@@ -2,7 +2,7 @@ package io.suggest.sc.grid.c
 
 import diode._
 import diode.data.{PendingBase, Pot}
-import io.suggest.dev.MScreen
+import io.suggest.dev.{MScreen, MSzMults}
 import io.suggest.err.ErrorConstants
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdCssArgs
@@ -15,7 +15,7 @@ import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.root.m.HandleIndexResp
-import io.suggest.sc.tile.TileConstants
+import io.suggest.sc.tile.{GridCalc, MGridCalcConf, TileConstants}
 import japgolly.univeq._
 
 import scala.util.Success
@@ -24,8 +24,42 @@ import scala.util.Success
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 14.11.17 18:59
-  * Description: Контроллер плитки карточек.
-  *
+  * Description: Утиль контроллера плитки карточек.
+  */
+object GridAdsAh {
+
+  private def GRID_CONF = MGridCalcConf.EVEN_GRID
+
+  /** Частичное переконфигурирование плитки. */
+  private def reconfGridColumnsCount(mscreen: MScreen,
+                                     gridConf: MGridCalcConf = GRID_CONF,
+                                     minSzMult: Double = MSzMults.GRID_MIN_SZMULT_D): Int = {
+    val evenGridColsCount = GridCalc.getColumnsCount(
+      // TODO Надо учесть фактическую ширину, т.е. вычесть открытые боковые панели.
+      contSz    = mscreen,
+      conf      = gridConf,
+      minSzMult = minSzMult
+    )
+    evenGridColsCount * gridConf.cellWidth.relSz
+  }
+
+
+  /** Полное переконфигурирование плитки. */
+  def fullGridConf(mscreen: MScreen): MJdConf = {
+    val gridConf = GRID_CONF
+
+    val gridColsCount = reconfGridColumnsCount(mscreen, gridConf)
+    MJdConf(
+      isEdit = false,
+      szMult = GridCalc.getSzMult4tilesScr(gridColsCount, mscreen, gridConf),
+      gridColumnsCount = gridColsCount
+    )
+  }
+
+}
+
+
+/** Контроллер плитки карточек.
   * @param searchArgsRO Доступ к текущим аргументам поиска карточек.
   */
 class GridAdsAh[M](
@@ -38,6 +72,7 @@ class GridAdsAh[M](
   extends ActionHandler(modelRW)
   with Log
 {
+
 
   /** Простая и ресурсоёмкая пересборка CSS карточек. */
   private def _mkJdCss(ads: Pot[Seq[MScAdData]], jdConf: MJdConf): JdCss = {
@@ -299,6 +334,25 @@ class GridAdsAh[M](
             }
           )
         }
+
+
+    // Экшен запуска пересчёта конфигурации плитки.
+    case GridReConf =>
+      val v0 = value
+      val gridColsCount2 = GridAdsAh.reconfGridColumnsCount(
+        mscreen   = screenRO.value,
+        minSzMult = v0.jdConf.szMult.toDouble
+      )
+      if (v0.jdConf.gridColumnsCount ==* gridColsCount2) {
+        noChange
+
+      } else {
+        val jdConf2 = v0.jdConf
+          .withGridColumnsCount( gridColsCount2 )
+        val v2 = v0.withJdConf( jdConf2 )
+        // TODO Возможно, что надо перекачать содержимое плитки с сервера, если всё слишком сильно переменилось. Нужен отложенный таймер для этого.
+        updated(v2)
+      }
 
   }
 

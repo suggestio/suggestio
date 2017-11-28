@@ -29,3 +29,6 @@ case class HandleIndexResp(tryResp: Try[MSc3Resp], reqTimestamp: Option[Long]) e
 
 /** События экрана. */
 case object ScreenReset extends IScRootAction
+
+/** Сработал таймер непосредственного запуска действий при ресайзе. */
+case object ScreenRszTimer extends IScRootAction

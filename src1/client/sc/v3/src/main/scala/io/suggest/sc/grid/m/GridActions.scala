@@ -53,3 +53,9 @@ case class FocusedResp(nodeId: String, tryResp: Try[MSc3Resp]) extends IGridActi
 
 /** Экшен скроллинга плитки. */
 case class GridScroll(scrollTop: Double) extends IGridAction
+
+
+/** Пересчитать конфиги плитки, возможно перестроив плитку.
+  * Полезно для ранней реакции на изменение размеров экрана.
+  */
+case object GridReConf extends IGridAction

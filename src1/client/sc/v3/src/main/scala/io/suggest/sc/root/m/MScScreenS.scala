@@ -17,7 +17,8 @@ object MScScreenS {
   /** Поддержка FastEq для инстансов [[MScScreenS]]. */
   implicit object MScScreenSFastEq extends FastEq[MScScreenS] {
     override def eqv(a: MScScreenS, b: MScScreenS): Boolean = {
-      a.screen ===* b.screen
+      (a.screen ===* b.screen) &&
+        (a.rszTimer ===* b.rszTimer)
     }
   }
 
@@ -29,11 +30,15 @@ object MScScreenS {
 /** Класс модели состояния экрана.
   *
   * @param screen Описание текущего экрана устройства, в котором отрендерено приложение.
+  * @param rszTimer Таймер уведомления других контроллеров о наступившем ресайзе.
+  *                 Используется таймер задержки реакции для подавление повторных ресайзов.
   */
 case class MScScreenS(
-                       screen      : MScreen
+                       screen      : MScreen,
+                       rszTimer    : Option[Int] = None
                      ) {
 
-  def withScreen(screen: MScreen) = copy(screen = screen)
+  def withScreen(screen: MScreen)           = copy(screen = screen)
+  def withRszTimer(rszTimer: Option[Int])   = copy(rszTimer = rszTimer)
 
 }

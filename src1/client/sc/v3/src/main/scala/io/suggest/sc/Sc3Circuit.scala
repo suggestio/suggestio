@@ -68,17 +68,6 @@ class Sc3Circuit(
 
     val mscreen = JsScreenUtil.getScreen()
 
-    val gridConf = MGridCalcConf.EVEN_GRID
-    val evenGridColsCount = GridCalc.getColumnsCount(
-      // TODO Надо учесть фактическую ширину, т.е. вычесть открытые боковые панели.
-      contSz = mscreen,
-      conf   = gridConf
-    )
-    val gridColsCount = evenGridColsCount * gridConf.cellWidth.relSz
-    val gridSzMult = GridCalc.getSzMult4tilesScr(gridColsCount, mscreen, gridConf)
-
-    println( gridConf, gridColsCount, gridSzMult )
-
     MScRoot(
       dev = MScDev(
         screen = MScScreenS(
@@ -94,12 +83,7 @@ class Sc3Circuit(
         )
       ),
       grid = {
-        val jdConf = MJdConf(
-          isEdit           = false,
-          // TODO Определить эти параметры автоматом
-          szMult           = gridSzMult,
-          gridColumnsCount = gridColsCount
-        )
+        val jdConf = GridAdsAh.fullGridConf(mscreen)
         MGridS(
           jdConf = jdConf,
           jdCss  = jdCssFactory.mkJdCss( MJdCssArgs(conf = jdConf) )
@@ -114,7 +98,7 @@ class Sc3Circuit(
 
   private val indexRW = zoomRW(_.index) { _.withIndex(_) }
   private val indexWelcomeRW = indexRW.zoomRW(_.welcome) { _.withWelcome(_) }
-  private val indexStateRW = indexRW.zoomRW(_.state) { _.withState(_) }
+  //private val indexStateRW = indexRW.zoomRW(_.state) { _.withState(_) }
 
   private val searchRW = indexRW.zoomRW(_.search) { _.withSearch(_) }
   private val searchMapRcvrsPotRW = searchRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
@@ -185,9 +169,6 @@ class Sc3Circuit(
       )
     }
 
-    // Слушаем события экрана:
-    acc ::= screenAh
-
     // Инициализатор карты ресиверов на гео-карте.
     if ( !searchMapRcvrsPotRW.value.isReady )
       acc ::= new RcvrMarkersInitAh( advRcvrsMapApi, searchMapRcvrsPotRW )
@@ -204,8 +185,11 @@ class Sc3Circuit(
     if ( searchRW.value.isMapInitialized )
       acc ::= mapCommonAh
 
-    // Контроллер плитки -- тоже где-то в начале.
+    // Контроллеры СНАЧАЛА экрана, а ПОТОМ плитки. Нужно соблюдать порядок.
     acc ::= gridAdsAh
+
+    // Экран отрабатываем в начале, но необходимость этого под вопросом.
+    acc ::= screenAh
 
     // Собрать все контроллеры в пачку.
     composeHandlers( acc: _* )

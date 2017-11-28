@@ -25,8 +25,7 @@ object GridCalc {
     * @param conf Конфиг рассчёта плитки. Там сохраняются разные константы.
     * @return Целое кол-во колонок.
     */
-  def getColumnsCount(contSz: IWidth, conf: IGridCalcConf): Int = {
-    val minSzMult = MSzMults.GRID_MIN_SZMULT_D
+  def getColumnsCount(contSz: IWidth, conf: IGridCalcConf, minSzMult: Double = MSzMults.GRID_MIN_SZMULT_D): Int = {
     val padding = conf.cellPadding * minSzMult
     val targetCount = ((contSz.width - padding) / (conf.cellWidthPx * minSzMult + padding)).toInt
     Math.min(conf.maxColumns,
@@ -45,7 +44,7 @@ object GridCalc {
   def getSzMult4tilesScr(colsCount: Int, dscr: IWidth, conf: IGridCalcConf): MSzMult = {
     val blockWidthPx = conf.cellWidthPx
     // Считаем целевое кол-во колонок на экране.
-    @tailrec def detectSzMult(restSzMults: List[MSzMult]): MSzMult= {
+    @tailrec def detectSzMult(restSzMults: List[MSzMult]): MSzMult = {
       val nextSzMult = restSzMults.head
       if (restSzMults.tail.isEmpty) {
         nextSzMult
