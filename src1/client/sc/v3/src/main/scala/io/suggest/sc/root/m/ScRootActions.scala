@@ -25,3 +25,7 @@ case class JsRouterStatus( payload: Try[scRoutes.type] ) extends IScRootAction
   *                     Может быть None, чтобы форсировать обновление выдачи без учёта timestamp'а запроса.
   */
 case class HandleIndexResp(tryResp: Try[MSc3Resp], reqTimestamp: Option[Long]) extends IScRootAction
+
+
+/** События экрана. */
+case object ScreenReset extends IScRootAction

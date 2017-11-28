@@ -14,8 +14,8 @@ import io.suggest.sjs.common.vsz.ViewportSz
 object JsScreenUtil extends Log {
 
   /** Детектор данных по экрану. */
-  def getScreen: MScreen = {
-    val vszOpt = ViewportSz.getViewportSize
+  def getScreen(): MScreen = {
+    val vszOpt = ViewportSz.getViewportSize()
     if (vszOpt.isEmpty)
       LOG.warn( WarnMsgs.NO_SCREEN_VSZ_DETECTED )
 

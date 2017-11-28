@@ -1,7 +1,7 @@
 package io.suggest.jd.render.v
 
 import com.github.dantrain.react.stonecutter._
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}

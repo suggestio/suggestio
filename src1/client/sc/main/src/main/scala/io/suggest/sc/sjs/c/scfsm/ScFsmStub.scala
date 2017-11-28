@@ -33,7 +33,7 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with
     /** Дополняемая/настраивамая реакция на сигнал об изменении размеров окна или экрана устройства. */
     def _viewPortChanged(e: IVpSzChanged): Unit = {
       // Обновить данные состояния по текущему экрану.
-      val screen = JsScreenUtil.getScreen
+      val screen = JsScreenUtil.getScreen()
       val sd0 = _stateData
       val sd1 = sd0.withCommon(
         sd0.common.copy(

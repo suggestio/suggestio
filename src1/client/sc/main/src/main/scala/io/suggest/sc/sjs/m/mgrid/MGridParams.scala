@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.m.mgrid
 
 import io.suggest.ad.blk.BlockWidths
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.sc.tile.{GridColumnCalc, MGridColumnsCalcConf}
+import io.suggest.sc.tile.{GridCalc, IGridCalcConf, TileConstants}
 import io.suggest.sc.tile.TileConstants._
 
 import scala.scalajs.js
@@ -19,7 +19,7 @@ case class MGridParams(
   cellPadding   : Int = PADDING_CSSPX,
   topOffset     : Int = 70,
   bottomOffset  : Int = 20
-) {
+) { that =>
 
   /**
    * Накатить данные из распарсенного JSON, присланного сервером.
@@ -48,17 +48,20 @@ case class MGridParams(
   }
 
   /** Конфиг для выполнения рассчёта оптимального кол-ва колонок плитки. */
-  private def GRID_COLUMNS_CONF = MGridColumnsCalcConf(
-    cellPadding = cellPadding,
-    cellWidth   = cellSize
-  )
+  private def GRID_COLUMNS_CONF = {
+    new IGridCalcConf {
+      override def cellWidthPx: Int = that.cellSize
+      override def maxColumns : Int = TileConstants.CELL140_COLUMNS_MAX
+      override def cellPadding: Int = that.cellPadding
+    }
+  }
 
   /**
    * Посчитать кол-во колонок сетки с помощью калькулятора колонок.
    * @return Кол-во колонок сетки на экране.
    */
   def countColumns(screen: ISize2di): Int = {
-    GridColumnCalc.getColumnsCount(screen, GRID_COLUMNS_CONF)
+    GridCalc.getColumnsCount(screen, GRID_COLUMNS_CONF)
   }
 
 }

@@ -82,7 +82,6 @@ class IndexR(
           } yield {
             welcomeR.PropsVal(
               wcInfo   = wcInfo,
-              screen   = props.state.screen,
               nodeName = resp.name,
               state    = wcState
             )

@@ -8,7 +8,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.dev.MSzMults
 import io.suggest.model.n2.node.MNode
 import io.suggest.sc.ScConstants
-import io.suggest.sc.tile.{GridColumnCalc, MGridColumnsCalcConf}
+import io.suggest.sc.tile.{GridCalc, MGridCalcConf}
 import models.blk
 import models.blk._
 import models.im._
@@ -162,10 +162,7 @@ class ShowcaseUtil @Inject() (
 
 
   /** Конфиг для рассчёта кол-ва колонок плитки. */
-  val GRID_COLS_CONF = MGridColumnsCalcConf(
-    cellWidth  = BlockWidths.NORMAL.value,
-    maxColumns = 4
-  )
+  val GRID_COLS_CONF = MGridCalcConf.EVEN_GRID
 
 
   def getTileArgs(dscrOpt: Option[DevScreen]): TileArgs = {
@@ -177,7 +174,7 @@ class ShowcaseUtil @Inject() (
     } { getTileArgs }
   }
   def getTileArgs(dscr: DevScreen): TileArgs = {
-    val colsCount = GridColumnCalc.getColumnsCount(dscr, GRID_COLS_CONF)
+    val colsCount = GridCalc.getColumnsCount(dscr, GRID_COLS_CONF)
     TileArgs(
       szMult      = getSzMult4tilesScr(colsCount, dscr),
       colsCount   = colsCount
@@ -191,7 +188,7 @@ class ShowcaseUtil @Inject() (
    * @return Оптимальное значение SzMult_t выбранный для рендера.
    */
   def getSzMult4tilesScr(colsCount: Int, dscr: DevScreen): SzMult_t = {
-    val blockWidthPx = GRID_COLS_CONF.cellWidth
+    val blockWidthPx = GRID_COLS_CONF.cellWidth.value
     // Считаем целевое кол-во колонок на экране.
     @tailrec def detectSzMult(restSzMults: List[SzMult_t]): SzMult_t = {
       val nextSzMult = restSzMults.head

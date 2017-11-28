@@ -2,7 +2,6 @@ package io.suggest.sc.sjs.c
 
 import io.suggest.sc.sjs.m.mv.MTouchLock
 import io.suggest.sjs.common.controller.DomQuick
-import org.scalajs.dom
 import org.scalajs.dom.TouchEvent
 
 /**

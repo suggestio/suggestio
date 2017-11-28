@@ -22,8 +22,9 @@ object MScRoot {
 
   implicit case object MScRootFastEq extends FastEq[MScRoot] {
     override def eqv(a: MScRoot, b: MScRoot): Boolean = {
-      (a.index ===* b.index) &&
-        (a.grid ===* b.grid) &&
+      (a.dev      ===* b.dev) &&
+        (a.index  ===* b.index) &&
+        (a.grid   ===* b.grid) &&
         (a.jsRouter eq b.jsRouter)
     }
   }
@@ -32,11 +33,13 @@ object MScRoot {
 
 
 case class MScRoot(
+                    dev           : MScDev,
                     index         : MScIndex,
                     grid          : MGridS,
                     jsRouter      : Pot[scRoutes.type]      = Pot.empty
                   ) {
 
+  def withDev( dev: MScDev )                        = copy(dev = dev)
   def withIndex( index: MScIndex )                  = copy(index = index)
   def withJsRouter( jsRouter: Pot[scRoutes.type] )  = copy(jsRouter = jsRouter)
   def withGrid( grid: MGridS )                      = copy(grid = grid)
@@ -61,7 +64,7 @@ case class MScRoot(
 
     MScCssArgs(
       customColorsOpt = indexRespOpt.map(_.colors),
-      screen          = index.state.screen,
+      screen          = dev.screen.screen,
       wcBgWh          = __whOpt( _.bgImage ),
       wcFgWh          = __whOpt( _.fgImage )
     )

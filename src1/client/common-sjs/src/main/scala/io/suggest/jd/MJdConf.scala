@@ -44,7 +44,7 @@ case class MJdConf(
                     isEdit              : Boolean,
                     szMult              : MSzMult,
                     blockPadding        : BlockPadding = BlockPaddings.default,
-                    // TODO Это не уместно тут, надо убрать. JdR в редакторе зависит, т.к. рендерит плитку пока так.
+                    // TODO Это не уместно тут? Лучше убрать. JdR в редакторе зависит, т.к. рендерит плитку пока так.
                     gridColumnsCount    : Int
                   ) {
 

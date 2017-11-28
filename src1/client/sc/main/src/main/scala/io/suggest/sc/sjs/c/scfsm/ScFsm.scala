@@ -33,7 +33,7 @@ object ScFsm
   override protected var _stateData: SD = {
     MScSd(
       common = MScCommon(
-        screen      = JsScreenUtil.getScreen,
+        screen      = JsScreenUtil.getScreen(),
         browser     = MBrowser.detectBrowser,
         generation  = MGen.random
       )

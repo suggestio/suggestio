@@ -39,7 +39,7 @@ class IndexAh[M](
         val args = MScIndexArgs(
           nodeId      = m.rcvrId,
           locEnv      = root.locEnv,
-          screen      = Some( root.index.state.screen ),
+          screen      = Some( root.dev.screen.screen ),
           withWelcome = true
         )
 

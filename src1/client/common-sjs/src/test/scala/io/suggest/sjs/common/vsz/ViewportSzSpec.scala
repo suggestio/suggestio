@@ -42,7 +42,7 @@ protected[vsz] trait ViewportSzTester extends SimpleTestSuite {
 
   test("2D size must work without exceptions") {
     val impl = getImpl
-    val resOpt = impl.getViewportSize
+    val resOpt = impl.getViewportSize()
     assert( resOpt.nonEmpty )
     val res = resOpt.get
     _testVal(res.height)

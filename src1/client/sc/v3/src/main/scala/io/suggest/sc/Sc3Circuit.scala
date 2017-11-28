@@ -3,7 +3,7 @@ package io.suggest.sc
 import diode.ModelRO
 import diode.react.ReactConnector
 import io.suggest.common.event.WndEvents
-import io.suggest.dev.{JsScreenUtil, MSzMults}
+import io.suggest.dev.JsScreenUtil
 import io.suggest.geo.{MGeoPoint, MLocEnv}
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdCssArgs
@@ -15,16 +15,16 @@ import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.grid.c.GridAdsAh
 import io.suggest.sc.grid.m.MGridS
 import io.suggest.sc.init.MSc3Init
-import io.suggest.sc.inx.c.{IndexAh, IndexStateAh, WelcomeAh}
+import io.suggest.sc.inx.c.{IndexAh, WelcomeAh}
 import io.suggest.sc.inx.m.{GetIndex, MScIndex, MScIndexState}
-import io.suggest.sc.m.ScreenReset
-import io.suggest.sc.root.c.NoOpAh
-import io.suggest.sc.root.m.{JsRouterStatus, MScRoot}
+import io.suggest.sc.root.c.{NoOpAh, ScreenAh}
+import io.suggest.sc.root.m._
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.router.c.JsRouterInitAh
 import io.suggest.sc.search.c.SearchAh
 import io.suggest.sc.search.m.MScSearch
 import io.suggest.sc.styl.{ScCss, ScCssFactoryModule}
+import io.suggest.sc.tile.{GridCalc, MGridCalcConf}
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -60,16 +60,33 @@ class Sc3Circuit(
 
   override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.SC_FSM_EVENT_FAILED
 
-  override protected def initialModel = {
+  override protected def initialModel: MScRoot = {
     // TODO Десериализовать состояние из URL или откуда-нибудь ещё.
     val state0 = Json
       .parse( StateInp.find().get.value.get )
       .as[MSc3Init]
 
+    val mscreen = JsScreenUtil.getScreen()
+
+    val gridConf = MGridCalcConf.EVEN_GRID
+    val evenGridColsCount = GridCalc.getColumnsCount(
+      // TODO Надо учесть фактическую ширину, т.е. вычесть открытые боковые панели.
+      contSz = mscreen,
+      conf   = gridConf
+    )
+    val gridColsCount = evenGridColsCount * gridConf.cellWidth.relSz
+    val gridSzMult = GridCalc.getSzMult4tilesScr(gridColsCount, mscreen, gridConf)
+
+    println( gridConf, gridColsCount, gridSzMult )
+
     MScRoot(
+      dev = MScDev(
+        screen = MScScreenS(
+          screen = mscreen
+        )
+      ),
       index = MScIndex(
         state = MScIndexState(
-          screen   = JsScreenUtil.getScreen,
           geoPoint = Some( MGeoPoint(59.92, 30.31) )
         ),
         search = MScSearch(
@@ -78,10 +95,10 @@ class Sc3Circuit(
       ),
       grid = {
         val jdConf = MJdConf(
-          isEdit = false,
+          isEdit           = false,
           // TODO Определить эти параметры автоматом
-          szMult = MSzMults.`1.0`,
-          gridColumnsCount = 4
+          szMult           = gridSzMult,
+          gridColumnsCount = gridColsCount
         )
         MGridS(
           jdConf = jdConf,
@@ -105,6 +122,9 @@ class Sc3Circuit(
 
   private val gridRW = zoomRW(_.grid) { _.withGrid(_) }
 
+  private val devRW = zoomRW(_.dev) { _.withDev(_) }
+  private val scScreenRW = devRW.zoomRW(_.screen) { _.withScreen(_) }
+
   private val rootRO = zoom(m => m)
 
   private val searchAdsArgsRO: ModelRO[MFindAdsReq] = zoom { mroot =>
@@ -112,14 +132,14 @@ class Sc3Circuit(
     MFindAdsReq(
       receiverId  = inxState.currRcvrId,
       locEnv      = if (inxState.currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
-      screenInfo  = Some( inxState.screen ),
+      screenInfo  = Some( mroot.dev.screen.screen ),
       generation  = Some( inxState.generation )
       // limit и offset очень специфичны и выставляются в конкретных контроллерах карточек.
       // TODO Добавить здесь tagNodeId.
     )
   }
 
-  private val screenRO = indexStateRW.zoom(_.screen)
+  private val screenRO = scScreenRW.zoom(_.screen)
 
 
   // Кэш action-handler'ов
@@ -134,10 +154,6 @@ class Sc3Circuit(
     stateRO = rootRO
   )
 
-  private val indexStateAh = new IndexStateAh(
-    modelRW = indexStateRW
-  )
-
   private lazy val mapCommonAh = new MapCommonAh(
     mmapRW = mmapRW
   )
@@ -148,6 +164,10 @@ class Sc3Circuit(
     screenRO      = screenRO,
     jdCssFactory  = jdCssFactory,
     modelRW       = gridRW
+  )
+
+  private val screenAh = new ScreenAh(
+    modelRW = scScreenRW
   )
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttp( scRoutes )
@@ -164,6 +184,9 @@ class Sc3Circuit(
         modelRW = jsRouterRW
       )
     }
+
+    // Слушаем события экрана:
+    acc ::= screenAh
 
     // Инициализатор карты ресиверов на гео-карте.
     if ( !searchMapRcvrsPotRW.value.isReady )
@@ -183,10 +206,6 @@ class Sc3Circuit(
 
     // Контроллер плитки -- тоже где-то в начале.
     acc ::= gridAdsAh
-
-    // Базовые экшены всей выдачи перехватываем всегда и в самую первую очередь.
-    // Сюда приходят оптовые или частые сообщения от геолокации, маячков, листенеров размеров экрана.
-    acc ::= indexStateAh
 
     // Собрать все контроллеры в пачку.
     composeHandlers( acc: _* )

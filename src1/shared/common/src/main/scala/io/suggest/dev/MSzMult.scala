@@ -105,6 +105,22 @@ object MSzMults {
   /** Для рассчёта оптимальной плитки используется этот ограничитель минимального множителя размера блоков. */
   def GRID_MIN_SZMULT = MSzMult.fromDouble( GRID_MIN_SZMULT_D )
 
+  /** Размеры для расширения плиток выдачи. Используются для подавления пустот по бокам экрана. */
+  def GRID_TILE_MULTS: List[MSzMult] = {
+    List(
+      // Набор допустимых значений, TODO в основном - с потолка, надо оставить только нужные.
+      MSzMult.fromDouble(1.4),
+      MSzMult.fromDouble(1.3),
+      MSzMult.fromDouble(1.2),
+      MSzMult.fromDouble(1.1),
+      MSzMult.fromDouble(1.06),
+      MSzMult.fromDouble(1.0),
+      // Экраны с шириной 640csspx требуют немного уменьшить карточку:
+      GRID_MIN_SZMULT
+    )
+  }
+
+
   /** Добавить в аккамуляторы все элементы кроме 3.0. */
   private def _allBut3Acc(acc0: List[MSzMult]): List[MSzMult] = {
     `0.5` ::

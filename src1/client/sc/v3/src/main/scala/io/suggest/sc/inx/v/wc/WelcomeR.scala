@@ -14,6 +14,7 @@ import io.suggest.sc.inx.m.{MWelcomeState, WcClick}
 import io.suggest.spa.OptFastEq.Plain
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.styl.GetScCssF
+import io.suggest.ueq.UnivEqUtil._
 
 import scalacss.ScalaCssReact._
 
@@ -31,7 +32,6 @@ class WelcomeR(
   /** Props-модель данного компонента. */
   case class PropsVal(
                        wcInfo     : MWelcomeInfo,
-                       screen     : MScreen,
                        nodeName   : Option[String],
                        state      : MWelcomeState
                      )
@@ -47,10 +47,9 @@ class WelcomeR(
   /** Поддержка FastEq прямо на объекте-компаньоне. */
   implicit object PropsVal extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.wcInfo eq b.wcInfo) &&
-        (a.screen eq b.screen) &&
-        (a.nodeName eq b.nodeName) &&
-        (a.state eq b.state)
+      (a.wcInfo     ===* b.wcInfo) &&
+        (a.nodeName ===* b.nodeName) &&
+        (a.state    ===* b.state)
     }
   }
 
