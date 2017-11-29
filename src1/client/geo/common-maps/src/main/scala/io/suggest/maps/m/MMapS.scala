@@ -16,15 +16,17 @@ import io.suggest.ueq.UnivEqUtil._
   */
 object MMapS {
 
-  implicit object MMapSFastEq extends FastEq[MMapS] {
+  implicit object MMapSFastEq4Map extends FastEq[MMapS] {
     override def eqv(a: MMapS, b: MMapS): Boolean = {
       (a.zoom ==* b.zoom) &&
         (a.centerInit ===* b.centerInit) &&
         // Не реагировать на изменение реальной координаты, т.к. сюда идёт запись только из callback'ов карты.
         //(a.centerReal ===* b.centerReal) &&
-        (a.locationFound ===* b.locationFound)
+        (a.locationFound ===* b.locationFound) &&
+        (a.dragging ==* b.dragging)
     }
   }
+
 
   implicit def univEq: UnivEq[MMapS] = UnivEq.derive
 
@@ -47,18 +49,21 @@ object MMapS {
   * @param centerReal Фактический центр карты после перемещения.
   *                   Запись напрямую в MMapProps приводит к плохому поведению leaflet,
   *                   поэтому фактический центр сохраняется отдельно от центра инициализации.
+  * @param dragging Находится ли карта сейчас в состоянии перетаскивания?
   */
 case class MMapS(
                   zoom          : Int,
                   centerInit    : MGeoPoint,
                   centerReal    : Option[MGeoPoint]   = None,
                   locationFound : Option[Boolean]     = None,
+                  dragging      : Boolean             = false,
                 ) {
 
   def withZoom(zoom: Int) = copy(zoom = zoom)
   def withCenterInit(centerInit: MGeoPoint) = copy(centerInit = centerInit)
   def withCenterReal(centerReal: Option[MGeoPoint]) = copy(centerReal = centerReal)
   def withLocationFound(lf: Option[Boolean]) = copy(locationFound = lf)
+  def withDragging(dragging: Boolean) = copy(dragging = dragging)
 
   def center: MGeoPoint = {
     centerReal

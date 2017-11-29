@@ -45,11 +45,10 @@ class IndexMapAh[M](
         _getIndex(v2)
       }
 
-
-    // Началось ручное перетаскивание карты.
-    case MapDragStart =>
-      // Выкинуть из состояния текущего ресивера, чтобы перейти в режим поиска по карте.
+    case _: MapDragEnd =>
+      val fx = _getIndexFx
       val v0 = value
+      // Выкинуть из состояния текущего ресивера. Если местоположение особо и не изменилось, то сервер вернёт назад текущий ресивер.
       if (v0.state.currRcvrId.nonEmpty) {
         // Выход из узла на голую карту.
         // TODO Не пашет, надо запускать GetIndex как-то совсем после сохранени состояния.
@@ -57,16 +56,11 @@ class IndexMapAh[M](
           v0.state
             .withRcvrNodeId(Nil)
         )
-        _getIndex(v2)
+        updated(v2, fx)
 
       } else {
-        // Последовательные шаги по карте
-        noChange
+        effectOnly(fx)
       }
-
-    case m: MapDragEnd =>
-      // TODO Проверять, изменилась ли начальная координата, и только тогда запускать эффект GetIndex'а.
-      effectOnly( _getIndexFx )
 
   }
 

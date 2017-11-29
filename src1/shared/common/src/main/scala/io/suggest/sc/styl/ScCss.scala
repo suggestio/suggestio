@@ -431,6 +431,14 @@ case class ScCss( args: IScCssArgs )
           )
         }
 
+        /** Контейнер прицела центра карты. */
+        val crosshair = style(
+          position.relative,
+          top( -(TAB_BODY_HEIGHT_PX / 2 + 12).px ),
+          left(48.5 %%),
+          zIndex(1000)
+        )
+
       }
 
     }

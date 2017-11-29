@@ -72,6 +72,29 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
     case _: IHandleMapPopupClose =>
       // Почему-то бывает, что сообщение о закрытие попапа приходят дважды.
       noChange
+
+    // Сигнал о начале перетаскивания карты.
+    case MapDragStart =>
+      val v0 = value
+      if (v0.dragging) {
+        noChange
+      } else {
+        // Записать в состояние, что isDragging = true
+        val v2 = v0.withDragging( true )
+        updated( v2 )
+      }
+
+    // Сигнал о завершении таскания карты
+    case _: MapDragEnd =>
+      val v0 = value
+      if (v0.dragging) {
+        // Записать в состояние, что isDragging = false
+        val v2 = v0.withDragging( false )
+        updated( v2 )
+      } else {
+        noChange
+      }
+
   }
 
 }

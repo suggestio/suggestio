@@ -2,19 +2,15 @@ package io.suggest.lk.adn.map.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.lk.adn.map.m.{IRadOpts, MLamRcvrs, MRoot}
-import io.suggest.maps.m.{MExistGeoS, MMapS}
+import io.suggest.maps.m.{MExistGeoS, MGeoMapPropsR}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.css.Css
-import io.suggest.maps.r.{LGeoMapR, LMapExtraProps, ReactLeafletUtil}
+import io.suggest.maps.r.{LGeoMapR, ReactLeafletUtil}
 import react.leaflet.control.LocateControlR
-import MMapS.MMapSFastEq
 import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.sjs.dt.period.r.DatePeriodR
-import IRadOpts.IRadOptsFastEq
-import MExistGeoS.MExistGeoSFastEq
 import io.suggest.spa.OptFastEq.Wrapped
-import RadPopupR.PropsValFastEq
 import io.suggest.common.empty.OptionUtil
 import react.leaflet.layer.LayerGroupR
 import react.leaflet.lmap.LMapR
@@ -31,12 +27,18 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 object LamFormR {
 
+  import MGeoMapPropsR.MGeoMapPropsRFastEq
+  import IRadOpts.IRadOptsFastEq
+  import MLamRcvrs.MLamRcvrsFastEq
+  import MExistGeoS.MExistGeoSFastEq
+  import RadPopupR.PropsValFastEq
+
   type Props = ModelProxy[MRoot]
 
 
   /** Модель состояния компонента. */
   protected[this] case class State(
-                                    mmapC                 : ReactConnectProxy[MMapS],
+                                    geoMapPropsC          : ReactConnectProxy[MGeoMapPropsR],
                                     radOptsC              : ReactConnectProxy[IRadOpts[_]],
                                     rcvrsC                : ReactConnectProxy[MLamRcvrs],
                                     priceDslOptC          : ReactConnectProxy[Option[IPriceDslTerm]],
@@ -68,12 +70,10 @@ object LamFormR {
         p.wrap(_.datePeriod)( DatePeriodR.apply ),
 
         // Рендер географической карты:
-        s.mmapC { mapPropsProxy =>
-          val lMapProps = LGeoMapR.lmMapSProxy2lMapProps(
-            mapPropsProxy,
-            LMapExtraProps(cssClass = Css.Lk.Maps.MAP_CONTAINER)
-          )
-          LMapR(lMapProps)(
+        s.geoMapPropsC { mapPropsProxy =>
+          LMapR(
+            LGeoMapR.lmMapSProxy2lMapProps( mapPropsProxy )
+          )(
 
             // Рендерим основную плитку карты.
             ReactLeafletUtil.Tiles.OsmDefault,
@@ -119,14 +119,23 @@ object LamFormR {
 
 
   val component = ScalaComponent.builder[Props]("LamForm")
-    .initialStateFromProps { p =>
+    .initialStateFromProps { propsProxy =>
+      val mapCssClass = Some( Css.Lk.Maps.MAP_CONTAINER )
       State(
-        mmapC         = p.connect(_.mmap),
-        radOptsC      = p.connect(identity),
-        rcvrsC        = p.connect(_.rcvrs),
-        priceDslOptC  = p.connect(_.price.respDslOpt),
-        currentPotC   = p.connect(_.current),
-        radPopupPropsC = p.connect { p =>
+        geoMapPropsC         = propsProxy.connect { p =>
+          val m = p.mmap
+          MGeoMapPropsR(
+            center        = m.center,
+            zoom          = m.zoom,
+            locationFound = m.locationFound,
+            cssClass      = mapCssClass
+          )
+        },
+        radOptsC      = propsProxy.connect(identity),
+        rcvrsC        = propsProxy.connect(_.rcvrs),
+        priceDslOptC  = propsProxy.connect(_.price.respDslOpt),
+        currentPotC   = propsProxy.connect(_.current),
+        radPopupPropsC = propsProxy.connect { p =>
           OptionUtil.maybe( p.rad.popup ) {
             RadPopupR.PropsVal(
               point = p.rad.circle.center

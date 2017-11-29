@@ -2,9 +2,10 @@ package io.suggest.sc.search.v
 
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.maps.m.{MMapS, MapDragEnd, MapDragStart}
+import io.suggest.common.html.HtmlConstants
+import io.suggest.maps.m.{MGeoMapPropsR, MMapS, MapDragEnd, MapDragStart}
 import io.suggest.maps.nodes.MGeoNodesResp
-import io.suggest.maps.r.{LGeoMapR, LMapExtraProps, RcvrMarkersR, ReactLeafletUtil}
+import io.suggest.maps.r.{LGeoMapR, RcvrMarkersR, ReactLeafletUtil}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.search.m.{MScSearch, MScSearchText, MSearchTab, MSearchTabs}
 import io.suggest.sc.styl.GetScCssF
@@ -32,8 +33,9 @@ class SearchR(
                getScCssF  : GetScCssF
              ) {
 
-  import MMapS.MMapSFastEq
+  import MGeoMapPropsR.MGeoMapPropsRFastEq
   import MScSearchText.MScSearchTextFastEq
+  import MMapS.MMapSFastEq4Map
 
   type Props = ModelProxy[MScSearch]
 
@@ -100,44 +102,56 @@ class SearchR(
 
                 <.div(
                   mapCSS.wrapper,
-                  <.div(
-                    mapCSS.inner,
+                  s.mmapC { mmapProxy =>
+                    <.div(
+                      mapCSS.inner,
 
-                    // TODO Объеденить как-то isMapInitialized и MMapS? Например, сделать Pot[MMapS] вместо MMapS.
-                    s.mmapC { mmapS =>
+                      // TODO Объеденить как-то isMapInitialized и MMapS? Например, сделать Pot[MMapS] вместо MMapS.
                       // Боремся с проблемой https://stackoverflow.com/a/36257493 с помощью отложенной инициализации.
                       s.isMapInitializedC { isMapInitializedSomeProxy =>
                         if (isMapInitializedSomeProxy.value.value) {
-                          val lMapProps = LGeoMapR
-                            .lmMapSProxy2lMapProps(
-                              mmapS,
-                              LMapExtraProps(
-                                cssClass    = mapCSS.geomap.htmlClass,
-                                onDragStart = Some( _onMapDragStartF ),
-                                onDragEnd   = Some( _onMapDragEndF )
-                              )
+                          mmapProxy.wrap { m =>
+                            MGeoMapPropsR(
+                              center        = m.center,
+                              zoom          = m.zoom,
+                              locationFound = m.locationFound,
+                              cssClass      = Some( mapCSS.geomap.htmlClass ),
+                              onDragStart   = Some( _onMapDragStartF ),
+                              onDragEnd     = Some( _onMapDragEndF )
                             )
-                            .noAttribution
+                          } { geoMapPropsProxy =>
+                            LMapR(
+                              LGeoMapR.lmMapSProxy2lMapProps( geoMapPropsProxy )
+                                .noAttribution
+                            )(
 
-                          LMapR(lMapProps)(
+                              // Рендерим основную плитку карты.
+                              ReactLeafletUtil.Tiles.OsmDefault,
 
-                            // Рендерим основную плитку карты.
-                            ReactLeafletUtil.Tiles.OsmDefault,
+                              // Плагин для геолокации текущего юзера.
+                              LocateControlR(),
 
-                            // Плагин для геолокации текущего юзера.
-                            LocateControlR(),
+                              // Рендер шейпов и маркеров текущий узлов.
+                              s.rcvrsGeoC( RcvrMarkersR(_)() )
 
-                            // Рендер шейпов и маркеров текущий узлов.
-                            s.rcvrsGeoC( RcvrMarkersR(_)() )
-
-                          )
+                            )
+                          }
                         } else {
                           ReactCommonUtil.VdomNullElement
                         }
-                      }
-                    }
+                      },
 
-                  )
+                      if (mmapProxy.value.dragging) {
+                        <.div(
+                          mapCSS.crosshair,
+                          HtmlConstants.PLUS
+                        )
+                      } else {
+                        EmptyVdom
+                      }
+
+                    )
+                  }
                 )
               )
             }
@@ -153,7 +167,7 @@ class SearchR(
   val component = ScalaComponent.builder[Props]("Search")
     .initialStateFromProps { propsProxy =>
       State(
-        mmapC     = propsProxy.connect( _.mapState ),
+        mmapC = propsProxy.connect( _.mapState ),
         rcvrsGeoC = propsProxy.connect( _.rcvrsGeo ),
         textOptC  = propsProxy.connect( _.text ),
         tabC      = propsProxy.connect( _.currTab ),

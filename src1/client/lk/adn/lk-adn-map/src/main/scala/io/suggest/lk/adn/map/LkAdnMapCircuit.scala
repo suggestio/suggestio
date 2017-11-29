@@ -19,7 +19,7 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.dt.period.r.DtpAh
 import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import MLamRad.MLamRadFastEq
-import MMapS.MMapSFastEq
+import MMapS.MMapSFastEq4Map
 import IRadOpts.IRadOptsFastEq
 import io.suggest.routes.{AdvRcvrsMapApiHttp, routes}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx

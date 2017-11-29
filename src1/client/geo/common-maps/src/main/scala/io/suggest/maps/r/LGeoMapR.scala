@@ -5,7 +5,7 @@ import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.common.empty.JsOptionUtil
-import io.suggest.sjs.leaflet.event.{DragEndEvent, Event, LocationEvent, PopupEvent}
+import io.suggest.sjs.leaflet.event.{Event, LocationEvent, PopupEvent}
 import io.suggest.sjs.leaflet.map.LMap
 import japgolly.scalajs.react.Callback
 import react.leaflet.lmap.LMapPropsR
@@ -23,51 +23,50 @@ object LGeoMapR {
 
   /** Сгенерить пропертисы для LGeoMapR для типичной ситуации отображения карты в ЛК.
     *
-    * @param dispatcher Прокси MMapS.
+    * @param proxy Прокси [[io.suggest.maps.m.MGeoMapPropsR]].
     * @return Инстанс LMapPropsR.
     */
-  def lmMapSProxy2lMapProps( dispatcher: ModelProxy[MMapS], extra: LMapExtraProps): LMapPropsR = {
-    lmMapSProxy2lMapProps( dispatcher(), dispatcher, extra )
-  }
-
-  /** Сгенерить пропертисы для LGeoMapR для типичной ситуации отображения карты в ЛК.
-    *
-    * @param v Инстанс MMapS.
-    * @param dispatcher Прокси для отправки экшенов-событий наверх.
-    * @return Инстанс LMapPropsR.
-    */
-  def lmMapSProxy2lMapProps( v: MMapS, dispatcher: ModelProxy[_], extra: LMapExtraProps ): LMapPropsR = {
+  def lmMapSProxy2lMapProps( proxy: ModelProxy[MGeoMapPropsR] ): LMapPropsR = {
+    val v = proxy()
 
     // Реакция на location found.
-    def _onLocationFound(locEvent: LocationEvent): Callback = {
-      val gp = MapsUtil.latLng2geoPoint( locEvent.latLng )
-      dispatcher.dispatchCB( HandleLocationFound(gp) )
+    lazy val _onLocationFoundF = {
+      def _onLocationFound(locEvent: LocationEvent): Callback = {
+        val gp = MapsUtil.latLng2geoPoint( locEvent.latLng )
+        proxy.dispatchCB( HandleLocationFound(gp) )
+      }
+      cbFun1ToJsCb( _onLocationFound )
     }
-    lazy val _onLocationFoundF = cbFun1ToJsCb( _onLocationFound )
 
     // Реакция на закрытие попапа
-    def _onPopupClose(popEvent: PopupEvent): Callback = {
-      dispatcher.dispatchCB( HandleMapPopupClose )
+    val _onPopupCloseF = {
+      def _onPopupClose(popEvent: PopupEvent): Callback = {
+        proxy.dispatchCB( HandleMapPopupClose )
+      }
+      cbFun1ToJsCb( _onPopupClose )
     }
-    val _onPopupCloseF = cbFun1ToJsCb( _onPopupClose )
 
     // Реакция на зуммирование карты.
-    def _onZoomEnd(event: Event): Callback = {
-      val newZoom = event.target.asInstanceOf[LMap].getZoom()
-      dispatcher.dispatchCB( MapZoomEnd(newZoom) )
+    val _onZoomEndF = {
+      def _onZoomEnd(event: Event): Callback = {
+        val newZoom = event.target.asInstanceOf[LMap].getZoom()
+        proxy.dispatchCB( MapZoomEnd(newZoom) )
+      }
+      cbFun1ToJsCb( _onZoomEnd )
     }
-    val _onZoomEndF = cbFun1ToJsCb( _onZoomEnd )
 
     // Реакция на перемещение карты.
-    def _onMoveEnd(event: Event): Callback = {
-      val newZoom = event.target.asInstanceOf[LMap].getCenter()
-      dispatcher.dispatchCB( MapMoveEnd(newZoom) )
+    val _onMoveEndF = {
+      def _onMoveEnd(event: Event): Callback = {
+        val newZoom = event.target.asInstanceOf[LMap].getCenter()
+        proxy.dispatchCB( MapMoveEnd(newZoom) )
+      }
+      cbFun1ToJsCb( _onMoveEnd )
     }
-    val _onMoveEndF = cbFun1ToJsCb( _onMoveEnd )
 
     // Карта должна рендерится с такими параметрами:
     new LMapPropsR {
-      override val center    = MapsUtil.geoPoint2LatLng( v.centerInit )
+      override val center    = MapsUtil.geoPoint2LatLng( v.center )
       override val zoom      = v.zoom
       // Значение требует markercluster, цифра взята с http://wiki.openstreetmap.org/wiki/Zoom_levels
       override val maxZoom   = 18
@@ -80,20 +79,15 @@ object LGeoMapR {
         }
       }
       override val onPopupClose = js.defined( _onPopupCloseF )
-      override val onZoomEnd = js.defined( _onZoomEndF )
-      override val onMoveEnd = js.defined( _onMoveEndF )
+      override val onZoomEnd    = js.defined( _onZoomEndF )
+      override val onMoveEnd    = js.defined( _onMoveEndF )
 
       // Пробрасываем extra-пропертисы:
-      override val className    = extra.cssClass
-      override val onDragStart  = JsOptionUtil.opt2undef( extra.onDragStart )
-      override val onDragEnd    = JsOptionUtil.opt2undef( extra.onDragEnd )
+      override val className    = JsOptionUtil.opt2undef( v.cssClass )
+      override val onDragStart  = JsOptionUtil.opt2undef( v.onDragStart )
+      override val onDragEnd    = JsOptionUtil.opt2undef( v.onDragEnd )
     }
   }
 
 }
 
-case class LMapExtraProps(
-                           cssClass     : String,
-                           onDragStart  : Option[js.Function1[Event, Unit]]        = None,
-                           onDragEnd    : Option[js.Function1[DragEndEvent, Unit]] = None
-                         )
