@@ -139,20 +139,22 @@ class SearchR(
                         } else {
                           ReactCommonUtil.VdomNullElement
                         }
-                      },
-
-                      if (mmapProxy.value.dragging) {
-                        <.div(
-                          mapCSS.crosshair,
-                          HtmlConstants.PLUS
-                        )
-                      } else {
-                        EmptyVdom
                       }
 
                     )
                   }
+                ),
+
+                // Прицел для наведения. Пока не ясно, отображать его всегда или только когда карта перетаскивается.
+                //if (mmapProxy.value.dragging) {
+                <.div(
+                  mapCSS.crosshair,
+                  HtmlConstants.PLUS
                 )
+                //} else {
+                //  EmptyVdom
+                //}
+
               )
             }
 

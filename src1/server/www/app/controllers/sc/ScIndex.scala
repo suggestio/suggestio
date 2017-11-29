@@ -2,6 +2,7 @@ package controllers.sc
 
 import _root_.util.di._
 import io.suggest.color.MColorData
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.IMust
 import io.suggest.es.search.MSubSearch
@@ -655,6 +656,9 @@ trait ScIndex
     */
   abstract class ScIndexLogicV3 extends ScIndexLogic {
 
+    /** true, если вызов идёт из [[ScIndexAdOpen]]. */
+    def isFocusedAdOpen: Boolean = false
+
     private def _img2mediaInfo(mimg: MImgT, whPxOpt: Option[MSize2di]): MMediaInfo = {
       MMediaInfo(
         giType = MMediaTypes.Image,
@@ -698,6 +702,50 @@ trait ScIndex
       }
     }
 
+    /** Поиск отображаемой координаты узла.
+      * Карта на клиенте будет отцентрована по этой точке. */
+    def nodeGeoPointOptFut: Future[Option[MGeoPoint]] = {
+      // Для нормальных узлов (не районов) следует возвращать клиенту их координату.
+      if (!isFocusedAdOpen && _reqArgs.locEnv.geoLocOpt.nonEmpty) {
+        // Не искать гео-точку для узла, если география на клиенте и так активна.
+        Future.successful( None )
+      } else {
+        // Если нет географии, то поискать центр для найденного узла.
+        for (inxNode <- indexNodeFutVal) yield {
+          OptionUtil.maybeOpt( inxNode.isRcvr ) {
+            def nodeLocEdges = inxNode.mnode.edges
+              .withPredicateIter( MPredicates.NodeLocation )
+
+            val iterCenters = nodeLocEdges
+              .flatMap { medge =>
+                medge.info.geoPoints
+                  .headOption
+                  .orElse {
+                    medge.info.geoShapes
+                      .iterator
+                      .flatMap { gs =>
+                        gs.shape.centerPoint
+                      }
+                      .toStream
+                      .headOption
+                  }
+              }
+
+            val iterFirstPoints = nodeLocEdges
+              .flatMap(_.info.geoShapes)
+              .map(_.shape.firstPoint)
+
+            val r = (iterCenters ++ iterFirstPoints)
+              .toStream
+              .headOption
+
+            LOGGER.trace(s"$logPrefix Node#${inxNode.mnode.id} geo pt. => $r")
+            r
+          }
+        }
+      }
+    }
+
     /** index-ответ сервера с данными по узлу. */
     def indexRespFut: Future[MSc3IndexResp] = {
       val _nodeIdOptFut        = currInxNodeIdOptFut
@@ -705,19 +753,22 @@ trait ScIndex
       val _nodeInfoFut         = indexNodeFutVal
       val _logoMediaInfoOptFut = logoMediaInfoOptFut
       val _welcomeInfoOptFut   = welcomeInfoOptFut
+      val _nodeGeoPointOptFut  = nodeGeoPointOptFut
       for {
         nodeIdOpt       <- _nodeIdOptFut
         nodeName        <- _nodeNameFut
         nodeInfo        <- _nodeInfoFut
         logoOpt         <- _logoMediaInfoOptFut
         welcomeOpt      <- _welcomeInfoOptFut
+        nodeGeoPointOpt <- _nodeGeoPointOptFut
       } yield {
         MSc3IndexResp(
           nodeId        = nodeIdOpt,
           name          = Option( nodeName ),
           colors        = nodeInfo.mnode.meta.colors,
           logoOpt       = logoOpt,
-          welcome       = welcomeOpt
+          welcome       = welcomeOpt,
+          geoPoint      = nodeGeoPointOpt
         )
       }
     }

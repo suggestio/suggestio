@@ -83,14 +83,23 @@ class IndexAh[M](
                 )
               } { inx =>
                 // TODO Сравнивать полученный index с текущим состоянием. Может быть ничего сохранять не надо?
-                v0
-                  .withResp(
-                    v0.resp.ready(inx)
-                  )
-                  .withState(
-                    v0.state
-                      .withRcvrNodeId( inx.nodeId.toList )
-                  )
+                v0.copy(
+                  resp = v0.resp.ready(inx),
+                  state = v0.state
+                    .withRcvrNodeId( inx.nodeId.toList ),
+                  search = inx
+                    .geoPoint
+                    .filter { mgp =>
+                      !(v0.search.mapState.center ~= mgp)
+                    }
+                    .fold(v0.search) { mgp =>
+                      v0.search.withMapState(
+                        v0.search.mapState
+                          .withCenterInit( mgp )
+                          .withCenterReal(None)
+                      )
+                    }
+                )
               }
           }
         )

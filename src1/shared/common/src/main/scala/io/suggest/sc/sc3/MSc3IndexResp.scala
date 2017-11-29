@@ -1,5 +1,7 @@
 package io.suggest.sc.sc3
 
+import io.suggest.geo.MGeoPoint
+import io.suggest.geo.MGeoPoint.Implicits._
 import io.suggest.media.IMediaInfo
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.index.MWelcomeInfo
@@ -22,7 +24,8 @@ object MSc3IndexResp {
     (__ \ "n").formatNullable[String] and
     (__ \ "c").format[MColors] and
     (__ \ "l").formatNullable[IMediaInfo] and
-    (__ \ "w").formatNullable[MWelcomeInfo]
+    (__ \ "w").formatNullable[MWelcomeInfo] and
+    (__ \ "g").formatNullable[MGeoPoint]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MSc3IndexResp] = UnivEq.derive
@@ -40,10 +43,11 @@ object MSc3IndexResp {
   * @param welcome Данные для рендера экрана приветствия.
   */
 case class MSc3IndexResp(
-                         nodeId  : Option[String],
-                         name    : Option[String],
-                         colors  : MColors,
-                         logoOpt : Option[IMediaInfo],
-                         welcome : Option[MWelcomeInfo]
+                         nodeId     : Option[String],
+                         name       : Option[String],
+                         colors     : MColors,
+                         logoOpt    : Option[IMediaInfo],
+                         welcome    : Option[MWelcomeInfo],
+                         geoPoint   : Option[MGeoPoint]
                        )
 
