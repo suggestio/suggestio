@@ -4,7 +4,8 @@ import diode.react.ModelProxy
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
-import io.suggest.sjs.leaflet.event.{Event, LocationEvent, PopupEvent}
+import io.suggest.sjs.common.empty.JsOptionUtil
+import io.suggest.sjs.leaflet.event.{DragEndEvent, Event, LocationEvent, PopupEvent}
 import io.suggest.sjs.leaflet.map.LMap
 import japgolly.scalajs.react.Callback
 import react.leaflet.lmap.LMapPropsR
@@ -25,8 +26,8 @@ object LGeoMapR {
     * @param dispatcher Прокси MMapS.
     * @return Инстанс LMapPropsR.
     */
-  def lmMapSProxy2lMapProps( dispatcher: ModelProxy[MMapS], cssClass: String ): LMapPropsR = {
-    lmMapSProxy2lMapProps( dispatcher(), dispatcher, cssClass )
+  def lmMapSProxy2lMapProps( dispatcher: ModelProxy[MMapS], extra: LMapExtraProps): LMapPropsR = {
+    lmMapSProxy2lMapProps( dispatcher(), dispatcher, extra )
   }
 
   /** Сгенерить пропертисы для LGeoMapR для типичной ситуации отображения карты в ЛК.
@@ -35,7 +36,7 @@ object LGeoMapR {
     * @param dispatcher Прокси для отправки экшенов-событий наверх.
     * @return Инстанс LMapPropsR.
     */
-  def lmMapSProxy2lMapProps( v: MMapS, dispatcher: ModelProxy[_], cssClass: String ): LMapPropsR = {
+  def lmMapSProxy2lMapProps( v: MMapS, dispatcher: ModelProxy[_], extra: LMapExtraProps ): LMapPropsR = {
 
     // Реакция на location found.
     def _onLocationFound(locEvent: LocationEvent): Callback = {
@@ -70,7 +71,6 @@ object LGeoMapR {
       override val zoom      = v.zoom
       // Значение требует markercluster, цифра взята с http://wiki.openstreetmap.org/wiki/Zoom_levels
       override val maxZoom   = 18
-      override val className = cssClass
       override val useFlyTo  = true
       override val onLocationFound = {
         if ( v.locationFound.contains(true) ) {
@@ -82,7 +82,18 @@ object LGeoMapR {
       override val onPopupClose = js.defined( _onPopupCloseF )
       override val onZoomEnd = js.defined( _onZoomEndF )
       override val onMoveEnd = js.defined( _onMoveEndF )
+
+      // Пробрасываем extra-пропертисы:
+      override val className    = extra.cssClass
+      override val onDragStart  = JsOptionUtil.opt2undef( extra.onDragStart )
+      override val onDragEnd    = JsOptionUtil.opt2undef( extra.onDragEnd )
     }
   }
 
 }
+
+case class LMapExtraProps(
+                           cssClass     : String,
+                           onDragStart  : Option[js.Function1[Event, Unit]]        = None,
+                           onDragEnd    : Option[js.Function1[DragEndEvent, Unit]] = None
+                         )

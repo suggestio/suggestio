@@ -307,7 +307,9 @@ class GridAdsAh[M](
               ra.acType match {
                 // Редирект в другую выдачу. Форсируем переключение в новую плитку.
                 case MScRespActionTypes.Index =>
-                  val fx = Effect.action( HandleIndexResp(m.tryResp, reqTimestamp = None, reason = None) )
+                  val fx = Effect.action {
+                    HandleIndexResp(m.tryResp, reqTimestamp = None, reason = None)
+                  }
                   effectOnly( fx )
 
                 // Фокусировка: раскрыть текущую карточку с помощью принятого контента.

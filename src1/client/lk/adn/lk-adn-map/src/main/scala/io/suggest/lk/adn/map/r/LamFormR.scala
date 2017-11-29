@@ -5,7 +5,7 @@ import io.suggest.lk.adn.map.m.{IRadOpts, MLamRcvrs, MRoot}
 import io.suggest.maps.m.{MExistGeoS, MMapS}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.css.Css
-import io.suggest.maps.r.{LGeoMapR, ReactLeafletUtil}
+import io.suggest.maps.r.{LGeoMapR, LMapExtraProps, ReactLeafletUtil}
 import react.leaflet.control.LocateControlR
 import MMapS.MMapSFastEq
 import io.suggest.bill.price.dsl.IPriceDslTerm
@@ -69,7 +69,10 @@ object LamFormR {
 
         // Рендер географической карты:
         s.mmapC { mapPropsProxy =>
-          val lMapProps = LGeoMapR.lmMapSProxy2lMapProps( mapPropsProxy, Css.Lk.Maps.MAP_CONTAINER )
+          val lMapProps = LGeoMapR.lmMapSProxy2lMapProps(
+            mapPropsProxy,
+            LMapExtraProps(cssClass = Css.Lk.Maps.MAP_CONTAINER)
+          )
           LMapR(lMapProps)(
 
             // Рендерим основную плитку карты.

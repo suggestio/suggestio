@@ -1,6 +1,6 @@
 package react.leaflet.lmap
 
-import io.suggest.sjs.leaflet.event.{Event, LocationEvent, PopupEvent}
+import io.suggest.sjs.leaflet.event.{DragEndEvent, Event, LocationEvent, PopupEvent}
 import io.suggest.sjs.leaflet.map.{LMap, LatLngBounds, MapOptions}
 import japgolly.scalajs.react.vdom.VdomNode
 import japgolly.scalajs.react.{Children, JsComponent}
@@ -68,5 +68,8 @@ trait LMapPropsR extends MapOptions {
 
   val onMoveStart: UndefOr[js.Function1[Event, Unit]] = js.undefined
   val onMoveEnd: UndefOr[js.Function1[Event, Unit]] = js.undefined
+
+  val onDragStart: UndefOr[js.Function1[Event, Unit]] = js.undefined
+  val onDragEnd: UndefOr[js.Function1[DragEndEvent, Unit]] = js.undefined
 
 }

@@ -14,7 +14,7 @@ import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.grid.c.GridAdsAh
 import io.suggest.sc.grid.m.MGridS
 import io.suggest.sc.init.MSc3Init
-import io.suggest.sc.inx.c.{IndexAh, WelcomeAh}
+import io.suggest.sc.inx.c.{IndexAh, IndexMapAh, WelcomeAh}
 import io.suggest.sc.inx.m.{GetIndex, MScIndex}
 import io.suggest.sc.root.c.{NoOpAh, ScreenAh}
 import io.suggest.sc.root.m._
@@ -137,7 +137,10 @@ class Sc3Circuit(
     val mapCommonAh = new MapCommonAh(
       mmapRW = mmapRW
     )
-    foldHandlers( mapCommonAh, indexAh )
+    val indexMapAh = new IndexMapAh(
+      modelRW = indexRW
+    )
+    foldHandlers( mapCommonAh, indexMapAh )
   }
 
   private val gridAdsAh = new GridAdsAh(
@@ -167,6 +170,9 @@ class Sc3Circuit(
       )
     }
 
+    // Основные события индекса не частые, но доступны всегда:
+    acc ::= indexAh
+
     // Инициализатор карты ресиверов на гео-карте.
     if ( !searchMapRcvrsPotRW.value.isReady )
       acc ::= new RcvrMarkersInitAh( advRcvrsMapApi, searchMapRcvrsPotRW )
@@ -179,8 +185,6 @@ class Sc3Circuit(
 
     if ( searchRW.value.isMapInitialized )
       acc ::= mapAndIndexAh
-    else
-      acc ::= indexAh
 
     // Контроллеры СНАЧАЛА экрана, а ПОТОМ плитки. Нужно соблюдать порядок.
     acc ::= gridAdsAh

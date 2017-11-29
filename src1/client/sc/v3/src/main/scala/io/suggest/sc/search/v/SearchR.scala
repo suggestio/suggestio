@@ -2,18 +2,20 @@ package io.suggest.sc.search.v
 
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.maps.m.MMapS
+import io.suggest.maps.m.{MMapS, MapDragEnd, MapDragStart}
 import io.suggest.maps.nodes.MGeoNodesResp
-import io.suggest.maps.r.{LGeoMapR, RcvrMarkersR, ReactLeafletUtil}
+import io.suggest.maps.r.{LGeoMapR, LMapExtraProps, RcvrMarkersR, ReactLeafletUtil}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.search.m.{MScSearch, MScSearchText, MSearchTab, MSearchTabs}
 import io.suggest.sc.styl.GetScCssF
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import react.leaflet.control.LocateControlR
 import io.suggest.spa.OptFastEq
 import io.suggest.spa.OptFastEq.Wrapped
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import react.leaflet.lmap.LMapR
 
 import scalacss.ScalaCssReact._
@@ -47,6 +49,18 @@ class SearchR(
 
   class Backend( $: BackendScope[Props, State] ) {
 
+    private def _onMapDragStart(e: Event): Callback = {
+      dispatchOnProxyScopeCB( $, MapDragStart )
+    }
+    private val _onMapDragStartF = ReactCommonUtil.cbFun1ToJsCb( _onMapDragStart )
+
+
+    private def _onMapDragEnd(e: DragEndEvent): Callback = {
+      dispatchOnProxyScopeCB( $, MapDragEnd(distancePx = e.distance) )
+    }
+    private val _onMapDragEndF = ReactCommonUtil.cbFun1ToJsCb( _onMapDragEnd )
+
+
     def render(s: State): VdomElement = {
       val scCss = getScCssF()
       val CSS = scCss.Search
@@ -72,10 +86,8 @@ class SearchR(
           // Карта.
 
           // Тело текущего таба.
-          s.mmapC { mmapS =>
-            val mapCSS = CSS.Tabs.MapTab
-
             s.tabC { currTabProxy =>
+              val mapCSS = CSS.Tabs.MapTab
               val currTab = currTabProxy()
 
               <.div(
@@ -91,27 +103,37 @@ class SearchR(
                   <.div(
                     mapCSS.inner,
 
-                    // Боремся с проблемой https://stackoverflow.com/a/36257493 с помощью отложенной инициализации.
-                    s.isMapInitializedC { isMapInitializedSomeProxy =>
-                      if (isMapInitializedSomeProxy.value.value) {
-                        val lMapProps = LGeoMapR
-                          .lmMapSProxy2lMapProps( mmapS, mapCSS.geomap.htmlClass )
-                          .noAttribution
+                    // TODO Объеденить как-то isMapInitialized и MMapS? Например, сделать Pot[MMapS] вместо MMapS.
+                    s.mmapC { mmapS =>
+                      // Боремся с проблемой https://stackoverflow.com/a/36257493 с помощью отложенной инициализации.
+                      s.isMapInitializedC { isMapInitializedSomeProxy =>
+                        if (isMapInitializedSomeProxy.value.value) {
+                          val lMapProps = LGeoMapR
+                            .lmMapSProxy2lMapProps(
+                              mmapS,
+                              LMapExtraProps(
+                                cssClass    = mapCSS.geomap.htmlClass,
+                                onDragStart = Some( _onMapDragStartF ),
+                                onDragEnd   = Some( _onMapDragEndF )
+                              )
+                            )
+                            .noAttribution
 
-                        LMapR(lMapProps)(
+                          LMapR(lMapProps)(
 
-                          // Рендерим основную плитку карты.
-                          ReactLeafletUtil.Tiles.OsmDefault,
+                            // Рендерим основную плитку карты.
+                            ReactLeafletUtil.Tiles.OsmDefault,
 
-                          // Плагин для геолокации текущего юзера.
-                          LocateControlR(),
+                            // Плагин для геолокации текущего юзера.
+                            LocateControlR(),
 
-                          // Рендер шейпов и маркеров текущий узлов.
-                          s.rcvrsGeoC( RcvrMarkersR(_)() )
+                            // Рендер шейпов и маркеров текущий узлов.
+                            s.rcvrsGeoC( RcvrMarkersR(_)() )
 
-                        )
-                      } else {
-                        ReactCommonUtil.VdomNullElement
+                          )
+                        } else {
+                          ReactCommonUtil.VdomNullElement
+                        }
                       }
                     }
 
@@ -119,7 +141,6 @@ class SearchR(
                 )
               )
             }
-          }
 
         )
       }

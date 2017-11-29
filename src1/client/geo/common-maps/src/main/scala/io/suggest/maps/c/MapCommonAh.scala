@@ -20,25 +20,28 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
     _setMapCenterTo( mgp, v0 )
   }
   private def _setMapCenterTo(mgp: MGeoPoint, v0: MMapS = value) = {
-    if ((v0.centerInit ~= mgp) || v0.centerReal.exists(_ ~= mgp)) {
-      noChange
-    } else {
-      //println( "set new loc: " + mgp)
-      val v2 = v0.copy(
+    _maybeUpdateStateUsing(mgp, v0) {
+      _.copy(
         centerInit = mgp,
         centerReal = None
       )
-      updated( v2 )
     }
   }
+  private def _maybeUpdateStateUsing(mgp: MGeoPoint, v0: MMapS = value)(f: MMapS => MMapS) = {
+    if (v0.center ~= mgp) {
+      noChange
+    } else {
+      updated( f(v0) )
+    }
+  }
+
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Карта была перемещена, у неё теперь новый центр.
     case m: MapMoveEnd =>
-      //println( m )
       val mgp = MapsUtil.latLng2geoPoint( m.newCenterLL )
-      _setMapCenterTo( mgp )
+      _maybeUpdateStateUsing(mgp) { _.withCenterReal(Some(mgp)) }
 
     // Реакция на изменение zoom'а.
     case ze: IMapZoomEnd =>
