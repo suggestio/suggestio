@@ -58,7 +58,7 @@ class IndexR(
   val component = ScalaComponent.builder[Props]("Index")
     .initialStateFromProps { propsProxy =>
       State(
-        
+
         headerPropsC = propsProxy.connect { props =>
           for {
             resp <- props.resp.toOption

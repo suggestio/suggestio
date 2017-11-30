@@ -1,6 +1,7 @@
 package controllers
 
 import java.io.File
+import java.net.InetAddress
 import java.nio.file.Path
 import javax.inject.{Inject, Singleton}
 
@@ -37,7 +38,7 @@ import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile, Tempor
 import play.api.libs.json.Json
 import play.api.mvc.{BodyParser, MultipartFormData, Result}
 import play.core.parsers.Multipart
-import util.acl.CanUploadFile
+import util.acl.{CanUploadFile, IgnoreAuth}
 import util.cdn.{CdnUtil, DistUtil}
 import util.up.{FileUtil, UploadUtil}
 import japgolly.univeq._
@@ -60,6 +61,7 @@ class Upload @Inject()(
                         mMedias                   : MMedias,
                         uploadUtil                : UploadUtil,
                         canUploadFile             : CanUploadFile,
+                        ignoreAuth                : IgnoreAuth,
                         cdnUtil                   : CdnUtil,
                         fileUtil                  : FileUtil,
                         val iMediaStorages        : IMediaStorages,
@@ -714,6 +716,32 @@ class Upload @Inject()(
       override def temporaryFileCreator = creator
     }
 
+  }
+
+
+
+  /** Экшен, возвращающий upload-конфигурацию текущего узла.
+    * Служебный, для отладки всяких проблем с балансировкой и маршрутизации.
+    */
+  def getConfig = ignoreAuth() { implicit request =>
+    val sb = new StringBuilder(128)
+    val NL = '\n'
+    
+    sb.append("my public url = ")
+      .append( uploadUtil.MY_NODE_PUBLIC_URL )
+      .append(NL)
+
+    /*
+    sb.append("now = ")
+      .append( uploadUtil.rightNow() )
+      .append(NL)
+    */
+
+    sb.append("localhost = ")
+      .append( InetAddress.getLocalHost )
+      .append(NL)
+
+    Ok( sb.toString() )
   }
 
 }

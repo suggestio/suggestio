@@ -29,7 +29,7 @@ class SearchAh[M](
       } else {
         val fx = Effect {
           DomQuick
-            .timeoutPromiseT(15)(InitSearchMap)
+            .timeoutPromiseT(25)(InitSearchMap)
             .fut
         }
         updated( v2, fx )

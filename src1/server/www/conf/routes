@@ -193,6 +193,7 @@ GET  /captcha/digital/:captchaId        @controllers.Captcha.getDigitalCaptcha(c
 ## Upload controller
 ## TODO Запилить поддержку подписанных JSON-моделей в jsRoutes. Название параметра "c" пока захардкожено на клиенте в UploadApi.
 POST /upload/file                       @controllers.Upload.doFileUpload(u: mup.MUploadTargetQs, c: Option[io.suggest.ctx.MCtxId] ?= None)
+GET  /upload/_config                    @controllers.Upload.getConfig
 
 
 ## sys
