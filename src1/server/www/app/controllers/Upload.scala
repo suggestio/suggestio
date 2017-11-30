@@ -726,16 +726,10 @@ class Upload @Inject()(
   def getConfig = ignoreAuth() { implicit request =>
     val sb = new StringBuilder(128)
     val NL = '\n'
-    
+
     sb.append("my public url = ")
       .append( uploadUtil.MY_NODE_PUBLIC_URL )
       .append(NL)
-
-    /*
-    sb.append("now = ")
-      .append( uploadUtil.rightNow() )
-      .append(NL)
-    */
 
     sb.append("localhost = ")
       .append( InetAddress.getLocalHost )

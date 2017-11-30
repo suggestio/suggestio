@@ -36,6 +36,15 @@ class WelcomeR(
                        state      : MWelcomeState
                      )
 
+  /** Поддержка FastEq прямо на объекте-компаньоне. */
+  implicit object WelcomeRPropsValFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      (a.wcInfo     ===* b.wcInfo) &&
+        (a.nodeName ===* b.nodeName) &&
+        (a.state    ===* b.state)
+    }
+  }
+
   /** Модель внутреннего состояния компонента приветствия.
     *
     * @param nodeNameC Коннекшен до названия узла.
@@ -43,15 +52,6 @@ class WelcomeR(
   protected[this] case class State(
                                     nodeNameC: ReactConnectProxy[Option[String]]
                                   )
-
-  /** Поддержка FastEq прямо на объекте-компаньоне. */
-  implicit object PropsVal extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.wcInfo     ===* b.wcInfo) &&
-        (a.nodeName ===* b.nodeName) &&
-        (a.state    ===* b.state)
-    }
-  }
 
   type Props = ModelProxy[Option[PropsVal]]
 

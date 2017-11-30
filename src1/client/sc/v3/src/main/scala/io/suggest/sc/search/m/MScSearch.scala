@@ -21,6 +21,7 @@ object MScSearch {
       (a.mapInit    ===* b.mapInit)  &&
         (a.text     ===* b.text)     &&
         (a.rcvrsGeo ===* b.rcvrsGeo) &&
+        (a.tags     ===* b.tags)     &&
         (a.currTab  ===* b.currTab)  &&
         (a.isShown  ==* b.isShown)
     }
@@ -44,15 +45,18 @@ object MScSearch {
 case class MScSearch(
                       mapInit             : MMapInitState,
                       text                : Option[MScSearchText] = None,
+                      // TODO Унести внутрь mapInit?
                       rcvrsGeo            : Pot[MGeoNodesResp]    = Pot.empty,
+                      tags                : MTagsSearchS          = MTagsSearchS.empty,
                       currTab             : MSearchTab            = MSearchTabs.default,
                       isShown             : Boolean               = false
                     ) {
 
-  def withMapInit( mapInit: MMapInitState )         = copy( mapInit = mapInit )
-  def withText( text: Option[MScSearchText] )       = copy( text = text )
-  def withRcvrsGeo( rcvrsGeo: Pot[MGeoNodesResp] )  = copy( rcvrsGeo = rcvrsGeo )
-  def withCurrTab( currTab: MSearchTab )            = copy( currTab = currTab )
-  def withIsShown( isShown: Boolean )               = copy( isShown = isShown )
+  def withMapInit   ( mapInit: MMapInitState )          = copy( mapInit = mapInit )
+  def withText      ( text: Option[MScSearchText] )     = copy( text = text )
+  def withRcvrsGeo  ( rcvrsGeo: Pot[MGeoNodesResp] )    = copy( rcvrsGeo = rcvrsGeo )
+  def withTags      ( tags: MTagsSearchS )              = copy( tags = tags )
+  def withCurrTab   ( currTab: MSearchTab )             = copy( currTab = currTab )
+  def withIsShown   ( isShown: Boolean )                = copy( isShown = isShown )
 
 }

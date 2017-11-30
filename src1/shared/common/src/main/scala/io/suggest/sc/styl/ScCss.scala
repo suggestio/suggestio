@@ -441,6 +441,46 @@ case class ScCss( args: IScCssArgs )
 
       }
 
+
+      /** Стили для вкладки с тегами. */
+      object TagsTag {
+
+        private val TAGS = "shops"
+
+        private val OUTER = _SM_ + TAGS
+
+        val outer = style(
+          addClassName(OUTER),
+          smFlex,
+          TAB_BODY_HEIGHT
+        )
+
+        val wrapper = style(
+          overflowScrollingMx,
+          smFlex,
+          TAB_BODY_HEIGHT
+        )
+
+        val inner = style(
+          addClassName( OUTER ),
+          minHeight( TAB_BODY_HEIGHT_PX.px )
+        )
+
+        private val TAGS_LIST = TAGS + "-list"
+
+        /** Список тегов. */
+        val tagsList = _styleAddClass( TAGS_LIST )
+
+        /** Один тег в списке тегов. */
+        val tagRow = _styleAddClass( TAGS_LIST + "_row" )
+
+        val oddRow  = _styleAddClass( __ + "odd" )
+        val evenRow = _styleAddClass( __ + "even")
+
+        val selected = _styleAddClass( __ + "selected" )
+
+      }
+
     }
 
   }
@@ -548,6 +588,7 @@ case class ScCss( args: IScCssArgs )
     Search.SearchBar.Field.active,
     Search.Tabs.Single.Rounded.right,
     Search.Tabs.MapTab.inner,
+    Search.Tabs.TagsTag.inner,
 
     Grid.container,
     Grid.Loaders.spinnerInner

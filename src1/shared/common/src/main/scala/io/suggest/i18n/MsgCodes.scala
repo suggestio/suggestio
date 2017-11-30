@@ -223,4 +223,7 @@ object MsgCodes {
   val `Background` = "Background"
   val `Upload.file` = "Upload.file"
 
+  val `No.tags.here` = "No.tags.here"
+  val `Not.loaded` = "Not.loaded"
+
 }

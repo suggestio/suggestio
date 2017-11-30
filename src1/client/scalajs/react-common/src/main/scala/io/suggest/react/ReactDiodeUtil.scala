@@ -1,6 +1,6 @@
 package io.suggest.react
 
-import diode.{ActionType, Effect, EffectSet}
+import diode._
 import diode.data.{PendingBase, Pot}
 import diode.react.ModelProxy
 import japgolly.scalajs.react.{BackendScope, Callback}
@@ -74,4 +74,29 @@ object ReactDiodeUtil {
 
   }
 
+
+  /** Расширенное API для ActionHandler'ов. */
+  implicit class ActionHandlerExt[M, T](val ah: ActionHandler[M, T]) extends AnyVal {
+
+    def optionalResult(v2Opt: Option[T] = None, fxOpt: Option[Effect] = None): ActionResult[M] = {
+      (v2Opt, fxOpt) match {
+        case (Some(v2), Some(fx)) => ah.updated(v2, fx)
+        case (Some(v2), None)     => ah.updated(v2)
+        case (None, Some(fx))     => ah.effectOnly(fx)
+        case (None, None)         => ah.noChange
+      }
+    }
+
+    def optionalSilentResult(v2Opt: Option[T] = None, fxOpt: Option[Effect] = None): ActionResult[M] = {
+      (v2Opt, fxOpt) match {
+        case (Some(v2), Some(fx)) => ah.updatedSilent(v2, fx)
+        case (Some(v2), None)     => ah.updatedSilent(v2)
+        case (None, Some(fx))     => ah.effectOnly(fx)
+        case (None, None)         => ah.noChange
+      }
+    }
+
+  }
+
 }
+

@@ -41,7 +41,14 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
     // Карта была перемещена, у неё теперь новый центр.
     case m: MapMoveEnd =>
       val mgp = MapsUtil.latLng2geoPoint( m.newCenterLL )
-      _maybeUpdateStateUsing(mgp) { _.withCenterReal(Some(mgp)) }
+      val v0 = value
+      if (v0.center ~= mgp) {
+        noChange
+      } else {
+        // Обновляем через updateSilent, т.к. не нужны никакие side-эффекты.
+        val v2 = v0.withCenterReal( Some(mgp) )
+        updatedSilent( v2 )
+      }
 
     // Реакция на изменение zoom'а.
     case ze: IMapZoomEnd =>
@@ -50,7 +57,7 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
         noChange
       } else {
         val v2 = v0.withZoom( ze.newZoom )
-        updated( v2 )
+        updatedSilent( v2 )
       }
 
     // Сигнал об успешном обнаружении геолокации.

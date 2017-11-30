@@ -13,13 +13,13 @@ import io.suggest.routes.{AdvRcvrsMapApiHttp, scRoutes}
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.grid.c.GridAdsAh
 import io.suggest.sc.grid.m.MGridS
-import io.suggest.sc.init.MSc3Init
 import io.suggest.sc.inx.c.{IndexAh, IndexMapAh, WelcomeAh}
 import io.suggest.sc.inx.m.{GetIndex, MScIndex}
 import io.suggest.sc.root.c.{NoOpAh, ScreenAh}
 import io.suggest.sc.root.m._
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.router.c.JsRouterInitAh
+import io.suggest.sc.sc3.MSc3Init
 import io.suggest.sc.search.c.SearchAh
 import io.suggest.sc.search.m.{MMapInitState, MScSearch}
 import io.suggest.sc.styl.{ScCss, ScCssFactoryModule}
@@ -116,9 +116,9 @@ class Sc3Circuit(
       receiverId  = inxState.currRcvrId,
       locEnv      = if (inxState.currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
       screenInfo  = Some( mroot.dev.screen.screen ),
-      generation  = Some( inxState.generation )
+      generation  = Some( inxState.generation ),
+      tagNodeId   = mroot.index.search.tags.selectedId
       // limit и offset очень специфичны и выставляются в конкретных контроллерах карточек.
-      // TODO Добавить здесь tagNodeId.
     )
   }
 

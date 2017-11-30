@@ -21,6 +21,8 @@ class SearchModule( scCssModule: ScCssModule ) {
 
   lazy val searchMapR = wire[SearchMapR]
 
+  lazy val tagsSearchR = wire[TagsSearchR]
+
   lazy val searchR = wire[SearchR]
 
 }

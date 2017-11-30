@@ -24,20 +24,22 @@ class IndexR(
               protected[this] val welcomeR    : WelcomeR
             ) {
 
-  import headerR.HeaderPropsValFastEq
   import MScSearch.MScSearchFastEq
+  import headerR.HeaderPropsValFastEq
+  import welcomeR.WelcomeRPropsValFastEq
 
 
   type Props = ModelProxy[MScIndex]
 
   protected[this] case class State(
                                     headerPropsC  : ReactConnectProxy[Option[headerR.PropsVal]],
-                                    wcPropsOptC   : ReactConnectProxy[Option[welcomeR.PropsVal]]
+                                    wcPropsOptC   : ReactConnectProxy[Option[welcomeR.PropsVal]],
+                                    searchC       : ReactConnectProxy[MScSearch]
                                   )
 
   class Backend( $: BackendScope[Props, State] ) {
 
-    def render(p: Props, s: State): VdomElement = {
+    def render(s: State): VdomElement = {
       <.div(
 
         // Экран приветствия узла:
@@ -47,7 +49,7 @@ class IndexR(
         s.headerPropsC { headerR.apply },
 
         // Правая панель (поиск)
-        p.wrap(_.search) { searchR.apply }
+        s.searchC { searchR.apply }
 
       )
     }
@@ -87,7 +89,9 @@ class IndexR(
               state    = wcState
             )
           }
-        }
+        },
+
+        searchC = propsProxy.connect(_.search)
 
       )
     }

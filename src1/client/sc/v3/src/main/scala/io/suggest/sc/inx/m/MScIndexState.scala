@@ -33,7 +33,6 @@ object MScIndexState {
   * @param generation Random seed выдачи.
   * @param rcvrIds id текущего отображаемого узла в начале списка.
   *                Затем "предыдущие" узлы, если есть.
-  * @param geoPoint Текущая гео-точка выдачи.
   */
 case class MScIndexState(
                           generation      : Long                = System.currentTimeMillis(),

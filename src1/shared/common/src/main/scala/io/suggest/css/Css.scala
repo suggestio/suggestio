@@ -30,6 +30,7 @@ object Css {
   object Display {
     final def HIDDEN        = "hidden"
     final def BLOCK         = _BLOCK
+    final def DISPLAY_BLOCK = "display-" + BLOCK
     final def VISIBLE       = "visible"
     final def INVISIBLE     = "visibility-hidden"
     final def INLINE_BLOCK  = "inline-" + _BLOCK

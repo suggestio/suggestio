@@ -2,6 +2,7 @@ package io.suggest.sc.search.v
 
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.css.Css
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.r.RcvrMarkersR
 import io.suggest.sc.search.m._
@@ -21,14 +22,16 @@ import scalacss.ScalaCssReact._
   * Description: Компонент поисковой панели (живёт справа).
   */
 class SearchR(
-               sTextR     : STextR,
-               tabsR      : TabsR,
-               searchMapR : SearchMapR,
-               getScCssF  : GetScCssF
+               sTextR         : STextR,
+               tabsR          : TabsR,
+               searchMapR     : SearchMapR,
+               getScCssF      : GetScCssF,
+               tagsSearchR    : TagsSearchR
              ) {
 
   import MScSearchText.MScSearchTextFastEq
   import MMapInitState.MMapInitStateFastEq
+  import MTagsSearchS.MTagsSearchFastEq
 
   type Props = ModelProxy[MScSearch]
 
@@ -41,24 +44,24 @@ class SearchR(
                                     isShownC            : ReactConnectProxy[Some[Boolean]],
                                   )
 
+
+  /** Отрендерить css-класс, отвечающий за display:none или display:block в зависимости от значения флага. */
+  private def _renderDisplayCss(isShown: Boolean): TagMod = {
+    ^.`class` := (if (isShown) Css.Display.DISPLAY_BLOCK else Css.Display.HIDDEN)
+  }
+
   class Backend( $: BackendScope[Props, State] ) {
 
-
-    def render(s: State): VdomElement = {
+    def render(props: Props, s: State): VdomElement = {
       val scCss = getScCssF()
-      val CSS = scCss.Search
+      val SearchCSS = scCss.Search
 
       s.isShownC { isShownProxy =>
         <.div(
-          CSS.panel,
+          SearchCSS.panel,
 
           // Скрывать/показывать панель.
-          if (isShownProxy().value) ^.display.block else ^.display.none,
-
-          // Заголовок панели с кнопкой сокрытия.
-          //<.div(
-          //  CSS.panelHeader,
-          //),
+          _renderDisplayCss( isShownProxy().value ),
 
           // Рендер текстового поля поиска.
           s.textOptC { sTextR.apply },
@@ -70,21 +73,33 @@ class SearchR(
 
           // Тело текущего таба.
           s.tabC { currTabProxy =>
+            val currTab = currTabProxy.value
+
+            // Контейнер всех содержимых вкладок.
             <.div(
-              if (currTabProxy.value ==* MSearchTabs.GeoMap)
-                ^.display.block
-              else
-                ^.display.none,
 
-              // Рендер карты:
-              s.mapInitC { mapInitProxy =>
-                searchMapR(mapInitProxy)(
+              // Содержимое вкладки с картой.
+              <.div(
+                _renderDisplayCss( currTab ==* MSearchTabs.GeoMap ),
 
-                  // Рендер шейпов и маркеров текущий узлов.
-                  s.rcvrsGeoC( RcvrMarkersR(_)() )
+                // Рендер карты:
+                s.mapInitC { mapInitProxy =>
+                  searchMapR(mapInitProxy)(
 
-                )
-              }
+                    // Рендер шейпов и маркеров текущий узлов.
+                    s.rcvrsGeoC( RcvrMarkersR(_)() )
+
+                  )
+                }
+              ),
+
+              // Содержимое вкладки с тегами.
+              <.div(
+                _renderDisplayCss( currTab ==* MSearchTabs.Tags ),
+
+                props.wrap(_.tags) { tagsSearchR.apply }
+              )
+
             )
 
           }

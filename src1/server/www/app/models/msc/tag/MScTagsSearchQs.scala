@@ -4,6 +4,8 @@ import io.suggest.common.empty.EmptyProduct
 import io.suggest.geo.MLocEnv
 import io.suggest.model.play.qsb.{QsbUtil, QueryStringBindableImpl}
 import io.suggest.sc.TagSearchConstants.Req._
+import io.suggest.sc.ScConstants.ReqArgs.VSN_FN
+import models.msc.{MScApiVsn, MScApiVsns}
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -29,7 +31,8 @@ object MScTagsSearchQs {
   implicit def mScTagsSearchQsQsb(implicit
                                   strOptB    : QueryStringBindable[Option[String]],
                                   intOptB    : QueryStringBindable[Option[Int]],
-                                  locEnvB    : QueryStringBindable[MLocEnv]
+                                  locEnvB    : QueryStringBindable[MLocEnv],
+                                  apiVsnB    : QueryStringBindable[MScApiVsn]
                                  ): QueryStringBindable[MScTagsSearchQs] = {
 
     new QueryStringBindableImpl[MScTagsSearchQs] {
@@ -42,6 +45,7 @@ object MScTagsSearchQs {
           limitOptE           <- intOptB.bind (k(LIMIT_FN),           params)
           offsetOptE          <- intOptB.bind (k(OFFSET_FN),          params)
           locEnvE             <- locEnvB.bind (k(LOC_ENV_FN),         params)
+          apiVsnE             <- apiVsnB.bind (k(VSN_FN),             params)
         } yield {
           // TODO Нужно избегать пустого критерия поиска, т.е. возвращать None, когда нет параметров для поиска.
           for {
@@ -52,12 +56,14 @@ object MScTagsSearchQs {
             _offsetOpt        <- QsbUtil.ensureIntOptRange(offsetOptE, 0, OFFSET_MAX)
               .right
             _locEnv           <- locEnvE.right
+            _apiVsn           <- apiVsnE.right
           } yield {
             MScTagsSearchQs(
               tagsQuery = _tagsQueryOpt,
               limitOpt  = _limitOpt,
               offsetOpt = _offsetOpt,
-              locEnv    = _locEnv
+              locEnv    = _locEnv,
+              apiVsn    = _apiVsn
             )
           }
         }
@@ -70,7 +76,8 @@ object MScTagsSearchQs {
           strOptB.unbind( k(FACE_FTS_QUERY_FN),  value.tagsQuery  ),
           intOptB.unbind( k(LIMIT_FN),           value.limitOpt   ),
           intOptB.unbind( k(OFFSET_FN),          value.offsetOpt  ),
-          locEnvB.unbind( k(LOC_ENV_FN),         value.locEnv     )
+          locEnvB.unbind( k(LOC_ENV_FN),         value.locEnv     ),
+          apiVsnB.unbind( k(VSN_FN),             value.apiVsn     )
         )
       }
 
@@ -85,6 +92,7 @@ case class MScTagsSearchQs(
   tagsQuery   : Option[String]  = None,
   limitOpt    : Option[Int]     = None,
   offsetOpt   : Option[Int]     = None,
-  locEnv      : MLocEnv         = MLocEnv.empty
+  locEnv      : MLocEnv         = MLocEnv.empty,
+  apiVsn      : MScApiVsn       = MScApiVsns.unknownVsn
 )
   extends EmptyProduct

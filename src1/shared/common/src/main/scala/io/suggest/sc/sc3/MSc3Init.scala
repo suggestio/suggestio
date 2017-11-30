@@ -1,8 +1,8 @@
-package io.suggest.sc.init
+package io.suggest.sc.sc3
 
 import io.suggest.maps.MMapProps
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
