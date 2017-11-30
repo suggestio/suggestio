@@ -21,7 +21,7 @@ import io.suggest.sc.root.m._
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.router.c.JsRouterInitAh
 import io.suggest.sc.search.c.SearchAh
-import io.suggest.sc.search.m.MScSearch
+import io.suggest.sc.search.m.{MMapInitState, MScSearch}
 import io.suggest.sc.styl.{ScCss, ScCssFactoryModule}
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
@@ -74,7 +74,9 @@ class Sc3Circuit(
       ),
       index = MScIndex(
         search = MScSearch(
-          mapState = MMapS( state0.mapProps )
+          mapInit = MMapInitState(
+            state = MMapS(state0.mapProps)
+          )
         )
       ),
       grid = {
@@ -97,7 +99,9 @@ class Sc3Circuit(
 
   private val searchRW = indexRW.zoomRW(_.search) { _.withSearch(_) }
   private val searchMapRcvrsPotRW = searchRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
-  private val mmapRW = searchRW.zoomRW(_.mapState) { _.withMapState(_) }
+
+  private val mapInitRW = searchRW.zoomRW(_.mapInit) { _.withMapInit(_) }
+  private val mmapsRW = mapInitRW.zoomRW(_.state) { _.withState(_) }
 
   private val gridRW = zoomRW(_.grid) { _.withGrid(_) }
 
@@ -135,7 +139,7 @@ class Sc3Circuit(
 
   private lazy val mapAndIndexAh = {
     val mapCommonAh = new MapCommonAh(
-      mmapRW = mmapRW
+      mmapRW = mmapsRW
     )
     val indexMapAh = new IndexMapAh(
       modelRW = indexRW
@@ -183,7 +187,7 @@ class Sc3Circuit(
     if ( indexWelcomeRW().nonEmpty )
       acc ::= new WelcomeAh( indexWelcomeRW )
 
-    if ( searchRW.value.isMapInitialized )
+    if ( mapInitRW.value.ready )
       acc ::= mapAndIndexAh
 
     // Контроллеры СНАЧАЛА экрана, а ПОТОМ плитки. Нужно соблюдать порядок.

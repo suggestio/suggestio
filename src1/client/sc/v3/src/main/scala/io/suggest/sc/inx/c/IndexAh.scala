@@ -13,6 +13,7 @@ import scala.util.Success
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -75,7 +76,7 @@ class IndexAh[M](
           },
           {scResp =>
             scResp.respActions
-              .find(_.acType == MScRespActionTypes.Index)
+              .find(_.acType ==* MScRespActionTypes.Index)
               .flatMap( _.index )
               .fold {
                 v0.withResp(
@@ -90,13 +91,15 @@ class IndexAh[M](
                   search = inx
                     .geoPoint
                     .filter { mgp =>
-                      !(v0.search.mapState.center ~= mgp)
+                      !(v0.search.mapInit.state.center ~= mgp)
                     }
                     .fold(v0.search) { mgp =>
-                      v0.search.withMapState(
-                        v0.search.mapState
-                          .withCenterInit( mgp )
-                          .withCenterReal(None)
+                      v0.search.withMapInit(
+                        v0.search.mapInit.withState(
+                          v0.search.mapInit.state
+                            .withCenterInit( mgp )
+                            .withCenterReal(None)
+                        )
                       )
                     }
                 )

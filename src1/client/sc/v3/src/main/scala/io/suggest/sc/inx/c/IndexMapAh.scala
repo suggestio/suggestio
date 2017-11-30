@@ -1,9 +1,10 @@
 package io.suggest.sc.inx.c
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
-import io.suggest.maps.m.{MapDragEnd, MapDragStart, ReqRcvrPopup}
-import io.suggest.sc.inx.m.{GetIndex, MScIndex}
+import io.suggest.maps.m.{MapDragEnd, ReqRcvrPopup}
+import io.suggest.sc.inx.m.{GetIndex, MScIndex, MapDragEndDelayed, MapRcvrClickDelayed}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.controller.DomQuick
 
 /**
   * Suggest.io
@@ -32,26 +33,47 @@ class IndexMapAh[M](
 
     // Клик по ресиверу на карте. Перейти в выдачу выбранного узла, если он отличается от текущего.
     case m: ReqRcvrPopup =>
+      // TODO Дожидаться MapMoveEnd-события.
+      val fx = Effect {
+        DomQuick
+          .timeoutPromiseT(40)(MapRcvrClickDelayed(m))
+          .fut
+      }
+      effectOnly(fx)
+
+    case m: MapRcvrClickDelayed =>
       val v0 = value
-      if (v0.state.currRcvrId contains m.nodeId) {
+      val nodeId = m.reason.nodeId
+      if (v0.state.currRcvrId contains nodeId) {
         // Это текущий узел, ничего менять не требуется
         // TODO Показать попап на карте, чтобы человек понимал, что это текущий узел.
         noChange
       } else {
         // Переключаемся в новый узел.
         val v2 = v0.withState(
-          v0.state.withRcvrNodeId( m.nodeId :: Nil )
+          v0.state.withRcvrNodeId( nodeId :: Nil )
         )
         _getIndex(v2)
       }
 
+
+    // Окончено таскание карты.
     case _: MapDragEnd =>
+      val fx = Effect {
+        // TODO Выставить в состояние, что надо дождаться события MapMoveEnd, вместо этого таймаута.
+        DomQuick
+          .timeoutPromiseT(30)(MapDragEndDelayed)
+          .fut
+      }
+      effectOnly( fx )
+
+    // Окончено и ~завершено таскание карты.
+    case MapDragEndDelayed =>
       val fx = _getIndexFx
       val v0 = value
       // Выкинуть из состояния текущего ресивера. Если местоположение особо и не изменилось, то сервер вернёт назад текущий ресивер.
       if (v0.state.currRcvrId.nonEmpty) {
         // Выход из узла на голую карту.
-        // TODO Не пашет, надо запускать GetIndex как-то совсем после сохранени состояния.
         val v2 = v0.withState(
           v0.state
             .withRcvrNodeId(Nil)

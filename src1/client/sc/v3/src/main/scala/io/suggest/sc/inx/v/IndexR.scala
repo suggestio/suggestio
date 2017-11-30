@@ -32,13 +32,12 @@ class IndexR(
 
   protected[this] case class State(
                                     headerPropsC  : ReactConnectProxy[Option[headerR.PropsVal]],
-                                    wcPropsOptC   : ReactConnectProxy[Option[welcomeR.PropsVal]],
-                                    searchC       : ReactConnectProxy[MScSearch]
+                                    wcPropsOptC   : ReactConnectProxy[Option[welcomeR.PropsVal]]
                                   )
 
   class Backend( $: BackendScope[Props, State] ) {
 
-    def render(s: State): VdomElement = {
+    def render(p: Props, s: State): VdomElement = {
       <.div(
 
         // Экран приветствия узла:
@@ -48,7 +47,7 @@ class IndexR(
         s.headerPropsC { headerR.apply },
 
         // Правая панель (поиск)
-        s.searchC { searchR.apply }
+        p.wrap(_.search) { searchR.apply }
 
       )
     }
@@ -59,6 +58,7 @@ class IndexR(
   val component = ScalaComponent.builder[Props]("Index")
     .initialStateFromProps { propsProxy =>
       State(
+        
         headerPropsC = propsProxy.connect { props =>
           for {
             resp <- props.resp.toOption
@@ -74,6 +74,7 @@ class IndexR(
             )
           }
         },
+
         wcPropsOptC = propsProxy.connect { props =>
           for {
             resp    <- props.resp.toOption
@@ -86,8 +87,8 @@ class IndexR(
               state    = wcState
             )
           }
-        },
-        searchC = propsProxy.connect(_.search)
+        }
+
       )
     }
     .renderBackend[Backend]

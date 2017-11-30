@@ -12,5 +12,8 @@ import io.suggest.sc.m.ISc3Action
 /** Трейт-маркер для экшенов в search. */
 sealed trait ISearchAction extends ISc3Action
 
+/** Команда к проведению инициализации гео.карты поиска. */
+case object InitSearchMap extends ISc3Action
+
 /** Переключение панели поиска на указанный таб. */
 case class SwitchTab( newTab: MSearchTab ) extends ISearchAction

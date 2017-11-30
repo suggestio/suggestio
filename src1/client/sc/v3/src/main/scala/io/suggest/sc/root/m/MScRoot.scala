@@ -49,7 +49,7 @@ case class MScRoot(
     MLocEnv(
       geoLocOpt = Some(
         MGeoLoc(
-          point = index.search.mapState.center
+          point = index.search.mapInit.state.center
         )
       )
     )

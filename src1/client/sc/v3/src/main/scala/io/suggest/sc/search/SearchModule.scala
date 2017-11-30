@@ -16,7 +16,10 @@ class SearchModule( scCssModule: ScCssModule ) {
   import scCssModule._
 
   lazy val sTextR = wire[STextR]
+
   lazy val tabsR = wire[TabsR]
+
+  lazy val searchMapR = wire[SearchMapR]
 
   lazy val searchR = wire[SearchR]
 

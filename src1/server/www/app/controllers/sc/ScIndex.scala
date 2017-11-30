@@ -705,13 +705,15 @@ trait ScIndex
     /** Поиск отображаемой координаты узла.
       * Карта на клиенте будет отцентрована по этой точке. */
     def nodeGeoPointOptFut: Future[Option[MGeoPoint]] = {
-      // Для нормальных узлов (не районов) следует возвращать клиенту их координату.
+      // Если география уже активна на уровне index-запроса, то тут ничего делать не требуется.
       if (!isFocusedAdOpen && _reqArgs.locEnv.geoLocOpt.nonEmpty) {
         // Не искать гео-точку для узла, если география на клиенте и так активна.
         Future.successful( None )
+
       } else {
         // Если нет географии, то поискать центр для найденного узла.
         for (inxNode <- indexNodeFutVal) yield {
+          // Для нормальных узлов (не районов) следует возвращать клиенту их координату.
           OptionUtil.maybeOpt( inxNode.isRcvr ) {
             def nodeLocEdges = inxNode.mnode.edges
               .withPredicateIter( MPredicates.NodeLocation )
