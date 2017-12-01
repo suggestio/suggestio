@@ -8,6 +8,7 @@ import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.sc.search.m.{MTagsSearchS, TagClick}
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -62,23 +63,17 @@ class TagsSearchR(
               val _odd = TabCSS.oddRow: TagMod
               val _even = TabCSS.evenRow: TagMod
 
+
+
               <.div(
                 TabCSS.tagsList,
-
-                // Ничего не загружено вообще. В норме, юзер не должен видеть это.
-                tagsS.tagsReq.renderEmpty {
-                  <.div(
-                    _tagRow,
-                    MsgCodes.`Not.loaded`       // TODO Messages()
-                  )
-                },
 
                 // Рендер нормального списка найденных тегов.
                 tagsS.tagsReq.render { tags =>
                   if (tags.isEmpty) {
                     <.div(
                       _tagRow,
-                      MsgCodes.`No.tags.here`   // TODO Messages()
+                      Messages( MsgCodes.`No.tags.here` )
                     )
                   } else {
                     tags

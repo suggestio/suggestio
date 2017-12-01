@@ -2,6 +2,7 @@ package io.suggest.sc.search.m
 
 import diode.FastEq
 import diode.data.Pot
+import io.suggest.common.empty.{IIsNonEmpty, NonEmpty}
 import io.suggest.sc.sc3.MSc3Tag
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
@@ -15,7 +16,7 @@ import japgolly.univeq._
   */
 object MTagsSearchS {
 
-  def empty = apply()
+  val empty = apply()
 
   /** Поддержка FastEq для инстансов [[MTagsSearchS]]. */
   implicit object MTagsSearchFastEq extends FastEq[MTagsSearchS] {
@@ -40,11 +41,17 @@ object MTagsSearchS {
 case class MTagsSearchS(
                          tagsReq      : Pot[Seq[MSc3Tag]]     = Pot.empty,
                          hasMoreTags  : Boolean               = true,
-                         // TODO Когда несколко тегов, надо заменить на Set[String].
+                         // TODO Когда станет допустимо сразу несколько тегов, надо заменить на Set[String].
                          selectedId   : Option[String]        = None
-                       ) {
+                       )
+  extends NonEmpty
+{
 
   def withTagsReq(tagsReq: Pot[Seq[MSc3Tag]])       = copy(tagsReq    = tagsReq)
   def withSelectedId(selectedId: Option[String])    = copy(selectedId = selectedId)
+
+  override def isEmpty: Boolean = {
+    MTagsSearchS.empty ===* this
+  }
 
 }

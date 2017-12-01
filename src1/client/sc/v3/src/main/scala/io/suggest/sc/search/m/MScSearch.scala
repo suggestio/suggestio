@@ -2,6 +2,7 @@ package io.suggest.sc.search.m
 
 import diode.FastEq
 import diode.data.Pot
+import io.suggest.common.empty.OptionUtil
 import io.suggest.maps.nodes.MGeoNodesResp
 import japgolly.univeq._
 import io.suggest.ueq.JsUnivEqUtil._
@@ -58,5 +59,22 @@ case class MScSearch(
   def withTags      ( tags: MTagsSearchS )              = copy( tags = tags )
   def withCurrTab   ( currTab: MSearchTab )             = copy( currTab = currTab )
   def withIsShown   ( isShown: Boolean )                = copy( isShown = isShown )
+
+
+  /** Сброс состояния тегов, если возможно. */
+  def maybeResetTags: MScSearch = {
+    resetTagsIfAny.getOrElse(this)
+  }
+
+  /** Вернуть обновлённый инстанс [[MScSearch]], если теги изменились в ходе сброса. */
+  def resetTagsIfAny: Option[MScSearch] = {
+    OptionUtil.maybe( tags.nonEmpty ) {
+      resetTagsForce
+    }
+  }
+
+  def resetTagsForce: MScSearch = {
+    withTags( MTagsSearchS.empty )
+  }
 
 }

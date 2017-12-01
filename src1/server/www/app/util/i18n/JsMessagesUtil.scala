@@ -234,6 +234,7 @@ class JsMessagesUtil @Inject() (
     MC.`Quick.search.for.offers` ::
       MC.`Map` ::
       MC.`Tags` ::
+      MC.`No.tags.here` ::
       Nil
   }
 

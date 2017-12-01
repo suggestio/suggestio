@@ -20,8 +20,8 @@ import io.suggest.sc.root.m._
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.router.c.JsRouterInitAh
 import io.suggest.sc.sc3.MSc3Init
-import io.suggest.sc.search.c.SearchAh
-import io.suggest.sc.search.m.{MMapInitState, MScSearch}
+import io.suggest.sc.search.c.{SearchAh, TagsAh}
+import io.suggest.sc.search.m.{MMapInitState, MScSearch, MSearchTabs}
 import io.suggest.sc.styl.{ScCss, ScCssFactoryModule}
 import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.sjs.common.log.CircuitLog
@@ -32,6 +32,7 @@ import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.spa.StateInp
 import org.scalajs.dom.Event
 import play.api.libs.json.Json
+import japgolly.univeq._
 
 import scala.concurrent.Promise
 
@@ -100,6 +101,7 @@ class Sc3Circuit(
 
   private val searchRW = indexRW.zoomRW(_.search) { _.withSearch(_) }
   private val searchMapRcvrsPotRW = searchRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
+  private val tagsRW = searchRW.zoomRW(_.tags) { _.withTags(_) }
 
   private val mapInitRW = searchRW.zoomRW(_.mapInit) { _.withMapInit(_) }
   private val mmapsRW = mapInitRW.zoomRW(_.state) { _.withState(_) }
@@ -143,8 +145,12 @@ class Sc3Circuit(
   private val noOpAh = new NoOpAh( jsRouterRW )
 
   private val searchAh = new SearchAh(
+    modelRW       = searchRW
+  )
+
+  private lazy val tagsAh = new TagsAh(
     api           = api,
-    modelRW       = searchRW,
+    modelRW       = tagsRW,
     searchArgsRO  = tagsSearchArgsQsRO
   )
 
@@ -181,11 +187,13 @@ class Sc3Circuit(
   override protected def actionHandler: HandlerFunction = {
     var acc = List.empty[HandlerFunction]
 
+    // TODO Opt Здесь много вызовов model.value. Может быть эффективнее будет один раз прочитать всю модель, и сверять её разные поля по мере необходимости?
+
     // В самый хвост списка добавить дефолтовый обработчик для некоторых событий, которые можно дропать.
     acc ::= noOpAh
 
     // Листенер инициализации роутера. Выкидывать его после окончания инициализации.
-    if ( !jsRouterRW().isReady ) {
+    if ( !jsRouterRW.value.isReady ) {
       acc ::= new JsRouterInitAh(
         modelRW = jsRouterRW
       )
@@ -209,6 +217,13 @@ class Sc3Circuit(
 
     // Контроллеры СНАЧАЛА экрана, а ПОТОМ плитки. Нужно соблюдать порядок.
     acc ::= gridAdsAh
+
+    val searchS = searchRW.value
+    if (searchS.isShown) {
+      if (searchS.currTab ==* MSearchTabs.Tags) {
+        acc ::= tagsAh
+      }
+    }
 
     // Экран отрабатываем в начале, но необходимость этого под вопросом.
     acc ::= screenAh
