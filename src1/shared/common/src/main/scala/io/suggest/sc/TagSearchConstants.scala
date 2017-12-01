@@ -23,6 +23,9 @@ object TagSearchConstants {
     /** Данные геолокации, если есть. */
     def LOC_ENV_FN        = ScConstants.ReqArgs.LOC_ENV_FN
 
+    /** id узла-ресивера, в рамках которого надо искать. */
+    def RCVR_ID_FN        = "r"
+
   }
 
 

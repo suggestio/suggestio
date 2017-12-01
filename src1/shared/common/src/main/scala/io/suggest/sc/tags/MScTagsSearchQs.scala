@@ -20,6 +20,7 @@ object MScTagsSearchQs {
         EmptyUtil.opt2ImplMEmptyF( MLocEnv ),
         EmptyUtil.implEmpty2OptF
       ) and
+    (__ \ RCVR_ID_FN).formatNullable[String] and
     (__ \ ScConstants.ReqArgs.VSN_FN).format[MScApiVsn]
   )(apply, unlift(unapply))
 
@@ -34,6 +35,12 @@ case class MScTagsSearchQs(
                             limitOpt    : Option[Int]     = None,
                             offsetOpt   : Option[Int]     = None,
                             locEnv      : MLocEnv         = MLocEnv.empty,
+                            rcvrId      : Option[String]  = None,
                             apiVsn      : MScApiVsn       = MScApiVsns.unknownVsn
                           )
   extends EmptyProduct
+{
+
+  def withLimitOffset(limitOpt: Option[Int] = None, offsetOpt: Option[Int] = None) = copy(limitOpt = limitOpt, offsetOpt = offsetOpt)
+
+}

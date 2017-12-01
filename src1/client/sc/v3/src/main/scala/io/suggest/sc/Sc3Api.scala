@@ -2,6 +2,7 @@ package io.suggest.sc
 
 import io.suggest.sc.grid.c.{FindAdsApiXhrImpl, IFindAdsApi}
 import io.suggest.sc.inx.c.{IIndexApi, IndexApiXhrImpl}
+import io.suggest.sc.search.c.{ISearchApi, SearchApiXhrImpl}
 
 /**
   * Suggest.io
@@ -12,7 +13,7 @@ import io.suggest.sc.inx.c.{IIndexApi, IndexApiXhrImpl}
 
 object Sc3Api {
 
-  final def API_VSN = MScApiVsns.ReactSjs3.value
+  final def API_VSN = MScApiVsns.ReactSjs3
 
 }
 
@@ -21,6 +22,7 @@ object Sc3Api {
 trait ISc3Api
   extends IIndexApi
   with IFindAdsApi
+  with ISearchApi
 
 
 /** XHR-реализация API. */
@@ -28,4 +30,5 @@ class Sc3ApiXhrImpl
   extends ISc3Api
   with IndexApiXhrImpl
   with FindAdsApiXhrImpl
+  with SearchApiXhrImpl
 

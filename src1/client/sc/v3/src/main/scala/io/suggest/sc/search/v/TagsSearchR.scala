@@ -74,20 +74,23 @@ class TagsSearchR(
                 },
 
                 // Рендер нормального списка найденных тегов.
-                tagsS.tagsReq.render { tagsResp =>
-                  if (tagsResp.tags.isEmpty) {
+                tagsS.tagsReq.render { tags =>
+                  if (tags.isEmpty) {
                     <.div(
                       _tagRow,
                       MsgCodes.`No.tags.here`   // TODO Messages()
                     )
                   } else {
-                    tagsResp.tags
+                    tags
                       .iterator
                       .zipWithIndex
                       .toVdomArray { case (mtag, i) =>
                         // Рендер одного ряда.
                         <.div(
                           _tagRow,
+
+                          // Используем nodeId как ключ. Контроллер должен выверять отсутствие дубликатов в списке тегов.
+                          ^.key := mtag.nodeId,
 
                           // Визуально разделять разные ряды.
                           if (i % 2 ==* 0) _odd else _even,
@@ -117,11 +120,20 @@ class TagsSearchR(
 
                 // Рендер ошибки.
                 tagsS.tagsReq.renderFailed { ex =>
-                  <.div(
-                    _tagRow,
-                    ^.`class` := Css.Colors.RED,
-                    ex.getMessage
+                  VdomArray(
+                    <.div(
+                      _tagRow,
+                      ^.key := "e",
+                      ^.`class` := Css.Colors.RED,
+                      ex.getClass.getSimpleName
+                    ),
+                    <.div(
+                      ^.key := "m",
+                      _tagRow,
+                      ex.getMessage
+                    )
                   )
+
                 }
 
               ) // tagsList

@@ -1,5 +1,12 @@
 package io.suggest.sc.search.c
 
+import io.suggest.routes.scRoutes
+import io.suggest.sc.router.c.ScJsRoutesUtil
+import io.suggest.sc.sc3.MSc3TagsResp
+import io.suggest.sc.tags.MScTagsSearchQs
+
+import scala.concurrent.Future
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -8,8 +15,12 @@ package io.suggest.sc.search.c
   */
 trait ISearchApi {
 
-  // TODO Вынести наконец модель MScTagsSearchQs в [common].
-  //def tagsSearch(args: MTagsSea)
+  /** Запуск поиска гео-тегов на сервере.
+    *
+    * @param args Аргументы для поиска тегов.
+    * @return Фьючерс с ответом сервера.
+    */
+  def tagsSearch(args: MScTagsSearchQs): Future[MSc3TagsResp]
 
 }
 
@@ -17,6 +28,13 @@ trait ISearchApi {
 /** Реализация [[ISearchApi]] поверх HTTP XHR. */
 trait SearchApiXhrImpl extends ISearchApi {
 
-  // TODO
+  import io.suggest.routes.JsRoutes_ScControllers._
+
+  override def tagsSearch(args: MScTagsSearchQs): Future[MSc3TagsResp] = {
+    ScJsRoutesUtil.mkRequest[MScTagsSearchQs, MSc3TagsResp](
+      args,
+      route = scRoutes.controllers.Sc.tagsSearch
+    )
+  }
 
 }

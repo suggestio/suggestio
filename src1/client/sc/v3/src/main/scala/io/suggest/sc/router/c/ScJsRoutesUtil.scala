@@ -4,7 +4,7 @@ import io.suggest.sc.{Sc3Api, ScConstants}
 import io.suggest.sc.sc3.MSc3Resp
 import io.suggest.sjs.common.model.Route
 import io.suggest.xplay.json.PlayJsonSjsUtil
-import play.api.libs.json.{Json, OWrites}
+import play.api.libs.json.{Json, OWrites, Reads}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.xhr.Xhr
 
@@ -32,15 +32,23 @@ object ScJsRoutesUtil {
     * @return Фьючерс с ответом сервера в стандартном формате.
     */
   def mkSc3Request[ArgsT: OWrites](args: ArgsT, route: js.Dictionary[js.Any] => Route): Future[MSc3Resp] = {
+    mkRequest[ArgsT, MSc3Resp](args, route)
+  }
+
+  def mkRequest[ArgsT: OWrites, RespT: Reads](args: ArgsT, route: js.Dictionary[js.Any] => Route): Future[RespT] = {
     val argsPj = Json.toJsObject( args )
     val argsJsDict = PlayJsonSjsUtil.toNativeJsonObj( argsPj )
-    argsJsDict.update( ScConstants.ReqArgs.VSN_FN, Sc3Api.API_VSN )
+
+    val vsnKey = ScConstants.ReqArgs.VSN_FN
+    if (!argsJsDict.contains(vsnKey))
+      argsJsDict.update( vsnKey, Sc3Api.API_VSN.value )
+
     for {
       respJsonText <- Xhr.requestJsonText( route(argsJsDict), REQ_TIMEOUT_MS )
     } yield {
       Json
         .parse( respJsonText )
-        .as[MSc3Resp]
+        .as[RespT]
     }
   }
 

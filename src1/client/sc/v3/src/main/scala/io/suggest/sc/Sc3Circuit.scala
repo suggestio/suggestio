@@ -23,6 +23,7 @@ import io.suggest.sc.sc3.MSc3Init
 import io.suggest.sc.search.c.SearchAh
 import io.suggest.sc.search.m.{MMapInitState, MScSearch}
 import io.suggest.sc.styl.{ScCss, ScCssFactoryModule}
+import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -112,13 +113,25 @@ class Sc3Circuit(
 
   private val searchAdsArgsRO: ModelRO[MFindAdsReq] = zoom { mroot =>
     val inxState = mroot.index.state
+    val currRcvrId = inxState.currRcvrId
     MFindAdsReq(
-      receiverId  = inxState.currRcvrId,
-      locEnv      = if (inxState.currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
+      receiverId  = currRcvrId,
+      locEnv      = if (currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
       screenInfo  = Some( mroot.dev.screen.screen ),
       generation  = Some( inxState.generation ),
       tagNodeId   = mroot.index.search.tags.selectedId
       // limit и offset очень специфичны и выставляются в конкретных контроллерах карточек.
+    )
+  }
+
+  private val tagsSearchArgsQsRO: ModelRO[MScTagsSearchQs] = zoom { mroot =>
+    val currRcvrId = mroot.index.state.currRcvrId
+    MScTagsSearchQs(
+      tagsQuery = mroot.index.search.text
+        .map(_.query),
+      locEnv    = if (currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
+      rcvrId    = currRcvrId,
+      apiVsn    = Sc3Api.API_VSN
     )
   }
 
@@ -129,7 +142,11 @@ class Sc3Circuit(
 
   private val noOpAh = new NoOpAh( jsRouterRW )
 
-  private val searchAh = new SearchAh( modelRW = searchRW )
+  private val searchAh = new SearchAh(
+    api           = api,
+    modelRW       = searchRW,
+    searchArgsRO  = tagsSearchArgsQsRO
+  )
 
   private val indexAh = new IndexAh(
     api     = api,

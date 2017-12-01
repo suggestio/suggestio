@@ -1,7 +1,7 @@
 package io.suggest.sc.search.m
 
 import io.suggest.sc.m.ISc3Action
-import io.suggest.sc.sc3.MSc3Resp
+import io.suggest.sc.sc3.MSc3TagsResp
 
 import scala.util.Try
 
@@ -34,4 +34,4 @@ case object ResetTags extends ISearchAction
 case class GetMoreTags(clear: Boolean) extends ISearchAction
 
 /** Экшен получения результата запроса поиска тегов. */
-case class MoreTagsResp(reason: GetMoreTags, timestamp: Long, resp: Try[MSc3Resp]) extends ISearchAction
+case class MoreTagsResp(reason: GetMoreTags, timestamp: Long, reqLimit: Int, resp: Try[MSc3TagsResp]) extends ISearchAction
