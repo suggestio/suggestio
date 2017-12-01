@@ -3,10 +3,13 @@ package io.suggest.sc.search.c
 import diode._
 import diode.data.PendingBase
 import io.suggest.common.empty.OptionUtil
+import io.suggest.dev.MScreen
 import io.suggest.sc.search.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.react.ReactDiodeUtil._
+import io.suggest.sc.styl.ScCss
 import io.suggest.sc.tags.MScTagsSearchQs
+import io.suggest.sc.tile.TileConstants
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
 
@@ -22,6 +25,7 @@ import scala.util.Success
 class TagsAh[M](
                  api              : ISearchApi,
                  searchArgsRO     : ModelRO[MScTagsSearchQs],
+                 screenRO         : ModelRO[MScreen],
                  modelRW          : ModelRW[M, MTagsSearchS]
                )
   extends ActionHandler( modelRW )
@@ -29,6 +33,33 @@ class TagsAh[M](
 {
 
   override val handle: PartialFunction[Any, ActionResult[M]] = {
+
+    // Скроллинг в списке тегов: возможно надо подгрузить ещё тегов.
+    case m: TagsScroll =>
+      val v0 = value
+      // Надо подгружать ещё или нет?
+      if (
+        !v0.tagsReq.isPending &&
+        v0.hasMoreTags && {
+          val containerHeight = screenRO.value.height - ScCss.TABS_OFFSET_PX
+          val scrollPxToGo = m.scrollHeight - containerHeight - m.scrollTop
+          scrollPxToGo < TileConstants.LOAD_MORE_SCROLL_DELTA_PX
+        }
+      ) {
+        // Требуется подгрузить ещё тегов.
+        val fx = Effect.action {
+          GetMoreTags(clear = false, ignorePending = true)
+        }
+        val v2 = v0.withTagsReq(
+          v0.tagsReq.pending()
+        )
+        // silent update, чтобы крутилка появилась только после GetMoreTags.
+        updatedSilent( v2, fx )
+
+      } else {
+        noChange
+      }
+
 
     // Клик по тегу в списке тегов.
     case m: TagClick =>
@@ -43,7 +74,7 @@ class TagsAh[M](
     // Команда к запуску поиска тегов.
     case m: GetMoreTags =>
       val v0 = value
-      if (m.clear || !v0.tagsReq.isPending) {
+      if (m.clear || m.ignorePending || !v0.tagsReq.isPending) {
         // Запустить эффект поиска, выставить запущенный запрос в состояние.
         val req2 = v0.tagsReq.pending()
 
@@ -89,8 +120,13 @@ class TagsAh[M](
       val tagsReq0 = v0.tagsReq
       if (tagsReq0 isPendingWithStartTime m.timestamp) {
         // Это ожидаемый запрос. Разбираем результат запроса:
-        val tagsReq2 = m.resp.fold(
-          tagsReq0.fail,
+        m.resp.fold(
+          {ex =>
+            val v2 = v0.withTagsReq(
+              tagsReq0.fail(ex)
+            )
+            updated( v2 )
+          },
           {resp =>
             val tagsList2 = if (m.reason.clear || tagsReq0.isEmpty || tagsReq0.exists(_.isEmpty)) {
               // Объединять текущий и полученный списки тегов не требуется.
@@ -99,13 +135,16 @@ class TagsAh[M](
               // Требуется склеить все имеющиеся списки тегов
               tagsReq0.getOrElse(Nil) ++ resp.tags
             }
-            tagsReq0.ready( tagsList2 )
+            val tagsReq2 = tagsReq0.ready( tagsList2 )
+            val v2 = v0.copy(
+              tagsReq     = tagsReq2,
+              hasMoreTags = m.reqLimit >= resp.tags.size,
+              selectedId  = OptionUtil.maybeOpt( !m.reason.clear )( v0.selectedId )
+            )
+            updated( v2 )
           }
         )
-        val v2 = v0.withTagsReq(
-          tagsReq2
-        )
-        updated( v2 )
+
 
       } else {
         // Это устаревший ответ, игнорим его:

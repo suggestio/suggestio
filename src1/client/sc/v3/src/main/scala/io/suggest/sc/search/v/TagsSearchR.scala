@@ -5,11 +5,11 @@ import diode.react.ReactPot._
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.r.LkPreLoaderR
-import io.suggest.sc.search.m.{MTagsSearchS, TagClick}
+import io.suggest.sc.search.m.{MTagsSearchS, TagClick, TagsScroll}
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.i18n.Messages
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromHtml, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
@@ -43,6 +43,13 @@ class TagsSearchR(
       dispatchOnProxyScopeCB($, TagClick(nodeId))
     }
 
+    /** Скроллинг в списке тегов. */
+    private def _onTagsListScroll(e: ReactEventFromHtml): Callback = {
+      val scrollTop = e.target.scrollTop
+      val scrollHeight = e.target.scrollHeight
+      dispatchOnProxyScopeCB($, TagsScroll(scrollTop, scrollHeight))
+    }
+
     def render(tagSearchProxy: Props, s: State): VdomElement = {
       val scCss = getScCssF()
       val TabCSS = scCss.Search.Tabs.TagsTag
@@ -63,10 +70,15 @@ class TagsSearchR(
               val _odd = TabCSS.oddRow: TagMod
               val _even = TabCSS.evenRow: TagMod
 
-
-
               <.div(
                 TabCSS.tagsList,
+
+                // Подписка на события скроллинга:
+                if (tagsS.hasMoreTags && !tagsS.tagsReq.isPending) {
+                  ^.onClick ==> _onTagsListScroll
+                } else {
+                  EmptyVdom
+                },
 
                 // Рендер нормального списка найденных тегов.
                 tagsS.tagsReq.render { tags =>

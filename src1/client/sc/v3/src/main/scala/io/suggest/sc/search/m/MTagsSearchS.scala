@@ -2,7 +2,7 @@ package io.suggest.sc.search.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.common.empty.{IIsNonEmpty, NonEmpty}
+import io.suggest.common.empty.NonEmpty
 import io.suggest.sc.sc3.MSc3Tag
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
@@ -47,7 +47,8 @@ case class MTagsSearchS(
   extends NonEmpty
 {
 
-  def withTagsReq(tagsReq: Pot[Seq[MSc3Tag]])       = copy(tagsReq    = tagsReq)
+  def withTagsReq(tagsReq: Pot[Seq[MSc3Tag]])       = copy(tagsReq = tagsReq)
+  def withHasMoreTags(hasMoreTags: Boolean)         = copy(hasMoreTags = hasMoreTags)
   def withSelectedId(selectedId: Option[String])    = copy(selectedId = selectedId)
 
   override def isEmpty: Boolean = {

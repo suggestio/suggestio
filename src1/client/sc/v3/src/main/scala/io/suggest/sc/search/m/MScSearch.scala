@@ -77,4 +77,9 @@ case class MScSearch(
     withTags( MTagsSearchS.empty )
   }
 
+
+  def isTagsVisible: Boolean = {
+    isShown && currTab ==* MSearchTabs.Tags
+  }
+
 }

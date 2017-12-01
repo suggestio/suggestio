@@ -25,11 +25,11 @@ class IndexMapAh[M](
     }
   }
 
-  private def _getIndex(v2: MScIndex) = {
-    updated(v2, _getIndexFx)
-  }
-
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+
+    // TODO Тут оптимизация шла в два шага: сначала откладывание событий напотом (Delayed-экшены),
+    // затем на втором шаге использование updatedSilent() вместо updated().
+    // Может быть, их можно объеденить (выкинув Delayed-экшены)?
 
     // Клик по ресиверу на карте. Перейти в выдачу выбранного узла, если он отличается от текущего.
     case m: ReqRcvrPopup =>
@@ -53,7 +53,7 @@ class IndexMapAh[M](
         val v2 = v0.withState(
           v0.state.withRcvrNodeId( nodeId :: Nil )
         )
-        _getIndex(v2)
+        updatedSilent(v2, _getIndexFx)
       }
 
 
@@ -78,7 +78,7 @@ class IndexMapAh[M](
           v0.state
             .withRcvrNodeId(Nil)
         )
-        updated(v2, fx)
+        updatedSilent(v2, fx)
 
       } else {
         effectOnly(fx)

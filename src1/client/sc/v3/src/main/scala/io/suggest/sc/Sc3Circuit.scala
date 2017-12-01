@@ -21,7 +21,7 @@ import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.router.c.JsRouterInitAh
 import io.suggest.sc.sc3.MSc3Init
 import io.suggest.sc.search.c.{SearchAh, TagsAh}
-import io.suggest.sc.search.m.{MMapInitState, MScSearch, MSearchTabs}
+import io.suggest.sc.search.m.{MMapInitState, MScSearch}
 import io.suggest.sc.styl.{ScCss, ScCssFactoryModule}
 import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.sjs.common.log.CircuitLog
@@ -151,7 +151,8 @@ class Sc3Circuit(
   private lazy val tagsAh = new TagsAh(
     api           = api,
     modelRW       = tagsRW,
-    searchArgsRO  = tagsSearchArgsQsRO
+    searchArgsRO  = tagsSearchArgsQsRO,
+    screenRO      = screenRO
   )
 
   private val indexAh = new IndexAh(
@@ -219,11 +220,8 @@ class Sc3Circuit(
     acc ::= gridAdsAh
 
     val searchS = searchRW.value
-    if (searchS.isShown) {
-      if (searchS.currTab ==* MSearchTabs.Tags) {
-        acc ::= tagsAh
-      }
-    }
+    if (searchS.isTagsVisible)
+      acc ::= tagsAh
 
     // Экран отрабатываем в начале, но необходимость этого под вопросом.
     acc ::= screenAh
