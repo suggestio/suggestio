@@ -1,5 +1,7 @@
 package models.msc
 
+import io.suggest.sc.MScApiVsn
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

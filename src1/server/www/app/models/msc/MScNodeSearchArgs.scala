@@ -7,6 +7,7 @@ import io.suggest.sc.NodeSearchConstants._
 import io.suggest.sc.ScConstants.ReqArgs.VSN_FN
 import util.qsb.QsbUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.sc.{MScApiVsn, MScApiVsns}
 
 /**
  * Suggest.io

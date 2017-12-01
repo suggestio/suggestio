@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.msrv
 
 import cordova.Cordova
-import io.suggest.sc.ScConstants.Vsns
+import io.suggest.sc.MScApiVsns
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.xhr.Xhr
@@ -21,11 +21,12 @@ object MSrv {
 
   /** Версия API backend-сервера. Записывается в запросы к sio-серверу, везде где это возможно. */
   val API_VSN: Int = {
-    if ( IS_PLAIN_BROWSER ) {
-      Vsns.SITE_JSONHTML
+    val scApiVsn = if ( IS_PLAIN_BROWSER ) {
+      MScApiVsns.Sjs1
     } else {
-      Vsns.CORDOVA_JSONHTML
+      MScApiVsns.Cordova
     }
+    scApiVsn.value
   }
 
 

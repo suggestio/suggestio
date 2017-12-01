@@ -10,6 +10,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.extra.domain.{DomainCriteria, MDomainModes}
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.sc.MScApiVsns
 import io.suggest.sc.sc3.MSc3Init
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.text.util.UrlUtil

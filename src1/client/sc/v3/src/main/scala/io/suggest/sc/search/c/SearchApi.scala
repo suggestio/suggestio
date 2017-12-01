@@ -14,6 +14,7 @@ trait ISearchApi {
 }
 
 
+/** Реализация [[ISearchApi]] поверх HTTP XHR. */
 trait SearchApiXhrImpl extends ISearchApi {
 
   // TODO

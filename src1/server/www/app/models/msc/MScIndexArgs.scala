@@ -2,6 +2,7 @@ package models.msc
 
 import io.suggest.geo.MLocEnv
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import io.suggest.sc.ScConstants.ReqArgs._
@@ -92,6 +93,7 @@ trait MScIndexArgs {
     import io.suggest.geo.MGeoLocJvm._
     import io.suggest.geo.MLocEnvJvm._
     import io.suggest.ble.MBeaconDataJvm._
+    import io.suggest.sc.MScApiVsnsJvm._
     MScIndexArgs.mScIndexArgsQsb.unbind("a", this)
   }
 }

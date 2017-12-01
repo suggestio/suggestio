@@ -4,6 +4,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import models.req.IReq
 import models.im.DevScreen
 import models.msc._

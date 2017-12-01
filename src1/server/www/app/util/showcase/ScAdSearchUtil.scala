@@ -10,9 +10,10 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.sc.MScApiVsn
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.msc.{MScAdsSearchQs, MScApiVsn}
+import models.msc.MScAdsSearchQs
 import util.ble.BleUtil
 
 import scala.concurrent.Future

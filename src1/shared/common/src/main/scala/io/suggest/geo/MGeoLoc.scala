@@ -4,6 +4,7 @@ import io.suggest.geo.GeoConstants.GeoLocQs._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import MGeoPoint.Implicits.MGEO_POINT_FORMAT_QS_OBJECT
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -20,6 +21,11 @@ object MGeoLoc {
     (__ \ CENTER_FN).format[MGeoPoint] and
     (__ \ ACCURACY_M_FN).formatNullable[Double]
   )(apply, unlift(unapply))
+
+  implicit def univEq: UnivEq[MGeoLoc] = {
+    import io.suggest.ueq.UnivEqUtil._
+    UnivEq.derive
+  }
 
 }
 

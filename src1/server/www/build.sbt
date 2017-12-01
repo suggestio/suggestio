@@ -147,7 +147,9 @@ routesImport ++= Seq(
   "io.suggest.model.n2.node.MNodeTypesJvm._",
   "io.suggest.file.up.MFile4UpPropsJvm._",
   "io.suggest.url.MHostInfoJvm._",
-  "io.suggest.sc.foc.MLookupModesJvm._"
+  "io.suggest.sc.foc.MLookupModesJvm._",
+  "io.suggest.sc.MScApiVsnsJvm._",
+  "io.suggest.sc.tags.MScTagsSearchQsJvm._"
 )
 
 deduplicators += { s: Seq[File] => s.headOption }

@@ -4,9 +4,9 @@ import io.suggest.ad.blk.ent.MEntity
 import io.suggest.common.css.ITopLeft
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2.node.MNode
+import io.suggest.sc.{IScApiVsn, MScApiVsn, MScApiVsns}
 import models.{BfText, BlockConf, blk}
 import models.im.make.MakeResult
-import models.msc.{IScApiVsn, MScApiVsn, MScApiVsns}
 
 /**
  * Suggest.io

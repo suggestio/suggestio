@@ -5,6 +5,7 @@ import java.util.NoSuchElementException
 import _root_.util.di.IScNlUtil
 import _root_.util.stat.IStatUtil
 import io.suggest.model.n2.node.MNode
+import io.suggest.sc.MScApiVsns
 import io.suggest.util.logs.IMacroLogs
 import models.jsm.NodeListResp
 import models.msc._

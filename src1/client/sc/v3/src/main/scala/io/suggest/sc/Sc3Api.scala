@@ -12,7 +12,7 @@ import io.suggest.sc.inx.c.{IIndexApi, IndexApiXhrImpl}
 
 object Sc3Api {
 
-  final def API_VSN = ScConstants.Vsns.REACT_SJS
+  final def API_VSN = MScApiVsns.ReactSjs3.value
 
 }
 

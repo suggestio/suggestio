@@ -12,6 +12,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.primo.id.OptId
+import io.suggest.sc.MScApiVsns
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.sc3.{MSc3AdsResp, MSc3Resp, MSc3RespAction}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}

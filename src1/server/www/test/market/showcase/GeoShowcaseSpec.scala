@@ -1,7 +1,8 @@
 package market.showcase
 
 import controllers.routes
-import models.msc.{MScApiVsns, SiteQsArgs}
+import io.suggest.sc.MScApiVsns
+import models.msc.SiteQsArgs
 import org.scalatestplus.play._
 import play.api.{Application, Mode}
 import play.api.inject.guice.GuiceApplicationBuilder

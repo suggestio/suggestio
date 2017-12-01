@@ -25,7 +25,7 @@ GET  /sc/one/html                       @controllers.Sc.onlyOneAd(o: blk.OneAdQs
 GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.OneAdQsArgs)
 ## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
 GET  /sc/router.js                      @controllers.Sc.scJsRouter
-GET  /sc/tags                           @controllers.Sc.tagsSearch(t: msc.tag.MScTagsSearchQs)
+GET  /sc/tags                           @controllers.Sc.tagsSearch(t: io.suggest.sc.tags.MScTagsSearchQs)
 GET  /sc/map/nodes/all                  @controllers.Sc.renderMapNodesAll
 
 ## Поиск по узлам

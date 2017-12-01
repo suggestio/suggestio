@@ -11,6 +11,4 @@ package object msc {
 
   type ScHdrBtn           = ScHdrBtns.T
 
-  type MScApiVsn          = MScApiVsns.T
-
 }

@@ -1,6 +1,7 @@
 package io.suggest.ble
 
 import io.suggest.ble.BleConstants.Beacon.Qs._
+import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -13,10 +14,12 @@ import play.api.libs.functional.syntax._
 object MUidBeacon {
 
   /** Поддержка JSON. В первую очередь -- для нужд JS-роутера, который всё это сплющивает в URL qs. */
-  implicit val MUID_BEACON_FORMAT: OFormat[MUidBeacon] = (
+  implicit def MUID_BEACON_FORMAT: OFormat[MUidBeacon] = (
     (__ \ UID_FN).format[String] and
     (__ \ DISTANCE_CM_FN).format[Int]
   )(apply, unlift(unapply))
+
+  implicit def univEq: UnivEq[MUidBeacon] = UnivEq.derive
 
 }
 

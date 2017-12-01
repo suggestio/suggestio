@@ -8,7 +8,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import models.msc.tag.MScTagsSearchQs
+import io.suggest.sc.tags.MScTagsSearchQs
 
 import scala.concurrent.Future
 

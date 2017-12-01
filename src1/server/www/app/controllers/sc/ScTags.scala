@@ -2,11 +2,11 @@ package controllers.sc
 
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.tag.MTagSearchResp
+import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.sc.sc3.{MSc3Tag, MSc3TagsResp}
+import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
-import models.msc.{MScApiVsn, MScApiVsns}
-import models.msc.tag.MScTagsSearchQs
 import models.req.IReq
 import play.api.libs.json.Json
 import play.api.mvc.Result

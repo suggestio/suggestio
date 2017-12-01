@@ -1,21 +1,19 @@
-package models.msc.tag
+package io.suggest.sc.tags
 
-import io.suggest.common.empty.EmptyProduct
 import io.suggest.geo.MLocEnv
 import io.suggest.model.play.qsb.{QsbUtil, QueryStringBindableImpl}
-import io.suggest.sc.TagSearchConstants.Req._
+import io.suggest.sc.MScApiVsn
 import io.suggest.sc.ScConstants.ReqArgs.VSN_FN
-import models.msc.{MScApiVsn, MScApiVsns}
+import io.suggest.sc.TagSearchConstants.Req._
 import play.api.mvc.QueryStringBindable
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 17.09.15 17:10
- * Description: Модель аргументов поискового запроса тегов, например в поисковой выдаче.
- * Поиск происходит по узлам графа N2, где теги -- лишь частный случай вершин.
- */
-object MScTagsSearchQs {
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 01.12.17 11:09
+  * Description: JVM-only утиль для модели MScTagsSearchQs.
+  */
+object MScTagsSearchQsJvm {
 
  /** Максимальное значение limit в qs. */
   private def LIMIT_MAX           = 50
@@ -85,14 +83,3 @@ object MScTagsSearchQs {
   }
 
 }
-
-
-/** Дефолтовая реализация модели аргументов поиска тегов. */
-case class MScTagsSearchQs(
-  tagsQuery   : Option[String]  = None,
-  limitOpt    : Option[Int]     = None,
-  offsetOpt   : Option[Int]     = None,
-  locEnv      : MLocEnv         = MLocEnv.empty,
-  apiVsn      : MScApiVsn       = MScApiVsns.unknownVsn
-)
-  extends EmptyProduct

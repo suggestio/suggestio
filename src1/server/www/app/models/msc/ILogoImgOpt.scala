@@ -1,6 +1,7 @@
 package models.msc
 
 import io.suggest.primo.IUnderlying
+import io.suggest.sc.IScApiVsn
 import models.im.MImgT
 
 /**

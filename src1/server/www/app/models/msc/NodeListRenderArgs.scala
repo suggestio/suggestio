@@ -1,6 +1,7 @@
 package models.msc
 
 import io.suggest.model.n2.node.MNode
+import io.suggest.sc.MScApiVsn
 
 /**
  * Suggest.io

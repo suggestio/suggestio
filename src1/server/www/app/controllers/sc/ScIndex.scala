@@ -13,6 +13,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, MNodeTypes, NodeNotFoundException}
+import io.suggest.sc.MScApiVsns
 import io.suggest.sc.index.MWelcomeInfo
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.sc3.{MSc3IndexResp, MSc3Resp, MSc3RespAction}

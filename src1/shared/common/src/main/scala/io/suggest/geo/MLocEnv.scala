@@ -1,8 +1,9 @@
 package io.suggest.geo
 
 import io.suggest.ble.MUidBeacon
-import io.suggest.common.empty.EmptyProduct
+import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.loc.LocationConstants._
+import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -13,9 +14,11 @@ import play.api.libs.functional.syntax._
   * Description: Модель описания географической и физической локации.
   */
 
-object MLocEnv {
+object MLocEnv extends IEmpty {
 
-  val empty = apply()
+  override type T = MLocEnv
+
+  override val empty = apply()
 
 
   /** Поддержка JSON для инстансов [[MLocEnv]].
@@ -29,6 +32,11 @@ object MLocEnv {
         { seq => if (seq.isEmpty) None else Some(seq) }
       )
   )(apply, unlift(unapply))
+
+  implicit def univEq: UnivEq[MLocEnv] = {
+    import io.suggest.ueq.UnivEqUtil._
+    UnivEq.derive
+  }
 
 }
 
