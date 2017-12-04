@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mgeo
 
-import io.suggest.geo.{MGeoLoc, MGeoPoint}
+import io.suggest.geo.{GeoLocType, MGeoLoc, MGeoPoint}
 import io.suggest.sjs.common.fsm.{IFsmMsg, IFsmMsgCompanion, SjsFsm}
 import org.scalajs.dom.PositionError
 
@@ -13,7 +13,7 @@ import org.scalajs.dom.PositionError
 trait IGeoSignal extends IFsmMsg {
 
   /** Тип геолокации, от которой исходит сигнал. */
-  def wtype: GlWatchType
+  def wtype: GeoLocType
 
   /** Сообщение об успехе? */
   def isSuccess: Boolean
@@ -22,7 +22,7 @@ trait IGeoSignal extends IFsmMsg {
 
 /** Интерфейс компаньона геосигналов. */
 trait IGeoSignalCompanion[X] {
-  def apply(t: X, wtype: GlWatchType): IGeoSignal
+  def apply(t: X, wtype: GeoLocType): IGeoSignal
 }
 
 trait IGeoLocSignal {
@@ -31,7 +31,7 @@ trait IGeoLocSignal {
 
 
 /** Сигнал о получении геолокации. */
-case class GlLocation(override val data: MGeoLoc, override val wtype: GlWatchType)
+case class GlLocation(override val data: MGeoLoc, override val wtype: GeoLocType)
   extends IGeoSignal
   with IGeoLocSignal
 {
@@ -41,7 +41,7 @@ object GlLocation extends IGeoSignalCompanion[MGeoLoc]
 
 
 /** Сигнал об ошибке геолокации. */
-case class GlError(error: PositionError, override val wtype: GlWatchType)
+case class GlError(error: PositionError, override val wtype: GeoLocType)
   extends IGeoSignal
 {
   override def isSuccess = false

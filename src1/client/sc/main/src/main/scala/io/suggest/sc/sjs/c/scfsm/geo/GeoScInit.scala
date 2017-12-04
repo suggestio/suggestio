@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.scfsm.geo
 import io.suggest.ble.beaconer.fsm.BeaconerFsm
 import io.suggest.ble.beaconer.m.signals.BeaconsNearby
 import io.suggest.ble.beaconer.m.{signals => bb}
-import io.suggest.geo.MGeoLoc
+import io.suggest.geo.{GeoLocTypes, MGeoLoc}
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.sjs.c.gloc.GeoLocFsm
 import io.suggest.sc.sjs.c.plat.PlatformFsm
@@ -63,7 +63,7 @@ trait GeoScInit extends Index { me =>
         receiver    = me,
         notifyZero  = true,
         data        = mgeo.SubscriberData(
-          minWatch    = mgeo.GlWatchTypes.Gps,
+          minWatch    = GeoLocTypes.Gps,
           withErrors  = true
         )
       )

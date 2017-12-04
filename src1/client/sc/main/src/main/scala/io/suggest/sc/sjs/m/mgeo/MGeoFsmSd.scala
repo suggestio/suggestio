@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.mgeo
 
 import io.suggest.common.empty.EmptyProduct
-import io.suggest.geo.MGeoLoc
+import io.suggest.geo.{GeoLocType, GeoLocTypes, MGeoLoc}
 import io.suggest.sjs.common.fsm.SjsFsm
 
 /**
@@ -14,9 +14,9 @@ import io.suggest.sjs.common.fsm.SjsFsm
   * @param subscribers Карта подписчиков.
   */
 case class MGeoFsmSd(
-  watchers    : Map[GlWatchType, MglWatcher]  = Map.empty,
-  subscribers : Map[SjsFsm, SubscriberData]   = Map.empty,
-  suppressor  : Option[Suppressor]            = None
+                      watchers    : Map[GeoLocType, MglWatcher]  = Map.empty,
+                      subscribers : Map[SjsFsm, SubscriberData]   = Map.empty,
+                      suppressor  : Option[Suppressor]            = None
 )
 
 
@@ -38,8 +38,8 @@ case class MglWatcher(
   * @param withErrors Слать ли ошибки геолокации?
   */
 case class SubscriberData(
-  minWatch     : GlWatchType      = GlWatchTypes.min,
-  withErrors   : Boolean          = false
+                           minWatch     : GeoLocType      = GeoLocTypes.min,
+                           withErrors   : Boolean          = false
 ) {
 
   def +(other: SubscriberData): SubscriberData = {
@@ -63,5 +63,5 @@ case class SubscriberData(
 case class Suppressor(
   timerId   : Int,
   generation: Long,
-  minWatch  : GlWatchType
+  minWatch  : GeoLocType
 )

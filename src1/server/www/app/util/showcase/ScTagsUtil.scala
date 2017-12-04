@@ -52,7 +52,6 @@ class ScTagsUtil @Inject()(
     val _edgeSearchCr = Criteria(
       predicates  = MPredicates.TaggedBy.Self :: Nil,
       tags        = tcrOpt.toSeq,
-      // TODO Это наверное бесполезно, не? Direct-теги пока не обкатаны, чтобы их вот так вот использовать.
       nodeIds     = qs.rcvrId.toSeq,
       // Отработать геолокацию: искать только теги, размещенные в текущей области.
       gsIntersect = for (geoLoc <- geoLocOpt2) yield {

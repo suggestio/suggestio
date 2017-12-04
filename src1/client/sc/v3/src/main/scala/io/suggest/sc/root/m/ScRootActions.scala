@@ -24,3 +24,7 @@ case object ScreenReset extends IScRootAction
 
 /** Сработал таймер непосредственного запуска действий при ресайзе. */
 case object ScreenRszTimer extends IScRootAction
+
+
+/** Управление подсистемой */
+case class GeoOnOff(enabled: Boolean) extends IScRootAction

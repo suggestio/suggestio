@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.gloc
 
 import io.suggest.fsm.StateData
+import io.suggest.geo.GeoLocType
 import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sjs.common.fsm.{IFsmMsg, SjsFsm}
 import io.suggest.sjs.common.vm.wnd.WindowVm
@@ -130,7 +131,7 @@ trait GeoLocFsmStub extends SjsFsm with StateData {
   }
 
 
-  protected[this] def _clearWatchers(watchers0: TraversableOnce[(GlWatchType, MglWatcher)]): Iterator[(GlWatchType, MglWatcher)] = {
+  protected[this] def _clearWatchers(watchers0: TraversableOnce[(GeoLocType, MglWatcher)]): Iterator[(GeoLocType, MglWatcher)] = {
     for {
       glApi         <- WindowVm().geolocation.iterator
       (wtype, w1)   <- watchers0.toIterator

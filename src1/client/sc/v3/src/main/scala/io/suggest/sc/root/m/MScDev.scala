@@ -16,7 +16,8 @@ object MScDev {
 
   implicit object MScDevFastEq extends FastEq[MScDev] {
     override def eqv(a: MScDev, b: MScDev): Boolean = {
-      (a.screen ===* b.screen)
+      (a.screen ===* b.screen) &&
+        (a.geo ===* b.geo)
     }
   }
 
@@ -24,10 +25,18 @@ object MScDev {
 
 }
 
+
+/** Класс модели состояния компонентов оборудования, доступного выдаче.
+  *
+  * @param screen Состояние экрана устройства.
+  * @param geo Состояния геолокации.
+  */
 case class MScDev(
-                   screen: MScScreenS
+                   screen       : MScScreenS,
+                   geo          : MScGeo        = MScGeo.empty
                  ) {
 
-  def withScreen(screen: MScScreenS) = copy(screen = screen)
+  def withScreen(screen: MScScreenS)      = copy(screen = screen)
+  def withGeo(geo: MScGeo)                = copy(geo = geo)
 
 }

@@ -1,12 +1,14 @@
 package io.suggest.sc.sjs.c.gloc
 
-import io.suggest.geo.MGeoLocJs
+import io.suggest.geo.{GeoLocType, GeoLocTypes, MGeoLocJs}
 import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.signals.IVisibilityChangeSignal
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.vm.wnd.WindowVm
-import org.scalajs.dom.{Geolocation, Position, PositionError}
+import org.scalajs.dom.{Geolocation, Position, PositionError, PositionOptions}
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -16,7 +18,7 @@ import org.scalajs.dom.{Geolocation, Position, PositionError}
   */
 trait Watching extends GeoLocFsmStub {
 
-  protected[this] def _startWatchersFor(wtypes: TraversableOnce[GlWatchType], glApi: Geolocation): Iterator[(GlWatchType, MglWatcher)] = {
+  protected[this] def _startWatchersFor(wtypes: TraversableOnce[GeoLocType], glApi: Geolocation): Iterator[(GeoLocType, MglWatcher)] = {
     wtypes
       .toIterator
       .flatMap { wtype =>
@@ -29,7 +31,12 @@ trait Watching extends GeoLocFsmStub {
             }, { pe: PositionError =>
               _sendEventSync( GlError(pe, wtype) )
             },
-            wtype.posOpts
+            {
+              val po = js.Dictionary.empty[js.Any]
+                .asInstanceOf[PositionOptions]
+              po.enableHighAccuracy = wtype.highAccuracy
+              po
+            }
           )
           val w = MglWatcher( Some(wid) )
           Seq(wtype -> w)
@@ -53,7 +60,7 @@ trait Watching extends GeoLocFsmStub {
         val sd0 = _stateData
 
         // Вычисляем недостающих watch'еров
-        val needWatchers = GlWatchTypes.all -- sd0.watchers.keysIterator
+        val needWatchers = GeoLocTypes.all -- sd0.watchers.keysIterator
 
         if (needWatchers.nonEmpty) {
           val watchersIter = _startWatchersFor(needWatchers, glApi)
