@@ -1,33 +1,28 @@
 BEGIN;
 
-CREATE TABLE sio2.debug
-(
-  object_id bigint NOT NULL, -- id элемента биллинга (item'а, ордера, контракта и т.д.)
-  key character varying(8) NOT NULL, -- Строковой ключ, описывающий тип дампа.
-  vsn smallint NOT NULL, -- Номер версии формата данных.
-  data bytea NOT NULL, -- Данные в произвольной форме.
-  CONSTRAINT debug_pkey PRIMARY KEY (object_id, key)
-)
-WITH (
-  OIDS=FALSE
-);
-ALTER TABLE sio2.debug
-  OWNER TO sio2;
-COMMENT ON TABLE sio2.debug
-  IS 'Отладочная инфа по элементам биллинга. Появилась для возможности модификации стоимости item''а уже после фактического его обсчёта. В дампе сохранялся сжатый инстанс PriceDsl, пригодный для десериализации, модификации и пересчёта.';
-COMMENT ON COLUMN sio2.debug.object_id IS 'id элемента биллинга (item''а, ордера, контракта и т.д.)';
-COMMENT ON COLUMN sio2.debug.key IS 'Строковой ключ, описывающий тип дампа.';
-COMMENT ON COLUMN sio2.debug.vsn IS 'Номер версии формата данных.';
-COMMENT ON COLUMN sio2.debug.data IS 'Данные в произвольной форме.';
+ALTER TABLE sio2.item
+    ADD COLUMN tag_node_id character varying(64);
+
+COMMENT ON COLUMN sio2.item.tag_node_id
+    IS 'id узла-тега, с которым связано размещение в теге.
+Раньше значение id узла-тега хранилось прямо в rcvr_id, что было очень неправильно.';
 
 
--- Index: sio2.debug_object_id_idx
+CREATE INDEX item_tag_node_id_inx
+    ON sio2.item USING btree
+    (tag_node_id ASC NULLS LAST)
+    TABLESPACE pg_default;
 
--- DROP INDEX sio2.debug_object_id_idx;
+CREATE INDEX item_rcvr_id_inx
+    ON sio2.item USING btree
+    (rcvr_id ASC NULLS LAST)
+    TABLESPACE pg_default;
 
-CREATE INDEX debug_object_id_idx
-  ON sio2.debug
-  USING btree
-  (object_id);
+CREATE INDEX item_node_id_inx
+    ON sio2.item USING btree
+    (ad_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+
 
 COMMIT;
+

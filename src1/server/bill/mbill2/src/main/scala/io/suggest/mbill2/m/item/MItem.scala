@@ -61,6 +61,7 @@ class MItems @Inject() (
   with DateStatusSlick
   with MAdItemIdsSlick
   with MAdItemStatusesSlick
+  with TagNodeIdOptSlick
 {
 
   import profile.api._
@@ -90,11 +91,12 @@ class MItems @Inject() (
     with GeoShapeOptColumn
     with TagFaceOptColumn
     with DateStatusColumn
+    with TagNodeIdOptColumn
   {
 
     override def * : ProvenShape[MItem] = {
-      (orderId, iType, status, price, nodeId, dateStartOpt, dateEndOpt, rcvrIdOpt, reasonOpt, geoShapeOpt, tagFaceOpt,
-        dateStatus, id.?) <> (
+      (orderId, iType, status, price, nodeId, dateStartOpt, dateEndOpt, rcvrIdOpt, reasonOpt, geoShapeOpt,
+        tagFaceOpt, tagNodeIdOpt, dateStatus, id.?) <> (
         MItem.tupled, MItem.unapply
       )
     }
@@ -275,6 +277,7 @@ trait IItem
   with IGeoShapeOpt
   with ITagFaceOpt
   with IDateStatus
+  with ITagNodeIdOpt
 
 
 /** Экземпляр модели (ряда абстрактной таблицы item'ов). */
@@ -286,10 +289,11 @@ case class MItem(
                   override val nodeId         : String,
                   override val dateStartOpt   : Option[OffsetDateTime],
                   override val dateEndOpt     : Option[OffsetDateTime],
-                  override val rcvrIdOpt      : Option[String],
+                  override val rcvrIdOpt      : Option[String]      = None,
                   override val reasonOpt      : Option[String]      = None,
-                  override val geoShape       : Option[IGeoShape]    = None,
+                  override val geoShape       : Option[IGeoShape]   = None,
                   override val tagFaceOpt     : Option[String]      = None,
+                  override val tagNodeIdOpt   : Option[String]      = None,
                   override val dateStatus     : OffsetDateTime      = OffsetDateTime.now(),
                   override val id             : Option[Gid_t]       = None
 )

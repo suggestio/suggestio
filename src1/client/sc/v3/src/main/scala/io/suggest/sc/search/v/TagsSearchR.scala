@@ -75,7 +75,7 @@ class TagsSearchR(
 
                 // Подписка на события скроллинга:
                 if (tagsS.hasMoreTags && !tagsS.tagsReq.isPending) {
-                  ^.onClick ==> _onTagsListScroll
+                  ^.onScroll ==> _onTagsListScroll
                 } else {
                   EmptyVdom
                 },

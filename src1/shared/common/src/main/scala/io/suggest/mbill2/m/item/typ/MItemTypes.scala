@@ -67,6 +67,9 @@ sealed abstract class MItemType extends EnumEntry with IStrId {
     */
   def isInterruptable: Boolean
 
+  /** Это какой-либо теггинг. */
+  def isTag: Boolean = false
+
 }
 
 
@@ -87,6 +90,7 @@ object MItemTypes extends EnumeratumApply[MItemType] {
   case object GeoTag extends MItemType {
     override def strId = "t"
     override def isInterruptable = true
+    override def isTag = true
   }
 
   /** Покупка размещения в каком-то месте на карте: по геошейпу без ресиверов. */
@@ -108,6 +112,7 @@ object MItemTypes extends EnumeratumApply[MItemType] {
   case object TagDirect extends MItemType {
     override def strId = "d"
     override def isInterruptable = true
+    override def isTag = true
   }
 
   /** Юзер просто пополняет sio-баланс, перекачивая на него деньги из внешнего источника денег. */
@@ -138,6 +143,8 @@ object MItemTypes extends EnumeratumApply[MItemType] {
   def adnMapTypes     : List[MItemType]     = AdnNodeMap :: GeoLocCaptureArea :: Nil
 
   def interruptable = values.filter(_.isInterruptable)
+
+  def tagTypes        : List[MItemType]     = GeoTag :: TagDirect :: Nil
 
   override val values = findValues
 

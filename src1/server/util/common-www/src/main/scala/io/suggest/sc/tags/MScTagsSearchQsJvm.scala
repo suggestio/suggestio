@@ -43,6 +43,7 @@ object MScTagsSearchQsJvm {
           limitOptE           <- intOptB.bind (k(LIMIT_FN),           params)
           offsetOptE          <- intOptB.bind (k(OFFSET_FN),          params)
           locEnvE             <- locEnvB.bind (k(LOC_ENV_FN),         params)
+          rcvrIdOptE          <- strOptB.bind (k(RCVR_ID_FN),         params)
           apiVsnE             <- apiVsnB.bind (k(VSN_FN),             params)
         } yield {
           // TODO Нужно избегать пустого критерия поиска, т.е. возвращать None, когда нет параметров для поиска.
@@ -54,6 +55,7 @@ object MScTagsSearchQsJvm {
             _offsetOpt        <- QsbUtil.ensureIntOptRange(offsetOptE, 0, OFFSET_MAX)
               .right
             _locEnv           <- locEnvE.right
+            _rcvrIdOpt        <- QsbUtil.ensureStrOptLen(rcvrIdOptE, 10, 100)
             _apiVsn           <- apiVsnE.right
           } yield {
             MScTagsSearchQs(
@@ -61,6 +63,7 @@ object MScTagsSearchQsJvm {
               limitOpt  = _limitOpt,
               offsetOpt = _offsetOpt,
               locEnv    = _locEnv,
+              rcvrId    = _rcvrIdOpt,
               apiVsn    = _apiVsn
             )
           }
@@ -75,6 +78,7 @@ object MScTagsSearchQsJvm {
           intOptB.unbind( k(LIMIT_FN),           value.limitOpt   ),
           intOptB.unbind( k(OFFSET_FN),          value.offsetOpt  ),
           locEnvB.unbind( k(LOC_ENV_FN),         value.locEnv     ),
+          strOptB.unbind( k(RCVR_ID_FN),         value.rcvrId     ),
           apiVsnB.unbind( k(VSN_FN),             value.apiVsn     )
         )
       }

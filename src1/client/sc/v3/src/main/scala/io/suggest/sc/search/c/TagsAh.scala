@@ -7,6 +7,7 @@ import io.suggest.dev.MScreen
 import io.suggest.sc.search.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.react.ReactDiodeUtil._
+import io.suggest.sc.grid.m.GridLoadAds
 import io.suggest.sc.styl.ScCss
 import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.sc.tile.TileConstants
@@ -65,10 +66,17 @@ class TagsAh[M](
     case m: TagClick =>
       val v0 = value
       val isAlreadySelected = v0.selectedId contains m.nodeId
+
       // Снять либо выставить выделение для тега.
       val selectedId2 = OptionUtil.maybe( !isAlreadySelected )( m.nodeId )
       val v2 = v0.withSelectedId( selectedId2 )
-      updated( v2 )
+
+      // Обновить плитку при выборе тега.
+      val fx = Effect.action {
+        GridLoadAds(clean = true, ignorePending = true)
+      }
+
+      updated( v2, fx )
 
 
     // Команда к запуску поиска тегов.

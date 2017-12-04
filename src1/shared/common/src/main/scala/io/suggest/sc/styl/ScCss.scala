@@ -43,7 +43,6 @@ object ScCss {
      */
     isSafari &&
       cssEnv.platform.userAgent.exists( _.contains("Mobile/") )
-    //true
   }
 
   /**
@@ -90,7 +89,6 @@ case class ScCss( args: IScCssArgs )
       mixin(
         overflowY.auto
       )
-      //StyleS.empty
     }
   }
 

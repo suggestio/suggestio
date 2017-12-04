@@ -2,6 +2,7 @@ package util.adv.geo.tag
 
 import javax.inject.Inject
 
+import io.suggest.common.coll.Lists
 import io.suggest.es.util.SioEsUtil
 import io.suggest.geo.MNodeGeoLevels
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -48,6 +49,13 @@ class GeoTagsUtil @Inject() (
   /** Предикат эджей, используемых в рамках этого модуля. */
   private def _PRED = MPredicates.TaggedBy.Self
 
+  private def TAG_ITEM_TYPES = {
+    //MItemTypes.GeoTag.strId :: Nil
+    // Поддержка разных тегов: географических и "прямых".
+    MItemTypes
+      .onlyIds( MItemTypes.tagTypes )
+      .toTraversable
+  }
 
   /**
     * Создание тегов из указанного множества с сбор id узлов.
@@ -83,7 +91,7 @@ class GeoTagsUtil @Inject() (
     * @return Фьючерс с опциоальным id тега-узла.
     */
   def findTagNode(tagFace: String): Future[Option[MNode]] = {
-    lazy val logPrefix = s"findTagNodeId($tagFace):"
+    lazy val logPrefix = s"findTagNode($tagFace):"
 
     val msearch = new MNodeSearchDfltImpl {
       override def outEdges: Seq[ICriteria] = {
@@ -93,13 +101,13 @@ class GeoTagsUtil @Inject() (
           exact     = true
         )
         val cr = Criteria(
-          predicates  = Seq( _PRED ),
-          tags        = Seq(tcr)
+          predicates  = _PRED :: Nil,
+          tags        = tcr :: Nil
         )
-        Seq(cr)
+        cr :: Nil
       }
 
-      override def nodeTypes = Seq( MNodeTypes.Tag )
+      override def nodeTypes = MNodeTypes.Tag :: Nil
 
       // Берём поиск с запасом. Возможно появление дублирующихся результатов поиска, и на это надо будет реагировать.
       // Когда всё будет отлажено, тут можно ставить limit=1, и искать через dynSearchOne() и подобных.
@@ -187,7 +195,7 @@ class GeoTagsUtil @Inject() (
       // Найти все теги, которые затрагиваются грядующим инсталлом.
       tagFacesOpts <- slick.db.run {
         itemsSql
-          .filter(_.iTypeStr === MItemTypes.GeoTag.strId)
+          .filter(_.iTypeStr inSet TAG_ITEM_TYPES)
           .map(_.tagFaceOpt)
           .distinct
           .result
@@ -246,14 +254,16 @@ class GeoTagsUtil @Inject() (
     val startTs = System.currentTimeMillis()
 
     // TODO Использовать stream вместо run.
-    val shapesFut = slick.db.run {
+    val shapesRcvrsFut = slick.db.run {
       mItems.query
         .filter { i =>
           (i.statusStr === MItemStatuses.Online.strId) &&
-            (i.iTypeStr === MItemTypes.GeoTag.strId) &&
-            (i.rcvrIdOpt === mnodeId)
+            (i.iTypeStr inSet TAG_ITEM_TYPES) &&
+            (i.tagNodeIdOpt === mnodeId)
         }
-        .map(_.geoShapeOpt)
+        .map { i =>
+          (i.geoShapeOpt, i.rcvrIdOpt)
+        }
         .distinct
         .take(1000)
         .result
@@ -263,26 +273,30 @@ class GeoTagsUtil @Inject() (
 
     for {
       // Дождаться окончания поиска шейпов для тега.
-      shapes <- shapesFut
+      shapesRcvrs <- shapesRcvrsFut
 
       // Залить собранные шейпы в узел тега.
       mnode2 <- {
         // Собрать единый список шейпов.
-        val tagShapes = shapes
+        val tagShapes = Lists.toListRev {
+          shapesRcvrs
+            .iterator
+            .flatMap(_._1.iterator)
+            .zipWithIndex
+            .map { case (s, i) =>
+              MEdgeGeoShape(
+                id = i + MEdgeGeoShape.SHAPE_ID_START,
+                glevel  = MNodeGeoLevels.geoTag,
+                shape = s
+              )
+            }
+        }
+
+        // Для direct-тегов собрать id узлов-ресиверов.
+        val directTagRcvrs = shapesRcvrs
           .iterator
-          .flatMap(_.iterator)
-          .zipWithIndex
-          .map { case (s, i) =>
-            MEdgeGeoShape(
-              id = i + MEdgeGeoShape.SHAPE_ID_START,
-              glevel  = MNodeGeoLevels.geoTag,
-              shape = s
-            )
-          }
-          // Оптимизация: собираем List в обратном порядке. Это O(N).
-          .foldLeft( List.empty[MEdgeGeoShape] ) { (acc, e) =>
-            e :: acc
-          }
+          .flatMap(_._2)
+          .toSet
 
         // Т.к. список в обратном порядке, то последний List.head.id равен кол-ву элементов - 1.
         val shapesCount = tagShapes
@@ -295,7 +309,7 @@ class GeoTagsUtil @Inject() (
         val someShapesCount = Some(shapesCount)
 
         mNodes.tryUpdate(mnode) { mnode0 =>
-          // Собрать единый эдж само-тега для всех геошейпов.
+          // Собрать единый эдж self-тега для всех геошейпов.
           val e0 = mnode0.edges
             .withPredicateIter(p)
             .toStream
@@ -305,7 +319,8 @@ class GeoTagsUtil @Inject() (
             order = someShapesCount,
             info = e0.info.copy(
               geoShapes = tagShapes
-            )
+            ),
+            nodeIds = directTagRcvrs ++ e0.nodeIds
           )
 
           mnode0.copy(
@@ -313,7 +328,7 @@ class GeoTagsUtil @Inject() (
               out = {
                 val iter = mnode0.edges
                   .withoutPredicateIter(p)
-                  .++( Seq(e1) )
+                  .++( e1 :: Nil )
                 MNodeEdges.edgesToMap1( iter )
               }
             )
@@ -356,8 +371,8 @@ class GeoTagsUtil @Inject() (
       // Найти все теги, которые затрагиваются грядующим инсталлом.
       tagIdsOpts <- slick.db.run {
         itemsSql
-          .filter(_.iTypeStr === MItemTypes.GeoTag.strId)
-          .map(_.rcvrIdOpt)
+          .filter(_.iTypeStr inSet TAG_ITEM_TYPES)
+          .map(_.tagNodeIdOpt)
           .distinct
           .result
       }
@@ -408,11 +423,11 @@ class GeoTagsUtil @Inject() (
       logPrefix = s"$logPrefixPrefix($tmapSize $startTs):"
       _         <- {
         info(s"$logPrefix Starting tags rebuild, $tmapSize tags to go.")
-        val rbldFut = rebuildTags(tmap.values)
-        for (ex <- rbldFut.failed) {
+        val rebuildTagsFut = rebuildTags(tmap.values)
+        for (ex <- rebuildTagsFut.failed) {
           error(s"$logPrefix Failed to rebuild the tags", ex)
         }
-        rbldFut
+        rebuildTagsFut
       }
     } yield {
       info(s"$logPrefix Rebuilt $tmapSize tags in ${System.currentTimeMillis - startTs}ms.")
@@ -420,7 +435,7 @@ class GeoTagsUtil @Inject() (
 
     // Подавляем оптимизацию if tmap.nonEmpty, приводящую к экзепшену.
     fut.recover {
-      case ex: NoSuchElementException =>
+      case _: NoSuchElementException =>
         // Nothing to do
     }
   }
@@ -433,7 +448,7 @@ class GeoTagsUtil @Inject() (
     */
   def deleteAllTagNodes(): Future[Int] = {
     val msearch = new MNodeSearchDfltImpl {
-      override def nodeTypes = Seq( MNodeTypes.Tag )
+      override def nodeTypes = MNodeTypes.Tag :: Nil
     }
     val scroller = mNodes.startScroll( msearch.toEsQueryOpt )
     mNodes.deleteByQuery(scroller)

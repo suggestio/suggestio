@@ -276,7 +276,6 @@ class AdvGeoBillUtil @Inject() (
                       nodeId        = adId,
                       dateStartOpt  = dtStartOpt,
                       dateEndOpt    = dtEndOpt,
-                      // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
                       rcvrIdOpt     = Some(rcvrId),
                       tagFaceOpt    = Some( tagFace ),
                       geoShape      = None
