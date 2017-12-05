@@ -1,14 +1,14 @@
 package io.suggest.sc.search.v
 
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
-import io.suggest.sc.search.m.MScSearchText
+import io.suggest.sc.search.m.{MScSearchText, SearchTextChanged, SearchTextFocus}
 import io.suggest.sc.styl.GetScCssF
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.sjs.common.i18n.Messages
-import io.suggest.spa.OptFastEq.Plain
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 import scalacss.ScalaCssReact._
 
@@ -21,45 +21,54 @@ import scalacss.ScalaCssReact._
   */
 class STextR( getScCssF: GetScCssF ) {
 
-  type Props = ModelProxy[Option[MScSearchText]]
-
-  case class State(
-                    textOptC: ReactConnectProxy[Option[String]]
-                  )
+  type Props = ModelProxy[MScSearchText]
 
 
-  class Backend( $: BackendScope[Props, State] ) {
+  class Backend( $: BackendScope[Props, Unit] ) {
 
-    def render(s: State): VdomElement = {
+    /** Происходит ввод текста в input. */
+    private def _onInput(e: ReactEventFromInput): Callback = {
+      val text = e.target.value
+      dispatchOnProxyScopeCB($, SearchTextChanged(text))
+    }
+
+    private def _onFocusChange(focused: Boolean): Callback = {
+      dispatchOnProxyScopeCB($, SearchTextFocus(focused))
+    }
+
+    def render(propsProxy: Props): VdomElement = {
       val scCss = getScCssF()
       val CSS = scCss.Search.SearchBar
+
+      val p = propsProxy.value
 
       <.div(
         CSS.bar,
 
         // Рендер текстового поля с input'ом.
-        s.textOptC { textOptProxy =>
-          val textOpt = textOptProxy()
+        <.div(
+          CSS.Field.field,
+
+          // Рендерить __active, когда происходит ввод данных.
+          if (p.focused) {
+            CSS.Field.active
+          } else {
+            EmptyVdom
+          },
 
           <.div(
-            CSS.Field.field,
-
-            // Рендерить __active, когда происходит ввод данных.
-            textOpt.whenDefined { _ =>
-              CSS.Field.active
-            },
-
-            <.div(
-              CSS.Field.fieldWrapper,
-              <.input(
-                CSS.Field.input,
-                ^.placeholder := Messages( MsgCodes.`Quick.search.for.offers` ),
-                ^.value := textOpt.getOrElse("")
-              )
+            CSS.Field.fieldWrapper,
+            <.input(
+              CSS.Field.input,
+              ^.placeholder := Messages( MsgCodes.`Quick.search.for.offers` ),
+              ^.onChange ==> _onInput,
+              ^.onFocus  --> _onFocusChange(true),
+              ^.onBlur   --> _onFocusChange(false),
+              ^.value     := p.query
             )
-
           )
-        }
+
+        )
 
       )
     }
@@ -68,11 +77,7 @@ class STextR( getScCssF: GetScCssF ) {
 
 
   val component = ScalaComponent.builder[Props]("SText")
-    .initialStateFromProps { propsProxy =>
-      State(
-        textOptC = propsProxy.connect( _.map(_.query) )
-      )
-    }
+    .stateless
     .renderBackend[Backend]
     .build
 

@@ -20,7 +20,7 @@ import io.suggest.sc.root.m._
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.router.c.JsRouterInitAh
 import io.suggest.sc.sc3.MSc3Init
-import io.suggest.sc.search.c.{SearchAh, TagsAh}
+import io.suggest.sc.search.c.{STextAh, SearchAh, TagsAh}
 import io.suggest.sc.search.m.{MMapInitState, MScSearch}
 import io.suggest.sc.styl.{ScCss, ScCssFactoryModule}
 import io.suggest.sc.tags.MScTagsSearchQs
@@ -32,7 +32,6 @@ import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.spa.StateInp
 import org.scalajs.dom.Event
 import play.api.libs.json.Json
-import japgolly.univeq._
 
 import scala.concurrent.Promise
 
@@ -100,11 +99,12 @@ class Sc3Circuit(
   //private val indexStateRW = indexRW.zoomRW(_.state) { _.withState(_) }
 
   private val searchRW = indexRW.zoomRW(_.search) { _.withSearch(_) }
-  private val searchMapRcvrsPotRW = searchRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
   private val tagsRW = searchRW.zoomRW(_.tags) { _.withTags(_) }
 
   private val mapInitRW = searchRW.zoomRW(_.mapInit) { _.withMapInit(_) }
+  private val searchMapRcvrsPotRW = mapInitRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
   private val mmapsRW = mapInitRW.zoomRW(_.state) { _.withState(_) }
+  private val searchTextRW = searchRW.zoomRW(_.text) { _.withText(_) }
 
   private val gridRW = zoomRW(_.grid) { _.withGrid(_) }
 
@@ -129,8 +129,7 @@ class Sc3Circuit(
   private val tagsSearchArgsQsRO: ModelRO[MScTagsSearchQs] = zoom { mroot =>
     val currRcvrId = mroot.index.state.currRcvrId
     MScTagsSearchQs(
-      tagsQuery = mroot.index.search.text
-        .map(_.query),
+      tagsQuery = mroot.index.search.text.searchQuery.toOption,
       locEnv    = if (currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
       rcvrId    = currRcvrId,
       apiVsn    = Sc3Api.API_VSN
@@ -183,6 +182,10 @@ class Sc3Circuit(
     modelRW = scScreenRW
   )
 
+  private val sTextAh = new STextAh(
+    modelRW = searchTextRW
+  )
+
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttp( scRoutes )
 
   override protected def actionHandler: HandlerFunction = {
@@ -209,6 +212,9 @@ class Sc3Circuit(
 
     // top-level search AH всегда ожидает команд, когда TODO нет открытого левого меню закрыто или focused-выдачи
     acc ::= searchAh
+
+    // TODO Opt sTextAh не нужен, когда панель поиска скрыта.
+    acc ::= sTextAh
 
     if ( indexWelcomeRW().nonEmpty )
       acc ::= new WelcomeAh( indexWelcomeRW )

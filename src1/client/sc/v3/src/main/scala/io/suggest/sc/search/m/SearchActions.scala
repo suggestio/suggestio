@@ -38,3 +38,17 @@ case class MoreTagsResp(reason: GetMoreTags, timestamp: Long, reqLimit: Int, res
 
 /** Происходит скроллинг в списке тегов. Возможно, надо подгрузить ещё тегов. */
 case class TagsScroll(scrollTop: Double, scrollHeight: Int) extends ISearchAction
+
+
+/** Изменения фокуса на input'е текстового поиска. */
+case class SearchTextFocus(focused: Boolean) extends ISearchAction
+
+/** Происходит ввод текста в поисковый input. */
+case class SearchTextChanged(newText: String) extends ISearchAction
+
+/** Таймаут фильтрации быстрых нажатий в поле ввода текста. */
+case class SearchTextTimerOut(timestamp: Long) extends ISearchAction
+
+
+/** Принудительный запуск поиска на текущей поисковой вкладке. */
+case object ReDoSearch extends ISearchAction

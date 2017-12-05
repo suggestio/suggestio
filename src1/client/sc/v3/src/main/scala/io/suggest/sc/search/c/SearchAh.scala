@@ -9,6 +9,7 @@ import io.suggest.sjs.common.controller.DomQuick
 import japgolly.univeq._
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.ErrorMsgs
 
 /**
   * Suggest.io
@@ -102,6 +103,22 @@ class SearchAh[M](
         this.optionalResult( v2Opt, needFxOpt )
       else
         this.optionalSilentResult(v2Opt, needFxOpt)
+
+
+    // Принудительный запуск поиска на текущей вкладке.
+    case m @ ReDoSearch =>
+      val v0 = value
+      v0.currTab match {
+        case MSearchTabs.Tags =>
+          val fx = Effect.action {
+            GetMoreTags(clear = true, ignorePending = true)
+          }
+          effectOnly(fx)
+
+        case t @ MSearchTabs.GeoMap =>
+          LOG.error( ErrorMsgs.NOT_IMPLEMENTED, msg = (m, t) )
+          noChange
+      }
 
   }
 

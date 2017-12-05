@@ -1,8 +1,11 @@
 package io.suggest.sc.search.m
 
 import diode.FastEq
+import diode.data.Pot
 import io.suggest.maps.m.MMapS
+import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 
 /**
@@ -22,8 +25,9 @@ object MMapInitState {
 
   implicit object MMapInitStateFastEq extends FastEq[MMapInitState] {
     override def eqv(a: MMapInitState, b: MMapInitState): Boolean = {
-      (a.state    ===* b.state) &&
-        (a.ready ==* b.ready)
+      (a.state      ===* b.state) &&
+        (a.ready     ==* b.ready) &&
+        (a.rcvrsGeo ===* b.rcvrsGeo)
     }
   }
 
@@ -37,13 +41,16 @@ object MMapInitState {
   *
   * @param state Состояние карты, даже если она не инициализирована.
   * @param ready Запущена ли карта?
+  * @param rcvrsGeo Гео-данные ресиверов.
   */
 case class MMapInitState(
-                          state       : MMapS,
-                          ready       : Boolean           = false
+                          state           : MMapS,
+                          ready           : Boolean               = false,
+                          rcvrsGeo        : Pot[MGeoNodesResp]    = Pot.empty,
                         ) {
 
   def withState(state: MMapS) = copy(state = state)
   def withReady(ready: Boolean) = copy(ready = ready)
+  def withRcvrsGeo( rcvrsGeo: Pot[MGeoNodesResp] ) = copy( rcvrsGeo = rcvrsGeo )
 
 }

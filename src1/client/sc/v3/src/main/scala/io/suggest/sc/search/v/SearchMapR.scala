@@ -1,13 +1,15 @@
 package io.suggest.sc.search.v
 
+import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
-import io.suggest.maps.m.{MGeoMapPropsR, MMapS, MapDragEnd, MapDragStart}
-import io.suggest.maps.r.{LGeoMapR, ReactLeafletUtil}
+import io.suggest.maps.m.{MGeoMapPropsR, MMapS, MapDragEnd}
+import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.maps.r.{LGeoMapR, RcvrMarkersR, ReactLeafletUtil}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.styl.GetScCssF
-import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
-import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ScalaComponent}
+import io.suggest.sjs.leaflet.event.DragEndEvent
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import react.leaflet.control.LocateControlR
@@ -32,7 +34,8 @@ class SearchMapR(
 
 
   protected[this] case class State(
-                                    mmapC     : ReactConnectProxy[MMapS]
+                                    mmapC       : ReactConnectProxy[MMapS],
+                                    rcvrsGeoC   : ReactConnectProxy[Pot[MGeoNodesResp]]
                                   )
 
 
@@ -54,7 +57,7 @@ class SearchMapR(
     private val _onMapDragEndOptF = Some( ReactCommonUtil.cbFun1ToJsCb( _onMapDragEnd ) )
 
 
-    def render(mapInitProxy: Props, s: State, children: PropsChildren): VdomElement = {
+    def render(mapInitProxy: Props, s: State): VdomElement = {
       val mapCSS = getScCssF().Search.Tabs.MapTab
       val mapInit = mapInitProxy.value
 
@@ -96,7 +99,8 @@ class SearchMapR(
                     // Плагин для геолокации текущего юзера.
                     LocateControlR(),
 
-                    children
+                    // Рендер шейпов и маркеров текущий узлов.
+                    s.rcvrsGeoC { RcvrMarkersR(_)() }
 
                   )
                 }
@@ -122,12 +126,13 @@ class SearchMapR(
   val component = ScalaComponent.builder[Props]("SMap")
     .initialStateFromProps { mapInitProxy =>
       State(
-        mmapC = mapInitProxy.connect(_.state)
+        mmapC     = mapInitProxy.connect(_.state),
+        rcvrsGeoC = mapInitProxy.connect(_.rcvrsGeo)
       )
     }
-    .renderBackendWithChildren[Backend]
+    .renderBackend[Backend]
     .build
 
-  def apply(mapInitProxy: Props)(children: VdomElement*) = component(mapInitProxy)(children: _*)
+  def apply(mapInitProxy: Props) = component(mapInitProxy)
 
 }

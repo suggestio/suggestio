@@ -1,16 +1,12 @@
 package io.suggest.sc.search.v
 
-import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.Css
-import io.suggest.maps.nodes.MGeoNodesResp
-import io.suggest.maps.r.RcvrMarkersR
 import io.suggest.sc.search.m._
 import io.suggest.sc.styl.GetScCssF
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.spa.OptFastEq
-import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.univeq._
 
 import scalacss.ScalaCssReact._
@@ -38,8 +34,7 @@ class SearchR(
 
   protected[this] case class State(
                                     mapInitC            : ReactConnectProxy[MMapInitState],
-                                    rcvrsGeoC           : ReactConnectProxy[Pot[MGeoNodesResp]],
-                                    textOptC            : ReactConnectProxy[Option[MScSearchText]],
+                                    sTextC              : ReactConnectProxy[MScSearchText],
                                     tabC                : ReactConnectProxy[MSearchTab],
                                     isShownC            : ReactConnectProxy[Some[Boolean]],
                                   )
@@ -64,7 +59,7 @@ class SearchR(
           _renderDisplayCss( isShownProxy().value ),
 
           // Рендер текстового поля поиска.
-          s.textOptC { sTextR.apply },
+          s.sTextC { sTextR.apply },
 
           // Переключалка вкладок карта-теги
           s.tabC { tabsR.apply },
@@ -83,14 +78,7 @@ class SearchR(
                 _renderDisplayCss( currTab ==* MSearchTabs.GeoMap ),
 
                 // Рендер карты:
-                s.mapInitC { mapInitProxy =>
-                  searchMapR(mapInitProxy)(
-
-                    // Рендер шейпов и маркеров текущий узлов.
-                    s.rcvrsGeoC( RcvrMarkersR(_)() )
-
-                  )
-                }
+                s.mapInitC { searchMapR.apply }
               ),
 
               // Содержимое вкладки с тегами.
@@ -116,8 +104,7 @@ class SearchR(
     .initialStateFromProps { propsProxy =>
       State(
         mapInitC  = propsProxy.connect( _.mapInit ),
-        rcvrsGeoC = propsProxy.connect( _.rcvrsGeo ),
-        textOptC  = propsProxy.connect( _.text ),
+        sTextC    = propsProxy.connect( _.text ),
         tabC      = propsProxy.connect( _.currTab ),
         isShownC  = propsProxy.connect( p => Some(p.isShown) )( OptFastEq.OptValueEq )
       )

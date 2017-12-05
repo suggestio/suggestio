@@ -1,8 +1,10 @@
 package io.suggest.sc.search.m
 
 import diode.FastEq
-import japgolly.univeq.UnivEq
+import diode.data.Pot
+import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 
 /**
   * Suggest.io
@@ -12,9 +14,15 @@ import io.suggest.ueq.UnivEqUtil._
   */
 object MScSearchText {
 
+  def empty = apply()
+
+  /** Поддержка FastEq для инстансов [[MScSearchText]]. */
   implicit object MScSearchTextFastEq extends FastEq[MScSearchText] {
     override def eqv(a: MScSearchText, b: MScSearchText): Boolean = {
-      a.query ===* b.query
+      (a.focused           ==* b.focused) &&
+        (a.query          ===* b.query) &&
+        (a.searchQuery    ===* b.searchQuery) &&
+        (a.searchTimerId  ===* b.searchTimerId)
     }
   }
 
@@ -25,8 +33,22 @@ object MScSearchText {
 
 /** Класс состояния текстового поиска.
   *
-  * @param query Текстовый запрос, набираемый юзером.
+  * @param focused Визуальный фокус на этом input'е?
+  * @param query Состояние текста в текстовом поле на экране.
+  * @param searchQuery Последний фактический поисковый запрос.
+  *                  Сюда вписывается готоовое для поиска значение.
   */
 case class MScSearchText(
-                          query   : String
-                        )
+                          focused           : Boolean               = false,
+                          query             : String                = "",
+                          searchQuery       : Pot[String]           = Pot.empty,
+                          searchTimerId     : Option[Int]           = None
+                        ) {
+
+  def withFocused(focused: Boolean)       = copy(focused = focused)
+  def withQuery(query: String)            = copy(query = query)
+  def withSearchQueryTimer(searchQuery: Pot[String], searchTimerId: Option[Int]) = {
+    copy(searchQuery = searchQuery, searchTimerId = searchTimerId)
+  }
+
+}

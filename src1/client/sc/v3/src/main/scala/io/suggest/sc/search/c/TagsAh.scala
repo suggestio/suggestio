@@ -78,7 +78,6 @@ class TagsAh[M](
 
       updated( v2, fx )
 
-
     // Команда к запуску поиска тегов.
     case m: GetMoreTags =>
       val v0 = value
