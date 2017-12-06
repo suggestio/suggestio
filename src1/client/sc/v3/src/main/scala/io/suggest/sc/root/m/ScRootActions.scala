@@ -2,6 +2,7 @@ package io.suggest.sc.root.m
 
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.routes.scRoutes
+import io.suggest.sc.Sc3Pages.MainScreen
 import io.suggest.spa.DAction
 
 import scala.util.Try
@@ -38,3 +39,11 @@ case class GlError(glType: GeoLocType, error: PositionException) extends IScRoot
 
 /** Сработал таймер подавления нежелательных координат. */
 case class GlSuppressTimeout(generation: Long) extends IScRootAction
+
+
+/** Из js-роутера пришла весточка, что нужно обновить состояние из данных в URL. */
+case class RouteTo( mainScreen: MainScreen ) extends IScRootAction
+
+/** Команда к обновлению ссылки в адресе согласно обновившемуся состоянию. */
+case object ResetUrlRoute extends IScRootAction
+

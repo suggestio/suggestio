@@ -7,7 +7,7 @@ import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.inx.m.{GetIndex, HandleIndexResp, MScIndex, MWelcomeState}
 import io.suggest.sc.resp.MScRespActionTypes
-import io.suggest.sc.root.m.MScRoot
+import io.suggest.sc.root.m.{MScRoot, ResetUrlRoute}
 import io.suggest.sc.search.m.GetMoreTags
 
 import scala.util.Success
@@ -128,6 +128,9 @@ class IndexAh[M](
                   GetMoreTags(clear = true)
                 }
               }
+
+              // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
+              fxsAcc ::= Effect.action( ResetUrlRoute )
 
               // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
               fxsAcc ::= Effect.action {

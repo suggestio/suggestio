@@ -48,13 +48,13 @@ object Sc3Main {
         }
     }
 
-    val modules = new Sc3Modules
+    val modules = new Sc3Module
 
     // Подготовить центральную цепочку.
-    val mainCircuit = modules.sc3CircuitModule.sc3Circuit
+    val mainCircuit = modules.sc3Circuit
 
     mainCircuit
-      .wrap(m => m)( modules.sc3Module.scRootR.apply )
+      .wrap(m => m)( modules.scRootR.apply )
       .renderIntoDOM(rootDiv)
 
     jsRouterFut.andThen { case _ =>
@@ -62,7 +62,7 @@ object Sc3Main {
       Logging.LOGGERS ::= new ScRmeLogAppender
     }
 
-    val BodyCss = modules.scCssModule.getScCssF().Body
+    val BodyCss = modules.getScCssF().Body
     body.className += BodyCss.smBody.htmlClass //+ HtmlConstants.SPACE + BodyCss.BgLogo.ru.htmlClass
 
     // TODO Добавить обеление фона body.

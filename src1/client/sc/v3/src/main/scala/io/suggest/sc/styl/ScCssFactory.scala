@@ -10,12 +10,11 @@ package io.suggest.sc.styl
   */
 
 import com.softwaremill.macwire._
-import io.suggest.sc.Sc3CircuitModule
 
 /** Factory-модуль для сборки инстансов ScCss, который зависит от аргументов рендера,
   * но допускает использование как-то внешних зависимостей.
   */
-class ScCssFactoryModule {
+class ScCssFactory {
 
   /** Параметризованная сборка ScCss (здесь можно добавлять DI-зависимости). */
   def mkScCss(args: MScCssArgs): ScCss = {
@@ -24,12 +23,3 @@ class ScCssFactoryModule {
 
 }
 
-
-class ScCssModule( sc3CircuitModule: Sc3CircuitModule ) {
-
-  /** Функция-геттер для получения текущего инстанса  */
-  val getScCssF: GetScCssF = { () =>
-    sc3CircuitModule.sc3Circuit.scCss()
-  }
-
-}

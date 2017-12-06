@@ -15,14 +15,14 @@ import io.suggest.sc.grid.c.GridAdsAh
 import io.suggest.sc.grid.m.MGridS
 import io.suggest.sc.inx.c.{IndexAh, IndexMapAh, WelcomeAh}
 import io.suggest.sc.inx.m.{GetIndex, MScIndex}
-import io.suggest.sc.root.c.{GeoLocAh, NoOpAh, ScreenAh}
+import io.suggest.sc.root.c.{GeoLocAh, ScreenAh, TailAh}
 import io.suggest.sc.root.m._
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.router.c.JsRouterInitAh
 import io.suggest.sc.sc3.MSc3Init
 import io.suggest.sc.search.c.{STextAh, SearchAh, TagsAh}
 import io.suggest.sc.search.m.{MMapInitState, MScSearch}
-import io.suggest.sc.styl.{ScCss, ScCssFactoryModule}
+import io.suggest.sc.styl.{ScCss, ScCssFactory}
 import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
@@ -33,7 +33,7 @@ import io.suggest.spa.StateInp
 import org.scalajs.dom.Event
 import play.api.libs.json.Json
 
-import scala.concurrent.Promise
+import scala.concurrent.{Future, Promise}
 
 /**
   * Suggest.io
@@ -42,9 +42,10 @@ import scala.concurrent.Promise
   * Description: Main circuit новой выдачи. Отрабатывает весь интерфейс выдачи v3.
   */
 class Sc3Circuit(
-                  scCssFactoryModule    : ScCssFactoryModule,
+                  scCssFactoryModule    : ScCssFactory,
                   jdCssFactory          : JdCssFactory,
-                  api                   : ISc3Api
+                  api                   : ISc3Api,
+                  getRouterCtlF         : GetRouterCtlF,
                 )
   extends CircuitLog[MScRoot]
   with ReactConnector[MScRoot]
@@ -92,6 +93,8 @@ class Sc3Circuit(
 
 
   // Кэш zoom'ов модели:
+  private val rootRW = zoomRW(m => m) { (_, new2) => new2 }
+
   private val jsRouterRW = zoomRW(_.jsRouter) { _.withJsRouter(_) }
 
   private val indexRW = zoomRW(_.index) { _.withIndex(_) }
@@ -112,7 +115,6 @@ class Sc3Circuit(
   private val scScreenRW = devRW.zoomRW(_.screen) { _.withScreen(_) }
   private val scGeoLocRW = devRW.zoomRW(_.geoLoc) { _.withGeoLoc(_) }
 
-  private val rootRO = zoom(m => m)
 
   private val searchAdsArgsRO: ModelRO[MFindAdsReq] = zoom { mroot =>
     val inxState = mroot.index.state
@@ -142,7 +144,11 @@ class Sc3Circuit(
 
   // Кэш action-handler'ов
 
-  private val noOpAh = new NoOpAh( jsRouterRW )
+  // хвостовой контроллер -- в самом конце, когда остальные отказались обрабатывать сообщение.
+  private val tailAh = new TailAh(
+    modelRW     = rootRW,
+    routerCtlF  = getRouterCtlF
+  )
 
   private val searchAh = new SearchAh(
     modelRW       = searchRW
@@ -158,7 +164,7 @@ class Sc3Circuit(
   private val indexAh = new IndexAh(
     api     = api,
     modelRW = indexRW,
-    stateRO = rootRO
+    stateRO = rootRW
   )
 
   private lazy val mapAndIndexAh = {
@@ -201,7 +207,7 @@ class Sc3Circuit(
     // TODO Opt Здесь много вызовов model.value. Может быть эффективнее будет один раз прочитать всю модель, и сверять её разные поля по мере необходимости?
 
     // В самый хвост списка добавить дефолтовый обработчик для некоторых событий, которые можно дропать.
-    acc ::= noOpAh
+    acc ::= tailAh
 
     // Листенер инициализации роутера. Выкидывать его после окончания инициализации.
     if ( !jsRouterRW.value.isReady ) {
@@ -260,11 +266,15 @@ class Sc3Circuit(
         // Запустить инициализацию начального индекса выдачи.
         try {
           if (indexRW.value.resp.isEmpty) {
-            dispatch( GetIndex(withWelcome = true) )
+            Future {
+              dispatch(GetIndex(withWelcome = true))
+            }
           }
           // Запустить получения гео-маркеров с сервера.
           if (searchMapRcvrsPotRW.value.isEmpty) {
-            dispatch( RcvrMarkersInit )
+            Future {
+              dispatch( RcvrMarkersInit )
+            }
           }
           jsRouterReadyP.success( None )
         } catch {

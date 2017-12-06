@@ -78,6 +78,20 @@ object ReactDiodeUtil {
   /** Расширенное API для ActionHandler'ов. */
   implicit class ActionHandlerExt[M, T](val ah: ActionHandler[M, T]) extends AnyVal {
 
+    def updateMaybeSilent(silent: Boolean)(v2: T): ActionResult[M] = {
+      if (silent)
+        ah.updatedSilent(v2)
+      else
+        ah.updated(v2)
+    }
+
+    def updateMaybeSilentFx(silent: Boolean)(v2: T, fx: Effect): ActionResult[M] = {
+      if (silent)
+        ah.updatedSilent(v2, fx)
+      else
+        ah.updated(v2, fx)
+    }
+
     def optionalResult(v2Opt: Option[T] = None, fxOpt: Option[Effect] = None): ActionResult[M] = {
       (v2Opt, fxOpt) match {
         case (Some(v2), Some(fx)) => ah.updated(v2, fx)

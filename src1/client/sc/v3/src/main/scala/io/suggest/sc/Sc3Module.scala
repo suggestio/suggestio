@@ -2,12 +2,8 @@ package io.suggest.sc
 
 import com.softwaremill.macwire._
 import io.suggest.jd.render.JdRenderModule
-import io.suggest.sc.grid.GridModule
-import io.suggest.sc.hdr.HeaderModule
-import io.suggest.sc.inx.IndexModule
 import io.suggest.sc.root.v.{ScCssR, ScRootR}
-import io.suggest.sc.search.SearchModule
-import io.suggest.sc.styl.{ScCssFactoryModule, ScCssModule}
+import io.suggest.sc.styl.{GetScCssF, ScCssFactory}
 
 /**
   * Suggest.io
@@ -18,65 +14,70 @@ import io.suggest.sc.styl.{ScCssFactoryModule, ScCssModule}
   * Используется macwire, т.к. прост и лёгок: никаких runtime-зависимостей,
   * весь банальнейший код генерится во время компиляции.
   */
-class Sc3CircuitModule {
-
-  lazy val sc3Api = wire[Sc3ApiXhrImpl]
-
-  lazy val scCssFactoryModule = wire[ScCssFactoryModule]
-
-  lazy val jdRenderModule = wire[JdRenderModule]
-
-  import jdRenderModule.jdCssFactory
-
-  lazy val sc3Circuit = wire[Sc3Circuit]
-
-}
-
 
 /** DI-модуль линковки самого верхнего уровня sc3.
   * Конструктор для линковки тут не используется, чтобы можно было быстро дёрнуть инстанс.
   * Все аргументы-зависимости объявлены и линкуются внутри тела модуля.
   */
-class Sc3Modules {
-
-  // Ручная линковка модулей, т.к. из-за @Module кажется, что есть проблемы.
-
-  lazy val sc3CircuitModule = wire[Sc3CircuitModule]
-
-  lazy val scCssModule = wire[ScCssModule]
+class Sc3Module {
 
   lazy val jdRenderModule = wire[JdRenderModule]
 
+  import jdRenderModule._
 
-  // Deps: не используем конструктор класса, чтобы скрыть всё DI позади new/extends.
-
-  lazy val headerModule = wire[HeaderModule]
-
-  lazy val searchModule = wire[SearchModule]
-
-  lazy val indexModule = wire[IndexModule]
-
-  lazy val gridModule = wire[GridModule]
-
-  lazy val sc3Module = wire[Sc3Module]
-
-}
-
-
-class Sc3Module(
-                 scCssModule  : ScCssModule,
-                 indexModule  : IndexModule,
-                 gridModule   : GridModule
-               ) {
-
-  import scCssModule._
-  import indexModule._
-  import gridModule._
-
+  // sc css
+  /** Функция-геттер для получения текущего инстанса ScCss. */
+  val getScCssF: GetScCssF = { () =>
+    sc3Circuit.scCss()
+  }
+  lazy val scCssFactoryModule = wire[ScCssFactory]
   lazy val scCssR  = wire[ScCssR]
 
-  // sc3 data
 
+  // header
+  lazy val headerR = wire[hdr.v.HeaderR]
+  lazy val logoR = wire[hdr.v.LogoR]
+  lazy val menuBtnR = wire[hdr.v.MenuBtnR]
+  lazy val nodeNameR = wire[hdr.v.NodeNameR]
+  lazy val leftR = wire[hdr.v.LeftR]
+  lazy val rightR = wire[hdr.v.RightR]
+  lazy val searchBtnR = wire[hdr.v.SearchBtnR]
+
+
+  // index
+  lazy val welcomeR = wire[inx.v.wc.WelcomeR]
+  lazy val indexR = wire[inx.v.IndexR]
+
+
+  // grid
+  lazy val gridLoaderR = wire[grid.v.GridLoaderR]
+  lazy val gridCoreR = wire[grid.v.GridCoreR]
+  lazy val gridR   = wire[grid.v.GridR]
+
+
+  // search
+  lazy val sTextR = wire[search.v.STextR]
+  lazy val tabsR = wire[search.v.TabsR]
+  lazy val searchMapR = wire[search.v.SearchMapR]
+  lazy val tagsSearchR = wire[search.v.TagsSearchR]
+  lazy val searchR = wire[search.v.SearchR]
+
+
+  // sc3 top level
   lazy val scRootR = wire[ScRootR]
+
+  lazy val sc3Router = wire[Sc3Router]
+
+  /** Для удобного доступа к контроллеру роутера из view'ов (НЕ через props),
+    * нам нужна защита от циклических зависимостей.
+    * Эта функция решает все проблемы с циклической зависимостью во время DI-линковки.
+    */
+  lazy val getRouterCtlF: GetRouterCtlF = { () =>
+    sc3Router.routerCtl
+  }
+
+
+  lazy val sc3Api = wire[Sc3ApiXhrImpl]
+  lazy val sc3Circuit = wire[Sc3Circuit]
 
 }
