@@ -81,11 +81,11 @@ class STextAh[M](
 
         if (v0.searchQuery contains v0.query) {
           // Ничего не изменилось в итоге, активировать поиск не требуется.
-          updated(v2)
+          updatedSilent(v2)
         } else {
           // Что-то надо искать, запустить экшен поиска.
           val fx = Effect.action( ReDoSearch )
-          updated(v2, fx)
+          updatedSilent(v2, fx)
         }
 
       } else {

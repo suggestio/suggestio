@@ -1,5 +1,6 @@
 package io.suggest.sc.root.m
 
+import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.routes.scRoutes
 import io.suggest.spa.DAction
 
@@ -27,4 +28,13 @@ case object ScreenRszTimer extends IScRootAction
 
 
 /** Управление подсистемой */
-case class GeoOnOff(enabled: Boolean) extends IScRootAction
+case class GeoLocOnOff(enabled: Boolean) extends IScRootAction
+
+
+/** Есть координаты. */
+case class GlLocation(glType: GeoLocType, location: MGeoLoc) extends IScRootAction
+/** Ошибка получения координат. */
+case class GlError(glType: GeoLocType, error: PositionException) extends IScRootAction
+
+/** Сработал таймер подавления нежелательных координат. */
+case class GlSuppressTimeout(generation: Long) extends IScRootAction

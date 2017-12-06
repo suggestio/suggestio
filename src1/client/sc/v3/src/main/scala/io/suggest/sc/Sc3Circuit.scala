@@ -15,7 +15,7 @@ import io.suggest.sc.grid.c.GridAdsAh
 import io.suggest.sc.grid.m.MGridS
 import io.suggest.sc.inx.c.{IndexAh, IndexMapAh, WelcomeAh}
 import io.suggest.sc.inx.m.{GetIndex, MScIndex}
-import io.suggest.sc.root.c.{NoOpAh, ScreenAh}
+import io.suggest.sc.root.c.{GeoLocAh, NoOpAh, ScreenAh}
 import io.suggest.sc.root.m._
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.router.c.JsRouterInitAh
@@ -110,6 +110,7 @@ class Sc3Circuit(
 
   private val devRW = zoomRW(_.dev) { _.withDev(_) }
   private val scScreenRW = devRW.zoomRW(_.screen) { _.withScreen(_) }
+  private val scGeoLocRW = devRW.zoomRW(_.geoLoc) { _.withGeoLoc(_) }
 
   private val rootRO = zoom(m => m)
 
@@ -186,6 +187,12 @@ class Sc3Circuit(
     modelRW = searchTextRW
   )
 
+  private val geoLocAh = new GeoLocAh(
+    dispatcher  = this,
+    modelRW     = scGeoLocRW
+  )
+
+
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttp( scRoutes )
 
   override protected def actionHandler: HandlerFunction = {
@@ -228,6 +235,9 @@ class Sc3Circuit(
     val searchS = searchRW.value
     if (searchS.isTagsVisible)
       acc ::= tagsAh
+
+    // Геолокация довольно часто получает сообщения (когда активна), поэтому её -- тоже в начало списка контроллеров:
+    acc ::= geoLocAh
 
     // Экран отрабатываем в начале, но необходимость этого под вопросом.
     acc ::= screenAh

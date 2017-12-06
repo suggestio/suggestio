@@ -118,7 +118,7 @@ trait Watching extends GeoLocFsmStub {
       val watchers1Iter = sd0.watchers.iterator
 
       // Не подпадает ли текущая геолокация под нож подавления?
-      val isLocNotSuppressed = _stateData.suppressor.fold(true) { s =>
+      val isLocNotSuppressed = sd0.suppressor.fold(true) { s =>
         loc.wtype.precision >= s.minWatch.precision
       }
 

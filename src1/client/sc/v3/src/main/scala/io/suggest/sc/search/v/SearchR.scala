@@ -25,8 +25,8 @@ class SearchR(
                tagsSearchR    : TagsSearchR
              ) {
 
-  import MScSearchText.MScSearchTextFastEq
   import MMapInitState.MMapInitStateFastEq
+  import MScSearchText.MScSearchTextFastEq
   import MTagsSearchS.MTagsSearchFastEq
 
   type Props = ModelProxy[MScSearch]

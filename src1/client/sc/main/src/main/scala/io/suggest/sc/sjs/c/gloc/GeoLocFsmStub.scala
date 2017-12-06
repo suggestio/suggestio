@@ -51,7 +51,7 @@ trait GeoLocFsmStub extends SjsFsm with StateData {
     def _handleUnSubscribe(s: UnSubscribe): Unit = {
       // Стереть из карты подписчика.
       val sd0 = _stateData
-      for (subData0 <- sd0.subscribers.get( s.receiver )) {
+      for (_ <- sd0.subscribers.get( s.receiver )) {
         val subs2 = sd0.subscribers - s.receiver
 
         // Обновить данные состояния новой картой подписчиков.

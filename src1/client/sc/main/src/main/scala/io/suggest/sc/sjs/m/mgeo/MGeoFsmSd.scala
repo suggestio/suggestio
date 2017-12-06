@@ -14,7 +14,7 @@ import io.suggest.sjs.common.fsm.SjsFsm
   * @param subscribers Карта подписчиков.
   */
 case class MGeoFsmSd(
-                      watchers    : Map[GeoLocType, MglWatcher]  = Map.empty,
+                      watchers    : Map[GeoLocType, MglWatcher]   = Map.empty,
                       subscribers : Map[SjsFsm, SubscriberData]   = Map.empty,
                       suppressor  : Option[Suppressor]            = None
 )
