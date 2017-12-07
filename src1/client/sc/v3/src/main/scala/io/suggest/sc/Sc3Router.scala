@@ -68,11 +68,14 @@ class Sc3Router(
       .option  // Вообще ничего нет, всё равно это отхватываем.
       .withDefault( MainScreen.empty )
 
+    // Кэшируем компонент ScRootR вне функций роутера, т.к. за ним следит только Sc3Circuit, а не роутер.
+    val scRootWrapped = sc3Circuit.wrap(m => m)(scRootR.apply)
     (
       dynamicRouteCT[MainScreen](mainScreenRoute) ~> dynRender { page =>
-        println( page )
+        // Отправить распарсенные данные URL в circuit:
         sc3Circuit.dispatch( RouteTo(page) )
-        sc3Circuit.wrap(m => m)(scRootR.apply)
+        // Вернуть исходный компонент. circuit сама перестроит её при необходимости:
+        scRootWrapped
       }
     ).notFound {
       redirectToPage(MainScreen.empty)( Redirect.Replace )

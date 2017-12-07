@@ -5,7 +5,6 @@ import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.log.Logging
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
-import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.sjs.leaflet.Leaflet

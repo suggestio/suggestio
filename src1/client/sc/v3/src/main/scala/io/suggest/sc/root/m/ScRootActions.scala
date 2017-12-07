@@ -17,6 +17,9 @@ import scala.util.Try
 /** Интерфейс корневых экшенов. */
 sealed trait IScRootAction extends DAction
 
+/** Запустить инициализацию js-роутера. */
+case object JsRouterInit extends IScRootAction
+
 /** Сигнал основной цепочке о состоянии основного js-роутера. */
 case class JsRouterStatus( payload: Try[scRoutes.type] ) extends IScRootAction
 

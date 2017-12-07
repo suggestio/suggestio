@@ -10,6 +10,7 @@ import io.suggest.sc.index.MWelcomeInfo
 import io.suggest.sc.inx.m.MScIndex
 import io.suggest.sc.styl.MScCssArgs
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -22,12 +23,14 @@ object MScRoot {
 
   implicit case object MScRootFastEq extends FastEq[MScRoot] {
     override def eqv(a: MScRoot, b: MScRoot): Boolean = {
-      (a.dev      ===* b.dev) &&
-        (a.index  ===* b.index) &&
-        (a.grid   ===* b.grid) &&
-        (a.jsRouter eq b.jsRouter)
+      (a.dev          ===* b.dev) &&
+        (a.index      ===* b.index) &&
+        (a.grid       ===* b.grid) &&
+        (a.internals  ===* b.internals)
     }
   }
+
+  implicit def univEq: UnivEq[MScRoot] = UnivEq.derive
 
 }
 
@@ -36,12 +39,12 @@ case class MScRoot(
                     dev           : MScDev,
                     index         : MScIndex,
                     grid          : MGridS,
-                    jsRouter      : Pot[scRoutes.type]      = Pot.empty
+                    internals     : MScInternals = MScInternals.empty
                   ) {
 
   def withDev( dev: MScDev )                        = copy(dev = dev)
   def withIndex( index: MScIndex )                  = copy(index = index)
-  def withJsRouter( jsRouter: Pot[scRoutes.type] )  = copy(jsRouter = jsRouter)
+  def withInternals( internals: MScInternals )      = copy(internals = internals)
   def withGrid( grid: MGridS )                      = copy(grid = grid)
 
   def locEnv: MLocEnv = {

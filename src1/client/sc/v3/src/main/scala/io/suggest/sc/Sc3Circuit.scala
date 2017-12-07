@@ -14,10 +14,9 @@ import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.grid.c.GridAdsAh
 import io.suggest.sc.grid.m.MGridS
 import io.suggest.sc.inx.c.{IndexAh, IndexMapAh, WelcomeAh}
-import io.suggest.sc.inx.m.{GetIndex, MScIndex}
+import io.suggest.sc.inx.m.MScIndex
 import io.suggest.sc.root.c.{GeoLocAh, ScreenAh, TailAh}
 import io.suggest.sc.root.m._
-import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.router.c.JsRouterInitAh
 import io.suggest.sc.sc3.MSc3Init
 import io.suggest.sc.search.c.{STextAh, SearchAh, TagsAh}
@@ -49,13 +48,21 @@ class Sc3Circuit(
                 )
   extends CircuitLog[MScRoot]
   with ReactConnector[MScRoot]
-{
+{ circuit =>
 
   import MScIndex.MScIndexFastEq
+  import MScInternals.MScInternalsFastEq
+  import MGridS.MGridSFastEq
+  import MScDev.MScDevFastEq
+  import MScScreenS.MScScreenSFastEq
+  import MScGeoLoc.MScGeoFastEq
   import io.suggest.sc.inx.m.MWelcomeState.MWelcomeStateFastEq
   import io.suggest.sc.styl.MScCssArgs.MScCssArgsFastEq
 
   import MScSearch.MScSearchFastEq
+  import io.suggest.sc.search.m.MScSearchText.MScSearchTextFastEq
+  import MScRoot.MScRootFastEq
+  import MMapInitState.MMapInitStateFastEq
 
 
   override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.SC_FSM_EVENT_FAILED
@@ -95,7 +102,8 @@ class Sc3Circuit(
   // Кэш zoom'ов модели:
   private val rootRW = zoomRW(m => m) { (_, new2) => new2 }
 
-  private val jsRouterRW = zoomRW(_.jsRouter) { _.withJsRouter(_) }
+  private val internalsRW = zoomRW(_.internals) { _.withInternals(_) }
+  private val jsRouterRW = internalsRW.zoomRW(_.jsRouter) { _.withJsRouter(_) }
 
   private val indexRW = zoomRW(_.index) { _.withIndex(_) }
   private val indexWelcomeRW = indexRW.zoomRW(_.welcome) { _.withWelcome(_) }
@@ -212,6 +220,7 @@ class Sc3Circuit(
     // Листенер инициализации роутера. Выкидывать его после окончания инициализации.
     if ( !jsRouterRW.value.isReady ) {
       acc ::= new JsRouterInitAh(
+        circuit = circuit,
         modelRW = jsRouterRW
       )
     }
@@ -255,10 +264,7 @@ class Sc3Circuit(
 
   // Отработать инициализацию роутера в самом начале конструктора.
   {
-    val jsRouterFut = SrvRouter.ensureJsRouter()
-    jsRouterFut.andThen { case tryRes =>
-      dispatch( JsRouterStatus(tryRes) )
-    }
+    dispatch( JsRouterInit )
 
     val jsRouterReadyP = Promise[None.type]()
     val unSubscribeJsRouterF = subscribe( jsRouterRW ) { jsRouterPotProxy =>

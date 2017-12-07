@@ -1,6 +1,6 @@
 package io.suggest.sc.root.c
 
-import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import diode._
 import io.suggest.sc.grid.m.GridLoadAds
 import io.suggest.sc.inx.m.{GetIndex, WcTimeOut}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -18,8 +18,8 @@ import japgolly.univeq._
   * неактуальной, а сообщения всё ещё идут.
   */
 class TailAh[M](
-                 modelRW      : ModelRW[M, MScRoot],
-                 routerCtlF   : GetRouterCtlF
+                 modelRW              : ModelRW[M, MScRoot],
+                 routerCtlF           : GetRouterCtlF
                )
   extends ActionHandler(modelRW)
 { ah =>
@@ -43,6 +43,8 @@ class TailAh[M](
     // js-роутер заливает в состояние данные из URL.
     case m: RouteTo =>
       val v0 = value
+
+      // Считаем, что js-роутер уже готов. Если нет, то это сообщение должно было быть перехвачено в JsRouterInitAh.
 
       var gridNeedsReload = false
       var nodeIndexNeedsReload = v0.index.resp.isTotallyEmpty
@@ -96,6 +98,7 @@ class TailAh[M](
         // Ничего не изменилось.
         noChange
       }
+
 
 
     // Если юзер активно тыкал пальцем по экрану, то таймер сокрытия мог сработать после окончания приветствия.
