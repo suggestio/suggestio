@@ -265,11 +265,6 @@ class Sc3Circuit(
       if (jsRouterPotProxy.value.nonEmpty) {
         // Запустить инициализацию начального индекса выдачи.
         try {
-          if (indexRW.value.resp.isEmpty) {
-            Future {
-              dispatch(GetIndex(withWelcome = true))
-            }
-          }
           // Запустить получения гео-маркеров с сервера.
           if (searchMapRcvrsPotRW.value.isEmpty) {
             Future {

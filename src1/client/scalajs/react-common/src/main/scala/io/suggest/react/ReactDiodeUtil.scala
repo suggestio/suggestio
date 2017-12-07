@@ -72,6 +72,11 @@ object ReactDiodeUtil {
       pendingOpt.exists(_.startTime ==* startTime)
     }
 
+    /** Вообще пустой Pot без намёков на наполнение в ближайшем времени. */
+    def isTotallyEmpty: Boolean = {
+      pot.isEmpty && !pot.isPending
+    }
+
   }
 
 

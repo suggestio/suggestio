@@ -5,7 +5,7 @@ import io.suggest.sc.grid.m.GridLoadAds
 import io.suggest.sc.inx.m.{GetIndex, WcTimeOut}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.root.m.{MScRoot, ResetUrlRoute, RouteTo}
-import io.suggest.react.ReactDiodeUtil.ActionHandlerExt
+import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.GetRouterCtlF
 import io.suggest.sc.Sc3Pages.MainScreen
 import japgolly.univeq._
@@ -45,7 +45,7 @@ class TailAh[M](
       val v0 = value
 
       var gridNeedsReload = false
-      var nodeIndexNeedsReload = false
+      var nodeIndexNeedsReload = v0.index.resp.isTotallyEmpty
       val needUpdateUi = false
 
       var inxState = v0.index.state

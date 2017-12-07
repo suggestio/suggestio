@@ -43,6 +43,7 @@ class Sc3Router(
                ) {
 
   import Sc3Pages._
+  import io.suggest.sc.root.m.MScRoot.MScRootFastEq
 
   val routerCfg = RouterConfigDsl[Sc3Pages].buildConfig { dsl =>
 
@@ -82,8 +83,8 @@ class Sc3Router(
   val (router, routerCtl) = Router.componentAndCtl(
     // TODO Когда v3 выдача станет дефолтом, лучше будет использовать fromWindowOrigin() НАВЕРНОЕ.
     //BaseUrl.fromWindowOrigin / "#!",
-    BaseUrl.until_# + "#!",
-    routerCfg
+    baseUrl = BaseUrl.until_# + "#!",
+    cfg     = routerCfg
   )
 
 }

@@ -5,7 +5,7 @@ import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.log.Logging
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
-import japgolly.scalajs.react.vdom.Implicits._
+import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.sjs.leaflet.Leaflet
@@ -17,8 +17,6 @@ import io.suggest.sjs.leaflet.Leaflet
   * Description: Запускалка выдачи третьего поколения.
   */
 object Sc3Main {
-
-  import io.suggest.sc.root.m.MScRoot.MScRootFastEq
 
   /** Здесь начинается исполнение кода выдачи. */
   def main(args: Array[String]): Unit = {
@@ -50,11 +48,9 @@ object Sc3Main {
 
     val modules = new Sc3Module
 
-    // Подготовить центральную цепочку.
-    val mainCircuit = modules.sc3Circuit
-
-    mainCircuit
-      .wrap(m => m)( modules.scRootR.apply )
+    // Отрендерить компонент spa-роутера в целевой контейнер.
+    modules.sc3Router
+      .router()
       .renderIntoDOM(rootDiv)
 
     jsRouterFut.andThen { case _ =>

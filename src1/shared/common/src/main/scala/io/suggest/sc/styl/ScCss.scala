@@ -575,6 +575,7 @@ case class ScCss( args: IScCssArgs )
     * @see [[https://japgolly.github.io/scalacss/book/gotchas.html]]
     */
   initInnerObjects(
+    Root.root,
     Body.BgLogo.ru,
     Welcome.Bg.bgImg,
     Welcome.Fg.fgImg,
