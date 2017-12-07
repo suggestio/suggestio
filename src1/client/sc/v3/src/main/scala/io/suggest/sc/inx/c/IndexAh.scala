@@ -1,6 +1,7 @@
 package io.suggest.sc.inx.c
 
 import diode._
+import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
 import io.suggest.sc.grid.m.GridLoadAds
 import io.suggest.sc.ScConstants
@@ -165,7 +166,7 @@ class IndexAh[M](
               for (mwc <- mWcSFutOpt)
                 fxsAcc ::= mwc._1
 
-              val allFxs = fxsAcc.reduce(_ + _)
+              val allFxs = ReactDiodeUtil.mergeEffectsSet( fxsAcc ).get
 
               updated(v2, allFxs)
             }

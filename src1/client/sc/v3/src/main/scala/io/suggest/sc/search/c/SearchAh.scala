@@ -8,6 +8,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import japgolly.univeq._
 import io.suggest.react.ReactDiodeUtil._
+import io.suggest.sc.root.m.ResetUrlRoute
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
 
@@ -30,16 +31,19 @@ class SearchAh[M](
     case HSearchBtnClick =>
       val v2 = value.withIsShown( true )
 
-      if (v2.mapInit.ready) {
-        updated( v2 )
-      } else {
-        val fx = Effect {
+      // Аккаумулятор сайд-эффектов.
+      var fx: Effect = Effect.action( ResetUrlRoute )
+
+      // Требуется ли запусткать инициализацию карты?
+      if (!v2.mapInit.ready) {
+        fx += Effect {
           DomQuick
             .timeoutPromiseT(25)(InitSearchMap)
             .fut
         }
-        updated( v2, fx )
       }
+
+      updated( v2, fx )
 
 
     // Запуск инициализации гео.карты.

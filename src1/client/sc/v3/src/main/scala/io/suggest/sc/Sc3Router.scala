@@ -1,5 +1,6 @@
 package io.suggest.sc
 
+import io.suggest.geo.MGeoPoint
 import io.suggest.sc.root.m.RouteTo
 import io.suggest.sc.root.v.ScRootR
 import japgolly.scalajs.react.extra.router.{BaseUrl, Redirect, Router, RouterConfigDsl}
@@ -27,9 +28,10 @@ object Sc3Pages {
   }
   /** Роута для основного экрана с какими-то доп.аргументами. */
   case class MainScreen(
-                         nodeId     : Option[String] = None,
-                         generation : Option[Long]   = None
-                         //geoPoint   : Option[MGeoPoint]
+                         nodeId         : Option[String]      = None,
+                         generation     : Option[Long]        = None,
+                         searchOpened   : Boolean             = false
+                         //geoPoint       : Option[MGeoPoint]   = None
                        )
     extends Sc3Pages
 
@@ -63,7 +65,15 @@ class Sc3Router(
 
     val generationOptP = __mkOptRoute(keys.GENERATION_FN, long)
 
-    val mainScreenRoute = ("?" ~ rcvrIdOptP ~ generationOptP)
+    // TODO Вынести эту роуту в отдельную утиль для sjs-react-ext.
+    val booleanP = new RouteB[Boolean]("(true|false)", 1, g => Some(g(0).toBoolean), _.toString)
+
+    /** URL-парсер/генератор для выяснения состояния открытости вкладки  */
+    val searchOpenedP = __mkOptRoute(keys.CAT_SCR_OPENED_FN, booleanP)
+      .withDefault(false)
+
+
+    val mainScreenRoute = ("?" ~ rcvrIdOptP ~ generationOptP ~ searchOpenedP)
       .caseClass[MainScreen]
       .option  // Вообще ничего нет, всё равно это отхватываем.
       .withDefault( MainScreen.empty )

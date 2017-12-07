@@ -115,6 +115,15 @@ object ReactDiodeUtil {
       }
     }
 
+
+    def updatedMaybeEffect(v2: T, effectOpt: Option[Effect]): ActionResult[M] = {
+      effectOpt.fold( ah.updated(v2) ) { fx => ah.updated(v2, fx) }
+    }
+
+    def maybeEffectOnly(effectOpt: Option[Effect]): ActionResult[M] = {
+      effectOpt.fold( ah.noChange ) { ah.effectOnly }
+    }
+
   }
 
 }
