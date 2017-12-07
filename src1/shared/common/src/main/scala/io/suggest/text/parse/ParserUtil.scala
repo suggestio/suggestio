@@ -23,7 +23,9 @@ object ParserUtil {
     s.replace(',', '.').toDouble
   }
 
-  def doubleRE = """-?(\d+([.,]+\d*)?|\d*[.,]+\d+)""".r
+  /** Регэксп для человеческих double-чисел. */
+  final def DOUBLE_RE_STR = """-?(\d+([.,]+\d*)?|\d*[.,]+\d+)"""
+  final def doubleRE = DOUBLE_RE_STR.r
 
   /** Генератор регэкспов для форматированных float-чисел. */
   def floatGroupedRE(groupingSepRE: String, fracSepRE: String): String = {

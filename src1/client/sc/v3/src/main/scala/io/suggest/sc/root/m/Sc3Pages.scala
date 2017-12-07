@@ -1,5 +1,6 @@
 package io.suggest.sc.root.m
 
+import io.suggest.geo.MGeoPoint
 import io.suggest.sc.search.m.MSearchTab
 import japgolly.univeq.UnivEq
 
@@ -28,10 +29,10 @@ object Sc3Pages {
   /** Роута для основного экрана с какими-то доп.аргументами. */
   case class MainScreen(
                          nodeId         : Option[String]      = None,
-                         generation     : Option[Long]        = None,
                          searchOpened   : Boolean             = false,
-                         currSearchTab        : Option[MSearchTab]  = None
-                         //geoPoint       : Option[MGeoPoint]   = None
+                         currSearchTab  : Option[MSearchTab]  = None,
+                         generation     : Option[Long]        = None,
+                         locEnv         : Option[MGeoPoint]   = None,
                        )
     extends Sc3Pages
 

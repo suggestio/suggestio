@@ -21,9 +21,8 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
   }
   private def _setMapCenterTo(mgp: MGeoPoint, v0: MMapS = value) = {
     _maybeUpdateStateUsing(mgp, v0) {
-      _.copy(
-        centerInit = mgp,
-        centerReal = None
+      _.withCenterInitReal(
+        centerInit = mgp
       )
     }
   }

@@ -35,8 +35,14 @@ class TailAh[M](
       val v0 = value
       val inxState = v0.index.state
       val searchOpened = v0.index.search.isShown
+      val currRcvrId = inxState.currRcvrId
       val m = MainScreen(
-        nodeId        = inxState.currRcvrId,
+        nodeId        = currRcvrId,
+        // Не рендерить координаты в URL, если находишься в контексте узла, закрыта панель поиска и нет выбранного тега.
+        // Это улучшит кэширование, возможно улучшит приватность при обмене ссылками.
+        locEnv        = OptionUtil.maybe {
+          currRcvrId.isEmpty || v0.index.search.isShown || v0.index.search.tags.selectedId.nonEmpty
+        }(v0.index.search.mapInit.state.center),
         generation    = Some( inxState.generation ),
         searchOpened  = searchOpened,
         currSearchTab = OptionUtil.maybe(searchOpened)( v0.index.search.currTab )
@@ -55,26 +61,30 @@ class TailAh[M](
 
       var gridNeedsReload = false
       var nodeIndexNeedsReload = v0.index.resp.isTotallyEmpty
-      val needUpdateUi = false
+      var needUpdateUi = false
 
-      var inxState = v0.index.state
+      var inx = v0.index
 
       var fxsAcc = List.empty[Effect]
 
       // Проверка id узла. Если отличается, то надо перезаписать.
-      if (m.mainScreen.nodeId !=* inxState.currRcvrId) {
+      if (m.mainScreen.nodeId !=* inx.state.currRcvrId) {
         nodeIndexNeedsReload = true
-        inxState = inxState.withRcvrNodeId( m.mainScreen.nodeId.toList )
+        inx = inx.withState {
+          inx.state.withRcvrNodeId( m.mainScreen.nodeId.toList )
+        }
       }
 
       // Проверка поля generation
       for {
         generation2 <- m.mainScreen.generation
-        if generation2 !=* inxState.generation
+        if generation2 !=* inx.state.generation
       } {
         // generation не совпадает. Надо будет перезагрузить плитку.
         gridNeedsReload = true
-        inxState = inxState.withGeneration( generation2 )
+        inx = inx.withState(
+          inx.state.withGeneration( generation2 )
+        )
       }
 
       // Текущий открытый таб на панели поиска
@@ -87,12 +97,21 @@ class TailAh[M](
         fxsAcc ::= Effect.action( HSearchBtnClick )
       }
 
-      // Обновлённое состояние, которое может быть и не обновлялось:
-      lazy val v2 = v0.withIndex(
-        v0.index.withState(
-          inxState
+      // Смотрим координаты текущей точки.
+      for (currGeoPoint <- m.mainScreen.locEnv) {
+        needUpdateUi = true
+        inx = inx.withSearch(
+          inx.search.withMapInit(
+            inx.search.mapInit.withState(
+              inx.search.mapInit.state
+                .withCenterInitReal( currGeoPoint )
+            )
+          )
         )
-      )
+      }
+
+      // Обновлённое состояние, которое может быть и не обновлялось:
+      lazy val v2 = v0.withIndex( inx )
 
       // Принять решение о перезагрузке выдачи, если возможно.
       if (nodeIndexNeedsReload) {
@@ -121,6 +140,7 @@ class TailAh[M](
         val fxOpt = ReactDiodeUtil.mergeEffectsSet( fxsAcc )
         ah.maybeEffectOnly( fxOpt )
       }
+
 
 
     // Если юзер активно тыкал пальцем по экрану, то таймер сокрытия мог сработать после окончания приветствия.

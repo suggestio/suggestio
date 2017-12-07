@@ -125,7 +125,7 @@ object MGeoPoint {
 /** Дефолтовая, пошаренная между клиентом и сервером. */
 case class MGeoPoint(
                       // TODO Надо обменять порядок аргументов на (lon,lat).
-                      // TODO Надо это учесть в FormUtil.geoPointM, GeoPoint.FORMAT_ES_OBJECT, Implicits.MGEO_POINT_FORMAT_QS_OBJECT.
+                      // TODO Надо это учесть в FormUtil.geoPointM, GeoPoint.FORMAT_ES_OBJECT, Implicits.MGEO_POINT_FORMAT_QS_OBJECT, в Sc3Router
                       lat: Double,
                       lon: Double
                     ) {
