@@ -3,48 +3,25 @@ package io.suggest.sc
 import io.suggest.geo.MGeoPoint
 import io.suggest.sc.root.m.RouteTo
 import io.suggest.sc.root.v.ScRootR
+import io.suggest.sc.root.m.Sc3Pages
+import io.suggest.sc.root.m.Sc3Pages._
+import io.suggest.sc.search.m.MSearchTabs
 import japgolly.scalajs.react.extra.router.{BaseUrl, Redirect, Router, RouterConfigDsl}
 import japgolly.scalajs.react.extra.router.StaticDsl.RouteB
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 06.12.17 14:25
   * Description: react-роутер для [[Sc3Main]].
-  * Вынесен в трейт, чтобы не разводить кашу в коде.
+  * В отличии от scalajs-spa-tutorial, этот роутер живёт за пределами [[Sc3Main]], чтобы не разводить кашу в коде.
   */
-
-sealed trait Sc3Pages
-
-object Sc3Pages {
-
-  implicit def univEq: UnivEq[Sc3Pages] = UnivEq.derive
-
-  object MainScreen {
-    def empty = apply()
-    implicit def univEq: UnivEq[MainScreen] = UnivEq.derive
-  }
-  /** Роута для основного экрана с какими-то доп.аргументами. */
-  case class MainScreen(
-                         nodeId         : Option[String]      = None,
-                         generation     : Option[Long]        = None,
-                         searchOpened   : Boolean             = false
-                         //geoPoint       : Option[MGeoPoint]   = None
-                       )
-    extends Sc3Pages
-
-}
-
-
-/** Статическая сборка sjs-react-роутера. */
 class Sc3Router(
                  sc3Circuit   : Sc3Circuit,
                  scRootR      : ScRootR
                ) {
 
-  import Sc3Pages._
   import io.suggest.sc.root.m.MScRoot.MScRootFastEq
 
   val routerCfg = RouterConfigDsl[Sc3Pages].buildConfig { dsl =>
@@ -72,8 +49,12 @@ class Sc3Router(
     val searchOpenedP = __mkOptRoute(keys.CAT_SCR_OPENED_FN, booleanP)
       .withDefault(false)
 
+    val searchTabP = string("[" + MSearchTabs.values.iterator.map(_.value).mkString + "]+")
+      .pmap( MSearchTabs.withValueOpt )(_.value)
 
-    val mainScreenRoute = ("?" ~ rcvrIdOptP ~ generationOptP ~ searchOpenedP)
+    val currentTabP = __mkOptRoute(keys.SEARCH_TAB_FN, searchTabP)
+
+    val mainScreenRoute = ("?" ~ rcvrIdOptP ~ generationOptP ~ searchOpenedP ~ currentTabP)
       .caseClass[MainScreen]
       .option  // Вообще ничего нет, всё равно это отхватываем.
       .withDefault( MainScreen.empty )

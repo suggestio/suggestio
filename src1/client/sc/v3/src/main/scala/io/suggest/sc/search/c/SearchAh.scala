@@ -73,17 +73,18 @@ class SearchAh[M](
         // Смена текущей вкладки.
         val v2 = v0.withCurrTab( m.newTab )
 
+        var fx: Effect = Effect.action( ResetUrlRoute )
+
         // TODO Если на панель тегов, то надо запустить эффект поиска текущих (начальных) тегов.
         if ((m.newTab ==* MSearchTabs.Tags) && v2.tags.tagsReq.isEmpty) {
           // Переключение на неинициализированную панель тегов: запустить загрузку тегов.
-          val fx = Effect.action {
+          val getMoreTagsFx = Effect.action {
             GetMoreTags(clear = true)
           }
-          updated(v2, fx)
-        } else {
-          // Инициализация тегов не требуется.
-          updated(v2)
+          fx = getMoreTagsFx + fx
         }
+
+        updated(v2, fx)
       }
 
 

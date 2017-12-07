@@ -2,7 +2,7 @@ package io.suggest.sc.root.m
 
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.routes.scRoutes
-import io.suggest.sc.Sc3Pages.MainScreen
+import Sc3Pages.MainScreen
 import io.suggest.spa.DAction
 
 import scala.util.Try

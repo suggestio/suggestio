@@ -1,6 +1,7 @@
 package io.suggest.sc.root.c
 
 import diode._
+import io.suggest.common.empty.OptionUtil
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.sc.grid.m.GridLoadAds
 import io.suggest.sc.inx.m.{GetIndex, WcTimeOut}
@@ -8,8 +9,9 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.root.m.{MScRoot, ResetUrlRoute, RouteTo}
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.GetRouterCtlF
-import io.suggest.sc.Sc3Pages.MainScreen
+import io.suggest.sc.root.m.Sc3Pages.MainScreen
 import io.suggest.sc.hdr.m.HSearchBtnClick
+import io.suggest.sc.search.m.SwitchTab
 import japgolly.univeq._
 
 /**
@@ -32,10 +34,12 @@ class TailAh[M](
     case ResetUrlRoute =>
       val v0 = value
       val inxState = v0.index.state
+      val searchOpened = v0.index.search.isShown
       val m = MainScreen(
         nodeId        = inxState.currRcvrId,
         generation    = Some( inxState.generation ),
-        searchOpened  = v0.index.search.isShown
+        searchOpened  = searchOpened,
+        currSearchTab = OptionUtil.maybe(searchOpened)( v0.index.search.currTab )
       )
       val routerCtl = routerCtlF()
       // TODO Opt Проверить, изменилась ли ссылка.
@@ -72,6 +76,10 @@ class TailAh[M](
         gridNeedsReload = true
         inxState = inxState.withGeneration( generation2 )
       }
+
+      // Текущий открытый таб на панели поиска
+      for (currSearchTab <- m.mainScreen.currSearchTab)
+        fxsAcc ::= Effect.action( SwitchTab( currSearchTab ) )
 
       // Проверка поля searchOpened
       if (m.mainScreen.searchOpened !=* v0.index.search.isShown) {

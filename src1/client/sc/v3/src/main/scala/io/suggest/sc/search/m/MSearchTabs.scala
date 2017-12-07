@@ -1,6 +1,6 @@
 package io.suggest.sc.search.m
 
-import enumeratum._
+import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.i18n.MsgCodes
 import japgolly.univeq.UnivEq
 
@@ -12,17 +12,17 @@ import japgolly.univeq.UnivEq
   */
 
 /** Модель табов панели поиска. */
-object MSearchTabs extends Enum[MSearchTab] {
+object MSearchTabs extends StringEnum[MSearchTab] {
 
   /** Вкладка с географической картой. */
-  case object GeoMap extends MSearchTab {
+  case object GeoMap extends MSearchTab("g") {
     override def isFirst = true
     override def isLast  = false
     override def name    = MsgCodes.`Map`
   }
 
   /** Вкладка с тегами. */
-  case object Tags extends MSearchTab {
+  case object Tags extends MSearchTab("h") {
     override def isFirst = false
     override def isLast  = true
     override def name    = MsgCodes.`Tags`
@@ -36,7 +36,10 @@ object MSearchTabs extends Enum[MSearchTab] {
 
 }
 
-sealed abstract class MSearchTab extends EnumEntry {
+
+/** Класс одного элемента модели [[MSearchTabs]].
+  * Являет собой одну вкладку search-панели. */
+sealed abstract class MSearchTab(override val value: String) extends StringEnumEntry {
 
   /** Самая первая (левая) вкладка. */
   def isFirst : Boolean

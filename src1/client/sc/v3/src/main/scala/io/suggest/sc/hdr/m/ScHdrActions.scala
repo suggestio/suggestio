@@ -10,6 +10,9 @@ import io.suggest.spa.DAction
   */
 trait IScHdrAction extends DAction
 
+// TODO Сделать классами с флагами внутри. Чтобы точно знать, что подразумевалось под каждым кликом.
+// Это защитит от двойных кликов.
+
 /** Клик по кнопке поиска (справа). */
 case object HSearchBtnClick extends IScHdrAction
 
