@@ -46,7 +46,6 @@ class Sc3Module {
 
   // index
   lazy val welcomeR = wire[inx.v.wc.WelcomeR]
-  lazy val indexR = wire[inx.v.IndexR]
 
 
   // grid

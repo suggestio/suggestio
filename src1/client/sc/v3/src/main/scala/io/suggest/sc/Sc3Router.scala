@@ -70,7 +70,7 @@ class Sc3Router(
 
     val tagNodeIdP = __mkOptRoute(keys.TAG_NODE_ID_FN, nodeIdP)
 
-    val mainScreenRoute = ("?" ~ rcvrIdOptP ~ locEnvOptP ~ searchOpenedP ~ currentTabP ~ generationOptP ~ tagNodeIdP)
+    val mainScreenRoute = ("?" ~ rcvrIdOptP ~ searchOpenedP ~ currentTabP ~ generationOptP ~ tagNodeIdP ~ locEnvOptP)
       .caseClass[MainScreen]
       .option
       .withDefault( MainScreen.empty )

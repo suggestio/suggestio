@@ -2,11 +2,15 @@ package io.suggest.sc.root.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.sc.grid.v.GridR
+import io.suggest.sc.hdr.m.MHeaderStates
+import io.suggest.sc.hdr.v.HeaderR
 import io.suggest.sc.inx.m.MScIndex
-import io.suggest.sc.inx.v.IndexR
+import io.suggest.sc.inx.v.wc.WelcomeR
 import io.suggest.sc.root.m.MScRoot
+import io.suggest.sc.search.m.MScSearch
+import io.suggest.sc.search.v.SearchR
 import io.suggest.sc.styl.{GetScCssF, MScCssArgs}
-import io.suggest.spa.OptFastEq
+import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -20,22 +24,31 @@ import scalacss.ScalaCssReact._
   * Description: Корневой react-компонент для выдачи третьего поколения.
   */
 class ScRootR (
-                indexR                      : IndexR,
-                protected[this] val scCssR  : ScCssR,
-                val gridR                   : GridR,
-                getScCssF                   : GetScCssF
+                protected[this] val scCssR      : ScCssR,
+                val gridR                       : GridR,
+                searchR                         : SearchR,
+                protected[this] val headerR     : HeaderR,
+                protected[this] val welcomeR    : WelcomeR,
+                getScCssF                       : GetScCssF,
               ) {
 
   import MScCssArgs.MScCssArgsFastEq
   import MScIndex.MScIndexFastEq
   import gridR.GridPropsValFastEq
+  import MScSearch.MScSearchFastEq
+  import headerR.HeaderPropsValFastEq
+  import welcomeR.WelcomeRPropsValFastEq
+
 
   type Props = ModelProxy[MScRoot]
 
   protected[this] case class State(
                                     scCssArgsC     : ReactConnectProxy[MScCssArgs],
                                     indexPropsC    : ReactConnectProxy[MScIndex],
-                                    gridPropsOptC  : ReactConnectProxy[gridR.PropsVal]
+                                    gridPropsOptC  : ReactConnectProxy[gridR.PropsVal],
+                                    headerPropsC   : ReactConnectProxy[Option[headerR.PropsVal]],
+                                    wcPropsOptC    : ReactConnectProxy[Option[welcomeR.PropsVal]],
+                                    searchC        : ReactConnectProxy[MScSearch]
                                   )
 
 
@@ -51,8 +64,14 @@ class ScRootR (
           // Ссылаемся на стиль.
           scCss.Root.root,
 
-          // Компонент index'а выдачи:
-          s.indexPropsC { indexR.apply },
+          // Экран приветствия узла:
+          s.wcPropsOptC { welcomeR.apply },
+
+          // Компонент заголовка выдачи:
+          s.headerPropsC { headerR.apply },
+
+          // Правая панель (поиск)
+          s.searchC { searchR.apply },
 
           // Рендер плитки карточек узла:
           s.gridPropsOptC { gridR.apply }
@@ -69,12 +88,46 @@ class ScRootR (
       State(
         scCssArgsC  = propsProxy.connect(_.scCssArgs),
         indexPropsC = propsProxy.connect(_.index),
+
         gridPropsOptC = propsProxy.connect { mroot =>
           gridR.PropsVal(
             grid    = mroot.grid,
             fgColor = mroot.index.resp.toOption.flatMap(_.colors.fg)
           )
-        }
+        },
+
+        headerPropsC = propsProxy.connect { props =>
+          for {
+            resp <- props.index.resp.toOption
+          } yield {
+            headerR.PropsVal(
+              // TODO Определять маркер состояния на основе состояния полей в props.
+              hdrState  = if (props.index.search.isShown) {
+                MHeaderStates.Search
+              } else {
+                MHeaderStates.PlainGrid
+              },
+              node      = resp
+            )
+          }
+        },
+
+        wcPropsOptC = propsProxy.connect { props =>
+          for {
+            resp    <- props.index.resp.toOption
+            wcInfo  <- resp.welcome
+            wcState <- props.index.welcome
+          } yield {
+            welcomeR.PropsVal(
+              wcInfo   = wcInfo,
+              nodeName = resp.name,
+              state    = wcState
+            )
+          }
+        },
+
+        searchC = propsProxy.connect(_.index.search)
+
       )
     }
     .renderBackend[Backend]
