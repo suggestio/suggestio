@@ -5,6 +5,7 @@ import diode.react.ReactConnector
 import io.suggest.common.event.WndEvents
 import io.suggest.dev.JsScreenUtil
 import io.suggest.geo.MLocEnv
+import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
@@ -29,7 +30,8 @@ import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.sjs.common.vm.wnd.WindowVm
-import io.suggest.spa.StateInp
+import io.suggest.spa.{OptFastEq, StateInp}
+import org.scalajs.dom
 import org.scalajs.dom.Event
 import play.api.libs.json.Json
 
@@ -107,6 +109,7 @@ class Sc3Circuit(
   private val jsRouterRW = internalsRW.zoomRW(_.jsRouter) { _.withJsRouter(_) }
 
   private val indexRW = zoomRW(_.index) { _.withIndex(_) }
+  private val titleOptRO = indexRW.zoom( _.resp.toOption.flatMap(_.name) )( OptFastEq.Plain )
   private val indexWelcomeRW = indexRW.zoomRW(_.welcome) { _.withWelcome(_) }
   //private val indexStateRW = indexRW.zoomRW(_.state) { _.withState(_) }
 
@@ -304,6 +307,15 @@ class Sc3Circuit(
         case ex: Throwable =>
           LOG.error( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, ex, evtName )
       }
+    }
+
+
+    // Подписаться на обновление заголовка и обновлять заголовок.
+    // Т.к. document.head.title -- это голая строка, то делаем рендер строки прямо здесь.
+    subscribe( titleOptRO ) { titleOptRO =>
+      val title0 = MsgCodes.`Suggest.io`
+      val title1 = titleOptRO.value.fold(title0)(_ + " | " + title0)
+      dom.document.title = title1
     }
 
   }
