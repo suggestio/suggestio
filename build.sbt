@@ -232,6 +232,13 @@ lazy val reactSanfonaSjs = {
     .dependsOn( commonReactSjs )
 }
 
+/** Scala.js биндинги для react-sidebar компонентов. */
+lazy val reactSidebar = {
+  val name = "react-sidebar"
+  Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
+    .dependsOn( commonReactSjs )
+}
+
 /** Утиль для плитки на базе react. */
 lazy val gridSjs = {
   val name = "grid"
@@ -538,7 +545,7 @@ lazy val sio2 = {
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
       tinyMceSjs, reactTinyMceSjs,
       reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
-      reactGridLayoutSjs, reactStoneCutterSjs, gridSjs,
+      reactGridLayoutSjs, reactStoneCutterSjs, gridSjs, reactSidebar,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
       lkAdEditorSjs,
       asmCryptoJsSjs, asmCryptoSioSjs,

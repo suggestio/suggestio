@@ -189,6 +189,11 @@ object Common {
       */
     val REACT_SANFONA = "1.0.4"
 
+    /** Версия react-sidebar для быстрой организации боковых панелек.
+      * @see [[https://github.com/balloob/react-sidebar]]
+      */
+    val REACT_SIDEBAR = "2.3.2"
+
   }
 
 
