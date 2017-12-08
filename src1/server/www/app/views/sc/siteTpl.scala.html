@@ -5,6 +5,7 @@
 @import _root_.views.html.stuff._
 @import ctx.api.{cdn, ctxUtil, n2NodesUtil}
 @import io.suggest.sc.ScConstants.{Site => C}
+@import io.suggest.i18n.MsgCodes
 @import views.html.stuff._preLoaderLkTpl
 
 <!DOCTYPE html>
@@ -14,7 +15,8 @@
     @* SEO: Пытаемся рисовать разные заголовки на разных страницах. *@
     @_nodeTitleTpl(args.nodeOpt)
     @if(args.nodeOpt) { | }
-    Suggest.io</title>
+    @(MsgCodes.`Suggest.io`)
+  </title>
 
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 

@@ -1,8 +1,9 @@
 package io.suggest.sc.sjs.c.scfsm.ust
 
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
-import io.suggest.sc.sjs.m.msc.{MScSd, MUrlUtil}
+import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sjs.common.vm.wnd.WindowVm
+import io.suggest.text.UrlUtil2
 
 /**
   * Suggest.io
@@ -16,7 +17,7 @@ trait State2UrlT extends ScFsmStub {
   object State2Url {
 
     def currUrlQsEqualsTo(qsStr: String): Boolean = {
-      val currQsStr = MUrlUtil.clearUrlHash( _urlHash )
+      val currQsStr = UrlUtil2.clearUrlHash( _urlHash )
       currQsStr.contains(qsStr)
     }
 
@@ -30,7 +31,7 @@ trait State2UrlT extends ScFsmStub {
         if ( !currUrlQsEqualsTo(qsStr) ) {
           //val n = "\n"
           //println( "pushState: " + System.currentTimeMillis() + " " + url + Thread.currentThread().getStackTrace.iterator.take(5).mkString(n,n,n) )
-          hApi.pushState(null, "sio", Some(MUrlUtil.URL_HASH_PREFIX + qsStr))
+          hApi.pushState(null, "sio", Some(UrlUtil2.URL_HASH_PREFIX + qsStr))
         }
         //else log("pushCurrState(): Dup state")
       }

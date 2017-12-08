@@ -7,12 +7,13 @@ import io.suggest.sc.sjs.c.scfsm.foc.FocCommon
 import io.suggest.sc.sjs.c.scfsm.nav.NavUtil
 import io.suggest.sc.sjs.c.scfsm.search.SearchUtil
 import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
-import io.suggest.sc.sjs.m.msc.{MGen, MScSd, MUrlUtil, PopStateSignal}
+import io.suggest.sc.sjs.m.msc.{MGen, MScSd, PopStateSignal}
 import io.suggest.sc.sjs.m.msearch.{MTabSwitchSignal, MTabs}
 import io.suggest.sc.sjs.m.mtags.MTagInfo
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.text.UrlUtil2
 import org.scalajs.dom
 
 import scala.concurrent.Future
@@ -53,7 +54,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
   override def _parseFromUrlHash(urlHash: String): Option[SD] = {
     // Распарсить в карту токенов.
     val tokens: Map[String, String] = {
-      MUrlUtil.clearUrlHash( urlHash )
+      UrlUtil2.clearUrlHash( urlHash )
         .map( MScSd.parseFromQs )
         .filter( _.nonEmpty )
         .getOrElse(Map.empty)

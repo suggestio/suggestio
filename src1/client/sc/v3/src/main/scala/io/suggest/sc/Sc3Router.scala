@@ -1,5 +1,6 @@
 package io.suggest.sc
 
+import io.suggest.common.empty.OptionUtil
 import io.suggest.geo._
 import io.suggest.text.parse.ParserUtil
 import io.suggest.common.html.HtmlConstants.{`(`, `)`}
@@ -7,7 +8,11 @@ import io.suggest.sc.m.{RouteTo, Sc3Pages}
 import io.suggest.sc.m.Sc3Pages._
 import io.suggest.sc.m.search.MSearchTabs
 import io.suggest.sc.v.ScRootR
-import japgolly.scalajs.react.extra.router.{BaseUrl, Redirect, Router, RouterConfigDsl}
+import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.ErrorMsgs
+import io.suggest.sjs.common.vm.doc.DocumentVm
+import io.suggest.text.UrlUtil2
+import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl}
 import japgolly.scalajs.react.extra.router.StaticDsl.RouteB
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -21,9 +26,14 @@ import japgolly.scalajs.react.vdom.html_<^._
 class Sc3Router(
                  sc3Circuit   : Sc3Circuit,
                  scRootR      : ScRootR
-               ) {
+               )
+  extends Log
+{
 
   import io.suggest.sc.m.MScRoot.MScRootFastEq
+
+  val baseUrlSuffix = "#!"
+  val baseUrl = BaseUrl.until_# + baseUrlSuffix
 
   val routerCfg = RouterConfigDsl[Sc3Pages].buildConfig { dsl =>
 
@@ -69,31 +79,66 @@ class Sc3Router(
 
     val tagNodeIdP = __mkOptRoute(keys.TAG_NODE_ID_FN, nodeIdP)
 
-    val mainScreenRoute = ("?" ~ rcvrIdOptP ~ searchOpenedP ~ currentTabP ~ generationOptP ~ tagNodeIdP ~ locEnvOptP)
+    val mainScreenOptRoute = ("?" ~ rcvrIdOptP ~ searchOpenedP ~ currentTabP ~ generationOptP ~ tagNodeIdP ~ locEnvOptP)
       .caseClass[MainScreen]
       .option
-      .withDefault( MainScreen.empty )
+
+    // Ковырять значение
+    var isAlreadyUsedCanonical = false
+
+    val mainScreenDfltRoute = mainScreenOptRoute
+      .withDefault {
+        // Залезть в link rel=canonical и распарсить там чего-нибудь.
+        // Это используется при подключении сторонних доменов к s.io на уровне siteTpl.
+        val mainScrOpt = OptionUtil.maybeOpt( !isAlreadyUsedCanonical ) {
+          isAlreadyUsedCanonical = true
+          try {
+            val iter = for {
+              link        <- DocumentVm().head.links
+              if link.isCanonical
+              href        <- link.href
+              urlHash     <- UrlUtil2.getUrlHash(href)
+              if urlHash.nonEmpty
+              // TODO Надо нормальный парсер, не капризный к порядку или &
+              urlHash2 = urlHash.replace(baseUrlSuffix, "") + "&"
+              parsedOpt   <- mainScreenOptRoute.route.parse( Path(urlHash2) )
+              parsed      <- parsedOpt
+            } yield {
+              parsed
+            }
+            iter
+              .toStream
+              .headOption
+          } catch {
+            case ex: Throwable =>
+              LOG.error( ErrorMsgs.CANONICAL_URL_FAILURE, ex )
+              None
+          }
+        }
+        mainScrOpt.getOrElse( MainScreen.empty )
+      }
 
     // Кэшируем компонент ScRootR вне функций роутера, т.к. за ним следит только Sc3Circuit, а не роутер.
     val scRootWrapped = sc3Circuit.wrap(m => m)(scRootR.apply)
 
-    (
-      dynamicRouteCT[MainScreen](mainScreenRoute) ~> dynRender { page =>
-        // Отправить распарсенные данные URL в circuit:
-        sc3Circuit.dispatch( RouteTo(page) )
-        // Вернуть исходный компонент. circuit сама перестроит её при необходимости:
-        scRootWrapped
-      }
-    ).notFound {
-      redirectToPage(MainScreen.empty)( Redirect.Replace )
+    val mainScreenRule = dynamicRouteCT[MainScreen](mainScreenDfltRoute) ~> dynRender { page =>
+      // Отправить распарсенные данные URL в circuit:
+      sc3Circuit.dispatch( RouteTo(page) )
+      // Вернуть исходный компонент. circuit сама перестроит её при необходимости:
+      scRootWrapped
     }
+
+    mainScreenRule
+      .notFound {
+        redirectToPage(MainScreen.empty)( Redirect.Replace )
+      }
   }
 
 
   val (router, routerCtl) = Router.componentAndCtl(
     // TODO Когда v3 выдача станет дефолтом, лучше будет использовать fromWindowOrigin() НАВЕРНОЕ.
     //BaseUrl.fromWindowOrigin / "#!",
-    baseUrl = BaseUrl.until_# + "#!",
+    baseUrl = baseUrl,
     cfg     = routerCfg
   )
 

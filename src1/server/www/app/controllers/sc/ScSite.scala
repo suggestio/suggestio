@@ -162,7 +162,16 @@ trait ScSite
     /** Кастомное опциональное состояние выдачи, которое должно быть отрендерено прямо в шаблоне и
       * прочитано оттуда выдачей. Изначальное появилось для передачи adnId (id текущего узла-ресивера),
       * но сразу было переимплеменчено в более универсальный инструмент. */
-    def customScStateOptFut: Future[Option[ScJsState]]
+    def customScStateOptFut: Future[Option[ScJsState]] = {
+      for {
+        nodeOpt <- nodeOptFutVal
+      } yield {
+        for (mnode <- nodeOpt) yield {
+          ScJsState(adnId = mnode.id)
+        }
+      }
+    }
+
 
     /** Значение флага sysRender, пробрасывается напрямую в ScSiteArgs. */
     def _syncRender: Boolean
@@ -274,17 +283,6 @@ trait ScSite
       Future.successful(html)
     }
 
-    /** Сформулировать данные для начального состояния выдачи. */
-    override def customScStateOptFut: Future[Option[ScJsState]] = {
-      for {
-        nodeOpt <- nodeOptFutVal
-      } yield {
-        for (mnode <- nodeOpt) yield {
-          ScJsState(adnId = mnode.id)
-        }
-      }
-    }
-
     override def _syncRender = false
 
   }
@@ -347,17 +345,6 @@ trait ScSite
           jsMessagesJs  = jsMessagesJs
         )
         _scriptV3Tpl(scriptRenderArgs)(ctx)
-      }
-    }
-
-    /** Сформулировать данные для начального состояния выдачи. */
-    override def customScStateOptFut: Future[Option[ScJsState]] = {
-      for {
-        nodeOpt <- nodeOptFutVal
-      } yield {
-        for (mnode <- nodeOpt) yield {
-          ScJsState(adnId = mnode.id)
-        }
       }
     }
 

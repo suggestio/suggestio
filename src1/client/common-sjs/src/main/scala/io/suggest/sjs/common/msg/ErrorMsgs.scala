@@ -167,4 +167,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def GRID_CONFIGURATION_INVALID       = E(76)
 
+  def CANONICAL_URL_FAILURE            = E(77)
+
 }
