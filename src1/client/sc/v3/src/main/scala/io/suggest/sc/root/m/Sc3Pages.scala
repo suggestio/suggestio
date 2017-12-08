@@ -29,10 +29,11 @@ object Sc3Pages {
   /** Роута для основного экрана с какими-то доп.аргументами. */
   case class MainScreen(
                          nodeId         : Option[String]      = None,
-                         searchOpened   : Boolean             = false,
-                         currSearchTab  : Option[MSearchTab]  = None,
-                         generation     : Option[Long]        = None,
                          locEnv         : Option[MGeoPoint]   = None,
+                         searchOpened   : Boolean             = false,
+                         searchTab      : Option[MSearchTab]  = None,
+                         generation     : Option[Long]        = None,
+                         tagNodeId      : Option[String]      = None,
                        )
     extends Sc3Pages
 

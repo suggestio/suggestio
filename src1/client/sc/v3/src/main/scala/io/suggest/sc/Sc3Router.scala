@@ -57,31 +57,6 @@ class Sc3Router(
 
     val currentTabP = __mkOptRoute(keys.SEARCH_TAB_FN, searchTabP)
 
-    // TODO Вынести эту роуту в отдельную утиль для sjs-react-ext.
-    /*
-    val doubleP = new RouteB[Double](
-      regex = `(` + ParserUtil.DOUBLE_RE_STR + `)`,
-      matchGroups = 1,
-      parse = { g =>
-        println(g, g(0))
-        println(g(0).toDouble)
-        Some(g(0).toDouble)
-      },
-      build = _.toString
-    )
-
-    val latitudeP = doubleP.filter { lat =>
-      val r = Lat.isValid(lat)
-      println(lat, r)
-      r
-    }
-    val longtitudeP = doubleP.filter { lon =>
-      val r = Lon.isValid(lon)
-      println(lon, r)
-      r
-    }
-    */
-
     val mGeoPointP = string {
       val doubleRE = ParserUtil.DOUBLE_RE_STR
       `(` + doubleRE + """\""" + GeoConstants.Qs.LAT_LON_DELIM_FN + doubleRE + `)`
@@ -93,9 +68,11 @@ class Sc3Router(
 
     val locEnvOptP = __mkOptRoute(keys.LOC_ENV_FN, mGeoPointP)
 
-    val mainScreenRoute = ("?" ~ rcvrIdOptP ~ searchOpenedP ~ currentTabP ~ generationOptP ~ locEnvOptP )
+    val tagNodeIdP = __mkOptRoute(keys.TAG_NODE_ID_FN, nodeIdP)
+
+    val mainScreenRoute = ("?" ~ rcvrIdOptP ~ locEnvOptP ~ searchOpenedP ~ currentTabP ~ generationOptP ~ tagNodeIdP)
       .caseClass[MainScreen]
-      .option  // Вообще ничего нет, всё равно это отхватываем.
+      .option
       .withDefault( MainScreen.empty )
 
     // Кэшируем компонент ScRootR вне функций роутера, т.к. за ним следит только Sc3Circuit, а не роутер.

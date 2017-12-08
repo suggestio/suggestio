@@ -11,7 +11,7 @@ import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.GetRouterCtlF
 import io.suggest.sc.root.m.Sc3Pages.MainScreen
 import io.suggest.sc.hdr.m.HSearchBtnClick
-import io.suggest.sc.search.m.SwitchTab
+import io.suggest.sc.search.m.{SwitchTab, TagClick}
 import japgolly.univeq._
 
 /**
@@ -45,7 +45,8 @@ class TailAh[M](
         }(v0.index.search.mapInit.state.center),
         generation    = Some( inxState.generation ),
         searchOpened  = searchOpened,
-        currSearchTab = OptionUtil.maybe(searchOpened)( v0.index.search.currTab )
+        searchTab = OptionUtil.maybe(searchOpened)( v0.index.search.currTab ),
+        tagNodeId     = v0.index.search.tags.selectedId
       )
       val routerCtl = routerCtlF()
       // TODO Opt Проверить, изменилась ли ссылка.
@@ -88,7 +89,7 @@ class TailAh[M](
       }
 
       // Текущий открытый таб на панели поиска
-      for (currSearchTab <- m.mainScreen.currSearchTab)
+      for (currSearchTab <- m.mainScreen.searchTab)
         fxsAcc ::= Effect.action( SwitchTab( currSearchTab ) )
 
       // Проверка поля searchOpened
@@ -108,6 +109,14 @@ class TailAh[M](
             )
           )
         )
+      }
+
+      // Смотрим текущий выделенный тег
+      for (tagNodeId <- m.mainScreen.tagNodeId) {
+        // Имитируем клик по тегу, да и всё.
+        fxsAcc ::= Effect.action {
+          TagClick( tagNodeId )
+        }
       }
 
       // Обновлённое состояние, которое может быть и не обновлялось:
