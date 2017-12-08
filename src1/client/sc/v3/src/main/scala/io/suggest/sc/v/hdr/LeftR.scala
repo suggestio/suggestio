@@ -1,6 +1,6 @@
-package io.suggest.sc.hdr.v
+package io.suggest.sc.v.hdr
 
-import io.suggest.sc.hdr.m.HLeftBtnClick
+import io.suggest.sc.m.hdr.HLeftBtnClick
 import io.suggest.sc.styl.GetScCssF
 
 /**

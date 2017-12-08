@@ -13,7 +13,7 @@ import io.suggest.sc.grid.m._
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
-import io.suggest.sc.inx.m.HandleIndexResp
+import io.suggest.sc.m.inx.HandleIndexResp
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.tile.{GridCalc, MGridCalcConf, TileConstants}
 import japgolly.univeq._

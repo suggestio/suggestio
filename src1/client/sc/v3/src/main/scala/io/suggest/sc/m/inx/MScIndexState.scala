@@ -1,9 +1,8 @@
-package io.suggest.sc.inx.m
+package io.suggest.sc.m.inx
 
 import diode.FastEq
-import io.suggest.geo.MGeoPoint
-import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
 
 /**
   * Suggest.io

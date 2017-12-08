@@ -1,6 +1,6 @@
-package io.suggest.sc.inx.c
+package io.suggest.sc.c.inx
 
-import io.suggest.sc.inx.m.WcTimeOut
+import io.suggest.sc.m.inx.WcTimeOut
 import io.suggest.sjs.common.controller.DomQuick
 
 import scala.concurrent.Future

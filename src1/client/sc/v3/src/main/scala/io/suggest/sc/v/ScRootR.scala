@@ -2,14 +2,14 @@ package io.suggest.sc.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.sc.grid.v.GridR
-import io.suggest.sc.hdr.m.MHeaderStates
-import io.suggest.sc.hdr.v.HeaderR
-import io.suggest.sc.inx.m.MScIndex
-import io.suggest.sc.inx.v.wc.WelcomeR
 import io.suggest.sc.m.MScRoot
+import io.suggest.sc.m.hdr.MHeaderStates
+import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.search.m.MScSearch
 import io.suggest.sc.search.v.SearchR
 import io.suggest.sc.styl.{GetScCssF, MScCssArgs}
+import io.suggest.sc.v.hdr.HeaderR
+import io.suggest.sc.v.inx.WelcomeR
 import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._

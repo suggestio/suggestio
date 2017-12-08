@@ -1,11 +1,11 @@
-package io.suggest.sc.hdr.v
+package io.suggest.sc.v.hdr
 
 import diode.react.ModelProxy
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.styl.GetScCssF
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 
 import scalacss.ScalaCssReact._
 

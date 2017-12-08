@@ -1,4 +1,4 @@
-package io.suggest.sc.hdr.m
+package io.suggest.sc.m.hdr
 
 import enumeratum._
 

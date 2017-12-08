@@ -1,8 +1,8 @@
-package io.suggest.sc.inx.c
+package io.suggest.sc.c.inx
 
+import io.suggest.routes.JsRoutes_ScControllers._
 import io.suggest.routes.scRoutes
 import io.suggest.sc.index.MScIndexArgs
-import io.suggest.routes.JsRoutes_ScControllers._
 import io.suggest.sc.router.c.ScJsRoutesUtil
 import io.suggest.sc.sc3.MSc3Resp
 

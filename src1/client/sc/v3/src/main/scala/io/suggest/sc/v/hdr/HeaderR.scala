@@ -1,16 +1,16 @@
-package io.suggest.sc.hdr.v
+package io.suggest.sc.v.hdr
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColorData
-import io.suggest.sc.hdr.m.{MHeaderState, MHeaderStates}
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.VdomElement
-import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.sc.m.hdr.{MHeaderState, MHeaderStates}
 import io.suggest.sc.sc3.MSc3IndexResp
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.spa.OptFastEq
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.html_<^._
 
 import scalacss.ScalaCssReact._
 

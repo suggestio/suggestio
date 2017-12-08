@@ -1,18 +1,17 @@
-package io.suggest.sc.hdr.v
+package io.suggest.sc.v.hdr
 
 import diode.react.ModelProxy
 import io.suggest.color.MColorData
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.sc.m.hdr.IScHdrAction
+import io.suggest.svg.SvgConst
 import japgolly.scalajs.react.vdom.VdomElement
-import japgolly.scalajs.react.vdom.svg_<^._
 import japgolly.scalajs.react.vdom.html_<^.{< => html, ^ => htmlAttrs}
+import japgolly.scalajs.react.vdom.svg_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 
 import scalacss.ScalaCssReact._
-import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sc.hdr.m.IScHdrAction
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.svg.SvgConst
-
 import scalacss.internal.StyleA
 
 /**

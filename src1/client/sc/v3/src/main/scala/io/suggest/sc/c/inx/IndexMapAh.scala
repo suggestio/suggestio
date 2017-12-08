@@ -1,8 +1,8 @@
-package io.suggest.sc.inx.c
+package io.suggest.sc.c.inx
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.maps.m.{MapDragEnd, ReqRcvrPopup}
-import io.suggest.sc.inx.m.{GetIndex, MScIndex, MapDragEndDelayed, MapRcvrClickDelayed}
+import io.suggest.sc.m.inx.{GetIndex, MScIndex, MapDragEndDelayed, MapRcvrClickDelayed}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 

@@ -1,4 +1,4 @@
-package io.suggest.sc.inx.m
+package io.suggest.sc.m.inx
 
 import diode.FastEq
 import japgolly.univeq._

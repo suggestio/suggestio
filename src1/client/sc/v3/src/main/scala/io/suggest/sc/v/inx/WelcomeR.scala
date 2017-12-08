@@ -1,20 +1,19 @@
-package io.suggest.sc.inx.v.wc
+package io.suggest.sc.v.inx
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.dev.MScreen
+import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MWelcomeInfo
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import io.suggest.sc.m.inx.{MWelcomeState, WcClick}
+import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.v.hdr.NodeNameR
+import io.suggest.spa.OptFastEq.Plain
+import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sc.ScConstants
-import io.suggest.sc.hdr.v.NodeNameR
-import io.suggest.sc.inx.m.{MWelcomeState, WcClick}
-import io.suggest.spa.OptFastEq.Plain
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.styl.GetScCssF
-import io.suggest.ueq.UnivEqUtil._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 
 import scalacss.ScalaCssReact._
 

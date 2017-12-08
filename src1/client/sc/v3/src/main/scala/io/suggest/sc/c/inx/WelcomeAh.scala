@@ -1,8 +1,8 @@
-package io.suggest.sc.inx.c
+package io.suggest.sc.c.inx
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.sc.ScConstants
-import io.suggest.sc.inx.m.{MWelcomeState, WcClick, WcTimeOut}
+import io.suggest.sc.m.inx.{MWelcomeState, WcClick, WcTimeOut}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**

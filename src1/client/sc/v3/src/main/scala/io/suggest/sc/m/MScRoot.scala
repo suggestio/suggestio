@@ -5,8 +5,8 @@ import io.suggest.geo.{MGeoLoc, MLocEnv}
 import io.suggest.media.IMediaInfo
 import io.suggest.sc.grid.m.MGridS
 import io.suggest.sc.index.MWelcomeInfo
-import io.suggest.sc.inx.m.MScIndex
 import io.suggest.sc.m.dev.MScDev
+import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.styl.MScCssArgs
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq

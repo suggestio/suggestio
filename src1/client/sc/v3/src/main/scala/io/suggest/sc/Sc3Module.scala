@@ -4,6 +4,8 @@ import com.softwaremill.macwire._
 import io.suggest.jd.render.JdRenderModule
 import io.suggest.sc.styl.{GetScCssF, ScCssFactory}
 import io.suggest.sc.v._
+import io.suggest.sc.v.hdr._
+import io.suggest.sc.v.inx.WelcomeR
 
 /**
   * Suggest.io
@@ -35,17 +37,17 @@ class Sc3Module {
 
 
   // header
-  lazy val headerR = wire[hdr.v.HeaderR]
-  lazy val logoR = wire[hdr.v.LogoR]
-  lazy val menuBtnR = wire[hdr.v.MenuBtnR]
-  lazy val nodeNameR = wire[hdr.v.NodeNameR]
-  lazy val leftR = wire[hdr.v.LeftR]
-  lazy val rightR = wire[hdr.v.RightR]
-  lazy val searchBtnR = wire[hdr.v.SearchBtnR]
+  lazy val headerR = wire[HeaderR]
+  lazy val logoR = wire[LogoR]
+  lazy val menuBtnR = wire[MenuBtnR]
+  lazy val nodeNameR = wire[NodeNameR]
+  lazy val leftR = wire[LeftR]
+  lazy val rightR = wire[RightR]
+  lazy val searchBtnR = wire[SearchBtnR]
 
 
   // index
-  lazy val welcomeR = wire[inx.v.wc.WelcomeR]
+  lazy val welcomeR = wire[WelcomeR]
 
 
   // grid

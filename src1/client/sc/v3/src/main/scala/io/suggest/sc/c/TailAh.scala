@@ -6,10 +6,10 @@ import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.GetRouterCtlF
 import io.suggest.sc.grid.m.GridLoadAds
-import io.suggest.sc.hdr.m.HSearchBtnClick
-import io.suggest.sc.inx.m.{GetIndex, WcTimeOut}
 import io.suggest.sc.m.{MScRoot, ResetUrlRoute, RouteTo}
 import io.suggest.sc.m.Sc3Pages.MainScreen
+import io.suggest.sc.m.hdr.HSearchBtnClick
+import io.suggest.sc.m.inx.{GetIndex, WcTimeOut}
 import io.suggest.sc.search.m.{SwitchTab, TagClick}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
