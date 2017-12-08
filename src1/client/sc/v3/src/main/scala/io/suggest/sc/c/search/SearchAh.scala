@@ -23,7 +23,7 @@ class SearchAh[M](
                  )
   extends ActionHandler( modelRW )
   with Log
-{
+{ ah =>
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -43,7 +43,7 @@ class SearchAh[M](
         }
       }
 
-      updated( v2, fx )
+      ah.updateMaybeSilentFx(m.silent)(v2, fx)
 
 
     // Запуск инициализации гео.карты.

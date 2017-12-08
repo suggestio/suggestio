@@ -16,7 +16,7 @@ trait IScHdrAction extends DAction
 /** Клик по кнопке поиска (справа) с указанной целью.
   * @param open true - для открытия поиска. false -- для закрытия.
   */
-case class HSearchBtnClick(open: Boolean) extends IScHdrAction
+case class HSearchBtnClick(open: Boolean, silent: Boolean = false) extends IScHdrAction
 
 /** Клик по кнопке меню (слева). */
 case object HMenuBtnClick extends IScHdrAction

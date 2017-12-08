@@ -51,50 +51,44 @@ class SearchR(
       val scCss = getScCssF()
       val SearchCSS = scCss.Search
 
-      //s.isShownC { isShownProxy =>
-        <.div(
-          SearchCSS.panel,
+      <.div(
+        SearchCSS.panel,
 
-          // Скрывать/показывать панель.
-          //_renderDisplayCss( isShownProxy().value ),
-          _renderDisplayCss( true ),
+        // Рендер текстового поля поиска.
+        s.sTextC { sTextR.apply },
 
-          // Рендер текстового поля поиска.
-          s.sTextC { sTextR.apply },
+        // Переключалка вкладок карта-теги
+        s.tabC { tabsR.apply },
 
-          // Переключалка вкладок карта-теги
-          s.tabC { tabsR.apply },
+        // Карта.
 
-          // Карта.
+        // Тело текущего таба.
+        s.tabC { currTabProxy =>
+          val currTab = currTabProxy.value
 
-          // Тело текущего таба.
-          s.tabC { currTabProxy =>
-            val currTab = currTabProxy.value
+          // Контейнер всех содержимых вкладок.
+          <.div(
 
-            // Контейнер всех содержимых вкладок.
+            // Содержимое вкладки с картой.
             <.div(
+              _renderDisplayCss( currTab ==* MSearchTabs.GeoMap ),
 
-              // Содержимое вкладки с картой.
-              <.div(
-                _renderDisplayCss( currTab ==* MSearchTabs.GeoMap ),
+              // Рендер карты:
+              s.mapInitC { searchMapR.apply }
+            ),
 
-                // Рендер карты:
-                s.mapInitC { searchMapR.apply }
-              ),
+            // Содержимое вкладки с тегами.
+            <.div(
+              _renderDisplayCss( currTab ==* MSearchTabs.Tags ),
 
-              // Содержимое вкладки с тегами.
-              <.div(
-                _renderDisplayCss( currTab ==* MSearchTabs.Tags ),
-
-                props.wrap(_.tags) { tagsSearchR.apply }
-              )
-
+              props.wrap(_.tags) { tagsSearchR.apply }
             )
 
-          }
+          )
 
-        )
-      //}
+        }
+
+      )
 
     }
 

@@ -60,6 +60,7 @@ class SearchMapR(
     def render(mapInitProxy: Props, s: State): VdomElement = {
       val mapCSS = getScCssF().Search.Tabs.MapTab
       val mapInit = mapInitProxy.value
+      val _stopPropagationF = ReactCommonUtil.stopPropagationCB _
 
       <.div(
         mapCSS.outer,
@@ -69,6 +70,10 @@ class SearchMapR(
 
           <.div(
             mapCSS.inner,
+            ^.onTouchStart  ==> _stopPropagationF,
+            ^.onTouchEnd    ==> _stopPropagationF,
+            ^.onTouchMove   ==> _stopPropagationF,
+            ^.onTouchCancel ==> _stopPropagationF,
 
             if (!mapInit.ready) {
               // Инициализация карты пока не запущена даже.

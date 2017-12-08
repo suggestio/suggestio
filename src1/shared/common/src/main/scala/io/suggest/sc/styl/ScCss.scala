@@ -338,7 +338,6 @@ case class ScCss( args: IScCssArgs )
       width( 320.px ),
       height( 100.%% )
     )
-    //_styleAddClass( _PANEL )
 
     /** CSS-класс заголовка внутри панели поиска. */
     //val panelHeader = _styleAddClasses( _PANEL + "_header" )

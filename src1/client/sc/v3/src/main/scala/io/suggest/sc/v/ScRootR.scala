@@ -57,7 +57,7 @@ class ScRootR (
   class Backend($: BackendScope[Props, State]) {
 
     private def _onOpenSearchSidebar(opened: Boolean): Callback = {
-      dispatchOnProxyScopeCB( $, HSearchBtnClick(opened) )
+      dispatchOnProxyScopeCB( $, HSearchBtnClick(opened, silent = true) )
     }
     private val _onOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb( _onOpenSearchSidebar )
 
@@ -83,7 +83,6 @@ class ScRootR (
             override val transitions  = true
             override val touch        = true
             override val pullRight    = true
-            //override val sidebarClassName = scCss.Search.panel.htmlClass
             override val styles       = searchStyles
           }
         )(
