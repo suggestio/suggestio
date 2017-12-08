@@ -3,7 +3,7 @@ package io.suggest.sc.router.c
 import diode._
 import diode.data.Pot
 import io.suggest.routes.scRoutes
-import io.suggest.sc.root.m.{JsRouterInit, JsRouterStatus, RouteTo}
+import io.suggest.sc.m.{JsRouterInit, JsRouterStatus, RouteTo}
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 

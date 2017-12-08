@@ -1,13 +1,12 @@
 package io.suggest.sc
 
 import io.suggest.geo._
-import io.suggest.sc.root.m.RouteTo
-import io.suggest.sc.root.v.ScRootR
-import io.suggest.sc.root.m.Sc3Pages
-import io.suggest.sc.root.m.Sc3Pages._
 import io.suggest.sc.search.m.MSearchTabs
 import io.suggest.text.parse.ParserUtil
 import io.suggest.common.html.HtmlConstants.{`(`, `)`}
+import io.suggest.sc.m.{RouteTo, Sc3Pages}
+import io.suggest.sc.m.Sc3Pages._
+import io.suggest.sc.v.ScRootR
 import japgolly.scalajs.react.extra.router.{BaseUrl, Redirect, Router, RouterConfigDsl}
 import japgolly.scalajs.react.extra.router.StaticDsl.RouteB
 import japgolly.scalajs.react.vdom.html_<^._
@@ -24,7 +23,7 @@ class Sc3Router(
                  scRootR      : ScRootR
                ) {
 
-  import io.suggest.sc.root.m.MScRoot.MScRootFastEq
+  import io.suggest.sc.m.MScRoot.MScRootFastEq
 
   val routerCfg = RouterConfigDsl[Sc3Pages].buildConfig { dsl =>
 

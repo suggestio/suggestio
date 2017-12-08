@@ -1,8 +1,8 @@
-package io.suggest.sc.root.m
+package io.suggest.sc.m
 
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.routes.scRoutes
-import Sc3Pages.MainScreen
+import io.suggest.sc.m.Sc3Pages.MainScreen
 import io.suggest.spa.DAction
 
 import scala.util.Try

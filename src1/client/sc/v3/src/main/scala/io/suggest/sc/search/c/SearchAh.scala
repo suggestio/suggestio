@@ -8,7 +8,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import japgolly.univeq._
 import io.suggest.react.ReactDiodeUtil._
-import io.suggest.sc.root.m.ResetUrlRoute
+import io.suggest.sc.m.ResetUrlRoute
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
 

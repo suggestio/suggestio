@@ -1,7 +1,7 @@
 package io.suggest
 
+import io.suggest.sc.m.Sc3Pages
 import japgolly.scalajs.react.extra.router.RouterCtl
-import io.suggest.sc.root.m.Sc3Pages
 
 /**
   * Suggest.io

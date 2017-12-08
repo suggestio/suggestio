@@ -7,8 +7,8 @@ import io.suggest.sc.grid.m.GridLoadAds
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.inx.m.{GetIndex, HandleIndexResp, MScIndex, MWelcomeState}
+import io.suggest.sc.m.{MScRoot, ResetUrlRoute}
 import io.suggest.sc.resp.MScRespActionTypes
-import io.suggest.sc.root.m.{MScRoot, ResetUrlRoute}
 import io.suggest.sc.search.m.GetMoreTags
 
 import scala.util.Success

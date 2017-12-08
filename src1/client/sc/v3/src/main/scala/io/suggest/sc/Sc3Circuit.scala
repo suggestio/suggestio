@@ -11,12 +11,14 @@ import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
 import io.suggest.routes.{AdvRcvrsMapApiHttp, scRoutes}
 import io.suggest.sc.ads.MFindAdsReq
+import io.suggest.sc.c.dev.{GeoLocAh, ScreenAh}
+import io.suggest.sc.c.TailAh
 import io.suggest.sc.grid.c.GridAdsAh
 import io.suggest.sc.grid.m.MGridS
 import io.suggest.sc.inx.c.{IndexAh, IndexMapAh, WelcomeAh}
 import io.suggest.sc.inx.m.MScIndex
-import io.suggest.sc.root.c.{GeoLocAh, ScreenAh, TailAh}
-import io.suggest.sc.root.m._
+import io.suggest.sc.m.{JsRouterInit, MScRoot, ScreenReset}
+import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.router.c.JsRouterInitAh
 import io.suggest.sc.sc3.MSc3Init
 import io.suggest.sc.search.c.{STextAh, SearchAh, TagsAh}
@@ -51,16 +53,16 @@ class Sc3Circuit(
 { circuit =>
 
   import MScIndex.MScIndexFastEq
-  import MScInternals.MScInternalsFastEq
+  import m.MScInternals.MScInternalsFastEq
   import MGridS.MGridSFastEq
   import MScDev.MScDevFastEq
   import MScScreenS.MScScreenSFastEq
-  import MScGeoLoc.MScGeoFastEq
-  import io.suggest.sc.inx.m.MWelcomeState.MWelcomeStateFastEq
-  import io.suggest.sc.styl.MScCssArgs.MScCssArgsFastEq
+  import m.dev.MScGeoLoc.MScGeoFastEq
+  import inx.m.MWelcomeState.MWelcomeStateFastEq
+  import styl.MScCssArgs.MScCssArgsFastEq
 
   import MScSearch.MScSearchFastEq
-  import io.suggest.sc.search.m.MScSearchText.MScSearchTextFastEq
+  import search.m.MScSearchText.MScSearchTextFastEq
   import MScRoot.MScRootFastEq
   import MMapInitState.MMapInitStateFastEq
 

@@ -1,17 +1,17 @@
-package io.suggest.sc.root.c
+package io.suggest.sc.c
 
 import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.react.ReactDiodeUtil
-import io.suggest.sc.grid.m.GridLoadAds
-import io.suggest.sc.inx.m.{GetIndex, WcTimeOut}
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sc.root.m.{MScRoot, ResetUrlRoute, RouteTo}
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.GetRouterCtlF
-import io.suggest.sc.root.m.Sc3Pages.MainScreen
+import io.suggest.sc.grid.m.GridLoadAds
 import io.suggest.sc.hdr.m.HSearchBtnClick
+import io.suggest.sc.inx.m.{GetIndex, WcTimeOut}
+import io.suggest.sc.m.{MScRoot, ResetUrlRoute, RouteTo}
+import io.suggest.sc.m.Sc3Pages.MainScreen
 import io.suggest.sc.search.m.{SwitchTab, TagClick}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 
 /**

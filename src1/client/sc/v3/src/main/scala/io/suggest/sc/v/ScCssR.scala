@@ -1,11 +1,11 @@
-package io.suggest.sc.root.v
+package io.suggest.sc.v
 
 import diode.react.ModelProxy
 import io.suggest.sc.styl.ScScalaCssDefaults._
 import io.suggest.sc.styl.{GetScCssF, MScCssArgs}
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 
 /**
   * Suggest.io

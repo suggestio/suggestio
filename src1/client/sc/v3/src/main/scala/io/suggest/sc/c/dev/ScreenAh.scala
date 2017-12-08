@@ -1,11 +1,12 @@
-package io.suggest.sc.root.c
+package io.suggest.sc.c.dev
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.dev.JsScreenUtil
 import io.suggest.sc.grid.m.GridReConf
-import io.suggest.sc.root.m.{MScScreenS, ScreenReset, ScreenRszTimer}
-import io.suggest.sjs.common.controller.DomQuick
+import io.suggest.sc.m.dev.MScScreenS
+import io.suggest.sc.m.{ScreenReset, ScreenRszTimer}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.controller.DomQuick
 
 /**
   * Suggest.io

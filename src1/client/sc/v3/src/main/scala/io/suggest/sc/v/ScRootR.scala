@@ -1,4 +1,4 @@
-package io.suggest.sc.root.v
+package io.suggest.sc.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.sc.grid.v.GridR
@@ -6,14 +6,14 @@ import io.suggest.sc.hdr.m.MHeaderStates
 import io.suggest.sc.hdr.v.HeaderR
 import io.suggest.sc.inx.m.MScIndex
 import io.suggest.sc.inx.v.wc.WelcomeR
-import io.suggest.sc.root.m.MScRoot
+import io.suggest.sc.m.MScRoot
 import io.suggest.sc.search.m.MScSearch
 import io.suggest.sc.search.v.SearchR
 import io.suggest.sc.styl.{GetScCssF, MScCssArgs}
 import io.suggest.spa.OptFastEq.Wrapped
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 
 import scalacss.ScalaCssReact._
 
@@ -34,8 +34,8 @@ class ScRootR (
 
   import MScCssArgs.MScCssArgsFastEq
   import MScIndex.MScIndexFastEq
-  import gridR.GridPropsValFastEq
   import MScSearch.MScSearchFastEq
+  import gridR.GridPropsValFastEq
   import headerR.HeaderPropsValFastEq
   import welcomeR.WelcomeRPropsValFastEq
 

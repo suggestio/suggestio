@@ -2,8 +2,8 @@ package io.suggest.sc
 
 import com.softwaremill.macwire._
 import io.suggest.jd.render.JdRenderModule
-import io.suggest.sc.root.v.{ScCssR, ScRootR}
 import io.suggest.sc.styl.{GetScCssF, ScCssFactory}
+import io.suggest.sc.v._
 
 /**
   * Suggest.io
