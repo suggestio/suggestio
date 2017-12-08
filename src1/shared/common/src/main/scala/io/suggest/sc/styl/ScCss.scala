@@ -265,12 +265,16 @@ case class ScCss( args: IScCssArgs )
       )
 
       /** Стиль кнопки заголовка, который указывает вправо. */
-      val right = _styleAddClasses(
-        Align.RIGHT :: _allBtnStyles: _*
+      val rightCss = style(
+        addClassNames(_allBtnStyles: _*),
+        //left(auto),
+        top( 14.px ),
+        right( -2.px ),
+        left.auto
       )
 
       /** Стиль кнопки заголовка, которая указывает влево. */
-      val left = _styleAddClasses(
+      val leftCss = _styleAddClasses(
         Align.LEFT :: _allBtnStyles: _*
       )
 
@@ -355,7 +359,11 @@ case class ScCss( args: IScCssArgs )
 
       /** CSS для текстовых полей поиска. */
       object Field {
-        val field         = _styleAddClass( _BAR + "_field" )
+        val field         = style(
+          addClassName( _BAR + "_field" ),
+          width( 245.px ),
+          left( -7.px )
+        )
         val active        = _styleAddClass( __ + "active" )
         val fieldWrapper  = _styleAddClass( _BAR + "_wrapper" )
         val input         = _styleAddClass( _BAR + "_input" )

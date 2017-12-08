@@ -24,8 +24,5 @@ case object HMenuBtnClick extends IScHdrAction
 /** Клик по кнопке влево/назад. */
 case object HLeftBtnClick extends IScHdrAction
 
-/** Клик по кнопке справа/вперёд. */
-case object HRightBtnClick extends IScHdrAction
-
 /** Клик по логотипу или названию узла. */
 case object HLogoClick extends IScHdrAction

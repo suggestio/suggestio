@@ -1,13 +1,17 @@
 package io.suggest.sc.v.search
 
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.color.MColorData
 import io.suggest.css.Css
 import io.suggest.sc.m.search._
 import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.v.hdr.RightR
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.univeq._
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.sc.m.hdr.HSearchBtnClick
 
 import scalacss.ScalaCssReact._
 
@@ -20,6 +24,7 @@ import scalacss.ScalaCssReact._
 class SearchR(
                sTextR         : STextR,
                tabsR          : TabsR,
+               rightR         : RightR,
                searchMapR     : SearchMapR,
                getScCssF      : GetScCssF,
                tagsSearchR    : TagsSearchR
@@ -47,6 +52,10 @@ class SearchR(
 
   class Backend( $: BackendScope[Props, State] ) {
 
+    private def _onCloseClick: Callback = {
+      dispatchOnProxyScopeCB($, HSearchBtnClick(open = false, silent = false))
+    }
+
     def render(props: Props, s: State): VdomElement = {
       val scCss = getScCssF()
       val SearchCSS = scCss.Search
@@ -56,6 +65,9 @@ class SearchR(
 
         // Рендер текстового поля поиска.
         s.sTextC { sTextR.apply },
+
+        // Стрелка для сворачивания вкладки.
+        props.wrap {_ => Option(MColorData.Examples.WHITE) } ( rightR.apply ),
 
         // Переключалка вкладок карта-теги
         s.tabC { tabsR.apply },
