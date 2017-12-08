@@ -51,12 +51,13 @@ class SearchR(
       val scCss = getScCssF()
       val SearchCSS = scCss.Search
 
-      s.isShownC { isShownProxy =>
+      //s.isShownC { isShownProxy =>
         <.div(
           SearchCSS.panel,
 
           // Скрывать/показывать панель.
-          _renderDisplayCss( isShownProxy().value ),
+          //_renderDisplayCss( isShownProxy().value ),
+          _renderDisplayCss( true ),
 
           // Рендер текстового поля поиска.
           s.sTextC { sTextR.apply },
@@ -93,7 +94,7 @@ class SearchR(
           }
 
         )
-      }
+      //}
 
     }
 

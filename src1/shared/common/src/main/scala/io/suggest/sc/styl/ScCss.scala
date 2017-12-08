@@ -331,8 +331,14 @@ case class ScCss( args: IScCssArgs )
 
     private val _PANEL = _SM_ + "categories-screen"
 
+    def Z_INDEX = 11
+
     /** CSS-класс div-контейнера правой панели. */
-    val panel = _styleAddClass( _PANEL )
+    val panel = style(
+      width( 320.px ),
+      height( 100.%% )
+    )
+    //_styleAddClass( _PANEL )
 
     /** CSS-класс заголовка внутри панели поиска. */
     //val panelHeader = _styleAddClasses( _PANEL + "_header" )

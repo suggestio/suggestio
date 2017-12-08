@@ -11,10 +11,10 @@ import scala.scalajs.js
   */
 trait SidebarStyles extends js.Object {
 
-  val root,
-    sidebar,
-    content,
-    overlay,
-    dragHandle: js.UndefOr[js.Object] = js.undefined
+  val root        : js.UndefOr[js.Object] = js.undefined
+  val sidebar     : js.UndefOr[js.Object] = js.undefined
+  val content     : js.UndefOr[js.Object] = js.undefined
+  val overlay     : js.UndefOr[js.Object] = js.undefined
+  val dragHandle  : js.UndefOr[js.Object] = js.undefined
 
 }

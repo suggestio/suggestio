@@ -13,8 +13,10 @@ trait IScHdrAction extends DAction
 // TODO Сделать классами с флагами внутри. Чтобы точно знать, что подразумевалось под каждым кликом.
 // Это защитит от двойных кликов.
 
-/** Клик по кнопке поиска (справа). */
-case object HSearchBtnClick extends IScHdrAction
+/** Клик по кнопке поиска (справа) с указанной целью.
+  * @param open true - для открытия поиска. false -- для закрытия.
+  */
+case class HSearchBtnClick(open: Boolean) extends IScHdrAction
 
 /** Клик по кнопке меню (слева). */
 case object HMenuBtnClick extends IScHdrAction

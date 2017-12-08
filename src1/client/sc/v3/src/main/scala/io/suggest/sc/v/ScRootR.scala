@@ -1,8 +1,9 @@
 package io.suggest.sc.v
 
+import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.sc.m.MScRoot
-import io.suggest.sc.m.hdr.MHeaderStates
+import io.suggest.sc.m.hdr.{HSearchBtnClick, MHeaderStates}
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.m.search.MScSearch
 import io.suggest.sc.styl.{GetScCssF, MScCssArgs}
@@ -13,7 +14,9 @@ import io.suggest.sc.v.search.SearchR
 import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.{ReactCommonUtil, StyleProps}
 
 import scalacss.ScalaCssReact._
 
@@ -51,33 +54,60 @@ class ScRootR (
                                     searchC        : ReactConnectProxy[MScSearch]
                                   )
 
-
   class Backend($: BackendScope[Props, State]) {
 
+    private def _onOpenSearchSidebar(opened: Boolean): Callback = {
+      dispatchOnProxyScopeCB( $, HSearchBtnClick(opened) )
+    }
+    private val _onOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb( _onOpenSearchSidebar )
+
     def render(s: State): VdomElement = {
-      val scCss = getScCssF()
-      <.div(
-        // Рендер стилей перед снаружи и перед остальной выдачей.
-        s.scCssArgsC { scCssR.apply },
+      s.searchC { searchPropsProxy =>
+        val scCss = getScCssF()
 
-        <.div(
-          // Ссылаемся на стиль.
-          scCss.Root.root,
+        val searchContentStyl = new StyleProps {
+          override val zIndex    = scCss.Search.Z_INDEX
+          override val overflowY = scalacss.internal.Literal.Typed.initial.value
+        }
+        val searchStyles = new SidebarStyles {
+          override val sidebar = searchContentStyl
+        }
 
-          // Экран приветствия узла:
-          s.wcPropsOptC { welcomeR.apply },
+        // Содержимое правой панели (панель поиска)
+        // search (правый) sidebar.
+        Sidebar(
+          new SidebarProps {
+            override val sidebar      = searchR( searchPropsProxy ).rawNode
+            override val onSetOpen    = _onOpenSearchSidebarF
+            override val open         = searchPropsProxy.value.isShown
+            override val transitions  = true
+            override val touch        = true
+            override val pullRight    = true
+            //override val sidebarClassName = scCss.Search.panel.htmlClass
+            override val styles       = searchStyles
+          }
+        )(
+          <.div(
+            // Рендер стилей перед снаружи и перед остальной выдачей.
+            s.scCssArgsC { scCssR.apply },
 
-          // Компонент заголовка выдачи:
-          s.headerPropsC { headerR.apply },
+            <.div(
+              // Ссылаемся на стиль.
+              scCss.Root.root,
 
-          // Правая панель (поиск)
-          s.searchC { searchR.apply },
+              // Экран приветствия узла:
+              s.wcPropsOptC { welcomeR.apply },
 
-          // Рендер плитки карточек узла:
-          s.gridPropsOptC { gridR.apply }
+              // Компонент заголовка выдачи:
+              s.headerPropsC { headerR.apply },
 
+              // Рендер плитки карточек узла:
+              s.gridPropsOptC { gridR.apply }
+
+            )
+          )
         )
-      )
+      }
     }
 
   }

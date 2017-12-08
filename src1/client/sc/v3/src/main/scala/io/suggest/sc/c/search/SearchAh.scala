@@ -28,8 +28,8 @@ class SearchAh[M](
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Клик по кнопке открытия поисковой панели.
-    case HSearchBtnClick =>
-      val v2 = value.withIsShown( true )
+    case m: HSearchBtnClick =>
+      val v2 = value.withIsShown( m.open )
 
       // Аккаумулятор сайд-эффектов.
       var fx: Effect = Effect.action( ResetUrlRoute )

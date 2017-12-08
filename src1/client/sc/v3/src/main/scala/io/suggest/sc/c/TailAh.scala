@@ -95,7 +95,7 @@ class TailAh[M](
       // Проверка поля searchOpened
       if (m.mainScreen.searchOpened !=* v0.index.search.isShown) {
         // Вместо патчинга состояния имитируем клик: это чтобы возможные сайд-эффекты обычного клика тоже отработали.
-        fxsAcc ::= Effect.action( HSearchBtnClick )
+        fxsAcc ::= Effect.action( HSearchBtnClick(m.mainScreen.searchOpened) )
       }
 
       // Смотрим координаты текущей точки.
