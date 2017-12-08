@@ -1,8 +1,8 @@
 package io.suggest.sc
 
+import io.suggest.sc.c.grid.{FindAdsApiXhrImpl, IFindAdsApi}
 import io.suggest.sc.c.inx.{IIndexApi, IndexApiXhrImpl}
-import io.suggest.sc.grid.c.{FindAdsApiXhrImpl, IFindAdsApi}
-import io.suggest.sc.search.c.{ISearchApi, SearchApiXhrImpl}
+import io.suggest.sc.c.search.{ISearchApi, SearchApiXhrImpl}
 
 /**
   * Suggest.io

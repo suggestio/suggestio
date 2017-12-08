@@ -4,8 +4,10 @@ import com.softwaremill.macwire._
 import io.suggest.jd.render.JdRenderModule
 import io.suggest.sc.styl.{GetScCssF, ScCssFactory}
 import io.suggest.sc.v._
+import io.suggest.sc.v.grid.{GridCoreR, GridLoaderR, GridR}
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx.WelcomeR
+import io.suggest.sc.v.search._
 
 /**
   * Suggest.io
@@ -51,17 +53,17 @@ class Sc3Module {
 
 
   // grid
-  lazy val gridLoaderR = wire[grid.v.GridLoaderR]
-  lazy val gridCoreR = wire[grid.v.GridCoreR]
-  lazy val gridR   = wire[grid.v.GridR]
+  lazy val gridLoaderR = wire[GridLoaderR]
+  lazy val gridCoreR = wire[GridCoreR]
+  lazy val gridR   = wire[GridR]
 
 
   // search
-  lazy val sTextR = wire[search.v.STextR]
-  lazy val tabsR = wire[search.v.TabsR]
-  lazy val searchMapR = wire[search.v.SearchMapR]
-  lazy val tagsSearchR = wire[search.v.TagsSearchR]
-  lazy val searchR = wire[search.v.SearchR]
+  lazy val sTextR = wire[STextR]
+  lazy val tabsR = wire[TabsR]
+  lazy val searchMapR = wire[SearchMapR]
+  lazy val tagsSearchR = wire[TagsSearchR]
+  lazy val searchR = wire[SearchR]
 
 
   // sc3 top level

@@ -12,17 +12,16 @@ import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
 import io.suggest.routes.{AdvRcvrsMapApiHttp, scRoutes}
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.c.dev.{GeoLocAh, ScreenAh}
-import io.suggest.sc.c.TailAh
+import io.suggest.sc.c.{JsRouterInitAh, TailAh}
+import io.suggest.sc.c.grid.GridAdsAh
 import io.suggest.sc.c.inx.{IndexAh, IndexMapAh, WelcomeAh}
-import io.suggest.sc.grid.c.GridAdsAh
-import io.suggest.sc.grid.m.MGridS
+import io.suggest.sc.c.search.{STextAh, SearchAh, TagsAh}
 import io.suggest.sc.m.{JsRouterInit, MScRoot, ScreenReset}
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
+import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx.MScIndex
-import io.suggest.sc.router.c.JsRouterInitAh
+import io.suggest.sc.m.search.{MMapInitState, MScSearch}
 import io.suggest.sc.sc3.MSc3Init
-import io.suggest.sc.search.c.{STextAh, SearchAh, TagsAh}
-import io.suggest.sc.search.m.{MMapInitState, MScSearch}
 import io.suggest.sc.styl.{ScCss, ScCssFactory}
 import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.sjs.common.log.CircuitLog
@@ -62,7 +61,7 @@ class Sc3Circuit(
   import styl.MScCssArgs.MScCssArgsFastEq
 
   import MScSearch.MScSearchFastEq
-  import search.m.MScSearchText.MScSearchTextFastEq
+  import m.search.MScSearchText.MScSearchTextFastEq
   import MScRoot.MScRootFastEq
   import MMapInitState.MMapInitStateFastEq
 

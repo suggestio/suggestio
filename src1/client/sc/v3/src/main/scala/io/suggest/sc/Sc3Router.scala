@@ -1,11 +1,11 @@
 package io.suggest.sc
 
 import io.suggest.geo._
-import io.suggest.sc.search.m.MSearchTabs
 import io.suggest.text.parse.ParserUtil
 import io.suggest.common.html.HtmlConstants.{`(`, `)`}
 import io.suggest.sc.m.{RouteTo, Sc3Pages}
 import io.suggest.sc.m.Sc3Pages._
+import io.suggest.sc.m.search.MSearchTabs
 import io.suggest.sc.v.ScRootR
 import japgolly.scalajs.react.extra.router.{BaseUrl, Redirect, Router, RouterConfigDsl}
 import japgolly.scalajs.react.extra.router.StaticDsl.RouteB

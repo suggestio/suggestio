@@ -1,7 +1,7 @@
 package io.suggest.sc.m
 
 import io.suggest.geo.MGeoPoint
-import io.suggest.sc.search.m.MSearchTab
+import io.suggest.sc.m.search.MSearchTab
 import japgolly.univeq.UnivEq
 
 /**

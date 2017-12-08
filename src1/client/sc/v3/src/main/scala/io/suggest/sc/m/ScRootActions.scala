@@ -14,6 +14,10 @@ import scala.util.Try
   * Description: Корневые экшены sc3.
   */
 
+/** Маркер-интерфейс для экшенов sc3. */
+trait ISc3Action extends DAction
+
+
 /** Интерфейс корневых экшенов. */
 sealed trait IScRootAction extends DAction
 
