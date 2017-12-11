@@ -28,6 +28,8 @@ testFrameworks += new TestFramework("minitest.runner.Framework")
 
 webpackBundlingMode := BundlingMode.LibraryOnly()
 
+// Use a different Webpack configuration file for production
+webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.config.js")
 
 emitSourceMaps := false
 

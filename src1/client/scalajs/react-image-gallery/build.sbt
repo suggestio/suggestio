@@ -25,7 +25,7 @@ libraryDependencies ++= Seq(
 )
 
 npmDependencies in Compile ++= Seq(
-  "react"                  -> Common.reactJsVsn,
+  //"react"                  -> Common.reactJsVsn,
   "react-image-gallery"    -> VSN
 )
 

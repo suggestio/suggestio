@@ -71,16 +71,15 @@ class JdGridUtil(
       override val component    = tagName
       override val columns      = conf.gridColumnsCount
       override val columnWidth  = Math.round(BlockWidths.min.value * blkSzMultD).toInt
-      // Плитка и без этого gutter'а работает. Просто выставлено на всякий случай, т.к. в коде модулей grid'а это дело используется.
+      // Плитка и без этого gutter'а работает. Просто выставлено на всякий случай.
       override val gutterWidth  = cellPaddingPx
       override val gutterHeight = cellPaddingPx
       override val layout       = js.defined {
         gridLayoutF
       }
-
-      override val enter = ees.enter
-      override val entered = ees.entered
-      override val exit = ees.exit
+      override val enter        = ees.enter
+      override val entered      = ees.entered
+      override val exit         = ees.exit
     }
   }
 

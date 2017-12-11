@@ -166,7 +166,7 @@ class Sc3Circuit(
     modelRW       = searchRW
   )
 
-  private lazy val tagsAh = new TagsAh(
+  private val tagsAh = new TagsAh(
     api           = api,
     modelRW       = tagsRW,
     searchArgsRO  = tagsSearchArgsQsRO,
@@ -179,7 +179,7 @@ class Sc3Circuit(
     stateRO = rootRW
   )
 
-  private lazy val mapAndIndexAh = {
+  private val mapAndIndexAh = {
     val mapCommonAh = new MapCommonAh(
       mmapRW = mmapsRW
     )
@@ -213,7 +213,7 @@ class Sc3Circuit(
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttp( scRoutes )
 
-  override protected def actionHandler: HandlerFunction = {
+  override protected val actionHandler: HandlerFunction = {
     var acc = List.empty[HandlerFunction]
 
     // TODO Opt Здесь много вызовов model.value. Может быть эффективнее будет один раз прочитать всю модель, и сверять её разные поля по мере необходимости?
@@ -222,18 +222,18 @@ class Sc3Circuit(
     acc ::= tailAh
 
     // Листенер инициализации роутера. Выкидывать его после окончания инициализации.
-    if ( !jsRouterRW.value.isReady ) {
+    //if ( !jsRouterRW.value.isReady ) {
       acc ::= new JsRouterInitAh(
         circuit = circuit,
         modelRW = jsRouterRW
       )
-    }
+    //}
 
     // Основные события индекса не частые, но доступны всегда:
     acc ::= indexAh
 
     // Инициализатор карты ресиверов на гео-карте.
-    if ( !searchMapRcvrsPotRW.value.isReady )
+    //if ( !searchMapRcvrsPotRW.value.isReady )
       acc ::= new RcvrMarkersInitAh( advRcvrsMapApi, searchMapRcvrsPotRW )
 
     // top-level search AH всегда ожидает команд, когда TODO нет открытого левого меню закрыто или focused-выдачи
@@ -242,17 +242,17 @@ class Sc3Circuit(
     // TODO Opt sTextAh не нужен, когда панель поиска скрыта.
     acc ::= sTextAh
 
-    if ( indexWelcomeRW().nonEmpty )
+    //if ( indexWelcomeRW().nonEmpty )
       acc ::= new WelcomeAh( indexWelcomeRW )
 
-    if ( mapInitRW.value.ready )
+    //if ( mapInitRW.value.ready )
       acc ::= mapAndIndexAh
 
     // Контроллеры СНАЧАЛА экрана, а ПОТОМ плитки. Нужно соблюдать порядок.
     acc ::= gridAdsAh
 
-    val searchS = searchRW.value
-    if (searchS.isTagsVisible)
+    //val searchS = searchRW.value
+    //if (searchS.isTagsVisible)
       acc ::= tagsAh
 
     // Геолокация довольно часто получает сообщения (когда активна), поэтому её -- тоже в начало списка контроллеров:
