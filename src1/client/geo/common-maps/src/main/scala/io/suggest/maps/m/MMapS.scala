@@ -75,4 +75,11 @@ case class MMapS(
     )
   }
 
+
+  def isCenterRealNearInit: Boolean = {
+    centerReal.fold(true) { centerRealMgp =>
+      centerInit ~= centerRealMgp
+    }
+  }
+
 }

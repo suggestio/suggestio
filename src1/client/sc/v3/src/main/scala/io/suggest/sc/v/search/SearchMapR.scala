@@ -3,10 +3,13 @@ package io.suggest.sc.v.search
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
+import io.suggest.geo.MGeoPoint
 import io.suggest.maps.m.{MGeoMapPropsR, MMapS, MapDragEnd}
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.r.{LGeoMapR, RcvrMarkersR, ReactLeafletUtil}
+import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.react.ReactCommonUtil
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.MMapInitState
 import io.suggest.sc.styl.GetScCssF
@@ -16,6 +19,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import react.leaflet.control.LocateControlR
 import react.leaflet.lmap.LMapR
+import io.suggest.spa.OptFastEq
 
 import scalacss.ScalaCssReact._
 
@@ -35,7 +39,8 @@ class SearchMapR(
 
   protected[this] case class State(
                                     mmapC       : ReactConnectProxy[MMapS],
-                                    rcvrsGeoC   : ReactConnectProxy[Pot[MGeoNodesResp]]
+                                    rcvrsGeoC   : ReactConnectProxy[Pot[MGeoNodesResp]],
+                                    loaderOptC  : ReactConnectProxy[Option[MGeoPoint]]
                                   )
 
 
@@ -105,7 +110,16 @@ class SearchMapR(
                     LocateControlR(),
 
                     // Рендер шейпов и маркеров текущий узлов.
-                    s.rcvrsGeoC { RcvrMarkersR(_)() }
+                    s.rcvrsGeoC { RcvrMarkersR(_)() },
+
+                    // Рендер опционального маркера-крутилки для ожидания загрузки.
+                    s.loaderOptC { loaderOpt =>
+                      loaderOpt.value.whenDefinedEl { mgp =>
+                        MapIcons.preloaderLMarker(
+                          latLng = MapsUtil.geoPoint2LatLng( mgp )
+                        )
+                      }
+                    }
 
                   )
                 }
@@ -131,8 +145,9 @@ class SearchMapR(
   val component = ScalaComponent.builder[Props]("SMap")
     .initialStateFromProps { mapInitProxy =>
       State(
-        mmapC     = mapInitProxy.connect(_.state),
-        rcvrsGeoC = mapInitProxy.connect(_.rcvrsGeo)
+        mmapC       = mapInitProxy.connect(_.state),
+        rcvrsGeoC   = mapInitProxy.connect(_.rcvrsGeo),
+        loaderOptC  = mapInitProxy.connect(_.loader)( OptFastEq.Plain )
       )
     }
     .renderBackend[Backend]

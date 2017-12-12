@@ -4,7 +4,6 @@ import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.hdr.{HSearchBtnClick, MHeaderStates}
-import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.m.search.MScSearch
 import io.suggest.sc.styl.{GetScCssF, MScCssArgs}
 import io.suggest.sc.v.grid.GridR
@@ -36,7 +35,6 @@ class ScRootR (
               ) {
 
   import MScCssArgs.MScCssArgsFastEq
-  import MScIndex.MScIndexFastEq
   import MScSearch.MScSearchFastEq
   import gridR.GridPropsValFastEq
   import headerR.HeaderPropsValFastEq
@@ -47,7 +45,6 @@ class ScRootR (
 
   protected[this] case class State(
                                     scCssArgsC     : ReactConnectProxy[MScCssArgs],
-                                    indexPropsC    : ReactConnectProxy[MScIndex],
                                     gridPropsOptC  : ReactConnectProxy[gridR.PropsVal],
                                     headerPropsC   : ReactConnectProxy[Option[headerR.PropsVal]],
                                     wcPropsOptC    : ReactConnectProxy[Option[welcomeR.PropsVal]],
@@ -57,7 +54,7 @@ class ScRootR (
   class Backend($: BackendScope[Props, State]) {
 
     private def _onOpenSearchSidebar(opened: Boolean): Callback = {
-      dispatchOnProxyScopeCB( $, HSearchBtnClick(opened, silent = true) )
+      dispatchOnProxyScopeCB( $, HSearchBtnClick(opened) )
     }
     private val _onOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb( _onOpenSearchSidebar )
 
@@ -116,7 +113,6 @@ class ScRootR (
     .initialStateFromProps { propsProxy =>
       State(
         scCssArgsC  = propsProxy.connect(_.scCssArgs),
-        indexPropsC = propsProxy.connect(_.index),
 
         gridPropsOptC = propsProxy.connect { mroot =>
           gridR.PropsVal(

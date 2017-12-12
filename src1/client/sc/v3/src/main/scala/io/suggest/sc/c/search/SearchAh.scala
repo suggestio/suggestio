@@ -43,7 +43,7 @@ class SearchAh[M](
         }
       }
 
-      ah.updateMaybeSilentFx(m.silent)(v2, fx)
+      updated(v2, fx)
 
 
     // Запуск инициализации гео.карты.

@@ -52,10 +52,6 @@ class SearchR(
 
   class Backend( $: BackendScope[Props, State] ) {
 
-    private def _onCloseClick: Callback = {
-      dispatchOnProxyScopeCB($, HSearchBtnClick(open = false, silent = false))
-    }
-
     def render(props: Props, s: State): VdomElement = {
       val scCss = getScCssF()
       val SearchCSS = scCss.Search

@@ -2,12 +2,12 @@ package io.suggest.sc.c.inx
 
 import diode._
 import io.suggest.react.ReactDiodeUtil
-import io.suggest.react.ReactDiodeUtil.PotOpsExt
+import io.suggest.react.ReactDiodeUtil.{PotOpsExt, ActionHandlerExt}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx.{GetIndex, HandleIndexResp, MScIndex, MWelcomeState}
-import io.suggest.sc.m.search.GetMoreTags
+import io.suggest.sc.m.search.{GetMoreTags, MScSearch, MapReIndex}
 import io.suggest.sc.m.{MScRoot, ResetUrlRoute}
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -30,37 +30,67 @@ class IndexAh[M](
                 )
   extends ActionHandler( modelRW )
   with Log
-{
+{ ah =>
+
+  private def _getIndex(withWelcome: Boolean, silent: Boolean, v0: MScIndex): ActionResult[M] = {
+    val ts = System.currentTimeMillis()
+
+    val fx = Effect {
+      val root = stateRO()
+      val args = MScIndexArgs(
+        nodeId      = v0.state.currRcvrId,
+        locEnv      = root.locEnv,
+        screen      = Some( root.dev.screen.screen ),
+        withWelcome = withWelcome
+      )
+
+      api
+        .getIndex(args)
+        .transform { tryRes =>
+          Success(HandleIndexResp(tryRes, Some(ts), reason = None))
+        }
+    }
+
+    val v2 = v0.withResp(
+      v0.resp.pending(ts)
+    )
+
+    ah.updateMaybeSilentFx(silent)(v2, fx)
+  }
+
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
-    // Команда запроса и получения индекса выдачи с сервера для текущего состояния.
-    case m: GetIndex =>
+    // Необходимо перезапросить индекс для текущего состояния карты
+    case m: MapReIndex =>
       val v0 = value
-      val ts = System.currentTimeMillis()
-
-      val fx = Effect {
-        val root = stateRO()
-        val args = MScIndexArgs(
-          nodeId      = v0.state.currRcvrId,
-          locEnv      = root.locEnv,
-          screen      = Some( root.dev.screen.screen ),
-          withWelcome = m.withWelcome
-        )
-
-        api
-          .getIndex(args)
-          .transform { tryRes =>
-            Success(HandleIndexResp(tryRes, Some(ts), reason = None))
-          }
+      if (
+        (m.rcvrId.nonEmpty && m.rcvrId ==* v0.state.currRcvrId) ||
+        (m.rcvrId.isEmpty && v0.search.mapInit.state.isCenterRealNearInit)
+      ) {
+        // Ничего как бы и не изменилось.
+        noChange
+      } else {
+        // Выставить новое состояние и запустить GetIndex.
+        val v1 = v0
+          .withState(
+            v0.state
+              .withRcvrNodeId( m.rcvrId.toList )
+          )
+          .withSearch(
+            v0.search.withMapInit(
+              v0.search.mapInit.withLoader(
+                Some( v0.search.mapInit.state.center )
+              )
+            )
+          )
+        _getIndex( withWelcome = m.rcvrId.nonEmpty, silent = false, v1)
       }
 
-      val v2 = v0.withResp(
-        v0.resp.pending(ts)
-      )
-      // Оптимизация: Используем updatedSilent, т.к. сейчас визуально нигде не отражается получение индекса.
-      updatedSilent( v2, fx )
 
+    // Команда запроса и получения индекса выдачи с сервера для текущего состояния.
+    case m: GetIndex =>
+      _getIndex(m.withWelcome, silent = true, value)
 
     // Поступление ответа сервера, который ожидается
     case m: HandleIndexResp =>
@@ -72,6 +102,16 @@ class IndexAh[M](
         noChange
 
       } else {
+
+        // Дедубликация кода сброса значения v.search.mapInit.loader.
+        def __resetMapLoader(s: MScSearch): MScSearch = {
+          s.withMapInit(
+            s.mapInit.withLoader(
+              None
+            )
+          )
+        }
+
         // Запихать ответ в состояние.
         m.tryResp
           .toEither
@@ -85,11 +125,19 @@ class IndexAh[M](
             // Ошибка получения индекса с сервера.
             {ex =>
               LOG.error( ErrorMsgs.GET_NODE_INDEX_FAILED, ex, msg = m )
-              val v2 = v0.withResp(
+              val v1 = v0.withResp(
                 v0.resp.fail(ex)
               )
+              val v2 = if (v1.search.mapInit.loader.nonEmpty) {
+                v1.withSearch(
+                  __resetMapLoader( v1.search )
+                )
+              } else {
+                v1
+              }
               updated( v2 )
             },
+
             // Индекс получен.
             {inx =>
               // TODO Сравнивать полученный index с текущим состоянием. Может быть ничего сохранять не надо?
@@ -99,6 +147,7 @@ class IndexAh[M](
                   .withRcvrNodeId( inx.nodeId.toList ),
                 search = {
                   val s0 = v0.search
+
                   // Выставить полученную с сервера геоточку как текущую.
                   val s1 = inx.geoPoint
                     .filter { mgp =>
@@ -115,8 +164,25 @@ class IndexAh[M](
                         )
                       )
                     }
+
                   // Возможный сброс состояния тегов
-                  s1.maybeResetTags
+                  val s2 = s1.maybeResetTags
+
+                  // Если заход в узел с карты, то надо скрыть search-панель.
+                  val s3 = if (s2.isShown && inx.welcome.nonEmpty) {
+                    s2.withIsShown( false )
+                  } else {
+                    s2
+                  }
+
+                  // Сбросить флаг mapInit.loader, если он выставлен.
+                  val s4 = if (s3.mapInit.loader.nonEmpty) {
+                    __resetMapLoader( s3 )
+                  } else {
+                    s3
+                  }
+
+                  s4
                 }
               )
 

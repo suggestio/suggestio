@@ -2,6 +2,7 @@ package io.suggest.sc.m.search
 
 import diode.FastEq
 import io.suggest.common.empty.OptionUtil
+import io.suggest.geo.MGeoLoc
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 
@@ -43,7 +44,7 @@ case class MScSearch(
                       text                : MScSearchText         = MScSearchText.empty,
                       tags                : MTagsSearchS          = MTagsSearchS.empty,
                       currTab             : MSearchTab            = MSearchTabs.default,
-                      isShown             : Boolean               = false
+                      isShown             : Boolean               = false,
                     ) {
 
   def withMapInit   ( mapInit: MMapInitState )          = copy( mapInit = mapInit )

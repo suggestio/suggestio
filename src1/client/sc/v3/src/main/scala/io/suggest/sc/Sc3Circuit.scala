@@ -15,8 +15,8 @@ import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.c.dev.{GeoLocAh, ScreenAh}
 import io.suggest.sc.c.{JsRouterInitAh, TailAh}
 import io.suggest.sc.c.grid.GridAdsAh
-import io.suggest.sc.c.inx.{IndexAh, IndexMapAh, WelcomeAh}
-import io.suggest.sc.c.search.{STextAh, SearchAh, TagsAh}
+import io.suggest.sc.c.inx.{IndexAh, WelcomeAh}
+import io.suggest.sc.c.search.{STextAh, ScMapDelayAh, SearchAh, TagsAh}
 import io.suggest.sc.m.{JsRouterInit, MScRoot, ScreenReset}
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.grid.MGridS
@@ -120,6 +120,7 @@ class Sc3Circuit(
   private val searchMapRcvrsPotRW = mapInitRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
   private val mmapsRW = mapInitRW.zoomRW(_.state) { _.withState(_) }
   private val searchTextRW = searchRW.zoomRW(_.text) { _.withText(_) }
+  private val mapDelayRW = mapInitRW.zoomRW(_.delay) { _.withDelay(_) }
 
   private val gridRW = zoomRW(_.grid) { _.withGrid(_) }
 
@@ -179,14 +180,14 @@ class Sc3Circuit(
     stateRO = rootRW
   )
 
-  private val mapAndIndexAh = {
+  private val mapAhs = {
     val mapCommonAh = new MapCommonAh(
       mmapRW = mmapsRW
     )
-    val indexMapAh = new IndexMapAh(
-      modelRW = indexRW
+    val scMapDelayAh = new ScMapDelayAh(
+      modelRW = mapDelayRW
     )
-    foldHandlers( mapCommonAh, indexMapAh )
+    foldHandlers( mapCommonAh, scMapDelayAh )
   }
 
   private val gridAdsAh = new GridAdsAh(
@@ -246,7 +247,7 @@ class Sc3Circuit(
       acc ::= new WelcomeAh( indexWelcomeRW )
 
     //if ( mapInitRW.value.ready )
-      acc ::= mapAndIndexAh
+      acc ::= mapAhs
 
     // Контроллеры СНАЧАЛА экрана, а ПОТОМ плитки. Нужно соблюдать порядок.
     acc ::= gridAdsAh
