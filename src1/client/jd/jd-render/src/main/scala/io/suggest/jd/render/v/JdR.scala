@@ -174,7 +174,10 @@ class JdR(
       val isSelected = jdArgs.selectedTag.containsLabel(s)
       val isEditSelected = isSelected && jdArgs.conf.isEdit
 
-      val isWide = /*!jdArgs.conf.isEdit &&*/ s.props1.bm.map(_.wide).getOrElseFalse
+      val isWide = s.props1.bm.map(_.wide).getOrElseFalse
+      // Оптимизация, т.к. wide-стиль используется в нескольких местах сразу.
+      lazy val wideCss = C.bmWideStyleF(s): TagMod
+
       val bgColor = _bgColorOpt(s, jdArgs)
 
       val bgImgOpt = for {
@@ -192,6 +195,9 @@ class JdR(
           // Запретить таскать изображение, чтобы не мешать перетаскиванию strip'ов
           if (jdArgs.conf.isEdit) {
             ^.draggable := false
+          } else if (isWide) {
+            // Для wide-картинок надо высоту задавать жестко.
+            wideCss
           } else {
             EmptyVdom
           },
@@ -209,13 +215,18 @@ class JdR(
             }
 
             cropEmuOpt.fold[TagMod] {
-              // Просто заполнение всего блока картинкой. TODO Унести в jdCss.
+              // Просто заполнение всего блока картинкой.
               s.props1.bm.whenDefined { bm =>
+                // TODO Унести стили в JdCss.
                 // Заполняем блок по ширине, т.к. дырки сбоку режут глаз сильнее, чем снизу.
-                TagMod(
-                  ^.width  := (bm.width * jdArgs.conf.szMult.toDouble).px    // Избегаем расплющивания картинок, пусть лучше обрезка будет.
+                if (isWide) {
+                  // TODO выставить left, чтобы отцентровать wide-картинку относительно центра экрана
+                  EmptyVdom
+                } else {
+                  // Избегаем расплющивания картинок, пусть лучше обрезка будет. Здесь только width.
+                  ^.width  := jdArgs.jdCss.bmStyleSide(bm.width).px
                   //^.height := bm.height.px
-                )
+                }
               }
             } { ecArgs =>
               // Нужно рассчитать параметры margin, w, h изображения, чтобы оно имитировало заданный кроп.
@@ -251,6 +262,8 @@ class JdR(
         ^.key := i.toString
       }
 
+      val maybeSelAV = _maybeSelected( s, jdArgs )
+
       val smBlock = <.div(
         keyAV,
         C.smBlock,
@@ -259,7 +272,10 @@ class JdR(
         if (isWide) {
           jdArgs.jdCss.wideBlockStyle
         } else {
-          bgColor
+          TagMod(
+            bgColor,
+            maybeSelAV
+          )
         },
 
         // Скрыть не-main-стрипы, если этого требует рендер.
@@ -270,8 +286,6 @@ class JdR(
         } else {
           EmptyVdom
         },
-
-        _maybeSelected( s, jdArgs ),
 
         // Если текущий стрип выделен, то его можно таскать.
         if (isEditSelected) {
@@ -295,7 +309,8 @@ class JdR(
         <.div(
           keyAV,
           bgColor.when(isWide),
-          C.bmWideStyleF(s),
+          wideCss,
+          maybeSelAV,
           ^.`class` := Css.flat( Css.Overflow.HIDDEN, Css.Position.RELATIVE ),
           bgImgTm.when(isWide),
           smBlock

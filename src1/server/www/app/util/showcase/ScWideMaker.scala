@@ -27,7 +27,7 @@ class ScWideMaker @Inject() (
   mCommonDi : ICommonDi
 )
   extends IMaker
-    with MacroLogsImpl
+  with MacroLogsImpl
 {
 
   import LOGGER._
@@ -60,43 +60,53 @@ class ScWideMaker @Inject() (
 
   /** Попытаться подправить опциональный исходный кроп, если есть. Если нет, то фейл. */
   def getAbsCropOrFail(iik: MAnyImgT, wideWh: ISize2di): Future[MCrop] = {
-    iik.cropOpt match {
-      case Some(crop0) =>
-        val origWhFut = for {
-          whOpt <- mAnyImgs.getImageWH( iik.original )
-        } yield {
-          // Будет Future.failed при проблеме - так и надо.
-          whOpt.get
-        }
-        updateCrop0(crop0, wideWh, origWhFut)
-
-      case None =>
-        Future failed new NoSuchElementException("No default crop is here.")
+    iik.cropOpt.fold [Future[MCrop]] {
+      Future.failed( new NoSuchElementException("No default crop is here.") )
+    } { crop0 =>
+      for {
+        origWhOpt <- mAnyImgs.getImageWH( iik.original )
+      } yield {
+        // Будет Future.failed при проблеме - так и надо.
+        updateCrop0(crop0, wideWh, origWhOpt.get)
+      }
     }
   }
 
   /** Поправить исходный кроп под wide-картинку. Гравитация производного кропа совпадает с исходным кропом. */
-  def updateCrop0(crop0: MCrop, wideWh: ISize2di, origWhFut: Future[ISize2di]): Future[MCrop] = {
-    origWhFut.map { origWh =>
-      // Есть ширина-длина сырца. Нужно придумать кроп с центром как можно ближе к центру исходного кропа.
-      // Результат должен изнутри быть вписан в исходник по размерам.
-      val rszRatioV = origWh.height.toFloat / wideWh.height.toFloat
-      val rszRatioH = origWh.width.toFloat / wideWh.width.toFloat
-      val rszRatio  = Math.max(1.0F, Math.min(rszRatioH, rszRatioV))
-      val w = szMulted(wideWh.width, rszRatio)
-      val h = szMulted(wideWh.height, rszRatio)
-      MCrop(
-        width = w, height = h,
-        // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном.
-        offX = translatedCropOffset(ocOffCoord = crop0.offX, ocSz = crop0.width, targetSz = w, oiSz = origWh.width, rszRatio = rszRatio),
-        offY = translatedCropOffset(ocOffCoord = crop0.offY, ocSz = crop0.height, targetSz = h, oiSz = origWh.height, rszRatio = rszRatio)
+  def updateCrop0(crop0: MCrop, wideWh: ISize2di, origWh: ISize2di): MCrop = {
+    // Есть ширина-длина сырца. Нужно придумать кроп с центром как можно ближе к центру исходного кропа.
+    // Результат должен изнутри быть вписан в исходник по размерам.
+    val rszRatioV = origWh.height.toFloat / wideWh.height.toFloat
+    val rszRatioH = origWh.width.toFloat / wideWh.width.toFloat
+    val rszRatio  = Math.max(1.0F, Math.min(rszRatioH, rszRatioV))
+    val w = szMulted(wideWh.width, rszRatio)
+    val h = szMulted(wideWh.height, rszRatio)
+    val r = MCrop(
+      width  = w,
+      height = h,
+      // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном.
+      offX = translatedCropOffset(
+        ocOffCoord  = crop0.offX,
+        ocSz        = crop0.width,
+        targetSz    = w,
+        oiSz        = origWh.width
+      ),
+      offY = translatedCropOffset(
+        ocOffCoord  = crop0.offY,
+        ocSz        = crop0.height,
+        targetSz    = h,
+        oiSz        = origWh.height
       )
-    }
+    )
+    LOGGER.info( s"$crop0 => $r rsz=$rszRatio h=$h")
+    r
   }
   /** Сделать из опционального исходнго кропа новый wide-кроп с указанием гравитации. */
   def getWideCropInfo(iik: MAnyImgT, wideWh: ISize2di): Future[ImgCropInfo] = {
     getAbsCropOrFail(iik, wideWh)
-      .map { crop1 => ImgCropInfo(crop1, isCenter = false) }
+      .map { crop1 =>
+        ImgCropInfo(crop1, isCenter = false)
+      }
       .recover { case ex: Exception =>
         if (!ex.isInstanceOf[NoSuchElementException])
           warn(s"Failed to read image[${iik.fileName}] WH", ex)
@@ -132,7 +142,9 @@ class ScWideMaker @Inject() (
       // Координата начала отрезка получается, если из координаты конца вычесть полную длину отрезку.
       (rightSegCoord - segLen).toInt
     }
-    Math.max(0, resRaw)
+    val r = Math.max(0, resRaw)
+    LOGGER.info(s"centerNearest: $centerCoord l=$segLen ax=$axLen => $r (axC=$axCenter)")
+    r
   }
 
   /**
@@ -141,14 +153,14 @@ class ScWideMaker @Inject() (
    * @param ocSz Размер исходного кропа по текущей оси. Например crop.width для оси X.
    * @param targetSz Целевой размер нового кропа (новый width).
    * @param oiSz Полный размер изображения по текущей оси. origWh.width для оси Х.
-   * @param rszRatio Используемый коэффициент масштабирования карточки и изображения размера задается здесь.
    * @return Новое значение offset'а для кропа.
    */
-  def translatedCropOffset(ocOffCoord: Int, ocSz: Int, targetSz: Int, oiSz: Int, rszRatio: SzMult_t): Int = {
+  def translatedCropOffset(ocOffCoord: Int, ocSz: Int, targetSz: Int, oiSz: Int): Int = {
+    // 2017-12-13: Раньше тут нормировались axLen и centerCoord по rszRatio. Уже не вспомнить, почему так было.
     val newCoordFloat = centerNearestLineSeg1D(
-      centerCoord = (ocOffCoord + ocSz / 2) / rszRatio,
-      segLen = targetSz.toFloat,
-      axLen = oiSz / rszRatio
+      centerCoord = ocOffCoord + ocSz / 2,
+      segLen      = targetSz.toFloat,
+      axLen       = oiSz
     )
     newCoordFloat.toInt
   }
@@ -160,8 +172,7 @@ class ScWideMaker @Inject() (
    * @return Фьючерс с результатом.
    */
   override def icompile(args: IMakeArgs): Future[MakeResult] = {
-    import args._
-    val iikOrig = img.original
+    LOGGER.info( s"WIDE make: $args" )
 
     // Собираем хвост параметров сжатия.
     val devScreen = args.devScreenOpt
@@ -169,7 +180,7 @@ class ScWideMaker @Inject() (
     val pxRatio = devScreen.pixelRatio
 
     // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
-    val tgtHeightCssRaw = szMultedF(blockMeta.height, szMult)
+    val tgtHeightCssRaw = szMultedF(args.blockMeta.height, args.szMult)
     val tgtHeightReal = szMulted(tgtHeightCssRaw, pxRatio.pixelRatio)
 
     // Ширину экрана квантуем, получая ширину картинки.
@@ -178,7 +189,7 @@ class ScWideMaker @Inject() (
 
     // Запустить сбор инфы по кропу.
     val wideWh = MSize2di(height = tgtHeightReal, width = cropWidth)
-    val cropInfoFut = getWideCropInfo(img, wideWh)
+    val cropInfoFut = getWideCropInfo(args.img, wideWh)
 
     // Начинаем собирать список трансформаций по ресайзу:
     val compression = args.compressMode
@@ -186,6 +197,7 @@ class ScWideMaker @Inject() (
       .fromDpr(pxRatio)
 
     val imOps0 = List[ImOp](
+      AbsResizeOp(wideWh, ImResizeFlags.FillArea :: Nil),
       ImFilters.Lanczos,
       StripOp,
       ImInterlace.Plane,
@@ -194,19 +206,19 @@ class ScWideMaker @Inject() (
     )
 
     // Нужно брать кроп отн.середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
-    val imOps2Fut = cropInfoFut
-      .map { cropInfo =>
-        val ops = if (cropInfo.isCenter) {
-          warn(s"Failed to read image[${iikOrig.fileName}] WH")
-          // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
-          ImGravities.Center ::  AbsCropOp(cropInfo.crop) ::  imOps0
-        } else {
-          AbsCropOp(cropInfo.crop) :: imOps0
-        }
-        ImGravities.Center ::
-          AbsResizeOp(wideWh, Seq(ImResizeFlags.FillArea)) ::
-          ops
+    val imOps9Fut = for (cropInfo <- cropInfoFut) yield {
+      LOGGER.info(s"crop0 = $cropInfo")
+      // 2017-12-13: Тут долгое время был сначала ресайз до wideWh, а только потом кроп *в исходных измерениях*.
+      // Это давало почему-то рабочие результаты, или ошибок просто не замечали...
+      val imOps1 = AbsCropOp(cropInfo.crop) :: imOps0
+      if (cropInfo.isCenter) {
+        warn(s"Failed to read image[${args.img.original.fileName}] WH")
+        // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
+        ImGravities.Center :: imOps1
+      } else {
+        imOps1
       }
+    }
 
     // Вычислить размер картинки в css-пикселях.
     val szCss = MSize2di(
@@ -215,12 +227,13 @@ class ScWideMaker @Inject() (
     )
     // Дождаться результатов рассчета картинки и вернуть контейнер с результатами.
     for {
-      imOps2 <- imOps2Fut
+      imOps9 <- imOps9Fut
     } yield {
+      LOGGER.info(s"imOps=[${imOps9.mkString(", " )}]")
       MakeResult(
         szCss       = szCss,
         szReal      = wideWh,
-        dynCallArgs = img.withDynOps(imOps2),
+        dynCallArgs = args.img.withDynOps(imOps9),
         isWide      = true
       )
     }

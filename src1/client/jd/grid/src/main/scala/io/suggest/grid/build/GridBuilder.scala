@@ -50,9 +50,8 @@ class GridBuilder {
       Array.fill(colsCount)(mcs0)
     }
 
-    // leftPtrPx -- пиксельная координата левого угла. Возможно, она и не нужна.
     // line и column -- это координата текущей ячейки
-    var leftPtrPx, currLine, currColumn = 0
+    var currLine, currColumn = 0
 
     val blkSzMultD   = args.jdConf.blkSzMult.toDouble
     val cellWidthPx  = Math.round(BlockWidths.min.value * blkSzMultD).toInt // props.columnWidth
@@ -87,14 +86,12 @@ class GridBuilder {
       */
     def beforeStepToNextCell(): Unit = {
       currColumn += 1
-      leftPtrPx += paddedCellWidthPx
     }
 
     /** step() переходит на следующую строку. Нужно внести изменения в состояние. */
     def beforeStepNextLine(): Unit = {
       currColumn = 0
       currLine += 1
-      leftPtrPx = 0
     }
 
     def incrHeightUsed(ci: Int, incrBy: Int): Unit = {
@@ -113,7 +110,7 @@ class GridBuilder {
         // Собрать функцию поиска места для одного элемента, модифицирующую текущее состояние.
         @tailrec
         def step(i: Int): js.Array[Int] = {
-          // В оригинале был for-цикл с ограничением на 1000 итераций на всю плитку. Тут 10 -- на один item.
+          // В оригинале был for-цикл с ограничением на 1000 итераций на всю плитку. Тут -- ограничение итераций на каждый item.
           if (i >= 20) {
             // return -- слишком много итераций. Обычно это симптом зависона из-за ЛОГИЧЕСКОЙ ошибки в быдлокоде.
             throw new IllegalStateException(ErrorMsgs.ENDLESS_LOOP_MAYBE + HtmlConstants.SPACE + i)
@@ -130,23 +127,20 @@ class GridBuilder {
             val cellWidthMax = _getMaxCellWidthCurrLine()
 
             if (itemCellWidth <= cellWidthMax) {
+              // Собрать новые координаты для блока:
+              val xy = js.Array(
+                currColumn * paddedCellWidthPx,
+                Math.round(currLine * paddedCellHeightPx).toInt + args.offY
+              )
+
+              // Обновить состояние: проинкрементить col/line курсоры:
               for {
                 ci <- (currColumn until (currColumn + itemCellWidth)).iterator
                 if ci < colsCount
               } {
-                // TODO Тут было colsInfo(currColumn).heightUsed += itemCellHeight и ПОЧЕМУ-то это нормально работало. Удалить этот TODO, если всё будет работать после фикса.
                 incrHeightUsed(ci, itemCellHeight)
                 currColumn += 1
               }
-
-              // Сообрать новые координаты для блока:
-              val xy = js.Array(
-                leftPtrPx,
-                Math.round(currLine * paddedCellHeightPx).toInt + args.offY
-              )
-
-              // Сдвинуть текущий left на ширину блока и padding
-              leftPtrPx += itemCellWidth * paddedCellWidthPx //cellWidthPx + cellPaddingWidthPx
 
               // Вернуть полученные px-координаты блока.
               xy

@@ -42,7 +42,7 @@ trait MAnyImgT extends ImgFilename with DynImgOpsString {
     val iter = dynImgOps
       .iterator
       .flatMap {
-        case AbsCropOp(crop) => Seq(crop)
+        case AbsCropOp(crop) => crop :: Nil
         case _ => Nil
       }
     if (iter.hasNext)

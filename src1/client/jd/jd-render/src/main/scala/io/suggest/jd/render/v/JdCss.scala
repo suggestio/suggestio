@@ -84,12 +84,13 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // -------------------------------------------------------------------------------
   // Strip
 
-  private def _bmStyleSide(sizePx: Int) = Math.round(sizePx * blkSzMultD).toInt
+  def bmStyleSide(sizePx: Int) = Math.round(sizePx * blkSzMultD).toInt
 
   def bmStyleWh(bm: ISize2di): MSize2di = {
-    val w = _bmStyleSide(bm.width)
-    val h = _bmStyleSide(bm.height)
-    MSize2di(width = w, height = h)
+    MSize2di(
+      width  = bmStyleSide(bm.width),
+      height = bmStyleSide(bm.height)
+    )
   }
 
   /** Стили контейнеров полосок, описываемых через props1.BlockMeta. */
@@ -122,8 +123,10 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     val wideStripsDomain = new Domain.OverSeq( wideStrips )
     styleF( wideStripsDomain ) { strip =>
       strip.props1.bm.whenDefinedStyleS { bm =>
+        val wh = bmStyleWh( bm )
         styleS(
-          height( Math.round(bm.height * blkSzMultD).px )
+          height( wh.height.px ),
+          minWidth( wh.width.px )
         )
       }
     }

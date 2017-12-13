@@ -35,7 +35,8 @@ import scalaz.Tree
   */
 @Singleton
 class JdAdUtil @Inject()(
-                         @Named("blk") blkImgMaker   : IMaker,
+                         @Named("blk") blkImgMaker      : IMaker,
+                         @Named("scWide") wideImgMaker  : IMaker,
                          mMediasCache                : MMediasCache,
                          mNodesCache                 : MNodesCache,
                          dynImgUtil                  : DynImgUtil,
@@ -431,7 +432,8 @@ class JdAdUtil @Inject()(
     case class show(override val nodeId     : Option[String],
                     override val nodeEdges  : MNodeEdges,
                     override val tpl        : Tree[JdTag],
-                    szMult                  : SzMult_t
+                    szMult                  : SzMult_t,
+                    allowWide               : Boolean
                    )(implicit ctx: Context) extends JdAdDataMakerBase {
       import ctx.request
 
@@ -440,7 +442,7 @@ class JdAdUtil @Inject()(
 
       /** Для выдачи требуются готовые картинки, подогнанные под экран устройства клиента. */
       override def imgJdEdgesFut: Future[Seq[MJdEdge]] = {
-        val _imgsRenderedFut  = renderAdDocImgs(tpl, imgsEdges, szMult, ctx.deviceScreenOpt)
+        val _imgsRenderedFut  = renderAdDocImgs(tpl, imgsEdges, szMult, ctx.deviceScreenOpt, allowWide)
         val _mediaHostsMapFut = mediaHostsMapFut
         for {
           imgsRendered      <- _imgsRenderedFut
@@ -514,12 +516,16 @@ class JdAdUtil @Inject()(
     * @param jdDoc Jd-шаблон.
     * @param imgsEdges Только img-эджи, с подвязанными к ним изображениями.
     * @param devScreenOpt Данные по экрану клиентского устройства.
+    * @param allowWide Допускается ли широкий рендер, если это требуется шаблоном?
+    *                  Для плитке -- нет, для фокусировки -- да.
     * @return Фьючерс с картой MakeResult'ов для эджей.
     */
   def renderAdDocImgs(jdDoc         : Tree[JdTag],
                       imgsEdges     : TraversableOnce[(MEdge, MImg3)],
                       szMult        : Float,
-                      devScreenOpt  : Option[DevScreen]): Future[Map[EdgeUid_t, (MEdge, MImg3, MakeResult)]] = {
+                      devScreenOpt  : Option[DevScreen],
+                      allowWide     : Boolean
+                     ): Future[Map[EdgeUid_t, (MEdge, MImg3, MakeResult)]] = {
     val futsIter = for {
       (medge, mimg) <- imgsEdges.toIterator
       edgeUid       <- medge.doc.uid
@@ -548,22 +554,29 @@ class JdAdUtil @Inject()(
         .flatMap(_.crop)
         .fold(mimg) { crop =>
           mimg.withDynOps(
-            Seq( AbsCropOp(crop) )
+            AbsCropOp(crop) :: Nil
           )
         }
 
-      // Есть картинка и jd-тег, ей соответствующий.
-      val imakeResFut = blkImgMaker.icompile(
-        MakeArgs(
-          img           = mimg2,
-          blockMeta     = contSz2d,
-          szMult        = 1.0f,
-          devScreenOpt  = devScreenOpt,
-          compressMode  = Some(
-            if (qdEmbedSzOpt.isEmpty) CompressModes.Bg else CompressModes.Fg
-          )
+      val makeArgs = MakeArgs(
+        img           = mimg2,
+        blockMeta     = contSz2d,
+        szMult        = 1.0f,
+        devScreenOpt  = devScreenOpt,
+        compressMode  = Some(
+          if (qdEmbedSzOpt.isEmpty) CompressModes.Bg else CompressModes.Fg
         )
       )
+
+      // Выбираем img maker исходя из конфигурации рендера.
+      val maker = if (allowWide && jdTag.props1.bm.exists(_.wide)) {
+        wideImgMaker
+      } else {
+        blkImgMaker
+      }
+
+      // Есть картинка и jd-тег, ей соответствующий.
+      val imakeResFut = maker.icompile( makeArgs )
 
       // Дописать в результат инфу по оригинальной картинке
       for (imakeRes <- imakeResFut) yield {

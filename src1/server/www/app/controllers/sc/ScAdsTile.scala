@@ -370,7 +370,7 @@ trait ScAdsTile
         val mainBlkTpl = jdAdUtil.getMainBlockTpl( brArgs.mad )
         val edges2 = jdAdUtil.filterEdgesForTpl(mainBlkTpl, brArgs.mad.edges)
         jdAdUtil.mkJdAdDataFor
-          .show(brArgs.mad.id, edges2, mainBlkTpl, tileArgs.szMult)(ctx)
+          .show(brArgs.mad.id, edges2, mainBlkTpl, tileArgs.szMult, allowWide = false)(ctx)
           .execute()
       }
         .flatten

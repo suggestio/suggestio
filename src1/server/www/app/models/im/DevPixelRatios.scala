@@ -20,7 +20,7 @@ object DevPixelRatios extends Enumeration with EnumValue2Val with StrEnumFormMap
     extends super.Val(name)
     with IDevPixelRatio
   {
-    override def toString() = name
+    override final def toString() = pixelRatio.toString
   }
 
 
