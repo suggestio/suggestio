@@ -62,13 +62,21 @@ class ScRootR (
       s.searchC { searchPropsProxy =>
         val scCss = getScCssF()
 
+        val INITIAL = scalacss.internal.Literal.Typed.initial.value
+
         val searchContentStyl = new StyleProps {
           override val zIndex    = scCss.Search.Z_INDEX
-          override val overflowY = scalacss.internal.Literal.Typed.initial.value
+          override val overflowY = INITIAL
         }
+        val contentStyl = new StyleProps {
+          override val overflowY = INITIAL
+        }
+
         val searchStyles = new SidebarStyles {
           override val sidebar = searchContentStyl
+          override val content = contentStyl
         }
+
 
         // Содержимое правой панели (панель поиска)
         // search (правый) sidebar.

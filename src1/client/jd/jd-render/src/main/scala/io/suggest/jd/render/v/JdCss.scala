@@ -8,7 +8,7 @@ import io.suggest.css.ScalaCssDefaults._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.render.m.MJdCssArgs
-import io.suggest.jd.tags.JdTag
+import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.primo.ISetUnset
 import io.suggest.text.MTextAligns
@@ -108,6 +108,36 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         styleS(
           width ( szMulted.width.px ),
           height( szMulted.height.px )
+        )
+      }
+    }
+  }
+
+
+  /** Стили для фоновых картинок стрипов (пока только non-wide). */
+  val stripBgStyleF = {
+    // Интересуют только стрипы c bgImg, но без wide
+    val strips = _allJdTagsIter
+      .flatMap { jdt =>
+        val p1 = jdt.props1
+        for {
+          bm <- p1.bm
+          if (jdt.name ==* MJdTagNames.STRIP) && p1.bgImg.nonEmpty && !bm.wide
+        } yield {
+          jdt
+        }
+      }
+      .toIndexedSeq
+    val stripsDomain = new Domain.OverSeq( strips )
+
+    // TODO Убрано, потому что тут только !wide изображения. Когда будет унифицироавно до всех, можно будет заюзать это.
+    //val commonCss = addClassName( Css.Block.BG )
+
+    styleF(stripsDomain) { strip =>
+      strip.props1.bm.whenDefinedStyleS { bm =>
+        styleS(
+          // Избегаем расплющивания картинок, пусть лучше обрезка будет. Здесь только width.
+          width( bmStyleSide(bm.width).px )
         )
       }
     }

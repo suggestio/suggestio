@@ -356,13 +356,10 @@ object Lists {
         false
       }
 
-    } else if (tr1HasNext || tr2HasNext) {
-      // Один hasNext, другой !hasNext. Значит, длина итераторов различается => коллекции не равны.
-      false
-
     } else {
-      // Оба итератора закочились одновременно. Значит они равны.
-      true
+      // Один hasNext, другой !hasNext. Значит, длина итераторов различается => коллекции не равны. => false
+      // Оба итератора закочились одновременно. Значит они равны. => true
+      !(tr1HasNext || tr2HasNext)
     }
   }
 
@@ -371,6 +368,32 @@ object Lists {
   def ofTypeF[X, T <: X: ClassTag]: PartialFunction[X, List[T]] = {
     case t: T => t :: Nil
     case _    => Nil
+  }
+
+
+
+  implicit class ListExt[T](val source: List[T]) extends AnyVal {
+
+    /** O(n)-аналог List.span(), но true-аккамулятор возвращается в развёрнутом виде.
+      * Т.е. [1,2,3,4,5,6] и {x<=3} вернёт результат ([3,2,1], [4,5,6]).
+      *
+      * @param f Предикат.
+      * @return
+      */
+    def spanRev(f: T => Boolean): (List[T], List[T]) = {
+      @tailrec
+      def __doSpan(headAccRev: List[T], rest: List[T]): (List[T], List[T]) = {
+        headAccRev match {
+          case hd :: tl if f(hd) =>
+            __doSpan(hd :: headAccRev, tl)
+          case _ =>
+            (headAccRev, rest)
+        }
+      }
+
+      __doSpan(Nil, source)
+    }
+
   }
 
 }

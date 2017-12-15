@@ -196,7 +196,6 @@ class JdR(
           if (jdArgs.conf.isEdit) {
             ^.draggable := false
           } else if (isWide) {
-            // Для wide-картинок надо высоту задавать жестко.
             wideCss
           } else {
             EmptyVdom
@@ -216,17 +215,11 @@ class JdR(
 
             cropEmuOpt.fold[TagMod] {
               // Просто заполнение всего блока картинкой.
-              s.props1.bm.whenDefined { bm =>
-                // TODO Унести стили в JdCss.
-                // Заполняем блок по ширине, т.к. дырки сбоку режут глаз сильнее, чем снизу.
-                if (isWide) {
-                  // TODO выставить left, чтобы отцентровать wide-картинку относительно центра экрана
-                  EmptyVdom
-                } else {
-                  // Избегаем расплющивания картинок, пусть лучше обрезка будет. Здесь только width.
-                  ^.width  := jdArgs.jdCss.bmStyleSide(bm.width).px
-                  //^.height := bm.height.px
-                }
+              if (isWide) {
+                // TODO Надо marginLeft или translate(), чтобы отцентровать wide-картинку по ширине плитки.
+                EmptyVdom
+              } else {
+                C.stripBgStyleF(s)
               }
             } { ecArgs =>
               // Нужно рассчитать параметры margin, w, h изображения, чтобы оно имитировало заданный кроп.

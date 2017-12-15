@@ -524,7 +524,9 @@ case class ScCss( args: IScCssArgs )
       addClassName( _SM_GRID_ADS + "_container" ),
       minHeight( _screenHeightPx ),
       left(0.px),
-      opacity(1)
+      opacity(1),
+      // 2017-12-14: Чтобы блоки могли за экран выезжать: нужно для широких карточек.
+      overflow.initial
     )
 
 
