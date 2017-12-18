@@ -6,9 +6,9 @@ import io.suggest.lk.tags.edit.m.signals._
 import io.suggest.lk.tags.edit.vm.add.ANameInput
 import io.suggest.lk.tags.edit.vm.exist.EDelete
 import io.suggest.lk.tags.edit.vm.search.hints.SContainer
+import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.tags.search.{MTagSearchArgs, MTagSearchRespTs, MTagsSearch}
 import org.scalajs.dom.Event
 

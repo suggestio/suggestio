@@ -12,9 +12,9 @@ import io.suggest.lk.r.LkPreLoaderR
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sjs.common.i18n.Messages
 import io.suggest.react.ReactCommonUtil.Implicits._
 import PopupR.PopupPropsValFastEq
+import io.suggest.msg.Messages
 
 /**
   * Suggest.io

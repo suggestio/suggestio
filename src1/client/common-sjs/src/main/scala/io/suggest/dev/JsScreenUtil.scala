@@ -1,7 +1,7 @@
 package io.suggest.dev
 
+import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.sjs.common.vsz.ViewportSz
 

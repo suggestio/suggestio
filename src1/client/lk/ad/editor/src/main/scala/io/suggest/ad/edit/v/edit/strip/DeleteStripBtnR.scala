@@ -1,18 +1,18 @@
 package io.suggest.ad.edit.v.edit.strip
 
 import diode.react.ModelProxy
-import io.suggest.ad.edit.m.{StripDeleteCancel, StripDelete}
+import io.suggest.ad.edit.m.{StripDelete, StripDeleteCancel}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
+import io.suggest.msg.Messages
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.VdomNullElement
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sjs.common.i18n.Messages
 
 /**
   * Suggest.io

@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.c.search
 
 import io.suggest.fsm.StateData
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.sjs.m.msearch.{MSearchFsmSd, MTab}
 import io.suggest.sjs.common.fsm.signals.Visible
 import io.suggest.sjs.common.fsm.{IFsmMsg, SjsFsm}
-import io.suggest.sjs.common.msg.ErrorMsgs
 
 /**
   * Suggest.io

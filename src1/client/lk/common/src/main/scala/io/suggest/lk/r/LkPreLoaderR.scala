@@ -3,7 +3,7 @@ package io.suggest.lk.r
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.sjs.common.i18n.Messages
+import io.suggest.msg.Messages
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._

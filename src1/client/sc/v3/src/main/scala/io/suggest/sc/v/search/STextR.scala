@@ -2,10 +2,10 @@ package io.suggest.sc.v.search
 
 import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
+import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{MScSearchText, SearchTextChanged, SearchTextFocus}
 import io.suggest.sc.styl.GetScCssF
-import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}

@@ -5,8 +5,8 @@ import io.suggest.common.tree.{NodeTreeUpdate, NodesTreeApiIId, NodesTreeWalk}
 import io.suggest.lk.nodes.{MLknNode, MLknNodeResp}
 import io.suggest.primo.id.IId
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.common.html.HtmlConstants.SPACE
+import io.suggest.msg.WarnMsgs
 
 /**
   * Suggest.io

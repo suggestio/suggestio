@@ -2,6 +2,7 @@ package io.suggest.sc.c.search
 
 import diode._
 import io.suggest.common.empty.OptionUtil
+import io.suggest.msg.ErrorMsgs
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.m.ResetUrlRoute
 import io.suggest.sc.m.hdr.HSearchBtnClick
@@ -9,7 +10,6 @@ import io.suggest.sc.m.search._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.univeq._
 
 /**

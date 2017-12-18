@@ -1,9 +1,9 @@
 package io.suggest.spa.delay
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**

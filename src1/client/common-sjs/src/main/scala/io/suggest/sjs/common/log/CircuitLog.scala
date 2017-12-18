@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.log
 
 import diode.Circuit
-import io.suggest.sjs.common.msg.ErrorMsg_t
+import io.suggest.msg.ErrorMsg_t
 
 /**
   * Suggest.io

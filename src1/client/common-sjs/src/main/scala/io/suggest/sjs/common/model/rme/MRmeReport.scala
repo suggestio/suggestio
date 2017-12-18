@@ -1,8 +1,8 @@
 package io.suggest.sjs.common.model.rme
 
 import io.suggest.err.ErrorConstants.Remote._
+import io.suggest.msg.ErrorMsg_t
 import io.suggest.sjs.common.log.Severity
-import io.suggest.sjs.common.msg.ErrorMsg_t
 import org.scalajs.dom
 
 import scala.scalajs.js

@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.init
 
 import io.suggest.common.event.WndEvents
+import io.suggest.msg.WarnMsgs
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.sjs.c.plat.PlatformFsm
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
@@ -10,7 +11,6 @@ import io.suggest.sc.sjs.m.mdev.{PlatEventListen, PlatformEvents}
 import io.suggest.sc.sjs.v.global.DocumentView
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.signals.PlatformReady
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.text.UrlUtil2

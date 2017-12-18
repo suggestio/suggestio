@@ -1,8 +1,8 @@
-package io.suggest.grid
+package io.suggest.grid.build
 
 import io.suggest.ad.blk.BlockHeights
-import minitest._
 import japgolly.univeq._
+import minitest._
 
 /**
   * Suggest.io

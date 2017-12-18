@@ -2,7 +2,7 @@ package io.suggest.react.r
 
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dt.MYmd
-import io.suggest.sjs.common.i18n.JsFormatUtil
+import io.suggest.msg.JsFormatUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 

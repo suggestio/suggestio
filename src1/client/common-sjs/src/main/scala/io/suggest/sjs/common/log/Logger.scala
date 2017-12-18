@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.log
 
-import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
+import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 
 import scala.annotation.elidable
 import scala.annotation.elidable._

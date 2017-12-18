@@ -10,7 +10,7 @@ import io.suggest.lk.adv.m.{IRcvrPopupProps, OpenNodeInfoClick}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.maps.u.{MapIcons, MapsUtil}
-import io.suggest.sjs.common.i18n.Messages
+import io.suggest.msg.Messages
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback}
 import react.leaflet.layer.LayerGroupR

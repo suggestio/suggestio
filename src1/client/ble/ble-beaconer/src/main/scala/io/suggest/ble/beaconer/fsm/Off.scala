@@ -2,7 +2,7 @@ package io.suggest.ble.beaconer.fsm
 
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.signals.Subscribe
-import io.suggest.sjs.common.msg.ErrorMsgs
+import io.suggest.msg.ErrorMsgs
 
 /**
   * Suggest.io

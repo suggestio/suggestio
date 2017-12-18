@@ -2,7 +2,7 @@ package io.suggest.lk.adn.map.r
 
 import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
-import io.suggest.sjs.common.i18n.Messages
+import io.suggest.msg.Messages
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 

@@ -3,8 +3,8 @@ package io.suggest.lk.adv.a
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.adv.m._
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 

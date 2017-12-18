@@ -4,8 +4,8 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
+import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
-import io.suggest.sjs.common.i18n.Messages
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.ReactUnivEqUtil._
 import japgolly.scalajs.react._

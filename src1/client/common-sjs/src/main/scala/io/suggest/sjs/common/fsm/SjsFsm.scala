@@ -1,10 +1,10 @@
 package io.suggest.sjs.common.fsm
 
 import io.suggest.fsm.{AbstractFsm, AbstractFsmUtil}
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.{ILog, Logger}
 import io.suggest.sjs.common.model.TimestampedCompanion
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success

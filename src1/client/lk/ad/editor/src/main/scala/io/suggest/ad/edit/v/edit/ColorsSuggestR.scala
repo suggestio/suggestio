@@ -5,13 +5,13 @@ import diode.react.ModelProxy
 import io.suggest.ad.edit.m.ColorChanged
 import io.suggest.color.MColorData
 import io.suggest.css.Css
+import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sjs.common.i18n.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**

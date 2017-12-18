@@ -1,10 +1,8 @@
 package io.suggest.jd
 
-import diode.FastEq
 import io.suggest.ad.blk.{BlockPadding, BlockPaddings, IBlockSize}
 import io.suggest.dev.MSzMult
 import japgolly.univeq._
-import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -14,16 +12,6 @@ import io.suggest.ueq.UnivEqUtil._
   */
 
 object MJdConf {
-
-  /** Поддержка FastEq для инстансов [[MJdConf]]. */
-  implicit object MJdConfFastEq extends FastEq[MJdConf] {
-    override def eqv(a: MJdConf, b: MJdConf): Boolean = {
-      (a.isEdit ==* b.isEdit) &&
-        (a.szMult ===* b.szMult) &&
-        (a.blockPadding ===* b.blockPadding) &&
-        (a.gridColumnsCount ==* b.gridColumnsCount)
-    }
-  }
 
   implicit def univEq: UnivEq[MJdConf] = UnivEq.force
 

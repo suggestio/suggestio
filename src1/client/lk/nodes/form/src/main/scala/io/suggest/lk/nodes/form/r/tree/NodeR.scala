@@ -12,10 +12,9 @@ import io.suggest.lk.nodes.MLknConf
 import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.r.menu.{NodeMenuBtnR, NodeMenuR}
 import io.suggest.lk.r.LkPreLoaderR
+import io.suggest.msg.{ErrorMsgs, JsFormatUtil, Messages}
 import io.suggest.react.ReactCommonUtil
-import io.suggest.sjs.common.i18n.{JsFormatUtil, Messages}
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 

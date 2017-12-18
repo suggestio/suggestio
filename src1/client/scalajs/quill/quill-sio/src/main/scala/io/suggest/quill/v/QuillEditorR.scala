@@ -5,13 +5,13 @@ import com.quilljs.delta.Delta
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.css.Css
+import io.suggest.msg.ErrorMsgs
 import io.suggest.quill.m.TextChanged
 import io.suggest.quill.u.QuillInit
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}

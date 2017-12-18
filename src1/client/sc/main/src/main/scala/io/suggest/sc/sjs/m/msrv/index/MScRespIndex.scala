@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.m.msrv.index
 
 import io.suggest.geo.MGeoPoint
+import io.suggest.msg.ErrorMsgs
 import io.suggest.primo.IApplyUndef1
 import io.suggest.routes.scRoutes
 import io.suggest.routes.JsRoutes_ScControllers._
@@ -12,7 +13,6 @@ import io.suggest.sc.sjs.m.mgeo.MGeoPointExt
 import io.suggest.sc.sjs.m.msrv.{IFocResp, MScResp, MSrv}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
 
 import scala.concurrent.Future
 import scala.scalajs.js.UndefOr

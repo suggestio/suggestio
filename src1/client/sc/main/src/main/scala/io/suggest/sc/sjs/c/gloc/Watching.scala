@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.c.gloc
 
 import io.suggest.geo.{GeoLocType, GeoLocTypes, MGeoLocJs}
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.signals.IVisibilityChangeSignal
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import org.scalajs.dom.{Geolocation, Position, PositionError, PositionOptions}
 

@@ -15,15 +15,15 @@ import io.suggest.file.up.{MFile4UpProps, MFileUploadS}
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.MImgEdgeWithOps
 import io.suggest.img.crop.MCrop
-import io.suggest.jd.{MJdEdgeId, MJdEdge}
+import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.jd.render.m.SetImgWh
 import io.suggest.js.UploadConstants
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import org.scalajs.dom.raw.URL
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._

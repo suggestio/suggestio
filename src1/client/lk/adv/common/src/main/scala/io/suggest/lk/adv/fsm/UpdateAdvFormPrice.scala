@@ -2,14 +2,14 @@ package io.suggest.lk.adv.fsm
 
 import io.suggest.common.fut.FutureUtil
 import io.suggest.fsm.StateData
-import io.suggest.lk.price.m.{XhrResult, Resp}
+import io.suggest.lk.price.m.{Resp, XhrResult}
 import io.suggest.lk.price.vm.PriceUrlInput
 import io.suggest.lk.price.vm.PriceVal
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.fsm.SjsFsm
 import io.suggest.sjs.common.vm.find.IFindEl
 import io.suggest.sjs.common.vm.input.FormDataVmT
 import io.suggest.sjs.dt.period.vm.InfoContainer
-import io.suggest.sjs.common.msg.{WarnMsgs, ErrorMsgs}
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 

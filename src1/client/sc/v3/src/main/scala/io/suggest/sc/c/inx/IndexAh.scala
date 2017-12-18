@@ -1,8 +1,9 @@
 package io.suggest.sc.c.inx
 
 import diode._
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.react.ReactDiodeUtil
-import io.suggest.react.ReactDiodeUtil.{PotOpsExt, ActionHandlerExt}
+import io.suggest.react.ReactDiodeUtil.{ActionHandlerExt, PotOpsExt}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.grid.GridLoadAds
@@ -12,7 +13,6 @@ import io.suggest.sc.m.{MScRoot, ResetUrlRoute}
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import japgolly.univeq._
 
 import scala.util.Success

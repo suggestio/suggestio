@@ -7,7 +7,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.tags.edit.m.RmTag
-import io.suggest.sjs.common.i18n.Messages
+import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**

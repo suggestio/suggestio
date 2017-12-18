@@ -1,4 +1,4 @@
-package io.suggest.grid
+package io.suggest.grid.build
 
 import io.suggest.ad.blk.BlockHeight
 import japgolly.univeq._

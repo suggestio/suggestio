@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.node
 
 import io.suggest.geo.MGeoLoc
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.sjs.c.scfsm.FindAdsArgsT
 import io.suggest.sc.sjs.m.mgrid.MGridState
@@ -11,7 +12,6 @@ import io.suggest.sc.sjs.m.msrv.tile.MFindAdsTile
 import io.suggest.sc.sjs.vm.layout.LayRootVm
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.res.CommonRes
-import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.doc.SafeBody
 import io.suggest.sjs.common.vm.wnd.WindowVm

@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.node
 
+import io.suggest.msg.WarnMsgs
 import io.suggest.sc.ScConstants.Welcome
 import io.suggest.sc.sjs.c.scfsm.grid
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
@@ -8,7 +9,6 @@ import io.suggest.sc.sjs.m.msrv.tile.MScRespAdsTile
 import io.suggest.sc.sjs.m.mwc.{WcClick, WcHideState, WcTimeout}
 import io.suggest.sc.sjs.vm.wc.{WcBgImg, WcFgImg, WcRoot}
 import io.suggest.sjs.common.controller.DomQuick
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**

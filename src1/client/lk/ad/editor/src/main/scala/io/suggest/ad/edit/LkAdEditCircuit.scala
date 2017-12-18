@@ -6,7 +6,6 @@ import io.suggest.ad.edit.m._
 import MDocS.MDocSFastEq
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
 import io.suggest.sjs.common.log.CircuitLog
-import io.suggest.sjs.common.msg.ErrorMsgs
 import play.api.libs.json.Json
 import io.suggest.ad.edit.c._
 import io.suggest.ad.edit.m.edit.color.{IBgColorPickerS, MColorPick, MColorsState}
@@ -30,6 +29,7 @@ import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._
 import org.scalajs.dom
 import io.suggest.ad.edit.m.layout.MSlideBlocks.MSlideBlocksFastEq
+import io.suggest.msg.ErrorMsgs
 
 /**
   * Suggest.io

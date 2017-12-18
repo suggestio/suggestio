@@ -3,7 +3,7 @@ package io.suggest.react.r
 import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.dt.MYmd
-import io.suggest.sjs.common.i18n.{JsFormatUtil, Messages}
+import io.suggest.msg.{JsFormatUtil, Messages}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 

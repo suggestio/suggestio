@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.vm.attr
 
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.vm.IVm
 import org.scalajs.dom.raw.HTMLInputElement
 

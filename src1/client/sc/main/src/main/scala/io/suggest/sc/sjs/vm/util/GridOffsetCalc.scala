@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.vm.util
 
+import io.suggest.msg.WarnMsgs
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.msc.IScSd
 import io.suggest.sjs.common.log.ILog
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vm.style.{StyleDisplayT, StyleWidth}
 import org.scalajs.dom.raw.HTMLElement
 

@@ -5,9 +5,9 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.lk.adn.map.m.HandleAdvGeoExistPopupResp
 import io.suggest.lk.adn.map.u.ILkAdnMapApi
 import io.suggest.maps.m.{HandleMapPopupClose, MExistGeoPopupS, OpenAdvGeoExistPopup}
+import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
 
 import scala.util.Success
 

@@ -7,6 +7,7 @@ import io.suggest.err.ErrorConstants
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.{JdCss, JdCssFactory}
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.m.grid._
@@ -15,7 +16,6 @@ import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.tile.{GridCalc, MGridCalcConf, TileConstants}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import japgolly.univeq._
 
 import scala.util.Success

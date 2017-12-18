@@ -10,6 +10,7 @@ import io.suggest.dt.{MAdvPeriod, MYmd}
 import io.suggest.dt.interval.{MRangeYmd, QuickAdvPeriod, QuickAdvPeriods}
 import io.suggest.lk.r.PropTable
 import io.suggest.lk.r.Forms.InputCont
+import io.suggest.msg.Messages
 import io.suggest.spa.OptFastEq.Plain
 import io.suggest.sjs.dt.period.m.{DtpInputFn, DtpInputFns, SetDateStartEnd, SetQap}
 import japgolly.scalajs.react._
@@ -20,7 +21,6 @@ import io.suggest.react.ReactCommonUtil.cbFun2ToJsCb
 import io.suggest.dt.moment.MomentJsUtil.Implicits.MomentDateExt
 import io.suggest.i18n.MsgCodes
 import io.suggest.sjs.common.empty.JsOptionUtil.opt2undef
-import io.suggest.sjs.common.i18n.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 // TODO import io.suggest.sjs.common.dt.JsDateUtil.MRangeYmdFastEq + OptFastEq.Wrapped
 

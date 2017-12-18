@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sc.sjs.c.scfsm.node.Index
 import io.suggest.sc.sjs.m.mfoc.FocRootAppeared
 import io.suggest.sc.sjs.m.msrv.index.MScRespIndex
@@ -7,7 +8,6 @@ import io.suggest.sc.sjs.vm.layout.FsLoader
 import io.suggest.sc.sjs.vm.res.FocusedRes
 import io.suggest.sc.sjs.vm.foc.fad.FAdRoot
 import io.suggest.sc.sjs.vm.foc.{FCarCont, FControls, FRoot}
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.util.Failure

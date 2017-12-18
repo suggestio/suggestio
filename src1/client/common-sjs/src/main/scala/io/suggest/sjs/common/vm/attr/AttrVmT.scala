@@ -1,9 +1,9 @@
 package io.suggest.sjs.common.vm.attr
 
-import io.suggest.sjs.common.msg.ErrorMsgs
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.IVm
-import org.scalajs.dom.{Element, Node, NamedNodeMap}
+import org.scalajs.dom.{Element, NamedNodeMap, Node}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr

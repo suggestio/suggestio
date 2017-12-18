@@ -6,8 +6,8 @@ import io.suggest.bill.tf.daily.{ITfDailyMode, InheritTf, MTfDailyInfo, ManualTf
 import io.suggest.cal.m.MCalTypes
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.util.Success

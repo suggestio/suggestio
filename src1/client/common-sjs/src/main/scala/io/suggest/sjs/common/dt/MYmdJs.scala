@@ -2,8 +2,8 @@ package io.suggest.sjs.common.dt
 
 import io.suggest.dt.MYmd
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
 import JsDateUtil.JsDateHelper
+import io.suggest.msg.ErrorMsgs
 
 import scala.scalajs.js
 

@@ -10,7 +10,7 @@ import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.tags.edit.m.AddTagFound
 import io.suggest.lk.tags.edit.vm.search.hints.SRow
-import io.suggest.sjs.common.i18n.Messages
+import io.suggest.msg.Messages
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromHtml, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._

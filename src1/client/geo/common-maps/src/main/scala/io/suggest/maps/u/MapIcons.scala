@@ -6,8 +6,8 @@ import io.suggest.common.spa.SpaConst.LkPreLoaderConst
 import io.suggest.i18n.MsgCodes
 import io.suggest.maps.vm.RadiusMarkerIcon
 import io.suggest.maps.vm.img.{IconVmStaticT, MarkerIcon, MarkerIconRetina, MarkerIconShadow}
+import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
-import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.map.LatLng

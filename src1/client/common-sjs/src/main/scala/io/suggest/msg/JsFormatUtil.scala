@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.i18n
+package io.suggest.msg
 
 import io.suggest.bill.MPrice
 import io.suggest.dt.MYmd

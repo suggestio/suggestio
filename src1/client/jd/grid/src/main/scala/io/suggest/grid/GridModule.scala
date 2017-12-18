@@ -1,7 +1,7 @@
 package io.suggest.grid
 
 import com.softwaremill.macwire._
-import io.suggest.grid.build.GridBuilder
+import io.suggest.grid.build.GridBuilderJs
 
 /**
   * Suggest.io
@@ -11,6 +11,6 @@ import io.suggest.grid.build.GridBuilder
   */
 class GridModule {
 
-  lazy val gridBuilder = wire[GridBuilder]
+  lazy val gridBuilder = wire[GridBuilderJs]
 
 }

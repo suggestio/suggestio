@@ -4,12 +4,12 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.geo._
 import io.suggest.text.parse.ParserUtil
 import io.suggest.common.html.HtmlConstants.{`(`, `)`}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.m.{RouteTo, Sc3Pages}
 import io.suggest.sc.m.Sc3Pages._
 import io.suggest.sc.m.search.MSearchTabs
 import io.suggest.sc.v.ScRootR
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.text.UrlUtil2
 import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl}

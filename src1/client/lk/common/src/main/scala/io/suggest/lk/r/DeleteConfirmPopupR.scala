@@ -8,9 +8,9 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.{DeleteConfirmPopupCancel, DeleteConfirmPopupOk, MDeleteConfirmPopupS}
 import io.suggest.lk.pop.PopupR
 import io.suggest.lk.pop.PopupR.PopupPropsValFastEq
+import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 

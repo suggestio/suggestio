@@ -6,11 +6,11 @@ import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.ad.edit.m.BlockSizeBtnClick
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.{MHand, MHands}
+import io.suggest.msg.Messages
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sjs.common.i18n.Messages
 
 import scalacss.ScalaCssReact._
 import scalacss.internal.StyleA

@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.geo.json
 
+import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
 
 import scala.scalajs.js
 import scala.scalajs.js.JSON

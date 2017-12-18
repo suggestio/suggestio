@@ -9,15 +9,15 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.err.ErrorConstants
-import io.suggest.grid.build.GridBuildArgs
+import io.suggest.grid.build.MGridBuildArgsJs
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
 import io.suggest.react.ReactCommonUtil.VdomNullElement
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.wnd.WindowVm
@@ -337,7 +337,7 @@ class JdR(
             conf = jdArgs.conf,
             tagName = GridComponents.DIV,
             gridBuildArgsF = { items =>
-              GridBuildArgs(
+              MGridBuildArgsJs(
                 itemsExtDatas = items,
                 jdConf = jdArgs.conf
               )

@@ -10,9 +10,9 @@ import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
 import io.suggest.sc.sjs.m.msc.{MGen, MScSd, PopStateSignal}
 import io.suggest.sc.sjs.m.msearch.{MTabSwitchSignal, MTabs}
 import io.suggest.sc.sjs.m.mtags.MTagInfo
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.msg.WarnMsgs
 import io.suggest.text.UrlUtil2
 import org.scalajs.dom
 

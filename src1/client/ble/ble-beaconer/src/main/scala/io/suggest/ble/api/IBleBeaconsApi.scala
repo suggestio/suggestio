@@ -1,9 +1,9 @@
 package io.suggest.ble.api
 
 import io.suggest.ble.api.cordova.ble.CordovaBleApi
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.fsm.SjsFsm
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
 
 /**
   * Suggest.io

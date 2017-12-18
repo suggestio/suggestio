@@ -7,9 +7,9 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.lk.nodes.{MLknConf, MLknNodeReq}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.text.StringUtil
 
 import scala.util.Success

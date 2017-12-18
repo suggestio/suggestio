@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.c.plat.dev
 
+import io.suggest.msg.WarnMsgs
 import io.suggest.sc.sjs.c.plat.PlatformFsmStub
 import io.suggest.sc.sjs.m.mdev.{PlatEventListen, PlatformEvents}
-import io.suggest.sjs.common.msg.WarnMsgs
 
 /**
   * Suggest.io

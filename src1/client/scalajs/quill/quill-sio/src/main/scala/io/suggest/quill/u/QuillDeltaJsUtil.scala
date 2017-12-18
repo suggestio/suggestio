@@ -4,7 +4,7 @@ import com.quilljs.delta.{DeltaInsertData_t, _}
 import io.suggest.color.MColorData
 import io.suggest.common.html.HtmlConstants
 import io.suggest.font.{MFontSizes, MFonts}
-import io.suggest.jd.{MJdEdgeId, MJdEdge}
+import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
@@ -13,10 +13,10 @@ import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.id.IId
 import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.text.MTextAligns
 import japgolly.univeq._
 import JdTag.Implicits._
+import io.suggest.msg.ErrorMsgs
 
 import scala.scalajs.js
 import scala.scalajs.js.{JSON, UndefOr, |}

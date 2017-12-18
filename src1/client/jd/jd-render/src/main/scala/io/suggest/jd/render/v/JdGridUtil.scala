@@ -2,7 +2,7 @@ package io.suggest.jd.render.v
 
 import com.github.dantrain.react.stonecutter.{CssGridProps, EnterExitStyle, GridComponent_t}
 import io.suggest.ad.blk.{BlockMeta, BlockWidths}
-import io.suggest.grid.build.{GridBuildArgs, GridBuilder, ItemPropsExt}
+import io.suggest.grid.build.{MGridBuildArgsJs, GridBuilderJs, ItemPropsExt}
 import io.suggest.jd.MJdConf
 import io.suggest.jd.tags.JdTag
 
@@ -16,7 +16,7 @@ import scalaz.Tree
   * Description: Утиль для сборки плитки на jd-карточках.
   */
 class JdGridUtil(
-                  gridBuilder: GridBuilder
+                  gridBuilder: GridBuilderJs
                 ) {
 
   def jdTrees2bms(jdTrees: TraversableOnce[Tree[JdTag]]): Iterator[BlockMeta] = {
@@ -39,7 +39,7 @@ class JdGridUtil(
                      jds              : TraversableOnce[BlockMeta],
                      conf             : MJdConf,
                      tagName          : GridComponent_t,
-                     gridBuildArgsF   : TraversableOnce[ItemPropsExt] => GridBuildArgs
+                     gridBuildArgsF   : TraversableOnce[ItemPropsExt] => MGridBuildArgsJs
                    ): CssGridProps = {
     // Собрать аргументы для вызова layout-функции grid-builder'а.
     val gridBuildArgs = gridBuildArgsF(

@@ -6,9 +6,9 @@ import io.suggest.dt.interval.{QuickAdvIsoPeriod, QuickAdvPeriods}
 import io.suggest.dt.{IPeriodInfo, MAdvPeriod, MYmd}
 import io.suggest.sjs.common.dt.JsDateUtil
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.dt.period.m.{DtpInputFns, SetDateStartEnd, SetQap}
 import io.suggest.dt.moment.MomentJsUtil.Implicits._
+import io.suggest.msg.WarnMsgs
 
 /**
   * Suggest.io

@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.m.msrv.foc
 
+import io.suggest.msg.ErrorMsgs
 import io.suggest.routes.scRoutes
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.sjs.m.msrv._
-import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.routes.JsRoutes_ScControllers._
 

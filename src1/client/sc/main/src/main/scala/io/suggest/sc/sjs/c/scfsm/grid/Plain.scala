@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
 import io.suggest.ble.beaconer.m.signals.BeaconsNearby
+import io.suggest.msg.WarnMsgs
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mhdr.{PrevNodeBtnClick, ShowSearchClick}
@@ -8,7 +9,6 @@ import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.vm.hdr.btns.HNodePrev
 import io.suggest.sc.sjs.vm.layout.FsLoader
 import io.suggest.sjs.common.fsm.signals.IMenuBtnClick
-import io.suggest.sjs.common.msg.WarnMsgs
 import org.scalajs.dom.Event
 
 /** Аддон для поддержки состояния "голая плитка" без открытых панелей, карточек и прочего. */

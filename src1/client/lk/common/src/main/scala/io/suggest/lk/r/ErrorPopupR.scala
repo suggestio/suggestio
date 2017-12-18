@@ -8,8 +8,8 @@ import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.{ErrorPopupCloseClick, MErrorPopupS}
 import io.suggest.lk.pop.PopupR
-import io.suggest.sjs.common.i18n.Messages
 import PopupR.PopupPropsValFastEq
+import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil.Implicits._
 
 /**

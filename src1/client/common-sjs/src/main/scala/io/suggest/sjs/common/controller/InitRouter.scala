@@ -1,10 +1,10 @@
 package io.suggest.sjs.common.controller
 
 import io.suggest.init.routed.{JsInitConstants, MJsiTg, MJsiTgs}
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.util.SafeSyncVoid
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 
 /**
  * Suggest.io

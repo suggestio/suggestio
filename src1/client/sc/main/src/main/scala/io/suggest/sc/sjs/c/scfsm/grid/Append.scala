@@ -1,11 +1,11 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.sjs.c.scfsm.grid.build.GridBuilder
 import io.suggest.sc.sjs.c.scfsm.FindAdsArgsT
 import io.suggest.sc.sjs.m.msrv.tile.{MFindAdsTile, MScRespAdsTile}
 import io.suggest.sc.sjs.vm.grid.GContent
 import io.suggest.sc.sjs.vm.res.CommonRes
-import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future

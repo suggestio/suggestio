@@ -8,12 +8,12 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.MSzMult
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.r.PropTable
+import io.suggest.msg.Messages
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sjs.common.i18n.Messages
 
 import scalacss.ScalaCssReact._
 import japgolly.univeq._

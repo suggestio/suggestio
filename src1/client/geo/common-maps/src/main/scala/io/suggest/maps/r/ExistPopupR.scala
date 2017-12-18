@@ -8,9 +8,9 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.maps.m.MExistGeoPopupS
 import io.suggest.maps.u.MapsUtil
 import io.suggest.mbill2.m.item.typ.MItemTypes
+import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.r.RangeYmdR
-import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import react.leaflet.popup.{LPopupPropsR, LPopupR}

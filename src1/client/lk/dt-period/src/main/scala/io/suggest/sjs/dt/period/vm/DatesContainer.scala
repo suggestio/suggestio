@@ -1,9 +1,9 @@
 package io.suggest.sjs.dt.period.vm
 
 import io.suggest.dt.interval.DatesIntervalConstants
+import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.fsm.{IInitLayoutFsm, SjsFsm}
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vm.find.FindDiv
 import io.suggest.sjs.common.vm.style.{SetIsShown, ShowHideDisplayT}
 

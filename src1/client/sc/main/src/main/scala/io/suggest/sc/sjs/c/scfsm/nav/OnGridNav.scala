@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.nav
 
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.sjs.c.scfsm.grid.OnGrid
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.m.mhdr.LogoClick
@@ -8,7 +9,6 @@ import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodes, MFindNodesArgsDfltImpl, MFindNodesResp}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlContent
 import io.suggest.sc.sjs.vm.nav.nodelist.glay.{GlayCaption, GlayNode}
-import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.vm.Vm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.fsm.signals.IMenuBtnClick

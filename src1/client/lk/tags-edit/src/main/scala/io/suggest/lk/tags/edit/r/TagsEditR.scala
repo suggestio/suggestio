@@ -6,7 +6,7 @@ import io.suggest.common.tags.edit.MTagsEditQueryProps
 import io.suggest.common.tags.search.MTagsFound
 import io.suggest.css.Css
 import io.suggest.lk.tags.edit.m.MTagsEditState
-import io.suggest.sjs.common.i18n.Messages
+import io.suggest.msg.Messages
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 

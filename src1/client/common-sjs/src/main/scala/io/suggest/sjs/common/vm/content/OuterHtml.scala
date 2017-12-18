@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.vm.content
 
+import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.IVm
 import org.scalajs.dom

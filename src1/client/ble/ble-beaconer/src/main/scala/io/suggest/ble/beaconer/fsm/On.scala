@@ -5,9 +5,9 @@ import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.BeaconSd
 import io.suggest.ble.beaconer.m.signals.{BeaconDetected, BeaconsNearby}
 import io.suggest.common.radio.RadioUtil
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.signals.IVisibilityChangeSignal
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 
 /**
   * Suggest.io

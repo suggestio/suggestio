@@ -5,8 +5,8 @@ import diode._
 import io.suggest.adv.geo.RcvrsMap_t
 import io.suggest.adv.rcvr.{IRcvrPopupNode, MRcvrPopupResp}
 import io.suggest.lk.adv.geo.m.SetRcvrStatus
+import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
 
 /**
   * Suggest.io

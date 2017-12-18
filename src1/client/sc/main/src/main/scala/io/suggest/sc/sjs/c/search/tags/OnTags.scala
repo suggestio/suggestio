@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.search.tags
 
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.routes.scRoutes
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.mgeo.NewGeoLoc
@@ -7,7 +8,6 @@ import io.suggest.sc.sjs.m.msearch.TagRowClick
 import io.suggest.sc.sjs.m.mtags.{MTagInfo, MTagsSd, TagSelected}
 import io.suggest.sc.sjs.vm.search.fts.SInput
 import io.suggest.sc.sjs.vm.search.tabs.htag.{StList, StListRow}
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.tags.search._
 import io.suggest.sjs.common.fsm.signals.Visible
 import io.suggest.routes.JsRoutes_ScControllers._

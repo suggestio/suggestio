@@ -2,9 +2,9 @@ package io.suggest.ble.api.cordova.ble
 
 import evothings.ble.DeviceInfo
 import io.suggest.ble.IBeaconSignal
+import io.suggest.msg.ErrorMsg_t
 import io.suggest.primo.{IApply1, TypeT}
 import io.suggest.sjs.common.log.ILog
-import io.suggest.sjs.common.msg.ErrorMsg_t
 
 import scala.scalajs.js.JSON
 

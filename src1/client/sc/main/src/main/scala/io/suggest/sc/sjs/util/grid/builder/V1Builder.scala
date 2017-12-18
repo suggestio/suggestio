@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.util.grid.builder
 
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.sjs.m.mgrid._
 import io.suggest.sjs.common.log.ILog
-import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.univeq._
 
 import scala.annotation.tailrec

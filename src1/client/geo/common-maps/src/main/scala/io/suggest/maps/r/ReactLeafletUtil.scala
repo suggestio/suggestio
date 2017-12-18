@@ -1,8 +1,8 @@
 package io.suggest.maps.r
 
 import io.suggest.common.maps.leaflet.LeafletConstants
+import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import react.leaflet.layer.{TileLayerPropsR, TileLayerR}
 

@@ -7,7 +7,6 @@ import io.suggest.geo.{GeoConstants, MGeoPoint, MGeoPointJs}
 import io.suggest.maps.m.MGeoAdvExistGjFtProps.fromAny
 import io.suggest.sjs.common.geo.json.{GjFeature, GjFeatureCollection, GjGeometry}
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.event.{Events, LayerEvent}
 import io.suggest.sjs.leaflet.map.{LatLng, Layer}
@@ -19,6 +18,7 @@ import io.suggest.sjs.leaflet.path.circle.{CircleMarkerOptions, CircleOptions}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.maps.m.OpenAdvGeoExistPopup
+import io.suggest.msg.WarnMsgs
 import japgolly.scalajs.react.vdom.VdomElement
 
 import scala.scalajs.js

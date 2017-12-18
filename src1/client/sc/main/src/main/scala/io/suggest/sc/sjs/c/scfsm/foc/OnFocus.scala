@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.c.scfsm.foc
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.{MHand, MHands}
 import io.suggest.common.m.mad.IMadId
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.sjs.m.mfoc._
 import io.suggest.sc.sjs.m.mfsm.touch.TouchStart
@@ -15,7 +16,6 @@ import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
 import io.suggest.sc.sjs.m.msrv.foc.{MFocAdSearchDflt, MFocAdSearchNoOpenIndex, MScAdsFoc}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sc.focus._
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.util.TouchUtil
 import org.scalajs.dom.{KeyboardEvent, MouseEvent, TouchEvent}

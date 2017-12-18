@@ -4,9 +4,9 @@ import cordova.Cordova
 import evothings.ble.{BLE, DeviceInfo}
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.signals.BeaconDetected
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.fsm.SjsFsm
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 
 import scala.scalajs.js.JSON
 

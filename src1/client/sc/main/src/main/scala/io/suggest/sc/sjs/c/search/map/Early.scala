@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.search.map
 
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.fsm.IFsmMsg
-import io.suggest.sjs.common.msg.ErrorMsgs
 
 /**
   * Suggest.io

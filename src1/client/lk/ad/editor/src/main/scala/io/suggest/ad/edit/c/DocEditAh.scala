@@ -21,16 +21,15 @@ import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
+import io.suggest.msg.{ErrorMsgs, Messages, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.Base64JsUtil
 import io.suggest.primo.SetVal
 import io.suggest.quill.m.TextChanged
 import io.suggest.quill.u.QuillDeltaJsUtil
 import io.suggest.react.ReactDiodeUtil
-import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.ueq.QuillUnivEqUtil._
 import japgolly.univeq._
 import org.scalajs.dom.raw.URL

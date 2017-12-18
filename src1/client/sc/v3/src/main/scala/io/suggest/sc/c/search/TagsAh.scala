@@ -4,6 +4,7 @@ import diode._
 import diode.data.PendingBase
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MScreen
+import io.suggest.msg.WarnMsgs
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.search._
@@ -12,7 +13,6 @@ import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.sc.tile.TileConstants
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
 
 import scala.util.Success
 

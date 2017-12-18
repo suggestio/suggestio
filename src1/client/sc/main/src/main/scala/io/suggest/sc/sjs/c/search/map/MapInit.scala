@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.c.search.map
 
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.sjs.m.mmap.MMapInst
 import io.suggest.sc.sjs.vm.mapbox.{AllNodesUrl, GlMapVm}
 import io.suggest.sc.sjs.vm.search.tabs.geo.SGeoContent
-import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.mapbox.gl.event._
 
 /**

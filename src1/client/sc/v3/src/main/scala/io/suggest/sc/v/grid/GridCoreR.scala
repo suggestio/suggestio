@@ -3,7 +3,7 @@ package io.suggest.sc.v.grid
 import com.github.dantrain.react.stonecutter.{CSSGrid, GridComponents}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants.`.`
-import io.suggest.grid.build.{GridBuildArgs, GridBuildRes_t}
+import io.suggest.grid.build.{MGridBuildArgsJs, GridBuildRes_t}
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdGridUtil, JdR}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -60,7 +60,7 @@ class GridCoreR(
           conf      = mgrid.jdConf,
           tagName   = GridComponents.DIV,
           gridBuildArgsF = { items =>
-            GridBuildArgs(
+            MGridBuildArgsJs(
               itemsExtDatas   = items,
               jdConf          = mgrid.jdConf,
               onLayout        = Some(_onGridLayoutF),

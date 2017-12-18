@@ -10,6 +10,7 @@ import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
+import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.routes.{AdvRcvrsMapApiHttp, scRoutes}
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.c.dev.{GeoLocAh, ScreenAh}
@@ -26,7 +27,6 @@ import io.suggest.sc.sc3.MSc3Init
 import io.suggest.sc.styl.{ScCss, ScCssFactory}
 import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.sjs.common.log.CircuitLog
-import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.sjs.common.vm.wnd.WindowVm

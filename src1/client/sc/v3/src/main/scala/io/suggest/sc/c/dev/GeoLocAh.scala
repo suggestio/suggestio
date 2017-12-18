@@ -3,11 +3,11 @@ package io.suggest.sc.c.dev
 import diode.data.Ready
 import diode.{ActionHandler, ActionResult, Dispatcher, ModelRW}
 import io.suggest.geo.{GeoLocType, GeoLocTypes, MGeoLocJs, PositionException}
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sc.m.dev.{MGeoLocWatcher, MScGeoLoc, Suppressor}
 import io.suggest.sc.m.{GeoLocOnOff, GlError, GlLocation, GlSuppressTimeout}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import japgolly.univeq._
 import org.scalajs.dom.{Geolocation, Position, PositionError, PositionOptions}

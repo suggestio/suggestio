@@ -1,24 +1,18 @@
 package io.suggest.grid.build
 
-import com.github.dantrain.react.stonecutter.{ItemProps, LayoutFunRes, PropsCommon}
 import io.suggest.ad.blk.{BlockHeights, BlockWidths}
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
-import io.suggest.grid.MWideLine
-import io.suggest.jd.MJdConf
-import io.suggest.sjs.common.msg.ErrorMsgs
+import io.suggest.msg.ErrorMsgs
 import japgolly.univeq._
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.annotation.tailrec
-import scala.concurrent.Future
-import scala.scalajs.js
-import scala.scalajs.js.JSConverters._
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 08.11.17 14:46
+  * Created: 18.12.17 14:17
   * Description: Утиль для билдинга плитки suggest.io на основе react-компонентов.
   *
   * Плитка s.io является гибкой и по вертикали, и по горизонтали.
@@ -33,7 +27,7 @@ import scala.scalajs.js.JSConverters._
   * Переменные состояния каждой под-плитки скрыто транслируются в общее состояние и обратно.
   * Таким образом, помимо основной рекурсии по выстраиванию блоков, есть ещё рекурсивное погружение в под-уровни
   * для рендера суб-блоков текущего блока.
-  * Для прослойки используется интерфейс [[IGridLevel]], который позволяет делать это всё.
+  * Для прослойки используется интерфейс IGridLevel, который позволяет делать это всё.
   *
   * 2. Поддержку широких карточек внутри плитки можно реализовать с помощью двухфазного прохода по
   * исходным item'ам:
@@ -42,18 +36,16 @@ import scala.scalajs.js.JSConverters._
   * то строим плитку заново с учётом wide-занятых строк, полученных на первом шаге, чтобы распихать карточки по
   * с учётом возникших ограничений по высоте.
   */
-class GridBuilder {
+object GridBuilderUtil {
 
-  /** stateless вычисления координат для плитки для указанных основе исходных item'ов.
-    * Создан, чтобы использовать как статическую layout-функцию, т.е. состояние билда живёт только внутри.
+
+  /** Кросс-платформенный код сборки плитки.
     *
-    * @param flatJsItems Плоский массив элементов плитки, переданный через stonecutter.
-    *                    Не используется напрямую: дерево данных по item'ам передаётся напрямую в args.
-    * @param props Пропертисы компонента плитки.
-    * @return Контейнер данных по расположению заданных элементов в плитке.
+    * @param args Аргументы для рендера.
+    * @return Результат сборки.
     */
-  def stoneCutterLayout(args: GridBuildArgs)(flatJsItems: js.Array[ItemProps], props: PropsCommon): LayoutFunRes = {
-    // Чисто самоконтроль, потом можно выкинуть.
+  def buildGrid(args: MGridBuildArgs): MGridBuildResult = {
+        // Чисто самоконтроль, потом можно выкинуть.
     if (args.jdConf.gridColumnsCount < BlockWidths.max.relSz)
       throw new IllegalArgumentException( ErrorMsgs.GRID_CONFIGURATION_INVALID + HtmlConstants.SPACE + args.jdConf +
         HtmlConstants.SPACE + args.jdConf.gridColumnsCount )
@@ -72,15 +64,15 @@ class GridBuilder {
 
 
     /** Конверсия координат ячейки плитки в css-пиксельные координаты. */
-    def _colLine2PxCoords(column: Int, line: Int): js.Array[Int] = {
-      js.Array(
-        column * paddedCellWidthPx,
-        Math.round(line * paddedCellHeightPx).toInt + args.offY
+    def _colLine2PxCoords(column: Int, line: Int): MCoords2di = {
+      MCoords2di(
+        x = column * paddedCellWidthPx,
+        y = Math.round(line * paddedCellHeightPx).toInt + args.offY
       )
     }
 
     /** Выполнение работы по размещению карточек на текущем уровне. */
-    def _processGridLevel(level: IGridLevel): TraversableOnce[js.Array[Int]] = {
+    def _processGridLevel(level: IGridLevel): Iterator[MCoords2di] = {
       // line и column -- это координата текущей ячейки
       var currLine, currColumn = 0
 
@@ -129,7 +121,7 @@ class GridBuilder {
 
         // Собрать функцию поиска места для одного элемента, модифицирующую текущее состояние.
         @tailrec
-        def step(i: Int): js.Array[Int] = {
+        def step(i: Int): MCoords2di = {
           // В оригинале был for-цикл с ограничением на 1000 итераций на всю плитку. Тут -- ограничение итераций на каждый item.
           if (i >= 20) {
             // return -- слишком много итераций. Обычно это симптом зависона из-за ЛОГИЧЕСКОЙ ошибки в быдлокоде.
@@ -184,18 +176,15 @@ class GridBuilder {
         //.toJSArray снаружи вызывается поверх результатов всех итераторов со всех уровней.
     }
 
-
     // Инициализация состояния плитки, в котором будет всё храниться.
-    val colsCount1 = props.columns
-
     val colsInfo1: Array[MColumnState] = {
       val mcs0 = MColumnState()
-      Array.fill(colsCount1)(mcs0)
+      Array.fill( args.columnsCount )(mcs0)
     }
 
-    val coords = _processGridLevel {
+    val coordsIter = _processGridLevel {
       new IGridLevel {
-        override def colsCount: Int = colsCount1
+        override def colsCount: Int = args.columnsCount
         override def colsInfo(ci: Int): MColumnState = colsInfo1(ci)
         override def updateColsInfo(i: Int, mcs: MColumnState): Unit = {
           colsInfo1(i) = mcs
@@ -209,7 +198,6 @@ class GridBuilder {
         //}
       }
     }
-      .toJSArray
 
     val maxCellHeight = colsInfo1
       .iterator
@@ -222,69 +210,16 @@ class GridBuilder {
       Math.max(0, width0)
     }
 
-    // Помимо координат, надо вычислить итоговые размеры плитки.
-    val res = new LayoutFunRes {
-      override val positions  = coords
-      override val gridHeight = gridHeightPx
-      override val gridWidth  = gridWidthPx
-    }
-
-    // Передать результат сборки плитки в side-effect-функцию, если она задана.
-    for (notifyF <- args.onLayout) {
-      Future {
-        // На раннем этапе нужны были только фактические размеры плитки.
-        // Поэтому собираем отдельный безопасный инстанс с этими размерами и отправляем в функцию.
-        val gridSz2d = MSize2di(width = gridWidthPx, height = gridHeightPx)
-        notifyF( gridSz2d )
-      }
-    }
-
-    res
+    MGridBuildResult(
+      coords = coordsIter,
+      gridWh = MSize2di(
+        width   = gridWidthPx,
+        height  = gridHeightPx
+      )
+    )
   }
 
-}
-
-
-/** Модель доп.аргументов вызова функции, которые мы передаём вне react.
-  *
-  * В изначальной реализации была пародия на monkey-patching, что вызывало негодование
-  * со стороны react, и добавляло неопределённости относительно надёжности и долговечности такого решения.
-  *
-  * @param itemsExtDatas Итератор или коллекция доп.данных для исходного массива ItemProps, длина должна совпадать.
-  * @param onLayout Callback для сайд-эффектов по итогам рассчёта плитки.
-  * @param offY Сдвиг сетки по вертикали, если требуется.
-  */
-case class GridBuildArgs(
-                          itemsExtDatas : TraversableOnce[ItemPropsExt],
-                          jdConf        : MJdConf,
-                          onLayout      : Option[MSize2di => _] = None,
-                          offY          : Int = 0
-                        )
-
-
-/** Интерфейс для взаимодействия с состоянием плитки.
-  * Позволяет зуммировать состояние над-плитки.
-  */
-trait IGridLevel {
-
-  /** Элементы для обработки на текущем уровне. */
-  def itemsExtDatas: TraversableOnce[ItemPropsExt]
-
-  /** Кол-во колонок в текущей проекции. */
-  def colsCount: Int
-
-  /** Прочитать состояние указанной колонки */
-  def colsInfo(ci: Int): MColumnState
-
-  /** Обновить состояние указанной колонки. */
-  def updateColsInfo(i: Int, mcs: MColumnState): Unit
-
-  /** Поиск первой полностью свободной (от края до края) строки.
-    * Очевидно, что после этой строки всё свободно.
-    *
-    * @return Исходный или иной экземпляр [[MWideLine]].
-    */
-  //def getWideLine(args: MWideLine): MWideLine
 
 }
+
 

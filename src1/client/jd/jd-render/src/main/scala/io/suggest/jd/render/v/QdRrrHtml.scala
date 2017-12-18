@@ -8,10 +8,10 @@ import io.suggest.jd.tags.JdTag
 import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.MPredicates
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.ISetUnset
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import japgolly.scalajs.react.vdom.{HtmlTagOf, TagMod, VdomElement}
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.Element

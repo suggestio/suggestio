@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.c.search.map
 
+import io.suggest.msg.WarnMsgs
 import io.suggest.sc.sjs.vm.maps.MpglAcTok
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.IFsmMsg
-import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.mapbox.gl.mapboxgl
 import io.suggest.sjs.mapbox.gl.window.IMbglWindow
 import org.scalajs.dom

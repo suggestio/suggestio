@@ -19,8 +19,8 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.spa.OptFastEq
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.sjs.common.i18n.Messages
 import diode.react.ReactPot._
+import io.suggest.msg.Messages
 
 /**
   * Suggest.io

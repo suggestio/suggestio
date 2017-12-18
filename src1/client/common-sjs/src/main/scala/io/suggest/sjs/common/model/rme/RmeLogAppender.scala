@@ -1,10 +1,10 @@
 package io.suggest.sjs.common.model.rme
 
+import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.MimeConst
 import io.suggest.proto.HttpConst
 import io.suggest.sjs.common.log.{ILogAppender, LogMsg, Severity}
 import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.xhr.{HttpStatuses, Xhr}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 

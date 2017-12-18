@@ -4,9 +4,9 @@ import evothings.ble.DeviceInfo
 import io.suggest.ble.BleConstants
 import io.suggest.ble.eddystone.{MEddyStoneUid, MFrameTypes}
 import io.suggest.common.uuid.LowUuidUtil
+import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.JsBinaryUtil
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
 
 /**
   * Suggest.io

@@ -7,9 +7,9 @@ import io.suggest.lk.adn.map.m.MLamRcvrs
 import io.suggest.lk.adn.map.u.ILkAdnMapApi
 import io.suggest.lk.m.NodeInfoPopupClose
 import io.suggest.maps.m.{HandleMapPopupClose, HandleRcvrPopupTryResp, ReqRcvrPopup}
+import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
 
 import scala.util.Success
 
