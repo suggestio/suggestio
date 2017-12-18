@@ -5,7 +5,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.img.crop.MCrop
 import io.suggest.util.logs.MacroLogsImpl
-import models.blk.{SzMult_t, szMulted, szMultedF, szRounded}
+import models.blk.{szMulted, szMultedF, szRounded}
 import models.im._
 import models.im.make.{IMakeArgs, IMaker, MakeResult}
 import models.mproj.ICommonDi
@@ -30,7 +30,6 @@ class ScWideMaker @Inject() (
   with MacroLogsImpl
 {
 
-  import LOGGER._
   import mCommonDi._
 
   /** Желаемые ширИны широкого бэкграунда. */
@@ -98,7 +97,7 @@ class ScWideMaker @Inject() (
         oiSz        = origWh.height
       )
     )
-    LOGGER.info( s"$crop0 => $r rsz=$rszRatio h=$h")
+    LOGGER.trace( s"updateCrop0($crop0, wh=$wideWh, origWh=$origWh) => $r ;; rsz=$rszRatio ;; h=$h")
     r
   }
   /** Сделать из опционального исходнго кропа новый wide-кроп с указанием гравитации. */
@@ -108,10 +107,11 @@ class ScWideMaker @Inject() (
         ImgCropInfo(crop1, isCenter = false)
       }
       .recover { case ex: Exception =>
+        def logPrefix = s"getWideCropInfo($iik, wh=$wideWh):"
         if (!ex.isInstanceOf[NoSuchElementException])
-          warn(s"Failed to read image[${iik.fileName}] WH", ex)
+          LOGGER.warn(s"$logPrefix Failed to read image[${iik.fileName}] WH", ex)
         else
-          debug("Failed to get abs crop: " + ex.getMessage)
+          LOGGER.debug(s"$logPrefix Failed to get abs crop: " + ex.getMessage)
         // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
         val c = MCrop(width = wideWh.width, height = wideWh.height, 0, 0)
         ImgCropInfo(c, isCenter = true)
@@ -143,7 +143,7 @@ class ScWideMaker @Inject() (
       (rightSegCoord - segLen).toInt
     }
     val r = Math.max(0, resRaw)
-    LOGGER.info(s"centerNearest: $centerCoord l=$segLen ax=$axLen => $r (axC=$axCenter)")
+    LOGGER.trace(s"centerNearest(center=$centerCoord, segLen=$segLen, axLen=$axLen) => $r (axC=$axCenter)")
     r
   }
 
@@ -172,7 +172,8 @@ class ScWideMaker @Inject() (
    * @return Фьючерс с результатом.
    */
   override def icompile(args: IMakeArgs): Future[MakeResult] = {
-    LOGGER.info( s"WIDE make: $args" )
+    lazy val logPrefix = s"icompile()#${System.currentTimeMillis()}:"
+    LOGGER.trace( s"$logPrefix WIDE make: $args" )
 
     // Собираем хвост параметров сжатия.
     val devScreen = args.devScreenOpt
@@ -207,15 +208,15 @@ class ScWideMaker @Inject() (
 
     // Нужно брать кроп отн.середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
     val imOps9Fut = for (cropInfo <- cropInfoFut) yield {
-      LOGGER.info(s"crop0 = $cropInfo")
       // 2017-12-13: Тут долгое время был сначала ресайз до wideWh, а только потом кроп *в исходных измерениях*.
       // Это давало почему-то рабочие результаты, или ошибок просто не замечали...
       val imOps1 = AbsCropOp(cropInfo.crop) :: imOps0
       if (cropInfo.isCenter) {
-        warn(s"Failed to read image[${args.img.original.fileName}] WH")
+        LOGGER.warn(s"$logPrefix Failed to read image[${args.img.original.fileName}] WH")
         // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
         ImGravities.Center :: imOps1
       } else {
+        LOGGER.trace(s"$logPrefix Final crop info: $cropInfo")
         imOps1
       }
     }
@@ -229,7 +230,7 @@ class ScWideMaker @Inject() (
     for {
       imOps9 <- imOps9Fut
     } yield {
-      LOGGER.info(s"imOps=[${imOps9.mkString(", " )}]")
+      LOGGER.trace(s"$logPrefix Final imOps=[${imOps9.mkString(", " )}]")
       MakeResult(
         szCss       = szCss,
         szReal      = wideWh,
