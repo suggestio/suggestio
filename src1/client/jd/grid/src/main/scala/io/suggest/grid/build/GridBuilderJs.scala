@@ -37,6 +37,7 @@ class GridBuilderJs {
 
     // Сконвертить координаты в js.Array-представление, понятное для stonecutter.
     val coordPositions = buildRes.coords
+      .iterator
       .map { mcoord =>
         js.Array( mcoord.x, mcoord.y )
       }

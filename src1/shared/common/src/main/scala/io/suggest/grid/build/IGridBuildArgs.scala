@@ -8,9 +8,11 @@ import io.suggest.jd.MJdConf
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 18.12.17 14:11
-  * Description:
+  * Description: Модели для взаимодействия с grid-builder'ом.
   */
 
+
+/** Модель аргументов для вызова [[GridBuilderUtil]].buildGrid(). */
 case class MGridBuildArgs(
                            columnsCount  : Int,
                            itemsExtDatas : TraversableOnce[ItemPropsExt],
@@ -46,7 +48,12 @@ trait IGridLevel {
 }
 
 
+/** Результат сборки плитки.
+  *
+  * @param coords Итератор координат блоков.
+  * @param gridWh Размеры собранной плитки.
+  */
 case class MGridBuildResult(
-                             coords   : Iterator[MCoords2di],
+                             coords   : Seq[MCoords2di],
                              gridWh   : MSize2di
                            )

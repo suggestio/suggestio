@@ -45,7 +45,7 @@ object GridBuilderUtil {
     * @return Результат сборки.
     */
   def buildGrid(args: MGridBuildArgs): MGridBuildResult = {
-        // Чисто самоконтроль, потом можно выкинуть.
+    // Чисто самоконтроль, потом можно выкинуть.
     if (args.jdConf.gridColumnsCount < BlockWidths.max.relSz)
       throw new IllegalArgumentException( ErrorMsgs.GRID_CONFIGURATION_INVALID + HtmlConstants.SPACE + args.jdConf +
         HtmlConstants.SPACE + args.jdConf.gridColumnsCount )
@@ -182,7 +182,7 @@ object GridBuilderUtil {
       Array.fill( args.columnsCount )(mcs0)
     }
 
-    val coordsIter = _processGridLevel {
+    val coords = _processGridLevel {
       new IGridLevel {
         override def colsCount: Int = args.columnsCount
         override def colsInfo(ci: Int): MColumnState = colsInfo1(ci)
@@ -198,6 +198,9 @@ object GridBuilderUtil {
         //}
       }
     }
+      // TODO Opt тут не совсем оптимально, но нужно неленивую коллекцию, чтобы посчитать высоту и ширину плитки.
+      // Изначально, тут вызывался .toJSArray, но когда код стал кросс-платформенным, это вызвало проблемы...
+      .toVector
 
     val maxCellHeight = colsInfo1
       .iterator
@@ -211,7 +214,7 @@ object GridBuilderUtil {
     }
 
     MGridBuildResult(
-      coords = coordsIter,
+      coords = coords,
       gridWh = MSize2di(
         width   = gridWidthPx,
         height  = gridHeightPx
