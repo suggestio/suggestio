@@ -143,11 +143,9 @@ class GridAdsAh[M](
         val nextReqPot2 = v0.ads.pending()
         val fx = Effect {
           // Если clean, то нужно обнулять offset.
-          val offset = if (m.clean) {
-            0
-          } else {
-            v0.ads.size
-          }
+          val offset = v0.ads
+            .filter(_ => !m.clean)
+            .fold(0)(_.size)
 
           // TODO Вычислять на основе данных параметров MScreen.
           val limit = 10
