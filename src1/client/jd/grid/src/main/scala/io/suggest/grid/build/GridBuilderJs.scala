@@ -31,21 +31,20 @@ class GridBuilderJs {
         columnsCount  = props.columns,
         itemsExtDatas = args.itemsExtDatas,
         jdConf        = args.jdConf,
-        offY          = args.offY
+        offY          = args.offY,
+        iter2coordsF  = { coordsIter =>
+          coordsIter
+            .map { mcoord =>
+              js.Array( mcoord.x, mcoord.y )
+            }
+            .toJSArray
+        }
       )
     )
 
-    // Сконвертить координаты в js.Array-представление, понятное для stonecutter.
-    val coordPositions = buildRes.coords
-      .iterator
-      .map { mcoord =>
-        js.Array( mcoord.x, mcoord.y )
-      }
-      .toJSArray
-
     // Помимо координат, надо вычислить итоговые размеры плитки.
     val res = new LayoutFunRes {
-      override val positions  = coordPositions
+      override val positions  = buildRes.coords
       override val gridHeight = buildRes.gridWh.height
       override val gridWidth  = buildRes.gridWh.width
     }
@@ -75,7 +74,7 @@ class GridBuilderJs {
   * @param offY Сдвиг сетки по вертикали, если требуется.
   */
 case class MGridBuildArgsJs(
-                             itemsExtDatas : TraversableOnce[ItemPropsExt],
+                             itemsExtDatas : TraversableOnce[MGridItemProps],
                              jdConf        : MJdConf,
                              onLayout      : Option[MSize2di => _] = None,
                              offY          : Int = 0

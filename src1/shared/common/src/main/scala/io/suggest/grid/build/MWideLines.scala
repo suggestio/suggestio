@@ -182,4 +182,16 @@ case class MWideLines(lines: List[MWideLine] = Nil) {
     }
   }
 
+
+  /** Read-only проверка наличия в аккамуляторе хотя бы одной wide-строки, пересекающейся с указанной.
+    *
+    * @param wantMwl Желаемый диапазон строк.
+    * @return 
+    */
+  def isBusy(wantMwl: MWideLine): Boolean = {
+    lines.exists { mwl =>
+      mwl overlaps wantMwl
+    }
+  }
+
 }

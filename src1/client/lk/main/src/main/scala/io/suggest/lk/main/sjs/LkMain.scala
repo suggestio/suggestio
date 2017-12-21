@@ -38,7 +38,7 @@ object LkMain extends Log {
       case ex: Throwable =>
         LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, ex, Leaflet )
     }
-    println("L.noConflict() done. L = " + js.Dynamic.global.L.toString )
+    //println("L.noConflict() done. L = " + js.Dynamic.global.L.toString )
 
     try {
       new LkInitRouter()

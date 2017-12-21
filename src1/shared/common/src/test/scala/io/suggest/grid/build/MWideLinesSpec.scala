@@ -74,16 +74,26 @@ object MWideLinesSpec extends SimpleTestSuite {
 
 
   test("push/extract two non-intercepting elements") {
+    val mwls00 = MWideLines()
+
     val mwl01 = MWideLine(1, BlockHeights.H140)
 
+    assertEquals( mwls00.isBusy( mwl01), false )
+
     // Добавить первый элемент в акк:
-    val (mwls01, mwl012) = MWideLines().push( mwl01 )
+    val (mwls01, mwl012) = mwls00.push( mwl01 )
+    assertEquals( mwls01.isBusy(mwl01), true )
+    assertEquals( mwls01.isBusy(mwl012), true )
     assert( mwls01.lines.nonEmpty, mwls01.toString )
     assertEquals( mwl012, mwl01 )
+    assertEquals( mwls01.isBusy( mwl01.withStartLine(2)), false )
+    assertEquals( mwls01.isBusy( mwl01.withStartLine(18)), false )
 
     // Добавить второй элемент в акк и проверить:
     val mwl02 = MWideLine(2, BlockHeights.H460)
+    assertEquals( mwls01.isBusy(mwl02), false )
     val (mwls02, mwl022) = mwls01.push( mwl02 )
+    assertEquals( mwls02.isBusy(mwl02), true )
     // Элемент mwl02 должен был измениться, т.к. он метит в туже строку, что и mwl01
     assert( mwl022 ==* mwl02, s"$mwl02 == $mwl022 :: $mwls02" )
     assertEquals( mwls02.lines.size, 2 )

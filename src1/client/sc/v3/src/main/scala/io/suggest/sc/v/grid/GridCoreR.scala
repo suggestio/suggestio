@@ -3,7 +3,7 @@ package io.suggest.sc.v.grid
 import com.github.dantrain.react.stonecutter.{CSSGrid, GridComponents}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants.`.`
-import io.suggest.grid.build.{MGridBuildArgsJs, GridBuildRes_t}
+import io.suggest.grid.build.{GridBuildRes_t, MGridBuildArgsJs, MGridItemProps}
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdGridUtil, JdR}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -51,22 +51,35 @@ class GridCoreR(
 
       CSSGrid {
         jdGridUtil.mkCssGridArgs(
-          jds = jdGridUtil.jdTrees2bms(
-            mgrid.ads
+          gbArgs = MGridBuildArgsJs(
+            itemsExtDatas = mgrid.ads
               .iterator
               .flatten
-              .flatMap(_.flatGridTemplates)
+              .map { scAdData =>
+                scAdData.focused.toOption.fold {
+                  // Несфокусированная карточка. Вернуть Left(blockMeta) с единственного стрипа.
+                  MGridItemProps(
+                    Left( scAdData.main.template.rootLabel.props1.bm.get )
+                  )
+                } { foc =>
+                  // Открытая карточка. Вернуть Right() со списком фокус-блоков:
+                  //println( foc )
+                  MGridItemProps(
+                    Right(
+                      jdGridUtil
+                        .jdTrees2bms( foc.template.subForest )
+                        .map { bm => MGridItemProps(Left(bm)) }
+                        .toSeq
+                    )
+                  )
+                }
+              },
+            jdConf          = mgrid.jdConf,
+            onLayout        = Some(_onGridLayoutF),
+            offY            = TileConstants.CONTAINER_OFFSET_TOP
           ),
           conf      = mgrid.jdConf,
-          tagName   = GridComponents.DIV,
-          gridBuildArgsF = { items =>
-            MGridBuildArgsJs(
-              itemsExtDatas   = items,
-              jdConf          = mgrid.jdConf,
-              onLayout        = Some(_onGridLayoutF),
-              offY            = TileConstants.CONTAINER_OFFSET_TOP
-            )
-          }
+          tagName   = GridComponents.DIV
         )
       } {
         val iter = for {

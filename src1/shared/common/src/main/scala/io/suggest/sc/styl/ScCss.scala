@@ -513,7 +513,8 @@ case class ScCss( args: IScCssArgs )
 
     val wrapper = style(
       overflowScrollingMx,
-      _screenHeight
+      _screenHeight,
+      overflowX.hidden
     )
 
     val content = style(

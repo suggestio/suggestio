@@ -5,7 +5,6 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.msg.ErrorMsgs
-import japgolly.univeq._
 
 import scala.annotation.tailrec
 
@@ -33,7 +32,7 @@ import scala.annotation.tailrec
   * исходным item'ам:
   * - Сначала просто стоим плитку исходя из начальной доступности всех строк и неограниченной высоты.
   * - Если на первом шаге была хотя бы одна wide-карточка и ширина плитки > 2 (или 3?) ячеек,
-  * то строим плитку заново с учётом wide-занятых строк, полученных на первом шаге, чтобы распихать карточки по
+  * то строим плитку заново с учётом wide-занятых строк, полученных на первом шаге, чтобы распихать карточки
   * с учётом возникших ограничений по высоте.
   */
 object GridBuilderUtil {
@@ -44,7 +43,7 @@ object GridBuilderUtil {
     * @param args Аргументы для рендера.
     * @return Результат сборки.
     */
-  def buildGrid(args: MGridBuildArgs): MGridBuildResult = {
+  def buildGrid[Coords_t](args: MGridBuildArgs[Coords_t]): MGridBuildResult[Coords_t] = {
     // Чисто самоконтроль, потом можно выкинуть.
     if (args.jdConf.gridColumnsCount < BlockWidths.max.relSz)
       throw new IllegalArgumentException( ErrorMsgs.GRID_CONFIGURATION_INVALID + HtmlConstants.SPACE + args.jdConf +
@@ -62,17 +61,8 @@ object GridBuilderUtil {
     val paddedCellHeightPx = cellHeightPx + cellPaddingHeightPx
     val paddedCellWidthPx  = cellWidthPx  + cellPaddingWidthPx
 
-
-    /** Конверсия координат ячейки плитки в css-пиксельные координаты. */
-    def _colLine2PxCoords(column: Int, line: Int): MCoords2di = {
-      MCoords2di(
-        x = column * paddedCellWidthPx,
-        y = Math.round(line * paddedCellHeightPx).toInt + args.offY
-      )
-    }
-
     /** Выполнение работы по размещению карточек на текущем уровне. */
-    def _processGridLevel(level: IGridLevel): Iterator[MCoords2di] = {
+    def _processGridLevel(ctx: IGridBuildCtx): Iterator[MCoords2di] = {
       // line и column -- это координата текущей ячейки
       var currLine, currColumn = 0
 
@@ -81,7 +71,7 @@ object GridBuilderUtil {
         // TODO Следует выкинуть var, занеся её в args, например.
         var mw = 1
         @tailrec def __detect(i: Int): Int = {
-          if (i < level.colsCount && level.colsInfo(i).heightUsed ==* currLine ) {
+          if (i < ctx.colsCount && ctx.getHeightUsed(i) <= currLine ) {
             mw += 1
             __detect(i + 1)
           } else {
@@ -96,84 +86,161 @@ object GridBuilderUtil {
         * оставив пустоту за собой.
         * Этот метод вносит одношаговые изменения в состояние.
         */
-      def beforeStepToNextCell(): Unit = {
+      def stepToNextCell(): Unit = {
         currColumn += 1
       }
 
       /** step() переходит на следующую строку. Нужно внести изменения в состояние. */
-      def beforeStepNextLine(): Unit = {
+      def stepToNextLine(): Unit = {
         currColumn = 0
         currLine += 1
       }
 
-      def incrHeightUsed(ci: Int, incrBy: Int): Unit = {
-        val mcs2 = level.colsInfo(ci).addHeightUsed( incrBy )
-        level.updateColsInfo(ci, mcs2)
-      }
-
       // Наконец, пройтись по блокам.
-      for {
-        itemExt <- level.itemsExtDatas.toIterator
-      } yield {
-        val bm = itemExt.blockMeta
-        val itemCellWidth  = bm.w.relSz
-        val itemCellHeight = bm.h.relSz
+      ctx
+        .itemsExtDatas
+        .toIterator
+        .flatMap { itemExt =>
+          itemExt.blockMetaOrChildren.fold[Iterator[MCoords2di]](
+            {bm =>
+              def _currAsWide(line: Int = currLine) = MWideLine(line, bm.h)
+              //println( itemExt, ctx.wideLines() )
 
-        // Собрать функцию поиска места для одного элемента, модифицирующую текущее состояние.
-        @tailrec
-        def step(i: Int): MCoords2di = {
-          // В оригинале был for-цикл с ограничением на 1000 итераций на всю плитку. Тут -- ограничение итераций на каждый item.
-          if (i >= 20) {
-            // return -- слишком много итераций. Обычно это симптом зависона из-за ЛОГИЧЕСКОЙ ошибки в быдлокоде.
-            throw new IllegalStateException(ErrorMsgs.ENDLESS_LOOP_MAYBE + HtmlConstants.SPACE + i)
+              // Собрать функцию поиска места для одного элемента, модифицирующую текущее состояние.
+              @tailrec
+              def step(i: Int): Iterator[MCoords2di] = {
+                // В оригинале был for-цикл с ограничением на 1000 итераций на всю плитку. Тут -- ограничение итераций на каждый item.
+                if (i >= 50) {
+                  // return -- слишком много итераций. Обычно это симптом зависона из-за ЛОГИЧЕСКОЙ ошибки в быдлокоде.
+                  throw new IllegalStateException(ErrorMsgs.ENDLESS_LOOP_MAYBE + HtmlConstants.SPACE + i)
 
-          } else if (currColumn >= level.colsCount) {
-            // Конец текущей строки -- перейти на следующую строку.
-            beforeStepNextLine()
-            step(i + 1)
+                } else if (
+                  currColumn >= ctx.colsCount || ctx.isWideLineBusy(_currAsWide())
+                ) {
+                  // Конец текущей строки -- перейти на следующую строку:
+                  //val mwl = _currAsWide()
+                  //println(currLine, currColumn, ctx.colsCount, mwl, ctx.wideLines(), ctx.isWideLineBusy(mwl))
+                  stepToNextLine()
+                  step(i + 1)
 
-            // В оригинале была ещё ветка: if this.is_only_spacers() == true ; break
-          } else if ( level.colsInfo(currColumn).heightUsed ==* currLine ) {
-            // Высота текущей колонки равна currLine.
-            // есть место хотя бы для одного блока с минимальной шириной, выясним блок с какой шириной может влезть.
-            val cellWidthMax = _getMaxCellWidthCurrLine()
+                  // В оригинале была ещё ветка: if this.is_only_spacers() == true ; break
+                  // До wide-карточек тут было ==, а не <=.
+                } else if (
+                  ctx.getHeightUsed(currColumn) <= currLine &&
+                    // и может влезть блок текущей ширины:
+                    bm.w.relSz <= _getMaxCellWidthCurrLine()
+                ) {
+                  // Отработать wide-карточку: разместить её в аккамуляторе wide-строк.
+                  if (bm.wide) {
+                    // Это wide-карточка. Вместо colsInfo заполняем данными wide-аккамулятор.
+                    // Перейти на след.строку, если в текущая строка уже занята хотя бы одним элементом.
+                    val isWideRenderNextLine = currColumn > 0
+                    val wideStartLine = if (isWideRenderNextLine) currLine + 1 else currLine
 
-            if (itemCellWidth <= cellWidthMax) {
-              // Собрать новые координаты для блока:
-              val xy = _colLine2PxCoords(line = currLine, column = currColumn)
+                    // Занять текущую строку под wide-карточку.
+                    val mwl = ctx.getWideLine( _currAsWide(wideStartLine) )
+                    //println("WIDE: " + bm + " => " + mwl + " cl=" + currLine + " col=" + currColumn)
 
-              // Обновить состояние: проинкрементить col/line курсоры:
-              for {
-                ci <- (currColumn until (currColumn + itemCellWidth)).iterator
-                if ci < level.colsCount
-              } {
-                incrHeightUsed(ci, itemCellHeight)
-                currColumn += 1
+                    // Надо вернуть координаты плитки для содержимого текущей карточки в самой середине строки плитки.
+                    // Здесь даже возможнен рендер в пол-ячейки, например.
+
+                    //currLine = mwl.startLine
+                    //currColumn = 0
+                  }
+
+                  // Собрать новые координаты для блока:
+                  val xy = MCoords2di(x = currColumn, y = currLine)
+
+                  val itemCellHeight = bm.h.relSz
+                  // Обновить состояние: проинкрементить col/line курсоры:
+                  val heightUsed = currLine + itemCellHeight
+                  for {
+                    ci <- (currColumn until (currColumn + bm.w.relSz)).iterator
+                    if ci < ctx.colsCount
+                  } {
+                    ctx.setHeightUsed( ci, heightUsed )
+                    //incrHeightUsed(ci, itemCellHeight)
+                    currColumn += 1
+                  }
+
+                  // Вернуть полученные px-координаты блока.
+                  Iterator.single( xy )
+
+                } else {
+                  // Требуется переход на следующую ячейку.
+                  //println("next cell: " + currLine + ";" + currColumn + " i=" + i +
+                  //  "heightUsed[" + ctx.getHeightUsed(currColumn) + "] <= CL[" + currLine + "]" +
+                  //  "bm.w.relSz[" + bm.w.relSz + "] <= maxW[" + _getMaxCellWidthCurrLine())
+                  stepToNextCell()
+                  step(i + 1)
+                }
               }
 
-              // Вернуть полученные px-координаты блока.
-              xy
+              // Запустить рассчёт координат для текущего блока:
+              step(0)
+            },
 
-            } else {
-              // Требуется переход в след.ячейку, оставив пустоту в этой ячейке.
-              // TODO Opt может быть, тут требуется сразу переход на след.строку?
-              incrHeightUsed(currColumn, 1)
-              beforeStepToNextCell()
-              step(i + 1)
+            // Обнаружены sub-item'ы, TODO отрендерить под-плитку.
+            {subItems =>
+              // Без этого костыля, в началах строк начиная со второй будет жепь.
+              if ( currColumn >= ctx.colsCount )
+                stepToNextLine()
+
+              val _currLine = currLine
+              val _currColumn = currColumn
+              println( "grid portal: l=" + _currLine + "; c=" + _currColumn )
+              // Создаём виртуальный контекст рекурсивного рендера плитки, и погружаемся в новый уровень рендера.
+              // Это нужно, чтобы раскрыть одну карточку вниз, а не слева-направо.
+              _processGridLevel {
+                new IGridBuildCtx {
+                  override def colsCount: Int = BlockWidths.max.relSz  // subItems.max?
+
+                  override def itemsExtDatas = subItems
+
+                  // TODO Если элемент крайний правый с минимальной шириной, то нужен сдвиг влево на 1 ячейку
+                  def _translateColumn2Host(ci: Int) = {
+                    if (ci >= ctx.colsCount)
+                      throw new IllegalArgumentException("out of ci bounds = " + ci)
+                    ci + _currColumn
+                  }
+
+                  def _translateLine2Host(cl: Int) = cl + _currLine
+
+                  override def getHeightUsed(ci: Int) = {
+                    val hostHeightUsed = ctx.getHeightUsed( _translateColumn2Host(ci) )
+                    Math.max(0, hostHeightUsed - _currLine)
+                  }
+
+                  override def setHeightUsed(ci: Int, heightUsed: Int): Unit = {
+                    val hostHeightUsed = heightUsed + _currLine
+                    val hostCi = _translateColumn2Host( ci )
+                    ctx.setHeightUsed( hostCi, hostHeightUsed )
+                  }
+
+                  override def getWideLine(args: MWideLine): MWideLine = {
+                    val hostWlWanted = args.withStartLine( _translateLine2Host(args.startLine) )
+                    val hostWlAssiged = ctx.getWideLine(hostWlWanted)
+                    hostWlAssiged.withStartLine( hostWlAssiged.startLine - _currLine )
+                  }
+
+                  override def wideLines(): MWideLines = ctx.wideLines()
+
+                  override def isWideLineBusy(args: MWideLine): Boolean = {
+                    val hostWlWanted = args.withStartLine( _translateLine2Host(args.startLine) )
+                    ctx.isWideLineBusy( hostWlWanted )
+                  }
+                }
+              }
+                // Исправить координаты в результатах.
+                .map { xy =>
+                  xy.copy(
+                    x = xy.x + currColumn,
+                    y = xy.y + currLine
+                  )
+                }
             }
-            // Если нет следующего блока - обход закончен.
-
-          } else {
-            // Требуется переход на следующую ячейку.
-            beforeStepToNextCell()
-            step(i + 1)
-          }
+          )
         }
-
-        // Запустить рассчёт координат для текущего блока:
-        step(0)
-      }
-        //.toJSArray снаружи вызывается поверх результатов всех итераторов со всех уровней.
     }
 
     // Инициализация состояния плитки, в котором будет всё храниться.
@@ -182,25 +249,53 @@ object GridBuilderUtil {
       Array.fill( args.columnsCount )(mcs0)
     }
 
-    val coords = _processGridLevel {
-      new IGridLevel {
-        override def colsCount: Int = args.columnsCount
-        override def colsInfo(ci: Int): MColumnState = colsInfo1(ci)
-        override def updateColsInfo(i: Int, mcs: MColumnState): Unit = {
-          colsInfo1(i) = mcs
+    // Инициализация аккамулятора wide-строк.
+    var wideLinesAcc = MWideLines()
+
+    val coords = args.iter2coordsF {
+      _processGridLevel {
+        new IGridBuildCtx {
+          override def colsCount: Int =
+            args.columnsCount
+
+          /** Прочитать состояние уже использованной высоты для указанной колонки. */
+          override def getHeightUsed(ci: Int) = {
+            colsInfo1(ci).heightUsed
+          }
+
+          override def setHeightUsed(ci: Int, heightUsed: Int): Unit = {
+            val mcs2 = colsInfo1(ci)
+              .withHeightUsed( heightUsed )
+            colsInfo1(ci) = mcs2
+          }
+
+          override def wideLines() = wideLinesAcc
+
+          override def itemsExtDatas = args.itemsExtDatas
+
+          override def getWideLine(args: MWideLine): MWideLine = {
+            // Поиск и резервирование доступных wide-строк в wide-аккамуляторе.
+            // 1. Собрать все overlapping-элементы.
+            // 2. Впихнуть в них всё необходимое.
+            val (mwls2, mwl2) = wideLinesAcc.push(args)
+            wideLinesAcc = mwls2
+            mwl2
+          }
+
+          override def isWideLineBusy(args: MWideLine) =
+            wideLinesAcc.isBusy(args)
         }
-        override def itemsExtDatas = args.itemsExtDatas
-        //override def getWideLine(args: MWideLine): MWideLine = {
-          // Поиск и резервирование доступных wide-строк в wide-аккамуляторе.
-          // 1. Собрать все overlapping-элементы.
-          // 2. Впихнуть в них всё необходимое.
-        //  ???
-        //}
       }
+        .map { colLine =>
+          // Нужно перевести строки и столбцы в пиксели внутри контейнера
+          MCoords2di(
+            x = colLine.x * paddedCellWidthPx,
+            y = Math.round(colLine.y * paddedCellHeightPx).toInt + args.offY
+          )
+        }
     }
-      // TODO Opt тут не совсем оптимально, но нужно неленивую коллекцию, чтобы посчитать высоту и ширину плитки.
-      // Изначально, тут вызывался .toJSArray, но когда код стал кросс-платформенным, это вызвало проблемы...
-      .toVector
+
+    // TODO Если есть wide-строки, то надо снова выстроить плитку, но уже с опустошением имеющегося wide-аккамулятора.
 
     val maxCellHeight = colsInfo1
       .iterator
@@ -225,4 +320,38 @@ object GridBuilderUtil {
 
 }
 
+
+
+/** Интерфейс для взаимодействия с состоянием плитки.
+  * Позволяет зуммировать состояние над-плитки.
+  */
+trait IGridBuildCtx {
+
+  /** Элементы для обработки на текущем уровне. */
+  def itemsExtDatas: TraversableOnce[MGridItemProps]
+
+  /** Кол-во колонок в текущей проекции. */
+  def colsCount: Int
+
+  /** Прочитать состояние уже использованной высоты для указанной колонки. */
+  //def colsInfo(ci: Int): MColumnState
+  def getHeightUsed(ci: Int): Int
+
+  /** Обновить состояние использованной высоты у указанной колонки. */
+  //def updateColsInfo(ci: Int, mcs: MColumnState): Unit
+  def setHeightUsed(ci: Int, heightUsed: Int): Unit
+
+  def wideLines(): MWideLines
+
+  /** Поиск первой полностью свободной (от края до края) строки.
+    * Очевидно, что после этой строки всё свободно.
+    *
+    * @return Исходный или иной экземпляр [[MWideLine]].
+    */
+  def getWideLine(args: MWideLine): MWideLine
+
+  /** Проверка, занята ли указанная строка? */
+  def isWideLineBusy(args: MWideLine): Boolean
+
+}
 

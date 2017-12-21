@@ -2,7 +2,7 @@ package io.suggest.jd.render.v
 
 import com.github.dantrain.react.stonecutter.{CssGridProps, EnterExitStyle, GridComponent_t}
 import io.suggest.ad.blk.{BlockMeta, BlockWidths}
-import io.suggest.grid.build.{MGridBuildArgsJs, GridBuilderJs, ItemPropsExt}
+import io.suggest.grid.build.{MGridBuildArgsJs, GridBuilderJs}
 import io.suggest.jd.MJdConf
 import io.suggest.jd.tags.JdTag
 
@@ -29,33 +29,19 @@ class JdGridUtil(
 
   /** Сборка пропертисов для запуска рендера CSSGrid.
     *
-    * @param jds Jd-теги в исходном порядке.
     * @param conf jd-конфиг рендера.
-    * @param gridBuildArgsF Функция сборки инстанса GridBuildArgs.
-    *                       Создана для возможности проброса каких-либо аргументов напрямую в билдер.
     * @return Инстанс CssGridProps, пригодный для передачи в CSSGrid(_)(...).
     */
   def mkCssGridArgs(
-                     jds              : TraversableOnce[BlockMeta],
+                     gbArgs           : MGridBuildArgsJs,
                      conf             : MJdConf,
-                     tagName          : GridComponent_t,
-                     gridBuildArgsF   : TraversableOnce[ItemPropsExt] => MGridBuildArgsJs
+                     tagName          : GridComponent_t
+                     //gridBuildArgsF   : TraversableOnce[MGridItemProps] => MGridBuildArgsJs
                    ): CssGridProps = {
-    // Собрать аргументы для вызова layout-функции grid-builder'а.
-    val gridBuildArgs = gridBuildArgsF(
-      jds
-        .toIterator
-        .map { bm =>
-          ItemPropsExt(
-            blockMeta = bm
-          )
-        }
-    )
-
     // Каррируем функцию вне тела new CssGridProps{}, чтобы sjs-компилятор меньше мусорил левыми полями.
     // https://github.com/scala-js/scala-js/issues/2748
     // Это снизит риск ругани react'а на неведомый хлам внутри props.
-    val gridLayoutF = gridBuilder.stoneCutterLayout( gridBuildArgs ) _
+    val gridLayoutF = gridBuilder.stoneCutterLayout( gbArgs ) _
 
     val szMultD = conf.szMult.toDouble
 
