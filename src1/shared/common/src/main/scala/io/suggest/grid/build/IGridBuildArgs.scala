@@ -35,8 +35,18 @@ case class MGridBuildArgs[Coords_t](
 
 /** Модель-контейнер данных по одному item'у плитки. */
 case class MGridItemProps(
-                           blockMetaOrChildren: Either[BlockMeta, TraversableOnce[MGridItemProps]]
-                         )
+                           blockMetaOrChildren: Either[BlockMeta, Seq[MGridItemProps]]
+                         ) {
+
+  /** Вернуть параметры первого блока. */
+  def firstBlockMeta: BlockMeta = {
+    blockMetaOrChildren
+      .right
+      .map(_.head.firstBlockMeta)
+      .fold(identity, identity)
+  }
+
+}
 
 
 /** Результат сборки плитки.

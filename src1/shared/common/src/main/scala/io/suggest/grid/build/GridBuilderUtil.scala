@@ -101,94 +101,77 @@ object GridBuilderUtil {
         .itemsExtDatas
         .toIterator
         .flatMap { itemExt =>
-          itemExt.blockMetaOrChildren.fold[Iterator[MCoords2di]](
-            {bm =>
+          // Новые функции надо впихивать внутрь рекурсии, иначе это всё закончится перевпихиванием функции внутрь рекурсии.
+          @tailrec
+          def step(i: Int): Iterator[MCoords2di] = {
+            // В оригинале был for-цикл с ограничением кол-ва итераций на всю плитку. Тут -- ограничение итераций на каждый item.
+            if (i >= 50) {
+              // return -- слишком много итераций. Обычно это симптом зависона из-за ЛОГИЧЕСКОЙ ошибки в быдлокоде.
+              throw new IllegalStateException(ErrorMsgs.ENDLESS_LOOP_MAYBE + HtmlConstants.SPACE + i)
+
+            } else if ( currColumn >= ctx.colsCount ) {
+              // Конец текущей строки -- перейти на следующую строку:
+              stepToNextLine()
+              step(i + 1)
+
+            } else if (ctx.getHeightUsed(currColumn) > currLine) {
+              // Текущая ячейка уже занята. Требуется переход на следующую ячейку.
+              stepToNextCell()
+              step(i + 1)
+
+            } else if (itemExt.blockMetaOrChildren.isLeft) {
+              val bm = itemExt.blockMetaOrChildren.left.get
               def _currAsWide(line: Int = currLine) = MWideLine(line, bm.h)
-              //println( itemExt, ctx.wideLines() )
 
-              // Собрать функцию поиска места для одного элемента, модифицирующую текущее состояние.
-              @tailrec
-              def step(i: Int): Iterator[MCoords2di] = {
-                // В оригинале был for-цикл с ограничением на 1000 итераций на всю плитку. Тут -- ограничение итераций на каждый item.
-                if (i >= 50) {
-                  // return -- слишком много итераций. Обычно это симптом зависона из-за ЛОГИЧЕСКОЙ ошибки в быдлокоде.
-                  throw new IllegalStateException(ErrorMsgs.ENDLESS_LOOP_MAYBE + HtmlConstants.SPACE + i)
+              if (
+                // Текущий блок как-то пересекается (по высоте) с широкой карточкой?
+                ctx.isWideLineBusy(_currAsWide()) ||
+                // Ширина текущего блока влезает в текущую строку?
+                bm.w.relSz > _getMaxCellWidthCurrLine()
+              ) {
+                // Здесь нет места для текущего блока.
+                stepToNextLine()
+                step(i + 1)
 
-                } else if (
-                  currColumn >= ctx.colsCount || ctx.isWideLineBusy(_currAsWide())
-                ) {
-                  // Конец текущей строки -- перейти на следующую строку:
-                  //val mwl = _currAsWide()
-                  //println(currLine, currColumn, ctx.colsCount, mwl, ctx.wideLines(), ctx.isWideLineBusy(mwl))
-                  stepToNextLine()
-                  step(i + 1)
+              } else {
+                // Здесь влезтет блок текущей ширины и высоты.
+                // Отработать wide-карточку: разместить её в аккамуляторе wide-строк.
+                if (bm.wide) {
+                  // Это wide-карточка. Вместо colsInfo заполняем данными wide-аккамулятор.
+                  // Перейти на след.строку, если в текущая строка уже занята хотя бы одним элементом.
+                  val isWideRenderNextLine = currColumn > 0
+                  val wideStartLine = if (isWideRenderNextLine) currLine + 1 else currLine
 
-                  // В оригинале была ещё ветка: if this.is_only_spacers() == true ; break
-                  // До wide-карточек тут было ==, а не <=.
-                } else if (
-                  ctx.getHeightUsed(currColumn) <= currLine &&
-                    // и может влезть блок текущей ширины:
-                    bm.w.relSz <= _getMaxCellWidthCurrLine()
-                ) {
-                  // Отработать wide-карточку: разместить её в аккамуляторе wide-строк.
-                  if (bm.wide) {
-                    // Это wide-карточка. Вместо colsInfo заполняем данными wide-аккамулятор.
-                    // Перейти на след.строку, если в текущая строка уже занята хотя бы одним элементом.
-                    val isWideRenderNextLine = currColumn > 0
-                    val wideStartLine = if (isWideRenderNextLine) currLine + 1 else currLine
-
-                    // Занять текущую строку под wide-карточку.
-                    val mwl = ctx.getWideLine( _currAsWide(wideStartLine) )
-                    //println("WIDE: " + bm + " => " + mwl + " cl=" + currLine + " col=" + currColumn)
-
-                    // Надо вернуть координаты плитки для содержимого текущей карточки в самой середине строки плитки.
-                    // Здесь даже возможнен рендер в пол-ячейки, например.
-
-                    //currLine = mwl.startLine
-                    //currColumn = 0
-                  }
-
-                  // Собрать новые координаты для блока:
-                  val xy = MCoords2di(x = currColumn, y = currLine)
-
-                  val itemCellHeight = bm.h.relSz
-                  // Обновить состояние: проинкрементить col/line курсоры:
-                  val heightUsed = currLine + itemCellHeight
-                  for {
-                    ci <- (currColumn until (currColumn + bm.w.relSz)).iterator
-                    if ci < ctx.colsCount
-                  } {
-                    ctx.setHeightUsed( ci, heightUsed )
-                    //incrHeightUsed(ci, itemCellHeight)
-                    currColumn += 1
-                  }
-
-                  // Вернуть полученные px-координаты блока.
-                  Iterator.single( xy )
-
-                } else {
-                  // Требуется переход на следующую ячейку.
-                  //println("next cell: " + currLine + ";" + currColumn + " i=" + i +
-                  //  "heightUsed[" + ctx.getHeightUsed(currColumn) + "] <= CL[" + currLine + "]" +
-                  //  "bm.w.relSz[" + bm.w.relSz + "] <= maxW[" + _getMaxCellWidthCurrLine())
-                  stepToNextCell()
-                  step(i + 1)
+                  // Занять текущую строку под wide-карточку.
+                  val mwl = ctx.getWideLine( _currAsWide(wideStartLine) )
+                  //println("WIDE: " + bm + " => " + mwl + " cl=" + currLine + " col=" + currColumn)
                 }
+
+                // Собрать новые координаты для блока:
+                val xy = MCoords2di(x = currColumn, y = currLine)
+
+                val itemCellHeight = bm.h.relSz
+                // Обновить состояние: проинкрементить col/line курсоры:
+                val heightUsed = currLine + itemCellHeight
+                for {
+                  ci <- (currColumn until (currColumn + bm.w.relSz)).iterator
+                  if ci < ctx.colsCount
+                } {
+                  ctx.setHeightUsed( ci, heightUsed )
+                  //incrHeightUsed(ci, itemCellHeight)
+                  currColumn += 1
+                }
+
+                // Вернуть полученные px-координаты блока.
+                Iterator.single( xy )
               }
 
-              // Запустить рассчёт координат для текущего блока:
-              step(0)
-            },
-
-            // Обнаружены sub-item'ы, TODO отрендерить под-плитку.
-            {subItems =>
-              // Без этого костыля, в началах строк начиная со второй будет жепь.
-              if ( currColumn >= ctx.colsCount )
-                stepToNextLine()
+            } else if (itemExt.blockMetaOrChildren.isRight) {
+              // Focused-карточка. Рендерим все блоки вертикально.
+              val subItems = itemExt.blockMetaOrChildren.right.get
 
               val _currLine = currLine
               val _currColumn = currColumn
-              println( "grid portal: l=" + _currLine + "; c=" + _currColumn )
               // Создаём виртуальный контекст рекурсивного рендера плитки, и погружаемся в новый уровень рендера.
               // Это нужно, чтобы раскрыть одну карточку вниз, а не слева-направо.
               _processGridLevel {
@@ -238,8 +221,15 @@ object GridBuilderUtil {
                     y = xy.y + currLine
                   )
                 }
+
+            } else {
+              // should never happen
+              println( ErrorMsgs.SHOULD_NEVER_HAPPEN )
+              Iterator.empty
             }
-          )
+          }
+
+          step(0)
         }
     }
 
