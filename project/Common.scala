@@ -219,7 +219,7 @@ object Common {
   )
 
   /** Версия play. */
-  val playVsn         = "2.6.7"
+  val playVsn         = "2.6.11"
 
 
   /** Версия bouncy castle. */
