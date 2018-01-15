@@ -74,7 +74,7 @@ class GridBuilderJs {
   * @param offY Сдвиг сетки по вертикали, если требуется.
   */
 case class MGridBuildArgsJs(
-                             itemsExtDatas : TraversableOnce[MGridItemProps],
+                             itemsExtDatas : Seq[MGridItemProps],
                              jdConf        : MJdConf,
                              onLayout      : Option[MSize2di => _] = None,
                              offY          : Int = 0

@@ -120,12 +120,13 @@ object GridBuilderUtil {
               step(i + 1)
 
             } else if (itemExt.blockMetaOrChildren.isLeft) {
+              // Это block-meta. Позиционируем ровно один (текущий) блок:
               val bm = itemExt.blockMetaOrChildren.left.get
               def _currAsWide(line: Int = currLine) = MWideLine(line, bm.h)
 
               if (
                 // Текущий блок как-то пересекается (по высоте) с широкой карточкой?
-                ctx.isWideLineBusy(_currAsWide()) ||
+                (!bm.wide && ctx.isWideLineBusy(_currAsWide())) ||
                 // Ширина текущего блока влезает в текущую строку?
                 bm.w.relSz > _getMaxCellWidthCurrLine()
               ) {
@@ -145,6 +146,7 @@ object GridBuilderUtil {
                   // Занять текущую строку под wide-карточку.
                   val mwl = ctx.getWideLine( _currAsWide(wideStartLine) )
                   //println("WIDE: " + bm + " => " + mwl + " cl=" + currLine + " col=" + currColumn)
+                  // TODO пофиксить currLine с учётом mwl
                 }
 
                 // Собрать новые координаты для блока:
@@ -158,7 +160,6 @@ object GridBuilderUtil {
                   if ci < ctx.colsCount
                 } {
                   ctx.setHeightUsed( ci, heightUsed )
-                  //incrHeightUsed(ci, itemCellHeight)
                   currColumn += 1
                 }
 
@@ -167,7 +168,7 @@ object GridBuilderUtil {
               }
 
             } else if (itemExt.blockMetaOrChildren.isRight) {
-              // Focused-карточка. Рендерим все блоки вертикально.
+              // ПодСписок блоков, значит это открытая focused-карточка. Позиционируем эти блоки вертикально:
               val subItems = itemExt.blockMetaOrChildren.right.get
 
               val _currLine = currLine
@@ -224,7 +225,7 @@ object GridBuilderUtil {
 
             } else {
               // should never happen
-              println( ErrorMsgs.SHOULD_NEVER_HAPPEN )
+              //println( ErrorMsgs.SHOULD_NEVER_HAPPEN )
               Iterator.empty
             }
           }
@@ -233,73 +234,120 @@ object GridBuilderUtil {
         }
     }
 
-    // Инициализация состояния плитки, в котором будет всё храниться.
-    val colsInfo1: Array[MColumnState] = {
-      val mcs0 = MColumnState()
-      Array.fill( args.columnsCount )(mcs0)
+    // Перевести строки и столбцы в пиксели внутри контейнера
+    def _colLine2xy(colLine: MCoords2di): MCoords2di = {
+      MCoords2di(
+        x = colLine.x * paddedCellWidthPx,
+        y = Math.round(colLine.y * paddedCellHeightPx).toInt + args.offY
+      )
     }
+
+    // TODO Далее тут адский говнокод с var'ами и костылями для возможности повторных вызовов рендера в разных условиях. Надо его отрефакторить капитально.
 
     // Инициализация аккамулятора wide-строк.
     var wideLinesAcc = MWideLines()
 
-    val coords = args.iter2coordsF {
-      _processGridLevel {
-        new IGridBuildCtx {
-          override def colsCount: Int =
-            args.columnsCount
+    // Неполная реалиация IGridBuildCtx (без wide-аккамулятора).
+    trait GridBuildCtxBase extends IGridBuildCtx {
 
-          /** Прочитать состояние уже использованной высоты для указанной колонки. */
-          override def getHeightUsed(ci: Int) = {
-            colsInfo1(ci).heightUsed
-          }
-
-          override def setHeightUsed(ci: Int, heightUsed: Int): Unit = {
-            val mcs2 = colsInfo1(ci)
-              .withHeightUsed( heightUsed )
-            colsInfo1(ci) = mcs2
-          }
-
-          override def wideLines() = wideLinesAcc
-
-          override def itemsExtDatas = args.itemsExtDatas
-
-          override def getWideLine(args: MWideLine): MWideLine = {
-            // Поиск и резервирование доступных wide-строк в wide-аккамуляторе.
-            // 1. Собрать все overlapping-элементы.
-            // 2. Впихнуть в них всё необходимое.
-            val (mwls2, mwl2) = wideLinesAcc.push(args)
-            wideLinesAcc = mwls2
-            mwl2
-          }
-
-          override def isWideLineBusy(args: MWideLine) =
-            wideLinesAcc.isBusy(args)
-        }
+      // Инициализация состояния плитки, в котором будет всё храниться.
+      val colsInfo1: Array[MColumnState] = {
+        val mcs0 = MColumnState()
+        Array.fill( args.columnsCount )(mcs0)
       }
-        .map { colLine =>
-          // Нужно перевести строки и столбцы в пиксели внутри контейнера
-          MCoords2di(
-            x = colLine.x * paddedCellWidthPx,
-            y = Math.round(colLine.y * paddedCellHeightPx).toInt + args.offY
-          )
-        }
+
+      override def colsCount: Int =
+        args.columnsCount
+
+      /** Прочитать состояние уже использованной высоты для указанной колонки. */
+      override def getHeightUsed(ci: Int) = {
+        colsInfo1(ci).heightUsed
+      }
+
+      override def setHeightUsed(ci: Int, heightUsed: Int): Unit = {
+        val mcs2 = colsInfo1(ci)
+          .withHeightUsed( heightUsed )
+        colsInfo1(ci) = mcs2
+      }
+
+      override def wideLines() = wideLinesAcc
+
+      override def itemsExtDatas = args.itemsExtDatas
+
+      //override def getWideLine(args: MWideLine): MWideLine = {
+        // Поиск и резервирование доступных wide-строк в wide-аккамуляторе.
+        // 1. Собрать все overlapping-элементы.
+        // 2. Впихнуть в них всё необходимое.
+      //  val (mwls2, mwl2) = wideLinesAcc.push(args)
+      //  wideLinesAcc = mwls2
+      //  mwl2
+      //}
+
+      //override def isWideLineBusy(args: MWideLine) =
+      //  wideLinesAcc.isBusy(args)
     }
 
-    // TODO Если есть wide-строки, то надо снова выстроить плитку, но уже с опустошением имеющегося wide-аккамулятора.
+    var builder: GridBuildCtxBase = new GridBuildCtxBase {
+      override def getWideLine(mwl0: MWideLine): MWideLine = {
+        // Поиск и резервирование доступных wide-строк в wide-аккамуляторе.
+        // 1. Собрать все overlapping-элементы.
+        // 2. Впихнуть в них всё необходимое.
+        val (mwls2, mwl2) = wideLinesAcc.push(mwl0)
+        wideLinesAcc = mwls2
+        mwl2
+      }
 
-    val maxCellHeight = colsInfo1
+      override def isWideLineBusy(args: MWideLine) =
+        wideLinesAcc.isBusy(args)
+    }
+
+    var coordsFinal = args.iter2coordsF {
+      _processGridLevel( builder )
+        .map( _colLine2xy )
+    }
+
+    // Если есть wide-строки, то надо снова выстроить плитку, но с опустошением уже имеющегося wide-аккамулятора.
+    if (/*false &&*/ wideLinesAcc.lines.nonEmpty) {
+      val wideAcc0 = wideLinesAcc
+      // Непустой аккамулятор wide-строк. Скорее всего, плитка некорректна: некоторые блоки пересекаются с wide-карточками.
+      // Повторно выстроить плитку, но извлекая wide-строки из заполненного аккамулятора.
+      builder = new GridBuildCtxBase {
+        override def getWideLine(mwl0: MWideLine): MWideLine = {
+          // Поиск и резервирование доступных wide-строк в wide-аккамуляторе.
+          // 1. Собрать все overlapping-элементы.
+          // 2. Впихнуть в них всё необходимое.
+          //println(mwl0, wideLinesAcc)
+          val (mwls2, mwl2) = wideLinesAcc.extract(mwl0).get
+          wideLinesAcc = mwls2
+          mwl2
+        }
+
+        override def isWideLineBusy(args: MWideLine) = {
+          wideAcc0.isBusy(args)
+          //println("isWideBusy = " + args + " ;; " + r)
+        }
+      }
+      coordsFinal = args.iter2coordsF {
+        _processGridLevel( builder )
+          .map( _colLine2xy )
+      }
+    }
+
+    val maxCellHeight = builder.colsInfo1
       .iterator
       .map(_.heightUsed)
       .max
     val gridHeightPx = Math.round(maxCellHeight * paddedCellHeightPx).toInt
 
     val gridWidthPx = {
-      val width0 = colsInfo1.count(_.heightUsed > 0) * paddedCellWidthPx - cellPaddingWidthPx
+      val width0 = builder.colsInfo1.count(_.heightUsed > 0) * paddedCellWidthPx - cellPaddingWidthPx
       Math.max(0, width0)
     }
 
+    //println( coordsFinal, args.itemsExtDatas )
+
     MGridBuildResult(
-      coords = coords,
+      coords = coordsFinal,
       gridWh = MSize2di(
         width   = gridWidthPx,
         height  = gridHeightPx
@@ -338,7 +386,7 @@ trait IGridBuildCtx {
     *
     * @return Исходный или иной экземпляр [[MWideLine]].
     */
-  def getWideLine(args: MWideLine): MWideLine
+  def getWideLine(mwl0: MWideLine): MWideLine
 
   /** Проверка, занята ли указанная строка? */
   def isWideLineBusy(args: MWideLine): Boolean

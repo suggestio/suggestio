@@ -338,7 +338,8 @@ class JdR(
                 .jdTrees2bms(jd.subForest)
                 .map { bm =>
                   MGridItemProps( Left(bm) )
-                },
+                }
+                .toSeq,
               jdConf = jdArgs.conf
             ),
             conf = jdArgs.conf,

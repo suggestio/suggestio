@@ -73,7 +73,8 @@ class GridCoreR(
                     )
                   )
                 }
-              },
+              }
+              .toSeq,
             jdConf          = mgrid.jdConf,
             onLayout        = Some(_onGridLayoutF),
             offY            = TileConstants.CONTAINER_OFFSET_TOP

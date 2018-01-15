@@ -27,7 +27,7 @@ import io.suggest.jd.MJdConf
   */
 case class MGridBuildArgs[Coords_t](
                                      columnsCount  : Int,
-                                     itemsExtDatas : TraversableOnce[MGridItemProps],
+                                     itemsExtDatas : Seq[MGridItemProps],
                                      jdConf        : MJdConf,
                                      offY          : Int,
                                      iter2coordsF  : Iterator[MCoords2di] => Coords_t
