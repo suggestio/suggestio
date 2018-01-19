@@ -24,6 +24,21 @@ object MCoords2di {
 
   implicit def univEq: UnivEq[MCoords2di] = UnivEq.derive
 
+
+  object Implicits {
+
+    /** Поддержка сортировки с приоритетом на X. */
+    implicit def xyOrdering: Ordering[MCoords2di] = {
+      Ordering.by { t: MCoords2di => t.tuple2 }
+    }
+
+    /** Поддержка сортировки с приоритетом на Y. */
+    implicit def yxOrdering: Ordering[MCoords2di] = {
+      Ordering.by { t: MCoords2di => t.tuple2swap }
+    }
+
+  }
+
 }
 
 
@@ -59,5 +74,14 @@ case class MCoords2di(
 
   def toSize = MSize2di(width = x, height = y)
 
-}
+  /** Поменять X и Y местами. Бывает надо для сортировки с приоритетом на Y. */
+  def swap = copy(x = y, y = x)
 
+  // Алиасы координат для различных случаев.
+  @inline def line = y
+  @inline def column = x
+
+  @inline def top = y
+  @inline def left = x
+
+}

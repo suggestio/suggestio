@@ -69,12 +69,12 @@ class GridCoreR(
                       jdGridUtil
                         .jdTrees2bms( foc.template.subForest )
                         .map { bm => MGridItemProps(Left(bm)) }
-                        .toSeq
+                        .toList
                     )
                   )
                 }
               }
-              .toSeq,
+              .toList,
             jdConf          = mgrid.jdConf,
             onLayout        = Some(_onGridLayoutF),
             offY            = TileConstants.CONTAINER_OFFSET_TOP

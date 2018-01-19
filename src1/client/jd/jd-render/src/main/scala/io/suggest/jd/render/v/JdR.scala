@@ -339,7 +339,7 @@ class JdR(
                 .map { bm =>
                   MGridItemProps( Left(bm) )
                 }
-                .toSeq,
+                .toList,
               jdConf = jdArgs.conf
             ),
             conf = jdArgs.conf,

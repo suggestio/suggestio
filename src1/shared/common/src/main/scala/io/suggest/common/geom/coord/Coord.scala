@@ -45,6 +45,9 @@ trait ICoord2d[V] extends ICoord1d[V] {
     evidence.distance(this, p2)
   }
 
+  def tuple2 = (x, y)
+  def tuple2swap = (y, x)
+
 }
 
 

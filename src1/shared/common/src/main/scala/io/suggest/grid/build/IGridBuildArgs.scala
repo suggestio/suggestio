@@ -27,15 +27,21 @@ import io.suggest.jd.MJdConf
   */
 case class MGridBuildArgs[Coords_t](
                                      columnsCount  : Int,
-                                     itemsExtDatas : Seq[MGridItemProps],
+                                     itemsExtDatas : List[MGridItemProps],
                                      jdConf        : MJdConf,
                                      offY          : Int,
                                      iter2coordsF  : Iterator[MCoords2di] => Coords_t
                                    )
 
-/** Модель-контейнер данных по одному item'у плитки. */
+/** Модель-контейнер данных по одному item'у плитки.
+  *
+  * @param blockMetaOrChildren Или блок или группа блоков.
+  * @param orderN Принудительный порядковый номер блока, если требуется.
+  *               Позволяет восстанавливать порядок блоков при нарушении порядка после перестановок (wide overlaps).
+  */
 case class MGridItemProps(
-                           blockMetaOrChildren: Either[BlockMeta, Seq[MGridItemProps]]
+                           blockMetaOrChildren    : Either[BlockMeta, List[MGridItemProps]],
+                           orderN                 : Option[Int] = None
                          ) {
 
   /** Вернуть параметры первого блока. */
