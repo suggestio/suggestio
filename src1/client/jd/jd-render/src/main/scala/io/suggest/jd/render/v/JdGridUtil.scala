@@ -36,7 +36,6 @@ class JdGridUtil(
                      gbArgs           : MGridBuildArgsJs,
                      conf             : MJdConf,
                      tagName          : GridComponent_t
-                     //gridBuildArgsF   : TraversableOnce[MGridItemProps] => MGridBuildArgsJs
                    ): CssGridProps = {
     // Каррируем функцию вне тела new CssGridProps{}, чтобы sjs-компилятор меньше мусорил левыми полями.
     // https://github.com/scala-js/scala-js/issues/2748
