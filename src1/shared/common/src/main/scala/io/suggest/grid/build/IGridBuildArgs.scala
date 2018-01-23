@@ -27,29 +27,59 @@ import io.suggest.jd.MJdConf
   */
 case class MGridBuildArgs[Coords_t](
                                      columnsCount  : Int,
-                                     itemsExtDatas : List[MGridItemProps],
+                                     itemsExtDatas : List[IGbBlockPayload],
                                      jdConf        : MJdConf,
                                      offY          : Int,
                                      iter2coordsF  : Iterator[MCoords2di] => Coords_t
                                    )
 
-/** Модель-контейнер данных по одному item'у плитки.
-  *
-  * @param blockMetaOrChildren Или блок или группа блоков.
-  * @param orderN Принудительный порядковый номер блока, если требуется.
-  *               Позволяет восстанавливать порядок блоков при нарушении порядка после перестановок (wide overlaps).
-  */
-case class MGridItemProps(
-                           blockMetaOrChildren    : Either[BlockMeta, List[MGridItemProps]],
-                           orderN                 : Option[Int] = None
-                         ) {
+
+/** Интерфейс для контейнеров с вариантами элементов плитки. */
+sealed trait IGbBlockPayload {
+  def isBlock: Boolean
+  def isSubBlocks: Boolean = !isBlock
+  def fold[T](blockF: MGbBlock => T, subBlocksF: MGbSubItems => T): T
+
 
   /** Вернуть параметры первого блока. */
   def firstBlockMeta: BlockMeta = {
-    blockMetaOrChildren
-      .right
-      .map(_.head.firstBlockMeta)
-      .fold(identity, identity)
+    fold(_.bm, _.subItems.head.firstBlockMeta)
+  }
+
+}
+
+/** Контейнер для одного блока.
+  * wide-блоки могут передать здесь инфу о фоновой картинке.
+  *
+  * @param bm Описание одного блока.
+  * @param wideBgSz Размер широкой фоновой картинки.
+  * @param orderN внутренний порядковый номер, заполняется и используется внутри [[GridBuilderUtil]].
+  */
+case class MGbBlock(
+                      bm                            : BlockMeta,
+                      wideBgSz                      : Option[MSize2di]  = None,
+                      private[build] val orderN     : Option[Int]       = None
+                   )
+  extends IGbBlockPayload {
+
+  override def isBlock = true
+
+  override def fold[T](blockF: MGbBlock => T, subBlocksF: MGbSubItems => T): T = {
+    blockF(this)
+  }
+
+}
+
+/** Контейнер для под-блоков. */
+case class MGbSubItems(
+                        subItems: List[IGbBlockPayload]
+                      )
+  extends IGbBlockPayload {
+
+  override def isBlock = false
+
+  override def fold[T](blockF: MGbBlock => T, subBlocksF: MGbSubItems => T): T = {
+    subBlocksF(this)
   }
 
 }

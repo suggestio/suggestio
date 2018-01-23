@@ -98,8 +98,8 @@ object GridBuilderUtil {
           // Для повторного позиционирования создаём новый уровень и вертикальную проекцию.
           // Это поможет спозиционировать блок только по вертикали, не трогая горизонтальную координату.
           // Это сдвиг вниз, он удобен при конфликте с широкой карточкой за место на экране.
-          val mgiProps = MGridItemProps(
-            Left(reDoItm.bm),
+          val mgiProps = MGbBlock(
+            bm = reDoItm.bm,
             orderN = Some( reDoItm.orderN )
           ) :: Nil
           // Используем rootLvl для сборки под-контекста, т.к. reDoItm.topLeft задано в абсолютных (root) координатах.
@@ -118,136 +118,138 @@ object GridBuilderUtil {
           _stepper( s2 )
 
         } else if (currLvl.restItems.nonEmpty) {
-          val itemExt = currLvl.restItems.head
           //println(stepCounter, itemExt)
-          if (itemExt.blockMetaOrChildren.isLeft) {
+          currLvl.restItems.head match {
+
             // Это block-meta. Позиционируем ровно один (текущий) блок:
-            val bm = itemExt.blockMetaOrChildren.left.get
-            val currWide = MWideLine( currLvl.ctx.lineToAbs(xy.line), bm.h )
-            //println( stepCounter, bm, currWide, s0.wides.mkString )
+            case itemExt: MGbBlock =>
+              val bm = itemExt.bm
+              val currWide = MWideLine( currLvl.ctx.lineToAbs(xy.line), bm.h )
+              //println( stepCounter, bm, currWide, s0.wides.mkString )
 
-            if (
-              // Текущий неширокий блок как-то пересекается (по высоте) с широкой карточкой?
-              s0.isWideOverlaps(currWide) ||
-                // Ширина текущего блока влезает в текущую строку?
-                (!bm.wide  && bm.w.relSz > currLvl._getMaxCellWidthCurrLine()) //||
-                // Широкий блок подразумевает пустую строку для себя: TODO А надо ли это, если у нас reDo-акк?
-                //(bm.wide   && rootLvl.currLineCol.column > 0)
-            ) {
-              // Здесь нет места для текущего блока.
-              val currLvl2 = currLvl.stepToNextLine
-              //println(stepCounter, "newLine: " + xy.line + " => " + currLvl2.currLineCol.line)
-              _stepper(
-                s0.withCurrLevel( currLvl2 )
-              )
-
-            } else {
-              // Здесь влезет блок текущей ширины и высоты.
-              // Отработать wide-карточку: разместить её в аккамуляторе wide-строк.
-
-              val itemCellHeight = bm.h.relSz
-              // Обновить состояние: проинкрементить col/line курсоры:
-              val endColumnIndex = xy.column + bm.w.relSz
-              val heightUsed = xy.line + itemCellHeight
-              for ( ci <- xy.column until endColumnIndex ) {
-                currLvl.ctx.setHeightUsed( ci, heightUsed )
-              }
-
-              val currLvl2 = currLvl.copy(
-                restItems = currLvl.restItems.tail,
-                currLineCol = xy.withX( endColumnIndex )
-              )
-              val xyAbs = currLvl.ctx.colLineToAbs( xy )
-
-              val res = MGbItemRes(
-                // Восстановить порядок, если индекс был передан из reDo-ветви.
-                orderN      = itemExt.orderN
-                  .getOrElse( stepCounter ),
-                topLeft     = xyAbs,
-                bm          = bm
-              )
-
-              val mwlAbsOpt = OptionUtil.maybe(bm.wide)( currWide )
-
-              // Если wide, то надо извлечь из results-аккамулятора элементы, конфликтующие по высоте с данным wide-блоком и запихать их в reDo-аккамулятор.
-              val wideS2Opt = for {
-                // Если у нас wide-блок
-                mwlAbs <- mwlAbsOpt
-                // Оттранслировать его в абсолютные координаты.
-                (conflicting, ok) = s0.resultsAccRev.partition { res =>
-                  /*val isConflict =*/ res.toWideLine overlaps mwlAbs
-                  /*
-                  if (isConflict)
-                    println("conflict: " + res + " vs wide=" + mwlAbs + " mwlXY=" + xy)
-                  isConflict
-                  */
-                }
-                if conflicting.nonEmpty
-              } yield {
-                //println( conflicting.size, ok.size )
-                // Есть конфликтующие item'ы. Надо закинуть их в reDoItems на родительском уровне.
-                val parentLvlOpt = s0.levels.tail.headOption
-                val modLvl0 = parentLvlOpt.getOrElse(currLvl2)
-                val modLvl2 = modLvl0.withReDoItems {
-                  conflicting reverse_::: modLvl0.reDoItems
-                }
-
-                // В связи с извлечением некоторых item'ов снизу, надо откатить значения в колонках.
-                val rootLvl1 = rootLvl
-                for {
-                  e  <- conflicting
-                  ci <- e.topLeft.left until (e.topLeft.left + e.bm.w.relSz)
-                } {
-                  val h0 = rootLvl1.ctx.getHeightUsed(ci)
-                  rootLvl1.ctx.setHeightUsed(ci, h0 - e.bm.h.relSz)
-                }
-
-                s0.copy(
-                  resultsAccRev = res :: ok,
-                  levels = parentLvlOpt.fold {
-                    // Родительского уровня не было, работа была на верхнем уровне.
-                    modLvl2 :: s0.levels.tail
-                  } { _ =>
-                    // Был родительский уровень. Обновить оба уровня.
-                    currLvl2 :: modLvl2 :: s0.levels.tail.tail
-                  },
-                  wides = mwlAbs :: s0.wides
+              if (
+                // Текущий неширокий блок как-то пересекается (по высоте) с широкой карточкой?
+                s0.isWideOverlaps(currWide) ||
+                  // Ширина текущего блока влезает в текущую строку?
+                  (!bm.wide  && bm.w.relSz > currLvl._getMaxCellWidthCurrLine()) //||
+                  // Широкий блок подразумевает пустую строку для себя: TODO А надо ли это, если у нас reDo-акк?
+                  //(bm.wide   && rootLvl.currLineCol.column > 0)
+              ) {
+                // Здесь нет места для текущего блока.
+                val currLvl2 = currLvl.stepToNextLine
+                //println(stepCounter, "newLine: " + xy.line + " => " + currLvl2.currLineCol.line)
+                _stepper(
+                  s0.withCurrLevel( currLvl2 )
                 )
-              }
 
-              val s2 = wideS2Opt.getOrElse {
-                // Не-wide блок. Просто закинуть данные в состояние.
-                s0.copy(
-                  levels        = currLvl2 :: s0.levels.tail,
-                  resultsAccRev = res :: s0.resultsAccRev,
-                  wides         = Lists.prependOpt(mwlAbsOpt)(s0.wides)
+              } else {
+                // Здесь влезет блок текущей ширины и высоты.
+                // Отработать wide-карточку: разместить её в аккамуляторе wide-строк.
+
+                val itemCellHeight = bm.h.relSz
+                // Обновить состояние: проинкрементить col/line курсоры:
+                val endColumnIndex = xy.column + bm.w.relSz
+                val heightUsed = xy.line + itemCellHeight
+                for ( ci <- xy.column until endColumnIndex ) {
+                  currLvl.ctx.setHeightUsed( ci, heightUsed )
+                }
+
+                val currLvl2 = currLvl.copy(
+                  restItems = currLvl.restItems.tail,
+                  currLineCol = xy.withX( endColumnIndex )
                 )
+                val xyAbs = currLvl.ctx.colLineToAbs( xy )
+
+                val res = MGbItemRes(
+                  // Восстановить порядок, если индекс был передан из reDo-ветви.
+                  orderN      = itemExt.orderN
+                    .getOrElse( stepCounter ),
+                  topLeft     = xyAbs,
+                  bm          = bm
+                )
+
+                val mwlAbsOpt = OptionUtil.maybe(bm.wide)( currWide )
+
+                // Если wide, то надо извлечь из results-аккамулятора элементы, конфликтующие по высоте с данным wide-блоком и запихать их в reDo-аккамулятор.
+                val wideS2Opt = for {
+                  // Если у нас wide-блок
+                  mwlAbs <- mwlAbsOpt
+                  // Оттранслировать его в абсолютные координаты.
+                  (conflicting, ok) = s0.resultsAccRev.partition { res =>
+                    /*val isConflict =*/ res.toWideLine overlaps mwlAbs
+                    /*
+                    if (isConflict)
+                      println("conflict: " + res + " vs wide=" + mwlAbs + " mwlXY=" + xy)
+                    isConflict
+                    */
+                  }
+                  if conflicting.nonEmpty
+                } yield {
+                  //println( conflicting.size, ok.size )
+                  // Есть конфликтующие item'ы. Надо закинуть их в reDoItems на родительском уровне.
+                  val parentLvlOpt = s0.levels.tail.headOption
+                  val modLvl0 = parentLvlOpt.getOrElse(currLvl2)
+                  val modLvl2 = modLvl0.withReDoItems {
+                    conflicting reverse_::: modLvl0.reDoItems
+                  }
+
+                  // В связи с извлечением некоторых item'ов снизу, надо откатить значения в колонках.
+                  val rootLvl1 = rootLvl
+                  for {
+                    e  <- conflicting
+                    ci <- e.topLeft.left until (e.topLeft.left + e.bm.w.relSz)
+                  } {
+                    val h0 = rootLvl1.ctx.getHeightUsed(ci)
+                    rootLvl1.ctx.setHeightUsed(ci, h0 - e.bm.h.relSz)
+                  }
+
+                  s0.copy(
+                    resultsAccRev = res :: ok,
+                    levels = parentLvlOpt.fold {
+                      // Родительского уровня не было, работа была на верхнем уровне.
+                      modLvl2 :: s0.levels.tail
+                    } { _ =>
+                      // Был родительский уровень. Обновить оба уровня.
+                      currLvl2 :: modLvl2 :: s0.levels.tail.tail
+                    },
+                    wides = mwlAbs :: s0.wides
+                  )
+                }
+
+                val s2 = wideS2Opt.getOrElse {
+                  // Не-wide блок. Просто закинуть данные в состояние.
+                  s0.copy(
+                    levels        = currLvl2 :: s0.levels.tail,
+                    resultsAccRev = res :: s0.resultsAccRev,
+                    wides         = Lists.prependOpt(mwlAbsOpt)(s0.wides)
+                  )
+                }
+
+                _stepper(s2)
+
               }
 
-              _stepper(s2)
-
-            }
-
-          } else {
             // ПодСписок блоков, значит это открытая focused-карточка. Позиционируем эти блоки вертикально:
-            val subItems = itemExt.blockMetaOrChildren.right.get
+            case itemExt: MGbSubItems =>
+              val subItems = itemExt.subItems
 
-            // Создаём виртуальный контекст рекурсивного рендера плитки, и погружаемся в новый уровень рендера.
-            // Это нужно, чтобы раскрыть одну карточку вниз, а не слева-направо.
-            val nextLvl = MGbLevelState(
-              ctx = currLvl.ctx.verticalSubGrid( currLvl.currLineCol ),
-              restItems = subItems
-            )
-            // Выкидываем текущий пройденный элемент с текущего уровня.
-            val currLvl2 = currLvl.copy(
-              restItems = currLvl.restItems.tail
-            )
-            val s2 = s0.withLevels(
-              nextLvl :: currLvl2 :: s0.levels.tail
-            )
+              // Создаём виртуальный контекст рекурсивного рендера плитки, и погружаемся в новый уровень рендера.
+              // Это нужно, чтобы раскрыть одну карточку вниз, а не слева-направо.
+              val nextLvl = MGbLevelState(
+                ctx = currLvl.ctx.verticalSubGrid( currLvl.currLineCol ),
+                restItems = subItems
+              )
+              // Выкидываем текущий пройденный элемент с текущего уровня.
+              val currLvl2 = currLvl.copy(
+                restItems = currLvl.restItems.tail
+              )
+              val s2 = s0.withLevels(
+                nextLvl :: currLvl2 :: s0.levels.tail
+              )
 
-            _stepper( s2 )
+              _stepper( s2 )
           }
+
 
         } else {
           // Нет на текущем уровне ничего, что следует делать. Подняться уровнем выше.
@@ -390,8 +392,17 @@ trait IGridBuildCtx { outer =>
     * @return Новый контекст [[IGridBuildCtx]].
     */
   def verticalSubGrid(outerLineCol: MCoords2di): IGridBuildCtx = {
+    val cellWidth = BlockWidths.max.relSz
+    // Бывает, что запрашиваемая плитка вылезает за пределамы исходной.
+    // Исправляем это прямо здесь.
+    val column2 = Math.max(0,
+      Math.min( outer.colsCount - cellWidth + 1, outerLineCol.column )
+    )
+    val line2 = outerLineCol.line
+
     new IGridBuildCtx {
-      override def colsCount: Int = BlockWidths.max.relSz  // subItems.max?
+      override def colsCount: Int = cellWidth
+      // Использовать subItems.max width?
 
       override def colLineToAbs(xy: MCoords2di): MCoords2di = {
         xy.copy(
@@ -400,30 +411,26 @@ trait IGridBuildCtx { outer =>
         )
       }
 
-      // TODO Если элемент крайний правый с минимальной шириной, то нужен сдвиг влево на 1 ячейку
-      override def columnToAbs(ci: Int) = {
-        if (ci >= outer.colsCount)
-          throw new IllegalArgumentException("out of ci bounds = " + ci)
-        ci + outerLineCol.column
-      }
+      override def columnToAbs(ci: Int) =
+        ci + column2
 
-      override def lineToAbs(cl: Int) = cl + outerLineCol.line
+      override def lineToAbs(cl: Int) = cl + line2
 
       override def getHeightUsed(ci: Int) = {
         val hostHeightUsed = outer.getHeightUsed( columnToAbs(ci) )
-        Math.max(0, hostHeightUsed - outerLineCol.line)
+        Math.max(0, hostHeightUsed - line2)
       }
 
       override def setHeightUsed(ci: Int, heightUsed: Int): Unit = {
-        val hostHeightUsed = heightUsed + outerLineCol.line
+        val hostHeightUsed = heightUsed + line2
         val hostCi = columnToAbs( ci )
         outer.setHeightUsed( hostCi, hostHeightUsed )
       }
 
       override def toString: String = {
         outer.toString +
-          "+" + outerLineCol.x +
-          "+" + outerLineCol.y
+          "+" + line2 +
+          "+" + column2
       }
 
     }
@@ -466,7 +473,7 @@ case class MGbStepState(
   */
 case class MGbLevelState(
                           ctx         : IGridBuildCtx,
-                          restItems   : List[MGridItemProps],
+                          restItems   : List[IGbBlockPayload],
                           currLineCol : MCoords2di              = MCoords2di(0, 0),
                           reDoItems   : List[MGbItemRes]        = Nil,
                         ) {

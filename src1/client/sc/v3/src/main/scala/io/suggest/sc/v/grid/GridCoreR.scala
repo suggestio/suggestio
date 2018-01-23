@@ -3,7 +3,7 @@ package io.suggest.sc.v.grid
 import com.github.dantrain.react.stonecutter.{CSSGrid, GridComponents}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants.`.`
-import io.suggest.grid.build.{GridBuildRes_t, MGridBuildArgsJs, MGridItemProps}
+import io.suggest.grid.build._
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdGridUtil, JdR}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -56,21 +56,19 @@ class GridCoreR(
               .iterator
               .flatten
               .map { scAdData =>
-                scAdData.focused.toOption.fold {
+                scAdData.focused.toOption.fold [IGbBlockPayload] {
                   // Несфокусированная карточка. Вернуть Left(blockMeta) с единственного стрипа.
-                  MGridItemProps(
-                    Left( scAdData.main.template.rootLabel.props1.bm.get )
+                  MGbBlock(
+                    scAdData.main.template.rootLabel.props1.bm.get
                   )
                 } { foc =>
                   // Открытая карточка. Вернуть Right() со списком фокус-блоков:
                   //println( foc )
-                  MGridItemProps(
-                    Right(
-                      jdGridUtil
-                        .jdTrees2bms( foc.template.subForest )
-                        .map { bm => MGridItemProps(Left(bm)) }
-                        .toList
-                    )
+                  MGbSubItems(
+                    jdGridUtil
+                      .jdTrees2bms( foc.template.subForest )
+                      .map { bm => MGbBlock(bm) }
+                      .toList
                   )
                 }
               }
