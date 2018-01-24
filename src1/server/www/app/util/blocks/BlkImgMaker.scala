@@ -54,21 +54,19 @@ class BlkImgMaker @Inject() (
       .getOrElse(CompressModes.Fg)
       .fromDpr(pxRatio)
 
+    val szReal = getRenderSz(szMult, blockMeta, pxRatio)
+
     // Настройки сохранения результирующей картинки (аккамулятор).
-    var imOpsAcc: List[ImOp] = List(
+    val imOpsAcc = List(
+      ImGravities.Center,
+      AbsResizeOp(szReal, ImResizeFlags.FillArea),
+      ExtentOp(szReal),
+      ImFilters.Lanczos,
       StripOp,
       ImInterlace.Plane,
       fgc.chromaSubSampling,
       fgc.imQualityOp
     )
-
-    // Втыкаем resize. Он должен идти после возможного кропа, но перед другими операциями.
-    val szReal = getRenderSz(szMult, blockMeta, pxRatio)
-    imOpsAcc ::= {
-      // IgnoreAspectRatio полезен, иначе браузер сам начнёт пытаться растягивать картинку, отображая мазню на экране.
-      AbsResizeOp(szReal, ImResizeFlags.IgnoreAspectRatio)
-    }
-    imOpsAcc ::= ImFilters.Lanczos
 
     // Генерим финальную ссыль на картинку с учетом возможного кропа или иных исходных трансформаций:
     val dargs = img.withDynOps(img.dynImgOps ++ imOpsAcc)

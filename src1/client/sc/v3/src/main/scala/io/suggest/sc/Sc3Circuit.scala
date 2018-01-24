@@ -136,9 +136,16 @@ class Sc3Circuit(
       receiverId  = currRcvrId,
       locEnv      = if (currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
       screenInfo  = Some {
-        mroot.dev.screen.screen
-          // 2018-01-24 Костыль в связи с расхождением между szMult экрана и szMult плитки, тут быстрофикс:
-          .withPxRatio( mroot.grid.jdConf.szMult.toDouble )
+        val scr0 = mroot.dev.screen.screen
+        // 2018-01-24 Костыль в связи с расхождением между szMult экрана и szMult плитки, тут быстрофикс:
+        val pxRatio2 = Math.max(
+          mroot.grid.jdConf.szMult.toDouble,
+          scr0.pxRatio
+        )
+        if (pxRatio2 > scr0.pxRatio)
+          scr0.withPxRatio( pxRatio2 )
+        else
+          scr0
       },
       generation  = Some( inxState.generation ),
       tagNodeId   = mroot.index.search.tags.selectedId
