@@ -26,7 +26,6 @@ object DevPixelRatios extends Enumeration with EnumValue2Val with StrEnumFormMap
 
   override type T = Val
 
-
   /** Единичная плотность пикселей. Некогда (до середины 2013 года) самые дефолтовые девайсы. */
   val MDPI: T = new Val("MDPI") {
     override def pixelRatio: Float = 1.0F
@@ -110,18 +109,21 @@ object DevPixelRatios extends Enumeration with EnumValue2Val with StrEnumFormMap
    */
   def default = XHDPI
 
+  // Запретить авто.использование 1.0 и 1.5. Удалить полностью пока нельзя из-за зависимостей в коде.
+  val valuesDetectable = XHDPI :: DPR3 :: Nil
+
   /**
    * Подобрать экземпляр этого перечисления под указанный
    * @param ratio Значение плотности пикселей.
    * @return DevPixelRatio.
    */
   def forRatio(ratio: Float): T = {
-    values
+    valuesDetectable
       .find { v =>
         val dpi: T = v
         (dpi.pixelRatio >= ratio) || (dpi.pixelRatio * 1.1 > ratio)
       }
-      .fold [T] { values.last } { v => v }
+      .getOrElse(valuesDetectable.last)
   }
 
 
