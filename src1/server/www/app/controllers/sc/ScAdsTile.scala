@@ -7,6 +7,7 @@ import _root_.util.stat.IStatUtil
 import io.suggest.ad.blk.BlockWidths
 import io.suggest.dev.MSzMult
 import io.suggest.jd.MJdAdData
+import io.suggest.jd.tags.MJdTagNames
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.primo.TypeT
 import io.suggest.sc.MScApiVsns
@@ -367,10 +368,24 @@ trait ScAdsTile
     override def renderMadAsync(brArgs: RenderArgs): Future[MJdAdData] = {
       // Требуется рендер только main-блока карточки.
       Future {
-        val mainBlkTpl = jdAdUtil.getMainBlockTpl( brArgs.mad )
-        val edges2 = jdAdUtil.filterEdgesForTpl(mainBlkTpl, brArgs.mad.edges)
+        val mainBlkTpl0 = jdAdUtil.getMainBlockTpl( brArgs.mad )
+        // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
+        val mainBlkTpl2 = mainBlkTpl0.map { jdt =>
+          if (jdt.name ==* MJdTagNames.STRIP && jdt.props1.bm.exists(_.wide)) {
+            jdt.withProps1(
+              jdt.props1.withBm(
+                jdt.props1.bm.map { bm =>
+                  bm.withWide( false )
+                }
+              )
+            )
+          } else {
+            jdt
+          }
+        }
+        val edges2 = jdAdUtil.filterEdgesForTpl(mainBlkTpl2, brArgs.mad.edges)
         jdAdUtil.mkJdAdDataFor
-          .show(brArgs.mad.id, edges2, mainBlkTpl, tileArgs.szMult, allowWide = false)(ctx)
+          .show(brArgs.mad.id, edges2, mainBlkTpl2, tileArgs.szMult, allowWide = false)(ctx)
           .execute()
       }
         .flatten
