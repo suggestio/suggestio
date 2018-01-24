@@ -51,6 +51,7 @@ object GridBuilderUtil {
         HtmlConstants.SPACE + args.jdConf.gridColumnsCount )
 
     val szMultD = args.jdConf.szMult.toDouble
+
     // Глобальный счётчик шагов рекурсии. Нужен как для поддержания порядка item'ов, так и для защиты от бесконечной рекурсии.
     var stepCounter = 0
 
@@ -169,14 +170,16 @@ object GridBuilderUtil {
                 // идущий перед wide-блоком с контентом. Надо закинуть wide-фоновый-блок в res-аккамулятор.
                 val wideBgResOpt = for (wideBgSz <- itemExt.wideBgSz) yield {
                   // Есть размер фона. Надо совместить горизонтальную середины плитки и изображения.
-                  val bgCenterX = (wideBgSz.width / 2 / szMultD).toInt
+                  // Поправочный szMult вычисляется через отношение высот картинки и самого блока. В норме должен быть == 1. Из проблем: он пережевывает и скрывает ошибки.
+                  val img2blkSzMult = szMultD * bm.height / wideBgSz.height.toDouble
+                  val displayedBgWidth = wideBgSz.width * img2blkSzMult
                   val wideBgRes = MGbItemRes(
                     orderN        = orderN,
                     topLeft       = xyAbs,
                     bm            = bm,
-                    forceCenterX  = Some( -bgCenterX )
+                    forceCenterX  = Some( displayedBgWidth )
                   )
-                  println("WIDE pos: " + wideBgSz + " => " + wideBgRes)
+                  println("WIDE pos: " + wideBgSz)
                   wideBgRes
                 }
 
@@ -327,7 +330,7 @@ object GridBuilderUtil {
       .iterator
       .map(_.heightUsed)
       .max
-    val gridHeightPx = Math.round(maxCellHeight * paddedCellHeightPx).toInt
+    val gridHeightPx = Math.round(maxCellHeight * paddedCellHeightPx).toInt + args.offY
 
     // Ширина всей плитки:
     val gridWidthPx = {
@@ -357,10 +360,10 @@ object GridBuilderUtil {
             // Эксплуатация костыля по абсолютной центровке какого-то блока вместо расположения в плитке:
             x = res.forceCenterX.fold {
               res.topLeft.x * paddedCellWidthPx
-            } { centerOffsetX =>
+            } { widthOrigPx =>
               // Отцентровать используя указанный сдвиг относительно центра плитки.
-              val r = ((gridWidthPx * szMultD / 2).toInt + centerOffsetX) / 2
-              println( "centering X... cOff=" + centerOffsetX + "px gridW=" + gridWidthPx + "px => " + r)
+              val r = ((gridWidthPx - widthOrigPx) * szMultD / 2).toInt // ((gridWidthPx * szMultD / 2).toInt + centerOffsetX) / 2
+              println( "centering X... cOff=" + widthOrigPx + "px gridW=" + gridWidthPx + "px => " + r)
               r
             },
             y = Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
@@ -547,7 +550,7 @@ case class MGbItemRes(
                        orderN           : Int,
                        topLeft          : MCoords2di,
                        bm               : BlockMeta,
-                       forceCenterX     : Option[Int]   = None,
+                       forceCenterX     : Option[Double]   = None,
                      ) {
 
   lazy val toWideLine = MWideLine(topLeft.y, bm.h)
