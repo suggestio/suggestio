@@ -1,6 +1,7 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
+import io.suggest.jd.tags.JdTag
 import io.suggest.scalaz.NodePath_t
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.univeq._
@@ -23,7 +24,8 @@ object MJdRenderArgs {
     override def eqv(a: MJdRenderArgs, b: MJdRenderArgs): Boolean = {
       (a.selPath              ===* b.selPath) &&
         (a.selJdtBgImgMod     ===* b.selJdtBgImgMod) &&
-        (a.hideNonMainStrips  ==* b.hideNonMainStrips) &&
+        (a.hideNonMainStrips  ==*  b.hideNonMainStrips) &&
+        (a.blockStyleFrom     ===* b.blockStyleFrom) &&
         (a.dnd                ===* b.dnd)
     }
   }
@@ -40,17 +42,20 @@ object MJdRenderArgs {
   *                       Появилась для возможности заглядывать "под" изображение в редакторе, чтобы увидеть фон.
   * @param hideNonMainStrips Скрыть все неглавные стрипы? Раньше была прозрачность, но она конфликтует с grid'ом.
   * @param dnd Состояние драг-н-дропа, который может прийти сюда из неизвестности.
+  * @param blockStyleFrom переопределить ключ для вызова JdTag.bmStyleF()
   */
 case class MJdRenderArgs(
                           selPath             : Option[NodePath_t]          = None,
                           selJdtBgImgMod      : Option[TagMod]              = None,
                           hideNonMainStrips   : Boolean                     = false,
+                          blockStyleFrom      : Option[JdTag]               = None,
                           dnd                 : MJdDndS                     = MJdDndS.empty
                         ) {
 
   def withSelPath(selPath: Option[NodePath_t])                  = copy(selPath = selPath)
   def withSelJdtBgImgMod(selJdtBgImgMod: Option[TagMod])        = copy(selJdtBgImgMod = selJdtBgImgMod)
   def withHideNonMainStrips(hideNonMainStrips: Boolean)         = copy(hideNonMainStrips = hideNonMainStrips)
+  def withBlockStyleFrom(blockStyleFrom: Option[JdTag])         = copy(blockStyleFrom = blockStyleFrom)
   def withDnd(dnd: MJdDndS = MJdDndS.empty)                     = copy(dnd = dnd)
 
 }

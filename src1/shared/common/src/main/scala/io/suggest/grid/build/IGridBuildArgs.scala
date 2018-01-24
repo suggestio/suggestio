@@ -2,7 +2,7 @@ package io.suggest.grid.build
 
 import io.suggest.ad.blk.BlockMeta
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.common.geom.d2.MSize2di
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.jd.MJdConf
 
 /**
@@ -39,7 +39,7 @@ sealed trait IGbBlockPayload {
   def isBlock: Boolean
   def isSubBlocks: Boolean = !isBlock
   def fold[T](blockF: MGbBlock => T, subBlocksF: MGbSubItems => T): T
-
+  def flatten: List[IGbBlockPayload]
 
   /** Вернуть параметры первого блока. */
   def firstBlockMeta: BlockMeta = {
@@ -57,12 +57,13 @@ sealed trait IGbBlockPayload {
   */
 case class MGbBlock(
                       bm                            : BlockMeta,
-                      wideBgSz                      : Option[MSize2di]  = None,
+                      wideBgSz                      : Option[ISize2di]  = None,
                       private[build] val orderN     : Option[Int]       = None
                    )
   extends IGbBlockPayload {
 
   override def isBlock = true
+  override def flatten = this :: Nil
 
   override def fold[T](blockF: MGbBlock => T, subBlocksF: MGbSubItems => T): T = {
     blockF(this)
@@ -77,6 +78,7 @@ case class MGbSubItems(
   extends IGbBlockPayload {
 
   override def isBlock = false
+  override def flatten = subItems
 
   override def fold[T](blockF: MGbBlock => T, subBlocksF: MGbSubItems => T): T = {
     subBlocksF(this)

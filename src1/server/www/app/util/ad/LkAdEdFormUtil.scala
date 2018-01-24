@@ -311,12 +311,6 @@ class LkAdEdFormUtil
     val upperBlockEdgeId = 1
     val alsoDisplayedInGridEdgeId = upperBlockEdgeId + 1
 
-    val descriptionEdgeId = alsoDisplayedInGridEdgeId + 1
-    val descrContentEdgeId = descriptionEdgeId + 1
-
-    val fr3text1EdgeId = descrContentEdgeId + 1
-    val fr3text2EdgeId = fr3text1EdgeId + 1
-
     val w1 = BlockWidths.default
     val h1 = BlockHeights.default
 
@@ -345,40 +339,6 @@ class LkAdEdFormUtil
             // Надпись "также отображается в плитке"
             JdTag.edgeQdTree( alsoDisplayedInGridEdgeId, MCoords2di(x = w1.value/3*2, y = h1.value / 2) )
           )
-        ),
-
-        // Strip#2 содержит предложение добавить описание или что-то ещё.
-        Tree.Node(
-          root = JdTag.strip(
-            bm = BlockMeta(
-              w = w1,
-              h = BlockHeights.H140
-            ),
-            bgColor = Some(MColorData(
-              code = "bcf014"
-            ))
-          ),
-          forest = Stream(
-            JdTag.edgeQdTree( descriptionEdgeId,  MCoords2di(5,  10) ),
-            JdTag.edgeQdTree( descrContentEdgeId, MCoords2di(33, 50) )
-          )
-        ),
-
-        // Strip#3
-        Tree.Node(
-          root = JdTag.strip(
-            bm = BlockMeta(
-              w = w1,
-              h = BlockHeights.H460
-            ),
-            bgColor = Some(MColorData(
-              code = "111111"
-            ))
-          ),
-          forest = Stream(
-            JdTag.edgeQdTree( fr3text1EdgeId, MCoords2di(15, 200) ),
-            JdTag.edgeQdTree( fr3text2EdgeId, MCoords2di(35, 400) )
-          )
         )
 
       )
@@ -389,37 +349,14 @@ class LkAdEdFormUtil
       MJdEdge(
         predicate = textPred,
         id        = upperBlockEdgeId,
-        text      = Some( ctx.messages( MsgCodes.`Upper.block` ) + "\n" ),
+        text      = Some( ctx.messages( MsgCodes.`Upper.block` ) + "\n" )
       ),
       MJdEdge(
         predicate = textPred,
         id        = alsoDisplayedInGridEdgeId,
         text      = Some( ctx.messages( MsgCodes.`also.displayed.in.grid` ) + "\n" )
-      ),
-
-      // strip2
-      MJdEdge(
-        predicate = textPred,
-        id        = descriptionEdgeId,
-        text      = Some( ctx.messages( MsgCodes.`Description` ) + "\n" )
-      ),
-      MJdEdge(
-        predicate = textPred,
-        id        = descrContentEdgeId,
-        text      = Some( "aw efawfwae fewafewa feawf aew rtg rs5y 4ytsg ga\n" )
-      ),
-
-      // strip3
-      MJdEdge(
-        predicate = textPred,
-        id        = fr3text1EdgeId,
-        text      = Some( "lorem ipsum und uber blochHeight wr2 34t\n" )
-      ),
-      MJdEdge(
-        predicate = textPred,
-        id        = fr3text2EdgeId,
-        text      = Some( "webkit-transition: transform 0.2s linear\n" )
       )
+
     )
 
     val r = MJdAdData(

@@ -50,8 +50,7 @@ object GridBuilderUtil {
       throw new IllegalArgumentException( ErrorMsgs.GRID_CONFIGURATION_INVALID + HtmlConstants.SPACE + args.jdConf +
         HtmlConstants.SPACE + args.jdConf.gridColumnsCount )
 
-    //println("==========================================")
-
+    val szMultD = args.jdConf.szMult.toDouble
     // Глобальный счётчик шагов рекурсии. Нужен как для поддержания порядка item'ов, так и для защиты от бесконечной рекурсии.
     var stepCounter = 0
 
@@ -79,7 +78,6 @@ object GridBuilderUtil {
         if ( xy.column >= currLvl.ctx.colsCount ) {
           // Конец текущей строки -- перейти на следующую строку:
           val currLvl2 = currLvl.stepToNextLine
-          //println(stepCounter, "no more cols, next LINE: " + xy + " => " + currLvl2.currLineCol)
           _stepper(
             s0.withCurrLevel( currLvl2 )
           )
@@ -87,7 +85,6 @@ object GridBuilderUtil {
         } else if ( currLvl.ctx.getHeightUsed( xy.column) > xy.line) {
           // Текущая ячейка уже занята. Требуется переход на следующую ячейку.
           val currLvl2 = currLvl.stepToNextCell
-          //println(stepCounter, "next COLUMN: " + xy + " => " + currLvl2.currLineCol)
           _stepper(
             s0.withCurrLevel( currLvl2 )
           )
@@ -107,7 +104,6 @@ object GridBuilderUtil {
             ctx       = rootLvl.ctx.verticalSubGrid( reDoItm.topLeft ),
             restItems = mgiProps
           )
-          //println("reDO: " + reDoItm + " => +subLvl=" + subLvl)
           // Обновить пока-текущий уровень, выкинув пройденный redo-элемент:
           val currLvl2 = currLvl.copy(
             reDoItems = currLvl.reDoItems.tail
@@ -118,26 +114,23 @@ object GridBuilderUtil {
           _stepper( s2 )
 
         } else if (currLvl.restItems.nonEmpty) {
-          //println(stepCounter, itemExt)
           currLvl.restItems.head match {
 
             // Это block-meta. Позиционируем ровно один (текущий) блок:
             case itemExt: MGbBlock =>
               val bm = itemExt.bm
               val currWide = MWideLine( currLvl.ctx.lineToAbs(xy.line), bm.h )
-              //println( stepCounter, bm, currWide, s0.wides.mkString )
 
               if (
                 // Текущий неширокий блок как-то пересекается (по высоте) с широкой карточкой?
                 s0.isWideOverlaps(currWide) ||
                   // Ширина текущего блока влезает в текущую строку?
                   (!bm.wide  && bm.w.relSz > currLvl._getMaxCellWidthCurrLine()) //||
-                  // Широкий блок подразумевает пустую строку для себя: TODO А надо ли это, если у нас reDo-акк?
+                  // Широкий блок подразумевает пустую строку для себя: это не надо, т.к. используется reDo-акк. TODO А может тоже надо?
                   //(bm.wide   && rootLvl.currLineCol.column > 0)
               ) {
                 // Здесь нет места для текущего блока.
                 val currLvl2 = currLvl.stepToNextLine
-                //println(stepCounter, "newLine: " + xy.line + " => " + currLvl2.currLineCol.line)
                 _stepper(
                   s0.withCurrLevel( currLvl2 )
                 )
@@ -160,15 +153,32 @@ object GridBuilderUtil {
                 )
                 val xyAbs = currLvl.ctx.colLineToAbs( xy )
 
+                val orderN = itemExt.orderN
+                  .getOrElse( stepCounter )
+
                 val res = MGbItemRes(
                   // Восстановить порядок, если индекс был передан из reDo-ветви.
-                  orderN      = itemExt.orderN
-                    .getOrElse( stepCounter ),
+                  orderN      = orderN,
                   topLeft     = xyAbs,
                   bm          = bm
                 )
 
                 val mwlAbsOpt = OptionUtil.maybe(bm.wide)( currWide )
+
+                // Т.к. фон wide-блока центруется независимо от контента, для этого используется искусственный wide-блок,
+                // идущий перед wide-блоком с контентом. Надо закинуть wide-фоновый-блок в res-аккамулятор.
+                val wideBgResOpt = for (wideBgSz <- itemExt.wideBgSz) yield {
+                  // Есть размер фона. Надо совместить горизонтальную середины плитки и изображения.
+                  val bgCenterX = (wideBgSz.width / 2 / szMultD).toInt
+                  val wideBgRes = MGbItemRes(
+                    orderN        = orderN,
+                    topLeft       = xyAbs,
+                    bm            = bm,
+                    forceCenterX  = Some( -bgCenterX )
+                  )
+                  println("WIDE pos: " + wideBgSz + " => " + wideBgRes)
+                  wideBgRes
+                }
 
                 // Если wide, то надо извлечь из results-аккамулятора элементы, конфликтующие по высоте с данным wide-блоком и запихать их в reDo-аккамулятор.
                 val wideS2Opt = for {
@@ -176,16 +186,10 @@ object GridBuilderUtil {
                   mwlAbs <- mwlAbsOpt
                   // Оттранслировать его в абсолютные координаты.
                   (conflicting, ok) = s0.resultsAccRev.partition { res =>
-                    /*val isConflict =*/ res.toWideLine overlaps mwlAbs
-                    /*
-                    if (isConflict)
-                      println("conflict: " + res + " vs wide=" + mwlAbs + " mwlXY=" + xy)
-                    isConflict
-                    */
+                    res.toWideLine overlaps mwlAbs
                   }
                   if conflicting.nonEmpty
                 } yield {
-                  //println( conflicting.size, ok.size )
                   // Есть конфликтующие item'ы. Надо закинуть их в reDoItems на родительском уровне.
                   val parentLvlOpt = s0.levels.tail.headOption
                   val modLvl0 = parentLvlOpt.getOrElse(currLvl2)
@@ -203,8 +207,9 @@ object GridBuilderUtil {
                     rootLvl1.ctx.setHeightUsed(ci, h0 - e.bm.h.relSz)
                   }
 
+                  // Обновить состояние билдера:
                   s0.copy(
-                    resultsAccRev = res :: ok,
+                    resultsAccRev = res :: Lists.prependOpt(wideBgResOpt)(ok),
                     levels = parentLvlOpt.fold {
                       // Родительского уровня не было, работа была на верхнем уровне.
                       modLvl2 :: s0.levels.tail
@@ -220,7 +225,7 @@ object GridBuilderUtil {
                   // Не-wide блок. Просто закинуть данные в состояние.
                   s0.copy(
                     levels        = currLvl2 :: s0.levels.tail,
-                    resultsAccRev = res :: s0.resultsAccRev,
+                    resultsAccRev = res :: Lists.prependOpt(wideBgResOpt)(s0.resultsAccRev),
                     wides         = Lists.prependOpt(mwlAbsOpt)(s0.wides)
                   )
                 }
@@ -310,32 +315,12 @@ object GridBuilderUtil {
     val cellWidthPx  = Math.round(BlockWidths.min.value * blkSzMultD).toInt // props.columnWidth
     val cellHeightPx = BlockHeights.min.value * blkSzMultD
 
-    val szMultD = args.jdConf.szMult.toDouble
     val paddingMultedPx = Math.round(args.jdConf.blockPadding.value * szMultD).toInt
     val cellPaddingWidthPx  = paddingMultedPx // _orZero( props.gutterWidth )
     val cellPaddingHeightPx = paddingMultedPx // _orZero( props.gutterHeight )
 
     val paddedCellHeightPx = cellHeightPx + cellPaddingHeightPx
     val paddedCellWidthPx  = cellWidthPx  + cellPaddingWidthPx
-
-    // Скомпилировать финальные координаты.
-    val coordsFinal = args.iter2coordsF {
-      s9
-        .resultsAccRev
-        // Восстановить исходный порядок. Сначала быстрый реверс, затем досортировка.
-        .reverse
-        // Доп.сортировка требуется, т.к. мелкие нарушения порядка происходят при конфликтах wide-блоков с
-        // предшествующими им блоками в соседних колонках. После реверса тут сравнителньо немного перестановок.
-        .sortBy(_.orderN)
-        .iterator
-        // Заменить колонки и строки на пиксели.
-        .map { res =>
-          MCoords2di(
-            x = res.topLeft.x * paddedCellWidthPx,
-            y = Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
-          )
-        }
-    }
 
     // Рассчёт финальных габаритов плитки: высота.
     val maxCellHeight = RootCtx.colsInfo
@@ -351,12 +336,41 @@ object GridBuilderUtil {
       Math.max(0, width0)
     }
 
+    val gridWh = MSize2di(
+      width   = gridWidthPx,
+      height  = gridHeightPx
+    )
+
+    // Скомпилировать финальные координаты.
+    val coordsFinal = args.iter2coordsF {
+      s9
+        .resultsAccRev
+        // Восстановить исходный порядок. Сначала быстрый реверс, затем досортировка.
+        .reverse
+        // Доп.сортировка требуется, т.к. мелкие нарушения порядка происходят при конфликтах wide-блоков с
+        // предшествующими им блоками в соседних колонках. После реверса тут сравнителньо немного перестановок.
+        .sortBy(_.orderN)
+        .iterator
+        // Заменить колонки и строки на пиксели.
+        .map { res =>
+          MCoords2di(
+            // Эксплуатация костыля по абсолютной центровке какого-то блока вместо расположения в плитке:
+            x = res.forceCenterX.fold {
+              res.topLeft.x * paddedCellWidthPx
+            } { centerOffsetX =>
+              // Отцентровать используя указанный сдвиг относительно центра плитки.
+              val r = ((gridWidthPx * szMultD / 2).toInt + centerOffsetX) / 2
+              println( "centering X... cOff=" + centerOffsetX + "px gridW=" + gridWidthPx + "px => " + r)
+              r
+            },
+            y = Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
+          )
+        }
+    }
+
     MGridBuildResult(
       coords = coordsFinal,
-      gridWh = MSize2di(
-        width   = gridWidthPx,
-        height  = gridHeightPx
-      )
+      gridWh = gridWh
     )
   }
 
@@ -527,11 +541,13 @@ case class MGbLevelState(
   * @param orderN Порядковый номер блока.
   * @param topLeft Отпозиционированные координаты.
   * @param bm Инфа по текущему блоку.
+  * @param forceCenterX Костыль для принудительной центровки по X вместо координат по сетке.
   */
 case class MGbItemRes(
                        orderN           : Int,
                        topLeft          : MCoords2di,
-                       bm               : BlockMeta
+                       bm               : BlockMeta,
+                       forceCenterX     : Option[Int]   = None,
                      ) {
 
   lazy val toWideLine = MWideLine(topLeft.y, bm.h)

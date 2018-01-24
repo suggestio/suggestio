@@ -175,8 +175,10 @@ class JdR(
       val isEditSelected = isSelected && jdArgs.conf.isEdit
 
       val isWide = s.props1.bm.map(_.wide).getOrElseFalse
+      val styleStrip = jdArgs.renderArgs.blockStyleFrom.getOrElse(s)
+
       // Оптимизация, т.к. wide-стиль используется в нескольких местах сразу.
-      lazy val wideCss = C.bmWideStyleF(s): TagMod
+      lazy val wideCss = C.bmWideStyleF(styleStrip): TagMod
 
       val bgColor = _bgColorOpt(s, jdArgs)
 
@@ -260,7 +262,7 @@ class JdR(
       val smBlock = <.div(
         keyAV,
         C.smBlock,
-        C.bmStyleF( s ),
+        C.bmStyleF( styleStrip ),
 
         if (isWide) {
           jdArgs.jdCss.wideBlockStyle
