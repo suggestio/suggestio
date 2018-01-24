@@ -199,6 +199,8 @@ class ScWideMaker @Inject() (
 
     val imOps0 = List[ImOp](
       AbsResizeOp(wideWh, ImResizeFlags.FillArea :: Nil),
+      ImGravities.Center,
+      ExtentOp(wideWh),
       ImFilters.Lanczos,
       StripOp,
       ImInterlace.Plane,
