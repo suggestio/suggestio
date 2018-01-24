@@ -199,8 +199,11 @@ class ScWideMaker @Inject() (
 
     val imOps0 = List[ImOp](
       AbsResizeOp(wideWh, ImResizeFlags.FillArea :: Nil),
+      // FillArea почти всегда выдаёт результат, выходящий за пределы wideWh по одному из измерений.
+      // Подогнать под wideWh, сделав extent-кроп по wideWh (как и рекомендуется в доках):
       ImGravities.Center,
       ExtentOp(wideWh),
+      // сглаживание, сжатие вывода, итд
       ImFilters.Lanczos,
       StripOp,
       ImInterlace.Plane,

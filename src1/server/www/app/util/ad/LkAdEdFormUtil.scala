@@ -11,7 +11,6 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.err.ErrorConstants
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
-import io.suggest.i18n.MsgCodes
 import io.suggest.jd._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.JdTag.Implicits._
@@ -308,13 +307,9 @@ class LkAdEdFormUtil
     // Тут просто очень временный документ.
     // Потом надо будет просто искать карточки на определённом узле, и возвращать их документ
     // и эджи (эджи - прорендерив через ctx.messages). Карточки сгенерить через новый редактор (который ещё не написан).
-    val upperBlockEdgeId = 1
-    val alsoDisplayedInGridEdgeId = upperBlockEdgeId + 1
 
     val w1 = BlockWidths.default
     val h1 = BlockHeights.default
-
-    val textPred = MPredicates.JdContent.Text
 
     val tplTree = Tree.Node(
       root = JdTag.document,
@@ -322,7 +317,7 @@ class LkAdEdFormUtil
         // Уровень стрипов. Рендерим три стрипа.
 
         // Strip#1 содержит намёк на то, что это верхний блок.
-        Tree.Node(
+        Tree.Leaf(
           root = JdTag.strip(
             bm = BlockMeta(
               w = w1,
@@ -331,37 +326,15 @@ class LkAdEdFormUtil
             bgColor = Some(MColorData(
               code = "060d45"
             ))
-          ),
-          forest = Stream(
-            // Надпись "Верхний блок"
-            JdTag.edgeQdTree( upperBlockEdgeId, MCoords2di(x = w1.value, y = h1.value) / 3 ),
-
-            // Надпись "также отображается в плитке"
-            JdTag.edgeQdTree( alsoDisplayedInGridEdgeId, MCoords2di(x = w1.value/3*2, y = h1.value / 2) )
           )
         )
 
       )
     )
 
-    val edges = Seq(
-      // strip1
-      MJdEdge(
-        predicate = textPred,
-        id        = upperBlockEdgeId,
-        text      = Some( ctx.messages( MsgCodes.`Upper.block` ) + "\n" )
-      ),
-      MJdEdge(
-        predicate = textPred,
-        id        = alsoDisplayedInGridEdgeId,
-        text      = Some( ctx.messages( MsgCodes.`also.displayed.in.grid` ) + "\n" )
-      )
-
-    )
-
     val r = MJdAdData(
       template = tplTree,
-      edges    = edges,
+      edges    = Nil,
       nodeId   = None
     )
 
