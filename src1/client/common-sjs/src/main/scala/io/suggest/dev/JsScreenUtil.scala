@@ -22,9 +22,9 @@ object JsScreenUtil extends Log {
     val pxRatio = WindowVm()
       .devicePixelRatio
       .fold[Double] {
-      LOG.warn( WarnMsgs.SCREEN_PX_RATIO_MISSING )
-      1.0
-    }( MScreen.roundPxRation )
+        LOG.warn( WarnMsgs.SCREEN_PX_RATIO_MISSING )
+        1.0
+      }( MScreen.roundPxRatio )
 
     vszOpt.fold{
       // Наврядли этот код будет вызываться когда-либо.

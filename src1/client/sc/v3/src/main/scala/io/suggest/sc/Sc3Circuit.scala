@@ -135,7 +135,11 @@ class Sc3Circuit(
     MFindAdsReq(
       receiverId  = currRcvrId,
       locEnv      = if (currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
-      screenInfo  = Some( mroot.dev.screen.screen ),
+      screenInfo  = Some {
+        mroot.dev.screen.screen
+          // 2018-01-24 Костыль в связи с расхождением между szMult экрана и szMult плитки, тут быстрофикс:
+          .withPxRatio( mroot.grid.jdConf.szMult.toDouble )
+      },
       generation  = Some( inxState.generation ),
       tagNodeId   = mroot.index.search.tags.selectedId
       // limit и offset очень специфичны и выставляются в конкретных контроллерах карточек.

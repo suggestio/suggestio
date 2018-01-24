@@ -20,8 +20,7 @@ object MScreen {
       .contramap[MScreen]( _.toQsValue )
   }
 
-
-  def roundPxRation(pxRatioRaw: Double): Double = {
+  def roundPxRatio(pxRatioRaw: Double): Double = {
     // Коэффициент недоскругления, точность до 0.1 - достаточная.
     val r = 10
     Math.round(pxRatioRaw * r).toDouble / r
@@ -51,6 +50,8 @@ case class MScreen(
   }
 
   override def toString: String = toQsValue
+
+  def withPxRatio(pxRatio: Double) = copy(pxRatio = pxRatio)
 
 }
 
