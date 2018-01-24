@@ -174,18 +174,16 @@ object GridBuilderUtil {
                   // TODO Im Кажется, будто поправка img2blkSzMult не нужна на новых версиях ImageMagick (7.0.7+), но нужна на старых (6.8.9).
                   val img2blkSzMult = szMultD * bm.height / wideBgSz.height.toDouble
                   val displayedBgWidth = wideBgSz.width * img2blkSzMult
-                  val wideBgRes = MGbItemRes(
+                  MGbItemRes(
                     orderN        = orderN,
                     topLeft       = xyAbs,
                     bm            = bm,
                     forceCenterX  = Some( displayedBgWidth )
                   )
-                  println("WIDE pos: " + wideBgSz)
-                  wideBgRes
                 }
 
                 // Если wide, то надо извлечь из results-аккамулятора элементы, конфликтующие по высоте с данным wide-блоком и запихать их в reDo-аккамулятор.
-                val wideS2Opt = for {
+                val s1DeConflictedOpt = for {
                   // Если у нас wide-блок
                   mwlAbs <- mwlAbsOpt
                   // Оттранслировать его в абсолютные координаты.
@@ -225,13 +223,26 @@ object GridBuilderUtil {
                   )
                 }
 
-                val s2 = wideS2Opt.getOrElse {
+                val s1 = s1DeConflictedOpt.getOrElse {
                   // Не-wide блок. Просто закинуть данные в состояние.
                   s0.copy(
                     levels        = currLvl2 :: s0.levels.tail,
                     resultsAccRev = res :: Lists.prependOpt(wideBgResOpt)(s0.resultsAccRev),
                     wides         = Lists.prependOpt(mwlAbsOpt)(s0.wides)
                   )
+                }
+
+                // 2018-01-24 Решено, что после wide-карточки на focused-уровне надо рендерить дальнейшую карточку не в столбик,
+                // а в обычном порядке по ширине всей плитки. Для этого можно объеденить два последних уровня, но лучше
+                // подменить контекст на текущем уровне на root, чтобы не нарушать порядок рендера.
+                val s2 = if (bm.wide && !currLvl2.ctx.isRoot) {
+                  val currLvl3 = s1.levels.head.copy(
+                    ctx = rootLvl.ctx,
+                    currLineCol = rootLvl.currLineCol
+                  )
+                  s1.withLevels( currLvl3 :: s1.levels.tail )
+                } else {
+                  s1
                 }
 
                 _stepper(s2)
@@ -302,6 +313,7 @@ object GridBuilderUtil {
         colsInfo(ci) = mcs2
       }
 
+      override def isRoot = true
     }
 
 
@@ -363,9 +375,7 @@ object GridBuilderUtil {
               res.topLeft.x * paddedCellWidthPx
             } { widthOrigPx =>
               // Отцентровать используя указанный сдвиг относительно центра плитки.
-              val r = ((gridWidthPx - widthOrigPx) * szMultD / 2).toInt // ((gridWidthPx * szMultD / 2).toInt + centerOffsetX) / 2
-              println( "centering X... cOff=" + widthOrigPx + "px gridW=" + gridWidthPx + "px => " + r)
-              r
+              ((gridWidthPx - widthOrigPx) * szMultD / 2).toInt // ((gridWidthPx * szMultD / 2).toInt + centerOffsetX) / 2
             },
             y = Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
           )
@@ -401,6 +411,8 @@ trait IGridBuildCtx { outer =>
 
   /** Обновить состояние использованной высоты у указанной колонки. */
   def setHeightUsed(ci: Int, heightUsed: Int): Unit
+
+  def isRoot: Boolean
 
 
   /** Сборка нового под-контекста для рендера под-плитки.
@@ -450,6 +462,8 @@ trait IGridBuildCtx { outer =>
           "+" + line2 +
           "+" + column2
       }
+
+      override final def isRoot = false
 
     }
   }

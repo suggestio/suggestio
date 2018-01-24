@@ -87,7 +87,6 @@ class GridCoreR(
                           bgEdge  <- foc.edges.get( bg.imgEdge.edgeUid )
                           imgWh   <- bgEdge.origWh
                         } yield {
-                          println( "wideBgSz 4 = " + imgWh )
                           imgWh
                         }
                         MGbBlock(bm, wideBgSz = wideBgBlk )
@@ -134,7 +133,6 @@ class GridCoreR(
                   val bgTpl = Tree.Leaf(
                     root = jdt0
                   )
-                  println( "wide bg render: " + jdt0 )
                   bgTpl :: contentTpl :: Nil
                 } else {
                   // Это не-wide-блок.
