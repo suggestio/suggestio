@@ -81,7 +81,7 @@ class ImgFileNameParsersSpec
         ImFilters.Lanczos,
         AbsResizeOp(MSize2di(140, 140), ImResizeFlags.OnlyShrinkLarger),
         StripOp,
-        ImInterlace.Plane,
+        ImInterlaces.Plane,
         ImSamplingFactors.SF_1x1,
         QualityOp(80.0)
       )

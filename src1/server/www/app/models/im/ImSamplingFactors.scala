@@ -1,5 +1,6 @@
 package models.im
 
+import enumeratum.values.{StringEnum, StringEnumEntry}
 import org.im4java.core.IMOperation
 
 /**
@@ -11,47 +12,63 @@ import org.im4java.core.IMOperation
  * @see [[http://www.impulseadventure.com/photo/chroma-subsampling.html]]
  */
 
-object ImSamplingFactors extends Enumeration {
-
-  /**
-   * Класс значения этого перечисления.
-   * @param qsValue Значение, кодируемое в qs-строку.
-   * @param horizontal Горизонтальный ресэмпл хромы.
-   * @param vertical Вертикальный ресэмпл хромы.
-   * @param isSubSampling Является ли это значение компрессией вообще? [true].
-   *                      false - если данный метод не является сжатием.
-   */
-  protected case class Val(qsValue: String, horizontal: Int, vertical: Int, isSubSampling: Boolean = true)
-    extends super.Val(qsValue) with ImOp {
-
-    override def opCode = ImOpCodes.SamplingFactor
-
-    override def addOperation(op: IMOperation): Unit = {
-      op.samplingFactor(horizontal.toDouble, vertical.toDouble)
-    }
-
-    override def unwrappedValue: Option[String] = {
-      Some(s"${horizontal}x$vertical")
-    }
-  }
-
-  /** Тип значения перечисления. */
-  type ImSamplingFactor = Val
-
+object ImSamplingFactors extends StringEnum[ImSamplingFactor] {
 
   /** 4:4:4 (No chroma subsampling). */
-  val SF_1x1: ImSamplingFactor     = Val("a", 1, 1, isSubSampling = false)
+  object SF_1x1 extends ImSamplingFactor("a") {
+    override def horizontal     = 1
+    override def vertical       = 1
+    override def isSubSampling  = false
+  }
 
   /** 4:2:2 (1/2 chroma horiz). */
-  val SF_2x1: ImSamplingFactor     = Val("b", 2, 1)
+  object SF_2x1 extends ImSamplingFactor("b") {
+    override def horizontal: Int = 2
+    override def vertical = 1
+  }
 
   /** 4:2:2 (1/2 chroma vert). */
-  val SF_1x2: ImSamplingFactor     = Val("c", 1, 2)
+  object SF_1x2 extends ImSamplingFactor("c") {
+    override def horizontal = 1
+    override def vertical   = 2
+  }
 
   /** 4:2:0 (1/2 chroma horiz, 1/2 chroma vert). */
-  val SF_2x2: ImSamplingFactor     = Val("d", 2, 2)
+  object SF_2x2 extends ImSamplingFactor("d") {
+    override def horizontal = 2
+    override def vertical   = 2
+  }
+
+  override def values = findValues
+
+}
 
 
-  implicit def value2val(x: Value): ImSamplingFactor = x.asInstanceOf[ImSamplingFactor]
+/** Класс значения этого перечисления. */
+sealed abstract class ImSamplingFactor(override val value: String) extends StringEnumEntry with ImOp {
+
+  /** Горизонтальный ресэмпл хромы. */
+  def horizontal: Int
+  /** Вертикальный ресэмпл хромы. */
+  def vertical: Int
+
+  /**
+    * Является ли это значение компрессией вообще? [true].
+    * false - если данный метод не является сжатием.
+    */
+  def isSubSampling: Boolean = true
+
+  /** Значение, кодируемое в qs-строку. */
+  override final def qsValue = value
+
+  override def opCode = ImOpCodes.SamplingFactor
+
+  override def addOperation(op: IMOperation): Unit = {
+    op.samplingFactor(horizontal.toDouble, vertical.toDouble)
+  }
+
+  override def unwrappedValue: Option[String] = {
+    Some(s"${horizontal}x$vertical")
+  }
 
 }

@@ -166,7 +166,7 @@ class WelcomeUtil @Inject() (
       ExtentOp(scrSz) ::
       StripOp ::
       bgc.imQualityOp ::
-      ImInterlace.Plane ::
+      ImInterlaces.Plane ::
       bgc.chromaSubSampling ::
       acc0
     bgc

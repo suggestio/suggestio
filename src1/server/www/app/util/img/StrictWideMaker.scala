@@ -71,7 +71,7 @@ class StrictWideMaker @Inject() (
       AbsCropOp( MCrop(width = width, height = height, offX = 0, offY = 0) ),
       //ImFilters.Lanczos,
       StripOp,
-      ImInterlace.Plane,
+      ImInterlaces.Plane,
       compression.chromaSubSampling,
       compression.imQualityOp
     )

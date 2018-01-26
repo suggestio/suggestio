@@ -31,18 +31,8 @@ object DevPixelRatios extends Enumeration with EnumValue2Val with StrEnumFormMap
     override def pixelRatio: Float = 1.0F
 
     // Используется SF_1x1 (т.е. откл.), иначе на контрастных переходах появляются заметные "тучи" на монотонных кусках.
-    override val bgCompression = ImCompression(
-      name = name,
-      mode = "bg",
-      qDflt = 88,
-      chromaSsDflt = ImSamplingFactors.SF_1x1
-    )
-    override val fgCompression = ImCompression(
-      name = name,
-      mode = "fg",
-      qDflt = 93,
-      chromaSsDflt = ImSamplingFactors.SF_1x1
-    )
+    override def bgCompression = ImCompression(88, ImSamplingFactors.SF_1x1)
+    override def fgCompression = ImCompression(93, ImSamplingFactors.SF_1x1)
   }
 
 
@@ -52,54 +42,24 @@ object DevPixelRatios extends Enumeration with EnumValue2Val with StrEnumFormMap
   /** Только на андройдах есть такое. */
   val HDPI: T = new Val("HDPI") {
     override def pixelRatio: Float = 1.5F
-    override val bgCompression = ImCompression(
-      name = name,
-      mode = "bg",
-      qDflt = 83,
-      chromaSsDflt = ImSamplingFactors.SF_1x1
-    )
-    override val fgCompression = ImCompression(
-      name = name,
-      mode = "fg",
-      qDflt = 88,
-      chromaSsDflt = ImSamplingFactors.SF_1x1
-    )
+    override def bgCompression = ImCompression(83, ImSamplingFactors.SF_1x1)
+    override def fgCompression = ImCompression(88, ImSamplingFactors.SF_1x1)
   }
 
 
   /** Андройд-девайсы и т.ч. retina, т.е. iphone4+ и прочие яблодевайсы после 2013 г. */
   val XHDPI: T = new Val("XHDPI") {
     override def pixelRatio: Float = 2.0F
-    override val bgCompression = ImCompression(
-      name = name,
-      mode = "bg",
-      qDflt = 70,
-      chromaSsDflt = ImSamplingFactors.SF_1x1
-    )
-    override val fgCompression = ImCompression(
-      name = name,
-      mode = "fg",
-      qDflt = 75,
-      chromaSsDflt = ImSamplingFactors.SF_1x1
-    )
+    override val bgCompression = ImCompression(70, ImSamplingFactors.SF_1x1)
+    override val fgCompression = ImCompression(75, ImSamplingFactors.SF_1x1)
   }
 
 
   /** На середину 2014 года, это только топовые андройды. Разрешение экрана соотвествует HD1080. */
   val DPR3: T = new Val("DPR3") {
     override def pixelRatio: Float = 3.0F
-    override val bgCompression = ImCompression(
-      name = name,
-      mode = "bg",
-      qDflt = 64,
-      chromaSsDflt = ImSamplingFactors.SF_1x2
-    )
-    override val fgCompression = ImCompression(
-      name = name,
-      mode = "fg",
-      qDflt = 68,
-      chromaSsDflt = ImSamplingFactors.SF_1x2
-    )
+    override val bgCompression = ImCompression(64, ImSamplingFactors.SF_1x2)
+    override val fgCompression = ImCompression(68, ImSamplingFactors.SF_1x2)
   }
 
 

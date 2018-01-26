@@ -206,7 +206,7 @@ class ScWideMaker @Inject() (
       // сглаживание, сжатие вывода, итд
       ImFilters.Lanczos,
       StripOp,
-      ImInterlace.Plane,
+      ImInterlaces.Plane,
       compression.chromaSubSampling,
       compression.imQualityOp
     )

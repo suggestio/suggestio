@@ -63,7 +63,7 @@ class BlkImgMaker @Inject() (
       ExtentOp(szReal),
       ImFilters.Lanczos,
       StripOp,
-      ImInterlace.Plane,
+      ImInterlaces.Plane,
       fgc.chromaSubSampling,
       fgc.imQualityOp
     )

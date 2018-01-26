@@ -2,10 +2,7 @@ package models.im
 
 import java.text.DecimalFormat
 
-import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.img.ImgCropParsersImpl
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import io.suggest.primo.IStrId
 import io.suggest.util.logs.MacroLogsImpl
 import org.im4java.core.IMOperation
 import util.FormUtil
@@ -68,7 +65,7 @@ object ImOp extends MacroLogsImpl with JavaTokenParsers {
       .zipWithIndex
       .foreach { case (imOp, i) =>
         sb.append(keyDotted)
-          .append(imOp.opCode.strId)
+          .append(imOp.opCode.value)
         if (withOrderInx) {
           sb.append('[').append(i).append(']')
         }
@@ -88,7 +85,7 @@ object ImOp extends MacroLogsImpl with JavaTokenParsers {
     rawOps
       .flatMap { case (k, vs) =>
         val opCodeStr = k.substring(keyDotted.length)
-        ImOpCodes.maybeWithName(opCodeStr)
+        ImOpCodes.withValueOpt(opCodeStr)
           .map { _ -> vs }
       }
       // Попытаться сгенерить результат
@@ -174,106 +171,6 @@ trait ImOp {
 }
 
 
-object ImOpCodes extends EnumMaybeWithName {
-
-  abstract protected class Val(val strId: String)
-    extends super.Val(strId)
-      with IStrId
-  {
-    def mkOp(vs: Seq[String]): ImOp
-  }
-
-  override type T = Val
-
-  val AbsCrop: T = new Val("a") {
-    override def mkOp(vs: Seq[String]) = {
-      AbsCropOp( new ImgCropParsersImpl().apply(vs.head))
-    }
-  }
-  val Gravity: T = new Val("b") {
-    override def mkOp(vs: Seq[String]) = {
-      ImGravities.withName(vs.head)
-    }
-  }
-  val AbsResize: T = new Val("c") {
-    override def mkOp(vs: Seq[String]): ImOp = {
-      AbsResizeOp(vs.head)
-    }
-  }
-  val Interlace: T = new Val("d") {
-    override def mkOp(vs: Seq[String]) = {
-      ImInterlace(vs)
-    }
-  }
-  val GaussBlur: T = new Val("e") {
-    override def mkOp(vs: Seq[String]) = {
-      GaussBlurOp(vs.head.toDouble)
-    }
-  }
-  val Quality: T = new Val("f") {
-    override def mkOp(vs: Seq[String]): ImOp = {
-      QualityOp(vs.head.toDouble)
-    }
-  }
-  val Extent: T = new Val("g") {
-    override def mkOp(vs: Seq[String]): ImOp = {
-      ExtentOp(vs.head)
-    }
-  }
-  val Strip: T = new Val("h") {
-    override def mkOp(vs: Seq[String]): ImOp = {
-      StripOp
-    }
-  }
-  val Filter: T = new Val("i") {
-    override def mkOp(vs: Seq[String]): ImOp = {
-      ImFilters(vs)
-    }
-  }
-  val SamplingFactor: T = new Val("j") {
-    override def mkOp(vs: Seq[String]): ImOp = {
-      ImSamplingFactors.withName( vs.head )
-    }
-  }
-  val PercentSzCrop: T = new Val("k") {
-    override def mkOp(vs: Seq[String]): ImOp = {
-      PercentSzCropOp(new ImgCropParsersImpl().apply(vs.head))
-    }
-  }
-
-  /** Не ясно, надо ли оверрайдить. Этот код написан до написания EnumMaybeWithName. */
-  override def maybeWithName(n: String): Option[T] = {
-    valuesT
-      .find(_.strId == n)
-  }
-
-}
-
-
-
-object ImGravities extends EnumMaybeWithName {
-
-  protected case class Val(strId: String, imName: String) extends super.Val(strId) with ImOp with IStrId {
-    override def opCode = ImOpCodes.Gravity
-    override def addOperation(op: IMOperation): Unit = {
-      op.gravity(imName)
-    }
-    override def qsValue: String = strId
-    override def unwrappedValue = Some(imName)
-  }
-
-  override type T = Val
-
-  // Некоторые значения помечены как lazy, т.к. не используются по факту.
-  val Center: T         = Val("c", "Center")
-  lazy val North: T     = Val("n", "North")
-  lazy val South: T     = Val("s", "South")
-  lazy val West: T      = Val("w", "West")
-  lazy val East: T      = Val("e", "East")
-
-
-}
-
 
 /** quality для результата. */
 case class QualityOp(quality: Double) extends ImOp {
@@ -297,31 +194,6 @@ case object StripOp extends ImOp {
   }
 }
 
-
-object ImInterlace extends EnumMaybeWithName {
-
-  protected case class Val(qsValue: String, imName: String) extends super.Val(qsValue) with ImOp {
-    override def opCode = ImOpCodes.Interlace
-    override def addOperation(op: IMOperation): Unit = {
-      op.interlace(imName)
-    }
-    override def unwrappedValue: Option[String] = Some(imName)
-  }
-
-  override type T = Val
-
-  val Plane: T            = Val("a", "Plane")
-  lazy val None: T        = Val("0", "None")
-  lazy val Line: T        = Val("l", "Line")
-  lazy val Jpeg: T        = Val("j", "JPEG")
-  lazy val Gif: T         = Val("g", "GIF")
-  lazy val Png: T         = Val("p", "PNG")
-  lazy val Partition: T   = Val("r", "Partition")
-
-  def apply(vs: Seq[String]): T = apply(vs.head)
-  def apply(v: String): T = withName(v)
-
-}
 
 
 

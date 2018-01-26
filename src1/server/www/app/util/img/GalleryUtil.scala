@@ -94,7 +94,7 @@ class GalleryUtil @Inject() (
       AbsResizeOp( newSz, ImResizeFlags.FillArea ),
       ExtentOp( newSz ),
       devPixelRatio.fgCompression.imQualityOp,
-      ImInterlace.Plane
+      ImInterlaces.Plane
     )
     // Если необходимо, то сначала делаем кроп:
     // TODO Если картинка не кропаная, то кропать её принудительно на 200 пикселей по высоте?
