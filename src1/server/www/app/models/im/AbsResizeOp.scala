@@ -2,6 +2,7 @@ package models.im
 
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import org.im4java.core.IMOperation
+import japgolly.univeq._
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -71,7 +72,7 @@ case class AbsResizeOp(sz: ISize2di, flags: Seq[ImResizeFlag] = Nil) extends ImO
     val h: Integer = AbsResizeOp.sizeIntg(sz.height)
     if (flags.isEmpty) {
       op.resize(w, h)
-    } else if (flags.size == 1) {
+    } else if (flags.lengthCompare(1) ==* 0) {
       op.resize(w, h, flags.head.imChar)
     } else {
       op.resize(w, h, flagsStr)
@@ -96,35 +97,5 @@ case class AbsResizeOp(sz: ISize2di, flags: Seq[ImResizeFlag] = Nil) extends ImO
     }
     Some( sb.toString() )
   }
-}
-
-
-
-
-/** Флаги для ресайза. */
-object ImResizeFlags extends Enumeration {
-  protected case class Val(imChar: Char, urlSafeChar: Char) extends super.Val(urlSafeChar.toString)
-
-  type ImResizeFlag = Val
-
-  val IgnoreAspectRatio: ImResizeFlag   = Val('!', 'a')
-  val OnlyShrinkLarger: ImResizeFlag    = Val('>', 'b')
-  val OnlyEnlargeSmaller: ImResizeFlag  = Val('<', 'c')
-  /** resize the image based on the smallest fitting dimension. */
-  val FillArea: ImResizeFlag            = Val('^', 'd')
-  // Другие режимы ресайза тут пока опущены, т.к. не подходят для AbsResize, а другой пока нет.
-
-  implicit def value2val(x: Value): ImResizeFlag = x.asInstanceOf[ImResizeFlag]
-  
-  def maybeWithName(s: String): Option[ImResizeFlag] = {
-    val ch = s.charAt(0)
-    values
-      .find { v =>
-        val irf: ImResizeFlag = v
-        irf.urlSafeChar == ch  ||  irf.imChar == ch
-      }
-      .asInstanceOf[Option[ImResizeFlag]]
-  }
-
 }
 

@@ -9,7 +9,6 @@ package object im {
 
   // Im enum-типы для параметров трансформации картинок.
   type ImGravity            = ImGravities.T
-  type ImResizeFlag         = ImResizeFlags.ImResizeFlag
   type ImInterlacing        = ImInterlace.T
   type ImOpCode             = ImOpCodes.T
 

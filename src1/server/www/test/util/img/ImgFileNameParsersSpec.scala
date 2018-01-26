@@ -75,11 +75,11 @@ class ImgFileNameParsersSpec
     }
 
     "parse serialized img filename with several imOps: ...~i=a&c=140x140a&h=&d=a&j=a&f=80" in {
-      val pr = parseFileName("8wQs1SQQRXavk4UFF0v7-A~i=a&c=140x140a&h=&d=a&j=a&f=80")
+      val pr = parseFileName("8wQs1SQQRXavk4UFF0v7-A~i=a&c=140x140b&h=&d=a&j=a&f=80")
       pr._1         mustBe base64ToUuid("8wQs1SQQRXavk4UFF0v7-A")
       pr._2         mustBe List(
         ImFilters.Lanczos,
-        AbsResizeOp(MSize2di(140, 140), ImResizeFlags.IgnoreAspectRatio),
+        AbsResizeOp(MSize2di(140, 140), ImResizeFlags.OnlyShrinkLarger),
         StripOp,
         ImInterlace.Plane,
         ImSamplingFactors.SF_1x1,
