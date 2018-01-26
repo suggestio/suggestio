@@ -210,9 +210,8 @@ trait ScSite
       for (rargs <- renderArgsFut) yield {
         val render = siteTpl(rargs)(ctx)
         cspUtil.applyCspHdrOpt( customCspPolicyOpt ) {
-          cacheControlShort {
-            Ok(render)
-          }
+          Ok(render)
+            .cacheControl( 600 )
         }
       }
     }

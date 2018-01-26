@@ -411,9 +411,8 @@ trait ScAdsTile
         )
 
         // Вернуть HTTP-ответ.
-        cacheControlShort {
-          Ok( Json.toJson(scResp) )
-        }
+        Ok( Json.toJson(scResp) )
+          .cacheControl( if(ctx.request.user.isAnon) 30 else 8 )
       }
     }
 

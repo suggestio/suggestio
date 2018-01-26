@@ -793,9 +793,8 @@ trait ScIndex
         )
 
         // Вернуть HTTP-ответ.
-        cacheControlShort {
-          Ok( Json.toJson(scResp) )
-        }
+        Ok( Json.toJson(scResp) )
+          .cacheControl( 20 )
       }
     }
 

@@ -20,6 +20,7 @@ import io.suggest.flash.FlashConstants
  * Created: 11.10.13 11:43
  * Description: Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller.
  */
+
 trait SioController
   extends InjectedController
   with ContextT
@@ -64,14 +65,19 @@ trait SioController
       .map { r => Redirect(r) }
   }
 
-  /** Бывает нужно просто впендюрить кеш для результата, но только когда продакшен. */
-  def cacheControlShort(r: Result): Result = {
-    val v = if (isProd) {
-      "public, max-age=600"
-    } else {
-      "no-cache"
+
+  // TODO Opt Надо, чтобы был Value class, но extends AnyVal нельзя делать внутри trait/class.
+  implicit class ResultExtOps(val r: Result) {
+
+    def cacheControl(seconds: Int): Result = {
+      val v = if (isProd) {
+        "public, max-age=" + seconds
+      } else {
+        "no-cache"
+      }
+      r.withHeaders(CACHE_CONTROL -> v)
     }
-    r.withHeaders(CACHE_CONTROL -> v)
+
   }
 
 

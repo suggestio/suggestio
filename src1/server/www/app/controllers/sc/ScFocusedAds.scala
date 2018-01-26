@@ -943,10 +943,9 @@ trait ScFocusedAds
           ) :: Nil
         )
 
-        // Вернуть HTTP-ответ.
-        cacheControlShort {
-          Ok( Json.toJson(scResp) )
-        }
+        // Вернуть HTTP-ответ. Короткий кэш просто для защиты от дублирующихся запросов.
+        Ok( Json.toJson(scResp) )
+          .cacheControl( if (ctx.request.user.isAnon) 20 else 6 )
       }
     }
 
