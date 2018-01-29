@@ -8,7 +8,7 @@ import io.suggest.model.n2.node.MNode
 import models.blk
 import models.blk.SzMult_t
 import models.im.DevScreen
-import models.im.make.{MakeArgs, Makers}
+import models.im.make.{MImgMakeArgs, MImgMakers}
 import play.api.inject.Injector
 import util.blocks.{BgImg, BlocksConf}
 
@@ -44,13 +44,13 @@ class LkAdUtil @Inject() (
       bm    <- mad.ad.blockMeta
       bgImg <- BgImg.getBgImg(mad)
     } yield {
-      val wArgs = MakeArgs(
+      val wArgs = MImgMakeArgs(
         img           = bgImg,
         blockMeta     = bm,
         szMult        = szMult,
         devScreenOpt  = devScreenOpt
       )
-      val imaker = injector.instanceOf( Makers.Block.makerClass )
+      val imaker = injector.instanceOf( MImgMakers.Block.makerClass )
       for (res <- imaker.icompile(wArgs)) yield {
         Some(res)
       }

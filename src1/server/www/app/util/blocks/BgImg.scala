@@ -55,10 +55,10 @@ object BgImg extends MacroLogsImplLazy {
    * @param devScreenOpt Параметры экрана.
    * @return Фьючерс с результатом подготовки изображения.
    */
-  def maybeMakeBgImgWith(mad: MNode, maker: IMaker, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
+  def maybeMakeBgImgWith(mad: MNode, maker: IImgMaker, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
                         (implicit ec: ExecutionContext): Future[Option[MakeResult]] = {
     FutureUtil.optFut2futOpt( getBgImg(mad) ) { bgImg =>
-      val iArgs = MakeArgs(bgImg, mad.ad.blockMeta.get, szMult = szMult, devScreenOpt)
+      val iArgs = MImgMakeArgs(bgImg, mad.ad.blockMeta.get, szMult = szMult, devScreenOpt)
       maker.icompile(iArgs)
         .map { Some.apply }
     }
@@ -66,7 +66,7 @@ object BgImg extends MacroLogsImplLazy {
 
   def maybeMakeBgImg(mad: MNode, szMult: SzMult_t, devScreenOpt: Option[DevScreen])
                     (implicit ec: ExecutionContext): Future[Option[MakeResult]] = {
-    val maker = Makers.forFocusedBg( mad.ad.blockMeta.exists(_.wide) )
+    val maker = MImgMakers.forFocusedBg( mad.ad.blockMeta.exists(_.wide) )
     val imaker = current.injector.instanceOf(maker.makerClass)
     maybeMakeBgImgWith(mad, imaker, szMult, devScreenOpt)
   }

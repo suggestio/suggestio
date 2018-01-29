@@ -1,7 +1,9 @@
 package models.im.make
 
-import io.suggest.common.menum.EnumMaybeWithName
-import util.FormUtil.StrEnumFormMappings
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumJvmUtil
+import io.suggest.playx.FormMappingUtil
+import japgolly.univeq.UnivEq
 import util.blocks.BlkImgMaker
 import util.img.StrictWideMaker
 import util.showcase.ScWideMaker
@@ -17,62 +19,63 @@ import scala.reflect.ClassTag
   * Каждый экземпляр модели -- это мета-инфа по одному image-maker'у.
   * С помощью инжектора, клиенты модели могут получить доступ к инстансам мэйкеров.
   */
-object Makers extends EnumMaybeWithName with StrEnumFormMappings {
-
-  /**
-   * Абстрактный экземпляр этой модели.
-   * @param strId Ключ модели и глобальный строковой идентификатор.
-   */
-  abstract protected sealed class Val(val strId: String)
-    extends super.Val(strId)
-  {
-    override def toString() = strId
-
-    /** Длинное имя, отображаемое юзеру. */
-    def longName: String
-
-    /** Инфа для инжекции инстанса maker'а. */
-    def makerClass: ClassTag[IMaker]
-
-  }
-
-  /** Экспортируемый тип модели. */
-  override type T = Val
-
+case object MImgMakers extends StringEnum[MImgMaker] {
 
   /** Рендер wide-картинки для выдачи (showcase).
     * Используется квантование ширины по линейке размеров, т.е. картинка может быть больше запрошенных размеров. */
-  val ScWide = new Val("scw") {
+  case object ScWide extends MImgMaker("scw") {
     override def longName   = "Showcase wide"
     override def makerClass = ClassTag( classOf[ScWideMaker] )
   }
 
   /** Рендерер картинки, вписывающий её точно в параметры блока. Рендерер опирается на параметры кропа,
     * заданные в редакторе карточек. */
-  val Block = new Val("blk") {
+  case object Block  extends MImgMaker("blk") {
     override def longName   = "Block-sized"
     override def makerClass = ClassTag( classOf[BlkImgMaker] )
   }
 
   /** Жесткий wide-рендер под обязательно заданный экран. */
-  val StrictWide = new Val("strw") {
+  case object StrictWide extends MImgMaker("strw") {
     override def longName   = "Strict wide"
     override def makerClass = ClassTag( classOf[StrictWideMaker] )
   }
 
-  override protected def _idMaxLen: Int = 6
+  override def values = findValues
 
 
   /**
    * У focused-отображения карточки два варианта рендера.
+ *
    * @param isWide true, если требуется широкий рендер. Иначе false.
    * @return Maker, подходящий под описанные условия.
    */
-  def forFocusedBg(isWide: Boolean): T = {
+  def forFocusedBg(isWide: Boolean): MImgMaker = {
     if (isWide)
       ScWide
     else
       Block
   }
+
+}
+
+
+/** Класс одного элемента модели MImgMaker. */
+sealed abstract class MImgMaker(override val value: String) extends StringEnumEntry {
+
+  /** Длинное имя, отображаемое юзеру. */
+  def longName: String
+
+  /** Инфа для инжекции инстанса maker'а. */
+  def makerClass: ClassTag[IImgMaker]
+
+}
+
+object MImgMaker {
+
+  def univEq: UnivEq[MImgMaker] = UnivEq.derive
+
+  def mappingOpt = EnumeratumJvmUtil.stringIdOptMapping( MImgMakers )
+  def mapping = FormMappingUtil.optMapping2required( mappingOpt )
 
 }

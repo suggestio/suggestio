@@ -1,6 +1,7 @@
 package io.suggest.sc.m.grid
 
 import diode.FastEq
+import diode.data.Pot
 import io.suggest.jd.MJdAdData
 import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
@@ -36,6 +37,7 @@ object MBlkRenderData {
   )
 
 }
+
 
 
 /** Данные для рендера одного блока плитки.

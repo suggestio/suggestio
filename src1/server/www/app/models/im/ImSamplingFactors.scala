@@ -12,29 +12,29 @@ import org.im4java.core.IMOperation
  * @see [[http://www.impulseadventure.com/photo/chroma-subsampling.html]]
  */
 
-object ImSamplingFactors extends StringEnum[ImSamplingFactor] {
+case object ImSamplingFactors extends StringEnum[ImSamplingFactor] {
 
   /** 4:4:4 (No chroma subsampling). */
-  object SF_1x1 extends ImSamplingFactor("a") {
+  case object Sf1x1 extends ImSamplingFactor("a") {
     override def horizontal     = 1
     override def vertical       = 1
     override def isSubSampling  = false
   }
 
   /** 4:2:2 (1/2 chroma horiz). */
-  object SF_2x1 extends ImSamplingFactor("b") {
+  case object Sf2x1 extends ImSamplingFactor("b") {
     override def horizontal: Int = 2
     override def vertical = 1
   }
 
   /** 4:2:2 (1/2 chroma vert). */
-  object SF_1x2 extends ImSamplingFactor("c") {
+  case object Sf1x2 extends ImSamplingFactor("c") {
     override def horizontal = 1
     override def vertical   = 2
   }
 
   /** 4:2:0 (1/2 chroma horiz, 1/2 chroma vert). */
-  object SF_2x2 extends ImSamplingFactor("d") {
+  case object Sf2x2 extends ImSamplingFactor("d") {
     override def horizontal = 2
     override def vertical   = 2
   }
@@ -70,5 +70,7 @@ sealed abstract class ImSamplingFactor(override val value: String) extends Strin
   override def unwrappedValue: Option[String] = {
     Some(s"${horizontal}x$vertical")
   }
+
+  override def toString = s"SubSampling(${horizontal}x$vertical)"
 
 }

@@ -7,7 +7,7 @@ import io.suggest.img.crop.MCrop
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk.{szMulted, szMultedF, szRounded}
 import models.im._
-import models.im.make.{IMakeArgs, IMaker, MakeResult}
+import models.im.make.{MImgMakeArgs, IImgMaker, MakeResult}
 import models.mproj.ICommonDi
 
 import scala.annotation.tailrec
@@ -26,7 +26,7 @@ class ScWideMaker @Inject() (
   mAnyImgs  : MAnyImgs,
   mCommonDi : ICommonDi
 )
-  extends IMaker
+  extends IImgMaker
   with MacroLogsImpl
 {
 
@@ -171,7 +171,7 @@ class ScWideMaker @Inject() (
    * @param args Контейнер с аргументами вызова.
    * @return Фьючерс с результатом.
    */
-  override def icompile(args: IMakeArgs): Future[MakeResult] = {
+  override def icompile(args: MImgMakeArgs): Future[MakeResult] = {
     lazy val logPrefix = s"icompile()#${System.currentTimeMillis()}:"
     LOGGER.trace( s"$logPrefix WIDE make: $args" )
 

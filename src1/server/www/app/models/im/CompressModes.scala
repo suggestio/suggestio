@@ -1,7 +1,9 @@
 package models.im
 
-import io.suggest.common.menum.EnumValue2Val
-import util.FormUtil.StrEnumFormMappings
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumJvmUtil
+import io.suggest.playx.FormMappingUtil
+import japgolly.univeq.UnivEq
 
 /**
  * Suggest.io
@@ -9,33 +11,42 @@ import util.FormUtil.StrEnumFormMappings
  * Created: 21.04.15 14:25
  * Description: Программы компрессии, используемые при сохранении картинок.
  */
-object CompressModes extends Enumeration with EnumValue2Val with StrEnumFormMappings {
-
-  /** Экземпляр модели. */
-  sealed abstract class Val(val strId: String) extends super.Val(strId) {
-    /** Извлечь компрессию из pxRatio согласно текущему режиму. */
-    def fromDpr(dpr: IDevPixelRatio): ImCompression
-    override def toString() = strId
-    def nameI18n: String
-  }
-
-  override type T = Val
+case object CompressModes extends StringEnum[CompressMode] {
 
   /** Компрессия фона. */
-  val Bg: T = new Val("bg") {
-    override def fromDpr(dpr: IDevPixelRatio): ImCompression = {
+  case object Bg extends CompressMode("bg") {
+    override def fromDpr(dpr: DevPixelRatio): ImCompression = {
       dpr.bgCompression
     }
     override def nameI18n = "Background"
   }
 
   /** Компрессия для изображений переднего плана. */
-  val Fg: T = new Val("fg") {
-    override def fromDpr(dpr: IDevPixelRatio): ImCompression = {
+  case object Fg extends CompressMode("fg") {
+    override def fromDpr(dpr: DevPixelRatio): ImCompression = {
       dpr.fgCompression
     }
     override def nameI18n = "Foreground"
   }
 
-  override protected def _idMaxLen: Int = 6
+  override val values = findValues
+
+}
+
+
+sealed abstract class CompressMode(override val value: String) extends StringEnumEntry {
+
+  def nameI18n: String
+
+  def fromDpr(dpr: DevPixelRatio): ImCompression
+
+}
+
+object CompressMode {
+
+  implicit def univEq: UnivEq[CompressMode] = UnivEq.derive
+
+  def mappingOpt = EnumeratumJvmUtil.stringIdOptMapping( CompressModes )
+  def mapping = FormMappingUtil.optMapping2required( mappingOpt )
+
 }

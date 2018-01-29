@@ -129,8 +129,9 @@ class ImOpsQsb extends QueryStringBindableImpl[Seq[ImOp]] {
           splitOnBracketsRe.split(k) match {
             case Array(k2, iStr) =>
               val i = iStr.toInt
-              Seq( ((k2, v), i) )
-            case _ => Seq.empty
+              ((k2, v), i) :: Nil
+            case _ =>
+              Nil
           }
         }
         // Восстановить исходный порядок.
@@ -193,8 +194,6 @@ case object StripOp extends ImOp {
     op.strip()
   }
 }
-
-
 
 
 /** Размывка по гауссу. */

@@ -74,6 +74,30 @@ object EnumeratumJvmUtil {
   }
 
 
+  /** id-маппинг для enum-модели с целочисленными ключами.
+    *
+    * @param m IntEnum-модель
+    * @tparam EntryType Тип значения.
+    * @return
+    */
+  def shortIdOptMapping[EntryType <: ShortEnumEntry](m: ShortEnum[EntryType]): Mapping[Option[EntryType]] = {
+    def fallbackF = Short.MinValue
+    valueIdOptMapping(
+      m = m,
+      mapping0 = {
+        val f = EnumeratumUtil.valueF[Short]
+        number(
+          min = m.values.headOption.fold(fallbackF)(f),
+          max = m.values.lastOption.fold(Short.MaxValue)(f)
+        )
+          .transform[Short](_.toShort, _.toInt)
+      },
+      fallback = fallbackF
+    )
+  }
+
+
+
   /** Сборка QueryStringBindable для моделей enumeratum ValueEnum.
     *
     * @param m Модель со всеми инстансами.

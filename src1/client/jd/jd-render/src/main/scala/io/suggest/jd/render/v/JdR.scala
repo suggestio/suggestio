@@ -16,7 +16,6 @@ import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
-import io.suggest.react.ReactCommonUtil.VdomNullElement
 import io.suggest.sjs.common.log.Log
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sjs.common.util.DataUtil
@@ -50,22 +49,6 @@ class JdR(
   import MJdArgs.MJdArgsFastEq
 
   type Props = ModelProxy[MJdArgs]
-
-  override val LOG = super.LOG
-
-  /** Флаг подавления неподдерживаемых функций рендера.
-    * true означает, что неподдерживаемые теги, эджи и т.д. будут приводить к null-рендеру.
-    */
-  private final val SUPPRESS_UNEXPECTED = false
-
-  /** Экзепшен NotImplemented или vdom-null в зависимости от состояния флага. */
-  private def _maybeSuppress: VdomElement = {
-    if (SUPPRESS_UNEXPECTED) {
-      VdomNullElement
-    } else {
-      ???
-    }
-  }
 
 
   /** Движок рендера для сборки под разные ситуации. Можно вынести за пределы компонента. */
@@ -168,17 +151,16 @@ class JdR(
 
 
     /** Рендер strip, т.е. одной "полосы" контента. */
-    def renderStrip(stripTree: Tree[JdTag], i: Int, jdArgs: MJdArgs): TagOf[html.Div]  = {
+    def renderStrip(stripTree: Tree[JdTag], i: Int, jdArgs: MJdArgs): TagOf[html.Div] = {
       val s = stripTree.rootLabel
       val C = jdArgs.jdCss
       val isSelected = jdArgs.selectedTag.containsLabel(s)
       val isEditSelected = isSelected && jdArgs.conf.isEdit
 
       val isWide = s.props1.bm.map(_.wide).getOrElseFalse
-      val styleStrip = jdArgs.renderArgs.blockStyleFrom.getOrElse(s)
 
       // Оптимизация, т.к. wide-стиль используется в нескольких местах сразу.
-      lazy val wideCss = C.bmWideStyleF(styleStrip): TagMod
+      lazy val wideWhBg = C.bmWideStyleF(s): TagMod
 
       val bgColor = _bgColorOpt(s, jdArgs)
 
@@ -189,7 +171,6 @@ class JdR(
         if edge.jdEdge.predicate ==>> MPredicates.JdBgPred
         bgImgSrc  <- edge.origImgSrcOpt
       } yield {
-
         <.img(
           ^.`class` := Css.Block.BG,
           ^.src := bgImgSrc,
@@ -198,7 +179,7 @@ class JdR(
           if (jdArgs.conf.isEdit) {
             ^.draggable := false
           } else if (isWide) {
-            wideCss
+            wideWhBg
           } else {
             EmptyVdom
           },
@@ -262,7 +243,7 @@ class JdR(
       val smBlock = <.div(
         keyAV,
         C.smBlock,
-        C.bmStyleF( styleStrip ),
+        C.bmStyleF( s ),
 
         if (isWide) {
           jdArgs.jdCss.wideBlockStyle
@@ -303,8 +284,8 @@ class JdR(
         // Широкоформатное отображение, рендерим фон без ограничений блока:
         <.div(
           keyAV,
-          bgColor.when(isWide),
-          wideCss,
+          bgColor,
+          wideWhBg,
           maybeSelAV,
           ^.`class` := Css.flat( Css.Overflow.HIDDEN, Css.Position.RELATIVE ),
           bgImgTm.when(isWide),

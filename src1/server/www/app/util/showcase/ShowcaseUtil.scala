@@ -12,7 +12,7 @@ import io.suggest.sc.tile.{GridCalc, MGridCalcConf}
 import models.blk
 import models.blk._
 import models.im._
-import models.im.make.{MakeArgs, MakeResult, Makers}
+import models.im.make.{MImgMakeArgs, MakeResult, MImgMakers}
 import models.mproj.ICommonDi
 import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
 import util.blocks.{BgImg, BlocksConf}
@@ -128,13 +128,13 @@ class ShowcaseUtil @Inject() (
       mimg <- BgImg.getBgImg(mad)
       bm   <- mad.ad.blockMeta
     } yield {
-      val wArgs = MakeArgs(
+      val wArgs = MImgMakeArgs(
         img           = mimg,
         blockMeta     = bm,
         szMult        = szMult,
         devScreenOpt  = devScrOpt
       )
-      val maker = Makers.forFocusedBg(bm.wide)
+      val maker = MImgMakers.forFocusedBg(bm.wide)
       current.injector
         .instanceOf( maker.makerClass )
         .icompile(wArgs)

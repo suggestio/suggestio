@@ -13,7 +13,7 @@ import io.suggest.model.n2.node.{MNode, MNodesCache}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
-import models.im.make.{IMaker, MakeArgs, MakeResult}
+import models.im.make.{IImgMaker, MImgMakeArgs, MakeResult}
 import models.im._
 import models.mctx.Context
 import models.req.IReqHdr
@@ -35,15 +35,15 @@ import scalaz.Tree
   */
 @Singleton
 class JdAdUtil @Inject()(
-                         @Named("blk") blkImgMaker      : IMaker,
-                         @Named("scWide") wideImgMaker  : IMaker,
-                         mMediasCache                : MMediasCache,
-                         mNodesCache                 : MNodesCache,
-                         dynImgUtil                  : DynImgUtil,
-                         cdnUtil                     : CdnUtil,
-                         videoUtil                   : VideoUtil,
-                         distUtil                    : DistUtil,
-                         implicit private val ec     : ExecutionContext
+                          @Named("blk") blkImgMaker      : IImgMaker,
+                          @Named("scWide") wideImgMaker  : IImgMaker,
+                          mMediasCache                : MMediasCache,
+                          mNodesCache                 : MNodesCache,
+                          dynImgUtil                  : DynImgUtil,
+                          cdnUtil                     : CdnUtil,
+                          videoUtil                   : VideoUtil,
+                          distUtil                    : DistUtil,
+                          implicit private val ec     : ExecutionContext
                        )
   extends MacroLogsImpl
 {
@@ -558,7 +558,7 @@ class JdAdUtil @Inject()(
           )
         }
 
-      val makeArgs = MakeArgs(
+      val makeArgs = MImgMakeArgs(
         img           = mimg2,
         blockMeta     = contSz2d,
         szMult        = 1.0f,

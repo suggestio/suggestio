@@ -10,9 +10,9 @@ import org.im4java.core.IMOperation
  * Description: Модель фильтров картинки.
  */
 
-object ImFilters extends StringEnum[ImFilter] {
+case object ImFilters extends StringEnum[ImFilter] {
 
-  object Lanczos extends ImFilter("a") {
+  case object Lanczos extends ImFilter("a") {
     override def imName = "Lanczos"
   }
 

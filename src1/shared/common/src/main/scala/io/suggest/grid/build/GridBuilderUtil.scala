@@ -157,30 +157,25 @@ object GridBuilderUtil {
                 val orderN = itemExt.orderN
                   .getOrElse( stepCounter )
 
-                val res = MGbItemRes(
-                  // Восстановить порядок, если индекс был передан из reDo-ветви.
-                  orderN      = orderN,
-                  topLeft     = xyAbs,
-                  bm          = bm
-                )
-
                 val mwlAbsOpt = OptionUtil.maybe(bm.wide)( currWide )
 
                 // Т.к. фон wide-блока центруется независимо от контента, для этого используется искусственный wide-блок,
                 // идущий перед wide-блоком с контентом. Надо закинуть wide-фоновый-блок в res-аккамулятор.
-                val wideBgResOpt = for (wideBgSz <- itemExt.wideBgSz) yield {
+                val wideBgWidthOpt = for (wideBgSz <- itemExt.wideBgSz) yield {
                   // Есть размер фона. Надо совместить горизонтальную середины плитки и изображения.
                   // Поправочный szMult вычисляется через отношение высот картинки и самого блока. В норме должен быть == 1. Из проблем: он пережевывает и скрывает ошибки.
                   // TODO Im Кажется, будто поправка img2blkSzMult не нужна на новых версиях ImageMagick (7.0.7+), но нужна на старых (6.8.9).
                   val img2blkSzMult = szMultD * bm.height / wideBgSz.height.toDouble
-                  val displayedBgWidth = wideBgSz.width * img2blkSzMult
-                  MGbItemRes(
-                    orderN        = orderN,
-                    topLeft       = xyAbs,
-                    bm            = bm,
-                    forceCenterX  = Some( displayedBgWidth )
-                  )
+                  /*val displayedBgWidth =*/ wideBgSz.width * img2blkSzMult
                 }
+
+                val res = MGbItemRes(
+                  // Восстановить порядок, если индекс был передан из reDo-ветви.
+                  orderN        = orderN,
+                  topLeft       = xyAbs,
+                  bm            = bm,
+                  forceCenterX  = wideBgWidthOpt
+                )
 
                 // Если wide, то надо извлечь из results-аккамулятора элементы, конфликтующие по высоте с данным wide-блоком и запихать их в reDo-аккамулятор.
                 val s1DeConflictedOpt = for {
@@ -211,7 +206,7 @@ object GridBuilderUtil {
 
                   // Обновить состояние билдера:
                   s0.copy(
-                    resultsAccRev = res :: Lists.prependOpt(wideBgResOpt)(ok),
+                    resultsAccRev = res :: ok,
                     levels = parentLvlOpt.fold {
                       // Родительского уровня не было, работа была на верхнем уровне.
                       modLvl2 :: s0.levels.tail
@@ -227,7 +222,7 @@ object GridBuilderUtil {
                   // Не-wide блок. Просто закинуть данные в состояние.
                   s0.copy(
                     levels        = currLvl2 :: s0.levels.tail,
-                    resultsAccRev = res :: Lists.prependOpt(wideBgResOpt)(s0.resultsAccRev),
+                    resultsAccRev = res :: s0.resultsAccRev,
                     wides         = Lists.prependOpt(mwlAbsOpt)(s0.wides)
                   )
                 }

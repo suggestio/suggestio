@@ -16,22 +16,22 @@ sealed abstract class ImResizeFlag(override val value: Char) extends CharEnumEnt
 
 
 /** Модель флагов ресайза. */
-object ImResizeFlags extends CharEnum[ImResizeFlag] {
+case object ImResizeFlags extends CharEnum[ImResizeFlag] {
 
-  object IgnoreAspectRatio extends ImResizeFlag('a') {
+  case object IgnoreAspectRatio extends ImResizeFlag('a') {
     override def imChar = '!'
   }
 
-  object OnlyShrinkLarger extends ImResizeFlag('b') {
+  case object OnlyShrinkLarger extends ImResizeFlag('b') {
     override def imChar = '>'
   }
 
-  object OnlyEnlargeSmaller extends ImResizeFlag('c') {
+  case object OnlyEnlargeSmaller extends ImResizeFlag('c') {
     override def imChar = '<'
   }
 
   /** resize the image based on the smallest fitting dimension. */
-  object FillArea extends ImResizeFlag('d') {
+  case object FillArea extends ImResizeFlag('d') {
     override def imChar = '^'
   }
 

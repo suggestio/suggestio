@@ -17,7 +17,7 @@ import models.BlockConf
 import models.blk.PrepareBlkImgArgs
 import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
 import models.im.MImg3
-import models.im.make.IMaker
+import models.im.make.IImgMaker
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.{IAdProdReq, INodeReq, IReq}
@@ -54,7 +54,7 @@ class MarketAd @Inject() (
                            lkEditorWsActors                        : LkEditorWsActors,
                            isAuth                                  : IsAuth,
                            canEditAd                               : CanEditAd,
-                           @Named("blk") override val blkImgMaker  : IMaker,
+                           @Named("blk") override val blkImgMaker  : IImgMaker,
                            n2NodesUtil                             : N2NodesUtil,
                            canUpdateSls                            : CanUpdateSls,
                            aclUtil                                 : AclUtil,

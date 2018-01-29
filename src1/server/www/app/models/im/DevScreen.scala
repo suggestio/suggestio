@@ -64,7 +64,7 @@ object DevScreen extends DevScreenParsers {
     mapping(
       "width"   -> whm,
       "height"  -> whm,
-      "pxRatio" -> DevPixelRatios.mappingOpt
+      "pxRatio" -> DevPixelRatio.mappingOpt
     )
     { DevScreen.apply }
     { DevScreen.unapply }

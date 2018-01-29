@@ -17,7 +17,7 @@ package models.im
  */
 case class ImCompression(
                           quality           : Int,
-                          chromaSubSampling : ImSamplingFactor  = ImSamplingFactors.SF_2x2,
+                          chromaSubSampling : ImSamplingFactor  = ImSamplingFactors.Sf2x2,
                           blur              : Option[Float]     = None
 ) {
 

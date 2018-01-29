@@ -6,7 +6,7 @@ import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk.{SzMult_t, szMulted}
 import models.im._
-import models.im.make.{IMakeArgs, IMaker, MakeResult}
+import models.im.make.{MImgMakeArgs, IImgMaker, MakeResult}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -23,7 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class BlkImgMaker @Inject() (
                               implicit private val ec: ExecutionContext
                             )
-  extends IMaker
+  extends IImgMaker
   with MacroLogsImpl
 {
 
@@ -44,7 +44,7 @@ class BlkImgMaker @Inject() (
 
 
   /** Этот движок внутри работает синхронно. Его синхронный код вынесен сюда. */
-  private def icompileSync(args: IMakeArgs): MakeResult = {
+  private def icompileSync(args: MImgMakeArgs): MakeResult = {
     import args._
 
     val pxRatio = DevPixelRatios.pxRatioDefaulted( devScreenOpt.flatMap(_.pixelRatioOpt) )
@@ -83,7 +83,7 @@ class BlkImgMaker @Inject() (
    * @param args Контейнер с данными для вызова.
    * @return Фьючерс с экземпляром MakeResult.
    */
-  override def icompile(args: IMakeArgs): Future[MakeResult] = {
+  override def icompile(args: MImgMakeArgs): Future[MakeResult] = {
     // Раз системе надо асинхронно, значит делаем асинхронно в принудительном порядке:
     Future {
       icompileSync(args)
@@ -94,5 +94,5 @@ class BlkImgMaker @Inject() (
 
 /** Интерфейс для поля с DI-инстансом maker'а [[BlkImgMaker]]. */
 trait IBlkImgMakerDI {
-  def blkImgMaker: IMaker
+  def blkImgMaker: IImgMaker
 }

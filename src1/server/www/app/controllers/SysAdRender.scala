@@ -2,7 +2,7 @@ package controllers
 
 import io.suggest.util.logs.IMacroLogs
 import models.blk.{OneAdQsArgs, OneAdWideQsArgs}
-import models.im.OutImgFmts
+import models.im.{OutImgFmt, OutImgFmts}
 import models.msc.OneAdRenderVariant
 import models.msys.MShowOneAdFormTplArgs
 import models.req.IAdReq
@@ -30,13 +30,13 @@ class SysAdRenderUtil {
     mapping(
       "szMult" -> FormUtil.szMultM,
       "vsn"    -> FormUtil.esVsnOptM,
-      "imgFmt" -> OutImgFmts.mapping,
+      "imgFmt" -> OutImgFmt.mapping,
       "wide"   -> OneAdWideQsArgs.optMapper
     )
     { OneAdQsArgs(madId, _, _, _, _) }
-    { OneAdQsArgs.unapply(_).map {
-        case (_, a, b, c, d) => (a, b, c, d)
-    }}
+    { OneAdQsArgs.unapply(_)
+      .map { case (_, a, b, c, d) => (a, b, c, d) }
+    }
   }
 
   /** Маппинг для формы OneAdQsArgs. */

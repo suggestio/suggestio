@@ -4,8 +4,8 @@ import javax.inject.Inject
 
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockMetaJvm, BlockWidths}
 import io.suggest.util.logs.IMacroLogs
-import models.im.{CompressModes, DevScreen, MImgT}
-import models.im.make.{IMakeArgs, MakeArgs, Makers, SysForm_t}
+import models.im.{CompressMode, DevScreen, MImgT}
+import models.im.make.{MImgMakeArgs, MImgMaker, MImgMakers, SysForm_t}
 import models.mctx.Context
 import play.api.data.{Form, Mapping}
 import play.api.mvc.Result
@@ -26,15 +26,15 @@ class SysImgMakeUtil @Inject() () {
 
   import play.api.data.Forms._
 
-  /** Маппинг для [[models.im.make.IMakeArgs]] под нужды этого контроллера. */
-  def makeArgsM(img: MImgT): Mapping[IMakeArgs] = {
+  /** Маппинг для [[models.im.make.MImgMakeArgs]] под нужды этого контроллера. */
+  def makeArgsM(img: MImgT): Mapping[MImgMakeArgs] = {
     mapping(
       "blockMeta" -> BlockMetaJvm.formMapping,
       "szMult"    -> FormUtil.szMultM,
       "devScreen" -> optional(DevScreen.mappingFat),
-      "compress"  -> CompressModes.mappingOpt
+      "compress"  -> CompressMode.mappingOpt
     )
-    { MakeArgs(img, _, _, _, _) : IMakeArgs }
+    { MImgMakeArgs(img, _, _, _, _) : MImgMakeArgs }
     {ima =>
       // После отвязки MakeArgs от BlockMeta возникла необходимость этого костыля:
       val bmsz = ima.blockMeta
@@ -49,7 +49,7 @@ class SysImgMakeUtil @Inject() () {
   /** Маппинг формы, с которой работают в шаблоны и контроллеры. */
   def makeFormM(img: MImgT): SysForm_t = {
     Form(tuple(
-      "maker" -> Makers.mapping,
+      "maker" -> MImgMaker.mapping,
       "args"  -> makeArgsM(img)
     ))
   }
@@ -80,8 +80,8 @@ trait SysImgMake
       implicit val ctx = implicitly[Context]
       // Забиндить дефолтовые данные в форму
       val form = sysImgMakeUtil.makeFormM(img).fill((
-        Makers.StrictWide,
-        MakeArgs(
+        MImgMakers.StrictWide,
+        MImgMakeArgs(
           img = img,
           blockMeta = bmDflt.getOrElse {
             BlockMeta.DEFAULT.withWide(true)
@@ -98,7 +98,7 @@ trait SysImgMake
   /** Рендер страницы с формой параметров make. */
   private def _makeFormRender(img: MImgT, form: SysForm_t, rs: Status)
                              (implicit ctx: Context): Future[Result] = {
-    val makers = Makers.valuesT
+    val makers = MImgMakers.values
     val html = makeFormTpl(img, form, makers)(ctx)
     rs(html)
   }

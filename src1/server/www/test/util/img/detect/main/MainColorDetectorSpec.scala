@@ -47,7 +47,7 @@ class MainColorDetectorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart wi
       }
       val detectResult = await(detectResultFut)
       detectResult.nonEmpty  mustBe  true
-      val dmchRgb = detectResult.get.rgb
+      val dmchRgb = detectResult.get.rgb.get
       val dmchRgbXyz = dmchRgb.toCoord3d
       for (mch <- mainColorsHex) {
         val mchRgb = MRgb.hex2rgb(mch)

@@ -82,7 +82,7 @@ class ImgFileNameParsersSpec
         AbsResizeOp(MSize2di(140, 140), ImResizeFlags.OnlyShrinkLarger),
         StripOp,
         ImInterlaces.Plane,
-        ImSamplingFactors.SF_1x1,
+        ImSamplingFactors.Sf1x1,
         QualityOp(80.0)
       )
     }

@@ -5,7 +5,7 @@ import javax.inject.{Inject, Named, Singleton}
 import controllers.sc._
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
-import models.im.make.IMaker
+import models.im.make.IImgMaker
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
 import util.acl.{BruteForceProtect, GetAnyAd, MaybeAuth}
@@ -48,7 +48,7 @@ class Sc @Inject() (
                      override val cspUtil            : CspUtil,
                      override val getAnyAd           : GetAnyAd,
                      override val maybeAuth          : MaybeAuth,
-                     @Named("blk") override val blkImgMaker  : IMaker,
+                     @Named("blk") override val blkImgMaker  : IImgMaker,
                      override val dynImgUtil         : DynImgUtil,
                      override val scMapUtil          : ScMapUtil,
                      override val advGeoLocUtil      : AdvGeoLocUtil,

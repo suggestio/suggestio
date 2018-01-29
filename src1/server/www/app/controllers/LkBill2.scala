@@ -13,7 +13,7 @@ import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.node.MNode
 import io.suggest.pick.PickleUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.im.make.IMaker
+import models.im.make.IImgMaker
 import models.mbill._
 import models.mcal.MCalendars
 import models.mctx.Context
@@ -44,7 +44,7 @@ class LkBill2 @Inject() (
                           override val logoUtil       : LogoUtil,
                           override val canViewOrder   : CanViewOrder,
                           override val canAccessItem  : CanAccessItem,
-                          @Named("blk") override val blkImgMaker  : IMaker,
+                          @Named("blk") override val blkImgMaker  : IImgMaker,
                           canViewNodeAdvInfo          : CanViewNodeAdvInfo,
                           override val isNodeAdmin    : IsNodeAdmin,
                           dynImgUtil                  : DynImgUtil,

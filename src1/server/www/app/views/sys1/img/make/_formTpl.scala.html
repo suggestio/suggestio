@@ -1,4 +1,4 @@
-@(submitCall: Call, mf: im.make.SysForm_t, makers: Iterable[im.make.Maker])(implicit ctx: Context)
+@(submitCall: Call, mf: im.make.SysForm_t, makers: Iterable[im.make.MImgMaker])(implicit ctx: Context)
 
 @* Верстка формы для вызова кастомного make. *@
 
@@ -12,7 +12,7 @@
   @* Выбор maker'а из списка допустимых. *@
   @select(
     mf("maker"),
-    options = makers.iterator.map(m => m.strId -> m.longName).toSeq,
+    options = makers.iterator.map(m => m.value -> m.longName).toSeq,
     'title -> "Какой image-maker использовать?"
   )
 
@@ -59,7 +59,7 @@
 
   @select(
     mf("args.devScreen.pxRatio"),
-    options = ("", "default") :: im.DevPixelRatios.values.iterator.map(r => r.name -> r.pixelRatio.toString).toList,
+    options = ("", "default") :: im.DevPixelRatios.values.iterator.map(r => r.toString -> r.pixelRatio.toString).toList,
     '_label -> "Плотность пикселей"
   )
 
@@ -74,7 +74,7 @@
 
   @select(
     mf("args.compress"),
-    options = im.CompressModes.values.iterator.map(c => c.strId -> c.nameI18n).toSeq,
+    options = im.CompressModes.values.iterator.map(c => c.value -> c.nameI18n).toSeq,
     '_label -> "Сжимать как"
   )
 

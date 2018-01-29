@@ -108,10 +108,10 @@ object OneAdQsArgs {
  * @param wideOpt 2015.mar.05 Контейнер для задания парамеров широкого рендера.
  */
 case class OneAdQsArgs(
-  adId    : String,
-  szMult  : SzMult_t,
-  vsnOpt  : Option[Long],
-  imgFmt  : OutImgFmt,
-  wideOpt : Option[OneAdWideQsArgs] = None
-)
+                        adId    : String,
+                        szMult  : SzMult_t,
+                        vsnOpt  : Option[Long],
+                        imgFmt  : OutImgFmt,
+                        wideOpt : Option[OneAdWideQsArgs] = None
+                      )
 

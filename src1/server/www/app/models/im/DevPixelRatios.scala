@@ -1,7 +1,11 @@
 package models.im
 
-import io.suggest.common.menum.EnumValue2Val
-import util.FormUtil.StrEnumFormMappings
+import enumeratum.values._
+import io.suggest.enum2.EnumeratumJvmUtil
+import io.suggest.playx.FormMappingUtil
+import japgolly.univeq.UnivEq
+
+import scala.collection.immutable
 
 /**
  * Suggest.io
@@ -10,29 +14,15 @@ import util.FormUtil.StrEnumFormMappings
  * Description: Модель, хранящая стандартные пиксельны плотности экранов для разных режимов картинки.
  * @see [[http://www.devicepixelratio.com/]].
  */
-object DevPixelRatios extends Enumeration with EnumValue2Val with StrEnumFormMappings {
-
-  /**
-   * Экземпляр модели.
-   * @param name Название семейства экранов.
-   */
-  protected abstract sealed class Val(val name: String)
-    extends super.Val(name)
-    with IDevPixelRatio
-  {
-    override final def toString() = pixelRatio.toString
-  }
-
-
-  override type T = Val
+case object DevPixelRatios extends ShortEnum[DevPixelRatio] {
 
   /** Единичная плотность пикселей. Некогда (до середины 2013 года) самые дефолтовые девайсы. */
-  val MDPI: T = new Val("MDPI") {
+  case object MDPI extends DevPixelRatio(10) {
     override def pixelRatio: Float = 1.0F
 
     // Используется SF_1x1 (т.е. откл.), иначе на контрастных переходах появляются заметные "тучи" на монотонных кусках.
-    override def bgCompression = ImCompression(88, ImSamplingFactors.SF_1x1)
-    override def fgCompression = ImCompression(93, ImSamplingFactors.SF_1x1)
+    override def bgCompression = ImCompression(88, ImSamplingFactors.Sf1x1)
+    override def fgCompression = ImCompression(93, ImSamplingFactors.Sf1x1)
   }
 
 
@@ -40,34 +30,37 @@ object DevPixelRatios extends Enumeration with EnumValue2Val with StrEnumFormMap
 
 
   /** Только на андройдах есть такое. */
-  val HDPI: T = new Val("HDPI") {
+  case object HDPI extends DevPixelRatio(15) {
     override def pixelRatio: Float = 1.5F
-    override def bgCompression = ImCompression(83, ImSamplingFactors.SF_1x1)
-    override def fgCompression = ImCompression(88, ImSamplingFactors.SF_1x1)
+    override def bgCompression = ImCompression(83, ImSamplingFactors.Sf1x1)
+    override def fgCompression = ImCompression(88, ImSamplingFactors.Sf1x1)
   }
 
 
   /** Андройд-девайсы и т.ч. retina, т.е. iphone4+ и прочие яблодевайсы после 2013 г. */
-  val XHDPI: T = new Val("XHDPI") {
+  case object XHDPI extends DevPixelRatio(20) {
     override def pixelRatio: Float = 2.0F
-    override val bgCompression = ImCompression(70, ImSamplingFactors.SF_1x1)
-    override val fgCompression = ImCompression(75, ImSamplingFactors.SF_1x1)
+    override val bgCompression = ImCompression(70, ImSamplingFactors.Sf1x1)
+    override val fgCompression = ImCompression(75, ImSamplingFactors.Sf1x1)
   }
 
 
   /** На середину 2014 года, это только топовые андройды. Разрешение экрана соотвествует HD1080. */
-  val DPR3: T = new Val("DPR3") {
+  case object DPR3 extends DevPixelRatio(30) {
     override def pixelRatio: Float = 3.0F
-    override val bgCompression = ImCompression(64, ImSamplingFactors.SF_1x2)
-    override val fgCompression = ImCompression(68, ImSamplingFactors.SF_1x2)
+    override val bgCompression = ImCompression(64, ImSamplingFactors.Sf1x2)
+    override val fgCompression = ImCompression(68, ImSamplingFactors.Sf1x2)
   }
 
 
-  /** 
+  override val values = findValues
+
+  /**
    * Дефолтовое значение DPR, когда нет другого.
+ *
    * @return 2.0, т.к. клиентский браузер браузер может не сообщать свои пиксели в ЛК.
    */
-  def default = XHDPI
+  def default: DevPixelRatio = XHDPI
 
   // Запретить авто.использование 1.0 и 1.5. Удалить полностью пока нельзя из-за зависимостей в коде.
   val valuesDetectable = XHDPI :: DPR3 :: Nil
@@ -77,32 +70,38 @@ object DevPixelRatios extends Enumeration with EnumValue2Val with StrEnumFormMap
    * @param ratio Значение плотности пикселей.
    * @return DevPixelRatio.
    */
-  def forRatio(ratio: Float): T = {
+  def forRatio(ratio: Float): DevPixelRatio = {
     valuesDetectable
       .find { v =>
-        val dpi: T = v
-        (dpi.pixelRatio >= ratio) || (dpi.pixelRatio * 1.1 > ratio)
+        (v.pixelRatio >= ratio) || (v.pixelRatio * 1.1 > ratio)
       }
       .getOrElse(valuesDetectable.last)
   }
 
 
   /** Если pixel ratio не задан, то взять дефолтовый, используемый для bgImg. */
-  def pxRatioDefaulted(pxRatioOpt: Option[T]): T = {
+  def pxRatioDefaulted(pxRatioOpt: Option[DevPixelRatio]): DevPixelRatio = {
     if (pxRatioOpt.isDefined) pxRatioOpt.get else default
   }
-
-  override protected def _idMaxLen: Int = 10
 
 }
 
 
-/** Интерфейс экземпляров модели [[DevPixelRatios]]. */
-trait IDevPixelRatio {
-  def name: String
-  def pixelRatio: Float
+sealed abstract class DevPixelRatio(override val value: Short) extends ShortEnumEntry {
+  //def name: String
+  def pixelRatio: Float = value / 10
 
   def bgCompression: ImCompression
   def fgCompression: ImCompression
+}
+
+
+object DevPixelRatio {
+
+  implicit def univEq: UnivEq[DevPixelRatio] = UnivEq.derive
+
+  def mappingOpt = EnumeratumJvmUtil.shortIdOptMapping( DevPixelRatios )
+  def mapping = FormMappingUtil.optMapping2required( mappingOpt )
+
 }
 

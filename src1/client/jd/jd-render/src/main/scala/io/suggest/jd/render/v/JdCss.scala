@@ -1,6 +1,7 @@
 package io.suggest.jd.render.v
 
 import diode.FastEq
+import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
 import io.suggest.color.MColorData
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.css.Css
@@ -51,7 +52,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // TODO Вынести статические стили в object ScCss?
   /** Все блоки помечаются этим классом. */
   val smBlock = style(
-    addClassName("sm-block"),
+    // Без addClassName("sm-block"), т.к. это ненужные transition и уже неактуальные стили.
     // Дефолтовые настройки шрифтов.
     fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
     fontSize( (MFontSizes.default.value * blkSzMultD).px )
@@ -71,13 +72,20 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       .flatMap( _.flatten )
   }
 
+  // Фактическая ширина плитки.
+  private lazy val gridWidthPx = {
+    val s = jdCssArgs.conf.gridColumnsCount * jdCssArgs.conf.szMult.toDouble
+    s * BlockWidths.min.value + (s + 2) * (BlockPaddings.default.value / 2)
+  }
 
   val wideBlockStyle = {
     val zeroPx = 0.px
     style(
       position.absolute,
       top(zeroPx),
-      left(zeroPx)
+      left(zeroPx),
+      // TODO Надо не просто ширину плитки закрывать, но и за экран по обе стороны уходить.
+      minWidth( gridWidthPx.px )
     )
   }
 
@@ -152,13 +160,17 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       .toIndexedSeq
     val wideStripsDomain = new Domain.OverSeq( wideStrips )
     styleF( wideStripsDomain ) { strip =>
-      strip.props1.bm.whenDefinedStyleS { bm =>
-        val wh = bmStyleWh( bm )
-        styleS(
-          height( wh.height.px ),
-          minWidth( wh.width.px )
-        )
+      var accS: List[ToStyle] = Nil
+      // Уточнить размеры wide-блока:
+      for (bm <- strip.props1.bm) {
+        accS ::= (height( bmStyleSide(bm.height).px ): ToStyle)
       }
+      // Цвет фона
+      for (bgColor <- strip.props1.bgColor) {
+        accS ::= (backgroundColor(Color(bgColor.hexCode)): ToStyle)
+      }
+      // Объеденить все стили:
+      styleS( accS: _* )
     }
   }
 

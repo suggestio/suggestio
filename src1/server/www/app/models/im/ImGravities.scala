@@ -22,25 +22,25 @@ sealed abstract class ImGravity(override val value: String) extends StringEnumEn
 }
 
 
-object ImGravities extends StringEnum[ImGravity] {
+case object ImGravities extends StringEnum[ImGravity] {
 
   // Некоторые значения помечены как lazy, т.к. не используются по факту.
-  object Center extends ImGravity("c") {
+  case object Center extends ImGravity("c") {
     override def imName = "Center"
   }
 
   // Не используются в проекте - скрыты.
   /*
-  object North extends ImGravity("n") {
+  case object North extends ImGravity("n") {
     override def imName = "North"
   }
-  object South extends ImGravity("s") {
+  case object South extends ImGravity("s") {
     override def imName = "South"
   }
-  object West extends ImGravity("w") {
+  case object West extends ImGravity("w") {
     override def imName = "West"
   }
-  object East extends ImGravity("e") {
+  case object East extends ImGravity("e") {
     override def imName = "East"
   }
   */

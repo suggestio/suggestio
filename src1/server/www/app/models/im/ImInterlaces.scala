@@ -23,30 +23,30 @@ sealed abstract class ImInterlace(override val value: String) extends StringEnum
 }
 
 
-object ImInterlaces extends StringEnum[ImInterlace] {
+case object ImInterlaces extends StringEnum[ImInterlace] {
 
-  object Plane extends ImInterlace("a") {
+  case object Plane extends ImInterlace("a") {
     override def imName = "Plane"
   }
 
   // Not used:
   /*
-  object None extends ImInterlace("0") {
+  case object None extends ImInterlace("0") {
     override def imName = "None"
   }
-  object Line extends ImInterlace("l") {
+  case object Line extends ImInterlace("l") {
     override def imName = "Line"
   }
-  object Jpeg extends ImInterlace("j") {
+  case object Jpeg extends ImInterlace("j") {
     override def imName = "JPEG"
   }
-  object Gif extends ImInterlace("g") {
+  case object Gif extends ImInterlace("g") {
     override def imName = "GIF"
   }
-  object Png extends ImInterlace("p") {
+  case object Png extends ImInterlace("p") {
     override def imName = "PNG"
   }
-  object Partition extends ImInterlace("r") {
+  case object Partition extends ImInterlace("r") {
     override def imName = "Partition"
   }
   */

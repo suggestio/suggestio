@@ -1,9 +1,10 @@
 package models.im
 
-import io.suggest.common.menum.{EnumMaybeWithName, EnumValue2Val}
-import io.suggest.model.play.qsb.QueryStringBindableImpl
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumJvmUtil
+import io.suggest.playx.FormMappingUtil
+import japgolly.univeq.UnivEq
 import play.api.mvc.QueryStringBindable
-import util.FormUtil.StrEnumFormMappings
 
 import scala.language.implicitConversions
 
@@ -15,69 +16,61 @@ import scala.language.implicitConversions
  * 2015.mar.13: Рефакторинг модели, добавление поддержки QueryStringBindable.
  */
 
-object OutImgFmts extends Enumeration with EnumValue2Val with EnumMaybeWithName with StrEnumFormMappings {
+case object OutImgFmts extends StringEnum[OutImgFmt] {
 
-  /**
-   * Экземпляр этой модели.
-   * @param name Название формата маленькими буквами.
-   */
-  protected abstract class Val(val name: String) extends super.Val(name) {
-    def mime: String
-    override def toString() = name
-  }
-
-  override type T = Val
-
-  val JPEG: T = new Val("jpeg") {
+  case object JPEG extends OutImgFmt("jpeg") {
     override def mime = "image/jpeg"
   }
 
-  val PNG: T = new Val("png") {
+  case object PNG extends OutImgFmt("png") {
     override def mime = "image/png"
   }
 
-  val GIF: T = new Val("gif") {
+  case object GIF extends OutImgFmt("gif") {
     override def mime = "image/gif"
   }
 
-  val SVG: T = new Val("svg") {
+  case object SVG extends OutImgFmt("svg") {
     override def mime = "image/svg+xml"
   }
 
+
+  override val values = findValues
+
   /**
    * Предложить формат для mime-типа.
+   *
    * @param mime Строка mime-типа.
    * @return OutImgFmt. Если не-image тип, то будет IllegalArgumentException.
    */
-  def forImageMime(mime: String): Option[T] = {
+  def forImageMime(mime: String): Option[OutImgFmt] = {
     values
       .find( _.mime.equalsIgnoreCase(mime) )
-      .asInstanceOf[Option[T]]
   }
 
+}
 
-  /** query string биндер для этой модели. */
-  implicit def outImgFmtQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
-    new QueryStringBindableImpl[T] {
-      /** Биндинг значения из карты аргументов. */
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
-        for ( fmtNameEith <- strB.bind(key, params) ) yield {
-          fmtNameEith.right.flatMap { fmtName =>
-            maybeWithName(fmtName)
-              .toRight[String]("Unknown image format: " + fmtName)
-          }
-        }
-      }
 
-      /** Сериализация значения. */
-      override def unbind(key: String, value: T): String = {
-        strB.unbind(key, value.name)
-      }
-    }
+sealed abstract class OutImgFmt(override val value: String) extends StringEnumEntry {
+
+  def mime: String
+
+  final def name = value
+
+  override final def toString = value
+
+}
+
+object OutImgFmt {
+
+  implicit def univEq: UnivEq[OutImgFmt] = UnivEq.derive
+
+  implicit def outImgFmtQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[OutImgFmt] = {
+    EnumeratumJvmUtil.valueEnumQsb( OutImgFmts )
   }
 
-
-  override protected def _idMaxLen: Int = 10
+  def mappingOpt = EnumeratumJvmUtil.stringIdOptMapping( OutImgFmts )
+  def mapping = FormMappingUtil.optMapping2required( mappingOpt )
 
 }
 

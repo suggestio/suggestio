@@ -6,7 +6,7 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.img.crop.MCrop
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.blk._
-import models.im.make.{IMakeArgs, IMaker, MakeResult}
+import models.im.make.{MImgMakeArgs, IImgMaker, MakeResult}
 import models.im._
 import models.mproj.ICommonDi
 
@@ -30,16 +30,16 @@ import scala.concurrent.Future
  */
 @Singleton
 class StrictWideMaker @Inject() (
-  mCommonDi: ICommonDi
-)
-  extends IMaker
+                                  mCommonDi: ICommonDi
+                                )
+  extends IImgMaker
     with MacroLogsImplLazy
 {
 
   import mCommonDi._
 
   /** Синхронная компиляция аргументов в картинку. */
-  def icompileSync(args: IMakeArgs): MakeResult = {
+  def icompileSync(args: MImgMakeArgs): MakeResult = {
     // Параметры экрана обязательны при вызове этого maker'а.
     val devScreen: DevScreen = {
       val dso = args.devScreenOpt
@@ -91,7 +91,7 @@ class StrictWideMaker @Inject() (
    * @param args Контейнер с аргументами вызова.
    * @return Фьючерс с экземпляром [[models.im.make.MakeResult]].
    */
-  override def icompile(args: IMakeArgs): Future[MakeResult] = {
+  override def icompile(args: MImgMakeArgs): Future[MakeResult] = {
     // TODO Возможно, следует использовать Future.successful()? Вычисление в целом легковесное.
     Future {
       icompileSync(args)

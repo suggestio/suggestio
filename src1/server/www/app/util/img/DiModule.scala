@@ -1,6 +1,6 @@
 package util.img
 
-import models.im.make.IMaker
+import models.im.make.IImgMaker
 import play.api.{Configuration, Environment}
 import play.api.inject.{Binding, Module}
 import util.blocks.BlkImgMaker
@@ -17,15 +17,15 @@ class DiModule extends Module {
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = {
     Seq(
       // Регистрируем релаизации IMaker'ов под разными именами.
-      bind( classOf[IMaker] )
+      bind( classOf[IImgMaker] )
         .qualifiedWith( "blk" )
         .to( classOf[BlkImgMaker] ),
 
-      bind( classOf[IMaker] )
+      bind( classOf[IImgMaker] )
         .qualifiedWith( "scWide" )
         .to( classOf[ScWideMaker] ),
 
-      bind( classOf[IMaker] )
+      bind( classOf[IImgMaker] )
         .qualifiedWith( "strictWide" )
         .to( classOf[StrictWideMaker] )
     )

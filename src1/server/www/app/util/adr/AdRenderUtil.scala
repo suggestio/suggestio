@@ -10,7 +10,7 @@ import io.suggest.model.n2.node.MNode
 import models.adr.MAdRenderArgs
 import models.blk.{OneAdQsArgs, szMulted}
 import models.im._
-import models.im.make.{IMaker, MakeArgs, MakeResult, Makers}
+import models.im.make.{IImgMaker, MImgMakeArgs, MakeResult, MImgMakers}
 import models.mproj.ICommonDi
 import util.adr.phantomjs.{PhantomJsRrrDiFactory, PhantomJsRrrUtil}
 import util.adr.wkhtml.{WkHtmlRrrDiFactory, WkHtmlRrrUtil}
@@ -27,7 +27,7 @@ import scala.concurrent.Future
  */
 @Singleton
 class AdRenderUtil @Inject() (
-                               @Named("blk") blkImgMaker : IMaker,
+                               @Named("blk") blkImgMaker : IImgMaker,
                                playUtil                  : PlayUtil,
                                mCommonDi                 : ICommonDi
                              ) {
@@ -95,16 +95,16 @@ class AdRenderUtil @Inject() (
       // Дальше есть выбор между wide и не-wide рендером.
       val (maker, dscr) = args.wideOpt match {
         case Some(wide) =>
-          (Makers.StrictWide, dscrF(wide.width))
+          (MImgMakers.StrictWide, dscrF(wide.width))
         // Нет wide-аргументов. Рендерим как block.
         case None =>
           val width = szMulted(bm.width, args.szMult)
           val dscr = dscrF(width)
-          (Makers.Block, dscr)
+          (MImgMakers.Block, dscr)
       }
 
       val imaker = current.injector.instanceOf( maker.makerClass )
-      val margs = MakeArgs(bgImg, bm, args.szMult, Some(dscr))
+      val margs = MImgMakeArgs(bgImg, bm, args.szMult, Some(dscr))
 
       for (res <- imaker.icompile(margs)) yield {
         Some(res)

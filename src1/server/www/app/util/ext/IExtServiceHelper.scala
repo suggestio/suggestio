@@ -63,9 +63,7 @@ trait IExtServiceHelper extends IMCommonDi {
     *
     * @return SzMult_t.
     */
-    // TODO хз надо ли это через конфиг задавать? Оно тут для отладки было.
-  lazy val szMult: SzMult_t = configuration.getOptional[Double](s"ext.adv.${mExtService.strId}.szMult")
-    .fold(szMultDflt)(_.toFloat)
+  def szMult: SzMult_t = szMultDflt
 
   /** Дефолтовое значение szMult, если в конфиге не задано. */
   def szMultDflt: SzMult_t = 1.0F
@@ -91,8 +89,7 @@ trait IExtServiceHelper extends IMCommonDi {
   }
 
   /** Формат рендера в картинку загружаемой карточки. */
-  lazy val imgFmt: OutImgFmt = configuration.getOptional[String](s"ext.adv.${mExtService.strId}.fmt")
-    .fold(imgFmtDflt)(OutImgFmts.withName)
+  def imgFmt = imgFmtDflt
 
   /** Дефолтовый формат изображения, если не задан в конфиге. */
   def imgFmtDflt: OutImgFmt = OutImgFmts.JPEG

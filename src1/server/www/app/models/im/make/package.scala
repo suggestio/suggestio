@@ -14,9 +14,7 @@ import play.api.data.Form
  */
 package object make {
 
-  type Maker      = Makers.T
-
   /** Тип для маппинга системной формы. Передается из контроллера в шаблоны. */
-  type SysForm_t  = Form[(Maker, IMakeArgs)]
+  type SysForm_t  = Form[(MImgMaker, MImgMakeArgs)]
 
 }
