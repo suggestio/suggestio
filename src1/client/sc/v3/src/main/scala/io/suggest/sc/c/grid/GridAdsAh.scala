@@ -210,7 +210,7 @@ class GridAdsAh[M](
               jdConf      = jdConf2,
               jdCss       = _mkJdCss(ads2, jdConf2),
               ads         = ads2,
-              hasMoreAds  = findAdsResp.ads.size >= m.limit
+              hasMoreAds  = findAdsResp.ads.lengthCompare(m.limit) >= 0
             )
           }
         )

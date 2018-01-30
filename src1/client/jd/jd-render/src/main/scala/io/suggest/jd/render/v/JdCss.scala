@@ -125,8 +125,9 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         accS ::= width ( szMulted.width.px )
         accS ::= height( szMulted.height.px )
 
-        // Если wide, то надо отцентровать блок внутри wide-контейнера.
-        if (bm.wide) {
+        // Выравнивание блока внутри внешнего контейнера:
+        if (bm.wide && !jdCssArgs.conf.isEdit) {
+          // Если wide, то надо отцентровать блок внутри wide-контейнера.
           // Формула по X банальна: с середины внешнего контейнера вычесть серелину smBlock и /2.
           import io.suggest.common.html.HtmlConstants._
           val calcFormula = 50.%%.value + SPACE + MINUS + SPACE + (szMulted.width / 2).px.value
@@ -134,6 +135,8 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
             left.attr := Css.Calc( calcFormula )
           }
           accS ::= calcAV
+        } else {
+          accS ::= left(0.px)
         }
       }
 
