@@ -330,7 +330,7 @@ object GridBuilderUtil {
     val cellWidthPx  = Math.round(BlockWidths.min.value * blkSzMultD).toInt // props.columnWidth
     val cellHeightPx = BlockHeights.min.value * blkSzMultD
 
-    val paddingMultedPx = Math.round(args.jdConf.blockPadding.value * szMultD).toInt
+    val paddingMultedPx = Math.round(args.jdConf.blockPadding.fullBetweenBlocksPx * szMultD).toInt
     val cellPaddingWidthPx  = paddingMultedPx // _orZero( props.gutterWidth )
     val cellPaddingHeightPx = paddingMultedPx // _orZero( props.gutterHeight )
 

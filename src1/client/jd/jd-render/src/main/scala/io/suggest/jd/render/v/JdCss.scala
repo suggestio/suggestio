@@ -1,7 +1,7 @@
 package io.suggest.jd.render.v
 
 import diode.FastEq
-import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
+import io.suggest.ad.blk.BlockPaddings
 import io.suggest.color.MColorData
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.css.Css
@@ -48,6 +48,11 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   val blkSzMultD = jdCssArgs.conf.blkSzMult.toDouble
 
+  /** Стиль выделения группы блоков. */
+  val blockGroupOutline = style(
+    outlineStyle.solid,
+    outlineWidth( szMultedSide( BlockPaddings.default.outlinePx ).px )
+  )
 
   // TODO Вынести статические стили в object ScCss?
   /** Все блоки помечаются этим классом. */
@@ -73,10 +78,12 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   }
 
   // Фактическая ширина плитки.
+  /*
   private lazy val gridWidthPx = {
     val s = jdCssArgs.conf.gridColumnsCount * jdCssArgs.conf.szMult.toDouble
     s * BlockWidths.min.value + (s + 2) * (BlockPaddings.default.value / 2)
   }
+  */
 
   val wideBlockStyle = {
     val zeroPx = 0.px
@@ -92,12 +99,12 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // -------------------------------------------------------------------------------
   // Strip
 
-  def bmStyleSide(sizePx: Int) = Math.round(sizePx * blkSzMultD).toInt
+  def szMultedSide(sizePx: Int) = Math.round(sizePx * blkSzMultD).toInt
 
   def bmStyleWh(bm: ISize2di): MSize2di = {
     MSize2di(
-      width  = bmStyleSide(bm.width),
-      height = bmStyleSide(bm.height)
+      width  = szMultedSide(bm.width),
+      height = szMultedSide(bm.height)
     )
   }
 
@@ -152,10 +159,10 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           // Записываем одну из двух сторон картинки.
           if (bm.wide) {
             // wide-картинки можно прессовать только по высоте блока
-            height( bmStyleSide(bm.height).px )
+            height( szMultedSide(bm.height).px )
           } else {
             // Избегаем расплющивания картинок, пусть лучше обрезка будет. Здесь только width.
-            width( bmStyleSide(bm.width).px )
+            width( szMultedSide(bm.width).px )
           }
         )
       }
@@ -174,7 +181,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       var accS: List[ToStyle] = Nil
       // Уточнить размеры wide-блока:
       for (bm <- strip.props1.bm) {
-        accS ::= (height( bmStyleSide(bm.height).px ): ToStyle)
+        accS ::= (height( szMultedSide(bm.height).px ): ToStyle)
       }
       // Цвет фона
       for (bgColor <- strip.props1.bgColor) {

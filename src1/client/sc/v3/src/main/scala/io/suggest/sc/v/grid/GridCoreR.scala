@@ -5,7 +5,7 @@ import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.grid.build._
-import io.suggest.jd.render.m.MJdArgs
+import io.suggest.jd.render.m.{MJdArgs, MJdRenderArgs}
 import io.suggest.jd.render.v.{JdGridUtil, JdR}
 import io.suggest.jd.tags.JdTag
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -111,6 +111,19 @@ class GridCoreR(
             .zipWithIndex
           rootId = ad.nodeId.getOrElse(i.toString)
           edges  = ad.flatGridEdges
+
+          // Групповое выделение цветом обводки блоков, когда карточка раскрыта:
+          groupOutlineColorOpt = ad.focused
+            .toOption
+            .flatMap { _ =>
+              ad.main.template.rootLabel.props1.bgColor
+            }
+          // Сборка контейнера настроек рендера всех плиток группы:
+          jdRenderArgs = groupOutlineColorOpt.fold(MJdRenderArgs.empty) { _ =>
+            MJdRenderArgs(groupOutLined = groupOutlineColorOpt)
+          }
+
+          // Пройтись по шаблонам карточки
           (tpl2, j) <- ad.flatGridTemplates.iterator.zipWithIndex
 
         } yield {
@@ -131,7 +144,8 @@ class GridCoreR(
                 template = tpl2,
                 edges    = edges,
                 jdCss    = mgrid.jdCss,
-                conf     = mgrid.jdConf
+                conf     = mgrid.jdConf,
+                renderArgs = jdRenderArgs
               )
             } ( jdR.apply )
           )

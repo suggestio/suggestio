@@ -164,6 +164,13 @@ class JdR(
 
       val bgColor = _bgColorOpt(s, jdArgs)
 
+      val groupOutlineTm = jdArgs.renderArgs.groupOutLined.fold( EmptyVdom ) { mcd =>
+        TagMod(
+          C.blockGroupOutline,
+          ^.outlineColor := mcd.hexCode
+        )
+      }
+
       val bgImgOpt = for {
         bgImgData <- s.props1.bgImg
         edgeUid   = bgImgData.imgEdge.edgeUid
@@ -245,7 +252,8 @@ class JdR(
         } else {
           TagMod(
             bgColor,
-            maybeSelAV
+            maybeSelAV,
+            groupOutlineTm
           )
         },
 
@@ -279,6 +287,7 @@ class JdR(
         // Широкоформатное отображение, рендерим фон без ограничений блока:
         <.div(
           keyAV,
+          groupOutlineTm,
           bgColor,
           wideWhBg,
           maybeSelAV,

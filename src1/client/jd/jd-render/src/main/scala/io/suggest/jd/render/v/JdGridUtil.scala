@@ -45,7 +45,7 @@ class JdGridUtil(
     val szMultD = conf.szMult.toDouble
 
     // Рассчёт расстояния между разными блоками.
-    val cellPaddingPx = Math.round(conf.blockPadding.value * szMultD).toInt
+    val cellPaddingPx = Math.round(conf.blockPadding.fullBetweenBlocksPx * szMultD).toInt
 
     val blkSzMultD = conf.blkSzMult.toDouble
 
