@@ -52,12 +52,12 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // TODO Вынести статические стили в object ScCss?
   /** Все блоки помечаются этим классом. */
   val smBlock = style(
-    // Без addClassName("sm-block"), т.к. это ненужные transition и уже неактуальные стили.
-    // Дефолтовые настройки шрифтов.
+    // Без addClassName("sm-block"), т.к. это ненужные transition и уже неактуальные стили (кроме overflow:hidden).
+    overflow.hidden,
+    // Дефолтовые настройки шрифтов внутри блока:
     fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
     fontSize( (MFontSizes.default.value * blkSzMultD).px )
   )
-
 
   /** Текущий выбранный тег выделяется на картинке. */
   val selectedTag = style(
@@ -82,10 +82,10 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     val zeroPx = 0.px
     style(
       position.absolute,
-      top(zeroPx),
-      left(zeroPx),
+      top(zeroPx)
+      //left(zeroPx)
       // TODO Надо не просто ширину плитки закрывать, но и за экран по обе стороны уходить.
-      minWidth( gridWidthPx.px )
+      //minWidth( gridWidthPx.px )
     )
   }
 
@@ -110,42 +110,53 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     val stripsDomain = new Domain.OverSeq( strips )
 
     styleF(stripsDomain) { strip =>
+      var accS = List.empty[ToStyle]
+
       // Стиль размеров блока-полосы.
-      strip.props1.bm.whenDefinedStyleS { bm =>
+      for (bm <- strip.props1.bm) {
         val szMulted = bmStyleWh(bm)
-        styleS(
-          width ( szMulted.width.px ),
-          height( szMulted.height.px )
-        )
+        accS ::= width ( szMulted.width.px )
+        accS ::= height( szMulted.height.px )
+
+        // Если wide, то надо отцентровать блок внутри wide-контейнера.
+        if (bm.wide) {
+          // Формула по X банальна: с середины внешнего контейнера вычесть серелину smBlock и /2.
+          import io.suggest.common.html.HtmlConstants._
+          val calcFormula = 50.%%.value + SPACE + MINUS + SPACE + (szMulted.width / 2).px.value
+          val calcAV: ToStyle = {
+            left.attr := Css.Calc( calcFormula )
+          }
+          accS ::= calcAV
+        }
       }
+
+      styleS( accS: _* )
     }
   }
 
 
-  /** Стили для фоновых картинок стрипов (пока только non-wide). */
+  /** Стили для фоновых картинок стрипов. */
   val stripBgStyleF = {
     // Интересуют только стрипы c bgImg, но без wide
     val strips = _allJdTagsIter
-      .flatMap { jdt =>
+      .filter { jdt =>
         val p1 = jdt.props1
-        for {
-          bm <- p1.bm
-          if (jdt.name ==* MJdTagNames.STRIP) && p1.bgImg.nonEmpty && !bm.wide
-        } yield {
-          jdt
-        }
+        p1.bm.nonEmpty && (jdt.name ==* MJdTagNames.STRIP) && p1.bgImg.nonEmpty
       }
       .toIndexedSeq
     val stripsDomain = new Domain.OverSeq( strips )
 
-    // TODO Убрано, потому что тут только !wide изображения. Когда будет унифицироавно до всех, можно будет заюзать это.
-    //val commonCss = addClassName( Css.Block.BG )
-
     styleF(stripsDomain) { strip =>
       strip.props1.bm.whenDefinedStyleS { bm =>
         styleS(
-          // Избегаем расплющивания картинок, пусть лучше обрезка будет. Здесь только width.
-          width( bmStyleSide(bm.width).px )
+          // Записываем одну из двух сторон картинки.
+          if (bm.wide) {
+            // wide-картинки можно прессовать только по высоте блока
+            height( bmStyleSide(bm.height).px )
+          } else {
+            // Избегаем расплющивания картинок, пусть лучше обрезка будет. Здесь только width.
+            width( bmStyleSide(bm.width).px )
+          }
         )
       }
     }

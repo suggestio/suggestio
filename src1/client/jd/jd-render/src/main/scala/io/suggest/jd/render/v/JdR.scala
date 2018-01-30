@@ -178,13 +178,11 @@ class JdR(
           // Запретить таскать изображение, чтобы не мешать перетаскиванию strip'ов
           if (jdArgs.conf.isEdit) {
             ^.draggable := false
-          } else if (isWide) {
-            wideWhBg
           } else {
             EmptyVdom
           },
 
-          // Поддержка эмуляции кропа.
+          // Размеры и позиционирование фоновой картинки в блоке:
           {
             // Рассчитываем аргументы кропа, если есть.
             val cropEmuOpt = for {
@@ -197,13 +195,9 @@ class JdR(
             }
 
             cropEmuOpt.fold[TagMod] {
-              // Просто заполнение всего блока картинкой.
-              if (isWide) {
-                // TODO Надо marginLeft или translate(), чтобы отцентровать wide-картинку по ширине плитки.
-                EmptyVdom
-              } else {
-                C.stripBgStyleF(s)
-              }
+              // Просто заполнение всего блока картинкой. Т.к. фактический размер картинки отличается от размера блока
+              // на px ratio, надо подогнать картинку по размерам:
+              C.stripBgStyleF(s)
             } { ecArgs =>
               // Нужно рассчитать параметры margin, w, h изображения, чтобы оно имитировало заданный кроп.
               // margin: -20px 0px 0px -16px; -- сдвиг вверх и влево.
@@ -241,7 +235,8 @@ class JdR(
       val maybeSelAV = _maybeSelected( s, jdArgs )
 
       val smBlock = <.div(
-        keyAV,
+        keyAV
+          .unless(isWide),
         C.smBlock,
         C.bmStyleF( s ),
 

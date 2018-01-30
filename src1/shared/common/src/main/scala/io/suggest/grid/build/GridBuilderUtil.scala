@@ -230,7 +230,11 @@ object GridBuilderUtil {
                 // 2018-01-24 Решено, что после wide-карточки на focused-уровне надо рендерить дальнейшую карточку не в столбик,
                 // а в обычном порядке по ширине всей плитки. Для этого можно объеденить два последних уровня, но лучше
                 // подменить контекст на текущем уровне на root, чтобы не нарушать порядок рендера.
-                val s2 = if (bm.wide && !currLvl2.ctx.isRoot) {
+                val s2 = if (
+                  bm.wide && !currLvl2.ctx.isRoot &&
+                  // 2018-01-30 Запретить этот сброс, если остался только один элемент: один болтающийся элемент выглядит не очень.
+                  currLvl2.restItems.lengthCompare(1) > 0
+                ) {
                   val currLvl3 = s1.levels.head.copy(
                     ctx = rootLvl.ctx,
                     currLineCol = rootLvl.currLineCol

@@ -19,6 +19,12 @@ object Css {
     cssClasses.mkString( HtmlConstants.SPACE )
   }
 
+  object Calc {
+    final def PREFIX = "calc("
+    final def SUFFIX = HtmlConstants.`)`
+    def apply(content: String): String = PREFIX + content + SUFFIX
+  }
+
   /** Всякие строковые литералы внутри CSS должны быть в ковычках. */
   def quoted(s: String): String = {
     val q = "'"
