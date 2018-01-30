@@ -229,7 +229,7 @@ class DocEditAh[M](
         val v3 = m.jdTag.name match {
           // Переключение на новый стрип. Инициализировать состояние stripEd:
           case n @ MJdTagNames.STRIP =>
-            val v33 = v2.withStripEd(
+            var v33 = v2.withStripEd(
               Some(MStripEdS(
                 isLastStrip = {
                   val hasManyStrips = v2.jdArgs.template
@@ -241,15 +241,17 @@ class DocEditAh[M](
                 }
               ))
             )
+
             // Если тип текущего тега изменился, то сбросить текущий slide-блок.
-            if (oldTagName contains n) {
-              v33
-            } else {
-              v33.withSlideBlocks(
-                v2.slideBlocks
+            if ( !oldTagName.contains(n) ) {
+              v33 = v33.withSlideBlocks(
+                v33.slideBlocks
                   .withExpanded( Some(SlideBlockKeys.BLOCK_BG) )
               )
             }
+
+            v33
+
           // Это не strip, обнулить состояние stripEd, если оно существует:
           case _ =>
             v2.withOutStripEd
@@ -259,12 +261,15 @@ class DocEditAh[M](
         val v4 = v0.jdArgs.selectedTag.fold(v3) { jdtTree =>
           val jdt = jdtTree.rootLabel
           val dataEdges0 = v0.jdArgs.edges
+
+          var v44 = v3
+
           if (
             jdt.name ==* MJdTagNames.QD_CONTENT &&
             QdJsUtil.isEmpty(jdtTree, dataEdges0) &&
-            v3.jdArgs.template.contains(jdt)
+            v44.jdArgs.template.contains(jdt)
           ) {
-            val tpl1 = v3.jdArgs.template
+            val tpl1 = v44.jdArgs.template
             val tpl2 = tpl1
               .loc
               .findByLabel(jdt)
@@ -276,9 +281,9 @@ class DocEditAh[M](
               }
             // Очистить эджи от лишнего контента
             val dataEdges2 = JdTag.purgeUnusedEdges(tpl2, dataEdges0)
-            v3
+            v44 = v44
               .withJdArgs(
-                v3.jdArgs.copy(
+                v44.jdArgs.copy(
                   template    = tpl2,
                   edges       = dataEdges2,
                   jdCss       = jdCssFactory.mkJdCss(
@@ -286,9 +291,25 @@ class DocEditAh[M](
                   )
                 )
               )
-          } else {
-            v3
+
+          } else if (
+            // Если до этого был выбран strip
+            jdt.name ==* MJdTagNames.STRIP
+          ) {
+            // цвет фона которого отсутсвует в презетах
+            for (
+              bgColorMcd <- jdt.props1.bgColor
+              if !v44.colorsState.colorPresets.contains(bgColorMcd)
+            ) {
+              // то закинуть его цвет фона в color-презеты.
+              v44 = v44.withColorsState(
+                v44.colorsState
+                  .prependPresets( jdt.props1.bgColor.get )
+              )
+            }
           }
+
+          v44
         }
 
         updated( v4 )
@@ -991,26 +1012,33 @@ class DocEditAh[M](
     case AddStripClick =>
       val v0 = value
 
+      val currStripLocOpt = v0.jdArgs.selectedTagLoc
+        .flatMap {
+          _.findUpByType( MJdTagNames.STRIP )
+        }
+
+      // Взять цвет фона с текущего стрипа.
+      val bgColorSome0 = currStripLocOpt
+        .flatMap(_.getLabel.props1.bgColor)
+        .orElse( Some(MColorData("ffffff")) )
+
+      // Собрать начальный блок:
       val newStripTree = Tree.Leaf(
         JdTag.strip(
           bm      = BlockMeta.DEFAULT,
-          bgColor = Some(MColorData("ffffff"))
+          bgColor = bgColorSome0
         )
       )
 
       // Найти предшествующий стрип и воткнуть справа от него. Либо в конце подураня корня шаблона, если текущего стрипа нет.
-      val newStripLoc = v0.jdArgs.selectedTagLoc
-        .flatMap {
-          _.findUpByType( MJdTagNames.STRIP )
-        }
-        .fold {
-          // Нет текущего стрипа. Впихнуть просто в шаблон
-          v0.jdArgs.template
-            .loc
-            .insertDownLast( newStripTree )
-        } { currStripLoc =>
-          currStripLoc.insertRight( newStripTree )
-        }
+      val newStripLoc = currStripLocOpt.fold {
+        // Нет текущего стрипа. Впихнуть просто в шаблон
+        v0.jdArgs.template
+          .loc
+          .insertDownLast( newStripTree )
+      } { currStripLoc =>
+        currStripLoc.insertRight( newStripTree )
+      }
 
       val tpl2 = newStripLoc.toTree
 

@@ -24,6 +24,17 @@ object MColorsState {
 
   implicit def univEq: UnivEq[MColorsState] = UnivEq.derive
 
+
+  /** Макс.длина списка презетов. Должна быть кратна 8 (зависит от color-picker'а). */
+  private val PRESETS_LEN_MAX = 16
+
+  def prependPresets(mcd: MColorData, presets0: List[MColorData]): List[MColorData] = {
+    var cps = mcd :: presets0
+    if (cps.lengthCompare(PRESETS_LEN_MAX) > 0)
+      cps = cps.slice(0, PRESETS_LEN_MAX)
+    cps
+  }
+
 }
 
 
@@ -40,6 +51,9 @@ case class MColorsState(
 
   def withColorPresets(colorPresets: List[MColorData])        = copy(colorPresets = colorPresets)
   def withHistograms(histograms: Map[String, MHistogram])     = copy(histograms = histograms)
+
+
+  def prependPresets(mcd: MColorData) = withColorPresets( MColorsState.prependPresets(mcd, colorPresets) )
 
 }
 

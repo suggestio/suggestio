@@ -26,19 +26,41 @@ class ColorPickAh[M](
     // Сигнал об изменении цвета.
     case m: ColorChanged =>
       val v0 = value.get
-      val v2 = v0.withColorOpt(
+      var v2 = v0.withColorOpt(
         colorOpt = Some( m.mcd )
       )
+
+      // Запилить в состояние презетов выбранный цвет.
+      if (m.isCompleted && !v2.colorsState.colorPresets.contains(m.mcd)) {
+        v2 = v2.withColorsState(
+          v2.colorsState
+            .prependPresets( m.mcd )
+        )
+      }
+
       updated( Some(v2) )
 
 
     // Клик где-то за пределами picker'а, когда тот открыт. Значит надо скрыть текущий picker.
     case DocBodyClick if value.exists(_.pickS.isShown) =>
       val v0 = value.get
-      val v2 = v0.withPickS(
+
+      // Убрать с экрана picker
+      var v2 = v0.withPickS(
         v0.pickS
           .withShownAt( None )
       )
+
+      // Сохранить текущий цвет.
+      for (
+        mcd <- v0.colorOpt
+        if !v2.colorsState.colorPresets.contains(mcd)
+      ) {
+        v2 = v2.withColorsState(
+          v2.colorsState.prependPresets( mcd )
+        )
+      }
+
       updated( Some(v2) )
 
 

@@ -241,6 +241,15 @@ class JdR(
 
       val maybeSelAV = _maybeSelected( s, jdArgs )
 
+      // Скрывать не-main-стрипы, если этого требует рендер.
+      // Это касается только стрипов, у которых нет isMain = Some(true)
+      val hideNonMainStrip = if (jdArgs.renderArgs.hideNonMainStrips && !s.props1.isMain.getOrElseFalse) {
+        // Данный стип надо приглушить с помощью указанных css-стилей.
+        ^.visibility.hidden
+      } else {
+        EmptyVdom
+      }
+
       val smBlock = <.div(
         keyAV
           .unless(isWide),
@@ -251,19 +260,11 @@ class JdR(
           jdArgs.jdCss.wideBlockStyle
         } else {
           TagMod(
+            hideNonMainStrip,
             bgColor,
             maybeSelAV,
             groupOutlineTm
           )
-        },
-
-        // Скрыть не-main-стрипы, если этого требует рендер.
-        // Это касается только стрипов, у которых нет isMain = Some(true)
-        if (jdArgs.renderArgs.hideNonMainStrips && !s.props1.isMain.getOrElseFalse) {
-          // Данный стип надо приглушить с помощью указанных css-стилей.
-          ^.visibility.hidden
-        } else {
-          EmptyVdom
         },
 
         // Если текущий стрип выделен, то его можно таскать.
@@ -288,6 +289,7 @@ class JdR(
         <.div(
           keyAV,
           groupOutlineTm,
+          hideNonMainStrip,
           bgColor,
           wideWhBg,
           maybeSelAV,

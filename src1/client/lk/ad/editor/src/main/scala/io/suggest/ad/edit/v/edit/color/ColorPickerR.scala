@@ -4,7 +4,7 @@ import com.github.casesandberg.react.color.{Color, PresetColor_t, Sketch, Sketch
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.ad.edit.m.ColorChanged
-import io.suggest.ad.edit.m.edit.color.{MColorPickerS, MColorsState}
+import io.suggest.ad.edit.m.edit.color.MColorsState
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
@@ -56,18 +56,11 @@ class ColorPickerR(
     }
     private lazy val _onColorChangedCbF = ReactCommonUtil.cbFun2ToJsCb( _onColorChanged )
 
-
-    /** Реакция на завершение выбора цвета. */
-    private def _onColorCompletelyChanged(color: Color, e: ReactEvent): Callback = {
-      _onColorChangedBody(color, isComplete = true)
-    }
-    private lazy val _onColorCompletelyChangedCbF = ReactCommonUtil.cbFun2ToJsCb( _onColorCompletelyChanged )
-
     private def _onColorChangedBody(color: Color, isComplete: Boolean): Callback = {
       val mcd = MColorData(
         code = MColorData.stripDiez(color.hex)
       )
-      dispatchOnProxyScopeCB($, ColorChanged(mcd, isCompleted = false))
+      dispatchOnProxyScopeCB($, ColorChanged(mcd, isCompleted = isComplete))
     }
 
 
@@ -78,12 +71,14 @@ class ColorPickerR(
           ^.left := props.fixedXy.x.px,
           ^.top := props.fixedXy.y.px,
 
+          // Чтобы не скрывался picker из-за DocBodyClick.
+          ^.onClick ==> ReactCommonUtil.stopPropagationCB,
+
           Sketch(
             new SketchProps {
               override val color        = props.color.hexCode
               override val disableAlpha = true
               override val onChange     = _onColorChangedCbF
-              override val onChangeComplete = _onColorCompletelyChangedCbF
               override val presetColors = {
                 props.colorsState.colorPresets
                   .iterator
