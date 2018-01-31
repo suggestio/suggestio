@@ -41,6 +41,10 @@ sealed trait IGbBlockPayload {
   def fold[T](blockF: MGbBlock => T, subBlocksF: MGbSubItems => T): T
   def flatten: List[IGbBlockPayload]
 
+  def headOption: Option[IGbBlockPayload]
+  def headOptionBlock: Option[MGbBlock]
+  def headIsWide: Boolean = headOptionBlock.exists(_.bm.wide)
+
   /** Вернуть параметры первого блока. */
   def firstBlockMeta: BlockMeta = {
     fold(_.bm, _.subItems.head.firstBlockMeta)
@@ -64,6 +68,8 @@ case class MGbBlock(
 
   override def isBlock = true
   override def flatten = this :: Nil
+  override def headOption = headOptionBlock
+  override def headOptionBlock = Some(this)
 
   override def fold[T](blockF: MGbBlock => T, subBlocksF: MGbSubItems => T): T = {
     blockF(this)
@@ -77,6 +83,9 @@ case class MGbSubItems(
                       )
   extends IGbBlockPayload {
 
+
+  override def headOptionBlock = headOption.flatMap(_.headOptionBlock)
+  override def headOption = subItems.headOption
   override def isBlock = false
   override def flatten = subItems
 

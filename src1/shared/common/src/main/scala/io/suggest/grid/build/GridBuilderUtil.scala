@@ -126,7 +126,7 @@ object GridBuilderUtil {
                 // Текущий неширокий блок как-то пересекается (по высоте) с широкой карточкой?
                 s0.isWideOverlaps(currWide) ||
                   // Ширина текущего блока влезает в текущую строку?
-                  (!bm.wide  && bm.w.relSz > currLvl._getMaxCellWidthCurrLine()) //||
+                  (!bm.wide  && bm.w.relSz > currLvl._getMaxCellWidthCurrLine()) // ||
                   // Широкий блок подразумевает пустую строку для себя: это не надо, т.к. используется reDo-акк. TODO А может тоже надо?
                   //(bm.wide   && rootLvl.currLineCol.column > 0)
               ) {
@@ -149,7 +149,7 @@ object GridBuilderUtil {
                 }
 
                 val currLvl2 = currLvl.copy(
-                  restItems = currLvl.restItems.tail,
+                  restItems   = currLvl.restItems.tail,
                   currLineCol = xy.withX( endColumnIndex )
                 )
                 val xyAbs = currLvl.ctx.colLineToAbs( xy )
@@ -239,9 +239,12 @@ object GridBuilderUtil {
                 // подменить контекст на текущем уровне на root, чтобы не нарушать порядок рендера.
                 val s2 = if (
                   bm.wide && !currLvl2.ctx.isRoot &&
-                  // 2018-01-30 Запретить этот сброс, если остался только один элемент: один болтающийся элемент выглядит не очень.
-                  currLvl2.restItems.lengthCompare(1) > 0
+                    // Нельзя делать сброс, если последующий элемент тоже wide. Это решает только последний из первых wide-элементов.
+                    !currLvl2.restItems.headOption.exists(_.headIsWide) &&
+                    // 2018-01-30 Запретить этот сброс, если остался только один элемент: один болтающийся элемент выглядит не очень.
+                    currLvl2.restItems.lengthCompare(1) > 0
                 ) {
+                  //println( itemExt, currLvl2.restItems.headOption, !currLvl2.restItems.headOption.exists(_.headIsWide) )
                   val currLvl3 = s1.levels.head.copy(
                     ctx = rootLvl.ctx,
                     currLineCol = rootLvl.currLineCol

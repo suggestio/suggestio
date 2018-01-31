@@ -285,18 +285,15 @@ class GridAdsAh[M](
           noChange
 
         } { case (ad0, index) =>
-          def __saveAdIntoValue(newAd: MScAdData) = _saveAdIntoValue(index, newAd, v0)
-
           // Есть искомая карточка. Перейти к обработке результата запроса.
           m.tryResp.fold(
             // Какая-то ошибка запроса этой рекламной карточки.
             {ex =>
               LOG.error(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, msg = m)
-              val v2 = __saveAdIntoValue(
-                ad0.withFocused(
-                  ad0.focused.fail(ex)
-                )
+              val ad1 = ad0.withFocused(
+                ad0.focused.fail(ex)
               )
+              val v2 = _saveAdIntoValue(index, ad1, v0)
               updated(v2)
             },
             {sc3Resp =>
@@ -313,16 +310,34 @@ class GridAdsAh[M](
                 // Фокусировка: раскрыть текущую карточку с помощью принятого контента.
                 case MScRespActionTypes.AdsFoc =>
                   val adsResp = ra.ads.get
-                  val v1 = __saveAdIntoValue(
-                    ad0.withFocused(
-                      ad0.focused.ready(
-                        MBlkRenderData( adsResp.ads.head )
-                      )
+                  val ad1 = ad0.withFocused(
+                    ad0.focused.ready(
+                      MBlkRenderData( adsResp.ads.head )
                     )
                   )
-                  val v2 = v1.withJdCss(
-                    _mkJdCss(v1.ads, v1.jdConf),
+                  val adsPot2 = for (ads0 <- v0.ads) yield {
+                    ads0
+                      .iterator
+                      .zipWithIndex
+                      .map { case (xad0, i) =>
+                        if (i ==* index) {
+                          // Раскрыть выбранную карточку.
+                          ad1
+                        } else if (xad0.focused.nonEmpty) {
+                          // Скрыть все уже открытык карточки.
+                          xad0.withFocused( Pot.empty )
+                        } else {
+                          // Нераскрытые карточки - пропустить без изменений.
+                          xad0
+                        }
+                      }
+                      .toVector
+                  }
+                  val v2 = v0.copy(
+                    jdCss = _mkJdCss(adsPot2, v0.jdConf),
+                    ads   = adsPot2
                   )
+                  // TODO Надо проскроллить выдачу на начало открытой карточки.
                   updated(v2)
 
                 case other =>
