@@ -2,7 +2,6 @@ package io.suggest.sc.c
 
 import diode._
 import io.suggest.common.empty.OptionUtil
-import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.GetRouterCtlF
 import io.suggest.sc.m.{MScRoot, ResetUrlRoute, RouteTo}
@@ -128,7 +127,7 @@ class TailAh[M](
         fxsAcc ::= Effect.action {
           GetIndex( withWelcome = true )
         }
-        val fx = ReactDiodeUtil.mergeEffectsSet( fxsAcc ).get
+        val fx = fxsAcc.mergeEffectsSet.get
         ah.updateMaybeSilentFx(needUpdateUi)(v2, fx)
 
       } else if (gridNeedsReload) {
@@ -136,17 +135,17 @@ class TailAh[M](
         fxsAcc ::= Effect.action {
           GridLoadAds( clean = true, ignorePending = true )
         }
-        val fx = ReactDiodeUtil.mergeEffectsSet( fxsAcc ).get
+        val fx = fxsAcc.mergeEffectsSet.get
         ah.updateMaybeSilentFx(needUpdateUi)(v2, fx)
 
       } else if (needUpdateUi) {
         // Изменения на уровне интерфейса.
-        val fxOpt = ReactDiodeUtil.mergeEffectsSet( fxsAcc )
+        val fxOpt = fxsAcc.mergeEffectsSet
         ah.updatedMaybeEffect( v2, fxOpt )
 
       } else {
         // Ничего не изменилось или только эффекты.
-        val fxOpt = ReactDiodeUtil.mergeEffectsSet( fxsAcc )
+        val fxOpt = fxsAcc.mergeEffectsSet
         ah.maybeEffectOnly( fxOpt )
       }
 

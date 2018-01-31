@@ -5,6 +5,7 @@ import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.edit.MQdEditS
+import io.suggest.ad.edit.m.edit.color.MColorsState
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.color.MColorData
 import io.suggest.common.MHands
@@ -27,7 +28,7 @@ import io.suggest.pick.Base64JsUtil
 import io.suggest.primo.SetVal
 import io.suggest.quill.m.TextChanged
 import io.suggest.quill.u.QuillDeltaJsUtil
-import io.suggest.react.ReactDiodeUtil
+import io.suggest.react.ReactDiodeUtil.EffectsOps
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ueq.QuillUnivEqUtil._
@@ -71,7 +72,8 @@ class DocEditAh[M](
 
     // 20. Необходимо организовать блобификацию файлов эджей, заданных через dataURL.
     val dataPrefix = HtmlConstants.Proto.DATA_
-    val blobEffectsIter = edges2
+
+    val totalFxOpt = edges2
       .valuesIterator
       .flatMap[Effect] { edgeData =>
         val jde = edgeData.jdEdge
@@ -79,39 +81,29 @@ class DocEditAh[M](
         // - Просто эдж, который надо молча завернуть в EdgeData. Текст, например.
         // - Эдж, сейчас который проходит асинхронную процедуру приведения к блобу. Он уже есть в исходной карте эджей со ссылкой в виде base64.
         // - Эдж, который с base64-URL появился в новой карте, но отсутсвует в старой. Нужно запустить его блоббирование.
-        val blobFxOpt = jde.url
-          .filter(_ startsWith dataPrefix)
-          .fold [Option[Effect]] {
-            // Это не-dataURL. А blob или просто без URL. В любом случае -- пропуск без изменений.
-            None
-          } { dataUrl =>
+        val blobFxOpt = for {
+          dataUrl <- jde.url
+          if (dataUrl startsWith dataPrefix) &&
             // Это dataURL. Тут два варианта: юзер загрузил новую картинку только что, либо загружена ранее.
             // Смотрим в old-эджи, есть ли там текущий эдж с этой картинкой.
-            oldEdges
-              .get( jde.id )
-              .fold [Option[Effect]] {
-                // Это новая картинка. Организовать перегонку в blob.
-                val fx = Effect {
-                  val fut = for (blob <- Base64JsUtil.b64Url2Blob(dataUrl)) yield {
-                    B64toBlobDone(dataUrl, blob)
-                  }
-                  for (ex <- fut.failed)
-                    LOG.error(ErrorMsgs.BASE64_TO_BLOB_FAILED, ex = ex)
-                  fut
-                }
-                Some(fx)
-              } { _ =>
-                // Этот dataURL-эдж уже был ранее, значит blob уже должен обрабатываться в фоне.
-                None
-              }
+            !(oldEdges contains jde.id)
+        } yield {
+          // Это новая картинка. Организовать перегонку в blob.
+          Effect {
+            val fut = for (blob <- Base64JsUtil.b64Url2Blob(dataUrl)) yield {
+              B64toBlobDone(dataUrl, blob)
+            }
+            for (ex <- fut.failed)
+              LOG.error(ErrorMsgs.BASE64_TO_BLOB_FAILED, ex = ex)
+            fut
           }
+        }
 
         // Аккамулировать эффект и обновлённый data-edge
         blobFxOpt
       }
-
-    // 90. Объединить все собранные эффекты воедино.
-    val totalFxOpt = ReactDiodeUtil.mergeEffectsSet( blobEffectsIter )
+      // Объединить все собранные эффекты воедино.
+      .mergeEffectsSet
 
     // Вернуть итоговую карту эджей и объединённый эффект.
     (totalFxOpt, edges2)
@@ -191,7 +183,7 @@ class DocEditAh[M](
           .findByLabel( m.jdTag )
           .get
         val newSelJdt = newSelJdtTreeLoc.toNodePath
-        val v1 = v0.withJdArgs(
+        var v2 = v0.withJdArgs(
           v0.jdArgs
             .withRenderArgs(
               v0.jdArgs.renderArgs
@@ -200,40 +192,40 @@ class DocEditAh[M](
         )
 
         // Если это QdTag, то отработать состояние quill-delta:
-        val v2 = m.jdTag.name match {
+        v2 = if (m.jdTag.name ==* MJdTagNames.QD_CONTENT) {
           // Это qd-тег, значит нужно собрать и залить текущую дельту текста в состояние.
-          case MJdTagNames.QD_CONTENT =>
-            // Нужно получить текущее qd-под-дерево (для сборки дельты)
-            val delta2 = quillDeltaJsUtil.qdTag2delta(
-              qd    = newSelJdtTreeLoc.tree,
-              edges = v1.jdArgs.edges
-            )
-            v1
-              .withQdEdit(
-                Some(
-                  MQdEditS(
-                    initDelta  = delta2
-                  )
+          // Нужно получить текущее qd-под-дерево (для сборки дельты)
+          val delta2 = quillDeltaJsUtil.qdTag2delta(
+            qd    = newSelJdtTreeLoc.tree,
+            edges = v2.jdArgs.edges
+          )
+          v2
+            .withQdEdit(
+              Some(
+                MQdEditS(
+                  initDelta  = delta2
                 )
               )
-              .withSlideBlocks(
-                v1.slideBlocks
-                  .withExpanded( Some(SlideBlockKeys.CONTENT) )
-              )
+            )
+            .withSlideBlocks(
+              v2.slideBlocks
+                .withExpanded( Some(SlideBlockKeys.CONTENT) )
+            )
+
+        } else {
           // Очистить состояние от дельты.
-          case _ =>
-            v1.withOutQdEdit
+          v2.withOutQdEdit
         }
 
         // Если это strip, то активировать состояние strip-редактора.
-        val v3 = m.jdTag.name match {
+        m.jdTag.name match {
           // Переключение на новый стрип. Инициализировать состояние stripEd:
           case n @ MJdTagNames.STRIP =>
-            var v33 = v2.withStripEd(
+            v2 = v2.withStripEd(
               Some(MStripEdS(
                 isLastStrip = {
                   val hasManyStrips = v2.jdArgs.template
-                    .deepOfTypeIter( MJdTagNames.STRIP )
+                    .deepOfTypeIter( n )
                     // Оптимизация: НЕ проходим весь strip-итератор, а считаем только первые два стрипа.
                     .slice(0, 2)
                     .size > 1
@@ -244,75 +236,69 @@ class DocEditAh[M](
 
             // Если тип текущего тега изменился, то сбросить текущий slide-блок.
             if ( !oldTagName.contains(n) ) {
-              v33 = v33.withSlideBlocks(
-                v33.slideBlocks
+              v2 = v2.withSlideBlocks(
+                v2.slideBlocks
                   .withExpanded( Some(SlideBlockKeys.BLOCK_BG) )
               )
             }
 
-            v33
-
           // Это не strip, обнулить состояние stripEd, если оно существует:
           case _ =>
-            v2.withOutStripEd
+            v2 = v2.withOutStripEd
         }
 
         // Может быть, был какой-то qd-tag и весь текст теперь в нём удалён? Удалить, если старый тег, если осталась дельта
-        val v4 = v0.jdArgs.selectedTag.fold(v3) { jdtTree =>
-          val jdt = jdtTree.rootLabel
-          val dataEdges0 = v0.jdArgs.edges
-
-          var v44 = v3
-
-          if (
-            jdt.name ==* MJdTagNames.QD_CONTENT &&
+        for {
+          jdtTree <- v0.jdArgs.selectedTag
+          jdt = jdtTree.rootLabel
+          dataEdges0 = v0.jdArgs.edges
+          if jdt.name ==* MJdTagNames.QD_CONTENT &&
             QdJsUtil.isEmpty(jdtTree, dataEdges0) &&
-            v44.jdArgs.template.contains(jdt)
-          ) {
-            val tpl1 = v44.jdArgs.template
-            val tpl2 = tpl1
-              .loc
-              .findByLabel(jdt)
-              .flatMap(_.delete)
-              .map(_.toTree)
-              .getOrElse {
-                LOG.warn( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = jdt )
-                tpl1
-              }
-            // Очистить эджи от лишнего контента
-            val dataEdges2 = JdTag.purgeUnusedEdges(tpl2, dataEdges0)
-            v44 = v44
-              .withJdArgs(
-                v44.jdArgs.copy(
-                  template    = tpl2,
-                  edges       = dataEdges2,
-                  jdCss       = jdCssFactory.mkJdCss(
-                    MJdCssArgs.singleCssArgs(tpl2, v3.jdArgs.conf)
-                  )
+            v2.jdArgs.template.contains(jdt)
+        } {
+          val tpl1 = v2.jdArgs.template
+          val tpl2 = tpl1
+            .loc
+            .findByLabel(jdt)
+            .flatMap(_.delete)
+            .map(_.toTree)
+            .getOrElse {
+              LOG.warn( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = jdt )
+              tpl1
+            }
+          // Очистить эджи от лишнего контента
+          val dataEdges2 = JdTag.purgeUnusedEdges(tpl2, dataEdges0)
+          v2 = v2
+            .withJdArgs(
+              v2.jdArgs.copy(
+                template    = tpl2,
+                edges       = dataEdges2,
+                jdCss       = jdCssFactory.mkJdCss(
+                  MJdCssArgs.singleCssArgs(tpl2, v2.jdArgs.conf)
                 )
               )
-
-          } else if (
-            // Если до этого был выбран strip
-            jdt.name ==* MJdTagNames.STRIP
-          ) {
-            // цвет фона которого отсутсвует в презетах
-            for (
-              bgColorMcd <- jdt.props1.bgColor
-              if !v44.colorsState.colorPresets.contains(bgColorMcd)
-            ) {
-              // то закинуть его цвет фона в color-презеты.
-              v44 = v44.withColorsState(
-                v44.colorsState
-                  .prependPresets( jdt.props1.bgColor.get )
-              )
-            }
-          }
-
-          v44
+            )
         }
 
-        updated( v4 )
+        // Обновить список color-preset'ов.
+        val bgColorsAppend = for {
+          // Закинуть цвет фона нового тега в самое начало списка презетов. Затем - окончательный фон предыдущего тега.
+          jdt <- m.jdTag :: v0.jdArgs.selectedTag.map(_.rootLabel).toList
+          bgColor <- jdt.props1.bgColor
+          if !v2.colorsState.colorPresets.contains(bgColor)
+        } yield {
+          bgColor
+        }
+        if (bgColorsAppend.nonEmpty) {
+          val presets2 = bgColorsAppend.foldLeft(v2.colorsState.colorPresets) { MColorsState.prependPresets }
+          // то закинуть его цвет фона в color-презеты.
+          v2 = v2.withColorsState(
+            v2.colorsState
+              .withColorPresets( presets2 )
+          )
+        }
+
+        updated( v2 )
       }
 
 

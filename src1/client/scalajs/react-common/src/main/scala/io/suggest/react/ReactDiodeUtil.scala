@@ -36,25 +36,32 @@ object ReactDiodeUtil {
   }
 
 
-  /** Объединение списка эффектов воедино для параллельного запуска всех сразу.
+  /** Расширенное API для коллекций эффектов.
     *
     * @param effects Эффекты.
-    * @return None, если передан пустой список эффектов.
-    *         Some(fx) с объединённым, либо единственным, эффектом.
     */
-  def mergeEffectsSet(effects: TraversableOnce[Effect]): Option[Effect] = {
-    if (effects.isEmpty) {
-      None
-    } else {
-      val iter = effects.toIterator
-      val fx1 = iter.next()
-      val allFx = if (iter.hasNext) {
-        new EffectSet(fx1, iter.toSet, defaultExecCtx)
+  implicit class EffectsOps(val effects: TraversableOnce[Effect]) extends AnyVal {
+
+    /** Объединение списка эффектов воедино для параллельного запуска всех сразу.
+      *
+      * @return None, если передан пустой список эффектов.
+      *         Some(fx) с объединённым, либо единственным, эффектом.
+      */
+    def mergeEffectsSet: Option[Effect] = {
+      if (effects.isEmpty) {
+        None
       } else {
-        fx1
+        val iter = effects.toIterator
+        val fx1 = iter.next()
+        val allFx = if (iter.hasNext) {
+          new EffectSet(fx1, iter.toSet, defaultExecCtx)
+        } else {
+          fx1
+        }
+        Some(allFx)
       }
-      Some(allFx)
     }
+
   }
 
 

@@ -2,8 +2,7 @@ package io.suggest.sc.c.inx
 
 import diode._
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.react.ReactDiodeUtil
-import io.suggest.react.ReactDiodeUtil.{ActionHandlerExt, PotOpsExt}
+import io.suggest.react.ReactDiodeUtil.{ActionHandlerExt, PotOpsExt, EffectsOps}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.grid.GridLoadAds
@@ -232,7 +231,7 @@ class IndexAh[M](
               for (mwc <- mWcSFutOpt)
                 fxsAcc ::= mwc._1
 
-              val allFxs = ReactDiodeUtil.mergeEffectsSet( fxsAcc ).get
+              val allFxs = fxsAcc.mergeEffectsSet.get
 
               updated(v2, allFxs)
             }
