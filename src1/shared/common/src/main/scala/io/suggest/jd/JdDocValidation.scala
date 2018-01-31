@@ -117,7 +117,10 @@ class JdDocValidation(
     val errMsgF = ErrorConstants.emsgF(STRIP + `.` + PROPS1)
     (
       ScalazUtil.liftNelOpt(props1.bgColor)( MColorData.validateHexCodeOnly ) |@|
-      ScalazUtil.liftNelOpt(props1.bgImg)( MImgEdgeWithOps.validate(_, edges, props1.bm) ) |@|
+      ScalazUtil.liftNelOpt(props1.bgImg)( MImgEdgeWithOps.validate(_, edges,
+        // TODO Тут костыль, чтобы не было ошибок, если блок слишком большой для картинки по одной из сторон. Т.е. когда высота картинки 400px, а блок - 620px, чтобы не было ошибки.
+        props1.bm.map(_ => BlockMeta.MINIMAL)
+      ) ) |@|
       ScalazUtil.liftNelSome(props1.bm, errMsgF(BM))( BlockMeta.validate ) |@|
       ScalazUtil.liftNelNone(props1.topLeft, errMsgF( XY + `.` + UNEXPECTED)) |@|
       ScalazUtil.liftNelOpt( props1.isMain ) {

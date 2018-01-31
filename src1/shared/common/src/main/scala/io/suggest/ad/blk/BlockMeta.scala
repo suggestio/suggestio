@@ -34,6 +34,9 @@ object BlockMeta {
     Validation.success(bm)
   }
 
+
+  def MINIMAL = BlockMeta( BlockWidths.min, BlockHeights.min )
+
 }
 
 

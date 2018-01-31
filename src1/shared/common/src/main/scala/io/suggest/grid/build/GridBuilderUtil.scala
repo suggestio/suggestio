@@ -167,7 +167,7 @@ object GridBuilderUtil {
                     // Поправочный szMult вычисляется через отношение высот картинки и самого блока. В норме должен быть == 1. Из проблем: он пережевывает и скрывает ошибки.
                     // TODO Im Кажется, будто поправка img2blkSzMult не нужна на новых версиях ImageMagick (7.0.7+), но нужна на старых (6.8.9).
                     val img2blkSzMult = szMultD * bm.height / wideBgSz.height.toDouble
-                    /*val displayedBgWidth =*/ wideBgSz.width * img2blkSzMult
+                    wideBgSz.width * img2blkSzMult
                   }
                   .orElse {
                     OptionUtil.maybe( bm.wide && !args.jdConf.isEdit ) {
