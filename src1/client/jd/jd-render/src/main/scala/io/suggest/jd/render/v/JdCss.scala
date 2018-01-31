@@ -59,6 +59,8 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   val smBlock = style(
     // Без addClassName("sm-block"), т.к. это ненужные transition и уже неактуальные стили (кроме overflow:hidden).
     overflow.hidden,
+    // Без absolute, невлезающие элементы (текст/контент) будут вылезать за пределы границы div'а.
+    position.absolute,
     // Дефолтовые настройки шрифтов внутри блока:
     fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
     fontSize( (MFontSizes.default.value * blkSzMultD).px )
@@ -77,22 +79,12 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       .flatMap( _.flatten )
   }
 
-  // Фактическая ширина плитки.
-  /*
-  private lazy val gridWidthPx = {
-    val s = jdCssArgs.conf.gridColumnsCount * jdCssArgs.conf.szMult.toDouble
-    s * BlockWidths.min.value + (s + 2) * (BlockPaddings.default.value / 2)
-  }
-  */
-
   val wideBlockStyle = {
     val zeroPx = 0.px
     style(
-      position.absolute,
+      // TODO Переместить top в smBlock?
       top(zeroPx)
       //left(zeroPx)
-      // TODO Надо не просто ширину плитки закрывать, но и за экран по обе стороны уходить.
-      //minWidth( gridWidthPx.px )
     )
   }
 
@@ -185,10 +177,23 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       // Уточнить размеры wide-блока:
       for (bm <- strip.props1.bm) {
         accS ::= (height( szMultedSide(bm.height).px ): ToStyle)
+
+        // Даже если есть фоновая картинка, но всё равно надо, чтобы ширина экрана была занята.
+        accS ::= minWidth(
+          if (jdCssArgs.conf.isEdit)
+            szMultedSide(bm.width).px
+          else
+            jdCssArgs.conf.gridWidthPx.px
+        )
       }
       // Цвет фона
       for (bgColor <- strip.props1.bgColor) {
         accS ::= (backgroundColor(Color(bgColor.hexCode)): ToStyle)
+      }
+
+      // Если нет фона, выставить ширину принудительно.
+      if (strip.props1.bgImg.isEmpty  &&  !jdCssArgs.conf.isEdit) {
+        accS ::= width( jdCssArgs.conf.plainWideBlockWidthPx.px )
       }
       // Объеденить все стили:
       styleS( accS: _* )

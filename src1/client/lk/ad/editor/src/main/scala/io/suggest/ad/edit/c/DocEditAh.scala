@@ -1005,8 +1005,26 @@ class DocEditAh[M](
 
       // Взять цвет фона с текущего стрипа.
       val bgColorSome0 = currStripLocOpt
-        .flatMap(_.getLabel.props1.bgColor)
-        .orElse( Some(MColorData("ffffff")) )
+        .map(_.getLabel)
+        .orElse {
+          // Попытаться взять цвет из главного блока или любого первого попавшегося блока с цветом фона.
+          v0.jdArgs.template
+            .getMainBlock
+            .map(_.rootLabel)
+        }
+        .toIterator
+        // Поискать цвет фона среди всех стрипов.
+        .++ {
+          v0.jdArgs.template.deepOfTypeIter( MJdTagNames.STRIP )
+        }
+        .flatMap( _.props1.bgColor )
+        .toStream
+        // Взять первый цвет
+        .headOption
+        .orElse {
+          // Если нет цвета, то использовать белый цвет.
+          Some(MColorData.Examples.WHITE)
+        }
 
       // Собрать начальный блок:
       val newStripTree = Tree.Leaf(

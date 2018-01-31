@@ -120,7 +120,9 @@ class GridCoreR(
             }
           // Сборка контейнера настроек рендера всех плиток группы:
           jdRenderArgs = groupOutlineColorOpt.fold(MJdRenderArgs.empty) { _ =>
-            MJdRenderArgs(groupOutLined = groupOutlineColorOpt)
+            MJdRenderArgs(
+              groupOutLined = groupOutlineColorOpt
+            )
           }
 
           // Пройтись по шаблонам карточки

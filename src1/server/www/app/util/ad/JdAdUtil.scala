@@ -7,6 +7,7 @@ import io.suggest.common.geom.d2.ISize2di
 import io.suggest.file.MSrvFileInfo
 import io.suggest.jd.{MJdAdData, MJdEdge}
 import io.suggest.jd.tags.JdTag
+import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.model.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.media.{MFileMetaHash, MMedia, MMediasCache}
 import io.suggest.model.n2.node.{MNode, MNodesCache}
@@ -21,7 +22,6 @@ import play.api.mvc.Call
 import util.cdn.{CdnUtil, DistUtil}
 import util.img.DynImgUtil
 import util.vid.VideoUtil
-import io.suggest.common.empty.OptionUtil.BoolOptOps
 import models.blk.SzMult_t
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -286,14 +286,8 @@ class JdAdUtil @Inject()(
 
   /** Узнать главный блок в карточке. */
   def getMainBlockTpl(mad: MNode): Tree[JdTag] = {
-    getMainBlockTpl( getNodeTpl(mad) )
-  }
-  def getMainBlockTpl(tpl0: Tree[JdTag]): Tree[JdTag] = {
-    tpl0.subForest
-      .find( _.rootLabel.props1.isMain.getOrElseFalse )
-      .getOrElse {
-        tpl0.subForest.head
-      }
+    getNodeTpl(mad)
+      .getMainBlockOrFirst
   }
 
 

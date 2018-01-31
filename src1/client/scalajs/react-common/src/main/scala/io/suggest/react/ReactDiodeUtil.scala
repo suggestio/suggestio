@@ -3,6 +3,7 @@ package io.suggest.react
 import diode._
 import diode.data.{PendingBase, Pot}
 import diode.react.ModelProxy
+import io.suggest.common.empty.OptionUtil
 import japgolly.scalajs.react.{BackendScope, Callback}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
@@ -48,17 +49,14 @@ object ReactDiodeUtil {
       *         Some(fx) с объединённым, либо единственным, эффектом.
       */
     def mergeEffectsSet: Option[Effect] = {
-      if (effects.isEmpty) {
-        None
-      } else {
+      OptionUtil.maybe(effects.nonEmpty) {
         val iter = effects.toIterator
         val fx1 = iter.next()
-        val allFx = if (iter.hasNext) {
+        if (iter.hasNext) {
           new EffectSet(fx1, iter.toSet, defaultExecCtx)
         } else {
           fx1
         }
-        Some(allFx)
       }
     }
 

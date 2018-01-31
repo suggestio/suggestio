@@ -161,13 +161,20 @@ object GridBuilderUtil {
 
                 // Т.к. фон wide-блока центруется независимо от контента, для этого используется искусственный wide-блок,
                 // идущий перед wide-блоком с контентом. Надо закинуть wide-фоновый-блок в res-аккамулятор.
-                val wideBgWidthOpt = for (wideBgSz <- itemExt.wideBgSz) yield {
-                  // Есть размер фона. Надо совместить горизонтальную середины плитки и изображения.
-                  // Поправочный szMult вычисляется через отношение высот картинки и самого блока. В норме должен быть == 1. Из проблем: он пережевывает и скрывает ошибки.
-                  // TODO Im Кажется, будто поправка img2blkSzMult не нужна на новых версиях ImageMagick (7.0.7+), но нужна на старых (6.8.9).
-                  val img2blkSzMult = szMultD * bm.height / wideBgSz.height.toDouble
-                  /*val displayedBgWidth =*/ wideBgSz.width * img2blkSzMult
-                }
+                val wideBgWidthOpt = itemExt.wideBgSz
+                  .map { wideBgSz =>
+                    // Есть размер фона. Надо совместить горизонтальную середины плитки и изображения.
+                    // Поправочный szMult вычисляется через отношение высот картинки и самого блока. В норме должен быть == 1. Из проблем: он пережевывает и скрывает ошибки.
+                    // TODO Im Кажется, будто поправка img2blkSzMult не нужна на новых версиях ImageMagick (7.0.7+), но нужна на старых (6.8.9).
+                    val img2blkSzMult = szMultD * bm.height / wideBgSz.height.toDouble
+                    /*val displayedBgWidth =*/ wideBgSz.width * img2blkSzMult
+                  }
+                  .orElse {
+                    OptionUtil.maybe( bm.wide && !args.jdConf.isEdit ) {
+                      // wide-блок без фоновой картинки. Взять ширину такого блока из jdConf:
+                      args.jdConf.plainWideBlockWidthPx
+                    }
+                  }
 
                 val res = MGbItemRes(
                   // Восстановить порядок, если индекс был передан из reDo-ветви.

@@ -8,6 +8,7 @@ import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.{MQdOp, MQdOpTypes}
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import japgolly.univeq._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -163,6 +164,19 @@ object JdTag {
           Iterator.single(jdt) ++ chIter
         } else {
           chIter
+        }
+      }
+
+      /** Вернуть главый блок, либо первый блок. */
+      def getMainBlock: Option[Tree[JdTag]] = {
+        tree.subForest
+          .find( _.rootLabel.props1.isMain.getOrElseFalse )
+      }
+
+      /** Вернуть главый блок, либо первый блок. */
+      def getMainBlockOrFirst: Tree[JdTag] = {
+        getMainBlock.getOrElse {
+          tree.subForest.head
         }
       }
 

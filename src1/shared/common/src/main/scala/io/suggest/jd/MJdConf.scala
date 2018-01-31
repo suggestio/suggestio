@@ -1,6 +1,6 @@
 package io.suggest.jd
 
-import io.suggest.ad.blk.{BlockPadding, BlockPaddings, IBlockSize}
+import io.suggest.ad.blk.{BlockPadding, BlockPaddings, BlockWidths, IBlockSize}
 import io.suggest.dev.MSzMult
 import japgolly.univeq._
 
@@ -44,6 +44,15 @@ case class MJdConf(
   /** Рассчитать коэфф.масштабирования блоков плитки. */
   val blkSzMultOpt = IBlockSize.szMultPaddedOpt(szMult, blockPadding)
   def blkSzMult = blkSzMultOpt.getOrElse( szMult )
+
+  /** Фактическая ширина внутреннего контейнера плитки в пикселях. */
+  lazy val gridWidthPx = {
+    val s = gridColumnsCount * szMult.toDouble
+    s * BlockWidths.min.value + (s + 2) * (BlockPaddings.default.value / 2)
+  }
+
+  /** Ширина wide-блока без фоновой картинки.  */
+  def plainWideBlockWidthPx = gridWidthPx * 1.5
 
 }
 
