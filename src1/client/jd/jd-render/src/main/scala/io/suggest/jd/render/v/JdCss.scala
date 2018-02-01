@@ -67,10 +67,20 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   )
 
   /** Текущий выбранный тег выделяется на картинке. */
-  val selectedTag = style(
-    outline.dashed,
-    zIndex(10)
-  )
+  val selectedTag = {
+    style(
+      outline.dashed,
+      zIndex(10)
+    )
+  }
+
+  /** Поддержка горизонтального ресайза. */
+  val horizResizable = {
+    style(
+      resize.horizontal,
+      overflow.hidden
+    )
+  }
 
   private def _allJdTagsIter: Iterator[JdTag] = {
     jdCssArgs
@@ -245,6 +255,22 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     }
   }
 
+  /** Стили ширин для элементов, у которых задана принудительная ширина. */
+  val forcedWidthStyleF = {
+    val widthsDomain = {
+      val tags = _allJdTagsIter
+        .filter(_.props1.widthPx.nonEmpty)
+        .toIndexedSeq
+      new Domain.OverSeq(tags)
+    }
+    styleF(widthsDomain) { jdt =>
+      jdt.props1.widthPx.whenDefinedStyleS { widthPx =>
+        styleS(
+          width( widthPx.px )
+        )
+      }
+    }
+  }
 
   // -------------------------------------------------------------------------------
   // fonts

@@ -5,6 +5,7 @@ import io.suggest.color.MColorData
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.img.MImgEdgeWithOps
+import io.suggest.math.MathConst
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -30,11 +31,16 @@ object MJdtProps1 extends IEmpty {
     (__ \ "b").formatNullable[MImgEdgeWithOps] and
     (__ \ "c").formatNullable[BlockMeta] and
     (__ \ "d").formatNullable[MCoords2di] and
-    (__ \ "e").formatNullable[Boolean]
+    (__ \ "e").formatNullable[Boolean] and
+    (__ \ "f").formatNullable[Int]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MJdtProps1] = {
     UnivEq.derive
+  }
+
+
+  def validateWidth(widthPx: Int, max: Int) = {
   }
 
 }
@@ -55,7 +61,8 @@ case class MJdtProps1(
                        bgImg      : Option[MImgEdgeWithOps]   = None,
                        bm         : Option[BlockMeta]         = None,
                        topLeft    : Option[MCoords2di]        = None,
-                       isMain     : Option[Boolean]           = None
+                       isMain     : Option[Boolean]           = None,
+                       widthPx    : Option[Int]               = None
                      )
   extends EmptyProduct
 {
@@ -65,5 +72,6 @@ case class MJdtProps1(
   def withBm(bm: Option[BlockMeta])                   = copy(bm = bm)
   def withTopLeft(topLeft: Option[MCoords2di])        = copy(topLeft = topLeft)
   def withIsMain(isMain: Option[Boolean])             = copy(isMain = isMain)
+  def withWidthPx(widthPx: Option[Int])               = copy(widthPx = widthPx)
 
 }

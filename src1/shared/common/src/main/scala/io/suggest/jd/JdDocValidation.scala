@@ -1,6 +1,6 @@
 package io.suggest.jd
 
-import io.suggest.ad.blk.BlockMeta
+import io.suggest.ad.blk.{BlockMeta, BlockWidths}
 import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.ISize2di
@@ -35,6 +35,7 @@ class JdDocValidation(
   private def BM      = "bm"
   private def PROPS1  = "props1"
   private def XY      = "xy"
+  private def WIDTH   = "w"
   private def STRIP   = "strip"
   private def S       = "s"
   private def STRIPS  = STRIP + S
@@ -125,7 +126,8 @@ class JdDocValidation(
       ScalazUtil.liftNelNone(props1.topLeft, errMsgF( XY + `.` + UNEXPECTED)) |@|
       ScalazUtil.liftNelOpt( props1.isMain ) {
         Validation.liftNel(_)(identity, errMsgF(`MAIN` + `.` + INVALID))
-      }
+      } |@|
+      ScalazUtil.liftNelNone(props1.widthPx, errMsgF(WIDTH + `.` + UNEXPECTED))
     )( MJdtProps1.apply )
   }
 
@@ -203,7 +205,10 @@ class JdDocValidation(
       ScalazUtil.liftNelNone(qdProps1.bgImg, errMsgF("bgImg") ) |@|
       ScalazUtil.liftNelNone(qdProps1.bm, errMsgF(BM)) |@|
       ScalazUtil.liftNelSome(qdProps1.topLeft, errMsgF(XY + `.` + MISSING))( validateQdTagXY(_, contSz) ) |@|
-      ScalazUtil.liftNelNone(qdProps1.isMain, errMsgF(MAIN + `.` + UNEXPECTED))
+      ScalazUtil.liftNelNone(qdProps1.isMain, errMsgF(MAIN + `.` + UNEXPECTED)) |@|
+      ScalazUtil.liftNelOpt (qdProps1.widthPx) { widthPx =>
+        MathConst.Counts.validateMinMax(widthPx, min = 10, max = BlockWidths.NORMAL.value * 2, errMsgF(WIDTH) + `.`)
+      }
     )( MJdtProps1.apply )
   }
 

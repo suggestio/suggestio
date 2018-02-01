@@ -60,12 +60,30 @@ object ReactCommonUtil {
     VdomElement(null)
   }
 
+  /** Выборочный рендер TagMod'а на основе результата выполнения условия. При компиляции превращается в if/else. */
+  @inline
+  def maybe(isRender: Boolean)(f: => TagMod): TagMod = {
+    if (isRender)
+      f
+    else
+      EmptyVdom
+  }
+
+  /** Выборочный рендер React-элемента на основе результата выполнения условия. При компиляции превращается в if/else. */
+  @inline
+  def maybeEl(isRender: Boolean)(f: => VdomElement): VdomElement = {
+    if (isRender)
+      f
+    else
+      VdomNullElement
+  }
+
 
   /** Все неявности складируются сюда. */
   object Implicits {
 
     /** Дополнительное API для react-рендера Option'ов. */
-    implicit class VdomElOptionExt[O[_], A](val o: O[A])(implicit O: OptionLike[O]) {
+    implicit class VdomElOptionExt[O[_], A](val o: O[A])(implicit O: OptionLike[O]) extends AnyRef {
 
       /**
        * Рендер Option[A] в VdomElement.
@@ -84,7 +102,7 @@ object ReactCommonUtil {
 
 
     /** Дополнительное API для react-рендера TagMod'ов. */
-    implicit class VdomTagModExt(val tm: TagMod) {
+    implicit class VdomTagModExt(val tm: TagMod) extends AnyRef {
 
       /** Форсированное приведение TagMod'а к vdom-элементу.
         * Если текущий TagMod уже является vdom-элементом, то его и вернуть.

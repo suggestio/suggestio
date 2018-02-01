@@ -16,6 +16,7 @@ import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
+import io.suggest.react.ReactCommonUtil
 import io.suggest.sjs.common.log.Log
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sjs.common.util.DataUtil
@@ -30,6 +31,7 @@ import org.scalajs.dom.{Element, html}
 import org.scalajs.dom.html.Image
 import play.api.libs.json.Json
 
+import scala.scalajs.js
 import scalacss.ScalaCssReact._
 import scalaz.Tree
 
@@ -68,6 +70,10 @@ class JdR(
 
     protected def onNewImageLoaded(edgeUid: EdgeUid_t)(e: ReactEvent): Callback
 
+    protected def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml): Callback
+
+
+
 
     /** Отрендерить дочерние элементы тега обычным методом.
       *
@@ -101,31 +107,25 @@ class JdR(
       */
     private def _maybeSelected(dt: JdTag, jdArgs: MJdArgs): TagMod = {
       // Если происходит перетаскивание, то нужно избавляться от рамок: так удобнее.
-      if (jdArgs.renderArgs.dnd.jdt.isEmpty && jdArgs.selectedTag.containsLabel(dt)) {
+      ReactCommonUtil.maybe(jdArgs.renderArgs.dnd.jdt.isEmpty && jdArgs.selectedTag.containsLabel(dt)) {
         jdArgs.jdCss.selectedTag
-      } else {
-        EmptyVdom
       }
     }
 
     private def _clickableOnEdit(jdt: JdTag, jdArgs: MJdArgs): TagMod = {
       // В режиме редактирования -- надо слать инфу по кликам на стрипах
-      if (jdArgs.conf.isEdit) {
+      ReactCommonUtil.maybe(jdArgs.conf.isEdit) {
         ^.onClick ==> jdTagClick(jdt)
-      } else {
-        EmptyVdom
       }
     }
 
 
     private def _droppableOnEdit(jdt: JdTag, jdArgs: MJdArgs): TagMod = {
-      if (jdArgs.conf.isEdit) {
+      ReactCommonUtil.maybe(jdArgs.conf.isEdit) {
         TagMod(
           ^.onDragOver ==> jdStripDragOver,
           ^.onDrop     ==> onDropToStrip(jdt)
         )
-      } else {
-        EmptyVdom
       }
     }
 
@@ -142,10 +142,8 @@ class JdR(
       * Нужно, чтобы редактор мог узнать wh оригинала изображения. */
     private def _notifyImgWhOnEdit(e: MEdgeDataJs, jdArgs: MJdArgs): TagMod = {
       // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
-      if ( jdArgs.conf.isEdit && e.fileJs.exists(_.whPx.isEmpty) ) {
+      ReactCommonUtil.maybe( jdArgs.conf.isEdit && e.fileJs.exists(_.whPx.isEmpty) ) {
         ^.onLoad ==> onNewImageLoaded(e.id)
-      } else {
-        EmptyVdom
       }
     }
 
@@ -183,10 +181,8 @@ class JdR(
           ^.src := bgImgSrc,
 
           // Запретить таскать изображение, чтобы не мешать перетаскиванию strip'ов
-          if (jdArgs.conf.isEdit) {
+          ReactCommonUtil.maybe(jdArgs.conf.isEdit) {
             ^.draggable := false
-          } else {
-            EmptyVdom
           },
 
           // Размеры и позиционирование фоновой картинки в блоке:
@@ -243,11 +239,9 @@ class JdR(
 
       // Скрывать не-main-стрипы, если этого требует рендер.
       // Это касается только стрипов, у которых нет isMain = Some(true)
-      val hideNonMainStrip = if (jdArgs.renderArgs.hideNonMainStrips && !s.props1.isMain.getOrElseFalse) {
+      val hideNonMainStrip = ReactCommonUtil.maybe(jdArgs.renderArgs.hideNonMainStrips && !s.props1.isMain.getOrElseFalse) {
         // Данный стип надо приглушить с помощью указанных css-стилей.
         ^.visibility.hidden
-      } else {
-        EmptyVdom
       }
 
       val smBlock = <.div(
@@ -268,13 +262,11 @@ class JdR(
         },
 
         // Если текущий стрип выделен, то его можно таскать.
-        if (isEditSelected) {
+        ReactCommonUtil.maybe( isEditSelected ) {
           TagMod(
             _draggableUsing(s, jdArgs)(stripDragStart(s)),
             ^.`class` := Css.Cursor.GRAB
           )
-        } else {
-          EmptyVdom
         },
 
         // Если задана фоновая картинка, от отрендерить её.
@@ -376,25 +368,32 @@ class JdR(
 
         // Поддержка перетаскивания
         jdArgs.jdCss.absPosStyleAll,
-        if (jdArgs.conf.isEdit && !jdArgs.selectedTag.containsLabel(parent)) {
+
+        ReactCommonUtil.maybe(jdArgs.conf.isEdit && !jdArgs.selectedTag.containsLabel(parent)) {
           _draggableUsing(qdTag, jdArgs) { qdTagDragStart(qdTag) }
-        } else {
-          EmptyVdom
         },
         jdArgs.jdCss.absPosStyleF(qdTag),
 
+        // CSS-класс принудительной ширины, если задан.
+        ReactCommonUtil.maybe( qdTag.props1.widthPx.nonEmpty ) {
+          jdArgs.jdCss.forcedWidthStyleF(qdTag)
+        },
+
         // Рендерить особые указатели мыши в режиме редактирования.
-        if (jdArgs.conf.isEdit) {
-          ^.`class` := {
-            if (jdArgs.selectedTag.containsLabel(qdTag)) {
-              // Текущий тег выделен. Значит, пусть будет move-указатель
-              Css.Cursor.MOVE
-            } else {
-              Css.Cursor.POINTER
-            }
+        ReactCommonUtil.maybe(jdArgs.conf.isEdit) {
+          if (jdArgs.selectedTag containsLabel qdTag) {
+            // Текущий тег выделен. Значит, пусть будет move-указатель
+            TagMod(
+              jdArgs.jdCss.horizResizable,
+              // TODO onResize -> ...
+              ^.onMouseUp ==> onQdTagResize(qdTag),
+              ^.`class` := Css.Cursor.MOVE
+            )
+
+          } else {
+            // Текущий тег НЕ выделен. Указатель обычной мышкой.
+            ^.`class` := Css.Cursor.POINTER
           }
-        } else {
-          EmptyVdom
         },
 
         tagMods
@@ -593,6 +592,20 @@ class JdR(
       }
     }
 
+
+    /** Самописная поддержка ресайза контента только силами браузера. */
+    override protected def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml): Callback = {
+      lazy val widthPxStyl = e.target.style.width    // "112px"
+      lazy val pxIdx = widthPxStyl.indexOf("px")
+      if (e.button == 0 && widthPxStyl != null && pxIdx > 0) {
+        val widthPx2 = widthPxStyl.substring(0, pxIdx).toInt
+        dispatchOnProxyScopeCB( $, CurrContentResize( widthPx2 ) )
+      } else {
+        Callback.empty
+      }
+    }
+
+
     /** Рендер компонента. */
     def render(jdArgsProxy: Props): VdomElement = {
       // Тут была попытка завернуть всё в коннекшен для явной защиты от перерендеров при неизменных MJdArgs.
@@ -673,6 +686,8 @@ class JdR(
     override protected def onDropToStrip(s: JdTag)(e: ReactDragEvent) = Callback.empty
 
     override protected def onNewImageLoaded(edgeUid: EdgeUid_t)(e: ReactEvent) = Callback.empty
+
+    override protected def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml) = Callback.empty
 
   }
 

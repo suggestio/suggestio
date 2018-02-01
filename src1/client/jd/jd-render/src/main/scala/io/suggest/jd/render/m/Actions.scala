@@ -44,3 +44,7 @@ case class JdDropStrip(targetStrip: JdTag, isUpper: Boolean) extends IJdAction
 
 /** Уведомить систему о ширине и длине загруженной картинки. */
 case class SetImgWh(edgeUid: EdgeUid_t, wh: MSize2di) extends IJdAction
+
+
+/** Сигнал ресайза контента внутри блока. */
+case class CurrContentResize(widthPx: Int) extends IJdAction

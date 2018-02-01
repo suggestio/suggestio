@@ -804,6 +804,31 @@ class DocEditAh[M](
       }
 
 
+    // Ручной ресайз контента (по ширине).
+    case m: CurrContentResize =>
+      val v0 = value
+      val tpl2 = v0.jdArgs
+        .selectedTagLoc
+        .get
+        .modifyLabel { jdTag0 =>
+          assert( jdTag0.name ==* MJdTagNames.QD_CONTENT )
+          // Сохранить новую ширину в состояние текущего тега:
+          jdTag0.withProps1(
+            jdTag0.props1
+              .withWidthPx( Some(m.widthPx) )
+          )
+        }
+        .toTree
+      val v2 = v0.withJdArgs(
+        v0.jdArgs
+          .withTemplate(tpl2)
+          .withJdCss(
+            jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
+          )
+      )
+      updated(v2)
+
+
     // Замена состояния галочки широкого рендера текущего стрипа новым значением
     case m: StripStretchAcross =>
       val v0 = value
