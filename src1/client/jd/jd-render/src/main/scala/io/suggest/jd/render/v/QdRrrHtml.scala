@@ -44,7 +44,7 @@ class QdRrrHtml(
                  jdArgs       : MJdArgs,
                  qdTag        : Tree[JdTag],
                  imgEdgeMods  : Option[MEdgeDataJs => TagMod] = None,
-                 resizeableCb : Option[(MQdOp, MEdgeDataJs, ReactMouseEventFromHtml) => Callback]
+                 resizableCb : Option[(MQdOp, MEdgeDataJs, ReactMouseEventFromHtml) => Callback]
                ) {
 
   import QdRrrHtml.LOG
@@ -196,9 +196,9 @@ class QdRrrHtml(
       }
 
       // Поддержка горизонтального ресайза картинки/видео.
-      for (resizeableF <- resizeableCb) {
+      for (resizableF <- resizableCb) {
         outerContAttrs = jdArgs.jdCss.horizResizableHover ::
-          (^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizeableF(qdOp, e, event) }) ::
+          (^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, event) }) ::
           outerContAttrs
       }
 
@@ -223,12 +223,24 @@ class QdRrrHtml(
     val resOpt = for {
       src <- e.jdEdge.url
     } yield {
-      _currLineAccRev ::= <.iframe(
+      val whStyl = qdOp.attrsEmbed.fold( jdArgs.jdCss.videoStyle ) { attrsEmbed =>
+        jdArgs.jdCss.embedAttrStyleF( attrsEmbed )
+      }
+      var tm: TagMod = <.iframe(
         ^.src := src,
         ^.key := s"V$i",
         ^.allowFullScreen := true,
-        jdArgs.jdCss.videoStyle  //videoStyleF( (qdOp, e) )
+        whStyl
       )
+      for (resizableF <- resizableCb) yield {
+        tm = <.div(
+          jdArgs.jdCss.horizResizableHover,
+          whStyl,
+          ^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, event) },
+          tm
+        )
+      }
+      _currLineAccRev ::= tm
     }
 
     if (resOpt.isEmpty)

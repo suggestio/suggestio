@@ -355,7 +355,7 @@ class JdR(
           imgEdgeMods = OptionUtil.maybe( jdArgs.conf.isEdit ) {
             _notifyImgWhOnEdit(_, jdArgs)
           },
-          resizeableCb = OptionUtil.maybe(isCurrentSelected) {
+          resizableCb = OptionUtil.maybe(isCurrentSelected) {
             onQdEmbedResize(_, _)(_)
           }
         )

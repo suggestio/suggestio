@@ -194,6 +194,11 @@ object Common {
       */
     val REACT_SIDEBAR = "2.3.2"
 
+    /** Версия STRML/react-resizable.
+      * @see [[https://github.com/STRML/react-resizable]]
+      */
+    val REACT_RESIZABLE = "1.7.5"
+
   }
 
 

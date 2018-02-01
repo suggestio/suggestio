@@ -224,6 +224,13 @@ lazy val reactStoneCutterSjs = {
     .dependsOn( commonReactSjs )
 }
 
+/** Scala.js facade for react-resizable. */
+lazy val reactResizableSjs = {
+  val name = "react-resizable"
+  Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
+    .dependsOn( commonReactSjs )
+}
+
 /** Scala.js-фасад для компонентов в react-sanfona. */
 // TODO Унести на гитхаб и удалить окончательно из проекта
 lazy val reactSanfonaSjs = {
