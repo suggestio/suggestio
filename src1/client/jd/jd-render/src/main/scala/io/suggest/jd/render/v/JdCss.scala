@@ -75,12 +75,12 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   }
 
   /** Поддержка горизонтального ресайза. */
-  val horizResizable = {
-    style(
+  val horizResizable = style(
+    &.hover(
       resize.horizontal,
       overflow.hidden
     )
-  }
+  )
 
   private def _allJdTagsIter: Iterator[JdTag] = {
     jdCssArgs

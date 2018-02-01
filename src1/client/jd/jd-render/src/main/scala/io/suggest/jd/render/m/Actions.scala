@@ -3,6 +3,7 @@ package io.suggest.jd.render.m
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.jd.tags.JdTag
+import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.spa.DAction
 
@@ -48,3 +49,7 @@ case class SetImgWh(edgeUid: EdgeUid_t, wh: MSize2di) extends IJdAction
 
 /** Сигнал ресайза контента внутри блока. */
 case class CurrContentResize(widthPx: Int) extends IJdAction
+
+
+/** Сигнал о ресайзе какого-то embed'а внутри текущего qd-тега. */
+case class QdEmbedResize(widthPx: Int, qdOp: MQdOp, edgeUid: EdgeUid_t) extends IJdAction

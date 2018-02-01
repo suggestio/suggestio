@@ -38,7 +38,7 @@ import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.ueq.UnivEqUtil._
 
 import scala.util.Random
-import scalaz.Tree
+import scalaz.{Tree, TreeLoc}
 
 /**
   * Suggest.io
@@ -56,59 +56,51 @@ class DocEditAh[M](
   with Log
 {
 
-  /** Пост-процессинг изменившихся эджей.
-    * Удобен после внесения каких-то изменений из quill.
-    *
-    * @param oldEdges Карта старых эджей.
-    * @param tpl Обновлённый шаблон
-    * @param edges Новая карта эджей.
-    * @return Возможный эффект и обновлённая карта эджей.
-    */
-  private def _ppEdges(oldEdges: Map[EdgeUid_t, MEdgeDataJs],
-                       tpl: Tree[JdTag],
-                       edges: Map[EdgeUid_t, MEdgeDataJs]): (Option[Effect], Map[EdgeUid_t, MEdgeDataJs]) = {
-    // 10. Очистить эджи от неиспользуемых.
-    val edges2 = JdTag.purgeUnusedEdges( tpl, edges )
-
-    // 20. Необходимо организовать блобификацию файлов эджей, заданных через dataURL.
-    val dataPrefix = HtmlConstants.Proto.DATA_
-
-    val totalFxOpt = edges2
-      .valuesIterator
-      .flatMap[Effect] { edgeData =>
-        val jde = edgeData.jdEdge
-        // Три варианта:
-        // - Просто эдж, который надо молча завернуть в EdgeData. Текст, например.
-        // - Эдж, сейчас который проходит асинхронную процедуру приведения к блобу. Он уже есть в исходной карте эджей со ссылкой в виде base64.
-        // - Эдж, который с base64-URL появился в новой карте, но отсутсвует в старой. Нужно запустить его блоббирование.
-        val blobFxOpt = for {
-          dataUrl <- jde.url
-          if (dataUrl startsWith dataPrefix) &&
-            // Это dataURL. Тут два варианта: юзер загрузил новую картинку только что, либо загружена ранее.
-            // Смотрим в old-эджи, есть ли там текущий эдж с этой картинкой.
-            !(oldEdges contains jde.id)
+  private def _qdUpdateWidth(qdSubTreeLoc0: TreeLoc[JdTag], edgeUid: EdgeUid_t, width: Int, needUpdateF: Int => Boolean = _ => true): TreeLoc[JdTag] = {
+    qdSubTreeLoc0.root
+      // Найти qd-op-тег, содержащего текущую новую картинку:
+      .find(
+        _.getLabel.qdProps.exists(
+          _.edgeInfo.exists(
+            _.edgeUid ==* edgeUid)))
+      // Требует ли модицификации текущая картинка?
+      .filter { imgOpLoc =>
+        val widthPxOpt = for {
+          qd          <- imgOpLoc.getLabel.qdProps
+          attrsEmbed  <- qd.attrsEmbed
+          widthSU     <- attrsEmbed.width
+          width       <- widthSU.toOption
         } yield {
-          // Это новая картинка. Организовать перегонку в blob.
-          Effect {
-            val fut = for (blob <- Base64JsUtil.b64Url2Blob(dataUrl)) yield {
-              B64toBlobDone(dataUrl, blob)
-            }
-            for (ex <- fut.failed)
-              LOG.error(ErrorMsgs.BASE64_TO_BLOB_FAILED, ex = ex)
-            fut
-          }
+          width
         }
-
-        // Аккамулировать эффект и обновлённый data-edge
-        blobFxOpt
+        widthPxOpt.isEmpty || widthPxOpt.exists(needUpdateF)
+        //{ widthPx =>
+        //  widthPx > maxEmbedWidth || widthPx <= 0
+        //}
       }
-      // Объединить все собранные эффекты воедино.
-      .mergeEffectsSet
-
-    // Вернуть итоговую карту эджей и объединённый эффект.
-    (totalFxOpt, edges2)
+      .fold(qdSubTreeLoc0) { imgOpLoc0 =>
+        imgOpLoc0.modifyLabel { imgOp0 =>
+          val label2 = imgOp0.withQdProps(
+            imgOp0.qdProps.map { qdOp =>
+              qdOp.withAttrsEmbed {
+                val width2 = Some( SetVal(width) )
+                // обычно attrs embed пуст для новой картинки/видео. Но quill может сам изменить размер сразу.
+                val ae2 = qdOp.attrsEmbed.fold {
+                  MQdAttrsEmbed( width = width2 )
+                } { attrsEmbed =>
+                  attrsEmbed.withWidthHeight(
+                    width  = width2,
+                    height = None
+                  )
+                }
+                Some(ae2)
+              }
+            }
+          )
+          label2
+        }
+      }
   }
-
 
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
@@ -122,25 +114,82 @@ class DocEditAh[M](
         noChange
 
       } else {
+        // Код обновления qd-тега в шаблоне:
+        def __updateTpl(qdSubTree2: Tree[JdTag]): Tree[JdTag] = {
+          v0.jdArgs
+            .selectedTagLoc
+            .get
+            .setTree( qdSubTree2 )
+            .toTree
+        }
+
         // Текст действительно изменился. Пересобрать json-document.
         //println( JSON.stringify(m.fullDelta) )
-        val currTag0 = v0.jdArgs.selectedTag.get
-        val selJdtPath = v0.jdArgs.renderArgs.selPath.get
+        val qdSubTree0 = v0.jdArgs.selectedTag.get
         // Спроецировать карту сборных эджей в jd-эджи
         val edgesData0 = v0.jdArgs.edges
-        val (qdTag2, edgesData2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, edgesData0)
+        val (qdSubTree2, edgesData2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, qdSubTree0, edgesData0)
 
         // Собрать новый json-document
-        val tpl2 = v0.jdArgs
-          .template
-          .pathToNode( selJdtPath )
-          .get
-          .setTree( qdTag2 )
+        val tpl1 = __updateTpl( qdSubTree2 )
+
+        // 10. Очистить эджи от неиспользуемых.
+        val edgesData3 = JdTag.purgeUnusedEdges( tpl1, edgesData2 )
+
+        // 20. Необходимо организовать блобификацию файлов эджей, заданных через dataURL.
+        val dataPrefix = HtmlConstants.Proto.DATA_
+
+        // 30. Найти новые эджи картинок, которые надо загружать на сервер.
+        val dataEdgesForUpload = (
+          for {
+            edgeData <- edgesData3.valuesIterator
+            jde = edgeData.jdEdge
+            // Три варианта:
+            // - Просто эдж, который надо молча завернуть в EdgeData. Текст, например.
+            // - Эдж, сейчас который проходит асинхронную процедуру приведения к блобу. Он уже есть в исходной карте эджей со ссылкой в виде base64.
+            // - Эдж, который с base64-URL появился в новой карте, но отсутсвует в старой. Нужно запустить его блоббирование.
+            dataUrl <- jde.url
+            if (dataUrl startsWith dataPrefix) &&
+              // Это dataURL. Тут два варианта: юзер загрузил новую картинку только что, либо загружена ранее.
+              // Смотрим в old-эджи, есть ли там текущий эдж с этой картинкой.
+              !(edgesData0 contains jde.id)
+          } yield {
+            (dataUrl, edgeData)
+          }
+        )
+          .toSeq
+
+        // Собрать эффект запуска аплоада на сервер для всех найденных картинок.
+        val uploadFxOpt = dataEdgesForUpload
+          .iterator
+          .map [Effect] { case (dataUrl, _) =>
+            // Это новая картинка. Организовать перегонку в blob.
+            Effect {
+              val fut = for (blob <- Base64JsUtil.b64Url2Blob(dataUrl)) yield {
+                B64toBlobDone(dataUrl, blob)
+              }
+              for (ex <- fut.failed)
+                LOG.error(ErrorMsgs.BASE64_TO_BLOB_FAILED, ex = ex)
+              fut
+            }
+          }
+          .mergeEffectsSet
+
+        val maxEmbedWidth = BlockWidths.NARROW.value
+        val qdSubTree3 = dataEdgesForUpload
+          .foldLeft(qdSubTree2.loc) { case (qdLoc, (_, edgeData)) =>
+            // Новая картинка. Найти и уменьшить её ширину в шаблоне.
+            val edgeUid = edgeData.jdEdge.id
+            _qdUpdateWidth(qdLoc, edgeUid, width = maxEmbedWidth, {
+              widthPx =>
+                widthPx > maxEmbedWidth || widthPx <= 0
+            })
+          }
           .toTree
 
-        // Пост-процессить новые эджи, т.к. там может быть мусор или эджи, требующие фоновой обработи.
-        val (fxOpt, edgesData3) = _ppEdges( edgesData0, tpl2, edgesData2 )
+        val tpl2 = __updateTpl( qdSubTree3 )
 
+        // Вернуть итоговую карту эджей и объединённый эффект.
         val jdArgs2 = v0.jdArgs.copy(
           template    = tpl2,
           edges       = edgesData3,
@@ -157,12 +206,20 @@ class DocEditAh[M](
           // Не обновляем init-дельту при редактировании, заменяем только актуальный инстанс.
           .withQdEdit(
             for (qdEdit <- v0.qdEdit) yield {
-              qdEdit.withRealDelta( Some(m.fullDelta) )
+              if (dataEdgesForUpload.isEmpty) {
+                // Перерендер не требуется, тихо сохранить текущую дельту в состояние.
+                qdEdit.withRealDelta( Some(m.fullDelta) )
+              } else {
+                // Если был новый embed, то надо перерендерить редактор новой дельтой, т.к. наверняка изменились размеры чего-либо.
+                qdEdit.withInitRealDelta(
+                  initDelta = quillDeltaJsUtil.qdTag2delta(qdSubTree3, edgesData3)
+                )
+              }
             }
           )
 
         // Объединить все эффекты, если они есть.
-        fxOpt.fold( updated(v2) ) { updated(v2, _) }
+        uploadFxOpt.fold( updated(v2) ) { updated(v2, _) }
       }
 
 
@@ -792,9 +849,8 @@ class DocEditAh[M](
               if qdTag0 !=* qdTag2
             } {
               v2 = v0.withQdEdit(
-                Some(qdEdit0.copy(
-                  initDelta = quillDeltaJsUtil.qdTag2delta( qdTag2, v2.jdArgs.edges ),
-                  realDelta = None
+                Some(qdEdit0.withInitRealDelta(
+                  initDelta = quillDeltaJsUtil.qdTag2delta( qdTag2, v2.jdArgs.edges )
                 ))
               )
             }
@@ -827,6 +883,44 @@ class DocEditAh[M](
           )
       )
       updated(v2)
+
+
+    // Реакция на сигнал ресайза у embed'а.
+    case m: QdEmbedResize =>
+      val v0 = value
+      v0.jdArgs
+        .selectedTag
+        .filter { jdt => jdt.rootLabel.name ==* MJdTagNames.QD_CONTENT }
+        .map { qdSubTree =>
+          _qdUpdateWidth(qdSubTree.loc, m.edgeUid, width = m.widthPx)
+        }
+        .fold {
+          LOG.log( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT )
+          noChange
+        } { qdSubTreeLoc2 =>
+          val qdSubTree2 = qdSubTreeLoc2.toTree
+          val tpl2 = v0.jdArgs.selectedTagLoc
+            .get
+            .setTree(qdSubTree2)
+            .toTree
+          val v2 = v0
+            .withJdArgs(
+              v0.jdArgs.copy(
+                template = tpl2,
+                jdCss = jdCssFactory.mkJdCss(
+                  MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
+                )
+              )
+            )
+            .withQdEdit(
+              v0.qdEdit.map { qdEdit0 =>
+                qdEdit0.withInitRealDelta(
+                  initDelta = quillDeltaJsUtil.qdTag2delta( qdSubTreeLoc2.root.tree, v0.jdArgs.edges )
+                )
+              }
+            )
+          updated( v2 )
+        }
 
 
     // Замена состояния галочки широкого рендера текущего стрипа новым значением

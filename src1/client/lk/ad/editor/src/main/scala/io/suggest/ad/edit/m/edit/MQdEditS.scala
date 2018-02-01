@@ -49,6 +49,7 @@ case class MQdEditS(
 
   override type T = MQdEditS
 
+  def withInitRealDelta(initDelta: Delta, realDelta: Option[Delta] = None) = copy(initDelta = initDelta, realDelta = realDelta)
   def withInitDelta(initDelta: Delta)                     = copy(initDelta = initDelta)
   def withRealDelta(realDelta: Option[Delta])             = copy(realDelta = realDelta)
   override def withBgColorPick(bgColor: MColorPickerS)    = copy(bgColorPick = bgColor)

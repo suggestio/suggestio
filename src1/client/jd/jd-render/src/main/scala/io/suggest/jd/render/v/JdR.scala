@@ -12,6 +12,7 @@ import io.suggest.err.ErrorConstants
 import io.suggest.grid.build.{MGbBlock, MGridBuildArgsJs}
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
+import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
@@ -31,7 +32,6 @@ import org.scalajs.dom.{Element, html}
 import org.scalajs.dom.html.Image
 import play.api.libs.json.Json
 
-import scala.scalajs.js
 import scalacss.ScalaCssReact._
 import scalaz.Tree
 
@@ -72,7 +72,7 @@ class JdR(
 
     protected def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml): Callback
 
-
+    protected def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs)(e: ReactMouseEventFromHtml): Callback
 
 
     /** Отрендерить дочерние элементы тега обычным методом.
@@ -345,6 +345,8 @@ class JdR(
       * @return Элемент vdom.
       */
     def renderQd(qdTagTree: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): TagOf[html.Div]  = {
+      val qdTag = qdTagTree.rootLabel
+      val isCurrentSelected = jdArgs.selectedTag containsLabel qdTag
       val tagMods = {
         val qdRrr = new QdRrrHtml(
           jdArgs      = jdArgs,
@@ -352,11 +354,13 @@ class JdR(
           // Для редактора: следует проверить эдж
           imgEdgeMods = OptionUtil.maybe( jdArgs.conf.isEdit ) {
             _notifyImgWhOnEdit(_, jdArgs)
+          },
+          resizeableCb = OptionUtil.maybe(isCurrentSelected) {
+            onQdEmbedResize(_, _)(_)
           }
         )
         qdRrr.render()
       }
-      val qdTag = qdTagTree.rootLabel
       <.div(
         ^.key := i.toString,
 
@@ -381,7 +385,7 @@ class JdR(
 
         // Рендерить особые указатели мыши в режиме редактирования.
         ReactCommonUtil.maybe(jdArgs.conf.isEdit) {
-          if (jdArgs.selectedTag containsLabel qdTag) {
+          if (isCurrentSelected) {
             // Текущий тег выделен. Значит, пусть будет move-указатель
             TagMod(
               jdArgs.jdCss.horizResizable,
@@ -593,18 +597,34 @@ class JdR(
     }
 
 
-    /** Самописная поддержка ресайза контента только силами браузера. */
-    override protected def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml): Callback = {
-      lazy val widthPxStyl = e.target.style.width    // "112px"
-      lazy val pxIdx = widthPxStyl.indexOf("px")
-      if (e.button == 0 && widthPxStyl != null && pxIdx > 0) {
-        val widthPx2 = widthPxStyl.substring(0, pxIdx).toInt
-        dispatchOnProxyScopeCB( $, CurrContentResize( widthPx2 ) )
-      } else {
-        Callback.empty
+    private def _parseWidth(e: ReactMouseEventFromHtml): Option[Int] = {
+      for {
+        target <- Option(e.target)
+        if e.button ==* 0
+        style  <- Option(target.style)
+        widthPxStyl  <- Option(style.width)
+        pxIdx = widthPxStyl.indexOf("px")
+        if pxIdx > 0
+      } yield {
+        widthPxStyl.substring(0, pxIdx).toInt
       }
     }
 
+    /** Самописная поддержка ресайза контента только силами браузера. */
+    override protected def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml): Callback = {
+      _parseWidth(e).fold(Callback.empty) { widthPx =>
+        dispatchOnProxyScopeCB( $, CurrContentResize( widthPx ) )
+      }
+    }
+
+
+    override protected def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs)(e: ReactMouseEventFromHtml): Callback = {
+      _parseWidth(e).fold(Callback.empty) { widthPx =>
+        // stopPropagation() нужен, чтобы сигнал не продублировался в onQdTagResize()
+        ReactCommonUtil.stopPropagationCB(e) >>
+          dispatchOnProxyScopeCB( $, QdEmbedResize( widthPx, qdOp, edgeDataJs.jdEdge.id ) )
+      }
+    }
 
     /** Рендер компонента. */
     def render(jdArgsProxy: Props): VdomElement = {
@@ -689,6 +709,7 @@ class JdR(
 
     override protected def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml) = Callback.empty
 
+    override protected def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs)(e: ReactMouseEventFromHtml) = Callback.empty
   }
 
 }

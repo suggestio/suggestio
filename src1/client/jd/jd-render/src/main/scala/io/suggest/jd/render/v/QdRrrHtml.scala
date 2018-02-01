@@ -12,6 +12,7 @@ import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.ISetUnset
 import io.suggest.sjs.common.log.Log
+import japgolly.scalajs.react.{Callback, ReactMouseEventFromHtml}
 import japgolly.scalajs.react.vdom.{HtmlTagOf, TagMod, VdomElement}
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.Element
@@ -42,7 +43,8 @@ import scalaz.Tree
 class QdRrrHtml(
                  jdArgs       : MJdArgs,
                  qdTag        : Tree[JdTag],
-                 imgEdgeMods  : Option[MEdgeDataJs => TagMod] = None
+                 imgEdgeMods  : Option[MEdgeDataJs => TagMod] = None,
+                 resizeableCb : Option[(MQdOp, MEdgeDataJs, ReactMouseEventFromHtml) => Callback]
                ) {
 
   import QdRrrHtml.LOG
@@ -170,9 +172,8 @@ class QdRrrHtml(
       }
 
       // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
-      if (jdArgs.conf.isEdit) {
+      if (jdArgs.conf.isEdit)
         imgArgsAcc ::= (^.draggable := false)
-      }
 
       // Доп.модификации извне.
       for (f <- imgEdgeMods)
@@ -188,16 +189,26 @@ class QdRrrHtml(
         imgArgsAcc: _*
       )
 
+      var outerSpanAttrs = List.empty[TagMod]
+
       for (attrsText <- qdOp.attrsText if attrsText.isCssStyled) {
-        val img = finalTm
-        val CSS = Css
-        finalTm = <.span(
-          jdArgs.jdCss.textStyleF( attrsText ),
-          embedStyleOpt.whenDefined,
-          ^.`class` := CSS.flat(CSS.Display.INLINE_BLOCK, CSS.Overflow.HIDDEN),
-          img
-        )
+        outerSpanAttrs ::= jdArgs.jdCss.textStyleF( attrsText )
       }
+
+      // Поддержка горизонтального ресайза картинки/видео.
+      for (resizeableF <- resizeableCb) {
+        outerSpanAttrs = jdArgs.jdCss.horizResizable ::
+          (^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizeableF(qdOp, e, event) }) ::
+          outerSpanAttrs
+      }
+
+      if (outerSpanAttrs.nonEmpty)
+        finalTm = <.span(
+          finalTm ::
+            embedStyleOpt.whenDefined ::
+            (^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Overflow.HIDDEN)) ::
+            outerSpanAttrs: _*
+        )
 
       _currLineAccRev ::= finalTm
     }

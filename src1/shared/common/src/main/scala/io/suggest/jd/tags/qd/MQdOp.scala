@@ -49,7 +49,8 @@ case class MQdOp(
                )
 {
 
-  def withAttrsText(attrsText: Option[MQdAttrsText]) = copy(attrsText = attrsText)
+  def withAttrsText(attrsText: Option[MQdAttrsText])      = copy(attrsText = attrsText)
+  def withAttrsEmbed(attrsEmbed : Option[MQdAttrsEmbed])  = copy(attrsEmbed = attrsEmbed)
 
 
   /*
