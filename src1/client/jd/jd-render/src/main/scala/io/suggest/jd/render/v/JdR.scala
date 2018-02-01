@@ -388,7 +388,7 @@ class JdR(
           if (isCurrentSelected) {
             // Текущий тег выделен. Значит, пусть будет move-указатель
             TagMod(
-              jdArgs.jdCss.horizResizable,
+              jdArgs.jdCss.horizResizableHover,
               // TODO onResize -> ...
               ^.onMouseUp ==> onQdTagResize(qdTag),
               ^.`class` := Css.Cursor.MOVE

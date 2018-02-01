@@ -189,25 +189,25 @@ class QdRrrHtml(
         imgArgsAcc: _*
       )
 
-      var outerSpanAttrs = List.empty[TagMod]
+      var outerContAttrs = List.empty[TagMod]
 
       for (attrsText <- qdOp.attrsText if attrsText.isCssStyled) {
-        outerSpanAttrs ::= jdArgs.jdCss.textStyleF( attrsText )
+        outerContAttrs ::= jdArgs.jdCss.textStyleF( attrsText )
       }
 
       // Поддержка горизонтального ресайза картинки/видео.
       for (resizeableF <- resizeableCb) {
-        outerSpanAttrs = jdArgs.jdCss.horizResizable ::
+        outerContAttrs = jdArgs.jdCss.horizResizableHover ::
           (^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizeableF(qdOp, e, event) }) ::
-          outerSpanAttrs
+          outerContAttrs
       }
 
-      if (outerSpanAttrs.nonEmpty)
-        finalTm = <.span(
+      if (outerContAttrs.nonEmpty)
+        finalTm = <.div(
           finalTm ::
             embedStyleOpt.whenDefined ::
             (^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Overflow.HIDDEN)) ::
-            outerSpanAttrs: _*
+            outerContAttrs: _*
         )
 
       _currLineAccRev ::= finalTm
