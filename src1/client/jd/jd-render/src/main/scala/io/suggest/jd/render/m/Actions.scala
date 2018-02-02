@@ -52,4 +52,4 @@ case class CurrContentResize(widthPx: Int) extends IJdAction
 
 
 /** Сигнал о ресайзе какого-то embed'а внутри текущего qd-тега. */
-case class QdEmbedResize(widthPx: Int, qdOp: MQdOp, edgeUid: EdgeUid_t) extends IJdAction
+case class QdEmbedResize(widthPx: Int, qdOp: MQdOp, edgeUid: EdgeUid_t, heightPx: Option[Int] = None) extends IJdAction

@@ -185,15 +185,14 @@ class QdRrrHtml(
         (^.src := imgSrc) ::
         imgArgsAcc
 
+      for (attrsText <- qdOp.attrsText if attrsText.isCssStyled)
+        imgArgsAcc ::= jdArgs.jdCss.textStyleF( attrsText )
+
       var finalTm: TagMod = <.img(
         imgArgsAcc: _*
       )
 
       var outerContAttrs = List.empty[TagMod]
-
-      for (attrsText <- qdOp.attrsText if attrsText.isCssStyled) {
-        outerContAttrs ::= jdArgs.jdCss.textStyleF( attrsText )
-      }
 
       // Поддержка горизонтального ресайза картинки/видео.
       for (resizableF <- resizableCb) {
@@ -203,7 +202,7 @@ class QdRrrHtml(
       }
 
       if (outerContAttrs.nonEmpty)
-        finalTm = <.div(
+        finalTm = <.span(
           finalTm ::
             embedStyleOpt.whenDefined ::
             (^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Overflow.HIDDEN)) ::

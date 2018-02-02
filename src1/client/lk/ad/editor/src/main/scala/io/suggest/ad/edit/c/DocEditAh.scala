@@ -56,8 +56,10 @@ class DocEditAh[M](
   with Log
 {
 
-  private def _qdUpdateWidth(qdSubTreeLoc0: TreeLoc[JdTag], edgeUid: EdgeUid_t, width: Int, needUpdateF: Int => Boolean = _ => true): TreeLoc[JdTag] = {
-    qdSubTreeLoc0.root
+  private def _qdUpdateWidth(qdSubTreeLoc0: TreeLoc[JdTag], edgeUid: EdgeUid_t, width: Int,
+                             heightPxOpt: Option[Int] = None, needUpdateF: Option[Int => Boolean] = None): TreeLoc[JdTag] = {
+    qdSubTreeLoc0
+      .root
       // Найти qd-op-тег, содержащего текущую новую картинку:
       .find(
         _.getLabel.qdProps.exists(
@@ -73,24 +75,22 @@ class DocEditAh[M](
         } yield {
           width
         }
-        widthPxOpt.isEmpty || widthPxOpt.exists(needUpdateF)
-        //{ widthPx =>
-        //  widthPx > maxEmbedWidth || widthPx <= 0
-        //}
+        widthPxOpt.isEmpty || (needUpdateF.isEmpty || widthPxOpt.exists(needUpdateF.get))
       }
       .fold(qdSubTreeLoc0) { imgOpLoc0 =>
         imgOpLoc0.modifyLabel { imgOp0 =>
           val label2 = imgOp0.withQdProps(
             imgOp0.qdProps.map { qdOp =>
               qdOp.withAttrsEmbed {
-                val width2 = Some( SetVal(width) )
+                val widthSuOpt  = Some( SetVal(width) )
+                val heightSuOpt = heightPxOpt.map(SetVal.apply)
                 // обычно attrs embed пуст для новой картинки/видео. Но quill может сам изменить размер сразу.
                 val ae2 = qdOp.attrsEmbed.fold {
-                  MQdAttrsEmbed( width = width2 )
+                  MQdAttrsEmbed( width = widthSuOpt, height = heightSuOpt )
                 } { attrsEmbed =>
                   attrsEmbed.withWidthHeight(
-                    width  = width2,
-                    height = None
+                    width  = widthSuOpt,
+                    height = heightSuOpt
                   )
                 }
                 Some(ae2)
@@ -180,7 +180,7 @@ class DocEditAh[M](
           .foldLeft(qdSubTree2.loc) { case (qdLoc, (_, edgeData)) =>
             // Новая картинка. Найти и уменьшить её ширину в шаблоне.
             val edgeUid = edgeData.jdEdge.id
-            _qdUpdateWidth(qdLoc, edgeUid, width = maxEmbedWidth, {
+            _qdUpdateWidth(qdLoc, edgeUid, width = maxEmbedWidth, heightPxOpt = None, needUpdateF = Some {
               widthPx =>
                 widthPx > maxEmbedWidth || widthPx <= 0
             })
@@ -892,7 +892,7 @@ class DocEditAh[M](
         .selectedTag
         .filter { jdt => jdt.rootLabel.name ==* MJdTagNames.QD_CONTENT }
         .map { qdSubTree =>
-          _qdUpdateWidth(qdSubTree.loc, m.edgeUid, width = m.widthPx)
+          _qdUpdateWidth(qdSubTree.loc, m.edgeUid, width = m.widthPx, heightPxOpt = m.heightPx)
         }
         .fold {
           LOG.log( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT )
