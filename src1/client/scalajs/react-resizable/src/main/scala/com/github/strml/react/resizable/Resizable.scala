@@ -1,5 +1,7 @@
 package com.github.strml.react.resizable
 
+import japgolly.scalajs.react.vdom.VdomNode
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 import japgolly.scalajs.react.{Children, JsComponent}
@@ -12,6 +14,8 @@ import japgolly.scalajs.react.{Children, JsComponent}
 object Resizable {
 
   val component = JsComponent[ResizableProps, Children.Varargs, js.Object]( ResizableJs )
+
+  def apply(props: ResizableProps)(children: VdomNode*) = component(props)(children: _*)
 
 }
 
