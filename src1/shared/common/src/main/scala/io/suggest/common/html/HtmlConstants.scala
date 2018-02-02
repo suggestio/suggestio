@@ -1,5 +1,6 @@
 package io.suggest.common.html
 
+import io.suggest.ad.blk.BlockWidths
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 
 /**
@@ -76,7 +77,10 @@ object HtmlConstants {
   object Iframes {
 
     /** Дефолтовые размеры для iframe в CSSpx. */
-    final def whCsspxDflt = MSize2di(width = 300, height = 150)
+    final def whCsspxDflt = {
+      val w = BlockWidths.NARROW.value
+      MSize2di(width = w, height = w / 2)
+    }
 
   }
 
