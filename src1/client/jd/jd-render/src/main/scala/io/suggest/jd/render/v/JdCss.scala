@@ -270,7 +270,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     styleF(widthsDomain) { jdt =>
       jdt.props1.widthPx.whenDefinedStyleS { widthPx =>
         styleS(
-          width( widthPx.px )
+          width( szMultedSide(widthPx).px )
         )
       }
     }

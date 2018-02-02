@@ -192,23 +192,32 @@ class QdRrrHtml(
         imgArgsAcc: _*
       )
 
-      var outerContAttrs = List.empty[TagMod]
-
       // Поддержка горизонтального ресайза картинки/видео.
-      for (resizableF <- resizableCb) {
-        outerContAttrs = jdArgs.jdCss.horizResizable ::
-          (^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, false, event) }) ::
-          (^.`class` := Css.Overflow.HIDDEN) ::
-          outerContAttrs
-      }
-
-      if (outerContAttrs.nonEmpty)
-        finalTm = <.span(
-          finalTm ::
-            embedStyleOpt.whenDefined ::
-            (^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Overflow.HIDDEN)) ::
-            outerContAttrs: _*
+      for {
+        resizableF      <- resizableCb
+        origWh          <- e.origWh
+        attrsEmbed      <- qdOp.attrsEmbed
+      } {
+        // TODO Надо бы сделать маску поверх картинки через div здесь. Это решит проблемы в хроме. Для этого надо провести высоту картинки, не сохраняя её в аттрибутах.
+        // Вычислить визуальную ширину в css-пикселях. Она нужна для рассчёта отображаемой ВЫСОТЫ покрывающей маски.
+        val maskHeightPx = attrsEmbed
+          .width
+          .flatMap(_.toOption)
+          .fold( origWh.height ) { displayWidthPx =>
+            (displayWidthPx.toDouble / origWh.width.toDouble * origWh.height).toInt
+          }
+        finalTm = <.div(
+          ^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Position.RELATIVE),
+          finalTm,
+          <.div(
+            jdArgs.jdCss.horizResizable,
+            ^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, false, event) },
+            ^.height := maskHeightPx.px,
+            jdArgs.jdCss.embedAttrStyleF( attrsEmbed ),
+            ^.`class` := Css.flat(Css.Overflow.HIDDEN, Css.Position.ABSOLUTE)
+          )
         )
+      }
 
       _currLineAccRev ::= finalTm
     }
@@ -250,7 +259,7 @@ class QdRrrHtml(
         )
         outerAcc =
           (^.key := (keyV + "c")) ::
-          (^.`class` := Css.Position.RELATIVE) ::
+          (^.`class` := Css.flat(Css.Position.RELATIVE, Css.Display.INLINE_BLOCK)) ::
           videoFrame ::
           outerAcc
         <.div( outerAcc: _* )
