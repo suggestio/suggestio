@@ -1,5 +1,7 @@
 package io.suggest.common.html
 
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -68,6 +70,14 @@ object HtmlConstants {
 
   object Target {
     val blank = "_blank"
+  }
+
+  /** Константы для iframe'ов. */
+  object Iframes {
+
+    /** Дефолтовые размеры для iframe в CSSpx. */
+    final def whCsspxDflt = MSize2di(width = 300, height = 150)
+
   }
 
 }

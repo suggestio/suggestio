@@ -432,7 +432,7 @@ lazy val sc3Sjs = {
 /** json document react renderer */
 lazy val jdRenderSjs = {
   Project(id = "jd-render-sjs", base = file(DIR0 + "client/jd/jd-render"))
-    .dependsOn( lkCommonSjs, reactStoneCutterSjs, gridSjs, reactResizableSjs )
+    .dependsOn( lkCommonSjs, reactStoneCutterSjs, gridSjs )
 }
 
 /** Внутренний форк securesocial. */

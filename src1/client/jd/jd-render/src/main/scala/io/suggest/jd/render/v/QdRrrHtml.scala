@@ -44,7 +44,7 @@ class QdRrrHtml(
                  jdArgs       : MJdArgs,
                  qdTag        : Tree[JdTag],
                  imgEdgeMods  : Option[MEdgeDataJs => TagMod] = None,
-                 resizableCb : Option[(MQdOp, MEdgeDataJs, ReactMouseEventFromHtml) => Callback]
+                 resizableCb  : Option[(MQdOp, MEdgeDataJs, Boolean, ReactMouseEventFromHtml) => Callback]
                ) {
 
   import QdRrrHtml.LOG
@@ -196,8 +196,9 @@ class QdRrrHtml(
 
       // Поддержка горизонтального ресайза картинки/видео.
       for (resizableF <- resizableCb) {
-        outerContAttrs = jdArgs.jdCss.horizResizableHover ::
-          (^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, event) }) ::
+        outerContAttrs = jdArgs.jdCss.horizResizable ::
+          (^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, false, event) }) ::
+          (^.`class` := Css.Overflow.HIDDEN) ::
           outerContAttrs
       }
 
@@ -225,20 +226,38 @@ class QdRrrHtml(
       val whStyl = qdOp.attrsEmbed.fold( jdArgs.jdCss.videoStyle ) { attrsEmbed =>
         jdArgs.jdCss.embedAttrStyleF( attrsEmbed )
       }
-      var tm: TagMod = <.iframe(
+      val keyV = s"V$i"
+      val videoFrame = <.iframe(
         ^.src := src,
-        ^.key := s"V$i",
+        ^.key := keyV,
         ^.allowFullScreen := true,
         whStyl
       )
-      for (resizableF <- resizableCb) yield {
-        tm = <.div(
-          jdArgs.jdCss.horizResizableHover,
-          whStyl,
-          ^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, event) },
-          tm
-        )
+
+      val tm = if ( jdArgs.conf.isEdit ) {
+        // Для редактора используем div-контейнер, чтобы меньше мигало видео в редакторе.
+        var outerAcc = List.empty[TagMod]
+        for (resizableF <- resizableCb) {
+          outerAcc ::= <.div(
+            ^.key := (keyV + "z"),
+            ^.`class` := Css.flat( Css.Position.ABSOLUTE, Css.Overflow.HIDDEN ),
+            jdArgs.jdCss.hvResizable,
+            whStyl,
+            ^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, true, event) }
+          )
+        }
+        outerAcc =
+          (^.key := (keyV + "c")) ::
+          (^.`class` := Css.Position.RELATIVE) ::
+          videoFrame ::
+          outerAcc
+        <.div( outerAcc: _* )
+
+      } else {
+        // Видео-фрейм без дополнительного div-контейнера.
+        videoFrame
       }
+
       _currLineAccRev ::= tm
     }
 

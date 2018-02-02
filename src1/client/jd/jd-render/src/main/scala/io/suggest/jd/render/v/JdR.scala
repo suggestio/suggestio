@@ -30,6 +30,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import org.scalajs.dom.{Element, html}
 import org.scalajs.dom.html.Image
+import org.scalajs.dom.raw.CSSStyleDeclaration
 import play.api.libs.json.Json
 
 import scalacss.ScalaCssReact._
@@ -72,7 +73,7 @@ class JdR(
 
     protected def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml): Callback
 
-    protected def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs)(e: ReactMouseEventFromHtml): Callback
+    protected def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs, withHeight: Boolean)(e: ReactMouseEventFromHtml): Callback
 
 
     /** Отрендерить дочерние элементы тега обычным методом.
@@ -356,7 +357,7 @@ class JdR(
             _notifyImgWhOnEdit(_, jdArgs)
           },
           resizableCb = OptionUtil.maybe(isCurrentSelected) {
-            onQdEmbedResize(_, _)(_)
+            onQdEmbedResize(_, _, _)(_)
           }
         )
         qdRrr.render()
@@ -388,10 +389,10 @@ class JdR(
           if (isCurrentSelected) {
             // Текущий тег выделен. Значит, пусть будет move-указатель
             TagMod(
-              jdArgs.jdCss.horizResizableHover,
+              ^.`class` := Css.flat( Css.Overflow.HIDDEN, Css.Cursor.MOVE ),
+              jdArgs.jdCss.horizResizable,
               // TODO onResize -> ...
-              ^.onMouseUp ==> onQdTagResize(qdTag),
-              ^.`class` := Css.Cursor.MOVE
+              ^.onMouseUp ==> onQdTagResize(qdTag)
             )
 
           } else {
@@ -597,17 +598,31 @@ class JdR(
     }
 
 
-    private def _parseWidth(e: ReactMouseEventFromHtml): Option[Int] = {
+    private def _parseStylePx(e: ReactMouseEventFromHtml)(f: CSSStyleDeclaration => String): Option[Int] = {
       for {
-        target <- Option(e.target)
+        target        <- Option(e.target)
         if e.button ==* 0
-        style  <- Option(target.style)
-        widthPxStyl  <- Option(style.width)
-        pxIdx = widthPxStyl.indexOf("px")
-        if pxIdx > 0
+        style         <- {
+          println(target.style)
+          Option(target.style)
+        }
+        sizePxStyl    <- Option(f(style))
+        pxIdx = sizePxStyl.indexOf("px")
+        if {
+          println(sizePxStyl, pxIdx)
+          pxIdx > 0
+        }
       } yield {
-        widthPxStyl.substring(0, pxIdx).toInt
+        sizePxStyl
+          .substring(0, pxIdx)
+          .toInt
       }
+    }
+    private def _parseWidth(e: ReactMouseEventFromHtml): Option[Int] = {
+      _parseStylePx(e)(_.width)
+    }
+    private def _parseHeight(e: ReactMouseEventFromHtml): Option[Int] = {
+      _parseStylePx(e)(_.height)
     }
 
     /** Самописная поддержка ресайза контента только силами браузера. */
@@ -618,11 +633,13 @@ class JdR(
     }
 
 
-    override protected def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs)(e: ReactMouseEventFromHtml): Callback = {
+    override protected def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs, withHeight: Boolean)(e: ReactMouseEventFromHtml): Callback = {
       _parseWidth(e).fold(Callback.empty) { widthPx =>
         // stopPropagation() нужен, чтобы сигнал не продублировался в onQdTagResize()
+        val heightPxOpt = OptionUtil.maybe(withHeight)(_parseHeight(e).get)
+        println(widthPx, withHeight, e.target.style.height, heightPxOpt)
         ReactCommonUtil.stopPropagationCB(e) >>
-          dispatchOnProxyScopeCB( $, QdEmbedResize( widthPx, qdOp, edgeDataJs.jdEdge.id ) )
+          dispatchOnProxyScopeCB( $, QdEmbedResize( widthPx, qdOp, edgeDataJs.jdEdge.id, heightPx = heightPxOpt ) )
       }
     }
 
@@ -709,7 +726,7 @@ class JdR(
 
     override protected def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml) = Callback.empty
 
-    override protected def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs)(e: ReactMouseEventFromHtml) = Callback.empty
+    override protected def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs, withHeight: Boolean)(e: ReactMouseEventFromHtml) = Callback.empty
   }
 
 }

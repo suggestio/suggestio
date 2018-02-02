@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.ad.blk.BlockPaddings
 import io.suggest.color.MColorData
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.css.ScalaCssUtil.Implicits._
@@ -76,13 +77,14 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
 
   /** Поддержка горизонтального ресайза. */
-  val horizResizableHover = {
+  val horizResizable = style(
     // TODO Хотелось с &.hover(...), но в хроме полный ахтунг и погибель
-    style(
-      resize.horizontal,
-      overflow.hidden
-    )
-  }
+    resize.horizontal,
+  )
+
+  val hvResizable = style(
+    resize.both
+  )
 
   private def _allJdTagsIter: Iterator[JdTag] = {
     jdCssArgs
@@ -406,10 +408,13 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   }
 
 
-  val videoStyle = style(
-    width ( Math.round(300 * blkSzMultD).px ),
-    height( Math.round(150 * blkSzMultD).px )
-  )
+  val videoStyle = {
+    val whDflt = HtmlConstants.Iframes.whCsspxDflt
+    style(
+      width ( Math.round(whDflt.width  * blkSzMultD).px ),
+      height( Math.round(whDflt.height * blkSzMultD).px )
+    )
+  }
 
   /** Стили для видео-фреймов. */
   /*
