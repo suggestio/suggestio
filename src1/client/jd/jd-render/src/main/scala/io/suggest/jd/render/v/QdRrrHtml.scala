@@ -237,15 +237,17 @@ class QdRrrHtml(
       val tm = if ( jdArgs.conf.isEdit ) {
         // Для редактора используем div-контейнер, чтобы меньше мигало видео в редакторе.
         var outerAcc = List.empty[TagMod]
-        for (resizableF <- resizableCb) {
-          outerAcc ::= <.div(
-            ^.key := (keyV + "z"),
-            ^.`class` := Css.flat( Css.Position.ABSOLUTE, Css.Overflow.HIDDEN ),
-            jdArgs.jdCss.hvResizable,
-            whStyl,
-            ^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, true, event) }
-          )
-        }
+        outerAcc ::= <.div(
+          ^.key := (keyV + "z"),
+          ^.`class` := Css.flat( Css.Position.ABSOLUTE, Css.Overflow.HIDDEN ),
+          whStyl,
+          resizableCb.whenDefined { resizableF =>
+            TagMod(
+              jdArgs.jdCss.hvResizable,
+              ^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, true, event) }
+            )
+          }
+        )
         outerAcc =
           (^.key := (keyV + "c")) ::
           (^.`class` := Css.Position.RELATIVE) ::
