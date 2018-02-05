@@ -29,6 +29,7 @@ import play.api.i18n.Messages
 import play.api.mvc.{AnyContent, Call, Result}
 import util.acl._
 import util.adn.NodesUtil
+import util.adv.AdvUtil
 import util.adv.direct.AdvRcvrsUtil
 import util.lk.LkAdUtil
 import util.mail.IMailerWrapper
@@ -61,6 +62,7 @@ class SysMarket @Inject() (
                             emailActivations                : EmailActivations,
                             mPerson                         : MPerson,
                             mItems                          : MItems,
+                            override val advUtil            : AdvUtil,
                             override val isSuNodeEdge       : IsSuNodeEdge,
                             override val isSuNode           : IsSuNode,
                             override val isSuMad            : IsSuMad,

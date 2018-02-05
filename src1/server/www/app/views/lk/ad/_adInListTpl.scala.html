@@ -20,7 +20,7 @@
     <div class="adv-item_preview-container">
       @_adNormalTpl(brArgs)
     </div>
-    @if( brArgs.mad.ad.blockMeta.exists(_.height > adsListMinZzHeight.value) ) {
+    @if( ctx.api.advUtil.getAdvMainBlockMeta(brArgs.mad).exists(_.height > adsListMinZzHeight.value) ) {
       <div class="adv-item_preview-border"></div>
     }
   </div>

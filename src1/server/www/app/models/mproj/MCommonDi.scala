@@ -75,7 +75,7 @@ final class MCommonDi @Inject() (
                                   override implicit val ec            : ExecutionContext,
                                   override implicit val esClient      : Client,
                                   override implicit val sn            : SioNotifierStaticClientI
-)
+                                )
   extends ICommonDi
 
 

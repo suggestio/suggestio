@@ -12,9 +12,10 @@ import io.suggest.sc.tile.{GridCalc, MGridCalcConf}
 import models.blk
 import models.blk._
 import models.im._
-import models.im.make.{MImgMakeArgs, MakeResult, MImgMakers}
+import models.im.make.{MImgMakeArgs, MImgMakers, MakeResult}
 import models.mproj.ICommonDi
 import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
+import util.adv.AdvUtil
 import util.blocks.{BgImg, BlocksConf}
 
 import scala.annotation.tailrec
@@ -28,8 +29,9 @@ import scala.concurrent.Future
  */
 @Singleton
 class ShowcaseUtil @Inject() (
-  mCommonDi : ICommonDi
-) {
+                               advUtil    : AdvUtil,
+                               mCommonDi  : ICommonDi
+                             ) {
 
   import mCommonDi._
 
@@ -59,7 +61,7 @@ class ShowcaseUtil @Inject() (
   def groupNarrowAds[T <: MNode](ads: Seq[T]): Seq[T] = {
     val (enOpt1, acc0) = ads.foldLeft [(Option[T], List[T])] (None -> Nil) {
       case ((enOpt, acc), e) =>
-        val bwidth: BlockWidth = e.ad.blockMeta
+        val bwidth: BlockWidth = advUtil.getAdvMainBlockMeta(e)
           .fold(BlockWidths.default)(bm => BlockWidths.withValue(bm.width))
         if (bwidth.isNarrow) {
           enOpt match {
@@ -91,7 +93,7 @@ class ShowcaseUtil @Inject() (
     val szMult: SzMult_t = {
       val dscrSz = for {
         dscr <- deviceScreenOpt
-        bm   <- mad.ad.blockMeta
+        bm   <- advUtil.getAdvMainBlockMeta(mad)
       } yield {
         fitBlockToScreen(bm, dscr)
       }
@@ -126,7 +128,7 @@ class ShowcaseUtil @Inject() (
   def focWideBgImgArgs(mad: MNode, szMult: SzMult_t, devScrOpt: Option[DevScreen]): Future[Option[MakeResult]] = {
     val optFut = for {
       mimg <- BgImg.getBgImg(mad)
-      bm   <- mad.ad.blockMeta
+      bm   <- advUtil.getAdvMainBlockMeta(mad)
     } yield {
       val wArgs = MImgMakeArgs(
         img           = mimg,

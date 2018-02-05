@@ -19,6 +19,7 @@ import play.api.{Application, Configuration, Environment}
 import play.api.http.HeaderNames._
 import play.api.i18n.Messages
 import play.api.mvc.Call
+import util.adv.AdvUtil
 import util.cdn.CdnUtil
 import util.i18n.JsMessagesUtil
 import util.img.{DynImgUtil, GalleryUtil}
@@ -301,17 +302,18 @@ trait Context {
   * DI препятствует этому, поэтому необходимо обеспечивать доступ с помощью класса-костыля. */
 @Singleton
 class ContextApi @Inject() (
-  override val ctxUtil    : ContextUtil,
-  val galleryUtil         : GalleryUtil,
-  val cdn                 : CdnUtil,
-  val dynImgUtil          : DynImgUtil,
-  val n2NodesUtil         : N2NodesUtil,
-  val mSuperUsers         : MSuperUsers,
-  val jsMessagesUtil      : JsMessagesUtil,
-  val mCtxIds             : MCtxIds,
-  val supportUtil         : SupportUtil,
-  override implicit val current: Application
-)
+                             override val ctxUtil    : ContextUtil,
+                             val galleryUtil         : GalleryUtil,
+                             val cdn                 : CdnUtil,
+                             val dynImgUtil          : DynImgUtil,
+                             val n2NodesUtil         : N2NodesUtil,
+                             val mSuperUsers         : MSuperUsers,
+                             val jsMessagesUtil      : JsMessagesUtil,
+                             val mCtxIds             : MCtxIds,
+                             val advUtil             : AdvUtil,
+                             val supportUtil         : SupportUtil,
+                             override implicit val current: Application
+                           )
   extends ICurrentAppHelpers
   with IContextUtilDi
 

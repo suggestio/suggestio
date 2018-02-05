@@ -1,8 +1,8 @@
 package util.ext.vk
 
 import java.net.URL
-
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.{OutImgFmt, OutImgFmts}
@@ -10,6 +10,7 @@ import models.mext.MExtServices
 import models.mext.vk.VkImgSizes
 import models.mproj.ICommonDi
 import play.api.libs.ws.WSClient
+import util.adv.AdvUtil
 import util.ext.IExtServiceHelper
 
 /**
@@ -19,10 +20,11 @@ import util.ext.IExtServiceHelper
   * Description: Утиль для взаимодействия с вконтактом.
   */
 @Singleton
-class VkontakteHelper @Inject() (
-  override val wsClient     : WSClient,
-  override val mCommonDi    : ICommonDi
-)
+class VkontakteHelper @Inject()(
+                                 override val wsClient     : WSClient,
+                                 override val advUtil      : AdvUtil,
+                                 override val mCommonDi    : ICommonDi
+                               )
   extends IExtServiceHelper
   with VkMpUpload
   with MacroLogsImpl

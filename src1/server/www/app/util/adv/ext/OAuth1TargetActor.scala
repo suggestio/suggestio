@@ -1,13 +1,14 @@
 package util.adv.ext
 
 import java.io.File
-
 import javax.inject.Inject
+
 import com.google.inject.assistedinject.Assisted
 import io.suggest.ahc.upload.IMpUploadArgs
 import io.suggest.fsm.FsmActor
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.IOAuth1AdvTargetActorArgs
+import models.adv.ext.Mad2ImgUrlCalcOuter
 import models.adv.ext.act.EtaCustomArgsBase
 import models.adv.js.ctx.JsErrorInfo
 import models.blk.OneAdQsArgs
@@ -16,6 +17,7 @@ import models.mext._
 import models.mproj.ICommonDi
 import play.api.libs.ws.{WSClient, WSResponse}
 import util.adr.AdRenderUtil
+import util.adv.AdvUtil
 import util.adv.ext.ut._
 import util.ext.ExtServicesUtil
 import util.n2u.N2NodesUtil
@@ -44,6 +46,7 @@ class OAuth1TargetActor @Inject() (
                                     override val advExtFormUtil   : AdvExtFormUtil,
                                     override val adRenderUtil     : AdRenderUtil,
                                     override val extServicesUtil  : ExtServicesUtil,
+                                    override val advUtil          : AdvUtil,
                                     override val ctxUtil          : ContextUtil,
                                     implicit val wsClient         : WSClient,
                                     override val mCommonDi        : ICommonDi
@@ -56,6 +59,7 @@ class OAuth1TargetActor @Inject() (
   with RenderAd2ImgRender
   with S2sMpUploadRender
   with EtaCustomArgsBase
+  with Mad2ImgUrlCalcOuter
 {
 
   import LOGGER._

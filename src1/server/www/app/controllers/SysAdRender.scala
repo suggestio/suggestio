@@ -11,6 +11,7 @@ import play.api.mvc.Result
 import util.acl.IIsSuMad
 import util.n2u.IN2NodesUtilDi
 import util.FormUtil
+import util.adv.IAdvUtilDi
 import views.html.sys1.market.ad.one._
 
 import scala.concurrent.Future
@@ -53,6 +54,7 @@ trait SysAdRender
   with IMacroLogs
   with IIsSuMad
   with IN2NodesUtilDi
+  with IAdvUtilDi
 {
 
   import mCommonDi._
@@ -78,7 +80,7 @@ trait SysAdRender
         szMult  = 1.0F,
         vsnOpt  = request.mad.versionOpt,
         imgFmt  = OutImgFmts.JPEG,
-        wideOpt = request.mad.ad.blockMeta.map { bm =>
+        wideOpt = for (bm <- request.mad.ad.blockMeta) yield {
           OneAdWideQsArgs(
             width = bm.width * 2
           )

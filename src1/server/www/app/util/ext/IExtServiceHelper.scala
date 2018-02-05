@@ -10,6 +10,7 @@ import models.im.{OutImgFmt, OutImgFmts}
 import models.mext.MExtService
 import models.mproj.IMCommonDi
 import models.IRenderable
+import util.adv.IAdvUtilDi
 
 import scala.concurrent.Future
 
@@ -21,7 +22,10 @@ import scala.concurrent.Future
   * Появился при распиливании растолстевшего [[models.mext.IExtService]] на данные модели и логику,
   * которая перешла сюда в ходе DI-рефакторинга.
   */
-trait IExtServiceHelper extends IMCommonDi {
+trait IExtServiceHelper
+  extends IMCommonDi
+  with IAdvUtilDi
+{
 
   import mCommonDi._
 
@@ -83,8 +87,7 @@ trait IExtServiceHelper extends IMCommonDi {
 
   /** Исповедовать ли широкое отображение при рендере карточки для размещения карточки на сервисе? */
   def isAdvExtWide(mad: MNode): Boolean = {
-    mad.ad
-      .blockMeta
+    advUtil.getAdvMainBlockMeta(mad)
       .exists(_.wide)
   }
 

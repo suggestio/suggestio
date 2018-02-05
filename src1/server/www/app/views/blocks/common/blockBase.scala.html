@@ -23,7 +23,7 @@
          @PRODUCER_ID_ATTR="@producerId"
        }
      }
-     @for(bm <- mad.ad.blockMeta) {
+     @for(bm <- ctx.api.advUtil.getAdvMainBlockMeta(mad)) {
        @WIDTH_ATTR="@szMulted(bm.width, args.szMult)"
        @HEIGHT_ATTR="@szMulted(bm.height, args.szMult)"
      }

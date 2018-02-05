@@ -154,13 +154,13 @@ class JdAdUtil @Inject()(
 
     hostInfoOpt
       .fold[String] {
-      // Вообще, это плохо, если нет хостнейма для media. Это значит, что-то не так.
-      LOGGER.warn(s"$logPrefix Media host-name missing for edge $medge")
-      call.url
-    } { hostInfo =>
-      LOGGER.trace(s"$logPrefix Using host=$hostInfo for media-edge $medge")
-      cdnUtil.distNodeCdnUrl( hostInfo, call)
-    }
+        // Вообще, это плохо, если нет хостнейма для media. Это значит, что-то не так.
+        LOGGER.warn(s"$logPrefix Media host-name missing for edge $medge")
+        call.url
+      } { hostInfo =>
+        LOGGER.trace(s"$logPrefix Using host=$hostInfo for media-edge $medge")
+        cdnUtil.distNodeCdnUrl( hostInfo, call)
+      }
   }
 
 
@@ -292,9 +292,9 @@ class JdAdUtil @Inject()(
 
 
   /** Настраиваемая логика рендера карточки. */
-  trait JdAdDataMakerBase {
+  trait JdAdDataMakerBase extends Product {
 
-    lazy val logPrefix = s"${getClass.getSimpleName}[${System.currentTimeMillis}]:"
+    lazy val logPrefix = s"$productPrefix[${System.currentTimeMillis}]:"
 
     def nodeId: Option[String]
 
@@ -304,15 +304,21 @@ class JdAdUtil @Inject()(
     def nodeEdges: MNodeEdges
 
     // Собираем картинки, используемые в карточке:
-    lazy val imgsEdges = prepareImgEdges( nodeEdges )
-    LOGGER.trace(s"$logPrefix Found ${imgsEdges.size} img.edges: ${imgsEdges.iterator.map(_._2.fileName).mkString(", ")}")
+    lazy val imgsEdges = {
+      val ie = prepareImgEdges( nodeEdges )
+      LOGGER.trace(s"$logPrefix Found ${ie.size} img.edges: ${ie.iterator.map(_._2.fileName).mkString(", ")}")
+      ie
+    }
 
     // Собрать связанные инстансы MMedia
     lazy val imgOrigsMediasMapFut = prepareImgMedias( imgsEdges )
 
     // Собрать video-эджи. Для них надо получить инстансы MNode, чтобы достучаться до ссылок.
-    lazy val videoEdges = prepareVideoEdges( nodeEdges )
-    LOGGER.trace(s"$logPrefix Found ${videoEdges.size} video edges: ${videoEdges.mkString(", ")}")
+    lazy val videoEdges = {
+      val ve = prepareVideoEdges( nodeEdges )
+      LOGGER.trace(s"$logPrefix Found ${ve.size} video edges: ${ve.mkString(", ")}")
+      ve
+    }
 
     /** Для каких img-узлов требуется прочитать ноды? */
     def imgEdgesNeedNodes: Seq[(MEdge, MImg3)]
@@ -442,6 +448,7 @@ class JdAdUtil @Inject()(
           imgsRendered      <- _imgsRenderedFut
           mediaHostsMap     <- _mediaHostsMapFut
         } yield {
+          LOGGER.trace(s"$logPrefix ${imgsEdges.length} img edges => rendered ${imgsRendered.size} map: [${imgsRendered.keysIterator.mkString(", ")}]")
           val imgPred = imgPredicate
           val iter = for {
             (edgeUid, (medge, mimg, iMakeRes)) <- imgsRendered.iterator
@@ -535,9 +542,13 @@ class JdAdUtil @Inject()(
       jdTag = jdLoc.getLabel
       qdEmbedSzOpt = jdTag.qdProps
         .flatMap(_.attrsEmbed)
-        .flatMap[ISize2di](_.size2dOpt)
+        .flatMap[ISize2di] { ae =>
+          LOGGER.error("attE: " + ae)
+          ae.size2dOpt
+        }
 
       contSz2d <- qdEmbedSzOpt.orElse {
+        LOGGER.error("xynta: " + qdEmbedSzOpt + jdTag.props1.bm)
         // Не найдено подходящего размера в qd-контенте. Поискать в strip props.
         jdTag.props1.bm
       }

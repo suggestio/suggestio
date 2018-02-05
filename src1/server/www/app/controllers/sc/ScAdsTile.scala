@@ -328,7 +328,7 @@ trait ScAdsTile
     /** Рендер HTTP-результата. */
     override def resultFut: Future[Result] = {
       val _madsRenderFut = madsRenderedFut
-      val _cssFut = jsAdsCssFut.map(_.body)
+      val _cssFut = jsAdsCssFut(ctx).map(_.body)
       val _params = MGridParams(
         cellSizeCssPx = cellSizeCssPx,
         cellPaddingCssPx = cellPaddingCssPx

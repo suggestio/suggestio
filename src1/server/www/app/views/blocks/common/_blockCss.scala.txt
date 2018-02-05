@@ -1,4 +1,4 @@
-@(args: blk.IRenderArgs)
+@(args: blk.IRenderArgs)(implicit ctx: Context)
 
 @* Стили для блока в общем. *@
 @import args._
@@ -7,7 +7,7 @@
 
 @defining( cssClasses.map {c => List(".", c, " ")} ) { cc =>
 .sm-block@{mad.id}@{cc} {
-  @for(bm <- mad.ad.blockMeta) {
+  @for(bm <- ctx.api.advUtil.getAdvMainBlockMeta(mad)) {
     width: @szMulted(bm.width, szMult)px;
     height: @szMulted(bm.height, szMult)px;
   }

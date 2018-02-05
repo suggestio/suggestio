@@ -66,11 +66,11 @@ trait ScCssUtil
     def adsCssRenderArgsFut: Future[immutable.Seq[blk.IRenderArgs]]
 
     /** Рендер обрамляющего css блоков на основе соотв. параметров. */
-    def adsCssRenderFut: Future[immutable.Seq[Txt]] = {
+    def adsCssRenderFut(implicit ctx: Context): Future[immutable.Seq[Txt]] = {
       adsCssRenderArgsFut flatMap { args =>
         Future.traverse(args) { cra =>
           Future {
-            _blockCss(cra)
+            _blockCss(cra)(ctx)
           }
         }
       }
@@ -95,7 +95,7 @@ trait ScCssUtil
     }
 
     /** Отрендерить стили в Txt для всех необходимых блоков. */
-    def jsAdsCssFut: Future[Txt] = {
+    def jsAdsCssFut(implicit ctx: Context): Future[Txt] = {
       val _adsCssRenderFut = adsCssRenderFut
       for {
         fieldRenders  <- adsFieldCssRenderFut

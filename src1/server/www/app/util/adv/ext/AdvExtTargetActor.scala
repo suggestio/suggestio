@@ -4,11 +4,13 @@ import java.io.File
 
 import com.google.inject.assistedinject.Assisted
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.ahc.upload.{IMpUploadArgs, UploadRefusedException}
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.fsm.FsmActor
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
+import models.adv.ext.Mad2ImgUrlCalcOuter
 import models.adv.ext.act._
 import models.adv.js._
 import models.adv.js.ctx._
@@ -18,6 +20,7 @@ import models.mws.AnswerStatuses
 import play.api.Configuration
 import play.api.libs.ws.{WSClient, WSResponse}
 import util.adr.AdRenderUtil
+import util.adv.AdvUtil
 import util.adv.ext.ut._
 import util.ext.ExtServicesUtil
 import util.n2u.N2NodesUtil
@@ -41,16 +44,17 @@ trait AdvExtTargetActorFactory {
   * @param args Аргументы для выполнения задач обработки таргета.
   */
 class AdvExtTargetActor @Inject()(
-                                 @Assisted override val args   : IExtAdvTargetActorArgs,
-                                 aeTgJsAdpActorUtil            : AeTgJsAdpActorUtil,
-                                 override val n2NodesUtil      : N2NodesUtil,
-                                 override val adRenderUtil     : AdRenderUtil,
-                                 override val advExtFormUtil       : AdvExtFormUtil,
-                                 override val extServicesUtil  : ExtServicesUtil,
-                                 override val ctxUtil          : ContextUtil,
-                                 implicit val wsClient         : WSClient,
-                                 override val mCommonDi        : ICommonDi
-)
+                                   @Assisted override val args   : IExtAdvTargetActorArgs,
+                                   aeTgJsAdpActorUtil            : AeTgJsAdpActorUtil,
+                                   override val n2NodesUtil      : N2NodesUtil,
+                                   override val adRenderUtil     : AdRenderUtil,
+                                   override val advExtFormUtil   : AdvExtFormUtil,
+                                   override val extServicesUtil  : ExtServicesUtil,
+                                   override val advUtil          : AdvUtil,
+                                   override val ctxUtil          : ContextUtil,
+                                   implicit val wsClient         : WSClient,
+                                   override val mCommonDi        : ICommonDi
+                                 )
   extends FsmActor
   with AdvExtTargetActorUtil
   with ReplyTo
@@ -59,6 +63,7 @@ class AdvExtTargetActor @Inject()(
   with EtaCustomArgsBase
   with RenderAd2ImgRender
   with S2sMpUploadRender
+  with Mad2ImgUrlCalcOuter
 {
 
   import LOGGER._

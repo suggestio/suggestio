@@ -52,21 +52,5 @@ case class MQdOp(
   def withAttrsText(attrsText: Option[MQdAttrsText])      = copy(attrsText = attrsText)
   def withAttrsEmbed(attrsEmbed : Option[MQdAttrsEmbed])  = copy(attrsEmbed = attrsEmbed)
 
-
-  /*
-  override def bgImgEdgeId = edgeInfo
-
-  override def setBgColor(bgColor: Option[MColorData]): MQdOp = {
-    val attrsText0 = attrsText.getOrElse(MQdAttrsText.empty)
-    withAttrsText(
-      Some(
-        attrsText0.withBackground(
-          bgColor.map { SetVal.apply }
-        )
-      )
-    )
-  }
-  */
-
 }
 

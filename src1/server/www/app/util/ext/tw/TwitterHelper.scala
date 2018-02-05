@@ -5,7 +5,7 @@ import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.model.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
-import models.adv.ext.Mad2ImgUrlCalc
+import models.adv.ext.Mad2ImgUrlCalcOuter
 import models.im.OutImgFmts
 import models.mctx.{Context, ContextUtil}
 import models.IRenderable
@@ -14,6 +14,7 @@ import models.mext.tw.card.{PhotoCardArgs, TwImgSizes}
 import models.mproj.ICommonDi
 import play.api.libs.ws.WSClient
 import play.twirl.api.Html
+import util.adv.AdvUtil
 import util.ext.{IExtServiceHelper, OAuth1Support}
 import util.n2u.N2NodesUtil
 
@@ -27,15 +28,17 @@ import scala.concurrent.Future
   */
 @Singleton
 class TwitterHelper @Inject() (
-  override val ctxUtil      : ContextUtil,
-  override val n2NodesUtil  : N2NodesUtil,
-  override val wsClient     : WSClient,
-  override val mCommonDi    : ICommonDi
-)
+                                override val ctxUtil      : ContextUtil,
+                                override val n2NodesUtil  : N2NodesUtil,
+                                override val wsClient     : WSClient,
+                                override val advUtil      : AdvUtil,
+                                override val mCommonDi    : ICommonDi
+                              )
   extends IExtServiceHelper
   with OAuth1Support
   with TwMpUpload
   with MacroLogsImpl
+  with Mad2ImgUrlCalcOuter
 {
   that =>
 

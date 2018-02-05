@@ -6,6 +6,7 @@ import io.suggest.util.logs.IMacroLogs
 import models.msc.AdCssArgs
 import models.blk
 import play.twirl.api.Txt
+import util.acl.{IIgnoreAuth, IgnoreAuth}
 import util.n2u.IN2NodesUtilDi
 import views.txt.blocks.common._
 
@@ -24,6 +25,7 @@ trait ScBlockCss
   with IMacroLogs
   with IN2NodesUtilDi
   with IMNodes
+  with IIgnoreAuth
 {
 
   import mCommonDi._
@@ -33,12 +35,13 @@ trait ScBlockCss
    * @param args Список id карточек, для которых надо вернуть css и параметры их рендера.
    * @return 200 Ok с отрендеренным css в неопределённом порядке.
    */
-  def serveBlockCss(args: Seq[AdCssArgs]) = Action.async { implicit request =>
+  def serveBlockCss(args: Seq[AdCssArgs]) = ignoreAuth().async { implicit request =>
     // TODO Надо переписать это дело через асинхронные enumerator'ы
     val madsFut = mNodes.multiGetRev( args.iterator.map(_.adId) )
     val argsMap = args.iterator
       .map(arg => arg.adId -> arg)
       .toMap
+    implicit val ctx = getContext2
     val resFut = madsFut.flatMap { mads =>
       Future.traverse(mads) { mad =>
         val arg = argsMap(mad.id.get)
@@ -59,7 +62,7 @@ trait ScBlockCss
               _textCss(cssRenderArgs): Txt
             }
             .toList
-          val preableCssTxt = _blockCss(brArgs): Txt
+          val preableCssTxt = _blockCss(brArgs)(ctx): Txt
           preableCssTxt :: offerFieldsTxts
         }
       } map { txts1 =>

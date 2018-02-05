@@ -2,7 +2,7 @@ package models.adv.ext.act
 
 import controllers.routes
 import io.suggest.common.geom.d2.INamedSize2di
-import models.adv.ext.Mad2ImgUrlCalc
+import models.adv.ext.Mad2ImgUrlCalcOuter
 import models.adv.js.ctx.MPictureCtx
 import models.mctx.IContextUtilDi
 
@@ -22,7 +22,8 @@ import models.mctx.IContextUtilDi
 
 trait EtaCustomArgsBase
   extends ExtTargetActorEnv
-    with IContextUtilDi
+  with IContextUtilDi
+  with Mad2ImgUrlCalcOuter
 { env =>
 
   def _adRenderMaxSzDflt: INamedSize2di = {

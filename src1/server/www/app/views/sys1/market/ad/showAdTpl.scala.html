@@ -29,7 +29,7 @@
     }
   </p>
 
-  @args.mad.ad.blockMeta.map { bm =>
+  @for(bm <- ctx.api.advUtil.getAdvMainBlockMeta(args.mad)) {
     <p>Размеры карточки: ширина=@bm.width высота=@bm.height css-пикселей.</p>
   }
 
@@ -80,7 +80,7 @@
             <a href="@routes.SysImg.showOne(ei.img)">
               <strong>@messages(ei.edge.predicate.singular)</strong>
             </a>
-            <a href="@routes.SysImg.makeForm(ei.img, args.mad.ad.blockMeta)">
+            <a href="@routes.SysImg.makeForm(ei.img, ctx.api.advUtil.getAdvMainBlockMeta(args.mad))">
               [make]
             </a>
           </li>

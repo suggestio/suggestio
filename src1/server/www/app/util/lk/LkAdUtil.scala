@@ -10,6 +10,7 @@ import models.blk.SzMult_t
 import models.im.DevScreen
 import models.im.make.{MImgMakeArgs, MImgMakers}
 import play.api.inject.Injector
+import util.adv.AdvUtil
 import util.blocks.{BgImg, BlocksConf}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -21,8 +22,9 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Утиль для работы с рекламными карточками в личном кабинете.
  */
 class LkAdUtil @Inject() (
-                           injector                    : Injector,
-                           override implicit val ec    : ExecutionContext
+                           injector                     : Injector,
+                           advUtil                      : AdvUtil,
+                           override implicit val ec     : ExecutionContext
                          )
   extends IExecutionContext
 {
@@ -41,7 +43,7 @@ class LkAdUtil @Inject() (
     val szMult = TILE_SZ_MULT
 
     val bgImgFutOpt = for {
-      bm    <- mad.ad.blockMeta
+      bm    <- advUtil.getAdvMainBlockMeta(mad)
       bgImg <- BgImg.getBgImg(mad)
     } yield {
       val wArgs = MImgMakeArgs(

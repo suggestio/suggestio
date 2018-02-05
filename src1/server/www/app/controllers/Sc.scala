@@ -8,10 +8,11 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.IImgMaker
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
-import util.acl.{BruteForceProtect, GetAnyAd, MaybeAuth}
+import util.acl.{BruteForceProtect, GetAnyAd, IgnoreAuth, MaybeAuth}
 import util.ad.JdAdUtil
 import util.adn.NodesUtil
 import util.adr.AdRenderUtil
+import util.adv.AdvUtil
 import util.adv.geo.AdvGeoLocUtil
 import util.ble.BleUtil
 import util.cdn.CdnUtil
@@ -48,6 +49,7 @@ class Sc @Inject() (
                      override val cspUtil            : CspUtil,
                      override val getAnyAd           : GetAnyAd,
                      override val maybeAuth          : MaybeAuth,
+                     override val advUtil            : AdvUtil,
                      @Named("blk") override val blkImgMaker  : IImgMaker,
                      override val dynImgUtil         : DynImgUtil,
                      override val scMapUtil          : ScMapUtil,
@@ -58,6 +60,7 @@ class Sc @Inject() (
                      override val bruteForceProtect  : BruteForceProtect,
                      override val scAdSearchUtil     : ScAdSearchUtil,
                      override val nodesUtil          : NodesUtil,
+                     override val ignoreAuth         : IgnoreAuth,
                      override val scTagsUtil         : ScTagsUtil,
                      override val geoIpUtil          : GeoIpUtil,
                      override val extServicesUtil    : ExtServicesUtil,

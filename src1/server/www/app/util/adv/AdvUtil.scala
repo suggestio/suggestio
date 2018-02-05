@@ -49,6 +49,23 @@ class AdvUtil @Inject() (
       .toSet
   }
 
+
+  /** Извлечь главный BlockMeta из узла-карточки. */
+  def getAdvMainBlockMeta(mad: MNode): Option[BlockMeta] = {
+    // v2-карточки, брать block-meta от главного блока
+    mad.extras.doc.fold {
+      // v1-карточка.
+      mad.ad.blockMeta
+    } { doc =>
+      import io.suggest.jd.tags.JdTag.Implicits._
+      doc.template
+        .getMainBlockOrFirst
+        .rootLabel
+        .props1.bm
+    }
+  }
+
+
   /**
     * Высокоуровневый рассчет цены размещения рекламной карточки. Вычисляет кол-во рекламных модулей и дергает
     * другой одноимённый метод.
@@ -58,7 +75,9 @@ class AdvUtil @Inject() (
     *         NoSuchElementException, если узел не является рекламной карточкой.
     */
   def getAdModulesCount(mad: MNode): Int = {
-    val bm = mad.ad.blockMeta.get   // TODO Следует ли отрабатывать ситуацию, когда нет BlockMeta?
+    // Тут поддержка разных кар
+    // TODO Следует ли отрабатывать ситуацию, когда нет BlockMeta?
+    val bm = getAdvMainBlockMeta(mad).get
     getAdModulesCount(bm)
   }
   def getAdModulesCount(bm: BlockMeta): Int = {
@@ -69,7 +88,7 @@ class AdvUtil @Inject() (
     wmul * hmul
   }
   def maybeAdModulesCount(mad: MNode): Option[Int] = {
-    mad.ad.blockMeta
+    getAdvMainBlockMeta(mad)
       .map( getAdModulesCount )
   }
 
@@ -288,4 +307,9 @@ class AdvUtil @Inject() (
       .mapAllPrices(_.normalizeAmountByExponent)
   }
 
+}
+
+
+trait IAdvUtilDi {
+  protected def advUtil: AdvUtil
 }

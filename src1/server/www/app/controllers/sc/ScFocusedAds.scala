@@ -863,7 +863,7 @@ trait ScFocusedAds
     override def resultFut: Future[Result] = {
       val _blockHtmlsFut = renderedAdsFut
 
-      val _stylesFut = jsAdsCssFut
+      val _stylesFut = jsAdsCssFut(ctx)
         .map(htmlCompressUtil.txt2str)
 
       for {

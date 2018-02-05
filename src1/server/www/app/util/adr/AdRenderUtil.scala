@@ -10,10 +10,11 @@ import io.suggest.model.n2.node.MNode
 import models.adr.MAdRenderArgs
 import models.blk.{OneAdQsArgs, szMulted}
 import models.im._
-import models.im.make.{IImgMaker, MImgMakeArgs, MakeResult, MImgMakers}
+import models.im.make.{IImgMaker, MImgMakeArgs, MImgMakers, MakeResult}
 import models.mproj.ICommonDi
 import util.adr.phantomjs.{PhantomJsRrrDiFactory, PhantomJsRrrUtil}
 import util.adr.wkhtml.{WkHtmlRrrDiFactory, WkHtmlRrrUtil}
+import util.adv.AdvUtil
 import util.blocks.BgImg
 import util.xplay.PlayUtil
 
@@ -29,6 +30,7 @@ import scala.concurrent.Future
 class AdRenderUtil @Inject() (
                                @Named("blk") blkImgMaker : IImgMaker,
                                playUtil                  : PlayUtil,
+                               advUtil                   : AdvUtil,
                                mCommonDi                 : ICommonDi
                              ) {
 
@@ -82,7 +84,7 @@ class AdRenderUtil @Inject() (
     val optFut = for {
       // Генерация данных по фоновой картинке карточки.
       bgImg <- BgImg.getBgImg(mad)
-      bm    <- mad.ad.blockMeta
+      bm    <- advUtil.getAdvMainBlockMeta(mad)
     } yield {
 
       // Высота виртуального экрана и плотность пикселей всегда одинаковая.
@@ -123,7 +125,7 @@ class AdRenderUtil @Inject() (
    * @return Фьючерс с байтами картинки.
    */
   def renderAd2img(adArgs: OneAdQsArgs, mad: MNode): Future[File] = {
-    val bm = mad.ad.blockMeta.get
+    val bm = advUtil.getAdvMainBlockMeta(mad).get
 
     // Высота отрендеренной карточки с учетом мультипликатора
     lazy val width0 = szMulted(bm.width, adArgs.szMult)

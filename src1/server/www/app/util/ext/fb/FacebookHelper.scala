@@ -9,6 +9,7 @@ import models.im.OutImgFmts
 import models.mext.MExtServices
 import models.mext.fb.FbImgSizes
 import models.mproj.ICommonDi
+import util.adv.AdvUtil
 import util.ext.IExtServiceHelper
 
 /**
@@ -19,8 +20,9 @@ import util.ext.IExtServiceHelper
   */
 @Singleton
 class FacebookHelper @Inject() (
-  override val mCommonDi: ICommonDi
-)
+                                 override val advUtil: AdvUtil,
+                                 override val mCommonDi: ICommonDi
+                               )
   extends IExtServiceHelper
 {
 
