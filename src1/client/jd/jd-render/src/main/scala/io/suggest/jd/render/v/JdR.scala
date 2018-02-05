@@ -484,7 +484,6 @@ class JdR(
         y = srcTop  - e.clientY
       )
 
-      //println( s"srcStyl($srcLeft $srcTop) - eCl(${e.clientX} ${e.clientY}) => $offsetXy" )
       e.dataTransfer.setData( mimes.DATA_CONTENT_TYPE, mimes.DataContentTypes.CONTENT_ELEMENT )
       e.dataTransfer.setData( mimes.COORD_2D_JSON, Json.toJson(offsetXy).toString() )
 
@@ -545,7 +544,6 @@ class JdR(
             x = ((clientX + offsetXy.x) / szMultD).toInt,
             y = ((clientY + offsetXy.y) / szMultD).toInt
           )
-          //println(s"e.client(${e.clientX} ${e.clientY}) +diff=$offsetXy => $topLeftXy")
 
           JdDropContent(
             strip       = s,
@@ -562,7 +560,6 @@ class JdR(
           val clRect = tgEl.getBoundingClientRect()
           val pointerY = clientY - clRect.top
           val isUpper = pointerY < clRect.height / 2
-          //println(s"e.Y=$clientY clRect.top=${clRect.top} clRect.height=${clRect.height}")
           JdDropStrip(
             targetStrip = s,
             isUpper     = isUpper
@@ -600,18 +597,14 @@ class JdR(
 
     private def _parseStylePx(e: ReactMouseEventFromHtml)(f: CSSStyleDeclaration => String): Option[Int] = {
       for {
-        target        <- Option(e.target)
+        // Используем currentTarget, т.к. хром возвращает события откуда попало, а не из точки аттача.
+        // TODO Если за пределами блока отпускание мыши, то и это не помогает.
+        target        <- Option(e.currentTarget)
         if e.button ==* 0
-        style         <- {
-          println(target.style)
-          Option(target.style)
-        }
+        style         <- Option(target.style)
         sizePxStyl    <- Option(f(style))
         pxIdx = sizePxStyl.indexOf("px")
-        if {
-          println(sizePxStyl, pxIdx)
-          pxIdx > 0
-        }
+        if pxIdx > 0
       } yield {
         sizePxStyl
           .substring(0, pxIdx)
