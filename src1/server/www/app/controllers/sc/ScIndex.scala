@@ -32,6 +32,7 @@ import util.ble.IBleUtilDi
 import util.geo.IGeoIpUtilDi
 import util.stat.{IStatCookiesUtilDi, IStatUtil}
 import views.html.sc._
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -79,7 +80,7 @@ trait ScIndex
     lazy val logPrefix = s"index[${System.currentTimeMillis()}]:"
 
     // В зависимости от версии API выбрать используемую логику сборки ответа.
-    val logicOrNull = if (args.apiVsn.majorVsn == MScApiVsns.Sjs1.majorVsn) {
+    val logicOrNull = if (args.apiVsn.majorVsn ==* MScApiVsns.Sjs1.majorVsn) {
       new ScIndexLogicV2 {
         override def _reqArgs  = args
         override def _syncArgs = MScIndexSyncArgs.empty

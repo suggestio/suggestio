@@ -15,6 +15,7 @@ import play.twirl.api.Html
 import util.acl._
 import views.html.sc.nav._
 import play.api.libs.json.JsString
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -152,7 +153,7 @@ trait ScNodesList
     /** Собрать необходимую логику обработки ответа в заисимости от версии API. */
     def apply(tstamp: Long, args: MScNodeSearchArgs)(implicit request: IReq[_]): FindNodesLogicV = {
       val v = args.apiVsn
-      if (v.majorVsn == MScApiVsns.Sjs1.majorVsn) {
+      if (v.majorVsn ==* MScApiVsns.Sjs1.majorVsn) {
         new FindNodesLogicV2(tstamp, args)
       } else {
         throw new UnsupportedOperationException("Unsupported API vsn: " + v)

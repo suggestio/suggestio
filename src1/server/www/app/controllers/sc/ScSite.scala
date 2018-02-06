@@ -29,6 +29,7 @@ import util.i18n.IJsMessagesUtilDi
 import util.sec.ICspUtilDi
 import util.stat.IStatUtil
 import views.html.sc._
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -366,7 +367,7 @@ trait ScSite
 
     } else {
 
-      if (siteArgs.apiVsn.majorVsn == MScApiVsns.Sjs1.majorVsn) {
+      if (siteArgs.apiVsn.majorVsn ==* MScApiVsns.Sjs1.majorVsn) {
         // sc v2 -- первая выдача на scala.js.
         val logic = new SiteScriptLogicV2 {
           override def _siteQsArgs = siteArgs

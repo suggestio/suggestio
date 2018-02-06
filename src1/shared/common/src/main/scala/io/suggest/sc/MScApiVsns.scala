@@ -63,7 +63,7 @@ object MScApiVsns extends IntEnum[MScApiVsn] {
 
   /** Какую версию использовать, если версия API не указана? */
   def unknownVsn: MScApiVsn = {
-    Sjs1
+    ReactSjs3
   }
 
 }
