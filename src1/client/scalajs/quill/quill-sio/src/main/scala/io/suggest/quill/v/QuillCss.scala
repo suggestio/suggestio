@@ -57,10 +57,8 @@ class QuillCss extends StyleSheet.Standalone {
   private val SPAN = <.span.name
 
 
-  private val FONT_DFLT = MFonts.default
-
   {
-    val xFontFamilyName = FONT_DFLT.cssFontFamily
+    val xFontFamilyName = MFonts.default.cssFontFamily
     val ffAV = fontFamily.attr := Css.quoted( xFontFamilyName )
     val cAV = content := Css.quoted( xFontFamilyName )
     for (what <- List(ITEM, LABEL)) {
@@ -191,7 +189,7 @@ class QuillCss extends StyleSheet.Standalone {
 
 
   (QL_ + "container") - (
-    fontFamily.attr := Css.quoted( FONT_DFLT.cssFontFamily ),
+    fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
     fontSize( MFontSizes.default.value.px ),
     color.black
   )

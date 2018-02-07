@@ -4,7 +4,6 @@ import diode._
 import diode.data.PendingBase
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.srv.ILkAdEditApi
-import io.suggest.lk.m.MDeleteConfirmPopupS
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -37,7 +36,8 @@ class SaveAh[M](
         LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = v0.save.saveReq )
         noChange
 
-      } else {  // TODO Проверить текущие upload-запросы.
+      } else {
+      // TODO Проверить текущие upload-запросы.
         // Реквест сохранения можно отправить на сервер прямо сейчас. Подготовить данные для сохранения:
         val form = v0.toForm
         val conf = confRO.value

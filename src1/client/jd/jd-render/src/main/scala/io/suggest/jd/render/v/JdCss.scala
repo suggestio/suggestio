@@ -55,13 +55,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     outlineWidth( szMultedSide( BlockPaddings.default.outlinePx ).px )
   )
 
-  private val _smBlockDefaults = mixin(
-    // Дефолтовые настройки шрифтов внутри блока:
-    fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
-    fontSize( (MFontSizes.default.value * blkSzMultD).px ),
-    color.black
-  )
-
   // TODO Вынести статические стили в object ScCss?
   /** Все блоки помечаются этим классом. */
   val smBlock = style(
@@ -69,7 +62,11 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     overflow.hidden,
     // Без absolute, невлезающие элементы (текст/контент) будут вылезать за пределы границы div'а.
     position.absolute,
-    _smBlockDefaults
+
+    // Дефолтовые настройки шрифтов внутри блока:
+    fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
+    fontSize( (MFontSizes.default.value * blkSzMultD).px ),
+    color.black
   )
 
   /** Текущий выбранный тег выделяется на картинке. */

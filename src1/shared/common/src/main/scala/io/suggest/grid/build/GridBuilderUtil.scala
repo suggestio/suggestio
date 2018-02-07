@@ -435,7 +435,7 @@ trait IGridBuildCtx { outer =>
     // Бывает, что запрашиваемая плитка вылезает за пределамы исходной.
     // Исправляем это прямо здесь.
     val column2 = Math.max(0,
-      Math.min( outer.colsCount - cellWidth + 1, outerLineCol.column )
+      Math.min( outer.colsCount - cellWidth, outerLineCol.column )
     )
     val line2 = outerLineCol.line
 
