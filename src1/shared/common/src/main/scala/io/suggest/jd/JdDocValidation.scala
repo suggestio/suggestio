@@ -3,7 +3,7 @@ package io.suggest.jd
 import io.suggest.ad.blk.{BlockMeta, BlockWidths}
 import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.common.geom.d2.ISize2di
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.err.ErrorConstants
 import io.suggest.img.MImgEdgeWithOps
 import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
@@ -120,7 +120,7 @@ class JdDocValidation(
       ScalazUtil.liftNelOpt(props1.bgColor)( MColorData.validateHexCodeOnly ) |@|
       ScalazUtil.liftNelOpt(props1.bgImg)( MImgEdgeWithOps.validate(_, edges,
         // TODO Тут костыль, чтобы не было ошибок, если блок слишком большой для картинки по одной из сторон. Т.е. когда высота картинки 400px, а блок - 620px, чтобы не было ошибки.
-        props1.bm.map(_ => BlockMeta.MINIMAL)
+        props1.bm.map(_ => MSize2di(70, 70))
       ) ) |@|
       ScalazUtil.liftNelSome(props1.bm, errMsgF(BM))( BlockMeta.validate ) |@|
       ScalazUtil.liftNelNone(props1.topLeft, errMsgF( XY + `.` + UNEXPECTED)) |@|
