@@ -23,23 +23,19 @@ import scala.concurrent.Future
  */
 @Singleton
 class ScWideMaker @Inject() (
-  mAnyImgs  : MAnyImgs,
-  mCommonDi : ICommonDi
-)
+                              mAnyImgs  : MAnyImgs,
+                              mCommonDi : ICommonDi
+                            )
   extends IImgMaker
   with MacroLogsImpl
 {
 
   import mCommonDi._
 
-  /** Желаемые ширИны широкого бэкграунда. */
-  val WIDE_WIDTHS_PX: List[Int] = getConfSzsRow("widths",  List(350, 500, 650, 850, 950, 1100, 1250, 1600, 2048) )
-
-  private def getConfSzsRow(confKeyPart: String, default: => List[Int]): List[Int] = {
-    configuration.getOptional[Seq[Int]](s"blocks.bg.wide.$confKeyPart.px")
-      .fold(default) { _.toList.map(_.intValue) }
-      .sorted
-  }
+  /** Желаемые ширИны широкого бэкграунда.
+    * 2018-02-06 Уменьшение списка размеров: 950 и 1250 убрано.
+    */
+  val WIDE_WIDTHS_PX: List[Int] = List(350, 500, 650, 850, /*950,*/ 1100, /*1250,*/ 1600, 2048)
 
 
   /** Подобрать ширину фоновой картинки на основе списка допустимых вариантов. */

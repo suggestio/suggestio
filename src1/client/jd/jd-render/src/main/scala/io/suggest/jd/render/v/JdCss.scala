@@ -322,7 +322,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         acc ::= av
       }
 
-      // Если задан font-size, то нужно отрендерить его вместе с сопуствующими аттрибутами.
+      // Если задан font-size, то нужно отрендерить его вместе с сопутствующими аттрибутами.
       for (fontSizeSU <- attrsText.size; fontSize <- fontSizeSU) {
         // Рендер размера шрифта
         acc ::= _lineHeightAttr( (fontSize.lineHeight * blkSzMultD).px )

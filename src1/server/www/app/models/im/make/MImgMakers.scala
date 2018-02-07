@@ -46,7 +46,7 @@ case object MImgMakers extends StringEnum[MImgMaker] {
 
   /**
    * У focused-отображения карточки два варианта рендера.
- *
+   *
    * @param isWide true, если требуется широкий рендер. Иначе false.
    * @return Maker, подходящий под описанные условия.
    */
