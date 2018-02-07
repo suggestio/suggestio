@@ -117,10 +117,8 @@ class QuillCss extends StyleSheet.Standalone {
   }
 
 
-  private val FONT_SIZE_DFLT = MFontSizes.default
-
   {
-    val mFontSize = FONT_SIZE_DFLT
+    val mFontSize = MFontSizes.default
     val sizeStr = mFontSize.value.toString
     val lineHeightPx = mFontSize.lineHeight.px
 
@@ -194,7 +192,8 @@ class QuillCss extends StyleSheet.Standalone {
 
   (QL_ + "container") - (
     fontFamily.attr := Css.quoted( FONT_DFLT.cssFontFamily ),
-    fontSize( MFontSizes.default.value.px )
+    fontSize( MFontSizes.default.value.px ),
+    color.black
   )
 
 

@@ -57,7 +57,7 @@ class LkAdEditApiHttp(
 
   import JsRoutes_Controllers_LkAdEdit._
 
-  private def XHR_REQ_TIMEOUT_MS_OPT = Some(1500)
+  private def XHR_REQ_TIMEOUT_MS_OPT = Some(15000)
 
   private def _adProdArgs(): (String, String) = {
     val conf = confRO.value
