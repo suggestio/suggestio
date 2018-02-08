@@ -165,11 +165,8 @@ class QdRrrHtml(
       var imgArgsAcc = List.empty[TagMod]
 
       // width/height экранного представления картинки задаётся в CSS:
-      val embedStyleOpt = for (embedAttrs <- qdOp.attrsEmbed) yield {
-        val embStyl = jdArgs.jdCss.embedAttrStyleF( embedAttrs )
-        imgArgsAcc ::= embStyl
-        embStyl
-      }
+      for (embedAttrs <- qdOp.attrsEmbed)
+        imgArgsAcc ::= jdArgs.jdCss.embedAttrStyleF( embedAttrs )
 
       // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
       if (jdArgs.conf.isEdit)
@@ -179,9 +176,11 @@ class QdRrrHtml(
       for (f <- imgEdgeMods)
         imgArgsAcc ::= f( e )
 
+      val keyTm = ^.key := s"I$i"
+
       // Наконец, отработать src (в самое начало списка -- просто на всякий случай).
       imgArgsAcc =
-        (^.key := s"I$i") ::
+        keyTm ::
         (^.src := imgSrc) ::
         imgArgsAcc
 
@@ -191,6 +190,15 @@ class QdRrrHtml(
       var finalTm: TagMod = <.img(
         imgArgsAcc: _*
       )
+
+      // Поддержка рендера внутри a-тега (ссылка).
+      for (attrsText <- qdOp.attrsText; linkSu <- attrsText.link; link <- linkSu) {
+        finalTm = <.a(
+          keyTm,
+          ^.href := link,
+          finalTm
+        )
+      }
 
       // Поддержка горизонтального ресайза картинки/видео.
       for {
@@ -207,6 +215,7 @@ class QdRrrHtml(
             (displayWidthPx.toDouble / origWh.width.toDouble * origWh.height).toInt
           }
         finalTm = <.div(
+          keyTm,
           ^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Position.RELATIVE),
           finalTm,
           <.div(
@@ -426,7 +435,6 @@ class QdRrrHtml(
 
     _currLineAccRev ::= acc
   }
-
 
   /** Отработать аккамулятор строк, массово отформатировав все накопленные строки. */
   private def _renderLines(): VdomElement = {
