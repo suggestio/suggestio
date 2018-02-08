@@ -25,9 +25,9 @@ import scala.util.Try
   * В отличии от scalajs-spa-tutorial, этот роутер живёт за пределами [[Sc3Main]], чтобы не разводить кашу в коде.
   */
 class Sc3SpaRouter(
-                 sc3Circuit   : Sc3Circuit,
-                 scRootR      : ScRootR
-               )
+                    sc3Circuit   : Sc3Circuit,
+                    scRootR      : ScRootR
+                  )
   extends Log
 {
 

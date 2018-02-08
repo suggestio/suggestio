@@ -2,7 +2,6 @@ package io.suggest.common.empty
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
-import scala.util.Try
 
 /**
   * Suggest.io

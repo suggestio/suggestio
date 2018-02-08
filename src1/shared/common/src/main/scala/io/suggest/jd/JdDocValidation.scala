@@ -125,7 +125,7 @@ class JdDocValidation(
       ScalazUtil.liftNelSome(props1.bm, errMsgF(BM))( BlockMeta.validate ) |@|
       ScalazUtil.liftNelNone(props1.topLeft, errMsgF( XY + `.` + UNEXPECTED)) |@|
       ScalazUtil.liftNelOpt( props1.isMain ) {
-        Validation.liftNel(_)(identity, errMsgF(`MAIN` + `.` + INVALID))
+        Validation.liftNel(_)(!_, errMsgF(`MAIN` + `.` + INVALID))
       } |@|
       ScalazUtil.liftNelNone(props1.widthPx, errMsgF(WIDTH + `.` + UNEXPECTED))
     )( MJdtProps1.apply )
