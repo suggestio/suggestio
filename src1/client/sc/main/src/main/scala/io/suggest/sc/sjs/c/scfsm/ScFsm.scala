@@ -7,6 +7,7 @@ import io.suggest.sc.sjs.m.msc._
 import io.suggest.sjs.common.fsm._
 import io.suggest.sjs.common.model.browser.MBrowser
 import io.suggest.sjs.common.vm.wnd.WindowVm
+import io.suggest.spa.MGen
 
 /**
  * Suggest.io

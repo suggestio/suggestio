@@ -69,7 +69,7 @@ class Sc3Module {
   // sc3 top level
   lazy val scRootR = wire[ScRootR]
 
-  lazy val sc3Router = wire[Sc3Router]
+  lazy val sc3Router = wire[Sc3SpaRouter]
 
   /** Для удобного доступа к контроллеру роутера из view'ов (НЕ через props),
     * нам нужна защита от циклических зависимостей.

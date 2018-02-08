@@ -7,12 +7,13 @@ import io.suggest.sc.sjs.c.scfsm.foc.FocCommon
 import io.suggest.sc.sjs.c.scfsm.nav.NavUtil
 import io.suggest.sc.sjs.c.scfsm.search.SearchUtil
 import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
-import io.suggest.sc.sjs.m.msc.{MGen, MScSd, PopStateSignal}
+import io.suggest.sc.sjs.m.msc.{MScSd, PopStateSignal}
 import io.suggest.sc.sjs.m.msearch.{MTabSwitchSignal, MTabs}
 import io.suggest.sc.sjs.m.mtags.MTagInfo
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.msg.WarnMsgs
+import io.suggest.spa.MGen
 import io.suggest.text.UrlUtil2
 import org.scalajs.dom
 

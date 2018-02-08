@@ -2,6 +2,7 @@ package io.suggest.common.empty
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -75,7 +76,6 @@ object OptionUtil {
     case t: T => Some(t)
     case _    => None
   }
-
 
   implicit class AnyOptOps[X](val option: Option[X]) extends AnyVal {
 

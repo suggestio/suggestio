@@ -7,6 +7,8 @@ import io.suggest.sc.sjs.m.mgrid.{MGridData, MGridState}
 import io.suggest.sc.sjs.m.mnav.MNavState
 import io.suggest.sc.sjs.m.msearch.MSearchSd
 import io.suggest.sjs.common.log.Log
+import io.suggest.spa.MGen
+import io.suggest.text.UrlUtilJs
 
 import scala.scalajs.js.URIUtils
 
@@ -29,7 +31,7 @@ object MScSd extends Log {
     var acc: List[(String, Any)] = Nil
 
     // Пока пишем generation, но наверное это лучше отключить, чтобы в режиме iOS webapp не было повторов.
-    acc ::= GENERATION_FN -> MGen.serialize(sd0.common.generation)
+    acc ::= GENERATION_FN -> MGen.serialize2js(sd0.common.generation)
 
     // Отработка состояния левой панели.
     val npo = sd0.nav.panelOpened
@@ -80,26 +82,9 @@ object MScSd extends Log {
   }
 
 
-  /** Сериализация списк ключ-значение в строку для URL.
-    *
-    * @param acc Выхлоп toUrlHashAcc().
-    * @return Строка, пригодная для записи в URL.
-    */
-  def acc2Qs(acc: TraversableOnce[AccEl_t]): String = {
-    acc.toIterator
-      .map { kv =>
-        kv.productIterator
-          .map { s =>
-            URIUtils.encodeURIComponent(s.toString)
-          }
-          .mkString("=")
-      }
-      .mkString("&")
-  }
-
   /** Простая сериализация инстанса модели в строку. */
   def toQsStr(sd: MScSd): String = {
-    acc2Qs(
+    UrlUtilJs.qsPairsToString(
       toUrlHashAcc(sd)
     )
   }
