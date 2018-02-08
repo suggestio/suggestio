@@ -191,11 +191,12 @@ class QdRrrHtml(
         imgArgsAcc: _*
       )
 
-      // Поддержка рендера внутри a-тега (ссылка).
+      // Поддержка рендера внутри a-тега (ссылка). В редакторе не рендерим её, чтобы не было случайных переходов при кликах по шаблону.
       for (attrsText <- qdOp.attrsText; linkSu <- attrsText.link; link <- linkSu) {
         finalTm = <.a(
           keyTm,
-          ^.href := link,
+          // Если редактор открыт, то не надо рендерить ссылку кликабельной. Просто пусть будет подсказка.
+          (if (jdArgs.conf.isEdit) ^.title else ^.href) := link,
           finalTm
         )
       }
