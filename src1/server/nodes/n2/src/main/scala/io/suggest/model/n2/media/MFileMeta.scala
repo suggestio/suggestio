@@ -5,6 +5,7 @@ import java.time.OffsetDateTime
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.crypto.hash.MHashes
 import io.suggest.es.model.IGenEsMappingProps
+import io.suggest.img.MImgFmts
 import io.suggest.model.PrefixedFn
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -85,6 +86,14 @@ object MFileMeta extends IGenEsMappingProps {
 }
 
 
+/** Метаданные любого файла.
+  *
+  * @param mime Стандартный MIME-тип.
+  * @param sizeB Размер в байтах.
+  * @param isOriginal Оригинал ли? false для деривативов.
+  * @param hashesHex Карта хэш-сумм файла.
+  * @param dateCreated Дата создания (заливки).
+  */
 case class MFileMeta(
   mime          : String,
   sizeB         : Long,
@@ -92,4 +101,9 @@ case class MFileMeta(
   hashesHex     : Seq[MFileMetaHash]  = Nil,
                     // TODO Сделать тип поля dateCreated более переносимым между js/jvm, и унифицировать модель с MSrvFileInfo.
   dateCreated   : OffsetDateTime      = OffsetDateTime.now()
-)
+) {
+
+  /** Если картинка, то вернуть её формат по модели MImgFmts. */
+  lazy val imgFormatOpt = MImgFmts.forImageMime(mime)
+
+}

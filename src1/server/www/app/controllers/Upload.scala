@@ -701,7 +701,7 @@ class Upload @Inject()(
 
     override def delete(file: TemporaryFile): Try[Boolean] = {
       Try {
-        mLocalImgs.deleteAllSyncFor(mLocalImg.rowKey)
+        mLocalImgs.deleteAllSyncFor(mLocalImg.rowKeyStr)
         true
       }
     }

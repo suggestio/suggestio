@@ -224,7 +224,7 @@ class Img @Inject() (
             NotFound("No such image.")
               .withHeaders(CACHE_CONTROL -> s"public, max-age=30")
           case ex: Throwable =>
-            LOGGER.error(s"Unknown exception occured during fetchg/processing of source image id[${args.rowKey}]\n  args = $args", ex)
+            LOGGER.error(s"Unknown exception occured during fetchg/processing of source image id[${args.rowKeyStr}]\n  args = $args", ex)
             ServiceUnavailable("Internal error occured during fetching/creating an image.")
               .withHeaders(RETRY_AFTER -> "60")
         }

@@ -4,7 +4,6 @@ import functional.{OneAppPerSuiteNoGlobalStart, RegexParsersTesting}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.img.crop.MCrop
 import io.suggest.util.UuidUtil.base64ToUuid
-import models._
 import models.im._
 import org.scalatestplus.play._
 

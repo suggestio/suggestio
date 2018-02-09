@@ -106,18 +106,6 @@ class MMedias @Inject() (
 
 object MMedia {
 
-  /**
-   * Сборка id'шников для экземпляров модели.
-   *
-   * @param imgNodeId id ноды картинки.
-   * @param qOpt Опциональный qualifier. Обычно None, если это файл-оригинал.
-   *             Some() если хранится дериватив.
-   * @return Строка для поля _id.
-   */
-  def mkId(imgNodeId: String, qOpt: Option[String]): String = {
-    qOpt.fold(imgNodeId)(imgNodeId + "?" + _)
-  }
-
 }
 
 

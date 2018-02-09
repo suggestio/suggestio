@@ -10,6 +10,7 @@ import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.fio.WriteRequest
+import io.suggest.img.MImgFmts
 import io.suggest.js.UploadConstants
 import io.suggest.model.img.ImgSzDated
 import io.suggest.model.n2.edge.MEdge
@@ -184,7 +185,7 @@ class MImgs3 @Inject() (
           file    = MFileMeta(
             mime        = mime,
             sizeB       = szB,
-            isOriginal  = mimg.isOriginal,
+            isOriginal  = !mimg.hasImgOps,
             hashesHex   = hashesHex
           ),
           picture = MPictureMeta(
@@ -325,10 +326,12 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
   * @param userFileName Имя файла, присланное юзером.
   */
 case class MImg3(
-  override val rowKeyStr            : String,
-  override val dynImgOps            : Seq[ImOp]       = Nil,
-  override val userFileName         : Option[String]  = None
-)
+                  override val rowKeyStr            : String,
+                  override val dynImgOps            : Seq[ImOp]       = Nil,
+                  // TODO userFileName удалить следом за saveToPermanent().
+                  //      Это костыль у старой заливки картинок. В DistImg весь аплоад уже в норме.
+                  override val userFileName         : Option[String]  = None
+                )
   extends MImgT
 {
 
@@ -336,7 +339,9 @@ case class MImg3(
     UuidUtil.base64ToUuid(rowKeyStr)
   }
 
-  lazy val mediaId = MMedia.mkId(rowKeyStr, qOpt)
+  def imgFormat = MImgFmts.default // TODO Вынести в поле конструктора.
+
+  lazy val mediaId = MDynImgId.mkMediaId(rowKeyStr, qOpt, imgFormat)
 
   override def storage = MStorages.SeaWeedFs
   override type MImg_t = MImg3

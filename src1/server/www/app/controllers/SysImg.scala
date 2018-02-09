@@ -131,7 +131,7 @@ class SysImg @Inject() (
     isSu().async { implicit request =>
       // TODO Удалять на ВСЕХ НОДАХ из кеша /picture/local/
       for (_ <- mImgs.delete(im)) yield {
-        val (msg, rdr) = if (im.isOriginal) {
+        val (msg, rdr) = if (!im.hasImgOps) {
           "Оригинал удалён." -> routes.SysImg.index()
         } else {
           "TODO Дериватив может остаться локально на других узлах." -> routes.SysImg.showOne(im.original)

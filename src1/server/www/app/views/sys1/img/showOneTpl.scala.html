@@ -10,7 +10,7 @@
 @import helper._
 
 @sysImgBase(
-  title = "(" + (if(img.isOriginal) "оригинал" else "дериватив") + ")",
+  title = "(" + (if(!img.hasImgOps) "оригинал" else "дериватив") + ")",
   mimgOpt = Some(img)
 ) {
 
@@ -26,7 +26,7 @@
       </a>
     }
 
-    @if(!img.isOriginal) {
+    @if(img.hasImgOps) {
       @_ptableRowTpl("original") {
         <a href="@routes.SysImg.showOne(img.original)">К оригиналу...</a>
       }

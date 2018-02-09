@@ -4,7 +4,6 @@ import java.nio.file.Files
 
 import javax.inject.Inject
 import io.suggest.async.AsyncUtil
-import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.{MImgs3, MLocalImg, MLocalImgs}
 import models.mcron.{ICronTask, MCronTask}
@@ -81,8 +80,7 @@ class PeriodicallyDeleteNotExistingInPermanent @Inject() (
         .filter { f  =>  f.isDirectory && f.lastModified() < oldNow }
         .foreach { currDir =>
           val rowKeyStr = currDir.getName
-          val rowKey = UuidUtil.base64ToUuid(rowKeyStr)
-          val mimg = MLocalImg(rowKey).toWrappedImg
+          val mimg = MLocalImg(rowKeyStr).toWrappedImg
           mImgs3.existsInPermanent(mimg)
             .filter(!_)
             .andThen { case _: Success[_] =>

@@ -8,6 +8,7 @@ import akka.util.ByteString
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.crop.MCrop
 import io.suggest.model.img.ImgSzDated
+import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 
@@ -21,12 +22,9 @@ import scala.concurrent.Future
  * - локальные картинки на ФС: [[MLocalImg]].
  * - удалённые permanent-хранилища на кластере: [[MImg3]].
  */
-trait MAnyImgT extends ImgFilename with DynImgOpsString {
+trait MAnyImgT {
 
   type MImg_t <: MImgT
-
-  /** Ключ ряда картинок, id для оригинала и всех производных. */
-  def rowKey: UUID
 
   /** Инстанс локальной картинки. Сама картинка может не существовать. */
   def toLocalInstance: MLocalImg
@@ -36,6 +34,13 @@ trait MAnyImgT extends ImgFilename with DynImgOpsString {
 
   /** Инстанс для доступа к картинке без каких-либо наложенных на неё изменений. */
   def original: MAnyImgT
+
+
+  def rowKeyStr: String
+  def dynImgOps: Seq[ImOp]
+
+  /** Ключ ряда картинок, id для оригинала и всех производных. */
+  lazy val rowKey: UUID = UuidUtil.base64ToUuid(rowKeyStr)
 
   /** Нащупать crop. Используется скорее как compat к прошлой форме работы с картинками. */
   def cropOpt: Option[MCrop] = {
@@ -56,17 +61,9 @@ trait MAnyImgT extends ImgFilename with DynImgOpsString {
       .exists { _.isInstanceOf[ImCropOpT] }
   }
 
-}
+  final def hasImgOps: Boolean = dynImgOps.nonEmpty
 
-
-/** Поле filename для класса. */
-trait ImgFilename {
-
-  def rowKeyStr: String
-  def hasImgOps: Boolean
-  def dynImgOpsStringSb(sb: StringBuilder): StringBuilder
-
-  def fileName: String = fileNameSb().toString()
+  lazy val fileName: String = fileNameSb().toString()
 
   /**
    * Билдер filename-строки
@@ -81,27 +78,19 @@ trait ImgFilename {
     }
     sb
   }
-}
-
-
-/** Поле минимально-сериализованных dynImg-аргументов для класса. */
-trait DynImgOpsString {
-
-  def dynImgOps: Seq[ImOp]
-
-  def isOriginal: Boolean = dynImgOps.isEmpty
 
   def dynImgOpsStringSb(sb: StringBuilder = ImOp.unbindSbDflt): StringBuilder = {
     ImOp.unbindImOpsSb(
-      keyDotted = "",
-      value = dynImgOps,
-      withOrderInx = false,
-      sb = sb
+      keyDotted     = "",
+      value         = dynImgOps,
+      withOrderInx  = false,
+      sb            = sb
     )
   }
 
-  def dynImgOpsString: String = {
-    dynImgOpsStringSb().toString()
+  lazy val dynImgOpsString: String = {
+    dynImgOpsStringSb()
+      .toString()
   }
 
   // Исторически, опциональный доступ к dynImgOpsString осуществляет метод qOpt.
@@ -132,10 +121,10 @@ trait MAnyImgsT[T <: MAnyImgT] {
 /** Статическая над-модель, реализующая разные общие методы для любых картинок. */
 @Singleton
 class MAnyImgs @Inject() (
-  mLocalImgs  : MLocalImgs,
-  mImgs3      : MImgs3,
-  mCommonDi   : ICommonDi
-)
+                           mLocalImgs  : MLocalImgs,
+                           mImgs3      : MImgs3,
+                           mCommonDi   : ICommonDi
+                         )
   extends MAnyImgsT[MAnyImgT]
   with MacroLogsImpl
 {

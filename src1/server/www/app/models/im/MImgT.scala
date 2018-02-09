@@ -3,6 +3,7 @@ package models.im
 import java.io.FileNotFoundException
 
 import io.suggest.async.StreamsUtil
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.di.ICacheApiUtil
 import io.suggest.model.img.ImgSzDated
@@ -178,10 +179,10 @@ trait MImgsT
           val logPrefix = "toLocalImg(): "
           if (ex.isInstanceOf[NoSuchElementException]) {
             if (LOGGER.underlying.isDebugEnabled) {
-              if (mimg.isOriginal)
-                LOGGER.debug(s"$logPrefix img not found in permanent storage: $toFile", ex)
-              else
+              if (mimg.hasImgOps)
                 LOGGER.debug(s"$logPrefix non-orig img not in permanent storage: $toFile")
+              else
+                LOGGER.debug(s"$logPrefix img not found in permanent storage: $toFile", ex)
             }
           } else {
             LOGGER.warn(s"$logPrefix _getImgBytes2 or writeIntoFile $toFile failed", ex)
@@ -298,7 +299,7 @@ abstract class MImgT extends MAnyImgT {
 
   def thisT: MImg_t
 
-  lazy val toLocalInstance = MLocalImg(rowKey, dynImgOps)
+  lazy val toLocalInstance = MLocalImg(rowKeyStr, dynImgOps)
 
   override def rowKeyStr = UuidUtil.uuidToBase64(rowKey)
 
@@ -308,14 +309,8 @@ abstract class MImgT extends MAnyImgT {
   /** Пользовательское имя файла, если известно. */
   def userFileName: Option[String]
 
-  override lazy val dynImgOpsString = super.dynImgOpsString
-
   def qOpt: Option[String] = {
-    if (isOriginal) {
-      None
-    } else {
-      Some( dynImgOpsString )
-    }
+    OptionUtil.maybe(hasImgOps)( dynImgOpsString )
   }
 
   protected def _thisToOriginal: MImg_t = withDynOps(Nil)
@@ -330,12 +325,6 @@ abstract class MImgT extends MAnyImgT {
       thisT
     }
   }
-
-  /** Есть ли операции в dynImgOps? */
-  override def hasImgOps: Boolean = dynImgOps.nonEmpty
-
-  /** Имя файла картинки. Испрользуется как сериализованное представление данных по картинке. */
-  override lazy val fileName: String = super.fileName
 
 }
 

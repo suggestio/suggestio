@@ -13,6 +13,7 @@ import io.suggest.model.img.ImgSzDated
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
+import net.sf.jmimemagic.MagicMatch
 import org.apache.commons.io.FileUtils
 import util.img.{ImgFileNameParsersImpl, ImgFileUtil, OrigImageUtil}
 import util.up.FileUtil
@@ -63,7 +64,6 @@ class MLocalImgs @Inject() (
 
   def getFsImgDir(mimg: MLocalImg): File    = getFsImgDir(mimg.rowKeyStr)
   def getFsImgDir(rowKeyStr: String): File  = new File(DIR, rowKeyStr)
-  def getFsImgDir(rowKey: UUID): File       = getFsImgDir( UuidUtil.uuidToBase64(rowKey) )
 
 
   def deleteSync(mimg: MLocalImg): Boolean = {
@@ -148,22 +148,22 @@ class MLocalImgs @Inject() (
   /**
    * Стереть из файловой системы все упоминания картинок с указанным id.
    * На деле будет удалена директория с указанным именем.
-   * @param rowKey id картинок.
+   * @param rowKeyStr id узла картинки.
    */
-  def deleteAllSyncFor(rowKey: UUID): Unit = {
-    val dir = getFsImgDir(rowKey)
+  def deleteAllSyncFor(rowKeyStr: String): Unit = {
+    val dir = getFsImgDir(rowKeyStr)
     FileUtils.deleteDirectory(dir)
   }
 
   /**
    * Асинхронно стереть все картинки, у которых указанный id.
    * По сути неблокирующий враппер над deleteAllSyncFor().
-   * @param rowKey id картинок.
+   * @param rowKeyStr Основной id узла-картинки.
    * @return Фьючерс для синхронизации.
    */
-  def deleteAllFor(rowKey: UUID): Future[_] = {
+  def deleteAllFor(rowKeyStr: String): Future[_] = {
     Future {
-      deleteAllSyncFor(rowKey)
+      deleteAllSyncFor(rowKeyStr)
     }(asyncUtil.singleThreadIoContext)
   }
 
@@ -187,7 +187,7 @@ class MLocalImgs @Inject() (
     }
   }
 
-  def mimeMatchOptFut(mimg: MLocalImg) = {
+  def mimeMatchOptFut(mimg: MLocalImg): Future[Option[MagicMatch]] = {
     val file = fileOf(mimg)
     val fut = Future {
       fileUtil.getMimeMatch(file)
@@ -268,37 +268,31 @@ object MLocalImg {
 
 /**
  * Экземпляр класса локально хранимой картинки в ФС.
- * @param rowKey Ключ (id картинки).
+ * @param rowKeyStr Ключ (id узла-картинки).
  * @param dynImgOps IM-операции, которые нужно наложить на оригинал с ключом rowKey, чтобы получить
  *                  необходимою картинку.
  */
 case class MLocalImg(
-  rowKey      : UUID = UUID.randomUUID(),
-  dynImgOps   : Seq[ImOp] = Nil
-)
+                      rowKeyStr   : String    = UuidUtil.uuidToBase64( UUID.randomUUID() ),
+                      dynImgOps   : Seq[ImOp] = Nil
+                    )
   extends MAnyImgT
 {
 
   override type MImg_t = MImgT
 
-  override lazy val rowKeyStr: String = UuidUtil.uuidToBase64(rowKey)
-
-  override def hasImgOps: Boolean = dynImgOps.nonEmpty
-
-  override lazy val dynImgOpsString: String = super.dynImgOpsString
-
-  override lazy val fileName = super.fileName
-
   override def toLocalInstance: MLocalImg = this
 
   override def original: MLocalImg = {
-    if (dynImgOps.nonEmpty)
+    if (hasImgOps)
       copy(dynImgOps = Nil)
     else
       this
   }
 
-  override lazy val toWrappedImg: MImg3 = MImg3(rowKeyStr, dynImgOps)
+  override lazy val toWrappedImg: MImg3 = {
+    MImg3(rowKeyStr, dynImgOps)
+  }
 
   override lazy val cropOpt = super.cropOpt
 
