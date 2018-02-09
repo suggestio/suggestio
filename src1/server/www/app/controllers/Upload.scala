@@ -29,7 +29,7 @@ import io.suggest.svg.SvgUtil
 import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.url.MHostUrl
 import io.suggest.ws.{MWsMsg, MWsMsgTypes}
-import models.im.{MImg3, MImgs3, MLocalImg, MLocalImgs}
+import models.im._
 import models.mproj.ICommonDi
 import models.mup.{MColorDetectArgs, MUploadFileHandler, MUploadFileHandlers, MUploadTargetQs}
 import models.req.IReq
@@ -421,7 +421,7 @@ class Upload @Inject()(
           // Создаём новый узел для загруженного файла.
           mnodeIdFut = {
             // Проверки закончены. Пора переходить к действиям по сохранению и анализу файла.
-            val nodeIdOpt0 = request.body.localImg.map(_.rowKeyStr)
+            val nodeIdOpt0 = request.body.localImg.map(_.dynImgId.rowKeyStr)
             val MediaTypes = MNodeTypes.Media
             val mnode0 = MNode(
               id = nodeIdOpt0,
@@ -476,9 +476,9 @@ class Upload @Inject()(
             LOGGER.info(s"$logPrefix Created node#$mnodeId. Preparing mmedia...")
 
             val mimg3Opt = for (_ <- imgIdentifyInfoOpt) yield {
-              MImg3( mnodeId, Nil, fileNameOpt )
+              MImg3( MDynImgId(mnodeId), fileNameOpt )
             }
-            val mediaIdOpt0 = mimg3Opt.map(_.mediaId)
+            val mediaIdOpt0 = mimg3Opt.map(_.dynImgId.mediaId)
             MMedia(
               nodeId = mnodeId,
               id   = mediaIdOpt0,
@@ -701,7 +701,7 @@ class Upload @Inject()(
 
     override def delete(file: TemporaryFile): Try[Boolean] = {
       Try {
-        mLocalImgs.deleteAllSyncFor(mLocalImg.rowKeyStr)
+        mLocalImgs.deleteAllSyncFor(mLocalImg.dynImgId.rowKeyStr)
         true
       }
     }

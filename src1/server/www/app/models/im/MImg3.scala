@@ -1,7 +1,7 @@
 package models.im
 
 import java.time.OffsetDateTime
-import java.util.{NoSuchElementException, UUID}
+import java.util.NoSuchElementException
 import javax.inject.{Inject, Singleton}
 
 import akka.stream.scaladsl.Source
@@ -10,7 +10,6 @@ import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.fio.WriteRequest
-import io.suggest.img.MImgFmts
 import io.suggest.js.UploadConstants
 import io.suggest.model.img.ImgSzDated
 import io.suggest.model.n2.edge.MEdge
@@ -20,7 +19,6 @@ import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.playx.CacheApiUtil
-import io.suggest.util.UuidUtil
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import models.mproj.ICommonDi
 import util.img.ImgFileNameParsersImpl
@@ -102,7 +100,7 @@ class MImgs3 @Inject() (
     * Если нет, то создрать и сохранить. */
   def ensureMnode(mimg: MImgT): Future[MNode] = {
     mNodesCache
-      .getById( mimg.rowKeyStr )
+      .getById( mimg.dynImgId.rowKeyStr )
       .map(_.get)
       .recoverWith { case _: NoSuchElementException =>
         saveMnode(mimg)
@@ -120,7 +118,7 @@ class MImgs3 @Inject() (
     } yield {
       // Собираем новый узел n2, когда все необходимые данные уже собраны...
       MNode(
-        id = Some( mimg.rowKeyStr ),
+        id = Some( mimg.dynImgId.rowKeyStr ),
         common = MNodeCommon(
           ntype         = MNodeTypes.Media.Image,
           isDependent   = true
@@ -180,12 +178,12 @@ class MImgs3 @Inject() (
         stor        <- storFut
       } yield {
         MMedia(
-          nodeId  = mimg.rowKeyStr,
+          nodeId  = mimg.dynImgId.rowKeyStr,
           id      = Some( mimg.mediaId ),
           file    = MFileMeta(
             mime        = mime,
             sizeB       = szB,
-            isOriginal  = !mimg.hasImgOps,
+            isOriginal  = !mimg.dynImgId.hasImgOps,
             hashesHex   = hashesHex
           ),
           picture = MPictureMeta(
@@ -274,9 +272,10 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
     override type T = MImg3
 
     override def fileName2miP: Parser[T] = {
+      // TODO Использовать парсер, делающий сразу MDynImgId
       (uuidStrP ~ imOpsP) ^^ {
         case nodeId ~ dynImgOps =>
-          MImg3(nodeId, dynImgOps)
+          MImg3(MDynImgId(nodeId, dynImgOps))
       }
     }
 
@@ -293,6 +292,7 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
     * @throws java.util.NoSuchElementException когда id узла-картинки не задан.
     */
   def apply(medge: MEdge): MImg3 = {
+    // TODO Перенести этот код в MDynImgId
     val dops = {
       medge.info
         .dynImgArgs
@@ -304,7 +304,8 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
           }
       }
     }
-    MImg3(medge.nodeIds.head, dops)
+    val dynImgId = MDynImgId(medge.nodeIds.head, dops)
+    MImg3(dynImgId)
   }
 
   def apply(mmedia: MMedia): MImg3 = {
@@ -313,7 +314,10 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
   }
 
   override def fromImg(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg3 = {
-    MImg3(img.rowKeyStr, dynOps2.getOrElse(img.dynImgOps))
+    val dynImgId0 = img.dynImgId
+    val dynImgId2 = dynOps2.fold(dynImgId0) { dynImgId0.withDynImgOps }
+
+    MImg3( dynImgId2 )
   }
 
 }
@@ -321,13 +325,10 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
 
 /**
   * Класс элементов модели.
-  * @param rowKeyStr Строковой ключ картинки-узла.
-  * @param dynImgOps Список параметров трансформации картинки.
   * @param userFileName Имя файла, присланное юзером.
   */
 case class MImg3(
-                  override val rowKeyStr            : String,
-                  override val dynImgOps            : Seq[ImOp]       = Nil,
+                  override val dynImgId             : MDynImgId,
                   // TODO userFileName удалить следом за saveToPermanent().
                   //      Это костыль у старой заливки картинок. В DistImg весь аплоад уже в норме.
                   override val userFileName         : Option[String]  = None
@@ -335,13 +336,8 @@ case class MImg3(
   extends MImgT
 {
 
-  override lazy val rowKey: UUID = {
-    UuidUtil.base64ToUuid(rowKeyStr)
-  }
-
-  def imgFormat = MImgFmts.default // TODO Вынести в поле конструктора.
-
-  lazy val mediaId = MDynImgId.mkMediaId(rowKeyStr, qOpt, imgFormat)
+  // TODO Удалить это
+  def mediaId = dynImgId.mediaId
 
   override def storage = MStorages.SeaWeedFs
   override type MImg_t = MImg3
@@ -349,7 +345,13 @@ case class MImg3(
   override def toWrappedImg = this
 
   override def withDynOps(dynImgOps2: Seq[ImOp]): MImg3 = {
-    copy(dynImgOps = dynImgOps2)
+    withDynImgId(
+      dynImgId.withDynImgOps(
+        dynImgOps2
+      )
+    )
   }
+
+  def withDynImgId(dynImgId: MDynImgId) = copy(dynImgId = dynImgId)
 
 }

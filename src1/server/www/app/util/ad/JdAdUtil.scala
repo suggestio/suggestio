@@ -3,18 +3,18 @@ package util.ad
 import javax.inject.{Inject, Named, Singleton}
 
 import io.suggest.color.MHistogram
-import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.file.MSrvFileInfo
 import io.suggest.jd.{MJdAdData, MJdEdge}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.JdTag.Implicits._
-import io.suggest.model.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
+import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.media.{MFileMetaHash, MMedia, MMediasCache}
 import io.suggest.model.n2.node.{MNode, MNodesCache}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
-import models.im.make.{IImgMaker, MImgMakeArgs, MakeResult}
+import models.im.make.{IImgMaker, MImgMakeArgs}
 import models.im._
 import models.mctx.Context
 import models.req.IReqHdr
@@ -81,7 +81,7 @@ class JdAdUtil @Inject()(
     mMediasCache.multiGetMap {
       imgsEdges
         .toIterator
-        .map(_._2.mediaId)
+        .map(_._2.dynImgId.mediaId)
         .toSet
     }
   }
@@ -189,7 +189,7 @@ class JdAdUtil @Inject()(
       // id узла эджа -- это идентификатор картинки.
       edgeUid         <- medge.doc.uid.iterator
       nodeId          <- medge.nodeIds.iterator
-      mmedia          <- mediasMap.get(mimg.mediaId).iterator
+      mmedia          <- mediasMap.get(mimg.dynImgId.mediaId).iterator
     } yield {
       // Получить инфу по хосту, на котором хранится данная картинка.
       val jdEdge = MJdEdge(
@@ -307,7 +307,7 @@ class JdAdUtil @Inject()(
     // Собираем картинки, используемые в карточке:
     lazy val imgsEdges = {
       val ie = prepareImgEdges( nodeEdges )
-      LOGGER.trace(s"$logPrefix Found ${ie.size} img.edges: ${ie.iterator.map(_._2.fileName).mkString(", ")}")
+      LOGGER.trace(s"$logPrefix Found ${ie.size} img.edges: ${ie.iterator.map(_._2.dynImgId.fileName).mkString(", ")}")
       ie
     }
 
@@ -471,7 +471,7 @@ class JdAdUtil @Inject()(
                 Some(url)
               },
               fileSrv = Some(MSrvFileInfo(
-                nodeId = imgMakeRes.mimg.rowKeyStr,
+                nodeId = imgMakeRes.mimg.dynImgId.rowKeyStr,
                 whPx   = Some( imgMakeRes.imgSzReal )
               ))
             )
@@ -572,7 +572,7 @@ class JdAdUtil @Inject()(
         edgedImgTags
           .iterator
           .filter(_.jdTag.name ==* MJdTagNames.QD_OP)
-          .map(_.mimg.original.mediaId)
+          .map(_.mimg.original.dynImgId.mediaId)
           .toSet
       )
 
@@ -584,7 +584,7 @@ class JdAdUtil @Inject()(
 
           tgImgSzOpt = if (isQd) {
             for {
-              mmediaOrig  <- embedOrigImgsMap.get( eit.mimg.original.mediaId )
+              mmediaOrig  <- embedOrigImgsMap.get( eit.mimg.original.dynImgId.mediaId )
               origWh      <- mmediaOrig.picture.whPx
             } yield {
               // Узнать ширину, заданную в теге (если есть).
@@ -596,7 +596,7 @@ class JdAdUtil @Inject()(
               } yield {
                 width
               }
-              LOGGER.trace(s"$logPrefix embed.img#${eit.mimg.rowKeyStr} edge#${eit.medge.doc.uid.orNull} width=>${jdTagWidthCssPxOpt.orNull}")
+              LOGGER.trace(s"$logPrefix embed.img#${eit.mimg.dynImgId.rowKeyStr} edge#${eit.medge.doc.uid.orNull} width=>${jdTagWidthCssPxOpt.orNull}")
 
               // Картинка есть. Но надо разобраться, надо ли её ресайзить.
               val origWidthNorm = wideImgMaker.normWideWidthBgSz( origWh.width )

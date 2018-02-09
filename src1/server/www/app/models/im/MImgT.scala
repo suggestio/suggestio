@@ -3,7 +3,6 @@ package models.im
 import java.io.FileNotFoundException
 
 import io.suggest.async.StreamsUtil
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.di.ICacheApiUtil
 import io.suggest.model.img.ImgSzDated
@@ -82,6 +81,7 @@ object MImgT extends MacroLogsImpl { model =>
     mImgTQsb
   }
 
+  // TODO Унести это в MDynImgId?
   /** routes-биндер для query-string. */
   implicit def mImgTQsb(implicit
                         strB: QueryStringBindable[String],
@@ -108,7 +108,7 @@ object MImgT extends MacroLogsImpl { model =>
             imOpsOpt  <- maybeImOpsOpt.right
           } yield {
             val imOps = imOpsOpt.getOrElse(Nil)
-            MImg3(imgId, imOps)
+            MImg3( MDynImgId(imgId, imOps) )
           }
         }
       }
@@ -116,8 +116,8 @@ object MImgT extends MacroLogsImpl { model =>
       override def unbind(key: String, value: MImgT): String = {
         val k = key1F(key)
         val unsignedRes = _mergeUnbinded1(
-          rowKeyB.unbind  (k(IMG_ID_FN),  value.rowKeyStr),
-          imOpsOptB.unbind(s"$key.",      if (value.hasImgOps) Some(value.dynImgOps) else None)
+          rowKeyB.unbind  (k(IMG_ID_FN),  value.dynImgId.rowKeyStr),
+          imOpsOptB.unbind(s"$key.",      if (value.dynImgId.hasImgOps) Some(value.dynImgId.dynImgOps) else None)
         )
         getQsbSigner(key)
           .mkSigned(key, unsignedRes)
@@ -146,7 +146,7 @@ trait MImgsT
 
 
   def mediaOptFut(mimg: MImgT): Future[Option[MMedia]] = {
-    mMedias.getById(mimg.mediaId)
+    mMedias.getById(mimg.dynImgId.mediaId)
   }
   protected def _mediaFut(mediaOptFut: Future[Option[MMedia]]): Future[MMedia] = {
     mediaOptFut.map(_.get)
@@ -159,7 +159,7 @@ trait MImgsT
       Future.successful( Some(inst) )
     } else {
       // Защищаемся от параллельных чтений одной и той же картинки. Это может создать ненужную нагрузку на сеть.
-      cacheApiUtil.getOrElseFut(mimg.fileName + ".2LOC", 4.seconds) {
+      cacheApiUtil.getOrElseFut(mimg.dynImgId.fileName + ".2LOC", 4.seconds) {
         // Запускаем поточное чтение из модели.
         val source = getStream(mimg)
 
@@ -179,7 +179,7 @@ trait MImgsT
           val logPrefix = "toLocalImg(): "
           if (ex.isInstanceOf[NoSuchElementException]) {
             if (LOGGER.underlying.isDebugEnabled) {
-              if (mimg.hasImgOps)
+              if (mimg.dynImgId.hasImgOps)
                 LOGGER.debug(s"$logPrefix non-orig img not in permanent storage: $toFile")
               else
                 LOGGER.debug(s"$logPrefix img not found in permanent storage: $toFile", ex)
@@ -198,7 +198,7 @@ trait MImgsT
 
   /** Закешированный результат чтения метаданных из постоянного хранилища. */
   def permMetaCached(mimg: MImgT): Future[Option[ImgSzDated]] = {
-    cacheApiUtil.getOrElseFut(mimg.fileName + ".giwh", ORIG_META_CACHE_SECONDS.seconds) {
+    cacheApiUtil.getOrElseFut(mimg.dynImgId.fileName + ".giwh", ORIG_META_CACHE_SECONDS.seconds) {
       _getImgMeta(mimg)
     }
   }
@@ -212,7 +212,7 @@ trait MImgsT
       .filter(_.isDefined)
 
     val localInst = mimg.toLocalInstance
-    lazy val logPrefix = s"getImageWh(${mimg.fileName}): "
+    lazy val logPrefix = s"getImageWh(${mimg.dynImgId.fileName}): "
 
     val fut = if (mLocalImgs.isExists(localInst)) {
       // Есть локальная картинка. Попробовать заодно потанцевать вокруг неё.
@@ -299,9 +299,7 @@ abstract class MImgT extends MAnyImgT {
 
   def thisT: MImg_t
 
-  lazy val toLocalInstance = MLocalImg(rowKeyStr, dynImgOps)
-
-  override def rowKeyStr = UuidUtil.uuidToBase64(rowKey)
+  lazy val toLocalInstance = MLocalImg(dynImgId)
 
   /** Используемое медиа-хранилище для данного элемента модели permanent img. */
   def storage: MStorage
@@ -309,18 +307,12 @@ abstract class MImgT extends MAnyImgT {
   /** Пользовательское имя файла, если известно. */
   def userFileName: Option[String]
 
-  def qOpt: Option[String] = {
-    OptionUtil.maybe(hasImgOps)( dynImgOpsString )
-  }
-
-  protected def _thisToOriginal: MImg_t = withDynOps(Nil)
-
   def withDynOps(dynImgOps2: Seq[ImOp]): MImg_t
 
   /** Дать экземпляр MImg на исходный немодифицированный оригинал. */
   lazy val original: MImg_t = {
-    if (hasImgOps) {
-      _thisToOriginal
+    if (dynImgId.hasImgOps) {
+      withDynOps(Nil)
     } else {
       thisT
     }

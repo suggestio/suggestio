@@ -433,7 +433,7 @@ class LkAdEdFormUtil
                 .exists { _.common.ntype ==* MNodeTypes.Media.Image },
               imgWh = imgsNeededMap.get( jdEdge.id )
                 .flatMap { mimg3 =>
-                  mediasMap.get( mimg3.mediaId )
+                  mediasMap.get( mimg3.dynImgId.mediaId )
                 }
                 .flatMap { mmedia =>
                   mmedia.picture.whPx

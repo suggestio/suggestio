@@ -21,14 +21,14 @@ trait WelcomeRenderArgsT {
   override def toString: String = {
     val sb = new StringBuilder(64, "bg=")
     bg match {
-      case Right(ii)    => sb.append(ii.mimg.fileName)
+      case Right(ii)    => sb.append(ii.mimg.dynImgId.fileName)
       case Left(color)  => sb.append(color)
     }
     sb.append('&')
     val _fgi = fgImage
     if (_fgi.isDefined)
       sb.append("fgImage='")
-        .append(_fgi.get.mimg.fileName)
+        .append(_fgi.get.mimg.dynImgId.fileName)
         .append('\'')
         .append('&')
     val _fgt = fgText

@@ -55,7 +55,7 @@ class ScWideMaker @Inject() (
 
   /** Попытаться подправить опциональный исходный кроп, если есть. Если нет, то фейл. */
   def getAbsCropOrFail(iik: MAnyImgT, wideWh: ISize2di): Future[MCrop] = {
-    iik.cropOpt.fold [Future[MCrop]] {
+    iik.dynImgId.cropOpt.fold [Future[MCrop]] {
       Future.failed( new NoSuchElementException("No default crop is here.") )
     } { crop0 =>
       for {
@@ -105,7 +105,7 @@ class ScWideMaker @Inject() (
       .recover { case ex: Exception =>
         def logPrefix = s"getWideCropInfo($iik, wh=$wideWh):"
         if (!ex.isInstanceOf[NoSuchElementException])
-          LOGGER.warn(s"$logPrefix Failed to read image[${iik.fileName}] WH", ex)
+          LOGGER.warn(s"$logPrefix Failed to read image[${iik.dynImgId.fileName}] WH", ex)
         else
           LOGGER.debug(s"$logPrefix Failed to get abs crop: " + ex.getMessage)
         // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
@@ -213,7 +213,7 @@ class ScWideMaker @Inject() (
       // Это давало почему-то рабочие результаты, или ошибок просто не замечали...
       val imOps1 = AbsCropOp(cropInfo.crop) :: imOps0
       if (cropInfo.isCenter) {
-        LOGGER.warn(s"$logPrefix Failed to read image[${args.img.original.fileName}] WH")
+        LOGGER.warn(s"$logPrefix Failed to read image[${args.img.original.dynImgId.fileName}] WH")
         // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
         ImGravities.Center :: imOps1
       } else {

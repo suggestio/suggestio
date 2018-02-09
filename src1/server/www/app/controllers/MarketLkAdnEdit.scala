@@ -285,7 +285,7 @@ class MarketLkAdnEdit @Inject() (
         {fmr =>
           // В фоне обновляем картинку карточки-приветствия.
           val waFgEdgeOptFut = welcomeUtil.updateWcFgImg(mnode, fmr.waImgOpt)
-          trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.fileName)}")
+          trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.dynImgId.fileName)}")
           // В фоне обновляем логотип узла
           val savedLogoFut = logoUtil.updateLogoFor(mnode, fmr.logoOpt)
           // Запускаем апдейт галереи.
@@ -356,7 +356,7 @@ class MarketLkAdnEdit @Inject() (
         for (newLogo <- newLogoOpt) {
           val logoEdge = MEdge(
             predicate = Logo,
-            nodeIds   = Set(newLogo.rowKeyStr)
+            nodeIds   = Set(newLogo.dynImgId.rowKeyStr)
           )
           edgesIter ++= Iterator.single(logoEdge)
         }
@@ -368,10 +368,10 @@ class MarketLkAdnEdit @Inject() (
             .map { case (img, i) =>
               MEdge(
                 predicate = GalleryItem,
-                nodeIds   = Set(img.rowKeyStr),
+                nodeIds   = Set(img.dynImgId.rowKeyStr),
                 order     = Some(i),
                 info      = MEdgeInfo(
-                  dynImgArgs = img.qOpt
+                  dynImgArgs = img.dynImgId.qOpt
                 ))
             }
         }

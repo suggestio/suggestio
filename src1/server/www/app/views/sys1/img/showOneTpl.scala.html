@@ -10,14 +10,14 @@
 @import helper._
 
 @sysImgBase(
-  title = "(" + (if(!img.hasImgOps) "оригинал" else "дериватив") + ")",
+  title = "(" + (if(!img.dynImgId.hasImgOps) "оригинал" else "дериватив") + ")",
   mimgOpt = Some(img)
 ) {
 
   @* Рендер разных метаданных о картинке. *@
   @_ptableTpl() {
-    @_ptableRowTpl("rowKey", title = Some("rowKey UUID: " + img.rowKey)) {
-      @img.rowKeyStr
+    @_ptableRowTpl("rowKey", title = Some("rowKey: " + img.dynImgId.rowKeyStr)) {
+      @img.dynImgId.rowKeyStr
     }
 
     @_ptableRowTpl("make", title = Some("Оформить проивольный рендер картинки")) {
@@ -26,13 +26,13 @@
       </a>
     }
 
-    @if(img.hasImgOps) {
+    @if(img.dynImgId.hasImgOps) {
       @_ptableRowTpl("original") {
         <a href="@routes.SysImg.showOne(img.original)">К оригиналу...</a>
       }
     }
 
-    @metaOpt.map { meta =>
+    @for(meta <- metaOpt) {
       @_ptableRowTpl("meta.width") {
         @meta.width
       }
@@ -44,9 +44,9 @@
       }
     }
 
-    @if(img.hasImgOps) {
+    @if(img.dynImgId.hasImgOps) {
       @_ptableRowTpl("img ops") {
-        @for(op <- img.dynImgOps.iterator) {
+        @for(op <- img.dynImgId.dynImgOps.iterator) {
           <strong title="@op.opCode">@messages("im.op." + op.opCode.value)</strong>:
           @op.unwrappedValue  @op.i18nValueCode.map(messages(_))  (@op.qsValue)
           <br/>

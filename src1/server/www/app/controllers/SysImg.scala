@@ -69,7 +69,7 @@ class SysImg @Inject() (
                 .flatMap { e => if (e.isLeft) None else Some(e.right.get) }
           }
         },
-        { _.fold("")(_.fileName) }
+        { _.fold("")(_.dynImgId.fileName) }
       )
       .verifying("error.invalid", _.isDefined)
       .transform [MImgT] (_.get, Some.apply)
@@ -131,7 +131,7 @@ class SysImg @Inject() (
     isSu().async { implicit request =>
       // TODO Удалять на ВСЕХ НОДАХ из кеша /picture/local/
       for (_ <- mImgs.delete(im)) yield {
-        val (msg, rdr) = if (!im.hasImgOps) {
+        val (msg, rdr) = if (!im.dynImgId.hasImgOps) {
           "Оригинал удалён." -> routes.SysImg.index()
         } else {
           "TODO Дериватив может остаться локально на других узлах." -> routes.SysImg.showOne(im.original)

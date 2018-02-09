@@ -18,7 +18,7 @@
   } else {
     @imgs.iterator.map { img =>
       <a href="@routes.SysImg.showOne(img)">
-        <img src="@dynImgUtil.thumb256Call(img, fillArea = true)" alt="rowKey: @img.rowKeyStr" />
+        <img src="@dynImgUtil.thumb256Call(img, fillArea = true)" alt="rowKey: @img.dynImgId.rowKeyStr" />
       </a>
     }
   }

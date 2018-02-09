@@ -4,6 +4,7 @@ import java.util.UUID
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
+import io.suggest.img.crop.MCrop
 import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.util.UuidUtil
 import japgolly.univeq._
@@ -15,18 +16,61 @@ import japgolly.univeq._
   * Description: Модель идентификатора dyn-картинки.
   * Является контейнером, вынесенный за пределы MImg* моделей, чтобы унифицировать передачу пачек данных конструкторов.
   */
+
+/** Контейнер данных для идентификации картинки.
+  *
+  * @param rowKeyStr Ключ (id узла-картинки).
+  * @param dynImgOps IM-операции, которые нужно наложить на оригинал с ключом rowKey, чтобы получить
+  *                  необходимою картинку.
+  */
 case class MDynImgId(
                       rowKeyStr     : String,
                       dynImgOps     : Seq[ImOp]     = Nil
-                    )
-{
+                    ) {
 
   def format: MImgFmt = MImgFmts.JPEG
 
-  // TODO Это надо для старых и очень картинок. Всякие GalleryUtil, LogoUtil и прочие зависят от этого.
+
+  /** Ключ ряда картинок, id для оригинала и всех производных. */
   lazy val rowKey: UUID = UuidUtil.base64ToUuid(rowKeyStr)
 
-  def hasImgOps = dynImgOps.nonEmpty
+  /** Нащупать crop. Используется скорее как compat к прошлой форме работы с картинками. */
+  def cropOpt: Option[MCrop] = {
+    val iter = dynImgOps
+      .iterator
+      .flatMap {
+        case AbsCropOp(crop) => crop :: Nil
+        case _ => Nil
+      }
+    if (iter.hasNext)
+      Some(iter.next())
+    else
+      None
+  }
+
+  def isCropped: Boolean = {
+    dynImgOps
+      .exists { _.isInstanceOf[ImCropOpT] }
+  }
+
+  final def hasImgOps: Boolean = dynImgOps.nonEmpty
+
+  lazy val fileName: String = fileNameSb().toString()
+
+  /**
+   * Билдер filename-строки
+   * @param sb Исходный StringBuilder.
+   * @return StringBuilder.
+   */
+  def fileNameSb(sb: StringBuilder = new StringBuilder(80)): StringBuilder = {
+    sb.append(rowKeyStr)
+    if (hasImgOps) {
+      sb.append('~')
+      dynImgOpsStringSb(sb)
+    }
+    sb
+  }
+
 
   def original: MDynImgId = {
     if (hasImgOps)
@@ -62,10 +106,24 @@ case class MDynImgId(
       .toString()
   }
 
+
+  lazy val fsFileName: String = {
+    if (hasImgOps) {
+      // TODO Тут надо формат дописать?
+      dynImgOpsString
+    } else {
+      "__ORIG__"
+    }
+  }
+
 }
 
 
 object MDynImgId {
+
+  def randomOrig() = MDynImgId(
+    rowKeyStr = UuidUtil.uuidToBase64( UUID.randomUUID() )
+  )
 
   /**
     * Сборка id'шников для экземпляров модели, хранящих динамические изображения.
@@ -104,6 +162,5 @@ object MDynImgId {
     else
       (rowKeyStr :: acc).mkString
   }
-
 
 }

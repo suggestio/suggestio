@@ -51,9 +51,9 @@ class WelcomeUtil @Inject() (
       for (_ <- mImgs3.saveToPermanent(fgMimg)) yield {
         val e = MEdge(
           predicate = MPredicates.WcLogo,
-          nodeIds   = Set(fgMimg.rowKeyStr),
+          nodeIds   = Set(fgMimg.dynImgId.rowKeyStr),
           info = MEdgeInfo(
-            dynImgArgs = fgMimg.qOpt
+            dynImgArgs = fgMimg.dynImgId.qOpt
           )
         )
         Some(e)

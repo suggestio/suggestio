@@ -2,7 +2,6 @@ package models.im
 
 import java.io.File
 import java.time.{Instant, ZoneOffset}
-import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import akka.stream.scaladsl.{FileIO, Source}
@@ -10,7 +9,6 @@ import akka.util.ByteString
 import io.suggest.async.AsyncUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.img.ImgSzDated
-import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import net.sf.jmimemagic.MagicMatch
@@ -62,7 +60,7 @@ class MLocalImgs @Inject() (
 
   DIR.mkdirs()
 
-  def getFsImgDir(mimg: MLocalImg): File    = getFsImgDir(mimg.rowKeyStr)
+  def getFsImgDir(mimg: MLocalImg): File    = getFsImgDir(mimg.dynImgId.rowKeyStr)
   def getFsImgDir(rowKeyStr: String): File  = new File(DIR, rowKeyStr)
 
 
@@ -110,7 +108,7 @@ class MLocalImgs @Inject() (
   }
 
   def identifyCached(mimg: MLocalImg) = {
-    cacheApiUtil.getOrElseFut(mimg.fileName + ".identify", IDENTIFY_CACHE_TTL_SECONDS.seconds) {
+    cacheApiUtil.getOrElseFut(mimg.dynImgId.fileName + ".identify", IDENTIFY_CACHE_TTL_SECONDS.seconds) {
       identify(mimg)
     }
   }
@@ -124,7 +122,7 @@ class MLocalImgs @Inject() (
       }
       .recover {
         case ex: org.im4java.core.InfoException =>
-          LOGGER.info("getImageWH(): Unable to identity image " + mimg.fileName, ex)
+          LOGGER.info("getImageWH(): Unable to identity image " + mimg.dynImgId.fileName, ex)
           None
       }
   }
@@ -210,7 +208,7 @@ class MLocalImgs @Inject() (
 
   def generateFileName(mimg: MLocalImg): Future[String] = {
     for (fext <- fileExtensionFut(mimg)) yield {
-      mimg.rowKeyStr + "." + fext
+      mimg.dynImgId.rowKeyStr + "." + fext
     }
   }
 
@@ -220,7 +218,7 @@ class MLocalImgs @Inject() (
 
   def fileOf(mimg: MLocalImg): File = {
     val fsImgDir = getFsImgDir(mimg)
-    new File(fsImgDir, mimg.fsFileName)
+    new File(fsImgDir, mimg.dynImgId.fsFileName)
   }
 
 }
@@ -244,8 +242,9 @@ object MLocalImg {
     /** Парсер имён файлов, конвертящий успешный результат своей работы в экземпляр MLocalImg. */
     override def fileName2miP: Parser[T] = {
       fileNameP ^^ {
-        case uuid ~ dynArgs =>
-          MLocalImg(uuid, dynArgs)
+        // TODO Сделать этот сборный парсер для MDynImgId.
+        case rowKeyStr ~ dynArgs =>
+          MLocalImg( MDynImgId(rowKeyStr, dynArgs))
       }
     }
 
@@ -266,42 +265,30 @@ object MLocalImg {
 }
 
 
-/**
- * Экземпляр класса локально хранимой картинки в ФС.
- * @param rowKeyStr Ключ (id узла-картинки).
- * @param dynImgOps IM-операции, которые нужно наложить на оригинал с ключом rowKey, чтобы получить
- *                  необходимою картинку.
- */
+/** Экземпляр класса локально хранимой картинки в ФС. */
 case class MLocalImg(
-                      rowKeyStr   : String    = UuidUtil.uuidToBase64( UUID.randomUUID() ),
-                      dynImgOps   : Seq[ImOp] = Nil
+                      override val dynImgId    : MDynImgId = MDynImgId.randomOrig()
                     )
   extends MAnyImgT
 {
 
+  // TODO Почему тут MImgT?
   override type MImg_t = MImgT
 
   override def toLocalInstance: MLocalImg = this
 
+  // TODO Оригинал ли будет на выходе? Что с форматом?
   override def original: MLocalImg = {
-    if (hasImgOps)
-      copy(dynImgOps = Nil)
+    if (dynImgId.hasImgOps)
+      withDynImgId( dynImgId.original )
     else
       this
   }
 
   override lazy val toWrappedImg: MImg3 = {
-    MImg3(rowKeyStr, dynImgOps)
+    MImg3(dynImgId)
   }
 
-  override lazy val cropOpt = super.cropOpt
-
-  lazy val fsFileName: String = {
-    if (hasImgOps) {
-      dynImgOpsString
-    } else {
-      "__ORIG__"
-    }
-  }
+  def withDynImgId(dynImgId: MDynImgId) = copy(dynImgId = dynImgId)
 
 }

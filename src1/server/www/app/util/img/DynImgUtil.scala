@@ -63,7 +63,7 @@ class DynImgUtil @Inject() (
       }
         .flatMap(identity)
         .failed.foreach { ex =>
-          error("Failed to prefetch dyn.image: " + dargs.fileName, ex)
+          error("Failed to prefetch dyn.image: " + dargs.dynImgId.fileName, ex)
         }
     }
     routes.Img.dynImg(dargs)
@@ -93,7 +93,7 @@ class DynImgUtil @Inject() (
           _ <- convert(
             in  = mLocalImgs.fileOf(localImg),
             out = mLocalImgs.fileOf(newLocalImg),
-            imOps = args.dynImgOps
+            imOps = args.dynImgId.dynImgOps
           )
         } yield {
           // Вернуть финальную картинку, т.к. с оригиналом и так всё ясно.
@@ -129,7 +129,7 @@ class DynImgUtil @Inject() (
     // Используем StringBuilder для сборки ключа, т.к. обычно на момент вызова этого метода fileName ещё не собран.
     val resultP = Promise[MLocalImg]()
     val resultFut = resultP.future
-    val ck = args.fileNameSb()
+    val ck = args.dynImgId.fileNameSb()
       .append(":eIR")
       .toString()
     // TODO Тут наверное можно задейстовать cacheApiUtil.
@@ -219,7 +219,7 @@ class DynImgUtil @Inject() (
     val flags = if (fillArea) Seq(ImResizeFlags.FillArea) else Nil
     val op = AbsResizeOp(MSize2di(256, 256), flags)
     val imgThumb = img.withDynOps(
-      img.dynImgOps ++ Seq(op)
+      img.dynImgId.dynImgOps ++ Seq(op)
     )
     imgCall(imgThumb)
   }

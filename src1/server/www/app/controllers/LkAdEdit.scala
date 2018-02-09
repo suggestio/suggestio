@@ -170,7 +170,7 @@ class LkAdEdit @Inject() (
             val imgNeededMap = lkAdEdFormUtil.collectNeededImgs( edges2 )
             val imgsMediasFut = mMedias.multiGetMap {
               imgNeededMap
-                .mapValues(_.mediaId)
+                .mapValues(_.dynImgId.mediaId)
                 .valuesIterator
                 .toSet
             }

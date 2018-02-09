@@ -69,7 +69,7 @@ class BlkImgMaker @Inject() (
     )
 
     // Генерим финальную ссыль на картинку с учетом возможного кропа или иных исходных трансформаций:
-    val dargs = img.withDynOps(img.dynImgOps ++ imOpsAcc)
+    val dargs = img.withDynOps(img.dynImgId.dynImgOps ++ imOpsAcc)
     MakeResult(
       szCss       = MSize2di(args.blockMeta),
       szReal      = szReal,

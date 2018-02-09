@@ -58,7 +58,7 @@ class ImgFormUtil @Inject() (
               None
           }
         },
-        { _.map(_.fileName) }
+        { _.map(_.dynImgId.fileName) }
       )
   }
 
@@ -160,11 +160,11 @@ class ImgFormUtil @Inject() (
         // Ксакеп Вася попытается подставить id уже сохраненной где-то картинки. А потом честно запросить удаление этой картинки.
         // Нужно исключить возможность подмешивать в списки картинок левые id, используя список oldImgs:
         .filter { v =>
-          val filterResult = oldImgIdsSet.contains( v._1.rowKey )
+          val filterResult = oldImgIdsSet.contains( v._1.dynImgId.rowKey )
           if (!filterResult)
-            warn("Tried to keep image, that does not exists in previous imgs: " + v._1.rowKeyStr)
+            warn("Tried to keep image, that does not exists in previous imgs: " + v._1.dynImgId.rowKeyStr)
           else
-            trace(s"Keeping old img[${v._2}]: ${v._1.rowKeyStr}")
+            trace(s"Keeping old img[${v._2}]: ${v._1.dynImgId.rowKeyStr}")
           filterResult
         }
     }
@@ -181,7 +181,7 @@ class ImgFormUtil @Inject() (
               .filter { loc =>
                 val filterResult = mLocalImgs.isExists(loc)
                 if (!filterResult)
-                  warn("REVALIDATE_ALREADY_SAVED: keeped image not exists: " + loc.fileName)
+                  warn("REVALIDATE_ALREADY_SAVED: keeped image not exists: " + loc.dynImgId.fileName)
                 filterResult
               }
               .map(_ => v)
@@ -204,9 +204,9 @@ class ImgFormUtil @Inject() (
             .original
           val filterResult = mLocalImgs.isExists(locImg)
           if (!filterResult)
-            warn("Request to save totally inexisting img: " + v._1.fileName)
+            warn("Request to save totally inexisting img: " + v._1.dynImgId.fileName)
           else
-            trace(s"Saving new img[${v._2}]: ${v._1.rowKeyStr}")
+            trace(s"Saving new img[${v._2}]: ${v._1.dynImgId.rowKeyStr}")
           filterResult
         }
       // Сохраняем все картинки параллельно:
@@ -238,7 +238,7 @@ class ImgFormUtil @Inject() (
   private def mimgs2rkSet(imgs: TraversableOnce[MAnyImgT]): Set[UUID] = {
     imgs
       .toIterator
-      .map(_.rowKey)
+      .map(_.dynImgId.rowKey)
       .toSet
   }
 

@@ -51,10 +51,10 @@ trait ISaveImgs {
         .iterator
         .map { case (pred, mimg) =>
           MEdge(
-            nodeIds   = Set(mimg.rowKeyStr),
+            nodeIds   = Set(mimg.dynImgId.rowKeyStr),
             predicate = pred,
             info      = MEdgeInfo(
-              dynImgArgs = mimg.qOpt
+              dynImgArgs = mimg.dynImgId.qOpt
             )
           )
         }
@@ -100,9 +100,9 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
         savedBgImg.map { mimg =>
           MEdge(
             predicate = fn,
-            nodeIds   = Set(mimg.rowKeyStr),
+            nodeIds   = Set(mimg.dynImgId.rowKeyStr),
             info = MEdgeInfo(
-              dynImgArgs = mimg.qOpt
+              dynImgArgs = mimg.dynImgId.qOpt
             )
           )
         }

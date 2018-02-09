@@ -98,10 +98,9 @@ class GalleryUtil @Inject() (
     )
     // Если необходимо, то сначала делаем кроп:
     // TODO Если картинка не кропаная, то кропать её принудительно на 200 пикселей по высоте?
-    if (mimg.isCropped) {
-      val crop = mimg.cropOpt.get
+    for (crop <- mimg.dynImgId.cropOpt)
       imOps ::= AbsCropOp(crop)
-    }
+
     val dynArgs = mimg.withDynOps(imOps)
     dynImgUtil.imgCall(dynArgs)
   }

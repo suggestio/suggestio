@@ -150,7 +150,7 @@ class MainColorDetector @Inject() (
    * @return Фьючерс с данными картинки.
    */
   def prepareImg(bgImg4s: MAnyImgT): Future[PrepareImgResult] = {
-    lazy val logPrefix = s"prepareImg(${bgImg4s.fileName}): "
+    lazy val logPrefix = s"prepareImg(${bgImg4s.dynImgId.fileName}): "
 
     // toLocalImg не существовует обычно вообще (ибо голый orig [+ crop]). Поэтому сразу ищем оригинал, но не теряя надежды.
     val localOrigImgFut = mAnyImgs.toLocalImg(bgImg4s.original)
@@ -166,14 +166,14 @@ class MainColorDetector @Inject() (
     }
 
     // Если исходная картинка - чистый оригинал, то отрабатывать отсутствие произодной картинки не требуется.
-    if (bgImg4s.hasImgOps) {
+    if (bgImg4s.dynImgId.hasImgOps) {
       // Если исходная картинка - обрезок, то можно изъять операции из исходной картинки и повторить их на оригинале вместе с генерацией гистограммы.
       localImg2Fut = localImg2Fut.recoverWith {
         case _: NoSuchElementException =>
           val resFut = for (v <- localOrigImgFut) yield {
-            PrepareImgResult(v, bgImg4s.dynImgOps)
+            PrepareImgResult(v, bgImg4s.dynImgId.dynImgOps)
           }
-          LOGGER.trace(s"${logPrefix}Derived img not exists. Re-applying ${bgImg4s.dynImgOps.size} IM ops to original: ${bgImg4s.dynImgOps}")
+          LOGGER.trace(s"${logPrefix}Derived img not exists. Re-applying ${bgImg4s.dynImgId.dynImgOps.size} IM ops to original: ${bgImg4s.dynImgId.dynImgOps}")
           resFut
       }
     }
@@ -221,7 +221,7 @@ class MainColorDetector @Inject() (
   /** Закэшировать выполнение detectPaletteFor(). */
   def cached(bgImg4s: MAnyImgT)(detectF: => Future[MHistogram]): Future[MHistogram] = {
     cacheApiUtil.getOrElseFut(
-      key         = "mcd." + bgImg4s.rowKeyStr + ".hist",
+      key         = "mcd." + bgImg4s.dynImgId.rowKeyStr + ".hist",
       expiration  = CACHE_COLOR_HISTOGRAM_DURATION
     )(detectF)
   }

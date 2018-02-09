@@ -15,7 +15,7 @@
   @for(mimg <- mimgOpt) {
     /
     @_blueLink( routes.SysImg.showOne(mimg) ) {
-      @mimg.rowKeyStr
+      @mimg.dynImgId.rowKeyStr
     }
   }
 
@@ -23,7 +23,7 @@
 }
 
 @sysBase(
-  title       = title + mimgOpt.fold("")(i => " | " + i.rowKeyStr) + " | Картинки",
+  title       = title + mimgOpt.fold("")(i => " | " + i.dynImgId.rowKeyStr) + " | Картинки",
   hPathAfter  = Some(hPathAfter1),
   headAfter   = headAfter
 )(content)

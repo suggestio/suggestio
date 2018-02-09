@@ -119,7 +119,7 @@ class Img @Inject() (
         stub
       }
       val id = CropConstants.CROPPER_DIV_ID
-      Ok(cropTpl(iik.fileName, width, height = height, imeta, id, iik.cropOpt))
+      Ok(cropTpl(iik.dynImgId.fileName, width, height = height, imeta, id, iik.dynImgId.cropOpt))
         .withHeaders(PopupConstants.HTTP_HDR_POPUP_ID -> id)
     }
   }
@@ -155,11 +155,11 @@ class Img @Inject() (
             crop2Fut map { crop2 =>
               // Сгенерить id картинки. Собираем картинку на базе исходника, накатив только crop:
               val cropOp = AbsCropOp(crop2)
-              val mimgOrig = MImg3(localImg.rowKeyStr)
+              val mimgOrig = MImg3(localImg.dynImgId.original)
               val croppedImgFileName = {
                 val imOps = List(cropOp)
                 val mimg = mimgOrig.withDynOps(imOps)
-                mimg.fileName
+                mimg.dynImgId.fileName
               }
               // Сгенерить новую dyn-ссылку на картинку. Откропать согласно запросу.
               // Т.к. это редактор, имеет смысл отресайзить оригинал до превьюшки.
@@ -172,7 +172,7 @@ class Img @Inject() (
             }
 
           case None =>
-            NotFound("img does not exist: " + iik0.fileName)
+            NotFound("img does not exist: " + iik0.dynImgId.fileName)
         }
       }
     )
@@ -220,11 +220,11 @@ class Img @Inject() (
 
         ensureFut.recover {
           case _: NoSuchElementException =>
-            LOGGER.debug("Img not found anywhere: " + args.fileName)
+            LOGGER.debug("Img not found anywhere: " + args.dynImgId.fileName)
             NotFound("No such image.")
               .withHeaders(CACHE_CONTROL -> s"public, max-age=30")
           case ex: Throwable =>
-            LOGGER.error(s"Unknown exception occured during fetchg/processing of source image id[${args.rowKeyStr}]\n  args = $args", ex)
+            LOGGER.error(s"Unknown exception occured during fetchg/processing of source image id[${args.dynImgId.rowKeyStr}]\n  args = $args", ex)
             ServiceUnavailable("Internal error occured during fetching/creating an image.")
               .withHeaders(RETRY_AFTER -> "60")
         }
@@ -283,7 +283,7 @@ trait TempImgSupport
         // Отрабатываем опциональный рендеринг html-поля с оверлеем.
         val mptmp = MLocalImg()
         lazy val ovlOpt = for (hrrr <- ovlRrr) yield {
-          hrrr(mptmp.fileName, implicitly[Context])
+          hrrr(mptmp.dynImgId.fileName, implicitly[Context])
         }
         // Далее, загрузка для svg и растровой графики расветвляется...
         val tmpFile = mLocalImgs.fileOf(mptmp)
@@ -293,7 +293,7 @@ trait TempImgSupport
             // Это svg. Надо его сжать и переместить в tmp-хранилище.
             val newSvg = htmlCompressUtil.compressSvgFromFile(srcFile)
             FileUtils.writeStringToFile(tmpFile, newSvg)
-            Ok( jsonTempOk(mptmp.fileName, routes.Img.dynImg(mptmp.toWrappedImg), ovlOpt) )
+            Ok( jsonTempOk(mptmp.dynImgId.fileName, routes.Img.dynImg(mptmp.toWrappedImg), ovlOpt) )
           } else {
             val reply = jsonImgError("SVG format invalid or not supported.")
             NotAcceptable(reply)
@@ -322,7 +322,7 @@ trait TempImgSupport
             val im = mImgCompanion.fromImg(mptmp, Some(imOps))
             val res2Fut = imgPrepareFut map { _ =>
               Ok( jsonTempOk(
-                mptmp.fileName,
+                mptmp.dynImgId.fileName,
                 dynImgUtil.imgCall(im),
                 ovlOpt
               ) )
@@ -334,7 +334,7 @@ trait TempImgSupport
                   colorDetectWsUtil.detectPalletteToWs(im, wsId.get)
                 }
               } else {
-                LOGGER.error(s"Calling MainColorDetector makes no sense, because websocket is disabled. Img was " + im.fileName)
+                LOGGER.error(s"Calling MainColorDetector makes no sense, because websocket is disabled. Img was " + im.dynImgId.fileName)
               }
             }
             // Возвращаем ожидаемый результат:

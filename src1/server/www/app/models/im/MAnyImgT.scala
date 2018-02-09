@@ -1,14 +1,11 @@
 package models.im
 
-import java.util.UUID
 import javax.inject.{Inject, Singleton}
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.img.crop.MCrop
 import io.suggest.model.img.ImgSzDated
-import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 
@@ -35,65 +32,10 @@ trait MAnyImgT {
   /** Инстанс для доступа к картинке без каких-либо наложенных на неё изменений. */
   def original: MAnyImgT
 
+  val dynImgId: MDynImgId
 
-  def rowKeyStr: String
-  def dynImgOps: Seq[ImOp]
+  def withDynImgId(dynImgId: MDynImgId): MAnyImgT
 
-  /** Ключ ряда картинок, id для оригинала и всех производных. */
-  lazy val rowKey: UUID = UuidUtil.base64ToUuid(rowKeyStr)
-
-  /** Нащупать crop. Используется скорее как compat к прошлой форме работы с картинками. */
-  def cropOpt: Option[MCrop] = {
-    val iter = dynImgOps
-      .iterator
-      .flatMap {
-        case AbsCropOp(crop) => crop :: Nil
-        case _ => Nil
-      }
-    if (iter.hasNext)
-      Some(iter.next())
-    else
-      None
-  }
-
-  def isCropped: Boolean = {
-    dynImgOps
-      .exists { _.isInstanceOf[ImCropOpT] }
-  }
-
-  final def hasImgOps: Boolean = dynImgOps.nonEmpty
-
-  lazy val fileName: String = fileNameSb().toString()
-
-  /**
-   * Билдер filename-строки
-   * @param sb Исходный StringBuilder.
-   * @return StringBuilder.
-   */
-  def fileNameSb(sb: StringBuilder = new StringBuilder(80)): StringBuilder = {
-    sb.append(rowKeyStr)
-    if (hasImgOps) {
-      sb.append('~')
-      dynImgOpsStringSb(sb)
-    }
-    sb
-  }
-
-  def dynImgOpsStringSb(sb: StringBuilder = ImOp.unbindSbDflt): StringBuilder = {
-    ImOp.unbindImOpsSb(
-      keyDotted     = "",
-      value         = dynImgOps,
-      withOrderInx  = false,
-      sb            = sb
-    )
-  }
-
-  lazy val dynImgOpsString: String = {
-    dynImgOpsStringSb()
-      .toString()
-  }
-
-  // Исторически, опциональный доступ к dynImgOpsString осуществляет метод qOpt.
 }
 
 
