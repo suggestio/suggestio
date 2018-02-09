@@ -33,6 +33,7 @@ import util.geo.IGeoIpUtilDi
 import util.stat.{IStatCookiesUtilDi, IStatUtil}
 import views.html.sc._
 import japgolly.univeq._
+import util.img.IDynImgUtil
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}

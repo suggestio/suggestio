@@ -10,6 +10,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.async.{AsyncUtil, IAsyncUtilDi}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.dt.DateTimeUtil
+import io.suggest.img.MImgFmts
 import io.suggest.img.crop.CropConstants
 import io.suggest.popup.PopupConstants
 import io.suggest.svg.SvgUtil
@@ -26,7 +27,7 @@ import play.api.libs.Files.TemporaryFile
 import play.api.mvc._
 import play.twirl.api.Html
 import util.acl._
-import util.di.{IDynImgUtil, IMImg3Di}
+import util.di.IMImg3Di
 import util.img.detect.main.{ColorDetectWsUtil, IColorDetectWsUtilDi, MainColorDetector}
 import util.img.{ImgCtlUtil, _}
 import util.up.FileUtil
@@ -303,7 +304,7 @@ trait TempImgSupport
           try {
             val imgPrepareFut: Future[_] = {
               // Проверяем формат принятой картинки на совместимость: // TODO Это не нужно, оригинал можно ведь и не раздавать никогда.
-              if (preserveUnknownFmt || OutImgFmts.forImageMime(srcMime).isDefined) {
+              if (preserveUnknownFmt || MImgFmts.forImageMime(srcMime).isDefined) {
                 // TODO Вызывать jpegtran или другие вещи для lossless-обработки. В фоне, параллельно.
                 Future {
                   FileUtils.moveFile(srcFile, tmpFile)

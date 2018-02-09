@@ -11,7 +11,7 @@ import play.api.data.{Form, Mapping}
 import play.api.mvc.Result
 import util.FormUtil
 import util.acl.IIsSu
-import util.di.IDynImgUtil
+import util.img.IDynImgUtil
 import views.html.sys1.img.make._
 
 import scala.concurrent.Future

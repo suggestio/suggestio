@@ -211,7 +211,7 @@ trait MImgsT
       .filter(_.isDefined)
 
     val localInst = mimg.toLocalInstance
-    lazy val logPrefix = "getImageWh(" + mimg.fileName + "): "
+    lazy val logPrefix = s"getImageWh(${mimg.fileName}): "
 
     val fut = if (mLocalImgs.isExists(localInst)) {
       // Есть локальная картинка. Попробовать заодно потанцевать вокруг неё.
@@ -265,7 +265,7 @@ trait MImgsT
       .filter(_.isDefined)
       .recoverWith {
         // Пытаемся прочитать эти метаданные из модели MLocalImg.
-        case ex: Exception  =>
+        case _: Exception  =>
           mLocalImgs.rawImgMeta( mimg.toLocalInstance )
       }
   }

@@ -199,11 +199,11 @@ class DynImgUtil @Inject() (
       cmd.run(op)
       val resFut = listener.future
       if (LOGGER.underlying.isTraceEnabled()) {
+        val logPrefix = s"convert($in=>$out)#${System.currentTimeMillis()}:"
         val tstamp = System.currentTimeMillis() * imOps.hashCode() * in.hashCode()
-        trace(s"convert(): [$tstamp] ${cmd.getCommand.iterator().asScala.mkString(" ")} $opStr")
-        for (res <- resFut) {
-          trace(s"convert(): [$tstamp] returned $res, result ${out.length} bytes")
-        }
+        trace(s"$logPrefix [$tstamp] ${cmd.getCommand.iterator().asScala.mkString(" ")} $opStr")
+        for (res <- resFut)
+          trace(s"$logPrefix [$tstamp] returned $res, result ${out.length} bytes")
       }
       resFut
     }
@@ -226,3 +226,7 @@ class DynImgUtil @Inject() (
 
 }
 
+/** Интерфейс для доступа к DI-полю с утилью для DynImg. */
+trait IDynImgUtil {
+  def dynImgUtil: DynImgUtil
+}

@@ -3,10 +3,10 @@ package util.ext
 import java.net.URL
 
 import io.suggest.common.geom.d2.INamedSize2di
+import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.model.n2.node.MNode
 import io.suggest.text.util.UrlUtil
 import models.blk.{OneAdWideQsArgs, SzMult_t, szMulted}
-import models.im.{OutImgFmt, OutImgFmts}
 import models.mext.MExtService
 import models.mproj.IMCommonDi
 import models.IRenderable
@@ -95,7 +95,7 @@ trait IExtServiceHelper
   def imgFmt = imgFmtDflt
 
   /** Дефолтовый формат изображения, если не задан в конфиге. */
-  def imgFmtDflt: OutImgFmt = OutImgFmts.JPEG
+  def imgFmtDflt: MImgFmt = MImgFmts.JPEG
 
   /** Поддержка OAuth1 на текущем сервисе. None означает, что нет поддержки. */
   def oauth1Support: Option[IOAuth1Support] = None

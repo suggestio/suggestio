@@ -5,10 +5,10 @@ import java.nio.file.Files
 
 import io.suggest.async.IAsyncUtilDi
 import io.suggest.common.geom.d2.ISize2di
+import io.suggest.img.MImgFmt
 import io.suggest.primo.IToPublicString
 import io.suggest.util.logs.MacroLogsImpl
 import models.adr.IAdRenderArgs
-import models.im.OutImgFmt
 import models.mproj.IMCommonDi
 
 import scala.concurrent.Future
@@ -44,7 +44,7 @@ abstract class IAdRrr
         file.exists()
       }
       .recoverWith {
-        case ex: NoSuchElementException =>
+        case _: NoSuchElementException =>
           val fut1 = _renderCached
           LOGGER.warn("File returned is deleted already o_O")
           fut1
@@ -132,7 +132,7 @@ case class AdRrrFailedException(now: Long, msg: String, privateMsg: String) exte
 
 /** Трейт для реализации статической утили рендереров. */
 trait IAdRrrUtil {
-  def qualityDflt(scrSz: ISize2di, fmt: OutImgFmt): Option[Int] = None
+  def qualityDflt(scrSz: ISize2di, fmt: MImgFmt): Option[Int] = None
 }
 
 /** Интерфейс для будущих DI Factory, собирающих инстансы рендереров. */

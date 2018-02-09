@@ -6,8 +6,8 @@ import javax.inject.{Inject, Singleton}
 import com.google.inject.assistedinject.Assisted
 import io.suggest.async.AsyncUtil
 import io.suggest.common.geom.d2.ISize2di
+import io.suggest.img.{MImgFmt, MImgFmts}
 import models.adr.IAdRenderArgs
-import models.im.{OutImgFmt, OutImgFmts}
 import models.mproj.ICommonDi
 import util.adr.{IAdRrr, IAdRrrDiFactory, IAdRrrUtil}
 import views.txt.js.phantom.renderOneAdJs
@@ -23,9 +23,9 @@ import views.txt.js.phantom.renderOneAdJs
 class PhantomJsRrrUtil extends IAdRrrUtil {
 
   /** Дефолтовое значение quality, если не задано. */
-  override def qualityDflt(scrSz: ISize2di, fmt: OutImgFmt): Option[Int] = {
+  override def qualityDflt(scrSz: ISize2di, fmt: MImgFmt): Option[Int] = {
     fmt match {
-      case OutImgFmts.JPEG => Some(94)
+      case MImgFmts.JPEG => Some(94)
       case _               => super.qualityDflt(scrSz, fmt)
     }
   }

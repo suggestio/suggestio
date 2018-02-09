@@ -7,9 +7,9 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.async.AsyncUtil
 import io.suggest.common.geom.d2.ISize2di
+import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.util.logs.MacroLogsDyn
 import models.adr._
-import models.im.{OutImgFmt, OutImgFmts}
 import models.mproj.ICommonDi
 import play.api.Configuration
 import util.adr.{IAdRrr, IAdRrrDiFactory, IAdRrrUtil}
@@ -47,10 +47,10 @@ class WkHtmlRrrUtil @Inject() (
   }
 
   /** Дефолтовое значение quality, если не задано. */
-  override def qualityDflt(scrSz: ISize2di, fmt: OutImgFmt): Option[Int] = {
+  override def qualityDflt(scrSz: ISize2di, fmt: MImgFmt): Option[Int] = {
     fmt match {
       // Для усиления сжатия PNG нужно выставлять "--quality 0" для wkhtmltoimage. Это уменьшает размер в несколько раз.
-      case OutImgFmts.PNG => Some(0)
+      case MImgFmts.PNG => Some(0)
       case _              => super.qualityDflt(scrSz, fmt)
     }
   }

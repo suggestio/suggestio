@@ -1,8 +1,8 @@
 package controllers
 
+import io.suggest.img.{MImgFmtJvm, MImgFmts}
 import io.suggest.util.logs.IMacroLogs
 import models.blk.{OneAdQsArgs, OneAdWideQsArgs}
-import models.im.{OutImgFmt, OutImgFmts}
 import models.msc.OneAdRenderVariant
 import models.msys.MShowOneAdFormTplArgs
 import models.req.IAdReq
@@ -31,7 +31,7 @@ class SysAdRenderUtil {
     mapping(
       "szMult" -> FormUtil.szMultM,
       "vsn"    -> FormUtil.esVsnOptM,
-      "imgFmt" -> OutImgFmt.mapping,
+      "imgFmt" -> MImgFmtJvm.mapping,
       "wide"   -> OneAdWideQsArgs.optMapper
     )
     { OneAdQsArgs(madId, _, _, _, _) }
@@ -79,7 +79,7 @@ trait SysAdRender
         adId    = madId,
         szMult  = 1.0F,
         vsnOpt  = request.mad.versionOpt,
-        imgFmt  = OutImgFmts.JPEG,
+        imgFmt  = MImgFmts.JPEG,
         wideOpt = for (bm <- request.mad.ad.blockMeta) yield {
           OneAdWideQsArgs(
             width = bm.width * 2
