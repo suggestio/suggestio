@@ -80,6 +80,7 @@ case class MDynImgId(
   }
 
   def withDynImgOps(dynImgOps: Seq[ImOp] = Nil) = copy(dynImgOps = dynImgOps)
+  def withDynFormat(dynFormat: MImgFmt)         = copy(dynFormat = dynFormat)
 
   /** id для модели MMedia. */
   lazy val mediaId = MDynImgId.mkMediaId(this)

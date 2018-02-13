@@ -8,6 +8,7 @@ package io.suggest.sc.tile
  */
 object TileConstants {
 
+  // TODO Распихать обе константы внутрь по обоим элементам BlockWidths.
   def CELL300_COLUMNS_MAX = 4
   def CELL140_COLUMNS_MAX = CELL300_COLUMNS_MAX * 2
 

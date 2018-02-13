@@ -22,6 +22,7 @@ import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import models.mproj.ICommonDi
 import util.img.ImgFileNameParsersImpl
 import util.up.FileUtil
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -271,7 +272,7 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
 
     override def fileName2miP: Parser[T] = {
       // TODO Использовать парсер, делающий сразу MDynImgId
-      (uuidStrP ~ dotDynFormatP ~ imOpsP) ^^ {
+      (uuidStrP ~ dotDynFormatOrJpegP ~ imOpsP) ^^ {
         case nodeId ~ dynFormat ~ dynImgOps =>
           MImg3(MDynImgId(nodeId, dynFormat, dynImgOps))
       }
@@ -316,9 +317,18 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
     MImg3(dynImgId)
   }
 
+  /** Извлечение данных картинки из MMedia. */
   def apply(mmedia: MMedia): MImg3 = {
+    val dynFmt = mmedia.file.imgFormatOpt.get
     // TODO Безопасно ли? По идее да, но лучше потестить или использовать какие-то данные из иных мест.
-    apply( mmedia.id.get )
+    val mimg0 = apply( mmedia.id.get )
+    if (mimg0.dynImgId.dynFormat !=* dynFmt) {
+      mimg0.withDynImgId(
+        mimg0.dynImgId.withDynFormat( dynFmt )
+      )
+    } else {
+      mimg0
+    }
   }
 
   override def fromImg(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg3 = {

@@ -176,12 +176,15 @@ class Upload @Inject()(
               val existColors = foundFile.picture.colors
               LOGGER.debug(s"$logPrefix Found existing file media#${foundFile.idOrNull} for hashes [${upFileProps.hashesHex.valuesIterator.mkString(", ")}] with ${existColors.size} colors.")
 
+              // Тут шаринг инстанса возможной картинки. Но надо быть осторожнее: если не картинка, то может быть экзепшен.
+              lazy val foundFileImg = MImg3( foundFile )
+
               // Собираем гистограмму цветов.
               val mediaColorsFut = if (existColors.isEmpty &&
                                        !foundFile.file.isOriginal &&
                                        foundFile.picture.nonEmpty) {
                 // Для получения гистограммы цветов надо получить на руки оригинал картинки.
-                val origImg3 = MImg3( foundFile ).original
+                val origImg3 = foundFileImg.original
                 LOGGER.trace(s"$logPrefix Will try original img for colors histogram: $origImg3")
                 for (origMediaOpt <- mImgs3.mediaOptFut( origImg3 )) yield {
                   // TODO Если не найдено оригинала, то может быть сразу ошибку? Потому что это будет нечто неюзабельное.
@@ -205,7 +208,7 @@ class Upload @Inject()(
                     url       = if (MimeConst.Image.isImage( foundFile.file.mime )) {
                       // TODO IMG_DIST: Вписать хост расположения картинки.
                       // TODO Нужна ссылка картинки на недо-оригинал картинки? Или как?
-                      Some( routes.Img.dynImg( MImg3(foundFile) ).url )
+                      Some( routes.Img.dynImg( foundFileImg ).url )
                     } else {
                       // TODO IMG_DIST Надо просто универсальную ссылку для скачивания файла, независимо от его типа.
                       LOGGER.error(s"$logPrefix MIME ${foundFile.file.mime} don't know how to build URL")

@@ -2,12 +2,15 @@ package util.showcase
 
 import javax.inject.{Inject, Singleton}
 
+import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.img.crop.MCrop
+import io.suggest.sc.grid.GridConstants
+import io.suggest.sc.tile.TileConstants
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk.{szMulted, szMultedF, szRounded}
 import models.im._
-import models.im.make.{MImgMakeArgs, IImgMaker, MakeResult}
+import models.im.make.{IImgMaker, MImgMakeArgs, MakeResult}
 import models.mproj.ICommonDi
 
 import scala.annotation.tailrec
@@ -34,8 +37,15 @@ class ScWideMaker @Inject() (
 
   /** Желаемые ширИны широкого бэкграунда.
     * 2018-02-06 Уменьшение списка размеров: 950 и 1250 убрано.
+    * Макс.ширина - 1260 -- это
     */
-  val WIDE_WIDTHS_PX: List[Int] = List(350, 500, 650, 850, /*950,*/ 1100/*, 1250, 1600, 2048*/)
+  val WIDE_WIDTHS_PX: List[Int] = List(350, 500, 650, 850, /*950,*/
+    {
+      // Макс.ширина равна макс.ширине плитки.
+      val cols = TileConstants.CELL300_COLUMNS_MAX
+      BlockWidths.NORMAL.value * cols + BlockPaddings.Bp20.value * (cols - 1)
+    }
+  )
 
 
   /** Подобрать ширину фоновой картинки на основе списка допустимых вариантов. */
