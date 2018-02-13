@@ -45,16 +45,14 @@ class BlkImgMaker @Inject() (
 
   /** Этот движок внутри работает синхронно. Его синхронный код вынесен сюда. */
   private def icompileSync(args: MImgMakeArgs): MakeResult = {
-    import args._
-
-    val pxRatio = DevPixelRatios.pxRatioDefaulted( devScreenOpt.flatMap(_.pixelRatioOpt) )
+    val pxRatio = DevPixelRatios.pxRatioDefaulted( args.devScreenOpt.flatMap(_.pixelRatioOpt) )
 
     // Компрессия выходной картинки, желательно как fg её сжимать.
     val fgc = args.compressMode
       .getOrElse(CompressModes.Fg)
       .fromDpr(pxRatio)
 
-    val szReal = getRenderSz(szMult, blockMeta, pxRatio)
+    val szReal = getRenderSz(args.szMult, args.blockMeta, pxRatio)
 
     // Настройки сохранения результирующей картинки (аккамулятор).
     val imOpsAcc = List(
@@ -69,7 +67,7 @@ class BlkImgMaker @Inject() (
     )
 
     // Генерим финальную ссыль на картинку с учетом возможного кропа или иных исходных трансформаций:
-    val dargs = img.withDynOps(img.dynImgId.dynImgOps ++ imOpsAcc)
+    val dargs = args.img.withDynOps(args.img.dynImgId.dynImgOps ++ imOpsAcc)
     MakeResult(
       szCss       = MSize2di(args.blockMeta),
       szReal      = szReal,

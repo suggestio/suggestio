@@ -3,9 +3,10 @@ package controllers
 import java.time.OffsetDateTime
 import javax.inject.{Inject, Singleton}
 
+import io.suggest.img.MImgFmts
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.js.UploadConstants
-import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
+import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MAdnExtra
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.model.n2.node.meta.colors.MColors
@@ -371,7 +372,11 @@ class MarketLkAdnEdit @Inject() (
                 nodeIds   = Set(img.dynImgId.rowKeyStr),
                 order     = Some(i),
                 info      = MEdgeInfo(
-                  dynImgArgs = img.dynImgId.qOpt
+                  dynImgArgs = Some(MEdgeDynImgArgs(
+                    // На выходе галлереи всегда jpeg'и.
+                    dynFormat = MImgFmts.JPEG,
+                    dynOpsStr = img.dynImgId.qOpt
+                  ))
                 ))
             }
         }

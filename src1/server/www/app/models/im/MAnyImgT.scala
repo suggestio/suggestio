@@ -5,9 +5,10 @@ import javax.inject.{Inject, Singleton}
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import io.suggest.common.geom.d2.ISize2di
+import io.suggest.fio.IDataSource
 import io.suggest.model.img.ImgSzDated
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
+import models.mproj.{ICommonDi, IMCommonDi}
 
 import scala.concurrent.Future
 
@@ -41,7 +42,9 @@ trait MAnyImgT {
 
 
 /** Трейт для статических частей img-моделей. */
-trait MAnyImgsT[T <: MAnyImgT] {
+trait MAnyImgsT[T <: MAnyImgT] extends IMCommonDi {
+
+  import mCommonDi.ec
 
   /** Удалить картинку из модели/моделей. */
   def delete(mimg: T): Future[_]
@@ -49,8 +52,16 @@ trait MAnyImgsT[T <: MAnyImgT] {
   /** Подготовить локальный файл с картинкой. */
   def toLocalImg(mimg: T): Future[Option[MLocalImg]]
 
+  /** Асинхронно стримить картинку из хранилища, прочитав связанные с ней данные. */
+  def getDataSource(mimg: T): Future[IDataSource]
+
   /** Асинхронно стримить картинку из хранилища. */
-  def getStream(mimg: T): Source[ByteString, _]
+  final def getStream(mimg: T): Source[ByteString, _] = {
+    val srcFut = for (ds <- getDataSource(mimg)) yield {
+      ds.data
+    }
+    Source.fromFutureSource(srcFut)
+  }
 
   /** Получить ширину и длину картинки. */
   def getImageWH(mimg: T): Future[Option[ISize2di]]
@@ -63,9 +74,9 @@ trait MAnyImgsT[T <: MAnyImgT] {
 /** Статическая над-модель, реализующая разные общие методы для любых картинок. */
 @Singleton
 class MAnyImgs @Inject() (
-                           mLocalImgs  : MLocalImgs,
-                           mImgs3      : MImgs3,
-                           mCommonDi   : ICommonDi
+                           mLocalImgs               : MLocalImgs,
+                           mImgs3                   : MImgs3,
+                           override val mCommonDi   : ICommonDi
                          )
   extends MAnyImgsT[MAnyImgT]
   with MacroLogsImpl
@@ -92,12 +103,13 @@ class MAnyImgs @Inject() (
     }
   }
 
-  override def getStream(mimg: MAnyImgT): Source[ByteString, _] = {
+  /** Асинхронно стримить картинку из хранилища, прочитав связанные с ней данные. */
+  override def getDataSource(mimg: MAnyImgT): Future[IDataSource] = {
     mimg match {
       case mimg3: MImg3 =>
-        mImgs3.getStream(mimg3)
+        mImgs3.getDataSource(mimg3)
       case localImg: MLocalImg =>
-        mLocalImgs.getStream(localImg)
+        mLocalImgs.getDataSource(localImg)
     }
   }
 

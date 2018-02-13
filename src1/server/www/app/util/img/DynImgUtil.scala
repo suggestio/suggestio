@@ -3,13 +3,18 @@ package util.img
 import java.io.File
 import javax.inject.{Inject, Singleton}
 
+import akka.NotUsed
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import controllers.routes
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.util.logs.MacroLogsImpl
 import models.im._
 import models.mproj.ICommonDi
 import org.im4java.core.{ConvertCmd, IMOperation}
 import play.api.mvc.Call
+import japgolly.univeq._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -59,7 +64,7 @@ class DynImgUtil @Inject() (
   def imgCall(dargs: MImgT): Call = {
     if (PREFETCH_ENABLED) {
       Future {
-        ensureImgReady(dargs, cacheResult = true)
+        ensureLocalImgReady(dargs, cacheResult = true)
       }
         .flatMap(identity)
         .failed.foreach { ex =>
@@ -91,9 +96,10 @@ class DynImgUtil @Inject() (
         // Запустить конвертацию исходной картинки
         for {
           _ <- convert(
-            in  = mLocalImgs.fileOf(localImg),
-            out = mLocalImgs.fileOf(newLocalImg),
-            imOps = args.dynImgId.dynImgOps
+            in     = mLocalImgs.fileOf(localImg),
+            out    = mLocalImgs.fileOf(newLocalImg),
+            outFmt = newLocalImg.dynImgId.dynFormat,
+            imOps  = args.dynImgId.dynImgOps
           )
         } yield {
           // Вернуть финальную картинку, т.к. с оригиналом и так всё ясно.
@@ -114,6 +120,38 @@ class DynImgUtil @Inject() (
   }
 
 
+  /** Абстракция над ensureLocalImgReady(), когда это не требуется. */
+  def getStream(args: MImgT): Source[ByteString, _] = {
+    lazy val logPrefix = s"getStream(${args.dynImgId.fileName}):"
+
+    val localInst = args.toLocalInstance
+    // Поискать в локальном кэше картинок.
+    if ( mLocalImgs.isExists(localInst) ) {
+      // TODO А если файл ещё не дописан, и прямо сейчас обрабатывается? Надо разрулить это на уровне convert(), чтобы записывал промежуточный выхлоп convert во временный файл.
+      LOGGER.trace(s"$logPrefix Will stream fs-local img: ${mLocalImgs.fileOf(localInst)}")
+      mLocalImgs.getStream(localInst)
+    } else {
+      // Поискать в seaweedfs. Кэшировать для самообороны от флуда.
+      val srcFutCached = cacheApiUtil.getOrElseFut( args.dynImgId.fileName + ":stream", expiration = ENSURE_DYN_CACHE_TTL ) {
+        val src = mImgs3
+          .getStream(args)
+          .recoverWithRetries(1, { case ex =>
+            LOGGER.debug(s"$logPrefix Img not found in SWFS (${ex.getClass.getSimpleName} ${ex.getMessage}). Will make new locally...")
+            val streamFut = for {
+              mLocImg <- ensureLocalImgReady(args, cacheResult = true)
+            } yield {
+              mLocalImgs.getStream(mLocImg)
+            }
+            Source.fromFutureSource(streamFut)
+              // TODO Тут хрень какая-то: конфликт между _ и NotUsed. _ приходит из play-ws.
+              .asInstanceOf[Source[ByteString, NotUsed]]
+          })
+        Future.successful(src)
+      }
+      Source.fromFutureSource(srcFutCached)
+    }
+  }
+
   /**
    * Убедиться, что картинка доступна локально для раздачи клиентам.
    * Для подавления параллельных запросов используется play.Cache, кеширующий фьючерсы результатов.
@@ -121,17 +159,15 @@ class DynImgUtil @Inject() (
    * @param cacheResult Сохранять ли в кеш незакешированный результат этого действия?
    *                    true когда это опережающий запрос подготовки картинки.
    *                    Иначе надо false.
-   * @param saveToPermanent Переопределить значение настройки [[SAVE_DERIVATIVES_TO_PERMANENT]].
    * @return Фьючерс с экземпляром MLocalImg или экзепшеном получения картинки.
    *         Throwable, если не удалось начать обработку. Такое возможно, если какой-то баг в коде.
    */
-  def ensureImgReady(args: MImgT, cacheResult: Boolean, saveToPermanent: Boolean = SAVE_DERIVATIVES_TO_PERMANENT): Future[MLocalImg] = {
+  def ensureLocalImgReady(args: MImgT, cacheResult: Boolean): Future[MLocalImg] = {
     // Используем StringBuilder для сборки ключа, т.к. обычно на момент вызова этого метода fileName ещё не собран.
     val resultP = Promise[MLocalImg]()
     val resultFut = resultP.future
-    val ck = args.dynImgId.fileNameSb()
-      .append(":eIR")
-      .toString()
+    val ck = args.dynImgId.fileName + ":eIR"
+
     // TODO Тут наверное можно задейстовать cacheApiUtil.
     cache.get [Future[MLocalImg]] (ck).foreach {
       // Результирующего фьючерс нет в кеше. Запускаем поиск/генерацию картинки:
@@ -149,7 +185,7 @@ class DynImgUtil @Inject() (
           case Success(None) =>
             val localResultFut = mkReadyImgToFile(args)
             // В фоне запускаем сохранение полученной картинки в permanent-хранилище (если включено):
-            if (saveToPermanent) {
+            if (SAVE_DERIVATIVES_TO_PERMANENT) {
               for (localImg2 <- localResultFut)
                 mImgs3.saveToPermanent( localImg2.toWrappedImg )
             }
@@ -180,16 +216,30 @@ class DynImgUtil @Inject() (
    * @param out Файл для конечного изображения.
    * @param imOps Список инструкций, описывающий трансформацию исходной картинки.
    */
-  def convert(in: File, out: File, imOps: Seq[ImOp]): Future[_] = {
+  def convert(in: File, out: File, outFmt: MImgFmt, imOps: Seq[ImOp]): Future[_] = {
     val op = new IMOperation
-    op.addImage(in.getAbsolutePath + "[0]")
+
+    op.addImage {
+      // Надо конвертить без анимации для всего, кроме GIF. Иначе, будут десятки jpeg'ов на выходе согласно кол-ву фреймов в исходнике.
+      var inAccTokes = List.empty[String]
+      if (outFmt !=* MImgFmts.GIF)
+        inAccTokes ::= "[0]"
+      val absPath = in.getAbsolutePath
+      // TODO В целях безопасности, надо in-формат тоже указывать, но формат оригинала может быть неправильный у нас. Надо будет внедрить его, когда всё более-менее стабилизируется.
+      if (inAccTokes.isEmpty)
+        absPath
+      else
+        (absPath :: inAccTokes).mkString
+    }
+
     for (imOp <- imOps) {
       imOp.addOperation(op)
     }
-    op.addImage(out.getAbsolutePath)
+    op.addImage(outFmt.imageMagickFormat + ":" + out.getAbsolutePath)
     val cmd = new ConvertCmd()
     cmd.setAsyncMode(true)
     val opStr = op.toString
+
     // Бывает, что происходят двойные одинаковые вызовы из-за слишком сильной параллельности в работе системы.
     // Пытаемся подавить двойные вызовы через короткий Cache.
     cacheApiUtil.getOrElseFut[Int](opStr, expiration = CONVERT_CACHE_TTL) {

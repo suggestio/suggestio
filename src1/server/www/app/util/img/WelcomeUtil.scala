@@ -4,7 +4,8 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MPredicates}
+import io.suggest.img.{MImgFmt, MImgFmts}
+import io.suggest.model.n2.edge.{MEdge, MEdgeDynImgArgs, MEdgeInfo, MPredicates}
 import io.suggest.model.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
 import models.im._
@@ -53,7 +54,10 @@ class WelcomeUtil @Inject() (
           predicate = MPredicates.WcLogo,
           nodeIds   = Set(fgMimg.dynImgId.rowKeyStr),
           info = MEdgeInfo(
-            dynImgArgs = fgMimg.dynImgId.qOpt
+            dynImgArgs = Some(MEdgeDynImgArgs(
+              dynFormat = fgMimg.dynImgId.dynFormat,
+              dynOpsStr = fgMimg.dynImgId.qOpt
+            ))
           )
         )
         Some(e)
@@ -89,24 +93,29 @@ class WelcomeUtil @Inject() (
 
     // Получить параметры (метаданные) фоновой картинки из хранилища картирок.
     val bgFut = mnode.edges
-      .withPredicateIterIds( MPredicates.GalleryItem )
+      .withPredicateIter( MPredicates.GalleryItem )
       .toStream
       .headOption
       .fold[Future[Either[String, IImgWithWhInfo]]] {
         Future.successful(_colorBg)
-      } { bgImgFilename =>
-        val oiik = MImg3(bgImgFilename)
+      } { bgEdge =>
+        val dynImgId = MDynImgId(
+          rowKeyStr = bgEdge.nodeIds.head,
+          dynFormat = bgEdge.info.dynImgArgs.fold[MImgFmt](MImgFmts.JPEG)(_.dynFormat),
+          dynImgOps = Nil  //TODO Реализовать парсинг операций. Пока это не используется, но всё равно надо бы: bgEdge.info.dynImgArgs.flatMap(_.dynOpsStr)
+        )
+        val oiik = MImg3(dynImgId)
         val fut0 = mImgs3.getImageWH( oiik.original )
-        lazy val logPrefix = s"getWelcomeRenderArgs(${mnode.idOrNull}): "
+        lazy val logPrefix = s"getWelcomeRenderArgs(${mnode.idOrNull}):"
         fut0.map {
           case Some(meta) =>
             Right(bgCallForScreen(oiik, screen, meta))
           case _ =>
-            trace(s"getWelcomeRenderArgs(${mnode.idOrNull}): no welcome bg WH for " + bgImgFilename)
+            trace(s"$logPrefix no welcome bg WH for $bgEdge")
             colorBg(mnode)
         }
         .recover { case ex: Throwable =>
-          error(logPrefix + "Failed to read welcome image data", ex)
+          error(s"$logPrefix Failed to read welcome image data", ex)
           _colorBg
         }
       }

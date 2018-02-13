@@ -1,7 +1,8 @@
 package util.sys
 
 import io.suggest.adn.MAdnRight
-import io.suggest.model.n2.edge.{MEdge, MEdgeInfo}
+import io.suggest.img.MImgFmts
+import io.suggest.model.n2.edge.{MEdge, MEdgeDynImgArgs, MEdgeInfo}
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.{MNode, MNodeTypesJvm}
@@ -264,14 +265,17 @@ class SysMarketUtil extends MacroLogsDyn {
     )
     { (dynImgArgsOpt, commentNiOpt, flagOpt, tags) =>
       MEdgeInfo(
-        dynImgArgs  = dynImgArgsOpt,
+        dynImgArgs  = for (_ <- dynImgArgsOpt) yield {
+          // TODO Формат dyn-img тут сбрасывается на JPEG, это неправильно. Просто это редко используемый код.
+          MEdgeDynImgArgs(MImgFmts.JPEG, dynImgArgsOpt)
+        },
         commentNi   = commentNiOpt,
         flag        = flagOpt,
         tags        = tags
       )
     }
     { ei =>
-      Some((ei.dynImgArgs, ei.commentNi, ei.flag, ei.tags))
+      Some((ei.dynImgArgs.flatMap(_.dynOpsStr), ei.commentNi, ei.flag, ei.tags))
     }
   }
 

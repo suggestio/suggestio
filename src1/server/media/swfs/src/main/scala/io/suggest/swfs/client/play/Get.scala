@@ -3,7 +3,7 @@ package io.suggest.swfs.client.play
 import io.suggest.swfs.client.proto.file.FileOpUnknownResponseException
 import io.suggest.swfs.client.proto.get.{GetResponse, IGetRequest}
 
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -23,7 +23,7 @@ trait Get extends ISwfsClientWs {
     val streamFut = wsClient.url( url )
       .stream()
 
-    streamFut.onFailure { case ex: Throwable =>
+    for (ex <- streamFut.failed) {
       LOGGER.error(s"$logPrefix Req failed: GET $url\n $args", ex)
     }
 
@@ -36,7 +36,8 @@ trait Get extends ISwfsClientWs {
       LOGGER.trace(s"$logPrefix Streaming GET resp, status = $respStatus, took ${System.currentTimeMillis - startMs} ms")
 
       if ( SwfsClientWs.isStatus2xx(respStatus) ) {
-        Some( GetResponse(sr.headers, sr.bodyAsSource) )
+        val resp = GetResponse( sr.headers, sr.bodyAsSource )
+        Some( resp )
       } else if (respStatus == 404) {
         None
       } else {

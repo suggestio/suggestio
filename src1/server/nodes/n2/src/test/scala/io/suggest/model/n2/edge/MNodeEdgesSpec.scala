@@ -3,6 +3,7 @@ package io.suggest.model.n2.edge
 import java.time.OffsetDateTime
 
 import io.suggest.geo.{CircleGs, MGeoPoint, MNodeGeoLevels}
+import io.suggest.img.MImgFmts
 import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 
@@ -36,7 +37,10 @@ class MNodeEdgesSpec extends FlatSpec with PlayJsonTestUtil {
       val edge3 = MEdge(
         predicate = MPredicates.NodeLocation,
         info = MEdgeInfo(
-          dynImgArgs = Some("easdasd"),
+          dynImgArgs = Some( MEdgeDynImgArgs(
+            dynFormat = MImgFmts.PNG,
+            dynOpsStr = Some("easdasd")
+          )),
           dateNi = Some( OffsetDateTime.now().minusDays(1) ),
           commentNi = Some("asdas asd as a#$!#@$ds'ad''''!"),
           flag = Some(true),

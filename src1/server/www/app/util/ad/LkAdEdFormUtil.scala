@@ -11,6 +11,7 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.err.ErrorConstants
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
+import io.suggest.img.MImgFmts
 import io.suggest.jd._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.JdTag.Implicits._
@@ -33,7 +34,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.vid.ext.VideoExtUrlParsers
 import japgolly.univeq._
 import models.blk.ed.{AdFormM, AdFormResult, BindResult}
-import models.im.MImg3
+import models.im.{MDynImgId, MImg3}
 import models.mctx.Context
 import play.api.data.Forms._
 import play.api.data._
@@ -403,7 +404,12 @@ class LkAdEdFormUtil
       if e.predicate ==>> MPredicates.JdContent.Image
       fileSrv <- e.fileSrv
     } yield {
-      e.id -> MImg3(fileSrv.nodeId)
+      val dynImgId = MDynImgId(
+        rowKeyStr = fileSrv.nodeId,
+        // Для оригинала формат не важен, в id-генерации он не участвует.
+        dynFormat = MImgFmts.default
+      )
+      e.id -> MImg3(dynImgId)
     }
     needImgsIter.toMap
   }

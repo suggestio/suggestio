@@ -3,7 +3,7 @@ package io.suggest.model.n2.media.storage
 import javax.inject.Inject
 
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.fio.{IReadResponse, IWriteRequest}
+import io.suggest.fio.{IDataSource, IWriteRequest}
 import io.suggest.primo.TypeT
 import io.suggest.es.util.SioEsUtil.DocField
 import io.suggest.url.MHostInfo
@@ -78,7 +78,7 @@ class IMediaStorages @Inject() (
       .asInstanceOf[ IMediaStorageStaticImpl { type T = X } ]
   }
 
-  override def read(ptr: T): Future[IReadResponse] = {
+  override def read(ptr: T): Future[IDataSource] = {
     _getModel(ptr)
       .read( ptr )
   }
@@ -139,7 +139,7 @@ trait IMediaStorageStatic extends TypeT {
    * Асинхронное поточное чтение хранимого файла.
    * @return Енумератор блоба.
    */
-  def read(ptr: T): Future[IReadResponse]
+  def read(ptr: T): Future[IDataSource]
 
   /**
    * Запустить асинхронное стирание контента в backend-хранилище.

@@ -5,9 +5,8 @@ import java.util.UUID
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.img.crop.MCrop
-import io.suggest.img.{MImgFmt, MImgFmts}
+import io.suggest.img.MImgFmt
 import io.suggest.util.UuidUtil
-import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -20,16 +19,18 @@ import japgolly.univeq._
 /** Контейнер данных для идентификации картинки.
   *
   * @param rowKeyStr Ключ (id узла-картинки).
+  * param dynFormat Динамический формат картинки.
   * @param dynImgOps IM-операции, которые нужно наложить на оригинал с ключом rowKey, чтобы получить
   *                  необходимою картинку.
   */
 case class MDynImgId(
                       rowKeyStr     : String,
-                      dynImgOps     : Seq[ImOp]     = Nil
+                      dynFormat     : MImgFmt,
+                      dynImgOps     : Seq[ImOp]         = Nil,
                     ) {
 
-  def format: MImgFmt = MImgFmts.JPEG
-
+  // TODO Допилить и активировать ассерты правил применения формата изображения.
+  // assert( hasImgOps && dynFormat.nonEmpty )
 
   /** Ключ ряда картинок, id для оригинала и всех производных. */
   lazy val rowKey: UUID = UuidUtil.base64ToUuid(rowKeyStr)
@@ -42,10 +43,7 @@ case class MDynImgId(
         case AbsCropOp(crop) => crop :: Nil
         case _ => Nil
       }
-    if (iter.hasNext)
-      Some(iter.next())
-    else
-      None
+    OptionUtil.maybe(iter.hasNext)( iter.next() )
   }
 
   def isCropped: Boolean = {
@@ -68,6 +66,8 @@ case class MDynImgId(
       sb.append('~')
       dynImgOpsStringSb(sb)
     }
+    sb.append( '.' )
+      .append( dynFormat.fileExt )
     sb
   }
 
@@ -82,10 +82,11 @@ case class MDynImgId(
   def withDynImgOps(dynImgOps: Seq[ImOp] = Nil) = copy(dynImgOps = dynImgOps)
 
   /** id для модели MMedia. */
-  lazy val mediaId: String = {
-    MDynImgId.mkMediaId(rowKeyStr, qOpt, format)
-  }
+  lazy val mediaId = MDynImgId.mkMediaId(this)
 
+  /** Исторически, это column qualifier, который использовался в column-oriented dbms.
+    * Сейчас используется тоже в качестве id, либо части id.
+    */
   def qOpt: Option[String] = {
     OptionUtil.maybe(hasImgOps)(dynImgOpsString)
   }
@@ -110,7 +111,7 @@ case class MDynImgId(
   lazy val fsFileName: String = {
     if (hasImgOps) {
       // TODO Тут надо формат дописать?
-      dynImgOpsString
+      dynImgOpsString + "." + dynFormat.fileExt
     } else {
       "__ORIG__"
     }
@@ -121,46 +122,38 @@ case class MDynImgId(
 
 object MDynImgId {
 
-  def randomOrig() = MDynImgId(
-    rowKeyStr = UuidUtil.uuidToBase64( UUID.randomUUID() )
+  /** Рандомный id для нового оригинала картинки. */
+  def randomOrig(dynFormat: MImgFmt) = MDynImgId(
+    rowKeyStr = UuidUtil.uuidToBase64( UUID.randomUUID() ),
+    dynFormat = dynFormat
   )
 
   /**
     * Сборка id'шников для экземпляров модели, хранящих динамические изображения.
     *
-    * 2018-02-09 В связи с внедрением формата картинок, новые правила генерации id, совместимые со старыми:
-    * - Оригиналы чего угодно всегда без формата (как раньше).
-    * - Картинки-деривативы:
-    *   - Если JPEG, то без формата в id (как раньше).
-    *   - формат указывается явно в id во всех остальных случаях (новые PNG, GIF и т.д.).
+    * 2018-02-09 В связи с внедрением формата картинок, после rowKeyStr указывается расширение файла файлового формата:
     *
     * Примеры:
-    * "afw43faw4ffw"              // Оригинальный файл в оригинальном формате, указанном внутри MMedia.fileMeta.
-    * "afw43faw4ffw?a=x&b=e"      // JPEG-дериватив из оригинала "afw43faw4ffw".
-    * "afw43faw4ffw.png?a=x&b=e"  // PNG-дериватив из оригинала "afw43faw4ffw".
-    *
-    * @param rowKeyStr id ноды картинки.
-    * @param qOpt Опциональный qualifier. Обычно None, если это файл-оригинал.
-    *             Some() если хранится дериватив.
-    * @return Строка для поля _id.
+    * "afw43faw4ffw"                // Оригинальный файл в оригинальном формате.
+    * "afw43faw4ffw.jpeg?a=x&b=e"   // JPEG-дериватив из оригинала "afw43faw4ffw".
     */
-  def mkMediaId(rowKeyStr: String, qOpt: Option[String], format: MImgFmt): String = {
+  def mkMediaId(dynImgId: MDynImgId): String = {
     var acc: List[String] = Nil
 
     // Строка с модификаторами.
+    val qOpt = dynImgId.qOpt
     for (q <- qOpt)
       acc = "?" :: q :: acc
 
-    // Эктеншен формата картинки, если требуется.
-    val isOrig = qOpt.isEmpty
-    if (!isOrig && format !=* MImgFmts.JPEG)
-      acc = HtmlConstants.`.` :: format.fileExt :: acc
+    // Эктеншен формата картинки, если не-оригинал.
+    if (dynImgId.hasImgOps)
+      acc = HtmlConstants.`.` :: dynImgId.dynFormat.fileExt :: acc
 
     // Финальная сборка полного id.
     if (acc.isEmpty)
-      rowKeyStr
+      dynImgId.rowKeyStr
     else
-      (rowKeyStr :: acc).mkString
+      (dynImgId.rowKeyStr :: acc).mkString
   }
 
 }

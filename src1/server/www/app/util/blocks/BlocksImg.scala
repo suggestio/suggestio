@@ -1,6 +1,7 @@
 package util.blocks
 
-import io.suggest.model.n2.edge.{MEdge, MEdgeInfo}
+import io.suggest.img.MImgFmts
+import io.suggest.model.n2.edge.{MEdge, MEdgeDynImgArgs, MEdgeInfo}
 import models.blk.ed.{BimKey_t, BindAcc, BlockImgMap, ImgsEmpty, Imgs_t}
 import models.im.MImg3
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
@@ -54,7 +55,10 @@ trait ISaveImgs {
             nodeIds   = Set(mimg.dynImgId.rowKeyStr),
             predicate = pred,
             info      = MEdgeInfo(
-              dynImgArgs = mimg.dynImgId.qOpt
+              dynImgArgs = Some(MEdgeDynImgArgs(
+                dynFormat = MImgFmts.JPEG,
+                dynOpsStr = mimg.dynImgId.qOpt
+              ))
             )
           )
         }
@@ -102,7 +106,10 @@ object SaveImgUtil extends MergeBindAcc[BlockImgMap] {
             predicate = fn,
             nodeIds   = Set(mimg.dynImgId.rowKeyStr),
             info = MEdgeInfo(
-              dynImgArgs = mimg.dynImgId.qOpt
+              dynImgArgs = Some(MEdgeDynImgArgs(
+                dynFormat = MImgFmts.JPEG,
+                dynOpsStr = mimg.dynImgId.qOpt
+              ))
             )
           )
         }

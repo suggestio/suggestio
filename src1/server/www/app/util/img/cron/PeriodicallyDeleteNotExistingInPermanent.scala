@@ -1,11 +1,12 @@
 package util.img.cron
 
 import java.nio.file.Files
-
 import javax.inject.Inject
+
 import io.suggest.async.AsyncUtil
+import io.suggest.img.MImgFmts
 import io.suggest.util.logs.MacroLogsImpl
-import models.im.{MImgs3, MLocalImg, MLocalImgs}
+import models.im.{MDynImgId, MImgs3, MLocalImg, MLocalImgs}
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
@@ -80,7 +81,8 @@ class PeriodicallyDeleteNotExistingInPermanent @Inject() (
         .filter { f  =>  f.isDirectory && f.lastModified() < oldNow }
         .foreach { currDir =>
           val rowKeyStr = currDir.getName
-          val mimg = MLocalImg(rowKeyStr).toWrappedImg
+          val dynImgId = MDynImgId(rowKeyStr, MImgFmts.default, Nil)
+          val mimg = MLocalImg(dynImgId).toWrappedImg
           mImgs3.existsInPermanent(mimg)
             .filter(!_)
             .andThen { case _: Success[_] =>

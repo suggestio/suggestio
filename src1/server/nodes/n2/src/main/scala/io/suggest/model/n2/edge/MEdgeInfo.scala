@@ -25,11 +25,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   override type T = MEdgeInfo
 
   /** Статический пустой экземпляр модели. */
-  override val empty: MEdgeInfo = {
-    new MEdgeInfo() {
-      override def nonEmpty = false
-    }
-  }
+  override val empty = MEdgeInfo()
 
 
   /** Модель названий полей модели [[MEdgeInfo]]. */
@@ -64,7 +60,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
 
       def GS_GLEVEL_FN                    = _fullFn( Fs.GLEVEL_FN )
       def GS_GJSON_COMPAT_FN              = _fullFn( Fs.GJSON_COMPAT_FN )
-      def GS_SHAPE_FN(ngl: MNodeGeoLevel)  = _fullFn( Fs.SHAPE_FN(ngl) )
+      def GS_SHAPE_FN(ngl: MNodeGeoLevel) = _fullFn( Fs.SHAPE_FN(ngl) )
 
     }
 
@@ -75,7 +71,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
 
   /** Поддержка JSON. */
   implicit val FORMAT: Format[MEdgeInfo] = (
-    (__ \ DYN_IMG_ARGS_FN).formatNullable[String] and
+    (__ \ DYN_IMG_ARGS_FN).formatNullable[MEdgeDynImgArgs] and
     (__ \ DATE_NI_FN).formatNullable[OffsetDateTime] and
     (__ \ COMMENT_NI_FN).formatNullable[String] and
     (__ \ FLAG_FN).formatNullable[Boolean] and
@@ -170,15 +166,15 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   * Изначально было Seq, но из-за частой пошаговой пересборки этого лучше подходит List.
   * @param geoPoints Некие опорные геокоординаты, если есть.
   */
-case class MEdgeInfo(
-  dynImgArgs   : Option[String]          = None,
-  dateNi       : Option[OffsetDateTime]  = None,
-  commentNi    : Option[String]          = None,
-  flag         : Option[Boolean]         = None,
-  tags         : Set[String]             = Set.empty,
-  geoShapes    : List[MEdgeGeoShape]     = Nil,
-  geoPoints    : Seq[MGeoPoint]          = Nil
-)
+final case class MEdgeInfo(
+                            dynImgArgs   : Option[MEdgeDynImgArgs] = None,
+                            dateNi       : Option[OffsetDateTime]  = None,
+                            commentNi    : Option[String]          = None,
+                            flag         : Option[Boolean]         = None,
+                            tags         : Set[String]             = Set.empty,
+                            geoShapes    : List[MEdgeGeoShape]     = Nil,
+                            geoPoints    : Seq[MGeoPoint]          = Nil
+                          )
   extends EmptyProduct
 {
 
@@ -187,9 +183,8 @@ case class MEdgeInfo(
     val sb = new StringBuilder(32)
 
     for (dia <- dynImgArgs) {
-      sb.append("dynImg{")
-        .append(dia)
-        .append("} ")
+      sb.append(dia)
+        .append(' ')
     }
 
     for (dt <- dateNi) {

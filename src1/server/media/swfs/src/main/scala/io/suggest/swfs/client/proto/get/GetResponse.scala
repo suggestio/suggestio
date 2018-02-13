@@ -2,7 +2,7 @@ package io.suggest.swfs.client.proto.get
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import io.suggest.fio.IReadResponse
+import io.suggest.fio.IDataSource
 import play.api.http.HeaderNames
 
 /**
@@ -11,7 +11,7 @@ import play.api.http.HeaderNames
  * Created: 09.10.15 11:46
  * Description: Модель ответа на запрос чтения файла из хранилища.
  */
-trait IGetResponse extends IReadResponse {
+trait IGetResponse extends IDataSource {
 
   /** Сырые заголовки HTTP-ответа. */
   def headers: Map[String, Seq[String]]

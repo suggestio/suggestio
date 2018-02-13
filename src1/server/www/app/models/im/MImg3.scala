@@ -4,12 +4,11 @@ import java.time.OffsetDateTime
 import java.util.NoSuchElementException
 import javax.inject.{Inject, Singleton}
 
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.fio.WriteRequest
+import io.suggest.fio.{IDataSource, WriteRequest}
+import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.js.UploadConstants
 import io.suggest.model.img.ImgSzDated
 import io.suggest.model.n2.edge.MEdge
@@ -42,7 +41,7 @@ class MImgs3 @Inject() (
   override val streamsUtil  : StreamsUtil,
   override val cacheApiUtil : CacheApiUtil,
   override val mLocalImgs   : MLocalImgs,
-  val mCommonDi             : ICommonDi
+  override val mCommonDi    : ICommonDi
 )
   extends MImgsT
   with MacroLogsImplLazy
@@ -64,15 +63,14 @@ class MImgs3 @Inject() (
     }
   }
 
-  /** Выполнить стриминг данных картинки из SeaWeedFS. */
-  override def getStream(mimg: MImgT): Source[ByteString, _] = {
-    val srcFut = for {
+
+  override def getDataSource(mimg: MImgT): Future[IDataSource] = {
+    for {
       mm <- _mediaFut( mediaOptFut(mimg) )
       rr <- iMediaStorages.read( mm.storage )
     } yield {
-      rr.data
+      rr
     }
-    Source.fromFutureSource( srcFut )
   }
 
   override protected def _getImgMeta(mimg: MImgT): Future[Option[ImgSzDated]] = {
@@ -273,9 +271,9 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
 
     override def fileName2miP: Parser[T] = {
       // TODO Использовать парсер, делающий сразу MDynImgId
-      (uuidStrP ~ imOpsP) ^^ {
-        case nodeId ~ dynImgOps =>
-          MImg3(MDynImgId(nodeId, dynImgOps))
+      (uuidStrP ~ dotDynFormatP ~ imOpsP) ^^ {
+        case nodeId ~ dynFormat ~ dynImgOps =>
+          MImg3(MDynImgId(nodeId, dynFormat, dynImgOps))
       }
     }
 
@@ -292,10 +290,13 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
     * @throws java.util.NoSuchElementException когда id узла-картинки не задан.
     */
   def apply(medge: MEdge): MImg3 = {
+    lazy val logPrefix = s"${getClass.getSimpleName}($medge)${System.currentTimeMillis()}:"
+
     // TODO Перенести этот код в MDynImgId
     val dops = {
       medge.info
         .dynImgArgs
+        .flatMap(_.dynOpsStr)
         .fold( List.empty[ImOp] ) { imOpsStr =>
           val pr = (new Parsers).parseImgArgs(imOpsStr)
           pr.getOrElse {
@@ -304,7 +305,14 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
           }
       }
     }
-    val dynImgId = MDynImgId(medge.nodeIds.head, dops)
+    val dynImgId = MDynImgId(
+      rowKeyStr = medge.nodeIds.head,
+      dynFormat = medge.info.dynImgArgs.fold[MImgFmt] {
+        LOGGER.debug(s"$logPrefix Dyn.img.args undefined, but image expected. Possibly, old dyn.img.edge format (pre-dynFormat 2018.feb.12). Guessing JPEG.")
+        MImgFmts.JPEG
+      }(_.dynFormat),
+      dynImgOps = dops
+    )
     MImg3(dynImgId)
   }
 

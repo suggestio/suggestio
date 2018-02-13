@@ -50,7 +50,7 @@ class PeriodicallyDeleteEmptyDirs @Inject() (
     if (DELETE_EMPTY_DIRS_ENABLED) {
       val ct2 = MCronTask(startDelay = DELETE_EMPTY_DIRS_START_DELAY, every = DELETE_EMPTY_DIRS_EVERY, displayName = EDD_CONF_PREFIX) {
         for (ex <- findAndDeleteEmptyDirsAsync().failed)
-          LOGGER.warn("Failed to findAndDeleteEmptyDirs()", ex)
+          LOGGER.warn("cronTasks(): Failed to findAndDeleteEmptyDirs()", ex)
       }
       ct2 :: Nil
     } else {
@@ -93,12 +93,15 @@ class PeriodicallyDeleteEmptyDirs @Inject() (
       dirStream.close()
     }
 
+    lazy val logPrefix = s"maybeDeleteDirIfEmpty($dirPath):"
+
     if (dirEmpty) {
       try {
-        LOGGER.debug("Deleting empty img-directory: " + dirPath)
+        LOGGER.trace(s"$logPrefix Delete empty img-directory.")
         Files.delete(dirPath)
       } catch {
-        case ex: Exception => LOGGER.warn("Unable to delete empty img directory: "  + dirPath, ex)
+        case ex: Exception =>
+          LOGGER.warn(s"$logPrefix Unable to delete empty img directory", ex)
       }
     }
   }

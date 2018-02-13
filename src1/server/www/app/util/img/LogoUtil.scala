@@ -4,6 +4,7 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.model.n2.edge.{MEdge, MPredicates}
 import io.suggest.model.n2.node.MNode
 import io.suggest.sc.ScConstants
@@ -27,7 +28,13 @@ class LogoUtil @Inject() (
 
   /** Приведение ребра графа к метаданным изображения логотипа. */
   def edge2logoImg(medge: MEdge): MImgT = {
-    MImg3( MDynImgId(medge.nodeIds.head, Nil) )
+    val dynImgId = MDynImgId(
+      rowKeyStr = medge.nodeIds.head,
+      dynFormat = medge.info.dynImgArgs
+        .fold[MImgFmt](MImgFmts.JPEG)(_.dynFormat),
+      dynImgOps = Nil
+    )
+    MImg3( dynImgId )
   }
 
   // TODO Допилить этот метод, привязать его к контроллеру, разобраться с MImg.deleteAllFor(UUID), обновить маппинги форм.

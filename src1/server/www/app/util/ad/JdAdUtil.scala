@@ -2,6 +2,7 @@ package util.ad
 
 import javax.inject.{Inject, Named, Singleton}
 
+import io.suggest.ad.blk.BlockWidths
 import io.suggest.color.MHistogram
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.file.MSrvFileInfo
@@ -576,13 +577,20 @@ class JdAdUtil @Inject()(
           .toSet
       )
 
+      // TODO Всё правильно тут? Масштаб вообще не учитывается? А должен бы.
+      szMult = 1.0f
+      //pxRatio = DevPixelRatios.pxRatioDefaulted( devScreenOpt.flatMap(_.pixelRatioOpt) )
+
       // Продолжить обход списка эджей, создав фьючерс результата
       results <- Future.sequence {
+        val wideNorms = BlockWidths.min.value :: BlockWidths.max.value :: wideImgMaker.WIDE_WIDTHS_PX.tail
+
         val iter = for {
           eit <- edgedImgTags.iterator
           isQd = eit.jdTag.name ==* MJdTagNames.QD_OP
 
           tgImgSzOpt = if (isQd) {
+            lazy val logPrefix2 = s"$logPrefix#qd#E${eit.medge.doc.uid.orNull}#${eit.mimg.dynImgId.rowKeyStr}:"
             for {
               mmediaOrig  <- embedOrigImgsMap.get( eit.mimg.original.dynImgId.mediaId )
               origWh      <- mmediaOrig.picture.whPx
@@ -596,42 +604,44 @@ class JdAdUtil @Inject()(
               } yield {
                 width
               }
-              LOGGER.trace(s"$logPrefix embed.img#${eit.mimg.dynImgId.rowKeyStr} edge#${eit.medge.doc.uid.orNull} width=>${jdTagWidthCssPxOpt.orNull}")
+              LOGGER.trace(s"$logPrefix2 embed.img#${eit.mimg.dynImgId.rowKeyStr} edge#${eit.medge.doc.uid.orNull} width=>${jdTagWidthCssPxOpt.orNull}")
 
               // Картинка есть. Но надо разобраться, надо ли её ресайзить.
-              val origWidthNorm = wideImgMaker.normWideWidthBgSz( origWh.width )
+              val origWidthNorm = wideImgMaker.normWideBgSz( origWh.width, wideNorms )
 
               // Узнать точно, какую ширину требуется получить на выходе.
               // Маловероятно, что в jdTag отсутствует ширина, но всё же отрабатываем и эту ситуацию.
-              val widthPxNonNormal = jdTagWidthCssPxOpt.fold {
+              val widthPxNonNormal = jdTagWidthCssPxOpt.getOrElse {
                 // Нет заданной в теге ширины. Это не хорошо, но ошибку лучше подавить.
-                LOGGER.warn(s"$logPrefix Width expected for embed.img.\n jdt=${eit.jdTag}\n img-edge=${eit.medge}\n img=${eit.mimg}.\n Suppressed error, will use origWH=$origWh as scaled img.size.")
+                LOGGER.warn(s"$logPrefix2 Width expected for embed.img.\n jdt=${eit.jdTag}\n img-edge=${eit.medge}\n img=${eit.mimg}.\n Suppressed error, will use origWH=$origWh as scaled img.size.")
                 origWh.width
-              } { jdTagWidthCssPx =>
-                // Есть заданная ширина для отображения картинки. Нормировать её по wide-шкале.
-                jdTagWidthCssPx
               }
-
-              val jdTagWidthCssPxNorm = wideImgMaker.normWideWidthBgSz( widthPxNonNormal )
+              val jdTagWidthCssPxNorm = wideImgMaker.normWideBgSz( widthPxNonNormal, wideNorms )
+              LOGGER.trace(s"$logPrefix2 Norm.width for jd-tag: ${widthPxNonNormal}px => ${jdTagWidthCssPxNorm}px; origW=${origWh.width}px=>${origWidthNorm}px")
 
               // Рассчитать размер итоговой картинки.
-              val targetImgSzPx = if (jdTagWidthCssPxNorm < origWidthNorm) {
+              // TODO Проблема: blkImgMaker учитывает и szMult, и pxRatio. Надо разобраться, что с чем сравнивать вообще.
+              val targetImgSzPx = if (jdTagWidthCssPxNorm /* * szMult * pxRatio.pixelRatio */ < origWidthNorm) {
                 // Велик соблазн возвращать непересжатую картинку, но этого делать не стоит: она может быть огромной.
                 // Если norm-размеры совпадают, то надо пересжать без изменения orig-размера: это будет быстро и без размывания пикселей.
                 val heightCssPxNorm = jdTagWidthCssPxNorm.toDouble / origWh.width.toDouble * origWh.height
+                LOGGER.trace(s"$logPrefix2 Img need downscaling: $origWh => (${jdTagWidthCssPxNorm}x$heightCssPxNorm)")
                 MSize2di(
-                  width = jdTagWidthCssPxNorm,
+                  width  = jdTagWidthCssPxNorm,
                   height = heightCssPxNorm.toInt
                 )
               } else {
                 // Картика не требует дополнительного пересжатия, можно просто вернуть оригинальный размер.
+                LOGGER.trace(s"$logPrefix2 Img resizing not needed. Returning origWh=$origWh")
                 origWh
               }
 
               targetImgSzPx
             }
           } else {
-            eit.jdTag.props1.bm
+            val wh = eit.jdTag.props1.bm
+            LOGGER.trace(s"$logPrefix Using block meta as img.wh: $wh")
+            wh
           }
 
           tgImgSz <- {
@@ -652,7 +662,7 @@ class JdAdUtil @Inject()(
           val makeArgs = MImgMakeArgs(
             img           = mimg2,
             blockMeta     = tgImgSz,
-            szMult        = 1.0f,
+            szMult        = szMult,
             devScreenOpt  = devScreenOpt,
             compressMode  = Some(
               if (isQd) CompressModes.Fg else CompressModes.Bg

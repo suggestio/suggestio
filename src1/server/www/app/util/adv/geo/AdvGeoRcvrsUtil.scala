@@ -114,7 +114,7 @@ class AdvGeoRcvrsUtil @Inject()(
             val dpr = DevPixelRatios.XHDPI
             val fut = for {
               logo      <- logoUtil.getLogo4scr(logoRaw, LOGO_HEIGHT_CSSPX, dpr)
-              localImg  <- dynImgUtil.ensureImgReady(logo, cacheResult = true)
+              localImg  <- dynImgUtil.ensureLocalImgReady(logo, cacheResult = true)
               whOpt     <- mAnyImgs.getImageWH(localImg)
             } yield {
               whOpt.fold[Option[LogoInfo]] {

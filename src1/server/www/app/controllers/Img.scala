@@ -1,6 +1,5 @@
 package controllers
 
-import java.io.File
 import java.time.{Instant, ZoneOffset}
 
 import _root_.util._
@@ -77,35 +76,6 @@ class Img @Inject() (
     cacheDuration.toSeconds.toInt
   }
 
-
-  // TODO Объеденить все эти serveImgFromFile, задействовать MLocalImg.mime для определения MIME.
-
-  private def serveImgFromFile(file: File, cacheSeconds: Int, modelInstant: Instant): Result = {
-    // Enumerator.fromFile() вроде как асинхронный, поэтому запускаем его тут как можно раньше.
-    val resultRaw = Ok.sendFile(file, inline = true)
-    LOGGER.trace(s"serveImgFromFile(${file.getParentFile.getName}/${file.getName}): 200 OK, file size = ${file.length} bytes.")
-    val mmOpt = fileUtil.getMimeMatch(file)
-
-    val ct = mmOpt
-      .flatMap { mm => Option(mm.getMimeType) }
-      // 2014.sep.26: В случае svg, jmimemagic не определяет правильно content-type, поэтому нужно ему помочь:
-      .map {
-        case textCt if SvgUtil.maybeSvgMime(textCt) => "image/svg+xml"
-        case other => other
-      }
-      .getOrElse{
-        LOGGER.warn(s"serveImg(): No MIME match found")
-        "image/unknown"
-      }   // Should never happen
-    resultRaw
-      .as(ct)
-      .withHeaders(
-        // Если форматтить просто modelInstant, то будет экзепшен: java.time.temporal.UnsupportedTemporalTypeException: Unsupported field: DayOfMonth
-        // Это всплывает наружу излишне динамически-типизированная сущность такого API.
-        LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.format( modelInstant.atOffset(ZoneOffset.UTC) ),
-        CACHE_CONTROL -> ("public, max-age=" + cacheSeconds + ", immutable, never-revalidate")
-      )
-  }
 
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
   def imgCropForm(imgId: String, width: Int, height: Int) = isAuth().async { implicit request =>
@@ -207,15 +177,48 @@ class Img @Inject() (
 
       // Изменилась картинка. Выдать её. Если картинки нет, то создать надо на основе оригинала.
       case false =>
+        // TODO Opt: можно стримить готовые картинки напрямую из seaweedfs или откуда-нибудь ещё, без MLocalImg.
+        //      val imgSrc = dynImgUtil.getStream( args ) ~~ TODO Добавить проброс метаданных (размер, mime-тип).
+        // TODO Проверять домен *.nodes.suggest.io, чтобы соответствовал расположению текущей картинки.
+        // Нужно прочитать MMedia.
         val ensureFut = for {
-          localImg <- dynImgUtil.ensureImgReady(args, cacheResult = false)
+          localImg <- dynImgUtil.ensureLocalImgReady(args, cacheResult = false)
         } yield {
           val imgFile = mLocalImgs.fileOf(localImg)
-          serveImgFromFile(
-            file          = imgFile,
-            cacheSeconds  = CACHE_ORIG_CLIENT_SECONDS,
-            modelInstant  = Instant.ofEpochMilli( imgFile.lastModified() )
+
+          val cacheSeconds = CACHE_ORIG_CLIENT_SECONDS
+          val modelInstant = Instant.ofEpochMilli( imgFile.lastModified() )
+          val fileName      = args.dynImgId.fileName
+
+          val resultRaw = Ok.sendFile(
+            content   = imgFile,
+            inline    = true,
+            fileName  = _ => fileName
           )
+          LOGGER.trace(s"serveImgFromFile(${imgFile.getParentFile.getName}/${imgFile.getName}): 200 OK, file size = ${imgFile.length} bytes.")
+          val mmOpt = fileUtil.getMimeMatch(imgFile)
+
+          val ct = mmOpt
+            .flatMap { mm => Option(mm.getMimeType) }
+            // 2014.sep.26: В случае svg, jmimemagic не определяет правильно content-type, поэтому нужно ему помочь:
+            .map {
+            case textCt if SvgUtil.maybeSvgMime(textCt) =>
+              MImgFmts.SVG.mime
+            case other =>
+              other
+          }
+            .getOrElse{
+              LOGGER.warn(s"serveImg(): No MIME match found")
+              "image/unknown"
+            }   // Should never happen
+          resultRaw
+            .as(ct)
+            .withHeaders(
+              // Если форматтить просто modelInstant, то будет экзепшен: java.time.temporal.UnsupportedTemporalTypeException: Unsupported field: DayOfMonth
+              // Это всплывает наружу излишне динамически-типизированная сущность такого API.
+              LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.format( modelInstant.atOffset(ZoneOffset.UTC) ),
+              CACHE_CONTROL -> ("public, max-age=" + cacheSeconds + ", immutable, never-revalidate")
+            )
         }
 
         ensureFut.recover {
@@ -279,9 +282,10 @@ trait TempImgSupport
         val srcFile = fileRef.path.toFile
         val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
         val srcMime = srcMagicMatch.getMimeType
+        val imgFmt = MImgFmts.withMime(srcMime).get
 
         // Отрабатываем опциональный рендеринг html-поля с оверлеем.
-        val mptmp = MLocalImg()
+        val mptmp = MLocalImg( MDynImgId.randomOrig(imgFmt) )
         lazy val ovlOpt = for (hrrr <- ovlRrr) yield {
           hrrr(mptmp.dynImgId.fileName, implicitly[Context])
         }
@@ -304,7 +308,7 @@ trait TempImgSupport
           try {
             val imgPrepareFut: Future[_] = {
               // Проверяем формат принятой картинки на совместимость: // TODO Это не нужно, оригинал можно ведь и не раздавать никогда.
-              if (preserveUnknownFmt || MImgFmts.forImageMime(srcMime).isDefined) {
+              if (preserveUnknownFmt || MImgFmts.withMime(srcMime).isDefined) {
                 // TODO Вызывать jpegtran или другие вещи для lossless-обработки. В фоне, параллельно.
                 Future {
                   FileUtils.moveFile(srcFile, tmpFile)

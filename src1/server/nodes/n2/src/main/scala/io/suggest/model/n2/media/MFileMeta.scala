@@ -104,6 +104,6 @@ case class MFileMeta(
 ) {
 
   /** Если картинка, то вернуть её формат по модели MImgFmts. */
-  lazy val imgFormatOpt = MImgFmts.forImageMime(mime)
+  lazy val imgFormatOpt = MImgFmts.withMime(mime)
 
 }

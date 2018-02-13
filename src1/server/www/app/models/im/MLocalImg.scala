@@ -4,20 +4,21 @@ import java.io.File
 import java.time.{Instant, ZoneOffset}
 import javax.inject.{Inject, Singleton}
 
-import akka.stream.scaladsl.{FileIO, Source}
-import akka.util.ByteString
+import akka.stream.scaladsl.FileIO
 import io.suggest.async.AsyncUtil
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.fio.IDataSource
 import io.suggest.model.img.ImgSzDated
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import net.sf.jmimemagic.MagicMatch
 import org.apache.commons.io.FileUtils
-import util.img.{ImgFileNameParsersImpl, ImgFileUtil, OrigImageUtil}
+import util.img.{ImgFileUtil, OrigImageUtil}
 import util.up.FileUtil
 
 import scala.concurrent.duration._
 import scala.concurrent.Future
+import scala.util.Try
 
 /**
  * Suggest.io
@@ -35,12 +36,12 @@ import scala.concurrent.Future
 
 @Singleton
 class MLocalImgs @Inject() (
-  origImageUtil : OrigImageUtil,
-  imgFileUtil   : ImgFileUtil,
-  asyncUtil     : AsyncUtil,
-  fileUtil      : FileUtil,
-  mCommonDi     : ICommonDi
-)
+                             origImageUtil               : OrigImageUtil,
+                             imgFileUtil                 : ImgFileUtil,
+                             asyncUtil                   : AsyncUtil,
+                             fileUtil                    : FileUtil,
+                             override val mCommonDi      : ICommonDi
+                           )
   extends MAnyImgsT[MLocalImg]
   with MacroLogsImpl
 {
@@ -95,9 +96,14 @@ class MLocalImgs @Inject() (
     }(asyncUtil.singleThreadIoContext)
   }
 
-  override def getStream(mimg: MLocalImg): Source[ByteString, _] = {
+  override def getDataSource(mimg: MLocalImg): Future[IDataSource] = {
     val file = fileOf(mimg)
-    FileIO.fromPath( file.toPath )
+    val ds = new IDataSource {
+      override lazy val data        = FileIO.fromPath( file.toPath )
+      override lazy val sizeB       = file.length()
+      override lazy val contentType = getMimeSync(mimg)
+    }
+    Future.successful(ds)
   }
 
   def identify(mimg: MLocalImg) = {
@@ -185,26 +191,38 @@ class MLocalImgs @Inject() (
     }
   }
 
-  def mimeMatchOptFut(mimg: MLocalImg): Future[Option[MagicMatch]] = {
+  def getMagicMatchSync(mimg: MLocalImg): Option[MagicMatch] = {
     val file = fileOf(mimg)
-    val fut = Future {
+    val tryRes = Try(
       fileUtil.getMimeMatch(file)
+    )
+    if (tryRes.isFailure)
+      LOGGER.error(s"Failed to get mime for file: $file [${file.length()} bytes]", tryRes.failed.get)
+    tryRes
+      .toOption
+      .flatten
+  }
+  def getMimeOptSync(mimg: MLocalImg): Option[String] = {
+    getMagicMatchSync(mimg)
+      .flatMap(imgFileUtil.getMime)
+  }
+  def getMimeSync(mimg: MLocalImg): String = {
+    imgFileUtil.orUnknown( getMimeOptSync(mimg) )
+  }
+
+  def mimeMatchOptFut(mimg: MLocalImg): Future[Option[MagicMatch]] = {
+    Future {
+      getMagicMatchSync(mimg)
     }
-    for (ex <- fut.failed) {
-      LOGGER.error(s"Failed to get mime for file: $file [${file.length()} bytes]", ex)
-    }
-    fut
   }
 
   /** Определение mime-типа из файла. */
   def mimeFut(mimg: MLocalImg): Future[String] = {
-    for {
-      mmOpt <- mimeMatchOptFut(mimg)
-    } yield {
-      val mimeOpt = imgFileUtil.getMime(mmOpt)
-      imgFileUtil.orUnknown( mimeOpt )
+    Future {
+      getMimeSync(mimg)
     }
   }
+
 
   def generateFileName(mimg: MLocalImg): Future[String] = {
     for (fext <- fileExtensionFut(mimg)) yield {
@@ -231,43 +249,9 @@ trait IMLocalImgs {
 
 
 
-/** Вообще полная статика модели [[MLocalImg]]. */
-object MLocalImg {
-
-  /** Реализация парсеров для filename из данной модели. */
-  class Parsers extends ImgFileNameParsersImpl {
-
-    override type T = MLocalImg
-
-    /** Парсер имён файлов, конвертящий успешный результат своей работы в экземпляр MLocalImg. */
-    override def fileName2miP: Parser[T] = {
-      fileNameP ^^ {
-        // TODO Сделать этот сборный парсер для MDynImgId.
-        case rowKeyStr ~ dynArgs =>
-          MLocalImg( MDynImgId(rowKeyStr, dynArgs))
-      }
-    }
-
-  }
-
-
-  /**
-   * Получить экземпляр MLocalImg из img filename, в котором сериализована вся инфа по картинке.
-   * @param filename Строка img filename.
-   * @return Экземпляр MLocalImg или экзепшен.
-   */
-  def apply(filename: String): MLocalImg = {
-    (new Parsers)
-      .fromFileName(filename)
-      .get
-  }
-
-}
-
-
 /** Экземпляр класса локально хранимой картинки в ФС. */
 case class MLocalImg(
-                      override val dynImgId    : MDynImgId = MDynImgId.randomOrig()
+                      override val dynImgId    : MDynImgId
                     )
   extends MAnyImgT
 {

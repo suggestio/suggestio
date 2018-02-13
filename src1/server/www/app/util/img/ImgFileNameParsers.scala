@@ -2,7 +2,7 @@ package util.img
 
 import java.util.UUID
 
-import io.suggest.img.ImgCropParsers
+import io.suggest.img.{ImgCropParsers, MImgFmt, MImgFmts}
 import io.suggest.primo.TypeT
 import io.suggest.util.UuidUtil
 import models.im.{AbsCropOp, ImOp}
@@ -59,6 +59,21 @@ trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers {
   def imOpsP: Parser[List[ImOp]] = {
     compatCropSuf2ImArgsP | dynImgArgsQsP | dynImgArgsQsEmptyP
   }
+
+  /** Парсер формата картинки. */
+  def dynFormatP: Parser[MImgFmt] = {
+    s"[a-z]{${MImgFmts.NAME_LEN_MIN},${MImgFmts.NAME_LEN_MAX}}".r
+      .map { fileExt =>
+        MImgFmts.withFileExt(fileExt)
+      }
+      .filter(_.isDefined)
+      .map(_.get)
+  }
+
+  /** Парсер формата картинки с точкой в начале: .jpeg */
+  def dotDynFormatP = "." ~> dynFormatP
+  /** Опциональный парсер формата. */
+  def dotDynFormatOrJpegP = opt(dotDynFormatP) ^^ { _.getOrElse(MImgFmts.JPEG) }
 
   /** Парсер полного filename'а. */
   def fileNameP = uuidStrP ~ imOpsP

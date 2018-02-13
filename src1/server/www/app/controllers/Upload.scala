@@ -14,6 +14,7 @@ import io.suggest.file.MSrvFileInfo
 import io.suggest.file.up.{MFile4UpProps, MUploadResp}
 import io.suggest.fio.WriteRequest
 import io.suggest.i18n.MMessage
+import io.suggest.img.MImgFmts
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.media._
 import io.suggest.model.n2.media.search.{MHashCriteria, MMediaSearchDfltImpl}
@@ -246,7 +247,9 @@ class Upload @Inject()(
       .fold[TemporaryFileCreator] (SingletonTemporaryFileCreator) {
         // Команда к сохранению напрямую в MLocalImg: сообрать соответствующий FileHandler.
         case MUploadFileHandlers.Picture =>
-          new LocalImgFileCreator( MLocalImg() )
+          val imgFmt = MImgFmts.withMime(uploadArgs.fileProps.mimeType).get
+          val dynImgId = MDynImgId.randomOrig( imgFmt )
+          new LocalImgFileCreator( MLocalImg(dynImgId) )
       }
     // Сборка самого BodyParser'а.
     val bp0 = parse.multipartFormData(
@@ -475,8 +478,12 @@ class Upload @Inject()(
           mmedia0 = {
             LOGGER.info(s"$logPrefix Created node#$mnodeId. Preparing mmedia...")
 
-            val mimg3Opt = for (_ <- imgIdentifyInfoOpt) yield {
-              MImg3( MDynImgId(mnodeId), fileNameOpt )
+            val mimg3Opt = for {
+              info      <- imgIdentifyInfoOpt
+              // Если что-то не так, то пусть будет ошибка прямо здесь.
+              imgFormat = MImgFmts.withImFormat( info.getImageFormat ).get
+            } yield {
+              MImg3( MDynImgId(mnodeId, imgFormat), fileNameOpt )
             }
             val mediaIdOpt0 = mimg3Opt.map(_.dynImgId.mediaId)
             MMedia(
@@ -534,7 +541,7 @@ class Upload @Inject()(
                   val colorsHist2 = colorHist.withRelFrequences
                   lazy val mcdsCount = colorsHist2.sorted.size
 
-                  LOGGER.trace(s"$logPrefix Detected $mcdsCount top-colors on media#$mmediaId:\n ${colorsHist2.sorted.mkString(",\n ")}")
+                  LOGGER.trace(s"$logPrefix Detected $mcdsCount top-colors on media#$mmediaId:\n ${colorsHist2.sorted.iterator.map(_.hexCode).mkString(", ")}")
 
                   val mmedia2OptFut = mMedias.tryUpdate(mmedia1) { m =>
                     m.withPicture(
