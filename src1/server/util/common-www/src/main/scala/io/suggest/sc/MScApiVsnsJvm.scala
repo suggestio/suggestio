@@ -23,8 +23,8 @@ object MScApiVsnsJvm extends MacroLogsImpl {
           maybeVsn.right.flatMap { vsnNum =>
             MScApiVsns.withValueOpt(vsnNum).toRight {
               // Довольно неожиданная ситуация, что выкинута версия, используемая на клиентах. Или ксакеп какой-то ковыряется.
-              val msg = "Unknown API version: " + vsnNum
-              LOGGER.warn(msg)
+              val msg = s"Unknown API version: $vsnNum"
+              LOGGER.debug(msg)
               msg
             }
           }
@@ -32,7 +32,7 @@ object MScApiVsnsJvm extends MacroLogsImpl {
         // Если версия не задана вообще, то выставить её в дефолтовую. Первая выдача не возвращала никаких версий.
         optRes.orElse {
           val vsn = MScApiVsns.unknownVsn
-          LOGGER.warn(s"Sc API vsn undefined, will try $vsn")
+          LOGGER.trace(s"qsb: Sc API vsn undefined, will try $vsn")
           Some( Right( vsn ) )
         }
       }
