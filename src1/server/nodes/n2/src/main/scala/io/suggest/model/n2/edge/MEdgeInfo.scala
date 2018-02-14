@@ -6,6 +6,7 @@ import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.{GeoPoint, MGeoPoint, MNodeGeoLevel}
 import io.suggest.geo.GeoPoint.Implicits._
+import io.suggest.img.MImgFmts
 import io.suggest.model.PrefixedFn
 import io.suggest.util.SioConstants
 import play.api.libs.functional.syntax._
@@ -31,7 +32,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   /** Модель названий полей модели [[MEdgeInfo]]. */
   object Fields {
 
-    val DYN_IMG_ARGS_FN   = "di"
+    val DYN_IMG_ARGS_FN   = "im"
     val DATE_NI_FN        = "dtni"
     val COMMENT_NI_FN     = "coni"
     val FLAG_FN           = "flag"
@@ -70,27 +71,53 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   import Fields._
 
   /** Поддержка JSON. */
-  implicit val FORMAT: Format[MEdgeInfo] = (
-    (__ \ DYN_IMG_ARGS_FN).formatNullable[MEdgeDynImgArgs] and
-    (__ \ DATE_NI_FN).formatNullable[OffsetDateTime] and
-    (__ \ COMMENT_NI_FN).formatNullable[String] and
-    (__ \ FLAG_FN).formatNullable[Boolean] and
-    (__ \ TAGS_FN).formatNullable[Set[String]]
-      .inmap [Set[String]] (
+  implicit val FORMAT: Format[MEdgeInfo] = {
+    val dynImgArgsFormat = {
+      // В норме (после resaveMany() должно быть просто: (__ \ DYN_IMG_ARGS_FN).formatNullable[MEdgeDynImgArgs]
+      // Но тут поддержка приемственности старого формата (кропа), поэтому отрабатываются сразу два варианта: новый объект и старая строка.
+      // TODO Удалить поддержку старого формата.
+      val fmt0 = (__ \ DYN_IMG_ARGS_FN).formatNullable[MEdgeDynImgArgs]
+
+      val readsOrOldDynOps = fmt0
+        .filter(_.nonEmpty)
+        .orElse {
+           for {
+             dynOpsStrOpt <- (__ \ "di").readNullable[String]
+           } yield {
+             for (_ <- dynOpsStrOpt) yield {
+               MEdgeDynImgArgs(
+                 dynFormat = MImgFmts.JPEG,
+                 dynOpsStr = dynOpsStrOpt
+               )
+             }
+           }
+        }
+
+      OFormat(readsOrOldDynOps, fmt0)
+    }
+
+    (
+      dynImgArgsFormat and
+      (__ \ DATE_NI_FN).formatNullable[OffsetDateTime] and
+      (__ \ COMMENT_NI_FN).formatNullable[String] and
+      (__ \ FLAG_FN).formatNullable[Boolean] and
+      (__ \ TAGS_FN).formatNullable[Set[String]]
+        .inmap [Set[String]] (
         _.getOrElse(Set.empty),
         { tags => if (tags.nonEmpty) Some(tags) else None }
       ) and
-    (__ \ GEO_SHAPES_FN).formatNullable[ List[MEdgeGeoShape] ]
-      .inmap [List[MEdgeGeoShape]] (
+      (__ \ GEO_SHAPES_FN).formatNullable[ List[MEdgeGeoShape] ]
+        .inmap [List[MEdgeGeoShape]] (
         _.getOrElse(Nil),
         { geos => if (geos.nonEmpty) Some(geos) else None }
       ) and
-    (__ \ GEO_POINT_FN).formatNullable[ Seq[MGeoPoint] ]
-      .inmap [Seq[MGeoPoint]] (
+      (__ \ GEO_POINT_FN).formatNullable[ Seq[MGeoPoint] ]
+        .inmap [Seq[MGeoPoint]] (
         _.getOrElse(Nil),
         { gps => if (gps.nonEmpty) Some(gps) else None }
       )
-  )(apply, unlift(unapply))
+    )(apply, unlift(unapply))
+  }
 
 
 
@@ -100,10 +127,10 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   /** Сборка полей ES-маппинга. */
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldText(
+      FieldObject(
         id              = DYN_IMG_ARGS_FN,
-        index           = false,
-        include_in_all  = false
+        enabled         = true,
+        properties      = MEdgeDynImgArgs.generateMappingProps
       ),
       FieldDate(
         id              = DATE_NI_FN,
@@ -177,6 +204,8 @@ final case class MEdgeInfo(
                           )
   extends EmptyProduct
 {
+
+  def withDynImgArgs(dynImgArgs: Option[MEdgeDynImgArgs]) = copy(dynImgArgs = dynImgArgs)
 
   /** Форматирование для вывода в шаблонах. */
   override def toString: String = {

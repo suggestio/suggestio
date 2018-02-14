@@ -1,6 +1,6 @@
 package io.suggest.es.model
 
-import play.api.libs.json.Writes
+import play.api.libs.json.{Json, Writes}
 
 /**
  * Suggest.io
@@ -19,6 +19,10 @@ trait EsModelJsonWrites extends EsModelCommonStaticT {
     esDocWrites
       .writes(m)
       .toString()
+  }
+
+  override final def toJsonPretty(m: T): String = {
+    Json.prettyPrint( esDocWrites.writes(m) )
   }
 
 }

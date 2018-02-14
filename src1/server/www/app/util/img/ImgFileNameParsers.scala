@@ -5,6 +5,7 @@ import java.util.UUID
 import io.suggest.img.{ImgCropParsers, MImgFmt, MImgFmts}
 import io.suggest.primo.TypeT
 import io.suggest.util.UuidUtil
+import io.suggest.util.logs.{IMacroLogs, MacroLogsDyn}
 import models.im.{AbsCropOp, ImOp}
 
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -16,7 +17,7 @@ import scala.util.parsing.combinator.JavaTokenParsers
  * Description: Набор парсеров для нужд декодирования filename'ов и прочих нужд моделей.
  */
 
-trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers {
+trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers with MacroLogsDyn {
 
   /** Парсер rowKey из filename: */
   def uuidStrP: Parser[String] = "[a-zA-Z0-9_-]{21,25}".r
@@ -73,7 +74,10 @@ trait ImgFileNameParsers extends JavaTokenParsers with ImgCropParsers {
   /** Парсер формата картинки с точкой в начале: .jpeg */
   def dotDynFormatP = "." ~> dynFormatP
   /** Опциональный парсер формата. */
-  def dotDynFormatOrJpegP = opt(dotDynFormatP) ^^ { _.getOrElse(MImgFmts.JPEG) }
+  def dotDynFormatOrJpegP = opt(dotDynFormatP) ^^ { _.getOrElse {
+    LOGGER.warn("dotDynFormatOrJpegP(): no fmt, using JPEG...")
+    MImgFmts.JPEG
+  }}
 
   /** Парсер полного filename'а. */
   def fileNameP = uuidStrP ~ imOpsP

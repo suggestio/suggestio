@@ -8,18 +8,20 @@ import io.suggest.ad.form.AdFormConstants
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.MEsUuId
+import io.suggest.img.MImgFmts
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.jd.MJdAdData
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.doc.MNodeDoc
-import io.suggest.model.n2.media.MMedias
+import io.suggest.model.n2.media.{MMedias, MMediasCache}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
+import models.im.{MDynImgId, MImg3}
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.mup.{MColorDetectArgs, MUploadFileHandlers}
@@ -51,6 +53,7 @@ class LkAdEdit @Inject() (
                            lkAdEdFormUtil                         : LkAdEdFormUtil,
                            mMedias                                : MMedias,
                            uploadCtl                              : Upload,
+                           mMediasCache                           : MMediasCache,
                            bruteForceProtect                      : BruteForceProtect,
                            jdAdUtil                               : JdAdUtil,
                            mNodes                                 : MNodes,
@@ -167,23 +170,47 @@ class LkAdEdit @Inject() (
             val edgedNodesMapFut = mNodesCache.multiGetMap( nodeId2edgesMap.keys )
 
             // Для валидации самого шаблона нужны данные по размерам связанных картинок. Поэтому залезаем в MMedia за оригиналами упомянутых картинок:
-            val imgNeededMap = lkAdEdFormUtil.collectNeededImgs( edges2 )
-            val imgsMediasFut = mMedias.multiGetMap {
-              imgNeededMap
-                .mapValues(_.dynImgId.mediaId)
+            val imgFmtDflt = MImgFmts.default
+            val imgNeededNodesMap = lkAdEdFormUtil.collectNeededImgNodes( edges2 )
+              // Вместо .mapValues используем полный map+sizeHint, т.к. будем много раз юзать значения.
+              .map { case (edgeUid, nodeId) =>
+                edgeUid -> MDynImgId(nodeId, dynFormat = imgFmtDflt)
+              }
+
+            val imgsMediasMapFut = mMediasCache.multiGetMap(
+              // Собрать id запрашиваемых media-оригиналов.
+              imgNeededNodesMap
+                .mapValues(_.mediaId)
                 .valuesIterator
                 .toSet
+            )
+            // Нужно, используя mmedia оригиналов картинок, собрать MImg3/MDynImgId с правильными форматами внутри:
+            val imgsNeededMapFut = for {
+              imgsMediasMap <- imgsMediasMapFut
+            } yield {
+              // Залить данные по форматам в исходную карту imgNeededMap
+              val iter2 = for {
+                (edgeUid, dynImgId) <- imgNeededNodesMap.iterator
+                mmedia <- imgsMediasMap.get( dynImgId.mediaId )
+                imgFormat <- mmedia.file.imgFormatOpt
+              } yield {
+                val dynImgId2 = dynImgId.withDynFormat( imgFormat )
+                val mimg = MImg3( dynImgId2 )
+                edgeUid -> mimg
+              }
+              iter2.toMap
             }
 
             // Когда будут собраны данные, произвести валидацию шаблона:
             val vldResFut = for {
-              imgsMediasMap <- imgsMediasFut
+              imgsMediasMap <- imgsMediasMapFut
               edgedNodesMap <- edgedNodesMapFut
+              imgsNeededMap <- imgsNeededMapFut
             } yield {
               lkAdEdFormUtil.validateTpl(
                 template      = request.body.template,
                 jdEdges       = edges2,
-                imgsNeededMap = imgNeededMap,
+                imgsNeededMap = imgsNeededMap,
                 nodesMap      = edgedNodesMap,
                 mediasMap     = imgsMediasMap
               )
@@ -220,9 +247,11 @@ class LkAdEdit @Inject() (
 
                   val edgesAcc0Fut = for {
                     videoExtEdges <- videoExtEdgesFut
+                    imgsNeededMap <- imgsNeededMapFut
                   } yield {
                     LOGGER.trace(s"$logPrefix ${videoExtEdges.size} VideoExtEdges = [${videoExtEdges.mapValues(_.idOrNull).mkString(", ")}]")
 
+                    val edgeInfo0 = MEdgeInfo.empty
                     var _acc0 = edges2.foldLeft(List.empty[MEdge]) { (acc0, jdEdge) =>
                       MEdge(
                         predicate = jdEdge.predicate,
@@ -242,7 +271,29 @@ class LkAdEdit @Inject() (
                         doc = MEdgeDoc(
                           uid   = Some(jdEdge.id),
                           text  = jdEdge.text.toSeq
-                        )
+                        ),
+                        info = {
+                          if (jdEdge.predicate ==>> MPredicates.JdContent.Image) {
+                            // Для картинки надо сохранить правильный формат сборки выхлопа. Для карточек - формат наследуется из исходника.
+                            imgsNeededMap
+                              .get( jdEdge.id )
+                              .fold(edgeInfo0) { mimg =>
+                                val fmt = mimg.dynImgId.dynFormat
+                                edgeInfo0.withDynImgArgs( Some(
+                                  // Наверное, тут всё правильно. dynOpsStr не особо-то используется: кроп описывается в jd-тегах.
+                                  edgeInfo0.dynImgArgs.fold(
+                                    MEdgeDynImgArgs(
+                                      dynFormat = fmt
+                                    )
+                                  ) { dia0 =>
+                                    dia0.withDynFormat( fmt )
+                                  }
+                                ))
+                              }
+                          } else {
+                            edgeInfo0
+                          }
+                        }
                       ) :: acc0
                     }
 

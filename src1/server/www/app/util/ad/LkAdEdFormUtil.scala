@@ -11,7 +11,6 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.err.ErrorConstants
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
-import io.suggest.img.MImgFmts
 import io.suggest.jd._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.JdTag.Implicits._
@@ -397,19 +396,18 @@ class LkAdEdFormUtil
     nodeIdVld *> edgesVlds
   }
 
-  /** Извлечь данные по картинкам из карты эджей. */
-  def collectNeededImgs(edges: TraversableOnce[MJdEdge]): Map[EdgeUid_t, MImg3] = {
+  /** Извлечь данные по картинкам из карты эджей.
+    *
+    * @param edges Эджи.
+    * @return Мапа: id эджа -> nodeId картинки.
+    */
+  def collectNeededImgNodes(edges: TraversableOnce[MJdEdge]): Map[EdgeUid_t, String] = {
     val needImgsIter = for {
       e <- edges.toIterator
       if e.predicate ==>> MPredicates.JdContent.Image
       fileSrv <- e.fileSrv
     } yield {
-      val dynImgId = MDynImgId(
-        rowKeyStr = fileSrv.nodeId,
-        // Для оригинала формат не важен, в id-генерации он не участвует.
-        dynFormat = MImgFmts.default
-      )
-      e.id -> MImg3(dynImgId)
+      e.id -> fileSrv.nodeId
     }
     needImgsIter.toMap
   }

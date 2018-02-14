@@ -67,6 +67,7 @@ class JdAdUtil @Inject()(
       // TODO Надо ли тут Bg-предикат? по идее, он устарел ещё до ввода jd-редактора.
       .withPredicateIter( imgPredicate, MPredicates.Bg )
       .map { medge =>
+        //LOGGER.info(s"prepareImgEdges(): E#${medge.doc.uid.orNull} img=${medge.info.dynImgArgs}")
         medge -> MImg3(medge)
       }
       .toSeq
@@ -192,6 +193,7 @@ class JdAdUtil @Inject()(
       nodeId          <- medge.nodeIds.iterator
       mmedia          <- mediasMap.get(mimg.dynImgId.mediaId).iterator
     } yield {
+      LOGGER.trace(s"$logPrefix E#$edgeUid ${mmedia.idOrNull} imgFmt=${mmedia.file.imgFormatOpt} ${mmedia.file.mime}")
       // Получить инфу по хосту, на котором хранится данная картинка.
       val jdEdge = MJdEdge(
         predicate = imgPredicate,

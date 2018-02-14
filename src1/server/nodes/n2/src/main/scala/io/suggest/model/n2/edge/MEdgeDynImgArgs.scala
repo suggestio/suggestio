@@ -2,7 +2,7 @@ package io.suggest.model.n2.edge
 
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.es.util.SioEsUtil._
-import io.suggest.img.{MImgFmt, MImgFmts}
+import io.suggest.img.MImgFmt
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -25,29 +25,10 @@ object MEdgeDynImgArgs extends IGenEsMappingProps {
 
 
   /** Поддержка play-json. */
-  implicit val MDYN_IMG_ARGS_FORMAT: OFormat[MEdgeDynImgArgs] = {
-    // Штатный сериализатор и десериализатор.
-    val fmt0 = (
-      (__ \ Fields.FORMAT_FN).format[MImgFmt] and
-      (__ \ Fields.DYN_OPS_FN).formatNullable[String]
-    )(apply, unlift(unapply))
-
-    // Изначально, данные по картинки хранились в edge.info в виде строки. Но её стало мало из-за формата.
-    // TODO Можно удалить после resaveMany() для всех узлов.
-    val fallbackReads = (fmt0: Reads[MEdgeDynImgArgs])
-      .orElse {
-        for {
-          dynOpsStr <- implicitly[Reads[String]]
-        } yield {
-          MEdgeDynImgArgs(
-            dynFormat = MImgFmts.JPEG,
-            dynOpsStr = Some(dynOpsStr)
-          )
-        }
-      }
-
-    OFormat(fallbackReads, fmt0)
-  }
+  implicit val MDYN_IMG_ARGS_FORMAT: OFormat[MEdgeDynImgArgs] = (
+    (__ \ Fields.FORMAT_FN).format[MImgFmt] and
+    (__ \ Fields.DYN_OPS_FN).formatNullable[String]
+  )(apply, unlift(unapply))
 
 
   override def generateMappingProps: List[DocField] = {
@@ -70,5 +51,10 @@ object MEdgeDynImgArgs extends IGenEsMappingProps {
 final case class MEdgeDynImgArgs(
                                   dynFormat : MImgFmt,
                                   dynOpsStr : Option[String]    = None
-                                )
+                                ) {
+
+  def withDynFormat(dynFormat: MImgFmt)         = copy(dynFormat = dynFormat)
+  def withDynOpsStr(dynOpsStr: Option[String])  = copy(dynOpsStr = dynOpsStr)
+
+}
 
