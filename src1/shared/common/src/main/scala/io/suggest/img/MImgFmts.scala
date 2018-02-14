@@ -26,6 +26,8 @@ case object MImgFmts extends StringEnum[MImgFmt] {
 
   case object GIF extends MImgFmt("g") {
     override def name = "gif"
+    override def imCoalesceFrames = true
+    override def imForceRepage = true
   }
 
   /** SVG бывает SVGZ (пожатый GZIP), и просто голым текстом (SVG).
@@ -130,6 +132,10 @@ sealed abstract class MImgFmt(override val value: String) extends StringEnumEntr
 
   /** Файловое расширение (без точки). Обычно эквивалентно name. */
   def fileExt = name
+
+
+  def imCoalesceFrames: Boolean = false
+  def imForceRepage: Boolean = false
 
 }
 

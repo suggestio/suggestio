@@ -232,9 +232,18 @@ class DynImgUtil @Inject() (
         (absPath :: inAccTokes).mkString
     }
 
+    // Нужно заставить imagemagick компактовать фреймы между собой при сохранении:
+    if (outFmt.imCoalesceFrames)
+      op.coalesce()
+
     for (imOp <- imOps) {
       imOp.addOperation(op)
     }
+
+    // Для gif'а нужно перестроить канву после операций, но перед сохранением:
+    if (outFmt.imForceRepage)
+      op.p_repage()
+
     op.addImage(outFmt.imageMagickFormat + ":" + out.getAbsolutePath)
     val cmd = new ConvertCmd()
     cmd.setAsyncMode(true)

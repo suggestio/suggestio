@@ -23,7 +23,6 @@ import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.pick.MimeConst
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.svg.SvgUtil
@@ -205,7 +204,7 @@ class Upload @Inject()(
                   fileExist = Some(MSrvFileInfo(
                     nodeId    = foundFile.nodeId,
                     // TODO Сгенерить ссылку на файл. Если это картинка, то через dynImgArgs
-                    url       = if (MimeConst.Image.isImage( foundFile.file.mime )) {
+                    url       = if (foundFile.file.imgFormatOpt.nonEmpty) {
                       // TODO IMG_DIST: Вписать хост расположения картинки.
                       // TODO Нужна ссылка картинки на недо-оригинал картинки? Или как?
                       Some( routes.Img.dynImg( foundFileImg ).url )
@@ -330,7 +329,7 @@ class Upload @Inject()(
         }
 
         // Вычислить фактический mime-тип файла.
-        mimeType <- try {
+        detectedMimeType <- try {
           val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
           Option( srcMagicMatch.getMimeType )
         } catch {
@@ -343,10 +342,18 @@ class Upload @Inject()(
 
         // Сравнить фактический MIME-тип с заявленным.
         if {
-          val r = mimeType ==* uploadArgs.fileProps.mimeType
-          LOGGER.trace(s"$logPrefix Mime type matching: detected=$mimeType declared=${uploadArgs.fileProps.mimeType} ;; matching? => $r")
+          val declaredMime = uploadArgs.fileProps.mimeType
+          val r = (detectedMimeType ==* declaredMime) || {
+            // Для svg есть особенности: нередко он определяется не точно или как text/plain.
+            SvgUtil.maybeSvgMime(declaredMime) && SvgUtil.maybeSvgMime(detectedMimeType) && {
+              val isSvgValid = SvgUtil.isSvgFileValid(srcFile)
+              LOGGER.trace(s"$logPrefix Possibly, it is SVG file with $detectedMimeType (declared: $declaredMime), isValid?$isSvgValid")
+              isSvgValid
+            }
+          }
+          LOGGER.trace(s"$logPrefix Mime type matching: detected=$detectedMimeType declared=${uploadArgs.fileProps.mimeType} ;; matching? => $r")
           if (!r)
-            __appendErr( s"Detected file MIME type '$mimeType' does not match to expected ${uploadArgs.fileProps.mimeType}." )
+            __appendErr( s"Detected file MIME type '$detectedMimeType' does not match to expected ${uploadArgs.fileProps.mimeType}." )
           r
         }
 
@@ -415,7 +422,7 @@ class Upload @Inject()(
           // Запускаем в фоне заливку файла из ФС в надёжное распределённое хранилище:
           saveFileToShardFut = {
             val wr = WriteRequest(
-              contentType  = mimeType,
+              contentType  = detectedMimeType,
               file         = srcFile,
               origFileName = fileNameOpt
             )
@@ -435,7 +442,7 @@ class Upload @Inject()(
                 ntype         = if (isImg) {
                   MediaTypes.Image
                 } else {
-                  LOGGER.info(s"$logPrefix Node will be created as OtherFile: no ideas here, mime=$mimeType")
+                  LOGGER.info(s"$logPrefix Node will be created as OtherFile: no ideas here, mime=$detectedMimeType")
                   MediaTypes.OtherFile
                 },
                 isDependent   = true
@@ -493,7 +500,7 @@ class Upload @Inject()(
               nodeId = mnodeId,
               id   = mediaIdOpt0,
               file = MFileMeta(
-                mime       = mimeType,
+                mime       = detectedMimeType,
                 sizeB      = uploadArgs.fileProps.sizeB,
                 isOriginal = true,
                 hashesHex  = hashesHex2

@@ -18,10 +18,7 @@ object MimeConst {
     final def TEXT_ = "text" + DELIM1
     final def JSON = "json"
 
-    final def IMAGE   = "image"
-    final def JPEG    = "jpeg"
-    final def GIF     = "gif"
-    final def PNG     = "png"
+    // Картинки живут полностью в MImgFmts.
 
     final def BASE64  = "base64"
 
@@ -68,33 +65,6 @@ object MimeConst {
 
   }
 
-
-  /** Mime-типы для картинок и сопутствующая им утиль. */
-  object Image {
-
-    final def PREFIX  = Words.IMAGE + Words.DELIM1
-
-    final def JPEG    = PREFIX + Words.JPEG
-    final def PNG     = PREFIX + Words.PNG
-    final def GIF     = PREFIX + Words.GIF
-
-    def isImage(ct: String): Boolean = {
-      val ct2 = ct.toLowerCase()
-      val prefix = PREFIX
-      (ct2 startsWith prefix) && {
-        val afterSlash = ct2.substring( prefix.length )
-        (Words.JPEG :: Words.PNG :: Words.GIF :: Nil)
-          .contains(afterSlash)
-      }
-    }
-
-    /** Проверка Content-Type на предмет допустимости для upload'а
-      * на сервер в качестве иллюстрации в рекламной карточке. */
-    def isImageForAd(ct: String): Boolean = {
-      isImage(ct)
-    }
-
-  }
 
 
   /** Валидация mime-типа картинки.

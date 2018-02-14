@@ -13,7 +13,7 @@ import io.suggest.crypto.hash.{HashesHex, MHashes}
 import io.suggest.file.{MJsFileInfo, MSrvFileInfo}
 import io.suggest.file.up.{MFile4UpProps, MFileUploadS}
 import io.suggest.i18n.{MMessage, MsgCodes}
-import io.suggest.img.MImgEdgeWithOps
+import io.suggest.img.{MImgEdgeWithOps, MImgFmts}
 import io.suggest.img.crop.MCrop
 import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.jd.render.m.SetImgWh
@@ -22,7 +22,6 @@ import io.suggest.lk.m.MErrorPopupS
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
-import io.suggest.pick.MimeConst
 import io.suggest.sjs.common.log.Log
 import org.scalajs.dom.raw.URL
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -87,7 +86,8 @@ class PictureAh[M](
         // Выставлен новый файл. Надо записать его в состояние.
         val (v9, fxOpt9) = m.files
           .find { fileNew =>
-            MimeConst.Image.isImageForAd(fileNew.`type`)
+            MImgFmts.withMime( fileNew.`type`.toLowerCase )
+              .nonEmpty
           }
           .fold [(MPictureAh, Option[Effect])] {
             val errMsg = MMessage( MsgCodes.`File.is.not.a.picture` )

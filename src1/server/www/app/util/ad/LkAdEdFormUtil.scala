@@ -11,6 +11,7 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.err.ErrorConstants
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
+import io.suggest.img.MImgFmts
 import io.suggest.jd._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.JdTag.Implicits._
@@ -354,8 +355,8 @@ class LkAdEdFormUtil
       minSizeB      = 256,
       maxSizeB      = IMG_UPLOAD_MAXLEN_BYTES,
       mimeVerifierF = { mimeType =>
-        MimeConst.Image.isImageForAd(mimeType) ||
-          SvgUtil.maybeSvgMime(mimeType)
+        MImgFmts.withMime(mimeType).nonEmpty ||
+          SvgUtil.maybeSvgMime(mimeType) // TODO Надо ли это? там text/* какой-то допускается даже.
       },
       mustHashes    = UploadConstants.CleverUp.PICTURE_FILE_HASHES
     )
