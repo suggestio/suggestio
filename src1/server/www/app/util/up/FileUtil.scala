@@ -6,7 +6,6 @@ import javax.inject.Inject
 import io.suggest.crypto.hash.{MHash, MHashes}
 import io.suggest.model.n2.media.MFileMetaHash
 import io.suggest.util.logs.MacroLogsImpl
-import net.sf.jmimemagic.{Magic, MagicMatch, MagicMatchNotFoundException}
 import org.apache.commons.codec.digest.DigestUtils
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -47,12 +46,14 @@ class FileUtil @Inject()(
     }
   }
 
-  def mkHashesHexAsync(file: File, hashes: TraversableOnce[MHash]): Future[Seq[MFileMetaHash]] = {
+  // TODO Удалить этот код следом за заливкой 1-го поколения.
+  def mkHashesHexAsync(file: File, hashes: TraversableOnce[MHash], flags: Set[Short]): Future[Seq[MFileMetaHash]] = {
     val futs = Future.traverse(hashes) { mhash =>
       Future {
         MFileMetaHash(
-          hType      = mhash,
-          hexValue  = mkFileHash(mhash, file)
+          hType     = mhash,
+          hexValue  = mkFileHash(mhash, file),
+          flags     = flags
         )
       }
     }
@@ -67,16 +68,6 @@ class FileUtil @Inject()(
       f(is)
     } finally {
       is.close()
-    }
-  }
-
-  def getMimeMatch(file: File): Option[MagicMatch] = {
-    try {
-      Option(Magic.getMagicMatch(file, false, true))
-    } catch {
-      case mmnfe: MagicMatchNotFoundException =>
-        LOGGER.warn(s"getMimeMatch($file): Unable to get MIME from file", mmnfe)
-        None
     }
   }
 

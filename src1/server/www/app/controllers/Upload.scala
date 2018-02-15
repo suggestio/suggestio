@@ -10,7 +10,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.MCtxId
 import io.suggest.es.model.IMust
-import io.suggest.file.MSrvFileInfo
+import io.suggest.file.{MSrvFileInfo, MimeUtilJvm}
 import io.suggest.file.up.{MFile4UpProps, MUploadResp}
 import io.suggest.fio.WriteRequest
 import io.suggest.i18n.MMessage
@@ -33,7 +33,6 @@ import models.im._
 import models.mproj.ICommonDi
 import models.mup.{MColorDetectArgs, MUploadFileHandler, MUploadFileHandlers, MUploadTargetQs}
 import models.req.IReq
-import net.sf.jmimemagic.Magic
 import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile, TemporaryFileCreator}
 import play.api.libs.json.Json
 import play.api.mvc.{BodyParser, MultipartFormData, Result}
@@ -216,7 +215,12 @@ class Upload @Inject()(
                     sizeB     = Some( foundFile.file.sizeB ),
                     name      = None,     // Имя пока не раскрываем. Файл мог быть был загружен другим юзером под иным именем.
                     mimeType  = Some( foundFile.file.mime ),
-                    hashesHex = MFileMetaHash.toHashesHex( foundFile.file.hashesHex ),
+                    hashesHex = MFileMetaHash.toHashesHex {
+                      // TODO Это всё надо вообще? может отправить на клиент просто исходные модели? Или вообще ничего не отправлять?
+                      foundFile.file.hashesHex
+                        .iterator
+                        .filter(_.flags contains MFileMetaHash.Flags.TRULY_ORIGINAL)
+                    },
                     colors    = {
                       // TODO !!! Выгребать из оригинала картинки, а не из любой найденной по хешам.
                       OptionUtil.maybe( mediaColors.nonEmpty ) {
@@ -251,7 +255,7 @@ class Upload @Inject()(
         case MUploadFileHandlers.Picture =>
           val imgFmt = MImgFmts.withMime(uploadArgs.fileProps.mimeType).get
           val dynImgId = MDynImgId.randomOrig( imgFmt )
-          new LocalImgFileCreator( MLocalImg(dynImgId) )
+          LocalImgFileCreator( MLocalImg(dynImgId) )
       }
     // Сборка самого BodyParser'а.
     val bp0 = parse.multipartFormData(
@@ -328,10 +332,54 @@ class Upload @Inject()(
           r
         }
 
+        declaredMime = uploadArgs.fileProps.mimeType
+
         // Вычислить фактический mime-тип файла.
-        detectedMimeType <- try {
-          val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
-          Option( srcMagicMatch.getMimeType )
+        (detectedMimeType, imgFmtOpt) <- try {
+          for {
+            mimeProbeRes   <- MimeUtilJvm.probeContentType(srcPath)
+            detectedMime2  <- {
+              LOGGER.trace(s"$logPrefix decl=$declaredMime user-filename=${filePart.filename} magic=>$mimeProbeRes")
+              // Причесать задетекченный mime-тип
+              if (request.body.localImg.isEmpty) {
+                Some(( mimeProbeRes, None ))
+              } else {
+                // У нас тут картинка ожидалась. Это SVG? SVG обрабатывается как текст в magic match.
+                // TODO Всё это неактуально. Перенести в async-часть, сделать lazy val'ы.
+                if (
+                  SvgUtil.maybeSvgMime(declaredMime) && SvgUtil.maybeSvgMime(mimeProbeRes) && {
+                    val svgDocOpt = SvgUtil.safeOpenWrap( SvgUtil.open(srcFile) )
+                    val isSvgValid = svgDocOpt.nonEmpty
+                    LOGGER.trace(s"$logPrefix Possibly, it is SVG file with $mimeProbeRes (declared: $declaredMime), isValid?$isSvgValid")
+                    isSvgValid
+                  }
+                ) {
+                  // Вернуть SVG-mime, т.е. MagicMatch возвращает text/plain.
+                  LOGGER.trace(s"$logPrefix Looks like SVG: decl=$declaredMime magic=$mimeProbeRes user-filename=${filePart.filename}")
+                  val t = MImgFmts.SVG
+                  Some((t.mime, Some(t)))
+
+                } else {
+                  // Это не SVG. Проверить по img-форматам.
+                  val imgFmtOpt1 = MImgFmts.withMime( mimeProbeRes )
+                  LOGGER.trace(s"$logPrefix MIME decl=$declaredMime magic=$mimeProbeRes => imgFmt=${imgFmtOpt1.orNull}")
+                  if (imgFmtOpt1.isEmpty)
+                    __appendErr( s"Unsupported image MIME type: $mimeProbeRes, expected $declaredMime" )
+                  for (imgFmt <- imgFmtOpt1) yield {
+                    (imgFmt.mime, imgFmtOpt1)
+                  }
+                }
+              }
+            }
+            if {
+              val r = detectedMime2._1 ==* declaredMime
+              if (!r)
+                __appendErr( s"Detected file MIME type '${detectedMime2._1}' does not match to expected ${uploadArgs.fileProps.mimeType}." )
+              r
+            }
+          } yield {
+            detectedMime2
+          }
         } catch {
           case ex: Throwable =>
             val msg = s"Failed to detect MIME type of file."
@@ -340,22 +388,6 @@ class Upload @Inject()(
             None
         }
 
-        // Сравнить фактический MIME-тип с заявленным.
-        if {
-          val declaredMime = uploadArgs.fileProps.mimeType
-          val r = (detectedMimeType ==* declaredMime) || {
-            // Для svg есть особенности: нередко он определяется не точно или как text/plain.
-            SvgUtil.maybeSvgMime(declaredMime) && SvgUtil.maybeSvgMime(detectedMimeType) && {
-              val isSvgValid = SvgUtil.isSvgFileValid(srcFile)
-              LOGGER.trace(s"$logPrefix Possibly, it is SVG file with $detectedMimeType (declared: $declaredMime), isValid?$isSvgValid")
-              isSvgValid
-            }
-          }
-          LOGGER.trace(s"$logPrefix Mime type matching: detected=$detectedMimeType declared=${uploadArgs.fileProps.mimeType} ;; matching? => $r")
-          if (!r)
-            __appendErr( s"Detected file MIME type '$detectedMimeType' does not match to expected ${uploadArgs.fileProps.mimeType}." )
-          r
-        }
 
       } yield {
         // Синхронные проверки завершены успешно. Переходим в асинхрон:
@@ -363,17 +395,25 @@ class Upload @Inject()(
 
           // Сверить чек-суммы файла, все и параллельно.
           hashesHex2 <- for {
-            hashesHexIterable2 <- Future.traverse( uploadArgs.fileProps.hashesHex ) {
-              case (mhash, expectedHexVal) =>
-                Future( fileUtil.mkFileHash(mhash, srcFile) )
-                  .filter { srcHash =>
-                    val r = srcHash equalsIgnoreCase expectedHexVal
-                    if (!r) errSb.synchronized {
-                      __appendErr( s"File hash ${mhash.fullStdName} '$srcHash' doesn't match to declared '$expectedHexVal'." )
+            hashesHexIterable2 <- {
+              val origHashesFlags = Set( MFileMetaHash.Flags.TRULY_ORIGINAL )
+              Future.traverse( uploadArgs.fileProps.hashesHex ) {
+                case (mhash, expectedHexVal) =>
+                  for {
+                    srcHash <- Future {
+                      fileUtil.mkFileHash(mhash, srcFile)
                     }
-                    r
+                    if {
+                      val r = srcHash equalsIgnoreCase expectedHexVal
+                      if (!r) errSb.synchronized {
+                        __appendErr( s"File hash ${mhash.fullStdName} '$srcHash' doesn't match to declared '$expectedHexVal'." )
+                      }
+                      r
+                    }
+                  } yield {
+                    MFileMetaHash(mhash, srcHash, origHashesFlags)
                   }
-                  .map { MFileMetaHash(mhash, _) }
+              }
             }
           } yield {
             LOGGER.trace(s"$logPrefix Validated hashes hex:\n ${hashesHexIterable2.mkString(",\n ")}")
@@ -384,6 +424,7 @@ class Upload @Inject()(
 
           // Проверить валидность принятой картинки с помощью identify:
           imgIdentifyInfoOpt <- FutureUtil.optFut2futOpt(request.body.localImg) { mLocImg =>
+            // TODO Нельзя запускать identify для SVG: происходит перегонка в растр и какие-то левые данные на выходе получаются.
             for {
               info <- mLocalImgs.identifyCached( mLocImg )
               // По идее, возможная ошибка уже должна быть выявлена.
@@ -391,7 +432,7 @@ class Upload @Inject()(
               infoOpt = Option(info)
               if infoOpt.nonEmpty
             } yield {
-              LOGGER.trace(s"$logPrefix Identify => ${info.getImageFormat} ${info.getImageWidth()}x${info.getImageHeight} ${info.getImageClass} // $info")
+              LOGGER.trace(s"$logPrefix Identify => ${info.getImageFormat} ${info.getImageWidth()}x${info.getImageHeight} ${info.getImageClass} // MIME decl=$declaredMime detected=$detectedMimeType")
               infoOpt
             }
           }
@@ -399,25 +440,16 @@ class Upload @Inject()(
           // Ожидалась картинка?
           isImg = imgIdentifyInfoOpt.nonEmpty
 
-          // Это svg-картинка?
-          isImgIsSvg = imgIdentifyInfoOpt.exists(_.getImageFormat equalsIgnoreCase "svg")
-
-          // Если тут SVG, то убедиться в валидности принятой картинки.
-          if {
-            val isValidIfSvg = !isImgIsSvg || SvgUtil.isSvgFileValid( srcFile )
-            if (!isValidIfSvg) errSb.synchronized {
-              __appendErr( s"SVG-file looks invalid." )
-            }
-            LOGGER.trace(s"$logPrefix checked SVG: isImg=$isImg isSvg=$isImgIsSvg isValidSvg => $isValidIfSvg")
-            isValidIfSvg
-          }
-
           fileNameOpt = Option( filePart.filename )
 
           // Собираем MediaStorage ptr:
           mediaStor = uploadArgs.storage.storageType match {
-            case MStorages.SeaWeedFs => SwfsStorage( Fid(uploadArgs.storage.storageInfo) )
+            case MStorages.SeaWeedFs =>
+              SwfsStorage( Fid(uploadArgs.storage.storageInfo) )
           }
+
+          // TODO Если требуется img-форматом, причесать оригинал, расширив исходную карту хэшей новыми значениями.
+          // Например, JPEG можно пропустить через jpegtran -copy. А svg в svgz через convert.
 
           // Запускаем в фоне заливку файла из ФС в надёжное распределённое хранилище:
           saveFileToShardFut = {
@@ -489,9 +521,8 @@ class Upload @Inject()(
             LOGGER.info(s"$logPrefix Created node#$mnodeId. Preparing mmedia...")
 
             val mimg3Opt = for {
-              info      <- imgIdentifyInfoOpt
               // Если что-то не так, то пусть будет ошибка прямо здесь.
-              imgFormat = MImgFmts.withImFormat( info.getImageFormat ).get
+              imgFormat <- imgFmtOpt
             } yield {
               MImg3( MDynImgId(mnodeId, imgFormat), fileNameOpt )
             }
@@ -507,7 +538,7 @@ class Upload @Inject()(
               ),
               picture = MPictureMeta(
                 whPx = imgIdentifyInfoOpt
-                .map(imgFileUtil.identityInfo2wh)
+                  .map(imgFileUtil.identityInfo2wh)
               ),
               storage = mediaStor
             )
@@ -705,7 +736,8 @@ class Upload @Inject()(
 
 
   /** Реализация перехвата временных файлов сразу в MLocalImg-хранилище. */
-  protected class LocalImgFileCreator(val mLocalImg: MLocalImg) extends TemporaryFileCreator { creator =>
+  protected case class LocalImgFileCreator(mLocalImg: MLocalImg)
+    extends TemporaryFileCreator { creator =>
 
     override def create(prefix: String, suffix: String): TemporaryFile = _create()
 
@@ -724,7 +756,7 @@ class Upload @Inject()(
     }
 
     /** Маскировка MLocalImg под TemporaryFile. */
-    object LocalImgFile extends TemporaryFile {
+    case object LocalImgFile extends TemporaryFile {
 
       private val _file = mLocalImgs.fileOf( mLocalImg )
 

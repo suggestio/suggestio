@@ -169,6 +169,7 @@ class DynImgUtil @Inject() (
     val ck = args.dynImgId.fileName + ":eIR"
 
     // TODO Тут наверное можно задейстовать cacheApiUtil.
+    // TODO Проверять MMedia, что текущий сервак соответствует нужному.
     cache.get [Future[MLocalImg]] (ck).foreach {
       // Результирующего фьючерс нет в кеше. Запускаем поиск/генерацию картинки:
       case None =>
@@ -241,10 +242,10 @@ class DynImgUtil @Inject() (
     }
 
     // Для gif'а нужно перестроить канву после операций, но перед сохранением:
-    if (outFmt.imForceRepage)
+    if (outFmt.imFinalRepage)
       op.p_repage()
 
-    op.addImage(outFmt.imageMagickFormat + ":" + out.getAbsolutePath)
+    op.addImage(outFmt.imFormat + ":" + out.getAbsolutePath)
     val cmd = new ConvertCmd()
     cmd.setAsyncMode(true)
     val opStr = op.toString

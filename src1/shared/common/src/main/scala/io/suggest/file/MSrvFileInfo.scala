@@ -3,7 +3,7 @@ package io.suggest.file
 import io.suggest.color.MHistogram
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.crypto.hash.MHash
+import io.suggest.crypto.hash.{HashesHex, MHash}
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -83,7 +83,7 @@ case class MSrvFileInfo(
                          sizeB      : Option[Long]        = None,
                          name       : Option[String]      = None,
                          mimeType   : Option[String]      = None,
-                         hashesHex  : Map[MHash, String]  = Map.empty,
+                         hashesHex  : HashesHex           = Map.empty,
                          colors     : Option[MHistogram]  = None,
                          whPx       : Option[MSize2di]    = None
                        ) {
@@ -116,7 +116,7 @@ case class MSrvFileInfo(
           .orElse( name ),
         mimeType = newInfo.mimeType
           .orElse( mimeType ),
-        hashesHex = Seq(newInfo.hashesHex, hashesHex)
+        hashesHex = (newInfo.hashesHex :: hashesHex :: Nil)
           .find(_.nonEmpty)
           .getOrElse(hashesHex),
         colors = newInfo.colors.orElse( colors ),

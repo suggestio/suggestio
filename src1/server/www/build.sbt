@@ -41,16 +41,7 @@ libraryDependencies ++= {
     exclude("log4j", "log4j")
     exclude("org.slf4j", "log4j-over-slf4j")
   ,
-  //Common.ORG %% "n2" % "0.0.0-SNAPSHOT",
-  // для разбора upload-частей, нужна помощь mime magic bytes
-  "jmimemagic" % "jmimemagic" % "0.1.2"
-    exclude("xml-apis", "xml-apis")
-    exclude("xml-apis", "xmlParserAPIs")
-    exclude("xerces",   "xerces")
-    exclude("log4j",    "log4j")
-    exclude("commons-logging", "commons-logging")
-  ,
-
+  
   // TODO DateTimePrettyPrinter -- последний компонент в проекте, который тянет joda-time:
   "joda-time"             %  "joda-time"            % "2.8.+",
 

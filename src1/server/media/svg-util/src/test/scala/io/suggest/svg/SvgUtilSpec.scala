@@ -15,24 +15,40 @@ class SvgUtilSpec extends FlatSpec {
 
   private val RSC_DIR = ""
 
-  private def testFile(filename: String, isSvg: Boolean): Unit = {
-    testFilePath(RSC_DIR + "/" + filename, isSvg)
+  private def testFile(filename: String, isSvg: Boolean, svgDeepTest: Boolean = true): Unit = {
+    testFilePath(RSC_DIR + "/" + filename, isSvg, svgDeepTest)
   }
 
   /** Тестируем isSvgValid() и isSvgFileValid(). */
-  private def testFilePath(filepath: String, isSvg: Boolean): Unit = {
+  private def testFilePath(filepath: String, isSvg: Boolean, svgDeepTest: Boolean = true): Unit = {
     // Тестируем isSvgValid():
     val is = getClass.getResourceAsStream(filepath)
+    val url = getClass.getResource(filepath).toString
     assert(is != null, "[[Test file NOT found]]")
     try {
-      SvgUtil.isSvgValid(is)  shouldBe  isSvg
+      val docOpt = SvgUtil.safeOpenWrap(
+        SvgUtil.open(is, url)
+      )
+      docOpt.nonEmpty shouldBe isSvg
+
+      // Для SVG-документов попытаться построить дерево.
+      if (svgDeepTest && isSvg) {
+        val doc = docOpt.get
+        val gvt = SvgUtil.buildGvt(doc)
+        assert(gvt != null)
+
+        val bounds = gvt.getBounds
+        assert(bounds.getWidth > 0)
+        assert(bounds.getHeight > 0)
+      }
     } finally {
       is.close()
     }
+
     // тестируем isSvgFileValid():
     val fpath = getClass.getResource(filepath).getFile
     val f = new File(fpath)
-    SvgUtil.isSvgFileValid(f) shouldBe  isSvg
+    SvgUtil.safeOpenWrap( SvgUtil.open(f) ).nonEmpty  shouldBe  isSvg
   }
 
 
@@ -46,7 +62,8 @@ class SvgUtilSpec extends FlatSpec {
   }
 
   it should "accept valid svg file: valid_svg2_shrinked.svg" in {
-    testFile("valid_svg2_shrinked.svg", isSvg = true)
+    // TODO Что-то не так с рендером этого файла: The attribute "offset" of the element <stop> is required
+    testFile("valid_svg2_shrinked.svg", isSvg = true, svgDeepTest = false)
   }
 
   it should "refuse text file (lorem_ipsum.txt)" in {

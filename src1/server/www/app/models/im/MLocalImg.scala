@@ -7,11 +7,11 @@ import javax.inject.{Inject, Singleton}
 import akka.stream.scaladsl.FileIO
 import io.suggest.async.AsyncUtil
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.file.MimeUtilJvm
 import io.suggest.fio.IDataSource
 import io.suggest.model.img.ImgSzDated
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import net.sf.jmimemagic.MagicMatch
 import org.apache.commons.io.FileUtils
 import util.img.{ImgFileUtil, OrigImageUtil}
 import util.up.FileUtil
@@ -109,7 +109,7 @@ class MLocalImgs @Inject() (
   def identify(mimg: MLocalImg) = {
     Future {
       val file = fileOf(mimg)
-      origImageUtil.identify(file)
+      origImageUtil.identify(mimg.dynImgId.dynFormat.imFormat + ":" + file.getAbsolutePath)
     }(asyncUtil.singleThreadCpuContext)
   }
 
@@ -180,21 +180,10 @@ class MLocalImgs @Inject() (
       _fsImgDir.mkdirs()
   }
 
-  def fileExtensionFut(mimg: MLocalImg): Future[String] = {
-    for (mimeMatchOpt <- mimeMatchOptFut(mimg)) yield {
-      mimeMatchOpt.fold {
-        LOGGER.warn("Mime match failed, guessing PNG extension")
-        "png"
-      } { mm =>
-        mm.getExtension
-      }
-    }
-  }
-
-  def getMagicMatchSync(mimg: MLocalImg): Option[MagicMatch] = {
+  def getMimeOptSync(mimg: MLocalImg): Option[String] = {
     val file = fileOf(mimg)
     val tryRes = Try(
-      fileUtil.getMimeMatch(file)
+      MimeUtilJvm.probeContentType( file.toPath )
     )
     if (tryRes.isFailure)
       LOGGER.error(s"Failed to get mime for file: $file [${file.length()} bytes]", tryRes.failed.get)
@@ -202,18 +191,8 @@ class MLocalImgs @Inject() (
       .toOption
       .flatten
   }
-  def getMimeOptSync(mimg: MLocalImg): Option[String] = {
-    getMagicMatchSync(mimg)
-      .flatMap(imgFileUtil.getMime)
-  }
   def getMimeSync(mimg: MLocalImg): String = {
     imgFileUtil.orUnknown( getMimeOptSync(mimg) )
-  }
-
-  def mimeMatchOptFut(mimg: MLocalImg): Future[Option[MagicMatch]] = {
-    Future {
-      getMagicMatchSync(mimg)
-    }
   }
 
   /** Определение mime-типа из файла. */
@@ -224,10 +203,8 @@ class MLocalImgs @Inject() (
   }
 
 
-  def generateFileName(mimg: MLocalImg): Future[String] = {
-    for (fext <- fileExtensionFut(mimg)) yield {
-      mimg.dynImgId.rowKeyStr + "." + fext
-    }
+  def generateFileName(mimg: MLocalImg): String = {
+    mimg.dynImgId.rowKeyStr + "." + mimg.dynImgId.dynFormat.fileExt
   }
 
   def isExists(mimg: MLocalImg): Boolean = {

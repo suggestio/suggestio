@@ -1,9 +1,9 @@
 package io.suggest.model.n2.media
 
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.crypto.hash.{HashHex, HashesHex, MHash}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.es.util.SioEsUtil._
-import io.suggest.primo.id.IId
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -19,6 +19,18 @@ object MFileMetaHash extends IGenEsMappingProps {
   object Fields {
     val HASH_TYPE_FN = "t"
     val HEX_VALUE_FN = "x"
+    val FLAGS_FN     = "f"
+  }
+
+  /** Допустимые значения флагов. */
+  object Flags {
+
+    /** Флаг истинного оригинала (который был залит на сервер). */
+    val TRULY_ORIGINAL              = 1.toShort
+
+    /** Флаг lossless-дериватива из оригинала (причёсанный и почищенный оригинал). */
+    val LOSSLESS_DERIVATIVE         = TRULY_ORIGINAL * 2
+
   }
 
 
@@ -27,7 +39,13 @@ object MFileMetaHash extends IGenEsMappingProps {
     val F = Fields
     (
       (__ \ F.HASH_TYPE_FN).format[MHash] and
-      (__ \ F.HEX_VALUE_FN).format[String]
+      (__ \ F.HEX_VALUE_FN).format[String] and
+      (__ \ F.FLAGS_FN).formatNullable[Set[Short]]
+        .inmap[Set[Short]](
+          // Изначально, никаких флагов не было. Поэтому имитируем наличие флага TRULY_ORIGINAL. TODO Надо resaveMany() для окончательной фиксации флагов.
+          EmptyUtil.opt2ImplEmpty1F( Set(Flags.TRULY_ORIGINAL) ),
+          { flags => if (flags.isEmpty) None else Some(flags) }
+        )
     )(apply, unlift(unapply))
   }
 
@@ -37,7 +55,8 @@ object MFileMetaHash extends IGenEsMappingProps {
     val F = Fields
     List(
       FieldKeyword(F.HASH_TYPE_FN, index = true, include_in_all = false),
-      FieldKeyword(F.HEX_VALUE_FN, index = true, include_in_all = true)
+      FieldKeyword(F.HEX_VALUE_FN, index = true, include_in_all = true),
+      FieldNumber(F.FLAGS_FN, fieldType = DocFieldTypes.short, index = true, include_in_all = false)
     )
   }
 
@@ -55,18 +74,16 @@ object MFileMetaHash extends IGenEsMappingProps {
 /** Класс ES-модели инфы по одному хешу файла.
   *
   * @param hType Тип хеша (алгоритм хеширования).
-  * @param hexValue Вычисленный хеш.
+  * @param hexValue Вычисленный хеш.a
+  * @param flags Разные флаги.
   */
 case class MFileMetaHash(
-                          hType     : MHash,
-                          hexValue  : String
-                        )
-  extends IId[MHash]
-{
+                          hType           : MHash,
+                          hexValue        : String,
+                          flags           : Set[Short]
+                        ) {
 
   /** Конверсия в ключ-значение. */
   def hashHexTuple: HashHex = (hType, hexValue)
-
-  override final def id = hType
 
 }

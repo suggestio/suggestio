@@ -9,6 +9,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.async.{AsyncUtil, IAsyncUtilDi}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.dt.DateTimeUtil
+import io.suggest.file.MimeUtilJvm
 import io.suggest.img.MImgFmts
 import io.suggest.img.crop.CropConstants
 import io.suggest.popup.PopupConstants
@@ -18,7 +19,6 @@ import models.im._
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.IReq
-import net.sf.jmimemagic.Magic
 import org.apache.commons.io.FileUtils
 import play.api.data.Forms._
 import play.api.data._
@@ -34,6 +34,7 @@ import views.html.img._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.Try
 
 /**
  * Suggest.io
@@ -196,17 +197,9 @@ class Img @Inject() (
             fileName  = _ => fileName
           )
           LOGGER.trace(s"serveImgFromFile(${imgFile.getParentFile.getName}/${imgFile.getName}): 200 OK, file size = ${imgFile.length} bytes.")
-          val mmOpt = fileUtil.getMimeMatch(imgFile)
-
-          val ct = mmOpt
-            .flatMap { mm => Option(mm.getMimeType) }
-            // 2014.sep.26: В случае svg, jmimemagic не определяет правильно content-type, поэтому нужно ему помочь:
-            .map {
-            case textCt if SvgUtil.maybeSvgMime(textCt) =>
-              MImgFmts.SVG.mime
-            case other =>
-              other
-          }
+          val ct = Try( MimeUtilJvm.probeContentType(imgFile.toPath) )
+            .toOption
+            .flatten
             .getOrElse{
               LOGGER.warn(s"serveImg(): No MIME match found")
               "image/unknown"
@@ -279,9 +272,7 @@ trait TempImgSupport
     val resultFut: Future[Result] = request.body.file("picture") match {
       case Some(pictureFile) =>
         val fileRef = pictureFile.ref
-        val srcFile = fileRef.path.toFile
-        val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
-        val srcMime = srcMagicMatch.getMimeType
+        val srcMime = MimeUtilJvm.probeContentType( fileRef.path ).get
         val imgFmt = MImgFmts.withMime(srcMime).get
 
         // Отрабатываем опциональный рендеринг html-поля с оверлеем.
@@ -289,11 +280,12 @@ trait TempImgSupport
         lazy val ovlOpt = for (hrrr <- ovlRrr) yield {
           hrrr(mptmp.dynImgId.fileName, implicitly[Context])
         }
+        val srcFile = fileRef.path.toFile
         // Далее, загрузка для svg и растровой графики расветвляется...
         val tmpFile = mLocalImgs.fileOf(mptmp)
         if (SvgUtil.maybeSvgMime(srcMime)) {
           // Это svg?
-          if (SvgUtil.isSvgFileValid(srcFile)) {
+          if (SvgUtil.safeOpenWrap( SvgUtil.open(srcFile) ).nonEmpty) {
             // Это svg. Надо его сжать и переместить в tmp-хранилище.
             val newSvg = htmlCompressUtil.compressSvgFromFile(srcFile)
             FileUtils.writeStringToFile(tmpFile, newSvg)

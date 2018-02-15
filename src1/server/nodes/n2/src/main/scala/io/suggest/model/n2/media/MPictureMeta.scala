@@ -2,7 +2,7 @@ package io.suggest.model.n2.media
 
 import io.suggest.color.{MColorData, MColorDataEs}
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
-import io.suggest.common.geom.d2.{MSize2di, MSize2diEs}
+import io.suggest.common.geom.d2.{MSize2di, MSize2diJvm}
 import io.suggest.es.model.IGenEsMappingProps
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
@@ -36,7 +36,7 @@ object MPictureMeta extends IGenEsMappingProps with IEmpty {
   override def generateMappingProps: List[DocField] = {
     val F = Fields
     List(
-      FieldObject(F.WH_PX_FN, enabled = true, properties = MSize2diEs.generateMappingProps),
+      FieldObject(F.WH_PX_FN, enabled = true, properties = MSize2diJvm.generateMappingProps),
       FieldNestedObject(F.COLORS_FN, enabled = true, properties = MColorDataEs.generateMappingProps)
     )
   }

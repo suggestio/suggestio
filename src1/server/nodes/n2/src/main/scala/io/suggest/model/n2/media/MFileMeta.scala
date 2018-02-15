@@ -52,7 +52,7 @@ object MFileMeta extends IGenEsMappingProps {
         // Пытаемся прочитать старое поле SHA1
         (__ \ F.SHA1_FN).formatNullable[String]
           .map[Seq[MFileMetaHash]] {
-            case Some(sha1hex) => MFileMetaHash(MHashes.Sha1, sha1hex.toLowerCase) :: Nil
+            case Some(sha1hex) => MFileMetaHash(MHashes.Sha1, sha1hex.toLowerCase, Set(MFileMetaHash.Flags.TRULY_ORIGINAL)) :: Nil
             case None          => Nil
           }
       }

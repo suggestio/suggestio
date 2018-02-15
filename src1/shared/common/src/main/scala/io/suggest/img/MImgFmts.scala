@@ -27,7 +27,7 @@ case object MImgFmts extends StringEnum[MImgFmt] {
   case object GIF extends MImgFmt("g") {
     override def name = "gif"
     override def imCoalesceFrames = true
-    override def imForceRepage = true
+    override def imFinalRepage = true
   }
 
   /** SVG бывает SVGZ (пожатый GZIP), и просто голым текстом (SVG).
@@ -35,10 +35,19 @@ case object MImgFmts extends StringEnum[MImgFmt] {
     */
   case object SVG extends MImgFmt("s") {
     override def name = "svg"
-    override final def mime = super.mime + "+xml"
+    def mimePrefix = super.mime
+    override final def mime = mimePrefix + "+xml"
+
+    override def otherMimes: List[String] = {
+      (mime + "-compressed") ::
+        Nil
+    }
+
     /** Пусть на выходе convert'а по возможности будет пожатый SVG, попробуем заставить это работать. */
-    override final def imageMagickFormat = imageMagickFormatNonCompressed + "Z"
-    final def imageMagickFormatNonCompressed = super.imageMagickFormat
+    override final def imFormat = imFormatNonCompressed + "Z"
+    final def imFormatNonCompressed = super.imFormat
+
+    override def isRaster = false
   }
 
 
@@ -76,7 +85,7 @@ case object MImgFmts extends StringEnum[MImgFmt] {
     val iter = for {
       imgFmt <- values.iterator
     } yield {
-      imgFmt.imageMagickFormat -> imgFmt
+      imgFmt.imFormat -> imgFmt
     }
     iter.toMap
   }
@@ -119,7 +128,7 @@ sealed abstract class MImgFmt(override val value: String) extends StringEnumEntr
     *
     * @see convert -list format
     */
-  def imageMagickFormat: String = name.toUpperCase
+  def imFormat: String = name.toUpperCase
 
   /** other mimes -- вторичные mime-типы.
     * Т.е. возможно, что за каким-то img-форматом закреплено несколько MIME-типов.
@@ -133,9 +142,20 @@ sealed abstract class MImgFmt(override val value: String) extends StringEnumEntr
   /** Файловое расширение (без точки). Обычно эквивалентно name. */
   def fileExt = name
 
-
+  /** Добавлять -coalesce перед convert-операциями?
+    * Требуется для анимированных форматов, чтобы между фреймами всё эффективно жалось.
+    */
   def imCoalesceFrames: Boolean = false
-  def imForceRepage: Boolean = false
+
+  /** Бывает, что нужно делать +repage после обработки, но перед сохранением.
+    * Для GIF'а например, из-за внутренних особенностей формата и его обработки.
+    */
+  def imFinalRepage: Boolean = false
+
+  /** Является ли формат растровым? */
+  def isRaster: Boolean = true
+  /** Является ли формат векторным? */
+  final def isVector: Boolean = !isRaster
 
 }
 

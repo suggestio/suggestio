@@ -115,7 +115,7 @@ lazy val quillSioSjs = {
 lazy val svgUtil = {
   val name = "svg-util"
   Project(name, base = file(DIR0 + "server/media/" + name))
-    .dependsOn(logsMacro)
+    .dependsOn(logsMacro, commonJVM)
 }
 
 /** 

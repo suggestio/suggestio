@@ -5,7 +5,6 @@ import java.util.NoSuchElementException
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.async.StreamsUtil
-import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.fio.{IDataSource, WriteRequest}
 import io.suggest.img.{MImgFmt, MImgFmts}
@@ -13,7 +12,7 @@ import io.suggest.js.UploadConstants
 import io.suggest.model.img.ImgSzDated
 import io.suggest.model.n2.edge.MEdge
 import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
-import io.suggest.model.n2.media.{MFileMeta, MMedia, MMedias, MPictureMeta}
+import io.suggest.model.n2.media._
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
@@ -108,12 +107,12 @@ class MImgs3 @Inject() (
 
   /** Сгенерить новый экземпляр MNode и сохранить. */
   def saveMnode(mimg: MImgT): Future[MNode] = {
-    val fnameFut = FutureUtil.opt2future(mimg.userFileName) {
+    val permFut = permMetaCached(mimg)
+    val fname = mimg.userFileName.getOrElse {
       mLocalImgs.generateFileName( mimg.toLocalInstance )
     }
     val mnodeFut = for {
-      perm    <- permMetaCached(mimg)
-      fname   <- fnameFut
+      perm    <- permFut
     } yield {
       // Собираем новый узел n2, когда все необходимые данные уже собраны...
       MNode(
@@ -161,7 +160,7 @@ class MImgs3 @Inject() (
       // Перезаписывать нечего, т.к. элемент ещё не существует в MMedia.
       val whOptFut = mLocalImgs.getImageWH(loc)
       // TODO Допустить, что хэши уже просчитаны где-то в контроллере, не считать их тут...
-      val hashesHexFut = fileUtil.mkHashesHexAsync(imgFile, UploadConstants.CleverUp.PICTURE_FILE_HASHES)
+      val hashesHexFut = fileUtil.mkHashesHexAsync(imgFile, UploadConstants.CleverUp.PICTURE_FILE_HASHES, Set(MFileMetaHash.Flags.TRULY_ORIGINAL))
       // TODO Ассигновать картинку на том же узле sio, что и оригинал. Надо удалить весь этот метод, чтобы руление картинками шло вне модели, в DynImgs, например.
       val storFut = iMediaStorages.assignNew( mimg.storage )
 

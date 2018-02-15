@@ -37,7 +37,7 @@ trait SioImageUtilT extends IMacroLogs {
   def INTERLACING: Option[String] = Some("Plane")
 
 
-  def identify(file: File) = new Info(file.getAbsolutePath, true)
+  def identify(filePath: String) = new Info(filePath, true)
 
 
   /**
