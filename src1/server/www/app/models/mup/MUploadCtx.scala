@@ -46,8 +46,12 @@ trait IUploadCtx {
 
   def file: File
 
+  def fileLength: Long
+
+  def declaredMime: String
+
   /** Задетекченный MIME-тип файла. */
-  def detectedMimeType: Option[String]
+  def detectedMimeTypeOpt: Option[String]
 
   /** Парралельный рассчёт всех интересующих хешей загруженного файла. БЕЗ сравнивания с оригиналами. */
   def hashesHexFut: Future[Iterable[MFileMetaHash]]
@@ -106,7 +110,11 @@ class MUploadCtx @Inject() (
 
   override val file = path.toFile
 
-  override lazy val detectedMimeType: Option[String] = {
+  override lazy val fileLength = file.length()
+
+  override def declaredMime = uploadArgs.fileProps.mimeType
+
+  override lazy val detectedMimeTypeOpt: Option[String] = {
     MimeUtilJvm.probeContentType(path)
   }
 
@@ -124,7 +132,7 @@ class MUploadCtx @Inject() (
     }
   }
 
-  override lazy val imgFmtOpt = detectedMimeType.flatMap( MImgFmts.withMime )
+  override lazy val imgFmtOpt = detectedMimeTypeOpt.flatMap( MImgFmts.withMime )
 
   override lazy val svgDocOpt: Option[Document] = {
     SvgUtil.safeOpenWrap(
@@ -144,7 +152,7 @@ class MUploadCtx @Inject() (
   override lazy val imageWh: Option[MSize2di] = {
     for {
       imgFmt    <- imgFmtOpt
-      mimeType  <- detectedMimeType
+      mimeType  <- detectedMimeTypeOpt
     } yield {
       imgFmt match {
         case MImgFmts.PNG | MImgFmts.JPEG | MImgFmts.GIF =>

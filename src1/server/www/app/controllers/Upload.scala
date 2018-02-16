@@ -10,7 +10,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.MCtxId
 import io.suggest.es.model.IMust
-import io.suggest.file.{MSrvFileInfo, MimeUtilJvm}
+import io.suggest.file.MSrvFileInfo
 import io.suggest.file.up.{MFile4UpProps, MUploadResp}
 import io.suggest.fio.WriteRequest
 import io.suggest.i18n.MMessage
@@ -25,7 +25,7 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
-import io.suggest.svg.SvgUtil
+import io.suggest.sec.av.{ClamAvScanRequest, ClamAvUtil}
 import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.url.MHostUrl
 import io.suggest.ws.{MWsMsg, MWsMsgTypes}
@@ -67,6 +67,7 @@ class Upload @Inject()(
                         mNodes                    : MNodes,
                         mImgs3                    : MImgs3,
                         mLocalImgs                : MLocalImgs,
+                        clamAvUtil                : ClamAvUtil,
                         distUtil                  : DistUtil,
                         imgFileUtil               : ImgFileUtil,
                         uploadCtxFactory          : IUploadCtxFactory,
@@ -320,12 +321,12 @@ class Upload @Inject()(
           r
         }
 
-        srcPath = filePart.ref.path
-        srcFile = srcPath.toFile
+        // Сборка Upload-контекста. Дальнейший сбор информации по загруженному файлу должен происходить в контексте.
+        upCtx = uploadCtxFactory.make(filePart, uploadArgs, request.body.localImg)
 
         // Сверить размер файла с заявленным размером
         if {
-          val srcLen = srcFile.length()
+          val srcLen = upCtx.fileLength
           val r = srcLen ==* uploadArgs.fileProps.sizeB
           LOGGER.trace(s"$logPrefix File size check: expected=${uploadArgs.fileProps.sizeB} detected=$srcLen ;; match? $r")
           if (!r)
@@ -333,65 +334,25 @@ class Upload @Inject()(
           r
         }
 
-        declaredMime = uploadArgs.fileProps.mimeType
-
-        // Вычислить фактический mime-тип файла.
-        (detectedMimeType, imgFmtOpt) <- try {
-          for {
-            mimeProbeRes   <- MimeUtilJvm.probeContentType(srcPath)
-            detectedMime2  <- {
-              LOGGER.trace(s"$logPrefix decl=$declaredMime user-filename=${filePart.filename} magic=>$mimeProbeRes")
-              // Причесать задетекченный mime-тип
-              if (request.body.localImg.isEmpty) {
-                Some(( mimeProbeRes, None ))
-              } else {
-                // У нас тут картинка ожидалась. Это SVG? SVG обрабатывается как текст в magic match.
-                // TODO Всё это неактуально. Перенести в async-часть, сделать lazy val'ы.
-                if (
-                  SvgUtil.maybeSvgMime(declaredMime) && SvgUtil.maybeSvgMime(mimeProbeRes) && {
-                    val svgDocOpt = SvgUtil.safeOpenWrap( SvgUtil.open(srcFile) )
-                    val isSvgValid = svgDocOpt.nonEmpty
-                    LOGGER.trace(s"$logPrefix Possibly, it is SVG file with $mimeProbeRes (declared: $declaredMime), isValid?$isSvgValid")
-                    isSvgValid
-                  }
-                ) {
-                  // Вернуть SVG-mime, т.е. MagicMatch возвращает text/plain.
-                  LOGGER.trace(s"$logPrefix Looks like SVG: decl=$declaredMime magic=$mimeProbeRes user-filename=${filePart.filename}")
-                  val t = MImgFmts.SVG
-                  Some((t.mime, Some(t)))
-
-                } else {
-                  // Это не SVG. Проверить по img-форматам.
-                  val imgFmtOpt1 = MImgFmts.withMime( mimeProbeRes )
-                  LOGGER.trace(s"$logPrefix MIME decl=$declaredMime magic=$mimeProbeRes => imgFmt=${imgFmtOpt1.orNull}")
-                  if (imgFmtOpt1.isEmpty)
-                    __appendErr( s"Unsupported image MIME type: $mimeProbeRes, expected $declaredMime" )
-                  for (imgFmt <- imgFmtOpt1) yield {
-                    (imgFmt.mime, imgFmtOpt1)
-                  }
-                }
-              }
-            }
-            if {
-              val r = detectedMime2._1 ==* declaredMime
-              if (!r)
-                __appendErr( s"Detected file MIME type '${detectedMime2._1}' does not match to expected ${uploadArgs.fileProps.mimeType}." )
-              r
-            }
-          } yield {
-            detectedMime2
-          }
-        } catch {
-          case ex: Throwable =>
-            val msg = s"Failed to detect MIME type of file."
-            LOGGER.error(s"$logPrefix $msg '$srcFile'", ex)
-            __appendErr(msg)
-            None
+        // Сверить MIME-тип принятого файла с заявленным:
+        detectedMimeType <- upCtx.detectedMimeTypeOpt
+        if {
+          val r = detectedMimeType ==* upCtx.declaredMime
+          if (!r)
+            __appendErr( s"Detected file MIME type '${upCtx.detectedMimeTypeOpt}' does not match to expected ${upCtx.declaredMime}." )
+          r
         }
 
-
       } yield {
-        // Синхронные проверки завершены успешно. Переходим в асинхрон:
+        val startMs = System.currentTimeMillis()
+        // Синхронные проверки завершены успешно. Переходим в асинхрон.
+
+        // Запустить антивирусную проверку в фоне:
+        val clamAvScanResFut = clamAvUtil.scan(
+          ClamAvScanRequest(
+            file = upCtx.file.getAbsolutePath
+          )
+        )
         for {
 
           // Сверить чек-суммы файла, все и параллельно.
@@ -402,7 +363,7 @@ class Upload @Inject()(
                 case (mhash, expectedHexVal) =>
                   for {
                     srcHash <- Future {
-                      fileUtil.mkFileHash(mhash, srcFile)
+                      fileUtil.mkFileHash(mhash, upCtx.file)
                     }
                     if {
                       val r = srcHash equalsIgnoreCase expectedHexVal
@@ -421,7 +382,19 @@ class Upload @Inject()(
             hashesHexIterable2.toSeq
           }
 
-          // TODO SEC Проверить полученный файл антивирусом: clamd + clamdscan --fdpass $file
+          // Перед возможным вызовом всяких imagemagick надо убедиться, что в файле не содержится вредоносного кода:
+          clamAvScanRes <- clamAvScanResFut
+          if {
+            val r = clamAvScanRes.isClean
+            LOGGER.trace(s"ClamAV: clean?$r took=${System.currentTimeMillis() - startMs} ms. ret=$clamAvScanRes")
+            if (!r) {
+              LOGGER.warn(s"ClamAV returned ${clamAvScanRes.result} for file ${upCtx.path}. See logs upper.\n User session: ${request.user.personIdOpt.orNull}\n remote: ${request.remoteClientAddress}\n User-Agent: ${request.headers.get(USER_AGENT).orNull}")
+              errSb.synchronized {
+                __appendErr( s"AntiVirus check failed." )
+              }
+            }
+            r
+          }
 
           // Проверить валидность принятой картинки с помощью identify:
           imgIdentifyInfoOpt <- FutureUtil.optFut2futOpt(request.body.localImg) { mLocImg =>
@@ -433,7 +406,7 @@ class Upload @Inject()(
               infoOpt = Option(info)
               if infoOpt.nonEmpty
             } yield {
-              LOGGER.trace(s"$logPrefix Identify => ${info.getImageFormat} ${info.getImageWidth()}x${info.getImageHeight} ${info.getImageClass} // MIME decl=$declaredMime detected=$detectedMimeType")
+              LOGGER.trace(s"$logPrefix Identify => ${info.getImageFormat} ${info.getImageWidth()}x${info.getImageHeight} ${info.getImageClass} // MIME decl=${upCtx.declaredMime} detected=${upCtx.detectedMimeTypeOpt}")
               infoOpt
             }
           }
@@ -456,7 +429,7 @@ class Upload @Inject()(
           saveFileToShardFut = {
             val wr = WriteRequest(
               contentType  = detectedMimeType,
-              file         = srcFile,
+              file         = upCtx.file,
               origFileName = fileNameOpt
             )
             LOGGER.trace(s"$logPrefix Will save file $wr to storage $mediaStor ...")
@@ -523,7 +496,7 @@ class Upload @Inject()(
 
             val mimg3Opt = for {
               // Если что-то не так, то пусть будет ошибка прямо здесь.
-              imgFormat <- imgFmtOpt
+              imgFormat <- upCtx.imgFmtOpt
             } yield {
               MImg3( MDynImgId(mnodeId, imgFormat), fileNameOpt )
             }

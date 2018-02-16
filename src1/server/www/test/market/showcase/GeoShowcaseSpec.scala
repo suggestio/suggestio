@@ -4,6 +4,7 @@ import controllers.routes
 import io.suggest.sc.MScApiVsns
 import models.msc.SiteQsArgs
 import org.scalatestplus.play._
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.{Application, Mode}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.Call
@@ -14,7 +15,7 @@ import play.api.mvc.Call
  * Created: 26.09.14 14:54
  * Description: Тесты для showcase.
  */
-trait GeoShowcaseSpecT extends PlaySpec with OneServerPerSuite with OneBrowserPerSuite {
+trait GeoShowcaseSpecT extends PlaySpec with GuiceOneServerPerSuite with OneBrowserPerSuite {
 
   protected def marketGeoSiteUrl: Call = {
     val args = SiteQsArgs(apiVsn = MScApiVsns.Sjs1)

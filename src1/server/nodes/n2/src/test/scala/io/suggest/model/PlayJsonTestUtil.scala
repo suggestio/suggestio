@@ -5,10 +5,10 @@ import org.scalatest.Matchers._
 import _root_.play.api.libs.json._
 import io.suggest.event.{MockedSioNotifierStaticClient, SioNotifierStaticClientI}
 import org.elasticsearch.client.Client
-import org.scalatestplus.play.OneAppPerSuite
 import _root_.play.api.{Application, Mode}
 import _root_.play.api.inject.bind
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 /**
  * Suggest.io
@@ -28,7 +28,7 @@ trait PlayJsonTestUtil extends TypeT {
 }
 
 
-trait MockedEsSn { this: OneAppPerSuite =>
+trait MockedEsSn { this: GuiceOneAppPerSuite =>
 
   override implicit lazy val app: Application = {
     new GuiceApplicationBuilder()
