@@ -16,11 +16,13 @@ import play.api.libs.Files.TemporaryFile
 import play.api.mvc.MultipartFormData
 import util.img.ImgFileUtil
 import io.suggest.common.geom.d2.MSize2diJvm.Implicits._
+import io.suggest.model.n2.media.MFileMetaHash
 import org.apache.batik.gvt.GraphicsNode
 import org.im4java.core.Info
 import util.img.detect.main.MainColorDetector
+import util.up.FileUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -34,7 +36,7 @@ import scala.concurrent.Future
   * и которые могут быть расшарены между разными шагами сложной логики или разными компонентами,
   * занятыми в процессе отработки аплоада.
   */
-trait IFileUpCtx {
+trait IUploadCtx {
 
   val filePart: MultipartFormData.FilePart[TemporaryFile]
 
@@ -46,6 +48,9 @@ trait IFileUpCtx {
 
   /** Задетекченный MIME-тип файла. */
   def detectedMimeType: Option[String]
+
+  /** Парралельный рассчёт всех интересующих хешей загруженного файла. БЕЗ сравнивания с оригиналами. */
+  def hashesHexFut: Future[Iterable[MFileMetaHash]]
 
   /** Формат картинки, если загруженный файл -- это картинка в поддерживаемом формате. */
   def imgFmtOpt: Option[MImgFmt]
@@ -68,30 +73,31 @@ trait IFileUpCtx {
 }
 
 
-/** Внутренний DI-контейнер для всей DI-утили, используемой внутри [[MFileUpCtx]]. */
-protected class MFileUpCtxStatic @Inject() (
-                                             val mLocalImgs                 : MLocalImgs,
-                                             val imgFileUtil                : ImgFileUtil,
-                                             val mainColorDetector          : MainColorDetector,
-                                             //implicit val ec    : ExecutionContext
-                                           )
+/** Внутренний DI-контейнер для всей DI-утили, используемой внутри [[MUploadCtx]]. */
+protected class MUploadCtxStatic @Inject()(
+                                            val mLocalImgs                 : MLocalImgs,
+                                            val imgFileUtil                : ImgFileUtil,
+                                            val mainColorDetector          : MainColorDetector,
+                                            val fileUtil                   : FileUtil,
+                                            implicit val ec                : ExecutionContext
+                                          )
 
-/** Интерфейс для Guice DI-factory, которая собирает инстансы upload-контекста [[MFileUpCtx]]. */
-trait IFileUpCtxFactory {
+/** Интерфейс для Guice DI-factory, которая собирает инстансы upload-контекста [[MUploadCtx]]. */
+trait IUploadCtxFactory {
   def make( filePart     : MultipartFormData.FilePart[TemporaryFile],
             uploadArgs   : MUploadTargetQs,
             mLocalImg    : Option[MLocalImg]
-          ): MFileUpCtx
+          ): MUploadCtx
 }
 
-/** Очевидная реализация [[IFileUpCtx]] на базе lazy vals. */
-class MFileUpCtx(
-                  @Assisted override val filePart       : MultipartFormData.FilePart[TemporaryFile],
-                  @Assisted uploadArgs                  : MUploadTargetQs,
-                  @Assisted override val mLocalImgOpt   : Option[MLocalImg],
-                  statics                               : MFileUpCtxStatic
-                )
-  extends IFileUpCtx
+/** Очевидная реализация [[IUploadCtx]] на базе lazy vals. */
+class MUploadCtx @Inject() (
+                             @Assisted override val filePart       : MultipartFormData.FilePart[TemporaryFile],
+                             @Assisted uploadArgs                  : MUploadTargetQs,
+                             @Assisted override val mLocalImgOpt   : Option[MLocalImg],
+                             statics                               : MUploadCtxStatic
+                           )
+  extends IUploadCtx
 {
 
   import statics._
@@ -102,6 +108,20 @@ class MFileUpCtx(
 
   override lazy val detectedMimeType: Option[String] = {
     MimeUtilJvm.probeContentType(path)
+  }
+
+  override lazy val hashesHexFut: Future[Iterable[MFileMetaHash]] = {
+    val origHashesFlags = Set( MFileMetaHash.Flags.TRULY_ORIGINAL )
+    Future.traverse( uploadArgs.fileProps.hashesHex ) {
+      case (mhash, _) =>
+        for {
+          srcHash <- Future {
+            fileUtil.mkFileHash(mhash, file)
+          }
+        } yield {
+          MFileMetaHash(mhash, srcHash, origHashesFlags)
+        }
+    }
   }
 
   override lazy val imgFmtOpt = detectedMimeType.flatMap( MImgFmts.withMime )

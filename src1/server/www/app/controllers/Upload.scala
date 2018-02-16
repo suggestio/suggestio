@@ -31,7 +31,7 @@ import io.suggest.url.MHostUrl
 import io.suggest.ws.{MWsMsg, MWsMsgTypes}
 import models.im._
 import models.mproj.ICommonDi
-import models.mup.{MColorDetectArgs, MUploadFileHandler, MUploadFileHandlers, MUploadTargetQs}
+import models.mup._
 import models.req.IReq
 import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile, TemporaryFileCreator}
 import play.api.libs.json.Json
@@ -69,6 +69,7 @@ class Upload @Inject()(
                         mLocalImgs                : MLocalImgs,
                         distUtil                  : DistUtil,
                         imgFileUtil               : ImgFileUtil,
+                        uploadCtxFactory          : IUploadCtxFactory,
                         mainColorDetector         : MainColorDetector,
                         wsDispatcherActors        : WsDispatcherActors,
                         override val mCommonDi    : ICommonDi

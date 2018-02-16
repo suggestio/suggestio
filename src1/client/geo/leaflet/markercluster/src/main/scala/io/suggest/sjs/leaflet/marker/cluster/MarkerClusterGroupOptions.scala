@@ -1,7 +1,11 @@
 package io.suggest.sjs.leaflet.marker.cluster
 
+import io.suggest.sjs.leaflet.map.Zoom_t
+import io.suggest.sjs.leaflet.path.PathOptions
+import io.suggest.sjs.leaflet.path.poly.PolylineOptions
+
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
+import scala.scalajs.js.{UndefOr, |}
 
 /**
   * Suggest.io
@@ -11,6 +15,8 @@ import scala.scalajs.js.UndefOr
   */
 trait MarkerClusterGroupOptions extends js.Object {
 
+  // Enabled by default (boolean options)
+
   val showCoverageOnHover         : UndefOr[Boolean]    = js.undefined
 
   val zoomToBoundsOnClick         : UndefOr[Boolean]    = js.undefined
@@ -19,6 +25,19 @@ trait MarkerClusterGroupOptions extends js.Object {
 
   val removeOutsideVisibleBounds  : UndefOr[Boolean]    = js.undefined
 
-  val spiderLegPolylineOptions    : UndefOr[js.Object]  = js.undefined
+  val animate                     : UndefOr[Boolean]    = js.undefined
+
+
+  // Other options
+
+  val animateAddingMarkers        : UndefOr[Boolean]            = js.undefined
+  val disableClusteringAtZoom     : UndefOr[Zoom_t]             = js.undefined
+  val maxClusterRadius            : UndefOr[Int | js.Function1[Int, Int]] = js.undefined
+  val polygonOptions              : UndefOr[PathOptions]        = js.undefined
+  val singleMarkerMode            : UndefOr[Boolean]            = js.undefined
+  val spiderLegPolylineOptions    : UndefOr[PolylineOptions]    = js.undefined
+  val spiderfyDistanceMultiplier  : UndefOr[Int]                = js.undefined
+  val iconCreateFunction          : UndefOr[js.Function1[js.Object, js.Object]] = js.undefined
+  val clusterPane                 : UndefOr[js.Any]             = js.undefined
 
 }

@@ -276,7 +276,7 @@ object Common {
   val leafletControlLocateJsVsn = "0.62.0"
 
   /** Версия Leaflet.markercluster.js. */
-  val leafletMarkerClusterJsVsn = "1.1.0"
+  val leafletMarkerClusterJsVsn = "1.3.0"
 
   
   /** Версия diode.

@@ -16,7 +16,7 @@ import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.event.MouseEvent
-import io.suggest.sjs.leaflet.map.LatLng
+import io.suggest.sjs.leaflet.map.{LatLng, Zoom_t}
 import io.suggest.sjs.leaflet.marker.icon.IconOptions
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent, MarkerOptions}
 import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
@@ -29,7 +29,7 @@ import react.leaflet.poly.{PolygonPropsR, PolygonR}
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.UndefOr
+import scala.scalajs.js.{UndefOr, |}
 
 /**
   * Suggest.io
@@ -227,6 +227,12 @@ object RcvrMarkersR {
               new MarkerClusterGroupPropsR {
                 override val markers      = markers9.iterator.flatten.toJSArray
                 override val markerClick  = _onMarkerClickedF
+
+                // По дефолту 80. Но как-то опаздывает оно с разделением мелких кластеров.
+                override val maxClusterRadius = 60
+                // На время ранних демонстраций: 15 - это уровень зданий ТЦ в центре СПб.
+                // Потом, с ростом мелочи, надо будет увеличить до 16, 17 или вообще закомментить.
+                override val disableClusteringAtZoom = 15
               }
             )
           },
