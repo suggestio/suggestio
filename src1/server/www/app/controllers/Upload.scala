@@ -344,9 +344,17 @@ class Upload @Inject()(
           r
         }
 
+        // Прежде чем запускать тяжелые проверки, надо быстро сверить лимиты для текущего типа файла:
+        if {
+          val r = upCtx.validateFileContentEarly
+          if (!r)
+            __appendErr( s"Failed to validate size limits: len=${upCtx.fileLength}b img=${upCtx.imgFmtOpt.orNull}/${upCtx.imageWh.orNull}" )
+          r
+        }
+
       } yield {
         val startMs = System.currentTimeMillis()
-        // Синхронные проверки завершены успешно. Переходим в асинхрон.
+        // Лёгкие синхронные проверки завершены успешно. Переходим в асинхрон и в тяжелые проверки.
 
         // В фоне запустить JVM-only валидацию содержимого файла. Все файлы должны иметь корректный внутренний формат.
         val isFileValidFut = upCtx.validateFileFut
@@ -388,11 +396,6 @@ class Upload @Inject()(
               file = upCtx.file.getAbsolutePath
             )
           )
-
-          // А раз файл уже валиден внутри, то для картинки можно поузнавать размеры (в фоне и используя ТОЛЬКО jvm)
-          imageWhOptFut = Future {
-            upCtx.imageWh
-          }
 
           clamAvScanRes <- clamAvScanResFut
           if {
@@ -483,8 +486,6 @@ class Upload @Inject()(
           // Ожидаем окончания сохранения узла.
           mnodeId <- mnodeIdFut
 
-          imageWhOpt <- imageWhOptFut
-
           // Наконец, переходим к MMedia:
           mmedia0 = {
             LOGGER.info(s"$logPrefix Created node#$mnodeId. Preparing mmedia...")
@@ -506,7 +507,7 @@ class Upload @Inject()(
                 hashesHex  = hashesHex2
               ),
               picture = MPictureMeta(
-                whPx = imageWhOpt
+                whPx = upCtx.imageWh
               ),
               storage = mediaStor
             )

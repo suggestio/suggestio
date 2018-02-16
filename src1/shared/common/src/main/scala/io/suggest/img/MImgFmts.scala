@@ -16,18 +16,26 @@ import japgolly.univeq._
 
 case object MImgFmts extends StringEnum[MImgFmt] {
 
+  private final val bInKb = 1024
+
   case object JPEG extends MImgFmt("j") {
     override def name = "jpeg"
+    override def uploadMaxFileSizeKb = 30 * bInKb
+    override def uploadSideSizeMaxPx = 6000
   }
 
   case object PNG extends MImgFmt("p") {
     override def name = "png"
+    override def uploadMaxFileSizeKb = 4 * bInKb
+    override def uploadSideSizeMaxPx = 2000
   }
 
   case object GIF extends MImgFmt("g") {
     override def name = "gif"
     override def imCoalesceFrames = true
     override def imFinalRepage = true
+    override def uploadMaxFileSizeKb = 2 * bInKb
+    override def uploadSideSizeMaxPx = 2000
   }
 
   /** SVG бывает SVGZ (пожатый GZIP), и просто голым текстом (SVG).
@@ -48,6 +56,9 @@ case object MImgFmts extends StringEnum[MImgFmt] {
     final def imFormatNonCompressed = super.imFormat
 
     override def isRaster = false
+
+    override def uploadMaxFileSizeKb = 2 * bInKb
+    override def uploadSideSizeMaxPx = 10000
   }
 
 
@@ -156,6 +167,15 @@ sealed abstract class MImgFmt(override val value: String) extends StringEnumEntr
   def isRaster: Boolean = true
   /** Является ли формат векторным? */
   final def isVector: Boolean = !isRaster
+
+  /** Аплоад: максимальный размер файла. */
+  def uploadMaxFileSizeKb: Int
+  final def uploadMaxFileSizeB: Int = {
+    uploadMaxFileSizeKb * 1024
+  }
+
+  /** Аплоад: максимальный размер одной стороны картинки. */
+  def uploadSideSizeMaxPx: Int
 
 }
 

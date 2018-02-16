@@ -1,6 +1,5 @@
 package models.mup
 
-import java.awt.Transparency
 import java.awt.image.BufferedImage
 import javax.inject.Inject
 
@@ -62,9 +61,9 @@ trait IUploadCtxFactory {
 /** Реализация upload-контекста на базе lazy vals. */
 class MUploadCtx @Inject() (
                              @Assisted val filePart       : MultipartFormData.FilePart[TemporaryFile],
-                             @Assisted uploadArgs                  : MUploadTargetQs,
+                             @Assisted uploadArgs         : MUploadTargetQs,
                              @Assisted val mLocalImgOpt   : Option[MLocalImg],
-                             statics                               : MUploadCtxStatic
+                             statics                      : MUploadCtxStatic
                            ) {
 
   import statics._
@@ -131,6 +130,30 @@ class MUploadCtx @Inject() (
     }
   }
 
+  /** Ранняя ''легковесная'' поверхностная валидация содержимого и размера файла. */
+  lazy val validateFileContentEarly: Boolean = {
+    imgFmtOpt
+      .map { imgFmt =>
+        try {
+          // Это картинка. Проверить лимиты по размеру файла и размеру сторон картинки.
+          (fileLength <= imgFmt.uploadMaxFileSizeB) &&
+            imageWh.exists { wh =>
+              val szMax = imgFmt.uploadSideSizeMaxPx
+              (wh.width <= szMax) && (wh.height <= szMax)
+            }
+        } catch {
+          case ex: Throwable =>
+            LOGGER.error(s"validateFileContentEarly: Failed to validate file $file ${detectedMimeTypeOpt.orNull} ${fileLength}b", ex)
+            false
+        }
+      }
+      .getOrElse {
+        // Неизвестный тип файла. Непонятно, как проверять.
+        throw new UnsupportedOperationException(s"Don't know, how to early-validate ${detectedMimeTypeOpt.orNull}")
+      }
+  }
+
+
   lazy val identifyInfoOpt: Option[Future[Info]] = {
     for (mimg <- mLocalImgOpt) yield {
       mLocalImgs.identifyCached( mimg )
@@ -167,7 +190,7 @@ class MUploadCtx @Inject() (
     FutureUtil.optFut2futOpt(optFut)(identity)
   }
 
-  /** Процедура валидации изображения. */
+  /** Процедура валидации самого изображения, т.е. полная проверка формата внутренностей файла. */
   lazy val validateImageOptFut: Option[Future[Boolean]] = {
     imgFmtOpt.map {
       case MImgFmts.PNG | MImgFmts.JPEG | MImgFmts.GIF =>
