@@ -14,7 +14,6 @@ class GuiceDiModule extends AbstractModule {
   override def configure(): Unit = {
     install(
       new FactoryModuleBuilder()
-        .implement( classOf[IUploadCtx], classOf[MUploadCtx] )
         .build( classOf[IUploadCtxFactory] )
     )
   }

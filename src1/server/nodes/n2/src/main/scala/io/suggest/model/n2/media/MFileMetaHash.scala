@@ -4,6 +4,7 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.crypto.hash.{HashHex, HashesHex, MHash}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.es.util.SioEsUtil._
+import io.suggest.primo.id.IId
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -81,9 +82,13 @@ case class MFileMetaHash(
                           hType           : MHash,
                           hexValue        : String,
                           flags           : Set[Short]
-                        ) {
+                        )
+  extends IId[MHash]
+{
 
   /** Конверсия в ключ-значение. */
   def hashHexTuple: HashHex = (hType, hexValue)
+
+  override def id = hType
 
 }

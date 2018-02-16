@@ -107,13 +107,18 @@ object SvgUtil extends MacroLogsImpl {
     * @return Корень GVT-дерева.
     */
   def buildGvt(doc: Document): GraphicsNode = {
-    val agent = new UserAgentAdapter
-    val loader = new DocumentLoader(agent)
-    val bridgeContext = new BridgeContext(agent, loader)
-    bridgeContext.setDynamic(true)
+    try {
+      val agent = new UserAgentAdapter
+      val loader = new DocumentLoader(agent)
+      val bridgeContext = new BridgeContext(agent, loader)
+      bridgeContext.setDynamic(true)
 
-    val builder = new GVTBuilder()
-    builder.build(bridgeContext, doc)
+      val builder = new GVTBuilder()
+      builder.build(bridgeContext, doc)
+    } catch {
+      case ex: Error =>
+        throw new IllegalArgumentException("Batik deeply failed", ex)
+    }
   }
 
 

@@ -4,6 +4,7 @@ import javax.inject.Inject
 
 import io.suggest.async.AsyncUtil
 import io.suggest.util.logs._
+import japgolly.univeq._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.sys.process._
@@ -38,7 +39,7 @@ final class ClamAvUtil @Inject()(
     * @param req Описание данных для сканера.
     * @return Фьючерс с результатом проверки.
     */
-  def scan(req: ClamAvScanRequest): Future[ClamAvScanResult] = {
+  def scan(req: ClamAvScanRequest): Future[IClamAvScanResult] = {
     if (USE_FDPASS_METHOD) {
       Future {
         scanClamdFdpass(req)
@@ -56,26 +57,45 @@ final class ClamAvUtil @Inject()(
     * @param req Описание данных для сканирования.
     * @return Фьючерс с результатом.
     */
-  def scanClamdFdpass(req: ClamAvScanRequest): ClamAvScanResult = {
+  def scanClamdFdpass(req: ClamAvScanRequest): ClamdscanResult = {
+    lazy val logPrefix = s"scanClamdFdpass()#${System.currentTimeMillis()}:"
+    LOGGER.trace(s"$logPrefix $req")
+
     import Words._
-    val ret = Process(CLAMDSCAN :: FDPASS :: req.file :: Nil) ! LOGGER.process
-    ClamAvScanResult(ret)
+    val ret = Process(CLAMDSCAN :: FDPASS :: req.file :: Nil) ! LOGGER.process(logPrefix)
+    ClamdscanResult(ret)
   }
 
 }
 
 
+/** Модель-контейнер аргументов запроса AV-проверки.
+  *
+  * @param file Проверяемый файл.
+  */
 case class ClamAvScanRequest(
                               file: String
                             )
 
 
-case class ClamAvScanResult(
-                             result   : Int
-                           ) {
+/** Интерфейс модели любого результата запроса AV-проверки. */
+trait IClamAvScanResult {
+  def isClean: Boolean
+}
+
+
+/** Модель-контейнер аргументов результата AV-проверки через консольную clamdscan.
+  *
+  * @param result Код результата, возвращённый консольной утилитой.
+  */
+case class ClamdscanResult(
+                            result   : Int
+                          )
+  extends IClamAvScanResult
+{
 
   def isClean: Boolean = {
-    result == 0
+    result ==* 0
   }
 
 }

@@ -1,14 +1,15 @@
 package models.mup
 
-import java.io.File
-import java.nio.file.Path
+import java.awt.Transparency
+import java.awt.image.BufferedImage
 import javax.inject.Inject
 
 import com.google.inject.assistedinject.Assisted
 import io.suggest.color.MHistogram
+import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.file.MimeUtilJvm
-import io.suggest.img.{MImgFmt, MImgFmts}
+import io.suggest.img.MImgFmts
 import io.suggest.svg.SvgUtil
 import models.im.{MLocalImg, MLocalImgs}
 import org.w3c.dom.Document
@@ -17,10 +18,12 @@ import play.api.mvc.MultipartFormData
 import util.img.ImgFileUtil
 import io.suggest.common.geom.d2.MSize2diJvm.Implicits._
 import io.suggest.model.n2.media.MFileMetaHash
+import io.suggest.util.logs.MacroLogsImpl
 import org.apache.batik.gvt.GraphicsNode
 import org.im4java.core.Info
 import util.img.detect.main.MainColorDetector
 import util.up.FileUtil
+import japgolly.univeq._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -36,46 +39,6 @@ import scala.concurrent.{ExecutionContext, Future}
   * и которые могут быть расшарены между разными шагами сложной логики или разными компонентами,
   * занятыми в процессе отработки аплоада.
   */
-trait IUploadCtx {
-
-  val filePart: MultipartFormData.FilePart[TemporaryFile]
-
-  val mLocalImgOpt: Option[MLocalImg]
-
-  def path: Path
-
-  def file: File
-
-  def fileLength: Long
-
-  def declaredMime: String
-
-  /** Задетекченный MIME-тип файла. */
-  def detectedMimeTypeOpt: Option[String]
-
-  /** Парралельный рассчёт всех интересующих хешей загруженного файла. БЕЗ сравнивания с оригиналами. */
-  def hashesHexFut: Future[Iterable[MFileMetaHash]]
-
-  /** Формат картинки, если загруженный файл -- это картинка в поддерживаемом формате. */
-  def imgFmtOpt: Option[MImgFmt]
-
-  def isImg: Boolean = imgFmtOpt.nonEmpty
-
-  /** Парсинг файла как svg-документа. */
-  def svgDocOpt: Option[Document]
-
-  def svgGvtOpt: Option[GraphicsNode]
-
-  /** Ширина и длина картинки, когда это картинка. */
-  def imageWh: Option[MSize2di]
-
-  def identifyInfoOpt: Option[Future[Info]]
-
-  /** Результат выполнения color-detect'ора над картинкой. */
-  def colorDetectOptFut: Option[Future[MHistogram]]
-
-}
-
 
 /** Внутренний DI-контейнер для всей DI-утили, используемой внутри [[MUploadCtx]]. */
 protected class MUploadCtxStatic @Inject()(
@@ -85,6 +48,8 @@ protected class MUploadCtxStatic @Inject()(
                                             val fileUtil                   : FileUtil,
                                             implicit val ec                : ExecutionContext
                                           )
+  extends MacroLogsImpl
+
 
 /** Интерфейс для Guice DI-factory, которая собирает инстансы upload-контекста [[MUploadCtx]]. */
 trait IUploadCtxFactory {
@@ -94,33 +59,31 @@ trait IUploadCtxFactory {
           ): MUploadCtx
 }
 
-/** Очевидная реализация [[IUploadCtx]] на базе lazy vals. */
+/** Реализация upload-контекста на базе lazy vals. */
 class MUploadCtx @Inject() (
-                             @Assisted override val filePart       : MultipartFormData.FilePart[TemporaryFile],
+                             @Assisted val filePart       : MultipartFormData.FilePart[TemporaryFile],
                              @Assisted uploadArgs                  : MUploadTargetQs,
-                             @Assisted override val mLocalImgOpt   : Option[MLocalImg],
+                             @Assisted val mLocalImgOpt   : Option[MLocalImg],
                              statics                               : MUploadCtxStatic
-                           )
-  extends IUploadCtx
-{
+                           ) {
 
   import statics._
 
-  override val path = filePart.ref.path
+  val path = filePart.ref.path
 
-  override val file = path.toFile
+  val file = path.toFile
 
-  override lazy val fileLength = file.length()
+  lazy val fileLength = file.length()
 
-  override def declaredMime = uploadArgs.fileProps.mimeType
+  def declaredMime = uploadArgs.fileProps.mimeType
 
-  override lazy val detectedMimeTypeOpt: Option[String] = {
+  lazy val detectedMimeTypeOpt: Option[String] = {
     MimeUtilJvm.probeContentType(path)
   }
 
-  override lazy val hashesHexFut: Future[Iterable[MFileMetaHash]] = {
+  lazy val hashesHexFut: Future[Seq[MFileMetaHash]] = {
     val origHashesFlags = Set( MFileMetaHash.Flags.TRULY_ORIGINAL )
-    Future.traverse( uploadArgs.fileProps.hashesHex ) {
+    Future.traverse( uploadArgs.fileProps.hashesHex.toSeq ) {
       case (mhash, _) =>
         for {
           srcHash <- Future {
@@ -132,15 +95,17 @@ class MUploadCtx @Inject() (
     }
   }
 
-  override lazy val imgFmtOpt = detectedMimeTypeOpt.flatMap( MImgFmts.withMime )
+  lazy val imgFmtOpt = detectedMimeTypeOpt.flatMap( MImgFmts.withMime )
 
-  override lazy val svgDocOpt: Option[Document] = {
+  def isImage = imgFmtOpt.nonEmpty
+
+  lazy val svgDocOpt: Option[Document] = {
     SvgUtil.safeOpenWrap(
       SvgUtil.open(file)
     )
   }
 
-  override lazy val svgGvtOpt: Option[GraphicsNode] = {
+  lazy val svgGvtOpt: Option[GraphicsNode] = {
     for {
       svgDoc <- svgDocOpt
     } yield {
@@ -149,7 +114,7 @@ class MUploadCtx @Inject() (
   }
 
   /** Ширина и длина картинки, когда это картинка. */
-  override lazy val imageWh: Option[MSize2di] = {
+  lazy val imageWh: Option[MSize2di] = {
     for {
       imgFmt    <- imgFmtOpt
       mimeType  <- detectedMimeTypeOpt
@@ -166,14 +131,14 @@ class MUploadCtx @Inject() (
     }
   }
 
-  override lazy val identifyInfoOpt: Option[Future[Info]] = {
+  lazy val identifyInfoOpt: Option[Future[Info]] = {
     for (mimg <- mLocalImgOpt) yield {
       mLocalImgs.identifyCached( mimg )
     }
   }
 
   /** Результат выполнения color-detect'ора над картинкой. */
-  override lazy val colorDetectOptFut: Option[Future[MHistogram]] = {
+  lazy val colorDetectOptFut: Option[Future[MHistogram]] = {
     for {
       mimg        <- mLocalImgOpt
       cdArgs      <- uploadArgs.colorDetect
@@ -181,6 +146,80 @@ class MUploadCtx @Inject() (
       mainColorDetector.cached(mimg) {
         mainColorDetector.detectPaletteFor(mimg, maxColors = cdArgs.paletteSize)
       }
+    }
+  }
+
+
+  /** Декодирование изображения в BufferedImage. */
+  lazy val bufferedImageFutOpt: Future[Option[BufferedImage]] = {
+    val optFut = for {
+      mime    <- detectedMimeTypeOpt
+      imgFmt  <- imgFmtOpt
+    } yield {
+      if (imgFmt !=* MImgFmts.SVG) {
+        Future {
+          imgFileUtil.readImage(mime, file)
+        }
+      } else {
+        throw new UnsupportedOperationException("Image format not supported for ImageIO: " + imgFmt)
+      }
+    }
+    FutureUtil.optFut2futOpt(optFut)(identity)
+  }
+
+  /** Процедура валидации изображения. */
+  lazy val validateImageOptFut: Option[Future[Boolean]] = {
+    imgFmtOpt.map {
+      case MImgFmts.PNG | MImgFmts.JPEG | MImgFmts.GIF =>
+        bufferedImageFutOpt
+          .map(_.nonEmpty)
+          .recover { case ex: Throwable =>
+            val logMgs = s"validateImageFut: Image file invalid, MIME=${detectedMimeTypeOpt.orNull}, file=$file"
+            if (ex.isInstanceOf[NoSuchElementException])
+              LOGGER.warn(logMgs)
+            else
+              LOGGER.warn(logMgs, ex)
+
+            false
+          }
+
+      case MImgFmts.SVG =>
+        Future.successful( svgGvtOpt.nonEmpty )
+    }
+  }
+
+  /** Проверка загруженного файла. Здесь вызываются проверки в зависимости от фактического типа файла. */
+  lazy val validateFileFut: Future[Boolean] = {
+    if (isImage) {
+      validateImageOptFut.get
+    } else {
+      // Это не картинка. Хз, как файл проверять
+      LOGGER.error( s"validateFileFut: Don't know, how to validate file ${detectedMimeTypeOpt.orNull}" )
+      Future.successful(false)
+    }
+  }
+
+  /** Если изображение, то есть ли прозрачный цвет? */
+  lazy val imageHasTransparentColors: Option[Future[Boolean]] = {
+    imgFmtOpt.map {
+      // JPEG не прозрачен
+      case MImgFmts.JPEG =>
+        Future.successful(false)
+      // PNG/GIF - попытаться проверить варианты.
+      case MImgFmts.PNG | MImgFmts.GIF =>
+        bufferedImageFutOpt
+          .map { bufOpt =>
+            val buf = bufOpt.get
+            // TODO Тут чисто вероятность. Надо перебирать пиксели, чтобы знать точно. А это долго. Или делать это на клиенте.
+            buf.getColorModel.hasAlpha
+          }
+          .recover { case ex =>
+            LOGGER.error("imageHasTransparentColors: Failed to get colors", ex)
+            false
+          }
+      // у SVG почти всегда прозрачный фон, считаем его таким по дефолту.
+      case MImgFmts.SVG =>
+        Future.successful(true)
     }
   }
 

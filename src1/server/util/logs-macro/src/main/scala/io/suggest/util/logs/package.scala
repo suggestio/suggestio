@@ -15,7 +15,15 @@ package object logs {
   implicit class MacroLoggerExtOps(val logger: MacroLogger) extends AnyVal {
 
     def process: ProcessLogger = {
-      ProcessLogger(logger.debug(_), logger.error(_))
+      ProcessLogger(logger.info(_), logger.error(_))
+    }
+
+    def process(logPrefix: => String): ProcessLogger = {
+      val delim = " "
+      ProcessLogger(
+        s => logger.info(logPrefix + delim + s),
+        s => logger.error(logPrefix + delim + s)
+      )
     }
 
   }

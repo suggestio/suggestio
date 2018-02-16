@@ -7,7 +7,7 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.color.{MColorData, MHistogram, MHistogramWs}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.fut.FutureUtil
+import io.suggest.crypto.hash.MHash
 import io.suggest.ctx.MCtxId
 import io.suggest.es.model.IMust
 import io.suggest.file.MSrvFileInfo
@@ -23,6 +23,7 @@ import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.sec.av.{ClamAvScanRequest, ClamAvUtil}
@@ -347,72 +348,64 @@ class Upload @Inject()(
         val startMs = System.currentTimeMillis()
         // Синхронные проверки завершены успешно. Переходим в асинхрон.
 
-        // Запустить антивирусную проверку в фоне:
-        val clamAvScanResFut = clamAvUtil.scan(
-          ClamAvScanRequest(
-            file = upCtx.file.getAbsolutePath
-          )
-        )
-        for {
+        // В фоне запустить JVM-only валидацию содержимого файла. Все файлы должны иметь корректный внутренний формат.
+        val isFileValidFut = upCtx.validateFileFut
 
-          // Сверить чек-суммы файла, все и параллельно.
-          hashesHex2 <- for {
-            hashesHexIterable2 <- {
-              val origHashesFlags = Set( MFileMetaHash.Flags.TRULY_ORIGINAL )
-              Future.traverse( uploadArgs.fileProps.hashesHex ) {
-                case (mhash, expectedHexVal) =>
-                  for {
-                    srcHash <- Future {
-                      fileUtil.mkFileHash(mhash, upCtx.file)
-                    }
-                    if {
-                      val r = srcHash equalsIgnoreCase expectedHexVal
-                      if (!r) errSb.synchronized {
-                        __appendErr( s"File hash ${mhash.fullStdName} '$srcHash' doesn't match to declared '$expectedHexVal'." )
+        for {
+          // Рассчитать хэш-суммы файла.
+          hashesHex2 <- upCtx.hashesHexFut
+          hashesHexMap = IId.els2idMap[MHash, MFileMetaHash]( hashesHex2 )
+
+          // Сверить рассчётные хэш-суммы с заявленными при загрузке.
+          if {
+            uploadArgs.fileProps
+              .hashesHex
+              .forall { case (mhash, expectedHexVal) =>
+                hashesHexMap
+                  .get(mhash)
+                  .exists { mfhash =>
+                    val r = mfhash.hexValue ==* expectedHexVal
+                    if (!r) {
+                      LOGGER.error(s"$logPrefix $mfhash != $mhash $expectedHexVal file=${upCtx.file} ${upCtx.fileLength}b user=${request.user.personIdOpt.orNull}")
+                      errSb.synchronized {
+                        __appendErr( s"File hash ${mhash.fullStdName} '${mfhash.hexValue}' doesn't match to declared '$expectedHexVal'." )
                       }
-                      r
                     }
-                  } yield {
-                    MFileMetaHash(mhash, srcHash, origHashesFlags)
+                    r
                   }
               }
-            }
-          } yield {
-            LOGGER.trace(s"$logPrefix Validated hashes hex:\n ${hashesHexIterable2.mkString(",\n ")}")
-            hashesHexIterable2.toSeq
           }
 
-          // Перед возможным вызовом всяких imagemagick надо убедиться, что в файле не содержится вредоносного кода:
+          // Убедиться, что формат файла валиден.
+          isFileValid <- isFileValidFut
+          if isFileValid
+
+          // Финальное тестирование внутренностей: перед возможным вызовом всяких imagemagick или иной утили, убедиться,
+          // что в файле не содержится вредоносного кода.
+          // Анти-оптимизация: Запускаем ТОЛЬКО ПОСЛЕ pure-java-проверок, т.к. в clam тоже находят дыры. https://www.opennet.ru/opennews/art.shtml?num=47964
+          clamAvScanResFut = clamAvUtil.scan(
+            ClamAvScanRequest(
+              file = upCtx.file.getAbsolutePath
+            )
+          )
+
+          // А раз файл уже валиден внутри, то для картинки можно поузнавать размеры (в фоне и используя ТОЛЬКО jvm)
+          imageWhOptFut = Future {
+            upCtx.imageWh
+          }
+
           clamAvScanRes <- clamAvScanResFut
           if {
             val r = clamAvScanRes.isClean
             LOGGER.trace(s"ClamAV: clean?$r took=${System.currentTimeMillis() - startMs} ms. ret=$clamAvScanRes")
             if (!r) {
-              LOGGER.warn(s"ClamAV returned ${clamAvScanRes.result} for file ${upCtx.path}. See logs upper.\n User session: ${request.user.personIdOpt.orNull}\n remote: ${request.remoteClientAddress}\n User-Agent: ${request.headers.get(USER_AGENT).orNull}")
+              LOGGER.warn(s"ClamAV INFECTED $clamAvScanRes for file ${upCtx.path}. See logs upper.\n User session: ${request.user.personIdOpt.orNull}\n remote: ${request.remoteClientAddress}\n User-Agent: ${request.headers.get(USER_AGENT).orNull}")
               errSb.synchronized {
                 __appendErr( s"AntiVirus check failed." )
               }
             }
             r
           }
-
-          // Проверить валидность принятой картинки с помощью identify:
-          imgIdentifyInfoOpt <- FutureUtil.optFut2futOpt(request.body.localImg) { mLocImg =>
-            // TODO Нельзя запускать identify для SVG: происходит перегонка в растр и какие-то левые данные на выходе получаются.
-            for {
-              info <- mLocalImgs.identifyCached( mLocImg )
-              // По идее, возможная ошибка уже должна быть выявлена.
-              // На всякий случай дополнительно проверяем info != null:
-              infoOpt = Option(info)
-              if infoOpt.nonEmpty
-            } yield {
-              LOGGER.trace(s"$logPrefix Identify => ${info.getImageFormat} ${info.getImageWidth()}x${info.getImageHeight} ${info.getImageClass} // MIME decl=${upCtx.declaredMime} detected=${upCtx.detectedMimeTypeOpt}")
-              infoOpt
-            }
-          }
-
-          // Ожидалась картинка?
-          isImg = imgIdentifyInfoOpt.nonEmpty
 
           fileNameOpt = Option( filePart.filename )
 
@@ -423,7 +416,7 @@ class Upload @Inject()(
           }
 
           // TODO Если требуется img-форматом, причесать оригинал, расширив исходную карту хэшей новыми значениями.
-          // Например, JPEG можно пропустить через jpegtran -copy. А svg в svgz через convert.
+          // Например, JPEG можно пропустить через jpegtran -copy.
 
           // Запускаем в фоне заливку файла из ФС в надёжное распределённое хранилище:
           saveFileToShardFut = {
@@ -445,7 +438,7 @@ class Upload @Inject()(
             val mnode0 = MNode(
               id = nodeIdOpt0,
               common = MNodeCommon(
-                ntype         = if (isImg) {
+                ntype         = if (upCtx.isImage) {
                   MediaTypes.Image
                 } else {
                   LOGGER.info(s"$logPrefix Node will be created as OtherFile: no ideas here, mime=$detectedMimeType")
@@ -490,6 +483,8 @@ class Upload @Inject()(
           // Ожидаем окончания сохранения узла.
           mnodeId <- mnodeIdFut
 
+          imageWhOpt <- imageWhOptFut
+
           // Наконец, переходим к MMedia:
           mmedia0 = {
             LOGGER.info(s"$logPrefix Created node#$mnodeId. Preparing mmedia...")
@@ -511,8 +506,7 @@ class Upload @Inject()(
                 hashesHex  = hashesHex2
               ),
               picture = MPictureMeta(
-                whPx = imgIdentifyInfoOpt
-                  .map(imgFileUtil.identityInfo2wh)
+                whPx = imageWhOpt
               ),
               storage = mediaStor
             )
@@ -614,7 +608,7 @@ class Upload @Inject()(
           // Вернуть 200 Ok с данными по файлу
           val srvFileInfo = MSrvFileInfo(
             nodeId    = mnodeId,
-            url       = if (isImg) {
+            url       = if ( upCtx.isImage ) {
               Some("TODO.need.good.abs.img.link")   // TODO XXX
             } else {
               LOGGER.error(s"$logPrefix TODO URL-generation not implemented for !isImg")
@@ -641,16 +635,21 @@ class Upload @Inject()(
               colorDetectFut <- colorDetectOptFut
               cdArgs         <- uploadArgs.colorDetect
               ctxId          <- ctxIdOpt
+              hasTransparentColorFut <- upCtx.imageHasTransparentColors
             } {
               LOGGER.trace(s"$logPrefix ColorDetect+WS: for uploaded image, ctxId#${ctxId.key}")
-              val wsNotifyFut = for (mhist0 <- colorDetectFut) yield {
+              val wsNotifyFut = for {
+                mhist0 <- colorDetectFut
+                hasTransparentColor <- hasTransparentColorFut
+              } yield {
                 val mhist2 = mhist0.shrinkColorsCount( cdArgs.wsPaletteSize )
                 val wsMsg = MWsMsg(
                   typ     = MWsMsgTypes.ColorsHistogram,
                   payload = Json.toJson {
                     MHistogramWs(
-                      nodeId = mnodeId,
-                      hist   = mhist2
+                      nodeId          = mnodeId,
+                      hist            = mhist2,
+                      hasTransparent  = hasTransparentColor
                     )
                   }
                 )
