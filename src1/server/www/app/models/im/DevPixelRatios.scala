@@ -5,8 +5,6 @@ import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.playx.FormMappingUtil
 import japgolly.univeq.UnivEq
 
-import scala.collection.immutable
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -57,7 +55,7 @@ case object DevPixelRatios extends ShortEnum[DevPixelRatio] {
 
   /**
    * Дефолтовое значение DPR, когда нет другого.
- *
+   *
    * @return 2.0, т.к. клиентский браузер браузер может не сообщать свои пиксели в ЛК.
    */
   def default: DevPixelRatio = XHDPI

@@ -62,6 +62,10 @@ libraryDependencies ++= {
   "net.sf.uadetector" % "uadetector-resources" % "2014.+",
   // scalasti - это простой гибкий динамический шаблонизатор строк. Нужен для генерации динамических карточек.
   "org.clapper" %% "scalasti" % "2.+",
+
+  // Для будущей работы с файлами добавлено вот это:
+  "com.github.pathikrit" %% "better-files"       % Common.Vsn.BETTER_FILES,
+  "com.typesafe.akka"    %% "akka-contrib-extra" % Common.Vsn.AKKA_CONTRIB_EXTRA,
   
   // Валидация: по идее это должно быть на уровне common, но scala-2.12 пока не пашет, оно тут:
   //"com.wix"      %% "accord-core"     % Common.wixAccordVsn,
@@ -79,6 +83,10 @@ libraryDependencies ++= {
     exclude("commons-logging", "commons-logging")
     exclude("de.l3s.boilerpipe", "boilerpipe")
   ,
+
+  // jbrotli
+  "org.meteogroup.jbrotli" % "jbrotli" % "0.5.0",
+  "org.meteogroup.jbrotli" % "jbrotli-native-linux-x86-amd64" % "0.5.0",
 
   "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
 
@@ -105,7 +113,9 @@ resolvers ++= {
     "sonatype-oss-snapshots"  at SONATYPE_OSS_SNAPSHOTS_URL,
     // kaptcha:
     "sonatype-groups-forge"   at SONATYPE_GROUPS_FORGE_URL,
-    "apache-releases"         at APACHE_RELEASES_URL
+    "apache-releases"         at APACHE_RELEASES_URL,
+    // brotli
+    "bintray-nitram509-jbrotli" at s"${ARTIFACTORY_URL}bintray-nitram509-jbrotli"
     //"jcenter"                 at JCENTER_URL
   )
 }
@@ -156,7 +166,7 @@ excludeFilter in digest := "*.scala"
 
 // sbt-web
 //pipelineStages ++= Seq(digest, filter, gzip)
-pipelineStages ++= Seq(digest, simpleUrlUpdate, digest, filter, gzip)
+pipelineStages ++= Seq(digest, simpleUrlUpdate, digest, filter, gzip, brotli)
 
 excludeFilter in simpleUrlUpdate := "*.map"
 //includeFilter in simpleUrlUpdate := "*.css"
@@ -202,7 +212,9 @@ dockerExposedPorts := Seq(9000, 9443, 9200, 9201, 9300, 9301)
 
 
 // Есть ассеты, которые нет смысла сжимать. Правда, они в /public, но на всякий случай сделаем.
-excludeFilter in gzip := "*.woff" || "*.woff2" || "*.md5" || "*.sha1"
+excludeFilter in gzip := "*.woff" || "*.woff2" || "*.md5" || "*.sha1" || "*.br"
+
+excludeFilter in brotli := "*.woff" || "*.woff2" || "*.md5" || "*.sha1" || "*.gz"
 
 // Дополнительные импорты для twirl-шаблонов.
 TwirlKeys.templateImports ++= Seq(

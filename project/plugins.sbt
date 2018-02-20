@@ -8,13 +8,21 @@ offline := true
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 resolvers ++= Seq(
-  "typesafe-releases"       at "http://ivy2-internal.cbca.ru/artifactory/typesafe-releases"
-  //"typesafe-releases"     at "http://10.0.0.254:8081/artifactory/typesafe-releases"
+  "typesafe-releases"            at "http://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
+  "bintray-nitram509-jbrotli"    at "http://ivy2-internal.cbca.ru/artifactory/bintray-nitram509-jbrotli"
 )
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.1")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.2")
+
+
+libraryDependencies += (
+  "org.meteogroup.jbrotli" % "jbrotli-native-linux-x86-amd64" % "0.5.0"
+)
+
+addSbtPlugin("io.suggest" % "sbt-web-brotli" % "0.5.6-SNAPSHOT")
+
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.3")
 
@@ -37,3 +45,4 @@ addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.10.0+20180202-1141")
 
 addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.9.0-SNAPSHOT")
+

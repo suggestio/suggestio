@@ -199,6 +199,16 @@ object Common {
       */
     val REACT_RESIZABLE = "1.7.5"
 
+    /** Версия pathikrit/better-files для удобной работы с файлами.
+      * @see [[https://github.com/pathikrit/better-files]]
+      */
+    val BETTER_FILES = "3.4.0"
+
+    /** Версия akka-contrib-extra. Вероятно, будет нужна для реактивного i/o из шелла.
+      * @see [[https://github.com/typesafehub/akka-contrib-extra]]
+      */
+    val AKKA_CONTRIB_EXTRA = "4.1.3"
+
   }
 
 

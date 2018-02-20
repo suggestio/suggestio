@@ -38,7 +38,6 @@ class DynImgUtil @Inject() (
   extends MacroLogsImpl
 {
 
-  import LOGGER._
   import mCommonDi._
 
   /** Сколько времени кешировать результат подготовки картинки?
@@ -54,7 +53,7 @@ class DynImgUtil @Inject() (
   private def PREFETCH_ENABLED = true
 
 
-  trace(s"DynImgUtil: ensureCache=$ENSURE_DYN_CACHE_TTL, saveDerivatives=$SAVE_DERIVATIVES_TO_PERMANENT, prefetch=$PREFETCH_ENABLED")
+  //LOGGER.trace(s"DynImgUtil: ensureCache=$ENSURE_DYN_CACHE_TTL, saveDerivatives=$SAVE_DERIVATIVES_TO_PERMANENT, prefetch=$PREFETCH_ENABLED")
 
   /**
    * Враппер для вызова routes.Img.dynImg(). Нужен чтобы навешивать сайд-эффекты и трансформировать результат вызова.
@@ -67,8 +66,9 @@ class DynImgUtil @Inject() (
         ensureLocalImgReady(dargs, cacheResult = true)
       }
         .flatMap(identity)
-        .failed.foreach { ex =>
-          error("Failed to prefetch dyn.image: " + dargs.dynImgId.fileName, ex)
+        .failed
+        .foreach { ex =>
+          LOGGER.error("Failed to prefetch dyn.image: " + dargs.dynImgId.fileName, ex)
         }
     }
     routes.Img.dynImg(dargs)
@@ -114,7 +114,7 @@ class DynImgUtil @Inject() (
         case _ =>
           "Unknown exception during image prefetch"
       }
-      error(logPrefix + msg, ex)
+      LOGGER.error(logPrefix + msg, ex)
     }
     fut
   }
@@ -223,7 +223,7 @@ class DynImgUtil @Inject() (
     op.addImage {
       // Надо конвертить без анимации для всего, кроме GIF. Иначе, будут десятки jpeg'ов на выходе согласно кол-ву фреймов в исходнике.
       var inAccTokes = List.empty[String]
-      if (outFmt !=* MImgFmts.GIF)
+      if (!outFmt.imCoalesceFrames)
         inAccTokes ::= "[0]"
       val absPath = in.getAbsolutePath
       // TODO В целях безопасности, надо in-формат тоже указывать, но формат оригинала может быть неправильный у нас. Надо будет внедрить его, когда всё более-менее стабилизируется.
@@ -261,9 +261,9 @@ class DynImgUtil @Inject() (
       if (LOGGER.underlying.isTraceEnabled()) {
         val logPrefix = s"convert($in=>$out)#${System.currentTimeMillis()}:"
         val tstamp = System.currentTimeMillis() * imOps.hashCode() * in.hashCode()
-        trace(s"$logPrefix [$tstamp] ${cmd.getCommand.iterator().asScala.mkString(" ")} $opStr")
+        LOGGER.trace(s"$logPrefix [$tstamp]\n ${cmd.getCommand.iterator().asScala.mkString(" ")}\n $opStr")
         for (res <- resFut)
-          trace(s"$logPrefix [$tstamp] returned $res, result ${out.length} bytes")
+          LOGGER.trace(s"$logPrefix [$tstamp] returned $res, result ${out.length} bytes")
       }
       resFut
     }

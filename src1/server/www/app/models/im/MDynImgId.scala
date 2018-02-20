@@ -19,7 +19,7 @@ import io.suggest.util.UuidUtil
 /** Контейнер данных для идентификации картинки.
   *
   * @param rowKeyStr Ключ (id узла-картинки).
-  * param dynFormat Динамический формат картинки.
+  * @param dynFormat Динамический формат картинки.
   * @param dynImgOps IM-операции, которые нужно наложить на оригинал с ключом rowKey, чтобы получить
   *                  необходимою картинку.
   */
@@ -27,6 +27,7 @@ case class MDynImgId(
                       rowKeyStr     : String,
                       dynFormat     : MImgFmt,
                       dynImgOps     : Seq[ImOp]         = Nil,
+                      // TODO svgo=()?, compress=(gzip | brotli)?
                     ) {
 
   // TODO Допилить и активировать ассерты правил применения формата изображения.
