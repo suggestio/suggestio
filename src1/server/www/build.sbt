@@ -83,11 +83,6 @@ libraryDependencies ++= {
     exclude("commons-logging", "commons-logging")
     exclude("de.l3s.boilerpipe", "boilerpipe")
   ,
-
-  // jbrotli
-  "org.meteogroup.jbrotli" % "jbrotli" % "0.5.0",
-  "org.meteogroup.jbrotli" % "jbrotli-native-linux-x86-amd64" % "0.5.0",
-
   "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
 
   // jsRevRouter используется специальный escaping:

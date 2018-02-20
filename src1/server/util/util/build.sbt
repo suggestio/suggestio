@@ -36,10 +36,6 @@ libraryDependencies ++= {
     // CompressUtil использует это. И [www] тоже.
     "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
 
-    // akka
-    //"com.typesafe.akka" %% "akka-actor"  % akkaVsn,
-    //"com.typesafe.akka" %% "akka-remote" % akkaVsn,
-
     // TEST
     "org.slf4j" % "slf4j-api" % slf4jVsn % Test,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn % Test,

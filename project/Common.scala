@@ -204,10 +204,18 @@ object Common {
       */
     val BETTER_FILES = "3.4.0"
 
+    /** Используемая в проекте версия akka. */
+    val AKKA = "2.5.+"
+
     /** Версия akka-contrib-extra. Вероятно, будет нужна для реактивного i/o из шелла.
       * @see [[https://github.com/typesafehub/akka-contrib-extra]]
       */
     val AKKA_CONTRIB_EXTRA = "4.1.3"
+
+    /** Версия jBrotli-биндингов.
+      * @see [[https://github.com/MeteoGroup/jbrotli]]
+      */
+    val JBROTLI = "0.5.0"
 
   }
 

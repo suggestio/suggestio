@@ -473,6 +473,13 @@ lazy val esUtil = {
     .dependsOn(util, textUtil)
 }
 
+/** Sio-утиль для brotli. */
+lazy val brotliUtil = {
+  val id = "brotli-util"
+  Project(id = id, base = file(DIR0 + "server/util/" + id))
+    .dependsOn(logsMacro)
+}
+
 /** Текстовая утиль, выносимая из util и других мест. */
 lazy val textUtil = {
   val id = "text-util"
@@ -496,6 +503,7 @@ lazy val www = project
     securesocial,
     esUtil, mgeo, n2, mbill2,
     nodesWww, payWww,
+    brotliUtil,
     textUtil,
     svgUtil, ipgeobase, stat
   )
