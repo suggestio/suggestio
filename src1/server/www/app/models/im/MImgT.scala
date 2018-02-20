@@ -4,6 +4,7 @@ import java.io.FileNotFoundException
 
 import io.suggest.async.StreamsUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.compress.MCompressAlgo
 import io.suggest.di.ICacheApiUtil
 import io.suggest.img.MImgFmt
 import io.suggest.model.img.ImgSzDated
@@ -38,9 +39,10 @@ import scala.concurrent.duration._
 
 object MImgT extends MacroLogsImpl { model =>
 
-  def SIGN_FN       = "sig"
-  def IMG_ID_FN     = "id"
-  def DYN_FORMAT_FN = "df"
+  def SIGN_FN             = "sig"
+  def IMG_ID_FN           = "id"
+  def DYN_FORMAT_FN       = "df"
+  def COMPRESS_ALGO_FN    = "ca"
 
   /** Использовать QSB[UUID] напрямую нельзя, т.к. он выдает не-base64-выхлопы, что вызывает конфликты. */
   def rowKeyB(implicit strB: QueryStringBindable[String]): QueryStringBindable[String] = {
@@ -81,15 +83,17 @@ object MImgT extends MacroLogsImpl { model =>
     import ImOp._
     import QueryStringBindable._
     import io.suggest.img.MImgFmtJvm._
+    import io.suggest.compress.MCompressAlgosJvm._
     mImgTQsb
   }
 
-  // TODO Унести это в MDynImgId?
+  // TODO Унести это в MDynImgId!
   /** routes-биндер для query-string. */
   implicit def mImgTQsb(implicit
-                        strB      : QueryStringBindable[String],
-                        imgFmtB   : QueryStringBindable[MImgFmt],
-                        imOpsOptB : QueryStringBindable[Option[Seq[ImOp]]]
+                        strB              : QueryStringBindable[String],
+                        imgFmtB           : QueryStringBindable[MImgFmt],
+                        imOpsOptB         : QueryStringBindable[Option[Seq[ImOp]]],
+                        compressAlgoOptB  : QueryStringBindable[Option[MCompressAlgo]]
                        ): QueryStringBindable[MImgT] = {
     new QueryStringBindableImpl[MImgT] {
 
@@ -102,19 +106,27 @@ object MImgT extends MacroLogsImpl { model =>
         val keyDotted = k("")
         for {
           // TODO Надо бы возвращать invalid signature при ошибке, а не not found.
-          params2         <- getQsbSigner(key)
+          params2             <- getQsbSigner(key)
             .signedOrNone(keyDotted, params)
-          nodeIdE         <- rowKeyB.bind(k(IMG_ID_FN), params2)
-          dynFormatE      <- imgFmtB.bind(k(DYN_FORMAT_FN), params2)
-          imOpsOptE       <- imOpsOptB.bind(keyDotted, params2)
+          nodeIdE             <- rowKeyB.bind(k(IMG_ID_FN), params2)
+          dynFormatE          <- imgFmtB.bind(k(DYN_FORMAT_FN), params2)
+          imOpsOptE           <- imOpsOptB.bind(keyDotted, params2)
+          compressAlgoOptE    <- compressAlgoOptB.bind(k(COMPRESS_ALGO_FN), params2)
         } yield {
           for {
-            imgId     <- nodeIdE.right
-            dynFormat <- dynFormatE.right
-            imOpsOpt  <- imOpsOptE.right
+            imgId             <- nodeIdE.right
+            dynFormat         <- dynFormatE.right
+            imOpsOpt          <- imOpsOptE.right
+            compressAlgoOpt   <- compressAlgoOptE.right
           } yield {
             val imOps = imOpsOpt.getOrElse(Nil)
-            MImg3( MDynImgId(imgId, dynFormat, imOps) )
+            val dynImgId = MDynImgId(
+              rowKeyStr     = imgId,
+              dynFormat     = dynFormat,
+              dynImgOps     = imOps,
+              compressAlgo  = compressAlgoOpt
+            )
+            MImg3( dynImgId )
           }
         }
       }
@@ -124,7 +136,8 @@ object MImgT extends MacroLogsImpl { model =>
         val unsignedRes = _mergeUnbinded1(
           rowKeyB.unbind  (k(IMG_ID_FN),      value.dynImgId.rowKeyStr),
           imgFmtB.unbind  (k(DYN_FORMAT_FN),  value.dynImgId.dynFormat),
-          imOpsOptB.unbind(s"$key.",          if (value.dynImgId.hasImgOps) Some(value.dynImgId.dynImgOps) else None)
+          imOpsOptB.unbind(s"$key.",          if (value.dynImgId.hasImgOps) Some(value.dynImgId.dynImgOps) else None),
+          compressAlgoOptB.unbind(k(COMPRESS_ALGO_FN), value.dynImgId.compressAlgo)
         )
         getQsbSigner(key)
           .mkSigned(key, unsignedRes)

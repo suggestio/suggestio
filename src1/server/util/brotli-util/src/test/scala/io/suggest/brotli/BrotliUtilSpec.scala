@@ -59,6 +59,8 @@ class BrotliUtilSpec extends FlatSpec {
           dec.deCompress( Array.empty[Byte], decBuf )
           i += 1
         }
+        assert( !dec.needsMoreInput() )
+        assert( !dec.needsMoreOutput() )
       } finally {
         dec.close()
       }

@@ -4,6 +4,7 @@ import java.util.UUID
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
+import io.suggest.compress.MCompressAlgo
 import io.suggest.img.crop.MCrop
 import io.suggest.img.MImgFmt
 import io.suggest.util.UuidUtil
@@ -22,11 +23,14 @@ import io.suggest.util.UuidUtil
   * @param dynFormat Динамический формат картинки.
   * @param dynImgOps IM-операции, которые нужно наложить на оригинал с ключом rowKey, чтобы получить
   *                  необходимою картинку.
+  * @param compressAlgo Опциональный финальный алгоритм сжатия.
+  *                     Нужен для сборки SVG, пожатых через brotli или иным алгоритмом.
   */
 case class MDynImgId(
                       rowKeyStr     : String,
                       dynFormat     : MImgFmt,
                       dynImgOps     : Seq[ImOp]         = Nil,
+                      compressAlgo  : Option[MCompressAlgo] = None
                       // TODO svgo=()?, compress=(gzip | brotli)?
                     ) {
 
