@@ -92,7 +92,7 @@ class SearchAh[M](
     case ResetTags =>
       val v0 = value
 
-      val tagsVisible = v0.isTagsVisible
+      val tagsVisible = v0.isShownTab( MSearchTabs.Tags )
       // Требуется ли сразу перезагружать список тегов? Да, если открыта search-панель и вкладка тегов -- текущая.
       val needFxOpt = OptionUtil.maybe( tagsVisible ) {
         Effect.action( GetMoreTags(clear = true) )

@@ -2,14 +2,15 @@ package io.suggest.sc.c
 
 import diode._
 import io.suggest.common.empty.OptionUtil
+import io.suggest.geo.MGeoPoint
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.GetRouterCtlF
 import io.suggest.sc.m._
 import io.suggest.sc.m.Sc3Pages.MainScreen
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.hdr.HSearchBtnClick
-import io.suggest.sc.m.inx.{GetIndex, WcTimeOut}
-import io.suggest.sc.m.search.{SwitchTab, TagClick}
+import io.suggest.sc.m.inx.{GetIndex, MScIndex, WcTimeOut}
+import io.suggest.sc.m.search.{MSearchTabs, SwitchTab, TagClick}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import japgolly.univeq._
@@ -102,14 +103,7 @@ class TailAh[M](
       // Смотрим координаты текущей точки.
       for (currGeoPoint <- m.mainScreen.locEnv) {
         needUpdateUi = true
-        inx = inx.withSearch(
-          inx.search.withMapInit(
-            inx.search.mapInit.withState(
-              inx.search.mapInit.state
-                .withCenterInitReal( currGeoPoint )
-            )
-          )
-        )
+        inx = withMapCenter(currGeoPoint, inx)
       }
 
       // Смотрим текущий выделенный тег
@@ -129,6 +123,8 @@ class TailAh[M](
         val fxOpt = fxsAcc.mergeEffectsSet
         ah.updatedSilentMaybeEffect(v2, fxOpt)
 
+        // TODO Если новое состояние условно "пустое" (без rcvrId или координат), то запустить геолокацию, можно даже без таймера (поддерживается?), а просто запустить.
+        // TODO Иначе - остановить геолокацию, если она запущена сейчас -- т.к. состояние "непустое".
       } else if (nodeIndexNeedsReload) {
         // Целиковая перезагрузка выдачи.
         fxsAcc ::= getIndexFx
@@ -158,44 +154,60 @@ class TailAh[M](
     case m: GlPubSignal =>
       val v0 = value
 
+      // Сейчас ожидаем максимально точных координат?
       v0.internals.geoLockTimer.fold {
-        // Уже не ждём геолокации.
-        noChange
-      } { timerId =>
-        // Отменить и забыть таймер GeoLocTimeOut
-        DomQuick.clearTimeout(timerId)
-        val v1 = _removeTimer(v0)
-
-        val fxs = getIndexFx + geoOffFx
-        m.orig match {
-          // Получены координаты. Сохранить геолокацию в общее состояние.
-          case loc: GlLocation =>
-            val v2 = v1.withIndex(
-              v1.index.withSearch(
-                v1.index.search.withMapInit(
-                  v1.index.search.mapInit.withState(
-                    v1.index.search.mapInit.state.withCenterInitReal(
-                      loc.location.point
-                    )
-                  )
-                )
-              )
-            )
-            // Запустить получение индекса с новыми координатами.
-            updatedSilent(v2, fxs)
-
-          // Ошибка геолокации. Не ждать завершения геолокации.
-          case _ =>
-            effectOnly(fxs)
+        // Сейчас не ожидаются координаты. Просто сохранить координаты в состояние карты.
+        m.orig.locationOpt.fold( noChange ) { geoLoc =>
+          val v2 = withMapCenter(geoLoc.point, v0)
+          val isMapOpened = v0.index.search.isShownTab(MSearchTabs.GeoMap)
+          val isSilentUpdate = !isMapOpened
+          ah.updateMaybeSilent(isSilentUpdate)(v2)
         }
+
+      } { geoLockTimerId =>
+        // Прямо сейчас этот контроллер ожидает координаты.
+        // Функция общего кода завершения ожидания координат: запустить выдачу, выключить geo loc, грохнуть таймер.
+        def __finished(v00: MScRoot) = {
+          val fxs = getIndexFx + geoOffFx
+          DomQuick.clearTimeout(geoLockTimerId)
+          val v22 = _removeTimer(v00)
+          updatedSilent(v22, fxs)
+        }
+
+        // Ожидаются координаты геолокации прямо сейчас.
+        m.orig.either.fold(
+          // Ожидаются координаты, но пришла ошибка. Можно ещё подождать, но пока считаем, что это конец.
+          // Скорее всего, юзер отменил геолокацию или что-то ещё хуже.
+          {_ =>
+            __finished(v0)
+          },
+          // Есть какие-то координаты, но не факт, что ожидаемо точные.
+          {geoLoc =>
+            // Т.к. работает suppressor, то координаты можно всегда записывать в состояние, не боясь постороннего "шума".
+            val v1 = withMapCenter(geoLoc.point, v0)
+
+            if (m.orig.glType.highAccuracy) {
+              // Пришли точные координаты. Завершаем ожидание.
+              __finished(v1)
+            } else {
+              // Пока получены не точные координаты. Надо ещё подождать координат по-точнее...
+              updatedSilent(v1)
+            }
+          }
+        )
       }
 
 
     // Наступил таймаут ожидания геолокации. Нужно активировать инициализацию в имеющемся состоянии
     case GeoLocTimeOut =>
-      // Удалить из состояния таймер геолокации.
-      val v2 = _removeTimer()
-      updatedSilent(v2, getIndexFx + geoOffFx)
+      val v0 = value
+      v0.internals.geoLockTimer.fold {
+        noChange
+      } { _ =>
+        // Удалить из состояния таймер геолокации, запустить выдачу.
+        val v2 = _removeTimer(v0)
+        updatedSilent(v2, getIndexFx + geoOffFx)
+      }
 
     // Если юзер активно тыкал пальцем по экрану, то таймер сокрытия мог сработать после окончания приветствия.
     case _: WcTimeOut =>
@@ -212,5 +224,22 @@ class TailAh[M](
   private def getIndexFx = Effect.action( GetIndex(withWelcome = true ) )
 
   private def geoOffFx = Effect.action( GeoLocOnOff(enabled = false) )
+
+  private def withMapCenter(center: MGeoPoint, v1: MScRoot = value): MScRoot = {
+    v1.withIndex(
+      withMapCenter(center, v1.index)
+    )
+  }
+  private def withMapCenter(center: MGeoPoint, inx: MScIndex): MScIndex = {
+    inx.withSearch(
+      inx.search.withMapInit(
+        inx.search.mapInit.withState(
+          inx.search.mapInit.state.withCenterInitReal(
+            center
+          )
+        )
+      )
+    )
+  }
 
 }

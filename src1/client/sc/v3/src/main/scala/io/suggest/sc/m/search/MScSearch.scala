@@ -2,7 +2,6 @@ package io.suggest.sc.m.search
 
 import diode.FastEq
 import io.suggest.common.empty.OptionUtil
-import io.suggest.geo.MGeoLoc
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 
@@ -70,9 +69,8 @@ case class MScSearch(
     withTags( MTagsSearchS.empty )
   }
 
-
-  def isTagsVisible: Boolean = {
-    isShown && currTab ==* MSearchTabs.Tags
+  def isShownTab(tab: MSearchTab): Boolean = {
+    isShown && currTab ==* tab
   }
 
 }

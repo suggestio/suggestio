@@ -2,12 +2,12 @@ package io.suggest.sc.c.inx
 
 import diode._
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.react.ReactDiodeUtil.{ActionHandlerExt, PotOpsExt, EffectsOps}
+import io.suggest.react.ReactDiodeUtil.{ActionHandlerExt, EffectsOps, PotOpsExt}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx.{GetIndex, HandleIndexResp, MScIndex, MWelcomeState}
-import io.suggest.sc.m.search.{GetMoreTags, MScSearch, MapReIndex}
+import io.suggest.sc.m.search.{GetMoreTags, MScSearch, MSearchTabs, MapReIndex}
 import io.suggest.sc.m.{MScRoot, ResetUrlRoute}
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -189,7 +189,7 @@ class IndexAh[M](
               var fxsAcc = List.empty[Effect]
 
               // Если вкладка с тегами видна, то запустить получение тегов в фоне.
-              if (v1.search.isTagsVisible) {
+              if ( v1.search.isShownTab(MSearchTabs.Tags) ) {
                 fxsAcc ::= Effect.action {
                   GetMoreTags(clear = true)
                 }

@@ -196,12 +196,17 @@ class GeoLocAh[M](
             noChange
           } { geoApi =>
             // Запустить мониторинг геолокации.
-            val needWatchers = GeoLocTypes.all
+            val needWatchers = if (m.onlyTypes.isEmpty)
+              GeoLocTypes.all
+            else
+              m.onlyTypes
 
-            val watchers2 = needWatchers.startWatchers(geoApi).toMap
+            val watchers2 = needWatchers
+              .startWatchers(geoApi)
+              .toMap
             // Сохранить новых watcher'ов в состояние.
             val v2 = v0.withWatchers(
-              watchers2
+              v0.watchers ++ watchers2
             )
             updatedSilent(v2)
           }
@@ -211,8 +216,12 @@ class GeoLocAh[M](
           for (s <- v0.suppressor)
             DomQuick.clearTimeout(s.timerId)
 
+          // TODO Нужна поддержка частичной остановки watcher'ов. Пока assert для защиты от ошибочного использования нереализованной частичной остановки.
+          assert( m.onlyTypes.isEmpty )
+
           val v2 = v0.copy(
             watchers = v0.watchers
+              .iterator
               .clearWatchers()
               .toMap,
             // Убрать suppressor, если активен.

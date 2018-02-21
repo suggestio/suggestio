@@ -84,6 +84,7 @@ class JsRouterInitAh[M <: AnyRef](
         val v2 = v0.withGeoLockTimer( Some(tp.timerId) )
         val timeoutFx = Effect( tp.fut )
 
+        // Эффект запуска всех доступных вариантов геолокации.
         val geoLocEnableFx = Effect.action( GeoLocOnOff(enabled = true) )
 
         // Склеить все эффекты и обновить состояние.

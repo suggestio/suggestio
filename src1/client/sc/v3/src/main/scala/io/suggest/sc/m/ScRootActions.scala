@@ -35,17 +35,36 @@ case object ScreenReset extends IScRootAction
 case object ScreenRszTimer extends IScRootAction
 
 
-/** Управление подсистемой */
-case class GeoLocOnOff(enabled: Boolean) extends IScRootAction
+/** Управление подсистемой геолокации в режиме вкл/выкл.
+  *
+  * @param enabled Включена?
+  * @param onlyTypes изменение касается только указанных типов. [] эквивалентен GeoLocTypes.all
+  */
+case class GeoLocOnOff(enabled: Boolean, onlyTypes: Traversable[GeoLocType] = Nil) extends IScRootAction
 
 
-/** Marker-trait только для [[GlLocation]] и [[GlError]]. */
-sealed trait IGeoLocSignal extends IScRootAction
+/** trait только для [[GlLocation]] и [[GlError]]. */
+sealed trait IGeoLocSignal extends IScRootAction {
+  def glType: GeoLocType
+  def isSuccess: Boolean
+  final def isError: Boolean = !isSuccess
+  def locationOpt: Option[MGeoLoc] = None
+  def errorOpt: Option[PositionException] = None
+  def either: Either[PositionException, MGeoLoc]
+}
 
 /** Есть координаты. */
-case class GlLocation(glType: GeoLocType, location: MGeoLoc) extends IGeoLocSignal
+case class GlLocation(override val glType: GeoLocType, location: MGeoLoc) extends IGeoLocSignal {
+  override def isSuccess = true
+  override def locationOpt = Some(location)
+  override def either = Right(location)
+}
 /** Ошибка получения координат. */
-case class GlError(glType: GeoLocType, error: PositionException) extends IGeoLocSignal
+case class GlError(override val glType: GeoLocType, error: PositionException) extends IGeoLocSignal {
+  override def isSuccess = false
+  override def errorOpt = Some(error)
+  override def either = Left(error)
+}
 
 /** Сигнал о наступлении геолокации (или ошибке оной) для ожидающего геолокацию. */
 case class GlPubSignal( orig: IGeoLocSignal ) extends IScRootAction
