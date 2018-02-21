@@ -8,6 +8,7 @@ import io.suggest.init.routed.MJsiTgs
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MAdnExtra
+import io.suggest.model.n2.media.MMediasCache
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo, MMeta}
@@ -50,6 +51,7 @@ class MarketLkAdnEdit @Inject() (
                                   galleryUtil                     : GalleryUtil,
                                   imgFormUtil                     : ImgFormUtil,
                                   bruteForceProtect               : BruteForceProtect,
+                                  mMediasCache                    : MMediasCache,
                                   isNodeAdmin                     : IsNodeAdmin,
                                   isAuth                          : IsAuth,
                                   override val mCommonDi          : ICommonDi
@@ -287,8 +289,26 @@ class MarketLkAdnEdit @Inject() (
           // В фоне обновляем картинку карточки-приветствия.
           val waFgEdgeOptFut = welcomeUtil.updateWcFgImg(mnode, fmr.waImgOpt)
           trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.dynImgId.fileName)}")
+
           // В фоне обновляем логотип узла
-          val savedLogoFut = logoUtil.updateLogoFor(mnode, fmr.logoOpt)
+          val savedLogoFut = for {
+            // Нужно выяснить формат логотипа, сохранить его в logoOpt
+            mmediaOpt     <- mMediasCache.maybeGetByIdCached( fmr.logoOpt.map(_.original.mediaId) )
+            logoOpt2 = for {
+              logo        <- fmr.logoOpt
+              mmedia      <- mmediaOpt
+              origImgFmt  <- mmedia.file.imgFormatOpt
+            } yield {
+              logo.withDynImgId(
+                logo.dynImgId.withDynFormat( origImgFmt )
+              )
+            }
+            // Сохранить новый лого
+            logoSavedOpt2 <- logoUtil.updateLogoFor(mnode, logoOpt2)
+          } yield {
+            logoSavedOpt2
+          }
+
           // Запускаем апдейт галереи.
           val galleryUpdFut = galleryUtil.updateGallery(
             newGallery = fmr.gallery,

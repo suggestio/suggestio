@@ -314,6 +314,8 @@ trait MImgsT
   * на N2 с MMedia, сохраняя совместимость, поэтому MImg слегка разделилась на куски. */
 abstract class MImgT extends MAnyImgT {
 
+  override def withDynImgId(dynImgId: MDynImgId): MImgT
+
   /** id в рамках модели MMedia. */
   def mediaId: String
 
