@@ -29,9 +29,9 @@ import io.suggest.util.UuidUtil
 case class MDynImgId(
                       rowKeyStr     : String,
                       dynFormat     : MImgFmt,
-                      dynImgOps     : Seq[ImOp]         = Nil,
+                      dynImgOps     : Seq[ImOp]             = Nil,
                       compressAlgo  : Option[MCompressAlgo] = None
-                      // TODO svgo=()?, compress=(gzip | brotli)?
+                      // TODO svgo=()?
                     ) {
 
   // TODO Допилить и активировать ассерты правил применения формата изображения.
@@ -73,6 +73,10 @@ case class MDynImgId(
     }
     sb.append( '.' )
       .append( dynFormat.fileExt )
+    for (algo <- compressAlgo) {
+      sb.append('.')
+        .append(algo.fileExtension)
+    }
     sb
   }
 
@@ -94,12 +98,14 @@ case class MDynImgId(
     * Сейчас используется тоже в качестве id, либо части id.
     */
   def qOpt: Option[String] = {
+    // TODO XXX dynFormat, compressAlgo
     OptionUtil.maybe(hasImgOps)(dynImgOpsString)
   }
 
 
   // Быдлокод скопирован из MImgT.
   def dynImgOpsStringSb(sb: StringBuilder = ImOp.unbindSbDflt): StringBuilder = {
+    // TODO XXX dynFormat, compressAlgo
     ImOp.unbindImOpsSb(
       keyDotted     = "",
       value         = dynImgOps,

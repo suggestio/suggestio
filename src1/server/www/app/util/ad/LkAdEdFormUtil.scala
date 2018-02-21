@@ -25,16 +25,14 @@ import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo, MMeta}
-import io.suggest.pick.MimeConst
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
-import io.suggest.svg.SvgUtil
 import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.text.StringUtil.StringCollUtil
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.vid.ext.VideoExtUrlParsers
 import japgolly.univeq._
 import models.blk.ed.{AdFormM, AdFormResult, BindResult}
-import models.im.{MDynImgId, MImg3}
+import models.im.MImg3
 import models.mctx.Context
 import play.api.data.Forms._
 import play.api.data._
@@ -355,8 +353,7 @@ class LkAdEdFormUtil
       minSizeB      = 256,
       maxSizeB      = IMG_UPLOAD_MAXLEN_BYTES,
       mimeVerifierF = { mimeType =>
-        MImgFmts.withMime(mimeType).nonEmpty ||
-          SvgUtil.maybeSvgMime(mimeType) // TODO Надо ли это? там text/* какой-то допускается даже.
+        MImgFmts.withMime(mimeType).nonEmpty
       },
       mustHashes    = UploadConstants.CleverUp.PICTURE_FILE_HASHES
     )

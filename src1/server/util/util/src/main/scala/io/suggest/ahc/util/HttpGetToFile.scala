@@ -3,7 +3,7 @@ package io.suggest.ahc.util
 import java.io.File
 import javax.inject.{Inject, Singleton}
 
-import io.suggest.async.StreamsUtil
+import io.suggest.streams.StreamsUtil
 import play.api.http.HttpVerbs
 import play.api.libs.ws.{WSClient, WSResponse}
 

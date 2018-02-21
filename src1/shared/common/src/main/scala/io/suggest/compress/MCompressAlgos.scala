@@ -13,12 +13,20 @@ import play.api.libs.json.Format
   */
 object MCompressAlgos extends StringEnum[MCompressAlgo] {
 
+  /** GZIP - дефакто, стандарт всего интернета.
+    * Быстрый, но менее эффективный, по сравнению с brotli.
+    */
+  case object Gzip extends MCompressAlgo("g") {
+    override def httpContentEncoding = "gzip"
+  }
+
   /** Алгоритм сжатия brotli.
     * Поддерживается браузерами с 2016-2017 годов.
     * На стороне сервера реализован через sbt-web-brotli и brotli-util.
     */
-  case object Brotli extends MCompressAlgo("b")
-
+  case object Brotli extends MCompressAlgo("b") {
+    override def httpContentEncoding = "br"
+  }
 
   override val values = findValues
 
@@ -26,7 +34,18 @@ object MCompressAlgos extends StringEnum[MCompressAlgo] {
 
 
 /** Класс одного элемента модели алгоритмов сжатия. */
-sealed abstract class MCompressAlgo(override val value: String) extends StringEnumEntry
+sealed abstract class MCompressAlgo(override val value: String) extends StringEnumEntry {
+
+  /** Значение HTTP-заголовка кодировки контента. */
+  def httpContentEncoding: String
+
+  /** Суффикс имени файла (без точки). */
+  def fileExtension: String = httpContentEncoding
+
+  // Чтобы два раза не хранить почти одинаковые строки, переопределяем toString.
+  override final def toString = httpContentEncoding
+
+}
 
 
 object MCompressAlgo {

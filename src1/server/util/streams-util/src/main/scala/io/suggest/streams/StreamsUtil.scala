@@ -1,12 +1,12 @@
-package io.suggest.async
+package io.suggest.streams
 
 import java.io.{File, FileOutputStream}
+import javax.inject.Inject
 
 import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import javax.inject.Inject
 import io.suggest.util.logs.IMacroLogs
 import org.reactivestreams.Publisher
 import play.api.libs.json.{JsNull, JsValue, Json}

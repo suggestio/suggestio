@@ -2,7 +2,6 @@ package models.im
 
 import java.io.FileNotFoundException
 
-import io.suggest.async.StreamsUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.compress.MCompressAlgo
 import io.suggest.di.ICacheApiUtil
@@ -14,6 +13,7 @@ import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.TypeT
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretGetter
+import io.suggest.streams.StreamsUtil
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import models.mproj.IMCommonDi

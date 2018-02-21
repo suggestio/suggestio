@@ -2,7 +2,7 @@ package io.suggest.swfs.client.play
 
 import java.io.File
 
-import io.suggest.async.StreamsUtil
+import io.suggest.streams.StreamsUtil
 import io.suggest.swfs.client.proto.delete.DeleteRequest
 import io.suggest.swfs.client.proto.get.GetRequest
 import io.suggest.swfs.client.proto.lookup.LookupRequest

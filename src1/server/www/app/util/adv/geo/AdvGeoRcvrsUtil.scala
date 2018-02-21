@@ -5,7 +5,6 @@ import javax.inject.Inject
 import io.suggest.adn.MAdnRights
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.rcvr.RcvrKey
-import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MGeoNodesResp, MMapNodeIconInfo}
@@ -13,6 +12,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.{DevPixelRatios, MAnyImgs, MImgT}
 import models.mctx.Context

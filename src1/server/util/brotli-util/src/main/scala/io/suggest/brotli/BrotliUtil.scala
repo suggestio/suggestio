@@ -5,6 +5,7 @@ import akka.stream._
 import akka.stream.scaladsl.Flow
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.util.ByteString
+import io.suggest.streams.ByteStringsChunker
 import org.meteogroup.jbrotli.{Brotli, BrotliStreamCompressor}
 import org.meteogroup.jbrotli.libloader.BrotliLibraryLoader
 
@@ -26,7 +27,7 @@ object BrotliUtil {
     Flow[ByteString]
       // Входная байт-строка может быть любого размера, а компрессор сжирает не более maxChunkSize за раз.
       // Нужно нарезать строку на подстроки, не превышающие максимальную длину:
-      .via( new Chunker( streamCompressor.getMaxInputBufferSize ) )
+      .via( new ByteStringsChunker( streamCompressor.getMaxInputBufferSize ) )
       // Каждую строку запихнуть в компрессор. Компрессор закрыть по завершении.
       .via( new BrotliCompressFlow(streamCompressor) )
   }
@@ -86,55 +87,4 @@ protected class BrotliCompressFlow(streamCompressor: BrotliStreamCompressor) ext
   }
 
 }
-
-
-// TODO Унести это в какой-нибудь пакет steams-util.
-/** ByteString chunker.
-  * @see [[https://doc.akka.io/docs/akka/2.5.8/stream/stream-cookbook.html?language=scala#chunking-up-a-stream-of-bytestrings-into-limited-size-bytestrings]]
-  */
-class Chunker(val chunkSize: Int) extends GraphStage[FlowShape[ByteString, ByteString]] {
-  val in = Inlet[ByteString]("Chunker.in")
-  val out = Outlet[ByteString]("Chunker.out")
-
-  override val shape = FlowShape.of(in, out)
-
-  override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = new GraphStageLogic(shape) {
-    private var buffer = ByteString.empty
-
-    setHandler(out, new OutHandler {
-      override def onPull(): Unit = {
-        if (isClosed(in)) emitChunk()
-        else pull(in)
-      }
-    })
-
-    setHandler(in, new InHandler {
-      override def onPush(): Unit = {
-        val elem = grab(in)
-        buffer ++= elem
-        emitChunk()
-      }
-
-      override def onUpstreamFinish(): Unit = {
-        if (buffer.isEmpty) completeStage()
-        // elements left in buffer, keep accepting downstream pulls
-        // and push from buffer until buffer is emitted
-      }
-    })
-
-    private def emitChunk(): Unit = {
-      if (buffer.isEmpty) {
-        if (isClosed(in)) completeStage()
-        else pull(in)
-      } else {
-        val (chunk, nextBuffer) = buffer.splitAt(chunkSize)
-        buffer = nextBuffer
-        push(out, chunk)
-      }
-    }
-
-  }
-}
-
-
 

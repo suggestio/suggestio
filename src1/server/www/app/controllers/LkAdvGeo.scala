@@ -7,7 +7,6 @@ import javax.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.adv.geo._
 import io.suggest.adv.rcvr._
-import io.suggest.async.StreamsUtil
 import io.suggest.bill.MGetPriceResp
 import io.suggest.bin.ConvCodecs
 import io.suggest.common.tags.edit.MTagsEditProps
@@ -42,6 +41,7 @@ import util.sec.CspUtil
 import util.tags.TagsEditFormUtil
 import views.html.lk.adv.geo._
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import io.suggest.streams.StreamsUtil
 
 import scala.concurrent.Future
 

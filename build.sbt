@@ -58,7 +58,7 @@ lazy val commonJS = common.js.settings(
 /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
 lazy val util = project
   .in( file(DIR0 + "server/util/util") )
-  .dependsOn(commonJVM, logsMacro, srvTestUtil % Test)
+  .dependsOn(commonJVM, logsMacro, streamsUtil, srvTestUtil % Test)
 
 /** Кое-какие общие вещи для js. */
 lazy val commonSjs = {
@@ -144,7 +144,7 @@ lazy val logsMacro = {
 /** Поддержка seaweedfs */
 lazy val swfs = project
   .in( file(DIR0 + "server/media/swfs") )
-  .dependsOn(util)
+  .dependsOn(util, streamsUtil % Test)
 
 /** Поддержка моделей n2. */
 lazy val n2 = project
@@ -473,11 +473,17 @@ lazy val esUtil = {
     .dependsOn(util, textUtil)
 }
 
+lazy val streamsUtil = {
+  val id = "streams-util"
+  Project(id = id, base = file(DIR0 + "server/util/" + id))
+    .dependsOn(logsMacro, commonJVM)
+}
+
 /** Sio-утиль для brotli. */
 lazy val brotliUtil = {
   val id = "brotli-util"
   Project(id = id, base = file(DIR0 + "server/util/" + id))
-    .dependsOn(logsMacro)
+    .dependsOn(streamsUtil)
 }
 
 /** Текстовая утиль, выносимая из util и других мест. */
@@ -503,7 +509,7 @@ lazy val www = project
     securesocial,
     esUtil, mgeo, n2, mbill2,
     nodesWww, payWww,
-    brotliUtil,
+    streamsUtil, brotliUtil,
     textUtil,
     svgUtil, ipgeobase, stat
   )
@@ -563,6 +569,7 @@ lazy val sio2 = {
       reactGridLayoutSjs, reactStoneCutterSjs, gridSjs, reactSidebar,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
       lkAdEditorSjs,
+      streamsUtil, brotliUtil,
       asmCryptoJsSjs, asmCryptoSioSjs,
       util, esUtil, textUtil, swfs, n2, securesocial,
       ipgeobase, stat,

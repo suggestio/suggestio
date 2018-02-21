@@ -357,7 +357,12 @@ class MarketLkAdnEdit @Inject() (
         for (newLogo <- newLogoOpt) {
           val logoEdge = MEdge(
             predicate = Logo,
-            nodeIds   = Set(newLogo.dynImgId.rowKeyStr)
+            nodeIds   = Set(newLogo.dynImgId.rowKeyStr),
+            info = MEdgeInfo(
+              dynImgArgs = Some(MEdgeDynImgArgs(
+                dynFormat = newLogo.dynImgId.dynFormat
+              ))
+            )
           )
           edgesIter ++= Iterator.single(logoEdge)
         }
