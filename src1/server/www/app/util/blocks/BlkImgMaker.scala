@@ -3,10 +3,10 @@ package util.blocks
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
-import io.suggest.util.logs.MacroLogsImpl
 import models.blk.{SzMult_t, szMulted}
 import models.im._
-import models.im.make.{MImgMakeArgs, IImgMaker, MakeResult}
+import models.im.make.{IImgMaker, MImgMakeArgs, MakeResult}
+import util.img.ImgMakerUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -21,10 +21,10 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class BlkImgMaker @Inject() (
-                              implicit private val ec: ExecutionContext
+                              imgMakerUtil              : ImgMakerUtil,
+                              implicit private val ec   : ExecutionContext
                             )
   extends IImgMaker
-  with MacroLogsImpl
 {
 
 
@@ -43,39 +43,6 @@ class BlkImgMaker @Inject() (
   }
 
 
-  /** Этот движок внутри работает синхронно. Его синхронный код вынесен сюда. */
-  private def icompileSync(args: MImgMakeArgs): MakeResult = {
-    val pxRatio = DevPixelRatios.pxRatioDefaulted( args.devScreenOpt.flatMap(_.pixelRatioOpt) )
-
-    // Компрессия выходной картинки, желательно как fg её сжимать.
-    val fgc = args.compressMode
-      .getOrElse(CompressModes.Fg)
-      .fromDpr(pxRatio)
-
-    val szReal = getRenderSz(args.szMult, args.blockMeta, pxRatio)
-
-    // Настройки сохранения результирующей картинки (аккамулятор).
-    val imOpsAcc = List(
-      ImGravities.Center,
-      AbsResizeOp(szReal, ImResizeFlags.FillArea),
-      ExtentOp(szReal),
-      ImFilters.Lanczos,
-      StripOp,
-      ImInterlaces.Plane,
-      fgc.chromaSubSampling,
-      fgc.imQualityOp
-    )
-
-    // Генерим финальную ссыль на картинку с учетом возможного кропа или иных исходных трансформаций:
-    val dargs = args.img.withDynOps(args.img.dynImgId.dynImgOps ++ imOpsAcc)
-    MakeResult(
-      szCss       = MSize2di(args.blockMeta),
-      szReal      = szReal,
-      dynCallArgs = dargs,
-      isWide      = false
-    )
-  }
-
   /**
    * img compile - собрать ссылку на изображение и сопутствующие метаданные.
    * @param args Контейнер с данными для вызова.
@@ -83,8 +50,42 @@ class BlkImgMaker @Inject() (
    */
   override def icompile(args: MImgMakeArgs): Future[MakeResult] = {
     // Раз системе надо асинхронно, значит делаем асинхронно в принудительном порядке:
-    Future {
-      icompileSync(args)
+    val pxRatio = DevPixelRatios.pxRatioDefaulted( args.devScreenOpt.flatMap(_.pixelRatioOpt) )
+
+    // Компрессия выходной картинки, желательно как fg её сжимать.
+    val fgc = args.compressMode
+      .getOrElse(CompressModes.Fg)
+      .fromDpr(pxRatio)
+
+    val origImgId = args.img.dynImgId.original
+    if (origImgId.dynFormat.isRaster) {
+      val szReal = getRenderSz(args.szMult, args.blockMeta, pxRatio)
+
+      // Это jpeg/png/gif и т.д. Прогнать через convert.
+      // Настройки сохранения результирующей картинки (аккамулятор).
+      val imOpsAcc = List[ImOp](
+        ImGravities.Center,
+        AbsResizeOp(szReal, ImResizeFlags.FillArea),
+        ExtentOp(szReal),
+        ImFilters.Lanczos,
+        StripOp,
+        ImInterlaces.Plane,
+        fgc.chromaSubSampling,
+        fgc.imQualityOp
+      )
+
+      val mr = MakeResult(
+        szCss       = MSize2di(args.blockMeta),
+        szReal      = szReal,
+        // Генерим финальную ссыль на картинку с учетом возможного кропа или иных исходных трансформаций:
+        dynCallArgs = args.img.withDynOps(args.img.dynImgId.dynImgOps ++ imOpsAcc),
+        isWide      = false
+      )
+      Future.successful(mr)
+
+    } else {
+      // Это SVG, а convert на выходе выдаёт растр. Надо кропать прямо на клиенте, а не здесь.
+      imgMakerUtil.returnImg(origImgId)
     }
   }
 

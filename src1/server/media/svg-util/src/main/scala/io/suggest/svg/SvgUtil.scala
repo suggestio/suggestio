@@ -2,12 +2,13 @@ package io.suggest.svg
 
 import java.io.{File, FileInputStream, InputStream}
 
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.util.logs.MacroLogsImpl
 import org.apache.batik.anim.dom.SAXSVGDocumentFactory
 import org.apache.batik.bridge.{BridgeContext, DocumentLoader, GVTBuilder, UserAgentAdapter}
 import org.apache.batik.gvt.GraphicsNode
 import org.apache.batik.util.XMLResourceDescriptor
-import org.w3c.dom.Document
+import org.w3c.dom.{Document, Node}
 
 import scala.util.Try
 
@@ -121,6 +122,30 @@ object SvgUtil extends MacroLogsImpl {
     }
   }
 
+
+  /** Попытаться прочитать из полей документа данные о фактическом размере картинки.
+    *
+    * @param doc Документ.
+    * @return Размер, если задан.
+    */
+  def getDocWh(doc: Document): Option[MSize2di] = {
+    Try {
+      for {
+        svgRoot     <- Option( doc.getFirstChild )
+        attrs       <- Option( svgRoot.getAttributes )
+        widthAv     <- Option( attrs.getNamedItem("width") )
+        heightAv    <- Option( attrs.getNamedItem("height") )
+      } yield {
+        def __parseAv(av: Node) = Math.round( av.getNodeValue.toDouble ).toInt
+        MSize2di(
+          width  = __parseAv(widthAv),
+          height = __parseAv(heightAv)
+        )
+      }
+    }
+      .toOption
+      .flatten
+  }
 
   /**
    * Может ли указанные mime-тип быть svg? Это нужно для исправления JMimeMagic.

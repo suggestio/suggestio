@@ -9,7 +9,7 @@ import io.suggest.file.MSrvFileInfo
 import io.suggest.jd.{MJdAdData, MJdEdge}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.JdTag.Implicits._
-import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.model.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.media.{MFileMetaHash, MMedia, MMediasCache}
 import io.suggest.model.n2.node.{MNode, MNodesCache}
 import io.suggest.url.MHostInfo
@@ -314,6 +314,16 @@ class JdAdUtil @Inject()(
       ie
     }
 
+    lazy val imgsEdgesMap = {
+      val iter = for {
+        edgeAndImg <- imgsEdges.iterator
+        edgeUid <- edgeAndImg._1.doc.uid
+      } yield {
+        edgeUid -> edgeAndImg
+      }
+      iter.toMap
+    }
+
     // Собрать связанные инстансы MMedia
     lazy val imgOrigsMediasMapFut = prepareImgMedias( imgsEdges )
 
@@ -485,15 +495,28 @@ class JdAdUtil @Inject()(
 
       override def finalTpl: Tree[JdTag] = {
         val tpl0 = super.finalTpl
-        // Удалить все crop'ы из содержимого, т.к. все картинки уже подогнаны под карточку.
+        // Удалить все crop'ы из растровых картинок, у которых задан кроп. Все растровые картинки должны бы быть уже подогнаны под карточку.
         for (jdTag <- tpl0) yield {
-          jdTag.withProps1(
-            jdTag.props1.withBgImg(
-              for (bgImg <- jdTag.props1.bgImg) yield {
-                bgImg.withCrop(None)
-              }
+          val jdTagOpt2 = for {
+            // Интересуют только теги с фоновой картинкой
+            bgImg <- jdTag.props1.bgImg
+            if bgImg.crop.nonEmpty
+            // Для которых известен эдж
+            edgeAndImg <- imgsEdgesMap.get( bgImg.imgEdge.edgeUid )
+            // И там растровая картинка задана:
+            if edgeAndImg._2.dynImgId.dynFormat.isRaster
+          } yield {
+            // Пересобрать тег без crop'а в bgImg:
+            jdTag.withProps1(
+              jdTag.props1.withBgImg(
+                Some(
+                  bgImg.withCrop(None)
+                )
+              )
             )
-          )
+          }
+          // Если ничего не пересобрано, значит текущий тег не требуется обновлять. Вернуть исходный jd-тег:
+          jdTagOpt2.getOrElse( jdTag )
         }
       }
 

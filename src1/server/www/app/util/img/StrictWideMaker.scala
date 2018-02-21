@@ -30,7 +30,8 @@ import scala.concurrent.Future
  */
 @Singleton
 class StrictWideMaker @Inject() (
-                                  mCommonDi: ICommonDi
+                                  imgMakerUtil  : ImgMakerUtil,
+                                  mCommonDi     : ICommonDi
                                 )
   extends IImgMaker
     with MacroLogsImplLazy
@@ -38,9 +39,14 @@ class StrictWideMaker @Inject() (
 
   import mCommonDi._
 
-  /** Синхронная компиляция аргументов в картинку. */
-  def icompileSync(args: MImgMakeArgs): MakeResult = {
-    // Параметры экрана обязательны при вызове этого maker'а.
+  /**
+   * Собрать ссылку на изображение и сопутствующие метаданные.
+   * @param args Контейнер с аргументами вызова.
+   * @return Фьючерс с экземпляром [[models.im.make.MakeResult]].
+   */
+  override def icompile(args: MImgMakeArgs): Future[MakeResult] = {
+    // TODO Возможно, следует использовать Future.successful()? Вычисление в целом легковесное.
+     // Параметры экрана обязательны при вызове этого maker'а.
     val devScreen: DevScreen = {
       val dso = args.devScreenOpt
       if (dso.isEmpty)
@@ -64,37 +70,33 @@ class StrictWideMaker @Inject() (
 
     val szReal = MSize2di(height = height, width = width)
 
-    // Собираем набор инструкций для imagemagick.
-    val imOps = List[ImOp](
-      ImGravities.Center,
-      AbsResizeOp(szReal, ImResizeFlags.FillArea),
-      AbsCropOp( MCrop(width = width, height = height, offX = 0, offY = 0) ),
-      //ImFilters.Lanczos,
-      StripOp,
-      ImInterlaces.Plane,
-      compression.chromaSubSampling,
-      compression.imQualityOp
-    )
+    val origImgId = args.img.dynImgId.original
+    if (origImgId.dynFormat.isVector) {
+      // Это SVG.
+      imgMakerUtil.returnImg( origImgId )
 
-    val szCss = MSize2di(height = szRounded(heightCssRaw),  width = widthCssPx)
+    } else {
+      // Растр. Собираем набор инструкций для imagemagick.
+      val imOps = List[ImOp](
+        ImGravities.Center,
+        AbsResizeOp(szReal, ImResizeFlags.FillArea),
+        AbsCropOp( MCrop(width = width, height = height, offX = 0, offY = 0) ),
+        //ImFilters.Lanczos,
+        StripOp,
+        ImInterlaces.Plane,
+        compression.chromaSubSampling,
+        compression.imQualityOp
+      )
 
-    MakeResult(
-      szCss       = szCss,
-      szReal      = szReal,
-      dynCallArgs = args.img.withDynOps(imOps),
-      isWide      = true
-    )
-  }
+      val szCss = MSize2di(height = szRounded(heightCssRaw),  width = widthCssPx)
 
-  /**
-   * Собрать ссылку на изображение и сопутствующие метаданные.
-   * @param args Контейнер с аргументами вызова.
-   * @return Фьючерс с экземпляром [[models.im.make.MakeResult]].
-   */
-  override def icompile(args: MImgMakeArgs): Future[MakeResult] = {
-    // TODO Возможно, следует использовать Future.successful()? Вычисление в целом легковесное.
-    Future {
-      icompileSync(args)
+      val mr = MakeResult(
+        szCss       = szCss,
+        szReal      = szReal,
+        dynCallArgs = args.img.withDynOps(imOps),
+        isWide      = true
+      )
+      Future.successful(mr)
     }
   }
 

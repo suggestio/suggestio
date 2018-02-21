@@ -1,6 +1,11 @@
 package models.im.make
 
-import scala.concurrent.Future
+import javax.inject.Inject
+
+import io.suggest.model.n2.media.MMediasCache
+import models.im.{MDynImgId, MImg3}
+
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io

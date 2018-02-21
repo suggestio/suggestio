@@ -70,7 +70,7 @@ object MCrop {
     def _validateOffset(sideF: ISize2di => Int, fn: String) = {
       C.validateMinMax(
         v   = sideF(offsetsAsWh),
-        min = 0,
+        min = -sideF(imgWh),
         max = sideF(imgWh) - sideF(crop),
         eMsgPrefix = "off" + fn.toUpperCase()
       )

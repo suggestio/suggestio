@@ -1,6 +1,7 @@
 package io.suggest.img
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.compress.MCompressAlgo
 import io.suggest.enum2.EnumeratumUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
@@ -176,6 +177,11 @@ sealed abstract class MImgFmt(override val value: String) extends StringEnumEntr
 
   /** Аплоад: максимальный размер одной стороны картинки. */
   def uploadSideSizeMaxPx: Int
+
+  /** Вездесущее форсирование компрессии для формата.
+    * SVG лучше сжимать в brotli, даже если это оригинал.
+    */
+  //def forceCompression: Option[MCompressAlgo] = None
 
 }
 

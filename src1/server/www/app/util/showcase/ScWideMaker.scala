@@ -5,13 +5,13 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.img.crop.MCrop
-import io.suggest.sc.grid.GridConstants
 import io.suggest.sc.tile.TileConstants
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk.{szMulted, szMultedF, szRounded}
 import models.im._
 import models.im.make.{IImgMaker, MImgMakeArgs, MakeResult}
 import models.mproj.ICommonDi
+import util.img.ImgMakerUtil
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -26,8 +26,9 @@ import scala.concurrent.Future
  */
 @Singleton
 class ScWideMaker @Inject() (
-                              mAnyImgs  : MAnyImgs,
-                              mCommonDi : ICommonDi
+                              mAnyImgs      : MAnyImgs,
+                              imgMakerUtil  : ImgMakerUtil,
+                              mCommonDi     : ICommonDi
                             )
   extends IImgMaker
   with MacroLogsImpl
@@ -196,58 +197,67 @@ class ScWideMaker @Inject() (
 
     // Запустить сбор инфы по кропу.
     val wideWh = MSize2di(height = tgtHeightReal, width = cropWidth)
-    val cropInfoFut = getWideCropInfo(args.img, wideWh)
 
-    // Начинаем собирать список трансформаций по ресайзу:
-    val compression = args.compressMode
-      .getOrElse(CompressModes.Bg)
-      .fromDpr(pxRatio)
+    val origImgId = args.img.dynImgId.original
+    if (origImgId.dynFormat.isVector) {
+      // Это SVG, вернуть всё как есть
+      imgMakerUtil.returnImg( origImgId )
 
-    val imOps0 = List[ImOp](
-      AbsResizeOp(wideWh, ImResizeFlags.FillArea :: Nil),
-      // FillArea почти всегда выдаёт результат, выходящий за пределы wideWh по одному из измерений.
-      // Подогнать под wideWh, сделав extent-кроп по wideWh (как и рекомендуется в доках):
-      ImGravities.Center,
-      ExtentOp(wideWh),
-      // сглаживание, сжатие вывода, итд
-      ImFilters.Lanczos,
-      StripOp,
-      ImInterlaces.Plane,
-      compression.chromaSubSampling,
-      compression.imQualityOp
-    )
+    } else {
+      val cropInfoFut = getWideCropInfo(args.img, wideWh)
 
-    // Нужно брать кроп отн.середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
-    val imOps9Fut = for (cropInfo <- cropInfoFut) yield {
-      // 2017-12-13: Тут долгое время был сначала ресайз до wideWh, а только потом кроп *в исходных измерениях*.
-      // Это давало почему-то рабочие результаты, или ошибок просто не замечали...
-      val imOps1 = AbsCropOp(cropInfo.crop) :: imOps0
-      if (cropInfo.isCenter) {
-        LOGGER.warn(s"$logPrefix Failed to read image[${args.img.original.dynImgId.fileName}] WH")
-        // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
-        ImGravities.Center :: imOps1
-      } else {
-        LOGGER.trace(s"$logPrefix Final crop info: $cropInfo")
-        imOps1
-      }
-    }
+      // Начинаем собирать список трансформаций по ресайзу:
+      val compression = args.compressMode
+        .getOrElse(CompressModes.Bg)
+        .fromDpr(pxRatio)
 
-    // Вычислить размер картинки в css-пикселях.
-    val szCss = MSize2di(
-      height = szRounded(tgtHeightCssRaw),
-      width  = cropWidthCssPx
-    )
-    // Дождаться результатов рассчета картинки и вернуть контейнер с результатами.
-    for {
-      imOps9 <- imOps9Fut
-    } yield {
-      LOGGER.trace(s"$logPrefix Final imOps=[${imOps9.mkString(", " )}]")
-      MakeResult(
-        szCss       = szCss,
-        szReal      = wideWh,
-        dynCallArgs = args.img.withDynOps(imOps9),
-        isWide      = true
+      val imOps0 = List[ImOp](
+        AbsResizeOp(wideWh, ImResizeFlags.FillArea :: Nil),
+        // FillArea почти всегда выдаёт результат, выходящий за пределы wideWh по одному из измерений.
+        // Подогнать под wideWh, сделав extent-кроп по wideWh (как и рекомендуется в доках):
+        ImGravities.Center,
+        ExtentOp(wideWh),
+        // сглаживание, сжатие вывода, итд
+        ImFilters.Lanczos,
+        StripOp,
+        ImInterlaces.Plane,
+        compression.chromaSubSampling,
+        compression.imQualityOp
       )
+
+      // Растр. Нужно брать кроп отн.середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
+      val imFinal9Fut = for (cropInfo <- cropInfoFut) yield {
+        // 2017-12-13: Тут долгое время был сначала ресайз до wideWh, а только потом кроп *в исходных измерениях*.
+        // Это давало почему-то рабочие результаты, или ошибок просто не замечали...
+        val imOps1 = AbsCropOp(cropInfo.crop) :: imOps0
+        val imOps9 = if (cropInfo.isCenter) {
+          LOGGER.warn(s"$logPrefix Failed to read image[${args.img.original.dynImgId.fileName}] WH")
+          // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
+          ImGravities.Center :: imOps1
+        } else {
+          LOGGER.trace(s"$logPrefix Final crop info: $cropInfo")
+          imOps1
+        }
+        LOGGER.trace(s"$logPrefix Final imOps=[${imOps9.mkString(", " )}]")
+        args.img.withDynOps(imOps9)
+      }
+
+      // Вычислить размер картинки в css-пикселях.
+      val szCss = MSize2di(
+        height = szRounded(tgtHeightCssRaw),
+        width  = cropWidthCssPx
+      )
+      // Дождаться результатов рассчета картинки и вернуть контейнер с результатами.
+      for {
+        imFinal9 <- imFinal9Fut
+      } yield {
+        MakeResult(
+          szCss       = szCss,
+          szReal      = wideWh,
+          dynCallArgs = imFinal9,
+          isWide      = true
+        )
+      }
     }
   }
 

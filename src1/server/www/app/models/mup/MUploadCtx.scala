@@ -68,6 +68,8 @@ class MUploadCtx @Inject() (
 
   import statics._
 
+  lazy val logPrefix = s"${getClass.getSimpleName}#${System.currentTimeMillis()}:"
+
   val path = filePart.ref.path
 
   val file = path.toFile
@@ -118,15 +120,22 @@ class MUploadCtx @Inject() (
       imgFmt    <- imgFmtOpt
       mimeType  <- detectedMimeTypeOpt
     } yield {
-      imgFmt match {
+      val res = imgFmt match {
         case MImgFmts.PNG | MImgFmts.JPEG | MImgFmts.GIF =>
           imgFileUtil.getImageWh( mimeType, file )
         case MImgFmts.SVG =>
-          svgGvtOpt
-            .get
-            .getBounds
-            .toSize2di
+          SvgUtil
+            .getDocWh(svgDocOpt.get)
+            .getOrElse {
+              LOGGER.warn(s"$logPrefix No document wh. Drawing SVG to detect factical w/h. Usually differs from real document viewport sz.")
+              svgGvtOpt
+                .get
+                .getPrimitiveBounds
+                .toSize2di
+            }
       }
+      LOGGER.trace(s"$logPrefix sz=$res for imgFmt=$imgFmt mime=$mimeType")
+      res
     }
   }
 
