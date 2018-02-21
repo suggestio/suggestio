@@ -39,10 +39,17 @@ case object ScreenRszTimer extends IScRootAction
 case class GeoLocOnOff(enabled: Boolean) extends IScRootAction
 
 
+/** Marker-trait только для [[GlLocation]] и [[GlError]]. */
+sealed trait IGeoLocSignal extends IScRootAction
+
 /** Есть координаты. */
-case class GlLocation(glType: GeoLocType, location: MGeoLoc) extends IScRootAction
+case class GlLocation(glType: GeoLocType, location: MGeoLoc) extends IGeoLocSignal
 /** Ошибка получения координат. */
-case class GlError(glType: GeoLocType, error: PositionException) extends IScRootAction
+case class GlError(glType: GeoLocType, error: PositionException) extends IGeoLocSignal
+
+/** Сигнал о наступлении геолокации (или ошибке оной) для ожидающего геолокацию. */
+case class GlPubSignal( orig: IGeoLocSignal ) extends IScRootAction
+
 
 /** Сработал таймер подавления нежелательных координат. */
 case class GlSuppressTimeout(generation: Long) extends IScRootAction
@@ -54,3 +61,6 @@ case class RouteTo( mainScreen: MainScreen ) extends IScRootAction
 /** Команда к обновлению ссылки в адресе согласно обновившемуся состоянию. */
 case object ResetUrlRoute extends IScRootAction
 
+
+/** Наступление таймаута получения гео-координат. */
+case object GeoLocTimeOut extends ISc3Action

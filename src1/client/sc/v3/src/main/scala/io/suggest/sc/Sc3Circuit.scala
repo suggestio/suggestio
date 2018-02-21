@@ -237,7 +237,7 @@ class Sc3Circuit(
     //if ( !jsRouterRW.value.isReady ) {
       acc ::= new JsRouterInitAh(
         circuit = circuit,
-        modelRW = jsRouterRW
+        modelRW = internalsRW
       )
     //}
 

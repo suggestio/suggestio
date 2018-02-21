@@ -3,7 +3,7 @@ package io.suggest.sc.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.routes.scRoutes
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -18,7 +18,8 @@ object MScInternals {
 
   implicit object MScInternalsFastEq extends FastEq[MScInternals] {
     override def eqv(a: MScInternals, b: MScInternals): Boolean = {
-      a.jsRouter eq b.jsRouter
+      (a.jsRouter eq b.jsRouter) &&
+        (a.geoLockTimer ==* b.geoLockTimer)
     }
   }
 
@@ -30,11 +31,14 @@ object MScInternals {
 /** Класс-контейнер модели внутренних состояний.
   *
   * @param jsRouter Состояния js-роутера, который инициализируется асинхронно при загрузке выдачи.
+  * @param geoLockTimer Сейчас происходит ожидание геолокации, это блокирует переключение выдачи (TailAh)
   */
 case class MScInternals(
-                         jsRouter      : Pot[scRoutes.type]      = Pot.empty
+                         jsRouter      : Pot[scRoutes.type]      = Pot.empty,
+                         geoLockTimer  : Option[Int]             = None,
                        ) {
 
-  def withJsRouter(jsRouter: Pot[scRoutes.type]) = copy(jsRouter = jsRouter)
+  def withJsRouter(jsRouter: Pot[scRoutes.type])    = copy(jsRouter = jsRouter)
+  def withGeoLockTimer(geoLockTimer: Option[Int])   = copy(geoLockTimer = geoLockTimer)
 
 }

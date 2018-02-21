@@ -4,13 +4,14 @@ import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.GetRouterCtlF
-import io.suggest.sc.m.{MScRoot, ResetUrlRoute, RouteTo}
+import io.suggest.sc.m._
 import io.suggest.sc.m.Sc3Pages.MainScreen
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.hdr.HSearchBtnClick
 import io.suggest.sc.m.inx.{GetIndex, WcTimeOut}
 import io.suggest.sc.m.search.{SwitchTab, TagClick}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.controller.DomQuick
 import japgolly.univeq._
 
 /**
@@ -44,12 +45,12 @@ class TailAh[M](
         }(v0.index.search.mapInit.state.center),
         generation    = Some( inxState.generation ),
         searchOpened  = searchOpened,
-        searchTab = OptionUtil.maybe(searchOpened)( v0.index.search.currTab ),
+        searchTab     = OptionUtil.maybe(searchOpened)( v0.index.search.currTab ),
         tagNodeId     = v0.index.search.tags.selectedId
       )
-      val routerCtl = routerCtlF()
-      // TODO Opt Проверить, изменилась ли ссылка.
-      routerCtl.set( m ).runNow()
+      routerCtlF()
+        .set( m )
+        .runNow()
       noChange
 
 
@@ -60,7 +61,8 @@ class TailAh[M](
       // Считаем, что js-роутер уже готов. Если нет, то это сообщение должно было быть перехвачено в JsRouterInitAh.
 
       var gridNeedsReload = false
-      var nodeIndexNeedsReload = v0.index.resp.isTotallyEmpty
+      val indexRespTotallyEmpty = v0.index.resp.isTotallyEmpty
+      var nodeIndexNeedsReload = indexRespTotallyEmpty
       var needUpdateUi = false
 
       var inx = v0.index
@@ -122,11 +124,14 @@ class TailAh[M](
       lazy val v2 = v0.withIndex( inx )
 
       // Принять решение о перезагрузке выдачи, если возможно.
-      if (nodeIndexNeedsReload) {
+      if (v0.internals.geoLockTimer.nonEmpty) {
+        // Блокирование загрузки.
+        val fxOpt = fxsAcc.mergeEffectsSet
+        ah.updatedSilentMaybeEffect(v2, fxOpt)
+
+      } else if (nodeIndexNeedsReload) {
         // Целиковая перезагрузка выдачи.
-        fxsAcc ::= Effect.action {
-          GetIndex( withWelcome = true )
-        }
+        fxsAcc ::= getIndexFx
         val fx = fxsAcc.mergeEffectsSet.get
         ah.updateMaybeSilentFx(needUpdateUi)(v2, fx)
 
@@ -149,12 +154,63 @@ class TailAh[M](
         ah.maybeEffectOnly( fxOpt )
       }
 
+    // Сигнал наступления геолокации (или ошибки геолокации).
+    case m: GlPubSignal =>
+      val v0 = value
 
+      v0.internals.geoLockTimer.fold {
+        // Уже не ждём геолокации.
+        noChange
+      } { timerId =>
+        // Отменить и забыть таймер GeoLocTimeOut
+        DomQuick.clearTimeout(timerId)
+        val v1 = _removeTimer(v0)
+
+        val fxs = getIndexFx + geoOffFx
+        m.orig match {
+          // Получены координаты. Сохранить геолокацию в общее состояние.
+          case loc: GlLocation =>
+            val v2 = v1.withIndex(
+              v1.index.withSearch(
+                v1.index.search.withMapInit(
+                  v1.index.search.mapInit.withState(
+                    v1.index.search.mapInit.state.withCenterInitReal(
+                      loc.location.point
+                    )
+                  )
+                )
+              )
+            )
+            // Запустить получение индекса с новыми координатами.
+            updatedSilent(v2, fxs)
+
+          // Ошибка геолокации. Не ждать завершения геолокации.
+          case _ =>
+            effectOnly(fxs)
+        }
+      }
+
+
+    // Наступил таймаут ожидания геолокации. Нужно активировать инициализацию в имеющемся состоянии
+    case GeoLocTimeOut =>
+      // Удалить из состояния таймер геолокации.
+      val v2 = _removeTimer()
+      updatedSilent(v2, getIndexFx + geoOffFx)
 
     // Если юзер активно тыкал пальцем по экрану, то таймер сокрытия мог сработать после окончания приветствия.
     case _: WcTimeOut =>
       noChange
 
   }
+
+  private def _removeTimer(v0: MScRoot = value): MScRoot = {
+    v0.withInternals(
+      v0.internals.withGeoLockTimer( None )
+    )
+  }
+
+  private def getIndexFx = Effect.action( GetIndex(withWelcome = true ) )
+
+  private def geoOffFx = Effect.action( GeoLocOnOff(enabled = false) )
 
 }

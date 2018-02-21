@@ -8,7 +8,6 @@ import io.suggest.util.logs.MacroLogsImplLazy
 import models.blk._
 import models.im.make.{MImgMakeArgs, IImgMaker, MakeResult}
 import models.im._
-import models.mproj.ICommonDi
 
 import scala.concurrent.Future
 
@@ -30,14 +29,11 @@ import scala.concurrent.Future
  */
 @Singleton
 class StrictWideMaker @Inject() (
-                                  imgMakerUtil  : ImgMakerUtil,
-                                  mCommonDi     : ICommonDi
+                                  imgMakerUtil  : ImgMakerUtil
                                 )
   extends IImgMaker
-    with MacroLogsImplLazy
+  with MacroLogsImplLazy
 {
-
-  import mCommonDi._
 
   /**
    * Собрать ссылку на изображение и сопутствующие метаданные.

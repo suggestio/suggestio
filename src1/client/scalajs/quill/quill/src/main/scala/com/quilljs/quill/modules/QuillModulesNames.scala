@@ -39,6 +39,7 @@ object QuillModulesNames {
     def LINK = "link"
 
     def IMAGE = "image"
+    def IMAGE_PATH = FORMATS_ + IMAGE
     def VIDEO = "video"
 
     def CLEAN = "clean"

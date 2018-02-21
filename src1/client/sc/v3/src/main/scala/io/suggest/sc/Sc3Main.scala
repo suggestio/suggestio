@@ -48,7 +48,7 @@ object Sc3Main {
     val modules = new Sc3Module
 
     // Отрендерить компонент spa-роутера в целевой контейнер.
-    modules.sc3Router
+    modules.sc3SpaRouter
       .router()
       .renderIntoDOM(rootDiv)
 

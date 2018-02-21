@@ -52,15 +52,6 @@ object ScConstants {
   }
 
 
-  /** Константы геолокации. */
-  object Geo {
-
-    /** Сколько браузер клиента может кешировать результат геолокации. */
-    def GEOLOC_MAXAGE_MS = 20000
-
-  }
-
-
   /** Client/server констатны выдачи для моделей ScReqArgs. */
   object ReqArgs {
 

@@ -1,11 +1,11 @@
 package io.suggest.sc.c
 
 import diode._
-import diode.data.Pot
-import io.suggest.routes.scRoutes
-import io.suggest.sc.m.{JsRouterInit, JsRouterStatus, RouteTo}
+import io.suggest.sc.m._
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.controller.DomQuick
+import io.suggest.react.ReactDiodeUtil._
 
 import scala.concurrent.Promise
 import scala.util.Success
@@ -18,7 +18,7 @@ import scala.util.Success
   */
 class JsRouterInitAh[M <: AnyRef](
                                    circuit: Circuit[M],
-                                   modelRW: ModelRW[M, Pot[scRoutes.type]]
+                                   modelRW: ModelRW[M, MScInternals]
                                  )
   extends ActionHandler( modelRW )
 {
@@ -28,7 +28,7 @@ class JsRouterInitAh[M <: AnyRef](
     // Команда к запуску инициализации js-роутера.
     case JsRouterInit =>
       val v0 = value
-      if (v0.isReady || v0.isPending) {
+      if (v0.jsRouter.isReady || v0.jsRouter.isPending) {
         // Инициализация уже запущена или выполнена ранее.
         noChange
 
@@ -38,7 +38,9 @@ class JsRouterInitAh[M <: AnyRef](
           SrvRouter.ensureJsRouter()
             .transform { tryRes => Success(JsRouterStatus(tryRes)) }
         }
-        val v2 = v0.pending()
+        val v2 = v0.withJsRouter(
+          v0.jsRouter.pending()
+        )
 
         // silent - потому что pending никого не интересует.
         updatedSilent(v2, fx)
@@ -49,16 +51,18 @@ class JsRouterInitAh[M <: AnyRef](
     case m: JsRouterStatus =>
       val v0 = value
       // Сохранить инфу по роутеру в состояние.
-      val v1 = m.payload.fold( v0.fail, v0.ready )
+      val v1 = v0.withJsRouter(
+        m.payload.fold( v0.jsRouter.fail, v0.jsRouter.ready )
+      )
       updated( v1 )
 
 
     // Костыль: перехват экшена инициализации выдачи из SPA-роутера, пока js-роутер не готов.
-    case m: RouteTo if !value.isReady =>
+    case m: RouteTo if !value.jsRouter.isReady =>
       // Эффект откладывания сообщения напотом, когда роутер будет готов.
-      val fx = Effect {
+      val delayedRouteToFx = Effect {
         val p = Promise[None.type]()
-        val unsubscribeF = circuit.subscribe(modelRW) { jsRouterPotProxy =>
+        val unsubscribeF = circuit.subscribe(modelRW.zoom(_.jsRouter)) { jsRouterPotProxy =>
           val jsRouterPot = jsRouterPotProxy.value
           if (jsRouterPot.nonEmpty) {
             p.success(None)
@@ -72,7 +76,26 @@ class JsRouterInitAh[M <: AnyRef](
         }
       }
 
-      effectOnly(fx)
+      // Запустить в фоне геолокацию, если нет полезной инфы в принятом состоянии.
+      // И запрос js-роутера с сервера и запрос геолокации пойдут параллельно.
+      if (m.mainScreen.needGeoLoc) {
+        val v0 = value
+        val tp = DomQuick.timeoutPromiseT( 5000 )( GeoLocTimeOut )
+        val v2 = v0.withGeoLockTimer( Some(tp.timerId) )
+        val timeoutFx = Effect( tp.fut )
+
+        val geoLocEnableFx = Effect.action( GeoLocOnOff(enabled = true) )
+
+        // Склеить все эффекты и обновить состояние.
+        val allFxs = (delayedRouteToFx :: geoLocEnableFx :: timeoutFx :: Nil)
+          .mergeEffectsSet
+          .get
+        updatedSilent(v2, allFxs)
+
+      } else {
+        // Уже известны какие-то данные для запуска выдачи. Значит, просто ждём js-роутер с сервера.
+        effectOnly(delayedRouteToFx)
+      }
 
   }
 

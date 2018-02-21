@@ -129,6 +129,11 @@ object ReactDiodeUtil {
       effectOpt.fold( ah.noChange ) { ah.effectOnly }
     }
 
+
+    def updatedSilentMaybeEffect(v2: T, effectOpt: Option[Effect]): ActionResult[M] = {
+      effectOpt.fold( ah.updatedSilent(v2) ) { fx => ah.updatedSilent(v2, fx) }
+    }
+
   }
 
 }

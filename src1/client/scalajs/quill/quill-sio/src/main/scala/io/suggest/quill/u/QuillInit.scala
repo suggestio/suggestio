@@ -45,6 +45,16 @@ class QuillInit {
     val QSizes = Quill.`import`[SizeClass]( QuillModulesNames.Attributors.Clazz.SIZE )
     QSizes.whitelist = fontSizesStringArray
     Quill.register2(QSizes, suppressWarnings = true)
+
+    // TODO Надо настроить mime-типы. В macos диалог выбора файла не даёт выбрать SVG.
+    /*
+    val QImage = Quill.`import`[ImageFormat]( QuillModulesNames.Formats.IMAGE_PATH )
+    QImage.accept = MImgFmts.values
+      .iterator
+      .flatMap(_.allMimes)
+      .mkString(", ")
+    Quill.register2(QImage, suppressWarnings = true)
+    */
   }
 
 

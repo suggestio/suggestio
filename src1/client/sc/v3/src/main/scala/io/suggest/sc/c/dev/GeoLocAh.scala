@@ -1,13 +1,14 @@
 package io.suggest.sc.c.dev
 
 import diode.data.Ready
-import diode.{ActionHandler, ActionResult, Dispatcher, ModelRW}
+import diode._
 import io.suggest.geo.{GeoLocType, GeoLocTypes, MGeoLocJs, PositionException}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sc.m.dev.{MGeoLocWatcher, MScGeoLoc, Suppressor}
-import io.suggest.sc.m.{GeoLocOnOff, GlError, GlLocation, GlSuppressTimeout}
+import io.suggest.sc.m._
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import japgolly.univeq._
 import org.scalajs.dom.{Geolocation, Position, PositionError, PositionOptions}
@@ -154,7 +155,7 @@ class GeoLocAh[M](
 
         // Полученный хардкорный итератор гео-вотчеров дополняется ещё и обновлёнными данными текущей геолокации.
         val watchers3 = {
-          supprOpt.fold(watchers1Iter)(_._2)  ++  Iterator.single(loc.glType -> mgl1)
+          supprOpt.fold(watchers1Iter)(_._2)  ++  List(loc.glType -> mgl1)
         }.toMap
 
         // Сохранить новые данные в состояние.
@@ -162,7 +163,11 @@ class GeoLocAh[M](
           watchers   = watchers3,
           suppressor = supprOpt.map(_._1)
         )
-        updatedSilent( v2 )
+
+        // Уведомить другие контроллеры о наступлении геолокации.
+        val notifyOthersFx = Effect.action( GlPubSignal(loc) )
+
+        updatedSilent( v2, notifyOthersFx )
 
         // Уведомить subscriber'ов о новой локации.
         //_notifySubscribers(loc)
@@ -268,7 +273,8 @@ class GeoLocAh[M](
           val v2 = v0.withWatchers(
             v0.watchers + (m.glType -> wa2)
           )
-          updatedSilent(v2)
+          val notifyOthersFx = Effect.action( GlPubSignal(m) )
+          updatedSilent(v2, notifyOthersFx)
         }
 
   }

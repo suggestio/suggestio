@@ -36,6 +36,14 @@ object Sc3Pages {
                          locEnv         : Option[MGeoPoint]   = None,
                        )
     extends Sc3Pages
+  {
+
+    /** Требуется ли гео-локация за неимением полезных данных? */
+    def needGeoLoc: Boolean = {
+      nodeId.isEmpty && locEnv.isEmpty
+    }
+
+  }
 
 }
 

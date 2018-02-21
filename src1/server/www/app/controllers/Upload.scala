@@ -84,7 +84,9 @@ class Upload @Inject()(
 
 
   /** Body-parser для prepareUploadLogic. */
-  def prepareUploadBp = parse.json[MFile4UpProps]
+  def prepareUploadBp: BodyParser[MFile4UpProps] = {
+    parse.json[MFile4UpProps]
+  }
 
   /** Тело экшена подготовки к аплоаду.
     * Только тело, потому что ACL-проверки выносятся в основной контроллер, в контексте которого происходит загрузка.
