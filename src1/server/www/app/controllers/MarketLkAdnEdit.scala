@@ -3,6 +3,7 @@ package controllers
 import java.time.OffsetDateTime
 import javax.inject.{Inject, Singleton}
 
+import io.suggest.file.MimeUtilJvm
 import io.suggest.img.MImgFmts
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.js.UploadConstants
@@ -14,7 +15,7 @@ import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo, MMeta}
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.logo.LogoOpt_t
-import models.im.{MImg3, MImgT}
+import models.im.{MImg3, MImgT, MLocalImgs}
 import models.madn.EditConstants._
 import models.mctx.Context
 import models.mlk.{FormMapResult, NodeEditArgs}
@@ -52,6 +53,7 @@ class MarketLkAdnEdit @Inject() (
                                   imgFormUtil                     : ImgFormUtil,
                                   bruteForceProtect               : BruteForceProtect,
                                   mMediasCache                    : MMediasCache,
+                                  mLocalImgs                      : MLocalImgs,
                                   isNodeAdmin                     : IsNodeAdmin,
                                   isAuth                          : IsAuth,
                                   override val mCommonDi          : ICommonDi
@@ -296,8 +298,12 @@ class MarketLkAdnEdit @Inject() (
             mmediaOpt     <- mMediasCache.maybeGetByIdCached( fmr.logoOpt.map(_.original.mediaId) )
             logoOpt2 = for {
               logo        <- fmr.logoOpt
-              mmedia      <- mmediaOpt
-              origImgFmt  <- mmedia.file.imgFormatOpt
+              origImgFmt  <- mmediaOpt.fold {
+                // Нет mmedia оригинала. К сожалению, это нормально... Надо переписать эту форму. А пока -- определить формат вручную.
+                val file = mLocalImgs.fileOf( logo.toLocalInstance )
+                val mime = MimeUtilJvm.probeContentType( file.toPath ).get
+                MImgFmts.withMime(mime)
+              } (_.file.imgFormatOpt)
             } yield {
               logo.withDynImgId(
                 logo.dynImgId.withDynFormat( origImgFmt )
