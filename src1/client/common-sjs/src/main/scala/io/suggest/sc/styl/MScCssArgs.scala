@@ -1,9 +1,13 @@
 package io.suggest.sc.styl
 
 import diode.FastEq
+import diode.data.Pot
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.dev.{MScreen, MSzMult}
+import io.suggest.dev.MScreen
+import io.suggest.media.IMediaInfo
 import io.suggest.model.n2.node.meta.colors.MColors
+import io.suggest.sc.index.MWelcomeInfo
+import io.suggest.sc.sc3.MSc3IndexResp
 import io.suggest.spa.OptFastEq
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -29,6 +33,19 @@ object MScCssArgs {
         (a.wcBgWh ===* b.wcBgWh) &&
         (a.wcFgWh ===* b.wcFgWh)
     }
+  }
+
+  def from(indexResp: Pot[MSc3IndexResp], mscreen: MScreen): MScCssArgs = {
+    val indexRespOpt = indexResp.toOption
+    val wcOpt = indexRespOpt.flatMap(_.welcome)
+    def __wcWhOpt(f: MWelcomeInfo => Option[IMediaInfo]) = wcOpt.flatMap(f).flatMap(_.whPx)
+
+    MScCssArgs(
+      customColorsOpt = indexRespOpt.map(_.colors),
+      screen          = mscreen,
+      wcBgWh          = __wcWhOpt( _.bgImage ),
+      wcFgWh          = __wcWhOpt( _.fgImage )
+    )
   }
 
 }

@@ -30,6 +30,14 @@ object ScConstants {
   def HEIGHT_ATTR   = CUSTOM_ATTR_PREFIX + "height"
 
 
+  /** Константы геолокации выдачи. */
+  object ScGeo {
+
+    /** Сколько миллисекунд ждать геолокации при запуске выдачи? */
+    def INIT_GEO_LOC_TIMEOUT_MS = 5000
+
+  }
+
   /** Константы для sc-стадии site: ScSite, siteTpl. */
   object Site {
 
@@ -337,7 +345,7 @@ object ScConstants {
     def FG_INFO_DIV_ID = "smWelcomeAdfgText"
 
     /** Начинать скрывать карточку приветствия через указанное время. */
-    def HIDE_TIMEOUT_MS = 1200
+    def HIDE_TIMEOUT_MS = 1800
 
     /** Оценочное максимальное реальное время анимации сокрытия приветствия.
       * Через это время элемент будет считаться скрытым. */

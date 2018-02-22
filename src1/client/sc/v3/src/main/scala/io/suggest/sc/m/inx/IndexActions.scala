@@ -53,3 +53,7 @@ case class MapRcvrClickDelayed(reason: ReqRcvrPopup) extends IIndexAction
   * Нужен, чтобы карта успела проанимироваться с минимумом рывков.
   */
 case object MapDragEndDelayed extends IIndexAction
+
+
+/** Команда к ребилду текущего инстанса ScCss. */
+case object ScCssReBuild extends IIndexAction

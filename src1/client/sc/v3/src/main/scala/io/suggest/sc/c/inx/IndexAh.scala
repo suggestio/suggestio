@@ -6,10 +6,11 @@ import io.suggest.react.ReactDiodeUtil.{ActionHandlerExt, EffectsOps, PotOpsExt}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.grid.GridLoadAds
-import io.suggest.sc.m.inx.{GetIndex, HandleIndexResp, MScIndex, MWelcomeState}
+import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.{GetMoreTags, MScSearch, MSearchTabs, MapReIndex}
 import io.suggest.sc.m.{MScRoot, ResetUrlRoute}
 import io.suggest.sc.resp.MScRespActionTypes
+import io.suggest.sc.styl.{MScCssArgs, ScCssFactory}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
@@ -23,9 +24,10 @@ import scala.util.Success
   * Description: Контроллер index'а выдачи.
   */
 class IndexAh[M](
-                  api       : IIndexApi,
-                  modelRW   : ModelRW[M, MScIndex],
-                  stateRO   : ModelRO[MScRoot]
+                  api           : IIndexApi,
+                  modelRW       : ModelRW[M, MScIndex],
+                  rootRO        : ModelRO[MScRoot],
+                  scCssFactory  : ScCssFactory,
                 )
   extends ActionHandler( modelRW )
   with Log
@@ -35,7 +37,7 @@ class IndexAh[M](
     val ts = System.currentTimeMillis()
 
     val fx = Effect {
-      val root = stateRO()
+      val root = rootRO()
       val args = MScIndexArgs(
         nodeId      = v0.state.currRcvrId,
         locEnv      = root.locEnv,
@@ -59,6 +61,19 @@ class IndexAh[M](
 
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+
+    // Кто-то затребовал перерендерить css-стили выдачи. Скорее всего, размеры экрана изменились.
+    case ScCssReBuild =>
+      val v0 = value
+      val scCssArgs = MScRoot.scCssArgsFrom( rootRO.value )
+      if (v0.scCss.args != scCssArgs) {
+        val scCss2 = scCssFactory.mkScCss( scCssArgs )
+        val v2 = v0.withScCss( scCss2 )
+        updated(v2)
+      } else {
+        noChange
+      }
+
 
     // Необходимо перезапросить индекс для текущего состояния карты
     case m: MapReIndex =>
@@ -227,13 +242,24 @@ class IndexAh[M](
               }
               val v2 = v1.withWelcome( mWcSFutOpt.map(_._2) )
 
+              // Нужно отребилдить ScCss, но только если что-то реально изменилось.
+              val scCssArgs2 = MScCssArgs.from(v2.resp, rootRO.value.dev.screen.screen)
+              val v3 = if (scCssArgs2 != v2.scCss.args) {
+                // Изменились аргументы. Пора отребилдить ScCss.
+                v2.withScCss(
+                  scCssFactory.mkScCss( scCssArgs2 )
+                )
+              } else {
+                v2
+              }
+
               // Объединить эффекты плитки и приветствия воедино:
               for (mwc <- mWcSFutOpt)
                 fxsAcc ::= mwc._1
 
               val allFxs = fxsAcc.mergeEffectsSet.get
 
-              updated(v2, allFxs)
+              updated(v3, allFxs)
             }
           )
       }

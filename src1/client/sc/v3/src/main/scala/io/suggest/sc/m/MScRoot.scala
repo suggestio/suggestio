@@ -2,8 +2,6 @@ package io.suggest.sc.m
 
 import diode.FastEq
 import io.suggest.geo.{MGeoLoc, MLocEnv}
-import io.suggest.media.IMediaInfo
-import io.suggest.sc.index.MWelcomeInfo
 import io.suggest.sc.m.dev.MScDev
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx.MScIndex
@@ -31,6 +29,12 @@ object MScRoot {
 
   implicit def univEq: UnivEq[MScRoot] = UnivEq.derive
 
+
+
+  def scCssArgsFrom(scRoot: MScRoot): MScCssArgs = {
+    MScCssArgs.from(scRoot.index.resp, scRoot.dev.screen.screen)
+  }
+
 }
 
 
@@ -54,21 +58,6 @@ case class MScRoot(
           point = index.search.mapInit.state.center
         )
       )
-    )
-  }
-
-
-  /** Инстанс модели аргументов рендера ScCss. */
-  lazy val scCssArgs: MScCssArgs = {
-    val indexRespOpt = index.resp.toOption
-    val wcOpt = indexRespOpt.flatMap(_.welcome)
-    def __whOpt(f: MWelcomeInfo => Option[IMediaInfo]) = wcOpt.flatMap(f).flatMap(_.whPx)
-
-    MScCssArgs(
-      customColorsOpt = indexRespOpt.map(_.colors),
-      screen          = dev.screen.screen,
-      wcBgWh          = __whOpt( _.bgImage ),
-      wcFgWh          = __whOpt( _.fgImage )
     )
   }
 

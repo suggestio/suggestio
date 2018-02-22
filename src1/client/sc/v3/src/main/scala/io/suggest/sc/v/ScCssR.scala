@@ -2,7 +2,7 @@ package io.suggest.sc.v
 
 import diode.react.ModelProxy
 import io.suggest.sc.styl.ScScalaCssDefaults._
-import io.suggest.sc.styl.{GetScCssF, MScCssArgs}
+import io.suggest.sc.styl.{IScCssArgs, ScCssFactory}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -13,13 +13,15 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   * Created: 11.07.17 16:09
   * Description: React-компонент, рендерящий динамический css выдачи.
   */
-class ScCssR( getScCssF: GetScCssF ) {
+class ScCssR(
+              scCssFactory: ScCssFactory
+            ) {
 
-  type Props = ModelProxy[MScCssArgs]
+  type Props = ModelProxy[IScCssArgs]
 
   class Backend($: BackendScope[Props, Unit]) {
-    def render: VdomElement = {
-      val scCss = getScCssF()
+    def render(props: Props): VdomElement = {
+      val scCss = scCssFactory.mkScCss(props.value)
 
       <.styleTag(
         scCss.render[String]

@@ -8,6 +8,7 @@ import io.suggest.dev.MScreen
 import io.suggest.i18n.MsgCodes
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.ScConstants
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -52,6 +53,8 @@ object ScCss {
     */
   val TABS_OFFSET_PX = 115
 
+  implicit def univEq: UnivEq[ScCss] = UnivEq.derive
+
 }
 
 
@@ -61,6 +64,9 @@ trait IScCssArgs {
   def screen            : MScreen
   def wcBgWh            : Option[MSize2di]
   def wcFgWh            : Option[MSize2di]
+}
+object IScCssArgs {
+  implicit def univEq: UnivEq[IScCssArgs] = UnivEq.force
 }
 
 
@@ -198,7 +204,7 @@ case class ScCss( args: IScCssArgs )
       /** Стили логотипа экрана приветствия. */
       val fgImg = {
         // Подготнка логотипа приветствия под текущий экран: центровка.
-        val whMx = args.wcFgWh.fold( StyleS.empty ) { wh0 =>
+        val whMx = args.wcFgWh.fold(StyleS.empty) { wh0 =>
           val wh2 = wh0 / 2
           val margin0 = wh2 / (-2)
           val margin2 = margin0.withHeight( margin0.height + 25 )

@@ -17,7 +17,7 @@ import com.softwaremill.macwire._
 class ScCssFactory {
 
   /** Параметризованная сборка ScCss (здесь можно добавлять DI-зависимости). */
-  def mkScCss(args: MScCssArgs): ScCss = {
+  def mkScCss(args: IScCssArgs): ScCss = {
     wire[ScCss]
   }
 

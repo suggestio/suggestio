@@ -1,6 +1,7 @@
 package io.suggest.sc
 
 import diode.ModelRO
+import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.common.event.WndEvents
 import io.suggest.dev.JsScreenUtil
@@ -23,8 +24,8 @@ import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.m.search.{MMapInitState, MScSearch}
-import io.suggest.sc.sc3.MSc3Init
-import io.suggest.sc.styl.{ScCss, ScCssFactory}
+import io.suggest.sc.sc3.{MSc3IndexResp, MSc3Init}
+import io.suggest.sc.styl.{MScCssArgs, ScCss, ScCssFactory}
 import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -44,7 +45,7 @@ import scala.concurrent.{Future, Promise}
   * Description: Main circuit новой выдачи. Отрабатывает весь интерфейс выдачи v3.
   */
 class Sc3Circuit(
-                  scCssFactoryModule    : ScCssFactory,
+                  scCssFactory          : ScCssFactory,
                   jdCssFactory          : JdCssFactory,
                   api                   : ISc3Api,
                   getRouterCtlF         : GetRouterCtlF,
@@ -60,7 +61,6 @@ class Sc3Circuit(
   import MScScreenS.MScScreenSFastEq
   import m.dev.MScGeoLoc.MScGeoFastEq
   import m.inx.MWelcomeState.MWelcomeStateFastEq
-  import styl.MScCssArgs.MScCssArgsFastEq
 
   import MScSearch.MScSearchFastEq
   import m.search.MScSearchText.MScSearchTextFastEq
@@ -78,6 +78,8 @@ class Sc3Circuit(
 
     val mscreen = JsScreenUtil.getScreen()
 
+    val scIndexResp = Pot.empty[MSc3IndexResp]
+
     MScRoot(
       dev = MScDev(
         screen = MScScreenS(
@@ -85,10 +87,14 @@ class Sc3Circuit(
         )
       ),
       index = MScIndex(
+        resp = scIndexResp,
         search = MScSearch(
           mapInit = MMapInitState(
             state = MMapS(state0.mapProps)
           )
+        ),
+        scCss = scCssFactory.mkScCss(
+          MScCssArgs.from(scIndexResp, mscreen)
         )
       ),
       grid = {
@@ -112,6 +118,8 @@ class Sc3Circuit(
   private val titleOptRO = indexRW.zoom( _.resp.toOption.flatMap(_.name) )( OptFastEq.Plain )
   private val indexWelcomeRW = indexRW.zoomRW(_.welcome) { _.withWelcome(_) }
   //private val indexStateRW = indexRW.zoomRW(_.state) { _.withState(_) }
+
+  val scCssRO: ModelRO[ScCss] = indexRW.zoom(_.scCss)
 
   private val searchRW = indexRW.zoomRW(_.search) { _.withSearch(_) }
   private val tagsRW = searchRW.zoomRW(_.tags) { _.withTags(_) }
@@ -188,7 +196,8 @@ class Sc3Circuit(
   private val indexAh = new IndexAh(
     api     = api,
     modelRW = indexRW,
-    stateRO = rootRW
+    rootRO = rootRW,
+    scCssFactory = scCssFactory
   )
 
   private val mapAhs = {
@@ -330,29 +339,6 @@ class Sc3Circuit(
       dom.document.title = title1
     }
 
-  }
-
-
-  /** Зуммер для получения инстанса динамических аргументов рендера ScCss. */
-  private val scCssArgsRO = zoom(_.scCssArgs)
-
-  private var _scCssCacheOpt: Option[ScCss] = None
-
-  // Постоянная подписка на события реальных изменений, связанных со стилями ScCss:
-  subscribe(scCssArgsRO) { _ =>
-    // Изменились какие-то параметры, связанные со стилями. Просто сбросить кэш ScCss:
-    _scCssCacheOpt = None
-  }
-
-  def scCss(): ScCss = {
-    _scCssCacheOpt.getOrElse {
-      // Заполнить кэш ScCss согласно текущим параметрам рендера:
-      synchronized {
-        val scCss = scCssFactoryModule.mkScCss( scCssArgsRO() )
-        _scCssCacheOpt = Some( scCss )
-        scCss
-      }
-    }
   }
 
 }

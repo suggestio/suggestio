@@ -4,6 +4,7 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.dev.JsScreenUtil
 import io.suggest.sc.m.dev.MScScreenS
 import io.suggest.sc.m.grid.GridReConf
+import io.suggest.sc.m.inx.ScCssReBuild
 import io.suggest.sc.m.{ScreenReset, ScreenRszTimer}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
@@ -50,12 +51,16 @@ class ScreenAh[M](modelRW: ModelRW[M, MScScreenS]) extends ActionHandler(modelRW
 
     // Сигнал срабатывания таймера отложенной реакции на изменение размеров экрана.
     case ScreenRszTimer =>
+      // TODO Opt Проверять, изменился ли экран по факту? Может быть изменился и вернулся назад за время таймера?
+      // Уведомить index-контроллер об изменении размера экрана
+      val scCssRebuildFx = Effect.action( ScCssReBuild )
+
       // Уведомить контроллер плитки, что пора пересчитать плитку.
       val gridFx = Effect.action( GridReConf )
 
       // Забыть о сработавшем таймере.
       val v2 = value.withRszTimer(None)
-      updated(v2, gridFx)
+      updated(v2, scCssRebuildFx + gridFx)
 
   }
 

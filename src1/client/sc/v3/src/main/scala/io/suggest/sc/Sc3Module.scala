@@ -31,9 +31,8 @@ class Sc3Module {
 
   // sc css
   /** Функция-геттер для получения текущего инстанса ScCss. */
-  val getScCssF: GetScCssF = { () =>
-    sc3Circuit.scCss()
-  }
+  val getScCssF: GetScCssF = sc3Circuit.scCssRO.apply
+
   lazy val scCssFactoryModule = wire[ScCssFactory]
   lazy val scCssR  = wire[ScCssR]
 

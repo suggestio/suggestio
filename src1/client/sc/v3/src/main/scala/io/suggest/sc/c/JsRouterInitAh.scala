@@ -6,6 +6,7 @@ import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.react.ReactDiodeUtil._
+import io.suggest.sc.ScConstants
 
 import scala.concurrent.Promise
 import scala.util.Success
@@ -80,7 +81,7 @@ class JsRouterInitAh[M <: AnyRef](
       // И запрос js-роутера с сервера и запрос геолокации пойдут параллельно.
       if (m.mainScreen.needGeoLoc) {
         val v0 = value
-        val tp = DomQuick.timeoutPromiseT( 5000 )( GeoLocTimeOut )
+        val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut )
         val v2 = v0.withGeoLockTimer( Some(tp.timerId) )
         val timeoutFx = Effect( tp.fut )
 
