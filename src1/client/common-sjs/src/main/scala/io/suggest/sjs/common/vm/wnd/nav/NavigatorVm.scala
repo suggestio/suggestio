@@ -20,7 +20,8 @@ case class NavigatorVm(_underlying: Navigator) extends IVm {
   def stub = NavStub(_underlying)
 
   def geolocation: Option[Geolocation] = {
-    stub.geolocation
+    stub
+      .geolocation
       .toOption
   }
 
@@ -28,6 +29,12 @@ case class NavigatorVm(_underlying: Navigator) extends IVm {
   def userAgent: Option[String] = {
     stub
       .userAgent
+      .toOption
+  }
+
+  def standalone: Option[Boolean] = {
+    stub
+      .standalone
       .toOption
   }
 
@@ -44,4 +51,5 @@ object NavStub {
 sealed trait NavStub extends js.Object {
   def geolocation: js.UndefOr[Geolocation] = js.native
   val userAgent: UndefOr[String] = js.native
+  val standalone: UndefOr[Boolean] = js.native
 }

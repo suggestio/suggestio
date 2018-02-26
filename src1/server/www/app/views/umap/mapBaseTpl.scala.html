@@ -5,6 +5,8 @@
 @import helper._
 @import io.suggest.js.JsRoutesConst
 
+@jsCall(c: Call) = {@Html( CSRF(c).url )}
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -233,12 +235,12 @@
             "datalayersControl": true,
             "urls": {
               "map": "/ru/map/{slug}_{pk}",
-              "datalayer_create": "@CSRF(routes.Umap.createMapDataLayer())",
-              "datalayer_view": "@args.dlGetUrl",
-              "datalayer_update": "@args.dlUpdateUrl",
+              "datalayer_create": "@jsCall(routes.Umap.createMapDataLayer())",
+              "datalayer_view": "@Html(args.dlGetUrl)",
+              "datalayer_update": "@Html(args.dlUpdateUrl)",
               "datalayer_delete": "/ru/map/{map_id}/datalayer/delete/{pk}/",
               "ajax_proxy": "/ajax-proxy/?url={url}",
-              "map_update": "@CSRF( routes.Umap.saveMapSettingsSubmit() )",
+              "map_update": "@jsCall( routes.Umap.saveMapSettingsSubmit() )",
               "map_old_url": "/ru/map/{username}/{slug}/",
               "map_geojson": "/ru/map/{pk}/geojson/",
               "map_short_url": "/ru/m/{pk}/",
@@ -246,7 +248,7 @@
               "map_new": "/ru/map/new/",
               "map_delete": "/ru/map/{map_id}/update/delete/",
               "map_create": "/ru/map/create/",
-              "logout": "@CSRF(routes.Ident.logout())",
+              "logout": "@jsCall(routes.Ident.logout())",
               "routing": "http://map.project-osrm.org/?loc={lat},{lng}&hl={locale}",
               "map_clone": "/ru/map/{map_id}/update/clone/",
               "login_popup_end": "/ru/login/popup/end/",

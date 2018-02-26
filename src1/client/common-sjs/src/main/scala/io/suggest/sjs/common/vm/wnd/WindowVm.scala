@@ -7,9 +7,10 @@ import io.suggest.sjs.common.vm.wnd.dpr.DevPxRatioT
 import io.suggest.sjs.common.vm.wnd.hist.HistoryApiT
 import io.suggest.sjs.common.vm.wnd.nav.NavigatorVm
 import org.scalajs.dom
-import org.scalajs.dom.{Navigator, Window}
+import org.scalajs.dom.{MediaQueryList, Navigator, Window}
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
  * Suggest.io
@@ -39,6 +40,12 @@ trait WindowVmT
   /** Безопасный упрощённый доступ к navigator.geolocation. */
   def geolocation = navigator.flatMap(_.geolocation)
 
+  def matchMedia(mediaQuery: String): Option[MediaQueryList] = {
+    stub
+      .matchMedia(mediaQuery)
+      .toOption
+  }
+
 }
 
 
@@ -56,4 +63,5 @@ object WindowStub {
 @js.native
 sealed trait WindowStub extends js.Object {
   def navigator: js.UndefOr[Navigator] = js.native
+  def matchMedia(mediaQuery: String): UndefOr[MediaQueryList] = js.native
 }
