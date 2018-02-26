@@ -81,3 +81,4 @@ class Sc @Inject() (
   with ScTags
   with ScRemoteError
   with ScMap
+  with ScPwaManifest

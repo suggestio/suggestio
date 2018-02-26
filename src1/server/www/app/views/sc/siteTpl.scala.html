@@ -7,6 +7,7 @@
 @import io.suggest.sc.ScConstants.{Site => C}
 @import io.suggest.i18n.MsgCodes
 @import views.html.stuff._preLoaderLkTpl
+@import io.suggest.sc.pwa.MPwaManifestQs
 
 <!DOCTYPE html>
 <html>
@@ -33,6 +34,8 @@
   }
   @if(!args.syncRender) {
     <meta name="fragment" content="!"/>
+    <link rel="manifest" href="@cdn.forCall(routes.Sc.webAppManifest( MPwaManifestQs(args.apiVsn) ))"/>
+    @* TODO startUrl meta tag и другие для iOS, не умеющей в manifest. *@
   }
 
   @static._faviconsTpl()

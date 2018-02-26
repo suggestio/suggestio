@@ -84,4 +84,21 @@ object HtmlConstants {
 
   }
 
+
+  /** Константы для link-тега. */
+  object Links {
+
+    /** Стандартные значения аттрибута rel. */
+    object Rels {
+
+      // Иконки сайта или приложения.
+      final def ICON              = "icon"
+      final def SHORTCUT_ICON     = "shortcut " + ICON
+      final def APPLE_TOUCH_ICON  = "apple-touch-" + ICON
+
+    }
+
+  }
+
+
 }

@@ -13,6 +13,11 @@ GET  /vassets/*file                     @controllers.Assets.versioned(path="/pub
 
 ## Home page
 GET  /                                  @controllers.Sc.geoSite(a: msc.ScJsState ?= msc.ScJsState.veryEmpty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
+
+## "... most browsers of all types will request /favicon.ico by default" https://stackoverflow.com/a/1445016
+## TODO Заменить на moved temporary + versioned-роута, чтобы усилить кэширование?
+GET  /favicon.ico                       @controllers.Assets.at(path = "/public", file = "images/favicon/114.ico")
+
 ## Унифицированный sc index на все случаи жизни.
 GET  /sc/index                          @controllers.Sc.index(a: msc.MScIndexArgs)
 
@@ -27,6 +32,7 @@ GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.
 GET  /sc/router.js                      @controllers.Sc.scJsRouter
 GET  /sc/tags                           @controllers.Sc.tagsSearch(t: io.suggest.sc.tags.MScTagsSearchQs)
 GET  /sc/map/nodes/all                  @controllers.Sc.renderMapNodesAll
+GET  /sc/sc.webmanifest                 @controllers.Sc.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
 
 ## Поиск по узлам
 GET  /sc/nodes                          @controllers.Sc.findNodes(a: msc.MScNodeSearchArgs)

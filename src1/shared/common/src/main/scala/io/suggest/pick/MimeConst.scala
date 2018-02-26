@@ -25,6 +25,7 @@ object MimeConst {
     final def MULTIPART = "multipart"
     final def FORM = "form"
     final def DATA = "data"
+    final def MANIFEST = "manifest"
   }
 
 
@@ -35,6 +36,8 @@ object MimeConst {
 
   // !!! Если выставлять это в запросы вручную, то надо не зыбывать обязательный "; boundary=..."
   final def MULTIPART_FORM_DATA         = Words.MULTIPART + Words.DELIM1 + Words.FORM + "-" + Words.DATA
+
+  final def WEB_APP_MANIFEST            = Words.APPLICATION_ + Words.MANIFEST + "+" + Words.JSON
 
 
   /** Внутренние sio-mime-типы. */

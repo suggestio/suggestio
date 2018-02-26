@@ -3,16 +3,21 @@
 @* Все иконки в метатегах для страниц. В т.ч. og:image и т.д. *@
 
 @import ctx.api.cdn
+@import models.im.MFavIcons
+@import io.suggest.common.geom.d2.ISize2di
+@import io.suggest.common.html.HtmlConstants.SPACE
 
 @_faviconTpl()
 
-<link href="@cdn.asset("images/favicon/57.png")" rel="apple-touch-icon" sizes="57x57" type="image/png" />
-<link href="@cdn.asset("images/favicon/72.png")" rel="apple-touch-icon" sizes="72x72" type="image/png" />
-<link href="@cdn.asset("images/favicon/114.png")" rel="apple-touch-icon" sizes="114x114" type="image/png" />
-<link href="@cdn.asset("images/favicon/144.png")" rel="apple-touch-icon" sizes="144x144" type="image/png" />
-
-<link href="@cdn.asset("images/favicon/rus.svg")" rel="icon" type="image/svg+xml" />
-<link href="@cdn.asset("images/favicon/228.png")" rel="icon" sizes="228x228" type="image/png" />
+@* Список дефолтовых favicon'ов уехал в статическую модель MFavIcons, а тут только генератор html. *@
+@for(icoRel <- MFavIcons.linkRelIcons.iterator; ico = icoRel.icon; rel <- icoRel.rels) {
+  <link href="@cdn.asset(ico.src)"
+        rel="@rel"
+        @if(ico.sizes.nonEmpty) {
+          sizes="@ico.sizes.iterator.map(ISize2di.wxh).mkString(SPACE)"
+        }
+        type="@ico.mimeType" />
+}
 
 @* windows 8+ metro: *@
 <meta name="msapplication-TileImage" content="@cdn.asset("images/favicon/144.png")" />

@@ -36,7 +36,11 @@ object ISize2di {
 
   /** Отрендерить в строку вида WxH. */
   def toString(sz2d: ISize2di): String = {
-    s"${sz2d.width}x${sz2d.height}"
+    wxh(sz2d)
+  }
+
+  def wxh(sz2d: ISize2di): String = {
+    sz2d.width.toString + "x" + sz2d.height
   }
 
   def whRatio(sz2d: ISize2di): Double = {
@@ -117,6 +121,8 @@ object MSize2di {
   }
 
   implicit def univEq: UnivEq[MSize2di] = UnivEq.derive
+
+  def square(sidePx: Int) = apply(width = sidePx, height = sidePx)
 
 }
 
