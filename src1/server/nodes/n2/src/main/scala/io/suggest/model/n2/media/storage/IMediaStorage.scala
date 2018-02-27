@@ -6,9 +6,12 @@ import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.fio.{IDataSource, IWriteRequest}
 import io.suggest.primo.TypeT
 import io.suggest.es.util.SioEsUtil.DocField
+import io.suggest.model.n2.media.storage.swfs.SwfsStorage
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.url.MHostInfo
 import play.api.inject.Injector
 import play.api.libs.json._
+import play.api.mvc.QueryStringBindable
 
 import scala.concurrent.Future
 
@@ -67,7 +70,7 @@ class IMediaStorages @Inject() (
 
   private type X = T
   private def _getModel(ptr: T): IMediaStorageStaticImpl { type T = X } = {
-    getModel(ptr.sType)
+    getModel(ptr.storageType)
   }
 
   def getModel(sType: MStorage): IMediaStorageStaticImpl { type T = X } = {
@@ -189,9 +192,59 @@ trait IMediaStorageStaticImpl extends IMediaStorageStatic {
 
 
 /** Интерфейс моделей хранилищ. */
+// TODO Сделать sealed, но SwfsStorage живёт в другом файле...
 trait IMediaStorage {
 
   /** Тип стораджа. */
-  def sType: MStorage
+  def storageType: MStorage
+
+  /** Какие-то данные уровня storage, понятные текущему типу стораджа. */
+  def storageInfo: String
+
+}
+
+object IMediaStorage {
+
+  object Fields {
+    def STORAGE_TYPE_FN = "t"
+    def STORAGE_DATA_FN = "d"
+  }
+
+  /** Поддержка биндинга из/в URL qs. */
+  implicit def mediaStorageQsb( implicit
+                                swfsStorageB    : QueryStringBindable[SwfsStorage],
+                                storageB        : QueryStringBindable[MStorage]
+                              ): QueryStringBindable[IMediaStorage] = {
+    new QueryStringBindableImpl[IMediaStorage] {
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, IMediaStorage]] = {
+        val k = key1F(key)
+        val F = Fields
+        for {
+          storageTypeE <- storageB.bind(k(F.STORAGE_TYPE_FN), params)
+          storageType  <- storageTypeE.right.toOption
+          storageDataE <- storageType match {
+            case MStorages.SeaWeedFs =>
+              swfsStorageB.bind(k(F.STORAGE_DATA_FN), params)
+          }
+        } yield {
+          storageDataE
+        }
+      }
+
+      override def unbind(key: String, value: IMediaStorage): String = {
+        val k = key1F(key)
+        val F = Fields
+        _mergeUnbinded1(
+          storageB.unbind( k(F.STORAGE_TYPE_FN), value.storageType ),
+          value match {
+            case swfs: SwfsStorage =>
+              swfsStorageB.unbind( k(F.STORAGE_DATA_FN), swfs )
+          }
+        )
+      }
+
+    }
+  }
 
 }

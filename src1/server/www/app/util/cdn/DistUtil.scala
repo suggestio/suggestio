@@ -4,15 +4,16 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.file.up.MFile4UpProps
-import io.suggest.model.n2.media.storage.{IMediaStorages, MAssignedStorage, MStorages}
-import io.suggest.model.n2.media.storage.swfs.{SwfsStorages, SwfsVolumeCache}
+import io.suggest.model.n2.media.storage._
+import io.suggest.model.n2.media.storage.swfs.{SwfsStorage, SwfsStorages, SwfsVolumeCache}
 import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.util.logs.MacroLogsImpl
-import models.mup.MSwfsUploadReqInfo
+import models.mup.MSwfsFidInfo
 import japgolly.univeq._
 import util.up.UploadUtil
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.model.n2.media.MMedia
+import io.suggest.swfs.client.proto.lookup.IVolumeLocation
 import io.suggest.url.MHostInfo
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -36,7 +37,7 @@ class DistUtil @Inject()(
 {
 
   /** Используемое хранилище. */
-  private def DIST_STORAGE = MStorages.SeaWeedFs
+  private def DIST_STORAGE: MStorage = MStorages.SeaWeedFs
 
 
   // TODO DIST_IMG Реализовать поддержку распределения media-файлов по нодам.
@@ -60,9 +61,8 @@ class DistUtil @Inject()(
       LOGGER.trace(s"$logPrefix Assigned swfs resp: $assignResp")
       val swfsAssignResp = assignResp._2
       MAssignedStorage(
-        host          = swfsAssignResp.hostInfo,
-        storageType   = storageType,
-        storageInfo   = swfsAssignResp.fid
+        host    = swfsAssignResp.hostInfo,
+        storage = assignResp._1
       )
     }
   }
@@ -70,42 +70,38 @@ class DistUtil @Inject()(
 
   /** Проверка возможности аплоада прямо сюда на текущую ноду.
     *
-    * @param storage Результат assignDist().
+    * @param storage Строка инфы в контексте данного хранилища.
     * @return Расширенные данные для аплоада, если Some.
     *         None, значит доступ закрыт.
     */
-  def checkForUpload(storage: MAssignedStorage): Future[Option[MSwfsUploadReqInfo]] = {
+  def checkStorageForThisNode(storage: IMediaStorage): Future[Either[Seq[IVolumeLocation], MSwfsFidInfo]] = {
     // Распарсить Swfs FID из URL и сопоставить полученный volumeID с текущей нодой sio.
-    val fidOpt = OptionUtil.maybe( storage.storageType ==* DIST_STORAGE ) {
-      Fid( storage.storageInfo )
-    }
+    lazy val logPrefix = s"checkForUpload($storage)#${System.currentTimeMillis()}:"
 
-    lazy val logPrefix = s"checkForUpload[${System.currentTimeMillis()}]:"
-    LOGGER.trace(s"$logPrefix Checking fid=${fidOpt.orNull}")
+    storage match {
+      case swfsStorage: SwfsStorage =>
+        LOGGER.trace(s"$logPrefix Checking SWFS fid=${swfsStorage.fid}")
 
-    fidOpt.fold [Future[Option[MSwfsUploadReqInfo]]] {
-      LOGGER.warn(s"$logPrefix fid is empty, but storage = ${storage.storageType}")
-      None
-    } { fid =>
-      for {
-        volLocs <- swfsVolumeCache.getLocations( fid.volumeId )
-      } yield {
-        // Может быть несколько результатов, если у volume существуют реплики.
-        // Нужно найти целевую мастер-шарду, которая располагается где-то очень близко к текущему локалхосту.
-        val myExtHost = uploadUtil.MY_NODE_PUBLIC_URL
-        val myVolOpt = volLocs
-          .find { volLoc =>
-            volLoc.publicUrl ==* myExtHost
-            // Не проверяем nameInt/url, потому что там полу-рандомный порт swfs
-          }
-
-        if (myVolOpt.isEmpty)
-          LOGGER.error(s"$logPrefix Failed to find vol#${fid.volumeId} for fid='$fid' nearby. My=$myExtHost, storage=$storage. Other available volumes considered non-local: ${volLocs.mkString(", ")}")
-
-        // Пусть будет NSEE при нарушении, так и надо: .recover() отработает ошибку доступа.
-        val myVol = myVolOpt.get
-        Some( MSwfsUploadReqInfo(fid, myVol, volLocs) )
-      }
+        for {
+          volLocs <- swfsVolumeCache.getLocations( swfsStorage.fid.volumeId )
+        } yield {
+          // Может быть несколько результатов, если у volume существуют реплики.
+          // Нужно найти целевую мастер-шарду, которая располагается где-то очень близко к текущему локалхосту.
+          val myExtHost = uploadUtil.MY_NODE_PUBLIC_URL
+          volLocs
+            .find { volLoc =>
+              volLoc.publicUrl ==* myExtHost
+              // Не проверяем nameInt/url, потому что там полу-рандомный порт swfs
+            }
+            .map { myVol =>
+              LOGGER.trace(s"$logPrefix ")
+              MSwfsFidInfo(swfsStorage.fid, myVol, volLocs)
+            }
+            .toRight {
+              LOGGER.error(s"$logPrefix Failed to find vol#${swfsStorage.fid.volumeId} for fid='${swfsStorage.fid}' nearby. My=$myExtHost, storage=$storage Other available volumes considered non-local: ${volLocs.mkString(", ")}")
+              volLocs
+            }
+        }
     }
   }
 

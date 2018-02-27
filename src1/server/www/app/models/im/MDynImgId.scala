@@ -34,6 +34,9 @@ case class MDynImgId(
                       // TODO svgo=()?
                     ) {
 
+  // TODO Переименовать поле rowKeyStr в nodeId.
+  final def nodeId: String = rowKeyStr
+
   // TODO Допилить и активировать ассерты правил применения формата изображения.
   // assert( hasImgOps && dynFormat.nonEmpty )
 

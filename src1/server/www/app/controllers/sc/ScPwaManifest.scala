@@ -36,8 +36,8 @@ trait ScPwaManifest
       display   = Some( MPwaDisplayModes.Standalone ),
       icons     = MFavIcons.linkRelIcons.map(_.icon)
     )
-    val respJson = Json.toJson( manifest )
-    Ok(respJson)
+
+    Ok( Json.toJson( manifest ) )
       .as( MimeConst.WEB_APP_MANIFEST )
       // TODO Протюнить cache-control под реальную обстановку. 86400сек - это с потолка.
       .cacheControl(86400)

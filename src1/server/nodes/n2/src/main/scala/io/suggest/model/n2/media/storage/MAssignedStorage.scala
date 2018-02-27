@@ -16,15 +16,13 @@ object MAssignedStorage {
 
   object Fields {
     def HOST_FN           = "h"
-    def STORAGE_TYPE_FN   = "t"
-    def STORAGE_INFO_FN   = "i"
+    def STORAGE_FN        = "s"
   }
 
   /** Поддержка биндинга для URL qs. */
   implicit def mDistAssignRespQsb(implicit
-                                  hostB     : QueryStringBindable[MHostInfo],
-                                  strB      : QueryStringBindable[String],
-                                  storageB  : QueryStringBindable[MStorage]
+                                  hostB           : QueryStringBindable[MHostInfo],
+                                  mediaStorageB   : QueryStringBindable[IMediaStorage]
                                  ): QueryStringBindable[MAssignedStorage] = {
     new QueryStringBindableImpl[MAssignedStorage] {
 
@@ -33,18 +31,15 @@ object MAssignedStorage {
         val F = Fields
         for {
           hostE             <- hostB.bind( k(F.HOST_FN), params )
-          storageTypeE      <- storageB.bind( k(F.STORAGE_TYPE_FN), params )
-          storageInfoE      <- strB.bind( k(F.STORAGE_INFO_FN), params )
+          storageE          <- mediaStorageB.bind( k(F.STORAGE_FN), params )
         } yield {
           for {
             host            <- hostE.right
-            storageType     <- storageTypeE.right
-            storageInfo     <- storageInfoE.right
+            storage         <- storageE.right
           } yield {
             MAssignedStorage(
               host          = host,
-              storageType   = storageType,
-              storageInfo   = storageInfo
+              storage       = storage
             )
           }
         }
@@ -54,9 +49,8 @@ object MAssignedStorage {
         val k = key1F(key)
         val F = Fields
         _mergeUnbinded1(
-          hostB.unbind    ( k(F.HOST_FN),         value.host ),
-          storageB.unbind ( k(F.STORAGE_TYPE_FN), value.storageType ),
-          strB.unbind     ( k(F.STORAGE_INFO_FN), value.storageInfo )
+          hostB.unbind          ( k(F.HOST_FN),         value.host ),
+          mediaStorageB.unbind  ( k(F.STORAGE_FN),      value.storage )
         )
       }
 
@@ -68,11 +62,9 @@ object MAssignedStorage {
 
 /** Класс-контейнер данных по хосту и стораджу для распределённого хранения данных.
   *
-  * @param storageType Используемый сторадж.
-  * @param storageInfo Данные хранения, понятные конкретному стораджу.
+  * @param storage Данные назначенного media-хранилища.
   */
 case class MAssignedStorage(
                              host        : MHostInfo,
-                             storageType : MStorage,
-                             storageInfo : String
+                             storage     : IMediaStorage
                            )

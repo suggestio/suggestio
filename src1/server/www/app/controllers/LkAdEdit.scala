@@ -15,7 +15,7 @@ import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.doc.MNodeDoc
-import io.suggest.model.n2.media.{MMedias, MMediasCache}
+import io.suggest.model.n2.media.MMediasCache
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
@@ -51,7 +51,6 @@ class LkAdEdit @Inject() (
                            isNodeAdmin                            : IsNodeAdmin,
                            cspUtil                                : CspUtil,
                            lkAdEdFormUtil                         : LkAdEdFormUtil,
-                           mMedias                                : MMedias,
                            uploadCtl                              : Upload,
                            mMediasCache                           : MMediasCache,
                            bruteForceProtect                      : BruteForceProtect,

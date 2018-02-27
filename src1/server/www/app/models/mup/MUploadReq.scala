@@ -16,14 +16,14 @@ trait IUploadReq[A]
 {
 
   /** Распарсенный swfs fid, если есть. */
-  def swfsOpt: Option[MSwfsUploadReqInfo]
+  def swfsOpt: Option[MSwfsFidInfo]
 
 }
 
 
 /** Дефолтовая реализация [[IUploadReq]]. */
 case class MUploadReq[A](
-                          override val swfsOpt              : Option[MSwfsUploadReqInfo],
+                          override val swfsOpt              : Option[MSwfsFidInfo],
                           override val request              : Request[A],
                           override val user                 : ISioUser
                         )
@@ -31,8 +31,8 @@ case class MUploadReq[A](
   with IUploadReq[A]
 
 
-case class MSwfsUploadReqInfo(
-                               swfsFidParsedOpt     : Fid,
-                               swfsMyVol            : IVolumeLocation,
-                               swfsVolLookup        : Seq[IVolumeLocation]
-                             )
+case class MSwfsFidInfo(
+                         swfsFidParsedOpt     : Fid,
+                         swfsMyVol            : IVolumeLocation,
+                         swfsVolLookup        : Seq[IVolumeLocation]
+                       )

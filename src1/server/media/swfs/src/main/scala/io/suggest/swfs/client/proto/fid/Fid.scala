@@ -1,8 +1,13 @@
 package io.suggest.swfs.client.proto.fid
 
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.swfs.client.proto.VolumeId_t
+import io.suggest.util.logs.MacroLogsDyn
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.mvc.QueryStringBindable
+
+import scala.util.Try
 
 /**
  * Suggest.io
@@ -11,22 +16,13 @@ import play.api.libs.functional.syntax._
  * Description: Модель представления fid'ов, который состоит из id файла и id раздела.
  */
 
-
-trait IFid extends IVolumeId {
-
-  /** id файла внутри volume. */
-  def fileId    : String
-
-  /** Сериализовать в строку. */
-  def toFid: String = s"$volumeId,$fileId"
-  override def toString = toFid
-}
-
-
-object Fid {
+object Fid extends MacroLogsDyn {
 
   val VOLUME_ID_FN = "v"
   val FILE_ID_FN   = "f"
+
+  val VOL_FID_DELIM_CH = ','
+
 
   implicit val FID_FORMAT: OFormat[Fid] = (
     (__ \ VOLUME_ID_FN).format[VolumeId_t] and
@@ -39,7 +35,35 @@ object Fid {
     val Array(volumeIdStr, fileId) = fid.split(',')
     val volumeId = volumeIdStr.toInt
     new Fid(volumeId, fileId) {
-      override def toFid = fid
+      override def toString = fid
+    }
+  }
+
+
+  /** Поддержка сырого биндинга из query-string. */
+  implicit def fidQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[Fid] = {
+    new QueryStringBindableImpl[Fid] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Fid]] = {
+        val fidStrRaw = strB.bind(key, params)
+        for (fidStrE <- fidStrRaw) yield {
+          for {
+            fidStr <- fidStrE.right
+            parsed <- Try( Fid(fidStr) )
+              .toEither
+              .left.map { ex =>
+                LOGGER.error(s"qsb: failed to bind $fidStrRaw", ex)
+                ex.getMessage
+              }
+              .right
+          } yield {
+            parsed
+          }
+        }
+      }
+
+      override def unbind(key: String, value: Fid): String = {
+        strB.unbind(key, value.toString)
+      }
     }
   }
 
@@ -47,7 +71,18 @@ object Fid {
 
 
 case class Fid(
-  override val volumeId  : VolumeId_t,
-  override val fileId    : String
-)
-  extends IFid
+                override val volumeId   : VolumeId_t,
+                fileId                  : String
+              )
+  extends IVolumeId
+{
+
+  /** Сериализовать в строку. */
+  override def toString: String = {
+    val sb = new StringBuilder(16)
+    sb.append( volumeId )
+      .append(  )
+    s"$volumeId,$fileId"
+  }
+
+}

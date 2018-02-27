@@ -8,13 +8,12 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import controllers.routes
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.img.{MImgFmt, MImgFmts}
+import io.suggest.img.MImgFmt
 import io.suggest.util.logs.MacroLogsImpl
 import models.im._
 import models.mproj.ICommonDi
 import org.im4java.core.{ConvertCmd, IMOperation}
 import play.api.mvc.Call
-import japgolly.univeq._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -50,7 +49,9 @@ class DynImgUtil @Inject() (
 
   /** Активен ли префетчинг, т.е. опережающая подготовка картинки?
     * Префетчинг начинается асинхронно в момент генерации ссылки на картинку. */
-  private def PREFETCH_ENABLED = true
+  // TODO Из-за распределения картинок по узлам, возникла ситуация, что prefetch исполняется не на том узле
+  // TODO Нужно сделать prefetch для локальных картинок, или слать HTTP Head запрос на ноду, где картинка должна бы быть.
+  private def PREFETCH_ENABLED = false
 
 
   //LOGGER.trace(s"DynImgUtil: ensureCache=$ENSURE_DYN_CACHE_TTL, saveDerivatives=$SAVE_DERIVATIVES_TO_PERMANENT, prefetch=$PREFETCH_ENABLED")
@@ -64,12 +65,11 @@ class DynImgUtil @Inject() (
     if (PREFETCH_ENABLED) {
       Future {
         ensureLocalImgReady(dargs, cacheResult = true)
+          .failed
+          .foreach { ex =>
+            LOGGER.error("Failed to prefetch dyn.image: " + dargs.dynImgId.fileName, ex)
+          }
       }
-        .flatMap(identity)
-        .failed
-        .foreach { ex =>
-          LOGGER.error("Failed to prefetch dyn.image: " + dargs.dynImgId.fileName, ex)
-        }
     }
     routes.Img.dynImg(dargs)
   }

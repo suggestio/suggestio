@@ -69,24 +69,27 @@ class CanUploadFile @Inject()(
         Results.Forbidden(msg)
 
       } else {
-        distUtil
-          .checkForUpload( upTg.storage )
-          .flatMap { swfsOpt =>
-            // Всё ок, данные всех хранилищ выверены, собрать mreq и запустить экшен аплоада и проверки самого файла.
-            LOGGER.trace(s"$logPrefix Allowed to process file upload, swfs=>${swfsOpt.orNull}")
+        val respFut = for {
+          swfsEith <- distUtil.checkStorageForThisNode( upTg.storage.storage )
+          if swfsEith.isRight
+          resp <- {
+            LOGGER.trace(s"$logPrefix Allowed to process file upload, swfs => $swfsEith")
             val mreq = MUploadReq(
-              swfsOpt = swfsOpt,
+              swfsOpt = swfsEith.right.toOption,
               request = request0,
               user    = user
             )
             f(mreq)
           }
-          .recover { case ex: Throwable =>
-            // Рядом с текущим узлом нет искомой swfs volume. Это значит, что юзер подменил хостнейм в сгенеренной ссылке,
-            // и пытается залить файл мимо целевого сервера (либо какая-то ошибка в конфигурации).
-            LOGGER.warn(s"$logPrefix Failed to validate SWFS upload args", ex)
-            Results.ExpectationFailed(s"Storage ${upTg.storage}:${upTg.storage.host.nameInt}:${upTg.storage.storageInfo} looks unavailable for upload from ${uploadUtil.MY_NODE_PUBLIC_URL}.")
-          }
+        } yield {
+          resp
+        }
+        respFut.recover { case ex: Throwable =>
+          // Рядом с текущим узлом нет искомой swfs volume. Это значит, что юзер подменил хостнейм в сгенеренной ссылке,
+          // и пытается залить файл мимо целевого сервера (либо какая-то ошибка в конфигурации).
+          LOGGER.warn(s"$logPrefix Failed to validate SWFS upload args", ex)
+          Results.ExpectationFailed(s"Storage ${upTg.storage}:${upTg.storage.host.nameInt}:${upTg.storage.storage} looks unavailable for upload from ${uploadUtil.MY_NODE_PUBLIC_URL}.")
+        }
       }
     }
 

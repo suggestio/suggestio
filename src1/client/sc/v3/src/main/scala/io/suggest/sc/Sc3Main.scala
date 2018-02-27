@@ -9,7 +9,6 @@ import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.sjs.leaflet.Leaflet
-import io.suggest.common.html.HtmlConstants.SLASH
 import org.scalajs.dom
 
 /**

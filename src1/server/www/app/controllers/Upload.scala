@@ -18,8 +18,7 @@ import io.suggest.img.MImgFmts
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.media._
 import io.suggest.model.n2.media.search.{MHashCriteria, MMediaSearchDfltImpl}
-import io.suggest.model.n2.media.storage.swfs.SwfsStorage
-import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
+import io.suggest.model.n2.media.storage.IMediaStorages
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
@@ -27,7 +26,6 @@ import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.sec.av.{ClamAvScanRequest, ClamAvUtil}
-import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.url.MHostUrl
 import io.suggest.ws.{MWsMsg, MWsMsgTypes}
 import models.im._
@@ -415,10 +413,7 @@ class Upload @Inject()(
           fileNameOpt = Option( filePart.filename )
 
           // Собираем MediaStorage ptr:
-          mediaStor = uploadArgs.storage.storageType match {
-            case MStorages.SeaWeedFs =>
-              SwfsStorage( Fid(uploadArgs.storage.storageInfo) )
-          }
+          mediaStor = uploadArgs.storage.storage
 
           // TODO Если требуется img-форматом, причесать оригинал, расширив исходную карту хэшей новыми значениями.
           // Например, JPEG можно пропустить через jpegtran -copy.
