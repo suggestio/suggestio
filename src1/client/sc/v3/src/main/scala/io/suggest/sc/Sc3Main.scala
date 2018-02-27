@@ -1,5 +1,6 @@
 package io.suggest.sc
 
+import io.suggest.pwa.WebAppUtil
 import io.suggest.sc.log.ScRmeLogAppender
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.log.Logging
@@ -8,6 +9,8 @@ import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.sjs.leaflet.Leaflet
+import io.suggest.common.html.HtmlConstants.SLASH
+import org.scalajs.dom
 
 /**
   * Suggest.io
@@ -24,6 +27,15 @@ object Sc3Main {
 
     // Сразу поискать js-роутер на странице.
     val jsRouterFut = SrvRouter.ensureJsRouter()
+
+    // 2018-02-27: После установки веб-приложения, есть проблема, что запуск приложения идёт по уже установленным
+    // координатам из исходного URL. На новых девайсах это решабельно через webmanifest.start_url, а на яббле нужен доп.костыль:
+    if (
+      WebAppUtil.isStandalone() &&
+      Option(dom.document.location.hash).exists(_.nonEmpty)
+    ) {
+      dom.document.location.hash = ""
+    }
 
     val doc  = DocumentVm()
     val body = doc.body

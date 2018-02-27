@@ -27,8 +27,11 @@ trait ScPwaManifest
     * @return 200 + JSON
     */
   def webAppManifest(qs: MPwaManifestQs) = maybeAuth(U.PersonNode).async { implicit request =>
+    // TODO Нужна локализация? И если нужна, то на уровне URL, или на уровне user-сессии?
     val manifest = MWebManifest(
       name      = MsgCodes.`Suggest.io`,
+      // TODO Полное и короткое названия должны различаться.
+      shortName = Some( MsgCodes.`Suggest.io` ),
       startUrl  = "/",
       display   = Some( MPwaDisplayModes.Standalone ),
       icons     = MFavIcons.linkRelIcons.map(_.icon)
@@ -39,7 +42,5 @@ trait ScPwaManifest
       // TODO Протюнить cache-control под реальную обстановку. 86400сек - это с потолка.
       .cacheControl(86400)
   }
-
-  // application/manifest+json
 
 }

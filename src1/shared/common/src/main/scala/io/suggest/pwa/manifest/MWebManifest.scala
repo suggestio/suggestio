@@ -63,6 +63,18 @@ object MWebManifest {
 
 /** Класс манифеста для web-приложения.
   *
+  * @see Инфа по желательным к заполнению полям [[https://developers.google.com/web/fundamentals/app-install-banners/]]
+  *
+  * Chrome automatically displays the banner when your app meets the following criteria:
+  * + Has a web app manifest file with:
+  *   + a short_name (used on the home screen)
+  *   + a name (used in the banner)
+  *   + a 192x192 png icon (the icon declarations must include a mime type of image/png)
+  *   + a start_url that loads
+  * + Has a service worker registered on your site.
+  * + Is served over HTTPS (a requirement for using service worker).
+  * + Meets a site engagement heuristic defined by Chrome (this is regularly being changed).
+  *
   * @param name Название приложения.
   * @param shortName Короткое название.
   * @param startUrl Ссылка при запуске.

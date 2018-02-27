@@ -5,7 +5,7 @@ import io.suggest.sjs.common.vm.evtg.EventTargetVmT
 import io.suggest.sjs.common.vm.head.HeadVm
 import org.scalajs.dom
 import org.scalajs.dom.{Document, Element}
-import org.scalajs.dom.raw.{HTMLBodyElement, HTMLElement, HTMLHeadElement}
+import org.scalajs.dom.raw.{HTMLBodyElement, HTMLDocument, HTMLElement, HTMLHeadElement}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -67,5 +67,5 @@ object SafeDocumentApi {
 
 
 /** Дефолтовая реализация [[DocumentVmT]], поля заменены на val и lazy val. */
-case class DocumentVm(override val _underlying: Document = dom.document)
+case class DocumentVm(override val _underlying: HTMLDocument = dom.document)
   extends DocumentVmT
