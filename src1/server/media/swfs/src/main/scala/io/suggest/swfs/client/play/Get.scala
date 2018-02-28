@@ -2,6 +2,7 @@ package io.suggest.swfs.client.play
 
 import io.suggest.swfs.client.proto.file.FileOpUnknownResponseException
 import io.suggest.swfs.client.proto.get.{GetResponse, IGetRequest}
+import play.api.http.HeaderNames
 
 import scala.concurrent.Future
 
@@ -20,8 +21,17 @@ trait Get extends ISwfsClientWs {
     lazy val logPrefix = s"get($startMs):"
     LOGGER.trace(s"$logPrefix Starting GET $url\n $args")
 
-    val streamFut = wsClient.url( url )
-      .stream()
+    var wsReqBuilder = wsClient.url( url )
+
+    // Поддержка сжатых ответов.
+    lazy val acceptEncoding = args.acceptCompression.iterator.map(_.httpContentEncoding).mkString(", ")
+    if (args.acceptCompression.nonEmpty) {
+      wsReqBuilder = wsReqBuilder.addHttpHeaders(
+        HeaderNames.ACCEPT_ENCODING -> acceptEncoding
+      )
+    }
+
+    val streamFut = wsReqBuilder.stream()
 
     for (ex <- streamFut.failed) {
       LOGGER.error(s"$logPrefix Req failed: GET $url\n $args", ex)
@@ -33,12 +43,13 @@ trait Get extends ISwfsClientWs {
     } yield {
 
       val respStatus = sr.status
-      LOGGER.trace(s"$logPrefix Streaming GET resp, status = $respStatus, took ${System.currentTimeMillis - startMs} ms")
 
       if ( SwfsClientWs.isStatus2xx(respStatus) ) {
         val resp = GetResponse( sr.headers, sr.bodyAsSource )
+        LOGGER.trace(s"$logPrefix GET OK, status = $respStatus, compressed?${resp.compression}($acceptEncoding), took ${System.currentTimeMillis - startMs}ms")
         Some( resp )
       } else if (respStatus == 404) {
+        LOGGER.debug(s"$logPrefix GET $url => 404, took ${System.currentTimeMillis - startMs}ms")
         None
       } else {
         LOGGER.warn(s"Unexpected response for GET $url => $respStatus")

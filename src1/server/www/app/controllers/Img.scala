@@ -1,6 +1,6 @@
 package controllers
 
-import java.time.{Instant, ZoneOffset}
+import java.time.ZonedDateTime
 
 import _root_.util._
 import com.google.inject.ImplementedBy
@@ -8,10 +8,10 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.async.{AsyncUtil, IAsyncUtilDi}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
-import io.suggest.dt.DateTimeUtil
 import io.suggest.file.MimeUtilJvm
 import io.suggest.img.MImgFmts
 import io.suggest.img.crop.CropConstants
+import io.suggest.model.n2.media.storage.IMediaStorages
 import io.suggest.popup.PopupConstants
 import io.suggest.svg.SvgUtil
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
@@ -22,6 +22,7 @@ import models.req.IReq
 import org.apache.commons.io.FileUtils
 import play.api.data.Forms._
 import play.api.data._
+import play.api.http.HttpEntity
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc._
 import play.twirl.api.Html
@@ -39,7 +40,7 @@ import scala.util.Try
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 19.04.13 14:45
+ * Created: 19.04.13 14:45fo
  * Description: Управление картинками, относящихся к поисковой выдаче и к разным другим вещам.
  * Изначально контроллер служил только для превьюшек картинок, и назывался "Thumb".
  */
@@ -51,8 +52,10 @@ class Img @Inject() (
   override val mLocalImgs         : MLocalImgs,
   override val dynImgUtil         : DynImgUtil,
   override val imgCtlUtil         : ImgCtlUtil,
+  canDynImg                       : CanDynImg,
   override val origImageUtil      : OrigImageUtil,
   override val asyncUtil          : AsyncUtil,
+  iMediaStorages                  : IMediaStorages,
   fileUtil                        : FileUtil,
   isAuth                          : IsAuth,
   imgFormUtil                     : ImgFormUtil,
@@ -150,82 +153,125 @@ class Img @Inject() (
   }
 
 
-  /**
-   * Запрос картинки с опрделёнными параметрами.
-   * Ссылка на картинку формируется на сервере и имеет HMAC-подпись для защиты от модификации.
-   *
-   * @param args Данные по желаемой картинке.
-   * @return Картинки или 304 Not modified.
-   */
-  def dynImg(args: MImgT) = Action.async { implicit request =>
-    val notModifiedFut: Future[Boolean] = {
-      request.headers
-        .get(IF_MODIFIED_SINCE)
-        .fold( Future.successful(false) ) { ims =>
-          for (imetaOpt <- mImgs3.rawImgMeta(args)) yield {
-            imetaOpt.fold(false) { imeta =>
-              val newModelInstant = withoutMs(imeta.dateCreated.toInstant.toEpochMilli)
-              isModifiedSinceCached(newModelInstant, ims)
-            }
-          }
-        }
+  /** Экшен раздачи динамических картинок второго поколения.
+    * Динамические картинки теперь привязаны к хостам, на которых они размещены.
+    * И иначе работать теперь нельзя.
+    *
+    * @param mimg Описание запрашиваемой картинки.
+    * @return 200 OK с картинкой.
+    *         404, если нет картинки или она обслуживается не на этом хосте.
+    */
+  def dynImg(mimg: MImgT) = canDynImg(mimg).async { implicit request =>
+    lazy val logPrefix = s"dynImg(${mimg.dynImgId.fileName})#${System.currentTimeMillis()}:"
+
+    // Сначала обработать 304-кэширование, если есть что-то:
+    val isNotModified = request.mmediaOpt.exists { mmedia =>
+      request.headers.get(IF_MODIFIED_SINCE).exists { ifModifiedSince =>
+        val dateCreated = mmedia.file.dateCreated
+        val newModelInstant = withoutMs(dateCreated.toInstant.toEpochMilli)
+        val r = isNotModifiedSinceCached(newModelInstant, ifModifiedSince)
+        LOGGER.trace(s"$logPrefix isNotModified?$r dateCreated=$dateCreated ($newModelInstant sec)")
+        r
+      }
     }
 
-    notModifiedFut.flatMap {
-      case true =>
-        NotModified
-          .withHeaders(CACHE_CONTROL -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS, immutable")
+    if (isNotModified) {
+      // 304 Not modified, т.к. клиент уже скачивал эту картинку ранее.
+      NotModified
+        .withHeaders(CACHE_CONTROL -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS, immutable")
 
-      // Изменилась картинка. Выдать её. Если картинки нет, то создать надо на основе оригинала.
-      case false =>
-        // TODO Opt: можно стримить готовые картинки напрямую из seaweedfs или откуда-нибудь ещё, без MLocalImg.
-        //      val imgSrc = dynImgUtil.getStream( args ) ~~ TODO Добавить проброс метаданных (размер, mime-тип).
-        // TODO Проверять домен *.nodes.suggest.io, чтобы соответствовал расположению текущей картинки.
-        // Нужно прочитать MMedia.
-        val ensureFut = for {
-          localImg <- dynImgUtil.ensureLocalImgReady(args, cacheResult = false)
+    } else {
+      //val cacheSeconds = CACHE_ORIG_CLIENT_SECONDS
+      //val modelInstant = Instant.ofEpochMilli( imgFile.lastModified() )
+
+      val cacheControlHdr =
+        CACHE_CONTROL -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS, immutable, never-revalidate"
+
+      // TODO Надо имя файла записать. Его нужно кодировать, а там какое-то play private api...
+      //CONTENT_DISPOSITION -> s"inline; filename=$fileName"
+
+      // Надо всё-таки вернуть картинку. Возможно, картинка ещё не создана. Уточняем:
+      request.mmediaOpt.fold [Future[Result]] {
+        // Готовой картинки сейчас не существует. Возможно, что она создаётся прямо сейчас.
+        // TODO Использовать асинхронную streamed-готовилку dyn-картинок (которую надо написать!).
+        for {
+          localImg <- dynImgUtil.ensureLocalImgReady(mimg, cacheResult = false)
         } yield {
           val imgFile = mLocalImgs.fileOf(localImg)
+          LOGGER.trace(s"$logPrefix 200 OK, file size = ${imgFile.length} bytes")
 
-          val cacheSeconds = CACHE_ORIG_CLIENT_SECONDS
-          val modelInstant = Instant.ofEpochMilli( imgFile.lastModified() )
-          val fileName      = args.dynImgId.fileName
-
-          val resultRaw = Ok.sendFile(
+          Ok.sendFile(
             content   = imgFile,
             inline    = true,
-            fileName  = _ => fileName
+            fileName  = { _ => mimg.dynImgId.fileName }
           )
-          LOGGER.trace(s"serveImgFromFile(${imgFile.getParentFile.getName}/${imgFile.getName}): 200 OK, file size = ${imgFile.length} bytes.")
-          val ct = Try( MimeUtilJvm.probeContentType(imgFile.toPath) )
-            .toOption
-            .flatten
-            .getOrElse{
-              LOGGER.warn(s"serveImg(): No MIME match found")
-              "image/unknown"
-            }   // Should never happen
-          resultRaw
-            .as(ct)
+            .as {
+              Try( MimeUtilJvm.probeContentType(imgFile.toPath) )
+                .toOption
+                .flatten
+                .get
+            }
             .withHeaders(
               // Если форматтить просто modelInstant, то будет экзепшен: java.time.temporal.UnsupportedTemporalTypeException: Unsupported field: DayOfMonth
               // Это всплывает наружу излишне динамически-типизированная сущность такого API.
-              LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.format( modelInstant.atOffset(ZoneOffset.UTC) ),
-              CACHE_CONTROL -> ("public, max-age=" + cacheSeconds + ", immutable, never-revalidate")
+              cacheControlHdr
+            )
+            .withDateHeaders(
+              LAST_MODIFIED -> ZonedDateTime.now()
             )
         }
 
-        ensureFut.recover {
-          case _: NoSuchElementException =>
-            LOGGER.debug("Img not found anywhere: " + args.dynImgId.fileName)
-            NotFound("No such image.")
-              .withHeaders(CACHE_CONTROL -> s"public, max-age=30")
-          case ex: Throwable =>
-            LOGGER.error(s"Unknown exception occured during fetchg/processing of source image id[${args.dynImgId.rowKeyStr}]\n  args = $args", ex)
-            ServiceUnavailable("Internal error occured during fetching/creating an image.")
-              .withHeaders(RETRY_AFTER -> "60")
+      } { mmedia =>
+        // В базе уже есть готовая к раздаче картинка. Организуем akka-stream: swfs -> here -> client.
+        // Кэшировать это скорее всего небезопасно, да и выигрыша мало (с локалхоста на локалхост), поэтому без кэша.
+
+        // Пробрсывать в swfs "Accept-Encoding: gzip", если задан в запросе на клиенте.
+        // Всякие SVG сжимаются на стороне swfs, их надо раздавать сжатыми.
+        iMediaStorages
+          .read( mmedia.storage, request.acceptCompressEncodings )
+          .map { dataSource =>
+            // Всё ок, направить шланг ответа в сторону юзера, пробросив корректный content-encoding, если есть.
+            LOGGER.trace(s"$logPrefix Successfully opened data stream with len=${dataSource.sizeB}b origSz=${mmedia.file.sizeB}b")
+            var respHeadersAcc = List( cacheControlHdr )
+
+            // Пробросить content-encoding, который вернул media-storage.
+            for (compression <- dataSource.compression) {
+              respHeadersAcc ::= (
+                CONTENT_ENCODING -> compression.httpContentEncoding
+              )
+            }
+
+            Ok.sendEntity(
+              HttpEntity.Streamed(
+                data          = dataSource.data,
+                contentLength = Some(dataSource.sizeB),
+                contentType   = Some(mmedia.file.mime)
+              )
+            )
+              .withHeaders( respHeadersAcc: _* )
+              .withDateHeaders(
+                // Раньше был ручной рендер даты, но в play появилась поддержка иного форматирования даты, пытаемся жить с ней:
+                //LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.format( mmedia.file.dateCreated.atZoneSimilarLocal(ZoneOffset.UTC) ),
+                LAST_MODIFIED -> mmedia.file.dateCreated.toZonedDateTime
+              )
+          }
+      }
+        .recover { case ex: Throwable =>
+          // TODO Пересобрать неисправную картинку, если не-оригинал?
+          ex match {
+            case _: NoSuchElementException =>
+              LOGGER.error(s"$logPrefix Image not exist in ${request.storageInfo}")
+              NotFound("Image unexpectedly missing.")
+                .withHeaders(CACHE_CONTROL -> s"public, max-age=30")
+            case _ =>
+              LOGGER.error(s"$logPrefix Failed to read image from ${request.storageInfo}", ex)
+              ServiceUnavailable("Internal error occured during fetching/creating an image.")
+                .withHeaders(RETRY_AFTER -> "60")
+          }
         }
     }
   }
+
 
 }
 

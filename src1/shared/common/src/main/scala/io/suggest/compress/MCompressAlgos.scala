@@ -2,7 +2,7 @@ package io.suggest.compress
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.json.Format
 
 /**
@@ -29,6 +29,12 @@ object MCompressAlgos extends StringEnum[MCompressAlgo] {
   }
 
   override val values = findValues
+
+  def withHttpContentEncoding(encoding: String): Option[MCompressAlgo] = {
+    // Пока без map, т.к. это довольно маленькая модель.
+    values
+      .find(_.httpContentEncoding ==* encoding)
+  }
 
 }
 

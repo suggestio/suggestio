@@ -43,9 +43,10 @@ object MStorFns extends Enum[MStorFn] {
     override def fn: String = "i"
 
     override def esMappingProp: DocField = {
+      val F = Fid.Fields
       FieldObject(fn, enabled = true, properties = Seq(
-        FieldNumber(Fid.VOLUME_ID_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
-        FieldKeyword(Fid.FILE_ID_FN, index = false, include_in_all = false)
+        FieldNumber(F.VOLUME_ID_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
+        FieldKeyword(F.FILE_ID_FN, index = false, include_in_all = false)
       ))
     }
   }

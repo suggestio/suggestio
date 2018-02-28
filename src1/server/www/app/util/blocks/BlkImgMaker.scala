@@ -59,7 +59,7 @@ class BlkImgMaker @Inject() (
 
     val origImgId = args.img.dynImgId.original
     if (origImgId.dynFormat.isRaster) {
-      val szReal = getRenderSz(args.szMult, args.blockMeta, pxRatio)
+      val szReal = getRenderSz(args.szMult, args.targetSz, pxRatio)
 
       // Это jpeg/png/gif и т.д. Прогнать через convert.
       // Настройки сохранения результирующей картинки (аккамулятор).
@@ -75,7 +75,7 @@ class BlkImgMaker @Inject() (
       )
 
       val mr = MakeResult(
-        szCss       = MSize2di(args.blockMeta),
+        szCss       = MSize2di(args.targetSz),
         szReal      = szReal,
         // Генерим финальную ссыль на картинку с учетом возможного кропа или иных исходных трансформаций:
         dynCallArgs = args.img.withDynOps(args.img.dynImgId.dynImgOps ++ imOpsAcc),

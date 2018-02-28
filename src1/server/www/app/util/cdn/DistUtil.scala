@@ -2,16 +2,13 @@ package util.cdn
 
 import javax.inject.{Inject, Singleton}
 
-import io.suggest.common.empty.OptionUtil
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.model.n2.media.storage._
 import io.suggest.model.n2.media.storage.swfs.{SwfsStorage, SwfsStorages, SwfsVolumeCache}
-import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.util.logs.MacroLogsImpl
 import models.mup.MSwfsFidInfo
 import japgolly.univeq._
 import util.up.UploadUtil
-import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.model.n2.media.MMedia
 import io.suggest.swfs.client.proto.lookup.IVolumeLocation
 import io.suggest.url.MHostInfo
@@ -52,13 +49,10 @@ class DistUtil @Inject()(
     val storageFacade = iMediaStorages.getModel( storageType ).asInstanceOf[SwfsStorages]
     val assignRespFut = storageFacade.assignNew()
 
-    lazy val logPrefix = s"assignDist[${System.currentTimeMillis()}]:"
-    LOGGER.trace(s"$logPrefix Started for $upProps")
-
     for {
       assignResp <- assignRespFut
     } yield {
-      LOGGER.trace(s"$logPrefix Assigned swfs resp: $assignResp")
+      LOGGER.trace(s"assignDist[${System.currentTimeMillis()}]: Assigned ok:\n props = $upProps\n resp = $assignResp")
       val swfsAssignResp = assignResp._2
       MAssignedStorage(
         host    = swfsAssignResp.hostInfo,
@@ -80,8 +74,6 @@ class DistUtil @Inject()(
 
     storage match {
       case swfsStorage: SwfsStorage =>
-        LOGGER.trace(s"$logPrefix Checking SWFS fid=${swfsStorage.fid}")
-
         for {
           volLocs <- swfsVolumeCache.getLocations( swfsStorage.fid.volumeId )
         } yield {
@@ -94,7 +86,7 @@ class DistUtil @Inject()(
               // Не проверяем nameInt/url, потому что там полу-рандомный порт swfs
             }
             .map { myVol =>
-              LOGGER.trace(s"$logPrefix ")
+              LOGGER.trace(s"$logPrefix Ok, local vol = $myVol\n fid = ${swfsStorage.fid.toString}\n all vol locs = ${volLocs.mkString(", ")}")
               MSwfsFidInfo(swfsStorage.fid, myVol, volLocs)
             }
             .toRight {
@@ -111,18 +103,18 @@ class DistUtil @Inject()(
     * @param medias Список интересующих media.
     * @return Карта nodeId -> hostname.
     */
-  def medias2hosts(medias: Traversable[MMedia]): Future[Map[String, Seq[MHostInfo]]] = {
+  def mediasHosts(medias: Iterable[MMedia]): Future[Map[String, Seq[MHostInfo]]] = {
     for {
-      storages2hosts <- iMediaStorages.getStoragesHosts( medias.map(_.storage) )
+      storages2hostsMap <- iMediaStorages.getStoragesHosts( medias.map(_.storage) )
     } yield {
-      val storages2hostsMap = storages2hosts.toMap
       medias
-        .toIterator
+        .iterator
         .map { media =>
           media.nodeId -> storages2hostsMap(media.storage)
         }
         .toMap
     }
   }
+
 
 }

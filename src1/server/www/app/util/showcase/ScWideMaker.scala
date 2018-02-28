@@ -188,7 +188,7 @@ class ScWideMaker @Inject() (
     val pxRatio = devScreen.pixelRatio
 
     // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
-    val tgtHeightCssRaw = szMultedF(args.blockMeta.height, args.szMult)
+    val tgtHeightCssRaw = szMultedF(args.targetSz.height, args.szMult)
     val tgtHeightReal = szMulted(tgtHeightCssRaw, pxRatio.pixelRatio)
 
     // Ширину экрана квантуем, получая ширину картинки.

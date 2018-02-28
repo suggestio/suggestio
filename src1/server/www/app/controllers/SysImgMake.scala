@@ -37,7 +37,7 @@ class SysImgMakeUtil @Inject() () {
     { MImgMakeArgs(img, _, _, _, _) : MImgMakeArgs }
     {ima =>
       // После отвязки MakeArgs от BlockMeta возникла необходимость этого костыля:
-      val bmsz = ima.blockMeta
+      val bmsz = ima.targetSz
       val bm = BlockMeta(
         w = BlockWidths.withValue( bmsz.width ),
         h = BlockHeights.withValue( bmsz.height )
@@ -83,7 +83,7 @@ trait SysImgMake
         MImgMakers.StrictWide,
         MImgMakeArgs(
           img = img,
-          blockMeta = bmDflt.getOrElse {
+          targetSz = bmDflt.getOrElse {
             BlockMeta.DEFAULT.withWide(true)
           },
           szMult = 1.0F,

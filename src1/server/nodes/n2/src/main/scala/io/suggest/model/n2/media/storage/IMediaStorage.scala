@@ -2,6 +2,7 @@ package io.suggest.model.n2.media.storage
 
 import javax.inject.Inject
 
+import io.suggest.compress.MCompressAlgo
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.fio.{IDataSource, IWriteRequest}
 import io.suggest.primo.TypeT
@@ -81,9 +82,9 @@ class IMediaStorages @Inject() (
       .asInstanceOf[ IMediaStorageStaticImpl { type T = X } ]
   }
 
-  override def read(ptr: T): Future[IDataSource] = {
+  override def read(ptr: X, acceptCompression: Iterable[MCompressAlgo]): Future[IDataSource] = {
     _getModel(ptr)
-      .read( ptr )
+      .read( ptr, acceptCompression )
   }
 
   override def delete(ptr: T): Future[_] = {
@@ -112,9 +113,9 @@ class IMediaStorages @Inject() (
       .getStorageHost(ptr)
   }
 
-  def getStoragesHosts(ptrs: Traversable[T]): Future[Iterable[(T, Seq[MHostInfo])]] = {
+  def getStoragesHosts(ptrs: Traversable[T]): Future[Map[T, Seq[MHostInfo]]] = {
     if (ptrs.isEmpty) {
-      Future.successful( Nil )
+      Future.successful( Map.empty )
     } else {
       val ptr = ptrs.head
       _getModel(ptr)
@@ -139,10 +140,13 @@ trait IMediaStorageStatic extends TypeT {
   def FORMAT: OFormat[T]
 
   /**
-   * Асинхронное поточное чтение хранимого файла.
-   * @return Енумератор блоба.
-   */
-  def read(ptr: T): Future[IDataSource]
+    * Асинхронное поточное чтение хранимого файла.
+    * @param ptr Описание цели.
+    * @param acceptCompression Допускать возвращать ответ в сжатом формате.
+    *
+    * @return Поток данных блоба + сопутствующие метаданные.
+    */
+  def read(ptr: T, acceptCompression: Iterable[MCompressAlgo] = Nil): Future[IDataSource]
 
   /**
    * Запустить асинхронное стирание контента в backend-хранилище.
@@ -186,12 +190,15 @@ trait IMediaStorageStaticImpl extends IMediaStorageStatic {
     * @param ptrs Все указатели.
     * @return Фьючерс с набором результатов.
     */
-  def getStoragesHosts(ptrs: Traversable[T]): Future[Iterable[(T, Seq[MHostInfo])]]
+  def getStoragesHosts(ptrs: Traversable[T]): Future[Map[T, Seq[MHostInfo]]]
 
 }
 
 
-/** Интерфейс моделей хранилищ. */
+/** Интерфейс моделей хранилищ.
+  * Странная модель. Она может быть и ключом в Map, и в URL qs жить, и т.д.
+  * И это интерфейс, некрасиво как-то.
+  */
 // TODO Сделать sealed, но SwfsStorage живёт в другом файле...
 trait IMediaStorage {
 

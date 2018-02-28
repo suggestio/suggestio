@@ -2,6 +2,7 @@ package models.req
 
 import java.net.InetAddress
 
+import io.suggest.compress.{MCompressAlgo, MCompressAlgos}
 import io.suggest.util.logs.MacroLogsImpl
 import models.msc.ScJsState
 import play.api.http.HeaderNames
@@ -170,6 +171,17 @@ trait ExtReqHdr extends RequestHeader {
         LOGGER.warn("host: unable to detect host for http request " + this)
         "suggest.io"
       }
+  }
+
+
+  /** Какие алгоритмы сжатия готов принять клиент в качестве Content-Encoding? */
+  lazy val acceptCompressEncodings: Seq[MCompressAlgo] = {
+    headers
+      .get( HeaderNames.ACCEPT_ENCODING )
+      .iterator
+      .flatMap( _.split("[,\\s]+") )
+      .flatMap( MCompressAlgos.withHttpContentEncoding )
+      .toSeq
   }
 
 }

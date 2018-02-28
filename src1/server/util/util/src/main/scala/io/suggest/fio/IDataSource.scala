@@ -2,6 +2,7 @@ package io.suggest.fio
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import io.suggest.compress.MCompressAlgo
 
 /**
  * Suggest.io
@@ -19,6 +20,9 @@ trait IDataSource extends IContentType {
 
   /** Размер файла. */
   def sizeB: Long
+
+  /** Если в запросе допускалось использование сжатия, то на выходе ответ может быть сжат. */
+  def compression: Option[MCompressAlgo]
 
 }
 

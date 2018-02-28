@@ -136,7 +136,12 @@ class AdvGeoRcvrsUtil @Inject()(
 
             // Подавлять ошибки рендера логотипа. Дефолтовщины хватит, главное чтобы всё было ок.
             fut.recover { case ex: Throwable =>
-              LOGGER.error(s"$logPrefix Node[${mnode.idOrNull}] with possible logo[$logoRaw] failed to prepare the logo for map", ex)
+              val msg = s"$logPrefix Node[${mnode.idOrNull}] with possible logo[$logoRaw] failed to prepare the logo for map"
+              if (ex.isInstanceOf[NoSuchElementException]) {
+                LOGGER.warn(msg)
+              } else {
+                LOGGER.warn(msg, ex)
+              }
               None
             }
           }

@@ -84,7 +84,7 @@ case class MDynImgId(
   }
 
 
-  def original: MDynImgId = {
+  lazy val original: MDynImgId = {
     if (hasImgOps)
       withDynImgOps(Nil)
     else

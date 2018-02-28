@@ -62,13 +62,15 @@ class JdAdUtil @Inject()(
     * @return Итератор, пригодный для использования в пакетом imgs-рендере,
     *         например в renderAdDocImgs().
     */
-  def prepareImgEdges(edges: MNodeEdges): Seq[(MEdge, MImg3)] = {
+  def prepareOrigImgEdges(edges: MNodeEdges): Seq[(MEdge, MImg3)] = {
     edges
       // TODO Надо ли тут Bg-предикат? по идее, он устарел ещё до ввода jd-редактора.
       .withPredicateIter( imgPredicate, MPredicates.Bg )
       .map { medge =>
         //LOGGER.info(s"prepareImgEdges(): E#${medge.doc.uid.orNull} img=${medge.info.dynImgArgs}")
-        medge -> MImg3(medge)
+        // По факту, тут всегда будет оригинал, даже если без .original. Потому что в jd-карточках эджи НЕ хранят в себе кроп или иные модификации.
+        val origImg = MImg3(medge).original
+        medge -> origImg
       }
       .toSeq
   }
@@ -125,17 +127,6 @@ class JdAdUtil @Inject()(
   }
 
 
-  /** Подготовка dist-данных по хостам. на которых живут разные медиа-файлы.
-    *
-    * @param medias Медиа-карты.
-    * @return КАрта хостов.
-    */
-  // TODO Надо это? Тут вызов другого метода, по сути.
-  def prepareDistMediaHosts(medias: Map[String, MMedia]): Future[Map[String, Seq[MHostInfo]]] = {
-    distUtil.medias2hosts( medias.values )
-  }
-
-
   /** Собрать ссылку на media-ресурс с учётом dist и cdn.
     * БОльшая часть метода не привязана к картинки, только генератор ссылки.
     *
@@ -147,10 +138,9 @@ class JdAdUtil @Inject()(
   def mkDistMediaUrl(call: Call, medge: MEdge, mediaHosts: Map[String, Seq[MHostInfo]])
                     (implicit req: IReqHdr): String = {
     val hostInfoOpt = medge.nodeIds
-      .iterator
+      .view
       .flatMap(mediaHosts.get)
       .flatten
-      .toStream
       .headOption
 
     def logPrefix = s"mkDistMediaUrl(#${medge.doc.uid.orNull},$call):"
@@ -307,16 +297,17 @@ class JdAdUtil @Inject()(
 
     def nodeEdges: MNodeEdges
 
-    // Собираем картинки, используемые в карточке:
-    lazy val imgsEdges = {
-      val ie = prepareImgEdges( nodeEdges )
+    // Собираем картинки, используемые в карточке.
+    // Следует помнить, что в jd-карточках модификация картинки задаётся в теге. Эджи всегда указывают на оригинал.
+    lazy val origImgsEdges = {
+      val ie = prepareOrigImgEdges( nodeEdges )
       LOGGER.trace(s"$logPrefix Found ${ie.size} img.edges: ${ie.iterator.map(_._2.dynImgId.fileName).mkString(", ")}")
       ie
     }
 
     lazy val imgsEdgesMap = {
       val iter = for {
-        edgeAndImg <- imgsEdges.iterator
+        edgeAndImg <- origImgsEdges.iterator
         edgeUid <- edgeAndImg._1.doc.uid
       } yield {
         edgeUid -> edgeAndImg
@@ -324,8 +315,8 @@ class JdAdUtil @Inject()(
       iter.toMap
     }
 
-    // Собрать связанные инстансы MMedia
-    lazy val imgOrigsMediasMapFut = prepareImgMedias( imgsEdges )
+    // Собрать связанные инстансы MMedia. Т.к. эджи всегда указывают на оригинал, то тут тоже оригиналы.
+    lazy val origImgMediasMapFut = prepareImgMedias( origImgsEdges )
 
     // Собрать video-эджи. Для них надо получить инстансы MNode, чтобы достучаться до ссылок.
     lazy val videoEdges = {
@@ -341,8 +332,9 @@ class JdAdUtil @Inject()(
     lazy val mediaNodesMapFut = prepareMediaNodes( imgEdgesNeedNodes, videoEdges )
 
     // Собрать инфу по хостам, хранящим интересующие media-файлы.
-    def mediaHostsMapFut = imgOrigsMediasMapFut
-      .flatMap { prepareDistMediaHosts }
+    def mediaHostsMapFut = origImgMediasMapFut.flatMap { medias =>
+      distUtil.mediasHosts( medias.values )
+    }
 
     // Скомпилить jd-эджи картинок.
     def imgJdEdgesFut: Future[Seq[MJdEdge]]
@@ -394,6 +386,177 @@ class JdAdUtil @Inject()(
       }
     }
 
+
+    /** Рендер картинок в строго необходимом размере.
+      * Это подходит для выдачи, но НЕ для редактора, который оперирует оригиналами.
+      *
+      * @param szMult0 Запрашиваемый сверху szMult.
+      * @param devScreenOpt Данные по экрану клиентского устройства.
+      * @param allowWide Допускается ли широкий рендер, если это требуется шаблоном?
+      *                  Для плитке -- нет, для фокусировки -- да.
+      * @return Фьючерс с картой MakeResult'ов для эджей.
+      */
+    def renderAdDocImgs( szMult0       : Float,
+                         devScreenOpt  : Option[DevScreen],
+                         allowWide     : Boolean
+                       ): Future[Iterable[MImgRenderInfo]] = {
+
+      // TODO Всё становится жирным и разъезжается, если использовать запрошенный szMult.
+      // Где-то на верхних уровнях szMult неправильно рассчитывается, повторяя внутри себя devPixelRatio.
+      // Надо вспомнить изначальное значение szMult, либо переосмыслить его, что есть источник проблемы. Либо запретить здесь учитывать screen pxRatio.
+      val szMult: SzMult_t = 1.0f
+
+      // Сразу запустить в фоне получение MMedia для оригиналов картинок:
+      val _origImgsMediasMapFut = origImgMediasMapFut
+
+      lazy val logPrefix = s"renderAdDocImgs()#${System.currentTimeMillis()}:"
+
+      case class EdgeImgTag(medge: MEdge, mimg: MImg3, jdTag: JdTag)
+
+      // Собрать в многоразовую коллекцию все данные по img-эджам и связанным с ними тегам:
+      val edgedImgTags = {
+        val iter = for {
+          (medge, mimg) <- origImgsEdges.toIterator
+          edgeUid       <- medge.doc.uid
+          jdLoc         <- tpl
+            .loc
+            .find { jdTagTree =>
+              jdTagTree
+                .getLabel
+                .edgeUids
+                .exists(_.edgeUid ==* edgeUid)
+            }
+        } yield {
+          EdgeImgTag(medge, mimg, jdLoc.getLabel)
+        }
+        iter.toList
+      }
+
+      // 2018-02-06 Из-за при ресайзе embed-картинок, в аттрибутах фигурирует только только ширина.
+      // Но для рассчёта финальной картинки, в ImgMakeArgs нужна и ширина, и высота.
+      // Для картинки, которой не хватает h или wh, надо прочитать orig-размеры из MMedia.
+
+      // Надо узнать, для каких картинок надо будет дополучить из MMedia данные оригинала:
+      for {
+        // Дождаться данных из MMedia
+        embedOrigImgsMap <- _origImgsMediasMapFut
+
+        // TODO Всё правильно тут? Масштаб вообще не учитывается? А должен бы.
+        //szMult = 1.0f
+        //pxRatio = DevPixelRatios.pxRatioDefaulted( devScreenOpt.flatMap(_.pixelRatioOpt) )
+
+        // Продолжить обход списка эджей, создав фьючерс результата
+        results <- Future.sequence {
+          val wideNorms = BlockWidths.min.value :: BlockWidths.max.value :: wideImgMaker.WIDE_WIDTHS_PX.tail
+
+          val iter = for {
+            eit <- edgedImgTags.iterator
+            isQd = eit.jdTag.name ==* MJdTagNames.QD_OP
+
+            tgImgSzOpt = if (isQd) {
+              lazy val logPrefix2 = s"$logPrefix#qd#E${eit.medge.doc.uid.orNull}#${eit.mimg.dynImgId.rowKeyStr}:"
+              for {
+                mmediaOrig  <- embedOrigImgsMap.get( eit.mimg.dynImgId.original.mediaId )
+                origWh      <- mmediaOrig.picture.whPx
+              } yield {
+                // Узнать ширину, заданную в теге (если есть).
+                val jdTagWidthCssPxOpt = for {
+                  qdProps     <- eit.jdTag.qdProps
+                  attrsEmbed  <- qdProps.attrsEmbed
+                  widthSu     <- attrsEmbed.width
+                  width       <- widthSu.toOption
+                } yield {
+                  width
+                }
+                LOGGER.trace(s"$logPrefix2 embed.img#${eit.mimg.dynImgId.rowKeyStr} edge#${eit.medge.doc.uid.orNull} width=>${jdTagWidthCssPxOpt.orNull}")
+
+                // Картинка есть. Но надо разобраться, надо ли её ресайзить.
+                val origWidthNorm = wideImgMaker.normWideBgSz( origWh.width, wideNorms )
+
+                // Узнать точно, какую ширину требуется получить на выходе.
+                // Маловероятно, что в jdTag отсутствует ширина, но всё же отрабатываем и эту ситуацию.
+                val widthPxNonNormal = jdTagWidthCssPxOpt.getOrElse {
+                  // Нет заданной в теге ширины. Это не хорошо, но ошибку лучше подавить.
+                  LOGGER.warn(s"$logPrefix2 Width expected for embed.img.\n jdt=${eit.jdTag}\n img-edge=${eit.medge}\n img=${eit.mimg}.\n Suppressed error, will use origWH=$origWh as scaled img.size.")
+                  origWh.width
+                }
+                val jdTagWidthCssPxNorm = wideImgMaker.normWideBgSz( widthPxNonNormal, wideNorms )
+                LOGGER.trace(s"$logPrefix2 Norm.width for jd-tag: ${widthPxNonNormal}px => ${jdTagWidthCssPxNorm}px; origW=${origWh.width}px=>${origWidthNorm}px")
+
+                // Рассчитать размер итоговой картинки.
+                // TODO Проблема: blkImgMaker учитывает и szMult, и pxRatio. Надо разобраться, что с чем сравнивать вообще.
+                val targetImgSzPx = if (jdTagWidthCssPxNorm /* * szMult * pxRatio.pixelRatio */ < origWidthNorm) {
+                  // Велик соблазн возвращать непересжатую картинку, но этого делать не стоит: она может быть огромной.
+                  // Если norm-размеры совпадают, то надо пересжать без изменения orig-размера: это будет быстро и без размывания пикселей.
+                  val heightCssPxNorm = jdTagWidthCssPxNorm.toDouble / origWh.width.toDouble * origWh.height
+                  LOGGER.trace(s"$logPrefix2 Img need downscaling: $origWh => (${jdTagWidthCssPxNorm}x$heightCssPxNorm)")
+                  MSize2di(
+                    width  = jdTagWidthCssPxNorm,
+                    height = heightCssPxNorm.toInt
+                  )
+                } else {
+                  // Картика не требует дополнительного пересжатия, можно просто вернуть оригинальный размер.
+                  LOGGER.trace(s"$logPrefix2 Img resizing not needed. Returning origWh=$origWh")
+                  origWh
+                }
+
+                targetImgSzPx
+              }
+            } else {
+              val wh = eit.jdTag.props1.bm
+              LOGGER.trace(s"$logPrefix Using block meta as img.wh: $wh")
+              wh
+            }
+
+            tgImgSz <- {
+              LOGGER.trace(s"$logPrefix img-edge#${eit.medge.doc.uid.orNull} qd?$isQd sz=>${tgImgSzOpt.orNull}")
+              tgImgSzOpt
+            }
+
+          } yield {
+            // Если есть кроп у текущей картинки, то запихнуть его в dynImgOps
+            val mimg2 = eit.jdTag.props1.bgImg
+              .flatMap(_.crop)
+              .fold(eit.mimg) { crop =>
+                eit.mimg.withDynOps(
+                  AbsCropOp(crop) :: Nil
+                )
+              }
+
+            val makeArgs = MImgMakeArgs(
+              img           = mimg2,
+              targetSz      = tgImgSz,
+              szMult        = szMult,
+              devScreenOpt  = devScreenOpt,
+              compressMode  = Some(
+                if (isQd) CompressModes.Fg else CompressModes.Bg
+              )
+            )
+
+            // Выбираем img maker исходя из конфигурации рендера.
+            val maker = if (allowWide && eit.jdTag.props1.bm.exists(_.wide)) {
+              wideImgMaker
+            } else {
+              blkImgMaker
+            }
+
+            // Дописать в результат рассчёта картинки инфу по оригинальной картинке:
+            for {
+              imakeRes <- maker.icompile( makeArgs )
+            } yield {
+              MImgRenderInfo(eit.medge, eit.mimg, imakeRes.dynCallArgs, imakeRes.szReal)
+            }
+          }
+
+          iter.toList
+        }
+
+      } yield {
+        LOGGER.trace(s"$logPrefix Done, ${results.size} img.results.")
+        results
+      }
+    }
+
   }
 
 
@@ -422,18 +585,18 @@ class JdAdUtil @Inject()(
 
       override def nodeId = None
 
-      override def imgEdgesNeedNodes = imgsEdges
+      override def imgEdgesNeedNodes = origImgsEdges
 
       override def imgJdEdgesFut: Future[Seq[MJdEdge]] = {
         val _mediaHostsMapFut = mediaHostsMapFut
         for {
-          mediasMap           <- imgOrigsMediasMapFut
+          mediasMap           <- origImgMediasMapFut
           mediaNodesMap       <- mediaNodesMapFut
           imgMedia2hostsMap   <- _mediaHostsMapFut
         } yield {
           LOGGER.trace(s"$logPrefix Found ${mediasMap.size} linked img medias.")
           mkJdImgEdgesForEdit(
-            imgsEdges   = imgsEdges,
+            imgsEdges   = origImgsEdges,
             mediasMap   = mediasMap,
             mediaNodes  = mediaNodesMap,
             mediaHosts  = imgMedia2hostsMap
@@ -464,13 +627,15 @@ class JdAdUtil @Inject()(
 
       /** Для выдачи требуются готовые картинки, подогнанные под экран устройства клиента. */
       override def imgJdEdgesFut: Future[Seq[MJdEdge]] = {
-        val _imgsRenderedFut  = renderAdDocImgs(tpl, imgsEdges, szMult, ctx.deviceScreenOpt, allowWide)
+        val _imgsRenderedFut  = renderAdDocImgs(szMult, ctx.deviceScreenOpt, allowWide)
         val _mediaHostsMapFut = mediaHostsMapFut
+        // TODO Сделать, чтобы mkDistMediaUrl-балансировка работала не по эджам, а только по mmedia.storage.
+        //val _origImgMediasMap = origImgMediasMapFut
         for {
           imgsRendered      <- _imgsRenderedFut
           mediaHostsMap     <- _mediaHostsMapFut
         } yield {
-          LOGGER.trace(s"$logPrefix ${imgsEdges.length} img edges => rendered ${imgsRendered.size} map: [${imgsRendered.iterator.flatMap(_.medge.doc.uid).mkString(", ")}]")
+          LOGGER.trace(s"$logPrefix ${origImgsEdges.length} img edges => rendered ${imgsRendered.size} map: [${imgsRendered.iterator.flatMap(_.medge.doc.uid).mkString(", ")}]")
           val imgPred = imgPredicate
           val iter = for {
             imgMakeRes <- imgsRendered.iterator
@@ -543,178 +708,6 @@ class JdAdUtil @Inject()(
             .exists( tplEdgeUids.contains )
         }
       )
-    }
-  }
-
-
-  /** Рендер картинок в строго необходимом размере.
-    * Это подходит для выдачи, но НЕ для редактора, который оперирует оригиналами.
-    *
-    * @param jdDoc Jd-шаблон.
-    * @param imgsEdges Только img-эджи, с подвязанными к ним изображениями.
-    * @param devScreenOpt Данные по экрану клиентского устройства.
-    * @param allowWide Допускается ли широкий рендер, если это требуется шаблоном?
-    *                  Для плитке -- нет, для фокусировки -- да.
-    * @return Фьючерс с картой MakeResult'ов для эджей.
-    */
-  def renderAdDocImgs(jdDoc         : Tree[JdTag],
-                      imgsEdges     : Traversable[(MEdge, MImg3)],
-                      szMult        : Float,
-                      devScreenOpt  : Option[DevScreen],
-                      allowWide     : Boolean
-                     ): Future[Iterable[MImgRenderInfo]] = {
-
-    lazy val logPrefix = s"renderAdDocImgs()#${System.currentTimeMillis()}:"
-
-    case class EdgeImgTag(medge: MEdge, mimg: MImg3, jdTag: JdTag)
-
-    // Собрать в многоразовую коллекцию все данные по img-эджам и связанным с ними тегам:
-    val edgedImgTags = {
-      val iter = for {
-        (medge, mimg) <- imgsEdges.toIterator
-        edgeUid       <- medge.doc.uid
-        jdLoc         <- jdDoc
-          .loc
-          .find { jdTagTree =>
-            jdTagTree
-              .getLabel
-              .edgeUids
-              .exists(_.edgeUid ==* edgeUid)
-          }
-      } yield {
-        EdgeImgTag(medge, mimg, jdLoc.getLabel)
-      }
-      iter.toList
-    }
-
-    // 2018-02-06 Из-за при ресайзе embed-картинок, в аттрибутах фигурирует только только ширина.
-    // Но для рассчёта финальной картинки, в ImgMakeArgs нужна и ширина, и высота.
-    // Для картинки, которой не хватает h или wh, надо прочитать orig-размеры из MMedia.
-
-    // Надо узнать, для каких картинок надо будет дополучить из MMedia данные оригинала:
-    for {
-      // Дождаться данных из MMedia
-      embedOrigImgsMap <- mMediasCache.multiGetMap(
-        edgedImgTags
-          .iterator
-          .filter(_.jdTag.name ==* MJdTagNames.QD_OP)
-          .map(_.mimg.original.dynImgId.mediaId)
-          .toSet
-      )
-
-      // TODO Всё правильно тут? Масштаб вообще не учитывается? А должен бы.
-      szMult = 1.0f
-      //pxRatio = DevPixelRatios.pxRatioDefaulted( devScreenOpt.flatMap(_.pixelRatioOpt) )
-
-      // Продолжить обход списка эджей, создав фьючерс результата
-      results <- Future.sequence {
-        val wideNorms = BlockWidths.min.value :: BlockWidths.max.value :: wideImgMaker.WIDE_WIDTHS_PX.tail
-
-        val iter = for {
-          eit <- edgedImgTags.iterator
-          isQd = eit.jdTag.name ==* MJdTagNames.QD_OP
-
-          tgImgSzOpt = if (isQd) {
-            lazy val logPrefix2 = s"$logPrefix#qd#E${eit.medge.doc.uid.orNull}#${eit.mimg.dynImgId.rowKeyStr}:"
-            for {
-              mmediaOrig  <- embedOrigImgsMap.get( eit.mimg.original.dynImgId.mediaId )
-              origWh      <- mmediaOrig.picture.whPx
-            } yield {
-              // Узнать ширину, заданную в теге (если есть).
-              val jdTagWidthCssPxOpt = for {
-                qdProps     <- eit.jdTag.qdProps
-                attrsEmbed  <- qdProps.attrsEmbed
-                widthSu     <- attrsEmbed.width
-                width       <- widthSu.toOption
-              } yield {
-                width
-              }
-              LOGGER.trace(s"$logPrefix2 embed.img#${eit.mimg.dynImgId.rowKeyStr} edge#${eit.medge.doc.uid.orNull} width=>${jdTagWidthCssPxOpt.orNull}")
-
-              // Картинка есть. Но надо разобраться, надо ли её ресайзить.
-              val origWidthNorm = wideImgMaker.normWideBgSz( origWh.width, wideNorms )
-
-              // Узнать точно, какую ширину требуется получить на выходе.
-              // Маловероятно, что в jdTag отсутствует ширина, но всё же отрабатываем и эту ситуацию.
-              val widthPxNonNormal = jdTagWidthCssPxOpt.getOrElse {
-                // Нет заданной в теге ширины. Это не хорошо, но ошибку лучше подавить.
-                LOGGER.warn(s"$logPrefix2 Width expected for embed.img.\n jdt=${eit.jdTag}\n img-edge=${eit.medge}\n img=${eit.mimg}.\n Suppressed error, will use origWH=$origWh as scaled img.size.")
-                origWh.width
-              }
-              val jdTagWidthCssPxNorm = wideImgMaker.normWideBgSz( widthPxNonNormal, wideNorms )
-              LOGGER.trace(s"$logPrefix2 Norm.width for jd-tag: ${widthPxNonNormal}px => ${jdTagWidthCssPxNorm}px; origW=${origWh.width}px=>${origWidthNorm}px")
-
-              // Рассчитать размер итоговой картинки.
-              // TODO Проблема: blkImgMaker учитывает и szMult, и pxRatio. Надо разобраться, что с чем сравнивать вообще.
-              val targetImgSzPx = if (jdTagWidthCssPxNorm /* * szMult * pxRatio.pixelRatio */ < origWidthNorm) {
-                // Велик соблазн возвращать непересжатую картинку, но этого делать не стоит: она может быть огромной.
-                // Если norm-размеры совпадают, то надо пересжать без изменения orig-размера: это будет быстро и без размывания пикселей.
-                val heightCssPxNorm = jdTagWidthCssPxNorm.toDouble / origWh.width.toDouble * origWh.height
-                LOGGER.trace(s"$logPrefix2 Img need downscaling: $origWh => (${jdTagWidthCssPxNorm}x$heightCssPxNorm)")
-                MSize2di(
-                  width  = jdTagWidthCssPxNorm,
-                  height = heightCssPxNorm.toInt
-                )
-              } else {
-                // Картика не требует дополнительного пересжатия, можно просто вернуть оригинальный размер.
-                LOGGER.trace(s"$logPrefix2 Img resizing not needed. Returning origWh=$origWh")
-                origWh
-              }
-
-              targetImgSzPx
-            }
-          } else {
-            val wh = eit.jdTag.props1.bm
-            LOGGER.trace(s"$logPrefix Using block meta as img.wh: $wh")
-            wh
-          }
-
-          tgImgSz <- {
-            LOGGER.trace(s"$logPrefix img-edge#${eit.medge.doc.uid.orNull} qd?$isQd sz=>${tgImgSzOpt.orNull}")
-            tgImgSzOpt
-          }
-
-        } yield {
-          // Если есть кроп у текущей картинки, то запихнуть его в dynImgOps
-          val mimg2 = eit.jdTag.props1.bgImg
-            .flatMap(_.crop)
-            .fold(eit.mimg) { crop =>
-              eit.mimg.withDynOps(
-                AbsCropOp(crop) :: Nil
-              )
-            }
-
-          val makeArgs = MImgMakeArgs(
-            img           = mimg2,
-            blockMeta     = tgImgSz,
-            szMult        = szMult,
-            devScreenOpt  = devScreenOpt,
-            compressMode  = Some(
-              if (isQd) CompressModes.Fg else CompressModes.Bg
-            )
-          )
-
-          // Выбираем img maker исходя из конфигурации рендера.
-          val maker = if (allowWide && eit.jdTag.props1.bm.exists(_.wide)) {
-            wideImgMaker
-          } else {
-            blkImgMaker
-          }
-
-          // Дописать в результат рассчёта картинки инфу по оригинальной картинке:
-          for {
-            imakeRes <- maker.icompile( makeArgs )
-          } yield {
-            MImgRenderInfo(eit.medge, eit.mimg, imakeRes.dynCallArgs, imakeRes.szReal)
-          }
-        }
-
-        iter.toList
-      }
-
-    } yield {
-      LOGGER.trace(s"$logPrefix Done, ${results.size} img.results.")
-      results
     }
   }
 

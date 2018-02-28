@@ -81,6 +81,10 @@ class Upload @Inject()(
   import mCommonDi.ec
 
 
+  // TODO Opt В будущем, особенно когда будет поддержка заливки видео (или иных больших файлов), надо будет
+  // переписать body parser, чтобы возвращал просто Source[ByteString, _].
+  // В качестве параллельных sink'ов надо сразу: swfs, clamav, hashesHex, colorDetector?, ffmpeg, etc... При ошибке - удалять из swfs.
+
   /** Body-parser для prepareUploadLogic. */
   def prepareUploadBp: BodyParser[MFile4UpProps] = {
     parse.json[MFile4UpProps]

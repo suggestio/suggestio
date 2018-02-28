@@ -132,7 +132,7 @@ class ShowcaseUtil @Inject() (
     } yield {
       val wArgs = MImgMakeArgs(
         img           = mimg,
-        blockMeta     = bm,
+        targetSz     = bm,
         szMult        = szMult,
         devScreenOpt  = devScrOpt
       )

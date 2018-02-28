@@ -48,7 +48,7 @@ class LkAdUtil @Inject() (
     } yield {
       val wArgs = MImgMakeArgs(
         img           = bgImg,
-        blockMeta     = bm,
+        targetSz     = bm,
         szMult        = szMult,
         devScreenOpt  = devScreenOpt
       )

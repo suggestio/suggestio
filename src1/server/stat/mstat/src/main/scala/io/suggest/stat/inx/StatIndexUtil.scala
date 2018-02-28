@@ -29,7 +29,6 @@ class StatIndexUtil @Inject() (
 {
 
   import mCommonDi._
-  import LOGGER._
 
 
   /** Максимальное кол-во документов в одном stat-индексе.
@@ -59,16 +58,16 @@ class StatIndexUtil @Inject() (
       _ <- mStatIndexes.resetIndexAliasTo(newInxName)
 
     } yield {
-      info(s"$newInxName Done ok.")
+      LOGGER.info(s"$newInxName Done ok.")
       newInxName
     }
 
     // При ошибках надо удалять новосозданный индекс.
     for (ex <- okFut.failed) {
       val deleteFut = mStatIndexes.deleteIndex( newInxName )
-      error(s"$logPrefix Failed to reNew to index. Deleting new index...", ex)
+      LOGGER.error(s"$logPrefix Failed to reNew to index. Deleting new index...", ex)
       deleteFut.onComplete { res =>
-        info(s"$logPrefix Emergency delete new index completed. Result: $res")
+        LOGGER.info(s"$logPrefix Emergency delete new index completed. Result: $res")
       }
     }
 
@@ -106,7 +105,7 @@ class StatIndexUtil @Inject() (
       }
 
     } yield {
-      trace(s"getCurrIndexInfo(): Done ok:\n Indices: ${aliasedNames.mkString(", ")}\n last index = $currInxNameOpt\n doc count = $indexDocCountOpt")
+      LOGGER.trace(s"currIndexInfo(): Done ok:\n Indices: ${aliasedNames.mkString(", ")}\n last index = ${currInxNameOpt.orNull}\n doc count = ${indexDocCountOpt.orNull}")
 
       for {
         currInxName <- currInxNameOpt
@@ -142,12 +141,12 @@ class StatIndexUtil @Inject() (
       }
       // Если проверка пройдена, то ничего reNew'ить не требуется.
       .map { infoOpt =>
-        debug(s"$logPrefix Nothing to do, index info = $infoOpt")
+        LOGGER.debug(s"$logPrefix Nothing to do, index info = $infoOpt")
         None
       }
       // Если одна из проверок была зафейлена, то произвести обновление индекса:
       .recoverWith { case _: NoSuchElementException =>
-        debug(s"maybeReNewCurrIndex(): Current index needs to be reNewed...")
+        LOGGER.debug(s"maybeReNewCurrIndex(): Current index needs to be reNewed...")
         reNewCurrIndex()
           .map( EmptyUtil.someF )
       }
@@ -161,7 +160,7 @@ class StatIndexUtil @Inject() (
     statIndexNamesFut.flatMap { statIndexNames =>
 
       if (statIndexNames.isEmpty) {
-        warn(s"$logPrefix No stat indices found.")
+        LOGGER.warn(s"$logPrefix No stat indices found.")
         Future.successful( None )
 
       } else {
@@ -175,12 +174,12 @@ class StatIndexUtil @Inject() (
           latestDtOpt.fold [Option[String]] {
             // Пустой старый индекс. Тут два варианта.
             if (statIndexNames.size == 1) {
-              trace(s"$logPrefix The only index[$oldestInxName] and it is empty. Guessing it as latest fresh index and ignoring.")
+              LOGGER.trace(s"$logPrefix The only index[$oldestInxName] and it is empty. Guessing it as latest fresh index and ignoring.")
               // Это единственный индекс. Значит это самый свежий индекс, просто в него ещё не записали статистики никакой.
               None
             } else {
               // Если же есть ещё другие индексы, то вероятно это некорректный индекс, у которого возникла ошибка при создании, но он не был удалён (например, рестарт системы во время reNew).
-              warn(s"$logPrefix Dangling index[$oldestInxName]: empty and the oldest. Guessing as invalid and too old to be alive.")
+              LOGGER.warn(s"$logPrefix Dangling index[$oldestInxName]: empty and the oldest. Guessing as invalid and too old to be alive.")
               Some(oldestInxName)
             }
 
@@ -192,10 +191,10 @@ class StatIndexUtil @Inject() (
             def __logMsg(result: String) = s"$logPrefix Index[$oldestInxName] is $result. Latest record is $latestDt. It is $daysAgo days ago, limit is $maxDaysAgo days."
             if (daysAgo > maxDaysAgo) {
               // Индекс слишком старый.
-              info( __logMsg("TOO OLD") )
+              LOGGER.info( __logMsg("TOO OLD") )
               Some(oldestInxName)
             } else {
-              trace( __logMsg("FRESH") )
+              LOGGER.trace( __logMsg("FRESH") )
               None
             }
           }
@@ -221,10 +220,10 @@ class StatIndexUtil @Inject() (
 
       // Если старый индекс найден, то удалить его.
       _ <- inxNameOpt.fold[Future[_]] {
-        trace(s"$logPrefix Nothing to do.")
+        LOGGER.trace(s"$logPrefix Nothing to do.")
         Future.successful(None)
       } { oldInxName =>
-        info(s"$logPrefix Index $oldInxName will be deleted right now...")
+        LOGGER.info(s"$logPrefix Index $oldInxName will be deleted right now...")
         mStatIndexes.deleteIndex(oldInxName)
       }
 

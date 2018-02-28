@@ -108,13 +108,12 @@ class DynImgUtil @Inject() (
       }
     for (ex <- fut.failed) {
       val logPrefix = s"mkReadyImgToFile($args): "
-      val msg = ex match {
+      ex match {
         case _: NoSuchElementException =>
-          "Image original does not exists in storage"
+          LOGGER.error(s"$logPrefix Image original does not exists in storage")
         case _ =>
-          "Unknown exception during image prefetch"
+          LOGGER.error(s"$logPrefix Unknown exception during image prefetch", ex)
       }
-      LOGGER.error(logPrefix + msg, ex)
     }
     fut
   }

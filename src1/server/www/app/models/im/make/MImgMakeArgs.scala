@@ -13,7 +13,7 @@ import models.im.{CompressMode, DevScreen, MImgT}
 
 case class MImgMakeArgs(
                          img          : MImgT,
-                         blockMeta    : ISize2di,
+                         targetSz     : ISize2di,
                          szMult       : SzMult_t,
                          devScreenOpt : Option[DevScreen],
                          compressMode : Option[CompressMode] = None

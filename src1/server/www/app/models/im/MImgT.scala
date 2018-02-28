@@ -199,10 +199,13 @@ trait MImgsT
           val logPrefix = "toLocalImg(): "
           if (ex.isInstanceOf[NoSuchElementException]) {
             if (LOGGER.underlying.isDebugEnabled) {
-              if (mimg.dynImgId.hasImgOps)
+              if (mimg.dynImgId.hasImgOps) {
                 LOGGER.debug(s"$logPrefix non-orig img not in permanent storage: $toFile")
-              else
-                LOGGER.debug(s"$logPrefix img not found in permanent storage: $toFile", ex)
+              } else {
+                def msg = s"$logPrefix img not found in permanent storage: $toFile"
+                if (ex.isInstanceOf[NoSuchElementException]) LOGGER.debug(msg)
+                else LOGGER.debug(msg, ex)
+              }
             }
           } else {
             LOGGER.warn(s"$logPrefix _getImgBytes2 or writeIntoFile $toFile failed", ex)

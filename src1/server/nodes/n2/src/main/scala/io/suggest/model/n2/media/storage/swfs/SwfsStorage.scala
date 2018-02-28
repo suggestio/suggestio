@@ -2,7 +2,8 @@ package io.suggest.model.n2.media.storage.swfs
 
 import javax.inject.{Inject, Singleton}
 
-import io.suggest.fio.IWriteRequest
+import io.suggest.compress.MCompressAlgo
+import io.suggest.fio.{IDataSource, IWriteRequest}
 import io.suggest.model.n2.media.storage.MStorage.STYPE_FN_FORMAT
 import io.suggest.model.n2.media.storage._
 import io.suggest.model.play.qsb.QueryStringBindableImpl
@@ -11,7 +12,7 @@ import io.suggest.swfs.client.proto.Replication
 import io.suggest.swfs.client.proto.assign.{AssignRequest, IAssignResponse}
 import io.suggest.swfs.client.proto.delete.{DeleteRequest, IDeleteResponse}
 import io.suggest.swfs.client.proto.fid.Fid
-import io.suggest.swfs.client.proto.get.{GetRequest, IGetResponse}
+import io.suggest.swfs.client.proto.get.GetRequest
 import io.suggest.swfs.client.proto.lookup.IVolumeLocation
 import io.suggest.swfs.client.proto.put.{IPutResponse, PutRequest}
 import io.suggest.url.MHostInfo
@@ -79,7 +80,7 @@ class SwfsStorages @Inject() (
     }
   }
 
-  override def getStoragesHosts(ptrs: Traversable[T]): Future[Iterable[(T, Seq[MHostInfo])]] = {
+  override def getStoragesHosts(ptrs: Traversable[T]): Future[Map[T, Seq[MHostInfo]]] = {
     // Собрать множество всех необходимых volumeId.
     val volumeId2ptrs = ptrs
       .groupBy(_.fid.volumeId)
@@ -89,17 +90,17 @@ class SwfsStorages @Inject() (
         lookupResp <- volCache.getLocations( volPtrs.head.fid.volumeId )
       } yield {
         LOGGER.trace(s"getAssignedStorages(): Resp for vol#$volumeId => ${lookupResp.mkString(", ")}")
-        volPtrs
-          .toIterator
-          .map { ptr =>
-            ptr -> _assignedStorResp(ptr, lookupResp)
-          }
-          .toSeq
+        for (ptr <- volPtrs) yield {
+          ptr -> _assignedStorResp(ptr, lookupResp)
+        }
       }
     }
 
     for (perVol <- perVolFut) yield {
-      perVol.flatten
+      perVol
+        .iterator
+        .flatten
+        .toMap
     }
   }
 
@@ -117,13 +118,14 @@ class SwfsStorages @Inject() (
   /** Короткий код для получения списка локаций volume, связанного с [[SwfsStorages]]. */
   private def _vlocsFut(ptr: T) = volCache.getLocations(ptr.fid.volumeId)
 
-  override def read(ptr: T): Future[IGetResponse] = {
+  override def read(ptr: SwfsStorage, acceptCompression: Iterable[MCompressAlgo]): Future[IDataSource] = {
     for {
       vlocs   <- _vlocsFut(ptr)
       getResp <- {
         val getReq = GetRequest(
-          volUrl = vlocs.head.url,
-          fid    = ptr.fid.toString
+          volUrl              = vlocs.head.url,
+          fid                 = ptr.fid.toString,
+          acceptCompression   = acceptCompression
         )
         client.get(getReq)
       }

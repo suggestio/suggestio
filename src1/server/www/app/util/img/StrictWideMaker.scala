@@ -53,7 +53,7 @@ class StrictWideMaker @Inject() (
     val pxRatio = devScreen.pixelRatio
 
     // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
-    val heightCssRaw = szMultedF(args.blockMeta.height, args.szMult)
+    val heightCssRaw = szMultedF(args.targetSz.height, args.szMult)
     val height = szMulted(heightCssRaw, pxRatio.pixelRatio)
     // Ширину экрана берем из DevScreen.
     val widthCssPx = devScreen.width

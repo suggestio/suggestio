@@ -59,7 +59,7 @@ class CanDynImg @Inject() (
           mMediasCache.getById(mimg.dynImgId.original.mediaId)
         }
 
-        lazy val logPrefix = s"${outer.getClass.getSimpleName}(${mimg.dynImgId.mediaId})#${System.currentTimeMillis()}:"
+        lazy val logPrefix = s"(${mimg.dynImgId.mediaId})#${System.currentTimeMillis()}:"
 
         mnodeOptFut.flatMap {
           case Some( mnode ) if mnode.common.isEnabled && (mnode.common.ntype ==* MNodeTypes.Media.Image) =>
@@ -68,17 +68,19 @@ class CanDynImg @Inject() (
               _imageNotFound
 
             } else if (mnode.common.ntype !=* MNodeTypes.Media.Image) {
-              LOGGER.debug(s"$logPrefix 404. Node type is ${mnode.common.ntype}, but image expected.")
+              LOGGER.warn(s"$logPrefix 404. Node type is ${mnode.common.ntype}, but image expected.")
               _imageNotFound
 
             } else {
               val user = aclUtil.userFromRequest( request )
+              LOGGER.trace(s"$logPrefix Found img node#${mnode.idOrNull}, user=${user.personIdOpt.orNull}")
 
               def __mediaFoundResp(mmedia: MMedia, respMediaOpt: Option[MMedia]): Future[Result] = {
                 // Сравнить узел картинки с текущим узлом:
                 distUtil.checkStorageForThisNode(mmedia.storage).flatMap {
                   // Найдена картинка-оригинал вместо дериватива. Это тоже норм.
                   case Right(storageInfo) =>
+                    LOGGER.trace(s"$logPrefix Passed. Storage=$storageInfo respMedia=${respMediaOpt.orNull}")
                     val req1 = MMediaOptNodeReq(
                       mmediaOpt         = respMediaOpt,
                       mmediaOrigOptFut  = () => mmediaOrigOptFut,

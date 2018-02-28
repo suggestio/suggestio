@@ -7,10 +7,9 @@ import javax.inject.Inject
 
 import io.suggest.dt.DateTimeUtil
 import play.api.libs.json.{JsObject, JsString}
-import play.api.mvc.{Call, RequestHeader}
+import play.api.mvc.Call
 import play.twirl.api.Html
 import util.HtmlCompressUtil
-import play.api.http.HeaderNames._
 import io.suggest.img.ImgConstants._
 
 /**
@@ -41,18 +40,8 @@ class ImgCtlUtil @Inject() (htmlCompressUtil: HtmlCompressUtil) {
   }
 
 
-  /**
-   * Проверить значение If-Modified-Since в реквесте.
-   * true - not modified, false иначе.
-   */
-  def isModifiedSinceCached(modelTstampMs: Instant)(implicit request: RequestHeader): Boolean = {
-    request.headers
-      .get(IF_MODIFIED_SINCE)
-      .fold(false)(isModifiedSinceCached(modelTstampMs, _))
-  }
-
-  def isModifiedSinceCached(modelTstampMs: Instant, ims: String): Boolean = {
-    DateTimeUtil.parseRfcDate(ims)
+  def isNotModifiedSinceCached(modelTstampMs: Instant, ifModifiedSince: String): Boolean = {
+    DateTimeUtil.parseRfcDate(ifModifiedSince)
       .exists { dt => !modelTstampMs.isAfter(dt.toInstant) }
   }
 

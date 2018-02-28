@@ -7,6 +7,7 @@ import javax.inject.{Inject, Singleton}
 import akka.stream.scaladsl.FileIO
 import io.suggest.async.AsyncUtil
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.compress.MCompressAlgo
 import io.suggest.file.MimeUtilJvm
 import io.suggest.fio.IDataSource
 import io.suggest.model.img.ImgSzDated
@@ -102,6 +103,8 @@ class MLocalImgs @Inject() (
       override lazy val data        = FileIO.fromPath( file.toPath )
       override lazy val sizeB       = file.length()
       override lazy val contentType = getMimeSync(mimg)
+      // Без скрытого сжатия, тут его не бывает.
+      override def compression = None
     }
     Future.successful(ds)
   }

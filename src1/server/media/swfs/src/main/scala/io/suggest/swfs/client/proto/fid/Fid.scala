@@ -18,21 +18,23 @@ import scala.util.Try
 
 object Fid extends MacroLogsDyn {
 
-  val VOLUME_ID_FN = "v"
-  val FILE_ID_FN   = "f"
+  object Fields {
+    final def VOLUME_ID_FN = "v"
+    final def FILE_ID_FN   = "f"
+  }
 
-  val VOL_FID_DELIM_CH = ','
+  final def VOL_FID_DELIM_CH = ','
 
 
   implicit val FID_FORMAT: OFormat[Fid] = (
-    (__ \ VOLUME_ID_FN).format[VolumeId_t] and
-    (__ \ FILE_ID_FN).format[String]
+    (__ \ Fields.VOLUME_ID_FN).format[VolumeId_t] and
+    (__ \ Fields.FILE_ID_FN).format[String]
   )(apply, unlift(unapply))
 
 
   /** Распарсить модель из строки. */
   def apply(fid: String): Fid = {
-    val Array(volumeIdStr, fileId) = fid.split(',')
+    val Array(volumeIdStr, fileId) = fid.split( VOL_FID_DELIM_CH )
     val volumeId = volumeIdStr.toInt
     new Fid(volumeId, fileId) {
       override def toString = fid
@@ -82,7 +84,7 @@ case class Fid(
     val sb = new StringBuilder(16)
     sb.append( volumeId )
       .append(  )
-    s"$volumeId,$fileId"
+    s"$volumeId${Fid.VOL_FID_DELIM_CH}$fileId"
   }
 
 }
