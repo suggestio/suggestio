@@ -1,7 +1,7 @@
 package controllers
 
 import akka.util.ByteString
-import javax.inject.{Inject, Singleton, Named}
+import javax.inject.{Inject, Named, Singleton}
 
 import controllers.cbill._
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
@@ -21,6 +21,7 @@ import models.mproj.ICommonDi
 import play.twirl.api.{Html, Template2}
 import util.TplDataFormatUtil
 import util.acl._
+import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.img.{DynImgUtil, GalleryUtil, LogoUtil}
@@ -41,6 +42,7 @@ class LkBill2 @Inject() (
                           mCalendars                  : MCalendars,
                           galleryUtil                 : GalleryUtil,
                           advUtil                     : AdvUtil,
+                          nodesUtil                   : NodesUtil,
                           override val logoUtil       : LogoUtil,
                           override val canViewOrder   : CanViewOrder,
                           override val canAccessItem  : CanAccessItem,
@@ -188,16 +190,29 @@ class LkBill2 @Inject() (
     * @return Бинарь с публичной инфой по узлу, на котором планируется размещение.
     */
   def nodeAdvInfo(nodeId: String, forAdId: Option[String]) = canViewNodeAdvInfo(nodeId, forAdId).async { implicit request =>
+
+    val galleryImgsFut = galleryUtil.galleryImgs(request.mnode)
+
+    val mediaHostsMapFut = galleryImgsFut.flatMap { galleryImgs =>
+      nodesUtil.nodeMediaHostsMap(
+        gallery = galleryImgs
+      )
+    }
+
     implicit val ctx = implicitly[Context]
+
+    val galleryCallsFut = galleryImgsFut.flatMap { galleryImgs =>
+      galleryUtil.renderGalleryCdn(galleryImgs, mediaHostsMapFut)(ctx)
+    }
 
     // Собрать картинки
     val galleryFut = for {
-      gal <- galleryUtil.galleryImgs(request.mnode)
+      galleryCalls <- galleryCallsFut
     } yield {
-      for (mimg <- gal) yield {
+      for (galleryCall <- galleryCalls) yield {
         MMediaInfo(
           giType  = MMediaTypes.Image,
-          url     = galleryUtil.dynLkBigCall(mimg)(ctx).url,
+          url     = galleryCall.url,
           // thumb'ы: Не отображаются на экране из-за особенностей вёрстки; в дизайне не предусмотрены.
           thumb   = None /*Some(
             MMediaInfo(

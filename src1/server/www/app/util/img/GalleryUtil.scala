@@ -5,6 +5,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.n2.edge.{MEdge, MPredicates}
 import io.suggest.model.n2.node.MNode
+import io.suggest.url.MHostInfo
 import models.im._
 import models.mctx.Context
 import models.madn.EditConstants
@@ -13,8 +14,9 @@ import play.api.data.Forms._
 import play.api.data.Mapping
 import play.api.mvc.Call
 import models.blk.szMulted
+import util.cdn.CdnUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -24,10 +26,12 @@ import scala.concurrent.Future
  */
 @Singleton
 class GalleryUtil @Inject() (
-  dynImgUtil        : DynImgUtil,
-  imgFormUtil       : ImgFormUtil,
-  configuration     : Configuration
-) {
+                              dynImgUtil              : DynImgUtil,
+                              imgFormUtil             : ImgFormUtil,
+                              cdnUtil                 : CdnUtil,
+                              configuration           : Configuration,
+                              implicit private val ec : ExecutionContext
+                            ) {
 
   // Ширина/высота картинки галереи, отображаемой в ЛК на странице узла.
   def LK_NODE_GALLERY_SHOW_WIDTH_PX = 625   //: Int  = configuration.getInt("lk.node.gallery.show.width.px") getOrElse 625
@@ -116,6 +120,23 @@ class GalleryUtil @Inject() (
       .map { MImg3.apply }
       .toList
     Future successful res
+  }
+
+
+  def renderGalleryCdn(galleryImgs: Seq[MImgT], mediaHostsMapFut: Future[Map[String, Seq[MHostInfo]]])(implicit ctx: Context): Future[Seq[Call]] = {
+    if (galleryImgs.isEmpty) {
+      Future.successful(Nil)
+    } else {
+      for (mediaHostsMap <- mediaHostsMapFut) yield {
+        for (galImg <- galleryImgs) yield {
+          cdnUtil.forMediaCall(
+            call          = dynLkBigCall(galImg)(ctx),
+            mediaId       = galImg.dynImgId.original.mediaId,
+            mediaHostsMap = mediaHostsMap
+          )
+        }
+      }
+    }
   }
 
 }

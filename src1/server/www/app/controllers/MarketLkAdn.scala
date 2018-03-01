@@ -65,7 +65,6 @@ class MarketLkAdn @Inject() (
                               isNodeAdmin                         : IsNodeAdmin,
                               isAdnNodeAdminOptOrAuth             : IsAdnNodeAdminOptOrAuth,
                               nodeEact                            : NodeEact,
-                              cdnUtil                             : CdnUtil,
                               dynImgUtil                          : DynImgUtil,
                               override val scryptUtil             : ScryptUtil,
                               override val mCommonDi              : ICommonDi
@@ -137,20 +136,8 @@ class MarketLkAdn @Inject() (
       implicit val ctx = getContext2
 
       // Подготовить галеру к работе через CDN:
-      val galleryCallsFut = galleryFut.flatMap { gallery =>
-        if (gallery.isEmpty) {
-          Future.successful(Nil)
-        } else {
-          for (mediaHostsMap <- mediaHostsMapFut) yield {
-            for (galImg <- gallery) yield {
-              cdnUtil.forMediaCall(
-                call          = galleryUtil.dynLkBigCall(galImg)(ctx),
-                mediaId       = galImg.dynImgId.original.mediaId,
-                mediaHostsMap = mediaHostsMap
-              )
-            }
-          }
-        }
+      val galleryCallsFut = galleryFut.flatMap { galleryImgs =>
+        galleryUtil.renderGalleryCdn(galleryImgs, mediaHostsMapFut)(ctx)
       }
 
       // Подготовить аргументы для рендера шаблона:
