@@ -29,8 +29,9 @@ object MFavIcons {
     val pngMime = png.mime
     val pngFileExt = png.fileExt
 
+    // TODO Надо подчистить размеры и иконки. Выявить реально необходимые.
     var iconsAcc = for {
-      sideSzPx <- List(57, 72, 114, 144)
+      sideSzPx <- List(57, 72, 114, 144, 180)
     } yield {
       MLinkRelIcon(
         icon = MIconInfo(
@@ -43,22 +44,25 @@ object MFavIcons {
     }
 
     val iconRels = List(rels.ICON)
+
+    // 192x192 png -- обязательный размер для андройда/хрома https://developers.google.com/web/fundamentals/app-install-banners/
+    for (sideSz <- List(192, 228, 512)) yield {
+      iconsAcc ::= MLinkRelIcon(
+        icon = MIconInfo(
+          src       = FAVICON_URL_PREFIX + sideSz + `.` + pngFileExt,
+          sizes     = List( MSize2di.square(sideSz) ),
+          mimeType  = pngMime
+        ),
+        rels = iconRels
+      )
+    }
+
     val svg = MImgFmts.SVG
     iconsAcc ::= MLinkRelIcon(
       icon = MIconInfo(
-        src      = FAVICON_URL_PREFIX + "rus" + `.` + svg.fileExt,
+        src      = FAVICON_URL_PREFIX + "sio" + `.` + svg.fileExt,
         sizes    = Nil,
         mimeType = svg.mime
-      ),
-      rels = iconRels
-    )
-
-    val sz228 = 228
-    iconsAcc ::= MLinkRelIcon(
-      icon = MIconInfo(
-        src       = FAVICON_URL_PREFIX + sz228 + `.` + pngFileExt,
-        sizes     = List( MSize2di.square(sz228) ),
-        mimeType  = pngMime
       ),
       rels = iconRels
     )

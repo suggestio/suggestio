@@ -170,7 +170,7 @@ class Img @Inject() (
         val dateCreated = mmedia.file.dateCreated
         val newModelInstant = withoutMs(dateCreated.toInstant.toEpochMilli)
         val r = isNotModifiedSinceCached(newModelInstant, ifModifiedSince)
-        LOGGER.trace(s"$logPrefix isNotModified?$r dateCreated=$dateCreated ($newModelInstant sec)")
+        LOGGER.trace(s"$logPrefix isNotModified?$r dateCreated=$dateCreated")
         r
       }
     }
@@ -212,8 +212,6 @@ class Img @Inject() (
                 .get
             }
             .withHeaders(
-              // Если форматтить просто modelInstant, то будет экзепшен: java.time.temporal.UnsupportedTemporalTypeException: Unsupported field: DayOfMonth
-              // Это всплывает наружу излишне динамически-типизированная сущность такого API.
               cacheControlHdr
             )
             .withDateHeaders(

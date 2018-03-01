@@ -1,13 +1,14 @@
 @()(implicit ctx: Context)
 
-@* Все иконки в метатегах для страниц. В т.ч. og:image и т.д. *@
+@* Все fav-иконки в метатегах для страниц.
+ * ico не объявляем тут, потому что оно не актуально, и обрабатывается на ~стандартном
+ * ресурсе /favicon.ico, а не здесь.
+ *@
 
 @import ctx.api.cdn
 @import models.im.MFavIcons
 @import io.suggest.common.geom.d2.ISize2di
 @import io.suggest.common.html.HtmlConstants.SPACE
-
-@_faviconTpl()
 
 @* Список дефолтовых favicon'ов уехал в статическую модель MFavIcons, а тут только генератор html. *@
 @for(icoRel <- MFavIcons.linkRelIcons.iterator; ico = icoRel.icon; rel <- icoRel.rels) {

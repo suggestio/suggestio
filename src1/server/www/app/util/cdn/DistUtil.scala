@@ -101,7 +101,7 @@ class DistUtil @Inject()(
   /** Вернуть карту медиа-хосты для указанных media.
     *
     * @param medias Список интересующих media.
-    * @return Карта nodeId -> hostname.
+    * @return Карта mediaId -> hostname.
     */
   def mediasHosts(medias: Iterable[MMedia]): Future[Map[String, Seq[MHostInfo]]] = {
     for {
