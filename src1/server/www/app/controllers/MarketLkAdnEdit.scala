@@ -3,6 +3,7 @@ package controllers
 import java.time.OffsetDateTime
 import javax.inject.{Inject, Singleton}
 
+import io.suggest.ctx.CtxData
 import io.suggest.file.MimeUtilJvm
 import io.suggest.img.MImgFmts
 import io.suggest.init.routed.MJsiTgs
@@ -29,6 +30,8 @@ import play.core.parsers.Multipart
 import play.twirl.api.Html
 import util.FormUtil._
 import util.acl._
+import util.adn.NodesUtil
+import util.cdn.CdnUtil
 import util.img.ImgFormUtil
 import util.img._
 import views.html.lk.adn.edit._
@@ -51,6 +54,7 @@ class MarketLkAdnEdit @Inject() (
                                   tempImgSupport                  : TempImgSupport,
                                   galleryUtil                     : GalleryUtil,
                                   imgFormUtil                     : ImgFormUtil,
+                                  nodesUtil                       : NodesUtil,
                                   bruteForceProtect               : BruteForceProtect,
                                   mMediasCache                    : MMediasCache,
                                   mLocalImgs                      : MLocalImgs,
@@ -149,7 +153,8 @@ class MarketLkAdnEdit @Inject() (
           fg = fgColor
         ),
         business = MBusinessInfo(
-          info = info
+          info = info,
+          siteUrl = siteUrlOpt
         )
       )
     }
@@ -183,6 +188,9 @@ class MarketLkAdnEdit @Inject() (
         colors = MColors(
           bg = color,
           fg = fgColor
+        ),
+        business = MBusinessInfo(
+          siteUrl = siteUrlOpt
         )
       )
     }
@@ -241,8 +249,8 @@ class MarketLkAdnEdit @Inject() (
       val formFilledFut = for {
         nodeLogoOpt  <- nodeLogoOptFut
       } yield {
-        val wcLogoImg = welcomeUtil.wcLogoImg(mnode)
-        val fmr = FormMapResult(mnode.meta, nodeLogoOpt, wcLogoImg, gallerryIks)
+        val wcFgImg = welcomeUtil.wcFgImg(mnode)
+        val fmr = FormMapResult(mnode.meta, nodeLogoOpt, wcFgImg, gallerryIks)
         formM fill fmr
       }
 
@@ -259,18 +267,52 @@ class MarketLkAdnEdit @Inject() (
   /** Общий код рендера редактирования узла. */
   private def _editAdnNode(form: Form[FormMapResult], rs: Status)
                           (implicit request: INodeReq[_]): Future[Result] = {
-    val args = NodeEditArgs(
-      mnode         = request.mnode,
-      mf            = form
-    )
+    // 2018.03.01 Необходимо собрать карту media-хостов, чтобы редактор правильно отображал все картинки узла на экране:
+    val galleryImgsFut = galleryUtil.galleryImgs( request.mnode )
+    val logoOptFut = logoUtil.getLogoOfNode( request.mnode )
 
-    for {
+    // Организация сборки контекста рендера.
+    val ctxFut = for {
       ctxData0  <- request.user.lkCtxDataFut
     } yield {
-      implicit val ctxData = ctxData0.withJsiTgs(
+      implicit val ctxData: CtxData = ctxData0.withJsiTgs(
         MJsiTgs.LkNodeEditForm :: ctxData0.jsiTgs
       )
-      val render = nodeEditTpl(args)
+      getContext2
+    }
+
+    // Сбор данных по welcome-картинке.
+    // TODO Opt Тут не требуется полный размер картинки и подгонка под экран, только базовые данные по welcome-картинкам.
+    val wcRenderArgsOptFut = ctxFut.flatMap { implicit ctx =>
+      welcomeUtil.getWelcomeRenderArgs(request.mnode, screen = None)(ctx)
+    }
+
+    // Сборка media-карты хостов dist-cdn.
+    val mediaHostsMapFut = for {
+      galleryImgs       <- galleryImgsFut
+      logoImgOpt        <- logoOptFut
+      wcRenderArgsOpt   <- wcRenderArgsOptFut
+      mediaHostsMap     <- nodesUtil.nodeMediaHostsMap(
+        logoImgOpt  = logoImgOpt,
+        welcomeOpt  = wcRenderArgsOpt,
+        gallery     = galleryImgs
+      )
+    } yield {
+      mediaHostsMap
+    }
+
+    // Отрендерить и вернуть ответ:
+    for {
+      ctx           <- ctxFut
+      mediaHostsMap <- mediaHostsMapFut
+    } yield {
+      val args = NodeEditArgs(
+        mnode         = request.mnode,
+        mf            = form,
+        mediaHostsMap = mediaHostsMap
+      )
+
+      val render = nodeEditTpl(args)(ctx)
       rs(render)
     }
   }
@@ -371,10 +413,10 @@ class MarketLkAdnEdit @Inject() (
       ),
       // Обновить эджи, относящиеся к форме.
       edges = {
-        import MPredicates.{WcLogo, Logo, GalleryItem}
+        import MPredicates.{WcFgImg, Logo, GalleryItem}
         // Готовим начальный итератор эджей-результатов.
         var edgesIter = mnode.edges
-          .withoutPredicateIter(WcLogo, Logo, GalleryItem)
+          .withoutPredicateIter(WcFgImg, Logo, GalleryItem)
         // Отрабатываем карточку приветствия.
         for (waFgEdge <- waFgEdgeOpt) {
           edgesIter ++= Iterator.single(waFgEdge)
@@ -430,7 +472,7 @@ class MarketLkAdnEdit @Inject() (
   def handleTempLogo = _imgUploadBase { implicit request =>
     tempImgSupport._handleTempImg(
       ovlRrr = Some { (imgId, ctx) =>
-        _logoOvlTpl(imgId)(ctx)
+        _logoOvlTpl(imgId, Map.empty)(ctx)
       },
       mImgCompanion = MImg3
     )

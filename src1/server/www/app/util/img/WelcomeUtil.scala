@@ -26,12 +26,12 @@ import scala.concurrent.Future
  */
 @Singleton
 class WelcomeUtil @Inject() (
-  scUtil                 : ShowcaseUtil,
-  cdnUtil                : CdnUtil,
-  mImgs3                 : MImgs3,
-  imgFormUtil            : ImgFormUtil,
-  mCommonDi              : ICommonDi
-)
+                              scUtil                 : ShowcaseUtil,
+                              cdnUtil                : CdnUtil,
+                              mImgs3                 : MImgs3,
+                              imgFormUtil            : ImgFormUtil,
+                              mCommonDi              : ICommonDi
+                            )
   extends MacroLogsImpl
 {
 
@@ -51,7 +51,7 @@ class WelcomeUtil @Inject() (
     FutureUtil.optFut2futOpt(newWelcomeImgOpt) { fgMimg =>
       for (_ <- mImgs3.saveToPermanent(fgMimg)) yield {
         val e = MEdge(
-          predicate = MPredicates.WcLogo,
+          predicate = MPredicates.WcFgImg,
           nodeIds   = Set(fgMimg.dynImgId.rowKeyStr),
           info = MEdgeInfo(
             dynImgArgs = Some(MEdgeDynImgArgs(
@@ -71,9 +71,9 @@ class WelcomeUtil @Inject() (
    * @param mnode Отрабатываемый узел.
    * @return Опциональная картинка.
    */
-  def wcLogoImg(mnode: MNode): Option[MImgT] = {
+  def wcFgImg(mnode: MNode): Option[MImgT] = {
     mnode.edges
-      .withPredicateIter( MPredicates.WcLogo )
+      .withPredicateIter( MPredicates.WcFgImg )
       .map { MImg3.apply }
       .toStream
       .headOption
@@ -120,7 +120,7 @@ class WelcomeUtil @Inject() (
         }
       }
 
-    val fgImgOpt = wcLogoImg(mnode)
+    val fgImgOpt = wcFgImg(mnode)
     val fgMetaOptFut = FutureUtil.optFut2futOpt(fgImgOpt) { fgImg =>
       mImgs3.getImageWH( fgImg )
     }

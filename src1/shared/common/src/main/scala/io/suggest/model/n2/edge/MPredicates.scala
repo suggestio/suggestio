@@ -57,7 +57,7 @@ object MPredicates extends StringEnum[MPredicate] {
     * После ветки root:mad-to-n2 предикат стал использоваться для указания на логотип приветствия.
     * а неудавшаяся модель карточки приветствия окончательно отмерла.
     */
-  case object WcLogo extends MPredicate("h")
+  case object WcFgImg extends MPredicate("h")
 
 
   /** Предикат, направляемый в сторону картинки или иного объекта, являющегося предметом галлереи. */

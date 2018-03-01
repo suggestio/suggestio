@@ -778,7 +778,7 @@ class SysMarket @Inject() (
       // Собрать инфу по картинкам.
       val imgs = {
         mad.edges
-          .withPredicateIter( MPredicates.Bg, MPredicates.WcLogo, MPredicates.GalleryItem )
+          .withPredicateIter( MPredicates.Bg, MPredicates.WcFgImg, MPredicates.GalleryItem )
           .map { e =>
             MImgEdge(e, MImg3(e))
           }

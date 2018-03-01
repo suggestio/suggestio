@@ -42,7 +42,7 @@ class GalleryUtil @Inject() (
 
   def galleryM: Mapping[List[MImgT]] = {
     list(imgFormUtil.img3IdM)
-      .verifying("error.gallery.too.large",  { _.size <= GALLERY_LEN_MAX })
+      .verifying("error.gallery.too.large", _.lengthCompare(GALLERY_LEN_MAX) <= 0)
   }
 
   def galleryKM = EditConstants.GALLERY_FN -> galleryM
@@ -123,20 +123,38 @@ class GalleryUtil @Inject() (
   }
 
 
+  /** Рендер ссылок на картинки галлереи с учётом dist-cdn.
+    *
+    * @param galleryImgs Галерные картинки.
+    * @param mediaHostsMapFut Карта media-хостов.
+    * @param ctx Контекст рендера.
+    * @return Фьючерс со списком ссылок в исходном порядке.
+    */
   def renderGalleryCdn(galleryImgs: Seq[MImgT], mediaHostsMapFut: Future[Map[String, Seq[MHostInfo]]])(implicit ctx: Context): Future[Seq[Call]] = {
     if (galleryImgs.isEmpty) {
       Future.successful(Nil)
     } else {
       for (mediaHostsMap <- mediaHostsMapFut) yield {
         for (galImg <- galleryImgs) yield {
-          cdnUtil.forMediaCall(
-            call          = dynLkBigCall(galImg)(ctx),
-            mediaId       = galImg.dynImgId.original.mediaId,
-            mediaHostsMap = mediaHostsMap
-          )
+          renderGalleryItemCdn(galImg, mediaHostsMap)
         }
       }
     }
+  }
+
+  /** Рендер одного элемента галереи узла с учётом dist-cdn.
+    *
+    * @param galleryImg Галерейная картинка.
+    * @param mediaHostsMap Карта media-хостов.
+    * @param ctx Контекст рендера.
+    * @return Ссылка на картинку галереи.
+    */
+  def renderGalleryItemCdn(galleryImg: MImgT, mediaHostsMap: Map[String, Seq[MHostInfo]])(implicit ctx: Context): Call = {
+    cdnUtil.forMediaCall(
+      call          = dynLkBigCall(galleryImg),
+      mediaId       = galleryImg.dynImgId.original.mediaId,
+      mediaHostsMap = mediaHostsMap
+    )
   }
 
 }

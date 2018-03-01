@@ -2,6 +2,7 @@ package models.mlk
 
 import io.suggest.model.n2.node.MNode
 import io.suggest.model.n2.node.meta.MMeta
+import io.suggest.url.MHostInfo
 import models.im.MImgT
 import models.im.logo.LogoOpt_t
 import play.api.data.Form
@@ -11,7 +12,16 @@ import play.api.data.Form
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 22.10.15 12:04
  * Description: Модели аргументов для редактирования узла (магазина) в личном кабинете.
+ * @see [[views.html.lk.adn.edit.nodeEditTpl]]
+ * @see [[views.html.lk.adn.edit._leaderNodeFormTpl]]
  */
+
+case class NodeEditArgs(
+                         mnode         : MNode,
+                         mf            : Form[FormMapResult],
+                         mediaHostsMap : Map[String, Seq[MHostInfo]]
+                       )
+
 
 /** Модель, отражающая результирующее значение биндинга формы редактирования узла. */
 case class FormMapResult(
@@ -22,21 +32,3 @@ case class FormMapResult(
 )
 
 
-/** Интерфейс контейнера аргументов вызова nodeEditTpl. */
-trait INodeEditArgs {
-
-  /** Редактируемый узел. */
-  def mnode         : MNode
-
-  /** Маппинг формы редактирования узла. */
-  def mf            : Form[FormMapResult]
-
-}
-
-
-/** Дефолтовая реализация контейнера передаваемых аргументов для nodeEditTpl. */
-case class NodeEditArgs(
-  override val mnode         : MNode,
-  override val mf            : Form[FormMapResult]
-)
-  extends INodeEditArgs

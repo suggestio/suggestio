@@ -44,7 +44,7 @@ class JdAdUtil @Inject()(
                           cdnUtil                     : CdnUtil,
                           videoUtil                   : VideoUtil,
                           implicit private val ec     : ExecutionContext
-                       )
+                        )
   extends MacroLogsImpl
 {
 
