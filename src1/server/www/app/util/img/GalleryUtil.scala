@@ -111,10 +111,10 @@ class GalleryUtil @Inject() (
       .withPredicateIter( MPredicates.GalleryItem )
   }
 
-  def galleryImgs(mnode: MNode): Future[Seq[MImgT]] = {
+  def galleryImgs(mnode: MNode): Future[List[MImgT]] = {
     val res = galleryEdges(mnode)
       .map { MImg3.apply }
-      .toSeq
+      .toList
     Future successful res
   }
 

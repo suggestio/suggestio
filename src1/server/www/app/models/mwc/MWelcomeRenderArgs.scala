@@ -1,6 +1,6 @@
-package models.msc
+package models.mwc
 
-import models.im.IImgWithWhInfo
+import models.im.MImgWithWhInfo
 
 /**
  * Suggest.io
@@ -8,15 +8,11 @@ import models.im.IImgWithWhInfo
  * Created: 10.04.15 15:21
  * Description: Аргументы для рендера sc/welcomeTpl.
  */
-trait WelcomeRenderArgsT {
-
-  /** Фон. Либо Left(цвет), либо Right(инфа по картинке). */
-  def bg: Either[String, IImgWithWhInfo]
-
-  def fgImage: Option[IImgWithWhInfo]
-
-  /** Текст, который надо отобразить. Изначально использовался, когда нет fgImage. */
-  def fgText: Option[String]
+final case class MWelcomeRenderArgs(
+                                     bg       : Either[String, MImgWithWhInfo],
+                                     fgImage  : Option[MImgWithWhInfo],
+                                     fgText   : Option[String]
+                                   ) {
 
   override def toString: String = {
     val sb = new StringBuilder(64, "bg=")
@@ -38,12 +34,12 @@ trait WelcomeRenderArgsT {
         .append('\'')
     sb.toString()
   }
+
+
+  def allImgsWithWhInfoIter: Iterator[MImgWithWhInfo] = {
+    (bg.right.toOption :: fgImage :: Nil)
+      .iterator
+      .flatten
+  }
+
 }
-
-
-case class MWelcomeRenderArgs(
-  override val bg       : Either[String, IImgWithWhInfo],
-  override val fgImage  : Option[IImgWithWhInfo],
-  override val fgText   : Option[String]
-)
-  extends WelcomeRenderArgsT

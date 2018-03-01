@@ -9,11 +9,13 @@ import akka.util.ByteString
 import controllers.routes
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.img.MImgFmt
+import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import models.im._
 import models.mproj.ICommonDi
 import org.im4java.core.{ConvertCmd, IMOperation}
 import play.api.mvc.Call
+import util.cdn.CdnUtil
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -32,6 +34,7 @@ class DynImgUtil @Inject() (
                              mImgs3                    : MImgs3,
                              mLocalImgs                : MLocalImgs,
                              im4jAsyncUtil             : Im4jAsyncUtil,
+                             cdnUtil                   : CdnUtil,
                              mCommonDi                 : ICommonDi
                            )
   extends MacroLogsImpl
@@ -76,6 +79,16 @@ class DynImgUtil @Inject() (
   def imgCall(filename: String): Call = {
     val img = MImg3(filename)
     imgCall(img)
+  }
+
+
+  /** Аналог [[imgCall()]], но работающая в контексте dist-cdn. */
+  def distCdnImgCall(mimg: MImgT, mediaHostsMap: Map[String, Seq[MHostInfo]]): Call = {
+    cdnUtil.forMediaCall(
+      call          = imgCall(mimg),
+      mediaId       = mimg.dynImgId.original.mediaId,
+      mediaHostsMap = mediaHostsMap
+    )
   }
 
 

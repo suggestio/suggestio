@@ -6,22 +6,29 @@ import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.adn.MAdnRights
 import io.suggest.color.MColorData
+import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
+import io.suggest.model.n2.media.MMediasCache
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import models.AdnShownTypes
 import models.adv.MExtTargets
+import models.im.MImgT
+import models.im.logo.LogoOpt_t
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
 import models.mext.MExtServices
 import models.mproj.ICommonDi
+import models.mwc.MWelcomeRenderArgs
 import play.api.i18n.Messages
 import play.api.mvc.Call
+import util.cdn.CdnUtil
 
 import scala.concurrent.Future
 import scala.util.Random
@@ -36,10 +43,12 @@ import scala.util.Random
  */
 @Singleton
 class NodesUtil @Inject() (
-  mNodes                  : MNodes,
-  mExtTargets             : MExtTargets,
-  mCommonDi               : ICommonDi
-)
+                            mNodes                  : MNodes,
+                            mExtTargets             : MExtTargets,
+                            mMediasCache            : MMediasCache,
+                            cdnUtil                 : CdnUtil,
+                            mCommonDi               : ICommonDi
+                          )
   extends MacroLogsImpl
 {
 
@@ -271,6 +280,53 @@ class NodesUtil @Inject() (
         LOGGER.warn(logPrefix + " Node default ads installer is disabled!")
         Nil
       }
+  }
+
+
+  /** Подготовка MediaHostsMap для рендера медиа-файлов узла с использование dist-cdn.
+    * Изначально код зародился в выдаче, но вынесен для возможности использования на других страницах узла.
+    *
+    * @param logoImgOpt Инфа по картинке-логотипу.
+    *                   см. [[util.img.LogoUtil.getLogoOfNode()]] и [[util.img.LogoUtil.getLogoOpt4scr()]].
+    * @param welcomeOpt Инфа по welcome-картинкам.
+    *                   см. [[util.img.WelcomeUtil.getWelcomeRenderArgs()]]
+    * @param gallery Инфа по внутренней галлерее картинок узла.
+    *                см. [[util.img.GalleryUtil.galleryImgs()]]
+    * @return Выхлоп [[util.cdn.CdnUtil.mediasHosts()]].
+    */
+  def nodeMediaHostsMap(logoImgOpt: LogoOpt_t                   = None,
+                        welcomeOpt: Option[MWelcomeRenderArgs]  = None,
+                        gallery   : List[MImgT]                 = Nil
+                       ): Future[Map[String, Seq[MHostInfo]]] = {
+    var allImgsAcc = gallery
+
+    allImgsAcc = welcomeOpt
+      .iterator
+      .flatMap( _.allImgsWithWhInfoIter )
+      .map(_.mimg)
+      .prependRevTo( allImgsAcc )
+
+    allImgsAcc = logoImgOpt.prependTo(allImgsAcc)
+
+    if (allImgsAcc.isEmpty) {
+      Future.successful( Map.empty )
+    } else {
+      for {
+        // Получить на руки media-инстансы для оригиналов картинок:
+        medias <- mMediasCache.multiGet {
+          allImgsAcc
+            .iterator
+            .map(_.dynImgId.original.mediaId)
+        }
+
+        // Узнать узлы, на которых хранятся связанные картинки.
+        mediaHostsMap <- cdnUtil.mediasHosts( medias )
+
+      } yield {
+        LOGGER.trace(s"nodeMediaHostsMap: ${mediaHostsMap.valuesIterator.flatten.map(_.namePublic).toSet.mkString(", ")}")
+        mediaHostsMap
+      }
+    }
   }
 
 }

@@ -9,23 +9,8 @@ import io.suggest.common.geom.d2.ISize2di
  * Description: Модель исчерпывающей инфы по картинке, которую можно отрендерить в шаблоне ссылку.
  */
 
-trait IImgWithWhInfo {
-
-  /** call для получения ссылки на картинку. */
-  def mimg: MImgT
-
-  /** Метаданные для рендера тега img. */
-  def meta: ISize2di
-
-  override def toString: String = {
-    getClass.getSimpleName + "(" + mimg + "," + meta + ")"
-  }
-
-}
-
-case class MImgWithWhInfo(
-  override val mimg : MImgT,
-  override val meta : ISize2di
-)
-  extends IImgWithWhInfo
+final case class MImgWithWhInfo(
+                                 mimg : MImgT,
+                                 meta : ISize2di
+                               )
 

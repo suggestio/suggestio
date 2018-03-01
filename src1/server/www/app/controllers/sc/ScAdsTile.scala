@@ -385,7 +385,14 @@ trait ScAdsTile
         }
         val edges2 = jdAdUtil.filterEdgesForTpl(mainBlkTpl2, brArgs.mad.edges)
         jdAdUtil.mkJdAdDataFor
-          .show(brArgs.mad.id, edges2, mainBlkTpl2, tileArgs.szMult, allowWide = false)(ctx)
+          .show(
+            nodeId        = brArgs.mad.id,
+            nodeEdges     = edges2,
+            tpl           = mainBlkTpl2,
+            szMult        = tileArgs.szMult,
+            allowWide     = false,
+            forceAbsUrls  = _qs.apiVsn.forceAbsUrls
+          )(ctx)
           .execute()
       }
         .flatten

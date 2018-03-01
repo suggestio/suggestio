@@ -30,10 +30,11 @@ import util.FormUtil._
 import util.acl._
 import util.adn.NodesUtil
 import util.ident.IdentUtil
-import util.img.{GalleryUtil, LogoUtil}
+import util.img.{DynImgUtil, GalleryUtil, LogoUtil}
 import util.lk.LkAdUtil
 import util.showcase.ShowcaseUtil
 import util.FormUtil
+import util.cdn.CdnUtil
 import views.html.lk.adn._
 import views.html.lk.adn.invite.inviteInvalidTpl
 import views.html.lk.usr._
@@ -64,6 +65,8 @@ class MarketLkAdn @Inject() (
                               isNodeAdmin                         : IsNodeAdmin,
                               isAdnNodeAdminOptOrAuth             : IsAdnNodeAdminOptOrAuth,
                               nodeEact                            : NodeEact,
+                              cdnUtil                             : CdnUtil,
+                              dynImgUtil                          : DynImgUtil,
                               override val scryptUtil             : ScryptUtil,
                               override val mCommonDi              : ICommonDi
 )
@@ -102,24 +105,75 @@ class MarketLkAdn @Inject() (
    */
   def showAdnNode(nodeId: String) = csrf.AddToken {
     isNodeAdmin(nodeId, U.Lk).async { implicit request =>
-      val mnode = request.mnode
-      val logoOptFut = logoUtil.getLogoOfNode(mnode)
-      val galleryFut = galleryUtil.galleryImgs( mnode )
-      for {
-        ctxData   <- request.user.lkCtxDataFut
-        logoOpt   <- logoOptFut
-        gallery   <- galleryFut
-      } yield {
-        val rargs = MNodeShowArgs(
-          mnode         = mnode,
-          logoImgOpt    = logoOpt,
-          bgColor       = colorCodeOrDflt(mnode.meta.colors.bg, scUtil.SITE_BGCOLOR_DFLT),
-          fgColor       = colorCodeOrDflt(mnode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT),
-          gallery       = gallery
-        )
 
+      // Запустить обсчёт логотипа и галереи узла:
+      val logoOptFut = logoUtil.getLogoOfNode( request.mnode )
+      val galleryFut = galleryUtil.galleryImgs( request.mnode )
+
+      // Собрать карту media-хостов для картинок, которые надо будет рендерить:
+      val mediaHostsMapFut = for {
+        logoOpt         <- logoOptFut
+        gallery         <- galleryFut
+        mediaHostsMap0  <- nodesUtil.nodeMediaHostsMap(
+          logoImgOpt  = logoOpt,
+          gallery     = gallery
+        )
+      } yield {
+        mediaHostsMap0
+      }
+
+      // Собрать ссылку на логотип узла.
+      val logoImgCallOptFut = logoOptFut.flatMap { logoImgOpt =>
+        FutureUtil.optFut2futOpt( logoImgOpt ) { logoImg =>
+          for {
+            mediaHostsMap <- mediaHostsMapFut
+          } yield {
+            val logoImgCdnCall = dynImgUtil.distCdnImgCall(logoImg, mediaHostsMap)
+            Some( logoImgCdnCall )
+          }
+        }
+      }
+
+      implicit val ctx = getContext2
+
+      // Подготовить галеру к работе через CDN:
+      val galleryCallsFut = galleryFut.flatMap { gallery =>
+        if (gallery.isEmpty) {
+          Future.successful(Nil)
+        } else {
+          for (mediaHostsMap <- mediaHostsMapFut) yield {
+            for (galImg <- gallery) yield {
+              cdnUtil.forMediaCall(
+                call          = galleryUtil.dynLkBigCall(galImg)(ctx),
+                mediaId       = galImg.dynImgId.original.mediaId,
+                mediaHostsMap = mediaHostsMap
+              )
+            }
+          }
+        }
+      }
+
+      // Подготовить аргументы для рендера шаблона:
+      val tplArgsFut = for {
+        logoImgCallOpt  <- logoImgCallOptFut
+        galleryCalls    <- galleryCallsFut
+      } yield {
+        MNodeShowArgs(
+          mnode           = request.mnode,
+          bgColor         = colorCodeOrDflt(request.mnode.meta.colors.bg, scUtil.SITE_BGCOLOR_DFLT),
+          fgColor         = colorCodeOrDflt(request.mnode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT),
+          gallery         = galleryCalls,
+          logoImgCallOpt  = logoImgCallOpt
+        )
+      }
+
+      // Отрендерить и вернуть ответ:
+      for {
+        ctxData         <- request.user.lkCtxDataFut
+        tplArgs         <- tplArgsFut
+      } yield {
         implicit val ctxData1 = ctxData
-        val html = adnNodeShowTpl( rargs )
+        val html = adnNodeShowTpl( tplArgs )(ctx)
         Ok(html)
       }
     }

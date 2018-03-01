@@ -917,7 +917,14 @@ trait ScFocusedAds
         val tpl = jdAdUtil.getNodeTpl( mad )
         val edges2 = jdAdUtil.filterEdgesForTpl(tpl, mad.edges)
         jdAdUtil.mkJdAdDataFor
-          .show(mad.id, edges2, tpl, tileArgs.szMult, allowWide = true)(ctx)
+          .show(
+            nodeId        = mad.id,
+            nodeEdges     = edges2,
+            tpl           = tpl,
+            szMult        = tileArgs.szMult,
+            allowWide     = true,
+            forceAbsUrls  = _qs.apiVsn.forceAbsUrls
+          )(ctx)
           .execute()
       }
         .flatten

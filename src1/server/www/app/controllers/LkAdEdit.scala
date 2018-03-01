@@ -437,13 +437,18 @@ class LkAdEdit @Inject() (
     val adId = adIdU.id
     canEditAd(adId, U.Lk).async { implicit request =>
       //lazy val logPrefix = s"editAd($adId):"
-      // Запустить сбоку карточки.
-      val jdAdDataFut = jdAdUtil.mkJdAdDataFor.edit( request.mad ).execute()
 
-      // Подготовить ctxData:
+      // Сразу заготовить контекст рендера, он нужен на всех последующих шагах:
       val ctxData1Fut = _ctxDataFut
       val ctxFut = ctxData1Fut.map { implicit ctxData0 =>
-        implicitly[Context]
+        getContext2
+      }
+
+      // Запустить сбоку карточки.
+      // Тут зависимость от контекста. Если тормозит, то для ускорения можно передавать неполный контекст без ctxData - на jd-рендер это не влияет.
+      val jdAdDataFut = ctxFut.flatMap { implicit ctx =>
+        jdAdUtil.mkJdAdDataFor.edit( request.mad )(ctx)
+          .execute()
       }
 
       // Собрать модель и отрендерить:

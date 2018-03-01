@@ -331,9 +331,9 @@ object Lists {
     * @param elems Исходная коллекция или итератор.
     * @return Список исходных элементов в обратном порядке.
     */
-  def toListRev[T](elems: TraversableOnce[T]): List[T] = {
+  def toListRev[T](elems: TraversableOnce[T], acc0: List[T] = Nil): List[T] = {
     elems
-      .foldLeft( List.empty[T] ) { (acc, e) => e :: acc }
+      .foldLeft(acc0) { (acc, e) => e :: acc }
   }
 
 
@@ -371,29 +371,52 @@ object Lists {
   }
 
 
+  object Implicits {
 
-  implicit class ListExt[T](val source: List[T]) extends AnyVal {
+    implicit class ListExt[T](val source: List[T]) extends AnyVal {
 
-    /** O(n)-аналог List.span(), но true-аккамулятор возвращается в развёрнутом виде.
-      * Т.е. [1,2,3,4,5,6] и {x<=3} вернёт результат ([3,2,1], [4,5,6]).
-      *
-      * @param f Предикат.
-      * @return
-      */
-    def spanRev(f: T => Boolean): (List[T], List[T]) = {
-      @tailrec
-      def __doSpan(headAccRev: List[T], rest: List[T]): (List[T], List[T]) = {
-        headAccRev match {
-          case hd :: tl if f(hd) =>
-            __doSpan(hd :: headAccRev, tl)
-          case _ =>
-            (headAccRev, rest)
+      /** O(n)-аналог List.span(), но true-аккамулятор возвращается в развёрнутом виде.
+        * Т.е. [1,2,3,4,5,6] и {x<=3} вернёт результат ([3,2,1], [4,5,6]).
+        *
+        * @param f Предикат.
+        * @return
+        */
+      def spanRev(f: T => Boolean): (List[T], List[T]) = {
+        @tailrec
+        def __doSpan(headAccRev: List[T], rest: List[T]): (List[T], List[T]) = {
+          headAccRev match {
+            case hd :: tl if f(hd) =>
+              __doSpan(hd :: headAccRev, tl)
+            case _ =>
+              (headAccRev, rest)
+          }
         }
+
+        __doSpan(Nil, source)
       }
 
-      __doSpan(Nil, source)
+    }
+
+
+    implicit class TraversableOnceListsOps[T](val source: TraversableOnce[T]) extends AnyVal {
+
+      /** Добавить все элементы этой коллекции в начало указанного списка в обратном порядке. */
+      def prependRevTo(list: List[T]): List[T] = {
+        toListRev(source, list)
+      }
+
+    }
+
+
+    implicit class OptionListExtOps[T](val source: Option[T]) extends AnyVal {
+
+      def prependTo(list: List[T]): List[T] = {
+        prependOpt(source)(list)
+      }
+
     }
 
   }
+
 
 }

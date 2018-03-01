@@ -11,6 +11,7 @@ import io.suggest.util.logs.IMacroLogs
 import models.blk
 import io.suggest.sc.focus.MLookupModes
 import models.msc._
+import models.mwc.MWelcomeRenderArgs
 import models.req.IReq
 import play.api.mvc.Result
 import play.twirl.api.{Html, HtmlFormat}
@@ -323,7 +324,10 @@ trait ScSyncSite
 
           /** Получение карточки приветствия не нужно, т.к. кравлер не требуется приветствовать,
             * да её потом нечем скрывать с экрана: js не работает же. */
-          override def welcomeOptFut: Future[Option[WelcomeRenderArgsT]] = Future.successful(None)
+          override def welcomeOptFut: Future[Option[MWelcomeRenderArgs]] = {
+            Future.successful(None)
+          }
+
         }
       }
     }

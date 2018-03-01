@@ -267,15 +267,19 @@ class CdnUtil @Inject() (
     * @return Карта mediaId -> hostname.
     */
   def mediasHosts(medias: Iterable[MMedia]): Future[Map[String, Seq[MHostInfo]]] = {
-    for {
-      storages2hostsMap <- iMediaStorages.getStoragesHosts( medias.map(_.storage) )
-    } yield {
-      medias
-        .iterator
-        .map { media =>
-          media.nodeId -> storages2hostsMap(media.storage)
-        }
-        .toMap
+    if (medias.isEmpty) {
+      Future.successful( Map.empty )
+    } else {
+      for {
+        storages2hostsMap <- iMediaStorages.getStoragesHosts( medias.map(_.storage) )
+      } yield {
+        medias
+          .iterator
+          .map { media =>
+            media.nodeId -> storages2hostsMap(media.storage)
+          }
+          .toMap
+      }
     }
   }
 

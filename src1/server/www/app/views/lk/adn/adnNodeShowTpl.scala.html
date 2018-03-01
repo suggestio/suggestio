@@ -1,4 +1,4 @@
-@(args: mlk.INodeShowArgs)(implicit ctx: Context)
+@(args: mlk.MNodeShowArgs)(implicit ctx: Context)
 
 @* Заглавная страница узла рекламной сети в личных кабинетах.
    Если isMyNode, то идёт рендер управляемого узла, и povAdnIdOpt игнорируется.
@@ -8,28 +8,32 @@
 @import node._
 @import ctx.api.dynImgUtil
 @import io.suggest.vlines.VLines
-@import args._
 @import lk.lkProp
 @import lk.dsl._
 @import views.html.stuff.bxslider._
+
+@* Инлайнинг старого _galleryTpl, который должен быть удалён вместе с кучей старого API. *@
+@import ctx.api.galleryUtil
+@import io.suggest.css.Css.Lk.BxSlider.JS_PHOTO_SLIDER
+
 
 @headAfter1 = {
   @_bxSliderCssTpl()
 }
 
 @nodeBaseTpl(
-  title         = mnode.meta.basic.name + " | " + messages("Profile"),
-  mnode         = mnode,
+  title         = args.mnode.meta.basic.name + " | " + messages("Profile"),
+  mnode         = args.mnode,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE,
   headAfter	    = Some(headAfter1)
 ) {
 
   <div class="profile_logo-bar">
-    @if(mnode.meta.colors.bg.isDefined) {
-      @for(img <- args.logoImgOpt) {
+    @if(args.mnode.meta.colors.bg.isDefined) {
+      @for(logoImgCall <- args.logoImgCallOpt) {
         <div class="image __size-L"
-             @for(bgColor <- mnode.meta.colors.bg) {style="background-color: #@bgColor.code;"}>
-          <img class="image_src" src="@dynImgUtil.imgCall(img)" alt="@mnode.meta.basic.name"/>
+             @for(bgColor <- args.mnode.meta.colors.bg) {style="background-color: #@bgColor.code;"}>
+          <img class="image_src" src="@logoImgCall" alt="@args.mnode.meta.basic.name"/>
         </div>
       }
     }
@@ -39,36 +43,36 @@
     @_delimTpl()
 
     @lkProp( messages("Name")) {
-      @mnode.meta.basic.name
+      @args.mnode.meta.basic.name
     }
 
-    @mnode.meta.address.town.map { town =>
+    @args.mnode.meta.address.town.map { town =>
       @lkProp( messages("Address")) {
-        @town@mnode.meta.address.address.map { addr =>, addr}
+        @town@args.mnode.meta.address.address.map { addr =>, addr}
       }
     }
 
-    @mnode.meta.business.siteUrl.map { siteUrl =>
+    @args.mnode.meta.business.siteUrl.map { siteUrl =>
       @lkProp( messages("Site")) {
         <a class="link" href="@siteUrl" target="_blank">@siteUrl</a>
       }
     }
 
-    @mnode.meta.business.info.map { info =>
+    @args.mnode.meta.business.info.map { info =>
       @lkProp( messages("Info.about.prods.and.svcs")) {
         @info
       }
     }
 
 
-    @if( mnode.extras.adn.exists(_.isReceiver) ) {
+    @if( args.mnode.extras.adn.exists(_.isReceiver) ) {
       @_delimTpl()
 
       @lkProp( messages("Daily.people.traffic")) {
-        @mnode.meta.business.humanTrafficAvg
+        @args.mnode.meta.business.humanTrafficAvg
       }
       @lkProp( messages("Audience.descr")) {
-        @mnode.meta.business.audienceDescr
+        @args.mnode.meta.business.audienceDescr
       }
 
       @* TODO добавить вывод картинки приветствия *@
@@ -77,7 +81,14 @@
       <div class="prop">
         <p class="prop_name __block">@messages("Node.photos"):</p>
         <div class="profile_photo-lst">
-          @_galleryTpl(args.gallery, "profile_photo-i")
+
+          @* Инлайнинг старой galleryTpl (новая - это react-image-gallery): *@
+          <div class="@JS_PHOTO_SLIDER">
+            @for(imgCall <- args.gallery) {
+              <img class="profile_photo-i" src="@imgCall" />
+            }
+          </div>
+
         </div>
       </div>
     }

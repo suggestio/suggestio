@@ -12,7 +12,7 @@ import models.im._
 import models.madn.EditConstants
 import models.mctx.Context
 import models.mproj.ICommonDi
-import models.msc.{MWelcomeRenderArgs, WelcomeRenderArgsT}
+import models.mwc.MWelcomeRenderArgs
 import util.cdn.CdnUtil
 import util.showcase.ShowcaseUtil
 
@@ -87,7 +87,7 @@ class WelcomeUtil @Inject() (
    * @return Фьючерс с опциональными настройками. Если None, то приветствие рендерить не надо.
    */
   def getWelcomeRenderArgs(mnode: MNode, screen: Option[DevScreen])
-                          (implicit ctx: Context): Future[Option[WelcomeRenderArgsT]] = {
+                          (implicit ctx: Context): Future[Option[MWelcomeRenderArgs]] = {
     // дедубликация кода. Можно наверное через Future.filter такое отрабатывать.
     def _colorBg = colorBg(mnode)
 
@@ -96,7 +96,7 @@ class WelcomeUtil @Inject() (
       .withPredicateIter( MPredicates.GalleryItem )
       .toStream
       .headOption
-      .fold[Future[Either[String, IImgWithWhInfo]]] {
+      .fold[Future[Either[String, MImgWithWhInfo]]] {
         Future.successful(_colorBg)
       } { bgEdge =>
         val dynImgId = MDynImgId(

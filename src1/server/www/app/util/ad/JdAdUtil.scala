@@ -18,7 +18,6 @@ import japgolly.univeq._
 import models.im.make.{IImgMaker, MImgMakeArgs}
 import models.im._
 import models.mctx.Context
-import models.req.IReqHdr
 import play.api.mvc.Call
 import util.cdn.CdnUtil
 import util.img.DynImgUtil
@@ -134,9 +133,9 @@ class JdAdUtil @Inject()(
     * @param mediaHosts Карта хостов.
     * @return Строка URL для рендера в HTML-документе.
     */
-  private def mkDistMediaUrl(call: Call, medge: MEdge, mediaHosts: Map[String, Seq[MHostInfo]]): String = {
+  private def mkDistMediaUrl(call: Call, medge: MEdge, mediaHosts: Map[String, Seq[MHostInfo]], forceAbsUrls: Boolean)(implicit ctx: Context): String = {
     def logPrefix = s"mkDistMediaUrl(#${medge.doc.uid.orNull},$call):"
-    medge
+    val call2 = medge
       .nodeIds
       .headOption
       .fold {
@@ -147,7 +146,8 @@ class JdAdUtil @Inject()(
         LOGGER.trace(s"$logPrefix Using nodeId#$nodeId for media-edge edge nodeIds=[${medge.nodeIds.mkString(", ")}]")
         cdnUtil.forMediaCall(call, nodeId, mediaHosts )
       }
-      .url
+
+    cdnUtil.maybeAbsUrl( forceAbsUrls)(call2)
   }
 
 
@@ -165,7 +165,7 @@ class JdAdUtil @Inject()(
                            mediasMap      : Map[String, MMedia],
                            mediaNodes     : Map[String, MNode],
                            mediaHosts     : Map[String, Seq[MHostInfo]]
-                         ): Seq[MJdEdge] = {
+                         )(implicit ctx: Context): Seq[MJdEdge] = {
     lazy val logPrefix = s"mkImgJdEdgesForEdit[${System.currentTimeMillis()}]:"
 
     // Получены медиа-файлы на руки.
@@ -187,7 +187,7 @@ class JdAdUtil @Inject()(
           nodeId    = nodeId,
           url       = Some {
             // TODO Вместо сырого оригинала вернуть нечто пересжатое с тем же w/h.
-            mkDistMediaUrl(dynImgUtil.imgCall(mimg), medge, mediaHosts)
+            mkDistMediaUrl(dynImgUtil.imgCall(mimg), medge, mediaHosts, forceAbsUrls = false)
           },
           // TODO Дальше модель сильно дублирует модель в MMedia.file (без учёта date_created).
           sizeB     = Some( mmedia.file.sizeB ),
@@ -397,10 +397,9 @@ class JdAdUtil @Inject()(
     /** Сборщик jd-карточек для редактора карточек.
       *
       * @param mad Узел рекламной карточки.
-      * @param req Реквест.
       */
     case class edit(mad: MNode)
-                   (implicit req: IReqHdr) extends JdAdDataMakerBase {
+                   (implicit ctx: Context) extends JdAdDataMakerBase {
 
       override val tpl = getNodeTpl(mad)
 
@@ -443,7 +442,8 @@ class JdAdUtil @Inject()(
                     override val nodeEdges  : MNodeEdges,
                     override val tpl        : Tree[JdTag],
                     szMult                  : SzMult_t,
-                    allowWide               : Boolean
+                    allowWide               : Boolean,
+                    forceAbsUrls            : Boolean
                    )(implicit ctx: Context) extends JdAdDataMakerBase {
 
       /** Для выдачи не требуется  */
@@ -469,7 +469,7 @@ class JdAdUtil @Inject()(
               predicate   = imgPred,
               id          = edgeUid,
               url         = {
-                val url = mkDistMediaUrl(dynImgUtil.imgCall(imgMakeRes.dynCallArgs), imgMakeRes.medge, mediaHostsMap)
+                val url = mkDistMediaUrl(dynImgUtil.imgCall(imgMakeRes.dynCallArgs), imgMakeRes.medge, mediaHostsMap, forceAbsUrls)
                 Some(url)
               },
               fileSrv = Some(MSrvFileInfo(

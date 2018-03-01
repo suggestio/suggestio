@@ -83,10 +83,12 @@ case class MDynImgId(
     sb
   }
 
-
-  lazy val original: MDynImgId = {
+  /** Хранилка инстанса оригинала.
+    * Для защиты от хранения ненужных ссылок на this, тут связка из метода и lazy val. */
+  private lazy val _originalHolder = withDynImgOps(Nil)
+  final def original: MDynImgId = {
     if (hasImgOps)
-      withDynImgOps(Nil)
+      _originalHolder
     else
       this
   }

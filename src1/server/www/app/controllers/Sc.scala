@@ -50,7 +50,6 @@ class Sc @Inject() (
                      override val cspUtil            : CspUtil,
                      override val getAnyAd           : GetAnyAd,
                      override val maybeAuth          : MaybeAuth,
-                     override val mMediasCache       : MMediasCache,
                      override val advUtil            : AdvUtil,
                      @Named("blk") override val blkImgMaker  : IImgMaker,
                      override val dynImgUtil         : DynImgUtil,

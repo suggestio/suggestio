@@ -1,5 +1,6 @@
 package models.msc
 
+import models.mwc.MWelcomeRenderArgs
 import play.twirl.api.Html
 
 /**
@@ -21,7 +22,7 @@ abstract class ScRenderArgs
 {
 
   /** Приветствие, если есть. */
-  def welcomeOpt    : Option[WelcomeRenderArgsT]
+  def welcomeOpt    : Option[MWelcomeRenderArgs]
 
   /** Дефолтовые параметры для рендера кнопок на панели. Тут нужен case-класс. */
   def hBtnArgs: HBtnArgs

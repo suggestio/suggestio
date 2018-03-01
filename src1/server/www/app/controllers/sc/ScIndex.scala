@@ -2,7 +2,7 @@ package controllers.sc
 
 import _root_.util.di._
 import io.suggest.color.MColorData
-import io.suggest.common.empty.{EmptyUtil, OptionUtil}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.IMust
@@ -12,7 +12,6 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.media.{IMediaInfo, MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
-import io.suggest.model.n2.media.IMediasCacheDi
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, MNodeTypes, NodeNotFoundException}
 import io.suggest.sc.MScApiVsns
@@ -23,7 +22,7 @@ import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.IMacroLogs
 import models.AdnShownTypes
-import models.im.{IImgWithWhInfo, MImgT}
+import models.im.{MImgT, MImgWithWhInfo}
 import models.msc._
 import models.msc.resp.{MScResp, MScRespAction, MScRespIndex}
 import play.api.libs.json.Json
@@ -36,6 +35,7 @@ import util.geo.IGeoIpUtilDi
 import util.stat.{IStatCookiesUtilDi, IStatUtil}
 import views.html.sc._
 import japgolly.univeq._
+import models.mwc.MWelcomeRenderArgs
 import util.img.IDynImgUtil
 
 import scala.concurrent.Future
@@ -65,7 +65,6 @@ trait ScIndex
   with IStatUtil
   with IBleUtilDi
   with IDynImgUtil
-  with IMediasCacheDi
 {
 
   import mCommonDi._
@@ -400,7 +399,7 @@ trait ScIndex
 
 
     /** Получение карточки приветствия. */
-    def welcomeOptFut: Future[Option[WelcomeRenderArgsT]] = {
+    def welcomeOptFut: Future[Option[MWelcomeRenderArgs]] = {
       if (_reqArgs.withWelcome) {
         for {
           inxNodeInfo <- indexNodeFutVal
@@ -408,7 +407,6 @@ trait ScIndex
         } yield {
           waOpt
         }
-
       } else {
         Future.successful(None)
       }
@@ -672,29 +670,16 @@ trait ScIndex
     lazy val distMediaHostsMapFut: Future[Map[String, Seq[MHostInfo]]] = {
       // В ScIndex входят logo, wc.fg, wc.bg. Собрать их в кучу и запросить для них media-узлы:
       val _logoImgOptFut = logoImgOptFut
-      val _welcomeOptFut = welcomeOptFut
 
       for {
-        welcomeOpt <- _welcomeOptFut
-        welcomeImgs = welcomeOpt
-          .iterator
-          .flatMap { welcome =>
-            (welcome.fgImage ++ welcome.bg.right.toOption)
-              .map(_.mimg)
-          }
-          .toList
-
+        welcomeOpt <- welcomeOptFut
         logoImgOpt <- _logoImgOptFut
-        allImgs = logoImgOpt.fold(welcomeImgs) { _ :: welcomeImgs }
-
-        // Получить на руки media-инстансы для оригиналов картинок:
-        medias <- mMediasCache.multiGet {
-          allImgs.view
-            .map(_.dynImgId.original.mediaId)
-        }
 
         // Узнать узлы, на которых хранятся связанные картинки.
-        mediaHostsMap <- cdnUtil.mediasHosts( medias )
+        mediaHostsMap <- nodesUtil.nodeMediaHostsMap(
+          logoImgOpt = logoImgOpt,
+          welcomeOpt = welcomeOpt
+        )
 
       } yield {
         LOGGER.trace(s"distNodesMap: ${mediaHostsMap.valuesIterator.flatten.map(_.namePublic).toSet.mkString(", ")}")
@@ -710,7 +695,7 @@ trait ScIndex
         val mMediaInfo = MMediaInfo(
           giType = MMediaTypes.Image,
           url    = cdnUtil.maybeAbsUrl(_reqArgs.apiVsn.forceAbsUrls) {
-            cdnUtil.forMediaCall( dynImgUtil.imgCall(mimg), mimg.dynImgId.original.mediaId, mediaHostsMap )
+            dynImgUtil.distCdnImgCall(mimg, mediaHostsMap)
           }(ctx),
           whPx   = whPxOpt
         )
@@ -728,7 +713,7 @@ trait ScIndex
       }
     }
 
-    private def _imgWithWhOpt2mediaInfo(iwwiOpt: Option[IImgWithWhInfo]): Future[Option[MMediaInfo]] = {
+    private def _imgWithWhOpt2mediaInfo(iwwiOpt: Option[MImgWithWhInfo]): Future[Option[MMediaInfo]] = {
       FutureUtil.optFut2futOpt(iwwiOpt) { ii =>
         _img2mediaInfo( ii.mimg, whPxOpt = Some(MSize2di.applyOrThis(ii.meta)) )
       }
