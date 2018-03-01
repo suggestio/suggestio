@@ -13,7 +13,7 @@ import japgolly.univeq._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.proto.HttpConst
-import util.cdn.DistUtil
+import util.cdn.CdnUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -29,7 +29,7 @@ class CanDynImg @Inject() (
                             aclUtil                 : AclUtil,
                             reqUtil                 : ReqUtil,
                             mMediasCache            : MMediasCache,
-                            distUtil                : DistUtil,
+                            cdnUtil                 : CdnUtil,
                             mNodesCache             : MNodesCache,
                             implicit private val ec : ExecutionContext
                           )
@@ -77,7 +77,7 @@ class CanDynImg @Inject() (
 
               def __mediaFoundResp(mmedia: MMedia, respMediaOpt: Option[MMedia]): Future[Result] = {
                 // Сравнить узел картинки с текущим узлом:
-                distUtil.checkStorageForThisNode(mmedia.storage).flatMap {
+                cdnUtil.checkStorageForThisNode(mmedia.storage).flatMap {
                   // Найдена картинка-оригинал вместо дериватива. Это тоже норм.
                   case Right(storageInfo) =>
                     LOGGER.trace(s"$logPrefix Passed. Storage=$storageInfo respMedia=${respMediaOpt.orNull}")

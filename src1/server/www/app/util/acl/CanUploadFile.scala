@@ -11,7 +11,7 @@ import models.mproj.ICommonDi
 import models.mup.{MUploadReq, MUploadTargetQs}
 import models.req.MSioUsers
 import play.api.mvc._
-import util.cdn.DistUtil
+import util.cdn.CdnUtil
 import util.up.UploadUtil
 
 import scala.concurrent.Future
@@ -27,7 +27,7 @@ class CanUploadFile @Inject()(
                                mSioUsers                  : MSioUsers,
                                uploadUtil                 : UploadUtil,
                                dab                        : DefaultActionBuilder,
-                               distUtil                   : DistUtil,
+                               cdnUtil                    : CdnUtil,
                                mCtxIds                    : MCtxIds,
                                mCommonDi                  : ICommonDi
                              )
@@ -70,7 +70,7 @@ class CanUploadFile @Inject()(
 
       } else {
         val respFut = for {
-          swfsEith <- distUtil.checkStorageForThisNode( upTg.storage.storage )
+          swfsEith <- cdnUtil.checkStorageForThisNode( upTg.storage.storage )
           if swfsEith.isRight
           resp <- {
             LOGGER.trace(s"$logPrefix Allowed to process file upload, swfs => $swfsEith")

@@ -20,7 +20,7 @@ import models.im._
 import models.mctx.Context
 import models.req.IReqHdr
 import play.api.mvc.Call
-import util.cdn.{CdnUtil, DistUtil}
+import util.cdn.CdnUtil
 import util.img.DynImgUtil
 import util.vid.VideoUtil
 import models.blk.SzMult_t
@@ -44,7 +44,6 @@ class JdAdUtil @Inject()(
                           dynImgUtil                  : DynImgUtil,
                           cdnUtil                     : CdnUtil,
                           videoUtil                   : VideoUtil,
-                          distUtil                    : DistUtil,
                           implicit private val ec     : ExecutionContext
                        )
   extends MacroLogsImpl
@@ -135,25 +134,20 @@ class JdAdUtil @Inject()(
     * @param mediaHosts Карта хостов.
     * @return Строка URL для рендера в HTML-документе.
     */
-  def mkDistMediaUrl(call: Call, medge: MEdge, mediaHosts: Map[String, Seq[MHostInfo]])
-                    (implicit req: IReqHdr): String = {
-    val hostInfoOpt = medge.nodeIds
-      .view
-      .flatMap(mediaHosts.get)
-      .flatten
-      .headOption
-
+  private def mkDistMediaUrl(call: Call, medge: MEdge, mediaHosts: Map[String, Seq[MHostInfo]]): String = {
     def logPrefix = s"mkDistMediaUrl(#${medge.doc.uid.orNull},$call):"
-
-    hostInfoOpt
-      .fold[String] {
+    medge
+      .nodeIds
+      .headOption
+      .fold {
         // Вообще, это плохо, если нет хостнейма для media. Это значит, что-то не так.
         LOGGER.warn(s"$logPrefix Media host-name missing for edge $medge")
-        call.url
-      } { hostInfo =>
-        LOGGER.trace(s"$logPrefix Using host=$hostInfo for media-edge $medge")
-        cdnUtil.distNodeCdnUrl( hostInfo, call)
+        call
+      } { nodeId =>
+        LOGGER.trace(s"$logPrefix Using nodeId#$nodeId for media-edge edge nodeIds=[${medge.nodeIds.mkString(", ")}]")
+        cdnUtil.forMediaCall(call, nodeId, mediaHosts )
       }
+      .url
   }
 
 
@@ -171,7 +165,7 @@ class JdAdUtil @Inject()(
                            mediasMap      : Map[String, MMedia],
                            mediaNodes     : Map[String, MNode],
                            mediaHosts     : Map[String, Seq[MHostInfo]]
-                         )(implicit req: IReqHdr): Seq[MJdEdge] = {
+                         ): Seq[MJdEdge] = {
     lazy val logPrefix = s"mkImgJdEdgesForEdit[${System.currentTimeMillis()}]:"
 
     // Получены медиа-файлы на руки.
@@ -333,7 +327,7 @@ class JdAdUtil @Inject()(
 
     // Собрать инфу по хостам, хранящим интересующие media-файлы.
     def mediaHostsMapFut = origImgMediasMapFut.flatMap { medias =>
-      distUtil.mediasHosts( medias.values )
+      cdnUtil.mediasHosts( medias.values )
     }
 
     // Скомпилить jd-эджи картинок.
@@ -451,7 +445,6 @@ class JdAdUtil @Inject()(
                     szMult                  : SzMult_t,
                     allowWide               : Boolean
                    )(implicit ctx: Context) extends JdAdDataMakerBase {
-      import ctx.request
 
       /** Для выдачи не требуется  */
       override def imgEdgesNeedNodes = Nil

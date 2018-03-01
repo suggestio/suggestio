@@ -2,7 +2,8 @@ package controllers.sc
 
 import _root_.util.di._
 import io.suggest.color.MColorData
-import io.suggest.common.empty.OptionUtil
+import io.suggest.common.empty.{EmptyUtil, OptionUtil}
+import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.IMust
 import io.suggest.es.search.MSubSearch
@@ -11,6 +12,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.media.{IMediaInfo, MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
+import io.suggest.model.n2.media.IMediasCacheDi
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, MNodeTypes, NodeNotFoundException}
 import io.suggest.sc.MScApiVsns
@@ -18,6 +20,7 @@ import io.suggest.sc.index.MWelcomeInfo
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.sc3.{MSc3IndexResp, MSc3Resp, MSc3RespAction}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
+import io.suggest.url.MHostInfo
 import io.suggest.util.logs.IMacroLogs
 import models.AdnShownTypes
 import models.im.{IImgWithWhInfo, MImgT}
@@ -62,6 +65,7 @@ trait ScIndex
   with IStatUtil
   with IBleUtilDi
   with IDynImgUtil
+  with IMediasCacheDi
 {
 
   import mCommonDi._
@@ -384,7 +388,7 @@ trait ScIndex
 
 
     /** Получение графического логотипа узла, если возможно. */
-    def logoImgOptFut: Future[Option[MImgT]] = {
+    lazy val logoImgOptFut: Future[Option[MImgT]] = {
       for {
         currNode     <- indexNodeFutVal
         logoOptRaw   <- logoUtil.getLogoOfNode(currNode.mnode)
@@ -662,45 +666,94 @@ trait ScIndex
     /** true, если вызов идёт из [[ScIndexAdOpen]]. */
     def isFocusedAdOpen: Boolean = false
 
-    private def _img2mediaInfo(mimg: MImgT, whPxOpt: Option[MSize2di]): MMediaInfo = {
-      MMediaInfo(
-        giType = MMediaTypes.Image,
-        url    = cdnUtil.maybeAbsUrl(_reqArgs.apiVsn.forceAbsUrls) {
-          cdnUtil.forCall( dynImgUtil.imgCall(mimg) )(ctx)
-        }(ctx),
-        whPx   = whPxOpt
-      )
+    override lazy val welcomeOptFut = super.welcomeOptFut
+
+    /** Поддержка dist nodes: собрать картинки для index'а узла. */
+    lazy val distMediaHostsMapFut: Future[Map[String, Seq[MHostInfo]]] = {
+      // В ScIndex входят logo, wc.fg, wc.bg. Собрать их в кучу и запросить для них media-узлы:
+      val _logoImgOptFut = logoImgOptFut
+      val _welcomeOptFut = welcomeOptFut
+
+      for {
+        welcomeOpt <- _welcomeOptFut
+        welcomeImgs = welcomeOpt
+          .iterator
+          .flatMap { welcome =>
+            (welcome.fgImage ++ welcome.bg.right.toOption)
+              .map(_.mimg)
+          }
+          .toList
+
+        logoImgOpt <- _logoImgOptFut
+        allImgs = logoImgOpt.fold(welcomeImgs) { _ :: welcomeImgs }
+
+        // Получить на руки media-инстансы для оригиналов картинок:
+        medias <- mMediasCache.multiGet {
+          allImgs.view
+            .map(_.dynImgId.original.mediaId)
+        }
+
+        // Узнать узлы, на которых хранятся связанные картинки.
+        mediaHostsMap <- cdnUtil.mediasHosts( medias )
+
+      } yield {
+        LOGGER.trace(s"distNodesMap: ${mediaHostsMap.valuesIterator.flatten.map(_.namePublic).toSet.mkString(", ")}")
+        mediaHostsMap
+      }
     }
 
-    private def _imgWithWhOpt2mediaInfo(iwwiOpt: Option[IImgWithWhInfo]): Option[MMediaInfo] = {
-      for (ii <- iwwiOpt) yield {
-        _img2mediaInfo( ii.mimg, whPxOpt = Some(MSize2di.applyOrThis(ii.meta)) )
+
+    private def _img2mediaInfo(mimg: MImgT, whPxOpt: Option[MSize2di]): Future[Option[MMediaInfo]] = {
+      for {
+        mediaHostsMap <- distMediaHostsMapFut
+      } yield {
+        val mMediaInfo = MMediaInfo(
+          giType = MMediaTypes.Image,
+          url    = cdnUtil.maybeAbsUrl(_reqArgs.apiVsn.forceAbsUrls) {
+            cdnUtil.forMediaCall( dynImgUtil.imgCall(mimg), mimg.dynImgId.original.mediaId, mediaHostsMap )
+          }(ctx),
+          whPx   = whPxOpt
+        )
+        Some( mMediaInfo )
       }
     }
 
     /** Подготовка данных по логотипу узла. */
     def logoMediaInfoOptFut: Future[Option[IMediaInfo]] = {
-      for (logoOpt <- logoImgOptFut) yield {
-        for (logoImg <- logoOpt) yield {
+      logoImgOptFut.flatMap { logoImgOpt =>
+        FutureUtil.optFut2futOpt(logoImgOpt) { logoImg =>
           // Пока без wh, т.к. у логотипа была константная высота, заданная в css-пикселях ScConstants.Logo.HEIGHT_CSSPX
           _img2mediaInfo( logoImg, whPxOpt = None )
         }
       }
     }
 
+    private def _imgWithWhOpt2mediaInfo(iwwiOpt: Option[IImgWithWhInfo]): Future[Option[MMediaInfo]] = {
+      FutureUtil.optFut2futOpt(iwwiOpt) { ii =>
+        _img2mediaInfo( ii.mimg, whPxOpt = Some(MSize2di.applyOrThis(ii.meta)) )
+      }
+    }
+
     /** Завернуть данные для рендера welcome в выходной формат. */
     def welcomeInfoOptFut: Future[Option[MWelcomeInfo]] = {
-      for (wcOpt <- welcomeOptFut) yield {
-        for (wc <- wcOpt) yield {
-          MWelcomeInfo(
-            bgColor = for (hexCode <- wc.bg.left.toOption) yield {
-              MColorData(
-                code = hexCode
-              )
-            },
-            bgImage = _imgWithWhOpt2mediaInfo( wc.bg.right.toOption ),
-            fgImage = _imgWithWhOpt2mediaInfo( wc.fgImage )
-          )
+      welcomeOptFut.flatMap { wcOpt =>
+        FutureUtil.optFut2futOpt(wcOpt) { wc =>
+          val bgImageFut = _imgWithWhOpt2mediaInfo( wc.bg.right.toOption )
+          for {
+            fgImage <- _imgWithWhOpt2mediaInfo( wc.fgImage )
+            bgImage <- bgImageFut
+          } yield {
+            val mWcInfo = MWelcomeInfo(
+              bgColor = for (hexCode <- wc.bg.left.toOption) yield {
+                MColorData(
+                  code = hexCode
+                )
+              },
+              bgImage = bgImage,
+              fgImage = fgImage
+            )
+            Some( mWcInfo )
+          }
         }
       }
     }

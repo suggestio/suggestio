@@ -34,3 +34,7 @@ class MMediasCache @Inject()(
   override def companion = mMedias
 
 }
+
+trait IMediasCacheDi {
+  def mMediasCache: MMediasCache
+}

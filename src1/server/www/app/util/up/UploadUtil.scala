@@ -2,7 +2,7 @@ package util.up
 
 import javax.inject.{Inject, Singleton}
 
-import models.mproj.ICommonDi
+import play.api.Configuration
 
 import scala.concurrent.duration._
 
@@ -15,10 +15,8 @@ import scala.concurrent.duration._
   */
 @Singleton
 class UploadUtil @Inject()(
-                            mCommonDi: ICommonDi
+                            configuration: Configuration
                           ) {
-
-  import mCommonDi.configuration
 
   /**
     * Публичное имя хоста текущего узла.

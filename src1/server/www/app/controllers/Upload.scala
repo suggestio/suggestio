@@ -37,7 +37,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{BodyParser, MultipartFormData, Result}
 import play.core.parsers.Multipart
 import util.acl.{CanUploadFile, IgnoreAuth}
-import util.cdn.{CdnUtil, DistUtil}
+import util.cdn.CdnUtil
 import util.up.{FileUtil, UploadUtil}
 import japgolly.univeq._
 import util.img.ImgFileUtil
@@ -67,7 +67,6 @@ class Upload @Inject()(
                         mImgs3                    : MImgs3,
                         mLocalImgs                : MLocalImgs,
                         clamAvUtil                : ClamAvUtil,
-                        distUtil                  : DistUtil,
                         imgFileUtil               : ImgFileUtil,
                         uploadCtxFactory          : IUploadCtxFactory,
                         mainColorDetector         : MainColorDetector,
@@ -141,7 +140,7 @@ class Upload @Inject()(
           val (respStatus, respDataFut) = fileSearchRes
             .headOption
             .fold [(Status, Future[MUploadResp])] {
-              val assignRespFut = distUtil.assignDist(upFileProps)
+              val assignRespFut = cdnUtil.assignDist(upFileProps)
               LOGGER.trace(s"$logPrefix No existing file, user will upload a new file.")
 
               val upDataFut = for {

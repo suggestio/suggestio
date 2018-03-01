@@ -3,25 +3,41 @@ package util.cdn
 import javax.inject.{Inject, Singleton}
 
 import controllers.routes
+import io.suggest.file.up.MFile4UpProps
+import io.suggest.model.n2.media.MMedia
+import io.suggest.model.n2.media.storage._
+import io.suggest.model.n2.media.storage.swfs.{SwfsStorage, SwfsStorages, SwfsVolumeCache}
 import io.suggest.playx.ExternalCall
 import io.suggest.proto.HttpConst
+import io.suggest.swfs.client.proto.lookup.IVolumeLocation
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
-import models.req.IReqHdr
+import models.mup.MSwfsFidInfo
 import play.api.Configuration
 import play.api.mvc.Call
+import util.up.UploadUtil
+import japgolly.univeq._
+
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 09.10.14 18:31
- * Description: Утииль для работы с CDN.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 09.10.14 18:31
+  * Description: Утиль для работы с CDN.
+  *
+  * 2018-03-01 В дополнение к первому варианту CDN добавлена утиль для dist+cdn.
+  * Сюда замержен небольшой DistUtil.
+  */
 @Singleton
 class CdnUtil @Inject() (
-                          corsUtil        : CorsUtil,
-                          configuration   : Configuration
+                          corsUtil                  : CorsUtil,
+                          configuration             : Configuration,
+                          iMediaStorages            : IMediaStorages,
+                          uploadUtil                : UploadUtil,
+                          swfsVolumeCache           : SwfsVolumeCache,
+                          implicit private val ec   : ExecutionContext
                         )
   extends MacroLogsImpl
 {
@@ -35,11 +51,12 @@ class CdnUtil @Inject() (
   /** Карта протоколов и списков CDN-хостов, которые готовые обслуживать запросы. */
   val CDN_PROTO_HOSTS: Map[String, List[String]] = {
     configuration.getOptional[Seq[String]]("cdn.protocols")
-      .fold [Iterator[String]] (Iterator(HttpConst.Proto.HTTP, HttpConst.Proto.HTTPS)) { protosRaw =>
+      .fold [TraversableOnce[String]] (HttpConst.Proto.HTTP :: HttpConst.Proto.HTTPS :: Nil) { protosRaw =>
         protosRaw
           .iterator
           .map(_.trim.toLowerCase)
       }
+      .toIterator
       .map { proto =>
         proto -> getCdnHostsForProto(proto)
       }
@@ -158,21 +175,156 @@ class CdnUtil @Inject() (
     * @return Хостнейм CDN-хоста.
     *         Если CDN недоступна, то вернуть обычный public-адрес.
     */
-  def distHost2cdnUrlPrefix(host: MHostInfo)(implicit request: IReqHdr): String = {
-    // TODO Дергать карту хостов и CDN.
-    LOGGER.trace(s"distHost2cdnHost(${host.nameInt}): CDN+NODES SUPPORT NOT IMPLEMENTED HERE, returning ${host.namePublic}")
-    HttpConst.Proto.CURR_PROTO + host.namePublic
+  def distHost2cdnUrlPrefix(host: MHostInfo): String = {
+    HttpConst.Proto.CURR_PROTO + reWriteHostToCdn(host.namePublic)
   }
 
 
-  /** Сборка URL, которая   */
-  def distNodeCdnUrl(host: MHostInfo, call: Call)(implicit request: IReqHdr): String = {
+  /** Сборка URL для dist-cdn с защитой от ExternalCall. */
+  def distNodeCdnUrl(host: MHostInfo, call: Call): String = {
     call match {
       // В теории возможно, что метод будет вызван с инстансом ExternalCall.
       case extCall: ExternalCall =>
         throw new IllegalArgumentException(s"ExternalCall is unsupported: $extCall ; host=$host")
       case _ =>
-        distHost2cdnUrlPrefix(host) + call.url
+        distNodeCdnUrlNoCheck(host, call)
+    }
+  }
+  /** Сборка URL для dist-cdn без защиты от ExternalCall. */
+  def distNodeCdnUrlNoCheck(host: MHostInfo, call: Call): String = {
+    distHost2cdnUrlPrefix(host) + call.url
+  }
+
+
+  /** Используемое хранилище. */
+  private def DIST_STORAGE: MStorage = MStorages.SeaWeedFs
+
+
+  // TODO DIST_IMG Реализовать поддержку распределения media-файлов по нодам.
+
+  /** Подготовить местечко для сохранения нового файла, вернув данные сервера для заливки файла.
+    *
+    * @param upProps Обобщённые данные по заливаемому файлу.
+    * @return Фьючерс с результатом.
+    */
+  def assignDist(upProps: MFile4UpProps): Future[MAssignedStorage] = {
+    val storageType = DIST_STORAGE
+    val storageFacade = iMediaStorages.getModel( storageType ).asInstanceOf[SwfsStorages]
+    val assignRespFut = storageFacade.assignNew()
+
+    for {
+      assignResp <- assignRespFut
+    } yield {
+      LOGGER.trace(s"assignDist[${System.currentTimeMillis()}]: Assigned ok:\n props = $upProps\n resp = $assignResp")
+      val swfsAssignResp = assignResp._2
+      MAssignedStorage(
+        host    = swfsAssignResp.hostInfo,
+        storage = assignResp._1
+      )
+    }
+  }
+
+
+  /** Проверка возможности аплоада прямо сюда на текущую ноду.
+    *
+    * @param storage Строка инфы в контексте данного хранилища.
+    * @return Расширенные данные для аплоада, если Some.
+    *         None, значит доступ закрыт.
+    */
+  def checkStorageForThisNode(storage: IMediaStorage): Future[Either[Seq[IVolumeLocation], MSwfsFidInfo]] = {
+    // Распарсить Swfs FID из URL и сопоставить полученный volumeID с текущей нодой sio.
+    lazy val logPrefix = s"checkForUpload($storage)#${System.currentTimeMillis()}:"
+
+    storage match {
+      case swfsStorage: SwfsStorage =>
+        for {
+          volLocs <- swfsVolumeCache.getLocations( swfsStorage.fid.volumeId )
+        } yield {
+          // Может быть несколько результатов, если у volume существуют реплики.
+          // Нужно найти целевую мастер-шарду, которая располагается где-то очень близко к текущему локалхосту.
+          val myExtHost = uploadUtil.MY_NODE_PUBLIC_URL
+          volLocs
+            .find { volLoc =>
+              volLoc.publicUrl ==* myExtHost
+              // Не проверяем nameInt/url, потому что там полу-рандомный порт swfs
+            }
+            .map { myVol =>
+              LOGGER.trace(s"$logPrefix Ok, local vol = $myVol\n fid = ${swfsStorage.fid.toString}\n all vol locs = ${volLocs.mkString(", ")}")
+              MSwfsFidInfo(swfsStorage.fid, myVol, volLocs)
+            }
+            .toRight {
+              LOGGER.error(s"$logPrefix Failed to find vol#${swfsStorage.fid.volumeId} for fid='${swfsStorage.fid}' nearby. My=$myExtHost, storage=$storage Other available volumes considered non-local: ${volLocs.mkString(", ")}")
+              volLocs
+            }
+        }
+    }
+  }
+
+
+  /** Вернуть карту медиа-хосты для указанных media.
+    *
+    * @param medias Список интересующих media.
+    * @return Карта mediaId -> hostname.
+    */
+  def mediasHosts(medias: Iterable[MMedia]): Future[Map[String, Seq[MHostInfo]]] = {
+    for {
+      storages2hostsMap <- iMediaStorages.getStoragesHosts( medias.map(_.storage) )
+    } yield {
+      medias
+        .iterator
+        .map { media =>
+          media.nodeId -> storages2hostsMap(media.storage)
+        }
+        .toMap
+    }
+  }
+
+
+  /** Аналог forCall() для dist-cdn.
+    *
+    * @param call Исходный url Call.
+    * @param mediaId id media-узла в карте узлов.
+    * @param mediaHostsMap Результат mediaHosts().
+    * @return Обновлённый Call с абсолютной ссылкой внутри.
+    */
+  def forMediaCall(call: Call, mediaId: String, mediaHostsMap: Map[String, Seq[MHostInfo]]): Call = {
+    call match {
+      case ext: ExternalCall =>
+        throw new IllegalArgumentException("External calls cannot be here. Check code, looks like this method called twice: " + ext)
+      case _ =>
+        mediaHostsMap
+          .get(mediaId)
+          .flatMap(_.headOption)
+          .fold(call) { host =>
+            new ExternalCall(
+              url = distNodeCdnUrlNoCheck(host, call)
+            )
+          }
+    }
+  }
+
+
+  /** Правила перезаписи хостнеймов. */
+  val REWRITE_FROM_TO: Option[(String, String)] = {
+    for {
+      fromToSeq <- configuration.getOptional[Seq[String]]("cdn.hosts.rewrite.from_to")
+    } yield {
+      val Seq(from, to) = fromToSeq.map(_.trim)
+      LOGGER.info(s"Hostname rewriting activated: $from => $to")
+      (from, to)
+    }
+  }
+
+  /** На мастере надо перезаписывать CDN-адреса для нод.
+    * s2.nodes.suggest.io => s2-suggest.cdnvideo.net
+    * На локалхосте этого всего не надо.
+    *
+    * @param host Исходный хостнейм, которому может потребоваться перезапись.
+    * @return Переписанный, либо исходный, хостнейм.
+    */
+  def reWriteHostToCdn(host: String): String = {
+    REWRITE_FROM_TO.fold(host) { case (from, to) =>
+      host.replaceAllLiterally(from, to)
     }
   }
 
