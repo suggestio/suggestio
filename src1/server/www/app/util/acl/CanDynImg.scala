@@ -11,7 +11,6 @@ import models.req.MMediaOptNodeReq
 import play.api.mvc._
 import japgolly.univeq._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.common.html.HtmlConstants
 import io.suggest.proto.HttpConst
 import util.cdn.CdnUtil
 
@@ -97,7 +96,7 @@ class CanDynImg @Inject() (
                     LOGGER.warn(s"$logPrefix DistUtil refused media request: NOT related to this node. media#${mmedia.idOrNull} storage is ${mmedia.storage}, volume locations = ${volLocs.mkString(", ")}")
                     // Попытаться отредиректить на правильный узел.
                     volLocs.headOption.fold(_imageNotFound) { volLoc =>
-                      val correctUrl = HttpConst.Proto.CURR_PROTO + volLoc.publicUrl + HtmlConstants.SLASH + request.uri
+                      val correctUrl = HttpConst.Proto.CURR_PROTO + volLoc.publicUrl + request.uri
                       LOGGER.info(s"$logPrefix Redirected user#${user.personIdOpt.orNull} to volume#$volLoc:\n $correctUrl")
                       Results.Redirect(correctUrl)
                     }

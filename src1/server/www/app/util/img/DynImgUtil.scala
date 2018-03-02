@@ -364,7 +364,7 @@ class DynImgUtil @Inject() (
           for {
             // Удалить из хранилища:
             _ <- {
-              LOGGER.debug(s"$logPrefix [$counter0] Will erase mmedia#${mmedia.idOrNull} of type ${mmedia.file.mime} size=${mmedia.file.sizeB}b wh=${mmedia.picture.whPx.orNull} v=${mmedia.versionOpt.orNull}\n storage = ${mmedia.storage}")
+              LOGGER.debug(s"$logPrefix [$counter0] Will erase mmedia#${mmedia.idOrNull} of type ${mmedia.file.mime} size=${mmedia.file.sizeB}b wh=${mmedia.picture.whPx.orNull} storage=${mmedia.storage}")
               iMediaStorages
                 .delete( mmedia.storage )
                 .recover { case _: NoSuchElementException if deleteEvenStorageMissing =>
