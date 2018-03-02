@@ -67,6 +67,7 @@ class Upload @Inject()(
                         mImgs3                    : MImgs3,
                         mLocalImgs                : MLocalImgs,
                         clamAvUtil                : ClamAvUtil,
+                        mMediasCache              : MMediasCache,
                         imgFileUtil               : ImgFileUtil,
                         uploadCtxFactory          : IUploadCtxFactory,
                         mainColorDetector         : MainColorDetector,
@@ -544,6 +545,8 @@ class Upload @Inject()(
 
           // Потом в фоне вне основного экшена сохранить результат детектирования основных цветов картинки в MMedia.PictureMeta:
           _ = {
+            mMediasCache.put( mmedia1 )
+
             for (colorDetectFut <- colorDetectOptFut) {
               val saveColorsFut = for (colorHist <- colorDetectFut) yield {
                 if (colorHist.sorted.nonEmpty) {

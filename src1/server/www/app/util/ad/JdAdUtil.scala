@@ -129,26 +129,15 @@ class JdAdUtil @Inject()(
     * БОльшая часть метода не привязана к картинки, только генератор ссылки.
     *
     * @param call Исходная внутренняя ссылка.
-    * @param medge Исходный MEdge.
+    * @param dynImgId Обработаный указатель на картинку.
     * @param mediaHosts Карта хостов.
     * @return Строка URL для рендера в HTML-документе.
     */
-  // TODO XXX Переписать. Этот метод должен идти ПОСЛЕ ImgMaker'ов, а не до. Иначе картинки направляются не туда.
-  private def mkDistMediaUrl(call: Call, medge: MEdge, mediaHosts: Map[String, Seq[MHostInfo]], forceAbsUrls: Boolean)(implicit ctx: Context): String = {
-    def logPrefix = s"mkDistMediaUrl(#${medge.doc.uid.orNull},$call):"
-    val call2 = medge
-      .nodeIds
-      .headOption
-      .fold {
-        // Вообще, это плохо, если нет хостнейма для media. Это значит, что-то не так.
-        LOGGER.warn(s"$logPrefix Media host-name missing for edge $medge")
-        call
-      } { nodeId =>
-        LOGGER.trace(s"$logPrefix Using nodeId#$nodeId for media-edge edge nodeIds=[${medge.nodeIds.mkString(", ")}]")
-        cdnUtil.forMediaCall(call, mediaHosts, nodeId )
-      }
-
-    cdnUtil.maybeAbsUrl( forceAbsUrls )(call2)
+  private def mkDistMediaUrl(call: Call, dynImgId: MDynImgId, mediaHosts: Map[String, Seq[MHostInfo]], forceAbsUrls: Boolean)
+                            (implicit ctx: Context): String = {
+    cdnUtil.maybeAbsUrl( forceAbsUrls )(
+      cdnUtil.forMediaCall1(call, mediaHosts, dynImgId.mediaIdWithOriginalMediaId)
+    )
   }
 
 
@@ -188,7 +177,7 @@ class JdAdUtil @Inject()(
           nodeId    = nodeId,
           url       = Some {
             // TODO Вместо сырого оригинала вернуть нечто пересжатое с тем же w/h.
-            mkDistMediaUrl(dynImgUtil.imgCall(mimg), medge, mediaHosts, forceAbsUrls = false)
+            mkDistMediaUrl(dynImgUtil.imgCall(mimg), mimg.dynImgId, mediaHosts, forceAbsUrls = false)
           },
           // TODO Дальше модель сильно дублирует модель в MMedia.file (без учёта date_created).
           sizeB     = Some( mmedia.file.sizeB ),
@@ -326,13 +315,20 @@ class JdAdUtil @Inject()(
     // Для имён файлов нужно собрать сами узлы.
     lazy val mediaNodesMapFut = prepareMediaNodes( imgEdgesNeedNodes, videoEdges )
 
-    // Собрать инфу по хостам, хранящим интересующие media-файлы.
-    def mediaHostsMapFut = origImgMediasMapFut.flatMap { medias =>
-      cdnUtil.mediasHosts( medias.values )
+    // Скомпилить jd-эджи картинок.
+    // TODO Нужно lazy val тут. Можно сделать через def + lazy val.
+    def imgJdEdgesFut: Future[Seq[MJdEdge]]
+
+    def mediasForMediaHostsFut: Future[Iterable[MMedia]] = {
+      origImgMediasMapFut.map(_.values)
     }
 
-    // Скомпилить jd-эджи картинок.
-    def imgJdEdgesFut: Future[Seq[MJdEdge]]
+    // Собрать инфу по хостам, хранящим интересующие media-файлы.
+    def mediaHostsMapFut: Future[Map[String, Seq[MHostInfo]]] = {
+      mediasForMediaHostsFut.flatMap {
+        cdnUtil.mediasHosts
+      }
+    }
 
     // Скомпилить jd-эджи для видосов:
     def videoJdEdgesFut = for {
@@ -387,7 +383,7 @@ class JdAdUtil @Inject()(
   /** Внутренняя инфа по результату пре-рендера одного img-edge. */
   protected[this] case class MImgRenderInfo(
                                              medge        : MEdge,
-                                             mimg         : MImg3,
+                                             sourceImg         : MImg3,
                                              dynCallArgs  : MImgT,
                                              imgSzReal    : MSize2di
                                            )
@@ -450,9 +446,32 @@ class JdAdUtil @Inject()(
       /** Для выдачи не требуется  */
       override def imgEdgesNeedNodes = Nil
 
+      /** Нужно собрать все MMedia из имеющихся: помимо оригиналов надо и скомпиленные картинки. */
+      override def mediasForMediaHostsFut: Future[Iterable[MMedia]] = {
+        val _origMediasForMediaHostsFut = super.mediasForMediaHostsFut
+        for {
+          renderedImgs <- renderAdDocImgsFut
+          mmedias <- mMediasCache.multiGet {
+            // Интересуют только деривативы, которые могут прямо сейчас существовать в медиа-хранилище. Оригиналы возьмём из _origMediasForMediaHostsFut.
+            for {
+              renderedImg <- renderedImgs.iterator
+              dynImgId = renderedImg.dynCallArgs.dynImgId
+              if dynImgId.hasImgOps
+            } yield {
+              dynImgId.mediaId
+            }
+          }
+          origMedias <- _origMediasForMediaHostsFut
+        } yield {
+          val res = mmedias.view ++ origMedias
+          LOGGER.trace(s"$logPrefix mediasForMediaHostsFut: collected ${res.size} medias:\n ${res.iterator.flatMap(_.id).mkString(",\n ")}")
+          res
+        }
+      }
+
       /** Для выдачи требуются готовые картинки, подогнанные под экран устройства клиента. */
       override def imgJdEdgesFut: Future[Seq[MJdEdge]] = {
-        val _imgsRenderedFut  = renderAdDocImgs
+        val _imgsRenderedFut  = renderAdDocImgsFut
         val _mediaHostsMapFut = mediaHostsMapFut
         // TODO Сделать, чтобы mkDistMediaUrl-балансировка работала не по эджам, а только по mmedia.storage.
         //val _origImgMediasMap = origImgMediasMapFut
@@ -460,7 +479,7 @@ class JdAdUtil @Inject()(
           imgsRendered      <- _imgsRenderedFut
           mediaHostsMap     <- _mediaHostsMapFut
         } yield {
-          LOGGER.trace(s"$logPrefix ${origImgsEdges.length} img edges => rendered ${imgsRendered.size} map: [${imgsRendered.iterator.flatMap(_.medge.doc.uid).mkString(", ")}]")
+          LOGGER.trace(s"$logPrefix ${origImgsEdges.length} img edges => rendered ${imgsRendered.size} map: [${imgsRendered.iterator.flatMap(_.medge.doc.uid).mkString(", ")}]\n mediaHostsMap[${mediaHostsMap.size}] = ${mediaHostsMap.keys.mkString(",  ")}")
           val imgPred = imgPredicate
           val iter = for {
             imgMakeRes <- imgsRendered.iterator
@@ -470,11 +489,12 @@ class JdAdUtil @Inject()(
               predicate   = imgPred,
               id          = edgeUid,
               url         = {
-                val url = mkDistMediaUrl(dynImgUtil.imgCall(imgMakeRes.dynCallArgs), imgMakeRes.medge, mediaHostsMap, forceAbsUrls)
+                val resImg = imgMakeRes.dynCallArgs
+                val url = mkDistMediaUrl(dynImgUtil.imgCall(resImg), resImg.dynImgId, mediaHostsMap, forceAbsUrls)
                 Some(url)
               },
               fileSrv = Some(MSrvFileInfo(
-                nodeId = imgMakeRes.mimg.dynImgId.rowKeyStr,
+                nodeId = imgMakeRes.sourceImg.dynImgId.rowKeyStr,
                 whPx   = Some( imgMakeRes.imgSzReal )
               ))
             )
@@ -513,7 +533,7 @@ class JdAdUtil @Inject()(
       /** Рендер картинок в строго необходимом размере.
         * Это подходит для выдачи, но НЕ для редактора, который оперирует оригиналами.
         */
-      def renderAdDocImgs: Future[Iterable[MImgRenderInfo]] = {
+      lazy val renderAdDocImgsFut: Future[Iterable[MImgRenderInfo]] = {
         // TODO Всё становится жирным и разъезжается, если использовать запрошенный szMult.
         // Где-то на верхних уровнях szMult неправильно рассчитывается, повторяя внутри себя devPixelRatio.
         // Надо вспомнить изначальное значение szMult, либо переосмыслить его, что есть источник проблемы. Либо запретить здесь учитывать screen pxRatio.

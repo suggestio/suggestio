@@ -38,6 +38,7 @@ class MImgs3 @Inject() (
   val mMedias               : MMedias,
   val mNodes                : MNodes,
   fileUtil                  : FileUtil,
+  mMediasCache              : MMediasCache,
   override val streamsUtil  : StreamsUtil,
   override val cacheApiUtil : CacheApiUtil,
   override val mLocalImgs   : MLocalImgs,
@@ -195,8 +196,11 @@ class MImgs3 @Inject() (
     val mediaSavedFut = media0Fut.recoverWith { case _: Throwable =>
       for {
         mmedia      <- mediaFut
-        _           <- mMedias.save(mmedia)
+        mediaId2    <- mMedias.save(mmedia)
       } yield {
+        assert( mmedia.id.contains( mediaId2 ) )
+        mMediasCache.put(mmedia)
+        LOGGER.info(s"$logPrefix Saved to permanent: media#$mediaId2")
         mmedia
       }
     }

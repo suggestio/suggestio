@@ -319,7 +319,6 @@ class NodesUtil @Inject() (
             .flatMap { mimg =>
               mimg.dynImgId
                 .mediaIdWithOriginalMediaId
-                .toSet
             }
         }
 

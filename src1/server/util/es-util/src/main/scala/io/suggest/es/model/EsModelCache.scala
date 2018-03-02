@@ -130,13 +130,19 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    * @return Тоже самое, что и исходный getById().
    */
   def getByIdAndCache(id: String, ck0: String = null): Future[Option[T1]] = {
-    val ck: String = if (ck0 == null) cacheKey(id) else ck0
+    val ck: String = if (ck0 != null) cacheKey(id) else ck0
     val resultFut = companion.getById(id)
     for (adnnOpt <- resultFut) {
       for (adnn <- adnnOpt)
         cache.set(ck, adnn, EXPIRE)
     }
     resultFut
+  }
+
+
+  def put(value: T1): Future[_] = {
+    val ck = cacheKey( value.id.get )
+    cache.set(ck, value, EXPIRE)
   }
 
 }

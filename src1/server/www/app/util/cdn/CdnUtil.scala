@@ -233,7 +233,7 @@ class CdnUtil @Inject() (
     */
   def checkStorageForThisNode(storage: IMediaStorage): Future[Either[Seq[IVolumeLocation], MSwfsFidInfo]] = {
     // Распарсить Swfs FID из URL и сопоставить полученный volumeID с текущей нодой sio.
-    lazy val logPrefix = s"checkForUpload($storage)#${System.currentTimeMillis()}:"
+    lazy val logPrefix = s"checkStorageForThisNode($storage)#${System.currentTimeMillis()}:"
 
     storage match {
       case swfsStorage: SwfsStorage =>
@@ -273,10 +273,11 @@ class CdnUtil @Inject() (
       for {
         storages2hostsMap <- iMediaStorages.getStoragesHosts( medias.map(_.storage).toSet )
       } yield {
+        LOGGER.trace(s"mediaHosts(${medias.size} medias): Done\n mediaIds = ${medias.iterator.map(_.idOrNull).mkString(", ")}\n storages = ${storages2hostsMap.keys.mkString(", ")}")
         medias
           .iterator
           .map { media =>
-            media.nodeId -> storages2hostsMap(media.storage)
+            media.id.get -> storages2hostsMap(media.storage)
           }
           .toMap
       }
@@ -291,27 +292,29 @@ class CdnUtil @Inject() (
     * @param mediaHostsMap Результат mediaHosts().
     * @return Обновлённый Call с абсолютной ссылкой внутри.
     */
-  def forMediaCall(call: Call, mediaHostsMap: Map[String, Seq[MHostInfo]], mediaIds: String*): Call = {
-    forMediaCall1(call, mediaHostsMap, mediaIds)
-  }
   def forMediaCall1(call: Call, mediaHostsMap: Map[String, Seq[MHostInfo]], mediaIds: TraversableOnce[String]): Call = {
     call match {
       case ext: ExternalCall =>
         throw new IllegalArgumentException("External calls cannot be here. Check code, looks like this method called twice: " + ext)
       case _ =>
+        def logPrefix = s"forMediaCall($mediaIds):"
         val newCallIter = for {
           mediaId <- mediaIds.toIterator
           hosts   <- mediaHostsMap.get(mediaId)
           host    <- chooseMediaHost(mediaId, hosts)
         } yield {
-          new ExternalCall(
-            url = distNodeCdnUrlNoCheck(host, call)
-          )
+          val url = distNodeCdnUrlNoCheck(host, call)
+          LOGGER.trace(s"$logPrefix URL gen ok\n mediaId = $mediaId\n host = $host\n url => $url\n mediaHosts[${mediaHostsMap.size}] = ${mediaHostsMap.keys.mkString(", ")}")
+          new ExternalCall( url )
         }
+        // Отработать запасной вариант, когда внезапно нет хостов:
         newCallIter
           .toStream
           .headOption
-          .getOrElse( call )
+          .getOrElse {
+            LOGGER.warn(s"$logPrefix Not found any dist-CDN host\n mediaIds = [${mediaIds.mkString(" | ")}]\n mediaHosts = $mediaHostsMap\n orig call = $call")
+            call
+          }
     }
   }
 
