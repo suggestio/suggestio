@@ -59,8 +59,6 @@ class TransportEsClient @Inject() (
   with MacroLogsImpl
 {
 
-  import LOGGER._
-
   private var _trClient: TransportClient = _
 
   def _installClient(): TransportClient = {
@@ -69,7 +67,7 @@ class TransportEsClient @Inject() (
     // Закинуть имя кластера из оригинального конфига.
     // TODO Переименовать параметры sio-конфига во что-то, начинающееся с es.client.
     val clusterNameOpt = configuration.getOptional[String]("cluster.name")
-    debug(s"$logPrefix Cluster name: ${clusterNameOpt.orNull}")
+    LOGGER.debug(s"$logPrefix Cluster name: ${clusterNameOpt.orNull}")
 
     // Законнектить свеженький клиент согласно адресам из конфига, если они там указаны.
     val addrs = configuration
@@ -91,7 +89,7 @@ class TransportEsClient @Inject() (
       .map( new InetSocketTransportAddress(_) )
       .toSeq
 
-    debug(s"$logPrefix Transport addrs: ${addrs.mkString(", ")}")
+    LOGGER.debug(s"$logPrefix Transport addrs: ${addrs.mkString(", ")}")
 
     _trClient = SioEsUtil.newTransportClient(addrs, clusterNameOpt)
     _trClient
@@ -101,7 +99,7 @@ class TransportEsClient @Inject() (
 
 
   // Constructor: немедленная инициализация es-клиента.
-  trace("Installing new ES client...")
+  LOGGER.trace("Installing new ES client...")
   _installClient()
 
   // При завершении работы надо зарубить клиент.
@@ -110,12 +108,12 @@ class TransportEsClient @Inject() (
       try {
         for ( c <- Option(_trClient) ) {
           c.close()
-          trace(s"Successfully closed ES client $c")
+          LOGGER.trace(s"Successfully closed ES client $c")
           _trClient = null
         }
       } catch {
         case ex: Throwable =>
-          error(s"Cannot close es client ${_trClient}", ex)
+          LOGGER.error(s"Cannot close es client ${_trClient}", ex)
       }
     }
   }

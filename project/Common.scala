@@ -48,7 +48,7 @@ object Common {
     //val YA_MONEY_SDK = "6.1.+"
 
     /** Версия elasticsearch. */
-    val ELASTIC_SEARCH = "5.4.2"
+    val ELASTIC_SEARCH = "5.6.8"
 
     /** Бывает, что используется slf4j. Тут его версия.
       * По-хорошему, у нас на сервере logback, на клиенте -- scala-logging поверх slf4j.
@@ -62,7 +62,7 @@ object Common {
       * es-5.0 -> log4j-2.7
       * @see [[https://github.com/elastic/elasticsearch/issues/19415#issuecomment-257840940]]
       */
-    val LOG4J      = "2.7"
+    val LOG4J      = "2.10.0"
 
     /** Версия авторских аддонов для JSR-310: threeten-extra. */
     val THREETEN_EXTRA = "1.0"

@@ -126,7 +126,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     }
 
     // Собираем асинхронный bulk-процессор, т.к. элементов может быть ну очень много.
-    val bp = bulkProcessor(logPrefix, listener, BULK_DELETE_QUEUE_LEN)
+    val bp = bulkProcessor(listener, BULK_DELETE_QUEUE_LEN)
 
     // Интересуют только id документов
     val totalFut = scroller
@@ -298,7 +298,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     val logPrefix = s"update(${System.currentTimeMillis}):"
 
     val bpListener = new BulkProcessorListener(logPrefix)
-    val bp = bulkProcessor(logPrefix, bpListener)
+    val bp = bulkProcessor(bpListener)
 
     // Создаём атомный счетчик, который будет инкрементится из разных потоков одновременно.
     // Можно счетчик гнать через аккамулятор, но это будет порождать много бессмысленного мусора.
@@ -541,9 +541,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
 
 
-  def bulkProcessor(name: String, listener: BulkProcessor.Listener, queueLen: Int = 100): BulkProcessor = {
+  def bulkProcessor(listener: BulkProcessor.Listener, queueLen: Int = 100): BulkProcessor = {
     BulkProcessor.builder(esClient, listener)
-      .setName(name)
       .setBulkActions( queueLen )
       .build()
   }
@@ -554,14 +553,14 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    * @return
    */
   def resaveAll(): Future[Int] = {
-    // TODO XXX Переписать на Sources/Streams, т.к. более 9999 оно не переваривает тут.
     val I = Implicits
     import I._
+
     val src = source[T]( QueryBuilders.matchAllQuery() )
 
     val logPrefix = s"resaveMany()#${System.currentTimeMillis()}:"
     val listener = new BulkProcessorListener(logPrefix)
-    val bp = bulkProcessor(logPrefix, listener)
+    val bp = bulkProcessor(listener)
 
     val counter = new AtomicInteger(0)
 

@@ -38,19 +38,19 @@ class BulkProcessorSaveBackend @Inject() (
 
   /** Используемый bulk processor. */
   protected val bp: BulkProcessor = {
+    val logPrefix = "statSaver:"
     val br = BulkProcessor.builder(esClient, new BulkProcessor.Listener {
       override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
-        trace(s"[$executionId] Will bulk save stats with ${request.numberOfActions} actions")
+        trace(s"$logPrefix [$executionId] Will bulk save stats with ${request.numberOfActions} actions")
       }
 
       override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit = {}
 
       override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit = {
-        error(s"[$executionId] error occured while bulk-saving ${request.numberOfActions} actions", failure)
+        error(s"$logPrefix [$executionId] error occured while bulk-saving ${request.numberOfActions} actions", failure)
       }
     })
-    br.setName("statSaver")
-      .setFlushInterval( TimeValue.timeValueSeconds(FLUSH_INTERVAL_SECONDS) )
+    br.setFlushInterval( TimeValue.timeValueSeconds(FLUSH_INTERVAL_SECONDS) )
       .setBulkSize(new ByteSizeValue(BULK_SIZE_BYTES))
       .build()
   }

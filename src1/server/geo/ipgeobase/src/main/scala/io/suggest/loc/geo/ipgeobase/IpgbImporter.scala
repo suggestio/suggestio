@@ -139,29 +139,30 @@ class IpgbImporter @Inject() (
   def createBulkProcessor(): BulkProcessor = {
     val counter = new AtomicInteger(0)
 
+    val logPrefix = s"${getClass.getSimpleName}[${System.currentTimeMillis}]:"
+
     val listener = new BulkProcessor.Listener {
       /** Перед отправкой каждого bulk-реквеста... */
       override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
-        trace(s"$executionId Before bulk import of ${request.numberOfActions} docs...")
+        trace(s"$logPrefix $executionId Before bulk import of ${request.numberOfActions} docs...")
       }
 
       /** Документы в очереди успешно удалены. */
       override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit = {
         val countImported = response.getItems.length
-        trace(s"$executionId Successfully imported $countImported, ${response.buildFailureMessage()}")
+        trace(s"$logPrefix $executionId Successfully imported $countImported, ${response.buildFailureMessage()}")
         counter.addAndGet(countImported)
       }
 
       /** Ошибка bulk-удаления. */
       override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit = {
-        error(s"Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
+        error(s"$logPrefix Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
       }
     }
 
     // Собираем асинхронный bulk-процессор, т.к. элементов может быть ну очень много.
     BulkProcessor
       .builder(esClient, listener)
-      .setName( s"${getClass.getSimpleName}[${System.currentTimeMillis}]" )
       .setBulkActions(BULK_QUEUE_LEN)
       .build()
   }
