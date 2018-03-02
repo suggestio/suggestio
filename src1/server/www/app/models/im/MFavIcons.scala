@@ -31,11 +31,11 @@ object MFavIcons {
 
     // TODO Надо подчистить размеры и иконки. Выявить реально необходимые.
     var iconsAcc = for {
-      sideSzPx <- List(57, 72, 114, 144, 180)
+      sideSzPx <- List(512)
     } yield {
       MLinkRelIcon(
         icon = MIconInfo(
-          src       = FAVICON_URL_PREFIX + sideSzPx + `.` + pngFileExt,
+          src       = FAVICON_URL_PREFIX + sideSzPx + "-" + rels.APPLE_TOUCH + `.` + pngFileExt,
           sizes     = List( MSize2di.square(sideSzPx) ),
           mimeType  = pngMime
         ),

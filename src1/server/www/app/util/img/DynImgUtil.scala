@@ -306,6 +306,7 @@ class DynImgUtil @Inject() (
     imgCall(imgThumb)
   }
 
+
   /** Пройтись по MMedia, найти все записи о картинках-деривативах и произвести для них процедуру стирания.
     *
     * @param deleteEvenStorageMissing Удалять, если файл не найден в хранилище?
@@ -325,7 +326,7 @@ class DynImgUtil @Inject() (
     // 3. Отправляем удаление элемента в BulkProcessor.
 
     val logPrefix = s"deleteAllDerivatives()#${System.currentTimeMillis()}:"
-    LOGGER.trace(s"$logPrefix Started. deleteEvenStorageMissing=${deleteEvenStorageMissing}")
+    LOGGER.trace(s"$logPrefix Started. deleteEvenStorageMissing=$deleteEvenStorageMissing")
 
     // Сборка поисковых аргументов для файла.
     val searchArgs = new MMediaSearchDfltImpl {
@@ -395,10 +396,12 @@ trait IDynImgUtil {
 }
 
 
+/** Интерфейс поддержки JMX для [[DynImgUtil]]. */
 trait DynImgUtilJmxMBean {
   def deleteAllDerivatives(deleteEvenStorageMissing: Boolean): String
 }
 
+/** Реализация поддержки JMX для [[DynImgUtil]]. */
 final class DynImgUtilJmx @Inject() (
                                       dynImgUtil                : DynImgUtil,
                                       override implicit val ec  : ExecutionContext
