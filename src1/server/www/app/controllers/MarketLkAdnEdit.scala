@@ -31,7 +31,6 @@ import play.twirl.api.Html
 import util.FormUtil._
 import util.acl._
 import util.adn.NodesUtil
-import util.cdn.CdnUtil
 import util.img.ImgFormUtil
 import util.img._
 import views.html.lk.adn.edit._
@@ -61,7 +60,7 @@ class MarketLkAdnEdit @Inject() (
                                   isNodeAdmin                     : IsNodeAdmin,
                                   isAuth                          : IsAuth,
                                   override val mCommonDi          : ICommonDi
-)
+                                )
   extends SioControllerImpl
   with MacroLogsImpl
 {
@@ -485,17 +484,22 @@ class MarketLkAdnEdit @Inject() (
    * @return JSON с тем же форматом ответа, что и для других img upload'ов.
    */
   def uploadWelcomeImg = _imgUpload { (imgId, ctx) =>
-    _welcomeOvlTpl(imgId)(ctx)
+    _welcomeOvlTpl(imgId, Map.empty)(ctx)
   }
 
 
   /** Юзер постит временную картинку для личного галереи узла. */
   def handleGalleryImg = _imgUpload { (imgId, ctx) =>
+    import models.madn.EditConstants.galleryFn
     val index = ctx.request
       .getQueryString(UploadConstants.NAME_INDEX_QS_NAME)
       .get
       .toInt
-    _galIndexedOvlTpl(imgId, fnIndex = index)(ctx)
+    _galOvlTpl(
+      imgId = imgId,
+      fn    = galleryFn(index),
+      mediaHostsMap = Map.empty // Это не правильно, но в целом плевать. Весь этот модуль - под удаление.
+    )(ctx)
   }
 
 

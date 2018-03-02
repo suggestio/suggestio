@@ -84,8 +84,11 @@ class DynImgUtil @Inject() (
 
   /** Аналог [[imgCall()]], но работающая в контексте dist-cdn. */
   def distCdnImgCall(mimg: MImgT, mediaHostsMap: Map[String, Seq[MHostInfo]]): Call = {
+    distCdnImgCall( imgCall(mimg), mimg, mediaHostsMap )
+  }
+  def distCdnImgCall(call: Call, mimg: MImgT, mediaHostsMap: Map[String, Seq[MHostInfo]]): Call = {
     cdnUtil.forMediaCall(
-      call          = imgCall(mimg),
+      call          = call,
       mediaId       = mimg.dynImgId.original.mediaId,
       mediaHostsMap = mediaHostsMap
     )

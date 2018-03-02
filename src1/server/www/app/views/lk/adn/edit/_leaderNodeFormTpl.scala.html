@@ -94,7 +94,7 @@
 
       <div class="prop" >
         <p class="prop_name __block">@messages("Welcome.screen"):</p>
-        @_welcomeAdFormTpl(args.mnode.id.get, mf)
+        @_welcomeAdFormTpl(args.mnode.id.get, mf, args.mediaHostsMap)
       </div>
 
       @_delimTpl()
@@ -124,7 +124,7 @@
         @for(gfi <- gf.indexes) {
           @defining( galleryFn(gfi) ) { gfn =>
             @for(imgId <- mf(gfn).value) {
-              @_galOvlTpl(imgId, fn = gfn)
+              @_galOvlTpl(imgId, fn = gfn, args.mediaHostsMap)
             }
           }
         }

@@ -1,6 +1,9 @@
-@(martId: String, mf: Form[_])(implicit ctx: Context)
+@(martId: String, mf: Form[_], mediaHostsMap: Map[String, Seq[io.suggest.url.MHostInfo]])(implicit ctx: Context)
 
-@* Форма для выставления приветственной картинки-карточки. *@
+@* Форма для выставления приветственной картинки-карточки.
+ * TODO Шаблон используется только в _leaderNodeFormTpl. Удалить следом за старым редактором узлов.
+ *@
+
 @import ovl._
 @import ctx.messages
 @import helper._
@@ -15,7 +18,7 @@
       @defining(mf(WELCOME_IMG_FN).value) { imgIdOpt =>
 
         @imgIdOpt.map { imgId =>
-          @_welcomeOvlTpl(imgId)
+          @_welcomeOvlTpl(imgId, mediaHostsMap)
         }
 
         <div class="image __size-M f-left @JS_IMG_UPLOAD_CLASS" @if(!imgIdOpt.isEmpty) {style="display: none;"}>
