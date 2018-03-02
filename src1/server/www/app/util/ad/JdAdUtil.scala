@@ -133,6 +133,7 @@ class JdAdUtil @Inject()(
     * @param mediaHosts Карта хостов.
     * @return Строка URL для рендера в HTML-документе.
     */
+  // TODO XXX Переписать. Этот метод должен идти ПОСЛЕ ImgMaker'ов, а не до. Иначе картинки направляются не туда.
   private def mkDistMediaUrl(call: Call, medge: MEdge, mediaHosts: Map[String, Seq[MHostInfo]], forceAbsUrls: Boolean)(implicit ctx: Context): String = {
     def logPrefix = s"mkDistMediaUrl(#${medge.doc.uid.orNull},$call):"
     val call2 = medge
@@ -144,10 +145,10 @@ class JdAdUtil @Inject()(
         call
       } { nodeId =>
         LOGGER.trace(s"$logPrefix Using nodeId#$nodeId for media-edge edge nodeIds=[${medge.nodeIds.mkString(", ")}]")
-        cdnUtil.forMediaCall(call, nodeId, mediaHosts )
+        cdnUtil.forMediaCall(call, mediaHosts, nodeId )
       }
 
-    cdnUtil.maybeAbsUrl( forceAbsUrls)(call2)
+    cdnUtil.maybeAbsUrl( forceAbsUrls )(call2)
   }
 
 

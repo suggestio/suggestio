@@ -316,7 +316,11 @@ class NodesUtil @Inject() (
         medias <- mMediasCache.multiGet {
           allImgsAcc
             .iterator
-            .map(_.dynImgId.original.mediaId)
+            .flatMap { mimg =>
+              mimg.dynImgId
+                .mediaIdWithOriginalMediaId
+                .toSet
+            }
         }
 
         // Узнать узлы, на которых хранятся связанные картинки.

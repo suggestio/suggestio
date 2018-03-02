@@ -94,10 +94,10 @@ class DynImgUtil @Inject() (
     distCdnImgCall( imgCall(mimg), mimg, mediaHostsMap )
   }
   def distCdnImgCall(call: Call, mimg: MImgT, mediaHostsMap: Map[String, Seq[MHostInfo]]): Call = {
-    cdnUtil.forMediaCall(
+    cdnUtil.forMediaCall1(
       call          = call,
-      mediaId       = mimg.dynImgId.original.mediaId,
-      mediaHostsMap = mediaHostsMap
+      mediaHostsMap = mediaHostsMap,
+      mediaIds      = mimg.dynImgId.mediaIdWithOriginalMediaId
     )
   }
 

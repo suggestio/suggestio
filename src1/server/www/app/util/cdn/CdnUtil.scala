@@ -271,7 +271,7 @@ class CdnUtil @Inject() (
       Future.successful( Map.empty )
     } else {
       for {
-        storages2hostsMap <- iMediaStorages.getStoragesHosts( medias.map(_.storage) )
+        storages2hostsMap <- iMediaStorages.getStoragesHosts( medias.map(_.storage).toSet )
       } yield {
         medias
           .iterator
@@ -287,26 +287,39 @@ class CdnUtil @Inject() (
   /** Аналог forCall() для dist-cdn.
     *
     * @param call Исходный url Call.
-    * @param mediaId id media-узла в карте узлов.
+    * @param mediaIds id media-узла в карте узлов в порядке приоритета.
     * @param mediaHostsMap Результат mediaHosts().
     * @return Обновлённый Call с абсолютной ссылкой внутри.
     */
-  def forMediaCall(call: Call, mediaId: String, mediaHostsMap: Map[String, Seq[MHostInfo]]): Call = {
+  def forMediaCall(call: Call, mediaHostsMap: Map[String, Seq[MHostInfo]], mediaIds: String*): Call = {
+    forMediaCall1(call, mediaHostsMap, mediaIds)
+  }
+  def forMediaCall1(call: Call, mediaHostsMap: Map[String, Seq[MHostInfo]], mediaIds: TraversableOnce[String]): Call = {
     call match {
       case ext: ExternalCall =>
         throw new IllegalArgumentException("External calls cannot be here. Check code, looks like this method called twice: " + ext)
       case _ =>
-        mediaHostsMap
-          .get(mediaId)
-          .flatMap(_.headOption)
-          .fold(call) { host =>
-            new ExternalCall(
-              url = distNodeCdnUrlNoCheck(host, call)
-            )
-          }
+        val newCallIter = for {
+          mediaId <- mediaIds.toIterator
+          hosts   <- mediaHostsMap.get(mediaId)
+          host    <- chooseMediaHost(mediaId, hosts)
+        } yield {
+          new ExternalCall(
+            url = distNodeCdnUrlNoCheck(host, call)
+          )
+        }
+        newCallIter
+          .toStream
+          .headOption
+          .getOrElse( call )
     }
   }
 
+
+  def chooseMediaHost(mediaId: String, hosts: Seq[MHostInfo]): Option[MHostInfo] = {
+    // TODO Это неправильно. Надо выбирать на основе mediaId.
+    hosts.headOption
+  }
 
   /** Правила перезаписи хостнеймов. */
   val REWRITE_FROM_TO: Option[(String, String)] = {

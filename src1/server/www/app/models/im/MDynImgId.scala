@@ -26,16 +26,16 @@ import io.suggest.util.UuidUtil
   * @param compressAlgo Опциональный финальный алгоритм сжатия.
   *                     Нужен для сборки SVG, пожатых через brotli или иным алгоритмом.
   */
-case class MDynImgId(
-                      rowKeyStr     : String,
-                      dynFormat     : MImgFmt,
-                      dynImgOps     : Seq[ImOp]             = Nil,
-                      compressAlgo  : Option[MCompressAlgo] = None
-                      // TODO svgo=()?
-                    ) {
+final case class MDynImgId(
+                            rowKeyStr     : String,
+                            dynFormat     : MImgFmt,
+                            dynImgOps     : Seq[ImOp]             = Nil,
+                            compressAlgo  : Option[MCompressAlgo] = None
+                            // TODO svgo=()?
+                          ) {
 
   // TODO Переименовать поле rowKeyStr в nodeId.
-  final def nodeId: String = rowKeyStr
+  def nodeId: String = rowKeyStr
 
   // TODO Допилить и активировать ассерты правил применения формата изображения.
   // assert( hasImgOps && dynFormat.nonEmpty )
@@ -59,7 +59,7 @@ case class MDynImgId(
       .exists { _.isInstanceOf[ImCropOpT] }
   }
 
-  final def hasImgOps: Boolean = dynImgOps.nonEmpty
+  def hasImgOps: Boolean = dynImgOps.nonEmpty
 
   lazy val fileName: String = fileNameSb().toString()
 
@@ -86,11 +86,23 @@ case class MDynImgId(
   /** Хранилка инстанса оригинала.
     * Для защиты от хранения ненужных ссылок на this, тут связка из метода и lazy val. */
   private lazy val _originalHolder = withDynImgOps(Nil)
-  final def original: MDynImgId = {
+  def original: MDynImgId = {
     if (hasImgOps)
       _originalHolder
     else
       this
+  }
+  def maybeOriginal: Option[MDynImgId] = {
+    OptionUtil.maybe(hasImgOps)(_originalHolder)
+  }
+
+  def mediaIdWithOriginalMediaId: Seq[String] = {
+    Stream.cons(
+      mediaId,
+      maybeOriginal.fold(Stream.empty[String]) { d =>
+        d.mediaId #:: Stream.empty[String]
+      }
+    )
   }
 
   def withDynImgOps(dynImgOps: Seq[ImOp] = Nil) = copy(dynImgOps = dynImgOps)

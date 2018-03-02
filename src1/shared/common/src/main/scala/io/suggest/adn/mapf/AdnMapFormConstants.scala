@@ -33,7 +33,7 @@ object AdnMapFormConstants {
       def DEFAULT = 30
 
       /** Максимальное значение радиуса. */
-      override def MAX_M = 400
+      override def MAX_M = 300
 
     }
 

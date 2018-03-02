@@ -150,10 +150,10 @@ class GalleryUtil @Inject() (
     * @return Ссылка на картинку галереи.
     */
   def renderGalleryItemCdn(galleryImg: MImgT, mediaHostsMap: Map[String, Seq[MHostInfo]])(implicit ctx: Context): Call = {
-    cdnUtil.forMediaCall(
+    cdnUtil.forMediaCall1(
       call          = dynLkBigCall(galleryImg),
-      mediaId       = galleryImg.dynImgId.original.mediaId,
-      mediaHostsMap = mediaHostsMap
+      mediaHostsMap = mediaHostsMap,
+      mediaIds      = galleryImg.dynImgId.mediaIdWithOriginalMediaId
     )
   }
 
