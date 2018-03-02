@@ -8,8 +8,12 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import controllers.routes
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.img.MImgFmt
+import io.suggest.img.{MImgFmt, MImgFmts}
+import io.suggest.model.n2.media.{MMedia, MMedias}
+import io.suggest.model.n2.media.search.MMediaSearchDfltImpl
+import io.suggest.model.n2.media.storage.IMediaStorages
 import io.suggest.url.MHostInfo
+import io.suggest.util.JMXBase
 import io.suggest.util.logs.MacroLogsImpl
 import models.im._
 import models.mproj.ICommonDi
@@ -19,7 +23,7 @@ import util.cdn.CdnUtil
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.util.{Failure, Success}
 
 /**
@@ -35,6 +39,9 @@ class DynImgUtil @Inject() (
                              mLocalImgs                : MLocalImgs,
                              im4jAsyncUtil             : Im4jAsyncUtil,
                              cdnUtil                   : CdnUtil,
+                             // Только для удаления и чистки базы:
+                             iMediaStorages            : IMediaStorages,
+                             mMedias                   : MMedias,
                              mCommonDi                 : ICommonDi
                            )
   extends MacroLogsImpl
@@ -299,9 +306,121 @@ class DynImgUtil @Inject() (
     imgCall(imgThumb)
   }
 
+  /** Пройтись по MMedia, найти все записи о картинках-деривативах и произвести для них процедуру стирания.
+    *
+    * @param deleteEvenStorageMissing Удалять, если файл не найден в хранилище?
+    *                                 true означает, что вызывающий этот метод ручается, что все шарды хранилищ активны,
+    *                                 и отсутствующие файлы действительно отсутствуют.
+    *                                 false - пропускать mmedia для несуществующих файлов.
+    * @return Фьючерс с кол-вом обработанных (удалённых) элементов.
+    */
+  def deleteAllDerivatives(deleteEvenStorageMissing: Boolean): Future[Int] = {
+    import mMedias.Implicits._
+
+    // Нельзя использовать deleteByQuery, ведь надо media-storage прочистить.
+    // Поэтому рубим по хитрому:
+    // 0. Организуем BulkProcessor.
+    // 1. Запускаем scroll-проход для поточного чтения всех интересующих MMedia.
+    // 2. Удаляем элемент из media-стораджа
+    // 3. Отправляем удаление элемента в BulkProcessor.
+
+    val logPrefix = s"deleteAllDerivatives()#${System.currentTimeMillis()}:"
+    LOGGER.trace(s"$logPrefix Started. deleteEvenStorageMissing=${deleteEvenStorageMissing}")
+
+    // Сборка поисковых аргументов для файла.
+    val searchArgs = new MMediaSearchDfltImpl {
+      override def limit = 20
+      override def isOriginalFile = Some(false)
+      override def fileMimes: Seq[String] = {
+        MImgFmts.values
+          .iterator
+          .flatMap(_.allMimes)
+          .toSeq
+      }
+    }
+
+    val src = mMedias.source[MMedia]( searchArgs.toEsQuery )
+
+    // Создаём и запускаем BulkProcessor:
+    val bp = mMedias.bulkProcessor(
+      listener = new mMedias.BulkProcessorListener( logPrefix + "BULK:" )
+    )
+
+    // Заготовить чтение элементов из elasticsearch:
+    src
+      .runFoldAsync( 0 ) { (counter0, mmedia) =>
+        // Убедиться, что пришёл ожидавшийся элемент:
+        if (mmedia.file.isOriginal) {
+          // should never happen: оригинал картинки пришёл на вход
+          LOGGER.warn( s"$logPrefix Original mmedia#${mmedia.idOrNull}, skipping it:\n $mmedia" )
+          Future.successful(counter0)
+
+        } else if (mmedia.file.imgFormatOpt.isEmpty) {
+          // should never happen: Пришла не-картинка, а что-то другое.
+          LOGGER.warn( s"$logPrefix Media#${mmedia.idOrNull} not an image: ${mmedia.file.mime}:\n $mmedia" )
+          Future.successful(counter0)
+
+        } else {
+          for {
+            // Удалить из хранилища:
+            _ <- {
+              LOGGER.debug(s"$logPrefix [$counter0] Will erase mmedia#${mmedia.idOrNull} of type ${mmedia.file.mime} size=${mmedia.file.sizeB}b wh=${mmedia.picture.whPx.orNull} v=${mmedia.versionOpt.orNull}\n storage = ${mmedia.storage}")
+              iMediaStorages
+                .delete( mmedia.storage )
+                .recover { case _: NoSuchElementException if deleteEvenStorageMissing =>
+                  LOGGER.warn(s"$logPrefix Not found file ${mmedia.storage} in storage")
+                  // TODO А что делать если вдруг шарда отвалилась?
+                }
+            }
+          } yield {
+            // Удалить из MMedia:
+            bp.add( mMedias.deleteRequestBuilder(mmedia.id.get).request() )
+            LOGGER.info(s"$logPrefix [$counter0] done with mmedia#${mmedia.idOrNull} | ${mmedia.storage}")
+
+            counter0 + 1
+          }
+        }
+      }
+      .andThen { case tryRes =>
+        LOGGER.info(s"$logPrefix Completed with $tryRes")
+        bp.close()
+      }
+  }
+
 }
 
 /** Интерфейс для доступа к DI-полю с утилью для DynImg. */
 trait IDynImgUtil {
   def dynImgUtil: DynImgUtil
+}
+
+
+trait DynImgUtilJmxMBean {
+  def deleteAllDerivatives(deleteEvenStorageMissing: Boolean): String
+}
+
+final class DynImgUtilJmx @Inject() (
+                                      dynImgUtil                : DynImgUtil,
+                                      override implicit val ec  : ExecutionContext
+                                    )
+  extends JMXBase
+  with DynImgUtilJmxMBean
+  with MacroLogsImpl
+{
+
+  override def jmxName: String = "io.suggest:type=img,name=" + classOf[DynImgUtil].getSimpleName
+
+  override def deleteAllDerivatives(deleteEvenStorageMissing: Boolean): String = {
+    val logPrefix = s"deleteAllDerivatives():"
+    LOGGER.warn(s"$logPrefix Starting")
+    val fut = for {
+      countDeleted <- dynImgUtil.deleteAllDerivatives(deleteEvenStorageMissing)
+    } yield {
+      s"$logPrefix Deleted $countDeleted items."
+    }
+    awaitString(fut)
+  }
+
+  override def futureTimeout = 5.minutes
+
 }

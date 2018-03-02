@@ -12,6 +12,7 @@ trait MMediaSearch
   extends SubSearches
   with FileHashSearch
   with NodeIdSearch
+  with FileMimeSearch
   with FileSizeSearch
   with IsOriginalFileSearch
   with Limit
@@ -28,6 +29,7 @@ trait MMediaSearchDflt
   with SubSearchesDflt
   with FileHashSearchDflt
   with NodeIdSearchDflt
+  with FileMimeSearchDflt
   with FileSizeSearchDflt
   with IsOriginalFileSearchDflt
   with LimitDflt

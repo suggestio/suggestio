@@ -48,7 +48,8 @@ class IpgbImporter @Inject() (
 
   /** Минимально допустимая длина архива с данными. */
   private def ARCHIVE_MIN_LENGTH = configuration.getOptional[Int]("ipgeobase.archive.size.min")
-    .getOrElse(1900000)
+    // Было 1`900`000, но это как-то жирновато совсем.
+    .getOrElse(300000)
 
   /** Имя файл, содержащего диапазоны.*/
   private def IP_RANGES_FILENAME = configuration.getOptional[String]("ipgeobase.cidr_optim.filename")
@@ -349,9 +350,9 @@ trait IpgbImporterJmxMBean {
 }
 
 final class IpgbImporterJmx @Inject()(
-                             injector                 : Injector,
-                             implicit val ec          : ExecutionContext
-                           )
+                                       injector                 : Injector,
+                                       override implicit val ec : ExecutionContext
+                                     )
   extends JMXBase
   with IpgbImporterJmxMBean
   with MacroLogsDyn

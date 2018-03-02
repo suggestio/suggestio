@@ -41,6 +41,7 @@ trait FileHashSearch extends DynSearchArgs {
         // Сборка одной query по одному критерию (внутри nested).
         val qb = QueryBuilders.boolQuery()
 
+        // TODO Возможно, тут ошибка: все одновременно хэши быть не могут ведь? Надо сделать по аналогии с NodeIdSearch, где через пачку SHOULD сделано.
         if (cr.hTypes.nonEmpty) {
           qb.must(
             QueryBuilders.termsQuery( hashesTypeFn, cr.hTypes.map(_.value): _* )

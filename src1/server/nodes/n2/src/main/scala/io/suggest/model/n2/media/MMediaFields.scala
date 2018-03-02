@@ -20,6 +20,9 @@ object MMediaFields {
     val FILE_META_FN    = "fm"
     override protected def _PARENT_FN = FILE_META_FN
 
+    def MIME_FN               = _fullFn( MFileMeta.Fields.MIME_FN )
+    def MIME_AS_TEXT_FN       = _fullFn( MFileMeta.Fields.MIME_FN + "." + MFileMeta.Fields.MIME_AS_TEXT_FN )
+
     /** Full FN nested-поля с хешами. */
     def HASHES_FN             = _fullFn( MFileMeta.Fields.HASHES_HEX_FN )
 

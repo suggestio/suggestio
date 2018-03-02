@@ -19,7 +19,13 @@ import play.api.libs.functional.syntax._
 object MFileMeta extends IGenEsMappingProps {
 
   object Fields {
-    val MIME_FN             = "mm"
+    /** Название поля, где mime индексируется как keyword. */
+    val MIME_FN             = "mi"
+    /** Название поля внутри mime, где mime индексируется текстом. */
+    val MIME_AS_TEXT_FN     = "mt"
+    /** Старое поле, где mime индексировался только как текст. */
+    private[MFileMeta] val OLD_MIME_FN = "mm"
+
     val SIZE_B_FN           = "sz"
     val IS_ORIGINAL_FN      = "orig"
 
@@ -59,8 +65,17 @@ object MFileMeta extends IGenEsMappingProps {
       OFormat(readsCompat, newFmt)
     }
 
+    // Отрабатываем неправильный маппинг mime-типа.
+    val mimeFormat: OFormat[String] = {
+      val fmt0 = (__ \ F.MIME_FN).format[String]
+      val readsFallback = fmt0.orElse {
+        (__ \ F.OLD_MIME_FN).read[String]
+      }
+      OFormat(readsFallback, fmt0)
+    }
+
     (
-      (__ \ F.MIME_FN).format[String] and
+      mimeFormat and
       (__ \ F.SIZE_B_FN).format[Long] and
       (__ \ F.IS_ORIGINAL_FN).format[Boolean] and
       hhFormat and
@@ -74,7 +89,9 @@ object MFileMeta extends IGenEsMappingProps {
   override def generateMappingProps: List[DocField] = {
     val F = Fields
     List(
-      FieldText(F.MIME_FN, index = true, include_in_all = true),
+      FieldKeyword(F.MIME_FN, index = true, include_in_all = true, fields = Seq(
+        FieldText(F.MIME_AS_TEXT_FN, index = true, include_in_all = true)
+      )),
       FieldNumber(F.SIZE_B_FN, fieldType = DocFieldTypes.long, index = true, include_in_all = false),
       FieldBoolean(F.IS_ORIGINAL_FN, index = true, include_in_all = false),
       FieldNestedObject(F.HASHES_HEX_FN, enabled = true, properties = MFileMetaHash.generateMappingProps),

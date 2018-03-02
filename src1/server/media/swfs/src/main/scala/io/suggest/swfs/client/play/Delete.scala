@@ -23,7 +23,7 @@ trait Delete extends ISwfsClientWs {
 
     val reqFut = wsClient.url(url).execute(method)
 
-    reqFut.onFailure { case ex: Throwable =>
+    for (ex <- reqFut.failed) {
       LOGGER.error(s"$logPrefix Failed $method $url\n $args", ex)
     }
 
@@ -35,9 +35,21 @@ trait Delete extends ISwfsClientWs {
       LOGGER.trace(s"$logPrefix $method $url => $s, took ${System.currentTimeMillis - startMs} ms,\n ${wsResp.body}")
 
       if ( SwfsClientWs.isStatus2xx(s) ) {
-        wsResp.json
-          .validate[DeleteResponse]
-          .asOpt
+        try {
+          if (wsResp.body.nonEmpty) {
+            wsResp.json
+              .validate[DeleteResponse]
+              .asOpt
+          } else {
+            LOGGER.debug(s"$logPrefix Empty 200 resp from swfs. File missing?")
+            None
+          }
+        } catch {
+          case ex: Throwable =>
+            LOGGER.warn(s"$logPrefix Failed to parse swfs-volume response:\n raw = ${wsResp.body}\n URL = $url\n resp status = ${wsResp.status} ${wsResp.statusText}", ex)
+            None
+        }
+
       } else if (s == 404) {
         None
       } else {

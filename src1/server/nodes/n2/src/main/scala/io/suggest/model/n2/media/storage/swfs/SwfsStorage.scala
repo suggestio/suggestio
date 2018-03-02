@@ -135,9 +135,11 @@ class SwfsStorages @Inject() (
   }
 
   override def delete(ptr: T): Future[Option[IDeleteResponse]] = {
+    lazy val logPrefix = s"delete(${ptr.fid}):"
     for {
       vlocs   <- _vlocsFut(ptr)
       delResp <- {
+        LOGGER.trace(s"$logPrefix vlocs = [${vlocs.mkString(", ")}]")
         val delReq = DeleteRequest(
           volUrl  = vlocs.head.url,
           fid     = ptr.fid.toString
@@ -145,7 +147,7 @@ class SwfsStorages @Inject() (
         client.delete(delReq)
       }
     } yield {
-      LOGGER.trace(s"Delete ${ptr.fid} returned: $delResp")
+      LOGGER.trace(s"$logPrefix Delete ${ptr.fid} returned: $delResp")
       delResp
     }
   }
