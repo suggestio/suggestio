@@ -482,7 +482,8 @@ class QdRrrHtml(
 
         } { attrs =>
           // Есть какие-то аттрибуты строки. Надо понять, совпадает ли это с текущей группой.
-          if (acc0.currLineGrpAttrs contains attrs) {
+          // TODO Тут вызывается isGroupsWith=>true|false, но случаев намного больше двух. См.комменты в .isGroupsWith().
+          if (acc0.currLineGrpAttrs.exists(_ isGroupsWith attrs)) {
             // Аттрибуты такие же, как и у предыдущих строк. Запихиваем в акк группы.
             acc0.copy(
               currLineGrpAcc = line :: acc0.currLineGrpAcc

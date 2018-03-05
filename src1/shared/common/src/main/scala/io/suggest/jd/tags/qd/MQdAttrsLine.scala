@@ -5,7 +5,7 @@ import io.suggest.err.ErrorConstants
 import io.suggest.math.MathConst
 import io.suggest.primo.ISetUnset
 import io.suggest.text.MTextAlign
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -78,3 +78,29 @@ case class MQdAttrsLine(
                          align       : Option[ISetUnset[MTextAlign]]    = None
                        )
   extends EmptyProduct
+{
+
+  /** Бывают line-аттрибуты, требующие группировки строк в кучу.
+    * Например: list.
+    * Если сгруппировать
+    *
+    * @param other line-аттрибуты какой-то другой группы.
+    * @return true, когда надо сгруппировать две сущности вместе.
+    *         false, когда надо рендерить в отдельных группа.
+    */
+  // TODO Это грязный кривой костыль, чтобы избежать склеивания строк в группах indent/align/etc.
+  // Он вызывает рендер пачки pre/blockquote/etc тегов, вместо одного общего.
+  // Для разных тегов должна быть разная политика группировки.
+  // Например, для pre-группы надо \n-концы строк между строками
+  // А для list -- вообще без \n или br
+  // Для остальных - br или p
+  def isGroupsWith(other: MQdAttrsLine): Boolean = {
+    // TODO Пока не ясно, что с заголовком.
+    align.isEmpty &&
+      indent.isEmpty &&
+      codeBlock.isEmpty &&
+      blockQuote.isEmpty &&
+      (this ==* other)
+  }
+
+}
