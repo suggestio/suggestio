@@ -286,6 +286,11 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       .flatMap(_.qdProps)
   }
 
+  /** В личном кабинете - css-класс "block". В выдаче - "display-block". Доколе этот бардак будет? */
+  private val displayBlockMx = mixin(
+    display.block
+  )
+
 
   /** styleF для стилей текстов. */
   val textStyleF = {
@@ -331,6 +336,9 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         // Отрендерить размер шрифта
         acc ::= _fontSizeAttr( (fontSize.value * blkSzMultD).px )
       }
+
+      // Фикс межстрочки для мелкого текста и HTML5
+      acc ::= displayBlockMx
 
       // Вернуть скомпонованный стиль.
       styleS(

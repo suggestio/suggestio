@@ -245,7 +245,7 @@ class QdRrrHtml(
       val whStyl = qdOp.attrsEmbed.fold( jdArgs.jdCss.videoStyle ) { attrsEmbed =>
         jdArgs.jdCss.embedAttrStyleF( attrsEmbed )
       }
-      val keyV = s"V$i"
+      val keyV = "V" + i
       val videoFrame = <.iframe(
         ^.src := src,
         ^.key := keyV,

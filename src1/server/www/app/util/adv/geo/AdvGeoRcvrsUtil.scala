@@ -114,6 +114,7 @@ class AdvGeoRcvrsUtil @Inject()(
             val dpr = DevPixelRatios.XHDPI
             val fut = for {
               logo      <- logoUtil.getLogo4scr(logoRaw, LOGO_HEIGHT_CSSPX, dpr)
+              // TODO XXX !!!! Здесь нельзя вызывать этот ensure. Надо только mimg генерить с размером. Затем mediaHostsMap, затем ссылки!!!
               localImg  <- dynImgUtil.ensureLocalImgReady(logo, cacheResult = true)
               whOpt     <- mAnyImgs.getImageWH(localImg)
             } yield {
