@@ -45,20 +45,27 @@ class CspUtil @Inject() (
   /** Заголовок CSP, который можно модификацировать в контроллерах для разных нужд. */
   val CSP_DFLT_OPT: Option[CspHeader] = {
     if (IS_ENABLED) {
+      // TODO На ноды балансируются только картинки, возможно ещё видео. И websocket'ы, связанные с ними. Надо ли их в common запихивать всё?
       val nodesWildcard = s"*.nodes.${contextUtil.HOST_PORT}"
       val commonSources = {
         // Т.к. сайт https-only, то игнорим протоколы, используем все CDN-хосты.
         val cdnHostsIter = cdnUtil.CDN_PROTO_HOSTS.valuesIterator.flatten
         val selfHosts = Csp.Sources.SELF :: Nil
-        val selfNodes = nodesWildcard :: Nil  // TODO Добавить cdn-nodes-домены сюда же.
+        val selfNodes = nodesWildcard :: Nil
+        // TODO Добавить cdn-nodes-домены сюда же.
         (cdnHostsIter ++ selfHosts ++ selfNodes)
           .toSet
+      }
+      val cdnNodes = for (rewriteFromTo <- cdnUtil.REWRITE_FROM_TO.iterator) yield {
+        // Из ссылки вида -suggest.cdnvideo.ru получается *.cdnvideo.ru. Как-то это не очень хорошо.
+        // TODO *-suggest.cdnvideo.ru нельзя, равно как и s*-suggest.cdnvideo.ru. А желательно тоже сделать такое...
+        "*" + rewriteFromTo._2.replaceFirst("^[^\\.]*", "")
       }
       val commonSourcesWithInline = commonSources + Csp.Sources.UNSAFE_INLINE
       val cspHdr = CspHeader(
         policy = CspPolicy(
           defaultSrc  = commonSources,
-          imgSrc      = commonSources + Csp.Sources.DATA,
+          imgSrc      = commonSources + Csp.Sources.DATA ++ cdnNodes,
           styleSrc    = commonSourcesWithInline,
           scriptSrc   = commonSourcesWithInline,
           // Коннекты: обычно, коннекты идут прямо на suggest.io. Для WebSocket надо явно прописать адреса из-за протокола.
