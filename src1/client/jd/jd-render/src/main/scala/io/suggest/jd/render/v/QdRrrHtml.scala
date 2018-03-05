@@ -291,31 +291,31 @@ class QdRrrHtml(
   private def _insertText(text: String, qdOp: MQdOp, i: Int): Unit = {
     if (text matches "[\n]+") {
       // Специальный случай: тег завершения строки с возможной стилистикой всей прошедшей строки.
-      for (_ <- 1 to text.length)
-        _handleEol( qdOp.attrsLine, Some(i) )
+      for (j <- 1 to text.length)
+        _handleEol( qdOp.attrsLine, Some(i), Some(j) )
     } else {
       // Это обычный текст. Но он может содержать в себе \n-символы в неограниченном количестве.
       _insertPlainTextWithNls(text, qdOp, i)
     }
   }
 
-  private def _emptyLineContent(iOpt: Option[Int] = None): TagMod = {
-    _emptyLineContent1( iOpt.map(_.toString) )
-  }
-  private def _emptyLineContent1(iOpt: Option[String] = None): TagMod = {
-    val tag = <.br
-    iOpt.fold[TagMod](tag) { i => ^.key := i }
+  private def _emptyLineContent1(key: String): TagMod = {
+    <.br(
+      ^.key := key
+    )
   }
 
   /** Отработать конец строки. */
-  private def _handleEol(attrsOpt: Option[MQdAttrsLine] = None, iOpt: Option[Int] = None): Unit = {
+  private def _handleEol(attrsOpt: Option[MQdAttrsLine] = None, iOpt: Option[Int] = None, jOpt: Option[Int] = None): Unit = {
     // Это операция рендера накопленной ранее строки. Развернуть отрендеренный контент текущей строки.
     if (_currLineAccRev.isEmpty) {
+      val key = "n" + iOpt.getOrElse("") + HtmlConstants.`.` + jOpt.getOrElse("")
       // Бывает, что данных в акке нет. Поэтому нужно исправить рендер этим костылём.
-      _currLineAccRev ::= _emptyLineContent(iOpt)
+      _currLineAccRev ::= _emptyLineContent1(key)
     }
 
     val currLineContent = _currLineAccRev.reverse
+
     val lineContent = TagMod.fromTraversableOnce(currLineContent)
     _linesAccRev ::= (attrsOpt, lineContent)
     _currLineAccRev = Nil
@@ -359,7 +359,7 @@ class QdRrrHtml(
   private def _insertVeryPlainText(text0: String, qdOp: MQdOp, keyPrefix: String): Unit = {
     // Для максимальной скорости работы и некоторого удобства, тут много переменных.
     var acc: TagMod = if ( text0.isEmpty ) {
-      _emptyLineContent1( Some(keyPrefix) )
+      _emptyLineContent1( keyPrefix )
     } else {
       text0
     }
