@@ -113,6 +113,10 @@ class DocEditAh[M](
         // Бывают ложные срабатывания. Например, прямо при инициализации редактора. Но не факт конечно, что они тут подавляются.
         noChange
 
+      } else if (v0.jdArgs.selectedTagLoc.isEmpty) {
+        LOG.warn( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m.getClass.getName )
+        noChange
+
       } else {
         // Код обновления qd-тега в шаблоне:
         def __updateTpl(qdSubTree2: Tree[JdTag]): Tree[JdTag] = {

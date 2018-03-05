@@ -330,15 +330,17 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       }
 
       // Если задан font-size, то нужно отрендерить его вместе с сопутствующими аттрибутами.
-      for (fontSizeSU <- attrsText.size; fontSize <- fontSizeSU) {
+      for (fontSizeSU <- attrsText.size; fontSizePx <- fontSizeSU) {
         // Рендер размера шрифта
-        acc ::= _lineHeightAttr( (fontSize.lineHeight * blkSzMultD).px )
+        acc ::= _lineHeightAttr( (fontSizePx.lineHeight * blkSzMultD).px )
         // Отрендерить размер шрифта
-        acc ::= _fontSizeAttr( (fontSize.value * blkSzMultD).px )
+        acc ::= _fontSizeAttr( (fontSizePx.value * blkSzMultD).px )
+
+        if (fontSizePx.forceRenderBlockHtml5)
+          acc ::= displayBlockMx
       }
 
-      // Фикс межстрочки для мелкого текста и HTML5
-      acc ::= displayBlockMx
+      // Фикс межстрочки для мелкого текста и HTML5. Можно это не рендерить для шрифтов, которые крупнее 18px
 
       // Вернуть скомпонованный стиль.
       styleS(

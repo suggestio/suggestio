@@ -73,6 +73,18 @@ sealed abstract class MFontSize(override val value: Int) extends IntEnumEntry {
 
   override final def toString = value.toString
 
+  /** В HTML5 задан принудительный минимальный line-height для inline-элементов.
+    * И это сказывается на мелких шрифтах: межстрочка не поспевает, и получаются большие интервалы
+    * между соседними строками.
+    *
+    * Чтобы это исправить, надо помечать тексты как display:block.
+    *
+    * @return true, если пора фиксить местрочку
+    */
+  def forceRenderBlockHtml5: Boolean = {
+    value < 18
+  }
+
 }
 
 
