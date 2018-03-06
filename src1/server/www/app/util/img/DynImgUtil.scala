@@ -65,8 +65,6 @@ class DynImgUtil @Inject() (
   private def PREFETCH_ENABLED = false
 
 
-  //LOGGER.trace(s"DynImgUtil: ensureCache=$ENSURE_DYN_CACHE_TTL, saveDerivatives=$SAVE_DERIVATIVES_TO_PERMANENT, prefetch=$PREFETCH_ENABLED")
-
   /**
    * Враппер для вызова routes.Img.dynImg(). Нужен чтобы навешивать сайд-эффекты и трансформировать результат вызова.
    * @param dargs Аргументы генерации картинки.

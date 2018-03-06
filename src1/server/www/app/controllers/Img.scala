@@ -69,15 +69,15 @@ class Img @Inject() (
   import imgCtlUtil._
   import mCommonDi._
 
-  /** Сколько времени можно кешировать на клиенте оригинал картинки. */
-  private val CACHE_ORIG_CLIENT_SECONDS = {
-    // TODO Кажется, этот параметр изменил свой смысл...
-    val cacheDuration =if (isProd) {
-      2.days
+  /** Сколько времени можно кешировать на клиенте результат dynImg() ? */
+  private val CACHE_DYN_IMG_CLIENT_SECONDS = {
+    val cacheDuration = if (isProd) {
+      // TODO Увеличить до года, если всё будет ок.
+      30.days
     } else {
       30.seconds
     }
-    cacheDuration.toSeconds.toInt
+    cacheDuration.toSeconds
   }
 
 
@@ -175,17 +175,16 @@ class Img @Inject() (
       }
     }
 
+    // HTTP-заголовок для картинок.
+    val cacheControlHdr =
+      CACHE_CONTROL -> s"public, max-age=$CACHE_DYN_IMG_CLIENT_SECONDS, immutable"
+
     if (isNotModified) {
       // 304 Not modified, т.к. клиент уже скачивал эту картинку ранее.
       NotModified
-        .withHeaders(CACHE_CONTROL -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS, immutable")
+        .withHeaders(cacheControlHdr)
 
     } else {
-      //val cacheSeconds = CACHE_ORIG_CLIENT_SECONDS
-      //val modelInstant = Instant.ofEpochMilli( imgFile.lastModified() )
-
-      val cacheControlHdr =
-        CACHE_CONTROL -> s"public, max-age=$CACHE_ORIG_CLIENT_SECONDS, immutable, never-revalidate"
 
       // TODO Надо имя файла записать. Его нужно кодировать, а там какое-то play private api...
       //CONTENT_DISPOSITION -> s"inline; filename=$fileName"
