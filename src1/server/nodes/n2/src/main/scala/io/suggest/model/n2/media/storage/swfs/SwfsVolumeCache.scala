@@ -57,8 +57,8 @@ class SwfsVolumeCache @Inject() (
       val lr = LookupRequest(
         volumeId = volumeId
       )
-      val fut = client.lookup(lr)
-        .map {
+      val fut = for (tryRes <- client.lookup(lr)) yield {
+        tryRes match {
           case Right(resp) =>
             LOGGER.trace("Lookup volumeId=" + volumeId + " => " + resp.locations.iterator.map(_.publicUrl).mkString(",") )
             resp.locations
@@ -66,6 +66,7 @@ class SwfsVolumeCache @Inject() (
             LOGGER.warn(s"Failed to lookup volumeId=$volumeId due to: ${err.error}")
             err.locations
         }
+      }
 
       // Если нет нормального результата, то нужно удалить фьючерс из кеша.
       for (ex <- fut.filter(_.nonEmpty).failed) {

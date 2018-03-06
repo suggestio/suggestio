@@ -12,14 +12,14 @@ import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
-import io.suggest.routes.{AdvRcvrsMapApiHttp, scRoutes}
+import io.suggest.routes.{AdvRcvrsMapApiHttpViaRouter, AdvRcvrsMapApiHttpViaUrl, scRoutes}
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.c.dev.{GeoLocAh, ScreenAh}
 import io.suggest.sc.c.{JsRouterInitAh, TailAh}
 import io.suggest.sc.c.grid.GridAdsAh
 import io.suggest.sc.c.inx.{IndexAh, WelcomeAh}
 import io.suggest.sc.c.search.{STextAh, ScMapDelayAh, SearchAh, TagsAh}
-import io.suggest.sc.m.{JsRouterInit, MScRoot, ScreenReset}
+import io.suggest.sc.m._
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx.MScIndex
@@ -72,7 +72,7 @@ class Sc3Circuit(
 
   override protected def initialModel: MScRoot = {
     // TODO Десериализовать состояние из URL или откуда-нибудь ещё.
-    val state0 = Json
+    val scInit = Json
       .parse( StateInp.find().get.value.get )
       .as[MSc3Init]
 
@@ -90,7 +90,7 @@ class Sc3Circuit(
         resp = scIndexResp,
         search = MScSearch(
           mapInit = MMapInitState(
-            state = MMapS(state0.mapProps)
+            state = MMapS(scInit.mapProps)
           )
         ),
         scCss = scCssFactory.mkScCss(
@@ -103,7 +103,13 @@ class Sc3Circuit(
           jdConf = jdConf,
           jdCss  = jdCssFactory.mkJdCss( MJdCssArgs(conf = jdConf) )
         )
-      }
+      },
+      internals = MScInternals(
+        // TODO Унести conf-модель в [common] целиком, задавать её прямо на сервере.
+        conf = MSc3Conf(
+          rcvrsMapUrl = scInit.rcvrsMapUrl
+        )
+      )
     )
   }
 
@@ -135,6 +141,8 @@ class Sc3Circuit(
   private val devRW = zoomRW(_.dev) { _.withDev(_) }
   private val scScreenRW = devRW.zoomRW(_.screen) { _.withScreen(_) }
   private val scGeoLocRW = devRW.zoomRW(_.geoLoc) { _.withGeoLoc(_) }
+
+  private val confRO = internalsRW.zoom(_.conf)
 
 
   private val searchAdsArgsRO: ModelRO[MFindAdsReq] = zoom { mroot =>
@@ -232,7 +240,7 @@ class Sc3Circuit(
   )
 
 
-  private def advRcvrsMapApi = new AdvRcvrsMapApiHttp( scRoutes )
+  private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( confRO.value.rcvrsMapUrl )
 
   override protected val actionHandler: HandlerFunction = {
     var acc = List.empty[HandlerFunction]

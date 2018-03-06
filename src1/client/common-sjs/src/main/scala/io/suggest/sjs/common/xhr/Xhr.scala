@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import io.suggest.id.IdentConst
 import io.suggest.pick.{MimeConst, PickleUtil}
 import io.suggest.proto.HttpConst
-import io.suggest.sjs.common.model.Route
+import io.suggest.sjs.common.model.{HttpRouteExtractor, Route}
 import io.suggest.sjs.common.xhr.ex._
 import org.scalajs.dom.XMLHttpRequest
 
@@ -83,7 +83,7 @@ object Xhr extends Log {
            headers: TraversableOnce[(String, String)] = Nil, body: Ajax.InputData = null): Future[XMLHttpRequest] = {
     sendRaw(
       method        = route.method,
-      url           = route2url(route),
+      url           = route2url( route ),
       timeoutMsOpt  = timeoutMsOpt,
       headers       = headers,
       body          = body
@@ -213,7 +213,7 @@ object Xhr extends Log {
     * @param body Опциональное тело запроса.
     * @return Фьючерс с блобом.
     */
-  def requestBinary(route: Route, body: Ajax.InputData = null): Future[ByteBuffer] = {
+  def requestBinary[HttpRoute: HttpRouteExtractor](route: HttpRoute, body: Ajax.InputData = null): Future[ByteBuffer] = {
     respAsBinary {
       successIf200 {
         sendBinary(
@@ -226,11 +226,13 @@ object Xhr extends Log {
     }
   }
 
-  def sendBinary(route: Route, body: Ajax.InputData, respType: String, headers: List[(String, String)] = Nil): Future[XMLHttpRequest] = {
+  def sendBinary[HttpRoute: HttpRouteExtractor](route: HttpRoute, body: Ajax.InputData, respType: String,
+                                                headers: List[(String, String)] = Nil): Future[XMLHttpRequest] = {
     _handleUnauthorized {
+      val hrex = implicitly[HttpRouteExtractor[HttpRoute]]
       Ajax(
-        method          = route.method,
-        url             = route2url(route),
+        method          = hrex.method(route),
+        url             = hrex.url(route),
         data            = body.asInstanceOf[Ajax.InputData],
         timeout         = 0,
         headers         = ((HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_OCTET_STREAM) :: headers).toMap,

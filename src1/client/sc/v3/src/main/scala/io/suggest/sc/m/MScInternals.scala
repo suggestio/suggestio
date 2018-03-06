@@ -14,8 +14,6 @@ import japgolly.univeq._
   */
 object MScInternals {
 
-  def empty = apply()
-
   implicit object MScInternalsFastEq extends FastEq[MScInternals] {
     override def eqv(a: MScInternals, b: MScInternals): Boolean = {
       (a.jsRouter eq b.jsRouter) &&
@@ -34,6 +32,7 @@ object MScInternals {
   * @param geoLockTimer Сейчас происходит ожидание геолокации, это блокирует переключение выдачи (TailAh)
   */
 case class MScInternals(
+                         conf          : MSc3Conf,
                          jsRouter      : Pot[scRoutes.type]      = Pot.empty,
                          geoLockTimer  : Option[Int]             = None,
                        ) {

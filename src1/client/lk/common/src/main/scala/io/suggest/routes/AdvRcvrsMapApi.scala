@@ -1,6 +1,8 @@
 package io.suggest.routes
 
 import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.proto.HttpConst.Methods
+import io.suggest.sjs.common.model.{HttpRoute, HttpRouteExtractor}
 import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.Future
@@ -21,16 +23,37 @@ trait IAdvRcvrsMapApi {
 }
 
 
-/** Реализация [[IAdvRcvrsMapApi]] поверх HTTP через js-роутер. */
-class AdvRcvrsMapApiHttp(jsRouter: => IJsRouter) extends IAdvRcvrsMapApi {
+object IAdvRcvrsMapApi {
 
-  /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
-  override def advRcvrsMap(): Future[MGeoNodesResp] = {
-    val route = jsRouter.controllers.Static.advRcvrsMap()
-    // Надо запустить запрос на сервер для получения списка узлов.
+  def _advRcvrsMapRequest[HttpRoute: HttpRouteExtractor](route: HttpRoute): Future[MGeoNodesResp] = {
     Xhr.unBooPickleResp[MGeoNodesResp] {
       Xhr.requestBinary( route )
     }
   }
 
 }
+
+/** Реализация [[IAdvRcvrsMapApi]] поверх HTTP через js-роутер. */
+class AdvRcvrsMapApiHttpViaRouter(jsRouter: => IJsRouter) extends IAdvRcvrsMapApi {
+
+  /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
+  override def advRcvrsMap(): Future[MGeoNodesResp] = {
+    IAdvRcvrsMapApi._advRcvrsMapRequest(
+      jsRouter.controllers.Static.advRcvrsMap()
+    )
+  }
+
+}
+
+
+/** Реализация [[IAdvRcvrsMapApi]] с запросом через произвольную ссылку. */
+class AdvRcvrsMapApiHttpViaUrl(url: => String) extends IAdvRcvrsMapApi {
+
+  override def advRcvrsMap(): Future[MGeoNodesResp] = {
+    IAdvRcvrsMapApi._advRcvrsMapRequest(
+      HttpRoute(method = Methods.GET, url = url)
+    )
+  }
+
+}
+

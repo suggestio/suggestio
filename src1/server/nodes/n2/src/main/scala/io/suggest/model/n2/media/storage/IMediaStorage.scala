@@ -113,6 +113,11 @@ class IMediaStorages @Inject() (
       .getStorageHost(ptr)
   }
 
+  /** Вернуть хосты, связанные с хранением указанных данных.
+    *
+    * @param ptrs storage-указатели.
+    * @return Карта с хостами.
+    */
   def getStoragesHosts(ptrs: Traversable[T]): Future[Map[T, Seq[MHostInfo]]] = {
     if (ptrs.isEmpty) {
       Future.successful( Map.empty )
@@ -188,7 +193,7 @@ trait IMediaStorageStaticImpl extends IMediaStorageStatic {
   /** Пакетный аналог для getAssignedStorage().
     *
     * @param ptrs Все указатели.
-    * @return Фьючерс с набором результатов.
+    * @return Фьючерс с картой хостов.
     */
   def getStoragesHosts(ptrs: Traversable[T]): Future[Map[T, Seq[MHostInfo]]]
 

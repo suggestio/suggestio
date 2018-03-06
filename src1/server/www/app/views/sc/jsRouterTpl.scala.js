@@ -12,8 +12,7 @@
   routes.javascript.Sc.findNodes,
   routes.javascript.Sc.focusedAds,
   routes.javascript.Sc.tagsSearch,
-  routes.javascript.Sc.handleScError,
-  routes.javascript.Static.advRcvrsMap
+  routes.javascript.Sc.handleScError
 )
 
 @* Когда скрипт загрузился и выполнился, будет вызвана функция инициализации с указанным именем, если задана. *@

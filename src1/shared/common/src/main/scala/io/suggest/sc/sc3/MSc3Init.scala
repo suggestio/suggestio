@@ -14,11 +14,10 @@ import play.api.libs.json._
 object MSc3Init {
 
   /** Поддержка play-json. */
-  implicit val MSC_INIT_FORMAT: OFormat[MSc3Init] = {
-    (__ \ "m")
-      .format[MMapProps]
-      .inmap(apply, _.mapProps)
-  }
+  implicit def MSC3_INIT_FORMAT: OFormat[MSc3Init] = (
+    (__ \ "m").format[MMapProps] and
+    (__ \ "r").format[String]
+  )(apply, unlift(unapply))
 
 }
 
@@ -26,7 +25,9 @@ object MSc3Init {
 /** Класс модели данных инициализации.
   *
   * @param mapProps Начальные настройки карты.
+  * @param rcvrsMapUrl Ссылка на карту ресиверов.
   */
 case class MSc3Init(
-                     mapProps: MMapProps
+                     mapProps     : MMapProps,
+                     rcvrsMapUrl  : String
                    )

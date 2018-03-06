@@ -323,12 +323,21 @@ trait ScSite
         .get
     }
 
+    // Кэшируем часто-используемый инстанс JSON formatter'а для MSc3Init.
+    private val _msc3InitFormat = MSc3Init.MSC3_INIT_FORMAT
+
     override def scriptHtmlFut: Future[Html] = {
       // Поиска начальную точку для гео.карты.
       val _geoPoint0Fut = geoPoint0Fut
 
       // Синхронно скомпилить js-messages для рендера прямо в html-шаблоне.
       val jsMessagesJs = jsMessagesUtil.scJsMsgsFactory( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(ctx.messages)
+
+      // Надо ссылку на список ресиверов отправить. Раньше через роутер приходила, но это без CDN как-то не очень.
+      // TODO В будущем, можно будет кэширование организовать: хэш в ссылке + длительный кэш.
+      val rcvrsMapUrl = cdnUtil.forCall(
+        routes.Static.advRcvrsMap()
+      )(ctx).url
 
       // Собрать все результаты в итоговый скрипт.
       for {
@@ -338,10 +347,13 @@ trait ScSite
           mapProps = MMapProps(
             center = geoPoint0,
             zoom   = 11     // TODO Цифра с потолка.
-          )
+          ),
+          rcvrsMapUrl = rcvrsMapUrl
         )
         val scriptRenderArgs = MSc3ScriptRenderArgs(
-          state0        = Json.toJson(state0).toString(),
+          state0        = Json
+            .toJson(state0)(_msc3InitFormat)
+            .toString(),
           jsMessagesJs  = jsMessagesJs
         )
         _scriptV3Tpl(scriptRenderArgs)(ctx)

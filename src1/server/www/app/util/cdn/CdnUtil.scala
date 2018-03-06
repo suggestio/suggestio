@@ -339,6 +339,8 @@ class CdnUtil @Inject() (
         // Балансируем запросы по хостам с помощью стабильного nodeId: остаток от деления по кол-ву доступных хостов.
         val hostsCount = hosts.size
         val hostIdx = Math.abs( nodeId.hashCode % hostsCount )
+        // TODO Opt Тут постоянно вызывается сортировка, но seaweedFS вроде бы всегда присылает отсортированные ответы.
+        // Очевидная идея, чтобы хранить отсортированный список на уровне swfsVolCache, но тогда возникает проблема, что непонятно, какая нода ближайшая по мнению мастера, сообщившего хосты в таком порядке.
         val choosenHost = hosts.sortBy(_.nameInt).apply(hostIdx)
         LOGGER.trace(s"chooseMediaHost($nodeId): Choosen host ${choosenHost.namePublic} from $hostsCount hosts: [${hosts.iterator.map(_.namePublic).mkString(" | ")}]")
         Some( choosenHost )

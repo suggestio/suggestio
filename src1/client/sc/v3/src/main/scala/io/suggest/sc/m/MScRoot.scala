@@ -42,7 +42,7 @@ case class MScRoot(
                     dev           : MScDev,
                     index         : MScIndex,
                     grid          : MGridS,
-                    internals     : MScInternals = MScInternals.empty
+                    internals     : MScInternals
                   ) {
 
   def withDev( dev: MScDev )                        = copy(dev = dev)
