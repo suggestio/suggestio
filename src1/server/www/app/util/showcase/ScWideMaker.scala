@@ -9,9 +9,9 @@ import io.suggest.sc.tile.TileConstants
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk.{szMulted, szMultedF, szRounded}
 import models.im._
-import models.im.make.{IImgMaker, MImgMakeArgs, MakeResult}
+import models.im.make.{MImgMakeArgs, MakeResult}
 import models.mproj.ICommonDi
-import util.img.ImgMakerUtil
+import util.img.{IImgMaker, ImgMakerUtil}
 
 import scala.annotation.tailrec
 import scala.concurrent.Future

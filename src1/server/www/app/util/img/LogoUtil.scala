@@ -131,4 +131,6 @@ class LogoUtil @Inject() (
     Future.successful( logoImg2 )
   }
 
+  // TODO Это забор getLogo4scr надо выпилить. Есть FitImgMaker, его и надо юзать.
+
 }

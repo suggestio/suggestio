@@ -5,7 +5,7 @@ import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.playx.FormMappingUtil
 import japgolly.univeq.UnivEq
 import util.blocks.BlkImgMaker
-import util.img.StrictWideMaker
+import util.img.{FitImgMaker, IImgMaker, StrictWideMaker}
 import util.showcase.ScWideMaker
 
 import scala.reflect.ClassTag
@@ -39,6 +39,12 @@ case object MImgMakers extends StringEnum[MImgMaker] {
   case object StrictWide extends MImgMaker("strw") {
     override def longName   = "Strict wide"
     override def makerClass = ClassTag( classOf[StrictWideMaker] )
+  }
+
+  /** Вписывание картинки в args.targetSz с учётом экрана и ресайза. */
+  case object Fit extends MImgMaker("fit") {
+    override def longName   = "Fit"
+    override def makerClass = ClassTag( classOf[FitImgMaker] )
   }
 
   override def values = findValues

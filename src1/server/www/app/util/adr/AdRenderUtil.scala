@@ -10,12 +10,13 @@ import io.suggest.model.n2.node.MNode
 import models.adr.MAdRenderArgs
 import models.blk.{OneAdQsArgs, szMulted}
 import models.im._
-import models.im.make.{IImgMaker, MImgMakeArgs, MImgMakers, MakeResult}
+import models.im.make.{MImgMakeArgs, MImgMakers, MakeResult}
 import models.mproj.ICommonDi
 import util.adr.phantomjs.{PhantomJsRrrDiFactory, PhantomJsRrrUtil}
 import util.adr.wkhtml.{WkHtmlRrrDiFactory, WkHtmlRrrUtil}
 import util.adv.AdvUtil
 import util.blocks.BgImg
+import util.img.IImgMaker
 import util.xplay.PlayUtil
 
 import scala.concurrent.Future

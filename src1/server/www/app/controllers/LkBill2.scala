@@ -13,7 +13,6 @@ import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.node.MNode
 import io.suggest.pick.PickleUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.im.make.IImgMaker
 import models.mbill._
 import models.mcal.MCalendars
 import models.mctx.Context
@@ -24,7 +23,7 @@ import util.acl._
 import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.billing.{Bill2Util, TfDailyUtil}
-import util.img.{DynImgUtil, GalleryUtil, LogoUtil}
+import util.img.{DynImgUtil, GalleryUtil, IImgMaker, LogoUtil}
 import views.html.lk.billing._
 
 import scala.concurrent.Future

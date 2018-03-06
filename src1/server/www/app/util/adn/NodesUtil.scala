@@ -288,6 +288,7 @@ class NodesUtil @Inject() (
     *
     * @param logoImgOpt Инфа по картинке-логотипу.
     *                   см. [[util.img.LogoUtil.getLogoOfNode()]] и [[util.img.LogoUtil.getLogoOpt4scr()]].
+    *                   или [[util.img.FitImgMaker]].
     * @param welcomeOpt Инфа по welcome-картинкам.
     *                   см. [[util.img.WelcomeUtil.getWelcomeRenderArgs()]]
     * @param gallery Инфа по внутренней галлерее картинок узла.

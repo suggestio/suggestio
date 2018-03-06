@@ -3,6 +3,7 @@ package util.sec
 import javax.inject.{Inject, Singleton}
 
 import controllers.routes
+import io.suggest.common.empty.OptionUtil
 import io.suggest.proto.HttpConst
 import io.suggest.sec.csp.{Csp, CspHeader, CspPolicy, CspViolationReport}
 import models.mctx.ContextUtil
@@ -44,7 +45,7 @@ class CspUtil @Inject() (
 
   /** Заголовок CSP, который можно модификацировать в контроллерах для разных нужд. */
   val CSP_DFLT_OPT: Option[CspHeader] = {
-    if (IS_ENABLED) {
+    OptionUtil.maybe( IS_ENABLED ) {
       // TODO На ноды балансируются только картинки, возможно ещё видео. И websocket'ы, связанные с ними. Надо ли их в common запихивать всё?
       val nodesWildcard = s"*.nodes.${contextUtil.HOST_PORT}"
       val commonSources = {
@@ -56,13 +57,15 @@ class CspUtil @Inject() (
         (cdnHostsIter ++ selfHosts ++ selfNodes)
           .toSet
       }
+
       val cdnNodes = for (rewriteFromTo <- cdnUtil.REWRITE_FROM_TO.iterator) yield {
         // Из ссылки вида -suggest.cdnvideo.ru получается *.cdnvideo.ru. Как-то это не очень хорошо.
         // TODO *-suggest.cdnvideo.ru нельзя, равно как и s*-suggest.cdnvideo.ru. А желательно тоже сделать такое...
         "*" + rewriteFromTo._2.replaceFirst("^[^\\.]*", "")
       }
       val commonSourcesWithInline = commonSources + Csp.Sources.UNSAFE_INLINE
-      val cspHdr = CspHeader(
+
+      CspHeader(
         policy = CspPolicy(
           defaultSrc  = commonSources,
           imgSrc      = commonSources + Csp.Sources.DATA ++ cdnNodes,
@@ -81,14 +84,11 @@ class CspUtil @Inject() (
           reportUri = Some( routes.Static.handleCspReport().url ),
           //frameSrc = VIDEO_SRCS,    // frameSrc is depreacted.
           childSrc = VIDEO_SRCS
+          // TODO На всякий случай, флешеапплеты разрешить только с youtube/video (или вообще запретить?).
+          //objectSrc = Set( Csp.Sources.NONE )
         ),
         reportOnly = CSP_REPORT_ONLY
       )
-
-      Some(cspHdr)
-
-    } else {
-      None
     }
   }
 

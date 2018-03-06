@@ -15,12 +15,12 @@ import io.suggest.model.n2.node.{MNode, MNodesCache}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
-import models.im.make.{IImgMaker, MImgMakeArgs}
+import models.im.make.MImgMakeArgs
 import models.im._
 import models.mctx.Context
 import play.api.mvc.Call
 import util.cdn.CdnUtil
-import util.img.DynImgUtil
+import util.img.{DynImgUtil, IImgMaker}
 import util.vid.VideoUtil
 import models.blk.SzMult_t
 import util.showcase.ScWideMaker

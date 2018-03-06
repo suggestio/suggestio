@@ -7,7 +7,6 @@ import javax.inject.{Inject, Singleton}
 import akka.stream.scaladsl.FileIO
 import io.suggest.async.AsyncUtil
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.compress.MCompressAlgo
 import io.suggest.file.MimeUtilJvm
 import io.suggest.fio.IDataSource
 import io.suggest.model.img.ImgSzDated

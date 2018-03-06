@@ -1,6 +1,5 @@
 package util.img
 
-import models.im.make.IImgMaker
 import play.api.{Configuration, Environment}
 import play.api.inject.{Binding, Module}
 import util.blocks.BlkImgMaker

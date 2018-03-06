@@ -7,9 +7,9 @@ import akka.NotUsed
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import controllers.routes
-import io.suggest.common.geom.d2.MSize2di
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.img.{MImgFmt, MImgFmts}
-import io.suggest.model.n2.media.{MMedia, MMedias}
+import io.suggest.model.n2.media.{MMedia, MMedias, MMediasCache}
 import io.suggest.model.n2.media.search.MMediaSearchDfltImpl
 import io.suggest.model.n2.media.storage.IMediaStorages
 import io.suggest.url.MHostInfo
@@ -42,6 +42,7 @@ class DynImgUtil @Inject() (
                              // Только для удаления и чистки базы:
                              iMediaStorages            : IMediaStorages,
                              mMedias                   : MMedias,
+                             mMediasCache              : MMediasCache,
                              mCommonDi                 : ICommonDi
                            )
   extends MacroLogsImpl
@@ -386,6 +387,69 @@ class DynImgUtil @Inject() (
         LOGGER.info(s"$logPrefix Completed with $tryRes")
         bp.close()
       }
+  }
+
+
+  /** Определить размер картинки, а если в операциях записан кроп/ресайз/экстент, то использовать такой размер.
+    * Сюда лучше направлять уже существующую картинку, либо кропнутую картинку.
+    *
+    * @param dynImgId id операции.
+    * @return Фьючерс с опциональным размером.
+    */
+  def getImgWh(dynImgId: MDynImgId): Future[Option[ISize2di]] = {
+    lazy val logPrefix = s"getImgWh(${dynImgId.fileName})#${System.currentTimeMillis()}:"
+
+    val opWhOpt = ImOp.getWhFromOps( dynImgId.dynImgOps )
+
+    ImOp.getWhFromOps( dynImgId.dynImgOps ) match {
+      case Some(whOpt @ Some(wh)) =>
+        // Размер картинки уже очевиден из
+        LOGGER.trace(s"$logPrefix Extracted WH from dynOps: $wh")
+        Future.successful(whOpt)
+
+      case other =>
+        val mediasFut = mMediasCache.multiGet {
+          // Если getWhFromOps() позволяет, то попытаться скопировать WH с оригинала.
+          if (other.isEmpty) {
+            LOGGER.trace(s"$logPrefix Ok to use orig.img#${dynImgId.rowKeyStr} as fallback. Will fetch both orig. and derivative MMedias...")
+            dynImgId.mediaIdWithOriginalMediaId
+          } else {
+            LOGGER.trace(s"$logPrefix Cannot copy wh from orig, because it differs. Try to fetch only derivative MMedia...")
+            dynImgId.mediaId :: Nil
+          }
+        }
+
+        mediasFut.flatMap { medias =>
+          if (medias.isEmpty) {
+            LOGGER.warn(s"$logPrefix Requested MMedia (orig&dyn) not exist.")
+            Future.successful(None)
+
+          } else {
+            LOGGER.trace(s"$logPrefix Found ${medias.size} mmedias")
+            val mediaWhOpt = medias
+              .sortBy(m => !m.file.isOriginal)
+              .iterator
+              .flatMap(_.picture.whPx)
+              .toStream
+              .headOption
+
+            mediaWhOpt.fold [Future[Option[ISize2di]]] {
+              for {
+                // Защита от запуска действий по доступу к несуществующей картинке.
+                mimg  <- ensureLocalImgReady(MImg3(dynImgId), cacheResult = true)
+                whOpt <- mLocalImgs.getImageWH( mimg )
+              } yield {
+                LOGGER.trace(s"$logPrefix WH derived from handly-converted img: $whOpt")
+                whOpt
+              }
+            } { wh =>
+              // Размер картинки уже очевиден из dynOps.
+              LOGGER.trace(s"$logPrefix WH derived from MMedia: $wh")
+              Future.successful( Some(wh) )
+            }
+          }
+        }
+    }
   }
 
 }

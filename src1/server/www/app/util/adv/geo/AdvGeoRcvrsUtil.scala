@@ -6,7 +6,7 @@ import io.suggest.adn.MAdnRights
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.fut.FutureUtil
-import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MGeoNodesResp, MMapNodeIconInfo}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
@@ -14,12 +14,14 @@ import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.im.{DevPixelRatios, MAnyImgs, MImgT}
+import models.im.make.MImgMakeArgs
+import models.im._
 import models.mctx.Context
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
+import util.adn.NodesUtil
 import util.cdn.CdnUtil
-import util.img.{DynImgUtil, LogoUtil}
+import util.img.{DynImgUtil, FitImgMaker, LogoUtil}
 
 import scala.concurrent.Future
 
@@ -32,10 +34,12 @@ import scala.concurrent.Future
 class AdvGeoRcvrsUtil @Inject()(
                                  mNodes      : MNodes,
                                  logoUtil    : LogoUtil,
+                                 nodesUtil   : NodesUtil,
                                  cdnUtil     : CdnUtil,
                                  mAnyImgs    : MAnyImgs,
                                  dynImgUtil  : DynImgUtil,
                                  streamsUtil : StreamsUtil,
+                                 fitImgMaker : FitImgMaker,
                                  mCommonDi   : ICommonDi
                                )
   extends MacroLogsImpl
@@ -55,12 +59,8 @@ class AdvGeoRcvrsUtil @Inject()(
     */
   private def NODE_LOGOS_PREPARING_PARALLELISM = 16
 
-  /** Размер логотипа (по высоте) на карте. */
-  private def LOGO_HEIGHT_CSSPX = 20 //configuration.getInt("node.logo.on.map.height.px").getOrElse(20)
-
-
-  private case class LogoInfo(logo: MImgT, wh: ISize2di)
-  private case class NodeInfo(mnode: MNode, logoInfoOpt: Option[LogoInfo])
+  /** Предельные размеры логотипо в px. */
+  private def LOGO_WH_LIMITS_CSSPX = MSize2di(width = 120, height = 20)
 
 
   /** Сборка ES-аргументов для поиска узлов, отображаемых на карте.
@@ -104,41 +104,44 @@ class AdvGeoRcvrsUtil @Inject()(
 
     lazy val logPrefix = s"rcvrNodesMap(${System.currentTimeMillis}):"
 
+    val targetSz = LOGO_WH_LIMITS_CSSPX
+    val dpr = DevPixelRatios.XHDPI
+    val targetScreenSome = Some(
+      DevScreen.default
+        .withPixelRatioOpt( Some(dpr) )
+    )
+    val compressModeSome = Some(
+      CompressModes.Fg
+    )
+    val logoSzMult = 1.0f
+
     // Пережевать все найденные узлы, собрать нужные данные в единый список.
     nodesSource
       // Собрать логотипы узлов.
       .mapAsyncUnordered(NODE_LOGOS_PREPARING_PARALLELISM) { mnode =>
         // Подготовить инфу по логотипу узла.
-        val logoInfoOptFut = logoUtil.getLogoOfNode(mnode).flatMap { logoOptRaw =>
+        val logoMakeResOptFut = logoUtil.getLogoOfNode(mnode).flatMap { logoOptRaw =>
           FutureUtil.optFut2futOpt(logoOptRaw) { logoRaw =>
-            val dpr = DevPixelRatios.XHDPI
+            // Используем FitImgMaker, чтобы вписать лого в ограничения логотипа для этой карты.
+            val imakeArgs = MImgMakeArgs(
+              img           = logoRaw,
+              targetSz      = targetSz,
+              szMult        = logoSzMult,
+              // На всех один и тот же экран, т.к. так быстрее. Логотипов десятки и сотни, и они мелкие, поэтому не важно.
+              devScreenOpt  = targetScreenSome,
+              compressMode  = compressModeSome
+            )
             val fut = for {
-              logo      <- logoUtil.getLogo4scr(logoRaw, LOGO_HEIGHT_CSSPX, dpr)
-              // TODO XXX !!!! Здесь нельзя вызывать этот ensure. Надо только mimg генерить с размером. Затем mediaHostsMap, затем ссылки!!!
-              localImg  <- dynImgUtil.ensureLocalImgReady(logo, cacheResult = true)
-              whOpt     <- mAnyImgs.getImageWH(localImg)
+              logoMakeRes <- fitImgMaker.icompile( imakeArgs )
             } yield {
-              whOpt.fold[Option[LogoInfo]] {
-                LOGGER.warn(s"$logPrefix Unable to fetch WH of logo $logo for node ${mnode.idOrNull}")
-                None
-              } { wh =>
-                LOGGER.trace(s"$logPrefix wh = $wh for img $logo")
-                val wh2 = if (dpr.pixelRatio != 1.0F) {
-                  MSize2di(
-                    width  = (wh.width  / dpr.pixelRatio).toInt,
-                    height = (wh.height / dpr.pixelRatio).toInt
-                  )
-                } else {
-                  wh
-                }
-                Some( LogoInfo(logo, wh2) )
-              }
+              LOGGER.trace(s"$logPrefix wh = ${logoMakeRes.szCss}csspx/${logoMakeRes.szReal}px for img $logoRaw")
+              Some( logoMakeRes )
             }
 
             // Подавлять ошибки рендера логотипа. Дефолтовщины хватит, главное чтобы всё было ок.
             fut.recover { case ex: Throwable =>
               val msg = s"$logPrefix Node[${mnode.idOrNull}] with possible logo[$logoRaw] failed to prepare the logo for map"
-              if (ex.isInstanceOf[NoSuchElementException]) {
+              if (ex.isInstanceOf[NoSuchElementException] && !LOGGER.underlying.isTraceEnabled) {
                 LOGGER.warn(msg)
               } else {
                 LOGGER.warn(msg, ex)
@@ -161,17 +164,19 @@ class AdvGeoRcvrsUtil @Inject()(
         val nodeColors = mnode.meta.colors.withPattern()
 
         // Завернуть результат работы в итоговый контейнер, используемый вместо трейта.
-        for (logoInfoOpt <- logoInfoOptFut) yield {
+        for {
+          logoMakeResOpt <- logoMakeResOptFut
+          logoOpt        = logoMakeResOpt.map(_.dynCallArgs)
+          // Тут сборка MediaHostsMap для одного узла через пакетное API. Это не слишком эффективно, но в целом всё равно работает через кэш.
+          mediaHostsMap  <- nodesUtil.nodeMediaHostsMap( logoImgOpt = logoOpt )
+        } yield {
           // Заверуть найденную иконку в пригодный для сериализации на клиент результат:
           val iconInfoOpt = for {
-            logoInfo <- logoInfoOpt
+            logoMakeRes <- logoMakeResOpt
           } yield {
             MMapNodeIconInfo(
-              url = ctx.dynImgCall( logoInfo.logo ).url,
-              wh  = MSize2di(
-                width  = logoInfo.wh.width,
-                height = logoInfo.wh.height
-              )
+              url = dynImgUtil.distCdnImgCall( logoMakeRes.dynCallArgs, mediaHostsMap ).url,
+              wh  = logoMakeRes.szCss
             )
           }
 

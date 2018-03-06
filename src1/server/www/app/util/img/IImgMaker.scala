@@ -1,4 +1,6 @@
-package models.im.make
+package util.img
+
+import models.im.make.{MImgMakeArgs, MakeResult}
 
 import scala.concurrent.Future
 

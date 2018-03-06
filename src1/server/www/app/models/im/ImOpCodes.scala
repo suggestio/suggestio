@@ -67,11 +67,11 @@ object ImOpCodes extends StringEnum[ImOpCode] {
       ImSamplingFactors.withValue( vs.head )
     }
   }
-  object PercentSzCrop extends ImOpCode("k") {
-    override def mkOp(vs: Seq[String]): ImOp = {
-      PercentSzCropOp(new ImgCropParsersImpl().apply(vs.head))
-    }
-  }
+  //object PercentSzCrop extends ImOpCode("k") {
+  //  override def mkOp(vs: Seq[String]): ImOp = {
+  //    PercentSzCropOp(new ImgCropParsersImpl().apply(vs.head))
+  //  }
+  //}
 
   override def values = findValues
 

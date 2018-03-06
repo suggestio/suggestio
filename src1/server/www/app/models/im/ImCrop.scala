@@ -35,12 +35,12 @@ case class AbsCropOp(crop: MCrop) extends ImCropOpT {
 
 /**
  * Кроп относильно исходника.
- * @param crop Кроп, где размеры выставлены в процентах, а сдвиги - в пикселях.
+ * param crop Кроп, где размеры выставлены в процентах, а сдвиги - в пикселях.
  */
-case class PercentSzCropOp(crop: MCrop) extends ImCropOpT {
-  override def opCode = ImOpCodes.PercentSzCrop
-
-  override def addOperation(op: IMOperation): Unit = {
-    op.crop().addRawArgs(crop.toRelSzCropStr)
-  }
-}
+//case class PercentSzCropOp(crop: MCrop) extends ImCropOpT {
+//  override def opCode = ImOpCodes.PercentSzCrop
+//
+//  override def addOperation(op: IMOperation): Unit = {
+//    op.crop().addRawArgs(crop.toRelSzCropStr)
+//  }
+//}

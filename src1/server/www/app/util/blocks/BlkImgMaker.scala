@@ -5,8 +5,8 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import models.blk.{SzMult_t, szMulted}
 import models.im._
-import models.im.make.{IImgMaker, MImgMakeArgs, MakeResult}
-import util.img.ImgMakerUtil
+import models.im.make.{MImgMakeArgs, MakeResult}
+import util.img.{IImgMaker, ImgMakerUtil}
 
 import scala.concurrent.{ExecutionContext, Future}
 

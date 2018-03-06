@@ -1,7 +1,7 @@
 package controllers
 
 import java.time.OffsetDateTime
-import javax.inject.{Inject, Singleton, Named}
+import javax.inject.{Inject, Named, Singleton}
 
 import io.suggest.ad.blk.ent.{EntFont, MEntity, TextEnt}
 import io.suggest.ad.form.AdFormConstants._
@@ -17,7 +17,6 @@ import models.BlockConf
 import models.blk.PrepareBlkImgArgs
 import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
 import models.im.MImg3
-import models.im.make.IImgMaker
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.{IAdProdReq, INodeReq, IReq}
@@ -32,6 +31,7 @@ import play.twirl.api.Html
 import util.acl._
 import util.ad.LkAdEdFormUtil
 import util.blocks.{BgImg, BlocksConf, ListBlock, LkEditorWsActors}
+import util.img.IImgMaker
 import util.img.detect.main.ColorDetectWsUtil
 import util.mdr.SysMdrUtil
 import util.n2u.N2NodesUtil

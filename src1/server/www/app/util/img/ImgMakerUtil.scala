@@ -3,7 +3,7 @@ package util.img
 import javax.inject.Inject
 
 import io.suggest.model.n2.media.MMediasCache
-import models.im.{MDynImgId, MImg3}
+import models.im._
 import models.im.make.MakeResult
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -35,10 +35,10 @@ class ImgMakerUtil @Inject() (
         .get
 
       MakeResult(
-        szCss = szReal,
-        szReal = szReal,
+        szCss       = szReal,
+        szReal      = szReal,
         dynCallArgs = MImg3(dynImgId),
-        isWide = false
+        isWide      = false
       )
     }
   }

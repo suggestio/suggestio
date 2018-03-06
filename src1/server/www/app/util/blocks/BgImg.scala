@@ -13,6 +13,7 @@ import util.n2u.N2NodesUtil
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.data.{FormError, Mapping}
 import play.api.Play.current
+import util.img.IImgMaker
 
 /**
  * Suggest.io

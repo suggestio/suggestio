@@ -6,7 +6,6 @@ import controllers.sc._
 import io.suggest.model.n2.media.MMediasCache
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
-import models.im.make.IImgMaker
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
 import util.acl.{BruteForceProtect, GetAnyAd, IgnoreAuth, MaybeAuth}
@@ -20,7 +19,7 @@ import util.cdn.CdnUtil
 import util.ext.ExtServicesUtil
 import util.geo.GeoIpUtil
 import util.i18n.JsMessagesUtil
-import util.img.{DynImgUtil, LogoUtil, WelcomeUtil}
+import util.img.{DynImgUtil, IImgMaker, LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
 import util.sec.CspUtil
 import util.showcase.{ScMapUtil, _}

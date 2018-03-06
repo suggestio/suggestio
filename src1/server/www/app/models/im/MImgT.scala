@@ -177,41 +177,40 @@ trait MImgsT
     if (mLocalImgs.isExists(inst)) {
       mLocalImgs.touchAsync( inst )
       Future.successful( Some(inst) )
+
     } else {
       // Защищаемся от параллельных чтений одной и той же картинки. Это может создать ненужную нагрузку на сеть.
-      cacheApiUtil.getOrElseFut(mimg.dynImgId.fileName + ".2LOC", 4.seconds) {
-        // Запускаем поточное чтение из модели.
-        val source = getStream(mimg)
+      // Готовим поточное чтение из стораджа:
+      val source = getStream(mimg)
 
-        // Подготовится к запуску записи в файл.
-        mLocalImgs.prepareWriteFile( inst )
+      // Подготовится к запуску записи в файл.
+      mLocalImgs.prepareWriteFile( inst )
 
-        // Запустить запись в файл.
-        val toFile = mLocalImgs.fileOf(inst)
-        val writeFut = for {
-          _ <- streamsUtil.sourceIntoFile(source, toFile)
-        } yield {
-          Option(inst)
-        }
+      // Запустить запись в файл.
+      val toFile = mLocalImgs.fileOf(inst)
+      val writeFut = for {
+        _ <- streamsUtil.sourceIntoFile(source, toFile)
+      } yield {
+        Option(inst)
+      }
 
-        // Отработать ошибки записи.
-        writeFut.recover { case ex: Throwable =>
-          val logPrefix = "toLocalImg(): "
-          if (ex.isInstanceOf[NoSuchElementException]) {
-            if (LOGGER.underlying.isDebugEnabled) {
-              if (mimg.dynImgId.hasImgOps) {
-                LOGGER.debug(s"$logPrefix non-orig img not in permanent storage: $toFile")
-              } else {
-                def msg = s"$logPrefix img not found in permanent storage: $toFile"
-                if (ex.isInstanceOf[NoSuchElementException]) LOGGER.debug(msg)
-                else LOGGER.debug(msg, ex)
-              }
+      // Отработать ошибки записи.
+      writeFut.recover { case ex: Throwable =>
+        val logPrefix = "toLocalImg(): "
+        if (ex.isInstanceOf[NoSuchElementException]) {
+          if (LOGGER.underlying.isDebugEnabled) {
+            if (mimg.dynImgId.hasImgOps) {
+              LOGGER.debug(s"$logPrefix non-orig img not in permanent storage: $toFile")
+            } else {
+              def msg = s"$logPrefix img not found in permanent storage: $toFile"
+              if (ex.isInstanceOf[NoSuchElementException]) LOGGER.debug(msg)
+              else LOGGER.debug(msg, ex)
             }
-          } else {
-            LOGGER.warn(s"$logPrefix _getImgBytes2 or writeIntoFile $toFile failed", ex)
           }
-          None
+        } else {
+          LOGGER.warn(s"$logPrefix _getImgBytes2 or writeIntoFile $toFile failed", ex)
         }
+        None
       }
     }
   }

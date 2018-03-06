@@ -108,6 +108,17 @@ final case class MDynImgId(
   def withDynImgOps(dynImgOps: Seq[ImOp] = Nil) = copy(dynImgOps = dynImgOps)
   def withDynFormat(dynFormat: MImgFmt)         = copy(dynFormat = dynFormat)
 
+  /** Добавить операции в конец списка операций. */
+  def addDynImgOps(addDynImgOps: Seq[ImOp]): MDynImgId = {
+    if (addDynImgOps.isEmpty) {
+      this
+    } else if (dynImgOps.isEmpty) {
+      withDynImgOps( addDynImgOps )
+    } else {
+      withDynImgOps( dynImgOps ++ addDynImgOps )
+    }
+  }
+
   /** id для модели MMedia. */
   lazy val mediaId = MDynImgId.mkMediaId(this)
 

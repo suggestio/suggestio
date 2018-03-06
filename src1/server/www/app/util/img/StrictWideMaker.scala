@@ -6,7 +6,7 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.img.crop.MCrop
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.blk._
-import models.im.make.{MImgMakeArgs, IImgMaker, MakeResult}
+import models.im.make.{MImgMakeArgs, MakeResult}
 import models.im._
 
 import scala.concurrent.Future
@@ -41,37 +41,33 @@ class StrictWideMaker @Inject() (
    * @return Фьючерс с экземпляром [[models.im.make.MakeResult]].
    */
   override def icompile(args: MImgMakeArgs): Future[MakeResult] = {
-    // TODO Возможно, следует использовать Future.successful()? Вычисление в целом легковесное.
-     // Параметры экрана обязательны при вызове этого maker'а.
-    val devScreen: DevScreen = {
-      val dso = args.devScreenOpt
-      if (dso.isEmpty)
-        throw new IllegalArgumentException(getClass.getSimpleName + ": args.devScreen is mandatory for this maker. You've passed empty screen info.")
-      else
-        dso.get
-    }
-    val pxRatio = devScreen.pixelRatio
-
-    // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
-    val heightCssRaw = szMultedF(args.targetSz.height, args.szMult)
-    val height = szMulted(heightCssRaw, pxRatio.pixelRatio)
-    // Ширину экрана берем из DevScreen.
-    val widthCssPx = devScreen.width
-    val width = szMulted(widthCssPx, pxRatio.pixelRatio)
-
-    // Компрессия, по возможности использовать передний план, т.к. maker используется для соц.сетей.
-    val compression = args.compressMode
-      .getOrElse(CompressModes.Fg)
-      .fromDpr(pxRatio)
-
-    val szReal = MSize2di(height = height, width = width)
-
     val origImgId = args.img.dynImgId.original
     if (origImgId.dynFormat.isVector) {
       // Это SVG.
       imgMakerUtil.returnImg( origImgId )
 
     } else {
+      // TODO Возможно, следует использовать Future.successful()? Вычисление в целом легковесное.
+      // Параметры экрана обязательны при вызове этого maker'а.
+      val devScreen = args.devScreenOpt.getOrElse {
+        throw new IllegalArgumentException(getClass.getSimpleName + ": args.devScreen is mandatory for this maker. You've passed empty screen info.")
+      }
+      val pxRatio = devScreen.pixelRatio
+
+      // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
+      val heightCssRaw = szMultedF(args.targetSz.height, args.szMult)
+      val height = szMulted(heightCssRaw, pxRatio.pixelRatio)
+      // Ширину экрана берем из DevScreen.
+      val widthCssPx = devScreen.width
+      val width = szMulted(widthCssPx, pxRatio.pixelRatio)
+
+      // Компрессия, по возможности использовать передний план, т.к. maker используется для соц.сетей.
+      val compression = args.compressMode
+        .getOrElse(CompressModes.Fg)
+        .fromDpr(pxRatio)
+
+      val szReal = MSize2di(height = height, width = width)
+
       // Растр. Собираем набор инструкций для imagemagick.
       val imOps = List[ImOp](
         ImGravities.Center,

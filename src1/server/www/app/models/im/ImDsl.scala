@@ -2,6 +2,8 @@ package models.im
 
 import java.text.DecimalFormat
 
+import io.suggest.common.empty.OptionUtil
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImpl
 import org.im4java.core.IMOperation
@@ -99,6 +101,46 @@ object ImOp extends MacroLogsImpl with JavaTokenParsers {
     val iter0 = FormUtil.parseToPairs(raw)
       .map { case (k, v)  =>  k -> List(v) }
     bindImOps(keyDotted, iter0)
+  }
+
+
+  /** Попытаться узнать точный размер результирующей картинки на основе im-операций кропа/ресайза.
+    *
+    * @param ops Операции в обычном порядке.
+    * @return Опциональные размеры картинки.
+    *         Some(Some()) достоверные размеры картинки.
+    *         Some(None) достоверные размеры отсутсвуют и ОТЛИЧАЮТСЯ от оригинала
+    *         None - нет инфы по размерами, но они совпадает с оригиналом.
+    */
+  def getWhFromOps(ops: Seq[ImOp]): Option[Option[ISize2di]] = {
+    OptionUtil.maybeOpt(ops.nonEmpty) {
+      getWhFromOpsRev( ops.reverseIterator )
+    }
+  }
+  /** Попытаться узнать точный размер результирующей картинки на основе im-операций в ОБРАТНОМ ПОРЯДКЕ.
+    *
+    * @param opsRev Im-операции в ОБРАТНОМ порядке.
+    * @return Опционально: найденный размер выхлопа.
+    */
+  def getWhFromOpsRev(opsRev: TraversableOnce[ImOp]): Option[Option[ISize2di]] = {
+    opsRev
+      .toIterator
+      // Надо найти операцию, затрагивающую фактический размер, и попытаться извлечь из неё wh.
+      .flatMap {
+        case op: AbsCropOp =>
+          Some(op.crop) :: Nil
+        case op: AbsResizeOp =>
+          // Ресайз можно использовать как размер, только если указанный размер точно соответствует результату.
+          val isResizeStrict = op.flags.contains( ImResizeFlags.FillArea ) || op.flags.contains( ImResizeFlags.IgnoreAspectRatio )
+          OptionUtil.maybe(isResizeStrict)(op.sz) :: Nil
+        case op: ExtentOp =>
+          Some(op.wh) :: Nil
+        case _ =>
+          Nil
+      }
+      .toStream
+      // Интересует только первая с конца возможная операция, задающая картинке достоверный размер:
+      .headOption
   }
 
 }
