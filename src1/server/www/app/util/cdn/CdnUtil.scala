@@ -3,6 +3,7 @@ package util.cdn
 import javax.inject.{Inject, Singleton}
 
 import controllers.routes
+import io.suggest.common.empty.OptionUtil
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.model.n2.media.MMedia
 import io.suggest.model.n2.media.storage._
@@ -288,11 +289,13 @@ class CdnUtil @Inject() (
   /** Аналог forCall() для dist-cdn.
     *
     * @param call Исходный url Call.
-    * @param mediaIds id media-узла в карте узлов в порядке приоритета.
+    * @param mediaIds media id в карте узлов в порядке приоритета.
+    *                 Первый элемент - media-id дериватива, если это дериватив.
+    *                 Последний элемент -- это всегда media id оригинала! Это нужно для балансировки по хостам, даже когда id дериватива задан.
     * @param mediaHostsMap Результат mediaHosts().
     * @return Обновлённый Call с абсолютной ссылкой внутри.
     */
-  def forMediaCall1(call: Call, mediaHostsMap: Map[String, Seq[MHostInfo]], mediaIds: TraversableOnce[String]): Call = {
+  def forMediaCall1(call: Call, mediaHostsMap: Map[String, Seq[MHostInfo]], mediaIds: Seq[String]): Call = {
     call match {
       case ext: ExternalCall =>
         throw new IllegalArgumentException("External calls cannot be here. Check code, looks like this method called twice: " + ext)
@@ -301,7 +304,7 @@ class CdnUtil @Inject() (
         val newCallIter = for {
           mediaId <- mediaIds.toIterator
           hosts   <- mediaHostsMap.get(mediaId)
-          host    <- chooseMediaHost(mediaId, hosts)
+          host    <- chooseMediaHost(mediaIds.last, hosts)
         } yield {
           val url = distNodeCdnUrlNoCheck(host, call)
           LOGGER.trace(s"$logPrefix URL gen ok\n mediaId = $mediaId\n host = $host\n url => $url\n mediaHosts[${mediaHostsMap.size}] = ${mediaHostsMap.keys.mkString(", ")}")
@@ -319,9 +322,28 @@ class CdnUtil @Inject() (
   }
 
 
-  def chooseMediaHost(mediaId: String, hosts: Seq[MHostInfo]): Option[MHostInfo] = {
-    // TODO Это неправильно. Надо выбирать на основе mediaId.
-    hosts.headOption
+  /** Выбор (и балансировка) медиа-хоста среди множества этих самых хостов.
+    * Стараемся равномерно балансировать нагрузку, и картинки одного
+    *
+    * @param nodeId ключ для балансировки по хостам, если узлов > 1.
+    *               Обычно - чистый id узла, без всяких media-суффиксов id.
+    * @param hosts Список хостов, по которым возможна балансировка.
+    * @return Выбранный медиа-хост, когда hosts не пустой.
+    */
+  def chooseMediaHost(nodeId: String, hosts: Seq[MHostInfo]): Option[MHostInfo] = {
+    OptionUtil.maybeOpt(hosts.nonEmpty) {
+      if (hosts.lengthCompare(1) == 0) {
+        // Если только 1 хост, то балансировка не нужна.
+        hosts.headOption
+      } else {
+        // Балансируем запросы по хостам с помощью стабильного nodeId: остаток от деления по кол-ву доступных хостов.
+        val hostsCount = hosts.size
+        val hostIdx = Math.abs( nodeId.hashCode % hostsCount )
+        val choosenHost = hosts.sortBy(_.nameInt).apply(hostIdx)
+        LOGGER.trace(s"chooseMediaHost($nodeId): Choosen host ${choosenHost.namePublic} from $hostsCount hosts: [${hosts.iterator.map(_.namePublic).mkString(" | ")}]")
+        Some( choosenHost )
+      }
+    }
   }
 
   /** Правила перезаписи хостнеймов. */
