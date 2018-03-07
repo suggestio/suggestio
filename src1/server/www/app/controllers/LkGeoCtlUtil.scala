@@ -180,9 +180,6 @@ protected class LkGeoCtlUtil @Inject() (
         .toMat( Sink.seq )(Keep.both)
         .run()
 
-      // Параллельно считаем общее кол-во найденных item'ов, чтобы сравнить их с лимитом.
-      //val itemsCountFut = streamsUtil.runCount(itemsSrc)
-
       // Сборка непоточного бинарного ответа.
       for {
         rowsMs      <- rowsMsFut

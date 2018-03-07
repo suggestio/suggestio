@@ -3,6 +3,7 @@ package io.suggest.util
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.ByteBuffer
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
+import javax.inject.Singleton
 
 import io.suggest.bin.{BinaryUtil, ConvCodecs, IDataConv}
 import org.apache.commons.io.IOUtils
@@ -13,6 +14,7 @@ import org.apache.commons.io.IOUtils
   * Created: 23.05.17 17:04
   * Description: Утиль для сжатия/разжатия данных на стороне JVM.
   */
+@Singleton
 class CompressUtilJvm {
 
   /** Неявная утварь всякая. */

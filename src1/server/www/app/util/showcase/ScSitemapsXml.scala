@@ -78,15 +78,14 @@ class ScSitemapsXml @Inject() (
       override def limit = 25
     }
 
-    val src0 = mNodes.source[MNode](adSearch)
-
     lazy val logPrefix = s"siteMapXmlSrc()[${System.currentTimeMillis()}]:"
 
     // Готовим неизменяемые потоко-безопасные константы, которые будут использованы для ускорения последующих шагов.
     val today = LocalDate.now()
     val qsb = ScJsState.qsbStandalone
 
-    val urls = src0
+    mNodes
+      .source[MNode](adSearch)
       .mapConcat { mad =>
         try {
           mad2sxu(mad, today, qsb)
@@ -101,8 +100,6 @@ class ScSitemapsXml @Inject() (
       .maybeTraceCount(this) { totalCount =>
         s"$logPrefix Total nodes found: $totalCount"
       }
-
-    urls
   }
 
 

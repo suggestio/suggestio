@@ -4,10 +4,13 @@ import javax.inject.{Inject, Singleton}
 
 import akka.util.ByteString
 import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
+import io.suggest.compress.MCompressAlgos
 import io.suggest.ctx.{MCtxId, MCtxIds}
+import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.pick.PickleUtil
 import io.suggest.sec.csp.CspViolationReport
 import io.suggest.stat.m.{MComponents, MDiag}
+import io.suggest.util.CompressUtilJvm
 import models.mctx.Context
 import models.mproj.ICommonDi
 import play.api.libs.json.JsValue
@@ -44,6 +47,7 @@ class Static @Inject() (
                          advGeoRcvrsUtil                 : AdvGeoRcvrsUtil,
                          statUtil                        : StatUtil,
                          aclUtil                         : AclUtil,
+                         compressUtilJvm                 : CompressUtilJvm,
                          secHeadersFilterUtil            : SecHeadersFilterUtil,
                          cspUtil                         : CspUtil,
                          mCtxIds                         : MCtxIds,
@@ -62,6 +66,7 @@ class Static @Inject() (
 
   import mCommonDi._
   import cspUtil.Implicits._
+  import compressUtilJvm.Implicits._
 
 
   /**
@@ -224,6 +229,40 @@ class Static @Inject() (
   }
 
 
+  /** Обсчитать данные карты узлов с использование кэширования.
+    *
+    * @return Фьючерс с gzip-ответом и значением etag.
+    */
+  private def _advRcvrsMapRespFut(): Future[(ByteString, Int)] = {
+    // Собрать и оформить данные по всем узлам, с использованием кэша.
+    // Операция ресурсоёмкая, поэтому кэш обязателен.
+    // TODO После портирования назад на JSON, надо будет akka-stream параллельно развести на gzip и brotli компрессоры и на хэшировалку. И опять же, кэшируя результат.
+    cache.getOrElseUpdate("advGeoNodesSrc", expiration = 10.seconds) {
+      val startedAtMs = System.currentTimeMillis()
+      for {
+        nodesRespMap <- advGeoRcvrsUtil.rcvrNodesMap(
+          advGeoRcvrsUtil.onMapRcvrsSearch(30)
+        )
+        nodesResp = MGeoNodesResp(
+          nodes = nodesRespMap.values
+        )
+        checksumFut = Future {
+          nodesRespMap.hashCode()
+        }
+        bbuf = PickleUtil.pickle( nodesResp )
+        gzippedBytea = GzipCompressConv.convert( bbuf )
+        checksum <- checksumFut
+      } yield {
+        // Завернуть в ByteString.
+        LOGGER.trace(s"_advRcvrsMapRespFut#${System.currentTimeMillis()}: Compiled resp with ${nodesResp.nodes.size} nodes, gzipped into ${gzippedBytea.length}bytes, checksum=$checksum, took=${System.currentTimeMillis() - startedAtMs} ms.")
+        val gzipBytes = ByteString.fromArrayUnsafe( gzippedBytea )
+
+        (gzipBytes, checksum)
+      }
+    }
+  }
+
+
   /**
     * Получение списка шейпов и маркеров узлов-ресиверов на карте.
     *
@@ -237,24 +276,31 @@ class Static @Inject() (
     */
   def advRcvrsMap = {
     ignoreAuth().async { implicit request =>
-      // Собрать данные по узлам.
-      val nodesRespBytesFut = cache.getOrElseUpdate("advGeoNodesSrc", expiration = 10.seconds) {
-        val msearch = advGeoRcvrsUtil.onMapRcvrsSearch(30)
-        for {
-          nodesResp <- advGeoRcvrsUtil.rcvrNodesMap( msearch )
-        } yield {
-          val bytes = ByteString(
-            PickleUtil.pickle( nodesResp )
-          )
-          bytes
-        }
-      }
-
       // Завернуть данные в единый блоб и отправить клиенту.
-      for (nodesRespBytes <- nodesRespBytesFut) yield {
-        Ok( nodesRespBytes )
+      for {
+        (gzipBytes, checksum) <- _advRcvrsMapRespFut()
+      } yield {
+        val etag = checksum.toString
+
+        // Совпадает ли Etag со значением на клиенте?
+        val etagMatches = request.headers
+          .get(IF_NONE_MATCH)
+          .contains( etag )
+
+        val resultBase = if (etagMatches) {
+          LOGGER.trace(s"advRcvrsMap#${System.currentTimeMillis()}: Etag match $etag, returning 304")
+          NotModified
+        } else {
+          // Тут не проверяется Accept-Encoding. Наврядли есть клиенты без поддержки gzip.
+          Ok( gzipBytes )
+            .withHeaders(CONTENT_ENCODING -> MCompressAlgos.Gzip.httpContentEncoding)
+        }
+
+        resultBase
+          // TODO Для 304-ответа тоже надо Etag и Cache-control?? Или только для 200 ok?
           .withHeaders(
-            CACHE_CONTROL -> "public, max-age=20"
+            CACHE_CONTROL -> "public, max-age=20",
+            ETAG          -> etag
           )
       }
     }

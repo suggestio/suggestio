@@ -2,6 +2,7 @@ package util.adv.geo
 
 import javax.inject.Inject
 
+import akka.stream.scaladsl.{Keep, Sink}
 import io.suggest.adn.MAdnRights
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.rcvr.RcvrKey
@@ -12,11 +13,9 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.n2.node.{MNode, MNodes}
-import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.MImgMakeArgs
 import models.im._
-import models.mctx.Context
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
 import util.adn.NodesUtil
@@ -38,7 +37,6 @@ class AdvGeoRcvrsUtil @Inject()(
                                  cdnUtil     : CdnUtil,
                                  mAnyImgs    : MAnyImgs,
                                  dynImgUtil  : DynImgUtil,
-                                 streamsUtil : StreamsUtil,
                                  fitImgMaker : FitImgMaker,
                                  mCommonDi   : ICommonDi
                                )
@@ -96,9 +94,11 @@ class AdvGeoRcvrsUtil @Inject()(
   /** Карта ресиверов, размещённых через lk-adn-map.
     *
     * @param msearch Инстас поисковых аргументов, собранный через rcvrsSearch().
-    * @return Фьючерс с GeoJSON.
+    * @return Фьючерс с картой узлов.
+    *         Карта нужна для удобства кэширования и как бы "сортировки", чтобы hashCode() или иные хэш-функции
+    *         всегда возвращали один и тот же результат.
     */
-  def rcvrNodesMap(msearch: MNodeSearch)(implicit ctx: Context): Future[MGeoNodesResp] = {
+  def rcvrNodesMap(msearch: MNodeSearch): Future[Map[String, MGeoNodePropsShapes]] = {
     // Начать выкачивать все подходящие узлы из модели:
     val nodesSource = mNodes.source[MNode](msearch)
 
@@ -190,19 +190,17 @@ class AdvGeoRcvrsUtil @Inject()(
           )
 
           // Собрать и вернуть контейнер с данными мапы узлов:
-          MGeoNodePropsShapes(
+          nodeId -> MGeoNodePropsShapes(
             props  = props,
             shapes = geoShapes
           )
         }
       }
       // Собрать в единый список всё это дело:
-      .runFold( List.empty[MGeoNodePropsShapes] ) { (acc, e) => e :: acc }
-      .map { mgnps =>
-        MGeoNodesResp(
-          nodes = mgnps
-        )
-      }
+      .toMat {
+        Sink.collection[(String, MGeoNodePropsShapes), Map[String, MGeoNodePropsShapes]]
+      }( Keep.right )
+      .run()
   }
 
 

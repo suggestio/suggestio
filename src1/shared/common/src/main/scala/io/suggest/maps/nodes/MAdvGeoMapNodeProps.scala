@@ -4,6 +4,8 @@ import boopickle.Default._
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.n2.node.meta.colors.MColors
 import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -13,6 +15,13 @@ import japgolly.univeq.UnivEq
   */
 
 object MAdvGeoMapNodeProps {
+
+  implicit def MAdvGeoMapNodePropsFormat: OFormat[MAdvGeoMapNodeProps] = (
+    (__ \ "n").format[String] and
+    (__ \ "c").format[MColors] and
+    (__ \ "h").formatNullable[String] and
+    (__ \ "i").formatNullable[MMapNodeIconInfo]
+  )(apply, unlift(unapply))
 
   /** Поддержка boopickle. */
   implicit val mAdvGeoMapNodePropsPickler: Pickler[MAdvGeoMapNodeProps] = {
@@ -41,6 +50,11 @@ case class MAdvGeoMapNodeProps(
 
 
 object MMapNodeIconInfo {
+
+  implicit def MMapNodeIconInfoFormat: OFormat[MMapNodeIconInfo] = (
+    (__ \ "u").format[String] and
+    (__ \ "wh").format[MSize2di]
+  )(apply, unlift(unapply))
 
   /** Поддержка boopickle. */
   implicit val mMapNodeIconInfoPickler: Pickler[MMapNodeIconInfo] = {

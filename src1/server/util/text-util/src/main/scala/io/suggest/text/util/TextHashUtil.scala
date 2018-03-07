@@ -38,18 +38,10 @@ object TextHashUtil {
   def md5(str: String): Array[Byte]    = md5(str.getBytes)
   def md5(a: Array[Byte]): Array[Byte] = md5Digest.digest(a)
 
-  /**
-   * Сделать из обычной строки md5-хеш строку капслоком.
-   * @param str строка для превращения в md5-хеш.
-   * @return
-   */
-  def md5hex(str:String) : String = {
-    val digest = md5(str)
-    // TODO Вместо 16-ричного кодирования лучше использовать весь алфавит + алфавит в upper-case.
-    //      Тогда хеши будут ощутимо короче. В эрланге использовалось 36-ричное кодирование: [0-9a-z]
+
+  def toHex(digest: Array[Byte]): String = {
     HexBin.encode(digest)
   }
-
 
   def sha1Digest = _sha1digestSrc.clone().asInstanceOf[MessageDigest]
 
