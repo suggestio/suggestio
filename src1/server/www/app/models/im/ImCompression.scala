@@ -1,5 +1,8 @@
 package models.im
 
+import io.suggest.img.{MImgFmt, MImgFmts}
+import japgolly.univeq._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -8,30 +11,48 @@ package models.im
  * В основном, все эти данные относятся к JPEG.
  */
 
+object ImCompression {
+
+  val SOME_BLUR = Some( GaussBlurOp(1) )
+  val SOME_CHROMA_SS = Some( ImSamplingFactors.Sf1x2 )
+
+}
+
 
 /**
  * Настройки сжатия.
  * @param quality quality (0..100). Основной параметр для jpeg'ов.
- * @param chromaSubSampling Цветовая субдискретизация. 2x2 по дефолту.
+ * @param chromaSubSampling Цветовая субдискретизация. 2x2 по дефолту. (JPEG)
  * @param blur Желаемая размывка.
  */
 case class ImCompression(
                           quality           : Int,
-                          chromaSubSampling : ImSamplingFactor  = ImSamplingFactors.Sf2x2,
-                          blur              : Option[Float]     = None
-) {
+                          chromaSubSampling : Option[ImSamplingFactor]  = None,
+                          blur              : Option[GaussBlurOp]       = None
+                        ) {
 
-  /** Значение quality. */
-  def imQuality = quality.toDouble
+  /** Сгенерить операции для сжатия.
+    *
+    * @return Список операций.
+    */
+  def toOps(outputFormat: MImgFmt): List[ImOp] = {
+    var acc = List.empty[ImOp]
 
-  /** Сгенерить экземпляр quality ImOp. */
-  def imQualityOp = QualityOp(imQuality)
+    // Добавляем, соблюдая порядок полей (для удобства при отладке):
+    for (b <- blur)
+      acc ::= b
 
-  /** Опционально сгенерить GaussBlurOp, если требуется размывка. */
-  def imGaussBlurOp: Option[GaussBlurOp] = {
-    blur.map { blurFloat =>
-      GaussBlurOp(blurFloat)
-    }
+    val isJpeg = outputFormat ==* MImgFmts.JPEG
+
+    for (chrSs <- chromaSubSampling if isJpeg)
+      acc ::= chrSs
+
+    // Добавить quality в начало списка, чтобы был как визуальный ориентир-разделитель:
+    // Нельзя выставлять q для PNG (или всегда 100 выставлять), она там работает наоборот.
+    if (isJpeg)
+      acc ::= QualityOp( quality )
+
+    acc
   }
 
 }

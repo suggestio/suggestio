@@ -199,7 +199,9 @@ class ScWideMaker @Inject() (
     val wideWh = MSize2di(height = tgtHeightReal, width = cropWidth)
 
     val origImgId = args.img.dynImgId.original
-    if (origImgId.dynFormat.isVector) {
+    val outFmt = origImgId.dynFormat
+
+    if (outFmt.isVector) {
       // Это SVG, вернуть всё как есть
       imgMakerUtil.returnImg( origImgId )
 
@@ -211,19 +213,17 @@ class ScWideMaker @Inject() (
         .getOrElse(CompressModes.Bg)
         .fromDpr(pxRatio)
 
-      val imOps0 = List[ImOp](
-        AbsResizeOp(wideWh, ImResizeFlags.FillArea :: Nil),
+      val imOps0 =
+        AbsResizeOp(wideWh, ImResizeFlags.FillArea :: Nil) ::
         // FillArea почти всегда выдаёт результат, выходящий за пределы wideWh по одному из измерений.
         // Подогнать под wideWh, сделав extent-кроп по wideWh (как и рекомендуется в доках):
-        ImGravities.Center,
-        ExtentOp(wideWh),
+        ImGravities.Center ::
+        ExtentOp(wideWh) ::
         // сглаживание, сжатие вывода, итд
-        ImFilters.Lanczos,
-        StripOp,
-        ImInterlaces.Plane,
-        compression.chromaSubSampling,
-        compression.imQualityOp
-      )
+        ImFilters.Lanczos ::
+        StripOp ::
+        ImInterlaces.Plane ::
+        compression.toOps( outFmt )
 
       // Растр. Нужно брать кроп отн.середины только когда нет исходного кропа и реально широкая картинка. Иначе надо транслировать исходный пользовательский кроп в этот.
       val imFinal9Fut = for (cropInfo <- cropInfoFut) yield {

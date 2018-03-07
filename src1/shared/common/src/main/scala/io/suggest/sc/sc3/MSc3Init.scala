@@ -16,7 +16,7 @@ object MSc3Init {
   /** Поддержка play-json. */
   implicit def MSC3_INIT_FORMAT: OFormat[MSc3Init] = (
     (__ \ "m").format[MMapProps] and
-    (__ \ "r").format[String]
+    (__ \ "r").format[MSc3Conf]
   )(apply, unlift(unapply))
 
 }
@@ -29,5 +29,5 @@ object MSc3Init {
   */
 case class MSc3Init(
                      mapProps     : MMapProps,
-                     rcvrsMapUrl  : String
+                     conf         : MSc3Conf
                    )

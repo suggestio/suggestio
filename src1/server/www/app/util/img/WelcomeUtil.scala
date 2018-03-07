@@ -148,15 +148,23 @@ class WelcomeUtil @Inject() (
   private def bgCallForScreen(oiik: MImgT, screenOpt: Option[DevScreen], origMeta: ISize2di)
                              (implicit ctx: Context): MImgWithWhInfo = {
     val oiik2 = oiik.original
+    lazy val logPrefix = s"bgCallForScreen($oiik):"
     screenOpt
       .flatMap { scr =>
         scr.maybeBasicScreenSize.map(_ -> scr)
       }
       .fold {
+        LOGGER.debug(s"$logPrefix No screen sz info for $screenOpt. Returning original img.")
         MImgWithWhInfo(oiik, origMeta)
       } { case (bss, screen) =>
-        val imOps = imConvertArgs(bss, screen)
-        val dynArgs = oiik2.withDynOps(imOps)
+        val outFmt = MImgFmts.JPEG
+        val imOps = bgImConvertArgs(outFmt, bss, screen)
+        val dynArgs = oiik2.withDynImgId(
+          oiik2.dynImgId.copy(
+            dynFormat = outFmt,
+            dynImgOps = imOps
+          )
+        )
         MImgWithWhInfo(dynArgs, bss)
       }
   }
@@ -165,22 +173,26 @@ class WelcomeUtil @Inject() (
     * @param scrSz Размер конечной картинки.
     * @return Список ImOp в прямом порядке.
     */
-  private def imConvertArgs(scrSz: BasicScreenSize, screen: DevScreen): Seq[ImOp] = {
+  private def bgImConvertArgs(outFmt: MImgFmt, scrSz: BasicScreenSize, screen: DevScreen): Seq[ImOp] = {
     val gravity = ImGravities.Center
-    val acc0: List[ImOp] = Nil
     val bgc = screen.pixelRatio.bgCompression
-    val acc1 = gravity ::
+
+    var acc =
+      StripOp ::
+      ImInterlaces.Plane ::
+      bgc.toOps( outFmt )
+
+    for (b <- bgc.blur) {
+      acc ::= b
+    }
+
+    acc = gravity ::
       AbsResizeOp(scrSz, Seq(ImResizeFlags.FillArea)) ::
       gravity ::
       ExtentOp(scrSz) ::
-      StripOp ::
-      bgc.imQualityOp ::
-      ImInterlaces.Plane ::
-      bgc.chromaSubSampling ::
-      acc0
-    bgc
-      .imGaussBlurOp
-      .fold(acc1)(_ :: acc1)
+      acc
+
+    acc
   }
 
   /** внутренний метод для генерации ответа по фону приветствия в режиме цвета. */

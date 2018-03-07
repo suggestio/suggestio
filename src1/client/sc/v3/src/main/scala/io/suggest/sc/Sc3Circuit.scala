@@ -12,7 +12,7 @@ import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
-import io.suggest.routes.{AdvRcvrsMapApiHttpViaRouter, AdvRcvrsMapApiHttpViaUrl, scRoutes}
+import io.suggest.routes.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.c.dev.{GeoLocAh, ScreenAh}
 import io.suggest.sc.c.{JsRouterInitAh, TailAh}
@@ -24,7 +24,7 @@ import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.m.search.{MMapInitState, MScSearch}
-import io.suggest.sc.sc3.{MSc3IndexResp, MSc3Init}
+import io.suggest.sc.sc3.{MSc3Conf, MSc3IndexResp, MSc3Init}
 import io.suggest.sc.styl.{MScCssArgs, ScCss, ScCssFactory}
 import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.sjs.common.log.CircuitLog
@@ -105,10 +105,7 @@ class Sc3Circuit(
         )
       },
       internals = MScInternals(
-        // TODO Унести conf-модель в [common] целиком, задавать её прямо на сервере.
-        conf = MSc3Conf(
-          rcvrsMapUrl = scInit.rcvrsMapUrl
-        )
+        conf = scInit.conf
       )
     )
   }

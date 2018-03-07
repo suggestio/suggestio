@@ -49,30 +49,33 @@ class BlkImgMaker @Inject() (
    * @return Фьючерс с экземпляром MakeResult.
    */
   override def icompile(args: MImgMakeArgs): Future[MakeResult] = {
-    // Раз системе надо асинхронно, значит делаем асинхронно в принудительном порядке:
-    val pxRatio = DevPixelRatios.pxRatioDefaulted( args.devScreenOpt.flatMap(_.pixelRatioOpt) )
-
-    // Компрессия выходной картинки, желательно как fg её сжимать.
-    val fgc = args.compressMode
-      .getOrElse(CompressModes.Fg)
-      .fromDpr(pxRatio)
-
     val origImgId = args.img.dynImgId.original
-    if (origImgId.dynFormat.isRaster) {
+    val outFmt = origImgId.dynFormat
+    if (outFmt.isVector) {
+      // Это SVG, а convert на выходе выдаёт растр. Надо кропать прямо на клиенте, а не здесь.
+      imgMakerUtil.returnImg(origImgId)
+
+    } else {
+      // Раз системе надо асинхронно, значит делаем асинхронно в принудительном порядке:
+      val pxRatio = DevPixelRatios.pxRatioDefaulted( args.devScreenOpt.flatMap(_.pixelRatioOpt) )
+
+      // Компрессия выходной картинки, желательно как fg её сжимать.
+      val fgc = args.compressMode
+        .getOrElse(CompressModes.Fg)
+        .fromDpr(pxRatio)
+
       val szReal = getRenderSz(args.szMult, args.targetSz, pxRatio)
 
       // Это jpeg/png/gif и т.д. Прогнать через convert.
       // Настройки сохранения результирующей картинки (аккамулятор).
-      val imOpsAcc = List[ImOp](
-        ImGravities.Center,
-        AbsResizeOp(szReal, ImResizeFlags.FillArea),
-        ExtentOp(szReal),
-        ImFilters.Lanczos,
-        StripOp,
-        ImInterlaces.Plane,
-        fgc.chromaSubSampling,
-        fgc.imQualityOp
-      )
+      val imOpsAcc =
+        ImGravities.Center ::
+        AbsResizeOp(szReal, ImResizeFlags.FillArea) ::
+        ExtentOp(szReal) ::
+        ImFilters.Lanczos ::
+        StripOp ::
+        ImInterlaces.Plane ::
+        fgc.toOps( outFmt )
 
       val mr = MakeResult(
         szCss       = MSize2di(args.targetSz),
@@ -83,9 +86,6 @@ class BlkImgMaker @Inject() (
       )
       Future.successful(mr)
 
-    } else {
-      // Это SVG, а convert на выходе выдаёт растр. Надо кропать прямо на клиенте, а не здесь.
-      imgMakerUtil.returnImg(origImgId)
     }
   }
 

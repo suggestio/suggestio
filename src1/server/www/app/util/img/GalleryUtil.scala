@@ -93,13 +93,16 @@ class GalleryUtil @Inject() (
       width  = szMulted(LK_NODE_GALLERY_SHOW_WIDTH_PX,  devPixelRatio.pixelRatio),
       height = szMulted(LK_NODE_GALLERY_SHOW_HEIGHT_PX, devPixelRatio.pixelRatio)
     )
-    var imOps: List[ImOp] = List(
-      ImGravities.Center,
-      AbsResizeOp( newSz, ImResizeFlags.FillArea ),
-      ExtentOp( newSz ),
-      devPixelRatio.fgCompression.imQualityOp,
-      ImInterlaces.Plane
-    )
+
+    val outFmt = mimg.dynImgId.dynFormat
+
+    var imOps: List[ImOp] =
+      ImGravities.Center ::
+      AbsResizeOp( newSz, ImResizeFlags.FillArea ) ::
+      ExtentOp( newSz ) ::
+      ImInterlaces.Plane ::
+      devPixelRatio.fgCompression.toOps( outFmt )
+
     // Если необходимо, то сначала делаем кроп:
     // TODO Если картинка не кропаная, то кропать её принудительно на 200 пикселей по высоте?
     for (crop <- mimg.dynImgId.cropOpt)

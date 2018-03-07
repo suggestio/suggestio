@@ -29,6 +29,20 @@ case object CompressModes extends StringEnum[CompressMode] {
     override def nameI18n = "Foreground"
   }
 
+  /** Большие фоновые картинки-обоины требуют особого подхода к сжатию эффективного  */
+  case object DeepBackground extends CompressMode("dbg") {
+    override def nameI18n = "Deep background"
+    override def fromDpr(dpr: DevPixelRatio): ImCompression = {
+      val c0 = Bg.fromDpr(dpr)
+      c0.copy(
+        quality           = c0.quality - 10,
+        chromaSubSampling = ImCompression.SOME_CHROMA_SS,
+        // Размывка 1х1 для сокрытия краёв после сильного сжатия.
+        blur              = ImCompression.SOME_BLUR
+      )
+    }
+  }
+
   override val values = findValues
 
 }

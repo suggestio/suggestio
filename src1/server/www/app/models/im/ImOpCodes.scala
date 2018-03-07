@@ -39,12 +39,12 @@ object ImOpCodes extends StringEnum[ImOpCode] {
   }
   object GaussBlur extends ImOpCode("e") {
     override def mkOp(vs: Seq[String]) = {
-      GaussBlurOp(vs.head.toDouble)
+      GaussBlurOp(vs.head.toInt)
     }
   }
   object Quality extends ImOpCode("f") {
     override def mkOp(vs: Seq[String]): ImOp = {
-      QualityOp(vs.head.toDouble)
+      QualityOp(vs.head.toInt)
     }
   }
   object Extent extends ImOpCode("g") {

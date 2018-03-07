@@ -19,8 +19,8 @@ case object DevPixelRatios extends ShortEnum[DevPixelRatio] {
     override def pixelRatio: Float = 1.0F
 
     // Используется SF_1x1 (т.е. откл.), иначе на контрастных переходах появляются заметные "тучи" на монотонных кусках.
-    override def bgCompression = ImCompression(88, ImSamplingFactors.Sf1x1)
-    override def fgCompression = ImCompression(93, ImSamplingFactors.Sf1x1)
+    override def bgCompression = ImCompression(82)
+    override def fgCompression = ImCompression(89)
   }
 
 
@@ -30,24 +30,25 @@ case object DevPixelRatios extends ShortEnum[DevPixelRatio] {
   /** Только на андройдах есть такое. */
   case object HDPI extends DevPixelRatio(15) {
     override def pixelRatio: Float = 1.5F
-    override def bgCompression = ImCompression(83, ImSamplingFactors.Sf1x1)
-    override def fgCompression = ImCompression(88, ImSamplingFactors.Sf1x1)
+    override def bgCompression = ImCompression(75)
+    override def fgCompression = ImCompression(83)
   }
 
 
   /** Андройд-девайсы и т.ч. retina, т.е. iphone4+ и прочие яблодевайсы после 2013 г. */
   case object XHDPI extends DevPixelRatio(20) {
     override def pixelRatio: Float = 2.0F
-    override val bgCompression = ImCompression(70, ImSamplingFactors.Sf1x1)
-    override val fgCompression = ImCompression(75, ImSamplingFactors.Sf1x1)
+    // Тут blur нельзя - слишком видно.
+    override val bgCompression = ImCompression(60)
+    override val fgCompression = ImCompression(75)
   }
 
 
   /** На середину 2014 года, это только топовые андройды. Разрешение экрана соотвествует HD1080. */
   case object DPR3 extends DevPixelRatio(30) {
     override def pixelRatio: Float = 3.0F
-    override val bgCompression = ImCompression(64, ImSamplingFactors.Sf1x2)
-    override val fgCompression = ImCompression(68, ImSamplingFactors.Sf1x2)
+    override val bgCompression = ImCompression(39)
+    override val fgCompression = ImCompression(43)
   }
 
 

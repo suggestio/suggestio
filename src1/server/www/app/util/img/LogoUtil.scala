@@ -119,14 +119,13 @@ class LogoUtil @Inject() (
     // Код метода синхронный, но, как показывает практика, лучше сразу сделать асинхрон, чтобы потом всё не перепиливать.
     // Исходя из pxRatio нужно посчитать высоту логотипа
     val heightPx = szMulted(heightCssPx, pxRatio.pixelRatio)
+    val outFmt = logoImg.dynImgId.dynFormat
 
     // Вернуть скомпленную картинку.
     val logoImg2 = logoImg.withDynOps(
-      Seq(
-        AbsResizeOp(MSize2di(height = heightPx, width = 0)),
-        StripOp,
-        pxRatio.fgCompression.imQualityOp
-      )
+      AbsResizeOp( MSize2di(height = heightPx, width = 0) ) ::
+        StripOp ::
+        pxRatio.fgCompression.toOps( outFmt )
     )
     Future.successful( logoImg2 )
   }

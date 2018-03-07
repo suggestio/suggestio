@@ -42,7 +42,9 @@ class StrictWideMaker @Inject() (
    */
   override def icompile(args: MImgMakeArgs): Future[MakeResult] = {
     val origImgId = args.img.dynImgId.original
-    if (origImgId.dynFormat.isVector) {
+    val outFmt = origImgId.dynFormat
+
+    if (outFmt.isVector) {
       // Это SVG.
       imgMakerUtil.returnImg( origImgId )
 
@@ -69,16 +71,14 @@ class StrictWideMaker @Inject() (
       val szReal = MSize2di(height = height, width = width)
 
       // Растр. Собираем набор инструкций для imagemagick.
-      val imOps = List[ImOp](
-        ImGravities.Center,
-        AbsResizeOp(szReal, ImResizeFlags.FillArea),
-        AbsCropOp( MCrop(width = width, height = height, offX = 0, offY = 0) ),
+      val imOps =
+        ImGravities.Center ::
+        AbsResizeOp(szReal, ImResizeFlags.FillArea) ::
+        AbsCropOp( MCrop(width = width, height = height, offX = 0, offY = 0) ) ::
         //ImFilters.Lanczos,
-        StripOp,
-        ImInterlaces.Plane,
-        compression.chromaSubSampling,
-        compression.imQualityOp
-      )
+        StripOp ::
+        ImInterlaces.Plane ::
+        compression.toOps( outFmt )
 
       val szCss = MSize2di(height = szRounded(heightCssRaw),  width = widthCssPx)
 

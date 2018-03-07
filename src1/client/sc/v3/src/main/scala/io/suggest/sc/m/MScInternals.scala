@@ -3,6 +3,7 @@ package io.suggest.sc.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.routes.scRoutes
+import io.suggest.sc.sc3.MSc3Conf
 import japgolly.univeq._
 
 /**

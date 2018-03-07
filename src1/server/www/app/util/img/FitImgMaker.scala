@@ -33,9 +33,10 @@ class FitImgMaker @Inject()(
     // В MakeResult вторичная сторона будет рассчитана согласно пропорции.
 
     val origImgId = args.img.dynImgId.original
+    val outFmt = origImgId.dynFormat
 
     // Для SVG ничего делать не надо.
-    if (origImgId.dynFormat.isVector) {
+    if (outFmt.isVector) {
       imgMakerUtil.returnImg( origImgId )
 
     } else {
@@ -84,19 +85,17 @@ class FitImgMaker @Inject()(
           .fromDpr( pxRatio )
 
         // Растр. Собираем набор инструкций для imagemagick.
-        val imOps = List[ImOp](
+        val imOps =
           AbsResizeOp(
             MSize2di(
               width  = if (useWidthRatio) outputWhPx.width else 0,
               height = if (useWidthRatio) 0 else outputWhPx.height
             )
-          ),
-          ImFilters.Lanczos,
-          StripOp,
-          ImInterlaces.Plane,
-          compression.chromaSubSampling,
-          compression.imQualityOp
-        )
+          ) ::
+          ImFilters.Lanczos ::
+          StripOp ::
+          ImInterlaces.Plane ::
+          compression.toOps( outFmt )
 
         // Сборка данных для новой картинки:
         val mimg2 = args.img.withDynImgId(

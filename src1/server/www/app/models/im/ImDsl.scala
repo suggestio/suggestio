@@ -216,10 +216,10 @@ trait ImOp {
 
 
 /** quality для результата. */
-case class QualityOp(quality: Double) extends ImOp {
+case class QualityOp(quality: Int) extends ImOp {
   override def opCode = ImOpCodes.Quality
   override def addOperation(op: IMOperation): Unit = {
-    op.quality(quality)
+    op.quality(quality.toDouble)
   }
   override def qsValue: String = {
     optFracZeroesFormat
@@ -239,14 +239,15 @@ case object StripOp extends ImOp {
 
 
 /** Размывка по гауссу. */
-case class GaussBlurOp(blur: Double) extends ImOp {
+case class GaussBlurOp(radiusSigma: Int) extends ImOp {
   override def opCode = ImOpCodes.GaussBlur
   override def addOperation(op: IMOperation): Unit = {
-    op.gaussianBlur(blur)
+    val d = radiusSigma.toDouble: java.lang.Double
+    op.gaussianBlur(d, d)
   }
   override def qsValue: String = {
-    twoFracZeroesFormat
-      .format(blur)
+    optFracZeroesFormat
+      .format(radiusSigma)
   }
 }
 

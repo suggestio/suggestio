@@ -58,9 +58,9 @@ class CspUtil @Inject() (
           .toSet
       }
 
-      val cdnNodes = for (rewriteFromTo <- cdnUtil.REWRITE_FROM_TO.iterator) yield {
+      val cdnNodes = for (rewriteFromTo <- cdnUtil.REWRITE_FROM_TO.view) yield {
         // Из ссылки вида -suggest.cdnvideo.ru получается *.cdnvideo.ru. Как-то это не очень хорошо.
-        // TODO *-suggest.cdnvideo.ru нельзя, равно как и s*-suggest.cdnvideo.ru. А желательно тоже сделать такое...
+        // *-suggest.cdnvideo.ru нельзя. Нельзя и s*-suggest.cdnvideo.ru. Поэтому разрешаем весь *.cdnvideo.ru:
         "*" + rewriteFromTo._2.replaceFirst("^[^\\.]*", "")
       }
       val commonSourcesWithInline = commonSources + Csp.Sources.UNSAFE_INLINE
