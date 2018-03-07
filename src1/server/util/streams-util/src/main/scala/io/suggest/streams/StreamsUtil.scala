@@ -5,7 +5,7 @@ import javax.inject.Inject
 
 import akka.NotUsed
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Keep, Sink, Source}
+import akka.stream.scaladsl.{FlowOps, Keep, Sink, Source}
 import akka.util.ByteString
 import io.suggest.util.logs.IMacroLogs
 import org.reactivestreams.Publisher
@@ -60,7 +60,8 @@ class StreamsUtil @Inject() (
     /** Утиль для Future[Publisher]. */
     implicit class PublisherFutUtil[T](val pubFut: Future[Publisher[T]]) {
       def toSource: Source[T, NotUsed] = {
-        Source.fromFuture(pubFut)
+        Source
+          .fromFuture(pubFut)
           .flatMapConcat( _.toSource )
       }
     }
@@ -75,6 +76,7 @@ class StreamsUtil @Inject() (
         * @param clazz Класса, снабжённый логгером.
         * @param logMessageF Сборка сообщения логгера.
         */
+      // TODO Реализовать на уровне FlowOps, т.к. здесь возня уровня Flow, а не Source.
       def maybeTraceCount(clazz: IMacroLogs)(logMessageF: Int => String): Source[T, M] = {
         val logger = clazz.LOGGER
 
@@ -88,7 +90,7 @@ class StreamsUtil @Inject() (
           src.alsoTo( sink )
 
         } else {
-          // Не требуется
+          // Не требуется логгирования.
           src
         }
       }
@@ -99,9 +101,8 @@ class StreamsUtil @Inject() (
         */
       def toSetFut: Future[Set[T]] = {
         src
-          .runFold(Set.newBuilder[T])(_ += _)
-          // Выстроить итоговое множество id'шников.
-          .map { _.result() }
+          .toMat( Sink.collection[T, Set[T]] )( Keep.right )
+          .run()
       }
 
     }

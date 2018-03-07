@@ -1,6 +1,6 @@
 package controllers
 
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{Flow, Keep, Sink}
 import akka.util.ByteString
 import javax.inject.Inject
 
@@ -471,76 +471,71 @@ class LkAdvGeo @Inject() (
           .sortBy( _._1.value )
       }
 
+      val currItemsPublisherFut = for {
+        allNodeIds <- allNodesIdsFut
+      } yield {
+        slick.db.stream {
+          advGeoBillUtil.findCurrForAdToRcvrs(
+            adId      = adId,
+            // TODO Добавить поддержку групп маячков ресиверов.
+            rcvrIds   = allNodeIds,
+            // Интересуют и черновики, и текущие размещения
+            statuses  = MItemStatuses.advActual,
+            // TODO Надо бы тут порешить, какой limit требуется на деле и требуется ли вообще. 20 взято с потолка.
+            limitOpt  = Some(300)
+          )
+        }
+      }
+
       // Запустить получение списка всех текущих (черновики + busy) размещений на узле и его маячках из биллинга.
-      val currAdvsSrc = {
-        val pubFut = for {
-          allNodeIds <- allNodesIdsFut
-        } yield {
-          slick.db.stream {
-            advGeoBillUtil.findCurrForAdToRcvrs(
-              adId      = adId,
-              // TODO Добавить поддержку групп маячков ресиверов.
-              rcvrIds   = allNodeIds,
-              // Интересуют и черновики, и текущие размещения
-              statuses  = MItemStatuses.advActual,
-              // TODO Надо бы тут порешить, какой limit требуется на деле и требуется ли вообще. 20 взято с потолка.
-              limitOpt  = Some(300)
-            )
-          }
+      // Выпрямляем Future[Publisher] в просто нормальный Source:
+      val currItemsSrc = currItemsPublisherFut
+        .toSource
+        .maybeTraceCount(this) { totalCount =>
+          s"$logPrefix Found $totalCount curr advs to rcvrs"
         }
-        // Выпрямляем Future[Publisher] в просто нормальный Source.
-        pubFut
-          .toSource
-          .maybeTraceCount(this) { totalCount =>
-            s"$logPrefix Found $totalCount curr advs to rcvrs"
-          }
-      }
 
-      def __src2RcvrIdsSet(src: Source[MItem,_]): Future[Set[String]] = {
-        // В текущих размещениях интересуют значения в поле rcvrId...
-        src
-          .mapConcat( _.rcvrIdOpt.toList )
-          // Перегнать все id в Future[SetBuilder[String]]
-          .toSetFut
-      }
-
-      // Запустить сбор rcvr node id'шников в потоке для текущих размещений.
-      val advRcvrIdsActualFut = __src2RcvrIdsSet(currAdvsSrc)
-      val advRcvrIdsBusyFut   = __src2RcvrIdsSet {
-        currAdvsSrc.filter { i =>
-          i.status.isAdvBusy
-        }
-      }
-
-      // Собрать множество id узлов, у которых есть хотя бы одно online-размещение.
-      val nodesHasOnlineFut = __src2RcvrIdsSet {
-        currAdvsSrc
-          .filter { _.status == MItemStatuses.Online }
-      }
+      // Sink, материализующий множество rcvrId из потока MItem:
+      val items2rcvrIdsSink = Flow[MItem]
+        .mapConcat( _.rcvrIdOpt.toList )
+        .toMat( Sink.collection[String, Set[String]] )( Keep.right )
 
       implicit val ctx = implicitly[Context]
 
-      // Карта интервалов размещения по id узлов.
-      val intervalsMapFut: Future[Map[String, MRangeYmdOpt]] = for {
-        // Сбилдить карту на основе источника текущих размещений
-        currAdvs <- currAdvsSrc.runFold(Map.newBuilder[String, MRangeYmdOpt]) { (acc, i) =>
-          for {
-            rcvrId <- i.rcvrIdOpt
-          } {
-            val rymd = MRangeYmdOpt.applyFrom(
-              dateStartOpt = advGeoBillUtil.offDate2localDateOpt(i.dateStartOpt)(ctx),
-              dateEndOpt   = advGeoBillUtil.offDate2localDateOpt(i.dateEndOpt)(ctx)
-            )
-            acc += rcvrId -> rymd
-          }
-          acc
-        }
-
-      } yield {
-        val r = currAdvs.result()
-        LOGGER.trace(s"$logPrefix Found ${r.size} adv date ranges for nodes: ${r.keysIterator.mkString(", ")}")
-        r
-      }
+      val (((advRcvrIdsActualFut, advRcvrIdsBusyFut), nodesHasOnlineFut), intervalsMapFut) = currItemsSrc
+        // Сбор всех (актуальных) rcvr id'шников в потоке для текущих размещений:
+        .alsoToMat( items2rcvrIdsSink )(Keep.right)
+        // Собираем только adv-busy-ресиверы:
+        .alsoToMat {
+          Flow[MItem]
+            .filter( _.status.isAdvBusy )
+            .toMat( items2rcvrIdsSink )(Keep.right)
+        }( Keep.both )
+        // Собрать множество id узлов, у которых есть хотя бы одно online-размещение:
+        .alsoToMat {
+          Flow[MItem]
+            .filter( _.status == MItemStatuses.Online )
+            .toMat( items2rcvrIdsSink )(Keep.right)
+        }( Keep.both )
+        // И собрать карту интервалов размещения по id узлов:
+        .toMat {
+          Flow[MItem]
+            .mapConcat { i =>
+              val kvsIter = for {
+                rcvrId <- i.rcvrIdOpt.iterator
+              } yield {
+                val rymd = MRangeYmdOpt.applyFrom(
+                  dateStartOpt = advGeoBillUtil.offDate2localDateOpt(i.dateStartOpt)(ctx),
+                  dateEndOpt   = advGeoBillUtil.offDate2localDateOpt(i.dateEndOpt)(ctx)
+                )
+                rcvrId -> rymd
+              }
+              kvsIter.toList
+            }
+            .toMat( Sink.collection[(String, MRangeYmdOpt), Map[String, MRangeYmdOpt]] )(Keep.right)
+        }( Keep.both )
+        // И запустить этот велосипед на исполнение, сгенерив пачку фьючерсов:
+        .run
 
       // Сборка JSON-модели для рендера JSON-ответа, пригодного для рендера с помощью react.js.
       for {
