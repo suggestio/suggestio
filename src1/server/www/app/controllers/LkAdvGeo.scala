@@ -489,11 +489,11 @@ class LkAdvGeo @Inject() (
           }
         }
         // Выпрямляем Future[Publisher] в просто нормальный Source.
-        val src = pubFut.toSource
-        streamsUtil.maybeTraceCount(src, this) { totalCount =>
-          s"$logPrefix Found $totalCount curr advs to rcvrs"
-        }
-        src
+        pubFut
+          .toSource
+          .maybeTraceCount(this) { totalCount =>
+            s"$logPrefix Found $totalCount curr advs to rcvrs"
+          }
       }
 
       def __src2RcvrIdsSet(src: Source[MItem,_]): Future[Set[String]] = {

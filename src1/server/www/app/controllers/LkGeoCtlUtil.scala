@@ -3,6 +3,7 @@ package controllers
 import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
 
+import akka.stream.scaladsl.{Keep, Sink}
 import io.suggest.adv.geo._
 import io.suggest.dt.YmdHelpersJvm
 import io.suggest.dt.interval.MRangeYmdOpt
@@ -79,13 +80,12 @@ protected class LkGeoCtlUtil @Inject() (
         val gjFeature = advGeoFormUtil.shapeInfo2geoJson(si)
         Json.toJson( gjFeature )
       }
+      .maybeTraceCount(this) { totalCount =>
+        s"currentNodeItemsGsToGeoJson($nodeId): streamed $totalCount GeoJSON features"
+      }
 
     // Превратить поток JSON-значений в "поточную строку", направленную в сторону юзера.
     val jsonStrSrc = streamsUtil.jsonSrcToJsonArrayNullEnded(currAdvsSrc)
-
-    streamsUtil.maybeTraceCount(currAdvsSrc, this) { totalCount =>
-      s"currentNodeItemsGsToGeoJson($nodeId): streamed $totalCount GeoJSON features"
-    }
 
     Ok.chunked( jsonStrSrc )
       .as( withCharset(JSON) )
@@ -112,7 +112,7 @@ protected class LkGeoCtlUtil @Inject() (
       val itemsMax = RCVR_ITEMS_PER_POPUP_LIMIT
 
       // Запросить у базы инфы по размещениям в текущем месте...
-      val itemsSrc = slick.db
+      val itemsSrc0 = slick.db
         .stream {
           advGeoBillUtil.itemsWithSameGeoShapeAs(
             query0  = mItems.findCurrentForNode( request.mitem.nodeId, itemTypes ),
@@ -122,9 +122,12 @@ protected class LkGeoCtlUtil @Inject() (
         }
         .toSource
 
+      // Сразу создаём ответвление от потока, которое будет считать полученные результаты, материализуя общее кол-во на выходе:
+      val itemsSrc = itemsSrc0.alsoToMat( streamsUtil.Sinks.count )(Keep.right)
+
       implicit val ctx = implicitly[Context]
 
-      val rowsMsFut = itemsSrc
+      val (itemsCountFut, rowsMsFut) = itemsSrc
         // Причесать кортежи в нормальные инстансы
         .map( MAdvGeoBasicInfo.apply )
         // Сгруппировать и объеденить по периодам размещения.
@@ -173,11 +176,12 @@ protected class LkGeoCtlUtil @Inject() (
         }
         // Вернуться на уровень основного потока...
         .mergeSubstreams
-        // Собрать все имеющиеся результаты в единую коллекцию.
-        .runFold( List.empty[(Option[Long], MGeoAdvExistRow)] ) { (acc, row) => row :: acc }
+        // Собрать все имеющиеся результаты в единую коллекцию:
+        .toMat( Sink.seq )(Keep.both)
+        .run()
 
       // Параллельно считаем общее кол-во найденных item'ов, чтобы сравнить их с лимитом.
-      val itemsCountFut = streamsUtil.count(itemsSrc)
+      //val itemsCountFut = streamsUtil.runCount(itemsSrc)
 
       // Сборка непоточного бинарного ответа.
       for {

@@ -238,16 +238,21 @@ class Static @Inject() (
   def advRcvrsMap = {
     ignoreAuth().async { implicit request =>
       // Собрать данные по узлам.
-      val nodesRespFut = cache.getOrElseUpdate("advGeoNodesSrc", expiration = 10.seconds) {
+      val nodesRespBytesFut = cache.getOrElseUpdate("advGeoNodesSrc", expiration = 10.seconds) {
         val msearch = advGeoRcvrsUtil.onMapRcvrsSearch(30)
-        advGeoRcvrsUtil.rcvrNodesMap( msearch )
+        for {
+          nodesResp <- advGeoRcvrsUtil.rcvrNodesMap( msearch )
+        } yield {
+          val bytes = ByteString(
+            PickleUtil.pickle( nodesResp )
+          )
+          bytes
+        }
       }
+
       // Завернуть данные в единый блоб и отправить клиенту.
-      for (nodesResp <- nodesRespFut) yield {
-        val bytes = ByteString(
-          PickleUtil.pickle( nodesResp )
-        )
-        Ok( bytes )
+      for (nodesRespBytes <- nodesRespBytesFut) yield {
+        Ok( nodesRespBytes )
           .withHeaders(
             CACHE_CONTROL -> "public, max-age=20"
           )

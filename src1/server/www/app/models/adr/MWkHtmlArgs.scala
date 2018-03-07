@@ -41,7 +41,7 @@ trait IWhHtmlArgsDflt extends IWkHtmlArgsT {
   import MWkHtmlArgs._
   override def zoomOpt     : Option[Float]     = ZOOM_OPT_DFLT
   override def plugins     : Boolean           = WITH_PLUGINS_DFLT
-  override def crop        : Option[MCrop]   = CROP_DFLT
+  override def crop        : Option[MCrop]     = CROP_DFLT
   override def smartWidth  : Boolean           = SMART_WIDTH_DFLT
 }
 
@@ -57,7 +57,7 @@ case class MWkHtmlArgs(
                         override val quality     : Option[Int],
                         override val zoomOpt     : Option[Float]     = MWkHtmlArgs.ZOOM_OPT_DFLT,
                         override val plugins     : Boolean           = MWkHtmlArgs.WITH_PLUGINS_DFLT,
-                        override val crop        : Option[MCrop]   = MWkHtmlArgs.CROP_DFLT,
+                        override val crop        : Option[MCrop]     = MWkHtmlArgs.CROP_DFLT,
                         override val smartWidth  : Boolean           = MWkHtmlArgs.SMART_WIDTH_DFLT
 )
   extends IWkHtmlArgsT

@@ -5,7 +5,7 @@ import javax.inject.Inject
 
 import akka.NotUsed
 import akka.stream.Materializer
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{Keep, Sink, Source}
 import akka.util.ByteString
 import io.suggest.util.logs.IMacroLogs
 import org.reactivestreams.Publisher
@@ -29,23 +29,22 @@ class StreamsUtil @Inject() (
     * @param src Источник элементов.
     * @return Фьючерс с кол-вом элементов.
     */
-  def count(src: Source[_, _]): Future[Int] = {
-    src.runFold(0) { (counter, _) => counter + 1 }
+  def runCount(src: Source[_, _]): Future[Int] = {
+    src
+      .toMat( Sinks.count )(Keep.right)
+      .run()
   }
 
-  /** Бывает, что необходимо просто залоггировать длину сорса, когда включена трассировка в логгере.
-    * По факту, это и есть основное предназначение count.
-    *
-    * @param src Источник.
-    * @param clazz Класса, снабжённый логгером.
-    * @param logMessageF Сборка сообщения логгера.
-    */
-  def maybeTraceCount(src: Source[_, _], clazz: IMacroLogs)(logMessageF: Int => String): Unit = {
-    val logger = clazz.LOGGER
-    if (logger.underlying.isTraceEnabled)
-      for (totalCount <- count(src))
-        logger.trace( logMessageF(totalCount) )
+  object Sinks {
+
+    def count[T]: Sink[T, Future[Int]] = {
+      Sink.fold[Int, T](0) { (acc0, _) =>
+        acc0 + 1
+      }
+    }
+
   }
+
 
 
   object Implicits {
@@ -68,7 +67,31 @@ class StreamsUtil @Inject() (
 
 
     /** Расширения для сорса. */
-    implicit class SourceUtil[T](val src: Source[T, _]) {
+    implicit class SourceUtil[T, M](val src: Source[T, M]) {
+
+      /** Бывает, что необходимо просто залоггировать длину сорса, когда включена трассировка в логгере.
+        * По факту, это и есть основное предназначение count.
+        *
+        * @param clazz Класса, снабжённый логгером.
+        * @param logMessageF Сборка сообщения логгера.
+        */
+      def maybeTraceCount(clazz: IMacroLogs)(logMessageF: Int => String): Source[T, M] = {
+        val logger = clazz.LOGGER
+
+        if (logger.underlying.isTraceEnabled) {
+          // Собрать новый синк, который посчитает значения, затем залоггировать итог.
+          val sink = Sinks.count[T]
+            .mapMaterializedValue { totalFut =>
+              for (total <- totalFut)
+                logger.trace( logMessageF(total) )
+            }
+          src.alsoTo( sink )
+
+        } else {
+          // Не требуется
+          src
+        }
+      }
 
       /**
         * Конвертация входного потока в множество.
