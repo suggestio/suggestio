@@ -39,7 +39,7 @@ case object DevPixelRatios extends ShortEnum[DevPixelRatio] {
   case object XHDPI extends DevPixelRatio(20) {
     override def pixelRatio: Float = 2.0F
     // Тут blur нельзя - слишком видно.
-    override val bgCompression = ImCompression(60)
+    override val bgCompression = ImCompression(65)
     override val fgCompression = ImCompression(75)
   }
 
@@ -47,8 +47,8 @@ case object DevPixelRatios extends ShortEnum[DevPixelRatio] {
   /** На середину 2014 года, это только топовые андройды. Разрешение экрана соотвествует HD1080. */
   case object DPR3 extends DevPixelRatio(30) {
     override def pixelRatio: Float = 3.0F
-    override val bgCompression = ImCompression(39)
-    override val fgCompression = ImCompression(43)
+    override val bgCompression = ImCompression(45)
+    override val fgCompression = ImCompression(55)
   }
 
 
