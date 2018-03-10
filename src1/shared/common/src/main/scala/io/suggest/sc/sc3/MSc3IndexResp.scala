@@ -1,7 +1,7 @@
 package io.suggest.sc.sc3
 
 import io.suggest.geo.MGeoPoint
-import io.suggest.geo.MGeoPoint.Implicits._
+import io.suggest.geo.MGeoPoint.JsonFormatters.QS_OBJECT
 import io.suggest.media.IMediaInfo
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.index.MWelcomeInfo

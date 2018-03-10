@@ -2,7 +2,7 @@ package io.suggest.maps
 
 import boopickle.Default._
 import io.suggest.geo.MGeoPoint
-import io.suggest.geo.MGeoPoint.Implicits.MGEO_POINT_FORMAT_QS_OBJECT
+import io.suggest.geo.MGeoPoint.JsonFormatters.QS_OBJECT
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

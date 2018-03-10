@@ -15,11 +15,6 @@ object LineStringGsJvm extends MultiPointShapeStatic {
 
   override type Shape_t = LineStringGs
 
-  def coords2playJson(coords: Seq[MGeoPoint]): JsArray = {
-    val coordsJson = coords.map( GeoPoint.toPlayGeoJson )
-    JsArray(coordsJson)
-  }
-
   override def toPlayGeoJsonGeom(gs: Shape_t): LineString[LngLat] = {
     LineString(
       coordinates = LineStringGsJvm.coords2latLngs( gs.coords )
@@ -27,8 +22,6 @@ object LineStringGsJvm extends MultiPointShapeStatic {
   }
 
   override def toEsShapeBuilder(gs: LineStringGs) = ShapeBuilders.newLineString( gsCoords2esCoords(gs) )
-
-  override protected[this] def applier = LineStringGs
 
 }
 

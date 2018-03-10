@@ -3,12 +3,12 @@ package io.suggest.geo
 import boopickle.Default._
 import io.suggest.common.maps.rad.IMinMaxM
 import io.suggest.primo.IApply1
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._   // НАДО!
 
 import scalaz.{Validation, ValidationNel}
 import scalaz.syntax.apply._
-import io.suggest.ueq.UnivEqUtil._
-import play.api.libs.json.OFormat
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -42,7 +42,76 @@ object IGeoShape {
       // TODO Добавить поддержку остальных моделей при необходимости.
   }
 
+
+  /** Контейнер различных вариантов поддержки JSON-сериализации/десериализации.
+    *
+    */
+  object JsonFormats {
+
+    /** Самая главная и самая обычная форматировалка любых GeoShape'ов.
+      * Заточенна под Elasticsearch, но ДОЛЖНА использоваться во всех хранилищах.
+      * Когда не ясно, какой форматтер использовать, надо использовать этот.
+      */
+    implicit lazy val allStoragesEsFormat: OFormat[IGeoShape] = {
+      MGsJsonFormatter(
+        gsFieldNames   = IGsFieldNames.Es,
+        gsTypeFormat   = GsType.GS_TYPE_FORMAT,
+        geoPointFormat = MGeoPoint.JsonFormatters.ARRAY_OR_ES_OBJECT
+      )
+        .geoShape
+    }
+
+    /** GeoJSON-only-форматтер.
+      *
+      * FIXME На GeoJSON-несовместимых GsType обязательно будут экзепшены.
+      */
+    implicit def geoJsonFormat: OFormat[IGeoShape] = {
+      MGsJsonFormatter(
+        gsFieldNames   = IGsFieldNames.Es,
+        // TODO Опасно: будет экзепшен, если на вход был подан GeoJSON-НЕсовместимый гео-шейп.
+        gsTypeFormat   = GsType.gsTypeGeoJsonCompatibleFormat.asInstanceOf[Format[GsType]],
+        geoPointFormat = MGeoPoint.FORMAT_GEO_ARRAY
+      )
+        .geoShape
+    }
+
+
+    /** Внутренний sio JSON, минимальный по максимуму. Во благо оптимизации, здесь можно ломать совместимость. */
+    implicit def internalMinFormat: OFormat[IGeoShape] = {
+      MGsJsonFormatter(
+        gsFieldNames    = IGsFieldNames.Minimal,
+        gsTypeFormat    = GsType.GS_TYPE_FORMAT,
+        geoPointFormat  = MGeoPoint.FORMAT_GEO_ARRAY
+      )
+        .geoShape
+    }
+
+  }
+
   implicit def univEq: UnivEq[IGeoShape] = UnivEq.derive
+
+
+  /** Вернуть объект-компаньон для указанного типа шейпа. */
+  def companionFor(gsType: GsType): IGeoShapeCompanion[_ <: IGeoShape] = {
+    gsType match {
+      case GsTypes.Circle               => CircleGs
+      case GsTypes.Polygon              => PolygonGs
+      case GsTypes.Point                => PointGs
+      case GsTypes.LineString           => LineStringGs
+      case GsTypes.Envelope             => EnvelopeGs
+      case GsTypes.MultiLineString      => MultiLineStringGs
+      case GsTypes.MultiPoint           => MultiPointGs
+      case GsTypes.MultiPolygon         => MultiPolygonGs
+      case GsTypes.GeometryCollection   => GeometryCollectionGs
+    }
+  }
+
+  /** Вернуть объект-компаньон для указанного шейпа. */
+  def companionFor[T <: IGeoShape](gs: T): IGeoShapeCompanion[T] = {
+    companionFor(gs.shapeType)
+      // Можно без asInstanceOf, но придётся написать ещё один длинный match, как соседнем companionFor().
+      .asInstanceOf[IGeoShapeCompanion[T]]
+  }
 
 }
 
@@ -63,7 +132,7 @@ sealed trait IGeoShape {
 
   /** Отображаемое для пользователя имя шейпа. */
   def displayTypeName: String = {
-    shapeType.geoJsonName
+    shapeType.geoJsonNameOpt
       .getOrElse( getClass.getSimpleName )
   }
 
@@ -81,6 +150,11 @@ sealed trait IGeoShape {
 }
 
 
+
+/** Интерфейс gs-компаньона (объекта). */
+sealed trait IGeoShapeCompanion[T <: IGeoShape]
+
+
 /** Маркер-трейт leaflet-полигона. */
 sealed trait ILPolygonGs extends IGeoShape {
   override def isLPolygon = true
@@ -93,7 +167,7 @@ sealed trait IGeoShapeQuerable extends IGeoShape
 
 // Реализация GeoShape'ов:
 
-object PointGs {
+object PointGs extends IGeoShapeCompanion[PointGs] {
   implicit val POINT_GS_PICKLER: Pickler[PointGs] = {
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[PointGs]
@@ -109,8 +183,7 @@ case class PointGs(coord: MGeoPoint) extends IGeoShapeQuerable {
 
 
 /** Гео-шейп круга. */
-// TODO Замёржить common-модель MGeoCircle в этот шейп.
-object CircleGs {
+object CircleGs extends IGeoShapeCompanion[CircleGs] {
 
   implicit val CIRCLE_GS_PICKLER: Pickler[CircleGs] = {
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
@@ -147,7 +220,7 @@ case class CircleGs(
 }
 
 
-object EnvelopeGs {
+object EnvelopeGs extends IGeoShapeCompanion[EnvelopeGs] {
   implicit def ENVELOPE_GS_PICKLER: Pickler[EnvelopeGs] = {
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[EnvelopeGs]
@@ -185,9 +258,12 @@ case class GeometryCollectionGs(geoms: Seq[IGeoShape]) extends IGeoShape {
   override def isArea: Boolean = {
     geoms.exists(_.isArea)
   }
-  implicit def univEq: UnivEq[GeometryCollectionGs] = UnivEq.derive
+
 }
-// TODO В целях безопасности, boopickle для GeometryCollectionGs генерится внутри IGeoShape с учётом рекурсии.
+object GeometryCollectionGs extends IGeoShapeCompanion[GeometryCollectionGs] {
+  implicit def univEq: UnivEq[GeometryCollectionGs] = UnivEq.derive
+  // TODO В целях безопасности, boopickle для GeometryCollectionGs генерится внутри IGeoShape с учётом рекурсии.
+}
 
 
 /** Общий интерфейс для [[LineStringGs]] и [[MultiPointGs]] обитает здесь. */
@@ -196,17 +272,22 @@ sealed trait MultiPointShape extends IGeoShapeQuerable {
   override def firstPoint = coords.head
 }
 
+/** Трейт для объекта-компаньона, содержащий общий код между multipoint-шейпами. */
+sealed trait MultiPointShapeStaticC[Gs_t <: MultiPointShape] extends IGeoShapeCompanion[Gs_t] with IApply1 {
+  override type ApplyArg_t = Seq[MGeoPoint]
+  override type T = Gs_t
+}
+
 /** Гео-шейп для MultiPoint geometry. */
 case class MultiPointGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
   override def shapeType = GsTypes.MultiPoint
 }
-object MultiPointGs extends IApply1 {
-  override type ApplyArg_t = Seq[MGeoPoint]
-  override type T = MultiPointGs
+object MultiPointGs extends MultiPointShapeStaticC[MultiPointGs] {
   implicit def MULTI_POINT_PICKLER: Pickler[MultiPointGs] = {
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[MultiPointGs]
   }
+  implicit def univEq: UnivEq[MultiPolygonGs] = UnivEq.derive
 }
 
 /** Гео-шейп для ListString geometry. */
@@ -214,10 +295,8 @@ case class LineStringGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
   override def shapeType = GsTypes.LineString
   override def firstPoint = coords.head
 }
-object LineStringGs extends IApply1 {
-  override type ApplyArg_t = Seq[MGeoPoint]
-  override type T = LineStringGs
-  implicit val LINE_STRING_PICKLER: Pickler[LineStringGs] = {
+object LineStringGs extends MultiPointShapeStaticC[LineStringGs] {
+  implicit def LINE_STRING_PICKLER: Pickler[LineStringGs] = {
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[LineStringGs]
   }
@@ -230,7 +309,7 @@ case class MultiLineStringGs(lines: Seq[LineStringGs]) extends IGeoShapeQuerable
   override def shapeType = GsTypes.MultiLineString
   override def firstPoint = lines.head.firstPoint
 }
-object MultiLineStringGs {
+object MultiLineStringGs extends IGeoShapeCompanion[MultiLineStringGs] {
   implicit def MULTI_LINE_STRING_PICKLER: Pickler[MultiLineStringGs] = {
     implicit val lineStringGsP = LineStringGs.LINE_STRING_PICKLER
     generatePickler[MultiLineStringGs]
@@ -251,12 +330,19 @@ case class PolygonGs(
   def toMpGss = outerWithHoles.map(_.coords)
   def outerWithHoles = outer :: holes
 }
-object PolygonGs {
+object PolygonGs extends IGeoShapeCompanion[PolygonGs] {
   implicit val POLYGON_GS_PICKLER: Pickler[PolygonGs] = {
     implicit val lineStringGsP = LineStringGs.LINE_STRING_PICKLER
     generatePickler[PolygonGs]
   }
   implicit def univEq: UnivEq[PolygonGs] = UnivEq.derive
+
+  def apply(lsgss: List[Seq[MGeoPoint]]): PolygonGs = {
+    PolygonGs(
+      outer = LineStringGs( lsgss.head ),
+      holes = lsgss.tail.map(LineStringGs.apply)
+    )
+  }
 }
 
 
@@ -268,11 +354,12 @@ case class MultiPolygonGs(polygons: Seq[PolygonGs])
   override def shapeType = GsTypes.MultiPolygon
   override def firstPoint = polygons.head.firstPoint
 }
-object MultiPolygonGs {
+object MultiPolygonGs extends IGeoShapeCompanion[MultiPolygonGs] {
   implicit val MULTI_POLYGON_GS_PICKLER: Pickler[MultiPolygonGs] = {
     implicit val polygonGsP = PolygonGs.POLYGON_GS_PICKLER
     generatePickler[MultiPolygonGs]
   }
 
   implicit def univEq: UnivEq[MultiPolygonGs] = UnivEq.derive
+
 }

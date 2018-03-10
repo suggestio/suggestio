@@ -1,10 +1,6 @@
 package io.suggest.geo
 
-import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import play.api.libs.functional.syntax._
-import play.api.libs.json._
 import au.id.jazzy.play.geojson.{Geometry, GeometryCollection, LngLat}
-import GeoShapeJvm.GEO_SHAPE_FORMAT
 
 /**
  * Suggest.io
@@ -14,14 +10,7 @@ import GeoShapeJvm.GEO_SHAPE_FORMAT
  */
 object GeometryCollectionGsJvm extends GsStaticJvm {
 
-  val GEOMETRIES_ESFN = "geometries"
-
   override type Shape_t = GeometryCollectionGs
-
-  override def DATA_FORMAT: Format[Shape_t] = {
-    (__ \ GEOMETRIES_ESFN).format[Seq[IGeoShape]]
-      .inmap[Shape_t](GeometryCollectionGs.apply, _.geoms)
-  }
 
   /** Конвертация в play.extras.geojson.Geomenty.
     * Circle конвертится в точку!
@@ -36,15 +25,6 @@ object GeometryCollectionGsJvm extends GsStaticJvm {
         .iterator
         .map( GeoShapeJvm.toPlayGeoJsonGeom )
         .toStream
-    )
-  }
-
-  override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    val geomsJson = gs.geoms.map { subGs =>
-      GeoShapeJvm.toPlayJson( subGs, geoJsonCompatible )
-    }
-    List(
-      GEOMETRIES_ESFN -> JsArray(geomsJson)
     )
   }
 

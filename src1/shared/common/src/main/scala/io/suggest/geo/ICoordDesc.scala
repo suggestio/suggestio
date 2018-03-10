@@ -14,7 +14,7 @@ sealed trait ICoordDesc {
   def ES_FN: String
 
   /** Имя query-string поля. */
-  def QS_FN: String
+  def QS_FN: String = ES_FN
 
   /** Абсолютная граница значений координаты: -bound <= x <= +bound. */
   def BOUND: Double

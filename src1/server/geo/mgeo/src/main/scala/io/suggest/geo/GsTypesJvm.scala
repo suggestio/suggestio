@@ -16,8 +16,8 @@ object GsTypesJvm {
     * @param gsType GeoShape Type.
     * @return Инстанс объекта-компаньона для абстрактного гео-шейпа.
     */
-  def companionFor(gsType: GsType): GsStaticJvm = {
-    val cqOpt: Option[GsStaticJvm] = esQuerableCompanionFor(gsType)
+  def jvmCompanionFor(gsType: GsType): GsStaticJvm = {
+    val cqOpt: Option[GsStaticJvm] = esQuerableJvmCompanionFor(gsType)
     cqOpt.getOrElse {
       gsType match {
         case GsTypes.GeometryCollection =>
@@ -36,7 +36,8 @@ object GsTypesJvm {
     * @return Опциональный объект-компаньон.
     *         None, если тип шейпа не относится к querable-шейпам.
     */
-  def esQuerableCompanionFor(gsType: GsType): Option[GsStaticJvmQuerable] = {
+  def esQuerableJvmCompanionFor(gsType: GsType): Option[GsStaticJvmQuerable] = {
+    // Этот метод используется только в jvmCompanionFor(). Можно замёржить.
     val cOrNull: GsStaticJvmQuerable = gsType match {
       case GsTypes.Polygon            => PolygonGsJvm
       case GsTypes.Circle             => CircleGsJvm

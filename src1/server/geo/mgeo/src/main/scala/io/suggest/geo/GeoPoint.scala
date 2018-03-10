@@ -130,16 +130,10 @@ object GeoPoint extends MacroLogsImpl {
       JsError( JsonValidationError("expected.jsstring", other) )
   }
 
-  /** JSON-формат для ввода-вывода в виде JSON-объекта с полями lat и lon. */
-  val FORMAT_ES_OBJECT: Format[MGeoPoint] = MGeoPoint.objFormat(
-    latName = Lat.ES_FN,
-    lonName = Lon.ES_FN
-  )
-
   /** Десериализация из JSON из различных видов представления геоточки. */
   val READS_ANY: Reads[MGeoPoint] = {
     MGeoPoint.FORMAT_GEO_ARRAY
-      .orElse( FORMAT_ES_OBJECT )
+      .orElse( MGeoPoint.FORMAT_ES_OBJECT )
       .orElse( READS_STRING )
   }
 
@@ -147,18 +141,6 @@ object GeoPoint extends MacroLogsImpl {
     * но сериализации в JSON object с полями lat и lon. */
   val FORMAT_ANY_TO_ARRAY = Format[MGeoPoint](READS_ANY, MGeoPoint.FORMAT_GEO_ARRAY)
 
-
-  // Экспорт инстансов IGeoPoint, вынесен из класса GeoPoint перед его депортацией в [common].
-
-  /**
-   * Конвертация в GeoJson-представление координат, т.е. в JSON-массив.
-   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html#_lat_lon_as_array_5]]
-   */
-  def toPlayGeoJson(gp: MGeoPoint) = {
-    JsArray(Seq(
-      JsNumber(gp.lon), JsNumber(gp.lat)
-    ))
-  }
 
   def toEsStr(gp: MGeoPoint): String = gp.lat.toString + "," + gp.lon.toString
 

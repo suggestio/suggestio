@@ -1,11 +1,6 @@
 package io.suggest.geo
 
-import io.suggest.geo.GeoPoint.Implicits._
-import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
-import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiPolygonBuilder, ShapeBuilders}
-import play.api.libs.functional.syntax._
-import play.api.libs.json._
 import au.id.jazzy.play.geojson.{LngLat, MultiPolygon}
 
 /**
@@ -18,23 +13,6 @@ object MultiPolygonGsJvm extends GsStaticJvmQuerable {
 
   override type Shape_t = MultiPolygonGs
 
-  override def DATA_FORMAT: Format[Shape_t] = {
-    (__ \ COORDS_ESFN).format[Seq[List[Seq[MGeoPoint]]]]
-      .inmap [Shape_t] (
-        {polyGss =>
-          MultiPolygonGs(
-            for (polyCoords <- polyGss) yield {
-              PolygonGsJvm(polyCoords)
-            }
-          )
-        },
-        {mpGs =>
-          mpGs.polygons
-            .map { _.toMpGss }
-        }
-      )
-  }
-
   override def toPlayGeoJsonGeom(mpGs: Shape_t): MultiPolygon[LngLat] = {
     MultiPolygon(
       coordinates = mpGs.polygons
@@ -44,15 +22,6 @@ object MultiPolygonGsJvm extends GsStaticJvmQuerable {
         }
         .toStream
     )
-  }
-
-  override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    val coords = for (pgs <- gs.polygons) yield {
-      PolygonGsJvm._toPlayJsonCoords( pgs )
-    }
-    val coordsArr = JsArray( coords )
-    val row = COORDS_ESFN -> coordsArr
-    row :: Nil
   }
 
   /** Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.

@@ -37,7 +37,7 @@ object EnumeratumUtil {
     }
   }
 
-  private def _optReads2reads[T](rOpt: Reads[Option[T]]): Reads[T] = {
+  def _optReads2reads[T](rOpt: Reads[Option[T]]): Reads[T] = {
     rOpt
       .filter( JsonValidationError("error.unknown.id") )(_.nonEmpty)
       .map( EmptyUtil.getF )

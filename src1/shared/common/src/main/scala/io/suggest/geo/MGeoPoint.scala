@@ -92,14 +92,28 @@ object MGeoPoint {
   )(apply, unlift(unapply))
 
 
-  object Implicits {
+  /** JSON-формат для ввода-вывода в виде JSON-объекта с полями lat и lon. */
+  def FORMAT_ES_OBJECT: Format[MGeoPoint] = MGeoPoint.objFormat(
+    latName = Lat.ES_FN,
+    lonName = Lon.ES_FN
+  )
+
+
+  object JsonFormatters {
 
     /** JSON-формат для ввода-вывода в виде JSON-объекта, подлежащего рендеру в query_string
       * с полями "a" для lat и "o" для lon. */
-    implicit val MGEO_POINT_FORMAT_QS_OBJECT: OFormat[MGeoPoint] = objFormat(
+    implicit val QS_OBJECT: OFormat[MGeoPoint] = objFormat(
       latName = Lat.QS_FN,
       lonName = Lon.QS_FN
     )
+
+    implicit val ARRAY_OR_ES_OBJECT: Format[MGeoPoint] = {
+      val fmt0 = FORMAT_GEO_ARRAY
+      val fallbackReads = fmt0.orElse { FORMAT_ES_OBJECT }
+      Format(fallbackReads, fmt0)
+    }
+
   }
 
   implicit def univEq: UnivEq[MGeoPoint] = {

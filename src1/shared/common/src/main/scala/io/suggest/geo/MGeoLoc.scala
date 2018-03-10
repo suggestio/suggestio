@@ -3,7 +3,7 @@ package io.suggest.geo
 import io.suggest.geo.GeoConstants.GeoLocQs._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import MGeoPoint.Implicits.MGEO_POINT_FORMAT_QS_OBJECT
+import MGeoPoint.JsonFormatters.QS_OBJECT
 import japgolly.univeq.UnivEq
 
 /**

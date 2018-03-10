@@ -6,11 +6,12 @@ import io.suggest.adv.geo.{AdvGeoConstants, MFormS, RcvrsMap_t}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.tags.edit.MTagsEditProps
-import io.suggest.geo.{CircleGs, CircleGsJvm, GeoShapeJvm, MGeoPoint}
+import io.suggest.geo._
 import io.suggest.maps.MMapProps
 import io.suggest.scalaz.{ScalazUtil, ValidateFormUtilT}
 import models.adv.geo.cur._
 import au.id.jazzy.play.geojson.{Feature, LngLat}
+import play.api.libs.json.Json
 import util.adv.AdvFormUtil
 
 import scalaz._
@@ -63,8 +64,13 @@ class AdvGeoFormUtil @Inject() (
     * Это во многом аналогично обычному shapeItems2geoJson, но более лениво в плане рендера попапа:
     * js должен обращаться к серверу за попапом. Поэтому, это легковеснее, быстрее, и Context здесь не нужен.
     */
+  // TODO GeoShape уже является кросс-платформенной. Пора выкинуть GeoJSON-костыли отсюда.
   def shapeInfo2geoJson(si: MAdvGeoShapeInfo): Feature[LngLat] = {
-    val gs = GeoShapeJvm.parse(si.geoShapeStr)
+    import IGeoShape.JsonFormats.allStoragesEsFormat
+
+    val gs = Json
+      .parse(si.geoShapeStr)
+      .as[IGeoShape]
     val props = GjFtProps(
       itemId      = si.itemId,
       // hasApproved влияет на цвет заливки.

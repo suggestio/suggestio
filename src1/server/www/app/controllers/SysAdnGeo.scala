@@ -561,7 +561,8 @@ class SysAdnGeo @Inject() (
   def showGeoJson(g: MGsPtr) = isSuNode(g.nodeId).async { implicit request =>
     _withNodeShape(g.gsId)() { mgs =>
       // Сейчас тут рендер GeoJSON-compatible. Раньше был просто рендер, почему-то.
-      val json = GeoShapeJvm.WRITES_GJSON_COMPAT.writes( mgs.shape )
+      import IGeoShape.JsonFormats.geoJsonFormat
+      val json = geoJsonFormat.writes( mgs.shape )
       Ok( json )
     }
   }

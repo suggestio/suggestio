@@ -1,9 +1,10 @@
 package io.suggest.mbill2.m.geo.shape
 
 import io.suggest.slick.profile.IProfile
-import io.suggest.geo.{IGeoShape, GeoShapeJvm}, GeoShapeJvm.GEO_SHAPE_FORMAT
+import io.suggest.geo.IGeoShape
 import io.suggest.primo.IApplyOpt1
 import play.api.libs.json.Json
+import io.suggest.geo.IGeoShape.JsonFormats.allStoragesEsFormat
 
 /**
   * Suggest.io
@@ -17,7 +18,9 @@ object GeoShapeOptSlick extends IApplyOpt1 {
   override type T = IGeoShape
 
   override def apply(gsStr: String): IGeoShape = {
-    GeoShapeJvm.parse(gsStr)
+    Json
+      .parse(gsStr)
+      .as[IGeoShape]
   }
 
   def unapplyOpt(gsOpt: Option[IGeoShape]): Option[Option[String]] = {

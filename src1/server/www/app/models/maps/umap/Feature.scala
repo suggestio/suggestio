@@ -1,6 +1,6 @@
 package models.maps.umap
 
-import io.suggest.geo.{IGeoShape, GeoShapeJvm}
+import io.suggest.geo.IGeoShape
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -8,7 +8,7 @@ import play.api.libs.functional.syntax._
 object Feature {
 
   implicit def FORMAT: Format[Feature] = (
-    (__ \ "geometry").format[IGeoShape](GeoShapeJvm.FORMAT_GJSON_COMPAT) and
+    (__ \ "geometry").format[IGeoShape]( IGeoShape.JsonFormats.geoJsonFormat ) and
     (__ \ "properties").formatNullable[FeatureProperties] and
     (__ \ "type").format[FeatureType]
   )(apply, unlift(unapply))

@@ -5,7 +5,7 @@ import java.time.OffsetDateTime
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.{IGeoShape, MNodeGeoLevel, MNodeGeoLevels}
-import io.suggest.geo.GeoShapeJvm._
+import io.suggest.geo.IGeoShape.JsonFormats.allStoragesEsFormat
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

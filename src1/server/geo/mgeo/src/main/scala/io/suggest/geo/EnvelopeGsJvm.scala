@@ -1,12 +1,8 @@
 package io.suggest.geo
 
 import io.suggest.geo.GeoConstants.Qs
-import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{ShapeBuilder, ShapeBuilders}
-import play.api.libs.functional.syntax._
-import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
 import au.id.jazzy.play.geojson.{LngLat, Polygon}
 
@@ -22,21 +18,6 @@ import au.id.jazzy.play.geojson.{LngLat, Polygon}
 object EnvelopeGsJvm extends GsStaticJvmQuerable {
 
   override type Shape_t = EnvelopeGs
-
-  override val DATA_FORMAT: OFormat[EnvelopeGs] = {
-    (__ \ GeoShapeJvm.COORDS_ESFN)
-      .format[Seq[MGeoPoint]]
-      .inmap[EnvelopeGs] (
-        { case Seq(c1, c3) =>
-            EnvelopeGs(c1, c3)
-          case other =>
-            throw new IllegalArgumentException("Invalid envelope coords count: " + other)
-        },
-        {egs =>
-          Seq(egs.topLeft, egs.bottomRight)
-        }
-      )
-  }
 
 
   /** Поддержка биндинга этой простой фигуры в play router. */
@@ -86,13 +67,6 @@ object EnvelopeGsJvm extends GsStaticJvmQuerable {
     Polygon [LngLat] (
       outer :: Nil
     )
-  }
-
-  override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    DATA_FORMAT
-      .writes(gs)
-      .fields
-      .toList
   }
 
   override def toEsShapeBuilder(gs: Shape_t): ShapeBuilder = {
