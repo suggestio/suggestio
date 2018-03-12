@@ -85,7 +85,7 @@ protected class LkGeoCtlUtil @Inject() (
       }
 
     // Превратить поток JSON-значений в "поточную строку", направленную в сторону юзера.
-    val jsonStrSrc = streamsUtil.jsonSrcToJsonArrayNullEnded(currAdvsSrc)
+    val jsonStrSrc = currAdvsSrc.jsonSrcToJsonArrayNullEnded
 
     Ok.chunked( jsonStrSrc )
       .as( withCharset(JSON) )

@@ -1,9 +1,11 @@
 package io.suggest.routes
 
-import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.proto.HttpConst.Methods
 import io.suggest.sjs.common.model.{HttpRoute, HttpRouteExtractor}
 import io.suggest.sjs.common.xhr.Xhr
+import play.api.libs.json.Json
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future
 
@@ -26,9 +28,18 @@ trait IAdvRcvrsMapApi {
 object IAdvRcvrsMapApi {
 
   def _advRcvrsMapRequest[HttpRoute: HttpRouteExtractor](route: HttpRoute): Future[MGeoNodesResp] = {
-    Xhr.unBooPickleResp[MGeoNodesResp] {
-      Xhr.requestBinary( route )
+    for {
+      jsonStr <- Xhr.requestJsonText( route )
+    } yield {
+      MGeoNodesResp(
+        nodes = Json
+          .parse(jsonStr)
+          .as[Seq[MGeoNodePropsShapes]]
+      )
     }
+    //Xhr.unBooPickleResp[MGeoNodesResp] {
+    //  Xhr.requestBinary( route )
+    //}
   }
 
 }

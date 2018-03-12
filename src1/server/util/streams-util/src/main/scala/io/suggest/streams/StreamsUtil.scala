@@ -5,11 +5,12 @@ import javax.inject.Inject
 
 import akka.NotUsed
 import akka.stream.Materializer
-import akka.stream.scaladsl.{FlowOps, Keep, Sink, Source}
+import akka.stream.scaladsl.{Compression, Flow, Keep, Sink, Source}
 import akka.util.ByteString
+import io.suggest.primo.Var
 import io.suggest.util.logs.IMacroLogs
 import org.reactivestreams.Publisher
-import play.api.libs.json.{JsNull, JsValue, Json}
+import play.api.libs.json.{JsValue, Json}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -107,36 +108,62 @@ class StreamsUtil @Inject() (
 
     }
 
-  }
 
+    /** Допы для потока JsValue (JSON-сериализованные элементы).
+      *
+      * @param src Поток JSON-сериазованных данных.
+      * @tparam T Тип JsValue.
+      * @tparam M Mat-value.
+      */
+    implicit class JsValuesSourceExt[T <: JsValue, M](val src: Source[T, M]) {
 
-  /**
-    * Рендер потока данных в json-массив для chunked-ответа.
-    * Т.к. есть проблемы с запятыми, в качестве последнего элемента добавляется null.
-    *
-    * @param src Источник объектов, уже сериализованных в JSON.
-    * @return Поток строк, формирующих валидный JSON array с null в качестве последнего элемента.
-    */
-  def jsonSrcToJsonArrayNullEnded(src: Source[JsValue, _]): Source[String, _] = {
-    // Сериализуем JSON в поток. Для валидности JSON надо добавить "[" в начале, "]" в конце, и разделители между элементами.
-    val delim = ",\n"
+      /**
+        * Рендер потока данных в json-массив для chunked-ответа.
+        * Т.к. есть проблемы с запятыми, в качестве последнего элемента добавляется null.
+        *
+        * @return Поток строк, формирующих валидный JSON array с null в качестве последнего элемента.
+        */
+      def jsonSrcToJsonArrayNullEnded: Source[String, M] = {
+        // Сериализуем JSON в поток. Для валидности JSON надо добавить "[" в начале, "]" в конце, и разделители между элементами.
+        // TODO Лучше реализовать GraphStage, а не этот велосипед.
+        Source.single( "[" )
+          .concatMat {
+            src
+              .map { m =>
+                Json.stringify(m)
+              }
+              .intersperse( ",\n" )
+          }(Keep.right)
+          .concatMat {
+            Source.single("]")
+          }(Keep.left)
+      }
 
-    val jsons = src.mapConcat { m =>
-      val jsonStr = Json.stringify(m)
-      jsonStr :: delim :: Nil
     }
 
-    // Собрать итоговый поток сознания.
-    // TODO Тут рукописный генератор JSON. Следует задействовать тот, что *вроде бы* есть в akka-http или где-то ещё.
-    Source.single( "[" )
-      .concat(jsons)
-      .concat {
-        Source(
-          // TODO Чтобы последняя запятая не вызывала ошибки парсинга, добавляем JsNull в конец потока объектов.
-          Json.stringify(JsNull) :: "]" :: Nil
-        )
+
+    implicit class ByteStringSinkExtOps[T](sink: Sink[T, Future[ByteString]]) {
+
+      /** Выполнить фоновую подмену результирующей ByteString.
+        * Результа
+        */
+      def asyncCompactedByteString: Sink[T, Future[Var[ByteString]]] = {
+        sink.mapMaterializedValue { byteStringFut0 =>
+          for (byteString <- byteStringFut0) yield {
+            val v = Var(byteString)
+            // В фоне органзиовать компакцию ByteString и подмену значения Var.value:
+            v.asyncUpgradeUsing { () =>
+              byteString.compact
+            }
+            v
+          }
+        }
       }
+
+    }
+
   }
+
 
   /**
    * Асинхронно записать все данные из Enumerator'а в указанный файл.
@@ -168,10 +195,43 @@ class StreamsUtil @Inject() (
   }
 
 
-
-  def mergeByteStrings(src: Source[ByteString, _]): Future[ByteString] = {
-    src.runReduce { (a,b) => a ++ b }
+  /** Сборка Sink'а, который будет конкатенировать ByteString'и.
+    *
+    * @return reusable Sink.
+    */
+  def byteStringAccSink: Sink[ByteString, Future[ByteString]] = {
+    // Собираем многоразовый синк, который будет наиболее эффективным путём собирать финальную ByteString.
+    // Используется mutable ByteString builder, который инициализируется с фактическим началом потока, поэтому тут lazyInit().
+    Sink
+      .lazyInit[ByteString, Future[ByteString]](
+        // При поступлении первых данных, инициализировать builder и собрать фактический sink:
+        sinkFactory = { _ =>
+          val b = ByteString.newBuilder
+          // Закидываем все данные в общий builder:
+          val realSink = Sink.foreach { b.append }
+            .mapMaterializedValue { doneFut =>
+              for (_ <- doneFut) yield {
+                b.result()
+              }
+            }
+          Future.successful( realSink )
+        },
+        // Нет данных? Не проблема, вернуть пустой ByteString:
+        fallback = { () =>
+          Future.successful( ByteString.empty )
+        }
+      )
+      .mapMaterializedValue(_.flatten)
   }
 
+
+  /** Почему-то голый .via(Compression.gzip) выдаёт мусор вместо результата.
+    * Поэтому тут костыли и подпорки для сжатия, выковырянные из play.api.libs.streams.GzipFlow
+    */
+  def gzipFlow(bufferSize: Int = 8192): Flow[ByteString, ByteString, _] = {
+    Flow[ByteString]
+      .via(new ByteStringsChunker(bufferSize))
+      .via(Compression.gzip)
+  }
 
 }

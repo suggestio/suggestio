@@ -63,8 +63,9 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
         Xhr.send(
           route = route,
           headers = Seq(
+            // JSON без кодировки, потому что там UTF-8 на уровне стандарта.
             H.ACCEPT        -> applicationJson,
-            H.CONTENT_TYPE  -> applicationJson    // TODO + "; charset=utf8" ?
+            H.CONTENT_TYPE  -> applicationJson
           ),
           body = Json.toJson(file4UpProps).toString()
         )

@@ -114,8 +114,12 @@ class CdnUtil @Inject() (
 
   /** Генератор вызовов к CDN или внутренних. */
   def forCall(c: Call)(implicit ctx: Context): Call = {
-    if (!HAS_ANY_CDN || c.isInstanceOf[ExternalCall]) {
+    if (c.isInstanceOf[ExternalCall]) {
+      // Уже внешний Call, там уже хост должен быть прописан.
       c
+    } else if (!HAS_ANY_CDN ) {
+      // CDN сейчас не задана, но она обычно есть на продакшене. Поэтому используем текущий хост в качестве CDN-хоста.
+      new ExternalCall( ctx.relUrlPrefix + c.url )
     } else {
       val reqHost = ctx.request.host
       val urlPrefixOpt: Option[String] = if (DISABLED_ON_HOSTS.contains(reqHost)) {

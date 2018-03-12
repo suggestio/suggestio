@@ -83,7 +83,9 @@ object HttpConst {
 
   object Proto {
 
-    private def _coloned(s: String) = s + HtmlConstants.COLON
+    final def COLON = HtmlConstants.COLON
+
+    private def _coloned(s: String) = s + COLON
 
     final def HTTP = "http"
     final def HTTP_ = _coloned(HTTP)

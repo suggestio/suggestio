@@ -12,6 +12,7 @@ import io.suggest.i18n.MessagesF_t
 import io.suggest.playx.{ICurrentAppHelpers, IsAppModes}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.ctx.{CtxData, MCtxId, MCtxIds}
+import io.suggest.proto.HttpConst
 import models.mproj.IMCommonDi
 import models.req.IReqHdr
 import models.usr.MSuperUsers
@@ -241,15 +242,32 @@ trait Context {
   lazy val ctxId: MCtxId = api.mCtxIds( user.personIdOpt )
   lazy val ctxIdStr: String = MCtxId.intoString(ctxId)
 
-  /** Собрать ссылку на веб-сокет с учетом текущего соединения. */
-  lazy val wsUrlPrefix: String = {
-    val sb = new StringBuilder(32, "ws")
-    if (request.isTransferSecure)
-      sb.append('s')
-    sb.append("://")
+
+  def relUrlPrefix: String =
+    _protoUrlPrefix( None )
+
+  def protoUrlPrefix(proto: String): String =
+    _protoUrlPrefix( Some(proto) )
+
+  private def _protoUrlPrefix(protoOpt: Option[String]): String = {
+    val sb = new StringBuilder(16)
+
+    val P = HttpConst.Proto
+    for (proto <- protoOpt) {
+      sb.append( proto )
+      if (request.isTransferSecure)
+        sb.append('s')
+      sb.append( P.COLON )
+    }
+
+    sb.append( P.CURR_PROTO )
       .append( request.host )
       .toString()
   }
+
+  /** Собрать ссылку на веб-сокет с учетом текущего соединения. */
+  def wsUrlPrefix: String = protoUrlPrefix( HttpConst.Proto.WS )
+
 
   /** Пользователю может потребоваться помощь на любой странице. Нужны генератор ссылок в зависимости от обстоятельств. */
   def supportFormCall(adnIdOpt: Option[String] = None) = {

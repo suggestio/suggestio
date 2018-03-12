@@ -4,6 +4,7 @@ import diode._
 import diode.data.Pot
 import io.suggest.maps.m.{InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.msg.ErrorMsgs
 import io.suggest.routes.IAdvRcvrsMapApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -41,7 +42,10 @@ class RcvrMarkersInitAh[M](
     // Результат реквеста карты маркеров пришёл и готов к заливке в карту.
     case m: InstallRcvrMarkers =>
       val v2 = m.tryResp.fold(
-        value.fail,
+        {ex =>
+          LOG.error( ErrorMsgs.INIT_RCVRS_MAP_FAIL, msg = m, ex = ex )
+          value.fail(ex)
+        },
         value.ready
       )
       updated( v2 )

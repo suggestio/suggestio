@@ -46,10 +46,7 @@ class CurrentGeoAh[M](
       // Надо бы отфильтровать null'ы, т.к. сервер генерит chunked с "особенностями" из-за проблем с овладеванием akka-streams Source.
       val v2 = scga.tryResp.fold(
         value.fail,
-        {arr0 =>
-          val arr2 = arr0.filter(_ != null)
-          value.ready(arr2)
-        }
+        value.ready
       )
       updated(v2)
 

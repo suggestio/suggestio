@@ -13,8 +13,12 @@ import akka.util.ByteString
   */
 class ByteStringsChunker(val chunkSize: Int) extends GraphStage[FlowShape[ByteString, ByteString]] {
 
-  val in = Inlet[ByteString]("ByteStringsChunker.in")
-  val out = Outlet[ByteString]("ByteStringsChunker.out")
+  val (in, out) = {
+    val prefix = getClass.getSimpleName + "."
+    val in1  = Inlet[ByteString]( prefix + "in")
+    val out1 = Outlet[ByteString]( prefix + "out")
+    (in1, out1)
+  }
 
   override val shape = FlowShape.of(in, out)
 

@@ -2,6 +2,7 @@ package io.suggest.swfs.client.play
 
 import java.io.File
 
+import akka.stream.scaladsl.Keep
 import io.suggest.streams.StreamsUtil
 import io.suggest.swfs.client.proto.delete.DeleteRequest
 import io.suggest.swfs.client.proto.get.GetRequest
@@ -152,7 +153,9 @@ class SwfsClientWsSpec extends PlaySpec with GuiceOneAppPerSuite {
           assert(getResp.nonEmpty, getResp)
         }
         val gr = getResp.get
-        val fcontentFut = streamsUtil.mergeByteStrings( gr.data )
+        val fcontentFut = gr.data
+          .toMat( streamsUtil.byteStringAccSink )(Keep.right)
+          .run()
           .map { bs => new String( bs.toArray ) }
         "have expected resp.body lenght" in {
           gr.sizeB shouldBe f.length()

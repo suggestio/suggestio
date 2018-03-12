@@ -335,9 +335,11 @@ trait ScSite
 
       // Надо ссылку на список ресиверов отправить. Раньше через роутер приходила, но это без CDN как-то не очень.
       // TODO В будущем, можно будет кэширование организовать: хэш в ссылке + длительный кэш.
-      val rcvrsMapUrl = cdnUtil.forCall(
-        routes.Static.advRcvrsMap()
-      )(ctx).url
+      val rcvrsMapUrl = cdnUtil.maybeAbsUrl(_siteQsArgs.apiVsn.forceAbsUrls )(
+        cdnUtil.forCall(
+          routes.Static.advRcvrsMap()
+        )(ctx)
+      )(ctx)
 
       // Собрать все результаты в итоговый скрипт.
       for {
@@ -380,20 +382,20 @@ trait ScSite
       Redirect(call)
 
     } else {
-
-      if (siteArgs.apiVsn.majorVsn ==* MScApiVsns.Sjs1.majorVsn) {
-        // sc v2 -- первая выдача на scala.js.
-        val logic = new SiteScriptLogicV2 {
-          override def _siteQsArgs = siteArgs
-          override def _request = request
-        }
-        _geoSiteResult(logic)
-
-      } else if (siteArgs.apiVsn.majorVsn == MScApiVsns.ReactSjs3.majorVsn) {
+      // Выбор движка выдачи:
+      if (siteArgs.apiVsn.majorVsn == MScApiVsns.ReactSjs3.majorVsn) {
         // Логика sc3
         val logic = new SiteScriptLogicV3 {
           override implicit def _request = request
           override def _siteQsArgs = siteArgs
+        }
+        _geoSiteResult(logic)
+
+      } else if (siteArgs.apiVsn.majorVsn ==* MScApiVsns.Sjs1.majorVsn) {
+        // sc v2 -- первая выдача на scala.js.
+        val logic = new SiteScriptLogicV2 {
+          override def _siteQsArgs = siteArgs
+          override def _request = request
         }
         _geoSiteResult(logic)
 

@@ -1,11 +1,12 @@
 package io.suggest.maps.nodes
 
 import io.suggest.geo.IGeoShape
+import io.suggest.geo.IGeoShape.JsonFormats.internalMinFormat
 import boopickle.Default._
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
-//import play.api.libs.json._
-//import play.api.libs.functional.syntax._
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -46,12 +47,10 @@ case class MGeoNodePropsShapes(
 
 object MGeoNodePropsShapes {
 
-  /*
   implicit def MGeoNodePropsShapesFormat: OFormat[MGeoNodePropsShapes] = (
     (__ \ "p").format[MAdvGeoMapNodeProps] and
-    (__ \ "s").format[Iterable[IGeoShape]]    // TODO
+    (__ \ "s").format[Iterable[IGeoShape]]
   )(apply, unlift(unapply))
-  */
 
   implicit val MGEO_NODE_PROPS_SHAPES_PICKLER: Pickler[MGeoNodePropsShapes] = {
     implicit val mAdvGeoMapNodePropsP = MAdvGeoMapNodeProps.mAdvGeoMapNodePropsPickler

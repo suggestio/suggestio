@@ -1,19 +1,25 @@
 package controllers
 
+import java.nio.charset.StandardCharsets
 import javax.inject.{Inject, Singleton}
 
+import akka.stream.scaladsl.{Compression, Flow, Keep, Sink}
 import akka.util.ByteString
 import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
-import io.suggest.compress.MCompressAlgos
+import io.suggest.brotli.{BrotliCompress, BrotliUtil}
+import io.suggest.compress.{MCompressAlgo, MCompressAlgos}
 import io.suggest.ctx.{MCtxId, MCtxIds}
-import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
+import io.suggest.model.n2.node.MNode
 import io.suggest.pick.PickleUtil
+import io.suggest.primo.Var
 import io.suggest.sec.csp.CspViolationReport
 import io.suggest.stat.m.{MComponents, MDiag}
+import io.suggest.streams.{ByteStringsChunker, StreamsUtil}
 import io.suggest.util.CompressUtilJvm
 import models.mctx.Context
 import models.mproj.ICommonDi
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.{BodyParser, WebSocket}
 import util.acl._
@@ -46,6 +52,7 @@ class Static @Inject() (
                          bruteForceProtect               : BruteForceProtect,
                          advGeoRcvrsUtil                 : AdvGeoRcvrsUtil,
                          statUtil                        : StatUtil,
+                         streamsUtil                     : StreamsUtil,
                          aclUtil                         : AclUtil,
                          compressUtilJvm                 : CompressUtilJvm,
                          secHeadersFilterUtil            : SecHeadersFilterUtil,
@@ -67,6 +74,7 @@ class Static @Inject() (
   import mCommonDi._
   import cspUtil.Implicits._
   import compressUtilJvm.Implicits._
+  import streamsUtil.Implicits._
 
 
   /**
@@ -229,35 +237,131 @@ class Static @Inject() (
   }
 
 
+  /** Контейнер для данных ответа сервера на тему карты ресиверов.
+    * Абстрагирует всякие особенности json/binary сериализаций от итогов работы.
+    *
+    * @param contentType Тип содержимого ответа.
+    * @param gzip gzip-пожатый ответ.
+    * @param etag Фьючерс со значением etag в виде целого.
+    * @param brotli Фьючрес с brotli-пожатый ответ.
+    */
+  private case class MAdvRcvrsMapRespData(
+                                           contentType   : String,
+                                           gzip          : Future[Var[ByteString]],
+                                           etag          : Future[String],
+                                           brotli        : Option[Future[Var[ByteString]]] = None
+                                         )
+
+  /** Рендерер JSON-карты данных узлов. */
+  private def _advRcvrsMapRespJsonFut(): Future[MAdvRcvrsMapRespData] = {
+    cache.getOrElseUpdate("advGeoNodesJson", expiration = 10.seconds) {
+      val byteStringSink = streamsUtil.byteStringAccSink
+        // Запускать в фоне compact, который подменит исходное неоптимизированное значение ByteString.
+        .asyncCompactedByteString
+
+      // Продолжаем реактивную обработку, но ответ клиенту будет нереактивным (кэширование, ибо).
+      val ((hashCodeFut, gzipFut), brotliFut) = advGeoRcvrsUtil
+        .rcvrNodesMap( advGeoRcvrsUtil.onMapRcvrsSearch(30) )
+        // Ветвь рассчёта контрольной суммы: материализуем Map[NodeId, data.hashCode()].hashCode()
+        .alsoToMat {
+          Flow[(MNode, MGeoNodePropsShapes)]
+            .map { case (mnode, mpropsShapes) =>
+              mnode.id.get -> mpropsShapes.hashCode()
+            }
+            .toMat {
+              Sink.collection[(String, Int), Map[String, Int]]
+                .mapMaterializedValue { nodeHashesMapFut =>
+                  for (nodeHashesMap <- nodeHashesMapFut) yield {
+                    nodeHashesMap
+                      .hashCode()
+                      .toString + "j"
+                  }
+                }
+            }(Keep.right)
+        }(Keep.right)
+        // JSON-рендер каждого item'а:
+        .map { case (_, data) =>
+          Json.toJson(data)
+        }
+        .jsonSrcToJsonArrayNullEnded
+        .map { jsonStrPart =>
+          // Для JSON допустим только UTF-8. Явно фиксируем это:
+          ByteString.fromString( jsonStrPart, StandardCharsets.UTF_8 )
+        }
+        // Нормализовать размеры ByteString'ов для входа компрессоров. Для Gzip это влияет на коэфф.сжатия.
+        .via( new ByteStringsChunker(8192) )
+        // Сжатие в GZIP:
+        .alsoToMat {
+          Flow[ByteString]
+            .via( Compression.gzip )
+            .toMat( byteStringSink )(Keep.right)
+        }(Keep.both)
+        // Сжатие в brotli:
+        .toMat {
+          Flow[ByteString]
+            .via( BrotliUtil.compress )
+            .toMat( byteStringSink )(Keep.right)
+        }(Keep.both)
+        .run()
+
+      val respData = MAdvRcvrsMapRespData(
+        contentType = JSON,
+        gzip        = gzipFut,
+        etag        = hashCodeFut,
+        brotli      = Some( brotliFut )
+      )
+
+      Future.successful( respData )
+    }
+  }
+
+
   /** Обсчитать данные карты узлов с использование кэширования.
     *
     * @return Фьючерс с gzip-ответом и значением etag.
     */
-  private def _advRcvrsMapRespFut(): Future[(ByteString, Int)] = {
+  private def _advRcvrsMapRespBoopickleFut(): Future[MAdvRcvrsMapRespData] = {
     // Собрать и оформить данные по всем узлам, с использованием кэша.
     // Операция ресурсоёмкая, поэтому кэш обязателен.
     // TODO После портирования назад на JSON, надо будет akka-stream параллельно развести на gzip и brotli компрессоры и на хэшировалку. И опять же, кэшируя результат.
-    cache.getOrElseUpdate("advGeoNodesSrc", expiration = 10.seconds) {
-      val startedAtMs = System.currentTimeMillis()
+    cache.getOrElseUpdate("advGeoNodesBoo", expiration = 10.seconds) {
+      // boo: (gzip, hash):
       for {
-        nodesRespMap <- advGeoRcvrsUtil.rcvrNodesMap(
-          advGeoRcvrsUtil.onMapRcvrsSearch(30)
-        )
-        nodesResp = MGeoNodesResp(
-          nodes = nodesRespMap.values
-        )
-        checksumFut = Future {
-          nodesRespMap.hashCode()
+        nodesRespMap <- advGeoRcvrsUtil
+          .rcvrNodesMap(
+            advGeoRcvrsUtil.onMapRcvrsSearch(30)
+          )
+          .map { case (mnode, data) =>
+            mnode.id.get -> data
+          }
+          // Собрать в единый список всё это дело:
+          .toMat {
+            Sink.collection[(String, MGeoNodePropsShapes), Map[String, MGeoNodePropsShapes]]
+          }( Keep.right )
+          .run()
+
+        etagFut = Future {
+          nodesRespMap
+            .hashCode()
+            .toString + "b"
         }
-        bbuf = PickleUtil.pickle( nodesResp )
-        gzippedBytea = GzipCompressConv.convert( bbuf )
-        checksum <- checksumFut
+
+        gzipBytesFut = Future {
+          val nodesResp = MGeoNodesResp(
+            nodes = nodesRespMap.values
+          )
+          val bbuf = PickleUtil.pickle( nodesResp )
+          val gzippedBytea = GzipCompressConv.convert( bbuf )
+          Var( ByteString.fromArrayUnsafe( gzippedBytea ) )
+        }
+
       } yield {
         // Завернуть в ByteString.
-        LOGGER.trace(s"_advRcvrsMapRespFut#${System.currentTimeMillis()}: Compiled resp with ${nodesResp.nodes.size} nodes, gzipped into ${gzippedBytea.length}bytes, checksum=$checksum, took=${System.currentTimeMillis() - startedAtMs} ms.")
-        val gzipBytes = ByteString.fromArrayUnsafe( gzippedBytea )
-
-        (gzipBytes, checksum)
+        MAdvRcvrsMapRespData(
+          contentType = BINARY,
+          gzip = gzipBytesFut,
+          etag = etagFut
+        )
       }
     }
   }
@@ -277,31 +381,73 @@ class Static @Inject() (
   def advRcvrsMap = {
     ignoreAuth().async { implicit request =>
       // Завернуть данные в единый блоб и отправить клиенту.
-      for {
-        (gzipBytes, checksum) <- _advRcvrsMapRespFut()
-      } yield {
-        val etag = checksum.toString
+      val accept = request.headers.get( ACCEPT )
+      lazy val logPrefix = s"advRcvrsMap(${accept.orNull})#${System.currentTimeMillis()}:"
 
-        // Совпадает ли Etag со значением на клиенте?
-        val etagMatches = request.headers
-          .get(IF_NONE_MATCH)
-          .contains( etag )
+      val acceptJson = accept.contains( JSON )
+      // TODO 2018-03-12 boopickle и bin-формат теперь только для совместимости с кривыми установленными webapp sc3. Можно её удалить ближе к запуску.
+      val acceptBinary = accept.contains( BINARY )
 
-        val resultBase = if (etagMatches) {
-          LOGGER.trace(s"advRcvrsMap#${System.currentTimeMillis()}: Etag match $etag, returning 304")
-          NotModified
-        } else {
-          // Тут не проверяется Accept-Encoding. Наврядли есть клиенты без поддержки gzip.
-          Ok( gzipBytes )
-            .withHeaders(CONTENT_ENCODING -> MCompressAlgos.Gzip.httpContentEncoding)
+      if (acceptJson ^ acceptBinary) {
+        for {
+          // TODO Проверить Accept, чтобы разрулить варианты между boopickle и json.
+          respData <- if (acceptJson)
+            _advRcvrsMapRespJsonFut()
+          else if (acceptBinary)
+            _advRcvrsMapRespBoopickleFut()
+          else
+            throw new IllegalArgumentException("Accept header invalid")
+
+          etag <- respData.etag
+
+          // Совпадает ли Etag со значением на клиенте?
+          etagMatches = request.headers
+            .get(IF_NONE_MATCH)
+            .contains( etag )
+
+          resultBase <- {
+            if (etagMatches) {
+              LOGGER.trace(s"$logPrefix Etag match $etag, returning 304")
+              Future.successful( NotModified )
+
+            } else {
+              // Пытаемся также вернуть brotli-ответ, т.к. это быстро.
+              val (bodyCompressAlgo, bodyCompressedFut) = respData
+                .brotli
+                .filter { _ =>
+                  request.headers
+                    .get(ACCEPT_ENCODING)
+                    .exists(_ contains MCompressAlgos.Brotli.httpContentEncoding)
+                }
+                // Наврядли есть клиенты без поддержки gzip, принебрегаем ими:
+                .fold [(MCompressAlgo, Future[Var[ByteString]])] (MCompressAlgos.Gzip -> respData.gzip) { MCompressAlgos.Brotli -> _ }
+
+              for {
+                respBodyVar <- bodyCompressedFut
+              } yield {
+                LOGGER.trace(s"$logPrefix Done, $bodyCompressAlgo with ${respBodyVar.value.length} bytes")
+                Ok( respBodyVar.value )
+                  .as( respData.contentType )
+                  .withHeaders(
+                    CONTENT_ENCODING -> bodyCompressAlgo.httpContentEncoding
+                  )
+              }
+            }
+          }
+
+        } yield {
+          resultBase
+            .withHeaders(
+              // TODO Для 304-ответа тоже надо Etag, Cache-control и Vary? Или только для 200 ok?
+              CACHE_CONTROL -> "public, max-age=20",
+              ETAG          -> etag,
+              VARY          -> (ACCEPT :: ACCEPT_ENCODING :: Nil).mkString(", ")
+            )
         }
 
-        resultBase
-          // TODO Для 304-ответа тоже надо Etag и Cache-control?? Или только для 200 ok?
-          .withHeaders(
-            CACHE_CONTROL -> "public, max-age=20",
-            ETAG          -> etag
-          )
+      } else {
+        // Accept: содержит некорректное значение.
+        BadRequest( ACCEPT )
       }
     }
   }

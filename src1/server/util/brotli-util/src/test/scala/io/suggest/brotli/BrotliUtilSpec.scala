@@ -4,8 +4,9 @@ import java.util
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.{Keep, Sink, Source}
+import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import akka.util.ByteString
+import io.suggest.streams.ByteStringsChunker
 import org.meteogroup.jbrotli.BrotliStreamDeCompressor
 import org.scalatest._
 import org.scalatest.Matchers._
@@ -33,7 +34,10 @@ class BrotliUtilSpec extends FlatSpec {
   }
 
   "Streamed brotli compressor" should "handle simple data" in {
-    val flow = BrotliUtil.streamedCompressorFlow
+    val flow = Flow[ByteString]
+      .via( new ByteStringsChunker(8192) )
+      .via( new BrotliCompress )
+
     val in = Source(0 to 100)
       .map { _ => ByteString.fromArrayUnsafe(DATA_252) }
     val sink = Sink.fold[ByteString, ByteString]( ByteString.empty ) { _ ++ _ }

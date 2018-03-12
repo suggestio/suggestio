@@ -2,7 +2,8 @@ package util.adv.geo
 
 import javax.inject.Inject
 
-import akka.stream.scaladsl.{Keep, Sink}
+import akka.NotUsed
+import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.adn.MAdnRights
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.rcvr.RcvrKey
@@ -98,10 +99,8 @@ class AdvGeoRcvrsUtil @Inject()(
     *         Карта нужна для удобства кэширования и как бы "сортировки", чтобы hashCode() или иные хэш-функции
     *         всегда возвращали один и тот же результат.
     */
-  def rcvrNodesMap(msearch: MNodeSearch): Future[Map[String, MGeoNodePropsShapes]] = {
+  def rcvrNodesMap(msearch: MNodeSearch): Source[(MNode, MGeoNodePropsShapes), NotUsed] = { // Future[Map[String, MGeoNodePropsShapes]] = {
     // Начать выкачивать все подходящие узлы из модели:
-    val nodesSource = mNodes.source[MNode](msearch)
-
     lazy val logPrefix = s"rcvrNodesMap(${System.currentTimeMillis}):"
 
     val targetSz = LOGO_WH_LIMITS_CSSPX
@@ -116,7 +115,8 @@ class AdvGeoRcvrsUtil @Inject()(
     val logoSzMult = 1.0f
 
     // Пережевать все найденные узлы, собрать нужные данные в единый список.
-    nodesSource
+    mNodes
+      .source[MNode](msearch)
       // Собрать логотипы узлов.
       .mapAsyncUnordered(NODE_LOGOS_PREPARING_PARALLELISM) { mnode =>
         // Подготовить инфу по логотипу узла.
@@ -190,17 +190,12 @@ class AdvGeoRcvrsUtil @Inject()(
           )
 
           // Собрать и вернуть контейнер с данными мапы узлов:
-          nodeId -> MGeoNodePropsShapes(
+          mnode -> MGeoNodePropsShapes(
             props  = props,
             shapes = geoShapes
           )
         }
       }
-      // Собрать в единый список всё это дело:
-      .toMat {
-        Sink.collection[(String, MGeoNodePropsShapes), Map[String, MGeoNodePropsShapes]]
-      }( Keep.right )
-      .run()
   }
 
 

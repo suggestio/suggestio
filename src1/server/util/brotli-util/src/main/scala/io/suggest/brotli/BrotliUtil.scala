@@ -1,11 +1,9 @@
 package io.suggest.brotli
 
-import akka.NotUsed
 import akka.stream._
-import akka.stream.scaladsl.Flow
 import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.util.ByteString
-import io.suggest.streams.ByteStringsChunker
+import io.suggest.util.logs.MacroLogsImpl
 import org.meteogroup.jbrotli.{Brotli, BrotliStreamCompressor}
 import org.meteogroup.jbrotli.libloader.BrotliLibraryLoader
 
@@ -15,38 +13,59 @@ import org.meteogroup.jbrotli.libloader.BrotliLibraryLoader
   * Created: 20.02.18 17:28
   * Description: Утиль, абстрагирующая нижележащую brotli-реализацию от sio-кода.
   */
-object BrotliUtil {
+object BrotliUtil extends MacroLogsImpl  {
 
   // Инициализировать jbrotli
   BrotliLibraryLoader.loadBrotli()
 
-  /** Сборка brotli-компрессора, пригодного для встраивания поток двоичных данных. */
-  def streamedCompressorFlow: Flow[ByteString, ByteString, NotUsed] = {
-    val streamCompressor = new BrotliStreamCompressor( Brotli.DEFAULT_PARAMETER )
+  /** Макс.размер одного chunk'а с данными.
+    *
+    * Max: 256 KiB.
+    * Можно уточнить через new BrotliStreamCompressor( Brotli.DEFAULT_PARAMETER ).getMaxInputBufferSize()
+    */
+  def MAX_INPUT_CHUNK_SIZE_B: Int = 256 * 1024
 
-    Flow[ByteString]
-      // Входная байт-строка может быть любого размера, а компрессор сжирает не более maxChunkSize за раз.
-      // Нужно нарезать строку на подстроки, не превышающие максимальную длину:
-      .via( new ByteStringsChunker( streamCompressor.getMaxInputBufferSize ) )
-      // Каждую строку запихнуть в компрессор. Компрессор закрыть по завершении.
-      .via( new BrotliCompressFlow(streamCompressor) )
+
+  /** Сборка инстанса streamCompressor'а.
+    * Т.к. компрессор нативный, то надо не забывать вычищать его из памяти через .close().
+    *
+    * @return Инстанс BrotliStreamCompressor.
+    */
+  def mkStreamCompressor(): BrotliStreamCompressor = {
+    new BrotliStreamCompressor( Brotli.DEFAULT_PARAMETER )
   }
+
+
+  def compress: BrotliCompress = new BrotliCompress
 
 }
 
 
-/** Сжиматель данных из потока данных.
-  *
-  * @param streamCompressor Инстанс используемого компрессора.
-  */
-protected class BrotliCompressFlow(streamCompressor: BrotliStreamCompressor) extends GraphStage[FlowShape[ByteString, ByteString]] {
-  val in: Inlet[ByteString] = Inlet("BrotliComp.In")
-  val out: Outlet[ByteString] = Outlet("BrotliComp.Out")
+/** Сжиматель данных из потока данных. */
+class BrotliCompress extends GraphStage[FlowShape[ByteString, ByteString]] {
+
+  val (in, out): (Inlet[ByteString], Outlet[ByteString]) = {
+    val prefix = getClass.getSimpleName + "."
+    (
+      Inlet( prefix + "In"),
+      Outlet( prefix + "Out")
+    )
+  }
 
   override def shape = FlowShape.of(in, out)
 
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = {
     new GraphStageLogic(shape) {
+
+      private var streamCompressor = BrotliUtil.mkStreamCompressor()
+
+      /** Close streamCompressor, if not closed. */
+      private def _closeStreamComp(): Unit = {
+        if (streamCompressor != null) {
+          streamCompressor.close()
+          streamCompressor = null
+        }
+      }
 
       setHandler(in, new InHandler {
         override def onPush(): Unit = {
@@ -56,7 +75,7 @@ protected class BrotliCompressFlow(streamCompressor: BrotliStreamCompressor) ext
           // Надо разобраться, нельзя ли обойтись без цельного копирования массива?
           val compressedBytea = streamCompressor.compressArray(input.toArray, false)
           val compressedOut = ByteString.fromArrayUnsafe( compressedBytea )
-          push(out, compressedOut)
+          emit(out, compressedOut)
         }
 
         override def onUpstreamFinish(): Unit = {
@@ -64,15 +83,16 @@ protected class BrotliCompressFlow(streamCompressor: BrotliStreamCompressor) ext
             val finalElement = ByteString.fromArrayUnsafe(
               streamCompressor.compressArray(Array.empty, true)
             )
-            push(out, finalElement)
+            if (finalElement.nonEmpty)
+              emit(out, finalElement)
           } finally {
-            streamCompressor.close()
+            _closeStreamComp()
           }
           super.onUpstreamFinish()
         }
 
         override def onUpstreamFailure(ex: Throwable): Unit = {
-          streamCompressor.close()
+          _closeStreamComp()
           super.onUpstreamFailure(ex)
         }
       })
@@ -82,6 +102,13 @@ protected class BrotliCompressFlow(streamCompressor: BrotliStreamCompressor) ext
           pull(in)
         }
       })
+
+      override def postStop(): Unit = {
+        super.postStop()
+        // Убедиться, что streamCompressor закрыт.
+        // В норме, он уже должен быть уже закрыт, но вдруг была какая-то внутренняя ошибка...
+        _closeStreamComp()
+      }
 
     }
   }

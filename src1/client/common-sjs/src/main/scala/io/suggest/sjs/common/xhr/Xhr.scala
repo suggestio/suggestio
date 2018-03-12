@@ -49,7 +49,7 @@ object Xhr extends Log {
 
   private def myHttpProto: Option[String] = {
     myProto.filter { p =>
-      p.startsWith("http")
+      p.startsWith( HttpConst.Proto.HTTP )
     }
   }
 
@@ -79,10 +79,13 @@ object Xhr extends Log {
   }
 
 
-  def send(route: Route, timeoutMsOpt: Option[Int] = None,
-           headers: TraversableOnce[(String, String)] = Nil, body: Ajax.InputData = null): Future[XMLHttpRequest] = {
+  def send[HttpRoute: HttpRouteExtractor](route: HttpRoute,
+                                          timeoutMsOpt: Option[Int] = None,
+                                          headers: TraversableOnce[(String, String)] = Nil,
+                                          body: Ajax.InputData = null): Future[XMLHttpRequest] = {
+    val hre = implicitly[HttpRouteExtractor[HttpRoute]]
     sendRaw(
-      method        = route.method,
+      method        = hre.method(route),
       url           = route2url( route ),
       timeoutMsOpt  = timeoutMsOpt,
       headers       = headers,
@@ -153,11 +156,12 @@ object Xhr extends Log {
     }
   }
 
-  def route2url(route: Route, preferAbsolute: Boolean = PREFER_ABS_URLS): String = {
+  def route2url[HttpRoute: HttpRouteExtractor](route: HttpRoute, preferAbsolute: Boolean = PREFER_ABS_URLS): String = {
+    val hre = implicitly[HttpRouteExtractor[HttpRoute]]
     if (preferAbsolute)
-      route.absoluteURL( PREFER_SECURE_URLS )
+      hre.absoluteUrl( route, PREFER_SECURE_URLS )
     else
-      route.url
+      hre.url( route )
   }
 
   /**
@@ -166,7 +170,7 @@ object Xhr extends Log {
     * @param route Маршрут jsrouter'а. Он содержит данные по URL и METHOD для запроса.
     * @return Фьючерс с десериализованным JSON.
     */
-  def requestJson(route: Route): Future[js.Dynamic] = {
+  def requestJson[HttpRoute: HttpRouteExtractor](route: HttpRoute): Future[js.Dynamic] = {
     for (jsonText <- requestJsonText(route)) yield {
       JSON.parse( jsonText )
     }
@@ -176,7 +180,7 @@ object Xhr extends Log {
     * Запрос JSON сервера без парсинга JSON на клиенте.
     * Метод появился как временный костыль к play-json, который через API парсит только строки.
     */
-  def requestJsonText(route: Route, timeoutMsOpt: Option[Int] = None): Future[String] = {
+  def requestJsonText[HttpRoute: HttpRouteExtractor](route: HttpRoute, timeoutMsOpt: Option[Int] = None): Future[String] = {
     val xhrFut = successIf200 {
       send(
         route         = route,
@@ -189,7 +193,7 @@ object Xhr extends Log {
     }
   }
 
-  def requestHtml(route: Route): Future[String] = {
+  def requestHtml[HttpRoute: HttpRouteExtractor](route: HttpRoute): Future[String] = {
     val xhrFut = successIf200 {
       send(
         route   = route,

@@ -11,7 +11,6 @@ import scala.scalajs.js
 
 @js.native
 sealed trait Route extends js.Object {
-  // def ajax() -- нельзя, т.к. deprecated и будет удалена, и зависит от jQuery.
 
   /** Используемый HTTP-метод. GET, POST и т.д. */
   val method: String = js.native
