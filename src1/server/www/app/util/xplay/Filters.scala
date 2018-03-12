@@ -5,6 +5,7 @@ import javax.inject.Inject
 import io.suggest.sec.ExpireSessionFilter
 import play.api.http.HttpFilters
 import play.api.mvc.EssentialFilter
+import play.filters.gzip.GzipFilter
 import util.HtmlCompressFilter
 import util.cdn.{CorsFilter, DumpXffHeaders}
 
@@ -22,6 +23,7 @@ final case class Filters @Inject() (
   htmlCompress            : HtmlCompressFilter,
   dumpXffHdrs             : DumpXffHeaders,
   secHeaders              : SecHeadersFilter,
+  gzipFilter              : GzipFilter,
   cors                    : CorsFilter
 )
   extends HttpFilters
