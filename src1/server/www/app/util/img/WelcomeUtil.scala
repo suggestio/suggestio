@@ -187,6 +187,7 @@ class WelcomeUtil @Inject() (
     }
 
     acc = gravity ::
+      BackgroundOp( None ) ::
       AbsResizeOp(scrSz, Seq(ImResizeFlags.FillArea)) ::
       gravity ::
       ExtentOp(scrSz) ::

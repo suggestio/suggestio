@@ -70,6 +70,7 @@ class BlkImgMaker @Inject() (
       // Настройки сохранения результирующей картинки (аккамулятор).
       val imOpsAcc =
         ImGravities.Center ::
+        BackgroundOp( None ) ::
         AbsResizeOp(szReal, ImResizeFlags.FillArea) ::
         ExtentOp(szReal) ::
         ImFilters.Lanczos ::

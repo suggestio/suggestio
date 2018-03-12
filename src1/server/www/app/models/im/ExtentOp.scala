@@ -8,7 +8,7 @@ import util.qsb.QSBs
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 02.10.14 14:38
- * Description:
+ * Description: Поддержка -extent.
  */
 
 object ExtentOp {
@@ -21,6 +21,7 @@ object ExtentOp {
 }
 
 case class ExtentOp(wh: ISize2di) extends ImOp {
+
   override def opCode = ImOpCodes.Extent
 
   override def qsValue: String = {

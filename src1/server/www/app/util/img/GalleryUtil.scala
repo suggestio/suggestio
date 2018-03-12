@@ -98,6 +98,7 @@ class GalleryUtil @Inject() (
 
     var imOps: List[ImOp] =
       ImGravities.Center ::
+      BackgroundOp( None ) ::
       AbsResizeOp( newSz, ImResizeFlags.FillArea ) ::
       ExtentOp( newSz ) ::
       ImInterlaces.Plane ::

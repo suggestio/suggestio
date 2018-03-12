@@ -72,6 +72,11 @@ object ImOpCodes extends StringEnum[ImOpCode] {
   //    PercentSzCropOp(new ImgCropParsersImpl().apply(vs.head))
   //  }
   //}
+  object Background extends ImOpCode("l") {
+    override def mkOp(vs: Seq[String]): ImOp = {
+      BackgroundOp( vs )
+    }
+  }
 
   override def values = findValues
 

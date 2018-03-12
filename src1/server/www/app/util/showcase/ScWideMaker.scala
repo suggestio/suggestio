@@ -214,6 +214,7 @@ class ScWideMaker @Inject() (
         .fromDpr(pxRatio)
 
       val imOps0 =
+        BackgroundOp( None ) ::
         AbsResizeOp(wideWh, ImResizeFlags.FillArea :: Nil) ::
         // FillArea почти всегда выдаёт результат, выходящий за пределы wideWh по одному из измерений.
         // Подогнать под wideWh, сделав extent-кроп по wideWh (как и рекомендуется в доках):

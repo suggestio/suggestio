@@ -282,7 +282,7 @@ class DynImgUtil @Inject() (
       if (LOGGER.underlying.isTraceEnabled()) {
         val logPrefix = s"convert($in=>$out)#${System.currentTimeMillis()}:"
         val tstamp = System.currentTimeMillis() * imOps.hashCode() * in.hashCode()
-        LOGGER.trace(s"$logPrefix [$tstamp]\n ${cmd.getCommand.iterator().asScala.mkString(" ")}\n $opStr")
+        LOGGER.trace(s"$logPrefix [$tstamp]\n $$ ${cmd.getCommand.iterator().asScala.mkString(" ")} $opStr")
         for (res <- resFut)
           LOGGER.trace(s"$logPrefix [$tstamp] returned $res, result ${out.length} bytes")
       }
