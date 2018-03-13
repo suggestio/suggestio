@@ -332,10 +332,7 @@ class DynImgUtil @Inject() (
       override def limit = 20
       override def isOriginalFile = Some(false)
       override def fileMimes: Seq[String] = {
-        MImgFmts.values
-          .iterator
-          .flatMap(_.allMimes)
-          .toSeq
+        MImgFmts.allMimesIter.toSeq
       }
     }
 

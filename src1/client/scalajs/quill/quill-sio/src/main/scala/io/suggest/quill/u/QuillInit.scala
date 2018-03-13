@@ -1,12 +1,22 @@
 package io.suggest.quill.u
 
 import com.github.zenoamaro.react.quill.Quill
+import com.quilljs.delta.{Delta, DeltaEmbed}
+import com.quilljs.quill.core.Emitter
 import com.quilljs.quill.modules.formats._
-import com.quilljs.quill.modules.{QuillModules, QuillModulesNames}
+import com.quilljs.quill.modules.toolbar.{QuillToolbar, QuillToolbarModule}
+import com.quilljs.quill.modules.{QuillCss, QuillModules, QuillModulesNames}
+import io.suggest.common.event.DomEvents
+import io.suggest.common.html.HtmlConstants
 import io.suggest.font.{MFontSizes, MFonts}
+import io.suggest.img.MImgFmts
+import org.scalajs.dom
+import org.scalajs.dom.{Event, UIEvent}
+import org.scalajs.dom.raw.{FileReader, HTMLInputElement}
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
+import scala.scalajs.js.{Dictionary, UndefOr}
 
 /**
   * Suggest.io
@@ -173,7 +183,57 @@ class QuillInit {
     // Собрать и вернуть итоговый конфиг.
     new QuillModules {
       override val toolbar = js.defined {
-        toolbarOptions
+        val qtm = js.Object().asInstanceOf[QuillToolbarModule]
+        qtm.container = toolbarOptions
+        qtm.handlers = {
+          // Неправильные mime-типы в accept-аттрибуте у image. Надо выставлять правильные тут:
+          val imageHandler = { (quillToolbar) =>
+            // Порт из themes/base.js https://github.com/quilljs/quill/blob/develop/themes/base.js#L121
+            var fileInput = quillToolbar.container
+              .querySelector("input.ql-image[type=file]")
+              .asInstanceOf[HTMLInputElement]
+            if (fileInput == null) {
+              fileInput = dom.document
+                .createElement( HtmlConstants.Input.input )
+                .asInstanceOf[HTMLInputElement]
+              fileInput.setAttribute("type", "file")
+              fileInput.setAttribute("accept", MImgFmts.allMimesIter.mkString(", "))
+              fileInput.classList.add( QuillCss.QL_IMAGE )
+
+              fileInput.addEventListener( DomEvents.CHANGE, {(_: Event) =>
+                if (fileInput.files != null && fileInput.files(0) != null) {
+                  val reader = new FileReader()
+                  reader.onload = { e: UIEvent =>
+                    val range = quillToolbar.quill.getSelection(true)
+                    quillToolbar.quill.updateContents(
+                      new Delta()
+                        .retain( range.index )
+                        .delete( range.length )
+                        .insert {
+                          val obj = js.Object.apply().asInstanceOf[DeltaEmbed]
+                          obj.image = reader.result.asInstanceOf[String]
+                          obj
+                        },
+                      Emitter.sources.USER
+                    )
+                    quillToolbar.quill.setSelection(range.index + 1, Emitter.sources.SILENT)
+                    fileInput.value = ""
+                  }
+                  // TODO По факту, base64 не нужен - надо вставлять ссылку на блоб. Потому что иначе DocEditAh потом назад конвертит это.
+                  reader.readAsDataURL( fileInput.files(0) )
+                }
+              })
+              quillToolbar.container.appendChild( fileInput )
+            }
+            fileInput.click()
+          }: js.ThisFunction0[QuillToolbar, _]
+
+          js.Dictionary[js.Any](
+            QuillModulesNames.Formats.IMAGE -> imageHandler
+          )
+        }
+
+        qtm
       }
     }
   }

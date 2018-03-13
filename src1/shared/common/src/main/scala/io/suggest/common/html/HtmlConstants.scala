@@ -60,6 +60,7 @@ object HtmlConstants {
 
   object Input {
 
+    val input = "input"
     val checkbox = "checkbox"
     val select = "select"
     val text = "text"

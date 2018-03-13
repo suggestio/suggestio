@@ -1,5 +1,7 @@
 package com.quilljs.quill
 
+import com.quilljs.delta.Delta
+import com.quilljs.quill.models.SelectionRange
 import org.scalajs.dom.Node
 
 import scala.scalajs.js
@@ -35,7 +37,6 @@ trait QuillStatic extends js.Object {
 
   @JSName("addContainer")
   def addContainer1(className: String, refNode: Node = js.native): Unit = js.native
-
   @JSName("addContainer")
   def addContainer2(domNode: Node, refNode: Node = js.native): Unit = js.native
 
@@ -43,6 +44,17 @@ trait QuillStatic extends js.Object {
 
   def disable(): Unit = js.native
   def enable(value: Boolean = js.native): Unit = js.native
+
+
+  def getSelection(param0: Boolean = js.native): SelectionRange = js.native
+
+  def setSelection(start: Int, end: Int): Unit = js.native
+  def setSelection(start: Int, source: String): Unit = js.native
+  def setSelection(start: Int, end: Int, source: String): Unit = js.native
+  def setSelection(range: SelectionRange): Unit = js.native
+  def setSelection(range: SelectionRange, source: String): Unit = js.native
+
+  def updateContents(delta: Delta, source: String = js.native): Unit = js.native
 
 }
 

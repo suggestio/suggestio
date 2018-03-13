@@ -14,6 +14,8 @@ object DomEvents
   with Touch
 {
 
+  def CHANGE = "change"
+
   def MESSAGE = "message"
 
   def PROGRESS = "progress"

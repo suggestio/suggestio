@@ -1,5 +1,7 @@
 package com.quilljs.quill.modules
 
+import com.quilljs.quill.modules.toolbar.QuillToolbarModule
+
 import scala.scalajs.js
 
 /**
@@ -28,6 +30,6 @@ trait QuillModules extends js.Object {
     * }}}
     *
     */
-  val toolbar: js.UndefOr[js.Array[js.Any]] = js.undefined
+  val toolbar: js.UndefOr[QuillToolbarModule] = js.undefined
 
 }

@@ -1,7 +1,6 @@
 package io.suggest.img
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
-import io.suggest.compress.MCompressAlgo
 import io.suggest.enum2.EnumeratumUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
@@ -64,6 +63,12 @@ case object MImgFmts extends StringEnum[MImgFmt] {
 
 
   override val values = findValues
+
+  def allMimesIter: Iterator[String] = {
+    values
+      .iterator
+      .flatMap(_.allMimes)
+  }
 
   private val _mimeValues: Map[String, MImgFmt] = {
     val iter = for {

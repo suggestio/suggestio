@@ -253,6 +253,7 @@ class Static @Inject() (
   private case class MAdvRcvrsMapRespData(
                                            contentType   : String,
                                            gzip          : Future[Var[ByteString]],
+                                           // TODO Удалить etag-поле следом за boopickle-сериализацией для advRcvrsMap()
                                            etag          : Future[String],
                                            brotli        : Option[Future[Var[ByteString]]] = None
                                          ) {
@@ -311,6 +312,7 @@ class Static @Inject() (
               .toMat( byteStringSink )(Keep.right)
           }
 
+          // TODO Удалить этот костыль следом за .etag-полем и boopickle-сериализацией.
           val etagStub = Future.successful("")
           // Общий код вызова финального mapMaterialzedValue(), который сохранит всё в кэш и вернёт нормализованное значение.
           def __mapMaterialized(gzip    : Future[Var[ByteString]],

@@ -10,53 +10,53 @@ import com.quilljs.quill.modules.formats.Size
   */
 object QuillModulesNames {
 
-  private def DELIM = "/"
+  private final def DELIM = "/"
 
   object Formats {
 
     /** path prefix for all formats. */
-    def FORMATS_ = "formats" + DELIM
+    final def FORMATS_ = "formats" + DELIM
 
-    def FONT = "font"
-    def FONT_PATH = FORMATS_ + FONT
+    final def FONT = "font"
+    final def FONT_PATH = FORMATS_ + FONT
 
-    def DIRECTION = "direction"
+    final def DIRECTION = "direction"
 
-    def BOLD = "bold"
-    def ITALIC = "italic"
-    def UNDERLINE = "underline"
-    def STRIKE = "strike"
+    final def BOLD = "bold"
+    final def ITALIC = "italic"
+    final def UNDERLINE = "underline"
+    final def STRIKE = "strike"
 
-    def COLOR = "color"
-    def BACKGROUND = "background"
+    final def COLOR = "color"
+    final def BACKGROUND = "background"
 
-    def BLOCKQUOTE = "blockquote"
+    final def BLOCKQUOTE = "blockquote"
 
-    def CODE_BLOCK = "code-block"
+    final def CODE_BLOCK = "code-block"
 
-    def INDENT = "indent"
+    final def INDENT = "indent"
 
-    def LINK = "link"
+    final def LINK = "link"
 
-    def IMAGE = "image"
-    def IMAGE_PATH = FORMATS_ + IMAGE
-    def VIDEO = "video"
+    final def IMAGE = "image"
+    final def IMAGE_PATH = FORMATS_ + IMAGE
+    final def VIDEO = "video"
 
-    def CLEAN = "clean"
+    final def CLEAN = "clean"
 
   }
 
   object Attributors {
-    def ATTRIBUTORS = "attributors"
+    final def ATTRIBUTORS = "attributors"
 
     object Style {
-      def STYLE = "style"
-      def SIZE = ATTRIBUTORS + DELIM + STYLE + DELIM + Size.SIZE
+      final def STYLE = "style"
+      final def SIZE = ATTRIBUTORS + DELIM + STYLE + DELIM + Size.SIZE
     }
 
     object Clazz {
-      def CLAZZ = "class"
-      def SIZE = ATTRIBUTORS + DELIM + CLAZZ + DELIM + Size.SIZE
+      final def CLAZZ = "class"
+      final def SIZE = ATTRIBUTORS + DELIM + CLAZZ + DELIM + Size.SIZE
     }
 
   }
