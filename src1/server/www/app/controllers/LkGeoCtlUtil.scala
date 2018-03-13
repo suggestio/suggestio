@@ -66,7 +66,7 @@ protected class LkGeoCtlUtil @Inject() (
     */
   def currentNodeItemsGsToGeoJson(nodeId: String, itemTypes: TraversableOnce[MItemType])(implicit request: IReq[_]): Future[Result] = {
     // Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
-    val currAdvsSrc = slick.db
+    val jsonsSrc = slick.db
       .stream {
         val query = mItems.findCurrentForNode( nodeId, itemTypes )
         bill2Util.onlyGeoShapesInfo(query)
@@ -83,11 +83,10 @@ protected class LkGeoCtlUtil @Inject() (
       .maybeTraceCount(this) { totalCount =>
         s"currentNodeItemsGsToGeoJson($nodeId): streamed $totalCount GeoJSON features"
       }
+      // Превратить поток JSON-значений в "поточную строку", направленную в сторону юзера.
+      .jsValuesToJsonArray
 
-    // Превратить поток JSON-значений в "поточную строку", направленную в сторону юзера.
-    val jsonStrSrc = currAdvsSrc.jsonSrcToJsonArrayNullEnded
-
-    Ok.chunked( jsonStrSrc )
+    Ok.chunked( jsonsSrc )
       .as( withCharset(JSON) )
       .withHeaders( CACHE_10 )
   }

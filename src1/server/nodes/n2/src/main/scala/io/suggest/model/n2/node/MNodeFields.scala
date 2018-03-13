@@ -40,8 +40,10 @@ object MNodeFields {
     override protected def _PARENT_FN = META_FN
 
     import MMeta.{Fields => F}
+    def META_BASIC_FN               = _fullFn( F.Basic.BASIC_FN )
     def BASIC_NAME_SHORT_NOTOK_FN   = _fullFn( F.Basic.NAME_SHORT_NOTOK_FN )
     def DATE_CREATED_FN             = _fullFn( F.Basic.DATE_CREATED_FN )
+    def META_COLORS_FN              = _fullFn( F.Colors.COLORS_FN )
   }
 
   /** Абсолютные имена ES-полей в .extras */

@@ -54,7 +54,7 @@ sealed trait StaticController extends js.Object {
 
   /** Роута для доступа к данным гео.карты рекламщиков.
     * Обычно проходит через CDN, но это уже разруливает серверный js-роутер. */
-  def advRcvrsMap(): Route = js.native
+  def advRcvrsMapJson(): Route = js.native
 
   /** Роута для доступа к унифицированному websocket channel. */
   def wsChannel(ctxId: String): Route = js.native

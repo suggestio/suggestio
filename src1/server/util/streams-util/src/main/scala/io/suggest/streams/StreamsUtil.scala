@@ -119,24 +119,15 @@ class StreamsUtil @Inject() (
 
       /**
         * Рендер потока данных в json-массив для chunked-ответа.
-        * Т.к. есть проблемы с запятыми, в качестве последнего элемента добавляется null.
         *
-        * @return Поток строк, формирующих валидный JSON array с null в качестве последнего элемента.
+        * @return Поток строк, формирующих валидный JSON array.
         */
-      def jsonSrcToJsonArrayNullEnded: Source[String, M] = {
-        // Сериализуем JSON в поток. Для валидности JSON надо добавить "[" в начале, "]" в конце, и разделители между элементами.
-        // TODO Лучше реализовать GraphStage, а не этот велосипед.
-        Source.single( "[" )
-          .concatMat {
-            src
-              .map { m =>
-                Json.stringify(m)
-              }
-              .intersperse( ",\n" )
-          }(Keep.right)
-          .concatMat {
-            Source.single("]")
-          }(Keep.left)
+      def jsValuesToJsonArray: Source[String, M] = {
+        src
+          .map { m =>
+            Json.stringify(m)
+          }
+          .intersperse("[", ",\n", "]")
       }
 
     }

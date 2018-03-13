@@ -30,7 +30,7 @@ class RcvrMarkersInitAh[M](
     // Сигнал запуска инициализации маркеров с сервера.
     case RcvrMarkersInit =>
       val fx = Effect {
-        api.advRcvrsMap()
+        api.advRcvrsMapJson()
           .transform { tryResp =>
             val r = InstallRcvrMarkers( tryResp )
             Success( r )

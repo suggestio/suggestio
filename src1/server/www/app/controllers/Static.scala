@@ -3,14 +3,16 @@ package controllers
 import java.nio.charset.StandardCharsets
 import javax.inject.{Inject, Singleton}
 
-import akka.stream.scaladsl.{Compression, Flow, Keep, Sink}
+import akka.NotUsed
+import akka.stream.{FlowShape, Graph}
+import akka.stream.scaladsl.{Compression, Flow, Keep, Sink, Source}
 import akka.util.ByteString
 import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
-import io.suggest.brotli.{BrotliCompress, BrotliUtil}
+import io.suggest.brotli.BrotliUtil
 import io.suggest.compress.{MCompressAlgo, MCompressAlgos}
 import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.{MNodeFields, MNodes}
 import io.suggest.pick.PickleUtil
 import io.suggest.primo.Var
 import io.suggest.sec.csp.CspViolationReport
@@ -21,7 +23,7 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.streams.ActorFlow
-import play.api.mvc.{BodyParser, WebSocket}
+import play.api.mvc.{BodyParser, Result, WebSocket}
 import util.acl._
 import util.adv.geo.AdvGeoRcvrsUtil
 import util.cdn.CorsUtil
@@ -31,6 +33,8 @@ import util.stat.StatUtil
 import util.ws.{MWsChannelActorArgs, WsChannelActors}
 import util.xplay.SecHeadersFilterUtil
 import views.html.static._
+import japgolly.univeq._
+import play.api.http.{HttpEntity, HttpProtocol}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -59,6 +63,7 @@ class Static @Inject() (
                          cspUtil                         : CspUtil,
                          mCtxIds                         : MCtxIds,
                          isSuOrDevelOr404                : IsSuOrDevelOr404,
+                         mNodes                          : MNodes,
                          maybeAuth                       : MaybeAuth,
                          canOpenWsChannel                : CanOpenWsChannel,
                          wsChannelActors                 : WsChannelActors,
@@ -250,68 +255,226 @@ class Static @Inject() (
                                            gzip          : Future[Var[ByteString]],
                                            etag          : Future[String],
                                            brotli        : Option[Future[Var[ByteString]]] = None
-                                         )
+                                         ) {
+    def forCompressAlgo(algo: MCompressAlgo): Future[Var[ByteString]] = {
+      algo match {
+        case MCompressAlgos.Brotli => brotli.get
+        case MCompressAlgos.Gzip   => gzip
+      }
+    }
+  }
 
-  /** Рендерер JSON-карты данных узлов. */
-  private def _advRcvrsMapRespJsonFut(): Future[MAdvRcvrsMapRespData] = {
-    cache.getOrElseUpdate("advGeoNodesJson", expiration = 10.seconds) {
-      val byteStringSink = streamsUtil.byteStringAccSink
-        // Запускать в фоне compact, который подменит исходное неоптимизированное значение ByteString.
-        .asyncCompactedByteString
+  /** Контейнер непоточных данных для ответа клиенту. */
+  private case class MAdvRcvrsStrictRespData(
+                                              compressAlgo: MCompressAlgo,
+                                              body: Future[Var[ByteString]]
+                                            )
 
-      // Продолжаем реактивную обработку, но ответ клиенту будет нереактивным (кэширование, ибо).
-      val ((hashCodeFut, gzipFut), brotliFut) = advGeoRcvrsUtil
-        .rcvrNodesMap( advGeoRcvrsUtil.onMapRcvrsSearch(30) )
-        // Ветвь рассчёта контрольной суммы: материализуем Map[NodeId, data.hashCode()].hashCode()
-        .alsoToMat {
-          Flow[(MNode, MGeoNodePropsShapes)]
-            .map { case (mnode, mpropsShapes) =>
-              mnode.id.get -> mpropsShapes.hashCode()
+  /** Рендерер JSON-карты данных узлов.
+    *
+    * @param respCompressAlgoOpt Какое сжатие требуется клиенту на выходе?
+    * @return Фьючерс с результатами.
+    *         Left(source) - Source для chunked/streamed выдачи данных юзеру
+    *         Right(...) - готовые к употреблению данные.
+    */
+  private def _advRcvrsMapRespJsonFut(respCompressAlgoOpt: Option[MCompressAlgo]): Future[Either[Source[ByteString, MAdvRcvrsMapRespData], MAdvRcvrsStrictRespData]] = {
+    for {
+      promiseOrCached <- cacheApiUtil.promiseOrCached[MAdvRcvrsMapRespData]( "advGeoNodesJson", expiration = 10.seconds )
+    } yield {
+      promiseOrCached.fold(
+        // В кэше нет данных, то надо запустить рассчёты:
+        {cachedPromise =>
+          // Организуем реактивную обработку нод с генерацией несжатых byte chunks:
+          val NODES_PER_CHUNK = 30
+          val chunkedUncompressedSrc = advGeoRcvrsUtil
+            .rcvrNodesMap( advGeoRcvrsUtil.onMapRcvrsSearch(NODES_PER_CHUNK) )
+            // JSON-рендер каждого item'а:
+            .map { case (_, data) =>
+              Json.toJson(data)
             }
-            .toMat {
-              Sink.collection[(String, Int), Map[String, Int]]
-                .mapMaterializedValue { nodeHashesMapFut =>
-                  for (nodeHashesMap <- nodeHashesMapFut) yield {
-                    nodeHashesMap
-                      .hashCode()
-                      .toString + "j"
+            .jsValuesToJsonArray
+            .map { jsonStrPart =>
+              // Для JSON допустим только UTF-8. Явно фиксируем это:
+              ByteString.fromString( jsonStrPart, StandardCharsets.UTF_8 )
+            }
+            // Нормализовать размеры ByteString'ов для входа компрессоров. Для Gzip это влияет на коэфф.сжатия.
+            .via( new ByteStringsChunker(8192) )
+
+          val byteStringSink = streamsUtil.byteStringAccSink
+            // Запускать в фоне compact, который подменит исходное неоптимизированное значение ByteString.
+            .asyncCompactedByteString
+
+          // Дедубликация кода сборки одного sink'а любого сжатия
+          def __compressSink( compressFlow: Graph[FlowShape[ByteString, ByteString], NotUsed]): Sink[ByteString, Future[Var[ByteString]]] = {
+            Flow[ByteString]
+              .via( compressFlow )
+              .toMat( byteStringSink )(Keep.right)
+          }
+
+          val etagStub = Future.successful("")
+          // Общий код вызова финального mapMaterialzedValue(), который сохранит всё в кэш и вернёт нормализованное значение.
+          def __mapMaterialized(gzip    : Future[Var[ByteString]],
+                                brotli  : Future[Var[ByteString]]): MAdvRcvrsMapRespData = {
+            val r = MAdvRcvrsMapRespData(JSON, gzip, etagStub, Some(brotli))
+            cachedPromise.success( r )
+            r
+          }
+
+          // TODO Opt В будущем можно генерить и кэшировать только brotli-выхлоп, а gzip и uncompressed при необходимости, путём распаковки из brotli на лету.
+          val gzipCompressor = Compression.gzip
+          val brotliCompressor = BrotliUtil.compress
+
+          // Сборка финального Source на основе желаемого алгоритма сжатия на выходе:
+          val respSrc = respCompressAlgoOpt.fold[Source[ByteString, MAdvRcvrsMapRespData]] {
+            // Без сжатия, значит собрать два синка
+            chunkedUncompressedSrc
+              .alsoToMat( __compressSink(gzipCompressor) )(Keep.right)
+              .alsoToMat( __compressSink(brotliCompressor) )(Keep.both)
+              .mapMaterializedValue[MAdvRcvrsMapRespData] { case (gzipFut, brotliFut) =>
+                __mapMaterialized(gzipFut, brotliFut)
+              }
+          } {
+            // Клиент хочет brotli-сжатия. Пересобираем:
+            case MCompressAlgos.Brotli =>
+              chunkedUncompressedSrc
+                .alsoToMat( __compressSink(gzipCompressor) )(Keep.right)
+                .via( brotliCompressor )
+                .alsoToMat( byteStringSink )(Keep.both)
+                .mapMaterializedValue { case (gzipFut, brotliFut) =>
+                  __mapMaterialized(gzipFut, brotliFut)
+                }
+            case MCompressAlgos.Gzip =>
+              chunkedUncompressedSrc
+                .alsoToMat( __compressSink( brotliCompressor ) )(Keep.right)
+                .via(gzipCompressor)
+                .alsoToMat( byteStringSink )(Keep.both)
+                .mapMaterializedValue { case (brotliFut, gzipFut) =>
+                  __mapMaterialized(gzipFut, brotliFut)
+                }
+          }
+          Left(respSrc)
+        },
+        // Прямое попадание в кэш:
+        {allData =>
+          // Пока просто форсируем gzip, даже если Accept-Encoding не задан. Наврядли это на кого-либо повлияет.
+          // Потом когда-нибудь можно впилить тут gunzip для честной выдачи без сжатия.
+          val compAlgo = respCompressAlgoOpt.getOrElse( MCompressAlgos.Gzip )
+          val respData = MAdvRcvrsStrictRespData(
+            compressAlgo = compAlgo,
+            body = allData.forCompressAlgo( compAlgo )
+          )
+          Right(respData)
+        }
+      )
+    }
+  }
+
+  /** Экшен потоковой генерации карты ресиверов.
+    * Объединяет в себе потоковый ответ наравне с кэшированием всех собранных значений.
+    *
+    * @return Ok + Streamed/Chunked (заполнения кэша)
+    *         Ok + Strict (извлечение из кэша)
+    */
+  def advRcvrsMapJson = {
+    ignoreAuth().async { implicit request =>
+      // Быстро вычислить значение ETag на стороне ES. Это быстрая аггрегация, выполняется прямо на шардах.
+      val remoteEtagFut = for (
+        nodesHashSum <- cacheApiUtil.getOrElseFut("advRcvrsHash", expiration = 10.seconds) {
+          mNodes.docsHashSum(
+            sourceFields = List(
+              // Эджи. Там array, поэтому дальше погружаться нельзя. TODO А интересуют только эджи захвата геолокации и логотипа узла
+              MNodeFields.Edges.E_OUT_FN,
+              // Название узла тоже интересует. Но его может и не быть, поэтому интересуемся только контейнер meta.basic, который есть всегда
+              MNodeFields.Meta.META_BASIC_FN,
+              MNodeFields.Meta.META_COLORS_FN
+            ),
+            q = advGeoRcvrsUtil.onMapRcvrsSearch(1000).toEsQuery
+          )
+        }
+      ) yield {
+        // Значение ETag требуется собирать в двойных ковычках, оформляем:
+        val quot = '"'
+        new StringBuilder(16)
+          .append(quot)
+          .append(nodesHashSum)
+          .append(quot)
+          .toString
+      }
+
+      // Завернуть данные в единый блоб и отправить клиенту.
+      lazy val logPrefix = s"advRcvrsMapJson#${System.currentTimeMillis()}:"
+
+      // На основе спецификации клиента выбрать алгоритм сжатия, в котором требуется получить ответ.
+      val respCompAlgoOpt = request.headers
+        .get(ACCEPT_ENCODING)
+        .flatMap( MCompressAlgos.chooseSmallestForAcceptEncoding )
+
+      for {
+
+        etag <- remoteEtagFut
+
+        // Совпадает ли Etag со значением на клиенте?
+        etagMatches = request.headers
+          .get(IF_NONE_MATCH)
+          .contains( etag )
+
+        resultBase <- {
+          if (etagMatches) {
+            LOGGER.trace(s"$logPrefix Etag match $etag, returning 304")
+            Future.successful( NotModified )
+
+          } else {
+            // Пытаемся также вернуть brotli-ответ, т.к. это быстро.
+            _advRcvrsMapRespJsonFut( respCompAlgoOpt ).flatMap { srcOrCached =>
+              val headers0 = List(
+                ETAG              -> etag,
+                VARY              -> ACCEPT_ENCODING
+              )
+
+              srcOrCached.fold[Future[Result]](
+                // В кэше нет, но есть подготовленный стриминг. Выполнить стримминг:
+                {src =>
+                  // Разрулить возможные проблемы с http<1.1. Это например nginx любит по дефолту.
+                  val r0 = if (request.request.version ==* HttpProtocol.HTTP_1_0) {
+                    LOGGER.warn(s"$logPrefix HTTP 1.0, streaming. Is nginx/proxy valid?")
+                    Ok.sendEntity(
+                      HttpEntity.Streamed(
+                        data          = src,
+                        contentLength = None,
+                        contentType   = Some(JSON)
+                      )
+                    )
+                  } else {
+                    Ok.chunked(src)
+                      .as( JSON )
+                  }
+                  respCompAlgoOpt.fold(r0) { respCompAlgo =>
+                    r0.withHeaders(
+                      (CONTENT_ENCODING -> respCompAlgo.httpContentEncoding) :: headers0: _*
+                    )
+                  }
+                },
+                // Есть ответ кэша. Возможно, что ещё не готовый. Но вернуть его как strict.
+                {respData =>
+                  for {
+                    respBodyVar <- respData.body
+                  } yield {
+                    LOGGER.trace(s"$logPrefix Have cached resp: ${respData.compressAlgo}: ${respBodyVar.value.length}b")
+                    Ok( respBodyVar.value )
+                      .as( JSON )
+                      .withHeaders(
+                        (CONTENT_ENCODING -> respData.compressAlgo.httpContentEncoding) :: headers0: _*
+                      )
                   }
                 }
-            }(Keep.right)
-        }(Keep.right)
-        // JSON-рендер каждого item'а:
-        .map { case (_, data) =>
-          Json.toJson(data)
+              )
+            }
+          }
         }
-        .jsonSrcToJsonArrayNullEnded
-        .map { jsonStrPart =>
-          // Для JSON допустим только UTF-8. Явно фиксируем это:
-          ByteString.fromString( jsonStrPart, StandardCharsets.UTF_8 )
-        }
-        // Нормализовать размеры ByteString'ов для входа компрессоров. Для Gzip это влияет на коэфф.сжатия.
-        .via( new ByteStringsChunker(8192) )
-        // Сжатие в GZIP:
-        .alsoToMat {
-          Flow[ByteString]
-            .via( Compression.gzip )
-            .toMat( byteStringSink )(Keep.right)
-        }(Keep.both)
-        // Сжатие в brotli:
-        .toMat {
-          Flow[ByteString]
-            .via( BrotliUtil.compress )
-            .toMat( byteStringSink )(Keep.right)
-        }(Keep.both)
-        .run()
 
-      val respData = MAdvRcvrsMapRespData(
-        contentType = JSON,
-        gzip        = gzipFut,
-        etag        = hashCodeFut,
-        brotli      = Some( brotliFut )
-      )
-
-      Future.successful( respData )
+      } yield {
+        resultBase
+      }
     }
   }
 
@@ -378,76 +541,61 @@ class Static @Inject() (
     *
     * @return Бинарь с маркерами всех упомянутых узлов + список шейпов.
     */
+  // TODO 2018-03-12 boopickle и bin-формат теперь только для совместимости с кривыми установленными webapp sc3. Можно её удалить ближе к запуску. Удалить .etag поле из модели выше.
   def advRcvrsMap = {
     ignoreAuth().async { implicit request =>
       // Завернуть данные в единый блоб и отправить клиенту.
       val accept = request.headers.get( ACCEPT )
       lazy val logPrefix = s"advRcvrsMap(${accept.orNull})#${System.currentTimeMillis()}:"
 
-      val acceptJson = accept.contains( JSON )
-      // TODO 2018-03-12 boopickle и bin-формат теперь только для совместимости с кривыми установленными webapp sc3. Можно её удалить ближе к запуску.
-      val acceptBinary = accept.contains( BINARY )
+      for {
+        respData <- _advRcvrsMapRespBoopickleFut()
 
-      if (acceptJson ^ acceptBinary) {
-        for {
-          // TODO Проверить Accept, чтобы разрулить варианты между boopickle и json.
-          respData <- if (acceptJson)
-            _advRcvrsMapRespJsonFut()
-          else if (acceptBinary)
-            _advRcvrsMapRespBoopickleFut()
-          else
-            throw new IllegalArgumentException("Accept header invalid")
+        etag <- respData.etag
 
-          etag <- respData.etag
+        // Совпадает ли Etag со значением на клиенте?
+        etagMatches = request.headers
+          .get(IF_NONE_MATCH)
+          .contains( etag )
 
-          // Совпадает ли Etag со значением на клиенте?
-          etagMatches = request.headers
-            .get(IF_NONE_MATCH)
-            .contains( etag )
+        resultBase <- {
+          if (etagMatches) {
+            LOGGER.trace(s"$logPrefix Etag match $etag, returning 304")
+            Future.successful( NotModified )
 
-          resultBase <- {
-            if (etagMatches) {
-              LOGGER.trace(s"$logPrefix Etag match $etag, returning 304")
-              Future.successful( NotModified )
-
-            } else {
-              // Пытаемся также вернуть brotli-ответ, т.к. это быстро.
-              val (bodyCompressAlgo, bodyCompressedFut) = respData
-                .brotli
-                .filter { _ =>
-                  request.headers
-                    .get(ACCEPT_ENCODING)
-                    .exists(_ contains MCompressAlgos.Brotli.httpContentEncoding)
-                }
-                // Наврядли есть клиенты без поддержки gzip, принебрегаем ими:
-                .fold [(MCompressAlgo, Future[Var[ByteString]])] (MCompressAlgos.Gzip -> respData.gzip) { MCompressAlgos.Brotli -> _ }
-
-              for {
-                respBodyVar <- bodyCompressedFut
-              } yield {
-                LOGGER.trace(s"$logPrefix Done, $bodyCompressAlgo with ${respBodyVar.value.length} bytes")
-                Ok( respBodyVar.value )
-                  .as( respData.contentType )
-                  .withHeaders(
-                    CONTENT_ENCODING -> bodyCompressAlgo.httpContentEncoding
-                  )
+          } else {
+            // Пытаемся также вернуть brotli-ответ, т.к. это быстро.
+            val (bodyCompressAlgo, bodyCompressedFut) = respData
+              .brotli
+              .filter { _ =>
+                request.headers
+                  .get(ACCEPT_ENCODING)
+                  .exists(_ contains MCompressAlgos.Brotli.httpContentEncoding)
               }
+              // Наврядли есть клиенты без поддержки gzip, принебрегаем ими:
+              .fold [(MCompressAlgo, Future[Var[ByteString]])] (MCompressAlgos.Gzip -> respData.gzip) { MCompressAlgos.Brotli -> _ }
+
+            for {
+              respBodyVar <- bodyCompressedFut
+            } yield {
+              LOGGER.trace(s"$logPrefix Done, $bodyCompressAlgo with ${respBodyVar.value.length} bytes")
+              Ok( respBodyVar.value )
+                .as( respData.contentType )
+                .withHeaders(
+                  CONTENT_ENCODING -> bodyCompressAlgo.httpContentEncoding
+                )
             }
           }
-
-        } yield {
-          resultBase
-            .withHeaders(
-              // TODO Для 304-ответа тоже надо Etag, Cache-control и Vary? Или только для 200 ok?
-              CACHE_CONTROL -> "public, max-age=20",
-              ETAG          -> etag,
-              VARY          -> (ACCEPT :: ACCEPT_ENCODING :: Nil).mkString(", ")
-            )
         }
 
-      } else {
-        // Accept: содержит некорректное значение.
-        BadRequest( ACCEPT )
+      } yield {
+        resultBase
+          .withHeaders(
+            // TODO Для 304-ответа тоже надо Etag, Cache-control и Vary? Или только для 200 ok?
+            CACHE_CONTROL -> "public, max-age=20",
+            ETAG          -> etag,
+            VARY          -> (ACCEPT_ENCODING :: Nil).mkString(", ")
+          )
       }
     }
   }

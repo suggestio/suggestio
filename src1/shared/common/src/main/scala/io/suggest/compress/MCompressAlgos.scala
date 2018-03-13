@@ -13,12 +13,7 @@ import play.api.libs.json.Format
   */
 object MCompressAlgos extends StringEnum[MCompressAlgo] {
 
-  /** GZIP - дефакто, стандарт всего интернета.
-    * Быстрый, но менее эффективный, по сравнению с brotli.
-    */
-  case object Gzip extends MCompressAlgo("g") {
-    override def httpContentEncoding = "gzip"
-  }
+  // Алгоритмы сжатия в порядке убывания силы сжатия: brotli -> gzip -> ...
 
   /** Алгоритм сжатия brotli.
     * Поддерживается браузерами с 2016-2017 годов.
@@ -28,12 +23,33 @@ object MCompressAlgos extends StringEnum[MCompressAlgo] {
     override def httpContentEncoding = "br"
   }
 
+  /** GZIP - дефакто, стандарт всего интернета.
+    * Быстрый, но менее эффективный, по сравнению с brotli.
+    */
+  case object Gzip extends MCompressAlgo("g") {
+    override def httpContentEncoding = "gzip"
+  }
+
   override val values = findValues
+
+  def valuesEffectiveFirst: Iterable[MCompressAlgo] = values
 
   def withHttpContentEncoding(encoding: String): Option[MCompressAlgo] = {
     // Пока без map, т.к. это довольно маленькая модель.
     values
       .find(_.httpContentEncoding ==* encoding)
+  }
+
+  /** На основе значения хидера Compress-Encoding выбрать алгоритм сжатия.
+    *
+    * @param acceptEncoding Строка-значение хидера Accept-Encoding.
+    * @return Алгоритм сжатия, если есть.
+    */
+  def chooseSmallestForAcceptEncoding(acceptEncoding: String): Option[MCompressAlgo] = {
+    valuesEffectiveFirst
+      .find { algo =>
+        acceptEncoding.contains( algo.httpContentEncoding )
+      }
   }
 
 }

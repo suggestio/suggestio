@@ -20,7 +20,7 @@ import scala.concurrent.Future
 trait IAdvRcvrsMapApi {
 
   /** Получение десериализованного инстанса с данными гео.карты рекламщиков. */
-  def advRcvrsMap(): Future[MGeoNodesResp]
+  def advRcvrsMapJson(): Future[MGeoNodesResp]
 
 }
 
@@ -48,9 +48,9 @@ object IAdvRcvrsMapApi {
 class AdvRcvrsMapApiHttpViaRouter(jsRouter: => IJsRouter) extends IAdvRcvrsMapApi {
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
-  override def advRcvrsMap(): Future[MGeoNodesResp] = {
+  override def advRcvrsMapJson(): Future[MGeoNodesResp] = {
     IAdvRcvrsMapApi._advRcvrsMapRequest(
-      jsRouter.controllers.Static.advRcvrsMap()
+      jsRouter.controllers.Static.advRcvrsMapJson()
     )
   }
 
@@ -60,7 +60,7 @@ class AdvRcvrsMapApiHttpViaRouter(jsRouter: => IJsRouter) extends IAdvRcvrsMapAp
 /** Реализация [[IAdvRcvrsMapApi]] с запросом через произвольную ссылку. */
 class AdvRcvrsMapApiHttpViaUrl(url: => String) extends IAdvRcvrsMapApi {
 
-  override def advRcvrsMap(): Future[MGeoNodesResp] = {
+  override def advRcvrsMapJson(): Future[MGeoNodesResp] = {
     IAdvRcvrsMapApi._advRcvrsMapRequest(
       HttpRoute(method = Methods.GET, url = url)
     )

@@ -92,7 +92,7 @@ trait ScSite
               dkeys = dkey :: Nil,
               modes = MDomainModes.ScServeIncomingRequests :: Nil
             )
-            Seq(cr)
+            cr :: Nil
           }
           override def limit          = 1
           override def isEnabled      = Some(true)
@@ -337,10 +337,9 @@ trait ScSite
       // TODO В будущем, можно будет кэширование организовать: хэш в ссылке + длительный кэш.
       val rcvrsMapUrl = cdnUtil.maybeAbsUrl(_siteQsArgs.apiVsn.forceAbsUrls )(
         cdnUtil.forCall(
-          routes.Static.advRcvrsMap()
+          routes.Static.advRcvrsMapJson()
         )(ctx)
       )(ctx)
-
       // Собрать все результаты в итоговый скрипт.
       for {
         geoPoint0 <- _geoPoint0Fut

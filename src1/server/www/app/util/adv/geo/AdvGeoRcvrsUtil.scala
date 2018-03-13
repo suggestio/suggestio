@@ -18,6 +18,9 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.MImgMakeArgs
 import models.im._
 import models.mproj.ICommonDi
+import org.elasticsearch.script.Script
+import org.elasticsearch.search.aggregations.AggregationBuilders
+import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetricAggregationBuilder
 import org.elasticsearch.search.sort.SortOrder
 import util.adn.NodesUtil
 import util.cdn.CdnUtil

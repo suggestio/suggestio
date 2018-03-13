@@ -18,7 +18,10 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentType
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.script.Script
 import org.elasticsearch.search.SearchHit
+import org.elasticsearch.search.aggregations.AggregationBuilders
+import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
 import org.elasticsearch.search.sort.SortBuilders
 
 import scala.collection.JavaConverters._
@@ -872,6 +875,48 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   // Вызываемый конструктор для класса Implicits. Должен быть перезаписан как val в итоге.
   def Implicits = new Implicits
+
+
+  /** Быстрый рассчёт контрольной суммы для всех найденных документов.
+    *
+    * @param q Query.
+    * @param sourceFields Полные названия полей документа, которые участвую в рассчёте хэша.
+    * @return Фьючерс с Int'ом внутри.
+    */
+  def docsHashSum(sourceFields: Iterable[String], q: QueryBuilder = QueryBuilders.matchAllQuery()): Future[Int] = {
+    if (sourceFields.isEmpty)
+      throw new IllegalArgumentException("sourceFields may not be empty")
+
+    val fieldPrefix = "params._source."
+    val fieldSuffix = ".hashCode()"
+    val fieldsFormula = sourceFields
+      .iterator
+      .map { fieldPrefix + _ + fieldSuffix }
+      .mkString(" + ")
+
+    val aggName = "dcrc"
+
+    for {
+      resp <- prepareSearch()
+        .setQuery( q )
+        .setSize(0)
+        .setFetchSource(false)
+        .addAggregation(
+          AggregationBuilders
+            .scriptedMetric( aggName )
+            .initScript( new Script("params._agg.hashes = []") )
+            .mapScript( new Script(s"params._agg.hashes.add( $fieldsFormula )") )
+            .combineScript( new Script("int xsum = 0; for (h in params._agg.hashes) { xsum += h } return xsum") )
+            .reduceScript( new Script("int asum = 0; for (a in params._aggs) { asum += a } return asum") )
+        )
+        .execute()
+    } yield {
+      // Извлечь результат из ES-ответа:
+      val agg = resp.getAggregations.get[ScriptedMetric](aggName)
+      LOGGER.debug(s"docsHashSum(): r=${Option(agg).map(_.aggregation()).orNull} totalHits=${resp.getHits.totalHits}")
+      agg.aggregation().asInstanceOf[Integer].intValue()
+    }
+  }
 
 }
 

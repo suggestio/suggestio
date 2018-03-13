@@ -46,4 +46,27 @@ class CacheApiUtil @Inject() (
     pfut
   }
 
+
+  /** Если нет готового значения в кэше, то вернуть Promise, сохраняемый прямо сейчас в кэше.
+    * Есть есть готовое значение, то вернуть Future.
+    *
+    * @param key Ключ в кэше.
+    * @param expiration Время истечения.
+    * @tparam T Тип значения.
+    * @return Either с двумя возможными исходами.
+    */
+  def promiseOrCached[T](key: String, expiration: Duration): Future[Either[Promise[T], T]] = {
+    cache.get[Future[T]](key).flatMap {
+      case None =>
+        val p = Promise[T]()
+        val pfut = p.future
+        cache.set(key, pfut, expiration)
+        val left = Left( p )
+        Future.successful(left)
+
+      case Some(vfut) =>
+        vfut.map(Right.apply)
+    }
+  }
+
 }
