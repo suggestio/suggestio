@@ -16,7 +16,6 @@ import org.scalajs.dom.raw.{FileReader, HTMLInputElement}
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.{Dictionary, UndefOr}
 
 /**
   * Suggest.io

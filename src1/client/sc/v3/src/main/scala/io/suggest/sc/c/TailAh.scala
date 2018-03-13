@@ -8,7 +8,7 @@ import io.suggest.sc.GetRouterCtlF
 import io.suggest.sc.m._
 import io.suggest.sc.m.Sc3Pages.MainScreen
 import io.suggest.sc.m.grid.GridLoadAds
-import io.suggest.sc.m.hdr.HSearchBtnClick
+import io.suggest.sc.m.hdr.SearchOpenClose
 import io.suggest.sc.m.inx.{GetIndex, MScIndex, WcTimeOut}
 import io.suggest.sc.m.search.{MSearchTabs, SwitchTab, TagClick}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -97,7 +97,7 @@ class TailAh[M](
       // Проверка поля searchOpened
       if (m.mainScreen.searchOpened !=* v0.index.search.isShown) {
         // Вместо патчинга состояния имитируем клик: это чтобы возможные сайд-эффекты обычного клика тоже отработали.
-        fxsAcc ::= Effect.action( HSearchBtnClick(m.mainScreen.searchOpened) )
+        fxsAcc ::= Effect.action( SearchOpenClose(m.mainScreen.searchOpened) )
       }
 
       // Смотрим координаты текущей точки.

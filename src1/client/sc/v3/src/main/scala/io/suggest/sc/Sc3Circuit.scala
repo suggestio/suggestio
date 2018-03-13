@@ -18,6 +18,7 @@ import io.suggest.sc.c.dev.{GeoLocAh, ScreenAh}
 import io.suggest.sc.c.{JsRouterInitAh, TailAh}
 import io.suggest.sc.c.grid.GridAdsAh
 import io.suggest.sc.c.inx.{IndexAh, WelcomeAh}
+import io.suggest.sc.c.menu.MenuAh
 import io.suggest.sc.c.search.{STextAh, ScMapDelayAh, SearchAh, TagsAh}
 import io.suggest.sc.m._
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
@@ -141,6 +142,8 @@ class Sc3Circuit(
 
   private val confRO = internalsRW.zoom(_.conf)
 
+  private val menuRW = indexRW.zoomRW(_.menu) { _.withMenu(_) }
+
 
   private val searchAdsArgsRO: ModelRO[MFindAdsReq] = zoom { mroot =>
     val inxState = mroot.index.state
@@ -236,6 +239,10 @@ class Sc3Circuit(
     modelRW     = scGeoLocRW
   )
 
+  private val menuAh = new MenuAh(
+    modelRW = menuRW
+  )
+
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( confRO.value.rcvrsMapUrl )
 
@@ -254,6 +261,9 @@ class Sc3Circuit(
         modelRW = internalsRW
       )
     //}
+
+    // Менюшка. По идее, используется не чаще, чем index.
+    acc ::= menuAh
 
     // Основные события индекса не частые, но доступны всегда:
     acc ::= indexAh

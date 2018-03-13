@@ -5,7 +5,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.msg.ErrorMsgs
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.m.ResetUrlRoute
-import io.suggest.sc.m.hdr.HSearchBtnClick
+import io.suggest.sc.m.hdr.SearchOpenClose
 import io.suggest.sc.m.search._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
@@ -28,7 +28,7 @@ class SearchAh[M](
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Клик по кнопке открытия поисковой панели.
-    case m: HSearchBtnClick =>
+    case m: SearchOpenClose =>
       val v2 = value.withIsShown( m.open )
 
       // Аккаумулятор сайд-эффектов.

@@ -10,6 +10,7 @@ import scala.scalajs.js
   */
 @js.native
 trait QuillToolbarModule extends js.Object {
+  // TODO Надо бы это сделать ScalaJSDefined, но quill ломается о всякие sjs$$_1$ скрытые поля, которые генерит sjs-компилятор.
 
   var container: js.UndefOr[js.Array[js.Any]] = js.undefined
 

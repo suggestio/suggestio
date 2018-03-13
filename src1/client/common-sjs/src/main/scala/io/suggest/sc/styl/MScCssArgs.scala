@@ -23,8 +23,8 @@ import io.suggest.ueq.UnivEqUtil._
 object MScCssArgs {
 
   /** Поддержка FastEq для инстансов [[MScCssArgs]]. */
-  implicit object MScCssArgsFastEq extends FastEq[MScCssArgs] {
-    override def eqv(a: MScCssArgs, b: MScCssArgs): Boolean = {
+  implicit object MScCssArgsFastEq extends FastEq[IScCssArgs] {
+    override def eqv(a: IScCssArgs, b: IScCssArgs): Boolean = {
       // Screen сравнивать референсно или по значению.
       // customColors -- референсно внутри Option, т.к. внешний Option пересобирается каждый раз.
       // Остальное -- чисто референсно.
