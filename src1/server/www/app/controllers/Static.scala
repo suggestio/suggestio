@@ -380,10 +380,10 @@ class Static @Inject() (
   def advRcvrsMapJson = {
     ignoreAuth().async { implicit request =>
       // Быстро вычислить значение ETag на стороне ES. Это быстрая аггрегация, выполняется прямо на шардах.
-      val remoteEtagFut = for (
+      val etagNoQuotesFut = for (
         nodesHashSum <- advGeoRcvrsUtil.rcvrNodesMapHashSumCached()
       ) yield {
-        s""""$nodesHashSum""""
+        nodesHashSum.toString
       }
 
       lazy val logPrefix = s"advRcvrsMapJson#${System.currentTimeMillis()}:"
@@ -394,16 +394,19 @@ class Static @Inject() (
         .flatMap( MCompressAlgos.chooseSmallestForAcceptEncoding )
 
       for {
-        etag <- remoteEtagFut
+        etagNoQuotes <- etagNoQuotesFut
 
         // Совпадает ли Etag со значением на клиенте?
         etagMatches = request.headers
           .get(IF_NONE_MATCH)
-          .contains( etag )
+          .exists { ifNoneMatch =>
+            // Значение If-None-Match иногда приходит с клиента без кавычек, но обычно с. Сравниваем как подстроки, наврядли тут будут ложные срабатывания.
+            ifNoneMatch contains etagNoQuotes
+          }
 
         resultBase <- {
           if (etagMatches) {
-            LOGGER.trace(s"$logPrefix Etag match $etag, returning 304")
+            LOGGER.trace(s"$logPrefix Etag match $etagNoQuotes, returning 304")
             Future.successful( NotModified )
 
           } else {
@@ -412,7 +415,7 @@ class Static @Inject() (
 
             // Значение ETag требуется рендерить в хидеры в двойных ковычках, оформляем:
             val headers0 = List(
-              ETAG              -> s""""$etag"""",
+              ETAG              -> s""""$etagNoQuotes"""",
               VARY              -> ACCEPT_ENCODING
             )
 
