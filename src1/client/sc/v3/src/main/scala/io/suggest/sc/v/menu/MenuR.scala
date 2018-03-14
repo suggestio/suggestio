@@ -49,6 +49,12 @@ class MenuR(
 
       <.div(
         menuCss.panel,
+
+        // Фон панели.
+        <.div(
+          scCss.Root.panelBg
+        ),
+
         propsProxy.wrap {_ => Option(MColorData.Examples.WHITE) } ( leftR.apply ),
 
         <.div(

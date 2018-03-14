@@ -57,6 +57,11 @@ class SearchR(
       <.div(
         SearchCSS.panel,
 
+        // Фон панели.
+        <.div(
+          scCss.Root.panelBg
+        ),
+
         // Рендер текстового поля поиска.
         s.sTextC { sTextR.apply },
 

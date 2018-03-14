@@ -148,9 +148,23 @@ case class ScCss( args: IScCssArgs )
     /** Общий стиль для всех панелей. */
     val panelCommon = mixin(
       height( 100.%% ),
-      background := _bgColorCss,
-      filter := "brightness(70%)"
     )
+
+    /** Фон одной панели. */
+    val panelBg = {
+      val pc100 = 100.%%
+      val px0 = 0.px
+      style(
+        position.absolute,
+        top(px0),
+        left(px0),
+        width( pc100 ),
+        height( pc100 ),
+        background := _bgColorCss,
+        filter := "brightness(90%)",
+        zIndex(-1)
+      )
+    }
 
   }
 
@@ -382,7 +396,10 @@ case class ScCss( args: IScCssArgs )
         )
         val active        = _styleAddClass( __ + "active" )
         val fieldWrapper  = _styleAddClass( _BAR + "_wrapper" )
-        val input         = _styleAddClass( _BAR + "_input" )
+        val input         = style(
+          addClassName( _BAR + "_input" ),
+          color( _fgColorCss )
+        )
       }
 
     }
@@ -414,8 +431,16 @@ case class ScCss( args: IScCssArgs )
       object Single {
 
         val tabOuter = _styleAddClass( _PANEL + "_single-tab" )
-        val tabInner = _styleAddClass( _SM_ + "tab" )
-        val inactive = _styleAddClass( __ + "inactive" )
+        val tabInner = style(
+          background := _fgColorCss,
+          color(_bgColorCss),
+          addClassName( _SM_ + "tab" )
+        )
+        val inactive = style(
+          color(_fgColorCss),
+          (background := none).important,
+          addClassName( __ + "inactive" )
+        )
 
         object Rounded {
           private val _ROUNDED_ = __ + "rounded-"

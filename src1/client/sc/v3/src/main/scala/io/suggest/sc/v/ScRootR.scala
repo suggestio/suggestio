@@ -97,9 +97,11 @@ class ScRootR (
 
           Sidebar(
             new SidebarProps {
-              override val sidebar      = menuR( menuPropsProxy )(
-                s.enterLkRowC { enterLkRowR.apply }
-              ).rawNode
+              override val sidebar      = {
+                menuR( menuPropsProxy )(
+                  s.enterLkRowC { enterLkRowR.apply }
+                ).rawNode
+              }
               override val pullRight    = false
               override val touch        = true
               override val transitions  = true
