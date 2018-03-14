@@ -374,49 +374,58 @@ class Static @Inject() (
   /** Экшен потоковой генерации карты ресиверов.
     * Объединяет в себе потоковый ответ наравне с кэшированием всех собранных значений.
     *
+    * @param nodesHashSum Ключ для долгосрочного кэширования уровня URL (вместо ETag).
+    *
     * @return Ok + Streamed/Chunked (заполнения кэша)
     *         Ok + Strict (извлечение из кэша)
     */
-  def advRcvrsMapJson = {
+  def advRcvrsMapJson( nodesHashSum: Option[Int] ) = {
     ignoreAuth().async { implicit request =>
       // Быстро вычислить значение ETag на стороне ES. Это быстрая аггрегация, выполняется прямо на шардах.
-      val etagNoQuotesFut = for (
-        nodesHashSum <- advGeoRcvrsUtil.rcvrNodesMapHashSumCached()
-      ) yield {
-        nodesHashSum.toString
-      }
+      val realNodesHashSumFut = advGeoRcvrsUtil.rcvrNodesMapHashSumCached()
 
       lazy val logPrefix = s"advRcvrsMapJson#${System.currentTimeMillis()}:"
 
-      // На основе спецификации клиента выбрать алгоритм сжатия, в котором требуется получить ответ.
-      val respCompAlgoOpt = request.headers
-        .get(ACCEPT_ENCODING)
-        .flatMap( MCompressAlgos.chooseSmallestForAcceptEncoding )
-
       for {
-        etagNoQuotes <- etagNoQuotesFut
-
-        // Совпадает ли Etag со значением на клиенте?
-        etagMatches = request.headers
-          .get(IF_NONE_MATCH)
-          .exists { ifNoneMatch =>
-            // Значение If-None-Match иногда приходит с клиента без кавычек, но обычно с. Сравниваем как подстроки, наврядли тут будут ложные срабатывания.
-            ifNoneMatch contains etagNoQuotes
-          }
+        realNodesHashSum <- realNodesHashSumFut
+        etagNoQuotes = realNodesHashSum.toString
 
         resultBase <- {
-          if (etagMatches) {
+          // Если URL не совпадает с вычисленным значением, то сразу можно редиректить на правильную ссылку
+          if (nodesHashSum.nonEmpty && !nodesHashSum.contains(realNodesHashSum) ) {
+            LOGGER.warn(s"$logPrefix Unexpected caching: ${nodesHashSum.orNull}, but $etagNoQuotes expected, redirection...")
+            val rdr = Redirect( routes.Static.advRcvrsMapJson( Some(realNodesHashSum) ) )
+            Future.successful(rdr)
+
+          } else if (
+            // Совпадает ли Etag со значением на клиенте?
+            request.headers
+              .get(IF_NONE_MATCH)
+              .exists { ifNoneMatch =>
+                // Значение If-None-Match иногда приходит с клиента без кавычек, но обычно с. Сравниваем как подстроки, наврядли тут будут ложные срабатывания.
+                ifNoneMatch contains etagNoQuotes
+              }
+          ) {
             LOGGER.trace(s"$logPrefix Etag match $etagNoQuotes, returning 304")
             Future.successful( NotModified )
 
           } else {
+            // На основе спецификации клиента выбрать алгоритм сжатия, в котором требуется получить ответ.
+            val respCompAlgoOpt = request.headers
+              .get(ACCEPT_ENCODING)
+              .flatMap( MCompressAlgos.chooseSmallestForAcceptEncoding )
+
             // Запускаем сборку карты:
             val rcvrsMapRespJsonFut = _advRcvrsMapRespJsonFut( respCompAlgoOpt )
+
+            // Если ссылка с кэшем, то допускам долгое кэширование.
+            val cacheControlSuffix = nodesHashSum.fold(20.seconds.toSeconds.toString)(_ => s"${5.days.toSeconds}, immutable")
 
             // Значение ETag требуется рендерить в хидеры в двойных ковычках, оформляем:
             val headers0 = List(
               ETAG              -> s""""$etagNoQuotes"""",
-              VARY              -> ACCEPT_ENCODING
+              VARY              -> ACCEPT_ENCODING,
+              CACHE_CONTROL     -> s"public, max-age=$cacheControlSuffix"
             )
 
             rcvrsMapRespJsonFut.flatMap { srcOrCached =>

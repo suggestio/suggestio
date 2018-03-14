@@ -22,7 +22,7 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import play.twirl.api.Html
 import util.acl._
-import util.adv.geo.IAdvGeoLocUtilDi
+import util.adv.geo.{IAdvGeoLocUtilDi, IAdvGeoRcvrsUtilDi}
 import util.di.IScUtil
 import util.ext.IExtServicesUtilDi
 import util.i18n.IJsMessagesUtilDi
@@ -55,6 +55,7 @@ trait ScSite
   with IMaybeAuth
   with IAdvGeoLocUtilDi
   with IJsMessagesUtilDi
+  with IAdvGeoRcvrsUtilDi
 {
 
   import mCommonDi._
@@ -326,23 +327,33 @@ trait ScSite
     // Кэшируем часто-используемый инстанс JSON formatter'а для MSc3Init.
     private val _msc3InitFormat = MSc3Init.MSC3_INIT_FORMAT
 
+    private def rcvrsMapUrlFut: Future[String] = {
+      for {
+        nodesHashSum <- advGeoRcvrsUtil.rcvrNodesMapHashSumCached()
+      } yield {
+        cdnUtil.maybeAbsUrl(_siteQsArgs.apiVsn.forceAbsUrls )(
+          cdnUtil.forCall(
+            routes.Static.advRcvrsMapJson( Some(nodesHashSum) )
+          )(ctx)
+        )(ctx)
+      }
+    }
+
     override def scriptHtmlFut: Future[Html] = {
       // Поиска начальную точку для гео.карты.
       val _geoPoint0Fut = geoPoint0Fut
+
+      val _rcvrsMapUrlFut = rcvrsMapUrlFut
 
       // Синхронно скомпилить js-messages для рендера прямо в html-шаблоне.
       val jsMessagesJs = jsMessagesUtil.scJsMsgsFactory( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(ctx.messages)
 
       // Надо ссылку на список ресиверов отправить. Раньше через роутер приходила, но это без CDN как-то не очень.
       // TODO В будущем, можно будет кэширование организовать: хэш в ссылке + длительный кэш.
-      val rcvrsMapUrl = cdnUtil.maybeAbsUrl(_siteQsArgs.apiVsn.forceAbsUrls )(
-        cdnUtil.forCall(
-          routes.Static.advRcvrsMapJson()
-        )(ctx)
-      )(ctx)
       // Собрать все результаты в итоговый скрипт.
       for {
-        geoPoint0 <- _geoPoint0Fut
+        geoPoint0   <- _geoPoint0Fut
+        rcvrsMapUrl <- _rcvrsMapUrlFut
       } yield {
         val state0 = MSc3Init(
           mapProps = MMapProps(

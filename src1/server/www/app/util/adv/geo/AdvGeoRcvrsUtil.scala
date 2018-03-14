@@ -439,6 +439,6 @@ class AdvGeoRcvrsUtil @Inject()(
 
 
 /** Интерфейс для DI-поля с инстансом [[AdvGeoRcvrsUtil]]. */
-trait IAdvGeoMapUtilDi {
-  def advGeoMapUtil: AdvGeoRcvrsUtil
+trait IAdvGeoRcvrsUtilDi {
+  def advGeoRcvrsUtil: AdvGeoRcvrsUtil
 }

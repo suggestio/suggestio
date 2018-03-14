@@ -13,7 +13,7 @@ import util.ad.JdAdUtil
 import util.adn.NodesUtil
 import util.adr.AdRenderUtil
 import util.adv.AdvUtil
-import util.adv.geo.AdvGeoLocUtil
+import util.adv.geo.{AdvGeoLocUtil, AdvGeoRcvrsUtil}
 import util.ble.BleUtil
 import util.cdn.CdnUtil
 import util.ext.ExtServicesUtil
@@ -58,6 +58,7 @@ class Sc @Inject() (
                      override val jsMessagesUtil     : JsMessagesUtil,
                      override val ctxUtil            : ContextUtil,
                      override val bruteForceProtect  : BruteForceProtect,
+                     override val advGeoRcvrsUtil    : AdvGeoRcvrsUtil,
                      override val scAdSearchUtil     : ScAdSearchUtil,
                      override val nodesUtil          : NodesUtil,
                      override val ignoreAuth         : IgnoreAuth,
