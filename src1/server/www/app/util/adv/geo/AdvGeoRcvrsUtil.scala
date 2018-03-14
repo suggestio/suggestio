@@ -13,7 +13,7 @@ import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MGeoNode
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.model.n2.node.{MNode, MNodeFields, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.MImgMakeArgs
 import models.im._
@@ -94,6 +94,32 @@ class AdvGeoRcvrsUtil @Inject()(
     }
   }
 
+
+  /** Запустить очень быстрый рассчёт хэш-суммы для карты ресиверов.
+    * Лучше использовать rcvrNodesMapHashSumCached(), поэтому тут protected.
+    *
+    * Выполняется на стороне ES прямо на всех шардах.
+    *
+    * @return Целое число.
+    */
+  protected def rcvrNodesMapHashSum(): Future[Int] = {
+    mNodes.docsHashSum(
+      sourceFields = List(
+        // Эджи. Там array, поэтому дальше погружаться нельзя. TODO А интересуют только эджи захвата геолокации и логотипа узла
+        MNodeFields.Edges.E_OUT_FN,
+        // Название узла тоже интересует. Но его может и не быть, поэтому интересуемся только контейнер meta.basic, который есть всегда
+        MNodeFields.Meta.META_BASIC_FN,
+        MNodeFields.Meta.META_COLORS_FN
+      ),
+      q = onMapRcvrsSearch(1000).toEsQuery
+    )
+  }
+  def rcvrNodesMapHashSumCached(): Future[Int] = {
+    import scala.concurrent.duration._
+    cacheApiUtil.getOrElseFut("advRcvrsHash", expiration = 10.seconds) {
+      rcvrNodesMapHashSum()
+    }
+  }
 
   /** Карта ресиверов, размещённых через lk-adn-map.
     *

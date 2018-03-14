@@ -8,18 +8,18 @@ import io.suggest.spa.DAction
   * Created: 10.07.17 20:57
   * Description: Diode-экшены для событий в заголовке выдачи.
   */
-trait IScHdrAction extends DAction
+sealed trait IScHdrAction extends DAction
 
-// TODO Сделать классами с флагами внутри. Чтобы точно знать, что подразумевалось под каждым кликом.
-// Это защитит от двойных кликов.
 
-/** Клик по кнопке поиска (справа) с указанной целью.
+/** Экшен открытия/закрытия панели поиска (справа).
   * @param open true - для открытия поиска. false -- для закрытия.
   */
 case class SearchOpenClose(open: Boolean) extends IScHdrAction
 
-/** Клик по кнопке меню (слева). */
+
+/** Экшен открытия/закрытия панели меню (слева). */
 case class MenuOpenClose(open: Boolean) extends IScHdrAction
+
 
 /** Клик по логотипу или названию узла. */
 case object HLogoClick extends IScHdrAction

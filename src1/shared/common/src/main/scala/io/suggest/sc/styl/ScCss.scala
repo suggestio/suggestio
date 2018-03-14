@@ -144,6 +144,15 @@ case class ScCss( args: IScCssArgs )
     /** корневой div-контейнер. */
     val root = _styleAddClass( _SM_ + "showcase" )
 
+    val panel = style(
+      width( 320.px ),
+      height( 100.%% ),
+      background := {
+        val c = 48
+        rgb(c,c,c)
+      }
+    )
+
   }
 
 
@@ -344,10 +353,7 @@ case class ScCss( args: IScCssArgs )
     def Z_INDEX = 11
 
     /** CSS-класс div-контейнера правой панели. */
-    val panel = style(
-      width( 320.px ),
-      height( 100.%% )
-    )
+    final def panel = Root.panel
 
     /** CSS-класс заголовка внутри панели поиска. */
     //val panelHeader = _styleAddClasses( _PANEL + "_header" )
@@ -585,6 +591,14 @@ case class ScCss( args: IScCssArgs )
       val spinnerInner = _styleAddClass( _SM_GRID_ADS_LOADER_SPINNER + "-inner" )
 
     }
+
+  }
+
+
+  /** Стили для панели меню. */
+  object Menu {
+
+    final def panel = Root.panel
 
   }
 

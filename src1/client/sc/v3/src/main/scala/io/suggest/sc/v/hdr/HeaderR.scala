@@ -11,6 +11,7 @@ import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.ueq.UnivEqUtil._
 
 import scalacss.ScalaCssReact._
 
@@ -41,8 +42,8 @@ class HeaderR(
 
   implicit object HeaderPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.hdrState eq b.hdrState) &&
-        (a.node eq b.node)
+      (a.hdrState ===* b.hdrState) &&
+        (a.node ===* b.node)
     }
   }
 
@@ -52,8 +53,8 @@ class HeaderR(
   /** Коннекшены для props'ов кнопок. */
   protected case class State(
                               plainGridC      : ReactConnectProxy[Option[MColorData]],
-                              menuC           : ReactConnectProxy[Option[MColorData]],
-                              searchC         : ReactConnectProxy[Option[MColorData]],
+                              //menuC           : ReactConnectProxy[Option[MColorData]],
+                              //searchC         : ReactConnectProxy[Option[MColorData]],
                               logoPropsOptC   : ReactConnectProxy[Option[logoR.PropsVal]]
                             )
 
@@ -98,8 +99,8 @@ class HeaderR(
       val HS = MHeaderStates
       State(
         plainGridC  = __fgColorDataOptProxy( HS.PlainGrid ),
-        menuC       = __fgColorDataOptProxy( HS.Menu ),
-        searchC     = __fgColorDataOptProxy( HS.Search ),
+        //menuC       = __fgColorDataOptProxy( HS.Menu ),
+        //searchC     = __fgColorDataOptProxy( HS.Search ),
         logoPropsOptC    = propsProxy.connect { propsOpt =>
           for (props <- propsOpt) yield {
             logoR.PropsVal(

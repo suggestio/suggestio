@@ -10,8 +10,6 @@ import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.univeq._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.m.hdr.SearchOpenClose
 
 import scalacss.ScalaCssReact._
 

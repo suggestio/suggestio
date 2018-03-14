@@ -34,12 +34,9 @@ object IAdvRcvrsMapApi {
       MGeoNodesResp(
         nodes = Json
           .parse(jsonStr)
-          .as[Seq[MGeoNodePropsShapes]]
+          .as[Stream[MGeoNodePropsShapes]]
       )
     }
-    //Xhr.unBooPickleResp[MGeoNodesResp] {
-    //  Xhr.requestBinary( route )
-    //}
   }
 
 }

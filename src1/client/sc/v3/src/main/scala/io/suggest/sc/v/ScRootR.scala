@@ -95,12 +95,12 @@ class ScRootR (
 
         Sidebar(
           new SidebarProps {
-            override val sidebar = menuR( menuPropsProxy ).rawNode
-            override val pullRight = false
-            override val touch = true
-            override val transitions = true
-            override val open = menuPropsProxy.value.menuS.opened
-            override val onSetOpen = _onOpenMenuSidebarF
+            override val sidebar      = menuR( menuPropsProxy ).rawNode
+            override val pullRight    = false
+            override val touch        = true
+            override val transitions  = true
+            override val docked       = menuPropsProxy.value.menuS.opened
+            override val onSetOpen    = _onOpenMenuSidebarF
           }
         ) {
           // Содержимое правой панели (панель поиска)
@@ -109,7 +109,7 @@ class ScRootR (
             new SidebarProps {
               override val sidebar      = searchR( searchPropsProxy ).rawNode
               override val onSetOpen    = _onOpenSearchSidebarF
-              override val docked       = searchPropsProxy.value.isShown
+              override val open         = searchPropsProxy.value.isShown
               override val transitions  = true
               override val touch        = true
               override val pullRight    = true
@@ -161,9 +161,10 @@ class ScRootR (
             resp <- props.index.resp.toOption
           } yield {
             headerR.PropsVal(
-              // TODO Определять маркер состояния на основе состояния полей в props.
               hdrState  = if (props.index.search.isShown) {
                 MHeaderStates.Search
+              } else if (props.index.menu.opened) {
+                MHeaderStates.Menu
               } else {
                 MHeaderStates.PlainGrid
               },

@@ -2,11 +2,15 @@ package io.suggest.sc.v.menu
 
 import diode.FastEq
 import diode.react.ModelProxy
+import io.suggest.color.MColorData
 import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.v.hdr.LeftR
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+
+import scalacss.ScalaCssReact._
 import io.suggest.ueq.UnivEqUtil._
 
 /**
@@ -16,6 +20,7 @@ import io.suggest.ueq.UnivEqUtil._
   * Description: Главный компонент левой панели меню выдачи.
   */
 class MenuR(
+             leftR          : LeftR,
              getScCssF      : GetScCssF
            ) {
 
@@ -43,8 +48,11 @@ class MenuR(
 
   class Backend($: BackendScope[Props, State]) {
     def render(p: Props, s: State): VdomElement = {
+      val scCss = getScCssF()
+      val menuCss = scCss.Menu
       <.div(
-        "TODO"
+        p.wrap {_ => Option(MColorData.Examples.WHITE) } ( leftR.apply ),
+        menuCss.panel
       )
     }
   }

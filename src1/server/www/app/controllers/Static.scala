@@ -12,7 +12,7 @@ import io.suggest.brotli.BrotliUtil
 import io.suggest.compress.{MCompressAlgo, MCompressAlgos}
 import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
-import io.suggest.model.n2.node.{MNodeFields, MNodes}
+import io.suggest.model.n2.node.MNodes
 import io.suggest.pick.PickleUtil
 import io.suggest.primo.Var
 import io.suggest.sec.csp.CspViolationReport
@@ -381,29 +381,11 @@ class Static @Inject() (
     ignoreAuth().async { implicit request =>
       // Быстро вычислить значение ETag на стороне ES. Это быстрая аггрегация, выполняется прямо на шардах.
       val remoteEtagFut = for (
-        nodesHashSum <- cacheApiUtil.getOrElseFut("advRcvrsHash", expiration = 10.seconds) {
-          mNodes.docsHashSum(
-            sourceFields = List(
-              // Эджи. Там array, поэтому дальше погружаться нельзя. TODO А интересуют только эджи захвата геолокации и логотипа узла
-              MNodeFields.Edges.E_OUT_FN,
-              // Название узла тоже интересует. Но его может и не быть, поэтому интересуемся только контейнер meta.basic, который есть всегда
-              MNodeFields.Meta.META_BASIC_FN,
-              MNodeFields.Meta.META_COLORS_FN
-            ),
-            q = advGeoRcvrsUtil.onMapRcvrsSearch(1000).toEsQuery
-          )
-        }
+        nodesHashSum <- advGeoRcvrsUtil.rcvrNodesMapHashSumCached()
       ) yield {
-        // Значение ETag требуется собирать в двойных ковычках, оформляем:
-        val quot = '"'
-        new StringBuilder(16)
-          .append(quot)
-          .append(nodesHashSum)
-          .append(quot)
-          .toString
+        s""""$nodesHashSum""""
       }
 
-      // Завернуть данные в единый блоб и отправить клиенту.
       lazy val logPrefix = s"advRcvrsMapJson#${System.currentTimeMillis()}:"
 
       // На основе спецификации клиента выбрать алгоритм сжатия, в котором требуется получить ответ.
@@ -412,7 +394,6 @@ class Static @Inject() (
         .flatMap( MCompressAlgos.chooseSmallestForAcceptEncoding )
 
       for {
-
         etag <- remoteEtagFut
 
         // Совпадает ли Etag со значением на клиенте?
@@ -426,13 +407,16 @@ class Static @Inject() (
             Future.successful( NotModified )
 
           } else {
-            // Пытаемся также вернуть brotli-ответ, т.к. это быстро.
-            _advRcvrsMapRespJsonFut( respCompAlgoOpt ).flatMap { srcOrCached =>
-              val headers0 = List(
-                ETAG              -> etag,
-                VARY              -> ACCEPT_ENCODING
-              )
+            // Запускаем сборку карты:
+            val rcvrsMapRespJsonFut = _advRcvrsMapRespJsonFut( respCompAlgoOpt )
 
+            // Значение ETag требуется рендерить в хидеры в двойных ковычках, оформляем:
+            val headers0 = List(
+              ETAG              -> s""""$etag"""",
+              VARY              -> ACCEPT_ENCODING
+            )
+
+            rcvrsMapRespJsonFut.flatMap { srcOrCached =>
               srcOrCached.fold[Future[Result]](
                 // В кэше нет, но есть подготовленный стриминг. Выполнить стримминг:
                 {src =>
