@@ -726,6 +726,11 @@ edge.predicate.np=Node geo-adv
 edge.predicate.o=Geo-adv in place
 edge.predicate.p=Placed in
 edge.predicate.r=Advertisers map
+edge.predicate.s=jd-content
+edge.predicate.st=Text content
+edge.predicate.si=Picture content
+edge.predicate.sv=Video content
+
 
 Your.name=Your name
 First.name=First name

@@ -371,7 +371,7 @@ class LkAdEdit @Inject() (
                             out = {
                               // Убрать все существующие jd-content-эджи. ТODO Bg-предикат: удалить старый предикат фона (старый формат market ad).
                               val edgesCleanIter = mad.edges
-                                .withoutPredicateIter( MPredicates.JdContent, MPredicates.Bg )
+                                .withoutPredicateIter( MPredicates.JdContent, MPredicates.Bg, MPredicates.ModeratedBy )
                               // Добавить новые jd-эджи.
                               MNodeEdges.edgesToMap1( edgesCleanIter ++ edgesAcc0 )
                             }

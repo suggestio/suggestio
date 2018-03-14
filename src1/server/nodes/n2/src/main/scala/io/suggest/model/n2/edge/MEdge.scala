@@ -1,5 +1,6 @@
 package io.suggest.model.n2.edge
 
+import io.suggest.common.empty.EmptyProduct
 import io.suggest.model.PrefixedFn
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
@@ -177,6 +178,18 @@ case class MEdge(
     }
     sb.append(')')
       .toString()
+  }
+
+
+  /** Т.к. doc получился вне info, бывает нужно объеденить их, если там есть данные. */
+  def edgeDatas: Iterator[AnyRef] = {
+    productIterator
+      .flatMap {
+        case pe: EmptyProduct if pe.nonEmpty =>
+          pe :: Nil
+        case _ =>
+          Nil
+      }
   }
 
 }

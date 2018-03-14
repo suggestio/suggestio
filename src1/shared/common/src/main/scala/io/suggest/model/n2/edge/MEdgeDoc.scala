@@ -57,17 +57,20 @@ case class MEdgeDoc(
   override def toString: String = {
     val sb = new StringBuilder(64)
     for (u <- uid)
-      sb.append("u#")
+      sb.append("#")
         .append(u)
         .append(",")
 
     if (text.nonEmpty) {
-      sb.append("t=[")
+      val isMany = text.lengthCompare(1) > 0
+      if (isMany)
+        sb.append("[")
       for (t <- text) {
         sb.append(t)
           .append(", ")
       }
-      sb.append("]")
+      if (isMany)
+        sb.append("]")
     }
 
     sb.toString()

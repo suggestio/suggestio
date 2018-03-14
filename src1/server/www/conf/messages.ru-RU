@@ -735,6 +735,11 @@ edge.predicate.np=Гео-размещение узла
 edge.predicate.o=Гео-размещение рекламной карточки
 edge.predicate.p=Находится внутри
 edge.predicate.r=Карта рекламодателей
+edge.predicate.s=jd-контент
+edge.predicate.st=Текстовый контент
+edge.predicate.si=Картинка-контент
+edge.predicate.sv=Видео-контент
+
 
 Your.name=Ваше имя
 First.name=Имя

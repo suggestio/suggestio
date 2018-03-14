@@ -8,7 +8,7 @@ import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v.hdr.RightR
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.univeq._
 
 import scalacss.ScalaCssReact._

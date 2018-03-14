@@ -57,7 +57,7 @@ final case class MEdgeDynImgArgs(
   def withDynOpsStr(dynOpsStr: Option[String])  = copy(dynOpsStr = dynOpsStr)
 
   override def toString: String = {
-    s"IDyn($dynFormat${dynOpsStr.fold("")("," + _)}"
+    s"IDyn($dynFormat${dynOpsStr.fold("")("," + _)})"
   }
 
 }

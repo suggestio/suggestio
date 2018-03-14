@@ -75,15 +75,19 @@
         }
 
         @_td(sz) {
-          @Option(ei.medge.info).filter(_.nonEmpty).fold(Html("&nbsp;")) { ei =>
-            @defining( ei.toString() ) { eiStr =>
-              <span title="@eiStr">
-                @if(eiStr.length > 25) {
-                  @eiStr.substring(0, 25)&hellip;
-                } else {
-                  @eiStr
-                }
-              </span>
+          @defining( ei.medge.edgeDatas ) { edgeDatasIter =>
+            @if(edgeDatasIter.isEmpty) {
+              &nbsp;
+            } else {
+              @defining( edgeDatasIter.mkString(" ") ) { edgeDatasStr =>
+                <span title="@edgeDatasStr">
+                  @if(edgeDatasStr.length > 25) {
+                    @edgeDatasStr.substring(0, 25)&hellip;
+                  } else {
+                    @edgeDatasStr
+                  }
+                </span>
+              }
             }
           }
         }
