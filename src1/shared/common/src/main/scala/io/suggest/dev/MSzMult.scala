@@ -137,7 +137,9 @@ object MSzMults {
 
   /** Набор масштабов для редактора карточек. */
   def forAdEditor: List[MSzMult] = {
-    _allBut3Acc(Nil)
+    // Для отладки проблем с внезапным переносом текста в контейнере при некоторых масштабах добавлен GRID_TILE_MULTS.
+    // TODO Убрать GRID_TILE_MULTS когда проблемы будут решены.
+    GRID_TILE_MULTS reverse_::: _allBut3Acc(Nil)
   }
 
 }
