@@ -354,7 +354,13 @@ class Static @Inject() (
                   __mapMaterialized(gzipFut, brotliFut)
                 }
           }
-          Left(respSrc)
+
+          // Залоггировать возможные ошибки:
+          val respSrcIfFail = respSrc.mapError { case ex =>
+            LOGGER.error(s"_advRcvrsMapRespJsonFut: Sourcing failed.", ex)
+            ex
+          }
+          Left(respSrcIfFail)
         },
         // Прямое попадание в кэш:
         {allData =>
@@ -398,6 +404,7 @@ class Static @Inject() (
             Future.successful(rdr)
 
           } else if (
+            nodesHashSum.isEmpty &&
             // Совпадает ли Etag со значением на клиенте?
             request.headers
               .get(IF_NONE_MATCH)
@@ -419,14 +426,17 @@ class Static @Inject() (
             val rcvrsMapRespJsonFut = _advRcvrsMapRespJsonFut( respCompAlgoOpt )
 
             // Если ссылка с кэшем, то допускам долгое кэширование.
-            val cacheControlSuffix = nodesHashSum.fold(20.seconds.toSeconds.toString)(_ => s"${5.days.toSeconds}, immutable")
+            // TODO После отладки кэширования надо минуты заменить на 5.days
+            val cacheControlSuffix = nodesHashSum.fold(20.seconds.toSeconds.toString)(_ => s"${2.minutes.toSeconds}, immutable")
 
-            // Значение ETag требуется рендерить в хидеры в двойных ковычках, оформляем:
-            val headers0 = List(
-              ETAG              -> s""""$etagNoQuotes"""",
+            var okHeaders = List(
               VARY              -> ACCEPT_ENCODING,
               CACHE_CONTROL     -> s"public, max-age=$cacheControlSuffix"
             )
+
+            // Значение ETag требуется рендерить в хидеры в двойных ковычках, оформляем:
+            if (nodesHashSum.isEmpty)
+              okHeaders ::= ETAG -> s""""$etagNoQuotes""""
 
             rcvrsMapRespJsonFut.flatMap { srcOrCached =>
               srcOrCached.fold[Future[Result]](
@@ -448,7 +458,7 @@ class Static @Inject() (
                   }
                   respCompAlgoOpt.fold(r0) { respCompAlgo =>
                     r0.withHeaders(
-                      (CONTENT_ENCODING -> respCompAlgo.httpContentEncoding) :: headers0: _*
+                      (CONTENT_ENCODING -> respCompAlgo.httpContentEncoding) :: okHeaders: _*
                     )
                   }
                 },
@@ -461,7 +471,7 @@ class Static @Inject() (
                     Ok( respBodyVar.value )
                       .as( JSON )
                       .withHeaders(
-                        (CONTENT_ENCODING -> respData.compressAlgo.httpContentEncoding) :: headers0: _*
+                        (CONTENT_ENCODING -> respData.compressAlgo.httpContentEncoding) :: okHeaders: _*
                       )
                   }
                 }

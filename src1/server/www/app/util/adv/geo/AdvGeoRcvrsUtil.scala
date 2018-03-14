@@ -103,16 +103,22 @@ class AdvGeoRcvrsUtil @Inject()(
     * @return Целое число.
     */
   protected def rcvrNodesMapHashSum(): Future[Int] = {
-    mNodes.docsHashSum(
-      sourceFields = List(
-        // Эджи. Там array, поэтому дальше погружаться нельзя. TODO А интересуют только эджи захвата геолокации и логотипа узла
-        MNodeFields.Edges.E_OUT_FN,
-        // Название узла тоже интересует. Но его может и не быть, поэтому интересуемся только контейнер meta.basic, который есть всегда
-        MNodeFields.Meta.META_BASIC_FN,
-        MNodeFields.Meta.META_COLORS_FN
-      ),
-      q = onMapRcvrsSearch(1000).toEsQuery
-    )
+    for {
+      hashSum0 <- mNodes.docsHashSum(
+        sourceFields = List(
+          // Эджи. Там array, поэтому дальше погружаться нельзя. TODO А интересуют только эджи захвата геолокации и логотипа узла
+          MNodeFields.Edges.E_OUT_FN,
+          // Название узла тоже интересует. Но его может и не быть, поэтому интересуемся только контейнер meta.basic, который есть всегда
+          MNodeFields.Meta.META_BASIC_FN,
+          MNodeFields.Meta.META_COLORS_FN
+        ),
+        q = onMapRcvrsSearch(1000).toEsQuery
+      )
+    } yield {
+      // Тут костыль для "версии", чтобы сбрасывать некорректный кэш. TODO Удалить этот .map после окончания отладки.
+      hashSum0 + 1
+    }
+
   }
   def rcvrNodesMapHashSumCached(): Future[Int] = {
     import scala.concurrent.duration._
