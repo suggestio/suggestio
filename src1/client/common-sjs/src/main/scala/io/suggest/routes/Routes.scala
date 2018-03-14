@@ -43,6 +43,12 @@ sealed trait Controllers extends js.Object {
   /** Роуты для assets-контроллера. */
   def Assets: AssetsController = js.native
 
+  /** Роуты для Ident-контроллера. */
+  def Ident: IdentController = js.native
+
+  /** Роуты для MarketLkAdn-контроллера. */
+  def MarketLkAdn: MarketLkAdnController = js.native
+
 }
 
 
@@ -78,6 +84,26 @@ sealed trait AssetsController extends js.Object {
   def versioned(file: String): Route = js.native
 
   def at(file: String): Route = js.native
+
+}
+
+
+@js.native
+sealed trait IdentController extends js.Object {
+
+  def mySioStartPage(): Route = js.native
+
+  def rdrUserSomewhere(): Route = js.native
+
+}
+
+
+@js.native
+sealed trait MarketLkAdnController extends js.Object {
+
+  def lkList(): Route = js.native
+
+  def showNodeAds(nodeId: String): Route = js.native
 
 }
 

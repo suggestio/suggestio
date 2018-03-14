@@ -65,6 +65,7 @@ trait ScIndex
   with IStatUtil
   with IBleUtilDi
   with IDynImgUtil
+  with IIsNodeAdmin
 {
 
   import mCommonDi._
@@ -428,7 +429,7 @@ trait ScIndex
       }
     }
 
-    def currInxNodeIdOptFut: Future[Option[String]] = {
+    lazy val currInxNodeIdOptFut: Future[Option[String]] = {
       for (inxNodeInfo <- indexNodeFutVal) yield {
         inxNodeInfo.mnode.id
           .filter(_ => inxNodeInfo.isRcvr)
@@ -789,6 +790,21 @@ trait ScIndex
       }
     }
 
+    /** Проверка на то, принадлежит ли текущий узел текущему юзеру. */
+    def isMyNodeFut: Future[Boolean] = {
+      _request.user.personIdOpt.fold {
+        //LOGGER.trace(s"$logPrefix not logged in")
+        Future.successful( false )
+      } { _ =>
+        currInxNodeIdOptFut.flatMap { currNodeIdOpt =>
+          currNodeIdOpt.fold ( Future.successful(false) ) { nodeId =>
+            isNodeAdmin.isAdnNodeAdmin(adnId = nodeId, user = _request.user)
+              .map(_.nonEmpty)
+          }
+        }
+      }
+    }
+
     /** index-ответ сервера с данными по узлу. */
     def indexRespFut: Future[MSc3IndexResp] = {
       val _nodeIdOptFut        = currInxNodeIdOptFut
@@ -797,6 +813,7 @@ trait ScIndex
       val _logoMediaInfoOptFut = logoMediaInfoOptFut
       val _welcomeInfoOptFut   = welcomeInfoOptFut
       val _nodeGeoPointOptFut  = nodeGeoPointOptFut
+      val _isMyNodeFut         = isMyNodeFut
       for {
         nodeIdOpt       <- _nodeIdOptFut
         nodeName        <- _nodeNameFut
@@ -804,6 +821,7 @@ trait ScIndex
         logoOpt         <- _logoMediaInfoOptFut
         welcomeOpt      <- _welcomeInfoOptFut
         nodeGeoPointOpt <- _nodeGeoPointOptFut
+        isMyNode        <- _isMyNodeFut
       } yield {
         MSc3IndexResp(
           nodeId        = nodeIdOpt,
@@ -811,7 +829,8 @@ trait ScIndex
           colors        = nodeInfo.mnode.meta.colors,
           logoOpt       = logoOpt,
           welcome       = welcomeOpt,
-          geoPoint      = nodeGeoPointOpt
+          geoPoint      = nodeGeoPointOpt,
+          isMyNode      = isMyNode
         )
       }
     }

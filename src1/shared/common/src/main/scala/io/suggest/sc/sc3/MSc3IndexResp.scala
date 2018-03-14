@@ -25,7 +25,8 @@ object MSc3IndexResp {
     (__ \ "c").format[MColors] and
     (__ \ "l").formatNullable[IMediaInfo] and
     (__ \ "w").formatNullable[MWelcomeInfo] and
-    (__ \ "g").formatNullable[MGeoPoint]
+    (__ \ "g").formatNullable[MGeoPoint] and
+    (__ \ "m").format[Boolean]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MSc3IndexResp] = UnivEq.derive
@@ -48,6 +49,7 @@ case class MSc3IndexResp(
                          colors     : MColors,
                          logoOpt    : Option[IMediaInfo],
                          welcome    : Option[MWelcomeInfo],
-                         geoPoint   : Option[MGeoPoint]
+                         geoPoint   : Option[MGeoPoint],
+                         isMyNode   : Boolean
                        )
 

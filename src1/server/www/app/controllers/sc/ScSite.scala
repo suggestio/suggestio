@@ -350,7 +350,8 @@ trait ScSite
             zoom   = 11     // TODO Цифра с потолка.
           ),
           conf = MSc3Conf(
-            rcvrsMapUrl = rcvrsMapUrl
+            rcvrsMapUrl = rcvrsMapUrl,
+            isLoggedIn  = _request.user.isAuth
           )
         )
         val scriptRenderArgs = MSc3ScriptRenderArgs(

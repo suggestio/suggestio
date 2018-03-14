@@ -225,4 +225,8 @@ object MsgCodes {
 
   val `No.tags.here` = "No.tags.here"
 
+  val `Login.to.sio` = "Login.to.sio"
+  val `Go.to.node.ads` = "Go.to.node.ads"
+  val `Personal.cabinet` = "Personal.cabinet"
+
 }

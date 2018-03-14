@@ -8,7 +8,7 @@ import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
-import util.acl.{BruteForceProtect, GetAnyAd, IgnoreAuth, MaybeAuth}
+import util.acl._
 import util.ad.JdAdUtil
 import util.adn.NodesUtil
 import util.adr.AdRenderUtil
@@ -61,6 +61,7 @@ class Sc @Inject() (
                      override val scAdSearchUtil     : ScAdSearchUtil,
                      override val nodesUtil          : NodesUtil,
                      override val ignoreAuth         : IgnoreAuth,
+                     override val isNodeAdmin        : IsNodeAdmin,
                      override val scTagsUtil         : ScTagsUtil,
                      override val geoIpUtil          : GeoIpUtil,
                      override val extServicesUtil    : ExtServicesUtil,

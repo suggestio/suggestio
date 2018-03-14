@@ -25,7 +25,6 @@ object MSc3Init {
 /** Класс модели данных инициализации.
   *
   * @param mapProps Начальные настройки карты.
-  * @param rcvrsMapUrl Ссылка на карту ресиверов.
   */
 case class MSc3Init(
                      mapProps     : MMapProps,

@@ -601,7 +601,7 @@ Switch.lang=Сменить язык
 
 Login.page.title=Вход
 Login=Войти
-Login.to.sio=Вход в suggest.io
+Login.to.sio=Вход в Suggest.io
 Remember.me=Запомнить меня
 Forgot.password=Забыли{0} пароль?
 Recover.password=Восстановить пароль?
@@ -974,3 +974,7 @@ This.block.is.the.only.main=Текущий блок -- главный.
 This.block.is.not.main=Текущий блок не является главным.
 No.main.blocks.First.block.is.main=В карточке нет главных блоков. Верхний блок считается основным.
 No.tags.here=Нет тегов в текущей локации
+
+Go.to.node.ads=К рекламным карточкам узла
+Personal.cabinet=Личный кабинет
+

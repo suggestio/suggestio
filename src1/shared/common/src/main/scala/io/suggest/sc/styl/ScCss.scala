@@ -5,6 +5,7 @@ import io.suggest.css.ScalaCssDefaults._
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.css.Css
 import io.suggest.dev.MScreen
+import io.suggest.font.MFonts
 import io.suggest.i18n.MsgCodes
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.ScConstants
@@ -144,13 +145,11 @@ case class ScCss( args: IScCssArgs )
     /** корневой div-контейнер. */
     val root = _styleAddClass( _SM_ + "showcase" )
 
-    val panel = style(
-      width( 320.px ),
+    /** Общий стиль для всех панелей. */
+    val panelCommon = mixin(
       height( 100.%% ),
-      background := {
-        val c = 48
-        rgb(c,c,c)
-      }
+      background := _bgColorCss,
+      filter := "brightness(70%)"
     )
 
   }
@@ -249,12 +248,14 @@ case class ScCss( args: IScCssArgs )
 
     object Buttons {
 
-      /** Начальный список для сборки стилей разных кнопок на панели заголовка. */
-      private val _allBtnStyles: List[String] = {
+      private val _allBtnStylesNoAbs: List[String] = {
         _SM_BUTTON ::
           (HEADER + "_btn") ::
-          Css.Position.ABSOLUTE ::
           Nil
+      }
+      /** Начальный список для сборки стилей разных кнопок на панели заголовка. */
+      private val _allBtnStyles: List[String] = {
+        Css.Position.ABSOLUTE :: _allBtnStylesNoAbs
       }
 
 
@@ -290,7 +291,7 @@ case class ScCss( args: IScCssArgs )
 
       /** Стиль кнопки заголовка, которая указывает влево. */
       val leftCss = _styleAddClasses(
-        Align.LEFT :: _allBtnStyles: _*
+        Align.LEFT :: _allBtnStylesNoAbs: _*
       )
 
     }
@@ -353,7 +354,10 @@ case class ScCss( args: IScCssArgs )
     def Z_INDEX = 11
 
     /** CSS-класс div-контейнера правой панели. */
-    final def panel = Root.panel
+    val panel = style(
+      width( 320.px ),
+      Root.panelCommon
+    )
 
     /** CSS-класс заголовка внутри панели поиска. */
     //val panelHeader = _styleAddClasses( _PANEL + "_header" )
@@ -577,7 +581,7 @@ case class ScCss( args: IScCssArgs )
       val outer = style(
         addClassName( _SM_GRID_ADS_LOADER ),
         // TODO Надо собрать содержимое svg вручную через Vdom и загонять в строку.
-        backgroundImage := ("""url('data:image/svg+xml;utf8,<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="10px" height="5px" viewBox="0 0 10 5" enable-background="new 0 0 10 5" xml:space="preserve"><polygon fill="#""" + _fgColorCss.value + """" points="10,3.16 5,0 0,3.16 0,5 5,1.84 10,5 "/></svg>"""),
+        backgroundImage := ("""url('data:image/svg+xml;utf8,<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="10px" height="5px" viewBox="0 0 10 5" enable-background="new 0 0 10 5" xml:space="preserve"><polygon fill="#""" + _fgColorCss.value + """" points="10,3.16 5,0 0,3.16 0,5 5,1.84 10,5 "/></svg>')"""),
         backgroundRepeat := "repeat-x"
         // Ещё есть width(max grid outer width), но оно в шаблоне живёт.
       )
@@ -598,7 +602,38 @@ case class ScCss( args: IScCssArgs )
   /** Стили для панели меню. */
   object Menu {
 
-    final def panel = Root.panel
+    val panel = style(
+      Root.panelCommon,
+      width( 280.px )
+    )
+
+    /** Стили строк меню */
+    object Rows {
+
+      val rowsContainer = style(
+        position.relative
+      )
+
+      val rowLink = style(
+        textDecoration := none
+      )
+
+      val rowOuter = style(
+        cursor.pointer
+      )
+
+      val rowContent = style(
+        color( _fgColorCss ),
+        position.relative,
+        width( 260.px ),
+        margin(0.px, auto),
+        fontFamily.attr := MFonts.OpenSansLight.fileName,
+        fontSize( 14.px ),
+        padding(12.px, 0.px),
+        textTransform.uppercase
+      )
+
+    }
 
   }
 
@@ -626,7 +661,8 @@ case class ScCss( args: IScCssArgs )
     Search.Tabs.TagsTag.inner,
 
     Grid.container,
-    Grid.Loaders.spinnerInner
+    Grid.Loaders.spinnerInner,
+    Menu.Rows.rowContent
   )
 
 }

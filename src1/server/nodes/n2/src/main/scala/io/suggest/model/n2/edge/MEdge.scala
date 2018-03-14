@@ -182,7 +182,7 @@ case class MEdge(
 
 
   /** Т.к. doc получился вне info, бывает нужно объеденить их, если там есть данные. */
-  def edgeDatas: Iterator[AnyRef] = {
+  def edgeDatas: Iterator[EmptyProduct] = {
     productIterator
       .flatMap {
         case pe: EmptyProduct if pe.nonEmpty =>

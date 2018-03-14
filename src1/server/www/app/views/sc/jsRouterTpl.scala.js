@@ -12,7 +12,11 @@
   routes.javascript.Sc.findNodes,
   routes.javascript.Sc.focusedAds,
   routes.javascript.Sc.tagsSearch,
-  routes.javascript.Sc.handleScError
+  routes.javascript.Sc.handleScError,
+
+  routes.javascript.Ident.mySioStartPage,
+  routes.javascript.Ident.rdrUserSomewhere,
+  routes.javascript.MarketLkAdn.showNodeAds
 )
 
 @* Когда скрипт загрузился и выполнился, будет вызвана функция инициализации с указанным именем, если задана. *@

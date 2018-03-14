@@ -6,7 +6,7 @@ import io.suggest.color.MColorData
 import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v.hdr.LeftR
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -38,33 +38,35 @@ class MenuR(
     * @param menuS Инстанс модели состояния меню.
     */
   case class PropsVal(
-                       menuS: MMenuS
+                       menuS        : MMenuS
                      )
 
 
-  /** Состояние, т.к. model-proxy-коннекшены для используемых компонентов. */
-  protected[this] case class State()
-
-
-  class Backend($: BackendScope[Props, State]) {
-    def render(p: Props, s: State): VdomElement = {
+  class Backend($: BackendScope[Props, Unit]) {
+    def render(propsProxy: Props, children: PropsChildren): VdomElement = {
       val scCss = getScCssF()
       val menuCss = scCss.Menu
+
       <.div(
-        p.wrap {_ => Option(MColorData.Examples.WHITE) } ( leftR.apply ),
-        menuCss.panel
-      )
+        menuCss.panel,
+        propsProxy.wrap {_ => Option(MColorData.Examples.WHITE) } ( leftR.apply ),
+
+        <.div(
+          menuCss.Rows.rowsContainer,
+
+          children
+        )  // .rowsContainer
+
+      )    // .panel
     }
   }
 
 
   val component = ScalaComponent.builder[Props]("Menu")
-    .initialStateFromProps { propsProxy =>
-      State()
-    }
-    .renderBackend[Backend]
+    .stateless
+    .renderBackendWithChildren[Backend]
     .build
 
-  def apply(menuProxy: Props) = component(menuProxy)
+  def apply(menuProxy: Props)(children: VdomNode*) = component(menuProxy)(children: _*)
 
 }

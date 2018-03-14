@@ -15,9 +15,10 @@ object MSc3Conf {
   /** Поддержка play-json.
     * def, ведь на клиенте это нужно только один раз.
     */
-  implicit def MSC3_CONF_FORMAT: OFormat[MSc3Conf] =
-    (__ \ "r").format[String]
-      .inmap[MSc3Conf](apply, _.rcvrsMapUrl)
+  implicit def MSC3_CONF_FORMAT: OFormat[MSc3Conf] = (
+    (__ \ "r").format[String] and
+    (__ \ "l").format[Boolean]
+  )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MSc3Conf] = UnivEq.derive
 
@@ -29,5 +30,6 @@ object MSc3Conf {
   * @param rcvrsMapUrl Ссылка на данные карты ресиверов.
   */
 case class MSc3Conf(
-                     rcvrsMapUrl: String
+                     rcvrsMapUrl: String,
+                     isLoggedIn : Boolean
                    )
