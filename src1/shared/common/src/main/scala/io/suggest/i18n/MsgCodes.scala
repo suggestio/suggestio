@@ -228,5 +228,8 @@ object MsgCodes {
   val `Login.to.sio` = "Login.to.sio"
   val `Go.to.node.ads` = "Go.to.node.ads"
   val `Personal.cabinet` = "Personal.cabinet"
+  val `Suggest.io.Project` = "Suggest.io.Project"
+  val `Suggest.io._transcription` = "Suggest.io._transcription"
+  val `About.sio.node.id` = "About.sio.node.id"
 
 }

@@ -7,7 +7,7 @@ import io.suggest.sc.v._
 import io.suggest.sc.v.grid.{GridCoreR, GridLoaderR, GridR}
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx.WelcomeR
-import io.suggest.sc.v.menu.{EnterLkRowR, MenuR}
+import io.suggest.sc.v.menu.{AboutSioR, EnterLkRowR, MenuR}
 import io.suggest.sc.v.search._
 
 /**
@@ -69,6 +69,7 @@ class Sc3Module {
   // menu
   lazy val menuR = wire[MenuR]
   lazy val enterLkRowR = wire[EnterLkRowR]
+  lazy val aboutSioR = wire[AboutSioR]
 
 
   // sc3 top level

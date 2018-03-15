@@ -238,6 +238,8 @@ class JsMessagesUtil @Inject() (
       MC.`Login.to.sio` ::
       MC.`Go.to.node.ads` ::
       MC.`Personal.cabinet` ::
+      MC.`Suggest.io.Project` ::
+      MC.`Suggest.io._transcription` ::
       Nil
   }
 

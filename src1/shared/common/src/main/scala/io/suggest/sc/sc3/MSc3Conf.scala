@@ -17,7 +17,8 @@ object MSc3Conf {
     */
   implicit def MSC3_CONF_FORMAT: OFormat[MSc3Conf] = (
     (__ \ "r").format[String] and
-    (__ \ "l").format[Boolean]
+    (__ \ "l").format[Boolean] and
+    (__ \ "a").format[String]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MSc3Conf] = UnivEq.derive
@@ -30,6 +31,7 @@ object MSc3Conf {
   * @param rcvrsMapUrl Ссылка на данные карты ресиверов.
   */
 case class MSc3Conf(
-                     rcvrsMapUrl: String,
-                     isLoggedIn : Boolean
+                     rcvrsMapUrl    : String,
+                     isLoggedIn     : Boolean,
+                     aboutSioNodeId : String
                    )

@@ -16,7 +16,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
-import io.suggest.sc.v.menu.{EnterLkRowR, MenuR}
+import io.suggest.sc.v.menu.{AboutSioR, EnterLkRowR, MenuR}
 
 import scalacss.ScalaCssReact._
 
@@ -33,6 +33,7 @@ class ScRootR (
                 protected[this] val headerR     : HeaderR,
                 protected[this] val menuR       : MenuR,
                 protected[this] val enterLkRowR : EnterLkRowR,
+                protected[this] val aboutSioR   : AboutSioR,
                 protected[this] val welcomeR    : WelcomeR,
                 getScCssF                       : GetScCssF,
               ) {
@@ -42,8 +43,9 @@ class ScRootR (
   import gridR.GridPropsValFastEq
   import headerR.HeaderPropsValFastEq
   import menuR.MenuRPropsValFastEq
-  import welcomeR.WelcomeRPropsValFastEq
   import enterLkRowR.EnterLkRowRPropsValFastEq
+  import aboutSioR.AboutSioRPropsValFastEq
+  import welcomeR.WelcomeRPropsValFastEq
 
 
   type Props = ModelProxy[MScRoot]
@@ -54,6 +56,7 @@ class ScRootR (
                                     headerPropsC   : ReactConnectProxy[Option[headerR.PropsVal]],
                                     wcPropsOptC    : ReactConnectProxy[Option[welcomeR.PropsVal]],
                                     enterLkRowC    : ReactConnectProxy[Option[enterLkRowR.PropsVal]],
+                                    aboutSioC      : ReactConnectProxy[Option[aboutSioR.PropsVal]],
                                     searchC        : ReactConnectProxy[MScSearch],
                                     menuC          : ReactConnectProxy[menuR.PropsVal],
                                   )
@@ -100,7 +103,13 @@ class ScRootR (
             new SidebarProps {
               override val sidebar      = {
                 menuR( menuPropsProxy )(
-                  s.enterLkRowC { enterLkRowR.apply }
+                  <.div(
+                    // Строка входа в личный кабинет
+                    s.enterLkRowC { enterLkRowR.apply },
+
+                    // Рендер кнопк
+                    s.aboutSioC { aboutSioR.apply }
+                  )
                 ).rawNode
               }
               override val pullRight    = false
@@ -136,6 +145,7 @@ class ScRootR (
 
                 // Рендер плитки карточек узла:
                 s.gridPropsOptC { gridR.apply }
+
               )
 
             )
@@ -201,7 +211,9 @@ class ScRootR (
         },
 
         enterLkRowC = propsProxy.connect { props =>
-          for (scJsRouter <- props.internals.jsRouter.toOption) yield {
+          for {
+            scJsRouter <- props.internals.jsRouter.toOption
+          } yield {
             enterLkRowR.PropsVal(
               isLoggedIn      = props.internals.conf.isLoggedIn,
               // TODO А если текущий узел внутри карточки, то что тогда? Надо как-то по adn-типу фильтровать.
@@ -213,6 +225,13 @@ class ScRootR (
               scJsRouter = scJsRouter
             )
           }
+        },
+
+        aboutSioC = propsProxy.connect { props =>
+          val propsVal = aboutSioR.PropsVal(
+            aboutNodeId = props.internals.conf.aboutSioNodeId
+          )
+          Some(propsVal)
         }
 
       )

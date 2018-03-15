@@ -35,6 +35,9 @@ object JsRoutes_ScControllers {
 @js.native
 sealed trait ScController extends js.Object {
 
+  /** Ссылка на корень. */
+  //def geoSite(scJsState: js.Any = js.undefined, siteQsArgs: js.Any = js.undefined): Route = js.native
+
   /** index выдачи для любой ситуации. */
   def index(args: Dictionary[Any]): Route = js.native
 

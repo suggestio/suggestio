@@ -34,6 +34,7 @@ class EnterLkRowR(
                        isMyAdnNodeId  : Option[String],
                        scJsRouter     : IJsRouter
                      )
+
   implicit object EnterLkRowRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.isLoggedIn ==* b.isLoggedIn) &&
@@ -47,7 +48,7 @@ class EnterLkRowR(
 
     def render(propsProxy: Props): VdomElement = {
       propsProxy.value.whenDefinedEl { props =>
-        val menuCss = getScCssF().Menu
+        val menuRowsCss = getScCssF().Menu.Rows
 
         val (hrefRoute, msgCode) = props.isMyAdnNodeId.fold [(Route, String)] {
           if (props.isLoggedIn) {
@@ -71,16 +72,16 @@ class EnterLkRowR(
 
         // Ссылка на вход или на личный кабинет
         <.div(
-          menuCss.Rows.rowOuter,
+          menuRowsCss.rowOuter,
 
           <.a(
-            menuCss.Rows.rowLink,
+            menuRowsCss.rowLink,
 
             // Сборка ссылки для входа туда, куда наверное хочет попасть пользователь.
             ^.href := hrefRoute.url,
 
             <.div(
-              menuCss.Rows.rowContent,
+              menuRowsCss.rowContent,
               Messages( msgCode )
             )
           )

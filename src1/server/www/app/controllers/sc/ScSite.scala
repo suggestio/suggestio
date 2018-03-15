@@ -4,7 +4,7 @@ import controllers.routes
 import io.suggest.adn.MAdnRights
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
-import io.suggest.i18n.I18nConst
+import io.suggest.i18n.{I18nConst, MsgCodes}
 import io.suggest.maps.MMapProps
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.extra.domain.{DomainCriteria, MDomainModes}
@@ -334,21 +334,30 @@ trait ScSite
       }
     }
 
+    /** Какой узел должен быть за about? */
+    private def aboutSioNodeIdFut: Future[String] = {
+      // TODO Надо, в зависимости от языка юзера, выдавать разные узлы.
+      // TODO Желательно кэшировать результат, если он вдруг асинхронный.
+      val aboutSioNodeId = ctx.messages( MsgCodes.`About.sio.node.id` )
+      Future.successful( aboutSioNodeId )
+    }
+
     override def scriptHtmlFut: Future[Html] = {
       // Поиска начальную точку для гео.карты.
       val _geoPoint0Fut = geoPoint0Fut
-
       val _rcvrsMapUrlFut = rcvrsMapUrlFut
 
       // Синхронно скомпилить js-messages для рендера прямо в html-шаблоне.
       val jsMessagesJs = jsMessagesUtil.scJsMsgsFactory( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(ctx.messages)
+      val _aboutSioNodeIdFut = aboutSioNodeIdFut
 
       // Надо ссылку на список ресиверов отправить. Раньше через роутер приходила, но это без CDN как-то не очень.
       // TODO В будущем, можно будет кэширование организовать: хэш в ссылке + длительный кэш.
       // Собрать все результаты в итоговый скрипт.
       for {
-        geoPoint0   <- _geoPoint0Fut
-        rcvrsMapUrl <- _rcvrsMapUrlFut
+        geoPoint0       <- _geoPoint0Fut
+        rcvrsMapUrl     <- _rcvrsMapUrlFut
+        aboutSioNodeId  <- _aboutSioNodeIdFut
       } yield {
         val state0 = MSc3Init(
           mapProps = MMapProps(
@@ -356,8 +365,9 @@ trait ScSite
             zoom   = 11     // TODO Цифра с потолка.
           ),
           conf = MSc3Conf(
-            rcvrsMapUrl = rcvrsMapUrl,
-            isLoggedIn  = _request.user.isAuth
+            rcvrsMapUrl     = rcvrsMapUrl,
+            isLoggedIn      = _request.user.isAuth,
+            aboutSioNodeId  = aboutSioNodeId
           )
         )
         val scriptRenderArgs = MSc3ScriptRenderArgs(

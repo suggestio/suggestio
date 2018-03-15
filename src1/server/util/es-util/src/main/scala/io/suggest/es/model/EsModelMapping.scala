@@ -69,10 +69,12 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with IMacroLog
       .setSource(generateMapping)
       .execute()
       .map { _.isAcknowledged }
+
     fut.onComplete {
       case Success(res) => LOGGER.debug(s"$logPrefix Done, ack=$res")
       case Failure(ex)  => LOGGER.error(s"$logPrefix Failed", ex)
     }
+
     fut
   }
 
