@@ -364,7 +364,7 @@ class Static @Inject() (
 
           // Залоггировать возможные ошибки:
           val respSrcIfFail = respSrc.mapError { case ex =>
-            LOGGER.error(s"_advRcvrsMapRespJsonFut: Sourcing failed.", ex)
+            LOGGER.error(s"$logPrefix Sourcing failed.", ex)
             ex
           }
           Left(respSrcIfFail)
@@ -411,7 +411,6 @@ class Static @Inject() (
             Future.successful(rdr)
 
           } else if (
-            nodesHashSum.isEmpty &&
             // Совпадает ли Etag со значением на клиенте?
             request.headers
               .get(IF_NONE_MATCH)
@@ -433,17 +432,15 @@ class Static @Inject() (
             val rcvrsMapRespJsonFut = _advRcvrsMapRespJsonFut( respCompAlgoOpt )
 
             // Если ссылка с кэшем, то допускам долгое кэширование.
-            // TODO После отладки кэширования надо минуты заменить на 5.days
-            val cacheControlSuffix = nodesHashSum.fold(20.seconds.toSeconds.toString)(_ => s"${3.minutes.toSeconds}, immutable")
+            // TODO После отладки кэширования надо выставить на 5.days
+            val cacheControlSuffix = nodesHashSum.fold(20.seconds.toSeconds.toString)(_ => s"${1.hour.toSeconds}, immutable")
 
-            var okHeaders = List(
+            val okHeaders = List(
+              // Значение ETag требуется рендерить в хидеры в двойных ковычках, оформляем:
+              ETAG              -> s""""$etagNoQuotes"""",
               VARY              -> ACCEPT_ENCODING,
               CACHE_CONTROL     -> s"public, max-age=$cacheControlSuffix"
             )
-
-            // Значение ETag требуется рендерить в хидеры в двойных ковычках, оформляем:
-            if (nodesHashSum.isEmpty)
-              okHeaders ::= ETAG -> s""""$etagNoQuotes""""
 
             rcvrsMapRespJsonFut.flatMap { srcOrCached =>
               srcOrCached.fold[Future[Result]](
