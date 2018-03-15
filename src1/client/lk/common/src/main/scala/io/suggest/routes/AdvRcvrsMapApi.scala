@@ -34,7 +34,8 @@ object IAdvRcvrsMapApi {
       MGeoNodesResp(
         nodes = Json
           .parse(jsonStr)
-          .as[Stream[MGeoNodePropsShapes]]
+          // Лениво парсить пока никак. Stream[] только расход памяти увеличивает.
+          .as[List[MGeoNodePropsShapes]]
       )
     }
   }

@@ -913,7 +913,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     } yield {
       // Извлечь результат из ES-ответа:
       val agg = resp.getAggregations.get[ScriptedMetric](aggName)
-      LOGGER.debug(s"docsHashSum(): r=${Option(agg).map(_.aggregation()).orNull} totalHits=${resp.getHits.totalHits}")
+      LOGGER.trace(s"docsHashSum(): r=${Option(agg).map(_.aggregation()).orNull} totalHits=${resp.getHits.totalHits}")
       agg.aggregation().asInstanceOf[Integer].intValue()
     }
   }

@@ -43,6 +43,7 @@ class ScRootR (
   import headerR.HeaderPropsValFastEq
   import menuR.MenuRPropsValFastEq
   import welcomeR.WelcomeRPropsValFastEq
+  import enterLkRowR.EnterLkRowRPropsValFastEq
 
 
   type Props = ModelProxy[MScRoot]
@@ -52,7 +53,7 @@ class ScRootR (
                                     gridPropsOptC  : ReactConnectProxy[gridR.PropsVal],
                                     headerPropsC   : ReactConnectProxy[Option[headerR.PropsVal]],
                                     wcPropsOptC    : ReactConnectProxy[Option[welcomeR.PropsVal]],
-                                    enterLkRowC    : ReactConnectProxy[enterLkRowR.PropsVal],
+                                    enterLkRowC    : ReactConnectProxy[Option[enterLkRowR.PropsVal]],
                                     searchC        : ReactConnectProxy[MScSearch],
                                     menuC          : ReactConnectProxy[menuR.PropsVal],
                                   )
@@ -200,15 +201,18 @@ class ScRootR (
         },
 
         enterLkRowC = propsProxy.connect { props =>
-          enterLkRowR.PropsVal(
-            isLoggedIn      = props.internals.conf.isLoggedIn,
-            // TODO А если текущий узел внутри карточки, то что тогда? Надо как-то по adn-типу фильтровать.
-            isMyAdnNodeId   = props.index.state
-              .currRcvrId
-              .filter { _ =>
-                props.index.resp.exists(_.isMyNode)
-              }
-          )
+          for (scJsRouter <- props.internals.jsRouter.toOption) yield {
+            enterLkRowR.PropsVal(
+              isLoggedIn      = props.internals.conf.isLoggedIn,
+              // TODO А если текущий узел внутри карточки, то что тогда? Надо как-то по adn-типу фильтровать.
+              isMyAdnNodeId   = props.index.state
+                .currRcvrId
+                .filter { _ =>
+                  props.index.resp.exists(_.isMyNode)
+                },
+              scJsRouter = scJsRouter
+            )
+          }
         }
 
       )
