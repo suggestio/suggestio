@@ -47,6 +47,9 @@ object MCompressAlgos extends StringEnum[MCompressAlgo] {
     */
   def chooseSmallestForAcceptEncoding(acceptEncoding: String): Option[MCompressAlgo] = {
     valuesEffectiveFirst
+      // Две следующией строки отключают brotli, потому что выяснилось, что он не работает внезапно.
+      .iterator
+      .filter(_ !=* Brotli)
       .find { algo =>
         acceptEncoding.contains( algo.httpContentEncoding )
       }
