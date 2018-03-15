@@ -2,12 +2,15 @@ package util.xplay
 
 import akka.stream.Materializer
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.sec.csp.Csp
+import play.api.http.ContentTypes
 import play.api.mvc.{Filter, RequestHeader, Result}
 import util.acl.AclUtil
 import util.sec.CspUtil
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -39,8 +42,9 @@ class SecHeadersFilterUtil {
 
   // TODO Надо выставить хотя бы 12 недель, а лучше год, и флаг preload для доступа в hardcoded-списки браузеров.
   // Сейчас это пока не сделано, т.к. есть проблемы с letsEncrypt, nginx reload, других возможных проблем.
-  //val DEFAULT_STRICT_TRANSPORT_SECURITY       = "max-age=10000; includeSubDomains"
-  val DEFAULT_STRICT_TRANSPORT_SECURITY         = "max-age=10000"   // TODO Разрулить проблему сертификата с http://backend.suggest.io/
+  // TODO Разрулить проблему сертификата с http://backend.suggest.io/
+  //val DEFAULT_STRICT_TRANSPORT_SECURITY       = "max-age=1000000; includeSubDomains"
+  val DEFAULT_STRICT_TRANSPORT_SECURITY         = s"max-age=${20.days.toSeconds}"
 
 
   // Хром не умеет в ALLOW-FROM. Надо разруливать через CSP frame-ancestors.
@@ -78,30 +82,45 @@ class SecHeadersFilter @Inject() (
       val hs = resp.header.headers
       var acc: List[(String, String)] = Nil
 
-      if ( !hs.contains(X_FRAME_OPTIONS_HEADER) )
-        acc ::= X_FRAME_OPTIONS_HEADER -> DEFAULT_FRAME_OPTIONS
+      // TODO Opt Некоторые хидера нет смысла навешивать на не-html ответы. CSP включен только для html-страниц, но надо разобраться с остальными хидерами.
+      // Это снизит траффик.
 
-      if ( !hs.contains(X_XSS_PROTECTION_HEADER) )
-        acc ::= X_XSS_PROTECTION_HEADER -> DEFAULT_XSS_PROTECTION
+      val isHtml = resp.body.contentType.exists(_.startsWith( ContentTypes.HTML ))
 
-      if ( !hs.contains(X_CONTENT_TYPE_OPTIONS_HEADER) )
-        acc ::= X_CONTENT_TYPE_OPTIONS_HEADER -> DEFAULT_CONTENT_TYPE_OPTIONS
+      // Некоторые хидеры применимы только для html-страниц:
+      if (isHtml) {
 
-      if ( !hs.contains(X_PERMITTED_CROSS_DOMAIN_POLICIES_HEADER) )
-        acc ::= X_PERMITTED_CROSS_DOMAIN_POLICIES_HEADER -> DEFAULT_PERMITTED_CROSS_DOMAIN_POLICIES
+        // Фреймы. Наврядли фрейм-атаки актуальны для чего-то кроме веб-страниц.
+        if ( !hs.contains(X_FRAME_OPTIONS_HEADER) )
+          acc ::= X_FRAME_OPTIONS_HEADER -> DEFAULT_FRAME_OPTIONS
+
+        // Только для IE8+, который его использует на веб-страницах. Малоактуально вообще, не только для вёб-страниц.
+        if ( !hs.contains(X_XSS_PROTECTION_HEADER) )
+          acc ::= X_XSS_PROTECTION_HEADER -> DEFAULT_XSS_PROTECTION
+
+        // Только для всякого Adobe-мусора, которого в sio нет и быть не должно, поэтому выставляется только для html-страниц.
+        if ( !hs.contains(X_PERMITTED_CROSS_DOMAIN_POLICIES_HEADER) )
+          acc ::= X_PERMITTED_CROSS_DOMAIN_POLICIES_HEADER -> DEFAULT_PERMITTED_CROSS_DOMAIN_POLICIES
+
+        // CSP, актуально только для html-страниц.
+        for {
+          cspKv <- cspUtil.CSP_KV_DFLT_OPT
+          // CSP: возможны два хидера: стандартный и report-only. Проверить, что их ещё нет в обрабатываемом ответе:
+          if !(hs.contains(Csp.HDR_NAME) || hs.contains(Csp.HDR_NAME_REPORT_ONLY))
+        } {
+          acc ::= cspKv
+        }
+
+      }
 
       // Добавить HSTS-хидер, если https. Для голого HTTP в этом нет смысла и необходимости.
+      // Для любых ответов, даже для картинок. Это "заразный" хидер уровня целого сайта: пусть все знают, что suggest.io только httpS.
       if (isSecure && !hs.contains(STRICT_TRANSPORT_SECURITY))
         acc ::= STRICT_TRANSPORT_SECURITY -> DEFAULT_STRICT_TRANSPORT_SECURITY
 
-      // CSP: если включено, то Some.
-      for {
-        cspKv <- cspUtil.CSP_KV_DFLT_OPT
-        // CSP: возможны два хидера: стандартный и report-only.
-        if !(hs.contains(Csp.HDR_NAME) || hs.contains(Csp.HDR_NAME_REPORT_ONLY))
-      } {
-        acc ::= cspKv
-      }
+      // Явный запрет авто-определние content-type браузером. Для любых ответов, content-type обязан быть валидным, либо должна быть ошибка.
+      if ( !hs.contains(X_CONTENT_TYPE_OPTIONS_HEADER) )
+        acc ::= X_CONTENT_TYPE_OPTIONS_HEADER -> DEFAULT_CONTENT_TYPE_OPTIONS
 
       resp.withHeaders(acc: _*)
     }
