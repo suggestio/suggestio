@@ -240,6 +240,7 @@ class JsMessagesUtil @Inject() (
       MC.`Personal.cabinet` ::
       MC.`Suggest.io.Project` ::
       MC.`Suggest.io._transcription` ::
+      MC.`Edit` ::
       Nil
   }
 

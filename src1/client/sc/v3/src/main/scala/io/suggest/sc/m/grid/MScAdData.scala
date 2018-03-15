@@ -56,15 +56,15 @@ object MScAdData {
 case class MScAdData(
                       nodeId      : Option[String],
                       main        : MBlkRenderData,
-                      focused     : Pot[MBlkRenderData] = Pot.empty
+                      focused     : Pot[MScFocAdData] = Pot.empty
                     ) {
 
-  def withFocused(focused: Pot[MBlkRenderData]) = copy(focused = focused)
+  def withFocused(focused: Pot[MScFocAdData]) = copy(focused = focused)
 
   private def _flatGridTemplatesUsing(f: MBlkRenderData => Seq[Tree[JdTag]]) = {
     focused.fold [Seq[Tree[JdTag]]] {
       main.template :: Nil
-    }(f)
+    }(foc => f(foc.blkData))
   }
 
   /** Вернуть последовательность шаблонов для "плоской" плитки, т.е. где и focused и не-focused одновременно.
@@ -90,7 +90,7 @@ case class MScAdData(
     */
   def flatGridEdges: Map[EdgeUid_t, MEdgeDataJs] = {
     focused
-      .fold(main.edges)(_.edges)
+      .fold(main.edges)(_.blkData.edges)
   }
 
 }

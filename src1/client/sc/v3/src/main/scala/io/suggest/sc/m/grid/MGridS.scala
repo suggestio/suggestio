@@ -58,4 +58,15 @@ case class MGridS(
   def withHasMoreAds(hasMoreAds: Boolean)                 = copy(hasMoreAds = hasMoreAds)
   def withGridSz(realContentSz: Option[MSize2di])         = copy(gridSz = realContentSz)
 
+  /** Текущая открытая карточка, если есть. */
+  lazy val focusedAdOpt: Option[MScAdData] = {
+    ads
+      .toOption
+      .flatMap { adsVec =>
+        adsVec.find { b =>
+          b.focused.nonEmpty
+        }
+      }
+  }
+
 }

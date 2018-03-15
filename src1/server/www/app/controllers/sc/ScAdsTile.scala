@@ -6,13 +6,12 @@ import _root_.util.showcase.IScAdSearchUtilDi
 import _root_.util.stat.IStatUtil
 import io.suggest.ad.blk.BlockWidths
 import io.suggest.dev.MSzMult
-import io.suggest.jd.MJdAdData
 import io.suggest.jd.tags.MJdTagNames
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.primo.TypeT
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.resp.MScRespActionTypes
-import io.suggest.sc.sc3.{MSc3AdsResp, MSc3Resp, MSc3RespAction}
+import io.suggest.sc.sc3.{MSc3AdData, MSc3AdsResp, MSc3Resp, MSc3RespAction}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.im.make.MakeResult
@@ -362,10 +361,10 @@ trait ScAdsTile
   protected class TileAdsLogicV3(override val _qs: MScAdsTileQs)
                                 (implicit val _request: IReq[_]) extends TileAdsLogicV {
 
-    override type T = MJdAdData
+    override type T = MSc3AdData
 
     // TODO brArgs содержит кучу неактуального мусора, потому что рендер уехал на клиент. Следует удалить лишние поля следом за v2-выдачей.
-    override def renderMadAsync(brArgs: RenderArgs): Future[MJdAdData] = {
+    override def renderMadAsync(brArgs: RenderArgs): Future[T] = {
       // Требуется рендер только main-блока карточки.
       Future {
         val mainBlkTpl0 = jdAdUtil.getMainBlockTpl( brArgs.mad )
@@ -384,7 +383,7 @@ trait ScAdsTile
           }
         }
         val edges2 = jdAdUtil.filterEdgesForTpl(mainBlkTpl2, brArgs.mad.edges)
-        jdAdUtil.mkJdAdDataFor
+        val jdFut = jdAdUtil.mkJdAdDataFor
           .show(
             nodeId        = brArgs.mad.id,
             nodeEdges     = edges2,
@@ -394,9 +393,13 @@ trait ScAdsTile
             forceAbsUrls  = _qs.apiVsn.forceAbsUrls
           )(ctx)
           .execute()
+
+        for (jd <- jdFut) yield
+          MSc3AdData( jd )
       }
         .flatten
     }
+
 
     /** Рендер HTTP-результата. */
     override def resultFut: Future[Result] = {

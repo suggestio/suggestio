@@ -188,7 +188,10 @@ class GridAdsAh[M](
 
             val newScAds = findAdsResp.ads
               .iterator
-              .map(MScAdData.apply)
+              .map { sc3AdData =>
+                // Игнорим какие-либо права доступа и прочее, сервер их и не присылает здесь.
+                MScAdData( sc3AdData.jd )
+              }
               .toVector
             val (ads2, jdConf2) = if (m.evidence.clean) {
               val jdConf1 = v0.jdConf.withSzMult(
@@ -310,9 +313,13 @@ class GridAdsAh[M](
                 // Фокусировка: раскрыть текущую карточку с помощью принятого контента.
                 case MScRespActionTypes.AdsFoc =>
                   val adsResp = ra.ads.get
+                  val focAd = adsResp.ads.head
                   val ad1 = ad0.withFocused(
                     ad0.focused.ready(
-                      MBlkRenderData( adsResp.ads.head )
+                      MScFocAdData(
+                        blkData = MBlkRenderData( focAd.jd ),
+                        canEdit = focAd.canEdit.contains(true)
+                      )
                     )
                   )
                   val adsPot2 = for (ads0 <- v0.ads) yield {

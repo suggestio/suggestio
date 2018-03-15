@@ -87,11 +87,13 @@ class GridCoreR(
                 } { foc =>
                   // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
                   MGbSubItems {
+                    val focBlk = foc.blkData
                     // Пройтись по блокам из focused-контейнера...
-                    foc.template
+                    focBlk
+                      .template
                       .subForest
                       .iterator
-                      .map { __blockRenderData2GbPayload( _, foc ) }
+                      .map { __blockRenderData2GbPayload( _, focBlk ) }
                       .toList
                   }
                 }

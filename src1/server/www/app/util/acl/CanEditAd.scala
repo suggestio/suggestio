@@ -2,6 +2,7 @@ package util.acl
 
 import javax.inject.{Inject, Singleton}
 
+import io.suggest.common.fut.FutureUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.req._
@@ -10,9 +11,8 @@ import util.n2u.N2NodesUtil
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
-import japgolly.univeq._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -58,6 +58,46 @@ class CanEditAd @Inject() (
 
   }
 
+  sealed case class MAdProd(mad: MNode, producer: MNode)
+
+  def isUserCanEditAd(user: ISioUser, adId: String): Future[Option[MAdProd]] = {
+    FutureUtil.optFut2futOpt(user.personIdOpt) { _ =>
+      val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
+      lazy val logPrefix = s"isUserCanEditAd1(${user.personIdOpt.orNull}, $adId):"
+      madOptFut.flatMap { madOpt =>
+        if (madOpt.isEmpty)
+          LOGGER.debug(s"$logPrefix Ad not found.")
+        FutureUtil.optFut2futOpt(madOpt) { mad =>
+          isUserCanEditAd(user, mad)
+        }
+      }
+    }
+  }
+  def isUserCanEditAd(user: ISioUser, mad: MNode): Future[Option[MAdProd]] = {
+    FutureUtil.optFut2futOpt(user.personIdOpt) { _ =>
+      val prodIdOpt = n2NodesUtil.madProducerId(mad)
+      val prodNodeOptFut = mNodesCache.maybeGetByIdCached(prodIdOpt)
+      lazy val logPrefix = s"isUserCanEditAd2(${user.personIdOpt.orNull}, ${mad.id.orNull}):"
+      for (prodNodeOpt <- prodNodeOptFut) yield {
+        if (prodNodeOpt.isEmpty)
+          LOGGER.warn(s"$logPrefix Missing producer ${prodIdOpt.orNull}")
+
+        for {
+          producer <- prodNodeOpt
+          if isUserCanEditAd(user, mad = mad, producer = producer)
+        } yield {
+          MAdProd(mad = mad, producer = producer)
+        }
+      }
+    }
+  }
+  def isUserCanEditAd(user: ISioUser, mad: MNode, producer: MNode): Boolean = {
+    // isSuper не проверяем, потому что оно и так проверяется внутри isNodeAdminCheck().
+    val isProducerAdmin = user.isAuth && isNodeAdmin.isNodeAdminCheck(producer, user)
+    LOGGER.trace(s"isUserCanEditAd3(${user.personIdOpt.orNull}, ad#${mad.id.orNull}, prod#${producer.id.orNull}): producerId = ${producer.id.orNull}, isAdmin?$isProducerAdmin")
+    isProducerAdmin
+  }
+
 
   def apply(adId1: String, userInits1: MUserInit*): ActionBuilder[MAdProdReq, AnyContent] = {
     new reqUtil.SioActionBuilderImpl[MAdProdReq] with AdEditBase with InitUserCmds {
@@ -74,34 +114,17 @@ class CanEditAd @Inject() (
         val user = aclUtil.userFromRequest(request)
 
         user.personIdOpt.fold (isAuth.onUnauth(request)) { _ =>
-          val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
+          val producerNodeIfCanEditOptFut = isUserCanEditAd(user, adId)
 
           maybeInitUser(user)
-          def mreq = MReq(request, user)
 
-          madOptFut.flatMap {
-            case Some(mad) =>
-              val prodIdOpt = n2NodesUtil.madProducerId(mad)
-              val prodNodeOptFut = mNodesCache.maybeGetByIdCached( prodIdOpt )
-
-              prodNodeOptFut.flatMap {
-                case Some(producer) =>
-                  val allowed = user.isSuper || isNodeAdmin.isNodeAdminCheck(producer, user)
-
-                  if (!allowed) {
-                    LOGGER.debug(s"isEditAllowed(${mad.id.get}, $user): Not a producer[$prodIdOpt] admin.")
-                    forbiddenFut("No node admin rights", request)
-                  } else {
-                    val req1 = MAdProdReq(mad = mad, producer = producer, request = request, user = user)
-                    block(req1)
-                  }
-
-                case None =>
-                  prodNotFound( mreq, prodIdOpt )
-              }
-
+          producerNodeIfCanEditOptFut.flatMap {
+            case Some(data) =>
+              val req1 = MAdProdReq(mad = data.mad, producer = data.producer, request = request, user = user)
+              block(req1)
             case None =>
-              adNotFound(mreq)
+              LOGGER.debug(s"isEditAllowed($adId, $user): Not a producer admin or missing nodes.")
+              forbiddenFut("No node admin rights", request)
           }
         }
       }
@@ -109,5 +132,10 @@ class CanEditAd @Inject() (
     }
   }
 
+}
+
+
+trait ICanEditAdDi {
+  def canEditAd: CanEditAd
 }
 

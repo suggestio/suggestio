@@ -16,7 +16,8 @@
 
   routes.javascript.Ident.mySioStartPage,
   routes.javascript.Ident.rdrUserSomewhere,
-  routes.javascript.MarketLkAdn.showNodeAds
+  routes.javascript.MarketLkAdn.showNodeAds,
+  routes.javascript.LkAdEdit.editAd
 )
 
 @* Когда скрипт загрузился и выполнился, будет вызвана функция инициализации с указанным именем, если задана. *@

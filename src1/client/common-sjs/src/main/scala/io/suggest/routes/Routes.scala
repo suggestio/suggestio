@@ -35,26 +35,29 @@ object routes extends IJsRouter
 sealed trait Controllers extends js.Object {
 
   /** Роуты для static-контроллера. */
-  def Static: StaticController = js.native
+  def Static: StaticCtlRoutes = js.native
 
   /** Роуты для img-контроллера. */
-  def Img: ImgController = js.native
+  def Img: ImgCtlRoutes = js.native
 
   /** Роуты для assets-контроллера. */
-  def Assets: AssetsController = js.native
+  def Assets: AssetsCtlRoutes = js.native
 
   /** Роуты для Ident-контроллера. */
-  def Ident: IdentController = js.native
+  def Ident: IdentCtlRoutes = js.native
 
   /** Роуты для MarketLkAdn-контроллера. */
-  def MarketLkAdn: MarketLkAdnController = js.native
+  def MarketLkAdn: MarketLkAdnCtlRoutes = js.native
+
+  /** Доступ к HTTP-роутам до серверного контроллера LkAdEdit. */
+  def LkAdEdit: LkAdEditCtlRoutes = js.native
 
 }
 
 
 /** Интерфейс контроллера Static. */
 @js.native
-sealed trait StaticController extends js.Object {
+sealed trait StaticCtlRoutes extends js.Object {
 
   def popupCheckContent(): Route = js.native
 
@@ -66,7 +69,7 @@ sealed trait StaticController extends js.Object {
 
 /** Интерфейс роутера ImgController'а. */
 @js.native
-sealed trait ImgController extends js.Object {
+sealed trait ImgCtlRoutes extends js.Object {
 
   /** Форма-окошко для кропа. */
   def imgCropForm(imgId: String, width: Int, height: Int): Route = js.native
@@ -75,7 +78,7 @@ sealed trait ImgController extends js.Object {
 
 
 @js.native
-sealed trait AssetsController extends js.Object {
+sealed trait AssetsCtlRoutes extends js.Object {
 
   def versioned(file: String): Route = js.native
 
@@ -85,7 +88,7 @@ sealed trait AssetsController extends js.Object {
 
 
 @js.native
-sealed trait IdentController extends js.Object {
+sealed trait IdentCtlRoutes extends js.Object {
 
   def mySioStartPage(): Route = js.native
 
@@ -95,11 +98,26 @@ sealed trait IdentController extends js.Object {
 
 
 @js.native
-sealed trait MarketLkAdnController extends js.Object {
+sealed trait MarketLkAdnCtlRoutes extends js.Object {
 
   def lkList(): Route = js.native
 
   def showNodeAds(nodeId: String): Route = js.native
+
+}
+
+
+/** Интерфейс js-роутера для LkAdEdit-контроллера. */
+@js.native
+sealed trait LkAdEditCtlRoutes extends js.Object {
+
+  def editAd(adId: String): Route = js.native
+
+  def prepareImgUpload(adId: String = null, nodeId: String = null): Route = js.native
+
+  def saveAdSubmit(adId: String = null, producerId: String = null): Route = js.native
+
+  def deleteSubmit(adId: String): Route = js.native
 
 }
 

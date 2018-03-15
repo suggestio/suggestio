@@ -16,7 +16,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
-import io.suggest.sc.v.menu.{AboutSioR, EnterLkRowR, MenuR}
+import io.suggest.sc.v.menu.{AboutSioR, EditAdR, EnterLkRowR, MenuR}
 
 import scalacss.ScalaCssReact._
 
@@ -27,15 +27,16 @@ import scalacss.ScalaCssReact._
   * Description: Корневой react-компонент для выдачи третьего поколения.
   */
 class ScRootR (
-                protected[this] val scCssR      : ScCssR,
-                val gridR                       : GridR,
-                searchR                         : SearchR,
-                protected[this] val headerR     : HeaderR,
-                protected[this] val menuR       : MenuR,
-                protected[this] val enterLkRowR : EnterLkRowR,
-                protected[this] val aboutSioR   : AboutSioR,
-                protected[this] val welcomeR    : WelcomeR,
-                getScCssF                       : GetScCssF,
+                val scCssR      : ScCssR,
+                val gridR       : GridR,
+                searchR         : SearchR,
+                val headerR     : HeaderR,
+                val menuR       : MenuR,
+                val enterLkRowR : EnterLkRowR,
+                val editAdR     : EditAdR,
+                val aboutSioR   : AboutSioR,
+                val welcomeR    : WelcomeR,
+                getScCssF       : GetScCssF,
               ) {
 
   import MScCssArgs.MScCssArgsFastEq
@@ -44,6 +45,7 @@ class ScRootR (
   import headerR.HeaderPropsValFastEq
   import menuR.MenuRPropsValFastEq
   import enterLkRowR.EnterLkRowRPropsValFastEq
+  import editAdR.EditAdRPropsValFastEq
   import aboutSioR.AboutSioRPropsValFastEq
   import welcomeR.WelcomeRPropsValFastEq
 
@@ -56,6 +58,7 @@ class ScRootR (
                                     headerPropsC   : ReactConnectProxy[Option[headerR.PropsVal]],
                                     wcPropsOptC    : ReactConnectProxy[Option[welcomeR.PropsVal]],
                                     enterLkRowC    : ReactConnectProxy[Option[enterLkRowR.PropsVal]],
+                                    editAdC        : ReactConnectProxy[Option[editAdR.PropsVal]],
                                     aboutSioC      : ReactConnectProxy[Option[aboutSioR.PropsVal]],
                                     searchC        : ReactConnectProxy[MScSearch],
                                     menuC          : ReactConnectProxy[menuR.PropsVal],
@@ -106,6 +109,9 @@ class ScRootR (
                   <.div(
                     // Строка входа в личный кабинет
                     s.enterLkRowC { enterLkRowR.apply },
+
+                    // Кнопка редактирования карточки.
+                    s.editAdC { editAdR.apply },
 
                     // Рендер кнопк
                     s.aboutSioC { aboutSioR.apply }
@@ -223,6 +229,21 @@ class ScRootR (
                   props.index.resp.exists(_.isMyNode)
                 },
               scJsRouter = scJsRouter
+            )
+          }
+        },
+
+        editAdC = propsProxy.connect { props =>
+          for {
+            scJsRouter  <- props.internals.jsRouter.toOption
+            focusedAdOuter <- props.grid.focusedAdOpt
+            focusedData <- focusedAdOuter.focused.toOption
+            if focusedData.canEdit
+            focusedAdId <- focusedAdOuter.nodeId
+          } yield {
+            editAdR.PropsVal(
+              adId      = focusedAdId,
+              scRoutes  = scJsRouter
             )
           }
         },

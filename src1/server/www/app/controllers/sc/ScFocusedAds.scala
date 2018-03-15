@@ -14,7 +14,7 @@ import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.primo.id.OptId
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.resp.MScRespActionTypes
-import io.suggest.sc.sc3.{MSc3AdsResp, MSc3Resp, MSc3RespAction}
+import io.suggest.sc.sc3.{MSc3AdData, MSc3AdsResp, MSc3Resp, MSc3RespAction}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.blk
@@ -51,6 +51,7 @@ trait ScFocusedAdsBase
   with IN2NodesUtilDi
   with IMNodes
   with IScAdSearchUtilDi
+  with ICanEditAdDi
 {
 
   import mCommonDi._
@@ -906,7 +907,7 @@ trait ScFocusedAds
   {
     // TODO Код тут очень похож на код рендера одной карточки в ScAdsTileLogicV3. Потому что jd-карточки раскрываются в плитки.
 
-    override type OBT = MJdAdData
+    override type OBT = MSc3AdData
 
     lazy val tileArgs = scUtil.getTileArgs(_qs.screen)
 
@@ -916,7 +917,7 @@ trait ScFocusedAds
         val mad = args.brArgs.mad
         val tpl = jdAdUtil.getNodeTpl( mad )
         val edges2 = jdAdUtil.filterEdgesForTpl(tpl, mad.edges)
-        jdAdUtil.mkJdAdDataFor
+        val jdFut = jdAdUtil.mkJdAdDataFor
           .show(
             nodeId        = mad.id,
             nodeEdges     = edges2,
@@ -926,6 +927,16 @@ trait ScFocusedAds
             forceAbsUrls  = _qs.apiVsn.forceAbsUrls
           )(ctx)
           .execute()
+
+        // Проверить права на редактирование у текущего юзера.
+        val isEditAllowed = canEditAd.isUserCanEditAd(_request.user, mad = args.brArgs.mad, producer = args.producer)
+
+        for (jd <- jdFut) yield {
+          MSc3AdData(
+            jd = jd,
+            canEdit = Some(isEditAllowed)
+          )
+        }
       }
         .flatten
     }

@@ -2,7 +2,6 @@ package io.suggest.sc.sc3
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.dev.MSzMult
-import io.suggest.jd.MJdAdData
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -16,8 +15,8 @@ object MSc3AdsResp {
 
   /** Поддержка play-json. */
   implicit def MSC3_ADS_TILE_RESP: OFormat[MSc3AdsResp] = (
-    (__ \ "a").formatNullable[Seq[MJdAdData]]
-      .inmap[Seq[MJdAdData]](
+    (__ \ "a").formatNullable[Seq[MSc3AdData]]
+      .inmap[Seq[MSc3AdData]](
         EmptyUtil.opt2ImplEmpty1F(Nil),
         {ads => if (ads.isEmpty) None else Some(ads) }
       ) and
@@ -33,6 +32,6 @@ object MSc3AdsResp {
   * @param szMult Мультипликатор размера, применённый ко всем карточкам.
   */
 case class MSc3AdsResp(
-                        ads     : Seq[MJdAdData],
+                        ads     : Seq[MSc3AdData],
                         szMult  : MSzMult
                       )
