@@ -3,7 +3,7 @@ package controllers
 import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
 
-import io.suggest.adn.mapf.{MLamForm, MLamFormInit}
+import io.suggest.adn.mapf.{MLamConf, MLamForm, MLamFormInit}
 import io.suggest.adv.geo.{OnAdvsMap, OnGeoCapturing}
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
@@ -24,7 +24,7 @@ import models.req.INodeReq
 import util.acl.IsNodeAdmin
 import util.adn.mapf.{LkAdnMapBillUtil, LkAdnMapFormUtil}
 import util.adv.AdvFormUtil
-import util.adv.geo.AdvGeoLocUtil
+import util.adv.geo.{AdvGeoLocUtil, AdvGeoRcvrsUtil}
 import util.billing.Bill2Util
 import util.mdr.MdrUtil
 import util.sec.CspUtil
@@ -48,6 +48,7 @@ class LkAdnMap @Inject() (
                            bill2Util                     : Bill2Util,
                            advGeoLocUtil                 : AdvGeoLocUtil,
                            mdrUtil                       : MdrUtil,
+                           advGeoRcvrsUtil               : AdvGeoRcvrsUtil,
                            reqUtil                       : ReqUtil,
                            lkGeoCtlUtil                  : LkGeoCtlUtil,
                            cspUtil                       : CspUtil,
@@ -94,6 +95,8 @@ class LkAdnMap @Inject() (
         getContext2
       }
 
+      val rcvrsMapUrlCallFut = ctxFut.flatMap( advGeoRcvrsUtil.rcvrNodesMapUrl()(_) )
+
       // Готовим дефолтовый MAdv4FreeProps.
       val a4fPropsOptFut = advFormUtil.a4fPropsOpt0CtxFut( ctxFut )
 
@@ -122,12 +125,16 @@ class LkAdnMap @Inject() (
 
       // Собрать конфиг для MLamFormInit, сериализовать в Base64:
       val lamFormInitB64Fut = for {
-        priceResp     <- priceRespFut
-        lamForm       <- lamFormFut
-        a4fPropsOpt   <- a4fPropsOptFut
+        priceResp       <- priceRespFut
+        lamForm         <- lamFormFut
+        a4fPropsOpt     <- a4fPropsOptFut
+        rcvrsMapUrlCall <- rcvrsMapUrlCallFut
       } yield {
         val init = MLamFormInit(
-          nodeId          = nodeId,
+          conf = MLamConf(
+            nodeId        = nodeId,
+            rcvrsMapUrl   = rcvrsMapUrlCall.url
+          ),
           priceResp       = priceResp,
           form            = lamForm,
           adv4FreeProps   = a4fPropsOpt

@@ -42,18 +42,6 @@ object IAdvRcvrsMapApi {
 
 }
 
-/** Реализация [[IAdvRcvrsMapApi]] поверх HTTP через js-роутер. */
-class AdvRcvrsMapApiHttpViaRouter(jsRouter: => IJsRouter) extends IAdvRcvrsMapApi {
-
-  /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
-  override def advRcvrsMapJson(): Future[MGeoNodesResp] = {
-    IAdvRcvrsMapApi._advRcvrsMapRequest(
-      jsRouter.controllers.Static.advRcvrsMapJson()
-    )
-  }
-
-}
-
 
 /** Реализация [[IAdvRcvrsMapApi]] с запросом через произвольную ссылку. */
 class AdvRcvrsMapApiHttpViaUrl(url: => String) extends IAdvRcvrsMapApi {

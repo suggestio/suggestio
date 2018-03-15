@@ -1,6 +1,8 @@
 package io.suggest.lk.adv.geo.m
 
 import diode.FastEq
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -15,11 +17,14 @@ object MOther {
 
   implicit object MOtherFastEq extends FastEq[MOther] {
     override def eqv(a: MOther, b: MOther): Boolean = {
-      (a.adId eq b.adId) &&
-        (a.onMainScreen == b.onMainScreen) &&
-        (a.doc eq b.doc)
+      (a.adId ===* b.adId) &&
+        (a.rcvrsMapUrl ==* b.rcvrsMapUrl) &&
+        (a.onMainScreen ==* b.onMainScreen) &&
+        (a.doc ===* b.doc)
     }
   }
+
+  implicit def univEq: UnivEq[MOther] = UnivEq.derive
 
 }
 
@@ -34,6 +39,7 @@ object MOther {
   */
 case class MOther(
   adId          : String,
+  rcvrsMapUrl   : String,
   onMainScreen  : Boolean             = true,
   doc           : MDocS               = MDocS()
 ) {

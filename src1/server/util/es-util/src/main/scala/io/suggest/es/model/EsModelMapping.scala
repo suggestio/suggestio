@@ -61,7 +61,8 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with IMacroLog
   /** Отправить маппинг в elasticsearch. */
   def putMapping(): Future[Boolean] = {
     lazy val logPrefix = s"putMapping[${System.currentTimeMillis()}]:"
-    LOGGER.debug(s"$logPrefix $ES_INDEX_NAME/$ES_TYPE_NAME")
+    LOGGER.trace(s"$logPrefix $ES_INDEX_NAME/$ES_TYPE_NAME")
+
     val fut = esClient.admin().indices()
       .preparePutMapping(ES_INDEX_NAME)
       .setType(ES_TYPE_NAME)
@@ -69,7 +70,7 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with IMacroLog
       .execute()
       .map { _.isAcknowledged }
     fut.onComplete {
-      case Success(res) => LOGGER.info(s"$logPrefix Done, ack=$res")
+      case Success(res) => LOGGER.debug(s"$logPrefix Done, ack=$res")
       case Failure(ex)  => LOGGER.error(s"$logPrefix Failed", ex)
     }
     fut

@@ -392,7 +392,7 @@ class Static @Inject() (
     * @return Ok + Streamed/Chunked (заполнения кэша)
     *         Ok + Strict (извлечение из кэша)
     */
-  def advRcvrsMapJson( nodesHashSum: Option[Int] ) = {
+  def advRcvrsMapJson(nodesHashSum: Int) = {
     ignoreAuth().async { implicit request =>
       // Быстро вычислить значение ETag на стороне ES. Это быстрая аггрегация, выполняется прямо на шардах.
       val realNodesHashSumFut = advGeoRcvrsUtil.rcvrNodesMapHashSumCached()
@@ -405,9 +405,9 @@ class Static @Inject() (
 
         resultBase <- {
           // Если URL не совпадает с вычисленным значением, то сразу можно редиректить на правильную ссылку
-          if (nodesHashSum.nonEmpty && !nodesHashSum.contains(realNodesHashSum) ) {
-            LOGGER.warn(s"$logPrefix Unexpected caching: ${nodesHashSum.orNull}, but $etagNoQuotes expected, redirection...")
-            val rdr = Redirect( routes.Static.advRcvrsMapJson( Some(realNodesHashSum) ) )
+          if ( nodesHashSum !=* realNodesHashSum ) {
+            LOGGER.warn(s"$logPrefix Unexpected caching: $nodesHashSum, but $etagNoQuotes expected, redirection...")
+            val rdr = Redirect( routes.Static.advRcvrsMapJson( realNodesHashSum ) )
             Future.successful(rdr)
 
           } else if (
@@ -432,14 +432,13 @@ class Static @Inject() (
             val rcvrsMapRespJsonFut = _advRcvrsMapRespJsonFut( respCompAlgoOpt )
 
             // Если ссылка с кэшем, то допускам долгое кэширование.
-            // TODO После отладки кэширования надо выставить на 5.days
-            val cacheControlSuffix = nodesHashSum.fold(20.seconds.toSeconds.toString)(_ => s"${1.hour.toSeconds}, immutable")
 
             val okHeaders = List(
               // Значение ETag требуется рендерить в хидеры в двойных ковычках, оформляем:
               ETAG              -> s""""$etagNoQuotes"""",
               VARY              -> ACCEPT_ENCODING,
-              CACHE_CONTROL     -> s"public, max-age=$cacheControlSuffix"
+              // TODO Увеличить кэш до неск.дней, когда всё устаканится наконец.
+              CACHE_CONTROL     -> s"public, max-age=${1.hour.toSeconds}, immutable"
             )
 
             rcvrsMapRespJsonFut.flatMap { srcOrCached =>

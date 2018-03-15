@@ -119,22 +119,22 @@ class LkAdvGeo @Inject() (
       val formFut = for {
         gp0         <- resLogic._geoPointFut
         a4fPropsOpt <- resLogic._a4fPropsOptFut
+        rcvrsMapUrl <- resLogic._rcvrsMapCallFut
       } yield {
-
         // TODO Распилить это на MMapProps и MGeoCircle.
         // Залить начальные данные в маппинг формы.
         MFormS(
-          mapProps = advGeoFormUtil.mapProps0(gp0),
+          mapProps        = advGeoFormUtil.mapProps0(gp0),
           // TODO Найти текущее размещение в draft items (в корзине неоплаченных).
-          onMainScreen = true,
+          onMainScreen    = true,
           adv4freeChecked = advFormUtil.a4fCheckedOpt( a4fPropsOpt ),
           // TODO Найти текущие ресиверы в draft items (в корзине неоплаченных).
-          rcvrsMap = Map.empty,
+          rcvrsMap        = Map.empty,
           // TODO Найти текущие теги в draft items (в корзине неоплаченных).
-          tagsEdit = MTagsEditProps(),
-          datePeriod = MAdvPeriod(),
+          tagsEdit        = MTagsEditProps(),
+          datePeriod      = MAdvPeriod(),
           // TODO Найти текущее размещение в draft items (в корзине неоплаченных).
-          radCircle = Some( advGeoFormUtil.radCircle0(gp0) ),
+          radCircle       = Some( advGeoFormUtil.radCircle0(gp0) ),
           tzOffsetMinutes = MFormS.TZ_OFFSET_IGNORE
         )
       }
@@ -176,6 +176,8 @@ class LkAdvGeo @Inject() (
       getContext2
     }
 
+    val _rcvrsMapCallFut = _ctxFut.flatMap( advGeoRcvrsUtil.rcvrNodesMapUrl()(_) )
+
     val _a4fPropsOptFut = advFormUtil.a4fPropsOpt0CtxFut( _ctxFut )
 
     /** Рендер ответа.
@@ -199,6 +201,7 @@ class LkAdvGeo @Inject() (
       // Отрендерить текущие радиусные размещения в форму MRoot.
       val formStateSerFut: Future[String] = for {
         a4fPropsOpt   <- _a4fPropsOptFut
+        rcvrsMapCall  <- _rcvrsMapCallFut
         formS         <- formFut
         advPricing    <- advPricingFut
       } yield {
@@ -207,7 +210,8 @@ class LkAdvGeo @Inject() (
           adId          = request.mad.id.get,
           adv4FreeProps = a4fPropsOpt,
           advPricing    = advPricing,
-          form          = formS
+          form          = formS,
+          rcvrsMapUrl   = rcvrsMapCall.url
         )
 
         // Сериализуем модель через boopickle + base64 для рендера бинаря прямо в HTML.

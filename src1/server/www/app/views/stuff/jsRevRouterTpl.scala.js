@@ -25,7 +25,10 @@ var @(name) = {};
   var _s = function(p,s){return p + @if(HTTPS_ENABLED){ ((s===true||(s&&s.secure))?'s':'') + }'://'}
   var hostEsc = '@esc( request.host )';
 
-  @* 2016.dec.14: Запилена поддержка CSRF в JsRoutes для POST-запросов. *@
+  @* 2016.dec.14: Запилена поддержка CSRF в JsRoutes для POST-запросов.
+   * Это безопасно, когда js-роутер заинлайнен в html-страницу.
+   * Если js-роутер раздаётся напрямую (как js-ответ), то CSRF тут не должно быть вообще никогда: это дыра в CSRF будет.
+   *@
   var csrfQs = @JavaScript( play.filters.csrf.CSRF.getToken.fold("undefined")(t => s"'${t.name}=${t.value}'") );
   var csrfQsExist = typeof csrfQs == "string";
 

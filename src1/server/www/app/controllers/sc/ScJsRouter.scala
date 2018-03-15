@@ -21,6 +21,7 @@ trait ScJsRouter
    * @return 200 OK, text/javascript.
    */
   def scJsRouter = maybeAuth() { implicit request =>
+    // CSRF тут нельзя. Вообще. Это общий для всех js-роутер. Иначе это будет дыра в CSRF-защите.
     // TODO Нужно получать параметры кеширования через qs на клиенте и выдавать соответствующие заголовки кеширования.
     // TODO Выставлять заголовки ETag, Last-Modified.
     val cacheSeconds = if (isDev) 1 else 100

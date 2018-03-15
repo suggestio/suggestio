@@ -289,7 +289,6 @@ trait ScSite
   }
 
 
-
   // TODO Сделать val, когда произойдёт переключение на v3-выдачу по дефолту.
   private def cspV3 = cspUtil.mkCustomPolicyHdr { pol0 =>
     pol0
@@ -329,13 +328,9 @@ trait ScSite
 
     private def rcvrsMapUrlFut: Future[String] = {
       for {
-        nodesHashSum <- advGeoRcvrsUtil.rcvrNodesMapHashSumCached()
+        nodesMapUrlCall <- advGeoRcvrsUtil.rcvrNodesMapUrl()(ctx)
       } yield {
-        cdnUtil.maybeAbsUrl(_siteQsArgs.apiVsn.forceAbsUrls )(
-          cdnUtil.forCall(
-            routes.Static.advRcvrsMapJson( Some(nodesHashSum) )
-          )(ctx)
-        )(ctx)
+        cdnUtil.maybeAbsUrl(_siteQsArgs.apiVsn.forceAbsUrls )( nodesMapUrlCall )(ctx)
       }
     }
 

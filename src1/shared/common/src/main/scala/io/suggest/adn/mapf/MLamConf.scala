@@ -1,4 +1,4 @@
-package io.suggest.lk.adn.map.m
+package io.suggest.adn.mapf
 
 /**
   * Suggest.io
@@ -7,5 +7,6 @@ package io.suggest.lk.adn.map.m
   * Description: Модель данных конфигурации Lam-формы.
   */
 case class MLamConf(
-                     nodeId: String
+                     nodeId       : String,
+                     rcvrsMapUrl  : String
                    )

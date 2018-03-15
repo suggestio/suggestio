@@ -6,23 +6,23 @@ import io.suggest.adn.mapf.MLamFormInit
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.bin.ConvCodecs
 import io.suggest.lk.adn.map.a._
+import io.suggest.lk.adn.map.m.IRadOpts.IRadOptsFastEq
+import io.suggest.lk.adn.map.m.MLamRad.MLamRadFastEq
 import io.suggest.lk.adn.map.m._
 import io.suggest.lk.adn.map.u.LkAdnMapApiHttpImpl
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
 import io.suggest.lk.adv.m.{MPriceS, ResetPrice}
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
+import io.suggest.maps.m.MMapS.MMapSFastEq4Map
 import io.suggest.maps.m.{MMapS, MRadS, RcvrMarkersInit}
 import io.suggest.maps.u.MapsUtil
+import io.suggest.msg.ErrorMsgs
+import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import io.suggest.pick.PickleUtil
+import io.suggest.routes.AdvRcvrsMapApiHttpViaUrl
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.dt.period.r.DtpAh
-import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
-import MLamRad.MLamRadFastEq
-import MMapS.MMapSFastEq4Map
-import IRadOpts.IRadOptsFastEq
-import io.suggest.msg.ErrorMsgs
-import io.suggest.routes.{AdvRcvrsMapApiHttpViaRouter, routes}
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.StateInp
 
 import scala.concurrent.Future
@@ -46,9 +46,7 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
 
     MRoot(
       mmap = MapsUtil.initialMapStateFrom( mFormInit.form.mapProps ),
-      conf = MLamConf(
-        nodeId = mFormInit.nodeId
-      ),
+      conf = mFormInit.conf,
       rad = MLamRad(
         circle = mFormInit.form.mapCursor,
         state = MRadS(
@@ -148,9 +146,9 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
     val rcvrsRw = zoomRW(_.rcvrs) { _.withRcvrs(_) }
 
     // Карта покрытия с данными ресиверов:
-    val staticApi = new AdvRcvrsMapApiHttpViaRouter( routes )
+    val rcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( confRO.value.rcvrsMapUrl )
     val rcvrsInitAh = new RcvrMarkersInitAh(
-      api     = staticApi,
+      api     = rcvrsMapApi,
       modelRW = rcvrsRw.zoomRW(_.nodesResp) { _.withNodesResp(_) }
     )
 

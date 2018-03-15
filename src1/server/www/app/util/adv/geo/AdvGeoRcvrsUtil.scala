@@ -3,13 +3,14 @@ package util.adv.geo
 import javax.inject.Inject
 
 import akka.NotUsed
-import akka.stream.scaladsl.{Keep, Sink, Source}
+import akka.stream.scaladsl.Source
+import controllers.routes
 import io.suggest.adn.MAdnRights
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MGeoNodesResp, MMapNodeIconInfo}
+import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MMapNodeIconInfo}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
@@ -17,11 +18,10 @@ import io.suggest.model.n2.node.{MNode, MNodeFields, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.MImgMakeArgs
 import models.im._
+import models.mctx.Context
 import models.mproj.ICommonDi
-import org.elasticsearch.script.Script
-import org.elasticsearch.search.aggregations.AggregationBuilders
-import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetricAggregationBuilder
 import org.elasticsearch.search.sort.SortOrder
+import play.api.mvc.Call
 import util.adn.NodesUtil
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, FitImgMaker, LogoUtil}
@@ -124,6 +124,17 @@ class AdvGeoRcvrsUtil @Inject()(
     import scala.concurrent.duration._
     cacheApiUtil.getOrElseFut("advRcvrsHash", expiration = 10.seconds) {
       rcvrNodesMapHashSum()
+    }
+  }
+
+  /** Сборка правильной ссылки на на карту. */
+  def rcvrNodesMapUrl()(implicit ctx: Context): Future[Call] = {
+    for {
+      nodesHashSum <- rcvrNodesMapHashSumCached()
+    } yield {
+      cdnUtil.forCall(
+        routes.Static.advRcvrsMapJson( nodesHashSum )
+      )(ctx)
     }
   }
 

@@ -28,5 +28,6 @@ case class MFormInit(
   adId          : String,
   adv4FreeProps : Option[MAdv4FreeProps],
   advPricing    : MGetPriceResp,
-  form          : MFormS
+  form          : MFormS,
+  rcvrsMapUrl   : String
 )

@@ -1,7 +1,7 @@
 package io.suggest.lk.adn.map.m
 
 import diode.FastEq
-import io.suggest.adn.mapf.MLamForm
+import io.suggest.adn.mapf.{MLamConf, MLamForm}
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.adv.m.MPriceS

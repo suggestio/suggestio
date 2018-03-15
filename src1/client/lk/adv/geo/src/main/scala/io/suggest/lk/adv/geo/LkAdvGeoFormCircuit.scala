@@ -26,7 +26,7 @@ import io.suggest.maps.c.{MapCommonAh, RadAh, RcvrMarkersInitAh}
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 import io.suggest.msg.ErrorMsgs
-import io.suggest.routes.{AdvRcvrsMapApiHttpViaRouter, routes}
+import io.suggest.routes.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.spa.StateInp
 // TODO import MAdv4Free....FastEq
 import MTagsEditState.MTagsEditStateFastEq
@@ -62,7 +62,8 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       MRoot(
         mmap = MapsUtil.initialMapStateFrom( mFormInit.form.mapProps ),
         other = MOther(
-          adId     = mFormInit.adId
+          adId        = mFormInit.adId,
+          rcvrsMapUrl = mFormInit.rcvrsMapUrl
         ),
         adv4free = for (a4fProps <- mFormInit.adv4FreeProps) yield {
           MAdv4Free(
@@ -186,9 +187,9 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       modelRW = geoAdvRW.zoomRW(_.popup) { _.withPopup(_) }
     )
 
-    val STATIC_API = new AdvRcvrsMapApiHttpViaRouter( routes )
+    val advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( otherRW.value.rcvrsMapUrl )
     val rcvrsMapInitAh = new RcvrMarkersInitAh(
-      api       = STATIC_API,
+      api       = advRcvrsMapApi,
       modelRW   = rcvrRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
     )
 
