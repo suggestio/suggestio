@@ -36,7 +36,8 @@ class RcvrMarkersInitAh[M](
             Success( r )
           }
       }
-      updated( value.pending(), fx )
+      // silent, т.к. RcvrMarkersR работает с этим Pot как с Option, а больше это никого и не касается.
+      updatedSilent( value.pending(), fx )
 
 
     // Результат реквеста карты маркеров пришёл и готов к заливке в карту.

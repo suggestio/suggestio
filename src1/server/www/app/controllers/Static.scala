@@ -1,6 +1,5 @@
 package controllers
 
-import java.nio.charset.StandardCharsets
 import javax.inject.{Inject, Singleton}
 
 import akka.NotUsed
@@ -294,6 +293,8 @@ class Static @Inject() (
               Json.toJson(data)
             }
             .jsValuesToJsonArrayByteStrings
+            // Компрессоры захлёбываются? Это проблемы компрессоров)) Стараемся разогнать генерацию данных на максимум ценой некоторой RAM.
+            .conflate(_ ++ _)
             // Нормализовать размеры ByteString'ов для входа компрессоров. Для Gzip это влияет на коэфф.сжатия.
             .via( new ByteStringsChunker(8192) )
 
