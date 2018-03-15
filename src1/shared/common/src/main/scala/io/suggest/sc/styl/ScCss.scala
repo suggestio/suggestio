@@ -161,7 +161,8 @@ case class ScCss( args: IScCssArgs )
         width( pc100 ),
         height( pc100 ),
         background := _bgColorCss,
-        filter := "brightness(90%)",
+        // 90% - эффекта затемнения сливается с незатемённой областью. 80% - эффект уже виден.
+        filter := "brightness(80%)",
         zIndex(-1)
       )
     }
