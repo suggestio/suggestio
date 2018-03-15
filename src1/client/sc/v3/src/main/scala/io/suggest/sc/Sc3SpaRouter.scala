@@ -13,6 +13,7 @@ import io.suggest.spa.MGen
 import io.suggest.text.{UrlUtil2, UrlUtilJs}
 import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl}
 import japgolly.scalajs.react.vdom.html_<^._
+import OptionUtil.BoolOptOps
 
 import scala.scalajs.js.URIUtils
 import scala.util.Try
@@ -70,20 +71,26 @@ class Sc3SpaRouter(
               }
             }
             .toMap
-          MainScreen(
-            nodeId = tokens.get( keys.ADN_ID_FN ),
-            searchOpened = tokens.get( keys.CAT_SCR_OPENED_FN )
+
+          def _boolOrFalseTok(key: String): Boolean = {
+            tokens.get( key )
               .flatMap { boolStr =>
                 Try(boolStr.toBoolean).toOption
               }
-              .getOrElse(false),
+              .getOrElseFalse
+          }
+
+          MainScreen(
+            nodeId = tokens.get( keys.ADN_ID_FN ),
+            searchOpened = _boolOrFalseTok( keys.CAT_SCR_OPENED_FN ),
             searchTab = tokens.get( keys.SEARCH_TAB_FN )
               .flatMap( MSearchTabs.withValueOpt ),
             generation = tokens.get( keys.GENERATION_FN )
               .flatMap( MGen.parse ),
             tagNodeId = tokens.get( keys.TAG_NODE_ID_FN ),
             locEnv = tokens.get( keys.LOC_ENV_FN )
-              .flatMap( MGeoPoint.fromString )
+              .flatMap( MGeoPoint.fromString ),
+            menuOpened = _boolOrFalseTok( keys.GEO_SCR_OPENED_FN )
           )
         }
       } { mainScreen =>
@@ -100,17 +107,13 @@ class Sc3SpaRouter(
         //if (npo)
         //  acc ::= GEO_SCR_OPENED_FN -> npo
 
-        // Отрабатываем состояние правой панели.
-        if (mainScreen.searchOpened) {
-          acc ::= keys.CAT_SCR_OPENED_FN -> mainScreen.searchOpened.toString
-
-          for (currTab <- mainScreen.searchTab)
-            acc ::= keys.SEARCH_TAB_FN -> currTab.value
-        }
-
         // Сериализация loc-env.
         for (geoLoc <- mainScreen.locEnv)
           acc ::= keys.LOC_ENV_FN -> geoLoc.toString
+
+        // Отработать id текущего узла.
+        for (nodeId <- mainScreen.nodeId)
+          acc ::= keys.ADN_ID_FN -> nodeId
 
         // TODO Использовать GeoLoc для маячков. Проблема в том, что функция-сериализатор JSON в QS _o2qs() лежит в js-роутере, а не здесь.
         //val locEnv: ILocEnv = mainScreen.???
@@ -132,9 +135,17 @@ class Sc3SpaRouter(
         //  }
         //}
 
-        // Отработать id текущего узла.
-        for (nodeId <- mainScreen.nodeId)
-          acc ::= keys.ADN_ID_FN -> nodeId
+        // Отрабатываем состояние правой панели.
+        if (mainScreen.searchOpened) {
+          acc ::= keys.CAT_SCR_OPENED_FN -> mainScreen.searchOpened.toString
+
+          for (currTab <- mainScreen.searchTab)
+            acc ::= keys.SEARCH_TAB_FN -> currTab.value
+        }
+
+        // Отработать открытое меню.
+        if (mainScreen.menuOpened)
+          acc ::= keys.GEO_SCR_OPENED_FN -> mainScreen.menuOpened.toString
 
         val queryString = UrlUtilJs.qsPairsToString(acc)
         Some( queryString )

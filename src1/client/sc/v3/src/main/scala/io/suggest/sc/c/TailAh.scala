@@ -8,7 +8,7 @@ import io.suggest.sc.GetRouterCtlF
 import io.suggest.sc.m._
 import io.suggest.sc.m.Sc3Pages.MainScreen
 import io.suggest.sc.m.grid.GridLoadAds
-import io.suggest.sc.m.hdr.SearchOpenClose
+import io.suggest.sc.m.hdr.{MenuOpenClose, SearchOpenClose}
 import io.suggest.sc.m.inx.{GetIndex, MScIndex, WcTimeOut}
 import io.suggest.sc.m.search.{MSearchTabs, SwitchTab, TagClick}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -47,7 +47,8 @@ class TailAh[M](
         generation    = Some( inxState.generation ),
         searchOpened  = searchOpened,
         searchTab     = OptionUtil.maybe(searchOpened)( v0.index.search.currTab ),
-        tagNodeId     = v0.index.search.tags.selectedId
+        tagNodeId     = v0.index.search.tags.selectedId,
+        menuOpened    = v0.index.menu.opened
       )
       routerCtlF()
         .set( m )
@@ -112,6 +113,11 @@ class TailAh[M](
         fxsAcc ::= Effect.action {
           TagClick( tagNodeId )
         }
+      }
+
+      // Сверить панель меню открыта или закрыта
+      if (m.mainScreen.menuOpened !=* v0.index.menu.opened) {
+        fxsAcc ::= Effect.action( MenuOpenClose(m.mainScreen.menuOpened) )
       }
 
       // Обновлённое состояние, которое может быть и не обновлялось:

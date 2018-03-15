@@ -34,6 +34,7 @@ object Sc3Pages {
                          generation     : Option[Long]        = None,
                          tagNodeId      : Option[String]      = None,
                          locEnv         : Option[MGeoPoint]   = None,
+                         menuOpened     : Boolean             = false
                        )
     extends Sc3Pages
   {

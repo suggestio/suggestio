@@ -1,6 +1,8 @@
 package io.suggest.sc.c.menu
 
-import diode.{ActionHandler, ActionResult, ModelRW}
+import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import io.suggest.sc.m.ResetUrlRoute
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.m.hdr.MenuOpenClose
 import io.suggest.sc.m.menu.MMenuS
 import japgolly.univeq._
@@ -24,7 +26,9 @@ class MenuAh[M](
       val v0 = value
       if (v0.opened !=* m.open) {
         val v2 = v0.withOpened( m.open )
-        updated( v2 )
+        // Обновить URL.
+        val fx = Effect.action( ResetUrlRoute )
+        updated( v2, fx )
       } else {
         noChange
       }
