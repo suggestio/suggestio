@@ -84,7 +84,7 @@ protected class LkGeoCtlUtil @Inject() (
         s"currentNodeItemsGsToGeoJson($nodeId): streamed $totalCount GeoJSON features"
       }
       // Превратить поток JSON-значений в "поточную строку", направленную в сторону юзера.
-      .jsValuesToJsonArray
+      .jsValuesToJsonArrayStrings
 
     Ok.chunked( jsonsSrc )
       .as( withCharset(JSON) )

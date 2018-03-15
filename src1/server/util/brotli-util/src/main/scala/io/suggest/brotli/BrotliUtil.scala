@@ -13,7 +13,7 @@ import org.meteogroup.jbrotli.libloader.BrotliLibraryLoader
   * Created: 20.02.18 17:28
   * Description: Утиль, абстрагирующая нижележащую brotli-реализацию от sio-кода.
   */
-object BrotliUtil extends MacroLogsImpl  {
+object BrotliUtil {
 
   // Инициализировать jbrotli
   BrotliLibraryLoader.loadBrotli()
@@ -31,7 +31,7 @@ object BrotliUtil extends MacroLogsImpl  {
     *
     * @return Инстанс BrotliStreamCompressor.
     */
-  def mkStreamCompressor(): BrotliStreamCompressor = {
+  protected[brotli] def mkStreamCompressor(): BrotliStreamCompressor = {
     new BrotliStreamCompressor( Brotli.DEFAULT_PARAMETER )
   }
 
@@ -41,8 +41,12 @@ object BrotliUtil extends MacroLogsImpl  {
 }
 
 
+object BrotliCompress extends MacroLogsImpl
+
 /** Сжиматель данных из потока данных. */
 class BrotliCompress extends GraphStage[FlowShape[ByteString, ByteString]] {
+
+  import BrotliCompress.LOGGER
 
   val (in, out): (Inlet[ByteString], Outlet[ByteString]) = {
     val prefix = getClass.getSimpleName + "."
@@ -57,11 +61,15 @@ class BrotliCompress extends GraphStage[FlowShape[ByteString, ByteString]] {
   override def createLogic(inheritedAttributes: Attributes): GraphStageLogic = {
     new GraphStageLogic(shape) {
 
+      private lazy val logPrefix = s"#${System.currentTimeMillis()}"
+
       private var streamCompressor = BrotliUtil.mkStreamCompressor()
 
       /** Close streamCompressor, if not closed. */
       private def _closeStreamComp(): Unit = {
+        LOGGER.trace(s"$logPrefix Will close compressor $streamCompressor")
         if (streamCompressor != null) {
+          LOGGER.trace(s"$logPrefix Closing compressor $streamCompressor")
           streamCompressor.close()
           streamCompressor = null
         }
@@ -74,17 +82,33 @@ class BrotliCompress extends GraphStage[FlowShape[ByteString, ByteString]] {
           // Судя по сорцам, ByteBuffer'ы должны быть или direct, или RW, а ByteString возвращает heap и read-only (вроде).
           // Надо разобраться, нельзя ли обойтись без цельного копирования массива?
           val compressedBytea = streamCompressor.compressArray(input.toArray, false)
-          val compressedOut = ByteString.fromArrayUnsafe( compressedBytea )
-          emit(out, compressedOut)
+
+          if (compressedBytea.isEmpty) {
+            //LOGGER.trace(s"$logPrefix in.onPush() eat ${input.length}b")
+            // Почти все отправки в brotli-компрессор заканчиваются пустым массивом на выходе: очень большое окно сжатия.
+            pull(in)
+
+          } else {
+            // Иногда бывает, что компрессор что-то вернул. Надо пробросить вперёд и ждать следующего pull от downstream.
+            LOGGER.trace(s"$logPrefix in.onPush().emit ${compressedBytea.length}b")
+            val compressedOut = ByteString.fromArrayUnsafe( compressedBytea )
+            emit(out, compressedOut)
+          }
         }
 
         override def onUpstreamFinish(): Unit = {
+          lazy val logPrefix2 = s"$logPrefix in.onUpstreamFinish()"
           try {
             val finalElement = ByteString.fromArrayUnsafe(
               streamCompressor.compressArray(Array.empty, true)
             )
+            LOGGER.trace(s"$logPrefix2 Last: ${finalElement.length}b")
             if (finalElement.nonEmpty)
               emit(out, finalElement)
+          } catch {
+            case ex: Throwable =>
+              LOGGER.error(s"$logPrefix2 Failed to flush stream", ex)
+              throw ex
           } finally {
             _closeStreamComp()
           }
@@ -92,6 +116,7 @@ class BrotliCompress extends GraphStage[FlowShape[ByteString, ByteString]] {
         }
 
         override def onUpstreamFailure(ex: Throwable): Unit = {
+          LOGGER.error(s"$logPrefix in: Upstream failure", ex)
           _closeStreamComp()
           super.onUpstreamFailure(ex)
         }
@@ -99,11 +124,16 @@ class BrotliCompress extends GraphStage[FlowShape[ByteString, ByteString]] {
 
       setHandler(out, new OutHandler {
         override def onPull(): Unit = {
-          pull(in)
+          // По идее, hashBeenPulled всегда false. Тут просто защищаемся от возможных невероятных ситуаций.
+          val hbp = hasBeenPulled(in)
+          LOGGER.trace(s"$logPrefix onPull() hasBeenPulled?$hbp")
+          if (!hbp)
+            pull(in)
         }
       })
 
       override def postStop(): Unit = {
+        LOGGER.trace(s"$logPrefix postStop()")
         super.postStop()
         // Убедиться, что streamCompressor закрыт.
         // В норме, он уже должен быть уже закрыт, но вдруг была какая-то внутренняя ошибка...

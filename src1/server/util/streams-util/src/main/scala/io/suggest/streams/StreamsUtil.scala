@@ -1,6 +1,7 @@
 package io.suggest.streams
 
 import java.io.{File, FileOutputStream}
+import java.nio.charset.StandardCharsets
 import javax.inject.Inject
 
 import akka.NotUsed
@@ -122,12 +123,33 @@ class StreamsUtil @Inject() (
         *
         * @return Поток строк, формирующих валидный JSON array.
         */
-      def jsValuesToJsonArray: Source[String, M] = {
+      def jsValuesToJsonArrayStrings: Source[String, M] = {
         src
           .map { m =>
             Json.stringify(m)
           }
-          .intersperse("[", ",\n", "]")
+          .intersperse("[", ",", "]")
+      }
+
+      /** Рендер потока JsValue в ByteString.
+        * Основное отличие в том, что для всех запятых используются расшаренный инстанс ByteString,
+        * а не постоянно собирается новый. Это снижает объем производимого мусора на 2+ байта с одного item'а.
+        * Профит небольшой, но он есть.
+        *
+        * @return
+        */
+      def jsValuesToJsonArrayByteStrings: Source[ByteString, M] = {
+        val _s2bs = ByteString.fromString( _: String, StandardCharsets.UTF_8 )
+        src
+          .map { m =>
+            val jsonStr = Json.stringify(m)
+            _s2bs(jsonStr)
+          }
+          .intersperse(
+            start  = _s2bs("["),
+            inject = _s2bs(","),
+            end    = _s2bs("]")
+          )
       }
 
     }

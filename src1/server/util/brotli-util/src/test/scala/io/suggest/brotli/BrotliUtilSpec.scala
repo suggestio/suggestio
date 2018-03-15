@@ -36,7 +36,7 @@ class BrotliUtilSpec extends FlatSpec {
   "Streamed brotli compressor" should "handle simple data" in {
     val flow = Flow[ByteString]
       .via( new ByteStringsChunker(8192) )
-      .via( new BrotliCompress )
+      .via( BrotliUtil.compress )
 
     val in = Source(0 to 100)
       .map { _ => ByteString.fromArrayUnsafe(DATA_252) }
@@ -47,7 +47,7 @@ class BrotliUtilSpec extends FlatSpec {
       .toMat(sink)(Keep.right)
       .run()
 
-    assert( fut.isReadyWithin(500 millis) )
+    assert( fut.isReadyWithin( 500.millis ) )
 
     whenReady(fut) { compressedByteString =>
       assert( compressedByteString.nonEmpty )

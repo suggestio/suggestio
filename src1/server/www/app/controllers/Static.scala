@@ -293,11 +293,7 @@ class Static @Inject() (
             .map { case (_, data) =>
               Json.toJson(data)
             }
-            .jsValuesToJsonArray
-            .map { jsonStrPart =>
-              // Для JSON допустим только UTF-8. Явно фиксируем это:
-              ByteString.fromString( jsonStrPart, StandardCharsets.UTF_8 )
-            }
+            .jsValuesToJsonArrayByteStrings
             // Нормализовать размеры ByteString'ов для входа компрессоров. Для Gzip это влияет на коэфф.сжатия.
             .via( new ByteStringsChunker(8192) )
 
@@ -312,13 +308,23 @@ class Static @Inject() (
               .toMat( byteStringSink )(Keep.right)
           }
 
+          lazy val logPrefix = s"_advRcvrsMapRespJsonFut#${System.currentTimeMillis()}:"
+
           // TODO Удалить этот костыль следом за .etag-полем и boopickle-сериализацией.
           val etagStub = Future.successful("")
           // Общий код вызова финального mapMaterialzedValue(), который сохранит всё в кэш и вернёт нормализованное значение.
-          def __mapMaterialized(gzip    : Future[Var[ByteString]],
-                                brotli  : Future[Var[ByteString]]): MAdvRcvrsMapRespData = {
-            val r = MAdvRcvrsMapRespData(JSON, gzip, etagStub, Some(brotli))
+          def __mapMaterialized(gzipFut    : Future[Var[ByteString]],
+                                brotliFut  : Future[Var[ByteString]]): MAdvRcvrsMapRespData = {
+            val r = MAdvRcvrsMapRespData(JSON, gzipFut, etagStub, Some(brotliFut))
             cachedPromise.success( r )
+
+            if (LOGGER.underlying.isTraceEnabled) {
+              for (gzipped <- gzipFut)
+                LOGGER.trace(s"$logPrefix Total gzipped size: ${gzipped.value.length} bytes")
+              for (brotlied <- brotliFut)
+                LOGGER.trace(s"$logPrefix Total brotli size: ${brotlied.value.length} bytes")
+            }
+
             r
           }
 
@@ -427,7 +433,7 @@ class Static @Inject() (
 
             // Если ссылка с кэшем, то допускам долгое кэширование.
             // TODO После отладки кэширования надо минуты заменить на 5.days
-            val cacheControlSuffix = nodesHashSum.fold(20.seconds.toSeconds.toString)(_ => s"${2.minutes.toSeconds}, immutable")
+            val cacheControlSuffix = nodesHashSum.fold(20.seconds.toSeconds.toString)(_ => s"${3.minutes.toSeconds}, immutable")
 
             var okHeaders = List(
               VARY              -> ACCEPT_ENCODING,
