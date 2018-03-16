@@ -48,7 +48,7 @@ class LkTagsSearchUtil @Inject() (
       TagCriteria(q, isPrefix = true)
     }
     val _edgeSearchCr = Criteria(
-      predicates  = Seq( MPredicates.TaggedBy.Self ),
+      predicates  = MPredicates.TaggedBy.Self :: Nil,
       tags        = tcrOpt.toSeq
     )
 

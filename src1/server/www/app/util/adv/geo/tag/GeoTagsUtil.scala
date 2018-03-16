@@ -11,7 +11,7 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria, TagCriteria}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes, MNodesCache}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.OptId
@@ -115,7 +115,7 @@ class GeoTagsUtil @Inject() (
     }
 
     for (tagNodes <- mNodes.dynSearch(msearch)) yield {
-      if (tagNodes.size > 1)
+      if (tagNodes.lengthCompare(1) > 0)
         warn(s"$logPrefix Too many tag-nodes found for single-tag request: ${tagNodes.mkString(", ")}, ...")
       // TODO Нужно запускать тут мерж tag-узлов при выявлении коллизии: 2+ узлов относяться к одному и тому же тегу.
       tagNodes.headOption
@@ -269,7 +269,7 @@ class GeoTagsUtil @Inject() (
         .result
     }
 
-    lazy val logPrefix = s"rebuildTag($mnodeId ${mnode.guessDisplayName} $startTs):"
+    lazy val logPrefix = s"rebuildTag(#${mnode.guessDisplayName.orNull} $mnodeId)#$startTs:"
 
     for {
       // Дождаться окончания поиска шейпов для тега.
@@ -277,6 +277,8 @@ class GeoTagsUtil @Inject() (
 
       // Залить собранные шейпы в узел тега.
       mnode2 <- {
+        LOGGER.trace(s"$logPrefix Found ${shapesRcvrs.length} shares/rcvrs:${shapesRcvrs.mkString(" \n", "\n ", "")}")
+
         // Собрать единый список шейпов.
         val tagShapes = Lists.toListRev {
           shapesRcvrs
@@ -291,19 +293,21 @@ class GeoTagsUtil @Inject() (
               )
             }
         }
+        LOGGER.trace(s"$logPrefix ${tagShapes.length} tag-shapes:\n ${tagShapes.mkString(",\n")}")
 
         // Для direct-тегов собрать id узлов-ресиверов.
         val directTagRcvrs = shapesRcvrs
           .iterator
           .flatMap(_._2)
           .toSet
+        LOGGER.trace(s"$logPrefix Direct tag rcvrs: ${directTagRcvrs.mkString(", ")}")
 
         // Т.к. список в обратном порядке, то последний List.head.id равен кол-ву элементов - 1.
         val shapesCount = tagShapes
           .headOption
           .fold(0)(_.id)
 
-        debug(s"$logPrefix Found $shapesCount different shapes.")
+        LOGGER.debug(s"$logPrefix Found $shapesCount different shapes.")
 
         val p = _PRED
         val someShapesCount = Some(shapesCount)
@@ -459,11 +463,18 @@ class GeoTagsUtil @Inject() (
 
 
 trait GeoTagsUtilJmxMBean {
+
   def deleteAllTagNodes(): String
+
+  def rebuildTagByNodeId(nodeId: String): String
+
+  def ensureTag(tags: String): String
+
 }
 
 class GeoTagsUtilJmx @Inject() (
                                  geoTagsUtil               : GeoTagsUtil,
+                                 mNodesCache               : MNodesCache,
                                  override implicit val ec  : ExecutionContext
                                )
   extends JMXBase
@@ -478,6 +489,26 @@ class GeoTagsUtilJmx @Inject() (
       s"Deleted $countDeleted tag nodes."
     }
     awaitString(fut)
+  }
+
+  override def rebuildTagByNodeId(nodeId: String): String = {
+    val fut = for {
+      mnodeOpt <- mNodesCache.getByIdType(nodeId, MNodeTypes.Tag)
+      mnode = mnodeOpt.get
+      mnode2 <- geoTagsUtil.rebuildTag( mnode )
+    } yield {
+      s"Done.\n\n\n$mnode2"
+    }
+    awaitString( fut )
+  }
+
+  override def ensureTag(tag: String): String = {
+    val fut = for {
+      mnode <- geoTagsUtil.ensureTag( tag )
+    } yield {
+      s"ok, nodeId = ${mnode.id.orNull}\n\n\n$mnode"
+    }
+    awaitString( fut )
   }
 
 }

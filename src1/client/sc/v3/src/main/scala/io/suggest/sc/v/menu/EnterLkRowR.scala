@@ -60,7 +60,7 @@ class EnterLkRowR(
           } else {
             // Ссылка на вход в s.io
             val r = props.scJsRouter.controllers.Ident.mySioStartPage()
-            val txt = MsgCodes.`Login.to.sio`
+            val txt = MsgCodes.`Login.page.title`
             (r, txt)
           }
         } { myAdnNodeId =>

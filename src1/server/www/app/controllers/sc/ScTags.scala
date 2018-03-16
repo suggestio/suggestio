@@ -1,5 +1,6 @@
 package controllers.sc
 
+import io.suggest.common.empty.OptionUtil
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.tag.MTagSearchResp
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
@@ -41,20 +42,27 @@ trait ScTags
   /** Общая логика обработки tags-запросов выдачи. */
   trait ScTagsLogicBase extends LogicCommonT {
 
+    lazy val logPrefix = s"${getClass.getSimpleName}#${System.currentTimeMillis()}:"
+
     def _qs: MScTagsSearchQs
 
     lazy val geoIpResOptFut = geoIpUtil.findIpCached(
       geoIpUtil.fixedRemoteAddrFromRequest.remoteAddr
     )
 
-    lazy val mGeoLocOptFut = geoIpUtil.geoLocOrFromIp( _qs.locEnv.geoLocOpt )( geoIpResOptFut )
+    lazy val mGeoLocOptFut = OptionUtil.maybeFut(_qs.rcvrId.isEmpty) {
+      geoIpUtil.geoLocOrFromIp( _qs.locEnv.geoLocOpt )( geoIpResOptFut )
+    }
 
-    lazy val tagsFoundFut = for {
-      mGeoLocOpt2 <- mGeoLocOptFut
-      msearch     <- scTagsUtil.qs2NodesSearch(_qs, mGeoLocOpt2)
-      found       <- mNodes.dynSearch(msearch)
-    } yield {
-      found
+    lazy val tagsFoundFut = {
+      for {
+        mGeoLocOpt2 <- mGeoLocOptFut
+        msearch     <- scTagsUtil.qs2NodesSearch(_qs, mGeoLocOpt2)
+        found       <- mNodes.dynSearch(msearch)
+      } yield {
+        LOGGER.trace(s"$logPrefix tagsFound: ${found.length} tags\n geoLoc2=${mGeoLocOpt2.orNull}\n msearch=$msearch")
+        found
+      }
     }
 
     /** Контекстно-зависимая сборка данных статистики. */
@@ -172,6 +180,7 @@ trait ScTags
       for {
         tags <- _tagsFoundFut
       } yield {
+        LOGGER.trace(s"$logPrefix Found ${tags.size} tags")
         val resp = MSc3TagsResp(
           tags = {
             val iter = for {

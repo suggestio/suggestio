@@ -141,21 +141,21 @@ trait AgtBuilder extends IAdvBuilder {
               val dateEnd2 = dateStart2.plus( mitem.dtIntervalOpt.get.toDuration )
               val mitemId = mitem.id.get
               // Определяем заодно id узла-тега. Это облегчит поиск в таблице на этапе перекомпиляции узлов-тегов.
-              val rcvrIdOpt = mitem.tagFaceOpt
+              val tagNodeIdOpt = mitem.tagFaceOpt
                 .flatMap(outerCtx.tagNodesMap.get)
                 .flatMap(_.id)
 
-              if (rcvrIdOpt.isEmpty)
+              if (tagNodeIdOpt.isEmpty)
                 LOGGER.warn(s"$logPrefix NOT found tag node id for tag-face: ${mitem.tagFaceOpt}")
 
               mItems.query
                 .filter { _.id === mitemId }
                 .map { i =>
-                  (i.status, i.rcvrIdOpt, i.dateStartOpt, i.dateEndOpt, i.dateStatus)
+                  (i.status, i.tagNodeIdOpt, i.dateStartOpt, i.dateEndOpt, i.dateStatus)
                 }
-                .update((MItemStatuses.Online, rcvrIdOpt, Some(dateStart2), Some(dateEnd2), dateStart2))
+                .update((MItemStatuses.Online, tagNodeIdOpt, Some(dateStart2), Some(dateEnd2), dateStart2))
                 .filter { rowsUpdated =>
-                  LOGGER.trace(s"$logPrefix Updated item[$mitemId] '${mitem.tagFaceOpt}': dateEnd => $dateEnd2, rcvrId => $rcvrIdOpt")
+                  LOGGER.trace(s"$logPrefix Updated item[$mitemId] '${mitem.tagFaceOpt}': dateEnd => $dateEnd2, tagNodeId => $tagNodeIdOpt")
                   rowsUpdated == 1
                 }
             }
