@@ -203,10 +203,9 @@ class GridAdsAh[M](
             } else {
               // Проверить, совпадает ли SzMult:
               ErrorConstants.assertArg( findAdsResp.szMult ==* v0.jdConf.szMult )
-              val ads1 = if (newScAds.nonEmpty)
-                v0.ads.map { _ ++ newScAds }
-              else
-                v0.ads
+              val scAds2 = v0.ads.toOption.fold(newScAds)(_ ++ newScAds)
+              // ready - обязателен, иначе останется pending и висячий без дела GridLoaderR.
+              val ads1 = v0.ads.ready( scAds2 )
               (ads1, v0.jdConf)
             }
             v0.copy(
