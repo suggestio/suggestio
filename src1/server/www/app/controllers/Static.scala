@@ -437,6 +437,7 @@ class Static @Inject() (
               // Значение ETag требуется рендерить в хидеры в двойных ковычках, оформляем:
               ETAG              -> s""""$etagNoQuotes"""",
               VARY              -> ACCEPT_ENCODING,
+              // Наврядли есть смысл делать очень длинный TTL: карта узлов может обновляться сто раз на дню.
               CACHE_CONTROL     -> s"public, max-age=${30.days.toSeconds}, immutable"
             )
 

@@ -72,8 +72,7 @@ class Img @Inject() (
   /** Сколько времени можно кешировать на клиенте результат dynImg() ? */
   private val CACHE_DYN_IMG_CLIENT_SECONDS = {
     val cacheDuration = if (isProd) {
-      // TODO Увеличить до года, если всё будет ок.
-      30.days
+      365.days
     } else {
       30.seconds
     }

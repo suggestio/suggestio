@@ -93,7 +93,8 @@ trait ScJsRouter
           .as( JAVASCRIPT )
           .withHeaders(
             ETAG          -> realHashCodeStringQuouted,
-            CACHE_CONTROL -> s"public, max-age=${10.minutes.toSeconds}, immutable"
+            // TODO По мере стабилизации, увеличить max-age до года:
+            CACHE_CONTROL -> s"public, max-age=${1.day.toSeconds}, immutable"
           )
       }
     }
