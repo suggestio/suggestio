@@ -18,7 +18,8 @@
 </div>
 
 @* id-атрибут у script-тега нарушает HTML-валидацию, но это плевать. *@
-<script id="@DOM_ID" type="text/javascript" async src="@cdn.forCall( routes.Sc.scJsRouter() )">
+<script id="@DOM_ID" type="text/javascript" async
+        src="@cdn.forCall( routes.Sc.scJsRouterCache(args.cacheHashCode) )">
 </script>
 
 @* Рендер jsMessages прямо тут. *@

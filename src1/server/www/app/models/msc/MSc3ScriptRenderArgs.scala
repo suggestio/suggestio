@@ -10,5 +10,6 @@ import play.twirl.api.JavaScript
   */
 case class MSc3ScriptRenderArgs(
                                  state0         : String,
-                                 jsMessagesJs   : JavaScript
+                                 jsMessagesJs   : JavaScript,
+                                 cacheHashCode  : Int
                                )

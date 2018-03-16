@@ -437,8 +437,7 @@ class Static @Inject() (
               // Значение ETag требуется рендерить в хидеры в двойных ковычках, оформляем:
               ETAG              -> s""""$etagNoQuotes"""",
               VARY              -> ACCEPT_ENCODING,
-              // TODO Увеличить кэш до неск.дней, когда всё устаканится наконец.
-              CACHE_CONTROL     -> s"public, max-age=${1.hour.toSeconds}, immutable"
+              CACHE_CONTROL     -> s"public, max-age=${30.days.toSeconds}, immutable"
             )
 
             rcvrsMapRespJsonFut.flatMap { srcOrCached =>

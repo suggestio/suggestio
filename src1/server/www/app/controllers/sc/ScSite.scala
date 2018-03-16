@@ -32,6 +32,7 @@ import views.html.sc._
 import japgolly.univeq._
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 /**
@@ -342,6 +343,14 @@ trait ScSite
       Future.successful( aboutSioNodeId )
     }
 
+    def scriptCacheHashCodeFut: Future[Int] = {
+      cacheApiUtil.getOrElseFut(_request.host + ":scv3ScriptCacheHashCode", 10.seconds) {
+        Future {
+          ScJsRouter.jsRouterCacheHash( ctx )
+        }
+      }
+    }
+
     override def scriptHtmlFut: Future[Html] = {
       // Поиска начальную точку для гео.карты.
       val _geoPoint0Fut = geoPoint0Fut
@@ -351,13 +360,16 @@ trait ScSite
       val jsMessagesJs = jsMessagesUtil.scJsMsgsFactory( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(ctx.messages)
       val _aboutSioNodeIdFut = aboutSioNodeIdFut
 
+      val _scriptCacheHashCodeFut = scriptCacheHashCodeFut
+
       // Надо ссылку на список ресиверов отправить. Раньше через роутер приходила, но это без CDN как-то не очень.
       // TODO В будущем, можно будет кэширование организовать: хэш в ссылке + длительный кэш.
       // Собрать все результаты в итоговый скрипт.
       for {
-        geoPoint0       <- _geoPoint0Fut
-        rcvrsMapUrl     <- _rcvrsMapUrlFut
-        aboutSioNodeId  <- _aboutSioNodeIdFut
+        geoPoint0             <- _geoPoint0Fut
+        rcvrsMapUrl           <- _rcvrsMapUrlFut
+        aboutSioNodeId        <- _aboutSioNodeIdFut
+        scriptCacheHashCode   <- _scriptCacheHashCodeFut
       } yield {
         val state0 = MSc3Init(
           mapProps = MMapProps(
@@ -371,10 +383,11 @@ trait ScSite
           )
         )
         val scriptRenderArgs = MSc3ScriptRenderArgs(
-          state0        = Json
+          state0 = Json
             .toJson(state0)(_msc3InitFormat)
             .toString(),
-          jsMessagesJs  = jsMessagesJs
+          jsMessagesJs = jsMessagesJs,
+          cacheHashCode = scriptCacheHashCode
         )
         _scriptV3Tpl(scriptRenderArgs)(ctx)
       }
