@@ -143,7 +143,7 @@ trait IAdvBuilder
 
     // Собираем db-экшены для инсталляции
     if (ditems.nonEmpty) {
-      LOGGER.trace(s"$logPrefix There are ${ditems.size} for install...")
+      LOGGER.trace(s"$logPrefix There are ${ditems.size} items for install: ${ditems.iterator.flatMap(_.id).mkString(", ")}")
       withAccUpdated { acc0 =>
         val dbas1 = ditems.foldLeft(acc0.dbActions) { (dbas0, mitem) =>
           val dbAction = {

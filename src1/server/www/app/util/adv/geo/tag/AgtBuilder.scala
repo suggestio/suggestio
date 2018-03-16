@@ -122,8 +122,14 @@ trait AgtBuilder extends IAdvBuilder {
   /** Гео-теги требуют особой обработки с выставлением MItem.rcvrId. */
   override def installSql(items: Iterable[MItem]): IAdvBuilder = {
 
+    // Костыль для direct-тегов:
+    // - Direct-теги обработываются в AdvDirectBuilder. Но, теги-то по сути прямо тут отрабатываются.
+    // И тут два варианта:
+    // - Дублировать/запускать этот код дважды для двух типов тегов.
+    // - Впихнуть direct-теги прямо сюда.
+    val tagItemTypes = MItemTypes.tagTypes
     val (ditems, others) = items.partition { i =>
-      i.iType == MItemTypes.GeoTag
+      tagItemTypes.contains( i.iType )
     }
 
     val this2 = super.installSql(others)

@@ -429,33 +429,35 @@ class AdvGeoBillUtil @Inject() (
     // Отработать ресиверы, если заданы.
     if (res.rcvrsMap.nonEmpty) {
       // Отработать прямые размещения на ресиверах
-      for {
-        (rcvrKey, rcvrProps) <- res.rcvrsMap
-        // TODO Отработать rcvrProps. Возможно, отмена размещения вместо создания.
-      } {
-        // Накинуть за ресивер (главный экран ресивера)
-        val rcvrId = rcvrKey.last
-        val rcvrPrice = advUtil.calcDateAdvPriceOnTf(rcvrId, abc)
+      if (res.onMainScreen) {
+        for {
+          (rcvrKey, _) <- res.rcvrsMap
+          // TODO Отработать rcvrProps. Возможно, отмена размещения вместо создания.
+        } {
+          // Накинуть за ресивер (главный экран ресивера)
+          val rcvrId = rcvrKey.last
+          val rcvrPrice = advUtil.calcDateAdvPriceOnTf(rcvrId, abc)
 
-        val omsMultOpt: Option[Double] = if (rcvrKey.tail.nonEmpty) {
-          // Для суб-ресиверов: без доп.наценок за главный экран.
-          None
-        } else {
-          // Домножаем за главный экран только для top-ресиверов.
-          Some(ON_MAIN_SCREEN_MULT)
+          val omsMultOpt: Option[Double] = if (rcvrKey.tail.nonEmpty) {
+            // Для суб-ресиверов: без доп.наценок за главный экран.
+            None
+          } else {
+            // Домножаем за главный экран только для top-ресиверов.
+            Some(ON_MAIN_SCREEN_MULT)
+          }
+          // Маппер OMS нужен ВСЕГДА, иначе addToOrder() не поймёт, что от него хотят.
+          val rcvrOmsPrice = Mapper(
+            underlying    = rcvrPrice,
+            multiplifier  = omsMultOpt,
+            reason        = Some( MPriceReason( MReasonTypes.OnMainScreen ) )
+          )
+
+          // Закинуть в аккамулятор результатов.
+          accRev ::= Mapper(
+            underlying = rcvrOmsPrice,
+            reason     = __rcvrPriceReason(rcvrId)
+          )
         }
-        // Маппер OMS нужен ВСЕГДА, иначе addToOrder() не поймёт, что от него хотят.
-        val rcvrOmsPrice = Mapper(
-          underlying    = rcvrPrice,
-          multiplifier  = omsMultOpt,
-          reason        = Some( MPriceReason( MReasonTypes.OnMainScreen ) )
-        )
-
-        // Закинуть в аккамулятор результатов.
-        accRev ::= Mapper(
-          underlying = rcvrOmsPrice,
-          reason     = __rcvrPriceReason(rcvrId)
-        )
       }
 
       // Отработать теги на ресиверах: теги размещаются только на верхних узлах.

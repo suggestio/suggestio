@@ -375,6 +375,8 @@ class LkAdvGeo @Inject() (
         },
         {mFormS =>
           val mFromS2Fut = _checkFormRcvrs(mFormS)
+          LOGGER.trace(s"$logPrefix orig form:\n $mFormS")
+
           val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
 
           // Запустить асинхронные операции: Надо обратиться к биллингу за рассчётом ценника:

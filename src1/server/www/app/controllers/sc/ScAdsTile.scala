@@ -222,14 +222,14 @@ trait ScAdsTileBase
 
           // Сохранить фактический search limit
           MAction(
-            actions = Seq( MActionTypes.SearchLimit ),
-            count   = Seq( _adSearch.limit )
+            actions = MActionTypes.SearchLimit :: Nil,
+            count   = _adSearch.limit :: Nil
           ),
 
           // Сохранить фактически search offset
           MAction(
-            actions = Seq( MActionTypes.SearchOffset ),
-            count   = Seq( _adSearch.offset )
+            actions = MActionTypes.SearchOffset :: Nil,
+            count   = _adSearch.offset :: Nil
           )
         )
 

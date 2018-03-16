@@ -6,7 +6,7 @@ import io.suggest.ble.{BeaconUtil, MUidBeacon}
 import io.suggest.es.model.IMust
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
 import io.suggest.geo.{MNodeGeoLevels, PointGs, PointGsJvm}
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.{MPredicate, MPredicates}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
@@ -99,9 +99,16 @@ class ScAdSearchUtil @Inject() (
         }
 
       } { tagNodeId =>
+        var preds = List.empty[MPredicate]
+        val tagPredParent = MPredicates.TaggedBy
+        if (args.rcvrIdOpt.nonEmpty)
+          preds ::= tagPredParent.DirectTag
+        if (args.locEnv.geoLocOpt.nonEmpty)
+          preds ::= tagPredParent.Agt
+
         // Указан тег. Ищем по тегу с учетом геолокации:
         eacc ::= Criteria(
-          predicates = MPredicates.TaggedBy.Agt :: Nil,
+          predicates = preds,
           nodeIds    = tagNodeId :: Nil,
           must       = must,
           gsIntersect = for (geoLoc <- args.locEnv.geoLocOpt) yield {

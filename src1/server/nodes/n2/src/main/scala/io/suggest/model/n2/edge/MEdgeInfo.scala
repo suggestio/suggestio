@@ -46,7 +46,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
       override protected def _PARENT_FN: String = TAGS_FN
 
       /** Имя raw-подполя, индексирующего всё без анализа. */
-      def RAW_FN = "raw"
+      def RAW_FN = "kw"
 
       def TAGS_RAW_FN = _fullFn(RAW_FN)
 
@@ -103,19 +103,19 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
       (__ \ FLAG_FN).formatNullable[Boolean] and
       (__ \ TAGS_FN).formatNullable[Set[String]]
         .inmap [Set[String]] (
-        _.getOrElse(Set.empty),
-        { tags => if (tags.nonEmpty) Some(tags) else None }
-      ) and
+          _.getOrElse(Set.empty),
+          { tags => if (tags.nonEmpty) Some(tags) else None }
+        ) and
       (__ \ GEO_SHAPES_FN).formatNullable[ List[MEdgeGeoShape] ]
         .inmap [List[MEdgeGeoShape]] (
-        _.getOrElse(Nil),
-        { geos => if (geos.nonEmpty) Some(geos) else None }
-      ) and
+          _.getOrElse(Nil),
+          { geos => if (geos.nonEmpty) Some(geos) else None }
+        ) and
       (__ \ GEO_POINT_FN).formatNullable[ Seq[MGeoPoint] ]
         .inmap [Seq[MGeoPoint]] (
-        _.getOrElse(Nil),
-        { gps => if (gps.nonEmpty) Some(gps) else None }
-      )
+          _.getOrElse(Nil),
+          { gps => if (gps.nonEmpty) Some(gps) else None }
+        )
     )(apply, unlift(unapply))
   }
 
@@ -156,11 +156,10 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         search_analyzer = SioConstants.DFLT_AN,
         fields = Seq(
           // Для аггрегации нужны ненормированные термы. Они позволят получать необрезанные слова.
-          FieldText(
+          FieldKeyword(
             id              = Tags.RAW_FN,
             include_in_all  = false,
-            index           = true,
-            analyzer        = SioConstants.KW_LC_AN
+            index           = true
           )
         )
       ),

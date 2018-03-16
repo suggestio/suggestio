@@ -108,7 +108,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
     } else {
       // Группировать по параметрам эджа, потом каждую группу перегонять в единственный эдж. Это снизит кол-во эджей.
       lazy val logPrefix = s"ADB.installNode()#${System.currentTimeMillis()}:"
-      LOGGER.debug(s"$logPrefix Found ${ditems.size} for direct-adv building. ")
+      LOGGER.debug(s"$logPrefix Found ${ditems.size} for direct-adv building: ${ditems.iterator.flatMap(_.id).mkString(", ")} ")
 
       val newEdges = ditems
         .toSeq
@@ -120,13 +120,13 @@ trait AdvDirectBuilder extends IAdvBuilder {
           val e = MEdge(
             predicate = itypeToPredicate(iType),
             nodeIds   = itemsGroup.iterator
-              .flatMap(_.rcvrIdOpt)
+              .flatMap( _.rcvrIdOpt )
               .toSet,
             info = MEdgeInfo(
               tags = tagFaceOpt.toSet
             )
           )
-          LOGGER.trace(s"$logPrefix Built new edge: item%$iType##[${itemsGroup.flatMap(_.id).mkString(",")}] => $e")
+          LOGGER.trace(s"$logPrefix Built new edge: item t#$iType=>p#${e.predicate} ##[${itemsGroup.flatMap(_.id).mkString(",")}] => $e")
           e
         }
         .toStream

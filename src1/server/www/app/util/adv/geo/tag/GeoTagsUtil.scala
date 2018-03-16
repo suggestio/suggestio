@@ -50,7 +50,6 @@ class GeoTagsUtil @Inject() (
   private def _PRED = MPredicates.TaggedBy.Self
 
   private def TAG_ITEM_TYPES = {
-    //MItemTypes.GeoTag.strId :: Nil
     // Поддержка разных тегов: географических и "прямых".
     MItemTypes
       .onlyIds( MItemTypes.tagTypes )

@@ -18,7 +18,7 @@ import io.suggest.stat.m.MStatsJmx
 import io.suggest.util.{JMXBase, JMXHelpers}
 import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.inject.ApplicationLifecycle
-import util.adv.direct.AdvRcvrsUtilJmx
+import util.adv.direct.{AdvRcvrsUtilJmx, DirectTagsUtilJmx}
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.es.SiowebEsModelJmx
 import util.img.DynImgUtilJmx
@@ -51,7 +51,8 @@ class JMXImpl @Inject() (
                           ipgbImporterJmx               : IpgbImporterJmx,
                           statIndexUtilJmx              : StatIndexUtilJmx,
                           sCryptUtilJmx                 : SCryptUtilJmx,
-                          dynImgUtilJmx                  : DynImgUtilJmx,
+                          dynImgUtilJmx                 : DynImgUtilJmx,
+                          directTagsUtilJmx             : DirectTagsUtilJmx,
                           lifecycle                     : ApplicationLifecycle,
                           implicit private val ec       : ExecutionContext
 )
@@ -81,7 +82,8 @@ class JMXImpl @Inject() (
       ipgbImporterJmx,
       statIndexUtilJmx,
       sCryptUtilJmx,
-      dynImgUtilJmx
+      dynImgUtilJmx,
+      directTagsUtilJmx
     )
   }
 
