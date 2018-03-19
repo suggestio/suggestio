@@ -5,6 +5,7 @@ import java.time.OffsetDateTime
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.ImplementedBy
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem, MItems}
@@ -13,7 +14,7 @@ import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import models.adv.build.Acc
 import models.mproj.{ICommonDi, IMCommonDi}
 import util.adn.mapf.{AdnMapBuilder, GeoLocBuilder}
-import util.adv.direct.AdvDirectBuilder
+import util.adv.direct.{AdvDirectBuilder, AdvDirectTagsBuilder}
 import util.adv.geo.place.AgpBuilder
 import util.adv.geo.tag.AgtBuilder
 import util.billing.Bill2Util
@@ -248,6 +249,7 @@ case class AdvBuilder @Inject() (
   with AgpBuilder
   with AdnMapBuilder
   with GeoLocBuilder
+  with AdvDirectTagsBuilder
 {
 
   override def withAcc(accFut2: Future[Acc]): IAdvBuilder = {

@@ -13,28 +13,17 @@ import util.adv.build.IAdvBuilder
   */
 object AdvDirectBuilder {
 
-  /** Поддерживаемые типы узлов. */
-  def SUPPORTED_TYPES: List[MItemType] = {
-    MItemTypes.AdvDirect ::
-      MItemTypes.TagDirect ::
-      Nil
-  }
-
-  /** Общий код сборки списка предикатов вынесен в этот метод. */
-  def PREDICATES0: List[MPredicate] = {
-    MPredicates.TaggedBy.DirectTag :: Nil
-  }
+  private final def ITYPE = MItemTypes.AdvDirect
+  private final def PRED  = MPredicates.Receiver.AdvDirect
 
   /** Точный список порождаемых этим билдером предикатов. */
   def PREDICATES_STRICT: List[MPredicate] = {
-    MPredicates.Receiver.AdvDirect ::
-      PREDICATES0
+    PRED :: Nil
   }
 
   /** Список предикатов для полнейшей очистки direct-размещений. */
   def PREDICATES_FULL: List[MPredicate] = {
-    MPredicates.Receiver ::
-      PREDICATES0
+    PRED.parent.value :: Nil
   }
 
   /**
@@ -60,7 +49,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
   import AdvDirectBuilder._
 
   override def supportedItemTypes: List[MItemType] = {
-    SUPPORTED_TYPES reverse_::: super.supportedItemTypes
+    ITYPE :: super.supportedItemTypes
   }
 
 
@@ -99,7 +88,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
 
 
   override def installNode(items: Iterable[MItem]): IAdvBuilder = {
-    val (ditems, others) = advBuilderUtil.partitionItemsByType(items, SUPPORTED_TYPES:_*)
+    val (ditems, others) = advBuilderUtil.partitionItemsByType(items, ITYPE)
 
     val this2 = super.installNode(others)
 
@@ -108,36 +97,25 @@ trait AdvDirectBuilder extends IAdvBuilder {
     } else {
       // Группировать по параметрам эджа, потом каждую группу перегонять в единственный эдж. Это снизит кол-во эджей.
       lazy val logPrefix = s"ADB.installNode()#${System.currentTimeMillis()}:"
-      LOGGER.debug(s"$logPrefix Found ${ditems.size} for direct-adv building: ${ditems.iterator.flatMap(_.id).mkString(", ")} ")
+      LOGGER.debug(s"$logPrefix Found ${ditems.size} for direct-adv building: ${ditems.iterator.flatMap(_.id).mkString(", ")}")
 
-      val newEdges = ditems
-        .toSeq
-        .groupBy { i =>
-          (i.iType, i.tagFaceOpt)
-        }
-        .iterator
-        .map { case ((iType, tagFaceOpt), itemsGroup) =>
-          val e = MEdge(
-            predicate = itypeToPredicate(iType),
-            nodeIds   = itemsGroup.iterator
-              .flatMap( _.rcvrIdOpt )
-              .toSet,
-            info = MEdgeInfo(
-              tags = tagFaceOpt.toSet
-            )
-          )
-          LOGGER.trace(s"$logPrefix Built new edge: item t#$iType=>p#${e.predicate} ##[${itemsGroup.flatMap(_.id).mkString(",")}] => $e")
-          e
-        }
-        .toStream
+      // Группировка особо не требуется. Пихаем все receiver'ы в один эдж.
+      val e = MEdge(
+        predicate = MPredicates.Receiver.AdvDirect,
+        nodeIds   = ditems
+          .iterator
+          .flatMap(_.rcvrIdOpt)
+          .toSet
+      )
+      LOGGER.trace(s"$logPrefix Built new edge: item ##[${ditems.flatMap(_.id).mkString(",")}] => $e")
 
       this2.withAccUpdated { acc0 =>
         val mnode2 = acc0.mnode.withEdges(
           acc0.mnode.edges.copy(
-            out = acc0.mnode.edges.out ++ newEdges
+            out = acc0.mnode.edges.out ++ (e :: Nil)
           )
         )
-        LOGGER.debug(s"$logPrefix Edges count changed: ${acc0.mnode.edges.out.size} => ${mnode2.edges.out.size}. ${newEdges.size} edges created:\n ${newEdges.mkString(",\n ")}")
+        LOGGER.debug(s"$logPrefix Edges count changed: ${acc0.mnode.edges.out.size} => ${mnode2.edges.out.size}. 1 edge created:\n $e")
         acc0.withMnode( mnode2 )
       }
     }

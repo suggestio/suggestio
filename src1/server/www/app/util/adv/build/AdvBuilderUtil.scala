@@ -4,6 +4,7 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.{MGeoPoint, MNodeGeoLevels}
+import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.{MEdge, MEdgeGeoShape, MEdgeInfo, MNodeEdges}
@@ -24,6 +25,7 @@ import scala.concurrent.Future
   */
 @Singleton
 class AdvBuilderUtil @Inject() (
+                                 mItems           : MItems,
                                  geoTagsUtil      : GeoTagsUtil,
                                  billDebugUtil    : BillDebugUtil,
                                  mCommonDi        : ICommonDi
@@ -32,7 +34,7 @@ class AdvBuilderUtil @Inject() (
 {
 
   import mCommonDi._
-  import slick.profile.api.Query
+  import slick.profile.api._
 
 
   /**
@@ -252,6 +254,52 @@ class AdvBuilderUtil @Inject() (
       // Ищем по dateStart. Фильтрация по наличию dateStart уже сделана выше, поэтому .get безопасен тут.
       itemsIter.maxBy( _.dateStartOpt.get.toInstant.toEpochMilli )
     }
+  }
+
+
+  /** Код SQL-инсталляции для тегов.
+    *
+    * @param b0 adv-билдер.
+    * @param ditems item'ы, которые билдим.
+    * @return Обновлённый инстанс [[IAdvBuilder]].
+    */
+  def tagsInstallSql(b0: IAdvBuilder, ditems: Iterable[MItem]): IAdvBuilder = {
+    lazy val logPrefix = s"AGT.installSql(${ditems.size}):"
+      LOGGER.trace(s"$logPrefix There are ${ditems.size} geotags for install...")
+
+      b0.withAccUpdatedFut { acc0 =>
+        for (outerCtx <- acc0.ctxOuterFut) yield {
+          val dbas1 = ditems.foldLeft(acc0.dbActions) { (dbas0, mitem) =>
+            val dbAction = {
+              val dateStart2 = b0.now
+              val dateEnd2 = dateStart2.plus( mitem.dtIntervalOpt.get.toDuration )
+              val mitemId = mitem.id.get
+              // Определяем заодно id узла-тега. Это облегчит поиск в таблице на этапе перекомпиляции узлов-тегов.
+              val tagNodeIdOpt = mitem.tagFaceOpt
+                .flatMap(outerCtx.tagNodesMap.get)
+                .flatMap(_.id)
+
+              if (tagNodeIdOpt.isEmpty)
+                LOGGER.warn(s"$logPrefix NOT found tag node id for tag-face: ${mitem.tagFaceOpt}")
+
+              mItems.query
+                .filter { _.id === mitemId }
+                .map { i =>
+                  (i.status, i.tagNodeIdOpt, i.dateStartOpt, i.dateEndOpt, i.dateStatus)
+                }
+                .update((MItemStatuses.Online, tagNodeIdOpt, Some(dateStart2), Some(dateEnd2), dateStart2))
+                .filter { rowsUpdated =>
+                  LOGGER.trace(s"$logPrefix Updated item[$mitemId] '${mitem.tagFaceOpt}': dateEnd => $dateEnd2, tagNodeId => $tagNodeIdOpt")
+                  rowsUpdated == 1
+                }
+            }
+            dbAction :: dbas0
+          }
+          acc0.withDbActions(
+            dbActions = dbas1
+          )
+        }
+      }
   }
 
 }

@@ -4,6 +4,7 @@ import boopickle.Default._
 import enumeratum._
 import io.suggest.common.menum.EnumeratumApply
 import io.suggest.primo.IStrId
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -11,69 +12,6 @@ import io.suggest.primo.IStrId
   * Created: 05.04.17 12:44
   * Description: Enumeration для типов item'ов.
   */
-object MItemType {
-
-  /** Поддержка boopickle.*/
-  implicit val mItemTypePickler: Pickler[MItemType] = {
-    import MItemTypes._
-    compositePickler[MItemType]
-      // TODO scala-2.12: возможно, там всё лучше чем сейчас. И все sealed-object'ы сами подцепятся.
-      .addConcreteType[AdvDirect.type]
-      .addConcreteType[GeoTag.type]
-      .addConcreteType[GeoPlace.type]
-      .addConcreteType[AdnNodeMap.type]
-      .addConcreteType[TagDirect.type]
-  }
-
-}
-
-
-/** Класс модели. */
-sealed abstract class MItemType extends EnumEntry with IStrId {
-
-  /** Название по каталогу локализованных названий. */
-  def nameI18n: String = {
-    "Item.type." + strId
-  }
-
-  /** Является ли ресивером денег CBCA?
-    * Для рекламных размещений внутри suggest.io -- она.
-    * Для прочих возможных сделок -- нужно анализировать содержимое MItem.rcvrIdOpt.
-    */
-  def moneyRcvrIsCbca: Boolean = true
-
-  /** Тип item'а относится к рекламным размещениям или иным услугам, отправляемым на модерацию? */
-  def sendToMdrOnOrderClose: Boolean = true
-
-  /** @return true когда требуется/подразумевается стадия аппрува s.io в ЖЦ item'а. */
-  def isApprovable: Boolean = true
-
-  /** final, чтобы в case object'ах не было перезаписи. */
-  override final def toString = super.toString
-
-  /** Цена item'а является долгом/обязательством клиентам перед сервисом?
-    * @return true - дебет, т.е. для всяких оплат товаров и услуг.
-    *         false - это крЕдит, т.е. источник средств.
-    *         Оплаченный item обогащает sio-баланс клиента своей стоимостью.
-    */
-  def isDebt: Boolean = true
-
-  /** Можно ли "прерывать" item данного типа?
-    * Прерывание item'а: это когда в online-режиме происходит коррекция dateEnd с частичным возвратом средств.
-    *
-    * По идее, изначально допускается прерывание любых adv и adn-item'ов.
-    * Но реализовано на том этапе только прерывание adn-item'ов в lk-adn-map-форме при перезаписи размещения.
-    * Нельзя прерывать всякие не-sio товары и услуги.
-    */
-  def isInterruptable: Boolean
-
-  /** Это какой-либо теггинг. */
-  def isTag: Boolean = false
-
-}
-
-
-/** Статическая модель всех допустимых типов item'ов. */
 object MItemTypes extends EnumeratumApply[MItemType] {
 
   /**
@@ -149,3 +87,68 @@ object MItemTypes extends EnumeratumApply[MItemType] {
   override val values = findValues
 
 }
+
+
+/** Класс модели. */
+sealed abstract class MItemType extends EnumEntry with IStrId {
+
+  /** Название по каталогу локализованных названий. */
+  def nameI18n: String = {
+    "Item.type." + strId
+  }
+
+  /** Является ли ресивером денег CBCA?
+    * Для рекламных размещений внутри suggest.io -- она.
+    * Для прочих возможных сделок -- нужно анализировать содержимое MItem.rcvrIdOpt.
+    */
+  def moneyRcvrIsCbca: Boolean = true
+
+  /** Тип item'а относится к рекламным размещениям или иным услугам, отправляемым на модерацию? */
+  def sendToMdrOnOrderClose: Boolean = true
+
+  /** @return true когда требуется/подразумевается стадия аппрува s.io в ЖЦ item'а. */
+  def isApprovable: Boolean = true
+
+  /** final, чтобы в case object'ах не было перезаписи. */
+  override final def toString = super.toString
+
+  /** Цена item'а является долгом/обязательством клиентам перед сервисом?
+    * @return true - дебет, т.е. для всяких оплат товаров и услуг.
+    *         false - это крЕдит, т.е. источник средств.
+    *         Оплаченный item обогащает sio-баланс клиента своей стоимостью.
+    */
+  def isDebt: Boolean = true
+
+  /** Можно ли "прерывать" item данного типа?
+    * Прерывание item'а: это когда в online-режиме происходит коррекция dateEnd с частичным возвратом средств.
+    *
+    * По идее, изначально допускается прерывание любых adv и adn-item'ов.
+    * Но реализовано на том этапе только прерывание adn-item'ов в lk-adn-map-форме при перезаписи размещения.
+    * Нельзя прерывать всякие не-sio товары и услуги.
+    */
+  def isInterruptable: Boolean
+
+  /** Это какой-либо теггинг. */
+  def isTag: Boolean = false
+
+}
+
+
+object MItemType {
+
+  /** Поддержка boopickle.*/
+  implicit val mItemTypePickler: Pickler[MItemType] = {
+    import MItemTypes._
+    compositePickler[MItemType]
+      // TODO scala-2.12: возможно, там всё лучше чем сейчас. И все sealed-object'ы сами подцепятся.
+      .addConcreteType[AdvDirect.type]
+      .addConcreteType[GeoTag.type]
+      .addConcreteType[GeoPlace.type]
+      .addConcreteType[AdnNodeMap.type]
+      .addConcreteType[TagDirect.type]
+  }
+
+  implicit def univEq: UnivEq[MItemType] = UnivEq.derive
+
+}
+

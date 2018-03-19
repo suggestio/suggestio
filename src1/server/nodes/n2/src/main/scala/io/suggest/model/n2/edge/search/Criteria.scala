@@ -18,6 +18,12 @@ trait ICriteria extends IIsNonEmpty with IMust {
   /** id искомых узлов. */
   def nodeIds     : Seq[String]
 
+  /** Каким образом трактовать nodeIds, если их >= 2?
+    * @return true значит объединять запрошенные nodeId через AND.
+    *         false - OR.
+    */
+  def nodeIdsMatchAll: Boolean
+
   /** id предикатов. */
   def predicates  : Seq[MPredicate]
 
@@ -56,9 +62,11 @@ trait ICriteria extends IIsNonEmpty with IMust {
 
     val _nodeIds = nodeIds
     if (_nodeIds.nonEmpty) {
+      val delim = s" ${if (nodeIdsMatchAll) "&" else "|"} "
       sb.append(",nodes=[")
       for (nodeId <- _nodeIds) {
-        sb.append(nodeId).append(',')
+        sb.append(nodeId)
+          .append(delim)
       }
       sb.append(']')
     }
@@ -87,13 +95,14 @@ trait ICriteria extends IIsNonEmpty with IMust {
 
 /** Дефолтовая реализация [[ICriteria]]. */
 case class Criteria(
-  override val nodeIds     : Seq[String]          = Nil,
-  override val predicates  : Seq[MPredicate]      = Nil,
-  override val must        : Must_t               = IMust.SHOULD,
-  override val flag        : Option[Boolean]      = None,
-  override val tags        : Seq[ITagCriteria]    = Nil,
-  override val gsIntersect : Option[IGsCriteria]  = None
-)
+                     override val nodeIds           : Seq[String]          = Nil,
+                     override val predicates        : Seq[MPredicate]      = Nil,
+                     override val must              : Must_t               = IMust.SHOULD,
+                     override val flag              : Option[Boolean]      = None,
+                     override val tags              : Seq[ITagCriteria]    = Nil,
+                     override val gsIntersect       : Option[IGsCriteria]  = None,
+                     override val nodeIdsMatchAll   : Boolean              = false,
+                   )
   extends ICriteria
   with EmptyProduct
 {

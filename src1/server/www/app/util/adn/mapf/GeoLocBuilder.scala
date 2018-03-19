@@ -18,8 +18,8 @@ import util.adv.build.IAdvBuilder
   */
 trait GeoLocBuilder extends IAdvBuilder {
 
-  private def _ITYPE = MItemTypes.GeoLocCaptureArea
-  private def _PRED  = MPredicates.NodeLocation.Paid
+  private final def _ITYPE = MItemTypes.GeoLocCaptureArea
+  private final def _PRED  = MPredicates.NodeLocation.Paid
 
 
   override def supportedItemTypes: List[MItemType] = {

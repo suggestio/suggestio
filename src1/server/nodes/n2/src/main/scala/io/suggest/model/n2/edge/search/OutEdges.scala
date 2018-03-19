@@ -123,14 +123,24 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
       // Поиск по id узлов, на которые указывают эджи.
       if (oe.nodeIds.nonEmpty) {
         val fn = EDGE_OUT_NODE_ID_FULL_FN
+
+        val nodeIdsQb: QueryBuilder = if (oe.nodeIdsMatchAll) {
+          // AND-матчинг всех пересленных nodeIds одновременно
+          val nodeIdsBq = QueryBuilders.boolQuery()
+          for (nodeId <- oe.nodeIds)
+            nodeIdsBq.must( QueryBuilders.termQuery(fn, nodeId) )
+          nodeIdsBq
+        } else  {
+          // OR-матчинг всех nodeIds
+          QueryBuilders.termsQuery(fn, oe.nodeIds: _*)
+        }
+
         _qOpt = _qOpt.map { _q =>
-          val nodeIdsFilter = QueryBuilders.termsQuery(fn, oe.nodeIds: _*)
           QueryBuilders.boolQuery()
             .must(_q)
-            .filter(nodeIdsFilter)
+            .must(nodeIdsQb)
         }.orElse {
-          val __q = QueryBuilders.termsQuery(fn, oe.nodeIds: _*)
-          Some(__q)
+          Some( nodeIdsQb )
         }
       }
 
@@ -138,14 +148,13 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
       if (oe.predicates.nonEmpty) {
         val fn = EDGE_OUT_PREDICATE_FULL_FN
         val predIds = oe.predicates.map(_.strId)
+        val predf = QueryBuilders.termsQuery(fn, predIds: _*)
         _qOpt = _qOpt.map { _q =>
-          val predf = QueryBuilders.termsQuery(fn, predIds: _*)
           QueryBuilders.boolQuery()
             .must(_q)
             .filter(predf)
         }.orElse {
-          val _q = QueryBuilders.termsQuery(fn, predIds: _*)
-          Some(_q)
+          Some(predf)
         }
       }
 
@@ -153,14 +162,13 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
       if (oe.flag.nonEmpty) {
         val flag = oe.flag.get
         val flagFn = EDGE_OUT_INFO_FLAG_FN
+        val flagFl = QueryBuilders.termQuery(flagFn, flag)
         _qOpt = _qOpt.map { _q =>
-          val flagFl = QueryBuilders.termQuery(flagFn, flag)
           QueryBuilders.boolQuery
             .must(_q)
             .filter(flagFl)
         }.orElse {
-          val _q = QueryBuilders.termQuery(flagFn, flag)
-          Some(_q)
+          Some( flagFl )
         }
       }
 

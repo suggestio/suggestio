@@ -2,9 +2,9 @@ package util.adv.geo.tag
 
 import io.suggest.geo.MNodeGeoLevels
 import io.suggest.mbill2.m.item.MItem
-import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.model.n2.edge._
+import japgolly.univeq._
 import util.adv.build.IAdvBuilder
 
 /**
@@ -17,10 +17,9 @@ trait AgtBuilder extends IAdvBuilder {
 
   import di._
   import mCommonDi._
-  import slick.profile.api._
 
-  private def _PRED   = MPredicates.TaggedBy.Agt
-  private def _ITYPE  = MItemTypes.GeoTag
+  private final def _PRED   = MPredicates.TaggedBy.Agt
+  private final def _ITYPE  = MItemTypes.GeoTag
 
 
   override def supportedItemTypes: List[MItemType] = {
@@ -39,7 +38,7 @@ trait AgtBuilder extends IAdvBuilder {
     val itype = _ITYPE
     val (tagItems, other) = items.partition { i =>
       // Интересуют только item'ы тегов, у которых всё правильно оформлено.
-      i.iType == itype && {
+      i.iType ==* itype && {
         val r = i.geoShape.isDefined && i.tagFaceOpt.isDefined
         if (!r)
           LOGGER.error(s"$logPrefix Invalid AGT item: one or more required fields are empty:\n $i")
@@ -60,6 +59,7 @@ trait AgtBuilder extends IAdvBuilder {
       // id узлов-тегов достаём из outer ctx.
       this2.withAccUpdatedFut { acc0 =>
         for (ctxOuter <- acc0.ctxOuterFut) yield {
+          val pred = _PRED
           val agtEdgesIter = tagItems
             .iterator
             .toSeq
@@ -67,7 +67,7 @@ trait AgtBuilder extends IAdvBuilder {
             // Конвертим группы в отдельные эджи.
             .iterator
             .map { case (gs, gsItems) =>
-
+              // Сборка всех tag face'ов.
               val tagFacesSet = gsItems
                 .iterator
                 .flatMap(_.tagFaceOpt)
@@ -87,7 +87,7 @@ trait AgtBuilder extends IAdvBuilder {
               }
 
               MEdge(
-                predicate = _PRED,
+                predicate = pred,
                 nodeIds   = nodeIdsSet,
                 info      = MEdgeInfo(
                   tags      = tagFacesSet,
@@ -119,60 +119,18 @@ trait AgtBuilder extends IAdvBuilder {
   }
 
 
-  /** Гео-теги требуют особой обработки с выставлением MItem.rcvrId. */
+  /** Теги требуют обработки с выставлением MItem.tagNodeId. */
   override def installSql(items: Iterable[MItem]): IAdvBuilder = {
-
-    // Костыль для direct-тегов:
-    // - Direct-теги обработываются в AdvDirectBuilder. Но, теги-то по сути прямо тут отрабатываются.
-    // И тут два варианта:
-    // - Дублировать/запускать этот код дважды для двух типов тегов.
-    // - Впихнуть direct-теги прямо сюда.
-    val tagItemTypes = MItemTypes.tagTypes
+    val tagItemType = _ITYPE
     val (ditems, others) = items.partition { i =>
-      tagItemTypes.contains( i.iType )
+      i.iType ==* tagItemType
     }
 
     val this2 = super.installSql(others)
 
     // Собираем db-экшены для инсталляции
     if (ditems.nonEmpty) {
-      lazy val logPrefix = s"AGT.installSql(${items.size}):"
-      LOGGER.trace(s"$logPrefix There are ${ditems.size} geotags for install...")
-
-      this2.withAccUpdatedFut { acc0 =>
-        for (outerCtx <- acc0.ctxOuterFut) yield {
-          val dbas1 = ditems.foldLeft(acc0.dbActions) { (dbas0, mitem) =>
-            val dbAction = {
-              val dateStart2 = now
-              val dateEnd2 = dateStart2.plus( mitem.dtIntervalOpt.get.toDuration )
-              val mitemId = mitem.id.get
-              // Определяем заодно id узла-тега. Это облегчит поиск в таблице на этапе перекомпиляции узлов-тегов.
-              val tagNodeIdOpt = mitem.tagFaceOpt
-                .flatMap(outerCtx.tagNodesMap.get)
-                .flatMap(_.id)
-
-              if (tagNodeIdOpt.isEmpty)
-                LOGGER.warn(s"$logPrefix NOT found tag node id for tag-face: ${mitem.tagFaceOpt}")
-
-              mItems.query
-                .filter { _.id === mitemId }
-                .map { i =>
-                  (i.status, i.tagNodeIdOpt, i.dateStartOpt, i.dateEndOpt, i.dateStatus)
-                }
-                .update((MItemStatuses.Online, tagNodeIdOpt, Some(dateStart2), Some(dateEnd2), dateStart2))
-                .filter { rowsUpdated =>
-                  LOGGER.trace(s"$logPrefix Updated item[$mitemId] '${mitem.tagFaceOpt}': dateEnd => $dateEnd2, tagNodeId => $tagNodeIdOpt")
-                  rowsUpdated == 1
-                }
-            }
-            dbAction :: dbas0
-          }
-          acc0.withDbActions(
-            dbActions = dbas1
-          )
-        }
-      }
-
+      advBuilderUtil.tagsInstallSql(this2, ditems)
     } else {
       this2
     }

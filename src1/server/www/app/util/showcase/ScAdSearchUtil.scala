@@ -115,6 +115,7 @@ class ScAdSearchUtil @Inject() (
           predicates = preds,
           nodeIds    = (tagNodeId :: args.rcvrIdOpt.toList)
             .map(_.id),
+          nodeIdsMatchAll = true,
           must       = must,
           gsIntersect = for (geoLoc <- args.locEnv.geoLocOpt) yield {
             GsCriteria(
