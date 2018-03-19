@@ -59,7 +59,7 @@ class MOrders @Inject() (
   {
 
     def statusStr     = column[String](STATUS_FN)
-    def status        = statusStr <> (MOrderStatuses.withNameT, MOrderStatuses.unapply)
+    def status        = statusStr <> (MOrderStatuses.withValue, MOrderStatus.unapplyStrId)
     def statusStrInx  = index(STATUS_INX, statusStr)
 
     override def * : ProvenShape[MOrder] = {

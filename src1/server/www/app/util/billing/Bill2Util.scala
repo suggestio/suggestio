@@ -23,6 +23,7 @@ import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
 import models.adv.geo.cur.AdvGeoShapeInfo_t
 import slick.sql.SqlAction
+import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -279,7 +280,7 @@ class Bill2Util @Inject() (
   private def _getLastOrderSql(contractId: Gid_t, status: MOrderStatus) = {
     mOrders.query
       .filter { q =>
-        (q.contractId === contractId) && (q.statusStr === status.strId)
+        (q.contractId === contractId) && (q.statusStr === status.value)
       }
       .sortBy(_.id.desc.nullsLast)
       .take(1)
@@ -1410,7 +1411,7 @@ class Bill2Util @Inject() (
           .filter { o =>
             (o.id === orderId) &&
               (o.contractId === validContractId) &&
-              (o.statusStr inSet MOrderStatuses.canGoToPaySys.map(_.strId).toTraversable)
+              (o.statusStr inSet MOrderStatuses.canGoToPaySys.onlyIds.toTraversable)
           }
           .result
           .headOption
@@ -1640,7 +1641,7 @@ class Bill2Util @Inject() (
     val stalledOrderIdsFut = slick.db.run {
       mOrders.query
         .filter { o =>
-          (o.statusStr === MOrderStatuses.Hold.strId) && (o.dateStatus < oldNow)
+          (o.statusStr === MOrderStatuses.Hold.value) && (o.dateStatus < oldNow)
         }
         .map(_.id)
         .take( MAX_STALLED_HOLDED_ORDERS_PER_ITERATION )
