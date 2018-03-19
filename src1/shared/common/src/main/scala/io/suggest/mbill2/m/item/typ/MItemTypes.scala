@@ -100,7 +100,7 @@ sealed abstract class MItemType(override val value: String) extends StringEnumEn
   def isApprovable: Boolean = true
 
   /** final, чтобы в case object'ах не было перезаписи. */
-  override final def toString = super.toString
+  override final def toString = value
 
   /** Цена item'а является долгом/обязательством клиентам перед сервисом?
     * @return true - дебет, т.е. для всяких оплат товаров и услуг.

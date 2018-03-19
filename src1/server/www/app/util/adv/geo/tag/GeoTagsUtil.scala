@@ -469,6 +469,10 @@ class GeoTagsUtil @Inject() (
 
 }
 
+trait IGeoTagsUtilDi {
+  def geoTagsUtil: GeoTagsUtil
+}
+
 
 
 trait GeoTagsUtilJmxMBean {

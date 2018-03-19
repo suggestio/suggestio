@@ -12,24 +12,6 @@ import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
  */
 object MItemStatuses extends StringEnum[MItemStatus] {
 
-  /** Укороченное выставление флага isBusy = false. */
-  sealed protected[this] trait NotBusy extends MItemStatus {
-    /** Использованные размещения, отклонённые и ещё неоплаченные не являются занятыми. */
-    override def isAdvBusy = false
-  }
-
-  /** Трейт подмешивается для статусов, неактуальных в плане рекламного размещения, т.к. окончательных. */
-  sealed protected[this] trait AdvInactual extends MItemStatus {
-    override def isAdvActual = false
-  }
-
-  /** Трейт для выставления флага isAdvBusyApproved в true. */
-  sealed protected[this] trait AdvBusyApproved extends MItemStatus {
-    override def isAdvBusyApproved = true
-  }
-
-
-
   // ДЛЯ strId НАДО ПОДДЕРЖИВАТЬ АЛФАВИТНЫЙ ПОРЯДОК ЭЛЕМЕНТОВ, И ЧЁТКО соответствующий хронологическому!
   // Это связано со всякими SQL-оборотами типа "SELECT max(status) ..."
 
@@ -134,9 +116,26 @@ object MItemStatus {
 
   implicit def univEq: UnivEq[MItemStatus] = UnivEq.derive
 
-
   def unapplyStrId(x: MItemStatus): Option[String] = {
     Some( x.value )
   }
 
 }
+
+
+/** Укороченное выставление флага isBusy = false. */
+sealed protected[this] trait NotBusy extends MItemStatus {
+  /** Использованные размещения, отклонённые и ещё неоплаченные не являются занятыми. */
+  override def isAdvBusy = false
+}
+
+/** Трейт подмешивается для статусов, неактуальных в плане рекламного размещения, т.к. окончательных. */
+sealed protected[this] trait AdvInactual extends MItemStatus {
+  override def isAdvActual = false
+}
+
+/** Трейт для выставления флага isAdvBusyApproved в true. */
+sealed protected[this] trait AdvBusyApproved extends MItemStatus {
+  override def isAdvBusyApproved = true
+}
+

@@ -118,7 +118,7 @@ abstract class AdvsUpdate
 
         ress  <- {
           Future.traverse(adIds) { adId =>
-            runForAdId(adId)
+            runForNodeId(adId)
               .map(_ => true)
               .recover { case ex: Throwable =>
                 error(s"$logPrefix Failed to process ad[$adId]", ex)
@@ -194,12 +194,12 @@ abstract class AdvsUpdate
     * Запуск обработки размещений в рамках одной карточки.
     * Обработка картоки организована внутри транзакции.
     *
-    * @param adId id обрабатываемой карточки.
+    * @param nodeId id обрабатываемого узла.
     */
-  def runForAdId(adId: String): Future[_] = {
-    val madOptFut = mNodesCache.getById(adId)
+  def runForNodeId(nodeId: String): Future[_] = {
+    val madOptFut = mNodesCache.getById(nodeId)
 
-    lazy val logPrefix = s"runForAdId($adId/${System.currentTimeMillis}):"
+    lazy val logPrefix = s"runForAdId($nodeId/${System.currentTimeMillis}):"
     trace(s"$logPrefix Starting...")
 
     // Нужны только item'ы, которые поддерживаются adv-билдерами
@@ -215,7 +215,7 @@ abstract class AdvsUpdate
     val updateAction = for {
 
       // Читаем все обрабатываемые item'ы, попутно блокируя для апдейта ниже по транзакции.
-      mitems <- findItemsForAdId(adId, b0.supportedItemTypes).forUpdate
+      mitems <- findItemsForAdId(nodeId, b0.supportedItemTypes).forUpdate
       if hasItemsForProcessing(mitems)
 
       // Блокировка транзакции в недо-экшене, готовящем db-экшены и обновляющий карточку.
@@ -252,11 +252,11 @@ abstract class AdvsUpdate
       // ex НЕ логгируем, оно залогируется где-нибудь уровнем выше.
       for (madOpt <- madOptFut) {
         if (madOpt.nonEmpty) {
-          warn(s"$logPrefix Possibly no items for ad[$adId], but they expected to be moments ago. Race conditions?")
+          warn(s"$logPrefix Possibly no items for ad[$nodeId], but they expected to be moments ago. Race conditions?")
         } else {
           // Какая-то инфа о размещении карточки (узла), которая уже удалена.
           warn(s"$logPrefix Node(ad) is missing, but zombie items is here. Purging zombies...")
-          purgeItemsForAd(adId)
+          purgeItemsForAd(nodeId)
         }
       }
     }
