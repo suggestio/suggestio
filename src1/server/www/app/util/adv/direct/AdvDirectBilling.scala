@@ -64,7 +64,7 @@ class AdvDirectBilling @Inject() (
       .query
       .filter { i =>
         (i.nodeId === adId) &&
-          (i.iTypeStr === MItemTypes.AdvDirect.strId) &&
+          (i.iTypeStr === MItemTypes.AdvDirect.value) &&
           (i.statusStr inSet MItemStatuses.advBusyIds.toSeq)
       }
   }

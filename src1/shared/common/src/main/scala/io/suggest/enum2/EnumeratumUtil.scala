@@ -107,4 +107,15 @@ object EnumeratumUtil {
       .toSeq
   }
 
+
+  implicit class ValueEnumEntriesOps[V](val vees: TraversableOnce[ValueEnumEntry[V]]) extends AnyVal {
+
+    def onlyIds: Iterator[V] = {
+      vees
+        .toIterator
+        .map(_.value)
+    }
+
+  }
+
 }

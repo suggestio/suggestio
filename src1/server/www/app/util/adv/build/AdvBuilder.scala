@@ -83,7 +83,7 @@ trait IAdvBuilder
     * в любом порядке, желательно через "::" . */
   def supportedItemTypes: List[MItemType] = Nil
 
-  def supportedItemTypesStrSet = supportedItemTypes.iterator.map(_.strId).toSet
+  def supportedItemTypesStrSet = supportedItemTypes.iterator.map(_.value).toSet
 
   /** Финализировать все размещения карточки по базе биллинга. */
   def finalizeBilling(statuses: MItemStatus*): IAdvBuilder = {

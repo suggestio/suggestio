@@ -12,7 +12,7 @@ import io.suggest.mbill2.m.geo.shape.{GeoShapeOptSlick, IGeoShapeOpt}
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.item.cols._
 import io.suggest.mbill2.m.item.status.{IMItemStatus, ItemStatusSlick, MItemStatus, MItemStatuses}
-import io.suggest.mbill2.m.item.typ.{IMItemType, MItemType, MItemTypeSlick, MItemTypes}
+import io.suggest.mbill2.m.item.typ.{IMItemType, MItemType, MItemTypeSlick}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.m.tags.{ITagFaceOpt, TagFaceOptSlick}
@@ -118,7 +118,8 @@ class MItems @Inject() (
       withTypes(types)
     }
     def withTypes(types: TraversableOnce[MItemType]): Rep[Boolean] = {
-      iTypeStr.inSet( MItemTypes.onlyIds(types).toTraversable )
+      import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
+      iTypeStr.inSet( types.onlyIds.toTraversable )
     }
     def withStatus(status1: MItemStatus): Rep[Boolean] = {
       statusStr === status1.strId

@@ -21,7 +21,7 @@ trait MItemTypeSlick extends IProfile {
 
   /** Поддержка распарсенного поля item status. */
   trait ItemTypeColumn extends ItemTypeStrColumn { that: Table[_] =>
-    def iType = iTypeStr <> (MItemTypes.withName, MItemTypes.unapply)
+    def iType = iTypeStr <> (MItemTypes.withValue, MItemType.unapplyStrId)
   }
 
 }

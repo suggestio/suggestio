@@ -65,8 +65,8 @@ class AdvGeoLocUtil @Inject() (
   }
 
   private def _geoAdvsItemTypes = Seq(
-    MItemTypes.GeoPlace.strId,
-    MItemTypes.GeoTag.strId
+    MItemTypes.GeoPlace.value,
+    MItemTypes.GeoTag.value
   )
 
   private def _traceAsyncRes[R](resFut: Future[R], msg: => String): Unit = {

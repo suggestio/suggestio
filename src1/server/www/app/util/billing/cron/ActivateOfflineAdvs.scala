@@ -63,7 +63,7 @@ class ActivateOfflineAdvs @Inject() (
     mItems.query
       .filter { i =>
         (i.nodeId === adId) &&
-        (i.iTypeStr inSet itypes.map(_.strId)) && (
+        (i.iTypeStr inSet itypes.map(_.value)) && (
           _itemsSql(i) || i.statusStr === MItemStatuses.Online.strId
         )
       }

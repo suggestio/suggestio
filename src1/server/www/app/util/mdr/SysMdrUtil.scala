@@ -122,7 +122,7 @@ class SysMdrUtil @Inject() (
   }
 
   def onlyItype(q: Q_t, itype: MItemType): Q_t = {
-    q.filter( _.iTypeStr === itype.strId)
+    q.filter( _.iTypeStr === itype.value)
   }
 
   /** Общий код сборки всех SQL queries для сборки items модерации карточки. */

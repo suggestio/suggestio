@@ -14,6 +14,7 @@ import util.billing.{Bill2Util, IBill2UtilDi}
 import util.di.IScUtil
 import util.mdr.SysMdrUtil
 import views.html.sys1.mdr._
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -143,7 +144,7 @@ trait SysMdrPaid
 
           // Закинуть в список необходимых узлов те, что в mitems.
           nodeIdsSetB ++= mitems.iterator
-            .filter(_.iType == MItemTypes.AdvDirect)
+            .filter(_.iType ==* MItemTypes.AdvDirect)
             .flatMap(_.rcvrIdOpt)
 
           val nodeIdsSet = nodeIdsSetB.result()
@@ -157,11 +158,11 @@ trait SysMdrPaid
           mitems
             .groupBy(_.iType)
             .toSeq
-            .sortBy(_._1.strId)
+            .sortBy(_._1.value)
         }
 
         // Посчитать, кол-во item'ов для рендера уже на пределе, или нет.
-        tooManyItems = mitems.size == ITEMS_LIMIT
+        tooManyItems = mitems.lengthCompare(ITEMS_LIMIT) ==* 0
 
         // Дождаться оставльных асинхронных данных
         mnodesMap   <- mnodesMapFut
@@ -221,7 +222,7 @@ trait SysMdrPaid
       val countOk = saveRes.successMask.count(identity)
       val countFail = saveRes.successMask.count(!_)
 
-      if (countFail == 0) {
+      if (countFail ==* 0) {
         LOGGER.debug(s"$logPrefix Success with ${saveRes.itemsCount} items")
         val rdrArgs = MdrSearchArgs(hideAdIdOpt = Some(nodeId))
         Redirect( routes.SysMdr.rdrToNextAd(rdrArgs) )

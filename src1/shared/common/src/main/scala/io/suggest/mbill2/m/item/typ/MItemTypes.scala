@@ -1,9 +1,7 @@
 package io.suggest.mbill2.m.item.typ
 
 import boopickle.Default._
-import enumeratum._
-import io.suggest.common.menum.EnumeratumApply
-import io.suggest.primo.IStrId
+import enumeratum.values.{StringEnum, StringEnumEntry}
 import japgolly.univeq.UnivEq
 
 /**
@@ -12,50 +10,44 @@ import japgolly.univeq.UnivEq
   * Created: 05.04.17 12:44
   * Description: Enumeration для типов item'ов.
   */
-object MItemTypes extends EnumeratumApply[MItemType] {
+object MItemTypes extends StringEnum[MItemType] {
 
   /**
     * Прямое размещение карточки прямо на каком-либо узле (используя id узла).
     * Это было самый первый тип размещения в suggest.io.
     * Скорее всего, этот же тип будет для размещения в маячках и группах маячков.
     */
-  case object AdvDirect extends MItemType {
-    override def strId = "a"
+  case object AdvDirect extends MItemType("a") {
     override def isInterruptable = true
   }
 
   /** Заказ геотеггинга для карточки. Размещение по шейпу и id узла-тега-ресивера. */
-  case object GeoTag extends MItemType {
-    override def strId = "t"
+  case object GeoTag extends MItemType("t") {
     override def isInterruptable = true
     override def isTag = true
   }
 
   /** Покупка размещения в каком-то месте на карте: по геошейпу без ресиверов. */
-  case object GeoPlace extends MItemType {
-    override def strId = "g"
+  case object GeoPlace extends MItemType("g") {
     override def isInterruptable = true
   }
 
   /** Размещение ADN-узла (магазина/ТЦ/etc) на карте. */
   @deprecated("Смысл замёржился в GeoLocCaptureArea", "2017-06-02")
-  case object AdnNodeMap extends MItemType {
-    override def strId = "m"
+  case object AdnNodeMap extends MItemType("m") {
     /** Это размещение узлов ЛК на карте. К карточкам это не относится никак. */
     override def sendToMdrOnOrderClose = false
     override def isInterruptable = true
   }
 
   /** Прямое размещение тега на узле. */
-  case object TagDirect extends MItemType {
-    override def strId = "d"
+  case object TagDirect extends MItemType("d") {
     override def isInterruptable = true
     override def isTag = true
   }
 
   /** Юзер просто пополняет sio-баланс, перекачивая на него деньги из внешнего источника денег. */
-  case object BalanceCredit extends MItemType {
-    override def strId = "e"
+  case object BalanceCredit extends MItemType("e") {
     /** Это кредитование баланса. Поэтому false. */
     override def isDebt = false
     /** Никакой рекламной составляющей это действо не несёт. */
@@ -65,8 +57,7 @@ object MItemTypes extends EnumeratumApply[MItemType] {
     override def isInterruptable = false
   }
 
-  case object GeoLocCaptureArea extends MItemType {
-    override def strId = "l"
+  case object GeoLocCaptureArea extends MItemType("l") {
     override def sendToMdrOnOrderClose = true
     override def isInterruptable = true
   }
@@ -74,7 +65,6 @@ object MItemTypes extends EnumeratumApply[MItemType] {
 
   /** Только типы item'ов, относящиеся к гео-размещениям. */
   def advGeoTypes     : List[MItemType]     = GeoTag :: GeoPlace :: Nil
-  def advGeoTypeIds                         = onlyIds( advGeoTypes )
 
   def advDirectTypes  : List[MItemType]     = AdvDirect :: TagDirect :: Nil
 
@@ -90,11 +80,11 @@ object MItemTypes extends EnumeratumApply[MItemType] {
 
 
 /** Класс модели. */
-sealed abstract class MItemType extends EnumEntry with IStrId {
+sealed abstract class MItemType(override val value: String) extends StringEnumEntry {
 
   /** Название по каталогу локализованных названий. */
   def nameI18n: String = {
-    "Item.type." + strId
+    "Item.type." + value
   }
 
   /** Является ли ресивером денег CBCA?
@@ -149,6 +139,10 @@ object MItemType {
   }
 
   implicit def univEq: UnivEq[MItemType] = UnivEq.derive
+
+  def unapplyStrId(x: MItemType): Option[String] = {
+    Some(x.value)
+  }
 
 }
 

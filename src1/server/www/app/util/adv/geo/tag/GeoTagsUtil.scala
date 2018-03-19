@@ -4,7 +4,7 @@ import javax.inject.Inject
 
 import akka.stream.scaladsl.{Keep, Sink}
 import io.suggest.es.util.SioEsUtil
-import io.suggest.geo.{IGeoShape, MNodeGeoLevels}
+import io.suggest.geo.MNodeGeoLevels
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
@@ -19,6 +19,7 @@ import io.suggest.streams.StreamsUtil
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import models.adv.build.MCtxOuter
+import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
 import models.mproj.ICommonDi
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -55,7 +56,8 @@ class GeoTagsUtil @Inject() (
   private def TAG_ITEM_TYPES = {
     // Поддержка разных тегов: географических и "прямых".
     MItemTypes
-      .onlyIds( MItemTypes.tagTypes )
+      .tagTypes
+      .onlyIds
       .toTraversable
   }
 

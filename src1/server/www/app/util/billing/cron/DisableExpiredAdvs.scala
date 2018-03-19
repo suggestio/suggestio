@@ -79,7 +79,7 @@ class DisableExpiredAdvs @Inject() (
         // Ищем item'ы для картоки в online-состоянии.
         (i.nodeId === adId) &&
           (i.statusStr === MItemStatuses.Online.strId) &&
-          (i.iTypeStr inSet itypes.map(_.strId))
+          (i.iTypeStr inSet itypes.map(_.value))
       }
       .result
   }
