@@ -65,7 +65,11 @@ class ScAdSearchUtil @Inject() (
       var eacc: List[Criteria] = Nil
 
       // Поиск карточек у указанного узла-ресивера.
-      for (rcvrId <- args.rcvrIdOpt) {
+      for {
+        rcvrId <- args.rcvrIdOpt
+        // 2018-03-19 Теги внутри узлов ищутся иначе, поэтому заданный ресивер отрабатывается в tagNodeId-ветви.
+        if args.tagNodeIdOpt.isEmpty
+      } {
         eacc ::= Criteria(
           nodeIds     = rcvrId.id :: Nil,
           predicates  = MPredicates.Receiver :: Nil,
@@ -109,7 +113,8 @@ class ScAdSearchUtil @Inject() (
         // Указан тег. Ищем по тегу с учетом геолокации:
         eacc ::= Criteria(
           predicates = preds,
-          nodeIds    = tagNodeId :: Nil,
+          nodeIds    = (tagNodeId :: args.rcvrIdOpt.toList)
+            .map(_.id),
           must       = must,
           gsIntersect = for (geoLoc <- args.locEnv.geoLocOpt) yield {
             GsCriteria(
