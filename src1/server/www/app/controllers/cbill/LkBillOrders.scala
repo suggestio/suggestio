@@ -23,6 +23,7 @@ import util.blocks.{BgImg, BlocksConf, IBlkImgMakerDI}
 import util.billing.IBill2UtilDi
 import util.di.ILogoUtilDi
 import views.html.lk.billing.order._
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -102,7 +103,7 @@ trait LkBillOrders
       } yield {
         val payTxnsIter = for {
           mtxn <- txns.iterator
-          if mtxn.txType == MTxnTypes.PaySysTxn
+          if mtxn.txType ==* MTxnTypes.PaySysTxn
           mbal <- mBalsMap.get( mtxn.balanceId )
         } yield {
           MPrice( mtxn.amount, mbal.price.currency )
@@ -595,7 +596,7 @@ trait LkBillOrders
 
       for (rowsDeleted <- delFut) yield {
         val resp0 = Redirect(r)
-        if (rowsDeleted == 1) {
+        if (rowsDeleted ==* 1) {
           resp0
         } else {
           LOGGER.warn(s"$logPrefix MItems.deleteById() returned invalid deleted rows count: $rowsDeleted")

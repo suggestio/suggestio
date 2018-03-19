@@ -1750,7 +1750,7 @@ class Bill2Util @Inject() (
     mTxns.query
       .filter { t =>
         (t.orderIdOpt === orderId) &&
-          (t.txTypeStr === MTxnTypes.PaySysTxn.strId)
+          (t.txTypeStr === MTxnTypes.PaySysTxn.value)
       }
       // Если вдруг больше одной транзакции, то интересует самая ранняя. Такое возможно из-за логических ошибок при аппруве item'ов.
       .sortBy(_.id.asc)

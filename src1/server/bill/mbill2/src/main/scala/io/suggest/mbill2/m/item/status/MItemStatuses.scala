@@ -59,7 +59,7 @@ object MItemStatuses extends StringEnum[MItemStatus] {
   }
 
 
-  override def values = findValues
+  override val values = findValues
 
 
   /** Статусы, обозначающие занятость карточки для прямого размещения. */

@@ -71,7 +71,7 @@ class MTxns @Inject() (
     def psTxnUidKey     = index(PgaNamesMaker.uniq(TABLE_NAME, PS_TXN_UID_FN), psTxnUidOpt, unique = true)
 
     def txTypeStr       = column[String](TX_TYPE_FN)
-    def txType          = txTypeStr <> (MTxnTypes.withNameT, MTxnTypes.unapply)
+    def txType          = txTypeStr <> (MTxnTypes.withValue, MTxnType.unapplyStrId)
 
     override def * : ProvenShape[MTxn] = {
       (balanceId, amount, txType, orderIdOpt, itemIdOpt, paymentComment, psTxnUidOpt, datePaidOpt, dateProcessed, id.?) <> (
