@@ -2,9 +2,9 @@ package util.adv.geo.tag
 
 import javax.inject.Inject
 
-import io.suggest.common.coll.Lists
+import akka.stream.scaladsl.{Keep, Sink}
 import io.suggest.es.util.SioEsUtil
-import io.suggest.geo.MNodeGeoLevels
+import io.suggest.geo.{IGeoShape, MNodeGeoLevels}
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
@@ -15,6 +15,7 @@ import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes, MNodesCache}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.OptId
+import io.suggest.streams.StreamsUtil
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import models.adv.build.MCtxOuter
@@ -35,16 +36,18 @@ import scala.util.{Failure, Success}
   * Сброс хлама в теги необходим для поиска тегов.
   */
 class GeoTagsUtil @Inject() (
-  mNodes        : MNodes,
-  mItems        : MItems,
-  mCommonDi     : ICommonDi
-)
+                              mNodes        : MNodes,
+                              mItems        : MItems,
+                              streamsUtil   : StreamsUtil,
+                              mCommonDi     : ICommonDi
+                            )
   extends MacroLogsImpl
 {
 
   import LOGGER._
   import mCommonDi._
   import slick.profile.api._
+  import streamsUtil.Implicits._
 
   /** Предикат эджей, используемых в рамках этого модуля. */
   private def _PRED = MPredicates.TaggedBy.Self
@@ -251,65 +254,70 @@ class GeoTagsUtil @Inject() (
     val mnodeId = mnode.id.get
 
     val startTs = System.currentTimeMillis()
-
-    // TODO Использовать stream вместо run.
-    val shapesRcvrsFut = slick.db.run {
-      mItems.query
-        .filter { i =>
-          (i.statusStr === MItemStatuses.Online.strId) &&
-            (i.iTypeStr inSet TAG_ITEM_TYPES) &&
-            (i.tagNodeIdOpt === mnodeId)
-        }
-        .map { i =>
-          (i.geoShapeOpt, i.rcvrIdOpt)
-        }
-        .distinct
-        .take(1000)
-        .result
-    }
-
     lazy val logPrefix = s"rebuildTag(#${mnode.guessDisplayName.orNull} $mnodeId)#$startTs:"
+
+    // Для наиболее оптимального сбора данных тега, параллельно и реактивно собираем данные сразу с нескольких колонок.
+    // Общий код SQL-запроса здесь:
+    val basicQuery = mItems.query
+      .filter { i =>
+        (i.tagNodeIdOpt === mnodeId) &&
+          (i.statusStr === MItemStatuses.Online.strId) &&
+          (i.iTypeStr inSet TAG_ITEM_TYPES)
+      }
+
+    // Запуск сбора шейпов для geo-тегов.
+    val (shapesCountFut, shapesFut) = slick.db
+      .stream {
+        basicQuery
+          .filter(_.geoShapeStrOpt.nonEmpty)
+          .map(_.geoShapeOpt)
+          .distinct
+          .result
+      }
+      .toSource
+      .mapConcat(_.toList)
+      .zipWithIndex
+      .alsoToMat( streamsUtil.Sinks.count )(Keep.right)
+      .map { case (s, i) =>
+        MEdgeGeoShape(
+          id      = i.toInt + MEdgeGeoShape.SHAPE_ID_START,
+          glevel  = MNodeGeoLevels.geoTag,
+          shape   = s
+        )
+      }
+      .toMat( Sink.collection[MEdgeGeoShape, List[MEdgeGeoShape]] )(Keep.both)
+      .run()
+
+    // Запуск сбора id ресиверов для direct-тегов
+    val directTagRcvrsFut = slick.db
+      .stream {
+        basicQuery
+          .filter(_.rcvrIdOpt.nonEmpty)
+          .map(_.rcvrIdOpt)
+          .distinct
+          .result
+      }
+      .toSource
+      .mapConcat(_.toList)
+      .toMat( Sink.collection[String, Set[String]] )(Keep.right)
+      .run()
 
     for {
       // Дождаться окончания поиска шейпов для тега.
-      shapesRcvrs <- shapesRcvrsFut
+      tagShapes       <- shapesFut
+      tagShapesCount  <- shapesCountFut
+
+      directTagRcvrs <- {
+        LOGGER.trace(s"$logPrefix $tagShapesCount different shapes found:\n ${tagShapes.mkString("\n ")}")
+        directTagRcvrsFut
+      }
 
       // Залить собранные шейпы в узел тега.
       mnode2 <- {
-        LOGGER.trace(s"$logPrefix Found ${shapesRcvrs.length} shares/rcvrs:${shapesRcvrs.mkString(" \n", "\n ", "")}")
-
-        // Собрать единый список шейпов.
-        val tagShapes = Lists.toListRev {
-          shapesRcvrs
-            .iterator
-            .flatMap(_._1.iterator)
-            .zipWithIndex
-            .map { case (s, i) =>
-              MEdgeGeoShape(
-                id = i + MEdgeGeoShape.SHAPE_ID_START,
-                glevel  = MNodeGeoLevels.geoTag,
-                shape = s
-              )
-            }
-        }
-        LOGGER.trace(s"$logPrefix ${tagShapes.length} tag-shapes:\n ${tagShapes.mkString(",\n")}")
-
-        // Для direct-тегов собрать id узлов-ресиверов.
-        val directTagRcvrs = shapesRcvrs
-          .iterator
-          .flatMap(_._2)
-          .toSet
-        LOGGER.trace(s"$logPrefix Direct tag rcvrs: ${directTagRcvrs.mkString(", ")}")
-
-        // Т.к. список в обратном порядке, то последний List.head.id равен кол-ву элементов - 1.
-        val shapesCount = tagShapes
-          .headOption
-          .fold(0)(_.id)
-
-        LOGGER.debug(s"$logPrefix Found $shapesCount different shapes.")
+        LOGGER.trace(s"$logPrefix Found ${directTagRcvrs.size} direct-tag rcvrs: [${directTagRcvrs.mkString(", ")}]")
 
         val p = _PRED
-        val someShapesCount = Some(shapesCount)
+        val someShapesCount = Some(tagShapesCount)
 
         mNodes.tryUpdate(mnode) { mnode0 =>
           // Собрать единый эдж self-тега для всех геошейпов.
