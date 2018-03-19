@@ -22,7 +22,7 @@ trait ItemStatusSlick extends IProfile {
   /** Поддержка отмаппленного поля Item status. */
   trait ItemStatusColumn extends ItemStatusStrColumn { that: Table[_] =>
     def status = statusStr <> (
-      MItemStatuses.withNameT, MItemStatuses.unapply
+      MItemStatuses.withValue, MItemStatus.unapplyStrId
     )
   }
 

@@ -20,6 +20,7 @@ import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import org.threeten.extra.Interval
 import slick.lifted.ProvenShape
 import slick.sql.SqlAction
+import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
 
 /**
  * Suggest.io
@@ -122,10 +123,10 @@ class MItems @Inject() (
       iTypeStr.inSet( types.onlyIds.toTraversable )
     }
     def withStatus(status1: MItemStatus): Rep[Boolean] = {
-      statusStr === status1.strId
+      statusStr === status1.value
     }
     def withStatuses(statuses: TraversableOnce[MItemStatus]): Rep[Boolean] = {
-      statusStr.inSet( MItemStatuses.onlyIds(statuses).toTraversable )
+      statusStr.inSet( statuses.onlyIds.toTraversable )
     }
     def withRcvrs(rcvrIds: Traversable[String]): Rep[Option[Boolean]] = {
       rcvrIdOpt.inSet( rcvrIds )
@@ -183,7 +184,7 @@ class MItems @Inject() (
     query
       // Явно запрещаем получать item без ожидаемого статуса
       .filter { i =>
-        (i.id === itemId) && (i.statusStr === status.strId)
+        (i.id === itemId) && (i.statusStr === status.value)
       }
       .result
       .headOption
@@ -201,11 +202,11 @@ class MItems @Inject() (
     * @param statuses Интересующие статусы item'ов или все возможные.
     * @return Пары adId -> [[io.suggest.mbill2.m.item.MAdItemStatuses]].
     */
-  def findStatusesForAds(adIds: Traversable[String], statuses: Traversable[MItemStatus] = MItemStatuses.valuesT) = {
+  def findStatusesForAds(adIds: Traversable[String], statuses: Traversable[MItemStatus] = MItemStatuses.values) = {
     // TODO Sec Возможность SQL injection, нужно передавать список через args, но slick sql не умеет IN (...) синтаксис.
     // Возможно, стоит попробовать эту пионерскую поделку https://github.com/tarao/slick-jdbc-extension-scala
     val adIdsStr = _mkSqlInString( adIds )
-    val statusesStr = _mkSqlInString( statuses.toIterator.map(_.strId) )
+    val statusesStr = _mkSqlInString( statuses.onlyIds )
     sql"SELECT #$NODE_ID_FN, array_agg(DISTINCT #$STATUS_FN) FROM #$TABLE_NAME WHERE ad_id IN (#$adIdsStr) AND #$STATUS_FN IN (#$statusesStr) GROUP BY ad_id"
       .as[MAdItemStatuses]
   }

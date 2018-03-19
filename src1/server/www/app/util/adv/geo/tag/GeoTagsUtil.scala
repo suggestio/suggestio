@@ -263,7 +263,7 @@ class GeoTagsUtil @Inject() (
     val basicQuery = mItems.query
       .filter { i =>
         (i.tagNodeIdOpt === mnodeId) &&
-          (i.statusStr === MItemStatuses.Online.strId) &&
+          (i.statusStr === MItemStatuses.Online.value) &&
           (i.iTypeStr inSet TAG_ITEM_TYPES)
       }
 

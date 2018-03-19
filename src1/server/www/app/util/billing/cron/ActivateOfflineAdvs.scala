@@ -44,7 +44,7 @@ class ActivateOfflineAdvs @Inject() (
 
   /** Ищем только карточки, у которых есть offline ads с dateStart < now. */
   override def _itemsSql(i: mItems.MItemsTable): Rep[Option[Boolean]] = {
-    (i.statusStr === MItemStatuses.Offline.strId) &&
+    (i.statusStr === MItemStatuses.Offline.value) &&
       (i.dateStartOpt <= now)
   }
 
@@ -64,7 +64,7 @@ class ActivateOfflineAdvs @Inject() (
       .filter { i =>
         (i.nodeId === adId) &&
         (i.iTypeStr inSet itypes.map(_.value)) && (
-          _itemsSql(i) || i.statusStr === MItemStatuses.Online.strId
+          _itemsSql(i) || i.statusStr === MItemStatuses.Online.value
         )
       }
       .result

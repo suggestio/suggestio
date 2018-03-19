@@ -114,11 +114,11 @@ class SysMdrUtil @Inject() (
   type Q_t = Query[mItems.MItemsTable, MItem, Seq]
 
   def onlyReqs(q: Q_t): Q_t = {
-    q.filter( _.statusStr === MItemStatuses.AwaitingMdr.strId)
+    q.filter( _.statusStr === MItemStatuses.AwaitingMdr.value)
   }
 
   def onlyStatuses(q: Q_t, statuses: Seq[MItemStatus]): Q_t = {
-    q.filter(_.statusStr inSet statuses.iterator.map(_.strId).toSeq)
+    q.filter(_.statusStr inSet statuses.iterator.map(_.value).toSeq)
   }
 
   def onlyItype(q: Q_t, itype: MItemType): Q_t = {

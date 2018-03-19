@@ -54,7 +54,7 @@ class MdrUtil @Inject() (
     mItems
       .query
       .filter { i =>
-        i.statusStr === MItemStatuses.AwaitingMdr.strId
+        i.statusStr === MItemStatuses.AwaitingMdr.value
       }
   }
 

@@ -38,7 +38,7 @@ class DisableExpiredAdvs @Inject() (
 
 
   override def _itemsSql(i: mItems.MItemsTable): Rep[Option[Boolean]] = {
-    (i.statusStr === MItemStatuses.Online.strId) &&
+    (i.statusStr === MItemStatuses.Online.value) &&
       (i.dateEndOpt <= now)
   }
 
@@ -78,7 +78,7 @@ class DisableExpiredAdvs @Inject() (
       .filter { i =>
         // Ищем item'ы для картоки в online-состоянии.
         (i.nodeId === adId) &&
-          (i.statusStr === MItemStatuses.Online.strId) &&
+          (i.statusStr === MItemStatuses.Online.value) &&
           (i.iTypeStr inSet itypes.map(_.value))
       }
       .result

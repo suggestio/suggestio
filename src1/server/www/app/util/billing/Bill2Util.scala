@@ -414,7 +414,7 @@ class Bill2Util @Inject() (
 
   def prepareOpenedItems(orderId: Gid_t): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
     mItems.findByOrderIdBuilder(orderId)
-      .filter(_.statusStr === MItemStatuses.Draft.strId)
+      .filter(_.statusStr === MItemStatuses.Draft.value)
       .result
       .forUpdate
   }
@@ -1795,7 +1795,7 @@ class Bill2Util @Inject() (
         // Делаем правильный кортеж: ключ -- строка шейпа, id - любой, status -- только максимальный
         (geoShapeStrOpt,
           group.map(_.id).max,
-          group.map(_.statusStr).max =!= MItemStatuses.AwaitingMdr.strId
+          group.map(_.statusStr).max =!= MItemStatuses.AwaitingMdr.value
         )
       }
       // LIMIT 200

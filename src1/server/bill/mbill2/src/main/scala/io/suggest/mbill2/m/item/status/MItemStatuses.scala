@@ -1,6 +1,8 @@
 package io.suggest.mbill2.m.item.status
 
-import io.suggest.common.menum.{EnumApply, EnumMaybeWithName}
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import japgolly.univeq.UnivEq
+import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
 
 /**
  * Suggest.io
@@ -8,69 +10,31 @@ import io.suggest.common.menum.{EnumApply, EnumMaybeWithName}
  * Created: 02.12.15 12:55
  * Description: Статусы обработки item'а.
  */
-object MItemStatuses extends EnumMaybeWithName with EnumApply {
-
-  protected[this] abstract class Val(override val strId: String)
-    extends super.Val(strId)
-    with ValT
-  {
-
-    /** Деньги заблокированы на счете покупателя? */
-    def isMoneyBlockedOnBuyer   : Boolean = false
-
-    /** Списаны ли деньги с основного баланса покупателя? */
-    def isMoneyWithdrawed       : Boolean = true
-
-    /** Деньги ушли от байера к селлеру и заблокированы на балансе селлера? */
-    def isMoneyBlockedOnSeller  : Boolean = false
-
-    /** Является ли рекламная карточка на rcvr-узле "занятой", если размещение в данном статусе?
-      * Да для ожидающих модерации, одобренных к размещению и размещенных. */
-    def isAdvBusy               : Boolean = true
-
-    /** Актуальный статус для размещения, это когда item ещё не прошел свой жизненный цикл. */
-    def isAdvActual             : Boolean = true
-
-    /** Является ли карточка заапрувленной к размещению в настоящем/будущем времени?
-      * @return true для Online и Offline.
-      *         false -- остальные.
-      */
-    def isAdvBusyApproved       : Boolean = false
-
-    /** Код локализованного названия по messages. */
-    def nameI18n = "Item.status." + strId
-
-    /** Класс css-иконки. */
-    def iconCssClass: Option[String]
-
-  }
-
+object MItemStatuses extends StringEnum[MItemStatus] {
 
   /** Укороченное выставление флага isBusy = false. */
-  sealed protected[this] trait NotBusy extends Val {
+  sealed protected[this] trait NotBusy extends MItemStatus {
     /** Использованные размещения, отклонённые и ещё неоплаченные не являются занятыми. */
     override def isAdvBusy = false
   }
 
   /** Трейт подмешивается для статусов, неактуальных в плане рекламного размещения, т.к. окончательных. */
-  sealed protected[this] trait AdvInactual extends Val {
+  sealed protected[this] trait AdvInactual extends MItemStatus {
     override def isAdvActual = false
   }
 
   /** Трейт для выставления флага isAdvBusyApproved в true. */
-  sealed protected[this] trait AdvBusyApproved extends Val {
+  sealed protected[this] trait AdvBusyApproved extends MItemStatus {
     override def isAdvBusyApproved = true
   }
 
-
-  override type T = Val
 
 
   // ДЛЯ strId НАДО ПОДДЕРЖИВАТЬ АЛФАВИТНЫЙ ПОРЯДОК ЭЛЕМЕНТОВ, И ЧЁТКО соответствующий хронологическому!
   // Это связано со всякими SQL-оборотами типа "SELECT max(status) ..."
 
   /** Item лежит в корзине, т.е. в черновике заказа. */
-  val Draft               : T = new Val("a") with NotBusy {
+  case object Draft extends MItemStatus("a") with NotBusy {
 
     /** Черновики обитают только в "корзине" (за искл. hold-ордера), CSS-иконки там не отображаются. */
     override def iconCssClass = None
@@ -80,7 +44,7 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
   }
 
   /** Item оплачен. Ожидается подтверждение со стороны suggest.io: модерация. */
-  val AwaitingMdr     : T = new Val("b") {
+  case object AwaitingMdr extends MItemStatus("b") {
 
     override def iconCssClass = Some( "mdr" )
 
@@ -89,46 +53,90 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
   }
 
   /** Отказано продавцом или поставщиком услуги. Например, размещение не прошло модерацию. */
-  val Refused   : T = new Val("c") with NotBusy with AdvInactual {
+  case object Refused extends MItemStatus("c") with NotBusy with AdvInactual {
     /** Деньги уже возвращены на счет счет покупателя. */
     override def isMoneyWithdrawed      = false
     override def iconCssClass = Some("refused")
   }
 
-  private abstract class _ValBusyApproved(name: String)
-    extends Val(name)
-    with AdvBusyApproved
 
 
   /** Купленная услуга пока в оффлайне. */
-  val Offline             : T = new _ValBusyApproved("f") {
+  case object Offline extends MItemStatus("f") with AdvBusyApproved {
     override def iconCssClass = Some("offline")
   }
 
   /** Оплаченная услуга сейчас в онлайне. */
-  val Online              : T = new _ValBusyApproved("o") {
+  case object Online extends MItemStatus("o") with AdvBusyApproved {
     override def iconCssClass = Some("online")
   }
 
   /** Завершена обработка item'а. Например, оплаченная услуга истекла. */
-  val Finished            : T = new Val("z") with NotBusy with AdvInactual {
+  case object Finished extends MItemStatus("z") with NotBusy with AdvInactual {
     override def iconCssClass = Some("finished")
   }
 
 
+  override def values = findValues
+
+
   /** Статусы, обозначающие занятость карточки для прямого размещения. */
-  def advBusy = valuesT.iterator.filter(_.isAdvBusy)
+  def advBusy = values.iterator.filter(_.isAdvBusy)
   /** Только id'шники, идентефицирующие занятость карточки. */
-  def advBusyIds = onlyIds(advBusy)
+  def advBusyIds = advBusy.onlyIds
 
 
   /** Статусы, обозначающие текущую актуальность adv-item'а, т.е. незаконченность его ЖЦ. */
-  def advActual = valuesT.iterator.filter(_.isAdvActual)
+  def advActual = values.iterator.filter(_.isAdvActual)
   /** id статусов, обозначающих текущую актуальность adv-item'а. */
-  def advActualIds = onlyIds(advBusy)
+  def advActualIds = advBusy.onlyIds
 
 
-  def advDone = valuesT.iterator.filter { it => !it.isAdvActual }
-  def advDoneIds = onlyIds( advDone )
+  def advDone = values.iterator.filter { it => !it.isAdvActual }
+  def advDoneIds = advDone.onlyIds
+
+}
+
+
+sealed abstract class MItemStatus(override val value: String) extends StringEnumEntry {
+
+  /** Деньги заблокированы на счете покупателя? */
+  def isMoneyBlockedOnBuyer   : Boolean = false
+
+  /** Списаны ли деньги с основного баланса покупателя? */
+  def isMoneyWithdrawed       : Boolean = true
+
+  /** Деньги ушли от байера к селлеру и заблокированы на балансе селлера? */
+  def isMoneyBlockedOnSeller  : Boolean = false
+
+  /** Является ли рекламная карточка на rcvr-узле "занятой", если размещение в данном статусе?
+    * Да для ожидающих модерации, одобренных к размещению и размещенных. */
+  def isAdvBusy               : Boolean = true
+
+  /** Актуальный статус для размещения, это когда item ещё не прошел свой жизненный цикл. */
+  def isAdvActual             : Boolean = true
+
+  /** Является ли карточка заапрувленной к размещению в настоящем/будущем времени?
+    * @return true для Online и Offline.
+    *         false -- остальные.
+    */
+  def isAdvBusyApproved       : Boolean = false
+
+  /** Код локализованного названия по messages. */
+  def nameI18n = "Item.status." + value
+
+  /** Класс css-иконки. */
+  def iconCssClass: Option[String]
+
+}
+
+object MItemStatus {
+
+  implicit def univEq: UnivEq[MItemStatus] = UnivEq.derive
+
+
+  def unapplyStrId(x: MItemStatus): Option[String] = {
+    Some( x.value )
+  }
 
 }

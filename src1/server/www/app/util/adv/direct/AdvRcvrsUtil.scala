@@ -85,7 +85,7 @@ class AdvRcvrsUtil @Inject()(
       mItems.query
         .filter { i =>
           (i.nodeId === madId) &&
-            (i.statusStr === MItemStatuses.Online.strId) &&
+            (i.statusStr === MItemStatuses.Online.value) &&
             (i.iTypeStr inSet itypes)
         }
         .result
@@ -174,7 +174,7 @@ class AdvRcvrsUtil @Inject()(
       .filter { i =>
         (i.nodeId === adId) &&
           (i.iTypeStr inSet b0.supportedItemTypesStrSet) &&
-          (i.statusStr === MItemStatuses.Online.strId)
+          (i.statusStr === MItemStatuses.Online.value)
       }
       .result
 

@@ -32,7 +32,7 @@ trait IAdItemStatuses extends INodeId {
   def statusesStr: Seq[String]
 
   def statuses: Set[MItemStatus] = {
-    statusesStr.flatMap(MItemStatuses.maybeWithName).toSet
+    statusesStr.flatMap(MItemStatuses.withValueOpt).toSet
   }
 }
 
