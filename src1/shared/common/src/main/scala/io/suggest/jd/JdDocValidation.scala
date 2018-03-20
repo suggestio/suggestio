@@ -217,7 +217,12 @@ class JdDocValidation(
         )
       } |@|
       ScalazUtil.liftNelOpt(qdProps1.rotateDeg.filter(_ !=* 0)) { rotateDeg =>
-        MathConst.Counts.validateMinMax(rotateDeg, min = -180, max = 180, errMsgF(ROTATE))
+        MathConst.Counts.validateMinMax(
+          v   = rotateDeg,
+          min = -JdConst.ROTATE_MAX_ABS,
+          max = JdConst.ROTATE_MAX_ABS,
+          errMsgF(ROTATE)
+        )
       }
     )( MJdtProps1.apply )
   }

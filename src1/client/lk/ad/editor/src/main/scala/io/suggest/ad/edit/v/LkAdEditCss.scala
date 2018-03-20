@@ -151,8 +151,12 @@ class LkAdEditCss
 
   object RangeInput {
 
-    val rangeInput = style(
+    val rangeSlider = style(
       verticalAlign.middle
+    )
+
+    val rangeText = style(
+      width(60.px).important
     )
 
   }
@@ -164,7 +168,7 @@ class LkAdEditCss
     BgColorOptPicker.colorRound,
     Crop.popup,
     StripMain.showAll,
-    RangeInput.rangeInput
+    RangeInput.rangeSlider
   )
 
 }

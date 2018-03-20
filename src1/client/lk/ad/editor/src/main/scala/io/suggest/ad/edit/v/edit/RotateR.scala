@@ -8,6 +8,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
+import io.suggest.jd.JdConst
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -81,15 +82,29 @@ class RotateR(
 
           // Слайдер градусов вращения.
           props.value.whenDefined { value =>
-            val minMax = 180
-            <.input(
-              lkAdEditCss.RangeInput.rangeInput,
-              ^.`type` := HtmlConstants.Input.range,
-              ^.value  := value,
-              ^.min := -minMax,
-              ^.max := minMax,
-              ^.onChange ==> onValueChange
+            <.span(
+              <.input(
+                lkAdEditCss.RangeInput.rangeSlider,
+                ^.`type` := HtmlConstants.Input.range,
+                ^.value  := value,
+                ^.min := -JdConst.ROTATE_MAX_ABS,
+                ^.max := JdConst.ROTATE_MAX_ABS,
+                ^.onChange ==> onValueChange
+              ),
+
+              HtmlConstants.NBSP_STR,
+
+              <.span(
+                ^.`class` := Css.Input.INPUT,
+                <.input(
+                  lkAdEditCss.RangeInput.rangeText,
+                  ^.`type`    := HtmlConstants.Input.text,
+                  ^.value     := value,
+                  ^.onChange  ==> onValueChange
+                )
+              )
             )
+
           }
 
         )

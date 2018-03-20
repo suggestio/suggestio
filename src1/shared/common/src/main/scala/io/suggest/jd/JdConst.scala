@@ -9,16 +9,19 @@ package io.suggest.jd
 object JdConst {
 
   /** Макс.кол-во стрипов в одном документе. */
-  def MAX_STRIPS_COUNT = 20
+  final def MAX_STRIPS_COUNT = 20
 
   /** Макс.кол-во элементов в минимальном блоке. */
-  def MAX_ELEMENTS_PER_MIN_BLOCK = 2
+  final def MAX_ELEMENTS_PER_MIN_BLOCK = 2
 
 
   /** Макс. кол-во qd-операций в одном "контенте". */
-  def MAX_QD_OPS_COUNT = 70
+  final def MAX_QD_OPS_COUNT = 70
 
 
-  def MAX_TEXT_LEN = 1024
+  final def MAX_TEXT_LEN = 1024
+
+  /** Максимально-допустимое вращение jd-элемента. */
+  final def ROTATE_MAX_ABS = 180
 
 }

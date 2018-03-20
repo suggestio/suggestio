@@ -15,7 +15,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.err.ErrorConstants
 import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.MJdEdge
+import io.suggest.jd.{JdConst, MJdEdge}
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags.JdTag.Implicits._
@@ -230,10 +230,13 @@ class DocEditAh[M](
     // Изменения состояния ротации текущего jd-тега.
     case m: RotateSet =>
       val v0 = value
+
       val updatedOpt = for {
         selJdtLoc0 <- v0.jdArgs.selectedTagLoc
         jdt0 = selJdtLoc0.getLabel
-        if jdt0.props1.rotateDeg !=* m.degrees
+        if (jdt0.props1.rotateDeg !=* m.degrees) &&
+          // Убедится, что значение не выходит за допустымые пределы поворота:
+          m.degrees.fold(true)(deg => Math.abs(deg) <= JdConst.ROTATE_MAX_ABS)
       } yield {
         val tpl2 = selJdtLoc0
           .modifyLabel { jdt00 =>
