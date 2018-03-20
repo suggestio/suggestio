@@ -35,6 +35,7 @@ class ReActivateCurrentAdvs @Inject() (
   import mCommonDi._
   import slick.profile.api._
 
+  override def MAX_ADS_PER_RUN = 30
 
   /** Ищем только карточки, у которых есть offline ads с dateStart < now. */
   override def _itemsSql(i: mItems.MItemsTable): Rep[Option[Boolean]] = {

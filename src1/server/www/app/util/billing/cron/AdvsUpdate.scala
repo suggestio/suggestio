@@ -135,7 +135,12 @@ abstract class AdvsUpdate
           // Если было слишком много карточек за раз, то продолжить работу после небольшой паузы.
           if (count >= MAX_ADS_PER_RUN) {
             info(s"$logPrefix Done $count adv-items (failed=$countFail), but DB has more, lets run again...")
-            run(counter2)
+            // Теги косячат при такой пакетной обработке. Надо паузу делать тут, рефреш индекса принудительный.
+            // Иначе свежие теги НЕ находятся в индексе на последующих итерациях.
+            mNodes.refreshIndex().flatMap { _ =>
+              LOGGER.trace(s"$logPrefix [$counter2] Refreshed nodes index, continue...")
+              run(counter2)
+            }
 
           } else {
             if (count > 0)
