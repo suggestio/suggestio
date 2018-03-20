@@ -459,6 +459,13 @@ lazy val secWwwUtil = {
     .dependsOn(util, esUtil, logsMacro, securesocial)
 }
 
+/** Утиль для взаимодействия с антивирусами. */
+lazy val secAvUtil = {
+  val id = "sec-av-util"
+  Project(id = id, base = file(DIR0 + "server/util/" + id))
+    .dependsOn(util, streamsUtil, logsMacro)
+}
+
 /** Разная поддержка узлов для вёб-морды. */
 lazy val nodesWww = {
   val id = "nodes-www"
@@ -506,7 +513,7 @@ lazy val www = project
   .in( file(DIR0 + "server/www") )
   .enablePlugins(PlayScala, WebScalaJSBundlerPlugin)
   .dependsOn(
-    securesocial,
+    securesocial, secAvUtil,
     esUtil, mgeo, n2, mbill2,
     nodesWww, payWww,
     streamsUtil, brotliUtil,
@@ -574,7 +581,7 @@ lazy val sio2 = {
       util, esUtil, textUtil, swfs, n2, securesocial,
       ipgeobase, stat,
       mgeo, commonWww, nodesWww,
-      www, mbill2, payWww, secWwwUtil, svgUtil
+      www, mbill2, payWww, secWwwUtil, secAvUtil, svgUtil
     )
 }
 

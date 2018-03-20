@@ -6,7 +6,7 @@ import functional.OneAppPerSuiteNoGlobalStart
 import io.suggest.color.MRgb
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.scalatestplus.play._
-import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
+import play.api.test.Helpers._
 
 import scala.concurrent.ExecutionContext
 
@@ -18,7 +18,7 @@ import scala.concurrent.ExecutionContext
  * Для определения цвета используются картинки с явным преобладанием какого-то цвета.
  * При тесте измеряется дистанция от найденного цвета до желаемых цветов.
  */
-class MainColorDetectorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with FutureAwaits with DefaultAwaitTimeout {
+class MainColorDetectorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
   private lazy val mainColorDetector = app.injector.instanceOf[MainColorDetector]
 

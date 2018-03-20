@@ -243,7 +243,7 @@ class StreamsUtil @Inject() (
     */
   def gzipFlow(bufferSize: Int = 8192): Flow[ByteString, ByteString, _] = {
     Flow[ByteString]
-      .via(new ByteStringsChunker(bufferSize))
+      .via( ByteStringsChunker(bufferSize) )
       .via(Compression.gzip)
   }
 

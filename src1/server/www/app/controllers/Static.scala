@@ -296,7 +296,7 @@ class Static @Inject() (
             // Компрессоры захлёбываются? Это проблемы компрессоров)) Стараемся разогнать генерацию данных на максимум ценой некоторой RAM.
             .conflate(_ ++ _)
             // Нормализовать размеры ByteString'ов для входа компрессоров. Для Gzip это влияет на коэфф.сжатия.
-            .via( new ByteStringsChunker(8192) )
+            .via( ByteStringsChunker(8192) )
 
           val byteStringSink = streamsUtil.byteStringAccSink
             // Запускать в фоне compact, который подменит исходное неоптимизированное значение ByteString.

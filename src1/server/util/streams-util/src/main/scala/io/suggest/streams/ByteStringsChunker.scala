@@ -11,7 +11,7 @@ import akka.util.ByteString
   * Description: ByteString chunker -- лимитирование размера каждого ByteString в потоке.
   * @see [[https://doc.akka.io/docs/akka/2.5.8/stream/stream-cookbook.html?language=scala#chunking-up-a-stream-of-bytestrings-into-limited-size-bytestrings]]
   */
-class ByteStringsChunker(val chunkSize: Int) extends GraphStage[FlowShape[ByteString, ByteString]] {
+case class ByteStringsChunker(val chunkSize: Int) extends GraphStage[FlowShape[ByteString, ByteString]] {
 
   val (in, out) = {
     val prefix = getClass.getSimpleName + "."

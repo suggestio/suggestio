@@ -35,7 +35,7 @@ class BrotliUtilSpec extends FlatSpec {
 
   "Streamed brotli compressor" should "handle simple data" in {
     val flow = Flow[ByteString]
-      .via( new ByteStringsChunker(8192) )
+      .via( ByteStringsChunker(8192) )
       .via( BrotliUtil.compress )
 
     val in = Source(0 to 100)
