@@ -50,14 +50,18 @@ class RotateR(
 
     /** Реакция на движение слайдера градусов наклона. */
     private def onValueChange(e: ReactEventFromInput): Callback = {
-      val newValue = e.target.value.toInt
-      dispatchOnProxyScopeCB($, RotateSet(Some(newValue)) )
+      val v = e.target.value
+      if (v.isEmpty) {
+        Callback.empty
+      } else {
+        val newValue = v.toInt
+        dispatchOnProxyScopeCB($, RotateSet(Some(newValue)) )
+      }
     }
 
     def render(propsOptProxy: Props): VdomElement = {
       propsOptProxy.value.whenDefinedEl { props =>
         <.div(
-
           // Галочка активации/деактивации вращения.
           <.label(
             ^.`class` := Css.CLICKABLE,

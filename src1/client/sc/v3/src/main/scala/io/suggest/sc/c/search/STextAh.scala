@@ -65,7 +65,7 @@ class STextAh[M](
       val v0 = value
 
       // Отфильтровать устаревший таймер:
-      if (v0.searchQuery isPendingWithStartTime  m.timestamp) {
+      if (v0.searchQuery isPendingWithStartTime m.timestamp) {
         // Нужно понять, есть ли какой-либо текст, выставив итог в поле searchQuery.
         // Если нет, то очистить поле, выставив Pot.empty.
         val searchQueryPot2 = if (v0.query.isEmpty || v0.query.trim.isEmpty) {

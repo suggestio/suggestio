@@ -240,11 +240,13 @@ class JdDocValidation(
     // Функция-валидатор для каждой из координат.
     def __validateSide(e: String, f: ISize2di => Int) = {
       val contSzSide = f(contSz)
+      // Повёрнутые элементы могут быть за экраном по xy, но на экране визуально.
+      val sideAbsSz = contSzSide * rotateDegOpt.fold(2)(_ => 6)
       MathConst.Counts.validateMinMax(
         v = f(coords2size),
-        min = -contSzSide,
         // TODO Использовать sin/cos угла для рассчёта предельного значения?
-        max = rotateDegOpt.fold(contSzSide)(_ => contSzSide * 2),
+        min = -sideAbsSz,
+        max = sideAbsSz,
         eMsgPrefix = errMsgF(e)
       )
     }
