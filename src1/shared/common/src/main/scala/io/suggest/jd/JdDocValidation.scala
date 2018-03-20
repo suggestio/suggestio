@@ -43,6 +43,7 @@ class JdDocValidation(
   private def OPS     = OP + S
   private def QD_OP   = QD + `.` + OP
   private def MAIN    = "main"
+  private def ROTATE  = "rot"
 
   import ErrorConstants.Words._
 
@@ -127,7 +128,8 @@ class JdDocValidation(
       ScalazUtil.liftNelOpt( props1.isMain ) {
         Validation.liftNel(_)(!_, errMsgF(`MAIN` + `.` + INVALID))
       } |@|
-      ScalazUtil.liftNelNone(props1.widthPx, errMsgF(WIDTH + `.` + UNEXPECTED))
+      ScalazUtil.liftNelNone(props1.widthPx, errMsgF(WIDTH + `.` + UNEXPECTED)) |@|
+      ScalazUtil.liftNelNone(props1.rotateDeg, errMsgF(ROTATE + `.` + UNEXPECTED))
     )( MJdtProps1.apply )
   }
 
@@ -208,6 +210,9 @@ class JdDocValidation(
       ScalazUtil.liftNelNone(qdProps1.isMain, errMsgF(MAIN + `.` + UNEXPECTED)) |@|
       ScalazUtil.liftNelOpt (qdProps1.widthPx) { widthPx =>
         MathConst.Counts.validateMinMax(widthPx, min = 10, max = BlockWidths.NORMAL.value * 2, errMsgF(WIDTH) + `.`)
+      } |@|
+      ScalazUtil.liftNelOpt(qdProps1.rotateDeg.filter(_ !=* 0)) { rotateDeg =>
+        MathConst.Counts.validateMinMax(rotateDeg, min = -180, max = 180, errMsgF(ROTATE))
       }
     )( MJdtProps1.apply )
   }

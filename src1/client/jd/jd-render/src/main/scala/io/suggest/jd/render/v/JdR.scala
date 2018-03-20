@@ -113,6 +113,11 @@ class JdR(
       }
     }
 
+    /** Ротация элемента. */
+    private def _maybeRotate(jdt: JdTag, jdArgs: MJdArgs): TagMod = {
+      jdt.props1.rotateDeg.whenDefined { jdArgs.jdCss.rotateF.apply }
+    }
+
     private def _clickableOnEdit(jdt: JdTag, jdArgs: MJdArgs): TagMod = {
       // В режиме редактирования -- надо слать инфу по кликам на стрипах
       ReactCommonUtil.maybe(jdArgs.conf.isEdit) {
@@ -367,6 +372,9 @@ class JdR(
 
         // Опциональный цвет фона
         _bgColorOpt( qdTag, jdArgs ),
+
+        // Опциональная ротация элемента.
+        _maybeRotate( qdTag, jdArgs ),
 
         _maybeSelected(qdTag, jdArgs),
         _clickableOnEdit(qdTag, jdArgs),

@@ -275,6 +275,7 @@ class JsMessagesUtil @Inject() (
       MC.`No.main.blocks.First.block.is.main` ::
       MC.`Background` ::
       MC.`Upload.file` ::
+      MC.`Rotation` ::
       Nil
   }
 

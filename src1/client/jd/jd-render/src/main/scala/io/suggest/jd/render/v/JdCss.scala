@@ -419,6 +419,20 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     }
   }
 
+  val rotateF = {
+    val rotatedSeq = _allJdTagsIter
+      .flatMap(_.props1.rotateDeg)
+      // Порядок не важен, но нужно избегать одинаковых углов поворота в списке допустимых значений:
+      .toSet
+      .toIndexedSeq
+
+    val rotationsDomain = new Domain.OverSeq( rotatedSeq )
+    styleF( rotationsDomain ) { rotateDeg =>
+      styleS(
+        transform := ("rotate(" + rotateDeg + "deg)" )
+      )
+    }
+  }
 
   val videoStyle = {
     val whDflt = HtmlConstants.Iframes.whCsspxDflt

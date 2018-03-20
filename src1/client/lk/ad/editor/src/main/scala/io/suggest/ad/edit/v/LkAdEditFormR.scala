@@ -13,7 +13,7 @@ import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.dev.MSzMults
 import io.suggest.jd.render.m.MJdArgs
-import io.suggest.jd.render.v.{JdCss, JdCssR, JdGridUtil, JdR}
+import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.quill.v.{QuillCss, QuillEditorR}
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.i18n.MsgCodes
@@ -50,6 +50,7 @@ class LkAdEditFormR(
                      deleteStripBtnR            : DeleteStripBtnR,
                      val showWideR              : ShowWideR,
                      val colorCheckboxR         : ColorCheckboxR,
+                     val rotateR                : RotateR,
                      val slideBlockR            : SlideBlockR,
                      val colorPickerR           : ColorPickerR,
                      val quillEditorR           : QuillEditorR
@@ -65,6 +66,7 @@ class LkAdEditFormR(
   import MStripEdS.MStripEdSFastEq
   import showWideR.ShowWideRPropsValFastEq
   import colorCheckboxR.ColorCheckboxPropsValFastEq
+  import rotateR.RotateRPropsValFastEq
   import slideBlockR.SlideBlockPropsValFastEq
   import quillEditorR.QuillEditorPropsValFastEq
 
@@ -86,7 +88,8 @@ class LkAdEditFormR(
                               showWidePropsOptC               : ReactConnectProxy[Option[showWideR.PropsVal]],
                               slideBlocks                     : SlideBlocksState,
                               colors                          : ColorsState,
-                              quillEdOptC                     : ReactConnectProxy[Option[quillEditorR.PropsVal]]
+                              quillEdOptC                     : ReactConnectProxy[Option[quillEditorR.PropsVal]],
+                              rotateOptC                      : ReactConnectProxy[Option[rotateR.PropsVal]]
                             )
 
   case class SlideBlocksState(
@@ -237,7 +240,10 @@ class LkAdEditFormR(
                       colorCheckboxR(_)(
                         MSG_BG_COLOR
                       )
-                    }
+                    },
+
+                    // Вращение: галочка + опциональный слайдер.
+                    s.rotateOptC { rotateR.apply }
                   )
                 )
               },
@@ -511,6 +517,17 @@ class LkAdEditFormR(
             quillEditorR.PropsVal(
               initDelta = qdS.initDelta,
               realDelta = qdS.realDelta
+            )
+          }
+        }( OptFastEq.Wrapped ),
+
+        rotateOptC = p.connect { mroot =>
+          for {
+            selJdt <- mroot.doc.jdArgs.selectedTag
+            if selJdt.rootLabel.name ==* MJdTagNames.QD_CONTENT
+          } yield {
+            rotateR.PropsVal(
+              value = selJdt.rootLabel.props1.rotateDeg
             )
           }
         }( OptFastEq.Wrapped )

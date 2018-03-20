@@ -159,3 +159,7 @@ case class ShowMainStrips(showing: Boolean) extends ILkEditAction
 case object DeleteAdClick extends ILkEditAction
 /** Ответ сервера на запрос удаления рекламной карточки. */
 case class DeleteAdResp( tryResp: Try[String] ) extends ILkEditAction
+
+
+/** Переключательство галочки вращения элемента. */
+case class RotateSet( degrees: Option[Int] ) extends ILkEditAction

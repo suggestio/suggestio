@@ -5,7 +5,6 @@ import io.suggest.color.MColorData
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.img.MImgEdgeWithOps
-import io.suggest.math.MathConst
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -32,15 +31,12 @@ object MJdtProps1 extends IEmpty {
     (__ \ "c").formatNullable[BlockMeta] and
     (__ \ "d").formatNullable[MCoords2di] and
     (__ \ "e").formatNullable[Boolean] and
-    (__ \ "f").formatNullable[Int]
+    (__ \ "f").formatNullable[Int] and
+    (__ \ "g").formatNullable[Int]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MJdtProps1] = {
     UnivEq.derive
-  }
-
-
-  def validateWidth(widthPx: Int, max: Int) = {
   }
 
 }
@@ -55,6 +51,7 @@ object MJdtProps1 extends IEmpty {
   * @param isMain Абстрактный флаг высшей приоритетности среди равных.
   *               В контексте стрипа обозначает, что данный стрип главный/заглавный, и именно он должен быть
   *               использован для рендера в плитке среди других карточек.
+  * @param rotateDeg Угол поворота в градусах, если задан.
   */
 case class MJdtProps1(
                        bgColor    : Option[MColorData]        = None,
@@ -62,7 +59,8 @@ case class MJdtProps1(
                        bm         : Option[BlockMeta]         = None,
                        topLeft    : Option[MCoords2di]        = None,
                        isMain     : Option[Boolean]           = None,
-                       widthPx    : Option[Int]               = None
+                       widthPx    : Option[Int]               = None,
+                       rotateDeg  : Option[Int]               = None,
                      )
   extends EmptyProduct
 {
@@ -73,5 +71,6 @@ case class MJdtProps1(
   def withTopLeft(topLeft: Option[MCoords2di])        = copy(topLeft = topLeft)
   def withIsMain(isMain: Option[Boolean])             = copy(isMain = isMain)
   def withWidthPx(widthPx: Option[Int])               = copy(widthPx = widthPx)
+  def withRotateDeg(rotateDeg: Option[Int])           = copy(rotateDeg = rotateDeg)
 
 }

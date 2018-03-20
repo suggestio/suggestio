@@ -233,4 +233,6 @@ object MsgCodes {
   val `Suggest.io._transcription` = "Suggest.io._transcription"
   val `About.sio.node.id` = "About.sio.node.id"
 
+  val `Rotation` = "Rotation"
+
 }

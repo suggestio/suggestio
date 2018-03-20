@@ -227,6 +227,34 @@ class DocEditAh[M](
       }
 
 
+    // Изменения состояния ротации текущего jd-тега.
+    case m: RotateSet =>
+      val v0 = value
+      val updatedOpt = for {
+        selJdtLoc0 <- v0.jdArgs.selectedTagLoc
+        jdt0 = selJdtLoc0.getLabel
+        if jdt0.props1.rotateDeg !=* m.degrees
+      } yield {
+        val tpl2 = selJdtLoc0
+          .modifyLabel { jdt00 =>
+            jdt00.withProps1(
+              jdt00.props1
+                .withRotateDeg( m.degrees )
+            )
+          }
+          .toTree
+        val v2 = v0.withJdArgs(
+          v0.jdArgs
+            .withTemplate( tpl2 )
+            .withJdCss(
+              jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
+            )
+        )
+        updated( v2 )
+      }
+      updatedOpt.getOrElse(noChange)
+
+
     // Клик по элементу карточки.
     case m: JdTagSelect =>
       val v0 = value

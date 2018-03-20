@@ -149,12 +149,22 @@ class LkAdEditCss
   }
 
 
+  object RangeInput {
+
+    val rangeInput = style(
+      verticalAlign.middle
+    )
+
+  }
+
+
   initInnerObjects(
     WhControls.contWidth,
     Layout.editorsCont,
     BgColorOptPicker.colorRound,
     Crop.popup,
-    StripMain.showAll
+    StripMain.showAll,
+    RangeInput.rangeInput
   )
 
 }

@@ -73,6 +73,8 @@ class LkAdEditModule {
 
   lazy val slideBlockR = wire[SlideBlockR]
 
+  lazy val rotateR = wire[RotateR]
+
 
   // circuit deps
 
