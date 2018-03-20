@@ -206,10 +206,15 @@ class JdDocValidation(
       ScalazUtil.liftNelOpt (qdProps1.bgColor)( MColorData.validateHexCodeOnly ) |@|
       ScalazUtil.liftNelNone(qdProps1.bgImg, errMsgF("bgImg") ) |@|
       ScalazUtil.liftNelNone(qdProps1.bm, errMsgF(BM)) |@|
-      ScalazUtil.liftNelSome(qdProps1.topLeft, errMsgF(XY + `.` + MISSING))( validateQdTagXY(_, contSz) ) |@|
+      ScalazUtil.liftNelSome(qdProps1.topLeft, errMsgF(XY + `.` + MISSING))( validateQdTagXY(_, contSz, qdProps1.rotateDeg) ) |@|
       ScalazUtil.liftNelNone(qdProps1.isMain, errMsgF(MAIN + `.` + UNEXPECTED)) |@|
       ScalazUtil.liftNelOpt (qdProps1.widthPx) { widthPx =>
-        MathConst.Counts.validateMinMax(widthPx, min = 10, max = BlockWidths.NORMAL.value * 2, errMsgF(WIDTH) + `.`)
+        MathConst.Counts.validateMinMax(
+          v = widthPx,
+          min = 10,
+          max = qdProps1.rotateDeg.fold(2)(_ => 6) * BlockWidths.NORMAL.value,
+          errMsgF(WIDTH) + `.`
+        )
       } |@|
       ScalazUtil.liftNelOpt(qdProps1.rotateDeg.filter(_ !=* 0)) { rotateDeg =>
         MathConst.Counts.validateMinMax(rotateDeg, min = -180, max = 180, errMsgF(ROTATE))
@@ -224,13 +229,19 @@ class JdDocValidation(
     * @param contSz Размер контейнера.
     * @return Результат валидации.
     */
-  private def validateQdTagXY(coords: MCoords2di, contSz: ISize2di): ValidationNel[String, MCoords2di] = {
+  private def validateQdTagXY(coords: MCoords2di, contSz: ISize2di, rotateDegOpt: Option[Int]): ValidationNel[String, MCoords2di] = {
     val errMsgF = ErrorConstants.emsgF(XY)
     val coords2size = coords.toSize
     // Функция-валидатор для каждой из координат.
     def __validateSide(e: String, f: ISize2di => Int) = {
       val contSzSide = f(contSz)
-      MathConst.Counts.validateMinMax(f(coords2size), min = -contSzSide, max = contSzSide, errMsgF(e))
+      MathConst.Counts.validateMinMax(
+        v = f(coords2size),
+        min = -contSzSide,
+        // TODO Использовать sin/cos угла для рассчёта предельного значения?
+        max = rotateDegOpt.fold(contSzSide)(_ => contSzSide * 2),
+        eMsgPrefix = errMsgF(e)
+      )
     }
     // Объединение валидаторов X и Y полей.
     (
