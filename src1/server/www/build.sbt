@@ -205,7 +205,10 @@ includeFilter in filter := {
 
 
 // Docker args. Ports: http, ssl, TODO set stable ports in elasticsearch.yml
-dockerExposedPorts := Seq(9000, 9443, 9200, 9201, 9300, 9301)
+dockerExposedPorts := Seq(9000)
+
+// Используем модифицированный дистр.
+dockerBaseImage := "sio/webarch:latest"
 
 
 // Есть ассеты, которые нет смысла сжимать. Правда, они в /public, но на всякий случай сделаем.

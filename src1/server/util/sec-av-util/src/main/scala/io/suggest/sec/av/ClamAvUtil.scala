@@ -98,7 +98,7 @@ final class ClamAvUtil @Inject()(
   }
 
 
-  private final def tcpCharset = StandardCharsets.US_ASCII
+  private def tcpCharset = StandardCharsets.US_ASCII
 
   /** Рендер целого число в байты. */
   private def int2byteString(i: Int): ByteString = {
@@ -117,6 +117,8 @@ final class ClamAvUtil @Inject()(
                          clamdHostPort: (String, Int) = CLAM_REMOTE_HOST_PORT.get): Future[ClamAvScanResult] = {
     val connectionFlow = Tcp()
       .outgoingConnection(clamdHostPort._1, clamdHostPort._2)
+
+    // TODO Если clamd начал ругаться во время отправки, то надо прерывать дальнейшую отправку.
 
     // Надо нарезать исходник на кусочки, добавив размер каждого chunk'а перед ним.
     val scanCmdSrc = Source
@@ -139,9 +141,7 @@ final class ClamAvUtil @Inject()(
     // Clamd возвращает сообщения прямо во время приёма файла (по мере выполнения проверки).
     val scanOutputSink = Flow[ByteString]
       .map(_.utf8String)
-      .toMat(
-        Sink.seq
-      )(Keep.right)
+      .toMat( Sink.seq )(Keep.right)
 
     val (_, resFut) = connectionFlow.runWith(scanCmdSrc, scanOutputSink)
 
