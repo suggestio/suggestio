@@ -84,7 +84,7 @@ class ScaleR(
                 ^.value    := props.current.multBody.toString,
                 ^.onChange ==> onScaleChange,
 
-                props.variants.toVdomArray { szMult =>
+                props.variants.distinct.toVdomArray { szMult =>
                   val code = szMult.multBody.toString
                   <.option(
                     ^.key   := code,
