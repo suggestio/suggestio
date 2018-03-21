@@ -51,16 +51,23 @@ abstract class ActivateAdvs
       .result
   }
 
+  def sqlInstallOnlyForItems(mitems: Iterable[MItem]): Iterable[MItem] = {
+    // Т.к. findItemsForAdId() возвращает все item'ы, а бывает, что на обработку интересуют только Offline-item'ы, без Online.
+    // И тут можно профильтровать.
+    mitems
+  }
 
   override def tryUpdateAd(tuData0: TryUpdateBuilder, mitems: Iterable[MItem]): Future[TryUpdateBuilder] = {
-    // Разделить item'ы на уже онлайновые и ещё пока оффлайновые.
-    val offline = mitems.filter(_.status == MItemStatuses.Offline)
-
     // Инкрементальный install всех необходимых item'ов на карточку.
-    val acc0Fut = Future.successful(tuData0.acc)
     val b2 = advBuilderFactory
-      .builder(acc0Fut, now)
-      .installSql(offline)
+      .builder(
+        acc0Fut = Future.successful(tuData0.acc),
+        now     = now
+      )
+      .installSql(
+        // Разделить item'ы на уже онлайновые и ещё пока оффлайновые.
+        sqlInstallOnlyForItems(mitems)
+      )
       .clearNode()
       .installNode(mitems)
 

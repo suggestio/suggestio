@@ -10,15 +10,6 @@ import scala.concurrent.Future
   * Created: 31.03.16 22:04
   * Description: Модель внешнего (по отн.к билдеру) контекста.
   */
-trait ICtxOuter {
-
-  /** Карта узлов-тегов: (tagFace|id) -> MNode.
-    * Смысл ключа зависит от контекста исполнения
-    */
-  def tagNodesMap: Map[String, MNode]
-
-}
-
 object MCtxOuter {
 
   def empty = apply()
@@ -27,8 +18,11 @@ object MCtxOuter {
 
 }
 
-/** Дефолтовая реализация модели [[ICtxOuter]]. */
+/** Модель общего контекста всей adv-build-операции.
+  *
+  * @param tagNodesMap Карта узлов-тегов: (tagFace|id) -> MNode.
+  *                    Смысл ключа зависит от контекста исполнения
+  */
 case class MCtxOuter(
-  override val tagNodesMap: Map[String, MNode] = Map.empty
+  tagNodesMap: Map[String, MNode] = Map.empty
 )
-  extends ICtxOuter

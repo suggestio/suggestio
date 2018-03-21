@@ -2,7 +2,7 @@ package util.billing.cron
 
 import javax.inject.Inject
 
-import io.suggest.mbill2.m.item.MItems
+import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.n2.node.MNodes
 import models.mproj.ICommonDi
@@ -32,6 +32,11 @@ class ActivateOfflineAdvs @Inject() (
   import mCommonDi._
   import slick.profile.api._
 
+  override def sqlInstallOnlyForItems(mitems: Iterable[MItem]): Iterable[MItem] = {
+    super
+      .sqlInstallOnlyForItems(mitems)
+      .filter(_.status == MItemStatuses.Offline)
+  }
 
   /** Ищем только карточки, у которых есть offline ads с dateStart < now. */
   override def _itemsSql(i: mItems.MItemsTable): Rep[Option[Boolean]] = {

@@ -123,8 +123,9 @@ class GeoTagsUtil @Inject() (
     for {
       tagNodes <- mNodes.dynSearch(msearch)
     } yield {
-      if (tagNodes.lengthCompare(1) > 0)
-        warn(s"$logPrefix Too many tag-nodes found for single-tag request: ${tagNodes.mkString(", ")}, ...")
+      if (tagNodes.lengthCompare(1) > 0) {
+        warn(s"$logPrefix Too many tag-nodes found for single-tag request:\n ${tagNodes.iterator.map(n => n.idOrNull -> n.guessDisplayName.orNull).mkString(", ")}")
+      }
       // TODO Нужно запускать тут мерж tag-узлов при выявлении коллизии: 2+ узлов относяться к одному и тому же тегу.
       tagNodes.headOption
     }
