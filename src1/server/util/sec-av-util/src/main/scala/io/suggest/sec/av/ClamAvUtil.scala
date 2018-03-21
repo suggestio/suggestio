@@ -3,7 +3,7 @@ package io.suggest.sec.av
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
@@ -29,9 +29,10 @@ import scala.sys.process._
   * - Быстрый локальный через unix-сокет (clamdscan --fdpass).
   * - Обычный, с передачей файла по tcp.
   */
+@Singleton
 final class ClamAvUtil @Inject()(
-                                  asyncUtil                 : AsyncUtil,
-                                  configuration             : Configuration,
+                                  asyncUtil                         : AsyncUtil,
+                                  configuration                     : Configuration,
                                   implicit private val actorSystem  : ActorSystem,
                                   implicit private val mat          : Materializer,
                                   implicit private val ec           : ExecutionContext

@@ -59,6 +59,8 @@ trait EsModelJMXMBeanI extends EsModelJMXMBeanCommonI {
     */
   def putAll(all: String): String
 
+  def refreshIndex(): String
+
 }
 
 
@@ -149,6 +151,14 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
       case ex: Throwable =>
         _formatEx(s"putAll(${all.length}): ", all, ex)
     }
+  }
+
+  override def refreshIndex(): String = {
+    LOGGER.debug(s"refreshIndex(): ${companion.ES_INDEX_NAME}")
+    val fut = for (res <- companion.refreshIndex()) yield {
+      s"Done, res =\n$res"
+    }
+    awaitString(fut)
   }
 
 

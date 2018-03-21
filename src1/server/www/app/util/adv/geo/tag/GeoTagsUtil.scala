@@ -118,7 +118,9 @@ class GeoTagsUtil @Inject() (
       override def limit = 2
     }
 
-    for (tagNodes <- mNodes.dynSearch(msearch)) yield {
+    for {
+      tagNodes <- mNodes.dynSearch(msearch)
+    } yield {
       if (tagNodes.lengthCompare(1) > 0)
         warn(s"$logPrefix Too many tag-nodes found for single-tag request: ${tagNodes.mkString(", ")}, ...")
       // TODO Нужно запускать тут мерж tag-узлов при выявлении коллизии: 2+ узлов относяться к одному и тому же тегу.
@@ -162,14 +164,14 @@ class GeoTagsUtil @Inject() (
           )
         )
 
-        trace(s"$logPrefix Tag not exists, creating new one: $tagNode0")
+        LOGGER.trace(s"$logPrefix Tag not exists, creating new one: $tagNode0")
 
         // Запустить сохранение нового узла.
         val saveFut = mNodes.save(tagNode0)
 
         saveFut.onComplete {
-          case Success(nodeId) => info(s"$logPrefix Created NEW node[$nodeId] for tag")
-          case Failure(ex)     => error(s"$logPrefix Unable to create tag-node", ex)
+          case Success(nodeId) => LOGGER.info(s"$logPrefix Created NEW node[$nodeId] for tag")
+          case Failure(ex)     => LOGGER.error(s"$logPrefix Unable to create tag-node", ex)
         }
 
         for (tagId <- saveFut) yield {

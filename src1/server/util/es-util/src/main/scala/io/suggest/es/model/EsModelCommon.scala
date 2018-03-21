@@ -589,16 +589,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   }
 
 
-  /** Рефреш всего индекса, в котором живёт эта модель. */
-  def refreshIndex(): Future[_] = {
-    val indexName = ES_INDEX_NAME
-    LOGGER.trace(s"refreshIndex(): Will refresh $indexName")
-    esClient.admin().indices()
-      .prepareRefresh(indexName)
-      .execute()
-  }
-
-
   def UPDATE_RETRIES_MAX: Int = EsModelUtil.UPDATE_RETRIES_MAX_DFLT
 
 

@@ -46,7 +46,8 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
       override protected def _PARENT_FN: String = TAGS_FN
 
       /** Имя raw-подполя, индексирующего всё без анализа. */
-      def RAW_FN = "kw"
+      def RAW_FN = "raw"
+      def KW_FN  = "kw"
 
       def TAGS_RAW_FN = _fullFn(RAW_FN)
 
@@ -155,9 +156,18 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         analyzer        = SioConstants.ENGRAM_AN_1,
         search_analyzer = SioConstants.DFLT_AN,
         fields = Seq(
-          // Для аггрегации нужны ненормированные термы. Они позволят получать необрезанные слова.
-          FieldKeyword(
+          // При поиске тегов надо игнорить регистр:
+          FieldText(
             id              = Tags.RAW_FN,
+            include_in_all  = false,
+            index           = true,
+            analyzer        = SioConstants.KW_LC_AN
+            // TODO Нужна поддержка аггрегации тут: нужен какой-то параметр тут + переиндексация. И можно удалить KW_FN.
+          ),
+          // Для аггрегации нужно keyword-термы. Они позволят получать необрезанные слова.
+          // Появилась для DirectTagsUtil, но из-за других проблем там, это поле не используется.
+          FieldKeyword(
+            id              = Tags.KW_FN,
             include_in_all  = false,
             index           = true
           )

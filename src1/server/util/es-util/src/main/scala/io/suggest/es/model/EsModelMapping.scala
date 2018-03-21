@@ -82,5 +82,15 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with IMacroLog
     EsModelUtil.ensureIndex(ES_INDEX_NAME, shards = SHARDS_COUNT, replicas = REPLICAS_COUNT)
   }
 
+
+  /** Рефреш всего индекса, в котором живёт эта модель. */
+  def refreshIndex(): Future[_] = {
+    val indexName = ES_INDEX_NAME
+    LOGGER.trace(s"refreshIndex(): Will refresh $indexName")
+    esClient.admin().indices()
+      .prepareRefresh(indexName)
+      .execute()
+  }
+
 }
 
