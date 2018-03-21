@@ -208,7 +208,7 @@ includeFilter in filter := {
 dockerExposedPorts := Seq(9000)
 
 // Используем модифицированный дистр.
-dockerBaseImage := "sio/webarch:latest"
+dockerBaseImage := "sio/os-www:latest"
 
 
 // Есть ассеты, которые нет смысла сжимать. Правда, они в /public, но на всякий случай сделаем.
