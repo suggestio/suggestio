@@ -602,7 +602,7 @@ class GeoTagsUtilJmx @Inject() (
     val fut = for {
       (countUpdated, countDeleted) <- geoTagsUtil.rebuildAllTagNodes()
     } yield {
-      s"Done:\nUpdated = $countUpdated\nDeleted = $countDeleted"
+      s"Updated = $countUpdated, Deleted = $countDeleted"
     }
     awaitString( fut )
   }

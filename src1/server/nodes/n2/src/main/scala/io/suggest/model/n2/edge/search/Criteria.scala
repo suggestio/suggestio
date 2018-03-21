@@ -28,7 +28,7 @@ trait ICriteria extends IIsNonEmpty with IMust {
   def predicates  : Seq[MPredicate]
 
   /** Критерий для поиска по тегу. */
-  def tags        : Seq[ITagCriteria]
+  def tags        : Seq[TagCriteria]
 
   /** Состояние дополнительного флага в контейнера info. */
   def flag        : Option[Boolean]
@@ -99,7 +99,7 @@ case class Criteria(
                      override val predicates        : Seq[MPredicate]      = Nil,
                      override val must              : Must_t               = IMust.SHOULD,
                      override val flag              : Option[Boolean]      = None,
-                     override val tags              : Seq[ITagCriteria]    = Nil,
+                     override val tags              : Seq[TagCriteria]     = Nil,
                      override val gsIntersect       : Option[IGsCriteria]  = None,
                      override val nodeIdsMatchAll   : Boolean              = false,
                    )
