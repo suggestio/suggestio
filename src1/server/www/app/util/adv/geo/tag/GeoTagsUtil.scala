@@ -335,17 +335,16 @@ class GeoTagsUtil @Inject() (
             info = e0.info.copy(
               geoShapes = tagShapes
             ),
-            nodeIds = directTagRcvrs ++ e0.nodeIds
+            nodeIds = directTagRcvrs
           )
 
           mnode0.copy(
             edges = mnode0.edges.copy(
-              out = {
-                val iter = mnode0.edges
+              out = MNodeEdges.edgesToMap1(
+                mnode0.edges
                   .withoutPredicateIter(p)
                   .++( e1 :: Nil )
-                MNodeEdges.edgesToMap1( iter )
-              }
+              )
             )
           )
         }
