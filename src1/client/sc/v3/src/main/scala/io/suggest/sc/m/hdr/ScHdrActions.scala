@@ -1,5 +1,6 @@
 package io.suggest.sc.m.hdr
 
+import io.suggest.sc.m.search.MSearchTab
 import io.suggest.spa.DAction
 
 /**
@@ -13,8 +14,10 @@ sealed trait IScHdrAction extends DAction
 
 /** Экшен открытия/закрытия панели поиска (справа).
   * @param open true - для открытия поиска. false -- для закрытия.
+  * @param onTab Открыть на указанном табе, если задан.
+  *              Если не задано, то открыть табе, заданном в состоянии.
   */
-case class SearchOpenClose(open: Boolean) extends IScHdrAction
+case class SearchOpenClose(open: Boolean, onTab: Option[MSearchTab] = None) extends IScHdrAction
 
 
 /** Экшен открытия/закрытия панели меню (слева). */

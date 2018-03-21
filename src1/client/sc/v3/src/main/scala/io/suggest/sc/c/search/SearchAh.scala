@@ -25,25 +25,55 @@ class SearchAh[M](
   with Log
 { ah =>
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
-    // Клик по кнопке открытия поисковой панели.
-    case m: SearchOpenClose =>
-      val v2 = value.withIsShown( m.open )
+  /** Запуск инициализации тегов. */
+  private def _maybeInitializeTab(v0: MScSearch): Option[Effect] = {
+    _maybeInitializeTab(v0.currTab, v0)
+  }
+  private def _maybeInitializeTab(tab: MSearchTab, v0: MScSearch): Option[Effect] = {
+    tab match {
+      case MSearchTabs.Tags if v0.tags.tagsReq.isEmpty =>
+        // Неинициализированная панель тегов: запустить загрузку тегов.
+        val getMoreTagsFx = Effect.action {
+          GetMoreTags(clear = true)
+        }
+        Some(getMoreTagsFx)
 
-      // Аккаумулятор сайд-эффектов.
-      var fx: Effect = Effect.action( ResetUrlRoute )
-
-      // Требуется ли запусткать инициализацию карты?
-      if (!v2.mapInit.ready) {
-        fx += Effect {
+      case MSearchTabs.GeoMap if !v0.mapInit.ready =>
+        val mapInitFx = Effect {
           DomQuick
             .timeoutPromiseT(25)(InitSearchMap)
             .fut
         }
-      }
+        Some( mapInitFx )
 
-      updated(v2, fx)
+      case _ =>
+        None
+    }
+  }
+
+  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+
+    // Клик по кнопке открытия поисковой панели.
+    case m: SearchOpenClose =>
+      var v2 = value.withIsShown( m.open )
+
+      // Если выставлен таб, то залить его в состояние:
+      for (tab <- m.onTab if v2.currTab !=* tab)
+        v2 = v2.withCurrTab(tab)
+
+      // Аккаумулятор сайд-эффектов.
+      val routeFx = Effect.action( ResetUrlRoute )
+
+      // Требуется ли запусткать инициализацию карты?
+      val fxOpt = _maybeInitializeTab(m.onTab.getOrElse(v2.currTab), v2)
+
+      // Объеденить эффекты:
+      val finalFx = (routeFx :: fxOpt.toList)
+        .mergeEffectsSet
+        .get
+
+      updated(v2, finalFx)
 
 
     // Запуск инициализации гео.карты.
@@ -75,14 +105,9 @@ class SearchAh[M](
 
         var fx: Effect = Effect.action( ResetUrlRoute )
 
-        // TODO Если на панель тегов, то надо запустить эффект поиска текущих (начальных) тегов.
-        if ((m.newTab ==* MSearchTabs.Tags) && v2.tags.tagsReq.isEmpty) {
-          // Переключение на неинициализированную панель тегов: запустить загрузку тегов.
-          val getMoreTagsFx = Effect.action {
-            GetMoreTags(clear = true)
-          }
-          fx = getMoreTagsFx + fx
-        }
+        // Если таб ещё не инициализирован, то сделать это.
+        for (tabInitFx <- _maybeInitializeTab(m.newTab, v2))
+          fx += tabInitFx
 
         updated(v2, fx)
       }

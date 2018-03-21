@@ -106,14 +106,16 @@ class TailAh[M](
       for {
         mSearchTab <- m.mainScreen.searchTab
         if !currMainScreen.searchTab.contains( mSearchTab )
-      }
+      } {
         fxsAcc ::= Effect.action( SwitchTab( mSearchTab ) )
+      }
 
       // Проверка поля searchOpened
       if (m.mainScreen.searchOpened !=* currMainScreen.searchOpened) {
         // Вместо патчинга состояния имитируем клик: это чтобы возможные сайд-эффекты обычного клика тоже отработали.
-        fxsAcc ::= Effect.action( SearchOpenClose(m.mainScreen.searchOpened) )
+        fxsAcc ::= Effect.action( SearchOpenClose(m.mainScreen.searchOpened, m.mainScreen.searchTab) )
       }
+      // TODO Возможно, SwitchTab надо запихнуть в else-ветвь тут?
 
       // Смотрим координаты текущей точки.
       for {
