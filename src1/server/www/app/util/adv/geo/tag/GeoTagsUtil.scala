@@ -3,6 +3,7 @@ package util.adv.geo.tag
 import javax.inject.Inject
 
 import akka.stream.scaladsl.{Keep, Sink}
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.util.SioEsUtil
 import io.suggest.geo.MNodeGeoLevels
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -49,6 +50,7 @@ class GeoTagsUtil @Inject() (
   import mCommonDi._
   import slick.profile.api._
   import streamsUtil.Implicits._
+  import mNodes.Implicits.elSourcingHelper
 
   /** Предикат эджей, используемых в рамках этого модуля. */
   private def _PRED = MPredicates.TaggedBy.Self
@@ -254,7 +256,7 @@ class GeoTagsUtil @Inject() (
     * @param mnode Исходный инстанс тега.
     * @return Фьючерс с результатом ребилда тега-узла.
     */
-  def rebuildTag(mnode: MNode): Future[MNode] = {
+  def rebuildTag(mnode: MNode): Future[Option[MNode]] = {
     val mnodeId = mnode.id.get
 
     val startTs = System.currentTimeMillis()
@@ -317,42 +319,78 @@ class GeoTagsUtil @Inject() (
       }
 
       // Залить собранные шейпы в узел тега.
-      mnode2 <- {
+      mnodeOpt2 <- {
         LOGGER.trace(s"$logPrefix Found ${directTagRcvrs.size} direct-tag rcvrs: [${directTagRcvrs.mkString(", ")}]")
 
         val p = _PRED
         val someShapesCount = Some(tagShapesCount)
 
-        mNodes.tryUpdate(mnode) { mnode0 =>
-          // Собрать единый эдж self-тега для всех геошейпов.
-          val e0 = mnode0.edges
-            .withPredicateIter(p)
-            .toStream
-            .head
+        if (directTagRcvrs.isEmpty && tagShapes.isEmpty) {
+          // Нет данных для self-тега. Удаляем его сразу:
+          for {
+            isDeleted <- mNodes.deleteById( mnode.id.get )
+          } yield {
+            LOGGER.info(s"$logPrefix Empty tag node deleted ok?$isDeleted")
+            Option.empty[MNode]
+          }
 
-          val e1 = e0.copy(
-            order = someShapesCount,
-            info = e0.info.copy(
-              geoShapes = tagShapes
-            ),
-            nodeIds = directTagRcvrs
-          )
+        } else {
+          mNodes
+            .tryUpdate(mnode) { mnode0 =>
+              val e0Opt = mnode0
+                .edges
+                .withPredicateIter(p)
+                .toStream
+                .headOption
 
-          mnode0.copy(
-            edges = mnode0.edges.copy(
-              out = MNodeEdges.edgesToMap1(
-                mnode0.edges
-                  .withoutPredicateIter(p)
-                  .++( e1 :: Nil )
-              )
-            )
-          )
+              // Собрать единый эдж self-тега для всех геошейпов.
+              val e1 = e0Opt.fold {
+                // Should never happen.
+                LOGGER.warn(s"$logPrefix Tag-node with missing self-tag edge. Repairing...")
+                MEdge(
+                  predicate = p,
+                  order = someShapesCount,
+                  info = MEdgeInfo(
+                    geoShapes = tagShapes
+                  ),
+                  nodeIds = directTagRcvrs
+                )
+              } { e0 =>
+                e0.copy(
+                  order = someShapesCount,
+                  info = e0.info.copy(
+                    geoShapes = tagShapes
+                  ),
+                  nodeIds = directTagRcvrs
+                )
+              }
+              LOGGER.trace(s"$logPrefix Updated self-tag edge: $e1")
+
+              if (e0Opt contains e1) {
+                // Новый и старый эджи эквивалентны. Значит, обновлять этот tag-node не требуется.
+                LOGGER.trace(s"$logPrefix Self-tag edge not modified. Do not update")
+                null
+              } else {
+                // Есть изменения. Заливаем в инстанс MNode и сохраняем:
+                mnode0.copy(
+                  edges = mnode0.edges.copy(
+                    out = MNodeEdges.edgesToMap1(
+                      mnode0.edges
+                        .withoutPredicateIter(p)
+                        .++( e1 :: Nil )
+                    )
+                  )
+                )
+              }
+            }
+            .map( EmptyUtil.someF )
         }
+
       }
 
     } yield {
-      trace(s"$logPrefix Tag rebuilded, took ${System.currentTimeMillis - startTs}ms.")
-      mnode2
+      LOGGER.trace(s"$logPrefix Tag rebuilded, took ${System.currentTimeMillis - startTs}ms. savedOrDeleted?${mnodeOpt2.isDefined}")
+      mnodeOpt2
     }
   }
 
@@ -362,12 +400,42 @@ class GeoTagsUtil @Inject() (
     * @param tagNodes Узлы-теги перед ребилдом.
     * @return Фьючерс со списком отребилденных тегов.
     */
-  def rebuildTags(tagNodes: Iterable[MNode]): Future[Iterable[MNode]] = {
+  def rebuildTags(tagNodes: Iterable[MNode]): Future[Stream[MNode]] = {
     if (tagNodes.isEmpty) {
-      Future.successful(tagNodes)
+      Future.successful( Stream.empty )
     } else {
-      Future.traverse(tagNodes)(rebuildTag)
+      for {
+        res <- Future.traverse(tagNodes)(rebuildTag)
+      } yield {
+        // Собрать явно-ленивый Stream из обновлённых тегов. Ленивость, т.к. результат этой функции обычно не нужен.
+        res
+          .iterator
+          .flatten
+          .toStream
+      }
     }
+  }
+
+
+  /** Пересобрать все существующие узлы-теги.
+    * Пустые теги будут удалены.
+    *
+    * @return Кол-во обновлённый и кол-во удалённых тегов-узлов.
+    */
+  def rebuildAllTagNodes(): Future[(Int, Int)] = {
+    mNodes
+      .source( (new AllTagNodesSearch).toEsQuery )
+      // Пересобираем все теги одновременно.
+      .mapAsyncUnordered(10) { mnode =>
+        rebuildTag(mnode)
+      }
+      .runFold( (0,0) ) { case ((countUpdated, countDeleted), mnodeOpt) =>
+        if (mnodeOpt.isEmpty) {
+          (countUpdated, countDeleted + 1)
+        } else {
+          (countUpdated + 1, countDeleted)
+        }
+      }
   }
 
 
@@ -455,15 +523,18 @@ class GeoTagsUtil @Inject() (
   }
 
 
+  class AllTagNodesSearch extends MNodeSearchDfltImpl {
+    override def nodeTypes = MNodeTypes.Tag :: Nil
+  }
+
+
   /**
     * Удаление всех узлов-тегов.
     *
     * @return Кол-во удаленных узлов.
     */
   def deleteAllTagNodes(): Future[Int] = {
-    val msearch = new MNodeSearchDfltImpl {
-      override def nodeTypes = MNodeTypes.Tag :: Nil
-    }
+    val msearch = new AllTagNodesSearch
     val scroller = mNodes.startScroll( msearch.toEsQueryOpt )
     mNodes.deleteByQuery(scroller)
   }
@@ -483,6 +554,8 @@ trait GeoTagsUtilJmxMBean {
   def rebuildTagByNodeId(nodeId: String): String
 
   def ensureTag(tags: String): String
+
+  def rebuildAllTagNodes(): String
 
 }
 
@@ -509,9 +582,9 @@ class GeoTagsUtilJmx @Inject() (
     val fut = for {
       mnodeOpt <- mNodesCache.getByIdType(nodeId, MNodeTypes.Tag)
       mnode = mnodeOpt.get
-      mnode2 <- geoTagsUtil.rebuildTag( mnode )
+      mnodeOpt2 <- geoTagsUtil.rebuildTag( mnode )
     } yield {
-      s"Done.\n\n\n$mnode2"
+      s"Done.\n\n\n$mnodeOpt2"
     }
     awaitString( fut )
   }
@@ -521,6 +594,15 @@ class GeoTagsUtilJmx @Inject() (
       mnode <- geoTagsUtil.ensureTag( tag )
     } yield {
       s"ok, nodeId = ${mnode.id.orNull}\n\n\n$mnode"
+    }
+    awaitString( fut )
+  }
+
+  override def rebuildAllTagNodes(): String = {
+    val fut = for {
+      (countUpdated, countDeleted) <- geoTagsUtil.rebuildAllTagNodes()
+    } yield {
+      s"Done:\nUpdated = $countUpdated\nDeleted = $countDeleted"
     }
     awaitString( fut )
   }
