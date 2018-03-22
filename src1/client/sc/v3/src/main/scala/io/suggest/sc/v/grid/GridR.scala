@@ -1,7 +1,7 @@
 package io.suggest.sc.v.grid
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.MSize2di
@@ -15,7 +15,6 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -71,6 +70,7 @@ class GridR(
       ReactDiodeUtil.dispatchOnProxyScopeCB($, GridScroll(scrollTop))
     }
 
+    private val _gridCoreApply: ReactConnectProps[MGridS] = gridCoreR(_)
 
     def render(s: State): VdomElement = {
       val ScCss = getScCssF()
@@ -102,7 +102,7 @@ class GridR(
                 },
 
                 // Непосредственный рендер плитки.
-                s.gridC { gridCoreR.apply }
+                s.gridC { _gridCoreApply }
               )
             },
 

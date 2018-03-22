@@ -14,6 +14,8 @@ import minitest._
 import scala.scalajs.js
 import scalaz.Tree
 
+import scala.scalajs.js.JSON
+
 // TODO Есть проблемы со сложностью типов в Delta.insert(). Раздолбить insert API на несколько методов + JSName?
 import scala.language.existentials
 
@@ -135,9 +137,9 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     //   {"attributes":{"bold":true},"insert":"blochHeight"},
     //   {"insert":" wr2 34t\n"}
     // ]}
-    val strBefore = "lorem ipsum und uber "
+    val strBefore = "lorem ipsum und uber"
     val strBolded = "blochHeight"
-    val strAfter  = " wr2 34t\n"
+    val strAfter  = "wr2 34t\n"
 
     val delta2 = new Delta()
       .insert( strBefore )
@@ -261,6 +263,68 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     val diffDelta = delta2.diff(revDelta)
 
     assert(diffDelta.ops.isEmpty)
+  }
+
+
+  test("Convert qd-tag with compex real-word text styling: word parts with different styles") {
+    // {"ops":[
+    //   {"insert":"lorem ipsum und uber "},
+    //   {"attributes":{"bold":true},"insert":"blochHeight"},
+    //   {"insert":" wr2 34t\n"}
+    // ]}
+    val strBefore = "lorem ipsum und uber"
+    val strBolded = "blochHeight"
+    val strAfter  = "wr2 34t\n"
+
+    val font = js.defined("aa-higherup")
+    val delta2 = new Delta()
+      .insert( strBefore,
+        attributes = {
+          val dAttrs = js.Object().asInstanceOf[DeltaOpAttrs]
+          dAttrs.font = font
+          dAttrs.color = js.defined("#fff")
+          dAttrs
+        }
+      )
+      .insert( strBolded,
+        attributes = {
+          val dAttrs = js.Object().asInstanceOf[DeltaOpAttrs]
+          dAttrs.bold = js.defined( true )
+          dAttrs.font = font
+          dAttrs.color = js.defined("#000")
+          dAttrs
+        }
+      )
+      .insert( strAfter,
+        attributes = {
+          val dAttrs = js.Object().asInstanceOf[DeltaOpAttrs]
+          dAttrs.font = font
+          dAttrs.color = js.defined("#fff")
+          dAttrs
+        }
+      )
+
+    // В эджах какой-то мусор. Но он не должен потеряться.
+    val edges0 = Map[EdgeUid_t, MEdgeDataJs](
+      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 1, url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 3, url = Some("blob:645v-56h65y5665h56")) ),
+      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) )
+    )
+
+    val jdTag0 = Tree.Leaf(
+      JdTag.qd( coords )
+    )
+
+    val (qdTagTree2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
+    assertEquals( qdTagTree2.qdOpsIter.size, 3 )
+    assertEquals( edges2.size, 6 )
+
+    val revDelta = quillDeltaJsUtil.qdTag2delta(qdTagTree2, edges2)
+    assertEquals( revDelta.ops.length, 3 )
+
+    val diffDelta = delta2.diff(revDelta)
+
+    assert( diffDelta.ops.isEmpty, s"\n expected = ${JSON.stringify(delta2)}\n received = ${JSON.stringify(revDelta)}\n diff = ${JSON.stringify(diffDelta)}" )
   }
 
 }

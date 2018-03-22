@@ -132,6 +132,7 @@ class DocEditAh[M](
         val qdSubTree0 = v0.jdArgs.selectedTag.get
         // Спроецировать карту сборных эджей в jd-эджи
         val edgesData0 = v0.jdArgs.edges
+        //println( "textChanged:\n" + JSON.stringify(m.fullDelta) )
         val (qdSubTree2, edgesData2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, qdSubTree0, edgesData0)
 
         // Собрать новый json-document
@@ -291,11 +292,12 @@ class DocEditAh[M](
             qd    = newSelJdtTreeLoc.tree,
             edges = v2.jdArgs.edges
           )
+          //println( "selJdt\n" + JSON.stringify(delta2) )
           v2
             .withQdEdit(
               Some(
                 MQdEditS(
-                  initDelta  = delta2
+                  initDelta = delta2
                 )
               )
             )

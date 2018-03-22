@@ -25,11 +25,6 @@ class SearchAh[M](
   with Log
 { ah =>
 
-
-  /** Запуск инициализации тегов. */
-  private def _maybeInitializeTab(v0: MScSearch): Option[Effect] = {
-    _maybeInitializeTab(v0.currTab, v0)
-  }
   private def _maybeInitializeTab(tab: MSearchTab, v0: MScSearch): Option[Effect] = {
     tab match {
       case MSearchTabs.Tags if v0.tags.tagsReq.isEmpty =>
@@ -65,8 +60,8 @@ class SearchAh[M](
       // Аккаумулятор сайд-эффектов.
       val routeFx = Effect.action( ResetUrlRoute )
 
-      // Требуется ли запусткать инициализацию карты?
-      val fxOpt = _maybeInitializeTab(m.onTab.getOrElse(v2.currTab), v2)
+      // Требуется ли запусткать инициализацию карты или списка тегов? Да, если открытие на НЕинициализированной панели.
+      val fxOpt = OptionUtil.maybeOpt(m.open)( _maybeInitializeTab(m.onTab.getOrElse(v2.currTab), v2) )
 
       // Объеденить эффекты:
       val finalFx = (routeFx :: fxOpt.toList)

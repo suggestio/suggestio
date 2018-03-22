@@ -135,13 +135,14 @@ object Common {
     /** Версия wysiwyg-редактора quill, который будем пытаться использовать заместо tinymce.
       * @see [[https://github.com/quilljs/quill]]
       */
-    val QUILL = "1.3.2"
+    // TODO Кажется, эти значения ни на что не влияют. react-quill тащит свою версию quill с собой.
+    val QUILL = "1.3.6"
     val QUILL_DELTA = "3.6.0"
 
     /** Версия react-quill
       * @see [[https://www.npmjs.com/package/react-quill]]
       */
-    val REACT_QUILL = "1.1.0"
+    val REACT_QUILL = "1.2.6"
 
     val REACT_LEAFLET = "1.6.6"
 
