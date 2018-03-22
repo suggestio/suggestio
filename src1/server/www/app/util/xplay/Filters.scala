@@ -19,11 +19,12 @@ import util.cdn.{CorsFilter, DumpXffHeaders}
   * Внутренний список фильтров упразднён.
   */
 final case class Filters @Inject() (
+  // gzip должен идти выше htmlCompress. TODO Кажется, что фильтры применяются в обратном порядке. Надо разобаться, возможно val filters требует reverse?
+  gzipFilter              : GzipFilter,
   expireSessionFilter     : ExpireSessionFilter,
   htmlCompress            : HtmlCompressFilter,
   dumpXffHdrs             : DumpXffHeaders,
   secHeaders              : SecHeadersFilter,
-  gzipFilter              : GzipFilter,
   cors                    : CorsFilter
 )
   extends HttpFilters
