@@ -1,7 +1,7 @@
 package io.suggest.lk.adn.map.r
 
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.geo.MGeoPoint
 import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -18,7 +18,8 @@ import react.leaflet.popup.{LPopupPropsR, LPopupR}
   */
 object RadPopupR {
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
   case class PropsVal(
                        point  : MGeoPoint
@@ -53,6 +54,7 @@ object RadPopupR {
     .renderBackend[Backend]
     .build
 
-  def apply(propsValProxy: Props) = component(propsValProxy)
+  private def _apply(propsValProxy: Props) = component(propsValProxy)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

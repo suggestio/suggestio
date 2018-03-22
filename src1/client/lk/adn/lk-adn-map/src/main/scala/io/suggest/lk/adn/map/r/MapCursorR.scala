@@ -1,6 +1,6 @@
 package io.suggest.lk.adn.map.r
 
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.lk.adn.map.m.IRadOpts
 import io.suggest.maps.m.MRadT
 import io.suggest.maps.m.MRadT.MRadTFastEq
@@ -18,7 +18,8 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   */
 object MapCursorR {
 
-  type Props = ModelProxy[IRadOpts[_]]
+  type Props_t = IRadOpts[_]
+  type Props = ModelProxy[Props_t]
 
 
   protected[this] case class State(
@@ -47,6 +48,7 @@ object MapCursorR {
     .renderBackend[Backend]
     .build
 
-  def apply(nodeMarkerProxy: Props) = component(nodeMarkerProxy)
+  private def _apply(nodeMarkerProxy: Props) = component(nodeMarkerProxy)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

@@ -1,6 +1,6 @@
 package io.suggest.maps.r.rad
 
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
@@ -18,7 +18,8 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, Scal
   */
 object RadEnabledR {
 
-  type Props = ModelProxy[PropsVal]
+  type Props_t = PropsVal
+  type Props = ModelProxy[Props_t]
 
   case class PropsVal(enabled: Boolean, renderHintAsText: Boolean)
 
@@ -76,6 +77,7 @@ object RadEnabledR {
     .renderBackend[Backend]
     .build
 
-  def apply(props: Props) = component(props)
+  def _apply(props: Props) = component(props)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

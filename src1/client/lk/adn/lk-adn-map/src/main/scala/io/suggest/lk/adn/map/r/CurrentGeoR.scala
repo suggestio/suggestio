@@ -1,7 +1,7 @@
 package io.suggest.lk.adn.map.r
 
 import diode.data.Pot
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.maps.m.{MExistGeoPopupS, MExistGeoS}
 import io.suggest.maps.r.{ExistAdvGeoShapesR, ExistPopupR}
 import io.suggest.sjs.common.geo.json.GjFeature
@@ -21,7 +21,8 @@ import scala.scalajs.js
   */
 object CurrentGeoR {
 
-  type Props = ModelProxy[MExistGeoS]
+  type Props_t = MExistGeoS
+  type Props = ModelProxy[Props_t]
 
   protected case class State(
                               geoJsonC   : ReactConnectProxy[Pot[js.Array[GjFeature]]],
@@ -54,6 +55,7 @@ object CurrentGeoR {
     .renderBackend[Backend]
     .build
 
-  def apply(currGeoSProxy: Props) = component(currGeoSProxy)
+  private def _apply(currGeoSProxy: Props) = component(currGeoSProxy)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

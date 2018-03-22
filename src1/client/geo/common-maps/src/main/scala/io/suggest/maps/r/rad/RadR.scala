@@ -1,6 +1,6 @@
 package io.suggest.maps.r.rad
 
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -20,7 +20,8 @@ import io.suggest.react.ReactCommonUtil
   */
 object RadR {
 
-  type Props = ModelProxy[Option[MRad]]
+  type Props_t = Option[MRad]
+  type Props = ModelProxy[Props_t]
 
   protected case class State(
                               mRadTC                  : ReactConnectProxy[Option[MRadT[_]]],
@@ -48,7 +49,7 @@ object RadR {
 
           // Попап управления центром.
           s.centerPopupC { popupEnabledOpt =>
-            val opt = popupEnabledOpt().filter(identity)
+            val opt = popupEnabledOpt.value.filter(identity)
             opt.whenDefinedEl { _ =>
               LPopupR(
                 new LPopupPropsR {
@@ -87,6 +88,7 @@ object RadR {
     .build
 
 
-  def apply(props: Props) = component(props)
+  private def _apply(props: Props) = component(props)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }
