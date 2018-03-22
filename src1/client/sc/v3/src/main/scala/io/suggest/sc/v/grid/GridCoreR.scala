@@ -74,7 +74,6 @@ class GridCoreR(
 
 
     def render(mgridProxy: Props): VdomElement = {
-      println("grid core re-renders...")
       val mgrid = mgridProxy.value
 
       CSSGrid {

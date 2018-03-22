@@ -6,6 +6,7 @@ import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
 import japgolly.scalajs.react.{BackendScope, Callback}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import japgolly.scalajs.react.extra.{Reusability, Reusable}
 import japgolly.univeq._
 
 /**
@@ -132,6 +133,21 @@ object ReactDiodeUtil {
 
     def updatedSilentMaybeEffect(v2: T, effectOpt: Option[Effect]): ActionResult[M] = {
       effectOpt.fold( ah.updatedSilent(v2) ) { fx => ah.updatedSilent(v2, fx) }
+    }
+
+  }
+
+
+  implicit class FastEqExtOps[A](val feq: FastEq[A]) extends AnyVal {
+
+    def reusability: Reusability[A] = {
+      Reusability[A] { feq.eqv }
+    }
+
+    def reusabilityModelProxy: Reusability[ModelProxy[A]] = {
+      Reusability[ModelProxy[A]] { (aProxy, bProxy) =>
+        feq.eqv( aProxy.value, bProxy.value )
+      }
     }
 
   }

@@ -25,6 +25,7 @@ import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
@@ -48,7 +49,7 @@ class JdR(
   extends Log
 { jdR =>
 
-  import MJdArgs.MJdArgsFastEq
+  import MJdArgs.{MJdArgsFastEq, jdArgsProxyReusability}
 
   type Props_t = MJdArgs
   type Props = ModelProxy[MJdArgs]
@@ -657,6 +658,7 @@ class JdR(
   val component = ScalaComponent.builder[Props]("Jd")
     .stateless
     .renderBackend[Backend]
+    .configure( Reusability.shouldComponentUpdate )
     .build
 
   private def _apply(jdArgsProxy: Props) = component( jdArgsProxy )

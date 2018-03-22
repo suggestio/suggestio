@@ -75,8 +75,6 @@ class GridR(
       val ScCss = getScCssF()
       val GridCss = ScCss.Grid
 
-      println("grid CONT re-renders")
-
       <.div(
         ScCss.smFlex, GridCss.outer,
 
