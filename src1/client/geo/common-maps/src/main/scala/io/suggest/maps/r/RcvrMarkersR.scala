@@ -1,7 +1,7 @@
 package io.suggest.maps.r
 
 import diode.data.Pot
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.color.MColorData
 import io.suggest.common.coll.Lists
 import io.suggest.common.html.HtmlConstants
@@ -39,7 +39,8 @@ import scala.scalajs.js.{UndefOr, |}
   */
 object RcvrMarkersR {
 
-  type Props = ModelProxy[Pot[MGeoNodesResp]]
+  type Props_t = Pot[MGeoNodesResp]
+  type Props = ModelProxy[Props_t]
 
   val FILL_OPACITY    = 0.15
   val STROKE_OPACITY  = 0.7
@@ -253,5 +254,6 @@ object RcvrMarkersR {
 
 
   def apply(rcvrsGeoPotProxy: Props)(children: VdomNode*) = component(rcvrsGeoPotProxy)(children: _*)
+  val applyNoChildren: ReactConnectProps[Props_t] = apply(_)()
 
 }

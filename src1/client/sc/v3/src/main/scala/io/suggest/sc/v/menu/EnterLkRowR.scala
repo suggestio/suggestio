@@ -1,7 +1,7 @@
 package io.suggest.sc.v.menu
 
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.routes.IJsRouter
@@ -13,7 +13,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -26,7 +25,8 @@ class EnterLkRowR(
                    getScCssF: GetScCssF
                  ) {
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
 
   case class PropsVal(
@@ -96,6 +96,7 @@ class EnterLkRowR(
     .renderBackend[Backend]
     .build
 
-  def apply(propsValProxy: Props) = component(propsValProxy)
+  private def _apply(propsValProxy: Props) = component(propsValProxy)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

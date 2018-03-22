@@ -133,6 +133,7 @@ object AdvGeoFormR {
 
             // Рендер кружочков текущих размещений.
             s.geoAdvExistGjC( ExistAdvGeoShapesR.apply ),
+
             // Рендер попапа над кружочком георазмещения:
             s.geoAdvPopupC( ExistPopupR.apply ),
 
@@ -145,7 +146,8 @@ object AdvGeoFormR {
             },
 
             // MarkerCluster для списка ресиверов, если таковой имеется...
-            s.rcvrsGeoC( RcvrMarkersR(_)() ),
+            s.rcvrsGeoC( RcvrMarkersR.applyNoChildren ),
+
             // Рендер опционального попапа над ресивером.
             s.rcvrPopupC( RcvrPopupR.apply )
 

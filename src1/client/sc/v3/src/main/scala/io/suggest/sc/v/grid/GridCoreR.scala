@@ -1,7 +1,7 @@
 package io.suggest.sc.v.grid
 
 import com.github.dantrain.react.stonecutter.{CSSGrid, GridComponents}
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.grid.build._
@@ -14,7 +14,6 @@ import io.suggest.sc.tile.TileConstants
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
-
 import scalaz.Tree
 
 /**
@@ -34,7 +33,9 @@ class GridCoreR(
   import MJdArgs.MJdArgsFastEq
 
 
-  type Props = ModelProxy[MGridS]
+  type Props_t = MGridS
+  type Props = ModelProxy[Props_t]
+
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -44,10 +45,12 @@ class GridCoreR(
     }
     private val _onGridLayoutF = ReactCommonUtil.cbFun1ToF( onGridLayout )
 
+
     /** Клик по карточке в плитке. */
     private def onBlockClick(nodeId: String): Callback = {
       ReactDiodeUtil.dispatchOnProxyScopeCB($, GridBlockClick(nodeId))
     }
+
 
     /** Конвертация одной карточки в один блок для рендера в плитке. */
     private def __blockRenderData2GbPayload(stripTpl: Tree[JdTag], brd: MBlkRenderData): MGbBlock = {
@@ -168,6 +171,7 @@ class GridCoreR(
     .renderBackend[Backend]
     .build
 
-  def apply(gridProxy: Props) = component(gridProxy)
+  private def _apply(gridProxy: Props) = component(gridProxy)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

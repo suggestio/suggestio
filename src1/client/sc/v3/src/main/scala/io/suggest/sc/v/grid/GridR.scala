@@ -60,7 +60,8 @@ class GridR(
                                     loaderPropsOptC     : ReactConnectProxy[Option[gridLoaderR.PropsVal]]
                                   )
 
-  type Props = ModelProxy[PropsVal]
+  type Props_t = PropsVal
+  type Props = ModelProxy[Props_t]
 
   class Backend($: BackendScope[Props, State]) {
 
@@ -70,11 +71,11 @@ class GridR(
       ReactDiodeUtil.dispatchOnProxyScopeCB($, GridScroll(scrollTop))
     }
 
-    private val _gridCoreApply: ReactConnectProps[MGridS] = gridCoreR(_)
-
     def render(s: State): VdomElement = {
       val ScCss = getScCssF()
       val GridCss = ScCss.Grid
+
+      println("grid CONT re-renders")
 
       <.div(
         ScCss.smFlex, GridCss.outer,
@@ -90,6 +91,7 @@ class GridR(
             s.jdCssC { jdCssR.apply },
 
             // Начинается [пере]сборка всей плитки
+            // TODO Функция сборки плитки неоптимальна и перегенеривается на каждый чих. Это вызывает лишние перерендеры контейнера плитки.
             s.gridSzC { gridSzOptProxy =>
               <.div(
                 GridCss.container,
@@ -102,7 +104,7 @@ class GridR(
                 },
 
                 // Непосредственный рендер плитки.
-                s.gridC { _gridCoreApply }
+                s.gridC { gridCoreR.apply }
               )
             },
 
@@ -148,6 +150,7 @@ class GridR(
     .renderBackend[Backend]
     .build
 
-  def apply(props: Props) = component(props)
+  private def _apply(props: Props) = component(props)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

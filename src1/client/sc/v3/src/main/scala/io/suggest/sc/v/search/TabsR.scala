@@ -1,6 +1,6 @@
 package io.suggest.sc.v.search
 
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{MSearchTab, MSearchTabs, SwitchTab}
@@ -8,7 +8,6 @@ import io.suggest.sc.styl.GetScCssF
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -19,7 +18,8 @@ import scalacss.ScalaCssReact._
   */
 class TabsR( getScCssF: GetScCssF ) {
 
-  type Props = ModelProxy[MSearchTab]
+  type Props_t = MSearchTab
+  type Props = ModelProxy[Props_t]
 
   class Backend( $: BackendScope[Props, Unit] ) {
 
@@ -85,6 +85,7 @@ class TabsR( getScCssF: GetScCssF ) {
     .renderBackend[Backend]
     .build
 
-  def apply( p: Props ) = component( p )
+  def _apply( p: Props ) = component( p )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

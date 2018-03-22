@@ -1,6 +1,6 @@
 package io.suggest.jd.render.v
 
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.css.ScalaCssDefaults._
 import japgolly.scalajs.react.ScalaComponent
 import japgolly.scalajs.react.vdom.html_<^._
@@ -13,7 +13,9 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class JdCssR( jdCssFactory: JdCssFactory ) {
 
-  type Props = ModelProxy[JdCss]
+  type Props_t = JdCss
+  type Props = ModelProxy[Props_t]
+
 
   val component = ScalaComponent.builder[Props]("JdCss")
     .stateless
@@ -25,6 +27,8 @@ class JdCssR( jdCssFactory: JdCssFactory ) {
     }
     .build
 
-  def apply(jdCssArgsProxy: Props) = component( jdCssArgsProxy )
+
+  private def _apply(jdCssArgsProxy: Props) = component( jdCssArgsProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

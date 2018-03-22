@@ -92,6 +92,7 @@ class SearchR(
             <.div(
               _renderDisplayCss( currTab ==* MSearchTabs.Tags ),
 
+              // TODO Сделать connect? Есть мнение, что оно перерендеривается на каждый чих, т.к. на втором уровне.
               props.wrap(_.tags) { tagsSearchR.apply }
             )
 

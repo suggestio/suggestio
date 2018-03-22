@@ -1,7 +1,7 @@
 package io.suggest.sc.v.inx
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.ScConstants
@@ -14,7 +14,6 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -52,7 +51,8 @@ class WelcomeR(
                                     nodeNameC: ReactConnectProxy[Option[String]]
                                   )
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
 
   class Backend( $: BackendScope[Props, State] ) {
@@ -138,6 +138,7 @@ class WelcomeR(
     .build
 
 
-  def apply(propsValProxy: Props) = component(propsValProxy)
+  private def _apply(propsValProxy: Props) = component(propsValProxy)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

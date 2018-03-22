@@ -1,6 +1,6 @@
 package io.suggest.sc.v.search
 
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -9,7 +9,6 @@ import io.suggest.sc.styl.GetScCssF
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -21,7 +20,8 @@ import scalacss.ScalaCssReact._
   */
 class STextR( getScCssF: GetScCssF ) {
 
-  type Props = ModelProxy[MScSearchText]
+  type Props_t = MScSearchText
+  type Props = ModelProxy[Props_t]
 
 
   class Backend( $: BackendScope[Props, Unit] ) {
@@ -81,6 +81,7 @@ class STextR( getScCssF: GetScCssF ) {
     .renderBackend[Backend]
     .build
 
-  def apply(scSearchTextOptProxy: Props) = component( scSearchTextOptProxy )
+  private def _apply(scSearchTextOptProxy: Props) = component( scSearchTextOptProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

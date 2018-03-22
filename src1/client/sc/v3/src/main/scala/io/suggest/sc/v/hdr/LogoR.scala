@@ -1,7 +1,7 @@
 package io.suggest.sc.v.hdr
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.media.IMediaInfo
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.styl.GetScCssF
@@ -9,7 +9,6 @@ import io.suggest.spa.OptFastEq.Plain
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -27,7 +26,8 @@ class LogoR(
              getScCssF: GetScCssF
            ) {
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
   case class PropsVal(
                        logoOpt      : Option[IMediaInfo],
@@ -87,6 +87,7 @@ class LogoR(
     .renderBackend[Backend]
     .build
 
-  def apply(nodeInfoOptProxy: Props) = component( nodeInfoOptProxy )
+  private def _apply(nodeInfoOptProxy: Props) = component( nodeInfoOptProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

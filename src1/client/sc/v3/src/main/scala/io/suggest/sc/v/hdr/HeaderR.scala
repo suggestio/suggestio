@@ -1,7 +1,7 @@
 package io.suggest.sc.v.hdr
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.m.hdr.{MHeaderState, MHeaderStates}
@@ -12,7 +12,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -47,7 +46,8 @@ class HeaderR(
     }
   }
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
 
   /** Коннекшены для props'ов кнопок. */
@@ -62,6 +62,13 @@ class HeaderR(
   /** Рендерер. */
   protected class Backend($: BackendScope[Props, State]) {
 
+    private val _plainGridBtnsF = { fgColorOptProxy: ModelProxy[Option[MColorData]] =>
+      <.span(
+        menuBtnR( fgColorOptProxy ),
+        searchBtnR( fgColorOptProxy )
+      ): VdomElement
+    }
+
     def render(propsProxy: Props, s: State): VdomElement = {
       propsProxy().whenDefinedEl { _ =>
         val scCss = getScCssF()
@@ -70,12 +77,7 @@ class HeaderR(
 
           // Кнопки заголовка в зависимости от состояния.
           // Кнопки при нахождении в обычной выдаче без посторонних вещей.
-          s.plainGridC { fgColorDataOptProxy =>
-            <.span(
-              menuBtnR( fgColorDataOptProxy ),
-              searchBtnR( fgColorDataOptProxy )
-            )
-          },
+          s.plainGridC( _plainGridBtnsF ),
 
           // Логотип посередине заголовка.
           s.logoPropsOptC { logoR.apply }
@@ -114,6 +116,7 @@ class HeaderR(
     .renderBackend[Backend]
     .build
 
-  def apply(props: Props) = component( props )
+  private def _apply(props: Props) = component( props )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

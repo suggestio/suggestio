@@ -1,7 +1,7 @@
 package io.suggest.jd.render.v
 
 import com.github.dantrain.react.stonecutter._
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
@@ -32,7 +32,6 @@ import org.scalajs.dom.{Element, html}
 import org.scalajs.dom.html.Image
 import org.scalajs.dom.raw.CSSStyleDeclaration
 import play.api.libs.json.Json
-
 import scalacss.ScalaCssReact._
 import scalaz.Tree
 
@@ -51,6 +50,7 @@ class JdR(
 
   import MJdArgs.MJdArgsFastEq
 
+  type Props_t = MJdArgs
   type Props = ModelProxy[MJdArgs]
 
 
@@ -659,7 +659,8 @@ class JdR(
     .renderBackend[Backend]
     .build
 
-  def apply(jdArgsProxy: Props) = component( jdArgsProxy )
+  private def _apply(jdArgsProxy: Props) = component( jdArgsProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 
   def renderSeparated(jdArgsProxy: Props): Iterator[VdomElement] = {
@@ -685,7 +686,7 @@ class JdR(
         } { jdArgs2Proxy =>
           <.div(
             ^.key := i.toString,
-            jdR(jdArgs2Proxy)
+            jdR.apply(jdArgs2Proxy)
           )
         }
       }

@@ -1,7 +1,7 @@
 package io.suggest.sc.v.menu
 
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import _root_.io.suggest.sc.GetRouterCtlF
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
@@ -12,7 +12,6 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.m.Sc3Pages
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -26,7 +25,8 @@ class AboutSioR(
                  spaRouter  : GetRouterCtlF
                ) {
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
   case class PropsVal(
                        aboutNodeId  : String,
@@ -74,6 +74,7 @@ class AboutSioR(
     .renderBackend[Backend]
     .build
 
-  def apply(propsValProxy: Props) = component( propsValProxy )
+  private def _apply(propsValProxy: Props) = component( propsValProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

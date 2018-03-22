@@ -1,7 +1,7 @@
 package io.suggest.sc.v.search
 
 import diode.data.Pot
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.MGeoPoint
 import io.suggest.maps.m.{MGeoMapPropsR, MMapS, MapDragEnd}
@@ -20,7 +20,6 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import react.leaflet.control.LocateControlR
 import react.leaflet.lmap.LMapR
 import io.suggest.spa.OptFastEq
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -44,22 +43,24 @@ class SearchMapR(
                                   )
 
 
-  type Props = ModelProxy[MMapInitState]
+  type Props_t = MMapInitState
+  type Props = ModelProxy[Props_t]
 
   class Backend($: BackendScope[Props, State]) {
-
-    /*
-    private def _onMapDragStart(e: Event): Callback = {
-      dispatchOnProxyScopeCB( $, MapDragStart )
-    }
-    private val _onMapDragStartOptF = Some( ReactCommonUtil.cbFun1ToJsCb( _onMapDragStart ) )
-    */
-
 
     private def _onMapDragEnd(e: DragEndEvent): Callback = {
       dispatchOnProxyScopeCB( $, MapDragEnd(distancePx = e.distance) )
     }
     private val _onMapDragEndOptF = Some( ReactCommonUtil.cbFun1ToJsCb( _onMapDragEnd ) )
+
+
+    private val _mapLoaderReuseF = { loaderOpt: ModelProxy[Option[MGeoPoint]] =>
+      loaderOpt.value.whenDefinedEl { mgp =>
+        MapIcons.preloaderLMarker(
+          latLng = MapsUtil.geoPoint2LatLng( mgp )
+        )
+      }
+    }
 
 
     def render(mapInitProxy: Props, s: State): VdomElement = {
@@ -86,6 +87,7 @@ class SearchMapR(
               EmptyVdom
 
             } else {
+              // TODO Нужно как-то организовать reuse инстанса фунции. Эта фунция зависит от state, и хз, как это нормально организовать. Вынести в top-level?
               s.mmapC { mmapProxy =>
                 mmapProxy.wrap { mmap =>
                   MGeoMapPropsR(
@@ -110,16 +112,10 @@ class SearchMapR(
                     LocateControlR(),
 
                     // Рендер шейпов и маркеров текущий узлов.
-                    s.rcvrsGeoC { RcvrMarkersR(_)() },
+                    s.rcvrsGeoC { RcvrMarkersR.applyNoChildren },
 
                     // Рендер опционального маркера-крутилки для ожидания загрузки.
-                    s.loaderOptC { loaderOpt =>
-                      loaderOpt.value.whenDefinedEl { mgp =>
-                        MapIcons.preloaderLMarker(
-                          latLng = MapsUtil.geoPoint2LatLng( mgp )
-                        )
-                      }
-                    }
+                    s.loaderOptC { _mapLoaderReuseF }
 
                   )
                 }
@@ -153,6 +149,7 @@ class SearchMapR(
     .renderBackend[Backend]
     .build
 
-  def apply(mapInitProxy: Props) = component(mapInitProxy)
+  private def _apply(mapInitProxy: Props) = component(mapInitProxy)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

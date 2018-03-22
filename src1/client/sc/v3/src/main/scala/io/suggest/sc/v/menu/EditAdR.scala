@@ -1,7 +1,7 @@
 package io.suggest.sc.v.menu
 
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.sc.styl.GetScCssF
@@ -11,7 +11,6 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.routes.IJsRouter
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -24,7 +23,8 @@ class EditAdR(
                getScCssF  : GetScCssF
              ) {
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
   case class PropsVal(
                        adId         : String,
@@ -68,6 +68,7 @@ class EditAdR(
     .renderBackend[Backend]
     .build
 
-  def apply(propsValProxy: Props) = component( propsValProxy )
+  private def _apply(propsValProxy: Props) = component( propsValProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

@@ -1,6 +1,6 @@
 package io.suggest.maps.r
 
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.adv.geo.{InGeoTag, OnAdvsMap, OnGeoCapturing, OnMainScreen}
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.css.Css
@@ -23,7 +23,8 @@ import react.leaflet.popup.{LPopupPropsR, LPopupR}
   */
 object ExistPopupR {
 
-  type Props = ModelProxy[MExistGeoPopupS]
+  type Props_t = MExistGeoPopupS
+  type Props = ModelProxy[Props_t]
 
 
   /** Тег с префиксом тега. */
@@ -121,6 +122,7 @@ object ExistPopupR {
     .renderBackend[Backend]
     .build
 
-  def apply(mGeoAdvs: Props) = component(mGeoAdvs)
+  private def _apply(mGeoAdvs: Props) = component(mGeoAdvs)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

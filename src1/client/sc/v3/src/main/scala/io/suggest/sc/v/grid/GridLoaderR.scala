@@ -1,7 +1,7 @@
 package io.suggest.sc.v.grid
 
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.color.MColorData
 import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -11,7 +11,6 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import org.scalajs.dom.ext.Color
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -36,7 +35,8 @@ class GridLoaderR(
     }
   }
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -115,6 +115,7 @@ class GridLoaderR(
     .renderBackend[Backend]
     .build
 
-  def apply(propsOptProxy: Props) = component(propsOptProxy)
+  private def _apply(propsOptProxy: Props) = component(propsOptProxy)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

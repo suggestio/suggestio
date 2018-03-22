@@ -1,7 +1,7 @@
 package io.suggest.maps.r
 
 import diode.data.Pot
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.adv.AdvConstants.CurrShapes
 import io.suggest.geo.{GeoConstants, MGeoPoint, MGeoPointJs}
 import io.suggest.maps.m.MGeoAdvExistGjFtProps.fromAny
@@ -33,7 +33,8 @@ import scala.scalajs.js.{JSON, UndefOr}
   */
 object ExistAdvGeoShapesR extends Log {
 
-  type Props = ModelProxy[Pot[js.Array[GjFeature]]]
+  type Props_t = Pot[js.Array[GjFeature]]
+  type Props = ModelProxy[Props_t]
 
 
   protected class Backend($: BackendScope[Props, Unit]) {
@@ -117,6 +118,7 @@ object ExistAdvGeoShapesR extends Log {
     .renderBackend[Backend]
     .build
 
-  def apply(gjResp: Props) = component(gjResp)
+  def _apply(gjResp: Props) = component(gjResp)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

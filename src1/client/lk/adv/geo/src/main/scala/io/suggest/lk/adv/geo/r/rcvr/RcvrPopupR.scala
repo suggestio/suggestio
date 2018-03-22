@@ -1,6 +1,6 @@
 package io.suggest.lk.adv.geo.r.rcvr
 
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.adv.rcvr.{IRcvrPopupNode, RcvrKey}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -10,7 +10,7 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.r.RangeYmdR
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactEventFromInput}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}
 
 /**
   * Suggest.io
@@ -22,7 +22,8 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactEven
 
 object RcvrPopupR {
 
-  type Props = ModelProxy[MRcvr]
+  type Props_t = MRcvr
+  type Props = ModelProxy[Props_t]
 
 
   /** Backend для react-sjs компонена. */
@@ -107,6 +108,7 @@ object RcvrPopupR {
     .build
 
 
-  def apply(props: Props) = component(props)
+  private def _apply(props: Props) = component(props)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }
