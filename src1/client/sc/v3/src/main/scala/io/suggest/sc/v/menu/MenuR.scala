@@ -55,7 +55,7 @@ class MenuR(
           scCss.Root.panelBg
         ),
 
-        propsProxy.wrap {_ => Option(MColorData.Examples.WHITE) } ( leftR.apply ),
+        propsProxy.wrap {_ => Option(MColorData.Examples.WHITE) } ( leftR.applyReusable ),
 
         <.div(
           menuCss.Rows.rowsContainer,

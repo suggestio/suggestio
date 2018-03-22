@@ -1,6 +1,6 @@
 package io.suggest.sc.v.hdr
 
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.color.MColorData
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -10,7 +10,6 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^.{< => html, ^ => htmlAttrs}
 import japgolly.scalajs.react.vdom.svg_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
-
 import scalacss.ScalaCssReact._
 import scalacss.internal.StyleA
 
@@ -37,11 +36,14 @@ object HdrBtn {
     ^.fill := "#" + fgColorHex
   }
 
+  type Props_t = Option[MColorData]
+  type Props = ModelProxy[Props_t]
+
 }
 
 trait HdrBtn {
 
-  type Props = ModelProxy[Option[MColorData]]
+  import HdrBtn.{Props_t, Props}
 
   protected[this] def cssStyle: StyleA
 
@@ -93,5 +95,6 @@ trait HdrBtn {
     .build
 
   def apply(fgColorDataOptProxy: Props) = component.withKey(_compName)( fgColorDataOptProxy )
+  lazy val applyReusable: ReactConnectProps[Props_t] = apply
 
 }

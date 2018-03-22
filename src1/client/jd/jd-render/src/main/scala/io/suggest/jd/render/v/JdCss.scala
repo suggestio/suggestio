@@ -1,6 +1,7 @@
 package io.suggest.jd.render.v
 
 import diode.FastEq
+import enumeratum.values.ValueEnumEntry
 import io.suggest.ad.blk.BlockPaddings
 import io.suggest.color.MColorData
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
@@ -15,8 +16,8 @@ import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.primo.ISetUnset
 import io.suggest.text.MTextAligns
 import japgolly.univeq._
-
 import scalacss.internal.DslBase.ToStyle
+import scalacss.internal.DslMacros
 import scalacss.internal.ValueT.TypedAttr_Color
 import scalacss.internal.mutable.StyleSheet
 
@@ -38,6 +39,11 @@ object JdCss {
   }
 
   implicit def univEq: UnivEq[JdCss] = UnivEq.derive
+
+
+  def valueEnumEntryDomainNameF[T] = {(vee: ValueEnumEntry[T], _: Int) =>
+    vee.value
+  }
 
 }
 
@@ -225,11 +231,14 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       .toSet
       .toIndexedSeq
     val bgColorsDomain = new Domain.OverSeq( bgColorsHex1 )
-    styleF( bgColorsDomain ) { bgColorHex =>
-      styleS(
-        backgroundColor( Color(bgColorHex) )
-      )
-    }
+    styleF( bgColorsDomain ) (
+      { bgColorHex =>
+        styleS(
+          backgroundColor( Color(bgColorHex) )
+        )
+      },
+      (colorHex, _) => MColorData.stripDiez(colorHex)
+    )
   }
 
 
@@ -364,18 +373,21 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
      // Домен допустимых выравниваний текста по горизонтали.
     val textAlignsDomain = new Domain.OverSeq( MTextAligns.values )
 
-    styleF( textAlignsDomain ) { align =>
-      val taAttr = textAlign
-      val av = align match {
-        case MTextAligns.Left    => taAttr.left
-        case MTextAligns.Center  => taAttr.center
-        case MTextAligns.Right   => taAttr.right
-        case MTextAligns.Justify => taAttr.justify
-      }
-      styleS(
-        av
-      )
-    }
+    styleF( textAlignsDomain )(
+      { align =>
+        val taAttr = textAlign
+        val av = align match {
+          case MTextAligns.Left    => taAttr.left
+          case MTextAligns.Center  => taAttr.center
+          case MTextAligns.Right   => taAttr.right
+          case MTextAligns.Justify => taAttr.justify
+        }
+        styleS(
+          av
+        )
+      },
+      JdCss.valueEnumEntryDomainNameF
+    )
   }
 
 
@@ -385,8 +397,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   /** Стили сдвигов выравниваний. */
   val indentStyleF = {
     // quill допускает сдвиги от 1 до 8 включительно.
-    val indentLevelsDomain = Domain.ofRange(1 to 8)
-    styleF( indentLevelsDomain ) { indentLevel =>
+    styleF.int(1 to 9) { indentLevel =>
       styleS(
         paddingLeft( (indentLevel * 3).em )
       )
@@ -427,12 +438,16 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       .toIndexedSeq
 
     val rotationsDomain = new Domain.OverSeq( rotatedSeq )
-    styleF( rotationsDomain ) { rotateDeg =>
-      styleS(
-        transform := ("rotate(" + rotateDeg + "deg)" )
-      )
-    }
+    styleF.apply( rotationsDomain )(
+      {rotateDeg =>
+        styleS(
+          transform := ("rotate(" + rotateDeg + "deg)" )
+        )
+      },
+      DslMacros.defaultStyleFClassNameSuffixI
+    )
   }
+
 
   val videoStyle = {
     val whDflt = HtmlConstants.Iframes.whCsspxDflt

@@ -358,10 +358,11 @@ class JdR(
         val qdRrr = new QdRrrHtml(
           jdArgs      = jdArgs,
           qdTag       = qdTagTree,
-          // Для редактора: следует проверить эдж
+          // Для редактора: следует рендерить img-теги, подслушивая у них wh:
           imgEdgeMods = OptionUtil.maybe( jdArgs.conf.isEdit ) {
             _notifyImgWhOnEdit(_, jdArgs)
           },
+          // Выбранный qd-тег можно ресайзить:
           resizableCb = OptionUtil.maybe(isCurrentSelected) {
             onQdEmbedResize(_, _, _)(_)
           }

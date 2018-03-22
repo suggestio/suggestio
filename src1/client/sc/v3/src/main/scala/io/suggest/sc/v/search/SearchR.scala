@@ -66,7 +66,7 @@ class SearchR(
         s.sTextC { sTextR.apply },
 
         // Стрелка для сворачивания вкладки.
-        props.wrap {_ => Option(MColorData.Examples.WHITE) } ( rightR.apply ),
+        props.wrap {_ => Option(MColorData.Examples.WHITE) } ( rightR.applyReusable ),
 
         // Переключалка вкладок карта-теги
         s.tabC { tabsR.apply },

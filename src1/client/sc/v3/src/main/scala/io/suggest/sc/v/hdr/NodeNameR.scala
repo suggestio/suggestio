@@ -1,12 +1,11 @@
 package io.suggest.sc.v.hdr
 
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.styl.GetScCssF
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -17,7 +16,8 @@ import scalacss.ScalaCssReact._
   */
 class NodeNameR( getScCssF: GetScCssF ) {
 
-  type Props = ModelProxy[Option[String]]
+  type Props_t = Option[String]
+  type Props = ModelProxy[Props_t]
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -44,6 +44,7 @@ class NodeNameR( getScCssF: GetScCssF ) {
     .renderBackend[Backend]
     .build
 
-  def apply(nodeNameOptProxy: Props) = component( nodeNameOptProxy )
+  private def _apply(nodeNameOptProxy: Props) = component( nodeNameOptProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }
