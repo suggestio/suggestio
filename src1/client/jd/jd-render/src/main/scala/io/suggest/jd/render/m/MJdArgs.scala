@@ -9,7 +9,6 @@ import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import io.suggest.scalaz.ZTreeUtil._
-import io.suggest.react.ReactDiodeUtil.FastEqExtOps
 
 import scalaz.{Tree, TreeLoc}
 
@@ -32,8 +31,6 @@ object MJdArgs {
         ((a.renderArgs ===* b.renderArgs) || MJdRenderArgs.MJdRenderArgsFastEq.eqv(a.renderArgs, b.renderArgs))
     }
   }
-
-  implicit val jdArgsProxyReusability = MJdArgsFastEq.reusabilityModelProxy
 
   implicit def univEq: UnivEq[MJdArgs] = UnivEq.derive
 

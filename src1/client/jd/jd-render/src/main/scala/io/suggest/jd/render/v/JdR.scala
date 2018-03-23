@@ -49,7 +49,7 @@ class JdR(
   extends Log
 { jdR =>
 
-  import MJdArgs.{MJdArgsFastEq, jdArgsProxyReusability}
+  import MJdArgs.MJdArgsFastEq
 
   type Props_t = MJdArgs
   type Props = ModelProxy[MJdArgs]
@@ -659,7 +659,8 @@ class JdR(
   val component = ScalaComponent.builder[Props]("Jd")
     .stateless
     .renderBackend[Backend]
-    .configure( Reusability.shouldComponentUpdate )
+    // TODO Это подавляет пере-рендеры плитки в выдаче, но нарушает работу редактора. Скорее всего, просто нельзя так работать с ModelProxy. И ошибка - следствие.
+    //.configure( Reusability.shouldComponentUpdate )
     .build
 
   private def _apply(jdArgsProxy: Props) = component( jdArgsProxy )

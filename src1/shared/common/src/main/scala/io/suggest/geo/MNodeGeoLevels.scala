@@ -12,7 +12,7 @@ import play.api.libs.json.Format
  */
 object MNodeGeoLevel {
 
-  implicit val NODE_GEO_LEVEL_FORMAT: Format[MNodeGeoLevel] = {
+  implicit def NODE_GEO_LEVEL_FORMAT: Format[MNodeGeoLevel] = {
     EnumeratumUtil.enumEntryFormat( MNodeGeoLevels )
   }
 
@@ -167,8 +167,7 @@ object MNodeGeoLevels extends Enum[MNodeGeoLevel] {
     * Но этого оказалось мало. Поэтому, теперь они на уровне здания, а тут поддержка
     * для поиска карточек в обоих индексах сразу.
     */
-  // TODO Удалить после ребилда карточек.
-  final def geoPlacesCompat = geoPlace :: NGL_TOWN_DISTRICT :: Nil
+  final def geoPlacesSearchAt = geoPlace :: Nil
 
 
   override val values = findValues

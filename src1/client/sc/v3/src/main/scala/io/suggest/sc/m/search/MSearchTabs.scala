@@ -34,6 +34,16 @@ object MSearchTabs extends StringEnum[MSearchTab] {
 
   def default: MSearchTab = GeoMap
 
+  /** Если мы на ресивере, то по умолчанию надо теги отображать.
+    * Если где-то в мире, то по умолчанию отображается карта.
+    */
+  def defaultIfRcvr(isRcvrNode: Boolean): MSearchTab = {
+    if (isRcvrNode)
+      Tags
+    else
+      GeoMap
+  }
+
 }
 
 

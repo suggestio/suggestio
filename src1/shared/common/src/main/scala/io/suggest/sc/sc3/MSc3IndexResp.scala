@@ -26,7 +26,8 @@ object MSc3IndexResp {
     (__ \ "l").formatNullable[IMediaInfo] and
     (__ \ "w").formatNullable[MWelcomeInfo] and
     (__ \ "g").formatNullable[MGeoPoint] and
-    (__ \ "m").format[Boolean]
+    (__ \ "m").format[Boolean] and
+    (__ \ "r").format[Boolean]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MSc3IndexResp] = UnivEq.derive
@@ -42,6 +43,10 @@ object MSc3IndexResp {
   * @param colors Цвета, если есть.
   * @param logoOpt Данные по логотипу-иллюстрации.
   * @param welcome Данные для рендера экрана приветствия.
+  * @param isRcvr Является ли этот узел ресивером?
+  *               true - торговый центр
+  *               false - это какой-то район города или иной узел-обложка.
+  * @param isMyNode Есть ли у текущего юзера права доступа на этот узел?
   */
 case class MSc3IndexResp(
                          nodeId     : Option[String],
@@ -50,6 +55,7 @@ case class MSc3IndexResp(
                          logoOpt    : Option[IMediaInfo],
                          welcome    : Option[MWelcomeInfo],
                          geoPoint   : Option[MGeoPoint],
-                         isMyNode   : Boolean
+                         isMyNode   : Boolean,
+                         isRcvr     : Boolean
                        )
 

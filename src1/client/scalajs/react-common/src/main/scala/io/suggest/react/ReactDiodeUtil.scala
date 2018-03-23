@@ -144,12 +144,6 @@ object ReactDiodeUtil {
       Reusability[A] { feq.eqv }
     }
 
-    def reusabilityModelProxy: Reusability[ModelProxy[A]] = {
-      Reusability[ModelProxy[A]] { (aProxy, bProxy) =>
-        feq.eqv( aProxy.value, bProxy.value )
-      }
-    }
-
   }
 
 }

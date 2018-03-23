@@ -390,6 +390,12 @@ lazy val lkAdnMapSjs = {
     .dependsOn(lkCommonSjs, lkAdvCommonSjs, lkDtPeriodSjs, mapsSjs)
 }
 
+/** JS страницы управления карточками узла в личном кабинете. */
+lazy val lkAdsSjs = {
+  Project(id = "lk-ads-sjs", base = file(DIR0 + "client/lk/ads"))
+    .dependsOn(lkCommonSjs)
+}
+
 /** Всякие мелкие скрипты ЛК объеденены в этом scala-js. 
  *
  * Чтобы clean/test в lk-sjs срабатывал и на зависимых вещах, перечисляем их здесь
@@ -398,7 +404,7 @@ lazy val lkAdnMapSjs = {
 lazy val lkSjs = {
   Project(id = "lk-sjs", base = file(DIR0 + "client/lk/main"))
     .enablePlugins(WebScalaJS)
-    .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs, lkAdEditorSjs)
+    .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs, lkAdEditorSjs, lkAdsSjs)
 }
 
 /** scala.js реализация системы мониторинга js-маячков. */

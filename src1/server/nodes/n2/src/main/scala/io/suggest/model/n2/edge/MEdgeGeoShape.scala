@@ -117,10 +117,8 @@ object MEdgeGeoShape extends IGenEsMappingProps {
   /** ES-маппинги полей. */
   override def generateMappingProps: List[DocField] = {
     val nglFields = MNodeGeoLevels.values
-      .foldLeft( List.empty[DocField] ) {
-        (acc, nglv)  =>
-          val ngl: MNodeGeoLevel = nglv
-          FieldGeoShape( Fields.SHAPE_FN(ngl), precision = ngl.precision)  ::  acc
+      .foldLeft( List.empty[DocField] ) { (acc, ngl)  =>
+        FieldGeoShape( Fields.SHAPE_FN(ngl), precision = ngl.precision)  ::  acc
       }
     FieldKeyword(Fields.GLEVEL_FN, index = true, include_in_all = false, store = true) ::
       FieldBoolean(Fields.GJSON_COMPAT_FN, index = true, include_in_all = false) ::

@@ -96,7 +96,7 @@ class ScAdSearchUtil @Inject() (
             predicates  = MPredicates.AdvGeoPlace :: Nil,
             must        = must,
             gsIntersect = Some(GsCriteria(
-              levels = MNodeGeoLevels.geoPlacesCompat,
+              levels = MNodeGeoLevels.geoPlacesSearchAt,
               shapes = PointGsJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil
             ))
           )

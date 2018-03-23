@@ -837,7 +837,8 @@ trait ScIndex
           logoOpt       = logoOpt,
           welcome       = welcomeOpt,
           geoPoint      = nodeGeoPointOpt,
-          isMyNode      = isMyNode
+          isMyNode      = isMyNode,
+          isRcvr        = nodeInfo.isRcvr
         )
       }
     }
