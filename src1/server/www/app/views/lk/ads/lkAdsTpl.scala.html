@@ -1,0 +1,46 @@
+@(mnode: MNode, state0: String)(implicit ctx: Context)
+
+@* Страница с внешней версткой для формы _adFormTpl. *@
+
+@import ctx.{messages, request}
+@import ctx.api.ctxUtil
+@import helper._
+@import io.suggest.ads.LkAdsFormConst
+@import io.suggest.js.JsRoutesConst
+@import io.suggest.font.{MFontSizes, MFonts}
+@import views.js.stuff.jsRevRouterTpl
+@import views.html.stuff.{jsTpl2HtmlTpl, _preLoaderLkTpl}
+@import lk.lkwdgts._formStateInputTpl
+
+
+@* TODO lkBaseLayout + rightPanel был в оригинале. *@
+@lk.lkBase(
+  title         = messages("Ad.cards"),
+  nodeOpt       = Some(mnode),
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS)
+) {
+
+  @_formStateInputTpl( state0 )
+
+  @* TODO div-контейнер для рендера react-формы. *@
+  <div id="@LkAdsFormConst.FORM_CONT_ID">
+    @_preLoaderLkTpl()
+  </div>
+
+
+  @* Ссылка на demo web site. *@
+  <div class="sm-note">
+    @if( mnode.extras.adn.exists(_.isReceiver) ) {
+      @messages("You.can.look.on.ads.in")
+      <a class="blue-link" href="@ctxUtil.SC_URL_PREFIX@routes.Sc.geoSite(msc.ScJsState(adnId = mnode.id))"
+         target="_blank">@messages("_ad.showcase.link")</a>.
+    }
+  </div>
+
+  @jsTpl2HtmlTpl( withScriptTag = true )(
+    jsRevRouterTpl( csrfAll = true, cdn = false )(
+      routes.javascript.LkAds.getAds
+    )
+  )
+
+}

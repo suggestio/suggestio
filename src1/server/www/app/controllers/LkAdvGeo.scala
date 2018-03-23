@@ -119,7 +119,6 @@ class LkAdvGeo @Inject() (
       val formFut = for {
         gp0         <- resLogic._geoPointFut
         a4fPropsOpt <- resLogic._a4fPropsOptFut
-        rcvrsMapUrl <- resLogic._rcvrsMapCallFut
       } yield {
         // TODO Распилить это на MMapProps и MGeoCircle.
         // Залить начальные данные в маппинг формы.

@@ -7,5 +7,7 @@ package io.suggest.adv.rcvr
   * Description: Интерфейс для поля rcvrKey.
   */
 trait IRcvrKey {
+
   def rcvrKey: RcvrKey
+
 }

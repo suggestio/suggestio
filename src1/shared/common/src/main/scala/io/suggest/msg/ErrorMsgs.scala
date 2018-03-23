@@ -169,4 +169,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def CANONICAL_URL_FAILURE            = E(77)
 
+  def LK_ADS_FORM_FAILED               = E(78)
+
 }

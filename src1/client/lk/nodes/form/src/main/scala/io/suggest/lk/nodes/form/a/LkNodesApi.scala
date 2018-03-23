@@ -139,17 +139,13 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
   }
 
 
-  private def _rcvrKey2string(rk: RcvrKey): String = {
-    rk.mkString("/")
-  }
-
   override def setAdv(adId: String, isEnabled: Boolean, onNode: RcvrKey): Future[MLknNode] = {
     Xhr.unBooPickleResp[MLknNode] {
       Xhr.requestBinary(
         route = routes.controllers.LkNodes.setAdv(
           adId          = adId,
           isEnabled     = isEnabled,
-          onNodeRcvrKey = _rcvrKey2string( onNode )
+          onNodeRcvrKey = RcvrKey.rcvrKey2urlPath( onNode )
         )
       )
     }
@@ -160,7 +156,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
     Xhr.unBooPickleResp[MLknNode] {
       Xhr.requestBinary(
         route = routes.controllers.LkNodes.setTfDaily(
-          onNodeRcvrKey = _rcvrKey2string( onNode )
+          onNodeRcvrKey = RcvrKey.rcvrKey2urlPath( onNode )
         ),
         body = PickleUtil.pickle( mode )
       )

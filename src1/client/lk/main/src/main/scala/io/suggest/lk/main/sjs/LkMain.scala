@@ -1,6 +1,7 @@
 package io.suggest.lk.main.sjs
 
 import io.suggest.ad.edit.LkAdEditInit
+import io.suggest.ads.LkAdsInit
 import io.suggest.lk.ad.form.init.AdFormInitRouter
 import io.suggest.lk.adn.edit.init.NodeEditInitRouter
 import io.suggest.lk.adn.map.init.LkAdnMapFormInitRouter
@@ -57,10 +58,14 @@ object LkMain extends Log {
 class LkInitRouter
   extends Log
   with LkAdEditInit
+  with AdvGeoFormInitRouter
+  with LkAdsInit
+  with LkAdnMapFormInitRouter
   with CenterContentInitRouter
   with TxnsListInit
   with CaptchaFormInit
   with HiddenCaptchaInit
+  with LkNodesInitRouter
   with RunnerInitRouter
   with FormEventsInitRouter
   with AdFormInitRouter
@@ -69,7 +74,4 @@ class LkInitRouter
   with JsHiddenInitRouter
   with PopupsInitRouter
   with NodeEditInitRouter
-  with AdvGeoFormInitRouter
   with AdvDirectFormInitRouter
-  with LkAdnMapFormInitRouter
-  with LkNodesInitRouter

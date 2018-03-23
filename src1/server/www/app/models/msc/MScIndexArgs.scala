@@ -106,6 +106,7 @@ trait MScIndexArgs {
     import io.suggest.sc.MScApiVsnsJvm._
     MScIndexArgs.mScIndexArgsQsb.unbind("a", this)
   }
+
 }
 
 

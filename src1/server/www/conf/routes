@@ -63,6 +63,10 @@ POST /lk/node/img/gal/prepare           @controllers.MarketLkAdnEdit.handleGalle
 POST /lk/node/img/welcome               @controllers.MarketLkAdnEdit.uploadWelcomeImg
 POST /lk/node/img/logo                  @controllers.MarketLkAdnEdit.handleTempLogo
 
+## Управления карточками узла.
+GET  /lk/mads/form/*nodeKey             @controllers.LkAds.adsPage(nodeKey: RcvrKey)
+GET  /lk/mads/get/*nodeKey              @controllers.LkAds.getAds(nodeKey: RcvrKey, offset: Int)
+
 ## Редактирования профиля юзера из личного кабинета узла.
 GET  /lk/own/edit/:adnId                @controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
 POST /lk/own/pwchange/:adnId            @controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
