@@ -1,6 +1,6 @@
 package io.suggest.sc.m.inx
 
-import io.suggest.maps.m.ReqRcvrPopup
+import io.suggest.maps.m.OpenMapRcvr
 import io.suggest.sc.m.ISc3Action
 import io.suggest.sc.sc3.MSc3Resp
 
@@ -20,7 +20,7 @@ sealed trait IIndexAction extends ISc3Action
   *
   * @param withWelcome Требуется ли картинка приветствия?
   */
-case class GetIndex(withWelcome: Boolean) extends IIndexAction
+case class GetIndex(withWelcome: Boolean, geoIntoRcvr: Boolean) extends IIndexAction
 
 
 /** Получен какой-то ответ сервера по поводу индекса выдачи.
@@ -46,7 +46,7 @@ case class WcTimeOut(timestamp: Long) extends IIndexAction
 
 
 /** Отложенная реакция на клик по ресиверу на карте.*/
-case class MapRcvrClickDelayed(reason: ReqRcvrPopup) extends IIndexAction
+case class MapRcvrClickDelayed(reason: OpenMapRcvr) extends IIndexAction
 
 
 /** Отложенный экшен реакции на окончание перетаскивания карты.

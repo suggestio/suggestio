@@ -6,7 +6,7 @@ import io.suggest.adv.rcvr.MRcvrPopupS
 import io.suggest.lk.adn.map.m.MLamRcvrs
 import io.suggest.lk.adn.map.u.ILkAdnMapApi
 import io.suggest.lk.m.NodeInfoPopupClose
-import io.suggest.maps.m.{HandleMapPopupClose, HandleRcvrPopupTryResp, ReqRcvrPopup}
+import io.suggest.maps.m.{HandleMapPopupClose, HandleRcvrPopupTryResp, OpenMapRcvr}
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -30,7 +30,7 @@ class LamRcvrMarkerPopupAh[M](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал запуска запроса с сервера содержимого попапа для ресивера.
-    case rrp: ReqRcvrPopup =>
+    case rrp: OpenMapRcvr =>
       val fx = Effect {
         api
           .nodeAdvInfo( rrp.nodeId )

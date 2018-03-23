@@ -160,7 +160,7 @@ class TailAh[M](
         // TODO Иначе - остановить геолокацию, если она запущена сейчас -- т.к. состояние "непустое".
       } else if (nodeIndexNeedsReload) {
         // Целиковая перезагрузка выдачи.
-        fxsAcc ::= getIndexFx
+        fxsAcc ::= getIndexFx( geoIntoRcvr = false )
         val fx = fxsAcc.mergeEffectsSet.get
         ah.updateMaybeSilentFx(needUpdateUi)(v2, fx)
 
@@ -201,7 +201,7 @@ class TailAh[M](
         // Прямо сейчас этот контроллер ожидает координаты.
         // Функция общего кода завершения ожидания координат: запустить выдачу, выключить geo loc, грохнуть таймер.
         def __finished(v00: MScRoot) = {
-          val fxs = getIndexFx + geoOffFx
+          val fxs = getIndexFx(geoIntoRcvr = true) + geoOffFx
           DomQuick.clearTimeout(geoLockTimerId)
           val v22 = _removeTimer(v00)
           updatedSilent(v22, fxs)
@@ -239,7 +239,8 @@ class TailAh[M](
       } { _ =>
         // Удалить из состояния таймер геолокации, запустить выдачу.
         val v2 = _removeTimer(v0)
-        updatedSilent(v2, getIndexFx + geoOffFx)
+        val fxs = getIndexFx(geoIntoRcvr = true) + geoOffFx
+        updatedSilent(v2, fxs)
       }
 
     // Если юзер активно тыкал пальцем по экрану, то таймер сокрытия мог сработать после окончания приветствия.
@@ -254,7 +255,7 @@ class TailAh[M](
     )
   }
 
-  private def getIndexFx = Effect.action( GetIndex(withWelcome = true ) )
+  private def getIndexFx(geoIntoRcvr: Boolean) = Effect.action( GetIndex(withWelcome = true, geoIntoRcvr = geoIntoRcvr) )
 
   private def geoOffFx = Effect.action( GeoLocOnOff(enabled = false) )
 

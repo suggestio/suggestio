@@ -8,7 +8,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.geo._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.MonkeyNodeId.forJsObject
-import io.suggest.maps.m.ReqRcvrPopup
+import io.suggest.maps.m.OpenMapRcvr
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -57,7 +57,7 @@ object RcvrMarkersR {
     }
 
     private def _clickEvent(nodeId: String, gp: MGeoPoint): Callback = {
-      val msg = ReqRcvrPopup(nodeId, gp)
+      val msg = OpenMapRcvr(nodeId, gp)
       dispatchOnProxyScopeCB($, msg)
     }
 

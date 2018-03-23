@@ -61,14 +61,12 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
 
     // Сигнал об успешном обнаружении геолокации.
     case hlf: HandleLocationFound =>
-      // Выставить в состояние флаг, что больше не требуется принимать сигнал геолокации.
+      // Выставить в состояние флаг, что больше не требуется принимать сигнал геолокации. Это нужно, чтобы избежать передёргивания карты.
+      // TODO Снимать флаг, при повторной геолокации.
       val v0 = value
       if (value.locationFound.contains(true)) {
-        println("ignored loc found: " + hlf)
         noChange
       } else {
-        // TODO Есть проблема с передёргиванием карты. Поэтому отлаживаем перехват и игнор этих сообщений:
-        println(hlf)
         val v2 = v0.withLocationFound( Some(true) )
         _setMapCenter(hlf, v2)
       }

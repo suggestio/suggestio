@@ -17,20 +17,24 @@ trait AdnRights extends DynSearchArgs {
   /** Права, которые должны быть у узла. */
   def withAdnRights: Seq[MAdnRight]
 
+  /** Вместо must использовать mustNot по отношению к заданным withAdnRights. */
+  def adnRightsMustOrNot: Boolean
+
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
     val qbOpt0 = super.toEsQueryOpt
-    val _war = withAdnRights
-    if (_war.isEmpty) {
+    val _withAdnRights = withAdnRights
+    if (_withAdnRights.isEmpty) {
       qbOpt0
 
     } else {
       val fn = MNodeFields.Extras.ADN_RIGHTS_FN
 
+      val mustOrNot = IMust.mustOrNot(adnRightsMustOrNot)
       // Собираем terms query, объединяя через AND (must).
       val allTermsQ = IMust.maybeWrapToBool {
-        for (r <- _war) yield {
-          MWrapClause(IMust.MUST, QueryBuilders.termQuery(fn, r.value))
+        for (r <- _withAdnRights) yield {
+          MWrapClause(mustOrNot, QueryBuilders.termQuery(fn, r.value))
         }
       }
 
@@ -63,6 +67,7 @@ trait AdnRights extends DynSearchArgs {
 /** Дефолтовая реализация абстрактных кусков [[AdnRights]]. */
 trait AdnRightsDflt extends AdnRights {
   override def withAdnRights: Seq[MAdnRight] = Seq.empty
+  override def adnRightsMustOrNot: Boolean = true
 }
 
 

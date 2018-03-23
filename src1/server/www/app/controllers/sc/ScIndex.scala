@@ -1,6 +1,7 @@
 package controllers.sc
 
 import _root_.util.di._
+import io.suggest.adn.MAdnRights
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
@@ -243,19 +244,27 @@ trait ScIndex
 
         // Пройтись по всем геоуровням, запустить везде параллельные поиски узлов в точке, закинув в recover'ы.
         val someTrue = Some(true)
+        val circle = CircleGs(geoLoc.point, radiusM = 1)
+        val qShape = CircleGsJvm.toEsQueryMaker( circle )
+        val someGeoPoint = Some(geoLoc.point)
+        val nodeLocPred = MPredicates.NodeLocation
+
+        // Если запрещено погружение в реальные узлы-ресиверы (геолокация), то запрещаем получать узлы-ресиверы от elasticsearch:
+        val (withAdnRights1, adnRightsMustOrNot1) = if (!_reqArgs.geoIntoRcvr) {
+          // Запрещено погружаться в ресиверы. Значит, ищем просто узел-обёртку для выдачи, а не ресивер.
+          (MAdnRights.RECEIVER :: Nil, false)
+        } else {
+          (Nil, true)
+        }
+
         val nglsResultsFut = Future.traverse(MNodeGeoLevels.values: Iterable[MNodeGeoLevel]) { ngl =>
-          val nodeLocPred = MPredicates.NodeLocation
           val msearch = new MNodeSearchDfltImpl {
             override def limit = 1
             // Очень маловероятно, что сортировка по близости к точке нужна, но мы её всё же оставим
-            override def withGeoDistanceSort: Option[MGeoPoint] = {
-              Some(geoLoc.point)
-            }
+            override def withGeoDistanceSort = someGeoPoint
             // Неактивные узлы сразу вылетают из выдачи.
             override def isEnabled = someTrue
             override def outEdges: Seq[ICriteria] = {
-              val circle = CircleGs(geoLoc.point, radiusM = 1)
-              val qShape = CircleGsJvm.toEsQueryMaker( circle )
               val gsCr = GsCriteria(
                 levels = ngl :: Nil,
                 shapes = qShape :: Nil
@@ -266,29 +275,24 @@ trait ScIndex
               )
               cr :: Nil
             }
+            override def withAdnRights = withAdnRights1
+            override def adnRightsMustOrNot = adnRightsMustOrNot1
           }
-
-          for (mnodeOpt <- mNodes.dynSearchOne(msearch)) yield {
+          // Запустить поиск по запрошенным адресам.
+          for (
+            mnodeOpt <- mNodes.dynSearchOne(msearch)
+          ) yield {
             LOGGER.trace(s"$logPrefix $geoLoc on level $ngl => ${mnodeOpt.flatMap(_.id).orNull}")
             for (mnode <- mnodeOpt) yield {
               MIndexNodeInfo(
                 mnode  = mnode,
-                isRcvr = mnode.extras.adn.exists { adn =>
-                  // Нужно избегать ситуации попападания в выдачу города или района. Для этого проверяем отображаемый тип узла.
-                  // Раньше было отсеивание через проверку NodeLocation.Paid-предиката, который проистекает только из ЛК-размещения.
-                  // Эффективно, но это оказалось губительным для "ручных" гео-узлов: полигонны на карте, нарисованые вне-Paid-предикатов.
-                  val isTownOrDistrict = adn.shownTypeIdOpt
-                    .flatMap( AdnShownTypes.maybeWithName )
-                    .exists { ast => ast.isTown || ast.isTownDistrict }
-                  // Рутинная проверка на принадлежность к ресиверам. Почти всегда true в текущей ситуации.
-                  val r = !isTownOrDistrict && adn.isReceiver
-                  LOGGER.trace(s"$logPrefix ${mnode.idOrNull} ngl=$ngl isRcvrs => $r")
-                  r
-                }
+                // 2018-03-23 Проверка упрощена. TODO Можно попытаться вынести её на уровень поиска в индексе по adnRights. Сортировать по RCVR и ngl (а как по дважды-nested сортировать???), и сразу получить нужный элемент.
+                isRcvr = mnode.extras.isRcvr
               )
             }
           }
         }
+
         // Получить первый успешный результат или вернуть NSEE.
         val fut1 = for (rs <- nglsResultsFut) yield {
           val resNode = rs

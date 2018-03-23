@@ -259,7 +259,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     if (pot.isEmpty && !pot.isPending) {
       for (rcvrPopupState <- zoom(_.rcvr.popupState).value) yield {
         // Есть повод устроить запрос.
-        val a = ReqRcvrPopup(
+        val a = OpenMapRcvr(
           nodeId    = rcvrPopupState.nodeId,
           geoPoint  = rcvrPopupState.latLng
         )

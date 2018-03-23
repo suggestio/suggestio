@@ -36,7 +36,8 @@ trait Index extends FindAdsArgsT {
         nodeId        = sd0.common.adnIdOpt,
         locEnv        = sd0.locEnv,
         screen        = Some( sd0.common.screen ),
-        withWelcome   = true
+        withWelcome   = true,
+        geoIntoRcvr   = true
       )
       MScRespIndex.getIndex(inxArgs)
     }

@@ -64,23 +64,26 @@ object ScConstants {
   object ReqArgs {
 
     /** Имя поля с данными экрана клиентского устройства. */
-    def SCREEN_FN         = "screen"
+    final def SCREEN_FN         = "screen"
 
     /** Имя поля с флагом о том, требуется ли рендерить welome-screen для index-выдачи? */
-    def WITH_WELCOME_FN   = "wc"
+    final def WITH_WELCOME_FN   = "wc"
 
     /** Имя поля с версией API выдачи. */
-    def VSN_FN            = "v"
+    final def VSN_FN            = "v"
 
     /** Имя поля с id предыдущего узла выдачи, т.е. как бы id узла-referrer'а. */
-    def PREV_ADN_ID_FN    = "pr"
+    final def PREV_ADN_ID_FN    = "pr"
 
     /** Имя поля с id текущего узла выдачи. Названа adn вместо node для однозначности, что это наверное ресивер. */
-    def NODE_ID_FN         = "n"
+    final def NODE_ID_FN         = "n"
 
     /** Имя поля с данными физического окружения устройства клиента.
       * Пришло на смену старому кривому полю с geo mode. */
-    def LOC_ENV_FN        = "e"
+    final def LOC_ENV_FN        = "e"
+
+    /** Имя поля для разрешения или запрета погружения в узле-ресивер. */
+    final def GEO_INTO_RCVR_FN  = "r"
 
   }
 

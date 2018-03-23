@@ -73,11 +73,14 @@ case object RcvrMarkersInit extends IMapsAction
 /** Экшен выставления указанных recevier-маркеров в состояние. */
 case class InstallRcvrMarkers(tryResp: Try[MGeoNodesResp]) extends IMapsAction
 
-case class ReqRcvrPopup(nodeId: String, override val geoPoint: MGeoPoint) extends ISetMapCenterForPopup
+/** Экшен "открытия" ресивера на карте.
+  * В редакторе - открытие попапа. В выдаче - переход в ресивер.
+  */
+case class OpenMapRcvr(nodeId: String, override val geoPoint: MGeoPoint) extends ISetMapCenterForPopup
 
 /** Экшен успешно декодированного ответа на запрос попапа. */
 case class HandleRcvrPopupResp(resp: MRcvrPopupResp) extends IMapsAction
-case class HandleRcvrPopupTryResp(resp: Try[MNodeAdvInfo], rrp: ReqRcvrPopup) extends IMapsAction
+case class HandleRcvrPopupTryResp(resp: Try[MNodeAdvInfo], rrp: OpenMapRcvr) extends IMapsAction
 /** Ошибка запроса по теме попапа. */
 case class HandleRcvrPopupError(ex: Throwable) extends IMapsAction
 

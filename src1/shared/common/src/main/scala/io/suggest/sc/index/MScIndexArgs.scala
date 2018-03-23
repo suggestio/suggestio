@@ -27,7 +27,8 @@ object MScIndexArgs {
     (__ \ LOC_ENV_FN).writeNullable[MLocEnv]
       .contramap[MLocEnv]( EmptyUtil.implEmpty2OptF ) and
     (__ \ SCREEN_FN).writeNullable[MScreen] and
-    (__ \ WITH_WELCOME_FN).write[Boolean]
+    (__ \ WITH_WELCOME_FN).write[Boolean] and
+    (__ \ GEO_INTO_RCVR_FN).write[Boolean]
   )( unlift(unapply) )
 
 }
@@ -39,10 +40,16 @@ object MScIndexArgs {
   * @param locEnv Описание текущей локации устройства (неявно-пустая модель).
   * @param screen Описание экрана устройства.
   * @param withWelcome Планируется ли рендерить splash-screen приветствия?
+  * @param geoIntoRcvr Допускать ли вход в ресивер по гео-координатам?
+  *                    true на стадии геолокации с поиском узла
+  *                    При гулянии по карте - false
+  *                    При клике по узлу на карте - true.
   */
 case class MScIndexArgs(
                          nodeId       : Option[String],
                          locEnv       : MLocEnv,
                          screen       : Option[MScreen],
-                         withWelcome  : Boolean
+                         withWelcome  : Boolean,
+                         geoIntoRcvr  : Boolean
+                         // TODO А где тут apiVsn? Если с сервером унифицировать, то надо здесь apiVsn.
                        )

@@ -6,6 +6,7 @@ import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import io.suggest.sc.ScConstants.ReqArgs._
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 /**
   * Suggest.io
@@ -22,6 +23,7 @@ object MScIndexArgs {
   implicit def mScIndexArgsQsb(implicit
                                locEnvB    : QueryStringBindable[MLocEnv],
                                boolB      : QueryStringBindable[Boolean],
+                               boolOptB   : QueryStringBindable[Option[Boolean]],
                                devScrB    : QueryStringBindable[Option[DevScreen]],
                                strOptB    : QueryStringBindable[Option[String]],
                                apiVsnB    : QueryStringBindable[MScApiVsn]
@@ -36,6 +38,7 @@ object MScIndexArgs {
           prevAdnIdOptE       <- strOptB.bind(f(PREV_ADN_ID_FN),      params)
           apiVsnE             <- apiVsnB.bind(f(VSN_FN),              params)
           adnIdOptE           <- strOptB.bind(f(NODE_ID_FN),          params)
+          geoIntoRcvrE        <- boolOptB.bind(f(GEO_INTO_RCVR_FN),   params)
         } yield {
           for {
             _apiVsn           <- apiVsnE.right
@@ -44,6 +47,7 @@ object MScIndexArgs {
             _adnIdOpt         <- adnIdOptE.right
             _devScreen        <- devScreenE.right
             _withWelcome      <- withWelcomeE.right
+            _geoIntoRcvr      <- geoIntoRcvrE.right
           } yield {
             new MScIndexArgsDfltImpl {
               override def locEnv         = _locEnv
@@ -52,6 +56,7 @@ object MScIndexArgs {
               override def apiVsn         = _apiVsn
               override def prevAdnId      = _prevAdnIdOpt
               override def adnIdOpt       = _adnIdOpt
+              override def geoIntoRcvr    = _geoIntoRcvr.getOrElseTrue
             }
           }
         }
@@ -63,6 +68,7 @@ object MScIndexArgs {
           locEnvB.unbind(f(LOC_ENV_FN),           value.locEnv),
           devScrB.unbind(f(SCREEN_FN),            value.screen),
           boolB.unbind  (f(WITH_WELCOME_FN),      value.withWelcome),
+          boolB.unbind  (f(GEO_INTO_RCVR_FN),     value.geoIntoRcvr),
           strOptB.unbind(f(PREV_ADN_ID_FN),       value.prevAdnId),
           strOptB.unbind(f(NODE_ID_FN),           value.adnIdOpt),
           apiVsnB.unbind(f(VSN_FN),               value.apiVsn)
@@ -77,11 +83,15 @@ object MScIndexArgs {
 }
 
 
+// TODO ЗАменить на case class, унифицировать с common MScIndexArgs, выкинуть ненужные поля.
+
 /** Модель аргументов запроса к выдаче. */
 trait MScIndexArgs {
   def locEnv              : MLocEnv
   def screen              : Option[DevScreen]
   def withWelcome         : Boolean
+  def geoIntoRcvr         : Boolean
+  // TODO prevAdnId - удалить следом за v2-выдачей
   def prevAdnId           : Option[String]
   def apiVsn              : MScApiVsn
   /** id (текущего) узла-ресивера, для которого запрашивается sc index. */
@@ -107,21 +117,9 @@ trait MScIndexArgsDflt extends MScIndexArgs {
   override def prevAdnId            : Option[String]      = None
   override def apiVsn               : MScApiVsn           = MScApiVsns.unknownVsn
   override def adnIdOpt             : Option[String]      = None
+  override def geoIntoRcvr          : Boolean             = true
 }
 /** Реализация [[MScIndexArgsDflt]] для облегчения скомпиленного байткода. */
 class MScIndexArgsDfltImpl extends MScIndexArgsDflt
 
-
-/** Враппер [[MScIndexArgs]] для имитации вызова copy(). */
-trait MScIndexArgsWrapper extends MScIndexArgs {
-  def reqArgsUnderlying: MScIndexArgs
-
-  override def locEnv               = reqArgsUnderlying.locEnv
-  override def screen               = reqArgsUnderlying.screen
-  override def withWelcome          = reqArgsUnderlying.withWelcome
-  override def prevAdnId            = reqArgsUnderlying.prevAdnId
-  override def apiVsn               = reqArgsUnderlying.apiVsn
-  override def adnIdOpt             = reqArgsUnderlying.adnIdOpt
-
-}
 

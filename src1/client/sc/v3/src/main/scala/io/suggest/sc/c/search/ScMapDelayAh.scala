@@ -1,7 +1,7 @@
 package io.suggest.sc.c.search
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
-import io.suggest.maps.m.{MapDragEnd, MapMoveEnd, ReqRcvrPopup}
+import io.suggest.maps.m.{MapDragEnd, MapMoveEnd, OpenMapRcvr}
 import io.suggest.sc.m.search.{MMapDelay, MapDelayTimeOut, MapReIndex}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -68,7 +68,7 @@ class ScMapDelayAh[M](
 
 
     // Клик по маркеру ресивера на карте. Отложить, чтобы карта не тормозила.
-    case m: ReqRcvrPopup =>
+    case m: OpenMapRcvr =>
       for (v0 <- value)
         DomQuick.clearTimeout( v0.timerId )
 

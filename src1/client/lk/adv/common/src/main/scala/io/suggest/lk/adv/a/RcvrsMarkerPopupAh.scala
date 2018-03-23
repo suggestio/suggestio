@@ -27,7 +27,7 @@ class RcvrsMarkerPopupAh[M](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал запуска запроса с сервера содержимого попапа для ресивера.
-    case rrp: ReqRcvrPopup =>
+    case rrp: OpenMapRcvr =>
       // TODO Проверить содержимое rcvrsRW, может там уже есть правильный ответ, и запрос делать не надо.
       val fx = Effect[IMapsAction] {
         api

@@ -135,4 +135,6 @@ case class MNodeExtras(
 
   def withDoc(doc: Option[MNodeDoc]) = copy(doc = doc)
 
+  def isRcvr = adn.exists(_.isReceiver)
+
 }

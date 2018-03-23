@@ -33,7 +33,7 @@ class IndexAh[M](
   with Log
 { ah =>
 
-  private def _getIndex(withWelcome: Boolean, silent: Boolean, v0: MScIndex): ActionResult[M] = {
+  private def _getIndex(withWelcome: Boolean, silent: Boolean, v0: MScIndex, geoIntoRcvr: Boolean): ActionResult[M] = {
     val ts = System.currentTimeMillis()
 
     val fx = Effect {
@@ -42,7 +42,8 @@ class IndexAh[M](
         nodeId      = v0.state.currRcvrId,
         locEnv      = root.locEnv,
         screen      = Some( root.dev.screen.screen ),
-        withWelcome = withWelcome
+        withWelcome = withWelcome,
+        geoIntoRcvr = geoIntoRcvr
       )
 
       api
@@ -98,13 +99,24 @@ class IndexAh[M](
               )
             )
           )
-        _getIndex( withWelcome = m.rcvrId.nonEmpty, silent = false, v1)
+        _getIndex(
+          withWelcome = m.rcvrId.nonEmpty,
+          silent = false,
+          v0 = v1,
+          geoIntoRcvr = m.rcvrId.nonEmpty
+        )
       }
 
 
     // Команда запроса и получения индекса выдачи с сервера для текущего состояния.
     case m: GetIndex =>
-      _getIndex(m.withWelcome, silent = true, value)
+      _getIndex(
+        withWelcome = m.withWelcome,
+        silent      = true,
+        v0          = value,
+        geoIntoRcvr = m.geoIntoRcvr
+      )
+
 
     // Поступление ответа сервера, который ожидается
     case m: HandleIndexResp =>
@@ -154,6 +166,9 @@ class IndexAh[M](
 
             // Индекс получен.
             {inx =>
+              // Сайд-эффекты закидываются в этот аккамулятор:
+              var fxsAcc = List.empty[Effect]
+
               // TODO Сравнивать полученный index с текущим состоянием. Может быть ничего сохранять не надо?
               val v1 = v0.copy(
                 resp = v0.resp.ready(inx),
@@ -196,18 +211,19 @@ class IndexAh[M](
                     s3
                   }
 
-                  s4
+                  // TODO 2018-03-23 Решено, что внутри узлов надо открывать сразу теги, ибо каталог.
+                  // А на карте - в первую очередь открывать карту.
+                  // Поэтому принудительно меняем текущую search-вкладку:
+                  val nextSearchTab = MSearchTabs.defaultIfRcvr( inx.isRcvr )
+                  val s5 = if (nextSearchTab !=* s4.currTab) {
+                    // Надо сменить search-таб согласно режиму текущего возможного узла.
+                    s4.withCurrTab(nextSearchTab)
+                  } else
+                    s4
+
+                  s5
                 }
               )
-
-              // Сайд-эффекты закидываются в этот аккамулятор:
-              var fxsAcc = List.empty[Effect]
-
-              // TODO 2018-03-23 Решено, что внутри узлов надо открывать сразу теги, ибо каталог.
-              // А на карте - в первую очередь открывать карту.
-              // Поэтому принудительно меняем текущую search-вкладку:
-              // TODO Но сначала надо запретить переход в ресивер без явного клика.
-              //val nextSearchTab = if (inx.isRcvr) MSearchTabs.
 
               // Если вкладка с тегами видна, то запустить получение тегов в фоне.
               if ( v1.search.isShownTab(MSearchTabs.Tags) ) {
