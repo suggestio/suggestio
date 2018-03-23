@@ -239,6 +239,7 @@ trait ScIndex
       _reqGeoLocFut.flatMap { geoLocOpt =>
         // Пусть будет сразу NSEE, если нет данных геолокации.
         val geoLoc = geoLocOpt.get
+        LOGGER.trace(s"$logPrefix Detect node using geo-loc: $geoLoc")
 
         // Пройтись по всем геоуровням, запустить везде параллельные поиски узлов в точке, закинув в recover'ы.
         val someTrue = Some(true)
@@ -253,7 +254,7 @@ trait ScIndex
             // Неактивные узлы сразу вылетают из выдачи.
             override def isEnabled = someTrue
             override def outEdges: Seq[ICriteria] = {
-              val circle = CircleGs(geoLoc.point, radiusM = 10)
+              val circle = CircleGs(geoLoc.point, radiusM = 1)
               val qShape = CircleGsJvm.toEsQueryMaker( circle )
               val gsCr = GsCriteria(
                 levels = ngl :: Nil,
@@ -268,6 +269,7 @@ trait ScIndex
           }
 
           for (mnodeOpt <- mNodes.dynSearchOne(msearch)) yield {
+            LOGGER.trace(s"$logPrefix $geoLoc on level $ngl => ${mnodeOpt.flatMap(_.id).orNull}")
             for (mnode <- mnodeOpt) yield {
               MIndexNodeInfo(
                 mnode  = mnode,
@@ -279,7 +281,9 @@ trait ScIndex
                     .flatMap( AdnShownTypes.maybeWithName )
                     .exists { ast => ast.isTown || ast.isTownDistrict }
                   // Рутинная проверка на принадлежность к ресиверам. Почти всегда true в текущей ситуации.
-                  !isTownOrDistrict && adn.isReceiver
+                  val r = !isTownOrDistrict && adn.isReceiver
+                  LOGGER.trace(s"$logPrefix ${mnode.idOrNull} ngl=$ngl isRcvrs => $r")
+                  r
                 }
               )
             }
@@ -287,9 +291,12 @@ trait ScIndex
         }
         // Получить первый успешный результат или вернуть NSEE.
         val fut1 = for (rs <- nglsResultsFut) yield {
-          rs.iterator
+          val resNode = rs
+            .iterator
             .flatten
             .next
+          LOGGER.trace(s"$logPrefix First-detected node#${resNode.mnode.idOrNull} isRcvr?${resNode.isRcvr}")
+          resNode
         }
 
         // Записываем в логи промежуточные итоги геолокации.

@@ -79,7 +79,7 @@ class ShowcaseNodeListUtil @Inject() (
                 }
                 override def outEdges: Seq[ICriteria] = {
                   val gsCr = GsCriteria(
-                    levels = Seq(lvl),
+                    levels = lvl :: Nil,
                     shapes = gsiOpt
                       .map {
                         _.geoDistanceQuery
@@ -90,7 +90,7 @@ class ShowcaseNodeListUtil @Inject() (
                     predicates = Seq(MPredicates.NodeLocation),
                     gsIntersect = Some(gsCr)
                   )
-                  Seq(cr)
+                  cr :: Nil
                 }
               }
               searchF(msearch)
@@ -162,7 +162,7 @@ class ShowcaseNodeListUtil @Inject() (
     detectFut
       .map(_.node)
       .recoverWith {
-        case ex: NoSuchElementException =>
+        case _: NoSuchElementException =>
           // Запускаем чтение из кеша уже известного узла.
           mNodesCache.maybeGetByIdCached(currAdnIdOpt)
             .filter(_.nonEmpty)
@@ -253,7 +253,7 @@ class ShowcaseNodeListUtil @Inject() (
   /** Обернуть список городов в гео-слой. */
   def townsToLayer(townNodes: Seq[MNode], expanded: Boolean)(implicit messages: Messages): GeoNodesLayer = {
     if (townNodes.isEmpty) {
-      GeoNodesLayer(Seq.empty, MNodeGeoLevels.NGL_TOWN, expanded = expanded)
+      GeoNodesLayer(Nil, MNodeGeoLevels.NGL_TOWN, expanded = expanded)
     } else if (townNodes.size == 1) {
       town2layer(townNodes.head, expanded)
     } else {
@@ -433,7 +433,8 @@ class ShowcaseNodeListUtil @Inject() (
             townsToLayer(townNodes, expanded = true)
           }
         } else {
-          Future successful town2layer(currNode)
+          val r = town2layer(currNode)
+          Future.successful(r)
         }
         for {
           districtsLayer <- districtsLayerFut

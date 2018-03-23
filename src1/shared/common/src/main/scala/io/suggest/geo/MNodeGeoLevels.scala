@@ -152,14 +152,23 @@ object MNodeGeoLevels extends Enum[MNodeGeoLevel] {
     override def accuracyMetersMax: Option[Int] = None
   }
 
-  def default: MNodeGeoLevel = NGL_BUILDING
+  final def default: MNodeGeoLevel = NGL_BUILDING
 
 
   /** Layer, относящийся к гео-тегам. */
-  def geoTag: MNodeGeoLevel = geoPlace
+  final def geoTag: MNodeGeoLevel = NGL_TOWN_DISTRICT
 
   /** Layer, в котором карточки размещают на карте. */
-  def geoPlace: MNodeGeoLevel = NGL_TOWN_DISTRICT
+  final def geoPlace: MNodeGeoLevel = NGL_BUILDING
+
+  /** В каких гео-слоях искать geo-place-размещения?
+    *
+    * 2018-03-23 Изначально, размещения в geo-place было в уровне TOWN_DISTRICT.
+    * Но этого оказалось мало. Поэтому, теперь они на уровне здания, а тут поддержка
+    * для поиска карточек в обоих индексах сразу.
+    */
+  // TODO Удалить после ребилда карточек.
+  final def geoPlacesCompat = geoPlace :: NGL_TOWN_DISTRICT :: Nil
 
 
   override val values = findValues
