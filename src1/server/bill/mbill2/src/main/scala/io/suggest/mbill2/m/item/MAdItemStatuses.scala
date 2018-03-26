@@ -26,27 +26,21 @@ trait MAdItemStatusesSlick extends IPgProfile {
 }
 
 
-/** Интерфейс модели. */
-trait IAdItemStatuses extends INodeId {
-  /** Ключи item'ов, связанных с указанной рекламной карточкой. */
-  def statusesStr: Seq[String]
-
-  def statuses: Set[MItemStatus] = {
-    statusesStr.flatMap(MItemStatuses.withValueOpt).toSet
-  }
-}
-
-
 /** Дефолтовая реализация модели [[IAdItemIds]].
   *
   * @param nodeId id рекламной карточки.
   * @param statusesStr Множество строк статусов item'ов карточки.
+  *                    Ключи item'ов, связанных с указанной рекламной карточкой.
   */
 case class MAdItemStatuses(
-  override val nodeId      : String,
-  override val statusesStr : Seq[String]
-)
-  extends IAdItemStatuses
+                            override val nodeId   : String,
+                            statusesStr           : Seq[String]
+                          )
+  extends INodeId
 {
-  override lazy val statuses = super.statuses
+
+  lazy val statuses: Set[MItemStatus] = {
+    statusesStr.flatMap(MItemStatuses.withValueOpt).toSet
+  }
+
 }

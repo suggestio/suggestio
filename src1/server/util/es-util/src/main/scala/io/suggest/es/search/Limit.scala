@@ -26,8 +26,8 @@ trait Limit extends DynSearchArgs with ILimit {
 
   override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
     val srb1 = super.prepareSearchRequest(srb)
-    if (limit > 0) {
-      val lim = Math.min(MAX_RESULTS_HARD, Math.max(1, limit))
+    if (limit >= 0) {
+      val lim = Math.min(MAX_RESULTS_HARD, limit)
       srb1.setSize(lim)
     } else {
       srb1

@@ -181,8 +181,6 @@ class MarketLkAdn @Inject() (
    */
   def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String]) = csrf.AddToken {
     isNodeAdmin(adnId, U.Lk).async { implicit request =>
-      import request.mnode
-
       // Для узла нужно отобразить его рекламу.
       // TODO Добавить поддержку агрумента mode
       val madsFut: Future[Seq[MNode]] = {
@@ -255,7 +253,7 @@ class MarketLkAdn @Inject() (
 
       // Надо ли отображать кнопку "управление" под карточками? Да, если узел продьюсер.
       val canAdvFut: Future[Boolean] = {
-        val canAdv = mnode.extras.adn.exists(_.isProducer)
+        val canAdv = request.mnode.extras.adn.exists(_.isProducer)
         Future.successful( canAdv )
       }
 
@@ -292,7 +290,7 @@ class MarketLkAdn @Inject() (
         ctx       <- ctxFut
       } yield {
         val args = MNodeAdsTplArgs(
-          mnode   = mnode,
+          mnode   = request.mnode,
           mads    = mnais,
           canAdv  = canAdv
         )

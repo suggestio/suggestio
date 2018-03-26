@@ -6,7 +6,7 @@ import _root_.util.showcase.IScAdSearchUtilDi
 import _root_.util.stat.IStatUtil
 import io.suggest.ad.blk.BlockWidths
 import io.suggest.dev.MSzMult
-import io.suggest.jd.tags.MJdTagNames
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.primo.TypeT
 import io.suggest.sc.MScApiVsns
@@ -367,29 +367,36 @@ trait ScAdsTile
     override def renderMadAsync(brArgs: RenderArgs): Future[T] = {
       // Требуется рендер только main-блока карточки.
       Future {
-        val mainBlkTpl0 = jdAdUtil.getMainBlockTpl( brArgs.mad )
-        // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
-        val mainBlkTpl2 = mainBlkTpl0.map { jdt =>
-          if (jdt.name ==* MJdTagNames.STRIP && jdt.props1.bm.exists(_.wide)) {
-            jdt.withProps1(
-              jdt.props1.withBm(
-                jdt.props1.bm.map { bm =>
-                  bm.withWide( false )
-                }
-              )
-            )
-          } else {
-            jdt
+        // Можно рендерить карточку сразу целиком, если на данном узле карточка размещена как заранее открытая.
+        val isDisplayOpened = (_qs.search.rcvrIdOpt.toList reverse_::: _qs.search.tagNodeIdOpt.toList)
+          .exists { nodeId =>
+            brArgs.mad.edges
+              .withPredicateIter( MPredicates.Receiver, MPredicates.TaggedBy )
+              .exists { medge =>
+                medge.nodeIds.contains(nodeId) &&
+                  medge.info.flag.contains(true)
+              }
           }
+
+        // Узнать, какой шаблон рендерить.
+        val tpl2 = if (isDisplayOpened) {
+          LOGGER.trace(s"$logPrefix Ad#${brArgs.mad.idOrNull} renders focused by default.")
+          jdAdUtil.getNodeTpl( brArgs.mad )
+        } else {
+          val tpl1 = jdAdUtil.getMainBlockTpl( brArgs.mad )
+          // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
+          jdAdUtil.setBlkWide(tpl1, wide2 = false)
         }
-        val edges2 = jdAdUtil.filterEdgesForTpl(mainBlkTpl2, brArgs.mad.edges)
+
+        // Собираем необходимые эджи и упаковываем в переносимый контейнер:
+        val edges2 = jdAdUtil.filterEdgesForTpl(tpl2, brArgs.mad.edges)
         val jdFut = jdAdUtil.mkJdAdDataFor
           .show(
             nodeId        = brArgs.mad.id,
             nodeEdges     = edges2,
-            tpl           = mainBlkTpl2,
+            tpl           = tpl2,
             szMult        = tileArgs.szMult,
-            allowWide     = false,
+            allowWide     = isDisplayOpened,
             forceAbsUrls  = _qs.apiVsn.forceAbsUrls
           )(ctx)
           .execute()

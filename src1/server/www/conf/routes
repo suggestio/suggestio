@@ -65,7 +65,7 @@ POST /lk/node/img/logo                  @controllers.MarketLkAdnEdit.handleTempL
 
 ## Управления карточками узла.
 GET  /lk/mads/form/*nodeKey             @controllers.LkAds.adsPage(nodeKey: RcvrKey)
-GET  /lk/mads/get/*nodeKey              @controllers.LkAds.getAds(nodeKey: RcvrKey, offset: Int)
+GET  /lk/mads/get/*nodeKey              @controllers.LkAds.getAds(nodeKey: RcvrKey, offset: Int, newAdId: Option[String] ?= None)
 
 ## Редактирования профиля юзера из личного кабинета узла.
 GET  /lk/own/edit/:adnId                @controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)

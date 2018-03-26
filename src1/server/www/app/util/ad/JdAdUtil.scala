@@ -268,6 +268,21 @@ class JdAdUtil @Inject()(
       .getMainBlockOrFirst
   }
 
+  def setBlkWide(blkTpl: Tree[JdTag], wide2: Boolean): Tree[JdTag] = {
+    blkTpl.map { jdt =>
+      if (jdt.name ==* MJdTagNames.STRIP && jdt.props1.bm.exists(_.wide !=* wide2)) {
+        jdt.withProps1(
+          jdt.props1.withBm(
+            jdt.props1.bm.map { bm =>
+              bm.withWide( wide2 )
+            }
+          )
+        )
+      } else {
+        jdt
+      }
+    }
+  }
 
   /** Настраиваемая логика рендера карточки. */
   trait JdAdDataMakerBase extends Product {

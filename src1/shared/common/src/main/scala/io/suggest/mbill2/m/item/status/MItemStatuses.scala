@@ -1,8 +1,10 @@
 package io.suggest.mbill2.m.item.status
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
-import japgolly.univeq.UnivEq
+import io.suggest.enum2.EnumeratumUtil
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
+import japgolly.univeq.UnivEq
+import play.api.libs.json.Format
 
 /**
  * Suggest.io
@@ -118,6 +120,10 @@ object MItemStatus {
 
   def unapplyStrId(x: MItemStatus): Option[String] = {
     Some( x.value )
+  }
+
+  implicit def MITEM_STATUS_FORMAT: Format[MItemStatus] = {
+    EnumeratumUtil.valueEnumEntryFormat( MItemStatuses )
   }
 
 }
