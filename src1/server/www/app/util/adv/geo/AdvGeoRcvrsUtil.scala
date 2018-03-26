@@ -112,7 +112,7 @@ class AdvGeoRcvrsUtil @Inject()(
           MNodeFields.Meta.META_BASIC_FN,
           MNodeFields.Meta.META_COLORS_FN
         ),
-        q = onMapRcvrsSearch(1000).toEsQuery
+        q = onMapRcvrsSearch(0).toEsQuery
       )
     } yield {
       // Тут костыль для "версии", чтобы сбрасывать некорректный кэш. TODO Удалить этот .map после окончания отладки.

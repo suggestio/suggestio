@@ -17,8 +17,10 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.v.menu.{AboutSioR, EditAdR, EnterLkRowR, MenuR}
-
 import scalacss.ScalaCssReact._
+
+import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -96,10 +98,14 @@ class ScRootR (
           val contentStyl = new StyleProps {
             override val overflowY = INITIAL
           }
+          val overlayStyl = new StyleProps {
+            override val zIndex = 3
+          }
 
           val searchStyles = new SidebarStyles {
             override val sidebar = searchContentStyl
             override val content = contentStyl
+            override val overlay = overlayStyl
           }
 
           Sidebar(
