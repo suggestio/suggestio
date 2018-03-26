@@ -25,7 +25,6 @@ import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
@@ -661,6 +660,7 @@ class JdR(
     .renderBackend[Backend]
     // TODO Это подавляет пере-рендеры плитки в выдаче, но нарушает работу редактора. Скорее всего, просто нельзя так работать с ModelProxy. И ошибка - следствие.
     //.configure( Reusability.shouldComponentUpdate )
+    // TODO Сделать сравнивание через хранение текущего значения Props.value в State: нужна связка componentWillMount + componentWillReceiverProps + shouldComponentUpdatePure
     .build
 
   private def _apply(jdArgsProxy: Props) = component( jdArgsProxy )

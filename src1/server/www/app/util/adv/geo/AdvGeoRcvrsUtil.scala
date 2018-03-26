@@ -167,6 +167,9 @@ class AdvGeoRcvrsUtil @Inject()(
       .mapAsyncUnordered(NODE_LOGOS_PREPARING_PARALLELISM) { mnode =>
         // Подготовить инфу по логотипу узла.
         val logoMakeResOptFut = logoUtil.getLogoOfNode(mnode).flatMap { logoOptRaw =>
+          if (logoOptRaw.isEmpty)
+            LOGGER.trace(s"$logPrefix Missing logo for node ${mnode.idOrNull}")
+
           FutureUtil.optFut2futOpt(logoOptRaw) { logoRaw =>
             // Используем FitImgMaker, чтобы вписать лого в ограничения логотипа для этой карты.
             val imakeArgs = MImgMakeArgs(

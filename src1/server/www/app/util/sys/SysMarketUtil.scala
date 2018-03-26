@@ -134,7 +134,9 @@ class SysMarketUtil extends MacroLogsDyn {
   def updateAdnNode(old: MNode, changes: MNode): MNode = {
     old.copy(
       common = old.common.copy(
-        ntype = changes.common.ntype
+        ntype       = changes.common.ntype,
+        isEnabled   = changes.common.isEnabled,
+        isDependent = changes.common.isDependent
       ),
       meta = old.meta.copy(
         basic = {
