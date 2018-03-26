@@ -4,9 +4,9 @@ import diode._
 import diode.data.{PendingBase, Pot}
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
-import japgolly.scalajs.react.{BackendScope, Callback}
+import japgolly.scalajs.react.{BackendScope, Callback, Children, ScalaComponent}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import japgolly.scalajs.react.extra.{Reusability, Reusable}
+import japgolly.scalajs.react.extra.Reusability
 import japgolly.univeq._
 
 /**
@@ -144,6 +144,36 @@ object ReactDiodeUtil {
       Reusability[A] { feq.eqv }
     }
 
+  }
+
+
+  /** Функция извлечения value из ModelProxy.
+    * Используется так: compBuilder.initialStateFromProps(modelProxyValueF)
+    */
+  def modelProxyValueF[T] = { modelProxy: ModelProxy[T] =>
+    modelProxy.value
+  }
+
+  /** Конфигурирование ModelProxy-компонента, чтобы кэшировал значение из ModelProxy внутри State,
+    * и сравнивал его перед апдейтом компонента.
+    * Бывает, что ReactConnector нельзя задействовать, но очень хочется. И тут аналог этого.
+    *
+    * @tparam P ModelProxy[S]
+    * @tparam S AnyRef
+    * @return Пропатченный компонент, который обновляется (и обновляет S) только если P.value отличается от S.
+    */
+  def statePropsValShouldComponentUpdate[P <: ModelProxy[S], C <: Children, S <: AnyRef: FastEq, B]: ScalaComponent.Config[P, C, S, B] = {
+    _.componentWillReceiveProps { $ =>
+      val nextPropsVal = $.nextProps.value
+      val currPropsVal = $.state
+      if ( implicitly[FastEq[S]].eqv(currPropsVal, nextPropsVal) ) {
+        Callback.empty
+      } else {
+        $.setState(nextPropsVal)
+      }
+    }.shouldComponentUpdatePure { $ =>
+      $.currentState ne $.nextState
+    }
   }
 
 }

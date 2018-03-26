@@ -17,7 +17,7 @@ import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
-import io.suggest.react.ReactCommonUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sjs.common.log.Log
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sjs.common.util.DataUtil
@@ -51,7 +51,7 @@ class JdR(
   import MJdArgs.MJdArgsFastEq
 
   type Props_t = MJdArgs
-  type Props = ModelProxy[MJdArgs]
+  type Props = ModelProxy[Props_t]
 
 
   /** Движок рендера для сборки под разные ситуации. Можно вынести за пределы компонента. */
@@ -449,7 +449,7 @@ class JdR(
 
 
   /** Рендерер дерева jd-тегов. */
-  protected class Backend($: BackendScope[Props, Unit]) extends JdRenderer {
+  protected class Backend($: BackendScope[Props, Props_t]) extends JdRenderer {
 
     // Callbacks
 
@@ -646,21 +646,21 @@ class JdR(
     }
 
     /** Рендер компонента. */
-    def render(jdArgsProxy: Props): VdomElement = {
+    def render(s: Props_t): VdomElement = {
       // Тут была попытка завернуть всё в коннекшен для явной защиты от перерендеров при неизменных MJdArgs.
       // Итог: фейл. Нарушается актуальность JdCss, перерендеры остаются.
-      renderJdArgs( jdArgsProxy.value )
+      renderJdArgs(s)
     }
 
   } // Backend
 
 
   val component = ScalaComponent.builder[Props]("Jd")
-    .stateless
+    // В состоянии храним последний инстанс MJdArgs. Это поможет подавлять паразитные перерендеры.
+    .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
-    // TODO Это подавляет пере-рендеры плитки в выдаче, но нарушает работу редактора. Скорее всего, просто нельзя так работать с ModelProxy. И ошибка - следствие.
-    //.configure( Reusability.shouldComponentUpdate )
-    // TODO Сделать сравнивание через хранение текущего значения Props.value в State: нужна связка componentWillMount + componentWillReceiverProps + shouldComponentUpdatePure
+    // ReactConnector использовать обычно нельзя, поэтому используем простой самописный компаратор, защищающий от лишних пере-рендеров.
+    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( MJdArgsFastEq ) )
     .build
 
   private def _apply(jdArgsProxy: Props) = component( jdArgsProxy )
