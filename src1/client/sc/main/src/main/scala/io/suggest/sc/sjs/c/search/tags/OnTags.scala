@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.search.tags
 
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.routes.scRoutes
+import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.mgeo.NewGeoLoc
 import io.suggest.sc.sjs.m.msearch.TagRowClick
@@ -10,7 +10,6 @@ import io.suggest.sc.sjs.vm.search.fts.SInput
 import io.suggest.sc.sjs.vm.search.tabs.htag.{StList, StListRow}
 import io.suggest.sjs.common.tags.search._
 import io.suggest.sjs.common.fsm.signals.Visible
-import io.suggest.routes.JsRoutes_ScControllers._
 
 import scala.util.{Failure, Success}
 
@@ -50,7 +49,7 @@ trait OnTags extends TagsFsmStub {
           locEnv  = ScFsm.currLocEnv
         )
         val fut = MTagsSearch.search(
-          route = scRoutes.controllers.Sc.tagsSearch( MTagSearchArgs.toJson(args) )
+          route = ScJsRoutes.controllers.Sc.tagsSearch( MTagSearchArgs.toJson(args) )
         )
         val reqTstamp = _sendFutResBackTimestamped(fut, MTagSearchRespTs)
         _stateData = sd0.copy(

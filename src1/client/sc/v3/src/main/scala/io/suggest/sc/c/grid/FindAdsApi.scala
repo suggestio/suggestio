@@ -1,6 +1,6 @@
 package io.suggest.sc.c.grid
 
-import io.suggest.routes.scRoutes
+import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.sc3.MSc3Resp
 import io.suggest.sc.u.ScJsRoutesUtil
@@ -36,19 +36,17 @@ trait IFindAdsApi {
 /** Реализация [[IFindAdsApi]] поверх HTTP/XHR. */
 trait FindAdsApiXhrImpl extends IFindAdsApi {
 
-  import io.suggest.routes.JsRoutes_ScControllers._
-
   override def findAds(args: MFindAdsReq): Future[MSc3Resp] = {
     ScJsRoutesUtil.mkSc3Request(
       args  = args,
-      route = scRoutes.controllers.Sc.findAds
+      route = ScJsRoutes.controllers.Sc.findAds
     )
   }
 
   override def focusedAds(args: MFindAdsReq): Future[MSc3Resp] = {
     ScJsRoutesUtil.mkSc3Request(
       args  = args,
-      route = scRoutes.controllers.Sc.focusedAds
+      route = ScJsRoutes.controllers.Sc.focusedAds
     )
   }
 

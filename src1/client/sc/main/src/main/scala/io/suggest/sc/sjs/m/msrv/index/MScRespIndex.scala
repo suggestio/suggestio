@@ -3,8 +3,7 @@ package io.suggest.sc.sjs.m.msrv.index
 import io.suggest.geo.MGeoPoint
 import io.suggest.msg.ErrorMsgs
 import io.suggest.primo.IApplyUndef1
-import io.suggest.routes.scRoutes
-import io.suggest.routes.JsRoutes_ScControllers._
+import io.suggest.routes.ScJsRoutes
 
 import scala.scalajs.js
 import io.suggest.sc.ScConstants.Resp._
@@ -37,7 +36,7 @@ object MScRespIndex extends Log with IApplyUndef1 {
    */
   def getIndex(args: MScIndexArgs): Future[MScRespIndex] = {
     // Собрать и отправить запрос за данными index.
-    val route = scRoutes.controllers.Sc.index( MScIndexArgsJs.toJson(args) )
+    val route = ScJsRoutes.controllers.Sc.index( MScIndexArgsJs.toJson(args) )
 
     // Запустить асинхронный запрос и распарсить результат.
     val fut = MSrv.doRequest(route)

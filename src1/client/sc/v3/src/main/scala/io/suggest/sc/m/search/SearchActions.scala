@@ -2,6 +2,7 @@ package io.suggest.sc.m.search
 
 import io.suggest.sc.m.ISc3Action
 import io.suggest.sc.sc3.MSc3TagsResp
+import io.suggest.sc.search.MSearchTab
 
 import scala.util.Try
 

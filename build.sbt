@@ -393,7 +393,7 @@ lazy val lkAdnMapSjs = {
 /** JS страницы управления карточками узла в личном кабинете. */
 lazy val lkAdsSjs = {
   Project(id = "lk-ads-sjs", base = file(DIR0 + "client/lk/ads"))
-    .dependsOn(lkCommonSjs)
+    .dependsOn(lkCommonSjs, jdRenderSjs)
 }
 
 /** Всякие мелкие скрипты ЛК объеденены в этом scala-js. 

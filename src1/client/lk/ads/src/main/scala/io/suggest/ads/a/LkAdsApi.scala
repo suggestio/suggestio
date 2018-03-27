@@ -17,6 +17,12 @@ import scala.concurrent.Future
   */
 trait ILkAdsApi {
 
+  /** Запрос к серверу за карточками.
+    *
+    * @param nodeKey Ключ текущего узла.
+    * @param offset Сдвиг в результатах.
+    * @return Фьючерс с порцией карточек.
+    */
   def getAds(nodeKey: RcvrKey, offset: Int): Future[Seq[MLkAdsOneAdResp]]
 
 }

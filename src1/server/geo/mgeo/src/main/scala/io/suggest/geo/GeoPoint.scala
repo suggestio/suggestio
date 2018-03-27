@@ -174,21 +174,22 @@ object GeoPoint extends MacroLogsImpl {
             latEith <- doubleB.bind( k(Lat.QS_FN), params )
             lonEith <- doubleB.bind( k(Lon.QS_FN), params )
           } yield {
-            // TODO play-2.6: scala-2.12+ syntax:
-            /*latEith
-              .filterOrElse( Lat.isValid, E_INVALID_LAT )
+            // play-2.6: scala-2.12+ syntax:
+            latEith
+              .filterOrElse( Lat.isValid, Lat.E_INVALID )
               .flatMap { lat =>
                 lonEith
-                  .filterOrElse( Lon.isValid, E_INVALID_LON )
+                  .filterOrElse( Lon.isValid, Lon.E_INVALID )
                   .map { lon =>
                     MGeoPoint(
                       lat = lat,
                       lon = lon
                     )
                   }
-              }*/
+              }
 
-            // scala 2.11 syntax: TODO Заменить верхним синтаксисом после апдейта сервера до scala-2.12 (см. TODO выше).
+            // scala 2.11 syntax: Заменить верхним синтаксисом и удалить после апдейта сервера до scala-2.12 (см. TODO выше).
+            /*
             latEith match {
               case Right(lat) =>
                 if (Lat.isValid(lat)) {
@@ -209,6 +210,7 @@ object GeoPoint extends MacroLogsImpl {
                 }
               case Left(e) => Left(e)
             }
+            */
           }
         }
 

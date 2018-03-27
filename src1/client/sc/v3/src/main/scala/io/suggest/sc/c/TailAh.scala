@@ -6,11 +6,12 @@ import io.suggest.geo.MGeoPoint
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.GetRouterCtlF
 import io.suggest.sc.m._
-import io.suggest.sc.m.Sc3Pages.MainScreen
+import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.hdr.{MenuOpenClose, SearchOpenClose}
 import io.suggest.sc.m.inx.{GetIndex, MScIndex, WcTimeOut}
-import io.suggest.sc.m.search.{MSearchTabs, SwitchTab, TagClick}
+import io.suggest.sc.m.search.{SwitchTab, TagClick}
+import io.suggest.sc.search.MSearchTabs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import japgolly.univeq._

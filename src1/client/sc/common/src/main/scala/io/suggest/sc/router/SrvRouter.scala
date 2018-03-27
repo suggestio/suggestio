@@ -1,6 +1,6 @@
 package io.suggest.sc.router
 
-import io.suggest.routes.scRoutes
+import io.suggest.routes.ScJsRoutes
 import io.suggest.sjs.common.vm.doc.SafeBody
 import org.scalajs.dom
 
@@ -21,7 +21,7 @@ object SrvRouter {
    * Получить роутер: со страницы или запросить с сервера асинхронно, если на странице отсутствует.
    * @return Фьючерс с роутером.
    */
-  def ensureJsRouter(): Future[scRoutes.type] = {
+  def ensureJsRouter(): Future[ScJsRoutes.type] = {
     val wnd = dom.window : WindowWithScRouterSafe
 
     if (wnd.jsRoutes.nonEmpty) {
@@ -30,7 +30,7 @@ object SrvRouter {
 
     } else {
       // Нет готового js-роутера. Нужно запросить его с сервера.
-      val p = Promise[scRoutes.type]()
+      val p = Promise[ScJsRoutes.type]()
       // Возможно, код уже запрашивается с сервера, и тогда routes AsyncInit функция будет уже выставлена.
       val asyncInitOpt = wnd.sioScJsRoutesAsyncInit
 

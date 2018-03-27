@@ -1,8 +1,10 @@
-package io.suggest.sc.m
+package io.suggest.sc.sc3
 
 import io.suggest.geo.MGeoPoint
-import io.suggest.sc.m.search.MSearchTab
+import io.suggest.sc.search.MSearchTab
 import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -22,8 +24,27 @@ object Sc3Pages {
 
 
   object MainScreen {
+
     def empty = apply()
+
     implicit def univEq: UnivEq[MainScreen] = UnivEq.derive
+
+    /** Поддержка play-json для qs-модели нужна для эксплуатации _o2qs() в jsRouter'е. */
+    implicit def MAIN_SCREEN_FORMAT: OFormat[MainScreen] = {
+      import io.suggest.sc.ScConstants.ScJsState._
+      import io.suggest.common.empty.OptionUtil._
+      import MGeoPoint.JsonFormatters.{PIPE_DELIM_STRING_READS, PIPE_DELIM_STRING_WRITES}
+      (
+        (__ \ ADN_ID_FN).formatNullable[String] and
+        (__ \ CAT_SCR_OPENED_FN).formatNullable[Boolean].formatBooleanOrFalse and
+        (__ \ SEARCH_TAB_FN).formatNullable[MSearchTab] and
+        (__ \ GENERATION_FN).formatNullable[Long] and
+        (__ \ TAG_NODE_ID_FN).formatNullable[String] and
+        (__ \ LOC_ENV_FN).formatNullable[MGeoPoint] and
+        (__ \ GEO_SCR_OPENED_FN).formatNullable[Boolean].formatBooleanOrFalse
+      )(apply, unlift(unapply))
+    }
+
   }
 
   /** Роута для основного экрана с какими-то доп.аргументами. */

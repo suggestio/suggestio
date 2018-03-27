@@ -1,8 +1,8 @@
 package io.suggest.sc.m
 
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
-import io.suggest.routes.scRoutes
-import io.suggest.sc.m.Sc3Pages.MainScreen
+import io.suggest.routes.ScJsRoutes
+import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.spa.DAction
 
 import scala.util.Try
@@ -25,7 +25,7 @@ sealed trait IScRootAction extends DAction
 case object JsRouterInit extends IScRootAction
 
 /** Сигнал основной цепочке о состоянии основного js-роутера. */
-case class JsRouterStatus( payload: Try[scRoutes.type] ) extends IScRootAction
+case class JsRouterStatus( payload: Try[ScJsRoutes.type] ) extends IScRootAction
 
 
 /** События экрана. */

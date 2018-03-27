@@ -235,4 +235,12 @@ object MsgCodes {
 
   val `Rotation` = "Rotation"
 
+  val `Ad.cards` = "Ad.cards"
+  val `You.can.look.on.ads.in` = "You.can.look.on.ads.in"
+  val `_ad.showcase.link` = "_ad.showcase.link"
+
+  val `Create.ad` = "Create.ad"
+  val `Show._ad` = "Show._ad"
+  val `_ad.Manage` = "_ad.Manage"
+
 }

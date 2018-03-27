@@ -1,6 +1,6 @@
 package io.suggest.sc.router
 
-import io.suggest.routes.scRoutes
+import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.ScConstants.JsRouter._
 import org.scalajs.dom.Window
 
@@ -23,7 +23,7 @@ sealed trait WindowWithScRouterSafe extends js.Object {
    * @return Роутер или undefined.
    */
   @JSName(NAME)
-  def jsRoutes: UndefOr[scRoutes.type] = js.native
+  def jsRoutes: UndefOr[ScJsRoutes.type] = js.native
 
   /**
    * Доступ к функции иниализации при асинхронной подгрузке js-роутера.

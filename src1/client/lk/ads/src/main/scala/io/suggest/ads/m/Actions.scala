@@ -1,6 +1,9 @@
 package io.suggest.ads.m
 
+import io.suggest.ads.MLkAdsOneAdResp
 import io.suggest.spa.DAction
+
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -15,4 +18,7 @@ sealed trait ILkAdsAction extends DAction
 case class GetMoreAds(clean: Boolean) extends ILkAdsAction
 
 /** Результат запроса карточек с сервера. */
-case class GetModeAdsResp(reason: GetMoreAds) extends ILkAdsAction
+case class GetMoreAdsResp(reason: GetMoreAds, tryResp: Try[Seq[MLkAdsOneAdResp]]) extends ILkAdsAction
+
+/** Экшен изменения состояния показа карточки в выдаче родительского узла. */
+case class SetAdShownAtParent(adId: String, isShown: Boolean) extends ILkAdsAction

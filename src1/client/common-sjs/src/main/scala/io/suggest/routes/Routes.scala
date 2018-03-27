@@ -52,6 +52,12 @@ sealed trait Controllers extends js.Object {
   /** Доступ к HTTP-роутам до серверного контроллера LkAdEdit. */
   def LkAdEdit: LkAdEditCtlRoutes = js.native
 
+  /** Доступ к роутам выдачи. */
+  def Sc: ScCtlRoutes = js.native
+
+  /** Объект с роутами серверного контроллера LkAdvGeo. */
+  def LkAdvGeo: LkAdvGeoCtlRoutes = js.native
+
 }
 
 
@@ -111,6 +117,8 @@ sealed trait MarketLkAdnCtlRoutes extends js.Object {
 @js.native
 sealed trait LkAdEditCtlRoutes extends js.Object {
 
+  def createAd(adId: String): Route = js.native
+
   def editAd(adId: String): Route = js.native
 
   def prepareImgUpload(adId: String = null, nodeId: String = null): Route = js.native
@@ -121,3 +129,64 @@ sealed trait LkAdEditCtlRoutes extends js.Object {
 
 }
 
+
+/** Контроллер выдачи, а точнее его экшены. */
+@js.native
+sealed trait ScCtlRoutes extends js.Object {
+
+  /** Ссылка на корень. */
+  def geoSite(scJsState: js.Dictionary[js.Any] = js.native, siteQsArgs: js.Dictionary[js.Any] = js.native): Route = js.native
+
+  /** index выдачи для любой ситуации. */
+  def index(args: js.Dictionary[js.Any]): Route = js.native
+
+  /** Поиск рекламных карточек для плитки выдачи. */
+  def findAds(adSearch: js.Dictionary[js.Any]): Route = js.native
+
+  /** Роута для запроса списка узлов. */
+  def findNodes(args: js.Dictionary[js.Any]): Route = js.native
+
+  /** Роута для поиска focused-карточек. */
+  def focusedAds(args: js.Dictionary[js.Any]): Route = js.native
+
+  /** Роута поиска тегов. */
+  def tagsSearch(args: js.Dictionary[js.Any]): Route = js.native
+
+  /** Роута для автоматического сабмита ошибок на сервер. */
+  def handleScError(): Route = js.native
+
+}
+
+
+/** Description: Интерфейс контроллер jsRouter'а с роутами экшенов LkAdvGeoTag контроллера. */
+@js.native
+sealed trait LkAdvGeoCtlRoutes extends js.Object {
+
+  /** Роута постинга добавления нового тега. */
+  def tagEditorAddTag(): Route = js.native
+
+  /** Роута для поиска тегов  */
+  def tagsSearch2(args: js.Dictionary[js.Any]): Route = js.native
+
+
+  /** Роута для запроса ценника текущего размещения. */
+  def getPriceSubmit(adId: String): Route = js.native
+
+  /** Роута на страницу гео-размещения карточки. */
+  def forAd(adId: String): Route = js.native
+
+  /** Роута для итогового сабмита формы. */
+  def forAdSubmit(adId: String): Route = js.native
+
+
+  /** Роута получения содержимого попапа узла географической карты. */
+  def rcvrMapPopup(adId: String, nodeId: String): Route = js.native
+
+
+  /** Роута получения карты текущих георазмещений. */
+  def existGeoAdvsMap(adId: String): Route = js.native
+
+  /** Роута для получения содержимого попапа над указанной областью георазмещения. */
+  def existGeoAdvsShapePopup(itemId: Double): Route = js.native
+
+}

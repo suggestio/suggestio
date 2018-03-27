@@ -3,6 +3,8 @@ package io.suggest.jd
 import io.suggest.ad.blk.{BlockPadding, BlockPaddings, BlockWidths, IBlockSize}
 import io.suggest.dev.MSzMult
 import japgolly.univeq._
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -12,6 +14,14 @@ import japgolly.univeq._
   */
 
 object MJdConf {
+
+  /** Поддержка play-json. */
+  implicit def MJD_CONF_FORMAT: OFormat[MJdConf] = (
+    (__ \ "e").format[Boolean] and
+    (__ \ "z").format[MSzMult] and
+    (__ \ "p").format[BlockPadding] and
+    (__ \ "c").format[Int]
+  )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MJdConf] = UnivEq.force
 

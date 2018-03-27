@@ -1,6 +1,6 @@
 package io.suggest.sc.m.hdr
 
-import io.suggest.sc.m.search.MSearchTab
+import io.suggest.sc.search.MSearchTab
 import io.suggest.spa.DAction
 
 /**

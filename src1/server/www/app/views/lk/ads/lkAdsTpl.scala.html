@@ -38,8 +38,11 @@
   </div>
 
   @jsTpl2HtmlTpl( withScriptTag = true )(
-    jsRevRouterTpl( csrfAll = true, cdn = false )(
-      routes.javascript.LkAds.getAds
+    jsRevRouterTpl( csrfAll = false, cdn = false )(
+      routes.javascript.LkAds.getAds,
+      routes.javascript.Sc.geoSite,
+      routes.javascript.LkAdEdit.createAd,
+      routes.javascript.LkAdvGeo.forAd
     )
   )
 

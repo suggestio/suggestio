@@ -4,13 +4,13 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.css.Css
 import io.suggest.sc.m.search._
+import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v.hdr.RightR
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.univeq._
-
 import scalacss.ScalaCssReact._
 
 /**

@@ -1,5 +1,7 @@
 package io.suggest.common.empty
 
+import play.api.libs.json._
+
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
 
@@ -66,6 +68,18 @@ object OptionUtil {
 
     def getOrElseTrue: Boolean = {
       boolOpt.getOrElse(true)
+    }
+
+  }
+
+
+  /** Расширенные фунции для nullable-json-форматирования boolean. */
+  implicit class BoolOptJsonFormatOps(val boolOptFormat: OFormat[Option[Boolean]]) extends AnyVal {
+    import play.api.libs.functional.syntax._
+
+    /** Приведение nullable-json-форматтера к boolean-форматтеру, для которого false==None */
+    def formatBooleanOrFalse: OFormat[Boolean] = {
+      boolOptFormat.inmap(_.getOrElseFalse, maybeTrue)
     }
 
   }

@@ -1,8 +1,10 @@
-package io.suggest.sc.m.search
+package io.suggest.sc.search
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumUtil
 import io.suggest.i18n.MsgCodes
 import japgolly.univeq.UnivEq
+import play.api.libs.json.Format
 
 /**
   * Suggest.io
@@ -65,6 +67,12 @@ sealed abstract class MSearchTab(override val value: String) extends StringEnumE
 }
 
 object MSearchTab {
+
   implicit def univEq: UnivEq[MSearchTab] = UnivEq.derive
+
+  implicit def MSEARCH_TAB_FORMAT: Format[MSearchTab] = {
+    EnumeratumUtil.valueEnumEntryFormat( MSearchTabs )
+  }
+
 }
 

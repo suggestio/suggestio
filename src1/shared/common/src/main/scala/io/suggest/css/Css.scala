@@ -1,6 +1,6 @@
 package io.suggest.css
 
-import io.suggest.common.html.HtmlConstants
+import io.suggest.common.html.HtmlConstants._
 
 /**
   * Suggest.io
@@ -16,12 +16,12 @@ object Css {
   }
 
   final def flat1(cssClasses: Seq[String]): String = {
-    cssClasses.mkString( HtmlConstants.SPACE )
+    cssClasses.mkString( SPACE )
   }
 
   object Calc {
     final def PREFIX = "calc("
-    final def SUFFIX = HtmlConstants.`)`
+    final def SUFFIX = `)`
     def apply(content: String): String = PREFIX + content + SUFFIX
   }
 
@@ -67,6 +67,9 @@ object Css {
   final def VALUE     = "value"
   private final def _NODENAME_ = "nodename"
 
+  private final def _CNT = "_cnt"
+  private final def PAGE = "page"
+
   final def __ = "__"
 
   final def CLICKABLE = "clickable"
@@ -82,6 +85,12 @@ object Css {
   }
 
   object Lk {
+
+    object Page {
+      final def VIEWPORT = "viewport"
+      final def PAGE_CNT = PAGE + _CNT
+      final def PAGE_TITLE = PAGE + UNDERSCORE + _TITLE
+    }
 
     /** div class=color для круглого div'а, заливаемого через css bg-color. */
     def COLOR = "color"
@@ -104,9 +113,10 @@ object Css {
 
 
     object Adv {
-      def FORM_PREFIX = "adv-management"
+      def ADV_ = "adv-"
+      final def FORM_PREFIX = ADV_ + "management"
       def FORM_OUTER_DIV = FORM_PREFIX
-      def RIGHT_BAR = FORM_PREFIX + "_" + Bars.RightBar.RIGHT_BAR
+      def RIGHT_BAR = FORM_PREFIX + UNDERSCORE + Bars.RightBar.RIGHT_BAR
       def LEFT_BAR  = FORM_PREFIX + "_left-bar"
 
       object Geo {
@@ -132,7 +142,7 @@ object Css {
         def TARIFF_ILLUSTRATION_W = TARIFF_ILLUSTRATION + "-w"
 
         def TARIFF_INFO = TARIFF + "_info"
-        def TARIFF_INFO_TITLE = TARIFF_INFO + "-title"
+        def TARIFF_INFO_TITLE = TARIFF_INFO + "-" + _TITLE
         def TARIFF_INFO_VALUE = TARIFF_INFO + "-value"
 
         def TARIFF_GREEN = TARIFF + "_green"
@@ -140,6 +150,28 @@ object Css {
       }
 
     }
+
+
+    /** Названия стилей для LkAds */
+    object Ads {
+      /** Список карточек. */
+      object AdsList {
+        def ADS_LIST = Adv.ADV_ + "lst"
+        def CREATE_AD_BTN = "add-" + Adv.ADV_ + "btn"
+        def LINE_DELIMITER = ADS_LIST + "_delimiter"
+
+        /** Имена стилей для элементов списка. */
+        object Item {
+          def AD_ITEM = Adv.ADV_ + "item"
+          def AD_ITEM_PREVIEW = AD_ITEM + "-preview"
+          def AD_ITEM_PREVIEW_CONTAINER = AD_ITEM_PREVIEW + "-container"
+          def AD_ITEM_PREVIEW_BOTTOM_ZIGZAG = AD_ITEM_PREVIEW + "-border"
+          def EDIT_BTN = AD_ITEM + "_edit-btn"
+          def CONTROLS = "ads-list-block__controls"
+        }
+      }
+    }
+
 
     object Bars {
 
@@ -151,12 +183,12 @@ object Css {
 
         object Price {
           def _PRICE = "price"
-          def WIDGET = RIGHT_BAR + "-" + _PRICE + "-" + _WIDGET
-          def WIDGET_CNT = WIDGET + "_cnt"
+          def WIDGET = RIGHT_BAR + MINUS + _PRICE + MINUS + _WIDGET
+          def WIDGET_CNT = WIDGET + _CNT
           def WIDGET_LOADER = WIDGET + "_loader"
-          def WIDGET_TITLE = WIDGET + "_" + _TITLE
-          def WIDGET_PRICE_VALUE = WIDGET + "_" + _PRICE + "-" + VALUE
-          def WIDGET_REQ_BTN     = WIDGET + "_" + "request-btn"
+          def WIDGET_TITLE = WIDGET + UNDERSCORE + _TITLE
+          def WIDGET_PRICE_VALUE = WIDGET + UNDERSCORE + _PRICE + "-" + VALUE
+          def WIDGET_REQ_BTN     = WIDGET + UNDERSCORE + "request-btn"
         }
       }
 
@@ -190,7 +222,7 @@ object Css {
         def SHOWING   = __ + "showing"
 
         def EDIT_BTN  = "edit-btn"
-        def TITLE     = "title"
+        def TITLE     = _TITLE
         def CONTENT   = "content"
 
         def EDITING_BTNS = "editing-btns"
@@ -254,11 +286,11 @@ object Css {
     }
 
     object SlideBlocks {
-      private def _PREFIX = _SLIDE + "-" + _BLOCK
+      private def _PREFIX = _SLIDE + MINUS + _BLOCK
       final def OUTER     = _PREFIX
       final def TITLE     = _PREFIX + "_title"
       final def TITLE_BTN = _PREFIX + "_btn"
-      final def BODY      = _PREFIX + "_cnt"
+      final def BODY      = _PREFIX + _CNT
       final def OPENED    = __ + "js-open"
     }
 
@@ -284,7 +316,7 @@ object Css {
     def DT_WIDGET = "date-widget"
     def OPTIONS   = DT_WIDGET + "_options"
     def RESULT    = DT_WIDGET + "_result"
-    def RESULT_VALUE = RESULT + "-" + VALUE
+    def RESULT_VALUE = RESULT + MINUS + VALUE
   }
 
 
@@ -298,14 +330,14 @@ object Css {
   object ColorsBlock {
     /** Квадратик одного цвета. */
     def COLOR_BLOCK       = "color-" + _BLOCK
-    private def PREFIX_   = COLOR_BLOCK + "_"
+    private def PREFIX_   = COLOR_BLOCK + UNDERSCORE
     /** Контейнер списка цветов. */
     def LIST              = PREFIX_ + "lst"
   }
 
   trait _EuSizes {
     def PREFIX_ROOT: String
-    def PREFIX = __ + PREFIX_ROOT + "-"
+    def PREFIX = __ + PREFIX_ROOT + MINUS
     def S = PREFIX + "S"
     def M = PREFIX + "M"
     def L = PREFIX + "L"
@@ -320,8 +352,8 @@ object Css {
 
   object PropTable {
     def TABLE     = "prop"
-    def TD_NAME   = TABLE + "_" + NAME
-    def TD_VALUE  = TABLE + "_" + VALUE
+    def TD_NAME   = TABLE + UNDERSCORE + NAME
+    def TD_VALUE  = TABLE + UNDERSCORE + VALUE
   }
 
 
@@ -340,6 +372,7 @@ object Css {
 
   object Size extends _EuSizes {
     override def PREFIX_ROOT = "size"
+    def XM = PREFIX + "XM"
   }
 
 
@@ -369,7 +402,9 @@ object Css {
 
     def PREFIX = __
 
-    def MAJOR     = PREFIX + "major"
+    private def major = "major"
+    def RADIAL_MAJOR = PREFIX + "radial-" + major
+    def MAJOR     = PREFIX + major
     def MINOR     = PREFIX + "minor"
     def NEGATIVE  = PREFIX + "negative"
     def HELPER    = PREFIX + "helper"
@@ -452,12 +487,12 @@ object Css {
         private def OUT  = "out"
         private def IN   = "in"
 
-        final def EASE_OUT: String = EASE + HtmlConstants.MINUS + OUT
+        final def EASE_OUT: String = EASE + MINUS + OUT
         final def EASE_IN_OUT: String = {
-          val d = HtmlConstants.MINUS
+          val d = MINUS
           EASE + d + IN + d + OUT
         }
-        final def EASE_IN: String = EASE + HtmlConstants.MINUS + IN
+        final def EASE_IN: String = EASE + MINUS + IN
 
       }
 
@@ -466,7 +501,7 @@ object Css {
       }
 
       final def all(durationSec: Double, timingFun: String): String = {
-        val s = HtmlConstants.SPACE
+        val s = SPACE
         Properties.ALL + s + duration(durationSec) + s + timingFun
       }
 
@@ -475,7 +510,7 @@ object Css {
 
     object Origin {
 
-      def TOP_LEFT = Coord.TOP + HtmlConstants.SPACE + Coord.LEFT
+      def TOP_LEFT = Coord.TOP + SPACE + Coord.LEFT
 
     }
 

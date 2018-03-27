@@ -1,6 +1,6 @@
 package io.suggest.sc.c.search
 
-import io.suggest.routes.scRoutes
+import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.sc3.MSc3TagsResp
 import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.sc.u.ScJsRoutesUtil
@@ -28,12 +28,10 @@ trait ISearchApi {
 /** Реализация [[ISearchApi]] поверх HTTP XHR. */
 trait SearchApiXhrImpl extends ISearchApi {
 
-  import io.suggest.routes.JsRoutes_ScControllers._
-
   override def tagsSearch(args: MScTagsSearchQs): Future[MSc3TagsResp] = {
     ScJsRoutesUtil.mkRequest[MScTagsSearchQs, MSc3TagsResp](
       args,
-      route = scRoutes.controllers.Sc.tagsSearch
+      route = ScJsRoutes.controllers.Sc.tagsSearch
     )
   }
 

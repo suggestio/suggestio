@@ -2,6 +2,7 @@ package io.suggest.sc.m.search
 
 import diode.FastEq
 import io.suggest.common.empty.OptionUtil
+import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 

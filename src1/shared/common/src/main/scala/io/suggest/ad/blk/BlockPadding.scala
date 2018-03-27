@@ -67,7 +67,7 @@ sealed abstract class BlockPadding(override val value: Int) extends IntEnumEntry
 object BlockPadding {
 
   /** Поддержка play-json. */
-  implicit def FORMAT: Format[BlockPadding] = {
+  implicit def BLOCK_PADDING_FORMAT: Format[BlockPadding] = {
     EnumeratumUtil.valueEnumEntryFormat( BlockPaddings )
   }
 

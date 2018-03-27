@@ -58,7 +58,6 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
 
   import MGeoAdvExistPopupResp.pickler
   import io.suggest.routes.JsRoutes_LkControllers._
-  import io.suggest.lk.adv.geo.u.LkAdvGeoRoutes._
 
   /** Функция-генератор роуты поиска тегов на сервере. */
   override protected def _tagsSearchRoute = routes.controllers.LkAdvGeo.tagsSearch2

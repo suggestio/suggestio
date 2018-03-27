@@ -3,7 +3,8 @@ package io.suggest.sc.v.search
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.m.search.{MSearchTab, MSearchTabs, SwitchTab}
+import io.suggest.sc.m.search.SwitchTab
+import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 import io.suggest.sc.styl.GetScCssF
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._

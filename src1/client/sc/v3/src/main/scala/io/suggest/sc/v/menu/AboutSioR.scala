@@ -11,7 +11,7 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sc.m.Sc3Pages
+import io.suggest.sc.sc3.Sc3Pages
 import scalacss.ScalaCssReact._
 
 /**

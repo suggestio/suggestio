@@ -1,5 +1,6 @@
 package io.suggest.ads
 
+import io.suggest.adv.rcvr.RcvrKey
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -14,9 +15,9 @@ object MLkAdsFormInit {
 
   /** Поддержка play-json. */
   implicit def MADS_FORM_INIT_FORMAT: OFormat[MLkAdsFormInit] = {
-    (__ \ "f")
-      .format[MLkAdsForm]
-      .inmap[MLkAdsFormInit]( apply, _.form )
+    (__ \ "i")
+      .format[RcvrKey]
+      .inmap[MLkAdsFormInit]( apply, _.nodeKey )
   }
 
   implicit def univEq: UnivEq[MLkAdsFormInit] = UnivEq.derive
@@ -26,8 +27,8 @@ object MLkAdsFormInit {
 
 /** Контейнер данных для инициализации формы управления карточками узла.
   *
-  * @param form Данные обмена формы.
+  * @param nodeKey Ключ узла.
   */
 case class MLkAdsFormInit(
-                           form: MLkAdsForm
+                           nodeKey: RcvrKey
                          )

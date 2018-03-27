@@ -1,7 +1,7 @@
 package controllers
 
 import akka.stream.scaladsl.{Keep, Sink, Source}
-import io.suggest.ads.{MLkAdsForm, MLkAdsFormInit, MLkAdsOneAdResp}
+import io.suggest.ads.{LkAdsFormConst, MLkAdsFormInit, MLkAdsOneAdResp}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.fut.FutureUtil
 import io.suggest.init.routed.MJsiTgs
@@ -69,9 +69,7 @@ class LkAds @Inject() (
 
       // Собираем состояние формы:
       val initS = MLkAdsFormInit(
-        form = MLkAdsForm(
-          nodeKey = nodeKey
-        )
+        nodeKey = nodeKey
       )
       val initJson = Json.toJson( initS )
 
@@ -104,7 +102,7 @@ class LkAds @Inject() (
     val parentNodeId = nodeKey.last
 
     // Макс кол-во карточек за один запрос.
-    val maxAdsPerTime = 16
+    val maxAdsPerTime = LkAdsFormConst.GET_ADS_COUNT_PER_REQUEST
 
     val adsSearch0 = new MNodeSearchDfltImpl {
       override val nodeTypes = MNodeTypes.Ad :: Nil

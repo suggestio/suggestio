@@ -1,6 +1,7 @@
 package io.suggest.ads.m
 
 import diode.FastEq
+import io.suggest.ads.MLkAdsConf
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 
@@ -14,7 +15,8 @@ object MLkAdsRoot {
 
   implicit object MLkAdsRootFastEq extends FastEq[MLkAdsRoot] {
     override def eqv(a: MLkAdsRoot, b: MLkAdsRoot): Boolean = {
-      a.currNode ===* b.currNode
+      (a.ads ===* b.ads) &&
+        (a.conf ===* b.conf)
     }
   }
 
@@ -25,12 +27,13 @@ object MLkAdsRoot {
 
 /** Класс root-модели состояния react-формы управления карточками.
   *
-  * @param currNode Модель данных состояния по текущему узлу.
+  * @param ads Модель данных состояния по текущему узлу.
   */
 case class MLkAdsRoot(
-                       currNode     : MCurrNodeS
+                       conf         : MLkAdsConf,
+                       ads          : MAdsS
                      ) {
 
-  def withCurrNode(currNode: MCurrNodeS) = copy(currNode = currNode)
+  def withCurrNode(ads: MAdsS) = copy(ads = ads)
 
 }

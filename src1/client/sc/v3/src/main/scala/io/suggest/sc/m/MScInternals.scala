@@ -2,7 +2,7 @@ package io.suggest.sc.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.routes.scRoutes
+import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.sc3.MSc3Conf
 import japgolly.univeq._
 
@@ -34,11 +34,11 @@ object MScInternals {
   */
 case class MScInternals(
                          conf          : MSc3Conf,
-                         jsRouter      : Pot[scRoutes.type]      = Pot.empty,
+                         jsRouter      : Pot[ScJsRoutes.type]      = Pot.empty,
                          geoLockTimer  : Option[Int]             = None,
                        ) {
 
-  def withJsRouter(jsRouter: Pot[scRoutes.type])    = copy(jsRouter = jsRouter)
+  def withJsRouter(jsRouter: Pot[ScJsRoutes.type])    = copy(jsRouter = jsRouter)
   def withGeoLockTimer(geoLockTimer: Option[Int])   = copy(geoLockTimer = geoLockTimer)
 
 }

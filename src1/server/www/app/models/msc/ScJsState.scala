@@ -58,7 +58,6 @@ object ScJsState extends MacroLogsImpl {
           maybeProducerAdnId    <- strOptB.bind (PRODUCER_ADN_ID_FN,    params)
           maybeNglsMap          <- nglsMapB.bind(NAV_NGLS_STATE_MAP_FN, params)
           geoPointOptEith       <- geoPointOptB.bind(LOC_ENV_FN,        params)
-
         } yield {
           val r = ScJsState(
             adnId               = strNonEmpty( QsbUtil.eitherOpt2option(maybeAdnId) ),
@@ -117,6 +116,7 @@ object ScJsState extends MacroLogsImpl {
  * @param navNglsMap Карта недефолтовых состояний отображаемых гео-уровней на карте навигации по узлам.
  * @param geoPoint Данные по текущему месту юзера на карте, если есть.
  */
+// TODO Удалить древние поля следом за старой выдачей, унифицировать в Sc3Pages.MainScreen.
 case class ScJsState(
                       adnId               : Option[String]   = None,
                       searchScrOpenedOpt  : Option[Boolean]  = None,

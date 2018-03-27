@@ -114,6 +114,24 @@ object MGeoPoint {
       Format(fallbackReads, fmt0)
     }
 
+    /** JSON-десериализация из строки вида "54.123456|66.123456" */
+    implicit def PIPE_DELIM_STRING_READS: Reads[MGeoPoint] = {
+      Reads[MGeoPoint] {
+        case jsStr: JsString =>
+          fromString(jsStr.value)
+            .fold [JsResult[MGeoPoint]] (JsError(jsStr.value)) (JsSuccess(_))
+        case other =>
+          JsError( other.toString() )
+      }
+    }
+
+    /** JSON-сериализация в строку вида "54.123456|66.123456" */
+    implicit def PIPE_DELIM_STRING_WRITES: Writes[MGeoPoint] = {
+      Writes[MGeoPoint] { mgp =>
+        JsString( mgp.toString )
+      }
+    }
+
   }
 
   implicit def univEq: UnivEq[MGeoPoint] = {

@@ -3,9 +3,7 @@ package io.suggest.sc
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo._
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.sc.m.{RouteTo, Sc3Pages}
-import io.suggest.sc.m.Sc3Pages._
-import io.suggest.sc.m.search.MSearchTabs
+import io.suggest.sc.m.RouteTo
 import io.suggest.sc.v.ScRootR
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.vm.doc.DocumentVm
@@ -14,6 +12,9 @@ import io.suggest.text.{UrlUtil2, UrlUtilJs}
 import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl}
 import japgolly.scalajs.react.vdom.html_<^._
 import OptionUtil.BoolOptOps
+import io.suggest.sc.sc3.Sc3Pages
+import io.suggest.sc.sc3.Sc3Pages.MainScreen
+import io.suggest.sc.search.MSearchTabs
 
 import scala.scalajs.js.URIUtils
 import scala.util.Try
