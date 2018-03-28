@@ -4,6 +4,7 @@ import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.ads.{LkAdsFormConst, MLkAdsFormInit, MLkAdsOneAdResp}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.IMust
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.{MAdItemStatuses, MItems}
@@ -96,7 +97,7 @@ class LkAds @Inject() (
     */
   def getAds(nodeKey: RcvrKey, offset1: Int, newAdIdOpt: Option[String]) = isNodeAdmin(nodeKey).async { implicit request =>
     // TODO Добавить поддержку агрумента mode
-    lazy val logPrefix = s"getAds(${nodeKey.mkString("/")}+$offset1)#${System.currentTimeMillis()}:"
+    lazy val logPrefix = s"getAds(${nodeKey.mkString("/")}+$offset1${newAdIdOpt.fold("")("," + _)})#${System.currentTimeMillis()}:"
 
     // Нужно найти запрашиваемые карточки:
     val parentNodeId = nodeKey.last
@@ -107,11 +108,19 @@ class LkAds @Inject() (
     val adsSearch0 = new MNodeSearchDfltImpl {
       override val nodeTypes = MNodeTypes.Ad :: Nil
       override val outEdges  = {
-        val cr = Criteria(
+        val must = IMust.MUST
+        // Поиск по узлу-владельцу
+        val crOwn = Criteria(
+          predicates  = MPredicates.OwnedBy :: Nil,
           nodeIds     = parentNodeId :: Nil,
-          predicates  = MPredicates.OwnedBy :: Nil
+          must        = must
         )
-        cr :: Nil
+        // Поиск только jd-карточкек
+        val crJdAd = Criteria(
+          predicates = MPredicates.JdContent :: Nil,
+          must       = must
+        )
+        crOwn :: crJdAd :: Nil
       }
       override def limit     = maxAdsPerTime
       // TODO Почему-то сортировка работает задом наперёд, должно быть DESC тут:
@@ -151,16 +160,38 @@ class LkAds @Inject() (
     // Поиск данных по размещениям в базе биллинга:
     val madId2advStatusesMapFut = madIdsFut.flatMap { madIds =>
       LOGGER.trace(s"$logPrefix madIds[${madIds.length}/$maxAdsPerTime] = ${madIds.mkString(", ")}")
+      /*
+      for {
+        itemsInfos <- slick.db.run {
+          mItems.findStatusesForAds(
+            // Не добавляем сюда newAdId, т.к. если у только что созданной карточки размещений быть и не должно.
+            adIds = madIds,
+            statuses = MNodeAdInfo.statusesSupported.toSeq
+          )
+        }
+      } yield {
+        LOGGER.trace(s"$logPrefix For ${madIds.length} ads collected ${itemsInfos.length} item infos.")
+        itemsInfos
+          .iterator
+          .map { i => (i.nodeId, i) }
+          .toMap
+      }
+      */
+
+      // Непонятно, работает ли исправно эта streamed-версия. TODO Раскомментить, если работает. Иначе, занести madIdsFut.flatMap внутрь for{}.
       slick.db
         .stream(
           mItems.findStatusesForAds(
             // Не добавляем сюда newAdId, т.к. если у только что созданной карточки размещений быть и не должно.
-            adIds     = madIds,
-            statuses  = MNodeAdInfo.statusesSupported.toSeq
+            adIds = madIds,
+            statuses = MNodeAdInfo.statusesSupported.toSeq
           )
         )
         .toSource
-        .map { a => a.nodeId -> a }
+        .map { a =>
+          a.nodeId -> a
+        }
+        .maybeTraceCount(this)(count => s"$logPrefix Bill agg $count item-infos for ${madIds.length} mads.")
         .toMat(
           Sink.collection[(String, MAdItemStatuses), Map[String, MAdItemStatuses]]
         )(Keep.right)
@@ -178,6 +209,7 @@ class LkAds @Inject() (
     val allAdsSrc = newAdIdOpt.fold[Source[MNode, _]](normalAdsSrc) { _ =>
       Source.fromFutureSource {
         for (createdAdOpt <- createdAdOptFut) yield {
+          LOGGER.trace(s"$logPrefix Newly created ad: ${createdAdOpt.flatMap(_.id)}")
           createdAdOpt.fold[Source[MNode, _]](normalAdsSrc) { newAd =>
             normalAdsSrc.prepend( Source.single(newAd) )
           }
@@ -189,6 +221,7 @@ class LkAds @Inject() (
     val adsRenderedSrc = allAdsSrc
       // Параллельно рендерим запрошенные карточки:
       .mapAsync(8) { mad =>
+        LOGGER.trace(s"$logPrefix Will render ${mad.idOrNull}")
         val mainTpl = jdAdUtil.getMainBlockTpl( mad )
         // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
         val mainNonWideTpl = jdAdUtil.setBlkWide(mainTpl, wide2 = false)
@@ -215,6 +248,7 @@ class LkAds @Inject() (
         for {
           jdAdData <- jdAdDataFut
         } yield {
+          LOGGER.trace(s"$logPrefix Done render ${mad.idOrNull}, ${jdAdData.edges.size} edges, rootJdt=${jdAdData.template.rootLabel}, shownAtParent?$shownAtParent")
           (mad.id, jdAdData, shownAtParent)
         }
       }
@@ -256,6 +290,7 @@ class LkAds @Inject() (
       rs.chunked(adsSrcJsonBytes)
     }
     resp
+      .as(JSON)
       .withHeaders(CACHE_CONTROL -> "public, max-age=10")
   }
 

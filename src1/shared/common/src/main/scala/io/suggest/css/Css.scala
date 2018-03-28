@@ -159,11 +159,13 @@ object Css {
         def ADS_LIST = Adv.ADV_ + "lst"
         def CREATE_AD_BTN = "add-" + Adv.ADV_ + "btn"
         def LINE_DELIMITER = ADS_LIST + "_delimiter"
+        def FIRST_IN_LINE = __ + "first-in-line"
 
         /** Имена стилей для элементов списка. */
         object Item {
           def AD_ITEM = Adv.ADV_ + "item"
-          def AD_ITEM_PREVIEW = AD_ITEM + "-preview"
+          def AD_ITEM_PREVIEW = AD_ITEM + "_preview"
+          // TODO Удалить этот стиль, если не используется. См. коммент в [lk-ads-sjs] AdItemR
           def AD_ITEM_PREVIEW_CONTAINER = AD_ITEM_PREVIEW + "-container"
           def AD_ITEM_PREVIEW_BOTTOM_ZIGZAG = AD_ITEM_PREVIEW + "-border"
           def EDIT_BTN = AD_ITEM + "_edit-btn"

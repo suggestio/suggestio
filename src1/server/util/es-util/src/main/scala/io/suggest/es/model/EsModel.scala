@@ -142,13 +142,18 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
 
   /** Тоже самое, что и multiget, но этап разбора ответа сервера поточный: элементы возвращаются по мере парсинга. */
-  def multiGetSrc(ids: TraversableOnce[String], options: GetOpts = _getArgsDflt): Source[T, _] = {
+  def multiGetSrc(ids: Traversable[String], options: GetOpts = _getArgsDflt): Source[T, _] = {
     if (ids.isEmpty) {
       Source.empty
     } else {
+      lazy val idsCount = ids.size
+      lazy val logPrefix = s"multiGetSrc($idsCount)#${System.currentTimeMillis()}:"
+      LOGGER.trace(s"$logPrefix Will source $idsCount items: ${ids.mkString(", ")}")
+
       val srcFut = for {
         resp <- multiGetRevRaw(ids, options = options)
       } yield {
+        LOGGER.trace(s"$logPrefix Fetched ${resp.getResponses.length} of ${ids.size}")
         val items = resp.getResponses
         if (items.isEmpty) {
           Source.empty
@@ -159,7 +164,10 @@ trait EsModelStaticT extends EsModelCommonStaticT {
       Source
         .fromFutureSource( srcFut )
         .filterNot { i =>
-          i.isFailed || !i.getResponse.isExists
+          val r = i.isFailed || !i.getResponse.isExists
+          if (r)
+            LOGGER.trace(s"$logPrefix Dropping ${i.getId} as failed or invalid: ${Option(i.getFailure).flatMap(f => Option(f.getMessage))}")
+          r
         }
         .map { i =>
           deserializeOne2( i.getResponse )

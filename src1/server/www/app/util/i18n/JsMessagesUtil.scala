@@ -286,7 +286,7 @@ class JsMessagesUtil @Inject() (
       MC.`_ad.showcase.link` ::
       MC.`Create.ad` ::
       MC.`Show._ad` ::
-      MC.`_ad.Manage` ::
+      MC.`ad.Manage` ::
       Nil
   }
 

@@ -69,7 +69,9 @@ class LkAdsFormR(
               <.a(
                 ^.`class` := Css.flat( Css.Lk.Ads.AdsList.CREATE_AD_BTN, Css.Floatt.LEFT ),
                 ^.href := routes.controllers.LkAdEdit.createAd( parentIdProxy.value ).url,
-                Messages( MsgCodes.`Create.ad`, HtmlConstants.SPACE )
+                <.span(
+                  Messages( MsgCodes.`Create.ad`, HtmlConstants.SPACE )
+                )
               )
             },
 
@@ -81,22 +83,25 @@ class LkAdsFormR(
                   .flatten
                   .zipWithIndex
                   .flatMap { case (adProps, i) =>
+                    val i1mod4eq0 = (i + 1) % 4 ==* 0
                     val iStr = i.toString
                     // Отрендерить превьюшку карточки с обвесом:
                     val adItem = p.wrap { mroot =>
                       adItemR.PropsVal(
-                        ad     = adProps,
-                        jdCss  = mroot.ads.jdCss,
-                        jdConf = mroot.conf.jdConf
+                        ad          = adProps,
+                        firstInLine = i1mod4eq0,
+                        jdCss       = mroot.ads.jdCss,
+                        jdConf      = mroot.conf.jdConf
                       )
                     } { adItemR.component.withKey(iStr)(_) }
                     var vdoms = List[VdomElement](adItem)
                     // Добавить перенос строки сетки после каждого четвертого элемента строки:
-                    if ((i + 1) % 4 ==* 0)
+                    if (i1mod4eq0) {
                       vdoms ::= <.div(
                         ^.key := (iStr + "d"),
                         ^.`class` := Css.Lk.Ads.AdsList.LINE_DELIMITER
                       )
+                    }
                     vdoms
                   }
                   .toVdomArray
@@ -120,8 +125,9 @@ class LkAdsFormR(
                   Json.toJsObject(routeArgs)
                 )
               )
+              // Собираем ссылку на выдачу на основе текущего nodeId:
               <.a(
-                // Собираем ссылку на выдачу на основе текущего nodeId:
+                ^.`class` := Css.Lk.BLUE_LINK,
                 // TODO ненужные "a."-префиксы в qs.
                 ^.href := route.url, //.replaceFirst("[?&]csrf[^&]+", ""),
                 ^.target.blank,

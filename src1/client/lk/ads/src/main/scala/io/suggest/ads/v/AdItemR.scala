@@ -19,6 +19,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, Scal
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -33,13 +34,15 @@ class AdItemR(
   import MJdArgs.MJdArgsFastEq
 
   case class PropsVal(
-                       ad     : MAdProps,
-                       jdCss  : JdCss,
-                       jdConf : MJdConf
+                       ad           : MAdProps,
+                       firstInLine  : Boolean,
+                       jdCss        : JdCss,
+                       jdConf       : MJdConf
                      )
   implicit object MLkAdItemRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.ad ===* b.ad) &&
+        (a.firstInLine ==* b.firstInLine) &&
         (a.jdCss ===* b.jdCss) &&
         (a.jdConf ===* b.jdConf)
     }
@@ -59,13 +62,22 @@ class AdItemR(
     def render(propsProxy: Props, s: PropsVal): VdomElement = {
       val ItemCss = Css.Lk.Ads.AdsList.Item
       <.div(
+        ^.`class` := {
+          var cssAcc = List.empty[String]
+          if (s.firstInLine)
+            cssAcc ::= Css.Lk.Ads.AdsList.FIRST_IN_LINE
+          cssAcc ::= ItemCss.AD_ITEM
+          Css.flat1( cssAcc )
+        },
+
         // Рендер превьюшки карточки: TODO Завернуть в коннекшен или как-то ещё защитить от перерендера.
         <.div(
           ^.`class` := ItemCss.AD_ITEM_PREVIEW,
 
           // Рендер
           <.div(
-            ^.`class` := ItemCss.AD_ITEM_PREVIEW_CONTAINER,
+            // TODO Почему-то все карточки сжимаются. Вероятно, этот стиль неактуален.
+            //^.`class` := ItemCss.AD_ITEM_PREVIEW_CONTAINER,
 
             // Рендер карточки:
             propsProxy.wrap { props =>
@@ -125,7 +137,7 @@ class AdItemR(
             <.a(
               ^.`class` := Css.flat( Css.Buttons.BTN, Css.Size.XM, Css.Buttons.RADIAL_MAJOR ),
               ^.href := routes.controllers.LkAdvGeo.forAd( adId ).url,
-              Messages( MsgCodes.`_ad.Manage` )
+              Messages( MsgCodes.`ad.Manage` )
             )
           )
         }  // adId
