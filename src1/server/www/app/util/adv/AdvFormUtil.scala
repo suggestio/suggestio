@@ -1,29 +1,25 @@
 package util.adv
 
 import java.time.LocalDate
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import scalaz._
 import scalaz.syntax.apply._
-import scalaz.std.iterable._
-import scalaz.std.string._
 import io.suggest.adv.AdvConstants
 import io.suggest.adv.AdvConstants.Su
 import io.suggest.adv.free.MAdv4FreeProps
-import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.MGetPriceResp
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dt.{IPeriodInfo, MAdvPeriod, MYmd, YmdHelpersJvm}
-import io.suggest.dt.interval.{MRangeYmd, PeriodsConstants, QuickAdvIsoPeriod, QuickAdvPeriods}
+import io.suggest.dt.interval.{MRangeYmd, QuickAdvIsoPeriod, QuickAdvPeriods}
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
-import io.suggest.scalaz.ScalazUtil
 import models.adv.form._
 import models.mctx.Context
 import models.req.{IReq, IReqHdr}
 import play.api.data.Forms._
 import play.api.data.{Form, _}
-import util.{FormUtil, TplDataFormatUtil}
+import util.TplDataFormatUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -50,9 +46,9 @@ class AdvFormUtil @Inject() (
   }
 
   /** Генератор списка шаблонных периодов размещения. */
-  def advPeriodsAvailable = {
+  def advPeriodsAvailable: IndexedSeq[String] = {
     QuickAdvPeriods.values
-      .map(_.strId)
+      .map(_.value)
   }
 
 
@@ -81,7 +77,7 @@ class AdvFormUtil @Inject() (
 
   /** Форма исповедует select, который имеет набор предустановленных интервалов, а также имеет режим задания дат вручную. */
   def advPeriodM: Mapping[MDatesPeriod] = {
-    val custom = PeriodsConstants.CUSTOM
+    val custom = QuickAdvPeriods.Custom.value
     tuple(
       QUICK_PERIOD_FN -> nonEmptyText(minLength = 1, maxLength = 10)
         .transform [Option[QuickAdvIsoPeriod]] (
@@ -91,7 +87,7 @@ class AdvFormUtil @Inject() (
             else
               QuickAdvPeriods.withNameOptionIso(periodRaw)
           },
-          { _.fold(custom)(_.strId) }   // TODO Тут было .isoPeriod, но он тут недоступен, поэтому strId.
+          { _.fold(custom)(_.value) }   // TODO Тут было .isoPeriod, но он тут недоступен, поэтому strId.
         ),
       DATES_INTERVAL_FN -> advDatePeriodOptM
     )
@@ -232,24 +228,14 @@ class AdvFormUtil @Inject() (
   }
 
 
-  def periodInfoV(p: IPeriodInfo): ValidationNel[String, IPeriodInfo] = {
+  def advPeriodInfoV(p: IPeriodInfo): ValidationNel[String, IPeriodInfo] = {
     IPeriodInfo.validateUsing(p)(dateRangeYmdIsForAdv)
   }
 
 
-  def datePeriodV(advPeriod: MAdvPeriod): ValidationNel[String, MAdvPeriod] = {
-    periodInfoV( advPeriod.info )
+  def advPeriodV(advPeriod: MAdvPeriod): ValidationNel[String, MAdvPeriod] = {
+    advPeriodInfoV( advPeriod.info )
       .map(_ => advPeriod)
-  }
-
-  def rcvrIdV(rcvrId: String): ValidationNel[String, String] = {
-    Validation.liftNel(rcvrId)( !FormUtil.isEsIdValid(_), "e.rcvr.id.format" )
-  }
-
-  def rcvrKeyV(rcvrKey: RcvrKey): ValidationNel[String, RcvrKey] = {
-    val v1 = Validation.liftNel(rcvrKey)(_.isEmpty, "e.rcvr.key.empty")
-    val v2 = ScalazUtil.validateAll(rcvrKey)(rcvrIdV)
-    (v1 |@| v2) { (_,_) => rcvrKey }
   }
 
 }

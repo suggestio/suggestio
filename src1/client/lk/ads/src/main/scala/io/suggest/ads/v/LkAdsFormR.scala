@@ -7,6 +7,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.v.{JdCss, JdCssR}
+import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.Messages
 import io.suggest.routes.routes
 import io.suggest.sc.sc3.Sc3Pages
@@ -77,8 +78,9 @@ class LkAdsFormR(
 
             // Список существующих карточек:
             s.nodeAdsC { adsPotProxy =>
+              val adsPot = adsPotProxy.value
               <.div(
-                adsPotProxy.value
+                adsPot
                   .iterator
                   .flatten
                   .zipWithIndex
@@ -104,7 +106,11 @@ class LkAdsFormR(
                     }
                     vdoms
                   }
-                  .toVdomArray
+                  .toVdomArray,
+
+                // TODO Сверстать прелоадер по-нормальному:
+                if (adsPot.isPending) LkPreLoaderR.AnimMedium
+                else EmptyVdom
               )
             }
           ),

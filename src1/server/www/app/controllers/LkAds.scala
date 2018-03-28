@@ -1,12 +1,13 @@
 package controllers
 
 import akka.stream.scaladsl.{Keep, Sink, Source}
-import io.suggest.ads.{LkAdsFormConst, MLkAdsFormInit, MLkAdsOneAdResp}
+import io.suggest.ads.{LkAdsFormConst, MLkAdsFormInit, MLkAdsOneAdAdvForm, MLkAdsOneAdResp}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.IMust
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.item.status.MItemStatus
+import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.mbill2.m.item.{MAdItemStatuses, MItems}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
@@ -19,12 +20,15 @@ import models.mctx.Context
 import models.mlk.MNodeAdInfo
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
-import play.api.libs.json.Json
-import util.acl.IsNodeAdmin
+import play.api.libs.json.{JsArray, JsString, Json}
+import util.acl.{CanUpdateSls, IsNodeAdmin}
 import util.ad.JdAdUtil
 import views.html.lk.ads._
 import japgolly.univeq._
 import play.api.http.HttpEntity
+import util.ads.LkAdsFormUtil
+
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -35,7 +39,9 @@ import play.api.http.HttpEntity
   */
 class LkAds @Inject() (
                         isNodeAdmin             : IsNodeAdmin,
+                        canUpdateSls            : CanUpdateSls,
                         jdAdUtil                : JdAdUtil,
+                        lkAdsFormUtil           : LkAdsFormUtil,
                         mNodes                  : MNodes,
                         streamsUtil             : StreamsUtil,
                         mItems                  : MItems,
@@ -47,6 +53,7 @@ class LkAds @Inject() (
 
   import mCommonDi._
   import streamsUtil.Implicits._
+  import io.suggest.scalaz.ScalazUtil.Implicits._
 
 
   /** Рендер странице с react-формой управления карточками.
@@ -160,25 +167,7 @@ class LkAds @Inject() (
     // Поиск данных по размещениям в базе биллинга:
     val madId2advStatusesMapFut = madIdsFut.flatMap { madIds =>
       LOGGER.trace(s"$logPrefix madIds[${madIds.length}/$maxAdsPerTime] = ${madIds.mkString(", ")}")
-      /*
-      for {
-        itemsInfos <- slick.db.run {
-          mItems.findStatusesForAds(
-            // Не добавляем сюда newAdId, т.к. если у только что созданной карточки размещений быть и не должно.
-            adIds = madIds,
-            statuses = MNodeAdInfo.statusesSupported.toSeq
-          )
-        }
-      } yield {
-        LOGGER.trace(s"$logPrefix For ${madIds.length} ads collected ${itemsInfos.length} item infos.")
-        itemsInfos
-          .iterator
-          .map { i => (i.nodeId, i) }
-          .toMap
-      }
-      */
 
-      // Непонятно, работает ли исправно эта streamed-версия. TODO Раскомментить, если работает. Иначе, занести madIdsFut.flatMap внутрь for{}.
       slick.db
         .stream(
           mItems.findStatusesForAds(
@@ -292,6 +281,100 @@ class LkAds @Inject() (
     resp
       .as(JSON)
       .withHeaders(CACHE_CONTROL -> "public, max-age=10")
+  }
+
+
+  /** Сохранить настройки размещения для указанной карточки.
+    * В request.body содержится MLkAdsOneAdAdvForm в виде JSON.
+    *
+    * @param adKey Цепочка узлов до рекламной карточки.
+    * @return JSON-ответ с обновлёнными данными размещения карточки.
+    */
+  def setAdv(adKey: RcvrKey) = csrf.Check {
+    canUpdateSls( adKey.last ).async(parse.json[MLkAdsOneAdAdvForm]) { implicit request =>
+      lazy val logPrefix = s"setAdv(${request.mad.idOrNull})#${System.currentTimeMillis()}:"
+      LOGGER.trace(s"$logPrefix Starting, adKey=${adKey.mkString(" / ")}")
+
+      lkAdsFormUtil.oneAdAdvFormVld( request.body ).fold(
+        // Зафейлилась раняя проверка входных данных
+        {failures =>
+          LOGGER.warn(s"$logPrefix Failed to validate form:\n ${failures.iterator.mkString("\n ")}")
+          // Вернуть список проблем в виде JSON назад клиенту
+          val json = JsArray(
+            failures
+              .iterator
+              .map(JsString.apply)
+              .toIndexedSeq
+          )
+          NotAcceptable( json )
+        },
+        // Синхронные проверки валидности данных пройдены, надо сверить запрос с данными системы.
+        {form =>
+          LOGGER.trace(s"$logPrefix Form vld passed: ${form.decls.length} decls, form = $form")
+
+          // Надо проверить adv-ключи на доступность для обработки.
+          // Надо собрать всех ресиверов, проверить права юзера на управление размещением в них (требуем node admin права):
+          val allRcvrKeys = form.decls
+            .iterator
+            .flatMap(_.key.rcvrKey)
+            .toSet
+          LOGGER.trace(s"$logPrefix ${allRcvrKeys.size} rcvrs ")
+
+          // Любые нетривиальные бесплатные размещения надо проводить через биллинг. Тривиальные прямые размещения - обычно ставятся напрямую, т.к. они пока без dateEnd.
+          val (unbilled, billed) = form.decls.partition { declKv =>
+            declKv.spec.advPeriod.isEmpty &&
+              (declKv.key.itype ==* MItemTypes.AdvDirect)
+          }
+          LOGGER.trace(s"$logPrefix ${unbilled.size} unbilled + ${billed.size} BILLed advs")
+
+          // TODO Надо дореализовать внутренние размещения, идущие через биллинг. Они уже в различных биллингах, и уже работают в LkAdvGeo.
+          if (billed.nonEmpty)
+            throw new UnsupportedOperationException(s"$logPrefix Billed advs not implemented here")
+
+          // Запустить проверки доступа для всех перечисленных в спеке узлов. Перегонка в Iterable для явного Iterable-выхлопа
+          val rcvrChecksFut = for {
+            rcvrsCheckResults <- Future.traverse( allRcvrKeys: Iterable[RcvrKey] ) { nodeKey =>
+              isNodeAdmin.isNodeChainAdmin(nodeKey, request.user)
+            }
+            // Проверяем, что все права доступа на узлу действительно валидны:
+            if {
+              val r = rcvrsCheckResults.forall(_.isDefined)
+              if (!r)
+                LOGGER.warn(s"$logPrefix ${rcvrsCheckResults.count(_.isEmpty)} of ${rcvrsCheckResults.size} rcvr checks FAILED, ${rcvrsCheckResults.count(_.isDefined)} passed. Failed rcvr keys were: \n${allRcvrKeys.iterator.zip(rcvrsCheckResults.iterator).filter(_._2.isEmpty).map(_._1).mkString("\n ")}")
+              r
+            }
+          } yield {
+            LOGGER.trace(s"$logPrefix All ${rcvrsCheckResults.size} rcvrs adv checks passed")
+            rcvrsCheckResults
+          }
+
+          // Когда все проверки выполнены, надо применить все запрошенные изменения
+          for {
+            _ <- rcvrChecksFut
+
+            // Собрать самые прямые размещения на свои узлы, исторически они живут без биллинга.
+            // TODO Может быть поле declKv.spec.isShow просто выкинуть? Если размещения нет, то значит его и нет вообще. Если есть - то создаётся размещение (или перезаписывается существующее).
+            // TODO Надо делать toSet, но сначала группировать по edge-свойствам: isShowOpened
+            selfRcvrIds = (for {
+              decl <- form.decls.iterator
+              if (decl.key.itype ==* MItemTypes.AdvDirect) && decl.spec.advPeriod.isEmpty
+              rcvrKey <- decl.key.rcvrKey
+            } yield {
+              rcvrKey.last
+            }).toSet
+
+            //currentSelfRcvrIds = request.mad.edges.withPredicateIter(MPredicates.Receiver.Self).flatMap(_.nodeIds).toSet
+
+            // TODO Залить небиллингуемый апдейт в карточку
+
+          } yield {
+            LOGGER.trace(s"$logPrefix All checks done, will apply changes to ad#${request.mad.idOrNull}")
+            // TODO Сгенерить ответ сервера
+            ???
+          }
+        }
+      )
+    }
   }
 
 }

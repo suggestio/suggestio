@@ -1,9 +1,6 @@
 package io.suggest.es.model
 
-import io.suggest.model.play.psb.PathBindableImpl
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import japgolly.univeq.UnivEq
-import play.api.mvc.{PathBindable, QueryStringBindable}
 
 /**
   * Suggest.io
@@ -12,15 +9,24 @@ import play.api.mvc.{PathBindable, QueryStringBindable}
   * Description: Модель для приходящих извне строковых id, используемых в elasticsearch.
   * Эти id желательно проверять, матчить и т.д. перед отправкой в ES.
   * Поэтому, используется такая вот модель.
-  *
-  * До 17.10.2016 модель называлась MEsId, но это не отражала её сильную завязанность на UUID.
   */
+
 object MEsUuId {
 
   def charsAllowedRe = "[_a-zA-Z0-9-]"
 
   /** Регэксп для проверки валидности id. */
   val uuidB64Re = (charsAllowedRe + "{19,25}").r
+
+  /** Регэксп для парсинга uuid, закодированного в base64, допускающего необычно-большую длину.
+    * Удлиненние id может быть у маячков.
+    */
+  val uuidB64Re60 = (MEsUuId.charsAllowedRe + "{19,60}").r
+
+  /** Проверить id по допустимым символам. У uuid и any id алфавиты одинаковые, только длина разная. */
+  def isEsIdValid(id: String): Boolean = {
+    uuidB64Re60.pattern.matcher(id).matches()
+  }
 
 
   /** Пропарсить строку и завернуть в [[MEsUuId]] если всё ок.
@@ -33,35 +39,6 @@ object MEsUuId {
       Right( MEsUuId(value) )
     } else {
       Left( "e.invalid_id" )
-    }
-  }
-
-  /** Поддержка биндинга из/в qs. */
-  implicit def nEsUuIdQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MEsUuId] = {
-    new QueryStringBindableImpl[MEsUuId] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MEsUuId]] = {
-        for (esIdE <- strB.bind(key, params)) yield {
-          esIdE.right
-            .flatMap(fromStringEith)
-        }
-      }
-
-      override def unbind(key: String, value: MEsUuId): String = {
-        strB.unbind(key, value.id)
-      }
-    }
-  }
-
-
-  /** PathBinadable для биндинга значения id прямо из URL path. */
-  implicit def psb(implicit strB: PathBindable[String]): PathBindable[MEsUuId] = {
-    new PathBindableImpl[MEsUuId] {
-      override def bind(key: String, value: String): Either[String, MEsUuId] = {
-        fromStringEith(value)
-      }
-      override def unbind(key: String, value: MEsUuId): String = {
-        value
-      }
     }
   }
 

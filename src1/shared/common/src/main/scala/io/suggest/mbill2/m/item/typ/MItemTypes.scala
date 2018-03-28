@@ -2,7 +2,9 @@ package io.suggest.mbill2.m.item.typ
 
 import boopickle.Default._
 import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumUtil
 import japgolly.univeq.UnivEq
+import play.api.libs.json.Format
 
 /**
   * Suggest.io
@@ -69,6 +71,9 @@ object MItemTypes extends StringEnum[MItemType] {
   def advDirectTypes  : List[MItemType]     = AdvDirect :: TagDirect :: Nil
 
   def adnMapTypes     : List[MItemType]     = AdnNodeMap :: GeoLocCaptureArea :: Nil
+
+  /** Типы, допустимые к использованию в модели MAdvDeclKey. */
+  def advDeclTypes    : List[MItemType]     = AdvDirect :: Nil
 
   def interruptable = values.filter(_.isInterruptable)
 
@@ -142,6 +147,10 @@ object MItemType {
 
   def unapplyStrId(x: MItemType): Option[String] = {
     Some(x.value)
+  }
+
+  implicit def mItemTypeFormat: Format[MItemType] = {
+    EnumeratumUtil.valueEnumEntryFormat( MItemTypes )
   }
 
 }

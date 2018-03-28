@@ -8,7 +8,7 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.tags.edit.MTagsEditProps
 import io.suggest.geo._
 import io.suggest.maps.MMapProps
-import io.suggest.scalaz.{ScalazUtil, ValidateFormUtilT}
+import io.suggest.scalaz.ValidateFormUtilT
 import models.adv.geo.cur._
 import au.id.jazzy.play.geojson.{Feature, LngLat}
 import play.api.libs.json.Json
@@ -17,8 +17,6 @@ import util.adv.AdvFormUtil
 import scalaz._
 import scalaz.syntax.apply._
 import scalaz.syntax.validation._
-// НЕ УДАЛЯТЬ!! could not find implicit value for evidence parameter of type scalaz.Foldable[Iterable]: ScalazUtil.validateAll(rm.keys)(advFormUtil.rcvrKeyV)
-import scalaz.std.iterable._
 
 /**
  * Suggest.io
@@ -87,20 +85,8 @@ class AdvGeoFormUtil @Inject() (
   }
 
 
-
   def rcvrsMapV(rm: RcvrsMap_t): ValidationNel[String, RcvrsMap_t] = {
-    var vld = Validation.liftNel(rm)( _.size > AdvGeoConstants.AdnNodes.MAX_RCVRS_PER_TIME, "e.rcvr.too.many" )
-    // Провалидировать все ключи, если они есть.
-    if (rm.keys.nonEmpty) {
-      // Затычка для scalaz, чтобы можно было провалидировать коллекцию из RcvrKey.
-      implicit val rcvrKeyDirtyMonoid = new Monoid[RcvrKey] {
-        override def zero: RcvrKey = Nil
-        override def append(f1: RcvrKey, f2: => RcvrKey): RcvrKey = f2
-      }
-      val v2 = ScalazUtil.validateAll(rm.keys)(advFormUtil.rcvrKeyV)
-      vld = (vld |@| v2) { (_,_) => rm }
-    }
-    vld
+    RcvrKey.rcvrsMapV(rm, AdvGeoConstants.AdnNodes.MAX_RCVRS_PER_TIME)
   }
 
   def advGeoRadCircleV(gc: CircleGs): ValidationNel[String, CircleGs] = {
@@ -110,7 +96,7 @@ class AdvGeoFormUtil @Inject() (
   def mAdvGeoFormV(m: MFormS): ValidationNel[String, MFormS] = {
     (
       MMapProps.validate( m.mapProps ) |@|
-      advFormUtil.datePeriodV( m.datePeriod ) |@|
+      advFormUtil.advPeriodV( m.datePeriod ) |@|
       rcvrsMapV( m.rcvrsMap ) |@|
       MTagsEditProps.validate( m.tagsEdit ) |@|
       // TODO Тут какой-то адовый говнокод, т.к. пол-часа на осиливание scalaz - это маловато. Нужно провалидировать опциональное значение с помощью обязательного валидатора:

@@ -52,7 +52,7 @@ class LkAdnMapFormUtil @Inject() (
   /** Основной валидатор для MLamForm. */
   def lamFormV(mf: MLamForm): ValidationNel[String, MLamForm] = {
     (
-       advFormUtil.datePeriodV( mf.datePeriod ) |@|
+       advFormUtil.advPeriodV( mf.datePeriod ) |@|
        adnRadCircleV( mf.mapCursor ) |@|
        MMapProps.validate( mf.mapProps ) |@|
        CommonDateTimeUtil.jsDateTzOffsetMinutesV( mf.tzOffsetMinutes )

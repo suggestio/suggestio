@@ -45,7 +45,7 @@ object DtpOptions {
     /** Реакция на смену значения в селекте периода размещения. */
     def onQapChange(e: ReactEventFromInput): Callback = {
       val v = e.target.value
-      val qap = QuickAdvPeriods.withName(v)
+      val qap = QuickAdvPeriods.withValue(v)
       dispatchOnProxyScopeCB($, SetQap(qap))
     }
 
@@ -74,14 +74,14 @@ object DtpOptions {
                 <.select(
                   ^.name      := ( AdvConstants.PERIOD_FN + QsConstants.KEY_PARTS_DELIM_STR + AdvConstants.DtPeriod.QUICK_PERIOD_FN ),
                   ^.`class`   := Css.CLICKABLE,
-                  ^.value     := qapProxy().strId,
+                  ^.value     := qapProxy().value,
                   ^.onChange ==> onQapChange,
 
                   // Отрендерить опшены: сначала quick-периоды, затем кастомные режимы дат.
                   QuickAdvPeriods.values.toVdomArray { qap =>
                     <.option(
-                      ^.key   := qap.strId,
-                      ^.value := qap.strId,
+                      ^.key   := qap.value,
+                      ^.value := qap.value,
                       Messages( qap.messagesCode )
                     )
                   }

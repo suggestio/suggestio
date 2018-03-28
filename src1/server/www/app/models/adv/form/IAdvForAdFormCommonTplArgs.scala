@@ -13,7 +13,7 @@ trait IAdvForAdFormCommonTplArgs {
   /** Доступные для рендера периоды. */
   def advPeriodsAvail: Seq[String] = {
     QuickAdvPeriods.values
-      .map(_.strId)
+      .map(_.value)
   }
 
 }

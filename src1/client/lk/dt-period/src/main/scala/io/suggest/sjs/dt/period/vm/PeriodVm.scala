@@ -1,6 +1,6 @@
 package io.suggest.sjs.dt.period.vm
 
-import io.suggest.dt.interval.{DatesIntervalConstants, PeriodsConstants}
+import io.suggest.dt.interval.{DatesIntervalConstants, QuickAdvPeriods}
 import io.suggest.sjs.dt.period.m.PeriodChangedEvent
 import io.suggest.sjs.common.fsm.InitLayoutFsmChange
 import io.suggest.sjs.common.vm.find.FindElT
@@ -37,7 +37,7 @@ trait PeriodVmT
    */
   def isoPeriodOpt: Option[String] = {
     Option( _underlying.value )
-      .filter { _ != PeriodsConstants.CUSTOM }
+      .filter { _ !=  QuickAdvPeriods.Custom.value }
   }
 
   override protected def _changeSignalModel = PeriodChangedEvent

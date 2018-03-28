@@ -4,11 +4,11 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.bill.MCurrencies
 import io.suggest.bill.price.dsl.MReasonTypes
 import io.suggest.cal.m.MCalTypes
-import io.suggest.dt.interval.{PeriodsConstants, QuickAdvPeriods}
+import io.suggest.dt.interval.QuickAdvPeriods
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import jsmessages.{JsMessages, JsMessagesFactory}
-import io.suggest.dt.interval.DatesIntervalConstants.{MONTHS_OF_YEAR, DAYS_OF_WEEK}
+import io.suggest.dt.interval.DatesIntervalConstants.{DAYS_OF_WEEK, MONTHS_OF_YEAR}
 
 /**
   * Suggest.io
@@ -37,16 +37,10 @@ class JsMessagesUtil @Inject() (
       "locale.momentjs" ::
       Nil
 
-    val advPeriodsIter: Iterator[String] = {
-      Seq(
-        QuickAdvPeriods.values
-          .iterator
-          .map(_.messagesCode),
-        Seq( PeriodsConstants.MESSAGES_PREFIX + PeriodsConstants.CUSTOM )
-      )
-        .iterator
-        .flatten
-    }
+    val advPeriodsIter = QuickAdvPeriods
+      .values
+      .iterator
+      .map(_.messagesCode)
 
     Iterator(static, advPeriodsIter)
       .flatten

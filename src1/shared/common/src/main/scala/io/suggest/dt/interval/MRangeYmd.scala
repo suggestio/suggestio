@@ -2,6 +2,9 @@ package io.suggest.dt.interval
 
 import boopickle.Default._
 import io.suggest.dt.MYmd
+import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -27,6 +30,13 @@ object MRangeYmd {
     implicit val mymdP = MYmd.mYmdPickler
     generatePickler[MRangeYmd]
   }
+
+  implicit def mRangeYmdFormat: OFormat[MRangeYmd] = (
+    (__ \ "s").format[MYmd] and
+    (__ \ "e").format[MYmd]
+  )(apply, unlift(unapply))
+
+  implicit def univEq: UnivEq[MRangeYmd] = UnivEq.derive
 
 }
 

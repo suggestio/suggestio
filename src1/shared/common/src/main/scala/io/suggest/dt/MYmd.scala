@@ -1,6 +1,9 @@
 package io.suggest.dt
 
 import boopickle.Default._
+import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -41,6 +44,15 @@ object MYmd {
   def toStringOpt(ymdOpt: Option[MYmd]): String = {
     ymdOpt.fold("")(_.toString)
   }
+
+  /** Поддержка play-json. */
+  implicit def mYmdFormat: Format[MYmd] = (
+    (__ \ "y").format[Int] and
+    (__ \ "m").format[Int] and
+    (__ \ "d").format[Int]
+  )(apply, unlift(unapply))
+
+  implicit def univEq: UnivEq[MYmd] = UnivEq.derive
 
 }
 

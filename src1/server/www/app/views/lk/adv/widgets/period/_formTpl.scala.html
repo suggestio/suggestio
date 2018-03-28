@@ -7,7 +7,7 @@
 @import lk.forms._
 @import io.suggest.dt.interval.DatesIntervalConstants._
 @import models.mdt.DtPickArgs
-@import io.suggest.dt.interval.PeriodsConstants.CUSTOM
+@import io.suggest.dt.interval.QuickAdvPeriods
 
 @__inputDatePick(suffix: String, id: String) = {
   @defining( pf("date." + suffix) ) { field =>
@@ -36,7 +36,7 @@
     }
 
     <div id="@DATES_CONT_ID"
-         style="display: @if(currPeriod.value.contains(CUSTOM)) {block} else {none};">
+         style="display: @if(currPeriod.value.contains( QuickAdvPeriods.Custom.value )) {block} else {none};">
       @lkProp( messages("Date.start") ) {
         @_inputWrapTpl("S") {
           @__inputDatePick("start", DATE_START_INPUT_ID)

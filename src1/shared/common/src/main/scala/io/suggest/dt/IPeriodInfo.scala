@@ -2,7 +2,9 @@ package io.suggest.dt
 
 import boopickle.Default._
 import io.suggest.dt.interval.{MRangeYmd, QuickAdvIsoPeriod, QuickAdvPeriod, QuickAdvPeriods}
-
+import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import scalaz.ValidationNel
 import scalaz.syntax.validation._
 
@@ -32,6 +34,26 @@ object IPeriodInfo {
       f(r)
         .map(_ => periodInfo)
     }
+  }
+
+  implicit def univEq: UnivEq[IPeriodInfo] = UnivEq.derive
+
+  implicit def periodInfoFormat: OFormat[IPeriodInfo] = {
+    val isoFmt = MIsoPeriod.mIsoPeriodFormat
+    val customFmt = MCustomPeriod.mCustomPeriodFormat
+
+    val reads = isoFmt.map[IPeriodInfo](identity).orElse {
+      customFmt.map[IPeriodInfo](identity)
+    }
+
+    val writes = OWrites[IPeriodInfo] {
+      case isoP: MIsoPeriod =>
+        isoFmt.writes( isoP )
+      case customP: MCustomPeriod =>
+        customFmt.writes( customP )
+    }
+
+    OFormat(reads, writes)
   }
 
 }
@@ -68,6 +90,14 @@ sealed trait IPeriodInfo {
 }
 
 
+object MIsoPeriod {
+  implicit def univEq: UnivEq[MIsoPeriod] = UnivEq.derive
+  implicit def mIsoPeriodFormat: OFormat[MIsoPeriod] = {
+    (__ \ "i")
+      .format[QuickAdvIsoPeriod]
+      .inmap(apply, _.isoPeriod)
+  }
+}
 /**
   * Режим quick-периода размещения.
   * @param isoPeriod Выбранный шаблон периода размещения.
@@ -101,6 +131,14 @@ case class MIsoPeriod(isoPeriod: QuickAdvIsoPeriod = QuickAdvPeriods.default ) e
 }
 
 
+object MCustomPeriod {
+  implicit def univEq: UnivEq[MCustomPeriod] = UnivEq.derive
+  implicit def mCustomPeriodFormat: OFormat[MCustomPeriod] = {
+    (__ \ "c")
+      .format[MRangeYmd]
+      .inmap[MCustomPeriod](apply, _.customRange)
+  }
+}
 /**
   * Режим произвольного периода размещения.
   * @param customRange Кастомный интервал дат.
