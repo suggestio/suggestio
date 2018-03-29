@@ -32,7 +32,8 @@ object MTfDailyInfo {
     //import enumeratum.values.StringEnum._   // TODO Не пашет. Вместо него возвращается не тот object: MCalType.type вместо MCalTypes.
     Format[Map[MCalType, MPrice]](
       stringEnumKeyMapReads[MCalType, MPrice](MCalTypes, implicitly),
-      implicitly[Writes[Map[MCalType, MPrice]]]
+      // Для writes здесь нельзя implicitly[Map[]], будет бесконечная рекурсия об tfClausesMap
+      stringEnumKeyMapWrites[MCalType, MPrice]
     )
   }
 

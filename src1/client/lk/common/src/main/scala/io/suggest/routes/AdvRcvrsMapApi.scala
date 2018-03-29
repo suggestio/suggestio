@@ -4,7 +4,6 @@ import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.proto.HttpConst.Methods
 import io.suggest.sjs.common.model.{HttpRoute, HttpRouteExtractor}
 import io.suggest.sjs.common.xhr.Xhr
-import play.api.libs.json.Json
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future
@@ -29,14 +28,11 @@ object IAdvRcvrsMapApi {
 
   def _advRcvrsMapRequest[HttpRoute: HttpRouteExtractor](route: HttpRoute): Future[MGeoNodesResp] = {
     for {
-      jsonStr <- Xhr.requestJsonText( route )
+      list <- Xhr.unJsonResp[List[MGeoNodePropsShapes]] {
+        Xhr.requestJsonText( route )
+      }
     } yield {
-      MGeoNodesResp(
-        nodes = Json
-          .parse(jsonStr)
-          // Лениво парсить пока никак. Stream[] только расход памяти увеличивает.
-          .as[List[MGeoNodePropsShapes]]
-      )
+      MGeoNodesResp( list )
     }
   }
 

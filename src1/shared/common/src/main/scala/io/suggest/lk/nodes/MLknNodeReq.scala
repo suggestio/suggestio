@@ -3,7 +3,9 @@ package io.suggest.lk.nodes
 import boopickle.Default._
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.ble.eddystone.EddyStoneUtil
-
+import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import scalaz.{Validation, ValidationNel}
 import scalaz.Validation.FlatMap._
 import scalaz.syntax.apply._
@@ -46,6 +48,13 @@ object MLknNodeReq {
       .flatMap { EddyStoneUtil.validateEddyStoneNodeId }
     (nameV |@| idV) { (_,_) => req }
   }
+
+  implicit def univEq: UnivEq[MLknNodeReq] = UnivEq.derive
+
+  implicit def mLknNodeReqFormat: OFormat[MLknNodeReq] = (
+    (__ \ "n").format[String] and
+    (__ \ "i").formatNullable[String]
+  )(apply, unlift(unapply))
 
 }
 

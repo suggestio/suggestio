@@ -1,6 +1,9 @@
 package io.suggest.lk.nodes
 
 import boopickle.Default._
+import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -16,6 +19,13 @@ object MLknConf {
   implicit val mLknConfPickler: Pickler[MLknConf] = {
     generatePickler[MLknConf]
   }
+
+  implicit def univEq: UnivEq[MLknConf] = UnivEq.derive
+
+  implicit def mLknConfFormat: OFormat[MLknConf] = (
+    (__ \ "n").format[String] and
+    (__ \ "a").formatNullable[String]
+  )(apply, unlift(unapply))
 
 }
 

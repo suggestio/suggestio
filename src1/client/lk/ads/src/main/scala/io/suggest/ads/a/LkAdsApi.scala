@@ -3,9 +3,7 @@ package io.suggest.ads.a
 import io.suggest.ads.MLkAdsOneAdResp
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.routes.routes
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.xhr.Xhr
-import play.api.libs.json.Json
 
 import scala.concurrent.Future
 
@@ -38,12 +36,8 @@ class LkAdsApiHttp() extends ILkAdsApi {
       rcvrKey = RcvrKey.rcvrKey2urlPath( nodeKey ),
       offset  = offset
     )
-    for {
-      jsonStr <- Xhr.requestJsonText(route)
-    } yield {
-      Json
-        .parse(jsonStr)
-        .as[Seq[MLkAdsOneAdResp]]
+    Xhr.unJsonResp[Seq[MLkAdsOneAdResp]] {
+      Xhr.requestJsonText(route)
     }
   }
 

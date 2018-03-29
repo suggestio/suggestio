@@ -2,10 +2,7 @@ package controllers
 
 import java.time.OffsetDateTime
 
-import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
-
-import io.suggest.bin.ConvCodecs
 import io.suggest.common.fut.FutureUtil
 import FutureUtil.HellImplicits._
 import io.suggest.adn.MAdnRights
@@ -21,10 +18,7 @@ import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.pick.PickleUtil
-import io.suggest.pick.PickleSrvUtil._
 import io.suggest.primo.id.IId
-import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mlk.nodes.{MLkAdNodesTplArgs, MLkNodesTplArgs}
@@ -36,6 +30,7 @@ import util.billing.{Bill2Util, TfDailyUtil}
 import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes._
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
 
@@ -65,7 +60,6 @@ class LkNodes @Inject() (
                           mNodes                    : MNodes,
                           canChangeNodeAvailability : CanChangeNodeAvailability,
                           bruteForceProtect         : BruteForceProtect,
-                          reqUtil                   : ReqUtil,
                           override val mCommonDi    : ICommonDi
                         )
   extends SioControllerImpl
@@ -142,11 +136,11 @@ class LkNodes @Inject() (
 
   /** Внутренняя модель данных по форме и контексту.
     *
-    * @param formStateB64 base64-строка с данными формы для инициализации на клиенте.
+    * @param formState Строка с данными формы для инициализации на клиенте.
     * @param ctx Обычный контекст.
     */
   private case class _MLknFormPrep(
-                                    formStateB64      : String,
+                                    formState         : String,
                                     implicit val ctx  : Context
                                   )
 
@@ -201,7 +195,7 @@ class LkNodes @Inject() (
       getContext2
     }
 
-    val formStateB64Fut = for {
+    val formStateFut = for {
       // Запустить поиск под-узлов для текущего узла.
       ctx               <- ctxFut
       subNodesResp      <- _subNodesRespFor(onNode, madOpt = madOpt)(ctx)
@@ -214,15 +208,15 @@ class LkNodes @Inject() (
         ),
         nodes0   = subNodesResp :: otherPersonNodes
       )
-      PickleUtil.pickleConv[MLknFormInit, ConvCodecs.Base64, String](minit)
+      Json.toJson( minit ).toString()
     }
 
     // Отрендерить и вернуть HTML-шаблон со страницей для формы.
     for {
-      formStateB64    <- formStateB64Fut
-      ctx             <- ctxFut
+      formState   <- formStateFut
+      ctx         <- ctxFut
     } yield {
-      _MLknFormPrep(formStateB64, ctx)
+      _MLknFormPrep(formState, ctx)
     }
   }
 
@@ -241,7 +235,7 @@ class LkNodes @Inject() (
         res               <- _lknFormPrep(request.mnode)
       } yield {
         val args = MLkNodesTplArgs(
-          formState = res.formStateB64,
+          formState = res.formState,
           mnode     = request.mnode
         )
         Ok( NodesTpl(args)(res.ctx) )
@@ -261,15 +255,14 @@ class LkNodes @Inject() (
         resp <- _subNodesRespFor(request.mnode, madOpt = None)    // TODO Сделать madOpt универсальным
       } yield {
         LOGGER.trace(s"nodeInfo($nodeId): Found ${resp.children.size} sub-nodes: ${IId.els2ids(resp.children).mkString(", ")}")
-        val bbuf = PickleUtil.pickle(resp)
-        Ok( ByteString(bbuf) )
+        Ok( Json.toJson(resp) )
       }
     }
   }
 
 
   /** BodyParser для тела запроса по созданию/редактированию узла. */
-  private def _mLknNodeReqBP = reqUtil.picklingBodyParser[MLknNodeReq]
+  private def _mLknNodeReqBP = parse.json[MLknNodeReq]
 
 
   /** Создать новый узел (маячок) с указанными параметрами.
@@ -386,8 +379,7 @@ class LkNodes @Inject() (
                 hasAdv    = None,
                 tf        = Some(tfDailyInfo)
               )
-              val bbuf = PickleUtil.pickle[MLknNode](mResp)
-              Ok( ByteString(bbuf) )
+              Ok( Json.toJson(mResp) )
             }
 
             respFut.recover {
@@ -446,8 +438,7 @@ class LkNodes @Inject() (
             hasAdv                  = None,
             tf                      = Some(tfDailyInfo)
           )
-          val bbuf = PickleUtil.pickle(mLknNode)
-          Ok(ByteString(bbuf))
+          Ok( Json.toJson(mLknNode) )
         }
       }
     }
@@ -534,8 +525,7 @@ class LkNodes @Inject() (
                 hasAdv                  = None,
                 tf                      = Some(tfDailyInfo)
               )
-              val bbuf = PickleUtil.pickle( m )
-              Ok( ByteString(bbuf) )
+              Ok( Json.toJson(m) )
             }
           }
         )
@@ -558,9 +548,9 @@ class LkNodes @Inject() (
         res <- _lknFormPrep(request.producer, madOpt = Some(request.mad))
       } yield {
         val rArgs = MLkAdNodesTplArgs(
-          formState = res.formStateB64,
-          mad = request.mad,
-          producer = request.producer
+          formState = res.formState,
+          mad       = request.mad,
+          producer  = request.producer
         )
         val html = AdNodesTpl(rArgs)(res.ctx)
         Ok(html)
@@ -634,14 +624,13 @@ class LkNodes @Inject() (
         )
 
         // Отправить сериализованные данные по узлу.
-        val bbuf = PickleUtil.pickle(mLknNode)
-        Ok( ByteString(bbuf) )
+        Ok( Json.toJson(mLknNode) )
       }
     }
   }
 
   /** BodyParser для выставления тарифа. */
-  private def _tfDailyBp = reqUtil.picklingBodyParser[ITfDailyMode]
+  private def _tfDailyBp = parse.json[ITfDailyMode]
 
 
   /** Юзер выставляет тариф для узла.
@@ -700,8 +689,7 @@ class LkNodes @Inject() (
             )
 
             // Собрать HTTP-ответ клиенту
-            val bbuf = PickleUtil.pickle( mLknNode )
-            Ok( ByteString(bbuf) )
+            Ok( Json.toJson(mLknNode) )
           }
         }
       )

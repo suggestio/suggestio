@@ -1,6 +1,5 @@
 package io.suggest.lk.nodes
 
-import boopickle.Default._
 import io.suggest.bill.tf.daily.MTfDailyInfo
 import io.suggest.model.n2.node.MNodeType
 import io.suggest.primo.id.IId
@@ -16,12 +15,6 @@ import play.api.libs.functional.syntax._
   */
 
 object MLknNode {
-
-  /** Поддержка сериализации/десериализации. */
-  implicit val lknNodePickler: Pickler[MLknNode] = {
-    implicit val tfP = MTfDailyInfo.mTfDailyInfoPickler
-    generatePickler[MLknNode]
-  }
 
   implicit def univEq: UnivEq[MLknNode] = UnivEq.derive
 

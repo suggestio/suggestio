@@ -3,10 +3,12 @@ package io.suggest.lk.nodes.form.a
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.tf.daily.ITfDailyMode
 import io.suggest.lk.nodes.{MLknNode, MLknNodeReq, MLknNodeResp}
-import io.suggest.pick.PickleUtil
+import io.suggest.pick.MimeConst
+import io.suggest.proto.HttpConst
 import io.suggest.routes.routes
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
 
@@ -85,10 +87,13 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
 
   import io.suggest.lk.nodes.form.u.LkNodesRoutes._
 
+  private def _JSON_BODY_HEADERS = List(
+    HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON
+  )
 
   override def nodeInfo(nodeId: String): Future[MLknNodeResp] = {
-    Xhr.unBooPickleResp[MLknNodeResp] {
-      Xhr.requestBinary(
+    Xhr.unJsonResp[MLknNodeResp] {
+      Xhr.requestJsonText(
         route = routes.controllers.LkNodes.nodeInfo(nodeId)
       )
     }
@@ -96,18 +101,19 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
 
 
   override def createSubNodeSubmit(parentId: String, data: MLknNodeReq): Future[MLknNode] = {
-    Xhr.unBooPickleResp[MLknNode] {
-      Xhr.requestBinary(
+    Xhr.unJsonResp[MLknNode] {
+      Xhr.requestJsonText(
         route = routes.controllers.LkNodes.createSubNodeSubmit(parentId),
-        body  = PickleUtil.pickle(data)
+        body  = Json.toJson(data).toString(),
+        headers = _JSON_BODY_HEADERS
       )
     }
   }
 
 
   override def setNodeEnabled(nodeId: String, isEnabled: Boolean): Future[MLknNode] = {
-    Xhr.unBooPickleResp[MLknNode] {
-      Xhr.requestBinary(
+    Xhr.unJsonResp[MLknNode] {
+      Xhr.requestJsonText(
         route = routes.controllers.LkNodes.setNodeEnabled(nodeId, isEnabled)
       )
     }
@@ -130,18 +136,19 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
 
 
   override def editNode(nodeId: String, data: MLknNodeReq): Future[MLknNode] = {
-    Xhr.unBooPickleResp[MLknNode] {
-      Xhr.requestBinary(
+    Xhr.unJsonResp[MLknNode] {
+      Xhr.requestJsonText(
         route = routes.controllers.LkNodes.editNode(nodeId),
-        body  = PickleUtil.pickle(data)
+        body  = Json.toJson(data).toString(),
+        headers = _JSON_BODY_HEADERS
       )
     }
   }
 
 
   override def setAdv(adId: String, isEnabled: Boolean, onNode: RcvrKey): Future[MLknNode] = {
-    Xhr.unBooPickleResp[MLknNode] {
-      Xhr.requestBinary(
+    Xhr.unJsonResp[MLknNode] {
+      Xhr.requestJsonText(
         route = routes.controllers.LkNodes.setAdv(
           adId          = adId,
           isEnabled     = isEnabled,
@@ -153,12 +160,13 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
 
 
   override def setTfDaily(onNode: RcvrKey, mode: ITfDailyMode): Future[MLknNode] = {
-    Xhr.unBooPickleResp[MLknNode] {
-      Xhr.requestBinary(
+    Xhr.unJsonResp[MLknNode] {
+      Xhr.requestJsonText(
         route = routes.controllers.LkNodes.setTfDaily(
           onNodeRcvrKey = RcvrKey.rcvrKey2urlPath( onNode )
         ),
-        body = PickleUtil.pickle( mode )
+        body = Json.toJson(mode).toString(),
+        headers = _JSON_BODY_HEADERS
       )
     }
   }

@@ -1,6 +1,5 @@
 package io.suggest.lk.nodes
 
-import boopickle.Default._
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -16,12 +15,6 @@ import play.api.libs.functional.syntax._
   */
 
 object MLknNodeResp {
-
-  /** Поддержка сериализации/десериализации. */
-  implicit val mLknSubNodesRespPickler: Pickler[MLknNodeResp] = {
-    implicit val treeNodeP = MLknNode.lknNodePickler
-    generatePickler[MLknNodeResp]
-  }
 
   implicit def univEq: UnivEq[MLknNodeResp] = {
     import io.suggest.ueq.UnivEqUtil._

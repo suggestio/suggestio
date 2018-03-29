@@ -2,15 +2,12 @@ package io.suggest.lk.nodes.form
 
 import diode.data.Ready
 import diode.react.ReactConnector
-import io.suggest.bin.ConvCodecs
 import io.suggest.lk.nodes.MLknFormInit
 import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
 import io.suggest.lk.nodes.form.a.pop.{CreateNodeAh, DeleteNodeAh, EditTfDailyAh}
 import io.suggest.lk.nodes.form.a.tree.TreeAh
 import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MNodeState, MTree}
-import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.log.CircuitLog
-import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.lk.nodes.form.m.MCreateNodeS.MCreateNodeSFastEq
@@ -20,6 +17,7 @@ import io.suggest.lk.nodes.form.m.MLknPopups.MLknPopupsFastEq
 import io.suggest.lk.m.MDeleteConfirmPopupS.MDeleteConfirmPopupSFastEq
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.StateInp
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
 
@@ -31,14 +29,13 @@ import scala.concurrent.Future
   */
 object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[MLkNodesRoot] {
 
-
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.LK_NODES_FORM_ERROR
 
   /** Сборка начального инстанса корневой модели. */
   override protected def initialModel: MLkNodesRoot = {
     val stateInp = StateInp.find().get
     val base64   = stateInp.value.get
-    val mFormInit = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MLknFormInit](base64)
+    val mFormInit = Json.parse(base64).as[MLknFormInit]
 
     val mroot = MLkNodesRoot(
       conf = mFormInit.conf,

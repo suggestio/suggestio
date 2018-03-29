@@ -2,7 +2,6 @@ package io.suggest.sc.u
 
 import io.suggest.sc.sc3.MSc3Resp
 import io.suggest.sc.{Sc3Api, ScConstants}
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.xplay.json.PlayJsonSjsUtil
@@ -43,12 +42,8 @@ object ScJsRoutesUtil {
     if (!argsJsDict.contains(vsnKey))
       argsJsDict.update( vsnKey, Sc3Api.API_VSN.value )
 
-    for {
-      respJsonText <- Xhr.requestJsonText( route(argsJsDict), REQ_TIMEOUT_MS )
-    } yield {
-      Json
-        .parse( respJsonText )
-        .as[RespT]
+    Xhr.unJsonResp[RespT] {
+      Xhr.requestJsonText( route(argsJsDict), REQ_TIMEOUT_MS )
     }
   }
 

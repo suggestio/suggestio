@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import io.suggest.id.IdentConst
 import io.suggest.pick.{MimeConst, PickleUtil}
 import io.suggest.proto.HttpConst
-import io.suggest.sjs.common.model.{HttpRouteExtractor, Route}
+import io.suggest.sjs.common.model.HttpRouteExtractor
 import io.suggest.sjs.common.xhr.ex._
 import org.scalajs.dom.XMLHttpRequest
 
@@ -17,6 +17,7 @@ import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
 import org.scalajs.dom
 import org.scalajs.dom.ext.{Ajax, AjaxException}
+import play.api.libs.json.{Json, Reads}
 
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 
@@ -180,12 +181,13 @@ object Xhr extends Log {
     * Запрос JSON сервера без парсинга JSON на клиенте.
     * Метод появился как временный костыль к play-json, который через API парсит только строки.
     */
-  def requestJsonText[HttpRoute: HttpRouteExtractor](route: HttpRoute, timeoutMsOpt: Option[Int] = None): Future[String] = {
+  def requestJsonText[HttpRoute: HttpRouteExtractor](route: HttpRoute, timeoutMsOpt: Option[Int] = None, body: Ajax.InputData = null, headers: List[(String, String)] = Nil): Future[String] = {
     val xhrFut = successIf200 {
       send(
         route         = route,
-        headers       = Seq(HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_JSON),
-        timeoutMsOpt  = timeoutMsOpt
+        headers       = (HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_JSON) :: headers,
+        timeoutMsOpt  = timeoutMsOpt,
+        body          = body
       )
     }
     for (xhr <- xhrFut) yield {
@@ -295,6 +297,12 @@ object Xhr extends Log {
   def unBooPickleResp[T](respFut: Future[ByteBuffer])(implicit u: Pickler[T]): Future[T] = {
     for (bbuf <- respFut) yield {
       PickleUtil.unpickle[T](bbuf)
+    }
+  }
+
+  def unJsonResp[T: Reads](respFut: Future[String]): Future[T] = {
+    for (jsonStr <- respFut) yield {
+      Json.parse(jsonStr).as[T]
     }
   }
 
