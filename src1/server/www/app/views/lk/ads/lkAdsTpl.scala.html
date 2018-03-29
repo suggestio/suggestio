@@ -27,16 +27,6 @@
     @_preLoaderLkTpl()
   </div>
 
-
-  @* Ссылка на demo web site. *@
-  <div class="sm-note">
-    @if( mnode.extras.adn.exists(_.isReceiver) ) {
-      @messages("You.can.look.on.ads.in")
-      <a class="blue-link" href="@ctxUtil.SC_URL_PREFIX@routes.Sc.geoSite(msc.ScJsState(adnId = mnode.id))"
-         target="_blank">@messages("_ad.showcase.link")</a>.
-    }
-  </div>
-
   @jsTpl2HtmlTpl( withScriptTag = true )(
     jsRevRouterTpl( csrfAll = false, cdn = false )(
       routes.javascript.LkAds.getAds,

@@ -134,8 +134,8 @@ class LkAdsFormR(
               // Собираем ссылку на выдачу на основе текущего nodeId:
               <.a(
                 ^.`class` := Css.Lk.BLUE_LINK,
-                // TODO ненужные "a."-префиксы в qs.
-                ^.href := route.url, //.replaceFirst("[?&]csrf[^&]+", ""),
+                // TODO ненужные "a."-префиксы в qs, сейчас спиливаются через replace, но надо-то как-то решить проблему.
+                ^.href := route.url.replaceAll("([?&])a\\.", "$1"),
                 ^.target.blank,
                 Messages( MsgCodes.`_ad.showcase.link` )
               )
