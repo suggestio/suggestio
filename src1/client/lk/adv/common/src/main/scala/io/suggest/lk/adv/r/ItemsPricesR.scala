@@ -124,7 +124,7 @@ object ItemsPricesR {
           ^.`class` := Css.flat1( tdCssBody ),
           tfPrice.mCalType
             .fold[VdomNode]( HtmlConstants.NBSP_STR ) { calType =>
-              Messages( calType.name )
+              Messages( calType.i18nCode )
             }
         ),
 

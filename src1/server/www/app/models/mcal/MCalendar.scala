@@ -31,8 +31,6 @@ class MCalendars @Inject() (
   with EsModelPlayJsonStaticT
 {
 
-  import mCalTypesJvm.mCalTypeFormat
-
   override type T = MCalendar
 
   override val ES_TYPE_NAME = "holyCal"
@@ -68,7 +66,7 @@ class MCalendars @Inject() (
       name        = m.get(NAME_FN).fold("WTF?")(JacksonParsing.stringParser),
       calType     = m.get(CAL_TYPE_FN)
         .map(JacksonParsing.stringParser)
-        .flatMap(MCalTypes.withNameOption)
+        .flatMap(MCalTypes.withValueOpt)
         .getOrElse( _dfltCalType(id) ),
       data        = JacksonParsing.stringParser( m(DATA_FN) ),
       versionOpt  = version
@@ -90,7 +88,7 @@ class MCalendars @Inject() (
     */
   private def _dfltCalType(id: Option[String]): MCalType = {
     val default = MCalTypes.default
-    LOGGER.warn(s"No cal type defined for calendar[${id.orNull}], fallback to ${default.name}")
+    LOGGER.warn(s"No cal type defined for calendar[${id.orNull}], fallback to ${default.i18nCode}")
     default
   }
 
@@ -112,7 +110,7 @@ class MCalendars @Inject() (
     import Fields._, m._
     NAME_FN       -> JsString(name) ::
       DATA_FN     -> JsString(data) ::
-      CAL_TYPE_FN -> JsString(calType.strId) ::
+      CAL_TYPE_FN -> JsString(calType.value) ::
       acc
   }
 

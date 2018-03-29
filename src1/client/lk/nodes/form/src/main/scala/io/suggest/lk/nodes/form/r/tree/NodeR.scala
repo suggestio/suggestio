@@ -434,9 +434,9 @@ object NodeR extends Log { self =>
                             <.tbody(
                               tfInfo.clauses.toVdomArray { case (mCalType, mPrice) =>
                                 <.tr(
-                                  ^.key := mCalType.strId,
+                                  ^.key := mCalType.value,
                                   _kvTdKey(
-                                    Messages( mCalType.name )
+                                    Messages( mCalType.i18nCode )
                                   ),
                                   _kvTdValue(
                                     JsFormatUtil.formatPrice(mPrice),
@@ -453,13 +453,14 @@ object NodeR extends Log { self =>
                       } else {
                         // Рендер компактной инфы по тарифу.
                         <.span(
-                          ": ",
+                          HtmlConstants.COLON,
+                          HtmlConstants.SPACE,
                           tfInfo.clauses.toVdomArray { case (mCalType, mPrice) =>
                             <.span(
-                              ^.key := mCalType.strId,
-                              " / "
+                              ^.key := mCalType.value,
+                              (HtmlConstants.SPACE + HtmlConstants.SLASH + HtmlConstants.SPACE)
                                 .unless( mCalType == tfInfo.clauses.head._1 ),
-                              ^.title := Messages( mCalType.name ),
+                              ^.title := Messages( mCalType.i18nCode ),
                               MPrice.amountStr(mPrice)
                             )
                           },

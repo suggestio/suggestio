@@ -16,7 +16,7 @@
   @select(
     cf("type"),
     options = for (mct <- MCalTypes.values) yield {
-      mct.strId -> messages(mct.name)
+      mct.value -> messages(mct.i18nCode)
     },
     '_label -> "Отображаемый тип"
   )

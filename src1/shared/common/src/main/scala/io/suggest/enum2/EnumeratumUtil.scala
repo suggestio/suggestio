@@ -1,7 +1,7 @@
 package io.suggest.enum2
 
 import enumeratum._
-import enumeratum.values.{ValueEnum, ValueEnumEntry}
+import enumeratum.values.{StringEnum, StringEnumEntry, ValueEnum, ValueEnumEntry}
 import io.suggest.common.empty.EmptyUtil
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Writes, _}
@@ -114,6 +114,31 @@ object EnumeratumUtil {
       vees
         .toIterator
         .map(_.value)
+    }
+
+  }
+
+
+  object MapJson {
+
+    implicit def stringEnumKeyMapReads[K <: StringEnumEntry: StringEnum, V: Reads]: Reads[Map[K, V]] = {
+      Reads.mapReads[K, V] { str =>
+        implicitly[StringEnum[K]]
+          .withValueOpt(str)
+          .fold[JsResult[K]](JsError("invalid"))(JsSuccess(_))
+      }
+    }
+
+    implicit def stringEnumKeyMapWrites[K <: StringEnumEntry, V: Writes]: Writes[Map[K, V]] = {
+      val w = implicitly[Writes[V]]
+      OWrites[Map[K, V]] { kvsMap =>
+        val jsObjFields = kvsMap.iterator
+          .map { case (k, v) =>
+            k.value -> w.writes(v)
+          }
+          .toSeq
+        JsObject( jsObjFields )
+      }
     }
 
   }

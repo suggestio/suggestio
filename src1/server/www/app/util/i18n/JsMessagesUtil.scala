@@ -178,7 +178,7 @@ class JsMessagesUtil @Inject() (
   private def CAL_TYPES: TraversableOnce[String] = {
     MCalTypes.values
       .iterator
-      .map(_.name)
+      .map(_.i18nCode)
   }
 
   /** Коды сообщений инфы по размещению. */

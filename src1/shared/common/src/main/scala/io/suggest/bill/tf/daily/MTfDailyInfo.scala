@@ -2,7 +2,10 @@ package io.suggest.bill.tf.daily
 
 import boopickle.Default._
 import io.suggest.bill.{MCurrency, MPrice}
-import io.suggest.cal.m.MCalType
+import io.suggest.cal.m.{MCalType, MCalTypes}
+import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -18,6 +21,27 @@ object MTfDailyInfo {
     implicit val mPriceP = MPrice.mPricePickler
     generatePickler[MTfDailyInfo]
   }
+
+  implicit def univEq: UnivEq[MTfDailyInfo] = {
+    import io.suggest.ueq.UnivEqUtil._
+    UnivEq.derive
+  }
+
+  implicit def tfClausesMapFormat: Format[Map[MCalType, MPrice]] = {
+    import io.suggest.enum2.EnumeratumUtil.MapJson._
+    //import enumeratum.values.StringEnum._   // TODO Не пашет. Вместо него возвращается не тот object: MCalType.type вместо MCalTypes.
+    Format[Map[MCalType, MPrice]](
+      stringEnumKeyMapReads[MCalType, MPrice](MCalTypes, implicitly),
+      implicitly[Writes[Map[MCalType, MPrice]]]
+    )
+  }
+
+  implicit def mTfDailyInfoFormat: OFormat[MTfDailyInfo] = (
+    (__ \ "m").format[ITfDailyMode] and
+    (__ \ "l").format[Map[MCalType, MPrice]] and
+    (__ \ "o").format[Int] and
+    (__ \ "u").format[MCurrency]
+  )(apply, unlift(unapply))
 
 }
 

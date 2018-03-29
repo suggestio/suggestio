@@ -1,5 +1,8 @@
 package io.suggest.bill
 
+import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 import scalaz.Monoid
 
 /**
@@ -100,6 +103,20 @@ object MPrice {
   }
 
   def unapply2(m: MPrice) = unapply(m).map { case (amount,curr,_) => (amount,curr) }
+
+
+  /** Поддержка play-json. */
+  implicit def mPriceFormat: OFormat[MPrice] = (
+    (__ \ "a").format[Amount_t] and
+    (__ \ "c").format[MCurrency] and
+    (__ \ "f").formatNullable[String]
+  )(apply, unlift(unapply))
+
+
+  implicit def univEq: UnivEq[MPrice] = {
+    import io.suggest.ueq.UnivEqUtil._
+    UnivEq.derive
+  }
 
 }
 

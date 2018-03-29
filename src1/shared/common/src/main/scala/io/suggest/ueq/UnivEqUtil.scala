@@ -51,4 +51,6 @@ object UnivEqUtil {
   @inline implicit def jsNumberUe         : UnivEq[JsNumber]        = UnivEq.force
   @inline implicit def jsNullUe           : UnivEq[JsNull.type]     = UnivEq.force
 
+  @inline implicit def kvMapUe[K: UnivEq, V: UnivEq]: UnivEq[Map[K, V]] = UnivEq.force
+
 }

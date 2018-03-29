@@ -4,8 +4,6 @@ import io.suggest.cal.m.{MCalType, MCalTypes}
 import io.suggest.common.empty.EmptyUtil
 import play.api.data.Forms._
 import play.api.data.Mapping
-import play.api.libs.json._
-import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -16,33 +14,14 @@ import play.api.libs.functional.syntax._
   */
 class MCalTypesJvm {
 
-  /** Поддержка опционального маппинга из/в JSON. */
-  implicit val mCalTypeOptFormat: Format[Option[MCalType]] = {
-    implicitly[Format[String]]
-      // Чтобы не было экзепшенов, надо дергать maybeWithName() и смотреть значение Option.
-      .inmap [Option[MCalType]] (
-        MCalTypes.withNameOption,
-        _.fold("")(_.strId)
-      )
-  }
-
-  /** Поддержка обязательного маппинга из/в JSON. */
-  implicit val mCalTypeFormat: Format[MCalType] = {
-    val reads = mCalTypeOptFormat
-      .filter( JsonValidationError("error.unknown.name") )(_.nonEmpty)
-      .map(_.get)
-    val writes = (mCalTypeOptFormat: Writes[Option[MCalType]])
-      .contramap[MCalType]( EmptyUtil.someF )
-    Format(reads, writes)
-  }
-
+  // TODO Подхватить маппинги из EnumeratumJvmUtil.
 
   /** Опциональный маппинг для формы. */
   def calTypeOptM: Mapping[Option[MCalType]] = {
     nonEmptyText(minLength = 1, maxLength = 10)
       .transform [Option[MCalType]] (
-        MCalTypes.withNameOption,
-        _.fold("")(_.strId)
+        MCalTypes.withValueOpt,
+        _.fold("")(_.value)
       )
   }
 

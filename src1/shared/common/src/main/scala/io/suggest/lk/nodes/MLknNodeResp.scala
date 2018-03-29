@@ -1,6 +1,9 @@
 package io.suggest.lk.nodes
 
 import boopickle.Default._
+import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -19,6 +22,17 @@ object MLknNodeResp {
     implicit val treeNodeP = MLknNode.lknNodePickler
     generatePickler[MLknNodeResp]
   }
+
+  implicit def univEq: UnivEq[MLknNodeResp] = {
+    import io.suggest.ueq.UnivEqUtil._
+    UnivEq.derive
+  }
+
+  /** Поддержка play-json. */
+  implicit def mLknNodeRespFormat: OFormat[MLknNodeResp] = (
+    (__ \ "i").format[MLknNode] and
+    (__ \ "c").format[Seq[MLknNode]]
+  )(apply, unlift(unapply))
 
 }
 

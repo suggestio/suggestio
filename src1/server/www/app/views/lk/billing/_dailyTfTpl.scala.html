@@ -40,7 +40,7 @@
         <td class="td tariff_info-title">
           @* По календарю определить тип и слова для рендера. *@
           @defining( clause.calId.flatMap(args.calsMap.get).fold[MCalType](MCalTypes.WeekDay)(_.calType) ) { mct =>
-            @messages(mct.name):
+            @messages(mct.i18nCode):
             @for(dayStart <- mct.dayStart; dayEnd <- mct.dayEnd) {
               @messages( MsgCodes.`dayOfW.N.`(dayStart) )-@messages( MsgCodes.`dayOfW.N.`(dayEnd) )
             }

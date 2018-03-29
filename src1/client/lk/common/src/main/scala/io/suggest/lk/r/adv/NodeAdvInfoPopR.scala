@@ -11,6 +11,7 @@ import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.bill.MPrice
 import io.suggest.cal.m.MCalType
 import io.suggest.common.html.HtmlConstants
+import io.suggest.common.html.HtmlConstants.{`(`, `)`}
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.model.n2.node.meta.MMetaPub
@@ -57,14 +58,15 @@ object NodeAdvInfoPopR {
         .flatMap { case (mCalType, _) =>
           // Ячейка заголовка с описанием названия (типа) календаря и затрагиваемых дней недели.
           val payloadCell = <.td(
-            ^.key := mCalType.strId,
+            ^.key := mCalType.value,
             ^.`class` := Css.flat( Css.Table.Td.TD, Css.Lk.Adv.NodeInfo.TARIFF_INFO_TITLE ),
-            Messages( mCalType.name ),
-            ": ",
+            Messages( mCalType.i18nCode ),
+            HtmlConstants.COLON,
+            HtmlConstants.SPACE,
             mCalType.dayStart.whenDefined { dayStart =>
               Messages( MsgCodes.`dayOfW.N.`( dayStart ) )
             },
-            "-".when( mCalType.dayStart.nonEmpty && mCalType.dayEnd.nonEmpty ),
+            HtmlConstants.MINUS.when( mCalType.dayStart.nonEmpty && mCalType.dayEnd.nonEmpty ),
             mCalType.dayEnd.whenDefined { dayEnd =>
               Messages( MsgCodes.`dayOfW.N.`( dayEnd ) )
             }
@@ -74,7 +76,7 @@ object NodeAdvInfoPopR {
           // Из-за "особенностей" верстки макса требуется добавлять пустые ячейки между столбцами.
           if ( !firstCalTypeOpt.contains( mCalType ) ) {
             val delimTd = <.td(
-              ^.key := mCalType.strId + "-"
+              ^.key := (mCalType.value + HtmlConstants.MINUS)
             )
             delimTd :: acc0
           } else {
@@ -109,15 +111,15 @@ object NodeAdvInfoPopR {
         .flatMap { case (mCalType, mPrice) =>
           // td-разделитель, из-за особенностей вёрстки.
           val td1 = <.td(
-            ^.key := mCalType.strId + "_",
+            ^.key := (mCalType.value + HtmlConstants.UNDERSCORE),
             ^.`class` := td
           )
           // Непосредственный контент.
           val td2 = <.td(
-            ^.key := mCalType.strId,
+            ^.key := mCalType.value,
             ^.`class` := Css.flat( td, Css.Lk.Adv.NodeInfo.TARIFF_INFO_VALUE ),
             JsFormatUtil.formatPrice( mPrice ),
-            "/",
+            HtmlConstants.SLASH,
             sutki
           )
           td1 :: td2 :: Nil
@@ -276,7 +278,7 @@ object NodeAdvInfoPopR {
                       advInfo.tfDaily.whenDefined { tfDailyInfo =>
                         _pricesRow(
                           Messages( MsgCodes.`Minimal.module` ),
-                          "(" + Messages( MsgCodes.`scheme.left` ) + ")",
+                          `(` + Messages( MsgCodes.`scheme.left` ) + `)`,
                           tfDailyInfo.clauses
                         )
                       },

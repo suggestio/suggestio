@@ -2,7 +2,11 @@ package io.suggest.lk.nodes
 
 import boopickle.Default._
 import io.suggest.bill.tf.daily.MTfDailyInfo
+import io.suggest.model.n2.node.MNodeType
 import io.suggest.primo.id.IId
+import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -19,6 +23,18 @@ object MLknNode {
     generatePickler[MLknNode]
   }
 
+  implicit def univEq: UnivEq[MLknNode] = UnivEq.derive
+
+  implicit def mLknNodeFormat: OFormat[MLknNode] = (
+    (__ \ "i").format[String] and
+    (__ \ "n").format[String] and
+    (__ \ "t").format[MNodeType] and
+    (__ \ "e").format[Boolean] and
+    (__ \ "a").formatNullable[Boolean] and
+    (__ \ "d").formatNullable[Boolean] and
+    (__ \ "f").formatNullable[MTfDailyInfo]
+  )(apply, unlift(unapply))
+
 }
 
 
@@ -31,8 +47,8 @@ case class MLknNode(
                      override val id        : String,
                      /** Отображаемое название узла. */
                      name                   : String,
-                     /** Код типа узла по модели MNodeTypes. */
-                     ntypeId                : String,
+                     /** Тип узла по модели MNodeTypes. */
+                     ntype                  : MNodeType,
                      /** Является ли узел активным сейчас? */
                      isEnabled              : Boolean,
                      /** Опциональные данные текущей видимости узла для других пользователей s.io.

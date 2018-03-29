@@ -3,6 +3,9 @@ package io.suggest.bill.tf.daily
 import boopickle.Default._
 import io.suggest.bill.Amount_t
 import io.suggest.i18n.MsgCodes
+import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -17,6 +20,28 @@ object ITfDailyMode {
     compositePickler[ITfDailyMode]
       .addConcreteType[InheritTf.type]
       .addConcreteType[ManualTf]
+  }
+
+
+  implicit def univEq: UnivEq[ITfDailyMode] = {
+    import io.suggest.ueq.UnivEqUtil._
+    UnivEq.derive
+  }
+
+  implicit def iTfDailyModeFormat: OFormat[ITfDailyMode] = {
+    val manFmt = ManualTf.manualTfFormat
+    val reads = manFmt
+      .map[ITfDailyMode](identity)
+      .orElse(
+        Reads
+          .pure(InheritTf)
+          .map[ITfDailyMode](identity)
+      )
+    val owrites = OWrites[ITfDailyMode] {
+      case m: ManualTf => manFmt.writes(m)
+      case InheritTf   => JsObject.empty
+    }
+    OFormat(reads, owrites)
   }
 
 }
@@ -74,6 +99,14 @@ final case class ManualTf( amount: Amount_t )
   override def isValid: Boolean = {
     amount >= TfDailyConst.Amount.MIN &&
     amount <= TfDailyConst.Amount.MAX
+  }
+
+}
+object ManualTf {
+
+  implicit def manualTfFormat: OFormat[ManualTf] = {
+    (__ \ "a").format[Amount_t]
+      .inmap[ManualTf](apply, _.amount)
   }
 
 }
