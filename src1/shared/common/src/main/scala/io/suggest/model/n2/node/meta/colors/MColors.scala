@@ -34,9 +34,9 @@ object MColors extends IEmpty {
 
   /** Поддержка JSON. */
   implicit val MCOLORS_FORMAT: OFormat[MColors] = (
-    (__ \ MColorKeys.Bg.strId).formatNullable[MColorData] and
-    (__ \ MColorKeys.Fg.strId).formatNullable[MColorData] and
-    (__ \ MColorKeys.Pattern.strId).formatNullable[MColorData]
+    (__ \ MColorKeys.Bg.value).formatNullable[MColorData] and
+    (__ \ MColorKeys.Fg.value).formatNullable[MColorData] and
+    (__ \ MColorKeys.Pattern.value).formatNullable[MColorData]
   )(MColors.apply, unlift(MColors.unapply))
 
   implicit def univEq: UnivEq[MColors] = UnivEq.derive

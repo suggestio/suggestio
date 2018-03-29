@@ -248,7 +248,7 @@ trait PwRecover
               // Генерить ответ как только появляется возможность.
               res1      <- {
                 val res0 = rdr
-                  .addingToSession(Keys.PersonId.name -> epw2.personId)
+                  .addingToSession(Keys.PersonId.value -> epw2.personId)
                   .flashing(FLASH.SUCCESS -> "New.password.saved")
                 setLangCookie2(res0, request.user.personNodeOptFut)
               }

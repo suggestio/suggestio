@@ -1,7 +1,6 @@
 package io.suggest.sec.m.msession
 
-import enumeratum._
-import securesocial.core.SecureSocial
+import enumeratum.values.{StringEnum, StringEnumEntry}
 
 /**
  * Suggest.io
@@ -9,33 +8,25 @@ import securesocial.core.SecureSocial
  * Created: 18.02.15 14:21
  * Description: Модель для хранения ключей доступа к сессии.
  */
-sealed abstract class SessionKey extends EnumEntry {
-  def isLogin: Boolean = true
-  def name = toString
-}
 
-object Keys extends Enum[SessionKey] {
+object Keys extends StringEnum[SessionKey] {
 
   /** Session-поле timestamp'а для контроля истечения сессии. */
-  case object Timestamp extends SessionKey {
-    override def toString = "t"
-  }
+  case object Timestamp extends SessionKey("t")
 
   /** Session-поле для хранения текущего person_id. */
-  case object PersonId extends SessionKey {
-    override def toString = "p"
-  }
+  case object PersonId extends SessionKey("p")
 
   /** Флаг для долгого хранения залогиненности.*/
-  case object RememberMe extends SessionKey {
-    override def toString = "r"
-  }
+  case object RememberMe extends SessionKey("r")
+
 
   /** Костыль к secure-social сохраняет ссылку для возврата юзера через session.
     * Менять на что-то отличное от оригинала можно только после проверки controllers.ident.ExternalLogin.
     * на безопасность переименования. */
-  case object OrigUrl extends SessionKey {
-    override def toString = SecureSocial.OriginalUrlKey
+
+  case object OrigUrl extends SessionKey("original-url") {
+    // TODO value = SecureSocial.OriginalUrlKey // Но Enumeratum пока не умеет final val.
     override def isLogin  = false
   }
 
@@ -44,3 +35,10 @@ object Keys extends Enum[SessionKey] {
   def onlyLoginIter = values.iterator.filter(_.isLogin)
 
 }
+
+
+sealed abstract class SessionKey(override val value: String) extends StringEnumEntry {
+  def isLogin: Boolean = true
+  override final def toString = value
+}
+

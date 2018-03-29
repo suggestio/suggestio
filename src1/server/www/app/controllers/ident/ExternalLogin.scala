@@ -105,7 +105,7 @@ class ExternalLogin_ @Inject() (
    * @return Ссылка в виде строки.
    */
   def toUrl2(ses: Session, personId: String): Future[String] = {
-    FutureUtil.opt2future( ses.get(Keys.OrigUrl.name) ) {
+    FutureUtil.opt2future( ses.get(Keys.OrigUrl.value) ) {
       identUtil.redirectCallUserSomewhere(personId)
         .map(_.url)
     }
@@ -175,7 +175,7 @@ trait ExternalLogin
         case flow: AuthenticationResult.NavigationFlow => Future.successful {
           val r0 = flow.result
           redirectTo.fold( r0 ) { url =>
-            r0.addingToSession(Keys.OrigUrl.name -> url)
+            r0.addingToSession(Keys.OrigUrl.value -> url)
           }
         }
 
@@ -253,7 +253,7 @@ trait ExternalLogin
                 }
               }
               // Сборка новой сессии: чистка исходника, добавление новых ключей, относящихся к идентификации.
-              var addToSessionAcc: List[(String, String)] = List(Keys.PersonId.name -> ident.personId)
+              var addToSessionAcc: List[(String, String)] = List(Keys.PersonId.value -> ident.personId)
               addToSessionAcc = authenticated.profile.oAuth2Info
                 .flatMap { _.expiresIn }
                 .filter { _ <= externalLogin.MAX_SESSION_TTL_SECONDS }

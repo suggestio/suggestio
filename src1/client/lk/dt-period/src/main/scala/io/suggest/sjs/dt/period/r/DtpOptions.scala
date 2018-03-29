@@ -108,10 +108,10 @@ object DtpOptions {
               } yield {
                 dateOptConn { dateOptProx =>
                   dateOptProx().whenDefinedEl { ymd =>
-                    PropTable.Outer.withKey(fn.strId)(
+                    PropTable.Outer.withKey(fn.value)(
                       PropTable.Row(
                         Messages(
-                          MsgCodes.`Date.suffixed`(fn.strId)
+                          MsgCodes.`Date.suffixed`(fn.value)
                         )
                       )(
                         InputCont(Css.Size.S)(

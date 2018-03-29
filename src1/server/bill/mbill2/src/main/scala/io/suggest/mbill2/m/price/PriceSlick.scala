@@ -24,7 +24,7 @@ trait PriceSlick extends IProfile {
     def currencyCode: Rep[String]
 
     override def currency = currencyCode <> (
-      MCurrencies.withName(_: String),
+      MCurrencies.withValue(_: String),
       { c: MCurrency => Some(c.currencyCode) }
     )
 

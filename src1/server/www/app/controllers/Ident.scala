@@ -14,7 +14,6 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.IReqHdr
 import models.usr.{EmailActivations, EmailPwIdents, MExtIdents, MPersonIdents}
-import play.api.mvc._
 import util.acl._
 import util.adn.NodesUtil
 import util.captcha.CaptchaUtil
@@ -73,7 +72,7 @@ class Ident @Inject() (
   // TODO Добавить CSRF
   def logout = Action { implicit request =>
     Redirect(MAIN_PAGE_CALL)
-      .removingFromSession(Keys.PersonId.name, Keys.Timestamp.name)
+      .removingFromSession(Keys.PersonId.value, Keys.Timestamp.value)
   }
 
 

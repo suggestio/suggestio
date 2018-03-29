@@ -40,7 +40,7 @@ class MDebugs @Inject() (
     def objectId  = column[Gid_t]( Fields.OBJECT_ID_FN, O.PrimaryKey )
 
     def keyStr    = column[String]( Fields.KEY_FN, O.PrimaryKey )
-    def key       = keyStr <> (MDbgKeys.withName, MDbgKeys.unapply)
+    def key       = keyStr <> (MDbgKeys.withValue, MDbgKeys.unapply)
 
     def vsn       = column[DbgVsn_t]( Fields.VSN_FN )
     def data      = column[Array[Byte]]( Fields.DATA_FN )
@@ -80,7 +80,7 @@ class MDebugs @Inject() (
     query
       .filter { d =>
         (d.objectId === objectId) &&
-          (d.keyStr === key.strId)
+          (d.keyStr === key.value)
       }
       .result
       .headOption

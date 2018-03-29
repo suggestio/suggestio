@@ -1,10 +1,9 @@
 package io.suggest.pay
 
-import enumeratum._
+import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.bill._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.MsgCodes
-import io.suggest.primo.IStrId
 
 /**
   * Suggest.io
@@ -13,43 +12,11 @@ import io.suggest.primo.IStrId
   * Description: Enum-модель платёжных систем.
   */
 
-/** Класс модели платёжной системы. */
-sealed abstract class MPaySystem extends EnumEntry with IStrId {
-
-  /** Информация о поддерживаемой валюте платежной системы.
-    *
-    * @param currency Интересующая валюта.
-    * @return Опциональный инфа по поддерживаемой валюте.
-    *         None, если валюта не поддерживается.
-    */
-  def supportedCurrency(currency: MCurrency): Option[ICurrencyPayInfo]
-
-  /** id узла платежной системы в s.io, если он есть или будет когда-нибудь.
-    * Крайне желательно, чтобы был человеко-читабельный id.
-    *
-    * Не обязательно узел существует, просто его id будет прописан в статистике/транзакциях или иных местах.
-    */
-  def nodeIdOpt: Option[String]
-
-  /** @return Код локализованного названия ПС по messages. */
-  def nameI18n: String
-
-  /** Бывает нужно переопределить хидер X-Frame-Options для HTTP-ответов юзерам, возвращающимся из ПС после оплаты.
-    * Тут значение ссылки для случая ALLOW-FROM.
-    */
-  def returnRespHdr_XFrameOptions_AllowFrom: Option[String] = None
-
-}
-
-
 /** Платёжные системы. */
-object MPaySystems extends Enum[MPaySystem] {
-
+object MPaySystems extends StringEnum[MPaySystem] {
 
   /** Yandex.Kassa. */
-  case object YaKa extends MPaySystem {
-
-    override def strId = "yaka"
+  case object YaKa extends MPaySystem("yaka") {
 
     override def supportedCurrency(currency: MCurrency): Option[ICurrencyPayInfo] = {
       // Поддерживаются только рубли.
@@ -84,6 +51,35 @@ object MPaySystems extends Enum[MPaySystem] {
 
   /** Все платёжные системы. */
   override def values = findValues
+
+}
+
+
+/** Класс модели платёжной системы. */
+sealed abstract class MPaySystem(override val value: String) extends StringEnumEntry {
+
+  /** Информация о поддерживаемой валюте платежной системы.
+    *
+    * @param currency Интересующая валюта.
+    * @return Опциональный инфа по поддерживаемой валюте.
+    *         None, если валюта не поддерживается.
+    */
+  def supportedCurrency(currency: MCurrency): Option[ICurrencyPayInfo]
+
+  /** id узла платежной системы в s.io, если он есть или будет когда-нибудь.
+    * Крайне желательно, чтобы был человеко-читабельный id.
+    *
+    * Не обязательно узел существует, просто его id будет прописан в статистике/транзакциях или иных местах.
+    */
+  def nodeIdOpt: Option[String]
+
+  /** @return Код локализованного названия ПС по messages. */
+  def nameI18n: String
+
+  /** Бывает нужно переопределить хидер X-Frame-Options для HTTP-ответов юзерам, возвращающимся из ПС после оплаты.
+    * Тут значение ссылки для случая ALLOW-FROM.
+    */
+  def returnRespHdr_XFrameOptions_AllowFrom: Option[String] = None
 
 }
 

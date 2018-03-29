@@ -1,7 +1,6 @@
 package io.suggest.mbill2.m.dbg
 
-import enumeratum._
-import io.suggest.primo.IStrId
+import enumeratum.values.{StringEnum, StringEnumEntry}
 
 /**
   * Suggest.io
@@ -10,22 +9,10 @@ import io.suggest.primo.IStrId
   * Description: Модель ключей в MDebug.
   */
 
-/** Класс одного ряда. */
-sealed abstract class MDbgKey
-  extends EnumEntry
-  with IStrId
-{
-  override final def toString = super.toString
-}
-
-
-/** Статическая enum-модель поля ключей MDebug. */
-object MDbgKeys extends Enum[MDbgKey] {
+object MDbgKeys extends StringEnum[MDbgKey] {
 
   /** Инфа о рассчёте стоимости: сериализованный через boopickle блобик с инстансом PriceDsl. */
-  case object PriceDsl extends MDbgKey {
-
-    override def strId = "p"
+  case object PriceDsl extends MDbgKey("p") {
 
     // Версии API
     /** Начальное API: просто выхлоп из pickle(). */
@@ -42,7 +29,16 @@ object MDbgKeys extends Enum[MDbgKey] {
   override def values = findValues
 
   def unapply(x: MDbgKey): Option[String] = {
-    Some(x.strId)
+    Some(x.value)
   }
 
 }
+
+
+/** Класс одного ряда. */
+sealed abstract class MDbgKey(override val value: String) extends StringEnumEntry {
+
+  override final def toString = value
+
+}
+

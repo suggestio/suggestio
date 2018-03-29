@@ -411,7 +411,7 @@ class MarketLkAdn @Inject() (
             } yield {
               Redirect(routes.MarketLkAdn.showNodeAds(adnId))
                 .flashing(FLASH.SUCCESS -> "Signup.finished")
-                .withSession(Keys.PersonId.name -> personId)
+                .withSession(Keys.PersonId.value -> personId)
             }
           }
         }

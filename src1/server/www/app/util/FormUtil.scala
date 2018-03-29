@@ -433,7 +433,7 @@ object FormUtil {
     text(minLength = 3, maxLength = 3)
       .transform[String](_.toUpperCase, identity)
       .transform[Option[MCurrency]](
-        MCurrencies.withNameOption,
+        MCurrencies.withValueOpt,
         _.fold("")(_.currencyCode)
       )
   }

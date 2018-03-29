@@ -11,6 +11,7 @@ import play.api.mvc.QueryStringBindable
   */
 object MPaySystemsJvm {
 
+  // TODO Заменить опциональный qsb на EnumeratumJvmUtil.valueEnumQsb( MPaySystems )
   /** Поддержка опционального Query String Bindable для инстансов [[MPaySystem]]. */
   implicit def mPaySystemsQsbOpt(implicit strOptB: QueryStringBindable[Option[String]]): QueryStringBindable[Option[MPaySystem]] = {
     new QueryStringBindableImpl[Option[MPaySystem]] {
@@ -23,7 +24,7 @@ object MPaySystemsJvm {
             strIdOpt.fold[Either[String, Option[MPaySystem]]] {
               Right(None)
             } { strId =>
-              val paySysOpt = MPaySystems.withNameOption( strId )
+              val paySysOpt = MPaySystems.withValueOpt( strId )
               paySysOpt
                 .fold[Either[String, Option[MPaySystem]]] (Left("pay.sys.id.invalid")) (_ => Right(paySysOpt))
             }
@@ -31,8 +32,8 @@ object MPaySystemsJvm {
         }
       }
 
-      override def unbind(key: String, value: Option[MPaySystem]): String = {
-        strOptB.unbind(key, value.map(_.strId))
+      override def unbind(key: String, paySysOpt: Option[MPaySystem]): String = {
+        strOptB.unbind(key, paySysOpt.map(_.value))
       }
 
     }

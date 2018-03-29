@@ -2,7 +2,7 @@ package io.suggest.bill
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers._
-import play.api.libs.json.Json
+import play.api.libs.json.{Format, Json}
 
 /**
   * Suggest.io
@@ -13,12 +13,10 @@ import play.api.libs.json.Json
 class MCurrenciesJvmSpec extends FlatSpec {
 
   "JSON Format" should "work for all supported currencies" in {
-    import MCurrenciesJvm.CURRENCY_FORMAT
-
     for (v <- MCurrencies.values) {
       val jsonVal = Json.toJson(v)
 
-      val jsRes = CURRENCY_FORMAT.reads( jsonVal )
+      val jsRes = implicitly[Format[MCurrency]].reads( jsonVal )
       assert(jsRes.isSuccess, jsRes)
       jsRes.get shouldBe v
     }

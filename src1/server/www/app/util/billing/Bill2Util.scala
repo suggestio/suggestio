@@ -1279,7 +1279,7 @@ class Bill2Util @Inject() (
         amount                    <- amountOpt
       } yield {
         // Пусть будет ошибка, если валюта неизвестна.
-        val currency = MCurrencies.withName(currencyCode)
+        val currency = MCurrencies.withValue(currencyCode)
         MPrice(amount, currency)
       }
       pricesIter.toSeq
@@ -1323,7 +1323,7 @@ class Bill2Util @Inject() (
           } yield {
             val price = MPrice(
               amount    = amount,
-              currency  = MCurrencies.withName(currencyCode)
+              currency  = MCurrencies.withValue(currencyCode)
             )
             orderId -> price
           }

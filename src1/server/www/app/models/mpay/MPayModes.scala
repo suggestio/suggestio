@@ -1,7 +1,6 @@
 package models.mpay
 
-import enumeratum._
-import io.suggest.primo.IStrId
+import enumeratum.values.{StringEnum, StringEnumEntry}
 
 /**
   * Suggest.io
@@ -12,18 +11,16 @@ import io.suggest.primo.IStrId
   * У других -- наверное тоже.
   */
 
-object MPayModes extends Enum[MPayMode] {
+object MPayModes extends StringEnum[MPayMode] {
 
   /** Нормальный режим: продакшен, реальная работа с реальными деньгами. */
-  case object Production extends MPayMode {
+  case object Production extends MPayMode("prod") {
     override def isProd   = true
-    override def toString = "prod"
   }
 
   /** Тестовый (доменстрационный) режим работы. Виртуальные деньги. */
-  case object Testing extends MPayMode {
+  case object Testing extends MPayMode("test") {
     override def isProd   = false
-    override def toString = "test"
   }
 
 
@@ -33,7 +30,7 @@ object MPayModes extends Enum[MPayMode] {
 
 
 /** Класс модели режимо pay-конфигураций. */
-sealed abstract class MPayMode extends EnumEntry with IStrId {
+sealed abstract class MPayMode(override val value: String) extends StringEnumEntry {
 
   /*** Это продакшен режим работы? */
   def isProd: Boolean
@@ -41,7 +38,6 @@ sealed abstract class MPayMode extends EnumEntry with IStrId {
   /** Это тестовый режим работы платёжки? */
   def isTest: Boolean = !isProd
 
-  override final def strId = toString
+  override final def toString: String = value
 
 }
-

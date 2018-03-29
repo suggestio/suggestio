@@ -33,7 +33,7 @@ object LoginTimestamp extends MacroLogsDyn {
 
 
   def fromSession(session: Session): Option[LoginTimestamp] = {
-    val stkOpt = session.get( Keys.Timestamp.name )
+    val stkOpt = session.get( Keys.Timestamp.value )
     fromSession1(stkOpt, session)
   }
 
@@ -58,7 +58,7 @@ case class LoginTimestamp(tstamp: Long, ttl: Ttl) {
   }
 
   def toSessionKeys: List[(String, String)] = {
-    val acc = List(Keys.Timestamp.name -> tstamp.toString)
+    val acc = List(Keys.Timestamp.value -> tstamp.toString)
     ttl.addToSessionAcc(acc)
   }
 

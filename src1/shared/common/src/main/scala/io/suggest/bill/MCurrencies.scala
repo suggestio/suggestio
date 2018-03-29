@@ -1,39 +1,83 @@
 package io.suggest.bill
 
-import enumeratum._
-import io.suggest.primo.IStrId
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumUtil
+import japgolly.univeq.UnivEq
+import play.api.libs.json.Format
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 12.01.17 18:57
-  * Description: Модель валют, отвязанная от особенностей жабы и системных локалей.
+  * Description: Модель валют, поддерживаемых системой s.io.
   */
 
-/** Статическая кроссплатформенная утиль для инстансов модели [[MCurrency]]. */
-object MCurrency {
+object MCurrencies extends StringEnum[MCurrency] {
 
-  import boopickle.Default._
-  import boopickle.CompositePickler
-  import MCurrencies._
+  /** Российский рубль.
+    * @see [[https://en.wikipedia.org/wiki/Russian_ruble]]
+    */
+  case object RUB extends MCurrency("RUB") {
+    override def htmlSymbol = "&#8381;"
+    override def symbol     = "₽"
+    override def iso4217    = 643
+    override def sioPaymentAmountMin: Amount_t = 1d
+  }
+
+  /** Евро.
+    * @see [[https://en.wikipedia.org/wiki/Euro]]
+    */
+  case object EUR extends MCurrency("EUR") {
+    override def htmlSymbol = "&#8364;"
+    override def symbol     = "€"
+    override def iso4217    = 978
+    override def sioPaymentAmountMin: Amount_t = 10d
+  }
+
+  /** Доллары США.
+    * @see [[https://en.wikipedia.org/wiki/United_States_dollar]]
+    */
+  case object USD extends MCurrency("USD") {
+    override def htmlSymbol = symbol
+    override def symbol     = "$"
+    override def iso4217    = 840
+    override def sioPaymentAmountMin: Amount_t = 10d
+  }
+
+  def withIso4217Option(code: Int) = values.find(_.iso4217 == code)
+
+  override val values = findValues
+
+  def default: MCurrency = values.head
 
 
-  implicit val pickler: CompositePickler[MCurrency] = {
-    // TODO scala-2.12 скорее всего можно будет генерить это дело автоматом, без concrete types.
-    compositePickler[MCurrency]
-      .addConcreteType[RUB.type]
-      .addConcreteType[EUR.type]
-      .addConcreteType[USD.type]
+  /** Список моделей "цен" (или чего-то ещё) превращаем в карту цен по валютами.
+    * Если валюты повторяются, то будет неправильная мапа на выходе.
+    *
+    * @param prices Исходные валютные модели.
+    * @return Карта исходных моделей по валютам БЕЗ учёта дубликатов.
+    */
+  def hardMapByCurrency[T <: IMCurrency](prices: TraversableOnce[T]): Map[MCurrency, T] = {
+    prices.toIterator
+      .map { p => p.currency -> p }
+      .toMap
+  }
+
+  def toCurrenciesIter(items: TraversableOnce[IMCurrency]): Iterator[MCurrency] = {
+    items.toIterator
+      .map(_.currency)
   }
 
 }
 
 
 /** Класс для каждого экземпляра модели. */
-sealed abstract class MCurrency extends EnumEntry with IStrId {
+sealed abstract class MCurrency(override val value: String) extends StringEnumEntry {
+
+  override final def toString = value
 
   /** Строковой международный код валюты. */
-  def currencyCode = strId
+  final def currencyCode = value
 
   /** Код по messages для форматирования цены с указанием данной валюты. */
   def i18nPriceCode = "price." + currencyCode
@@ -75,71 +119,30 @@ sealed abstract class MCurrency extends EnumEntry with IStrId {
 
 }
 
+/** Статическая кроссплатформенная утиль для инстансов модели [[MCurrency]]. */
+object MCurrency {
 
-/** Модель поддеживаемых системой валют. */
-object MCurrencies extends Enum[MCurrency] {
+  import boopickle.CompositePickler
 
-  override val values = findValues
-
-  def default: MCurrency = values.head
-
-  /** Российский рубль.
-    * @see [[https://en.wikipedia.org/wiki/Russian_ruble]]
-    */
-  case object RUB extends MCurrency {
-    override def strId      = "RUB"
-    override def toString   = super.toString
-    override def htmlSymbol = "&#8381;"
-    override def symbol     = "₽"
-    override def iso4217    = 643
-    override def sioPaymentAmountMin: Amount_t = 1d
+  implicit val pickler: CompositePickler[MCurrency] = {
+    import MCurrencies._
+    import boopickle.Default._
+    // TODO scala-2.12 скорее всего можно будет генерить это дело автоматом, без concrete types.
+    compositePickler[MCurrency]
+      .addConcreteType[RUB.type]
+      .addConcreteType[EUR.type]
+      .addConcreteType[USD.type]
   }
 
-  /** Евро.
-    * @see [[https://en.wikipedia.org/wiki/Euro]]
-    */
-  case object EUR extends MCurrency {
-    override def strId      = "EUR"
-    override def toString   = super.toString
-    override def htmlSymbol = "&#8364;"
-    override def symbol     = "€"
-    override def iso4217    = 978
-    override def sioPaymentAmountMin: Amount_t = 10d
-  }
+  implicit def univEq: UnivEq[MCurrency] = UnivEq.derive
 
-  /** Доллары США.
-    * @see [[https://en.wikipedia.org/wiki/United_States_dollar]]
-    */
-  case object USD extends MCurrency {
-    override def strId      = "USD"
-    override def toString   = super.toString
-    override def htmlSymbol = symbol
-    override def symbol     = "$"
-    override def iso4217    = 840
-    override def sioPaymentAmountMin: Amount_t = 10d
-  }
-
-  def withIso4217Option(code: Int) = values.find(_.iso4217 == code)
-
-
-  /** Список моделей "цен" (или чего-то ещё) превращаем в карту цен по валютами.
-    * Если валюты повторяются, то будет неправильная мапа на выходе.
-    *
-    * @param prices Исходные валютные модели.
-    * @return Карта исходных моделей по валютам БЕЗ учёта дубликатов.
-    */
-  def hardMapByCurrency[T <: IMCurrency](prices: TraversableOnce[T]): Map[MCurrency, T] = {
-    prices.toIterator
-      .map { p => p.currency -> p }
-      .toMap
-  }
-
-  def toCurrenciesIter(items: TraversableOnce[IMCurrency]): Iterator[MCurrency] = {
-    items.toIterator
-      .map(_.currency)
+  /** Поддержка play-json. */
+  implicit def mCurrencyFormat: Format[MCurrency] = {
+    EnumeratumUtil.valueEnumEntryFormat( MCurrencies )
   }
 
 }
+
 
 
 /** Интерфейс для обязательного поля currency. */

@@ -1,8 +1,7 @@
 package io.suggest.common.geom.d2
 
-import enumeratum._
+import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
-import io.suggest.primo.IStrId
 import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
 
@@ -18,19 +17,14 @@ import play.api.libs.json.Format
 /** Модель воспринимаемых двумерных ориентаций.
   * strId все являются human-readable, потому модель используется для хранения статистики и kibana.
   */
-object MOrientations2d extends Enum[MOrientation2d] {
+object MOrientations2d extends StringEnum[MOrientation2d] {
 
-  case object Vertical extends MOrientation2d {
-    override def strId = "vert"
-  }
+  case object Vertical extends MOrientation2d("vert")
 
-  case object Horizontal extends MOrientation2d {
-    override def strId = "horiz"
-  }
+  case object Horizontal extends MOrientation2d("horiz")
 
-  case object Square extends MOrientation2d {
-    override def strId = "square"
-  }
+  case object Square extends MOrientation2d("square")
+
 
   override val values = findValues
 
@@ -49,19 +43,16 @@ object MOrientations2d extends Enum[MOrientation2d] {
 
 
 /** Класс одного элемента модели [[MOrientations2d]]. */
-sealed abstract class MOrientation2d
-  extends EnumEntry
-  with IStrId
-{
-  override final def toString = super.toString
+sealed abstract class MOrientation2d(override val value: String) extends StringEnumEntry {
+  override final def toString = value
 }
 
 
 object MOrientation2d {
 
   /** Поддержка play-json. */
-  implicit val MORIENTATION2D_FORMAT: Format[MOrientation2d] = {
-    EnumeratumUtil.enumEntryFormat( MOrientations2d )
+  implicit def MORIENTATION2D_FORMAT: Format[MOrientation2d] = {
+    EnumeratumUtil.valueEnumEntryFormat( MOrientations2d )
   }
 
   implicit def univEq: UnivEq[MOrientation2d] = UnivEq.derive

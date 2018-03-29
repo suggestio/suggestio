@@ -91,7 +91,7 @@ class PlusMinusControlsR(
             MHands.values.toVdomArray { mhand =>
               val (handCssClass, isEnabledSomeC) = _mhand2css( mhand )
 
-              isEnabledSomeC.withKey(mhand.strId) { isEnabledSomeProxy =>
+              isEnabledSomeC.withKey(mhand.value) { isEnabledSomeProxy =>
                 // TODO Выключать кнопку при неактивности
                 val isEnabled = isEnabledSomeProxy.value.value
                 <.div(

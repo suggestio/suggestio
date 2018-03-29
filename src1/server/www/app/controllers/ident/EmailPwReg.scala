@@ -246,7 +246,7 @@ trait EmailPwReg
           } yield {
             val args = nodesUtil.nodeRegSuccessArgs(mnode)
             Ok( regSuccessTpl(args)(ctx) )
-              .addingToSession(Keys.PersonId.name -> personId)
+              .addingToSession(Keys.PersonId.value -> personId)
               .withLang(lang)
           }
         } // Form.fold right

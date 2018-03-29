@@ -60,7 +60,7 @@ trait EmailPwSubmit
   /** Маппинг формы epw-логина с забиванием дефолтовых значений. */
   def emailPwLoginFormStubM(implicit request: RequestHeader): Future[EmailPwLoginForm_t] = {
     // Пытаемся извлечь email из сессии.
-    val emailFut: Future[String] = request.session.get(Keys.PersonId.name) match {
+    val emailFut: Future[String] = request.session.get(Keys.PersonId.value) match {
       case Some(personId) =>
         for (epwIdents <- emailPwIdents.findByPersonId(personId)) yield {
           epwIdents.headOption.fold("")(_.email)
@@ -99,7 +99,7 @@ trait EmailPwSubmit
                 val mpersonOptFut = mNodes.getByIdType(personId, MNodeTypes.Person)
                 val rdrFut = RdrBackOrFut(r) { emailSubmitOkCall(personId) }
                 var addToSession: List[(String, String)] = List(
-                  Keys.PersonId.name -> personId
+                  Keys.PersonId.value -> personId
                 )
                 // Реализация длинной сессии при наличии флага rememberMe.
                 addToSession = binded.ttl.addToSessionAcc(addToSession)

@@ -78,7 +78,7 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
       scId    <- conf.getOptional[Long]("scid")
       modeId  <- conf.getOptional[String]("mode")
     } yield {
-      val mode = MPayModes.withName(modeId)
+      val mode = MPayModes.withValue(modeId)
       val yProf = YakaProfile(
         scId = scId,
         mode = mode,
@@ -125,8 +125,8 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
   def yakaActionOptM: Mapping[Option[MYakaAction]] = {
     nonEmptyText(minLength = 5, maxLength = 16)
       .transform [Option[MYakaAction]] (
-        MYakaActions.withNameOption,
-        _.fold("")(_.strId)
+        MYakaActions.withValueOpt,
+        _.fold("")(_.value)
       )
   }
 
@@ -253,7 +253,7 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
 
       val d = ';'
       val str = new StringBuilder(128)    // ~106-112 примерная макс.длина этой строки в нашем случае.
-        .append( yReq.action.strId ).append(d)
+        .append( yReq.action.value ).append(d)
         .append( amount ).append(d)
         .append( price.currency.iso4217 + currencyIdOffset(profile) ).append(d)
         .append( yReq.bankId ).append(d)

@@ -45,7 +45,7 @@ class ExpireSessionUtil @Inject() (
   /** Ключи в session, которые нужно удалять при любой проблеме с TTL. */
   val filteredKeySet = {
     Keys.onlyLoginIter
-      .map(_.name)
+      .map(_.value)
       .toSet
   }
 
@@ -80,9 +80,9 @@ class ExpireSessionUtil @Inject() (
     // Отработать отсутствие таймштампа в сессии.
     if (tstampOpt.isEmpty) {
 
-      if ( session0.data.contains(PersonId.name) ) {
+      if ( session0.data.contains(PersonId.value) ) {
         // Сессия была только что выставлена в контроллере. Там же и ttl выставлен.
-        val session1 = session0 + (Timestamp.name -> LoginTimestamp.currentTstamp().toString)
+        val session1 = session0 + (Timestamp.value -> LoginTimestamp.currentTstamp().toString)
         result.withSession(session1)
 
       } else {
@@ -100,7 +100,7 @@ class ExpireSessionUtil @Inject() (
 
       newTsOpt.fold {
         // Таймштамп истёк -- стереть из сессии таймштамп и username.
-        LOGGER.trace("invokeBlock(): Erasing expired session for person " + session0.get(PersonId.name))
+        LOGGER.trace("invokeBlock(): Erasing expired session for person " + session0.get(PersonId.value))
         val session1 = clearSessionLoginData(session0)
         result.withSession( session1 )
 

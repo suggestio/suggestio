@@ -1,8 +1,7 @@
 package models.mpay.yaka
 
-import enumeratum._
+import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import io.suggest.primo.IStrId
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -12,22 +11,19 @@ import play.api.mvc.QueryStringBindable
   * Description: Модель экшенов яндекс-кассы.
   */
 /** Класс одного элемента модели, т.е. экшена яндекс-кассы. */
-sealed abstract class MYakaAction extends EnumEntry with IStrId {
-  override def strId = toString
+sealed abstract class MYakaAction(override val value: String) extends StringEnumEntry {
+  override final def toString = value
 }
 
+
 /** Модель экшенов яндекс-кассы. */
-object MYakaActions extends Enum[MYakaAction] {
+object MYakaActions extends StringEnum[MYakaAction] {
 
   /** Проверка без изменений в биллинги сервера. */
-  case object Check extends MYakaAction {
-    override def toString = "checkOrder"
-  }
+  case object Check extends MYakaAction("checkOrder")
 
   /** Проведение платёжа в биллинге s.io. */
-  case object Payment extends MYakaAction {
-    override def toString = "paymentAviso"
-  }
+  case object Payment extends MYakaAction("paymentAviso")
 
   override def values = findValues
 
@@ -35,17 +31,13 @@ object MYakaActions extends Enum[MYakaAction] {
 
 
 /** Модель return-экшенов. Там только успехи и ошибки. */
-object MYakaReturnActions extends Enum[MYakaAction] {
+object MYakaReturnActions extends StringEnum[MYakaAction] {
 
   /** Юзер возвращается в /success. */
-  case object Success extends MYakaAction {
-    override def toString = "PaymentSuccess"
-  }
+  case object Success extends MYakaAction("PaymentSuccess")
 
   /** Юзера отправили в /fail. */
-  case object Fail extends MYakaAction {
-    override def toString = "PaymentFail"
-  }
+  case object Fail extends MYakaAction("PaymentFail")
 
   override def values = findValues
 
@@ -58,14 +50,14 @@ object MYakaReturnActions extends Enum[MYakaAction] {
           strIdEith <- strB.bind(key, params)
         } yield {
           strIdEith.right.flatMap { strId =>
-            withNameOption(strId)
+            withValueOpt(strId)
               .toRight("e.invalid.yaka.action")
           }
         }
       }
 
-      override def unbind(key: String, value: MYakaAction) = {
-        strB.unbind(key, value.strId)
+      override def unbind(key: String, yAction: MYakaAction) = {
+        strB.unbind(key, yAction.value)
       }
 
     }

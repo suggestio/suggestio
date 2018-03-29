@@ -1,22 +1,8 @@
 package io.suggest.model.n2.media.storage
 
-import enumeratum._
+import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.es.util.SioEsUtil._
-
-/** Класс модели названий полей storage-моделей. */
-sealed abstract class MStorFn extends EnumEntry {
-
-  /** Идентификатор (название) поля на стороне ES. */
-  def fn: String
-
-  /** ES-описание поля. */
-  def esMappingProp: DocField
-
-  override def entryName = fn
-
-}
-
 
 /**
  * Suggest.io
@@ -24,12 +10,10 @@ sealed abstract class MStorFn extends EnumEntry {
  * Created: 29.09.15 20:57
  * Description: Модель имён полей для моделей [[IMediaStorage]].
  */
-object MStorFns extends Enum[MStorFn] {
+object MStorFns extends StringEnum[MStorFn] {
 
   // common
-  case object STYPE extends MStorFn {
-
-    override def fn: String = "t"
+  case object STYPE extends MStorFn("t") {
 
     override def esMappingProp: DocField = {
       FieldKeyword(fn, index = true, include_in_all = false)
@@ -38,9 +22,7 @@ object MStorFns extends Enum[MStorFn] {
 
 
   // seaweedfs
-  case object FID extends MStorFn {
-
-    override def fn: String = "i"
+  case object FID extends MStorFn("i") {
 
     override def esMappingProp: DocField = {
       val F = Fid.Fields
@@ -55,3 +37,16 @@ object MStorFns extends Enum[MStorFn] {
   override val values = findValues
 
 }
+
+
+/** Класс модели названий полей storage-моделей. */
+sealed abstract class MStorFn(override val value: String) extends StringEnumEntry {
+
+  /** Идентификатор (название) поля на стороне ES. */
+  final def fn: String = value
+
+  /** ES-описание поля. */
+  def esMappingProp: DocField
+
+}
+

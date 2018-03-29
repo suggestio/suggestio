@@ -1,7 +1,6 @@
 package io.suggest.common
 
-import enumeratum._
-import io.suggest.primo.IStrId
+import enumeratum.values.{StringEnum, StringEnumEntry}
 
 /**
  * Suggest.io
@@ -9,7 +8,31 @@ import io.suggest.primo.IStrId
  * Created: 19.08.15 15:41
  * Description: Константы для таких понятий как "лево" и "право".
  */
-sealed abstract class MHand extends EnumEntry with IStrId {
+
+object MHands extends StringEnum[MHand] {
+
+  /** Лево. */
+  case object Left extends MHand("l") {
+    override def name         = "left"
+    override def inverted     = Right
+    override def isRight      = false
+    override def isLeft       = true
+  }
+
+  /** Право. */
+  case object Right extends MHand("r") {
+    override def name         = "right"
+    override def inverted     = Left
+    override def isRight      = true
+    override def isLeft       = false
+  }
+
+  override val values = findValues
+
+}
+
+
+sealed abstract class MHand(override val value: String) extends StringEnumEntry {
 
   /** Если Left, то вернуть Right и наоборот. */
   def inverted: MHand
@@ -24,33 +47,8 @@ sealed abstract class MHand extends EnumEntry with IStrId {
   def isRight: Boolean
 
 
-  override final def entryName = strId
   override final def toString = name
 
 }
 
 
-/** Модель понятий "лево" и "право". */
-object MHands extends Enum[MHand] {
-
-  /** Лево. */
-  case object Left extends MHand {
-    override def strId        = "l"
-    override def name         = "left"
-    override def inverted     = Right
-    override def isRight      = false
-    override def isLeft       = true
-  }
-
-  /** Право. */
-  case object Right extends MHand {
-    override def strId        = "r"
-    override def name         = "right"
-    override def inverted     = Left
-    override def isRight      = true
-    override def isLeft       = false
-  }
-
-  override val values = findValues
-
-}

@@ -3,7 +3,6 @@ package io.suggest.model.n2.bill.tariff.daily
 import io.suggest.bill.{IMCurrency, MCurrency}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.bill.MCurrenciesJvm.CURRENCY_FORMAT
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
 

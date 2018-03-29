@@ -1,11 +1,10 @@
 package io.suggest.bill.price.dsl
 
-import enumeratum._
+import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.DistanceUtil
 import io.suggest.i18n.{MessagesF_t, MsgCodes}
 import io.suggest.mbill2.m.item.typ.MItemTypes
-import io.suggest.primo.IStrId
 
 /**
   * Suggest.io
@@ -34,41 +33,19 @@ object MReasonType {
 }
 
 
-/** Модель типа причины. */
-sealed abstract class MReasonType extends EnumEntry with IStrId {
-
-  override final def strId = toString
-
-  /** Граничная причина, после которой идёт погружение на уровень item'а и его дней. */
-  def isItemLevel: Boolean
-
-  /** Код наименования по messages. */
-  def msgCodeI18n: String
-
-  /** Локализованный payload, если есть. */
-  def i18nPayload(payload: MPriceReason)(messagesF: MessagesF_t): Option[String] = {
-    None
-  }
-
-}
-
-
 /** Модель типов причин тарификации. */
-object MReasonTypes extends Enum[MReasonType] {
+object MReasonTypes extends StringEnum[MReasonType] {
 
 
   /** Тарифное начисление за размещение на главном экране. */
-  case object OnMainScreen extends MReasonType {
-    override def toString     = "oms"
+  case object OnMainScreen extends MReasonType("oms") {
     override def isItemLevel  = true
     override def msgCodeI18n  = MsgCodes.`Adv.on.main.screen`
   }
 
 
   /** Причина начисления - географическая площадь. */
-  case object GeoArea extends MReasonType {
-
-    override def toString     = "geo"
+  case object GeoArea extends MReasonType("geo") {
     override def msgCodeI18n  = MsgCodes.`Coverage.area`
 
     /** Накидывание за гео-покрытие идёт поверх каких-то item'ов. */
@@ -92,8 +69,7 @@ object MReasonTypes extends Enum[MReasonType] {
 
 
   /** Накидывание цены за фактическую площадь карточки в плитке. */
-  case object BlockModulesCount extends MReasonType {
-    override def toString     = "bmc"
+  case object BlockModulesCount extends MReasonType("bmc") {
     override def msgCodeI18n  = MsgCodes.`Ad.area.modules.count`
     /** Кол-во блоков не является оплачиваемым, а является просто множителем для других item-причин. */
     override def isItemLevel = false
@@ -110,8 +86,7 @@ object MReasonTypes extends Enum[MReasonType] {
 
 
   /** Накидывают за тег. */
-  case object Tag extends MReasonType {
-    override def toString     = "tag"
+  case object Tag extends MReasonType("tag") {
     override def isItemLevel  = true
     override def msgCodeI18n  = MsgCodes.`Tag`
 
@@ -126,8 +101,7 @@ object MReasonTypes extends Enum[MReasonType] {
   }
 
   /** Накидывают за прямое размещение на каком-то узле-ресивере. */
-  case object Rcvr extends MReasonType {
-    override def toString     = "rcvr"
+  case object Rcvr extends MReasonType("rcvr") {
     /** Это не является item-уровнем. item'ами являются теги и OnMainScreen в underlying-термах. */
     override def isItemLevel = false
     override def msgCodeI18n  = MItemTypes.AdvDirect.nameI18n
@@ -144,8 +118,7 @@ object MReasonTypes extends Enum[MReasonType] {
 
 
   /** Начисление за размещение ADN-узла на карте геолокации пользователей. */
-  case object GeoLocCapture extends MReasonType {
-    override def toString     = "GLC"
+  case object GeoLocCapture extends MReasonType("GLC") {
     override def msgCodeI18n  = MsgCodes.`Users.geo.location.capturing`
     override def isItemLevel  = true
   }
@@ -159,3 +132,20 @@ object MReasonTypes extends Enum[MReasonType] {
 }
 
 
+/** Модель типа причины. */
+sealed abstract class MReasonType(override val value: String) extends StringEnumEntry {
+
+  /** Граничная причина, после которой идёт погружение на уровень item'а и его дней. */
+  def isItemLevel: Boolean
+
+  /** Код наименования по messages. */
+  def msgCodeI18n: String
+
+  /** Локализованный payload, если есть. */
+  def i18nPayload(payload: MPriceReason)(messagesF: MessagesF_t): Option[String] = {
+    None
+  }
+
+  override final def toString = value
+
+}
