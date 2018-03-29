@@ -1,7 +1,6 @@
 package util.adv.geo
 
 import javax.inject.Inject
-
 import akka.NotUsed
 import akka.stream.scaladsl.Source
 import controllers.routes
@@ -20,9 +19,9 @@ import models.im.make.MImgMakeArgs
 import models.im._
 import models.mctx.Context
 import models.mproj.ICommonDi
-import org.elasticsearch.search.sort.SortOrder
 import play.api.mvc.Call
 import util.adn.NodesUtil
+import util.adv.direct.AdvRcvrsUtil
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, FitImgMaker, LogoUtil}
 
@@ -37,6 +36,7 @@ import scala.concurrent.Future
 class AdvGeoRcvrsUtil @Inject()(
                                  mNodes      : MNodes,
                                  logoUtil    : LogoUtil,
+                                 advRcvrsUtil: AdvRcvrsUtil,
                                  nodesUtil   : NodesUtil,
                                  cdnUtil     : CdnUtil,
                                  mAnyImgs    : MAnyImgs,
@@ -344,7 +344,7 @@ class AdvGeoRcvrsUtil @Inject()(
       LOGGER.trace(s"$logPrefix ${hasChildRcvrKeys.size}|p[${parentIds.size}|s$subIdsSize ,, RcvrKeys with children: $hasChildRcvrKeys")
 
       // Запихиваем всё в поисковый запрос для ES:
-      val msearch = subRcvrsSearch(
+      val msearch = advRcvrsUtil.subRcvrsSearch(
         parentIds   = parentIds.toSeq,
         onlyWithIds = subIds.toSeq,
         limit1      = subIdsSize
@@ -394,30 +394,6 @@ class AdvGeoRcvrsUtil @Inject()(
         noChildRcvrKeys ++ rcvrKeys3
       }
     }
-  }
-
-  /** Поиск под-ресиверов по отношению к указанным ресиверам. */
-  def subRcvrsSearch(parentIds: Seq[String], onlyWithIds: Seq[String] = Nil, limit1: Int = 100 ): MNodeSearch = {
-    new MNodeSearchDfltImpl {
-      override def isEnabled = Some(true)
-      override def outEdges: Seq[ICriteria] = {
-        val cr = Criteria(
-          nodeIds    = parentIds,
-          predicates = MPredicates.OwnedBy :: Nil
-        )
-        cr :: Nil
-      }
-      override def withAdnRights  = MAdnRights.RECEIVER :: Nil
-      override def withNameSort   = Some( SortOrder.ASC )
-      override def limit          = limit1
-      override def withIds        = onlyWithIds
-    }
-  }
-
-  /** Поиск под-ресиверов у указанного ресивера. */
-  def findSubRcvrsOf(rcvrId: String): Future[Seq[MNode]] = {
-    val search = subRcvrsSearch(parentIds = rcvrId :: Nil)
-    mNodes.dynSearch(search)
   }
 
   /** Аккуратное сравнение множеств id ресиверов. */

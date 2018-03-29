@@ -23,25 +23,13 @@ class LkAdsFormUtil @Inject()(
 
   // TODO Надо вынести платформо-зависимое шаманство с датами и периодами размещения в typeclass IYmdHelper
   def advDeclSpecVld(spec: MAdvDeclSpec): ValidationNel[String, MAdvDeclSpec] = {
-    // Проверить isShow
-    val isShownVld = Validation.success(spec.isShown): ValidationNel[String, Boolean]
-
     // Проверить isShowOpened
-    val isShowOpenedVld = if (spec.isShown) {
-      Validation.success(spec.isShowOpened): ValidationNel[String, Option[Boolean]]
-    } else {
-      ScalazUtil.liftNelNone(spec.isShowOpened, "show.opened.unexpected")
-    }
+    val isShowOpenedVld = Validation.success(spec.isShowOpened): ValidationNel[String, Option[Boolean]]
 
     // Проверить период размещения.
-    val advPeriodVld = if (spec.isShown) {
-      ScalazUtil.liftNelOpt(spec.advPeriod)(advFormUtil.advPeriodV)
-    } else {
-      ScalazUtil.liftNelNone(spec.advPeriod, "adv.period.unexpected")
-    }
+    val advPeriodVld = ScalazUtil.liftNelOpt(spec.advPeriod)(advFormUtil.advPeriodV)
 
     (
-      isShownVld |@|
       isShowOpenedVld |@|
       advPeriodVld
     )(MAdvDeclSpec.apply)

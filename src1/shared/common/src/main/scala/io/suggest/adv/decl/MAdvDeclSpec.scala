@@ -14,7 +14,6 @@ import play.api.libs.json._
 object MAdvDeclSpec {
 
   implicit def mAdvDeclSpecFormat: OFormat[MAdvDeclSpec] = (
-    (__ \ "s").format[Boolean] and
     (__ \ "o").formatNullable[Boolean] and
     (__ \ "p").formatNullable[MAdvPeriod]
   )(apply, unlift(unapply))
@@ -26,13 +25,11 @@ object MAdvDeclSpec {
 
 /** Контейнер данных описания размещения карточки на абстрактном узле/теге/geo.
   *
-  * @param isShown Отображается или нет?
   * @param isShowOpened Отображать сразу раскрытой?
   *                     None, значит что в данном контексте в этом смысла нет.
   * @param advPeriod Период размещения, если задан.
   */
 case class MAdvDeclSpec(
-                         isShown       : Boolean,
                          isShowOpened  : Option[Boolean],
                          advPeriod     : Option[MAdvPeriod]
                        )

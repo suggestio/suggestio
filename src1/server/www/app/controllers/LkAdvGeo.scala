@@ -3,7 +3,6 @@ package controllers
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 import akka.util.ByteString
 import javax.inject.Inject
-
 import controllers.ctag.NodeTagsEdit
 import io.suggest.adv.geo._
 import io.suggest.adv.rcvr._
@@ -42,6 +41,7 @@ import util.tags.TagsEditFormUtil
 import views.html.lk.adv.geo._
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.streams.StreamsUtil
+import util.adv.direct.AdvRcvrsUtil
 
 import scala.concurrent.Future
 
@@ -57,6 +57,7 @@ class LkAdvGeo @Inject() (
                            advFormUtil                     : AdvFormUtil,
                            bill2Util                       : Bill2Util,
                            advGeoLocUtil                   : AdvGeoLocUtil,
+                           advRcvrsUtil                    : AdvRcvrsUtil,
                            advGeoRcvrsUtil                 : AdvGeoRcvrsUtil,
                            streamsUtil                     : StreamsUtil,
                            ymdHelpersJvm                   : YmdHelpersJvm,
@@ -449,7 +450,7 @@ class LkAdvGeo @Inject() (
       import request.{mnode => rcvrNode}
 
       // Запросить по биллингу карту подузлов для запрашиваемого ресивера.
-      val subNodesFut = advGeoRcvrsUtil.findSubRcvrsOf(rcvrNodeId)
+      val subNodesFut = advRcvrsUtil.findSubRcvrsOf(rcvrNodeId)
 
       lazy val logPrefix = s"rcvrMapPopup($adId,$rcvrNodeId)[${System.currentTimeMillis}]:"
 

@@ -44,4 +44,11 @@ case class MAdvDeclKv(
 
   def tuple = (key, spec)
 
+  /** Какой ключ используется для группировки unbilled-эджей?
+    * На момент написания, тут группировались только AdvDirect / Receiver.Self эджи.
+    */
+  def unbilledEdgesGroupingKey = {
+    (key.itype, spec.isShowOpened)
+  }
+
 }

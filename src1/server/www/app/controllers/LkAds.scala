@@ -1,15 +1,17 @@
 package controllers
 
-import akka.stream.scaladsl.{Keep, Sink, Source}
+import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import io.suggest.ads.{LkAdsFormConst, MLkAdsFormInit, MLkAdsOneAdAdvForm, MLkAdsOneAdResp}
+import io.suggest.adv.decl.{MAdvDeclKey, MAdvDeclKv, MAdvDeclSpec}
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.IMust
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.item.status.MItemStatus
-import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
+import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MAdItemStatuses, MItems}
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -21,12 +23,14 @@ import models.mlk.MNodeAdInfo
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
 import play.api.libs.json.{JsArray, JsString, Json}
-import util.acl.{CanUpdateSls, IsNodeAdmin}
+import util.acl.{CanUpdateSls, IsAuth, IsNodeAdmin}
 import util.ad.JdAdUtil
 import views.html.lk.ads._
 import japgolly.univeq._
 import play.api.http.HttpEntity
+import play.api.mvc.Result
 import util.ads.LkAdsFormUtil
+import util.adv.direct.AdvRcvrsUtil
 
 import scala.concurrent.Future
 
@@ -40,6 +44,8 @@ import scala.concurrent.Future
 class LkAds @Inject() (
                         isNodeAdmin             : IsNodeAdmin,
                         canUpdateSls            : CanUpdateSls,
+                        advRcvrsUtil            : AdvRcvrsUtil,
+                        isAuth                  : IsAuth,
                         jdAdUtil                : JdAdUtil,
                         lkAdsFormUtil           : LkAdsFormUtil,
                         mNodes                  : MNodes,
@@ -54,6 +60,7 @@ class LkAds @Inject() (
   import mCommonDi._
   import streamsUtil.Implicits._
   import io.suggest.scalaz.ScalazUtil.Implicits._
+  import mNodes.Implicits._
 
 
   /** Рендер странице с react-формой управления карточками.
@@ -284,12 +291,55 @@ class LkAds @Inject() (
   }
 
 
+  /** Чтение информпации по внутренним размещениям указанной карточки.
+    *
+    * @param adKey Ключ узла-карточки.
+    * @return 200 OK + adv.decls json
+    */
+  /*
+  def getAdv(adKey: RcvrKey) = canUpdateSls( adKey.last ).async { implicit request =>
+
+      // TODO Собрать advDecl на основе узлов и эджей карточки.
+      // TODO Собрать отображаемые в форме метаданные по узлам.
+
+    // TODO Искать подкарточки?
+
+    val rcvrSelfPred = MPredicates.Receiver.Self
+    val rcvrSelfItype = MItemTypes.AdvDirect
+    for {
+      e <- request.mad.edges
+        .withPredicateIter( rcvrSelfPred )
+      nodeId <- e.nodeIds
+    } yield {
+      MAdvDeclKv(
+        key = MAdvDeclKey(
+          itype = rcvrSelfItype,
+          // TODO Тут надо нормальный rcvrKey генерить как-то: идти от узла вверх по цепочке предикатов OwnedBy в поисках текущего юзера.
+          rcvrKey = Some( nodeId :: Nil )
+        ),
+        spec = MAdvDeclSpec(
+          isShowOpened = e.info.flag,
+          advPeriod    = None
+        )
+      )
+    }
+    request.mad.edges
+      .withPredicateIter( MPredicates.Receiver.Self )
+      .map { edge =>
+
+      }
+    ???
+  }
+  */
+
+
   /** Сохранить настройки размещения для указанной карточки.
     * В request.body содержится MLkAdsOneAdAdvForm в виде JSON.
     *
     * @param adKey Цепочка узлов до рекламной карточки.
     * @return JSON-ответ с обновлёнными данными размещения карточки.
     */
+  /*
   def setAdv(adKey: RcvrKey) = csrf.Check {
     canUpdateSls( adKey.last ).async(parse.json[MLkAdsOneAdAdvForm]) { implicit request =>
       lazy val logPrefix = s"setAdv(${request.mad.idOrNull})#${System.currentTimeMillis()}:"
@@ -348,33 +398,83 @@ class LkAds @Inject() (
             rcvrsCheckResults
           }
 
-          // Когда все проверки выполнены, надо применить все запрошенные изменения
           for {
+            // Когда все проверки выполнены, можно начать применять все запрошенные изменения
             _ <- rcvrChecksFut
 
-            // Собрать самые прямые размещения на свои узлы, исторически они живут без биллинга.
-            // TODO Может быть поле declKv.spec.isShow просто выкинуть? Если размещения нет, то значит его и нет вообще. Если есть - то создаётся размещение (или перезаписывается существующее).
-            // TODO Надо делать toSet, но сначала группировать по edge-свойствам: isShowOpened
-            selfRcvrIds = (for {
-              decl <- form.decls.iterator
-              if (decl.key.itype ==* MItemTypes.AdvDirect) && decl.spec.advPeriod.isEmpty
-              rcvrKey <- decl.key.rcvrKey
-            } yield {
-              rcvrKey.last
-            }).toSet
+            // Заливка возможных unbilled-размещений прямо в рекламную карточку
+            mad2 <- if (unbilled.nonEmpty) {
+              LOGGER.trace(s"$logPrefix Checks done. Have unbilled adv.decls. Will apply unbilled...")
+              // Есть unbilled-размещения. Реорганизовать данные этих размещений и накатить их.
+              val rcvrSelfPred = MPredicates.Receiver.Self
 
-            //currentSelfRcvrIds = request.mad.edges.withPredicateIter(MPredicates.Receiver.Self).flatMap(_.nodeIds).toSet
+              // Собрать все новые эджи
+              val newEdges = unbilled
+                .groupBy(_.unbilledEdgesGroupingKey)
+                // Не используем mapValues(), т.к. он через-чур ленив и не даёт доступа к ключам.
+                .iterator
+                .map { case ((itype, showOpenedOpt), edgeDeclGroup) =>
+                  // Предикат отрабатывается первым, чтобы возможная ошибка была как можно раньше.
+                  val predicate = itype match {
+                    case MItemTypes.AdvDirect =>
+                      rcvrSelfPred
+                    case other =>
+                      throw new UnsupportedOperationException(s"$logPrefix Unbilled item type $other is not supported as predicate. Check src.code for unbilled advs.")
+                  }
+                  val nodeIds = {
+                    val iter = for {
+                      declKv  <- edgeDeclGroup
+                      rcvrKey <- declKv.key.rcvrKey
+                    } yield {
+                      rcvrKey.last
+                    }
+                    iter.toSet
+                  }
+                  val edgeFlagOpt = showOpenedOpt
+                    .flatMap(OptionUtil.maybeTrue)
+                  val edgeInfo = edgeFlagOpt
+                    .fold(MEdgeInfo.empty)(_ => MEdgeInfo(flag = edgeFlagOpt))
+                  val e = MEdge(
+                    predicate = predicate,
+                    nodeIds = nodeIds,
+                    info = edgeInfo
+                  )
+                  LOGGER.trace(s"$logPrefix Unbilled edge: $e")
+                  e
+                }
+                .toStream
 
-            // TODO Залить небиллингуемый апдейт в карточку
+              // Запуск обновлялки карточки:
+              mNodes.tryUpdate( request.mad ) { mad =>
+                mad.withEdges(
+                  mad.edges.copy(
+                    out = MNodeEdges.edgesToMap1(
+                      mad.edges
+                        // Удалить (перезаписать) все старые небиллингуемые эджи.
+                        .withoutPredicateIter( rcvrSelfPred )
+                        .++( newEdges )
+                        .toSeq
+                    )
+                  )
+                )
+              }
+
+            } else {
+              LOGGER.trace(s"$logPrefix No unbilled adv.decls.")
+              Future.successful(request.mad)
+            }
+
 
           } yield {
-            LOGGER.trace(s"$logPrefix All checks done, will apply changes to ad#${request.mad.idOrNull}")
-            // TODO Сгенерить ответ сервера
-            ???
+            LOGGER.trace(s"$logPrefix Ok, applied adv-changes to ad#${request.mad.idOrNull}")
+
+            // TODO Вернуть обновлённые данные по карточке
+            Ok
           }
         }
       )
     }
   }
+  */
 
 }

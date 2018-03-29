@@ -1,18 +1,21 @@
 package util.adv.direct
 
 import java.time.OffsetDateTime
-import javax.inject.{Inject, Singleton}
 
+import io.suggest.adn.MAdnRights
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.EsModelUtil
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes, MNodesCache}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT}
 import models.mproj.ICommonDi
+import org.elasticsearch.search.sort.SortOrder
 import util.adv.build.AdvBuilderFactory
 import util.n2u.N2NodesUtil
 
@@ -322,6 +325,31 @@ class AdvRcvrsUtil @Inject()(
         }
       )
     )
+  }
+
+
+  /** Поиск под-ресиверов по отношению к указанным ресиверам. */
+  def subRcvrsSearch(parentIds: Seq[String], onlyWithIds: Seq[String] = Nil, limit1: Int = 100 ): MNodeSearch = {
+    new MNodeSearchDfltImpl {
+      override def isEnabled = Some(true)
+      override def outEdges: Seq[ICriteria] = {
+        val cr = Criteria(
+          nodeIds    = parentIds,
+          predicates = MPredicates.OwnedBy :: Nil
+        )
+        cr :: Nil
+      }
+      override def withAdnRights  = MAdnRights.RECEIVER :: Nil
+      override def withNameSort   = Some( SortOrder.ASC )
+      override def limit          = limit1
+      override def withIds        = onlyWithIds
+    }
+  }
+
+  /** Поиск под-ресиверов у указанного ресивера. */
+  def findSubRcvrsOf(parentIds: String*): Future[Seq[MNode]] = {
+    val search = subRcvrsSearch(parentIds = parentIds)
+    mNodes.dynSearch(search)
   }
 
 }
