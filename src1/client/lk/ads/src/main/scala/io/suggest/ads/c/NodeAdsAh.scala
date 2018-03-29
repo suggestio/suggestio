@@ -1,14 +1,17 @@
 package io.suggest.ads.c
 
 import diode._
+import diode.data.Pot
 import io.suggest.ads.{LkAdsFormConst, MLkAdsConf}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ads.a.ILkAdsApi
-import io.suggest.ads.m.{GetMoreAds, GetMoreAdsResp, MAdProps, MAdsS}
+import io.suggest.ads.m._
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.JdCssFactory
+import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
+import io.suggest.react.ReactDiodeUtil.PotOpsExt
 
 import scala.util.Success
 
@@ -20,6 +23,7 @@ import scala.util.Success
   */
 class NodeAdsAh[M](
                     api           : ILkAdsApi,
+                    lkNodesApi    : ILkNodesApi,
                     jdCssFactory  : JdCssFactory,
                     confRO        : ModelRO[MLkAdsConf],
                     modelRW       : ModelRW[M, MAdsS]
@@ -29,6 +33,73 @@ class NodeAdsAh[M](
 {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+
+    // Экшен замены значения галочки размещения какой-то карточки на родительском узле.
+    case m: SetAdShownAtParent =>
+      val ts = System.currentTimeMillis()
+
+      val fx = Effect {
+        lkNodesApi.setAdv(
+          adId      = m.adId,
+          isEnabled = m.isShown,
+          onNode    = confRO.value.nodeKey
+        ).transform { tryResp =>
+          Success( SetAdShownAtParentResp(m, tryResp, ts) )
+        }
+      }
+
+      val v0 = value
+      val v2 = v0.withAds(
+        ads = for (ads <- v0.ads) yield {
+          for (adProps0 <- ads) yield {
+            if (adProps0.adResp.jdAdData.nodeId contains m.adId) {
+              adProps0.withShownAtParentReq(
+                adProps0.shownAtParentReq.pending(ts)
+              )
+            } else {
+              adProps0
+            }
+          }
+        }
+      )
+
+      updated(v2, fx)
+
+
+    // Завершение запроса к серверу за апдейтом галочки размещения на родительском узле.
+    case m: SetAdShownAtParentResp =>
+      val v0 = value
+      val v2 = v0.withAds(
+        ads = for (ads <- v0.ads) yield {
+          for (adProps0 <- ads) yield {
+            if (adProps0.adResp.jdAdData.nodeId contains m.reason.adId) {
+              if (adProps0.shownAtParentReq isPendingWithStartTime m.timestampMs) {
+                m.tryResp.fold(
+                  {ex =>
+                    adProps0.withShownAtParentReq(
+                      adProps0.shownAtParentReq.fail(ex)
+                    )
+                  },
+                  {mLknNode2 =>
+                    adProps0.copy(
+                      adResp            = adProps0.adResp.withShownAtParent( mLknNode2.hasAdv.getOrElse(m.reason.isShown) ),
+                      shownAtParentReq  = Pot.empty
+                    )
+                  }
+                )
+              } else {
+                // Неактуальный реквест.
+                LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+                adProps0
+              }
+            } else {
+              adProps0
+            }
+          }
+        }
+      )
+      updated(v2)
+
 
     // Команда к скачке карточек с сервера.
     case m: GetMoreAds =>

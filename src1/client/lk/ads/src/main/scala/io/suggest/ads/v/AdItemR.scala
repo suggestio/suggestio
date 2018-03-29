@@ -13,6 +13,7 @@ import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil
 import ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.i18n.MsgCodes
+import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.Messages
 import io.suggest.routes.routes
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}
@@ -118,17 +119,26 @@ class AdItemR(
               <.div(
                 ^.`class` := ItemCss.CONTROLS,
                 <.label(
-                  <.input(
-                    ^.`class` := Css.Input.CHECKBOX,
-                    ^.`type`  := HtmlConstants.Input.checkbox,
-                    ^.checked := s.ad.adResp.shownAtParent,
-                    ^.onChange ==> _adShownOnParentChanged( adId )
+                  VdomArray(
+                    <.input(
+                      ^.key := "1",
+                      ^.`class` := Css.Input.CHECKBOX,
+                      ^.`type`  := HtmlConstants.Input.checkbox,
+                      ^.checked := s.ad.adResp.shownAtParent,
+                      ^.onChange ==> _adShownOnParentChanged( adId )
+                    ),
+                    <.span(
+                      ^.key := "2",
+                      ^.`class` := Css.Input.STYLED_CHECKBOX,
+                      HtmlConstants.NBSP_STR
+                    )
                   ),
-                  <.span(
-                    ^.`class` := Css.Input.STYLED_CHECKBOX,
-                    HtmlConstants.NBSP_STR
-                  ),
-                  Messages( MsgCodes.`Show._ad` )
+                  Messages( MsgCodes.`Show._ad` ),
+
+                  // Прелоадер.
+                  if (s.ad.shownAtParentReq.isPending)
+                    LkPreLoaderR.AnimSmall
+                  else EmptyVdom
                 )
               )
             ),

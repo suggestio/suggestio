@@ -14,6 +14,7 @@ scalacOptions += "-feature"
 libraryDependencies ++= Seq(
   Common.ORG          %%% "lk-adv-common-sjs"       % "0.0.0-SNAPSHOT",
   Common.ORG          %%% "scalajs-react-common"    % "0.0.0-SNAPSHOT",
-  "org.scala-js"      %%% "scalajs-dom"             % Common.sjsDomVsn
+  "org.scala-js"      %%% "scalajs-dom"             % Common.sjsDomVsn,
+  "com.softwaremill.macwire" %% "macros"            % Common.Vsn.MACWIRE % "provided"
 )
 

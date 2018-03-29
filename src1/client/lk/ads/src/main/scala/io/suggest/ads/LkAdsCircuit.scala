@@ -8,6 +8,7 @@ import io.suggest.dev.MSzMults
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.JdCssFactory
+import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.StateInp
@@ -63,15 +64,18 @@ class LkAdsCircuit(
   // Контроллеры
   val lkAdsApi = new LkAdsApiHttp()
 
+  val lkNodesApi = new LkNodesApiHttpImpl
+
   val nodeAdsAh = new NodeAdsAh(
     api           = lkAdsApi,
+    lkNodesApi    = lkNodesApi,
     jdCssFactory  = jdCssFactory,
     confRO        = confRO,
     modelRW       = currNodeRW
   )
 
 
-  override protected def actionHandler: HandlerFunction = {
+  override protected val actionHandler: HandlerFunction = {
     nodeAdsAh
   }
 

@@ -47,5 +47,9 @@ case class MLkAdsOneAdResp(
                             advStatuses   : Set[MItemStatus],
                             jdAdData      : MJdAdData,
                             shownAtParent : Boolean
-                          )
+                          ) {
+
+  def withShownAtParent(shownAtParent: Boolean)     = copy(shownAtParent = shownAtParent)
+
+}
 

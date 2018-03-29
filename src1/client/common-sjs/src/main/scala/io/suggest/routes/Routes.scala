@@ -58,6 +58,9 @@ sealed trait Controllers extends js.Object {
   /** Объект с роутами серверного контроллера LkAdvGeo. */
   def LkAdvGeo: LkAdvGeoCtlRoutes = js.native
 
+  /** Роуты LkNodes-контроллера. */
+  def LkNodes: LkNodesCtlRoutes = js.native
+
 }
 
 
@@ -188,5 +191,33 @@ sealed trait LkAdvGeoCtlRoutes extends js.Object {
 
   /** Роута для получения содержимого попапа над указанной областью георазмещения. */
   def existGeoAdvsShapePopup(itemId: Double): Route = js.native
+
+}
+
+
+/** Доступные экшены контроллера LkNodes. */
+@js.native
+sealed trait LkNodesCtlRoutes extends js.Object {
+
+  /** Роута списка под-узлов для указанного узла. */
+  def nodeInfo(nodeId: String): Route = js.native
+
+  /** Роута сабмита формы добавления нового узла. */
+  def createSubNodeSubmit(parentId: String): Route = js.native
+
+  /** Роута сабмита нового значения флага isEnabled. */
+  def setNodeEnabled(nodeId: String, isEnabled: Boolean): Route = js.native
+
+  /** Роута для удаления узла. */
+  def deleteNode(nodeId: String): Route = js.native
+
+  /** Сабмит редактирования узла. */
+  def editNode(nodeId: String): Route = js.native
+
+  /** Сабмит обновления данных размещения какой-то карточки на каком-то узле по rcvrKey. */
+  def setAdv(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): Route = js.native
+
+  /** Сабмит обновлённых данных по тарификацию размещений на узле. */
+  def setTfDaily(onNodeRcvrKey: String): Route = js.native
 
 }

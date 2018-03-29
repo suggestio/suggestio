@@ -85,8 +85,6 @@ trait ILkNodesApi {
 /** Реализация [[ILkNodesApi]] для взаимодействия с серверным контроллером LkNodes через обычные HTTP-запросы. */
 class LkNodesApiHttpImpl extends ILkNodesApi {
 
-  import io.suggest.lk.nodes.form.u.LkNodesRoutes._
-
   private def _JSON_BODY_HEADERS = List(
     HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON
   )
