@@ -177,6 +177,12 @@ case object TfDailyManualMode
   extends LkNodesAction
 
 
-/** Клик где-то в документе. Нужно скрывания выпадающей менюшки, если она отображается. */
-//case object DocumentClick
-//  extends LkNodesAction
+/** Изменилось значение галочки раскрытости карточки по дефолту. */
+case class AdvShowOpenedChange(rcvrKey: RcvrKey, isChecked: Boolean)
+  extends LkNodesTreeAction
+/** Ответ сервера на запрос изменения отображения рекламной карточки. */
+case class AdvShowOpenedChangeResp(reason: AdvShowOpenedChange, tryResp: Try[_])
+  extends LkNodesTreeAction {
+  override def rcvrKey = reason.rcvrKey
+}
+

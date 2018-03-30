@@ -216,8 +216,7 @@ class TreeAh[M](
                 .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
                   val mns2 = mns0.withAdv(
                     Some( MNodeAdvState(
-                      newIsEnabled  = m.isEnabled,
-                      req           = Pending()
+                      newIsEnabledPot = Pot.empty[Boolean].ready(m.isEnabled).pending()
                     ))
                   )
                   mns2 :: Nil
@@ -241,7 +240,7 @@ class TreeAh[M](
                 LOG.error(ErrorMsgs.SRV_REQUEST_FAILED, ex, msg = m)
                 mns0.withAdv(
                   mns0.adv.map { s =>
-                    s.withReq( s.req.fail(ex) )
+                    s.withReq( s.newIsEnabledPot.fail(ex) )
                   }
                 )
               },
@@ -514,6 +513,96 @@ class TreeAh[M](
           }
           .toList
       )
+      updated(v2)
+
+
+    // Реакция на изменение галочки showOpened напротив узла.
+    case m: AdvShowOpenedChange =>
+      val conf = confRO()
+      conf.adIdOpt.fold {
+        // adId не задан в конфиге формы. Should never happen.
+        LOG.warn( ErrorMsgs.AD_ID_IS_EMPTY, msg = m + HtmlConstants.SPACE + conf )
+        noChange
+
+      } { adId =>
+        val v0 = value
+        MNodeState.findSubNode(m.rcvrKey, v0.nodes).fold {
+          LOG.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          noChange
+        } { mns0 =>
+          if (mns0.adv.nonEmpty) {
+            // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
+            LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
+            noChange
+
+          } else {
+            // Всё ок, можно обновлять текущий узел и запускать реквест на сервер.
+            val rcvrKey = m.rcvrKey
+
+            // Организовать реквест на сервер.
+            val fx = Effect {
+              api.setAdvShowOpened(
+                adId          = adId,
+                isShowOpened  = m.isChecked,
+                onNode        = rcvrKey
+              ).transform { tryResp =>
+                Success( AdvShowOpenedChangeResp(m, tryResp) )
+              }
+            }
+
+            // Обновить состояние формы.
+            val v2 = value.withNodes(
+              MNodeState
+                .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
+                  val mns2 = mns0.withAdv(
+                    Some( MNodeAdvState(
+                      isShowOpenedPot = Pot.empty[Boolean].ready(m.isChecked).pending()
+                    ))
+                  )
+                  mns2 :: Nil
+                }
+                .toList
+            )
+
+            updated(v2, fx)
+          }
+        }
+      }
+
+
+    // Ответ сервера по запросу обновления галочки раскрытого
+    case m: AdvShowOpenedChangeResp =>
+      val v0 = value
+
+      val nodes2 = MNodeState
+        .flatMapSubNode(m.rcvrKey, v0.nodes) { nodeState =>
+          val nodeState2 = m.tryResp.fold [MNodeState] (
+            // При ошибке запроса: сохранить ошибку в состояние
+            {ex =>
+              nodeState.withAdv(
+                nodeState.adv.map { nodeState0 =>
+                  nodeState0.copy(
+                    isShowOpenedPot = Pot.empty[Boolean].fail(ex)
+                  )
+                }
+              )
+            },
+            // Если всё ок, то обновить состояние текущего узла.
+            {_ =>
+              nodeState
+                .withAdv(None)
+                .withInfo(
+                  nodeState.info.withAdvShowOpened(
+                    Some(m.reason.isChecked)
+                  )
+                )
+            }
+          )
+          nodeState2 :: Nil
+        }
+        .toList
+
+      val v2 = v0.withNodes(nodes2)
       updated(v2)
 
   }

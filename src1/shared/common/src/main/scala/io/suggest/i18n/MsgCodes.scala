@@ -242,5 +242,6 @@ object MsgCodes {
   val `Create.ad` = "Create.ad"
   val `Show._ad` = "Show._ad"
   val `ad.Manage` = "ad.Manage"
+  val `Show.ad.opened` = "Show.ad.opened"
 
 }

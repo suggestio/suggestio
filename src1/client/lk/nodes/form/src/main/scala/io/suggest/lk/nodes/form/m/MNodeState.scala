@@ -50,7 +50,7 @@ case class MNodeState(
     */
   def isNormal = editing.isEmpty && !advIsPending
 
-  def advIsPending = adv.exists(_.req.isPending)
+  def advIsPending = adv.exists(_.newIsEnabledPot.isPending)
 
 }
 

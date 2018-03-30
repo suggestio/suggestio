@@ -281,6 +281,7 @@ class JsMessagesUtil @Inject() (
       MC.`Create.ad` ::
       MC.`Show._ad` ::
       MC.`ad.Manage` ::
+      MC.`Show.ad.opened` ::
       Nil
   }
 

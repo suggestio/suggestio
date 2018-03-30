@@ -7,6 +7,7 @@ import io.suggest.err.ErrorConstants
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.{JdCss, JdCssFactory}
+import io.suggest.jd.tags.MJdTagNames
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
 import io.suggest.sc.ads.MFindAdsReq
@@ -189,7 +190,7 @@ class GridAdsAh[M](
             val newScAds = findAdsResp.ads
               .iterator
               .map { sc3AdData =>
-                // Игнорим какие-либо права доступа и прочее, сервер их и не присылает здесь.
+                // TODO Заинлайнить этот apply, попутно пофиксив в нём focused.canEdit
                 MScAdData( sc3AdData.jd )
               }
               .toVector

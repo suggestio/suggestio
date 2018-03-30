@@ -16,11 +16,16 @@ object MNodeAdvState {
 }
 
 case class MNodeAdvState(
-                          newIsEnabled  : Boolean,
-                          req           : Pot[_]    = Pot.empty
-                        )
-{
+                          newIsEnabledPot               : Pot[Boolean]  = Pot.empty,
+                          isShowOpenedPot   : Pot[Boolean]  = Pot.empty
+                        ) {
 
-  def withReq(req2: Pot[_]) = copy(req = req2)
+  def withReq(req2: Pot[Boolean]) = copy(newIsEnabledPot = req2)
+
+  def withIsShowOpenedPot(isShowOpenedPot: Pot[Boolean])    = copy(isShowOpenedPot = isShowOpenedPot)
+
+  def isShowOpened = isShowOpenedPot.getOrElse(false)
+  def newIsEnabled = newIsEnabledPot.getOrElse(false)
+
 
 }

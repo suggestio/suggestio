@@ -2,6 +2,7 @@ package io.suggest.ads.v
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ReactPot._
 import io.suggest.ad.blk.BlockHeights
 import io.suggest.ads.m.{MAdProps, SetAdShownAtParent}
 import io.suggest.common.html.HtmlConstants
@@ -122,6 +123,9 @@ class AdItemR(
                   VdomArray(
                     <.input(
                       ^.key := "1",
+                      if (s.ad.shownAtParentReq.isPending) {
+                        ^.disabled := true
+                      } else EmptyVdom,
                       ^.`class` := Css.Input.CHECKBOX,
                       ^.`type`  := HtmlConstants.Input.checkbox,
                       ^.checked := s.ad.adResp.shownAtParent,
@@ -138,7 +142,18 @@ class AdItemR(
                   // Прелоадер.
                   if (s.ad.shownAtParentReq.isPending)
                     LkPreLoaderR.AnimSmall
-                  else EmptyVdom
+                  else EmptyVdom,
+
+                  // Рендер ошибки запроса, если есть.
+                  s.ad.shownAtParentReq.renderFailed { ex =>
+                    <.span(
+                      ^.`class` := Css.Input.ERROR,
+                      Messages( MsgCodes.`Error` ),
+                      HtmlConstants.SPACE,
+                      ex.getMessage
+                    )
+                  }
+
                 )
               )
             ),

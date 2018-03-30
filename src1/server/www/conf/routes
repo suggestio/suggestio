@@ -130,6 +130,7 @@ POST /lk/subnodes/edit/:nodeId                      @controllers.LkNodes.editNod
 POST /lk/subnodes/madv/:adId/:isEnabled/*onNode     @controllers.LkNodes.setAdv(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
 GET  /lk/subnodes/mad/:adId                         @controllers.LkNodes.nodesForAd(adId: MEsUuId)
 POST /lk/subnodes/tfd/*onNode                       @controllers.LkNodes.setTfDaily(onNode: RcvrKey)
+POST /lk/subnodes/aso/:adId/:isEnabled/*onNode      @controllers.LkNodes.setAdvShowOpened(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
 
 
 ## ЛК: Размещение ADN-узла на карте

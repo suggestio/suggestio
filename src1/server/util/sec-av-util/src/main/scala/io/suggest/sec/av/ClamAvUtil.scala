@@ -1,7 +1,7 @@
 package io.suggest.sec.av
 
 import java.io.File
-import java.nio.{ByteBuffer, ByteOrder}
+import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 
 import javax.inject.{Inject, Singleton}
@@ -156,10 +156,11 @@ final class ClamAvUtil @Inject()(
 
     val (_, resFut) = connectionFlow.runWith(scanCmdSrc, scanOutputSink)
 
+    // TODO Определять ошибки clamav.
+    // TODO Нужен таймаут после завершения отсылки. clamav закрывает сокет по таймауту через минуту, но это долговато.
     for (res <- resFut) yield {
       LOGGER.trace(s"scanClamdRemoteTcp(): Response =\n${res.mkString}")
       val isClean = res.forall { resPart =>
-        println(resPart)
         resPart.contains("OK") && !resPart.contains("FOUND")
       }
       ClamAvScanResult(isClean)

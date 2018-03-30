@@ -25,6 +25,7 @@ object MLknNode {
     (__ \ "e").format[Boolean] and
     (__ \ "a").formatNullable[Boolean] and
     (__ \ "d").formatNullable[Boolean] and
+    (__ \ "o").formatNullable[Boolean] and
     (__ \ "f").formatNullable[MTfDailyInfo]
   )(apply, unlift(unapply))
 
@@ -55,8 +56,15 @@ case class MLknNode(
 
                      /** Имеется ли размещение текущей рекламной карточки на указанном узле? */
                      hasAdv                 : Option[Boolean],
+                     /** Рендерить размещённую карточку открытой? */
+                     advShowOpened          : Option[Boolean],
 
                      /** Данные по тарифу размещения. None значит, что сервер не уточнял этот вопрос. */
                      tf                     : Option[MTfDailyInfo]
                    )
   extends IId[String]
+{
+
+  def withAdvShowOpened(advShowOpened: Option[Boolean]) = copy(advShowOpened = advShowOpened)
+
+}

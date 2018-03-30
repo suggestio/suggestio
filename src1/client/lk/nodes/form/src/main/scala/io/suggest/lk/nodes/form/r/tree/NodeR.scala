@@ -12,13 +12,14 @@ import io.suggest.lk.nodes.MLknConf
 import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.r.menu.{NodeMenuBtnR, NodeMenuR}
 import io.suggest.lk.r.LkPreLoaderR
-import io.suggest.msg.{ErrorMsgs, JsFormatUtil, Messages}
+import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sjs.common.log.Log
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 /**
   * Suggest.io
@@ -120,6 +121,13 @@ class NodeR(
       _dispatchCB( TfDailyShowDetails(rcvrKey) )
     }
 
+    /** Callback клика по галочке отображения по дефолту в раскрытом виде. */
+    private def onShowOpenedClick(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
+      e.stopPropagationCB >> _dispatchCB(
+        AdvShowOpenedChange(rcvrKey, e.target.checked)
+      )
+    }
+
 
     private def _dispatchCB[A](action: A)(implicit evidence: ActionType[A]): Callback = {
       $.props >>= { p =>
@@ -163,7 +171,9 @@ class NodeR(
       val rcvrKeyRev = node.info.id :: parentRcvrKey
       val rcvrKey = rcvrKeyRev.reverse
 
-      val isShowNodeEditProps = p.conf.adIdOpt.isEmpty && p.mtree.showProps.contains(rcvrKey)
+      val isShowProps = p.mtree.showProps.contains(rcvrKey)
+      val isShowNodeEditProps = isShowProps && p.conf.adIdOpt.isEmpty
+      val isShowAdvProps = isShowProps && p.conf.adIdOpt.isDefined
 
       // Контейнер узла узла + дочерних узлов.
       <.div(
@@ -175,7 +185,7 @@ class NodeR(
         // Разделитель-промежуток от предыдущего элемента сверху.
         _delim,
         // Если на текущем узле отображаются пропертисы, то нужен толстый delimiter
-        _delim.when( isShowNodeEditProps ),
+        _delim.when( isShowProps ),
 
         <.div(
           ^.classSet1(
@@ -191,7 +201,7 @@ class NodeR(
             Css.Lk.Nodes.Name.EDITING  -> node.editing.nonEmpty,
 
             // Закруглять углы только когда узел не раскрыт.
-            Css.Table.Td.Radial.FIRST -> !isShowNodeEditProps
+            Css.Table.Td.Radial.FIRST -> !isShowProps
           ),
           // Во время неРедактирования можно сворачивать-разворачивать блок, кликая по нему.
           if (node.isNormal) {
@@ -226,10 +236,7 @@ class NodeR(
                     ^.checked   := node.adv
                       .map(_.newIsEnabled)
                       .orElse(node.info.hasAdv)
-                      .getOrElse {
-                        LOG.log( ErrorMsgs.AD_ID_IS_EMPTY, msg = rcvrKey )
-                        false
-                      }
+                      .getOrElseFalse
                   ),
                   <.span,
                   HtmlConstants.NBSP_STR,
@@ -255,12 +262,12 @@ class NodeR(
                   HtmlConstants.NBSP_STR,
 
                   // Если Pending, крутилку отобразить.
-                  advState.req.renderPending { _ =>
+                  advState.newIsEnabledPot.renderPending { _ =>
                     _smallWaitLoader
                   },
 
                   // Если ошибка, то отобразить сообщение о проблеме.
-                  advState.req.renderFailed { ex =>
+                  advState.newIsEnabledPot.renderFailed { ex =>
                     <.span(
                       ^.title := ex.toString,
                       Messages( MsgCodes.`Error` )
@@ -547,6 +554,45 @@ class NodeR(
               )   // TBODY
             )     // TABLE
           )
+
+        } else if (isShowAdvProps) {
+          // Рендрить вёрстку редактирования настроек размещения карточки.
+          <.div(
+            // Данные по узлу рендерим таблицей вида ключ-значение. Однако, возможна третья колонка с крутилкой.
+            <.table(
+              ^.`class` := Css.flat( Css.Table.TABLE, Css.Table.Width.XL, Css.Lk.Nodes.KvTable.LKN_TABLE ),
+
+              <.tbody(
+
+                // id узла.
+                <.tr(
+                  _kvTdKey(
+                    Messages( MsgCodes.`Show.ad.opened` )
+                  ),
+                  _kvTdValue {
+                    val isShowOpened = node.adv
+                      .map(_.isShowOpened)
+                      .orElse(node.info.advShowOpened)
+                      .getOrElseFalse
+                    // Чек-бокс для управления isEnabled-флагом узла.
+                    <.label(
+                      ^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE, Css.Lk.Nodes.Inputs.INPUT70 ),
+                      <.input(
+                        ^.`type` := HtmlConstants.Input.checkbox,
+                        // Текущее значение галочки происходит из нового значения и текущего значения, полученного на сервере.
+                        ^.checked := isShowOpened,
+                        ^.onChange ==> onShowOpenedClick(rcvrKey)
+                      ),
+                      <.span(),
+                      Messages( I18nConst.yesNo( isShowOpened ) )
+                    )
+                  }
+                )
+
+              )
+            )
+          )
+
         } else EmptyVdom,
 
         // Рекурсивно отрендерить дочерние элементы:

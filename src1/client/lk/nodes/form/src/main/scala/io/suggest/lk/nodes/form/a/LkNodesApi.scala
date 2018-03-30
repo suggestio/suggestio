@@ -70,6 +70,14 @@ trait ILkNodesApi {
     */
   def setAdv(adId: String, isEnabled: Boolean, onNode: RcvrKey): Future[MLknNode]
 
+  /** Запустить обновление флага showOpened для указанного узла и карточки.
+    *
+    * @param adId id рекламной карточки.
+    * @param isShowOpened Новое значение isShowOpened.
+    * @param onNode На каком узле действо разворачивать при открытии?
+    * @return Фьючерс с обнволённым узлом.
+    */
+  def setAdvShowOpened(adId: String, isShowOpened: Boolean, onNode: RcvrKey): Future[_]
 
   /** Выставить новый режим тарификации указанного узла.
     *
@@ -165,6 +173,14 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
         ),
         body = Json.toJson(mode).toString(),
         headers = _JSON_BODY_HEADERS
+      )
+    }
+  }
+
+  override def setAdvShowOpened(adId: String, isShowOpened: Boolean, onNode: RcvrKey): Future[_] = {
+    Xhr.successIfStatus( HttpConst.Status.OK, HttpConst.Status.NO_CONTENT ) {
+      Xhr.send(
+        route = routes.controllers.LkNodes.setAdvShowOpened(adId, isShowOpened, RcvrKey.rcvrKey2urlPath(onNode))
       )
     }
   }
