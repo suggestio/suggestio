@@ -1,7 +1,7 @@
 package io.suggest.sc.c.grid
 
 import diode._
-import diode.data.{PendingBase, Pot}
+import diode.data.{PendingBase, Pot, Ready}
 import io.suggest.dev.{MScreen, MSzMults}
 import io.suggest.err.ErrorConstants
 import io.suggest.jd.MJdConf
@@ -9,6 +9,7 @@ import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.{JdCss, JdCssFactory}
 import io.suggest.jd.tags.MJdTagNames
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.m.grid._
@@ -17,6 +18,8 @@ import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.tile.{GridCalc, MGridCalcConf, TileConstants}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
+import io.suggest.jd.tags.JdTag.Implicits._
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import japgolly.univeq._
 
 import scala.util.Success
@@ -187,13 +190,44 @@ class GridAdsAh[M](
             ErrorConstants.assertArg( scAction.acType ==* MScRespActionTypes.AdsTile )
             val findAdsResp = scAction.ads.get
 
+            // Подготовить полученные с сервера карточки:
             val newScAds = findAdsResp.ads
               .iterator
               .map { sc3AdData =>
-                // TODO Заинлайнить этот apply, попутно пофиксив в нём focused.canEdit
-                MScAdData( sc3AdData.jd )
+                // Собрать начальное состояние карточки.
+                // Сервер может присылать уже открытые карточи - это нормально.
+                // Главное - их сразу пропихивать и в focused, и в обычные блоки.
+                val isFocused = sc3AdData.jd.template.rootLabel.name ==* MJdTagNames.DOCUMENT
+                val jsEdgesMap = sc3AdData.jd.edgesMap.mapValues(MEdgeDataJs(_))
+                MScAdData(
+                  nodeId    = sc3AdData.jd.nodeId,
+                  main      = MBlkRenderData(
+                    template  = if (isFocused) {
+                      // Найти главный блок в шаблоне focused-карточки документа.
+                      sc3AdData.jd.template.getMainBlockOrFirst
+                    } else {
+                      sc3AdData.jd.template
+                    },
+                    edges     = jsEdgesMap
+                  ),
+                  focused = if (isFocused) {
+                    // Сервер прислал focused-карточку.
+                    val v = MScFocAdData(
+                      MBlkRenderData(
+                        template  = sc3AdData.jd.template,
+                        edges     = jsEdgesMap
+                      ),
+                      canEdit = sc3AdData.canEdit.getOrElseFalse
+                    )
+                    Ready(v)
+                  } else {
+                    // Обычный grid-block.
+                    Pot.empty
+                  }
+                )
               }
               .toVector
+
             val (ads2, jdConf2) = if (m.evidence.clean) {
               val jdConf1 = v0.jdConf.withSzMult(
                 findAdsResp.szMult

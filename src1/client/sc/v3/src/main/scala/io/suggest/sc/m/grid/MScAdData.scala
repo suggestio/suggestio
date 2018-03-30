@@ -1,16 +1,14 @@
 package io.suggest.sc.m.grid
 
 import diode.FastEq
-import diode.data.{Pot, Ready}
-import io.suggest.jd.MJdAdData
-import io.suggest.jd.tags.{JdTag, MJdTagNames}
+import diode.data.Pot
+import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import scalaz.Tree
-import JdTag.Implicits._
 
 /**
   * Suggest.io
@@ -31,36 +29,6 @@ object MScAdData {
   }
 
   implicit def univEq: UnivEq[MScAdData] = UnivEq.derive
-
-  /** Сборка инстанса [[MScAdData]] из инстанса MJdAdData. */
-  def apply( jdAdData: MJdAdData ): MScAdData = {
-    val isFocused = jdAdData.template.rootLabel.name ==* MJdTagNames.DOCUMENT
-    val jsEdgesMap = jdAdData.edgesMap.mapValues(MEdgeDataJs(_))
-    apply(
-      nodeId    = jdAdData.nodeId,
-      main      = MBlkRenderData(
-        template  = if (isFocused) {
-          // Найти главный блок в шаблоне focused-карточки документа.
-          jdAdData.template.getMainBlockOrFirst
-        } else {
-          jdAdData.template
-        },
-        edges     = jsEdgesMap
-      ),
-      focused = if (isFocused) {
-        val v = MScFocAdData(
-          MBlkRenderData(
-            template  = jdAdData.template,
-            edges     = jsEdgesMap
-          ),
-          canEdit = false // TODO В GridAdsAh-вызове есть лучшее значение.
-        )
-        Ready(v)
-      } else {
-        Pot.empty
-      }
-    )
-  }
 
 }
 

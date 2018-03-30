@@ -5,6 +5,7 @@ import _root_.util.di.{IScNlUtil, IScUtil}
 import _root_.util.showcase.IScAdSearchUtilDi
 import _root_.util.stat.IStatUtil
 import io.suggest.ad.blk.BlockWidths
+import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MSzMult
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{IMNodes, MNode}
@@ -45,6 +46,7 @@ trait ScAdsTileBase
   with IMNodes
   with IBlkImgMakerDI
   with IScAdSearchUtilDi
+  with ICanEditAdDi
 {
 
   import mCommonDi._
@@ -401,8 +403,23 @@ trait ScAdsTile
           )(ctx)
           .execute()
 
-        for (jd <- jdFut) yield
-          MSc3AdData( jd )
+        val canEditFocusedOptFut = OptionUtil.maybeFut( isDisplayOpened ) {
+          for (
+            resOpt <- canEditAd.isUserCanEditAd(_request.user, brArgs.mad)
+          ) yield {
+            Some( resOpt.nonEmpty )
+          }
+        }
+
+        for {
+          jd <- jdFut
+          canEditOpt <- canEditFocusedOptFut
+        } yield {
+          MSc3AdData(
+            jd      = jd,
+            canEdit = canEditOpt
+          )
+        }
       }
         .flatten
     }
