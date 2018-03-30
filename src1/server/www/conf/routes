@@ -56,7 +56,7 @@ GET  /lk/nodes                          @controllers.MarketLkAdn.lkList(fromNode
 GET  /lk/node/create                    @controllers.MarketLkAdn.createNode
 POST /lk/node/create                    @controllers.MarketLkAdn.createNodeSubmit
 GET  /lk/node/profile/:nodeId           @controllers.MarketLkAdn.showAdnNode(nodeId)
-GET  /lk/node/mads/:adnId               @controllers.MarketLkAdn.showNodeAds(adnId, mode: mlk.MNodeAdsMode ?= mlk.MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None)
+#GET  /lk/node/mads/:adnId               @controllers.MarketLkAdn.showNodeAds(adnId, mode: mlk.MNodeAdsMode ?= mlk.MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None)
 GET  /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNode(adnId)
 POST /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
 POST /lk/node/img/gal/prepare           @controllers.MarketLkAdnEdit.handleGalleryImg

@@ -4,7 +4,7 @@
 
 @import ctx.messages
 
-<a class="event_w" href="@routes.MarketLkAdn.showNodeAds(rargs.mevent.ownerId)">
+<a class="event_w" href="@routes.LkAds.adsPage(rargs.mevent.ownerId :: Nil)">
   @_oneEvtBase(rargs, Some("__bg-1 __icon-1")) {
     <div class="event_t">
       @messages("Start.your.work.with.ads.mgr")

@@ -504,8 +504,8 @@ class LkAdEdit @Inject() (
         LOGGER.info(s"$logPrefix Done, isDeleted = $isDeleted")
 
         // Удаление выполнено. Т.к. у нас pure-js-форма, то надо редирект на клиенте сделать.
-        val call = routes.MarketLkAdn.showNodeAds(
-          adnId   = request.producer.id.get
+        val call = routes.LkAds.adsPage(
+          nodeKey = request.producer.id.get :: Nil
         )
         Ok( call.url )
       }

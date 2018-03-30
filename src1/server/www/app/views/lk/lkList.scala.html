@@ -24,7 +24,7 @@
             <div class="node-list_i">
               @* Текущему магазину добавлять класс __current. *@
               <a class="node-list_i-link @if(currAdnId == mnode.id){__current}"
-                 href="@routes.MarketLkAdn.showNodeAds(mnode.id.get)">
+                 href="@routes.LkAds.adsPage(mnode.id.get :: Nil)">
                 @mnode.meta.basic.name
               </a>
             </div>

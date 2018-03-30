@@ -52,7 +52,7 @@ class IdentUtil @Inject() (
       } else if (mnodeIds.size == 1) {
         // У юзера есть один рекламный узел
         val nodeId = mnodeIds.head
-        routes.MarketLkAdn.showNodeAds(nodeId)
+        routes.LkAds.adsPage(nodeId :: Nil)
       } else {
         // У юзера есть несколько узлов во владении. Нужно предоставить ему выбор.
         routes.MarketLkAdn.lkList()

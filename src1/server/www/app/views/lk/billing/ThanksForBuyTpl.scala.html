@@ -17,7 +17,7 @@
 
   <p>
     @for(mnodeId <- mnode.id) {
-      <a href="@routes.MarketLkAdn.showNodeAds(mnodeId)">
+      <a href="@routes.LkAds.adsPage(mnodeId :: Nil)">
         &lt;&lt;&lt;
         @messages("Return.to.my.ads")...
       </a>

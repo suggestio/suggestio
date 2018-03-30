@@ -170,8 +170,8 @@ class MarketAd @Inject() (
             adId
           }
           // Сборка и возврат HTTP-ответа.
-          for (adId <- adIdFut) yield {
-            Redirect(routes.MarketLkAdn.showNodeAds(adnId, newAdId = Some(adId)))
+          for (_ <- adIdFut) yield {
+            Redirect(routes.LkAds.adsPage(adnId :: Nil /*, newAdId = Some(adId)*/ ))
               .flashing(FLASH.SUCCESS -> "Ad.created")
           }
         }
@@ -314,11 +314,10 @@ class MarketAd @Inject() (
     * карточки нет продьюсера. Если так, то надо будет вернуть lkList(). */
   private def _routeToMadProducerOrLkList(mad: MNode): Call = {
     val prodIdOpt = n2NodesUtil.madProducerId(mad)
-    val mlk = routes.MarketLkAdn
     prodIdOpt.fold[Call] {
-      mlk.lkList()
+      routes.MarketLkAdn.lkList()
     } { prodId =>
-      mlk.showNodeAds(prodId)
+      routes.LkAds.adsPage( prodId :: Nil )
     }
   }
 

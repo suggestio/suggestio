@@ -23,7 +23,7 @@
     <h2>@messages("Your.cart.is.empty").</h2>
 
     @*for( mnodeId <- args.mnode.id ) {
-      <a href="@routes.MarketLkAdn.showNodeAds(mnodeId)">
+      <a href="@routes.LkAds.adsPage(mnodeId :: Nil)">
         @messages("Return.to.my.ads")
       </a>
     }*@

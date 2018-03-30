@@ -42,6 +42,17 @@
       }
     }
 
+
+    @if(ctx.user.isSuper) {
+      @* Кнопка вызова системной панели. Временно ушла с правой панели (вместе с панелью). *@
+      @_leftBarItemTpl(
+        title = "System",
+        href  = routes.SysMarket.showAdnNode(nodeId)
+      ) {
+        System
+      }
+    }
+
   } @* nodeId *@
 
 }

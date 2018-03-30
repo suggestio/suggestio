@@ -408,7 +408,7 @@ class MarketLkAdn @Inject() (
               }
 
             } yield {
-              Redirect(routes.MarketLkAdn.showNodeAds(adnId))
+              Redirect(routes.LkAds.adsPage(adnId :: Nil))
                 .flashing(FLASH.SUCCESS -> "Signup.finished")
                 .withSession(Keys.PersonId.value -> personId)
             }
