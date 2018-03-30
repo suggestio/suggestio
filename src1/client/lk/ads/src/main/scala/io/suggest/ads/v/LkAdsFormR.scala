@@ -2,6 +2,7 @@ package io.suggest.ads.v
 
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.ads.LkAdsFormConst
 import io.suggest.ads.m.{MAdProps, MLkAdsRoot}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -10,6 +11,7 @@ import io.suggest.jd.render.v.{JdCss, JdCssR}
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.Messages
 import io.suggest.routes.routes
+import io.suggest.sc.ScConstants
 import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -85,7 +87,7 @@ class LkAdsFormR(
                   .flatten
                   .zipWithIndex
                   .flatMap { case (adProps, i) =>
-                    val i1mod4eq0 = (i + 1) % 4 ==* 0
+                    val i1mod4eq0 = (i + 1) % LkAdsFormConst.ADS_PER_ROW ==* 0
                     val iStr = i.toString
                     // Отрендерить превьюшку карточки с обвесом:
                     val adItem = p.wrap { mroot =>
@@ -135,7 +137,7 @@ class LkAdsFormR(
               <.a(
                 ^.`class` := Css.Lk.BLUE_LINK,
                 // TODO ненужные "a."-префиксы в qs, сейчас спиливаются через replace, но надо-то как-то решить проблему.
-                ^.href := route.url.replaceAll("([?&])a\\.", "$1"),
+                ^.href := ScConstants.ScJsState.fixJsRouterUrl(route.url),
                 ^.target.blank,
                 Messages( MsgCodes.`_ad.showcase.link` )
               )

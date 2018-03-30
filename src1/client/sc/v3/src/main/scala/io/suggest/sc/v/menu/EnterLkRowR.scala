@@ -65,7 +65,9 @@ class EnterLkRowR(
           }
         } { myAdnNodeId =>
           // Ссылка прямо в личный кабинет узла.
-          val r = props.scJsRouter.controllers.MarketLkAdn.showNodeAds( myAdnNodeId )
+          //val r = props.scJsRouter.controllers.MarketLkAdn.showNodeAds( myAdnNodeId )
+          // TODO Тут опасность: id узла используется как ключ узла.
+          val r = props.scJsRouter.controllers.LkAds.adsPage( myAdnNodeId )
           val txt = MsgCodes.`Go.to.node.ads`
           (r, txt)
         }

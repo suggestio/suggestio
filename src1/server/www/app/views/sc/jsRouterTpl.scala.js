@@ -16,7 +16,7 @@
 
   routes.javascript.Ident.mySioStartPage,
   routes.javascript.Ident.rdrUserSomewhere,
-  routes.javascript.MarketLkAdn.showNodeAds,
+  routes.javascript.LkAds.adsPage,
   routes.javascript.LkAdEdit.editAd
 )
 

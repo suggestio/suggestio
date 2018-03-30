@@ -61,6 +61,9 @@ sealed trait Controllers extends js.Object {
   /** Роуты LkNodes-контроллера. */
   def LkNodes: LkNodesCtlRoutes = js.native
 
+  /** Роуты LkAds-контроллера. */
+  def LkAds: LkAdsCtlRoutes = js.native
+
 }
 
 
@@ -221,3 +224,15 @@ sealed trait LkNodesCtlRoutes extends js.Object {
   def setTfDaily(onNodeRcvrKey: String): Route = js.native
 
 }
+
+
+/** Роуты до LkAds-контроллера. */
+@js.native
+sealed trait LkAdsCtlRoutes extends js.Object {
+
+  def adsPage(nodeKey: String): Route = js.native
+
+  def getAds(rcvrKey: String, offset: Int): Route = js.native
+
+}
+

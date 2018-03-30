@@ -625,6 +625,13 @@ object ScConstants {
     val TAG_NODE_ID_FN          = TAG_INFO_FN + ".i"
     val TAG_FACE_FN             = TAG_INFO_FN + ".f"
 
+    /** Историческая проблема: названия qs-параметров оторваны от структуры qs-модели состояния.
+      * js-роутер o2qs() неправильно сериализует названия qs-полей.
+      * Тут фунция ремонта ссылки с состоянием, которая сгенерена через js-роутер и его функцию o2qs(). */
+    def fixJsRouterUrl(url: String): String = {
+      url.replaceAll("([?&])a\\.", "$1")
+    }
+
   }
 
 }

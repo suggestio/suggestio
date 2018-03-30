@@ -26,3 +26,6 @@ case class SetAdShownAtParent(adId: String, isShown: Boolean) extends ILkAdsActi
 
 /** Экшен завершения запроса на выставление отображения карточки на текущем (родительском) узле. */
 case class SetAdShownAtParentResp(reason: SetAdShownAtParent, tryResp: Try[MLknNode], timestampMs: Long) extends ILkAdsAction
+
+/** Экшен скроллинга плитки карточек. Надо подгружать плитку по мере скроллинга. */
+case class AdsScroll(scrollTop: Double) extends ILkAdsAction

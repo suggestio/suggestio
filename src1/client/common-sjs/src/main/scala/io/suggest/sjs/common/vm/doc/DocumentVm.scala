@@ -1,6 +1,7 @@
 package io.suggest.sjs.common.vm.doc
 
 import io.suggest.common.event.VisibilityChangeEvents
+import io.suggest.sjs.common.vm.Vm
 import io.suggest.sjs.common.vm.evtg.EventTargetVmT
 import io.suggest.sjs.common.vm.head.HeadVm
 import org.scalajs.dom
@@ -21,7 +22,22 @@ import scala.language.implicitConversions
 object DocumentVm
   extends VisibilityChangeEvents
 
-trait DocumentVmT extends EventTargetVmT {
+
+/** Представление API document'а с точки зрения потенциальной опасности некоторых полей. */
+@js.native
+trait SafeDocumentApi extends js.Object {
+  def body: UndefOr[HTMLBodyElement] = js.native
+  def head: UndefOr[HTMLHeadElement] = js.native
+  def scrollingElement: UndefOr[HTMLElement] = js.native
+}
+object SafeDocumentApi {
+  implicit def apply(doc: Document): SafeDocumentApi = {
+    doc.asInstanceOf[SafeDocumentApi]
+  }
+}
+
+
+case class DocumentVm(override val _underlying: HTMLDocument = dom.document) extends EventTargetVmT {
 
   override type T = Document
 
@@ -49,23 +65,6 @@ trait DocumentVmT extends EventTargetVmT {
       .getOrElse( _underlying.documentElement )
   }
 
+  def documentElement = Vm( _underlying.documentElement )
+
 }
-
-
-/** Представление API document'а с точки зрения потенциальной опасности некоторых полей. */
-@js.native
-trait SafeDocumentApi extends js.Object {
-  def body: UndefOr[HTMLBodyElement] = js.native
-  def head: UndefOr[HTMLHeadElement] = js.native
-  def scrollingElement: UndefOr[HTMLElement] = js.native
-}
-object SafeDocumentApi {
-  implicit def apply(doc: Document): SafeDocumentApi = {
-    doc.asInstanceOf[SafeDocumentApi]
-  }
-}
-
-
-/** Дефолтовая реализация [[DocumentVmT]], поля заменены на val и lazy val. */
-case class DocumentVm(override val _underlying: HTMLDocument = dom.document)
-  extends DocumentVmT

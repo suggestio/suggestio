@@ -12,6 +12,7 @@ import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
+import io.suggest.sjs.common.vsz.ViewportSz
 
 import scala.util.Success
 
@@ -33,6 +34,34 @@ class NodeAdsAh[M](
 {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+
+    // Реакция на скроллинг страницы со списком карточек: подгрузить ещё карточек...
+    case m: AdsScroll =>
+      val v0 = value
+      if (
+        v0.hasMoreAds &&
+        !v0.ads.isPending && {
+          // Оценить уровень скролла: пора подгружать или нет. Тут по аналогии с GridAdsAh.
+          val blocksCount = v0.ads.fold(0)(_.length) + 1
+          val rowsCount = blocksCount % LkAdsFormConst.ADS_PER_ROW
+          val gridHeight = rowsCount * LkAdsFormConst.ONE_ITEM_FULL_HEIGHT_PX
+          val screenHeight = ViewportSz.getViewportSize().fold(768)(_.height)
+          val fullContentHeight = gridHeight + LkAdsFormConst.GRID_TOP_SCREEN_OFFSET_PX
+          val delta = fullContentHeight - screenHeight - m.scrollTop
+          delta < LkAdsFormConst.LOAD_MORE_SCROLL_DELTA_PX
+        }
+      ) {
+        // Надо подгрузить ещё карточек.
+        val fx = Effect.action( GetMoreAds(clean = false) )
+        val v2 = v0.withAds(
+          v0.ads.pending()
+        )
+        updated(v2, fx)
+      } else {
+        // Скролл отфильтрован.
+        noChange
+      }
+
 
     // Экшен замены значения галочки размещения какой-то карточки на родительском узле.
     case m: SetAdShownAtParent =>

@@ -29,8 +29,6 @@ trait ILkAdsApi {
 /** Реализация [[ILkAdsApi]] поверх традиционных http-запросов. */
 class LkAdsApiHttp() extends ILkAdsApi {
 
-  import LkAdsRoutes._
-
   override def getAds(nodeKey: RcvrKey, offset: Int): Future[Seq[MLkAdsOneAdResp]] = {
     val route = routes.controllers.LkAds.getAds(
       rcvrKey = RcvrKey.rcvrKey2urlPath( nodeKey ),
