@@ -1,6 +1,7 @@
 package io.suggest.lk.nodes.form.m
 
 import diode.data.Pot
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -8,10 +9,16 @@ import diode.data.Pot
   * Created: 10.03.17 11:05
   * Description: Состояние обновления галочки isEnabled.
   */
+object MNodeEnabledUpdateState {
+
+  implicit def univEq: UnivEq[MNodeEnabledUpdateState] = UnivEq.force
+
+}
+
 case class MNodeEnabledUpdateState(
-                                  newIsEnabled      : Boolean,
-                                  request           : Pot[_]
-                                ) {
+                                    newIsEnabled      : Boolean,
+                                    request           : Pot[_]
+                                  ) {
 
   def withRequest(req: Pot[_]) = copy(request = req)
 

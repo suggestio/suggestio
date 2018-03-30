@@ -10,6 +10,7 @@
 
   @for(nodeId <- nodeIdOpt) {
 
+    @* TODO Nodes LkAds требует RcvrKey, а у нас тут на руках только лишь nodeId. *@
     @_leftBarItemTpl(
       title = messages("Ad.cards"),
       href  = routes.LkAds.adsPage(nodeId :: Nil),

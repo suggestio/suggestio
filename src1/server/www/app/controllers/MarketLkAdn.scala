@@ -34,7 +34,6 @@ import util.img.{DynImgUtil, GalleryUtil, LogoUtil}
 import util.lk.LkAdUtil
 import util.showcase.ShowcaseUtil
 import util.FormUtil
-import util.cdn.CdnUtil
 import views.html.lk.adn._
 import views.html.lk.adn.invite.inviteInvalidTpl
 import views.html.lk.usr._

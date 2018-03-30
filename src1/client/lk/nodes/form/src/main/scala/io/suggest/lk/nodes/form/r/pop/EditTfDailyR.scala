@@ -22,7 +22,7 @@ import io.suggest.msg.Messages
   * Created: 21.03.17 21:57
   * Description: Компонент попапа редактирования тарифа.
   */
-object EditTfDailyR {
+class EditTfDailyR {
 
   type Props = ModelProxy[Option[MEditTfDailyS]]
 

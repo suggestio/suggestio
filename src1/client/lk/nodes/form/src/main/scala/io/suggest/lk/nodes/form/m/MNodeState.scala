@@ -7,6 +7,7 @@ import io.suggest.primo.id.IId
 import io.suggest.sjs.common.log.Log
 import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.msg.WarnMsgs
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -94,6 +95,11 @@ object MNodeState
         Ready( children2.toSeq )
       )
     }
+  }
+
+  implicit def univEq: UnivEq[MNodeState] = {
+    import io.suggest.ueq.JsUnivEqUtil._
+    UnivEq.derive
   }
 
 }

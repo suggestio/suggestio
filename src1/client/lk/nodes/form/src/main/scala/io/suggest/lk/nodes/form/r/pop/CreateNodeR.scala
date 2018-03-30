@@ -22,7 +22,7 @@ import io.suggest.msg.Messages
   * Created: 17.03.17 21:31
   * Description: Компонент попапа с формой создания узла.
   */
-object CreateNodeR {
+class CreateNodeR {
 
   type Props = ModelProxy[Option[MCreateNodeS]]
 

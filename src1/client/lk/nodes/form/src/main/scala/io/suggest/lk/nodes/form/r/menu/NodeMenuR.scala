@@ -16,7 +16,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Created: 29.03.17 12:49
   * Description: Компонент опциональной менюшки текущего узла.
   */
-object NodeMenuR {
+class NodeMenuR {
 
   type Props = ModelProxy[_]
 

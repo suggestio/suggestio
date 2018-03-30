@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
-import diode.ActionType
+import diode.{ActionType, FastEq}
 import diode.react.ModelProxy
 import diode.react.ReactPot.potWithReact
 import io.suggest.adv.rcvr.RcvrKey
@@ -13,10 +13,12 @@ import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.r.menu.{NodeMenuBtnR, NodeMenuR}
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.{ErrorMsgs, JsFormatUtil, Messages}
-import io.suggest.react.ReactCommonUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sjs.common.log.Log
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -25,7 +27,11 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: Рекурсивный react-компонент одной ноды дерева [[TreeR]].
   * Изначально разрастался прямо внутри [[TreeR]].
   */
-object NodeR extends Log { self =>
+class NodeR(
+             nodeMenuR    : NodeMenuR,
+             nodeMenuBtnR : NodeMenuBtnR
+           )
+  extends Log { self =>
 
   type Props = PropsVal
 
@@ -40,12 +46,22 @@ object NodeR extends Log { self =>
     */
   case class PropsVal(
                        conf          : MLknConf,
+                       // TODO mtree Всегда меняется. Нужно его выкинуть из node-состояния ИЛИ заменить на isShowProps:Boolean. С помощью scalaz.Tree и рефакторинга рендера. Иначе дерево формы рендерится целиком на каждый чих.
                        mtree         : MTree,
                        node          : MNodeState,
                        parentRcvrKey : RcvrKey,
                        level         : Int,
                        proxy         : ModelProxy[_]
                      )
+  implicit object NodeRPropsValFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      MTree.MTreeFastEq.eqv(a.mtree, b.mtree) &&
+        (a.conf ===* b.conf) &&
+        (a.node ===* b.node) &&
+        (a.parentRcvrKey ===* b.parentRcvrKey) &&
+        (a.level ==* b.level)
+    }
+  }
 
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -147,7 +163,7 @@ object NodeR extends Log { self =>
       val rcvrKeyRev = node.info.id :: parentRcvrKey
       val rcvrKey = rcvrKeyRev.reverse
 
-      val isShowProps = p.conf.adIdOpt.isEmpty && p.mtree.showProps.contains(rcvrKey)
+      val isShowNodeEditProps = p.conf.adIdOpt.isEmpty && p.mtree.showProps.contains(rcvrKey)
 
       // Контейнер узла узла + дочерних узлов.
       <.div(
@@ -159,7 +175,7 @@ object NodeR extends Log { self =>
         // Разделитель-промежуток от предыдущего элемента сверху.
         _delim,
         // Если на текущем узле отображаются пропертисы, то нужен толстый delimiter
-        _delim.when( isShowProps ),
+        _delim.when( isShowNodeEditProps ),
 
         <.div(
           ^.classSet1(
@@ -175,7 +191,7 @@ object NodeR extends Log { self =>
             Css.Lk.Nodes.Name.EDITING  -> node.editing.nonEmpty,
 
             // Закруглять углы только когда узел не раскрыт.
-            Css.Table.Td.Radial.FIRST -> !isShowProps
+            Css.Table.Td.Radial.FIRST -> !isShowNodeEditProps
           ),
           // Во время неРедактирования можно сворачивать-разворачивать блок, кликая по нему.
           if (node.isNormal) {
@@ -222,7 +238,7 @@ object NodeR extends Log { self =>
               },
 
               // Рендерить кнопку редактирования имени, если ситуация позволяет.
-              if (isShowProps && node.isNormal) {
+              if (isShowNodeEditProps && node.isNormal) {
                 <.span(
                   HtmlConstants.NBSP_STR,
                   HtmlConstants.NBSP_STR,
@@ -265,12 +281,12 @@ object NodeR extends Log { self =>
               },
 
               // Кнопка удаления узла.
-              if (isShowProps && node.info.canChangeAvailability.contains(true)) {
+              if (isShowNodeEditProps && node.info.canChangeAvailability.contains(true)) {
                 <.div(
                   ^.`class` := Css.Lk.Nodes.Menu.MENU,
                   ^.onClick ==> ReactCommonUtil.stopPropagationCB,
-                  NodeMenuBtnR( p.proxy ),
-                  NodeMenuR( p.proxy )
+                  nodeMenuBtnR( p.proxy ),
+                  nodeMenuR( p.proxy )
                 )
               } else EmptyVdom
 
@@ -331,7 +347,7 @@ object NodeR extends Log { self =>
         ),
 
         // Рендер подробной информации по узлу
-        if (isShowProps) {
+        if (isShowNodeEditProps) {
           <.div(
 
             // Данные по узлу рендерим таблицей вида ключ-значение. Однако, возможна третья колонка с крутилкой.
@@ -544,7 +560,7 @@ object NodeR extends Log { self =>
                   parentRcvrKey = rcvrKeyRev,
                   level         = childLevel
                 )
-                self( p1 )
+                component.withKey(subNode.info.id)( p1 )
               }
             } else EmptyVdom
           )
@@ -560,7 +576,7 @@ object NodeR extends Log { self =>
         },
 
         // Если текущий узел раскрыт полностью, то нужен ещё один разделитель снизу, чтобы явно отделить контент текущего узла.
-        _delim.when( isShowProps )
+        _delim.when( isShowNodeEditProps )
 
       )
     }
@@ -571,6 +587,7 @@ object NodeR extends Log { self =>
   val component = ScalaComponent.builder[Props]("Node")
     .stateless
     .renderBackend[Backend]
+    .configure( ReactDiodeUtil.propsFastEqShouldComponentUpdate )
     .build
 
   def apply(p: Props) = component(p)

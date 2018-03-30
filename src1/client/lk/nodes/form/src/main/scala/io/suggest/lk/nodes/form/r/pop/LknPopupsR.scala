@@ -17,7 +17,10 @@ import japgolly.scalajs.react.vdom.Implicits._
   * Created: 17.03.17 22:26
   * Description: React-компонент всех попапов этой формы. Рендерится параллельно с корневым компонентом формы.
   */
-object LknPopupsR {
+class LknPopupsR(
+                  val createNodeR   : CreateNodeR,
+                  val editTfDailyR  : EditTfDailyR
+                ) {
 
   import MCreateNodeS.MCreateNodeSFastEq
   import MDeleteConfirmPopupS.MDeleteConfirmPopupSFastEq
@@ -44,13 +47,13 @@ object LknPopupsR {
         PopupsContR( popContPropsProxy )(
 
           // Рендер попапа создания нового узла:
-          state.createNodeOptConn { CreateNodeR.apply },
+          state.createNodeOptConn { createNodeR.apply },
 
           // Рендер попапа удаления существующего узла:
           state.deleteNodeOptConn { DeleteConfirmPopupR.apply },
 
           // Рендер попапа редактирования тарифа текущего узла.
-          state.editTfDailyOptConn { EditTfDailyR.apply }
+          state.editTfDailyOptConn { editTfDailyR.apply }
 
         )
 

@@ -176,5 +176,17 @@ object ReactDiodeUtil {
     }
   }
 
+
+  /** Конфигурирование компонента, чтобы сверялись props через FastEq.
+    *
+    * @tparam P Тип Props с поддержкой FastEq.
+    * @return Сконфигуренный компонент.
+    */
+  def propsFastEqShouldComponentUpdate[P: FastEq, C <: Children, S, B]: ScalaComponent.Config[P, C, S, B] = {
+    _.shouldComponentUpdatePure { $ =>
+      implicitly[FastEq[P]].neqv( $.currentProps, $.nextProps )
+    }
+  }
+
 }
 

@@ -8,7 +8,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
 /** Компонентик кнопки меню узла. */
-object NodeMenuBtnR {
+class NodeMenuBtnR {
 
   type Props = ModelProxy[_]
 

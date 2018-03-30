@@ -2,6 +2,7 @@ package io.suggest.lk.nodes.form.m
 
 import diode.FastEq
 import io.suggest.adv.rcvr.RcvrKey
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -16,6 +17,11 @@ object MTree {
       (a.nodes eq b.nodes) &&
         (a.showProps eq b.showProps)
     }
+  }
+
+  implicit def univEq: UnivEq[MTree] = {
+    import io.suggest.ueq.UnivEqUtil._
+    UnivEq.derive
   }
 
 }

@@ -12,6 +12,7 @@ import io.suggest.lk.nodes.form.m.MLknPopups.MLknPopupsFastEq
 import org.scalajs.dom.raw.HTMLDivElement
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.univeq._
+import com.softwaremill.macwire._
 
 /**
   * Suggest.io
@@ -39,16 +40,18 @@ trait LkNodesInitRouter extends InitRouter {
     // Инициализировать хранилку ссылки на гифку прелоадера, т.к. тот будет стёрт входе react-рендера.
     LkPreLoader.PRELOADER_IMG_URL
 
+    val modules = wire[LkNodesModule]
+
     // Инициализировать circuit
-    val circuit = LkNodesFormCircuit
+    val circuit = modules.lkNodesFormCircuit
 
     // Рендер формы.
-    val formR = circuit.wrap(m => m)(LkNodesFormR.apply)
+    val formR = circuit.wrap(m => m)( modules.lkNodesFormR.apply )
     val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( LkNodesConst.FORM_CONT_ID )
     formR.renderIntoDOM(formTarget )
 
     // Рендер компонента попапов.
-    val popsContR = circuit.wrap(_.popups)( LknPopupsR.apply )
+    val popsContR = circuit.wrap(_.popups)( modules.lknPopupsR.apply )
     val popsContTarget = PopupsContR.initDocBody()
     popsContR.renderIntoDOM(popsContTarget)
   }

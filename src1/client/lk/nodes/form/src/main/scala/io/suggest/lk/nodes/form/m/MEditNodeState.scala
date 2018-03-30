@@ -1,6 +1,7 @@
 package io.suggest.lk.nodes.form.m
 
 import diode.data.Pot
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -30,6 +31,10 @@ trait IEditNodeState[T <: IEditNodeState[T]] {
   /** Флаг общей итоговой валидности. */
   def isValid: Boolean = nameValid
 
+}
+
+object MEditNodeState {
+  implicit def univEq: UnivEq[MEditNodeState] = UnivEq.force
 }
 
 

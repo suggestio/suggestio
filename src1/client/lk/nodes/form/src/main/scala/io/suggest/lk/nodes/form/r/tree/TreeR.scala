@@ -15,7 +15,9 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   * Description: React-компонент дерева узлов.
   * Каждый узел дерева описывается компонентом [[NodeR]].
   */
-object TreeR {
+class TreeR(
+             val nodeR: NodeR
+           ) {
 
   type Props = ModelProxy[PropsVal]
 
@@ -46,7 +48,7 @@ object TreeR {
 
         // Рендерить узлы.
         v.mtree.nodes.toVdomArray { node =>
-          val tnp = NodeR.PropsVal(
+          val tnp = nodeR.PropsVal(
             conf          = v.conf,
             mtree         = v.mtree,
             node          = node,
@@ -54,7 +56,7 @@ object TreeR {
             level         = parentLevel,
             proxy         = p
           )
-          NodeR( tnp )
+          nodeR.component.withKey(node.info.id)( tnp )
         }
 
       )

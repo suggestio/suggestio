@@ -27,7 +27,7 @@ import scala.concurrent.Future
   * Created: 08.02.17 16:10
   * Description: Diode circuit для формы управления узлами в личном кабинете.
   */
-object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[MLkNodesRoot] {
+class LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[MLkNodesRoot] {
 
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.LK_NODES_FORM_ERROR
 
