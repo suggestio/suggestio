@@ -33,6 +33,8 @@ case object MImgFmts extends StringEnum[MImgFmt] {
   case object GIF extends MImgFmt("g") {
     override def name = "gif"
     override def imCoalesceFrames = true
+    /** @see [[http://www.imagemagick.org/Usage/anim_opt/#optimize]] General Purpose GIF Optimizer of ImageMagick */
+    override def layersOptimize = true
     override def imFinalRepage = true
     override def uploadMaxFileSizeKb = 2 * bInKb
     override def uploadSideSizeMaxPx = 2000
@@ -168,6 +170,9 @@ sealed abstract class MImgFmt(override val value: String) extends StringEnumEntr
     * Для GIF'а например, из-за внутренних особенностей формата и его обработки.
     */
   def imFinalRepage: Boolean = false
+
+  /** Добавлять -layers  Optimize */
+  def layersOptimize: Boolean = false
 
   /** Является ли формат растровым? */
   def isRaster: Boolean = true

@@ -255,7 +255,9 @@ class DynImgUtil @Inject() (
     }
 
     // Нужно заставить imagemagick компактовать фреймы между собой при сохранении:
-    if (outFmt.imCoalesceFrames)
+    if (outFmt.layersOptimize)
+      op.layers("Optimize")
+    else if (outFmt.imCoalesceFrames)
       op.coalesce()
 
     for (imOp <- imOps) {
