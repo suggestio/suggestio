@@ -1,10 +1,10 @@
 package io.suggest.sec.av
 
 import java.io.File
-import java.nio.ByteBuffer
+import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.charset.StandardCharsets
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl._
@@ -48,12 +48,13 @@ final class ClamAvUtil @Inject()(
       host   <- avConf.getOptional[String]("host")
     } yield {
       val port = avConf.getOptional[Int]("port").getOrElse(3310)
+      LOGGER.info(s"Configured remote clamd: $host:$port")
       (host, port)
     }
   }
 
   /** Максимальный размер одной порции исходного файла, отправляемого по TCP. */
-  private def TCP_CHUNK_SIZE = 2048
+  private def TCP_CHUNK_SIZE = 4096
 
   LOGGER.debug(s"Clam remote = ${CLAM_REMOTE_HOST_PORT.orNull}")
 
@@ -94,6 +95,7 @@ final class ClamAvUtil @Inject()(
 
 
   def scanClamdRemote(req: ClamAvScanRequest): Future[ClamAvScanResult] = {
+    LOGGER.trace(s"scanClamdRemote(): File = ${req.file}")
     val src = FileIO.fromPath( new File(req.file).toPath )
     scanClamdRemoteTcp(src)
   }
@@ -103,7 +105,11 @@ final class ClamAvUtil @Inject()(
 
   /** Рендер целого число в байты. */
   private def int2byteString(i: Int): ByteString = {
-    val bbuf = ByteBuffer.allocate(4).putInt(i).array()
+    val bbuf = ByteBuffer
+      .allocate(4)
+      //.order( ByteOrder.BIG_ENDIAN )
+      .putInt(i)
+      .array()
     ByteString.fromArrayUnsafe( bbuf )
   }
 
@@ -116,6 +122,8 @@ final class ClamAvUtil @Inject()(
     */
   def scanClamdRemoteTcp(src: Source[ByteString, _],
                          clamdHostPort: (String, Int) = CLAM_REMOTE_HOST_PORT.get): Future[ClamAvScanResult] = {
+    lazy val logPrefix = s"scanClamdRemoteTcp()#${System.currentTimeMillis()}:"
+    LOGGER.trace(s"$logPrefix Will stream data to $clamdHostPort")
     val connectionFlow = Tcp()
       .outgoingConnection(clamdHostPort._1, clamdHostPort._2)
 
@@ -130,7 +138,9 @@ final class ClamAvUtil @Inject()(
           .filter(_.nonEmpty)
           .map { chunk =>
             // Формат такой: <dataLength:4><data:dataLength>
-            val lenBs = int2byteString( chunk.length )
+            val l = chunk.length
+            val lenBs = int2byteString( l )
+            LOGGER.trace(s"$logPrefix $l bytes: $lenBs")
             // Приклеить байты длины к chunk'у данных и вернуть:
             lenBs ++ chunk
           }

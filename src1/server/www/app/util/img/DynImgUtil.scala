@@ -255,9 +255,7 @@ class DynImgUtil @Inject() (
     }
 
     // Нужно заставить imagemagick компактовать фреймы между собой при сохранении:
-    if (outFmt.layersOptimize)
-      op.layers("Optimize")
-    else if (outFmt.imCoalesceFrames)
+    if (outFmt.imCoalesceFrames)
       op.coalesce()
 
     for (imOp <- imOps) {
@@ -267,6 +265,10 @@ class DynImgUtil @Inject() (
     // Для gif'а нужно перестроить канву после операций, но перед сохранением:
     if (outFmt.imFinalRepage)
       op.p_repage()
+
+    // Для gif костыли
+    if (outFmt.layersOptimize)
+      op.layers("Optimize")
 
     op.addImage(outFmt.imFormat + ":" + out.getAbsolutePath)
     val cmd = new ConvertCmd()
