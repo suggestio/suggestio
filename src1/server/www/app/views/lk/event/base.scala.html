@@ -1,9 +1,0 @@
-@(title: String, nodeOpt: Option[MNode], headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
-
-@* Базовый шаблон для страниц в разделе событий. *@
-
-@lk.lkBaseLayout(
-  title         = title,
-  nodeOpt       = nodeOpt,
-  leftCurrEl    = Some(LkLeftPanelLinks.LPL_EVENTS)
-)(content)

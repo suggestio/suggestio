@@ -2,7 +2,6 @@ package models.event
 
 import java.time.OffsetDateTime
 
-import search.IEventsSearchArgs
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.es.util.SioEsUtil._
@@ -10,7 +9,6 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
-import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.primo.id.OptStrId
 import io.suggest.util.JacksonParsing
 import io.suggest.util.logs.MacroLogsImpl
@@ -18,6 +16,8 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.collection.Map
 import scala.concurrent.ExecutionContext
+
+// TODO Модель оставлена тут только для совместимости с legacy-кодом из lk-adv-ext.
 
 /**
  * Suggest.io
@@ -69,7 +69,6 @@ class MEvents @Inject() (
 )
   extends EsModelStatic
     with MacroLogsImpl
-    with EsDynSearchStatic[IEventsSearchArgs]
     with EsmV2Deserializer
     with EsModelPlayJsonStaticT
 {

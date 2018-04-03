@@ -3,7 +3,6 @@ package models.adv.ext
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.model.n2.node.MNode
 import models.blk.OneAdQsArgs
-import util.blocks.BgImg
 import models.blk.szMulted
 import util.adv.IAdvUtilDi
 import util.ext.IExtServiceHelper
@@ -46,8 +45,7 @@ trait Mad2ImgUrlCalcOuter extends IAdvUtilDi {
       val szMultV = whSzM * srv.szMult
       // Вычислить необходимость и ширину широкого отображения.
       // 2015.mar.13: Запрет для wide-рендера карточек без картинки. Пока эта функция не работает как надо.
-      val wideWidthOpt = BgImg.getBgImg(mad)
-        .flatMap { _ => srv.advExtWidePosting(tgUrl, mad) }
+      val wideWidthOpt = srv.advExtWidePosting(tgUrl, mad)
       //.filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.15F }
       PicInfo(
         wide   = wideWidthOpt,

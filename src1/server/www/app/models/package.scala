@@ -12,11 +12,7 @@ import play.api.data.Form
 
 package object models {
 
-  val  BlocksConf           = util.blocks.BlocksConf
   type BlockConf            = util.blocks.BlocksConf.T
-
-  type BfText               = util.blocks.BfText
-  type BfImage              = util.blocks.BfImage
 
   type AdnShownType         = AdnShownTypes.T
 

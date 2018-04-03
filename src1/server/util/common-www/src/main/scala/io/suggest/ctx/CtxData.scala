@@ -10,28 +10,16 @@ import io.suggest.mbill2.m.balance.MBalance
  * Description: Модель дополнительных произвольных данных, передаваемых по шаблонам внутри Context.
  */
 
-trait ICtxData {
-
-  def jsiTgs          : List[MJsiTg]
-  def mUsrBalances    : Seq[MBalance]
-  def evtsCount       : Option[Int]
-
-}
-
 
 /**
  * Модель для произвольных данных, закидываемых в контекст.
  * @param jsiTgs Какие-то доп.цели инициализации, выставляемые на уровне экшена
  * @param mUsrBalances Остатки на счетах юзера, обычно приходят из request.user.balancesFut в контроллер.
- * @param evtsCount Отображаемое кол-во непрочитанных событий.
  */
 case class CtxData(
-  override val jsiTgs           : List[MJsiTg]    = Nil,
-  override val mUsrBalances     : Seq[MBalance]   = Nil,
-  override val evtsCount        : Option[Int]     = None
-)
-  extends ICtxData
-{
+                    jsiTgs           : List[MJsiTg]    = Nil,
+                    mUsrBalances     : Seq[MBalance]   = Nil
+                  ) {
 
   def withJsiTgs(jsiTgs2: List[MJsiTg]) = copy(jsiTgs = jsiTgs2)
 
@@ -55,6 +43,6 @@ case class CtxData(
 
 object CtxData {
 
-  /** Часто-используемый пустой инстанс [[ICtxData]]. */
+  /** Часто-используемый пустой инстанс [[CtxData]]. */
   val empty = CtxData()
 }

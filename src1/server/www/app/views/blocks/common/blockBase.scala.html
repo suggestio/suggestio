@@ -1,4 +1,4 @@
-@(args: blk.IRenderArgs, bc: util.blocks.ValT)(content: Html)(implicit ctx: Context)
+@(args: blk.IRenderArgs)(content: Html)(implicit ctx: Context)
 
 @import models.blk.szMulted
 @import args.mad
@@ -9,7 +9,7 @@
 
 @* Тут постоянная часть верстки блоков карточек в выдаче.
    __rel класс - центровка div'а по центру.  *@
-<div class="sm-block sio-mart__single-offer sm-block-tpl@bc.id @if(mad.id){sm-block@mad.id} @if(args.isFocused){__rel} @args.cssClasses"
+<div class="sm-block sio-mart__single-offer @if(mad.id){sm-block@mad.id} @if(args.isFocused){__rel} @args.cssClasses"
      @if(mad.id) {
        @MAD_ID_ATTR="@mad.id"
        id="@mad.id@ID_DELIM@(if (args.isFocused) FAd.BLOCK_ID_SUFFIX else ID_SUFFIX)"
@@ -28,8 +28,6 @@
        @HEIGHT_ATTR="@szMulted(bm.height, args.szMult)"
      }
      data-wide-bg="@args.wideBg.isDefined"
-     @for(tl <- args.topLeft if tl.inlineStyle) {
-       style="@_focTopLeftCss(tl)"
-     }>
+     >
   @content
 </div>

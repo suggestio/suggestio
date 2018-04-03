@@ -4,7 +4,6 @@ import javax.inject.Singleton
 
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.blk.ent.{EntFont, TextEnt}
-import io.suggest.ad.form.AdFormConstants._
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
@@ -17,28 +16,20 @@ import io.suggest.jd.tags._
 import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.js.UploadConstants
-import io.suggest.model.n2.ad.rd.RichDescr
-import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.model.n2.media.MMedia
 import io.suggest.model.n2.node.{MNode, MNodeTypes}
-import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.colors.MColors
-import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo, MMeta}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.text.StringUtil.StringCollUtil
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.vid.ext.VideoExtUrlParsers
 import japgolly.univeq._
-import models.blk.ed.{AdFormM, AdFormResult, BindResult}
 import models.im.MImg3
 import models.mctx.Context
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil._
-import util.TplDataFormatUtil
-import util.blocks.BlocksConf
 
 import scala.concurrent.Future
 import scalaz.{Tree, Validation, ValidationNel}
@@ -111,31 +102,6 @@ class LkAdEdFormUtil
   }
 
 
-  /** Маппер для описания, прилагаемого к рекламной карточке. */
-  val richDescrOptM: Mapping[Option[RichDescr]] = {
-    val rdTextM = text(maxLength = 500000)
-      .transform(strFmtTrimF, strIdentityF)
-    val m = mapping(
-      "bgColor" -> colorM,
-      "text"    -> rdTextM
-    )
-    {(bgColor, rdText) =>
-      if (rdText.isEmpty) {
-        None
-      } else {
-        Some(RichDescr(bgColor = bgColor, text = rdText))
-      }
-    }
-    {rdOpt =>
-      val bgColor = rdOpt.fold("FFFFFF")(_.bgColor)
-      val rdText  = rdOpt.fold("")(_.text)
-      Some( (bgColor, rdText) )
-    }
-    optional(m)
-      .transform(_.flatten, Option.apply)
-  }
-
-
   /**
    * Сборка маппинга для шрифта.
    * @return Маппинг для AOFieldFont.
@@ -161,27 +127,6 @@ class LkAdEdFormUtil
       import aoff._
       Some((color, fsz, align, aoff.family))
     }
-  }
-
-
-  /** Маппер для активации и настройки покрывающей сетки-паттерна указанного цвета. */
-  val coveringPatternM: Mapping[Option[MColorData]] = {
-    tuple(
-      "enabled" -> boolean,
-      "color"   -> colorDataOptM
-    )
-    .verifying("error.required", {m => m match {
-      case (true, None)   => false
-      case _              => true
-    }})
-    .transform[Option[MColorData]] (
-      { case (isEnabled, colorOpt) =>
-        colorOpt.filter(_ => isEnabled)
-      },
-      {colorOpt =>
-        (colorOpt.isDefined, colorOpt)
-      }
-    )
   }
 
 
@@ -215,84 +160,6 @@ class LkAdEdFormUtil
     )
     { TextEnt.apply }
     { TextEnt.unapply }
-  }
-
-
-  /** apply-функция для формы добавления/редактировать рекламной карточки.
-    * Вынесена за пределы генератора ad-маппингов во избежание многократного создания в памяти экземпляров функции. */
-  def adFormApply(bmr: BindResult, pattern: Option[MColorData],
-                  richDescrOpt: Option[RichDescr], bgColor: MColorData): AdFormResult = {
-    val mad = MNode(
-      common = MNodeCommon(
-        ntype = MNodeTypes.Ad,
-        isDependent = true
-      ),
-      meta = MMeta(
-        basic = MBasicMeta(
-          // Сгенерить неиндексируемое имя карточки на основе полей.
-          techName = Some {
-            val s = bmr.entites
-              .iterator
-              .flatMap(_.text)
-              .map(_.value)
-              .filter(_.length >= 2)
-              .toSet
-              .mkString(" | ")
-            TplDataFormatUtil.strLimitLen(s, 32)
-          }
-        ),
-        colors = MColors(
-          pattern = pattern,
-          bg      = Some( bgColor )
-        ),
-        business = MBusinessInfo(
-          siteUrl = bmr.href
-        )
-      ),
-      ad = MNodeAd(
-        entities  = MNodeAd.toEntMap1( bmr.entites ),
-        richDescr = richDescrOpt,
-        blockMeta = Some(bmr.blockMeta)
-      )
-    )
-    AdFormResult(mad, bmr.bim)
-  }
-
-  /** Функция разборки для маппинга формы добавления/редактирования рекламной карточки. */
-  def adFormUnapply(applied: AdFormResult): Option[(BindResult, Option[MColorData], Option[RichDescr], MColorData)] = {
-    val mad = applied.mad
-    val bmr = BindResult(
-      entites   = mad.ad.entities.valuesIterator.toList,
-      blockMeta = mad.ad.blockMeta.getOrElse {
-        LOGGER.warn("adFormUnapply(): BlockMeta is missing on ad[" + mad.id + "]")
-        BlockMeta.DEFAULT
-      },
-      bim       = applied.bim,
-      href      = mad.meta.business.siteUrl
-    )
-    val pattern = mad.meta.colors.pattern
-    val bgColor = mad.meta.colors.bg
-      .getOrElse( MColorData(
-        code = "EEEEEE"
-      ))
-    Some( (bmr, pattern, mad.ad.richDescr, bgColor) )
-  }
-
-
-  /**
-   * Сборщик форм произвольного назначения для парсинга реквестов с данными рекламной карточки.
-   * @return Маппинг формы, готовый к эксплуатации.
-   */
-  // TODO Сделать val наверное надо... Но есть циклическая зависимость между этим классом и BfText.
-  def adFormM: AdFormM = {
-    Form(
-      mapping(
-        OFFER_K     -> BlocksConf.DEFAULT.strictMapping,
-        PATTERN_K   -> coveringPatternM,
-        DESCR_K     -> richDescrOptM,
-        BG_COLOR_K  -> colorDataM
-      )(adFormApply)(adFormUnapply)
-    )
   }
 
 

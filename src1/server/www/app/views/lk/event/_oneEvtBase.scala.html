@@ -13,13 +13,7 @@
   @* Рендерить крестик в углу для событий, которые разрешают их сокрытие *@
   @if(rargs.mevent.isCloseable) {
     @* Если есть id, значит можно удалить событие на сервере. *@
-    @for(eId <- rargs.mevent.id) {
-      <form action="@CSRF(routes.LkEvents.nodeEventDelete(eId))" method="POST">
-    }
-      <input class="event_close close" type="submit" value="" title="@messages("Hide.event")" />
-    @if(rargs.mevent.id) {
-      </form>
-    }
+    <input class="event_close close" type="submit" value="" title="@messages("Hide.event")" />
   }
 
   @* Рендерим остальное содержимое события. *@

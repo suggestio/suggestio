@@ -265,11 +265,6 @@ object FormUtil {
     .transform [Option[String]] (emptyStrOptToNone, identity)
   def colorSomeM = toSomeStrM(colorM)
 
-  def colorDataM = colorM.transform [MColorData] (
-    { code => MColorData(code = code) },
-    _.code
-  )
-
   private def _color2dataOptM(m0: Mapping[Option[String]]): Mapping[Option[MColorData]] = {
     m0.transform [Option[MColorData]] (
       _.map(code => MColorData(code = code)),

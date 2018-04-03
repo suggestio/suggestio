@@ -10,7 +10,6 @@ import io.suggest.util.JMXBase
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.adv.MExtTargets
 import models.ai.MAiMads
-import models.event.MEvents
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
 import models.usr.{EmailActivations, EmailPwIdents, MExtIdents}
@@ -31,7 +30,6 @@ class SiowebEsModel @Inject() (
   mNodes              : MNodes,
   mMedias             : MMedias,
   mCalendars          : MCalendars,
-  mEvents             : MEvents,
   mExtTargets         : MExtTargets,
   mAiMads             : MAiMads,
   emailPwIdents       : EmailPwIdents,
@@ -61,7 +59,6 @@ class SiowebEsModel @Inject() (
     mCalendars,
     mAiMads,
     mExtTargets,
-    mEvents,
     mAsymKeys,
     mMedias
     //mStats // Модель живёт в скользящих индексах, но это наверное безопасно...

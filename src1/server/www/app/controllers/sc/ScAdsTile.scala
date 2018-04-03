@@ -1,6 +1,6 @@
 package controllers.sc
 
-import _root_.util.blocks.{BgImg, BlocksConf, IBlkImgMakerDI}
+import _root_.util.blocks.{BlocksConf, IBlkImgMakerDI}
 import _root_.util.di.{IScNlUtil, IScUtil}
 import _root_.util.showcase.IScAdSearchUtilDi
 import _root_.util.stat.IStatUtil
@@ -117,11 +117,11 @@ trait ScAdsTileBase
     /** Сборка аргументов рендера для пакетного рендера css-стилей. */
     lazy val madsBrArgs4CssFut: Future[Seq[blk.RenderArgs]] = {
       madsFut.flatMap { mads =>
-        val _szMult = szMult
-        val devScreenOpt = ctx.deviceScreenOpt
+        //val _szMult = szMult
+        //val devScreenOpt = ctx.deviceScreenOpt
         Future.traverse(mads) { mad =>
           for {
-            bgImgOpt <- BgImg.maybeMakeBgImgWith(mad, blkImgMaker, _szMult, devScreenOpt)
+            bgImgOpt <- Future.successful( Option.empty[MakeResult] ) // TODO mad2 BgImg.maybeMakeBgImgWith(mad, blkImgMaker, _szMult, devScreenOpt)
           } yield {
             _brArgsFor(mad, bgImgOpt)
           }
@@ -174,8 +174,8 @@ trait ScAdsTileBase
         .map { _.offset }
 
       // Получаем синхронные данные
-      val devScreenOpt = ctx.deviceScreenOpt
-      val _szMult = szMult
+      //val devScreenOpt = ctx.deviceScreenOpt
+      //val _szMult = szMult
 
       // Продолжаем асинхронную обработку
       for {
@@ -184,7 +184,7 @@ trait ScAdsTileBase
         renderStartedAt = System.currentTimeMillis()
         madsRendered  <- {
           Future.traverse(madsIndexed) { case (mad, relIndex) =>
-            val bgImgOptFut = BgImg.maybeMakeBgImgWith(mad, blkImgMaker, _szMult, devScreenOpt)
+            val bgImgOptFut = Future.successful( Option.empty[MakeResult] )   // TODO mad2 BgImg.maybeMakeBgImgWith(mad, blkImgMaker, _szMult, devScreenOpt)
             bgImgOptFut.flatMap { bgImgOpt =>
               val indexOpt = Some(offset + relIndex)
               val brArgs1 = _brArgsFor(mad, bgImgOpt, indexOpt)

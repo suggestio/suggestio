@@ -5,7 +5,7 @@ import io.suggest.common.css.ITopLeft
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2.node.MNode
 import io.suggest.sc.{IScApiVsn, MScApiVsn, MScApiVsns}
-import models.{BfText, BlockConf, blk}
+import models.{BlockConf, blk}
 import models.im.make.MakeResult
 
 /**
@@ -102,13 +102,11 @@ case class RenderArgs(
 
 /**
  * Контейнер параметров рендера css-стиля блока.
- * @param bf Экземпляр BlockField
  * @param entity Текущее поле карточки.
  * @param yoff Сдвиг по оси y.
  */
 case class FieldCssRenderArgs(
                                brArgs      : blk.IRenderArgs,
-                               bf          : BfText,
                                entity      : MEntity,
                                yoff        : Int,
                                override val isFocused : Boolean     = false,

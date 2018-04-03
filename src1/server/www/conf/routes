@@ -56,7 +56,6 @@ GET  /lk/nodes                          @controllers.MarketLkAdn.lkList(fromNode
 GET  /lk/node/create                    @controllers.MarketLkAdn.createNode
 POST /lk/node/create                    @controllers.MarketLkAdn.createNodeSubmit
 GET  /lk/node/profile/:nodeId           @controllers.MarketLkAdn.showAdnNode(nodeId)
-#GET  /lk/node/mads/:adnId               @controllers.MarketLkAdn.showNodeAds(adnId, mode: mlk.MNodeAdsMode ?= mlk.MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None)
 GET  /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNode(adnId)
 POST /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
 POST /lk/node/img/gal/prepare           @controllers.MarketLkAdnEdit.handleGalleryImg
@@ -167,10 +166,6 @@ GET  /lk/h/support                      @controllers.LkHelp.supportForm(r: Optio
 POST /lk/h/support                      @controllers.LkHelp.supportFormSubmit(r: Option[String] ?= None)
 POST /lk/h/geo/node/:adnId              @controllers.LkHelp.askGeo4NodeSubmit(adnId, r: Option[String] ?= None)
 GET  /lk/h/about                        @controllers.LkHelp.companyAbout(nodeId: Option[String] ?= None)
-
-## ЛК: нотификации (события)
-GET  /lk/events/node/:adnId             @controllers.LkEvents.nodeIndex(adnId, limit: Int ?= 7, offset: Int ?= 0, inline: Boolean ?= false)
-POST /lk/events/delete/:evtId           @controllers.LkEvents.nodeEventDelete(evtId)
 
 ## Языки и локализация
 GET  /lang                              @controllers.LkLang.showLangSwitcher(r: Option[String] ?= None)

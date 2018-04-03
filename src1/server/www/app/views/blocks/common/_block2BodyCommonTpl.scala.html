@@ -1,4 +1,4 @@
-@(args: blk.IRenderArgs, bc: util.blocks.BlocksConf.CommonBlock2T)(implicit ctx: Context)
+@(args: blk.IRenderArgs)(implicit ctx: Context)
 
 @* Базовый шаблон тела block'ов версии 2.0. *@
 
@@ -8,7 +8,7 @@
 
 @defining( args.inlineStyles || args.mad.id.isEmpty ) { isStylesInline =>
 
-  @bgImgTpl(bc, args,  cssClass = Some("bg") )
+  @*bgImgTpl(bc, args,  cssClass = Some("bg") )*@
 
   @if(isStylesInline) {
     <style>@Html(_blockCss(args).toString.trim)</style>
@@ -30,7 +30,6 @@
       @if(isStylesInline) {
         <style>
           @Html(_textCss(blk.FieldCssRenderArgs(
-            bf      = bc.titleBf,
             brArgs  = args,
             entity  = offer,
             yoff    = 0,

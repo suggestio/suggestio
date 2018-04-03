@@ -79,12 +79,10 @@ trait ScCssUtil
     /** Вспомогательная функция для подготовки данных к рендеру css'ок: приведение рекламной карточки к css-параметрам. */
     protected def mad2craIter(brArgs: blk.IRenderArgs, cssClasses: Seq[String]): Iterator[blk.FieldCssRenderArgs] = {
       import brArgs.mad
-      val bc = n2NodesUtil.bc(mad)
       mad.ad.entities
         .valuesIterator
         .map { ent =>
           blk.FieldCssRenderArgs(
-            bf          = bc.titleBf,
             brArgs      = brArgs,
             entity      = ent,
             yoff        = 0,

@@ -5,7 +5,6 @@ import models.mctx.Context
 import play.api.libs.json._
 import play.twirl.api.{Html, Template2}
 import views.html.lk.adv.ext.event._
-import views.html.lk.event._
 
 /**
  * Suggest.io
@@ -44,32 +43,6 @@ object MEventTypes extends Enumeration with EnumMaybeWithName with EnumJsonReads
   /** Возникла ошибка при обработке одной цели [[models.adv.MExtTarget]]. */
   val AdvExtTgError: MEventType = new Val("c") {
     override def template = targetErrorTpl
-  }
-
-  /** Когда узел создан, нужно добавить владельцу указание на возможность создать ещё один узел. */
-  val YouCanCreateNewShop: MEventType = new Val("e") {
-    override def template = _youCanUseAddShopBtnEvtTpl
-  }
-
-  /** После создания узла, уведомление о возможности попользоваться удобным менеджером рекламных карточек. */
-  val StartYourWorkUsingCardMgr: MEventType = new Val("f") {
-    /** Шаблон для рендера одного события текущего типа. */
-    override def template = _startYourWorkUsingCardMgrEvtTpl
-  }
-
-  /** Появился входящий запрос по размещению. */
-  val AdvReqIncoming: MEventType = new Val("g") {
-    override def template = _advRequestedEvtTpl
-  }
-
-  /** Исходящее размещение заапрувлено. */
-  val AdvOutcomingOk: MEventType = new Val("h") {
-    override def template = _yourAdvApprovedEvtTpl
-  }
-
-  /** Исходящее размещение отклонено. */
-  val AdvOutcomingRefused: MEventType = new Val("i") {
-    override def template = _yourAdvRefusedEvtTpl
   }
 
   /** Не удалась инициализация сервиса. Рендерим ошибку. */

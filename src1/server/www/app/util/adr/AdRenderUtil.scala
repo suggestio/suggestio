@@ -4,18 +4,15 @@ import java.io.File
 import javax.inject.{Inject, Named, Singleton}
 
 import controllers.routes
-import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.n2.node.MNode
 import models.adr.MAdRenderArgs
 import models.blk.{OneAdQsArgs, szMulted}
-import models.im._
-import models.im.make.{MImgMakeArgs, MImgMakers, MakeResult}
+import models.im.make.MakeResult
 import models.mproj.ICommonDi
 import util.adr.phantomjs.{PhantomJsRrrDiFactory, PhantomJsRrrUtil}
 import util.adr.wkhtml.{WkHtmlRrrDiFactory, WkHtmlRrrUtil}
 import util.adv.AdvUtil
-import util.blocks.BgImg
 import util.img.IImgMaker
 import util.xplay.PlayUtil
 
@@ -82,39 +79,8 @@ class AdRenderUtil @Inject() (
    *         Future Some() если есть картинка. Широкий фон или нет -- зависит от args.
    */
   def getBgImgOpt(mad: MNode, args: OneAdQsArgs): Future[Option[MakeResult]] = {
-    val optFut = for {
-      // Генерация данных по фоновой картинке карточки.
-      bgImg <- BgImg.getBgImg(mad)
-      bm    <- advUtil.getAdvMainBlockMeta(mad)
-    } yield {
-
-      // Высота виртуального экрана и плотность пикселей всегда одинаковая.
-      val dscrF = DevScreen(
-        _ : Int,
-        height = szMulted(bm.height, args.szMult),
-        pixelRatioOpt = Some(DevPixelRatios.MDPI)
-      )
-
-      // Дальше есть выбор между wide и не-wide рендером.
-      val (maker, dscr) = args.wideOpt match {
-        case Some(wide) =>
-          (MImgMakers.StrictWide, dscrF(wide.width))
-        // Нет wide-аргументов. Рендерим как block.
-        case None =>
-          val width = szMulted(bm.width, args.szMult)
-          val dscr = dscrF(width)
-          (MImgMakers.Block, dscr)
-      }
-
-      val imaker = current.injector.instanceOf( maker.makerClass )
-      val margs = MImgMakeArgs(bgImg, bm, args.szMult, Some(dscr))
-
-      for (res <- imaker.icompile(margs)) yield {
-        Some(res)
-      }
-    }
-
-    FutureUtil.optFut2futOpt(optFut)(identity)
+    // TODO mads2 Нужна поддержка jd-карточкек. Вероятно, надо удалить этот метод, т.к. он только на одну картинку рассчитан.
+    Future.successful( None )
   }
 
 

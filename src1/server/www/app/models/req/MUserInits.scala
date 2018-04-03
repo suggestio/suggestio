@@ -52,15 +52,6 @@ object MUserInits extends TypeT {
     override def initUser(user: ISioUser): Unit = user.contractIdOptFut
   }
 
-  /** Запуск узнавания значения счетчика событий. */
-  sealed trait EvtsCountT extends ValTDummy {
-    override def initUser(user: ISioUser): Unit = {
-      super.initUser(user)
-      user.evtsCountFut
-    }
-  }
-  object EvtsCount extends EvtsCountT
-
   /** Инициализация обыденного личного кабинета: баланс, счетчик новых событий, возможно ещё что-то.
     * @see [[models.req.ISioUserT.lkCtxDataFut]] */
   object Lk extends ValT {

@@ -45,8 +45,7 @@ class SiowebNotifier @Inject() (
   // TODO Вынести это отсюда?
   protected def getStaticSubscribers: Seq[SNStaticSubscriber] = {
     List(
-      injector.instanceOf[MNodesCache],
-      injector.instanceOf[AdnNodeEvents]
+      injector.instanceOf[MNodesCache]
     )
   }
 

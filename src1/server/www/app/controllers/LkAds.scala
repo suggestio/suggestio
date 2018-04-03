@@ -6,7 +6,7 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.IMust
 import io.suggest.init.routed.MJsiTgs
-import io.suggest.mbill2.m.item.status.MItemStatus
+import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.{MAdItemStatuses, MItems}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
@@ -17,7 +17,6 @@ import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
 import javax.inject.Inject
 import models.mctx.Context
-import models.mlk.MNodeAdInfo
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
 import play.api.http.HttpEntity
@@ -165,8 +164,8 @@ class LkAds @Inject() (
         .stream(
           mItems.findStatusesForAds(
             // Не добавляем сюда newAdId, т.к. если у только что созданной карточки размещений быть и не должно.
-            adIds = madIds,
-            statuses = MNodeAdInfo.statusesSupported.toSeq
+            adIds    = madIds,
+            statuses = MItemStatuses.advBusy.toStream
           )
         )
         .toSource

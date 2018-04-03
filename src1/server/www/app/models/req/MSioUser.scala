@@ -13,8 +13,6 @@ import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodesCache}
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
-import models.event.MEvents
-import models.event.search.MEventsSearchArgs
 import models.usr.MSuperUsers
 import org.elasticsearch.client.Client
 import play.api.db.slick.DatabaseConfigProvider
@@ -71,9 +69,6 @@ sealed trait ISioUser {
    */
   def mBalancesFut: Future[Seq[MBalance]]
 
-  /** Кол-во непрочитанных событий. */
-  def evtsCountFut: Future[Option[Int]]
-
   /** Дополнительные цели js-инициализации по мнению ActionBuilder'а. */
   def jsiTgs: List[MJsiTg]
 
@@ -91,7 +86,6 @@ class MSioUserEmpty extends ISioUser {
 
   override def personIdOpt          = None
   override def mContractOptFut      = _futOptOk[MContract]
-  override def evtsCountFut         = _futOptOk[Int]
   override def personNodeOptFut     = _futOptOk[MNode]
   override def isSuper              = false
   override def contractIdOptFut     = _futOptOk[Long]
@@ -154,16 +148,6 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
     }
   }
 
-  override def evtsCountFut: Future[Option[Int]] = {
-    FutureUtil.optFut2futOpt(personIdOpt) { personId =>
-      // TODO Нужно портировать события на MNode и тут искать их.
-      val search = MEventsSearchArgs(ownerId = Some(personId))
-      for (cnt <- mEvents.dynCount(search)) yield {
-        Some(cnt.toInt)
-      }
-    }
-  }
-
   override def mBalancesFut: Future[Seq[MBalance]] = {
     // Мысленный эксперимент показал, что кеш здесь практически НЕ нужен. Работаем без кеша, заодно и проблем меньше.
     val fut = contractIdOptFut.flatMap { contractIdOpt =>
@@ -185,14 +169,11 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
   }
 
   override def lkCtxDataFut: Future[CtxData] = {
-    val _evtsCountFut = evtsCountFut
     for {
       mBalances <- mBalancesFut
-      evtsCount <- _evtsCountFut
     } yield {
       CtxData(
-        mUsrBalances  = mBalances,
-        evtsCount     = evtsCount
+        mUsrBalances  = mBalances
       )
     }
   }
@@ -218,7 +199,6 @@ class MsuStatic @Inject()(
                            val mSuperUsers               : MSuperUsers,
                            val mContracts                : MContracts,
                            val mBalances                 : MBalances,
-                           val mEvents                   : MEvents,
                            // Не следует тут юзать MCommonDi, т.к. тут живёт слишком фундаментальный для проекта компонент.
                            val mNodeCache                : MNodesCache,
                            override val _slickConfigProvider : DatabaseConfigProvider,
@@ -248,7 +228,6 @@ case class MSioUserLazy @Inject() (
   override lazy val mContractOptFut   = super.mContractOptFut
   override lazy val mBalancesFut      = super.mBalancesFut
   override lazy val isSuper           = super.isSuper
-  override lazy val evtsCountFut      = super.evtsCountFut
 
   override lazy val lkCtxDataFut      = super.lkCtxDataFut
 

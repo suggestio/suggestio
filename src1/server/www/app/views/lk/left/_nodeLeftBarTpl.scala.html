@@ -29,20 +29,6 @@
       css   = classesAct(leftCurrEl.contains(LPL_BILLING), "__billing")
     )()
 
-    @_leftBarItemTpl(
-      title = messages("Events"),
-      href  = routes.LkEvents.nodeIndex(nodeId),
-      css   = classesAct(leftCurrEl.contains(LPL_EVENTS), "__events")
-    ) {
-      @* Заметный кружок с кол-вом непрочитанных сообщений. *@
-      @for( cnt <- ctx.data.evtsCount) {
-        @if(cnt > 0) {
-          <span class="left-bar_menu-bubble" title="@messages("New.events.cnt", cnt)">@cnt</span>
-        }
-      }
-    }
-
-
     @if(ctx.user.isSuper) {
       @* Кнопка вызова системной панели. Временно ушла с правой панели (вместе с панелью). *@
       @_leftBarItemTpl(

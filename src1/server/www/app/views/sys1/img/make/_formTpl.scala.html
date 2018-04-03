@@ -18,13 +18,7 @@
 
   <br/>
 
-
   <p><strong>Блок карточки</strong></p>
-
-  @* blockId в целом deprecated, поэтому hidden-поля достаточно. *@
-  @defining( "args.blockMeta.blockId" ) { fn =>
-    <input type="hidden" name="@fn" value="@mf(fn).value.getOrElse(BlocksConf.DEFAULT.id)" />
-  }
 
   @select(
     mf("args.blockMeta.width"),

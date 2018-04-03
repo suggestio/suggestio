@@ -1,17 +1,15 @@
 package util.lk
 
-import javax.inject.Inject
-
-import io.suggest.common.fut.FutureUtil
 import io.suggest.di.IExecutionContext
 import io.suggest.model.n2.node.MNode
+import javax.inject.Inject
 import models.blk
 import models.blk.SzMult_t
 import models.im.DevScreen
-import models.im.make.{MImgMakeArgs, MImgMakers}
+import models.im.make.MakeResult
 import play.api.inject.Injector
 import util.adv.AdvUtil
-import util.blocks.{BgImg, BlocksConf}
+import util.blocks.BlocksConf
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -42,23 +40,8 @@ class LkAdUtil @Inject() (
   def tiledAdBrArgs(mad: MNode, devScreenOpt: Option[DevScreen] = None): Future[blk.RenderArgs] = {
     val szMult = TILE_SZ_MULT
 
-    val bgImgFutOpt = for {
-      bm    <- advUtil.getAdvMainBlockMeta(mad)
-      bgImg <- BgImg.getBgImg(mad)
-    } yield {
-      val wArgs = MImgMakeArgs(
-        img           = bgImg,
-        targetSz     = bm,
-        szMult        = szMult,
-        devScreenOpt  = devScreenOpt
-      )
-      val imaker = injector.instanceOf( MImgMakers.Block.makerClass )
-      for (res <- imaker.icompile(wArgs)) yield {
-        Some(res)
-      }
-    }
-
-    val bgImgOptFut = FutureUtil.optFut2futOpt(bgImgFutOpt)(identity)
+    // TODO mads2 Тут выпилен код вообще.
+    val bgImgOptFut = Future.successful( Option.empty[MakeResult] )
 
     val bc = BlocksConf.applyOrDefault( mad )
 

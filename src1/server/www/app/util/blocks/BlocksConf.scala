@@ -5,14 +5,12 @@ import io.suggest.model.n2.node.MNode
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk
-import models.blk.ed.{AdFormM, BimKey_t, BindAcc, BindResult}
+import models.blk.ed.BimKey_t
 import models.mctx.Context
-import play.api.data._
 import play.api.mvc.QueryStringBindable
+import play.twirl.api.{Html, Template2}
 import util.FormUtil.IdEnumFormMappings
 import views.html.blocks._
-import play.api.data.validation.Constraint
-import play.twirl.api.{Html, Template2}
 
 // TODO Надо выпилить эту модель, т.к. динамический редактор с кучей карточек и переключаемыми блоками ушел в небытие.
 
@@ -110,13 +108,7 @@ object BlocksConf
   // Начало значений
 
   /** Блок рекламной карточки с произвольным заполнением и без svg. */
-  sealed trait CommonBlock2T
-    extends Height
-    with Width
-    with BgImg
-    with TitleListBlockT
-    with Href
-    with IsWideBg
+  sealed trait CommonBlock2T extends ValT
 
   /** Блок рекламной карточки с произвольным заполнением и без svg. */
   sealed trait Block20t extends CommonBlock2T {
@@ -124,12 +116,8 @@ object BlocksConf
     override def template = _block20Tpl
   }
   val Block20 = new Val( 20 ) with Block20t with EmptyKey {
-    override def mappingWithNewKey(newKey: String) = Block20Wrapper(key = newKey)
-    override val strictMapping = super.strictMapping
   }
-  sealed case class Block20Wrapper(key: String) extends ValTWrapper(Block20) with ValTEmpty with Block20t {
-    override def mappingWithNewKey(newKey: String) = copy(key = newKey)
-  }
+  sealed case class Block20Wrapper(key: String) extends ValTWrapper(Block20) with ValTEmpty with Block20t
 
 
   // Конец значений. Уже. А ведь когда-то их было 26...
@@ -176,7 +164,7 @@ object BlocksConf
 
 
 /** Базовый интерфейс для реализаций класса Enumeration.Val. */
-trait ValT extends ISaveImgs with Mapping[BindResult] {
+trait ValT {
 
   def id: Int
 
@@ -190,9 +178,6 @@ trait ValT extends ISaveImgs with Mapping[BindResult] {
   /** Шаблон для рендера. */
   def template: Template2[blk.IRenderArgs, Context, Html]
 
-  /** Набор маппингов для обработки данных от формы. */
-  def strictMapping: Mapping[BindResult] = this
-
   /** Более удобный интерфейс для метода template.render(). */
   def renderBlock(args: blk.IRenderArgs)(implicit ctx: Context) = {
     template.render(args, ctx)
@@ -205,42 +190,8 @@ trait ValT extends ISaveImgs with Mapping[BindResult] {
    */
   def i18nLabelOf(bk: String): String
 
-  /** Stackable-trait: заполняется в прямом порядке в отличии от списка blockFields().
-    * Этот метод помогает заполнять список ВСЕХ полей задом наперёд. */
-  def blockFieldsRev(af: AdFormM): List[BlockFieldT]
-
-  /** Описание используемых полей. На основе этой спеки генерится шаблон формы редактора. */
-  def blockFields(af: AdFormM): List[BlockFieldT] = blockFieldsRev(af).reverse
-
   /** Поиск поля картинки для указанного имени поля. */
   def getImgFieldForName(fn: BimKey_t): Option[BfImage] = None
-
-  // Mapping:
-  def mappingsAcc: List[Mapping[_]]
-  override val mappings = mappingsAcc
-
-  override val constraints: Seq[Constraint[BindResult]] = Nil
-  override def verifying(constraints: Constraint[BindResult]*): Mapping[BindResult] = {
-    throw new UnsupportedOperationException("verifying() never implemented for BlockConf.")
-  }
-
-  /** Пошаговый биндинг динамических маппингов. */
-  def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc]
-
-  override def bind(data: Map[String, String]): Either[Seq[FormError], BindResult] = {
-    // Собрать BindAcc и сконвертить в BlockMapperResult
-    bindAcc(data)
-      .right
-      .map { _.toBindResult(id) }
-  }
-
-  def mappingWithNewKey(newKey: String): Mapping[BindResult]
-
-  def withPrefix(prefix: String) = {
-    addPrefix(prefix)
-      .map(mappingWithNewKey)
-      .getOrElse(this)
-  }
 
 }
 
@@ -255,26 +206,8 @@ abstract class ValTWrapper(v: ValT) extends ValT {
 
 
 /** Враппер понадобился из-за проблем со scala.Enumeration, который не даёт делать инстансы Val несколько раз. */
-trait ValTEmpty extends ValT {
-  override def blockFieldsRev(af: AdFormM): List[BlockFieldT] = {
-    Nil
-  }
-  override def unbind(value: BindResult): Map[String, String] = {
-    Map.empty
-  }
-  override def unbindAndValidate(value: BindResult): (Map[String, String], Seq[FormError]) = {
-    Map.empty[String, String] -> Seq.empty[FormError]
-  }
-  override def bindAcc(data: Map[String, String]): Either[Seq[FormError], BindAcc] = {
-    Right(BindAcc())
-  }
-  override def mappingsAcc: List[Mapping[_]] = {
-    Nil
-  }
-}
+trait ValTEmpty extends ValT
 
 
-trait EmptyKey extends ValT {
-  override val key: String = ""
-}
+trait EmptyKey extends ValT
 

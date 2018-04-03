@@ -6,7 +6,7 @@ import io.suggest.util.logs.IMacroLogs
 import models.msc.AdCssArgs
 import models.blk
 import play.twirl.api.Txt
-import util.acl.{IIgnoreAuth, IgnoreAuth}
+import util.acl.IIgnoreAuth
 import util.n2u.IN2NodesUtilDi
 import views.txt.blocks.common._
 
@@ -58,7 +58,7 @@ trait ScBlockCss
           val offerFieldsTxts = mad.ad.entities
             .valuesIterator
             .map { entity =>
-              val cssRenderArgs = blk.FieldCssRenderArgs(brArgs, bc.titleBf, entity, yoff = 0 )
+              val cssRenderArgs = blk.FieldCssRenderArgs(brArgs, entity, yoff = 0 )
               _textCss(cssRenderArgs): Txt
             }
             .toList

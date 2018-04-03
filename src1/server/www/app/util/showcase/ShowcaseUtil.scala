@@ -1,22 +1,20 @@
 package util.showcase
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidth, BlockWidths}
-import io.suggest.common.empty.EmptyUtil
-import io.suggest.common.fut.FutureUtil
 import io.suggest.dev.MSzMults
 import io.suggest.model.n2.node.MNode
 import io.suggest.sc.ScConstants
 import io.suggest.sc.tile.{GridCalc, MGridCalcConf}
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.blk
 import models.blk._
 import models.im._
-import models.im.make.{MImgMakeArgs, MImgMakers, MakeResult}
+import models.im.make.MakeResult
 import models.mproj.ICommonDi
 import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
 import util.adv.AdvUtil
-import util.blocks.{BgImg, BlocksConf}
+import util.blocks.BlocksConf
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -31,7 +29,9 @@ import scala.concurrent.Future
 class ShowcaseUtil @Inject() (
                                advUtil    : AdvUtil,
                                mCommonDi  : ICommonDi
-                             ) {
+                             )
+  extends MacroLogsImplLazy
+{
 
   import mCommonDi._
 
@@ -126,23 +126,8 @@ class ShowcaseUtil @Inject() (
    * @return None если нет фоновой картинки. Иначе Some() с данными рендера фоновой wide-картинки.
    */
   def focWideBgImgArgs(mad: MNode, szMult: SzMult_t, devScrOpt: Option[DevScreen]): Future[Option[MakeResult]] = {
-    val optFut = for {
-      mimg <- BgImg.getBgImg(mad)
-      bm   <- advUtil.getAdvMainBlockMeta(mad)
-    } yield {
-      val wArgs = MImgMakeArgs(
-        img           = mimg,
-        targetSz     = bm,
-        szMult        = szMult,
-        devScreenOpt  = devScrOpt
-      )
-      val maker = MImgMakers.forFocusedBg(bm.wide)
-      current.injector
-        .instanceOf( maker.makerClass )
-        .icompile(wArgs)
-        .map( EmptyUtil.someF )
-    }
-    FutureUtil.optFut2futOpt(optFut)(identity)
+    LOGGER.error(s"focWideBgImgArgs(${mad.idOrNull}) Not implemented for jd-ads")
+    Future.successful( None )
   }
 
 

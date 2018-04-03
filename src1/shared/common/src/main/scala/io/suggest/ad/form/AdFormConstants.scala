@@ -37,13 +37,8 @@ object AdFormConstants {
   /** id контейнера отрендеренной палитры. */
   def COLORS_DIV_ID                 = TYPE_COLOR_PALETTE
 
-  def AD_BG_COLOR_ID                = "adBgColor"
-
   // Названия корневых полей формы редактирования.
   def OFFER_K     = "offer"
-  def PATTERN_K   = "pattern"
-  def DESCR_K     = "descr"
-  def BG_COLOR_K  = "bgColor"
 
 
   /** Константы для запуска детектора основных цветов картинок. */

@@ -1,39 +1,31 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
-
 import controllers.ident._
 import io.suggest.color.MColorData
 import io.suggest.common.fut.FutureUtil
-import io.suggest.mbill2.m.item.MItems
-import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.model.n2.edge.{MEdge, MPredicates}
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.m.msession.Keys
 import io.suggest.sec.util.ScryptUtil
 import io.suggest.util.logs.MacroLogsImpl
+import javax.inject.{Inject, Singleton}
 import models.UsrCreateNodeForm_t
-import models.mctx.Context
-import models.mlk.{MNodeAdInfo, MNodeAdsMode, MNodeAdsTplArgs, MNodeShowArgs}
+import models.mlk.MNodeShowArgs
 import models.mproj.ICommonDi
 import models.req.{INodeReq, MReq}
 import models.usr.{EmailActivations, EmailPwIdent, EmailPwIdents, MPersonIdents}
-import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc.Result
+import util.FormUtil
 import util.FormUtil._
 import util.acl._
 import util.adn.NodesUtil
 import util.ident.IdentUtil
 import util.img.{DynImgUtil, GalleryUtil, LogoUtil}
-import util.lk.LkAdUtil
 import util.showcase.ShowcaseUtil
-import util.FormUtil
 import views.html.lk.adn._
 import views.html.lk.adn.invite.inviteInvalidTpl
 import views.html.lk.usr._
@@ -50,9 +42,7 @@ import scala.concurrent.Future
 @Singleton
 class MarketLkAdn @Inject() (
                               nodesUtil                           : NodesUtil,
-                              lkAdUtil                            : LkAdUtil,
                               scUtil                              : ShowcaseUtil,
-                              mItems                              : MItems,
                               mNodes                              : MNodes,
                               override val identUtil              : IdentUtil,
                               override val emailPwIdents          : EmailPwIdents,
@@ -167,136 +157,6 @@ class MarketLkAdn @Inject() (
 
   private def colorCodeOrDflt(cdOpt: Option[MColorData], dflt: => String): String = {
     cdOpt.fold(dflt)(_.code)
-  }
-
-  /**
-   * Рендер страницы ЛК с рекламными карточками узла.
-   *
-   * @param adnId id узла.
-   * @param mode Режим фильтрации карточек.
-   * @param newAdIdOpt Костыль: если была добавлена рекламная карточка, то она должна отобразится сразу,
-   *                   независимо от refresh в индексе. Тут её id.
-   * @return 200 Ok + страница ЛК со списком карточек.
-   */
-  def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String]) = csrf.AddToken {
-    isNodeAdmin(adnId, U.Lk).async { implicit request =>
-      // Для узла нужно отобразить его рекламу.
-      // TODO Добавить поддержку агрумента mode
-      val madsFut: Future[Seq[MNode]] = {
-        val producedByCrs = {
-          val cr = Criteria(
-            nodeIds     = adnId :: Nil,
-            predicates  = MPredicates.OwnedBy :: Nil
-          )
-          cr :: Nil
-        }
-        val adsSearch0 = new MNodeSearchDfltImpl {
-          override def nodeTypes = MNodeTypes.Ad :: Nil
-          override def outEdges  = producedByCrs
-          override def limit     = 200
-          // TODO Почему-то сортировка работает задом наперёд, должно быть DESC тут:
-          override def withDateCreatedSort = Some(SortOrder.ASC)
-        }
-        // Это свой узел. Нужно в реалтайме найти рекламные карточки и проверить newAdIdOpt.
-        val prodAdsFut = mNodes.dynSearchRt(adsSearch0)
-
-        // Бывает, что добавлена новая карточка (но индекс ещё не сделал refresh). Нужно её найти и отобразить:
-        val extAdOptFut = FutureUtil.optFut2futOpt(newAdIdOpt) { newAdId =>
-          for {
-            newAdOpt <- mNodes.getByIdType(newAdId, MNodeTypes.Ad)
-            if newAdOpt.exists { newAd =>
-              newAd.edges
-                .withNodePred(adnId, MPredicates.OwnedBy)
-                .nonEmpty
-            }
-          } yield {
-            newAdOpt
-          }
-        }
-        for {
-          prodAds  <- prodAdsFut
-          extAdOpt <- extAdOptFut
-        } yield {
-          // Если есть карточка в extAdOpt, то надо залить её в список карточек.
-          extAdOpt.fold(prodAds) { extAd =>
-            val i = prodAds.indexWhere(_.id == extAd.id)
-            if ( i >= 0 ) {
-              // Это возврат после edit. Заменить существующую карточку.
-              prodAds.updated(i, extAd)
-            } else {
-              // Это возврат после create. Дописать карточку вначало.
-              extAdOpt.get #:: prodAds.toStream
-            }
-          }
-        }
-
-      }
-
-      // Нужно бегло собрать инфу о текущих размещениях карточек в базе без подробностей.
-      val itemsInfosFut = for {
-        mads <- madsFut
-        itemsInfos <- {
-          slick.db.run {
-            mItems.findStatusesForAds(
-              adIds     = mads.flatMap(_.id),
-              statuses  = MNodeAdInfo.statusesSupported.toSeq
-            )
-          }
-        }
-      } yield {
-        itemsInfos
-          .iterator
-          .map { i => (i.nodeId, i) }
-          .toMap
-      }
-
-      // Надо ли отображать кнопку "управление" под карточками? Да, если узел продьюсер.
-      val canAdvFut: Future[Boolean] = {
-        val canAdv = request.mnode.extras.adn.exists(_.isProducer)
-        Future.successful( canAdv )
-      }
-
-      val ctxFut = request.user.lkCtxDataFut.map { implicit ctxData =>
-        implicitly[Context]
-      }
-
-      val mnaisFut = for {
-        mads <- madsFut
-        ctx  <- ctxFut
-        // Собираем данные для рендера карточек
-        res  <- {
-          val dsOpt = ctx.deviceScreenOpt
-          Future.traverse(mads) { mad =>
-            lkAdUtil.tiledAdBrArgs(mad, dsOpt)
-          }
-        }
-        itemsInfos <- itemsInfosFut
-      } yield {
-        // Заворачиваем данные для рендера и по размещениям в контейнеры.
-        for (brArgs <- res) yield {
-          val iiOpt = brArgs.mad.id
-            .flatMap(itemsInfos.get)
-          val iStatuses = iiOpt
-            .fold(Set.empty[MItemStatus])(_.statuses)
-          MNodeAdInfo(brArgs, iStatuses)
-        }
-      }
-
-      // Рендер результата, когда все карточки будут собраны.
-      for {
-        mnais     <- mnaisFut
-        canAdv    <- canAdvFut
-        ctx       <- ctxFut
-      } yield {
-        val args = MNodeAdsTplArgs(
-          mnode   = request.mnode,
-          mads    = mnais,
-          canAdv  = canAdv
-        )
-        val render = nodeAdsTpl(args)(ctx)
-        Ok(render)
-      }
-    }
   }
 
 

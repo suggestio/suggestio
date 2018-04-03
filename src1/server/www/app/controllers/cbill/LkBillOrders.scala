@@ -19,11 +19,12 @@ import models.mctx.Context
 import models.req.INodeReq
 import play.api.i18n.Messages
 import util.acl._
-import util.blocks.{BgImg, BlocksConf, IBlkImgMakerDI}
+import util.blocks.{BlocksConf, IBlkImgMakerDI}
 import util.billing.IBill2UtilDi
 import util.di.ILogoUtilDi
 import views.html.lk.billing.order._
 import japgolly.univeq._
+import models.im.make.MakeResult
 
 import scala.concurrent.Future
 
@@ -309,13 +310,13 @@ trait LkBillOrders
       allNodesMap <- allNodesMapFut
       brArgss     <- Future.sequence {
         // Интересуют только ноды, которые можно рендерить как рекламные карточки.
-        val devScrOpt = ctx.deviceScreenOpt
+        //val devScrOpt = ctx.deviceScreenOpt
         for {
           (nodeId, mad) <- allNodesMap
           if itemNodeIds.contains(nodeId) && mad.ad.nonEmpty
         } yield {
           for {
-            bgOpt <- BgImg.maybeMakeBgImgWith(mad, blkImgMaker, szMult, devScrOpt)
+            bgOpt <-  Future.successful(Option.empty[MakeResult]) // TODO mad2 BgImg.maybeMakeBgImgWith(mad, blkImgMaker, szMult, devScrOpt)
           } yield {
             val ra = RenderArgs(
               mad       = mad,

@@ -2,35 +2,3 @@
 
 @* Стили для одного текстового поля одного оффера одного блока. *@
 
-@import io.suggest.sc.ScConstants.Block.Text.fieldTextId
-
-
-@defining( fieldTextId( args.entity.id ) ) { fieldCssClass =>
-
-.sm-block@{args.mad.id}@args.cssClasses.map{c =>.@c } .mvbl-@{fieldCssClass} {
-  position: absolute;
-  @defining( args.aovfCoords getOrElse args.xy ) { c =>
-    left: @{c.x * args.szMult}px;
-    top: @{c.y * args.szMult}px;
-  }
-}
-
-
-@for(aovf <- args.entity.text) {
-.sm-block@{args.mad.id}@args.cssClasses.map{c =>.@c } .@{fieldCssClass} {
-  color: #@aovf.font.color!important;
-
-  @for(fsz <- aovf.font.size) {
-    font-size: @{fsz.value * args.szMult}px!important;
-    @* TODO возможно стоит сделать font-size и line-height одинаковыми *@
-    line-height: @{fsz.lineHeight * args.szMult}px!important;
-  }
-
-  @* TODO Fonts.maybeWithName должно жить на уровне десериализации модели, а не здесь. *@
-  @aovf.font.family.map {ff =>font-family: @(ff.cssFontFamily)!important;}
-
-  @aovf.font.align.map {ta =>text-align: @ta.cssName!important;}
-}
-}
-
-} @* fieldCssClass *@
