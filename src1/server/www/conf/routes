@@ -96,18 +96,6 @@ GET  /lk/xadv/geo/map/shapes/:adId      @controllers.LkAdvGeo.existGeoAdvsMap(ad
 GET  /lk/xadv/geo/map/shape/pop/:itemId @controllers.LkAdvGeo.existGeoAdvsShapePopup(itemId: Gid_t)
 ## Тут должен быть GET, но почему-то GET с бинарным телом не выходит из Ajax/XHR.
 
-## ЛК: Рекламные карточки
-GET  /lk/mad/new/:adnId                 @controllers.MarketAd.createAd(adnId)
-POST /lk/mad/new/:adnId                 @controllers.MarketAd.createAdSubmit(adnId)
-POST /lk/mad/preview/:adnId             @controllers.MarketAd.adFormPreviewSubmit(adnId, isFull: Boolean)
-POST /lk/mad/img/prepare                @controllers.MarketAd.prepareBlockImg(h: blk.PrepareBlkImgArgs)
-POST /lk/mad/sa/:adId                   @controllers.MarketAd.updateShowLevelSubmit(adId)
-GET  /lk/mad/edit/:adId                 @controllers.MarketAd.editAd(adId)
-POST /lk/mad/edit/:adId                 @controllers.MarketAd.editAdSubmit(adId)
-GET  /lk/mad/delete/:adId               @controllers.MarketAd.deleteWnd(adId)
-POST /lk/mad/delete/:adId               @controllers.MarketAd.deleteSubmit(adId)
-GET  /ws/lk/mad/:wsId                   @controllers.MarketAd.ws(wsId: String)
-GET  /lk/mad/new/field/text/:offerN     @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
 ## ЛК: Редактор рекламных карточек v2:
 GET  /lk/mad/new2/:nodeId               @controllers.LkAdEdit.createAd(nodeId: MEsUuId)
 POST /lk/mad/save2                      @controllers.LkAdEdit.saveAdSubmit(mad: Option[MEsUuId] ?= None, prod: Option[MEsUuId] ?= None)

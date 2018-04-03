@@ -1,18 +1,13 @@
 package util.blocks
 
-import io.suggest.common.menum.EnumValue2Val
 import models.blk.ed.{BimKey_t, BindAcc, BlockImgMap}
-import models.mctx.Context
 import play.api.data._
 import Forms._
 import enumeratum.values.ValueEnumEntry
 import io.suggest.ad.blk._
 import io.suggest.ad.blk.ent.{EntFont, MEntity, TextEnt, ValueEnt}
 import util.FormUtil._
-import models._
-import views.html.blocks.editor._
 import util.img.ImgFormUtil
-import play.twirl.api.{Html, Template5}
 import util.ad.LkAdEdFormUtil
 
 /**
@@ -43,88 +38,10 @@ object BlocksUtil {
 import BlocksUtil._
 
 
-/** Трейт для значений BlockEditorField. */
-sealed trait BefValT { bv =>
-  type VT
-  type BFT <: BlockFieldT { type T = VT }
-  def fieldTemplate: Template5[BFT, String, Form[_], BlockConf, Context, Html]
-  def renderEditorField(bf: BFT, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
-    fieldTemplate.render(bf, bfNameBase, af, bc, ctx)
-  }
-}
-
-
-object BlocksEditorFields extends EnumValue2Val {
-
-  // TODO Наверное надо параметризовать BFT или T, иначе тут какая-то задница с типами получается.
-  protected abstract class Val(val name: String)
-    extends super.Val(name)
-    with BefValT
-
-  override type T = Val
-
-  /** Скрытое поле для указания высоты блока. */
-  val Height = new Val("height") {
-    override type VT = BlockHeight
-    override type BFT = BfHeight
-    override def fieldTemplate = _heightTpl
-  }
-
-  val Width = new Val("width") {
-    override type VT = BlockWidth
-    override type BFT = BfWidth
-    override def fieldTemplate = _widthTpl
-  }
-
-  /** Ввод голой строки. */
-  val InputString = new Val("inputStr") {
-    override type VT = String
-    override type BFT = BfString
-    def fieldTemplate = _inputStringTpl
-  }
-
-  /** Это когда много букв с указанием цвета. */
-  val TextArea = new Val("textarea") {
-    override type VT = TextEnt
-    override type BFT = BfText
-    override def fieldTemplate = _textareaTpl
-  }
-
-  /** Поле с кнопкой для загрузки картинки. */
-  val Image = new Val("img") {
-    override type VT = BlockImgMap
-    override type BFT = BfImage
-    override def fieldTemplate = _imageTpl
-  }
-
-  val Color = new Val("color") {
-    override type VT = String
-    override type BFT = BfColor
-    override def fieldTemplate = _colorTpl
-  }
-
-  val Checkbox = new Val("checkbox") {
-    override type VT = Boolean
-    override type BFT = BfCheckbox
-    override def fieldTemplate = _checkboxTpl
-  }
-
-  /** специальный тип, подходит для вставляния левых шаблонов в набор полей редактора. */
-  val NoValue = new Val("noval") {
-    override type VT = None.type
-    override type BFT = BfNoValueT
-    override def fieldTemplate = _addStringFieldBtnTpl
-  }
-}
-
-import BlocksEditorFields._
-
-
 /** Трейт для конкретного поля в рамках динамического маппинга поля. */
 trait BlockFieldT { that =>
   type T
   def name: String
-  def field: BlockEditorField { type VT = that.T }
   def defaultValue: Option[T]
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
   def fallbackValue: T
@@ -136,8 +53,6 @@ trait BlockFieldT { that =>
 
   def getOptionalStrictMapping: Mapping[Option[T]] = optional(mappingBase)
   def getOptionalStrictMappingKV = name -> getOptionalStrictMapping
-
-  def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html
 
   def offerNopt: Option[Int]
   def offerN = offerNopt getOrElse 0
@@ -190,15 +105,11 @@ case class BfHeight(
   override type T = BlockHeight
   override def availableVals = BlockHeights.values
 
-  override def field = BlocksEditorFields.Height
   override def fallbackValue: T = availableValsMin
 
   override def mappingBase = BlockMetaJvm.blockHeightMapping
   override def offerNopt = None
 
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
-    field.renderEditorField(this, bfNameBase, af, bc)
-  }
 }
 
 
@@ -215,10 +126,6 @@ case class BfWidth(
   override def mappingBase = BlockMetaJvm.blockWidthMapping
   override def offerNopt = None
   override def availableVals = BlockWidths.values
-  override def field = BlocksEditorFields.Width
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
-    field.renderEditorField(this, bfNameBase, af, bc)
-  }
   override def fallbackValue = BlockWidths.default
 }
 
@@ -241,8 +148,6 @@ case class BfText(
 
   def strTransformF = strTrimSanitizeF
 
-  override def field = BlocksEditorFields.TextArea
-
   override val mappingBase: Mapping[T] = {
     val m0 = text(minLength = minLen, maxLength = maxLen)
       .transform(replaceEOLwithBR andThen strTrimBrOnlyF,  replaceBRwithEOL andThen strUnescapeF)
@@ -255,9 +160,6 @@ case class BfText(
     font = defaultFont
   )
 
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
-    field.renderEditorField(this, bfNameBase, af, bc)
-  }
 
   override def getOptionalStrictMapping: Mapping[Option[T]] = {
     super.getOptionalStrictMapping
@@ -282,14 +184,8 @@ case class BfString(
 {
   def fallbackValue = "example"
 
-  override def field = InputString
-
   override type T = String
   def strTransformF = strTrimSanitizeF
-
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
-    field.renderEditorField(this, bfNameBase, af, bc)
-  }
 
   override def mappingBase: Mapping[T] = {
     nonEmptyText(minLength = minLen, maxLength = maxLen)
@@ -316,8 +212,6 @@ case class BfImage(
 {
   override type T = BlockImgMap
 
-  override def field = Image
-
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
   override def fallbackValue: T = {
     //val oiik = OrigImgIdKey(PreviewFormDefaults.IMG_ID, OrigImgData("", None))
@@ -338,11 +232,6 @@ case class BfImage(
       )
   }
 
-
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)
-                                (implicit ctx: Context): Html = {
-    field.renderEditorField(this, bfNameBase, af, bc)
-  }
 }
 
 
@@ -359,12 +248,7 @@ case class BfColor(
   override def mappingBase: Mapping[T] = defaultOpt(colorM, defaultValue)
   override def getOptionalStrictMapping: Mapping[Option[T]] = colorOptM
 
-  override def field = BlocksEditorFields.Color
 
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)
-                                (implicit ctx: Context): Html = {
-    field.renderEditorField(this, bfNameBase, af, bc)
-  }
 }
 
 
@@ -377,26 +261,16 @@ case class BfCheckbox(
   extends BlockFieldT
 {
   override type T = Boolean
-  override def field = Checkbox
   override def mappingBase: Mapping[T] = boolean
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)
-                                (implicit ctx: Context): Html = {
-    field.renderEditorField(this, bfNameBase, af, bc)
-  }
 }
 
 
 /** Реализация полей-пустышек. */
 trait BfNoValueT extends BlockFieldT {
   override type T = None.type
-  override def field = NoValue
   override def mappingBase: Mapping[T] = {
     optional(text)
       .transform[T]({_ => None}, identity)
-  }
-  override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)
-                                (implicit ctx: Context): Html = {
-    field.renderEditorField(this, bfNameBase, af, bc)
   }
   override def defaultValue: Option[T] = None
   override def fallbackValue: T = None

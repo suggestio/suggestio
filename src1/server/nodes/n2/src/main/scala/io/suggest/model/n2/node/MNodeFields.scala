@@ -2,7 +2,6 @@ package io.suggest.model.n2.node
 
 import io.suggest.geo.MNodeGeoLevel
 import io.suggest.model._
-import io.suggest.model.n2.FieldNamesL1
 import io.suggest.model.n2.bill.tariff.MNodeTariffs
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.geo.MNodeGeo
@@ -26,7 +25,7 @@ object MNodeFields {
 
   /** Абсолютные имена ES-полей в .common */
   object Common extends PrefixedFn {
-    def COMMON_FN = FieldNamesL1.Common.name
+    def COMMON_FN = "c"
     override protected def _PARENT_FN = COMMON_FN
     def NODE_TYPE_FN      = _fullFn( MNodeCommon.NODE_TYPE_FN )
     def IS_ENABLED_FN     = _fullFn( MNodeCommon.IS_ENABLED_FN )
@@ -36,7 +35,7 @@ object MNodeFields {
   /** Абсолютные имена ES-полей в .meta */
   object Meta extends PrefixedFn {
     /** Имя поля на стороне ES, куда скидываются все метаданные. */
-    def META_FN                     = FieldNamesL1.Meta.name
+    def META_FN                     = "m"
     override protected def _PARENT_FN = META_FN
 
     import MMeta.{Fields => F}
@@ -49,7 +48,7 @@ object MNodeFields {
   /** Абсолютные имена ES-полей в .extras */
   object Extras extends PrefixedFn {
 
-    def EXTRAS_FN  = FieldNamesL1.Extras.name
+    def EXTRAS_FN  = "x"
     override protected def _PARENT_FN = EXTRAS_FN
 
     import MNodeExtras.{Fields => F}
@@ -72,7 +71,7 @@ object MNodeFields {
   /** Абсолютные имена ES-полей в .edges */
   object Edges extends PrefixedFn {
 
-    def EDGES_FN = FieldNamesL1.Edges.name
+    def EDGES_FN = "e"
     override protected def _PARENT_FN = EDGES_FN
 
     /** Адрес nested-объектов, хранящих данные по эджам. */
@@ -103,7 +102,7 @@ object MNodeFields {
   /** Абсолютные названия географических полей.*/
   object Geo extends PrefixedFn {
 
-    def GEO_FN = FieldNamesL1.Geo.name
+    def GEO_FN = "g"
     override protected def _PARENT_FN = GEO_FN
 
     def POINT_FN = _fullFn( MNodeGeo.Fields.POINT_FN )
@@ -115,7 +114,7 @@ object MNodeFields {
   object Ad {
 
     /** Название корневого поля с контейнером данных рекламной карточки. */
-    def AD_FN = FieldNamesL1.Ad.name
+    def AD_FN = "a"
 
   }
 
@@ -124,7 +123,7 @@ object MNodeFields {
   object Billing extends PrefixedFn {
 
     /** Название корневого поля биллинга. */
-    def BILLING_FN = FieldNamesL1.Billing.name
+    def BILLING_FN = "b"
     override protected def _PARENT_FN = BILLING_FN
 
     def TARIFFS_DAILY_CURRENCY_FN       = _fullFn( MNodeTariffs.Fields.Daily.CURRENCY_FN )

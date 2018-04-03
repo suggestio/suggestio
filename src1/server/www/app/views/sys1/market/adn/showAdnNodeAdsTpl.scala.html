@@ -30,7 +30,7 @@
     @for((brArgs, i) <- args.mads.iterator.zipWithIndex; mad = brArgs.mad; madId <- mad.id) {
     @_adInListTpl(brArgs, i) {
 
-      <a class="siom-ac-btn __color-2 __size-XL __ft-XM __list-vertical" href="@routes.MarketAd.editAd(madId)">
+      <a class="siom-ac-btn __color-2 __size-XL __ft-XM __list-vertical" href="@routes.LkAdEdit.editAd(madId)">
         Редактор карточки
       </a>
 
