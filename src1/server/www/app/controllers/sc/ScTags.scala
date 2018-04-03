@@ -2,7 +2,6 @@ package controllers.sc
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.model.n2.node.IMNodes
-import io.suggest.model.n2.tag.MTagSearchResp
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.sc.sc3.{MSc3Tag, MSc3TagsResp}
 import io.suggest.sc.tags.MScTagsSearchQs
@@ -15,7 +14,6 @@ import util.acl.IMaybeAuth
 import util.geo.IGeoIpUtilDi
 import util.showcase.IScTagsUtilDi
 import util.stat.IStatUtil
-import views.html.sc.search._
 import japgolly.univeq._
 
 import scala.concurrent.Future
@@ -129,43 +127,6 @@ trait ScTags
   }
 
 
-  /** ScTags для выдачи второго поколения. */
-  case class ScTagsV2(override val _qs: MScTagsSearchQs)
-                     (override implicit val _request: IReq[_]) extends ScTagsHttpLogic {
-
-    override def execute(): Future[Result] = {
-      // Запустить фоновые задачи.
-      val _tagsFoundFut = tagsFoundFut
-
-      // Запустить сбор статистики.
-      saveScStat()
-
-      // Сформировать ответ, когда всё будет готово.
-      for {
-        found       <- _tagsFoundFut
-      } yield {
-        // Запустить рендер, если найден хотя бы один тег.
-        val htmlOpt = if (found.nonEmpty) {
-          val html = htmlCompressUtil.html2str4json(
-            _tagsListTpl(found)(ctx)
-          )
-          Some( html )
-        } else {
-          None
-        }
-
-        val resp = MTagSearchResp(
-          rendered    = htmlOpt,
-          foundCount  = found.size
-        )
-        Ok( Json.toJson(resp) )
-      }
-    }
-
-  }
-  object ScTagsV2 extends IScTagsHttpLogicCompanion
-
-
   /** Реализация поддержки Sc APIv3. */
   case class ScTagsV3(override val _qs: MScTagsSearchQs)
                      (override implicit val _request: IReq[_]) extends ScTagsHttpLogic {
@@ -207,9 +168,7 @@ trait ScTags
 
   /** Переключалка между различными логиками для разных версий Sc API. */
   def _apiVsn2logic(scApiVsn: MScApiVsn): IScTagsHttpLogicCompanion = {
-    if (scApiVsn.majorVsn ==* MScApiVsns.Sjs1.majorVsn) {
-      ScTagsV2
-    } else if (scApiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
+    if (scApiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
       ScTagsV3
     } else {
       throw new UnsupportedOperationException("Unknown API vsn: " + scApiVsn)

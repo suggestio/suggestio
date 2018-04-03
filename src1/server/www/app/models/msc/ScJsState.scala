@@ -1,7 +1,7 @@
 package models.msc
 
 import io.suggest.common.empty.EmptyProduct
-import io.suggest.geo.{MGeoPoint, MNodeGeoLevel}
+import io.suggest.geo.MGeoPoint
 import io.suggest.geo.GeoPoint.pipeDelimitedQsbOpt
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImpl
@@ -56,7 +56,6 @@ object ScJsState extends MacroLogsImpl {
           maybeFadsOffset       <- intOptB.bind (FADS_OFFSET_FN,        params)
           maybeSearchTab        <- boolOptB.bind(SEARCH_TAB_FN,         params)
           maybeProducerAdnId    <- strOptB.bind (PRODUCER_ADN_ID_FN,    params)
-          maybeNglsMap          <- nglsMapB.bind(NAV_NGLS_STATE_MAP_FN, params)
           geoPointOptEith       <- geoPointOptB.bind(LOC_ENV_FN,        params)
         } yield {
           val r = ScJsState(
@@ -69,8 +68,6 @@ object ScJsState extends MacroLogsImpl {
             fadsOffsetOpt       = QsbUtil.eitherOpt2option(maybeFadsOffset),
             searchTabListOpt    = noFalse( QsbUtil.eitherOpt2option(maybeSearchTab) ),
             fadsProdIdOpt       = strNonEmpty( QsbUtil.eitherOpt2option(maybeProducerAdnId) ),
-            navNglsMap          = QsbUtil.eitherOpt2option(maybeNglsMap)
-              .getOrElse( Map.empty ),
             geoPoint            = QsbUtil.eitherOpt2option( geoPointOptEith )
           )
           Right(r)
@@ -87,7 +84,6 @@ object ScJsState extends MacroLogsImpl {
           intOptB.unbind  (FADS_OFFSET_FN,        value.fadsOffsetOpt),
           boolOptB.unbind (SEARCH_TAB_FN,         value.searchTabListOpt),
           strOptB.unbind  (PRODUCER_ADN_ID_FN,    value.fadsProdIdOpt),
-          nglsMapB.unbind (NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) ),
           geoPointOptB.unbind(LOC_ENV_FN,         value.geoPoint)
         )
       }
@@ -113,7 +109,6 @@ object ScJsState extends MacroLogsImpl {
  * @param fadsOffsetOpt текущий сдвиг в просматриваемых карточках.
  * @param searchTabListOpt Выбранная вкладка на поисковой панели.
  * @param fadsProdIdOpt id продьюсера просматриваемой карточки.
- * @param navNglsMap Карта недефолтовых состояний отображаемых гео-уровней на карте навигации по узлам.
  * @param geoPoint Данные по текущему месту юзера на карте, если есть.
  */
 // TODO Удалить древние поля следом за старой выдачей, унифицировать в Sc3Pages.MainScreen.
@@ -126,7 +121,6 @@ case class ScJsState(
                       fadsOffsetOpt       : Option[Int]      = None,
                       searchTabListOpt    : Option[Boolean]  = None,
                       fadsProdIdOpt       : Option[String]   = None,
-                      navNglsMap          : Map[MNodeGeoLevel, Boolean] = Map.empty,
                       geoPoint            : Option[MGeoPoint] = None
 )
   extends EmptyProduct
@@ -168,11 +162,6 @@ case class ScJsState(
 
   def generation: Long = generationOpt.getOrElse(System.currentTimeMillis)
 
-  /** Уточнить значение состояния развернутости nav. гео-слоя. В синхронной выдаче возможны варианты. */
-  def nglExpanded(gnl: GeoNodesLayer): Boolean = {
-    navNglsMap.getOrElse(gnl.ngl, gnl.expanded)
-  }
-
   /**
    * Переключить состояние поля navScrOpenedOpt, сгенерив новое состояние.
    * @return Копия текущего состояния с новым значением поля navScrOpenedOpt.
@@ -193,8 +182,7 @@ case class ScJsState(
     generationOpt       = None,
     fadsOffsetOpt       = None,
     searchTabListOpt    = None,
-    fadsProdIdOpt       = None,
-    navNglsMap          = Map.empty
+    fadsProdIdOpt       = None
   )
 
   /** Короткая сериализация экземпляра в открывок query string. */

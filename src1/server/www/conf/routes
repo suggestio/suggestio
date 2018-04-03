@@ -35,8 +35,6 @@ GET  /sc/tags                           @controllers.Sc.tagsSearch(t: io.suggest
 GET  /sc/map/nodes/all                  @controllers.Sc.renderMapNodesAll
 GET  /sc/sc.webmanifest                 @controllers.Sc.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
 
-## Поиск по узлам
-GET  /sc/nodes                          @controllers.Sc.findNodes(a: msc.MScNodeSearchArgs)
 ## Прямой доступ к синхронной выдаче
 GET  /sc/syncsite                       @controllers.Sc.syncGeoSite(a: msc.ScJsState ?= msc.ScJsState.empty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
 ## Дамп ошибок выдачи.
@@ -339,7 +337,6 @@ GET  /sys/bill                           @controllers.SysBilling.overview
 
 ## sys/debug
 GET  /sys/debug                          @controllers.SysDebug.index
-POST /sys/debug/geo/parent/execute       @controllers.SysDebug.testNodesAllGeoParents
 POST /sys/debug/adv/rcvrs/reset          @controllers.SysDebug.resetAllRcvrs
 
 ## ident: логины/логауты

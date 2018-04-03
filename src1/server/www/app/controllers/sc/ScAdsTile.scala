@@ -1,7 +1,7 @@
 package controllers.sc
 
 import _root_.util.blocks.{BlocksConf, IBlkImgMakerDI}
-import _root_.util.di.{IScNlUtil, IScUtil}
+import _root_.util.di.IScUtil
 import _root_.util.showcase.IScAdSearchUtilDi
 import _root_.util.stat.IStatUtil
 import io.suggest.ad.blk.BlockWidths
@@ -20,7 +20,6 @@ import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
 import models.blk._
-import play.twirl.api.Html
 import util.acl._
 import play.api.libs.json.Json
 import japgolly.univeq._
@@ -28,7 +27,6 @@ import japgolly.univeq._
 import scala.collection.immutable
 import scala.concurrent.Future
 import models.blk
-import models.msc.resp.{MScResp, MScRespAction, MScRespAdsTile}
 import util.ad.IJdAdUtilDi
 
 /**
@@ -40,7 +38,6 @@ import util.ad.IJdAdUtilDi
 trait ScAdsTileBase
   extends ScController
   with IMacroLogs
-  with IScNlUtil
   with IScUtil
   with ScCssUtil
   with IMNodes
@@ -74,17 +71,6 @@ trait ScAdsTileBase
         indexOpt      = indexOpt,
         isFocused     = false
       )
-    }
-
-    def renderMad2html(brArgs: blk.RenderArgs): Html = {
-      BlocksConf.DEFAULT
-        .renderBlock(brArgs)(ctx)
-    }
-
-    def renderMad2htmlAsync(brArgs: blk.RenderArgs): Future[Html] = {
-      Future {
-        renderMad2html(brArgs)
-      }
     }
 
     def renderMadAsync(brArgs: blk.RenderArgs): Future[T]
@@ -291,8 +277,6 @@ trait ScAdsTile
       val v = adSearch.apiVsn
       if (v.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
         new TileAdsLogicV3( adSearch )
-      } else if (v.majorVsn ==* MScApiVsns.Sjs1.majorVsn) {
-        new TileAdsLogicV2( adSearch )
       } else {
         throw new UnsupportedOperationException("Unsupported API version: " + v)
       }
@@ -308,55 +292,6 @@ trait ScAdsTile
 
     def cellSizeCssPx: Int    = szMulted(BlockWidths.NARROW.value, tileArgs.szMult)
     def cellPaddingCssPx: Int = szMulted(scUtil.GRID_COLS_CONF.cellPadding, tileArgs.szMult)
-  }
-
-
-
-  /** Логика сборки HTTP-ответа для API v2 (на базе голой scala.js). */
-  protected class TileAdsLogicV2(override val _qs: MScAdsTileQs)
-                                (implicit val _request: IReq[_]) extends TileAdsLogicV {
-
-    override type T = MFoundAd
-
-    override def renderMadAsync(brArgs: RenderArgs): Future[T] = {
-      for ( html <- renderMad2htmlAsync(brArgs) ) yield {
-        MFoundAd(
-          htmlCompressUtil.html2str4json(html)
-        )
-      }
-    }
-
-    /** Рендер HTTP-результата. */
-    override def resultFut: Future[Result] = {
-      val _madsRenderFut = madsRenderedFut
-      val _cssFut = jsAdsCssFut(ctx).map(_.body)
-      val _params = MGridParams(
-        cellSizeCssPx = cellSizeCssPx,
-        cellPaddingCssPx = cellPaddingCssPx
-      )
-
-      for {
-        _madsRender <- _madsRenderFut
-        _css        <- _cssFut
-      } yield {
-        // Собираем финальный ответ.
-        val respData = MScResp(
-          scActions = Seq(
-            MScRespAction(
-              acType = MScRespActionTypes.AdsTile,
-              adsTile = Some(
-                MScRespAdsTile(
-                  mads    = _madsRender,
-                  css     = Some(_css),
-                  params  = Some(_params)
-                )
-              )
-            )
-          )
-        )
-        Ok( Json.toJson(respData) )
-      }
-    }
   }
 
 

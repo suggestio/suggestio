@@ -615,7 +615,6 @@ object ScConstants {
     val FADS_OFFSET_FN          = "f.off"
     val PRODUCER_ADN_ID_FN      = "f.pr.id"
 
-    val NAV_NGLS_STATE_MAP_FN   = "n.ngls"
     val GEO_SCR_OPENED_FN       = "n.open"
 
     // Панель поиска: гео-позишен, [гео]теги.

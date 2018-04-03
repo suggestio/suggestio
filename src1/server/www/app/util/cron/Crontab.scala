@@ -8,7 +8,6 @@ import models.mproj.ICommonDi
 import play.api.inject.ApplicationLifecycle
 import util.billing.cron.BillingCronTasks
 import util.geo.IpGeoBaseImport
-import util.health.AdnGeoParentsHealth
 import util.img.cron.{PeriodicallyDeleteEmptyDirs, PeriodicallyDeleteNotExistingInPermanent}
 import util.stat.StatCronTasks
 
@@ -27,7 +26,6 @@ import scala.concurrent.Future
 // TODO Вынести cron в отдельный пакет, на крайняк в util или ещё куда-нибудь. Чтобы список модулей на вход получал через reference.conf.
 
 class Crontab @Inject() (
-  geoParentsHealth              : AdnGeoParentsHealth,
   ipGeoBaseImport               : IpGeoBaseImport,
   statCronTasks                 : StatCronTasks,
   billingCronTasks              : BillingCronTasks,
@@ -49,7 +47,6 @@ class Crontab @Inject() (
     billingCronTasks,
     ipGeoBaseImport,
     statCronTasks,
-    geoParentsHealth,
     periodicallyDeleteEmptyDirs,
     periodicallyDeleteNotExistingInPermanent
   )

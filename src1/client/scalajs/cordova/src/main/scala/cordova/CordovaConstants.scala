@@ -1,5 +1,7 @@
 package cordova
 
+import scala.scalajs.js
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -7,6 +9,8 @@ package cordova
   * Description: Constants of cordova.
   */
 object CordovaConstants {
+
+  def IS_PLAIN_BROWSER = js.isUndefined( Cordova )
 
   object Events {
 

@@ -7,7 +7,6 @@ import io.suggest.common.css.FocusedTopLeft
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.dev.MSzMult
-import io.suggest.jd.MJdAdData
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.model.n2.node.search.MNodeSearch
@@ -27,7 +26,6 @@ import play.twirl.api.Html
 import util.acl._
 import views.html.sc.foc._
 import io.suggest.sc.focus.{MLookupMode, MLookupModes}
-import models.msc.resp.{MFocRenderResult, MScResp, MScRespAction, MScRespAdsFoc}
 import play.api.libs.json.Json
 import util.ad.IJdAdUtilDi
 import util.showcase.IScAdSearchUtilDi
@@ -803,94 +801,6 @@ trait ScFocusedAds
   }
 
 
-  /** Реализация v2-логики.
-    * Логика Focused Ads API v2, которая претерпела значителньые изменения в сравнении с API v1.
-    *
-    * Все карточки рендерятся одним списком json-объектов, которых изначально было два типа:
-    * - Focused ad: _focusedAdTpl.
-    * - Full focused ad: _focusedAdsTpl
-    * Этот неоднородный массив отрабатывается конечным автоматом на клиенте, который видя full-часть понимает,
-    * что последующие за ней не-full части относяться к этому же продьюсеру.
-    *
-    * Разные куски списка могут прозрачно склеиваться.
-    *
-    * Так же, сервер может вернуть вместо вышеописанного ответа:
-    * - index-выдачу другого узла.
-    * - команду для перехода по внешней ссылке.
-    *
-    */
-  protected class FocusedLogicHttpV2(override val _qs: MScAdsFocQs)
-                                    (override implicit val _request: IReq[_])
-    extends FocusedAdsLogicHttp
-  {
-
-    // При рендере генерятся контейнеры render-результатов, который затем конвертируются в json.
-    override type OBT = MFocRenderResult
-
-    override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
-      val fullArgsFut = focAdsRenderArgsFor(args)
-
-      val bodyFut = renderBlockHtml(args)
-        .map { htmlCompressUtil.html2str4json }
-
-      val controlsFut = for {
-        fullArgs <- fullArgsFut
-      } yield {
-        htmlCompressUtil.html2str4json(
-          _controlsTpl(fullArgs)(ctx)
-        )
-      }
-
-      val producerId = n2NodesUtil.madProducerId(args.brArgs.mad).get
-
-      for {
-        body      <- bodyFut
-        controls  <- controlsFut
-      } yield {
-        val humanIndex1 = args.index
-        MFocRenderResult(
-          madId       = args.brArgs.mad.id.get,
-          body        = body,
-          controls    = controls,
-          producerId  = producerId,
-          humanIndex  = humanIndex1,
-          index       = humanIndex1 - 1
-        )
-      }
-    }
-
-
-    /** Сборка HTTP-ответа APIv2. */
-    override def resultFut: Future[Result] = {
-      val _blockHtmlsFut = renderedAdsFut
-
-      val _stylesFut = jsAdsCssFut(ctx)
-        .map(htmlCompressUtil.txt2str)
-
-      for {
-        madsCount   <- madsCountIntFut
-        blockHtmls  <- _blockHtmlsFut
-        _styles     <- _stylesFut
-      } yield {
-        val resp = MScResp(
-          scActions = Seq(
-            MScRespAction(
-              acType = MScRespActionTypes.AdsFoc,
-              adsFoc = Some( MScRespAdsFoc(
-                fads        = blockHtmls,
-                totalCount  = madsCount,
-                styles      = _styles
-              ))
-            )
-          )
-        )
-        Ok( Json.toJson(resp) )
-      }
-    }
-
-  }  // class FocusedLogicHttpV2
-
-
   /** V3-логика фокусировки на карточке.
     * Повторяет логику v2, но:
     * - client-side render.
@@ -1013,8 +923,6 @@ trait ScFocusedAds
   def getLogicFor(qs: MScAdsFocQs)(implicit request: IReq[_]): FocusedAdsLogicHttp = {
     if (qs.apiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
       new FocusedLogicHttpV3(qs)
-    } else if (qs.apiVsn.majorVsn ==* MScApiVsns.Sjs1.majorVsn) {
-      new FocusedLogicHttpV2(qs)
     } else {
       throw new IllegalArgumentException(s"Unsupported API version: ${qs.apiVsn} :: ${request.method} ${request.uri} FROM ${request.remoteClientAddress}")
     }

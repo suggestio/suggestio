@@ -25,7 +25,7 @@ import io.suggest.util.logs.IMacroLogs
 import models.AdnShownTypes
 import models.im.{MImgT, MImgWithWhInfo}
 import models.msc._
-import models.msc.resp.{MScResp, MScRespAction, MScRespIndex}
+import models.mwc.MWelcomeRenderArgs
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.twirl.api.Html
@@ -33,11 +33,8 @@ import util.acl._
 import util.adn.INodesUtil
 import util.ble.IBleUtilDi
 import util.geo.IGeoIpUtilDi
-import util.stat.{IStatCookiesUtilDi, IStatUtil}
-import views.html.sc._
-import japgolly.univeq._
-import models.mwc.MWelcomeRenderArgs
 import util.img.IDynImgUtil
+import util.stat.{IStatCookiesUtilDi, IStatUtil}
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -86,13 +83,7 @@ trait ScIndex
     lazy val logPrefix = s"index[${System.currentTimeMillis()}]:"
 
     // В зависимости от версии API выбрать используемую логику сборки ответа.
-    val logicOrNull = if (args.apiVsn.majorVsn ==* MScApiVsns.Sjs1.majorVsn) {
-      new ScIndexLogicV2 {
-        override def _reqArgs  = args
-        override def _syncArgs = MScIndexSyncArgs.empty
-        override def _request  = request
-      }
-    } else if (args.apiVsn.majorVsn == MScApiVsns.ReactSjs3.majorVsn) {
+    val logicOrNull = if (args.apiVsn.majorVsn == MScApiVsns.ReactSjs3.majorVsn) {
       new ScIndexLogicV3 {
         override def _syncArgs = MScIndexSyncArgs.empty
         override def _reqArgs  = args
@@ -493,6 +484,8 @@ trait ScIndex
   }
 
 
+  // TODO Используется только в ScSyncSite. Удалить следом за SyncSite-велосипедом.
+
   /** Дефолтовая реализация логики ScIndexLogic v2 (sjs1) для снижения объемов кодогенерации байткода
     * в конкретных реализациях. */
   abstract class ScIndexLogicV2 extends ScIndexLogic {
@@ -562,7 +555,7 @@ trait ScIndex
             override def _syncArgsUnderlying = _syncArgs
             override def hBtnArgs = _hBtnArgs
           }
-          hdr._navPanelBtnTpl(rargs)(ctx)
+          views.html.sc.hdr._navPanelBtnTpl(rargs)(ctx)
         }
       }
     }
@@ -600,64 +593,16 @@ trait ScIndex
     /** Рендер indexTpl. */
     def respHtmlFut: Future[Html] = {
       for (renderArgs <- indexTplRenderArgsFut) yield {
-        indexTpl(renderArgs)(ctx)
+        views.html.sc.indexTpl(renderArgs)(ctx)
       }
     }
 
     /** Рендер минифицированного indexTpl. */
     def respHtml4JsFut = respHtmlFut.map( htmlCompressUtil.html2str4json )
 
-
     /** HTTP-ответ клиенту. */
     override def result: Future[Result] = {
-      for {
-        args <- respArgsFut
-      } yield {
-        statCookiesUtil.resultWithStatCookie {
-          Ok( Json.toJson(args) )
-        }(ctx.request)
-      }
-    }
-
-    def respArgsFut: Future[MScResp] = {
-      val _htmlFut  = respHtml4JsFut
-      val _currAdnIdOptFut = currInxNodeIdOptFut
-
-      val _geoPointOptFut = for {
-        currAdnIdOpt  <- _currAdnIdOptFut
-        // Если нет данных по текущему узлу, то надо вернуть точку из обычной геолокации или geoip.
-        geoLocOpt     <- currAdnIdOpt
-          .fold[Future[Option[MGeoLoc]]] (reqGeoLocFutVal) { _ => Future.successful(None) }
-      } yield {
-        geoLocOpt
-          .map(_.point)
-      }
-
-      val _titleFut = titleFut
-      for {
-        html              <- _htmlFut
-        currAdnIdOpt      <- _currAdnIdOptFut
-        _title            <- _titleFut
-        _geoPointOpt      <- _geoPointOptFut
-      } yield {
-        LOGGER.trace(s"$logPrefix adnId=$currAdnIdOpt geoPoint=${_geoPointOpt} | html=${html.length}c | title: '''${_title}'''")
-        MScResp(
-          scActions = Seq(
-            MScRespAction(
-              acType = respActionType,
-              index = Some(
-                MScRespIndex(
-                  indexHtml     = html,
-                  currAdnId     = currAdnIdOpt,
-                  title         = Some( _title ),
-                  geoPoint      = _geoPointOpt
-                )
-              )
-            )
-          )
-        )
-      }
-
+      NotImplemented
     }
 
   }

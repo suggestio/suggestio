@@ -3,7 +3,6 @@ package controllers.sc
 import java.util.NoSuchElementException
 
 import controllers.{SioController, routes}
-import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.model.n2.node.MNode
@@ -16,6 +15,7 @@ import models.req.IReq
 import play.api.mvc.Result
 import play.twirl.api.{Html, HtmlFormat}
 import util.acl.IMaybeAuth
+import util.blocks.BlocksConf
 
 import scala.concurrent.Future
 
@@ -34,7 +34,6 @@ trait ScSyncSite
   with ScIndex
   with ScAdsTileBase
   with ScFocusedAdsBase
-  with ScNodesListBase
   with IMaybeAuth
 {
 
@@ -115,6 +114,16 @@ trait ScSyncSite
             )
           }
           override lazy val ctx = syncLogic.ctx
+
+          // TODO mads2 Тут древний код вместо заглушки, выковыренный из TileAdsLogic:
+          // Надо рендерить jd-карточки в html на стороне сервера как-то.
+          def renderMad2htmlAsync(brArgs: blk.RenderArgs): Future[Html] = {
+            Future {
+              BlocksConf.DEFAULT
+                .renderBlock(brArgs)(ctx)
+            }
+          }
+
           override def renderMadAsync(brArgs: blk.RenderArgs): Future[T] = {
             for (rendered <- renderMad2htmlAsync(brArgs)) yield {
               RenderedAdBlock(brArgs.mad, rendered)
@@ -202,48 +211,13 @@ trait ScSyncSite
       }
     }
 
-    /** Логика отработки списка узлов (панели навигации). */
-    lazy val nodesListLogic = new FindNodesLogic {
-      override implicit def _request = syncLogic._request
-      override val _nsArgs = MScNodeSearchArgs(
-        currAdnId = _scState.adnId
-      )
-      override def renderArgsFut: Future[NodeListRenderArgs] = {
-        for (renderArgs <- super.renderArgsFut) yield {
-          new NodeListRenderArgsWrapper {
-            override def _nlraUnderlying = renderArgs
-            override def syncUrl(jsState: ScJsState) = _urlGenF(jsState)
-          }
-        }
-      }
-    }
-
+    // 2018-04-03 Удаление FindNodes вообще, в таком виде её не сущестует в sc3.
     def maybeNodesListHtmlFut: Future[Option[Html]] = {
-      if (_scState.isNavScrOpened) {
-        // Рендерим, пробрасывая js-состояние внутрь шаблона.
-        for (rnl <- nodesListLogic.nodesListRenderedFut) yield {
-          Some( rnl(Some(_scState)) )
-        }
-      } else {
-        Future.successful( None )
-      }
-    }
-
-    def maybeGeoDetectResultFut: Future[Option[GeoDetectResult]] = {
-      if (_scState.isNavScrOpened) {
-        nodesListLogic.nextNodeWithLayerFut
-          .map( EmptyUtil.someF )
-      } else {
-        Future.successful( None )
-      }
+      Future.successful( None )
     }
 
     def currNodeGeoOptFut: Future[Option[MNode]] = {
-      for (gdrOpt <- maybeGeoDetectResultFut) yield {
-        for (gdr <- gdrOpt) yield {
-          gdr.node
-        }
-      }
+      Future.successful( None )
     }
 
     def tilesRenderFut = tileLogic.madsRenderedFut

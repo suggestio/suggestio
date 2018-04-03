@@ -4,7 +4,6 @@ import javax.inject.Inject
 import models.mproj.ICommonDi
 import util.acl.IsSu
 import util.adv.direct.AdvRcvrsUtil
-import util.health.AdnGeoParentsHealth
 import views.html.sys1.debug._
 
 /**
@@ -14,7 +13,6 @@ import views.html.sys1.debug._
  * Description: Sys-контроллер для отладки.
  */
 class SysDebug @Inject() (
-                           geoParentsHealth              : AdnGeoParentsHealth,
                            advRcvrsUtil                  : AdvRcvrsUtil,
                            isSu                          : IsSu,
                            override val mCommonDi        : ICommonDi
@@ -30,24 +28,6 @@ class SysDebug @Inject() (
       Ok( indexTpl() )
     }
   }
-
-  /**
-    * Запуск теста geo-связности geo-узлов через geo.parents-поля.
-    *
-    * @return 200 Ок со страницей-отчетом.
-    */
-  def testNodesAllGeoParents = csrf.Check {
-    isSu().async { implicit request =>
-      for {
-      // Организуем тестирование
-        testResults <- geoParentsHealth.testAll()
-      } yield {
-        val render = geo.parent.resultsTpl(testResults)
-        Ok(render)
-      }
-    }
-  }
-
 
   /** Запуск поиска и ремонта неправильных ресиверов в карточках. */
   def resetAllRcvrs = csrf.Check {

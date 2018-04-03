@@ -148,32 +148,6 @@ trait ScIndexAdOpen
         }
       }
 
-    } else if (majorApiVsn ==* MScApiVsns.Sjs1.majorVsn) {
-      new ScIndexLogicV2 {
-        override def _syncArgs          = MScIndexSyncArgs.empty
-        override lazy val indexNodeFut: Future[MIndexNodeInfo] = {
-          Future.successful(
-            MIndexNodeInfo(
-              mnode   = producer,
-              isRcvr  = true
-            )
-          )
-        }
-        override def _request  = request
-        override def _reqArgs: MScIndexArgs = new MScIndexArgsDfltImpl {
-          private val s = focLogic._qs
-          override def prevAdnId: Option[String]  = {
-            s.search
-              .rcvrIdOpt
-              .map(_.id)
-          }
-          override def screen: Option[DevScreen]  = s.screen
-          override def apiVsn: MScApiVsn          = s.apiVsn
-          override def withWelcome                = true
-          override def locEnv                     = s.search.locEnv
-        }
-      }
-
     } else {
       throw new IllegalArgumentException("Unknown API: " + majorApiVsn)
     }

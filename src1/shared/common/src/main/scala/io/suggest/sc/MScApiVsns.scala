@@ -27,34 +27,6 @@ import play.api.libs.json.Format
 
 object MScApiVsns extends IntEnum[MScApiVsn] {
 
-  /** Выдача, переписанная на scala.js.
-    * Выдача второго поколения или просто "sc v2".
-    * HTTP-ответы представляют из себя JSON-объекты (application/json) с отрендеренным html внутри полей.
-    */
-  case object Sjs1 extends MScApiVsn( 2 ) {
-
-    override def useJdAds = false
-
-  }
-
-
-  /** Cordova-выдача требует некоторого доп.шаманства в коде относительно API обычного v2. */
-  case object Cordova extends MScApiVsn( 3 ) {
-
-    override def useJdAds = false
-
-    /** Различия API с обычной версией только в мелочах, поэтому контроллеры должны реагировать как обычно на v2. */
-    override def majorVsn = Sjs1.majorVsn
-
-    /**
-      * В cordova есть проблема с относительными ссылками: WebView работает в контексте file:///,
-      * и нужно, чтобы картинки и прочая медия была явно определена с полными ссылками.
-      */
-    override def forceAbsUrls = true
-
-  }
-
-
   /** Выдача на React.sjs (sc3). */
   case object ReactSjs3 extends MScApiVsn( 4 )
 
@@ -72,11 +44,8 @@ object MScApiVsns extends IntEnum[MScApiVsn] {
 /** Класс одного элемента модели [[MScApiVsns]]. */
 sealed abstract class MScApiVsn(override val value: Int) extends IntEnumEntry {
 
-  // TODO Удалить это?
-  final def versionNumber = value
-
   /** Мажорная версия API. Выводится из versonNumber, может переопредяться на минорных реализациях. */
-  def majorVsn: Int = versionNumber
+  def majorVsn: Int = value
 
   /**
     * Генерить абсолютные внутренние ссылки в выдаче, где возможно.
@@ -90,7 +59,7 @@ sealed abstract class MScApiVsn(override val value: Int) extends IntEnumEntry {
     */
   def useJdAds: Boolean = true
 
-  override def toString: String = s"v$majorVsn($versionNumber)"
+  override def toString: String = s"v$majorVsn($value)"
 
 }
 

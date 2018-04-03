@@ -9,7 +9,6 @@
 @jsRevRouterTpl(NAME)(
   routes.javascript.Sc.index,
   routes.javascript.Sc.findAds,
-  routes.javascript.Sc.findNodes,
   routes.javascript.Sc.focusedAds,
   routes.javascript.Sc.tagsSearch,
   routes.javascript.Sc.handleScError,

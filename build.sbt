@@ -407,18 +407,12 @@ lazy val scCommonSjs = {
     .dependsOn( commonSjs )
 }
 
-/** Выдача suggest.io, написанная с помощью scala.js. */
-lazy val scSjs = {
-  Project(id = "sc-sjs", base = file(DIR0 + "client/sc/main"))
-    .enablePlugins(WebScalaJS)
-    .dependsOn(scCommonSjs, mapBoxGlSjs, bleBeaconerSjs, cordovaSjs)
-}
-
 /** Выдача на scala.js+react. */
 lazy val sc3Sjs = {
   Project(id = "sc3-sjs", base = file(DIR0 + "client/sc/v3"))
     .enablePlugins(WebScalaJS)
-    .dependsOn(scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSjs, mapsSjs, jdRenderSjs, reactSidebar)
+    // Поддержка BLE и Cordova не реализована. Надо извлечь из прошлой выдачи, которая была удалена 2018-04-03 после 7390c4e0af497795438e67b57e42c28281a100d2 из src1/client/sc/main
+    .dependsOn(scCommonSjs, commonReactSjs, /*bleBeaconerSjs, cordovaSjs,*/ mapsSjs, jdRenderSjs, reactSidebar)
 }
 
 /** json document react renderer */
@@ -514,7 +508,7 @@ lazy val www = project
   )
   .settings(
     // Это связка для
-    scalaJSProjects := Seq(lkSjs, scSjs, sc3Sjs),
+    scalaJSProjects := Seq(lkSjs, sc3Sjs),
     pipelineStages in Assets ++= Seq(scalaJSPipeline),
     // Скопипастить некоторые ассеты прямо из npm:
     // react DatePicker
@@ -560,8 +554,8 @@ lazy val sio2 = {
     .aggregate(
       commonJS, commonJVM, logsMacro,
       commonSjs, commonReactSjs,
-      leafletSjs, leafletReactSjs, mapBoxGlSjs,
-      lkSjs, scSjs, sc3Sjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
+      leafletSjs, leafletReactSjs,
+      lkSjs, sc3Sjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
       tinyMceSjs, reactTinyMceSjs,
       reactImageGallerySjs, reactColorSjs, reactImageCropSjs,

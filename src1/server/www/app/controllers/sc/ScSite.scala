@@ -29,7 +29,6 @@ import util.i18n.IJsMessagesUtilDi
 import util.sec.ICspUtilDi
 import util.stat.IStatUtil
 import views.html.sc._
-import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -259,44 +258,13 @@ trait ScSite
   }
 
 
-  /** Когда нужно рендерить site script, подмешиваем это. */
-  protected abstract class SiteScriptLogicV2 extends SiteLogic {
-
-    import views.html.sc.site.v2._
-
-    override def customCspPolicyOpt: Option[(String, String)] = {
-      cspUtil.CustomPolicies.PageWithMapboxGl
-    }
-
-    /** Добавки к тегу head в siteTpl. */
-    override def headAfterFut: Future[List[Html]] = {
-      val fut0 = super.headAfterFut
-      val headAfterHtml = _headAfterV2Tpl()(ctx)
-      for (htmls0 <- fut0) yield {
-        headAfterHtml :: htmls0
-      }
-    }
-
-    override def scriptHtmlFut: Future[Html] = {
-      val scriptRenderArgs = MSc2ScriptRenderArgs(
-        apiVsn = _siteQsArgs.apiVsn
-      )
-      val html = _scriptV2Tpl(scriptRenderArgs)(ctx)
-      Future.successful(html)
-    }
-
-    override def _syncRender = false
-
-  }
-
-
-  // TODO Сделать val, когда произойдёт переключение на v3-выдачу по дефолту.
-  private def cspV3 = cspUtil.mkCustomPolicyHdr { pol0 =>
+  private val cspV3 = cspUtil.mkCustomPolicyHdr { pol0 =>
     pol0
       .allowOsmLeaflet
       .jsUnsafeInline
       .styleUnsafeInline
   }
+
 
   /** Реализация SiteLogic для v3-выдачи на базе react с client-side рендером. */
   protected abstract class SiteScriptLogicV3 extends SiteLogic {
@@ -417,14 +385,6 @@ trait ScSite
         val logic = new SiteScriptLogicV3 {
           override implicit def _request = request
           override def _siteQsArgs = siteArgs
-        }
-        _geoSiteResult(logic)
-
-      } else if (siteArgs.apiVsn.majorVsn ==* MScApiVsns.Sjs1.majorVsn) {
-        // sc v2 -- первая выдача на scala.js.
-        val logic = new SiteScriptLogicV2 {
-          override def _siteQsArgs = siteArgs
-          override def _request = request
         }
         _geoSiteResult(logic)
 

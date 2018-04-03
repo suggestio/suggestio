@@ -3,7 +3,6 @@ package controllers
 import javax.inject.{Inject, Named, Singleton}
 
 import controllers.sc._
-import io.suggest.model.n2.media.MMediasCache
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.ContextUtil
@@ -41,7 +40,6 @@ class Sc @Inject() (
                      override val statUtil           : StatUtil,
                      override val statCookiesUtil    : StatCookiesUtil,
                      override val mNodes             : MNodes,
-                     override val scNlUtil           : ShowcaseNodeListUtil,
                      override val scUtil             : ShowcaseUtil,
                      override val adRenderUtil       : AdRenderUtil,
                      override val cdnUtil            : CdnUtil,
@@ -76,7 +74,6 @@ class Sc @Inject() (
   with ScSyncSite
   with ScAdsTile
   with ScFocusedAds
-  with ScNodesList
   with ScBlockCss
   with ScOnlyOneAd
   with ScIndexAdOpen
