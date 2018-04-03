@@ -17,7 +17,6 @@ import models.mbill._
 import models.mcal.MCalendars
 import models.mctx.Context
 import models.mproj.ICommonDi
-import play.twirl.api.{Html, Template2}
 import util.TplDataFormatUtil
 import util.acl._
 import util.adn.NodesUtil
@@ -137,47 +136,6 @@ class LkBill2 @Inject() (
     isNodeAdmin(onNodeId, U.Lk).async { implicit request =>
       request.user.lkCtxDataFut.map { implicit ctxData =>
         Ok(ThanksForBuyTpl(request.mnode))
-      }
-    }
-  }
-
-
-  /** Рендер окошка с по целевому узлу-ресиверу.
-    *
-    * @param nodeId id узла-ресивера.
-    * @return 200 Ок с версткой окошка.
-    *         404 если узел не найден или не является ресивером.
-    */
-  def _rcvrInfoWnd(nodeId: String) = _rcvrInfoResp(_rcvrInfoWndTpl, nodeId)
-
-  /** Рендер только наполнения окошка по целевому узлу-ресиверу. */
-  def _rcvrInfoWndBody(nodeId: String, forAdId: Option[String]) = _rcvrInfoResp(_rcvrInfoPopBodyTpl, nodeId, forAdId)
-
-  private def _rcvrInfoResp(
-                             tpl      : Template2[IRcvrInfoTplArgs, Context, Html],
-                             nodeId   : String,
-                             forAdId  : Option[String] = None
-                           ) = {
-    canViewNodeAdvInfo(nodeId, forAdId).async { implicit request =>
-      val madOpt = request.adProdReqOpt
-        .map(_.mad)
-      val dailyTfArgsOptFut = _dailyTfArgsFut(request.mnode, madOpt)
-      val galleryFut = galleryUtil.galleryImgs(request.mnode)
-
-      val okFut = for {
-        dailyTfArgsOpt  <- dailyTfArgsOptFut
-        dailyTfArgs     =  dailyTfArgsOpt.get
-        gallery         <- galleryFut
-      } yield {
-        val args = MRcvrInfoTplArgs(
-          tfArgs  = dailyTfArgs,
-          gallery = gallery
-        )
-        Ok( tpl.render(args, implicitly[Context]) )
-      }
-
-      okFut.recover { case _: NoSuchElementException =>
-        NotFound("Not a receiver: " + nodeId)
       }
     }
   }

@@ -1,6 +1,5 @@
 package models.adv
 
-import io.suggest.bill.MGetPriceResp
 import models.mbase.{IMad, IProducer}
 
 /**
@@ -19,13 +18,4 @@ trait IAdvFreeForAdCommonTplArgs
   with IProducer
 {
   def adId = mad.id.get
-}
-
-
-/** Аргументы forAd-шаблона платного размещения реализуют этот общий интерфейс. */
-trait IAdvForAdCommonTplArgs extends IAdvFreeForAdCommonTplArgs {
-
-  /** Начальная отображаемая цена. */
-  def price: MGetPriceResp
-
 }
