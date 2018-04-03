@@ -46,9 +46,6 @@ object MJsiTgs extends StringEnum[MJsiTg] {
   /** Цель для инициализации страницы размещения в геотегах. */
   case object AdvGeoForm extends MJsiTg("m")
 
-  /** Цель инициализации формы прямого размещения карточки на узлах. */
-  case object AdvDirectForm extends MJsiTg("n")
-
   /** Цель инициализации формы размещения ADN-узла на географической карте. */
   case object AdnMapForm extends MJsiTg("o")
 

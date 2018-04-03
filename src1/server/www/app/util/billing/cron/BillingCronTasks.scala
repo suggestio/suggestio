@@ -4,7 +4,6 @@ import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
-import util.adv.direct.AdvDirectBilling
 import util.billing.Bill2Util
 import util.cron.ICronTasksProvider
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -19,12 +18,11 @@ import scala.concurrent.duration._
  * Т.к. все товары и услуги были унифицированы через MItem, то их обслуживание так-же потребовало унификации.
  */
 class BillingCronTasks @Inject()(
-  advDirectBilling        : AdvDirectBilling,
-  aoaFac                  : ActivateOfflineAdvsFactory,
-  deaFac                  : DisableExpiredAdvsFactory,
-  bill2Util               : Bill2Util,
-  mCommonDi               : ICommonDi
-)
+                                  aoaFac                  : ActivateOfflineAdvsFactory,
+                                  deaFac                  : DisableExpiredAdvsFactory,
+                                  bill2Util               : Bill2Util,
+                                  mCommonDi               : ICommonDi
+                                )
   extends ICronTasksProvider
   with MacroLogsImpl
 {
@@ -86,24 +84,5 @@ class BillingCronTasks @Inject()(
       Nil
     }
   }
-
-  /** Цикл автоматического накатывания MAdvReq в MAdvOk.
-    * Нужно найти висячие MAdvReq и заапрувить их не проверяя. */
-  /*def enableOfflineAdvs() {
-    val period = new Period(AUTO_ACCEPT_REQS_AFTER_HOURS, 0, 0, 0)
-    // Найти запросы размещения, чей срок уже пришел
-    val advsReqFut = Future {
-      db.withConnection { implicit c =>
-        MAdvReq.findCreatedLast(period)
-      }
-    }(AsyncUtil.jdbcExecutionContext)
-
-    // Обработать найденные запросы размещения.
-    for (advsReq <- advsReqFut) {
-      for (mar <- advsReq) {
-        advDirectBilling.acceptAdvReq(mar, isAuto = true)
-      }
-    }
-  }*/
 
 }

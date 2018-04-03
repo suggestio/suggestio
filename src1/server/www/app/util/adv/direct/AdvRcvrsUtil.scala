@@ -32,13 +32,12 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AdvRcvrsUtil @Inject()(
-  mItems                  : MItems,
-  override val mNodes     : MNodes,
-  advDirectBilling        : AdvDirectBilling,
-  advBuilderFactory       : AdvBuilderFactory,
-  n2NodesUtil             : N2NodesUtil,
-  mCommonDi               : ICommonDi
-)
+                              mItems                  : MItems,
+                              override val mNodes     : MNodes,
+                              advBuilderFactory       : AdvBuilderFactory,
+                              n2NodesUtil             : N2NodesUtil,
+                              mCommonDi               : ICommonDi
+                            )
   extends MacroLogsImpl
   with AdvMNodesTryUpdateBuilderT
 {
@@ -311,20 +310,6 @@ class AdvRcvrsUtil @Inject()(
     for (tub2 <- fut) yield {
       tub2.acc.mnode
     }
-  }
-
-  /** Заменить ресиверов в узле без сохранения. */
-  def updateReceivers(mad: MNode, rcvrs1: Seq[MEdge]): MNode = {
-    mad.withEdges(
-      edges = mad.edges.copy(
-        out = {
-          val oldEdgesIter = mad.edges
-            .withoutPredicateIter( MPredicates.Receiver )
-          val newRcvrEdges = rcvrs1.iterator
-          MNodeEdges.edgesToMap1( oldEdgesIter ++ newRcvrEdges )
-        }
-      )
-    )
   }
 
 

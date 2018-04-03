@@ -75,55 +75,6 @@ class AdvFormUtil @Inject() (
     )
   }
 
-  /** Форма исповедует select, который имеет набор предустановленных интервалов, а также имеет режим задания дат вручную. */
-  def advPeriodM: Mapping[MDatesPeriod] = {
-    val custom = QuickAdvPeriods.Custom.value
-    tuple(
-      QUICK_PERIOD_FN -> nonEmptyText(minLength = 1, maxLength = 10)
-        .transform [Option[QuickAdvIsoPeriod]] (
-          {periodRaw =>
-            if (periodRaw == custom)
-              None
-            else
-              QuickAdvPeriods.withNameOptionIso(periodRaw)
-          },
-          { _.fold(custom)(_.value) }   // TODO Тут было .isoPeriod, но он тут недоступен, поэтому strId.
-        ),
-      DATES_INTERVAL_FN -> advDatePeriodOptM
-    )
-    .verifying("error.required", { m => m match {
-      case (periodOpt, datesOpt)  =>  periodOpt.isDefined || datesOpt.isDefined
-    }})
-    // Проверяем даты у тех, у кого выставлены галочки. end должна быть не позднее start.
-    .verifying("error.date.end.before.start", { m => m match {
-       // Если даты имеют смысл, то они заданы, и их проверяем.
-       case (None, Some((dateStart, dateEnd)))    => !(dateStart isAfter dateEnd)
-       // Остальные случаи не отрабатываем - смысла нет.
-       case _ => true
-    }})
-
-    .transform [MDatesPeriod] (
-      // В зависимости от имеющихся значений полей выбираем реальный период.
-      { case (Some(qap), _) =>
-          MDatesPeriod(qap)
-        case (_, dpo) =>
-          val (dstart, dend) = dpo.get
-          MDatesPeriod(None, dstart, dend)
-      },
-      // unapply(). Нужно попытаться притянуть имеющийся интервал дат на какой-то период из списка QuickAdvPeriod.
-      // При неудаче вернуть кастомный период.
-      {dsp =>
-        dsp.quickPeriod match {
-          case Some(qap)  =>
-            val mdp = MDatesPeriod(qap)
-            Some(qap) -> Some( (mdp.dateStart, mdp.dateEnd) )
-          case None =>
-            None -> Some((dsp.dateStart, dsp.dateEnd))
-        }
-      }
-    )
-  }
-
 
   def maybeFreeAdv()(implicit request: IReq[_]): Boolean = {
     // Раньше было ограничение на размещение с завтрашнего дня, теперь оно снято.

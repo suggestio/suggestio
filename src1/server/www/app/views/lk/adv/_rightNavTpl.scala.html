@@ -20,12 +20,6 @@
   )
 
   @_navItemTpl(
-    title = messages("Adv.in.geo.node"),
-    href  = Some( routes.MarketAdv.advForAd(madId) ),
-    css   = classesAct(curr.contains( L.DIRECT ), "__geo")
-  )
-
-  @_navItemTpl(
     title = messages("Adv.in.nodes"),
     href  = Some( routes.LkNodes.nodesForAd(madId) ),
     css   = classesAct(curr.contains( L.AD_NODES ), "__nodes")

@@ -1,10 +1,8 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.model.n2.node.{MNode, MNodes}
 import models.mproj.ICommonDi
-import util.adv.direct.AdvDirectBilling
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
@@ -13,6 +11,7 @@ import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{IReqHdr, ISioUser, MNodeReq}
 import play.api.mvc._
+import util.billing.Bill2Util
 
 import scala.concurrent.Future
 
@@ -30,7 +29,7 @@ class CanChangeNodeAvailability @Inject() (
                                             mNodes            : MNodes,
                                             aclUtil           : AclUtil,
                                             isNodeAdmin       : IsNodeAdmin,
-                                            advDirectBilling  : AdvDirectBilling,
+                                            bill2Util         : Bill2Util,
                                             reqUtil           : ReqUtil,
                                             mCommonDi         : ICommonDi
                                           )
@@ -66,7 +65,7 @@ class CanChangeNodeAvailability @Inject() (
 
       // Поискать размещений на узел в биллинге...
       val hasAnyBusyToNodeFut = slick.db.run {
-        advDirectBilling.hasAnyBusyToNode(nodeId)
+        bill2Util.hasAnyBusyToNode(nodeId)
       }
 
       // Поискать какие-либо подчиненные узлы, указывающие на этот узел.

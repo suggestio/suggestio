@@ -160,13 +160,6 @@ lazy val commonSlickDriver = {
   Project(id = name, base = file(DIR0 + "server/util/" ++ name))
 }
 
-/** Scala.js API для доступа к jquery.datetimepicker.js от xdsoft. */
-lazy val jqDateTimePickerSjs = {
-  val name = "jquery-datetimepicker"
-  Project(id = name, base = file(DIR0 + "client/scalajs/jquery/jquery-datetimepicker"))
-    //.enablePlugins(ScalaJSBundlerPlugin)
-}
-
 /** всякая мелочь, специфчная только для личного кабинета, но используется в нескольких модулях. */
 lazy val lkCommonSjs = {
   val name = "lk-common-sjs"
@@ -177,7 +170,6 @@ lazy val lkCommonSjs = {
 
 /** Самопальные биндинги для moment.js. */
 lazy val momentSjs = Project(id = "moment-sjs", base = file(DIR0 + "client/dt/moment"))
-
 
 /** sio-утиль для moment.js. */
 lazy val momentSioSjs = {
@@ -257,7 +249,7 @@ lazy val gridSjs = {
 lazy val lkDtPeriodSjs = {
   val name = "lk-dt-period-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/dt-period"))
-    .dependsOn(lkCommonSjs, jqDateTimePickerSjs, commonReactSjs, reactDatePickerSjs)
+    .dependsOn(lkCommonSjs, commonReactSjs, reactDatePickerSjs)
 }
 
 /** lk-adv-common sjs. */
@@ -265,13 +257,6 @@ lazy val lkAdvCommonSjs = {
   val name = "lk-adv-common-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/adv/common"))
     .dependsOn(lkCommonSjs, lkDtPeriodSjs, commonReactSjs, mapsSjs)
-}
-
-/** Поддержка формы прямого размещения на узлах. */
-lazy val lkAdvDirectSjs = {
-  val name = "lk-adv-direct-sjs"
-  Project(id = name, base = file(DIR0 + "client/lk/adv/direct"))
-    .dependsOn(lkAdvCommonSjs)
 }
 
 /** Sjs-модуль для поддержки подсистемы размещения в гео-тегах. */
@@ -400,12 +385,12 @@ lazy val lkAdsSjs = {
 /** Всякие мелкие скрипты ЛК объеденены в этом scala-js. 
  *
  * Чтобы clean/test в lk-sjs срабатывал и на зависимых вещах, перечисляем их здесь
- *   .aggregate(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdvCommonSjs, lkCommonSjs, lkAdnMapSjs, lkNodesFormSjs)
+ *   .aggregate(lkAdvExtSjs, lkAdvGeoSjs, lkAdvCommonSjs, lkCommonSjs, lkAdnMapSjs, lkNodesFormSjs)
  */
 lazy val lkSjs = {
   Project(id = "lk-sjs", base = file(DIR0 + "client/lk/main"))
     .enablePlugins(WebScalaJS)
-    .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs, lkAdEditorSjs, lkAdsSjs)
+    .dependsOn(lkAdvExtSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs, lkAdEditorSjs, lkAdsSjs)
 }
 
 /** scala.js реализация системы мониторинга js-маячков. */
@@ -576,7 +561,7 @@ lazy val sio2 = {
       commonJS, commonJVM, logsMacro,
       commonSjs, commonReactSjs,
       leafletSjs, leafletReactSjs, mapBoxGlSjs,
-      lkSjs, scSjs, sc3Sjs, jqDateTimePickerSjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
+      lkSjs, scSjs, sc3Sjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
       tinyMceSjs, reactTinyMceSjs,
       reactImageGallerySjs, reactColorSjs, reactImageCropSjs,

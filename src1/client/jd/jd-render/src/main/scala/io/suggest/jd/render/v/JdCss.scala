@@ -142,7 +142,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         // Выравнивание блока внутри внешнего контейнера:
         if (bm.wide && !jdCssArgs.conf.isEdit) {
           // Если wide, то надо отцентровать блок внутри wide-контейнера.
-          // Формула по X банальна: с середины внешнего контейнера вычесть серелину smBlock и /2.
+          // Формула по X банальна: с середины внешнего контейнера вычесть середину smBlock и /2.
           import io.suggest.common.html.HtmlConstants._
           val calcFormula = 50.%%.value + SPACE + MINUS + SPACE + (szMulted.width / 2).px.value
           val calcAV: ToStyle = {
@@ -257,7 +257,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       val tags = _allJdTagsIter
         .filter(_.props1.topLeft.nonEmpty)
         .toIndexedSeq
-
       new Domain.OverSeq(tags)
     }
     styleF(absPosDomain) { jdt =>

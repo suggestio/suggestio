@@ -71,11 +71,6 @@ GET  /lk/mads/get/*nodeKey              @controllers.LkAds.getAds(nodeKey: RcvrK
 GET  /lk/own/edit/:adnId                @controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
 POST /lk/own/pwchange/:adnId            @controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
 
-## Размещение рекламы (adv) на узлах-получателях
-GET  /lk/xadv/loc/for/:adId             @controllers.MarketAdv.advForAd(adId)
-POST /lk/xadv/loc/for/:adId             @controllers.MarketAdv.advFormSubmit(adId)
-POST /lk/xadv/loc/price/for/:adId       @controllers.MarketAdv.getAdvPriceSubmit(adId)
-
 ## Размещение рекламы на внешних сервисах
 GET  /lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTarget(adnId)
 POST /lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTargetSubmit(adnId)
