@@ -71,10 +71,8 @@ class Sc @Inject() (
   with MacroLogsImpl
   with ScSite
   with ScIndex
-  with ScSyncSite
   with ScAdsTile
   with ScFocusedAds
-  with ScBlockCss
   with ScOnlyOneAd
   with ScIndexAdOpen
   with ScJsRouter

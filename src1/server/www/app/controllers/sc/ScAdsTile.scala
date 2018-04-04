@@ -38,7 +38,6 @@ trait ScAdsTileBase
   extends ScController
   with IMacroLogs
   with IScUtil
-  with ScCssUtil
   with IMNodes
   with IBlkImgMakerDI
   with IScAdSearchUtilDi
@@ -48,7 +47,7 @@ trait ScAdsTileBase
   import mCommonDi._
 
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
-  trait TileAdsLogic extends LogicCommonT with AdCssRenderArgs with TypeT {
+  trait TileAdsLogic extends LogicCommonT with TypeT {
 
     def _qs: MScAdsTileQs
 
@@ -98,21 +97,12 @@ trait ScAdsTileBase
       }
     }
 
-    override def adsCssExternalFut: Future[Seq[AdCssArgs]] = {
-      for (mads <- madsFut) yield {
-        val _szMult = szMult
-        mads
-          .flatMap(_.id)
-          .map { adId => AdCssArgs(adId, _szMult) }
-      }
-    }
-
     // Группировка groupNarrowAds отключена, т.к. новый focused-порядок не соответствует плитке,
     // а плитка страдает от выравнивания по 2 столбца.
     def madsGroupedFut = madsFut//.map { scUtil.groupNarrowAds }
 
     /** Очень параллельный рендер в HTML всех необходимых карточек. */
-    lazy val madsRenderedFut: Future[Seq[T]] = {
+    def madsRenderedFut: Future[Seq[T]] = {
       // Запускаем асинхронные операции
       val _madsGroupedFut = madsGroupedFut
         .map { _.zipWithIndex }

@@ -38,7 +38,10 @@
           href="@args.nodeOpt.flatMap(n2NodesUtil.urlPrefixOf).getOrElse(ctxUtil.SC_URL_PREFIX)@routes.Sc.geoSite()#!?@jsState.canonical.toQs()" />
   }
   @if(!args.syncRender) {
+    @* Раскомментить, когда будет рабочий SyncSite для новой выдачи.
     <meta name="fragment" content="!"/>
+    *@
+
     <link rel="manifest" href="@cdn.forCall(routes.Sc.webAppManifest( MPwaManifestQs(args.apiVsn) ))"/>
     @* TODO startUrl meta tag и другие для iOS, не умеющей в manifest. *@
   }

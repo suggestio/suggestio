@@ -21,8 +21,6 @@ GET  /favicon.ico                       @controllers.Assets.at(path = "/public",
 ## Унифицированный sc index на все случаи жизни.
 GET  /sc/index                          @controllers.Sc.index(a: msc.MScIndexArgs)
 
-GET  /sc/blkcss                         @controllers.Sc.serveBlockCss(c: Seq[msc.AdCssArgs])
-
 GET  /sc/tile                           @controllers.Sc.findAds(a: msc.MScAdsTileQs)
 GET  /sc/fads                           @controllers.Sc.focusedAds(a: msc.MScAdsFocQs)
 ## Рендер ровно одной карточки.
@@ -35,8 +33,6 @@ GET  /sc/tags                           @controllers.Sc.tagsSearch(t: io.suggest
 GET  /sc/map/nodes/all                  @controllers.Sc.renderMapNodesAll
 GET  /sc/sc.webmanifest                 @controllers.Sc.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
 
-## Прямой доступ к синхронной выдаче
-GET  /sc/syncsite                       @controllers.Sc.syncGeoSite(a: msc.ScJsState ?= msc.ScJsState.empty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
 ## Дамп ошибок выдачи.
 POST /sc/error                          @controllers.Sc.handleScError
 

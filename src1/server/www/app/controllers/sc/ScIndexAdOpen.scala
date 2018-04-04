@@ -124,7 +124,6 @@ trait ScIndexAdOpen
     val idxLogic: ScIndexLogic = if (majorApiVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
       new ScIndexLogicV3 {
         override def isFocusedAdOpen    = true
-        override def _syncArgs          = MScIndexSyncArgs.empty
         override lazy val indexNodeFut: Future[MIndexNodeInfo] = {
           Future.successful(
             MIndexNodeInfo(

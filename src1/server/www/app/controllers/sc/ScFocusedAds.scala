@@ -5,7 +5,6 @@ import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.coll.Lists
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.fut.FutureUtil
 import io.suggest.dev.MSzMult
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{IMNodes, MNode}
@@ -17,14 +16,10 @@ import io.suggest.sc.sc3.{MSc3AdData, MSc3AdsResp, MSc3Resp, MSc3RespAction}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.blk
-import models.im.MImgT
-import models.im.logo.LogoOpt_t
 import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
-import play.twirl.api.Html
 import util.acl._
-import views.html.sc.foc._
 import io.suggest.sc.focus.{MLookupMode, MLookupModes}
 import play.api.libs.json.Json
 import util.ad.IJdAdUtilDi
@@ -32,7 +27,6 @@ import util.showcase.IScAdSearchUtilDi
 import util.stat.IStatUtil
 import japgolly.univeq._
 
-import scala.collection.immutable
 import scala.concurrent.Future
 
 /**
@@ -45,7 +39,6 @@ trait ScFocusedAdsBase
   extends ScController
   with IMacroLogs
   with IScUtil
-  with ScCssUtil
   with IN2NodesUtilDi
   with IMNodes
   with IScAdSearchUtilDi
@@ -55,7 +48,7 @@ trait ScFocusedAdsBase
   import mCommonDi._
 
   /** Базовая логика обработки запросов сбора данных по рекламным карточкам и компиляции оных в результаты выполнения запросов. */
-  abstract class FocusedAdsLogic extends LogicCommonT with AdCssRenderArgs {
+  abstract class FocusedAdsLogic extends LogicCommonT {
 
     /** Параллельный рендер блоков, находящихся за пределом экрана, должен будет возращать результат этого типа для каждого блока. */
     type OBT
@@ -92,7 +85,7 @@ trait ScFocusedAdsBase
         Future.successful(0L)
       }
     }
-    lazy val madsCountIntFut = madsCountFut.map(_.toInt)
+    def madsCountIntFut = madsCountFut.map(_.toInt)
 
     /**
       * 2014.jan.28: Если не найдены какие-то элементы, то сообщить об этом в логи.
@@ -166,20 +159,20 @@ trait ScFocusedAdsBase
 
     /** Список продьюсеров, относящихся к запрошенным focused-карточкам.
       * Порядок продьюсеров в списке неопределён. */
-    lazy val mads2ProdsFut: Future[Seq[MNode]] = {
+    def mads2ProdsFut: Future[Seq[MNode]] = {
       prodIdsFut.flatMap { prodIds =>
         mNodesCache.multiGet(prodIds)
       }
     }
 
     /** Карта продьюсеров, относящихся к запрошенным focused-карточкам. */
-    lazy val mads2ProdsMapFut: Future[Map[String, MNode]] = {
+    def mads2ProdsMapFut: Future[Map[String, MNode]] = {
       for (prods <- mads2ProdsFut) yield {
         OptId.els2idMap(prods)
       }
     }
 
-    lazy val mads2andBrArgsFut: Future[Seq[blk.RenderArgs]] = {
+    def mads2andBrArgsFut: Future[Seq[blk.RenderArgs]] = {
       val _mads2Fut = mads2Fut
       val _withCssClasses = withCssClasses
       _mads2Fut.flatMap { mads =>
@@ -202,34 +195,11 @@ trait ScFocusedAdsBase
       mads2andBrArgsFut
     }
 
-    /** Карта СЫРЫХ логотипов продьюсеров без подгонки под экран.
-      * Если в карте нет искомого продьюсера, то значит он без логотипа-картинки. */
-    def prod2logoImgMapFut: Future[Map[String, MImgT]] = {
-      mads2ProdsFut
-        .flatMap( logoUtil.getLogoOfNodes )
-    }
-    /** Карта логотипов продьюсеров, подогнанных под запрашиваемый экран. */
-    lazy val prod2logoScrImgMapFut: Future[Map[String, MImgT]] = {
-      for {
-        logosMap   <- prod2logoImgMapFut
-        nodeLogos2 <- Future.traverse( logosMap ) { case (nodeId, logoImgRaw) =>
-          for (logo4scr <- logoUtil.getLogo4scr(logoImgRaw, _qs.screen)) yield {
-            nodeId -> logo4scr
-          }
-        }
-      } yield {
-        nodeLogos2.toMap
-      }
-    }
-
     /** Параллельный рендер последовательности блоков. */
     def renderedAdsFut: Future[Seq[OBT]] = {
       // Форсируем распараллеливание асинхронных операций.
       val _mads4blkRenderFut  = mads4blkRenderFut
       val _producersMapFut    = mads2ProdsMapFut
-
-      // touch-воздействие, чтобы запустить процесс. Сама карта будет опрошена в focAdsRenderArgsFor()
-      prod2logoScrImgMapFut
 
       val _firstAdIndexFut1 = firstAdIndexFut
       for {
@@ -273,141 +243,11 @@ trait ScFocusedAdsBase
       }
     }
 
-    /**
-     * Отправить в очередь на исполнение рендер одного блока, заданного контейнером аргументов.
-     * Метод должен вызываться в реализации логики из кода реализации метода renderOuterBlock().
-      *
-      * @param args Аргументы рендера блока.
-     * @return Фьючерс с html-рендером одного блока.
-     */
-    def renderBlockHtml(args: IAdBodyTplArgs): Future[Html] = {
-      Future {
-        _adTpl(args)(ctx)
-      }
-    }
 
-    /** Что же будет рендерится в качестве текущей просматриваемой карточки? */
-    lazy val focAdOptFut: Future[Option[blk.RenderArgs]] = {
-      for (mads2andBrArgs <- mads2andBrArgsFut) yield {
-        mads2andBrArgs.headOption
-      }
-    }
-
-    /** Фьючерс продьюсера, относящегося к текущей карточке. */
-    def focAdProducerOptFut: Future[Option[MNode]] = {
-      val _prodsMapFut = mads2ProdsMapFut
-      focAdOptFut.flatMap { focAdOpt =>
-        FutureUtil.optFut2futOpt( focAdOpt ) { focMad =>
-          for (prodsMap <- _prodsMapFut) yield {
-            n2NodesUtil
-              .madProducerId(focMad.mad)
-              .flatMap(prodsMap.get)
-          }
-        }
-      }
-    }
-
-
-    lazy val firstAdIndexFut = _firstAdIndexFut
-
-    /** Сборка аргументов для рендера focused-карточки, т.е. раскрытого блока + оформление продьюсера. */
-    protected def focAdsRenderArgsFor(abtArgs: IAdBodyTplArgs): Future[IFocusedAdsTplArgs] = {
-      val producer = abtArgs.producer
-
-      val logoImgOptFut: Future[LogoOpt_t] = for {
-        logosMap   <- prod2logoScrImgMapFut
-      } yield {
-        abtArgs.producer
-          .id
-          .flatMap(logosMap.get)
-      }
-
-      val _fgColor = producer.meta.colors.fg.fold(scUtil.SITE_FGCOLOR_DFLT)(_.code)
-      val _bgColor = producer.meta.colors.bg.fold(scUtil.SITE_BGCOLOR_DFLT)(_.code)
-
-      for (_logoImgOpt <- logoImgOptFut) yield {
-        FocusedAdsTplArgs2(
-          abtArgs,
-          bgColor     = _bgColor,
-          fgColor     = _fgColor,
-          hBtnArgs    = HBtnArgs(fgColor = _fgColor),
-          logoImgOpt  = _logoImgOpt,
-          is3rdParty  = n2NodesUtil
-            .madProducerId(abtArgs.brArgs.mad)
-            .exists(is3rdPartyProducer),
-          jsStateOpt  = _scStateOpt
-        )
-      }
-    }
-
-    /** Сборка контейнера аргументов для вызова шаблона _fullTpl(). */
-    def focAdsHtmlArgsFut: Future[IFocusedAdsTplArgs] = {
-      val _producerFut = focAdProducerOptFut.map(_.get)
-      val _brArgsFut = focAdOptFut.map(_.get)
-      val _madsCountIntFut = madsCountIntFut
-      val _firstAdIndexFut1 = firstAdIndexFut
-
-      // Склеиваем фьючерсы в набор аргументов вызова focAdsRenderArgsFor().
-      for {
-        _producer     <- _producerFut
-        _brArgs       <- _brArgsFut
-        madsCountInt  <- _madsCountIntFut
-        firstAdIndex  <- _firstAdIndexFut1
-        // Завернуть все данные в общий контейнер аргументов
-        abtArgs = AdBodyTplArgs(
-          _brArgs, _producer,
-          adsCount    = madsCountInt,
-          index       = firstAdIndex,
-          is3rdParty  = is3rdPartyProducer(_producer.id.get)
-        )
-        // Запустить сборку аргументов рендера.
-        args          <- focAdsRenderArgsFor(abtArgs)
-      } yield {
-        args
-      }
-    }
-
-    override def adsCssExternalFut: Future[Seq[AdCssArgs]] = {
-      for (mbas <- mads2andBrArgsFut) yield {
-        for (mba <- mbas) yield {
-          AdCssArgs(mba.mad.id.get, mba.szMult)
-        }
-      }
-    }
+    def firstAdIndexFut = _firstAdIndexFut
 
     /** Дописывать эти css-классы в стили и в рендер. */
     def withCssClasses = Seq("focused")
-
-    /** Вызов заглавного рендера карточки. */
-    def renderFocused(args: IFocusedAdsTplArgs): Html = {
-      _fullTpl(args)(ctx)
-    }
-
-    // TODO Заглавная карточка специфична только для API v1, но используется в SyncSite для рендера единственной (текущей) карточки.
-    // Нужно перевести SyncSite на использование API v2 или на базовый трейт;  v1 будет постепенно выпилено.
-
-    /** Отрендеренное отображение раскрытой карточки вместе с обрамлениями и остальным.
-      * Т.е. пригодно для вставки в соотв. div indexTpl. Функция игнорирует значение _withHeadAd.
-      *
-      * @return Если нет карточек, то будет NoSuchElementException. Иначе фьючерс с HTML-рендером. */
-    def focAdHtmlFut: Future[Html] = {
-      for (args <- focAdsHtmlArgsFut) yield {
-        renderFocused(args)
-      }
-    }
-
-    /** Опциональный аналог focAdHtmlFut. Функция учитывает значение _withHeadAd. */
-    def focAdHtmlOptFut: Future[Option[Html]] = {
-      focAdHtmlFut
-        .map(Some.apply)
-        .recover {
-          case _: NoSuchElementException =>
-            None
-          case ex: Throwable =>
-            LOGGER.error("Failed to find focused ad", ex)
-            None
-        }
-    }
 
     /** Контекстно-зависимая сборка данных статистики. */
     override def scStat: Future[Stat2] = {

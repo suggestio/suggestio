@@ -18,7 +18,6 @@ abstract class ScRenderArgs
   with ILogoRenderArgs
   with IHBtnRenderArgs
   with IHBtnArgsFieldImpl
-  with MScIndexSyncArgs
 {
 
   /** Приветствие, если есть. */

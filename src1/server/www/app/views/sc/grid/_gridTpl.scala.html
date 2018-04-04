@@ -7,16 +7,6 @@
 @_scrollableContainerTpl("sm-grid-ads", id = ROOT_DIV_ID) {
 
   <div class="sm-grid-ads_container" id="smGridAdsContainer">
-    @* Заинлайненные рекламные карточки при синхронном рендере. *@
-    @for(tile <- args.inlineTiles) {
-      @args.jsStateOpt.map { jsState =>
-        <a href="@args.syncUrl( jsState.copy(fadOpenedIdOpt = tile.mad.id, navScrOpenedOpt = None, searchScrOpenedOpt = None) )">
-      }
-      @tile.rendered
-      @if(args.jsStateOpt) {
-        </a>
-      }
-    }
   </div>
 
   @if(!args.syncRender) {

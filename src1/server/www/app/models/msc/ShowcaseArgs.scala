@@ -1,9 +1,6 @@
 package models.msc
 
-import controllers.routes
-import io.suggest.model.n2.node.MNode
 import models.blk.SzMult_t
-import play.twirl.api.Html
 
 /**
  * Suggest.io
@@ -22,24 +19,12 @@ trait ISyncRenderInfo {
 trait SyncRenderInfo extends ISyncRenderInfo {
   def syncRender: Boolean = jsStateOpt.isDefined
   def syncUrl(jsState: ScJsState): String = {
-    routes.Sc.syncGeoSite(jsState).url
+    "NOT-IMPLEMENTED"
   }
 }
 trait SyncRenderInfoDflt extends SyncRenderInfo {
   override def jsStateOpt: Option[ScJsState] = None
 }
-
-
-/** Экземпляр отрендернной рекламной карточки*/
-trait IRenderedAdBlock {
-  def mad: MNode
-  def rendered: Html
-}
-case class RenderedAdBlock(
-  override val mad        : MNode,
-  override val rendered   : Html
-)
-  extends IRenderedAdBlock
 
 
 /** Настройки рендера плитки на клиенте. */

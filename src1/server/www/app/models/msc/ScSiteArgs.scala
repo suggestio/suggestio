@@ -43,20 +43,3 @@ trait ScSiteArgs extends SyncRenderInfoDflt {
   }
 }
 
-/** Враппер для аргументов рендера "сайта" выдачи. */
-trait ScSiteArgsWrapper extends ScSiteArgs {
-  def _scSiteArgs: ScSiteArgs
-
-  override def scColors     = _scSiteArgs.scColors
-  override def adnId        = _scSiteArgs.adnId
-
-  override def nodeOpt      = _scSiteArgs.nodeOpt
-  override def inlineIndex  = _scSiteArgs.inlineIndex
-  override def headAfter    = _scSiteArgs.headAfter
-
-  override def toString     = _scSiteArgs.toString
-  override def syncRender   = _scSiteArgs.syncRender
-
-  override def scriptHtml   = _scSiteArgs.scriptHtml
-  override def apiVsn       = _scSiteArgs.apiVsn
-}

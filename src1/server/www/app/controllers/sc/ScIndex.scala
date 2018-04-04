@@ -22,13 +22,11 @@ import io.suggest.sc.sc3.{MSc3IndexResp, MSc3Resp, MSc3RespAction}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.IMacroLogs
-import models.AdnShownTypes
 import models.im.{MImgT, MImgWithWhInfo}
 import models.msc._
 import models.mwc.MWelcomeRenderArgs
 import play.api.libs.json.Json
 import play.api.mvc._
-import play.twirl.api.Html
 import util.acl._
 import util.adn.INodesUtil
 import util.ble.IBleUtilDi
@@ -85,7 +83,6 @@ trait ScIndex
     // В зависимости от версии API выбрать используемую логику сборки ответа.
     val logicOrNull = if (args.apiVsn.majorVsn == MScApiVsns.ReactSjs3.majorVsn) {
       new ScIndexLogicV3 {
-        override def _syncArgs = MScIndexSyncArgs.empty
         override def _reqArgs  = args
         override def _request  = request
       }
@@ -129,9 +126,6 @@ trait ScIndex
     /** qs-аргументы реквеста. */
     def _reqArgs: MScIndexArgs
 
-    /** Параметры, приходящие из sync site.  */
-    def _syncArgs: IScIndexSyncArgs
-
     /** Тип sc-responce экшена. */
     def respActionType = MScRespActionTypes.Index
 
@@ -161,7 +155,7 @@ trait ScIndex
 
     /** #00: поиск узла по id ресивера, указанного в qs.
       * Future[NSEE], когда нет необходимого узла. */
-    lazy val l00_rcvrByIdFut: Future[MIndexNodeInfo] = {
+    def l00_rcvrByIdFut: Future[MIndexNodeInfo] = {
       val adnIdOpt = _reqArgs.adnIdOpt
 
       val rFut = for {
@@ -189,7 +183,7 @@ trait ScIndex
 
 
     /** #10: Определение текущего узла выдачи по ближним маячкам. */
-    lazy val l10_detectUsingNearBeacons: Future[MIndexNodeInfo] = {
+    def l10_detectUsingNearBeacons: Future[MIndexNodeInfo] = {
       // Ищем активные узлы-ресиверы, относящиеся к видимым маячкам.
       val searchOpt = bleUtil.scoredByDistanceBeaconSearch(
         maxBoost    = 100000F,
@@ -222,7 +216,7 @@ trait ScIndex
     }
 
     /** поискать покрывающий ТЦ/город/район. */
-    lazy val l50_detectUsingCoords: Future[MIndexNodeInfo] = {
+    def l50_detectUsingCoords: Future[MIndexNodeInfo] = {
       // Если с ресивером по id не фартует, но есть данные геолокации, то заодно запускаем поиск узла-ресивера по геолокации.
       // В понятиях старой выдачи, это поиск активного узла-здания.
       // Нет смысла выносить этот асинхронный код за пределы recoverWith(), т.к. он или не нужен, или же выполнится сразу синхронно.
@@ -311,7 +305,7 @@ trait ScIndex
 
 
     /** Найти в пуле или придумать какой-то рандомный узел, желательно без id даже. */
-    lazy val l95_ephemeralNodeFromPool: Future[MIndexNodeInfo] = {
+    def l95_ephemeralNodeFromPool: Future[MIndexNodeInfo] = {
       // Нужно выбирать эфемерный узел с учётом языка реквеста. Используем i18n как конфиг.
       val ephNodeId = Option ( ctx.messages("conf.sc.node.ephemeral.id") )
         .filter(_.nonEmpty)
@@ -417,7 +411,7 @@ trait ScIndex
 
 
     /** Определение заголовка выдачи. */
-    lazy val titleFut: Future[String] = {
+    def titleFut: Future[String] = {
       for (inxNodeInfo <- indexNodeFutVal) yield {
         inxNodeInfo.mnode
           .meta
@@ -482,131 +476,6 @@ trait ScIndex
     }
 
   }
-
-
-  // TODO Используется только в ScSyncSite. Удалить следом за SyncSite-велосипедом.
-
-  /** Дефолтовая реализация логики ScIndexLogic v2 (sjs1) для снижения объемов кодогенерации байткода
-    * в конкретных реализациях. */
-  abstract class ScIndexLogicV2 extends ScIndexLogic {
-
-    /** Контейнер палитры выдачи. */
-    lazy val colorsFut: Future[IColors] = {
-      for (mnodeInfo <- indexNodeFutVal) yield {
-        def _codeF(mcd: MColorData) = mcd.code
-        val colors = mnodeInfo.mnode.meta.colors
-        val _bgColor = colors.bg.fold(scUtil.SITE_BGCOLOR_DFLT)(_codeF)
-        val _fgColor = colors.fg.fold(scUtil.SITE_FGCOLOR_DFLT)(_codeF)
-        Colors(bgColor = _bgColor, fgColor = _fgColor)
-      }
-    }
-
-    lazy val hBtnArgsFut: Future[HBtnArgs] = {
-      for (colors <- colorsFut) yield {
-        HBtnArgs(fgColor = colors.fgColor)
-      }
-    }
-
-    /** Если узел с географией не связан, и есть "предыдущий" узел, то надо отрендерить кнопку "назад". */
-    def topLeftBtnHtmlFut: Future[Html] = {
-      // Сразу запускаем сборку аргументов hbtn-рендера. Не здесь, так в super-методе они понадобятся точно.
-      val _hBtnArgsFut = hBtnArgsFut
-
-      // Отрендерить кнопку "назад на предыдущий узел", только если все проверки выполнены на ок...
-      val htmlFut = for {
-        // В методе логика немного разветвляется и асинхронна внутри. false-ветвь реализована через Future.failed.
-        _     <- {
-          if (_reqArgs.prevAdnId.nonEmpty) {
-            Future.successful( None )
-          } else {
-            Future.failed( new NoSuchElementException() )
-          }
-        }
-        mnodeInfo <- indexNodeFutVal
-        mnode = mnodeInfo.mnode
-        // Продолжать только если текущий узел не связан с географией.
-        if {
-          val directGpIter = mnode.edges
-            .withPredicateIter( MPredicates.GeoParent.Direct )
-          directGpIter.isEmpty && {
-            // Если в город (верхний узел) перешли из левого подузла, то у города НЕ должна отображаться кнопка "назад",
-            // несмотря на отсутствие гео-родителей.
-            val stiOpt = mnode.extras.adn
-              .flatMap( _.shownTypeIdOpt )
-              .flatMap( AdnShownTypes.maybeWithName )
-            !stiOpt.exists( _.isTopLevel )
-          }
-        }
-        // Наконец, обратиться к аргументам рендера кнопки.
-        hBtnArgs0 <- _hBtnArgsFut
-      } yield {
-        // Отрендерить кнопку, внеся кое-какие коррективы в аргументы рендера.
-        val hBtnArgs2 = hBtnArgs0.copy(adnId = _reqArgs.prevAdnId)
-        ScHdrBtns.Back2UpperNode(hBtnArgs2)
-      }
-
-      // Что-то не так, но обычно это нормально.
-      htmlFut.recoverWith { case ex: Throwable =>
-        if (!ex.isInstanceOf[NoSuchElementException])
-          LOGGER.warn(s"$logPrefix topLeftBtnHtmlFut(): Workarounding unexpected expection", ex)
-
-        for (_hBtnArgs <- _hBtnArgsFut) yield {
-          val rargs = new MScIndexSyncArgsWrap with IHBtnArgsFieldImpl {
-            override def _syncArgsUnderlying = _syncArgs
-            override def hBtnArgs = _hBtnArgs
-          }
-          views.html.sc.hdr._navPanelBtnTpl(rargs)(ctx)
-        }
-      }
-    }
-
-        /** Сборка аргументов рендера indexTpl. */
-    def indexTplRenderArgsFut: Future[ScRenderArgs] = {
-      val _logoImgOptFut      = logoImgOptFut
-      val _welcomeOptFut      = welcomeOptFut
-      val _topLeftBtnHtmlFut  = topLeftBtnHtmlFut
-      val _colorsFut          = colorsFut
-      val _hBtnArgsFut        = hBtnArgsFut
-      val _titleFut           = titleFut
-      for {
-        _logoImgOpt           <- _logoImgOptFut
-        _welcomeOpt           <- _welcomeOptFut
-        _topLeftBtnHtml       <- _topLeftBtnHtmlFut
-        _colors               <- _colorsFut
-        _hBtnArgs             <- _hBtnArgsFut
-        _title                <- _titleFut
-      } yield {
-        new ScRenderArgs with IColorsWrapper with MScIndexSyncArgsWrap {
-          override def hBtnArgs             = _hBtnArgs
-          override def _underlying          = _colors
-          override def topLeftBtnHtml       = _topLeftBtnHtml
-          override def title                = _title
-          override def _syncArgsUnderlying  = _syncArgs
-          override def logoImgOpt           = _logoImgOpt
-          override def welcomeOpt           = _welcomeOpt
-          override def apiVsn               = _reqArgs.apiVsn
-        }
-      }
-    }
-
-
-    /** Рендер indexTpl. */
-    def respHtmlFut: Future[Html] = {
-      for (renderArgs <- indexTplRenderArgsFut) yield {
-        views.html.sc.indexTpl(renderArgs)(ctx)
-      }
-    }
-
-    /** Рендер минифицированного indexTpl. */
-    def respHtml4JsFut = respHtmlFut.map( htmlCompressUtil.html2str4json )
-
-    /** HTTP-ответ клиенту. */
-    override def result: Future[Result] = {
-      NotImplemented
-    }
-
-  }
-
 
 
   /** Раздача индекса выдачи v3.
