@@ -2,7 +2,6 @@ package io.suggest.lk.main.sjs
 
 import io.suggest.ad.edit.LkAdEditInit
 import io.suggest.ads.LkAdsInit
-import io.suggest.lk.ad.form.init.AdFormInitRouter
 import io.suggest.lk.adn.edit.init.NodeEditInitRouter
 import io.suggest.lk.adn.map.init.LkAdnMapFormInitRouter
 import io.suggest.lk.adv.geo.AdvGeoFormInitRouter
@@ -11,14 +10,11 @@ import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.ident.center.CenterContentInitRouter
 import io.suggest.lk.ident.center.captcha.{CaptchaFormInit, HiddenCaptchaInit}
 import io.suggest.lk.nodes.form.LkNodesInitRouter
-import io.suggest.lk.popup.PopupsInitRouter
 import io.suggest.msg.ErrorMsgs
-import io.suggest.sjs.common.controller.jshidden.JsHiddenInitRouter
-import io.suggest.sjs.common.controller.vlines.VerticalLinesInitRouter
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.xadv.ext.js.form.FormEventsInitRouter
-import io.suggest.xadv.ext.js.runner.c.RunnerInitRouter
+import io.suggest.xadv.ext.js.runner.c.AdvExtRunnerInitRouter
 
 import scala.scalajs.js
 
@@ -65,11 +61,7 @@ class LkInitRouter
   with CaptchaFormInit
   with HiddenCaptchaInit
   with LkNodesInitRouter
-  with RunnerInitRouter
+  with AdvExtRunnerInitRouter
   with FormEventsInitRouter
-  with AdFormInitRouter
   with FlashInitRouter
-  with VerticalLinesInitRouter
-  with JsHiddenInitRouter
-  with PopupsInitRouter
   with NodeEditInitRouter

@@ -21,18 +21,6 @@ import scala.scalajs.js.Any
  * Created: 27.04.15 18:01
  */
 
-/** Аддон для роутера инициализации для активации системы попапов. */
-trait PopupsInitRouter extends InitRouter {
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.Popups) {
-      Popup.init()
-    } else {
-      super.routeInitTarget(itg)
-    }
-  }
-}
-
-
 /**
   * Система управления попапами в личном кабинете.
   * В оригинале (mx_cof) компонент назывался CbcaPopup.

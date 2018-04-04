@@ -1,10 +1,8 @@
 package io.suggest.sjs.common.controller.vlines
 
-import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.vlines.VLines._
 import org.scalajs.dom.Element
 import org.scalajs.jquery.{JQuery, jQuery}
-import japgolly.univeq._
 
 /**
  * Suggest.io
@@ -38,20 +36,6 @@ object VerticalLines {
       if ( !inhOpt.contains(v) )
         h -= 10
       jqel.height(h)
-    }
-  }
-
-}
-
-
-/** Аддон для init-роутера для активации контроллера инициализации динамических вертикальных линий. */
-trait VerticalLinesInitRouter extends InitRouter {
-
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.VCenterLines) {
-      VerticalLines.resetAllVLinesHeights()
-    } else {
-      super.routeInitTarget(itg)
     }
   }
 

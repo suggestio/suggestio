@@ -1,10 +1,8 @@
 package io.suggest.sjs.common.controller.jshidden
 
 import io.suggest.err.ErrorConstants
-import io.suggest.sjs.common.controller.InitRouter
 import org.scalajs.jquery.{JQuery, jQuery}
 import io.suggest.js.hidden.JsHiddenConstants._
-import japgolly.univeq._
 
 
 /**
@@ -38,16 +36,5 @@ object JsHidden {
     processFound( jQuery(CSS_SELECTOR) )
   }
 
-}
-
-/** Поддержка отработки этого в init-роутере. */
-trait JsHiddenInitRouter extends InitRouter {
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.JsHidden) {
-      JsHidden.processAll()
-    } else {
-      super.routeInitTarget(itg)
-    }
-  }
 }
 

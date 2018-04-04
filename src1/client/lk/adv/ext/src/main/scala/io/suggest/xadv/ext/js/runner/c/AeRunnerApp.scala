@@ -20,7 +20,7 @@ import scala.concurrent.Future
  */
 
 /** Аддон для ri-sjs-контроллера LkAdvExt, чтобы был экшен для запуска runner'а. */
-trait RunnerInitRouter extends InitRouter {
+trait AdvExtRunnerInitRouter extends InitRouter {
 
   override protected def routeInitTarget(itg: MInitTarget): Unit = {
     if (itg ==* MInitTargets.AdvExtRunner) {
