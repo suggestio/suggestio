@@ -7,7 +7,6 @@ import models.blk.{OneAdQsArgs, RenderArgs, szMulted}
 import util.acl.GetAnyAd
 import util.adr.IAdRenderUtilDi
 import util.adv.IAdvUtilDi
-import util.blocks.BlocksConf
 import views.html.blocks.common.standaloneTpl
 import views.html.sc._adTpl
 
@@ -38,13 +37,11 @@ trait ScOnlyOneAd
   def onlyOneAd(args: OneAdQsArgs) = getAnyAd(args.adId).async { implicit request =>
     import request.mad
     val bgImgOptFut = adRenderUtil.getBgImgOpt(mad, args)
-    val bc = BlocksConf.applyOrDefault( request.mad )
     // Рендер, когда асинхронные операции будут завершены.
     for (bgImgOpt <- bgImgOptFut) yield {
       // Собираем аргументы для рендера карточки.
       val brArgs = RenderArgs(
         mad           = mad,
-        bc            = bc,
         szMult        = args.szMult,
         withEdit      = false,
         inlineStyles  = true,

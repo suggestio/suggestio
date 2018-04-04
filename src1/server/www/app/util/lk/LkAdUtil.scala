@@ -9,7 +9,6 @@ import models.im.DevScreen
 import models.im.make.MakeResult
 import play.api.inject.Injector
 import util.adv.AdvUtil
-import util.blocks.BlocksConf
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -43,12 +42,9 @@ class LkAdUtil @Inject() (
     // TODO mads2 Тут выпилен код вообще.
     val bgImgOptFut = Future.successful( Option.empty[MakeResult] )
 
-    val bc = BlocksConf.applyOrDefault( mad )
-
     for (bgImgOpt <- bgImgOptFut) yield {
       blk.RenderArgs(
         mad       = mad,
-        bc        = bc,
         withEdit  = false,
         szMult    = szMult,
         bgImg     = bgImgOpt,

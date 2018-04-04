@@ -45,12 +45,10 @@ trait ScBlockCss
     val resFut = madsFut.flatMap { mads =>
       Future.traverse(mads) { mad =>
         val arg = argsMap(mad.id.get)
-        val bc = n2NodesUtil.bc(mad)
         // Картинка вроде нужна, но стоит в этом убедиться... Future для распаралеливания и на случай если картинка понадобиться
         Future {
           val brArgs = blk.RenderArgs(
             mad           = mad,
-            bc            = bc,
             szMult        = arg.szMult,
             inlineStyles  = false,
             bgImg         = None

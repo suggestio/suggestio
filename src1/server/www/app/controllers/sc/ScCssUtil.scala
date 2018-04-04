@@ -1,14 +1,11 @@
 package controllers.sc
 
 import controllers.routes
-import models.blk
 import models.mctx.Context
 import models.msc.AdCssArgs
-import play.twirl.api.{Txt, Html}
+import play.twirl.api.Html
 import util.n2u.IN2NodesUtilDi
-import views.txt.blocks.common.{_blockCss, _textCss}
 
-import scala.collection.immutable
 import scala.concurrent.Future
 
 /**
@@ -21,8 +18,6 @@ trait ScCssUtil
   extends ScController
   with IN2NodesUtilDi
 {
-
-  import mCommonDi._
 
   /**
    * Вспомогательный метод для генерации ссылки на css блоков из списка данных об этих блоках.
@@ -44,66 +39,6 @@ trait ScCssUtil
       * css отдельным запросом.
       * @return последовательность аргументов для генерации ссылки на css. */
     def adsCssExternalFut: Future[Seq[AdCssArgs]]
-
-    /**
-     * Вернуть данные по пакетному рендеру css блоков одновременно с текущим запросом.
-     * @return последовательность аргументов для вызова рендера как можно скорее.
-     */
-    def adsCssFieldRenderArgsFut: Future[immutable.Seq[blk.FieldCssRenderArgs]]
-
-    def adsFieldCssRenderFut: Future[immutable.Seq[Txt]] = {
-      adsCssFieldRenderArgsFut flatMap { args =>
-        // TODO Нужно обрать из выхлопа лишнии пробелы и пустые строки. Это сократит выхлоп до 10%.
-        Future.traverse(args) { cssRenderArgs =>
-          Future {
-            _textCss(cssRenderArgs)
-          }
-        }
-      }
-    }
-
-    /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
-    def adsCssRenderArgsFut: Future[immutable.Seq[blk.IRenderArgs]]
-
-    /** Рендер обрамляющего css блоков на основе соотв. параметров. */
-    def adsCssRenderFut(implicit ctx: Context): Future[immutable.Seq[Txt]] = {
-      adsCssRenderArgsFut flatMap { args =>
-        Future.traverse(args) { cra =>
-          Future {
-            _blockCss(cra)(ctx)
-          }
-        }
-      }
-    }
-
-    /** Вспомогательная функция для подготовки данных к рендеру css'ок: приведение рекламной карточки к css-параметрам. */
-    protected def mad2craIter(brArgs: blk.IRenderArgs, cssClasses: Seq[String]): Iterator[blk.FieldCssRenderArgs] = {
-      import brArgs.mad
-      mad.ad.entities
-        .valuesIterator
-        .map { ent =>
-          blk.FieldCssRenderArgs(
-            brArgs      = brArgs,
-            entity      = ent,
-            yoff        = 0,
-            cssClasses  = cssClasses,
-            isFocused   = brArgs.isFocused
-          )
-        }
-    }
-
-    /** Отрендерить стили в Txt для всех необходимых блоков. */
-    def jsAdsCssFut(implicit ctx: Context): Future[Txt] = {
-      val _adsCssRenderFut = adsCssRenderFut
-      for {
-        fieldRenders  <- adsFieldCssRenderFut
-        adsCssRenders <- _adsCssRenderFut
-      } yield {
-        val blkCssTxts = new Txt(adsCssRenders)
-        val fieldCssTxts = new Txt(fieldRenders)
-        new Txt( List(blkCssTxts, fieldCssTxts) )
-      }
-    }
 
   }
 

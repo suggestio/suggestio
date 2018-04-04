@@ -14,7 +14,6 @@ import models.im.make.MakeResult
 import models.mproj.ICommonDi
 import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
 import util.adv.AdvUtil
-import util.blocks.BlocksConf
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -102,13 +101,10 @@ class ShowcaseUtil @Inject() (
       }
     }
 
-    val bc = BlocksConf.applyOrDefault( mad )
-
     // Нужно получить данные для рендера широкой карточки.
     for (bgImgOpt <- focWideBgImgArgs(mad, szMult, deviceScreenOpt)) yield {
       blk.RenderArgs(
         mad       = mad,
-        bc        = bc,
         withEdit  = false,
         szMult    = szMult,
         bgImg     = bgImgOpt,

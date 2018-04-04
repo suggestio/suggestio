@@ -19,7 +19,7 @@ import models.mctx.Context
 import models.req.INodeReq
 import play.api.i18n.Messages
 import util.acl._
-import util.blocks.{BlocksConf, IBlkImgMakerDI}
+import util.blocks.IBlkImgMakerDI
 import util.billing.IBill2UtilDi
 import util.di.ILogoUtilDi
 import views.html.lk.billing.order._
@@ -320,7 +320,6 @@ trait LkBillOrders
           } yield {
             val ra = RenderArgs(
               mad       = mad,
-              bc        = BlocksConf.applyOrDefault(mad),
               withEdit  = false,
               bgImg     = bgOpt,
               szMult    = szMult,

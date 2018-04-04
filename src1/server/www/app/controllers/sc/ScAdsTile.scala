@@ -1,6 +1,6 @@
 package controllers.sc
 
-import _root_.util.blocks.{BlocksConf, IBlkImgMakerDI}
+import _root_.util.blocks.IBlkImgMakerDI
 import _root_.util.di.IScUtil
 import _root_.util.showcase.IScAdSearchUtilDi
 import _root_.util.stat.IStatUtil
@@ -24,7 +24,6 @@ import util.acl._
 import play.api.libs.json.Json
 import japgolly.univeq._
 
-import scala.collection.immutable
 import scala.concurrent.Future
 import models.blk
 import util.ad.IJdAdUtilDi
@@ -62,7 +61,6 @@ trait ScAdsTileBase
     private def _brArgsFor(mad: MNode, bgImg: Option[MakeResult], indexOpt: Option[Int] = None): blk.RenderArgs = {
       blk.RenderArgs(
         mad           = mad,
-        bc            = BlocksConf.applyOrDefault(mad),
         withEdit      = false,
         bgImg         = bgImg,
         szMult        = szMult,
@@ -100,21 +98,6 @@ trait ScAdsTileBase
       }
     }
 
-    /** Сборка аргументов рендера для пакетного рендера css-стилей. */
-    lazy val madsBrArgs4CssFut: Future[Seq[blk.RenderArgs]] = {
-      madsFut.flatMap { mads =>
-        //val _szMult = szMult
-        //val devScreenOpt = ctx.deviceScreenOpt
-        Future.traverse(mads) { mad =>
-          for {
-            bgImgOpt <- Future.successful( Option.empty[MakeResult] ) // TODO mad2 BgImg.maybeMakeBgImgWith(mad, blkImgMaker, _szMult, devScreenOpt)
-          } yield {
-            _brArgsFor(mad, bgImgOpt)
-          }
-        }
-      }
-    }
-
     override def adsCssExternalFut: Future[Seq[AdCssArgs]] = {
       for (mads <- madsFut) yield {
         val _szMult = szMult
@@ -123,28 +106,6 @@ trait ScAdsTileBase
           .map { adId => AdCssArgs(adId, _szMult) }
       }
     }
-
-    /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
-    override def adsCssRenderArgsFut: Future[immutable.Seq[IRenderArgs]] = {
-      for {
-        brArgss <- madsBrArgs4CssFut
-      } yield {
-        brArgss
-          .toStream
-      }
-    }
-
-    override def adsCssFieldRenderArgsFut: Future[immutable.Seq[FieldCssRenderArgs]] = {
-      for {
-        brArgss <- madsBrArgs4CssFut
-      } yield {
-        brArgss
-          .iterator
-          .flatMap { brArgs =>  mad2craIter(brArgs, Nil) }
-          .toStream
-      }
-    }
-
 
     // Группировка groupNarrowAds отключена, т.к. новый focused-порядок не соответствует плитке,
     // а плитка страдает от выравнивания по 2 столбца.

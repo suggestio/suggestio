@@ -12,8 +12,6 @@ import play.api.data.Form
 
 package object models {
 
-  type BlockConf            = util.blocks.BlocksConf.T
-
   type AdnShownType         = AdnShownTypes.T
 
   type NodeRightPanelLink   = NodeRightPanelLinks.T

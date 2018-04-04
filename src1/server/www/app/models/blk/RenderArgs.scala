@@ -5,8 +5,9 @@ import io.suggest.common.css.ITopLeft
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2.node.MNode
 import io.suggest.sc.{IScApiVsn, MScApiVsn, MScApiVsns}
-import models.{BlockConf, blk}
+import models.blk
 import models.im.make.MakeResult
+import util.blocks.BlocksConf
 
 /**
  * Suggest.io
@@ -17,8 +18,9 @@ import models.im.make.MakeResult
 
 trait IRenderArgs extends IScApiVsn {
 
-  /** Блок. */
-  def bc              : BlockConf
+  /** conf блока */
+  // TODO Удалить следом за любым кодом поддержки старых карточек.
+  final def bc         : BlocksConf.T = BlocksConf.Block20
 
   /** Рекламная карточка, которую надо отрендерить. */
   def mad             : MNode
@@ -67,7 +69,6 @@ trait IRenderArgs extends IScApiVsn {
 sealed trait IRenderArgsWrapper0 extends IRenderArgs {
   def brArgs: IRenderArgs
 
-  override def bc           = brArgs.bc
   override def mad          = brArgs.mad
   override def withEdit     = brArgs.withEdit
   override def szMult       = brArgs.szMult
@@ -85,7 +86,7 @@ sealed trait IRenderArgsWrapper0 extends IRenderArgs {
 case class RenderArgs(
   override val mad            : MNode,
   override val szMult         : SzMult_t,
-  override val bc             : BlockConf,
+                     // TODO Удалить bgImg и возможно ещё какие-то неактуальные поля.
   override val bgImg          : Option[MakeResult],
   override val isFocused      : Boolean                 = false,
   override val withEdit       : Boolean                 = false,

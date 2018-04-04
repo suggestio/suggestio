@@ -61,8 +61,7 @@ class NodesUtil @Inject() (
 
   // Для новосозданного узла надо создавать новые карточки, испортируя их из указанного узла в указанном кол-ве.
   /** id узла, который содержит дефолтовые карточки. Задается явно в конфиге. */
-  val ADN_IDS_INIT_ADS_SOURCE = configuration.getOptional[Seq[String]]("user.node.created.mads.import.from.adn_ids")
-    .getOrElse(Nil)
+  def ADN_IDS_INIT_ADS_SOURCE = Nil
 
   /** Кол-во карточек для импорта из дефолтового узла. */
   val INIT_ADS_COUNT = configuration.getOptional[Int]("user.node.created.mads.import.count")
@@ -174,9 +173,10 @@ class NodesUtil @Inject() (
     )
     for {
       nodeId        <- mNodes.save(inst)
-      madsCreateFut = installDfltMads(nodeId)
+      // TODO Нужно инсталлить jd-карточки, а не этот старый хлам
+      //madsCreateFut = installDfltMads(nodeId)
       _             <- createExtDfltTargets(nodeId)
-      _             <- madsCreateFut
+      //_             <- madsCreateFut
     } yield {
       inst.copy(id = Some(nodeId))
     }
@@ -252,19 +252,6 @@ class NodesUtil @Inject() (
                   mad0.edges
                     .withoutPredicateIter(pp, rp)
                     .++( prodE :: selfRcvrE :: Nil )
-                }
-              }
-            ),
-            ad = mad0.ad.copy(
-              entities = {
-                mad0.ad.entities.mapValues { ent =>
-                  ent.copy(
-                    text = ent.text.map { aosf =>
-                      aosf.copy(
-                        value = messages(aosf.value)
-                      )
-                    }
-                  )
                 }
               }
             )

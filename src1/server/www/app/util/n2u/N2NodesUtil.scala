@@ -6,8 +6,6 @@ import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.ICriteria
 import io.suggest.model.n2.extra.domain.MDomainModes
 import io.suggest.model.n2.node.MNode
-import models.BlockConf
-import util.blocks.BlocksConf
 
 /**
   * Suggest.io
@@ -75,11 +73,6 @@ class N2NodesUtil {
       .withNodePred(nodeId, MPredicates.Receiver)
       .toStream
       .headOption
-  }
-
-  /** Определить BlockConf для карточки или иного узла. */
-  def bc(mad: MNode): BlockConf = {
-    BlocksConf.DEFAULT
   }
 
   /**

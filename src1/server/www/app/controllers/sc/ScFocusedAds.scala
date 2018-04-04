@@ -375,33 +375,12 @@ trait ScFocusedAdsBase
       }
     }
 
-    override def adsCssFieldRenderArgsFut: Future[immutable.Seq[blk.FieldCssRenderArgs]] = {
-      for (mbas <- mads2andBrArgsFut) yield {
-        mbas.iterator
-          .flatMap { mba =>  mad2craIter(mba, mba.cssClasses) }
-          .toStream
-      }
-    }
-
     /** Дописывать эти css-классы в стили и в рендер. */
     def withCssClasses = Seq("focused")
-
-    /** Параметры для рендера обрамляющего css блоков (css не полей, а блоков в целом). */
-    override def adsCssRenderArgsFut: Future[immutable.Seq[blk.IRenderArgs]] = {
-      for (mbas <- mads2andBrArgsFut) yield {
-        mbas.toStream
-      }
-    }
 
     /** Вызов заглавного рендера карточки. */
     def renderFocused(args: IFocusedAdsTplArgs): Html = {
       _fullTpl(args)(ctx)
-    }
-    /** Вызов renderFocused() асинхронно, внутри Future{}. Полезно для параллельного рендера блоков. */
-    def renderFocusedFut(args: IFocusedAdsTplArgs): Future[Html] = {
-      Future {
-        renderFocused(args)
-      }
     }
 
     // TODO Заглавная карточка специфична только для API v1, но используется в SyncSite для рендера единственной (текущей) карточки.
