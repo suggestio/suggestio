@@ -39,9 +39,6 @@ object Sc3Main {
     val doc  = DocumentVm()
     val body = doc.body
 
-    // Инициализировать анимированную крутилку для выдачи.
-    LkPreLoader.PRELOADER_IMG_URL
-
     // Самый корневой рендер -- отрабатывается первым.
     val rootDiv = {
       Option {

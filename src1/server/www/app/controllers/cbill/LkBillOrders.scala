@@ -305,7 +305,6 @@ trait LkBillOrders
 
     // Собрать карту аргументов для рендера карточек
     val node2brArgsMapFut: Future[Map[String, IRenderArgs]] = for {
-      ctx         <- ctxFut
       itemNodeIds <- itemNodeIdsFut
       allNodesMap <- allNodesMapFut
       brArgss     <- Future.sequence {

@@ -7,8 +7,6 @@ package models
  */
 package object event {
 
-  type ArgName      = ArgNames.T
-
   type MEventType   = MEventTypes.T
 
 }

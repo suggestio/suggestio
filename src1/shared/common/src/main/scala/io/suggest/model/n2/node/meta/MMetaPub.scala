@@ -2,6 +2,9 @@ package io.suggest.model.n2.node.meta
 
 import boopickle.Default._
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -17,11 +20,18 @@ object MMetaPub extends IEmpty {
 
   def empty = MMetaPub()
 
-  implicit val mNodeadvMetaPickler: Pickler[MMetaPub] = {
+  implicit val mMetaPubPickler: Pickler[MMetaPub] = {
     implicit val addressP = MAddress.mAddresPickler
     implicit val businessP = MBusinessInfo.mBusinessInfoPickler
     generatePickler[MMetaPub]
   }
+
+  implicit def mMetaPubFormat: OFormat[MMetaPub] = (
+    (__ \ "a").format[MAddress] and
+    (__ \ "b").format[MBusinessInfo]
+  )(apply, unlift(unapply))
+
+  implicit def univEq: UnivEq[MMetaPub] = UnivEq.derive
 
 }
 

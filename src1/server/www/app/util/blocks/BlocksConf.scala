@@ -1,11 +1,9 @@
 package util.blocks
 
 import io.suggest.common.menum.EnumValue2Val
-import io.suggest.util.logs.MacroLogsImpl
 import models.blk
 import models.mctx.Context
 import play.twirl.api.{Html, Template2}
-import util.FormUtil.IdEnumFormMappings
 import views.html.blocks._
 
 // TODO Надо выпилить эту модель, т.к. динамический редактор с кучей карточек и переключаемыми блоками ушел в небытие.
@@ -16,7 +14,6 @@ import views.html.blocks._
  * Created: 27.04.14 16:50
  * Description: Устаревшая модель конфигов для блоков верстки.
  * Надо удалить его полностью.
- *
  */
 
 object BlocksConf

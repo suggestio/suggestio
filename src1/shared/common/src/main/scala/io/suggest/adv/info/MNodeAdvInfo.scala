@@ -16,7 +16,7 @@ object MNodeAdvInfo {
 
   implicit val mNodeAdvInfoPickler: Pickler[MNodeAdvInfo] = {
     implicit val mTfDailyInfoP = MTfDailyInfo.mTfDailyInfoPickler
-    implicit val mMetaPubP = MMetaPub.mNodeadvMetaPickler
+    implicit val mMetaPubP = MMetaPub.mMetaPubPickler
     implicit val mAdvInfo4AdP = MNodeAdvInfo4Ad.mAdvInfo4AdPickler
     implicit val mMediaInfoP = IMediaInfo.iMediaItemPickler
     generatePickler[MNodeAdvInfo]

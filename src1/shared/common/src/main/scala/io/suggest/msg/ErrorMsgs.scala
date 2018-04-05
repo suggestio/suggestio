@@ -171,4 +171,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def LK_ADS_FORM_FAILED               = E(78)
 
+  def LK_ADN_EDIT_FORM_FAILED          = E(79)
+
 }

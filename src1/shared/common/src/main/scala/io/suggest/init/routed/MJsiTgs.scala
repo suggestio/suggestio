@@ -46,6 +46,9 @@ object MJsiTgs extends StringEnum[MJsiTg] {
   /** Цель инициализации ЛК-формы управления карточками. */
   case object LkAdsForm extends MJsiTg("r")
 
+  /** Цель инициализации react-формы редактирования ADN-узла. */
+  case object LkAdnEditForm extends MJsiTg("s")
+
 
   override def values = findValues
 

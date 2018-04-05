@@ -1,0 +1,32 @@
+@(mnode: MNode, formStateStr: String)(implicit ctx: Context)
+
+@* Шаблон страницы с react-формой редактирования ADN-узла. *@
+
+@import ctx.{request, messages}
+@import lk.adn._
+@import io.suggest.adn.edit.{NodeEditConstants => C}
+@import views.js.stuff.jsRevRouterTpl
+@import views.html.stuff.jsTpl2HtmlTpl
+
+
+@rightBarAfter = {
+  <div id="@C.SAVE_BTN_CONTAINER_ID" class="right-bar_bottom">
+  </div>
+}
+
+@nodeBaseTpl(
+  title         = messages("Edit.profile"),
+  mnode         = mnode,
+  rightCurrEl   = NodeRightPanelLinks.RPL_NODE_EDIT,
+  rightBarAfter = Some(rightBarAfter)
+) {
+
+  <div id="C.FORM_CONTAINER_ID"></div>
+
+  @jsTpl2HtmlTpl()(
+    jsRevRouterTpl()(
+      routes.javascript.LkAdnEdit.save
+    )
+  )
+
+}

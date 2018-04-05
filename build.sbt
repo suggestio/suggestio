@@ -371,8 +371,15 @@ lazy val lkTagsEditSjs = {
 
 /** Sjs-поддержка размещения ADN-узла на карте. */
 lazy val lkAdnMapSjs = {
-  Project(id = "lk-adn-map-sjs", base = file(DIR0 + "client/lk/adn/lk-adn-map"))
+  val prefix = "lk-adn-map"
+  Project(id = prefix + "-sjs", base = file(DIR0 + "client/lk/adn/" + prefix))
     .dependsOn(lkCommonSjs, lkAdvCommonSjs, lkDtPeriodSjs, mapsSjs)
+}
+
+/** Scala.js формы редактирования метаданных узла. */
+lazy val lkAdnEditSjs = {
+  Project(id = "lk-adn-edit-sjs", base = file(DIR0 + "client/lk/adn/edit"))
+    .dependsOn(lkCommonSjs)
 }
 
 /** JS страницы управления карточками узла в личном кабинете. */
@@ -390,7 +397,7 @@ lazy val lkAdsSjs = {
 lazy val lkSjs = {
   Project(id = "lk-sjs", base = file(DIR0 + "client/lk/main"))
     .enablePlugins(WebScalaJS)
-    .dependsOn(lkAdvExtSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs, lkAdEditorSjs, lkAdsSjs)
+    .dependsOn(lkAdvExtSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs, lkAdEditorSjs, lkAdsSjs, lkAdnEditSjs)
 }
 
 /** scala.js реализация системы мониторинга js-маячков. */
@@ -561,7 +568,7 @@ lazy val sio2 = {
       reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
       reactGridLayoutSjs, reactStoneCutterSjs, gridSjs, reactSidebar,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
-      lkAdEditorSjs,
+      lkAdEditorSjs, lkAdnEditSjs,
       streamsUtil, brotliUtil,
       asmCryptoJsSjs, asmCryptoSioSjs,
       util, esUtil, textUtil, swfs, n2, securesocial,

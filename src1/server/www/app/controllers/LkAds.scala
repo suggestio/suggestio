@@ -40,7 +40,7 @@ class LkAds @Inject() (
                         mItems                  : MItems,
                         override val mCommonDi  : ICommonDi
                       )
-  extends SioController
+  extends SioControllerImpl
   with MacroLogsImpl
 {
 

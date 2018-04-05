@@ -37,4 +37,10 @@ object NodeEditConstants {
 
   }
 
+  /** id контейнера для кнопки сохранения. */
+  def SAVE_BTN_CONTAINER_ID = "aer"
+
+  /** id контейнера для формы. */
+  def FORM_CONTAINER_ID = "aec"
+
 }
