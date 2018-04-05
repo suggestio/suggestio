@@ -285,6 +285,17 @@ class JsMessagesUtil @Inject() (
       Nil
   }
 
+  private def LK_ADN_EDIT_MSGS: TraversableOnce[String] = {
+    MC.`Name` ::
+      MC.`Town` ::
+      MC.`Address` ::
+      MC.`Site` ::
+      MC.`Info.about.prods.and.svcs` ::
+      MC.`Daily.people.traffic` ::
+      MC.`Audience.descr` ::
+      Nil
+  }
+
 
   /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
   val (lkJsMsgsFactory, hash): (JsMessages, Int) = {
@@ -304,7 +315,8 @@ class JsMessagesUtil @Inject() (
       LK_COMMON,
       LK_NODES_MSGS,
       LK_AD_EDIT_MSGS,
-      LK_ADS_MSGS
+      LK_ADS_MSGS,
+      LK_ADN_EDIT_MSGS
     )
       .flatten
       .toSet

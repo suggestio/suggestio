@@ -3,7 +3,7 @@ package io.suggest.ad.edit.v
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.lk.r.SlideBlockCss
-
+import io.suggest.lk.r.color.ColorBtnR
 import scalacss.internal.mutable.StyleSheet
 
 /**
@@ -114,7 +114,7 @@ class LkAdEditCss
     val colorRound = {
       val whPx = 30.px
       style(
-        addClassNames(Css.Lk.COLOR, Css.Display.INLINE_BLOCK),
+        addClassNames( ColorBtnR.defaultCssClasses: _* ),
         width( whPx ),
         height( whPx )
       )

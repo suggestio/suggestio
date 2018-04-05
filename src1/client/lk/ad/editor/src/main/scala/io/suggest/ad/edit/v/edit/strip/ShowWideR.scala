@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.v.edit.strip
 
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.ad.edit.m.StripStretchAcross
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -36,7 +36,8 @@ class ShowWideR {
   }
 
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -79,6 +80,7 @@ class ShowWideR {
     .renderBackend[Backend]
     .build
 
-  def apply(propsOptProxy: Props) = component(propsOptProxy)
+  def _apply(propsOptProxy: Props) = component(propsOptProxy)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

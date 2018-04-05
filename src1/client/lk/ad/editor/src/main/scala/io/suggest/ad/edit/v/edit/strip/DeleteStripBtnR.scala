@@ -1,6 +1,6 @@
 package io.suggest.ad.edit.v.edit.strip
 
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.ad.edit.m.{StripDelete, StripDeleteCancel}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.common.html.HtmlConstants
@@ -22,7 +22,8 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
   */
 class DeleteStripBtnR {
 
-  type Props = ModelProxy[Option[MStripEdS]]
+  type Props_t = Option[MStripEdS]
+  type Props = ModelProxy[Props_t]
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -91,6 +92,7 @@ class DeleteStripBtnR {
     .renderBackend[Backend]
     .build
 
-  def apply(stripEdSOptProxy: Props) = component( stripEdSOptProxy )
+  def _apply(stripEdSOptProxy: Props) = component( stripEdSOptProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

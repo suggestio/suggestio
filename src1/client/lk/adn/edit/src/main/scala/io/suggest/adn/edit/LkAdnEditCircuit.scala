@@ -31,7 +31,8 @@ class LkAdnEditCircuit
     MLkAdnEditRoot(
       conf = minit.conf,
       node = MAdnNodeS(
-        meta = minit.form.mmeta
+        meta          = minit.form.mmeta,
+        colorPresets  = minit.form.mmeta.colors.allColorsIter.toList
       )
     )
   }

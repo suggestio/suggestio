@@ -1,7 +1,8 @@
 package io.suggest.model.n2.node.meta
 
 import boopickle.Default._
-import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.common.empty.EmptyProduct
+import io.suggest.model.n2.node.meta.colors.MColors
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -14,11 +15,7 @@ import play.api.libs.functional.syntax._
   * публичные метаданные по узлу.
   * Содержит только публичные поля и только с портабельными данными.
   */
-object MMetaPub extends IEmpty {
-
-  override type T = MMetaPub
-
-  def empty = MMetaPub()
+object MMetaPub {
 
   implicit val mMetaPubPickler: Pickler[MMetaPub] = {
     implicit val addressP = MAddress.mAddresPickler
@@ -27,8 +24,10 @@ object MMetaPub extends IEmpty {
   }
 
   implicit def mMetaPubFormat: OFormat[MMetaPub] = (
+    (__ \ "n").format[String] and
     (__ \ "a").format[MAddress] and
-    (__ \ "b").format[MBusinessInfo]
+    (__ \ "b").format[MBusinessInfo] and
+    (__ \ "c").format[MColors]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MMetaPub] = UnivEq.derive
@@ -37,7 +36,9 @@ object MMetaPub extends IEmpty {
 
 
 case class MMetaPub(
-                         address       : MAddress        = MAddress.empty,
-                         business      : MBusinessInfo   = MBusinessInfo.empty
-                       )
+                     name          : String,
+                     address       : MAddress        = MAddress.empty,
+                     business      : MBusinessInfo   = MBusinessInfo.empty,
+                     colors        : MColors         = MColors.empty
+                   )
   extends EmptyProduct

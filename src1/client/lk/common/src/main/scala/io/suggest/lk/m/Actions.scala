@@ -1,5 +1,7 @@
 package io.suggest.lk.m
 
+import io.suggest.color.MColorData
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.spa.DAction
 
 /**
@@ -35,3 +37,14 @@ case object DeleteConfirmPopupCancel extends ILkCommonPopupCloseAction
 
 /** Клик по заголовку slide-блока. */
 case class SlideBlockClick(key: String) extends ILkCommonAction
+
+
+/** Изменился цвет в color picker'е.
+  * @param isCompleted Окончательное выставление цвета?
+  *                    Если false, то юзер пока ещё выбирает.
+  * @param forceTransform Если цвет пришёл из ColorSuggest или иного источника, то выставляется true.
+  */
+case class ColorChanged(mcd: MColorData, isCompleted: Boolean, forceTransform: Boolean = false) extends ILkCommonAction
+
+/** Клик на "цвете" для выбора цвета. */
+case class ColorBtnClick(vpXy: MCoords2di) extends ILkCommonAction

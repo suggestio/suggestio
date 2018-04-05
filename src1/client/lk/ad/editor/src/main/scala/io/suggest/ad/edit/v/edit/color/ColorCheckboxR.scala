@@ -1,22 +1,21 @@
 package io.suggest.ad.edit.v.edit.color
 
 import diode.FastEq
-import diode.react.ModelProxy
-import io.suggest.ad.edit.m.{ColorBtnClick, ColorCheckboxChange}
+import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
+import io.suggest.ad.edit.m.ColorCheckboxChange
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.color.MColorData
-import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
+import io.suggest.lk.r.color.ColorBtnR
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import org.scalajs.dom.Element
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -27,7 +26,10 @@ import scalacss.ScalaCssReact._
   */
 class ColorCheckboxR(
                       lkAdEditCss     : LkAdEditCss,
+                      val colorBtnR   : ColorBtnR
                     ) {
+
+  import colorBtnR.ColorBtnRPropsValFastEq
 
   /** Модель пропертисов этого компонента.
     *
@@ -35,18 +37,25 @@ class ColorCheckboxR(
     *              None значит прозрачный.
     */
   case class PropsVal(
-                       color          : Option[MColorData]
+                       color          : Option[MColorData],
+                       label          : String
                      )
   implicit object ColorCheckboxPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      a.color ===* b.color
+      (a.color ===* b.color) &&
+        (a.label ===* b.label)
     }
   }
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
 
-  class Backend($: BackendScope[Props, _]) {
+  case class State(
+                    colorBtnPropsC    : ReactConnectProxy[colorBtnR.Props_t]
+                  )
+
+  class Backend($: BackendScope[Props, State]) {
 
     /** Реакция на клики по галочке заливки цветом. */
     private def _onCheckBoxChanged(e: ReactEventFromInput): Callback = {
@@ -54,18 +63,7 @@ class ColorCheckboxR(
       dispatchOnProxyScopeCB($, ColorCheckboxChange(isChecked))
     }
 
-    /** Реакция на клик по кружочку цвета. */
-    private def _onColorRoundClick(e: ReactMouseEvent): Callback = {
-      val fixedCoord = MCoords2di(
-        x = e.clientX.toInt,
-        y = e.clientY.toInt
-      )
-
-      dispatchOnProxyScopeCB($, ColorBtnClick(fixedCoord))
-    }
-
-
-    def render(propsOptProxy: Props, pc: PropsChildren): VdomElement = {
+    def render(propsOptProxy: Props, s: State): VdomElement = {
       propsOptProxy.value.whenDefinedEl { props =>
         val C = lkAdEditCss.BgColorOptPicker
 
@@ -87,11 +85,11 @@ class ColorCheckboxR(
             ),
             <.span(
               ^.`class` := Css.flat(Css.Input.CHECKBOX_TITLE, Css.Buttons.MAJOR),
-              pc
+              props.label
             )
           ),
 
-          props.color.whenDefined { mColorData =>
+          props.color.whenDefined { _ =>
             <.span(
               ^.`class` := Css.flat(Css.CLICKABLE, Css.Display.INLINE_BLOCK),
               ^.onClick ==> ReactCommonUtil.stopPropagationCB,
@@ -99,12 +97,8 @@ class ColorCheckboxR(
               HtmlConstants.NBSP_STR,
               HtmlConstants.NBSP_STR,
 
-              // Текущий цвет.
-              <.div(
-                C.colorRound,
-                ^.backgroundColor := mColorData.hexCode,
-                ^.onClick ==> _onColorRoundClick
-              )
+              // Кнопка активации color-picker'а:
+              s.colorBtnPropsC { colorBtnR.apply }
 
             )
           }
@@ -116,10 +110,26 @@ class ColorCheckboxR(
 
 
   val component = ScalaComponent.builder[Props]("BgColor")
-    .stateless
-    .renderBackendWithChildren[Backend]
+    .initialStateFromProps { propsOptProxy =>
+      val colorBtnCssOpt = Option( lkAdEditCss.BgColorOptPicker.colorRound.htmlClass )
+      State(
+        colorBtnPropsC = propsOptProxy.connect { propsOpt =>
+          for {
+            props <- propsOpt
+            color <- props.color
+          } yield {
+            colorBtnR.PropsVal(
+              color = color,
+              cssClass = colorBtnCssOpt
+            )
+          }
+        }( OptFastEq.Wrapped )
+      )
+    }
+    .renderBackend[Backend]
     .build
 
-  def apply(propsValOptProxy: Props)(children: VdomNode*) = component( propsValOptProxy )(children: _*)
+  def _apply(propsValOptProxy: Props) = component( propsValOptProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

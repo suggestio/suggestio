@@ -34,25 +34,33 @@ object MColors extends IEmpty {
 
   /** Поддержка JSON. */
   implicit val MCOLORS_FORMAT: OFormat[MColors] = (
-    (__ \ MColorKeys.Bg.value).formatNullable[MColorData] and
-    (__ \ MColorKeys.Fg.value).formatNullable[MColorData] and
-    (__ \ MColorKeys.Pattern.value).formatNullable[MColorData]
-  )(MColors.apply, unlift(MColors.unapply))
+    (__ \ "b").formatNullable[MColorData] and
+    (__ \ "f").formatNullable[MColorData]
+  )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MColors] = UnivEq.derive
+
+  def bgF = { cs: MColors => cs.bg }
+  def fgF = { cs: MColors => cs.fg }
 
 }
 
 
 case class MColors(
   bg        : Option[MColorData]    = None,
-  fg        : Option[MColorData]    = None,
-  pattern   : Option[MColorData]    = None
+  fg        : Option[MColorData]    = None
 )
   extends EmptyProduct
 {
 
-  /** Цвет паттерна. */
-  def withPattern(pattern: Option[MColorData] = None) = copy(pattern = pattern)
+  /** Вернуть все перечисленные цвета. */
+  def allColorsIter: Iterator[MColorData] = {
+    // TODO Задействовать productIterator, но пока как-то уродливо получается.
+    Iterator(
+      bg,
+      fg
+    )
+      .flatten
+  }
 
 }

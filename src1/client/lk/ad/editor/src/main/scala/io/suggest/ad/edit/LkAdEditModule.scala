@@ -6,12 +6,14 @@ import io.suggest.ad.edit.c.{ColorPickAh, DocEditAh}
 import io.suggest.ad.edit.m.edit.color.MColorPick
 import io.suggest.ad.edit.m.{MAeRoot, MDocS}
 import io.suggest.ad.edit.v.edit._
-import io.suggest.ad.edit.v.edit.color.{ColorCheckboxR, ColorPickerR}
+import io.suggest.ad.edit.v.edit.color.ColorCheckboxR
 import io.suggest.ad.edit.v.edit.strip._
 import io.suggest.ad.edit.v.pop.{LaePopupsR, PictureCropPopupR}
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.render.JdRenderModule
+import io.suggest.lk.LkCommonModule
 import io.suggest.lk.r.SlideBlockR
+import io.suggest.lk.r.color.ColorPickerR
 import io.suggest.quill.QuillSioModule
 
 /**
@@ -24,11 +26,13 @@ class LkAdEditModule {
 
   final type M = MAeRoot
 
-  lazy val jdRenderModule = wire[JdRenderModule]
+  val jdRenderModule = wire[JdRenderModule]
 
-  lazy val quillSioModule = wire[QuillSioModule]
+  val quillSioModule = wire[QuillSioModule]
 
+  val lkCommonModule = wire[LkCommonModule]
 
+  import lkCommonModule._
   import jdRenderModule._
   import quillSioModule._
 

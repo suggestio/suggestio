@@ -7,7 +7,7 @@ import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
 import io.suggest.ad.edit.v.edit._
-import io.suggest.ad.edit.v.edit.color.{ColorCheckboxR, ColorPickerR}
+import io.suggest.ad.edit.v.edit.color.ColorCheckboxR
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
@@ -19,6 +19,7 @@ import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.{MJdTagName, MJdTagNames}
 import io.suggest.lk.r.SlideBlockR
+import io.suggest.lk.r.color.ColorPickerR
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.spa.OptFastEq
@@ -26,7 +27,6 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.univeq._
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -114,7 +114,6 @@ class LkAdEditFormR(
 
     def render(p: Props, s: State): VdomElement = {
       val LCSS = lkAdEditCss.Layout
-      val MSG_BG_COLOR = Messages( MsgCodes.`Bg.color` )
 
       <.div(
         ^.`class` := Css.Overflow.HIDDEN,
@@ -149,23 +148,7 @@ class LkAdEditFormR(
               LCSS.previewInnerCont,
 
               // Тело превьюшки в виде плитки.
-              s.jdPreviewArgsC {
-                jdR.apply
-                /* jdArgsProxy =>
-                  val jdArgs = jdArgsProxy.value
-                  val jds = jdArgs.template.subForest
-                  CSSGrid {
-                    jdGridUtil.mkCssGridArgs(
-                      jds  = jds,
-                      conf = jdArgs.conf
-                    )
-                  } (
-                    jdR
-                      .renderSeparated( jdArgsProxy )
-                      .toVdomArray
-                  )
-                */
-              },
+              s.jdPreviewArgsC { jdR.apply },
 
               <.div(
                 ^.`class` := Css.CLEAR
@@ -211,11 +194,7 @@ class LkAdEditFormR(
                 slideBlockR(propsOpt)(
                   <.div(
                     // Выбор цвета фона блока.
-                    s.colors.stripBgCbOptC { colorOptProxy =>
-                      colorCheckboxR(colorOptProxy)(
-                        MSG_BG_COLOR
-                      )
-                    },
+                    s.colors.stripBgCbOptC { colorCheckboxR.apply },
 
                     // Управление картинкой, если доступно:
                     s.picPropsOptC { pictureR.apply },
@@ -236,11 +215,7 @@ class LkAdEditFormR(
                     <.br,
 
                     // Цвет фона контента.
-                    s.colors.contentBgCbOptC {
-                      colorCheckboxR(_)(
-                        MSG_BG_COLOR
-                      )
-                    },
+                    s.colors.contentBgCbOptC { colorCheckboxR.apply },
 
                     // Вращение: галочка + опциональный слайдер.
                     s.rotateOptC { rotateR.apply }
@@ -298,6 +273,7 @@ class LkAdEditFormR(
         }( OptFastEq.Wrapped )
       }
 
+      val MSG_BG_COLOR = Messages( MsgCodes.`Bg.color` )
       // Фунция сборки коннекшена до состояния чекбокса выбора цвета.
       def __mkBgColorCbC(jdtName: MJdTagName) = {
         p.connect { mroot =>
@@ -307,7 +283,8 @@ class LkAdEditFormR(
             if selJdt.name ==* jdtName
           } yield {
             colorCheckboxR.PropsVal(
-              color         = selJdt.props1.bgColor
+              color         = selJdt.props1.bgColor,
+              label         = MSG_BG_COLOR
             )
           }
         }( OptFastEq.Wrapped )
@@ -484,24 +461,29 @@ class LkAdEditFormR(
         ),
 
         colors = ColorsState(
-          picker = p.connect { mroot =>
-            for {
-              pickerS <- {
-                mroot.doc.stripEd
-                  .orElse {
-                    mroot.doc.qdEdit
-                  }
-                  .map(_.bgColorPick)
+          picker = {
+            // Класс элемента color-picker'а. По идее, неизменный, поэтому живёт снаружи.
+            val cssClassOpt = Some( lkAdEditCss.BgColorOptPicker.pickerCont.htmlClass )
+            p.connect { mroot =>
+              for {
+                pickerS <- {
+                  mroot.doc.stripEd
+                    .orElse {
+                      mroot.doc.qdEdit
+                    }
+                    .map(_.bgColorPick)
+                }
+                if pickerS.shownAt.isDefined
+                selJdtTree  <- mroot.doc.jdArgs.selectedTag
+                bgColor     <- selJdtTree.rootLabel.props1.bgColor
+              } yield {
+                colorPickerR.PropsVal(
+                  color         = bgColor,
+                  colorPresets  = mroot.doc.colorsState.colorPresets,
+                  cssClass      = cssClassOpt,
+                  topLeftPx     = pickerS.shownAt
+                )
               }
-              shownAt     <- pickerS.shownAt
-              selJdtTree  <- mroot.doc.jdArgs.selectedTag
-              bgColor     <- selJdtTree.rootLabel.props1.bgColor
-            } yield {
-              colorPickerR.PropsVal(
-                color       = bgColor,
-                colorsState = mroot.doc.colorsState,
-                fixedXy     = shownAt
-              )
             }
           },
 

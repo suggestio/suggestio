@@ -22,7 +22,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   *   )
   * }}}
   */
-object PropTable {
+object PropTableR {
 
   val Outer = ScalaComponent.builder[Unit]("PropTable")
     .stateless
@@ -36,20 +36,23 @@ object PropTable {
     }
     .build
 
+  def Name(name: TagMod) = _nameOrValue(Css.PropTable.TD_NAME, name)
+  def Value(value: TagMod) = _nameOrValue( Css.PropTable.TD_VALUE, value )
+
+  private def _nameOrValue(cssClass: String, content: TagMod): VdomElement = {
+    <.td(
+      ^.`class` := cssClass,
+      content
+    )
+  }
 
   /** Один ряд таблицы. */
-  val Row = ScalaComponent.builder[String]("PropTableRow")
+  val Row = ScalaComponent.builder[TagMod]("PropTableRow")
     .stateless
     .renderPC { (_, name, children) =>
       <.tr(
-        <.td(
-          ^.`class` := Css.PropTable.TD_NAME,
-          name
-        ),
-        <.td(
-          ^.`class` := Css.PropTable.TD_VALUE,
-          children
-        )
+        Name( name ),
+        Value( children )
       )
     }
     .build

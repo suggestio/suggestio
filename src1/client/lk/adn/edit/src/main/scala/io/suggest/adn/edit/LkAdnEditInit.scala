@@ -33,7 +33,9 @@ trait LkAdnEditInit extends InitRouter {
     // Рендерим основную форму:
     circuit
       .wrap(identity(_))( module.lkAdnEditFormR.apply )
-      .renderIntoDOM( VUtil.getElementByIdOrNull[HTMLDivElement]( NodeEditConstants.FORM_CONTAINER_ID ) )
+      .renderIntoDOM(
+        VUtil.getElementByIdOrNull[HTMLDivElement]( NodeEditConstants.FORM_CONTAINER_ID )
+      )
 
     // TODO Рендерить компонент сохранения в правый div.
   }

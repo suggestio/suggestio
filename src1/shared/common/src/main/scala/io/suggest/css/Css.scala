@@ -86,6 +86,10 @@ object Css {
 
   object Lk {
 
+    object Paddings extends _EuSizes {
+      override def PREFIX_ROOT = __ + "padding"
+    }
+
     object Page {
       final def VIEWPORT = "viewport"
       final def PAGE_CNT = PAGE + _CNT
@@ -301,6 +305,23 @@ object Css {
       final def IMAGE_ADD_BTN  = "image_add-btn"
     }
 
+
+    object Adn {
+      private def PROFILE_ = "profile_"
+      object Edit {
+        private def _BAR = "-bar"
+        object Logo {
+          def LOGO_BAR = PROFILE_ + "logo" + _BAR
+        }
+        object Info {
+          def INFO_BAR = PROFILE_ + "info" + _BAR
+        }
+        object Colors {
+          def COLOR_TITLE = __ + "color-title"
+        }
+      }
+    }
+
   } // Lk
 
 
@@ -369,6 +390,8 @@ object Css {
     def CHECKBOX          = "checkbox"
     def STYLED_CHECKBOX   = "styled-" + CHECKBOX
     def CHECKBOX_TITLE    = CHECKBOX + "_title"
+
+    def REQUIRED_ICON     = "required-icon"
   }
 
 
@@ -515,7 +538,6 @@ object Css {
       def TOP_LEFT = Coord.TOP + SPACE + Coord.LEFT
 
     }
-
 
     object Transform {
 

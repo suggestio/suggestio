@@ -2,7 +2,7 @@ package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
 import diode.data.Pot
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.ad.edit.m.SaveAd
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -37,7 +37,8 @@ class SaveR {
     }
   }
 
-  type Props = ModelProxy[PropsVal]
+  type Props_t = PropsVal
+  type Props = ModelProxy[Props_t]
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -106,6 +107,7 @@ class SaveR {
     .renderBackend[Backend]
     .build
 
-  def apply(propsProxy: Props) = component( propsProxy )
+  def _apply(propsProxy: Props) = component( propsProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

@@ -61,15 +61,6 @@ case object AddStripClick extends IAddAction
 /** Изменилось состояние галочки напротив color picker'а для выставления bgColor тега. */
 case class ColorCheckboxChange(isEnabled: Boolean) extends ILkEditAction
 
-/** Изменился цвет в bg color picker'е.
-  * @param isCompleted Окончательное выставление цвета?
-  *                    Если false, то юзер пока ещё выбирает.
-  */
-case class ColorChanged(mcd: MColorData, isCompleted: Boolean, forceTransform: Boolean = false) extends ILkEditAction
-
-/** Клик на "цвете" для выбора цвета. */
-case class ColorBtnClick(vpXy: MCoords2di) extends ILkEditAction
-
 /** Клик просто где-то в body. */
 case object DocBodyClick extends ILkEditAction
 

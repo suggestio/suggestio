@@ -1,51 +1,47 @@
-package io.suggest.ad.edit.v.edit.color
+package io.suggest.lk.r.color
 
 import com.github.casesandberg.react.color.{Color, PresetColor_t, Sketch, SketchProps}
 import diode.FastEq
-import diode.react.ModelProxy
-import io.suggest.ad.edit.m.ColorChanged
-import io.suggest.ad.edit.m.edit.color.MColorsState
-import io.suggest.ad.edit.v.LkAdEditCss
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
+import io.suggest.lk.m.ColorChanged
 import io.suggest.react.ReactCommonUtil
+import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 import scala.scalajs.js.JSConverters._
-import scalacss.ScalaCssReact._
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 10.11.17 21:21
   * Description: Компонент непосредственного color-picker'а.
-  * Раньше жил прямо внутри [[ColorCheckboxR]], но с появлением аккордеона возникли проблемы:
-  * выпадающий color picker залезает под нижнюю границу блока, делая его бесполезным.
   *
   * Решено отвязать его от чекбокса.
   */
-class ColorPickerR(
-                    lkAdEditCss: LkAdEditCss
-                  ) {
+class ColorPickerR {
 
   case class PropsVal(
                        color          : MColorData,
-                       colorsState    : MColorsState,
-                       fixedXy        : MCoords2di
+                       colorPresets   : List[MColorData]    = Nil,
+                       cssClass       : Option[String]      = None,
+                       topLeftPx      : Option[MCoords2di]  = None
                      )
   implicit object ColorPickerPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.color ===* b.color) &&
-        (a.colorsState ===* b.colorsState) &&
-        (a.fixedXy ===* b.fixedXy)
+        (a.colorPresets ===* b.colorPresets) &&
+        (a.cssClass ===* b.cssClass) &&
+        (a.topLeftPx ===* b.topLeftPx)
     }
   }
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -67,9 +63,16 @@ class ColorPickerR(
     def render(propsOptProxy: Props): VdomElement = {
       propsOptProxy.value.whenDefinedEl { props =>
         <.div(
-          lkAdEditCss.BgColorOptPicker.pickerCont,
-          ^.left := props.fixedXy.x.px,
-          ^.top := props.fixedXy.y.px,
+          props.cssClass.whenDefined { cssClass =>
+            ^.`class` := cssClass
+          },
+
+          props.topLeftPx.whenDefined { xy =>
+            TagMod(
+              ^.left := xy.x.px,
+              ^.top  := xy.y.px
+            )
+          },
 
           // Чтобы не скрывался picker из-за DocBodyClick.
           ^.onClick ==> ReactCommonUtil.stopPropagationCB,
@@ -80,7 +83,7 @@ class ColorPickerR(
               override val disableAlpha = true
               override val onChange     = _onColorChangedCbF
               override val presetColors = {
-                props.colorsState.colorPresets
+                props.colorPresets
                   .iterator
                   .map { mcd =>
                     mcd.hexCode: PresetColor_t
@@ -101,6 +104,7 @@ class ColorPickerR(
     .renderBackend[Backend]
     .build
 
-  def apply(propsOptProxy: Props) = component(propsOptProxy)
+  private def _apply(propsOptProxy: Props) = component( propsOptProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

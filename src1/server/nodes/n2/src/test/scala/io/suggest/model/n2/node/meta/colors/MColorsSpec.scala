@@ -23,8 +23,7 @@ class MColorsSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MColors(
         bg = Some( MColorData("AAAAAA") ),
-        fg = Some( MColorData("FFFFFF") ),
-        pattern = Some( MColorData("123123") )
+        fg = Some( MColorData("FFFFFF") )
       )
     }
   }

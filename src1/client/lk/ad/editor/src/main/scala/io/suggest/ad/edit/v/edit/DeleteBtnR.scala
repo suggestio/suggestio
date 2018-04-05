@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.ad.edit.m.DeleteAdClick
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -24,7 +24,8 @@ import io.suggest.ueq.UnivEqUtil._
   */
 class DeleteBtnR {
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
   case class PropsVal(
                        deleteConfirm: Option[MDeleteConfirmPopupS]
@@ -100,6 +101,7 @@ class DeleteBtnR {
     .renderBackend[Backend]
     .build
 
-  def apply(propsOptProxy: Props) = component( propsOptProxy )
+  def _apply(propsOptProxy: Props) = component( propsOptProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

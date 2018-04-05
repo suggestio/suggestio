@@ -2,9 +2,9 @@ package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.ad.edit.m.ColorChanged
 import io.suggest.color.MColorData
 import io.suggest.css.Css
+import io.suggest.lk.m.ColorChanged
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}

@@ -8,7 +8,7 @@ import io.suggest.common.qs.QsConstants
 import io.suggest.css.Css
 import io.suggest.dt.{MAdvPeriod, MYmd}
 import io.suggest.dt.interval.{MRangeYmd, QuickAdvPeriod, QuickAdvPeriods}
-import io.suggest.lk.r.PropTable
+import io.suggest.lk.r.PropTableR
 import io.suggest.lk.r.Forms.InputCont
 import io.suggest.msg.Messages
 import io.suggest.spa.OptFastEq.Plain
@@ -63,8 +63,8 @@ object DtpOptions {
         ^.`class` := Css.Dt.OPTIONS,
 
         // Выбор периода размещения...
-        PropTable.Outer(
-          PropTable.Row(
+        PropTableR.Outer(
+          PropTableR.Row(
             // Пояснение по сути
             Messages( MsgCodes.`Advertising.period` )
           )(
@@ -108,8 +108,8 @@ object DtpOptions {
               } yield {
                 dateOptConn { dateOptProx =>
                   dateOptProx().whenDefinedEl { ymd =>
-                    PropTable.Outer.withKey(fn.value)(
-                      PropTable.Row(
+                    PropTableR.Outer.withKey(fn.value)(
+                      PropTableR.Row(
                         Messages(
                           MsgCodes.`Date.suffixed`(fn.value)
                         )

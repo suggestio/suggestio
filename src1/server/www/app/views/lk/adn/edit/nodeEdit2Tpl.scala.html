@@ -7,6 +7,7 @@
 @import io.suggest.adn.edit.{NodeEditConstants => C}
 @import views.js.stuff.jsRevRouterTpl
 @import views.html.stuff.jsTpl2HtmlTpl
+@import lk.lkwdgts._formStateInputTpl
 
 
 @rightBarAfter = {
@@ -21,7 +22,10 @@
   rightBarAfter = Some(rightBarAfter)
 ) {
 
-  <div id="C.FORM_CONTAINER_ID"></div>
+  <div id="@C.FORM_CONTAINER_ID">
+    @*_preLoaderLkTpl()*@
+    @_formStateInputTpl( formStateStr )
+  </div>
 
   @jsTpl2HtmlTpl()(
     jsRevRouterTpl()(

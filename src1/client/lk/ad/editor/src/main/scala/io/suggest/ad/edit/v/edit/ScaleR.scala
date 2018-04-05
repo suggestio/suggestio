@@ -7,7 +7,7 @@ import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.MSzMult
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.r.PropTable
+import io.suggest.lk.r.PropTableR
 import io.suggest.msg.Messages
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}
@@ -75,8 +75,8 @@ class ScaleR(
         <.div(
           lkAdEditCss.Layout.scaleInputCont,
 
-          PropTable.Outer(
-            PropTable.Row(
+          PropTableR.Outer(
+            PropTableR.Row(
               Messages( MsgCodes.`Scale` )
             )(
               <.select(

@@ -118,7 +118,7 @@ case class MMeta(
 ) {
 
   /** Вернуть инстанс модели [[MMetaPub]] на основе данной модели. */
-  def public = MMetaPub(address, business)
+  def public = MMetaPub(basic.name, address, business, colors)
 
   def withBasic(basic: MBasicMeta) = copy(basic = basic)
 

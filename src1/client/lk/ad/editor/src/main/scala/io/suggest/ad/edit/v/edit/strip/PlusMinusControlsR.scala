@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.v.edit.strip
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.ad.edit.m.BlockSizeBtnClick
 import io.suggest.ad.edit.v.LkAdEditCss
@@ -11,7 +11,6 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
-
 import scalacss.ScalaCssReact._
 import scalacss.internal.StyleA
 
@@ -44,7 +43,8 @@ class PlusMinusControlsR(
   }
 
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
   case class State(
                     leftEnabledC : ReactConnectProxy[Some[Boolean]],
@@ -130,6 +130,7 @@ class PlusMinusControlsR(
     .build
 
 
-  def apply(propsOptProxy: Props) = component( propsOptProxy )
+  def _apply(propsOptProxy: Props) = component( propsOptProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

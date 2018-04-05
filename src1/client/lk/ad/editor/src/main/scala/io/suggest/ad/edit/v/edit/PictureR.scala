@@ -2,7 +2,7 @@ package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
 import diode.data.Pot
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.ad.edit.m.{CropOpen, PictureFileChanged}
 import io.suggest.color.MHistogram
 import io.suggest.common.html.HtmlConstants
@@ -49,7 +49,8 @@ class PictureR(
     }
   }
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
   protected[this] case class State(
                                     imgSrcOptC        : ReactConnectProxy[Option[String]],
@@ -228,6 +229,7 @@ class PictureR(
     .renderBackend[Backend]
     .build
 
-  def apply(propsOptProxy: Props) = component( propsOptProxy )
+  def _apply(propsOptProxy: Props) = component( propsOptProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

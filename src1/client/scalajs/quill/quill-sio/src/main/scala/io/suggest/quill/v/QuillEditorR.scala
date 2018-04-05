@@ -3,7 +3,7 @@ package io.suggest.quill.v
 import com.github.zenoamaro.react.quill._
 import com.quilljs.delta.Delta
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.css.Css
 import io.suggest.msg.ErrorMsgs
 import io.suggest.quill.m.TextChanged
@@ -58,7 +58,8 @@ class QuillEditorR(
   }
 
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -112,6 +113,7 @@ class QuillEditorR(
     .renderBackend[Backend]
     .build
 
-  def apply(textOptProxy: Props) = component( textOptProxy )
+  def _apply(textOptProxy: Props) = component( textOptProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

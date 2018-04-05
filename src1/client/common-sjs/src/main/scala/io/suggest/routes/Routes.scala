@@ -64,6 +64,9 @@ sealed trait Controllers extends js.Object {
   /** Роуты LkAds-контроллера. */
   def LkAds: LkAdsCtlRoutes = js.native
 
+  /** Роуты LkAdnEdit-контроллера. */
+  def LkAdnEdit: LkAdnEditCtlRoutes = js.native
+
 }
 
 
@@ -235,6 +238,17 @@ sealed trait LkAdsCtlRoutes extends js.Object {
   def adsPage(nodeKey: String): Route = js.native
 
   def getAds(rcvrKey: String, offset: Int): Route = js.native
+
+}
+
+
+/** Роуты до LkAdnEdit-контроллера. */
+@js.native
+sealed trait LkAdnEditCtlRoutes extends js.Object {
+
+  def editNodePage(nodeId: String): Route = js.native
+
+  def save(nodeId: String): Route = js.native
 
 }
 

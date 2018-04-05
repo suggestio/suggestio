@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.ad.edit.m.RotateSet
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.empty.OptionUtil
@@ -16,7 +16,6 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -38,7 +37,8 @@ class RotateR(
     }
   }
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -121,6 +121,7 @@ class RotateR(
     .renderBackend[Backend]
     .build
 
-  def apply(propsValOptProxy: Props) = component(propsValOptProxy)
+  def _apply(propsValOptProxy: Props) = component(propsValOptProxy)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

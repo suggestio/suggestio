@@ -1,9 +1,11 @@
 package io.suggest.adn.edit.m
 
 import diode.FastEq
+import io.suggest.color.MColorData
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2.node.meta.MMetaPub
 import io.suggest.ueq.UnivEqUtil._
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -15,7 +17,9 @@ object MAdnNodeS {
 
   implicit object MAdnNodeSFastEq extends FastEq[MAdnNodeS] {
     override def eqv(a: MAdnNodeS, b: MAdnNodeS): Boolean = {
-      a.meta ===* b.meta
+      (a.meta ===* b.meta) &&
+        (a.colorPresets ===* b.colorPresets) &&
+        (a.colorPicker ===* b.colorPicker)
     }
   }
 
@@ -29,6 +33,8 @@ object MAdnNodeS {
   * @param meta Текстовые метаданные узла.
   */
 case class MAdnNodeS(
-                      meta: MMetaPub
+                      meta          : MMetaPub,
+                      colorPresets  : List[MColorData],
+                      colorPicker   : Option[MCoords2di] = None
                       // TODO js-эджи для картинок.
                     )

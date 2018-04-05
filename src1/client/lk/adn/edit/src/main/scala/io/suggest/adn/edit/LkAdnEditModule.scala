@@ -1,7 +1,8 @@
 package io.suggest.adn.edit
 
 import com.softwaremill.macwire._
-import io.suggest.adn.edit.v.LkAdnEditFormR
+import io.suggest.adn.edit.v.{LkAdnEditFormR, OneRowR}
+import io.suggest.lk.LkCommonModule
 
 /**
   * Suggest.io
@@ -11,11 +12,16 @@ import io.suggest.adn.edit.v.LkAdnEditFormR
   */
 class LkAdnEditModule {
 
+  val lkCommonModule = wire[LkCommonModule]
+  import lkCommonModule._
+
   lazy val lkAdnEditCircuit = wire[LkAdnEditCircuit]
 
 
   // views
 
   lazy val lkAdnEditFormR = wire[LkAdnEditFormR]
+
+  lazy val oneRowR = wire[OneRowR]
 
 }

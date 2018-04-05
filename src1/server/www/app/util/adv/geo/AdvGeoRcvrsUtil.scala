@@ -210,7 +210,6 @@ class AdvGeoRcvrsUtil @Inject()(
         // Собираем props-константы за скобками, чтобы mnode-инстанс можно было "отпустить".
         val nodeId     = mnode.id.get
         val hintOpt    = mnode.guessDisplayName
-        val nodeColors = mnode.meta.colors.withPattern()
 
         // Завернуть результат работы в итоговый контейнер, используемый вместо трейта.
         for {
@@ -234,7 +233,7 @@ class AdvGeoRcvrsUtil @Inject()(
             nodeId  = nodeId,
             hint    = hintOpt,
             // Цвета узла. Можно без цвета паттерна, т.к. он не нужен.
-            colors  = nodeColors,
+            colors  = mnode.meta.colors,
             icon    = iconInfoOpt
           )
 

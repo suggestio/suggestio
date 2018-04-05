@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.ad.edit.m.{MainStripChange, ShowMainStrips}
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.html.HtmlConstants
@@ -15,7 +15,6 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}
 import japgolly.univeq._
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -47,7 +46,8 @@ class UseAsMainR(
 
 
   /** Тип приходящих пропертисов. */
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -128,6 +128,7 @@ class UseAsMainR(
     .renderBackend[Backend]
     .build
 
-  def apply(propsOptProxy: Props) = component( propsOptProxy )
+  def _apply(propsOptProxy: Props) = component( propsOptProxy )
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }
