@@ -2,22 +2,19 @@ package io.suggest.adn.edit.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adn.edit.m._
-import io.suggest.color.MColorData
-import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.i18n.MsgCodes
+import io.suggest.lk.m.DocBodyClick
 import io.suggest.lk.r.PropTableR
 import io.suggest.lk.r.color.{ColorBtnR, ColorPickerR}
-import io.suggest.model.n2.node.meta.colors.MColors
+import io.suggest.model.n2.node.meta.colors.{MColorType, MColorTypes}
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import japgolly.scalajs.react.vdom.TagOf
 import io.suggest.spa.OptFastEq
-import org.scalajs.dom.html
 
 /**
   * Suggest.io
@@ -26,11 +23,12 @@ import org.scalajs.dom.html
   * Description: Корневой react-компонент формы редактирования ADN-узла.
   */
 class LkAdnEditFormR(
-                      oneRowR             : OneRowR,
+                      val oneRowR         : OneRowR,
                       val colorPickerR    : ColorPickerR,
                       val colorBtnR       : ColorBtnR
                     ) {
 
+  import oneRowR.OneRowRValueValFastEq
   import colorPickerR.ColorPickerPropsValFastEq
   import colorBtnR.ColorBtnRPropsValFastEq
 
@@ -39,44 +37,17 @@ class LkAdnEditFormR(
   val css = new LkAdnEditCss
 
   case class State(
-                    nameC           : ReactConnectProxy[Option[String]],
-                    townC           : ReactConnectProxy[Option[String]],
-                    addressC        : ReactConnectProxy[Option[String]],
-                    siteUrlC        : ReactConnectProxy[Option[String]],
-                    infoAboutC      : ReactConnectProxy[Option[String]],
-                    humanTrafficC   : ReactConnectProxy[Option[Int]],
-                    audienceDescrC  : ReactConnectProxy[Option[String]],
+                    nameC           : ReactConnectProxy[oneRowR.ValueVal],
+                    townC           : ReactConnectProxy[oneRowR.ValueVal],
+                    addressC        : ReactConnectProxy[oneRowR.ValueVal],
+                    siteUrlC        : ReactConnectProxy[oneRowR.ValueVal],
+                    infoAboutC      : ReactConnectProxy[oneRowR.ValueVal],
+                    humanTrafficC   : ReactConnectProxy[oneRowR.ValueVal],
+                    audienceDescrC  : ReactConnectProxy[oneRowR.ValueVal],
                     bgColorC        : ReactConnectProxy[colorBtnR.Props_t],
                     fgColorC        : ReactConnectProxy[colorBtnR.Props_t],
                     colorPickerC    : ReactConnectProxy[colorPickerR.Props_t],
                   )
-
-  /** Рендер одного text-input'а. */
-  private def __textInput[T](
-                              msgCode      : String,
-                              onChangeF    : ReactEventFromInput => Callback,
-                              conn         : ReactConnectProxy[Option[T]],
-                              tag          : TagOf[html.Element],
-                              isRequired   : Boolean = false
-                            ): VdomElement = {
-    val inputId = msgCode.toLowerCase
-    oneRowR(
-      oneRowR.PropsVal(
-        nameCode    = msgCode,
-        inputId     = inputId,
-        isRequired  = isRequired
-      )
-    )(
-      conn { valueProxy =>
-        tag(
-          ^.id        := inputId,
-          ^.value     := valueProxy.value.fold("")(_.toString),
-          ^.onChange ==> onChangeF
-        )
-      }
-    )
-  }
-
 
   private def __colorTd(cssClasses: List[String])(content: TagMod): VdomElement = {
     <.td(
@@ -116,19 +87,20 @@ class LkAdnEditFormR(
       dispatchOnProxyScopeCB( $, SetAudienceDescr(e.target.value) )
     }
 
+    private def onDocumentClick: Callback = {
+      dispatchOnProxyScopeCB( $, DocBodyClick )
+    }
+
     def render(props: Props, s: State): VdomElement = {
       val delimHr = <.hr(
         ^.`class` := Css.flat( Css.Lk.HrDelim.DELIMITER, Css.Lk.HrDelim.LIGHT )
       )
 
-      val textArea = <.textarea
-      val inputText = <.input(
-        ^.`type` := HtmlConstants.Input.text
-      )
-
       val paddingS = Css.Lk.Paddings.S
 
       <.div(
+        ^.onClick --> onDocumentClick,
+
         // Отрендерить доп.стили
         <.styleTag(
           css.render[String]
@@ -136,6 +108,7 @@ class LkAdnEditFormR(
 
         <.div(
           css.logoBar,
+          // TODO Логотип узла
           "LOGO"
         ),
 
@@ -145,36 +118,36 @@ class LkAdnEditFormR(
           delimHr,
 
           // Поле названия узла:
-          __textInput( MsgCodes.`Name`, onNameChange, s.nameC, inputText, true ),
+          oneRowR( oneRowR.PropsVal( MsgCodes.`Name`, onNameChange, s.nameC, isRequired = true) ),
 
           // Поле города узла:
-          __textInput( MsgCodes.`Town`, onTownChange, s.townC, inputText ),
+          oneRowR( oneRowR.PropsVal( MsgCodes.`Town`, onTownChange, s.townC ) ),
 
           // Поле адреса:
-          __textInput( MsgCodes.`Address`, onAddressChange, s.addressC, textArea ),
+          oneRowR( oneRowR.PropsVal( MsgCodes.`Address`, onAddressChange, s.addressC, isTextArea = true) ),
 
           // Поле URL сайта:
-          __textInput( MsgCodes.`Site`, onSiteUrlChange, s.siteUrlC, inputText ),
+          oneRowR( oneRowR.PropsVal( MsgCodes.`Site`, onSiteUrlChange, s.siteUrlC )),
 
           // Инфа о товарах и услугах:
-          __textInput( MsgCodes.`Info.about.prods.and.svcs`, onInfoAboutProductsChange, s.infoAboutC, textArea ),
+          oneRowR( oneRowR.PropsVal( MsgCodes.`Info.about.prods.and.svcs`, onInfoAboutProductsChange, s.infoAboutC, isTextArea = true )),
 
 
           delimHr,
 
           // Поле задания человеческого трафика.
-          __textInput( MsgCodes.`Daily.people.traffic`, onHumanTrafficChange, s.humanTrafficC, inputText ),
+          oneRowR( oneRowR.PropsVal( MsgCodes.`Daily.people.traffic`, onHumanTrafficChange, s.humanTrafficC ) ),
 
           // Поле описания аудитории.
-          __textInput( MsgCodes.`Audience.descr`, onAudienceDescrChange, s.audienceDescrC, textArea ),
-
+          oneRowR( oneRowR.PropsVal( MsgCodes.`Audience.descr`, onAudienceDescrChange, s.audienceDescrC, isTextArea = true ) ),
 
           delimHr,
-
           // TODO Экран приветствия
 
+          delimHr,
           // TODO Фотографии магазина.
 
+          delimHr,
 
           // Цвета фона и контента
           PropTableR.Outer(
@@ -186,10 +159,15 @@ class LkAdnEditFormR(
                 s.bgColorC { colorBtnR.apply }
               ),
 
-              // TODO линия-разделитель
+              // Вертикальная линия-разделитель:
+              __colorTd( paddingS :: Nil )(
+                <.div(
+                  css.colorTdVerticalHr
+                )
+              ),
 
               __colorTd( Css.Lk.Adn.Edit.Colors.COLOR_TITLE :: Css.PropTable.TD_NAME :: Nil )(
-                "TODO Messages( MsgCodes.`Fg.color` )"
+                Messages( MsgCodes.`Fg.color.of.sc.hint` )
               ),
               __colorTd( paddingS :: Nil )(
                 s.fgColorC { colorBtnR.apply }
@@ -198,7 +176,6 @@ class LkAdnEditFormR(
           )
 
         ),
-
 
         s.colorPickerC { colorPickerR.apply }
 
@@ -210,54 +187,62 @@ class LkAdnEditFormR(
 
   val component = ScalaComponent.builder[Props]("Form")
     .initialStateFromProps { propsProxy =>
-
-      def __getColorBtnC(colorF: MColors => Option[MColorData]): ReactConnectProxy[colorBtnR.Props_t] = {
+      // Сборка коннекшена до цвета:
+      def __getColorBtnC(colorType: MColorType): ReactConnectProxy[colorBtnR.Props_t] = {
+        val colorTypeSome = Some(colorType)
         propsProxy.connect { props =>
           for {
-            mcd <- colorF(props.node.meta.colors)
+            mcd <- props.node.meta.colors.ofType( colorType )
           } yield {
             colorBtnR.PropsVal(
-              color = mcd
+              color     = mcd,
+              colorType = colorTypeSome
             )
           }
         }( OptFastEq.Wrapped )
       }
 
+      val emptyStr = ""
+      def emptyStrF: String = emptyStr
+      // Сборка тривиального коннекшена до ValueVal
+      def __getStringOptConn(getValF: MLkAdnEditRoot => Option[String]): ReactConnectProxy[oneRowR.ValueVal] = {
+        propsProxy.connect { mroot =>
+          oneRowR.ValueVal(
+            value = getValF(mroot).getOrElse(emptyStrF)
+          )
+        }( OneRowRValueValFastEq )
+      }
+
       State(
-        nameC = propsProxy.connect[Option[String]] { props =>
-          // TODO Opt Надо бы коннектить просто String, а не Option[String], но функция __textInput пока заточена под Option.
-          Some( props.node.meta.name )
-        }( OptFastEq.Plain ),
-        townC = propsProxy.connect { props =>
-          props.node.meta.address.town
-        }( OptFastEq.Plain ),
-        addressC = propsProxy.connect { props =>
-          props.node.meta.address.address
-        }( OptFastEq.Plain ),
+        nameC = propsProxy.connect { props =>
+          oneRowR.ValueVal(
+            value = props.node.meta.name,
+            error = props.node.errors.name
+          )
+        }( OneRowRValueValFastEq ),
+        townC = __getStringOptConn( _.node.meta.address.town ),
+        addressC = __getStringOptConn( _.node.meta.address.address ),
         siteUrlC = propsProxy.connect { props =>
-          props.node.meta.business.siteUrl
-        }( OptFastEq.Plain ),
-        infoAboutC = propsProxy.connect { props =>
-          props.node.meta.business.info
-        }( OptFastEq.Plain ),
-        humanTrafficC = propsProxy.connect { props =>
-          props.node.meta.business.humanTrafficAvg
-        }( OptFastEq.OptValueEq ),
-        audienceDescrC = propsProxy.connect { props =>
-          props.node.meta.business.audienceDescr
-        }( OptFastEq.Plain ),
-        bgColorC = __getColorBtnC( MColors.bgF ),
-        fgColorC = __getColorBtnC( MColors.fgF ),
+          oneRowR.ValueVal(
+            value = props.node.meta.business.siteUrl.getOrElse(emptyStrF),
+            error = props.node.errors.siteUrl
+          )
+        }( OneRowRValueValFastEq ),
+        infoAboutC = __getStringOptConn( _.node.meta.business.info ),
+        humanTrafficC = __getStringOptConn( _.node.meta.business.humanTraffic ),
+        audienceDescrC = __getStringOptConn( _.node.meta.business.audienceDescr ),
+        bgColorC = __getColorBtnC( MColorTypes.Bg ),
+        fgColorC = __getColorBtnC( MColorTypes.Fg ),
         colorPickerC = propsProxy.connect { props =>
           for {
-            // TODO Тут хрень полная. Нужна поддержка ColorPicker'а, но понимающего разные режимы: Bg и Fg. Как раз недавно была удалена соответствующая enum-модель.
-            _ <- props.node.colorPicker
-            mcd <- props.node.meta.colors.allColorsIter.toStream.headOption
+            cps <- props.node.colorPicker
+            mcd <- props.node.meta.colors.ofType( cps.ofColorType )
           } yield {
             colorPickerR.PropsVal(
               color         = mcd,
               colorPresets  = props.node.colorPresets,
-              topLeftPx     = props.node.colorPicker
+              topLeftPx     = Some( cps.topLeftPx ),
+              cssClass      = Some( css.colorPicker.htmlClass )
             )
           }
         }( OptFastEq.Wrapped )

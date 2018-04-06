@@ -60,3 +60,10 @@ case class MAddress(
                      section       : Option[String] = None
                    )
   extends EmptyProduct
+{
+
+  def withTown(town: Option[String])          = copy(town = town)
+  def withAddress(address: Option[String])    = copy(address = address)
+  def withPhone(phone: Option[String])        = copy(phone = phone)
+
+}

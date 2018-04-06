@@ -61,9 +61,6 @@ case object AddStripClick extends IAddAction
 /** Изменилось состояние галочки напротив color picker'а для выставления bgColor тега. */
 case class ColorCheckboxChange(isEnabled: Boolean) extends ILkEditAction
 
-/** Клик просто где-то в body. */
-case object DocBodyClick extends ILkEditAction
-
 
 /** Изменилось file-поле выбора картинки. */
 case class PictureFileChanged(files: Seq[File]) extends ILkEditAction

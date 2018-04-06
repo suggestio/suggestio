@@ -89,6 +89,7 @@ class LkAdsFormR(
                   .flatMap { case (adProps, i) =>
                     val i1mod4eq0 = (i + 1) % LkAdsFormConst.ADS_PER_ROW ==* 0
                     val iStr = i.toString
+
                     // Отрендерить превьюшку карточки с обвесом:
                     val adItem = p.wrap { mroot =>
                       adItemR.PropsVal(
@@ -98,6 +99,7 @@ class LkAdsFormR(
                         jdConf      = mroot.conf.jdConf
                       )
                     } { adItemR.component.withKey(iStr)(_) }
+                    
                     var vdoms = List[VdomElement](adItem)
                     // Добавить перенос строки сетки после каждого четвертого элемента строки:
                     if (i1mod4eq0) {

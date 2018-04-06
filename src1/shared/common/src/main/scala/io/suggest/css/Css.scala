@@ -87,7 +87,7 @@ object Css {
   object Lk {
 
     object Paddings extends _EuSizes {
-      override def PREFIX_ROOT = __ + "padding"
+      override def PREFIX_ROOT = "padding"
     }
 
     object Page {
@@ -275,6 +275,7 @@ object Css {
     object HrDelim {
       def DELIMITER = "delimiter"
       def LIGHT = __ + "light"
+      def VERTICAL = __ + "vertical"
     }
 
     object AdEdit {

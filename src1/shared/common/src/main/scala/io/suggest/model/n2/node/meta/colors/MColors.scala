@@ -34,8 +34,8 @@ object MColors extends IEmpty {
 
   /** Поддержка JSON. */
   implicit val MCOLORS_FORMAT: OFormat[MColors] = (
-    (__ \ "b").formatNullable[MColorData] and
-    (__ \ "f").formatNullable[MColorData]
+    (__ \ MColorTypes.Bg.value).formatNullable[MColorData] and
+    (__ \ MColorTypes.Fg.value).formatNullable[MColorData]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MColors] = UnivEq.derive
@@ -46,6 +46,8 @@ object MColors extends IEmpty {
 }
 
 
+// TODO Вероятно, надо заменить эту модель (или её поля) чем-то типа Map[MColorType, MColorData].
+
 case class MColors(
   bg        : Option[MColorData]    = None,
   fg        : Option[MColorData]    = None
@@ -55,12 +57,27 @@ case class MColors(
 
   /** Вернуть все перечисленные цвета. */
   def allColorsIter: Iterator[MColorData] = {
-    // TODO Задействовать productIterator, но пока как-то уродливо получается.
-    Iterator(
-      bg,
-      fg
-    )
+    Iterator( bg, fg )
       .flatten
   }
+
+
+  def ofType(mct: MColorType): Option[MColorData] = {
+    mct match {
+      case MColorTypes.Bg => bg
+      case MColorTypes.Fg => fg
+    }
+  }
+
+
+  def withColorOfType(mct: MColorType, mcdOpt: Option[MColorData]): MColors = {
+    mct match {
+      case MColorTypes.Bg => withBg(mcdOpt)
+      case MColorTypes.Fg => withFg(mcdOpt)
+    }
+  }
+
+  def withBg(bg: Option[MColorData]) = copy(bg = bg)
+  def withFg(fg: Option[MColorData]) = copy(fg = fg)
 
 }

@@ -42,3 +42,11 @@ case class MMetaPub(
                      colors        : MColors         = MColors.empty
                    )
   extends EmptyProduct
+{
+
+  def withName(name: String)                  = copy(name = name)
+  def withAddress(address: MAddress)          = copy(address = address)
+  def withBusiness(business: MBusinessInfo)   = copy(business = business)
+  def withColors(colors: MColors)             = copy(colors = colors)
+
+}

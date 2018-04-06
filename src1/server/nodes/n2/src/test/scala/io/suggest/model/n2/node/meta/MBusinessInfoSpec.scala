@@ -24,7 +24,7 @@ class MBusinessInfoSpec extends FlatSpec with PlayJsonTestUtil {
       MBusinessInfo(
         siteUrl         = Some("http://isuggest.ru/index.html"),
         audienceDescr   = Some("Очень vip публика ходит тут.\n\n\r\tВот<>!@#@!#\n."),
-        humanTrafficAvg = Some(2000),
+        humanTraffic = Some(2000),
         info            = Some("Some info -_-ar3\nsdrgse5g \r\t fsg435 \n")
       )
     }

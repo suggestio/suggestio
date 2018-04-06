@@ -16,7 +16,7 @@ object MBusinessInfoEs extends IGenEsMappingProps {
     List(
       FieldText(SITE_URL_FN, index = true, include_in_all = true, boost = Some(0.33F)),
       FieldText(AUDIENCE_DESCR_FN, index = true, include_in_all = false),
-      FieldNumber(HUMAN_TRAFFIC_AVG_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
+      FieldNumber(HUMAN_TRAFFIC_INT_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
       FieldText(BDESCR_FN, index = true, include_in_all = true, boost = Some(0.1F))
     )
   }

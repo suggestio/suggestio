@@ -2,10 +2,10 @@ package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.edit.m.edit.color.MColorPick
-import io.suggest.ad.edit.m.{ColorCheckboxChange, DocBodyClick}
+import io.suggest.ad.edit.m.ColorCheckboxChange
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
-import io.suggest.lk.m.{ColorBtnClick, ColorChanged}
+import io.suggest.lk.m.{ColorBtnClick, ColorChanged, DocBodyClick}
 
 /**
   * Suggest.io

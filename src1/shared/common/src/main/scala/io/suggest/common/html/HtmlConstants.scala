@@ -49,6 +49,7 @@ object HtmlConstants {
   val PLUS                    = "+"
   val MINUS                   = "-"
   val UNDERSCORE              = "_"
+  val ASTERISK                = "*"
 
   val `.`                     = "."
 

@@ -2,7 +2,6 @@ package io.suggest.adn.edit.m
 
 import diode.FastEq
 import io.suggest.color.MColorData
-import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2.node.meta.MMetaPub
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -19,7 +18,8 @@ object MAdnNodeS {
     override def eqv(a: MAdnNodeS, b: MAdnNodeS): Boolean = {
       (a.meta ===* b.meta) &&
         (a.colorPresets ===* b.colorPresets) &&
-        (a.colorPicker ===* b.colorPicker)
+        (a.colorPicker ===* b.colorPicker) &&
+        (a.errors ===* b.errors)
     }
   }
 
@@ -35,6 +35,16 @@ object MAdnNodeS {
 case class MAdnNodeS(
                       meta          : MMetaPub,
                       colorPresets  : List[MColorData],
-                      colorPicker   : Option[MCoords2di] = None
+                      colorPicker   : Option[MAdnEditColorPickerS]  = None,
+                      errors        : MAdnEditErrors                = MAdnEditErrors.empty
                       // TODO js-эджи для картинок.
-                    )
+                    ) {
+
+  def withMeta(meta: MMetaPub)                                    = copy(meta = meta)
+  def withColorPresets(colorPresets: List[MColorData])            = copy(colorPresets = colorPresets)
+  def withColorPicker(colorPicker: Option[MAdnEditColorPickerS])  = copy(colorPicker = colorPicker)
+  def withErrors(errors: MAdnEditErrors)                          = copy(errors = errors)
+
+  lazy val colorPresetsLen = colorPresets.length
+
+}

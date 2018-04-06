@@ -91,14 +91,14 @@ class MarketLkAdnEdit @Inject() (
   private def phoneKM       = "phone"   -> phoneOptM
 
   private def audDescrKM    = "audienceDescr"   -> toStrOptM(audienceDescrM)
-  private def humTrafAvgKM  = "humanTrafficAvg" -> optional(humanTrafficAvgM)
+  private def humTrafAvgKM  = "humanTrafficAvg" -> optional( nameM )  // Маппинг чисто с потолка.
 
   private def infoKM        = "info" -> toStrOptM(text2048M)
 
   /** Маппер подформы метаданных для узла-ресивера. */
   private def rcvrMetaM = {
     mapping(nameKM, townKM, addressKM, colorKM, fgColorKM, siteUrlKM, phoneKM, audDescrKM, humTrafAvgKM, infoKM)
-    {(name, town, address, color, fgColorOpt, siteUrlOpt, phoneOpt, audDescr, humanTrafficAvg, info) =>
+    {(name, town, address, color, fgColorOpt, siteUrlOpt, phoneOpt, audDescr, humanTraffic, info) =>
       MMeta(
         basic = MBasicMeta(
           nameOpt = Some(name)
@@ -111,7 +111,7 @@ class MarketLkAdnEdit @Inject() (
         business = MBusinessInfo(
           siteUrl           = siteUrlOpt,
           audienceDescr     = audDescr,
-          humanTrafficAvg   = humanTrafficAvg,
+          humanTraffic      = humanTraffic,
           info              = info
         ),
         colors = MColors(
@@ -128,7 +128,7 @@ class MarketLkAdnEdit @Inject() (
         meta.business.siteUrl,
         meta.address.phone,
         meta.business.audienceDescr,
-        meta.business.humanTrafficAvg,
+        meta.business.humanTraffic,
         meta.business.info
       ))
     }
@@ -405,7 +405,7 @@ class MarketLkAdnEdit @Inject() (
         business = mnode.meta.business.copy(
           // TODO Нужно осторожнее обновлять поля, которые не всегда содержат значения (зависят от типа узла).
           audienceDescr   = meta2.business.audienceDescr,
-          humanTrafficAvg = meta2.business.humanTrafficAvg,
+          humanTraffic = meta2.business.humanTraffic,
           info            = meta2.business.info,
           siteUrl         = meta2.business.siteUrl
         )

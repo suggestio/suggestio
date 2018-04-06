@@ -6,12 +6,14 @@ import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.css.Css
 import io.suggest.lk.m.ColorBtnClick
+import io.suggest.model.n2.node.meta.colors.MColorType
 import japgolly.scalajs.react.{BackendScope, Callback, ReactMouseEvent, ScalaComponent}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactCommonUtil
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
 
 /**
   * Suggest.io
@@ -28,8 +30,9 @@ object ColorBtnR {
 class ColorBtnR {
 
   case class PropsVal(
-                       color    : MColorData,
-                       cssClass : Option[String] = None
+                       color        : MColorData,
+                       colorType    : Option[MColorType] = None,
+                       cssClass     : Option[String] = None
                      )
   implicit object ColorBtnRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
@@ -50,7 +53,10 @@ class ColorBtnR {
         x = e.clientX.toInt,
         y = e.clientY.toInt
       )
-      dispatchOnProxyScopeCB($, ColorBtnClick(fixedCoord))
+      ReactCommonUtil.stopPropagationCB(e) >> dispatchOnProxyScopeCBf($) { propsProxy: Props =>
+        val colorTypeOpt = propsProxy.value.flatMap(_.colorType)
+        ColorBtnClick(fixedCoord, colorTypeOpt)
+      }
     }
 
     def render(p: Props): VdomElement = {

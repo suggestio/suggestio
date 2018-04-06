@@ -4,7 +4,7 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
-import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot, SlideBlockKeys}
+import io.suggest.ad.edit.m.{MAeRoot, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
 import io.suggest.ad.edit.v.edit._
 import io.suggest.ad.edit.v.edit.color.ColorCheckboxR
@@ -18,6 +18,7 @@ import io.suggest.quill.v.{QuillCss, QuillEditorR}
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.{MJdTagName, MJdTagNames}
+import io.suggest.lk.m.DocBodyClick
 import io.suggest.lk.r.SlideBlockR
 import io.suggest.lk.r.color.ColorPickerR
 import io.suggest.msg.Messages

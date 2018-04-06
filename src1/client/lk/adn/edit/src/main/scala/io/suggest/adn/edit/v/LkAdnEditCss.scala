@@ -24,4 +24,14 @@ class LkAdnEditCss extends StyleSheet.Inline {
     addClassName( C.Info.INFO_BAR )
   )
 
+  val colorTdVerticalHr = style(
+    addClassNames( Css.Lk.HrDelim.DELIMITER, Css.Lk.HrDelim.LIGHT ),
+    height( 43.px ),
+    width( 1.px )
+  )
+
+  val colorPicker = style(
+    position.fixed
+  )
+
 }

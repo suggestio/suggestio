@@ -176,7 +176,7 @@ object NodeAdvInfoPopR {
         _renderMetaRow( MsgCodes.`Address`, mmeta.address.address ),
         _renderMetaRow( MsgCodes.`Site`, mmeta.business.siteUrl, isUrl = true ),
         _renderMetaRow( MsgCodes.`Info.about.prods.and.svcs`, mmeta.business.info ),
-        _renderMetaRow( MsgCodes.`Daily.people.traffic`, mmeta.business.humanTrafficAvg.map(_.toString) ),
+        _renderMetaRow( MsgCodes.`Daily.people.traffic`, mmeta.business.humanTraffic.map(_.toString) ),
         _renderMetaRow( MsgCodes.`Audience.descr`, mmeta.business.audienceDescr )
       )
     }

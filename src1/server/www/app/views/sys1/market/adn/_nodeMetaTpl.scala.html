@@ -50,9 +50,9 @@
     }
   }
 
-  @for(htAvg <- meta.business.humanTrafficAvg) {
+  @for(ht <- meta.business.humanTraffic) {
     @_ptableRowTpl( "Человеческий трафик:") {
-      @formatIntHtml(htAvg) чел. в день
+      @ht
     }
   }
 

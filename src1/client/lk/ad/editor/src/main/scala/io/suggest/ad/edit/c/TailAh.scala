@@ -2,8 +2,8 @@ package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.edit.m.pop.MAePopupsS
-import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
-import io.suggest.lk.m.{CloseAllPopups, ErrorPopupCloseClick}
+import io.suggest.ad.edit.m.MAeRoot
+import io.suggest.lk.m.{CloseAllPopups, DocBodyClick, ErrorPopupCloseClick}
 
 /**
   * Suggest.io

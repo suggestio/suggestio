@@ -194,6 +194,7 @@ object MsgCodes {
   val `Block` = "Block"
   val `Example.text` = "Example.text"
   val `Bg.color` = "Bg.color"
+  val `Fg.color.of.sc.hint` = "Fg.color.of.sc.hint"
 
   val `File.is.not.a.picture` = "File.is.not.a.picture"
   val `Apply` = "Apply"
@@ -243,5 +244,7 @@ object MsgCodes {
   val `Show._ad` = "Show._ad"
   val `ad.Manage` = "ad.Manage"
   val `Show.ad.opened` = "Show.ad.opened"
+
+  val `invalid_url` = "invalid_url"
 
 }

@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node.meta
 
 import boopickle.Default._
-import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -20,18 +20,34 @@ object MBusinessInfo extends IEmpty {
   object Fields {
     val SITE_URL_FN             = "su"
     val AUDIENCE_DESCR_FN       = "ad"
-    val HUMAN_TRAFFIC_AVG_FN    = "ht"
+    val HUMAN_TRAFFIC_INT_FN    = "ht"
+    val HUMAN_TRAFFIC_FN        = "hu"
     /** Имя поля для описания серьезного бизнеса: Business DESCRiption. */
     val BDESCR_FN               = "bd"
   }
 
   /** Поддержка JSON. */
-  implicit val MBUSINESS_INFO_FORMAT: OFormat[MBusinessInfo] = (
-    (__ \ Fields.SITE_URL_FN).formatNullable[String] and
-    (__ \ Fields.AUDIENCE_DESCR_FN).formatNullable[String] and
-    (__ \ Fields.HUMAN_TRAFFIC_AVG_FN).formatNullable[Int] and
-    (__ \ Fields.BDESCR_FN).formatNullable[String]
-  )(apply, unlift(unapply))
+  implicit val MBUSINESS_INFO_FORMAT: OFormat[MBusinessInfo] = {
+    // TODO 2018-04-06 Удалить потом. Миграция с Int на String-поле
+    val humanTrafficFormat0 = {
+      val pathStr = (__ \ Fields.HUMAN_TRAFFIC_FN)
+      val r = pathStr.read[String]
+        .map( EmptyUtil.someF )
+        .orElse {
+          (__ \ Fields.HUMAN_TRAFFIC_INT_FN).readNullable[Int]
+            .map(_.map(_.toString))
+        }
+      val w = pathStr.writeNullable[String]
+      OFormat( r, w )
+    }
+
+    (
+      (__ \ Fields.SITE_URL_FN).formatNullable[String] and
+      (__ \ Fields.AUDIENCE_DESCR_FN).formatNullable[String] and
+      humanTrafficFormat0 and
+      (__ \ Fields.BDESCR_FN).formatNullable[String]
+    )(apply, unlift(unapply))
+  }
 
 
   /** Частоиспользуемый пустой экземпляр модели [[MBusinessInfo]]. */
@@ -47,9 +63,17 @@ object MBusinessInfo extends IEmpty {
 
 
 case class MBusinessInfo(
-  siteUrl             : Option[String]  = None,
-  audienceDescr       : Option[String]  = None,
-  humanTrafficAvg     : Option[Int]     = None,
-  info                : Option[String]  = None
+                          siteUrl             : Option[String]  = None,
+                          audienceDescr       : Option[String]  = None,
+                          humanTraffic        : Option[String]  = None,
+                          info                : Option[String]  = None
 )
   extends EmptyProduct
+{
+
+  def withSiteUrl(siteUrl: Option[String])              = copy(siteUrl = siteUrl)
+  def withAudienceDescr(audienceDescr: Option[String])  = copy(audienceDescr = audienceDescr)
+  def withHumanTraffic(humanTraffic: Option[String])    = copy(humanTraffic = humanTraffic)
+  def withInfo(info: Option[String])                    = copy(info = info)
+
+}

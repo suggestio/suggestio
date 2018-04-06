@@ -293,6 +293,8 @@ class JsMessagesUtil @Inject() (
       MC.`Info.about.prods.and.svcs` ::
       MC.`Daily.people.traffic` ::
       MC.`Audience.descr` ::
+      MC.`Bg.color` ::
+      MC.`Fg.color.of.sc.hint` ::
       Nil
   }
 
