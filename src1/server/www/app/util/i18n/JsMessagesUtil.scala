@@ -235,6 +235,7 @@ class JsMessagesUtil @Inject() (
       MC.`Suggest.io.Project` ::
       MC.`Suggest.io._transcription` ::
       MC.`Edit` ::
+      MC.`Please.wait` ::
       Nil
   }
 

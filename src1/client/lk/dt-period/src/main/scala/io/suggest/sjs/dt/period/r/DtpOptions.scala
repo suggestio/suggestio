@@ -11,6 +11,7 @@ import io.suggest.dt.interval.{MRangeYmd, QuickAdvPeriod, QuickAdvPeriods}
 import io.suggest.lk.r.PropTableR
 import io.suggest.lk.r.Forms.InputCont
 import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
 import io.suggest.spa.OptFastEq.Plain
 import io.suggest.sjs.dt.period.m.{DtpInputFn, DtpInputFns, SetDateStartEnd, SetQap}
 import japgolly.scalajs.react._
@@ -96,10 +97,7 @@ object DtpOptions {
           val customRangeOpt = customRangeOptProxy()
           val momentLocale = Messages( MsgCodes.`locale.momentjs` )
           <.div(
-            if (customRangeOpt.isEmpty) {
-              EmptyVdom
-
-            } else {
+            ReactCommonUtil.maybeEl(customRangeOpt.nonEmpty) {
               val children: Seq[TagMod] = for {
                 (fn, dateOptConn) <- Seq[(DtpInputFn, ReactConnectProxy[Option[MYmd]])](
                   DtpInputFns.start -> state.dateStartConn,

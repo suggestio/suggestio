@@ -526,7 +526,7 @@ class QdRrrHtml(
       // Компилим значение text-align
       val textAlignTm = attrs.align
         .flatMap(_.toOption)
-        .fold( EmptyVdom ) { mTextAlign =>
+        .fold( TagMod.empty ) { mTextAlign =>
           ^.`class` := Css.flat(
             jdArgs.jdCss.textAlignsStyleF( mTextAlign ).htmlClass,
             Css.Display.BLOCK
@@ -535,7 +535,7 @@ class QdRrrHtml(
 
       val indentTm = attrs.indent
         .flatMap(_.toOption)
-        .fold( EmptyVdom ) { indentLevel =>
+        .fold( TagMod.empty ) { indentLevel =>
           jdArgs.jdCss.indentStyleF( indentLevel )
         }
 

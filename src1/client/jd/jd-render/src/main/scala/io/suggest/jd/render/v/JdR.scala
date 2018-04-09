@@ -168,12 +168,14 @@ class JdR(
 
       val bgColor = _bgColorOpt(s, jdArgs)
 
-      val groupOutlineTm = jdArgs.renderArgs.groupOutLined.fold( EmptyVdom ) { mcd =>
-        TagMod(
-          C.blockGroupOutline,
-          ^.outlineColor := mcd.hexCode
-        )
-      }
+      val groupOutlineTm = jdArgs.renderArgs
+        .groupOutLined
+        .fold( TagMod.empty ) { mcd =>
+          TagMod(
+            C.blockGroupOutline,
+            ^.outlineColor := mcd.hexCode
+          )
+        }
 
       val bgImgOpt = for {
         bgImgData <- s.props1.bgImg

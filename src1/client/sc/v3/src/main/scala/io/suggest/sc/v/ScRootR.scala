@@ -19,9 +19,6 @@ import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.v.menu.{AboutSioR, EditAdR, EnterLkRowR, MenuR}
 import scalacss.ScalaCssReact._
 
-import scala.scalajs.js
-import scala.scalajs.js.UndefOr
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

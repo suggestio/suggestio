@@ -9,6 +9,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.MDeleteConfirmPopupS
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -60,9 +61,7 @@ class DeleteBtnR {
               ),
 
               // НЕ слать экшены, если сейчас идёт запрос.
-              if (isPending) {
-                EmptyVdom
-              } else {
+              ReactCommonUtil.maybe( !isPending ) {
                 ^.onClick --> _onDeleteBtnClick
               },
 

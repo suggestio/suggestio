@@ -34,6 +34,7 @@ object ItemsPricesR {
           // Рендерить название причины начисления
           val leftTd = <.td(
             ^.`class` := Css.flat1( tdCssBody ),
+            ^.key := "l",
 
             Messages( priceReason.reasonType.msgCodeI18n )
           )
@@ -41,6 +42,7 @@ object ItemsPricesR {
           // Рендерить переменные, присланные вместе с причиной.
           val secondTd = <.td(
             ^.`class` := Css.flat1( tdCssBody ),
+            ^.key := "s",
 
             priceReason.reasonType
               .i18nPayload(priceReason)( Messages.f )
@@ -51,6 +53,7 @@ object ItemsPricesR {
           val thirdTd = <.td(
             ^.`class` := Css.flat1( tdCssBody ),
             ^.width := 40.px,
+            ^.key := "t",
 
             mapper
               .multiplifier

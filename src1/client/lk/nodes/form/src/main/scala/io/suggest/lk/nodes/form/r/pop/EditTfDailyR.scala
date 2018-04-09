@@ -15,6 +15,7 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.ReactCommonUtil.Implicits._
 import PopupR.PopupPropsValFastEq
 import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
 
 /**
   * Suggest.io
@@ -144,10 +145,8 @@ class EditTfDailyR {
                   Css.Buttons.MAJOR -> saveBtnActive,
                   Css.Buttons.MINOR -> !saveBtnActive
                 ),
-                if (saveBtnActive) {
+                ReactCommonUtil.maybe( saveBtnActive ) {
                   ^.onClick --> onSaveClick
-                } else {
-                  EmptyVdom
                 },
                 Messages( MsgCodes.`Save` )
               ),

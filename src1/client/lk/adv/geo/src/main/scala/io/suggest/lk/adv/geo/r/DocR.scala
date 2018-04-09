@@ -6,6 +6,7 @@ import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.geo.m.{DocReadMoreClick, MDocS}
 import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -31,10 +32,8 @@ object DocR {
 
       <.div(
 
-        if (expanded) {
+        ReactCommonUtil.maybe( expanded ) {
           ^.`class` := Css.PropTable.TD_VALUE
-        } else {
-          EmptyVdom
         },
 
         Messages( MsgCodes.`Adv.geo.form.descr1` ),

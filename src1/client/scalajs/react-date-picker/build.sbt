@@ -7,7 +7,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "scalajs-react-date-picker"
 
-version := "0.39.0"
+version := "1.4.1"
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 

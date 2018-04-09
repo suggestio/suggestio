@@ -1,6 +1,6 @@
 package com.github.balloob.react.sidebar
 
-import japgolly.scalajs.react.raw.ReactNodeList
+import japgolly.scalajs.react.raw.React.Node
 
 import scala.scalajs.js
 
@@ -21,8 +21,7 @@ trait SidebarProps extends js.Object {
 
   val overlayClassName    : js.UndefOr[String]          = js.undefined
 
-  // TODO Replace with js.Any or VdomNode?
-  val sidebar             : js.UndefOr[ReactNodeList]   = js.undefined
+  val sidebar             : js.UndefOr[Node]   = js.undefined
 
   val onSetOpen           : js.UndefOr[js.Function1[Boolean, _]]  = js.undefined
 

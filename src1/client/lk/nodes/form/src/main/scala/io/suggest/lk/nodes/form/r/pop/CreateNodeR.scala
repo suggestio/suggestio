@@ -15,6 +15,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import PopupR.PopupPropsValFastEq
 import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
 
 /**
   * Suggest.io
@@ -71,10 +72,8 @@ class CreateNodeR {
             // Сейчас открыта форма добавление под-узла для текущего узла.
             <.div(
 
-              if (isSaving) {
+              ReactCommonUtil.maybe(isSaving) {
                 ^.title := Messages( MsgCodes.`Server.request.in.progress.wait` )
-              } else {
-                EmptyVdom
               },
 
               <.h2(
@@ -116,10 +115,8 @@ class CreateNodeR {
                       ^.onChange   ==> onIdChange,
                       ^.placeholder := EddyStone.EXAMPLE_UID,
 
-                      if (!isSaving) {
+                      ReactCommonUtil.maybe(!isSaving) {
                         ^.title := Messages( MsgCodes.`Example.id.0`, EddyStone.EXAMPLE_UID )
-                      } else {
-                        EmptyVdom
                       },
 
                       disabledAttr
@@ -134,7 +131,7 @@ class CreateNodeR {
                 ^.`class` := Css.flat( Css.Buttons.BTN_W, Css.Size.M ),
 
                 // Кнопка сохранения. Активна только когда юзером введено достаточно данных.
-                if (addState.saving.isEmpty && !isSaving) {
+                ReactCommonUtil.maybeEl( addState.saving.isEmpty && !isSaving ) {
                   val isSaveBtnEnabled = addState.isValid
                   <.span(
                     <.a(
@@ -144,10 +141,8 @@ class CreateNodeR {
                         Css.Buttons.DISABLED  -> !isSaveBtnEnabled
                       ),
 
-                      if (isSaveBtnEnabled) {
+                      ReactCommonUtil.maybe( isSaveBtnEnabled ) {
                         ^.onClick --> onSaveClick
-                      } else {
-                        EmptyVdom
                       },
 
                       Messages( MsgCodes.`Save` )
@@ -161,15 +156,10 @@ class CreateNodeR {
                       Messages( MsgCodes.`Cancel` )
                     )
                   )
-                } else {
-                  EmptyVdom
                 },
 
                 // Крутилка ожидания сохранения.
-                if (isSaving)
-                  LkPreLoaderR.AnimMedium
-                else
-                  EmptyVdom,
+                ReactCommonUtil.maybeEl(isSaving)( LkPreLoaderR.AnimMedium ),
 
                 // Вывести инфу, что что-то пошло не так при ошибке сохранения.
                 addState.saving.renderFailed {

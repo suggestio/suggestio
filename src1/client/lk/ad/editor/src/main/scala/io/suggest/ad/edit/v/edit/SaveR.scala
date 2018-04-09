@@ -9,6 +9,7 @@ import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -62,9 +63,7 @@ class SaveR {
           ),
 
           // НЕ слать экшены, если сейчас идёт запрос.
-          if (isPending) {
-            EmptyVdom
-          } else {
+          ReactCommonUtil.maybe( !isPending ) {
             ^.onClick --> onSaveBtnClick
           },
 

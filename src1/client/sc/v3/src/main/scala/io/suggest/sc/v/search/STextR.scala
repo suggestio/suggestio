@@ -3,6 +3,7 @@ package io.suggest.sc.v.search
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{MScSearchText, SearchTextChanged, SearchTextFocus}
 import io.suggest.sc.styl.GetScCssF
@@ -50,10 +51,8 @@ class STextR( getScCssF: GetScCssF ) {
           CSS.Field.field,
 
           // Рендерить __active, когда происходит ввод данных.
-          if (p.focused) {
+          ReactCommonUtil.maybe(p.focused) {
             CSS.Field.active
-          } else {
-            EmptyVdom
           },
 
           <.div(

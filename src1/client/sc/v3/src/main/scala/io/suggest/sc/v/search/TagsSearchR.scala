@@ -6,6 +6,7 @@ import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{MTagsSearchS, TagClick, TagsScroll}
 import io.suggest.sc.styl.GetScCssF
@@ -13,7 +14,6 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromHtml, ScalaComponent}
 import japgolly.univeq._
-
 import scalacss.ScalaCssReact._
 
 /**
@@ -74,10 +74,8 @@ class TagsSearchR(
                 TabCSS.tagsList,
 
                 // Подписка на события скроллинга:
-                if (tagsS.hasMoreTags && !tagsS.tagsReq.isPending) {
+                ReactCommonUtil.maybe(tagsS.hasMoreTags && !tagsS.tagsReq.isPending) {
                   ^.onScroll ==> _onTagsListScroll
-                } else {
-                  EmptyVdom
                 },
 
                 // Рендер нормального списка найденных тегов.
@@ -103,10 +101,9 @@ class TagsSearchR(
                           if (i % 2 ==* 0) _odd else _even,
 
                           // Подсвечивать текущие выделенные теги.
-                          if (tagsS.selectedId contains mtag.nodeId)
+                          ReactCommonUtil.maybe(tagsS.selectedId contains mtag.nodeId) {
                             TabCSS.selected
-                          else
-                            EmptyVdom,
+                          },
 
                           ^.onClick --> _onTagClick(mtag.nodeId),
 

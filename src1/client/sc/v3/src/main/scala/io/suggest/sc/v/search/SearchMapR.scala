@@ -81,12 +81,7 @@ class SearchMapR(
             ^.onTouchMove   ==> _stopPropagationF,
             ^.onTouchCancel ==> _stopPropagationF,
 
-            if (!mapInit.ready) {
-              // Инициализация карты пока не запущена даже.
-              // TODO Выводить "Пжлст, подождите..."?
-              EmptyVdom
-
-            } else {
+            ReactCommonUtil.maybeEl(mapInit.ready) {
               // TODO Нужно как-то организовать reuse инстанса фунции. Эта фунция зависит от state, и хз, как это нормально организовать. Вынести в top-level?
               s.mmapC { mmapProxy =>
                 mmapProxy.wrap { mmap =>

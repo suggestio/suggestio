@@ -6,6 +6,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.lk.r.PropTableR
 import io.suggest.msg.Messages
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react.{Callback, ReactEventFromInput, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
@@ -61,15 +62,14 @@ class OneRowR {
             ^.`for` := inputId,
             Messages( props.nameCode ),
 
-            if (props.isRequired) {
+            ReactCommonUtil.maybeNode( props.isRequired ) {
               <.span(
                 ^.`class` := Css.Input.REQUIRED_ICON,
                 HtmlConstants.SPACE,
                 HtmlConstants.ASTERISK
               )
-            } else {
-              EmptyVdom
             }
+
           )
         )(
           props.conn { valueValProxy =>
@@ -99,9 +99,7 @@ class OneRowR {
         )
       )
     }
-    .shouldComponentUpdatePure { $ =>
-      $.currentProps != $.nextProps
-    }
+    .configure( ReactDiodeUtil.propsFastEqShouldComponentUpdate )
     .build
 
   def apply(propsVal: PropsVal) = component(propsVal)

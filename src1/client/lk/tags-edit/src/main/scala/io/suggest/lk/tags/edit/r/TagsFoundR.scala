@@ -11,6 +11,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.lk.tags.edit.m.AddTagFound
 import io.suggest.lk.tags.edit.vm.search.hints.SRow
 import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromHtml, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -48,73 +49,69 @@ object TagsFoundR {
           Css.HintList.CONTAINER,
           Css.Display.HIDDEN -> !isShown
         ),
-        if (!isShown) EmptyVdom else <.div(
-          ^.`class`     := Css.HintList.OUTER,
+        ReactCommonUtil.maybeEl( isShown ) {
           <.div(
-            ^.`class`   := Css.HintList.CONTENT,
+            ^.`class`     := Css.HintList.OUTER,
+            <.div(
+              ^.`class`   := Css.HintList.CONTENT,
 
-            // Клик активен только когда есть по чему кликать.
-            if ( v.exists(_.tags.nonEmpty) ) {
-              ^.onClick ==>? onTagFoundClick
-            } else {
-              EmptyVdom
-            },
+              // Клик активен только когда есть по чему кликать.
+              ReactCommonUtil.maybe( v.exists(_.tags.nonEmpty) ) {
+                ^.onClick ==>? onTagFoundClick
+              },
 
-            // Если снова идёт поиск, то пусть будет спиннер прямо в текущем отображаемом контейнере.
-            if (v.isPending) {
-              val pleaseWait = Messages( MsgCodes.`Please.wait` )
-              LkPreLoader.PRELOADER_IMG_URL.fold[TagMod](pleaseWait) { preloaderUrl =>
-                <.img(
-                  ^.src := preloaderUrl,
-                  ^.alt := pleaseWait,
-                  ^.width := 16.px
-                )
-              }
-            } else {
-              EmptyVdom
-            },
-
-            // Отрендерить список найденных тегов
-            {
-              val attrTagFace = VdomAttr(ATTR_TAG_FACE)
-              val iter = for {
-                state     <- v.iterator
-                tagFound  <- state.tags.iterator
-              } yield {
-                <.div(
-                  ^.key := tagFound.face,
-                  ^.`class` := (Css.HintList.ROW + " " + TagsEditConstants.Search.Hints.HINT_ROW_CLASS),
-                  attrTagFace := tagFound.face,
-
-                  <.div(
-                    ^.`class` := Css.NAME,
-                    <.span(
-                      ^.`class` := Css._PREFIX,
-                      HtmlConstants.DIEZ
-                    ),
-                    tagFound.face
-                  ),
-                  <.div(
-                    ^.`class` := Css.VALUE,
-                    tagFound.count
+              // Если снова идёт поиск, то пусть будет спиннер прямо в текущем отображаемом контейнере.
+              ReactCommonUtil.maybe(v.isPending) {
+                val pleaseWait = Messages( MsgCodes.`Please.wait` )
+                LkPreLoader.PRELOADER_IMG_URL.fold[TagMod](pleaseWait) { preloaderUrl =>
+                  <.img(
+                    ^.src := preloaderUrl,
+                    ^.alt := pleaseWait,
+                    ^.width := 16.px
                   )
+                }
+              },
+
+              // Отрендерить список найденных тегов
+              {
+                val attrTagFace = VdomAttr(ATTR_TAG_FACE)
+                val iter = for {
+                  state     <- v.iterator
+                  tagFound  <- state.tags.iterator
+                } yield {
+                  <.div(
+                    ^.key := tagFound.face,
+                    ^.`class` := (Css.HintList.ROW + " " + TagsEditConstants.Search.Hints.HINT_ROW_CLASS),
+                    attrTagFace := tagFound.face,
+
+                    <.div(
+                      ^.`class` := Css.NAME,
+                      <.span(
+                        ^.`class` := Css._PREFIX,
+                        HtmlConstants.DIEZ
+                      ),
+                      tagFound.face
+                    ),
+                    <.div(
+                      ^.`class` := Css.VALUE,
+                      tagFound.count
+                    )
+                  )
+                }
+                iter.toVdomArray
+              },
+
+              // При ошибке надо тоже надо не молчать, чтобы эту ошибку быстрее обнаружили и устранили.
+              ReactCommonUtil.maybeEl(v.isFailed) {
+                <.div(
+                  ^.`class` := Css.Colors.RED,
+                  Messages( MsgCodes.`Something.gone.wrong` )
                 )
               }
-              iter.toVdomArray
-            },
 
-            // При ошибке надо тоже надо не молчать, чтобы эту ошибку быстрее обнаружили и устранили.
-            if (v.isFailed) {
-              <.div(
-                ^.`class` := Css.Colors.RED,
-                Messages( MsgCodes.`Something.gone.wrong` )
-              )
-            } else {
-              EmptyVdom
-            }
-
+            )
           )
-        )
+        }
       )
     }
 

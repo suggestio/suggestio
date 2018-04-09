@@ -11,7 +11,7 @@ import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdR}
 import io.suggest.n2.edge.MEdgeDataJs
-import io.suggest.react.ReactDiodeUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.r.LkPreLoaderR
@@ -123,9 +123,9 @@ class AdItemR(
                   VdomArray(
                     <.input(
                       ^.key := "1",
-                      if (s.ad.shownAtParentReq.isPending) {
+                      ReactCommonUtil.maybe( s.ad.shownAtParentReq.isPending ) {
                         ^.disabled := true
-                      } else EmptyVdom,
+                      },
                       ^.`class` := Css.Input.CHECKBOX,
                       ^.`type`  := HtmlConstants.Input.checkbox,
                       ^.checked := s.ad.adResp.shownAtParent,
@@ -140,9 +140,9 @@ class AdItemR(
                   Messages( MsgCodes.`Show._ad` ),
 
                   // Прелоадер.
-                  if (s.ad.shownAtParentReq.isPending)
+                  ReactCommonUtil.maybeEl( s.ad.shownAtParentReq.isPending ) {
                     LkPreLoaderR.AnimSmall
-                  else EmptyVdom,
+                  },
 
                   // Рендер ошибки запроса, если есть.
                   s.ad.shownAtParentReq.renderFailed { ex =>

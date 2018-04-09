@@ -42,10 +42,6 @@ object Common {
 
     val PLAY_GEOJSON = "1.5.+"
 
-    /** Версия yandex-money-sdk-java.
-     *  @see [[https://github.com/yandex-money/yandex-money-sdk-java#gradle-dependency-jcenter]]
-     */
-    //val YA_MONEY_SDK = "6.1.+"
 
     /** Версия elasticsearch. */
     val ELASTIC_SEARCH = "5.6.8"
@@ -78,7 +74,7 @@ object Common {
 
     }
 
-    val REACT_IMAGE_GALLERY = "0.7.15"
+    val REACT_IMAGE_GALLERY = "0.8.7"
 
     /** Версия play-ws, который уехал за пределы play начиная с play-2.6.0.
       * @see [[https://playframework.com/documentation/2.6.x/WSMigration26]]
@@ -99,7 +95,7 @@ object Common {
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
       */
     // TODO обновится на основную ветку. когда добавят/замёржат fontFamily(String)
-    val SCALACSS = "0.5.3"
+    val SCALACSS = "0.5.5"
 
     /** Улучшенное жестко-типизированное сравнение.
       * @see [[https://github.com/japgolly/univeq#scalaz]]
@@ -144,18 +140,18 @@ object Common {
       */
     val REACT_QUILL = "1.2.6"
 
-    val REACT_LEAFLET = "1.6.6"
+    val REACT_LEAFLET = "1.9.1"
 
     /** Окостыливание экспортов js-модулей для совместимости с webpack и es-modules.
       * @see [[https://github.com/webpack-contrib/exports-loader]]
       * @see [[https://www.npmjs.com/package/exports-loader]]
       */
-    val EXPORTS_LOADER_JS = "0.6.4"
+    val EXPORTS_LOADER_JS = "0.7.0"
 
     /** Окостыливание импортов js-модулей для совместимости с webpack.
       * @see [[https://github.com/webpack-contrib/imports-loader]]
       */
-    val IMPORTS_LOADER_JS = "0.7.1"
+    val IMPORTS_LOADER_JS = "0.8.0"
 
     /** AsmCrypto.js hi-speed crypto routines.
       *
@@ -178,7 +174,7 @@ object Common {
     /** Версия react-grid-layout.
       * @see [[https://github.com/strml/react-grid-layout]]
       */
-    val REACT_GRID_LAYOUT = "0.16.0"
+    val REACT_GRID_LAYOUT = "0.16.6"
 
     /** Версия react-stonecutter для организации плитки.
       * @see [[https://github.com/dantrain/react-stonecutter]]
@@ -188,7 +184,7 @@ object Common {
     /** Версия аккордеона react-sanfona.
       * @see [[https://github.com/daviferreira/react-sanfona]]
       */
-    val REACT_SANFONA = "1.0.4"
+    val REACT_SANFONA = "1.2.0"
 
     /** Версия react-sidebar для быстрой организации боковых панелек.
       * @see [[https://github.com/balloob/react-sidebar]]
@@ -276,13 +272,13 @@ object Common {
    *  Версия react.js, используемая в проекте. 
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactJsVsn         = "15.6.1"
+  val reactJsVsn         = "16.2.0"
 
   /** 
    *  Версия scalajs-react, используемая в проекте.
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactSjsVsn        = "1.1.1"
+  val reactSjsVsn        = "1.2.0"
 
   /** 
    *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.
@@ -301,7 +297,7 @@ object Common {
   /** Версия diode.
     * @see [[https://github.com/ochrons/diode/]]
     */
-  val diodeVsn = "1.1.3"
+  val diodeVsn = "1.1.4s"
 
   /** Версия сериализатора boopickle. 
     * @see [[https://github.com/ochrons/boopickle]]

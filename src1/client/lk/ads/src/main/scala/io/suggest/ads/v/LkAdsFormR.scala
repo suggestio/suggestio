@@ -10,6 +10,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.v.{JdCss, JdCssR}
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
 import io.suggest.routes.routes
 import io.suggest.sc.ScConstants
 import io.suggest.sc.sc3.Sc3Pages
@@ -112,9 +113,10 @@ class LkAdsFormR(
                   }
                   .toVdomArray,
 
-                // TODO Сверстать прелоадер по-нормальному:
-                if (adsPot.isPending) LkPreLoaderR.AnimMedium
-                else EmptyVdom
+                ReactCommonUtil.maybeEl( adsPot.isPending ) {
+                  // TODO Сверстать прелоадер по-нормальному:
+                  LkPreLoaderR.AnimMedium
+                }
               )
             }
           ),

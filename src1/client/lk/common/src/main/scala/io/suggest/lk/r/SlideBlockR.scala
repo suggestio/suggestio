@@ -5,13 +5,13 @@ import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.lk.m.SlideBlockClick
+import io.suggest.react.ReactCommonUtil
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
-
 import scalacss.internal.mutable.StyleSheet
 import scalacss.ScalaCssReact._
 
@@ -107,10 +107,8 @@ class SlideBlockR(
     def render(propsOptProxy: Props, children: PropsChildren): VdomElement = {
       propsOptProxy.value.whenDefinedEl { props =>
         val CSS = slideBlockCss.SlideBlock
-        val openedCssTm: TagMod = if (props.expanded) {
+        val openedCssTm: TagMod = ReactCommonUtil.maybe(props.expanded) {
           CSS.opened
-        } else {
-          EmptyVdom
         }
 
         <.div(
@@ -136,10 +134,8 @@ class SlideBlockR(
           // Содержимое.
           <.div(
             CSS.bodyWrap,
-            if (props.expanded) {
+            ReactCommonUtil.maybe(props.expanded) {
               CSS.bodyWrapExpanded
-            } else {
-              EmptyVdom
             },
 
             <.div(

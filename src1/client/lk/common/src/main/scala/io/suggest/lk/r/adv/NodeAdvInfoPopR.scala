@@ -16,6 +16,7 @@ import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.model.n2.node.meta.MMetaPub
 import io.suggest.msg.{JsFormatUtil, Messages}
+import io.suggest.react.ReactCommonUtil
 import io.suggest.sjs.common.controller.DomQuick
 import react.image.gallery.{IgItem, ImageGalleryPropsR, ImageGalleryR}
 import io.suggest.sjs.common.empty.JsOptionUtil.opt2undef
@@ -211,9 +212,7 @@ object NodeAdvInfoPopR {
                 ^.`class` := Css.flat( Css.Lk.Adv.NodeInfo.TARIFF, Css.Lk.Adv.NodeInfo.IN_POPUP ),
 
                 // Галерея фоток, если есть.
-                if ( advInfo.gallery.isEmpty ) {
-                  EmptyVdom
-                } else {
+                ReactCommonUtil.maybeEl( advInfo.gallery.nonEmpty ) {
                   val hasManyImgs = advInfo.gallery.size >= 2
 
                   <.div(

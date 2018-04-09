@@ -204,10 +204,8 @@ class NodeR(
             Css.Table.Td.Radial.FIRST -> !isShowProps
           ),
           // Во время неРедактирования можно сворачивать-разворачивать блок, кликая по нему.
-          if (node.isNormal) {
+          ReactCommonUtil.maybe(node.isNormal) {
             ^.onClick --> onNodeClick(rcvrKey)
-          } else {
-            EmptyVdom
           },
 
           node.editing.fold[VdomElement] {
@@ -245,7 +243,7 @@ class NodeR(
               },
 
               // Рендерить кнопку редактирования имени, если ситуация позволяет.
-              if (isShowNodeEditProps && node.isNormal) {
+              ReactCommonUtil.maybeEl( isShowNodeEditProps && node.isNormal ) {
                 <.span(
                   HtmlConstants.NBSP_STR,
                   HtmlConstants.NBSP_STR,
@@ -255,7 +253,7 @@ class NodeR(
                     ^.title   := Messages( MsgCodes.`Change` )
                   )
                 )
-              } else EmptyVdom,
+              },
 
               node.adv.whenDefined { advState =>
                 <.span(
@@ -288,14 +286,14 @@ class NodeR(
               },
 
               // Кнопка удаления узла.
-              if (isShowNodeEditProps && node.info.canChangeAvailability.contains(true)) {
+              ReactCommonUtil.maybeEl( isShowNodeEditProps && node.info.canChangeAvailability.contains(true) ) {
                 <.div(
                   ^.`class` := Css.Lk.Nodes.Menu.MENU,
                   ^.onClick ==> ReactCommonUtil.stopPropagationCB,
                   nodeMenuBtnR( p.proxy ),
                   nodeMenuR( p.proxy )
                 )
-              } else EmptyVdom
+              }
 
             )
 
@@ -527,13 +525,13 @@ class NodeR(
                           val countDisabled = children.count { n =>
                             !n.info.isEnabled
                           }
-                          if (countDisabled > 0) {
+                          ReactCommonUtil.maybeEl(countDisabled > 0) {
                             <.span(
                               HtmlConstants.COMMA,
                               HtmlConstants.NBSP_STR,
                               Messages( MsgCodes.`N.disabled`, countDisabled )
                             )
-                          } else EmptyVdom
+                          }
                         },
 
                         // Рендерим поддержку добавления нового под-узла:
@@ -598,7 +596,7 @@ class NodeR(
         // Рекурсивно отрендерить дочерние элементы:
         node.children.render { children =>
           <.div(
-            if (children.nonEmpty) {
+             ReactCommonUtil.maybeNode(children.nonEmpty) {
               val childLevel = level + 1
               children.toVdomArray { subNode =>
                 val p1 = p.copy(
@@ -608,7 +606,7 @@ class NodeR(
                 )
                 component.withKey(subNode.info.id)( p1 )
               }
-            } else EmptyVdom
+            }
           )
         },
 

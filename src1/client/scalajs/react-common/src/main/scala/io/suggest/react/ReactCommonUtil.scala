@@ -66,7 +66,7 @@ object ReactCommonUtil {
     if (isRender)
       f
     else
-      EmptyVdom
+      TagMod.empty
   }
 
   /** Выборочный рендер React-элемента на основе результата выполнения условия. При компиляции превращается в if/else. */
@@ -78,6 +78,13 @@ object ReactCommonUtil {
       VdomNullElement
   }
 
+  @inline
+  def maybeNode(isRender: Boolean)(f: => VdomNode): VdomNode = {
+    if (isRender)
+      f
+    else
+      EmptyVdom
+  }
 
   /** Все неявности складируются сюда. */
   object Implicits {
