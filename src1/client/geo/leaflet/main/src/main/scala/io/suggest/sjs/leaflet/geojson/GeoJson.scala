@@ -3,6 +3,7 @@ package io.suggest.sjs.leaflet.geojson
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.leaflet.{PolygonCoords_t, PolygonLatLngs_t}
 import io.suggest.sjs.leaflet.map.{LMap, LatLng, LatLngBounds, Layer}
+import io.suggest.sjs.leaflet.LEAFLET_IMPORT
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
@@ -13,7 +14,7 @@ import scala.scalajs.js.annotation.JSImport
   * Created: 11.04.16 14:44
   * Description: GeoJSON layer model.
   */
-@JSImport("leaflet", "GeoJSON")
+@JSImport(LEAFLET_IMPORT, "GeoJSON")
 @js.native
 object GeoJson extends js.Object {
 

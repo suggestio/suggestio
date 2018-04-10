@@ -1,5 +1,6 @@
 package io.suggest.sjs.leaflet.path
 
+import io.suggest.sjs.leaflet.LEAFLET_IMPORT
 import io.suggest.sjs.leaflet.map.{LMap, LatLng, LatLngBounds, Layer}
 import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
 import org.scalajs.dom.raw.HTMLElement
@@ -14,7 +15,7 @@ import scala.scalajs.js.annotation.JSImport
  * Created: 20.11.15 14:38
  * Description: Basic API for paths.
  */
-@JSImport("leaflet", "Path")
+@JSImport(LEAFLET_IMPORT, "Path")
 @js.native
 class Path extends Layer {
 

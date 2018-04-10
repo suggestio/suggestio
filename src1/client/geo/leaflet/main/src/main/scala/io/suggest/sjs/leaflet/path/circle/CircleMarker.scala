@@ -1,5 +1,8 @@
 package io.suggest.sjs.leaflet.path.circle
 
+import io.suggest.sjs.leaflet.LEAFLET_IMPORT
+import io.suggest.sjs.leaflet.map.LatLng
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
@@ -10,6 +13,14 @@ import scala.scalajs.js.annotation.JSImport
  * Description: API for L.CircleMarker.
  * Here radius in pixels, not meters.
  */
-@JSImport("leaflet", "CircleMarker")
+@JSImport(LEAFLET_IMPORT, "circleMarker")
 @js.native
-class CircleMarker extends Circle
+object CircleMarker extends js.Function2[LatLng, CircleMarkerOptions, Circle] {
+  override def apply(arg1: LatLng, arg2: CircleMarkerOptions = js.native): Circle = js.native
+}
+
+
+@JSImport(LEAFLET_IMPORT, "CircleMarker")
+@js.native
+class CircleMarker(latLng   : LatLng,
+                   options  : CircleMarkerOptions = js.native) extends Circle

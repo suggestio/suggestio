@@ -2,6 +2,7 @@ package io.suggest.sjs.leaflet.control
 
 import io.suggest.sjs.leaflet.map.{LMap, Layer}
 import org.scalajs.dom.raw.HTMLElement
+import io.suggest.sjs.leaflet.LEAFLET_IMPORT
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
@@ -13,7 +14,7 @@ import scala.scalajs.js.annotation.JSImport
  * Description: API for controls.
  * @see [[http://leafletjs.com/reference.html#icontrol]]
  */
-@JSImport("leaflet", "Control")
+@JSImport(LEAFLET_IMPORT, "Control")
 @js.native
 class IControl extends Layer {
 

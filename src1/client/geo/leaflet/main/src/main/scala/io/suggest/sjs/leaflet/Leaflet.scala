@@ -14,7 +14,7 @@ import io.suggest.sjs.leaflet.tilelayer.{TileLayer, TlOptions}
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
-import scala.scalajs.js.annotation.{JSImport, JSName}
+import scala.scalajs.js.annotation._
 
 /**
   * Suggest.io
@@ -24,8 +24,7 @@ import scala.scalajs.js.annotation.{JSImport, JSName}
   */
 
 @js.native
-@JSImport("leaflet", JSImport.Namespace)
-object Leaflet extends js.Object {
+trait ILeaflet extends js.Object {
 
   def map(target: MapTarget, options: MapOptions = js.native): LMap = js.native
 
@@ -79,4 +78,11 @@ object Leaflet extends js.Object {
   /** Rollback window.L to previous value. */
   def noConflict(): Leaflet.type | js.Any = js.native
 
+  val version: String = js.native
+
 }
+
+
+@js.native
+@JSImport(LEAFLET_IMPORT, JSImport.Namespace)
+object Leaflet extends ILeaflet

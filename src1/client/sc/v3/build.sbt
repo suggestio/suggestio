@@ -26,7 +26,14 @@ testFrameworks += new TestFramework("minitest.runner.Framework")
 // TODO Надо бы выставлять это на ci, но НЕ выставлять на продакшенах.
 //scalacOptions in Compile ++= Seq("-Xelide-below", "WARNING")
 
-webpackBundlingMode := BundlingMode.LibraryOnly()
+//webpackBundlingMode := BundlingMode.LibraryOnly()
+// https://scalacenter.github.io/scalajs-bundler/cookbook.html#performance
+// https://github.com/scalacenter/scalajs-bundler/issues/178
+webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly()
+
+// TODO Проблемы с L() и window.L. Нужно как-то организовать воспроизводимый bug-report и отправить в scala.js.
+webpackBundlingMode in fullOptJS := BundlingMode.Application
+
 
 // Use a different Webpack configuration file for production
 webpackConfigFile in fullOptJS := Some(baseDirectory.value / "webpack.prod.config.js")

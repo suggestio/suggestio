@@ -1,6 +1,7 @@
 package io.suggest.sjs.leaflet.layer.group
 
 import io.suggest.sjs.leaflet.map.{LMap, Layer}
+import io.suggest.sjs.leaflet.LEAFLET_IMPORT
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
@@ -11,7 +12,7 @@ import scala.scalajs.js.annotation.JSImport
  * Created: 20.11.15 22:49
  * Description: API for layer groups.
  */
-@JSImport("leaflet", "LayerGroup")
+@JSImport(LEAFLET_IMPORT, "LayerGroup")
 @js.native
 class LayerGroup extends Layer {
 

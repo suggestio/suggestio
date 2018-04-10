@@ -13,7 +13,8 @@ import scala.scalajs.js.`|`
   */
 package object leaflet {
 
-  def L = Leaflet
+  //final val LEAFLET_IMPORT = "string-replace-loader?search=window.L&replace=window.LLLLLLLL!./node_modules/leaflet/dist/leaflet.js"
+  final val LEAFLET_IMPORT = "leaflet"
 
   type MapTarget = String | HTMLElement
 

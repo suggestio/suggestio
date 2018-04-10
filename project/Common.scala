@@ -95,7 +95,7 @@ object Common {
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
       */
     // TODO обновится на основную ветку. когда добавят/замёржат fontFamily(String)
-    val SCALACSS = "0.5.5"
+    val SCALACSS = "0.5.6-SNAPSHOT"
 
     /** Улучшенное жестко-типизированное сравнение.
       * @see [[https://github.com/japgolly/univeq#scalaz]]
@@ -285,7 +285,7 @@ object Common {
    *  Где-то в leaflet-плагинах есть зависимость от wildcard-версии вида [1.0.0,),
    *  что может вызвать проблемы на сборке с пустым ivy2-кешем во время освежения версии в webjars.
    */
-  val leafletJsVsn              = "1.2.0"
+  val leafletJsVsn              = "1.3.1"
 
   /** Версия L.control.locate.js. */
   val leafletControlLocateJsVsn = "0.62.0"

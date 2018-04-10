@@ -1,5 +1,6 @@
 package io.suggest.sjs.leaflet.marker
 
+import io.suggest.sjs.leaflet.LEAFLET_IMPORT
 import io.suggest.sjs.leaflet.handler.IHandler
 import io.suggest.sjs.leaflet.map.{LMap, LatLng, Layer}
 import io.suggest.sjs.leaflet.marker.icon.Icon
@@ -17,7 +18,7 @@ import scala.scalajs.js.annotation.JSImport
  * Description: Маркер на карте.
  */
 
-@JSImport("leaflet", "Marker")
+@JSImport(LEAFLET_IMPORT, "Marker")
 @js.native
 class Marker extends Layer {
 

@@ -23,7 +23,7 @@ object ScCss {
   // TODO Исходные цвета надо бы брать откуда-то, с сервера например.
   def COLORS_DFLT = MColors(
     bg = Some(MColorData( "111111" )),
-    fg = Some(MColorData( "ffffff" ))
+    fg = Some(MColorData.Examples.WHITE)
   )
 
   lazy val isSafari = cssEnv.platform.name.contains("Safari")

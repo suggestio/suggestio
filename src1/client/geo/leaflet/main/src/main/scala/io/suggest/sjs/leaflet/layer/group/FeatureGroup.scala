@@ -3,6 +3,7 @@ package io.suggest.sjs.leaflet.layer.group
 import io.suggest.sjs.leaflet.map.LatLngBounds
 import io.suggest.sjs.leaflet.path.PathOptions
 import io.suggest.sjs.leaflet.popup.PopupOptions
+import io.suggest.sjs.leaflet.LEAFLET_IMPORT
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
@@ -13,7 +14,7 @@ import scala.scalajs.js.annotation.JSImport
  * Created: 20.11.15 22:56
  * Description: API for L.FeatureGroup instances.
  */
-@JSImport("leaflet", "FeatureGroup")
+@JSImport(LEAFLET_IMPORT, "FeatureGroup")
 @js.native
 class FeatureGroup extends LayerGroup {
 

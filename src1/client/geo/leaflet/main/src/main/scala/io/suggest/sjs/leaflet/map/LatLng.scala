@@ -1,5 +1,6 @@
 package io.suggest.sjs.leaflet.map
 
+import io.suggest.sjs.leaflet.LEAFLET_IMPORT
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
@@ -10,7 +11,7 @@ import scala.scalajs.js.annotation.JSImport
  * Description: APIs for LatLng static and instances.
  * LatLng instance is a geo coordinates.
  */
-@JSImport("leaflet", "LatLng")
+@JSImport(LEAFLET_IMPORT, "LatLng")
 @js.native
 object LatLng extends js.Object {
 

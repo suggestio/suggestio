@@ -1,5 +1,6 @@
 package io.suggest.sjs.leaflet.path.poly
 
+import io.suggest.sjs.leaflet.LEAFLET_IMPORT
 import io.suggest.sjs.leaflet.map.LatLngBounds
 
 import scala.scalajs.js
@@ -11,7 +12,7 @@ import scala.scalajs.js.annotation.JSImport
  * Created: 20.11.15 23:08
  * Description: API for rectangles.
  */
-@JSImport("leaflet", "Rectangle")
+@JSImport(LEAFLET_IMPORT, "Rectangle")
 @js.native
 class Rectangle extends Polygon {
 
