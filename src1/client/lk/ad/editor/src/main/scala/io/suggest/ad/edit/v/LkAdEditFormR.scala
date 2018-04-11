@@ -16,11 +16,14 @@ import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.quill.v.{QuillCss, QuillEditorR}
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
+import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.{MJdTagName, MJdTagNames}
-import io.suggest.lk.m.DocBodyClick
-import io.suggest.lk.r.SlideBlockR
-import io.suggest.lk.r.color.ColorPickerR
+import io.suggest.lk.m.{DocBodyClick, MFormResourceKey}
+import io.suggest.lk.r.{SlideBlockR, UploadStatusR}
+import io.suggest.lk.r.color.{ColorPickerR, ColorsSuggestR}
+import io.suggest.lk.r.crop.CropBtnR
+import io.suggest.lk.r.img.ImgEditBtnR
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.spa.OptFastEq
@@ -43,7 +46,10 @@ class LkAdEditFormR(
                      lkAdEditCss                : LkAdEditCss,
                      quillCssFactory            : => QuillCss,
                      val scaleR                 : ScaleR,
-                     val pictureR               : PictureR,
+                     uploadStatusR              : UploadStatusR,
+                     val imgEditBtnR            : ImgEditBtnR,
+                     val colorsSuggestR         : ColorsSuggestR,
+                     cropBtnR                   : CropBtnR,
                      val saveR                  : SaveR,
                      val useAsMainR             : UseAsMainR,
                      val deleteBtnR             : DeleteBtnR,
@@ -59,7 +65,10 @@ class LkAdEditFormR(
 
   import MJdArgs.MJdArgsFastEq
   import scaleR.ScaleRPropsValFastEq
-  import pictureR.PictureRPropsValFastEq
+  import MFileUploadS.MFileUploadSFastEq
+  import colorsSuggestR.ColorsSuggestPropsValFastEq
+  import imgEditBtnR.ImgEditBtnRPropsValFastEq
+  import MFormResourceKey.MFormImgKeyFastEq
   import saveR.SaveRPropsValFastEq
   import useAsMainR.UseAdMainPropsValFastEq
   import deleteBtnR.DeleteBtnRPropsValFastEq
@@ -77,8 +86,11 @@ class LkAdEditFormR(
   protected case class State(
                               jdPreviewArgsC                  : ReactConnectProxy[MJdArgs],
                               jdCssArgsC                      : ReactConnectProxy[JdCss],
-                              picPropsOptC                    : ReactConnectProxy[Option[pictureR.PropsVal]],
                               scalePropsOptC                  : ReactConnectProxy[Option[scaleR.PropsVal]],
+                              imgEditBtnPropsC                : ReactConnectProxy[imgEditBtnR.PropsVal],
+                              upStateOptC                     : ReactConnectProxy[Option[MFileUploadS]],
+                              colSuggPropsOptC                : ReactConnectProxy[Option[colorsSuggestR.PropsVal]],
+                              cropBtnPropsOptC                : ReactConnectProxy[Option[MFormResourceKey]],
                               rightYOptC                      : ReactConnectProxy[Option[Int]],
                               savePropsC                      : ReactConnectProxy[saveR.PropsVal],
                               useAsMainStripPropsOptC         : ReactConnectProxy[Option[useAsMainR.PropsVal]],
@@ -157,84 +169,96 @@ class LkAdEditFormR(
             )
           ),
 
-          // Рендер редакторов
-          s.rightYOptC { rightYOptProxy =>
-            <.div(
-              LCSS.editorsCont,
-              rightYOptProxy.value.whenDefined { rightY =>
-                ^.transform := (Css.Anim.Transform.TRANSLATE + `(` + 0.px + COMMA + rightY.px + `)`)
-              },
+          // Рендер редакторов: собираем все редакторы вне контекста функции общего div'а.
+          {
+            // Редактор strip'а
+            val slideBlockBodyDiv = <.div(
+              // Кнопки управление шириной и высотой блока.
+              <.div(
+                lkAdEditCss.WhControls.outer,
+                s.heightPropsOptC { plusMinusControlsR.apply },
+                s.widthPropsOptC { plusMinusControlsR.apply }
+              ),
 
-              // Редактор блока.
-              s.slideBlocks.block { propsOpt =>
-                slideBlockR(propsOpt)(
-                  // Редактор strip'а
-                  s.stripEdSOptC { _ =>
-                    <.div(
+              // Управление main-блоками.
+              s.useAsMainStripPropsOptC { useAsMainR.apply },
 
-                      // Кнопки управление шириной и высотой блока.
-                      <.div(
-                        lkAdEditCss.WhControls.outer,
-                        s.heightPropsOptC { plusMinusControlsR.apply },
-                        s.widthPropsOptC { plusMinusControlsR.apply }
-                      ),
-
-                      // Управление main-блоками.
-                      s.useAsMainStripPropsOptC { useAsMainR.apply },
-
-                      // Кнопка удаления текущего блока.
-                      s.stripEdSOptC { deleteStripBtnR.apply },
-
-                    )
-                  }
-                )
-              },
-
-              // Настройка фона блока.
-              s.slideBlocks.blockBg { propsOpt =>
-                slideBlockR(propsOpt)(
-                  <.div(
-                    // Выбор цвета фона блока.
-                    s.colors.stripBgCbOptC { colorCheckboxR.apply },
-
-                    // Управление картинкой, если доступно:
-                    s.picPropsOptC { pictureR.apply },
-                    <.br,
-
-                    // Галочка широкого рендера фона.
-                    s.showWidePropsOptC { showWideR.apply },
-                  )
-                )
-              },
-
-              // Редактор контента (текста)
-              s.slideBlocks.content { propsOpt =>
-                slideBlockR(propsOpt)(
-                  <.div(
-                    // Редактор текста
-                    s.quillEdOptC { quillEditorR.apply },
-                    <.br,
-
-                    // Цвет фона контента.
-                    s.colors.contentBgCbOptC { colorCheckboxR.apply },
-
-                    // Вращение: галочка + опциональный слайдер.
-                    s.rotateOptC { rotateR.apply }
-                  )
-                )
-              },
-
-              // Форма создания новых объектов.
-              s.slideBlocks.create { propsOpt =>
-                slideBlockR(propsOpt)(
-                  addR(p)
-                )
-              },
-
-              // Кнопка сохранения карточки.
-              s.savePropsC { saveR.apply },
+              // Кнопка удаления текущего блока.
+              s.stripEdSOptC { deleteStripBtnR.apply }
 
             )
+            // Слайд редактор блока.
+            val slideBlockVdom = s.slideBlocks.block { propsOpt =>
+              slideBlockR(propsOpt)( slideBlockBodyDiv )
+            }
+
+            // Настройка фона блока.
+            val blockBgBodyDiv = <.div(
+              ^.`class` := Css.Overflow.HIDDEN,
+
+              // Выбор цвета фона блока.
+              s.colors.stripBgCbOptC { colorCheckboxR.apply },
+
+              // Рендер цветов текущей картинки
+              s.colSuggPropsOptC { colorsSuggestR.apply },
+
+              // Рендерить картинку и управление ей:
+              s.imgEditBtnPropsC { imgEditBtnR.apply },
+
+              // Кнопка запуска кропа для картинки:
+              s.cropBtnPropsOptC { cropBtnR.apply },
+
+              // Отрендерить данные процесса загрузки:
+              s.upStateOptC { uploadStatusR.apply },
+
+              <.br,
+
+              // Галочка широкого рендера фона.
+              s.showWidePropsOptC { showWideR.apply }
+            )
+            val blockBgSlide = s.slideBlocks.blockBg { propsOpt =>
+              slideBlockR(propsOpt)( blockBgBodyDiv )
+            }
+
+            val contentBodyDiv = <.div(
+              // Редактор текста
+              s.quillEdOptC { quillEditorR.apply },
+              <.br,
+
+              // Цвет фона контента.
+              s.colors.contentBgCbOptC { colorCheckboxR.apply },
+
+              // Вращение: галочка + опциональный слайдер.
+              s.rotateOptC { rotateR.apply }
+            )
+            // Редактор контента (текста)
+            val contentSlideBlock = s.slideBlocks.content { propsOpt =>
+              slideBlockR(propsOpt)( contentBodyDiv )
+            }
+
+            // Форма создания новых объектов.
+            val createSlideBody = addR(p)
+            val createSlideBlock = s.slideBlocks.create { propsOpt =>
+              slideBlockR(propsOpt)( createSlideBody )
+            }
+
+            // Кнопка сохранения карточки.
+            val saveBtn = s.savePropsC { saveR.apply }
+
+            // Редакторы собраны снаружи от этого коннекшена, от которого пока не понятно, как избавляться.
+            s.rightYOptC { rightYOptProxy =>
+              <.div(
+                LCSS.editorsCont,
+                rightYOptProxy.value.whenDefined { rightY =>
+                  ^.transform := (Css.Anim.Transform.TRANSLATE + `(` + 0.px + COMMA + rightY.px + `)`)
+                },
+                slideBlockVdom,
+                blockBgSlide,
+                contentSlideBlock,
+                createSlideBlock,
+                saveBtn
+              )
+            }
           },
 
           // ПослеБаяние: впихнуть сюда абсолютно-плавающие color-picker'ы.
@@ -264,8 +288,8 @@ class LkAdEditFormR(
       def __mkStripBmC[T: FastEq](f: BlockMeta => T) = {
         p.connect { mroot =>
           for {
-            selJdtTree <- mroot.doc.jdArgs.selectedTag
-            selJdt = selJdtTree.rootLabel
+            selJdtTreeLoc <- mroot.doc.jdArgs.selJdt.treeLocOpt
+            selJdt = selJdtTreeLoc.getLabel
             if selJdt.name ==* MJdTagNames.STRIP
             bm     <- selJdt.props1.bm
           } yield {
@@ -279,8 +303,8 @@ class LkAdEditFormR(
       def __mkBgColorCbC(jdtName: MJdTagName) = {
         p.connect { mroot =>
           for {
-            selJdtTree <- mroot.doc.jdArgs.selectedTag
-            selJdt = selJdtTree.rootLabel
+            selJdtTreeLoc <- mroot.doc.jdArgs.selJdt.treeLocOpt
+            selJdt = selJdtTreeLoc.getLabel
             if selJdt.name ==* jdtName
           } yield {
             colorCheckboxR.PropsVal(
@@ -291,6 +315,9 @@ class LkAdEditFormR(
         }( OptFastEq.Wrapped )
       }
 
+      // Один общий ключ на все отображаемые ресурсы, которые не требуют уникального ключа.
+      val formResKey = MFormResourceKey.empty
+
       State(
         jdPreviewArgsC = p.connect { mroot =>
           mroot.doc.jdArgs
@@ -299,32 +326,6 @@ class LkAdEditFormR(
         jdCssArgsC = p.connect { mroot =>
           mroot.doc.jdArgs.jdCss
         },
-
-        picPropsOptC = p.connect { mroot =>
-          for {
-            selJdt   <- mroot.doc.jdArgs.selectedTagLoc.toLabelOpt
-            if selJdt.name.isBgImgAllowed
-          } yield {
-            val bgEdgeOpt = selJdt.props1
-              .bgImg
-              .flatMap { ei =>
-                mroot.doc.jdArgs.edges
-                  .get(ei.imgEdge.edgeUid)
-              }
-            pictureR.PropsVal(
-              imgSrcOpt = bgEdgeOpt
-                .flatMap(_.imgSrcOpt),
-              uploadState = bgEdgeOpt
-                .flatMap(_.fileJs)
-                .flatMap(_.upload),
-              histogram = bgEdgeOpt
-                .flatMap(_.jdEdge.fileSrv)
-                .flatMap { fileSrv =>
-                  mroot.doc.colorsState.histograms.get(fileSrv.nodeId)
-                }
-            )
-          }
-        }( OptFastEq.Wrapped ),
 
         scalePropsOptC = {
           val variants = MSzMults.forAdEditor
@@ -351,7 +352,7 @@ class LkAdEditFormR(
           for {
             // Доступно только при редактировании стрипа.
             _       <- mroot.doc.stripEd
-            selJdt  <- mroot.doc.jdArgs.selectedTagLoc.toLabelOpt
+            selJdt  <- mroot.doc.jdArgs.selJdt.treeLocOpt.toLabelOpt
           } yield {
             import io.suggest.common.empty.OptionUtil.BoolOptOps
             useAsMainR.PropsVal(
@@ -475,8 +476,8 @@ class LkAdEditFormR(
                     .map(_.bgColorPick)
                 }
                 if pickerS.shownAt.isDefined
-                selJdtTree  <- mroot.doc.jdArgs.selectedTag
-                bgColor     <- selJdtTree.rootLabel.props1.bgColor
+                selJdtTreeLoc   <- mroot.doc.jdArgs.selJdt.treeLocOpt
+                bgColor         <- selJdtTreeLoc.getLabel.props1.bgColor
               } yield {
                 colorPickerR.PropsVal(
                   color         = bgColor,
@@ -506,12 +507,48 @@ class LkAdEditFormR(
 
         rotateOptC = p.connect { mroot =>
           for {
-            selJdt <- mroot.doc.jdArgs.selectedTag
-            if selJdt.rootLabel.name ==* MJdTagNames.QD_CONTENT
+            selJdtLoc <- mroot.doc.jdArgs.selJdt.treeLocOpt
+            selJdt = selJdtLoc.getLabel
+            if selJdt.name ==* MJdTagNames.QD_CONTENT
           } yield {
             rotateR.PropsVal(
-              value = selJdt.rootLabel.props1.rotateDeg
+              value = selJdt.props1.rotateDeg
             )
+          }
+        }( OptFastEq.Wrapped ),
+
+        imgEditBtnPropsC = p.connect { mroot =>
+          imgEditBtnR.PropsVal(
+            src = mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
+              .flatMap(_.imgSrcOpt)
+          )
+        },
+
+        upStateOptC = p.connect { mroot =>
+          mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
+            .flatMap(_.fileJs)
+            .flatMap(_.upload)
+        }(OptFastEq.Wrapped),
+
+        colSuggPropsOptC = p.connect { mroot =>
+          for {
+            bgEdge  <- mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
+            fileSrv <- bgEdge.jdEdge.fileSrv
+            hist    <- mroot.doc.colorsState.histograms.get( fileSrv.nodeId )
+          } yield {
+            colorsSuggestR.PropsVal(
+              titleMsgCode = MsgCodes.`Suggested.bg.colors`,
+              colors       = hist.sorted
+            )
+          }
+        }( OptFastEq.Wrapped ),
+
+        cropBtnPropsOptC = p.connect { mroot =>
+          for {
+            bgEdge <- mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
+            if bgEdge.imgSrcOpt.nonEmpty
+          } yield {
+            formResKey
           }
         }( OptFastEq.Wrapped )
 

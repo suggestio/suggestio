@@ -27,7 +27,7 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
 
       val needTransformOpt = for {
         // Если выделен стрип, имеющий фоновое изображение...
-        selJdt <- v0.jdArgs.selectedTagLoc.toLabelOpt
+        selJdt <- v0.jdArgs.selJdt.treeLocOpt.toLabelOpt
         if selJdt.name ==* MJdTagNames.STRIP &&
            selJdt.props1.bgImg.nonEmpty
         // и открыт стрип-редактор...

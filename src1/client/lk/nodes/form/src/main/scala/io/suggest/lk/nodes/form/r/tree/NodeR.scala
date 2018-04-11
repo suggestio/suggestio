@@ -516,28 +516,30 @@ class NodeR(
                     ),
 
                     _kvTdValue(
-                      if (children.nonEmpty) <.span(
-                        // Вывести общее кол-во под-узлов.
-                        Messages( MsgCodes.`N.nodes`, children.size),
+                      ReactCommonUtil.maybeNode(children.nonEmpty) {
+                        <.span(
+                          // Вывести общее кол-во под-узлов.
+                          Messages( MsgCodes.`N.nodes`, children.size),
 
-                        // Вывести кол-во выключенных под-узлов, если такие есть.
-                        {
-                          val countDisabled = children.count { n =>
-                            !n.info.isEnabled
-                          }
-                          ReactCommonUtil.maybeEl(countDisabled > 0) {
-                            <.span(
-                              HtmlConstants.COMMA,
-                              HtmlConstants.NBSP_STR,
-                              Messages( MsgCodes.`N.disabled`, countDisabled )
-                            )
-                          }
-                        },
+                          // Вывести кол-во выключенных под-узлов, если такие есть.
+                          {
+                            val countDisabled = children.count { n =>
+                              !n.info.isEnabled
+                            }
+                            ReactCommonUtil.maybeEl(countDisabled > 0) {
+                              <.span(
+                                HtmlConstants.COMMA,
+                                HtmlConstants.NBSP_STR,
+                                Messages( MsgCodes.`N.disabled`, countDisabled )
+                              )
+                            }
+                          },
 
-                        // Рендерим поддержку добавления нового под-узла:
-                        HtmlConstants.COMMA,
-                        HtmlConstants.SPACE
-                      ) else EmptyVdom,
+                          // Рендерим поддержку добавления нового под-узла:
+                          HtmlConstants.COMMA,
+                          HtmlConstants.SPACE
+                        )
+                      },
 
                       // Форма добавления для текущего узла не существует. Рендерить кнопку добавления.
                       <.a(
@@ -553,7 +555,7 @@ class NodeR(
             )     // TABLE
           )
 
-        } else if (isShowAdvProps) {
+        } else ReactCommonUtil.maybeNode(isShowAdvProps) {
           // Рендрить вёрстку редактирования настроек размещения карточки.
           <.div(
             // Данные по узлу рендерим таблицей вида ключ-значение. Однако, возможна третья колонка с крутилкой.
@@ -591,7 +593,7 @@ class NodeR(
             )
           )
 
-        } else EmptyVdom,
+        },
 
         // Рекурсивно отрендерить дочерние элементы:
         node.children.render { children =>

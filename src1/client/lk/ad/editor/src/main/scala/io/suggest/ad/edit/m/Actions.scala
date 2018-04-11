@@ -2,9 +2,7 @@ package io.suggest.ad.edit.m
 
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
-import io.suggest.color.MColorData
 import io.suggest.common.MHand
-import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.crypto.hash.MHash
 import io.suggest.dev.MSzMult
@@ -15,7 +13,7 @@ import io.suggest.scalaz.StringValidationNel
 import io.suggest.spa.DAction
 import io.suggest.text.StringUtil
 import io.suggest.url.MHostUrl
-import org.scalajs.dom.{Blob, File}
+import org.scalajs.dom.Blob
 
 import scala.util.Try
 import scalaz.Tree
@@ -60,22 +58,6 @@ case object AddStripClick extends IAddAction
 
 /** Изменилось состояние галочки напротив color picker'а для выставления bgColor тега. */
 case class ColorCheckboxChange(isEnabled: Boolean) extends ILkEditAction
-
-
-/** Изменилось file-поле выбора картинки. */
-case class PictureFileChanged(files: Seq[File]) extends ILkEditAction
-
-
-sealed trait IPictureCropAction extends ILkEditAction
-
-/** Сигнал к отрытию попапа редактирования изображения. */
-case object CropOpen extends IPictureCropAction
-/** Сигнал к закрытию попапа кропа изображения. */
-case object CropCancel extends IPictureCropAction
-/** Измение кропа текущего изображения. */
-case class CropChanged(percentCrop: PercentCrop, pixelCrop: PixelCrop) extends IPictureCropAction
-/** Подтверждение сохранения кропа. */
-case object CropSave extends IPictureCropAction
 
 
 /** Сообщение о завершении фоновой конвертации из base64 data-URL в натуральный блоб. */

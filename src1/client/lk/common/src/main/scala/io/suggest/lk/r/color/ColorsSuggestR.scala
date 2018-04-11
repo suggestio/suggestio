@@ -1,18 +1,18 @@
-package io.suggest.ad.edit.v.edit
+package io.suggest.lk.r.color
 
 import diode.FastEq
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.color.MColorData
 import io.suggest.css.Css
 import io.suggest.lk.m.ColorChanged
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 
 /**
   * Suggest.io
@@ -41,7 +41,8 @@ class ColorsSuggestR {
   }
 
 
-  type Props = ModelProxy[Option[PropsVal]]
+  type Props_t = Option[PropsVal]
+  type Props = ModelProxy[Props_t]
 
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -87,6 +88,7 @@ class ColorsSuggestR {
     .renderBackend[Backend]
     .build
 
-  def apply(propsProxy: Props) = component(propsProxy)
+  def _apply(propsProxy: Props) = component(propsProxy)
+  val apply: ReactConnectProps[Props_t] = _apply
 
 }

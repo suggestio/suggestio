@@ -56,10 +56,6 @@ class LkAdEditModule {
 
   lazy val colorPickerR = wire[ColorPickerR]
 
-  lazy val colorSuggestR = wire[ColorsSuggestR]
-
-  lazy val pictureR = wire[PictureR]
-
   lazy val scaleR = wire[ScaleR]
 
   lazy val saveR = wire[SaveR]

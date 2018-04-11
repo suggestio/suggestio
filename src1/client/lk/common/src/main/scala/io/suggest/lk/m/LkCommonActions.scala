@@ -1,9 +1,11 @@
 package io.suggest.lk.m
 
+import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2.node.meta.colors.MColorType
 import io.suggest.spa.DAction
+import org.scalajs.dom.File
 
 /**
   * Suggest.io
@@ -52,3 +54,20 @@ case class ColorBtnClick(vpXy: MCoords2di, colorTypeOpt: Option[MColorType]) ext
 
 /** Клик просто где-то в body. */
 case object DocBodyClick extends ILkCommonAction
+
+
+
+/** Изменилось file-поле выбора картинки. */
+case class PictureFileChanged(files: Seq[File]) extends ILkCommonAction
+
+
+sealed trait IPictureCropAction extends ILkCommonAction
+
+/** Сигнал к отрытию попапа редактирования изображения. */
+case object CropOpen extends IPictureCropAction
+/** Сигнал к закрытию попапа кропа изображения. */
+case object CropCancel extends IPictureCropAction
+/** Измение кропа текущего изображения. */
+case class CropChanged(percentCrop: PercentCrop, pixelCrop: PixelCrop) extends IPictureCropAction
+/** Подтверждение сохранения кропа. */
+case object CropSave extends IPictureCropAction

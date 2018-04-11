@@ -1,6 +1,7 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
+import io.suggest.img.MImgEdgeWithOps
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
@@ -9,7 +10,6 @@ import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import io.suggest.scalaz.ZTreeUtil._
-
 import scalaz.{Tree, TreeLoc}
 
 /**
@@ -60,15 +60,48 @@ case class MJdArgs(
   def withJdCss(jdCss: JdCss)                       = copy(jdCss = jdCss)
   def withConf(conf: MJdConf)                       = copy(conf = conf)
 
-  /** Выяснить TreeLoc текущего выбранного узла в дереве. */
-  lazy val selectedTagLoc: Option[TreeLoc[JdTag]] = {
-    renderArgs.selPath.flatMap { template.pathToNode }
+  /** Быстрый доступ и кэш данных по текущему выбранному тегу. */
+  object selJdt {
+
+    /** Вернуть tree loc текущего тега.
+      * O(N). кэшируем результат тут. */
+    lazy val treeLocOpt: Option[TreeLoc[JdTag]] = {
+      renderArgs.selPath.flatMap { template.pathToNode }
+    }
+
+    /** Вернуть поддерево текущего тега.
+      * O(treeLoc) + O(1).
+      * Чисто враппер. Обычно можно использовать treeLoc напрямую.
+      */
+    def treeOpt: Option[Tree[JdTag]] = {
+      treeLocOpt.map(_.tree)
+    }
+
+    def bgEdgeIdOpt: Option[MImgEdgeWithOps] = {
+      for {
+        loc <- treeLocOpt
+        jdt = loc.getLabel
+        if jdt.name.isBgImgAllowed
+        bgEdgeId <- jdt.props1.bgImg
+      } yield {
+        bgEdgeId
+      }
+    }
+
+    /** Вернуть bgImg текущего выбранного тега.
+      * O(treeLoc) + O(log(edges.size)), поэтому кэш.
+      */
+    lazy val bgEdgeDataOpt: Option[MEdgeDataJs] = {
+      for {
+        bgEi     <- bgEdgeIdOpt
+        dataEdge <- edges.get( bgEi.imgEdge.edgeUid )
+      } yield {
+        dataEdge
+      }
+    }
+
   }
 
-  /** Текущий выбранный тег с его поддеревом. */
-  lazy val selectedTag: Option[Tree[JdTag]] = {
-    selectedTagLoc.map(_.tree)
-  }
 
   /** Аналог selectedTagLoc, но для перетаскиваемого тега. */
   lazy val draggingTagLoc: Option[TreeLoc[JdTag]] = {

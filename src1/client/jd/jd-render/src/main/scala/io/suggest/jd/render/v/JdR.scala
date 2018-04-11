@@ -108,7 +108,7 @@ class JdR(
       */
     private def _maybeSelected(dt: JdTag, jdArgs: MJdArgs): TagMod = {
       // Если происходит перетаскивание, то нужно избавляться от рамок: так удобнее.
-      ReactCommonUtil.maybe(jdArgs.renderArgs.dnd.jdt.isEmpty && jdArgs.selectedTag.containsLabel(dt)) {
+      ReactCommonUtil.maybe(jdArgs.renderArgs.dnd.jdt.isEmpty && jdArgs.selJdt.treeLocOpt.containsLabel(dt)) {
         jdArgs.jdCss.selectedTag
       }
     }
@@ -158,7 +158,7 @@ class JdR(
     def renderStrip(stripTree: Tree[JdTag], i: Int, jdArgs: MJdArgs): TagOf[html.Div] = {
       val s = stripTree.rootLabel
       val C = jdArgs.jdCss
-      val isSelected = jdArgs.selectedTag.containsLabel(s)
+      val isSelected = jdArgs.selJdt.treeLocOpt.containsLabel(s)
       val isEditSelected = isSelected && jdArgs.conf.isEdit
 
       val isWide = s.props1.bm.map(_.wide).getOrElseFalse
@@ -354,7 +354,7 @@ class JdR(
       */
     def renderQd(qdTagTree: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): TagOf[html.Div]  = {
       val qdTag = qdTagTree.rootLabel
-      val isCurrentSelected = jdArgs.selectedTag containsLabel qdTag
+      val isCurrentSelected = jdArgs.selJdt.treeLocOpt containsLabel qdTag
       val tagMods = {
         val qdRrr = new QdRrrHtml(
           jdArgs      = jdArgs,
@@ -385,7 +385,7 @@ class JdR(
         // Поддержка перетаскивания
         jdArgs.jdCss.absPosStyleAll,
 
-        ReactCommonUtil.maybe(jdArgs.conf.isEdit && !jdArgs.selectedTag.containsLabel(parent)) {
+        ReactCommonUtil.maybe(jdArgs.conf.isEdit && !jdArgs.selJdt.treeLocOpt.containsLabel(parent)) {
           _draggableUsing(qdTag, jdArgs) { qdTagDragStart(qdTag) }
         },
         jdArgs.jdCss.absPosStyleF(qdTag),

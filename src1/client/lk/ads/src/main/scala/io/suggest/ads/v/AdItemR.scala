@@ -95,12 +95,10 @@ class AdItemR(
           ),
 
           // Если блок по высоте великоват, то нарисовать линию отреза:
-          if (s.ad.adResp.jdAdData.template.rootLabel.props1.bm.exists(_.height >= BlockHeights.H460.value)) {
+          ReactCommonUtil.maybeNode(s.ad.adResp.jdAdData.template.rootLabel.props1.bm.exists(_.height >= BlockHeights.H460.value)) {
             <.div(
               ^.`class` := ItemCss.AD_ITEM_PREVIEW_BOTTOM_ZIGZAG
             )
-          } else {
-            EmptyVdom
           }
         ),
 

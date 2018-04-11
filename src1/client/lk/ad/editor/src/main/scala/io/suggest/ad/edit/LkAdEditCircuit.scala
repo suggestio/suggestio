@@ -159,7 +159,7 @@ class LkAdEditCircuit(
                                  (bgColorCont2mdoc: (MDocS, Option[StateOuter_t]) => MDocS) = {
     def __filteredSelTag(mdoc: MDocS) = {
       mdoc.jdArgs
-        .selectedTagLoc
+        .selJdt.treeLocOpt
         .filter( JdTag.treeLocByTypeFilterF(jdtName) )
     }
 
@@ -226,7 +226,7 @@ class LkAdEditCircuit(
     val mdoc = mroot.doc
     MPictureAh(
       edges       = mdoc.jdArgs.edges,
-      selectedTag = mdoc.jdArgs.selectedTagLoc.toLabelOpt,
+      selectedTag = mdoc.jdArgs.selJdt.treeLocOpt.toLabelOpt,
       errorPopup  = mroot.popups.error,
       cropPopup   = mroot.popups.pictureCrop,
       histograms  = mdoc.colorsState.histograms
@@ -239,7 +239,7 @@ class LkAdEditCircuit(
         // Пробросить обновлённый selected-тег в шаблон:
         val tpl2Opt = for {
           selJdt2    <- mPictureAh.selectedTag
-          selJdtLoc0 <- mdoc0.jdArgs.selectedTagLoc
+          selJdtLoc0 <- mdoc0.jdArgs.selJdt.treeLocOpt
           // Пересобирать дерево только если теги различаются.
           if selJdtLoc0.getLabel !=* selJdt2
         } yield {
@@ -353,8 +353,8 @@ class LkAdEditCircuit(
     // Если допускается выбор цвета фона текущего jd-тега, то подцепить соотв. контроллер.
     val mDocS = mDocSRw.value
 
-    for (selTag <- mDocS.jdArgs.selectedTag) {
-      selTag.rootLabel.name match {
+    for (selTagLoc <- mDocS.jdArgs.selJdt.treeLocOpt) {
+      selTagLoc.getLabel.name match {
         case MJdTagNames.STRIP =>
           acc ::= stripBgColorAh
         case MJdTagNames.QD_CONTENT =>

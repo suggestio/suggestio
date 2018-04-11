@@ -5,7 +5,7 @@ Common.settingsOrgJS
 
 enablePlugins(ScalaJSBundlerPlugin)
 
-name := "scalajs-react-color"
+name := "scalajs-react-image-crop"
 
 version := "2.0.8"
 

@@ -132,7 +132,7 @@ lazy val lkAdvExtSjs = {
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
-    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, reactImageCropSjs, asmCryptoSioSjs )
+    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, asmCryptoSioSjs )
 }
 
 /** Трейты для поддержки простых логов. */
@@ -165,7 +165,7 @@ lazy val lkCommonSjs = {
   val name = "lk-common-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/common"))
     //.enablePlugins(ScalaJSBundlerPlugin)
-    .dependsOn(commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs)
+    .dependsOn(commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs, reactImageCropSjs)
 }
 
 /** Самопальные биндинги для moment.js. */

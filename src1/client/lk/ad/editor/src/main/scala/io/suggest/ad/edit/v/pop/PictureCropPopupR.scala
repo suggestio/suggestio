@@ -3,11 +3,11 @@ package io.suggest.ad.edit.v.pop
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop, ReactCrop, ReactCropProps}
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.ad.edit.m.{CropCancel, CropChanged, CropSave}
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
+import io.suggest.lk.m.{CropCancel, CropChanged, CropSave}
 import io.suggest.lk.pop.PopupR
 import io.suggest.msg.Messages
 import japgolly.scalajs.react._

@@ -1,12 +1,12 @@
-package io.suggest.lk.r
+package io.suggest.lk.r.img
 
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.react.ReactCommonUtil
+import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io

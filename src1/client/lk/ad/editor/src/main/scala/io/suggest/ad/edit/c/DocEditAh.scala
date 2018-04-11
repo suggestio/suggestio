@@ -113,7 +113,7 @@ class DocEditAh[M](
         // Бывают ложные срабатывания. Например, прямо при инициализации редактора. Но не факт конечно, что они тут подавляются.
         noChange
 
-      } else if (v0.jdArgs.selectedTagLoc.isEmpty) {
+      } else if (v0.jdArgs.selJdt.treeLocOpt.isEmpty) {
         LOG.warn( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m.getClass.getName )
         noChange
 
@@ -121,7 +121,7 @@ class DocEditAh[M](
         // Код обновления qd-тега в шаблоне:
         def __updateTpl(qdSubTree2: Tree[JdTag]): Tree[JdTag] = {
           v0.jdArgs
-            .selectedTagLoc
+            .selJdt.treeLocOpt
             .get
             .setTree( qdSubTree2 )
             .toTree
@@ -129,7 +129,7 @@ class DocEditAh[M](
 
         // Текст действительно изменился. Пересобрать json-document.
         //println( JSON.stringify(m.fullDelta) )
-        val qdSubTree0 = v0.jdArgs.selectedTag.get
+        val qdSubTree0 = v0.jdArgs.selJdt.treeOpt.get
         // Спроецировать карту сборных эджей в jd-эджи
         val edgesData0 = v0.jdArgs.edges
         //println( "textChanged:\n" + JSON.stringify(m.fullDelta) )
@@ -233,7 +233,7 @@ class DocEditAh[M](
       val v0 = value
 
       val updatedOpt = for {
-        selJdtLoc0 <- v0.jdArgs.selectedTagLoc
+        selJdtLoc0 <- v0.jdArgs.selJdt.treeLocOpt
         jdt0 = selJdtLoc0.getLabel
         if (jdt0.props1.rotateDeg !=* m.degrees) &&
           // Убедится, что значение не выходит за допустымые пределы поворота:
@@ -262,7 +262,7 @@ class DocEditAh[M](
     // Клик по элементу карточки.
     case m: JdTagSelect =>
       val v0 = value
-      val oldSelectedTag = v0.jdArgs.selectedTag.map(_.rootLabel)
+      val oldSelectedTag = v0.jdArgs.selJdt.treeLocOpt.map(_.getLabel)
       if ( oldSelectedTag contains m.jdTag ) {
         // Бывают повторные щелчки по уже выбранным элементам, это нормально.
         noChange
@@ -343,7 +343,7 @@ class DocEditAh[M](
 
         // Может быть, был какой-то qd-tag и весь текст теперь в нём удалён? Удалить, если старый тег, если осталась дельта
         for {
-          jdtTree <- v0.jdArgs.selectedTag
+          jdtTree <- v0.jdArgs.selJdt.treeOpt
           jdt = jdtTree.rootLabel
           dataEdges0 = v0.jdArgs.edges
           if jdt.name ==* MJdTagNames.QD_CONTENT &&
@@ -377,7 +377,7 @@ class DocEditAh[M](
         // Обновить список color-preset'ов.
         val bgColorsAppend = for {
           // Закинуть цвет фона нового тега в самое начало списка презетов. Затем - окончательный фон предыдущего тега.
-          jdt <- m.jdTag :: v0.jdArgs.selectedTag.map(_.rootLabel).toList
+          jdt <- m.jdTag :: v0.jdArgs.selJdt.treeLocOpt.map(_.getLabel).toList
           bgColor <- jdt.props1.bgColor
           if !v2.colorsState.colorPresets.contains(bgColor)
         } yield {
@@ -468,7 +468,7 @@ class DocEditAh[M](
     case m: BlockSizeBtnClick =>
       val v0 = value
 
-      val stripTreeLoc0 = v0.jdArgs.selectedTagLoc.get
+      val stripTreeLoc0 = v0.jdArgs.selJdt.treeLocOpt.get
       val strip0 = stripTreeLoc0.getLabel
 
       val bm0 = strip0.props1.bm.get
@@ -536,7 +536,7 @@ class DocEditAh[M](
       } else {
         // Второй шаг удаления, и юзер подтвердил удаление.
         val strip4delLoc = v0.jdArgs
-          .selectedTagLoc
+          .selJdt.treeLocOpt
           .get
 
         val tpl0 = v0.jdArgs.template
@@ -605,7 +605,7 @@ class DocEditAh[M](
           )
         )
         // Если запускается перетаскивание тега, который не является текущим, то надо "выбрать" таскаемый тег.
-        if ( v0.jdArgs.selectedTagLoc.toLabelOpt contains m.jdTag ) {
+        if ( v0.jdArgs.selJdt.treeLocOpt.toLabelOpt contains m.jdTag ) {
           // Текущий тег перетаскивается, всё ок.
           updated( v2 )
         } else {
@@ -648,7 +648,7 @@ class DocEditAh[M](
           .orElse( v0.jdArgs.draggingTagLoc.toLabelOpt )
           .get
 
-        v0.jdArgs.selectedTagLoc
+        v0.jdArgs.selJdt.treeLocOpt
           .filter { loc =>
             // Убедиться, что текущий selected-тег содержит dndJdt:
             dndJdt ==* loc.getLabel
@@ -879,10 +879,10 @@ class DocEditAh[M](
             // Надо заставить перерендерить quill, если он изменился и открыт сейчас:
             for {
               qdEdit0     <- v0.qdEdit
-              qdTag2      <- jdArgs2.selectedTag
+              qdTag2      <- jdArgs2.selJdt.treeOpt
               if qdTag2.rootLabel.name ==* MJdTagNames.QD_CONTENT
               // Перерендеривать quill только если изменение гистограммы коснулось эджа внутри текущего qd-тега:
-              qdTag0      <- v0.jdArgs.selectedTag
+              qdTag0      <- v0.jdArgs.selJdt.treeOpt
               if qdTag0 !=* qdTag2
             } {
               v2 = v0.withQdEdit(
@@ -901,7 +901,7 @@ class DocEditAh[M](
     case m: CurrContentResize =>
       val v0 = value
       val tpl2 = v0.jdArgs
-        .selectedTagLoc
+        .selJdt.treeLocOpt
         .get
         .modifyLabel { jdTag0 =>
           assert( jdTag0.name ==* MJdTagNames.QD_CONTENT )
@@ -926,7 +926,7 @@ class DocEditAh[M](
     case m: QdEmbedResize =>
       val v0 = value
       v0.jdArgs
-        .selectedTag
+        .selJdt.treeOpt
         .filter { jdt => jdt.rootLabel.name ==* MJdTagNames.QD_CONTENT }
         .map { qdSubTree =>
           _qdUpdateWidth(qdSubTree.loc, m.edgeUid, width = m.widthPx, heightPxOpt = m.heightPx)
@@ -936,7 +936,7 @@ class DocEditAh[M](
           noChange
         } { qdSubTreeLoc2 =>
           val qdSubTree2 = qdSubTreeLoc2.toTree
-          val tpl2 = v0.jdArgs.selectedTagLoc
+          val tpl2 = v0.jdArgs.selJdt.treeLocOpt
             .get
             .setTree(qdSubTree2)
             .toTree
@@ -964,7 +964,7 @@ class DocEditAh[M](
     case m: StripStretchAcross =>
       val v0 = value
       val tpl2 = v0.jdArgs
-        .selectedTagLoc
+        .selJdt.treeLocOpt
         .get
         .modifyLabel { strip0 =>
           assert(strip0.name ==* MJdTagNames.STRIP)
@@ -1003,7 +1003,7 @@ class DocEditAh[M](
         }
       }
 
-      v0.jdArgs.selectedTagLoc
+      v0.jdArgs.selJdt.treeLocOpt
         .filter(_.getLabel.name ==* MJdTagNames.STRIP)
         .fold(noChange) { currStripLoc =>
           // Вычислить новые значения для этого и всех соседних элементов.
@@ -1065,7 +1065,7 @@ class DocEditAh[M](
     case AddContentClick =>
       val v0 = value
       val stripName = MJdTagNames.STRIP
-      val intoStripLoc = v0.jdArgs.selectedTagLoc
+      val intoStripLoc = v0.jdArgs.selJdt.treeLocOpt
         .fold {
           // Сейчас нет выделенных тегов. Найти первый попавшийся strip
           v0.jdArgs.template
@@ -1154,7 +1154,7 @@ class DocEditAh[M](
     case AddStripClick =>
       val v0 = value
 
-      val currStripLocOpt = v0.jdArgs.selectedTagLoc
+      val currStripLocOpt = v0.jdArgs.selJdt.treeLocOpt
         .flatMap {
           _.findUpByType( MJdTagNames.STRIP )
         }
