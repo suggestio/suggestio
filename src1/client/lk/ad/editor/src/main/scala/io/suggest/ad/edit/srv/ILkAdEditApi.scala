@@ -2,7 +2,6 @@ package io.suggest.ad.edit.srv
 
 import diode.ModelRO
 import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit}
-import io.suggest.file.up.{MFile4UpProps, MUploadResp}
 import io.suggest.jd.MJdAdData
 import io.suggest.pick.MimeConst
 import io.suggest.proto.HttpConst
@@ -11,6 +10,7 @@ import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.up.IUploadApi
 import play.api.libs.json.Json
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.model.Route
 
 import scala.concurrent.Future
 
@@ -21,14 +21,6 @@ import scala.concurrent.Future
   * Description: Интерфейс API сервера для взаимодействия в контексте редактирования рекламной карточки.
   */
 trait ILkAdEditApi {
-
-  /** Шаг 1 подготовки к аплоаду файла (картинки, обычно) в контексте карточки.
-    *
-    * @param file4UpProps Данные файла, готовящегося к заливке.
-    * @return Фьючерс с ответом сервера.
-    */
-  def prepareUpload(file4UpProps: MFile4UpProps): Future[MUploadResp]
-
 
   /** Отправка на сервер формы для создания новой карточки.
     *
@@ -64,15 +56,13 @@ class LkAdEditApiHttp(
     (adIdOpt, producerIdOpt)
   }
 
-  override def prepareUpload(file4UpProps: MFile4UpProps): Future[MUploadResp] = {
+  def prepareUploadRoute: Route = {
     val (adIdNull, producerIdNull) = _adProdArgs()
-    val route = routes.controllers.LkAdEdit.prepareImgUpload(
+    routes.controllers.LkAdEdit.prepareImgUpload(
       adId   = adIdNull,
       nodeId = producerIdNull
     )
-    uploadApi.prepareUpload( route, file4UpProps )
   }
-
 
   override def saveAdSubmit(producerId: String, form: MJdAdData): Future[MAdEditFormInit] = {
     val (adIdNull, producerIdNull) = _adProdArgs()

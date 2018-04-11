@@ -6,7 +6,7 @@ import io.suggest.color.{MHistogram, MHistogramWs}
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.asm.HashWwTask
 import io.suggest.crypto.hash.{HashesHex, MHashes}
-import io.suggest.file.up.{MFile4UpProps, MFileUploadS, MUploadResp}
+import io.suggest.file.up.{MFile4UpProps, MFileUploadS}
 import io.suggest.file.{MJsFileInfo, MSrvFileInfo}
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.crop.MCrop
@@ -20,6 +20,7 @@ import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.model.Route
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.IUploadApi
 import io.suggest.ws.MWsMsgTypes
@@ -40,9 +41,9 @@ import scala.util.Success
   * Description: Контроллер управления картинками.
   */
 class PictureAh[M](
-                    prepareUploadF  : MFile4UpProps => Future[MUploadResp],
-                    uploadApi       : IUploadApi,
-                    modelRW         : ModelRW[M, MPictureAh]
+                    prepareUploadRoute  : => Route,
+                    uploadApi           : IUploadApi,
+                    modelRW             : ModelRW[M, MPictureAh]
                   )
   extends ActionHandler(modelRW)
   with Log
@@ -57,21 +58,16 @@ class PictureAh[M](
     // 2. Запустить фоновую закачку файла на сервер.
     case m: PictureFileChanged =>
       val v0 = value
-      val selJdt0 = v0.selectedTag.get
 
       // Посмотреть, что пришло в сообщении...
       if (m.files.isEmpty) {
         // Файл удалён, т.е. список файлов изменился в []. Удалить bgImg и сопутствующий edgeUid, если файл более никому не нужен.
-        selJdt0.props1
-          .bgImg
+        v0.imgEdgeId
           .fold( noChange ) { _ =>
             // Не чистим эджи, пусть другие контроллеры проконтроллируют карту эджей на предмет ненужных эджей.
             // Это нужно, чтобы избежать удаления файла, который используется в каком-то другом теге.
-            val selJdt2 = selJdt0.withProps1(
-              selJdt0.props1.withBgImg( None )
-            )
-            val v2 = v0.withSelectedTag(
-              selectedTag = Some( selJdt2 )
+            val v2 = v0.withImgEdgeId(
+              imgEdgeId = None
             )
             // Отправить в очередь задачу по зачистке карты эджей:
             val fx = Effect.action(PurgeUnusedEdges)
@@ -114,7 +110,7 @@ class PictureAh[M](
               .fold [(MEdgeDataJs, Map[EdgeUid_t, MEdgeDataJs], Option[Effect])] {
                 // Новый файл выбран юзером, который пока неизвестен.
                 // Найти в состоянии текущий файл, если он там есть.
-                val bgImgOldOpt = selJdt0.props1.bgImg
+                val bgImgOldOpt = v0.imgEdgeId
                 val edgeUidOldOpt = bgImgOldOpt.map(_.imgEdge.edgeUid)
                 val dataEdgeOldOpt = edgeUidOldOpt.flatMap( v0.edges.get )
 
@@ -186,18 +182,16 @@ class PictureAh[M](
                 (edge, v0.edges, None)
               }
 
-            val selJdt2 = selJdt0.withProps1(
-              selJdt0.props1.withBgImg( Some(
-                MImgEdgeWithOps(
-                  imgEdge = MJdEdgeId( dataEdge9.id ),
-                )
-              ))
+            val imgEdgeIdSome2 = Some(
+              MImgEdgeWithOps(
+                imgEdge = MJdEdgeId( dataEdge9.id )
+              )
             )
 
             // Собрать обновлённое состояние.
             val v1 = v0.copy(
               edges       = edges9,
-              selectedTag = Some(selJdt2)
+              imgEdgeId   = imgEdgeIdSome2
             )
             v1 -> fxOpt
           }
@@ -297,7 +291,7 @@ class PictureAh[M](
                       )
                       val edgeUid = edge0.id
                       val blobUrl = fileJs0.blobUrl.get
-                      prepareUploadF(upProps)
+                      uploadApi.prepareUpload( prepareUploadRoute, upProps )
                         .transform { tryRes =>
                           Success( PrepUploadResp(tryRes, edgeUid, blobUrl) )
                         }
@@ -413,14 +407,8 @@ class PictureAh[M](
                 for (_ <- resp.errors.headOption) yield {
                   val v2 = v0.copy(
                     // Удалить эдж текущего файла.
-                    edges = v0.edges - edge0.id,
-                    selectedTag = for (selJdt <- v0.selectedTag) yield {
-                      selJdt.withProps1(
-                        selJdt
-                          .props1
-                          .withBgImg(None)
-                      )
-                    },
+                    edges      = v0.edges - edge0.id,
+                    imgEdgeId  = None,
                     // Вывести попап с ошибками, присланными сервером:
                     errorPopup = _errorPopupWithMessages( v0.errorPopup, resp.errors )
                   )
@@ -578,10 +566,9 @@ class PictureAh[M](
     // Клик по кнопке открытия попапа для кропа.
     case CropOpen =>
       val v0 = value
-      val selJdt = v0.selectedTag.get
-      val bgImg = selJdt.props1.bgImg.get
+      val bgImg = v0.imgEdgeId.get
       val edge = v0.edges( bgImg.imgEdge.edgeUid )
-      val bm = selJdt.props1.bm.get
+      val bm = v0.cropContSz.get
 
       val bmWhRatio = ISize2di.whRatio(bm)
 
@@ -643,7 +630,7 @@ class PictureAh[M](
         MPictureCropPopup(
           origCrop    = bgImg.crop,
           imgEdgeUid  = edge.id,
-          percentCrop = cropPc,
+          percentCrop = cropPc
         )
       ))
 
@@ -673,7 +660,6 @@ class PictureAh[M](
     case CropSave =>
       val v0 = value
       val cropPopup0 = v0.cropPopup.get
-      val selJdt0 = v0.selectedTag.get
       val iEdgeUid = cropPopup0.imgEdgeUid
       val iEdge = v0.edges( iEdgeUid )
 
@@ -683,7 +669,7 @@ class PictureAh[M](
       val pixelCrop = _cropPopupS2mcrop(cropPopup0, origWh)
 
       // Сохранить в текущий тег параметры кропа.
-      val bgImg2 = for (bgImg0 <- selJdt0.props1.bgImg) yield {
+      val bgImg2 = for (bgImg0 <- v0.imgEdgeId) yield {
         bgImg0
           .withCrop( Some( pixelCrop ) )
       }
@@ -692,13 +678,7 @@ class PictureAh[M](
       // Сохранить новый кроп в состояние.
       val v2 = v0
         .withCropPopup( None )
-        .withSelectedTag(Some(
-          selJdt0.withProps1(
-            selJdt0.props1.withBgImg(
-              bgImg2
-            )
-          )
-        ))
+        .withImgEdgeId( bgImg2 )
       updated( v2 )
 
 
@@ -709,23 +689,16 @@ class PictureAh[M](
         val v1 = v0.withCropPopup( None )
         // Восстановить настройки кропа.
         val v2 = if (
-          v1.selectedTag.exists(
-            _.props1.bgImg.exists(
-              _.crop ===* cropPopup.origCrop))
+          v1.imgEdgeId
+            .exists( _.crop ===* cropPopup.origCrop )
         ) {
           // Исходный кроп и текущий эквивалентны. Поэтому пропускаем всё как есть.
           v1
         } else {
           // Восстановить исходный кроп sel-тега в состоянии.
-          v1.withSelectedTag(
-            v1.selectedTag.map { selJdt0 =>
-              selJdt0.withProps1(
-                selJdt0.props1.withBgImg(
-                  selJdt0.props1.bgImg.map { bgImg =>
-                    bgImg.withCrop( cropPopup.origCrop )
-                  }
-                )
-              )
+          v1.withImgEdgeId(
+            v1.imgEdgeId.map { imgEdgeId =>
+              imgEdgeId.withCrop( cropPopup.origCrop )
             }
           )
         }
@@ -772,21 +745,15 @@ class PictureAh[M](
       mcrop2  = {
         _cropPopupS2mcrop(cropPopup, origWh)
       }
-      selJdt0 <- v0.selectedTag
-      bgImg   <- selJdt0.props1.bgImg
+      bgImg   <- v0.imgEdgeId
       // Не обновлять ничего, если ничего не изменилось.
       if !bgImg.crop.contains( mcrop2 )
     } yield {
-      selJdt0.withProps1(
-        selJdt0.props1.withBgImg(Some(
-          bgImg
-            .withCrop( Some(mcrop2) )
-        ))
-      )
+      bgImg.withCrop( Some(mcrop2) )
     }
 
     selJdt2.fold(v0) { _ =>
-      v0.withSelectedTag( selJdt2 )
+      v0.withImgEdgeId( selJdt2 )
     }
   }
 

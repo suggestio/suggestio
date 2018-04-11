@@ -2,7 +2,8 @@ package io.suggest.lk.m.img
 
 import diode.FastEq
 import io.suggest.color.MHistogram
-import io.suggest.jd.tags.JdTag
+import io.suggest.common.geom.d2.ISize2di
+import io.suggest.img.MImgEdgeWithOps
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
@@ -21,10 +22,11 @@ object MPictureAh {
   implicit object MPictureAhFastEq extends FastEq[MPictureAh] {
     override def eqv(a: MPictureAh, b: MPictureAh): Boolean = {
       (a.edges ===* b.edges) &&
-        (a.selectedTag ===* b.selectedTag) &&
+        (a.imgEdgeId ===* b.imgEdgeId) &&
         (a.errorPopup ===* b.errorPopup) &&
         (a.cropPopup ===* b.cropPopup) &&
-        (a.histograms ===* b.histograms)
+        (a.histograms ===* b.histograms) &&
+        (a.cropContSz ===* b.cropContSz)
     }
   }
 
@@ -33,23 +35,25 @@ object MPictureAh {
 }
 
 
-/** Класс-контейнер данных для [[io.suggest.ad.edit.c.PictureAh]].
+/** Класс-контейнер данных для [[io.suggest.lk.c.PictureAh]].
   *
   * @param edges Карта эджей с возможными данными по связанным файлам.
   * @param selectedTag Текущий тег.
   * @param errorPopup Код сообщения о какой-то ошибке, связанной с картинками.
   *                   Например, когда файл не является картинкой.
+  * @param cropContSz Размер контейнера при активном кропе. Read-only.
   */
 case class MPictureAh(
                        edges          : Map[EdgeUid_t, MEdgeDataJs],
-                       selectedTag    : Option[JdTag],
+                       imgEdgeId      : Option[MImgEdgeWithOps],
                        errorPopup     : Option[MErrorPopupS],
                        cropPopup      : Option[MPictureCropPopup],
-                       histograms     : Map[String, MHistogram]
+                       histograms     : Map[String, MHistogram],
+                       cropContSz     : Option[ISize2di],
                      ) {
 
   def withEdges(edges: Map[EdgeUid_t, MEdgeDataJs])             = copy(edges = edges)
-  def withSelectedTag(selectedTag: Option[JdTag])               = copy(selectedTag = selectedTag)
+  def withImgEdgeId(imgEdgeId: Option[MImgEdgeWithOps])         = copy(imgEdgeId = imgEdgeId)
   def withErrorPopup(errorPopup: Option[MErrorPopupS])          = copy(errorPopup = errorPopup)
   def withCropPopup(cropPopup: Option[MPictureCropPopup])       = copy(cropPopup = cropPopup)
   def withHistograms(histograms: Map[String, MHistogram])       = copy(histograms = histograms)

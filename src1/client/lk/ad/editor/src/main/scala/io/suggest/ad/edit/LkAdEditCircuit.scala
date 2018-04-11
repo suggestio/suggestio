@@ -24,7 +24,6 @@ import io.suggest.jd.MJdConf
 import io.suggest.spa.{OptFastEq, StateInp}
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._
 import org.scalajs.dom
 import io.suggest.ad.edit.m.layout.MSlideBlocks.MSlideBlocksFastEq
@@ -227,10 +226,13 @@ class LkAdEditCircuit(
     val mdoc = mroot.doc
     MPictureAh(
       edges       = mdoc.jdArgs.edges,
-      selectedTag = mdoc.jdArgs.selJdt.treeLocOpt.toLabelOpt,
+      imgEdgeId   = mdoc.jdArgs.selJdt.treeLocOpt
+        .flatMap(_.getLabel.props1.bgImg),
       errorPopup  = mroot.popups.error,
       cropPopup   = mroot.popups.pictureCrop,
-      histograms  = mdoc.colorsState.histograms
+      histograms  = mdoc.colorsState.histograms,
+      cropContSz  = mdoc.jdArgs.selJdt.treeLocOpt
+        .flatMap(_.getLabel.props1.bm)
     )
   } { (mroot0, mPictureAh) =>
     val mdoc0 = mroot0.doc
@@ -239,12 +241,17 @@ class LkAdEditCircuit(
       .withJdArgs {
         // Пробросить обновлённый selected-тег в шаблон:
         val tpl2Opt = for {
-          selJdt2    <- mPictureAh.selectedTag
           selJdtLoc0 <- mdoc0.jdArgs.selJdt.treeLocOpt
           // Пересобирать дерево только если теги различаются.
-          if selJdtLoc0.getLabel !=* selJdt2
+          selJdt0 = selJdtLoc0.getLabel
+          if selJdt0.props1.bgImg !=* mPictureAh.imgEdgeId
         } yield {
-          selJdtLoc0.setLabel( selJdt2 )
+          selJdtLoc0.setLabel(
+            selJdt0.withProps1(
+              selJdt0.props1
+                .withBgImg( mPictureAh.imgEdgeId )
+            )
+          )
         }
         val tpl2 = tpl2Opt.fold(mdoc0.jdArgs.template)(_.toTree)
 
@@ -294,9 +301,9 @@ class LkAdEditCircuit(
 
   /** Контроллер изображений. */
   private val pictureAh = new PictureAh(
-    uploadApi       = uploadApi,
-    modelRW         = mPictureAhRW,
-    prepareUploadF  = adEditApi.prepareUpload
+    uploadApi             = uploadApi,
+    modelRW               = mPictureAhRW,
+    prepareUploadRoute    = adEditApi.prepareUploadRoute
   )
 
   private val stripBgColorPickAfterAh = new ColorPickAfterStripAh( mDocSRw )

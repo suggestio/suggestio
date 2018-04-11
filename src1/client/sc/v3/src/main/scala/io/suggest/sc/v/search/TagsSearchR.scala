@@ -133,7 +133,7 @@ class TagsSearchR(
 
     }
 
-    def render(tagSearchProxy: Props, s: State): VdomElement = {
+    def render(s: State): VdomElement = {
       val scCss = getScCssF()
       val TabCSS = scCss.Search.Tabs.TagsTag
 
@@ -147,6 +147,7 @@ class TagsSearchR(
             TabCSS.inner,
 
             // Наконец, начинается содержимое вкладки с тегами:
+            // TODO Надо контейнер отделить от динамической части. Тут по сути проброс в Props
             s.tagsC { _tagsRenderF.apply }
 
           ) // inner
