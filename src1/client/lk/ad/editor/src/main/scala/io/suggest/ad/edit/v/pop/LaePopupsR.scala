@@ -2,8 +2,10 @@ package io.suggest.ad.edit.v.pop
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.MAeRoot
+import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.lk.m.{MDeleteConfirmPopupS, MErrorPopupS}
 import io.suggest.lk.pop.PopupsContR
+import io.suggest.lk.r.crop.CropPopupR
 import io.suggest.lk.r.{DeleteConfirmPopupR, ErrorPopupR}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -17,10 +19,11 @@ import io.suggest.spa.OptFastEq.Wrapped
   * Description: Lk Ad Edit Popups -- все попапы формы живут здесь.
   */
 class LaePopupsR(
-                  val pictureCropPopupR: PictureCropPopupR
+                  lkAdEditCss     : LkAdEditCss,
+                  val cropPopupR  : CropPopupR
                 ) {
 
-  import pictureCropPopupR.PictureCropPopupPropsFastEq
+  import cropPopupR.CropPopupPropsFastEq
   import MErrorPopupS.MErrorPopupSFastEq
   import PopupsContR.PopContPropsValFastEq
   import MDeleteConfirmPopupS.MDeleteConfirmPopupSFastEq
@@ -30,25 +33,24 @@ class LaePopupsR(
   protected case class State(
                               popupsContPropsC    : ReactConnectProxy[PopupsContR.PropsVal],
                               errorMsgsC          : ReactConnectProxy[Option[MErrorPopupS]],
-                              cropPopPropsOptC    : ReactConnectProxy[Option[pictureCropPopupR.PropsVal]],
+                              cropPopPropsOptC    : ReactConnectProxy[Option[cropPopupR.PropsVal]],
                               deleteConfirmOptC   : ReactConnectProxy[Option[MDeleteConfirmPopupS]]
                             )
 
   class Backend($: BackendScope[Props, State]) {
     def render(p: Props, s: State): VdomElement = {
+      val popupContBody = Seq[VdomNode](
+        // Попап с ~отрендеренными ошибками:
+        s.errorMsgsC { ErrorPopupR.apply },
+
+        // Попап кропа картинки:
+        s.cropPopPropsOptC { cropPopupR.apply },
+
+        // Попап подтверждения удаления рекламной карточки.
+        s.deleteConfirmOptC { DeleteConfirmPopupR.apply }
+      )
       s.popupsContPropsC { popupContProps =>
-        PopupsContR(popupContProps)(
-
-          // Попап с ~отрендеренными ошибками:
-          s.errorMsgsC { ErrorPopupR.apply },
-
-          // Попап кропа картинки:
-          s.cropPopPropsOptC { pictureCropPopupR.apply },
-
-          // Попап подтверждения удаления рекламной карточки.
-          s.deleteConfirmOptC { DeleteConfirmPopupR.apply }
-
-        )
+        PopupsContR(popupContProps)( popupContBody: _* )
       }
     }
   }
@@ -72,9 +74,10 @@ class LaePopupsR(
             edge        <- root.doc.jdArgs.edges.get( mcrop.imgEdgeUid )
             imgSrc      <- edge.origImgSrcOpt
           } yield {
-            pictureCropPopupR.PropsVal(
-              imgSrc = imgSrc,
-              percentCrop = mcrop.percentCrop
+            cropPopupR.PropsVal(
+              imgSrc      = imgSrc,
+              percentCrop = mcrop.percentCrop,
+              popCssClass = lkAdEditCss.Crop.popup.htmlClass :: Nil
             )
           }
         },

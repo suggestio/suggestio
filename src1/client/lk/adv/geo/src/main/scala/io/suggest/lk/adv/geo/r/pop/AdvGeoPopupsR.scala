@@ -9,7 +9,7 @@ import PopupsContR.PopContPropsValFastEq
 import MNodeInfoPopupS.MNodeInfoPopupFastEq
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.lk.r.{ErrorPopupR, PleaseWaitPopupR}
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
 import japgolly.scalajs.react.vdom.Implicits._
 import MErrorPopupS.MErrorPopupSFastEq
 
@@ -34,20 +34,22 @@ object AdvGeoPopupsR {
   class Backend($: BackendScope[Props, State]) {
 
     def render(state: State): VdomElement = {
+      val popupsChildren = List[VdomNode](
+        // Попап инфы по размещению на узле.
+        state.nodeInfoConn { AdvGeoNodeInfoPopR.apply },
+
+        // Попап "Пожалуйста, подождите...":
+        state.pendingOptConn { PleaseWaitPopupR.apply },
+
+        // Попап с какой-либо ошибкой среди попапов.
+        state.errorOptConn { ErrorPopupR.apply }
+
+      )
+
       state.popContPropsConn { popContPropsProxy =>
         // Рендер контейнера попапов:
         PopupsContR( popContPropsProxy )(
-
-          // Попап инфы по размещению на узле.
-          state.nodeInfoConn { AdvGeoNodeInfoPopR.apply },
-
-          // -- Служебные попапы --
-          // Попап "Пожалуйста, подождите...":
-          state.pendingOptConn { PleaseWaitPopupR.apply },
-
-          // Попап с какой-либо ошибкой среди попапов.
-          state.errorOptConn { ErrorPopupR.apply }
-
+          popupsChildren: _*
         )
       }
     }

@@ -9,7 +9,7 @@ import io.suggest.lk.r.ErrorPopupR
 import io.suggest.lk.r.adv.NodeAdvInfoPopR
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.spa.OptFastEq.Plain
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
 import japgolly.scalajs.react.vdom.Implicits._
 import MErrorPopupS.MErrorPopupSFastEq
 import io.suggest.spa.OptFastEq
@@ -27,22 +27,25 @@ object LamPopupsR {
   protected case class State(
                               popContPropsC             : ReactConnectProxy[PopupsContR.PropsVal],
                               nodeAdvInfoOptC           : ReactConnectProxy[Option[MNodeAdvInfo]],
-                              exOptC                    : ReactConnectProxy[Option[MErrorPopupS]]
+                              errorPopupOptC            : ReactConnectProxy[Option[MErrorPopupS]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
 
     def render(state: State): VdomElement = {
+
+      val popups = Seq[VdomNode](
+        // Попап инфы по размещению на узле.
+        state.nodeAdvInfoOptC { NodeAdvInfoPopR.apply },
+
+        // Попап с какой-либо ошибкой среди попапов.
+        state.errorPopupOptC { ErrorPopupR.apply }
+      )
+
       state.popContPropsC { popContPropsProxy =>
         // Рендер контейнера попапов:
         PopupsContR( popContPropsProxy )(
-
-          // Попап инфы по размещению на узле.
-          state.nodeAdvInfoOptC { NodeAdvInfoPopR.apply },
-
-          // Попап с какой-либо ошибкой среди попапов.
-          state.exOptC { ErrorPopupR.apply }
-
+          popups: _*
         )
       }
     }
@@ -61,7 +64,7 @@ object LamPopupsR {
           )
         },
         nodeAdvInfoOptC = mrootProxy.connect { _.rcvrs.popupResp.toOption },
-        exOptC = mrootProxy.connect { mroot =>
+        errorPopupOptC = mrootProxy.connect { mroot =>
           MErrorPopupS.fromExOpt(
             mroot.rcvrs.popupResp.exceptionOption
           )

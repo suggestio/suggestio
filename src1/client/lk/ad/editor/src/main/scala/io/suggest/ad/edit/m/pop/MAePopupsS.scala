@@ -2,6 +2,7 @@ package io.suggest.ad.edit.m.pop
 
 import diode.FastEq
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.lk.m.img.MPictureCropPopup
 import io.suggest.lk.m.{MDeleteConfirmPopupS, MErrorPopupS}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq

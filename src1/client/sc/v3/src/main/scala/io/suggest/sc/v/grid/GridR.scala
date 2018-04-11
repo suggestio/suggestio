@@ -90,20 +90,24 @@ class GridR(
 
             // Начинается [пере]сборка всей плитки
             // TODO Функция сборки плитки неоптимальна и перегенеривается на каждый чих. Это вызывает лишние перерендеры контейнера плитки.
-            s.gridSzC { gridSzOptProxy =>
-              <.div(
-                GridCss.container,
+            {
+              // Непосредственный рендер плитки, снаружи от рендера connect-зависимого контейнера плитки.
+              val gridCore = s.gridC { gridCoreR.apply }
 
-                gridSzOptProxy.value.whenDefined { gridSz =>
-                  TagMod(
-                    ^.width  := gridSz.width.px,
-                    ^.height := (gridSz.height + TileConstants.CONTAINER_OFFSET_BOTTOM + TileConstants.CONTAINER_OFFSET_TOP).px
-                  )
-                },
+              s.gridSzC { gridSzOptProxy =>
+                <.div(
+                  GridCss.container,
 
-                // Непосредственный рендер плитки.
-                s.gridC { gridCoreR.apply }
-              )
+                  gridSzOptProxy.value.whenDefined { gridSz =>
+                    TagMod(
+                      ^.width  := gridSz.width.px,
+                      ^.height := (gridSz.height + TileConstants.CONTAINER_OFFSET_BOTTOM + TileConstants.CONTAINER_OFFSET_TOP).px
+                    )
+                  },
+
+                  gridCore
+                )
+              }
             },
 
             // Крутилка подгрузки карточек.

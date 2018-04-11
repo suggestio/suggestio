@@ -8,12 +8,13 @@ import io.suggest.ad.edit.m.{MAeRoot, MDocS}
 import io.suggest.ad.edit.v.edit._
 import io.suggest.ad.edit.v.edit.color.ColorCheckboxR
 import io.suggest.ad.edit.v.edit.strip._
-import io.suggest.ad.edit.v.pop.{LaePopupsR, PictureCropPopupR}
+import io.suggest.ad.edit.v.pop.LaePopupsR
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.render.JdRenderModule
 import io.suggest.lk.LkCommonModule
 import io.suggest.lk.r.SlideBlockR
 import io.suggest.lk.r.color.ColorPickerR
+import io.suggest.lk.r.crop.CropPopupR
 import io.suggest.quill.QuillSioModule
 
 /**
@@ -67,7 +68,7 @@ class LkAdEditModule {
   lazy val deleteBtnR = wire[DeleteBtnR]
 
 
-  lazy val pictureCropPopupR = wire[PictureCropPopupR]
+  lazy val cropPopupR = wire[CropPopupR]
 
   lazy val laePopupsR = wire[LaePopupsR]
 

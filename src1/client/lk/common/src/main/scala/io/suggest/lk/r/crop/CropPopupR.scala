@@ -1,23 +1,22 @@
-package io.suggest.ad.edit.v.pop
+package io.suggest.lk.r.crop
 
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop, ReactCrop, ReactCropProps}
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.{CropCancel, CropChanged, CropSave}
 import io.suggest.lk.pop.PopupR
 import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
+import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.ueq.ReactImageCropUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactCommonUtil
-import io.suggest.ueq.UnivEqUtil._
-import io.suggest.ueq.ReactImageCropUnivEqUtil._
 
 /**
   * Suggest.io
@@ -25,18 +24,18 @@ import io.suggest.ueq.ReactImageCropUnivEqUtil._
   * Created: 20.09.17 16:48
   * Description: React-компонент для кропа картинки.
   */
-class PictureCropPopupR(
-                         laeCss: LkAdEditCss
-                       ) {
+class CropPopupR {
 
   case class PropsVal(
                        imgSrc       : String,
-                       percentCrop  : PercentCrop
+                       percentCrop  : PercentCrop,
+                       popCssClass  : List[String]
                      )
-  implicit object PictureCropPopupPropsFastEq extends FastEq[PropsVal] {
+  implicit object CropPopupPropsFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.imgSrc ===* b.imgSrc) &&
-        (a.percentCrop ===* b.percentCrop)
+        (a.percentCrop ===* b.percentCrop) &&
+        (a.popCssClass ===* b.popCssClass)
     }
   }
 
@@ -64,7 +63,7 @@ class PictureCropPopupR(
         propsOptProxy.wrap { _ =>
           PopupR.PropsVal(
             closeable = Some(closeBtnClick),
-            css       = laeCss.Crop.popup.htmlClass :: Nil,
+            css       = props.popCssClass,
             topPc     = 10,
             tagMod    = Some {
               ^.right := (-19).pct

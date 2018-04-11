@@ -1,7 +1,6 @@
-package io.suggest.ad.edit.m.edit.pic
+package io.suggest.lk.m.img
 
 import diode.FastEq
-import io.suggest.ad.edit.m.pop.MPictureCropPopup
 import io.suggest.color.MHistogram
 import io.suggest.jd.tags.JdTag
 import io.suggest.lk.m.MErrorPopupS
@@ -50,7 +49,7 @@ case class MPictureAh(
                      ) {
 
   def withEdges(edges: Map[EdgeUid_t, MEdgeDataJs])             = copy(edges = edges)
-  def withSelectedTag(selectedTag: Option[JdTag])             = copy(selectedTag = selectedTag)
+  def withSelectedTag(selectedTag: Option[JdTag])               = copy(selectedTag = selectedTag)
   def withErrorPopup(errorPopup: Option[MErrorPopupS])          = copy(errorPopup = errorPopup)
   def withCropPopup(cropPopup: Option[MPictureCropPopup])       = copy(cropPopup = cropPopup)
   def withHistograms(histograms: Map[String, MHistogram])       = copy(histograms = histograms)

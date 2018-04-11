@@ -74,30 +74,33 @@ class SearchR(
         // Карта.
 
         // Тело текущего таба.
-        s.tabC { currTabProxy =>
-          val currTab = currTabProxy.value
+        {
+          // Рендер карты:
+          val searchMap = s.mapInitC { searchMapR.apply }
+          // TODO Сделать connect? Есть мнение, что оно перерендеривается на каждый чих, т.к. на втором уровне.
+          val tagsSearch = props.wrap(_.tags) { tagsSearchR.apply }
 
-          // Контейнер всех содержимых вкладок.
-          <.div(
+          s.tabC { currTabProxy =>
+            val currTab = currTabProxy.value
 
-            // Содержимое вкладки с картой.
+            // Контейнер всех содержимых вкладок.
             <.div(
-              _renderDisplayCss( currTab ==* MSearchTabs.GeoMap ),
 
-              // Рендер карты:
-              s.mapInitC { searchMapR.apply }
-            ),
+              // Содержимое вкладки с картой.
+              <.div(
+                _renderDisplayCss( currTab ==* MSearchTabs.GeoMap ),
+                searchMap
+              ),
 
-            // Содержимое вкладки с тегами.
-            <.div(
-              _renderDisplayCss( currTab ==* MSearchTabs.Tags ),
+              // Содержимое вкладки с тегами.
+              <.div(
+                _renderDisplayCss( currTab ==* MSearchTabs.Tags ),
+                tagsSearch
+              )
 
-              // TODO Сделать connect? Есть мнение, что оно перерендеривается на каждый чих, т.к. на втором уровне.
-              props.wrap(_.tags) { tagsSearchR.apply }
             )
 
-          )
-
+          }
         }
 
       )

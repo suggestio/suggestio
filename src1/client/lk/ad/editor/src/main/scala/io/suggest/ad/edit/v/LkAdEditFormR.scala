@@ -185,7 +185,6 @@ class LkAdEditFormR(
 
               // Кнопка удаления текущего блока.
               s.stripEdSOptC { deleteStripBtnR.apply }
-
             )
             // Слайд редактор блока.
             val slideBlockVdom = s.slideBlocks.block { propsOpt =>

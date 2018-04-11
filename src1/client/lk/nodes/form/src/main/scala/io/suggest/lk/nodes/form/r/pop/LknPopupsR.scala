@@ -8,7 +8,7 @@ import io.suggest.lk.pop.PopupsContR
 import io.suggest.lk.r.DeleteConfirmPopupR
 import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
 import japgolly.scalajs.react.vdom.Implicits._
 
 /**
@@ -41,22 +41,23 @@ class LknPopupsR(
   class Backend($: BackendScope[Props, State]) {
 
     def render(propsProxy: Props, state: State): VdomElement = {
-      state.popContPropsConn { popContPropsProxy =>
 
+      val popups = List[VdomNode](
+        // Рендер попапа создания нового узла:
+        state.createNodeOptConn { createNodeR.apply },
+
+        // Рендер попапа удаления существующего узла:
+        state.deleteNodeOptConn { DeleteConfirmPopupR.apply },
+
+        // Рендер попапа редактирования тарифа текущего узла.
+        state.editTfDailyOptConn { editTfDailyR.apply }
+      )
+
+      state.popContPropsConn { popContPropsProxy =>
         // Рендер контейнера попапов:
         PopupsContR( popContPropsProxy )(
-
-          // Рендер попапа создания нового узла:
-          state.createNodeOptConn { createNodeR.apply },
-
-          // Рендер попапа удаления существующего узла:
-          state.deleteNodeOptConn { DeleteConfirmPopupR.apply },
-
-          // Рендер попапа редактирования тарифа текущего узла.
-          state.editTfDailyOptConn { editTfDailyR.apply }
-
+          popups: _*
         )
-
       }
     }
 

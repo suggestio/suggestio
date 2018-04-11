@@ -50,6 +50,89 @@ class TagsSearchR(
       dispatchOnProxyScopeCB($, TagsScroll(scrollTop, scrollHeight))
     }
 
+    private val _tagsRenderF = { tagsProxy: ModelProxy[MTagsSearchS] =>
+      val scCss = getScCssF()
+      val TabCSS = scCss.Search.Tabs.TagsTag
+
+      val tagsS = tagsProxy.value
+      val _tagRow = TabCSS.tagRow: TagMod
+      val _odd = TabCSS.oddRow: TagMod
+      val _even = TabCSS.evenRow: TagMod
+
+      <.div(
+        TabCSS.tagsList,
+
+        // Подписка на события скроллинга:
+        ReactCommonUtil.maybe(tagsS.hasMoreTags && !tagsS.tagsReq.isPending) {
+          ^.onScroll ==> _onTagsListScroll
+        },
+
+        // Рендер нормального списка найденных тегов.
+        tagsS.tagsReq.render { tags =>
+          if (tags.isEmpty) {
+            <.div(
+              _tagRow,
+              Messages( MsgCodes.`No.tags.here` )
+            )
+          } else {
+            tags
+              .iterator
+              .zipWithIndex
+              .toVdomArray { case (mtag, i) =>
+                // Рендер одного ряда.
+                <.div(
+                  _tagRow,
+
+                  // Используем nodeId как ключ. Контроллер должен выверять отсутствие дубликатов в списке тегов.
+                  ^.key := mtag.nodeId,
+
+                  // Визуально разделять разные ряды.
+                  if (i % 2 ==* 0) _odd else _even,
+
+                  // Подсвечивать текущие выделенные теги.
+                  ReactCommonUtil.maybe(tagsS.selectedId contains mtag.nodeId) {
+                    TabCSS.selected
+                  },
+
+                  ^.onClick --> _onTagClick(mtag.nodeId),
+
+                  mtag.name
+                )
+              }
+          }
+
+        },
+
+        // Рендер крутилки ожидания.
+        tagsS.tagsReq.renderPending { _ =>
+          <.div(
+            _tagRow,
+            LkPreLoaderR.AnimSmall
+          )
+        },
+
+        // Рендер ошибки.
+        tagsS.tagsReq.renderFailed { ex =>
+          VdomArray(
+            <.div(
+              _tagRow,
+              ^.key := "e",
+              ^.`class` := Css.Colors.RED,
+              ex.getClass.getSimpleName
+            ),
+            <.div(
+              ^.key := "m",
+              _tagRow,
+              ex.getMessage
+            )
+          )
+
+        }
+
+      ) // tagsList
+
+    }
+
     def render(tagSearchProxy: Props, s: State): VdomElement = {
       val scCss = getScCssF()
       val TabCSS = scCss.Search.Tabs.TagsTag
@@ -64,85 +147,7 @@ class TagsSearchR(
             TabCSS.inner,
 
             // Наконец, начинается содержимое вкладки с тегами:
-            s.tagsC { tagsProxy =>
-              val tagsS = tagsProxy.value
-              val _tagRow = TabCSS.tagRow: TagMod
-              val _odd = TabCSS.oddRow: TagMod
-              val _even = TabCSS.evenRow: TagMod
-
-              <.div(
-                TabCSS.tagsList,
-
-                // Подписка на события скроллинга:
-                ReactCommonUtil.maybe(tagsS.hasMoreTags && !tagsS.tagsReq.isPending) {
-                  ^.onScroll ==> _onTagsListScroll
-                },
-
-                // Рендер нормального списка найденных тегов.
-                tagsS.tagsReq.render { tags =>
-                  if (tags.isEmpty) {
-                    <.div(
-                      _tagRow,
-                      Messages( MsgCodes.`No.tags.here` )
-                    )
-                  } else {
-                    tags
-                      .iterator
-                      .zipWithIndex
-                      .toVdomArray { case (mtag, i) =>
-                        // Рендер одного ряда.
-                        <.div(
-                          _tagRow,
-
-                          // Используем nodeId как ключ. Контроллер должен выверять отсутствие дубликатов в списке тегов.
-                          ^.key := mtag.nodeId,
-
-                          // Визуально разделять разные ряды.
-                          if (i % 2 ==* 0) _odd else _even,
-
-                          // Подсвечивать текущие выделенные теги.
-                          ReactCommonUtil.maybe(tagsS.selectedId contains mtag.nodeId) {
-                            TabCSS.selected
-                          },
-
-                          ^.onClick --> _onTagClick(mtag.nodeId),
-
-                          mtag.name
-                        )
-                      }
-                  }
-
-                },
-
-                // Рендер крутилки ожидания.
-                tagsS.tagsReq.renderPending { _ =>
-                  <.div(
-                    _tagRow,
-                    LkPreLoaderR.AnimSmall
-                  )
-                },
-
-                // Рендер ошибки.
-                tagsS.tagsReq.renderFailed { ex =>
-                  VdomArray(
-                    <.div(
-                      _tagRow,
-                      ^.key := "e",
-                      ^.`class` := Css.Colors.RED,
-                      ex.getClass.getSimpleName
-                    ),
-                    <.div(
-                      ^.key := "m",
-                      _tagRow,
-                      ex.getMessage
-                    )
-                  )
-
-                }
-
-              ) // tagsList
-
-            } // tagsC tagsProxy
+            s.tagsC { _tagsRenderF.apply }
 
           ) // inner
         )   // wrap

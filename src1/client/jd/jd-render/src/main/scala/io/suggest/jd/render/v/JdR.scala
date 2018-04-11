@@ -13,6 +13,7 @@ import io.suggest.grid.build.{MGbBlock, MGridBuildArgsJs}
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd.MQdOp
+import io.suggest.lk.m.SetImgWh
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs

@@ -118,13 +118,8 @@ object AdvGeoFormR {
         },
 
         // Рендер географической карты:
-        s.geoMapPropsC { mapProps =>
-          LMapR(
-            LGeoMapR.lmMapSProxy2lMapProps(
-              mapProps
-            )
-          )(
-
+        {
+          val mapChildren = List[VdomNode](
             // Рендерим основную плитку карты.
             ReactLeafletUtil.Tiles.OsmDefault,
 
@@ -150,8 +145,14 @@ object AdvGeoFormR {
 
             // Рендер опционального попапа над ресивером.
             s.rcvrPopupC( RcvrPopupR.apply )
-
           )
+          s.geoMapPropsC { mapProps =>
+            LMapR(
+              LGeoMapR.lmMapSProxy2lMapProps(
+                mapProps
+              )
+            )( mapChildren: _* )
+          }
         },
 
         <.br,

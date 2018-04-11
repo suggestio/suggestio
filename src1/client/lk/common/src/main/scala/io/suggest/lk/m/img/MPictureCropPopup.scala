@@ -1,12 +1,12 @@
-package io.suggest.ad.edit.m.pop
+package io.suggest.lk.m.img
 
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import diode.FastEq
 import io.suggest.img.crop.MCrop
 import io.suggest.model.n2.edge.EdgeUid_t
-import io.suggest.ueq.ReactImageCropUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import io.suggest.ueq.ReactImageCropUnivEqUtil._
 
 /**
   * Suggest.io
@@ -19,7 +19,7 @@ object MPictureCropPopup {
   implicit object MPictureCropPopupFastEq extends FastEq[MPictureCropPopup] {
     override def eqv(a: MPictureCropPopup, b: MPictureCropPopup): Boolean = {
       (a.origCrop ===* b.origCrop) &&
-      (a.imgEdgeUid ==* b.imgEdgeUid) &&
+        (a.imgEdgeUid ==* b.imgEdgeUid) &&
         (a.percentCrop ===* b.percentCrop) &&
         (a.pixelCrop ===* b.pixelCrop)
     }

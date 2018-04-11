@@ -21,6 +21,7 @@ import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd._
+import io.suggest.lk.m.{FileHashStart, HandleNewHistogramInstalled, PurgeUnusedEdges}
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.msg.{ErrorMsgs, Messages, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs

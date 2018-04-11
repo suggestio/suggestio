@@ -6,7 +6,7 @@ import io.suggest.css.Css
 import io.suggest.jd.render.m.IJdAction
 import io.suggest.jd.tags.MJdTagNames
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
-import io.suggest.lk.m.{ColorBtnClick, ColorChanged, DocBodyClick}
+import io.suggest.lk.m.{ColorBtnClick, ColorChanged, DocBodyClick, SetImgWh}
 import japgolly.univeq._
 import io.suggest.ueq.ReactUnivEqUtil._
 import io.suggest.scalaz.ZTreeUtil._

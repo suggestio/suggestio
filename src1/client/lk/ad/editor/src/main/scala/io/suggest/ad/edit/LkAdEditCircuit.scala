@@ -12,7 +12,6 @@ import io.suggest.ad.edit.m.edit.color.{IBgColorPickerS, MColorPick, MColorsStat
 import io.suggest.ad.edit.m.edit.MQdEditS
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags._
-import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
 import io.suggest.ad.edit.m.layout.MLayoutS
@@ -29,6 +28,8 @@ import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._
 import org.scalajs.dom
 import io.suggest.ad.edit.m.layout.MSlideBlocks.MSlideBlocksFastEq
+import io.suggest.lk.c.PictureAh
+import io.suggest.lk.m.img.MPictureAh
 import io.suggest.msg.ErrorMsgs
 
 /**
@@ -293,9 +294,9 @@ class LkAdEditCircuit(
 
   /** Контроллер изображений. */
   private val pictureAh = new PictureAh(
-    api         = adEditApi,
-    uploadApi   = uploadApi,
-    modelRW     = mPictureAhRW
+    uploadApi       = uploadApi,
+    modelRW         = mPictureAhRW,
+    prepareUploadF  = adEditApi.prepareUpload
   )
 
   private val stripBgColorPickAfterAh = new ColorPickAfterStripAh( mDocSRw )

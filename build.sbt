@@ -165,7 +165,7 @@ lazy val lkCommonSjs = {
   val name = "lk-common-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/common"))
     //.enablePlugins(ScalaJSBundlerPlugin)
-    .dependsOn(commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs, reactImageCropSjs)
+    .dependsOn(commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs, reactImageCropSjs, asmCryptoSioSjs)
 }
 
 /** Самопальные биндинги для moment.js. */

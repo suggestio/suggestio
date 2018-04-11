@@ -1,6 +1,5 @@
 package io.suggest.ad.edit.m
 
-import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.common.MHand
 import io.suggest.common.html.HtmlConstants
@@ -64,32 +63,6 @@ case class ColorCheckboxChange(isEnabled: Boolean) extends ILkEditAction
 case class B64toBlobDone(b64Url: String, blob: Blob) extends ILkEditAction {
   override def toString = s"$productPrefix(${StringUtil.strLimitLen(b64Url, 16, HtmlConstants.ELLIPSIS)}${HtmlConstants.COMMA}$blob)"
 }
-
-
-/** Команда принудительной прочистки эджей, не исходит от юзера, а является продуктом работы других контроллеров. */
-case object PurgeUnusedEdges extends ILkEditAction
-
-
-/** Экшен запуска хеширования файла в указанном эдже.
-  * Хэширование с последующим аплоадом может запускаться из разных мест: quill, strip editor, etc. */
-case class FileHashStart(edgeUid: EdgeUid_t, blobUrl: String) extends ILkEditAction
-
-/** Завершение асинхронного хэширования файла. */
-case class FileHashRes(edgeUid: EdgeUid_t, blobUrl: String, hash: MHash, hex: Try[String]) extends ILkEditAction
-
-
-/** Завершён запрос подготовки сервера к аплоаду файла. */
-case class PrepUploadResp(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String) extends ILkEditAction
-/** Завершён запрос заливки файла на сервер. */
-case class UploadRes(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String, hostUrl: MHostUrl) extends ILkEditAction
-// TODO Объеденить оба case class'а?
-
-
-/** Экшен для запуска какой-то реакции на событие появления новой гистограммы в карте оных.
-  * Испускается из PictureAh, и попадает в DocEditAh для выставления bgColor на jd-элементах,
-  * связанных с соответствующей узлу картинкой.
-  */
-case class HandleNewHistogramInstalled(nodeId: String) extends ILkEditAction
 
 
 /** Сигнал изменения масштаба рендера. */

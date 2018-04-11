@@ -3,9 +3,16 @@ package io.suggest.lk.m
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
+import io.suggest.common.geom.d2.MSize2di
+import io.suggest.crypto.hash.MHash
+import io.suggest.file.up.MUploadResp
+import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.model.n2.node.meta.colors.MColorType
 import io.suggest.spa.DAction
+import io.suggest.url.MHostUrl
 import org.scalajs.dom.File
+
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -71,3 +78,33 @@ case object CropCancel extends IPictureCropAction
 case class CropChanged(percentCrop: PercentCrop, pixelCrop: PixelCrop) extends IPictureCropAction
 /** Подтверждение сохранения кропа. */
 case object CropSave extends IPictureCropAction
+
+
+
+/** Экшен запуска хеширования файла в указанном эдже.
+  * Хэширование с последующим аплоадом может запускаться из разных мест: quill, strip editor, etc. */
+case class FileHashStart(edgeUid: EdgeUid_t, blobUrl: String) extends ILkCommonAction
+
+/** Завершение асинхронного хэширования файла. */
+case class FileHashRes(edgeUid: EdgeUid_t, blobUrl: String, hash: MHash, hex: Try[String]) extends ILkCommonAction
+
+/** Завершён запрос подготовки сервера к аплоаду файла. */
+case class PrepUploadResp(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String) extends ILkCommonAction
+
+/** Завершён запрос заливки файла на сервер. */
+case class UploadRes(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String, hostUrl: MHostUrl) extends ILkCommonAction
+// TODO Объеденить оба case class'а?
+
+
+/** Экшен для запуска какой-то реакции на событие появления новой гистограммы в карте оных.
+  * Испускается из PictureAh, и попадает в DocEditAh для выставления bgColor на jd-элементах,
+  * связанных с соответствующей узлу картинкой.
+  */
+case class HandleNewHistogramInstalled(nodeId: String) extends ILkCommonAction
+
+/** Команда принудительной прочистки эджей, не исходит от юзера, а является продуктом работы других контроллеров. */
+case object PurgeUnusedEdges extends ILkCommonAction
+
+/** Уведомить систему о ширине и длине загруженной картинки. */
+case class SetImgWh(edgeUid: EdgeUid_t, wh: MSize2di) extends ILkCommonAction
+

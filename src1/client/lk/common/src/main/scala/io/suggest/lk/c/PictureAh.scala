@@ -1,36 +1,32 @@
-package io.suggest.ad.edit.c
+package io.suggest.lk.c
 
 import com.github.dominictobias.react.image.crop.PercentCrop
 import diode._
-import io.suggest.ad.edit.m._
-import io.suggest.ad.edit.m.edit.pic.MPictureAh
-import io.suggest.ad.edit.m.pop.MPictureCropPopup
-import io.suggest.ad.edit.srv.ILkAdEditApi
 import io.suggest.color.{MHistogram, MHistogramWs}
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.asm.HashWwTask
 import io.suggest.crypto.hash.{HashesHex, MHashes}
+import io.suggest.file.up.{MFile4UpProps, MFileUploadS, MUploadResp}
 import io.suggest.file.{MJsFileInfo, MSrvFileInfo}
-import io.suggest.file.up.{MFile4UpProps, MFileUploadS}
 import io.suggest.i18n.{MMessage, MsgCodes}
-import io.suggest.img.{MImgEdgeWithOps, MImgFmts}
 import io.suggest.img.crop.MCrop
+import io.suggest.img.{MImgEdgeWithOps, MImgFmts}
 import io.suggest.jd.{MJdEdge, MJdEdgeId}
-import io.suggest.jd.render.m.SetImgWh
 import io.suggest.js.UploadConstants
 import io.suggest.lk.m._
+import io.suggest.lk.m.img.{MPictureAh, MPictureCropPopup}
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
-import io.suggest.sjs.common.log.Log
-import org.scalajs.dom.raw.URL
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import japgolly.univeq._
+import io.suggest.sjs.common.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.IUploadApi
 import io.suggest.ws.MWsMsgTypes
 import io.suggest.ws.pool.m.{MWsConnTg, WsChannelMsg, WsEnsureConn}
 import io.suggest.ww._
+import japgolly.univeq._
+import org.scalajs.dom.raw.URL
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -44,9 +40,9 @@ import scala.util.Success
   * Description: Контроллер управления картинками.
   */
 class PictureAh[M](
-                    api         : ILkAdEditApi,
-                    uploadApi   : IUploadApi,
-                    modelRW     : ModelRW[M, MPictureAh]
+                    prepareUploadF  : MFile4UpProps => Future[MUploadResp],
+                    uploadApi       : IUploadApi,
+                    modelRW         : ModelRW[M, MPictureAh]
                   )
   extends ActionHandler(modelRW)
   with Log
@@ -301,8 +297,7 @@ class PictureAh[M](
                       )
                       val edgeUid = edge0.id
                       val blobUrl = fileJs0.blobUrl.get
-                      api
-                        .prepareUpload( upProps )
+                      prepareUploadF(upProps)
                         .transform { tryRes =>
                           Success( PrepUploadResp(tryRes, edgeUid, blobUrl) )
                         }

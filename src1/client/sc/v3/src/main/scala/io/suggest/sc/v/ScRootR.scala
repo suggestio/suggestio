@@ -17,6 +17,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.v.menu.{AboutSioR, EditAdR, EnterLkRowR, MenuR}
+import io.suggest.spa.OptFastEq
 import scalacss.ScalaCssReact._
 
 /**
@@ -52,15 +53,17 @@ class ScRootR (
   type Props = ModelProxy[MScRoot]
 
   protected[this] case class State(
-                                    scCssArgsC     : ReactConnectProxy[IScCssArgs],
-                                    gridPropsOptC  : ReactConnectProxy[gridR.PropsVal],
-                                    headerPropsC   : ReactConnectProxy[Option[headerR.PropsVal]],
-                                    wcPropsOptC    : ReactConnectProxy[Option[welcomeR.PropsVal]],
-                                    enterLkRowC    : ReactConnectProxy[Option[enterLkRowR.PropsVal]],
-                                    editAdC        : ReactConnectProxy[Option[editAdR.PropsVal]],
-                                    aboutSioC      : ReactConnectProxy[Option[aboutSioR.PropsVal]],
-                                    searchC        : ReactConnectProxy[MScSearch],
-                                    menuC          : ReactConnectProxy[menuR.PropsVal],
+                                    scCssArgsC          : ReactConnectProxy[IScCssArgs],
+                                    gridPropsOptC       : ReactConnectProxy[gridR.PropsVal],
+                                    headerPropsC        : ReactConnectProxy[Option[headerR.PropsVal]],
+                                    wcPropsOptC         : ReactConnectProxy[Option[welcomeR.PropsVal]],
+                                    enterLkRowC         : ReactConnectProxy[Option[enterLkRowR.PropsVal]],
+                                    editAdC             : ReactConnectProxy[Option[editAdR.PropsVal]],
+                                    aboutSioC           : ReactConnectProxy[Option[aboutSioR.PropsVal]],
+                                    searchC             : ReactConnectProxy[MScSearch],
+                                    searchOpenedSomeC   : ReactConnectProxy[Some[Boolean]],
+                                    menuC               : ReactConnectProxy[menuR.PropsVal],
+                                    menuOpenedSomeC     : ReactConnectProxy[Some[Boolean]]
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -78,91 +81,94 @@ class ScRootR (
 
 
     def render(s: State): VdomElement = {
+      val scCss = getScCssF()
+
+      // Рендерим всё линейно, а не деревом, чтобы избежать вложенных connect.apply-фунцкий и сопутствующих эффектов.
+      // Содержимое правой панели (панель поиска)
+      // search (правый) sidebar.
+      val gridBody = <.div(
+        // Ссылаемся на стиль.
+        scCss.Root.root,
+
+        // Экран приветствия узла:
+        s.wcPropsOptC { welcomeR.apply },
+
+        // Компонент заголовка выдачи:
+        s.headerPropsC { headerR.apply },
+
+        // Рендер плитки карточек узла:
+        s.gridPropsOptC { gridR.apply }
+      )
+
+      val searchBarBody = s.searchC { searchR.apply }
+
+      val menuSideBarBodyInner = <.div(
+        // Строка входа в личный кабинет
+        s.enterLkRowC { enterLkRowR.apply },
+
+        // Кнопка редактирования карточки.
+        s.editAdC { editAdR.apply },
+
+        // Рендер кнопк
+        s.aboutSioC { aboutSioR.apply }
+      )
+      val menuSideBarBody = s.menuC { menuPropsProxy =>
+        menuR( menuPropsProxy )( menuSideBarBodyInner )
+      }
+
+      val css_initial = scalacss.internal.Literal.Typed.initial.value
+
+      val searchContentStyl = new StyleProps {
+        override val zIndex    = scCss.Search.Z_INDEX
+        override val overflowY = css_initial
+      }
+      val contentStyl = new StyleProps {
+        override val overflowY = css_initial
+      }
+      val overlayStyl = new StyleProps {
+        override val zIndex = 3
+      }
+
+      val searchStyles = new SidebarStyles {
+        override val sidebar = searchContentStyl
+        override val content = contentStyl
+        override val overlay = overlayStyl
+      }
+
+      val searchSideBar = s.searchOpenedSomeC { searchOpenedSomeProxy =>
+        Sidebar(
+          new SidebarProps {
+            override val sidebar      = searchBarBody.rawNode
+            override val onSetOpen    = _onOpenSearchSidebarF
+            override val open         = searchOpenedSomeProxy.value.value
+            override val transitions  = true
+            override val touch        = true
+            override val pullRight    = true
+            override val styles       = searchStyles
+          }
+        )( gridBody )
+      }
+
+      val menuSideBar = s.menuOpenedSomeC { menuOpenedSomeProxy =>
+        Sidebar(
+          new SidebarProps {
+            override val sidebar      = menuSideBarBody.rawNode
+            override val pullRight    = false
+            override val touch        = true
+            override val transitions  = true
+            override val docked       = menuOpenedSomeProxy.value.value
+            override val onSetOpen    = _onOpenMenuSidebarF
+          }
+        )( searchSideBar )
+      }
+
       <.div(
         // Рендер стилей перед снаружи и перед остальной выдачей.
         s.scCssArgsC { scCssR.apply },
 
-        s.searchC { searchPropsProxy =>
-        s.menuC { menuPropsProxy =>
-          val scCss = getScCssF()
-
-          val INITIAL = scalacss.internal.Literal.Typed.initial.value
-
-          val searchContentStyl = new StyleProps {
-            override val zIndex    = scCss.Search.Z_INDEX
-            override val overflowY = INITIAL
-          }
-          val contentStyl = new StyleProps {
-            override val overflowY = INITIAL
-          }
-          val overlayStyl = new StyleProps {
-            override val zIndex = 3
-          }
-
-          val searchStyles = new SidebarStyles {
-            override val sidebar = searchContentStyl
-            override val content = contentStyl
-            override val overlay = overlayStyl
-          }
-
-          Sidebar(
-            new SidebarProps {
-              override val sidebar      = {
-                menuR( menuPropsProxy )(
-                  <.div(
-                    // Строка входа в личный кабинет
-                    s.enterLkRowC { enterLkRowR.apply },
-
-                    // Кнопка редактирования карточки.
-                    s.editAdC { editAdR.apply },
-
-                    // Рендер кнопк
-                    s.aboutSioC { aboutSioR.apply }
-                  )
-                ).rawNode
-              }
-              override val pullRight    = false
-              override val touch        = true
-              override val transitions  = true
-              override val docked       = menuPropsProxy.value.menuS.opened
-              override val onSetOpen    = _onOpenMenuSidebarF
-            }
-          ) {
-            // Содержимое правой панели (панель поиска)
-            // search (правый) sidebar.
-            Sidebar(
-              new SidebarProps {
-                override val sidebar      = searchR( searchPropsProxy ).rawNode
-                override val onSetOpen    = _onOpenSearchSidebarF
-                override val open         = searchPropsProxy.value.isShown
-                override val transitions  = true
-                override val touch        = true
-                override val pullRight    = true
-                override val styles       = searchStyles
-              }
-            )(
-
-              <.div(
-                // Ссылаемся на стиль.
-                scCss.Root.root,
-
-                // Экран приветствия узла:
-                s.wcPropsOptC { welcomeR.apply },
-
-                // Компонент заголовка выдачи:
-                s.headerPropsC { headerR.apply },
-
-                // Рендер плитки карточек узла:
-                s.gridPropsOptC { gridR.apply }
-
-              )
-
-            )
-          }
-        }
-        }
-
+        menuSideBar
       )
+
     }
 
   }
@@ -256,7 +262,15 @@ class ScRootR (
             aboutNodeId = props.internals.conf.aboutSioNodeId
           )
           Some(propsVal)
-        }
+        },
+
+        menuOpenedSomeC = propsProxy.connect { props =>
+          Some( props.index.menu.opened )
+        }( OptFastEq.OptValueEq ),
+
+        searchOpenedSomeC = propsProxy.connect { props =>
+          Some( props.index.search.isShown )
+        }( OptFastEq.OptValueEq )
 
       )
     }
