@@ -5,7 +5,7 @@ import japgolly.scalajs.react.{JsComponent, ReactEvent, Children}
 
 import scala.scalajs.js
 import scala.scalajs.js.{UndefOr, |}
-import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -90,6 +90,8 @@ trait DatePickerPropsR extends js.Object {
   val peekNextMonth: UndefOr[Boolean] = js.undefined
 
   val placeholderText: UndefOr[String] = js.undefined
+
+  val popperPlacement: UndefOr[String] = js.undefined
 
   val popoverAttachment: UndefOr[String] = js.undefined
 

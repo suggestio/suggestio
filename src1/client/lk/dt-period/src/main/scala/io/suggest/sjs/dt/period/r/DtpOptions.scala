@@ -1,6 +1,6 @@
 package io.suggest.sjs.dt.period.r
 
-import com.github.hacker0x01.react.date.picker.{DatePickerPropsR, DatePickerR, Date_t}
+import com.github.hacker0x01.react.date.picker.{DatePickerPropsR, DatePickerR, Date_t, PopperPlacements}
 import com.momentjs.Moment
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adv.AdvConstants
@@ -145,6 +145,7 @@ object DtpOptions {
                                   js.undefined
                               }
                               override val maxDate: UndefOr[Date_t] = fn.maxDate
+                              override val popperPlacement: UndefOr[String] = PopperPlacements.`bottom-end`
                             }
                           )
                         )
