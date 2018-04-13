@@ -118,6 +118,7 @@ object MJdEdge {
   * @param fileSrv КроссПлатформенная инфа по файлу-узлу на стороне сервера.
   */
 case class MJdEdge(
+                    // TODO Предикат вообще тут неуместен. Это уровень представления, его нужно унести на уровень id или просто удалить: jdEdge описывает один ресурс (файл, текст, etc), а куда его привязать - это уже другой уровень.
                     predicate           : MPredicate,   // TODO MPredicate заменить на MPredicates.JdContent.Child или что-то типа него.
                     override val id     : EdgeUid_t,
                     text                : Option[String] = None,

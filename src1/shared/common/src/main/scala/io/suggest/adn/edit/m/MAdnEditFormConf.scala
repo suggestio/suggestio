@@ -1,8 +1,9 @@
-package io.suggest.adn.edit
+package io.suggest.adn.edit.m
 
+import io.suggest.ctx.ICtxIdStrOpt
 import japgolly.univeq.UnivEq
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -28,5 +29,11 @@ object MAdnEditFormConf {
   * @param nodeId id редактируемого узла.
   */
 case class MAdnEditFormConf(
-                             nodeId: String
+                             nodeId: String,
                            )
+  extends ICtxIdStrOpt
+{
+
+  override def ctxIdOpt: Option[String] = None
+
+}

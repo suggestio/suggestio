@@ -1,7 +1,6 @@
 package io.suggest.adn.edit.m
 
 import diode.FastEq
-import io.suggest.adn.edit.{MAdnEditForm, MAdnEditFormConf}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 
@@ -16,7 +15,8 @@ object MLkAdnEditRoot {
   implicit object MLkAdnEditRootFastEq extends FastEq[MLkAdnEditRoot] {
     override def eqv(a: MLkAdnEditRoot, b: MLkAdnEditRoot): Boolean = {
       (a.node ===* b.node) &&
-        (a.conf ===* b.conf)
+        (a.conf ===* b.conf) &&
+        (a.popups ===* b.popups)
     }
   }
 
@@ -32,16 +32,16 @@ object MLkAdnEditRoot {
   */
 case class MLkAdnEditRoot(
                            conf   : MAdnEditFormConf,
-                           node   : MAdnNodeS
+                           node   : MAdnNodeS,
+                           popups : MAdnEditPopups    = MAdnEditPopups.empty,
                          ) {
 
-  def withNode(node: MAdnNodeS)         = copy(node = node)
+  def withNode(node: MAdnNodeS)             = copy(node = node)
+  def withPopups(popups: MAdnEditPopups)    = copy(popups = popups)
 
   /** Экспорт в кросс-платформенный класс формы редактирования adn-узла. */
   def toForm: MAdnEditForm = {
-    MAdnEditForm(
-      mmeta = node.meta
-    )
+    node.toForm
   }
 
 }

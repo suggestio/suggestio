@@ -8,9 +8,12 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.m.DocBodyClick
+import io.suggest.jd.MJdEdgeId
+import io.suggest.lk.m.{DocBodyClick, MFormResourceKey}
 import io.suggest.lk.r.PropTableR
 import io.suggest.lk.r.color.{ColorBtnR, ColorPickerR}
+import io.suggest.lk.r.img.ImgEditBtnR
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.meta.colors.{MColorType, MColorTypes}
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -25,7 +28,9 @@ import io.suggest.spa.OptFastEq
 class LkAdnEditFormR(
                       val oneRowR         : OneRowR,
                       val colorPickerR    : ColorPickerR,
-                      val colorBtnR       : ColorBtnR
+                      val colorBtnR       : ColorBtnR,
+                      val imgEditBtnR     : ImgEditBtnR,
+                      wcFgContR           : WcFgContR,
                     ) {
 
   import oneRowR.OneRowRValueValFastEq
@@ -47,6 +52,8 @@ class LkAdnEditFormR(
                     bgColorC        : ReactConnectProxy[colorBtnR.Props_t],
                     fgColorC        : ReactConnectProxy[colorBtnR.Props_t],
                     colorPickerC    : ReactConnectProxy[colorPickerR.Props_t],
+                    logoEditBtnC    : ReactConnectProxy[imgEditBtnR.Props_t],
+                    wcFgBtnC        : ReactConnectProxy[imgEditBtnR.Props_t],
                   )
 
   private def __colorTd(cssClasses: List[String])(content: TagMod): VdomElement = {
@@ -108,8 +115,8 @@ class LkAdnEditFormR(
 
         <.div(
           css.logoBar,
-          // TODO Логотип узла
-          "LOGO"
+
+          s.logoEditBtnC { imgEditBtnR.apply }
         ),
 
         <.div(
@@ -141,11 +148,21 @@ class LkAdnEditFormR(
           // Поле описания аудитории.
           oneRowR( oneRowR.PropsVal( MsgCodes.`Audience.descr`, onAudienceDescrChange, s.audienceDescrC, isTextArea = true ) ),
 
+
           delimHr,
-          // TODO Экран приветствия
+
+          // Экран приветствия
+          wcFgContR(
+
+            // Картинка приветствия
+            s.wcFgBtnC { imgEditBtnR.apply }
+
+          ),
+
 
           delimHr,
           // TODO Фотографии магазина.
+
 
           delimHr,
 
@@ -213,6 +230,14 @@ class LkAdnEditFormR(
         }( OneRowRValueValFastEq )
       }
 
+      def __getImgSrcOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[String] = {
+        f(mroot.node.resView)
+          .flatMap { ei =>
+            mroot.node.edges.get( ei.edgeUid )
+          }
+          .flatMap(_.imgSrcOpt)
+      }
+
       State(
         nameC = propsProxy.connect { props =>
           oneRowR.ValueVal(
@@ -245,7 +270,33 @@ class LkAdnEditFormR(
               cssClass      = Some( css.colorPicker.htmlClass )
             )
           }
-        }( OptFastEq.Wrapped )
+        }( OptFastEq.Wrapped ),
+
+        logoEditBtnC = {
+          val logoResKey = MFormResourceKey(
+            pred = Some( MPredicates.Logo )
+          )
+          propsProxy.connect { props =>
+            imgEditBtnR.PropsVal(
+              src = __getImgSrcOpt(props)(_.logo),
+              resKey  = logoResKey,
+              bgColor = props.node.meta.colors.bg
+            )
+          }
+        },
+
+        wcFgBtnC = {
+          val wcFgResKey = MFormResourceKey(
+            pred = Some( MPredicates.WcFgImg )
+          )
+          propsProxy.connect { props =>
+            imgEditBtnR.PropsVal(
+              src = __getImgSrcOpt(props)(_.wcFg),
+              resKey = wcFgResKey
+            )
+          }
+        }
+
       )
     }
     .renderBackend[Backend]

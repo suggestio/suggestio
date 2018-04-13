@@ -3,7 +3,6 @@ package io.suggest.lk.m.img
 import diode.FastEq
 import io.suggest.color.MHistogram
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.img.MImgEdgeWithOps
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs

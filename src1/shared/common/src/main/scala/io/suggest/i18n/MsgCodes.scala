@@ -246,5 +246,7 @@ object MsgCodes {
   val `Show.ad.opened` = "Show.ad.opened"
 
   val `invalid_url` = "invalid_url"
+  val `Welcome.screen` = "Welcome.screen"
+  val `Welcome.bg.hint` = "Welcome.bg.hint"
 
 }

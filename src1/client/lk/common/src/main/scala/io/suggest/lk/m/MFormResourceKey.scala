@@ -37,7 +37,7 @@ object MFormResourceKey {
   * @param nodePath Путь дa узла в jd-дереве, если есть.
   */
 case class MFormResourceKey(
-                             pred     : Option[MPredicate],
-                             edgeUid  : Option[EdgeUid_t],
-                             nodePath : Option[NodePath_t],
+                             pred     : Option[MPredicate] = None,
+                             edgeUid  : Option[EdgeUid_t]  = None,
+                             nodePath : Option[NodePath_t] = None,
                            )

@@ -2,6 +2,7 @@ package io.suggest.lk.r.img
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProps}
+import io.suggest.color.MColorData
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
@@ -26,12 +27,14 @@ class ImgEditBtnR {
 
   case class PropsVal(
                        src        : Option[String],
-                       resKey     : MFormResourceKey
+                       resKey     : MFormResourceKey,
+                       bgColor    : Option[MColorData] = None,
                      )
   implicit object ImgEditBtnRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.src ===* b.src) &&
-        (a.resKey ==* b.resKey)
+        (a.resKey ==* b.resKey) &&
+        (a.bgColor ===* b.bgColor)
     }
   }
 
@@ -66,6 +69,10 @@ class ImgEditBtnR {
 
       <.div(
         ^.`class` := Css.flat( C.IMAGE, Css.Size.M ),
+
+        propsVal.bgColor.whenDefined { bgColor =>
+          ^.backgroundColor := bgColor.hexCode
+        },
 
         propsVal.src.fold[VdomElement] {
           val upCss = Css.Lk.Uploads

@@ -296,6 +296,8 @@ class JsMessagesUtil @Inject() (
       MC.`Audience.descr` ::
       MC.`Bg.color` ::
       MC.`Fg.color.of.sc.hint` ::
+      MC.`Welcome.screen` ::
+      MC.`Welcome.bg.hint` ::
       Nil
   }
 

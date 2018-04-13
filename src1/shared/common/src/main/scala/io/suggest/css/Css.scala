@@ -378,6 +378,7 @@ object Css {
     def TABLE     = "prop"
     def TD_NAME   = TABLE + UNDERSCORE + NAME
     def TD_VALUE  = TABLE + UNDERSCORE + VALUE
+    def BLOCK     = __ + _BLOCK
   }
 
 

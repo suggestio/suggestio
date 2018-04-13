@@ -1,7 +1,6 @@
 package util.ad
 
 import javax.inject.{Inject, Named, Singleton}
-
 import io.suggest.ad.blk.BlockWidths
 import io.suggest.color.MHistogram
 import io.suggest.common.geom.d2.MSize2di
@@ -9,7 +8,7 @@ import io.suggest.file.MSrvFileInfo
 import io.suggest.jd.{MJdAdData, MJdEdge}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.JdTag.Implicits._
-import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicate, MPredicates}
 import io.suggest.model.n2.media.{MFileMetaHash, MMedia, MMediasCache}
 import io.suggest.model.n2.node.{MNode, MNodesCache}
 import io.suggest.url.MHostInfo
@@ -52,26 +51,6 @@ class JdAdUtil @Inject()(
   def imgPredicate = MPredicates.JdContent.Image
 
   def videoPredicate = MPredicates.JdContent.Video
-
-
-  /** Выделение img-эджей из общего списка эджей рекламной карточки.
-    *
-    * @param edges Эджи рекламной карточки.
-    * @return Итератор, пригодный для использования в пакетом imgs-рендере,
-    *         например в renderAdDocImgs().
-    */
-  def prepareOrigImgEdges(edges: MNodeEdges): Seq[(MEdge, MImg3)] = {
-    edges
-      // TODO Надо ли тут Bg-предикат? по идее, он устарел ещё до ввода jd-редактора.
-      .withPredicateIter( imgPredicate, MPredicates.Bg )
-      .map { medge =>
-        //LOGGER.info(s"prepareImgEdges(): E#${medge.doc.uid.orNull} img=${medge.info.dynImgArgs}")
-        // По факту, тут всегда будет оригинал, даже если без .original. Потому что в jd-карточках эджи НЕ хранят в себе кроп или иные модификации.
-        val origImg = MImg3(medge).original
-        medge -> origImg
-      }
-      .toSeq
-  }
 
 
   /** Получить на руки список MMedia для подготавливаемых картинок.
@@ -161,16 +140,19 @@ class JdAdUtil @Inject()(
     // Получены медиа-файлы на руки.
     val iter = for {
       // Пройти по BgImg-эджам карточки:
-      (medge, mimg)   <- imgsEdges.toIterator
+      ((medge, mimg), i) <- imgsEdges.toIterator.zipWithIndex
       // id узла эджа -- это идентификатор картинки.
-      edgeUid         <- medge.doc.uid.iterator
       nodeId          <- medge.nodeIds.iterator
       mmedia          <- mediasMap.get(mimg.dynImgId.mediaId).iterator
     } yield {
+      // uid как-то получился обязательным, хотя TODO его следует сделать опциональным в MJdEdge, и убрать getOrElse-костыль:
+      val edgeUid = medge.doc.uid.getOrElse( -i )
+
       LOGGER.trace(s"$logPrefix E#$edgeUid ${mmedia.idOrNull} imgFmt=${mmedia.file.imgFormatOpt} ${mmedia.file.mime}")
       // Получить инфу по хосту, на котором хранится данная картинка.
       val jdEdge = MJdEdge(
-        predicate = imgPredicate,
+        // Тут раньше безусловно выставлялся предикат imgPredicate, но с adn-редактором понадобились и другие предикаты.
+        predicate = medge.predicate,
         id        = edgeUid,
         // url не ставим, потому что очень нужен около-оригинальная картинка, для кропа например.
         fileSrv   = Some(MSrvFileInfo(
@@ -284,6 +266,27 @@ class JdAdUtil @Inject()(
     }
   }
 
+
+  /** Выделение img-эджей из общего списка эджей рекламной карточки.
+    *
+    * @param edges Эджи рекламной карточки.
+    * @return Итератор, пригодный для использования в пакетом imgs-рендере,
+    *         например в renderAdDocImgs().
+    */
+  def collectImgEdges(nodeEdges: MNodeEdges, predicates: Seq[MPredicate]): Seq[(MEdge, MImg3)] = {
+    nodeEdges
+      // TODO Надо ли тут Bg-предикат? по идее, он устарел ещё до ввода jd-редактора.
+      .withPredicateIter( predicates: _* )
+      .map { medge =>
+        //LOGGER.info(s"prepareImgEdges(): E#${medge.doc.uid.orNull} img=${medge.info.dynImgArgs}")
+        // По факту, тут всегда будет оригинал, даже если без .original. Потому что в jd-карточках эджи НЕ хранят в себе кроп или иные модификации.
+        val origImg = MImg3(medge).original
+        medge -> origImg
+      }
+      .toSeq
+  }
+
+
   /** Настраиваемая логика рендера карточки. */
   trait JdAdDataMakerBase extends Product {
 
@@ -296,10 +299,11 @@ class JdAdUtil @Inject()(
 
     def nodeEdges: MNodeEdges
 
+
     // Собираем картинки, используемые в карточке.
     // Следует помнить, что в jd-карточках модификация картинки задаётся в теге. Эджи всегда указывают на оригинал.
     lazy val origImgsEdges = {
-      val ie = prepareOrigImgEdges( nodeEdges )
+      val ie = collectImgEdges( nodeEdges, imgPredicate :: MPredicates.Bg :: Nil )
       LOGGER.trace(s"$logPrefix Found ${ie.size} img.edges: ${ie.iterator.map(_._2.dynImgId.fileName).mkString(", ")}")
       ie
     }
@@ -398,7 +402,7 @@ class JdAdUtil @Inject()(
   /** Внутренняя инфа по результату пре-рендера одного img-edge. */
   protected[this] case class MImgRenderInfo(
                                              medge        : MEdge,
-                                             sourceImg         : MImg3,
+                                             sourceImg    : MImg3,
                                              dynCallArgs  : MImgT,
                                              imgSzReal    : MSize2di
                                            )
@@ -413,9 +417,9 @@ class JdAdUtil @Inject()(
     case class edit(mad: MNode)
                    (implicit ctx: Context) extends JdAdDataMakerBase {
 
-      override val tpl = getNodeTpl(mad)
+      override lazy val tpl = getNodeTpl(mad)
 
-      override val nodeEdges = mad.edges
+      override lazy val nodeEdges = mad.edges
 
       override def nodeId = None
 
@@ -423,9 +427,10 @@ class JdAdUtil @Inject()(
 
       override def imgJdEdgesFut: Future[Seq[MJdEdge]] = {
         val _mediaHostsMapFut = mediaHostsMapFut
+        val _mediaNodesMapFut = mediaNodesMapFut
         for {
           mediasMap           <- origImgMediasMapFut
-          mediaNodesMap       <- mediaNodesMapFut
+          mediaNodesMap       <- _mediaNodesMapFut
           imgMedia2hostsMap   <- _mediaHostsMapFut
         } yield {
           LOGGER.trace(s"$logPrefix Found ${mediasMap.size} linked img medias.")
