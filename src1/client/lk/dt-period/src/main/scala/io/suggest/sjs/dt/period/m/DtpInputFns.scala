@@ -30,7 +30,7 @@ object DtpInputFns extends StringEnum[DtpInputFn] {
         cr.dateStart.to[Moment].tomorrow
       }
     }
-    override def monthsShown = 2
+    override def monthsShown = 3
     override def maxDate: Moment = super.maxDate.tomorrow
     override def selectsStart: Boolean = false
   }
