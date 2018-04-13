@@ -3,10 +3,11 @@ package io.suggest.ad.edit.v.pop
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.MAeRoot
 import io.suggest.ad.edit.v.LkAdEditCss
-import io.suggest.lk.m.{MDeleteConfirmPopupS, MErrorPopupS}
+import io.suggest.lk.m.{MDeleteConfirmPopupS, MErrorPopupS, MFormResourceKey}
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.lk.r.crop.CropPopupR
 import io.suggest.lk.r.{DeleteConfirmPopupR, ErrorPopupR}
+import io.suggest.model.n2.edge.MPredicates
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -58,8 +59,8 @@ class LaePopupsR(
 
   val component = ScalaComponent.builder[Props]("LaePops")
     .initialStateFromProps { rootProxy =>
+      val frkPredSome = Some( MPredicates.JdBgPred )
       State(
-
         popupsContPropsC = rootProxy.connect { mroot =>
           PopupsContR.PropsVal(
             visible = mroot.popups.nonEmpty
@@ -77,7 +78,12 @@ class LaePopupsR(
             cropPopupR.PropsVal(
               imgSrc      = imgSrc,
               percentCrop = mcrop.percentCrop,
-              popCssClass = lkAdEditCss.Crop.popup.htmlClass :: Nil
+              popCssClass = lkAdEditCss.Crop.popup.htmlClass :: Nil,
+              resKey      = MFormResourceKey(
+                pred      = frkPredSome,
+                edgeUid   = Some( edge.jdEdge.id ),
+                nodePath  = root.doc.jdArgs.renderArgs.selPath
+              )
             )
           }
         },

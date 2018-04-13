@@ -6,17 +6,18 @@ import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.m.{CropCancel, CropChanged, CropSave}
+import io.suggest.lk.m.{CropCancel, CropChanged, CropSave, MFormResourceKey}
 import io.suggest.lk.pop.PopupR
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
 import io.suggest.ueq.ReactImageCropUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -29,13 +30,15 @@ class CropPopupR {
   case class PropsVal(
                        imgSrc       : String,
                        percentCrop  : PercentCrop,
-                       popCssClass  : List[String]
+                       popCssClass  : List[String],
+                       resKey       : MFormResourceKey
                      )
   implicit object CropPopupPropsFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.imgSrc ===* b.imgSrc) &&
         (a.percentCrop ===* b.percentCrop) &&
-        (a.popCssClass ===* b.popCssClass)
+        (a.popCssClass ===* b.popCssClass) &&
+        (a.resKey ==* b.resKey)
     }
   }
 
@@ -45,15 +48,21 @@ class CropPopupR {
   class Backend($: BackendScope[Props, Unit]) {
 
     private def closeBtnClick: Callback = {
-      dispatchOnProxyScopeCB( $, CropCancel )
+      dispatchOnProxyScopeCBf($) { p: Props =>
+        CropCancel( p.value.get.resKey )
+      }
     }
 
     private def saveBtnClick: Callback = {
-      dispatchOnProxyScopeCB( $, CropSave )
+      dispatchOnProxyScopeCBf($) { p: Props =>
+        CropSave( p.value.get.resKey )
+      }
     }
 
     private def onCropChange( pcCrop: PercentCrop, pxCrop: PixelCrop ): Callback = {
-      dispatchOnProxyScopeCB( $, CropChanged(pcCrop, pxCrop) )
+      dispatchOnProxyScopeCBf($) { p: Props =>
+        CropChanged(pcCrop, pxCrop, p.value.get.resKey)
+      }
     }
     private val onCropChangeF = ReactCommonUtil.cbFun2ToJsCb( onCropChange )
 

@@ -5,14 +5,15 @@ import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.m.PictureFileChanged
+import io.suggest.lk.m.{MFormResourceKey, PictureFileChanged}
 import io.suggest.msg.Messages
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
 import io.suggest.sjs.common.model.dom.DomListSeq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}
+import japgolly.univeq._
 import org.scalajs.dom
 
 /**
@@ -24,11 +25,13 @@ import org.scalajs.dom
 class ImgEditBtnR {
 
   case class PropsVal(
-                       src        : Option[String]
+                       src        : Option[String],
+                       resKey     : MFormResourceKey
                      )
   implicit object ImgEditBtnRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      a.src ===* b.src
+      (a.src ===* b.src) &&
+        (a.resKey ==* b.resKey)
     }
   }
 
@@ -51,7 +54,9 @@ class ImgEditBtnR {
     }
 
     private def _picFileChanged(files: Seq[dom.File]): Callback = {
-      dispatchOnProxyScopeCB($, PictureFileChanged(files))
+      dispatchOnProxyScopeCBf($) { props: Props =>
+        PictureFileChanged(files, props.value.resKey)
+      }
     }
 
 

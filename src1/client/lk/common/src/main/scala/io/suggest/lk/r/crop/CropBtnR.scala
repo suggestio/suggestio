@@ -10,7 +10,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
 
 /**
   * Suggest.io
@@ -28,8 +28,9 @@ class CropBtnR {
 
     /** Клик по кнопке кадрирования картинки. */
     private def _onCropClick: Callback = {
-      // TODO Запихать props (resKey) в отправляемый CropOpen
-      dispatchOnProxyScopeCB($, CropOpen)
+      dispatchOnProxyScopeCBf($) { props: Props =>
+        CropOpen( props.value.get )
+      }
     }
 
     def render(propsOptProxy: Props): VdomElement = {

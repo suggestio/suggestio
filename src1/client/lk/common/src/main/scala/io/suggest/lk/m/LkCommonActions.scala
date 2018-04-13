@@ -65,19 +65,19 @@ case object DocBodyClick extends ILkCommonAction
 
 
 /** Изменилось file-поле выбора картинки. */
-case class PictureFileChanged(files: Seq[File]) extends ILkCommonAction
+case class PictureFileChanged(files: Seq[File], resKey: MFormResourceKey) extends ILkCommonAction
 
 
 sealed trait IPictureCropAction extends ILkCommonAction
 
 /** Сигнал к отрытию попапа редактирования изображения. */
-case object CropOpen extends IPictureCropAction
+case class CropOpen(resKey: MFormResourceKey) extends IPictureCropAction
 /** Сигнал к закрытию попапа кропа изображения. */
-case object CropCancel extends IPictureCropAction
+case class CropCancel(resKey: MFormResourceKey) extends IPictureCropAction
 /** Измение кропа текущего изображения. */
-case class CropChanged(percentCrop: PercentCrop, pixelCrop: PixelCrop) extends IPictureCropAction
+case class CropChanged(percentCrop: PercentCrop, pixelCrop: PixelCrop, resKey: MFormResourceKey) extends IPictureCropAction
 /** Подтверждение сохранения кропа. */
-case object CropSave extends IPictureCropAction
+case class CropSave(resKey: MFormResourceKey) extends IPictureCropAction
 
 
 
@@ -89,10 +89,10 @@ case class FileHashStart(edgeUid: EdgeUid_t, blobUrl: String) extends ILkCommonA
 case class FileHashRes(edgeUid: EdgeUid_t, blobUrl: String, hash: MHash, hex: Try[String]) extends ILkCommonAction
 
 /** Завершён запрос подготовки сервера к аплоаду файла. */
-case class PrepUploadResp(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String) extends ILkCommonAction
+case class PrepUploadResp(tryRes: Try[MUploadResp], edgeUid: EdgeUid_t, blobUrl: String) extends ILkCommonAction
 
 /** Завершён запрос заливки файла на сервер. */
-case class UploadRes(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String, hostUrl: MHostUrl) extends ILkCommonAction
+case class UploadRes(tryRes: Try[MUploadResp], edgeUid: EdgeUid_t, blobUrl: String, hostUrl: MHostUrl) extends ILkCommonAction
 // TODO Объеденить оба case class'а?
 
 

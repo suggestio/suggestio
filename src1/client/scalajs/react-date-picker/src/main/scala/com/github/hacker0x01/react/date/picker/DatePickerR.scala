@@ -23,7 +23,7 @@ object DatePickerR {
 
 
 /** Native component facade. */
-@JSImport("react-datepicker", JSImport.Namespace)
+@JSImport("react-datepicker", JSImport.Default)
 @js.native
 protected object DatePickerJs extends js.Object
 

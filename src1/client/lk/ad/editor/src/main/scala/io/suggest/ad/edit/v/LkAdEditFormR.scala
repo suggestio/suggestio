@@ -24,6 +24,7 @@ import io.suggest.lk.r.{SlideBlockR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorPickerR, ColorsSuggestR}
 import io.suggest.lk.r.crop.CropBtnR
 import io.suggest.lk.r.img.ImgEditBtnR
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.spa.OptFastEq
@@ -315,7 +316,7 @@ class LkAdEditFormR(
       }
 
       // Один общий ключ на все отображаемые ресурсы, которые не требуют уникального ключа.
-      val formResKey = MFormResourceKey.empty
+      val imgResKeyPredSome = Some( MPredicates.JdContent.Image )
 
       State(
         jdPreviewArgsC = p.connect { mroot =>
@@ -516,11 +517,19 @@ class LkAdEditFormR(
           }
         }( OptFastEq.Wrapped ),
 
-        imgEditBtnPropsC = p.connect { mroot =>
-          imgEditBtnR.PropsVal(
-            src = mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
-              .flatMap(_.imgSrcOpt)
-          )
+        imgEditBtnPropsC = {
+          p.connect { mroot =>
+            val bgEdgeOpt = mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
+            imgEditBtnR.PropsVal(
+              src = bgEdgeOpt
+                .flatMap(_.imgSrcOpt),
+              resKey = MFormResourceKey(
+                pred     = imgResKeyPredSome,
+                edgeUid  = bgEdgeOpt.map(_.jdEdge.id),
+                nodePath = mroot.doc.jdArgs.renderArgs.selPath
+              )
+            )
+          }
         },
 
         upStateOptC = p.connect { mroot =>
@@ -547,7 +556,11 @@ class LkAdEditFormR(
             bgEdge <- mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
             if bgEdge.imgSrcOpt.nonEmpty
           } yield {
-            formResKey
+            MFormResourceKey(
+              pred     = imgResKeyPredSome,
+              edgeUid  = Some( bgEdge.jdEdge.id ),
+              nodePath = mroot.doc.jdArgs.renderArgs.selPath
+            )
           }
         }( OptFastEq.Wrapped )
 

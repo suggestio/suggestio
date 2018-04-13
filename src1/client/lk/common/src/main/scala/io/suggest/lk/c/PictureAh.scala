@@ -40,16 +40,16 @@ import scala.util.Success
   * Created: 18.09.17 19:03
   * Description: Контроллер управления картинками.
   */
-class PictureAh[M](
-                    prepareUploadRoute  : => Route,
-                    uploadApi           : IUploadApi,
-                    modelRW             : ModelRW[M, MPictureAh]
-                  )
+class PictureAh[V, M](
+                       prepareUploadRoute  : MFormResourceKey => Route,
+                       uploadApi           : IUploadApi,
+                       modelRW             : ModelRW[M, MPictureAh[V]]
+                     )(implicit picViewContAdp: IPictureViewAdp[V])
   extends ActionHandler(modelRW)
   with Log
 {
 
-  private type ResPair_t = (MPictureAh, Effect)
+  private type ResPair_t = (MPictureAh[V], Effect)
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -62,12 +62,13 @@ class PictureAh[M](
       // Посмотреть, что пришло в сообщении...
       if (m.files.isEmpty) {
         // Файл удалён, т.е. список файлов изменился в []. Удалить bgImg и сопутствующий edgeUid, если файл более никому не нужен.
-        v0.imgEdgeId
+        picViewContAdp
+          .get(v0.view, m.resKey)
           .fold( noChange ) { _ =>
             // Не чистим эджи, пусть другие контроллеры проконтроллируют карту эджей на предмет ненужных эджей.
             // Это нужно, чтобы избежать удаления файла, который используется в каком-то другом теге.
-            val v2 = v0.withImgEdgeId(
-              imgEdgeId = None
+            val v2 = v0.withView(
+              view = picViewContAdp.updated(v0.view, m.resKey)(None)
             )
             // Отправить в очередь задачу по зачистке карты эджей:
             val fx = Effect.action(PurgeUnusedEdges)
@@ -81,7 +82,7 @@ class PictureAh[M](
             MImgFmts.withMime( fileNew.`type`.toLowerCase )
               .nonEmpty
           }
-          .fold [(MPictureAh, Option[Effect])] {
+          .fold [(MPictureAh[V], Option[Effect])] {
             val errMsg = MMessage( MsgCodes.`File.is.not.a.picture` )
             // Не найдено картинок среди новых файлов.
             val v1 = v0.withErrorPopup(
@@ -110,7 +111,7 @@ class PictureAh[M](
               .fold [(MEdgeDataJs, Map[EdgeUid_t, MEdgeDataJs], Option[Effect])] {
                 // Новый файл выбран юзером, который пока неизвестен.
                 // Найти в состоянии текущий файл, если он там есть.
-                val bgImgOldOpt = v0.imgEdgeId
+                val bgImgOldOpt = picViewContAdp.get(v0.view, m.resKey)
                 val edgeUidOldOpt = bgImgOldOpt.map(_.imgEdge.edgeUid)
                 val dataEdgeOldOpt = edgeUidOldOpt.flatMap( v0.edges.get )
 
@@ -191,7 +192,7 @@ class PictureAh[M](
             // Собрать обновлённое состояние.
             val v1 = v0.copy(
               edges       = edges9,
-              imgEdgeId   = imgEdgeIdSome2
+              view        = picViewContAdp.updated(v0.view, m.resKey)(imgEdgeIdSome2)
             )
             v1 -> fxOpt
           }
@@ -259,7 +260,7 @@ class PictureAh[M](
               noChange
             } { edge0 =>
               // Дедубликация кода обновления текущего эджа:
-              def __v2F(fileJs9: MJsFileInfo): MPictureAh = {
+              def __v2F(fileJs9: MJsFileInfo): MPictureAh[V] = {
                 val edge2 = edge0.withFileJs( Some( fileJs9 ) )
                 v0.withEdges(
                   v0.edges.updated( edge0.id, edge2 )
@@ -291,7 +292,15 @@ class PictureAh[M](
                       )
                       val edgeUid = edge0.id
                       val blobUrl = fileJs0.blobUrl.get
-                      uploadApi.prepareUpload( prepareUploadRoute, upProps )
+                      val reqRoute = prepareUploadRoute(
+                        MFormResourceKey(
+                          pred    = Some( edge0.jdEdge.predicate ),
+                          edgeUid = Some( edgeUid ),
+                          nodePath = None
+                        )
+                      )
+                      uploadApi
+                        .prepareUpload( reqRoute, upProps )
                         .transform { tryRes =>
                           Success( PrepUploadResp(tryRes, edgeUid, blobUrl) )
                         }
@@ -319,7 +328,7 @@ class PictureAh[M](
     // Сигнал о завершении запроса подготовки к аплоаду файла.
     case m: PrepUploadResp =>
       val v0 = value
-      _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid_t, m.blobUrl).fold {
+      _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid, m.blobUrl).fold {
         LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
 
@@ -361,7 +370,7 @@ class PictureAh[M](
                     // TODO Пописаться на события xhr.upload.onprogress, чтобы мониторить ход заливки.
                     // Завернуть ответ сервера в итоговый Action:
                     upRespFut.transform { tryRes =>
-                      Success( UploadRes(tryRes, m.edgeUid_t, m.blobUrl, firstUpUrl) )
+                      Success( UploadRes(tryRes, m.edgeUid, m.blobUrl, firstUpUrl) )
                     }
                   }
 
@@ -408,7 +417,7 @@ class PictureAh[M](
                   val v2 = v0.copy(
                     // Удалить эдж текущего файла.
                     edges      = v0.edges - edge0.id,
-                    imgEdgeId  = None,
+                    view       = picViewContAdp.forgetEdge(v0.view, m.edgeUid),
                     // Вывести попап с ошибками, присланными сервером:
                     errorPopup = _errorPopupWithMessages( v0.errorPopup, resp.errors )
                   )
@@ -429,7 +438,7 @@ class PictureAh[M](
     // Выполнен аплоад на сервер. Пришёл результат выполнения запроса.
     case m: UploadRes =>
       val v0 = value
-      _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid_t, m.blobUrl).fold {
+      _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid, m.blobUrl).fold {
         LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
 
@@ -564,9 +573,9 @@ class PictureAh[M](
 
 
     // Клик по кнопке открытия попапа для кропа.
-    case CropOpen =>
+    case m: CropOpen =>
       val v0 = value
-      val bgImg = v0.imgEdgeId.get
+      val bgImg = picViewContAdp.get(v0.view, m.resKey).get
       val edge = v0.edges( bgImg.imgEdge.edgeUid )
       val bm = v0.cropContSz.get
 
@@ -652,12 +661,12 @@ class PictureAh[M](
       val v1 = v0.withCropPopup( Some(cropPopup2) )
 
       // Надо рендерить crop и в самой карточке.
-      val v2 = _updateSelectedTag( v1 )
+      val v2 = _updateSelectedTag( v1, m.resKey )
       updated(v2)
 
 
     // Сохранение выбранного кропа для картинки.
-    case CropSave =>
+    case m: CropSave =>
       val v0 = value
       val cropPopup0 = v0.cropPopup.get
       val iEdgeUid = cropPopup0.imgEdgeUid
@@ -668,37 +677,46 @@ class PictureAh[M](
       // Вычисляем MCrop в пикселях.
       val pixelCrop = _cropPopupS2mcrop(cropPopup0, origWh)
 
+      val bgImg0 = picViewContAdp.get(v0.view, m.resKey).get
+
       // Сохранить в текущий тег параметры кропа.
-      val bgImg2 = for (bgImg0 <- v0.imgEdgeId) yield {
-        bgImg0
-          .withCrop( Some( pixelCrop ) )
+
+      val view2 = picViewContAdp.updated(v0.view, m.resKey) {
+        Some {
+          bgImg0
+            .withCrop( Some( pixelCrop ) )
+        }
       }
+
       // TODO Добавить поддержку выставления кропа в qdTag. Но тут нужно сам quill ещё промодифицировать.
 
       // Сохранить новый кроп в состояние.
       val v2 = v0
         .withCropPopup( None )
-        .withImgEdgeId( bgImg2 )
+        .withView( view2 )
       updated( v2 )
 
 
     // Отмена кропа
-    case CropCancel =>
+    case m: CropCancel =>
       val v0 = value
       v0.cropPopup.fold(noChange) { cropPopup =>
         val v1 = v0.withCropPopup( None )
         // Восстановить настройки кропа.
+        val imgOpt0 = picViewContAdp.get( v1.view, m.resKey )
         val v2 = if (
-          v1.imgEdgeId
+          picViewContAdp.get(v1.view, m.resKey)
             .exists( _.crop ===* cropPopup.origCrop )
         ) {
           // Исходный кроп и текущий эквивалентны. Поэтому пропускаем всё как есть.
           v1
         } else {
           // Восстановить исходный кроп sel-тега в состоянии.
-          v1.withImgEdgeId(
-            v1.imgEdgeId.map { imgEdgeId =>
-              imgEdgeId.withCrop( cropPopup.origCrop )
+          v1.withView(
+            picViewContAdp.updateWith(v1.view, m.resKey) { imgEdgeIdOpt =>
+              for (imgEdgeId <- imgEdgeIdOpt) yield {
+                imgEdgeId.withCrop( cropPopup.origCrop )
+              }
             }
           )
         }
@@ -737,23 +755,23 @@ class PictureAh[M](
 
 
   /** Когда надо рендерить кроп на экране в карточке, то использовать этот код. */
-  private def _updateSelectedTag(v0: MPictureAh): MPictureAh = {
-    val selJdt2 = for {
+  private def _updateSelectedTag(v0: MPictureAh[V], resKey: MFormResourceKey): MPictureAh[V] = {
+    val imgEdgeId2 = for {
       cropPopup <- v0.cropPopup
       e       <- v0.edges.get( cropPopup.imgEdgeUid )
       origWh  <- e.origWh
-      mcrop2  = {
-        _cropPopupS2mcrop(cropPopup, origWh)
-      }
-      bgImg   <- v0.imgEdgeId
+      mcrop2  = _cropPopupS2mcrop(cropPopup, origWh)
+      bgImg   <- picViewContAdp.get(v0.view, resKey)
       // Не обновлять ничего, если ничего не изменилось.
       if !bgImg.crop.contains( mcrop2 )
     } yield {
       bgImg.withCrop( Some(mcrop2) )
     }
 
-    selJdt2.fold(v0) { _ =>
-      v0.withImgEdgeId( selJdt2 )
+    imgEdgeId2.fold(v0) { _ =>
+      v0.withView(
+        picViewContAdp.updated(v0.view, resKey)(imgEdgeId2)
+      )
     }
   }
 
@@ -805,7 +823,7 @@ class PictureAh[M](
   }
 
 
-  private def _maybeWithHistogram(fe: MSrvFileInfo, v0: MPictureAh): ActionResult[M] = {
+  private def _maybeWithHistogram(fe: MSrvFileInfo, v0: MPictureAh[V]): ActionResult[M] = {
     fe.colors
       .filter(_.nonEmpty)
       .fold(updated(v0)) { hist =>
@@ -815,7 +833,7 @@ class PictureAh[M](
       }
   }
 
-  private def _withHistogram(nodeId: String, colors: MHistogram, v0: MPictureAh): ResPair_t = {
+  private def _withHistogram(nodeId: String, colors: MHistogram, v0: MPictureAh[V]): ResPair_t = {
     val v2 = v0.withHistograms(
       v0.histograms
         .updated(nodeId, colors)

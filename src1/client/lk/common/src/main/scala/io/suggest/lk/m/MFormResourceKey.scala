@@ -2,8 +2,9 @@ package io.suggest.lk.m
 
 import diode.FastEq
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicate}
+import io.suggest.scalaz.NodePath_t
 import io.suggest.ueq.UnivEqUtil._
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -16,12 +17,11 @@ import japgolly.univeq.UnivEq
   */
 object MFormResourceKey {
 
-  def empty = MFormResourceKey()
-
   implicit object MFormImgKeyFastEq extends FastEq[MFormResourceKey] {
     override def eqv(a: MFormResourceKey, b: MFormResourceKey): Boolean = {
       (a.pred ===* b.pred) &&
-        (a.edgeUid ===* b.edgeUid)
+        (a.edgeUid ==* b.edgeUid) &&
+        (a.nodePath ===* b.nodePath)
     }
   }
 
@@ -33,9 +33,11 @@ object MFormResourceKey {
 /** Контейнер данных с ключевой инфой по ресурсу.
   *
   * @param pred Предикат.
-  * @param edgeUid id эджа
+  * @param edgeUid id эджа, когда известен есть.
+  * @param nodePath Путь дa узла в jd-дереве, если есть.
   */
 case class MFormResourceKey(
-                             pred     : Option[MPredicate]  = None,
-                             edgeUid  : Option[EdgeUid_t]   = None
+                             pred     : Option[MPredicate],
+                             edgeUid  : Option[EdgeUid_t],
+                             nodePath : Option[NodePath_t],
                            )

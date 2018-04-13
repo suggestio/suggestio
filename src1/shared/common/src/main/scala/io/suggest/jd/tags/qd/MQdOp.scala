@@ -49,6 +49,7 @@ case class MQdOp(
                )
 {
 
+  def withEdgeInfo(edgeInfo: Option[MJdEdgeId])           = copy(edgeInfo = edgeInfo)
   def withAttrsText(attrsText: Option[MQdAttrsText])      = copy(attrsText = attrsText)
   def withAttrsEmbed(attrsEmbed : Option[MQdAttrsEmbed])  = copy(attrsEmbed = attrsEmbed)
 

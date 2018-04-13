@@ -18,19 +18,20 @@ import japgolly.univeq.UnivEq
   */
 object MPictureAh {
 
-  /** Поддержка FastEq для [[MPictureAh]]. */
-  implicit object MPictureAhFastEq extends FastEq[MPictureAh] {
-    override def eqv(a: MPictureAh, b: MPictureAh): Boolean = {
-      (a.edges ===* b.edges) &&
-        (a.imgEdgeId ===* b.imgEdgeId) &&
+  implicit def MPictureAhFastEq[V <: AnyRef : UnivEq]: FastEq[MPictureAh[V]] = {
+    new FastEq[MPictureAh[V]] {
+      override def eqv(a: MPictureAh[V], b: MPictureAh[V]): Boolean = {
+        (a.edges ===* b.edges) &&
+        (a.view ===* b.view) &&
         (a.errorPopup ===* b.errorPopup) &&
         (a.cropPopup ===* b.cropPopup) &&
         (a.histograms ===* b.histograms) &&
         (a.cropContSz ===* b.cropContSz)
+      }
     }
   }
 
-  implicit def univEq: UnivEq[MPictureAh] = UnivEq.derive
+  implicit def univEq[V: UnivEq]: UnivEq[MPictureAh[V]] = UnivEq.derive
 
 }
 
@@ -43,17 +44,17 @@ object MPictureAh {
   *                   Например, когда файл не является картинкой.
   * @param cropContSz Размер контейнера при активном кропе. Read-only.
   */
-case class MPictureAh(
-                       edges          : Map[EdgeUid_t, MEdgeDataJs],
-                       imgEdgeId      : Option[MImgEdgeWithOps],
-                       errorPopup     : Option[MErrorPopupS],
-                       cropPopup      : Option[MPictureCropPopup],
-                       histograms     : Map[String, MHistogram],
-                       cropContSz     : Option[ISize2di],
-                     ) {
+case class MPictureAh[V](
+                          edges          : Map[EdgeUid_t, MEdgeDataJs],
+                          view           : V,
+                          errorPopup     : Option[MErrorPopupS],
+                          cropPopup      : Option[MPictureCropPopup],
+                          histograms     : Map[String, MHistogram],
+                          cropContSz     : Option[ISize2di],
+                        ) {
 
   def withEdges(edges: Map[EdgeUid_t, MEdgeDataJs])             = copy(edges = edges)
-  def withImgEdgeId(imgEdgeId: Option[MImgEdgeWithOps])         = copy(imgEdgeId = imgEdgeId)
+  def withView(view: V)                                         = copy(view = view)
   def withErrorPopup(errorPopup: Option[MErrorPopupS])          = copy(errorPopup = errorPopup)
   def withCropPopup(cropPopup: Option[MPictureCropPopup])       = copy(cropPopup = cropPopup)
   def withHistograms(histograms: Map[String, MHistogram])       = copy(histograms = histograms)

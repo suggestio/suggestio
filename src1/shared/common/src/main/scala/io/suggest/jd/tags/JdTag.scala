@@ -158,7 +158,7 @@ object JdTag {
       }
 
       def deepOfTypeIter(jdtName: MJdTagName): Iterator[JdTag] = {
-        val chIter = deepChildrenOfTypeIter(jdtName)
+        def chIter = deepChildrenOfTypeIter(jdtName)
         val jdt = tree.rootLabel
         if (jdt.name ==* jdtName) {
           Iterator.single(jdt) ++ chIter
@@ -261,24 +261,10 @@ final case class JdTag(
 
   def withQdProps(qdProps: Option[MQdOp])         = copy(qdProps = qdProps)
 
-
   def edgeUids: Iterable[MJdEdgeId] = {
     props1.bgImg.map(_.imgEdge) ++
       qdProps.flatMap(_.edgeInfo)
   }
-
-
-
-
-  /*
-  override def bgImgEdgeId = props1.bgImg.map(_.imgEdge)
-
-  override def setBgColor(bgColor: Option[MColorData]): IDocTag = {
-    withProps1(
-      props1.withBgColor(bgColor)
-    )
-  }
-  */
 
   override def toString: String = {
     "#" + name +

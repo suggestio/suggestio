@@ -24,12 +24,13 @@ import io.suggest.jd.MJdConf
 import io.suggest.spa.{OptFastEq, StateInp}
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
-import japgolly.univeq._
 import org.scalajs.dom
 import io.suggest.ad.edit.m.layout.MSlideBlocks.MSlideBlocksFastEq
 import io.suggest.lk.c.PictureAh
 import io.suggest.lk.m.img.MPictureAh
 import io.suggest.msg.ErrorMsgs
+import scalaz.Tree
+import io.suggest.scalaz.ZTreeUtil._
 
 /**
   * Suggest.io
@@ -222,12 +223,11 @@ class LkAdEditCircuit(
     _zoomToBgColorPickS[MQdEditS](MJdTagNames.QD_CONTENT)(_.qdEdit) { _.withQdEdit(_) }
   )
 
-  private val mPictureAhRW = zoomRW[MPictureAh] { mroot =>
+  private val mPictureAhRW = zoomRW[MPictureAh[Tree[JdTag]]] { mroot =>
     val mdoc = mroot.doc
     MPictureAh(
       edges       = mdoc.jdArgs.edges,
-      imgEdgeId   = mdoc.jdArgs.selJdt.treeLocOpt
-        .flatMap(_.getLabel.props1.bgImg),
+      view        = mdoc.jdArgs.template,
       errorPopup  = mroot.popups.error,
       cropPopup   = mroot.popups.pictureCrop,
       histograms  = mdoc.colorsState.histograms,
@@ -236,47 +236,36 @@ class LkAdEditCircuit(
     )
   } { (mroot0, mPictureAh) =>
     val mdoc0 = mroot0.doc
+    val tpl0 = mdoc0.jdArgs.template
+    val isTplChanged = tpl0 !===* mPictureAh.view
 
-    val mdoc1 = mdoc0
-      .withJdArgs {
-        // Пробросить обновлённый selected-тег в шаблон:
-        val tpl2Opt = for {
-          selJdtLoc0 <- mdoc0.jdArgs.selJdt.treeLocOpt
-          // Пересобирать дерево только если теги различаются.
-          selJdt0 = selJdtLoc0.getLabel
-          if selJdt0.props1.bgImg !=* mPictureAh.imgEdgeId
-        } yield {
-          selJdtLoc0.setLabel(
-            selJdt0.withProps1(
-              selJdt0.props1
-                .withBgImg( mPictureAh.imgEdgeId )
+    val mdoc1 = if (isTplChanged || (mPictureAh.edges !===* mdoc0.jdArgs.edges)) {
+      mdoc0
+        .withJdArgs {
+          // Разобраться, изменился ли шаблон в реальности:
+          val (tpl2, css2) = if (isTplChanged) {
+            // Изменился шаблон. Вернуть новый шаблон, пересобрать css
+            val tpl1 = mPictureAh.view
+            val css1 = jdCssFactory.mkJdCss(
+              MJdCssArgs.singleCssArgs(tpl1, mdoc0.jdArgs.conf )
             )
+            (tpl1, css1)
+          } else {
+            // Не изменился шаблон, вернуть исходник
+            (tpl0, mdoc0.jdArgs.jdCss)
+          }
+
+          // Залить всё в итоговое состояние пачкой:
+          mdoc0.jdArgs.copy(
+            template    = tpl2,
+            edges       = mPictureAh.edges,
+            jdCss       = css2
           )
         }
-        val tpl2 = tpl2Opt.fold(mdoc0.jdArgs.template)(_.toTree)
-
-        // css обновляем только после FastEq, чтобы избежать жирного перерендера без необходимости.
-        // TODO Вынести этот код куда-нибудь.
-        val css2 = {
-          val oldCssArgs = MJdCssArgs.singleCssArgs(mdoc0.jdArgs.template, mdoc0.jdArgs.conf )
-          val newCssArgs = MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf )
-          if (MJdCssArgs.MJdCssArgsFastEq.eqv(oldCssArgs, newCssArgs)) {
-            mdoc0.jdArgs.jdCss
-          } else {
-            // Что-то важное изменилось, отправляем CSS на пересборку.
-            jdCssFactory.mkJdCss(
-              MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf )
-            )
-          }
-        }
-
-        // Залить всё в итоговое состояние пачкой:
-        mdoc0.jdArgs.copy(
-          template    = tpl2,
-          edges       = mPictureAh.edges,
-          jdCss       = css2
-        )
-      }
+    } else {
+      // Нет изменений в документе, пропускаем всё молча.
+      mdoc0
+    }
 
     // Гистограммы лежат вне mdoc, и обновляются нечасто, поэтому тут ленивый апдейт гистограмм в состоянии:
     val mdoc2 = if (mdoc0.colorsState.histograms ===* mPictureAh.histograms) {
@@ -303,7 +292,7 @@ class LkAdEditCircuit(
   private val pictureAh = new PictureAh(
     uploadApi             = uploadApi,
     modelRW               = mPictureAhRW,
-    prepareUploadRoute    = adEditApi.prepareUploadRoute
+    prepareUploadRoute    = { _ => adEditApi.prepareUploadRoute }
   )
 
   private val stripBgColorPickAfterAh = new ColorPickAfterStripAh( mDocSRw )
