@@ -97,7 +97,7 @@ GET  /lk/xadv/geo/map/shape/pop/:itemId @controllers.LkAdvGeo.existGeoAdvsShapeP
 GET  /lk/mad/new2/:nodeId               @controllers.LkAdEdit.createAd(nodeId: MEsUuId)
 POST /lk/mad/save2                      @controllers.LkAdEdit.saveAdSubmit(mad: Option[MEsUuId] ?= None, prod: Option[MEsUuId] ?= None)
 GET  /lk/mad/edit2/:adId                @controllers.LkAdEdit.editAd(adId: MEsUuId)
-POST /lk/mad/up/img                     @controllers.LkAdEdit.prepareImgUpload(adId: Option[MEsUuId] ?= None, nodeId: Option[MEsUuId] ?= None)
+POST /lk/mad/up/img                     @controllers.LkAdEdit.prepareImgUpload(madId: Option[MEsUuId] ?= None, nodeId: Option[MEsUuId] ?= None)
 POST /lk/mad/delete2/:adId              @controllers.LkAdEdit.deleteSubmit(adId: MEsUuId)
 
 ## ЛК: Управление под-узлами.
