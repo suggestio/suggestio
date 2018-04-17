@@ -108,3 +108,6 @@ case object PurgeUnusedEdges extends ILkCommonAction
 /** Уведомить систему о ширине и длине загруженной картинки. */
 case class SetImgWh(edgeUid: EdgeUid_t, wh: MSize2di) extends ILkCommonAction
 
+
+/** Экшен сохранения документа. */
+case object Save extends ILkCommonAction

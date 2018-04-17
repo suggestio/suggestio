@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets
 
 import javax.inject.{Inject, Singleton}
 import akka.actor.ActorSystem
-import akka.stream.Materializer
+import akka.stream.{Materializer, OverflowStrategy}
 import akka.stream.scaladsl._
 import akka.util.ByteString
 import io.suggest.async.AsyncUtil
@@ -53,9 +53,6 @@ final class ClamAvUtil @Inject()(
     }
   }
 
-  /** Максимальный размер одной порции исходного файла, отправляемого по TCP. */
-  private def TCP_CHUNK_SIZE = 4096
-
   LOGGER.debug(s"Clam remote = ${CLAM_REMOTE_HOST_PORT.orNull}")
 
   object Words {
@@ -96,7 +93,10 @@ final class ClamAvUtil @Inject()(
 
   def scanClamdRemote(req: ClamAvScanRequest): Future[ClamAvScanResult] = {
     LOGGER.trace(s"scanClamdRemote(): File = ${req.file}")
-    val src = FileIO.fromPath( new File(req.file).toPath )
+    // Используем lazy-source, чтобы файл не читался, пока сокет не будет открыт:
+    val src = Source.lazily { () =>
+      FileIO.fromPath(new File(req.file).toPath, chunkSize = 8192)
+    }
     scanClamdRemoteTcp(src)
   }
 
@@ -134,7 +134,7 @@ final class ClamAvUtil @Inject()(
       .single( ByteString.fromString("zINSTREAM\u0000", tcpCharset) )
       .concat {
         src
-          .via( ByteStringsChunker(TCP_CHUNK_SIZE) )
+          // Здесь раньше был ByteStringChunker, но он не нужен для файлов, а по для остальных лучше самостоятельно это разрулить (на уровне каждого конкретного source).
           .filter(_.nonEmpty)
           .map { chunk =>
             // Формат такой: <dataLength:4><data:dataLength>
@@ -148,6 +148,8 @@ final class ClamAvUtil @Inject()(
       .concat(
         Source.single( int2byteString( 0 ) )
       )
+      // Допускаем некоторое склеивание кусочков на уровне исходящих tcp-пакетов, если исходник читается быстро:
+      .buffer(8, OverflowStrategy.backpressure)
 
     // Clamd возвращает сообщения прямо во время приёма файла (по мере выполнения проверки).
     val scanOutputSink = Flow[ByteString]
@@ -157,7 +159,7 @@ final class ClamAvUtil @Inject()(
     val (_, resFut) = connectionFlow.runWith(scanCmdSrc, scanOutputSink)
 
     // TODO Определять ошибки clamav.
-    // TODO Нужен таймаут после завершения отсылки. clamav закрывает сокет по таймауту через минуту, но это долговато.
+    // TODO Нужен таймаут после завершения отсылки. clamav закрывает сокет по таймауту через минуту-две, но это долговато.
     for (res <- resFut) yield {
       LOGGER.trace(s"scanClamdRemoteTcp(): Response =\n${res.mkString}")
       val isClean = res.forall { resPart =>

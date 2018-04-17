@@ -4,6 +4,7 @@ import diode._
 import diode.data.PendingBase
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.srv.ILkAdEditApi
+import io.suggest.lk.m.Save
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -29,7 +30,7 @@ class SaveAh[M](
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Клик по кнопке сохранения карточки.
-    case SaveAd =>
+    case Save =>
       val v0 = modelRW.value
       if (v0.save.saveReq.isPending) {
         // Уже сейчас есть какой-то запущенный реквест сохранения.

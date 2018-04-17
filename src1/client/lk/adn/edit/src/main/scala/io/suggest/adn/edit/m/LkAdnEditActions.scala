@@ -2,6 +2,8 @@ package io.suggest.adn.edit.m
 
 import io.suggest.spa.DAction
 
+import scala.util.Try
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -30,4 +32,7 @@ case class SetHumanTraffic(humanTraffic: String) extends ILkAdnEditAction
 
 /** Обновление инфы по описанию аудитории. */
 case class SetAudienceDescr(audienceDescr: String) extends ILkAdnEditAction
+
+/** Результат запроса к серверу на тему сохранения данных формы редактирования ADN-узла. */
+case class SaveResp(tryResp: Try[MAdnEditForm]) extends ILkAdnEditAction
 

@@ -25,6 +25,13 @@ object MAdnResViewUtil {
           view.logo.map(edgeWithOpsF)
         case MPredicates.WcFgImg =>
           view.wcFg.map(edgeWithOpsF)
+        case MPredicates.GalleryItem =>
+          resKey.edgeUid
+            .flatMap { imgUid =>
+              view.galImgs
+                // TODO Фильтрануть ещё и по значению кропа
+                .find(_.imgEdge.edgeUid ==* imgUid)
+            }
         case other =>
           throw new IllegalArgumentException(resKey + SPACE + other)
       }
@@ -37,6 +44,31 @@ object MAdnResViewUtil {
           view.withLogo( newValueEdgeId )
         case MPredicates.WcFgImg =>
           view.withWcFg( newValueEdgeId )
+        case MPredicates.GalleryItem =>
+          resKey.edgeUid.fold {
+            // Добавить новый элемент в начало галереи:
+            newValue.fold {
+              // Хрень какая-то: нет ни id, ни элемента.
+              view
+            } { newVal =>
+              view.withGalImgs(
+                newVal :: view.galImgs.toList
+              )
+            }
+          } { galImgEdgeId =>
+            // Заменить существующий элемент:
+            val newValueSeq = newValue.toList
+            view.withGalImgs(
+              view.galImgs.flatMap { galImg =>
+                // TODO Проверять по кропу и прочим уточняющим данным.
+                if (galImg.imgEdge.edgeUid ==* galImgEdgeId) {
+                  newValueSeq
+                } else {
+                  galImg :: Nil
+                }
+              }
+            )
+          }
         case other =>
           throw new IllegalArgumentException(resKey + SPACE + newValue + SPACE + other)
       }
@@ -48,7 +80,8 @@ object MAdnResViewUtil {
 
       view.copy(
         logo = view.logo.filter(__jdEdgeF),
-        wcFg = view.wcFg.filter(__jdEdgeF)
+        wcFg = view.wcFg.filter(__jdEdgeF),
+        galImgs = view.galImgs.filter( ((e: MImgEdgeWithOps) => e.imgEdge).andThen(__jdEdgeF) )
       )
     }
 

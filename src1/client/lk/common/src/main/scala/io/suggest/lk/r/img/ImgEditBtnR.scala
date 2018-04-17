@@ -7,7 +7,9 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.{MFormResourceKey, PictureFileChanged}
+import io.suggest.lk.r.img.ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq
 import io.suggest.msg.Messages
+import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
 import io.suggest.sjs.common.model.dom.DomListSeq
 import io.suggest.ueq.UnivEqUtil._
@@ -25,25 +27,12 @@ import org.scalajs.dom
   */
 class ImgEditBtnR {
 
-  case class PropsVal(
-                       src        : Option[String],
-                       resKey     : MFormResourceKey,
-                       bgColor    : Option[MColorData] = None,
-                     )
-  implicit object ImgEditBtnRPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.src ===* b.src) &&
-        (a.resKey ==* b.resKey) &&
-        (a.bgColor ===* b.bgColor)
-    }
-  }
 
-
-  type Props_t = PropsVal
+  type Props_t = ImgEditBtnPropsVal
   type Props = ModelProxy[Props_t]
 
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($: BackendScope[Props, Props_t]) {
 
     /** Реакция на выбор файла в file input. */
     private def _onFileChange(e: ReactEventFromInput): Callback = {
@@ -64,11 +53,11 @@ class ImgEditBtnR {
 
 
     def render(propsValProxy: Props): VdomElement = {
-      val C = Css.Lk.AdEdit.Image
+      val C = Css.Lk.Image
       val propsVal = propsValProxy.value
 
       <.div(
-        ^.`class` := Css.flat( C.IMAGE, Css.Size.M ),
+        ^.`class` := Css.flat1( C.IMAGE :: Css.Size.M :: propsVal.css ),
 
         propsVal.bgColor.whenDefined { bgColor =>
           ^.backgroundColor := bgColor.hexCode
@@ -117,11 +106,32 @@ class ImgEditBtnR {
 
 
   val component = ScalaComponent.builder[Props]("ImgEditBtn")
-    .stateless
+    .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
+    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(ImgEditBtnRPropsValFastEq) )
     .build
 
   def _apply(propsValProxy: Props) = component( propsValProxy )
   val apply: ReactConnectProps[Props_t] = _apply
 
 }
+
+
+case class ImgEditBtnPropsVal(
+                               src        : Option[String],
+                               resKey     : MFormResourceKey,
+                               bgColor    : Option[MColorData] = None,
+                               css        : List[String] = Nil
+                             )
+object ImgEditBtnPropsVal {
+  implicit object ImgEditBtnRPropsValFastEq extends FastEq[ImgEditBtnPropsVal] {
+    override def eqv(a: ImgEditBtnPropsVal, b: ImgEditBtnPropsVal): Boolean = {
+      (a.src ===* b.src) &&
+        (a.resKey ==* b.resKey) &&
+        (a.bgColor ===* b.bgColor) &&
+        (a.css ===* b.css)
+    }
+  }
+}
+
+

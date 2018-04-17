@@ -10,8 +10,9 @@ import io.suggest.css.Css
 import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
-import io.suggest.react.ReactCommonUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.spa.OptFastEq.Wrapped
 
 /**
   * Suggest.io
@@ -21,10 +22,13 @@ import io.suggest.react.ReactCommonUtil.Implicits._
   */
 class UploadStatusR {
 
+  import MFileUploadS.MFileUploadSFastEq
+
+
   type Props_t = Option[MFileUploadS]
   type Props = ModelProxy[Props_t]
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($: BackendScope[Props, Props_t]) {
 
     def render(upStateOptProxy: Props): VdomElement = {
       upStateOptProxy.value.whenDefinedEl { upState =>
@@ -71,8 +75,9 @@ class UploadStatusR {
 
 
   val component = ScalaComponent.builder[Props]("UploadStatus")
-    .stateless
+    .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
+    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate )
     .build
 
   def _apply(upStateOptProxy: Props) = component( upStateOptProxy)

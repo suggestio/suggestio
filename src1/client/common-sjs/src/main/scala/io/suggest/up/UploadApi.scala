@@ -25,6 +25,8 @@ import scala.concurrent.Future
   */
 trait IUploadApi {
 
+  def conf: ICtxIdStrOpt
+
   /** Подготовка к аплоаду: запрос реквизитов для аплоада с сервера.
     *
     * @param route Роута, за которой скрыт prepareUpload-экшен..
@@ -47,6 +49,8 @@ trait IUploadApi {
 
 /** Реализация [[IUploadApi]] поверх HTTP/XHR. */
 class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUploadApi {
+
+  override def conf: ICtxIdStrOpt = confRO.value
 
   /** Код тела подготовки к аплоаду и декодинга результата по HTTP.
     *
@@ -102,8 +106,13 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
       // Запускаем XHR...
       xhr <- Xhr.sendRaw(
         method  = HttpConst.Methods.POST,
-        // TODO Здесь дописывается &c=ctxId в хвост ссылки. А надо организовать сборку URL через jsRoutes. Для этого надо вместо ссылки брать подписанную JS-модель.
-        url     = "//" + upData.host + upData.relUrl + confRO.value.ctxIdOpt.fold(""){ ctxId => "&c=" + ctxId },
+        url     = {
+          // TODO Здесь дописывается &c=ctxId в хвост ссылки. А надо организовать сборку URL через jsRoutes. Для этого надо вместо ссылки брать подписанную JS-модель.
+          HttpConst.Proto.CURR_PROTO +
+            upData.host +
+            upData.relUrl +
+            conf.ctxIdOpt.fold(""){ ctxId => "&c=" + ctxId }
+        },
         headers = Seq(
           HttpConst.Headers.ACCEPT        -> MimeConst.APPLICATION_JSON
         ),

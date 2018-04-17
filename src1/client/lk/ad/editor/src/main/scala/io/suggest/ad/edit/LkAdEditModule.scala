@@ -13,8 +13,6 @@ import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.render.JdRenderModule
 import io.suggest.lk.LkCommonModule
 import io.suggest.lk.r.SlideBlockR
-import io.suggest.lk.r.color.ColorPickerR
-import io.suggest.lk.r.crop.CropPopupR
 import io.suggest.quill.QuillSioModule
 
 /**
@@ -43,6 +41,9 @@ class LkAdEditModule {
   // css deps
   lazy val lkAdEditCss = wire[LkAdEditCss]
 
+  // lk-common: линкуем слайд-блок, т.к. SlideBlockCss собран в LkAdEditCss:
+  lazy val slideBlockR = wire[SlideBlockR]
+
 
   // views deps
   lazy val plusMinusControlsR = wire[PlusMinusControlsR]
@@ -55,11 +56,7 @@ class LkAdEditModule {
 
   lazy val colorCheckboxR = wire[ColorCheckboxR]
 
-  lazy val colorPickerR = wire[ColorPickerR]
-
   lazy val scaleR = wire[ScaleR]
-
-  lazy val saveR = wire[SaveR]
 
   lazy val showWideR = wire[ShowWideR]
 
@@ -68,11 +65,7 @@ class LkAdEditModule {
   lazy val deleteBtnR = wire[DeleteBtnR]
 
 
-  lazy val cropPopupR = wire[CropPopupR]
-
   lazy val laePopupsR = wire[LaePopupsR]
-
-  lazy val slideBlockR = wire[SlideBlockR]
 
   lazy val rotateR = wire[RotateR]
 

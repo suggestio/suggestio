@@ -3,15 +3,11 @@ package io.suggest.ad.edit.m
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.common.MHand
 import io.suggest.common.html.HtmlConstants
-import io.suggest.crypto.hash.MHash
 import io.suggest.dev.MSzMult
-import io.suggest.file.up.MUploadResp
 import io.suggest.jd.tags.JdTag
-import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.spa.DAction
 import io.suggest.text.StringUtil
-import io.suggest.url.MHostUrl
 import org.scalajs.dom.Blob
 
 import scala.util.Try
@@ -82,8 +78,6 @@ case object JdDocChanged extends ILkEditAction
 case class JdVldResult( vldRes: StringValidationNel[Tree[JdTag]] ) extends ILkEditAction
 
 
-/** Экшен сохранения документа. */
-case object SaveAd extends ILkEditAction
 /** Результат запроса сохранения карточки на сервер. */
 case class SaveAdResp(timestamp: Long, tryResp: Try[MAdEditFormInit]) extends ILkEditAction
 

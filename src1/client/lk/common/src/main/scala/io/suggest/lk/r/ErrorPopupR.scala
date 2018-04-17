@@ -20,7 +20,8 @@ import io.suggest.react.ReactCommonUtil.Implicits._
   */
 object ErrorPopupR {
 
-  type Props = ModelProxy[Option[MErrorPopupS]]
+  type Props_t = Option[MErrorPopupS]
+  type Props = ModelProxy[Props_t]
 
   protected class Backend($: BackendScope[Props, Unit]) {
 

@@ -3,7 +3,6 @@ package io.suggest.ad.edit
 import diode.{ModelRO, ModelRW}
 import diode.react.ReactConnector
 import io.suggest.ad.edit.m._
-import MDocS.MDocSFastEq
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
 import io.suggest.sjs.common.log.CircuitLog
 import play.api.libs.json.Json
@@ -13,7 +12,6 @@ import io.suggest.ad.edit.m.edit.MQdEditS
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags._
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
-import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
 import io.suggest.ad.edit.m.layout.MLayoutS
 import io.suggest.ad.edit.m.vld.MJdVldAh
 import io.suggest.ad.edit.srv.LkAdEditApiHttp
@@ -25,7 +23,6 @@ import io.suggest.spa.{OptFastEq, StateInp}
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
 import org.scalajs.dom
-import io.suggest.ad.edit.m.layout.MSlideBlocks.MSlideBlocksFastEq
 import io.suggest.lk.c.PictureAh
 import io.suggest.lk.m.img.MPictureAh
 import io.suggest.msg.ErrorMsgs
@@ -46,6 +43,15 @@ class LkAdEditCircuit(
   extends CircuitLog[MAeRoot]
   with ReactConnector[MAeRoot]
 {
+
+  import MPictureAh.MPictureAhFastEq
+  import MAeRoot.MAeRootFastEq
+  import MDocS.MDocSFastEq
+  import io.suggest.ws.pool.m.MWsPoolS.MWsPoolSFastEq
+  import MLayoutS.MLayoutSFastEq
+  import io.suggest.ad.edit.m.pop.MAePopupsS.MAePopupsSFastEq
+  import io.suggest.ad.edit.m.layout.MSlideBlocks.MSlideBlocksFastEq
+
 
   /** Флаг использования валидации на клиенте.
     * Валидация на клиенте нежелательна, т.к. это очень жирный кусок js, который может
@@ -115,7 +121,7 @@ class LkAdEditCircuit(
   }
 
 
-  private val rootRW = zoomRW(m => m) { (_, mroot2) => mroot2 }
+  private val rootRW = zoomRW(identity(_)) { (_, mroot2) => mroot2 }
   /** Используется извне, в init например. */
   val rootRO: ModelRO[MAeRoot] = rootRW
 

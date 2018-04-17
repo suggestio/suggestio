@@ -20,10 +20,10 @@ import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.{MJdTagName, MJdTagNames}
 import io.suggest.lk.m.{DocBodyClick, MFormResourceKey}
-import io.suggest.lk.r.{SlideBlockR, UploadStatusR}
+import io.suggest.lk.r.{SaveR, SlideBlockR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorPickerR, ColorsSuggestR}
 import io.suggest.lk.r.crop.CropBtnR
-import io.suggest.lk.r.img.ImgEditBtnR
+import io.suggest.lk.r.img.{ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -68,7 +68,6 @@ class LkAdEditFormR(
   import scaleR.ScaleRPropsValFastEq
   import MFileUploadS.MFileUploadSFastEq
   import colorsSuggestR.ColorsSuggestPropsValFastEq
-  import imgEditBtnR.ImgEditBtnRPropsValFastEq
   import MFormResourceKey.MFormImgKeyFastEq
   import saveR.SaveRPropsValFastEq
   import useAsMainR.UseAdMainPropsValFastEq
@@ -77,6 +76,7 @@ class LkAdEditFormR(
   import MStripEdS.MStripEdSFastEq
   import showWideR.ShowWideRPropsValFastEq
   import colorCheckboxR.ColorCheckboxPropsValFastEq
+  import io.suggest.lk.r.img.ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq
   import rotateR.RotateRPropsValFastEq
   import slideBlockR.SlideBlockPropsValFastEq
   import quillEditorR.QuillEditorPropsValFastEq
@@ -88,7 +88,7 @@ class LkAdEditFormR(
                               jdPreviewArgsC                  : ReactConnectProxy[MJdArgs],
                               jdCssArgsC                      : ReactConnectProxy[JdCss],
                               scalePropsOptC                  : ReactConnectProxy[Option[scaleR.PropsVal]],
-                              imgEditBtnPropsC                : ReactConnectProxy[imgEditBtnR.PropsVal],
+                              imgEditBtnPropsC                : ReactConnectProxy[imgEditBtnR.Props_t],
                               upStateOptC                     : ReactConnectProxy[Option[MFileUploadS]],
                               colSuggPropsOptC                : ReactConnectProxy[Option[colorsSuggestR.PropsVal]],
                               cropBtnPropsOptC                : ReactConnectProxy[Option[MFormResourceKey]],
@@ -243,7 +243,10 @@ class LkAdEditFormR(
             }
 
             // Кнопка сохранения карточки.
-            val saveBtn = s.savePropsC { saveR.apply }
+            val saveBtn = <.div(
+              ^.`class` := Css.Floatt.RIGHT,
+              s.savePropsC { saveR.apply }
+            )
 
             // Редакторы собраны снаружи от этого коннекшена, от которого пока не понятно, как избавляться.
             s.rightYOptC { rightYOptProxy =>
@@ -520,7 +523,7 @@ class LkAdEditFormR(
         imgEditBtnPropsC = {
           p.connect { mroot =>
             val bgEdgeOpt = mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
-            imgEditBtnR.PropsVal(
+            ImgEditBtnPropsVal(
               src = bgEdgeOpt
                 .flatMap(_.imgSrcOpt),
               resKey = MFormResourceKey(

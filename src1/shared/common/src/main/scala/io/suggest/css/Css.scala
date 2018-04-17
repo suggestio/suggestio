@@ -186,6 +186,7 @@ object Css {
       object RightBar {
         def PREFIX = "right"
         def RIGHT_BAR = PREFIX + BAR_SUFFIX
+        def RIGHT_BAR_BOTTOM = RIGHT_BAR + "_bottom"
 
         object Price {
           def _PRICE = "price"
@@ -278,13 +279,9 @@ object Css {
       def VERTICAL = __ + "vertical"
     }
 
-    object AdEdit {
-
-      object Image {
-        def IMAGE = "image"
-        def IMAGE_REMOVE_BTN = IMAGE + "_remove-" + Buttons.BTN
-      }
-
+    object Image {
+      def IMAGE = "image"
+      def IMAGE_REMOVE_BTN = IMAGE + "_remove-" + Buttons.BTN
     }
 
     object Submit {

@@ -7,17 +7,20 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import io.suggest.css.ScalaCssDefaults._
+import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEdgeId
 import io.suggest.lk.m.{DocBodyClick, MFormResourceKey}
-import io.suggest.lk.r.PropTableR
+import io.suggest.lk.r.{PropTableR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorBtnR, ColorPickerR}
-import io.suggest.lk.r.img.ImgEditBtnR
+import io.suggest.lk.r.img.{ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.meta.colors.{MColorType, MColorTypes}
 import io.suggest.msg.Messages
+import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.spa.OptFastEq
+import io.suggest.spa.FastEqUtil
 
 /**
   * Suggest.io
@@ -30,17 +33,29 @@ class LkAdnEditFormR(
                       val colorPickerR    : ColorPickerR,
                       val colorBtnR       : ColorBtnR,
                       val imgEditBtnR     : ImgEditBtnR,
+                      val uploadStatusR   : UploadStatusR,
+                      val nodeGalleryR    : NodeGalleryR,
                       wcFgContR           : WcFgContR,
                     ) {
 
   import oneRowR.OneRowRValueValFastEq
-  import colorPickerR.ColorPickerPropsValFastEq
   import colorBtnR.ColorBtnRPropsValFastEq
+  import colorPickerR.ColorPickerPropsValFastEq
+  import MFileUploadS.MFileUploadSFastEq
+  import io.suggest.lk.r.img.ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq
 
   type Props = ModelProxy[MLkAdnEditRoot]
 
+
+  /** Состояние картинок. */
+  case class ImgState(
+                       editBtnC         : ReactConnectProxy[imgEditBtnR.Props_t],
+                       uploadStatusC    : ReactConnectProxy[uploadStatusR.Props_t]
+                     )
+
   val css = new LkAdnEditCss
 
+  /** Состояние компонента: все react-коннекшены. */
   case class State(
                     nameC           : ReactConnectProxy[oneRowR.ValueVal],
                     townC           : ReactConnectProxy[oneRowR.ValueVal],
@@ -52,8 +67,9 @@ class LkAdnEditFormR(
                     bgColorC        : ReactConnectProxy[colorBtnR.Props_t],
                     fgColorC        : ReactConnectProxy[colorBtnR.Props_t],
                     colorPickerC    : ReactConnectProxy[colorPickerR.Props_t],
-                    logoEditBtnC    : ReactConnectProxy[imgEditBtnR.Props_t],
-                    wcFgBtnC        : ReactConnectProxy[imgEditBtnR.Props_t],
+                    logo            : ImgState,
+                    wcFg            : ImgState,
+                    galImgs         : ReactConnectProxy[nodeGalleryR.Props_t]
                   )
 
   private def __colorTd(cssClasses: List[String])(content: TagMod): VdomElement = {
@@ -98,7 +114,19 @@ class LkAdnEditFormR(
       dispatchOnProxyScopeCB( $, DocBodyClick )
     }
 
-    def render(props: Props, s: State): VdomElement = {
+
+    private def _renderImgEdit(is: ImgState) = {
+      <.div(
+        // Кнопка редактировния картинки
+        is.editBtnC { imgEditBtnR.apply },
+
+        // Данные по загрузке картинки
+        is.uploadStatusC { uploadStatusR.apply }
+      )
+    }
+
+
+    def render(propsProxy: Props, s: State): VdomElement = {
       val delimHr = <.hr(
         ^.`class` := Css.flat( Css.Lk.HrDelim.DELIMITER, Css.Lk.HrDelim.LIGHT )
       )
@@ -116,7 +144,7 @@ class LkAdnEditFormR(
         <.div(
           css.logoBar,
 
-          s.logoEditBtnC { imgEditBtnR.apply }
+          _renderImgEdit( s.logo )
         ),
 
         <.div(
@@ -155,13 +183,15 @@ class LkAdnEditFormR(
           wcFgContR(
 
             // Картинка приветствия
-            s.wcFgBtnC { imgEditBtnR.apply }
+            _renderImgEdit( s.wcFg )
 
           ),
 
 
           delimHr,
-          // TODO Фотографии магазина.
+
+          // Галерея фотографий магазина:
+          s.galImgs { nodeGalleryR.apply },
 
 
           delimHr,
@@ -221,6 +251,7 @@ class LkAdnEditFormR(
 
       val emptyStr = ""
       def emptyStrF: String = emptyStr
+
       // Сборка тривиального коннекшена до ValueVal
       def __getStringOptConn(getValF: MLkAdnEditRoot => Option[String]): ReactConnectProxy[oneRowR.ValueVal] = {
         propsProxy.connect { mroot =>
@@ -230,12 +261,22 @@ class LkAdnEditFormR(
         }( OneRowRValueValFastEq )
       }
 
-      def __getImgSrcOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[String] = {
+      def __getImgEdgeOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[MEdgeDataJs] = {
         f(mroot.node.resView)
           .flatMap { ei =>
             mroot.node.edges.get( ei.edgeUid )
           }
+      }
+
+      def __getImgSrcOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[String] = {
+        __getImgEdgeOpt(mroot)(f)
           .flatMap(_.imgSrcOpt)
+      }
+
+      def __getImgUploadOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[MFileUploadS] = {
+        __getImgEdgeOpt(mroot)(f)
+          .flatMap(_.fileJs)
+          .flatMap(_.upload)
       }
 
       State(
@@ -272,29 +313,71 @@ class LkAdnEditFormR(
           }
         }( OptFastEq.Wrapped ),
 
-        logoEditBtnC = {
-          val logoResKey = MFormResourceKey(
-            pred = Some( MPredicates.Logo )
+        logo = {
+          val logoF = MAdnResView.logoF
+          ImgState(
+            editBtnC = {
+              val logoResKey = MFormResourceKey(
+                pred = Some( MPredicates.Logo )
+              )
+              propsProxy.connect { props =>
+                ImgEditBtnPropsVal(
+                  src = __getImgSrcOpt(props)(logoF),
+                  resKey  = logoResKey,
+                  bgColor = props.node.meta.colors.bg
+                )
+              }
+            },
+            uploadStatusC = propsProxy.connect { props =>
+              __getImgUploadOpt(props)(logoF)
+            }( OptFastEq.Wrapped )
           )
-          propsProxy.connect { props =>
-            imgEditBtnR.PropsVal(
-              src = __getImgSrcOpt(props)(_.logo),
-              resKey  = logoResKey,
-              bgColor = props.node.meta.colors.bg
-            )
-          }
         },
 
-        wcFgBtnC = {
-          val wcFgResKey = MFormResourceKey(
-            pred = Some( MPredicates.WcFgImg )
+        wcFg = {
+          val wcFgF = MAdnResView.wcFgF
+          ImgState(
+            editBtnC = {
+              val wcFgResKey = MFormResourceKey(
+                pred = Some( MPredicates.WcFgImg )
+              )
+              propsProxy.connect { props =>
+                ImgEditBtnPropsVal(
+                  src = __getImgSrcOpt(props)(wcFgF),
+                  resKey = wcFgResKey
+                )
+              }
+            },
+            uploadStatusC = propsProxy.connect { props =>
+              __getImgUploadOpt(props)(wcFgF)
+            }( OptFastEq.Wrapped )
           )
+        },
+
+        galImgs = {
           propsProxy.connect { props =>
-            imgEditBtnR.PropsVal(
-              src = __getImgSrcOpt(props)(_.wcFg),
-              resKey = wcFgResKey
-            )
-          }
+            val iter = for {
+              galImg <- props.node.resView.galImgs.iterator
+              edge <- props.node.edges
+                .get( galImg.imgEdge.edgeUid )
+                .iterator
+            } yield {
+              nodeGalleryR.PropsValEl(
+                editBtn = ImgEditBtnPropsVal(
+                  src = edge.imgSrcOpt,
+                  resKey = MFormResourceKey(
+                    pred    = nodeGalleryR.galPredSome,
+                    edgeUid = Some( edge.id )
+                  ),
+                  bgColor = None,
+                  css     = nodeGalleryR.imgsRowContCss
+                ),
+                uploadStatus = edge.fileJs
+                  .flatMap(_.upload)
+              )
+            }
+            iter.toSeq
+          }( FastEqUtil.DeepCollFastEq[nodeGalleryR.PropsValEl, Seq]( nodeGalleryR.NodeGalleryRPropsValElFastEq ) )
         }
 
       )

@@ -248,5 +248,6 @@ object MsgCodes {
   val `invalid_url` = "invalid_url"
   val `Welcome.screen` = "Welcome.screen"
   val `Welcome.bg.hint` = "Welcome.bg.hint"
+  val `Node.photos` = "Node.photos"
 
 }

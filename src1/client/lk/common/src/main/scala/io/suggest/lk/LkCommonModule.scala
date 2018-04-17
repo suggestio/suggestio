@@ -1,9 +1,9 @@
 package io.suggest.lk
 
 import com.softwaremill.macwire._
-import io.suggest.lk.r.UploadStatusR
+import io.suggest.lk.r.{SaveR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorBtnR, ColorPickerR, ColorsSuggestR}
-import io.suggest.lk.r.crop.CropBtnR
+import io.suggest.lk.r.crop.{CropBtnR, CropPopupR}
 import io.suggest.lk.r.img.ImgEditBtnR
 
 /**
@@ -24,5 +24,9 @@ class LkCommonModule {
   lazy val imgEditBtnR = wire[ImgEditBtnR]
 
   lazy val cropBtnR = wire[CropBtnR]
+
+  lazy val cropPopupR = wire[CropPopupR]
+
+  lazy val saveR = wire[SaveR]
 
 }

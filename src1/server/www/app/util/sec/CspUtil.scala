@@ -146,6 +146,10 @@ class CspUtil @Inject() (
         .addChildSrc( DATA )
     }
 
+    val AdnEdit = mkCustomPolicyHdr { p0 =>
+      p0.addImgSrc( Csp.Sources.BLOB )
+    }
+
   }
 
 

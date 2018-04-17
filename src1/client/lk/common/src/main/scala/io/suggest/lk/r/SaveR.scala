@@ -1,21 +1,20 @@
-package io.suggest.ad.edit.v.edit
+package io.suggest.lk.r
 
 import diode.FastEq
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProps}
-import io.suggest.ad.edit.m.SaveAd
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.r.LkPreLoaderR
+import io.suggest.lk.m.Save
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.ueq.JsUnivEqUtil._
 
 /**
   * Suggest.io
@@ -45,7 +44,7 @@ class SaveR {
 
     /** Клик по кнопке сохранения. */
     private def onSaveBtnClick: Callback = {
-      dispatchOnProxyScopeCB($, SaveAd)
+      dispatchOnProxyScopeCB($, Save)
     }
 
     def render(propsProxy: Props): VdomElement = {
@@ -53,7 +52,6 @@ class SaveR {
       val isPending = p.currentReq.isPending
 
       <.div(
-        ^.`class` := Css.Floatt.RIGHT,
 
         <.a(
           ^.classSet1(

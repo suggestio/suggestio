@@ -15,8 +15,8 @@ object MLkAdnEditRoot {
   implicit object MLkAdnEditRootFastEq extends FastEq[MLkAdnEditRoot] {
     override def eqv(a: MLkAdnEditRoot, b: MLkAdnEditRoot): Boolean = {
       (a.node ===* b.node) &&
-        (a.conf ===* b.conf) &&
-        (a.popups ===* b.popups)
+        (a.popups ===* b.popups) &&
+        (a.internals ===* b.internals)
     }
   }
 
@@ -31,12 +31,13 @@ object MLkAdnEditRoot {
   * @param node Состояния редактора ADN-узла.
   */
 case class MLkAdnEditRoot(
-                           conf   : MAdnEditFormConf,
-                           node   : MAdnNodeS,
-                           popups : MAdnEditPopups    = MAdnEditPopups.empty,
+                           node         : MAdnNodeS,
+                           internals    : MAdnEditInternals,
+                           popups       : MAdnEditPopups    = MAdnEditPopups.empty
                          ) {
 
   def withNode(node: MAdnNodeS)             = copy(node = node)
+  def withInternals(internals: MAdnEditInternals) = copy(internals = internals)
   def withPopups(popups: MAdnEditPopups)    = copy(popups = popups)
 
   /** Экспорт в кросс-платформенный класс формы редактирования adn-узла. */

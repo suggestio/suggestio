@@ -298,6 +298,8 @@ class JsMessagesUtil @Inject() (
       MC.`Fg.color.of.sc.hint` ::
       MC.`Welcome.screen` ::
       MC.`Welcome.bg.hint` ::
+      MC.`Node.photos` ::
+      MC.`Save` ::
       Nil
   }
 

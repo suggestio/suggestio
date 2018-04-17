@@ -50,9 +50,12 @@ GET  /lk/nodes                          @controllers.MarketLkAdn.lkList(fromNode
 GET  /lk/node/create                    @controllers.MarketLkAdn.createNode
 POST /lk/node/create                    @controllers.MarketLkAdn.createNodeSubmit
 GET  /lk/node/profile/:nodeId           @controllers.MarketLkAdn.showAdnNode(nodeId)
-## Редактор ADN-узла
-GET  /lk/node/edit2/:nodeId             @controllers.LkAdnEdit.editNodePage(nodeId: MEsUuId)
-POST /lk/node/edit2/:nodeId             @controllers.LkAdnEdit.save(nodeId: MEsUuId)
+
+## Редактор ADN-узла: v2 react
+GET  /lk/node/edit2/page/:nodeId        @controllers.LkAdnEdit.editNodePage(nodeId: MEsUuId)
+POST /lk/node/edit2/img/up/:nodeId      @controllers.LkAdnEdit.uploadImg(nodeId: MEsUuId)
+POST /lk/node/edit2/page/:nodeId        @controllers.LkAdnEdit.save(nodeId: MEsUuId)
+
 ## Старый редактор ADN-узла, удалить потом.
 GET  /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNode(adnId)
 POST /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)

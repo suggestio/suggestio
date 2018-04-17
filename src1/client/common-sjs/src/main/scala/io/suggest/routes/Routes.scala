@@ -248,6 +248,8 @@ sealed trait LkAdnEditCtlRoutes extends js.Object {
 
   def editNodePage(nodeId: String): Route = js.native
 
+  def uploadImg(nodeId: String): Route = js.native
+
   def save(nodeId: String): Route = js.native
 
 }

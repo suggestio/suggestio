@@ -47,7 +47,7 @@ class PictureAh[V, M](
                      )(implicit picViewContAdp: IPictureViewAdp[V])
   extends ActionHandler(modelRW)
   with Log
-{
+{ ah =>
 
   private type ResPair_t = (MPictureAh[V], Effect)
 
@@ -481,23 +481,30 @@ class PictureAh[V, M](
                 )
 
                 // В ответе может быть гистограмма. Это важно проаналализировать и вынести решение:
-                val (v9, fx) = fileExist.colors.fold[ResPair_t] {
+                fileExist.colors.fold {
                   // Сервер не прислал гистограмму. Она придёт по websocket'у.
                   // В фоне: запустить открытие websocket'а для связи с сервером по поводу гистограммы.
-                  val wsEnsureFx = Effect.action {
-                    WsEnsureConn(
-                      target = MWsConnTg(
-                        host = m.hostUrl.host
-                      ),
-                      closeAfterSec = Some(120)
-                    )
+                  uploadApi.conf.ctxIdOpt.fold {
+                    // Нет ctxId в аплоаде - не будет веб-сокета с палитрой.
+                    updated(v2)
+                  } { _ =>
+                    // Есть ctxId - нужен веб-сокет
+                    val wsEnsureFx = Effect.action {
+                      WsEnsureConn(
+                        target = MWsConnTg(
+                          host = m.hostUrl.host
+                        ),
+                        closeAfterSec = Some(120)
+                      )
+                    }
+                    updated(v2, wsEnsureFx)
                   }
-                  (v2, wsEnsureFx)
+
                 } { histogram =>
                   // Гистограмма уже есть в комплекте с ответом сервера. Внести гистограмму в карту и запустить дальнейший процессинг дерева документа:
-                  _withHistogram( fileExist.nodeId, histogram, v2 )
+                  val (v3, fx3) = _withHistogram( fileExist.nodeId, histogram, v2 )
+                  updated(v3, fx3)
                 }
-                updated(v9, fx)
               }
               // Возможно, что-то пошло на сервере не так. Нужно отрендерить .errors:
               .orElse {

@@ -1,6 +1,7 @@
 package io.suggest.adn.edit.m
 
 import diode.FastEq
+import io.suggest.common.empty.EmptyProduct
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.lk.m.img.MPictureCropPopup
 import io.suggest.ueq.UnivEqUtil._
@@ -31,7 +32,9 @@ object MAdnEditPopups {
 case class MAdnEditPopups(
                            errorPopup     : Option[MErrorPopupS]        = None,
                            cropPopup      : Option[MPictureCropPopup]   = None,
-                         ) {
+                         )
+  extends EmptyProduct
+{
 
   def withErrorPopup(errorPopup: Option[MErrorPopupS])        = copy(errorPopup = errorPopup)
   def withCropPopup(cropPopup: Option[MPictureCropPopup])     = copy(cropPopup = cropPopup)

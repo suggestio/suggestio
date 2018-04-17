@@ -2,8 +2,11 @@ package controllers
 
 import io.suggest.adn.edit.m.{MAdnEditForm, MAdnEditFormConf, MAdnEditFormInit, MAdnResView}
 import io.suggest.es.model.MEsUuId
+import io.suggest.file.up.MFile4UpProps
+import io.suggest.img.{MImgEdgeWithOps, MImgFmts}
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.jd.MJdEdgeId
+import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge.{MPredicate, MPredicates}
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.Inject
@@ -15,6 +18,10 @@ import util.ad.JdAdUtil
 import util.cdn.CdnUtil
 import views.html.lk.adn.edit._
 import japgolly.univeq._
+import models.mup.MUploadFileHandlers
+import play.api.mvc.Result
+import scalaz.ValidationNel
+import util.sec.CspUtil
 
 /**
   * Suggest.io
@@ -25,7 +32,9 @@ import japgolly.univeq._
   */
 class LkAdnEdit @Inject() (
                             isNodeAdmin               : IsNodeAdmin,
+                            cspUtil                   : CspUtil,
                             jdAdUtil                  : JdAdUtil,
+                            upload                    : Upload,
                             cdnUtil                   : CdnUtil,
                             override val mCommonDi    : ICommonDi
                           )
@@ -34,6 +43,11 @@ class LkAdnEdit @Inject() (
 {
 
   import mCommonDi._
+
+  /** Накатить какие-то дополнительные CSP-политики для работы редактора. */
+  private def _applyCspToEditPage(res0: Result): Result = {
+    cspUtil.applyCspHdrOpt( cspUtil.CustomPolicies.AdEdit )(res0)
+  }
 
 
   /** Экшен, возвращающий html-страницу с формой редактирования узла.
@@ -55,6 +69,7 @@ class LkAdnEdit @Inject() (
       // Какие предикаты и эджи здесь интересуют?
       val nodeImgPredicates = MPredicates.Logo ::
         MPredicates.WcFgImg ::
+        MPredicates.GalleryItem ::
         Nil
       val imgsEdges = jdAdUtil.collectImgEdges(request.mnode.edges, nodeImgPredicates)
 
@@ -98,7 +113,11 @@ class LkAdnEdit @Inject() (
         jdEdges <- jdEdgesFut
       } yield {
         LOGGER.trace(s"$logPrefix Compiled jd-edges: $jdEdges")
-        def __getImgEdge(pred: MPredicate) = jdEdges.find(_.predicate ==* pred).map(e => MJdEdgeId(e.id))
+        def __getImgEdge(pred: MPredicate) = {
+          jdEdges
+            .find(_.predicate ==* pred)
+            .map(e => MJdEdgeId(e.id))
+        }
 
         val minit = MAdnEditFormInit(
           conf = mconf,
@@ -107,7 +126,13 @@ class LkAdnEdit @Inject() (
             edges = jdEdges,
             resView = MAdnResView(
               logo = __getImgEdge( MPredicates.Logo ),
-              wcFg = __getImgEdge( MPredicates.WcFgImg )
+              wcFg = __getImgEdge( MPredicates.WcFgImg ),
+              galImgs = jdEdges
+                .iterator
+                .filter(_.predicate ==* MPredicates.GalleryItem)
+                // TODO Тут проблема: нужен dynImgArgs, который валяется в исходных эджах или ещё где-то.
+                .map(e => MImgEdgeWithOps( MJdEdgeId(e.id) ))
+                .toSeq
             )
           )
         )
@@ -125,9 +150,45 @@ class LkAdnEdit @Inject() (
           mnode         = request.mnode,
           formStateStr  = formInitStr
         )(ctx)
-        Ok( html )
+        _applyCspToEditPage( Ok(html) )
       }
     }
+  }
+
+
+  /** Экшен получения ссылки для аплоада картинки.
+    *
+    * @param nodeIdU id узла.
+    * @return
+    */
+  def uploadImg(nodeIdU: MEsUuId) = csrf.Check {
+    isNodeAdmin(nodeIdU).async(upload.prepareUploadBp) { implicit request =>
+      upload.prepareUploadLogic(
+        logPrefix           = s"${getClass.getSimpleName}.uploadImg($nodeIdU):",
+        validated           = image4UploadPropsV(request.body),
+        uploadFileHandler   = Some( MUploadFileHandlers.Picture ),
+        colorDetect         = None
+      )
+    }
+  }
+
+  /** Валидация данных файла, готовящегося к заливке.
+    *
+    * @param fileProps Присланные клиентом данные по файлу.
+    * @return ValidationNel с выверенными данными или ошибкой.
+    */
+  private def image4UploadPropsV(fileProps: MFile4UpProps): ValidationNel[String, MFile4UpProps] = {
+    // Тут практически копипаст данных из LkAdEdit/LkAdEdFormUtil:
+    MFile4UpProps.validate(
+      m             = fileProps,
+      // Бывает, что загружается просто png-рамка, например:
+      minSizeB      = 100,
+      maxSizeB      = 10*1024*1024,
+      mimeVerifierF = { mimeType =>
+        MImgFmts.withMime(mimeType).nonEmpty
+      },
+      mustHashes    = UploadConstants.CleverUp.PICTURE_FILE_HASHES
+    )
   }
 
 

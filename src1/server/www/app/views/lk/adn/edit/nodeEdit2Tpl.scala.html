@@ -6,7 +6,7 @@
 @import lk.adn._
 @import io.suggest.adn.edit.{NodeEditConstants => C}
 @import views.js.stuff.jsRevRouterTpl
-@import views.html.stuff.jsTpl2HtmlTpl
+@import views.html.stuff.{jsTpl2HtmlTpl, _preLoaderLkTpl}
 @import lk.lkwdgts._formStateInputTpl
 
 
@@ -23,13 +23,14 @@
 ) {
 
   <div id="@C.FORM_CONTAINER_ID">
-    @*_preLoaderLkTpl()*@
     @_formStateInputTpl( formStateStr )
+    @_preLoaderLkTpl()
   </div>
 
   @jsTpl2HtmlTpl()(
     jsRevRouterTpl()(
-      routes.javascript.LkAdnEdit.save
+      routes.javascript.LkAdnEdit.save,
+      routes.javascript.LkAdnEdit.uploadImg
     )
   )
 

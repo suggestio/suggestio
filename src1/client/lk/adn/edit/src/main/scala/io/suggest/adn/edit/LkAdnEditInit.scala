@@ -3,6 +3,8 @@ package io.suggest.adn.edit
 import io.suggest.sjs.common.controller.InitRouter
 import japgolly.univeq._
 import com.softwaremill.macwire._
+import io.suggest.adn.edit.m.MLkAdnEditRoot
+import io.suggest.lk.pop.PopupsContR
 import io.suggest.sjs.common.view.VUtil
 import org.scalajs.dom.raw.HTMLDivElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -30,14 +32,27 @@ trait LkAdnEditInit extends InitRouter {
     val module = wire[LkAdnEditModule]
     val circuit = module.lkAdnEditCircuit
 
+    val identityRootF = circuit.rootRO
+
     // Рендерим основную форму:
     circuit
-      .wrap(identity(_))( module.lkAdnEditFormR.apply )
+      .wrap(identityRootF)( module.lkAdnEditFormR.apply )
       .renderIntoDOM(
         VUtil.getElementByIdOrNull[HTMLDivElement]( NodeEditConstants.FORM_CONTAINER_ID )
       )
 
-    // TODO Рендерить компонент сохранения в правый div.
+    // Рендерить компонент сохранения в правый div.
+    circuit
+      .wrap(identityRootF)( module.rightBarR.apply )
+      .renderIntoDOM(
+        VUtil.getElementByIdOrNull[HTMLDivElement]( NodeEditConstants.SAVE_BTN_CONTAINER_ID )
+      )
+
+    // Рендерить компонент попапов формы.
+    circuit
+      .wrap(identityRootF)( module.lkAdnEditPopupsR.apply )
+      .renderIntoDOM( PopupsContR.initDocBody() )
+
   }
 
 }

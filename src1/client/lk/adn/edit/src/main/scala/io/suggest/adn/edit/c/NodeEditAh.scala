@@ -7,7 +7,7 @@ import io.suggest.adn.edit.m._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.err.ErrorConstants
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.m.{ColorBtnClick, ColorChanged, DocBodyClick}
+import io.suggest.lk.m.{ColorBtnClick, ColorChanged, DocBodyClick, PurgeUnusedEdges}
 import io.suggest.model.n2.node.meta.colors.MColorTypes
 import io.suggest.proto.HttpConst
 import io.suggest.sjs.common.log.Log
@@ -290,6 +290,21 @@ class NodeEditAh[M](
 
         updated(v1)
       }
+
+
+    // Очистка эджей в состоянии от неактуальных элементов.
+    case PurgeUnusedEdges =>
+      val v0 = value
+      // Собрать множество id используемых эджей.
+      val edgeUids = v0.resView
+        .edgeUids
+        .map(_.edgeUid)
+        .toSet
+      // Профильтровать карту эджей в состоянии.
+      val v2 = v0.withEdges(
+        v0.edges.filterKeys(edgeUids.contains)
+      )
+      updatedSilent(v2)
 
   }
 

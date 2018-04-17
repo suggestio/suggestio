@@ -5,7 +5,6 @@ import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.univeq._
 import japgolly.scalajs.react.vdom.Implicits._
-import io.suggest.ads.m.MLkAdsRoot.MLkAdsRootFastEq
 import io.suggest.common.event.DomEvents
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.wnd.WindowVm
@@ -32,6 +31,8 @@ trait LkAdsInit extends InitRouter {
 
   /** Запуск непосредственной инициализации узла. */
   private def _doInit(): Unit = {
+    import io.suggest.ads.m.MLkAdsRoot.MLkAdsRootFastEq
+
     // Инициализировать хранилку ссылки на гифку прелоадера, т.к. тот будет стёрт входе react-рендера.
     LkPreLoader.PRELOADER_IMG_URL
 

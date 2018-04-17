@@ -1,13 +1,15 @@
 package io.suggest.adn.edit
 
 import diode.react.ReactConnector
-import io.suggest.adn.edit.c.NodeEditAh
+import io.suggest.adn.edit.api.{ILkAdnEditApi, LKAdnEditApiHttp}
+import io.suggest.adn.edit.c.{InternalsAh, NodeEditAh}
 import io.suggest.adn.edit.m._
 import io.suggest.lk.c.PictureAh
 import io.suggest.lk.m.img.MPictureAh
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.id.IId
+import io.suggest.routes.routes
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.StateInp
 import play.api.libs.json.Json
@@ -25,6 +27,11 @@ class LkAdnEditCircuit
   with ReactConnector[MLkAdnEditRoot]
 {
 
+  import MLkAdnEditRoot.MLkAdnEditRootFastEq
+  import MAdnNodeS.MAdnNodeSFastEq
+  import MPictureAh.MPictureAhFastEq
+
+
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.LK_ADN_EDIT_FORM_FAILED
 
   /** Извлекать начальное состояние формы из html-страницы. */
@@ -35,7 +42,9 @@ class LkAdnEditCircuit
       .as[MAdnEditFormInit]
 
     MLkAdnEditRoot(
-      conf = minit.conf,
+      internals = MAdnEditInternals(
+        conf = minit.conf
+      ),
       node = MAdnNodeS(
         meta          = minit.form.meta,
         colorPresets  = minit.form.meta.colors.allColorsIter.toList,
@@ -47,6 +56,8 @@ class LkAdnEditCircuit
 
 
   // Models
+  val rootRO = zoom(identity(_))
+
   val nodeRW = zoomRW(_.node)(_.withNode(_))
 
   val mPictureAhRW = zoomRW [MPictureAh[MAdnResView]] { mroot =>
@@ -84,7 +95,15 @@ class LkAdnEditCircuit
     mroot2
   }
 
-  val confRO = zoom(_.conf)
+  val internalsRW = zoomRW(_.internals) { _.withInternals(_) }
+
+  val confRO = internalsRW.zoom(_.conf)
+
+
+  // API
+  val uploadApi: IUploadApi = new UploadApiHttp( confRO )
+
+  val lkAdnEditApi: ILkAdnEditApi = new LKAdnEditApiHttp( confRO )
 
 
   // Controllers
@@ -92,25 +111,32 @@ class LkAdnEditCircuit
     modelRW = nodeRW
   )
 
-  // TODO Нужен ctxId, который можно через conf передать.
-  val uploadApi: IUploadApi = new UploadApiHttp(confRO)
 
   val pictureAh = {
     import MAdnResViewUtil._
     new PictureAh(
-      prepareUploadRoute = { mrk =>
-        // TODO Возвращать роуты контроллера LkAdnEdit в зав-ти от предиката и прочих данных из mrk
-        ???
+      // Возвращать роуты контроллера LkAdnEdit в зав-ти от предиката и прочих данных из $1?
+      prepareUploadRoute = { _ =>
+        routes.controllers.LkAdnEdit.uploadImg(
+          nodeId = confRO.value.nodeId
+        )
       },
       uploadApi = uploadApi,
-      modelRW = mPictureAhRW
+      modelRW   = mPictureAhRW
     )
   }
+
+  val internalsAh = new InternalsAh(
+    api = lkAdnEditApi,
+    mrootRO = rootRO,
+    modelRW = internalsRW
+  )
 
   override protected val actionHandler: HandlerFunction = {
     composeHandlers(
       nodeEditAh,
-      pictureAh
+      pictureAh,
+      internalsAh
     )
   }
 
