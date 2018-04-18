@@ -1,14 +1,14 @@
 package io.suggest.adn.edit
 
-import scalaz.{Validation, ValidationNel}
-import scalaz.syntax.apply._
-
+import io.suggest.common.geom.d2.MSize2di
+import io.suggest.math.MathConst
+import scalaz.ValidationNel
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 30.04.15 14:59
- * Description:
+ * Description: Константы редактора ADN-узла.
  */
 object NodeEditConstants {
 
@@ -28,11 +28,11 @@ object NodeEditConstants {
 
     /** Валидация названия узла. */
     def validateNodeName(raw: String): ValidationNel[String, String] = {
-      val l = raw.length
+      val name = raw.trim
       val ePrefix = "e.node.name.len.too"
-      val minLenOk = Validation.liftNel(l)( _ > LEN_MAX, s"$ePrefix.big" )
-      val maxLenOk = Validation.liftNel(l)( _ < LEN_MIN, s"$ePrefix.small" )
-      (minLenOk |@| maxLenOk) { (_,_) => raw }
+      MathConst.Counts
+        .validateMinMax(name.length, min = LEN_MIN, max = LEN_MAX, ePrefix)
+        .map(_ => name)
     }
 
   }
@@ -42,5 +42,16 @@ object NodeEditConstants {
 
   /** id контейнера для формы. */
   def FORM_CONTAINER_ID = "aec"
+
+
+  /** Данные галереи узла. */
+  object Gallery {
+
+    def WIDTH_PX  = 625
+    def HEIGHT_PX = 200
+
+    def WH_PX = MSize2di(width = WIDTH_PX, height = HEIGHT_PX)
+
+  }
 
 }

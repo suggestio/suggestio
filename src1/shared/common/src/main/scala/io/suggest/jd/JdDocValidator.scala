@@ -27,9 +27,9 @@ import scalaz.syntax.apply._
   * Проверка дерева документа [[JdTag]] -- комплексная вещь, которую лучше вынести за пределы модели.
   * Конструктор содержит связанные с шаблоном данные для рендера.
   */
-class JdDocValidation(
-                       edges: Map[EdgeUid_t, MJdEdgeVldInfo]
-                     ) {
+class JdDocValidator(
+                      edges: Map[EdgeUid_t, MJdEdgeVldInfo]
+                    ) {
 
   private def QD      = "qd"
   private def BM      = "bm"

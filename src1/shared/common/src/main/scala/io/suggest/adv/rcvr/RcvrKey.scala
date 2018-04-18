@@ -6,7 +6,6 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.scalaz.ScalazUtil
 import scalaz.{Monoid, Validation, ValidationNel}
 import scalaz.syntax.apply._
-// НЕ УДАЛЯТЬ!! could not find implicit value for evidence parameter of type scalaz.Foldable[Iterable]: ScalazUtil.validateAll(rm.keys)(advFormUtil.rcvrKeyV)
 import scalaz.std.iterable._
 import scalaz.std.string._
 

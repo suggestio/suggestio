@@ -3,9 +3,13 @@ package io.suggest.model.n2.node.meta.colors
 import boopickle.Default._
 import io.suggest.color.MColorData
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.err.ErrorConstants
+import io.suggest.scalaz.ScalazUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import scalaz.ValidationNel
+import scalaz.syntax.apply._
 
 /**
   * Suggest.io
@@ -42,6 +46,22 @@ object MColors extends IEmpty {
 
   def bgF = { cs: MColors => cs.bg }
   def fgF = { cs: MColors => cs.fg }
+
+  /** Проверка валидности hex-цветов. */
+  def validateHexOpt(color: MColors): ValidationNel[String, MColors] = {
+    (
+      ScalazUtil.liftNelOpt(color.bg)( MColorData.validateHexCodeOnly ) |@|
+      ScalazUtil.liftNelOpt(color.fg)( MColorData.validateHexCodeOnly )
+    )(apply _)
+  }
+
+  /** Проверка, что все цвета выставлены. */
+  def validateHexSome(color: MColors): ValidationNel[String, MColors] = {
+    (
+      ScalazUtil.liftNelSome(color.bg, "bg." + ErrorConstants.Words.EXPECTED)( MColorData.validateHexCodeOnly ) |@|
+      ScalazUtil.liftNelSome(color.fg, "fg." + ErrorConstants.Words.EXPECTED)( MColorData.validateHexCodeOnly )
+    )(apply _)
+  }
 
 }
 

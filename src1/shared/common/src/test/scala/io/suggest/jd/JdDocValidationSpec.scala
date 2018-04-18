@@ -14,7 +14,7 @@ import scalaz.Tree
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 20.10.17 21:50
-  * Description: Тесты для [[JdDocValidation]].
+  * Description: Тесты для [[JdDocValidator]].
   */
 object JdDocValidationSpec extends SimpleTestSuite {
 
@@ -147,7 +147,7 @@ object JdDocValidationSpec extends SimpleTestSuite {
       }
       .toMap
 
-    val vld = new JdDocValidation(edgesMap)
+    val vld = new JdDocValidator(edgesMap)
 
     val vldRes = vld.validateDocumentTree( tplTree )
     assert(vldRes.isSuccess, vldRes.toString)

@@ -3,7 +3,7 @@ package io.suggest.ad.edit.c
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.edit.m.JdDocChanged
 import io.suggest.ad.edit.m.vld.MJdVldAh
-import io.suggest.jd.{JdDocValidation, MEdgePicInfo, MJdEdgeVldInfo}
+import io.suggest.jd.{JdDocValidator, MEdgePicInfo, MJdEdgeVldInfo}
 
 /**
   * Suggest.io
@@ -21,7 +21,7 @@ class JdVldAh[M]( modelRW: ModelRW[M, MJdVldAh] ) extends ActionHandler(modelRW)
     // Сигнал об изменении в json-документе. Надо запустить пере-валидацию документа.
     case JdDocChanged =>
       val v0 = value
-      val vld = new JdDocValidation(
+      val vld = new JdDocValidator(
         edges = v0.edges.mapValues { eData =>
           MJdEdgeVldInfo(
             jdEdge = eData.jdEdge,

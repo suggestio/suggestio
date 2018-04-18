@@ -1,10 +1,14 @@
 package io.suggest.adn.edit.m
 
-import io.suggest.jd.MJdEdge
+import io.suggest.jd.{MJdEdge, MJdEdgeVldInfo}
+import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.model.n2.node.meta.MMetaPub
+import io.suggest.scalaz.StringValidationNel
 import japgolly.univeq._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import scalaz.Validation
+import scalaz.syntax.apply._
 
 /**
   * Suggest.io
@@ -25,6 +29,16 @@ object MAdnEditForm {
     (__ \ "r").format[MAdnResView] and
     (__ \ "e").format[Seq[MJdEdge]]
   )(apply, unlift(unapply))
+
+
+  /** Выверение данных формы. */
+  def validate(form: MAdnEditForm, vldEdgesMap: Map[EdgeUid_t, MJdEdgeVldInfo]): StringValidationNel[MAdnEditForm] = {
+    (
+      MMetaPub.validate( form.meta ) |@|
+      MAdnResView.validate(form.resView, vldEdgesMap) |@|
+      Validation.success( vldEdgesMap.valuesIterator.map(_.jdEdge).toSeq )
+    )(apply _)
+  }
 
 }
 

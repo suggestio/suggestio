@@ -2,9 +2,14 @@ package io.suggest.model.n2.node.meta
 
 import boopickle.Default._
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
+import io.suggest.err.ErrorConstants
+import io.suggest.scalaz.ScalazUtil
+import io.suggest.text.UrlUtil2
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import scalaz.{Validation, ValidationNel}
+import scalaz.syntax.apply._
 
 /**
   * Suggest.io
@@ -59,6 +64,16 @@ object MBusinessInfo extends IEmpty {
 
   implicit def univEq: UnivEq[MBusinessInfo] = UnivEq.derive
 
+
+  def validate(mbi: MBusinessInfo): ValidationNel[String, MBusinessInfo] = {
+    (
+      ScalazUtil.liftNelOpt(mbi.siteUrl)( url => UrlUtil2.validateUrl(url, "url." + ErrorConstants.Words.INVALID) ) |@|
+      ScalazUtil.validateTextOpt(mbi.audienceDescr, maxLen = 300, "auDescr") |@|
+      ScalazUtil.validateTextOpt(mbi.humanTraffic, maxLen = 120, "htraf") |@|
+      ScalazUtil.validateTextOpt(mbi.info, maxLen = 600, "info")
+    )(apply _)
+  }
+
 }
 
 
@@ -67,7 +82,7 @@ case class MBusinessInfo(
                           audienceDescr       : Option[String]  = None,
                           humanTraffic        : Option[String]  = None,
                           info                : Option[String]  = None
-)
+                        )
   extends EmptyProduct
 {
 

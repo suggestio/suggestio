@@ -320,11 +320,13 @@ class LkAdnEditFormR(
               val logoResKey = MFormResourceKey(
                 pred = Some( MPredicates.Logo )
               )
+              val cssSizeL = Css.Size.L
               propsProxy.connect { props =>
                 ImgEditBtnPropsVal(
-                  src = __getImgSrcOpt(props)(logoF),
+                  src     = __getImgSrcOpt(props)(logoF),
                   resKey  = logoResKey,
-                  bgColor = props.node.meta.colors.bg
+                  bgColor = props.node.meta.colors.bg,
+                  size    = cssSizeL
                 )
               }
             },

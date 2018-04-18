@@ -57,7 +57,7 @@ class ImgEditBtnR {
       val propsVal = propsValProxy.value
 
       <.div(
-        ^.`class` := Css.flat1( C.IMAGE :: Css.Size.M :: propsVal.css ),
+        ^.`class` := Css.flat1( C.IMAGE :: propsVal.size :: propsVal.css ),
 
         propsVal.bgColor.whenDefined { bgColor =>
           ^.backgroundColor := bgColor.hexCode
@@ -105,7 +105,7 @@ class ImgEditBtnR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("ImgEditBtn")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
     .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(ImgEditBtnRPropsValFastEq) )
@@ -121,7 +121,8 @@ case class ImgEditBtnPropsVal(
                                src        : Option[String],
                                resKey     : MFormResourceKey,
                                bgColor    : Option[MColorData] = None,
-                               css        : List[String] = Nil
+                               css        : List[String] = Nil,
+                               size       : String = Css.Size.M
                              )
 object ImgEditBtnPropsVal {
   implicit object ImgEditBtnRPropsValFastEq extends FastEq[ImgEditBtnPropsVal] {
@@ -129,7 +130,8 @@ object ImgEditBtnPropsVal {
       (a.src ===* b.src) &&
         (a.resKey ==* b.resKey) &&
         (a.bgColor ===* b.bgColor) &&
-        (a.css ===* b.css)
+        (a.css ===* b.css) &&
+        (a.size ==* b.size)
     }
   }
 }

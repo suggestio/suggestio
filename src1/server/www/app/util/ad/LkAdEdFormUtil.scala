@@ -1,7 +1,6 @@
 package util.ad
 
-import javax.inject.Singleton
-
+import javax.inject.{Inject, Singleton}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.blk.ent.{EntFont, TextEnt}
 import io.suggest.color.MColorData
@@ -19,11 +18,10 @@ import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.model.n2.media.MMedia
 import io.suggest.model.n2.node.{MNode, MNodeTypes}
-import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
+import io.suggest.scalaz.StringValidationNel
 import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.text.StringUtil.StringCollUtil
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.vid.ext.VideoExtUrlParsers
 import japgolly.univeq._
 import models.im.MImg3
 import models.mctx.Context
@@ -33,6 +31,8 @@ import util.FormUtil._
 
 import scala.concurrent.Future
 import scalaz.{Tree, Validation, ValidationNel}
+import scalaz.syntax.apply._
+import util.n2u.N2VldUtil
 
 /**
  * Suggest.io
@@ -41,7 +41,9 @@ import scalaz.{Tree, Validation, ValidationNel}
  * Description: Общая утиль для работы с разными ad-формами: preview и обычными.
  */
 @Singleton
-class LkAdEdFormUtil
+class LkAdEdFormUtil @Inject() (
+                                 n2VldUtil    : N2VldUtil
+                               )
   extends MacroLogsImpl
 {
 
@@ -227,10 +229,6 @@ class LkAdEdFormUtil
   }
 
 
-  import scalaz.std.iterable._
-  import scalaz.std.list._
-  import scalaz.syntax.apply._
-
   /** Запуск ранней синхронной валидации эджей, из присланной юзером JSON-формы.
     * Происходит базовая проверка данных.
     *
@@ -245,12 +243,7 @@ class LkAdEdFormUtil
     val edges1 = JdTag.purgeUnusedEdges( form.template, form.edgesMap )
 
     // Ранняя валидация корректности присланных эджей:
-    val videoExtUrlParsers = new VideoExtUrlParsers
-    val edgesVlds = ScalazUtil.validateAll(edges1.values) {
-      MJdEdge
-        .validateForStore(_, videoExtUrlParsers)
-        .map(List(_))
-    }
+    val edgesVlds = n2VldUtil.earlyValidateEdges( edges1.values )
 
     def logPrefix = s"validateEdges(${form.edges.size})[${System.currentTimeMillis()}]:"
 
@@ -261,61 +254,17 @@ class LkAdEdFormUtil
     nodeIdVld *> edgesVlds
   }
 
-  /** Извлечь данные по картинкам из карты эджей.
-    *
-    * @param edges Эджи.
-    * @return Мапа: id эджа -> nodeId картинки.
-    */
-  def collectNeededImgNodes(edges: TraversableOnce[MJdEdge]): Map[EdgeUid_t, String] = {
-    val needImgsIter = for {
-      e <- edges.toIterator
-      if e.predicate ==>> MPredicates.JdContent.Image
-      fileSrv <- e.fileSrv
-    } yield {
-      e.id -> fileSrv.nodeId
-    }
-    needImgsIter.toMap
-  }
+  /** Какие предикаты относятся к картинкам? */
+  def IMAGE_PREDICATES = MPredicates.JdContent.Image :: Nil
 
   /** Произвести валидацию шаблона на стороне сервера. */
   def validateTpl(template       : Tree[JdTag],
-                  jdEdges        : Iterable[MJdEdge],
-                  imgsNeededMap  : Map[EdgeUid_t, MImg3],
-                  nodesMap       : Map[String, MNode],
-                  mediasMap      : Map[String, MMedia]): StringValidationNel[Tree[JdTag]] = {
+                  vldEdgesMap    : Map[EdgeUid_t, MJdEdgeVldInfo]
+                 ): StringValidationNel[Tree[JdTag]] = {
     lazy val logPrefix = s"validateTpl()[${System.currentTimeMillis()}]:"
-    LOGGER.trace(s"$logPrefix Starting with ${jdEdges.size} edges, ${imgsNeededMap.size} imgs needed, ${nodesMap.size} nodes found, ${mediasMap.size} medias found.")
+    LOGGER.trace(s"$logPrefix Starting with ${vldEdgesMap.size} vld-edges.")
 
-    // Для валидации шаблона надо создать специальную карту vld-эджей.
-    val P = MPredicates.JdContent
-
-    val vldEdgesMap = jdEdges
-      .iterator
-      .map { jdEdge =>
-        val nodeIdOpt = jdEdge.fileSrv.map(_.nodeId)
-        val vldEdge = MJdEdgeVldInfo(
-          jdEdge = jdEdge,
-          img    = OptionUtil.maybe( jdEdge.predicate ==>> P.Image ) {
-            MEdgePicInfo(
-              isImg = nodeIdOpt
-                .flatMap { nodesMap.get }
-                .exists { _.common.ntype ==* MNodeTypes.Media.Image },
-              imgWh = imgsNeededMap.get( jdEdge.id )
-                .flatMap { mimg3 =>
-                  mediasMap.get( mimg3.dynImgId.mediaId )
-                }
-                .flatMap { mmedia =>
-                  mmedia.picture.whPx
-                }
-            )
-          }
-        )
-        LOGGER.trace(s"$logPrefix Edge#${jdEdge.id}, nodeId#${nodeIdOpt.orNull} img=>${vldEdge.img}")
-        jdEdge.id -> vldEdge
-      }
-      .toMap
-
-    val vldtor = new JdDocValidation(vldEdgesMap)
+    val vldtor = new JdDocValidator(vldEdgesMap)
     val vldRes = vldtor.validateDocumentTree( template )
 
     LOGGER.trace(s"$logPrefix Validation completed => $vldRes")

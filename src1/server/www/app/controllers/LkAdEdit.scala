@@ -1,14 +1,12 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.ad.blk.{BlockPadding, BlockPaddings}
 import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit}
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.MEsUuId
-import io.suggest.img.MImgFmts
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.jd.MJdAdData
 import io.suggest.model.n2.ad.MNodeAd
@@ -21,7 +19,6 @@ import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
-import models.im.{MDynImgId, MImg3}
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.mup.{MColorDetectArgs, MUploadFileHandlers}
@@ -31,6 +28,7 @@ import play.api.mvc._
 import util.acl.{BruteForceProtect, CanCreateOrEditAd, CanEditAd, IsNodeAdmin}
 import util.ad.{JdAdUtil, LkAdEdFormUtil}
 import util.mdr.SysMdrUtil
+import util.n2u.N2VldUtil
 import util.sec.CspUtil
 import util.vid.VideoUtil
 import views.html.lk.ad.edit._
@@ -52,6 +50,7 @@ class LkAdEdit @Inject() (
                            cspUtil                                : CspUtil,
                            lkAdEdFormUtil                         : LkAdEdFormUtil,
                            uploadCtl                              : Upload,
+                           n2VldUtil                              : N2VldUtil,
                            mMediasCache                           : MMediasCache,
                            bruteForceProtect                      : BruteForceProtect,
                            jdAdUtil                               : JdAdUtil,
@@ -105,7 +104,7 @@ class LkAdEdit @Inject() (
       } yield {
         val formInit = MAdEditFormInit(
           conf          = formConf,
-          adData            = adData,
+          adData        = adData,
           blockPadding  = prodBlockPadding(request.mnode)
         )
         _formInit2str( formInit )
@@ -153,65 +152,16 @@ class LkAdEdit @Inject() (
           // Есть проверенные эджи, похожие на валидные. Надо заняться валидацией самого шаблона.
           {edges2 =>
             // Собрать данные по всем упомянутым в запросе узлам, не обрывая связь с исходными эджами.
-            val nodeId2edgesMap = (
-              for {
-                jdEdge  <- edges2.iterator
-                fileSrv <- jdEdge.fileSrv
-              } yield {
-                fileSrv.nodeId -> jdEdge
-              }
-            )
-              .toSeq
-              .groupBy(_._1)
-              .mapValues(_.map(_._2))
-
-            // Поискать узлы, упомянутые в этих эджах.
-            val edgedNodesMapFut = mNodesCache.multiGetMap( nodeId2edgesMap.keys )
-
-            // Для валидации самого шаблона нужны данные по размерам связанных картинок. Поэтому залезаем в MMedia за оригиналами упомянутых картинок:
-            val imgFmtDflt = MImgFmts.default
-            val imgNeededNodesMap = lkAdEdFormUtil.collectNeededImgNodes( edges2 )
-              // Вместо .mapValues используем полный map+sizeHint, т.к. будем много раз юзать значения.
-              .map { case (edgeUid, nodeId) =>
-                edgeUid -> MDynImgId(nodeId, dynFormat = imgFmtDflt)
-              }
-
-            val imgsMediasMapFut = mMediasCache.multiGetMap(
-              // Собрать id запрашиваемых media-оригиналов.
-              imgNeededNodesMap
-                .mapValues(_.mediaId)
-                .valuesIterator
-                .toSet
-            )
-            // Нужно, используя mmedia оригиналов картинок, собрать MImg3/MDynImgId с правильными форматами внутри:
-            val imgsNeededMapFut = for {
-              imgsMediasMap <- imgsMediasMapFut
-            } yield {
-              // Залить данные по форматам в исходную карту imgNeededMap
-              val iter2 = for {
-                (edgeUid, dynImgId) <- imgNeededNodesMap.iterator
-                mmedia <- imgsMediasMap.get( dynImgId.mediaId )
-                imgFormat <- mmedia.file.imgFormatOpt
-              } yield {
-                val dynImgId2 = dynImgId.withDynFormat( imgFormat )
-                val mimg = MImg3( dynImgId2 )
-                edgeUid -> mimg
-              }
-              iter2.toMap
-            }
+            val imgPreds = lkAdEdFormUtil.IMAGE_PREDICATES
+            val edgesVldLogic = n2VldUtil.EdgesValidator(edges2, imgPreds)
 
             // Когда будут собраны данные, произвести валидацию шаблона:
             val vldResFut = for {
-              imgsMediasMap <- imgsMediasMapFut
-              edgedNodesMap <- edgedNodesMapFut
-              imgsNeededMap <- imgsNeededMapFut
+              vldEdgesMap <- edgesVldLogic.vldEdgesMapFut
             } yield {
               lkAdEdFormUtil.validateTpl(
                 template      = request.body.template,
-                jdEdges       = edges2,
-                imgsNeededMap = imgsNeededMap,
-                nodesMap      = edgedNodesMap,
-                mediasMap     = imgsMediasMap
+                vldEdgesMap   = vldEdgesMap
               )
             }
 
@@ -246,7 +196,7 @@ class LkAdEdit @Inject() (
 
                   val edgesAcc0Fut = for {
                     videoExtEdges <- videoExtEdgesFut
-                    imgsNeededMap <- imgsNeededMapFut
+                    imgsNeededMap <- edgesVldLogic.imgsNeededMapFut
                   } yield {
                     LOGGER.trace(s"$logPrefix ${videoExtEdges.size} VideoExtEdges = [${videoExtEdges.mapValues(_.idOrNull).mkString(", ")}]")
 

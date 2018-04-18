@@ -1,10 +1,13 @@
 package io.suggest.scalaz
 
 import io.suggest.common.empty.{EmptyUtil, IIsEmpty}
+import io.suggest.common.html.HtmlConstants
+import io.suggest.err.ErrorConstants
 
 import scala.collection.{AbstractIterable, AbstractIterator, AbstractSeq}
 import scalaz.{Foldable, IList, Monoid, NonEmptyList, Validation, ValidationNel}
 import scalaz.syntax.foldable._
+
 import scala.language.higherKinds
 import scala.util.parsing.combinator.Parsers
 
@@ -96,6 +99,27 @@ object ScalazUtil {
         Validation.failureNel( errorF(noSuccess) )
     }
   }
+
+
+  /** Валидация опционального текста по длине.
+    * Если текст пустой, то будет None.
+    * Если нет, то будет выверена макс.длина.
+    *
+    * @param textOpt Опциональный исходный текст.
+    * @param maxLen Макс.длина строки текста.
+    * @param errMsgF Сообщение об ошибке.
+    * @return Результат валидации с ошибками или прочищенным текстом.
+    */
+  def validateTextOpt(textOpt: Option[String], maxLen: Int, errMsgF: => String): ValidationNel[String, Option[String]] = {
+    ScalazUtil.liftNelOpt(
+      textOpt
+        .map(_.trim)
+        .filter(_.length > 0)
+    ) { text =>
+      Validation.liftNel(text)(_.length > maxLen, errMsgF + HtmlConstants.`.` + ErrorConstants.Words.TOO_MANY)
+    }
+  }
+
 
   object Implicits {
 

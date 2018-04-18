@@ -2,9 +2,12 @@ package io.suggest.model.n2.node.meta
 
 import boopickle.Default._
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.scalaz.ScalazUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import scalaz.ValidationNel
+import scalaz.syntax.apply._
 
 /**
   * Suggest.io
@@ -48,6 +51,17 @@ object MAddress extends IEmpty {
   }
 
   implicit def univEq: UnivEq[MAddress] = UnivEq.derive
+
+
+  def validate(maddress: MAddress): ValidationNel[String, MAddress] = {
+    (
+      ScalazUtil.validateTextOpt( maddress.town, maxLen = 40, "town" ) |@|
+      ScalazUtil.validateTextOpt( maddress.address, maxLen = 100, "addr" ) |@|
+      ScalazUtil.validateTextOpt( maddress.phone, maxLen = 30, "phone" ) |@|
+      ScalazUtil.validateTextOpt( maddress.floor, maxLen = 16, "floor" ) |@|
+      ScalazUtil.validateTextOpt( maddress.section, maxLen = 16, "sect" )
+    )(apply _)
+  }
 
 }
 

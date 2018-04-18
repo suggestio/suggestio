@@ -1,11 +1,15 @@
 package io.suggest.model.n2.node.meta
 
 import boopickle.Default._
+import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.model.n2.node.meta.colors.MColors
+import io.suggest.scalaz.StringValidationNel
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import scalaz.Validation
+import scalaz.syntax.apply._
 
 /**
   * Suggest.io
@@ -32,9 +36,30 @@ object MMetaPub {
 
   implicit def univEq: UnivEq[MMetaPub] = UnivEq.derive
 
+
+  def validateName(name: String): StringValidationNel[String] = {
+    NodeEditConstants.Name.validateNodeName(name)
+  }
+
+  def validate(metaPub: MMetaPub): StringValidationNel[MMetaPub] = {
+    (
+      validateName( metaPub.name ) |@|
+      MAddress.validate( metaPub.address ) |@|
+      MBusinessInfo.validate( metaPub.business ) |@|
+      MColors.validateHexSome( metaPub.colors )
+    )(apply _)
+  }
+
 }
 
 
+/** Класс-контейнер публичных кросс-платформенных мета-данных узла.
+  *
+  * @param name Имя узла.
+  * @param address Данные по адресам.
+  * @param business Бизнес-информация.
+  * @param colors Цвета узла.
+  */
 case class MMetaPub(
                      name          : String,
                      address       : MAddress        = MAddress.empty,
