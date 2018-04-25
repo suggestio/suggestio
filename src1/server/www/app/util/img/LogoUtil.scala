@@ -4,8 +4,6 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.img.{MImgFmt, MImgFmts}
-import io.suggest.model.n2.edge.{MEdge, MPredicates}
 import io.suggest.model.n2.node.MNode
 import io.suggest.sc.ScConstants
 import models.blk._
@@ -22,55 +20,8 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class LogoUtil @Inject() (
-  imgFormUtil               : ImgFormUtil,
-  implicit private val ec   : ExecutionContext
-) {
-
-  /** Приведение ребра графа к метаданным изображения логотипа. */
-  def edge2logoImg(medge: MEdge): MImgT = {
-    val dynImgId = MDynImgId(
-      rowKeyStr = medge.nodeIds.head,
-      dynFormat = medge.info.dynImgArgs
-        .fold[MImgFmt](MImgFmts.JPEG)(_.dynFormat),
-      dynImgOps = Nil
-    )
-    MImg3( dynImgId )
-  }
-
-  // TODO Допилить этот метод, привязать его к контроллеру, разобраться с MImg.deleteAllFor(UUID), обновить маппинги форм.
-  def updateLogoFor(mnode: MNode, newLogo: LogoOpt_t): Future[Option[MImgT]] = {
-    val oldImgs = mnode.edges
-      .withPredicateIter( MPredicates.Logo )
-      .map { edge2logoImg }
-      .toIterable
-    val newLogosFut = imgFormUtil.updateOrigImgFull(
-      needImgs  = newLogo.toSeq,
-      oldImgs   = oldImgs
-    )
-    newLogosFut
-      .map { _.headOption }
-  }
-
-
-  /** Получить логотипы нескольких узлов, вернув карту имеющихся логотипов.
-    * Если какого-то запрошенного узла нет в карте, то значит он без логотипа. */
-  def getLogoOfNodes(nodes: TraversableOnce[MNode]): Future[Map[String, MImgT]] = {
-    val res = nodes.toIterator
-      .flatMap { mnode =>
-        val eopt = mnode.edges
-          .withPredicateIter( MPredicates.Logo )
-          .toStream
-          .headOption
-        for {
-          e     <- eopt
-          id    <- mnode.id
-        } yield {
-          id -> edge2logoImg(e)
-        }
-      }
-      .toMap
-    Future successful res
-  }
+                           implicit private val ec   : ExecutionContext
+                         ) {
 
   /**
    * Доставание картинки логотипа без подгонки под свойства экрана.
@@ -78,11 +29,10 @@ class LogoUtil @Inject() (
    * @return Фьючерс с результатом: None -- логотип не выставлен.
    */
   def getLogoOfNode(mnode: MNode): Future[LogoOpt_t] = {
-    val res = mnode.edges
-      .withPredicateIter( MPredicates.Logo )
-      .toStream
-      .headOption
-      .map { edge2logoImg }
+    val res = mnode.Quick.Adn.logo
+      .map { case (jdId, e) =>
+        MImg3( MDynImgId.fromJdEdge(jdId, e) )
+      }
     Future.successful( res )
   }
 

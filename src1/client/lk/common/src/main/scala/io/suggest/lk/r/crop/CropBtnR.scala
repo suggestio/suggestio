@@ -4,7 +4,8 @@ import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.m.{CropOpen, MFormResourceKey}
+import io.suggest.lk.m.CropOpen
+import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.msg.Messages
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement

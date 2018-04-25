@@ -180,9 +180,8 @@ class JdR(
 
       val bgImgOpt = for {
         bgImgData <- s.props1.bgImg
-        edgeUid   = bgImgData.imgEdge.edgeUid
-        edge      <- jdArgs.edges.get( edgeUid )
-        if edge.jdEdge.predicate ==>> MPredicates.JdBgPred
+        edge      <- jdArgs.edges.get( bgImgData.edgeUid )
+        if edge.jdEdge.predicate ==>> MPredicates.JdContent.Image
         bgImgSrc  <- edge.origImgSrcOpt
       } yield {
         <.img(

@@ -1,17 +1,13 @@
 package util.img
 
+import io.suggest.adn.edit.NodeEditConstants
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.model.n2.edge.{MEdge, MPredicates}
+import io.suggest.model.n2.edge.MEdge
 import io.suggest.model.n2.node.MNode
 import io.suggest.url.MHostInfo
 import models.im._
 import models.mctx.Context
-import models.madn.EditConstants
-import play.api.Configuration
-import play.api.data.Forms._
-import play.api.data.Mapping
 import play.api.mvc.Call
 import models.blk.szMulted
 import util.cdn.CdnUtil
@@ -27,56 +23,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class GalleryUtil @Inject() (
                               dynImgUtil              : DynImgUtil,
-                              imgFormUtil             : ImgFormUtil,
                               cdnUtil                 : CdnUtil,
-                              configuration           : Configuration,
                               implicit private val ec : ExecutionContext
                             ) {
-
-  // Ширина/высота картинки галереи, отображаемой в ЛК на странице узла.
-  def LK_NODE_GALLERY_SHOW_WIDTH_PX = 625   //: Int  = configuration.getInt("lk.node.gallery.show.width.px") getOrElse 625
-  def LK_NODE_GALLERY_SHOW_HEIGHT_PX = 200  //: Int = configuration.getInt("lk.node.gallery.show.height.px") getOrElse 200
-
-  /** Максимально кол-во картинок в галереи. */
-  val GALLERY_LEN_MAX = configuration.getOptional[Int]("adn.gallery.len.max") getOrElse 7
-
-  def galleryM: Mapping[List[MImgT]] = {
-    list(imgFormUtil.img3IdM)
-      .verifying("error.gallery.too.large", _.lengthCompare(GALLERY_LEN_MAX) <= 0)
-  }
-
-  def galleryKM = EditConstants.GALLERY_FN -> galleryM
-
-  def gallery2iiks(gallery: TraversableOnce[MEdge]): Iterator[MImgT] = {
-    gallery
-      .toIterator
-      .map { medge =>
-        galEdge2img(medge) -> medge.order.getOrElse(Int.MaxValue)
-      }
-      .toSeq
-      .sortBy( _._2 )
-      .iterator
-      .map(_._1)
-  }
-
-  def galEdge2img(edge: MEdge): MImgT = {
-    MImg3(edge)
-  }
-
-
-  /**
-   * Асинхронное обновление галереи. Входы и выходы в форматах, удобных для работы.
-   * @param newGallery Новая галерея (результат бинда формы).
-   * @param oldGallery Старое содержимое галереи.
-   * @return Фьючерс с новой галереи в формате старой галереи.
-   */
-  def updateGallery(newGallery: Seq[MImgT], oldGallery: Seq[String]): Future[Seq[MImgT]] = {
-    imgFormUtil.updateOrigImgId(
-      needImgs  = newGallery,
-      oldImgIds = oldGallery
-    )
-  }
-
 
   /**
    * Генерация dyn-img ссылки на картинку галереи, которая отображается (обычно) откропанной в ЛК на странице узла.
@@ -90,8 +39,8 @@ class GalleryUtil @Inject() (
     // Всегда ресайзим до необходимого отображаемого размера. Используем fg-качество для сжатия.
     // TODO Height должен быть необязательный, но максимум 200 пикселей.
     val newSz = MSize2di(
-      width  = szMulted(LK_NODE_GALLERY_SHOW_WIDTH_PX,  devPixelRatio.pixelRatio),
-      height = szMulted(LK_NODE_GALLERY_SHOW_HEIGHT_PX, devPixelRatio.pixelRatio)
+      width  = szMulted( NodeEditConstants.Gallery.WIDTH_PX,  devPixelRatio.pixelRatio),
+      height = szMulted( NodeEditConstants.Gallery.HEIGHT_PX, devPixelRatio.pixelRatio)
     )
 
     val outFmt = mimg.dynImgId.dynFormat
@@ -114,16 +63,15 @@ class GalleryUtil @Inject() (
   }
 
 
-  def galleryEdges(mnode: MNode): Iterator[MEdge] = {
-    mnode.edges
-      .withPredicateIter( MPredicates.GalleryItem )
-  }
-
   def galleryImgs(mnode: MNode): Future[List[MImgT]] = {
-    val res = galleryEdges(mnode)
-      .map { MImg3.apply }
+    // List исторически используется в исходниках, хотя по логике тут должна быть Seq
+    val res = mnode.Quick.Adn.galImgs
+      .iterator
+      .map { case (jdId, galImgEdge) =>
+        MImg3( MDynImgId.fromJdEdge(jdId, galImgEdge) )
+      }
       .toList
-    Future successful res
+    Future.successful( res )
   }
 
 

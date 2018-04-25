@@ -5,7 +5,6 @@ import io.suggest.sjs.common.vm.attr.AttrVmT
 import io.suggest.sjs.common.vm.child.OfMyCssClass
 import io.suggest.sjs.common.vm.find.IApplyEl
 import io.suggest.sjs.common.vm.of.{OfDiv, OfEventTargetNode}
-import org.scalajs.dom.raw.HTMLDivElement
 
 /**
   * Suggest.io

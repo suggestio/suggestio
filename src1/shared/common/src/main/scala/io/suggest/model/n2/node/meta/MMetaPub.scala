@@ -8,7 +8,6 @@ import io.suggest.scalaz.StringValidationNel
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import scalaz.Validation
 import scalaz.syntax.apply._
 
 /**

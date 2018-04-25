@@ -7,6 +7,8 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.compress.MCompressAlgo
 import io.suggest.img.crop.MCrop
 import io.suggest.img.MImgFmt
+import io.suggest.jd.MJdEdgeId
+import io.suggest.model.n2.edge.MEdge
 import io.suggest.util.UuidUtil
 
 /**
@@ -194,6 +196,27 @@ object MDynImgId {
       dynImgId.rowKeyStr
     else
       (dynImgId.rowKeyStr :: acc).mkString
+  }
+
+
+  /** Экстрактор данных [[MDynImgId]] из jd-эджа в связке с обычным эджем.
+    * Метод не проверяет связно
+    *
+    * @param jdId Данные jd-эджа.
+    * @param medge Связанный MEdge.
+    * @return
+    */
+  def fromJdEdge(jdId: MJdEdgeId, medge: MEdge): MDynImgId = {
+    apply(
+      rowKeyStr = medge.nodeIds.head,
+      dynFormat = jdId.outImgFormat.get,
+      dynImgOps = {
+        var acc = List.empty[ImOp]
+        for (mcrop <- jdId.crop)
+          acc ::= AbsCropOp( mcrop )
+        acc
+      }
+    )
   }
 
 }

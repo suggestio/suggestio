@@ -33,31 +33,3 @@ trait CreateDiv extends CreateEl {
 
 }
 
-
-/** Добавление значения DOM_ID в собираемые элементы. */
-trait CreateWithId extends CreateEl with DomId {
-
-  override type Dom_t <: Element
-
-  abstract override protected def createNewEl(): Dom_t = {
-    val el = super.createNewEl()
-    el.id = DOM_ID
-    el
-  }
-
-}
-
-
-/** Быстрый аддон для сборки Div-элементов. */
-trait CreateDivWithId
-  extends CreateDiv
-  with CreateWithId
-
-
-/** Бытрый доступ к однострочной сборке новых vm'ов с новыми анонимыными backend-тегами внутри. */
-trait CreateVm extends CreateEl with IApplyEl {
-
-  def createNew(): T = {
-    apply( createNewEl() )
-  }
-}

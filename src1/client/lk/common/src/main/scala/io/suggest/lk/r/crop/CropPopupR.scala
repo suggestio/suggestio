@@ -6,7 +6,8 @@ import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.m.{CropCancel, CropChanged, CropSave, MFormResourceKey}
+import io.suggest.lk.m.frk.MFormResourceKey
+import io.suggest.lk.m.{CropCancel, CropChanged, CropSave}
 import io.suggest.lk.pop.PopupR
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil

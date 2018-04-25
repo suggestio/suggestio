@@ -394,7 +394,7 @@ class SysAdnGeo @Inject() (
           e.id == gs.id
         }
         val p = MPredicates.NodeLocation
-        mnode0.edges.updateFirst { e =>
+        mnode0.edges.updateAll { e =>
           e.predicate == p  &&  e.info.geoShapes.exists(pf)
         } { e0 =>
           Some(e0.copy(

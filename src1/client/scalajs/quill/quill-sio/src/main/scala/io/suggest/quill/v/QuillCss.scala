@@ -31,6 +31,9 @@ class QuillCss extends StyleSheet.Standalone {
 
   private val QL_PICKER_CSS_SEL = QL_ + "picker"
 
+  private val QL_TOOLTIP_CSS_SEL = QL_ + "tooltip"
+  private val QL_EDITING_CSS_SEL = QL_ + "editing"
+
   private val LABEL = "label"
   private val ITEM = "item"
 
@@ -181,7 +184,15 @@ class QuillCss extends StyleSheet.Standalone {
           itemCssAttrs: _*
         )
 
+      ),
+
+      // Нужно выравнивать диалог ввода ссылки по горизонтали, иначе он может уходить за экран.
+      &(QL_TOOLTIP_CSS_SEL) - (
+        &(QL_EDITING_CSS_SEL) - (
+          left(0.px).important
+        )
       )
+
     )
 
   }
@@ -193,6 +204,5 @@ class QuillCss extends StyleSheet.Standalone {
     fontSize( MFontSizes.default.value.px ),
     color.black
   )
-
 
 }

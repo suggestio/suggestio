@@ -56,13 +56,6 @@ GET  /lk/node/edit2/page/:nodeId        @controllers.LkAdnEdit.editNodePage(node
 POST /lk/node/edit2/img/up/:nodeId      @controllers.LkAdnEdit.uploadImg(nodeId: MEsUuId)
 POST /lk/node/edit2/page/:nodeId        @controllers.LkAdnEdit.save(nodeId: MEsUuId)
 
-## Старый редактор ADN-узла, удалить потом.
-GET  /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNode(adnId)
-POST /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
-POST /lk/node/img/gal/prepare           @controllers.MarketLkAdnEdit.handleGalleryImg
-POST /lk/node/img/welcome               @controllers.MarketLkAdnEdit.uploadWelcomeImg
-POST /lk/node/img/logo                  @controllers.MarketLkAdnEdit.handleTempLogo
-
 ## Управления карточками узла.
 GET  /lk/mads/form/*nodeKey             @controllers.LkAds.adsPage(nodeKey: RcvrKey)
 GET  /lk/mads/get/*nodeKey              @controllers.LkAds.getAds(nodeKey: RcvrKey, offset: Int, newAdId: Option[String] ?= None)
@@ -172,9 +165,6 @@ GET  /lk/h/about                        @controllers.LkHelp.companyAbout(nodeId:
 GET  /lang                              @controllers.LkLang.showLangSwitcher(r: Option[String] ?= None)
 POST /lang                              @controllers.LkLang.selectLangSubmit(r: Option[String])
 GET  /lang/:lang/:hash/messages.js      @controllers.LkLang.lkMessagesJs(lang: String, hash: Int)
-
-GET  /img/crop/:imgId                   @controllers.Img.imgCropForm(imgId, width:Int, height: Int)
-POST /img/crop                          @controllers.Img.imgCropSubmit
 
 ## Генераторы капч
 GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptcha(captchaId, cp: String)

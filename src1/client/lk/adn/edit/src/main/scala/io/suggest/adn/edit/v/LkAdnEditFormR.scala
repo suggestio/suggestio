@@ -2,6 +2,7 @@ package io.suggest.adn.edit.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adn.edit.m._
+import io.suggest.color.MColorData
 import io.suggest.css.Css
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -10,15 +11,16 @@ import io.suggest.css.ScalaCssDefaults._
 import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEdgeId
-import io.suggest.lk.m.{DocBodyClick, MFormResourceKey}
+import io.suggest.lk.m.DocBodyClick
+import io.suggest.lk.m.frk.{MFormResourceKey, MFrkTypes}
 import io.suggest.lk.r.{PropTableR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorBtnR, ColorPickerR}
 import io.suggest.lk.r.img.{ImgEditBtnPropsVal, ImgEditBtnR}
-import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.meta.colors.{MColorType, MColorTypes}
 import io.suggest.msg.Messages
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.sc.ScConstants
 import io.suggest.spa.OptFastEq
 import io.suggest.spa.FastEqUtil
 
@@ -237,15 +239,16 @@ class LkAdnEditFormR(
       // Сборка коннекшена до цвета:
       def __getColorBtnC(colorType: MColorType): ReactConnectProxy[colorBtnR.Props_t] = {
         val colorTypeSome = Some(colorType)
+        lazy val mcdDflt = MColorData( colorType.scDefaultHex )
         propsProxy.connect { props =>
-          for {
-            mcd <- props.node.meta.colors.ofType( colorType )
-          } yield {
-            colorBtnR.PropsVal(
-              color     = mcd,
-              colorType = colorTypeSome
-            )
-          }
+          val mcd = props.node.meta.colors
+            .ofType( colorType )
+            .getOrElse( mcdDflt )
+          val propsVal = colorBtnR.PropsVal(
+            color     = mcd,
+            colorType = colorTypeSome
+          )
+          Some( propsVal ): colorBtnR.Props_t
         }( OptFastEq.Wrapped )
       }
 
@@ -302,7 +305,9 @@ class LkAdnEditFormR(
         colorPickerC = propsProxy.connect { props =>
           for {
             cps <- props.node.colorPicker
-            mcd <- props.node.meta.colors.ofType( cps.ofColorType )
+            mcd = props.node.meta.colors
+              .ofType( cps.ofColorType )
+              .getOrElse( MColorData(cps.ofColorType.scDefaultHex) )
           } yield {
             colorPickerR.PropsVal(
               color         = mcd,
@@ -317,14 +322,15 @@ class LkAdnEditFormR(
           val logoF = MAdnResView.logoF
           ImgState(
             editBtnC = {
-              val logoResKey = MFormResourceKey(
-                pred = Some( MPredicates.Logo )
-              )
               val cssSizeL = Css.Size.L
+              val frkTypeSome = Some( MFrkTypes.Logo )
               propsProxy.connect { props =>
                 ImgEditBtnPropsVal(
                   src     = __getImgSrcOpt(props)(logoF),
-                  resKey  = logoResKey,
+                  resKey  = MFormResourceKey(
+                    jdEdgeId = props.node.resView.logo,
+                    frkType  = frkTypeSome
+                  ),
                   bgColor = props.node.meta.colors.bg,
                   size    = cssSizeL
                 )
@@ -340,13 +346,14 @@ class LkAdnEditFormR(
           val wcFgF = MAdnResView.wcFgF
           ImgState(
             editBtnC = {
-              val wcFgResKey = MFormResourceKey(
-                pred = Some( MPredicates.WcFgImg )
-              )
+              val frkTypeSome = Some( MFrkTypes.WcFg )
               propsProxy.connect { props =>
                 ImgEditBtnPropsVal(
                   src = __getImgSrcOpt(props)(wcFgF),
-                  resKey = wcFgResKey
+                  resKey = MFormResourceKey(
+                    jdEdgeId = props.node.resView.wcFg,
+                    frkType  = frkTypeSome
+                  )
                 )
               }
             },
@@ -358,27 +365,31 @@ class LkAdnEditFormR(
 
         galImgs = {
           propsProxy.connect { props =>
-            val iter = for {
-              galImg <- props.node.resView.galImgs.iterator
-              edge <- props.node.edges
-                .get( galImg.imgEdge.edgeUid )
-                .iterator
-            } yield {
-              nodeGalleryR.PropsValEl(
-                editBtn = ImgEditBtnPropsVal(
-                  src = edge.imgSrcOpt,
-                  resKey = MFormResourceKey(
-                    pred    = nodeGalleryR.galPredSome,
-                    edgeUid = Some( edge.id )
+            if (props.node.resView.galImgs.isEmpty) {
+              Nil
+            } else {
+              val iter = for {
+                galImg <- props.node.resView.galImgs.iterator
+                edge <- props.node.edges
+                  .get( galImg.edgeUid )
+                  .iterator
+              } yield {
+                nodeGalleryR.PropsValEl(
+                  editBtn = ImgEditBtnPropsVal(
+                    src = edge.imgSrcOpt,
+                    resKey = MFormResourceKey(
+                      frkType  = nodeGalleryR.resKeyTypeSome,
+                      jdEdgeId = Some(galImg)
+                    ),
+                    bgColor = None,
+                    css     = nodeGalleryR.imgsRowContCss
                   ),
-                  bgColor = None,
-                  css     = nodeGalleryR.imgsRowContCss
-                ),
-                uploadStatus = edge.fileJs
-                  .flatMap(_.upload)
-              )
+                  uploadStatus = edge.fileJs
+                    .flatMap(_.upload)
+                )
+              }
+              iter.toSeq
             }
-            iter.toSeq
           }( FastEqUtil.DeepCollFastEq[nodeGalleryR.PropsValEl, Seq]( nodeGalleryR.NodeGalleryRPropsValElFastEq ) )
         }
 

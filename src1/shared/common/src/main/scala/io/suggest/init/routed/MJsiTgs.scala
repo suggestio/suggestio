@@ -19,9 +19,6 @@ object MJsiTgs extends StringEnum[MJsiTg] {
   /** Вертикальная центровка в ident. */
   case object IdentVCenterContent extends MJsiTg("e")
 
-  /** Форма редактирования узла в личном кабинете. */
-  case object LkNodeEditForm extends MJsiTg("f")
-
   /** init-target для включения js к форме ввода капчи. */
   case object CaptchaForm extends MJsiTg("j")
 

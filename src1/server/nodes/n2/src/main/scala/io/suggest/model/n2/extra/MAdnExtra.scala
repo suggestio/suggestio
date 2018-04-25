@@ -1,7 +1,8 @@
 package io.suggest.model.n2.extra
 
+import io.suggest.adn.edit.m.MAdnResView
 import io.suggest.adn.{MAdnRight, MAdnRights}
-import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
@@ -18,42 +19,44 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 object MAdnExtra extends IGenEsMappingProps {
 
   /** В качестве эксперимента, имена полей этой модели являются отдельной моделью. */
-  object Fields extends EnumMaybeWithName {
+  object Fields {
 
-    protected[this] sealed class Val(val fn: String)
-      extends super.Val(fn)
-
-    override type T = Val
-
-    val RIGHTS: T           = new Val("g")
-    val IS_BY_USER          = new Val("u")
-    val SHOWN_TYPE          = new Val("s")
-    val IS_TEST             = new Val("t")
-    val SHOW_IN_SC_NL       = new Val("n")
+    val RES_VIEW_FN         = "r"
+    val RIGHTS              = "g"
+    val IS_BY_USER          = "u"
+    val SHOWN_TYPE          = "s"
+    val IS_TEST             = "t"
+    val SHOW_IN_SC_NL       = "n"
 
   }
+
 
   import Fields._
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MAdnExtra] = (
-    (__ \ RIGHTS.fn).formatNullable[Set[MAdnRight]]
+    (__ \ RES_VIEW_FN).formatNullable[MAdnResView]
+      .inmap[MAdnResView](
+        EmptyUtil.opt2ImplMEmptyF( MAdnResView ),
+        EmptyUtil.implEmpty2OptF
+      ) and
+    (__ \ RIGHTS).formatNullable[Set[MAdnRight]]
       .inmap [Set[MAdnRight]] (
-        _.getOrElse( Set.empty ),
+        EmptyUtil.opt2ImplEmptyF( Set.empty ),
         { rights => if (rights.isEmpty) None else Some(rights) }
       ) and
-    (__ \ IS_BY_USER.fn).formatNullable[Boolean]
+    (__ \ IS_BY_USER).formatNullable[Boolean]
       .inmap [Boolean] (
         _.getOrElseFalse,
         someF
       ) and
-    (__ \ SHOWN_TYPE.fn).formatNullable[String] and
-    (__ \ IS_TEST.fn).formatNullable[Boolean]
+    (__ \ SHOWN_TYPE).formatNullable[String] and
+    (__ \ IS_TEST).formatNullable[Boolean]
       .inmap [Boolean] (
         _.getOrElseFalse,
         someF
       ) and
-    (__ \ SHOW_IN_SC_NL.fn).formatNullable[Boolean]
+    (__ \ SHOW_IN_SC_NL).formatNullable[Boolean]
       .inmap [Boolean] (
         _.getOrElseTrue,
         someF
@@ -65,11 +68,12 @@ object MAdnExtra extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldKeyword(RIGHTS.fn, index = true, include_in_all = false),
-      FieldBoolean(IS_BY_USER.fn, index = true, include_in_all = false),
-      FieldKeyword(SHOWN_TYPE.fn, index = true, include_in_all = false),
-      FieldBoolean(IS_TEST.fn, index = true, include_in_all = false),
-      FieldBoolean(SHOW_IN_SC_NL.fn, index = true, include_in_all = false)
+      FieldObject(RES_VIEW_FN, enabled = false, properties = Nil),
+      FieldKeyword(RIGHTS, index = true, include_in_all = false),
+      FieldBoolean(IS_BY_USER, index = true, include_in_all = false),
+      FieldKeyword(SHOWN_TYPE, index = true, include_in_all = false),
+      FieldBoolean(IS_TEST, index = true, include_in_all = false),
+      FieldBoolean(SHOW_IN_SC_NL, index = true, include_in_all = false)
     )
   }
 
@@ -84,15 +88,18 @@ object MAdnExtra extends IGenEsMappingProps {
   * @param testNode Отметка о тестовом характере существования этого узла.
   *                 Он не должен отображаться для обычных участников сети, а только для других тестовых узлов.
   * @param showInScNl Можно ли узел отображать в списке узлов выдачи?
+  * @param resView Уровень представления ресурсов adn-узла. Логотипы, картинки приветствия и т.д. - сюда.
   */
 case class MAdnExtra(
-                      rights                : Set[MAdnRight]             = Set.empty,
+                      resView               : MAdnResView               = MAdnResView.empty,
+                      rights                : Set[MAdnRight]            = Set.empty,
                       isUser                : Boolean                   = false,
                       shownTypeIdOpt        : Option[String]            = None,
                       testNode              : Boolean                   = false,
-                      showInScNl            : Boolean                   = true
-) {
+                      showInScNl            : Boolean                   = true,
+                    ) {
 
+  def withResView(resView: MAdnResView) = copy(resView = resView)
 
   def isProducer: Boolean = rights.contains( MAdnRights.PRODUCER )
   def isReceiver: Boolean = rights.contains( MAdnRights.RECEIVER )

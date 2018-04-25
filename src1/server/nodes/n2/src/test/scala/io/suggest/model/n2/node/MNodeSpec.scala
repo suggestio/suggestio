@@ -63,7 +63,7 @@ class MNodeSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
             out = {
               MNodeEdges.edgesToMap(
                 MEdge(
-                  predicate = MPredicates.Logo,
+                  predicate = MPredicates.AdvGeoPlace,
                   nodeIds = Set("fa4f493wfr3420f3904__4"),
                   info = MEdgeInfo(
                     flag = Some(true),

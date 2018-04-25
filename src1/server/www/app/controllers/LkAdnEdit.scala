@@ -1,27 +1,28 @@
 package controllers
 
-import io.suggest.adn.edit.m.{MAdnEditForm, MAdnEditFormConf, MAdnEditFormInit, MAdnResView}
+import io.suggest.adn.edit.m.{MAdnEditForm, MAdnEditFormConf, MAdnEditFormInit}
 import io.suggest.es.model.MEsUuId
 import io.suggest.file.up.MFile4UpProps
-import io.suggest.img.{MImgEdgeWithOps, MImgFmts}
+import io.suggest.img.MImgFmts
 import io.suggest.init.routed.MJsiTgs
-import io.suggest.jd.MJdEdgeId
 import io.suggest.js.UploadConstants
-import io.suggest.model.n2.edge.{MPredicate, MPredicates}
+import io.suggest.model.n2.edge.{EdgesUtil, MPredicates}
+import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.Inject
 import models.mctx.Context
 import models.mproj.ICommonDi
 import play.api.libs.json.Json
-import util.acl.IsNodeAdmin
+import util.acl.{BruteForceProtect, IsNodeAdmin}
 import util.ad.JdAdUtil
 import util.cdn.CdnUtil
 import views.html.lk.adn.edit._
-import japgolly.univeq._
 import models.mup.MUploadFileHandlers
 import play.api.mvc.Result
 import scalaz.ValidationNel
+import util.n2u.N2VldUtil
 import util.sec.CspUtil
+import io.suggest.scalaz.ScalazUtil.Implicits._
 
 /**
   * Suggest.io
@@ -33,7 +34,10 @@ import util.sec.CspUtil
 class LkAdnEdit @Inject() (
                             isNodeAdmin               : IsNodeAdmin,
                             cspUtil                   : CspUtil,
+                            n2VldUtil                 : N2VldUtil,
                             jdAdUtil                  : JdAdUtil,
+                            mNodes                    : MNodes,
+                            bruteForceProtect         : BruteForceProtect,
                             upload                    : Upload,
                             cdnUtil                   : CdnUtil,
                             override val mCommonDi    : ICommonDi
@@ -59,7 +63,9 @@ class LkAdnEdit @Inject() (
   def editNodePage(nodeId: MEsUuId) = csrf.AddToken {
     isNodeAdmin(nodeId, U.Lk).async { implicit request =>
       // Запустить сборку контекста:
-      val ctxFut = for (ctxData0 <- request.user.lkCtxDataFut) yield {
+      val ctxFut = for {
+        ctxData0 <- request.user.lkCtxDataFut
+      } yield {
         implicit val ctxData1 = ctxData0.withJsiTgs(
           jsiTgs2 = MJsiTgs.LkAdnEditForm :: ctxData0.jsiTgs
         )
@@ -67,11 +73,15 @@ class LkAdnEdit @Inject() (
       }
 
       // Какие предикаты и эджи здесь интересуют?
-      val nodeImgPredicates = MPredicates.Logo ::
-        MPredicates.WcFgImg ::
-        MPredicates.GalleryItem ::
-        Nil
-      val imgsEdges = jdAdUtil.collectImgEdges(request.mnode.edges, nodeImgPredicates)
+      val imgEdgeUids = request.mnode.extras
+        .adnEdgeUids
+        .map(_.edgeUid)
+        .toSet
+      val imgEdges = request.mnode
+        .edges
+        .withUid1(imgEdgeUids)
+
+      val imgsEdges = jdAdUtil.collectImgEdges( imgEdges )
 
       // Запустить сбор данных по интересующим картинкам:
       val imgMediasMapFut = jdAdUtil.prepareImgMedias( imgsEdges )
@@ -113,27 +123,14 @@ class LkAdnEdit @Inject() (
         jdEdges <- jdEdgesFut
       } yield {
         LOGGER.trace(s"$logPrefix Compiled jd-edges: $jdEdges")
-        def __getImgEdge(pred: MPredicate) = {
-          jdEdges
-            .find(_.predicate ==* pred)
-            .map(e => MJdEdgeId(e.id))
-        }
 
         val minit = MAdnEditFormInit(
           conf = mconf,
           form = MAdnEditForm(
-            meta  = mMetaPub,
-            edges = jdEdges,
-            resView = MAdnResView(
-              logo = __getImgEdge( MPredicates.Logo ),
-              wcFg = __getImgEdge( MPredicates.WcFgImg ),
-              galImgs = jdEdges
-                .iterator
-                .filter(_.predicate ==* MPredicates.GalleryItem)
-                // TODO Тут проблема: нужен dynImgArgs, который валяется в исходных эджах или ещё где-то.
-                .map(e => MImgEdgeWithOps( MJdEdgeId(e.id) ))
-                .toSeq
-            )
+            meta    = mMetaPub,
+            edges   = jdEdges,
+            // TODO Тут безопасно ли делать .get? По идее, этот метод может быть вызван и для карточки...
+            resView = request.mnode.extras.adn.get.resView
           )
         )
         // Сериализация состояния в строку:
@@ -181,8 +178,8 @@ class LkAdnEdit @Inject() (
     // Тут практически копипаст данных из LkAdEdit/LkAdEdFormUtil:
     MFile4UpProps.validate(
       m             = fileProps,
-      // Бывает, что загружается просто png-рамка, например:
-      minSizeB      = 100,
+      // Теоретически, может загружаться очень тривиальный svg-логотип:
+      minSizeB      = 200,
       maxSizeB      = 10*1024*1024,
       mimeVerifierF = { mimeType =>
         MImgFmts.withMime(mimeType).nonEmpty
@@ -197,8 +194,61 @@ class LkAdnEdit @Inject() (
     * @param nodeId id узла.
     */
   def save(nodeId: MEsUuId) = csrf.Check {
-    isNodeAdmin(nodeId).async { implicit request =>
-      ???
+    bruteForceProtect {
+      isNodeAdmin(nodeId).async( parse.json[MAdnEditForm] ) { implicit request =>
+        lazy val logPrefix = s"save($nodeId)#${System.currentTimeMillis()}:"
+
+        // Для прочистки карты эджей, надо узнать все пустующие эджи:
+        val usedEdgeIds = request.body.usedEdgeUidsSet
+        val jdEdges0 = EdgesUtil.purgeUnusedEdgesFrom(usedEdgeIds, request.body.edges)
+
+        // Надо распарсенный реквест провалидировать.
+        n2VldUtil.earlyValidateEdges( jdEdges0 ).fold(
+          // Ошибка базовой проверки эджей.
+          {errors =>
+            val msg = errors.iterator.mkString("\n")
+            LOGGER.debug(s"$logPrefix Failed to validate form edges:\n$msg")
+            NotAcceptable( msg )
+          },
+          // Всё ок, переходим к дальнейшим асинхронным проверкам:
+          {edges2 =>
+            val imgPreds = MPredicates.JdContent.Image :: Nil
+            val evld = n2VldUtil.EdgesValidator( edges2, imgPreds )
+
+            evld.vldEdgesMapFut.flatMap { vldEdgesMap =>
+              // Произвести полную валидацию присланных данных:
+              MAdnEditForm.validate( request.body, vldEdgesMap ).fold(
+                {errors =>
+                  val msg = errors.iterator.mkString("\n")
+                  LOGGER.debug(s"$logPrefix Failed to validate form: \n$msg")
+                  NotAcceptable(msg)
+                },
+                {form =>
+                  // Все данные проверены, перейти к апдейту данных узла.
+                  LOGGER.trace(s"$logPrefix Form validated ok. Will update node.\n $form")
+
+                  ???
+                  /*
+                  val addNodeEdges = for (jdEdge <- form.edges) yield {
+                    MEdge(
+                      predicate = jdEdge.predicate,
+                      nodeIds   =
+                    )
+                  }
+
+                  mNodes.tryUpdate(request.mnode) { mnode0 =>
+                    val edges2 = mnode0.edges
+                      .withoutPredicateIter( imgPreds: _* )
+
+                  }
+                  */
+                  ???
+                }
+              )
+            }
+          }
+        )
+      }
     }
   }
 

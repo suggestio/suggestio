@@ -2,7 +2,8 @@ package io.suggest.adn.edit.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adn.edit.m.MLkAdnEditRoot
-import io.suggest.lk.m.{MErrorPopupS, MFormResourceKey}
+import io.suggest.lk.m.MErrorPopupS
+import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.lk.r.ErrorPopupR
 import io.suggest.lk.r.crop.CropPopupR
@@ -74,7 +75,6 @@ class LkAdnEditPopupsR(
                 percentCrop = mcrop.percentCrop,
                 popCssClass = Nil, //lkAdEditCss.Crop.popup.htmlClass :: Nil,
                 resKey      = MFormResourceKey(
-                  pred      = None,
                   edgeUid   = Some( edge.jdEdge.id ),
                   nodePath  = None
                 )

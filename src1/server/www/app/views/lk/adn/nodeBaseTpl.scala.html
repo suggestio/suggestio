@@ -3,7 +3,6 @@
 
 @* Какой-то базовый шаблон узла в личном кабинете. *@
 
-@import lk.adn.node._
 @import ctx._
 @import NodeRightPanelLinks._
 @import lk.right._
@@ -23,7 +22,7 @@
 
       @_navItemTpl(
         title = messages("Edit.profile"),
-        href  = Some( routes.MarketLkAdnEdit.editAdnNode(nodeId) ),
+        href  = Some( routes.LkAdnEdit.editNodePage(nodeId) ),
         css   = classesAct(rightCurrEl == RPL_NODE_EDIT, "__edit-profile")
       )
 

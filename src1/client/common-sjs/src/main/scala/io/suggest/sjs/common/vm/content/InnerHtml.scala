@@ -18,13 +18,3 @@ trait SetInnerHtml extends IVm {
     _underlying.innerHTML = html
   }
 }
-
-
-trait GetInnerHtml extends IVm {
-  
-  override type T <: Element
-  
-  def innerHtml: String = {
-    _underlying.innerHTML
-  }
-}

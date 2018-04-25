@@ -32,7 +32,7 @@ object MEdgeDoc extends IEmpty {
 
   /** Поддержка play-json. */
   implicit val MEDGE_DOC_FORMAT: OFormat[MEdgeDoc] = (
-    (__ \ Fields.UID_FN).formatNullable[Int] and
+    (__ \ Fields.UID_FN).formatNullable[EdgeUid_t] and
     (__ \ Fields.TEXT_FN).formatNullable[Seq[String]]
       .inmap[Seq[String]](
         { _.getOrElse(Nil) },
@@ -49,11 +49,15 @@ object MEdgeDoc extends IEmpty {
   * @param text Строки текста, хранимые и нормально индексирумые на сервере.
   */
 case class MEdgeDoc(
-                     uid    : Option[Int]   = None,
-                     text   : Seq[String]   = Nil
+                     uid    : Option[EdgeUid_t]   = None,
+                     text   : Seq[String]         = Nil
                    )
   extends EmptyProduct
 {
+
+  def withUid(uid: Option[EdgeUid_t]) = copy(uid = uid)
+  def withText(text: Seq[String]) = copy(text = text)
+
   override def toString: String = {
     val sb = new StringBuilder(64)
     for (u <- uid)

@@ -40,6 +40,13 @@ object ScalazUtil {
     }
   }
 
+  def liftNelOptMust[E, T](opt: Option[T], mustBeSome: Boolean, errMsg: => E)(f: T => ValidationNel[E, T]): ValidationNel[E, Option[T]] = {
+    if (mustBeSome && opt.isDefined)
+      liftNelSome(opt, errMsg)(f)
+    else
+      liftNelNone(opt, errMsg)
+  }
+
   /** Приведение функции валидации к опциональной ипостаси.
     * None на входе всегда даёт success(None) на выходе.
     */
@@ -85,6 +92,11 @@ object ScalazUtil {
   def someValidationOrFail[E, T](e: => E)(validationOpt: Option[ValidationNel[E, T]]): ValidationNel[E, T] = {
     validationOpt.getOrElse( Validation.failureNel(e) )
   }
+  def validationOptOrNone[E, T](validationOpt: Option[ValidationNel[E, Option[T]]]): ValidationNel[E, Option[T]] = {
+    validationOpt.getOrElse {
+      Validation.success(None)
+    }
+  }
   def optValidationOrNone[E, T](validationOpt: Option[ValidationNel[E, T]]): ValidationNel[E, Option[T]] = {
     validationOpt
       .fold[ValidationNel[E, Option[T]]] (Validation.success(None)) ( _.map(Some.apply) )
@@ -122,6 +134,19 @@ object ScalazUtil {
 
 
   object Implicits {
+
+    /** Доп.утиль для валидации. */
+    implicit class RichValidationOpt[E, T]( val vldOpt: Option[ValidationNel[E, Option[T]]] ) extends AnyVal {
+
+      /** Быстрый костылёк для валидации. */
+      def getOrElseNone: ValidationNel[E, Option[T]] = {
+        vldOpt.getOrElse {
+          Validation.success(None)
+        }
+      }
+
+    }
+
 
     /** API поддержки приведения IList'ов к нормальным человеческим коллекциям. */
     implicit class RichIList[T](ilist: IList[T]) { that =>

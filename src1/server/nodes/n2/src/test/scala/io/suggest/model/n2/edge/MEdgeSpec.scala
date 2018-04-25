@@ -1,6 +1,5 @@
 package io.suggest.model.n2.edge
 
-import io.suggest.img.MImgFmts
 import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 
@@ -30,10 +29,7 @@ class MEdgeSpec extends FlatSpec with PlayJsonTestUtil {
         nodeIds   = Set("avf90fk43a90fk34af34f"),
         order     = Some(5),
         info      = MEdgeInfo(
-          dynImgArgs = Some(MEdgeDynImgArgs(
-            dynFormat = MImgFmts.JPEG,
-            dynOpsStr = Some("arfaew4rfaw4fwa443af34ff")
-          ))
+          commentNi = Some("ASDASDASD")
         )
       )
     }

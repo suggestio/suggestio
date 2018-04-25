@@ -2,11 +2,10 @@ package io.suggest.lk.c
 
 import io.suggest.common.html.HtmlConstants
 import io.suggest.err.ErrorConstants
-import io.suggest.img.MImgEdgeWithOps
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
-import io.suggest.lk.m.MFormResourceKey
-import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.lk.m.frk.MFormResourceKey
+import io.suggest.model.n2.edge.EdgeUid_t
 import scalaz.Tree
 import japgolly.univeq._
 
@@ -24,12 +23,12 @@ import japgolly.univeq._
 trait IPictureViewAdp[V] {
 
   /** Прочитать текущие данные по отображению изображения. */
-  def get(view: V, resKey: MFormResourceKey): Option[MImgEdgeWithOps]
+  def get(view: V, resKey: MFormResourceKey): Option[MJdEdgeId]
 
   /** Обновить указатель на картинку, вернув обновлённый V. */
-  def updated(view: V, resKey: MFormResourceKey)(newValue: Option[MImgEdgeWithOps]): V
+  def updated(view: V, resKey: MFormResourceKey)(newValue: Option[MJdEdgeId]): V
 
-  def updateWith(view: V, resKey: MFormResourceKey)(f: Option[MImgEdgeWithOps] => Option[MImgEdgeWithOps]): V = {
+  def updateWith(view: V, resKey: MFormResourceKey)(f: Option[MJdEdgeId] => Option[MJdEdgeId]): V = {
     updated(view, resKey) {
       f( get(view, resKey) )
     }
@@ -45,17 +44,17 @@ trait IPictureViewAdp[V] {
 object IPictureViewAdp {
 
   /** Самый твивиальный view-контейнер значения - это само значение. Тут typeclass поддержки такого контейнера. */
-  implicit object DummyAdp extends IPictureViewAdp[Option[MImgEdgeWithOps]] {
-    override def get(view: Option[MImgEdgeWithOps], resKey: MFormResourceKey): Option[MImgEdgeWithOps] = {
+  implicit object DummyAdp extends IPictureViewAdp[Option[MJdEdgeId]] {
+    override def get(view: Option[MJdEdgeId], resKey: MFormResourceKey): Option[MJdEdgeId] = {
       view
     }
-    override def updated(view: Option[MImgEdgeWithOps], resKey: MFormResourceKey)(newValue: Option[MImgEdgeWithOps]): Option[MImgEdgeWithOps] = {
+    override def updated(view: Option[MJdEdgeId], resKey: MFormResourceKey)(newValue: Option[MJdEdgeId]): Option[MJdEdgeId] = {
       newValue
     }
-    override def forgetEdge(view: Option[MImgEdgeWithOps], edgeUid: EdgeUid_t): Option[MImgEdgeWithOps] = {
+    override def forgetEdge(view: Option[MJdEdgeId], edgeUid: EdgeUid_t): Option[MJdEdgeId] = {
       view
         .filterNot { p =>
-          p.imgEdge.edgeUid ==* edgeUid
+          p.edgeUid ==* edgeUid
         }
     }
   }
@@ -71,75 +70,61 @@ object IPictureViewAdp {
         keyEdgeUid.exists(ei => edgeUids.exists(_.edgeUid ==* ei))
     }
 
-    override def get(view: Tree[JdTag], resKey: MFormResourceKey): Option[MImgEdgeWithOps] = {
-      // Найти в дереве тег, у которого bgImg подпадает по ключ, вернуть bgImg.
-      resKey.pred.flatMap {
-        case MPredicates.JdContent.Image =>
-          val nodePath = resKey.nodePath.get
-          for {
-            jdtLoc   <- view.pathToNode( nodePath )
-            jdt = jdtLoc.getLabel
-            // Само-контроль: убедится, что данные тега содержат или НЕ содержат эдж, указанный в resKey:
-            if _cmpEdgeUid(resKey.edgeUid, jdt.edgeUids)
-            // Извлечь или собрать инстанс MImgEdgeWithOps.
-            imgEdgeWithOps <- jdt.props1
-              .bgImg
-              .orElse {
-                for {
-                  qdProps <- jdt.qdProps
-                  ei <- qdProps.edgeInfo
-                } yield {
-                  MImgEdgeWithOps(ei)
-                }
-              }
-          } yield {
-            imgEdgeWithOps
+    override def get(view: Tree[JdTag], resKey: MFormResourceKey): Option[MJdEdgeId] = {
+      val nodePath = resKey.nodePath.get
+      for {
+        jdtLoc   <- view.pathToNode( nodePath )
+        jdt = jdtLoc.getLabel
+        // Само-контроль: убедится, что данные тега содержат или НЕ содержат эдж, указанный в resKey:
+        if _cmpEdgeUid(resKey.edgeUid, jdt.edgeUids)
+        // Извлечь или собрать инстанс MImgEdgeWithOps.
+        imgEdgeWithOps <- jdt.props1
+          .bgImg
+          .orElse {
+            for {
+              qdProps <- jdt.qdProps
+              ei <- qdProps.edgeInfo
+            } yield {
+              ei
+            }
           }
-
-        case _ =>
-          throw new UnsupportedOperationException( resKey.toString  )
+      } yield {
+        imgEdgeWithOps
       }
     }
 
-    override def updated(view: Tree[JdTag], resKey: MFormResourceKey)(newValue: Option[MImgEdgeWithOps]): Tree[JdTag] = {
+    override def updated(view: Tree[JdTag], resKey: MFormResourceKey)(newValue: Option[MJdEdgeId]): Tree[JdTag] = {
       // Найти и обновить bgImg для тега, который подпадает под запрашиваемый ключ.
-      val pred = resKey.pred.get
-      pred match {
-        case MPredicates.JdContent.Image =>
-          val nodePath = resKey.nodePath.get
-          val jdtLoc = view.pathToNode(nodePath).get
-          val jdt = jdtLoc.getLabel
-          ErrorConstants.assertArg( _cmpEdgeUid(resKey.edgeUid, jdt.edgeUids) )
+      val nodePath = resKey.nodePath.get
+      val jdtLoc = view.pathToNode(nodePath).get
+      val jdt = jdtLoc.getLabel
+      ErrorConstants.assertArg( _cmpEdgeUid(resKey.edgeUid, jdt.edgeUids) )
 
-          jdtLoc
-            .setLabel {
-              jdt.name match {
-                case MJdTagNames.QD_OP =>
-                  jdt.withQdProps(
-                    jdt.qdProps.map { qdProps =>
-                      qdProps.withEdgeInfo(
-                        newValue.map(_.imgEdge)
-                      )
-                    }
-                  )
-                case MJdTagNames.STRIP =>
-                  jdt.withProps1(
-                    jdt.props1.withBgImg( newValue )
-                  )
-                case jdtName =>
-                  throw new UnsupportedOperationException(resKey + HtmlConstants.SPACE + newValue + HtmlConstants.SPACE + jdtName)
-              }
-            }
-            .toTree
-        case _ =>
-          throw new UnsupportedOperationException( resKey.toString  )
-      }
+      jdtLoc
+        .setLabel {
+          jdt.name match {
+            case MJdTagNames.QD_OP =>
+              jdt.withQdProps(
+                jdt.qdProps.map { qdProps =>
+                  qdProps
+                    .withEdgeInfo( newValue )
+                }
+              )
+            case MJdTagNames.STRIP =>
+              jdt.withProps1(
+                jdt.props1.withBgImg( newValue )
+              )
+            case jdtName =>
+              throw new UnsupportedOperationException(resKey + HtmlConstants.SPACE + newValue + HtmlConstants.SPACE + jdtName)
+          }
+        }
+        .toTree
     }
 
     override def forgetEdge(view: Tree[JdTag], edgeUid: EdgeUid_t): Tree[JdTag] = {
       // Аккуратно отмаппить все теги: если bgImg содержит edgeUid, то обнулить bgImg.
       for (jdt0 <- view) yield {
-        if (jdt0.props1.bgImg.exists(_.imgEdge.edgeUid ==* edgeUid)) {
+        if (jdt0.props1.bgImg.exists(_.edgeUid ==* edgeUid)) {
           jdt0.withProps1(
             jdt0.props1
               .withBgImg( None )

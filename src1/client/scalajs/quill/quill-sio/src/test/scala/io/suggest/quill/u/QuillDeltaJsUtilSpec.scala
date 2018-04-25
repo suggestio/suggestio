@@ -154,8 +154,8 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     // В эджах какой-то мусор. Но он не должен потеряться.
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
-      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 1, url = Some("blob:asdasdasdsda")) ),
-      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 3, url = Some("blob:645v-56h65y5665h56")) ),
+      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 1, url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 3, url = Some("blob:645v-56h65y5665h56")) ),
       4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) )
     )
 
@@ -199,8 +199,8 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     // Пусть исходные эджи содержат только мусор:
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
-      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 1, url = Some("blob:asdasdasdsda")) ),
-      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 3, url = Some("blob:645v-56h65y5665h56")) ),
+      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 1, url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 3, url = Some("blob:645v-56h65y5665h56")) ),
       4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) ),
       0 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) )
     )
@@ -244,8 +244,8 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     // Пусть исходные эджи содержат только что-то, отсосящиеся к другим частям документа:
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
-      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 1, url = Some("blob:asdasdasdsda")) ),
-      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 3, url = Some("blob:645v-56h65y5665h56")) ),
+      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 1, url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 3, url = Some("blob:645v-56h65y5665h56")) ),
       4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) ),
       0 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) ),
       5 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, 5, text = Some(strBefore)) )
@@ -306,8 +306,8 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     // В эджах какой-то мусор. Но он не должен потеряться.
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
-      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 1, url = Some("blob:asdasdasdsda")) ),
-      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 3, url = Some("blob:645v-56h65y5665h56")) ),
+      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 1, url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 3, url = Some("blob:645v-56h65y5665h56")) ),
       4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) )
     )
 

@@ -1,6 +1,7 @@
 package io.suggest.jd
 
 import io.suggest.common.geom.d2.ISize2di
+import io.suggest.img.MImgFmt
 
 /**
   * Suggest.io
@@ -19,6 +20,7 @@ case class MJdEdgeVldInfo(
 /** Модель для доступа к данным эджа и связанный с ним картинки. */
 case class MEdgePicInfo(
                          isImg     : Boolean,
-                         imgWh     : Option[ISize2di]
+                         imgWh     : Option[ISize2di],
+                         dynFmt    : Option[MImgFmt],
                        )
 

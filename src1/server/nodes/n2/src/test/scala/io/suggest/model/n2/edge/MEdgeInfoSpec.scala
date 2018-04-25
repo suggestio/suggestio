@@ -3,7 +3,6 @@ package io.suggest.model.n2.edge
 import java.time.OffsetDateTime
 
 import io.suggest.geo.{CircleGs, Distance, MGeoPoint, MNodeGeoLevels}
-import io.suggest.img.MImgFmts
 import io.suggest.test.json.PlayJsonTestUtil
 import org.elasticsearch.common.unit.DistanceUnit
 import org.scalatest.FlatSpec
@@ -26,10 +25,6 @@ class MEdgeInfoSpec extends FlatSpec with PlayJsonTestUtil {
   it should "handle full-filled model" in {
     jsonTest {
       MEdgeInfo(
-        dynImgArgs  = Some( MEdgeDynImgArgs(
-          dynFormat = MImgFmts.JPEG,
-          dynOpsStr = Some( "afaW?Fa234f9843w5f=63.,h56423&&#456" )
-        )),
         dateNi      = Some( OffsetDateTime.now().minusDays(3) ),
         commentNi   = Some("test test 2"),
         flag        = Some(true),

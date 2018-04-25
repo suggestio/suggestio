@@ -140,4 +140,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def UNKNOWN_CONNECTION                     = E(58)
 
+  def MISSING_UPDATED_EDGE                   = E(59)
+
 }

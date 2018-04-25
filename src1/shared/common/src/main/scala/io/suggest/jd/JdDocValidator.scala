@@ -5,7 +5,6 @@ import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.err.ErrorConstants
-import io.suggest.img.MImgEdgeWithOps
 import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.jd.tags.qd._
@@ -14,7 +13,6 @@ import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.scalaz.ScalazUtil
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._
-
 import scalaz._
 import scalaz.std.stream._
 import scalaz.syntax.apply._
@@ -119,10 +117,10 @@ class JdDocValidator(
     val errMsgF = ErrorConstants.emsgF(STRIP + `.` + PROPS1)
     (
       ScalazUtil.liftNelOpt(props1.bgColor)( MColorData.validateHexCodeOnly ) |@|
-      ScalazUtil.liftNelOpt(props1.bgImg)( MImgEdgeWithOps.validate(_, edges,
-        // TODO Тут костыль, чтобы не было ошибок, если блок слишком большой для картинки по одной из сторон. Т.е. когда высота картинки 400px, а блок - 620px, чтобы не было ошибки.
-        props1.bm.map(_ => MSize2di(70, 70))
-      ) ) |@|
+      ScalazUtil.liftNelOpt(props1.bgImg)(
+        // TODO imgContSz=70x70 - Тут костыль, чтобы не было ошибок, если блок слишком большой для картинки по одной из сторон. Т.е. когда высота картинки 400px, а блок - 620px, чтобы не было ошибки.
+        MJdEdgeId.validate(_, edges, props1.bm.map(_ => MSize2di(70, 70)) )
+      ) |@|
       ScalazUtil.liftNelSome(props1.bm, errMsgF(BM))( BlockMeta.validate ) |@|
       ScalazUtil.liftNelNone(props1.topLeft, errMsgF( XY + `.` + UNEXPECTED)) |@|
       ScalazUtil.liftNelOpt( props1.isMain ) {
@@ -324,8 +322,18 @@ class JdDocValidator(
   /** Валидация id эджа. */
   private def validateQdEdgeId(ei: MJdEdgeId, edgeOpt: Option[MJdEdgeVldInfo]): ValidationNel[String, MJdEdgeId] = {
     val errMsgF = ErrorConstants.emsgF( "edge" )
-    Validation.liftNel(ei.edgeUid)({ _ => edgeOpt.isEmpty }, errMsgF("id" + `.` + INVALID))
-      .map( MJdEdgeId.apply )
+    (
+      Validation.liftNel(ei.edgeUid)({ _ => edgeOpt.isEmpty }, errMsgF("id" + `.` + INVALID)) |@|
+      // Перенести данные формата из эджа.
+      // TODO Это наверное не правильно - управлять форматом на уровне валидации. Надо унести это куда?
+      ScalazUtil.liftNelOpt(
+        edgeOpt
+          .flatMap(_.img)
+          .flatMap(_.dynFmt)
+      )(Validation.success) |@|
+      // Кроп для qd-эджей сейчас не поддерживается в интерфейсе редактора. Когда будет работать - надо будет заменить эту часть.
+      ScalazUtil.liftNelNone(ei.crop, errMsgF(""))
+    )( MJdEdgeId.apply )
   }
 
 

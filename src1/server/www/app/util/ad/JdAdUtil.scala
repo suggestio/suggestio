@@ -5,10 +5,11 @@ import io.suggest.ad.blk.BlockWidths
 import io.suggest.color.MHistogram
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.file.MSrvFileInfo
+import io.suggest.img.MImgFmts
 import io.suggest.jd.{MJdAdData, MJdEdge}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.JdTag.Implicits._
-import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicate, MPredicates}
+import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.media.{MFileMetaHash, MMedia, MMediasCache}
 import io.suggest.model.n2.node.{MNode, MNodesCache}
 import io.suggest.url.MHostInfo
@@ -273,14 +274,17 @@ class JdAdUtil @Inject()(
     * @return Итератор, пригодный для использования в пакетом imgs-рендере,
     *         например в renderAdDocImgs().
     */
-  def collectImgEdges(nodeEdges: MNodeEdges, predicates: Seq[MPredicate]): Seq[(MEdge, MImg3)] = {
+  def collectImgEdges(nodeEdges: MNodeEdges): Seq[(MEdge, MImg3)] = {
     nodeEdges
-      // TODO Надо ли тут Bg-предикат? по идее, он устарел ещё до ввода jd-редактора.
-      .withPredicateIter( predicates: _* )
+      .withPredicateIter( imgPredicate )
       .map { medge =>
         //LOGGER.info(s"prepareImgEdges(): E#${medge.doc.uid.orNull} img=${medge.info.dynImgArgs}")
         // По факту, тут всегда будет оригинал, даже если без .original. Потому что в jd-карточках эджи НЕ хранят в себе кроп или иные модификации.
-        val origImg = MImg3(medge).original
+        val dynImgId = MDynImgId(
+          rowKeyStr = medge.nodeIds.head,
+          dynFormat = MImgFmts.default
+        )
+        val origImg = MImg3(dynImgId)
         medge -> origImg
       }
       .toSeq
@@ -303,7 +307,7 @@ class JdAdUtil @Inject()(
     // Собираем картинки, используемые в карточке.
     // Следует помнить, что в jd-карточках модификация картинки задаётся в теге. Эджи всегда указывают на оригинал.
     lazy val origImgsEdges = {
-      val ie = collectImgEdges( nodeEdges, imgPredicate :: MPredicates.Bg :: Nil )
+      val ie = collectImgEdges( nodeEdges )
       LOGGER.trace(s"$logPrefix Found ${ie.size} img.edges: ${ie.iterator.map(_._2.dynImgId.fileName).mkString(", ")}")
       ie
     }
@@ -532,7 +536,7 @@ class JdAdUtil @Inject()(
             bgImg <- jdTag.props1.bgImg
             if bgImg.crop.nonEmpty
             // Для которых известен эдж
-            edgeAndImg <- imgsEdgesMap.get( bgImg.imgEdge.edgeUid )
+            edgeAndImg <- imgsEdgesMap.get( bgImg.edgeUid )
             // И там растровая картинка задана:
             if edgeAndImg._2.dynImgId.dynFormat.isRaster
           } yield {
@@ -668,12 +672,15 @@ class JdAdUtil @Inject()(
 
             } yield {
               // Если есть кроп у текущей картинки, то запихнуть его в dynImgOps
-              val mimg2 = eit.jdTag.props1.bgImg
-                .flatMap(_.crop)
-                .fold(eit.mimg) { crop =>
-                  eit.mimg.withDynOps(
-                    AbsCropOp(crop) :: Nil
-                  )
+              val mimg2 = eit.jdTag.props1
+                .bgImg.fold(eit.mimg) { imgJdId =>
+                  eit.mimg.withDynImgId {
+                    val dynId = eit.mimg.dynImgId
+                    dynId.copy(
+                      dynFormat = imgJdId.outImgFormat.getOrElse( dynId.dynFormat ),
+                      dynImgOps = imgJdId.crop.map(AbsCropOp.apply).toList
+                    )
+                  }
                 }
 
               val makeArgs = MImgMakeArgs(

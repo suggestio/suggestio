@@ -101,7 +101,7 @@ object MEdge extends IGenEsMappingProps {
   }
 
   /** Поддержка JSON. */
-  implicit val FORMAT: Format[MEdge] = (
+  implicit val FORMAT: OFormat[MEdge] = (
     (__ \ PREDICATE_FN).format(MPredicate.MPREDICATE_DEEP_FORMAT) and
     NODE_IDS_FORMAT and
     (__ \ ORDER_FN).formatNullable[Int] and
@@ -191,5 +191,10 @@ case class MEdge(
           Nil
       }
   }
+
+
+  def withPredicate(predicate: MPredicate) = copy(predicate = predicate)
+  def withNodeIds(nodeIds: Set[String]) = copy(nodeIds = nodeIds)
+  def withInfo(info: MEdgeInfo) = copy(info = info)
 
 }

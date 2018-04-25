@@ -1,5 +1,7 @@
 package io.suggest.model.n2.edge
 
+import io.suggest.primo.id.IId
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -20,6 +22,16 @@ object EdgesUtil {
 
   def nextEdgeUidFromMap(edgeUidMap: Map[EdgeUid_t, _]): EdgeUid_t = {
     nextEdgeUidFrom( edgeUidMap.keys )
+  }
+
+  def purgeUnusedEdgesFromMap[E](usedEdgeIds: Set[EdgeUid_t], edgesMap: Map[EdgeUid_t, E]): Map[EdgeUid_t, E] = {
+    edgesMap
+      .filterKeys { usedEdgeIds.contains }
+  }
+
+  // TODO Нужно задействовать CanBuildFrom[].
+  def purgeUnusedEdgesFrom[E <: IId[EdgeUid_t]]( usedEdgeIds: Set[EdgeUid_t], edges: Iterable[E] ): Iterable[E] = {
+    edges.filter(e => usedEdgeIds.contains(e.id))
   }
 
 }

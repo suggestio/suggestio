@@ -10,10 +10,11 @@ import io.suggest.file.up.{MFile4UpProps, MFileUploadS}
 import io.suggest.file.{MJsFileInfo, MSrvFileInfo}
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.crop.MCrop
-import io.suggest.img.{MImgEdgeWithOps, MImgFmts}
+import io.suggest.img.MImgFmts
 import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.js.UploadConstants
 import io.suggest.lk.m._
+import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.lk.m.img.{MPictureAh, MPictureCropPopup}
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
@@ -112,7 +113,7 @@ class PictureAh[V, M](
                 // Новый файл выбран юзером, который пока неизвестен.
                 // Найти в состоянии текущий файл, если он там есть.
                 val bgImgOldOpt = picViewContAdp.get(v0.view, m.resKey)
-                val edgeUidOldOpt = bgImgOldOpt.map(_.imgEdge.edgeUid)
+                val edgeUidOldOpt = bgImgOldOpt.map(_.edgeUid)
                 val dataEdgeOldOpt = edgeUidOldOpt.flatMap( v0.edges.get )
 
                 // Вычислить новый edgeUid.
@@ -125,7 +126,7 @@ class PictureAh[V, M](
                 // Записать текущий файл в состояние.
                 val dataEdge2 = MEdgeDataJs(
                   jdEdge = MJdEdge(
-                    predicate   = MPredicates.JdBgPred,
+                    predicate   = MPredicates.JdContent.Image,
                     id          = edgeUid2,
                     url         = Some( blobUrlNew )
                   ),
@@ -184,8 +185,8 @@ class PictureAh[V, M](
               }
 
             val imgEdgeIdSome2 = Some(
-              MImgEdgeWithOps(
-                imgEdge = MJdEdgeId( dataEdge9.id )
+              MJdEdgeId(
+                edgeUid = dataEdge9.id
               )
             )
 
@@ -294,7 +295,6 @@ class PictureAh[V, M](
                       val blobUrl = fileJs0.blobUrl.get
                       val reqRoute = prepareUploadRoute(
                         MFormResourceKey(
-                          pred    = Some( edge0.jdEdge.predicate ),
                           edgeUid = Some( edgeUid ),
                           nodePath = None
                         )
@@ -583,7 +583,7 @@ class PictureAh[V, M](
     case m: CropOpen =>
       val v0 = value
       val bgImg = picViewContAdp.get(v0.view, m.resKey).get
-      val edge = v0.edges( bgImg.imgEdge.edgeUid )
+      val edge = v0.edges( bgImg.edgeUid )
       val bm = v0.cropContSz.get
 
       val bmWhRatio = ISize2di.whRatio(bm)
@@ -710,7 +710,6 @@ class PictureAh[V, M](
       v0.cropPopup.fold(noChange) { cropPopup =>
         val v1 = v0.withCropPopup( None )
         // Восстановить настройки кропа.
-        val imgOpt0 = picViewContAdp.get( v1.view, m.resKey )
         val v2 = if (
           picViewContAdp.get(v1.view, m.resKey)
             .exists( _.crop ===* cropPopup.origCrop )

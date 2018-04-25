@@ -2,7 +2,7 @@ package io.suggest.model.n2.edge
 
 import java.time.OffsetDateTime
 
-import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.{GeoPoint, MGeoPoint, MNodeGeoLevel}
 import io.suggest.geo.GeoPoint.Implicits._
@@ -26,12 +26,13 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   override type T = MEdgeInfo
 
   /** Статический пустой экземпляр модели. */
-  override val empty = MEdgeInfo()
+  override val empty = apply()
 
 
   /** Модель названий полей модели [[MEdgeInfo]]. */
   object Fields {
 
+    @deprecated("Remove it", "2018-04-20")
     val DYN_IMG_ARGS_FN   = "im"
     val DATE_NI_FN        = "dtni"
     val COMMENT_NI_FN     = "coni"
@@ -72,7 +73,8 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   import Fields._
 
   /** Поддержка JSON. */
-  implicit val FORMAT: Format[MEdgeInfo] = {
+  implicit val mEdgeInfoFormat: Format[MEdgeInfo] = {
+    // TODO Удалить это поле вообще. Оно устарело.
     val dynImgArgsFormat = {
       // В норме (после resaveMany() должно быть просто: (__ \ DYN_IMG_ARGS_FN).formatNullable[MEdgeDynImgArgs]
       // Но тут поддержка приемственности старого формата (кропа), поэтому отрабатываются сразу два варианта: новый объект и старая строка.
@@ -82,16 +84,16 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
       val readsOrOldDynOps = fmt0
         .filter(_.nonEmpty)
         .orElse {
-           for {
-             dynOpsStrOpt <- (__ \ "di").readNullable[String]
-           } yield {
-             for (_ <- dynOpsStrOpt) yield {
-               MEdgeDynImgArgs(
-                 dynFormat = MImgFmts.JPEG,
-                 dynOpsStr = dynOpsStrOpt
-               )
-             }
-           }
+          for {
+            dynOpsStrOpt <- (__ \ "di").readNullable[String]
+          } yield {
+            for (_ <- dynOpsStrOpt) yield {
+              MEdgeDynImgArgs(
+                dynFormat = MImgFmts.JPEG,
+                dynOpsStr = dynOpsStrOpt
+              )
+            }
+          }
         }
 
       OFormat(readsOrOldDynOps, fmt0)
@@ -104,17 +106,17 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
       (__ \ FLAG_FN).formatNullable[Boolean] and
       (__ \ TAGS_FN).formatNullable[Set[String]]
         .inmap [Set[String]] (
-          _.getOrElse(Set.empty),
+          EmptyUtil.opt2ImplEmptyF( Set.empty ),
           { tags => if (tags.nonEmpty) Some(tags) else None }
         ) and
       (__ \ GEO_SHAPES_FN).formatNullable[ List[MEdgeGeoShape] ]
         .inmap [List[MEdgeGeoShape]] (
-          _.getOrElse(Nil),
+          EmptyUtil.opt2ImplEmptyF( Nil ),
           { geos => if (geos.nonEmpty) Some(geos) else None }
         ) and
       (__ \ GEO_POINT_FN).formatNullable[ Seq[MGeoPoint] ]
         .inmap [Seq[MGeoPoint]] (
-          _.getOrElse(Nil),
+          EmptyUtil.opt2ImplEmptyF( Nil ),
           { gps => if (gps.nonEmpty) Some(gps) else None }
         )
     )(apply, unlift(unapply))
@@ -203,6 +205,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   * @param geoPoints Некие опорные геокоординаты, если есть.
   */
 final case class MEdgeInfo(
+                            @deprecated("Use MImgEdgeWithOps outside instead", "2018-04-20")
                             dynImgArgs   : Option[MEdgeDynImgArgs] = None,
                             dateNi       : Option[OffsetDateTime]  = None,
                             commentNi    : Option[String]          = None,
@@ -214,6 +217,7 @@ final case class MEdgeInfo(
   extends EmptyProduct
 {
 
+  @deprecated("Use MImgEdgeWithOps outside instead", "2018-04-20")
   def withDynImgArgs(dynImgArgs: Option[MEdgeDynImgArgs]) = copy(dynImgArgs = dynImgArgs)
 
   /** Форматирование для вывода в шаблонах. */

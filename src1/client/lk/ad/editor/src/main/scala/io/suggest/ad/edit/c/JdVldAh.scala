@@ -21,14 +21,17 @@ class JdVldAh[M]( modelRW: ModelRW[M, MJdVldAh] ) extends ActionHandler(modelRW)
     // Сигнал об изменении в json-документе. Надо запустить пере-валидацию документа.
     case JdDocChanged =>
       val v0 = value
+
       val vld = new JdDocValidator(
         edges = v0.edges.mapValues { eData =>
           MJdEdgeVldInfo(
             jdEdge = eData.jdEdge,
             img = for (fileJs <- eData.fileJs) yield {
               MEdgePicInfo(
-                isImg = true,
-                imgWh = fileJs.whPx
+                isImg  = true,
+                imgWh  = fileJs.whPx,
+                // Формат картинки не важен на клиенте, но важен серверу.
+                dynFmt = None
               )
             }
           )

@@ -59,10 +59,3 @@ trait FindDiv extends FindElT {
   override type Dom_t = HTMLDivElement
 }
 
-
-/** Трейт API быстрого и простого поиска элемента по динамическому id. */
-trait FindElDynIdT extends DynDomId with IApplyEl with FindApplyUtil {
-  def find(arg: DomIdArg_t): Option[T] = {
-    _find( getDomId(arg) )
-  }
-}

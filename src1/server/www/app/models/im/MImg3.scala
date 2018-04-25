@@ -6,10 +6,8 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.fio.{IDataSource, WriteRequest}
-import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.js.UploadConstants
 import io.suggest.model.img.ImgSzDated
-import io.suggest.model.n2.edge.MEdge
 import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
 import io.suggest.model.n2.media._
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
@@ -288,36 +286,6 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
     if (!pr.successful)
       LOGGER.error(s"""Failed to parse img from fileName <<$fileName>>:\n$pr""")
     pr.get
-  }
-
-  /** Экстракция указателя на картинку из эджа узла N2.
-    * @throws java.util.NoSuchElementException когда id узла-картинки не задан.
-    */
-  def apply(medge: MEdge): MImg3 = {
-    lazy val logPrefix = s"${getClass.getSimpleName}($medge)${System.currentTimeMillis()}:"
-
-    // TODO Перенести этот код в MDynImgId
-    val dops = {
-      medge.info
-        .dynImgArgs
-        .flatMap(_.dynOpsStr)
-        .fold( List.empty[ImOp] ) { imOpsStr =>
-          val pr = (new Parsers).parseImgArgs(imOpsStr)
-          pr.getOrElse {
-            LOGGER.warn(s"apply($medge): Ignoring ops. Failed to parse imOps str '''$imOpsStr'''\n$pr")
-            Nil
-          }
-      }
-    }
-    val dynImgId = MDynImgId(
-      rowKeyStr = medge.nodeIds.head,
-      dynFormat = medge.info.dynImgArgs.fold[MImgFmt] {
-        LOGGER.debug(s"$logPrefix Dyn.img.args undefined, but image expected. Possibly, old dyn.img.edge format (pre-dynFormat 2018.feb.12). Guessing JPEG.")
-        MImgFmts.JPEG
-      }(_.dynFormat),
-      dynImgOps = dops
-    )
-    MImg3(dynImgId)
   }
 
   /** Извлечение данных картинки из MMedia. */

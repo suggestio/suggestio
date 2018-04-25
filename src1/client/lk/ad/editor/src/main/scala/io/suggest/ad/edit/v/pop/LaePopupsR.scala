@@ -3,7 +3,8 @@ package io.suggest.ad.edit.v.pop
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.MAeRoot
 import io.suggest.ad.edit.v.LkAdEditCss
-import io.suggest.lk.m.{MDeleteConfirmPopupS, MErrorPopupS, MFormResourceKey}
+import io.suggest.lk.m.frk.MFormResourceKey
+import io.suggest.lk.m.{MDeleteConfirmPopupS, MErrorPopupS}
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.lk.r.crop.CropPopupR
 import io.suggest.lk.r.{DeleteConfirmPopupR, ErrorPopupR}
@@ -59,7 +60,7 @@ class LaePopupsR(
 
   val component = ScalaComponent.builder[Props]("LaePops")
     .initialStateFromProps { rootProxy =>
-      val frkPredSome = Some( MPredicates.JdBgPred )
+      val frkPredSome = Some( MPredicates.JdContent.Image )
       State(
         popupsContPropsC = rootProxy.connect { mroot =>
           PopupsContR.PropsVal(
@@ -80,7 +81,6 @@ class LaePopupsR(
               percentCrop = mcrop.percentCrop,
               popCssClass = lkAdEditCss.Crop.popup.htmlClass :: Nil,
               resKey      = MFormResourceKey(
-                pred      = frkPredSome,
                 edgeUid   = Some( edge.jdEdge.id ),
                 nodePath  = root.doc.jdArgs.renderArgs.selPath
               )

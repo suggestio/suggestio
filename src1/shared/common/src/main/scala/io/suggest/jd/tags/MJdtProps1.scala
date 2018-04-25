@@ -4,7 +4,7 @@ import io.suggest.ad.blk.BlockMeta
 import io.suggest.color.MColorData
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.img.MImgEdgeWithOps
+import io.suggest.jd.MJdEdgeId
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -27,7 +27,7 @@ object MJdtProps1 extends IEmpty {
   /** Поддержка play-json. */
   implicit val MJD_TAG_PROPS1_FORMAT: OFormat[MJdtProps1] = (
     (__ \ "a").formatNullable[MColorData] and
-    (__ \ "b").formatNullable[MImgEdgeWithOps] and
+    (__ \ "b").formatNullable[MJdEdgeId] and
     (__ \ "c").formatNullable[BlockMeta] and
     (__ \ "d").formatNullable[MCoords2di] and
     (__ \ "e").formatNullable[Boolean] and
@@ -55,7 +55,7 @@ object MJdtProps1 extends IEmpty {
   */
 case class MJdtProps1(
                        bgColor    : Option[MColorData]        = None,
-                       bgImg      : Option[MImgEdgeWithOps]   = None,
+                       bgImg      : Option[MJdEdgeId]   = None,
                        bm         : Option[BlockMeta]         = None,
                        topLeft    : Option[MCoords2di]        = None,
                        isMain     : Option[Boolean]           = None,
@@ -66,7 +66,7 @@ case class MJdtProps1(
 {
 
   def withBgColor(bgColor: Option[MColorData])        = copy(bgColor = bgColor)
-  def withBgImg(bgImg: Option[MImgEdgeWithOps])       = copy(bgImg = bgImg)
+  def withBgImg(bgImg: Option[MJdEdgeId])       = copy(bgImg = bgImg)
   def withBm(bm: Option[BlockMeta])                   = copy(bm = bm)
   def withTopLeft(topLeft: Option[MCoords2di])        = copy(topLeft = topLeft)
   def withIsMain(isMain: Option[Boolean])             = copy(isMain = isMain)

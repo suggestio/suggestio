@@ -37,10 +37,10 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
       override protected def _PARENT_FN = ADN_FN
 
       import MAdnExtra.{Fields => F}
-      def IS_TEST_FN          = _fullFn( F.IS_TEST.fn )
-      def RIGHTS_FN           = _fullFn( F.RIGHTS.fn )
-      def SHOWN_TYPE_FN       = _fullFn( F.SHOWN_TYPE.fn )
-      def SHOW_IN_SC_NL_FN    = _fullFn( F.SHOW_IN_SC_NL.fn )
+      def IS_TEST_FN          = _fullFn( F.IS_TEST )
+      def RIGHTS_FN           = _fullFn( F.RIGHTS )
+      def SHOWN_TYPE_FN       = _fullFn( F.SHOWN_TYPE )
+      def SHOW_IN_SC_NL_FN    = _fullFn( F.SHOW_IN_SC_NL )
     }
 
 
@@ -134,7 +134,13 @@ case class MNodeExtras(
 {
 
   def withDoc(doc: Option[MNodeDoc]) = copy(doc = doc)
+  def withAdn(adn: Option[MAdnExtra]) = copy(adn = adn)
 
   def isRcvr = adn.exists(_.isReceiver)
+
+  def adnLogo = adn.flatMap(_.resView.logo)
+  def adnWcFg = adn.flatMap(_.resView.wcFg)
+  def adnGalImgs = adn.toList.flatMap(_.resView.galImgs)
+  def adnEdgeUids = adn.iterator.flatMap(_.resView.edgeUids)
 
 }

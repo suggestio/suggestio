@@ -1,12 +1,13 @@
 package io.suggest.adn.edit.m
 
-import io.suggest.common.html.HtmlConstants.SPACE
-import io.suggest.img.MImgEdgeWithOps
 import io.suggest.jd.MJdEdgeId
 import io.suggest.lk.c.IPictureViewAdp
-import io.suggest.lk.m.MFormResourceKey
-import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.lk.m.frk.MFormResourceKey
+import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.msg.WarnMsgs
+import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -14,63 +15,39 @@ import japgolly.univeq._
   * Created: 13.04.18 22:10
   * Description: Доп.утиль для модели MAdnResView.
   */
-object MAdnResViewUtil {
+object MAdnResViewUtil extends Log {
 
   implicit object ResViewAdp extends IPictureViewAdp[MAdnResView] {
 
-    override def get(view: MAdnResView, resKey: MFormResourceKey): Option[MImgEdgeWithOps] = {
-      val edgeWithOpsF = MImgEdgeWithOps(_: MJdEdgeId)
-      resKey.pred.get match {
-        case MPredicates.Logo =>
-          view.logo.map(edgeWithOpsF)
-        case MPredicates.WcFgImg =>
-          view.wcFg.map(edgeWithOpsF)
-        case MPredicates.GalleryItem =>
-          resKey.edgeUid
-            .flatMap { imgUid =>
-              view.galImgs
-                // TODO Фильтрануть ещё и по значению кропа
-                .find(_.imgEdge.edgeUid ==* imgUid)
-            }
-        case other =>
-          throw new IllegalArgumentException(resKey + SPACE + other)
-      }
+    override def get(view: MAdnResView, resKey: MFormResourceKey): Option[MJdEdgeId] = {
+      resKey.jdEdgeId
     }
 
-    override def updated(view: MAdnResView, resKey: MFormResourceKey)(newValue: Option[MImgEdgeWithOps]): MAdnResView = {
-      def newValueEdgeId = newValue.map(_.imgEdge)
-      resKey.pred.get match {
-        case MPredicates.Logo =>
-          view.withLogo( newValueEdgeId )
-        case MPredicates.WcFgImg =>
-          view.withWcFg( newValueEdgeId )
-        case MPredicates.GalleryItem =>
-          resKey.edgeUid.fold {
-            // Добавить новый элемент в начало галереи:
-            newValue.fold {
-              // Хрень какая-то: нет ни id, ни элемента.
-              view
-            } { newVal =>
-              view.withGalImgs(
-                newVal :: view.galImgs.toList
-              )
+    override def updated(view: MAdnResView, resKey: MFormResourceKey)(newValue: Option[MJdEdgeId]): MAdnResView = {
+      // Найти в view присланный инстанс jdEdgeId и обновить.
+      val jdEdgeId4Update = resKey.jdEdgeId.get
+      def __cmpF( jdEdgeId: MJdEdgeId ): Boolean = jdEdgeId ===* jdEdgeId4Update
+
+      if ( view.logo.exists(__cmpF) ) {
+        view.withLogo( newValue )
+
+      } else if ( view.wcFg.exists(__cmpF) ) {
+        view.withWcFg( newValue )
+
+      } else if ( view.galImgs.exists(__cmpF) ) {
+        // Обновить картинку в галерее.
+        view.withGalImgs(
+          view
+            .galImgs
+            .flatMap { e =>
+              if (__cmpF(e)) newValue
+              else e :: Nil
             }
-          } { galImgEdgeId =>
-            // Заменить существующий элемент:
-            val newValueSeq = newValue.toList
-            view.withGalImgs(
-              view.galImgs.flatMap { galImg =>
-                // TODO Проверять по кропу и прочим уточняющим данным.
-                if (galImg.imgEdge.edgeUid ==* galImgEdgeId) {
-                  newValueSeq
-                } else {
-                  galImg :: Nil
-                }
-              }
-            )
-          }
-        case other =>
-          throw new IllegalArgumentException(resKey + SPACE + newValue + SPACE + other)
+        )
+
+      } else {
+        LOG.warn( WarnMsgs.MISSING_UPDATED_EDGE, msg = (view, resKey, newValue) )
+        view
       }
     }
 
@@ -81,7 +58,8 @@ object MAdnResViewUtil {
       view.copy(
         logo = view.logo.filter(__jdEdgeF),
         wcFg = view.wcFg.filter(__jdEdgeF),
-        galImgs = view.galImgs.filter( ((e: MImgEdgeWithOps) => e.imgEdge).andThen(__jdEdgeF) )
+        galImgs =  view.galImgs
+          .filter( __jdEdgeF )
       )
     }
 

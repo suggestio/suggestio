@@ -398,8 +398,6 @@ class DynImgUtil @Inject() (
   def getImgWh(dynImgId: MDynImgId): Future[Option[ISize2di]] = {
     lazy val logPrefix = s"getImgWh(${dynImgId.fileName})#${System.currentTimeMillis()}:"
 
-    val opWhOpt = ImOp.getWhFromOps( dynImgId.dynImgOps )
-
     ImOp.getWhFromOps( dynImgId.dynImgOps ) match {
       case Some(whOpt @ Some(wh)) =>
         // Размер картинки уже очевиден из

@@ -70,7 +70,7 @@ class NodesUtil @Inject() (
 
   /** Куда отправлять юзера, когда тот создал новый узел? */
   def userNodeCreatedRedirect(adnId: String): Call = {
-    routes.MarketLkAdnEdit.editAdnNode(adnId)
+    routes.LkAdnEdit.editNodePage( adnId )
   }
 
   /** Для рендера шаблона regSuccessTpl требуется собрать аргументы для рендера. */

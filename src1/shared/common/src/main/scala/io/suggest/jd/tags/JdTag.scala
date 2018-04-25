@@ -6,13 +6,12 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.{MQdOp, MQdOpTypes}
-import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil}
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import japgolly.univeq._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-
 import scalaz.{Show, Tree, TreeLoc}
 
 /**
@@ -140,7 +139,6 @@ object JdTag {
           .flatMap(_.edgeInfo)
         val iter2 = jdt.props1.bgImg
           .iterator
-          .map(_.imgEdge)
         val iter12 = (iter1 ++ iter2)
           .map(_.edgeUid)
         val iterChs = tree.subForest
@@ -227,9 +225,10 @@ object JdTag {
     */
   def purgeUnusedEdges[E](tpl: Tree[JdTag], edgesMap: Map[EdgeUid_t, E]): Map[EdgeUid_t, E] = {
     import Implicits._
-    val usedEdgeIds = tpl.deepEdgesUidsIter.toSet
-    edgesMap
-      .filterKeys { usedEdgeIds.contains }
+    EdgesUtil.purgeUnusedEdgesFromMap(
+      usedEdgeIds = tpl.deepEdgesUidsIter.toSet,
+      edgesMap    = edgesMap
+    )
   }
 
 }
@@ -262,7 +261,7 @@ final case class JdTag(
   def withQdProps(qdProps: Option[MQdOp])         = copy(qdProps = qdProps)
 
   def edgeUids: Iterable[MJdEdgeId] = {
-    props1.bgImg.map(_.imgEdge) ++
+    props1.bgImg ++
       qdProps.flatMap(_.edgeInfo)
   }
 

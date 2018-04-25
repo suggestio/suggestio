@@ -5,15 +5,12 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.{MImgFmt, MImgFmts}
-import io.suggest.model.n2.edge.{MEdge, MEdgeDynImgArgs, MEdgeInfo, MPredicates}
 import io.suggest.model.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
 import models.im._
-import models.madn.EditConstants
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.mwc.MWelcomeRenderArgs
-import util.cdn.CdnUtil
 import util.showcase.ShowcaseUtil
 
 import scala.concurrent.Future
@@ -27,9 +24,7 @@ import scala.concurrent.Future
 @Singleton
 class WelcomeUtil @Inject() (
                               scUtil                 : ShowcaseUtil,
-                              cdnUtil                : CdnUtil,
                               mImgs3                 : MImgs3,
-                              imgFormUtil            : ImgFormUtil,
                               mCommonDi              : ICommonDi
                             )
   extends MacroLogsImpl
@@ -38,33 +33,6 @@ class WelcomeUtil @Inject() (
   import LOGGER._
   import mCommonDi._
 
-  /** Ключ для картинки, используемой в качестве приветствия. */
-  // TODO Удалить вслед за старой архитектурой.
-
-  def welcomeImgIdKM = EditConstants.WELCOME_IMG_FN -> imgFormUtil.img3IdOptM
-
-
-  /** Обновление картинки и карточки приветствия. Картинка хранится в полу-рекламной карточке, поэтому надо ещё
-    * обновить карточку и пересохранить её. */
-  def updateWcFgImg(adnNode: MNode, newWelcomeImgOpt: Option[MImgT]): Future[Option[MEdge]] = {
-    // Сохранить картинку, вернуть эдж. Нет картинки -- нет эджа.
-    FutureUtil.optFut2futOpt(newWelcomeImgOpt) { fgMimg =>
-      for (_ <- mImgs3.saveToPermanent(fgMimg)) yield {
-        val e = MEdge(
-          predicate = MPredicates.WcFgImg,
-          nodeIds   = Set(fgMimg.dynImgId.rowKeyStr),
-          info = MEdgeInfo(
-            dynImgArgs = Some(MEdgeDynImgArgs(
-              dynFormat = fgMimg.dynImgId.dynFormat,
-              dynOpsStr = fgMimg.dynImgId.qOpt
-            ))
-          )
-        )
-        Some(e)
-      }
-    }
-  }
-
 
   /**
    * Извлечь логотип карточки приветствия.
@@ -72,11 +40,10 @@ class WelcomeUtil @Inject() (
    * @return Опциональная картинка.
    */
   def wcFgImg(mnode: MNode): Option[MImgT] = {
-    mnode.edges
-      .withPredicateIter( MPredicates.WcFgImg )
-      .map { MImg3.apply }
-      .toStream
-      .headOption
+    mnode.Quick.Adn.wcFg
+      .map { case (jdId, e) =>
+        MImg3( MDynImgId.fromJdEdge(jdId, e) )
+      }
   }
 
 
@@ -92,18 +59,12 @@ class WelcomeUtil @Inject() (
     def _colorBg = colorBg(mnode)
 
     // Получить параметры (метаданные) фоновой картинки из хранилища картирок.
-    val bgFut = mnode.edges
-      .withPredicateIter( MPredicates.GalleryItem )
-      .toStream
+    val bgFut = mnode.Quick.Adn.galImgs
       .headOption
       .fold[Future[Either[String, MImgWithWhInfo]]] {
         Future.successful(_colorBg)
-      } { bgEdge =>
-        val dynImgId = MDynImgId(
-          rowKeyStr = bgEdge.nodeIds.head,
-          dynFormat = bgEdge.info.dynImgArgs.fold[MImgFmt](MImgFmts.JPEG)(_.dynFormat),
-          dynImgOps = Nil  //TODO Реализовать парсинг операций. Пока это не используется, но всё равно надо бы: bgEdge.info.dynImgArgs.flatMap(_.dynOpsStr)
-        )
+      } { case (jdId, bgEdge) =>
+        val dynImgId = MDynImgId.fromJdEdge(jdId, bgEdge)
         val oiik = MImg3(dynImgId)
         val fut0 = mImgs3.getImageWH( oiik.original )
         lazy val logPrefix = s"getWelcomeRenderArgs(${mnode.idOrNull}):"

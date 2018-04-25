@@ -64,7 +64,7 @@ class GridCoreR(
         bg      <- stripJdt.props1.bgImg
         // 2018-01-23: Для wide-фона нужен отдельный блок, т.к. фон позиционируется отдельно от wide-block-контента.
         // TODO Нужна поддержка wide-фона без картинки.
-        bgEdge  <- brd.edges.get( bg.imgEdge.edgeUid )
+        bgEdge  <- brd.edges.get( bg.edgeUid )
         imgWh   <- bgEdge.origWh
       } yield {
         imgWh

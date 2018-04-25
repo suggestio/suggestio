@@ -18,7 +18,6 @@ import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mproj.ICommonDi
-import models.im.MImg3
 import models.msc.MScAdsSearchQs
 import models.msys._
 import models.req.{INodeReq, IReq, MNodeReq}
@@ -776,14 +775,16 @@ class SysMarket @Inject() (
       val producerOptFut = mNodesCache.maybeGetByIdCached( producerIdOpt )
 
       // Собрать инфу по картинкам.
-      val imgs = {
+      // TODO Тут код наверное уже не актуален. Просто подправлен тут для совместимости.
+      val imgs = List.empty[MImgEdge]
+      /*
         mad.edges
-          .withPredicateIter( MPredicates.Bg, MPredicates.WcFgImg, MPredicates.GalleryItem )
+          .withPredicateIter( MPredicates.JdContent.Image )
           .map { e =>
             MImgEdge(e, MImg3(e))
           }
           .toSeq
-      }
+      */
 
       // Считаем кол-во ресиверов.
       val rcvrsCount = n2NodesUtil.receiverIds(mad)

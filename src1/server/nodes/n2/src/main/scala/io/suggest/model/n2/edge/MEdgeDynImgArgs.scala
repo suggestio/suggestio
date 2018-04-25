@@ -15,6 +15,7 @@ import play.api.libs.functional.syntax._
   * Похожа на MDynImgId, но очень упрощена и более сериализована местами:
   * Поле dynOpsStr - сериализованная строка, а не Seq[ImOp].
   */
+@deprecated("Use MImgEdgeWithOps in view-level instead", "2018-04-20")
 object MEdgeDynImgArgs extends IGenEsMappingProps {
 
   /** Названия ES-полей. */
@@ -48,7 +49,9 @@ object MEdgeDynImgArgs extends IGenEsMappingProps {
   * @param dynFormat Ожидаемый формат картинки на выходе. Обычно JPEG.
   * @param dynOpsStr Дополнительные опции рендера, если есть.
   */
+@deprecated("Use MImgEdgeWithOps() in view-level instead", "2018-04-20")
 final case class MEdgeDynImgArgs(
+                                  @deprecated("Use MImgEdgeWithOps() in view-level instead", "2018-04-20")
                                   dynFormat : MImgFmt,
                                   dynOpsStr : Option[String]    = None
                                 ) {

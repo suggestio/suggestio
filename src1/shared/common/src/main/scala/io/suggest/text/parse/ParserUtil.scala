@@ -1,6 +1,8 @@
 package io.suggest.text.parse
 
-import scala.util.parsing.combinator.JavaTokenParsers
+import io.suggest.common.empty.OptionUtil
+
+import scala.util.parsing.combinator.{JavaTokenParsers, Parsers}
 
 /**
  * Suggest.io
@@ -32,7 +34,23 @@ object ParserUtil {
     s"""(?U)-?(\d(\d|$groupingSepRE)*($fracSepRE+\d*)?|\d*$fracSepRE+\d+)"""
   }
 
+
+  object Implicits {
+
+    /** Расширенная утиль для ParserResult. */
+    implicit class ParseResultExtOps[T]( val pr: Parsers#ParseResult[T] ) extends AnyVal {
+
+      /** Конвертировать в Option. */
+      def toOption: Option[T] = {
+        OptionUtil.maybe( pr.successful )( pr.get )
+      }
+
+    }
+
+  }
+
 }
+
 
 // TODO Нужно собрать парсеры для различных float-форматов согласно http://docs.oracle.com/cd/E19455-01/806-0169/overview-9/index.html
 

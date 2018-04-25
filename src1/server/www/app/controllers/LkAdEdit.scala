@@ -196,11 +196,9 @@ class LkAdEdit @Inject() (
 
                   val edgesAcc0Fut = for {
                     videoExtEdges <- videoExtEdgesFut
-                    imgsNeededMap <- edgesVldLogic.imgsNeededMapFut
                   } yield {
                     LOGGER.trace(s"$logPrefix ${videoExtEdges.size} VideoExtEdges = [${videoExtEdges.mapValues(_.idOrNull).mkString(", ")}]")
 
-                    val edgeInfo0 = MEdgeInfo.empty
                     var _acc0 = edges2.foldLeft(List.empty[MEdge]) { (acc0, jdEdge) =>
                       MEdge(
                         predicate = jdEdge.predicate,
@@ -218,31 +216,9 @@ class LkAdEdit @Inject() (
                             .toSet
                         },
                         doc = MEdgeDoc(
-                          uid   = Some(jdEdge.id),
+                          uid   = Some( jdEdge.id ),
                           text  = jdEdge.text.toSeq
-                        ),
-                        info = {
-                          if (jdEdge.predicate ==>> MPredicates.JdContent.Image) {
-                            // Для картинки надо сохранить правильный формат сборки выхлопа. Для карточек - формат наследуется из исходника.
-                            imgsNeededMap
-                              .get( jdEdge.id )
-                              .fold(edgeInfo0) { mimg =>
-                                val fmt = mimg.dynImgId.dynFormat
-                                edgeInfo0.withDynImgArgs( Some(
-                                  // Наверное, тут всё правильно. dynOpsStr не особо-то используется: кроп описывается в jd-тегах.
-                                  edgeInfo0.dynImgArgs.fold(
-                                    MEdgeDynImgArgs(
-                                      dynFormat = fmt
-                                    )
-                                  ) { dia0 =>
-                                    dia0.withDynFormat( fmt )
-                                  }
-                                ))
-                              }
-                          } else {
-                            edgeInfo0
-                          }
-                        }
+                        )
                       ) :: acc0
                     }
 
@@ -321,7 +297,7 @@ class LkAdEdit @Inject() (
                             out = {
                               // Убрать все существующие jd-content-эджи. ТODO Bg-предикат: удалить старый предикат фона (старый формат market ad).
                               val edgesCleanIter = mad.edges
-                                .withoutPredicateIter( MPredicates.JdContent, MPredicates.Bg, MPredicates.ModeratedBy )
+                                .withoutPredicateIter( MPredicates.JdContent, MPredicates.ModeratedBy )
                               // Добавить новые jd-эджи.
                               MNodeEdges.edgesToMap1( edgesCleanIter ++ edgesAcc0 )
                             }

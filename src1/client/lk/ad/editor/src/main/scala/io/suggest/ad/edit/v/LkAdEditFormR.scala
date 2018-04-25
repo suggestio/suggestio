@@ -19,7 +19,8 @@ import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.{MJdTagName, MJdTagNames}
-import io.suggest.lk.m.{DocBodyClick, MFormResourceKey}
+import io.suggest.lk.m.DocBodyClick
+import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.lk.r.{SaveR, SlideBlockR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorPickerR, ColorsSuggestR}
 import io.suggest.lk.r.crop.CropBtnR
@@ -318,9 +319,6 @@ class LkAdEditFormR(
         }( OptFastEq.Wrapped )
       }
 
-      // Один общий ключ на все отображаемые ресурсы, которые не требуют уникального ключа.
-      val imgResKeyPredSome = Some( MPredicates.JdContent.Image )
-
       State(
         jdPreviewArgsC = p.connect { mroot =>
           mroot.doc.jdArgs
@@ -527,7 +525,6 @@ class LkAdEditFormR(
               src = bgEdgeOpt
                 .flatMap(_.imgSrcOpt),
               resKey = MFormResourceKey(
-                pred     = imgResKeyPredSome,
                 edgeUid  = bgEdgeOpt.map(_.jdEdge.id),
                 nodePath = mroot.doc.jdArgs.renderArgs.selPath
               )
@@ -560,7 +557,6 @@ class LkAdEditFormR(
             if bgEdge.imgSrcOpt.nonEmpty
           } yield {
             MFormResourceKey(
-              pred     = imgResKeyPredSome,
               edgeUid  = Some( bgEdge.jdEdge.id ),
               nodePath = mroot.doc.jdArgs.renderArgs.selPath
             )

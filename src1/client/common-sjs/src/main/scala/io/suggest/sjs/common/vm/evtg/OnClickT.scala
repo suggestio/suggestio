@@ -3,8 +3,6 @@ package io.suggest.sjs.common.vm.evtg
 import io.suggest.sjs.common.util.TouchUtil
 import org.scalajs.dom.Event
 
-import scala.scalajs.js
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

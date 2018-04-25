@@ -5,7 +5,7 @@ import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.m.MFormResourceKey
+import io.suggest.lk.m.frk.{MFormResourceKey, MFrkTypes}
 import io.suggest.lk.r.UploadStatusR
 import io.suggest.lk.r.img.{ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.model.n2.edge.MPredicates
@@ -31,6 +31,7 @@ class NodeGalleryR(
   import io.suggest.file.up.MFileUploadS.MFileUploadSFastEq
   import io.suggest.lk.r.img.ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq
 
+  lazy val resKeyTypeSome = Some( MFrkTypes.GalImg )
 
   type Props_t = Seq[PropsValEl]
   type Props = ModelProxy[Props_t]
@@ -51,8 +52,17 @@ class NodeGalleryR(
   val galPredSome = Some( MPredicates.GalleryItem )
   val imgsRowContCss = List( Css.Floatt.LEFT )
 
+  /** Пропертисы кнопки добавления элемента сейчас являются константой. */
+  private val _addBtnProps = ImgEditBtnPropsVal(
+    src = None,
+    resKey = MFormResourceKey(
+      frkType = resKeyTypeSome
+    ),
+    css = imgsRowContCss
+  )
 
   class Backend($: BackendScope[Props, Props_t]) {
+
     def render(propsProxy: Props): VdomElement = {
       val galImgs = propsProxy.value
 
@@ -67,15 +77,7 @@ class NodeGalleryR(
         ),
 
         // Кнопка добавления новой фотки
-        propsProxy.wrap { _ =>
-          ImgEditBtnPropsVal(
-            src = None,
-            resKey = MFormResourceKey(
-              pred = galPredSome
-            ),
-            css = imgsRowContCss
-          )
-        }( imgEditBtnR.apply ),
+        propsProxy.wrap(_ => _addBtnProps)( imgEditBtnR.apply ),
 
         // Уже добавленный фотки галереи:
         <.div(

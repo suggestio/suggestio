@@ -1,8 +1,7 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
-import io.suggest.img.MImgEdgeWithOps
-import io.suggest.jd.MJdConf
+import io.suggest.jd.{MJdConf, MJdEdgeId}
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.model.n2.edge.EdgeUid_t
@@ -77,7 +76,7 @@ case class MJdArgs(
       treeLocOpt.map(_.tree)
     }
 
-    def bgEdgeIdOpt: Option[MImgEdgeWithOps] = {
+    def bgEdgeIdOpt: Option[MJdEdgeId] = {
       for {
         loc <- treeLocOpt
         jdt = loc.getLabel
@@ -94,7 +93,7 @@ case class MJdArgs(
     lazy val bgEdgeDataOpt: Option[MEdgeDataJs] = {
       for {
         bgEi     <- bgEdgeIdOpt
-        dataEdge <- edges.get( bgEi.imgEdge.edgeUid )
+        dataEdge <- edges.get( bgEi.edgeUid )
       } yield {
         dataEdge
       }

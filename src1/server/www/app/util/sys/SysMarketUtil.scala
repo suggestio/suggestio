@@ -1,8 +1,7 @@
 package util.sys
 
 import io.suggest.adn.MAdnRight
-import io.suggest.img.MImgFmts
-import io.suggest.model.n2.edge.{MEdge, MEdgeDynImgArgs, MEdgeInfo}
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo}
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.{MNode, MNodeTypesJvm}
@@ -260,24 +259,19 @@ class SysMarketUtil extends MacroLogsDyn {
   /** Маппинг для поля info в эдже. */
   def edgeInfoM: Mapping[MEdgeInfo] = {
     mapping(
-      "dynImgArgs" -> optional( nonEmptyText(minLength = 2, maxLength = 256) ),
       "commentNi"  -> optional( text(maxLength = 256) ),
       "flag"       -> optional( boolean ),
       "tags"       -> tagsListM
     )
-    { (dynImgArgsOpt, commentNiOpt, flagOpt, tags) =>
+    { (commentNiOpt, flagOpt, tags) =>
       MEdgeInfo(
-        dynImgArgs  = for (_ <- dynImgArgsOpt) yield {
-          // TODO Формат dyn-img тут сбрасывается на JPEG, это неправильно. Просто это редко используемый код.
-          MEdgeDynImgArgs(MImgFmts.JPEG, dynImgArgsOpt)
-        },
         commentNi   = commentNiOpt,
         flag        = flagOpt,
         tags        = tags
       )
     }
     { ei =>
-      Some((ei.dynImgArgs.flatMap(_.dynOpsStr), ei.commentNi, ei.flag, ei.tags))
+      Some((ei.commentNi, ei.flag, ei.tags))
     }
   }
 
@@ -314,7 +308,6 @@ class SysMarketUtil extends MacroLogsDyn {
       info      = {
         val i = e.info
         mEdge0.info.copy(
-          dynImgArgs  = i.dynImgArgs,
           commentNi   = i.commentNi,
           flag        = i.flag,
           tags        = i.tags

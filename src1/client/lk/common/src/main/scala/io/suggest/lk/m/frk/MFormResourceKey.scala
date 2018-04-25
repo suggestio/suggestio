@@ -1,8 +1,10 @@
-package io.suggest.lk.m
+package io.suggest.lk.m.frk
 
 import diode.FastEq
-import io.suggest.model.n2.edge.{EdgeUid_t, MPredicate}
+import io.suggest.jd.MJdEdgeId
+import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.scalaz.NodePath_t
+import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 
@@ -19,7 +21,8 @@ object MFormResourceKey {
 
   implicit object MFormImgKeyFastEq extends FastEq[MFormResourceKey] {
     override def eqv(a: MFormResourceKey, b: MFormResourceKey): Boolean = {
-      (a.pred ===* b.pred) &&
+      (a.frkType ===* b.frkType) &&
+        (OptFastEq.Plain.eqv(a.jdEdgeId, b.jdEdgeId)) &&
         (a.edgeUid ==* b.edgeUid) &&
         (a.nodePath ===* b.nodePath)
     }
@@ -33,11 +36,13 @@ object MFormResourceKey {
 /** Контейнер данных с ключевой инфой по ресурсу.
   *
   * @param pred Предикат.
+  * @param jdEdgeId jd id эджа, привязанного к данному элементу
   * @param edgeUid id эджа, когда известен есть.
   * @param nodePath Путь дa узла в jd-дереве, если есть.
   */
 case class MFormResourceKey(
-                             pred     : Option[MPredicate] = None,
-                             edgeUid  : Option[EdgeUid_t]  = None,
-                             nodePath : Option[NodePath_t] = None,
+                             frkType      : Option[MFrkType]      = None,
+                             jdEdgeId     : Option[MJdEdgeId]     = None,
+                             edgeUid      : Option[EdgeUid_t]     = None,
+                             nodePath     : Option[NodePath_t]    = None,
                            )

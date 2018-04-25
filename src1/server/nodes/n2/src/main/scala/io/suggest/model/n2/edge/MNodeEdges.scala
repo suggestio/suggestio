@@ -1,12 +1,14 @@
 package io.suggest.model.n2.edge
 
-import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.common.empty.{EmptyProduct, IEmpty, OptionUtil}
 import io.suggest.model.PrefixedFn
-import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MNodeGeoLevel
+import io.suggest.util.logs.MacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+
+import scala.collection.SeqView
 
 /**
  * Suggest.io
@@ -23,7 +25,7 @@ import play.api.libs.functional.syntax._
  * эджи возвращаются внутрь моделей, из которых они исходят. Это как бы золотая середина
  * для исходной архитектуры и новой.
  */
-object MNodeEdges extends IGenEsMappingProps with IEmpty {
+object MNodeEdges extends IGenEsMappingProps with IEmpty with MacroLogsImpl {
 
   override type T = MNodeEdges
 
@@ -67,11 +69,42 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
   }
 
   implicit val FORMAT: Format[MNodeEdges] = {
-    (__ \ Fields.OUT_FN).formatNullable[Seq[MEdge]]
-      // Приведение опциональной карты к неопциональной.
-      .inmap [Seq[MEdge]] (
-        opt2ImplEmpty1F( Nil ),
-        {mnes => if (mnes.isEmpty) None else Some(mnes) }
+    (__ \ Fields.OUT_FN)
+      // Парсинг в два этапа, чтобы можно отсеивать некорректные эджи.
+      .formatNullable[Seq[JsObject]]
+      .inmap[Seq[MEdge]](
+        // Десериализация эджей: подавлять эджи, с парсингом которых возникла проблема.
+        // Как правило, это просто устаревшие эджи, которые неактуальны с нарушением совместимости.
+        // Например, какой-то предикат выкинули, а эджи пока остались.
+        {jsObjectsOpt =>
+          jsObjectsOpt
+            .getOrElse(Nil)
+            .iterator
+            .flatMap { jsObj =>
+              try {
+                jsObj.validate[MEdge].fold(
+                  {err =>
+                    LOGGER.warn(s"Not parsed edge: error = $err\n $jsObj")
+                    Nil
+                  },
+                  {medge =>
+                    medge :: Nil
+                  }
+                )
+              } catch {
+                case ex: Throwable =>
+                  LOGGER.error(s"Edge parsing failure, skipped: $jsObj", ex)
+                  Nil
+              }
+            }
+            .toSeq
+        },
+        // Сериализация эджей проста и понятна:
+        {edges =>
+          OptionUtil.maybe( edges.nonEmpty ) {
+            edges.map( Json.toJsObject(_) )
+          }
+        }
       )
       // Вместо apply используем inmap, т.к. только одно поле тут.
       .inmap [MNodeEdges](
@@ -107,7 +140,28 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
     */
   def nextOrderId(edges: TraversableOnce[MEdge]): Int = {
     val iter = edges.toIterator.flatMap(_.order)
-    if (iter.isEmpty) 0 else iter.max + 1
+    if (iter.isEmpty) 0
+    else iter.max + 1
+  }
+
+
+  object Filters {
+
+    def hasUidF(edgeUids: Traversable[EdgeUid_t])(medge: MEdge): Boolean = {
+      edgeUids.exists( medge.doc.uid.contains )
+    }
+
+    def nodePredF(nodeId: String, predicate: MPredicate)(medge: MEdge): Boolean = {
+      medge.nodeIds.contains(nodeId) &&
+        medge.predicate ==>> predicate
+    }
+
+    def predsF(preds: Traversable[MPredicate])(medge: MEdge): Boolean = {
+      preds.exists { p =>
+        medge.predicate ==>> p
+      }
+    }
+
   }
 
 }
@@ -116,8 +170,8 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
 //      Оно какое-то топорное, наверное можно придумать что-то по-лучше.
 
 case class MNodeEdges(
-  out   : Seq[MEdge]    = Nil
-)
+                       out   : Seq[MEdge]    = Nil
+                     )
   extends EmptyProduct
 {
 
@@ -134,16 +188,6 @@ case class MNodeEdges(
       .map(_first)
   }
 
-  def withoutIndexRaw(i: Int): Iterator[(MEdge, Int)] = {
-    iterator
-      .zipWithIndex
-      .filter(_._2 != i)
-  }
-
-  def withoutIndex(i: Int): Iterator[MEdge] = {
-    withoutIndexRaw(i)
-      .map(_first)
-  }
 
   def withIndexUpdated(i: Int)(f: MEdge => TraversableOnce[MEdge]): Iterator[MEdge] = {
     iterator
@@ -152,7 +196,7 @@ case class MNodeEdges(
         if (x == i) {
           f(e)
         } else {
-          Seq(e)
+          e :: Nil
         }
       }
   }
@@ -160,25 +204,17 @@ case class MNodeEdges(
 
   def withPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
     iterator
-      .filter { medge =>
-        preds.exists { p =>
-          medge.predicate ==>> p
-        }
-      }
+      .filter { MNodeEdges.Filters.predsF(preds) }
   }
 
   def withoutPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
     iterator
-      .filter { e =>
-        !preds.exists { p =>
-          e.predicate ==>> p
-        }
-      }
+      .filterNot { MNodeEdges.Filters.predsF(preds) }
   }
 
   def withPredicateIterIds(pred: MPredicate*): Iterator[String] = {
     withPredicateIter(pred: _*)
-      .flatMap { _.nodeIds}
+      .flatMap { _.nodeIds }
   }
 
   def withNodeId(nodeIds: String*): Iterator[MEdge] = {
@@ -190,16 +226,40 @@ case class MNodeEdges(
 
   def withNodePred(nodeId: String, predicate: MPredicate): Iterator[MEdge] = {
     iterator
-      .filter { medge =>
-        medge.nodeIds.contains(nodeId)  &&  medge.predicate ==>> predicate
-      }
+      .filter( MNodeEdges.Filters.nodePredF(nodeId, predicate) )
   }
 
   def withoutNodePred(nodeId: String, predicate: MPredicate): Iterator[MEdge] = {
     iterator
-      .filterNot { medge =>
-        medge.nodeIds.contains(nodeId)  &&  medge.predicate ==>> predicate
+      .filterNot( MNodeEdges.Filters.nodePredF(nodeId, predicate) )
+  }
+
+
+  /** Фильтрация по edge uid. */
+  def withUid(edgeUids: EdgeUid_t*) = withUid1(edgeUids)
+  def withUid1(edgeUids: Traversable[EdgeUid_t]): MNodeEdges = {
+    withFilter( MNodeEdges.Filters.hasUidF(edgeUids) )
+  }
+
+  /** Фильтрация по отсутствую указанных edge uid. */
+  def withoutUid(edgeUids: EdgeUid_t*): MNodeEdges = {
+    withFilterNot( MNodeEdges.Filters.hasUidF(edgeUids) )
+  }
+
+  def withFilter(f: MEdge => Boolean): MNodeEdges = {
+    copy(
+      out = {
+        val v = if (out.isInstanceOf[SeqView[_,_]]) {
+          out
+        } else {
+          out.view
+        }
+        v.filter(f)
       }
+    )
+  }
+  def withFilterNot(f: MEdge => Boolean): MNodeEdges = {
+    withFilter( f.andThen(!_) )
   }
 
   /**
@@ -209,13 +269,13 @@ case class MNodeEdges(
     * @param updateF Обновлять эдж этой фунцией.
     * @return Обновлённый экземпляр [[MNodeEdges]].
     */
-  def updateFirst(findF: MEdge => Boolean)(updateF: MEdge => Option[MEdge]): MNodeEdges = {
+  def updateAll(findF: MEdge => Boolean)(updateF: MEdge => Option[MEdge]): MNodeEdges = {
     copy(
       out = this.out.flatMap { e =>
         if (findF(e)) {
           updateF(e)
         } else {
-          Seq(e)
+          e :: Nil
         }
       }
     )

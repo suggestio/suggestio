@@ -34,6 +34,7 @@ object MPredicates extends StringEnum[MPredicate] {
 
 
   /** Указание на картинку-логотип узла-учреждения.  */
+  @deprecated("Use JdContent.Image instead", "2018-04-20")
   case object Logo extends MPredicate("e")
 
 
@@ -57,10 +58,12 @@ object MPredicates extends StringEnum[MPredicate] {
     * После ветки root:mad-to-n2 предикат стал использоваться для указания на логотип приветствия.
     * а неудавшаяся модель карточки приветствия окончательно отмерла.
     */
+  @deprecated("Use JdContent.Image instead", "2018-04-20")
   case object WcFgImg extends MPredicate("h")
 
 
   /** Предикат, направляемый в сторону картинки или иного объекта, являющегося предметом галлереи. */
+  @deprecated("Use JdContent.Image instead", "2018-04-20")
   case object GalleryItem extends MPredicate("i")
 
 
@@ -110,11 +113,9 @@ object MPredicates extends StringEnum[MPredicate] {
 
 
   /** Фоновый объект по отношению к текущему объекту. */
+  @deprecated("Not used, used for old ads. Remove it after AdnJdEdgesMigration.", "2018-04-20")
   case object Bg extends MPredicate("m")
 
-  /** Как-то получилось, что Bg-предикат использовался в Jd-контенте одновременно с JdContent.Image. */
-  // TODO Заинлайнить сие, если уход с Bg-предиката будет нормален.
-  def JdBgPred = JdContent.Image
 
   /**
     * Эдж для задания гео-шейпов геолокации узла в выдаче.

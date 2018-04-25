@@ -142,17 +142,20 @@ class N2VldUtil @Inject()(
         val vldEdge = MJdEdgeVldInfo(
           jdEdge = jdEdge,
           img    = OptionUtil.maybe( imgPreds.exists(jdEdge.predicate ==>>) ) {
+            val mmediaOpt = imgsNeededMap
+              .get( jdEdge.id )
+              .flatMap { mimg3 =>
+                mediasMap.get( mimg3.dynImgId.mediaId )
+              }
+
             MEdgePicInfo(
               isImg = nodeIdOpt
                 .flatMap { nodesMap.get }
                 .exists { _.common.ntype ==* MNodeTypes.Media.Image },
-              imgWh = imgsNeededMap.get( jdEdge.id )
-                .flatMap { mimg3 =>
-                  mediasMap.get( mimg3.dynImgId.mediaId )
-                }
-                .flatMap { mmedia =>
-                  mmedia.picture.whPx
-                }
+              imgWh = mmediaOpt
+                .flatMap( _.picture.whPx ),
+              dynFmt = mmediaOpt
+                .flatMap( _.file.imgFormatOpt )
             )
           }
         )
@@ -184,6 +187,7 @@ class N2VldUtil @Inject()(
       imgsNeededMap( imgsMediasMap, edge2imgIdMap )
     }
 
+    // Карта исходных эджей, где каждый эдж дополнен данными для валидации.
     val vldEdgesMapFut = for {
       imgsMediasMap <- imgsMediasMapFut
       edgedNodesMap <- edgedNodesMapFut

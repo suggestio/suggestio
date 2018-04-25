@@ -13,7 +13,3 @@ trait IInit {
 
 }
 
-/** Пустая реализация [[IInit]]. */
-trait IInitDummy extends IInit {
-  override def init(): Unit = {}
-}

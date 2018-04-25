@@ -1,12 +1,11 @@
 package io.suggest.adn.edit.m
 
 import io.suggest.adn.edit.NodeEditConstants
-import io.suggest.common.empty.EmptyUtil
+import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.err.ErrorConstants
-import io.suggest.img.MImgEdgeWithOps
 import io.suggest.jd.{MJdEdgeId, MJdEdgeVldInfo}
-import io.suggest.model.n2.edge.{EdgeUid_t, MPredicate, MPredicates}
+import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
@@ -23,16 +22,25 @@ import scala.collection.TraversableOnce
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 13.04.18 21:55
-  * Description: Модель описания картинок adn-узла.
-  * Является view-частью для картинок.
+  * Description: Кросс-платформенная модель описания картинок adn-узла.
+  * Является view-частью для картинок, вынесена из эджей.
   */
-object MAdnResView {
+object MAdnResView extends IEmpty {
+
+  override type T = MAdnResView
+  override def empty = apply()
+
+  object Fields {
+    val LOGO_FN = "l"
+    val WC_FG_FN = "w"
+    val GAL_IMGS_FN = "g"
+  }
 
   implicit def mAdnImgsFormat: OFormat[MAdnResView] = (
-    (__ \ "l").formatNullable[MJdEdgeId] and
-    (__ \ "w").formatNullable[MJdEdgeId] and
-    (__ \ "g").formatNullable[Seq[MImgEdgeWithOps]]
-      .inmap[Seq[MImgEdgeWithOps]](
+    (__ \ Fields.LOGO_FN).formatNullable[MJdEdgeId] and
+    (__ \ Fields.WC_FG_FN).formatNullable[MJdEdgeId] and
+    (__ \ Fields.GAL_IMGS_FN).formatNullable[Seq[MJdEdgeId]]
+      .inmap[Seq[MJdEdgeId]](
         EmptyUtil.opt2ImplEmptyF(Nil),
         { galImgs => if (galImgs.isEmpty) None else Some(galImgs) }
       )
@@ -51,20 +59,20 @@ object MAdnResView {
   /** Валидация инстанса [[MAdnResView]] с помощью карты эджей. */
   def validate(rv: MAdnResView, edgesMap: Map[EdgeUid_t, MJdEdgeVldInfo]): StringValidationNel[MAdnResView] = {
     // Фунция валидации опционального jdId, на который ссылается этот view
-    def __vldJdId(jdIdOpt: Option[MJdEdgeId], pred: MPredicate, name: => String) = {
+    def __vldJdId(jdIdOpt: Option[MJdEdgeId], name: String) = {
       ScalazUtil.liftNelOpt(jdIdOpt) { jdId =>
         ScalazUtil.liftNelSome( edgesMap.get(jdId.edgeUid), name + `.` + ErrorConstants.Words.MISSING ) { vldEdge =>
-          Validation.liftNel(vldEdge.jdEdge.predicate)(_ !=* pred, name + `.` + ErrorConstants.Words.INVALID)
+          Validation.liftNel(vldEdge.jdEdge.predicate)(_ !=* MPredicates.JdContent.Image, name + `.` + ErrorConstants.Words.INVALID)
             .map { _ => vldEdge }
         }.map { _ => jdId }
       }
     }
 
     (
-      __vldJdId(rv.logo, MPredicates.Logo, "logo") |@|
-      __vldJdId(rv.wcFg, MPredicates.WcFgImg, "wc") |@|
+      __vldJdId(rv.logo, "logo") |@|
+      __vldJdId(rv.wcFg, "wc") |@|
       ScalazUtil.validateAll(rv.galImgs) { galImg =>
-        MImgEdgeWithOps.validate(galImg, edgesMap, Some(NodeEditConstants.Gallery.WH_PX))
+        MJdEdgeId.validate(galImg, edgesMap, Some(NodeEditConstants.Gallery.WH_PX))
           .map(Stream(_))
       }
     )(apply _)
@@ -80,14 +88,16 @@ object MAdnResView {
   * @param galImgs Галерея картинок.
   */
 case class MAdnResView(
-                        logo      : Option[MJdEdgeId],
-                        wcFg      : Option[MJdEdgeId],
-                        galImgs   : Seq[MImgEdgeWithOps]
-                      ) {
+                        logo      : Option[MJdEdgeId]     = None,
+                        wcFg      : Option[MJdEdgeId]     = None,
+                        galImgs   : Seq[MJdEdgeId]        = Nil,
+                      )
+  extends EmptyProduct
+{
 
   def withLogo(logo: Option[MJdEdgeId]) = copy(logo = logo)
   def withWcFg(wcFg: Option[MJdEdgeId]) = copy(wcFg = wcFg)
-  def withGalImgs(galImgs: Seq[MImgEdgeWithOps]) = copy(galImgs = galImgs)
+  def withGalImgs(galImgs: Seq[MJdEdgeId]) = copy(galImgs = galImgs)
 
 
   def edgeUids: Iterator[MJdEdgeId] = {
@@ -99,7 +109,6 @@ case class MAdnResView(
       }
       .flatMap {
         case id: MJdEdgeId => id :: Nil
-        case imgId: MImgEdgeWithOps => imgId.imgEdge :: Nil
         case _ => Nil
       }
   }

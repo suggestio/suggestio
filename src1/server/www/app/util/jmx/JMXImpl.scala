@@ -1,7 +1,6 @@
 package util.jmx
 
 import javax.inject.Inject
-
 import io.suggest.model.n2.media.MMediasJmx
 import io.suggest.model.n2.node.MNodesJmx
 import models.adv.MExtTargetsJmx
@@ -21,6 +20,7 @@ import play.api.inject.ApplicationLifecycle
 import util.adv.direct.AdvRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.billing.cron.ReActivateCurrentAdvsJmx
+import util.compat.AdnJdEdgesMigrationJmx
 import util.es.SiowebEsModelJmx
 import util.img.DynImgUtilJmx
 
@@ -33,30 +33,31 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: JMX MBean'ы нужно заливать в энтерпрайз. Тут добавка к Global, чтобы тот мог включать/выключать jmx.
  */
 
-class JMXImpl @Inject() (
-                          mMediasJmx                    : MMediasJmx,
-                          siowebEsModelJmx              : SiowebEsModelJmx,
-                          advUtilJmx                    : AdvRcvrsUtilJmx,
-                          mCalendarJmx                  : MCalendarJmx,
-                          mNodesJmx                     : MNodesJmx,
-                          geoTagsUtilJmx                : GeoTagsUtilJmx,
-                          mExtTargetsJmx                : MExtTargetsJmx,
-                          mEventsJmx                    : MEventsJmx,
-                          mAiMadJmx                     : MAiMadJmx,
-                          emailPwIdentsJmx              : EmailPwIdentsJmx,
-                          emailActivationsJmx           : EmailActivationsJmx,
-                          mExtIdentJmx                  : MExtIdentJmx,
-                          mIpRangesJmx                  : MIpRangesJmx,
-                          mCitiesJmx                    : MCitiesJmx,
-                          mStatsJmx                     : MStatsJmx,
-                          ipgbImporterJmx               : IpgbImporterJmx,
-                          statIndexUtilJmx              : StatIndexUtilJmx,
-                          sCryptUtilJmx                 : SCryptUtilJmx,
-                          dynImgUtilJmx                 : DynImgUtilJmx,
-                          reActivateCurrentAdvsJmx      : ReActivateCurrentAdvsJmx,
-                          lifecycle                     : ApplicationLifecycle,
-                          implicit private val ec       : ExecutionContext
-)
+case class JMXImpl @Inject() (
+                               mMediasJmx                    : MMediasJmx,
+                               siowebEsModelJmx              : SiowebEsModelJmx,
+                               advUtilJmx                    : AdvRcvrsUtilJmx,
+                               mCalendarJmx                  : MCalendarJmx,
+                               mNodesJmx                     : MNodesJmx,
+                               geoTagsUtilJmx                : GeoTagsUtilJmx,
+                               mExtTargetsJmx                : MExtTargetsJmx,
+                               mEventsJmx                    : MEventsJmx,
+                               mAiMadJmx                     : MAiMadJmx,
+                               emailPwIdentsJmx              : EmailPwIdentsJmx,
+                               emailActivationsJmx           : EmailActivationsJmx,
+                               mExtIdentJmx                  : MExtIdentJmx,
+                               mIpRangesJmx                  : MIpRangesJmx,
+                               mCitiesJmx                    : MCitiesJmx,
+                               mStatsJmx                     : MStatsJmx,
+                               ipgbImporterJmx               : IpgbImporterJmx,
+                               statIndexUtilJmx              : StatIndexUtilJmx,
+                               sCryptUtilJmx                 : SCryptUtilJmx,
+                               dynImgUtilJmx                 : DynImgUtilJmx,
+                               reActivateCurrentAdvsJmx      : ReActivateCurrentAdvsJmx,
+                               lifecycle                     : ApplicationLifecycle,
+                               adnJdEdgesMigrationJmx        : AdnJdEdgesMigrationJmx,
+                               implicit private val ec       : ExecutionContext
+                             )
   extends MacroLogsImplLazy
 {
 
@@ -64,28 +65,12 @@ class JMXImpl @Inject() (
 
   /** Список моделей, отправляемых в MBeanServer. private для защиты от возможных воздействий извне. */
   private def JMX_MODELS = {
-    List[JMXBase](
-      emailActivationsJmx,
-      emailPwIdentsJmx,
-      mExtIdentJmx,
-      mCalendarJmx,
-      siowebEsModelJmx,
-      mAiMadJmx,
-      advUtilJmx,
-      mEventsJmx,
-      mExtTargetsJmx,
-      mNodesJmx,
-      geoTagsUtilJmx,
-      mIpRangesJmx,
-      mCitiesJmx,
-      mMediasJmx,
-      mStatsJmx,
-      ipgbImporterJmx,
-      statIndexUtilJmx,
-      sCryptUtilJmx,
-      dynImgUtilJmx,
-      reActivateCurrentAdvsJmx
-    )
+    productIterator
+      .flatMap {
+        case jmx: JMXBase => jmx :: Nil
+        case _            => Nil
+      }
+      .toSeq
   }
 
   // Constructor
