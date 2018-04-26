@@ -3,7 +3,7 @@ package util.n2u
 import io.suggest.common.empty.OptionUtil
 import io.suggest.img.MImgFmts
 import io.suggest.jd.{MEdgePicInfo, MJdEdge, MJdEdgeVldInfo}
-import io.suggest.model.n2.edge.{EdgeUid_t, MPredicate}
+import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.model.n2.media.{MMedia, MMediasCache}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodesCache}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
@@ -37,12 +37,12 @@ class N2VldUtil @Inject()(
     * @param edges Эджи.
     * @return Мапа: id эджа -> nodeId картинки.
     */
-  def collectNeededImgIds(edges: TraversableOnce[MJdEdge], imgPreds: Iterable[MPredicate]): Map[EdgeUid_t, MDynImgId] = {
+  def collectNeededImgIds(edges: TraversableOnce[MJdEdge]): Map[EdgeUid_t, MDynImgId] = {
     // Формат дефолтовый, потому что для оригинала он игнорируется, и будет перезаписан в imgsNeededMap()
     val imgFmtDflt = MImgFmts.default
     val needImgsIter = for {
       e <- edges.toIterator
-      if imgPreds.exists(e.predicate ==>>)
+      if e.predicate ==>> MPredicates.JdContent.Image
       fileSrv <- e.fileSrv
     } yield {
       e.id -> MDynImgId(fileSrv.nodeId, dynFormat = imgFmtDflt)
@@ -120,15 +120,13 @@ class N2VldUtil @Inject()(
 
   /** Валидация эджей.
     *
-    * @param imgPreds Список img-предикатов, использованный ранее в collectNeededImgIds().
     * @param jdEdges Вообще все исходные эджи.
     * @param imgsNeededMap Выхлоп imgsNeededMap()
     * @param nodesMap Выхлоп edgedNodes()
     * @param mediasMap Выхлоп imgsMedias()
     * @return Карта эджей с доп.данными для проверки.
     */
-  def validateEdges( imgPreds       : Iterable[MPredicate],
-                     jdEdges        : Iterable[MJdEdge],
+  def validateEdges( jdEdges        : Iterable[MJdEdge],
                      imgsNeededMap  : Map[EdgeUid_t, MImg3],
                      nodesMap       : Map[String, MNode],
                      mediasMap      : Map[String, MMedia]
@@ -141,7 +139,7 @@ class N2VldUtil @Inject()(
         val nodeIdOpt = jdEdge.fileSrv.map(_.nodeId)
         val vldEdge = MJdEdgeVldInfo(
           jdEdge = jdEdge,
-          img    = OptionUtil.maybe( imgPreds.exists(jdEdge.predicate ==>>) ) {
+          img    = OptionUtil.maybe( jdEdge.predicate ==>> MPredicates.JdContent.Image ) {
             val mmediaOpt = imgsNeededMap
               .get( jdEdge.id )
               .flatMap { mimg3 =>
@@ -168,14 +166,13 @@ class N2VldUtil @Inject()(
 
 
   /** Логика работы валидатора эджей, пригодная для повторного использования. */
-  case class EdgesValidator(edges    : Iterable[MJdEdge],
-                            imgPreds : Iterable[MPredicate] ) {
+  case class EdgesValidator( edges    : Iterable[MJdEdge] ) {
 
     // Собрать данные по всем упомянутым в запросе узлам, не обрывая связь с исходными эджами.
     val edgedNodesMapFut = edgedNodes( edges )
 
     // Для валидации самого шаблона нужны данные по размерам связанных картинок. Поэтому залезаем в MMedia за оригиналами упомянутых картинок:
-    val edge2imgIdMap = collectNeededImgIds( edges, imgPreds )
+    val edge2imgIdMap = collectNeededImgIds( edges )
 
     val imgsMediasMapFut = imgsMedias( edge2imgIdMap.values )
 
@@ -194,7 +191,6 @@ class N2VldUtil @Inject()(
       imgsNeededMap <- imgsNeededMapFut
     } yield {
       validateEdges(
-        imgPreds      = imgPreds,
         jdEdges       = edges,
         imgsNeededMap = imgsNeededMap,
         nodesMap      = edgedNodesMap,

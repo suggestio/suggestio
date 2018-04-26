@@ -2,7 +2,7 @@ package io.suggest.adn.edit
 
 import diode.react.ReactConnector
 import io.suggest.adn.edit.api.{ILkAdnEditApi, LKAdnEditApiHttp}
-import io.suggest.adn.edit.c.{InternalsAh, NodeEditAh}
+import io.suggest.adn.edit.c.{RootAh, NodeEditAh}
 import io.suggest.adn.edit.m._
 import io.suggest.lk.c.PictureAh
 import io.suggest.lk.m.img.MPictureAh
@@ -48,7 +48,7 @@ class LkAdnEditCircuit
       node = MAdnNodeS(
         meta          = minit.form.meta,
         colorPresets  = minit.form.meta.colors.allColorsIter.toList,
-        edges         = IId.els2idMap( minit.form.edges.iterator.map(MEdgeDataJs(_)) ),
+        edges         = MEdgeDataJs.jdEdges2EdgesDataMap( minit.form.edges ),
         resView       = minit.form.resView
       )
     )
@@ -56,7 +56,7 @@ class LkAdnEditCircuit
 
 
   // Models
-  val rootRO = zoom(identity(_))
+  val rootRW = zoomRW(identity(_))((_, root2) => root2)
 
   val nodeRW = zoomRW(_.node)(_.withNode(_))
 
@@ -111,7 +111,6 @@ class LkAdnEditCircuit
     modelRW = nodeRW
   )
 
-
   val pictureAh = {
     import MAdnResViewUtil._
     new PictureAh(
@@ -126,17 +125,17 @@ class LkAdnEditCircuit
     )
   }
 
-  val internalsAh = new InternalsAh(
-    api = lkAdnEditApi,
-    mrootRO = rootRO,
-    modelRW = internalsRW
+  val rootAh = new RootAh(
+    api     = lkAdnEditApi,
+    modelRW = rootRW
   )
+
 
   override protected val actionHandler: HandlerFunction = {
     composeHandlers(
       nodeEditAh,
       pictureAh,
-      internalsAh
+      rootAh
     )
   }
 

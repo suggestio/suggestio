@@ -32,6 +32,14 @@ object MEdgeDataJs {
     jdesMap.mapValues { MEdgeDataJs(_) }
   }
 
+  def jdEdges2EdgesDataMap(jdEdges: TraversableOnce[MJdEdge]): Map[EdgeUid_t, MEdgeDataJs] = {
+    IId.els2idMap(
+      jdEdges
+        .toIterator
+        .map( MEdgeDataJs(_) )
+    )
+  }
+
 
   /** Поддержка FastEq для инстансов [[MEdgeDataJs]]. */
   // TODO Не ясно, нужно ли оно, ведь инстансы живут в Map'е. Запилено на автомате.

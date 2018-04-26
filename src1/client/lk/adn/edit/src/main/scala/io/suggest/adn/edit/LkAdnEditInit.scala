@@ -32,7 +32,7 @@ trait LkAdnEditInit extends InitRouter {
     val module = wire[LkAdnEditModule]
     val circuit = module.lkAdnEditCircuit
 
-    val identityRootF = circuit.rootRO
+    val identityRootF = circuit.rootRW
 
     // Рендерим основную форму:
     circuit

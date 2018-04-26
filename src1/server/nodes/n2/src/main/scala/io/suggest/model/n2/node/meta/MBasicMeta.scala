@@ -135,6 +135,7 @@ case class MBasicMeta(
       name
   }
 
+  def withNameOpt(nameOpt: Option[String]) = copy(nameOpt = nameOpt)
   def withTechName(techName: Option[String] = None) = copy(techName = techName)
 
 }

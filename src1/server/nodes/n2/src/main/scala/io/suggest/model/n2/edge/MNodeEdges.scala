@@ -202,14 +202,22 @@ case class MNodeEdges(
   }
 
 
-  def withPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
-    iterator
-      .filter { MNodeEdges.Filters.predsF(preds) }
+  def withPredicate(preds: MPredicate*): MNodeEdges = {
+    withFilter( MNodeEdges.Filters.predsF(preds) )
+  }
+  def withoutPredicate(preds: MPredicate*): MNodeEdges = {
+    withFilterNot( MNodeEdges.Filters.predsF(preds) )
   }
 
+  // TODO deprecated withPredicate
+  def withPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
+    withPredicate(preds: _*).iterator
+  }
+
+  // TODO deprecated withoutPredicate
   def withoutPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
-    iterator
-      .filterNot { MNodeEdges.Filters.predsF(preds) }
+    withoutPredicate( preds: _* )
+      .iterator
   }
 
   def withPredicateIterIds(pred: MPredicate*): Iterator[String] = {
@@ -246,21 +254,46 @@ case class MNodeEdges(
     withFilterNot( MNodeEdges.Filters.hasUidF(edgeUids) )
   }
 
+  def outView = if (out.isInstanceOf[SeqView[_,_]]) {
+    out
+  } else {
+    out.view
+  }
+
   def withFilter(f: MEdge => Boolean): MNodeEdges = {
-    copy(
-      out = {
-        val v = if (out.isInstanceOf[SeqView[_,_]]) {
-          out
-        } else {
-          out.view
-        }
-        v.filter(f)
-      }
+    withOut(
+      out = outView.filter(f)
     )
   }
   def withFilterNot(f: MEdge => Boolean): MNodeEdges = {
     withFilter( f.andThen(!_) )
   }
+
+
+  /** Докинуть эджей. */
+  def withEdge(edges: MEdge*): MNodeEdges = {
+    if (edges.isEmpty) {
+      this
+    } else {
+      withOut(
+        out = outView ++ edges
+      )
+    }
+  }
+
+  /** Докинуть коллекции эджей. */
+  def withEdges(edgess: TraversableOnce[MEdge]*): MNodeEdges = {
+    if (edgess.isEmpty) {
+      this
+    } else {
+      withOut(
+        out = outView ++ edgess.iterator.flatten
+      )
+    }
+  }
+
+  /** Название сбивает с толку, но это метод для перезаписи out на случай возможного появления других полей case-класса. */
+  def withOut(out: Seq[MEdge]) = copy(out = out)
 
   /**
     * Найти и обновить с помощью функции эдж, который соответствует предикату.
@@ -270,7 +303,7 @@ case class MNodeEdges(
     * @return Обновлённый экземпляр [[MNodeEdges]].
     */
   def updateAll(findF: MEdge => Boolean)(updateF: MEdge => Option[MEdge]): MNodeEdges = {
-    copy(
+    withOut(
       out = this.out.flatMap { e =>
         if (findF(e)) {
           updateF(e)

@@ -152,8 +152,7 @@ class LkAdEdit @Inject() (
           // Есть проверенные эджи, похожие на валидные. Надо заняться валидацией самого шаблона.
           {edges2 =>
             // Собрать данные по всем упомянутым в запросе узлам, не обрывая связь с исходными эджами.
-            val imgPreds = lkAdEdFormUtil.IMAGE_PREDICATES
-            val edgesVldLogic = n2VldUtil.EdgesValidator(edges2, imgPreds)
+            val edgesVldLogic = n2VldUtil.EdgesValidator(edges2)
 
             // Когда будут собраны данные, произвести валидацию шаблона:
             val vldResFut = for {
@@ -212,7 +211,6 @@ class LkAdEdit @Inject() (
                             .orElse {
                               jdEdge.fileSrv.map(_.nodeId)
                             }
-                            .iterator
                             .toSet
                         },
                         doc = MEdgeDoc(

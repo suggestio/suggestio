@@ -122,4 +122,16 @@ case class MMeta(
 
   def withBasic(basic: MBasicMeta) = copy(basic = basic)
 
+  /** Залить данные из MMetaPub в эту модель. */
+  def withPublic(metaPub: MMetaPub): MMeta = {
+    copy(
+      basic = basic.withNameOpt(
+        nameOpt = Option( metaPub.name )
+      ),
+      address  = metaPub.address,
+      business = metaPub.business,
+      colors   = metaPub.colors
+    )
+  }
+
 }

@@ -308,7 +308,7 @@ case class MNode(
   def withId(idOpt: Option[String]) = copy(id = idOpt)
   override def withVersion(versionOpt: Option[Long]) = copy(versionOpt = versionOpt)
   def withExtras(extras: MNodeExtras) = copy(extras = extras)
-  def withAd(ad: MNodeAd = MNodeAd.empty) = copy(ad = ad)
+  def withMeta(meta: MMeta) = copy(meta = meta)
 
 
   /** Система быстрого доступа к рутинным операциям с полями класса. */

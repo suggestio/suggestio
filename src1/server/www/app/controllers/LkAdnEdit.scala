@@ -6,7 +6,7 @@ import io.suggest.file.up.MFile4UpProps
 import io.suggest.img.MImgFmts
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.js.UploadConstants
-import io.suggest.model.n2.edge.{EdgesUtil, MPredicates}
+import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.Inject
@@ -23,6 +23,9 @@ import scalaz.ValidationNel
 import util.n2u.N2VldUtil
 import util.sec.CspUtil
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import models.req.MNodeReq
+
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -72,83 +75,105 @@ class LkAdnEdit @Inject() (
         implicitly[Context]
       }
 
-      // Какие предикаты и эджи здесь интересуют?
-      val imgEdgeUids = request.mnode.extras
-        .adnEdgeUids
-        .map(_.edgeUid)
-        .toSet
-      val imgEdges = request.mnode
-        .edges
-        .withUid1(imgEdgeUids)
-
-      val imgsEdges = jdAdUtil.collectImgEdges( imgEdges )
-
-      // Запустить сбор данных по интересующим картинкам:
-      val imgMediasMapFut = jdAdUtil.prepareImgMedias( imgsEdges )
-      val mediaNodesMapFut = jdAdUtil.prepareMediaNodes( imgsEdges, videoEdges = Nil )
-
-      lazy val logPrefix = s"editNodePage($nodeId)#${System.currentTimeMillis()}:"
-
-      val mediaHostsMapFut = for {
-        imgMedias  <- imgMediasMapFut
-        mediaHosts <- cdnUtil.mediasHosts( imgMedias.values )
-      } yield {
-        LOGGER.trace(s"$logPrefix For ${imgMedias.size} medias (${imgMedias.keysIterator.mkString(", ")}) found ${mediaHosts.size} media hosts = ${mediaHosts.values.flatMap(_.headOption).map(_.namePublic).mkString(", ")}")
-        mediaHosts
-      }
-
-      // Скомпилить в jd-эджи собранную инфу, затем завернуть в edit-imgs:
-      val jdEdgesFut = for {
-        imgMediasMap  <- imgMediasMapFut
-        mediaNodesMap <- mediaNodesMapFut
-        mediaHostsMap <- mediaHostsMapFut
-        ctx           <- ctxFut
-      } yield {
-        jdAdUtil.mkJdImgEdgesForEdit(
-          imgsEdges  = imgsEdges,
-          mediasMap  = imgMediasMap,
-          mediaNodes = mediaNodesMap,
-          mediaHosts = mediaHostsMap
-        )(ctx)
-      }
+      val mformFut = _mkForm( Some(ctxFut) )
 
       // Синхронно подготовить прочие данные для инициализации:
       val mconf = MAdnEditFormConf(
-        nodeId   = request.mnode.id.get
+        nodeId = request.mnode.id.get
       )
-      val mMetaPub = request.mnode.meta.public
-
-      // Собрать данные для инициализации начального состояния формы:
-      val formInitStrFut = for {
-        jdEdges <- jdEdgesFut
-      } yield {
-        LOGGER.trace(s"$logPrefix Compiled jd-edges: $jdEdges")
-
-        val minit = MAdnEditFormInit(
-          conf = mconf,
-          form = MAdnEditForm(
-            meta    = mMetaPub,
-            edges   = jdEdges,
-            // TODO Тут безопасно ли делать .get? По идее, этот метод может быть вызван и для карточки...
-            resView = request.mnode.extras.adn.get.resView
-          )
-        )
-        // Сериализация состояния в строку:
-        Json.toJson(minit)
-          .toString()
-      }
 
       // Сгенерить итоговый ответ сервера и ответить наконец:
       for {
         ctx         <- ctxFut
-        formInitStr <- formInitStrFut
+        mform       <- mformFut
       } yield {
+        // Собрать данные для инициализации начального состояния формы:
+        val minit = MAdnEditFormInit(
+          conf = mconf,
+          form = mform
+        )
+        // Сериализация состояния в строку:
+        val formInitStr = Json
+          .toJson(minit)
+          .toString()
+
         val html = nodeEdit2Tpl(
           mnode         = request.mnode,
           formStateStr  = formInitStr
         )(ctx)
+
         _applyCspToEditPage( Ok(html) )
       }
+    }
+  }
+
+
+  /** Сборка данных формы редактора.
+    *
+    * @param ctxFutOpt Данные контекста рендера.
+    * @param request HTTP-реквест.
+    * @return Фьючерс с инстансом формы.
+    */
+  private def _mkForm(ctxFutOpt: Option[Future[Context]] = None)
+                     (implicit request: MNodeReq[_]): Future[MAdnEditForm] = {
+    // Запустить сборку контекста, если ещё не запущен:
+    val ctxFut = ctxFutOpt
+      .getOrElse( Future.successful(getContext2) )
+
+    // Какие предикаты и эджи здесь интересуют?
+    val imgEdgeUids = request.mnode.extras
+      .adnEdgeUids
+      .map(_.edgeUid)
+      .toSet
+    val imgEdges = request.mnode
+      .edges
+      .withUid1(imgEdgeUids)
+
+    val imgsEdges = jdAdUtil.collectImgEdges( imgEdges )
+
+    // Запустить сбор данных по интересующим картинкам:
+    val imgMediasMapFut = jdAdUtil.prepareImgMedias( imgsEdges )
+    val mediaNodesMapFut = jdAdUtil.prepareMediaNodes( imgsEdges, videoEdges = Nil )
+
+    lazy val logPrefix = s"_mkForm(${request.mnode.idOrNull})#${System.currentTimeMillis()}:"
+
+    val mediaHostsMapFut = for {
+      imgMedias  <- imgMediasMapFut
+      mediaHosts <- cdnUtil.mediasHosts( imgMedias.values )
+    } yield {
+      LOGGER.trace(s"$logPrefix For ${imgMedias.size} medias (${imgMedias.keysIterator.mkString(", ")}) found ${mediaHosts.size} media hosts = ${mediaHosts.values.flatMap(_.headOption).map(_.namePublic).mkString(", ")}")
+      mediaHosts
+    }
+
+    // Скомпилить в jd-эджи собранную инфу, затем завернуть в edit-imgs:
+    val jdEdgesFut = for {
+      imgMediasMap  <- imgMediasMapFut
+      mediaNodesMap <- mediaNodesMapFut
+      mediaHostsMap <- mediaHostsMapFut
+      ctx           <- ctxFut
+    } yield {
+      jdAdUtil.mkJdImgEdgesForEdit(
+        imgsEdges  = imgsEdges,
+        mediasMap  = imgMediasMap,
+        mediaNodes = mediaNodesMap,
+        mediaHosts = mediaHostsMap
+      )(ctx)
+    }
+
+    // Подготовить метаданные узла:
+    val mMetaPub = request.mnode.meta.public
+
+    // Собрать класс с формой
+    for {
+      jdEdges <- jdEdgesFut
+    } yield {
+      LOGGER.trace(s"$logPrefix Compiled jd-edges: $jdEdges")
+      MAdnEditForm(
+        meta    = mMetaPub,
+        edges   = jdEdges,
+        // TODO Тут безопасно ли делать .get? По идее, этот метод может быть вызван и для карточки...
+        resView = request.mnode.extras.adn.get.resView
+      )
     }
   }
 
@@ -212,8 +237,7 @@ class LkAdnEdit @Inject() (
           },
           // Всё ок, переходим к дальнейшим асинхронным проверкам:
           {edges2 =>
-            val imgPreds = MPredicates.JdContent.Image :: Nil
-            val evld = n2VldUtil.EdgesValidator( edges2, imgPreds )
+            val evld = n2VldUtil.EdgesValidator( edges2 )
 
             evld.vldEdgesMapFut.flatMap { vldEdgesMap =>
               // Произвести полную валидацию присланных данных:
@@ -227,22 +251,43 @@ class LkAdnEdit @Inject() (
                   // Все данные проверены, перейти к апдейту данных узла.
                   LOGGER.trace(s"$logPrefix Form validated ok. Will update node.\n $form")
 
-                  ???
-                  /*
+                  // Конвертация jd-эджей в MEdge-представление. Коллекция (не одноразовая!).
                   val addNodeEdges = for (jdEdge <- form.edges) yield {
                     MEdge(
                       predicate = jdEdge.predicate,
-                      nodeIds   =
+                      nodeIds = jdEdge.fileSrv
+                        .map(_.nodeId)
+                        .toSet,
+                      doc = MEdgeDoc(
+                        uid = Some( jdEdge.id )
+                      )
                     )
                   }
 
-                  mNodes.tryUpdate(request.mnode) { mnode0 =>
-                    val edges2 = mnode0.edges
-                      .withoutPredicateIter( imgPreds: _* )
-
+                  // Запуск обновления.
+                  val saveFut = mNodes.tryUpdate(request.mnode) { mnode0 =>
+                    mnode0.copy(
+                      edges = mnode0.edges
+                        // Стираем все jd-эджи. На момент описания результат был эквивалентен
+                        .withoutPredicate( MPredicates.JdContent )
+                        .withEdges( addNodeEdges ),
+                      extras = mnode0.extras.withAdn(Some(
+                        mnode0.extras.adn.get
+                          .withResView( form.resView )
+                      )),
+                      meta = mnode0.meta
+                        .withPublic( form.meta )
+                    )
                   }
-                  */
-                  ???
+
+                  // Параллельно собрать json-ответ с провалидированной формой:
+                  val respFormJson = Json.toJson( form )
+
+                  // Дождаться завершения, собрать ответ с обновлённой формой.
+                  for (_ <- saveFut) yield {
+                    LOGGER.trace(s"$logPrefix Node updated ok.")
+                    Ok( respFormJson )
+                  }
                 }
               )
             }
