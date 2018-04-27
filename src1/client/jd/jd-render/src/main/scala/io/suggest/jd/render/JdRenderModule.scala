@@ -3,6 +3,7 @@ package io.suggest.jd.render
 import com.softwaremill.macwire._
 import io.suggest.grid.GridModule
 import io.suggest.jd.render.v._
+import io.suggest.lk.LkCommonModule
 
 /**
   * Suggest.io
@@ -15,6 +16,9 @@ class JdRenderModule {
   // deps
   val gridSjsModule = wire[GridModule]
   import gridSjsModule._
+
+  val lkCommonModule = wire[LkCommonModule]
+  import lkCommonModule._
 
 
   // impl

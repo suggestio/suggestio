@@ -6,9 +6,8 @@ import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.lk.m.{MDeleteConfirmPopupS, MErrorPopupS}
 import io.suggest.lk.pop.PopupsContR
-import io.suggest.lk.r.crop.CropPopupR
+import io.suggest.lk.r.img.CropPopupR
 import io.suggest.lk.r.{DeleteConfirmPopupR, ErrorPopupR}
-import io.suggest.model.n2.edge.MPredicates
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -60,7 +59,6 @@ class LaePopupsR(
 
   val component = ScalaComponent.builder[Props]("LaePops")
     .initialStateFromProps { rootProxy =>
-      val frkPredSome = Some( MPredicates.JdContent.Image )
       State(
         popupsContPropsC = rootProxy.connect { mroot =>
           PopupsContR.PropsVal(
@@ -83,7 +81,8 @@ class LaePopupsR(
               resKey      = MFormResourceKey(
                 edgeUid   = Some( edge.jdEdge.id ),
                 nodePath  = root.doc.jdArgs.renderArgs.selPath
-              )
+              ),
+              withDelete  = false
             )
           }
         },

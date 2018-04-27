@@ -236,9 +236,7 @@ class LkAdEditCircuit(
       view        = mdoc.jdArgs.template,
       errorPopup  = mroot.popups.error,
       cropPopup   = mroot.popups.pictureCrop,
-      histograms  = mdoc.colorsState.histograms,
-      cropContSz  = mdoc.jdArgs.selJdt.treeLocOpt
-        .flatMap(_.getLabel.props1.bm)
+      histograms  = mdoc.colorsState.histograms
     )
   } { (mroot0, mPictureAh) =>
     val mdoc0 = mroot0.doc

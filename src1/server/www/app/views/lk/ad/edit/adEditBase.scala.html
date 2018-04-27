@@ -3,21 +3,19 @@
 @* Страница с внешней версткой для формы _adFormTpl. *@
 
 @import ctx.{messages, request}
+@import ctx.api.cdn
 @import helper._
 @import io.suggest.ad.form.AdFormConstants._
 @import io.suggest.js.JsRoutesConst
 @import io.suggest.font.{MFontSizes, MFonts}
 @import views.js.stuff.jsRevRouterTpl
 @import views.html.stuff.jsTpl2HtmlTpl
+@import views.html.stuff.react.crop._reactCropCssTpl
+@import views.html.stuff.quill._quillCssTpl
 
 @headAfter = {
-  @* quill editor. *@
-  <link rel="stylesheet" type="text/css"
-        href="@routes.Assets.versioned("quill/dist/quill.snow.css")" />
-
-  @* react-image-crop. *@
-  <link rel="stylesheet" type="text/css"
-        href="@routes.Assets.versioned("react-image-crop/dist/ReactCrop.css")" />
+  @_quillCssTpl()
+  @_reactCropCssTpl()
 }
 
 @lk.lkBase(

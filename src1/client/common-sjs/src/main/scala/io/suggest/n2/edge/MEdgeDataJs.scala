@@ -3,7 +3,7 @@ package io.suggest.n2.edge
 import diode.FastEq
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.file.MJsFileInfo
-import io.suggest.jd.MJdEdge
+import io.suggest.jd.{MJdEdge, MJdEdgeId}
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.primo.id.IId
 import io.suggest.ueq.UnivEqUtil._
@@ -51,6 +51,14 @@ object MEdgeDataJs {
   }
 
   implicit def univEq: UnivEq[MEdgeDataJs] = UnivEq.derive
+
+
+  implicit object MEdgeDataJsTupleFastEq extends FastEq[(MJdEdgeId, MEdgeDataJs)] {
+    override def eqv(a: (MJdEdgeId, MEdgeDataJs), b: (MJdEdgeId, MEdgeDataJs)): Boolean = {
+      (a._1 ===* b._1) &&
+        implicitly[FastEq[MEdgeDataJs]].eqv(a._2, b._2)
+    }
+  }
 
 }
 

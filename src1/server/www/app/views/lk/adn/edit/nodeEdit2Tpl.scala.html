@@ -8,7 +8,11 @@
 @import views.js.stuff.jsRevRouterTpl
 @import views.html.stuff.{jsTpl2HtmlTpl, _preLoaderLkTpl}
 @import lk.lkwdgts._formStateInputTpl
+@import views.html.stuff.react.crop._reactCropCssTpl
 
+@headAfter = {
+  @_reactCropCssTpl()
+}
 
 @rightBarAfter = {
   <div id="@C.SAVE_BTN_CONTAINER_ID" class="right-bar_bottom">
@@ -19,7 +23,8 @@
   title         = messages("Edit.profile"),
   mnode         = mnode,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE_EDIT,
-  rightBarAfter = Some(rightBarAfter)
+  rightBarAfter = Some(rightBarAfter),
+  headAfter     = Some(headAfter)
 ) {
 
   <div id="@C.FORM_CONTAINER_ID">

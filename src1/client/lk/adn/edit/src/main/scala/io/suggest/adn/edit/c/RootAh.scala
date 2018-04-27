@@ -2,10 +2,10 @@ package io.suggest.adn.edit.c
 
 import diode._
 import io.suggest.adn.edit.api.ILkAdnEditApi
-import io.suggest.adn.edit.m.{MAdnEditErrors, MLkAdnEditRoot, SaveResp}
-import io.suggest.lk.m.Save
+import io.suggest.adn.edit.m.{MAdnEditErrors, MAdnEditPopups, MLkAdnEditRoot, SaveResp}
+import io.suggest.lk.m.{CloseAllPopups, HandleNewHistogramInstalled, Save}
 import io.suggest.msg.WarnMsgs
-import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.primo.id.IId
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 
@@ -75,16 +75,32 @@ class RootAh[M](
               saving = v0.internals.saving
                 .ready(form2)
             ),
-            node = v0.node.copy(
-              meta    = form2.meta,
-              edges   = MEdgeDataJs.jdEdges2EdgesDataMap( form2.edges ),
-              resView = form2.resView,
-              errors  = MAdnEditErrors.empty
-            )
+            node = {
+              // Для ускорения и упрощения: Новые эджи не заливаем (в них нет fileSrv), а просто фильтруем существующие эджи по edge uid.
+              val newEdgeIds = IId.els2idsSet( form2.edges )
+              v0.node.copy(
+                meta    = form2.meta,
+                edges   = v0.node.edges.filterKeys( newEdgeIds.contains ),
+                resView = form2.resView,
+                errors  = MAdnEditErrors.empty
+              )
+            }
           )
           updated( v2 )
         }
       )
+
+    // Перехват ненужных событий.
+    case _: HandleNewHistogramInstalled =>
+      noChange
+
+    // Закрытие всех попапов.
+    case CloseAllPopups =>
+      val v0 = value
+      val v2 = v0.withPopups(
+        MAdnEditPopups.empty
+      )
+      updated( v2 )
 
   }
 

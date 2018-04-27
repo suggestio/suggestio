@@ -1,9 +1,10 @@
 package io.suggest.lk.m
 
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
+import diode.FastEq
 import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.common.geom.d2.MSize2di
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.crypto.hash.MHash
 import io.suggest.file.up.MUploadResp
 import io.suggest.lk.m.frk.MFormResourceKey
@@ -72,7 +73,16 @@ case class PictureFileChanged(files: Seq[File], resKey: MFormResourceKey) extend
 sealed trait IPictureCropAction extends ILkCommonAction
 
 /** Сигнал к отрытию попапа редактирования изображения. */
-case class CropOpen(resKey: MFormResourceKey) extends IPictureCropAction
+case class CropOpen(resKey: MFormResourceKey, cropContSz: ISize2di) extends IPictureCropAction
+object CropOpen {
+  implicit object CropOpenFastEq extends FastEq[CropOpen] {
+    override def eqv(a: CropOpen, b: CropOpen): Boolean = {
+      MFormResourceKey.MFormImgKeyFastEq.eqv( a.resKey, b.resKey ) &&
+        (a.cropContSz eq b.cropContSz)
+    }
+  }
+}
+
 /** Сигнал к закрытию попапа кропа изображения. */
 case class CropCancel(resKey: MFormResourceKey) extends IPictureCropAction
 /** Измение кропа текущего изображения. */

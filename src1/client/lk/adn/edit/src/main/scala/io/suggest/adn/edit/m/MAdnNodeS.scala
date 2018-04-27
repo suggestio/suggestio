@@ -60,7 +60,7 @@ case class MAdnNodeS(
       meta = meta,
       edges = edges.values
         .iterator
-        .map(_.jdEdge)
+        .map(_.jdEdge.withUrl())
         .toSeq,
       resView = resView
     )

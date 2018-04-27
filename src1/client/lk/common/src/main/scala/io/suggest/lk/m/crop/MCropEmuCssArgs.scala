@@ -1,4 +1,4 @@
-package io.suggest.jd.render.m
+package io.suggest.lk.m.crop
 
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.img.crop.MCrop
@@ -10,9 +10,9 @@ import japgolly.univeq.UnivEq
   * Created: 28.09.17 15:10
   * Description: Модель данных по эмулируемому кропу изображения.
   */
-object MEmuCropCssArgs {
+object MCropEmuCssArgs {
 
-  implicit def univEq: UnivEq[MEmuCropCssArgs] = UnivEq.derive
+  implicit def univEq: UnivEq[MCropEmuCssArgs] = UnivEq.derive
 
 }
 
@@ -23,7 +23,7 @@ object MEmuCropCssArgs {
   * @param origWh Размеры оригинального изображения.
   * @param outerWh Размеры контейнера, в который надо вписать итоговое изображение.
   */
-case class MEmuCropCssArgs(
+case class MCropEmuCssArgs(
                             crop    : MCrop,
                             origWh  : MSize2di,
                             outerWh : ISize2di

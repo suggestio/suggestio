@@ -5,7 +5,7 @@ import com.quilljs.delta.{Delta, DeltaEmbed}
 import com.quilljs.quill.core.Emitter
 import com.quilljs.quill.modules.formats._
 import com.quilljs.quill.modules.toolbar.{QuillToolbar, QuillToolbarModule}
-import com.quilljs.quill.modules.{QuillCss, QuillModules, QuillModulesNames}
+import com.quilljs.quill.modules.{QuillCssConst, QuillModules, QuillModulesNames}
 import io.suggest.common.event.DomEvents
 import io.suggest.common.html.HtmlConstants
 import io.suggest.font.{MFontSizes, MFonts}
@@ -197,7 +197,7 @@ class QuillInit {
                 .asInstanceOf[HTMLInputElement]
               fileInput.setAttribute("type", "file")
               fileInput.setAttribute("accept", MImgFmts.allMimesIter.mkString(", "))
-              fileInput.classList.add( QuillCss.QL_IMAGE )
+              fileInput.classList.add( QuillCssConst.QL_IMAGE )
 
               fileInput.addEventListener( DomEvents.CHANGE, {(_: Event) =>
                 if (fileInput.files != null && fileInput.files(0) != null) {

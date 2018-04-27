@@ -24,9 +24,9 @@ object MAdnResViewUtil extends Log {
         case MFrkTypes.WcFg =>
           view.wcFg
         case MFrkTypes.GalImg =>
-          resKey.jdEdgeId.flatMap { jdEdgeId =>
+          resKey.edgeUid.flatMap { edgeUid =>
             view.galImgs.find { e =>
-              e.edgeUid ==* jdEdgeId.edgeUid
+              e.edgeUid ==* edgeUid
             }
           }
       }
@@ -42,7 +42,7 @@ object MAdnResViewUtil extends Log {
           view.withWcFg( newValue )
         case MFrkTypes.GalImg =>
           // Нужно найти по id эджа, если он задан.
-          resKey.jdEdgeId.fold {
+          resKey.edgeUid.fold {
             // Нет id. Добавить в начало галеры
             newValue.fold {
               // Нет добавляемой картинки. Ошибочная ситуация какая-то.
@@ -52,10 +52,10 @@ object MAdnResViewUtil extends Log {
                 addEdgeId +: view.galImgs
               )
             }
-          } { existingEdgeId =>
+          } { existingEdgeUid =>
             view.withGalImgs(
               view.galImgs.flatMap { galImg =>
-                if (galImg.edgeUid ==* existingEdgeId.edgeUid) {
+                if (galImg.edgeUid ==* existingEdgeUid) {
                   newValue
                 } else {
                   galImg :: Nil

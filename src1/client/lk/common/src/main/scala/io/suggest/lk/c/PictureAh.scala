@@ -68,9 +68,14 @@ class PictureAh[V, M](
           .fold( noChange ) { _ =>
             // Не чистим эджи, пусть другие контроллеры проконтроллируют карту эджей на предмет ненужных эджей.
             // Это нужно, чтобы избежать удаления файла, который используется в каком-то другом теге.
-            val v2 = v0.withView(
+            var v2 = v0.withView(
               view = picViewContAdp.updated(v0.view, m.resKey)(None)
             )
+
+            // Закрыть cropPopup, если открыт. В CropPopup бывает кнопка "удалить".
+            for (_ <- v2.cropPopup)
+              v2 = v2.withCropPopup(None)
+
             // Отправить в очередь задачу по зачистке карты эджей:
             val fx = Effect.action(PurgeUnusedEdges)
             updated( v2, fx )
@@ -431,7 +436,6 @@ class PictureAh[V, M](
               }
           }
         )
-
       }
 
 
@@ -582,11 +586,12 @@ class PictureAh[V, M](
     // Клик по кнопке открытия попапа для кропа.
     case m: CropOpen =>
       val v0 = value
-      val bgImg = picViewContAdp.get(v0.view, m.resKey).get
+      val bgImg = picViewContAdp
+        .get(v0.view, m.resKey)
+        .get
       val edge = v0.edges( bgImg.edgeUid )
-      val bm = v0.cropContSz.get
 
-      val bmWhRatio = ISize2di.whRatio(bm)
+      val bmWhRatio = ISize2di.whRatio( m.cropContSz )
 
       val origWhOpt = edge.fileJs
         .flatMap(_.whPx)

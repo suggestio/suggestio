@@ -2,7 +2,6 @@ package io.suggest.lk.m.img
 
 import diode.FastEq
 import io.suggest.color.MHistogram
-import io.suggest.common.geom.d2.ISize2di
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
@@ -24,8 +23,7 @@ object MPictureAh {
         (a.view ===* b.view) &&
         (a.errorPopup ===* b.errorPopup) &&
         (a.cropPopup ===* b.cropPopup) &&
-        (a.histograms ===* b.histograms) &&
-        (a.cropContSz ===* b.cropContSz)
+        (a.histograms ===* b.histograms)
       }
     }
   }
@@ -41,15 +39,13 @@ object MPictureAh {
   * @param selectedTag Текущий тег.
   * @param errorPopup Код сообщения о какой-то ошибке, связанной с картинками.
   *                   Например, когда файл не является картинкой.
-  * @param cropContSz Размер контейнера при активном кропе. Read-only.
   */
 case class MPictureAh[V](
                           edges          : Map[EdgeUid_t, MEdgeDataJs],
                           view           : V,
                           errorPopup     : Option[MErrorPopupS],
                           cropPopup      : Option[MPictureCropPopup],
-                          histograms     : Map[String, MHistogram],
-                          cropContSz     : Option[ISize2di],
+                          histograms     : Map[String, MHistogram]
                         ) {
 
   def withEdges(edges: Map[EdgeUid_t, MEdgeDataJs])             = copy(edges = edges)

@@ -31,7 +31,7 @@ class NodeGalleryR(
   import io.suggest.file.up.MFileUploadS.MFileUploadSFastEq
   import io.suggest.lk.r.img.ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq
 
-  lazy val resKeyTypeSome = Some( MFrkTypes.GalImg )
+  lazy val formResKeyTypeSome = Some( MFrkTypes.GalImg )
 
   type Props_t = Seq[PropsValEl]
   type Props = ModelProxy[Props_t]
@@ -54,9 +54,9 @@ class NodeGalleryR(
 
   /** Пропертисы кнопки добавления элемента сейчас являются константой. */
   private val _addBtnProps = ImgEditBtnPropsVal(
-    src = None,
+    edge = None,
     resKey = MFormResourceKey(
-      frkType = resKeyTypeSome
+      frkType = formResKeyTypeSome
     ),
     css = imgsRowContCss
   )

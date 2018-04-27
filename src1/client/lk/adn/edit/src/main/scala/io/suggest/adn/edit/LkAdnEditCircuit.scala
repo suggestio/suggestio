@@ -2,13 +2,12 @@ package io.suggest.adn.edit
 
 import diode.react.ReactConnector
 import io.suggest.adn.edit.api.{ILkAdnEditApi, LKAdnEditApiHttp}
-import io.suggest.adn.edit.c.{RootAh, NodeEditAh}
+import io.suggest.adn.edit.c.{NodeEditAh, RootAh}
 import io.suggest.adn.edit.m._
 import io.suggest.lk.c.PictureAh
 import io.suggest.lk.m.img.MPictureAh
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
-import io.suggest.primo.id.IId
 import io.suggest.routes.routes
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.StateInp
@@ -66,8 +65,7 @@ class LkAdnEditCircuit
       view        = mroot.node.resView,
       errorPopup  = mroot.popups.errorPopup,
       cropPopup   = mroot.popups.cropPopup,
-      histograms  = Map.empty,
-      cropContSz  = None
+      histograms  = Map.empty
     )
   } { (mroot0, mPictureAh2) =>
     var mroot2 = mroot0

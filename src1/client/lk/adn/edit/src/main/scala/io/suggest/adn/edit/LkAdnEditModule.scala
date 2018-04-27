@@ -20,6 +20,8 @@ class LkAdnEditModule {
 
   // views
 
+  lazy val lkAdEditCss = wire[LkAdnEditCss]
+
   lazy val lkAdnEditFormR = wire[LkAdnEditFormR]
 
   lazy val oneRowR = wire[OneRowR]

@@ -90,12 +90,12 @@ case class MJdArgs(
     /** Вернуть bgImg текущего выбранного тега.
       * O(treeLoc) + O(log(edges.size)), поэтому кэш.
       */
-    lazy val bgEdgeDataOpt: Option[MEdgeDataJs] = {
+    lazy val bgEdgeDataOpt: Option[(MJdEdgeId, MEdgeDataJs)] = {
       for {
         bgEi     <- bgEdgeIdOpt
         dataEdge <- edges.get( bgEi.edgeUid )
       } yield {
-        dataEdge
+        (bgEi, dataEdge)
       }
     }
 

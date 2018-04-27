@@ -22,23 +22,9 @@ import scalacss.internal.mutable.StyleSheet
 class QuillCss extends StyleSheet.Standalone {
 
   import dsl._
+  import com.quilljs.quill.modules.QuillCssConst._
 
-  final private val NAME_DELIM = "-"
-
-  private val QL_ = ".ql" + NAME_DELIM
-
-  private val QL_SNOW_CSS_SEL = QL_ + "snow"
-
-  private val QL_PICKER_CSS_SEL = QL_ + "picker"
-
-  private val QL_TOOLTIP_CSS_SEL = QL_ + "tooltip"
-  private val QL_EDITING_CSS_SEL = QL_ + "editing"
-
-  private val LABEL = "label"
-  private val ITEM = "item"
-
-  private val VALUE_ATTR_NAME = HtmlConstants.ATTR_PREFIX + "value"
-
+  val VALUE_ATTR_NAME = HtmlConstants.ATTR_PREFIX + "value"
 
   // Отрендерить общие стили отображения всех шрифтов.
   for {
@@ -187,10 +173,8 @@ class QuillCss extends StyleSheet.Standalone {
       ),
 
       // Нужно выравнивать диалог ввода ссылки по горизонтали, иначе он может уходить за экран.
-      &(QL_TOOLTIP_CSS_SEL) - (
-        &(QL_EDITING_CSS_SEL) - (
-          left(0.px).important
-        )
+      &(QL_TOOLTIP_CSS_SEL + QL_EDITING_CSS_SEL) - (
+        left(0.px).important
       )
 
     )

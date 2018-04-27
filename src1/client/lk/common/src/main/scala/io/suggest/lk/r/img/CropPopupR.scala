@@ -1,4 +1,4 @@
-package io.suggest.lk.r.crop
+package io.suggest.lk.r.img
 
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop, ReactCrop, ReactCropProps}
 import diode.FastEq
@@ -7,7 +7,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.frk.MFormResourceKey
-import io.suggest.lk.m.{CropCancel, CropChanged, CropSave}
+import io.suggest.lk.m.{CropCancel, CropChanged, CropSave, PictureFileChanged}
 import io.suggest.lk.pop.PopupR
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
@@ -32,14 +32,16 @@ class CropPopupR {
                        imgSrc       : String,
                        percentCrop  : PercentCrop,
                        popCssClass  : List[String],
-                       resKey       : MFormResourceKey
+                       resKey       : MFormResourceKey,
+                       withDelete   : Boolean
                      )
   implicit object CropPopupPropsFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.imgSrc ===* b.imgSrc) &&
         (a.percentCrop ===* b.percentCrop) &&
         (a.popCssClass ===* b.popCssClass) &&
-        (a.resKey ==* b.resKey)
+        (a.resKey ==* b.resKey) &&
+        (a.withDelete ==* b.withDelete)
     }
   }
 
@@ -49,15 +51,21 @@ class CropPopupR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    private def closeBtnClick: Callback = {
+    private val closeBtnClick: Callback = {
       dispatchOnProxyScopeCBf($) { p: Props =>
         CropCancel( p.value.get.resKey )
       }
     }
 
-    private def saveBtnClick: Callback = {
+    private val saveBtnClick: Callback = {
       dispatchOnProxyScopeCBf($) { p: Props =>
         CropSave( p.value.get.resKey )
+      }
+    }
+
+    private val deleteBtnClick: Callback = {
+      dispatchOnProxyScopeCBf($) { p: Props =>
+        PictureFileChanged(Nil, p.value.get.resKey)
       }
     }
 
@@ -101,6 +109,16 @@ class CropPopupR {
               )
             ),
 
+            // Отрендерить кнопку удаления картинки.
+            ReactCommonUtil.maybeNode(props.withDelete) {
+              <.a(
+                ^.`class` := Css.flat( B.BTN, B.BTN_W, B.NEGATIVE, Css.Size.M, Css.Floatt.LEFT ),
+                ^.onClick --> deleteBtnClick,
+                Messages( MsgCodes.`Delete` )
+              )
+            },
+
+            // Кнопка сохранения.
             <.a(
               ^.`class` := Css.flat( B.BTN, B.BTN_W, B.MAJOR, Css.Size.M ),
               ^.onClick --> saveBtnClick,
@@ -111,7 +129,7 @@ class CropPopupR {
             HtmlConstants.NBSP_STR,
 
             <.a(
-              ^.`class` := Css.flat( B.BTN, B.BTN_W, B.NEGATIVE, Css.Size.M ),
+              ^.`class` := Css.flat( B.BTN, B.BTN_W, B.MINOR, Css.Size.M ),
               ^.onClick --> closeBtnClick,
               Messages( MsgCodes.`Cancel` )
             ),

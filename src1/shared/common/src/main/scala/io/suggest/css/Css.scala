@@ -282,6 +282,7 @@ object Css {
     object Image {
       def IMAGE = "image"
       def IMAGE_REMOVE_BTN = IMAGE + "_remove-" + Buttons.BTN
+      def IMAGE_EDIT_BTN = IMAGE + "_edit-" + Buttons.BTN
     }
 
     object Submit {

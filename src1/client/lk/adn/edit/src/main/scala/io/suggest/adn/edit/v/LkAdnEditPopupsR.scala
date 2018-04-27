@@ -6,7 +6,7 @@ import io.suggest.lk.m.MErrorPopupS
 import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.lk.r.ErrorPopupR
-import io.suggest.lk.r.crop.CropPopupR
+import io.suggest.lk.r.img.CropPopupR
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
@@ -19,7 +19,9 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: Компонент попапов формы редактирования узла.
   */
 class LkAdnEditPopupsR(
-                        val cropPopupR: CropPopupR
+                        lkAdEditCss     : LkAdnEditCss,
+                        galleryR        : NodeGalleryR,
+                        val cropPopupR  : CropPopupR
                       ) {
 
   type Props = ModelProxy[MLkAdnEditRoot]
@@ -64,6 +66,7 @@ class LkAdnEditPopupsR(
         errorPopupC = propsProxy.connect(_.popups.errorPopup)( OptFastEq.Wrapped ),
 
         cropPopupC = {
+          val popupCss = lkAdEditCss.galImgCropPopup.htmlClass :: Nil
           propsProxy.connect { root =>
             for {
               mcrop       <- root.popups.cropPopup
@@ -73,11 +76,12 @@ class LkAdnEditPopupsR(
               cropPopupR.PropsVal(
                 imgSrc      = imgSrc,
                 percentCrop = mcrop.percentCrop,
-                popCssClass = Nil, //lkAdEditCss.Crop.popup.htmlClass :: Nil,
+                popCssClass = popupCss,
                 resKey      = MFormResourceKey(
                   edgeUid   = Some( edge.jdEdge.id ),
-                  nodePath  = None
-                )
+                  frkType   = galleryR.formResKeyTypeSome
+                ),
+                withDelete  = true
               )
             }
           }( OptFastEq.Wrapped )

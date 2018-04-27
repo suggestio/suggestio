@@ -1,5 +1,6 @@
 package io.suggest.adn.edit.v
 
+import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.css.Css
 import scalacss.internal.mutable.StyleSheet
 import io.suggest.css.ScalaCssDefaults._
@@ -32,6 +33,12 @@ class LkAdnEditCss extends StyleSheet.Inline {
 
   val colorPicker = style(
     position.fixed
+  )
+
+  /** Если не ограничивать кроп-попап по ширине, то он займёт размер картинки. */
+  val galImgCropPopup = style(
+    maxWidth( NodeEditConstants.Gallery.WIDTH_PX.px ),
+    overflow.visible
   )
 
 }

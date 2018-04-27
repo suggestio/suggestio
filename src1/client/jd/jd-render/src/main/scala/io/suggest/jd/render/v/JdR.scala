@@ -5,15 +5,13 @@ import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
-import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.err.ErrorConstants
 import io.suggest.grid.build.{MGbBlock, MGridBuildArgsJs}
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd.MQdOp
-import io.suggest.lk.m.SetImgWh
+import io.suggest.lk.r.img.ImgRenderUtilJs
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
@@ -30,7 +28,6 @@ import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import org.scalajs.dom.{Element, html}
-import org.scalajs.dom.html.Image
 import org.scalajs.dom.raw.CSSStyleDeclaration
 import play.api.libs.json.Json
 import scalacss.ScalaCssReact._
@@ -44,7 +41,8 @@ import scalaz.Tree
   */
 
 class JdR(
-           jdGridUtil: JdGridUtil
+           imgRenderUtilJs    : ImgRenderUtilJs,
+           jdGridUtil         : JdGridUtil
          )
   extends Log
 { jdR =>
@@ -193,39 +191,16 @@ class JdR(
             ^.draggable := false
           },
 
-          // Размеры и позиционирование фоновой картинки в блоке:
-          {
-            // Рассчитываем аргументы кропа, если есть.
-            val cropEmuOpt = for {
-              crop    <- bgImgData.crop
-              bm      <- s.props1.bm
-              origWh  <- edge.origWh
-            } yield {
-              //val outerWh = bm.rePadded( jdArgs.conf.blockPadding )
-              MEmuCropCssArgs(crop, origWh, bm)
-            }
-
-            cropEmuOpt.fold[TagMod] {
-              // Просто заполнение всего блока картинкой. Т.к. фактический размер картинки отличается от размера блока
-              // на px ratio, надо подогнать картинку по размерам:
-              C.stripBgStyleF(s)
-            } { ecArgs =>
-              // Нужно рассчитать параметры margin, w, h изображения, чтобы оно имитировало заданный кроп.
-              // margin: -20px 0px 0px -16px; -- сдвиг вверх и влево.
-              // Для этого надо вписать размеры кропа в размеры блока
-
-              // Вычисляем отношение стороны кропа к стороне блока. Считаем, что обе стороны соотносятся одинаково.
-              val outer2cropRatio = ecArgs.outerWh.height.toDouble / ecArgs.crop.height.toDouble
-              val blkSzMultD = jdArgs.conf.szMult.toDouble
-
-              // Проецируем это отношение на натуральные размеры картинки, top и left:
-              TagMod(
-                ^.width := (ecArgs.origWh.width  * outer2cropRatio * blkSzMultD).px,
-                ^.height := (ecArgs.origWh.height * outer2cropRatio * blkSzMultD).px,
-                ^.marginLeft := (-ecArgs.crop.offX * outer2cropRatio * blkSzMultD).px,
-                ^.marginTop := (-ecArgs.crop.offY * outer2cropRatio * blkSzMultD).px
-              )
-            }
+          // Размеры и позиционирование фоновой картинки в блоке (эмуляция кропа):
+          imgRenderUtilJs.htmlImgCropEmuAttrsOpt(
+            cropOpt     = bgImgData.crop,
+            outerWhOpt  = s.props1.bm,
+            origWhOpt   = edge.origWh,
+            szMult      = jdArgs.conf.szMult
+          ).getOrElse {
+            // Просто заполнение всего блока картинкой. Т.к. фактический размер картинки отличается от размера блока
+            // на px ratio, надо подогнать картинку по размерам:
+            C.stripBgStyleF(s)
           },
 
           // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
@@ -586,23 +561,7 @@ class JdR(
 
     /** Callback о завершении загрузки в память картинки, у которой неизвестны какие-то рантаймовые параметры. */
     override protected def onNewImageLoaded(edgeUid: EdgeUid_t)(e: ReactEvent): Callback = {
-      // Прочитать natural w/h из экшена.
-      try {
-        val img = e.target.asInstanceOf[Image]
-        val sz = MSize2di(
-          // IDEA почему-то ругается на deprecated, это ошибка в scala-плагине.
-          width  = img.naturalWidth,
-          height = img.naturalHeight
-        )
-        val minWh = 0
-        ErrorConstants.assertArg( sz.width > minWh )
-        ErrorConstants.assertArg( sz.height > minWh )
-        dispatchOnProxyScopeCB( $, SetImgWh(edgeUid, sz) )
-      } catch {
-        case ex: Throwable =>
-          LOG.error( ErrorMsgs.IMG_EXPECTED, ex = ex, msg = (edgeUid, e.target.toString) )
-          Callback.empty
-      }
+      imgRenderUtilJs.notifyImageLoaded($, edgeUid, e)
     }
 
 

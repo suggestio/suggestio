@@ -19,13 +19,11 @@ import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.{MJdTagName, MJdTagNames}
-import io.suggest.lk.m.DocBodyClick
+import io.suggest.lk.m.{CropOpen, DocBodyClick}
 import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.lk.r.{SaveR, SlideBlockR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorPickerR, ColorsSuggestR}
-import io.suggest.lk.r.crop.CropBtnR
-import io.suggest.lk.r.img.{ImgEditBtnPropsVal, ImgEditBtnR}
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.lk.r.img.{CropBtnR, ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.spa.OptFastEq
@@ -51,7 +49,7 @@ class LkAdEditFormR(
                      uploadStatusR              : UploadStatusR,
                      val imgEditBtnR            : ImgEditBtnR,
                      val colorsSuggestR         : ColorsSuggestR,
-                     cropBtnR                   : CropBtnR,
+                     val cropBtnR               : CropBtnR,
                      val saveR                  : SaveR,
                      val useAsMainR             : UseAsMainR,
                      val deleteBtnR             : DeleteBtnR,
@@ -69,7 +67,6 @@ class LkAdEditFormR(
   import scaleR.ScaleRPropsValFastEq
   import MFileUploadS.MFileUploadSFastEq
   import colorsSuggestR.ColorsSuggestPropsValFastEq
-  import MFormResourceKey.MFormImgKeyFastEq
   import saveR.SaveRPropsValFastEq
   import useAsMainR.UseAdMainPropsValFastEq
   import deleteBtnR.DeleteBtnRPropsValFastEq
@@ -92,7 +89,7 @@ class LkAdEditFormR(
                               imgEditBtnPropsC                : ReactConnectProxy[imgEditBtnR.Props_t],
                               upStateOptC                     : ReactConnectProxy[Option[MFileUploadS]],
                               colSuggPropsOptC                : ReactConnectProxy[Option[colorsSuggestR.PropsVal]],
-                              cropBtnPropsOptC                : ReactConnectProxy[Option[MFormResourceKey]],
+                              cropBtnPropsOptC                : ReactConnectProxy[cropBtnR.Props_t],
                               rightYOptC                      : ReactConnectProxy[Option[Int]],
                               savePropsC                      : ReactConnectProxy[saveR.PropsVal],
                               useAsMainStripPropsOptC         : ReactConnectProxy[Option[useAsMainR.PropsVal]],
@@ -522,10 +519,9 @@ class LkAdEditFormR(
           p.connect { mroot =>
             val bgEdgeOpt = mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
             ImgEditBtnPropsVal(
-              src = bgEdgeOpt
-                .flatMap(_.imgSrcOpt),
+              edge   = bgEdgeOpt,
               resKey = MFormResourceKey(
-                edgeUid  = bgEdgeOpt.map(_.jdEdge.id),
+                edgeUid  = bgEdgeOpt.map(_._1.edgeUid),
                 nodePath = mroot.doc.jdArgs.renderArgs.selPath
               )
             )
@@ -534,14 +530,14 @@ class LkAdEditFormR(
 
         upStateOptC = p.connect { mroot =>
           mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
-            .flatMap(_.fileJs)
+            .flatMap(_._2.fileJs)
             .flatMap(_.upload)
         }(OptFastEq.Wrapped),
 
         colSuggPropsOptC = p.connect { mroot =>
           for {
             bgEdge  <- mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
-            fileSrv <- bgEdge.jdEdge.fileSrv
+            fileSrv <- bgEdge._2.jdEdge.fileSrv
             hist    <- mroot.doc.colorsState.histograms.get( fileSrv.nodeId )
           } yield {
             colorsSuggestR.PropsVal(
@@ -554,12 +550,18 @@ class LkAdEditFormR(
         cropBtnPropsOptC = p.connect { mroot =>
           for {
             bgEdge <- mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
-            if bgEdge.imgSrcOpt.nonEmpty
+            if bgEdge._2.imgSrcOpt.nonEmpty
+            // Вычислить размер контейнера. Это размер блока, для которого выбираем фон:
+            cropContSz <- mroot.doc.jdArgs
+              .selJdt
+              .treeLocOpt
+              .flatMap(_.getLabel.props1.bm)
           } yield {
-            MFormResourceKey(
-              edgeUid  = Some( bgEdge.jdEdge.id ),
+            val frk = MFormResourceKey(
+              edgeUid  = Some( bgEdge._1.edgeUid ),
               nodePath = mroot.doc.jdArgs.renderArgs.selPath
             )
+            CropOpen( frk, cropContSz )
           }
         }( OptFastEq.Wrapped )
 

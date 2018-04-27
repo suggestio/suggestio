@@ -1,6 +1,7 @@
 package io.suggest.adn.edit.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.adn.edit.m._
 import io.suggest.color.MColorData
 import io.suggest.css.Css
@@ -20,7 +21,6 @@ import io.suggest.model.n2.node.meta.colors.{MColorType, MColorTypes}
 import io.suggest.msg.Messages
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.ScConstants
 import io.suggest.spa.OptFastEq
 import io.suggest.spa.FastEqUtil
 
@@ -37,6 +37,7 @@ class LkAdnEditFormR(
                       val imgEditBtnR     : ImgEditBtnR,
                       val uploadStatusR   : UploadStatusR,
                       val nodeGalleryR    : NodeGalleryR,
+                      lkAdEditCss         : LkAdnEditCss,
                       wcFgContR           : WcFgContR,
                     ) {
 
@@ -54,8 +55,6 @@ class LkAdnEditFormR(
                        editBtnC         : ReactConnectProxy[imgEditBtnR.Props_t],
                        uploadStatusC    : ReactConnectProxy[uploadStatusR.Props_t]
                      )
-
-  val css = new LkAdnEditCss
 
   /** Состояние компонента: все react-коннекшены. */
   case class State(
@@ -140,17 +139,17 @@ class LkAdnEditFormR(
 
         // Отрендерить доп.стили
         <.styleTag(
-          css.render[String]
+          lkAdEditCss.render[String]
         ),
 
         <.div(
-          css.logoBar,
+          lkAdEditCss.logoBar,
 
           _renderImgEdit( s.logo )
         ),
 
         <.div(
-          css.infoBar,
+          lkAdEditCss.infoBar,
 
           delimHr,
 
@@ -211,7 +210,7 @@ class LkAdnEditFormR(
               // Вертикальная линия-разделитель:
               __colorTd( paddingS :: Nil )(
                 <.div(
-                  css.colorTdVerticalHr
+                  lkAdEditCss.colorTdVerticalHr
                 )
               ),
 
@@ -264,21 +263,18 @@ class LkAdnEditFormR(
         }( OneRowRValueValFastEq )
       }
 
-      def __getImgEdgeOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[MEdgeDataJs] = {
-        f(mroot.node.resView)
-          .flatMap { ei =>
-            mroot.node.edges.get( ei.edgeUid )
-          }
-      }
-
-      def __getImgSrcOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[String] = {
-        __getImgEdgeOpt(mroot)(f)
-          .flatMap(_.imgSrcOpt)
+      def __getImgEdgeOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[(MJdEdgeId, MEdgeDataJs)] = {
+        for {
+          ei <- f(mroot.node.resView)
+          edge <- mroot.node.edges.get( ei.edgeUid )
+        } yield {
+          (ei, edge)
+        }
       }
 
       def __getImgUploadOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[MFileUploadS] = {
         __getImgEdgeOpt(mroot)(f)
-          .flatMap(_.fileJs)
+          .flatMap(_._2.fileJs)
           .flatMap(_.upload)
       }
 
@@ -313,7 +309,7 @@ class LkAdnEditFormR(
               color         = mcd,
               colorPresets  = props.node.colorPresets,
               topLeftPx     = Some( cps.topLeftPx ),
-              cssClass      = Some( css.colorPicker.htmlClass )
+              cssClass      = Some( lkAdEditCss.colorPicker.htmlClass )
             )
           }
         }( OptFastEq.Wrapped ),
@@ -326,9 +322,9 @@ class LkAdnEditFormR(
               val frkTypeSome = Some( MFrkTypes.Logo )
               propsProxy.connect { props =>
                 ImgEditBtnPropsVal(
-                  src     = __getImgSrcOpt(props)(logoF),
+                  edge     = __getImgEdgeOpt(props)(logoF),
                   resKey  = MFormResourceKey(
-                    jdEdgeId = props.node.resView.logo,
+                    edgeUid  = props.node.resView.logo.map(_.edgeUid),
                     frkType  = frkTypeSome
                   ),
                   bgColor = props.node.meta.colors.bg,
@@ -349,9 +345,9 @@ class LkAdnEditFormR(
               val frkTypeSome = Some( MFrkTypes.WcFg )
               propsProxy.connect { props =>
                 ImgEditBtnPropsVal(
-                  src = __getImgSrcOpt(props)(wcFgF),
+                  edge = __getImgEdgeOpt(props)(wcFgF),
                   resKey = MFormResourceKey(
-                    jdEdgeId = props.node.resView.wcFg,
+                    edgeUid  = props.node.resView.wcFg.map(_.edgeUid),
                     frkType  = frkTypeSome
                   )
                 )
@@ -364,6 +360,7 @@ class LkAdnEditFormR(
         },
 
         galImgs = {
+          val cropOnClickSome = Some( NodeEditConstants.Gallery.WH_PX )
           propsProxy.connect { props =>
             if (props.node.resView.galImgs.isEmpty) {
               Nil
@@ -376,13 +373,14 @@ class LkAdnEditFormR(
               } yield {
                 nodeGalleryR.PropsValEl(
                   editBtn = ImgEditBtnPropsVal(
-                    src = edge.imgSrcOpt,
+                    edge   = Some( (galImg, edge) ),
                     resKey = MFormResourceKey(
-                      frkType  = nodeGalleryR.resKeyTypeSome,
-                      jdEdgeId = Some(galImg)
+                      frkType  = nodeGalleryR.formResKeyTypeSome,
+                      edgeUid  = Some( galImg.edgeUid )
                     ),
                     bgColor = None,
-                    css     = nodeGalleryR.imgsRowContCss
+                    css     = nodeGalleryR.imgsRowContCss,
+                    cropOnClick = cropOnClickSome
                   ),
                   uploadStatus = edge.fileJs
                     .flatMap(_.upload)

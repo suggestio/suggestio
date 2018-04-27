@@ -1,17 +1,16 @@
-package io.suggest.lk.r.crop
+package io.suggest.lk.r.img
 
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.CropOpen
-import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.msg.Messages
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
-import japgolly.scalajs.react.vdom.VdomElement
-import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 
 /**
   * Suggest.io
@@ -21,7 +20,7 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
   */
 class CropBtnR {
 
-  type Props_t = Option[MFormResourceKey]
+  type Props_t = Option[CropOpen]
   type Props = ModelProxy[Props_t]
 
 
@@ -30,7 +29,7 @@ class CropBtnR {
     /** Клик по кнопке кадрирования картинки. */
     private def _onCropClick: Callback = {
       dispatchOnProxyScopeCBf($) { props: Props =>
-        CropOpen( props.value.get )
+        props.value.get
       }
     }
 
