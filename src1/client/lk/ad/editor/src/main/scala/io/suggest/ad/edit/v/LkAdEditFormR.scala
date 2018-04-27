@@ -8,6 +8,7 @@ import io.suggest.ad.edit.m.{MAeRoot, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
 import io.suggest.ad.edit.v.edit._
 import io.suggest.ad.edit.v.edit.color.ColorCheckboxR
+import io.suggest.ad.edit.v.edit.content.ContentEditCssR
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
@@ -60,7 +61,8 @@ class LkAdEditFormR(
                      val rotateR                : RotateR,
                      val slideBlockR            : SlideBlockR,
                      val colorPickerR           : ColorPickerR,
-                     val quillEditorR           : QuillEditorR
+                     val quillEditorR           : QuillEditorR,
+                     val contentEditCssR        : ContentEditCssR,
                    ) {
 
   import MJdArgs.MJdArgsFastEq
@@ -78,6 +80,7 @@ class LkAdEditFormR(
   import rotateR.RotateRPropsValFastEq
   import slideBlockR.SlideBlockPropsValFastEq
   import quillEditorR.QuillEditorPropsValFastEq
+  import contentEditCssR.ContentEditCssRPropsValFastEq
 
   type Props = ModelProxy[MAeRoot]
 
@@ -101,7 +104,8 @@ class LkAdEditFormR(
                               slideBlocks                     : SlideBlocksState,
                               colors                          : ColorsState,
                               quillEdOptC                     : ReactConnectProxy[Option[quillEditorR.PropsVal]],
-                              rotateOptC                      : ReactConnectProxy[Option[rotateR.PropsVal]]
+                              rotateOptC                      : ReactConnectProxy[Option[rotateR.PropsVal]],
+                              contentEditCssC                 : ReactConnectProxy[contentEditCssR.Props_t],
                             )
 
   case class SlideBlocksState(
@@ -219,7 +223,10 @@ class LkAdEditFormR(
             }
 
             val contentBodyDiv = <.div(
-              // Редактор текста
+              // Доп.стили для редактора контента:
+              s.contentEditCssC { contentEditCssR.apply },
+
+              // Редактор контента
               s.quillEdOptC { quillEditorR.apply },
               <.br,
 
@@ -563,7 +570,28 @@ class LkAdEditFormR(
             )
             CropOpen( frk, cropContSz )
           }
-        }( OptFastEq.Wrapped )
+        }( OptFastEq.Wrapped ),
+
+        contentEditCssC = p.connect { mroot =>
+          contentEditCssR.PropsVal(
+            bgColor = {
+              for {
+                selJdtTreeLoc <- mroot.doc.jdArgs.selJdt.treeLocOpt
+                selJdt = selJdtTreeLoc.getLabel
+                if selJdt.name ==* MJdTagNames.QD_CONTENT
+                r <- {
+                  // Найти цвет фона в текущем или в родительских тегах.
+                  (Iterator.single(selJdt) ++ selJdtTreeLoc.parents.iterator.map(_._2))
+                    .flatMap(_.props1.bgColor)
+                    .toStream
+                    .headOption
+                }
+              } yield {
+                r
+              }
+            }
+          )
+        }
 
       )
     }

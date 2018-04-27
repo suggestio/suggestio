@@ -184,6 +184,7 @@ object JdTag {
     /** Дополнительная утиль для TreeLoc[IDocTag]. */
     implicit class IDocTagZTreeLocOps(private val treeLoc: TreeLoc[JdTag]) extends AnyVal {
 
+      // TODO Унести в ScalazUtil
       def findUp(f: TreeLoc[JdTag] => Boolean): Option[TreeLoc[JdTag]] = {
         if ( f(treeLoc) ) {
           Some(treeLoc)

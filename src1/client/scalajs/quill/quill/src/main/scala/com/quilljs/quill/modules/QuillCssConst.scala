@@ -20,6 +20,8 @@ object QuillCssConst {
 
   val QL_SNOW_CSS_SEL = QL_ + "snow"
 
+  val QL_EDITOR_CSS_SEL = QL_ + "editor"
+
   val QL_PICKER_CSS_SEL = QL_ + "picker"
 
   val QL_TOOLTIP_CSS_SEL = QL_ + "tooltip"
