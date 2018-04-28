@@ -4,7 +4,6 @@ import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.ads.{LkAdsFormConst, MLkAdsFormInit, MLkAdsOneAdResp}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.fut.FutureUtil
-import io.suggest.es.model.IMust
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.{MAdItemStatuses, MItems}
@@ -107,19 +106,12 @@ class LkAds @Inject() (
     val adsSearch0 = new MNodeSearchDfltImpl {
       override val nodeTypes = MNodeTypes.Ad :: Nil
       override val outEdges  = {
-        val must = IMust.MUST
         // Поиск по узлу-владельцу
         val crOwn = Criteria(
           predicates  = MPredicates.OwnedBy :: Nil,
-          nodeIds     = parentNodeId :: Nil,
-          must        = must
+          nodeIds     = parentNodeId :: Nil
         )
-        // Поиск только jd-карточкек
-        val crJdAd = Criteria(
-          predicates = MPredicates.JdContent :: Nil,
-          must       = must
-        )
-        crOwn :: crJdAd :: Nil
+        crOwn :: Nil
       }
       override def limit     = maxAdsPerTime
       // TODO Почему-то сортировка работает задом наперёд, должно быть DESC тут:

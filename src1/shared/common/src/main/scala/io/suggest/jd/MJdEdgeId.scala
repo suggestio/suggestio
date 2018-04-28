@@ -3,10 +3,9 @@ package io.suggest.jd
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.err.ErrorConstants
 import io.suggest.img.crop.MCrop
-import io.suggest.img.{MImgFmt, MImgFmts}
+import io.suggest.img.MImgFmt
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.scalaz.ScalazUtil
-import io.suggest.scalaz.ScalazUtil.Implicits._
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -78,20 +77,17 @@ object MJdEdgeId {
       )
     }
 
-    val outImgFmtVldOpt = for {
-      edgeInfo <- edgeInfoOpt
-      img <- edgeInfo.img
-      if img.isImg
-    } yield {
-      Validation.liftNel(m.outImgFormat)(_.isEmpty, "img.fmt." + ErrorConstants.Words.MISSING)
-    }
-
     (
       Validation.liftNel(m.edgeUid)(
         { _ => !edgeInfoOpt.exists(_.img.exists(_.isImg)) },
         ErrorConstants.emsgF("img")("e")
       ) |@|
-      outImgFmtVldOpt.getOrElseNone |@|
+      // Формат пока прости копипастим из VldInfo: Юзер не управляет заданием выходного формата.
+      Validation.success(
+        edgeInfoOpt
+          .flatMap(_.img)
+          .flatMap(_.dynFmt)
+      ) |@|
       ScalazUtil.optValidationOrNone( cropAndWhVldOpt )
     )(apply _)
   }

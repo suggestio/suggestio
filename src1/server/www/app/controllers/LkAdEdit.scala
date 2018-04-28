@@ -371,7 +371,8 @@ class LkAdEdit @Inject() (
       // Запустить сбоку карточки.
       // Тут зависимость от контекста. Если тормозит, то для ускорения можно передавать неполный контекст без ctxData - на jd-рендер это не влияет.
       val jdAdDataFut = ctxFut.flatMap { implicit ctx =>
-        jdAdUtil.mkJdAdDataFor.edit( request.mad )(ctx)
+        jdAdUtil.mkJdAdDataFor
+          .edit( request.mad )(ctx)
           .execute()
       }
 
