@@ -53,10 +53,7 @@ class NodeAdsAh[M](
       ) {
         // Надо подгрузить ещё карточек.
         val fx = Effect.action( GetMoreAds(clean = false) )
-        val v2 = v0.withAds(
-          v0.ads.pending()
-        )
-        updated(v2, fx)
+        effectOnly(fx)
       } else {
         // Скролл отфильтрован.
         noChange
@@ -132,6 +129,7 @@ class NodeAdsAh[M](
 
     // Команда к скачке карточек с сервера.
     case m: GetMoreAds =>
+      println(m)
       val v0 = value
       if (!v0.hasMoreAds) {
         // Больше нет карточек на сервере

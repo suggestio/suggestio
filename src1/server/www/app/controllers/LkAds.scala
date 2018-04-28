@@ -114,8 +114,7 @@ class LkAds @Inject() (
         crOwn :: Nil
       }
       override def limit     = maxAdsPerTime
-      // TODO Почему-то сортировка работает задом наперёд, должно быть DESC тут:
-      override val withDateCreatedSort = Some(SortOrder.ASC)
+      override val withDateCreatedSort = Some(SortOrder.DESC)
       override def offset    = offset1
     }
 
