@@ -23,7 +23,7 @@ import play.api.mvc.Call
 import util.adn.NodesUtil
 import util.adv.direct.AdvRcvrsUtil
 import util.cdn.CdnUtil
-import util.img.{DynImgUtil, FitImgMaker, LogoUtil}
+import util.img.{DynImgUtil, FitImgMaker, LogoUtil, WelcomeUtil}
 
 import scala.concurrent.Future
 
@@ -36,6 +36,7 @@ import scala.concurrent.Future
 class AdvGeoRcvrsUtil @Inject()(
                                  mNodes      : MNodes,
                                  logoUtil    : LogoUtil,
+                                 welcomeUtil : WelcomeUtil,
                                  advRcvrsUtil: AdvRcvrsUtil,
                                  nodesUtil   : NodesUtil,
                                  cdnUtil     : CdnUtil,
@@ -63,6 +64,8 @@ class AdvGeoRcvrsUtil @Inject()(
 
   /** Предельные размеры логотипо в px. */
   private def LOGO_WH_LIMITS_CSSPX = MSize2di(width = 120, height = 20)
+
+  private def WC_FG_LIMITS_CSSPX = MSize2di(width = 40, height = 40)
 
 
   /** Сборка ES-аргументов для поиска узлов, отображаемых на карте.
@@ -149,7 +152,9 @@ class AdvGeoRcvrsUtil @Inject()(
     // Начать выкачивать все подходящие узлы из модели:
     lazy val logPrefix = s"rcvrNodesMap(${System.currentTimeMillis}):"
 
-    val targetSz = LOGO_WH_LIMITS_CSSPX
+    val logoTargetSz = LOGO_WH_LIMITS_CSSPX
+    val wcFgTargetSz = WC_FG_LIMITS_CSSPX
+
     val dpr = DevPixelRatios.XHDPI
     val targetScreenSome = Some(
       DevScreen.default
@@ -166,37 +171,43 @@ class AdvGeoRcvrsUtil @Inject()(
       // Собрать логотипы узлов.
       .mapAsyncUnordered(NODE_LOGOS_PREPARING_PARALLELISM) { mnode =>
         // Подготовить инфу по логотипу узла.
-        val logoMakeResOptFut = logoUtil.getLogoOfNode(mnode).flatMap { logoOptRaw =>
-          if (logoOptRaw.isEmpty)
-            LOGGER.trace(s"$logPrefix Missing logo for node ${mnode.idOrNull}")
+        val mapLogoImgWithLimitsOptRaw = welcomeUtil
+          .wcFgImg(mnode)
+          .map(_ -> wcFgTargetSz)
+          .orElse {
+            logoUtil.getLogoOfNode(mnode)
+              .map(_ -> logoTargetSz)
+          }
 
-          FutureUtil.optFut2futOpt(logoOptRaw) { logoRaw =>
-            // Используем FitImgMaker, чтобы вписать лого в ограничения логотипа для этой карты.
-            val imakeArgs = MImgMakeArgs(
-              img           = logoRaw,
-              targetSz      = targetSz,
-              szMult        = logoSzMult,
-              // На всех один и тот же экран, т.к. так быстрее. Логотипов десятки и сотни, и они мелкие, поэтому не важно.
-              devScreenOpt  = targetScreenSome,
-              compressMode  = compressModeSome
-            )
-            val fut = for {
-              logoMakeRes <- fitImgMaker.icompile( imakeArgs )
-            } yield {
-              LOGGER.trace(s"$logPrefix wh = ${logoMakeRes.szCss}csspx/${logoMakeRes.szReal}px for img $logoRaw")
-              Some( logoMakeRes )
-            }
+        if (mapLogoImgWithLimitsOptRaw.isEmpty)
+          LOGGER.trace(s"$logPrefix Missing logo for node ${mnode.idOrNull}")
 
-            // Подавлять ошибки рендера логотипа. Дефолтовщины хватит, главное чтобы всё было ок.
-            fut.recover { case ex: Throwable =>
-              val msg = s"$logPrefix Node[${mnode.idOrNull}] with possible logo[$logoRaw] failed to prepare the logo for map"
-              if (ex.isInstanceOf[NoSuchElementException] && !LOGGER.underlying.isTraceEnabled) {
-                LOGGER.warn(msg)
-              } else {
-                LOGGER.warn(msg, ex)
-              }
-              None
+        val logoMakeResOptFut = FutureUtil.optFut2futOpt(mapLogoImgWithLimitsOptRaw) { case (logoRaw, targetSz) =>
+          // Используем FitImgMaker, чтобы вписать лого в ограничения логотипа для этой карты.
+          val imakeArgs = MImgMakeArgs(
+            img           = logoRaw,
+            targetSz      = targetSz,
+            szMult        = logoSzMult,
+            // На всех один и тот же экран, т.к. так быстрее. Логотипов десятки и сотни, и они мелкие, поэтому не важно.
+            devScreenOpt  = targetScreenSome,
+            compressMode  = compressModeSome
+          )
+          val fut = for {
+            logoMakeRes <- fitImgMaker.icompile( imakeArgs )
+          } yield {
+            LOGGER.trace(s"$logPrefix wh = ${logoMakeRes.szCss}csspx/${logoMakeRes.szReal}px for img $logoRaw")
+            Some( logoMakeRes )
+          }
+
+          // Подавлять ошибки рендера логотипа. Дефолтовщины хватит, главное чтобы всё было ок.
+          fut.recover { case ex: Throwable =>
+            val msg = s"$logPrefix Node[${mnode.idOrNull}] with possible logo[$logoRaw] failed to prepare the logo for map"
+            if (ex.isInstanceOf[NoSuchElementException] && !LOGGER.underlying.isTraceEnabled) {
+              LOGGER.warn(msg)
+            } else {
+              LOGGER.warn(msg, ex)
             }
+            None
           }
         }
 

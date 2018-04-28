@@ -95,15 +95,14 @@ class MarketLkAdn @Inject() (
     isNodeAdmin(nodeId, U.Lk).async { implicit request =>
 
       // Запустить обсчёт логотипа и галереи узла:
-      val logoOptFut = logoUtil.getLogoOfNode( request.mnode )
+      val logoImgOpt = logoUtil.getLogoOfNode( request.mnode )
       val galleryFut = galleryUtil.galleryImgs( request.mnode )
 
       // Собрать карту media-хостов для картинок, которые надо будет рендерить:
       val mediaHostsMapFut = for {
-        logoOpt         <- logoOptFut
         gallery         <- galleryFut
         mediaHostsMap0  <- nodesUtil.nodeMediaHostsMap(
-          logoImgOpt  = logoOpt,
+          logoImgOpt  = logoImgOpt,
           gallery     = gallery
         )
       } yield {
@@ -111,14 +110,12 @@ class MarketLkAdn @Inject() (
       }
 
       // Собрать ссылку на логотип узла.
-      val logoImgCallOptFut = logoOptFut.flatMap { logoImgOpt =>
-        FutureUtil.optFut2futOpt( logoImgOpt ) { logoImg =>
-          for {
-            mediaHostsMap <- mediaHostsMapFut
-          } yield {
-            val logoImgCdnCall = dynImgUtil.distCdnImgCall(logoImg, mediaHostsMap)
-            Some( logoImgCdnCall )
-          }
+      val logoImgCallOptFut = FutureUtil.optFut2futOpt( logoImgOpt ) { logoImg =>
+        for {
+          mediaHostsMap <- mediaHostsMapFut
+        } yield {
+          val logoImgCdnCall = dynImgUtil.distCdnImgCall(logoImg, mediaHostsMap)
+          Some( logoImgCdnCall )
         }
       }
 

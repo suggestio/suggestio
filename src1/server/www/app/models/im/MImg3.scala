@@ -36,7 +36,7 @@ class MImgs3 @Inject() (
   val mMedias               : MMedias,
   val mNodes                : MNodes,
   fileUtil                  : FileUtil,
-  mMediasCache              : MMediasCache,
+  override val mMediasCache : MMediasCache,
   override val streamsUtil  : StreamsUtil,
   override val cacheApiUtil : CacheApiUtil,
   override val mLocalImgs   : MLocalImgs,

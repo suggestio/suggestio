@@ -191,7 +191,9 @@ class Upload @Inject()(
                 // Для получения гистограммы цветов надо получить на руки оригинал картинки.
                 val origImg3 = foundFileImg.original
                 LOGGER.trace(s"$logPrefix Will try original img for colors histogram: $origImg3")
-                for (origMediaOpt <- mImgs3.mediaOptFut( origImg3 )) yield {
+                for {
+                  origMediaOpt <- mMediasCache.getById(origImg3.dynImgId.mediaId)
+                } yield {
                   // TODO Если не найдено оригинала, то может быть сразу ошибку? Потому что это будет нечто неюзабельное.
                   if (origMediaOpt.isEmpty)
                     LOGGER.warn(s"$logPrefix Orig.img $mImgs3 not found media#${origImg3.mediaId}, but derivative media#${foundFile.idOrNull} is here: $foundFile")

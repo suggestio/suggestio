@@ -7,7 +7,7 @@ import io.suggest.compress.MCompressAlgo
 import io.suggest.di.ICacheApiUtil
 import io.suggest.img.MImgFmt
 import io.suggest.model.img.ImgSzDated
-import io.suggest.model.n2.media.{IMMedias, MMedia}
+import io.suggest.model.n2.media.{IMMedias, IMediasCacheDi, MMedia}
 import io.suggest.model.n2.media.storage.MStorage
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.TypeT
@@ -156,6 +156,7 @@ trait MImgsT
     with IMacroLogs
     with ICacheApiUtil
     with IMMedias
+    with IMediasCacheDi
     with IMCommonDi
     with IMLocalImgs
 {
@@ -164,9 +165,8 @@ trait MImgsT
 
   protected val streamsUtil: StreamsUtil
 
-
   def mediaOptFut(mimg: MImgT): Future[Option[MMedia]] = {
-    mMedias.getById(mimg.dynImgId.mediaId)
+    mMediasCache.getById(mimg.dynImgId.mediaId)
   }
   protected def _mediaFut(mediaOptFut: Future[Option[MMedia]]): Future[MMedia] = {
     mediaOptFut.map(_.get)

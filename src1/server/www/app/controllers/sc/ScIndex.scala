@@ -387,7 +387,7 @@ trait ScIndex
     lazy val logoImgOptFut: Future[Option[MImgT]] = {
       for {
         currNode     <- indexNodeFutVal
-        logoOptRaw   <- logoUtil.getLogoOfNode(currNode.mnode)
+        logoOptRaw = logoUtil.getLogoOfNode(currNode.mnode)
         logoOptScr   <- logoUtil.getLogoOpt4scr(logoOptRaw, _reqArgs.screen)
       } yield {
         logoOptScr

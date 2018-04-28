@@ -21,7 +21,6 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.AdnShownTypes
 import models.adv.MExtTargets
 import models.im.MImgT
-import models.im.logo.LogoOpt_t
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
 import models.mext.MExtServices
 import models.mproj.ICommonDi
@@ -282,7 +281,7 @@ class NodesUtil @Inject() (
     *                см. [[util.img.GalleryUtil.galleryImgs()]]
     * @return Выхлоп [[util.cdn.CdnUtil.mediasHosts()]].
     */
-  def nodeMediaHostsMap(logoImgOpt: LogoOpt_t                   = None,
+  def nodeMediaHostsMap(logoImgOpt: Option[MImgT]               = None,
                         welcomeOpt: Option[MWelcomeRenderArgs]  = None,
                         gallery   : List[MImgT]                 = Nil
                        ): Future[Map[String, Seq[MHostInfo]]] = {

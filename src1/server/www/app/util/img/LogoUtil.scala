@@ -8,7 +8,6 @@ import io.suggest.model.n2.node.MNode
 import io.suggest.sc.ScConstants
 import models.blk._
 import models.im._
-import models.im.logo._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -28,12 +27,11 @@ class LogoUtil @Inject() (
    * @param mnode Узел, к которому прилинкован логотип.
    * @return Фьючерс с результатом: None -- логотип не выставлен.
    */
-  def getLogoOfNode(mnode: MNode): Future[LogoOpt_t] = {
-    val res = mnode.Quick.Adn.logo
+  def getLogoOfNode(mnode: MNode): Option[MImgT] = {
+    mnode.Quick.Adn.logo
       .map { case (jdId, e) =>
         MImg3( MDynImgId.fromJdEdge(jdId, e) )
       }
-    Future.successful( res )
   }
 
   /**
@@ -42,14 +40,14 @@ class LogoUtil @Inject() (
    * @param screenOpt Данные по экрану клиента, если есть.
    * @return Фьючерс с картинкой, если логотип задан.
    */
-  def getLogoOpt4scr(logoOpt: LogoOpt_t, screenOpt: Option[DevScreen]): Future[LogoOpt_t] = {
-    logoOpt.fold [Future[LogoOpt_t]] {
+  def getLogoOpt4scr(logoOpt: Option[MImgT], screenOpt: Option[DevScreen]): Future[Option[MImgT]] = {
+    logoOpt.fold [Future[Option[MImgT]]] {
       Future successful None
     } { logoImg =>
       getLogoOpt4scr(logoImg, screenOpt)
     }
   }
-  def getLogoOpt4scr(logoImg: MImgT, screenOpt: Option[DevScreen]): Future[LogoOpt_t] = {
+  def getLogoOpt4scr(logoImg: MImgT, screenOpt: Option[DevScreen]): Future[Option[MImgT]] = {
     getLogo4scr(logoImg, screenOpt)
       .map { EmptyUtil.someF }
   }

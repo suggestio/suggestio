@@ -353,8 +353,8 @@ trait LkBillOrders
           if itemNodeIds.contains(nodeId) && mnode.ad.isEmpty
         } yield {
           // Готовим логотип данного узла... Если логотипа нет, то тут будет синхронное None.
+          val logoOptRaw = logoUtil.getLogoOfNode(mnode)
           for {
-            logoOptRaw     <- logoUtil.getLogoOfNode(mnode)
             logoOptScr     <- logoUtil.getLogoOpt4scr(logoOptRaw, devScreenOpt)
           } yield {
             for (logo <- logoOptScr; nodeId <- mnode.id) yield {
