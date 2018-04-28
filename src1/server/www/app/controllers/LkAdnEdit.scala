@@ -120,16 +120,20 @@ class LkAdnEdit @Inject() (
     val ctxFut = ctxFutOpt
       .getOrElse( Future.successful(getContext2) )
 
-    // Какие предикаты и эджи здесь интересуют?
-    val imgEdgeUids = request.mnode.extras
+    val imgEdgesJdIds = request.mnode.extras
       .adnEdgeUids
-      .map(_.edgeUid)
-      .toSet
+      .toStream
+
+    // Какие предикаты и эджи здесь интересуют?
+    val imgEdgeUids = imgEdgesJdIds
+      .iterator
+      .map(e => e.edgeUid -> e)
+      .toMap
     val imgEdges = request.mnode
       .edges
-      .withUid1(imgEdgeUids)
+      .withUid1(imgEdgeUids.keys)
 
-    val imgsEdges = jdAdUtil.collectImgEdges( imgEdges )
+    val imgsEdges = jdAdUtil.collectImgEdges( imgEdges, imgEdgeUids )
 
     // Запустить сбор данных по интересующим картинкам:
     val imgMediasMapFut = jdAdUtil.prepareImgMedias( imgsEdges )

@@ -20,7 +20,6 @@ import play.api.inject.ApplicationLifecycle
 import util.adv.direct.AdvRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.billing.cron.ReActivateCurrentAdvsJmx
-import util.compat.AdnJdEdgesMigrationJmx
 import util.es.SiowebEsModelJmx
 import util.img.DynImgUtilJmx
 
@@ -55,7 +54,6 @@ case class JMXImpl @Inject() (
                                dynImgUtilJmx                 : DynImgUtilJmx,
                                reActivateCurrentAdvsJmx      : ReActivateCurrentAdvsJmx,
                                lifecycle                     : ApplicationLifecycle,
-                               adnJdEdgesMigrationJmx        : AdnJdEdgesMigrationJmx,
                                implicit private val ec       : ExecutionContext
                              )
   extends MacroLogsImplLazy

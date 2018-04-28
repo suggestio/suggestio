@@ -5,6 +5,7 @@ import io.suggest.model.PrefixedFn
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MNodeGeoLevel
+import io.suggest.primo.id.OptId
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

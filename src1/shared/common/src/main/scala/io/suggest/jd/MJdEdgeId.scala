@@ -32,10 +32,7 @@ object MJdEdgeId {
         val r2 = f0.orElse( oldJdEdgeIdReads )
         Format(r2, f0)
       } and
-      (__ \ "f").formatNullableWithDefault[MImgFmt] {
-        println("Failed to decode img.output format. Did you executed AdnJdEdgesMigration.doIt()*?")
-        Some( MImgFmts.default )
-      } and
+      (__ \ "f").formatNullable[MImgFmt] and
       (__ \ "c").formatNullable[MCrop]
     )(apply, unlift(unapply))
 

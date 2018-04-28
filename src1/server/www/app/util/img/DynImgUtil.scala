@@ -1,17 +1,23 @@
 package util.img
 
 import java.io.File
-import javax.inject.{Inject, Singleton}
+import java.util.concurrent.atomic.AtomicInteger
 
+import javax.inject.{Inject, Singleton}
 import akka.NotUsed
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import controllers.routes
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.img.{MImgFmt, MImgFmts}
+import io.suggest.jd.MJdEdgeId
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.media.{MMedia, MMedias, MMediasCache}
 import io.suggest.model.n2.media.search.MMediaSearchDfltImpl
 import io.suggest.model.n2.media.storage.IMediaStorages
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.url.MHostInfo
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.MacroLogsImpl
@@ -20,6 +26,7 @@ import models.mproj.ICommonDi
 import org.im4java.core.{ConvertCmd, IMOperation}
 import play.api.mvc.Call
 import util.cdn.CdnUtil
+import japgolly.univeq._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -39,6 +46,8 @@ class DynImgUtil @Inject() (
                              mLocalImgs                : MLocalImgs,
                              im4jAsyncUtil             : Im4jAsyncUtil,
                              cdnUtil                   : CdnUtil,
+                             // Для каких-то регламентных операций в MNodes:
+                             mNodes                    : MNodes,
                              // Только для удаления и чистки базы:
                              iMediaStorages            : IMediaStorages,
                              mMedias                   : MMedias,
@@ -449,6 +458,172 @@ class DynImgUtil @Inject() (
     }
   }
 
+
+  import mNodes.Implicits._
+
+  /** Пройтись по всем узлам, которые ссылаются на картинки, поковырятся там в jdEdge, выставив
+    * dynFormat согласно оригиналам картинок, на которые они ссылаются.
+    *
+    * @param nodeIds id узлов, которые требуется отработать.
+    *                Если пусто, то все узлы.
+    * @return Фьючерс с кол-вом обработанных узлов.
+    */
+  def resetJdImgDynFormatsToOrigOnNodes(nodeIds: Seq[String] = Nil): Future[Int] = {
+    val logPrefix = s"resetJdImgDynFormatsToOrigOnNodes()#${System.currentTimeMillis()}:"
+
+    val nodesPerTime = 10
+
+    val msearch = new MNodeSearchDfltImpl {
+      override def outEdges: Seq[ICriteria] = {
+        val cr = Criteria(
+          predicates = MPredicates.JdContent.Image :: Nil
+        )
+        cr :: Nil
+      }
+      override def withIds = nodeIds
+      override def limit = nodesPerTime
+    }
+
+    val bp = mNodes.bulkProcessor(
+      new mNodes.BulkProcessorListener(logPrefix)
+    )
+    val origImgFmt = MImgFmts.default
+
+    val countProcessed = new AtomicInteger(0)
+
+    mNodes
+      .source[MNode]( msearch.toEsQuery )
+      .mapAsyncUnordered(nodesPerTime) { mnode =>
+        val edgesByUid = mnode.edges.edgesByUid
+        val logPrefix2 = s"$logPrefix Node#${mnode.idOrNull}:"
+
+        val jdImgEdgeIdsIter: TraversableOnce[MJdEdgeId] = mnode.common.ntype match {
+          // Рекламная карточка. Растрясти шаблон документа карточки:
+          case MNodeTypes.Ad =>
+            for {
+              doc <- mnode.extras.doc.iterator
+              jdTag <- doc.template.flatten
+              imgEdge <- jdTag.edgeUids
+            } yield {
+              imgEdge
+            }
+
+          // Adn-узел. Проверить MAdnResView:
+          case MNodeTypes.AdnNode =>
+            // Собрать данные для запроса по id к MMedia:
+            mnode.extras.adn
+              .iterator
+              .flatMap(_.resView.edgeUids)
+
+          // Should never happen.
+          case _ =>
+            ???
+        }
+
+        val mediaId2edgeUid = (for {
+          jdEdgeId  <- jdImgEdgeIdsIter.toIterator
+          medge     <- edgesByUid.get( jdEdgeId.edgeUid ).iterator
+          if medge.predicate ==* MPredicates.JdContent.Image
+          imgNodeId <- medge.nodeIds
+        } yield {
+          val mediaId = MDynImgId(imgNodeId, origImgFmt).mediaId
+          jdEdgeId.edgeUid -> mediaId
+        })
+          .toMap
+        LOGGER.trace(s"$logPrefix2 mediaId2edgesUid:\n ${mediaId2edgeUid.mkString(", \n")}")
+
+        for {
+          // Поискать оригинал картинки через media-кэш. Это даст ускорение.
+          mmediasMap <- mMediasCache.multiGetMap( mediaId2edgeUid.values.toSet )
+        } yield {
+          def _upgradeJdIdOpt(jdIdOpt: Option[MJdEdgeId]): Option[MJdEdgeId] = {
+            val resOpt = for {
+              jdId        <- jdIdOpt
+              jdMediaId   <- mediaId2edgeUid.get( jdId.edgeUid )
+              mmedia      <- mmediasMap.get( jdMediaId )
+            } yield {
+              val jdId2 = jdId.withOutImgFormat( mmedia.file.imgFormatOpt )
+              LOGGER.debug(s"$logPrefix2 UPGRADED edge: $jdId2")
+              jdId2
+            }
+            resOpt.orElse {
+              LOGGER.trace(s"$logPrefix2 Ignored edge $jdIdOpt")
+              jdIdOpt
+            }
+          }
+
+          val mnode2: MNode = mnode.common.ntype match {
+            case MNodeTypes.Ad =>
+              mnode.withExtras(
+                mnode.extras.withDoc(
+                  for (doc <- mnode.extras.doc) yield {
+                    doc.withTemplate(
+                      for (jdTag0 <- doc.template) yield {
+                        // обновить bgImg
+                        var jdTag2 = jdTag0
+                        for (_ <- jdTag2.props1.bgImg) {
+                          jdTag2 = jdTag2.withProps1(
+                            jdTag2.props1.withBgImg(
+                              _upgradeJdIdOpt( jdTag2.props1.bgImg )
+                            )
+                          )
+                        }
+                        // обновить qd edgeid
+                        for {
+                          qdProps <- jdTag2.qdProps
+                          _       <- qdProps.edgeInfo
+                        } {
+                          jdTag2 = jdTag2.withQdProps(
+                            Some(qdProps.withEdgeInfo(
+                              _upgradeJdIdOpt( qdProps.edgeInfo )
+                            ))
+                          )
+                        }
+
+                        // Вернуть обновлённый тег
+                        jdTag2
+                      }
+                    )
+                  }
+                )
+              )
+
+            case MNodeTypes.AdnNode =>
+              mnode.withExtras(
+                mnode.extras.withAdn(
+                  for (adn <- mnode.extras.adn) yield {
+                    val rv = adn.resView
+                    adn.withResView(
+                      rv.copy(
+                        logo = _upgradeJdIdOpt(rv.logo),
+                        wcFg = _upgradeJdIdOpt(rv.wcFg),
+                        galImgs = rv.galImgs
+                          .flatMap { galImg => _upgradeJdIdOpt(Some(galImg)) }
+                      )
+                    )
+                  }
+                )
+              )
+
+            // Should never happen
+            case _ =>
+              ???
+          }
+
+          bp.add( mNodes.prepareIndex(mnode2).request() )
+          countProcessed.incrementAndGet()
+          mnode2
+        }
+      }
+      .runForeach { mnode2 =>
+        LOGGER.trace(s"$logPrefix Processed ${mnode2.common.ntype} #${mnode2.idOrNull}")
+      }
+      .map { _ =>
+        bp.close()
+        countProcessed.get()
+      }
+  }
+
 }
 
 /** Интерфейс для доступа к DI-полю с утилью для DynImg. */
@@ -460,6 +635,8 @@ trait IDynImgUtil {
 /** Интерфейс поддержки JMX для [[DynImgUtil]]. */
 trait DynImgUtilJmxMBean {
   def deleteAllDerivatives(deleteEvenStorageMissing: Boolean): String
+  def resetJdImgDynFormatsToOrig(): String
+  def resetJdImgDynFormatsToOrigOnNode(nodeId: String): String
 }
 
 /** Реализация поддержки JMX для [[DynImgUtil]]. */
@@ -473,6 +650,7 @@ final class DynImgUtilJmx @Inject() (
 {
 
   override def jmxName: String = "io.suggest:type=img,name=" + classOf[DynImgUtil].getSimpleName
+  override def futureTimeout = 5.minutes
 
   override def deleteAllDerivatives(deleteEvenStorageMissing: Boolean): String = {
     val logPrefix = s"deleteAllDerivatives():"
@@ -485,6 +663,22 @@ final class DynImgUtilJmx @Inject() (
     awaitString(fut)
   }
 
-  override def futureTimeout = 5.minutes
+  override def resetJdImgDynFormatsToOrig(): String = {
+    val fut = for {
+      countProcessed <- dynImgUtil.resetJdImgDynFormatsToOrigOnNodes()
+    } yield {
+      s"Done. $countProcessed nodes"
+    }
+    awaitString(fut)
+  }
+
+  override def resetJdImgDynFormatsToOrigOnNode(nodeId: String): String = {
+    val fut = for {
+      countProcessed <- dynImgUtil.resetJdImgDynFormatsToOrigOnNodes( nodeId :: Nil )
+    } yield {
+      s"Done. $countProcessed nodes: $nodeId"
+    }
+    awaitString(fut)
+  }
 
 }

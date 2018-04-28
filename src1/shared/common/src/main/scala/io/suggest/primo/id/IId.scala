@@ -15,6 +15,12 @@ trait IId[T] {
 
 }
 
+
+/** Интерфейс type-class'а, который извлекает id из произвольного инстанса. */
+trait IdGetter[T, Id_t] {
+  def getId(t: T): Id_t
+}
+
 trait IdUtil[IId_t[_]] {
 
   /** Приведение коллекции инстансов к коллекции id'шников.

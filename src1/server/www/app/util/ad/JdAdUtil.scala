@@ -6,10 +6,10 @@ import io.suggest.color.MHistogram
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.file.MSrvFileInfo
 import io.suggest.img.MImgFmts
-import io.suggest.jd.{MJdAdData, MJdEdge}
+import io.suggest.jd.{MJdAdData, MJdEdge, MJdEdgeId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.JdTag.Implicits._
-import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.model.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.media.{MFileMetaHash, MMedia, MMediasCache}
 import io.suggest.model.n2.node.{MNode, MNodesCache}
 import io.suggest.url.MHostInfo
@@ -274,15 +274,20 @@ class JdAdUtil @Inject()(
     * @return Итератор, пригодный для использования в пакетом imgs-рендере,
     *         например в renderAdDocImgs().
     */
-  def collectImgEdges(nodeEdges: MNodeEdges): Seq[(MEdge, MImg3)] = {
+  def collectImgEdges(nodeEdges: MNodeEdges, uids2jdEdgeId: Map[EdgeUid_t, MJdEdgeId]): Seq[(MEdge, MImg3)] = {
     nodeEdges
       .withPredicateIter( imgPredicate )
       .map { medge =>
-        //LOGGER.info(s"prepareImgEdges(): E#${medge.doc.uid.orNull} img=${medge.info.dynImgArgs}")
-        // По факту, тут всегда будет оригинал, даже если без .original. Потому что в jd-карточках эджи НЕ хранят в себе кроп или иные модификации.
         val dynImgId = MDynImgId(
           rowKeyStr = medge.nodeIds.head,
-          dynFormat = MImgFmts.default
+          // TODO По идее, тут достаточно MImgFmts.defaults, но почему-то всё тогда сглючивает.
+          dynFormat = medge.doc.uid
+            .flatMap(uids2jdEdgeId.get)
+            .flatMap(_.outImgFormat)
+            .getOrElse {
+              LOGGER.warn(s"collectImgEdges(): Not found edge ${medge.doc.uid} in edgesMap:\n ${uids2jdEdgeId.mkString(", ")}")
+              MImgFmts.default
+            }
         )
         val origImg = MImg3(dynImgId)
         medge -> origImg
@@ -303,11 +308,16 @@ class JdAdUtil @Inject()(
 
     def nodeEdges: MNodeEdges
 
-
     // Собираем картинки, используемые в карточке.
     // Следует помнить, что в jd-карточках модификация картинки задаётся в теге. Эджи всегда указывают на оригинал.
     lazy val origImgsEdges = {
-      val ie = collectImgEdges( nodeEdges )
+      val uid2jdEdgeId = tpl
+        .flatten
+        .iterator
+        .flatMap(_.edgeUids)
+        .map(eid => eid.edgeUid -> eid)
+        .toMap
+      val ie = collectImgEdges( nodeEdges, uid2jdEdgeId )
       LOGGER.trace(s"$logPrefix Found ${ie.size} img.edges: ${ie.iterator.map(_._2.dynImgId.fileName).mkString(", ")}")
       ie
     }

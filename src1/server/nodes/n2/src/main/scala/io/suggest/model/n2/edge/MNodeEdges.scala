@@ -292,6 +292,20 @@ case class MNodeEdges(
     }
   }
 
+  lazy val edgesByUid: Map[EdgeUid_t, MEdge] = {
+    if (out.isEmpty) {
+      Map.empty
+    } else {
+      val iter = for {
+        e   <- out
+        uid <- e.doc.uid
+      } yield {
+        (uid, e)
+      }
+      iter.toMap
+    }
+  }
+
   /** Название сбивает с толку, но это метод для перезаписи out на случай возможного появления других полей case-класса. */
   def withOut(out: Seq[MEdge]) = copy(out = out)
 
