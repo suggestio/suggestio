@@ -61,10 +61,13 @@ object MAdnResView extends IEmpty {
     // Фунция валидации опционального jdId, на который ссылается этот view
     def __vldJdId(jdIdOpt: Option[MJdEdgeId], name: String) = {
       ScalazUtil.liftNelOpt(jdIdOpt) { jdId =>
-        ScalazUtil.liftNelSome( edgesMap.get(jdId.edgeUid), name + `.` + ErrorConstants.Words.MISSING ) { vldEdge =>
-          Validation.liftNel(vldEdge.jdEdge.predicate)(_ !=* MPredicates.JdContent.Image, name + `.` + ErrorConstants.Words.INVALID)
-            .map { _ => vldEdge }
-        }.map { _ => jdId }
+        (
+          MJdEdgeId.validate(jdId, edgesMap, None) |@|
+          ScalazUtil.liftNelSome( edgesMap.get(jdId.edgeUid), name + `.` + ErrorConstants.Words.MISSING ) { vldEdge =>
+            Validation.liftNel(vldEdge.jdEdge.predicate)(_ !=* MPredicates.JdContent.Image, name + `.` + ErrorConstants.Words.INVALID)
+              .map { _ => vldEdge }
+          }
+        ){ (jdId2, _) => jdId2 }
       }
     }
 

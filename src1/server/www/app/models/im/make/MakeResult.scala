@@ -14,12 +14,16 @@ import play.api.mvc.Call
   * @param szReal Данные о размере картинки в реальных экранных пикселях экрана устройства. Превышают szCss в szMult раз.
   * @param dynCallArgs Данные для сборки ссылки на картинку.
   * @param isWide Является ли результат make - широкоформатным рендером?
+  * @param isFake Это был фейковый мейк.
+  *               Например, svg не надо готовить, но результат всё равно нужен.
+  *               И тогда isFake = true, т.е. ничего по факту не делалось.
   */
 case class MakeResult(
                        szCss         : MSize2di,
                        szReal        : MSize2di,
                        dynCallArgs   : MImgT,
-                       isWide        : Boolean
+                       isWide        : Boolean,
+                       isFake        : Boolean = false
                      ) {
 
   // TODO Удалить этот метод, он не модельный.

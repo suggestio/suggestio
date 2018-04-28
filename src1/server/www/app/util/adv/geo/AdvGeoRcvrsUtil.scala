@@ -119,7 +119,7 @@ class AdvGeoRcvrsUtil @Inject()(
       )
     } yield {
       // Тут костыль для "версии", чтобы сбрасывать некорректный кэш. TODO Удалить этот .map после окончания отладки.
-      hashSum0 + 3
+      hashSum0 + 4
     }
 
   }
@@ -196,7 +196,7 @@ class AdvGeoRcvrsUtil @Inject()(
             logoMakeRes <- fitImgMaker.icompile( imakeArgs )
           } yield {
             LOGGER.trace(s"$logPrefix wh = ${logoMakeRes.szCss}csspx/${logoMakeRes.szReal}px for img $logoRaw")
-            Some( logoMakeRes )
+            Some( logoMakeRes -> targetSz )
           }
 
           // Подавлять ошибки рендера логотипа. Дефолтовщины хватит, главное чтобы всё было ок.
@@ -225,17 +225,25 @@ class AdvGeoRcvrsUtil @Inject()(
         // Завернуть результат работы в итоговый контейнер, используемый вместо трейта.
         for {
           logoMakeResOpt <- logoMakeResOptFut
-          logoOpt        = logoMakeResOpt.map(_.dynCallArgs)
+          logoOpt        = logoMakeResOpt.map(_._1.dynCallArgs)
           // Тут сборка MediaHostsMap для одного узла через пакетное API. Это не слишком эффективно, но в целом всё равно работает через кэш.
           mediaHostsMap  <- nodesUtil.nodeMediaHostsMap( logoImgOpt = logoOpt )
         } yield {
           // Заверуть найденную иконку в пригодный для сериализации на клиент результат:
           val iconInfoOpt = for {
-            logoMakeRes <- logoMakeResOpt
+            (logoMakeRes, targetWh) <- logoMakeResOpt
           } yield {
             MMapNodeIconInfo(
               url = dynImgUtil.distCdnImgCall( logoMakeRes.dynCallArgs, mediaHostsMap ).url,
-              wh  = logoMakeRes.szCss
+              wh  = {
+                val szCss = logoMakeRes.szCss
+                if (logoMakeRes.isFake) {
+                  // Фейковый рендер, значит на выходе оригинальный размер. Надо спроецировать этот размер на targetWh по высоте:
+                  targetWh.withWidth(
+                    (szCss.width.toDouble / (szCss.height.toDouble / targetWh.height.toDouble)).toInt
+                  )
+                } else szCss
+              }
             )
           }
 

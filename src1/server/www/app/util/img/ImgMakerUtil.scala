@@ -38,7 +38,8 @@ class ImgMakerUtil @Inject() (
         szCss       = szReal,
         szReal      = szReal,
         dynCallArgs = MImg3(dynImgId),
-        isWide      = false
+        isWide      = false,
+        isFake      = true
       )
     }
   }
