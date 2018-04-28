@@ -8,7 +8,7 @@ import io.suggest.text.UrlUtil2
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import scalaz.{Validation, ValidationNel}
+import scalaz.ValidationNel
 import scalaz.syntax.apply._
 
 /**
@@ -64,13 +64,12 @@ object MBusinessInfo extends IEmpty {
 
   implicit def univEq: UnivEq[MBusinessInfo] = UnivEq.derive
 
-
   def validate(mbi: MBusinessInfo): ValidationNel[String, MBusinessInfo] = {
     (
       ScalazUtil.liftNelOpt(mbi.siteUrl)( url => UrlUtil2.validateUrl(url, "url." + ErrorConstants.Words.INVALID) ) |@|
       ScalazUtil.validateTextOpt(mbi.audienceDescr, maxLen = 300, "auDescr") |@|
       ScalazUtil.validateTextOpt(mbi.humanTraffic, maxLen = 120, "htraf") |@|
-      ScalazUtil.validateTextOpt(mbi.info, maxLen = 600, "info")
+      ScalazUtil.validateTextOpt(mbi.info, maxLen = 1000, "info")
     )(apply _)
   }
 
