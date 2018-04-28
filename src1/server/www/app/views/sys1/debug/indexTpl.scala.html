@@ -2,8 +2,25 @@
 
 @* Индексная страница для раздела sys-отладки. *@
 
+@import helper._
+@import ctx._
+
 @dbgBase("Инструменты") {
 
-  @adv2._rcvrsTpl()
+  @form( CSRF(routes.SysDebug.resetAllRcvrs()) ) {
+    <input type="submit" value="Найти и исправить карты ресиверов в карточках" />
+  }
+
+  <br/>
+
+  @form( CSRF(routes.SysDebug.resetImgsToOrig()) ) {
+    <input type="submit" value="Сбросить JdEdgId.dynFormat для img-jd-эджей на оригинал" />
+  }
+
+  <br/>
+
+  @form( CSRF(routes.SysDebug.deleteAllDynImgDerivatives()) ) {
+    <input type="submit" value="Удалить все img-деривативы" />
+  }
 
 }

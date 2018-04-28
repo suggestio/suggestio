@@ -331,6 +331,8 @@ GET  /sys/bill                           @controllers.SysBilling.overview
 ## sys/debug
 GET  /sys/debug                          @controllers.SysDebug.index
 POST /sys/debug/adv/rcvrs/reset          @controllers.SysDebug.resetAllRcvrs
+POST /sys/debug/dynimg/jdedges/reset     @controllers.SysDebug.resetImgsToOrig
+POST /sys/debug/dynimg/derivatives/del   @controllers.SysDebug.deleteAllDynImgDerivatives
 
 ## ident: логины/логауты
 GET  /id                                @controllers.Ident.mySioStartPage(r: Option[String] ?= None)

@@ -4,6 +4,7 @@ import javax.inject.Inject
 import models.mproj.ICommonDi
 import util.acl.IsSu
 import util.adv.direct.AdvRcvrsUtil
+import util.img.DynImgUtil
 import views.html.sys1.debug._
 
 /**
@@ -14,6 +15,7 @@ import views.html.sys1.debug._
  */
 class SysDebug @Inject() (
                            advRcvrsUtil                  : AdvRcvrsUtil,
+                           dynImgUtil                    : DynImgUtil,
                            isSu                          : IsSu,
                            override val mCommonDi        : ICommonDi
 )
@@ -33,7 +35,31 @@ class SysDebug @Inject() (
   def resetAllRcvrs = csrf.Check {
     isSu().async { implicit request =>
       for (count <- advRcvrsUtil.resetAllReceivers()) yield {
-        Ok(count + " ads updated.")
+        Ok(s"$count ads updated.")
+      }
+    }
+  }
+
+
+  /** Запуск сброса значений полей MJdEdgeId.dynFormat для картинок на orig-значения. */
+  def resetImgsToOrig = csrf.Check {
+    isSu().async { implicit request =>
+      for {
+        nodesCompleted <- dynImgUtil.resetJdImgDynFormatsToOrigOnNodes()
+      } yield {
+        Ok(s"$nodesCompleted nodes processed.")
+      }
+    }
+  }
+
+
+  /** Запуск удаления всех img-деривативов. */
+  def deleteAllDynImgDerivatives = csrf.Check {
+    isSu().async { implicit request =>
+      for {
+        res <- dynImgUtil.deleteAllDerivatives( deleteEvenStorageMissing = false )
+      } yield {
+        Ok(s"$res imgs deleted.")
       }
     }
   }
