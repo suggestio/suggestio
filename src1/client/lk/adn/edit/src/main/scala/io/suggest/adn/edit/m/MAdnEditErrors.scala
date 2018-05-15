@@ -20,7 +20,10 @@ object MAdnEditErrors {
       (a.name ===* b.name) &&
         (a.town ===* b.town) &&
         (a.address ===* b.address) &&
-        (a.siteUrl ===* b.siteUrl)
+        (a.siteUrl ===* b.siteUrl) &&
+        (a.info ===* b.info) &&
+        (a.humanTraffic ===* b.humanTraffic) &&
+        (a.audienceDescr ===* b.audienceDescr)
     }
   }
 
@@ -34,10 +37,13 @@ object MAdnEditErrors {
   * @param name Messages-код ошибки в поле названия.
   */
 case class MAdnEditErrors(
-                           name    : Option[String] = None,
-                           town    : Option[String] = None,
-                           address : Option[String] = None,
-                           siteUrl : Option[String] = None,
+                           name           : Option[String] = None,
+                           town           : Option[String] = None,
+                           address        : Option[String] = None,
+                           siteUrl        : Option[String] = None,
+                           info           : Option[String] = None,
+                           humanTraffic   : Option[String] = None,
+                           audienceDescr  : Option[String] = None,
                          )
   extends EmptyProduct
 {
@@ -46,5 +52,8 @@ case class MAdnEditErrors(
   def withTown(town: Option[String]) = copy(town = town)
   def withAddress(address : Option[String]) = copy(address = address)
   def withSiteUrl(siteUrl: Option[String]) = copy(siteUrl = siteUrl)
+  def withInfo(info: Option[String]) = copy(info = info)
+  def withHumanTraffic(humanTraffic: Option[String]) = copy(humanTraffic = humanTraffic)
+  def withAudienceDescr(audienceDescr: Option[String]) = copy(audienceDescr = audienceDescr)
 
 }

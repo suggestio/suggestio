@@ -78,12 +78,21 @@ object MBusinessInfo extends IEmpty {
     }
   }
 
+  def validateInfo(info: Option[String]): StringValidationNel[Option[String]] =
+    ScalazUtil.validateTextOpt(info, maxLen = 1000, "info")
+
+  def validateAudienceDescr(audienceDescr: Option[String]): StringValidationNel[Option[String]] =
+    ScalazUtil.validateTextOpt(audienceDescr, maxLen = 300, "audsc")
+
+  def validateHumanTraffic(humanTraffic: Option[String]): StringValidationNel[Option[String]] =
+    ScalazUtil.validateTextOpt(humanTraffic, maxLen = 120, "htraf")
+
   def validate(mbi: MBusinessInfo): ValidationNel[String, MBusinessInfo] = {
     (
-      validateSiteUrl(mbi.siteUrl) |@|
-      ScalazUtil.validateTextOpt(mbi.audienceDescr, maxLen = 300, "auDescr") |@|
-      ScalazUtil.validateTextOpt(mbi.humanTraffic, maxLen = 120, "htraf") |@|
-      ScalazUtil.validateTextOpt(mbi.info, maxLen = 1000, "info")
+      validateSiteUrl( mbi.siteUrl ) |@|
+      validateAudienceDescr( mbi.audienceDescr ) |@|
+      validateHumanTraffic( mbi.humanTraffic ) |@|
+      validateInfo( mbi.info )
     )(apply _)
   }
 

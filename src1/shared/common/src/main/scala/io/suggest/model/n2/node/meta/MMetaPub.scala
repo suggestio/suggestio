@@ -36,9 +36,8 @@ object MMetaPub {
   implicit def univEq: UnivEq[MMetaPub] = UnivEq.derive
 
 
-  def validateName(name: String): StringValidationNel[String] = {
+  def validateName(name: String): StringValidationNel[String] =
     NodeEditConstants.Name.validateNodeName(name)
-  }
 
   def validate(metaPub: MMetaPub): StringValidationNel[MMetaPub] = {
     (

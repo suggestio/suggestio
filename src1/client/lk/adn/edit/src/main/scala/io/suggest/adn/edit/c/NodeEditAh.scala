@@ -6,6 +6,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.lk.m.{ColorBtnClick, ColorChanged, DocBodyClick, PurgeUnusedEdges}
 import io.suggest.model.n2.node.meta.{MAddress, MBusinessInfo, MMetaPub}
 import io.suggest.model.n2.node.meta.colors.MColorTypes
+import io.suggest.scalaz.StringValidationNel
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
 
@@ -113,27 +114,8 @@ class NodeEditAh[M](
 
         // Проверить корректность
         val trimmed = m.name.trim
-        val trimmedVld = MMetaPub.validateName(trimmed)
+        val v2 = _updateErrors(v1, MMetaPub.validateName(trimmed))( _.name )( _.withName(_) )
 
-        val v2 = trimmedVld.fold(
-          {errors =>
-            // Сохранить в состояние и выставить ошибку name-поля:
-            v1.withErrors(
-              v1.errors.withName(
-                Some( errors.head )
-              )
-            )
-          },
-          {_ =>
-            if (v1.errors.name.nonEmpty) {
-              v1.withErrors(
-                v1.errors.withName(None)
-              )
-            } else {
-              v1
-            }
-          }
-        )
         updated(v2)
       }
 
@@ -155,23 +137,7 @@ class NodeEditAh[M](
           )
         )
 
-        val v2 = MAddress.validateTown(townOpt).fold(
-          {errors =>
-            v1.withErrors(
-              v1.errors
-                .withTown( Some(errors.head) )
-            )
-          },
-          {_ =>
-            if (v1.errors.town.nonEmpty) {
-              v1.withErrors(
-                v1.errors.withTown(None)
-              )
-            } else {
-              v1
-            }
-          }
-        )
+        val v2 = _updateErrors(v1, MAddress.validateTown(townOpt))( _.town )( _.withTown(_) )
 
         updated(v2)
       }
@@ -196,21 +162,7 @@ class NodeEditAh[M](
           )
         )
 
-        val v2 = MAddress.validateAddress(addressOpt).fold(
-          {errors =>
-            v1.withErrors(
-              v1.errors
-                .withAddress( Some(errors.head) )
-            )
-          },
-          {_ =>
-            if (v1.errors.address.nonEmpty) {
-              v1.withErrors( v1.errors.withAddress(None) )
-            } else {
-              v1
-            }
-          }
-        )
+        val v2 = _updateErrors(v1, MAddress.validateAddress(addressOpt))( _.address )( _.withAddress(_) )
 
         updated(v2)
       }
@@ -236,23 +188,7 @@ class NodeEditAh[M](
         )
 
         // Попытаться распарсить ссылку в тексте.
-        val v2 = MBusinessInfo.validateSiteUrl( urlOpt ).fold(
-          {errors =>
-            v1.withErrors(
-              v1.errors
-                .withSiteUrl( Some( errors.head ) )
-            )
-          },
-          {_ =>
-            if (v1.errors.siteUrl.nonEmpty) {
-              v1.withErrors(
-                v1.errors.withSiteUrl( None )
-              )
-            } else {
-              v1
-            }
-          }
-        )
+        val v2 = _updateErrors(v1, MBusinessInfo.validateSiteUrl( urlOpt ))( _.siteUrl )( _.withSiteUrl(_) )
 
         updated(v2)
       }
@@ -276,7 +212,9 @@ class NodeEditAh[M](
           )
         )
 
-        updated(v1)
+        val v2 = _updateErrors(v1, MBusinessInfo.validateInfo( infoOpt ))( _.info )( _.withInfo(_) )
+
+        updated(v2)
       }
 
 
@@ -298,7 +236,9 @@ class NodeEditAh[M](
           )
         )
 
-        updated(v1)
+        val v2 = _updateErrors(v1, MBusinessInfo.validateHumanTraffic( htOpt ))( _.humanTraffic )( _.withHumanTraffic(_) )
+
+        updated(v2)
       }
 
 
@@ -320,7 +260,9 @@ class NodeEditAh[M](
           )
         )
 
-        updated(v1)
+        val v2 = _updateErrors(v1, MBusinessInfo.validateAudienceDescr(adOpt))( _.audienceDescr )( _.withAudienceDescr(_) )
+
+        updated(v2)
       }
 
 
@@ -338,6 +280,43 @@ class NodeEditAh[M](
       )
       updatedSilent(v2)
 
+  }
+
+
+  /** Обновление какой-либо ошибки в состоянии ошибок.
+    *
+    * @param v0 Начальное состояние.
+    * @param vld Результат валидации.
+    * @param readF Чтение текущего значения из состояния ошибок..
+    * @param writeF Запись нового значения
+    * @return Обновлённое состояние.
+    */
+  private def _updateErrors(v0: MAdnNodeS, vld: StringValidationNel[_])
+                           (readF: MAdnEditErrors => Option[String])
+                           (writeF: (MAdnEditErrors, Option[String]) => MAdnEditErrors): MAdnNodeS = {
+    vld.fold(
+      // Ошибка валидации
+      {errors =>
+        // Записать первую ошибку в состояние.
+        val e2 = errors.head
+        if (readF(v0.errors) contains e2) {
+          v0
+        } else {
+          v0.withErrors(
+            writeF(v0.errors, Some(e2))
+          )
+        }
+      },
+      // Всё ок, нет ошибки
+      {_ =>
+        if (readF(v0.errors).nonEmpty) {
+          // стереть ошибку из состояния.
+          v0.withErrors( writeF(v0.errors, None) )
+        } else {
+          v0
+        }
+      }
+    )
   }
 
 }

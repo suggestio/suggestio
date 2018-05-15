@@ -233,7 +233,7 @@ class LkAdnEditFormR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("Form")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .initialStateFromProps { propsProxy =>
       // Сборка коннекшена до цвета:
       def __getColorBtnC(colorType: MColorType): ReactConnectProxy[colorBtnR.Props_t] = {
@@ -253,15 +253,6 @@ class LkAdnEditFormR(
 
       val emptyStr = ""
       def emptyStrF: String = emptyStr
-
-      // Сборка тривиального коннекшена до ValueVal
-      def __getStringOptConn(getValF: MLkAdnEditRoot => Option[String]): ReactConnectProxy[oneRowR.ValueVal] = {
-        propsProxy.connect { mroot =>
-          oneRowR.ValueVal(
-            value = getValF(mroot).getOrElse(emptyStrF)
-          )
-        }( OneRowRValueValFastEq )
-      }
 
       def __getImgEdgeOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[(MJdEdgeId, MEdgeDataJs)] = {
         for {
@@ -303,9 +294,25 @@ class LkAdnEditFormR(
             error = props.node.errors.siteUrl
           )
         }( OneRowRValueValFastEq ),
-        infoAboutC = __getStringOptConn( _.node.meta.business.info ),
-        humanTrafficC = __getStringOptConn( _.node.meta.business.humanTraffic ),
-        audienceDescrC = __getStringOptConn( _.node.meta.business.audienceDescr ),
+        infoAboutC = propsProxy.connect { props =>
+          oneRowR.ValueVal(
+            value = props.node.meta.business.info.getOrElse(emptyStrF),
+            error = props.node.errors.info
+          )
+        }( OneRowRValueValFastEq ),
+        humanTrafficC = propsProxy.connect { props =>
+          oneRowR.ValueVal(
+            value = props.node.meta.business.humanTraffic.getOrElse(emptyStrF),
+            error = props.node.errors.humanTraffic
+          )
+        }( OneRowRValueValFastEq ),
+        audienceDescrC = propsProxy.connect { props =>
+          oneRowR.ValueVal(
+            value = props.node.meta.business.audienceDescr.getOrElse(emptyStrF),
+            error = props.node.errors.audienceDescr
+          )
+        }( OneRowRValueValFastEq ),
+
         bgColorC = __getColorBtnC( MColorTypes.Bg ),
         fgColorC = __getColorBtnC( MColorTypes.Fg ),
         colorPickerC = propsProxy.connect { props =>
