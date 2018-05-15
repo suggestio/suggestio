@@ -18,6 +18,8 @@ object MAdnEditErrors {
   implicit object MAdnEditErrorsFastEq extends FastEq[MAdnEditErrors] {
     override def eqv(a: MAdnEditErrors, b: MAdnEditErrors): Boolean = {
       (a.name ===* b.name) &&
+        (a.town ===* b.town) &&
+        (a.address ===* b.address) &&
         (a.siteUrl ===* b.siteUrl)
     }
   }
@@ -33,12 +35,16 @@ object MAdnEditErrors {
   */
 case class MAdnEditErrors(
                            name    : Option[String] = None,
-                           siteUrl : Option[String] = None
+                           town    : Option[String] = None,
+                           address : Option[String] = None,
+                           siteUrl : Option[String] = None,
                          )
   extends EmptyProduct
 {
 
-  def withNameError(nameError: Option[String])        = copy(name = nameError)
-  def withSiteUrl(siteUrl: Option[String])            = copy(siteUrl = siteUrl)
+  def withName(name: Option[String]) = copy(name = name)
+  def withTown(town: Option[String]) = copy(town = town)
+  def withAddress(address : Option[String]) = copy(address = address)
+  def withSiteUrl(siteUrl: Option[String]) = copy(siteUrl = siteUrl)
 
 }

@@ -47,7 +47,7 @@
 
     @args.mnode.meta.address.town.map { town =>
       @lkProp( messages("Address")) {
-        @town@args.mnode.meta.address.address.map { addr =>, addr}
+        @town@args.mnode.meta.address.address.map { addr =>, @addr}
       }
     }
 

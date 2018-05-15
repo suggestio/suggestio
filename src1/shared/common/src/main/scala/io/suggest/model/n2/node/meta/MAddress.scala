@@ -2,7 +2,7 @@ package io.suggest.model.n2.node.meta
 
 import boopickle.Default._
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
-import io.suggest.scalaz.ScalazUtil
+import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -52,11 +52,16 @@ object MAddress extends IEmpty {
 
   implicit def univEq: UnivEq[MAddress] = UnivEq.derive
 
+  def validateTown(town: Option[String]): StringValidationNel[Option[String]] =
+    ScalazUtil.validateTextOpt( town, maxLen = 40, "town" )
+
+  def validateAddress(address: Option[String]): StringValidationNel[Option[String]] =
+    ScalazUtil.validateTextOpt( address, maxLen = 100, "addr" )
 
   def validate(maddress: MAddress): ValidationNel[String, MAddress] = {
     (
-      ScalazUtil.validateTextOpt( maddress.town, maxLen = 40, "town" ) |@|
-      ScalazUtil.validateTextOpt( maddress.address, maxLen = 100, "addr" ) |@|
+      validateTown( maddress.town ) |@|
+      validateAddress( maddress.address ) |@|
       ScalazUtil.validateTextOpt( maddress.phone, maxLen = 30, "phone" ) |@|
       ScalazUtil.validateTextOpt( maddress.floor, maxLen = 16, "floor" ) |@|
       ScalazUtil.validateTextOpt( maddress.section, maxLen = 16, "sect" )

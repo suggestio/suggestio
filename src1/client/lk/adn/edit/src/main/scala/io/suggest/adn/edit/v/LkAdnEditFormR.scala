@@ -285,8 +285,18 @@ class LkAdnEditFormR(
             error = props.node.errors.name
           )
         }( OneRowRValueValFastEq ),
-        townC = __getStringOptConn( _.node.meta.address.town ),
-        addressC = __getStringOptConn( _.node.meta.address.address ),
+        townC = propsProxy.connect { props =>
+          oneRowR.ValueVal(
+            value = props.node.meta.address.town.getOrElse(emptyStrF),
+            error = props.node.errors.town
+          )
+        }( OneRowRValueValFastEq ),
+        addressC = propsProxy.connect { props =>
+          oneRowR.ValueVal(
+            value = props.node.meta.address.address.getOrElse(emptyStrF),
+            error = props.node.errors.address
+          )
+        }( OneRowRValueValFastEq ),
         siteUrlC = propsProxy.connect { props =>
           oneRowR.ValueVal(
             value = props.node.meta.business.siteUrl.getOrElse(emptyStrF),

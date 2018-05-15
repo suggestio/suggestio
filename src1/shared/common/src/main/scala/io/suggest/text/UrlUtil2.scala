@@ -23,7 +23,7 @@ object UrlUtil2 {
   def validateUrl[E](url: String, err: => E): ValidationNel[E, String] = {
     // TODO Задействовать Validation.fromTryCatchThrowable(new URI(url).toString)
     try {
-      val u = new URI(url)
+      val u = URI.create(url)
       Validation.success( u.toString )
     } catch {
       case _: Throwable =>

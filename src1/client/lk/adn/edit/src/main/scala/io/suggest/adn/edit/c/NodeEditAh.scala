@@ -1,19 +1,13 @@
 package io.suggest.adn.edit.c
 
-import java.net.URI
-
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.adn.edit.m._
 import io.suggest.common.empty.OptionUtil
-import io.suggest.err.ErrorConstants
-import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.{ColorBtnClick, ColorChanged, DocBodyClick, PurgeUnusedEdges}
+import io.suggest.model.n2.node.meta.{MAddress, MBusinessInfo, MMetaPub}
 import io.suggest.model.n2.node.meta.colors.MColorTypes
-import io.suggest.proto.HttpConst
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
-
-import scala.util.Try
 
 /**
   * Suggest.io
@@ -55,6 +49,7 @@ class NodeEditAh[M](
     case m: ColorBtnClick =>
       val v0 = value
       val colorType = m.colorTypeOpt.get
+
       def cp2F = MAdnEditColorPickerS(
         ofColorType = colorType,
         topLeftPx   = m.vpXy.copy(
@@ -62,6 +57,7 @@ class NodeEditAh[M](
           y = m.vpXy.y - 260
         )
       )
+
       val v2 = v0.colorPicker.fold {
         // Сейчас color picker скрыт. Открыть его:
         v0.withColorPicker( Some(cp2F) )
@@ -77,28 +73,29 @@ class NodeEditAh[M](
               val l = v0.colorPresetsLen
               val cps1 = if (l > 10) {
                 // Надо укоротить список цветов
-                Iterator(
-                  v0.colorPresets.view(0, 7),
-                  v0.colorPresets.view(l - 2, l)
+                ( v0.colorPresets.view(0, 7) ::
+                  v0.colorPresets.view(l - 2, l) ::
+                  Nil
                 )
                   .flatten
-                  .toList
               } else {
                 v0.colorPresets
               }
               (addColor :: cps1).distinct
             }
           }
-
       }
       updated(v2)
 
+
+    // Клик где-то в документе, чтобы скрыть автоматические попапы. Скрыть color-picker'ы.
     case DocBodyClick =>
       val v0 = value
       v0.colorPicker.fold(noChange) { _ =>
         val v2 = v0.withColorPicker( None )
         updated(v2)
       }
+
 
     // Выставление новое названия узла:
     case m: SetName =>
@@ -110,33 +107,36 @@ class NodeEditAh[M](
       } else {
         // Есть текст, выставить его в состояние. Финальный трим будет на сервере.
         val v1 = v0.withMeta(
-          v0.meta.withName(
-            m.name
-          )
+          v0.meta
+            .withName( m.name )
         )
 
         // Проверить корректность
         val trimmed = m.name.trim
-        // TODO Задействовать нормальную валидацию, а не это.
-        val v2 = if (trimmed.length > 0) {
-          if (v1.errors.name.nonEmpty) {
-            v1.withErrors(
-              v1.errors.withNameError(None)
-            )
-          } else {
-            v1
-          }
+        val trimmedVld = MMetaPub.validateName(trimmed)
 
-        } else {
-          // Сохранить в состояние и выставить ошибку name-поля:
-          v1.withErrors(
-            v1.errors.withNameError(
-              Some( MsgCodes.`Error` )    // TODO нужна нормальная ошибка
+        val v2 = trimmedVld.fold(
+          {errors =>
+            // Сохранить в состояние и выставить ошибку name-поля:
+            v1.withErrors(
+              v1.errors.withName(
+                Some( errors.head )
+              )
             )
-          )
-        }
+          },
+          {_ =>
+            if (v1.errors.name.nonEmpty) {
+              v1.withErrors(
+                v1.errors.withName(None)
+              )
+            } else {
+              v1
+            }
+          }
+        )
         updated(v2)
       }
+
 
     // Редактирование города
     case m: SetTown =>
@@ -154,7 +154,26 @@ class NodeEditAh[M](
             v0.meta.address.withTown( townOpt )
           )
         )
-        updated(v1)
+
+        val v2 = MAddress.validateTown(townOpt).fold(
+          {errors =>
+            v1.withErrors(
+              v1.errors
+                .withTown( Some(errors.head) )
+            )
+          },
+          {_ =>
+            if (v1.errors.town.nonEmpty) {
+              v1.withErrors(
+                v1.errors.withTown(None)
+              )
+            } else {
+              v1
+            }
+          }
+        )
+
+        updated(v2)
       }
 
 
@@ -176,7 +195,24 @@ class NodeEditAh[M](
             )
           )
         )
-        updated(v1)
+
+        val v2 = MAddress.validateAddress(addressOpt).fold(
+          {errors =>
+            v1.withErrors(
+              v1.errors
+                .withAddress( Some(errors.head) )
+            )
+          },
+          {_ =>
+            if (v1.errors.address.nonEmpty) {
+              v1.withErrors( v1.errors.withAddress(None) )
+            } else {
+              v1
+            }
+          }
+        )
+
+        updated(v2)
       }
 
 
@@ -194,33 +230,29 @@ class NodeEditAh[M](
       } else {
         val v1 = v0.withMeta(
           v0.meta.withBusiness(
-            v0.meta.business.withSiteUrl(
-              urlOpt
-            )
+            v0.meta.business
+              .withSiteUrl( urlOpt )
           )
         )
 
         // Попытаться распарсить ссылку в тексте.
-        val v2 = if (urlOpt.exists { url =>
-          Try {
-            ErrorConstants.assertArg( url.startsWith( HttpConst.Proto.HTTP ) )
-            URI.create(url)
-          }.isFailure
-        }) {
-          v1.withErrors(
-            v1.errors.withSiteUrl(
-              Some( MsgCodes.`invalid_url` )
-            )
-          )
-        } else {
-          if (v1.errors.siteUrl.nonEmpty) {
+        val v2 = MBusinessInfo.validateSiteUrl( urlOpt ).fold(
+          {errors =>
             v1.withErrors(
-              v1.errors.withSiteUrl( None )
+              v1.errors
+                .withSiteUrl( Some( errors.head ) )
             )
-          } else {
-            v1
+          },
+          {_ =>
+            if (v1.errors.siteUrl.nonEmpty) {
+              v1.withErrors(
+                v1.errors.withSiteUrl( None )
+              )
+            } else {
+              v1
+            }
           }
-        }
+        )
 
         updated(v2)
       }
