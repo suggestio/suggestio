@@ -25,7 +25,7 @@ import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.m.search.{MMapInitState, MScSearch}
-import io.suggest.sc.sc3.{MSc3Conf, MSc3IndexResp, MSc3Init}
+import io.suggest.sc.sc3.{MSc3IndexResp, MSc3Init}
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.sc.v.ScCssFactory

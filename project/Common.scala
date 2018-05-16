@@ -214,6 +214,11 @@ object Common {
       */
     val JBROTLI = "0.5.0"
 
+    /** Версия react-scroll для управления скроллингом.
+      * @see [[https://github.com/fisshy/react-scroll]]
+      */
+    val REACT_SCROLL = "1.7.9"
+
   }
 
 

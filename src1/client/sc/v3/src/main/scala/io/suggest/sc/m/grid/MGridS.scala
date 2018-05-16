@@ -47,7 +47,7 @@ case class MGridS(
                    jdCss          : JdCss,
                    ads            : Pot[Vector[MScAdData]]        = Pot.empty,
                    hasMoreAds     : Boolean                       = true,
-                   gridSz         : Option[MSize2di]              = None
+                   gridSz         : Option[MSize2di]              = None,
                  )
   extends EmptyProductPot
 {

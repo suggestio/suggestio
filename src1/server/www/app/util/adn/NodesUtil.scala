@@ -53,16 +53,14 @@ class NodesUtil @Inject() (
   import mCommonDi._
 
   /** Через сколько секунд отправлять юзера в ЛК ноды после завершения реги юзера. */
-  private val NODE_CREATED_SUCCESS_RDR_AFTER: Int = configuration.getOptional[Int]("user.node.created.success.redirect.after.sec")
-    .getOrElse(5)
+  private def NODE_CREATED_SUCCESS_RDR_AFTER: Int = 5
 
   // Для новосозданного узла надо создавать новые карточки, испортируя их из указанного узла в указанном кол-ве.
   /** id узла, который содержит дефолтовые карточки. Задается явно в конфиге. */
   def ADN_IDS_INIT_ADS_SOURCE = Nil
 
   /** Кол-во карточек для импорта из дефолтового узла. */
-  val INIT_ADS_COUNT = configuration.getOptional[Int]("user.node.created.mads.import.count")
-    .getOrElse(1)
+  def INIT_ADS_COUNT = 1
 
 
   /** Куда отправлять юзера, когда тот создал новый узел? */
