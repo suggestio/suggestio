@@ -5,7 +5,6 @@ import javax.inject.{Inject, Singleton}
 
 import controllers.routes
 import io.suggest.adn.MAdnRights
-import io.suggest.color.MColorData
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
@@ -14,7 +13,6 @@ import io.suggest.model.n2.media.MMediasCache
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
@@ -114,13 +112,7 @@ class NodesUtil @Inject() (
         basic = MBasicMeta(
           nameOpt = nameOpt
         ),
-        colors = {
-          val dc = NodeDfltColors.getOneRandom()
-          MColors(
-            bg = Some( MColorData(code = dc.bgColor) ),
-            fg = Some( MColorData(code = dc.fgColor) )
-          )
-        }
+        colors = NodeDfltColors.getOneRandom().adnColors
       ),
       extras = MNodeExtras(
         adn =  Some(MAdnExtra(

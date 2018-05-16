@@ -2,7 +2,7 @@ package io.suggest.sc.v
 
 import diode.react.ModelProxy
 import io.suggest.sc.styl.ScScalaCssDefaults._
-import io.suggest.sc.styl.{IScCssArgs, ScCssFactory}
+import io.suggest.sc.styl.IScCssArgs
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -36,5 +36,21 @@ class ScCssR(
     .build
 
   def apply(colorsProxy: Props) = component( colorsProxy )
+
+}
+
+
+import com.softwaremill.macwire._
+import io.suggest.sc.styl.{IScCssArgs, ScCss}
+
+/** Factory-модуль для сборки инстансов ScCss, который зависит от аргументов рендера,
+  * но допускает использование как-то внешних зависимостей.
+  */
+class ScCssFactory {
+
+  /** Параметризованная сборка ScCss (здесь можно добавлять DI-зависимости). */
+  def mkScCss(args: IScCssArgs): ScCss = {
+    wire[ScCss]
+  }
 
 }

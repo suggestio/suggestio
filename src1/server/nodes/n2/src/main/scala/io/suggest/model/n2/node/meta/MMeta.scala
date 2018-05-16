@@ -134,4 +134,6 @@ case class MMeta(
     )
   }
 
+  def withColors(colors: MColors) = copy(colors = colors)
+
 }

@@ -2,7 +2,7 @@ package io.suggest.sc
 
 import com.softwaremill.macwire._
 import io.suggest.jd.render.JdRenderModule
-import io.suggest.sc.styl.{GetScCssF, ScCssFactory}
+import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v._
 import io.suggest.sc.v.grid.{GridCoreR, GridLoaderR, GridR}
 import io.suggest.sc.v.hdr._

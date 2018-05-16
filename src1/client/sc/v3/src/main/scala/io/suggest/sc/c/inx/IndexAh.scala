@@ -11,7 +11,8 @@ import io.suggest.sc.m.search.{GetMoreTags, MScSearch, MapReIndex}
 import io.suggest.sc.m.{MScRoot, ResetUrlRoute}
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.search.MSearchTabs
-import io.suggest.sc.styl.{MScCssArgs, ScCssFactory}
+import io.suggest.sc.styl.MScCssArgs
+import io.suggest.sc.v.ScCssFactory
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._

@@ -1,6 +1,7 @@
 package io.suggest.model.n2.node.meta.colors
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.color.MColorData
 import io.suggest.enum2.EnumeratumUtil
 import io.suggest.sc.ScConstants
 import japgolly.univeq.UnivEq
@@ -26,6 +27,11 @@ object MColorTypes extends StringEnum[MColorType] {
 
 
   override def values = findValues
+
+  def scDefaultColors = MColors(
+    bg = Some( MColorData(Bg.scDefaultHex) ),
+    fg = Some( MColorData(Fg.scDefaultHex) )
+  )
 
 }
 

@@ -26,8 +26,9 @@ import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.m.search.{MMapInitState, MScSearch}
 import io.suggest.sc.sc3.{MSc3Conf, MSc3IndexResp, MSc3Init}
-import io.suggest.sc.styl.{MScCssArgs, ScCss, ScCssFactory}
+import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.tags.MScTagsSearchQs
+import io.suggest.sc.v.ScCssFactory
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.OptFastEq.Wrapped

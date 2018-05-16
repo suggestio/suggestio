@@ -1,6 +1,8 @@
 package models.madn
 
-import io.suggest.common.menum.EnumValue2Val
+import enumeratum.{Enum, EnumEntry}
+import io.suggest.color.MColorData
+import io.suggest.model.n2.node.meta.colors.MColors
 
 import scala.util.Random
 
@@ -10,46 +12,83 @@ import scala.util.Random
  * Created: 18.02.15 11:58
  * Description: Статическая модель с дефолтовыми цветами оформления новосоздаваемых узлов.
  */
-object NodeDfltColors extends Enumeration(0) with EnumValue2Val {
+object NodeDfltColors extends Enum[NodeDfltColor] {
 
-  /**
-   * Внутренняя проверка на валидность указания цвета.
-   * @param color hex-код цвета RGB.
-   */
-  private def assertColorValid(color: String): Unit = {
-    // TODO Использовать регэксп
-    assert(color.length == 6 && !color.startsWith("#"), s"invalid color code: $color")
+  case object C1 extends NodeDfltColor {
+    override def bgColorHex = "544d4d"
+    override def fgColorHex = "f0eded"
   }
 
-  /**
-   * Экземпляр модели дефолтового цвета.
-   * @param bgColor Цвет фона.
-   * @param fgColor Цвет текста/элементов.
-   */
-  protected sealed class Val(val bgColor: String, val fgColor: String) extends super.Val {
-    assertColorValid(bgColor)
-    assertColorValid(fgColor)
+  case object C2 extends NodeDfltColor {
+    override def bgColorHex = "774b5d"
+    override def fgColorHex = "ffffff"
   }
 
-  override type T = Val
+  case object C3 extends NodeDfltColor {
+    override def bgColorHex = "243446"
+    override def fgColorHex = "c9dbc4"
+  }
 
-  val C1  : T = new Val("544d4d", "f0eded")
-  val C2  : T = new Val("774b5d", "ffffff")
-  val C3  : T = new Val("243446", "c9dbc4")
-  val C4  : T = new Val("2f353e", "d5e0f8")
-  val C5  : T = new Val("aabfb0", "7e2d3e")
-  val C6  : T = new Val("def6e8", "454849")
-  val C7  : T = new Val("cf5048", "eefaf9")
-  val C8  : T = new Val("b5b7b6", "39445d")
-  val C9  : T = new Val("e7e7e7", "6c849e")
-  val C10 : T = new Val("9f9295", "952f48")
+  case object C4 extends NodeDfltColor {
+    override def bgColorHex = "2f353e"
+    override def fgColorHex = "d5e0f8"
+  }
+
+  case object C5 extends NodeDfltColor {
+    override def bgColorHex = "aabfb0"
+    override def fgColorHex = "7e2d3e"
+  }
+
+  case object C6 extends NodeDfltColor {
+    override def bgColorHex = "def6e8"
+    override def fgColorHex = "454849"
+  }
+
+  case object C7 extends NodeDfltColor {
+    override def bgColorHex = "cf5048"
+    override def fgColorHex = "eefaf9"
+  }
+
+  case object C8 extends NodeDfltColor {
+    override def bgColorHex = "b5b7b6"
+    override def fgColorHex = "39445d"
+  }
+
+  case object C9 extends NodeDfltColor {
+    override def bgColorHex = "e7e7e7"
+    override def fgColorHex = "6c849e"
+  }
+
+  case object C10 extends NodeDfltColor {
+    override def bgColorHex = "9f9295"
+    override def fgColorHex = "952f48"
+  }
+
+
+  override val values = findValues
 
   /** Вернуть рандомный цвет. */
-  def getOneRandom(rnd: Random = new Random()): T = {
+  def getOneRandom(rnd: Random = new Random()): NodeDfltColor = {
     val id = rnd.nextInt(values.size)
-    apply(id)
+    values(id)
   }
 
 }
 
+
+/** Класс одного дефолтового цвета. */
+sealed abstract class NodeDfltColor extends EnumEntry {
+
+  def bgColorHex: String
+  def fgColorHex: String
+
+  /** Цвета для adn-узла. */
+  final def adnColors: MColors = {
+    MColors(
+      bg = Some( MColorData(bgColorHex) ),
+      fg = Some( MColorData(fgColorHex) )
+    )
+  }
+
+}
 

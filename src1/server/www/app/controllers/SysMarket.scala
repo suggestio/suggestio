@@ -1,7 +1,6 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
-
 import controllers.sysctl._
 import controllers.sysctl.domain.SmDomains
 import controllers.sysctl.invite.SmSendEmailInvite
@@ -42,6 +41,8 @@ import views.html.sys1.market.ad._
 import views.html.sys1.market.adn._
 
 import scala.concurrent.Future
+import japgolly.univeq._
+import models.madn.NodeDfltColors
 
 /**
  * Suggest.io
@@ -402,7 +403,16 @@ class SysMarket @Inject() (
                     }
                   ),
                   // Возможно, id создаваемого документа уже задан.
-                  id          = ncp.withId
+                  id          = ncp.withId,
+                  // Если создаётся adn-узел, и цвета не заданы, то надо выставить рандомные цвета:
+                  meta = if ((mnode0.common.ntype ==* MNodeTypes.AdnNode) && mnode0.meta.colors.adnColors.exists(_.isEmpty)) {
+                    val colors2 = NodeDfltColors.getOneRandom().adnColors
+                    LOGGER.trace(s"$logPrefix Resetting colors for created adn node: $colors2")
+                    mnode0.meta
+                      .withColors( colors2 )
+                  } else {
+                    mnode0.meta
+                  }
                 )
                 nodeId <- mNodes.save(mnode1)
 

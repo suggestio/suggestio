@@ -44,7 +44,7 @@ object MMetaPub {
       validateName( metaPub.name ) |@|
       MAddress.validate( metaPub.address ) |@|
       MBusinessInfo.validate( metaPub.business ) |@|
-      MColors.validateHexSome( metaPub.colors )
+      MColors.validateOrAdnSome( metaPub.colors )
     )(apply _)
   }
 

@@ -4,11 +4,11 @@ import boopickle.Default._
 import io.suggest.color.MColorData
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.err.ErrorConstants
-import io.suggest.scalaz.ScalazUtil
+import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import scalaz.ValidationNel
+import scalaz.{Validation, ValidationNel}
 import scalaz.syntax.apply._
 
 /**
@@ -56,11 +56,21 @@ object MColors extends IEmpty {
   }
 
   /** Проверка, что все цвета выставлены. */
-  def validateHexSome(color: MColors): ValidationNel[String, MColors] = {
+  def validateHexSome(color: MColors): StringValidationNel[MColors] = {
     (
       ScalazUtil.liftNelSome(color.bg, "bg." + ErrorConstants.Words.EXPECTED)( MColorData.validateHexCodeOnly ) |@|
       ScalazUtil.liftNelSome(color.fg, "fg." + ErrorConstants.Words.EXPECTED)( MColorData.validateHexCodeOnly )
     )(apply _)
+  }
+
+  /** Костыль: проверка заданных цветов, но если цвета не заданы, то возвращать дефолтовые.
+    * Появился тут, т.к. ранее через SysMarket создавались adn-узлы без цветов, но в новой lk-adn-edit форме цвета обязательны.
+    * Проблема решается на уровне валидации, подстановкой всегда одинаковых дефолтовых данных на стадии валидации и сохранения.
+    */
+  def validateOrAdnSome(colors: MColors): StringValidationNel[MColors] = {
+    validateHexSome(colors).orElse {
+      Validation.success( MColorTypes.scDefaultColors )
+    }
   }
 
 }
@@ -81,6 +91,7 @@ case class MColors(
       .flatten
   }
 
+  def adnColors = bg :: fg :: Nil
 
   def ofType(mct: MColorType): Option[MColorData] = {
     mct match {
