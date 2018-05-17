@@ -5,6 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.grid.GridScrollUtil
 import io.suggest.jd.render.v._
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.sc.m.grid.{GridScroll, MGridS}
@@ -80,6 +81,7 @@ class GridR(
 
         <.div(
           ScCss.smFlex, GridCss.wrapper,
+          ^.id := GridScrollUtil.SCROLL_CONTAINER_ID,
           ^.onScroll ==> onGridScroll,
 
           <.div(

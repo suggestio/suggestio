@@ -1,7 +1,10 @@
 package io.suggest.sc.c.grid
 
+import com.github.fisshy.react.scroll
+import com.github.fisshy.react.scroll.LinkProps
 import diode._
 import diode.data.{PendingBase, Pot, Ready}
+import io.suggest.ad.blk.BlockPaddings
 import io.suggest.dev.{MScreen, MSzMults}
 import io.suggest.err.ErrorConstants
 import io.suggest.jd.MJdConf
@@ -20,8 +23,12 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.grid.GridScrollUtil
+import io.suggest.sc.styl.ScCss
 import japgolly.univeq._
 
+import scala.concurrent.Future
+import scala.scalajs.js.{UndefOr, |}
 import scala.util.Success
 
 /**
@@ -298,13 +305,14 @@ class GridAdsAh[M](
             updated(v2, fx)
 
           } { _ =>
-            // Карточка уже открыта, её надо свернуть назад в main-блок.
             val ad1 = ad0.withFocused( Pot.empty )
             val ads2 = _saveAdIntoAds(index, ad1, v0)
             val v2 = v0.copy(
               ads   = ads2,
               jdCss = _mkJdCss(ads2, v0.jdConf)
             )
+            // В фоне - запустить скроллинг к началу карточки. TODO Сделать Effect? Нужен тогда Action какой-то возвращать, а у нас тут Unit/void.
+            _scrollToAd( ad0 )
             updated(v2)
           }
         }
@@ -378,7 +386,8 @@ class GridAdsAh[M](
                     jdCss = _mkJdCss(adsPot2, v0.jdConf),
                     ads   = adsPot2
                   )
-                  // TODO Надо проскроллить выдачу на начало открытой карточки.
+                  // Надо проскроллить выдачу на начало открытой карточки:
+                  _scrollToAd( ad1 )
                   updated(v2)
 
                 case other =>
@@ -434,6 +443,23 @@ class GridAdsAh[M](
     v0.withAds(
       _saveAdIntoAds(index, newAd, v0)
     )
+  }
+
+
+  private def _scrollToAd(adData: MScAdData): Unit = {
+    // Карточка уже открыта, её надо свернуть назад в main-блок.
+    Future {
+      for (adId <- adData.nodeId) {
+        val scrollId = GridScrollUtil.adId2scrollElName(adId)
+        scroll.Scroller.scrollTo( scrollId, new LinkProps {
+          override val smooth = true
+          // Надо скроллить grid wrapper, а не document:
+          override val containerId = GridScrollUtil.SCROLL_CONTAINER_ID
+          // Сдвиг обязателен, т.к. карточки заезжают под заголовок.
+          override val offset = -ScCss.HEADER_HEIGHT_PX - BlockPaddings.default.value
+        })
+      }
+    }
   }
 
 }

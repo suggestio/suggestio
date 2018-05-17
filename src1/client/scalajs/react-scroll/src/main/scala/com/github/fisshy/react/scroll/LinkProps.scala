@@ -13,6 +13,7 @@ trait LinkProps extends js.Object {
   val activeClass         : js.UndefOr[String]                    = js.undefined
   // В link оно помечено как required
   val to                  : js.UndefOr[String]                    = js.undefined
+  val containerId         : js.UndefOr[String]                    = js.undefined
   val spy                 : js.UndefOr[Boolean]                   = js.undefined
 
   /** true | false | "easeInOutQuint" | ...

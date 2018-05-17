@@ -11,7 +11,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.{EsModelJMXBaseImpl, EsModelJMXMBeanI, EsmV2Deserializer, IEsDocMeta}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.id.OptStrId
-import io.suggest.text.util.StringUtil
+import io.suggest.text.StringUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 

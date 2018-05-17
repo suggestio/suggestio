@@ -54,6 +54,9 @@ object ScCss {
     */
   val TABS_OFFSET_PX = 115
 
+  /** Высота заголовка. */
+  val HEADER_HEIGHT_PX = 50
+
   implicit def univEq: UnivEq[ScCss] = UnivEq.derive
 
 }
@@ -258,7 +261,8 @@ case class ScCss( args: IScCssArgs )
     val header = style(
       addClassNames( HEADER, Css.Position.ABSOLUTE ),
       backgroundColor( _bgColorCss ),
-      borderColor( _fgColorCss )
+      borderColor( _fgColorCss ),
+      height( ScCss.HEADER_HEIGHT_PX.px )
     )
 
     object Buttons {

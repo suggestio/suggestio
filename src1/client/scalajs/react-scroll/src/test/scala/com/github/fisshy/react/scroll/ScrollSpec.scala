@@ -4,8 +4,6 @@ import minitest._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
-import scala.scalajs.js.UndefOr
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

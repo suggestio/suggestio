@@ -25,55 +25,6 @@ object StringUtil {
   def B32HEX_ZERO_BYTE = '0'.toByte
 
 
-  /**
-   * Сгенерить случайны id-шник вида "64srGaf345TfQw34fa"
-   * @param len Опциональная длина выходной строки.
-   * @return Случайная строка.
-   */
-  def randomId(len: Int = 10): String = {
-    _mkRandomId(len)(randomIdChar)
-  }
-
-  private def _mkRandomId(len: Int)(mkCharF: Random => Char): String = {
-    val rnd = new Random()
-    (1 to len)
-      .iterator
-      .map(_ => mkCharF(rnd))
-      .mkString
-  }
-
-
-  /** Сгенерить случайный символ из диапазона 0-9 a-z A-Z
-   * @return случайный alphanumeric символ.
-   */
-  @tailrec
-  private def randomIdChar(rnd: Random): Char = {
-    rnd.nextPrintableChar() match {
-      case c if c>='0' && c<='9' || c>='A' && c<='Z' || c>='a' && c<='z'  => c
-      case _ => randomIdChar(rnd)
-    }
-  }
-
-  /** Генерация одного случайного lower-case символа латиницы.
-   * @return Символ от 'a' до 'z'.
-   */
-  @tailrec
-  def randomIdLatLcChar(rnd: Random): Char = {
-    rnd.nextPrintableChar() match {
-      case c if c>='a' && c<='z'  => c
-      case c if c>='A' && c<='Z'  => c.toLower
-      case _                      => randomIdLatLcChar(rnd)
-    }
-  }
-
-  /** Генерация случайно строки из латинских символов от 'a' до 'z'.
-   * @param len Длина результирующей строки.
-   * @return Случайная строка вида "asdftbhdb" длины len.
-   */
-  def randomIdLatLc(len: Int = 10): String = {
-    _mkRandomId(len)(randomIdLatLcChar)
-  }
-
 
   def getB32Encoder = new Base32(true)
   def getLongBuffer = ByteBuffer.allocate(LONG_BYTESIZE)

@@ -1,9 +1,12 @@
 package io.suggest.sc.v.grid
 
 import com.github.dantrain.react.stonecutter.{CSSGrid, GridComponents}
+import com.github.fisshy.react.scroll
+import com.github.fisshy.react.scroll.ElementProps
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants.`.`
+import io.suggest.grid.GridScrollUtil
 import io.suggest.grid.build._
 import io.suggest.jd.render.m.{MJdArgs, MJdRenderArgs}
 import io.suggest.jd.render.v.{JdGridUtil, JdR}
@@ -15,6 +18,8 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import scalaz.Tree
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -134,31 +139,46 @@ class GridCoreR(
           (tpl2, j) <- ad.flatGridTemplates.iterator.zipWithIndex
 
         } yield {
+          // Для скроллинга требуется повесить scroll.Element вокруг первого блока.
+          val jdt = mgridProxy.wrap { _ =>
+            // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
+            MJdArgs(
+              template = tpl2,
+              edges    = edges,
+              jdCss    = mgrid.jdCss,
+              conf     = mgrid.jdConf,
+              renderArgs = jdRenderArgs
+            )
+          } ( jdR.apply )
+
+          val k = rootId + `.` + j
           // На телевизорах и прочих около-умных устройствах без нормальных устройств ввода,
           // для кликов подсвечиваются только ссылки.
           // Поэтому тут используется <A>-тег, хотя div был бы уместнее.
           <.a(
-            ^.key := (rootId + `.` + j),
+            ^.key := k,
 
             // Реакция на клики, когда nodeId задан.
             ad.nodeId.whenDefined { nodeId =>
               ^.onClick --> onBlockClick(nodeId)
             },
 
-            mgridProxy.wrap { _ =>
-              // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
-              MJdArgs(
-                template = tpl2,
-                edges    = edges,
-                jdCss    = mgrid.jdCss,
-                conf     = mgrid.jdConf,
-                renderArgs = jdRenderArgs
-              )
-            } ( jdR.apply )
+            if (j > 0 || ad.nodeId.isEmpty) {
+              jdt
+            } else {
+              // Для верхнего блока карточки - повесить маркер скроллинга react-scroll.
+              val adId = ad.nodeId.get
+              val scrollId = GridScrollUtil.adId2scrollElName(adId)
+              scroll.Element.component {
+                new ElementProps {
+                  override val name = scrollId
+                  override val id   = scrollId
+                }
+              }( jdt )
+            }
           )
         }
-        val arr = iter.toVdomArray
-        arr
+        iter.toVdomArray
       }
     }
 
