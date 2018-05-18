@@ -106,10 +106,9 @@ class GridAh[M](
       val v0 = value
       if (
         !v0.core.ads.isPending &&
-        v0.hasMoreAds &&
-        v0.gridSz.exists { gridSz =>
+        v0.hasMoreAds && {
           // Оценить уровень скролла. Возможно, уровень не требует подгрузки ещё карточек
-          val contentHeight = gridSz.height + TileConstants.CONTAINER_OFFSET_TOP
+          val contentHeight = v0.core.gridBuild.gridWh.height + TileConstants.CONTAINER_OFFSET_TOP
           val screenHeight = screenRO.value.height
           val scrollPxToGo = contentHeight - screenHeight - m.scrollTop
           scrollPxToGo < TileConstants.LOAD_MORE_SCROLL_DELTA_PX

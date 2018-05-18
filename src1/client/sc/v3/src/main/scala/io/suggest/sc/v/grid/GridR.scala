@@ -57,7 +57,7 @@ class GridR(
   protected[this] case class State(
                                     jdCssC              : ReactConnectProxy[JdCss],
                                     coreC               : ReactConnectProxy[MGridCoreS],
-                                    gridSzC             : ReactConnectProxy[Option[MSize2di]],
+                                    gridSzC             : ReactConnectProxy[MSize2di],
                                     loaderPropsOptC     : ReactConnectProxy[Option[gridLoaderR.PropsVal]]
                                   )
 
@@ -96,16 +96,13 @@ class GridR(
               // Непосредственный рендер плитки, снаружи от рендера connect-зависимого контейнера плитки.
               val gridCore = s.coreC { gridCoreR.apply }
 
-              s.gridSzC { gridSzOptProxy =>
+              s.gridSzC { gridSzProxy =>
+                val gridSz = gridSzProxy.value
+
                 <.div(
                   GridCss.container,
-
-                  gridSzOptProxy.value.whenDefined { gridSz =>
-                    TagMod(
-                      ^.width  := gridSz.width.px,
-                      ^.height := (gridSz.height + TileConstants.CONTAINER_OFFSET_BOTTOM + TileConstants.CONTAINER_OFFSET_TOP).px
-                    )
-                  },
+                  ^.width  := gridSz.width.px,
+                  ^.height := (gridSz.height + TileConstants.CONTAINER_OFFSET_BOTTOM + TileConstants.CONTAINER_OFFSET_TOP).px,
 
                   gridCore
                 )
@@ -135,8 +132,8 @@ class GridR(
         },
 
         gridSzC = propsProxy.connect { props =>
-          props.grid.gridSz
-        }( OptFastEq.OptValueEq ),
+          props.grid.core.gridBuild.gridWh
+        }( FastEq.ValueEq ) ,
 
         loaderPropsOptC = propsProxy.connect { props =>
           OptionUtil.maybe(props.grid.core.ads.isPending) {
@@ -144,7 +141,7 @@ class GridR(
             gridLoaderR.PropsVal(
               fgColor = fgColor,
               // В оригинальной выдачи, линия отрыва шла через весь экран. Тут для простоты -- только под внутренним контейнером.
-              widthPx = props.grid.gridSz.map(_.width)
+              widthPx = Some( props.grid.core.gridBuild.gridWh.width )
             )
           }
         }( OptFastEq.Wrapped )
