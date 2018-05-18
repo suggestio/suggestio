@@ -1,6 +1,5 @@
 package io.suggest.sc.m.grid
 
-import io.suggest.grid.build.GridBuildRes_t
 import io.suggest.sc.m.ISc3Action
 import io.suggest.sc.sc3.MSc3Resp
 
@@ -39,12 +38,6 @@ case class GridLoadAdsResp(
   extends IGridAction
 
 
-/** Сигнал о получении данных по построенной плитке.
-  *
-  * @param res Результат работы GridBuilder'а.
-  */
-case class HandleGridBuildRes(res: GridBuildRes_t) extends IGridAction
-
 /** Клик по карточке в плитке. */
 case class GridBlockClick(nodeId: String) extends IGridAction
 
@@ -59,3 +52,6 @@ case class GridScroll(scrollTop: Double) extends IGridAction
   * Полезно для ранней реакции на изменение размеров экрана.
   */
 case object GridReConf extends IGridAction
+
+/** Выполнен скроллинг карточек. */
+case object GridScrollDone extends IGridAction

@@ -2,7 +2,7 @@ package io.suggest.jd.render.v
 
 import com.github.dantrain.react.stonecutter.{CssGridProps, EnterExitStyle, GridComponent_t}
 import io.suggest.ad.blk.{BlockMeta, BlockWidths}
-import io.suggest.grid.build.{MGridBuildArgsJs, GridBuilderJs}
+import io.suggest.grid.build.{GridBuilderJs, MGridBuildResult}
 import io.suggest.jd.MJdConf
 import io.suggest.jd.tags.JdTag
 
@@ -33,14 +33,14 @@ class JdGridUtil(
     * @return Инстанс CssGridProps, пригодный для передачи в CSSGrid(_)(...).
     */
   def mkCssGridArgs(
-                     gbArgs           : MGridBuildArgsJs,
+                     gbRes            : MGridBuildResult,
                      conf             : MJdConf,
                      tagName          : GridComponent_t
                    ): CssGridProps = {
     // Каррируем функцию вне тела new CssGridProps{}, чтобы sjs-компилятор меньше мусорил левыми полями.
     // https://github.com/scala-js/scala-js/issues/2748
     // Это снизит риск ругани react'а на неведомый хлам внутри props.
-    val gridLayoutF = gridBuilder.stoneCutterLayout( gbArgs ) _
+    val gridLayoutF = gridBuilder.stoneCutterLayout( gbRes ) _
 
     val szMultD = conf.szMult.toDouble
 

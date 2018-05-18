@@ -8,7 +8,7 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.grid.GridScrollUtil
 import io.suggest.jd.render.v._
 import io.suggest.react.ReactDiodeUtil
-import io.suggest.sc.m.grid.{GridScroll, MGridS}
+import io.suggest.sc.m.grid.{GridScroll, MGridCoreS, MGridS}
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.tile.TileConstants
 import io.suggest.spa.OptFastEq
@@ -32,7 +32,7 @@ class GridR(
            ) {
 
   import JdCss.JdCssFastEq
-  import MGridS.MGridSFastEq
+  import MGridCoreS.MGridCoreSFastEq
   import gridLoaderR.GridLoaderPropsValFastEq
 
 
@@ -56,7 +56,7 @@ class GridR(
   /** Модель состояния компонента. */
   protected[this] case class State(
                                     jdCssC              : ReactConnectProxy[JdCss],
-                                    gridC               : ReactConnectProxy[MGridS],
+                                    coreC               : ReactConnectProxy[MGridCoreS],
                                     gridSzC             : ReactConnectProxy[Option[MSize2di]],
                                     loaderPropsOptC     : ReactConnectProxy[Option[gridLoaderR.PropsVal]]
                                   )
@@ -94,7 +94,7 @@ class GridR(
             // TODO Функция сборки плитки неоптимальна и перегенеривается на каждый чих. Это вызывает лишние перерендеры контейнера плитки.
             {
               // Непосредственный рендер плитки, снаружи от рендера connect-зависимого контейнера плитки.
-              val gridCore = s.gridC { gridCoreR.apply }
+              val gridCore = s.coreC { gridCoreR.apply }
 
               s.gridSzC { gridSzOptProxy =>
                 <.div(
@@ -127,11 +127,11 @@ class GridR(
       // Наконец, сборка самого состояния.
       State(
         jdCssC = propsProxy.connect { props =>
-          props.grid.jdCss
+          props.grid.core.jdCss
         },
 
-        gridC = propsProxy.connect { props =>
-          props.grid
+        coreC = propsProxy.connect { props =>
+          props.grid.core
         },
 
         gridSzC = propsProxy.connect { props =>
@@ -139,7 +139,7 @@ class GridR(
         }( OptFastEq.OptValueEq ),
 
         loaderPropsOptC = propsProxy.connect { props =>
-          OptionUtil.maybe(props.grid.ads.isPending) {
+          OptionUtil.maybe(props.grid.core.ads.isPending) {
             val fgColor = props.fgColor.getOrElse( MColorData.Examples.WHITE )
             gridLoaderR.PropsVal(
               fgColor = fgColor,

@@ -14,9 +14,4 @@ object GridScrollUtil {
   // TODO Если используем рандомные id, то надо избежать комбинаций букв, приводящих к срабатываниям блокировщиков рекламы.
   lazy val SCROLL_CONTAINER_ID = StringUtil.randomIdLatLc()
 
-  /** Сборка id для скроллинга к карточке на основе id карточки. */
-  def adId2scrollElName(nodeId: String): String = {
-    nodeId
-  }
-
 }

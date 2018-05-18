@@ -244,11 +244,11 @@ class ScRootR (
 
         editAdC = propsProxy.connect { props =>
           for {
-            scJsRouter  <- props.internals.jsRouter.toOption
-            focusedAdOuter <- props.grid.focusedAdOpt
-            focusedData <- focusedAdOuter.focused.toOption
+            scJsRouter      <- props.internals.jsRouter.toOption
+            focusedAdOuter  <- props.grid.core.focusedAdOpt
+            focusedData     <- focusedAdOuter.focused.toOption
             if focusedData.canEdit
-            focusedAdId <- focusedAdOuter.nodeId
+            focusedAdId     <- focusedAdOuter.nodeId
           } yield {
             editAdR.PropsVal(
               adId      = focusedAdId,

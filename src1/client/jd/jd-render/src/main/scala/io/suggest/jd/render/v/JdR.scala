@@ -7,7 +7,7 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.grid.build.{MGbBlock, MGridBuildArgsJs}
+import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs}
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd.MQdOp
@@ -297,15 +297,19 @@ class JdR(
         // Плитку отсюда полностью вынести не удалось.
         CSSGrid {
           jdGridUtil.mkCssGridArgs(
-            gbArgs = MGridBuildArgsJs(
-              itemsExtDatas = jdGridUtil
-                .jdTrees2bms(jd.subForest)
-                .map { bm =>
-                  MGbBlock( bm )
-                }
-                .toList,
-              jdConf = jdArgs.conf
-            ),
+            gbRes = GridBuilderUtil.buildGrid {
+              MGridBuildArgs(
+                itemsExtDatas = jdGridUtil
+                  .jdTrees2bms(jd.subForest)
+                  .map { bm =>
+                    MGbBlock( None, bm )
+                  }
+                  .toList,
+                jdConf = jdArgs.conf,
+                columnsCount = jdArgs.conf.gridColumnsCount,
+                offY = 0
+              )
+            },
             conf = jdArgs.conf,
             tagName = GridComponents.DIV
           )

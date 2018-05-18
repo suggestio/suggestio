@@ -44,7 +44,7 @@ object GridBuilderUtil {
     * @param args Аргументы для рендера.
     * @return Результат сборки.
     */
-  def buildGrid[Coords_t](args: MGridBuildArgs[Coords_t]): MGridBuildResult[Coords_t] = {
+  def buildGrid(args: MGridBuildArgs): MGridBuildResult = {
     // Чисто самоконтроль, потом можно выкинуть.
     if (args.jdConf.gridColumnsCount < BlockWidths.max.relSz)
       throw new IllegalArgumentException( ErrorMsgs.GRID_CONFIGURATION_INVALID + HtmlConstants.SPACE + args.jdConf +
@@ -97,8 +97,9 @@ object GridBuilderUtil {
           // Это поможет спозиционировать блок только по вертикали, не трогая горизонтальную координату.
           // Это сдвиг вниз, он удобен при конфликте с широкой карточкой за место на экране.
           val mgiProps = MGbBlock(
-            bm = reDoItm.bm,
-            orderN = Some( reDoItm.orderN )
+            nodeId  = None,   // TODO Тут непонятно, откуда взять данные для nodeId. Но надо ли?
+            bm      = reDoItm.bm,
+            orderN  = Some( reDoItm.orderN )
           ) :: Nil
           // Используем rootLvl для сборки под-контекста, т.к. reDoItm.topLeft задано в абсолютных (root) координатах.
           val subLvl = MGbLevelState(
@@ -367,29 +368,29 @@ object GridBuilderUtil {
     )
 
     // Скомпилировать финальные координаты.
-    val coordsFinal = args.iter2coordsF {
-      s9
-        .resultsAccRev
-        // Восстановить исходный порядок. Сначала быстрый реверс, затем досортировка.
-        .reverse
-        // Доп.сортировка требуется, т.к. мелкие нарушения порядка происходят при конфликтах wide-блоков с
-        // предшествующими им блоками в соседних колонках. После реверса тут сравнителньо немного перестановок.
-        .sortBy(_.orderN)
-        .iterator
-        // Заменить колонки и строки на пиксели.
-        .map { res =>
-          MCoords2di(
-            // Эксплуатация костыля по абсолютной центровке какого-то блока вместо расположения в плитке:
-            x = res.forceCenterX.fold {
-              res.topLeft.x * paddedCellWidthPx
-            } { widthOrigPx =>
-              // Отцентровать используя указанный сдвиг относительно центра плитки.
-              ((gridWidthPx - widthOrigPx) * szMultD / 2).toInt // ((gridWidthPx * szMultD / 2).toInt + centerOffsetX) / 2
-            },
-            y = Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
-          )
-        }
-    }
+    val coordsFinal = s9
+      .resultsAccRev
+      // Восстановить исходный порядок. Сначала быстрый реверс, затем досортировка.
+      .reverse
+      // Доп.сортировка требуется, т.к. мелкие нарушения порядка происходят при конфликтах wide-блоков с
+      // предшествующими им блоками в соседних колонках. После реверса тут сравнителньо немного перестановок.
+      .sortBy(_.orderN)
+      .iterator
+      // Заменить колонки и строки на пиксели.
+      .map { res =>
+        MCoords2di(
+          // Эксплуатация костыля по абсолютной центровке какого-то блока вместо расположения в плитке:
+          x = res.forceCenterX.fold {
+            res.topLeft.x * paddedCellWidthPx
+          } { widthOrigPx =>
+            // Отцентровать используя указанный сдвиг относительно центра плитки.
+            ((gridWidthPx - widthOrigPx) * szMultD / 2).toInt // ((gridWidthPx * szMultD / 2).toInt + centerOffsetX) / 2
+          },
+          y = Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
+        )
+      }
+      // НЕ ЛЕНИВАЯ коллекция, но это скорее дань традициям. Раньше на toStream/toSeq всё ломалось, т.к. переменные обновлялись прямо внутри итератора. Сейчас уже наверное можно и toStream делать.
+      .toList
 
     MGridBuildResult(
       coords = coordsFinal,

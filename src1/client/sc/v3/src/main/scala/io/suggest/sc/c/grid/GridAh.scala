@@ -1,7 +1,6 @@
 package io.suggest.sc.c.grid
 
-import com.github.fisshy.react.scroll
-import com.github.fisshy.react.scroll.LinkProps
+import com.github.fisshy.react.scroll.{AnimateScroll, LinkProps}
 import diode._
 import diode.data.{PendingBase, Pot, Ready}
 import io.suggest.ad.blk.BlockPaddings
@@ -24,11 +23,11 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.grid.GridScrollUtil
+import io.suggest.grid.build.{GridBuilderUtil, MGridBuildArgs, MGridBuildResult}
 import io.suggest.sc.styl.ScCss
 import japgolly.univeq._
+import io.suggest.react.ReactDiodeUtil.ActionHandlerExt
 
-import scala.concurrent.Future
-import scala.scalajs.js.{UndefOr, |}
 import scala.util.Success
 
 /**
@@ -37,7 +36,7 @@ import scala.util.Success
   * Created: 14.11.17 18:59
   * Description: Утиль контроллера плитки карточек.
   */
-object GridAdsAh {
+object GridAh {
 
   private def GRID_CONF = MGridCalcConf.EVEN_GRID
 
@@ -73,16 +72,16 @@ object GridAdsAh {
 /** Контроллер плитки карточек.
   * @param searchArgsRO Доступ к текущим аргументам поиска карточек.
   */
-class GridAdsAh[M](
-                    api             : IFindAdsApi,
-                    searchArgsRO    : ModelRO[MFindAdsReq],
-                    screenRO        : ModelRO[MScreen],
-                    jdCssFactory    : JdCssFactory,
-                    modelRW         : ModelRW[M, MGridS]
-                  )
+class GridAh[M](
+                 api             : IFindAdsApi,
+                 searchArgsRO    : ModelRO[MFindAdsReq],
+                 screenRO        : ModelRO[MScreen],
+                 jdCssFactory    : JdCssFactory,
+                 modelRW         : ModelRW[M, MGridS]
+               )
   extends ActionHandler(modelRW)
   with Log
-{
+{ ah =>
 
 
   /** Простая и ресурсоёмкая пересборка CSS карточек. */
@@ -106,7 +105,7 @@ class GridAdsAh[M](
     case m: GridScroll =>
       val v0 = value
       if (
-        !v0.ads.isPending &&
+        !v0.core.ads.isPending &&
         v0.hasMoreAds &&
         v0.gridSz.exists { gridSz =>
           // Оценить уровень скролла. Возможно, уровень не требует подгрузки ещё карточек
@@ -121,7 +120,10 @@ class GridAdsAh[M](
           GridLoadAds(clean = false, ignorePending = true)
         }
         // Выставить pending в состояние, чтобы повторные события скролла игнорились.
-        val v2 = v0.withAds( v0.ads.pending() )
+        val v2 = v0.withCore(
+          v0.core
+            .withAds( v0.core.ads.pending() )
+        )
         updatedSilent(v2, fx)
 
       } else {
@@ -130,31 +132,19 @@ class GridAdsAh[M](
       }
 
 
-    // Команда к обновлению фактических данных по плитке.
-    case m: HandleGridBuildRes =>
-      val v0 = value
-      if (m.res.width <= 0 || m.res.height <= 0 || v0.gridSz.contains(m.res)) {
-        // Размер плитки не изменился или невалиден. Такое надо игнорить.
-        noChange
-      } else {
-        val v2 = v0.withGridSz( Some(m.res) )
-        updated(v2)
-      }
-
-
     // Сигнал к загрузке карточек с сервера согласно текущему состоянию выдачи.
     case m: GridLoadAds =>
       val v0 = value
-      if (v0.ads.isPending && !m.ignorePending) {
-        LOG.warn( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.ads) )
+      if (v0.core.ads.isPending && !m.ignorePending) {
+        LOG.warn( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.core.ads) )
         noChange
 
       } else {
         val searchArgs = searchArgsRO.value
-        val nextReqPot2 = v0.ads.pending()
+        val nextReqPot2 = v0.core.ads.pending()
         val fx = Effect {
           // Если clean, то нужно обнулять offset.
-          val offset = v0.ads
+          val offset = v0.core.ads
             .filter(_ => !m.clean)
             .fold(0)(_.size)
 
@@ -174,7 +164,10 @@ class GridAdsAh[M](
           }
         }
 
-        val v2 = v0.withAds( nextReqPot2 )
+        val v2 = v0.withCore(
+          v0.core
+            .withAds( nextReqPot2 )
+        )
         updated(v2, fx)
       }
 
@@ -183,12 +176,16 @@ class GridAdsAh[M](
     case m: GridLoadAdsResp =>
       // Сверить timestamp с тем, что внутри Pot'а.
       val v0 = value
-      if ( v0.ads.isPendingWithStartTime(m.startTime) ) {
+      if ( v0.core.ads.isPendingWithStartTime(m.startTime) ) {
         // Это и есть ожидаемый ответ сервера. Разобраться, что там внутри...
-        val v2 = m.resp.fold(
+        m.resp.fold(
           {ex =>
             // Записать ошибку в состояние.
-            v0.withAds( v0.ads.fail(ex) )
+            val v2 = v0.withCore(
+              v0.core
+                .withAds( v0.core.ads.fail(ex) )
+            )
+            updated(v2)
           },
           {scResp =>
             // Сервер ответил что-то вразумительное.
@@ -205,7 +202,10 @@ class GridAdsAh[M](
                 // Сервер может присылать уже открытые карточи - это нормально.
                 // Главное - их сразу пропихивать и в focused, и в обычные блоки.
                 val isFocused = sc3AdData.jd.template.rootLabel.name ==* MJdTagNames.DOCUMENT
-                val jsEdgesMap = sc3AdData.jd.edgesMap.mapValues(MEdgeDataJs(_))
+                val jsEdgesMap = sc3AdData.jd
+                  .edgesMap
+                  .mapValues(MEdgeDataJs(_))
+
                 MScAdData(
                   nodeId    = sc3AdData.jd.nodeId,
                   main      = MBlkRenderData(
@@ -235,30 +235,40 @@ class GridAdsAh[M](
               }
               .toVector
 
-            val (ads2, jdConf2) = if (m.evidence.clean) {
-              val jdConf1 = v0.jdConf.withSzMult(
+            val (ads2, jdConf2, fxOpt) = if (m.evidence.clean) {
+              val jdConf1 = v0.core.jdConf.withSzMult(
                 findAdsResp.szMult
               )
-              val ads1 = v0.ads.ready(newScAds)
-              (ads1, jdConf1)
+              val ads1 = v0.core.ads.ready(newScAds)
+              val scrollFx: Effect = Effect.action {
+                AnimateScroll.scrollToTop( _scrollOptions )
+                GridScrollDone
+              }
+              (ads1, jdConf1, Some(scrollFx))
 
             } else {
               // Проверить, совпадает ли SzMult:
-              ErrorConstants.assertArg( findAdsResp.szMult ==* v0.jdConf.szMult )
-              val scAds2 = v0.ads.toOption.fold(newScAds)(_ ++ newScAds)
+              ErrorConstants.assertArg( findAdsResp.szMult ==* v0.core.jdConf.szMult )
+              val scAds2 = v0.core.ads.toOption.fold(newScAds)(_ ++ newScAds)
               // ready - обязателен, иначе останется pending и висячий без дела GridLoaderR.
-              val ads1 = v0.ads.ready( scAds2 )
-              (ads1, v0.jdConf)
+              val ads1 = v0.core.ads.ready( scAds2 )
+              (ads1, v0.core.jdConf, None)
             }
-            v0.copy(
-              jdConf      = jdConf2,
-              jdCss       = _mkJdCss(ads2, jdConf2),
-              ads         = ads2,
+
+            val v2 = v0.copy(
+              core = v0.core.copy(
+                jdConf      = jdConf2,
+                jdCss       = _mkJdCss(ads2, jdConf2),
+                ads         = ads2,
+                // Отребилдить плитку:
+                gridBuild   = _rebuildGrid(ads2, jdConf2)
+              ),
               hasMoreAds  = findAdsResp.ads.lengthCompare(m.limit) >= 0
             )
+
+            ah.updatedMaybeEffect(v2, fxOpt)
           }
         )
-        updated(v2)
 
       } else {
         // Почему-то пришёл неактуальный ответ на запрос.
@@ -274,7 +284,7 @@ class GridAdsAh[M](
       val v0 = value
 
       // Поискать запрошенную карточку в состоянии.
-      _findAd(m.nodeId, v0)
+      _findAd(m.nodeId, v0.core)
         .fold {
           LOG.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
           noChange
@@ -307,13 +317,16 @@ class GridAdsAh[M](
           } { _ =>
             val ad1 = ad0.withFocused( Pot.empty )
             val ads2 = _saveAdIntoAds(index, ad1, v0)
-            val v2 = v0.copy(
-              ads   = ads2,
-              jdCss = _mkJdCss(ads2, v0.jdConf)
+            val v2 = v0.withCore(
+              v0.core.copy(
+                ads       = ads2,
+                jdCss     = _mkJdCss(ads2, v0.core.jdConf),
+                gridBuild = _rebuildGrid(ads2, v0.core.jdConf)
+              )
             )
-            // В фоне - запустить скроллинг к началу карточки. TODO Сделать Effect? Нужен тогда Action какой-то возвращать, а у нас тут Unit/void.
-            _scrollToAd( ad0 )
-            updated(v2)
+            // В фоне - запустить скроллинг к началу карточки.
+            val scrollFx = _scrollToAdFx( ad0, ads2, v2.core.gridBuild )
+            updated(v2, scrollFx)
           }
         }
 
@@ -323,7 +336,7 @@ class GridAdsAh[M](
       val v0 = value
 
       // Найти фокусируемую рекламную карточку
-      _findAd(m.nodeId)
+      _findAd(m.nodeId, v0.core)
         .fold {
           // Не найдена искомая карточка.
           LOG.warn( ErrorMsgs.NODE_NOT_FOUND, msg = m )
@@ -364,7 +377,7 @@ class GridAdsAh[M](
                       )
                     )
                   )
-                  val adsPot2 = for (ads0 <- v0.ads) yield {
+                  val adsPot2 = for (ads0 <- v0.core.ads) yield {
                     ads0
                       .iterator
                       .zipWithIndex
@@ -382,13 +395,16 @@ class GridAdsAh[M](
                       }
                       .toVector
                   }
-                  val v2 = v0.copy(
-                    jdCss = _mkJdCss(adsPot2, v0.jdConf),
-                    ads   = adsPot2
+                  val v2 = v0.withCore(
+                    v0.core.copy(
+                      jdCss     = _mkJdCss(adsPot2, v0.core.jdConf),
+                      ads       = adsPot2,
+                      gridBuild = _rebuildGrid( adsPot2, v0.core.jdConf )
+                    )
                   )
                   // Надо проскроллить выдачу на начало открытой карточки:
-                  _scrollToAd( ad1 )
-                  updated(v2)
+                  val scrollFx = _scrollToAdFx( ad1, adsPot2, v2.core.gridBuild )
+                  updated(v2, scrollFx)
 
                 case other =>
                   LOG.error( ErrorMsgs.UNSUPPORTED_VALUE_OF_ARGUMENT, msg = (m, other) )
@@ -402,27 +418,35 @@ class GridAdsAh[M](
     // Экшен запуска пересчёта конфигурации плитки.
     case GridReConf =>
       val v0 = value
-      val gridColsCount2 = GridAdsAh.reconfGridColumnsCount(
+      val gridColsCount2 = GridAh.reconfGridColumnsCount(
         mscreen   = screenRO.value,
         gridConf  = MGridCalcConf.PLAIN_GRID,
-        minSzMult = v0.jdConf.szMult.toDouble
+        minSzMult = v0.core.jdConf.szMult.toDouble
       )
-      if (v0.jdConf.gridColumnsCount ==* gridColsCount2) {
+      if (v0.core.jdConf.gridColumnsCount ==* gridColsCount2) {
         noChange
 
       } else {
-        val jdConf2 = v0.jdConf
+        val jdConf2 = v0.core.jdConf
           .withGridColumnsCount( gridColsCount2 )
-        val v2 = v0.withJdConf( jdConf2 )
+        val v2 = v0.withCore(
+          v0.core
+            .withJdConf( jdConf2 )
+        )
         // TODO Возможно, что надо перекачать содержимое плитки с сервера, если всё слишком сильно переменилось. Нужен отложенный таймер для этого.
         updated(v2)
       }
+
+
+    // Сообщение об окончании авто-скроллинга. TODO Это ненужный костыль. Он существует просто потому что Effect должен возвращать хоть какой-то экшен.
+    case GridScrollDone =>
+      noChange
 
   }
 
 
   /** Найти карточку с указанным id в состоянии, вернув её и её индекс. */
-  private def _findAd(nodeId: String, v0: MGridS = value): Option[(MScAdData, Int)] = {
+  private def _findAd(nodeId: String, v0: MGridCoreS): Option[(MScAdData, Int)] = {
     v0.ads
       .toOption
       .flatMap { ads =>
@@ -435,31 +459,67 @@ class GridAdsAh[M](
 
   /** Залить в состояние обновлённый инстанс карточки. */
   def _saveAdIntoAds(index: Int, newAd: MScAdData, v0: MGridS = value) = {
-    for (ads0 <- v0.ads) yield {
+    for (ads0 <- v0.core.ads) yield {
       ads0.updated(index, newAd)
     }
   }
   def _saveAdIntoValue(index: Int, newAd: MScAdData, v0: MGridS = value): MGridS = {
-    v0.withAds(
-      _saveAdIntoAds(index, newAd, v0)
+    v0.withCore(
+      v0.core.withAds(
+        _saveAdIntoAds(index, newAd, v0)
+      )
     )
   }
 
 
-  private def _scrollToAd(adData: MScAdData): Unit = {
+  /** Эффект скроллинга к указанной карточке. */
+  private def _scrollToAdFx(toAd    : MScAdData,
+                            ads     : Pot[Seq[MScAdData]],
+                            gbRes   : MGridBuildResult
+                           ): Effect = {
     // Карточка уже открыта, её надо свернуть назад в main-блок.
-    Future {
-      for (adId <- adData.nodeId) {
-        val scrollId = GridScrollUtil.adId2scrollElName(adId)
-        scroll.Scroller.scrollTo( scrollId, new LinkProps {
-          override val smooth = true
-          // Надо скроллить grid wrapper, а не document:
-          override val containerId = GridScrollUtil.SCROLL_CONTAINER_ID
-          // Сдвиг обязателен, т.к. карточки заезжают под заголовок.
-          override val offset = -ScCss.HEADER_HEIGHT_PX - BlockPaddings.default.value
-        })
-      }
+    // Нужно узнать координату в плитке карточке
+    val nodeIdOpt = toAd.nodeId
+    Effect.action {
+      gbRes.coords
+        .iterator
+        .zip( ads.iterator.flatten )
+        .find { case (_, scAdData) =>
+          scAdData.nodeId ==* nodeIdOpt
+        }
+        .foreach { case (mcoordPx, _) =>
+          AnimateScroll.scrollTo(
+            // Сдвиг обязателен, т.к. карточки заезжают под заголовок.
+            to = Math.max(0, mcoordPx.y - ScCss.HEADER_HEIGHT_PX - BlockPaddings.default.value),
+            options = _scrollOptions
+          )
+        }
+      GridScrollDone
     }
+  }
+
+  /** Константна с параметрами скроллинга. */
+  private def _scrollOptions: LinkProps = {
+    new LinkProps {
+      override val smooth = true
+      // Надо скроллить grid wrapper, а не document:
+      override val containerId = GridScrollUtil.SCROLL_CONTAINER_ID
+    }
+  }
+
+
+  /** Запуск ребилда плитки. */
+  def _rebuildGrid(ads: Pot[Seq[MScAdData]], jdConf: MJdConf): MGridBuildResult = {
+    GridBuilderUtil.buildGrid(
+      MGridBuildArgs(
+        columnsCount  = jdConf.gridColumnsCount,
+        itemsExtDatas = MGridCoreS
+          .ads2gridBlocks( ads.iterator.flatten )
+          .toList,
+        jdConf        = jdConf,
+        offY          = TileConstants.CONTAINER_OFFSET_TOP
+      )
+    )
   }
 
 }

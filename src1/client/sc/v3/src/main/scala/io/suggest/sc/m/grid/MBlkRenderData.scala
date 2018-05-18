@@ -1,7 +1,8 @@
 package io.suggest.sc.m.grid
 
 import diode.FastEq
-import diode.data.Pot
+import io.suggest.common.empty.OptionUtil
+import io.suggest.grid.build.MGbBlock
 import io.suggest.jd.MJdAdData
 import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
@@ -9,7 +10,6 @@ import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
-
 import scalaz.Tree
 
 /**
@@ -33,8 +33,32 @@ object MBlkRenderData {
   /** Сборка инстанса [[MScAdData]] из инстанса MJdAdData. */
   def apply( jdAdData: MJdAdData ): MBlkRenderData = apply(
     template  = jdAdData.template,
-    edges     = jdAdData.edgesMap.mapValues(MEdgeDataJs(_))
+    edges     = jdAdData.edgesMap
+      .mapValues(MEdgeDataJs(_))
   )
+
+
+  /** Конвертация одной карточки в один блок для рендера в плитке. */
+  def blockRenderData2GbPayload(nodeId: Option[String], stripTpl: Tree[JdTag], brd: MBlkRenderData): MGbBlock = {
+    // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
+    val stripJdt = stripTpl.rootLabel
+    val bm = stripJdt
+      .props1
+      .bm.get
+
+    val wideBgBlk = for {
+      _       <- OptionUtil.maybeTrue( bm.wide )
+      bg      <- stripJdt.props1.bgImg
+      // 2018-01-23: Для wide-фона нужен отдельный блок, т.к. фон позиционируется отдельно от wide-block-контента.
+      // TODO Нужна поддержка wide-фона без картинки.
+      bgEdge  <- brd.edges.get( bg.edgeUid )
+      imgWh   <- bgEdge.origWh
+    } yield {
+      imgWh
+    }
+
+    MGbBlock( nodeId, bm, wideBgBlk )
+  }
 
 }
 

@@ -16,13 +16,13 @@ import io.suggest.routes.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.c.dev.{GeoLocAh, ScreenAh}
 import io.suggest.sc.c.{JsRouterInitAh, TailAh}
-import io.suggest.sc.c.grid.GridAdsAh
+import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.inx.{IndexAh, WelcomeAh}
 import io.suggest.sc.c.menu.MenuAh
 import io.suggest.sc.c.search.{STextAh, ScMapDelayAh, SearchAh, TagsAh}
 import io.suggest.sc.m._
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
-import io.suggest.sc.m.grid.MGridS
+import io.suggest.sc.m.grid.{MGridCoreS, MGridS}
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.m.search.{MMapInitState, MScSearch}
 import io.suggest.sc.sc3.{MSc3IndexResp, MSc3Init}
@@ -100,10 +100,12 @@ class Sc3Circuit(
         )
       ),
       grid = {
-        val jdConf = GridAdsAh.fullGridConf(mscreen)
+        val jdConf = GridAh.fullGridConf(mscreen)
         MGridS(
-          jdConf = jdConf,
-          jdCss  = jdCssFactory.mkJdCss( MJdCssArgs(conf = jdConf) )
+          core = MGridCoreS(
+            jdConf = jdConf,
+            jdCss  = jdCssFactory.mkJdCss( MJdCssArgs(conf = jdConf) )
+          )
         )
       },
       internals = MScInternals(
@@ -156,7 +158,7 @@ class Sc3Circuit(
         val scr0 = mroot.dev.screen.screen
         // 2018-01-24 Костыль в связи с расхождением между szMult экрана и szMult плитки, тут быстрофикс:
         val pxRatio2 = Math.max(
-          mroot.grid.jdConf.szMult.toDouble,
+          mroot.grid.core.jdConf.szMult.toDouble,
           scr0.pxRatio
         )
         if (pxRatio2 > scr0.pxRatio)
@@ -219,7 +221,7 @@ class Sc3Circuit(
     foldHandlers( mapCommonAh, scMapDelayAh )
   }
 
-  private val gridAdsAh = new GridAdsAh(
+  private val gridAdsAh = new GridAh(
     api           = api,
     searchArgsRO  = searchAdsArgsRO,
     screenRO      = screenRO,

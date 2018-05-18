@@ -4,6 +4,7 @@ import io.suggest.ad.blk.BlockMeta
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.jd.MJdConf
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -19,23 +20,18 @@ import io.suggest.jd.MJdConf
   * @param itemsExtDatas Данные по item'мам рассчитываемой плитки.
   * @param jdConf Конфигурация рендера.
   * @param offY Сдвиг по Y.
-  * @param iter2coordsF Функция сборки результата рассчёта координат.
-  *                     На вход получает итератор координат, и должна НЕ лениво собрать возвращаемый результат.
-  *                     Вынести за пределы args пока нельзя, потому что выполнение неленивой функции имеет сайд-эффекты
-  *                     при финальном рассчётё плитки (ширина/высота плитки).
-  * @tparam Coords_t Тип результата рассчёта координат, возвращаемый из iter2coordsF().
   */
-case class MGridBuildArgs[Coords_t](
-                                     columnsCount  : Int,
-                                     itemsExtDatas : List[IGbBlockPayload],
-                                     jdConf        : MJdConf,
-                                     offY          : Int,
-                                     iter2coordsF  : Iterator[MCoords2di] => Coords_t
-                                   )
+case class MGridBuildArgs(
+                           columnsCount  : Int,
+                           itemsExtDatas : List[IGbBlockPayload],
+                           jdConf        : MJdConf,
+                           offY          : Int
+                         )
 
 
 /** Интерфейс для контейнеров с вариантами элементов плитки. */
 sealed trait IGbBlockPayload {
+  def nodeId: Option[String]
   def isBlock: Boolean
   def isSubBlocks: Boolean = !isBlock
   def fold[T](blockF: MGbBlock => T, subBlocksF: MGbSubItems => T): T
@@ -60,9 +56,10 @@ sealed trait IGbBlockPayload {
   * @param orderN внутренний порядковый номер, заполняется и используется внутри [[GridBuilderUtil]].
   */
 case class MGbBlock(
-                      bm                            : BlockMeta,
-                      wideBgSz                      : Option[ISize2di]  = None,
-                      private[build] val orderN     : Option[Int]       = None
+                     override val nodeId           : Option[String],
+                     bm                            : BlockMeta,
+                     wideBgSz                      : Option[ISize2di]  = None,
+                     private[build] val orderN     : Option[Int]       = None,
                    )
   extends IGbBlockPayload {
 
@@ -79,7 +76,8 @@ case class MGbBlock(
 
 /** Контейнер для под-блоков. */
 case class MGbSubItems(
-                        subItems: List[IGbBlockPayload]
+                        override val nodeId       : Option[String],
+                        subItems                  : List[IGbBlockPayload]
                       )
   extends IGbBlockPayload {
 
@@ -98,10 +96,24 @@ case class MGbSubItems(
 
 /** Результат сборки плитки.
   *
-  * @param coords Итератор координат блоков.
+  * @param coords Координаты блоков.
   * @param gridWh Размеры собранной плитки.
   */
-case class MGridBuildResult[Coords_t](
-                                       coords   : Coords_t,
-                                       gridWh   : MSize2di
-                                     )
+case class MGridBuildResult(
+                             coords   : Seq[MCoords2di],
+                             gridWh   : MSize2di
+                           )
+
+object MGridBuildResult {
+
+  def empty = apply(
+    coords = Nil,
+    gridWh = MSize2di(0, 0)
+  )
+
+  implicit def univEq: UnivEq[MGridBuildResult] = {
+    import io.suggest.ueq.UnivEqUtil._
+    UnivEq.derive
+  }
+
+}

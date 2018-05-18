@@ -1,25 +1,15 @@
 package io.suggest.sc.v.grid
 
 import com.github.dantrain.react.stonecutter.{CSSGrid, GridComponents}
-import com.github.fisshy.react.scroll
-import com.github.fisshy.react.scroll.ElementProps
 import diode.react.{ModelProxy, ReactConnectProps}
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants.`.`
-import io.suggest.grid.GridScrollUtil
-import io.suggest.grid.build._
 import io.suggest.jd.render.m.{MJdArgs, MJdRenderArgs}
 import io.suggest.jd.render.v.{JdGridUtil, JdR}
-import io.suggest.jd.tags.JdTag
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.react.ReactDiodeUtil
 import io.suggest.sc.m.grid._
-import io.suggest.sc.tile.TileConstants
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
-import scalaz.Tree
-
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -38,43 +28,15 @@ class GridCoreR(
   import MJdArgs.MJdArgsFastEq
 
 
-  type Props_t = MGridS
+  type Props_t = MGridCoreS
   type Props = ModelProxy[Props_t]
 
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    /** Завершение обсчёта плитки. */
-    private def onGridLayout(layoutRes: GridBuildRes_t): Callback = {
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, HandleGridBuildRes(layoutRes))
-    }
-    private val _onGridLayoutF = ReactCommonUtil.cbFun1ToF( onGridLayout )
-
-
     /** Клик по карточке в плитке. */
     private def onBlockClick(nodeId: String): Callback = {
       ReactDiodeUtil.dispatchOnProxyScopeCB($, GridBlockClick(nodeId))
-    }
-
-
-    /** Конвертация одной карточки в один блок для рендера в плитке. */
-    private def __blockRenderData2GbPayload(stripTpl: Tree[JdTag], brd: MBlkRenderData): MGbBlock = {
-      // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
-      val stripJdt = stripTpl.rootLabel
-      val bm = stripJdt
-        .props1
-        .bm.get
-      val wideBgBlk = for {
-        _       <- OptionUtil.maybeTrue( bm.wide )
-        bg      <- stripJdt.props1.bgImg
-        // 2018-01-23: Для wide-фона нужен отдельный блок, т.к. фон позиционируется отдельно от wide-block-контента.
-        // TODO Нужна поддержка wide-фона без картинки.
-        bgEdge  <- brd.edges.get( bg.edgeUid )
-        imgWh   <- bgEdge.origWh
-      } yield {
-        imgWh
-      }
-      MGbBlock( bm, wideBgBlk )
     }
 
 
@@ -83,34 +45,7 @@ class GridCoreR(
 
       CSSGrid {
         jdGridUtil.mkCssGridArgs(
-          gbArgs = MGridBuildArgsJs(
-            itemsExtDatas = mgrid.ads
-              .iterator
-              .flatten
-              .map { scAdData =>
-                scAdData.focused.fold [IGbBlockPayload] {
-                  // Несфокусированная карточка. Вернуть bm единственного стрипа.
-                  val brd = scAdData.main
-                  __blockRenderData2GbPayload( brd.template, brd )
-                } { foc =>
-                  // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
-                  MGbSubItems {
-                    val focBlk = foc.blkData
-                    // Пройтись по блокам из focused-контейнера...
-                    focBlk
-                      .template
-                      .subForest
-                      .iterator
-                      .map { __blockRenderData2GbPayload( _, focBlk ) }
-                      .toList
-                  }
-                }
-              }
-              .toList,
-            jdConf          = mgrid.jdConf,
-            onLayout        = Some(_onGridLayoutF),
-            offY            = TileConstants.CONTAINER_OFFSET_TOP
-          ),
+          gbRes     = mgrid.gridBuild,
           conf      = mgrid.jdConf,
           tagName   = GridComponents.DIV
         )
@@ -140,42 +75,27 @@ class GridCoreR(
 
         } yield {
           // Для скроллинга требуется повесить scroll.Element вокруг первого блока.
-          val jdt = mgridProxy.wrap { _ =>
-            // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
-            MJdArgs(
-              template = tpl2,
-              edges    = edges,
-              jdCss    = mgrid.jdCss,
-              conf     = mgrid.jdConf,
-              renderArgs = jdRenderArgs
-            )
-          } ( jdR.apply )
-
-          val k = rootId + `.` + j
           // На телевизорах и прочих около-умных устройствах без нормальных устройств ввода,
           // для кликов подсвечиваются только ссылки.
           // Поэтому тут используется <A>-тег, хотя div был бы уместнее.
           <.a(
-            ^.key := k,
+            ^.key := (rootId + `.` + j),
 
             // Реакция на клики, когда nodeId задан.
             ad.nodeId.whenDefined { nodeId =>
               ^.onClick --> onBlockClick(nodeId)
             },
 
-            if (j > 0 || ad.nodeId.isEmpty) {
-              jdt
-            } else {
-              // Для верхнего блока карточки - повесить маркер скроллинга react-scroll.
-              val adId = ad.nodeId.get
-              val scrollId = GridScrollUtil.adId2scrollElName(adId)
-              scroll.Element.component {
-                new ElementProps {
-                  override val name = scrollId
-                  override val id   = scrollId
-                }
-              }( jdt )
-            }
+            mgridProxy.wrap { _ =>
+              // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
+              MJdArgs(
+                template = tpl2,
+                edges    = edges,
+                jdCss    = mgrid.jdCss,
+                conf     = mgrid.jdConf,
+                renderArgs = jdRenderArgs
+              )
+            } ( jdR.apply )
           )
         }
         iter.toVdomArray
