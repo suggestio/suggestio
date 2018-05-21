@@ -79,7 +79,7 @@ class NodesUtil @Inject() (
 
 
   /** Собрать критерии поиска узлов, прямо принадлежащих текущему юзеру. */
-  def personNodesSearch(personId: String, limit1: Int = 100, withoutIds1: Seq[String] = Nil): MNodeSearch = {
+  def personNodesSearch(personId: String, limit1: Int = 200, withoutIds1: Seq[String] = Nil): MNodeSearch = {
     new MNodeSearchDfltImpl {
       override def outEdges = Seq(
         Criteria(

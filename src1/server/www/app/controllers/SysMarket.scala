@@ -384,6 +384,7 @@ class SysMarket @Inject() (
           ncpForm.fold(
             __onError(_, "create"),
             {ncp =>
+              val isAdnNode = mnode0.common.ntype ==* MNodeTypes.AdnNode
               // Собрать новый инстанс узла.
               val resFut = for {
               // Если задан id создаваемого узла, убедится что этот id свободен:
@@ -393,19 +394,35 @@ class SysMarket @Inject() (
                 mnode1 = mnode0.copy(
                   edges = mnode0.edges.copy(
                     out = {
-                      val ownEdge = MEdge(
-                        // OwnedBy вешать НЕЛЬЗЯ, т.к. это вызывает недопонимание у суперюзеров (человеческий фактор).
-                        // Например, цена начинает считаться по нулям у суперюзера даже при отключении соотв. галочки su free.
-                        predicate = MPredicates.CreatedBy,
-                        nodeIds   = request.user.personIdOpt.toSet
-                      )
-                      MNodeEdges.edgesToMap(ownEdge)
+                      var edgesAcc = List.empty[MEdge]
+
+                      val personNodeIds = request.user.personIdOpt.toSet
+
+                      // Если есть person-id, то сохранить связи до полей.
+                      if (personNodeIds.nonEmpty) {
+                        edgesAcc ::= MEdge(
+                          // OwnedBy вешать НЕЛЬЗЯ, т.к. это вызывает недопонимание у суперюзеров (человеческий фактор).
+                          // Например, цена начинает считаться по нулям у суперюзера даже при отключении соотв. галочки su free.
+                          predicate = MPredicates.CreatedBy,
+                          nodeIds   = personNodeIds
+                        )
+
+                        // Для ADN-узла надо выставлять ownedBy до супер-юзера.
+                        if (isAdnNode) {
+                          edgesAcc ::= MEdge(
+                            predicate = MPredicates.OwnedBy,
+                            nodeIds   = personNodeIds
+                          )
+                        }
+                      }
+
+                      MNodeEdges.edgesToMap( edgesAcc: _* )
                     }
                   ),
                   // Возможно, id создаваемого документа уже задан.
                   id          = ncp.withId,
                   // Если создаётся adn-узел, и цвета не заданы, то надо выставить рандомные цвета:
-                  meta = if ((mnode0.common.ntype ==* MNodeTypes.AdnNode) && mnode0.meta.colors.adnColors.exists(_.isEmpty)) {
+                  meta = if (isAdnNode && mnode0.meta.colors.adnColors.exists(_.isEmpty)) {
                     val colors2 = NodeDfltColors.getOneRandom().adnColors
                     LOGGER.trace(s"$logPrefix Resetting colors for created adn node: $colors2")
                     mnode0.meta
