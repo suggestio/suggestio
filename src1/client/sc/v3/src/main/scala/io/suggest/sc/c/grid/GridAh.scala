@@ -223,7 +223,8 @@ class GridAh[M](
                         template  = sc3AdData.jd.template,
                         edges     = jsEdgesMap
                       ),
-                      canEdit = sc3AdData.canEdit.getOrElseFalse
+                      canEdit = sc3AdData.canEdit.getOrElseFalse,
+                      userFoc = false
                     )
                     Ready(v)
                   } else {
@@ -372,7 +373,8 @@ class GridAh[M](
                     ad0.focused.ready(
                       MScFocAdData(
                         blkData = MBlkRenderData( focAd.jd ),
-                        canEdit = focAd.canEdit.contains(true)
+                        canEdit = focAd.canEdit.contains(true),
+                        userFoc = true
                       )
                     )
                   )

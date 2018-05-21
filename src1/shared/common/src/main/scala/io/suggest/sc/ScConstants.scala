@@ -611,7 +611,7 @@ object ScConstants {
     val CAT_SCR_OPENED_FN       = "s.open"
     val SEARCH_TAB_FN           = "s.tab"
 
-    val FADS_CURRENT_AD_ID_FN   = "f.cur.id"
+    val FOCUSED_AD_ID_FN   = "f.cur.id"
     val FADS_OFFSET_FN          = "f.off"
     val PRODUCER_ADN_ID_FN      = "f.pr.id"
 

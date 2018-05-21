@@ -22,10 +22,7 @@ class MAddressSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MAddress(
         town      = Some("Санкт-Петрозаводск"),
-        address   = Some("пл.Ленина, дом 1,\n корпус 2, строение 3Б, \nквартирка номер четыре."),
-        phone     = Some("+8-999-354-7642"),
-        floor     = Some("-1"),
-        section   = Some("333а")
+        address   = Some("пл.Ленина, дом 1,\n корпус 2, строение 3Б, \nквартирка номер четыре.")
       )
     }
   }

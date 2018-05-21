@@ -48,7 +48,22 @@ class TailAh[M](
       searchOpened  = searchOpened,
       searchTab     = OptionUtil.maybe(searchOpened)( v0.index.search.currTab ),
       tagNodeId     = v0.index.search.tags.selectedId,
-      menuOpened    = v0.index.menu.opened
+      menuOpened    = v0.index.menu.opened,
+      focusedAdId   = {
+        val iter = for {
+          scAdData <- v0.grid.core.ads
+            .iterator
+            .flatten
+          focData <- scAdData.focused.toOption
+          if focData.userFoc
+          adNodeId <- scAdData.nodeId
+        } yield {
+          adNodeId
+        }
+        iter
+          .toStream
+          .headOption
+      }
     )
   }
 

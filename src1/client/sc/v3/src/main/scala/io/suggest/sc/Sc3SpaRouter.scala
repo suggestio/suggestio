@@ -92,7 +92,8 @@ class Sc3SpaRouter(
               tagNodeId = tokens.get( keys.TAG_NODE_ID_FN ),
               locEnv = tokens.get( keys.LOC_ENV_FN )
                 .flatMap( MGeoPoint.fromString ),
-              menuOpened = _boolOrFalseTok( keys.GEO_SCR_OPENED_FN )
+              menuOpened = _boolOrFalseTok( keys.GEO_SCR_OPENED_FN ),
+              focusedAdId = tokens.get( keys.FOCUSED_AD_ID_FN )
             )
           }
         } { mainScreen =>
@@ -128,14 +129,10 @@ class Sc3SpaRouter(
             // TODO  TAG_FACE_FN -> tagInfo.face
           }
 
-          // TODO Отработать focused-выдачу, если она активна.
-          //for (focSd <- sd0.focused) {
-          //  acc ::= FADS_CURRENT_AD_ID_FN -> focSd.current.madId
-          //  // Закинуть producerId foc-выдачи
-          //  for (producerId <- focSd.producerId) {
-          //    acc ::= PRODUCER_ADN_ID_FN -> producerId
-          //  }
-          //}
+          // Отработать focused-выдачу, если она активна:
+          for (focusedAdId <- mainScreen.focusedAdId) yield {
+            acc ::= keys.FOCUSED_AD_ID_FN -> focusedAdId
+          }
 
           // Отрабатываем состояние правой панели.
           if (mainScreen.searchOpened) {

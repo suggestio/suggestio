@@ -52,7 +52,7 @@ object ScJsState extends MacroLogsImpl {
           maybeCatScreenOpened  <- boolOptB.bind(CAT_SCR_OPENED_FN,     params)
           maybeGeoScreenOpened  <- boolOptB.bind(GEO_SCR_OPENED_FN,     params)
           maybeGeneration       <- longOptB.bind(GENERATION_FN,         params)
-          maybeFadsOpened       <- strOptB.bind (FADS_CURRENT_AD_ID_FN, params)
+          maybeFadsOpened       <- strOptB.bind (FOCUSED_AD_ID_FN, params)
           maybeFadsOffset       <- intOptB.bind (FADS_OFFSET_FN,        params)
           maybeSearchTab        <- boolOptB.bind(SEARCH_TAB_FN,         params)
           maybeProducerAdnId    <- strOptB.bind (PRODUCER_ADN_ID_FN,    params)
@@ -80,7 +80,7 @@ object ScJsState extends MacroLogsImpl {
           boolOptB.unbind (CAT_SCR_OPENED_FN,     value.searchScrOpenedOpt),
           boolOptB.unbind (GEO_SCR_OPENED_FN,     value.navScrOpenedOpt),
           longOptB.unbind (GENERATION_FN,         value.generationOpt),
-          strOptB.unbind  (FADS_CURRENT_AD_ID_FN, value.fadOpenedIdOpt),
+          strOptB.unbind  (FOCUSED_AD_ID_FN, value.fadOpenedIdOpt),
           intOptB.unbind  (FADS_OFFSET_FN,        value.fadsOffsetOpt),
           boolOptB.unbind (SEARCH_TAB_FN,         value.searchTabListOpt),
           strOptB.unbind  (PRODUCER_ADN_ID_FN,    value.fadsProdIdOpt),

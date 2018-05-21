@@ -21,9 +21,6 @@ object MAddress extends IEmpty {
   object Fields {
     val TOWN_FN         = "t"
     val ADDRESS_FN      = "a"
-    val PHONE_FN        = "p"
-    val FLOOR_FN        = "f"
-    val SECTION_FN      = "s"
   }
 
 
@@ -31,10 +28,7 @@ object MAddress extends IEmpty {
 
   implicit val MADDRESS_FORMAT: OFormat[MAddress] = (
     (__ \ TOWN_FN).formatNullable[String] and
-    (__ \ ADDRESS_FN).formatNullable[String] and
-    (__ \ PHONE_FN).formatNullable[String] and
-    (__ \ FLOOR_FN).formatNullable[String] and
-    (__ \ SECTION_FN).formatNullable[String]
+    (__ \ ADDRESS_FN).formatNullable[String]
   )(apply, unlift(unapply))
 
 
@@ -61,10 +55,7 @@ object MAddress extends IEmpty {
   def validate(maddress: MAddress): ValidationNel[String, MAddress] = {
     (
       validateTown( maddress.town ) |@|
-      validateAddress( maddress.address ) |@|
-      ScalazUtil.validateTextOpt( maddress.phone, maxLen = 30, "phone" ) |@|
-      ScalazUtil.validateTextOpt( maddress.floor, maxLen = 16, "floor" ) |@|
-      ScalazUtil.validateTextOpt( maddress.section, maxLen = 16, "sect" )
+      validateAddress( maddress.address )
     )(apply _)
   }
 
@@ -74,15 +65,11 @@ object MAddress extends IEmpty {
 case class MAddress(
                      town          : Option[String] = None,
                      address       : Option[String] = None,
-                     phone         : Option[String] = None,
-                     floor         : Option[String] = None,
-                     section       : Option[String] = None
                    )
   extends EmptyProduct
 {
 
   def withTown(town: Option[String])          = copy(town = town)
   def withAddress(address: Option[String])    = copy(address = address)
-  def withPhone(phone: Option[String])        = copy(phone = phone)
 
 }

@@ -30,12 +30,9 @@ class SysMarketUtil extends MacroLogsDyn {
     "hiddenDescr"   -> publishedTextOptM,
     "town"          -> townOptM,
     "address"       -> addressOptM,
-    "phone"         -> phoneOptM,
-    "floor"         -> floorOptM,
-    "section"       -> sectionOptM,
     "siteUrl"       -> urlStrOptM
   )
-  {(name, nameShort, descr, town, address, phone, floor, section, siteUrl) =>
+  {(name, nameShort, descr, town, address, siteUrl) =>
     MMeta(
       basic = MBasicMeta(
         nameOpt       = Some(name),
@@ -44,10 +41,7 @@ class SysMarketUtil extends MacroLogsDyn {
       ),
       address = MAddress(
         town    = town,
-        address = address,
-        phone   = phone,
-        floor   = floor,
-        section = section
+        address = address
       ),
       business = MBusinessInfo(
         siteUrl = siteUrl
@@ -61,9 +55,6 @@ class SysMarketUtil extends MacroLogsDyn {
       meta.basic.hiddenDescr,
       meta.address.town,
       meta.address.address,
-      meta.address.phone,
-      meta.address.floor,
-      meta.address.section,
       meta.business.siteUrl
     ))
   }

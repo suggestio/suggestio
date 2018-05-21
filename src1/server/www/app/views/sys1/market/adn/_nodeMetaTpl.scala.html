@@ -68,24 +68,6 @@
     }
   }
 
-  @for(phone <- meta.address.phone) {
-    @_ptableRowTpl( messages("Phone") + ":") {
-      @phone
-    }
-  }
-
-  @for(floor <- meta.address.floor) {
-    @_ptableRowTpl( messages("Floor") + ":") {
-      @floor
-    }
-  }
-
-  @for(section <- meta.address.section) {
-    @_ptableRowTpl( messages("Section") + ":") {
-      @section
-    }
-  }
-
   @for(siteUrl <- meta.business.siteUrl) {
     @_ptableRowTpl( "Сайт:") {
       <a class="blue-link" href="http://anonym.to/?@siteUrl" target="_blank" title="@humanizeUrl(siteUrl)">

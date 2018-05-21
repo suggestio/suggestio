@@ -15,10 +15,7 @@ object MAddressEs extends IGenEsMappingProps {
   override def generateMappingProps: List[DocField] = {
     List(
       FieldText(TOWN_FN, index = true, include_in_all = true),
-      FieldText(ADDRESS_FN, index = true, include_in_all = true),
-      FieldText(PHONE_FN, index = true, include_in_all = true),
-      FieldKeyword(FLOOR_FN, index = true, include_in_all = true),
-      FieldKeyword(SECTION_FN, index = true, include_in_all = true)
+      FieldText(ADDRESS_FN, index = true, include_in_all = true)
     )
   }
 
