@@ -16,7 +16,7 @@ import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, MNodeTypes, NodeNotFoundException}
 import io.suggest.sc.MScApiVsns
-import io.suggest.sc.index.MWelcomeInfo
+import io.suggest.sc.index.{MScIndexArgs, MWelcomeInfo}
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.sc3.{MSc3IndexResp, MSc3Resp, MSc3RespAction}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
@@ -25,6 +25,7 @@ import io.suggest.util.logs.IMacroLogs
 import models.im.{MImgT, MImgWithWhInfo}
 import models.msc._
 import models.mwc.MWelcomeRenderArgs
+import models.req.IReq
 import play.api.libs.json.Json
 import play.api.mvc._
 import util.acl._
@@ -82,10 +83,7 @@ trait ScIndex
 
     // В зависимости от версии API выбрать используемую логику сборки ответа.
     val logicOrNull = if (args.apiVsn.majorVsn == MScApiVsns.ReactSjs3.majorVsn) {
-      new ScIndexLogicV3 {
-        override def _reqArgs  = args
-        override def _request  = request
-      }
+      ScIndexLogicV3(args)(request)
     } else {
       LOGGER.error(s"$logPrefix No logic available for api vsn: ${args.apiVsn}. Forgot to implement? args = $args")
       null
@@ -156,7 +154,7 @@ trait ScIndex
     /** #00: поиск узла по id ресивера, указанного в qs.
       * Future[NSEE], когда нет необходимого узла. */
     def l00_rcvrByIdFut: Future[MIndexNodeInfo] = {
-      val adnIdOpt = _reqArgs.adnIdOpt
+      val adnIdOpt = _reqArgs.nodeId
 
       val rFut = for {
         mnodeOpt <- mNodesCache.maybeGetByIdCached( adnIdOpt )
@@ -467,10 +465,10 @@ trait ScIndex
             inxSa :: Nil
           }
           override def components = MComponents.Index :: super.components
-          override def remoteAddr   = _remoteIp
+          override def remoteAddr = _remoteIp
           override def devScreenOpt = _reqArgs.screen
-          override def locEnvOpt    = Some(_reqArgs.locEnv)
-          override def geoIpLoc     = _geoIpResOpt
+          override def locEnvOpt = Some(_reqArgs.locEnv)
+          override def geoIpLoc = _geoIpResOpt
         }
       }
     }
@@ -485,7 +483,8 @@ trait ScIndex
     *
     * Сервер отвечает только параметрами для рендера, без html.
     */
-  abstract class ScIndexLogicV3 extends ScIndexLogic {
+  case class ScIndexLogicV3(override val _reqArgs: MScIndexArgs)
+                           (override implicit val _request: IReq[_]) extends ScIndexLogic {
 
     /** true, если вызов идёт из [[ScIndexAdOpen]]. */
     def isFocusedAdOpen: Boolean = false

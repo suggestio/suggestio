@@ -9,6 +9,7 @@ import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.dev.{MPxRatios, MScreen}
 import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MMapNodeIconInfo}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
@@ -155,10 +156,10 @@ class AdvGeoRcvrsUtil @Inject()(
     val logoTargetSz = LOGO_WH_LIMITS_CSSPX
     val wcFgTargetSz = WC_FG_LIMITS_CSSPX
 
-    val dpr = DevPixelRatios.XHDPI
+    val dpr = MPxRatios.XHDPI
     val targetScreenSome = Some(
-      DevScreen.default
-        .withPixelRatioOpt( Some(dpr) )
+      MScreen.default
+        .withPxRatio( dpr )
     )
     val compressModeSome = Some(
       CompressModes.Fg

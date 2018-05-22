@@ -1,9 +1,9 @@
 package util.showcase
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.dev.MScreen
 import io.suggest.img.crop.MCrop
 import io.suggest.sc.tile.TileConstants
 import io.suggest.util.logs.MacroLogsImpl
@@ -184,8 +184,8 @@ class ScWideMaker @Inject() (
 
     // Собираем хвост параметров сжатия.
     val devScreen = args.devScreenOpt
-      .getOrElse( DevScreen.default )
-    val pxRatio = devScreen.pixelRatio
+      .getOrElse( MScreen.default )
+    val pxRatio = devScreen.pxRatio
 
     // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
     val tgtHeightCssRaw = szMultedF(args.targetSz.height, args.szMult)
@@ -208,10 +208,10 @@ class ScWideMaker @Inject() (
     } else {
       val cropInfoFut = getWideCropInfo(args.img, wideWh)
 
-      // Начинаем собирать список трансформаций по ресайзу:
-      val compression = args.compressMode
+      val compMode = args.compressMode
         .getOrElse(CompressModes.Bg)
-        .fromDpr(pxRatio)
+      // Начинаем собирать список трансформаций по ресайзу:
+      val compression = ImCompression.forPxRatio( compMode, pxRatio )
 
       val imOps0 =
         BackgroundOp( None ) ::

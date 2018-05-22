@@ -19,7 +19,7 @@ GET  /                                  @controllers.Sc.geoSite(a: msc.ScJsState
 GET  /favicon.ico                       @controllers.Assets.at(path = "/public", file = "images/favicon/114.ico")
 
 ## Унифицированный sc index на все случаи жизни.
-GET  /sc/index                          @controllers.Sc.index(a: msc.MScIndexArgs)
+GET  /sc/index                          @controllers.Sc.index(a: io.suggest.sc.index.MScIndexArgs)
 
 GET  /sc/tile                           @controllers.Sc.findAds(a: msc.MScAdsTileQs)
 GET  /sc/fads                           @controllers.Sc.focusedAds(a: msc.MScAdsFocQs)

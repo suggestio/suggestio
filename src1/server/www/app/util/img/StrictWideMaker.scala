@@ -54,7 +54,7 @@ class StrictWideMaker @Inject() (
       val devScreen = args.devScreenOpt.getOrElse {
         throw new IllegalArgumentException(getClass.getSimpleName + ": args.devScreen is mandatory for this maker. You've passed empty screen info.")
       }
-      val pxRatio = devScreen.pixelRatio
+      val pxRatio = devScreen.pxRatio
 
       // Нужно вычислить размеры wide-версии оригинала. Используем szMult для вычисления высоты.
       val heightCssRaw = szMultedF(args.targetSz.height, args.szMult)
@@ -63,10 +63,10 @@ class StrictWideMaker @Inject() (
       val widthCssPx = devScreen.width
       val width = szMulted(widthCssPx, pxRatio.pixelRatio)
 
-      // Компрессия, по возможности использовать передний план, т.к. maker используется для соц.сетей.
-      val compression = args.compressMode
+      val compMode = args.compressMode
         .getOrElse(CompressModes.Fg)
-        .fromDpr(pxRatio)
+      // Компрессия, по возможности использовать передний план, т.к. maker используется для соц.сетей.
+      val compression = ImCompression.forPxRatio( compMode, pxRatio )
 
       val szReal = MSize2di(height = height, width = width)
 

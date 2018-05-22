@@ -3,15 +3,15 @@ package models.mctx
 import java.net.IDN
 import java.time.{Instant, OffsetDateTime, ZoneId}
 
-import _root_.models.im.{DevScreen, MImgT}
+import _root_.models.im.MImgT
 import com.google.inject.assistedinject.Assisted
 import javax.inject.{Inject, Singleton}
-
 import controllers.routes
 import io.suggest.i18n.MessagesF_t
 import io.suggest.playx.{ICurrentAppHelpers, IsAppModes}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.ctx.{CtxData, MCtxId, MCtxIds}
+import io.suggest.dev.{MScreenJvm, MScreen}
 import io.suggest.proto.HttpConst
 import models.mproj.IMCommonDi
 import models.req.IReqHdr
@@ -279,7 +279,7 @@ trait Context {
   }
 
   /** Параметры экрана клиентского устройства. Эти данные можно обнаружить внутри query string. */
-  lazy val deviceScreenOpt: Option[DevScreen] = {
+  lazy val deviceScreenOpt: Option[MScreen] = {
     request.queryString
       .iterator
       .filter { case (k, _) =>
@@ -287,7 +287,7 @@ trait Context {
       }
       .flatMap {
         case kv @ (k, _) =>
-          DevScreen.devScreenQsb
+          MScreenJvm.devScreenQsb
             .bind(k, Map(kv))
             .filter(_.isRight)
             .map(_.right.get)

@@ -299,7 +299,7 @@ class GridAh[M](
                 allowReturnJump = Some( true ),
                 adIdLookup      = Some( m.nodeId ),
                 adsLookupMode   = None,
-                screenInfo      = args0.screenInfo,
+                screen      = args0.screen,
                 receiverId      = args0.receiverId
               )
               api.focusedAds(args)

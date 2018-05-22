@@ -1,8 +1,8 @@
 package util.img
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.common.geom.d2.{IHeight, ISize2di, IWidth, MSize2di}
+import io.suggest.dev.MPxRatios
 import io.suggest.util.logs.MacroLogsImpl
 import models.im._
 import models.im.make.{MImgMakeArgs, MakeResult}
@@ -74,15 +74,16 @@ class FitImgMaker @Inject()(
         val outputWhCssPx = __mkOutputSz( args.szMult )
 
         val pxRatio = args.devScreenOpt
-          .flatMap(_.pixelRatioOpt)
-          .getOrElse(DevPixelRatios.default)
+          .map(_.pxRatio)
+          .getOrElse(MPxRatios.default)
 
         val outputWhPx    = __mkOutputSz( args.szMult * pxRatio.pixelRatio )
 
-        // Компрессия, по возможности использовать передний план, т.к. maker используется для соц.сетей.
-        val compression = args.compressMode
+        val compMode = args.compressMode
           .getOrElse(CompressModes.Fg)
-          .fromDpr( pxRatio )
+
+        // Компрессия, по возможности использовать передний план, т.к. maker используется для соц.сетей.
+        val compression = ImCompression.forPxRatio( compMode, pxRatio )
 
         // Растр. Собираем набор инструкций для imagemagick.
         val imOps =

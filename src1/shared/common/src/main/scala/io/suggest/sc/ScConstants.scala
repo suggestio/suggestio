@@ -72,9 +72,6 @@ object ScConstants {
     /** Имя поля с версией API выдачи. */
     final def VSN_FN            = "v"
 
-    /** Имя поля с id предыдущего узла выдачи, т.е. как бы id узла-referrer'а. */
-    final def PREV_ADN_ID_FN    = "pr"
-
     /** Имя поля с id текущего узла выдачи. Названа adn вместо node для однозначности, что это наверное ресивер. */
     final def NODE_ID_FN         = "n"
 
@@ -107,6 +104,7 @@ object ScConstants {
 
   /** css-класс для форсирования вертикального скроллинга во внутренних контейнерах. */
   def OVERFLOW_VSCROLL_CSS_CLASS = "sm-overflow-scrolling"
+
 
   /** Константы ответов сервера. */
   object Resp {
@@ -152,13 +150,6 @@ object ScConstants {
     final val TOTAL_COUNT_FN    = "tc"
 
     final val STYLES_FN         = "st"
-
-    final val INDEX_RESP_ACTION = "i"
-
-    final val ADS_TILE_RESP_ACTION = "t"
-
-    /** Экшен для focused-данных в ответе. */
-    final val FOC_ANSWER_ACTION  = "focused"
 
   }
 

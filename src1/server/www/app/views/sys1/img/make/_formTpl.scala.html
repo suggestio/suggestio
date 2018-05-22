@@ -6,6 +6,7 @@
 @import ctx._
 @import io.suggest.ad.blk.{BlockHeights, BlockWidths}
 @import io.suggest.enum2.EnumeratumUtil.toSelectOptions
+@import io.suggest.dev.MPxRatios
 
 @form( CSRF(submitCall) ) {
 
@@ -53,7 +54,7 @@
 
   @select(
     mf("args.devScreen.pxRatio"),
-    options = ("", "default") :: im.DevPixelRatios.values.iterator.map(r => r.toString -> r.pixelRatio.toString).toList,
+    options = ("", "default") :: MPxRatios.values.iterator.map(r => r.toString -> r.pixelRatio.toString).toList,
     '_label -> "Плотность пикселей"
   )
 

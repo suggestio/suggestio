@@ -1,11 +1,11 @@
 package models.msc
 
 import io.suggest.ad.search.AdSearchConstants._
+import io.suggest.dev.MScreen
 import io.suggest.sc.ScConstants.ReqArgs.VSN_FN
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.sc.ads.MLookupMode
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
-import io.suggest.sc.focus.MLookupMode
-import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -20,7 +20,7 @@ object MScAdsFocQs {
   /** Поддержка биндинга инстансов модели из URL qs. */
   implicit def mScAdsFocQsQsb(implicit
                               scAdsSearchArgsB : QueryStringBindable[MScAdsSearchQs],
-                              devScreenOptB    : QueryStringBindable[Option[DevScreen]],
+                              devScreenOptB    : QueryStringBindable[Option[MScreen]],
                               apiVsnB          : QueryStringBindable[MScApiVsn],
                               boolB            : QueryStringBindable[Boolean],
                               strB             : QueryStringBindable[String],
@@ -59,17 +59,15 @@ object MScAdsFocQs {
       }
 
       override def unbind(key: String, value: MScAdsFocQs): String = {
-        _mergeUnbinded {
-          val k = key1F(key)
-          Seq(
-            scAdsSearchArgsB.unbind (key,                     value.search),
-            boolB.unbind            (k(FOC_JUMP_ALLOWED_FN),  value.focJumpAllowed),
-            lookupModeOptB.unbind   (k(AD_LOOKUP_MODE_FN),    value.lookupMode),
-            strB.unbind             (k(AD_ID_LOOKUP_FN),      value.lookupAdId),
-            devScreenOptB.unbind    (k(SCREEN_INFO_FN),       value.screen),
-            apiVsnB.unbind          (k(VSN_FN),               value.apiVsn)
-          )
-        }
+        val k = key1F(key)
+        _mergeUnbinded1(
+          scAdsSearchArgsB.unbind (key,                     value.search),
+          boolB.unbind            (k(FOC_JUMP_ALLOWED_FN),  value.focJumpAllowed),
+          lookupModeOptB.unbind   (k(AD_LOOKUP_MODE_FN),    value.lookupMode),
+          strB.unbind             (k(AD_ID_LOOKUP_FN),      value.lookupAdId),
+          devScreenOptB.unbind    (k(SCREEN_INFO_FN),       value.screen),
+          apiVsnB.unbind          (k(VSN_FN),               value.apiVsn)
+        )
       }
 
     }
@@ -93,6 +91,6 @@ case class MScAdsFocQs(
                         focJumpAllowed  : Boolean,
                         lookupMode      : Option[MLookupMode],
                         lookupAdId      : String,
-                        screen          : Option[DevScreen],
+                        screen          : Option[MScreen],
                         apiVsn          : MScApiVsn         = MScApiVsns.unknownVsn
-)
+                      )

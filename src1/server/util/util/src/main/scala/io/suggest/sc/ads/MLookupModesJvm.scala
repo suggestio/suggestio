@@ -1,7 +1,6 @@
-package io.suggest.sc.foc
+package io.suggest.sc.ads
 
 import io.suggest.enum2.EnumeratumJvmUtil
-import io.suggest.sc.focus.{MLookupMode, MLookupModes}
 import play.api.mvc.QueryStringBindable
 
 /**

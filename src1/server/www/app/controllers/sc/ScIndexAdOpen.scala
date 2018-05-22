@@ -4,9 +4,9 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.sc.{MScApiVsn, MScApiVsns}
+import io.suggest.sc.MScApiVsns
+import io.suggest.sc.index.MScIndexArgs
 import models.req.IReq
-import models.im.DevScreen
 import models.msc._
 import play.api.mvc.Result
 import util.n2u.IN2NodesUtilDi
@@ -122,28 +122,24 @@ trait ScIndexAdOpen
 
     // TODO Надо дедублицировать тут код как-то... Нужно изобретать wrapper-trait?
     val idxLogic: ScIndexLogic = if (majorApiVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
-      new ScIndexLogicV3 {
-        override def isFocusedAdOpen    = true
+      // v3 выдача. Собрать аргументы для вызова index-логики:
+      val s = focLogic._qs
+      val indexArgs = MScIndexArgs(
+        screen = s.screen,
+        apiVsn = s.apiVsn,
+        withWelcome = true,
+        locEnv = s.search.locEnv
+      )
+
+      // Собрать и исполнить пропатченную index-логику.
+      new ScIndexLogicV3( indexArgs )(request) {
+        override def isFocusedAdOpen = true
         override lazy val indexNodeFut: Future[MIndexNodeInfo] = {
-          Future.successful(
-            MIndexNodeInfo(
-              mnode   = producer,
-              isRcvr  = true
-            )
+          val nodeInfo = MIndexNodeInfo(
+            mnode   = producer,
+            isRcvr  = true
           )
-        }
-        override def _request  = request
-        override def _reqArgs: MScIndexArgs = new MScIndexArgsDfltImpl {
-          private val s = focLogic._qs
-          override def prevAdnId: Option[String]  = {
-            s.search
-              .rcvrIdOpt
-              .map(_.id)
-          }
-          override def screen: Option[DevScreen]  = s.screen
-          override def apiVsn: MScApiVsn          = s.apiVsn
-          override def withWelcome                = true
-          override def locEnv                     = s.search.locEnv
+          Future.successful( nodeInfo )
         }
       }
 

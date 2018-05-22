@@ -1,10 +1,10 @@
 package models.msc
 
 import io.suggest.ad.search.AdSearchConstants._
+import io.suggest.dev.MScreen
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.sc.ScConstants.ReqArgs.VSN_FN
-import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -18,7 +18,7 @@ object MScAdsTileQs {
 
   implicit def mScAdsTileQsQsb(implicit
                                scAdsSearchArgsB : QueryStringBindable[MScAdsSearchQs],
-                               devScreenOptB    : QueryStringBindable[Option[DevScreen]],
+                               devScreenOptB    : QueryStringBindable[Option[MScreen]],
                                apiVsnB          : QueryStringBindable[MScApiVsn]
                               ): QueryStringBindable[MScAdsTileQs] = {
     new QueryStringBindableImpl[MScAdsTileQs] {
@@ -65,6 +65,6 @@ object MScAdsTileQs {
 /** Контейнер аргументов запроса плитки карточек. */
 case class MScAdsTileQs(
   search    : MScAdsSearchQs,
-  screen    : Option[DevScreen] = None,
+  screen    : Option[MScreen]   = None,
   apiVsn    : MScApiVsn         = MScApiVsns.unknownVsn
 )

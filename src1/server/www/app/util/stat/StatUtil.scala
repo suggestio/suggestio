@@ -11,7 +11,6 @@ import io.suggest.stat.m._
 import io.suggest.stat.saver.PlayStatSaver
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.im.DevScreen
 import models.mctx.{Context, ContextUtil}
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser}
@@ -222,7 +221,7 @@ class StatUtil @Inject()(
 
 
     /** Данные по экрану. Оверрайдить при наличии уже распарсенного инстанса. */
-    def devScreenOpt: Option[DevScreen] = ctx.deviceScreenOpt
+    def devScreenOpt = ctx.deviceScreenOpt
 
     def vportQuanted: Option[MViewPort] = None
 
@@ -234,7 +233,7 @@ class StatUtil @Inject()(
           MViewPort(
             widthPx   = dso.width,
             heightPx  = dso.height,
-            pxRatio   = dso.pixelRatioOpt.map(_.pixelRatio)
+            pxRatio   = Some( dso.pxRatio.pixelRatio )
           )
         },
         vportQuanted  = vportQuanted
@@ -254,11 +253,11 @@ class StatUtil @Inject()(
         Nil
       } else {
         val mact = MAction(
-          actions = Seq( MActionTypes.BleBeaconNear ),
+          actions = MActionTypes.BleBeaconNear :: Nil,
           nodeId  = bcns.map(_.uid),
           count   = bcns.map(_.distanceCm)
         )
-        Seq(mact)
+        mact :: Nil
       }
     }
 

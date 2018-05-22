@@ -1,10 +1,9 @@
 package controllers
 
-import javax.inject.Inject
-
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockMetaJvm, BlockWidths}
+import io.suggest.dev.MScreenJvm
 import io.suggest.util.logs.IMacroLogs
-import models.im.{CompressMode, DevScreen, MImgT}
+import models.im.{CompressMode, MImgT}
 import models.im.make.{MImgMakeArgs, MImgMaker, MImgMakers, SysForm_t}
 import models.mctx.Context
 import play.api.data.{Form, Mapping}
@@ -22,7 +21,7 @@ import scala.concurrent.Future
  * Created: 21.04.15 22:50
  * Description: Аддон для SysImg-контроллера, добавляющий экшены для отладки make-движков.
  */
-class SysImgMakeUtil @Inject() () {
+class SysImgMakeUtil {
 
   import play.api.data.Forms._
 
@@ -31,10 +30,10 @@ class SysImgMakeUtil @Inject() () {
     mapping(
       "blockMeta" -> BlockMetaJvm.formMapping,
       "szMult"    -> FormUtil.szMultM,
-      "devScreen" -> optional(DevScreen.mappingFat),
+      "devScreen" -> optional(MScreenJvm.mappingFat),
       "compress"  -> CompressMode.mappingOpt
     )
-    { MImgMakeArgs(img, _, _, _, _) : MImgMakeArgs }
+    { MImgMakeArgs(img, _, _, _, _) }
     {ima =>
       // После отвязки MakeArgs от BlockMeta возникла необходимость этого костыля:
       val bmsz = ima.targetSz

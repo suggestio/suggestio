@@ -2,8 +2,9 @@ package controllers.sc
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.model.n2.node.IMNodes
+import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
-import io.suggest.sc.sc3.{MSc3Tag, MSc3TagsResp}
+import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MSc3Tag, MSc3TagsResp}
 import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
@@ -131,7 +132,8 @@ trait ScTags
   case class ScTagsV3(override val _qs: MScTagsSearchQs)
                      (override implicit val _request: IReq[_]) extends ScTagsHttpLogic {
 
-    override def execute(): Future[Result] = {
+    /** Сборка search-res-ответа без sc3Resp-обёртки. */
+    def sc3TagsRespFut: Future[MSc3TagsResp] = {
       // Запустить фоновые задачи.
       val _tagsFoundFut = tagsFoundFut
 
@@ -142,7 +144,7 @@ trait ScTags
         tags <- _tagsFoundFut
       } yield {
         LOGGER.trace(s"$logPrefix Found ${tags.size} tags")
-        val resp = MSc3TagsResp(
+        MSc3TagsResp(
           tags = {
             val iter = for {
               tagNode <- tags.iterator
@@ -157,7 +159,23 @@ trait ScTags
             iter.toSeq
           }
         )
-        val respJson = Json.toJson( resp )
+      }
+    }
+
+    override def execute(): Future[Result] = {
+      for {
+        sc3TagsResp <- sc3TagsRespFut
+      } yield {
+        val respJson = Json.toJson(
+          MSc3Resp(
+            respActions = List(
+              MSc3RespAction(
+                acType = MScRespActionTypes.SearchRes,
+                search = Some( sc3TagsResp )
+              )
+            )
+          )
+        )
         Ok( respJson )
       }
     }

@@ -2,6 +2,7 @@ package io.suggest.sc.sc3
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.dev.MSzMult
+import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -14,7 +15,7 @@ import play.api.libs.functional.syntax._
 object MSc3AdsResp {
 
   /** Поддержка play-json. */
-  implicit def MSC3_ADS_TILE_RESP: OFormat[MSc3AdsResp] = (
+  implicit def MSC3_ADS_TILE_RESP_FORMAT: OFormat[MSc3AdsResp] = (
     (__ \ "a").formatNullable[Seq[MSc3AdData]]
       .inmap[Seq[MSc3AdData]](
         EmptyUtil.opt2ImplEmpty1F(Nil),
@@ -22,6 +23,12 @@ object MSc3AdsResp {
       ) and
     (__ \ "z").format[MSzMult]
   )(apply, unlift(unapply))
+
+
+  implicit def univEq: UnivEq[MSc3AdsResp] = {
+    import io.suggest.ueq.UnivEqUtil._
+    UnivEq.derive
+  }
 
 }
 

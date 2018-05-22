@@ -1,11 +1,11 @@
 package util.lk
 
+import io.suggest.dev.MScreen
 import io.suggest.di.IExecutionContext
 import io.suggest.model.n2.node.MNode
 import javax.inject.Inject
 import models.blk
 import models.blk.SzMult_t
-import models.im.DevScreen
 import models.im.make.MakeResult
 import play.api.inject.Injector
 import util.adv.AdvUtil
@@ -36,7 +36,7 @@ class LkAdUtil @Inject() (
    * @param devScreenOpt Инфа по скрину.
    * @return Фьючерс с контейнером аргументов для рендера блока.
    */
-  def tiledAdBrArgs(mad: MNode, devScreenOpt: Option[DevScreen] = None): Future[blk.RenderArgs] = {
+  def tiledAdBrArgs(mad: MNode, devScreenOpt: Option[MScreen] = None): Future[blk.RenderArgs] = {
     val szMult = TILE_SZ_MULT
 
     // TODO mads2 Тут выпилен код вообще.

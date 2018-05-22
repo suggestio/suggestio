@@ -1,6 +1,6 @@
-package util.img
+package io.suggest.dev
 
-import models.im.{DevScreen, DevPixelRatios, DevPixelRatio}
+import io.suggest.common.html.HtmlConstants
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -13,13 +13,17 @@ import scala.util.parsing.combinator.JavaTokenParsers
 object PicSzParsers {
 
   val picSizeNumRe = "\\d{2,5}".r
-  val picSizeDelimRe = "[xX]".r
 
-  def IMG_RES_DPR_DELIM = ","
+  final val WH_DELIM = "x"
+  val picSizeDelimRe = s"[${WH_DELIM.toLowerCase}${WH_DELIM.toUpperCase}]".r
+
+  @inline
+  final def IMG_RES_DPR_DELIM = HtmlConstants.COMMA
+
 }
 
 
-import PicSzParsers._
+import io.suggest.dev.PicSzParsers._
 
 
 /** Парсеры для размеров картинок. */
@@ -39,10 +43,10 @@ trait PicSzParsers extends JavaTokenParsers {
 /** Парсеры для плотности пикселей. */
 trait DevicePixelRatioParsers extends JavaTokenParsers {
 
-  def devPixRatioP: Parser[DevPixelRatio] = {
+  def devPixRatioP: Parser[MPxRatio] = {
     decimalNumber ^^ { dnStr =>
       val dprVal = dnStr.toFloat
-      DevPixelRatios.forRatio(dprVal)
+      MPxRatios.forRatio(dprVal)
     }
   }
 
@@ -52,11 +56,17 @@ trait DevicePixelRatioParsers extends JavaTokenParsers {
 /** Комбо-парсер для значения device screen. */
 trait DevScreenParsers extends PicSzParsers with DevicePixelRatioParsers {
 
-  def devScreenP: Parser[DevScreen] = {
+  def devScreenP: Parser[MScreen] = {
     val d = IMG_RES_DPR_DELIM
-    (resolutionRawP ~ opt(d ~> devPixRatioP)) ^^ {
-      case w ~ h ~ dprOpt  =>  DevScreen(width = w, height = h, pixelRatioOpt = dprOpt)
+    (resolutionRawP ~ (d ~> devPixRatioP)) ^^ {
+      case w ~ h ~ dpr =>
+        MScreen(
+          width         = w,
+          height        = h,
+          pxRatio       = dpr
+        )
     }
   }
 
 }
+final class DevScreenParsersImpl extends DevScreenParsers

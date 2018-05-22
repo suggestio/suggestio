@@ -1,8 +1,8 @@
 package util.blocks
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.dev.{MPxRatio, MPxRatios}
 import models.blk.{SzMult_t, szMulted}
 import models.im._
 import models.im.make.{MImgMakeArgs, MakeResult}
@@ -34,7 +34,7 @@ class BlkImgMaker @Inject() (
    * @param blockMeta Целевой размер. В частности - метаданные блока.
    * @return Параметры для картинки.
    */
-  private def getRenderSz(szMult: SzMult_t, blockMeta: ISize2di, pxRatio: DevPixelRatio): MSize2di = {
+  private def getRenderSz(szMult: SzMult_t, blockMeta: ISize2di, pxRatio: MPxRatio): MSize2di = {
     val imgResMult = pxRatio.pixelRatio * szMult
     MSize2di(
       height = szMulted(blockMeta.height, imgResMult),
@@ -57,12 +57,13 @@ class BlkImgMaker @Inject() (
 
     } else {
       // Раз системе надо асинхронно, значит делаем асинхронно в принудительном порядке:
-      val pxRatio = DevPixelRatios.pxRatioDefaulted( args.devScreenOpt.flatMap(_.pixelRatioOpt) )
+      val pxRatio = MPxRatios.pxRatioDefaulted( args.devScreenOpt.map(_.pxRatio) )
+
+      val compMode = args.compressMode
+        .getOrElse(CompressModes.Fg)
 
       // Компрессия выходной картинки, желательно как fg её сжимать.
-      val fgc = args.compressMode
-        .getOrElse(CompressModes.Fg)
-        .fromDpr(pxRatio)
+      val fgc = ImCompression.forPxRatio(compMode, pxRatio)
 
       val szReal = getRenderSz(args.szMult, args.targetSz, pxRatio)
 

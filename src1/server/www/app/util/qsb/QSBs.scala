@@ -1,11 +1,11 @@
 package util.qsb
 
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.dev.PicSzParsers
 import io.suggest.geo.{MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.mvc.QueryStringBindable
-import util.img.PicSzParsers
 
 import scala.util.parsing.combinator.JavaTokenParsers
 

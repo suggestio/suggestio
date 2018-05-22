@@ -3,7 +3,7 @@ package util.img
 import io.suggest.adn.edit.NodeEditConstants
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.model.n2.edge.MEdge
+import io.suggest.dev.MPxRatios
 import io.suggest.model.n2.node.MNode
 import io.suggest.url.MHostInfo
 import models.im._
@@ -35,7 +35,7 @@ class GalleryUtil @Inject() (
    */
   def dynLkBigCall(mimg: MImgT)(implicit ctx: Context): Call = {
     val devPixelRatio = ctx.deviceScreenOpt
-      .fold(DevPixelRatios.default)(_.pixelRatio)
+      .fold(MPxRatios.default)(_.pxRatio)
     // Всегда ресайзим до необходимого отображаемого размера. Используем fg-качество для сжатия.
     // TODO Height должен быть необязательный, но максимум 200 пикселей.
     val newSz = MSize2di(
@@ -51,7 +51,8 @@ class GalleryUtil @Inject() (
       AbsResizeOp( newSz, ImResizeFlags.FillArea ) ::
       ExtentOp( newSz ) ::
       ImInterlaces.Plane ::
-      devPixelRatio.fgCompression.toOps( outFmt )
+      ImCompression.forPxRatio( CompressModes.Fg, devPixelRatio)
+        .toOps( outFmt )
 
     // Если необходимо, то сначала делаем кроп:
     // TODO Если картинка не кропаная, то кропать её принудительно на 200 пикселей по высоте?

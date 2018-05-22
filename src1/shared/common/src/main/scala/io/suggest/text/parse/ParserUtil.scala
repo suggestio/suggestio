@@ -45,6 +45,16 @@ object ParserUtil {
         OptionUtil.maybe( pr.successful )( pr.get )
       }
 
+      /** Сконвертировать в Either. */
+      def toEither: Either[String, T] = {
+        pr match {
+          case s: Parsers#Success[T] =>
+            Right( s.result )
+          case e: Parsers#NoSuccess =>
+            Left( e.msg )
+        }
+      }
+
     }
 
   }

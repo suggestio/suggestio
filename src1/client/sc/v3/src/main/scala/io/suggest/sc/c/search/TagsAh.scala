@@ -134,7 +134,10 @@ class TagsAh[M](
             )
             updated( v2 )
           },
-          {resp =>
+          {sc3Resp =>
+            // TODO Надо бы разруливать ответ как-то.
+            val resp = sc3Resp.respActions.head.search.get
+
             val tagsList2 = if (m.reason.clear || tagsReq0.isEmpty || tagsReq0.exists(_.isEmpty)) {
               // Объединять текущий и полученный списки тегов не требуется.
               resp.tags

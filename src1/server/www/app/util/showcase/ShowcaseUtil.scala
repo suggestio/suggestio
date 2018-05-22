@@ -2,14 +2,13 @@ package util.showcase
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidth, BlockWidths}
-import io.suggest.dev.MSzMults
+import io.suggest.dev.{MScreen, MSzMults}
 import io.suggest.model.n2.node.MNode
 import io.suggest.sc.ScConstants
 import io.suggest.sc.tile.{GridCalc, MGridCalcConf}
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.blk
 import models.blk._
-import models.im._
 import models.im.make.MakeResult
 import models.mproj.ICommonDi
 import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
@@ -88,7 +87,7 @@ class ShowcaseUtil @Inject() (
    * @param mad Рекламная карточка.
    * @return Аргументы для рендера.
    */
-  def focusedBrArgsFor(mad: MNode, deviceScreenOpt: Option[DevScreen] = None): Future[blk.RenderArgs] = {
+  def focusedBrArgsFor(mad: MNode, deviceScreenOpt: Option[MScreen] = None): Future[blk.RenderArgs] = {
     val szMult: SzMult_t = {
       val dscrSz = for {
         dscr <- deviceScreenOpt
@@ -121,7 +120,7 @@ class ShowcaseUtil @Inject() (
    * @param szMult Требуемый мультипликатор размера картинки.
    * @return None если нет фоновой картинки. Иначе Some() с данными рендера фоновой wide-картинки.
    */
-  def focWideBgImgArgs(mad: MNode, szMult: SzMult_t, devScrOpt: Option[DevScreen]): Future[Option[MakeResult]] = {
+  def focWideBgImgArgs(mad: MNode, szMult: SzMult_t, devScrOpt: Option[MScreen]): Future[Option[MakeResult]] = {
     LOGGER.error(s"focWideBgImgArgs(${mad.idOrNull}) Not implemented for jd-ads")
     Future.successful( None )
   }
@@ -148,7 +147,7 @@ class ShowcaseUtil @Inject() (
   val GRID_COLS_CONF = MGridCalcConf.EVEN_GRID
 
 
-  def getTileArgs(dscrOpt: Option[DevScreen]): TileArgs = {
+  def getTileArgs(dscrOpt: Option[MScreen]): TileArgs = {
     dscrOpt.fold {
       TileArgs(
         szMult    = MIN_SZ_MULT,
@@ -156,7 +155,7 @@ class ShowcaseUtil @Inject() (
       )
     } { getTileArgs }
   }
-  def getTileArgs(dscr: DevScreen): TileArgs = {
+  def getTileArgs(dscr: MScreen): TileArgs = {
     val colsCount = GridCalc.getColumnsCount(dscr, GRID_COLS_CONF)
     TileArgs(
       szMult      = getSzMult4tilesScr(colsCount, dscr),
@@ -170,7 +169,7 @@ class ShowcaseUtil @Inject() (
    * @param dscr Экран.
    * @return Оптимальное значение SzMult_t выбранный для рендера.
    */
-  def getSzMult4tilesScr(colsCount: Int, dscr: DevScreen): SzMult_t = {
+  def getSzMult4tilesScr(colsCount: Int, dscr: MScreen): SzMult_t = {
     val blockWidthPx = GRID_COLS_CONF.cellWidth.value
     // Считаем целевое кол-во колонок на экране.
     @tailrec def detectSzMult(restSzMults: List[SzMult_t]): SzMult_t = {
@@ -208,7 +207,7 @@ class ShowcaseUtil @Inject() (
    * @param dscr Данные по экрану устройства.
    * @return Значение SzMult, пригодное для рендера блока.
    */
-  def fitBlockToScreen(bm: BlockMeta, dscr: DevScreen): SzMult_t = {
+  def fitBlockToScreen(bm: BlockMeta, dscr: MScreen): SzMult_t = {
     val hfloat = bm.height.toFloat
 
     val szMultIter0 = for {

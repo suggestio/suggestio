@@ -125,7 +125,9 @@ case object BasicScreenSizes extends Enum[BasicScreenSize] {
 
   override val values = findValues
 
-  /** Найти подходящее разрешение, если есть. */
+  /** Найти подходящее разрешение, если есть.
+    * (Найти базовое разрешение окна по модели)
+    */
   def includesSize(sz: ISize2di): Option[BasicScreenSize] = {
     values
       .find { ISize2di.isIncudesSz(_, sz) }

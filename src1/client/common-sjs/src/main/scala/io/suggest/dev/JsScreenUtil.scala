@@ -21,18 +21,15 @@ object JsScreenUtil extends Log {
 
     val pxRatio = WindowVm()
       .devicePixelRatio
-      .fold[Double] {
+      .fold {
         LOG.warn( WarnMsgs.SCREEN_PX_RATIO_MISSING )
-        1.0
-      }( MScreen.roundPxRatio )
+        MPxRatios.default
+      }( MPxRatios.forRatio(_) )
 
     vszOpt.fold{
       // Наврядли этот код будет вызываться когда-либо.
-      MScreen(
-        width  = 1024,
-        height = 768,
-        pxRatio = pxRatio
-      )
+      MScreen.default
+        .withPxRatio( pxRatio )
     } { sz2d =>
       MScreen(
         width  = sz2d.width,

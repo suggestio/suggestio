@@ -143,13 +143,15 @@ routesImport ++= Seq(
   "io.suggest.model.n2.node.MNodeTypesJvm._",
   "io.suggest.file.up.MFile4UpPropsJvm._",
   "io.suggest.url.MHostInfoJvm._",
-  "io.suggest.sc.foc.MLookupModesJvm._",
+  "io.suggest.sc.ads.MLookupModesJvm._",
   "io.suggest.sc.MScApiVsnsJvm._",
   "io.suggest.sc.tags.MScTagsSearchQsJvm._",
   "io.suggest.img.MImgFmtJvm._",
   "io.suggest.compress.MCompressAlgosJvm._",
   "models.msc.MPwaManifestQsJvm._",
-  "io.suggest.es.model.MEsUuIdJvm._"
+  "io.suggest.es.model.MEsUuIdJvm._",
+  "io.suggest.dev.MScreenJvm._",
+  "io.suggest.sc.index.MScIndexArgsJvm._"
 )
 
 deduplicators += { s: Seq[File] => s.headOption }

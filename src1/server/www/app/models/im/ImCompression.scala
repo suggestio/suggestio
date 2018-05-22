@@ -1,5 +1,6 @@
 package models.im
 
+import io.suggest.dev.{MPxRatio, MPxRatios}
 import io.suggest.img.{MImgFmt, MImgFmts}
 import japgolly.univeq._
 
@@ -15,6 +16,43 @@ object ImCompression {
 
   val SOME_BLUR = Some( GaussBlurOp(1) )
   val SOME_CHROMA_SS = Some( ImSamplingFactors.Sf1x2 )
+
+
+  def bgForPxRatio(dpr: MPxRatio): ImCompression = {
+    dpr match {
+      case MPxRatios.XHDPI => ImCompression(65)
+      case MPxRatios.DPR3  => ImCompression(39)
+      // Используется SF_1x1 (т.е. откл.), иначе на контрастных переходах появляются заметные "тучи" на монотонных кусках.
+      case MPxRatios.MDPI  => ImCompression(82)
+      case MPxRatios.HDPI  => ImCompression(75)
+    }
+  }
+
+  def fgForPxRatio(dpr: MPxRatio): ImCompression = {
+    dpr match {
+      case MPxRatios.XHDPI => ImCompression(75)
+      case MPxRatios.DPR3  => ImCompression(45)
+      case MPxRatios.MDPI  => ImCompression(89)
+      case MPxRatios.HDPI  => ImCompression(83)
+    }
+  }
+
+  def forPxRatio(compressMode: CompressMode, dpr: MPxRatio): ImCompression = {
+    compressMode match {
+      case CompressModes.Fg =>
+        fgForPxRatio(dpr)
+      case CompressModes.Bg =>
+        bgForPxRatio(dpr)
+      case CompressModes.DeepBackground =>
+        val c0 = bgForPxRatio(dpr)
+        c0.copy(
+          quality           = c0.quality - 10,
+          chromaSubSampling = ImCompression.SOME_CHROMA_SS,
+          // Размывка 1х1 для сокрытия краёв после сильного сжатия.
+          blur              = ImCompression.SOME_BLUR
+        )
+    }
+  }
 
 }
 

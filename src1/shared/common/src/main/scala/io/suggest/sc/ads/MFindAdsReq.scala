@@ -6,7 +6,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.sc.focus.MLookupMode
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -34,6 +34,8 @@ object MFindAdsReq {
     (__ \ AD_ID_LOOKUP_FN).writeNullable[String]
   )( unlift(unapply) )
 
+  implicit def univEq: UnivEq[MFindAdsReq] = UnivEq.derive
+
 }
 
 
@@ -48,7 +50,7 @@ case class MFindAdsReq(
                         receiverId  : Option[String]    = None,
                         generation  : Option[Long]      = None,
                         locEnv      : MLocEnv           = MLocEnv.empty,
-                        screenInfo  : Option[MScreen]   = None,
+                        screen      : Option[MScreen]   = None,
                         tagNodeId   : Option[String]    = None,
                         // focused API
                         /**

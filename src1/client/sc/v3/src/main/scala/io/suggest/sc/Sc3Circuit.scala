@@ -4,7 +4,7 @@ import diode.ModelRO
 import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.common.event.WndEvents
-import io.suggest.dev.JsScreenUtil
+import io.suggest.dev.{MPxRatios, JsScreenUtil}
 import io.suggest.geo.MLocEnv
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.m.MJdCssArgs
@@ -154,14 +154,16 @@ class Sc3Circuit(
     MFindAdsReq(
       receiverId  = currRcvrId,
       locEnv      = if (currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
-      screenInfo  = Some {
+      screen  = Some {
         val scr0 = mroot.dev.screen.screen
         // 2018-01-24 Костыль в связи с расхождением между szMult экрана и szMult плитки, тут быстрофикс:
-        val pxRatio2 = Math.max(
-          mroot.grid.core.jdConf.szMult.toDouble,
-          scr0.pxRatio
+        val pxRatio2 = MPxRatios.forRatio(
+          Math.max(
+            mroot.grid.core.jdConf.szMult.toDouble,
+            scr0.pxRatio.pixelRatio
+          )
         )
-        if (pxRatio2 > scr0.pxRatio)
+        if (pxRatio2.value > scr0.pxRatio.value)
           scr0.withPxRatio( pxRatio2 )
         else
           scr0

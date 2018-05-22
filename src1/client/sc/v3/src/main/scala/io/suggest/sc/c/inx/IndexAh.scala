@@ -3,7 +3,7 @@ package io.suggest.sc.c.inx
 import diode._
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.react.ReactDiodeUtil.{ActionHandlerExt, EffectsOps, PotOpsExt}
-import io.suggest.sc.ScConstants
+import io.suggest.sc.{Sc3Api, ScConstants}
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx._
@@ -39,13 +39,14 @@ class IndexAh[M](
     val ts = System.currentTimeMillis()
 
     val fx = Effect {
-      val root = rootRO()
+      val root = rootRO.value
       val args = MScIndexArgs(
         nodeId      = v0.state.currRcvrId,
         locEnv      = root.locEnv,
         screen      = Some( root.dev.screen.screen ),
         withWelcome = withWelcome,
-        geoIntoRcvr = geoIntoRcvr
+        geoIntoRcvr = geoIntoRcvr,
+        apiVsn      = Sc3Api.API_VSN
       )
 
       api

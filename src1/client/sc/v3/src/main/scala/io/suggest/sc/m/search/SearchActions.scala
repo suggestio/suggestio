@@ -1,7 +1,7 @@
 package io.suggest.sc.m.search
 
 import io.suggest.sc.m.ISc3Action
-import io.suggest.sc.sc3.MSc3TagsResp
+import io.suggest.sc.sc3.MSc3Resp
 import io.suggest.sc.search.MSearchTab
 
 import scala.util.Try
@@ -35,7 +35,7 @@ case object ResetTags extends ISearchAction
 case class GetMoreTags(clear: Boolean, ignorePending: Boolean = false) extends ISearchAction
 
 /** Экшен получения результата запроса поиска тегов. */
-case class MoreTagsResp(reason: GetMoreTags, timestamp: Long, reqLimit: Int, resp: Try[MSc3TagsResp]) extends ISearchAction
+case class MoreTagsResp(reason: GetMoreTags, timestamp: Long, reqLimit: Int, resp: Try[MSc3Resp]) extends ISearchAction
 
 /** Происходит скроллинг в списке тегов. Возможно, надо подгрузить ещё тегов. */
 case class TagsScroll(scrollTop: Double, scrollHeight: Int) extends ISearchAction

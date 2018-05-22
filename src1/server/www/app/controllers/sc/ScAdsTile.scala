@@ -178,10 +178,10 @@ trait ScAdsTileBase
 
         new Stat2 {
           override def components = MComponents.Tile :: super.components
-          override def statActions  = saAcc
-          override def userSaOpt    = _userSaOpt
-          override def locEnvOpt    = _qs.search.locEnv.optional
-          override def gen          = _qs.search.genOpt
+          override def statActions = saAcc
+          override def userSaOpt = _userSaOpt
+          override def locEnvOpt = _qs.search.locEnv.optional
+          override def gen = _qs.search.genOpt
           override def devScreenOpt = _qs.screen
         }
       }
@@ -247,7 +247,7 @@ trait ScAdsTile
 
 
   protected class TileAdsLogicV3(override val _qs: MScAdsTileQs)
-                                (implicit val _request: IReq[_]) extends TileAdsLogicV {
+                                (override implicit val _request: IReq[_]) extends TileAdsLogicV {
 
     override type T = MSc3AdData
 

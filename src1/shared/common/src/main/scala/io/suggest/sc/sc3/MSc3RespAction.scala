@@ -1,7 +1,8 @@
 package io.suggest.sc.sc3
 
 import io.suggest.sc.ScConstants.Resp._
-import io.suggest.sc.resp.MScRespActionType
+import io.suggest.sc.resp.{MScRespActionType, MScRespActionTypes}
+import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -17,9 +18,12 @@ object MSc3RespAction {
   /** Поддержка play-json. */
   implicit def MSC3_RESP_ACTION_FORMAT: OFormat[MSc3RespAction] = (
     (__ \ ACTION_FN).format[MScRespActionType] and
-    (__ \ INDEX_RESP_ACTION).formatNullable[MSc3IndexResp] and
-    (__ \ ADS_TILE_RESP_ACTION).formatNullable[MSc3AdsResp]
+    (__ \ MScRespActionTypes.Index.value).formatNullable[MSc3IndexResp] and
+    (__ \ MScRespActionTypes.AdsTile.value).formatNullable[MSc3AdsResp] and
+    (__ \ MScRespActionTypes.SearchRes.value).formatNullable[MSc3TagsResp]
   )(apply, unlift(unapply))
+
+  implicit def univEq: UnivEq[MSc3RespAction] = UnivEq.derive
 
 }
 
@@ -31,9 +35,11 @@ object MSc3RespAction {
   * @param acType Тип экшена.
   * @param index Тело index-ответа.
   * @param ads Тело ответа для плитки jd-карточек.
+  * @param search Тело ответа с результатами поиска тегов/узлов/etc.
   */
 case class MSc3RespAction(
                            acType    : MScRespActionType,
-                           index     : Option[MSc3IndexResp]      = None,
-                           ads       : Option[MSc3AdsResp]    = None
+                           index     : Option[MSc3IndexResp]  = None,
+                           ads       : Option[MSc3AdsResp]    = None,
+                           search    : Option[MSc3TagsResp]   = None,
                          )

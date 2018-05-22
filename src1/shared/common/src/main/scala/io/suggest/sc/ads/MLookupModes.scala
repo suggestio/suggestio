@@ -1,4 +1,4 @@
-package io.suggest.sc.focus
+package io.suggest.sc.ads
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil

@@ -2,8 +2,9 @@ package io.suggest.dev
 
 import io.suggest.common.geom.d2.ISize2di
 import japgolly.univeq.UnivEq
+import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import play.api.libs.json.Writes
+import io.suggest.text.parse.ParserUtil.Implicits._
 
 /**
  * Suggest.io
@@ -14,10 +15,18 @@ import play.api.libs.json.Writes
 
 object MScreen {
 
-  /** Поддержка Play-json сериализации у нас очень простая. */
-  implicit def MSCREEN_WRITES: Writes[MScreen] = {
-    implicitly[Writes[String]]
-      .contramap[MScreen]( _.toQsValue )
+  def maybeFromString(s: String): Either[String, MScreen] = {
+    val p = new DevScreenParsersImpl
+    p.parse( p.devScreenP, s )
+      .toEither
+  }
+
+  implicit def mScreenFormat: Format[MScreen] = {
+    implicitly[Format[String]]
+      .inmap[MScreen](
+        maybeFromString(_).right.get,
+        _.toQsValue
+      )
   }
 
   def roundPxRatio(pxRatioRaw: Double): Double = {
@@ -31,27 +40,42 @@ object MScreen {
     UnivEq.derive
   }
 
+  def default = MScreen(
+    width   = 1024,
+    height  = 768,
+    pxRatio = MPxRatios.default
+  )
+
 }
 
 
-/** Класс модели для client-side описания экрана. */
+/**
+ * Данные по экрану.
+ * @param width Ширина в css-пикселях.
+ * @param height Высота в css-пикселях.
+ * @param pxRatio Плотность пикселей.
+ */
 case class MScreen(
-  override val width    : Int,
-  override val height   : Int,
-  pxRatio               : Double
-)
+                  // TODO Сделать поле wh, убрать top-level поля w/h
+                    override val width    : Int,
+                    override val height   : Int,
+                    pxRatio               : MPxRatio
+                  )
   extends ISize2di
 {
 
   /** Сериализовать для передачи на сервер. */
-  def toQsValue: String = {
+  final def toQsValue: String = {
     // Округлять pxRatio до первого знака после запятой:
-    width.toString + "x" + height.toString + "," + pxRatio
+    width.toString +
+      PicSzParsers.WH_DELIM + height.toString +
+      PicSzParsers.IMG_RES_DPR_DELIM + pxRatio.pixelRatio
+    // TODO Надо использовать pxRatio.value
   }
 
-  override def toString: String = toQsValue
+  override final def toString: String = toQsValue
 
-  def withPxRatio(pxRatio: Double) = copy(pxRatio = pxRatio)
+  def withPxRatio(pxRatio: MPxRatio) = copy(pxRatio = pxRatio)
 
 }
 

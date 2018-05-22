@@ -11,6 +11,7 @@ import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.primo.id.OptId
 import io.suggest.sc.MScApiVsns
+import io.suggest.sc.ads.{MLookupMode, MLookupModes}
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.sc3.{MSc3AdData, MSc3AdsResp, MSc3Resp, MSc3RespAction}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
@@ -20,7 +21,6 @@ import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
 import util.acl._
-import io.suggest.sc.focus.{MLookupMode, MLookupModes}
 import play.api.libs.json.Json
 import util.ad.IJdAdUtilDi
 import util.showcase.IScAdSearchUtilDi

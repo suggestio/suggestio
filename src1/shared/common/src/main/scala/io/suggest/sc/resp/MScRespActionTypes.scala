@@ -1,11 +1,10 @@
 package io.suggest.sc.resp
 
-import io.suggest.primo.IStrId
 import io.suggest.sc.ScConstants.Resp._
-import enumeratum._
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
-import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -15,22 +14,19 @@ import play.api.libs.functional.syntax._
   */
 
 /** Кросс-платформенная модель типов экшенов sc-ответов. */
-object MScRespActionTypes extends Enum[MScRespActionType] {
+object MScRespActionTypes extends StringEnum[MScRespActionType] {
 
   /** Тип экшена с индексом выдачи. */
-  case object Index extends MScRespActionType {
-    override def strId = INDEX_RESP_ACTION
-  }
+  case object Index extends MScRespActionType("i")
 
   /** Тип экшена с плиткой выдачи. */
-  case object AdsTile extends MScRespActionType {
-    override def strId = ADS_TILE_RESP_ACTION
-  }
+  case object AdsTile extends MScRespActionType("t")
 
   /** Тип экшена с карточками focused-выдачи. */
-  case object AdsFoc extends MScRespActionType {
-    override def strId = FOC_ANSWER_ACTION
-  }
+  case object AdsFoc extends MScRespActionType("f")
+
+  /** Экшен результата поиска. */
+  case object SearchRes extends MScRespActionType("s")
 
 
   /** Список всех значений модели. */
@@ -40,17 +36,15 @@ object MScRespActionTypes extends Enum[MScRespActionType] {
 
 
 /** Класс одного элемента модели типов. */
-sealed abstract class MScRespActionType
-  extends EnumEntry
-  with IStrId
+sealed abstract class MScRespActionType(override val value: String)
+  extends StringEnumEntry
 
 
 /** Статическая поддержка элементов модели [[MScRespActionType]]. */
 object MScRespActionType {
 
   implicit def MSC_RESP_ACTION_TYPE_FORMAT: Format[MScRespActionType] = {
-    implicitly[Format[String]]
-      .inmap( MScRespActionTypes.withName, _.strId )
+    EnumeratumUtil.valueEnumEntryFormat( MScRespActionTypes )
   }
 
   implicit def univEq: UnivEq[MScRespActionType] = UnivEq.derive
