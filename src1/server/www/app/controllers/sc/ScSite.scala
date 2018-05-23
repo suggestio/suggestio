@@ -192,7 +192,6 @@ trait ScSite
       } yield {
         new ScSiteArgs {
           override def nodeOpt    = _nodeOpt
-          override val scColors   = scUtil.siteScColors(nodeOpt)
           override def headAfter: Traversable[Html] = {
             super.headAfter ++ _headAfter
           }

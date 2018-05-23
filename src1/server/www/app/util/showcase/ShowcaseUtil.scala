@@ -11,7 +11,7 @@ import models.blk
 import models.blk._
 import models.im.make.MakeResult
 import models.mproj.ICommonDi
-import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
+import models.msc.TileArgs
 import util.adv.AdvUtil
 
 import scala.annotation.tailrec
@@ -235,19 +235,6 @@ class ShowcaseUtil @Inject() (
       MIN_SZ_MULT
     else
       maxHiter.max
-  }
-
-
-  /** Обычные цвета выдачи, не нужны в 99% случаев. */
-  private def SC_COLORS_GEO = ScSiteColors(bgColor = SITE_BGCOLOR_DFLT, fgColor = SITE_FGCOLOR_DFLT)
-
-  def siteScColors(nodeOpt: Option[MNode]): IScSiteColors = {
-    nodeOpt.fold(SC_COLORS_GEO) { mnode =>
-      ScSiteColors(
-        bgColor = mnode.meta.colors.bg.fold(SITE_BGCOLOR_DFLT)(_.code),
-        fgColor = mnode.meta.colors.fg.fold(SITE_FGCOLOR_DFLT)(_.code)
-      )
-    }
   }
 
 }

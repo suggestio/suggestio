@@ -30,20 +30,11 @@ trait IAdBodyTplArgs extends IProducer {
 
 /** Дефолтовая реализация [[IAdBodyTplArgs]]. */
 case class AdBodyTplArgs(
-  override val brArgs    : blk.IRenderArgs,
-  override val producer  : MNode,
-  override val adsCount  : Int,
-  override val index     : Int,
-  override val is3rdParty: Boolean
-)
+                          override val brArgs    : blk.IRenderArgs,
+                          override val producer  : MNode,
+                          override val adsCount  : Int,
+                          override val index     : Int,
+                          override val is3rdParty: Boolean
+                        )
   extends IAdBodyTplArgs
 
-
-trait IAdBodyTplArgsWrapper extends IAdBodyTplArgs with IProducerWrapper {
-  override def _underlying: IAdBodyTplArgs
-
-  override def brArgs   = _underlying.brArgs
-  override def index    = _underlying.index
-  override def adsCount = _underlying.adsCount
-  override def is3rdParty = _underlying.is3rdParty
-}

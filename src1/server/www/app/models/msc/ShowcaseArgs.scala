@@ -10,20 +10,9 @@ import models.blk.SzMult_t
  * 2014.nov.11: "Showcase" и "SMShowcase" в названиях классов сокращены до "Sc"
  */
 
-trait ISyncRenderInfo {
-  def jsStateOpt: Option[ScJsState]
-  def syncRender: Boolean
-  def syncUrl(jsState: ScJsState): String
-}
-
-trait SyncRenderInfo extends ISyncRenderInfo {
+trait SyncRenderInfoDflt {
   def syncRender: Boolean = jsStateOpt.isDefined
-  def syncUrl(jsState: ScJsState): String = {
-    "NOT-IMPLEMENTED"
-  }
-}
-trait SyncRenderInfoDflt extends SyncRenderInfo {
-  override def jsStateOpt: Option[ScJsState] = None
+  def jsStateOpt: Option[ScJsState] = None
 }
 
 

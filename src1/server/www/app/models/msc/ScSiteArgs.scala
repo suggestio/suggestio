@@ -13,8 +13,6 @@ import play.twirl.api.Html
 
 trait ScSiteArgs extends SyncRenderInfoDflt {
 
-  /** Контейнер с цветами выдачи. */
-  def scColors      : IScSiteColors
   /** Текущая нода. Создавалась для генерации заголовка в head.title. */
   def nodeOpt       : Option[MNode] = None
   /** Инлайновый рендер индексной страницы выдачи. В параметре содержится отрендеренный HTML. */
@@ -27,12 +25,11 @@ trait ScSiteArgs extends SyncRenderInfoDflt {
   def apiVsn        : MScApiVsn
 
   // Имитируем поведение параметра, чтобы в будущем не рисовать костыли в коде шаблонов.
-  def adnId   = nodeOpt.flatMap(_.id)
+  def adnId = nodeOpt.flatMap(_.id)
 
   override def toString: String = {
     val sb = new StringBuilder(64)
-    sb.append("scColors=").append(scColors).append('&')
-      .append("syncRender=").append(syncRender).append('&')
+    sb.append("syncRender=").append(syncRender).append('&')
     if (nodeOpt.isDefined)
       sb.append("node=").append(nodeOpt.get.idOrNull).append('&')
     if (adnId.isDefined)

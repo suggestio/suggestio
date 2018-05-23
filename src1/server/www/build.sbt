@@ -122,7 +122,6 @@ routesImport ++= Seq(
   "util.qsb._",
   "util.qsb.QSBs._",
   "models.im.ImOp._",
-  "models.msc.AdCssArgs._",
   "io.suggest.es.model.MEsUuId",
   "io.suggest.mbill2.m.gid.Gid_t",
   "io.suggest.mbill2.m.item.typ.MItemType",
