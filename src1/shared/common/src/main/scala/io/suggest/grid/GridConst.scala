@@ -1,4 +1,4 @@
-package io.suggest.sc.tile
+package io.suggest.grid
 
 /**
  * Suggest.io
@@ -6,7 +6,7 @@ package io.suggest.sc.tile
  * Created: 19.05.15 13:03
  * Description: Константы плитки выдачи suggest.io.
  */
-object TileConstants {
+object GridConst {
 
   // TODO Распихать обе константы внутрь по обоим элементам BlockWidths.
   def CELL300_COLUMNS_MAX = 4

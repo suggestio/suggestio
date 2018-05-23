@@ -1,10 +1,10 @@
-package io.suggest.sc.sc3
+package io.suggest.sc.ads
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.dev.MSzMult
 import japgolly.univeq._
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io

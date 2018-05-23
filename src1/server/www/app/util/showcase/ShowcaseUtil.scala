@@ -3,9 +3,9 @@ package util.showcase
 import javax.inject.{Inject, Singleton}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidth, BlockWidths}
 import io.suggest.dev.{MScreen, MSzMults}
+import io.suggest.grid.{GridCalc, MGridCalcConf}
 import io.suggest.model.n2.node.MNode
 import io.suggest.sc.ScConstants
-import io.suggest.sc.tile.{GridCalc, MGridCalcConf}
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.blk
 import models.blk._

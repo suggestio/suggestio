@@ -2,9 +2,9 @@ package io.suggest.sc.m.inx
 
 import diode.FastEq
 import diode.data.Pot
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.m.search.MScSearch
-import io.suggest.sc.sc3.MSc3IndexResp
 import io.suggest.sc.styl.ScCss
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._

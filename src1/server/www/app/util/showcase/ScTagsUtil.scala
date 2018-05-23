@@ -1,14 +1,13 @@
 package util.showcase
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.common.tags.TagFacesUtil
 import io.suggest.geo.{CircleGs, CircleGsJvm, MGeoLoc, MNodeGeoLevels}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.sc.tags.MScTagsSearchQs
+import io.suggest.sc.search.MScTagsSearchQs
 
 import scala.concurrent.Future
 

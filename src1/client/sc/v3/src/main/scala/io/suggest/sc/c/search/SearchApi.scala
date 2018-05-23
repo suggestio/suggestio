@@ -2,7 +2,7 @@ package io.suggest.sc.c.search
 
 import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.sc3.MSc3Resp
-import io.suggest.sc.tags.MScTagsSearchQs
+import io.suggest.sc.search.MScTagsSearchQs
 import io.suggest.sc.u.ScJsRoutesUtil
 
 import scala.concurrent.Future

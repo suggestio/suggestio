@@ -4,8 +4,8 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m.hdr.{MHeaderState, MHeaderStates}
-import io.suggest.sc.sc3.MSc3IndexResp
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._

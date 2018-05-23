@@ -1,4 +1,4 @@
-package io.suggest.sc.tile
+package io.suggest.grid
 
 import io.suggest.ad.blk.{BlockWidth, BlockWidths}
 import io.suggest.common.geom.d2.IWidth
@@ -19,7 +19,7 @@ import scala.annotation.tailrec
 
 object GridCalc {
 
-  /** Посчитать оптимальное кол-во колонок плитки под указанный
+  /** Посчитать оптимальное кол-во колонок плитки под указанную ширину экрана.
     *
     * @param contSz Размер контейнера плитки.
     * @param conf Конфиг рассчёта плитки. Там сохраняются разные константы.
@@ -92,9 +92,9 @@ trait IGridCalcConf {
   * @param maxColumns Максимально допустимое кол-во колонок.
   */
 case class MGridCalcConf(
-                          cellPadding    : Int          = TileConstants.PADDING_CSSPX,
+                          cellPadding    : Int          = GridConst.PADDING_CSSPX,
                           cellWidth      : BlockWidth   = BlockWidths.NARROW,
-                          maxColumns     : Int          = TileConstants.CELL140_COLUMNS_MAX
+                          maxColumns     : Int          = GridConst.CELL140_COLUMNS_MAX
                         )
   extends IGridCalcConf
 {
@@ -110,8 +110,8 @@ object MGridCalcConf {
   def EVEN_GRID: MGridCalcConf = {
     val bw = BlockWidths.NORMAL
     MGridCalcConf(
-      maxColumns  = TileConstants.CELL300_COLUMNS_MAX,
-      cellPadding = TileConstants.PADDING_CSSPX,
+      maxColumns  = GridConst.CELL300_COLUMNS_MAX,
+      cellPadding = GridConst.PADDING_CSSPX,
       cellWidth   = bw
     )
   }

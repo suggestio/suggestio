@@ -1,10 +1,9 @@
-package io.suggest.sc.sc3
+package io.suggest.sc.index
 
 import io.suggest.geo.MGeoPoint
 import io.suggest.geo.MGeoPoint.JsonFormatters.QS_OBJECT
 import io.suggest.media.IMediaInfo
 import io.suggest.model.n2.node.meta.colors.MColors
-import io.suggest.sc.index.MWelcomeInfo
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._

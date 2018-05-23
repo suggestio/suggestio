@@ -1,4 +1,4 @@
-package io.suggest.sc.tags
+package io.suggest.sc.search
 
 import io.suggest.geo.MLocEnv
 import io.suggest.model.play.qsb.{QsbUtil, QueryStringBindableImpl}

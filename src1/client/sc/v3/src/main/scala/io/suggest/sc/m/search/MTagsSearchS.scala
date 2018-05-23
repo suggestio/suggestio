@@ -3,7 +3,7 @@ package io.suggest.sc.m.search
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.empty.NonEmpty
-import io.suggest.sc.sc3.MSc3Tag
+import io.suggest.sc.search.MSc3Tag
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._

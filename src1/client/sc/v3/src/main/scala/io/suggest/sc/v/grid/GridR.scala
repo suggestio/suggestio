@@ -5,12 +5,11 @@ import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.grid.GridScrollUtil
+import io.suggest.grid.{GridConst, GridScrollUtil}
 import io.suggest.jd.render.v._
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.sc.m.grid.{GridScroll, MGridCoreS, MGridS}
 import io.suggest.sc.styl.GetScCssF
-import io.suggest.sc.tile.TileConstants
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
@@ -102,7 +101,7 @@ class GridR(
                 <.div(
                   GridCss.container,
                   ^.width  := gridSz.width.px,
-                  ^.height := (gridSz.height + TileConstants.CONTAINER_OFFSET_BOTTOM + TileConstants.CONTAINER_OFFSET_TOP).px,
+                  ^.height := (gridSz.height + GridConst.CONTAINER_OFFSET_BOTTOM + GridConst.CONTAINER_OFFSET_TOP).px,
 
                   gridCore
                 )

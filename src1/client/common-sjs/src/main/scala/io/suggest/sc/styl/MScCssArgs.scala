@@ -6,8 +6,7 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MScreen
 import io.suggest.media.IMediaInfo
 import io.suggest.model.n2.node.meta.colors.MColors
-import io.suggest.sc.index.MWelcomeInfo
-import io.suggest.sc.sc3.MSc3IndexResp
+import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
 import io.suggest.spa.OptFastEq
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._

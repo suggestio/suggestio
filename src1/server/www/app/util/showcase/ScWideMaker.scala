@@ -4,8 +4,8 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.ad.blk.{BlockPaddings, BlockWidths}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.dev.MScreen
+import io.suggest.grid.GridConst
 import io.suggest.img.crop.MCrop
-import io.suggest.sc.tile.TileConstants
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk.{szMulted, szMultedF, szRounded}
 import models.im._
@@ -43,7 +43,7 @@ class ScWideMaker @Inject() (
   val WIDE_WIDTHS_PX: List[Int] = List(350, 500, 650, 850, /*950,*/
     {
       // Макс.ширина равна макс.ширине плитки.
-      val cols = TileConstants.CELL300_COLUMNS_MAX
+      val cols = GridConst.CELL300_COLUMNS_MAX
       BlockWidths.NORMAL.value * cols + BlockPaddings.Bp20.value * (cols - 1)
     }
   )

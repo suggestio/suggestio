@@ -4,13 +4,13 @@ import diode._
 import diode.data.PendingBase
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MScreen
+import io.suggest.grid.GridConst
 import io.suggest.msg.WarnMsgs
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.search._
+import io.suggest.sc.search.MScTagsSearchQs
 import io.suggest.sc.styl.ScCss
-import io.suggest.sc.tags.MScTagsSearchQs
-import io.suggest.sc.tile.TileConstants
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 
@@ -44,7 +44,7 @@ class TagsAh[M](
         v0.hasMoreTags && {
           val containerHeight = screenRO.value.height - ScCss.TABS_OFFSET_PX
           val scrollPxToGo = m.scrollHeight - containerHeight - m.scrollTop
-          scrollPxToGo < TileConstants.LOAD_MORE_SCROLL_DELTA_PX
+          scrollPxToGo < GridConst.LOAD_MORE_SCROLL_DELTA_PX
         }
       ) {
         // Требуется подгрузить ещё тегов.

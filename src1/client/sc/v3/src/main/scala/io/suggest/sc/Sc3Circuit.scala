@@ -4,7 +4,7 @@ import diode.ModelRO
 import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.common.event.WndEvents
-import io.suggest.dev.{MPxRatios, JsScreenUtil}
+import io.suggest.dev.{JsScreenUtil, MPxRatios}
 import io.suggest.geo.MLocEnv
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.m.MJdCssArgs
@@ -20,14 +20,15 @@ import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.inx.{IndexAh, WelcomeAh}
 import io.suggest.sc.c.menu.MenuAh
 import io.suggest.sc.c.search.{STextAh, ScMapDelayAh, SearchAh, TagsAh}
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m._
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.grid.{MGridCoreS, MGridS}
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.m.search.{MMapInitState, MScSearch}
-import io.suggest.sc.sc3.{MSc3IndexResp, MSc3Init}
+import io.suggest.sc.sc3.MSc3Init
+import io.suggest.sc.search.MScTagsSearchQs
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
-import io.suggest.sc.tags.MScTagsSearchQs
 import io.suggest.sc.v.ScCssFactory
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx

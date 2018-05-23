@@ -1,12 +1,12 @@
-package io.suggest.sc.tags
+package io.suggest.sc.search
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil}
 import io.suggest.geo.MLocEnv
+import io.suggest.sc.TagSearchConstants.Req._
 import io.suggest.sc.{MScApiVsn, MScApiVsns, ScConstants}
 import japgolly.univeq.UnivEq
-import io.suggest.sc.TagSearchConstants.Req._
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 object MScTagsSearchQs {
 

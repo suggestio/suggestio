@@ -17,12 +17,11 @@ import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.m.grid._
 import io.suggest.sc.m.inx.HandleIndexResp
 import io.suggest.sc.resp.MScRespActionTypes
-import io.suggest.sc.tile.{GridCalc, MGridCalcConf, TileConstants}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
-import io.suggest.grid.GridScrollUtil
+import io.suggest.grid.{GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
 import io.suggest.grid.build.{GridBuilderUtil, MGridBuildArgs, MGridBuildResult}
 import io.suggest.sc.styl.ScCss
 import japgolly.univeq._
@@ -108,10 +107,10 @@ class GridAh[M](
         !v0.core.ads.isPending &&
         v0.hasMoreAds && {
           // Оценить уровень скролла. Возможно, уровень не требует подгрузки ещё карточек
-          val contentHeight = v0.core.gridBuild.gridWh.height + TileConstants.CONTAINER_OFFSET_TOP
+          val contentHeight = v0.core.gridBuild.gridWh.height + GridConst.CONTAINER_OFFSET_TOP
           val screenHeight = screenRO.value.height
           val scrollPxToGo = contentHeight - screenHeight - m.scrollTop
-          scrollPxToGo < TileConstants.LOAD_MORE_SCROLL_DELTA_PX
+          scrollPxToGo < GridConst.LOAD_MORE_SCROLL_DELTA_PX
         }
       ) {
         // В фоне надо будет запустить подгрузку новых карточек.
@@ -518,7 +517,7 @@ class GridAh[M](
           .ads2gridBlocks( ads.iterator.flatten )
           .toList,
         jdConf        = jdConf,
-        offY          = TileConstants.CONTAINER_OFFSET_TOP
+        offY          = GridConst.CONTAINER_OFFSET_TOP
       )
     )
   }

@@ -9,6 +9,4 @@ package object msc {
 
   type OneAdRenderVariant = OneAdRenderVariants.T
 
-  type ScHdrBtn           = ScHdrBtns.T
-
 }

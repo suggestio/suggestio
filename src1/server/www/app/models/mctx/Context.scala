@@ -11,8 +11,9 @@ import io.suggest.i18n.MessagesF_t
 import io.suggest.playx.{ICurrentAppHelpers, IsAppModes}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.ctx.{CtxData, MCtxId, MCtxIds}
-import io.suggest.dev.{MScreenJvm, MScreen}
+import io.suggest.dev.{MScreen, MScreenJvm}
 import io.suggest.proto.HttpConst
+import io.suggest.sc.ScConstants
 import models.mproj.IMCommonDi
 import models.req.IReqHdr
 import models.usr.MSuperUsers
@@ -55,7 +56,7 @@ final class ContextUtil @Inject() (
   val isIphoneRe = "iPhone".r.unanchored
 
   /** Регэксп для поиска в query string параметра, который хранит параметры клиентского экрана. */
-  val SCREEN_ARG_NAME_RE = "a\\.s(creen)?".r
+  val SCREEN_ARG_NAME_RE = s"a\\.${ScConstants.ReqArgs.SCREEN_FN}(creen)?".r
 
 
   /** Самое дефолтовое имя главного домена. */
