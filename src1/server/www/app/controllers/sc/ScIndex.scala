@@ -17,8 +17,7 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, MNodeTypes, NodeNotFoundException}
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs, MWelcomeInfo}
-import io.suggest.sc.resp.MScRespActionTypes
-import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction}
+import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.IMacroLogs

@@ -16,7 +16,6 @@ import io.suggest.react.ReactDiodeUtil.PotOpsExt
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.m.grid._
 import io.suggest.sc.m.inx.HandleIndexResp
-import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.jd.tags.JdTag.Implicits._
@@ -26,6 +25,7 @@ import io.suggest.grid.build.{GridBuilderUtil, MGridBuildArgs, MGridBuildResult}
 import io.suggest.sc.styl.ScCss
 import japgolly.univeq._
 import io.suggest.react.ReactDiodeUtil.ActionHandlerExt
+import io.suggest.sc.sc3.MScRespActionTypes
 
 import scala.util.Success
 
@@ -298,7 +298,7 @@ class GridAh[M](
                 allowReturnJump = Some( true ),
                 adIdLookup      = Some( m.nodeId ),
                 adsLookupMode   = None,
-                screen      = args0.screen,
+                screen          = args0.screen,
                 receiverId      = args0.receiverId
               )
               api.focusedAds(args)

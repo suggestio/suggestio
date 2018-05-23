@@ -3,7 +3,6 @@ package io.suggest.sc.sc3
 import io.suggest.sc.ScConstants.Resp._
 import io.suggest.sc.ads.MSc3AdsResp
 import io.suggest.sc.index.MSc3IndexResp
-import io.suggest.sc.resp.{MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.search.MSc3TagsResp
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._

@@ -1,6 +1,5 @@
-package io.suggest.sc.resp
+package io.suggest.sc.sc3
 
-import io.suggest.sc.ScConstants.Resp._
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
 import japgolly.univeq.UnivEq

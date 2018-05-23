@@ -9,7 +9,7 @@ import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.{GetMoreTags, MScSearch, MapReIndex}
 import io.suggest.sc.m.{MScRoot, ResetUrlRoute}
-import io.suggest.sc.resp.MScRespActionTypes
+import io.suggest.sc.sc3.MScRespActionTypes
 import io.suggest.sc.search.MSearchTabs
 import io.suggest.sc.styl.MScCssArgs
 import io.suggest.sc.v.ScCssFactory

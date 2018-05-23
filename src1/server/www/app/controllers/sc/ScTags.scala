@@ -2,9 +2,8 @@ package controllers.sc
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.model.n2.node.IMNodes
-import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
-import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction}
+import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScRespActionTypes}
 import io.suggest.sc.search.{MSc3Tag, MSc3TagsResp, MScTagsSearchQs}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
