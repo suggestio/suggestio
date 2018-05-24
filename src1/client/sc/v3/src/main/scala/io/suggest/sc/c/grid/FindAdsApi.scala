@@ -1,8 +1,7 @@
 package io.suggest.sc.c.grid
 
 import io.suggest.routes.ScJsRoutes
-import io.suggest.sc.ads.MFindAdsReq
-import io.suggest.sc.sc3.MSc3Resp
+import io.suggest.sc.sc3.{MSc3Resp, MScQs}
 import io.suggest.sc.u.ScJsRoutesUtil
 
 import scala.concurrent.Future
@@ -20,7 +19,7 @@ trait IFindAdsApi {
     * @param args Аргументы для поиска.
     * @return Фьючерс в обычном формате выдачи.
     */
-  def findAds(args: MFindAdsReq): Future[MSc3Resp]
+  def findAds(args: MScQs): Future[MSc3Resp]
 
   /** Запрос к серверу на тему фокусировки для карточки.
     *
@@ -28,7 +27,7 @@ trait IFindAdsApi {
     * @return Фьючерс с распарсенным ответом сервера.
     *         Сервер может вернуть Index-ответ, это значит, что надо перейти в выдачу другого узла.
     */
-  def focusedAds(args: MFindAdsReq): Future[MSc3Resp]
+  def focusedAds(args: MScQs): Future[MSc3Resp]
 
 }
 
@@ -36,14 +35,14 @@ trait IFindAdsApi {
 /** Реализация [[IFindAdsApi]] поверх HTTP/XHR. */
 trait FindAdsApiXhrImpl extends IFindAdsApi {
 
-  override def findAds(args: MFindAdsReq): Future[MSc3Resp] = {
+  override def findAds(args: MScQs): Future[MSc3Resp] = {
     ScJsRoutesUtil.mkSc3Request(
       args  = args,
       route = ScJsRoutes.controllers.Sc.findAds
     )
   }
 
-  override def focusedAds(args: MFindAdsReq): Future[MSc3Resp] = {
+  override def focusedAds(args: MScQs): Future[MSc3Resp] = {
     ScJsRoutesUtil.mkSc3Request(
       args  = args,
       route = ScJsRoutes.controllers.Sc.focusedAds

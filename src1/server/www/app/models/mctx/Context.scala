@@ -56,7 +56,7 @@ final class ContextUtil @Inject() (
   val isIphoneRe = "iPhone".r.unanchored
 
   /** Регэксп для поиска в query string параметра, который хранит параметры клиентского экрана. */
-  val SCREEN_ARG_NAME_RE = s"a\\.${ScConstants.ReqArgs.SCREEN_FN}(creen)?".r
+  val SCREEN_ARG_NAME_RE = s"a\\.(c\\.)?${ScConstants.ReqArgs.SCREEN_FN}(creen)?".r
 
 
   /** Самое дефолтовое имя главного домена. */

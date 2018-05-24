@@ -14,10 +14,11 @@ import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.OptId
+import io.suggest.sc.ads.MAdsSearchReq
+import io.suggest.sc.sc3.{MScCommonQs, MScQs}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mproj.ICommonDi
-import models.msc.MScAdsSearchQs
 import models.msys._
 import models.req.{INodeReq, IReq, MNodeReq}
 import models.usr.{EmailActivation, EmailActivations, MPerson}
@@ -115,10 +116,10 @@ class SysMarket @Inject() (
 
       // Собрать es-запрос согласно запросу, описанному в URL.
       val msearch = new MNodeSearchDfltImpl {
-        override def nodeTypes    = args.ntypeOpt.toSeq
+        override def nodeTypes = args.ntypeOpt.toSeq
         override def shownTypeIds = args.stiOpt.toSeq.map(_.name)
-        override def limit        = args.limit
-        override def offset       = args.offset
+        override def limit = args.limit
+        override def offset = args.offset
         override def withNameSort = Some( SortOrder.ASC )
       }
 
@@ -578,7 +579,7 @@ class SysMarket @Inject() (
 
 
   /** Отобразить технический список рекламных карточек узла. */
-  def showAdnNodeAds(a: MScAdsSearchQs) = csrf.AddToken {
+  def showAdnNodeAds(a: MScQs) = csrf.AddToken {
     isSu().async { implicit request =>
 
       // Ищем все рекламные карточки, подходящие под запрос.
@@ -600,8 +601,8 @@ class SysMarket @Inject() (
       def __nodeIdsF(x: Option[MEsUuId]): Seq[String] = {
         x.iterator.map(_.id).toSeq
       }
-      val producerIds = __nodeIdsF(a.prodIdOpt)
-      val rcvrIds     = __nodeIdsF(a.rcvrIdOpt)
+      val producerIds = __nodeIdsF( a.search.prodId )
+      val rcvrIds     = __nodeIdsF( a.search.rcvrId )
 
       // Узнаём текущий узел на основе запроса. TODO Кривовато это как-то, может стоит через аргумент передавать?
       val adnNodeIdOpt = {
@@ -731,8 +732,11 @@ class SysMarket @Inject() (
               routes.SysMarket.showAdnNode(prodId)
             }
         } { rcvrId =>
-          val adSearch = MScAdsSearchQs(
-            rcvrIdOpt = Some(rcvrId)
+          val adSearch = MScQs(
+            search = MAdsSearchReq(
+              rcvrId = Some( rcvrId )
+            ),
+            common = MScCommonQs.empty
           )
           routes.SysMarket.showAdnNodeAds(adSearch)
         }
@@ -764,8 +768,8 @@ class SysMarket @Inject() (
         // Тут хрень какая-то. Наугад выбирается случайный узел.
         mNodes.dynSearchOne {
           new MNodeSearchDfltImpl {
-            override def nodeTypes = Seq( MNodeTypes.AdnNode )
-            override def withAdnRights = Seq( MAdnRights.RECEIVER )
+            override def nodeTypes = MNodeTypes.AdnNode :: Nil
+            override def withAdnRights = MAdnRights.RECEIVER :: Nil
             override def limit = 1
           }
         }

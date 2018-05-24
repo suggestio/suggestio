@@ -4,7 +4,6 @@ import _root_.util.di.IScUtil
 import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.coll.Lists
 import io.suggest.common.css.FocusedTopLeft
-import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MSzMult
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{IMNodes, MNode}
@@ -12,7 +11,7 @@ import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.primo.id.OptId
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.ads.{MLookupMode, MLookupModes, MSc3AdData, MSc3AdsResp}
-import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScRespActionTypes}
+import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.blk
@@ -53,7 +52,7 @@ trait ScFocusedAdsBase
     type OBT
 
     /** Исходные критерии поиска карточек. */
-    val _qs: MScAdsFocQs
+    val _qs: MScQs
 
     lazy val logPrefix = s"foc(${ctx.timestamp}):"
 
@@ -62,13 +61,15 @@ trait ScFocusedAdsBase
 
     /** Является ли указанный продьюсер очень внешним в качестве ресивера? */
     def is3rdPartyProducer(producerId: String): Boolean = {
-      val hasProdAsRcvr = _qs.search.rcvrIdOpt.exists(_.id ==* producerId)
+      val hasProdAsRcvr = _qs.search
+        .rcvrId
+        .exists(_.id ==* producerId)
       // TODO Тут был какой-то говнокод: _qs.search.prodIdOpt.nonEmpty && _qs.search.prodIdOpt ==* _qs.search.rcvrIdOpt
       !hasProdAsRcvr
     }
 
     lazy val mAdsSearchFut: Future[MNodeSearch] = {
-      scAdSearchUtil.qsArgs2nodeSearch(_qs.search, Some(_qs.apiVsn))
+      scAdSearchUtil.qsArgs2nodeSearch(_qs)
     }
 
     /** Поисковые критерии для подсчёта общего кол-ва результатов. */
@@ -76,7 +77,7 @@ trait ScFocusedAdsBase
 
     /** В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется. */
     def madsCountFut: Future[Long] = {
-      if (_qs.search.hasAnySearchCriterias) {
+      if (_qs.hasAnySearchCriterias) {
         madsCountSearchFut
           .flatMap(mNodes.dynCount)
       } else {
@@ -100,8 +101,10 @@ trait ScFocusedAdsBase
         val idsWant = ids.toSet
         val idsNotFound = idsWant -- idsFound
         val sb = new StringBuilder(128, "logInvalidFirstIds(): Client requested inexisting ad ids: ")
-        idsNotFound.foreach { id =>
-          sb.append(id).append(',').append(' ')
+        for (id <- idsNotFound) {
+          sb.append(id)
+            .append(',')
+            .append(' ')
         }
         sb.setLength(sb.length - 2)
         LOGGER.debug(sb.toString())
@@ -176,13 +179,13 @@ trait ScFocusedAdsBase
       val _withCssClasses = withCssClasses
       _mads2Fut.flatMap { mads =>
         Future.traverse(mads) { mad =>
-          for (brArgs <- scUtil.focusedBrArgsFor(mad, _qs.screen)) yield {
+          for (brArgs <- scUtil.focusedBrArgsFor(mad, _qs.common.screen)) yield {
             brArgs.copy(
               inlineStyles    = false,
               cssClasses      = _withCssClasses,
               // 2015.mar.06: FIXME Это значение сейчас перезаписывается таким же через showcase.js. // TODO Они должны быть в стилях, а не тут.
               topLeft         = for (_ <- brArgs.wideBg) yield FocusedTopLeft,
-              apiVsn          = _qs.apiVsn
+              apiVsn          = _qs.common.apiVsn
             )
           }
         }
@@ -248,10 +251,12 @@ trait ScFocusedAdsBase
     /** Дописывать эти css-классы в стили и в рендер. */
     def withCssClasses = Seq("focused")
 
+    lazy val lookupModeOpt = _qs.foc.flatMap(_.lookupMode)
+
     /** Контекстно-зависимая сборка данных статистики. */
     override def scStat: Future[Stat2] = {
-      val _rcvrOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.rcvrIdOpt )
-      val _prodOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.prodIdOpt )
+      val _rcvrOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.rcvrId )
+      val _prodOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.prodId )
 
       val _userSaOptFut = statUtil.userSaOptFutFromRequest()
 
@@ -282,27 +287,30 @@ trait ScFocusedAdsBase
         )
 
         // Если идёт начальная фокусировка, то сохранить данные по окликнутой карточке.
-        if (_qs.lookupMode contains MLookupModes.Around) {
-          for (mad0 <- _mads.find(_.id.contains( _qs.lookupAdId) )) {
+        if (lookupModeOpt contains MLookupModes.Around) {
+          for {
+            qsFoc <- _qs.foc
+            mad0  <- _mads.find(_.id.contains( qsFoc.lookupAdId) )
+          } {
             saAcc ::= MAction(
-              actions   = Seq(MActionTypes.ScAdsFocusingOnAd),
+              actions   = MActionTypes.ScAdsFocusingOnAd :: Nil,
               nodeId    = mad0.id.toSeq,
               nodeName  = mad0.guessDisplayName.toSeq
             )
           }
         }
 
-        saAcc = statUtil.withNodeAction(MActionTypes.ScRcvrAds, _qs.search.rcvrIdOpt, _rcvrOpt) {
-          statUtil.withNodeAction( MActionTypes.ScProdAds, _qs.search.prodIdOpt, _prodOpt )(saAcc)
+        saAcc = statUtil.withNodeAction(MActionTypes.ScRcvrAds, _qs.search.rcvrId, _rcvrOpt) {
+          statUtil.withNodeAction( MActionTypes.ScProdAds, _qs.search.prodId, _prodOpt )(saAcc)
         }
 
         new Stat2 {
-          override def components   = MComponents.Open :: super.components
-          override def statActions  = saAcc
-          override def userSaOpt    = _userSaOpt
-          override def locEnvOpt    = _qs.search.locEnv.optional
-          override def gen          = _qs.search.genOpt
-          override def devScreenOpt = _qs.screen
+          override def components = MComponents.Open :: super.components
+          override def statActions = saAcc
+          override def userSaOpt = _userSaOpt
+          override def locEnvOpt = _qs.common.locEnv.optional
+          override def gen = _qs.search.genOpt
+          override def devScreenOpt = _qs.common.screen
         }
 
       }
@@ -364,30 +372,35 @@ trait ScFocusedAdsBase
     /** Число-отметка текущей логики обработки запроса. */
     private val _currTimeMs = System.currentTimeMillis()
 
+    lazy val lookupAdIdOpt = _qs.foc.map(_.lookupAdId)
 
     /** Асинхронный результат поиска сегмента карточек. */
     lazy val adIdsLookupResFut: Future[AdsLookupRes] = {
-      _qs.lookupMode
+      lookupModeOpt
         .filter { _ =>
-          _qs.search.hasAnySearchCriterias
+          _qs.hasAnySearchCriterias
         }
-        .map { lm =>
-          // v2-выдача ищет focused-карточки в выдаче.
-          LOGGER.trace(s"$logPrefix v2 focusing: ${_qs.lookupAdId} ${lm.toVisualString}")
-          mAdsSearchFut.flatMap { mNodeSearch =>
-            _doAdIdsLookup(neededCount = mNodeSearch.limit, lm = lm)
+        .flatMap { lm =>
+          for (lookupAdId <- lookupAdIdOpt) yield {
+            // v2-выдача ищет focused-карточки в выдаче.
+            LOGGER.trace(s"$logPrefix v2 focusing: ${lookupAdIdOpt.orNull} ${lm.toVisualString}")
+            mAdsSearchFut.flatMap { mNodeSearch =>
+              _doAdIdsLookup(adId = lookupAdId, neededCount = mNodeSearch.limit, lm = lm)
+            }
           }
         }
         .orElse {
-          OptionUtil.maybe( _qs.lookupMode.isEmpty ) {
+          for {
+            lookupAdId <- lookupAdIdOpt
+            if lookupModeOpt.isEmpty
+          } yield {
             // v3-выдача пытается прочитать ровно одну карточку.
-            LOGGER.trace(s"$logPrefix v3: single ad GET: ${_qs.lookupAdId} without lookup.")
-            Future.successful(
-              AdsLookupRes(
-                ids   = NodeIdIndexed(_qs.lookupAdId, 1) :: Nil,
-                total = 1
-              )
+            LOGGER.trace(s"$logPrefix v3: single ad GET: ${lookupAdIdOpt} without lookup.")
+            val r = AdsLookupRes(
+              ids   = NodeIdIndexed(lookupAdId, 1) :: Nil,
+              total = 1
             )
+            Future.successful( r )
           }
         }
         .getOrElse {
@@ -398,19 +411,20 @@ trait ScFocusedAdsBase
     }
 
     /** Метод рекурсивного поиска сегмента последовательности id карточек в пакетных выхлопах elasticsearch. */
-    def _doAdIdsLookup(adId: String = _qs.lookupAdId, lm: MLookupMode,
+    def _doAdIdsLookup(adId: String, lm: MLookupMode,
                        neededCount: Int, limit1: Int = 50, offset1: Int = 0, tryN: Int = 1): Future[AdsLookupRes] = {
 
       assert(tryN <= 20)
 
       // Необходимо поискать id focused-карточек в корректном порядке с начала списка.
-      val fadsIdsSearchQs = _qs.search.copy(
-        limitOpt  = Some(limit1),
-        offsetOpt = Some(offset1)
+      val fadsIdsSearchQs = _qs.search.withLimitOffset(
+        limit  = Some(limit1),
+        offset = Some(offset1)
       )
+      val qs2 = _qs.withSearch( fadsIdsSearchQs )
 
       // TODO Далее какой-то быдлокод с реализацией нетривиальной выборки сегмента последовательности foc-карточек.
-      scAdSearchUtil.qsArgs2nodeSearch(fadsIdsSearchQs, Some(_qs.apiVsn)).flatMap { msearch =>
+      scAdSearchUtil.qsArgs2nodeSearch(qs2).flatMap { msearch =>
 
         val fadIdsFut = mNodes.dynSearchIds(msearch)
         val __limit = msearch.limit
@@ -629,7 +643,7 @@ trait ScFocusedAds
     * @param _qs Параметры рендера.
     * @param _request Исходный HTTP-реквест.
     */
-  protected class FocusedLogicHttpV3(override val _qs: MScAdsFocQs)
+  protected class FocusedLogicHttpV3(override val _qs: MScQs)
                                     (override implicit val _request: IReq[_])
     extends FocusedAdsLogicHttp
   {
@@ -637,7 +651,7 @@ trait ScFocusedAds
 
     override type OBT = MSc3AdData
 
-    lazy val tileArgs = scUtil.getTileArgs(_qs.screen)
+    lazy val tileArgs = scUtil.getTileArgs( _qs.common.screen )
 
     /** Рендер одной focused-карточки. */
     override def renderOuterBlock(args: AdBodyTplArgs): Future[OBT] = {
@@ -652,7 +666,7 @@ trait ScFocusedAds
             tpl           = tpl,
             szMult        = tileArgs.szMult,
             allowWide     = true,
-            forceAbsUrls  = _qs.apiVsn.forceAbsUrls
+            forceAbsUrls  = _qs.common.apiVsn.forceAbsUrls
           )(ctx)
           .execute()
 
@@ -703,7 +717,7 @@ trait ScFocusedAds
     * @param qs URL-аргументы запроса.
     * @return JSONP с отрендеренными карточками.
     */
-  def focusedAds(qs: MScAdsFocQs) = maybeAuth().async { implicit request =>
+  def focusedAds(qs: MScQs) = maybeAuth().async { implicit request =>
     val logic = getLogicFor(qs)
     // Запустить изменябельное тело экшена на исполнение.
     _focusedAds(logic)
@@ -738,11 +752,11 @@ trait ScFocusedAds
 
 
   /** Перезаписываемый сборкщик логик для версий. */
-  def getLogicFor(qs: MScAdsFocQs)(implicit request: IReq[_]): FocusedAdsLogicHttp = {
-    if (qs.apiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
+  def getLogicFor(qs: MScQs)(implicit request: IReq[_]): FocusedAdsLogicHttp = {
+    if (qs.common.apiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
       new FocusedLogicHttpV3(qs)
     } else {
-      throw new IllegalArgumentException(s"Unsupported API version: ${qs.apiVsn} :: ${request.method} ${request.uri} FROM ${request.remoteClientAddress}")
+      throw new IllegalArgumentException(s"Unsupported API version: ${qs.common.apiVsn} :: ${request.method} ${request.uri} FROM ${request.remoteClientAddress}")
     }
   }
 

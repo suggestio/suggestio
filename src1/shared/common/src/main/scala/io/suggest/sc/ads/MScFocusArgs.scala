@@ -16,7 +16,8 @@ object MScFocusArgs {
   implicit def mScFocusArgsFormat: Format[MScFocusArgs] = (
     (__ \ FOC_JUMP_ALLOWED_FN).format[Boolean] and
     (__ \ AD_LOOKUP_MODE_FN).formatNullable[MLookupMode] and
-    (__ \ AD_ID_LOOKUP_FN).format[String]
+    (__ \ LOOKUP_AD_ID_FN).format[String] and
+    (__ \ FOC_ALSO_RETURN_GRID_FN).format[Boolean]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MScFocusArgs] = UnivEq.derive
@@ -30,9 +31,11 @@ object MScFocusArgs {
   * @param lookupMode Режим перехода между focused-карточками.
   *                   Неактуально для sc3. Будет удалён, если не понадобится.
   * @param lookupAdId id узла фокусируемой карточки.
+  * @param alsoReturnGrid Просьба к серверу, чтобы заодно поискал карточки для обычной плитки без фокусировки.
   */
 case class MScFocusArgs(
-                       focJumpAllowed  : Boolean,
-                       lookupMode      : Option[MLookupMode],
-                       lookupAdId      : String,
-                     )
+                         focJumpAllowed     : Boolean,
+                         lookupMode         : Option[MLookupMode],
+                         lookupAdId         : String,
+                         alsoReturnGrid     : Boolean
+                       )

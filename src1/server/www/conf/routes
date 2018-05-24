@@ -21,8 +21,8 @@ GET  /favicon.ico                       @controllers.Assets.at(path = "/public",
 ## Унифицированный sc index на все случаи жизни.
 GET  /sc/index                          @controllers.Sc.index(a: io.suggest.sc.index.MScIndexArgs)
 
-GET  /sc/tile                           @controllers.Sc.findAds(a: msc.MScAdsTileQs)
-GET  /sc/fads                           @controllers.Sc.focusedAds(a: msc.MScAdsFocQs)
+GET  /sc/tile                           @controllers.Sc.findAds(a: io.suggest.sc.sc3.MScQs)
+GET  /sc/fads                           @controllers.Sc.focusedAds(a: io.suggest.sc.sc3.MScQs)
 ## Рендер ровно одной карточки.
 GET  /sc/one/html                       @controllers.Sc.onlyOneAd(o: blk.OneAdQsArgs)
 GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.OneAdQsArgs)
@@ -186,7 +186,7 @@ GET  /sys/market/adns                   @controllers.SysMarket.adnNodesList(w: m
 GET  /sys/market/create/adn             @controllers.SysMarket.createAdnNode()
 POST /sys/market/create/adn             @controllers.SysMarket.createAdnNodeSubmit()
 POST /sys/market/adn/:adnId/delete      @controllers.SysMarket.deleteAdnNodeSubmit(adnId)
-GET  /sys/market/ads                    @controllers.SysMarket.showAdnNodeAds(a: msc.MScAdsSearchQs)
+GET  /sys/market/ads                    @controllers.SysMarket.showAdnNodeAds(a: io.suggest.sc.sc3.MScQs)
 POST /sys/market/mad/rm/rcvr/:adId      @controllers.SysMarket.removeAdRcvr(adId, rcvrId: Option[String] ?= None, r: Option[String] ?= None)
 GET  /sys/market/adn/edit/:adnId        @controllers.SysMarket.editAdnNode(adnId)
 POST /sys/market/adn/edit/:adnId        @controllers.SysMarket.editAdnNodeSubmit(adnId)

@@ -1,4 +1,4 @@
-@(args: msys.IShowNodeAdsTplArgs)(implicit ctx: Context)
+@(args: msys.MShowNodeAdsTplArgs)(implicit ctx: Context)
 
 @* Список реклам и сервисных функций. *@
 
@@ -96,7 +96,12 @@
     limit   = args.msearch.limit,
     offset  = args.msearch.offset,
     urlF    = { offset1 =>
-      routes.SysMarket.showAdnNodeAds( args.qs.copy(offsetOpt = Some(offset1)) )
+      routes.SysMarket.showAdnNodeAds(
+        args.qs.withSearch(
+          args.qs.search
+            .withOffset( Some(offset1) )
+        )
+      )
     }
   )
 

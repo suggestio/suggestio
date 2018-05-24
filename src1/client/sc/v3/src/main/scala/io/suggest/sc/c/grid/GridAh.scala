@@ -13,7 +13,7 @@ import io.suggest.jd.tags.MJdTagNames
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
-import io.suggest.sc.ads.MFindAdsReq
+import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 import io.suggest.sc.m.grid._
 import io.suggest.sc.m.inx.HandleIndexResp
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -25,7 +25,7 @@ import io.suggest.grid.build.{GridBuilderUtil, MGridBuildArgs, MGridBuildResult}
 import io.suggest.sc.styl.ScCss
 import japgolly.univeq._
 import io.suggest.react.ReactDiodeUtil.ActionHandlerExt
-import io.suggest.sc.sc3.MScRespActionTypes
+import io.suggest.sc.sc3.{MScQs, MScRespActionTypes}
 
 import scala.util.Success
 
@@ -69,11 +69,11 @@ object GridAh {
 
 
 /** Контроллер плитки карточек.
-  * @param searchArgsRO Доступ к текущим аргументам поиска карточек.
+  * @param scQsRO Доступ к текущим аргументам поиска карточек.
   */
 class GridAh[M](
                  api             : IFindAdsApi,
-                 searchArgsRO    : ModelRO[MFindAdsReq],
+                 scQsRO          : ModelRO[MScQs],
                  screenRO        : ModelRO[MScreen],
                  jdCssFactory    : JdCssFactory,
                  modelRW         : ModelRW[M, MGridS]
@@ -138,8 +138,9 @@ class GridAh[M](
         noChange
 
       } else {
-        val searchArgs = searchArgsRO.value
+        val args0 = scQsRO.value
         val nextReqPot2 = v0.core.ads.pending()
+
         val fx = Effect {
           // Если clean, то нужно обнулять offset.
           val offset = v0.core.ads
@@ -149,11 +150,16 @@ class GridAh[M](
           // TODO Вычислять на основе данных параметров MScreen.
           val limit = 10
 
-          val searchArgs2 = searchArgs
-            .withLimitOffset( limit = Some(limit), offset = Some(offset) )
+          val args2 = args0.withSearch(
+            args0.search
+              .withLimitOffset(
+                limit  = Some(limit),
+                offset = Some(offset)
+              )
+          )
 
           // Запустить запрос с почищенными аргументами...
-          val fut = api.findAds( searchArgs2 )
+          val fut = api.findAds( args2 )
 
           // Завернуть ответ сервера в экшен:
           val startTime = nextReqPot2.asInstanceOf[PendingBase].startTime
@@ -293,15 +299,21 @@ class GridAh[M](
             // Карточка сейчас скрыта, её нужно раскрыть.
             // Собрать запрос фокусировки на ровно одной рекламной карточке.
             val fx = Effect {
-              val args0 = searchArgsRO.value
-              val args = MFindAdsReq(
-                allowReturnJump = Some( true ),
-                adIdLookup      = Some( m.nodeId ),
-                adsLookupMode   = None,
-                screen          = args0.screen,
-                receiverId      = args0.receiverId
+              val args0 = scQsRO.value
+              val args1 = args0.copy(
+                search = MAdsSearchReq(
+                  rcvrId = args0.search.rcvrId
+                ),
+                foc = Some(
+                  MScFocusArgs(
+                    focJumpAllowed  = true,
+                    lookupMode      = None,
+                    lookupAdId      = m.nodeId,
+                    alsoReturnGrid  = false
+                  )
+                )
               )
-              api.focusedAds(args)
+              api.focusedAds( args1 )
                 .transform { tryResp =>
                   Success( FocusedResp(m.nodeId, tryResp) )
                 }

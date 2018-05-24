@@ -5,6 +5,7 @@ import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.common.event.WndEvents
 import io.suggest.dev.{JsScreenUtil, MPxRatios}
+import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.m.MJdCssArgs
@@ -13,7 +14,7 @@ import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.routes.AdvRcvrsMapApiHttpViaUrl
-import io.suggest.sc.ads.MFindAdsReq
+import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.c.dev.{GeoLocAh, ScreenAh}
 import io.suggest.sc.c.{JsRouterInitAh, TailAh}
 import io.suggest.sc.c.grid.GridAh
@@ -26,7 +27,7 @@ import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.grid.{MGridCoreS, MGridS}
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.m.search.{MMapInitState, MScSearch}
-import io.suggest.sc.sc3.MSc3Init
+import io.suggest.sc.sc3.{MSc3Init, MScCommonQs, MScQs}
 import io.suggest.sc.search.MScTagsSearchQs
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.v.ScCssFactory
@@ -149,29 +150,38 @@ class Sc3Circuit(
   private val menuRW = indexRW.zoomRW(_.menu) { _.withMenu(_) }
 
 
-  private val searchAdsArgsRO: ModelRO[MFindAdsReq] = zoom { mroot =>
+  private val scQsRO: ModelRO[MScQs] = zoom { mroot =>
+    import MEsUuId.Implicits._
     val inxState = mroot.index.state
-    val currRcvrId = inxState.currRcvrId
-    MFindAdsReq(
-      receiverId  = currRcvrId,
-      locEnv      = if (currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
-      screen  = Some {
-        val scr0 = mroot.dev.screen.screen
-        // 2018-01-24 Костыль в связи с расхождением между szMult экрана и szMult плитки, тут быстрофикс:
-        val pxRatio2 = MPxRatios.forRatio(
-          Math.max(
-            mroot.grid.core.jdConf.szMult.toDouble,
-            scr0.pxRatio.pixelRatio
+    val currRcvrId = inxState.currRcvrId.toEsUuIdOpt
+    MScQs(
+      common = MScCommonQs(
+        apiVsn = Sc3Api.API_VSN,
+        screen = Some {
+          val scr0 = mroot.dev.screen.screen
+          // 2018-01-24 Костыль в связи с расхождением между szMult экрана и szMult плитки, тут быстрофикс:
+          val pxRatio2 = MPxRatios.forRatio(
+            Math.max(
+              mroot.grid.core.jdConf.szMult.toDouble,
+              scr0.pxRatio.pixelRatio
+            )
           )
-        )
-        if (pxRatio2.value > scr0.pxRatio.value)
-          scr0.withPxRatio( pxRatio2 )
-        else
-          scr0
-      },
-      generation  = Some( inxState.generation ),
-      tagNodeId   = mroot.index.search.tags.selectedId
-      // limit и offset очень специфичны и выставляются в конкретных контроллерах карточек.
+          if (pxRatio2.value > scr0.pxRatio.value)
+            scr0.withPxRatio( pxRatio2 )
+          else
+            scr0
+        },
+        locEnv = {
+          if (currRcvrId.isEmpty) mroot.locEnv
+          else MLocEnv.empty
+        }
+      ),
+      search = MAdsSearchReq(
+        rcvrId      = currRcvrId,
+        genOpt      = Some( inxState.generation ),
+        tagNodeId   = mroot.index.search.tags.selectedId.toEsUuIdOpt
+        // limit и offset очень специфичны и выставляются в конкретных контроллерах карточек.
+      )
     )
   }
 
@@ -226,7 +236,7 @@ class Sc3Circuit(
 
   private val gridAdsAh = new GridAh(
     api           = api,
-    searchArgsRO  = searchAdsArgsRO,
+    scQsRO        = scQsRO,
     screenRO      = screenRO,
     jdCssFactory  = jdCssFactory,
     modelRW       = gridRW

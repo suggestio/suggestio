@@ -4,13 +4,15 @@
 @* Подложка для страниц, работающих с унифицированными adn-узлами. *@
 @import sys1.market._
 @import ctx._
-@import msc._
+@import io.suggest.sc.sc3.MScQs
+@import io.suggest.sc.ads.MAdsSearchReq
+
 
 @hPathAfter1 = {
   /
   @defining( nodeOpt.flatMap(_.id).orElse( madOpt.flatMap(ctx.api.n2NodesUtil.madProducerId) ) ) { adnIdOpt =>
     @for( adnId <- adnIdOpt ) {
-      <a href="@routes.SysMarket.showAdnNodeAds( MScAdsSearchQs(prodIdOpt = Some(adnId)) )">
+      <a href="@routes.SysMarket.showAdnNodeAds( MScQs(search = MAdsSearchReq(prodId = Some(adnId))) )">
     }
     Карточки
     @if(adnIdOpt) {

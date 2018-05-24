@@ -3,7 +3,7 @@ package io.suggest.sc.sc3
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.dev.MScreen
 import io.suggest.geo.MLocEnv
-import io.suggest.sc.{MScApiVsn, ScConstants}
+import io.suggest.sc.{MScApiVsn, MScApiVsns, ScConstants}
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -14,7 +14,9 @@ import play.api.libs.functional.syntax._
   * Created: 23.05.18 13:41
   * Description: Обобщённые аргументы выдачи, которые пошарены между экшенами.
   */
-object MSc3UApiCommonQs {
+object MScCommonQs {
+
+  def empty = apply()
 
   object Fields {
     @inline
@@ -26,7 +28,7 @@ object MSc3UApiCommonQs {
   }
 
   /** Поддержка play-json. */
-  implicit def mSc3UApiCommonQsFormat: OFormat[MSc3UApiCommonQs] = (
+  implicit def mScCommonQsFormat: OFormat[MScCommonQs] = (
     (__ \ Fields.API_VSN_FN).format[MScApiVsn] and
     (__ \ Fields.SCREEN_FN).formatNullable[MScreen] and
     (__ \ Fields.LOC_ENV_FN).formatNullable[MLocEnv]
@@ -36,7 +38,7 @@ object MSc3UApiCommonQs {
       )
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MSc3UApiCommonQs] = UnivEq.derive
+  implicit def univEq: UnivEq[MScCommonQs] = UnivEq.derive
 
 }
 
@@ -47,8 +49,8 @@ object MSc3UApiCommonQs {
   * @param apiVsn Версия Sc API.
   * @param locEnv Данные геолокации и физического окружения, если есть.
   */
-case class MSc3UApiCommonQs(
-                             apiVsn     : MScApiVsn,
-                             screen     : Option[MScreen],
-                             locEnv     : MLocEnv         = MLocEnv.empty,
-                           )
+case class MScCommonQs(
+                        apiVsn     : MScApiVsn       = MScApiVsns.unknownVsn,
+                        screen     : Option[MScreen] = None,
+                        locEnv     : MLocEnv         = MLocEnv.empty,
+                      )

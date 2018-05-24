@@ -1,7 +1,6 @@
 package util.showcase
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.ble.{BeaconUtil, MUidBeacon}
 import io.suggest.es.model.IMust
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
@@ -10,10 +9,9 @@ import io.suggest.model.n2.edge.{MPredicate, MPredicates}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.sc.MScApiVsn
+import io.suggest.sc.sc3.MScQs
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.msc.MScAdsSearchQs
 import util.ble.BleUtil
 
 import scala.concurrent.Future
@@ -29,10 +27,10 @@ import scala.concurrent.Future
   */
 @Singleton
 class ScAdSearchUtil @Inject() (
-  mNodes    : MNodes,
-  bleUtil   : BleUtil,
-  mCommonDi : ICommonDi
-)
+                                 mNodes    : MNodes,
+                                 bleUtil   : BleUtil,
+                                 mCommonDi : ICommonDi
+                               )
   extends MacroLogsImpl
 {
 
@@ -58,7 +56,7 @@ class ScAdSearchUtil @Inject() (
     * @param apiVsnOpt Версия API выдачи, если есть.
     *                  Например, нельзя выдавать jd-карточки в v2-выдачу, и наоборот.
     */
-  def qsArgs2nodeSearch(args: MScAdsSearchQs, apiVsnOpt: Option[MScApiVsn] = None): Future[MNodeSearch] = {
+  def qsArgs2nodeSearch(args: MScQs): Future[MNodeSearch] = {
 
     val _outEdges: Seq[ICriteria] = {
       val must = IMust.MUST
@@ -66,9 +64,9 @@ class ScAdSearchUtil @Inject() (
 
       // Поиск карточек у указанного узла-ресивера.
       for {
-        rcvrId <- args.rcvrIdOpt
+        rcvrId <- args.search.rcvrId
         // 2018-03-19 Теги внутри узлов ищутся иначе, поэтому заданный ресивер отрабатывается в tagNodeId-ветви.
-        if args.tagNodeIdOpt.isEmpty
+        if args.search.tagNodeId.isEmpty
       } {
         eacc ::= Criteria(
           nodeIds     = rcvrId.id :: Nil,
@@ -80,7 +78,7 @@ class ScAdSearchUtil @Inject() (
       }
 
       // Поиск карточек от указанного узла-продьюсера.
-      for (prodId <- args.prodIdOpt) {
+      for (prodId <- args.search.prodId) {
         eacc ::= Criteria(
           nodeIds     = prodId.id :: Nil,
           predicates  = MPredicates.OwnedBy :: Nil,
@@ -89,9 +87,9 @@ class ScAdSearchUtil @Inject() (
       }
 
       // Поддержка геопоиска в выдаче.
-      args.tagNodeIdOpt.fold [Unit] {
+      args.search.tagNodeId.fold [Unit] {
         // Геотегов не указано. Но можно искать размещения карточек в указанной точке.
-        for (geoLoc <- args.locEnv.geoLocOpt) {
+        for (geoLoc <- args.common.locEnv.geoLocOpt) {
           eacc ::= Criteria(
             predicates  = MPredicates.AdvGeoPlace :: Nil,
             must        = must,
@@ -104,33 +102,30 @@ class ScAdSearchUtil @Inject() (
 
       } { tagNodeId =>
         var preds = List.empty[MPredicate]
+
         val tagPredParent = MPredicates.TaggedBy
-        if (args.rcvrIdOpt.nonEmpty)
+
+        if (args.search.rcvrId.nonEmpty)
           preds ::= tagPredParent.DirectTag
-        if (args.locEnv.geoLocOpt.nonEmpty)
+
+        if (args.common.locEnv.geoLocOpt.nonEmpty)
           preds ::= tagPredParent.Agt
 
         // Указан тег. Ищем по тегу с учетом геолокации:
         eacc ::= Criteria(
           predicates = preds,
-          nodeIds    = (tagNodeId :: args.rcvrIdOpt.toList)
+          nodeIds    = (tagNodeId :: args.search.rcvrId.toList)
             .map(_.id),
           nodeIdsMatchAll = true,
           must       = must,
-          gsIntersect = for (geoLoc <- args.locEnv.geoLocOpt) yield {
+          gsIntersect = for {
+            geoLoc <- args.common.locEnv.geoLocOpt
+          } yield {
             GsCriteria(
               levels = MNodeGeoLevels.geoTag :: Nil,
               shapes = PointGsJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil
             )
           }
-        )
-      }
-
-      // Фильтровать карточки под возможности текущего API: разруливать поддержку jd-формата по наличию jd-предиката:
-      for (apiVsn <- apiVsnOpt) {
-        eacc ::= Criteria(
-          predicates  = MPredicates.JdContent :: Nil,
-          must        = IMust.mustOrNot( apiVsn.useJdAds )
         )
       }
 
@@ -145,14 +140,14 @@ class ScAdSearchUtil @Inject() (
 
     val normalSearches = if (_outEdges.nonEmpty) {
       val _mrs = MRandomSortData(
-        generation = args.genOpt.getOrElse(1L),
+        generation = args.search.genOpt.getOrElse(1L),
         weight     = Some(0.0000001F)
       )
       val normalSearch = new MNodeSearchDfltImpl {
-        override def outEdges         = _outEdges
-        override def nodeTypes        = _nodeTypes
-        override def randomSort       = Some(_mrs)
-        override def isEnabled        = someTrue
+        override def outEdges = _outEdges
+        override def nodeTypes = _nodeTypes
+        override def randomSort = Some(_mrs)
+        override def isEnabled = someTrue
       }
       val subSearch = MSubSearch(
         search = normalSearch,
@@ -166,14 +161,14 @@ class ScAdSearchUtil @Inject() (
     // Карточки в маячках ищутся отдельно от основного набора параметров, вне всяких продьюсеров-ресиверов-географии.
     // Результаты объединяются в общий выхлоп, но маячковые результаты -- поднимаются в начало этого списка.
     // Причём, чем ближе маячок -- тем выше результат.
-    val bcnsSearchesFut = _bleBeacons2search( args.locEnv.bleBeacons )
+    val bcnsSearchesFut = _bleBeacons2search( args.common.locEnv.bleBeacons )
 
     // Собрать итоговый запрос.
-    val _limit = args.limitOpt.fold(LIMIT_DFLT) {
+    val _limit = args.search.limit.fold(LIMIT_DFLT) {
       Math.min(LIMIT_MAX, _)
     }
 
-    val _offset = args.offsetOpt.fold(0) {
+    val _offset = args.search.offset.fold(0) {
       Math.min(OFFSET_MAX_ABS, _)
     }
 
@@ -190,10 +185,10 @@ class ScAdSearchUtil @Inject() (
       // Пока что всё работает синхронно.
       // Но для маячков скорее всего потребуется фоновая асинхронная работа по поиску id нод ble-маячков.
       new MNodeSearchDfltImpl {
-        override def limit            = _limit
-        override def offset           = _offset
-        override def nodeTypes        = _nodeTypes
-        override def subSearches      = _subSearches
+        override def limit = _limit
+        override def offset = _offset
+        override def nodeTypes = _nodeTypes
+        override def subSearches = _subSearches
       }
     }
   }

@@ -12,11 +12,10 @@ import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.primo.TypeT
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.ads.{MSc3AdData, MSc3AdsResp}
-import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScRespActionTypes}
+import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.im.make.MakeResult
-import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
 import models.blk._
@@ -49,11 +48,11 @@ trait ScAdsTileBase
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
   trait TileAdsLogic extends LogicCommonT with TypeT {
 
-    def _qs: MScAdsTileQs
+    def _qs: MScQs
 
     /** 2014.11.25: Размер плиток в выдаче должен способствовать заполнению экрана по горизонтали,
       * избегая или минимизируя белые пустоты по краям экрана клиентского устройства. */
-    lazy val tileArgs = scUtil.getTileArgs(_qs.screen)
+    lazy val tileArgs = scUtil.getTileArgs(_qs.common.screen)
 
     def szMult = tileArgs.szMult
 
@@ -64,7 +63,7 @@ trait ScAdsTileBase
         bgImg         = bgImg,
         szMult        = szMult,
         inlineStyles  = false,
-        apiVsn        = _qs.apiVsn,
+        apiVsn        = _qs.common.apiVsn,
         indexOpt      = indexOpt,
         isFocused     = false
       )
@@ -74,14 +73,14 @@ trait ScAdsTileBase
 
     lazy val logPrefix = s"findAds(${ctx.timestamp}):"
 
-    lazy val adSearch2Fut = scAdSearchUtil.qsArgs2nodeSearch(_qs.search, Some(_qs.apiVsn))
+    lazy val adSearch2Fut = scAdSearchUtil.qsArgs2nodeSearch( _qs )
 
     LOGGER.trace(s"$logPrefix ${_request.uri}")
 
 
     /** Найти все итоговые карточки. */
     lazy val madsFut: Future[Seq[MNode]] = {
-      if (_qs.search.hasAnySearchCriterias) {
+      if (_qs.hasAnySearchCriterias) {
         for {
           adSearch <- adSearch2Fut
           res <- mNodes.dynSearch(adSearch)
@@ -137,8 +136,11 @@ trait ScAdsTileBase
 
     /** Статистика этой вот плитки. */
     override def scStat: Future[Stat2] = {
-      val _rcvrOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.rcvrIdOpt )
-      val _prodOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.prodIdOpt )
+      val rcvrIdOpt = _qs.search.rcvrId
+      val prodIdOpt = _qs.search.prodId
+
+      val _rcvrOptFut   = mNodesCache.maybeGetByEsIdCached( rcvrIdOpt )
+      val _prodOptFut   = mNodesCache.maybeGetByEsIdCached( prodIdOpt )
 
       val _userSaOptFut = statUtil.userSaOptFutFromRequest()
       val _madsFut      = madsFut
@@ -172,17 +174,19 @@ trait ScAdsTileBase
           )
         )
 
-        val saAcc = statUtil.withNodeAction(MActionTypes.ScRcvrAds, _qs.search.rcvrIdOpt, _rcvrOpt) {
-          statUtil.withNodeAction( MActionTypes.ScProdAds, _qs.search.prodIdOpt, _prodOpt )(statActionsAcc0)
+        val saAcc = statUtil.withNodeAction(MActionTypes.ScRcvrAds, rcvrIdOpt, _rcvrOpt) {
+          statUtil.withNodeAction( MActionTypes.ScProdAds, prodIdOpt, _prodOpt )(statActionsAcc0)
         }
+
+        val generationOpt = _qs.search.genOpt
 
         new Stat2 {
           override def components = MComponents.Tile :: super.components
           override def statActions = saAcc
           override def userSaOpt = _userSaOpt
-          override def locEnvOpt = _qs.search.locEnv.optional
-          override def gen = _qs.search.genOpt
-          override def devScreenOpt = _qs.screen
+          override def locEnvOpt = _qs.common.locEnv.optional
+          override def gen = generationOpt
+          override def devScreenOpt = _qs.common.screen
         }
       }
     }
@@ -207,7 +211,7 @@ trait ScAdsTile
     * @param adSearch Поисковый запрос.
     * @return JSONP с рекламными карточками для рендера в выдаче.
     */
-  def findAds(adSearch: MScAdsTileQs) = maybeAuth().async { implicit request =>
+  def findAds(adSearch: MScQs) = maybeAuth().async { implicit request =>
     // В зависимости от версии API, используем ту или иную реализацию логики.
     val logic = TileAdsLogicV( adSearch )
     val resultFut = logic.resultFut
@@ -224,8 +228,8 @@ trait ScAdsTile
   protected object TileAdsLogicV {
 
     /** Собрать необходимую логику обработки запроса в зависимости от версии API. */
-    def apply(adSearch: MScAdsTileQs)(implicit request: IReq[_]): TileAdsLogicV = {
-      val v = adSearch.apiVsn
+    def apply(adSearch: MScQs)(implicit request: IReq[_]): TileAdsLogicV = {
+      val v = adSearch.common.apiVsn
       if (v.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
         new TileAdsLogicV3( adSearch )
       } else {
@@ -246,7 +250,7 @@ trait ScAdsTile
   }
 
 
-  protected class TileAdsLogicV3(override val _qs: MScAdsTileQs)
+  protected class TileAdsLogicV3(override val _qs: MScQs)
                                 (override implicit val _request: IReq[_]) extends TileAdsLogicV {
 
     override type T = MSc3AdData
@@ -256,7 +260,7 @@ trait ScAdsTile
       // Требуется рендер только main-блока карточки.
       Future {
         // Можно рендерить карточку сразу целиком, если на данном узле карточка размещена как заранее открытая.
-        val isDisplayOpened = (_qs.search.rcvrIdOpt.toList reverse_::: _qs.search.tagNodeIdOpt.toList)
+        val isDisplayOpened = (_qs.search.rcvrId.toList reverse_::: _qs.search.tagNodeId.toList)
           .exists { nodeId =>
             brArgs.mad.edges
               .withPredicateIter( MPredicates.Receiver, MPredicates.TaggedBy )
@@ -285,7 +289,7 @@ trait ScAdsTile
             tpl           = tpl2,
             szMult        = tileArgs.szMult,
             allowWide     = isDisplayOpened,
-            forceAbsUrls  = _qs.apiVsn.forceAbsUrls
+            forceAbsUrls  = _qs.common.apiVsn.forceAbsUrls
           )(ctx)
           .execute()
 

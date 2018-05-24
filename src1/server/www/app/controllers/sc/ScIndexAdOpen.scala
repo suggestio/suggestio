@@ -6,6 +6,7 @@ import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.index.MScIndexArgs
+import io.suggest.common.empty.OptionUtil.AnyOptOps
 import models.req.IReq
 import models.msc._
 import play.api.mvc.Result
@@ -35,9 +36,11 @@ trait ScIndexAdOpen
     import logic._request
 
     val resFut = for {
+      focQs <- logic._qs.foc.toFutureDefined
+
       // Фильтруем по флагу focJumpAllowed. if в первой строчке foc{} использовать нельзя, поэтому имитируем тут Future.
       _ <- {
-        if (logic._qs.focJumpAllowed) {
+        if (focQs.focJumpAllowed) {
           Future.successful(None)
         } else {
           val ex = new NoSuchElementException("Foc jump disabled by sc-sjs.")
@@ -46,7 +49,7 @@ trait ScIndexAdOpen
       }
 
       // Прочитать из хранилища указанную карточку.
-      madOpt <- mNodesCache.getById( logic._qs.lookupAdId )
+      madOpt <- mNodesCache.getById( focQs.lookupAdId )
 
       // .get приведёт к NSEE, это нормально.
       producerId = {
@@ -66,10 +69,10 @@ trait ScIndexAdOpen
                 predicates  = MPredicates.Receiver :: Nil,
                 nodeIds     = producerId :: Nil
               )
-              Seq(cr)
+              cr :: Nil
             }
             override def limit = 2
-            override def nodeTypes = Seq( MNodeTypes.Ad )
+            override def nodeTypes = MNodeTypes.Ad :: Nil
           }
           mNodes.dynCount(args)
         }
@@ -118,17 +121,17 @@ trait ScIndexAdOpen
   private def _goToProducerIndex(producer: MNode, focLogic: FocusedAdsLogicHttp)
                                 (implicit request: IReq[_]): Future[Result] = {
     // Извлекаем MAdnNode втупую. exception будет перехвачен в recoverWith.
-    val majorApiVsn = focLogic._qs.apiVsn.majorVsn
+    val majorApiVsn = focLogic._qs.common.apiVsn.majorVsn
 
     // TODO Надо дедублицировать тут код как-то... Нужно изобретать wrapper-trait?
     val idxLogic: ScIndexLogic = if (majorApiVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
       // v3 выдача. Собрать аргументы для вызова index-логики:
-      val s = focLogic._qs
+      val s = focLogic._qs.common
       val indexArgs = MScIndexArgs(
         screen = s.screen,
         apiVsn = s.apiVsn,
         withWelcome = true,
-        locEnv = s.search.locEnv
+        locEnv = s.locEnv
       )
 
       // Собрать и исполнить пропатченную index-логику.

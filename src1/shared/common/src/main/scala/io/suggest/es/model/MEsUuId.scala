@@ -1,6 +1,8 @@
 package io.suggest.es.model
 
 import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -43,6 +45,13 @@ object MEsUuId {
   }
 
 
+  /** Поддержка play-json. */
+  implicit def mEsUuIdFormat: Format[MEsUuId] = {
+    implicitly[Format[String]]
+      .inmap[MEsUuId]( apply, _.id )
+  }
+
+
   // TODO Переместить сюда же маппинг esIdM из FormUtil.
 
   import scala.language.implicitConversions
@@ -53,6 +62,19 @@ object MEsUuId {
   implicit def esIdOpt2strOpt(esIdOpt: Option[MEsUuId]): Option[String] = esIdOpt.map(esId2string)
 
   implicit def univEq: UnivEq[MEsUuId] = UnivEq.derive
+
+
+  object Implicits {
+
+    implicit class StrOptExtOps( val strOpt: Option[String] ) extends AnyVal {
+
+      def toEsUuIdOpt: Option[MEsUuId] = {
+        strOpt.map { MEsUuId.apply }
+      }
+
+    }
+
+  }
 
 }
 

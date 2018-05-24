@@ -12,6 +12,8 @@
 @import sys1.stuff.dsl._
 @import sys1.domains._nodeDomainsTpl
 @import msc._
+@import io.suggest.sc.sc3.MScQs
+@import io.suggest.sc.ads.MAdsSearchReq
 
 
 @* Подшаблон генерации квадратной кнопки. *@
@@ -135,12 +137,12 @@
   @lkBlock("Управление") {
 
     @btn(
-      href = routes.SysMarket.showAdnNodeAds( MScAdsSearchQs(prodIdOpt = Some(mnode.id.get)) ),
+      href = routes.SysMarket.showAdnNodeAds( MScQs(search = MAdsSearchReq(prodId = Some(mnode.id.get))) ),
       paddingPx = 28
     ) { Собственные<br/>рекламные<br/>карточки }
 
     @btn(
-      href = routes.SysMarket.showAdnNodeAds( MScAdsSearchQs(rcvrIdOpt = Some(mnode.id.get))  ),
+      href = routes.SysMarket.showAdnNodeAds( MScQs(search = MAdsSearchReq(rcvrId = Some(mnode.id.get))) ),
       paddingPx  = 28
     ) { Рекламные<br/>карточки<br/>в выдаче }
 

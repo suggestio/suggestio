@@ -96,6 +96,11 @@ object OptionUtil {
       option.flatMap( ofTypeF[X, T] )
     }
 
+    /** Конвертер в Future. Если None, то будет Future.failed(NSEE). */
+    def toFutureDefined: Future[X] = {
+      option.fold[Future[X]]( Future.failed(new NoSuchElementException) )( Future.successful )
+    }
+
   }
 
 }
