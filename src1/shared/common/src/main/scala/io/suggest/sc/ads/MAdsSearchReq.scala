@@ -27,7 +27,8 @@ object MAdsSearchReq extends IEmpty {
     (__ \ OFFSET_FN).formatNullable[Int] and
     (__ \ RECEIVER_ID_FN).formatNullable[MEsUuId] and
     (__ \ GENERATION_FN).formatNullable[Long] and
-    (__ \ TAG_NODE_ID_FN).formatNullable[MEsUuId]
+    (__ \ TAG_NODE_ID_FN).formatNullable[MEsUuId] and
+    (__ \ TEXT_QUERY_FN).formatNullable[String]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MAdsSearchReq] = UnivEq.derive
@@ -42,6 +43,7 @@ case class MAdsSearchReq(
                           rcvrId      : Option[MEsUuId]   = None,
                           genOpt      : Option[Long]      = None,
                           tagNodeId   : Option[MEsUuId]   = None,
+                          textQuery   : Option[String]    = None,
                         )
   extends EmptyProduct
 {

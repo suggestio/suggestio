@@ -1,9 +1,5 @@
 package io.suggest.sc.index
 
-import io.suggest.common.empty.EmptyUtil
-import io.suggest.dev.MScreen
-import io.suggest.geo.MLocEnv
-import io.suggest.sc.MScApiVsn
 import io.suggest.sc.ScConstants.ReqArgs._
 import japgolly.univeq._
 import play.api.libs.functional.syntax._
@@ -25,15 +21,8 @@ object MScIndexArgs {
   /** Поддержка JSON-сериализации */
   implicit def mscIndexArgsFormat: OFormat[MScIndexArgs] = (
     (__ \ NODE_ID_FN).formatNullable[String] and
-    (__ \ LOC_ENV_FN).formatNullable[MLocEnv]
-      .inmap[MLocEnv](
-        EmptyUtil.opt2ImplMEmptyF(MLocEnv),
-        EmptyUtil.implEmpty2OptF
-      ) and
-    (__ \ SCREEN_FN).formatNullable[MScreen] and
     (__ \ WITH_WELCOME_FN).format[Boolean] and
-    (__ \ GEO_INTO_RCVR_FN).format[Boolean] and
-    (__ \ VSN_FN).format[MScApiVsn]
+    (__ \ GEO_INTO_RCVR_FN).format[Boolean]
   )( apply, unlift(unapply) )
 
   implicit def univEq: UnivEq[MScIndexArgs] = UnivEq.derive
@@ -54,9 +43,6 @@ object MScIndexArgs {
   */
 case class MScIndexArgs(
                          nodeId       : Option[String]  = None,
-                         locEnv       : MLocEnv         = MLocEnv.empty,
-                         screen       : Option[MScreen] = None,
                          withWelcome  : Boolean         = true,
                          geoIntoRcvr  : Boolean         = true,
-                         apiVsn       : MScApiVsn
                        )

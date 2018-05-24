@@ -9,7 +9,7 @@ package io.suggest.jd
 object JdConst {
 
   /** Макс.кол-во стрипов в одном документе. */
-  final def MAX_STRIPS_COUNT = 20
+  final def MAX_STRIPS_COUNT = 50
 
   /** Макс.кол-во элементов в минимальном блоке. */
   final def MAX_ELEMENTS_PER_MIN_BLOCK = 2

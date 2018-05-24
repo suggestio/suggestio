@@ -43,4 +43,10 @@ object AdSearchConstants {
     */
   def FOC_ALSO_RETURN_GRID_FN = "m"
 
+  /** Имя поля с текстовым запросом поиска.
+    * Изначально, это было tagSearchQuery в классе tags search,
+    * но теперь всё унифицировано.
+    */
+  def TEXT_QUERY_FN = "q"
+
 }

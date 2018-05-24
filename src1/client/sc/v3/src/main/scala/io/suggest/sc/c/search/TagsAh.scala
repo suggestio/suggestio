@@ -9,7 +9,7 @@ import io.suggest.msg.WarnMsgs
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.search._
-import io.suggest.sc.search.MScTagsSearchQs
+import io.suggest.sc.sc3.MScQs
 import io.suggest.sc.styl.ScCss
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -25,7 +25,7 @@ import scala.util.Success
   */
 class TagsAh[M](
                  api              : ISearchApi,
-                 searchArgsRO     : ModelRO[MScTagsSearchQs],
+                 tagsSearchQsRO   : ModelRO[MScQs],
                  screenRO         : ModelRO[MScreen],
                  modelRW          : ModelRW[M, MTagsSearchS]
                )
@@ -87,14 +87,20 @@ class TagsAh[M](
 
         val fx = Effect {
           // Подготовить аргументы запроса:
-          val args0 = searchArgsRO.value
+          val args0 = tagsSearchQsRO.value
           val offsetOpt = OptionUtil.maybeOpt(!m.clear) {
             v0.tagsReq
               .toOption
               .map(_.size)
           }
+          // TODO Лимит результатов - брать из высоты экрана.
           val limit = 30
-          val args2 = args0.withLimitOffset( Some(30), offsetOpt = offsetOpt )
+          val args2 = args0.withSearch(
+            args0.search.withLimitOffset(
+              limit  = Some(limit),
+              offset = offsetOpt
+            )
+          )
           // Запустить запрос.
           api
             .tagsSearch( args2 )

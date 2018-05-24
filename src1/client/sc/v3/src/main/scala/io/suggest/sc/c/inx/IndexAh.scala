@@ -9,7 +9,7 @@ import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.{GetMoreTags, MScSearch, MapReIndex}
 import io.suggest.sc.m.{MScRoot, ResetUrlRoute}
-import io.suggest.sc.sc3.MScRespActionTypes
+import io.suggest.sc.sc3.{MScCommonQs, MScQs, MScRespActionTypes}
 import io.suggest.sc.search.MSearchTabs
 import io.suggest.sc.styl.MScCssArgs
 import io.suggest.sc.v.ScCssFactory
@@ -40,13 +40,20 @@ class IndexAh[M](
 
     val fx = Effect {
       val root = rootRO.value
-      val args = MScIndexArgs(
-        nodeId      = v0.state.currRcvrId,
-        locEnv      = root.locEnv,
-        screen      = Some( root.dev.screen.screen ),
-        withWelcome = withWelcome,
-        geoIntoRcvr = geoIntoRcvr,
-        apiVsn      = Sc3Api.API_VSN
+
+      val args = MScQs(
+        common = MScCommonQs(
+          apiVsn = Sc3Api.API_VSN,
+          locEnv = root.locEnv,
+          screen = Some( root.dev.screen.screen )
+        ),
+        index = Some(
+          MScIndexArgs(
+            nodeId      = v0.state.currRcvrId,
+            withWelcome = withWelcome,
+            geoIntoRcvr = geoIntoRcvr
+          )
+        )
       )
 
       api

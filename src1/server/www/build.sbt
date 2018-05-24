@@ -144,7 +144,6 @@ routesImport ++= Seq(
   "io.suggest.url.MHostInfoJvm._",
   "io.suggest.sc.ads.MLookupModesJvm._",
   "io.suggest.sc.MScApiVsnsJvm._",
-  "io.suggest.sc.search.MScTagsSearchQsJvm._",
   "io.suggest.img.MImgFmtJvm._",
   "io.suggest.compress.MCompressAlgosJvm._",
   "models.msc.MPwaManifestQsJvm._",

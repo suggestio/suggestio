@@ -3,8 +3,8 @@ package controllers.sc
 import io.suggest.common.empty.OptionUtil
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
-import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScRespActionTypes}
-import io.suggest.sc.search.{MSc3Tag, MSc3TagsResp, MScTagsSearchQs}
+import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScQs, MScRespActionTypes}
+import io.suggest.sc.search.{MSc3Tag, MSc3TagsResp}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.req.IReq
@@ -42,14 +42,14 @@ trait ScTags
 
     lazy val logPrefix = s"${getClass.getSimpleName}#${System.currentTimeMillis()}:"
 
-    def _qs: MScTagsSearchQs
+    def _qs: MScQs
 
     lazy val geoIpResOptFut = geoIpUtil.findIpCached(
       geoIpUtil.fixedRemoteAddrFromRequest.remoteAddr
     )
 
-    lazy val mGeoLocOptFut = OptionUtil.maybeFut(_qs.rcvrId.isEmpty) {
-      geoIpUtil.geoLocOrFromIp( _qs.locEnv.geoLocOpt )( geoIpResOptFut )
+    lazy val mGeoLocOptFut = OptionUtil.maybeFut( _qs.search.rcvrId.isEmpty ) {
+      geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLocOpt )( geoIpResOptFut )
     }
 
     lazy val tagsFoundFut = {
@@ -76,7 +76,7 @@ trait ScTags
             val acc0: List[MAction] = Nil
 
             // Добавить offset, если задан
-            val acc1 = _qs.offsetOpt.fold(acc0) { offset =>
+            val acc1 = _qs.search.offset.fold(acc0) { offset =>
               val limAction = MAction(
                 actions = MActionTypes.SearchOffset :: Nil,
                 count   = offset :: Nil
@@ -85,7 +85,7 @@ trait ScTags
             }
 
             // Добавить limit, если задан
-            val acc2 = _qs.limitOpt.fold(acc1) { limit =>
+            val acc2 = _qs.search.limit.fold(acc1) { limit =>
               val limAction = MAction(
                 actions = MActionTypes.SearchLimit :: Nil,
                 count   = limit :: Nil
@@ -100,12 +100,12 @@ trait ScTags
               nodeName  = found.flatMap(_.guessDisplayName),
               count     = Seq(found.size),
               // Поисковый запрос тегов, если есть.
-              textNi    = _qs.tagsQuery.toSeq
+              textNi    = _qs.search.textQuery.toSeq
             )
             tAction :: acc2
           }
           override def userSaOpt    = _userSaOpt
-          override def locEnvOpt    = Some( _qs.locEnv )
+          override def locEnvOpt    = Some( _qs.common.locEnv )
           override def geoIpLoc     = geoIpResOpt
           override def components   = MComponents.Tags :: super.components
         }
@@ -123,12 +123,12 @@ trait ScTags
 
   /** Интерфейс для объекта-компаньона реализаций [[ScTagsHttpLogic]]. */
   protected trait IScTagsHttpLogicCompanion {
-    def apply(qs: MScTagsSearchQs)(implicit request: IReq[_]): ScTagsHttpLogic
+    def apply(qs: MScQs)(implicit request: IReq[_]): ScTagsHttpLogic
   }
 
 
   /** Реализация поддержки Sc APIv3. */
-  case class ScTagsV3(override val _qs: MScTagsSearchQs)
+  case class ScTagsV3(override val _qs: MScQs)
                      (override implicit val _request: IReq[_]) extends ScTagsHttpLogic {
 
     /** Сборка search-res-ответа без sc3Resp-обёртки. */
@@ -199,8 +199,8 @@ trait ScTags
     * @param qs Аргументы поиска из URL query string.
     * @return Рендер куска списка тегов, который раньше был списком узлов.
     */
-  def tagsSearch(qs: MScTagsSearchQs) = maybeAuth().async { implicit request =>
-    val logic = _apiVsn2logic( qs.apiVsn )
+  def tagsSearch(qs: MScQs) = maybeAuth().async { implicit request =>
+    val logic = _apiVsn2logic( qs.common.apiVsn )
     logic(qs).execute()
   }
 

@@ -16,8 +16,8 @@ import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, MNodeTypes, NodeNotFoundException}
 import io.suggest.sc.MScApiVsns
-import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs, MWelcomeInfo}
-import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScRespActionTypes}
+import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
+import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.IMacroLogs
@@ -33,6 +33,7 @@ import util.ble.IBleUtilDi
 import util.geo.IGeoIpUtilDi
 import util.img.IDynImgUtil
 import util.stat.{IStatCookiesUtilDi, IStatUtil}
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -76,44 +77,55 @@ trait ScIndex
     * @return 200 OK + index выдачи в виде JSON.
     */
   // U.PersonNode запрашивается в фоне для сбора статистики внутри экшена.
-  def index(args: MScIndexArgs) = maybeAuth(U.PersonNode).async { implicit request =>
-
+  def index(args: MScQs) = maybeAuth(U.PersonNode).async { implicit request =>
     lazy val logPrefix = s"index[${System.currentTimeMillis()}]:"
 
-    // В зависимости от версии API выбрать используемую логику сборки ответа.
-    val logicOrNull = if (args.apiVsn.majorVsn == MScApiVsns.ReactSjs3.majorVsn) {
-      ScIndexLogicV3(args)(request)
-    } else {
-      LOGGER.error(s"$logPrefix No logic available for api vsn: ${args.apiVsn}. Forgot to implement? args = $args")
-      null
-    }
-
-    // В зависимости от наличия или отсутствия заимплеменченной логики, разрулить ситуацию:
-    Option(logicOrNull).fold [Future[Result]] {
-      NotImplemented(s"Sc Index API not implemented for ${args.apiVsn}.")
-    } { logic =>
-      // Собираем http-ответ.
-      val resultFut = for (res <- logic.result) yield {
-        // Настроить кэш-контрол. Если нет locEnv, то для разных ip будут разные ответы, и CDN кешировать их не должна.
-        val (cacheControlMode, hdrs0) = if (!args.locEnv.isEmpty) {
-          "private" -> ((VARY -> X_FORWARDED_FOR) :: Nil)
+    // Чтобы избегать корявой многоэтажности, экспериментируем с Either:
+    (
+      if (args.index.nonEmpty) Right(None)
+      else Left {
+        LOGGER.debug(s"$logPrefix No or invalid .index in scQs = $args")
+        BadRequest("index args missing")
+      }
+    )
+      // В зависимости от версии API выбрать используемую логику сборки ответа.
+      .flatMap { _ =>
+        val logicOrNull = if (args.common.apiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
+          ScIndexLogicV3(args)(request)
         } else {
-          "public" -> Nil
+          LOGGER.error(s"$logPrefix No logic available for api vsn: ${args.common.apiVsn}. Forgot to implement? args = $args")
+          null
         }
-        val hdrs1 = CACHE_CONTROL -> s"$cacheControlMode, max-age=${scUtil.SC_INDEX_CACHE_SECONDS}" ::
-          hdrs0
-        res.withHeaders(hdrs1: _*)
+        Option( logicOrNull )
+          .toRight(
+            NotImplemented(s"Sc Index API not implemented for ${args.common.apiVsn}.")
+          )
       }
+      // Запустить выбранную логику на исполнение:
+      .map { logic =>
+        // Собираем http-ответ.
+        val resultFut = for (res <- logic.result) yield {
+          // Настроить кэш-контрол. Если нет locEnv, то для разных ip будут разные ответы, и CDN кешировать их не должна.
+          val (cacheControlMode, hdrs0) = if (!args.common.locEnv.isEmpty) {
+            "private" -> ((VARY -> X_FORWARDED_FOR) :: Nil)
+          } else {
+            "public" -> Nil
+          }
+          val hdrs1 = CACHE_CONTROL -> s"$cacheControlMode, max-age=${scUtil.SC_INDEX_CACHE_SECONDS}" ::
+            hdrs0
+          res.withHeaders(hdrs1: _*)
+        }
 
-      // Собираем статистику второго поколения...
-      logic.saveScStat()
+        // Собираем статистику второго поколения...
+        logic.saveScStat()
 
-      resultFut.recover { case ex: NodeNotFoundException =>
-        // Эта ветвь вообще когда-нибудь вызывается? indexNodeFut всегда какой-то узел вроде возвращает.
-        LOGGER.trace(s"$logPrefix ${logic.logPrefix}: everything is missing; args = $args", ex)
-        NotFound( ex.getMessage )
+        resultFut.recover { case ex: NodeNotFoundException =>
+          // Эта ветвь вообще когда-нибудь вызывается? indexNodeFut всегда какой-то узел вроде возвращает.
+          LOGGER.trace(s"$logPrefix ${logic.logPrefix}: everything is missing; args = $args", ex)
+          NotFound( ex.getMessage )
+        }
       }
-    }
+      .fold[Future[Result]]( identity(_), identity )
   }
 
 
@@ -121,7 +133,10 @@ trait ScIndex
   abstract class ScIndexLogic extends LogicCommonT { logic =>
 
     /** qs-аргументы реквеста. */
-    def _reqArgs: MScIndexArgs
+    def _reqArgs: MScQs
+
+    /** Быстрый доступ к MScIndexArgs. По идее, это безопасно, т.к. запрос должен быть вместе с index args. */
+    final def _scIndexArgs = _reqArgs.index.get
 
     /** Тип sc-responce экшена. */
     def respActionType = MScRespActionTypes.Index
@@ -145,7 +160,7 @@ trait ScIndex
 
     /** ip-геолокация, когда гео-координаты или иные полезные данные клиента отсутствуют. */
     def reqGeoLocFut: Future[Option[MGeoLoc]] = {
-      geoIpUtil.geoLocOrFromIp( _reqArgs.locEnv.geoLocOpt )(geoIpResOptFut)
+      geoIpUtil.geoLocOrFromIp( _reqArgs.common.locEnv.geoLocOpt )(geoIpResOptFut)
     }
     lazy val reqGeoLocFutVal = reqGeoLocFut
 
@@ -153,7 +168,7 @@ trait ScIndex
     /** #00: поиск узла по id ресивера, указанного в qs.
       * Future[NSEE], когда нет необходимого узла. */
     def l00_rcvrByIdFut: Future[MIndexNodeInfo] = {
-      val adnIdOpt = _reqArgs.nodeId
+      val adnIdOpt = _scIndexArgs.nodeId
 
       val rFut = for {
         mnodeOpt <- mNodesCache.maybeGetByIdCached( adnIdOpt )
@@ -185,7 +200,7 @@ trait ScIndex
       val searchOpt = bleUtil.scoredByDistanceBeaconSearch(
         maxBoost    = 100000F,
         predicates  = Seq( MPredicates.PlacedIn ),
-        bcns        = _reqArgs.locEnv.bleBeacons
+        bcns        = _reqArgs.common.locEnv.bleBeacons
       )
       searchOpt.fold [Future[MIndexNodeInfo] ] {
         Future.failed( new NoSuchElementException("no beacons") )
@@ -195,9 +210,9 @@ trait ScIndex
           must   = IMust.MUST
         )
         val msearch = new MNodeSearchDfltImpl {
-          override def subSearches  = Seq(subSearch)
+          override def subSearches  = subSearch :: Nil
           override def isEnabled    = Some(true)
-          override def nodeTypes    = Seq(MNodeTypes.AdnNode)
+          override def nodeTypes    = MNodeTypes.AdnNode :: Nil
           override def limit        = 1
         }
         val nearBeaconHolderOptFut = mNodes.dynSearchOne(msearch)
@@ -232,7 +247,7 @@ trait ScIndex
         val nodeLocPred = MPredicates.NodeLocation
 
         // Если запрещено погружение в реальные узлы-ресиверы (геолокация), то запрещаем получать узлы-ресиверы от elasticsearch:
-        val (withAdnRights1, adnRightsMustOrNot1) = if (!_reqArgs.geoIntoRcvr) {
+        val (withAdnRights1, adnRightsMustOrNot1) = if (!_scIndexArgs.geoIntoRcvr) {
           // Запрещено погружаться в ресиверы. Значит, ищем просто узел-обёртку для выдачи, а не ресивер.
           (MAdnRights.RECEIVER :: Nil, false)
         } else {
@@ -385,7 +400,7 @@ trait ScIndex
       for {
         currNode     <- indexNodeFutVal
         logoOptRaw = logoUtil.getLogoOfNode(currNode.mnode)
-        logoOptScr   <- logoUtil.getLogoOpt4scr(logoOptRaw, _reqArgs.screen)
+        logoOptScr   <- logoUtil.getLogoOpt4scr(logoOptRaw, _reqArgs.common.screen)
       } yield {
         logoOptScr
       }
@@ -394,7 +409,7 @@ trait ScIndex
 
     /** Получение карточки приветствия. */
     def welcomeOptFut: Future[Option[MWelcomeRenderArgs]] = {
-      if (_reqArgs.withWelcome) {
+      if (_scIndexArgs.withWelcome) {
         for {
           inxNodeInfo <- indexNodeFutVal
           waOpt       <- welcomeUtil.getWelcomeRenderArgs(inxNodeInfo.mnode, ctx.deviceScreenOpt)(ctx)
@@ -457,7 +472,7 @@ trait ScIndex
               MActionTypes.ScIndexCovering
             }
             val inxSa = MAction(
-              actions   = Seq(actType),
+              actions   = actType :: Nil,
               nodeId    = _indexNode.mnode.id.toSeq,
               nodeName  = _indexNode.mnode.guessDisplayName.toSeq
             )
@@ -465,8 +480,8 @@ trait ScIndex
           }
           override def components = MComponents.Index :: super.components
           override def remoteAddr = _remoteIp
-          override def devScreenOpt = _reqArgs.screen
-          override def locEnvOpt = Some(_reqArgs.locEnv)
+          override def devScreenOpt = _reqArgs.common.screen
+          override def locEnvOpt = Some( _reqArgs.common.locEnv )
           override def geoIpLoc = _geoIpResOpt
         }
       }
@@ -482,7 +497,7 @@ trait ScIndex
     *
     * Сервер отвечает только параметрами для рендера, без html.
     */
-  case class ScIndexLogicV3(override val _reqArgs: MScIndexArgs)
+  case class ScIndexLogicV3(override val _reqArgs: MScQs)
                            (override implicit val _request: IReq[_]) extends ScIndexLogic {
 
     /** true, если вызов идёт из [[ScIndexAdOpen]]. */
@@ -518,7 +533,7 @@ trait ScIndex
       } yield {
         val mMediaInfo = MMediaInfo(
           giType = MMediaTypes.Image,
-          url    = cdnUtil.maybeAbsUrl(_reqArgs.apiVsn.forceAbsUrls) {
+          url    = cdnUtil.maybeAbsUrl( _reqArgs.common.apiVsn.forceAbsUrls ) {
             dynImgUtil.distCdnImgCall(mimg, mediaHostsMap)
           }(ctx),
           whPx   = whPxOpt
@@ -571,7 +586,7 @@ trait ScIndex
       * Карта на клиенте будет отцентрована по этой точке. */
     def nodeGeoPointOptFut: Future[Option[MGeoPoint]] = {
       // Если география уже активна на уровне index-запроса, то тут ничего делать не требуется.
-      if (!isFocusedAdOpen && _reqArgs.locEnv.geoLocOpt.nonEmpty) {
+      if (!isFocusedAdOpen && _reqArgs.common.locEnv.geoLocOpt.nonEmpty) {
         // Не искать гео-точку для узла, если география на клиенте и так активна.
         Future.successful( None )
 

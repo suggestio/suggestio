@@ -68,11 +68,18 @@ object MEsUuId {
 
     implicit class StrOptExtOps( val strOpt: Option[String] ) extends AnyVal {
 
-      def toEsUuIdOpt: Option[MEsUuId] = {
+      def toEsUuIdOpt: Option[MEsUuId] =
         strOpt.map { MEsUuId.apply }
-      }
 
     }
+
+  }
+
+
+  implicit class EsUuIdOptExtOps( val esIdOpt: Option[MEsUuId] ) extends AnyVal {
+
+    def toStringOpt: Option[String] =
+      esIdOpt.map( _.id )
 
   }
 

@@ -5,8 +5,9 @@ import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.sc.MScApiVsns
-import io.suggest.sc.index.MScIndexArgs
 import io.suggest.common.empty.OptionUtil.AnyOptOps
+import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sc.sc3.MScQs
 import models.req.IReq
 import models.msc._
 import play.api.mvc.Result
@@ -126,12 +127,13 @@ trait ScIndexAdOpen
     // TODO Надо дедублицировать тут код как-то... Нужно изобретать wrapper-trait?
     val idxLogic: ScIndexLogic = if (majorApiVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
       // v3 выдача. Собрать аргументы для вызова index-логики:
-      val s = focLogic._qs.common
-      val indexArgs = MScIndexArgs(
-        screen = s.screen,
-        apiVsn = s.apiVsn,
-        withWelcome = true,
-        locEnv = s.locEnv
+      val indexArgs = MScQs(
+        common = focLogic._qs.common,
+        index = Some(
+          MScIndexArgs(
+            withWelcome = true
+          )
+        )
       )
 
       // Собрать и исполнить пропатченную index-логику.

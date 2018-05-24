@@ -7,7 +7,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.sc.search.MScTagsSearchQs
+import io.suggest.sc.sc3.MScQs
 
 import scala.concurrent.Future
 
@@ -27,18 +27,18 @@ class ScTagsUtil @Inject()(
 
 
   /** Компиляция значений query string в MNodeSearch. */
-  def qs2NodesSearch(qs: MScTagsSearchQs): Future[MNodeSearch] = {
-    qs2NodesSearch(qs, qs.locEnv.geoLocOpt)
+  def qs2NodesSearch(qs: MScQs): Future[MNodeSearch] = {
+    qs2NodesSearch(qs, qs.common.locEnv.geoLocOpt)
   }
-  def qs2NodesSearch(qs: MScTagsSearchQs, geoLocOpt2: Option[MGeoLoc]): Future[MNodeSearch] = {
+  def qs2NodesSearch(qs: MScQs, geoLocOpt2: Option[MGeoLoc]): Future[MNodeSearch] = {
 
-    val _limit = qs.limitOpt
+    val _limit = qs.search.limit
       .getOrElse( LIMIT_DFLT )
 
-    val _offset = qs.offsetOpt
+    val _offset = qs.search.offset
       .getOrElse( 0 )
 
-    val tags: Seq[String] = TagFacesUtil.queryOpt2tags( qs.tagsQuery )
+    val tags: Seq[String] = TagFacesUtil.queryOpt2tags( qs.search.textQuery )
     val searchTagOpt  = tags.lastOption
 
     val tcrOpt = for (q <- searchTagOpt) yield {
@@ -51,7 +51,7 @@ class ScTagsUtil @Inject()(
     val _edgeSearchCr = Criteria(
       predicates  = MPredicates.TaggedBy.Self :: Nil,
       tags        = tcrOpt.toSeq,
-      nodeIds     = qs.rcvrId.toSeq,
+      nodeIds     = qs.search.rcvrId.toStringOpt.toSeq,
       // Отработать геолокацию: искать только теги, размещенные в текущей области.
       gsIntersect = for (geoLoc <- geoLocOpt2) yield {
         val circle = CircleGs(

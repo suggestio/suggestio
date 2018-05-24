@@ -10,7 +10,7 @@ package controllers.sc
 trait ScUapi
   extends ScIndex
   with ScAdsTile
-  with ScFocusedAds
+  with ScIndexAdOpen
 {
 
 

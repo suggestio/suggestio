@@ -28,7 +28,6 @@ import io.suggest.sc.m.grid.{MGridCoreS, MGridS}
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.m.search.{MMapInitState, MScSearch}
 import io.suggest.sc.sc3.{MSc3Init, MScCommonQs, MScQs}
-import io.suggest.sc.search.MScTagsSearchQs
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.v.ScCssFactory
 import io.suggest.sjs.common.log.CircuitLog
@@ -70,6 +69,8 @@ class Sc3Circuit(
   import m.search.MScSearchText.MScSearchTextFastEq
   import MScRoot.MScRootFastEq
   import MMapInitState.MMapInitStateFastEq
+
+  import MEsUuId.Implicits._
 
 
   override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.SC_FSM_EVENT_FAILED
@@ -150,8 +151,7 @@ class Sc3Circuit(
   private val menuRW = indexRW.zoomRW(_.menu) { _.withMenu(_) }
 
 
-  private val scQsRO: ModelRO[MScQs] = zoom { mroot =>
-    import MEsUuId.Implicits._
+  private val gridAdsQsRO: ModelRO[MScQs] = zoom { mroot =>
     val inxState = mroot.index.state
     val currRcvrId = inxState.currRcvrId.toEsUuIdOpt
     MScQs(
@@ -185,13 +185,18 @@ class Sc3Circuit(
     )
   }
 
-  private val tagsSearchArgsQsRO: ModelRO[MScTagsSearchQs] = zoom { mroot =>
+  /** Аргументы для поиска тегов. */
+  private val tagsSearchQsRO: ModelRO[MScQs] = zoom { mroot =>
     val currRcvrId = mroot.index.state.currRcvrId
-    MScTagsSearchQs(
-      tagsQuery = mroot.index.search.text.searchQuery.toOption,
-      locEnv    = if (currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
-      rcvrId    = currRcvrId,
-      apiVsn    = Sc3Api.API_VSN
+    MScQs(
+      common = MScCommonQs(
+        locEnv    = if (currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
+        apiVsn    = Sc3Api.API_VSN
+      ),
+      search = MAdsSearchReq(
+        textQuery = mroot.index.search.text.searchQuery.toOption,
+        rcvrId    = currRcvrId.toEsUuIdOpt
+      )
     )
   }
 
@@ -211,10 +216,10 @@ class Sc3Circuit(
   )
 
   private val tagsAh = new TagsAh(
-    api           = api,
-    modelRW       = tagsRW,
-    searchArgsRO  = tagsSearchArgsQsRO,
-    screenRO      = screenRO
+    api             = api,
+    modelRW         = tagsRW,
+    tagsSearchQsRO  = tagsSearchQsRO,
+    screenRO        = screenRO
   )
 
   private val indexAh = new IndexAh(
@@ -236,7 +241,7 @@ class Sc3Circuit(
 
   private val gridAdsAh = new GridAh(
     api           = api,
-    scQsRO        = scQsRO,
+    scQsRO        = gridAdsQsRO,
     screenRO      = screenRO,
     jdCssFactory  = jdCssFactory,
     modelRW       = gridRW

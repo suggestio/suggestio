@@ -19,7 +19,7 @@ GET  /                                  @controllers.Sc.geoSite(a: msc.ScJsState
 GET  /favicon.ico                       @controllers.Assets.at(path = "/public", file = "images/favicon/114.ico")
 
 ## Унифицированный sc index на все случаи жизни.
-GET  /sc/index                          @controllers.Sc.index(a: io.suggest.sc.index.MScIndexArgs)
+GET  /sc/index                          @controllers.Sc.index(a: io.suggest.sc.sc3.MScQs)
 
 GET  /sc/tile                           @controllers.Sc.findAds(a: io.suggest.sc.sc3.MScQs)
 GET  /sc/fads                           @controllers.Sc.focusedAds(a: io.suggest.sc.sc3.MScQs)
@@ -29,7 +29,7 @@ GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.
 ## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
 GET  /sc/router.js                      @controllers.Sc.scJsRouter
 GET  /sc/routes/:c/router.js            @controllers.Sc.scJsRouterCache(c: Int)
-GET  /sc/tags                           @controllers.Sc.tagsSearch(t: io.suggest.sc.search.MScTagsSearchQs)
+GET  /sc/tags                           @controllers.Sc.tagsSearch(t: io.suggest.sc.sc3.MScQs)
 GET  /sc/map/nodes/all                  @controllers.Sc.renderMapNodesAll
 GET  /sc/sc.webmanifest                 @controllers.Sc.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
 

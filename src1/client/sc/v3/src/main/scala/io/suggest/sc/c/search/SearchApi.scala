@@ -1,8 +1,7 @@
 package io.suggest.sc.c.search
 
 import io.suggest.routes.ScJsRoutes
-import io.suggest.sc.sc3.MSc3Resp
-import io.suggest.sc.search.MScTagsSearchQs
+import io.suggest.sc.sc3.{MSc3Resp, MScQs}
 import io.suggest.sc.u.ScJsRoutesUtil
 
 import scala.concurrent.Future
@@ -20,7 +19,7 @@ trait ISearchApi {
     * @param args Аргументы для поиска тегов.
     * @return Фьючерс с ответом сервера.
     */
-  def tagsSearch(args: MScTagsSearchQs): Future[MSc3Resp]
+  def tagsSearch(args: MScQs): Future[MSc3Resp]
 
 }
 
@@ -28,8 +27,8 @@ trait ISearchApi {
 /** Реализация [[ISearchApi]] поверх HTTP XHR. */
 trait SearchApiXhrImpl extends ISearchApi {
 
-  override def tagsSearch(args: MScTagsSearchQs): Future[MSc3Resp] = {
-    ScJsRoutesUtil.mkRequest[MScTagsSearchQs, MSc3Resp](
+  override def tagsSearch(args: MScQs): Future[MSc3Resp] = {
+    ScJsRoutesUtil.mkSc3Request(
       args,
       route = ScJsRoutes.controllers.Sc.tagsSearch
     )

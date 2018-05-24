@@ -1,8 +1,7 @@
 package io.suggest.sc.c.inx
 
 import io.suggest.routes.ScJsRoutes
-import io.suggest.sc.index.MScIndexArgs
-import io.suggest.sc.sc3.MSc3Resp
+import io.suggest.sc.sc3.{MSc3Resp, MScQs}
 import io.suggest.sc.u.ScJsRoutesUtil
 
 import scala.concurrent.Future
@@ -20,7 +19,7 @@ trait IIndexApi {
     * @param args Аргументы запроса индекса.
     * @return Фьючерс с ответом сервера.
     */
-  def getIndex(args: MScIndexArgs): Future[MSc3Resp]
+  def getIndex(args: MScQs): Future[MSc3Resp]
 
 }
 
@@ -28,7 +27,7 @@ trait IIndexApi {
 /** Реализация [[IIndexApi]] поверх XHR. */
 trait IndexApiXhrImpl extends IIndexApi {
 
-  override def getIndex(args: MScIndexArgs): Future[MSc3Resp] = {
+  override def getIndex(args: MScQs): Future[MSc3Resp] = {
     ScJsRoutesUtil.mkSc3Request(
       args  = args,
       route = ScJsRoutes.controllers.Sc.index
