@@ -5,7 +5,6 @@ import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.sc.MScApiVsns
-import io.suggest.common.empty.OptionUtil.AnyOptOps
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.sc3.MScQs
 import models.req.IReq
@@ -29,73 +28,94 @@ trait ScIndexAdOpen
   with IN2NodesUtilDi
   with IMNodes
 {
+
   import mCommonDi._
+
+
+  /** Необходимо ли перевести focused-запрос в index запрос? */
+  protected def _isFocGoToProducerIndexFut(qs: MScQs): Future[Option[MNode]] = {
+    lazy val logPrefix = s"_isFocGoToProducerIndexFut()#${System.currentTimeMillis()}:"
+
+    val toProducerFutOpt = for {
+      focQs <- qs.foc
+      if focQs.focIndexAllowed
+    } yield {
+      for {
+        // Прочитать из хранилища указанную карточку.
+        madOpt <- mNodesCache.getById( focQs.lookupAdId )
+
+        // .get приведёт к NSEE, это нормально.
+        producerId = {
+          madOpt
+            .flatMap(n2NodesUtil.madProducerId)
+            .get
+        }
+
+        if !(qs.search.rcvrId containsStr producerId )
+
+        producer <- {
+          // 2015.sep.16: Нельзя перепрыгивать на продьюсера, у которого не больше одной карточки на главном экране.
+          val prodAdsCountFut: Future[Long] = {
+            val args = new MNodeSearchDfltImpl {
+              override def outEdges: Seq[ICriteria] = {
+                val cr = Criteria(
+                  predicates  = MPredicates.Receiver :: Nil,
+                  nodeIds     = producerId :: Nil
+                )
+                cr :: Nil
+              }
+              override def limit = 2
+              override def nodeTypes = MNodeTypes.Ad :: Nil
+            }
+            mNodes.dynCount(args)
+          }
+
+          val prodFut = mNodesCache.getById(producerId)
+            .map(_.get)
+
+          // Как выяснилось, бывают карточки-сироты (продьюсер удален, карточка -- нет). Нужно сообщать об этой ошибке.
+          for (ex <- prodFut.failed) {
+            val msg = s"Producer node[$producerId] does not exist."
+            if (ex.isInstanceOf[NoSuchElementException])
+              LOGGER.error(msg)
+            else
+              LOGGER.error(msg, ex)
+          }
+
+          // Фильтруем prodFut по кол-ву карточек, размещенных у него на главном экране.
+          prodAdsCountFut
+            .filter { _ > 1 }
+            .flatMap { _ => prodFut }
+        }
+
+      } yield {
+        // Да, вернуть продьюсера.
+        LOGGER.trace(s"$logPrefix Foc ad#${focQs.lookupAdId} go-to index producer#$producerId")
+        Some( producer )
+      }
+    }
+
+    toProducerFutOpt
+      .getOrElse( Future.failed(new NoSuchElementException) )
+      .recover { case _: NoSuchElementException =>
+        None
+      }
+  }
+
 
   /** Тело экшена возврата медиа-кнопок расширено поддержкой переключения на index-выдачу узла-продьюсера
     * рекламной карточки, которая заинтересовала юзера. */
-  override protected def _focusedAds(logic: FocusedAdsLogicHttp): Future[Result] = {
-    import logic._request
-
+  override protected def _focusedAds(qs: MScQs)(implicit request: IReq[_]): Future[Result] = {
     val resFut = for {
-      focQs <- logic._qs.foc.toFutureDefined
-
-      // Фильтруем по флагу focJumpAllowed. if в первой строчке foc{} использовать нельзя, поэтому имитируем тут Future.
-      _ <- {
-        if (focQs.focJumpAllowed) {
-          Future.successful(None)
-        } else {
-          val ex = new NoSuchElementException("Foc jump disabled by sc-sjs.")
-          Future.failed(ex)
-        }
+      producerOpt <- _isFocGoToProducerIndexFut(qs)
+      producer = producerOpt.get
+      majorApiVsn = qs.common.apiVsn.majorVsn
+      idxLogic: ScIndexLogic = if (majorApiVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
+        ScFocToIndexLogicV3(producer, qs)(request)
+      } else {
+        throw new IllegalArgumentException("Unknown API: " + majorApiVsn)
       }
-
-      // Прочитать из хранилища указанную карточку.
-      madOpt <- mNodesCache.getById( focQs.lookupAdId )
-
-      // .get приведёт к NSEE, это нормально.
-      producerId = {
-        madOpt
-          .flatMap(n2NodesUtil.madProducerId)
-          .get
-      }
-
-      if logic.is3rdPartyProducer( producerId )
-
-      producer <- {
-        // 2015.sep.16: Нельзя перепрыгивать на продьюсера, у которого не больше одной карточки на главном экране.
-        val prodAdsCountFut: Future[Long] = {
-          val args = new MNodeSearchDfltImpl {
-            override def outEdges: Seq[ICriteria] = {
-              val cr = Criteria(
-                predicates  = MPredicates.Receiver :: Nil,
-                nodeIds     = producerId :: Nil
-              )
-              cr :: Nil
-            }
-            override def limit = 2
-            override def nodeTypes = MNodeTypes.Ad :: Nil
-          }
-          mNodes.dynCount(args)
-        }
-
-        val prodFut = mNodesCache.getById(producerId)
-          .map(_.get)
-        // Как выяснилось, бывают карточки-сироты (продьюсер удален, карточка -- нет). Нужно сообщать об этой ошибке.
-        for (ex <- prodFut.failed) {
-          val msg = s"Producer node[$producerId] does not exist."
-          if (ex.isInstanceOf[NoSuchElementException])
-            LOGGER.error(msg)
-          else
-            LOGGER.error(msg, ex)
-        }
-        // Фильтруем prodFut по кол-ву карточек, размещенных у него на главном экране.
-        prodAdsCountFut
-          .filter { _ > 1 }
-          .flatMap { _ => prodFut }
-      }
-
-      result <- _goToProducerIndex(producer, logic)
-
+      result <- idxLogic.resultFut
     } yield {
       result
     }
@@ -104,56 +124,45 @@ trait ScIndexAdOpen
     resFut.recoverWith { case ex: Throwable =>
       // Продьюсер неизвестен, не подходит под критерии или переброска отключена.
       if ( !ex.isInstanceOf[NoSuchElementException] )
-        LOGGER.error("_focusedAds(): Suppressing unexpected exception for " + logic._request.uri, ex)
-      super._focusedAds(logic)
+        LOGGER.error("_focusedAds(): Suppressing unexpected exception for " + request.uri, ex)
+      super._focusedAds(qs)
     }
   }
 
 
-  /**
-    * Решено, что юзера нужно перебросить на выдачу другого узла с возможностью возрата на исходный узел
-    * через кнопку навигации.
+  /** ScIndex-логика перехода на с focused-карточки в индекс выдачи продьюсера фокусируемой карточки.
     *
-    * @param producer Узел-продьюсер, на который необходимо переключиться.
-    * @param focLogic Закешированная focused-логика, собранная в экшене.
-    * @param request Исходный реквест.
-    * @return Фьючерс с http-результатом.
+    * @param producer Продьюсер, в который требуется перескочить.
+    * @param focQs Исходные qs-аргументы запроса фокусировки.
+    * @param _request Исходный HTTP-реквест.
     */
-  private def _goToProducerIndex(producer: MNode, focLogic: FocusedAdsLogicHttp)
-                                (implicit request: IReq[_]): Future[Result] = {
-    // Извлекаем MAdnNode втупую. exception будет перехвачен в recoverWith.
-    val majorApiVsn = focLogic._qs.common.apiVsn.majorVsn
+  case class ScFocToIndexLogicV3(producer: MNode, focQs: MScQs)
+                                (override implicit val _request: IReq[_]) extends ScIndexLogic {
 
-    // TODO Надо дедублицировать тут код как-то... Нужно изобретать wrapper-trait?
-    val idxLogic: ScIndexLogic = if (majorApiVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
+    /** Подстановка qs-аргументы реквеста. */
+    // TODO Заменить lazy val на val.
+    override lazy val _qs: MScQs = {
       // v3 выдача. Собрать аргументы для вызова index-логики:
-      val indexArgs = MScQs(
-        common = focLogic._qs.common,
+      MScQs(
+        common = focQs.common,
         index = Some(
           MScIndexArgs(
             withWelcome = true
           )
         )
       )
-
-      // Собрать и исполнить пропатченную index-логику.
-      new ScIndexLogicV3( indexArgs )(request) {
-        override def isFocusedAdOpen = true
-        override lazy val indexNodeFut: Future[MIndexNodeInfo] = {
-          val nodeInfo = MIndexNodeInfo(
-            mnode   = producer,
-            isRcvr  = true
-          )
-          Future.successful( nodeInfo )
-        }
-      }
-
-    } else {
-      throw new IllegalArgumentException("Unknown API: " + majorApiVsn)
     }
 
-    // Логика обработки запроса собрана, запустить исполнение запроса.
-    idxLogic.result
+    override def isFocusedAdOpen = true
+
+    override lazy val indexNodeFut: Future[MIndexNodeInfo] = {
+      val nodeInfo = MIndexNodeInfo(
+        mnode   = producer,
+        isRcvr  = true
+      )
+      Future.successful( nodeInfo )
+    }
+
   }
 
 }

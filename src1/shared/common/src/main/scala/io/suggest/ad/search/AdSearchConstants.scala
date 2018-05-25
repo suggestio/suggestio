@@ -26,7 +26,7 @@ object AdSearchConstants {
 
   /** 2015.aug.26: Название опционального поля с флагом того, разрешено ли серверу возвращать
     * index answer вместо focused ads. */
-  def FOC_JUMP_ALLOWED_FN   = "n"
+  def FOC_INDEX_ALLOWED_FN   = "n"
 
   /** @return Имя поля с кодом используемого режима lookup'а карточки. */
   def AD_LOOKUP_MODE_FN    = "k"
@@ -41,7 +41,7 @@ object AdSearchConstants {
   /** v3 + uapi.
     * Имя поля со значением флага возвращения данных обычной плитки, а не только фокусируемой карточки.
     */
-  def FOC_ALSO_RETURN_GRID_FN = "m"
+  def FOC_AFTER_INDEX_FN = "m"
 
   /** Имя поля с текстовым запросом поиска.
     * Изначально, это было tagSearchQuery в классе tags search,

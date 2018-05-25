@@ -3,6 +3,7 @@ package io.suggest.es.model
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -80,6 +81,9 @@ object MEsUuId {
 
     def toStringOpt: Option[String] =
       esIdOpt.map( _.id )
+
+    def containsStr(str: String): Boolean =
+      esIdOpt.exists(_.id ==* str)
 
   }
 

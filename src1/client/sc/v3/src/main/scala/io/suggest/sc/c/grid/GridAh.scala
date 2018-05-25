@@ -306,10 +306,10 @@ class GridAh[M](
                 ),
                 foc = Some(
                   MScFocusArgs(
-                    focJumpAllowed  = true,
+                    focIndexAllowed  = true,
                     lookupMode      = None,
                     lookupAdId      = m.nodeId,
-                    alsoReturnGrid  = false
+                    focAfterIndex  = false
                   )
                 )
               )

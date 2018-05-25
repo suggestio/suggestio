@@ -53,12 +53,6 @@ sealed abstract class MScApiVsn(override val value: Int) extends IntEnumEntry {
     */
   def forceAbsUrls: Boolean = false
 
-  /** Разрешены ли jd-карточки в данном API?
-    * @return true -- разрешены только jd-карточки.
-    *         false -- запрещены все jd-карточки.
-    */
-  def useJdAds: Boolean = true
-
   override def toString: String = s"v$majorVsn($value)"
 
 }

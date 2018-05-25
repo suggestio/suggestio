@@ -80,3 +80,5 @@ class Sc @Inject() (
   with ScRemoteError
   with ScMap
   with ScPwaManifest
+  with ScUniApi
+

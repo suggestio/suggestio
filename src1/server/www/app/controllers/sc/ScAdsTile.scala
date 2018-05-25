@@ -46,7 +46,7 @@ trait ScAdsTileBase
   import mCommonDi._
 
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
-  trait TileAdsLogic extends LogicCommonT with TypeT {
+  trait TileAdsLogic extends LogicCommonT with IRespActionFut with TypeT {
 
     def _qs: MScQs
 
@@ -250,8 +250,8 @@ trait ScAdsTile
   }
 
 
-  protected class TileAdsLogicV3(override val _qs: MScQs)
-                                (override implicit val _request: IReq[_]) extends TileAdsLogicV {
+  case class TileAdsLogicV3(override val _qs: MScQs)
+                           (override implicit val _request: IReq[_]) extends TileAdsLogicV {
 
     override type T = MSc3AdData
 
@@ -315,8 +315,7 @@ trait ScAdsTile
     }
 
 
-    /** Рендер HTTP-результата. */
-    override def resultFut: Future[Result] = {
+    override def respActionFut: Future[MSc3RespAction] = {
       val _madsRenderFut = madsRenderedFut
       val szMult = MSzMult.fromDouble( tileArgs.szMult )
 
@@ -324,14 +323,25 @@ trait ScAdsTile
       for {
         madsRendered <- _madsRenderFut
       } yield {
+        MSc3RespAction(
+          acType = MScRespActionTypes.AdsTile,
+          ads = Some(MSc3AdsResp(
+            ads     = madsRendered,
+            szMult  = szMult
+          ))
+        )
+      }
+    }
+
+
+    /** Рендер HTTP-результата. */
+    override def resultFut: Future[Result] = {
+      // Завернуть index-экшен в стандартный scv3-контейнер:
+      for {
+        adsTileRespAction <- respActionFut
+      } yield {
         val scResp = MSc3Resp(
-          respActions = MSc3RespAction(
-            acType = MScRespActionTypes.AdsTile,
-            ads = Some(MSc3AdsResp(
-              ads     = madsRendered,
-              szMult  = szMult
-            ))
-          ) :: Nil
+          respActions = adsTileRespAction :: Nil
         )
 
         // Вернуть HTTP-ответ.

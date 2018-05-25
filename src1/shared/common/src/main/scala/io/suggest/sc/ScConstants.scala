@@ -609,7 +609,7 @@ object ScConstants {
     val GEO_SCR_OPENED_FN       = "n.open"
 
     // Панель поиска: гео-позишен, [гео]теги.
-    def LOC_ENV_FN              = ReqArgs.LOC_ENV_FN
+    final def LOC_ENV_FN              = ReqArgs.LOC_ENV_FN
 
     def TAG_INFO_FN             = "t"
     val TAG_NODE_ID_FN          = TAG_INFO_FN + ".i"

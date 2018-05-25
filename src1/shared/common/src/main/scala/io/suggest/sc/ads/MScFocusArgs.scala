@@ -14,10 +14,10 @@ import play.api.libs.json._
 object MScFocusArgs {
 
   implicit def mScFocusArgsFormat: Format[MScFocusArgs] = (
-    (__ \ FOC_JUMP_ALLOWED_FN).format[Boolean] and
+    (__ \ FOC_INDEX_ALLOWED_FN).format[Boolean] and
     (__ \ AD_LOOKUP_MODE_FN).formatNullable[MLookupMode] and
     (__ \ LOOKUP_AD_ID_FN).format[String] and
-    (__ \ FOC_ALSO_RETURN_GRID_FN).format[Boolean]
+    (__ \ FOC_AFTER_INDEX_FN).format[Boolean]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MScFocusArgs] = UnivEq.derive
@@ -27,15 +27,16 @@ object MScFocusArgs {
 
 /** Контейнер параметров фокусировки карточки.
   *
-  * @param focJumpAllowed Разрешён переход в выдачу узла вместо открытия карточки?
+  * @param focIndexAllowed Разрешён переход в выдачу узла вместо открытия карточки?
   * @param lookupMode Режим перехода между focused-карточками.
   *                   Неактуально для sc3. Будет удалён, если не понадобится.
   * @param lookupAdId id узла фокусируемой карточки.
-  * @param alsoReturnGrid Просьба к серверу, чтобы заодно поискал карточки для обычной плитки без фокусировки.
+  * @param focAfterIndex Возвращать ли результат фокусировки даже после перехода в узел-продьюсер.
   */
 case class MScFocusArgs(
-                         focJumpAllowed     : Boolean,
-                         lookupMode         : Option[MLookupMode],
-                         lookupAdId         : String,
-                         alsoReturnGrid     : Boolean
+                         focIndexAllowed        : Boolean,
+                         lookupMode             : Option[MLookupMode],
+                         lookupAdId             : String,
+                         // TODO Возвращать сфокумированную карточку даже после перехода в другой узел.
+                         focAfterIndex          : Boolean
                        )

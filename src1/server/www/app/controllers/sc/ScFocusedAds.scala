@@ -33,7 +33,8 @@ import scala.concurrent.Future
  * Created: 12.11.14 19:38
  * Description: Поддержка открытых рекламных карточек.
  */
-trait ScFocusedAdsBase
+
+trait ScFocusedAds
   extends ScController
   with IMacroLogs
   with IScUtil
@@ -41,12 +42,15 @@ trait ScFocusedAdsBase
   with IMNodes
   with IScAdSearchUtilDi
   with ICanEditAdDi
+  with IStatUtil
+  with IMaybeAuth
+  with IJdAdUtilDi
 {
 
   import mCommonDi._
 
   /** Базовая логика обработки запросов сбора данных по рекламным карточкам и компиляции оных в результаты выполнения запросов. */
-  abstract class FocusedAdsLogic extends LogicCommonT {
+  abstract class FocusedAdsLogic extends LogicCommonT with IRespActionFut {
 
     /** Параллельный рендер блоков, находящихся за пределом экрана, должен будет возращать результат этого типа для каждого блока. */
     type OBT
@@ -59,14 +63,6 @@ trait ScFocusedAdsBase
     /** Sync-состояние выдачи, если есть. */
     def _scStateOpt: Option[ScJsState]
 
-    /** Является ли указанный продьюсер очень внешним в качестве ресивера? */
-    def is3rdPartyProducer(producerId: String): Boolean = {
-      val hasProdAsRcvr = _qs.search
-        .rcvrId
-        .exists(_.id ==* producerId)
-      // TODO Тут был какой-то говнокод: _qs.search.prodIdOpt.nonEmpty && _qs.search.prodIdOpt ==* _qs.search.rcvrIdOpt
-      !hasProdAsRcvr
-    }
 
     lazy val mAdsSearchFut: Future[MNodeSearch] = {
       scAdSearchUtil.qsArgs2nodeSearch(_qs)
@@ -226,7 +222,7 @@ trait ScFocusedAdsBase
                   producer    = producer,
                   index       = index1,
                   adsCount    = madsCountInt,
-                  is3rdParty  = is3rdPartyProducer(producerId)
+                  is3rdParty  = !_qs.search.rcvrId.containsStr(producerId)
                 )
                 val (renderFut, brAcc1) = renderOneBlockAcc(args, brAcc0)
                 (index1, brAcc1) -> renderFut
@@ -607,22 +603,9 @@ trait ScFocusedAdsBase
 
   }
 
-}
-
-
-/** Поддержка экшена для focused-ads API v1. */
-trait ScFocusedAds
-  extends ScFocusedAdsBase
-  with IStatUtil
-  with IMaybeAuth
-  with IJdAdUtilDi
-{
-
-  import mCommonDi._
-
 
   /** Расширение базовой focused-ads-логики для написания HTTP-экшенов. */
-  protected trait FocusedAdsLogicHttp extends FocusedAdsLogic {
+  protected trait FocusedAdsLogicHttp extends FocusedAdsLogic with IRespActionFut {
 
     /** Синхронного состояния выдачи тут обычно нет. */
     override def _scStateOpt: Option[ScJsState] = None
@@ -643,8 +626,8 @@ trait ScFocusedAds
     * @param _qs Параметры рендера.
     * @param _request Исходный HTTP-реквест.
     */
-  protected class FocusedLogicHttpV3(override val _qs: MScQs)
-                                    (override implicit val _request: IReq[_])
+  case class FocusedLogicHttpV3(override val _qs: MScQs)
+                               (override implicit val _request: IReq[_])
     extends FocusedAdsLogicHttp
   {
     // TODO Код тут очень похож на код рендера одной карточки в ScAdsTileLogicV3. Потому что jd-карточки раскрываются в плитки.
@@ -683,24 +666,33 @@ trait ScFocusedAds
         .flatten
     }
 
-    /** Сборка HTTP-ответа v3-выдачи. */
-    override def resultFut: Future[Result] = {
-      val _renderedAdsFut = renderedAdsFut
 
+    /** Сборка RespAction ответа сервера. */
+    def respActionFut: Future[MSc3RespAction] = {
+      val _renderedAdsFut = renderedAdsFut
       // Собрать ответ на запрос, когда всё будет подготовлено
       val szMult = MSzMult.fromDouble( tileArgs.szMult )
 
       for {
         renderedAds <- _renderedAdsFut
       } yield {
+        MSc3RespAction(
+          acType = MScRespActionTypes.AdsFoc,
+          ads = Some(MSc3AdsResp(
+            ads     = renderedAds,
+            szMult  = szMult
+          ))
+        )
+      }
+    }
+
+    /** Сборка HTTP-ответа v3-выдачи. */
+    override def resultFut: Future[Result] = {
+      for {
+        focusedRespAction <- respActionFut
+      } yield {
         val scResp = MSc3Resp(
-          respActions = MSc3RespAction(
-            acType = MScRespActionTypes.AdsFoc,
-            ads = Some(MSc3AdsResp(
-              ads     = renderedAds,
-              szMult  = szMult
-            ))
-          ) :: Nil
+          respActions = focusedRespAction :: Nil
         )
 
         // Вернуть HTTP-ответ. Короткий кэш просто для защиты от дублирующихся запросов.
@@ -718,10 +710,10 @@ trait ScFocusedAds
     * @return JSONP с отрендеренными карточками.
     */
   def focusedAds(qs: MScQs) = maybeAuth().async { implicit request =>
-    val logic = getLogicFor(qs)
     // Запустить изменябельное тело экшена на исполнение.
-    _focusedAds(logic)
+    _focusedAds(qs)
   }
+
 
   /**
     * Тело экщена focusedAds() вынесено сюда для возможности перезаписывания.
@@ -729,18 +721,15 @@ trait ScFocusedAds
     * @param logic Экземпляр focused-логики.
     * @return Фьючерс с результатом.
     */
-  protected def _focusedAds(logic: FocusedAdsLogicHttp): Future[Result] = {
-    _showFocusedAds(logic)
-  }
+  protected def _focusedAds(qs: MScQs)(implicit request: IReq[_]): Future[Result] = {
 
-  /**
-    * Юзер просматривает карточки в раскрытом виде (фокусируется). Отрендерить браузер карточек.
-    *
-    * @param logic Закешированная исходная focused-логика рендера.
-    * @return Фьючерс с http-результатом.
-    */
-  protected def _showFocusedAds(logic: FocusedAdsLogicHttp): Future[Result] = {
-    // Запускаем сборку ответа:
+    val logic: FocusedAdsLogicHttp = if (qs.common.apiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
+      FocusedLogicHttpV3(qs)(request)
+    } else {
+      throw new IllegalArgumentException(s"Unsupported API version: ${qs.common.apiVsn} :: ${request.method} ${request.uri} FROM ${request.remoteClientAddress}")
+    }
+
+    // Юзер просматривает карточки в раскрытом виде (фокусируется). Отрендерить браузер карточек.
     val resultFut = logic.resultFut
 
     // И запускаем сохранение статистики по текущему действу:
@@ -748,16 +737,6 @@ trait ScFocusedAds
 
     // Вернуть основной результат экшена.
     resultFut
-  }
-
-
-  /** Перезаписываемый сборкщик логик для версий. */
-  def getLogicFor(qs: MScQs)(implicit request: IReq[_]): FocusedAdsLogicHttp = {
-    if (qs.common.apiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
-      new FocusedLogicHttpV3(qs)
-    } else {
-      throw new IllegalArgumentException(s"Unsupported API version: ${qs.common.apiVsn} :: ${request.method} ${request.uri} FROM ${request.remoteClientAddress}")
-    }
   }
 
 }

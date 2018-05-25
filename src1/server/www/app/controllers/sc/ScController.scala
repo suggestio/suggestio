@@ -1,6 +1,7 @@
 package controllers.sc
 
 import controllers.SioController
+import io.suggest.sc.sc3.MSc3RespAction
 import models.mctx.Context
 import models.req.IReq
 import util.cdn.ICdnUtilDi
@@ -50,6 +51,14 @@ trait ScController
       scStat
         .flatMap(statUtil.saveStat)
     }
+
+  }
+
+
+  /** Интерфейс для respAction-поля, которое часто присутствует в большинстве логик. */
+  protected trait IRespActionFut {
+
+    def respActionFut: Future[MSc3RespAction]
 
   }
 

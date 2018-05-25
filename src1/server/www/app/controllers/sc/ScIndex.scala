@@ -91,7 +91,7 @@ trait ScIndex
       // В зависимости от версии API выбрать используемую логику сборки ответа.
       .flatMap { _ =>
         val logicOrNull = if (args.common.apiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
-          ScIndexLogicV3(args)(request)
+          ScIndexLogicHttp(args)(request)
         } else {
           LOGGER.error(s"$logPrefix No logic available for api vsn: ${args.common.apiVsn}. Forgot to implement? args = $args")
           null
@@ -104,7 +104,7 @@ trait ScIndex
       // Запустить выбранную логику на исполнение:
       .map { logic =>
         // Собираем http-ответ.
-        val resultFut = for (res <- logic.result) yield {
+        val resultFut = for (res <- logic.resultFut) yield {
           // Настроить кэш-контрол. Если нет locEnv, то для разных ip будут разные ответы, и CDN кешировать их не должна.
           val (cacheControlMode, hdrs0) = if (!args.common.locEnv.isEmpty) {
             "private" -> ((VARY -> X_FORWARDED_FOR) :: Nil)
@@ -130,13 +130,13 @@ trait ScIndex
 
 
   /** Унифицированная логика выдачи в фазе index. */
-  abstract class ScIndexLogic extends LogicCommonT { logic =>
+  abstract class ScIndexLogic extends LogicCommonT with IRespActionFut { logic =>
 
     /** qs-аргументы реквеста. */
-    def _reqArgs: MScQs
+    def _qs: MScQs
 
     /** Быстрый доступ к MScIndexArgs. По идее, это безопасно, т.к. запрос должен быть вместе с index args. */
-    final def _scIndexArgs = _reqArgs.index.get
+    final def _scIndexArgs = _qs.index.get
 
     /** Тип sc-responce экшена. */
     def respActionType = MScRespActionTypes.Index
@@ -160,7 +160,7 @@ trait ScIndex
 
     /** ip-геолокация, когда гео-координаты или иные полезные данные клиента отсутствуют. */
     def reqGeoLocFut: Future[Option[MGeoLoc]] = {
-      geoIpUtil.geoLocOrFromIp( _reqArgs.common.locEnv.geoLocOpt )(geoIpResOptFut)
+      geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLocOpt )(geoIpResOptFut)
     }
     lazy val reqGeoLocFutVal = reqGeoLocFut
 
@@ -200,7 +200,7 @@ trait ScIndex
       val searchOpt = bleUtil.scoredByDistanceBeaconSearch(
         maxBoost    = 100000F,
         predicates  = Seq( MPredicates.PlacedIn ),
-        bcns        = _reqArgs.common.locEnv.bleBeacons
+        bcns        = _qs.common.locEnv.bleBeacons
       )
       searchOpt.fold [Future[MIndexNodeInfo] ] {
         Future.failed( new NoSuchElementException("no beacons") )
@@ -400,7 +400,7 @@ trait ScIndex
       for {
         currNode     <- indexNodeFutVal
         logoOptRaw = logoUtil.getLogoOfNode(currNode.mnode)
-        logoOptScr   <- logoUtil.getLogoOpt4scr(logoOptRaw, _reqArgs.common.screen)
+        logoOptScr   <- logoUtil.getLogoOpt4scr(logoOptRaw, _qs.common.screen)
       } yield {
         logoOptScr
       }
@@ -408,7 +408,7 @@ trait ScIndex
 
 
     /** Получение карточки приветствия. */
-    def welcomeOptFut: Future[Option[MWelcomeRenderArgs]] = {
+    lazy val welcomeOptFut: Future[Option[MWelcomeRenderArgs]] = {
       if (_scIndexArgs.withWelcome) {
         for {
           inxNodeInfo <- indexNodeFutVal
@@ -444,8 +444,6 @@ trait ScIndex
       }
     }
 
-    def result: Future[Result]
-
 
     override def scStat: Future[Stat2] = {
       // Запуск асинхронных задач в фоне.
@@ -480,30 +478,17 @@ trait ScIndex
           }
           override def components = MComponents.Index :: super.components
           override def remoteAddr = _remoteIp
-          override def devScreenOpt = _reqArgs.common.screen
-          override def locEnvOpt = Some( _reqArgs.common.locEnv )
+          override def devScreenOpt = _qs.common.screen
+          override def locEnvOpt = Some( _qs.common.locEnv )
           override def geoIpLoc = _geoIpResOpt
         }
       }
     }
 
-  }
 
-
-  /** Раздача индекса выдачи v3.
-    *
-    * По сравнению с v2 здесь существенное упрощение серверной части,
-    * т.к. вся генерация html идёт на клиенте.
-    *
-    * Сервер отвечает только параметрами для рендера, без html.
-    */
-  case class ScIndexLogicV3(override val _reqArgs: MScQs)
-                           (override implicit val _request: IReq[_]) extends ScIndexLogic {
 
     /** true, если вызов идёт из [[ScIndexAdOpen]]. */
     def isFocusedAdOpen: Boolean = false
-
-    override lazy val welcomeOptFut = super.welcomeOptFut
 
     /** Поддержка dist nodes: собрать картинки для index'а узла. */
     lazy val distMediaHostsMapFut: Future[Map[String, Seq[MHostInfo]]] = {
@@ -533,7 +518,7 @@ trait ScIndex
       } yield {
         val mMediaInfo = MMediaInfo(
           giType = MMediaTypes.Image,
-          url    = cdnUtil.maybeAbsUrl( _reqArgs.common.apiVsn.forceAbsUrls ) {
+          url    = cdnUtil.maybeAbsUrl( _qs.common.apiVsn.forceAbsUrls ) {
             dynImgUtil.distCdnImgCall(mimg, mediaHostsMap)
           }(ctx),
           whPx   = whPxOpt
@@ -586,7 +571,7 @@ trait ScIndex
       * Карта на клиенте будет отцентрована по этой точке. */
     def nodeGeoPointOptFut: Future[Option[MGeoPoint]] = {
       // Если география уже активна на уровне index-запроса, то тут ничего делать не требуется.
-      if (!isFocusedAdOpen && _reqArgs.common.locEnv.geoLocOpt.nonEmpty) {
+      if (!isFocusedAdOpen && _qs.common.locEnv.geoLocOpt.nonEmpty) {
         // Не искать гео-точку для узла, если география на клиенте и так активна.
         Future.successful( None )
 
@@ -595,8 +580,9 @@ trait ScIndex
         for (inxNode <- indexNodeFutVal) yield {
           // Для нормальных узлов (не районов) следует возвращать клиенту их координату.
           OptionUtil.maybeOpt( inxNode.isRcvr ) {
-            def nodeLocEdges = inxNode.mnode.edges
-              .withPredicateIter( MPredicates.NodeLocation )
+            def nodeLocEdges =
+              inxNode.mnode.edges
+                .withPredicateIter( MPredicates.NodeLocation )
 
             val iterCenters = nodeLocEdges
               .flatMap { medge =>
@@ -644,7 +630,7 @@ trait ScIndex
     }
 
     /** index-ответ сервера с данными по узлу. */
-    def indexRespFut: Future[MSc3IndexResp] = {
+    override def respActionFut: Future[MSc3RespAction] = {
       val _nodeIdOptFut        = currInxNodeIdOptFut
       val _nodeNameFut         = titleFut
       val _nodeInfoFut         = indexNodeFutVal
@@ -661,7 +647,7 @@ trait ScIndex
         nodeGeoPointOpt <- _nodeGeoPointOptFut
         isMyNode        <- _isMyNodeFut
       } yield {
-        MSc3IndexResp(
+        val resp = MSc3IndexResp(
           nodeId        = nodeIdOpt,
           name          = Option( nodeName ),
           colors        = nodeInfo.mnode.meta.colors,
@@ -671,6 +657,10 @@ trait ScIndex
           isMyNode      = isMyNode,
           isRcvr        = nodeInfo.isRcvr
         )
+        MSc3RespAction(
+          acType = respActionType,
+          index  = Some( resp )
+        )
       }
     }
 
@@ -678,16 +668,13 @@ trait ScIndex
       * v3-выдача рендерится на клиенте через react.js.
       * С сервера отправляются только данные для рендера.
       */
-    override def result: Future[Result] = {
+    def resultFut: Future[Result] = {
       for {
-        indexResp <- indexRespFut
+        indexRespAction <- respActionFut
       } yield {
         // Завернуть index-экшен в стандартный scv3-контейнер:
         val scResp = MSc3Resp(
-          respActions = MSc3RespAction(
-            acType = respActionType,
-            index  = Some(indexResp)
-          ) :: Nil
+          respActions = indexRespAction :: Nil
         )
 
         // Вернуть HTTP-ответ.
@@ -697,5 +684,16 @@ trait ScIndex
     }
 
   }
+
+
+  /** Раздача индекса выдачи v3.
+    *
+    * По сравнению с v2 здесь существенное упрощение серверной части,
+    * т.к. вся генерация html идёт на клиенте.
+    *
+    * Сервер отвечает только параметрами для рендера, без html.
+    */
+  case class ScIndexLogicHttp(override val _qs: MScQs)
+                             (override implicit val _request: IReq[_]) extends ScIndexLogic
 
 }

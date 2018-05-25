@@ -18,7 +18,9 @@ GET  /                                  @controllers.Sc.geoSite(a: msc.ScJsState
 ## TODO Заменить на moved temporary + versioned-роута, чтобы усилить кэширование?
 GET  /favicon.ico                       @controllers.Assets.at(path = "/public", file = "images/favicon/114.ico")
 
-## Унифицированный sc index на все случаи жизни.
+## sc3+ Объединённое API:
+GET  /sc/api/pub                        @controllers.Sc.pubApi(a: io.suggest.sc.sc3.MScQs)
+## Дробное Sc api:
 GET  /sc/index                          @controllers.Sc.index(a: io.suggest.sc.sc3.MScQs)
 
 GET  /sc/tile                           @controllers.Sc.findAds(a: io.suggest.sc.sc3.MScQs)

@@ -25,6 +25,9 @@ object MScCommonQs {
     final def SCREEN_FN = ScConstants.ReqArgs.SCREEN_FN
     @inline
     final def LOC_ENV_FN = ScConstants.ReqArgs.LOC_ENV_FN
+
+    val SEARCH_GRID_ADS_FN  = "g"
+    val SEARCH_TAGS_FN      = "t"
   }
 
   /** Поддержка play-json. */
@@ -35,7 +38,9 @@ object MScCommonQs {
       .inmap[MLocEnv](
         EmptyUtil.opt2ImplMEmptyF( MLocEnv ),
         EmptyUtil.implEmpty2OptF
-      )
+      ) and
+    (__ \ Fields.SEARCH_GRID_ADS_FN).formatNullable[Boolean] and
+    (__ \ Fields.SEARCH_TAGS_FN).formatNullable[Boolean]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MScCommonQs] = UnivEq.derive
@@ -48,9 +53,13 @@ object MScCommonQs {
   * @param screen Параметры экрана клиентского устройства.
   * @param apiVsn Версия Sc API.
   * @param locEnv Данные геолокации и физического окружения, если есть.
+  * @param searchGridAds Флаг поиска и возврата разных карточек плитки в ответе.
+  * @param searchTags Флаг поиска и возврата тегов в ответе.
   */
 case class MScCommonQs(
-                        apiVsn     : MScApiVsn       = MScApiVsns.unknownVsn,
-                        screen     : Option[MScreen] = None,
-                        locEnv     : MLocEnv         = MLocEnv.empty,
+                        apiVsn            : MScApiVsn           = MScApiVsns.unknownVsn,
+                        screen            : Option[MScreen]     = None,
+                        locEnv            : MLocEnv             = MLocEnv.empty,
+                        searchGridAds     : Option[Boolean]     = None,
+                        searchTags        : Option[Boolean]     = None,
                       )

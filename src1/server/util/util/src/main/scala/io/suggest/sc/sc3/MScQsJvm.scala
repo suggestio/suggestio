@@ -177,22 +177,22 @@ object MScQsJvm {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScFocusArgs]] = {
         val k = key1F(key)
         for {
-          focJumpAllowedE         <- boolB.bind         ( k(FOC_JUMP_ALLOWED_FN),     params )
+          focJumpAllowedE         <- boolB.bind         ( k(FOC_INDEX_ALLOWED_FN),    params )
           lookupModeOptE          <- lookupModeOptB.bind( k(AD_LOOKUP_MODE_FN),       params )
           lookupAdIdE             <- strB.bind          ( k(LOOKUP_AD_ID_FN),         params )
-          focAlsoReturnGridE      <- boolB.bind         ( k(FOC_ALSO_RETURN_GRID_FN), params )
+          focAfterIndexE          <- boolB.bind         ( k(FOC_AFTER_INDEX_FN),      params )
         } yield {
           for {
-            focJumpAllowed        <- focJumpAllowedE.right
+            focIndexAllowed       <- focJumpAllowedE.right
             lookupModeOpt         <- lookupModeOptE.right
             lookupAdId            <- lookupAdIdE.right
-            focAlsoReturnGrid     <- focAlsoReturnGridE.right
+            focAfterIndex         <- focAfterIndexE.right
           } yield {
             MScFocusArgs(
-              focJumpAllowed      = focJumpAllowed,
+              focIndexAllowed     = focIndexAllowed,
               lookupMode          = lookupModeOpt,
               lookupAdId          = lookupAdId,
-              alsoReturnGrid      = focAlsoReturnGrid
+              focAfterIndex       = focAfterIndex
             )
           }
         }
@@ -201,10 +201,10 @@ object MScQsJvm {
       override def unbind(key: String, value: MScFocusArgs): String = {
         val k = key1F(key)
         _mergeUnbinded1(
-          boolB.unbind          ( k(FOC_JUMP_ALLOWED_FN),     value.focJumpAllowed ),
+          boolB.unbind          ( k(FOC_INDEX_ALLOWED_FN),    value.focIndexAllowed ),
           lookupModeOptB.unbind ( k(AD_LOOKUP_MODE_FN),       value.lookupMode ),
           strB.unbind           ( k(LOOKUP_AD_ID_FN),         value.lookupAdId ),
-          boolB.unbind          ( k(FOC_ALSO_RETURN_GRID_FN), value.alsoReturnGrid )
+          boolB.unbind          ( k(FOC_AFTER_INDEX_FN),      value.focAfterIndex )
         )
       }
 

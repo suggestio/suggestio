@@ -38,7 +38,7 @@ trait ScTags
 
 
   /** Общая логика обработки tags-запросов выдачи. */
-  trait ScTagsLogicBase extends LogicCommonT {
+  trait ScTagsLogicBase extends LogicCommonT with IRespActionFut {
 
     lazy val logPrefix = s"${getClass.getSimpleName}#${System.currentTimeMillis()}:"
 
@@ -128,11 +128,11 @@ trait ScTags
 
 
   /** Реализация поддержки Sc APIv3. */
-  case class ScTagsV3(override val _qs: MScQs)
-                     (override implicit val _request: IReq[_]) extends ScTagsHttpLogic {
+  case class ScTagsLogicV3(override val _qs: MScQs)
+                          (override implicit val _request: IReq[_]) extends ScTagsHttpLogic {
 
     /** Сборка search-res-ответа без sc3Resp-обёртки. */
-    def sc3TagsRespFut: Future[MSc3TagsResp] = {
+    override def respActionFut: Future[MSc3RespAction] = {
       // Запустить фоновые задачи.
       val _tagsFoundFut = tagsFoundFut
 
@@ -143,36 +143,36 @@ trait ScTags
         tags <- _tagsFoundFut
       } yield {
         LOGGER.trace(s"$logPrefix Found ${tags.size} tags")
-        MSc3TagsResp(
-          tags = {
-            val iter = for {
-              tagNode <- tags.iterator
-              name    <- tagNode.guessDisplayName.iterator
-              nodeId  <- tagNode.id.iterator
-            } yield {
-              MSc3Tag(
-                name   = name,
-                nodeId = nodeId
-              )
-            }
-            iter.toSeq
-          }
+        MSc3RespAction(
+          acType = MScRespActionTypes.SearchRes,
+          search = Some(
+            MSc3TagsResp(
+              tags = {
+                val iter = for {
+                  tagNode <- tags.iterator
+                  name    <- tagNode.guessDisplayName.iterator
+                  nodeId  <- tagNode.id.iterator
+                } yield {
+                  MSc3Tag(
+                    name   = name,
+                    nodeId = nodeId
+                  )
+                }
+                iter.toSeq
+              }
+            )
+          )
         )
       }
     }
 
     override def execute(): Future[Result] = {
       for {
-        sc3TagsResp <- sc3TagsRespFut
+        sc3TagsRespAction <- respActionFut
       } yield {
         val respJson = Json.toJson(
           MSc3Resp(
-            respActions = List(
-              MSc3RespAction(
-                acType = MScRespActionTypes.SearchRes,
-                search = Some( sc3TagsResp )
-              )
-            )
+            respActions = sc3TagsRespAction :: Nil
           )
         )
         Ok( respJson )
@@ -180,13 +180,13 @@ trait ScTags
     }
 
   }
-  object ScTagsV3 extends IScTagsHttpLogicCompanion
+  object ScTagsLogicV3 extends IScTagsHttpLogicCompanion
 
 
   /** Переключалка между различными логиками для разных версий Sc API. */
   def _apiVsn2logic(scApiVsn: MScApiVsn): IScTagsHttpLogicCompanion = {
     if (scApiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
-      ScTagsV3
+      ScTagsLogicV3
     } else {
       throw new UnsupportedOperationException("Unknown API vsn: " + scApiVsn)
     }
