@@ -26,6 +26,7 @@ import io.suggest.sc.styl.ScCss
 import japgolly.univeq._
 import io.suggest.react.ReactDiodeUtil.ActionHandlerExt
 import io.suggest.sc.sc3.{MScQs, MScRespActionTypes}
+import io.suggest.sc.u.api.IScUniApi
 
 import scala.util.Success
 
@@ -72,7 +73,7 @@ object GridAh {
   * @param scQsRO Доступ к текущим аргументам поиска карточек.
   */
 class GridAh[M](
-                 api             : IFindAdsApi,
+                 api             : IScUniApi,
                  scQsRO          : ModelRO[MScQs],
                  screenRO        : ModelRO[MScreen],
                  jdCssFactory    : JdCssFactory,
@@ -150,16 +151,19 @@ class GridAh[M](
           // TODO Вычислять на основе данных параметров MScreen.
           val limit = 10
 
-          val args2 = args0.withSearch(
-            args0.search
+          val args2 = args0.copy(
+            search = args0.search
               .withLimitOffset(
                 limit  = Some(limit),
                 offset = Some(offset)
-              )
+              ),
+            common = args0.common.copy(
+              searchGridAds = Some(false)
+            )
           )
 
           // Запустить запрос с почищенными аргументами...
-          val fut = api.findAds( args2 )
+          val fut = api.pubApi( args2 )
 
           // Завернуть ответ сервера в экшен:
           val startTime = nextReqPot2.asInstanceOf[PendingBase].startTime
@@ -304,16 +308,18 @@ class GridAh[M](
                 search = MAdsSearchReq(
                   rcvrId = args0.search.rcvrId
                 ),
+                // TODO common: надо выставлять подгрузку grid-карточек при перескоке foc->index, чтобы плитка приходила сразу?
                 foc = Some(
                   MScFocusArgs(
                     focIndexAllowed  = true,
-                    lookupMode      = None,
-                    lookupAdId      = m.nodeId,
-                    focAfterIndex  = false
+                    lookupMode       = None,
+                    lookupAdId       = m.nodeId,
+                    // TODO Сделать true, чтобы карточка была раскрытой после перехода в новую выдачу.
+                    focAfterIndex    = false
                   )
                 )
               )
-              api.focusedAds( args1 )
+              api.pubApi( args1 )
                 .transform { tryResp =>
                   Success( FocusedResp(m.nodeId, tryResp) )
                 }

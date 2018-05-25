@@ -1,7 +1,6 @@
-package io.suggest.sc.u
+package io.suggest.sc.u.api
 
 import io.suggest.sc.sc3.MSc3Resp
-import io.suggest.sc.{Sc3Api, ScConstants}
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.xplay.json.PlayJsonSjsUtil
@@ -37,10 +36,6 @@ object ScJsRoutesUtil {
   def mkRequest[ArgsT: OWrites, RespT: Reads](args: ArgsT, route: js.Dictionary[js.Any] => Route): Future[RespT] = {
     val argsPj = Json.toJsObject( args )
     val argsJsDict = PlayJsonSjsUtil.toNativeJsonObj( argsPj )
-
-    val vsnKey = ScConstants.ReqArgs.VSN_FN
-    if (!argsJsDict.contains(vsnKey))
-      argsJsDict.update( vsnKey, Sc3Api.API_VSN.value )
 
     Xhr.unJsonResp[RespT] {
       Xhr.requestJsonText( route(argsJsDict), REQ_TIMEOUT_MS )

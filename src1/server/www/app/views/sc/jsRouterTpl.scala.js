@@ -7,10 +7,7 @@
 @import views.js.stuff.jsRevRouterTpl
 
 @jsRevRouterTpl(NAME)(
-  routes.javascript.Sc.index,
-  routes.javascript.Sc.findAds,
-  routes.javascript.Sc.focusedAds,
-  routes.javascript.Sc.tagsSearch,
+  routes.javascript.Sc.pubApi,
   routes.javascript.Sc.handleScError,
 
   routes.javascript.Ident.mySioStartPage,

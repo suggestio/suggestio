@@ -22,7 +22,8 @@ object MScQsJvm {
   implicit def mScCommonQsQsb(implicit
                               screenOptB   : QueryStringBindable[Option[MScreen]],
                               apiVsnB      : QueryStringBindable[MScApiVsn],
-                              locEnvB      : QueryStringBindable[MLocEnv]
+                              locEnvB      : QueryStringBindable[MLocEnv],
+                              boolOptB     : QueryStringBindable[Option[Boolean]]
                              ): QueryStringBindable[MScCommonQs] = {
     new QueryStringBindableImpl[MScCommonQs] {
       import MScCommonQs.Fields._
@@ -30,19 +31,25 @@ object MScQsJvm {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScCommonQs]] = {
         val k = key1F(key)
         for {
-          screenOptE    <- screenOptB.bind  ( k(SCREEN_FN),  params )
-          apiVsnE       <- apiVsnB.bind     ( k(API_VSN_FN), params )
-          locEnvE       <- locEnvB.bind     ( k(LOC_ENV_FN), params )
+          screenOptE            <- screenOptB.bind  ( k(SCREEN_FN),             params )
+          apiVsnE               <- apiVsnB.bind     ( k(API_VSN_FN),            params )
+          locEnvE               <- locEnvB.bind     ( k(LOC_ENV_FN),            params )
+          searchGridAdsOptE     <- boolOptB.bind    ( k(SEARCH_GRID_ADS_FN),    params )
+          searchTagsOptE        <- boolOptB.bind    ( k(SEARCH_TAGS_FN),        params )
         } yield {
           for {
-            screenOpt   <- screenOptE.right
-            apiVsn      <- apiVsnE.right
-            locEnv      <- locEnvE.right
+            screenOpt           <- screenOptE.right
+            apiVsn              <- apiVsnE.right
+            locEnv              <- locEnvE.right
+            searchGridAdsOpt    <- searchGridAdsOptE.right
+            searchTagsOpt       <- searchTagsOptE.right
           } yield {
             MScCommonQs(
-              screen = screenOpt,
-              apiVsn = apiVsn,
-              locEnv = locEnv
+              screen          = screenOpt,
+              apiVsn          = apiVsn,
+              locEnv          = locEnv,
+              searchGridAds   = searchGridAdsOpt,
+              searchTags      = searchTagsOpt
             )
           }
         }
@@ -51,9 +58,11 @@ object MScQsJvm {
       override def unbind(key: String, value: MScCommonQs): String = {
         val k = key1F(key)
         _mergeUnbinded1(
-          screenOptB.unbind   ( k(SCREEN_FN),  value.screen ),
-          apiVsnB.unbind      ( k(API_VSN_FN), value.apiVsn ),
-          locEnvB.unbind      ( k(LOC_ENV_FN), value.locEnv )
+          screenOptB.unbind   ( k(SCREEN_FN),             value.screen ),
+          apiVsnB.unbind      ( k(API_VSN_FN),            value.apiVsn ),
+          locEnvB.unbind      ( k(LOC_ENV_FN),            value.locEnv ),
+          boolOptB.unbind     ( k(SEARCH_GRID_ADS_FN),    value.searchGridAds ),
+          boolOptB.unbind     ( k(SEARCH_TAGS_FN),        value.searchTags )
         )
       }
 

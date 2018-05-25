@@ -12,6 +12,7 @@ import io.suggest.sc.m.{MScRoot, ResetUrlRoute}
 import io.suggest.sc.sc3.{MScCommonQs, MScQs, MScRespActionTypes}
 import io.suggest.sc.search.MSearchTabs
 import io.suggest.sc.styl.MScCssArgs
+import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sc.v.ScCssFactory
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -26,7 +27,7 @@ import scala.util.Success
   * Description: Контроллер index'а выдачи.
   */
 class IndexAh[M](
-                  api           : IIndexApi,
+                  api           : IScUniApi,
                   modelRW       : ModelRW[M, MScIndex],
                   rootRO        : ModelRO[MScRoot],
                   scCssFactory  : ScCssFactory,
@@ -57,7 +58,7 @@ class IndexAh[M](
       )
 
       api
-        .getIndex(args)
+        .pubApi(args)
         .transform { tryRes =>
           Success(HandleIndexResp(tryRes, Some(ts), reason = None))
         }

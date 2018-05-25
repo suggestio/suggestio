@@ -20,18 +20,18 @@ GET  /favicon.ico                       @controllers.Assets.at(path = "/public",
 
 ## sc3+ Объединённое API:
 GET  /sc/api/pub                        @controllers.Sc.pubApi(a: io.suggest.sc.sc3.MScQs)
-## Дробное Sc api:
+## Дробное Sc api: TODO Удалить все 4 экшена. Вызовы идут теперь через pubApi().
 GET  /sc/index                          @controllers.Sc.index(a: io.suggest.sc.sc3.MScQs)
-
 GET  /sc/tile                           @controllers.Sc.findAds(a: io.suggest.sc.sc3.MScQs)
 GET  /sc/fads                           @controllers.Sc.focusedAds(a: io.suggest.sc.sc3.MScQs)
+GET  /sc/tags                           @controllers.Sc.tagsSearch(t: io.suggest.sc.sc3.MScQs)
+
 ## Рендер ровно одной карточки.
 GET  /sc/one/html                       @controllers.Sc.onlyOneAd(o: blk.OneAdQsArgs)
 GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.OneAdQsArgs)
 ## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
 GET  /sc/router.js                      @controllers.Sc.scJsRouter
 GET  /sc/routes/:c/router.js            @controllers.Sc.scJsRouterCache(c: Int)
-GET  /sc/tags                           @controllers.Sc.tagsSearch(t: io.suggest.sc.sc3.MScQs)
 GET  /sc/map/nodes/all                  @controllers.Sc.renderMapNodesAll
 GET  /sc/sc.webmanifest                 @controllers.Sc.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
 

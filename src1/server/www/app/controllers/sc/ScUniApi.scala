@@ -44,7 +44,7 @@ trait ScUniApi
                                 (override implicit val _request: IReq[_]) extends LazyContext {
 
     // Разобрать qs, собрать на исполнение.
-    lazy val logPrefix = s"${getClass.getSimpleName}#${System.currentTimeMillis()}:"
+    lazy val logPrefix = s"PubApi#${System.currentTimeMillis()}:"
 
 
     /** Логика фокусировки - в первую очередь, т.к. она может определять index-логику. */
@@ -186,13 +186,12 @@ trait ScUniApi
     def gridAdsRespActionFutOpt: Option[Future[MSc3RespAction]] = for {
       isGridAdsAfterIndex <- qs.common.searchGridAds
     } yield {
-      LOGGER.trace(s"$logPrefix Search for grid ads, waitIndex=$isGridAdsAfterIndex")
-
       for {
         qs2         <- __qsMaybeWaitIndex(isGridAdsAfterIndex)
         logic       = TileAdsLogicV3(qs2)(_request)
         respAction  <- _logic2stateRespActionFut( logic )
       } yield {
+        LOGGER.trace(s"$logPrefix Search for grid ads, waitIndex=$isGridAdsAfterIndex\n res = $respAction")
         respAction
       }
     }
@@ -202,12 +201,12 @@ trait ScUniApi
     def tagsRespActionFutOpt: Option[Future[MSc3RespAction]] = for {
       isTagsAfterIndex <- qs.common.searchTags
     } yield {
-      LOGGER.trace(s"$logPrefix Search tags. AfterIndex?${isTagsAfterIndex}")
       for {
         qs2         <- __qsMaybeWaitIndex(isTagsAfterIndex)
         logic       = ScTagsLogicV3(qs2)(_request)
         respAction  <- _logic2stateRespActionFut( logic )
       } yield {
+        LOGGER.trace(s"$logPrefix Search tags. AfterIndex?${isTagsAfterIndex}\n res = $respAction")
         respAction
       }
     }
@@ -279,7 +278,8 @@ trait ScUniApi
     // Разобрать qs, собрать на исполнение.
     val apiVsnMj = qs.common.apiVsn.majorVsn
 
-    def logPrefix = s"pubApi($qs):"
+    lazy val logPrefix = s"pubApi()#${System.currentTimeMillis()}:"
+    LOGGER.trace(s"$logPrefix\n QS = $qs\n Raw qs = ${request.rawQueryString}")
 
     // Пробежаться по поддерживаемым версиям sc api:
     if (apiVsnMj ==* MScApiVsns.ReactSjs3.majorVsn) {

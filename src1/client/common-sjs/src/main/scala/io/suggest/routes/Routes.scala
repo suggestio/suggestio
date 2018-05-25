@@ -146,20 +146,8 @@ sealed trait ScCtlRoutes extends js.Object {
   /** Ссылка на корень. */
   def geoSite(scJsState: js.Dictionary[js.Any] = js.native, siteQsArgs: js.Dictionary[js.Any] = js.native): Route = js.native
 
-  /** index выдачи для любой ситуации. */
-  def index(args: js.Dictionary[js.Any]): Route = js.native
-
-  /** Поиск рекламных карточек для плитки выдачи. */
-  def findAds(adSearch: js.Dictionary[js.Any]): Route = js.native
-
-  /** Роута для запроса списка узлов. */
-  def findNodes(args: js.Dictionary[js.Any]): Route = js.native
-
-  /** Роута для поиска focused-карточек. */
-  def focusedAds(args: js.Dictionary[js.Any]): Route = js.native
-
-  /** Роута поиска тегов. */
-  def tagsSearch(args: js.Dictionary[js.Any]): Route = js.native
+  /** Роута для доступа к pubApi. */
+  def pubApi(args: js.Dictionary[js.Any]): Route = js.native
 
   /** Роута для автоматического сабмита ошибок на сервер. */
   def handleScError(): Route = js.native

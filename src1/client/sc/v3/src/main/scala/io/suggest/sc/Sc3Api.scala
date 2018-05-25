@@ -1,8 +1,6 @@
 package io.suggest.sc
 
-import io.suggest.sc.c.grid.{FindAdsApiXhrImpl, IFindAdsApi}
-import io.suggest.sc.c.inx.{IIndexApi, IndexApiXhrImpl}
-import io.suggest.sc.c.search.{ISearchApi, SearchApiXhrImpl}
+import io.suggest.sc.u.api.{IScUniApi, ScUniApiHttpImpl}
 
 /**
   * Suggest.io
@@ -20,15 +18,11 @@ object Sc3Api {
 
 /** Интерфейс полного API. Не ясно, нужен ли. */
 trait ISc3Api
-  extends IIndexApi
-  with IFindAdsApi
-  with ISearchApi
+  extends IScUniApi
 
 
 /** XHR-реализация API. */
 class Sc3ApiXhrImpl
-  extends ISc3Api
-  with IndexApiXhrImpl
-  with FindAdsApiXhrImpl
-  with SearchApiXhrImpl
+  extends ScUniApiHttpImpl
+  with ISc3Api
 

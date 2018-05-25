@@ -190,8 +190,9 @@ class Sc3Circuit(
     val currRcvrId = mroot.index.state.currRcvrId
     MScQs(
       common = MScCommonQs(
-        locEnv    = if (currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
-        apiVsn    = Sc3Api.API_VSN
+        locEnv      = if (currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
+        apiVsn      = Sc3Api.API_VSN,
+        searchTags  = Some(false)
       ),
       search = MAdsSearchReq(
         textQuery = mroot.index.search.text.searchQuery.toOption,

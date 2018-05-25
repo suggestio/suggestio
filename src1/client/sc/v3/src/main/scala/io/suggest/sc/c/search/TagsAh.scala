@@ -11,6 +11,7 @@ import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.MScQs
 import io.suggest.sc.styl.ScCss
+import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 
@@ -24,7 +25,7 @@ import scala.util.Success
   * Description: Контроллер для тегов. Вынесен из SearchAh, т.к. вся его логика очень изолирована в рамках пары моделей.
   */
 class TagsAh[M](
-                 api              : ISearchApi,
+                 api              : IScUniApi,
                  tagsSearchQsRO   : ModelRO[MScQs],
                  screenRO         : ModelRO[MScreen],
                  modelRW          : ModelRW[M, MTagsSearchS]
@@ -95,15 +96,15 @@ class TagsAh[M](
           }
           // TODO Лимит результатов - брать из высоты экрана.
           val limit = 30
-          val args2 = args0.withSearch(
-            args0.search.withLimitOffset(
-              limit  = Some(limit),
-              offset = offsetOpt
+          val args2 = args0.copy(
+            search = args0.search.withLimitOffset(
+              limit     = Some(limit),
+              offset    = offsetOpt
             )
           )
           // Запустить запрос.
           api
-            .tagsSearch( args2 )
+            .pubApi( args2 )
             .transform { tryResp =>
               val action = MoreTagsResp(
                 reason    = m,
