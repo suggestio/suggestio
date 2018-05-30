@@ -13,7 +13,7 @@ import scala.concurrent.Future
   */
 trait IScUniApi {
 
-  def pubApi(a: MScQs): Future[MSc3Resp]
+  def pubApi(args: MScQs): Future[MSc3Resp]
 
 }
 

@@ -2,6 +2,10 @@ package io.suggest.sc
 
 import com.softwaremill.macwire._
 import io.suggest.jd.render.JdRenderModule
+import io.suggest.sc.c.IRespWithActionHandler
+import io.suggest.sc.c.grid.{GridFocusRespHandler, GridRespHandler}
+import io.suggest.sc.c.inx.IndexRespHandler
+import io.suggest.sc.c.search.TagsRespHandler
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v._
 import io.suggest.sc.v.grid.{GridCoreR, GridLoaderR, GridR}
@@ -34,7 +38,7 @@ class Sc3Module {
   /** Функция-геттер для получения текущего инстанса ScCss. */
   val getScCssF: GetScCssF = sc3Circuit.scCssRO.apply
 
-  lazy val scCssFactoryModule = wire[ScCssFactory]
+  lazy val scCssFactory = wire[ScCssFactory]
   lazy val scCssR  = wire[ScCssR]
 
 
@@ -50,12 +54,15 @@ class Sc3Module {
 
   // index
   lazy val welcomeR = wire[WelcomeR]
+  lazy val indexRespHandler = wire[IndexRespHandler]
 
 
   // grid
   lazy val gridLoaderR = wire[GridLoaderR]
   lazy val gridCoreR = wire[GridCoreR]
   lazy val gridR   = wire[GridR]
+  lazy val gridRespHandler = wire[GridRespHandler]
+  lazy val gridFocusRespHandler = wire[GridFocusRespHandler]
 
 
   // search
@@ -64,6 +71,7 @@ class Sc3Module {
   lazy val searchMapR = wire[SearchMapR]
   lazy val tagsSearchR = wire[TagsSearchR]
   lazy val searchR = wire[SearchR]
+  lazy val tagsRespHandler = wire[TagsRespHandler]
 
 
   // menu
@@ -89,5 +97,15 @@ class Sc3Module {
 
   lazy val sc3Api = wire[Sc3ApiXhrImpl]
   lazy val sc3Circuit = wire[Sc3Circuit]
+
+
+  /** Список обработчиков resp-action в ответах сервера. */
+  val respWithActionHandlers: Seq[IRespWithActionHandler] = {
+    gridRespHandler ::
+      gridFocusRespHandler ::
+      indexRespHandler ::
+      tagsRespHandler ::
+      Nil
+  }
 
 }

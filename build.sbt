@@ -249,7 +249,7 @@ lazy val reactScroll = {
 lazy val gridSjs = {
   val name = "grid"
   Project(id = name + "-sjs", base = file(s"${DIR0}client/jd/grid"))
-    .dependsOn(lkCommonSjs, reactStoneCutterSjs)
+    .dependsOn(lkCommonSjs, reactStoneCutterSjs, reactScroll)
 }
 
 /** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */

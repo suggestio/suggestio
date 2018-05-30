@@ -1,21 +1,24 @@
 package io.suggest.sc.c.inx
 
 import diode._
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.react.ReactDiodeUtil.{ActionHandlerExt, EffectsOps, PotOpsExt}
+import diode.data.Pot
+import io.suggest.msg.ErrorMsgs
+import io.suggest.react.ReactDiodeUtil.ActionHandlerExt
 import io.suggest.sc.{Sc3Api, ScConstants}
+import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sc.m._
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx._
-import io.suggest.sc.m.search.{GetMoreTags, MScSearch, MapReIndex}
-import io.suggest.sc.m.{MScRoot, ResetUrlRoute}
-import io.suggest.sc.sc3.{MScCommonQs, MScQs, MScRespActionTypes}
+import io.suggest.sc.m.search.{GetMoreTags, MapReIndex}
+import io.suggest.sc.sc3._
 import io.suggest.sc.search.MSearchTabs
 import io.suggest.sc.styl.MScCssArgs
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sc.v.ScCssFactory
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
+import io.suggest.react.ReactDiodeUtil.EffectsOps
 import japgolly.univeq._
 
 import scala.util.Success
@@ -26,6 +29,156 @@ import scala.util.Success
   * Created: 18.07.17 18:39
   * Description: Контроллер index'а выдачи.
   */
+
+class IndexRespHandler( scCssFactory: ScCssFactory )
+  extends IRespWithActionHandler
+  with Log
+{
+
+  override def isMyReqReason(ctx: MRhCtx): Boolean = {
+    ctx.m.reason.isInstanceOf[IScIndexRespReason]
+  }
+
+  override def getPot(ctx: MRhCtx): Option[Pot[_]] = {
+    Some( ctx.value0.index.resp )
+  }
+
+  override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
+    val i0 = ctx.value0.index
+    LOG.error( ErrorMsgs.GET_NODE_INDEX_FAILED, ex, msg = ctx.m )
+    var i2 = i0.withResp(
+      i0.resp.fail(ex)
+    )
+    if (i2.search.mapInit.loader.nonEmpty) {
+      i2 = i2.withSearch(
+        i2.search.resetMapLoader
+      )
+    }
+    ctx.value0.withIndex( i2 )
+  }
+
+  override def isMyRespAction(raType: MScRespActionType, ctx: MRhCtx): Boolean = {
+    raType ==* MScRespActionTypes.Index
+  }
+
+  override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect]) = {
+    val i0 = ctx.value0.index
+    val inx = ra.index.get
+
+    // Сайд-эффекты закидываются в этот аккамулятор:
+    var fxsAcc = List.empty[Effect]
+
+    // TODO Сравнивать полученный index с текущим состоянием. Может быть ничего сохранять не надо?
+    var i1 = i0.copy(
+      resp = i0.resp.ready(inx),
+      state = i0.state
+        .withRcvrNodeId( inx.nodeId.toList ),
+      search = {
+        var s0 = i0.search
+
+        // Выставить полученную с сервера геоточку как текущую.
+        s0 = inx.geoPoint
+          .filter { mgp =>
+            !(i0.search.mapInit.state.center ~= mgp)
+          }
+          .fold(s0) { mgp =>
+            s0.withMapInit(
+              s0.mapInit.withState(
+                s0.mapInit.state.copy(
+                  centerInit = mgp,
+                  centerReal = None
+                  // TODO выставлять ли zoom?
+                )
+              )
+            )
+          }
+
+        // Возможный сброс состояния тегов
+        s0 = s0.maybeResetTags
+
+        // Если заход в узел с карты, то надо скрыть search-панель.
+        if (s0.isShown && inx.welcome.nonEmpty)
+          s0 = s0.withIsShown( false )
+
+        // Сбросить флаг mapInit.loader, если он выставлен.
+        if (s0.mapInit.loader.nonEmpty)
+          s0 = s0.resetMapLoader
+
+        // 2018-03-23 Решено, что внутри узлов надо открывать сразу теги, ибо каталог.
+        // А на карте - в первую очередь открывать карту.
+        // Поэтому принудительно меняем текущую search-вкладку:
+        val nextSearchTab = MSearchTabs.defaultIfRcvr( inx.isRcvr )
+        if (nextSearchTab !=* s0.currTab)
+        // Надо сменить search-таб согласно режиму текущего возможного узла.
+          s0 = s0.withCurrTab(nextSearchTab)
+
+        s0
+      }
+    )
+
+    val respActionTypes = ctx.m.tryResp.get.respActionTypes
+    // Если вкладка с тегами видна, то запустить получение тегов в фоне.
+    if (i1.search.isShownTab(MSearchTabs.Tags) && !respActionTypes.contains(MScRespActionTypes.SearchRes)) {
+      fxsAcc ::= Effect.action {
+        GetMoreTags(clear = true)
+      }
+    }
+
+    // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
+    fxsAcc ::= Effect.action( ResetUrlRoute )
+
+    // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
+    if ( !respActionTypes.contains(MScRespActionTypes.AdsTile) ) {
+      fxsAcc ::= Effect.action {
+        GridLoadAds(clean = true, ignorePending = true)
+      }
+    }
+
+    // Инициализация приветствия. Подготовить состояние welcome.
+    val mWcSFutOpt = for {
+      resp <- i1.resp.toOption
+      if !i1.resp.isFailed      // Всякие FailingStale содержат старый ответ и новую ошибку, их надо отсеять.
+      _    <- resp.welcome
+    } yield {
+      val tstamp = System.currentTimeMillis()
+
+      // Собрать функцию для запуска неотменяемого таймера.
+      // Функция возвращает фьючерс, который исполнится через ~секунду.
+      val tpFx = Effect {
+        WelcomeUtil.timeout( ScConstants.Welcome.HIDE_TIMEOUT_MS, tstamp )
+      }
+
+      // Собрать начальное состояние приветствия:
+      val mWcS = MWelcomeState(
+        isHiding    = false,
+        timerTstamp = tstamp
+      )
+
+      (tpFx, mWcS)
+    }
+    i1 = i1.withWelcome( mWcSFutOpt.map(_._2) )
+
+    // Нужно отребилдить ScCss, но только если что-то реально изменилось.
+    val scCssArgs2 = MScCssArgs.from(i1.resp, ctx.value0.dev.screen.screen)
+    if (scCssArgs2 != i1.scCss.args) {
+      // Изменились аргументы. Пора отребилдить ScCss.
+      i1 = i1.withScCss(
+        scCssFactory.mkScCss( scCssArgs2 )
+      )
+    }
+
+    // Объединить эффекты плитки и приветствия воедино:
+    for (mwc <- mWcSFutOpt)
+      fxsAcc ::= mwc._1
+
+    val v2 = ctx.value0.withIndex( i1 )
+    val fxOpt = fxsAcc.mergeEffectsSet
+    (v2, fxOpt)
+  }
+
+}
+
+
 class IndexAh[M](
                   api           : IScUniApi,
                   modelRW       : ModelRW[M, MScIndex],
@@ -36,7 +189,17 @@ class IndexAh[M](
   with Log
 { ah =>
 
-  private def _getIndex(withWelcome: Boolean, silent: Boolean, v0: MScIndex, geoIntoRcvr: Boolean): ActionResult[M] = {
+  /** Непосредственный запуск получения индекса с сервера.
+    *
+    * @param withWelcome Надо ли серверу готовить и возвращать welcome-данные.
+    * @param silent Не рендерить на экране изменений?
+    * @param v0 Исходныое значение MScIndex.
+    * @param geoIntoRcvr Допускать geo-детектирование ресивера.
+    * @param reason Экшен-причина, приведший к запуску запроса.
+    * @return ActionResult.
+    */
+  private def _getIndex(withWelcome: Boolean, silent: Boolean, v0: MScIndex,
+                        geoIntoRcvr: Boolean, reason: IScIndexRespReason): ActionResult[M] = {
     val ts = System.currentTimeMillis()
 
     val fx = Effect {
@@ -60,7 +223,13 @@ class IndexAh[M](
       api
         .pubApi(args)
         .transform { tryRes =>
-          Success(HandleIndexResp(tryRes, Some(ts), reason = None))
+          val r2 = HandleScApiResp(
+            reqTimeStamp  = Some(ts),
+            apiReq        = args,
+            tryResp       = tryRes,
+            reason        = reason
+          )
+          Success(r2)
         }
     }
 
@@ -110,11 +279,13 @@ class IndexAh[M](
               )
             )
           )
+
         _getIndex(
           withWelcome = m.rcvrId.nonEmpty,
-          silent = false,
-          v0 = v1,
-          geoIntoRcvr = m.rcvrId.nonEmpty
+          silent      = false,
+          v0          = v1,
+          geoIntoRcvr = m.rcvrId.nonEmpty,
+          reason      = m
         )
       }
 
@@ -125,178 +296,11 @@ class IndexAh[M](
         withWelcome = m.withWelcome,
         silent      = true,
         v0          = value,
-        geoIntoRcvr = m.geoIntoRcvr
+        geoIntoRcvr = m.geoIntoRcvr,
+        reason      = m
       )
-
-
-    // Поступление ответа сервера, который ожидается
-    case m: HandleIndexResp =>
-      val v0 = value
-
-      if (!m.reqTimestamp.fold(true)(v0.resp.isPendingWithStartTime)) {
-        // Ответ сервера пришёл поздновато: уже другой запрос ожидается.
-        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
-        noChange
-
-      } else {
-
-        // Дедубликация кода сброса значения v.search.mapInit.loader.
-        def __resetMapLoader(s: MScSearch): MScSearch = {
-          s.withMapInit(
-            s.mapInit.withLoader(
-              None
-            )
-          )
-        }
-
-        // Запихать ответ в состояние.
-        m.tryResp
-          .toEither
-          .right.flatMap { scResp =>
-            scResp.respActions
-              .find(_.acType ==* MScRespActionTypes.Index)
-              .flatMap( _.index )
-              .toRight( new NoSuchElementException("index") )
-          }
-          .fold(
-            // Ошибка получения индекса с сервера.
-            {ex =>
-              LOG.error( ErrorMsgs.GET_NODE_INDEX_FAILED, ex, msg = m )
-              val v1 = v0.withResp(
-                v0.resp.fail(ex)
-              )
-              val v2 = if (v1.search.mapInit.loader.nonEmpty) {
-                v1.withSearch(
-                  __resetMapLoader( v1.search )
-                )
-              } else {
-                v1
-              }
-              updated( v2 )
-            },
-
-            // Индекс получен.
-            {inx =>
-              // Сайд-эффекты закидываются в этот аккамулятор:
-              var fxsAcc = List.empty[Effect]
-
-              // TODO Сравнивать полученный index с текущим состоянием. Может быть ничего сохранять не надо?
-              val v1 = v0.copy(
-                resp = v0.resp.ready(inx),
-                state = v0.state
-                  .withRcvrNodeId( inx.nodeId.toList ),
-                search = {
-                  val s0 = v0.search
-
-                  // Выставить полученную с сервера геоточку как текущую.
-                  val s1 = inx.geoPoint
-                    .filter { mgp =>
-                      !(v0.search.mapInit.state.center ~= mgp)
-                    }
-                    .fold(s0) { mgp =>
-                      s0.withMapInit(
-                        s0.mapInit.withState(
-                          s0.mapInit.state.copy(
-                            centerInit = mgp,
-                            centerReal = None
-                            // TODO выставлять ли zoom?
-                          )
-                        )
-                      )
-                    }
-
-                  // Возможный сброс состояния тегов
-                  val s2 = s1.maybeResetTags
-
-                  // Если заход в узел с карты, то надо скрыть search-панель.
-                  val s3 = if (s2.isShown && inx.welcome.nonEmpty) {
-                    s2.withIsShown( false )
-                  } else {
-                    s2
-                  }
-
-                  // Сбросить флаг mapInit.loader, если он выставлен.
-                  val s4 = if (s3.mapInit.loader.nonEmpty) {
-                    __resetMapLoader( s3 )
-                  } else {
-                    s3
-                  }
-
-                  // 2018-03-23 Решено, что внутри узлов надо открывать сразу теги, ибо каталог.
-                  // А на карте - в первую очередь открывать карту.
-                  // Поэтому принудительно меняем текущую search-вкладку:
-                  val nextSearchTab = MSearchTabs.defaultIfRcvr( inx.isRcvr )
-                  val s5 = if (nextSearchTab !=* s4.currTab) {
-                    // Надо сменить search-таб согласно режиму текущего возможного узла.
-                    s4.withCurrTab(nextSearchTab)
-                  } else
-                    s4
-
-                  s5
-                }
-              )
-
-              // Если вкладка с тегами видна, то запустить получение тегов в фоне.
-              if ( v1.search.isShownTab(MSearchTabs.Tags) ) {
-                fxsAcc ::= Effect.action {
-                  GetMoreTags(clear = true)
-                }
-              }
-
-              // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
-              fxsAcc ::= Effect.action( ResetUrlRoute )
-
-              // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
-              fxsAcc ::= Effect.action {
-                GridLoadAds(clean = true, ignorePending = true)
-              }
-
-              // Инициализация приветствия. Подготовить состояние welcome.
-              val mWcSFutOpt = for {
-                resp <- v1.resp.toOption
-                if !v1.resp.isFailed      // Всякие FailingStale содержат старый ответ и новую ошибку, их надо отсеять.
-                _    <- resp.welcome
-              } yield {
-                val tstamp = System.currentTimeMillis()
-
-                // Собрать функцию для запуска неотменяемого таймера.
-                // Функция возвращает фьючерс, который исполнится через ~секунду.
-                val tpFx = Effect {
-                  WelcomeUtil.timeout( ScConstants.Welcome.HIDE_TIMEOUT_MS, tstamp )
-                }
-
-                // Собрать начальное состояние приветствия:
-                val mWcS = MWelcomeState(
-                  isHiding    = false,
-                  timerTstamp = tstamp
-                )
-
-                (tpFx, mWcS)
-              }
-              val v2 = v1.withWelcome( mWcSFutOpt.map(_._2) )
-
-              // Нужно отребилдить ScCss, но только если что-то реально изменилось.
-              val scCssArgs2 = MScCssArgs.from(v2.resp, rootRO.value.dev.screen.screen)
-              val v3 = if (scCssArgs2 != v2.scCss.args) {
-                // Изменились аргументы. Пора отребилдить ScCss.
-                v2.withScCss(
-                  scCssFactory.mkScCss( scCssArgs2 )
-                )
-              } else {
-                v2
-              }
-
-              // Объединить эффекты плитки и приветствия воедино:
-              for (mwc <- mWcSFutOpt)
-                fxsAcc ::= mwc._1
-
-              val allFxs = fxsAcc.mergeEffectsSet.get
-
-              updated(v3, allFxs)
-            }
-          )
-      }
 
   }
 
 }
+

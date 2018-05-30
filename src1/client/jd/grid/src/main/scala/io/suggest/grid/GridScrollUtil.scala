@@ -1,6 +1,7 @@
 package io.suggest.grid
 
 import io.suggest.text.StringUtil
+import com.github.fisshy.react.scroll.LinkProps
 
 /**
   * Suggest.io
@@ -13,5 +14,14 @@ object GridScrollUtil {
   /** Рандомный id для grid-wrapper.  */
   // TODO Если используем рандомные id, то надо избежать комбинаций букв, приводящих к срабатываниям блокировщиков рекламы.
   lazy val SCROLL_CONTAINER_ID = StringUtil.randomIdLatLc()
+
+
+  def scrollOptions: LinkProps = {
+    new LinkProps {
+      override val smooth = true
+      // Надо скроллить grid wrapper, а не document:
+      override val containerId = SCROLL_CONTAINER_ID
+    }
+  }
 
 }

@@ -102,6 +102,7 @@ case class MGridCoreS(
   }
 
 
-  def adsGridBlocksIter = MGridCoreS.ads2gridBlocks( ads.iterator.flatten )
+  def adsGridBlocksIter: Iterator[IGbBlockPayload] =
+    MGridCoreS.ads2gridBlocks( ads.iterator.flatten )
 
 }

@@ -1,10 +1,8 @@
 package io.suggest.sc.m.search
 
-import io.suggest.sc.m.ISc3Action
-import io.suggest.sc.sc3.MSc3Resp
+import io.suggest.sc.m.{ISc3Action, IScApiRespReason, IScIndexRespReason}
 import io.suggest.sc.search.MSearchTab
 
-import scala.util.Try
 
 /**
   * Suggest.io
@@ -32,10 +30,7 @@ case class TagClick( nodeId: String ) extends ISearchAction
 case object ResetTags extends ISearchAction
 
 /** Экшен для запуска поиска тегов под текущую выдачу. */
-case class GetMoreTags(clear: Boolean, ignorePending: Boolean = false) extends ISearchAction
-
-/** Экшен получения результата запроса поиска тегов. */
-case class MoreTagsResp(reason: GetMoreTags, timestamp: Long, reqLimit: Int, resp: Try[MSc3Resp]) extends ISearchAction
+case class GetMoreTags(clear: Boolean, ignorePending: Boolean = false) extends ISearchAction with IScApiRespReason
 
 /** Происходит скроллинг в списке тегов. Возможно, надо подгрузить ещё тегов. */
 case class TagsScroll(scrollTop: Double, scrollHeight: Int) extends ISearchAction
@@ -58,4 +53,4 @@ case object ReDoSearch extends ISearchAction
 case class MapDelayTimeOut( gen: Long ) extends ISearchAction
 
 /** Команда к запуску index-реакции на текущее состояние гео.карты. */
-case class MapReIndex( rcvrId: Option[String] ) extends ISc3Action
+case class MapReIndex( rcvrId: Option[String] ) extends ISc3Action with IScIndexRespReason

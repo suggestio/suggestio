@@ -1,7 +1,7 @@
 package io.suggest.sc.m.inx
 
 import io.suggest.maps.m.OpenMapRcvr
-import io.suggest.sc.m.ISc3Action
+import io.suggest.sc.m.{ISc3Action, IScIndexRespReason}
 import io.suggest.sc.sc3.MSc3Resp
 
 import scala.util.Try
@@ -20,17 +20,18 @@ sealed trait IIndexAction extends ISc3Action
   *
   * @param withWelcome Требуется ли картинка приветствия?
   */
-case class GetIndex(withWelcome: Boolean, geoIntoRcvr: Boolean) extends IIndexAction
+case class GetIndex(withWelcome: Boolean, geoIntoRcvr: Boolean) extends IIndexAction with IScIndexRespReason
 
 
 /** Получен какой-то ответ сервера по поводу индекса выдачи.
   *
-  * @param reqTimestamp Таймштамп index-запроса.
+  * @param reqTimeStamp Таймштамп index-запроса.
   *                     Может быть None, чтобы форсировать обновление выдачи без учёта timestamp'а запроса.
   */
+@deprecated("Use HandleScApiResp instead", "2018-may-28")
 case class HandleIndexResp(
                             tryResp: Try[MSc3Resp],
-                            reqTimestamp: Option[Long],
+                            reqTimeStamp: Option[Long],
                             reason: Option[GetIndex]
                           )
   extends IIndexAction

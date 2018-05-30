@@ -15,7 +15,11 @@ import io.suggest.sjs.common.controller.DomQuick
   * Created: 28.11.17 10:46
   * Description: Контроллер, слушающий события экрана устройства.
   */
-class ScreenAh[M](modelRW: ModelRW[M, MScScreenS]) extends ActionHandler(modelRW) {
+class ScreenAh[M](
+                   modelRW: ModelRW[M, MScScreenS]
+                 )
+  extends ActionHandler(modelRW)
+{
 
   /** Кол-во миллисекунд срабатывания таймера задержки реакции на произошедший ресайз. */
   private def RSZ_TIMER_MS = 100

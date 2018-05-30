@@ -16,7 +16,7 @@ import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.routes.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.c.dev.{GeoLocAh, ScreenAh}
-import io.suggest.sc.c.{JsRouterInitAh, TailAh}
+import io.suggest.sc.c.{IRespWithActionHandler, JsRouterInitAh, TailAh}
 import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.inx.{IndexAh, WelcomeAh}
 import io.suggest.sc.c.menu.MenuAh
@@ -48,10 +48,11 @@ import scala.concurrent.{Future, Promise}
   * Description: Main circuit новой выдачи. Отрабатывает весь интерфейс выдачи v3.
   */
 class Sc3Circuit(
-                  scCssFactory          : ScCssFactory,
-                  jdCssFactory          : JdCssFactory,
-                  api                   : ISc3Api,
-                  getRouterCtlF         : GetRouterCtlF,
+                  scCssFactory              : ScCssFactory,
+                  jdCssFactory              : JdCssFactory,
+                  api                       : ISc3Api,
+                  getRouterCtlF             : GetRouterCtlF,
+                  respWithActionHandlers    : Seq[IRespWithActionHandler],
                 )
   extends CircuitLog[MScRoot]
   with ReactConnector[MScRoot]
@@ -190,7 +191,9 @@ class Sc3Circuit(
     val currRcvrId = mroot.index.state.currRcvrId
     MScQs(
       common = MScCommonQs(
-        locEnv      = if (currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
+        locEnv      =
+          if (currRcvrId.isEmpty) mroot.locEnv
+          else MLocEnv.empty,
         apiVsn      = Sc3Api.API_VSN,
         searchTags  = Some(false)
       ),
@@ -209,7 +212,8 @@ class Sc3Circuit(
   // хвостовой контроллер -- в самом конце, когда остальные отказались обрабатывать сообщение.
   private val tailAh = new TailAh(
     modelRW     = rootRW,
-    routerCtlF  = getRouterCtlF
+    routerCtlF  = getRouterCtlF,
+    respWithActionHandlers = respWithActionHandlers,
   )
 
   private val searchAh = new SearchAh(

@@ -3,19 +3,24 @@ package io.suggest.sc.c
 import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
+import io.suggest.jd.render.v.JdCssFactory
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.GetRouterCtlF
 import io.suggest.sc.m._
-import io.suggest.sc.sc3.Sc3Pages.MainScreen
-import io.suggest.sc.m.grid.GridLoadAds
+import io.suggest.sc.m.grid._
 import io.suggest.sc.m.hdr.{MenuOpenClose, SearchOpenClose}
 import io.suggest.sc.m.inx.{GetIndex, MScIndex, WcTimeOut}
 import io.suggest.sc.m.search.{SwitchTab, TagClick}
+import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.sc.search.MSearchTabs
+import io.suggest.sc.v.ScCssFactory
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
-import japgolly.univeq._
+import io.suggest.sjs.common.log.Log
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.common.coll.Lists.Implicits.OptionListExtOps
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -27,10 +32,12 @@ import scala.concurrent.Future
   * неактуальной, а сообщения всё ещё идут.
   */
 class TailAh[M](
-                 modelRW              : ModelRW[M, MScRoot],
-                 routerCtlF           : GetRouterCtlF
+                 modelRW                  : ModelRW[M, MScRoot],
+                 respWithActionHandlers   : Seq[IRespWithActionHandler],
+                 routerCtlF               : GetRouterCtlF
                )
   extends ActionHandler(modelRW)
+  with Log
 { ah =>
 
   def getMainScreenSnapShot(v0: MScRoot = value): MainScreen = {
@@ -199,6 +206,7 @@ class TailAh[M](
         ah.maybeEffectOnly( fxOpt )
       }
 
+
     // Сигнал наступления геолокации (или ошибки геолокации).
     case m: GlPubSignal =>
       val v0 = value
@@ -258,6 +266,84 @@ class TailAh[M](
         val fxs = getIndexFx(geoIntoRcvr = true) + geoOffFx
         updatedSilent(v2, fxs)
       }
+
+
+    // Объединённая обработка результатов API-запросов к серверу.
+    // Результаты всех index, grid, focused, tags запросов - попадают только сюда.
+    case m: HandleScApiResp =>
+      val value0 = value
+
+      val rhCtx0 = MRhCtx(value0, m)
+      val respHandler = respWithActionHandlers
+        .find { rh =>
+          rh.isMyReqReason(rhCtx0)
+        }
+        .get
+
+      // Класс сложного аккамулятора при свёрстке resp-экшенов:
+      case class RaFoldAcc( v1         : MScRoot        = value0,
+                            fxAccRev   : List[Effect]   = Nil
+                          )
+
+      // Надо сначала проверить timestamp, если он задан.
+      val isActualResp = m.reqTimeStamp.fold(true) { reqTimeStamp =>
+        // Найти среди pot'ов состояния соответствие timestamp'у.
+        respHandler
+          .getPot(rhCtx0)
+          .exists(_ isPendingWithStartTime reqTimeStamp)
+      }
+
+      // Сборка сложной логики внутри Either: по левому борту ошибки, по правому - нормальный ход действий.
+      Either
+        .cond(
+          isActualResp,
+          left = {
+            LOG.error(WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m)
+            noChange
+          },
+          right = None
+        )
+        // Раскрыть содержимое tryResp.
+        .flatMap { _ =>
+          // Если ошибка запроса, то залить её в состояние
+          for (ex <- m.tryResp.toEither.left) yield {
+            val v2 = respHandler.handleReqError(ex, rhCtx0)
+            updated(v2)
+          }
+        }
+        // Если запрос ок, то значит пора выполнить свёрстку respActions на состояние и эффекты
+        .map { scResp =>
+          val acc9 = scResp.respActions.foldLeft( RaFoldAcc() ) { (acc0, ra) =>
+            val rhCtx1 = rhCtx0.copy(
+              value0 = acc0.v1
+            )
+            respWithActionHandlers
+              .find { rah =>
+                rah.isMyRespAction( ra.acType, rhCtx0 )
+              }
+              .map { rah =>
+                rah.applyRespAction( ra, rhCtx1 )
+              }
+              .fold {
+                // Resp-экшен не поддерживается системой. Такое возможно, только когда есть тип экшена, для которого забыли накодить RespActionHandler.
+                LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = ra )
+                acc0
+              } { case (v2, fxOpt) =>
+                acc0.copy(
+                  v1 = v2,
+                  fxAccRev = fxOpt.prependTo( acc0.fxAccRev )
+                )
+              }
+          }
+
+          val fxOpt9 = acc9.fxAccRev
+            .reverse
+            .mergeEffectsSet
+          ah.updatedMaybeEffect( acc9.v1, fxOpt9 )
+        }
+        // Вернуть Left или Right.
+        .fold(identity, identity)
+
 
     // Если юзер активно тыкал пальцем по экрану, то таймер сокрытия мог сработать после окончания приветствия.
     case _: WcTimeOut =>

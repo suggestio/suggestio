@@ -74,4 +74,13 @@ case class MScSearch(
     isShown && currTab ==* tab
   }
 
+
+  /** Дедубликация кода сброса значения this.mapInit.loader. */
+  def resetMapLoader: MScSearch = {
+    withMapInit(
+      mapInit
+        .withLoader( None )
+    )
+  }
+
 }

@@ -2,6 +2,7 @@ package io.suggest.sc.m
 
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.routes.ScJsRoutes
+import io.suggest.sc.sc3.{MSc3Resp, MScQs, MScRespActionType}
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.spa.DAction
 
@@ -16,6 +17,11 @@ import scala.util.Try
 
 /** Маркер-интерфейс для экшенов sc3. */
 trait ISc3Action extends DAction
+
+/** Интерфейс для допустимых значений поля HandleScApiResp.tryResp. */
+trait IScApiRespReason extends ISc3Action
+/** Интерфейс для Index-resp reason. */
+trait IScIndexRespReason extends IScApiRespReason
 
 
 /** Интерфейс корневых экшенов. */
@@ -83,3 +89,37 @@ case object ResetUrlRoute extends IScRootAction
 
 /** Наступление таймаута получения гео-координат. */
 case object GeoLocTimeOut extends ISc3Action
+
+
+/** Экшен для запуска обработки унифицированного ответа выдачи, который бывает сложным и много-гранным.
+  * @param reqTimeStamp Время запуска запроса к серверу.
+  * @param tryResp Результат запроса к серверу.
+  * @param apiReq Оригинальный реквест к api выдачи.
+  * @param reason Оригинальный исходный экшен, с которого всё действо началось.
+  */
+case class HandleScApiResp(
+                            reqTimeStamp   : Option[Long],
+                            apiReq         : MScQs,
+                            tryResp        : Try[MSc3Resp],
+                            reason         : IScApiRespReason
+                          )
+  extends ISc3Action
+{
+
+  /** Проверить тип экшена ответа. */
+  def isNextRespActionType(expected: MScRespActionType): Boolean = {
+    tryResp.isSuccess &&
+      tryResp.get.isNextActionType( expected )
+  }
+
+  /** Обёртка над copy() при обновлении экшена (перещёлкивание экшенов в tryResp).
+    *
+    * @param tryResp Обновлённые данные ответа сервера.
+    * @param reqTimeStamp Обычно тут None, что обозначает отсутствие проверки timestamp.
+    * @return Обновлённый инстанс [[HandleScApiResp]].
+    */
+  def withTryRespTs(tryResp: Try[MSc3Resp], reqTimeStamp: Option[Long] = None) =
+    copy(tryResp = tryResp, reqTimeStamp = reqTimeStamp)
+
+}
+

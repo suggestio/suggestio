@@ -1,19 +1,20 @@
 package io.suggest.sc.c.search
 
 import diode._
-import diode.data.PendingBase
+import diode.data.{PendingBase, Pot}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MScreen
 import io.suggest.grid.GridConst
-import io.suggest.msg.WarnMsgs
-import io.suggest.react.ReactDiodeUtil._
+import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
+import io.suggest.sc.m.{HandleScApiResp, MScRoot}
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.search._
-import io.suggest.sc.sc3.MScQs
+import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.styl.ScCss
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
+import japgolly.univeq._
 
 import scala.util.Success
 
@@ -106,11 +107,11 @@ class TagsAh[M](
           api
             .pubApi( args2 )
             .transform { tryResp =>
-              val action = MoreTagsResp(
-                reason    = m,
-                timestamp = req2.asInstanceOf[PendingBase].startTime,
-                reqLimit  = limit,
-                resp      = tryResp
+              val action = HandleScApiResp(
+                reason        = m,
+                tryResp       = tryResp,
+                reqTimeStamp  = Some( req2.asInstanceOf[PendingBase].startTime ),
+                apiReq        = args2
               )
               Success( action )
             }
@@ -126,49 +127,68 @@ class TagsAh[M](
         noChange
       }
 
+  }
 
-    // Обработать ответ сервера по вопросу поиска тегов.
-    case m: MoreTagsResp =>
-      // Сверить timestamp'ы запроса и ответа
-      val v0 = value
-      val tagsReq0 = v0.tagsReq
-      if (tagsReq0 isPendingWithStartTime m.timestamp) {
-        // Это ожидаемый запрос. Разбираем результат запроса:
-        m.resp.fold(
-          {ex =>
-            val v2 = v0.withTagsReq(
-              tagsReq0.fail(ex)
-            )
-            updated( v2 )
-          },
-          {sc3Resp =>
-            // TODO Надо бы разруливать ответ как-то.
-            val resp = sc3Resp.respActions.head.search.get
-
-            val tagsList2 = if (m.reason.clear || tagsReq0.isEmpty || tagsReq0.exists(_.isEmpty)) {
-              // Объединять текущий и полученный списки тегов не требуется.
-              resp.tags
-            } else {
-              // Требуется склеить все имеющиеся списки тегов
-              tagsReq0.getOrElse(Nil) ++ resp.tags
-            }
-            val tagsReq2 = tagsReq0.ready( tagsList2 )
-            val v2 = v0.copy(
-              tagsReq     = tagsReq2,
-              hasMoreTags = m.reqLimit >= resp.tags.size,
-              selectedId  = OptionUtil.maybeOpt( !m.reason.clear )( v0.selectedId )
-            )
-            updated( v2 )
-          }
-        )
+}
 
 
-      } else {
-        // Это устаревший ответ, игнорим его:
-        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
-        noChange
-      }
+/** Обработчик ответов по тегам. */
+class TagsRespHandler
+  extends IRespWithActionHandler
+{
 
+  private def _withTags(ctx: MRhCtx, tags2: MTagsSearchS): MScRoot = {
+    ctx.value0.withIndex(
+      ctx.value0.index.withSearch(
+        ctx.value0.index.search
+          .withTags( tags2 )
+      )
+    )
+  }
+
+  override def isMyReqReason(ctx: MRhCtx): Boolean = {
+    ctx.m.reason.isInstanceOf[GetMoreTags]
+  }
+
+  override def getPot(ctx: MRhCtx): Option[Pot[_]] = {
+    Some( ctx.value0.index.search.tags.tagsReq )
+  }
+
+  override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
+    val t0 = ctx.value0.index.search.tags
+    val t2 = t0.withTagsReq(
+      t0.tagsReq.fail(ex)
+    )
+    _withTags(ctx, t2)
+  }
+
+  override def isMyRespAction(raType: MScRespActionType, ctx: MRhCtx): Boolean = {
+    raType ==* MScRespActionTypes.SearchRes
+  }
+
+  override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect]) = {
+    val reason = ctx.m.reason.asInstanceOf[GetMoreTags]
+    val t0 = ctx.value0.index.search.tags
+
+    val tagsResp = ra.search.get
+    val tagsList2 = if (reason.clear || t0.tagsReq.isEmpty || t0.tagsReq.exists(_.isEmpty)) {
+      // Объединять текущий и полученный списки тегов не требуется.
+      tagsResp.tags
+    } else {
+      // Требуется склеить все имеющиеся списки тегов
+      t0.tagsReq.getOrElse(Nil) ++ tagsResp.tags
+    }
+
+    val tagsReq2 = t0.tagsReq.ready( tagsList2 )
+
+    val t2 = t0.copy(
+      tagsReq     = tagsReq2,
+      hasMoreTags = ctx.m.apiReq.search.limit.get >= tagsResp.tags.size,
+      selectedId  = OptionUtil.maybeOpt( !reason.clear )( t0.selectedId )
+    )
+
+    val v2 = _withTags(ctx, t2)
+    (v2, None)
   }
 
 }
