@@ -64,5 +64,8 @@ case class MScQs(
   }
 
   def withSearch(search: MAdsSearchReq) = copy(search = search)
+  def withFoc(foc: Option[MScFocusArgs]) = copy(foc = foc)
+  def withIndex(index: Option[MScIndexArgs]) = copy(index = index)
+  def withCommon(common: MScCommonQs) = copy(common = common)
 
 }

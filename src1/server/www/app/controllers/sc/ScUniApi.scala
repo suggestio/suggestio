@@ -50,16 +50,44 @@ trait ScUniApi
     /** Логика фокусировки - в первую очередь, т.к. она может определять index-логику. */
     lazy val focOrIndexLogicFutOpt = for (focQs <- qs.foc) yield {
       for {
-        focToIndexProducerOpt <- _isFocGoToProducerIndexFut( qs )
+        // Получить данные по продьюсеру, если переход в другую выдачу.
+        focToIndexProducerOpt <- {
+          if (focQs.focAfterIndex) {
+            Future.successful(None)
+          } else {
+            _isFocGoToProducerIndexFut( qs )
+          }
+        }
+
+        // Если фокусировка после index, то надо дождаться результатов index и пробрасывать их в логику работы.
+        qs2 <- {
+          if (focQs.focAfterIndex) {
+            for (inxLogicOpt <- adsSearchAfterIndexQsOptFut) yield {
+              inxLogicOpt
+                .map { qsAfterIndex =>
+                  val qss2 = qsAfterIndex
+                    .withFoc( qsAfterIndex.foc )
+                  LOGGER.trace(s"$logPrefix Will use qs from indexLogic:\n old = $qs\n new = $qss2")
+                  qss2
+                }
+                .getOrElse {
+                  LOGGER.debug(s"$logPrefix inx logic missing, but focAfterIndex set")
+                  qs
+                }
+            }
+          } else {
+            Future.successful( qs )
+          }
+        }
       } yield {
         val logic = focToIndexProducerOpt.fold [LogicCommonT with IRespActionFut] {
           // Фокусируемся на запрошенной карточке:
           LOGGER.trace(s"$logPrefix Focus to $focQs")
-          FocusedLogicHttpV3( qs )(_request)
+          FocusedLogicHttpV3( qs2 )(_request)
         } { producerNode =>
           // Переход в index-выдачу продьюсера:
           LOGGER.trace(s"$logPrefix Foc from ad#${focQs.lookupAdId} to index to ${producerNode.idOrNull}")
-          ScFocToIndexLogicV3(producerNode, qs)(_request)
+          ScFocToIndexLogicV3(producerNode, qs2)(_request)
         }
         focToIndexProducerOpt -> logic
       }
@@ -73,9 +101,11 @@ trait ScUniApi
         // .get: Пусть будет ошибка, если логика двух этих методов начнёт разъезжаться.
         focOrIndexLogicFut = focOrIndexLogicFutOpt.get
       } yield {
+        LOGGER.trace(s"$logPrefix focQs=$focQs")
         for {
           (_, focOrIndexLogic) <- focOrIndexLogicFut
         } yield {
+          LOGGER.trace(s"$logPrefix focOrIndexLogic = $focOrIndexLogic")
           focOrIndexLogic match {
             case l: FocusedLogicHttpV3 =>
               Some(l)
@@ -125,7 +155,7 @@ trait ScUniApi
 
 
     /** Собрать index-логику, когда требуется. */
-    def indexLogicOptFut: Future[Option[ScIndexLogic]] = {
+    lazy val indexLogicOptFut: Future[Option[ScIndexLogic]] = {
       if (qs.index.nonEmpty) {
         val logic = ScIndexLogicHttp(qs)(_request)
         LOGGER.trace(s"$logPrefix Normal index-logic created: $logic")
@@ -164,8 +194,14 @@ trait ScUniApi
           ),
           common = qs.common.copy(
             locEnv = qs.common.locEnv.copy(
-              geoLocOpt = for (gp <- scIndexResp.geoPoint) yield {
-                MGeoLoc(gp)
+              geoLocOpt = if (scIndexResp.nodeId.nonEmpty) {
+                // Задан узел - координаты не нужны.
+                None
+              } else {
+                // Узел не задан. Попытаться достать координаты.
+                scIndexResp.geoPoint
+                  .map( MGeoLoc(_) )
+                  .orElse( qs.common.locEnv.geoLocOpt )
               }
             )
           )

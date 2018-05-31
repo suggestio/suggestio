@@ -15,8 +15,8 @@ import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
-import io.suggest.sc.c.{IRespActionHandler, IRespHandler, IRespWithActionHandler, MRhCtx}
-import io.suggest.sc.m.{HandleScApiResp, MScRoot}
+import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
+import io.suggest.sc.m.{HandleScApiResp, MScRoot, ResetUrlRoute}
 import io.suggest.sc.m.grid._
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.styl.ScCss
@@ -38,6 +38,10 @@ import scala.util.Success
 object GridAh {
 
   private def GRID_CONF = MGridCalcConf.EVEN_GRID
+
+  /** Кол-во карточек за один ответ. */
+  // TODO Рассчитывать кол-во карточек за 1 реквест на основе экрана и прочих вещей.
+  def adsPerReqLimit = 10
 
   /** Частичное переконфигурирование плитки. */
   private def reconfGridColumnsCount(mscreen: MScreen,
@@ -346,9 +350,10 @@ class GridFocusRespHandler( jdCssFactory: JdCssFactory )
         )
         // Надо проскроллить выдачу на начало открытой карточки:
         val scrollFx = GridAh.scrollToAdFx( ad1, adsPot2, g2.core.gridBuild )
+        val resetRouteFx = Effect.action( ResetUrlRoute )
 
         val v2 = ctx.value0.withGrid( g2 )
-        val fxOpt = Some(scrollFx)
+        val fxOpt = Some(scrollFx + resetRouteFx)
         (v2, fxOpt)
       }
   }
@@ -419,13 +424,10 @@ class GridAh[M](
             .filter(_ => !m.clean)
             .fold(0)(_.size)
 
-          // TODO Вычислять на основе данных параметров MScreen.
-          val limit = 10
-
           val args2 = args0.copy(
             search = args0.search
               .withLimitOffset(
-                limit  = Some(limit),
+                limit  = Some( GridAh.adsPerReqLimit ),
                 offset = Some(offset)
               ),
             common = args0.common.copy(
@@ -521,7 +523,9 @@ class GridAh[M](
             )
             // В фоне - запустить скроллинг к началу карточки.
             val scrollFx = GridAh.scrollToAdFx( ad0, ads2, v2.core.gridBuild )
-            updated(v2, scrollFx)
+            val resetRouteFx = Effect.action( ResetUrlRoute )
+            val fxs = scrollFx + resetRouteFx
+            updated(v2, fxs)
           }
         }
 

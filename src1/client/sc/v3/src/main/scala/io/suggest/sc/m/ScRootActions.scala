@@ -21,7 +21,9 @@ trait ISc3Action extends DAction
 /** Интерфейс для допустимых значений поля HandleScApiResp.tryResp. */
 trait IScApiRespReason extends ISc3Action
 /** Интерфейс для Index-resp reason. */
-trait IScIndexRespReason extends IScApiRespReason
+trait IScIndexRespReason extends IScApiRespReason {
+  def focusedAdId: Option[String] = None
+}
 
 
 /** Интерфейс корневых экшенов. */

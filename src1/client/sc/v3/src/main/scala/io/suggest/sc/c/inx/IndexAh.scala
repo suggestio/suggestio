@@ -19,6 +19,8 @@ import io.suggest.sc.v.ScCssFactory
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.react.ReactDiodeUtil.EffectsOps
+import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
+import io.suggest.sc.c.grid.GridAh
 import japgolly.univeq._
 
 import scala.util.Success
@@ -209,7 +211,8 @@ class IndexAh[M](
         common = MScCommonQs(
           apiVsn = Sc3Api.API_VSN,
           locEnv = root.locEnv,
-          screen = Some( root.dev.screen.screen )
+          screen = Some( root.dev.screen.screen ),
+          searchGridAds = Some( true )
         ),
         index = Some(
           MScIndexArgs(
@@ -217,6 +220,22 @@ class IndexAh[M](
             withWelcome = withWelcome,
             geoIntoRcvr = geoIntoRcvr
           )
+        ),
+        // Фокусироваться надо при запуске. Для этого следует получать всё из reason, а не из состояния.
+        foc = for {
+          focAdId <- reason.focusedAdId
+        } yield {
+          MScFocusArgs(
+            focIndexAllowed = true,
+            lookupMode      = None,
+            lookupAdId      = focAdId,
+            focAfterIndex   = true
+          )
+        },
+        search = MAdsSearchReq(
+          limit  = Some( GridAh.adsPerReqLimit ),
+          genOpt = Some( root.index.state.generation ),
+          offset = Some( 0 )
         )
       )
 

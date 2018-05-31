@@ -3,7 +3,6 @@ package io.suggest.sc.c
 import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
-import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.GetRouterCtlF
@@ -14,7 +13,6 @@ import io.suggest.sc.m.inx.{GetIndex, MScIndex, WcTimeOut}
 import io.suggest.sc.m.search.{SwitchTab, TagClick}
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.sc.search.MSearchTabs
-import io.suggest.sc.v.ScCssFactory
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
@@ -31,16 +29,13 @@ import scala.concurrent.Future
   * Description: Бывает, что надо заглушить сообщения, т.к. обработка этих сообщений стала
   * неактуальной, а сообщения всё ещё идут.
   */
-class TailAh[M](
-                 modelRW                  : ModelRW[M, MScRoot],
-                 respWithActionHandlers   : Seq[IRespWithActionHandler],
-                 routerCtlF               : GetRouterCtlF
-               )
-  extends ActionHandler(modelRW)
-  with Log
-{ ah =>
+object TailAh {
 
-  def getMainScreenSnapShot(v0: MScRoot = value): MainScreen = {
+  /** Сборка снимка данных состояния.
+    * @param v0 Инстанс состояния MScRoot.
+    * @return Данные в MainScreen.
+    */
+  def getMainScreenSnapShot(v0: MScRoot): MainScreen = {
     val inxState = v0.index.state
     val searchOpened = v0.index.search.isShown
     val currRcvrId = inxState.currRcvrId
@@ -58,10 +53,8 @@ class TailAh[M](
       menuOpened    = v0.index.menu.opened,
       focusedAdId   = {
         val iter = for {
-          scAdData <- v0.grid.core.ads
-            .iterator
-            .flatten
-          focData <- scAdData.focused.toOption
+          scAdData <- v0.grid.core.focusedAdOpt
+          focData  <- scAdData.focused.toOption
           if focData.userFoc
           adNodeId <- scAdData.nodeId
         } yield {
@@ -74,11 +67,24 @@ class TailAh[M](
     )
   }
 
+}
+
+
+/** Непосредственный контроллер "последних" сообщений. */
+class TailAh[M](
+                 modelRW                  : ModelRW[M, MScRoot],
+                 respWithActionHandlers   : Seq[IRespWithActionHandler],
+                 routerCtlF               : GetRouterCtlF
+               )
+  extends ActionHandler(modelRW)
+  with Log
+{ ah =>
+
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Заставить роутер собрать новую ссылку.
     case ResetUrlRoute =>
-      val m = getMainScreenSnapShot()
+      val m = TailAh.getMainScreenSnapShot( value )
       // Уведомить в фоне роутер, заодно разблокировав интерфейс.
       Future {
         routerCtlF()
@@ -92,7 +98,7 @@ class TailAh[M](
     // js-роутер заливает в состояние данные из URL.
     case m: RouteTo =>
       val v0 = value
-      val currMainScreen = getMainScreenSnapShot(v0)
+      val currMainScreen = TailAh.getMainScreenSnapShot(v0)
 
       // Считаем, что js-роутер уже готов. Если нет, то это сообщение должно было быть перехвачено в JsRouterInitAh.
 
@@ -161,8 +167,20 @@ class TailAh[M](
       }
 
       // Сверить панель меню открыта или закрыта
-      if (m.mainScreen.menuOpened !=* currMainScreen.menuOpened) {
+      if (m.mainScreen.menuOpened !=* currMainScreen.menuOpened)
         fxsAcc ::= Effect.action( MenuOpenClose(m.mainScreen.menuOpened) )
+
+      // Сверить focused ad id:
+      if (
+        m.mainScreen.focusedAdId !=* currMainScreen.focusedAdId &&
+        !nodeIndexNeedsReload
+      ) {
+        for {
+          focusedAdId <- m.mainScreen.focusedAdId
+            .orElse( currMainScreen.focusedAdId )
+        } {
+          fxsAcc ::= Effect.action( GridBlockClick(nodeId = focusedAdId) )
+        }
       }
 
       // Обновлённое состояние, которое может быть и не обновлялось:
@@ -183,7 +201,10 @@ class TailAh[M](
         // TODO Иначе - остановить геолокацию, если она запущена сейчас -- т.к. состояние "непустое".
       } else if (nodeIndexNeedsReload) {
         // Целиковая перезагрузка выдачи.
-        fxsAcc ::= getIndexFx( geoIntoRcvr = false )
+        fxsAcc ::= getIndexFx(
+          geoIntoRcvr = false,
+          focusedAdId = m.mainScreen.focusedAdId
+        )
         val fx = fxsAcc.mergeEffectsSet.get
         ah.updateMaybeSilentFx(needUpdateUi)(v2, fx)
 
@@ -357,9 +378,13 @@ class TailAh[M](
     )
   }
 
-  private def getIndexFx(geoIntoRcvr: Boolean) = Effect.action( GetIndex(withWelcome = true, geoIntoRcvr = geoIntoRcvr) )
+  private def getIndexFx(geoIntoRcvr: Boolean, focusedAdId: Option[String] = None): Effect = {
+    Effect.action(
+      GetIndex(withWelcome = true, geoIntoRcvr = geoIntoRcvr, focusedAdId = focusedAdId) )
+  }
 
-  private def geoOffFx = Effect.action( GeoLocOnOff(enabled = false) )
+  private def geoOffFx: Effect =
+    Effect.action( GeoLocOnOff(enabled = false) )
 
   private def withMapCenter(center: MGeoPoint, v1: MScRoot = value): MScRoot = {
     v1.withIndex(

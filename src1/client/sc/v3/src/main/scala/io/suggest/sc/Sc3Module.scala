@@ -100,12 +100,13 @@ class Sc3Module {
 
 
   /** Список обработчиков resp-action в ответах сервера. */
-  val respWithActionHandlers: Seq[IRespWithActionHandler] = {
-    gridRespHandler ::
-      gridFocusRespHandler ::
-      indexRespHandler ::
-      tagsRespHandler ::
-      Nil
+  lazy val respWithActionHandlers: Seq[IRespWithActionHandler] = {
+    List[IRespWithActionHandler](
+      gridRespHandler,
+      gridFocusRespHandler,
+      indexRespHandler,
+      tagsRespHandler
+    )
   }
 
 }
