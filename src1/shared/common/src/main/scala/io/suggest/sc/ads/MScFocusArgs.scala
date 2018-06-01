@@ -16,8 +16,7 @@ object MScFocusArgs {
   implicit def mScFocusArgsFormat: Format[MScFocusArgs] = (
     (__ \ FOC_INDEX_ALLOWED_FN).format[Boolean] and
     (__ \ AD_LOOKUP_MODE_FN).formatNullable[MLookupMode] and
-    (__ \ LOOKUP_AD_ID_FN).format[String] and
-    (__ \ FOC_AFTER_INDEX_FN).format[Boolean]
+    (__ \ LOOKUP_AD_ID_FN).format[String]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MScFocusArgs] = UnivEq.derive
@@ -36,7 +35,5 @@ object MScFocusArgs {
 case class MScFocusArgs(
                          focIndexAllowed        : Boolean,
                          lookupMode             : Option[MLookupMode],
-                         lookupAdId             : String,
-                         // TODO Возвращать сфокумированную карточку даже после перехода в другой узел.
-                         focAfterIndex          : Boolean
+                         lookupAdId             : String
                        )

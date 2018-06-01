@@ -1,8 +1,7 @@
 package controllers.sc
 
 import _root_.util.blocks.IBlkImgMakerDI
-import _root_.util.di.IScUtil
-import _root_.util.showcase.IScAdSearchUtilDi
+import _root_.util.showcase.{IScAdSearchUtilDi, IScUtil}
 import _root_.util.stat.IStatUtil
 import io.suggest.ad.blk.BlockWidths
 import io.suggest.common.empty.OptionUtil

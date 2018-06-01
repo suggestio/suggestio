@@ -189,19 +189,16 @@ object MScQsJvm {
           focJumpAllowedE         <- boolB.bind         ( k(FOC_INDEX_ALLOWED_FN),    params )
           lookupModeOptE          <- lookupModeOptB.bind( k(AD_LOOKUP_MODE_FN),       params )
           lookupAdIdE             <- strB.bind          ( k(LOOKUP_AD_ID_FN),         params )
-          focAfterIndexE          <- boolB.bind         ( k(FOC_AFTER_INDEX_FN),      params )
         } yield {
           for {
             focIndexAllowed       <- focJumpAllowedE.right
             lookupModeOpt         <- lookupModeOptE.right
             lookupAdId            <- lookupAdIdE.right
-            focAfterIndex         <- focAfterIndexE.right
           } yield {
             MScFocusArgs(
               focIndexAllowed     = focIndexAllowed,
               lookupMode          = lookupModeOpt,
-              lookupAdId          = lookupAdId,
-              focAfterIndex       = focAfterIndex
+              lookupAdId          = lookupAdId
             )
           }
         }
@@ -212,8 +209,7 @@ object MScQsJvm {
         _mergeUnbinded1(
           boolB.unbind          ( k(FOC_INDEX_ALLOWED_FN),    value.focIndexAllowed ),
           lookupModeOptB.unbind ( k(AD_LOOKUP_MODE_FN),       value.lookupMode ),
-          strB.unbind           ( k(LOOKUP_AD_ID_FN),         value.lookupAdId ),
-          boolB.unbind          ( k(FOC_AFTER_INDEX_FN),      value.focAfterIndex )
+          strB.unbind           ( k(LOOKUP_AD_ID_FN),         value.lookupAdId )
         )
       }
 

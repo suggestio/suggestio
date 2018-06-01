@@ -88,4 +88,25 @@ object FutureUtil {
     x.fold(ifEmpty)(_ => Future.successful(x))
   }
 
+
+  object Implicits {
+
+    implicit class FutureExtOps[T](val fut: Future[T]) extends AnyVal {
+
+      /** Заворачивание возможного NSEE в None, а результата в Some().
+        *
+        * @return Фьючерс с опциональным результатом.
+        */
+      def toOptFut(implicit ec: ExecutionContext): Future[Option[T]] = {
+        fut
+          .map[Option[T]] { EmptyUtil.someF }
+          .recover { case _: NoSuchElementException =>
+            None
+          }
+      }
+
+    }
+
+  }
+
 }

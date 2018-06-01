@@ -255,7 +255,7 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
         // Отребилдить плитку:
         gridBuild   = GridAh.rebuildGrid(ads2, jdConf2)
       ),
-      hasMoreAds  = gridResp.ads.lengthCompare(ctx.m.apiReq.search.limit.get) >= 0
+      hasMoreAds  = ctx.m.apiReq.search.limit.fold(true)(_ >= 0)
     )
 
     // И вернуть новый акк:
@@ -487,9 +487,7 @@ class GridAh[M](
                   MScFocusArgs(
                     focIndexAllowed  = true,
                     lookupMode       = None,
-                    lookupAdId       = m.nodeId,
-                    // TODO Сделать true, чтобы карточка была раскрытой после перехода в новую выдачу.
-                    focAfterIndex    = false
+                    lookupAdId       = m.nodeId
                   )
                 )
               )

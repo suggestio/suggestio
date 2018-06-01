@@ -228,8 +228,7 @@ class IndexAh[M](
           MScFocusArgs(
             focIndexAllowed = true,
             lookupMode      = None,
-            lookupAdId      = focAdId,
-            focAfterIndex   = true
+            lookupAdId      = focAdId
           )
         },
         search = MAdsSearchReq(

@@ -56,6 +56,7 @@ object OptionUtil {
   }
 
 
+  // TODO Унести в Implicits
   /** Дополнительные операции для Option[Boolean]. */
   implicit class BoolOptOps(val boolOpt: Option[Boolean]) extends AnyVal {
 
@@ -73,6 +74,7 @@ object OptionUtil {
   }
 
 
+  // TODO Унести в Implicits
   /** Расширенные фунции для nullable-json-форматирования boolean. */
   implicit class BoolOptJsonFormatOps(val boolOptFormat: OFormat[Option[Boolean]]) extends AnyVal {
     import play.api.libs.functional.syntax._
@@ -90,6 +92,8 @@ object OptionUtil {
     case _    => None
   }
 
+
+  // TODO Унести в Implicits
   implicit class AnyOptOps[X](val option: Option[X]) extends AnyVal {
 
     def filterByType[T <: X: ClassTag]: Option[T] = {
@@ -100,6 +104,20 @@ object OptionUtil {
     def toFutureDefined: Future[X] = {
       option.fold[Future[X]]( Future.failed(new NoSuchElementException) )( Future.successful )
     }
+
+  }
+
+
+  object Implicits {
+
+    implicit class OptFutOptExtOps[T](val optFutOpt: Option[Future[Option[T]]]) extends AnyVal {
+
+      def getOrNoneFut: Future[Option[T]] = {
+        optFutOpt.getOrElse( Future.successful(None) )
+      }
+
+    }
+
 
   }
 

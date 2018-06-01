@@ -11,10 +11,10 @@ import models.req.IReq
 import play.api.mvc.{Call, Result}
 import util.acl._
 import util.billing.{Bill2Util, IBill2UtilDi}
-import util.di.IScUtil
 import util.mdr.SysMdrUtil
 import views.html.sys1.mdr._
 import japgolly.univeq._
+import util.showcase.IScUtil
 
 import scala.concurrent.Future
 

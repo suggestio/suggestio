@@ -34,6 +34,7 @@ import util.geo.IGeoIpUtilDi
 import util.img.IDynImgUtil
 import util.stat.{IStatCookiesUtilDi, IStatUtil}
 import japgolly.univeq._
+import util.showcase.IScUtil
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}

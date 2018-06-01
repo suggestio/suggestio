@@ -1,6 +1,5 @@
 package controllers.sc
 
-import _root_.util.di.IScUtil
 import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.coll.Lists
 import io.suggest.common.css.FocusedTopLeft
@@ -21,7 +20,7 @@ import play.api.mvc.Result
 import util.acl._
 import play.api.libs.json.Json
 import util.ad.IJdAdUtilDi
-import util.showcase.IScAdSearchUtilDi
+import util.showcase.{IScAdSearchUtilDi, IScUtil}
 import util.stat.IStatUtil
 import japgolly.univeq._
 

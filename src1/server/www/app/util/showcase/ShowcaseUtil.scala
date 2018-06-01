@@ -4,8 +4,12 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidth, BlockWidths}
 import io.suggest.dev.{MScreen, MSzMults}
 import io.suggest.grid.{GridCalc, MGridCalcConf}
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.sc.ScConstants
+import io.suggest.sc.sc3.MScQs
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.blk
 import models.blk._
@@ -13,6 +17,8 @@ import models.im.make.MakeResult
 import models.mproj.ICommonDi
 import models.msc.TileArgs
 import util.adv.AdvUtil
+import util.n2u.N2NodesUtil
+import io.suggest.common.empty.OptionUtil.Implicits._
 
 import scala.annotation.tailrec
 import scala.concurrent.Future
@@ -25,8 +31,10 @@ import scala.concurrent.Future
  */
 @Singleton
 class ShowcaseUtil @Inject() (
-                               advUtil    : AdvUtil,
-                               mCommonDi  : ICommonDi
+                               advUtil      : AdvUtil,
+                               n2NodesUtil  : N2NodesUtil,
+                               mNodes       : MNodes,
+                               mCommonDi    : ICommonDi
                              )
   extends MacroLogsImplLazy
 {
@@ -236,5 +244,84 @@ class ShowcaseUtil @Inject() (
     else
       maxHiter.max
   }
+
+
+  /** Необходимо ли перевести focused-запрос в index запрос? */
+  def isFocGoToProducerIndexFut(qs: MScQs): Future[Option[MNode]] = {
+    lazy val logPrefix = s"_isFocGoToProducerIndexFut()#${System.currentTimeMillis()}:"
+
+    val toProducerFutOpt = for {
+      focQs <- qs.foc
+      if focQs.focIndexAllowed
+    } yield {
+      for {
+        // Прочитать из хранилища указанную карточку.
+        madOpt <- mNodesCache.getById( focQs.lookupAdId )
+
+        // .get приведёт к NSEE, это нормально.
+        producerId = {
+          madOpt
+            .flatMap(n2NodesUtil.madProducerId)
+            .get
+        }
+
+        if !(qs.search.rcvrId containsStr producerId )
+
+        producer <- {
+          // 2015.sep.16: Нельзя перепрыгивать на продьюсера, у которого не больше одной карточки на главном экране.
+          val prodAdsCountFut: Future[Long] = {
+            val args = new MNodeSearchDfltImpl {
+              override def outEdges: Seq[ICriteria] = {
+                val cr = Criteria(
+                  predicates  = MPredicates.Receiver :: Nil,
+                  nodeIds     = producerId :: Nil
+                )
+                cr :: Nil
+              }
+              override def limit = 2
+              override def nodeTypes = MNodeTypes.Ad :: Nil
+            }
+            mNodes.dynCount(args)
+          }
+
+          val prodFut = mNodesCache.getById(producerId)
+            .map(_.get)
+
+          // Как выяснилось, бывают карточки-сироты (продьюсер удален, карточка -- нет). Нужно сообщать об этой ошибке.
+          for (ex <- prodFut.failed) {
+            val msg = s"Producer node[$producerId] does not exist."
+            if (ex.isInstanceOf[NoSuchElementException])
+              LOGGER.error(msg)
+            else
+              LOGGER.error(msg, ex)
+          }
+
+          // Фильтруем prodFut по кол-ву карточек, размещенных у него на главном экране.
+          prodAdsCountFut
+            .filter { _ > 1 }
+            .flatMap { _ => prodFut }
+        }
+
+      } yield {
+        // Да, вернуть продьюсера.
+        LOGGER.trace(s"$logPrefix Foc ad#${focQs.lookupAdId} go-to index producer#$producerId")
+        Some( producer )
+      }
+    }
+
+    toProducerFutOpt
+      .getOrNoneFut
+      .recover { case _: NoSuchElementException =>
+        None
+      }
+  }
+
+}
+
+
+/** Description: Интерфейс для доступа к DI-инстансу [[util.showcase.ShowcaseUtil]]. */
+trait IScUtil {
+
+  def scUtil: ShowcaseUtil
 
 }

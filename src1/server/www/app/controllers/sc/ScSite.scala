@@ -23,10 +23,10 @@ import play.api.mvc._
 import play.twirl.api.Html
 import util.acl._
 import util.adv.geo.{IAdvGeoLocUtilDi, IAdvGeoRcvrsUtilDi}
-import util.di.IScUtil
 import util.ext.IExtServicesUtilDi
 import util.i18n.IJsMessagesUtilDi
 import util.sec.ICspUtilDi
+import util.showcase.IScUtil
 import util.stat.IStatUtil
 import views.html.sc._
 
