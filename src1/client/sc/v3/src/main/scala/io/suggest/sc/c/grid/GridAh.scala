@@ -545,6 +545,9 @@ class GridAh[M](
         val v2 = v0.withCore(
           v0.core
             .withJdConf( jdConf2 )
+            .withGridBuild(
+              GridAh.rebuildGrid(v0.core.ads, jdConf2)
+            )
         )
         // TODO Возможно, что надо перекачать содержимое плитки с сервера, если всё слишком сильно переменилось. Нужен отложенный таймер для этого.
         updated(v2)

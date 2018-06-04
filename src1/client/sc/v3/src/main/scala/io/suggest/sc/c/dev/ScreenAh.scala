@@ -30,7 +30,7 @@ class ScreenAh[M](
     // Сигнал изменения размеров/ориентации экрана.
     case ScreenReset =>
       val v0 = value
-      val screen2 = JsScreenUtil.getScreen()
+      // TODO Проверять, изменился ли экран.
       v0.rszTimer.fold {
         val tp = DomQuick.timeoutPromise(RSZ_TIMER_MS)
         val fx = Effect {
@@ -38,18 +38,12 @@ class ScreenAh[M](
             ScreenRszTimer
           }
         }
-        val v2 = v0.copy(
-          screen   = screen2,
-          rszTimer = Some( tp.timerId )
-        )
-        updated(v2, fx)
+        val v2 = v0.withRszTimer( Some( tp.timerId ) )
+        updatedSilent(v2, fx)
 
       } { _ =>
         // Таймер уже запущен, просто обновить screen в состоянии свежим инстансом.
-        val v2 = v0.withScreen(
-          screen = screen2
-        )
-        updated(v2)
+        noChange
       }
 
 
@@ -63,8 +57,15 @@ class ScreenAh[M](
       val gridFx = Effect.action( GridReConf )
 
       // Забыть о сработавшем таймере.
-      val v2 = value.withRszTimer(None)
-      updated(v2, scCssRebuildFx + gridFx)
+      val screen2 = JsScreenUtil.getScreen()
+
+      val v2 = value.copy(
+        screen    = screen2,
+        rszTimer  = None
+      )
+
+      val finalFx = scCssRebuildFx + gridFx
+      updated(v2, finalFx)
 
   }
 

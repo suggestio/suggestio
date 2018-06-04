@@ -109,7 +109,9 @@ class ShowcaseUtil @Inject() (
     }
 
     // Нужно получить данные для рендера широкой карточки.
-    for (bgImgOpt <- focWideBgImgArgs(mad, szMult, deviceScreenOpt)) yield {
+    for {
+      bgImgOpt <- focWideBgImgArgs(mad, szMult, deviceScreenOpt)
+    } yield {
       blk.RenderArgs(
         mad       = mad,
         withEdit  = false,
