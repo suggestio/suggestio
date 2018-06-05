@@ -8,6 +8,7 @@ import io.suggest.dev.{JsScreenUtil, MPxRatios}
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
 import io.suggest.i18n.MsgCodes
+import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
@@ -104,7 +105,12 @@ class Sc3Circuit(
         )
       ),
       grid = {
-        val jdConf = GridAh.fullGridConf(mscreen)
+        val (gridColsCount, gridSzMult) = GridAh.fullGridConf(mscreen)
+        val jdConf = MJdConf(
+          isEdit            = false,
+          gridColumnsCount  = gridColsCount,
+          szMult            = gridSzMult
+        )
         MGridS(
           core = MGridCoreS(
             jdConf = jdConf,

@@ -4,7 +4,7 @@ import com.github.fisshy.react.scroll.AnimateScroll
 import diode._
 import diode.data.{PendingBase, Pot, Ready}
 import io.suggest.ad.blk.BlockPaddings
-import io.suggest.dev.MScreen
+import io.suggest.dev.{MScreen, MSzMult}
 import io.suggest.grid.build.{GridBuilderUtil, MGridBuildArgs, MGridBuildResult}
 import io.suggest.grid.{GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
 import io.suggest.jd.MJdConf
@@ -23,6 +23,7 @@ import io.suggest.sc.styl.ScCss
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.common.geom.d2.IWidth
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
 
@@ -43,20 +44,21 @@ object GridAh {
   def adsPerReqLimit = 10
 
 
-  /** Полное переконфигурирование плитки. */
-  def fullGridConf(mscreen: MScreen): MJdConf = {
+  /** Полное переконфигурирование плитки.
+    * @return 1 - кол-во колонок плитки.
+    *         2 - szMult плитки.
+    */
+  def fullGridConf(mscreen: IWidth): (Int, MSzMult) = {
     val gridConf = GRID_CONF
 
     val gridColsCount = GridCalc.getColumnsCount(
       contSz = mscreen,
       conf   = gridConf
     )
-    MJdConf(
-      isEdit = false,
-      szMult = GridCalc.getSzMult4tilesScr(gridColsCount, mscreen, gridConf),
-      gridColumnsCount = gridColsCount
-    )
+    val gridSzMult = GridCalc.getSzMult4tilesScr(gridColsCount, mscreen, gridConf)
+    (gridColsCount, gridSzMult)
   }
+
 
   /** Выполнение ребилда плитки. */
   def rebuildGrid(ads: Pot[Seq[MScAdData]], jdConf: MJdConf): MGridBuildResult = {
@@ -523,14 +525,9 @@ class GridAh[M](
     case GridReConf =>
       val v0 = value
       val mscreen = screenRO.value
-      val gridConf = GridAh.GRID_CONF
-      val jdConf0 = v0.core.jdConf
-      val gridColsCount2 = GridCalc.getColumnsCount(
-        contSz    = mscreen,
-        conf      = gridConf
-      )
-      val szMult2 = GridCalc.getSzMult4tilesScr(gridColsCount2, mscreen, gridConf)
+      val (gridColsCount2, szMult2) = GridAh.fullGridConf( mscreen )
 
+      val jdConf0 = v0.core.jdConf
       val szMultMatches = jdConf0.szMult ==* szMult2
       //println( s"gridColumnCount=$gridColsCount2 $szMultMatches ${jdConf0.szMult} => $szMult2" )
 

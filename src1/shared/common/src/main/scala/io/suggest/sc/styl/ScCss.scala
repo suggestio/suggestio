@@ -372,9 +372,11 @@ case class ScCss( args: IScCssArgs )
 
     def Z_INDEX = 11
 
+    def PANEL_WIDTH_PX = 320
+
     /** CSS-класс div-контейнера правой панели. */
     val panel = style(
-      width( 320.px ),
+      width( PANEL_WIDTH_PX.px ),
       Root.panelCommon
     )
 
