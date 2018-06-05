@@ -4,7 +4,7 @@ import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.maps.nodes.MGeoNodesResp
-import io.suggest.sjs.leaflet.map.{LatLng, Zoom_t}
+import io.suggest.sjs.leaflet.map.{LMap, LatLng, Zoom_t}
 import io.suggest.spa.DAction
 
 import scala.util.Try
@@ -108,3 +108,6 @@ case object MapDragStart extends IMapsAction
 
 /** Событие окончания перетаскивания карты. */
 case class MapDragEnd(distancePx: Double) extends IMapsAction
+
+/** Реагировать на окончание инициализации карты. */
+case class HandleMapReady(map: LMap) extends IMapsAction

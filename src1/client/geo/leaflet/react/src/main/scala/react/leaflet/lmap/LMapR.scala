@@ -1,7 +1,7 @@
 package react.leaflet.lmap
 
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event, LocationEvent, PopupEvent}
-import io.suggest.sjs.leaflet.map.{LMap, LatLngBounds, MapOptions}
+import io.suggest.sjs.leaflet.map.{IWhenReadyArgs, LMap, LatLngBounds, MapOptions}
 import japgolly.scalajs.react.vdom.VdomNode
 import japgolly.scalajs.react.{Children, JsComponent}
 import react.leaflet.Context
@@ -71,5 +71,10 @@ trait LMapPropsR extends MapOptions {
 
   val onDragStart: UndefOr[js.Function1[Event, Unit]] = js.undefined
   val onDragEnd: UndefOr[js.Function1[DragEndEvent, Unit]] = js.undefined
+
+  // onLoad(e) -> whenReady().
+  // https://github.com/PaulLeCam/react-leaflet/pull/331
+  val whenReady: UndefOr[js.Function1[IWhenReadyArgs, _]] = js.undefined
+
 
 }

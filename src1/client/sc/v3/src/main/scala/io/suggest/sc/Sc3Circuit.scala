@@ -253,7 +253,8 @@ class Sc3Circuit(
   )
 
   private val screenAh = new ScreenAh(
-    modelRW = scScreenRW
+    modelRW = scScreenRW,
+    rootRO  = rootRW
   )
 
   private val sTextAh = new STextAh(

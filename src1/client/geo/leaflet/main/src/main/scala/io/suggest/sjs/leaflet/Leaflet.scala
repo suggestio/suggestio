@@ -80,6 +80,8 @@ trait ILeaflet extends js.Object {
 
   val version: String = js.native
 
+  def whenReady(f: js.Function1[IWhenReadyArgs, _]): Unit = js.native
+
 }
 
 

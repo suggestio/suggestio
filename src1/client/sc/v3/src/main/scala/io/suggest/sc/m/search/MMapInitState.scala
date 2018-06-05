@@ -5,8 +5,10 @@ import diode.data.Pot
 import io.suggest.geo.MGeoPoint
 import io.suggest.maps.m.MMapS
 import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.sjs.leaflet.map.LMap
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.MapsUnivEq._
 import japgolly.univeq._
 
 /**
@@ -24,13 +26,15 @@ import japgolly.univeq._
   */
 object MMapInitState {
 
+
   implicit object MMapInitStateFastEq extends FastEq[MMapInitState] {
     override def eqv(a: MMapInitState, b: MMapInitState): Boolean = {
       (a.state      ===* b.state) &&
         (a.ready     ==* b.ready) &&
         (a.rcvrsGeo ===* b.rcvrsGeo) &&
         (a.delay    ===* b.delay) &&
-        (a.loader   ===* b.loader)
+        (a.loader   ===* b.loader) &&
+        (a.lmap     ===* b.lmap)
     }
   }
 
@@ -47,6 +51,8 @@ object MMapInitState {
   * @param rcvrsGeo Гео-данные ресиверов.
   * @param delay Опциональное состояние отложенной реакции на события карты.
   * @param loader Координата для отображения маркера текущей подгрузки выдачи.
+  * @param lmap leaflet instance для воздействия напрямую на карта в обход в react-leaflet.
+  *                  Возможно, станет ненужным при использовании react context api (react-leaflet v2+).
   */
 case class MMapInitState(
                           state           : MMapS,
@@ -54,6 +60,7 @@ case class MMapInitState(
                           rcvrsGeo        : Pot[MGeoNodesResp]    = Pot.empty,
                           delay           : Option[MMapDelay]     = None,
                           loader          : Option[MGeoPoint]     = None,
+                          lmap            : Option[LMap]          = None,
                         ) {
 
   def withState(state: MMapS)                       = copy( state = state )
@@ -61,5 +68,6 @@ case class MMapInitState(
   def withRcvrsGeo(rcvrsGeo: Pot[MGeoNodesResp])    = copy( rcvrsGeo = rcvrsGeo )
   def withDelay(delay: Option[MMapDelay])           = copy( delay = delay )
   def withLoader(loader: Option[MGeoPoint])         = copy( loader = loader )
+  def withLInstance(lmap: Option[LMap])= copy( lmap = lmap )
 
 }

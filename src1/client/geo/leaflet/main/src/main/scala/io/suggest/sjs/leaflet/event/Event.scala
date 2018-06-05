@@ -11,8 +11,12 @@ import scala.scalajs.js
 @js.native
 trait Event extends js.Object {
 
-  var `type`: String = js.native
+  val `type`: String = js.native
 
-  var target: js.Object = js.native
+  val target: js.Object = js.native
+
+  val sourceTarget: js.UndefOr[js.Object] = js.native
+
+  val propagatedFrom: js.UndefOr[js.Object] = js.native
 
 }

@@ -78,11 +78,14 @@ object LGeoMapR {
           js.defined( _onLocationFoundF )
         }
       }
+
+      //override val trackResize  = JsOptionUtil.opt2undef( v.trackWndResize )
       override val onPopupClose = js.defined( _onPopupCloseF )
       override val onZoomEnd    = js.defined( _onZoomEndF )
       override val onMoveEnd    = js.defined( _onMoveEndF )
 
       // Пробрасываем extra-пропертисы:
+      override val whenReady    = JsOptionUtil.opt2undef( v.whenReady )
       override val className    = JsOptionUtil.opt2undef( v.cssClass )
       override val onDragStart  = JsOptionUtil.opt2undef( v.onDragStart )
       override val onDragEnd    = JsOptionUtil.opt2undef( v.onDragEnd )

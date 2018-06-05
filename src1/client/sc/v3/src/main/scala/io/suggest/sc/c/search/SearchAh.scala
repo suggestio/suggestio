@@ -2,6 +2,7 @@ package io.suggest.sc.c.search
 
 import diode._
 import io.suggest.common.empty.OptionUtil
+import io.suggest.maps.m.HandleMapReady
 import io.suggest.msg.ErrorMsgs
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.m.ResetUrlRoute
@@ -11,6 +12,8 @@ import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.leaflet.map.LMap
+import io.suggest.spa.DoNothing
 import japgolly.univeq._
 
 /**
@@ -19,6 +22,20 @@ import japgolly.univeq._
   * Created: 21.07.17 15:38
   * Description: Контроллер для общих экшенов поисковой панели.
   */
+object SearchAh {
+
+  /** Вернуть эффект для пере-ресайза гео.карты. */
+  def mapResizeFx(lMap: LMap): Effect = {
+    Effect.action {
+      //println("invalidate size")
+      lMap.invalidateSize(true)
+      DoNothing
+    }
+  }
+
+}
+
+
 class SearchAh[M](
                    modelRW        : ModelRW[M, MScSearch]
                  )
@@ -35,13 +52,21 @@ class SearchAh[M](
         }
         Some(getMoreTagsFx)
 
-      case MSearchTabs.GeoMap if !v0.mapInit.ready =>
-        val mapInitFx = Effect {
-          DomQuick
-            .timeoutPromiseT(25)(InitSearchMap)
-            .fut
+      case MSearchTabs.GeoMap =>
+        if (v0.mapInit.ready) {
+          // Надо запускать ручной ресайз, иначе карта может неверно увидеть свой фактический размер (т.к. размер окна мог меняться, пока карта была скрыта).
+          // TODO Не запускать ресайз, если размер не менялся. У карты крышу сносит, если часто этот метод дёргать.
+          for (lInstance <- v0.mapInit.lmap) yield {
+            SearchAh.mapResizeFx( lInstance )
+          }
+        } else {
+          val mapInitFx = Effect {
+            DomQuick
+              .timeoutPromiseT(25)(InitSearchMap)
+              .fut
+          }
+          Some( mapInitFx )
         }
-        Some( mapInitFx )
 
       case _ =>
         None
@@ -145,6 +170,14 @@ class SearchAh[M](
           LOG.error( ErrorMsgs.NOT_IMPLEMENTED, msg = (m, t) )
           noChange
       }
+
+    // Перехват инстанса leaflet map и сохранение в состояние.
+    case m: HandleMapReady =>
+      val v0 = value
+      val v2 = v0.withMapInit(
+        v0.mapInit.withLInstance( Some(m.map) )
+      )
+      updatedSilent( v2 )
 
   }
 

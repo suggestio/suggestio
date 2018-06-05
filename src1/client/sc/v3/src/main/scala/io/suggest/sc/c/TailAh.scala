@@ -18,6 +18,7 @@ import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits.OptionListExtOps
+import io.suggest.spa.DoNothing
 import japgolly.univeq._
 
 import scala.concurrent.Future
@@ -368,6 +369,10 @@ class TailAh[M](
 
     // Если юзер активно тыкал пальцем по экрану, то таймер сокрытия мог сработать после окончания приветствия.
     case _: WcTimeOut =>
+      noChange
+
+    // Обработка всегда-игнорируемых событий, но которые зачем-то нужны.
+    case DoNothing =>
       noChange
 
   }

@@ -1,13 +1,14 @@
 package io.suggest.sc.c.dev
 
-import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import diode._
 import io.suggest.dev.JsScreenUtil
 import io.suggest.sc.m.dev.MScScreenS
 import io.suggest.sc.m.grid.GridReConf
 import io.suggest.sc.m.inx.ScCssReBuild
-import io.suggest.sc.m.{ScreenReset, ScreenRszTimer}
+import io.suggest.sc.m.{MScRoot, ScreenReset, ScreenRszTimer}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
+import io.suggest.sc.c.search.SearchAh
 
 /**
   * Suggest.io
@@ -16,7 +17,8 @@ import io.suggest.sjs.common.controller.DomQuick
   * Description: Контроллер, слушающий события экрана устройства.
   */
 class ScreenAh[M](
-                   modelRW: ModelRW[M, MScScreenS]
+                   modelRW: ModelRW[M, MScScreenS],
+                   rootRO : ModelRO[MScRoot]
                  )
   extends ActionHandler(modelRW)
 {
@@ -54,7 +56,7 @@ class ScreenAh[M](
       val scCssRebuildFx = Effect.action( ScCssReBuild )
 
       // Уведомить контроллер плитки, что пора пересчитать плитку.
-      val gridFx = Effect.action( GridReConf )
+      val gridReConfFx = Effect.action( GridReConf )
 
       // Забыть о сработавшем таймере.
       val screen2 = JsScreenUtil.getScreen()
@@ -64,8 +66,17 @@ class ScreenAh[M](
         rszTimer  = None
       )
 
-      val finalFx = scCssRebuildFx + gridFx
-      updated(v2, finalFx)
+      // Аккамулируем эффект. Сначала перестройка основной вёрстки.
+      var fx: Effect = scCssRebuildFx + gridReConfFx
+
+      // Если гео.карта видна юзера, то пнуть её после обновления вёрстки.
+      for {
+        lInstance <- rootRO.value.index.search.mapInit.lmap
+      } {
+        fx >> SearchAh.mapResizeFx( lInstance )
+      }
+
+      updated(v2, fx)
 
   }
 
