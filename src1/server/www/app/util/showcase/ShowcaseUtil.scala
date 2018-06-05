@@ -20,7 +20,6 @@ import util.adv.AdvUtil
 import util.n2u.N2NodesUtil
 import io.suggest.common.empty.OptionUtil.Implicits._
 
-import scala.annotation.tailrec
 import scala.concurrent.Future
 
 /**
@@ -159,6 +158,7 @@ class ShowcaseUtil @Inject() (
 
   def getTileArgs(dscrOpt: Option[MScreen]): TileArgs = {
     dscrOpt.fold {
+      LOGGER.warn("getTileArgs(): Screen missing")
       TileArgs(
         szMult    = MIN_SZ_MULT,
         colsCount = GRID_COLS_CONF.maxColumns
@@ -168,35 +168,11 @@ class ShowcaseUtil @Inject() (
   def getTileArgs(dscr: MScreen): TileArgs = {
     val colsCount = GridCalc.getColumnsCount(dscr, GRID_COLS_CONF)
     TileArgs(
-      szMult      = getSzMult4tilesScr(colsCount, dscr),
+      szMult      = GridCalc.getSzMult4tilesScr(colsCount, dscr, GRID_COLS_CONF).toFloat,
       colsCount   = colsCount
     )
   }
 
-  /**
-   * Вычислить мультипликатор размера для плиточной выдачи с целью подавления лишних полей по бокам.
-   * @param colsCount Кол-во колонок в плитке.
-   * @param dscr Экран.
-   * @return Оптимальное значение SzMult_t выбранный для рендера.
-   */
-  def getSzMult4tilesScr(colsCount: Int, dscr: MScreen): SzMult_t = {
-    val blockWidthPx = GRID_COLS_CONF.cellWidth.value
-    // Считаем целевое кол-во колонок на экране.
-    @tailrec def detectSzMult(restSzMults: List[SzMult_t]): SzMult_t = {
-      val nextSzMult = restSzMults.head
-      if (restSzMults.tail.isEmpty) {
-        nextSzMult
-      } else {
-        // Вычислить остаток ширины за вычетом всех отмасштабированных блоков, с запасом на боковые поля.
-        val w1 = getW1(nextSzMult, colsCount, blockWidth = blockWidthPx, scrWidth = dscr.width, paddingPx = GRID_COLS_CONF.cellPadding)
-        if (w1 >= MIN_W1)
-          nextSzMult
-        else
-          detectSzMult(restSzMults.tail)
-      }
-    }
-    detectSzMult(TILES_SZ_MULTS)
-  }
 
   /**
    * w1 - это ширина экрана за вычетом плитки блоков указанной ширины в указанное кол-во колонок.

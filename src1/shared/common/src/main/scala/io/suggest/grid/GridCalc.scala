@@ -23,13 +23,17 @@ object GridCalc {
     *
     * @param contSz Размер контейнера плитки.
     * @param conf Конфиг рассчёта плитки. Там сохраняются разные константы.
-    * @return Целое кол-во колонок.
+    * @return Целое кол-во колонок в рамках конфига.
     */
-  def getColumnsCount(contSz: IWidth, conf: IGridCalcConf, minSzMult: Double = MSzMults.GRID_MIN_SZMULT_D): Int = {
+  def getColumnsCount(contSz: IWidth, conf: MGridCalcConf, minSzMult: Double = MSzMults.GRID_MIN_SZMULT_D): Int = {
     val padding = conf.cellPadding * minSzMult
-    val targetCount = ((contSz.width - padding) / (conf.cellWidthPx * minSzMult + padding)).toInt
-    Math.min(conf.maxColumns,
+    val targetCount = ((contSz.width - padding) / (conf.cellWidth.value * minSzMult + padding)).toInt
+    val evenGridColsCount = Math.min(conf.maxColumns,
       Math.max(1, targetCount))
+    //println(s"getColsCnt(contSz=$contSz, conf=$conf, minSzMult=$minSzMult): padding=$padding, tgCount=$targetCount, r=>$r")
+
+    // Для EVEN_GRID результат надо домножить на 2 (cell-ширина одного блока).
+    Math.max(2, evenGridColsCount * conf.cellWidth.relSz)
   }
 
 
@@ -41,18 +45,26 @@ object GridCalc {
    * @param dscr Экран.
    * @return Оптимальное значение SzMult_t выбранный для рендера.
    */
-  def getSzMult4tilesScr(colsCount: Int, dscr: IWidth, conf: IGridCalcConf): MSzMult = {
-    val blockWidthPx = conf.cellWidthPx
+  def getSzMult4tilesScr(colsCount: Int, dscr: IWidth, conf: MGridCalcConf): MSzMult = {
+    val unitColsCount = colsCount / conf.cellWidth.relSz
+    // Минимальная остаточная ширина экрана в пикселях. Это расстояние по бокам.
+    val MIN_W1_PX = 0d
+
     // Считаем целевое кол-во колонок на экране.
     @tailrec def detectSzMult(restSzMults: List[MSzMult]): MSzMult = {
-      val nextSzMult = restSzMults.head
+      val currSzMult = restSzMults.head
       if (restSzMults.tail.isEmpty) {
-        nextSzMult
+        currSzMult
       } else {
         // Вычислить остаток ширины за вычетом всех отмасштабированных блоков, с запасом на боковые поля.
-        val w1 = getW1(nextSzMult, colsCount, blockWidth = blockWidthPx, scrWidth = dscr.width, paddingPx = conf.cellPadding)
-        if (w1 >= MIN_W1)
-          nextSzMult
+        // Следует помнить, что "колонки" тут - в понятиях GridConf, т.е. могут быть и двойные колонки спокойно.
+        val gridWidth0 = unitColsCount * conf.cellWidth.value + conf.cellPadding * (unitColsCount + 1)
+        val gridWidthMulted = gridWidth0 * currSzMult.toDouble
+        // w1 - это ширина экрана за вычетом плитки блоков указанной ширины в указанное кол-во колонок.
+        val w1 = dscr.width - gridWidthMulted
+        //println(s"gridWidth: blkW=${conf.cellWidth}+${conf.cellPadding} uCols=$unitColsCount => $gridWidth0 * $currSzMult = $gridWidthMulted ;; scrW=${dscr.width} ;; w1=$w1")
+        if (w1 >= MIN_W1_PX)
+          currSzMult
         else
           detectSzMult(restSzMults.tail)
       }
@@ -60,29 +72,8 @@ object GridCalc {
     detectSzMult( MSzMults.GRID_TILE_MULTS )
   }
 
-  def MIN_W1 = -1d
-
-  /**
-   * w1 - это ширина экрана за вычетом плитки блоков указанной ширины в указанное кол-во колонок.
-   * Этот метод запускает формулу рассчета оставшейся ширины.
-   * @param szMult Предлагаемый мультипликатор размера.
-   * @param colCnt Кол-во колонок.
-   * @param blockWidth Ширина блока.
-   * @param scrWidth Доступная для размещения плитки блоков ширина экрана.
-   * @return Остаток ширины.
-   */
-  private def getW1(szMult: MSzMult, colCnt: Int, blockWidth: Int, scrWidth: Int, paddingPx: Int): Double = {
-    scrWidth - (colCnt * blockWidth + paddingPx * (colCnt + 1)) * szMult.toDouble
-  }
-
 }
 
-
-trait IGridCalcConf {
-  def cellPadding    : Int
-  def cellWidthPx    : Int
-  def maxColumns     : Int
-}
 
 
 /** Модель конфига для рассчёта колонок сетки.
@@ -92,19 +83,25 @@ trait IGridCalcConf {
   * @param maxColumns Максимально допустимое кол-во колонок.
   */
 case class MGridCalcConf(
-                          cellPadding    : Int          = GridConst.PADDING_CSSPX,
-                          cellWidth      : BlockWidth   = BlockWidths.NARROW,
-                          maxColumns     : Int          = GridConst.CELL140_COLUMNS_MAX
-                        )
-  extends IGridCalcConf
-{
-  override def cellWidthPx = cellWidth.value
+                          cellPadding    : Int,
+                          cellWidth      : BlockWidth,
+                          maxColumns     : Int
+                        ) {
+
+  def colUnitWidthPx = cellWidth.value
+
 }
 
 object MGridCalcConf {
 
   /** Настройки для дефолтовой сетки. */
-  def PLAIN_GRID = MGridCalcConf()
+  def PLAIN_GRID: MGridCalcConf = {
+    MGridCalcConf(
+      cellPadding  = GridConst.PADDING_CSSPX,
+      cellWidth    = BlockWidths.NARROW,
+      maxColumns   = GridConst.CELL140_COLUMNS_MAX
+    )
+  }
 
   /** Чётная сетка -- сетка с чётным кол-вом колонок. */
   def EVEN_GRID: MGridCalcConf = {

@@ -1,6 +1,5 @@
 package io.suggest.sc.sc3
 
-import io.suggest.sc.ScConstants.Resp._
 import io.suggest.sc.ads.MSc3AdsResp
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.search.MSc3TagsResp
@@ -19,7 +18,7 @@ object MSc3RespAction {
 
   /** Поддержка play-json. */
   implicit def MSC3_RESP_ACTION_FORMAT: OFormat[MSc3RespAction] = (
-    (__ \ ACTION_FN).format[MScRespActionType] and
+    (__ \ "action").format[MScRespActionType] and
     (__ \ MScRespActionTypes.Index.value).formatNullable[MSc3IndexResp] and
     (__ \ MScRespActionTypes.AdsTile.value).formatNullable[MSc3AdsResp] and
     (__ \ MScRespActionTypes.SearchRes.value).formatNullable[MSc3TagsResp]

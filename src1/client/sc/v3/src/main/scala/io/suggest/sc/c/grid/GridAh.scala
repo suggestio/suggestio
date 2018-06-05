@@ -4,7 +4,7 @@ import com.github.fisshy.react.scroll.AnimateScroll
 import diode._
 import diode.data.{PendingBase, Pot, Ready}
 import io.suggest.ad.blk.BlockPaddings
-import io.suggest.dev.{MScreen, MSzMults}
+import io.suggest.dev.MScreen
 import io.suggest.grid.build.{GridBuilderUtil, MGridBuildArgs, MGridBuildResult}
 import io.suggest.grid.{GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
 import io.suggest.jd.MJdConf
@@ -23,7 +23,6 @@ import io.suggest.sc.styl.ScCss
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.empty.OptionUtil.BoolOptOps
-import io.suggest.err.ErrorConstants
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
 
@@ -43,25 +42,15 @@ object GridAh {
   // TODO Рассчитывать кол-во карточек за 1 реквест на основе экрана и прочих вещей.
   def adsPerReqLimit = 10
 
-  /** Частичное переконфигурирование плитки. */
-  private def reconfGridColumnsCount(mscreen: MScreen,
-                                     gridConf: MGridCalcConf = GRID_CONF,
-                                     minSzMult: Double = MSzMults.GRID_MIN_SZMULT_D): Int = {
-    val evenGridColsCount = GridCalc.getColumnsCount(
-      // TODO Надо учесть фактическую ширину, т.е. вычесть открытые боковые панели.
-      contSz    = mscreen,
-      conf      = gridConf,
-      minSzMult = minSzMult
-    )
-    Math.max(2, evenGridColsCount * gridConf.cellWidth.relSz)
-  }
-
 
   /** Полное переконфигурирование плитки. */
   def fullGridConf(mscreen: MScreen): MJdConf = {
     val gridConf = GRID_CONF
 
-    val gridColsCount = reconfGridColumnsCount(mscreen, gridConf)
+    val gridColsCount = GridCalc.getColumnsCount(
+      contSz = mscreen,
+      conf   = gridConf
+    )
     MJdConf(
       isEdit = false,
       szMult = GridCalc.getSzMult4tilesScr(gridColsCount, mscreen, gridConf),
@@ -157,6 +146,7 @@ object GridAh {
 /** Поддержка resp-handler'а для карточек плитки без фокусировки. */
 class GridRespHandler( jdCssFactory: JdCssFactory )
   extends IRespWithActionHandler
+  with Log
 {
 
   override def isMyReqReason(ctx: MRhCtx): Boolean = {
@@ -226,37 +216,38 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
       }
       .toVector
 
+    // Самоконтроль для отладки: Проверить, совпадает ли SzMult между сервером и клиентом?
+    //if (gridResp.szMult !=* g0.core.jdConf.szMult)
+    //  LOG.warn(WarnMsgs.SERVER_CLIENT_SZ_MULT_MISMATCH, msg = (gridResp.szMult, g0.core.jdConf.szMult))
+
     // Нельзя тут использовать m.reason: причина относится только к начальному resp-экшену (и то необязательно).
-    val (ads2, jdConf2, fxOpt) = if (ctx.m.apiReq.search.offset.fold(true)(_ ==* 0)) {
-      val jdConf1 = g0.core.jdConf.withSzMult(
-        gridResp.szMult
-      )
+    val (ads2, fxOpt) = if (ctx.m.apiReq.search.offset.fold(true)(_ ==* 0)) {
       val ads1 = g0.core.ads.ready(newScAds)
       val scrollFx: Effect = Effect.action {
         AnimateScroll.scrollToTop( GridScrollUtil.scrollOptions )
         GridScrollDone
       }
-      (ads1, jdConf1, Some(scrollFx))
+      (ads1, Some(scrollFx))
 
     } else {
-      // Проверить, совпадает ли SzMult:
-      ErrorConstants.assertArg( gridResp.szMult ==* g0.core.jdConf.szMult )
       val scAds2 = g0.core.ads.toOption.fold(newScAds)(_ ++ newScAds)
       // ready - обязателен, иначе останется pending и висячий без дела GridLoaderR.
       val ads1 = g0.core.ads.ready( scAds2 )
-      (ads1, g0.core.jdConf, None)
+      (ads1, None)
     }
 
     val g2 = g0.copy(
       core = g0.core.copy(
-        jdConf      = jdConf2,
-        jdCss       = jdCssFactory.mkJdCss( GridAh.jdCssArgs(ads2, jdConf2) ),
+        jdCss       = jdCssFactory.mkJdCss( GridAh.jdCssArgs(ads2, g0.core.jdConf) ),
         ads         = ads2,
         // Отребилдить плитку:
-        gridBuild   = GridAh.rebuildGrid(ads2, jdConf2)
+        gridBuild   = GridAh.rebuildGrid(ads2, g0.core.jdConf)
       ),
-      hasMoreAds  = ctx.m.apiReq.search.limit.fold(true)(_ >= 0)
+      hasMoreAds  = ctx.m.apiReq.search.limit.fold(true) { limit =>
+        gridResp.ads.lengthCompare(limit) >= 0
+      }
     )
+
 
     // И вернуть новый акк:
     val v2 = ctx.value0.withGrid(g2)
@@ -531,22 +522,39 @@ class GridAh[M](
     // Экшен запуска пересчёта конфигурации плитки.
     case GridReConf =>
       val v0 = value
-      val gridColsCount2 = GridAh.reconfGridColumnsCount(
-        mscreen   = screenRO.value,
-        gridConf  = MGridCalcConf.PLAIN_GRID,
-        minSzMult = v0.core.jdConf.szMult.toDouble
+      val mscreen = screenRO.value
+      val gridConf = GridAh.GRID_CONF
+      val jdConf0 = v0.core.jdConf
+      val gridColsCount2 = GridCalc.getColumnsCount(
+        contSz    = mscreen,
+        conf      = gridConf
       )
-      if (v0.core.jdConf.gridColumnsCount ==* gridColsCount2) {
-        noChange
+      val szMult2 = GridCalc.getSzMult4tilesScr(gridColsCount2, mscreen, gridConf)
 
+      val szMultMatches = jdConf0.szMult ==* szMult2
+      //println( s"gridColumnCount=$gridColsCount2 $szMultMatches ${jdConf0.szMult} => $szMult2" )
+
+      if (szMultMatches && jdConf0.gridColumnsCount ==* gridColsCount2) {
+        noChange
       } else {
-        val jdConf2 = v0.core.jdConf
+        var core1 = v0.core
+        var jdConf2 = jdConf0
           .withGridColumnsCount( gridColsCount2 )
+
+        // Если изменился szMult, то перепилить css-стили карточек:
+        if (!szMultMatches) {
+          jdConf2 = jdConf2
+            .withSzMult( szMult2 )
+          core1 = core1.withJdCss(
+            jdCssFactory.mkJdCss( GridAh.jdCssArgs(core1.ads, jdConf2) )
+          )
+        }
+
         val v2 = v0.withCore(
-          v0.core
+          core1
             .withJdConf( jdConf2 )
             .withGridBuild(
-              GridAh.rebuildGrid(v0.core.ads, jdConf2)
+              GridAh.rebuildGrid(core1.ads, jdConf2)
             )
         )
         // TODO Возможно, что надо перекачать содержимое плитки с сервера, если всё слишком сильно переменилось. Нужен отложенный таймер для этого.

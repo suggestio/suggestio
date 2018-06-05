@@ -174,7 +174,9 @@ trait ScFocusedAds
       val _withCssClasses = withCssClasses
       _mads2Fut.flatMap { mads =>
         Future.traverse(mads) { mad =>
-          for (brArgs <- scUtil.focusedBrArgsFor(mad, _qs.common.screen)) yield {
+          for {
+            brArgs <- scUtil.focusedBrArgsFor(mad, _qs.common.screen)
+          } yield {
             brArgs.copy(
               inlineStyles    = false,
               cssClasses      = _withCssClasses,

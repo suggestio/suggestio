@@ -1,8 +1,9 @@
 package controllers.sc
 
-import io.suggest.common.empty.OptionUtil, OptionUtil.Implicits._
+import io.suggest.common.empty.OptionUtil
+import OptionUtil.Implicits._
 import io.suggest.common.fut.FutureUtil
-import io.suggest.sc.MScApiVsns
+import io.suggest.sc.{MScApiVsns, ScConstants}
 import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScQs}
 import util.acl.IMaybeAuth
 import japgolly.univeq._
@@ -114,7 +115,17 @@ trait ScUniApi
                     .orElse( qs.common.locEnv.geoLocOpt )
                 }
               )
-            )
+            ),
+            // Надо ли сразу фокусировать кликнутую карточку после перехода в новый index?
+            foc = for {
+              foc0 <- qs.foc
+              if ScConstants.Focused.AUTO_FOCUS_AFTER_FOC_INDEX
+            } yield {
+              // если требуется авто-фокусировка, то снять флаг focIndex на всякий случай (для возможной от бесконечных переходов). В норме - это ни на что не должно влиять.
+              foc0.copy(
+                focIndexAllowed = false
+              )
+            }
           )
           LOGGER.trace(s"$logPrefix Ads search after index qs2=$qs2")
           qs2
@@ -128,28 +139,15 @@ trait ScUniApi
     }
 
 
-    /** Аргументы для фокусировки карточки. */
-    def focAdsSearchAfterIndexQsOptFut: Future[Option[MScQs]] = {
-      for (qs1 <- qsAfterIndexFut) yield {
-        for (foc <- qs.foc) yield {
-          val foc2 = foc.copy(
-            focIndexAllowed = false
-          )
-          qs1.withFoc( Some(foc2) )
-        }
-      }
-    }
-
-
     /** Собрать focused-логику, если она требуется. */
     def focLogicOptFut: Future[Option[FocusedLogicHttpV3]] = {
       for {
         // Нужно разобраться, какие параметры брать за основу в зависимости от флага в qs.
-        focQsOpt <- focAdsSearchAfterIndexQsOptFut
+        qsAfterIndex <- qsAfterIndexFut
       } yield {
-        for (focQs <- focQsOpt) yield {
-          LOGGER.trace(s"$logPrefix Focused logic active, focQs = ${focQs.foc.orNull}")
-          FocusedLogicHttpV3( focQs )(_request)
+        for (focQs <- qsAfterIndex.foc) yield {
+          LOGGER.trace(s"$logPrefix Focused logic active, focQs = $focQs")
+          FocusedLogicHttpV3( qsAfterIndex )(_request)
         }
       }
     }
@@ -227,14 +225,14 @@ trait ScUniApi
 
     /** Сборка JSON-ответа сервера. */
     def scRespFut: Future[MSc3Resp] = {
-      val _focRespActionOptFut = focRespActionOptFut
-      val _gridAdsRespActionOptFut = gridAdsRespActionOptFut
       val _indexRespActionOptFut = indexRespActionOptFut
+      val _gridAdsRespActionOptFut = gridAdsRespActionOptFut
+      val _focRespActionOptFut = focRespActionOptFut
       val _tagsRespActionOptFut = tagsRespActionFutOpt
       for {
-        focRaOpt        <- _focRespActionOptFut
-        gridAdsRaOpt    <- _gridAdsRespActionOptFut
         indexRaOpt      <- _indexRespActionOptFut
+        gridAdsRaOpt    <- _gridAdsRespActionOptFut
+        focRaOpt        <- _focRespActionOptFut
         tagsRaOpt       <- _tagsRespActionOptFut
       } yield {
         val respActions = (

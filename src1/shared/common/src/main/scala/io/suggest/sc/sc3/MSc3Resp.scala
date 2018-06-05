@@ -1,6 +1,5 @@
 package io.suggest.sc.sc3
 
-import io.suggest.sc.ScConstants.Resp.RESP_ACTIONS_FN
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -19,7 +18,7 @@ object MSc3Resp {
 
   /** Поддержка play-json. */
   implicit def msc3RespFormat: OFormat[MSc3Resp] = {
-    (__ \ RESP_ACTIONS_FN).format[List[MSc3RespAction]]
+    (__ \ "ra").format[List[MSc3RespAction]]
       .inmap[MSc3Resp]( apply, _.respActions )
   }
 
