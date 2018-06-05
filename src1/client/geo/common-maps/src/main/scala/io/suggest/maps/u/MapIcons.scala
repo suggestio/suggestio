@@ -1,12 +1,11 @@
 package io.suggest.maps.u
 
 import diode.data.Pot
-import diode.react.ReactPot._
 import io.suggest.common.spa.SpaConst.LkPreLoaderConst
 import io.suggest.i18n.MsgCodes
 import io.suggest.maps.vm.RadiusMarkerIcon
 import io.suggest.maps.vm.img.{IconVmStaticT, MarkerIcon, MarkerIconRetina, MarkerIconShadow}
-import io.suggest.msg.Messages
+import io.suggest.msg.{Messages, WarnMsgs}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.sjs.leaflet.Leaflet
@@ -14,7 +13,9 @@ import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.react.ReactCommonUtil.Implicits._
-import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
+import io.suggest.sjs.common.log.Log
+import japgolly.scalajs.react.vdom.VdomElement
+// Не удалять: нужно для MarkerR()...
 import japgolly.scalajs.react.vdom.Implicits._
 import react.leaflet.marker.{MarkerPropsR, MarkerR}
 
@@ -24,7 +25,7 @@ import react.leaflet.marker.{MarkerPropsR, MarkerR}
   * Created: 19.04.17 15:59
   * Description: Иконки для маркеров на карте.
   */
-object MapIcons {
+object MapIcons extends Log {
 
   def mkDraggableMarker(latLng: LatLng, icon1: Icon): Marker = {
     val options = new MarkerOptions {
@@ -37,7 +38,16 @@ object MapIcons {
 
   def markerIconBase(iconModel: IconVmStaticT, o: IconOptions = IconOptions.empty): IconOptions = {
     // Собираем обычную иконку маркера.
-    for (img <- iconModel.find()) {
+    val iconFindRes = iconModel.find()
+
+    // Leaflet начал сыпать ошибками после ~1.3, если поле .iconUrl пустовато. Нужно отследить, откуда приходят ошибочные данные.
+    if (iconFindRes.isEmpty)
+      LOG.warn( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = iconModel )
+
+    for (img <- iconFindRes) {
+      if (img.srcOpt.isEmpty)
+        LOG.warn( WarnMsgs.IMG_URL_EXPECTED, msg = (img, iconModel) )
+
       for (src <- img.srcOpt) {
         o.iconUrl = src
       }

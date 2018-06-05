@@ -27,8 +27,10 @@ object SearchAh {
   /** Вернуть эффект для пере-ресайза гео.карты. */
   def mapResizeFx(lMap: LMap): Effect = {
     Effect.action {
-      //println("invalidate size")
-      lMap.invalidateSize(true)
+      DomQuick.setTimeout(100) { () =>
+        lMap.invalidateSize(true)
+        //println("invalidate size")
+      }
       DoNothing
     }
   }

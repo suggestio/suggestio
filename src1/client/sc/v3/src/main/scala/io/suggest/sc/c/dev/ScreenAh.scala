@@ -9,6 +9,7 @@ import io.suggest.sc.m.{MScRoot, ScreenReset, ScreenRszTimer}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sc.c.search.SearchAh
+import io.suggest.sc.search.MSearchTabs
 
 /**
   * Suggest.io
@@ -70,8 +71,10 @@ class ScreenAh[M](
       var fx: Effect = scCssRebuildFx + gridReConfFx
 
       // Если гео.карта видна юзера, то пнуть её после обновления вёрстки.
+      val root = rootRO.value
       for {
-        lInstance <- rootRO.value.index.search.mapInit.lmap
+        lInstance <- root.index.search.mapInit.lmap
+        if root.index.search.isShownTab( MSearchTabs.GeoMap )
       } {
         fx >> SearchAh.mapResizeFx( lInstance )
       }

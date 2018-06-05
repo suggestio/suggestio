@@ -72,4 +72,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def UNKNOWN_CONNECTION                     = E(58)
 
+  def IMG_URL_EXPECTED                       = E(59)
+
 }
