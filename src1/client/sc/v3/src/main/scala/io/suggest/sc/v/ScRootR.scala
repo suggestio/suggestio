@@ -126,7 +126,7 @@ class ScRootR (
         override val overflowY = css_initial
       }
       val overlayStyl = new StyleProps {
-        override val zIndex = 3
+        override val zIndex = -100
       }
 
       val searchStyles = new SidebarStyles {

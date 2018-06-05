@@ -26,12 +26,15 @@ object SearchAh {
 
   /** Вернуть эффект для пере-ресайза гео.карты. */
   def mapResizeFx(lMap: LMap): Effect = {
-    Effect.action {
-      DomQuick.setTimeout(100) { () =>
+    Effect {
+      // Пауза перед сбросом размера, т.к. карта неправильно определяет свой размер "на лету", только после полного рендера.
+      for {
+        _ <- DomQuick.timeoutPromise(100).fut
+      } yield {
         lMap.invalidateSize(true)
-        //println("invalidate size")
+        // TODO Opt надо как-то пустой эффект возвращать без оверхеда.
+        DoNothing
       }
-      DoNothing
     }
   }
 
