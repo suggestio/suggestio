@@ -279,6 +279,8 @@ case class CspPolicy(
   def allowUmap: CspPolicy = {
     allowOsmLeaflet
       .addScriptSrc( Csp.Sources.UNSAFE_EVAL, Csp.Sources.UNSAFE_INLINE )
+      // Чтобы можно было менять подложку карты на любую: их много, они перечислены в шаблоне mapBaseTpl.
+      .withImgSrc( Set( Csp.Sources.* ) )
   }
 
   def jsUnsafeInline: CspPolicy = {
