@@ -10,7 +10,9 @@ import scala.scalajs.js
   */
 object CordovaConstants {
 
-  def IS_PLAIN_BROWSER = js.isUndefined( Cordova )
+  /** Является ли данная платформа - Cordova? */
+  def isCordovaPlatform: Boolean = !js.isUndefined( Cordova )
+
 
   object Events {
 

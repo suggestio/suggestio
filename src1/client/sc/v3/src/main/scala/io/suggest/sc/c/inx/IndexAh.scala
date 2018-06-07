@@ -3,7 +3,7 @@ package io.suggest.sc.c.inx
 import diode._
 import diode.data.Pot
 import io.suggest.msg.ErrorMsgs
-import io.suggest.react.ReactDiodeUtil.ActionHandlerExt
+import io.suggest.spa.DiodeUtil.Implicits.ActionHandlerExt
 import io.suggest.sc.{Sc3Api, ScConstants}
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.index.MScIndexArgs
@@ -18,7 +18,7 @@ import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sc.v.ScCssFactory
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.react.ReactDiodeUtil.EffectsOps
+import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 import io.suggest.sc.c.grid.GridAh
 import japgolly.univeq._

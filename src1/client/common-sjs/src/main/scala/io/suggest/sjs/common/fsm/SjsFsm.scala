@@ -4,7 +4,6 @@ import io.suggest.fsm.{AbstractFsm, AbstractFsmUtil}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.{ILog, Logger}
-import io.suggest.sjs.common.model.TimestampedCompanion
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
@@ -180,17 +179,6 @@ trait SjsFsm extends AbstractFsm with ILog {
       // Вешать асинхронную отправку сюда смысла нет, только паразитные setTimeout() в коде появяться.
       _sendEventSyncSafe(msg)
     }
-  }
-
-  /** Подписать фьючерс на отсылку ответа вместе с таймштампом вешанья события.
-    * Полезно для определения порядка параллельных одинаковых запросов. */
-  protected def _sendFutResBackTimestamped[T](fut: Future[T], model: TimestampedCompanion[T],
-                                              timestamp: Long = System.currentTimeMillis()): Long = {
-    fut.onComplete { tryRes =>
-      val msg = model(tryRes, timestamp)
-      _sendEventSyncSafe(msg)
-    }
-    timestamp
   }
 
 }

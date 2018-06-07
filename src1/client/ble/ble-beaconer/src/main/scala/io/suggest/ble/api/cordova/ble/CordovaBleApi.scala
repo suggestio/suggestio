@@ -3,11 +3,12 @@ package io.suggest.ble.api.cordova.ble
 import cordova.Cordova
 import evothings.ble.{BLE, DeviceInfo}
 import io.suggest.ble.api.IBleBeaconsApi
-import io.suggest.ble.beaconer.m.signals.BeaconDetected
+import io.suggest.ble.beaconer.m.BeaconDetected
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.sjs.common.fsm.SjsFsm
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
+import scala.concurrent.Future
 import scala.scalajs.js.JSON
 
 /**
@@ -41,12 +42,15 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
     getClass.getSimpleName + "(" + API_OPT + ")"
   }
 
+
   /** Начать слушанье ble-маячков, отсылая данные в указанный fsm. */
-  override def listenBeacons(listener: SjsFsm): Unit = {
-    API_OPT.get.startScan(
-      onDeviceFound = _handleDeviceFound(_: DeviceInfo, listener),
-      onScanError   = _handleErrorCode(_: String, listener)
-    )
+  override def listenBeacons(listener: Function1[BeaconDetected, _]): Future[_] = {
+    Future {
+      API_OPT.get.startScan(
+        onDeviceFound = _handleDeviceFound(_: DeviceInfo, listener),
+        onScanError   = _handleErrorCode(_: String)
+      )
+    }
   }
 
 
@@ -54,7 +58,7 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
     * Получена инфа с каким-то bluetooth advertisement, необязательно по маячкам.
     * Надо бы распарсить это в поддержимаемые маячки или отфильтровать.
     */
-  def _handleDeviceFound(dev: DeviceInfo, listener: SjsFsm): Unit = {
+  def _handleDeviceFound(dev: DeviceInfo, listener: Function1[BeaconDetected, _]): Unit = {
     // Заинлайненный список beacon-парсеров.
     // Функция собирает один beacon-парсер и пытается провести парсинг...
     val f = { parserFactory: BeaconParserFactory =>
@@ -72,21 +76,24 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
 
       } {
         case Right(beacon) =>
-          listener ! BeaconDetected( beacon )
+          val e = BeaconDetected( beacon )
+          listener(e)
         case Left(msg) =>
           LOG.log( WarnMsgs.FILTERED_OUT_BLE_DEVICE, msg = devStr + " " + msg )
       }
   }
 
   /** Какая-то ошибка возникла при сканировании. */
-  def _handleErrorCode(errorCode: String, listener: SjsFsm): Unit = {
+  def _handleErrorCode(errorCode: String): Unit = {
     LOG.error(ErrorMsgs.BLE_SCAN_ERROR, msg = errorCode)
   }
 
 
   /** Прекратить любое слушанье маячков. */
-  override def unListenAllBeacons(): Unit = {
-    API_OPT.get.stopScan()
+  override def unListenAllBeacons(): Future[_] = {
+    Future {
+      API_OPT.get.stopScan()
+    }
   }
 
 }

@@ -4,7 +4,6 @@ import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sc.GetRouterCtlF
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid._
@@ -20,6 +19,7 @@ import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits.OptionListExtOps
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
+import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.concurrent.Future
 

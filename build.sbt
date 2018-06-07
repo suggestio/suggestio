@@ -426,7 +426,7 @@ lazy val sc3Sjs = {
   Project(id = "sc3-sjs", base = file(DIR0 + "client/sc/v3"))
     .enablePlugins(WebScalaJS)
     // Поддержка BLE и Cordova не реализована. Надо извлечь из прошлой выдачи, которая была удалена 2018-04-03 после 7390c4e0af497795438e67b57e42c28281a100d2 из src1/client/sc/main
-    .dependsOn(scCommonSjs, commonReactSjs, /*bleBeaconerSjs, cordovaSjs,*/ mapsSjs, jdRenderSjs, reactSidebar, reactScroll)
+    .dependsOn(scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSjs, mapsSjs, jdRenderSjs, reactSidebar, reactScroll)
 }
 
 /** json document react renderer */

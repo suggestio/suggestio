@@ -11,7 +11,7 @@ import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
-import io.suggest.react.ReactDiodeUtil.PotOpsExt
+import io.suggest.spa.DiodeUtil.Implicits.PotOpsExt
 import io.suggest.sjs.common.vsz.ViewportSz
 
 import scala.util.Success

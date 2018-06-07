@@ -29,7 +29,7 @@ import io.suggest.pick.Base64JsUtil
 import io.suggest.primo.SetVal
 import io.suggest.quill.m.TextChanged
 import io.suggest.quill.u.QuillDeltaJsUtil
-import io.suggest.react.ReactDiodeUtil.EffectsOps
+import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ueq.QuillUnivEqUtil._

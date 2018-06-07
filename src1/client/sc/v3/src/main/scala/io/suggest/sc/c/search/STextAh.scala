@@ -2,7 +2,7 @@ package io.suggest.sc.c.search
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
-import io.suggest.react.ReactDiodeUtil.PotOpsExt
+import io.suggest.spa.DiodeUtil.Implicits.PotOpsExt
 import io.suggest.sc.m.search._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick

@@ -3,6 +3,8 @@ package io.suggest.sc
 import diode.ModelRO
 import diode.data.Pot
 import diode.react.ReactConnector
+import io.suggest.ble.beaconer.c.BleBeaconerAh
+import io.suggest.ble.beaconer.m.BbOnOff
 import io.suggest.common.event.WndEvents
 import io.suggest.dev.{JsScreenUtil, MPxRatios}
 import io.suggest.es.model.MEsUuId
@@ -16,7 +18,7 @@ import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.routes.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.sc.ads.MAdsSearchReq
-import io.suggest.sc.c.dev.{GeoLocAh, ScreenAh}
+import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c.{IRespWithActionHandler, JsRouterInitAh, TailAh}
 import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.inx.{IndexAh, WelcomeAh}
@@ -41,6 +43,7 @@ import org.scalajs.dom.Event
 import play.api.libs.json.Json
 
 import scala.concurrent.{Future, Promise}
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -73,12 +76,12 @@ class Sc3Circuit(
   import MMapInitState.MMapInitStateFastEq
 
   import MEsUuId.Implicits._
+  import io.suggest.ble.beaconer.m.MBeaconerS.MBeaconerSFastEq
 
 
   override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.SC_FSM_EVENT_FAILED
 
   override protected def initialModel: MScRoot = {
-    // TODO Десериализовать состояние из URL или откуда-нибудь ещё.
     val scInit = Json
       .parse( StateInp.find().get.value.get )
       .as[MSc3Init]
@@ -91,7 +94,8 @@ class Sc3Circuit(
       dev = MScDev(
         screen = MScScreenS(
           screen = mscreen
-        )
+        ),
+        platform = PlatformAh.platformInit(this)
       ),
       index = MScIndex(
         resp = scIndexResp,
@@ -156,6 +160,9 @@ class Sc3Circuit(
   private val confRO = internalsRW.zoom(_.conf)
 
   private val menuRW = indexRW.zoomRW(_.menu) { _.withMenu(_) }
+
+  private val platformRW = devRW.zoomRW(_.platform) { _.withPlatform(_) }
+  private val beaconerRW = devRW.zoomRW(_.beaconer) { _.withBeaconer(_) }
 
 
   private val gridAdsQsRO: ModelRO[MScQs] = zoom { mroot =>
@@ -276,6 +283,15 @@ class Sc3Circuit(
     modelRW = menuRW
   )
 
+  private val platformAh = new PlatformAh(
+    modelRW = platformRW
+  )
+
+  private val beaconerAh = new BleBeaconerAh(
+    modelRW     = beaconerRW,
+    dispatcher  = this
+  )
+
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( confRO.value.rcvrsMapUrl )
 
@@ -298,6 +314,9 @@ class Sc3Circuit(
     // Менюшка. По идее, используется не чаще, чем index.
     acc ::= menuAh
 
+    // События уровня платформы.
+    acc ::= platformAh
+
     // Основные события индекса не частые, но доступны всегда:
     acc ::= indexAh
 
@@ -311,6 +330,10 @@ class Sc3Circuit(
     // TODO Opt sTextAh не нужен, когда панель поиска скрыта.
     acc ::= sTextAh
 
+    //val searchS = searchRW.value
+    //if (searchS.isTagsVisible)
+      acc ::= tagsAh
+
     //if ( indexWelcomeRW().nonEmpty )
       acc ::= new WelcomeAh( indexWelcomeRW )
 
@@ -320,9 +343,8 @@ class Sc3Circuit(
     // Контроллеры СНАЧАЛА экрана, а ПОТОМ плитки. Нужно соблюдать порядок.
     acc ::= gridAdsAh
 
-    //val searchS = searchRW.value
-    //if (searchS.isTagsVisible)
-      acc ::= tagsAh
+    // Контроллер BLE-маячков. Сигналы приходят часто, поэтому его - ближе к голове списка.
+    acc ::= beaconerAh
 
     // Геолокация довольно часто получает сообщения (когда активна), поэтому её -- тоже в начало списка контроллеров:
     acc ::= geoLocAh
@@ -386,6 +408,50 @@ class Sc3Circuit(
       val title0 = MsgCodes.`Suggest.io`
       val title1 = titleOptRO.value.fold(title0)(_ + " | " + title0)
       dom.document.title = title1
+    }
+
+    //  Когда наступает platform ready и BLE доступен, надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
+    def __dispatchBleBeaconerOnOff() = {
+      val plat = platformRW.value
+      if (plat.isBleAvail && plat.isReady) {
+        val msg = BbOnOff( isEnabled = plat.isUsingNow)
+        dispatch( msg )
+      }
+    }
+
+    // Дожидаться активности платформы, прежде чем заюзать её.
+    val isPlatformReadyRO = platformRW.zoom(_.isReady)
+    // Лезть в состояние на стадии конструктора - плохая примета. Поэтому защищаемся от возможных косяков в будущем через try-обёртку вокруг zoom.value()
+    if ( Try(isPlatformReadyRO.value).getOrElse(false) ) {
+      // Платформа уже готова. Запустить эффект активации BLE-маячков.
+      __dispatchBleBeaconerOnOff()
+    } else {
+      // Платформа не готова. Значит, надо бы дождаться готовности платформы и повторить попытку.
+      val sp = Promise[None.type]()
+      val cancelF = subscribe(isPlatformReadyRO) { isReadyNowProxy =>
+        if (isReadyNowProxy.value) {
+          // Запустить bluetooth-мониторинг.
+          __dispatchBleBeaconerOnOff()
+          // TODO Активировать фоновый GPS-мониторинг, чтобы видеть себя на карте. Нужен маркер на карте и спрашивался о переходе в новую локацию.
+          sp.success(None)
+        }
+      }
+      // Удалить подписку на platform-ready-события: она нужна только один раз: при запуске системы на слишком асинхронной платформе.
+      for (_ <- sp.future)
+        cancelF()
+    }
+
+    // Реагировать на события активности приложения выдачи.
+    subscribe( platformRW.zoom(_.isUsingNow) ) { _ =>
+      // Глушить BLE-маячки, когда платформа позволяет это делать.
+      __dispatchBleBeaconerOnOff()
+      // TODO Глушить фоновый GPS-мониторинг
+    }
+
+    // Подписаться на события изменения списка наблюдаемых маячков.
+    // TODO Opt Не подписываться без необходимости.
+    subscribe( beaconerRW.zoom(_.nearbyReport) ) { nearbyReportProxy =>
+      println( "beacons changed: " + nearbyReportProxy.value.mkString("\n[", ",\n", "\n]") )
     }
 
   }

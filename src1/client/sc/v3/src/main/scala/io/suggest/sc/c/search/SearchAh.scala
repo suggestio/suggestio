@@ -4,7 +4,7 @@ import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.maps.m.HandleMapReady
 import io.suggest.msg.ErrorMsgs
-import io.suggest.react.ReactDiodeUtil._
+import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sc.m.ResetUrlRoute
 import io.suggest.sc.m.hdr.SearchOpenClose
 import io.suggest.sc.m.search._

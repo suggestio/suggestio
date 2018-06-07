@@ -1,6 +1,7 @@
 package io.suggest.ble
 
 import io.suggest.common.radio.IDistantRadioSignal
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -9,6 +10,7 @@ import io.suggest.common.radio.IDistantRadioSignal
   * Description: Трейт наблюдаемых данных по ровно одному маячку.
   * Изначально назывался IBeacon, но это слегка конфликтовало с ябло-брендом.
   */
+
 trait IBeaconSignal extends IDistantRadioSignal {
 
   /** Некий внутренний уникальный id/ключ маячка, если он вообще есть.
@@ -20,3 +22,9 @@ trait IBeaconSignal extends IDistantRadioSignal {
 
 }
 
+
+object IBeaconSignal {
+
+  implicit def univEq: UnivEq[IBeaconSignal] = UnivEq.force
+
+}

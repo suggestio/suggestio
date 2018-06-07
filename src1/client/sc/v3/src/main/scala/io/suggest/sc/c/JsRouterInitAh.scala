@@ -5,7 +5,7 @@ import io.suggest.sc.m._
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
-import io.suggest.react.ReactDiodeUtil._
+import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sc.ScConstants
 
 import scala.concurrent.Promise
@@ -37,7 +37,9 @@ class JsRouterInitAh[M <: AnyRef](
         // Нужно запустить инициалиазацию js-роутера:
         val fx = Effect {
           SrvRouter.ensureJsRouter()
-            .transform { tryRes => Success(JsRouterStatus(tryRes)) }
+            .transform { tryRes =>
+              Success(JsRouterStatus(tryRes))
+            }
         }
         val v2 = v0.withJsRouter(
           v0.jsRouter.pending()

@@ -1,6 +1,7 @@
 package io.suggest.sc.m.dev
 
 import diode.FastEq
+import io.suggest.ble.beaconer.m.MBeaconerS
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 
@@ -17,7 +18,9 @@ object MScDev {
   implicit object MScDevFastEq extends FastEq[MScDev] {
     override def eqv(a: MScDev, b: MScDev): Boolean = {
       (a.screen ===* b.screen) &&
-        (a.geoLoc ===* b.geoLoc)
+        (a.platform ===* b.platform) &&
+        (a.geoLoc ===* b.geoLoc) &&
+        (a.beaconer ===* b.beaconer)
     }
   }
 
@@ -33,10 +36,14 @@ object MScDev {
   */
 case class MScDev(
                    screen       : MScScreenS,
-                   geoLoc       : MScGeoLoc        = MScGeoLoc.empty
+                   platform     : MPlatformS,
+                   geoLoc       : MScGeoLoc        = MScGeoLoc.empty,
+                   beaconer     : MBeaconerS       = MBeaconerS.empty,
                  ) {
 
   def withScreen(screen: MScScreenS)      = copy(screen = screen)
+  def withPlatform(platform: MPlatformS)  = copy(platform = platform)
   def withGeoLoc(geo: MScGeoLoc)          = copy(geoLoc = geo)
+  def withBeaconer(beaconer: MBeaconerS)  = copy(beaconer = beaconer)
 
 }

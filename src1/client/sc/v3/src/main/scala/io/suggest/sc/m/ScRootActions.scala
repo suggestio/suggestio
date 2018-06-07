@@ -125,3 +125,10 @@ case class HandleScApiResp(
 
 }
 
+
+/** Изменилась видимость выдачи, нужно приостановить или возобновить работу выдачи. */
+case class PauseOrResume(isScVisible: Boolean) extends IScRootAction
+
+/** Сигнал готовности платформы к полноценной работе. */
+case object SetPlatformReady extends IScRootAction
+

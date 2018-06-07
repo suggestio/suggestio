@@ -74,4 +74,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def IMG_URL_EXPECTED                       = E(59)
 
+  def INACTUAL_NOTIFICATION                  = E(60)
+
 }

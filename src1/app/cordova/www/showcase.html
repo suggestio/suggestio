@@ -11,15 +11,27 @@
 	<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
 	<meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui"/>
 	<link type="text/css" rel="stylesheet" media="screen" href="css/showcase.css"/>
-	<link href='css/mapbox-gl.css' rel='stylesheet'/>
     </head>
     <body class="sm-body __ru ">
+        <!-- TODO Удалить это отсюда (перенести куда-нибудь, возможно с сервера спрашивать конфиг и кэшировать). -->
+	<input type="hidden" id="dds" value="{&quot;m&quot;:{&quot;c&quot;:{&quot;a&quot;:59.939037,&quot;o&quot;:30.315784},&quot;z&quot;:11},&quot;r&quot;:{&quot;r&quot;:&quot;//suggest.cdnvideo.ru/~/geo/map/rcvrs/-377154146/map.json&quot;,&quot;l&quot;:false,&quot;a&quot;:&quot;AU1MCCmy2A6B8K1LbX6u&quot;}}"/>
+	<div id="sioMartRoot"></div>
+
 	<script id="scJsRouterCont" type="text/javascript" async src="js/router.js"></script>
         <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="cordova_plugins.js"></script>
-	<input type="hidden" id="actomab" value="pk.eyJ1Ijoia29uc3RhbnRpbjIiLCJhIjoiY2ltb2xlYWcyMDAxN3ZjbTRwYjg3Z3NqbiJ9.7ls6nsfHopoz8pxt34yjbg"/>
-	<input type="hidden" id="allscnm" value="https://suggest.io/sc/map/nodes/all"/>
-	<script type="text/javascript" async src='js/mapbox-gl.js'></script>
-	<script type="text/javascript" src="js/sc-sjs-opt-bundle.js"></script>
+
+	<!-- es6 polyfill: android <= 4.4 -->
+	<script type="text/javascript" src="js/babel-polyfill.min.js"></script>
+
+	<script type="text/javascript" src="js/messages.ru.js"></script>
+
+
+	<!--script type="text/javascript" src="js/sc3-sjs-opt-bundle.js"></script-->
+
+	<script type="text/javascript" src="js/sc3-sjs-fastopt-library.js"></script>
+	<script type="text/javascript" src="js/sc3-sjs-fastopt-loader.js"></script>
+	<script type="text/javascript" src="js/sc3-sjs-fastopt.js"></script>
+
     </body>
 </html>

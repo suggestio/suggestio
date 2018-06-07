@@ -1,4 +1,4 @@
-package io.suggest.ble.beaconer.m.beacon
+package io.suggest.ble.beaconer.m
 
 import io.suggest.sjs.common.stat.TopBottomFiltered
 

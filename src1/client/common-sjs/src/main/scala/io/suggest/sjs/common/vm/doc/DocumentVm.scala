@@ -1,6 +1,5 @@
 package io.suggest.sjs.common.vm.doc
 
-import io.suggest.common.event.VisibilityChangeEvents
 import io.suggest.sjs.common.vm.Vm
 import io.suggest.sjs.common.vm.evtg.EventTargetVmT
 import io.suggest.sjs.common.vm.head.HeadVm
@@ -19,9 +18,6 @@ import scala.language.implicitConversions
  * Description: Враппер для объекта document для возможности более безопасного (кросс-браузерного)
  * обращения к некоторым полям.
  */
-object DocumentVm
-  extends VisibilityChangeEvents
-
 
 /** Представление API document'а с точки зрения потенциальной опасности некоторых полей. */
 @js.native

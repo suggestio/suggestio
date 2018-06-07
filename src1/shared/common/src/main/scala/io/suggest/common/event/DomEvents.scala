@@ -12,6 +12,7 @@ object DomEvents
   with Mouse
   with Move
   with Touch
+  with VisibilityChangeEvents
 {
 
   def CHANGE = "change"
