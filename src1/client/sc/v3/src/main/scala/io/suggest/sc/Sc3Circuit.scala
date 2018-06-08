@@ -27,20 +27,20 @@ import io.suggest.sc.c.search.{STextAh, ScMapDelayAh, SearchAh, TagsAh}
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m._
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
-import io.suggest.sc.m.grid.{MGridCoreS, MGridS}
+import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.m.search.{MMapInitState, MScSearch}
-import io.suggest.sc.sc3.{MSc3Init, MScCommonQs, MScQs}
+import io.suggest.sc.sc3.{MScCommonQs, MScQs}
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
+import io.suggest.sc.u.Sc3ConfUtil
 import io.suggest.sc.v.ScCssFactory
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.sjs.common.vm.wnd.WindowVm
-import io.suggest.spa.{OptFastEq, StateInp}
+import io.suggest.spa.OptFastEq
 import org.scalajs.dom
 import org.scalajs.dom.Event
-import play.api.libs.json.Json
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -82,12 +82,16 @@ class Sc3Circuit(
   override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.SC_FSM_EVENT_FAILED
 
   override protected def initialModel: MScRoot = {
-    val scInit = Json
-      .parse( StateInp.find().get.value.get )
-      .as[MSc3Init]
+    // Сначала надо подготовить конфиг, прочитав его со страницы (если он там есть).
+    val scInit = Sc3ConfUtil.initFromDom()
+      .getOrElse {
+        // TODO Нужен какой-то авто-конфиг. С сервера надо получать разные полезные данные, запихивать результат в circuit-конструктор.
+        val emsg = ErrorMsgs.GRID_CONFIGURATION_INVALID
+        LOG.error( emsg )
+        throw new NoSuchElementException( emsg )
+      }
 
     val mscreen = JsScreenUtil.getScreen()
-
     val scIndexResp = Pot.empty[MSc3IndexResp]
 
     MScRoot(
@@ -170,7 +174,7 @@ class Sc3Circuit(
     val currRcvrId = inxState.currRcvrId.toEsUuIdOpt
     MScQs(
       common = MScCommonQs(
-        apiVsn = Sc3Api.API_VSN,
+        apiVsn = mroot.internals.conf.apiVsn,
         screen = Some {
           val scr0 = mroot.dev.screen.screen
           // 2018-01-24 Костыль в связи с расхождением между szMult экрана и szMult плитки, тут быстрофикс:
@@ -207,7 +211,7 @@ class Sc3Circuit(
         locEnv =
           if (currRcvrId.isEmpty) mroot.locEnv
           else MLocEnv.empty,
-        apiVsn = Sc3Api.API_VSN,
+        apiVsn = mroot.internals.conf.apiVsn,
         searchTags = Some(false)
       ),
       search = MAdsSearchReq(
@@ -451,7 +455,9 @@ class Sc3Circuit(
     // Подписаться на события изменения списка наблюдаемых маячков.
     // TODO Opt Не подписываться без необходимости.
     subscribe( beaconerRW.zoom(_.nearbyReport) ) { nearbyReportProxy =>
-      println( "beacons changed: " + nearbyReportProxy.value.mkString("\n[", ",\n", "\n]") )
+      //println( "beacons changed: " + nearbyReportProxy.value.mkString("\n[", ",\n", "\n]") )
+      // Надо запустить пересборку плитки.
+      dispatch( GridLoadAds(clean = true, ignorePending = true) )
     }
 
   }

@@ -51,13 +51,13 @@ case class MScRoot(
   def withGrid( grid: MGridS )                      = copy(grid = grid)
 
   def locEnv: MLocEnv = {
-    // TODO собрать данные по маячкам и текущей локации
     MLocEnv(
       geoLocOpt = Some(
         MGeoLoc(
           point = index.search.mapInit.state.center
         )
-      )
+      ),
+      bleBeacons = dev.beaconer.nearbyReport
     )
   }
 

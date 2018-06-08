@@ -16,35 +16,40 @@ import scala.language.implicitConversions
 
 object SiteQsArgs {
 
-  def ADN_ID_FN               = "a"
-  def POV_AD_ID_FN            = "b"
-  def VSN_FN                  = "v"
-
+  // empty - частый инстанс, шарим его между всеми запросами.
   val empty = SiteQsArgs()
+
+  object Fields {
+    def ADN_ID_FN               = "a"
+    def POV_AD_ID_FN            = "b"
+    def VSN_FN                  = "v"
+  }
 
   /** query-string-биндер модели. */
   implicit def siteQsArgsQsb(implicit
-                             strOptB: QueryStringBindable[Option[String]],
-                             apiVsnB: QueryStringBindable[MScApiVsn]
+                             strOptB      : QueryStringBindable[Option[String]],
+                             apiVsnOptB   : QueryStringBindable[Option[MScApiVsn]]
                             ): QueryStringBindable[SiteQsArgs] = {
     new QueryStringBindableImpl[SiteQsArgs] {
+      import Fields._
+
       /** Маппер из qs. */
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SiteQsArgs]] = {
         val f = key1F(key)
         for {
           maybeAdnIdOpt     <- strOptB.bind(f(ADN_ID_FN),    params)
           maybePovAdIdOpt   <- strOptB.bind(f(POV_AD_ID_FN), params)
-          maybeApiVsn       <- apiVsnB.bind(f(VSN_FN),       params)
+          maybeApiVsnOpt    <- apiVsnOptB.bind(f(VSN_FN),    params)
         } yield {
           for {
-            adnIdOpt    <- maybeAdnIdOpt.right
-            povAdIdOpt  <- maybePovAdIdOpt.right
-            apiVsn      <- maybeApiVsn.right
+            adnIdOpt        <- maybeAdnIdOpt.right
+            povAdIdOpt      <- maybePovAdIdOpt.right
+            apiVsnOpt       <- maybeApiVsnOpt.right
           } yield {
             SiteQsArgs(
-              apiVsn  = apiVsn,
-              adnId   = adnIdOpt,
-              povAdId = povAdIdOpt
+              apiVsnOpt     = apiVsnOpt,
+              adnId         = adnIdOpt,
+              povAdId       = povAdIdOpt
             )
           }
         }
@@ -56,7 +61,7 @@ object SiteQsArgs {
         _mergeUnbinded1(
           strOptB.unbind(k(ADN_ID_FN),     value.adnId),
           strOptB.unbind(k(POV_AD_ID_FN),  value.povAdId),
-          apiVsnB.unbind(k(VSN_FN),        value.apiVsn)
+          apiVsnOptB.unbind(k(VSN_FN),     value.apiVsnOpt)
         )
       }
     }
@@ -73,8 +78,12 @@ object SiteQsArgs {
   *                Используется для рендера twitter-meta-тегов и прочего.
   */
 case class SiteQsArgs(
-  apiVsn  : MScApiVsn      = MScApiVsns.unknownVsn,
-  // TODO Кажется, что adnId параметр не очень-то используется для записи в него. Только на чтение.
-  adnId   : Option[String] = None,
-  povAdId : Option[String] = None
-)
+                       apiVsnOpt   : Option[MScApiVsn]       = None,
+                       // TODO Кажется, что adnId параметр не очень-то используется для записи в него. Только на чтение.
+                       adnId       : Option[String]          = None,
+                       povAdId     : Option[String]          = None
+                     ) {
+
+  final def apiVsn = apiVsnOpt.getOrElse( MScApiVsns.unknownVsn )
+
+}

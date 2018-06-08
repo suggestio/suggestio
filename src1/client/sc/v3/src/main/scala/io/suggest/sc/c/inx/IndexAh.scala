@@ -4,7 +4,7 @@ import diode._
 import diode.data.Pot
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.DiodeUtil.Implicits.ActionHandlerExt
-import io.suggest.sc.{Sc3Api, ScConstants}
+import io.suggest.sc.ScConstants
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m._
@@ -209,7 +209,7 @@ class IndexAh[M](
 
       val args = MScQs(
         common = MScCommonQs(
-          apiVsn = Sc3Api.API_VSN,
+          apiVsn = root.internals.conf.apiVsn,
           locEnv = root.locEnv,
           screen = Some( root.dev.screen.screen ),
           searchGridAds = Some( true )

@@ -78,8 +78,10 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
         case Right(beacon) =>
           val e = BeaconDetected( beacon )
           listener(e)
-        case Left(msg) =>
-          LOG.log( WarnMsgs.FILTERED_OUT_BLE_DEVICE, msg = devStr + " " + msg )
+        case _ =>
+          // do nothing
+        //case Left(msg) =>
+          //LOG.log( WarnMsgs.FILTERED_OUT_BLE_DEVICE, msg = devStr + " " + msg )
       }
   }
 

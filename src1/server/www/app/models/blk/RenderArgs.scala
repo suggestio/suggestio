@@ -4,7 +4,7 @@ import io.suggest.ad.blk.ent.MEntity
 import io.suggest.common.css.ITopLeft
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2.node.MNode
-import io.suggest.sc.{IScApiVsn, MScApiVsn, MScApiVsns}
+import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import models.blk
 import models.im.make.MakeResult
 import util.blocks.BlocksConf
@@ -16,7 +16,7 @@ import util.blocks.BlocksConf
  * Description: Модель для параметров рендера блоков. Изначально жила в models.Stuff.
  */
 
-trait IRenderArgs extends IScApiVsn {
+trait IRenderArgs {
 
   /** conf блока */
   // TODO Удалить следом за любым кодом поддержки старых карточек.
@@ -44,7 +44,7 @@ trait IRenderArgs extends IScApiVsn {
   def topLeft         : Option[ITopLeft]
 
   /** Версия API выдачи. */
-  override def apiVsn : MScApiVsn = MScApiVsns.unknownVsn
+  def apiVsn : MScApiVsn = MScApiVsns.unknownVsn
 
   /** Порядковый номер. Заполняется только для плитки выдачи. */
   def indexOpt        : Option[Int]

@@ -14,6 +14,6 @@ class ScRmeLogAppender extends RmeLogAppender {
 
   override def route        = ScJsRoutes.controllers.Sc.handleScError()
 
-  override def minSeverity  = Severities.ALL
+  override def minSeverity  = Severities.Error
 
 }

@@ -121,7 +121,7 @@ object BleBeaconerAh extends Log {
       // что фильтровать по дальности вообще смысла мало, т.к. кроме проблем это ничего не сулит в реальной обстановке.
       //tuple._2.distanceCm < 10000
       //}
-      .toSeq
+      .toList
   }
 
 
@@ -262,16 +262,17 @@ class BleBeaconerAh[M](
             val beaconSd1 = v0.beacons
               .get(bUid)
               .fold[MBeaconData] {
-              MBeaconData(
-                beacon     = m.beacon,
-                lastSeenMs = m.seen
-              )
-            } { currBeaconSd =>
-              currBeaconSd.copy(
-                beacon     = m.beacon,
-                lastSeenMs = m.seen
-              )
-            }
+                MBeaconData(
+                  beacon     = m.beacon,
+                  lastSeenMs = m.seen
+                )
+              } { currBeaconSd =>
+                currBeaconSd.copy(
+                  beacon     = m.beacon,
+                  lastSeenMs = m.seen
+                )
+              }
+
             val distanceM: Double = distanceOptM.getOrElse {
               LOG.warn(WarnMsgs.BEACON_ACCURACY_UNKNOWN, msg = m.beacon)
               99
@@ -279,7 +280,7 @@ class BleBeaconerAh[M](
             // Нам проще работать с целочисленной дистанцией в сантиметрах
             val distanceCm = (distanceM * 100).toInt
 
-            LOG.log( msg = (bUid :: distanceCm :: Nil).mkString(" ") )
+            //LOG.log( msg = (bUid :: distanceCm :: Nil).mkString(" ") )
 
             beaconSd1.accuracies.pushValue(distanceCm)
 
@@ -316,8 +317,11 @@ class BleBeaconerAh[M](
         // Собрать id маячков, подлежащий удалению.
         val keys2delete = v0.beacons
           .iterator
-          .filter { case (_, mbd) =>
-            now - mbd.lastSeenMs < ttl
+          .filter { case (k, mbd) =>
+            val isOk = now - mbd.lastSeenMs < ttl
+            val isToDelete = !isOk
+            //println(s"drop?$isToDelete $k, now=$now lastSeen=${mbd.lastSeenMs} diff=${now - mbd.lastSeenMs} max-ttl=$ttl isOk=$isOk")
+            isToDelete
           }
           .map(_._1)
           .toSet
@@ -327,7 +331,8 @@ class BleBeaconerAh[M](
           noChange
         } else {
           // Есть маячки, которые требуют удаления из основной карты. Для снижения нагрузки на CPU делаем view, а ребилд всей карты будет потом.
-          val beacons2 = v0.beacons.filterKeys( !keys2delete.contains(_) )
+          val beacons2 = v0.beacons
+            .filterKeys( !keys2delete.contains(_) )
           val (notifyAllTimerOpt2, notifyFxOpt) = BleBeaconerAh.ensureNotifyAllDirtyTimer( v0.notifyAllTimer, beacons2, v0.envFingerPrint )
 
           // Проверить, остались ли ещё маячки в списке. Если нет, то gc-таймер более не нужен.
@@ -337,6 +342,7 @@ class BleBeaconerAh[M](
           } else {
             v0.gcIntervalId
           }
+          //println(s"gc: ${keys2delete.mkString(", ")} ${v0.beacons.size}->${beacons2.size}")
 
           val v2 = v0.copy(
             notifyAllTimer  = notifyAllTimerOpt2,
@@ -351,11 +357,20 @@ class BleBeaconerAh[M](
     // Сработал таймер уведомления в внешней системы о существенном изменении среди маячков.
     case m: MaybeNotifyAll =>
       val v0 = value
+      def __maybeRmTimer() = {
+        if (v0.notifyAllTimer.nonEmpty) {
+          val v2 = v0.withNotifyAllTimerId(None)
+          updatedSilent(v2)
+        } else {
+          noChange
+        }
+      }
       if (v0.notifyAllTimer.exists(_.timestamp ==* m.timestamp)) {
         // Это ожидаемый таймер сработал. Пересчитать контрольную сумму маячков:
         val beaconsNearby = BleBeaconerAh.beaconsNearby( v0.beacons )
         val fpr2 = BleBeaconerAh.mkFingerPrint( beaconsNearby )
         if (fpr2 !=* v0.envFingerPrint) {
+          //println(s"fpr CHANGED: ${v0.envFingerPrint}=>$fpr2\n beaconsMap = ${v0.beacons}\n nearby = ${beaconsNearby.mkString(", ")}")
           // Изменился отпечаток маячков с момента последнего уведомления всех вокруг. Надо организовать обновлённый список маячков.
           val v2 = v0.copy(
             envFingerPrint = fpr2,
@@ -367,13 +382,14 @@ class BleBeaconerAh[M](
 
         } else {
           // Нет смысла уведомлять кого-либо: ничего существенно не изменилось в маячков.
-          noChange
+          //println("nothing changed " + v0.envFingerPrint + "==" + fpr2)
+          __maybeRmTimer()
         }
 
       } else {
         // Неожиданный таймер, игнор.
         LOG.log( WarnMsgs.INACTUAL_NOTIFICATION, msg = m )
-        noChange
+        __maybeRmTimer()
       }
 
 
@@ -441,11 +457,11 @@ class BleBeaconerAh[M](
     // Обработать результат подписки API на события.
     case m: HandleListenRes =>
       val v0 = value
-      v0.bleBeaconsApi.fold {
+      if (!v0.bleBeaconsApi.isPending) {
         // API выключено. Что-то не так, наверное.
         LOG.error( ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED, msg = m )
         noChange
-      } { _ =>
+      } else {
         // Сейчас система включена, и API активно. Значит пришёл сигнал об активации API (или ошибке активации).
         // Запустить таймер перехода из тихого в нормальный режим работы (уведомлять всех).
         m.listenTryRes.fold(

@@ -241,7 +241,8 @@ class ScAdSearchUtil @Inject() (
         } else {
           val adsInBcnsSearchOpt = bleUtil.scoredByDistanceBeaconSearch(
             maxBoost = 20000000F,
-            predicates = MPredicates.Receiver.AdvDirect :: Nil,
+            //TODO Надо predicates = MPredicates.Receiver.AdvDirect :: Nil, но есть проблемы с LkNodes формой, которая лепит везде Self.
+            predicates = MPredicates.Receiver :: Nil,
             bcns = bcns2Iter
           )
 

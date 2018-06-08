@@ -320,7 +320,7 @@ class TailAh[M](
         .cond(
           isActualResp,
           left = {
-            LOG.error(WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m)
+            LOG.log(WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m)
             noChange
           },
           right = None

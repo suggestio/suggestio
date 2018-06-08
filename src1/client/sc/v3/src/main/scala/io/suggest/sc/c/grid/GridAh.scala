@@ -403,6 +403,7 @@ class GridAh[M](
     // Сигнал к загрузке карточек с сервера согласно текущему состоянию выдачи.
     case m: GridLoadAds =>
       val v0 = value
+      //println(m)
       if (v0.core.ads.isPending && !m.ignorePending) {
         LOG.warn( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.core.ads) )
         noChange

@@ -30,6 +30,12 @@ object MScApiVsns extends IntEnum[MScApiVsn] {
   /** Выдача на React.sjs (sc3). */
   case object ReactSjs3 extends MScApiVsn( 4 )
 
+  /** react-выдача sc3 для cordova-приложений. */
+  case object ReactCordova extends MScApiVsn( 5 ) {
+    override def majorVsn = ReactSjs3.majorVsn
+    override def forceAbsUrls = true
+  }
+
 
   override val values = findValues
 
@@ -69,8 +75,3 @@ object MScApiVsn {
 
 }
 
-
-/** Интерфейс для моделей, предоставляющим поле apiVsn с версией API выдачи. */
-trait IScApiVsn {
-  def apiVsn: MScApiVsn
-}

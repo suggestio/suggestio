@@ -122,7 +122,7 @@ var @(name) = {};
           }
           a = a.concat(
             ap,
-            encodeURIComponent(kp1),
+            kp1, @* //2018-06-08 Без encodeURIComponent, т.к. ломает имена c индексами [1] *@
             '=',
             encodeURIComponent(v1)
           );

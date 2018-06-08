@@ -1,5 +1,6 @@
 package io.suggest.sc.sc3
 
+import io.suggest.sc.MScApiVsn
 import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -18,7 +19,8 @@ object MSc3Conf {
   implicit def MSC3_CONF_FORMAT: OFormat[MSc3Conf] = (
     (__ \ "r").format[String] and
     (__ \ "l").format[Boolean] and
-    (__ \ "a").format[String]
+    (__ \ "a").format[String] and
+    (__ \ "v").format[MScApiVsn]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MSc3Conf] = UnivEq.derive
@@ -33,5 +35,6 @@ object MSc3Conf {
 case class MSc3Conf(
                      rcvrsMapUrl    : String,
                      isLoggedIn     : Boolean,
-                     aboutSioNodeId : String
+                     aboutSioNodeId : String,
+                     apiVsn         : MScApiVsn,
                    )

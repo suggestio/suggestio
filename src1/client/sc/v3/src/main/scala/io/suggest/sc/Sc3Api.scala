@@ -9,13 +9,6 @@ import io.suggest.sc.u.api.{IScUniApi, ScUniApiHttpImpl}
   * Description: API выдачи.
   */
 
-object Sc3Api {
-
-  final def API_VSN = MScApiVsns.ReactSjs3
-
-}
-
-
 /** Интерфейс полного API. Не ясно, нужен ли. */
 trait ISc3Api
   extends IScUniApi

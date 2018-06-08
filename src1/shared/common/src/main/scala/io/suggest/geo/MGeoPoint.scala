@@ -151,6 +151,15 @@ object MGeoPoint {
 
   }
 
+
+  /** Примеры гео-точек. */
+  object Examples {
+
+    /** Центр СПб, адмиралтейство / штаб ВМФ. */
+    def RU_SPB_CENTER = MGeoPoint(lat = 59.93769, lon = 30.30887)
+
+  }
+
 }
 
 

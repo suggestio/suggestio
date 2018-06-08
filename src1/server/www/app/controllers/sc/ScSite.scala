@@ -127,16 +127,13 @@ trait ScSite
 
     /** Добавки к тегу head в siteTpl. */
     def headAfterFut: Future[List[Html]] = {
-      mNodesCache.maybeGetByIdCached( _siteQsArgs.povAdId )
-        .map { _.get }
-        // Интересует только карточка с ресивером. TODO И отмодерированная?
-        .filter { mad =>
-          mad.edges
-            .withPredicateIter(MPredicates.Receiver)
-            .nonEmpty  //.exists(_.info.sls.nonEmpty)
-        }
-        // Зарендерить всё параллельно.
-        .flatMap { mad =>
+      val fut = for {
+        madOpt <- mNodesCache.maybeGetByIdCached( _siteQsArgs.povAdId )
+        mad = madOpt.get
+        if mad.edges
+          .withPredicateIter( MPredicates.Receiver )
+          .nonEmpty  //.exists(_.info.sls.nonEmpty)
+        renders <- {
           val futs = for (svcHelper <- extServicesUtil.HELPERS) yield {
             for (renderables <- svcHelper.adMetaTagsRender(mad)) yield {
               for (renderable <- renderables) yield {
@@ -144,18 +141,20 @@ trait ScSite
               }
             }
           }
-          for (renders <- Future.sequence(futs)) yield {
-            renders.iterator
-              .flatten
-              .toList
-          }
+          Future.sequence(futs)
         }
-        // Отработать случи отсутствия карточки или другие нежелательные варианты.
-        .recover { case ex: Throwable =>
-          if (!ex.isInstanceOf[NoSuchElementException])
-            LOGGER.warn("Failed to collect meta-tags for ad " + _siteQsArgs.povAdId, ex)
-          List.empty[Html]
-        }
+      } yield {
+        renders
+          .iterator
+          .flatten
+          .toList
+      }
+      // Отработать случи отсутствия карточки или другие нежелательные варианты.
+      fut.recover { case ex: Throwable =>
+        if (!ex.isInstanceOf[NoSuchElementException])
+          LOGGER.warn("Failed to collect meta-tags for ad " + _siteQsArgs.povAdId, ex)
+        List.empty[Html]
+      }
     }
 
     /** Какой скрипт рендерить? */
@@ -341,12 +340,13 @@ trait ScSite
         val state0 = MSc3Init(
           mapProps = MMapProps(
             center = geoPoint0,
-            zoom   = 11     // TODO Цифра с потолка.
+            zoom   = MMapProps.ZOOM_DEFAULT
           ),
           conf = MSc3Conf(
             rcvrsMapUrl     = rcvrsMapUrl,
             isLoggedIn      = _request.user.isAuth,
-            aboutSioNodeId  = aboutSioNodeId
+            aboutSioNodeId  = aboutSioNodeId,
+            apiVsn          = _siteQsArgs.apiVsn
           )
         )
         val scriptRenderArgs = MSc3ScriptRenderArgs(

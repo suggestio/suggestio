@@ -38,7 +38,10 @@ case class HttpRoute(
   assert( url.startsWith( HttpConst.Proto.CURR_PROTO ) )
 
   private def _absUrl(proto: String, secure: Boolean): String = {
-    proto + (if(secure) HttpConst.Proto.SECURE_SUFFIX else "") + url
+    proto +
+      (if(secure) HttpConst.Proto.SECURE_SUFFIX else "") +
+      HttpConst.Proto.COLON +
+      url
   }
 
   def absoluteUrl(secure: Boolean): String = {

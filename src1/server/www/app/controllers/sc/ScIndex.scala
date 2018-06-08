@@ -91,13 +91,13 @@ trait ScIndex
     )
       // В зависимости от версии API выбрать используемую логику сборки ответа.
       .flatMap { _ =>
-        val logicOrNull = if (args.common.apiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
-          ScIndexLogicHttp(args)(request)
+        val logicOpt = if (args.common.apiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
+          Some( ScIndexLogicHttp(args)(request) )
         } else {
           LOGGER.error(s"$logPrefix No logic available for api vsn: ${args.common.apiVsn}. Forgot to implement? args = $args")
-          null
+          None
         }
-        Option( logicOrNull )
+        logicOpt
           .toRight(
             NotImplemented(s"Sc Index API not implemented for ${args.common.apiVsn}.")
           )
@@ -200,7 +200,7 @@ trait ScIndex
       // Ищем активные узлы-ресиверы, относящиеся к видимым маячкам.
       val searchOpt = bleUtil.scoredByDistanceBeaconSearch(
         maxBoost    = 100000F,
-        predicates  = Seq( MPredicates.PlacedIn ),
+        predicates  = MPredicates.PlacedIn :: Nil,
         bcns        = _qs.common.locEnv.bleBeacons
       )
       searchOpt.fold [Future[MIndexNodeInfo] ] {
