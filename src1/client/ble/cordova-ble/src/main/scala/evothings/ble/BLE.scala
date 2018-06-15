@@ -1,5 +1,7 @@
 package evothings.ble
 
+import com.apple.ios.core.bluetooth.CBAdvData
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
 import scala.scalajs.js.typedarray.{ArrayBuffer, Uint8Array}
@@ -21,7 +23,7 @@ class BLE extends js.Object {
 
   def stopScan(): Unit = js.native
 
-  def parseAdvertisementData(device: DeviceInfo): js.UndefOr[AdvertisementData] = js.native
+  def parseAdvertisementData(device: DeviceInfo): js.UndefOr[CBAdvData] = js.native
 
   def getBondState(device   : IDeviceAddress,
                    success  : js.Function1[String, _],
@@ -169,56 +171,7 @@ sealed trait DeviceInfo extends IDeviceAddress {
     * Available on Android by parsing the scanRecord, which is implemented in the library EasyBLE:
     * @see [[https://github.com/evothings/evothings-libraries/blob/master/libs/evothings/easyble/easyble.js]]
     */
-  var advertisementData: js.UndefOr[AdvertisementData] = js.native
-
-}
-
-
-/**
-  * Information extracted from a scanRecord. Some or all of the fields may
-  * be undefined. This varies between BLE devices.
-  * Depending on OS version and BLE device, additional fields, not documented
-  * here, may be present.
-  */
-@js.native
-sealed trait AdvertisementData extends js.Object {
-
-  /**
-    * The device's name. Might or might
-    * not be equal to DeviceInfo.name. iOS caches DeviceInfo.name which means if
-    * the name is changed on the device, the new name might not be visible.
-    * kCBAdvDataLocalName is not cached and is therefore safer to use, when available.
-    */
-  var kCBAdvDataLocalName: js.UndefOr[String] = js.native
-
-  /** Transmission power level as advertised by the device. */
-  var kCBAdvDataTxPowerLevel: js.UndefOr[Int] = js.native
-
-  /** A positive integer, the BLE channel
-    * on which the device listens for connections. Ignore this number. */
-  var kCBAdvDataChannel: js.UndefOr[Int] = js.native
-
-  /** True if the device accepts  connections. False if it doesn't. */
-  var kCBAdvDataIsConnectable: js.UndefOr[Boolean] = js.native
-
-  /**
-    * Array of strings, the UUIDs of services advertised by the device.
-    * Formatted according to RFC 4122, all lowercase.
-    */
-  var kCBAdvDataServiceUUIDs: js.UndefOr[js.Array[String]] = js.native
-
-  /**
-    * Dictionary of strings to strings.
-    * The keys are service UUIDs. The values are base-64-encoded binary data.
-    */
-  var kCBAdvDataServiceData: js.UndefOr[js.Dictionary[String]] = js.native
-
-  /**
-    * Base-64-encoded binary data.
-    * This field is used by BLE devices to advertise custom data that don't fit into
-    * any of the other fields.
-    */
-  var kCBAdvDataManufacturerData: js.UndefOr[String] = js.native
+  var advertisementData: js.UndefOr[CBAdvData] = js.native
 
 }
 

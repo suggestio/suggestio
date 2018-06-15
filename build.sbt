@@ -311,6 +311,12 @@ lazy val cordovaSjs = Project(id = "scalajs-cordova", base = file(DIR0 + "client
 lazy val cordovaBleSjs = Project(id = "scalajs-cordova-ble", base = file(DIR0 + "client/ble/cordova-ble"))
 
 
+/** Scala.js фасады для доступа к web-bluetooth API. */
+//lazy val webBluetoothSjs = {
+//  val name = "web-bluetooth"
+//  Project(id = "scalajs-" + name, base = file(DIR0 + "client/ble/" + name))
+//}
+
 /** Самописное leaflet API. */
 lazy val leafletSjs = Project(id = "scalajs-leaflet", base = file(DIR0 + "client/geo/leaflet/main"))
     .dependsOn(commonSjs)
@@ -396,7 +402,7 @@ lazy val lkAdsSjs = {
     .dependsOn(lkCommonSjs, jdRenderSjs, lkNodesFormSjs)
 }
 
-/** Всякие мелкие скрипты ЛК объеденены в этом scala-js. 
+/** Всякие мелкие скрипты ЛК объеденены в этом scala-js.
  *
  * Чтобы clean/test в lk-sjs срабатывал и на зависимых вещах, перечисляем их здесь
  *   .aggregate(lkAdvExtSjs, lkAdvGeoSjs, lkAdvCommonSjs, lkCommonSjs, lkAdnMapSjs, lkNodesFormSjs)

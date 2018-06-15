@@ -219,6 +219,11 @@ object Common {
       */
     val REACT_SCROLL = "1.7.9"
 
+    /** Упрощённое API-обёртка над WebBluetooth для работы с маячками eddystone прямо из браузера.
+      * @see [[https://github.com/zurfyx/eddystone-web-bluetooth]]
+      */
+    val EDDYSTONE_WEB_BLUETOOTH_JS = "1.0.1"
+
   }
 
 

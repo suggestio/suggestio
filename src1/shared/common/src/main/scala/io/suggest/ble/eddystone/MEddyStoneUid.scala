@@ -9,11 +9,11 @@ package io.suggest.ble.eddystone
   *           то тут hex-строка с 16 байтами полного id.
   */
 case class MEddyStoneUid(
-  override val rssi     : Int,
-  override val txPower  : Int,
-  uid                   : String
-  //url                   : Option[String] = None
-)
+                          override val rssi     : Int,
+                          override val txPower  : Int,
+                          uid                   : String
+                          //url                   : Option[String] = None
+                        )
   extends IEddyStoneTxSignal
 {
 

@@ -1,10 +1,14 @@
 package io.suggest.pick
 
 import io.suggest.bin.BinaryUtil
+import io.suggest.common.uuid.LowUuidUtil
 import org.scalajs.dom.{Blob, FileReader, UIEvent}
 
 import scala.annotation.tailrec
 import scala.concurrent.{Future, Promise}
+import scala.scalajs.js
+import scala.scalajs.js.URIUtils
+import scala.scalajs.js.annotation.JSGlobal
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArray, Uint8Array}
 
 /**
@@ -197,13 +201,15 @@ object JsBinaryUtil {
     * @param byteCount Bytes count.
     * @return hex string.
     */
-  def toHexString(i: Int, byteCount: Int): String = {
+  def toHexString(i: Double, byteCount: Int): String = {
     import scalajs.js.JSNumberOps._
 
     var string = i.toString(16)
-    while (string.length < byteCount*2) {
-      string = "0" + string
-    }
+    val finalLen = byteCount * 2
+    // Добить нулями слева, когда это требуется
+    val leadingZeroesCount = finalLen - string.length
+    if (leadingZeroesCount > 0)
+      string = ("0" * leadingZeroesCount) + string
     string
   }
 
@@ -248,4 +254,43 @@ object JsBinaryUtil {
     p.future
   }
 
+
+  /** Десериализация 16 байтов uuid из js-массива байт.
+    *
+    * @param array Массив байт.
+    * @param offset Начальный сдвиг в массиве байт.
+    * @return Строка UUID стандартного вида "хххххххх-хххх-хххх-хххх-хххххххххххх".
+    */
+  def byteArrayReadUuid(array: Uint8Array, offset: Int): String = {
+    val uuidFormat = LowUuidUtil.UUID_FORMAT
+    val sb = new StringBuilder( uuidFormat.sum + uuidFormat.length - 1 )
+    val delim = LowUuidUtil.UID_PARTS_DELIM.head
+    var k = offset
+    for (uuidPartLen <- uuidFormat) {
+      for (_ <- 0 until uuidPartLen) {
+        val chStr = JsBinaryUtil.toHexString( array(k), 1 )
+        sb.append( chStr )
+        k += 1
+      }
+      // Для всех частей кроме последней надо добавлять разделитель "-".
+      if (uuidPartLen < 6)
+        sb.append( delim )
+    }
+    sb.toString()
+  }
+
+
+  /** Наиболее быстрый метод десериализации - застаить браузер декодировать массив.
+    * Как это просто и легко сделать на scala.js - загадка.
+    * Поэтому, тут просто костыль, вызывающий String.fromCharCode(ch*).
+    */
+  def bytesUtf8ToString(a: Uint8Array): String = {
+    // TODO В оригинале было decodeURIComponent(escape(...)). Т.е. escape+unescape. Зачем-то это надо было. Не ясно, зачем именно.
+    js.Dynamic.global
+      .String.fromCharCode
+      .apply(null, a)
+      .asInstanceOf[String]
+  }
+
 }
+

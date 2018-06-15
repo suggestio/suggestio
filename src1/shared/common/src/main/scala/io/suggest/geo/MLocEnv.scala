@@ -1,7 +1,7 @@
 package io.suggest.geo
 
 import io.suggest.ble.MUidBeacon
-import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.loc.LocationConstants._
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
@@ -28,7 +28,7 @@ object MLocEnv extends IEmpty {
     (__ \ GEO_LOC_FN).formatNullable[MGeoLoc] and
     (__ \ BLE_BEACONS_FN).formatNullable[Seq[MUidBeacon]]
       .inmap[Seq[MUidBeacon]](
-        { optSeq => optSeq.getOrElse(Nil) },
+        EmptyUtil.opt2ImplEmptyF(Nil),
         { seq => if (seq.isEmpty) None else Some(seq) }
       )
   )(apply, unlift(unapply))
@@ -48,7 +48,7 @@ object MLocEnv extends IEmpty {
   * @param bleBeacons Данные BLE-локации на основе маячков.
   */
 case class MLocEnv(
-  geoLocOpt     : Option[MGeoLoc]    = None,
-  bleBeacons    : Seq[MUidBeacon]    = Nil
-)
+                    geoLocOpt     : Option[MGeoLoc]    = None,
+                    bleBeacons    : Seq[MUidBeacon]    = Nil
+                  )
   extends EmptyProduct

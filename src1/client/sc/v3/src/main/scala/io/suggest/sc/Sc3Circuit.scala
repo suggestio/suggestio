@@ -76,6 +76,7 @@ class Sc3Circuit(
   import MMapInitState.MMapInitStateFastEq
 
   import MEsUuId.Implicits._
+  import io.suggest.sc.m.dev.MPlatformS.MPlatformSFastEq
   import io.suggest.ble.beaconer.m.MBeaconerS.MBeaconerSFastEq
 
 
@@ -418,8 +419,10 @@ class Sc3Circuit(
     def __dispatchBleBeaconerOnOff() = {
       val plat = platformRW.value
       if (plat.isBleAvail && plat.isReady) {
-        val msg = BbOnOff( isEnabled = plat.isUsingNow)
-        dispatch( msg )
+        Future {
+          val msg = BbOnOff( isEnabled = plat.isUsingNow)
+          dispatch( msg )
+        }
       }
     }
 
@@ -441,8 +444,8 @@ class Sc3Circuit(
         }
       }
       // Удалить подписку на platform-ready-события: она нужна только один раз: при запуске системы на слишком асинхронной платформе.
-      for (_ <- sp.future)
-        cancelF()
+      sp.future
+        .andThen { case _ => cancelF() }
     }
 
     // Реагировать на события активности приложения выдачи.
@@ -454,7 +457,7 @@ class Sc3Circuit(
 
     // Подписаться на события изменения списка наблюдаемых маячков.
     // TODO Opt Не подписываться без необходимости.
-    subscribe( beaconerRW.zoom(_.nearbyReport) ) { nearbyReportProxy =>
+    subscribe( beaconerRW.zoom(_.nearbyReport) ) { _ =>
       //println( "beacons changed: " + nearbyReportProxy.value.mkString("\n[", ",\n", "\n]") )
       // Надо запустить пересборку плитки.
       dispatch( GridLoadAds(clean = true, ignorePending = true) )

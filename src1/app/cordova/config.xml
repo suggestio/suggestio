@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="io.suggest.Sio2m" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-    <name>iSuggest</name>
+<widget id="io.suggest.app.cordova.sio2m" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>sio2m</name>
     <description>
 	Suggest.io cordova client.
     </description>
     <author email="konstantin.nikiforov@cbca.ru" href="https://www.suggest.io">
-        CBCA nano-team
+      Konstantin Nikiforov
     </author>
     <content src="showcase.html" />
     <plugin name="cordova-plugin-whitelist" spec="1" />
@@ -23,4 +23,10 @@
         <allow-intent href="itms:*" />
         <allow-intent href="itms-apps:*" />
     </platform>
+    <plugin name="cordova-plugin-geolocation" spec="^4.0.1" />
+    <plugin name="cordova-plugin-ble-central" spec="^1.2.2">
+        <variable name="BLUETOOTH_USAGE_DESCRIPTION" value="Monitoring Bluetooth-Beacons" />
+    </plugin>
+    <engine name="android" spec="^7.0.0" />
+    <engine name="ios" spec="^4.5.4" />
 </widget>

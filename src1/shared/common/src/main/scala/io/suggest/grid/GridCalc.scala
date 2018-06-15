@@ -1,6 +1,6 @@
 package io.suggest.grid
 
-import io.suggest.ad.blk.{BlockWidth, BlockWidths}
+import io.suggest.ad.blk.{BlockPaddings, BlockWidth, BlockWidths}
 import io.suggest.common.geom.d2.IWidth
 import io.suggest.dev.{MSzMult, MSzMults}
 
@@ -78,17 +78,18 @@ object GridCalc {
 
 /** Модель конфига для рассчёта колонок сетки.
   *
-  * @param cellPadding Расстоянием между ячейками.
   * @param cellWidth Ширина одной рассчётной ячейки в css-пикселях.
   * @param maxColumns Максимально допустимое кол-во колонок.
   */
 case class MGridCalcConf(
-                          cellPadding    : Int,
                           cellWidth      : BlockWidth,
                           maxColumns     : Int
                         ) {
 
   def colUnitWidthPx = cellWidth.value
+
+  /** Ширина обрамления вокруг одного блока. */
+  def cellPadding = BlockPaddings.Bp20.outlinePx
 
 }
 
@@ -97,7 +98,6 @@ object MGridCalcConf {
   /** Настройки для дефолтовой сетки. */
   def PLAIN_GRID: MGridCalcConf = {
     MGridCalcConf(
-      cellPadding  = GridConst.PADDING_CSSPX,
       cellWidth    = BlockWidths.NARROW,
       maxColumns   = GridConst.CELL140_COLUMNS_MAX
     )
@@ -108,7 +108,6 @@ object MGridCalcConf {
     val bw = BlockWidths.NORMAL
     MGridCalcConf(
       maxColumns  = GridConst.CELL300_COLUMNS_MAX,
-      cellPadding = GridConst.PADDING_CSSPX,
       cellWidth   = bw
     )
   }

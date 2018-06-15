@@ -1,6 +1,6 @@
 package io.suggest.common.uuid
 
-import io.suggest.ble.BleConstants.Beacon.UID_PARTS_DELIM
+import io.suggest.common.html.HtmlConstants
 
 /**
   * Suggest.io
@@ -9,6 +9,12 @@ import io.suggest.ble.BleConstants.Beacon.UID_PARTS_DELIM
   * Description: Низкоуровневая утиль для UUID.
   */
 object LowUuidUtil {
+
+  /** Разделитель, используемый при форматировании кусков ID. */
+  @inline
+  final def UID_PARTS_DELIM = HtmlConstants.MINUS
+
+  final def UUID_FORMAT: List[Int] = 4 :: 2 :: 2 :: 2 :: 6 :: Nil
 
   /**
     * Отформатировать hex-строку в представление eddystone UID (10+6 байт):

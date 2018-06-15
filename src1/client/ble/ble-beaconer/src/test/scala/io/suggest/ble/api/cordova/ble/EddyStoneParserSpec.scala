@@ -1,32 +1,31 @@
 package io.suggest.ble.api.cordova.ble
 
-import evothings.ble.{AdvertisementData, DeviceInfo}
+import com.apple.ios.core.bluetooth.CBAdvData
+import com.github.don.cordova.plugin.ble.central.{BtDevice, Rssi_t}
+import io.suggest.pick.JsBinaryUtil
 import minitest._
 
 import scala.scalajs.js
+import scala.scalajs.js.typedarray.ArrayBuffer
+import scala.scalajs.js.{Dictionary, UndefOr, |}
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 13.10.16 21:40
-  * Description: Тесты для beacon-парсера [[IBeaconParser]].
+  * Description: Тесты для beacon-парсера [[EddyStoneParser]].
   */
 object EddyStoneParserSpec extends SimpleTestSuite {
 
   test("Parse some real 1st-gen MagicSystems EddyStone-UID beacon on Android") {
-
-    val dev = js.Object().asInstanceOf[DeviceInfo]
-    dev.address = "EF:3B:62:6A:2E:9B"
-    dev.rssi = -60
-    dev.scanRecord = "AgEGAwOq/hUWqv4Aw6oRIjNEVWZ3iJkAAAAABFYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-    dev.advertisementData = {
-      val ad = js.Object().asInstanceOf[AdvertisementData]
-      val svcUuid = "0000feaa-0000-1000-8000-00805f9b34fb"
-      ad.kCBAdvDataServiceUUIDs = js.Array( svcUuid )
-      ad.kCBAdvDataServiceData  = js.Dictionary[String](
-        svcUuid -> "AMOqESIzRFVmd4iZAAAAAARW"
-      )
-      ad
+    // Имитируем bt-выхлоп андройда:
+    val dev = new BtDevice {
+      override val id = "EF:3B:62:6A:2E:9B"
+      override val rssi: UndefOr[Rssi_t] = -60
+      override val advertising: UndefOr[ArrayBuffer | CBAdvData] = {
+        val scanRecord = "AgEGAwOq/hUWqv4Aw6oRIjNEVWZ3iJkAAAAABFYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+        JsBinaryUtil.base64DecToArr(scanRecord).buffer
+      }
     }
 
     val rEithOpt = EddyStoneParser(dev).parse()
@@ -46,17 +45,22 @@ object EddyStoneParserSpec extends SimpleTestSuite {
 
   test("Parse some strange eddystone-UID beacon from TK Gulliver (scan via iPhone)") {
 
-    val dev = js.Object().asInstanceOf[DeviceInfo]
-    dev.address = "35E90358-121B-4BE9-811A-0AE262D2FED5"
-    dev.rssi = -95
-    dev.advertisementData = {
-      val ad = js.Object().asInstanceOf[AdvertisementData]
-      val svcUuid = "0000feaa-0000-1000-8000-00805f9b34fb"
-      ad.kCBAdvDataServiceUUIDs = js.Array(svcUuid)
-      ad.kCBAdvDataServiceData = js.Dictionary[String](
-        svcUuid -> "AOO6HFG6sxR+/ujlJSQjIiEgAAA="
-      )
-      ad
+    val dev = new BtDevice {
+      override val id = "35E90358-121B-4BE9-811A-0AE262D2FED5"
+      override val rssi: UndefOr[Rssi_t] = -95
+      override val advertising: UndefOr[ArrayBuffer | CBAdvData] = {
+        val svcUuid = "0000feaa-0000-1000-8000-00805f9b34fb"
+        new CBAdvData {
+          override val kCBAdvDataServiceUUIDs: UndefOr[js.Array[String]] = {
+            js.Array(svcUuid)
+          }
+          override val kCBAdvDataServiceData: UndefOr[Dictionary[ArrayBuffer]] = {
+            js.Dictionary[ArrayBuffer](
+              svcUuid -> JsBinaryUtil.base64DecToArr("AOO6HFG6sxR+/ujlJSQjIiEgAAA=").buffer
+            )
+          }
+        }
+      }
     }
 
     val rEithOpt = EddyStoneParser(dev).parse()

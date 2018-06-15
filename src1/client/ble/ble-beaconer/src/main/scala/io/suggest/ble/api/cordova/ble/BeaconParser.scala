@@ -1,6 +1,6 @@
 package io.suggest.ble.api.cordova.ble
 
-import evothings.ble.DeviceInfo
+import com.github.don.cordova.plugin.ble.central.BtDevice
 import io.suggest.ble.IBeaconSignal
 import io.suggest.msg.ErrorMsg_t
 import io.suggest.primo.{IApply1, TypeT}
@@ -23,7 +23,7 @@ trait BeaconParser extends TypeT with ILog {
 
 
   /** Инстанс в cordova-ble device info. */
-  def dev: DeviceInfo
+  def dev: BtDevice
 
   /** Пропарсить dev в опциональный инстанс маячка.
     * @return None если это не маячок.
@@ -51,6 +51,6 @@ trait BeaconParser extends TypeT with ILog {
 
 /** Интерфейс для компаньонов, собирающих конкретные реализации [[BeaconParser]]. */
 trait BeaconParserFactory extends IApply1 {
-  override type ApplyArg_t = DeviceInfo
+  override type ApplyArg_t = BtDevice
   override type T <: BeaconParser
 }
