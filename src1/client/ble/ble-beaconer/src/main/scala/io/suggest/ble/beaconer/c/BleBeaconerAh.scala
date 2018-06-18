@@ -468,6 +468,7 @@ class BleBeaconerAh[M](
           {ex =>
             val beacons2 = Map.empty[String, MBeaconData]
             val gcTimer2 = ensureGcInterval(beacons2, v0.gcIntervalId)
+            LOG.error(ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED, ex = ex, msg = m)
             // Какая-то ошибка активации API.
             val v2 = v0.copy(
               isEnabled         = false,
@@ -481,6 +482,7 @@ class BleBeaconerAh[M](
           {bbApi =>
             // Успешная активация API. Надо запустить таймер начального накопления данных по маячкам.
             val (timerInfo, fx) = BleBeaconerAh.startNotifyAllTimer( BleBeaconerAh.EARLY_INIT_TIMEOUT_MS )
+            println(s"ok, starting with $bbApi")
             val v2 = v0.copy(
               notifyAllTimer    = Some(timerInfo),
               isEnabled         = true,

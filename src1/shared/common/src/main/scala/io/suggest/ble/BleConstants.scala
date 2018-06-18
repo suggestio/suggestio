@@ -24,7 +24,7 @@ object BleConstants {
     */
   val SERVICES_BASE_UUID_LC: String = {
     val d = LowUuidUtil.UID_PARTS_DELIM
-    d + FOUR_ZEROES + d + "1000-8000-00805f9b34fb"
+    d + FOUR_ZEROES + d + "1000-8000-00805F9B34FB"
   }
 
   /** Сборка полного UUID на основе 16-бит service id (hex). */

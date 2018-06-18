@@ -94,11 +94,16 @@ case class EddyStoneParser(override val dev: BtDevice)
               val parsedTokens = BtAdvData.parseScanRecord( new Uint8Array(arrBuf) )
               for {
                 tok <- parsedTokens.iterator
-                sd  <- tok match {
-                  case sd: ScanRecordToken.ServiceData => sd :: Nil
-                  case _ => Nil
+                sd  <- {
+                  tok match {
+                    case sd: ScanRecordToken.ServiceData => sd :: Nil
+                    case _ => Nil
+                  }
                 }
-                if (sd.uuid matchUuid eddyStoneUuidTok)
+                if {
+                  val r = sd.uuid matchUuid eddyStoneUuidTok
+                  r
+                }
               } yield {
                 sd.data
               }
@@ -124,34 +129,40 @@ case class EddyStoneParser(override val dev: BtDevice)
         }
       }
 
+    } yield {
+
       // Это eddystone какого-то типа. На руках есть service data, заявленная для eddystone uuid.
       // Надо разобрать байты, сверить тип с UID:
-      frameCode = esAdBytes(0)
-      if {
+      val frameCode = esAdBytes(0)
+      if (
         // 2017.mar.29: Бывают инновационные маячки, которые излишне длинные фреймы, что не противоречит стандарту.
         // Могут и 20 байт прислать, где в хвосте 0x0000. Первый такой маячок был обнаружен в ТК Гулливер.
         // Парсим только первые N байт в UID-фреймах:
         frameCode ==* MFrameTypes.UID.frameCode &&
           esAdBytes.byteLength >= MFrameTypes.UID.frameMinByteLen
-      }
-
-    } yield {
-      MEddyStoneUid(
-        rssi    = dev.rssi.get,
-        txPower = JsBinaryUtil.littleEndianToInt8(esAdBytes, 1),
-        uid     = LowUuidUtil.hexStringToEddyUid(
-          JsBinaryUtil.typedArrayToHexString(
-            esAdBytes.subarray(2, MFrameTypes.UID.frameMinByteLen)
+      ) {
+        val euid = MEddyStoneUid(
+          rssi    = dev.rssi.get,
+          txPower = JsBinaryUtil.littleEndianToInt8(esAdBytes, 1),
+          uid     = LowUuidUtil.hexStringToEddyUid(
+            JsBinaryUtil.typedArrayToHexString(
+              esAdBytes.subarray(2, MFrameTypes.UID.frameMinByteLen)
+            )
           )
         )
-      )
+        Right(euid)
+
+      } else {
+        Left(frameCode)
+      }
+
     }
 
     // Вернуть первый найденный uid
-    iter
-      .toStream
-      .headOption
-      .map(Right.apply)
+    val s = iter.toStream
+    // Найти первый eddystone-UID. Если нет, то вернуть первый попавшийся элемент.
+    s .find(_.isRight)
+      .orElse( s.headOption )
   }
 
   override def parserFailMsg = ErrorMsgs.CANT_PARSE_EDDY_STONE

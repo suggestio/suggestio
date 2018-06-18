@@ -1,6 +1,6 @@
 package io.suggest.ble.api.cordova.ble
 
-import com.github.don.cordova.plugin.ble.central.{Ble, BtDevice}
+import com.github.don.cordova.plugin.ble.central.{Ble, BtDevice, StartScanOptions}
 import io.suggest.ble.BleConstants
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.BeaconDetected
@@ -10,7 +10,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
-import scala.scalajs.js.JSON
+import scala.scalajs.js.{JSON, UndefOr}
 
 /**
   * Suggest.io
@@ -35,9 +35,12 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
   /** Начать слушанье ble-маячков, отсылая данные в указанный fsm. */
   override def listenBeacons(listener: Function1[BeaconDetected, _]): Future[_] = {
     Future {
-      Ble.startScan(
+      Ble.startScanWithOptions(
         // Короткого UUID тут достаточно.
-        services      = js.Array( BleConstants.Beacon.EddyStone.SERVICE_UUID_16B_LC ),
+        services      = js.Array( /*BleConstants.Beacon.EddyStone.SERVICE_UUID_16B_LC*/ ),
+        options = new StartScanOptions {
+          override val reportDuplicates = true
+        },
         success       = _handleDeviceFound(_: BtDevice, listener),
         failure       = _handleError(_: js.Any)
       )
@@ -57,19 +60,17 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
     }
 
     // Заинлайнен список поддерживаемых beacon-парсеров с помощью f(...) orElse f(...) orElse f(...)
-    def devStr = JSON.stringify(dev)
     f( EddyStoneParser )
       // Среагировать на результат работы цепочки парсеров.
       .fold [Unit] {
         // device found, но почему-то неподходящий под маячок. warn для отправки на сервер сообщения о подозрительной штуковине, потом надо закомментить/упростить.
-        LOG.log( WarnMsgs.UNKNOWN_BLE_DEVICE, msg = devStr )
+        LOG.log( WarnMsgs.UNKNOWN_BLE_DEVICE, msg = JSON.stringify(dev) )
       } {
         case Right(beacon) =>
           val e = BeaconDetected( beacon )
           listener(e)
         case _ =>
-          // do nothing
-        //case Left(msg) =>
+          // Left(_) - значит парсер отсеял устройство за ненадобностью. do nothing
           //LOG.log( WarnMsgs.FILTERED_OUT_BLE_DEVICE, msg = devStr + " " + msg )
       }
   }
