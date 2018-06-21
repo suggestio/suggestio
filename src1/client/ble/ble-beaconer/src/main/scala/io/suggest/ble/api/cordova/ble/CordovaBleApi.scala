@@ -1,16 +1,15 @@
 package io.suggest.ble.api.cordova.ble
 
 import com.github.don.cordova.plugin.ble.central.{Ble, BtDevice, StartScanOptions}
-import io.suggest.ble.BleConstants
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.BeaconDetected
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.{ErrorMsg_t, ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
-import scala.scalajs.js.{JSON, UndefOr}
+import scala.scalajs.js.JSON
 
 /**
   * Suggest.io
@@ -23,12 +22,59 @@ import scala.scalajs.js.{JSON, UndefOr}
 
 class CordovaBleApi extends IBleBeaconsApi with Log {
 
+  /** Вспомогательная функция для сборки методов, которые дёргают true/false-callback'и.
+    *
+    * @param onErrorMsg При ошибках - логгировать это сообщения.
+    * @param doIt Функция для вызова метода с двумя callback'ами.
+    * @return Фьчерс с true/false.
+    *         Ошибок метод не возвращает, а тоже false.
+    */
+  private def _syncBoolApiMethodHelper(onErrorMsg: ErrorMsg_t)
+                                      (doIt: (js.Function0[_], js.Function0[_]) => Unit): Future[Boolean] = {
+    Future {
+      val p = Promise[Boolean]()
+      def setIsEnabled(isEnabled: Boolean) = {
+        () => p.success(isEnabled)
+      }
+      doIt(
+        setIsEnabled(true),
+        setIsEnabled(false)
+      )
+      p.future
+    }
+      .flatten
+      .recover { case ex: Throwable =>
+        LOG.warn( onErrorMsg, ex, msg = (this, doIt) )
+        false
+      }
+  }
+
+
   override def isApiAvailable: Boolean = {
     !js.isUndefined(Ble)
   }
 
-  override def toString: String = {
-    getClass.getSimpleName
+
+  /** Узнать, включён ли bluetooth в данный момент? */
+  override def isBleEnabled(): Future[Boolean] = {
+    _syncBoolApiMethodHelper( ErrorMsgs.BLE_BEACONS_API_CHECK_ENABLED_FAILED ) {
+      (trueF, falseF) =>
+        Ble.isEnabled(
+          enabled     = trueF,
+          notEnabled  = falseF
+        )
+    }
+  }
+
+  /** Попробовать включить bluetooth. */
+  override def enableBle(): Future[Boolean] = {
+    _syncBoolApiMethodHelper( ErrorMsgs.BLE_BEACONS_API_ENABLE_FAILED ) {
+      (trueF, falseF) =>
+        Ble.enable(
+          success = trueF,
+          refused = falseF
+        )
+    }
   }
 
 

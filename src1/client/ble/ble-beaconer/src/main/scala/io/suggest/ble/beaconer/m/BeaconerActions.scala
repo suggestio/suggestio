@@ -17,8 +17,14 @@ import scala.util.Try
 sealed trait IBleBeaconAction extends DAction
 
 
-/** Управление работой системой мониторинга маячков. */
-case class BbOnOff(isEnabled: Boolean) extends IBleBeaconAction
+/** Управление работой системой мониторинга маячков.
+  *
+  * @param isEnabled Новое состояние (вкл/выкл)
+  * @param hard Если true + !isEnabled, то состояние фиксируется в off с очисткой состояния.
+  *             Включить назад можно будет только после hard+isEnabled
+  */
+case class BbOnOff(isEnabled: Boolean,
+                   hard: Boolean = false) extends IBleBeaconAction
 
 /** Экшен Результат подписки на события API. */
 private[beaconer] case class HandleListenRes( listenTryRes: Try[IBleBeaconsApi] ) extends IBleBeaconAction
@@ -36,3 +42,9 @@ private[ble] case class BeaconDetected(
 
 /** Экшен запуска сборки неактуальных маячков в состоянии. */
 private[beaconer] case object DoGc extends IBleBeaconAction
+
+/** Экшен, уведомляющий о завершении инициализации или деинициализации.
+  *
+  * @param tryEnabled Итоговое состояние, к которому пришла система.
+  */
+private[beaconer] case class ReadyEnabled(tryEnabled: Try[Boolean] ) extends IBleBeaconAction

@@ -1,7 +1,6 @@
 package io.suggest.spa
 
-import diode.{ActionType, Effect}
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import diode.ActionType
 import japgolly.univeq.UnivEq
 
 /**
@@ -14,13 +13,7 @@ import japgolly.univeq.UnivEq
   *
   * @see [[http://ochrons.github.io/diode/usage/Actions.html]]
   */
-trait DAction {
-
-  import DAction.DActionType
-
-  final def effect = Effect.action( this )( DActionType, defaultExecCtx )
-
-}
+trait DAction
 
 
 object DAction {

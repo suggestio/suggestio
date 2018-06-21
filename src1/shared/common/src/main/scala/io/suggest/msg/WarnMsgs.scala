@@ -76,4 +76,7 @@ object WarnMsgs extends MsgsStaticT {
 
   def INACTUAL_NOTIFICATION                  = E(60)
 
+  /** Событие проигнорено (подавлено), потому что причин для реагирования недостаточно. */
+  def SUPPRESSED_INSUFFICIENT                = E(61)
+
 }

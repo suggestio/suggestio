@@ -4,6 +4,7 @@ import com.github.fisshy.react.scroll.AnimateScroll
 import diode._
 import diode.data.{PendingBase, Pot, Ready}
 import io.suggest.ad.blk.BlockPaddings
+import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MScreen, MSzMult}
 import io.suggest.grid.build.{GridBuilderUtil, MGridBuildArgs, MGridBuildResult}
 import io.suggest.grid.{GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
@@ -222,20 +223,33 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
     //if (gridResp.szMult !=* g0.core.jdConf.szMult)
     //  LOG.warn(WarnMsgs.SERVER_CLIENT_SZ_MULT_MISMATCH, msg = (gridResp.szMult, g0.core.jdConf.szMult))
 
-    // Нельзя тут использовать m.reason: причина относится только к начальному resp-экшену (и то необязательно).
-    val (ads2, fxOpt) = if (ctx.m.apiReq.search.offset.fold(true)(_ ==* 0)) {
-      val ads1 = g0.core.ads.ready(newScAds)
-      val scrollFx: Effect = Effect.action {
-        AnimateScroll.scrollToTop( GridScrollUtil.scrollOptions )
-        GridScrollDone
+    // Нельзя тут использовать ctx.m.reason: причина относится только к начальному resp-экшену (и то необязательно).
+    val isCleanLoad = ctx.m.apiReq.search.offset.fold(true)(_ ==* 0)
+
+    // Опциональный эффект скролла вверх.
+    val scrollFxOpt = {
+      // Возможно, требование скролла задано принудительно в исходном запросе перезагрузки плитки?
+      val isScrollUpOpt = ctx.m.reason match {
+        case gla: GridLoadAds => gla.silent
+        case _ => None
       }
-      (ads1, Some(scrollFx))
+      // А если вручную не задано, то определить нужность скроллинга автоматически:
+      val isScrollUp = isScrollUpOpt.getOrElse( isCleanLoad )
+      OptionUtil.maybe(isScrollUp) {
+        Effect.action {
+          AnimateScroll.scrollToTop( GridScrollUtil.scrollOptions )
+          GridScrollDone
+        }
+      }
+    }
+
+    val ads2 = if (isCleanLoad) {
+      g0.core.ads.ready(newScAds)
 
     } else {
       val scAds2 = g0.core.ads.toOption.fold(newScAds)(_ ++ newScAds)
       // ready - обязателен, иначе останется pending и висячий без дела GridLoaderR.
-      val ads1 = g0.core.ads.ready( scAds2 )
-      (ads1, None)
+      g0.core.ads.ready( scAds2 )
     }
 
     val g2 = g0.copy(
@@ -253,7 +267,7 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
 
     // И вернуть новый акк:
     val v2 = ctx.value0.withGrid(g2)
-    (v2, fxOpt)
+    (v2, scrollFxOpt)
   }
 
 }

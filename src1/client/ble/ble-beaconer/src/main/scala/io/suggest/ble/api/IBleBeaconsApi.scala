@@ -19,6 +19,12 @@ import scala.concurrent.Future
 
 trait IBleBeaconsApi {
 
+  /** Узнать, включён ли bluetooth в данный момент? */
+  def isBleEnabled(): Future[Boolean]
+
+  /** Попробовать включить bluetooth. */
+  def enableBle(): Future[Boolean]
+
   /** Доступно ли текущее API для использования? */
   def isApiAvailable: Boolean
 

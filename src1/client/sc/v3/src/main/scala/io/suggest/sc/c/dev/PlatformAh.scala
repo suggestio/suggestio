@@ -3,6 +3,7 @@ package io.suggest.sc.c.dev
 import _root_.cordova.CordovaConstants.{Events => CordovaEvents}
 import cordova.CordovaConstants
 import diode.{ActionHandler, ActionResult, Dispatcher, ModelRW}
+import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.common.event.DomEvents
 import io.suggest.sc.m.{PauseOrResume, SetPlatformReady}
 import io.suggest.sc.m.dev.MPlatformS
@@ -40,9 +41,7 @@ object PlatformAh {
       // Это кордова-контейнер для веб-приложения.
       // Кордова в момент инициализации обычно не готова ни к чему.
       isReady = false
-
-      // TODO Определять доступность блютуса: может пользовать запретил им пользоваться.
-      isBleAvail = true
+      isBleAvail = IBleBeaconsApi.detectApis().nonEmpty
 
       // Подписка на событие готовности кордовы к работе с железом устройства.
       docVm.addEventListener( CordovaEvents.DEVICE_READY ) { _: Event =>

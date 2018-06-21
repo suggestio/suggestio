@@ -15,7 +15,7 @@ import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
-import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
+import io.suggest.msg.{ErrorMsg_t, ErrorMsgs, WarnMsgs}
 import io.suggest.routes.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
@@ -94,13 +94,14 @@ class Sc3Circuit(
 
     val mscreen = JsScreenUtil.getScreen()
     val scIndexResp = Pot.empty[MSc3IndexResp]
+    val mplatform = PlatformAh.platformInit(this)
 
     MScRoot(
       dev = MScDev(
         screen = MScScreenS(
           screen = mscreen
         ),
-        platform = PlatformAh.platformInit(this)
+        platform = mplatform
       ),
       index = MScIndex(
         resp = scIndexResp,
@@ -167,6 +168,7 @@ class Sc3Circuit(
   private val menuRW = indexRW.zoomRW(_.menu) { _.withMenu(_) }
 
   private val platformRW = devRW.zoomRW(_.platform) { _.withPlatform(_) }
+
   private val beaconerRW = devRW.zoomRW(_.beaconer) { _.withBeaconer(_) }
 
 
@@ -459,8 +461,19 @@ class Sc3Circuit(
     // TODO Opt Не подписываться без необходимости.
     subscribe( beaconerRW.zoom(_.nearbyReport) ) { _ =>
       //println( "beacons changed: " + nearbyReportProxy.value.mkString("\n[", ",\n", "\n]") )
-      // Надо запустить пересборку плитки.
-      dispatch( GridLoadAds(clean = true, ignorePending = true) )
+      val mroot = rootRW.value
+      if (mroot.index.resp.isPending) {
+        LOG.log( WarnMsgs.SUPPRESSED_INSUFFICIENT, msg = "ble!inx" )
+        // TODO Если сигнал пришёл, когда уже идёт запрос плитки/индекса, то надо это уведомление отправлять в очередь?
+
+      } else {
+        // Надо запустить пересборку плитки.
+        dispatch( GridLoadAds(
+          clean = true,
+          ignorePending = true,
+          silent = Some(false)
+        ))
+      }
     }
 
   }

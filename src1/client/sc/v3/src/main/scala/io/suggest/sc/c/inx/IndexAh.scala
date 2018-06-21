@@ -207,6 +207,7 @@ class IndexAh[M](
     val fx = Effect {
       val root = rootRO.value
 
+      //println("get index @" + System.currentTimeMillis())
       val args = MScQs(
         common = MScCommonQs(
           apiVsn = root.internals.conf.apiVsn,

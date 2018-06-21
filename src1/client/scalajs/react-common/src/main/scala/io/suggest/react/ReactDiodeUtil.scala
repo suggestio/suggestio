@@ -1,9 +1,11 @@
 package io.suggest.react
 
 import diode._
+import diode.data.Pot
 import diode.react.ModelProxy
 import japgolly.scalajs.react.{BackendScope, Callback, Children, ScalaComponent}
 import japgolly.scalajs.react.extra.Reusability
+import japgolly.scalajs.react.vdom.VdomElement
 
 /**
   * Suggest.io
@@ -83,6 +85,18 @@ object ReactDiodeUtil {
     _.shouldComponentUpdatePure { $ =>
       implicitly[FastEq[P]].neqv( $.currentProps, $.nextProps )
     }
+  }
+
+
+  object Implicits {
+
+    implicit class ReactPotExtOps[T](val pot: Pot[T]) extends AnyVal {
+
+      def renderEl(f: T => VdomElement): VdomElement =
+        if (pot.nonEmpty) f(pot.get) else ReactCommonUtil.VdomNullElement
+
+    }
+
   }
 
 }

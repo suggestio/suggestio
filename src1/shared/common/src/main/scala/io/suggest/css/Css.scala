@@ -76,6 +76,8 @@ object Css {
 
   object Text {
     final def CENTERED = "centered"
+    // Изначально только sc3 (без lk)
+    final def BOLD = "bold"
   }
 
 

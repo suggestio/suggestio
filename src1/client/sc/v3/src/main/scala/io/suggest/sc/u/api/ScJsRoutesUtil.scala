@@ -18,7 +18,7 @@ import scala.scalajs.js
 object ScJsRoutesUtil {
 
   /** Через сколько секунд запрос можно закрывать по таймауту? */
-  def REQ_TIMEOUT_MS = Some(10000)
+  def REQ_TIMEOUT_MS = Some(20000)
 
 
   /** Все реквесты выдачи очень похожи: они отличаются только ссылкой для запроса,

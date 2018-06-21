@@ -16,7 +16,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
-import io.suggest.sc.v.menu.{AboutSioR, EditAdR, EnterLkRowR, MenuR}
+import io.suggest.sc.v.menu._
 import io.suggest.spa.OptFastEq
 import scalacss.ScalaCssReact._
 
@@ -36,6 +36,7 @@ class ScRootR (
                 val editAdR     : EditAdR,
                 val aboutSioR   : AboutSioR,
                 val welcomeR    : WelcomeR,
+                val blueToothR  : BlueToothR,
                 getScCssF       : GetScCssF,
               ) {
 
@@ -63,7 +64,8 @@ class ScRootR (
                                     searchC             : ReactConnectProxy[MScSearch],
                                     searchOpenedSomeC   : ReactConnectProxy[Some[Boolean]],
                                     menuC               : ReactConnectProxy[menuR.PropsVal],
-                                    menuOpenedSomeC     : ReactConnectProxy[Some[Boolean]]
+                                    menuOpenedSomeC     : ReactConnectProxy[Some[Boolean]],
+                                    menuBlueToothOptC   : ReactConnectProxy[blueToothR.Props_t],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -109,8 +111,11 @@ class ScRootR (
         // Кнопка редактирования карточки.
         s.editAdC { editAdR.apply },
 
-        // Рендер кнопк
-        s.aboutSioC { aboutSioR.apply }
+        // Рендер кнопки "О проекте"
+        s.aboutSioC { aboutSioR.apply },
+
+        // Рендер кнопки/подменю для управления bluetooth.
+        s.menuBlueToothOptC { blueToothR.apply }
       )
       val menuSideBarBody = s.menuC { menuPropsProxy =>
         menuR( menuPropsProxy )( menuSideBarBodyInner )
@@ -270,7 +275,11 @@ class ScRootR (
 
         searchOpenedSomeC = propsProxy.connect { props =>
           Some( props.index.search.isShown )
-        }( OptFastEq.OptValueEq )
+        }( OptFastEq.OptValueEq ),
+
+        menuBlueToothOptC = propsProxy.connect { mroot =>
+          mroot.dev.beaconer.isEnabled
+        }
 
       )
     }

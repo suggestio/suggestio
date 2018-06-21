@@ -39,6 +39,17 @@ object Ble extends js.Object {
                 failure   : js.Function1[js.Any, _] = js.native
               ): Unit = js.native
 
+  def isEnabled(
+                 enabled    : js.Function0[_],
+                 notEnabled : js.Function0[_]
+               ): Unit = js.native
+
+  /** iOS not supported. */
+  def enable(
+              success   : js.Function0[_],
+              refused   : js.Function0[_]
+            ): Unit = js.native
+
   // ...
 
 }

@@ -15,8 +15,15 @@ sealed trait IGridAction extends ISc3Action
   *
   * @param clean true - Очистить плитку перед добавлением полученных карточек.
   *              false - Дописать полученные карточки в конец текущей плитки.
+  * @param silent Скрытый апдейт плитки: без явной прокрутки куда-то вверх при clean-релоаде.
+  *               None - решить самостоятельно.
+  *               true - скрытые изменения в плитке.
   */
-case class GridLoadAds(clean: Boolean, ignorePending: Boolean) extends IGridAction with IScApiRespReason
+case class GridLoadAds(clean          : Boolean,
+                       ignorePending  : Boolean,
+                       silent         : Option[Boolean] = None
+                      )
+  extends IGridAction with IScApiRespReason
 
 
 /** Клик по карточке в плитке. */

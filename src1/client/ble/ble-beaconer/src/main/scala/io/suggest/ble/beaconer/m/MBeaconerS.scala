@@ -25,21 +25,26 @@ object MBeaconerS {
 
   implicit object MBeaconerSFastEq extends FastEq[MBeaconerS] {
     override def eqv(a: MBeaconerS, b: MBeaconerS): Boolean = {
-      (a.isEnabled ==* b.isEnabled) &&
+      (a.isEnabled ===* b.isEnabled) &&
         (a.notifyAllTimer ===* b.notifyAllTimer) &&
         (a.beacons ===* b.beacons) &&
         (a.nearbyReport ===* b.nearbyReport) &&
         (a.gcIntervalId ===* b.gcIntervalId) &&
         (a.envFingerPrint ===* b.envFingerPrint) &&
-        (a.bleBeaconsApi ===* b.bleBeaconsApi)
+        (a.bleBeaconsApi ===* b.bleBeaconsApi) &&
+        (a.hardOff ==* b.hardOff)
     }
   }
 
 }
 
 
-/**
+/** Контейнер данных состояния мониторилки маячков.
   *
+  * @param isEnabled Изначально - флаг, но он имеет более широкое значение.
+  *                  Pot.empty - сейчас BLE API недоступно на устройстве.
+  *                  true - включено, true+pending - ВКЛючается
+  *                  false - выключено, false+pending - ВЫКЛючается
   * @param beacons Текущая карта маячков по id.
   * @param envFingerPrint Хэш некоторых данных из карты маячков: чек-сумма текущего состояния.
   * @param bleBeaconsApi Текущее активное API.
@@ -50,21 +55,26 @@ object MBeaconerS {
   * @param gcIntervalId id таймера интервала сборки мусора.
   * @param nearbyReport Итоговый отчёт по текущим наблюдаемым маячкам.
   *                     Подписка на его изменения позволяет определять появление/исчезновение маячков.
+  * @param hardOff      Жесткое выключение системы. Флаг для защиты от автоматических включений-выключений,
+  *                     когда пользователь требует выключить bluetooth.
   */
 case class MBeaconerS(
-                       isEnabled            : Boolean                    = false,
+                       isEnabled            : Pot[Boolean]               = Pot.empty,
                        notifyAllTimer       : Option[MTsTimerId]         = None,
                        beacons              : Map[String, MBeaconData]   = Map.empty,
                        nearbyReport         : Seq[MUidBeacon]            = Nil,
                        gcIntervalId         : Option[Int]                = None,
                        envFingerPrint       : Option[Int]                = None,
                        bleBeaconsApi        : Pot[IBleBeaconsApi]        = Pot.empty,
+                       hardOff              : Boolean                    = false,
                      )
   extends EmptyProduct
 {
 
   // Изоляция толстых вызовов copy здесь для снижения объемов кодогенерации:
 
+  def withIsEnabled(isEnabled: Pot[Boolean]) =
+    copy( isEnabled = isEnabled )
   def withBeacons(beacons2: Map[String, MBeaconData]) =
     copy( beacons = beacons2 )
   def withEnvFingerPrint(envFingerPrint: Option[Int]) =
@@ -75,6 +85,8 @@ case class MBeaconerS(
     copy( bleBeaconsApi = bleBeaconsApi )
   def withGcIntervalId( gcIntervalId: Option[Int] ) =
     copy( gcIntervalId = gcIntervalId )
+  def withHardOff(hardOff: Boolean) =
+    copy(hardOff = hardOff)
 
 }
 

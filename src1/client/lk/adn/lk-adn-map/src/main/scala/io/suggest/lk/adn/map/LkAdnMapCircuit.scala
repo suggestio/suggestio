@@ -1,5 +1,6 @@
 package io.suggest.lk.adn.map
 
+import diode.Effect
 import diode.data.Ready
 import diode.react.ReactConnector
 import io.suggest.adn.mapf.MLamFormInit
@@ -14,7 +15,7 @@ import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
 import io.suggest.lk.adv.m.{MPriceS, ResetPrice}
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.MMapS.MMapSFastEq4Map
-import io.suggest.maps.m.{MMapS, MRadS, RcvrMarkersInit}
+import io.suggest.maps.m.{MRadS, RcvrMarkersInit}
 import io.suggest.maps.u.MapsUtil
 import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
@@ -91,7 +92,7 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
     )
 
     // Эффект пересчёта стоимости размещения с помощью сервера.
-    val priceUpdateEffect = ResetPrice.effect
+    val priceUpdateEffect = Effect.action( ResetPrice )
 
     // Обновлять состояние при изменении конфигурации карты.
     val mapCommonAh = new MapCommonAh(

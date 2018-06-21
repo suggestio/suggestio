@@ -250,4 +250,10 @@ object MsgCodes {
   val `Welcome.bg.hint` = "Welcome.bg.hint"
   val `Node.photos` = "Node.photos"
 
+  val `Bluetooth` = "Bluetooth"
+  val `On` = "On"
+  val `Off` = "Off"
+  def onOff(isOn: Boolean): String =
+    if (isOn) `On` else `Off`
+
 }
