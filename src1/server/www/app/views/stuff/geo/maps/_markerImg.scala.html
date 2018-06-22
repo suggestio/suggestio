@@ -1,5 +1,5 @@
 @(id: String, baseName: String, wh: Option[io.suggest.common.geom.d2.ISize2di] = None,
-  xy: Option[io.suggest.common.geom.coord.MCoords2di] = None)
+  xy: Option[io.suggest.common.geom.coord.MCoords2di] = None)(implicit ctx: Context)
 
 @*
  * Рендер img-тега для одного маркера карты.
@@ -10,7 +10,7 @@
 @import io.suggest.common.maps.MapFormConstants._
 
 <img id="@id"
-     src="@routes.Assets.versioned("images/" + baseName)"
+     src="@ctx.api.cdn.asset( "images/" + baseName )"
      alt=""
      @for(wh1 <- wh) {
        @ATTR_IMG_WIDTH=@wh1.width

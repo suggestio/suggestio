@@ -11,12 +11,15 @@ import io.suggest.maps.m.MonkeyNodeId.forJsObject
 import io.suggest.maps.m.OpenMapRcvr
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.u.{MapIcons, MapsUtil}
+import io.suggest.proto.HttpConst
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.common.empty.JsOptionUtil
+import io.suggest.sjs.common.model.HttpRoute
+import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.event.MouseEvent
-import io.suggest.sjs.leaflet.map.{LatLng, Zoom_t}
+import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.icon.IconOptions
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent, MarkerOptions}
 import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
@@ -29,7 +32,7 @@ import react.leaflet.poly.{PolygonPropsR, PolygonR}
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.{UndefOr, |}
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -79,6 +82,20 @@ object RcvrMarkersR {
     def render(rcvrsGeoPotProxy: Props, children: PropsChildren): VdomElement = {
       rcvrsGeoPotProxy().toOption.whenDefinedEl { mRcvrsGeo =>
 
+        // Бывает, что требуются строго абсолютные URL (cordova). Тут - собираем фунцкию для причёсывания исходных ссылок.
+        val maybeAbsUrlF: String => String = if (Xhr.PREFER_ABS_URLS) {
+          // Фунция на случай, когда требуется причёсывать ссылки:
+          val httpProto = HttpConst.Proto.HTTP
+          val isSecure = true
+
+          url0: String =>
+            HttpRoute.mkAbsUrl( protoPrefix = httpProto, secure = isSecure, relUrl = url0 )
+
+        } else {
+          // Причёсывать ссылки не требуется. Просто используем исходные ссылки.
+          identity[String]
+        }
+
         // Собираем сложный итератор, который на выходе в элементах выдаёт два аккамулятора: маркеры и шейпы.
         val iter = for {
           mnode <- mRcvrsGeo.nodes.iterator
@@ -100,7 +117,8 @@ object RcvrMarkersR {
             override val icon = js.defined {
               mnode.props.icon.fold ( MapIcons.pinMarkerIcon() ) { iconInfo =>
                 val o = IconOptions.empty
-                o.iconUrl = iconInfo.url
+                // Для cordova требуются абсолютные ссылки на картинки, иначе она подставит file:// в протокол.
+                o.iconUrl = maybeAbsUrlF( iconInfo.url )
                 // Описываем размеры иконки по данным сервера.
                 o.iconSize = MapsUtil.size2d2LPoint( iconInfo.wh )
                 // Для иконки -- якорь прямо в середине.

@@ -35,13 +35,12 @@ case class HttpRoute(
                       url     : String
                     ) {
 
-  assert( url.startsWith( HttpConst.Proto.CURR_PROTO ) )
-
   private def _absUrl(proto: String, secure: Boolean): String = {
-    proto +
-      (if(secure) HttpConst.Proto.SECURE_SUFFIX else "") +
-      HttpConst.Proto.COLON +
-      url
+    HttpRoute.mkAbsUrl(
+      protoPrefix = proto,
+      secure = secure,
+      relUrl = url
+    )
   }
 
   def absoluteUrl(secure: Boolean): String = {
@@ -50,6 +49,19 @@ case class HttpRoute(
 
   def webSocketUrl(secure: Boolean): String = {
     _absUrl( HttpConst.Proto.WS, secure)
+  }
+
+}
+
+object HttpRoute {
+
+  /** Метод сборки абсолютной ссылки. */
+  def mkAbsUrl(protoPrefix: String, secure: Boolean, relUrl: String): String = {
+    assert( relUrl.startsWith( HttpConst.Proto.CURR_PROTO ) )
+    protoPrefix +
+      (if(secure) HttpConst.Proto.SECURE_SUFFIX else "") +
+      HttpConst.Proto.COLON +
+      relUrl
   }
 
 }

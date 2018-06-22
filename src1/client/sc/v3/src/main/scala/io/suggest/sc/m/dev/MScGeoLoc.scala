@@ -39,9 +39,9 @@ object MScGeoLoc {
   *                 Если пусто, то можно считать эту подсистему выключенной.
   */
 case class MScGeoLoc(
-                   watchers     : Map[GeoLocType, MGeoLocWatcher]   = Map.empty,
-                   suppressor   : Option[Suppressor]                = None
-                 ) {
+                      watchers     : Map[GeoLocType, MGeoLocWatcher]   = Map.empty,
+                      suppressor   : Option[Suppressor]                = None
+                    ) {
 
   def withWatchers(watchers: Map[GeoLocType, MGeoLocWatcher]) = copy(watchers = watchers)
   def withSuppressor(suppressor: Option[Suppressor]) = copy(suppressor = suppressor)

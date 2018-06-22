@@ -15,6 +15,8 @@ import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sjs.common.log.Log
 import japgolly.scalajs.react.vdom.VdomElement
+
+import scala.scalajs.js
 // Не удалять: нужно для MarkerR()...
 import japgolly.scalajs.react.vdom.Implicits._
 import react.leaflet.marker.{MarkerPropsR, MarkerR}
@@ -26,6 +28,9 @@ import react.leaflet.marker.{MarkerPropsR, MarkerR}
   * Description: Иконки для маркеров на карте.
   */
 object MapIcons extends Log {
+
+  /** Пошаренный mutable JSON с извлечёнными данными pin-маркера. */
+  private lazy val PIN_MARKER_ICON_BASE = markerIconBase( MarkerIcon )
 
   def mkDraggableMarker(latLng: LatLng, icon1: Icon): Marker = {
     val options = new MarkerOptions {
@@ -65,7 +70,8 @@ object MapIcons extends Log {
   /** Сборка иконки маркера. */
   def pinMarkerIcon(): Icon = {
     // Начинаем собирать параметры иконки.
-    val o = markerIconBase(MarkerIcon)
+    //markerIconBase(MarkerIcon)
+    val o = js.Object.create(PIN_MARKER_ICON_BASE).asInstanceOf[IconOptions]
 
     // Собираем retina-icon'ку маркера
     for {

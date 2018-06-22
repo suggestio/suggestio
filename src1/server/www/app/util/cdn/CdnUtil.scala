@@ -17,6 +17,7 @@ import models.mctx.Context
 import models.mup.MSwfsFidInfo
 import play.api.Configuration
 import play.api.mvc.Call
+import OptionUtil.BoolOptOps
 import util.up.UploadUtil
 import japgolly.univeq._
 
@@ -67,8 +68,8 @@ class CdnUtil @Inject() (
 
   /** Раздавать ли шрифты через CDN? Дергается из шаблонов. Если Cors отключен, то этот параметр тоже отключается. */
   val FONTS_ENABLED: Boolean = {
-    configuration.getOptional[Boolean]("cdn.fonts.enabled")
-      .exists(_ && corsUtil.IS_ENABLED)
+    corsUtil.IS_ENABLED &&
+      configuration.getOptional[Boolean]("cdn.fonts.enabled").getOrElseTrue
   }
 
   /** Отключено использование CDN на хостах: */
