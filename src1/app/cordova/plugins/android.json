@@ -15,6 +15,9 @@
     },
     "cordova-plugin-ble-central": {
       "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
+    },
+    "cordova-plugin-splashscreen": {
+      "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
     }
   },
   "dependent_plugins": {}
