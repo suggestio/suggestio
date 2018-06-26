@@ -1,6 +1,9 @@
 package io.suggest.stat.m
 
-import io.suggest.common.menum.{EnumJsonReadsValT, EnumMaybeWithName, StrIdValT}
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumUtil
+import japgolly.univeq.UnivEq
+import play.api.libs.json.Format
 
 /**
   * Suggest.io
@@ -14,49 +17,54 @@ import io.suggest.common.menum.{EnumJsonReadsValT, EnumMaybeWithName, StrIdValT}
   * - "выдача" + AdOpen   = фокусировка выдачи на карточке.
   * и т.д.
   */
-object MComponents extends EnumMaybeWithName with EnumJsonReadsValT with StrIdValT {
-
-  /** Класс для всех экземпляров модели.
-    *
-    * @param strId LOWER CASE ONLY!
-    */
-  protected class Val(override val strId: String)
-    extends super.Val
-    with ValT
-
-  override type T = Val
-
+object MComponents extends StringEnum[MComponent] {
 
   /** Крупный компонент sc (showcase), т.е. выдача на главной. */
-  val Sc        : T = new Val("выдача")
+  case object Sc extends MComponent("выдача")
 
   /** Сайт (для single-page app типа выдачи). */
-  val Site      : T = new Val("site")
+  case object Site extends MComponent("site")
 
   /** Некие index-страницы. */
-  val Index     : T = new Val("index")
+  case object Index extends MComponent("index")
 
   /** Карточка. */
-  val Ad        : T = new Val("карточка")
+  case object Ad extends MComponent("карточка")
 
   /** Открытие другого "компонента". Например фокусировка на карточке в выдаче. */
-  val Open      : T = new Val("открыть")
+  case object Open extends MComponent("открыть")
 
   /** Плитка карточек. */
-  val Tile      : T = new Val("плитка")
+  case object Tile extends MComponent("плитка")
 
   /** Тег или теги. */
-  val Tags      : T = new Val("теги")
+  case object Tags extends MComponent("теги")
 
   /** Некий-то "компонент", генерящий статистику ошибки.
     * Обычно применяется в связке с другими компонентами, чтобы уточнить суть. */
-  val Error     : T = new Val("ошибка")
+  case object Error extends MComponent("ошибка")
 
   /** Content-Security-Policy. */
-  val CSP       : T = new Val("csp")
+  case object CSP extends MComponent("csp")
 
   //val Lk: T       = new Val("ЛК")
   //val Sys: T      = new Val("SYS")
   //...
+
+  override def values = findValues
+
+}
+
+
+sealed abstract class MComponent(override val value: String) extends StringEnumEntry {
+  def strId = value
+}
+
+object MComponent {
+
+  implicit def univEq: UnivEq[MComponent] = UnivEq.derive
+
+  implicit def mComponentFormat: Format[MComponent] =
+    EnumeratumUtil.valueEnumEntryFormat( MComponents )
 
 }

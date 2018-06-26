@@ -76,22 +76,46 @@ object BleBeaconerAh extends Log {
             FutureUtil
               .tryCatchFut {
                 for {
+                  // Для андройд: надо пройти все проверки, включить блютус при необходимости.
+                  // Для iOS: все проверки и попытка включения могут зафейлится вообще (до listenBeacons).
+                  // Т.к. платформа влияет на всю ветвь isEnabled, ветка включения bluetooth через API опциональна:
+                  // подавляем все возможные ошибки, но всё равно пытаемся началь слушать маячки.
+
                   // Узнать, включён ли bluetooth сейчас?
-                  isEnabled0 <- bbApi.isBleEnabled()
+                  isEnabled0 <- bbApi
+                    .isBleEnabled()
+                    // iOS: подавить любые возможные ошибки:
+                    .recover { case ex =>
+                      LOG.warn( ErrorMsgs.BLE_BEACONS_API_CHECK_ENABLED_FAILED, ex, msg = bbApi )
+                      false
+                    }
+
                   // Если bt вЫключен, то запустить активацию bt:
                   isEnabled2 <- {
-                    if (isEnabled0) Future.successful(isEnabled0)
-                    else bbApi.enableBle()
+                    if (isEnabled0)
+                      Future.successful(isEnabled0)
+                    else
+                      bbApi
+                        .enableBle()
+                        // iOS: Ошибку включения трактуем как успех: пусть ошибка возникнет на уровне listenBeacons().
+                        .recover { case ex =>
+                          LOG.warn( ErrorMsgs.BLE_BEACONS_API_ENABLE_FAILED, ex, msg = bbApi )
+                          true
+                        }
                   }
-                  // Если bt всё равно выключен, то смысла запускать сканирование нет.
+                  // Если bt точно выключен, то смысла запускать сканирование нет.
                   if isEnabled2
+
+                  // Запустить непосредственное слушанье маячков:
                   _ <- bbApi.listenBeacons(dispatcher.dispatch(_: BeaconDetected))
+
                 } yield {
                   bbApi
                 }
               }
               .recoverWith { case ex: Throwable =>
                 LOG.error( ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED, ex, bbApi )
+
                 // На всякий случай - в фоне постараться грохнуть это API.
                 // Далее - велосипед для безопасного опускания неисправного API и переходу на следующий шаг:
                 val nextP = Promise[None.type]()
@@ -105,7 +129,8 @@ object BleBeaconerAh extends Log {
                     nextP.success( None )
 
                 try {
-                  bbApi.unListenAllBeacons()
+                  bbApi
+                    .unListenAllBeacons()
                     .recover { case ex2 =>
                       LOG.error( ErrorMsgs.BLE_BEACONS_API_SHUTDOWN_FAILED, ex2, bbApi)
                       null

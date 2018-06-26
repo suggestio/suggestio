@@ -5,6 +5,7 @@ import diode.data.Pot
 import io.suggest.ble.MUidBeacon
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.common.html.HtmlConstants
 import io.suggest.sjs.common.model.MTsTimerId
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -87,6 +88,42 @@ case class MBeaconerS(
     copy( gcIntervalId = gcIntervalId )
   def withHardOff(hardOff: Boolean) =
     copy(hardOff = hardOff)
+
+
+  // Перезапись toString, чтобы лишний мусор не рендерить.
+  override final def toString: String = {
+    import HtmlConstants._
+
+    new StringBuilder(128, productPrefix)
+      .append( `(` )
+      .append( isEnabled ).append( COMMA )
+      .append( notifyAllTimer )
+      // Вместо карты маячков генерим упрощённый список из укороченных id маячков:
+      .append( beacons.size ).append( COLON )
+      .append( `[` )
+      .appendAll(
+        beacons
+          .keysIterator
+          .flatMap { bcnId =>
+            // Генерим строку вида "02...43A5"
+            bcnId.substring(0, 2) ::
+              HtmlConstants.ELLIPSIS ::
+              bcnId.substring(bcnId.length - 4, bcnId.length) ::
+              COMMA ::
+              Nil
+          }
+          .flatMap(_.toCharArray)
+      )
+      .append( `]` ).append( COMMA )
+      // mearbyReport: укорачиваем просто до длины
+      .append( nearbyReport.length ).append( DIEZ ).append( COMMA )
+      .append( gcIntervalId ).append( COMMA )
+      .append( envFingerPrint ).append( COMMA )
+      .append( bleBeaconsApi ).append( COMMA )
+      .append( hardOff )
+      .append( `)` )
+      .toString()
+  }
 
 }
 

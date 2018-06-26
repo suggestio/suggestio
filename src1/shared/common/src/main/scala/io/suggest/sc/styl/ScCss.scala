@@ -118,6 +118,7 @@ case class ScCss( args: IScCssArgs )
 
   val smFlex = _styleAddClass( _SM_ + "flex" )
 
+
   /** Стили для html.body . */
   // TODO Этот код наверное не нужен. Т.к. оно вне react-компонента.
   object Body {

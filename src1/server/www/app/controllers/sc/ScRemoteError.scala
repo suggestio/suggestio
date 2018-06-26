@@ -39,15 +39,15 @@ trait ScRemoteError
     Form(
       mapping(
         MSG_FN -> {
-          nonEmptyText(minLength = 1, maxLength = 8192)
+          nonEmptyText(minLength = MSG_LEN_MIN, maxLength = MSG_LEN_MAX)
             .transform[String](strTrimF, strIdentityF)
         },
         URL_FN -> {
-          optional( text(minLength = 8, maxLength = 1024) )
+          optional( text(minLength = URL_LEN_MIN, maxLength = URL_LEN_MAX) )
             .transform[Option[String]](emptyStrOptToNone, identity)
         },
         STATE_FN -> {
-          optional(text(maxLength = 2048))
+          optional(text(maxLength = STATE_LEN_MAX))
             .transform[Option[String]](emptyStrOptToNone, identity)
         }
       )

@@ -33,9 +33,9 @@ object MUidBeacon {
   * @param distanceCm Расстояние в сантиметрах, если известно.
   */
 case class MUidBeacon(
-  uid          : String,
-  distanceCm   : Int
-) {
+                       uid          : String,
+                       distanceCm   : Int
+                     ) {
 
   override def toString = "B(" + uid + "," + distanceCm + "cm)"
 

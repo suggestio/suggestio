@@ -27,7 +27,7 @@ object StringUtil {
 
   /** Лимитирование длины строки слева. Если строка длинее указанного порога,
     * то она будет урезана и в конце появится многоточие. */
-  def strLimitLen(str: String, maxLen: Int, ellipsis: String): String = {
+  def strLimitLen(str: String, maxLen: Int, ellipsis: String = HtmlConstants.ELLIPSIS): String = {
     if (str.length <= maxLen) {
       str
     } else {

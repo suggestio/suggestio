@@ -55,4 +55,22 @@ case class MTagsSearchS(
     MTagsSearchS.empty ===* this
   }
 
+  override final def toString: String = {
+    import io.suggest.common.html.HtmlConstants._
+
+    new StringBuilder(64)
+      .append( productPrefix )
+      .append( `(` )
+      .append(
+        tagsReq.getClass.getSimpleName + COLON +
+          tagsReq.fold(0)(_.length) + COLON +
+          tagsReq.exceptionOption.fold("")(ex => ex.getClass + " " + ex.getMessage)
+      )
+      .append( COMMA )
+      .append( hasMoreTags ).append( COMMA )
+      .append( selectedId )
+      .append( `)` )
+      .toString()
+  }
+
 }

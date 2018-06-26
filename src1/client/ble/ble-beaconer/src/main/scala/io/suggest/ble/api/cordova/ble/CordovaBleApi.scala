@@ -3,7 +3,7 @@ package io.suggest.ble.api.cordova.ble
 import com.github.don.cordova.plugin.ble.central.{Ble, BtDevice, StartScanOptions}
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.BeaconDetected
-import io.suggest.msg.{ErrorMsg_t, ErrorMsgs, WarnMsgs}
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
@@ -29,8 +29,7 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
     * @return Фьчерс с true/false.
     *         Ошибок метод не возвращает, а тоже false.
     */
-  private def _syncBoolApiMethodHelper(onErrorMsg: ErrorMsg_t)
-                                      (doIt: (js.Function0[_], js.Function0[_]) => Unit): Future[Boolean] = {
+  private def _syncBoolApiMethodHelper(doIt: (js.Function0[_], js.Function0[_]) => Unit): Future[Boolean] = {
     Future {
       val p = Promise[Boolean]()
       def setIsEnabled(isEnabled: Boolean) = {
@@ -43,10 +42,6 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
       p.future
     }
       .flatten
-      .recover { case ex: Throwable =>
-        LOG.warn( onErrorMsg, ex, msg = (this, doIt) )
-        false
-      }
   }
 
 
@@ -57,7 +52,7 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
 
   /** Узнать, включён ли bluetooth в данный момент? */
   override def isBleEnabled(): Future[Boolean] = {
-    _syncBoolApiMethodHelper( ErrorMsgs.BLE_BEACONS_API_CHECK_ENABLED_FAILED ) {
+    _syncBoolApiMethodHelper {
       (trueF, falseF) =>
         Ble.isEnabled(
           enabled     = trueF,
@@ -68,7 +63,7 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
 
   /** Попробовать включить bluetooth. */
   override def enableBle(): Future[Boolean] = {
-    _syncBoolApiMethodHelper( ErrorMsgs.BLE_BEACONS_API_ENABLE_FAILED ) {
+    _syncBoolApiMethodHelper {
       (trueF, falseF) =>
         Ble.enable(
           success = trueF,

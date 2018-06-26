@@ -34,11 +34,23 @@ object MScInternals {
   */
 case class MScInternals(
                          conf          : MSc3Conf,
-                         jsRouter      : Pot[ScJsRoutes.type]      = Pot.empty,
+                         jsRouter      : Pot[ScJsRoutes.type]    = Pot.empty,
                          geoLockTimer  : Option[Int]             = None,
                        ) {
 
   def withJsRouter(jsRouter: Pot[ScJsRoutes.type])    = copy(jsRouter = jsRouter)
   def withGeoLockTimer(geoLockTimer: Option[Int])   = copy(geoLockTimer = geoLockTimer)
+
+  override def toString: String = {
+    import io.suggest.common.html.HtmlConstants._
+    new StringBuilder(128)
+      .append( productPrefix )
+      .append( `(` )
+      .append( conf ).append( COMMA )
+      .append( jsRouter.map(_ => "") ).append( COMMA )
+      .append( geoLockTimer )
+      .append( `)` )
+      .toString()
+  }
 
 }

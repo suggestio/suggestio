@@ -1,6 +1,9 @@
 package io.suggest.stat.m
 
-import io.suggest.common.menum.{EnumJsonReadsValT, EnumMaybeWithName, StrIdValT}
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumUtil
+import japgolly.univeq.UnivEq
+import play.api.libs.json.Format
 
 /**
   * Suggest.io
@@ -9,21 +12,31 @@ import io.suggest.common.menum.{EnumJsonReadsValT, EnumMaybeWithName, StrIdValT}
   * Description: Модель типов юзер-агента.
   * Изначально "браузер" или "приложение".
   */
-object MUaTypes extends EnumMaybeWithName with EnumJsonReadsValT with StrIdValT {
 
-  protected class Val(override val strId: String)
-    extends super.Val(strId)
-    with ValT
-
-  override type T = Val
+object MUaTypes extends StringEnum[MUaType] {
 
   /** Браузеры. */
-  val Browser       : T = new Val("browser")
+  case object Browser extends MUaType("browser")
 
   /** Мобильные приложения. */
-  val App           : T = new Val("app")
+  case object App extends MUaType("app")
 
   /** Приложение на базе cordova. Используется в связке с MobileApp. */
-  val CordovaApp    : T = new Val("cordova")
+  case object CordovaApp extends MUaType("cordova")
+
+
+  override def values = findValues
+
+}
+
+
+sealed abstract class MUaType(override val value: String) extends StringEnumEntry
+
+object MUaType {
+
+  implicit def mUaTypeFormat: Format[MUaType] =
+    EnumeratumUtil.valueEnumEntryFormat( MUaTypes )
+
+  implicit def univEq: UnivEq[MUaType] = UnivEq.derive
 
 }

@@ -1,12 +1,12 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
+import io.suggest.common.html.HtmlConstants
 import io.suggest.jd.MJdConf
 import io.suggest.jd.tags.JdTag
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.scalaz.ZTreeUtil._
-
 import scalaz.Tree
 
 /**
@@ -45,4 +45,15 @@ object MJdCssArgs {
 case class MJdCssArgs(
                        templates  : Seq[Tree[JdTag]] = Nil,
                        conf       : MJdConf
-                     )
+                     ) {
+
+  override final def toString: String = {
+    new StringBuilder( productPrefix )
+      .append( HtmlConstants.`(` )
+      .append( templates.length ).append( HtmlConstants.DIEZ ).append( HtmlConstants.COMMA )
+      .append( conf )
+      .append( HtmlConstants.`)` )
+      .toString()
+  }
+
+}

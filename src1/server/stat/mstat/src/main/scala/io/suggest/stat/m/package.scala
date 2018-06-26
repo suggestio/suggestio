@@ -9,8 +9,4 @@ package object m {
 
   type MActionType = MActionTypes.T
 
-  type MComponent  = MComponents.T
-
-  type MUaType     = MUaTypes.T
-
 }

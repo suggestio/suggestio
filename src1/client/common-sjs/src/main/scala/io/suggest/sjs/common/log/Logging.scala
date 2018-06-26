@@ -49,7 +49,8 @@ case class LogMsg(
   fsmState  : Option[String]      = None
 ) {
 
-  override def toString: ErrorMsg_t = {
+  /** Рендер в строку, но без severity, fsmState, code. */
+  def onlyMainText: String = {
     // Нааккумулировать данных для логгирования из модели logMsg в строку.
     var tokensAcc = List.empty[String]
 
@@ -61,10 +62,6 @@ case class LogMsg(
     }
     for (msg <- message)
       tokensAcc = d :: msg :: tokensAcc
-    for (code <- code)
-      tokensAcc = d :: code :: tokensAcc
-    for (fsmState <- fsmState)
-      tokensAcc = d :: "[" :: fsmState.toString :: "]" :: tokensAcc
     tokensAcc = from :: ":" :: d :: tokensAcc
 
     // Отрендерить в логи итог работы...

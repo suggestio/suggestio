@@ -2,6 +2,7 @@ package io.suggest.sc.m.grid
 
 import diode.FastEq
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.html.HtmlConstants
 import io.suggest.grid.build.MGbBlock
 import io.suggest.jd.MJdAdData
 import io.suggest.jd.tags.JdTag
@@ -76,5 +77,16 @@ case class MBlkRenderData(
                          ) {
 
   lazy val tplSubForestIndexed = template.subForest.toIndexedSeq
+
+  override def toString: String = {
+    new StringBuilder( productPrefix )
+      .append( HtmlConstants.`(` )
+      // Гарантированно не рендерим дерево, хотя там вроде toString и так переопределён уже:
+      .append( HtmlConstants.DIEZ ).append( HtmlConstants.COMMA )
+      // Рендерим кол-во эджей вместо всей карты
+      .append( edges.size ).append( "e" )
+      .append( HtmlConstants.`)` )
+      .toString()
+  }
 
 }

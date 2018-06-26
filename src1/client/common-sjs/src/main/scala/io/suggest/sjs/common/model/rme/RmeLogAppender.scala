@@ -1,5 +1,6 @@
 package io.suggest.sjs.common.model.rme
 
+import io.suggest.err.ErrorConstants
 import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.MimeConst
 import io.suggest.proto.HttpConst
@@ -7,6 +8,7 @@ import io.suggest.sjs.common.log.{ILogAppender, LogMsg, Severity}
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.xhr.{HttpStatuses, Xhr}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.text.StringUtil
 
 import scala.concurrent.Future
 import scala.scalajs.js.JSON
@@ -37,11 +39,12 @@ abstract class RmeLogAppender extends ILogAppender {
           hdrCt :: Nil
         },
         body    = {
+          val c = ErrorConstants.Remote
           val report = MRmeReport(
             severity = logMsg.severity,
             // TODO Рендерить в report необходиые поля, а не собирать строковой message. Чтобы на сервере индексировалось всё.
-            msg     = logMsg.toString,
-            state   = logMsg.fsmState,
+            msg     = StringUtil.strLimitLen( logMsg.onlyMainText, c.MSG_LEN_MAX ),
+            state   = logMsg.fsmState.map( StringUtil.strLimitLen(_, c.STATE_LEN_MAX) ),
             errCode = logMsg.code
           )
           val json = MRmeReport.toJson(report)

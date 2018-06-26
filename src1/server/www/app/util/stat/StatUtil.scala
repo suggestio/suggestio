@@ -163,14 +163,14 @@ class StatUtil @Inject()(
       ctx.request.headers
         .get( HeaderNames.X_REQUESTED_WITH )
         .fold [List[MUaType]] (Browser :: Nil) { xRqWith =>
-        val acc0 = App :: Nil
-        if (xRqWith.endsWith(".Sio2m")) {
-          CordovaApp :: acc0
-        } else {
-          debug(s"mua(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
-          acc0
+          val acc0 = App :: Nil
+          if (xRqWith.endsWith(".Sio2m")) {
+            CordovaApp :: acc0
+          } else {
+            debug(s"mua(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
+            acc0
+          }
         }
-      }
     }
 
 
