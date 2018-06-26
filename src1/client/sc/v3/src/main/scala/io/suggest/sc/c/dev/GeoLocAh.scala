@@ -174,7 +174,7 @@ class GeoLocAh[M](
 
       } else {
         // Данная геолокация подпадает под подавление. Скорее всего что-то пошло не так.
-        LOG.warn(WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = (loc, v0.suppressor))
+        //LOG.warn(WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = (loc, v0.suppressor))
         val v2 = v0.withWatchers(
           watchers1Iter.toMap
         )

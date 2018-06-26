@@ -7,6 +7,7 @@ import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.common.event.DomEvents
 import io.suggest.sc.m.{PauseOrResume, SetPlatformReady}
 import io.suggest.sc.m.dev.MPlatformS
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import japgolly.univeq._
 import org.scalajs.dom
@@ -19,6 +20,9 @@ import org.scalajs.dom.Event
   * Description: Контроллер платформы, на которой исполняется выдача.
   */
 object PlatformAh {
+
+  def isBleAvailCheck(): Boolean =
+    IBleBeaconsApi.detectApis().nonEmpty
 
   /** Статический метод, выполняющий начальную инициализацию платформы.
     * Можно вызывать только один раз во время запуска.
@@ -41,11 +45,13 @@ object PlatformAh {
       // Это кордова-контейнер для веб-приложения.
       // Кордова в момент инициализации обычно не готова ни к чему.
       isReady = false
-      isBleAvail = IBleBeaconsApi.detectApis().nonEmpty
+      isBleAvail = isBleAvailCheck()
 
       // Подписка на событие готовности кордовы к работе с железом устройства.
       docVm.addEventListener( CordovaEvents.DEVICE_READY ) { _: Event =>
         // TODO Проверять содержимое Event'а? Вдруг, не ready, а ошибка какая-то.
+        // для deviceready функция-листенер может вызваться немедленно. Сразу тут вписать значение в переменную.
+        isReady = true
         dispatcher.dispatch( SetPlatformReady )
         // TODO Надо отписаться от ready-события?
       }
@@ -100,6 +106,7 @@ class PlatformAh[M](
                      modelRW    : ModelRW[M, MPlatformS]
                    )
   extends ActionHandler( modelRW )
+  with Log
 {
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
@@ -115,12 +122,23 @@ class PlatformAh[M](
       }
 
     // Сигнал о готовности платформы к работе.
-    case SetPlatformReady =>
+    case m @ SetPlatformReady =>
       val v0 = value
       if (v0.isReady) {
+        LOG.warn("Plat.ready.ALREADY", msg = m)
         noChange
       } else {
-        val v2 = v0.withIsReady( true )
+        LOG.warn("PLATFORM READY EVENT!", msg = m )
+        
+        var v2 = v0.withIsReady( true )
+
+        // Проверить, не изменились ли ещё какие-то платформенные флаги?
+        val bleAvail2 = PlatformAh.isBleAvailCheck()
+        if (v2.isBleAvail !=* bleAvail2)
+          v2 = v2.withIsBleAvail( bleAvail2 )
+
+        // TODO Проверять ble avail?
+
         updated(v2)
       }
 

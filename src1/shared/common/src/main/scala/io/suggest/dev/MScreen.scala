@@ -76,6 +76,7 @@ case class MScreen(
   override final def toString: String = toQsValue
 
   def withPxRatio(pxRatio: MPxRatio) = copy(pxRatio = pxRatio)
+  def withWh(width: Int, height: Int) = copy(width = width, height = height)
 
 }
 

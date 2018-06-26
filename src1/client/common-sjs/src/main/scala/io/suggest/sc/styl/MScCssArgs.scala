@@ -3,7 +3,7 @@ package io.suggest.sc.styl
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.dev.MScreen
+import io.suggest.dev.MScreenInfo
 import io.suggest.media.IMediaInfo
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
@@ -24,24 +24,24 @@ object MScCssArgs {
   /** Поддержка FastEq для инстансов [[MScCssArgs]]. */
   implicit object MScCssArgsFastEq extends FastEq[IScCssArgs] {
     override def eqv(a: IScCssArgs, b: IScCssArgs): Boolean = {
-      // Screen сравнивать референсно или по значению.
+      // Screen сравнивать референсно или по значению. TODO Актуально ли ещё полное сравнение? Может сравнивания в контроллере ScreenAh достаточно?
       // customColors -- референсно внутри Option, т.к. внешний Option пересобирается каждый раз.
       // Остальное -- чисто референсно.
       OptFastEq.Plain.eqv(a.customColorsOpt, b.customColorsOpt) &&
-        ((a.screen ===* b.screen) || (a.screen ==* b.screen)) &&
+        ((a.screenInfo ===* b.screenInfo) || (a.screenInfo ==* b.screenInfo)) &&
         (a.wcBgWh ===* b.wcBgWh) &&
         (a.wcFgWh ===* b.wcFgWh)
     }
   }
 
-  def from(indexResp: Pot[MSc3IndexResp], mscreen: MScreen): MScCssArgs = {
+  def from(indexResp: Pot[MSc3IndexResp], screenInfo: MScreenInfo): MScCssArgs = {
     val indexRespOpt = indexResp.toOption
     val wcOpt = indexRespOpt.flatMap(_.welcome)
     def __wcWhOpt(f: MWelcomeInfo => Option[IMediaInfo]) = wcOpt.flatMap(f).flatMap(_.whPx)
 
     MScCssArgs(
       customColorsOpt = indexRespOpt.map(_.colors),
-      screen          = mscreen,
+      screenInfo      = screenInfo,
       wcBgWh          = __wcWhOpt( _.bgImage ),
       wcFgWh          = __wcWhOpt( _.fgImage )
     )
@@ -52,7 +52,7 @@ object MScCssArgs {
 
 case class MScCssArgs(
                        override val customColorsOpt   : Option[MColors],
-                       override val screen            : MScreen,
+                       override val screenInfo        : MScreenInfo,
                        override val wcBgWh            : Option[MSize2di],
                        override val wcFgWh            : Option[MSize2di]
                      )

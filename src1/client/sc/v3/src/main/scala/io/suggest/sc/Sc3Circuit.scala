@@ -6,7 +6,7 @@ import diode.react.ReactConnector
 import io.suggest.ble.beaconer.c.BleBeaconerAh
 import io.suggest.ble.beaconer.m.BbOnOff
 import io.suggest.common.event.WndEvents
-import io.suggest.dev.{JsScreenUtil, MPxRatios}
+import io.suggest.dev.{JsScreenUtil, MPxRatios, MScreenInfo}
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
 import io.suggest.i18n.MsgCodes
@@ -36,6 +36,7 @@ import io.suggest.sc.u.Sc3ConfUtil
 import io.suggest.sc.v.ScCssFactory
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.spa.OptFastEq
@@ -96,10 +97,15 @@ class Sc3Circuit(
     val scIndexResp = Pot.empty[MSc3IndexResp]
     val mplatform = PlatformAh.platformInit(this)
 
+    val screenInfo = MScreenInfo(
+      screen = mscreen
+      // TODO задетектить unsafeOffsets
+    )
+
     MScRoot(
       dev = MScDev(
         screen = MScScreenS(
-          screen = mscreen
+          info = screenInfo
         ),
         platform = mplatform
       ),
@@ -111,7 +117,7 @@ class Sc3Circuit(
           )
         ),
         scCss = scCssFactory.mkScCss(
-          MScCssArgs.from(scIndexResp, mscreen)
+          MScCssArgs.from(scIndexResp, screenInfo)
         )
       ),
       grid = {
@@ -179,7 +185,7 @@ class Sc3Circuit(
       common = MScCommonQs(
         apiVsn = mroot.internals.conf.apiVsn,
         screen = Some {
-          val scr0 = mroot.dev.screen.screen
+          val scr0 = mroot.dev.screen.info.safeScreen
           // 2018-01-24 Костыль в связи с расхождением между szMult экрана и szMult плитки, тут быстрофикс:
           val pxRatio2 = MPxRatios.forRatio(
             Math.max(
@@ -224,7 +230,8 @@ class Sc3Circuit(
     )
   }
 
-  private val screenRO = scScreenRW.zoom(_.screen)
+  private val screenInfoRO = scScreenRW.zoom(_.info)
+  private val screenRO = screenInfoRO.zoom(_.screen)
 
 
   // Кэш action-handler'ов
@@ -418,33 +425,55 @@ class Sc3Circuit(
     }
 
     //  Когда наступает platform ready и BLE доступен, надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
-    def __dispatchBleBeaconerOnOff() = {
-      val plat = platformRW.value
-      if (plat.isBleAvail && plat.isReady) {
-        Future {
-          val msg = BbOnOff( isEnabled = plat.isUsingNow)
-          dispatch( msg )
+    def __dispatchBleBeaconerOnOff(): Unit = {
+      try {
+        val plat = platformRW.value
+        if (plat.isBleAvail && plat.isReady) {
+          LOG.warn( "ok, dispatching ble on/off", msg = plat )
+          Future {
+            val msg = BbOnOff( isEnabled = plat.isUsingNow)
+            dispatch( msg )
+          }
+        } else {
+          LOG.warn( "no msg", msg = plat )
         }
+      } catch {
+        case ex: Throwable =>
+          LOG.error( ErrorMsgs.CORDOVA_BLE_REQUIRE_FAILED, ex )
       }
     }
 
     // Дожидаться активности платформы, прежде чем заюзать её.
     val isPlatformReadyRO = platformRW.zoom(_.isReady)
     // Лезть в состояние на стадии конструктора - плохая примета. Поэтому защищаемся от возможных косяков в будущем через try-обёртку вокруг zoom.value()
-    if ( Try(isPlatformReadyRO.value).getOrElse(false) ) {
+    val isPlatformReadyNowTry = Try(isPlatformReadyRO.value)
+    if ( isPlatformReadyNowTry.getOrElse(false) ) {
       // Платформа уже готова. Запустить эффект активации BLE-маячков.
+      LOG.log( msg = isPlatformReadyNowTry )
       __dispatchBleBeaconerOnOff()
     } else {
       // Платформа не готова. Значит, надо бы дождаться готовности платформы и повторить попытку.
+      LOG.warn( WarnMsgs.PLATFORM_NOT_READY, msg = isPlatformReadyNowTry )
+
+      // 2018-06-26: Добавить запасной таймер на случай если платформа так и не приготовится.
+      val readyTimeoutId = DomQuick.setTimeout( 7000 ) { () =>
+        if (!isPlatformReadyRO.value) {
+          LOG.error( ErrorMsgs.PLATFORM_READY_NOT_FIRED )
+          dispatch( SetPlatformReady )
+        }
+      }
+
       val sp = Promise[None.type]()
       val cancelF = subscribe(isPlatformReadyRO) { isReadyNowProxy =>
         if (isReadyNowProxy.value) {
+          DomQuick.clearTimeout( readyTimeoutId )
           // Запустить bluetooth-мониторинг.
           __dispatchBleBeaconerOnOff()
           // TODO Активировать фоновый GPS-мониторинг, чтобы видеть себя на карте. Нужен маркер на карте и спрашивался о переходе в новую локацию.
           sp.success(None)
         }
       }
+
       // Удалить подписку на platform-ready-события: она нужна только один раз: при запуске системы на слишком асинхронной платформе.
       sp.future
         .andThen { case _ => cancelF() }
@@ -452,7 +481,7 @@ class Sc3Circuit(
 
     // Реагировать на события активности приложения выдачи.
     subscribe( platformRW.zoom(_.isUsingNow) ) { _ =>
-      // Глушить BLE-маячки, когда платформа позволяет это делать.
+      // Отключать мониторинг BLE-маячков, когда платформа позволяет это делать.
       __dispatchBleBeaconerOnOff()
       // TODO Глушить фоновый GPS-мониторинг
     }

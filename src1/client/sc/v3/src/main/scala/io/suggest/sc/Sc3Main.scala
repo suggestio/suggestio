@@ -30,7 +30,8 @@ object Sc3Main {
     // координатам из исходного URL. На новых девайсах это решабельно через webmanifest.start_url, а на яббле нужен доп.костыль:
     if (
       WebAppUtil.isStandalone() &&
-      Option(dom.document.location.hash).exists(_.nonEmpty)
+      Option(dom.document.location.hash)
+        .exists(_.nonEmpty)
     ) {
       dom.document.location.hash = ""
     }
@@ -54,15 +55,23 @@ object Sc3Main {
 
     val modules = new Sc3Module
 
+    def __activateRmeLogger(): Unit = {
+      // Активировать отправку логов на сервер, когда js-роутер будет готов.
+      Logging.LOGGERS ::= new ScRmeLogAppender
+    }
+
+    if (jsRouterFut.isCompleted) {
+      __activateRmeLogger()
+    } else {
+      jsRouterFut.andThen { case _ =>
+        __activateRmeLogger()
+      }
+    }
+
     // Отрендерить компонент spa-роутера в целевой контейнер.
     modules.sc3SpaRouter
       .router()
       .renderIntoDOM(rootDiv)
-
-    jsRouterFut.andThen { case _ =>
-      // Активировать отправку логов на сервер, когда js-роутер будет готов.
-      Logging.LOGGERS ::= new ScRmeLogAppender
-    }
 
     val BodyCss = modules.getScCssF().Body
     body.className += BodyCss.smBody.htmlClass //+ HtmlConstants.SPACE + BodyCss.BgLogo.ru.htmlClass

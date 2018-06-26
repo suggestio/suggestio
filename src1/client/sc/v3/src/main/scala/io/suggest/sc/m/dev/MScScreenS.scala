@@ -1,7 +1,7 @@
 package io.suggest.sc.m.dev
 
 import diode.FastEq
-import io.suggest.dev.MScreen
+import io.suggest.dev.MScreenInfo
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 
@@ -17,7 +17,7 @@ object MScScreenS {
   /** Поддержка FastEq для инстансов [[MScScreenS]]. */
   implicit object MScScreenSFastEq extends FastEq[MScScreenS] {
     override def eqv(a: MScScreenS, b: MScScreenS): Boolean = {
-      (a.screen ===* b.screen) &&
+      (a.info ===* b.info) &&
         (a.rszTimer ===* b.rszTimer)
     }
   }
@@ -29,16 +29,18 @@ object MScScreenS {
 
 /** Класс модели состояния экрана.
   *
-  * @param screen Описание текущего экрана устройства, в котором отрендерено приложение.
+  * @param info Описание текущего экрана устройства, в котором отрендерено приложение.
   * @param rszTimer Таймер уведомления других контроллеров о наступившем ресайзе.
   *                 Используется таймер задержки реакции для подавление повторных ресайзов.
+  * @param safeAreaTopLeft Сдвиг левого верхнего угла для safe-area.
+  *                        Для iphone10+ и возможно других устройст, к которых экран "вырезки" с краёв.
   */
 case class MScScreenS(
-                       screen      : MScreen,
-                       rszTimer    : Option[Int] = None
+                       info             : MScreenInfo,
+                       rszTimer         : Option[Int]       = None
                      ) {
 
-  def withScreen(screen: MScreen)           = copy(screen = screen)
+  def withInfo(info: MScreenInfo)           = copy(info = info)
   def withRszTimer(rszTimer: Option[Int])   = copy(rszTimer = rszTimer)
 
 }

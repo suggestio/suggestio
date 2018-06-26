@@ -7,6 +7,7 @@ import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
+import io.suggest.common.html.HtmlConstants
 import io.suggest.common.radio.RadioUtil
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.controller.DomQuick
@@ -63,6 +64,8 @@ object BleBeaconerAh extends Log {
   def startApiActivation(dispatcher: Dispatcher): Option[Effect] = {
     // Поиск и подключение всех доступных API для сбора маячков.
     val apis = IBleBeaconsApi.detectApis()
+    LOG.log( msg = apis.mkString( HtmlConstants.COMMA ) )
+
     OptionUtil.maybe( apis.nonEmpty ) {
       // Подписаться на первое доступное API. При ошибках - переходить к следующему API по списку.
       // На все API нет смысла подписываться: тогда будут приходить ненужные уведомления.
@@ -70,7 +73,10 @@ object BleBeaconerAh extends Log {
         // Асинхронная свёрстка списка доступных API'шек.
         def __foldApisAsync(restApis: Seq[IBleBeaconsApi]): Future[IBleBeaconsApi] = {
           restApis.headOption.fold [Future[IBleBeaconsApi]] {
-            Future.failed( new NoSuchElementException( ErrorMsgs.BLE_BEACONS_API_UNAVAILABLE ) )
+            val emsg = ErrorMsgs.BLE_BEACONS_API_UNAVAILABLE
+            LOG.log( emsg, msg = apis )
+            Future.failed( new NoSuchElementException( emsg ) )
+
           } { bbApi =>
             // Надо бы активировать bluetooth, раз уж пошла активация системы.
             FutureUtil
@@ -104,7 +110,12 @@ object BleBeaconerAh extends Log {
                         }
                   }
                   // Если bt точно выключен, то смысла запускать сканирование нет.
-                  if isEnabled2
+                  if {
+                    val r = isEnabled2
+                    if (!r)
+                      LOG.log( ErrorMsgs.BLE_BEACONS_API_CHECK_ENABLED_FAILED, msg = (bbApi, r) )
+                    r
+                  }
 
                   // Запустить непосредственное слушанье маячков:
                   _ <- bbApi.listenBeacons(dispatcher.dispatch(_: BeaconDetected))

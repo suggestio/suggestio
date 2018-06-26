@@ -28,6 +28,7 @@ object ScalaCssUtil {
     implicit class CssLiteralsExt( val literals: Literal.type ) extends AnyVal {
       import scalacss.internal.Value
 
+      // Доп.css-костыли к iphone10 iOS 10-11+:
       def env: Value = "env"
       def constant: Value = "constant"
 

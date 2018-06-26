@@ -58,12 +58,14 @@ class ScreenAh[M](
 
       // Уведомить контроллер плитки, что пора пересчитать плитку.
       val gridReConfFx = Effect.action( GridReConf )
-
       // Забыть о сработавшем таймере.
       val screen2 = JsScreenUtil.getScreen()
 
+      val v0 = value
+
       val v2 = value.copy(
-        screen    = screen2,
+        info      = v0.info
+          .withScreen( screen2 ),
         rszTimer  = None
       )
 

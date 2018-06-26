@@ -1,5 +1,6 @@
 package io.suggest.sjs.common.log
 
+import io.suggest.common.html.HtmlConstants
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 
 import scala.annotation.elidable
@@ -56,7 +57,7 @@ trait LoggerT {
       Logging.handleLogMsg(logMsg)
     } catch { case ex: Throwable =>
       // Подавлять ошибки внутри самих логгеров.
-      println( ErrorMsgs.ALL_LOGGERS_FAILED + " " + ex.getMessage )
+      println( ErrorMsgs.ALL_LOGGERS_FAILED + HtmlConstants.SPACE + ex.getMessage + HtmlConstants.SPACE + logMsg )
     }
   }
 

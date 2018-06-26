@@ -161,7 +161,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
     i1 = i1.withWelcome( mWcSFutOpt.map(_._2) )
 
     // Нужно отребилдить ScCss, но только если что-то реально изменилось.
-    val scCssArgs2 = MScCssArgs.from(i1.resp, ctx.value0.dev.screen.screen)
+    val scCssArgs2 = MScCssArgs.from(i1.resp, ctx.value0.dev.screen.info)
     if (scCssArgs2 != i1.scCss.args) {
       // Изменились аргументы. Пора отребилдить ScCss.
       i1 = i1.withScCss(
@@ -212,7 +212,7 @@ class IndexAh[M](
         common = MScCommonQs(
           apiVsn = root.internals.conf.apiVsn,
           locEnv = root.locEnv,
-          screen = Some( root.dev.screen.screen ),
+          screen = Some( root.dev.screen.info.screen ),
           searchGridAds = Some( true )
         ),
         index = Some(

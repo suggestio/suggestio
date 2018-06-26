@@ -4,7 +4,7 @@ import io.suggest.color.MColorData
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.css.Css
-import io.suggest.dev.MScreen
+import io.suggest.dev.MScreenInfo
 import io.suggest.font.MFonts
 import io.suggest.i18n.MsgCodes
 import io.suggest.model.n2.node.meta.colors.MColors
@@ -65,7 +65,7 @@ object ScCss {
 /** Интерфейс модели параметров для вызова ScCss. */
 trait IScCssArgs {
   def customColorsOpt   : Option[MColors]
-  def screen            : MScreen
+  def screenInfo        : MScreenInfo
   def wcBgWh            : Option[MSize2di]
   def wcFgWh            : Option[MSize2di]
 }
@@ -199,14 +199,14 @@ case class ScCss( args: IScCssArgs )
       val bgImg = {
         // В зависимости от наличия или отсутствия размера welcome background, стили могут отличаться.
         val whMx = args.wcBgWh.fold( StyleS.empty ) { wh0 =>
-          val wh2 = if (ISize2di.whRatio(wh0) < ISize2di.whRatio(args.screen)) {
-            val w = args.screen.width
+          val wh2 = if (ISize2di.whRatio(wh0) < ISize2di.whRatio(args.screenInfo.screen)) {
+            val w = args.screenInfo.screen.width
             MSize2di(
               width  = w,
               height = w * wh0.height / wh0.width
             )
           } else {
-            val h = args.screen.height
+            val h = args.screenInfo.screen.height
             MSize2di(
               width  = h * wh0.width / wh0.height,
               height = h
@@ -263,7 +263,8 @@ case class ScCss( args: IScCssArgs )
       addClassNames( HEADER, Css.Position.ABSOLUTE ),
       backgroundColor( _bgColorCss ),
       borderColor( _fgColorCss ),
-      height( ScCss.HEADER_HEIGHT_PX.px )
+      height( ScCss.HEADER_HEIGHT_PX.px ),
+      top( args.screenInfo.unsafeOffsets.top.px )
     )
 
     object Buttons {
@@ -423,7 +424,7 @@ case class ScCss( args: IScCssArgs )
 
       val tabsWrapper = _styleAddClass( _TABS + "-wrapper" )
 
-      private val TAB_BODY_HEIGHT_PX = args.screen.height - ScCss.TABS_OFFSET_PX
+      private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - ScCss.TABS_OFFSET_PX
 
       private val TAB_BODY_HEIGHT    = height( TAB_BODY_HEIGHT_PX.px )
 
@@ -551,7 +552,7 @@ case class ScCss( args: IScCssArgs )
 
     private val _SM_GRID_ADS = _SM_ + "grid-ads"
 
-    private val _screenHeightPx = args.screen.height.px
+    private val _screenHeightPx = args.screenInfo.screen.height.px
     private val _screenHeight = height( _screenHeightPx )
 
     val outer = style(

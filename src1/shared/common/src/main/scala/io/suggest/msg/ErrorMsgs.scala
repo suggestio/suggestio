@@ -127,4 +127,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def LK_ADN_EDIT_FORM_FAILED          = E(79)
 
+  def PLATFORM_READY_NOT_FIRED         = E(80)
+
 }

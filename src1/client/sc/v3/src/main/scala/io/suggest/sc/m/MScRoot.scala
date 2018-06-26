@@ -32,7 +32,7 @@ object MScRoot {
 
 
   def scCssArgsFrom(scRoot: MScRoot): MScCssArgs = {
-    MScCssArgs.from(scRoot.index.resp, scRoot.dev.screen.screen)
+    MScCssArgs.from(scRoot.index.resp, scRoot.dev.screen.info)
   }
 
 }

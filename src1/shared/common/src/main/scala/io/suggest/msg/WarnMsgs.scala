@@ -79,4 +79,6 @@ object WarnMsgs extends MsgsStaticT {
   /** Событие проигнорено (подавлено), потому что причин для реагирования недостаточно. */
   def SUPPRESSED_INSUFFICIENT                = E(61)
 
+  def PLATFORM_NOT_READY                     = E(62)
+
 }
