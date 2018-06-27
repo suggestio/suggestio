@@ -129,4 +129,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def PLATFORM_READY_NOT_FIRED         = E(80)
 
+  def CATCHED_CONSTRUCTOR_EXCEPTION    = E(81)
+
 }

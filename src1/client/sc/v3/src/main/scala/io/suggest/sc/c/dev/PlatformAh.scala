@@ -122,14 +122,11 @@ class PlatformAh[M](
       }
 
     // Сигнал о готовности платформы к работе.
-    case m @ SetPlatformReady =>
+    case SetPlatformReady =>
       val v0 = value
       if (v0.isReady) {
-        LOG.warn("Plat.ready.ALREADY", msg = m)
         noChange
       } else {
-        LOG.warn("PLATFORM READY EVENT!", msg = m )
-        
         var v2 = v0.withIsReady( true )
 
         // Проверить, не изменились ли ещё какие-то платформенные флаги?

@@ -3,13 +3,12 @@ package io.suggest.ble.api.cordova.ble
 import com.github.don.cordova.plugin.ble.central.{Ble, BtDevice, StartScanOptions}
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.BeaconDetected
-import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
-import scala.scalajs.js.JSON
 
 /**
   * Suggest.io
@@ -103,10 +102,11 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
     // Заинлайнен список поддерживаемых beacon-парсеров с помощью f(...) orElse f(...) orElse f(...)
     f( EddyStoneParser )
       // Среагировать на результат работы цепочки парсеров.
-      .fold [Unit] {
+      .foreach {
+      //.fold [Unit] {
         // device found, но почему-то неподходящий под маячок. warn для отправки на сервер сообщения о подозрительной штуковине, потом надо закомментить/упростить.
-        LOG.log( WarnMsgs.UNKNOWN_BLE_DEVICE, msg = JSON.stringify(dev) )
-      } {
+        //LOG.log( WarnMsgs.UNKNOWN_BLE_DEVICE, msg = JSON.stringify(dev) )
+      //} {
         case Right(beacon) =>
           val e = BeaconDetected( beacon )
           listener(e)

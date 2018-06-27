@@ -429,13 +429,11 @@ class Sc3Circuit(
       try {
         val plat = platformRW.value
         if (plat.isBleAvail && plat.isReady) {
-          LOG.warn( "ok, dispatching ble on/off", msg = plat )
+          //LOG.warn( "ok, dispatching ble on/off", msg = plat )
           Future {
             val msg = BbOnOff( isEnabled = plat.isUsingNow)
             dispatch( msg )
           }
-        } else {
-          LOG.warn( "no msg", msg = plat )
         }
       } catch {
         case ex: Throwable =>
@@ -443,40 +441,44 @@ class Sc3Circuit(
       }
     }
 
-    // Дожидаться активности платформы, прежде чем заюзать её.
     val isPlatformReadyRO = platformRW.zoom(_.isReady)
-    // Лезть в состояние на стадии конструктора - плохая примета. Поэтому защищаемся от возможных косяков в будущем через try-обёртку вокруг zoom.value()
-    val isPlatformReadyNowTry = Try(isPlatformReadyRO.value)
-    if ( isPlatformReadyNowTry.getOrElse(false) ) {
-      // Платформа уже готова. Запустить эффект активации BLE-маячков.
-      LOG.log( msg = isPlatformReadyNowTry )
-      __dispatchBleBeaconerOnOff()
-    } else {
-      // Платформа не готова. Значит, надо бы дождаться готовности платформы и повторить попытку.
-      LOG.warn( WarnMsgs.PLATFORM_NOT_READY, msg = isPlatformReadyNowTry )
+    // Начинаем юзать платформу прямо в конструкторе circuit. Это может быть небезопасно, поэтому тут try-catch для всей этой логики.
+    try {
+      // Лезть в состояние на стадии конструктора - плохая примета. Поэтому защищаемся от возможных косяков в будущем через try-обёртку вокруг zoom.value()
+      if ( Try(isPlatformReadyRO.value).getOrElse(false) ) {
+        // Платформа уже готова. Запустить эффект активации BLE-маячков.
+        //LOG.log( msg = isPlatformReadyNowTry )
+        __dispatchBleBeaconerOnOff()
+      } else {
+        // Платформа не готова. Значит, надо бы дождаться готовности платформы и повторить попытку.
+        //LOG.warn( WarnMsgs.PLATFORM_NOT_READY, msg = isPlatformReadyNowTry )
 
-      // 2018-06-26: Добавить запасной таймер на случай если платформа так и не приготовится.
-      val readyTimeoutId = DomQuick.setTimeout( 7000 ) { () =>
-        if (!isPlatformReadyRO.value) {
-          LOG.error( ErrorMsgs.PLATFORM_READY_NOT_FIRED )
-          dispatch( SetPlatformReady )
+        // 2018-06-26: Добавить запасной таймер на случай если платформа так и не приготовится.
+        val readyTimeoutId = DomQuick.setTimeout( 7000 ) { () =>
+          if (!isPlatformReadyRO.value) {
+            LOG.error( ErrorMsgs.PLATFORM_READY_NOT_FIRED )
+            dispatch( SetPlatformReady )
+          }
         }
-      }
 
-      val sp = Promise[None.type]()
-      val cancelF = subscribe(isPlatformReadyRO) { isReadyNowProxy =>
-        if (isReadyNowProxy.value) {
-          DomQuick.clearTimeout( readyTimeoutId )
-          // Запустить bluetooth-мониторинг.
-          __dispatchBleBeaconerOnOff()
-          // TODO Активировать фоновый GPS-мониторинг, чтобы видеть себя на карте. Нужен маркер на карте и спрашивался о переходе в новую локацию.
-          sp.success(None)
+        val sp = Promise[None.type]()
+        val cancelF = subscribe(isPlatformReadyRO) { isReadyNowProxy =>
+          if (isReadyNowProxy.value) {
+            DomQuick.clearTimeout( readyTimeoutId )
+            // Запустить bluetooth-мониторинг.
+            __dispatchBleBeaconerOnOff()
+            // TODO Активировать фоновый GPS-мониторинг, чтобы видеть себя на карте. Нужен маркер на карте и спрашивался о переходе в новую локацию.
+            sp.success(None)
+          }
         }
-      }
 
-      // Удалить подписку на platform-ready-события: она нужна только один раз: при запуске системы на слишком асинхронной платформе.
-      sp.future
-        .andThen { case _ => cancelF() }
+        // Удалить подписку на platform-ready-события: она нужна только один раз: при запуске системы на слишком асинхронной платформе.
+        sp.future
+          .andThen { case _ => cancelF() }
+      }
+    } catch { case ex: Throwable =>
+      // Возникла ошибка от подготовки платформы прямо в конструкторе. Подавить, т.к. иначе всё встанет колом.
+      LOG.error( ErrorMsgs.CATCHED_CONSTRUCTOR_EXCEPTION, ex )
     }
 
     // Реагировать на события активности приложения выдачи.

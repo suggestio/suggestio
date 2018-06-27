@@ -64,7 +64,7 @@ object BleBeaconerAh extends Log {
   def startApiActivation(dispatcher: Dispatcher): Option[Effect] = {
     // Поиск и подключение всех доступных API для сбора маячков.
     val apis = IBleBeaconsApi.detectApis()
-    LOG.log( msg = apis.mkString( HtmlConstants.COMMA ) )
+    //LOG.log( msg = apis.mkString( HtmlConstants.COMMA ) )
 
     OptionUtil.maybe( apis.nonEmpty ) {
       // Подписаться на первое доступное API. При ошибках - переходить к следующему API по списку.
