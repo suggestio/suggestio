@@ -77,7 +77,7 @@ class Sc3Circuit(
   import MMapInitState.MMapInitStateFastEq
 
   import MEsUuId.Implicits._
-  import io.suggest.sc.m.dev.MPlatformS.MPlatformSFastEq
+  import io.suggest.dev.MPlatformS.MPlatformSFastEq
   import io.suggest.ble.beaconer.m.MBeaconerS.MBeaconerSFastEq
 
 
@@ -97,9 +97,22 @@ class Sc3Circuit(
     val scIndexResp = Pot.empty[MSc3IndexResp]
     val mplatform = PlatformAh.platformInit(this)
 
-    val screenInfo = MScreenInfo(
-      screen = mscreen
+    /*
+    val screenInfo = {
       // TODO задетектить unsafeOffsets
+      val some20 = Some(20)
+      MScreenInfo(
+        screen = mscreen,
+        unsafeOffsets = MTlbr(
+          topO = some20,
+          leftO = some20
+        )
+      )
+    }
+    */
+    val screenInfo = MScreenInfo(
+      screen        = mscreen,
+      unsafeOffsets = JsScreenUtil.getScreenUnsafeAreas(mscreen, mplatform)
     )
 
     MScRoot(

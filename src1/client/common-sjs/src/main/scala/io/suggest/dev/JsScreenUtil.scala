@@ -1,9 +1,13 @@
 package io.suggest.dev
 
-import io.suggest.msg.WarnMsgs
+import io.suggest.common.empty.OptionUtil
+import io.suggest.common.geom.d2.{MOrientation2d, MOrientations2d}
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.sjs.common.vsz.ViewportSz
+import japgolly.univeq._
+import org.scalajs.dom
 
 /**
   * Suggest.io
@@ -36,6 +40,48 @@ object JsScreenUtil extends Log {
         height = sz2d.height,
         pxRatio = pxRatio
       )
+    }
+  }
+
+
+  /** Задетектить небезопасные для контента области на экране.
+    * iphone10 содержит вырез наверху экрана.
+    *
+    * @param mscreen Результат getScreen().
+    * @param platform Данные по текущей платформе.
+    * @return Данные боковин экрана.
+    */
+  def getScreenUnsafeAreas(mscreen: MScreen, platform: MPlatformS): MTlbr = {
+    try {
+      val ua = dom.window.navigator.userAgent
+      val isIphone = ua.contains("iPhone")
+      val isIphone10Wh = isIphone && {
+        val wh = mscreen.width ::
+          mscreen.height ::
+          Nil
+
+        (wh contains 812) &&
+          (wh contains 375) &&
+          (mscreen.pxRatio ==* MPxRatios.DPR3)
+      }
+
+      if (isIphone10Wh) {
+        val orientation = MOrientations2d.forSize2d( mscreen )
+        // TODO Определять динамически
+        val offsetPx = 20
+        MTlbr(
+          topO  = OptionUtil.maybe(orientation ==* MOrientations2d.Vertical)( offsetPx ),
+          leftO = OptionUtil.maybe(orientation ==* MOrientations2d.Horizontal)( offsetPx )
+          // TODO right или left? Надо как-то врубаться, куда ориентация направлена. Можно детектить через доп. css-свойства apple.
+        )
+      } else {
+        // Обычное устройство, всё ок.
+        MTlbr.empty
+      }
+    } catch {
+      case ex: Throwable =>
+        LOG.error( ErrorMsgs.SCREEN_SAFE_AREA_DETECT_ERROR, ex, msg = (mscreen, platform) )
+        MTlbr.empty
     }
   }
 

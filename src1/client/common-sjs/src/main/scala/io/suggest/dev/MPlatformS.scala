@@ -1,4 +1,4 @@
-package io.suggest.sc.m.dev
+package io.suggest.dev
 
 import diode.FastEq
 import japgolly.univeq._

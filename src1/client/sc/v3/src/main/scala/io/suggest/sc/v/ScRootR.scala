@@ -5,7 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.hdr.{MHeaderStates, MenuOpenClose, SearchOpenClose}
 import io.suggest.sc.m.search.MScSearch
-import io.suggest.sc.styl.{GetScCssF, IScCssArgs, MScCssArgs}
+import io.suggest.sc.styl.{GetScCssF, IScCssArgs, MScCssArgs, ScCss}
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr.HeaderR
 import io.suggest.sc.v.inx.WelcomeR
@@ -40,7 +40,6 @@ class ScRootR (
                 getScCssF       : GetScCssF,
               ) {
 
-  import MScCssArgs.MScCssArgsFastEq
   import MScSearch.MScSearchFastEq
   import gridR.GridPropsValFastEq
   import headerR.HeaderPropsValFastEq
@@ -54,7 +53,7 @@ class ScRootR (
   type Props = ModelProxy[MScRoot]
 
   protected[this] case class State(
-                                    scCssArgsC          : ReactConnectProxy[IScCssArgs],
+                                    scCssArgsC          : ReactConnectProxy[ScCss],
                                     gridPropsOptC       : ReactConnectProxy[gridR.PropsVal],
                                     headerPropsC        : ReactConnectProxy[Option[headerR.PropsVal]],
                                     wcPropsOptC         : ReactConnectProxy[Option[welcomeR.PropsVal]],
@@ -182,7 +181,7 @@ class ScRootR (
   val component = ScalaComponent.builder[Props]("Root")
     .initialStateFromProps { propsProxy =>
       State(
-        scCssArgsC  = propsProxy.connect(_.index.scCss.args),
+        scCssArgsC  = propsProxy.connect(_.index.scCss),
 
         gridPropsOptC = propsProxy.connect { mroot =>
           gridR.PropsVal(

@@ -2,7 +2,7 @@ package io.suggest.sc.v
 
 import diode.react.ModelProxy
 import io.suggest.sc.styl.ScScalaCssDefaults._
-import io.suggest.sc.styl.IScCssArgs
+import io.suggest.sc.styl.ScCss
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -13,18 +13,14 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   * Created: 11.07.17 16:09
   * Description: React-компонент, рендерящий динамический css выдачи.
   */
-class ScCssR(
-              scCssFactory: ScCssFactory
-            ) {
+class ScCssR {
 
-  type Props = ModelProxy[IScCssArgs]
+  type Props = ModelProxy[ScCss]
 
   class Backend($: BackendScope[Props, Unit]) {
     def render(props: Props): VdomElement = {
-      val scCss = scCssFactory.mkScCss(props.value)
-
       <.styleTag(
-        scCss.render[String]
+        props.value.render[String]
       )
     }
   }
@@ -40,6 +36,7 @@ class ScCssR(
 }
 
 
+// TODO Код ниже - актуален ли вообще?
 import com.softwaremill.macwire._
 import io.suggest.sc.styl.{IScCssArgs, ScCss}
 

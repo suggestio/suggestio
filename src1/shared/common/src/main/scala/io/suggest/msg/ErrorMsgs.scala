@@ -131,4 +131,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def CATCHED_CONSTRUCTOR_EXCEPTION    = E(81)
 
+  def SCREEN_SAFE_AREA_DETECT_ERROR    = E(82)
+
 }

@@ -8,6 +8,8 @@ package io.suggest
 package object css {
 
   /** Пошаренное дефолтовое значение настроек рендера ScalaCSS. */
+  // TODO ProdDefaults: проблема с ScCss: id меняются на каждый чих, а перерендер шаблонов мы не делаем (getScCssF).
+  // Надо написать свой конфиг, который будет генерить более стабильные названия для css-классов (нужен свой NameGen наподобии alphabet())
   val ScalaCssDefaults = scalacss.DevDefaults
 
 }

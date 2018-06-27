@@ -3,6 +3,7 @@ package io.suggest.sc.styl
 import io.suggest.color.MColorData
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.dev.MScreenInfo
 import io.suggest.font.MFonts
@@ -59,6 +60,9 @@ object ScCss {
 
   implicit def univEq: UnivEq[ScCss] = UnivEq.derive
 
+  /** Стандартный сдвиг кнопок заголовка сверху. */
+  val HEADER_BTN_TOP_OFFSET_PX = 7
+
 }
 
 
@@ -93,7 +97,7 @@ case class ScCss( args: IScCssArgs )
   val overflowScrollingMx: StyleS = {
     if (ScCss.needOverrideScroll) {
       mixin(
-        addClassName( _SM_ + "overflow-scrolling"  )
+        addClassName( _SM_ + "overflow-scrolling" )
       )
     } else {
       mixin(
@@ -263,56 +267,71 @@ case class ScCss( args: IScCssArgs )
       addClassNames( HEADER, Css.Position.ABSOLUTE ),
       backgroundColor( _bgColorCss ),
       borderColor( _fgColorCss ),
-      height( ScCss.HEADER_HEIGHT_PX.px ),
-      top( args.screenInfo.unsafeOffsets.top.px )
+      // Для экранов с вырезами (iphone10) - расширяем заголовок вниз по вертикали:
+      height( (ScCss.HEADER_HEIGHT_PX + args.screenInfo.unsafeOffsets.top).px ),
     )
 
     object Buttons {
 
-      private val _allBtnStylesNoAbs: List[String] = {
-        _SM_BUTTON ::
-          (HEADER + "_btn") ::
-          Nil
-      }
-      /** Начальный список для сборки стилей разных кнопок на панели заголовка. */
-      private val _allBtnStyles: List[String] = {
-        Css.Position.ABSOLUTE :: _allBtnStylesNoAbs
-      }
-
+      val btn = style(
+        addClassNames( _SM_BUTTON, HEADER + "_btn" )
+      )
 
       /** Выравнивание кнопок. */
       object Align {
-        private def __aligned(where: String) = __ + where + "-aligned"
-        def LEFT  = __aligned( MsgCodes.`left` )
-        def RIGHT = __aligned( MsgCodes.`right` )
+        // Новые стили
+        val leftAligned = style(
+          left( 5.px )
+        )
+        val rightAligned = style(
+          left.auto,
+          right( 5.px )
+        )
       }
 
       //val leftGeoBtn = _styleAddClasses( _btnMx, HEADER + "_geo-button", Align.LEFT )
 
-      private def _btnClass(root: String) = HEADER + "_" + root + "-" + `BUTTON`
+      private def _btnClass(root: String): String =
+        HEADER + HtmlConstants.UNDERSCORE + root + HtmlConstants.MINUS + `BUTTON`
 
       /** Стиль кнопки поиска. */
-      val search = _styleAddClasses(
-        _btnClass("search") :: Align.RIGHT :: _allBtnStyles: _*
+      val search = style(
+        addClassNames(
+          _btnClass("search"),
+          Align.rightAligned.htmlClass,
+          Css.Position.ABSOLUTE,
+          btn.htmlClass
+        ),
+        top( (args.screenInfo.unsafeOffsets.top + 5).px )
       )
 
       /** Стиль кнопки меню слева. */
-      val menu = _styleAddClasses(
-        _btnClass("geo") :: Align.LEFT :: _allBtnStyles: _*
+      val menu = style(
+        addClassNames(
+          Align.leftAligned.htmlClass,
+          Css.Position.ABSOLUTE,
+          btn.htmlClass
+        ),
+        top( (args.screenInfo.unsafeOffsets.top + 7).px ),
       )
 
       /** Стиль кнопки заголовка, который указывает вправо. */
       val rightCss = style(
-        addClassNames(_allBtnStyles: _*),
-        //left(auto),
+        addClassNames(
+          Css.Position.ABSOLUTE,
+          btn.htmlClass
+        ),
         top( 14.px ),
         right( -2.px ),
         left.auto
       )
 
       /** Стиль кнопки заголовка, которая указывает влево. */
-      val leftCss = _styleAddClasses(
-        Align.LEFT :: _allBtnStylesNoAbs: _*
+      val leftCss = style(
+        addClassNames(
+          Align.leftAligned.htmlClass,
+          btn.htmlClass
+        )
       )
 
     }
@@ -329,13 +348,12 @@ case class ScCss( args: IScCssArgs )
 
         private val TXT_LOGO = HEADER + "_txt-" + `logo_`
 
-        val txtLogo = {
-          style(
-            addClassName( TXT_LOGO ),
-            color( _fgColorCss ),
-            borderColor( _fgColorCss )
-          )
-        }
+        val txtLogo = style(
+          addClassName( TXT_LOGO ),
+          color( _fgColorCss ),
+          borderColor( _fgColorCss ),
+          top( args.screenInfo.unsafeOffsets.top.px )
+        )
 
         /** Точки по краям названия узла. */
         object Dots {
@@ -358,7 +376,10 @@ case class ScCss( args: IScCssArgs )
       /** CSS для картинки-логотипа. */
       object Img {
         /** Алиас основного стиля логотипа. */
-        val logo = _styleAddClass( HEADER + "_" + `logo_` )
+        val logo = style(
+          //_styleAddClass( HEADER + "_" + `logo_` )
+          paddingTop( (args.screenInfo.unsafeOffsets.top + 10).px )
+        )
         def IMG_HEIGHT_CSSPX = 30
       }
 
@@ -552,13 +573,14 @@ case class ScCss( args: IScCssArgs )
 
     private val _SM_GRID_ADS = _SM_ + "grid-ads"
 
-    private val _screenHeightPx = args.screenInfo.screen.height.px
+    private val _screenHeightPx = (args.screenInfo.screen.height - args.screenInfo.unsafeOffsets.height).px
     private val _screenHeight = height( _screenHeightPx )
 
     val outer = style(
       addClassName( _SM_GRID_ADS ),
       _screenHeight,
-      backgroundColor( _bgColorCss )
+      backgroundColor( _bgColorCss ),
+      paddingTop( args.screenInfo.unsafeOffsets.top.px )
     )
 
     val wrapper = style(
@@ -685,7 +707,7 @@ case class ScCss( args: IScCssArgs )
     Welcome.Bg.bgImg,
     Welcome.Fg.fgImg,
 
-    Header.Buttons.search,
+    Header.Buttons.Align.leftAligned,
     Header.Logo.Txt.Dots.dot,
     Header.Logo.Img.logo,
 
