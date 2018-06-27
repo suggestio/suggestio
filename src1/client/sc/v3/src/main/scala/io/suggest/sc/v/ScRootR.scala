@@ -5,7 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.hdr.{MHeaderStates, MenuOpenClose, SearchOpenClose}
 import io.suggest.sc.m.search.MScSearch
-import io.suggest.sc.styl.{GetScCssF, IScCssArgs, MScCssArgs, ScCss}
+import io.suggest.sc.styl.{GetScCssF, ScCss}
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr.HeaderR
 import io.suggest.sc.v.inx.WelcomeR
@@ -162,6 +162,7 @@ class ScRootR (
             override val transitions  = true
             override val docked       = menuOpenedSomeProxy.value.value
             override val onSetOpen    = _onOpenMenuSidebarF
+            override val shadow       = true
           }
         )( searchSideBar )
       }

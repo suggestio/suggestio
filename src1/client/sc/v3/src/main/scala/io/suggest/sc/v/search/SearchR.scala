@@ -62,46 +62,51 @@ class SearchR(
           scCss.Root.panelBg
         ),
 
-        // Рендер текстового поля поиска.
-        s.sTextC { sTextR.apply },
+        // Наполнение панели.
+        <.div(
+          scCss.Search.content,
 
-        // Стрелка для сворачивания вкладки.
-        props.wrap {_ => Option(MColorData.Examples.WHITE) } ( rightR.applyReusable ),
+          // Рендер текстового поля поиска.
+          s.sTextC { sTextR.apply },
 
-        // Переключалка вкладок карта-теги
-        s.tabC { tabsR.apply },
+          // Стрелка для сворачивания вкладки.
+          props.wrap {_ => Option(MColorData.Examples.WHITE) } ( rightR.applyReusable ),
 
-        // Карта.
+          // Переключалка вкладок карта-теги
+          s.tabC { tabsR.apply },
 
-        // Тело текущего таба.
-        {
-          // Рендер карты:
-          val searchMap = s.mapInitC { searchMapR.apply }
-          // TODO Сделать connect? Есть мнение, что оно перерендеривается на каждый чих, т.к. на втором уровне.
-          val tagsSearch = props.wrap(_.tags) { tagsSearchR.apply }
+          // Карта.
 
-          s.tabC { currTabProxy =>
-            val currTab = currTabProxy.value
+          // Тело текущего таба.
+          {
+            // Рендер карты:
+            val searchMap = s.mapInitC { searchMapR.apply }
+            // TODO Сделать connect? Есть мнение, что оно перерендеривается на каждый чих, т.к. на втором уровне.
+            val tagsSearch = props.wrap(_.tags) { tagsSearchR.apply }
 
-            // Контейнер всех содержимых вкладок.
-            <.div(
+            s.tabC { currTabProxy =>
+              val currTab = currTabProxy.value
 
-              // Содержимое вкладки с картой.
+              // Контейнер всех содержимых вкладок.
               <.div(
-                _renderDisplayCss( currTab ==* MSearchTabs.GeoMap ),
-                searchMap
-              ),
 
-              // Содержимое вкладки с тегами.
-              <.div(
-                _renderDisplayCss( currTab ==* MSearchTabs.Tags ),
-                tagsSearch
+                // Содержимое вкладки с картой.
+                <.div(
+                  _renderDisplayCss( currTab ==* MSearchTabs.GeoMap ),
+                  searchMap
+                ),
+
+                // Содержимое вкладки с тегами.
+                <.div(
+                  _renderDisplayCss( currTab ==* MSearchTabs.Tags ),
+                  tagsSearch
+                )
+
               )
 
-            )
-
+            }
           }
-        }
+        )
 
       )
 

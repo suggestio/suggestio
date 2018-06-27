@@ -55,13 +55,20 @@ class MenuR(
           scCss.Root.panelBg
         ),
 
-        propsProxy.wrap {_ => Option(MColorData.Examples.WHITE) } ( leftR.applyReusable ),
-
+        // Контейнер для непосредственного контента панели.
         <.div(
-          menuCss.Rows.rowsContainer,
+          menuCss.content,
 
-          children
-        )  // .rowsContainer
+          // Кнопка сокрытия панели влево
+          propsProxy.wrap {_ => Option(MColorData.Examples.WHITE) } ( leftR.applyReusable ),
+
+          // Менюшка
+          <.div(
+            menuCss.Rows.rowsContainer,
+
+            children
+          )  // .rowsContainer
+        )
 
       )    // .panel
     }

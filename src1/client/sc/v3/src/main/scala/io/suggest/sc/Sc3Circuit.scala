@@ -94,8 +94,12 @@ class Sc3Circuit(
       }
 
     val mscreen = JsScreenUtil.getScreen()
-    val scIndexResp = Pot.empty[MSc3IndexResp]
     val mplatform = PlatformAh.platformInit(this)
+
+    val screenInfo = MScreenInfo(
+      screen        = mscreen,
+      unsafeOffsets = JsScreenUtil.getScreenUnsafeAreas(mscreen, mplatform)
+    )
 
     /*
     val screenInfo = {
@@ -103,17 +107,15 @@ class Sc3Circuit(
       val some20 = Some(20)
       MScreenInfo(
         screen = mscreen,
-        unsafeOffsets = MTlbr(
+        unsafeOffsets = io.suggest.dev.MTlbr(
           topO = some20,
           leftO = some20
         )
       )
     }
     */
-    val screenInfo = MScreenInfo(
-      screen        = mscreen,
-      unsafeOffsets = JsScreenUtil.getScreenUnsafeAreas(mscreen, mplatform)
-    )
+
+    val scIndexResp = Pot.empty[MSc3IndexResp]
 
     MScRoot(
       dev = MScDev(

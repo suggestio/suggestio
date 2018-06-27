@@ -321,7 +321,7 @@ case class ScCss( args: IScCssArgs )
           Css.Position.ABSOLUTE,
           btn.htmlClass
         ),
-        top( 14.px ),
+        top( (14 + args.screenInfo.unsafeOffsets.top).px ),
         right( -2.px ),
         left.auto
       )
@@ -403,6 +403,14 @@ case class ScCss( args: IScCssArgs )
       Root.panelCommon
     )
 
+    val content = {
+      val paddingTopPx = args.screenInfo.unsafeOffsets.top
+      style(
+        paddingTop( paddingTopPx.px ),
+        maxHeight( (args.screenInfo.screen.height - paddingTopPx).px )
+      )
+    }
+
     /** CSS-класс заголовка внутри панели поиска. */
     //val panelHeader = _styleAddClasses( _PANEL + "_header" )
 
@@ -445,7 +453,7 @@ case class ScCss( args: IScCssArgs )
 
       val tabsWrapper = _styleAddClass( _TABS + "-wrapper" )
 
-      private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - ScCss.TABS_OFFSET_PX
+      private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - ScCss.TABS_OFFSET_PX - args.screenInfo.unsafeOffsets.top
 
       private val TAB_BODY_HEIGHT    = height( TAB_BODY_HEIGHT_PX.px )
 
@@ -662,6 +670,16 @@ case class ScCss( args: IScCssArgs )
       Root.panelCommon,
       width( 280.px )
     )
+
+    val content = {
+      val minPaddingTopPx = 5
+      val paddingTopPx = args.screenInfo.unsafeOffsets.top + minPaddingTopPx
+      style(
+        paddingTop( paddingTopPx.px ),
+        maxHeight( (args.screenInfo.screen.height - paddingTopPx).px ),
+        overflow.auto
+      )
+    }
 
     /** Стили строк меню */
     object Rows {
