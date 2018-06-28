@@ -54,6 +54,9 @@ object HtmlConstants {
   val UNDERSCORE              = "_"
   val ASTERISK                = "*"
 
+  val LESSER                  = "<"
+  val GREAGER                 = ">"
+
   val `.`                     = "."
 
   @inline

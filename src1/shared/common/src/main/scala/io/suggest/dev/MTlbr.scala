@@ -1,6 +1,7 @@
 package io.suggest.dev
 
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.common.html.HtmlConstants
 import japgolly.univeq.UnivEq
 
 /**
@@ -59,5 +60,17 @@ case class MTlbr(
 
   def width: Int = left + right
   def height: Int = top + bottom
+
+  /** Отрендерить в строку вида +3+++ (или +3+4+5+6). */
+  override def toString: String = {
+    val delim = HtmlConstants.PLUS
+    productIterator
+      .flatMap {
+        case v: Option[_] =>
+          delim :: v.asInstanceOf[Option[Int]].toList
+        case _ => Nil
+      }
+      .mkString
+  }
 
 }

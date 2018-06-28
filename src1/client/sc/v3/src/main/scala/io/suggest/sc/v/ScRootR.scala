@@ -2,6 +2,7 @@ package io.suggest.sc.v
 
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.hdr.{MHeaderStates, MenuOpenClose, SearchOpenClose}
 import io.suggest.sc.m.search.MScSearch
@@ -37,6 +38,7 @@ class ScRootR (
                 val aboutSioR   : AboutSioR,
                 val welcomeR    : WelcomeR,
                 val blueToothR  : BlueToothR,
+                val unsafeScreenAreaOffsetR: UnsafeScreenAreaOffsetR,
                 getScCssF       : GetScCssF,
               ) {
 
@@ -65,6 +67,7 @@ class ScRootR (
                                     menuC               : ReactConnectProxy[menuR.PropsVal],
                                     menuOpenedSomeC     : ReactConnectProxy[Some[Boolean]],
                                     menuBlueToothOptC   : ReactConnectProxy[blueToothR.Props_t],
+                                    mtlbrOptC           : ReactConnectProxy[unsafeScreenAreaOffsetR.Props_t],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -114,7 +117,10 @@ class ScRootR (
         s.aboutSioC { aboutSioR.apply },
 
         // Рендер кнопки/подменю для управления bluetooth.
-        s.menuBlueToothOptC { blueToothR.apply }
+        s.menuBlueToothOptC { blueToothR.apply },
+
+        // DEBUG: Если активна отладка, то вот это ещё отрендерить:
+        s.mtlbrOptC { unsafeScreenAreaOffsetR.apply }
       )
       val menuSideBarBody = s.menuC { menuPropsProxy =>
         menuR( menuPropsProxy )( menuSideBarBodyInner )
@@ -279,7 +285,13 @@ class ScRootR (
 
         menuBlueToothOptC = propsProxy.connect { mroot =>
           mroot.dev.beaconer.isEnabled
-        }
+        },
+
+        mtlbrOptC = propsProxy.connect { mroot =>
+          OptionUtil.maybe( mroot.internals.conf.debug ) {
+            mroot.dev.screen.info.unsafeOffsets
+          }
+        }( OptFastEq.Plain )
 
       )
     }

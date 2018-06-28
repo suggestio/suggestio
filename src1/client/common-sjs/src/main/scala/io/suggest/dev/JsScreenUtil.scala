@@ -67,8 +67,8 @@ object JsScreenUtil extends Log {
 
       if (isIphone10Wh) {
         val orientation = MOrientations2d.forSize2d( mscreen )
-        // TODO Определять динамически
-        val offsetPx = 20
+        // TODO Определять динамически. Для iphone 10 надо 20px, но визуально надо больше.
+        val offsetPx = 28
         MTlbr(
           topO  = OptionUtil.maybe(orientation ==* MOrientations2d.Vertical)( offsetPx ),
           leftO = OptionUtil.maybe(orientation ==* MOrientations2d.Horizontal)( offsetPx )

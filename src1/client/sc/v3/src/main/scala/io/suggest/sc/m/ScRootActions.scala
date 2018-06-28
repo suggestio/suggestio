@@ -132,3 +132,5 @@ case class PauseOrResume(isScVisible: Boolean) extends IScRootAction
 /** Сигнал готовности платформы к полноценной работе. */
 case object SetPlatformReady extends IScRootAction
 
+
+case class UpdateUnsafeScreenOffsetBy(incDecBy: Int) extends IScRootAction

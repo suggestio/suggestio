@@ -28,6 +28,7 @@ import util.i18n.IJsMessagesUtilDi
 import util.sec.ICspUtilDi
 import util.showcase.IScUtil
 import util.stat.IStatUtil
+import OptionUtil.BoolOptOps
 import views.html.sc._
 
 import scala.concurrent.Future
@@ -59,6 +60,9 @@ trait ScSite
 {
 
   import mCommonDi._
+
+  /** Изначальное значение флага отладки js-выдачи управляется флагом в конфиге. */
+  private lazy val SC_JS_DEBUG = configuration.getOptional[Boolean]("sc.js.debug").getOrElseFalse
 
 
   /** Настраиваемая логика сборки результата запроса сайта выдачи. */
@@ -346,7 +350,8 @@ trait ScSite
             rcvrsMapUrl     = rcvrsMapUrl,
             isLoggedIn      = _request.user.isAuth,
             aboutSioNodeId  = aboutSioNodeId,
-            apiVsn          = _siteQsArgs.apiVsn
+            apiVsn          = _siteQsArgs.apiVsn,
+            debug           = SC_JS_DEBUG
           )
         )
         val scriptRenderArgs = MSc3ScriptRenderArgs(

@@ -1,11 +1,12 @@
 package io.suggest.sc.c.dev
 
 import diode._
+import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.JsScreenUtil
 import io.suggest.sc.m.dev.MScScreenS
 import io.suggest.sc.m.grid.GridReConf
 import io.suggest.sc.m.inx.ScCssReBuild
-import io.suggest.sc.m.{MScRoot, ScreenReset, ScreenRszTimer}
+import io.suggest.sc.m.{MScRoot, ScreenReset, ScreenRszTimer, UpdateUnsafeScreenOffsetBy}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sc.c.search.SearchAh
@@ -81,6 +82,44 @@ class ScreenAh[M](
         fx >> SearchAh.mapResizeFx( lInstance )
       }
 
+      updated(v2, fx)
+
+
+    // Отладка: управление коэфф сдвига выдачи.
+    case m: UpdateUnsafeScreenOffsetBy =>
+      val v0 = value
+      val uo0 = v0.info.unsafeOffsets
+
+      val incDecF: Option[Int] => Option[Int] = if (uo0.isEmpty) {
+        // Нет исходного сдвига. Скорее всего, сдвиги на этом устройстве не актуальны, но увеличиваем сразу все поля.
+        offOpt0: Option[Int] =>
+          val off2 = offOpt0.getOrElse(0) + m.incDecBy
+          OptionUtil.maybe( off2 > 0 )(off2)
+      } else {
+        // Обновить только ненулевые значения. Это основной вектор отладки.
+        offOpt0: Option[Int] =>
+          offOpt0
+            .map(_ + m.incDecBy)
+            .filter(_ > 0)
+      }
+
+
+      val uo2 = uo0.copy(
+        topO    = incDecF(uo0.topO),
+        leftO   = incDecF(uo0.leftO),
+        rightO  = incDecF(uo0.rightO),
+        bottomO = incDecF(uo0.bottomO)
+      )
+
+      val v2 = v0.withInfo(
+        v0.info.withSafeArea(
+          uo2
+        )
+      )
+
+      // По идее, ребилдить можно прямо тут, но zoom-модель не повзоляет отсюда получить доступ к scCss.
+      // Запускаем ребилд css в фоне:
+      val fx = Effect.action( ScCssReBuild )
       updated(v2, fx)
 
   }
