@@ -269,6 +269,7 @@ case class ScCss( args: IScCssArgs )
       borderColor( _fgColorCss ),
       // Для экранов с вырезами (iphone10) - расширяем заголовок вниз по вертикали:
       height( (ScCss.HEADER_HEIGHT_PX + args.screenInfo.unsafeOffsets.top).px ),
+      left( args.screenInfo.unsafeOffsets.left.px )
     )
 
     object Buttons {
@@ -581,14 +582,15 @@ case class ScCss( args: IScCssArgs )
 
     private val _SM_GRID_ADS = _SM_ + "grid-ads"
 
-    private val _screenHeightPx = (args.screenInfo.screen.height - args.screenInfo.unsafeOffsets.height).px
+    private val _screenHeightPx = (args.screenInfo.screen.height - args.screenInfo.unsafeOffsets.top).px
     private val _screenHeight = height( _screenHeightPx )
 
     val outer = style(
       addClassName( _SM_GRID_ADS ),
       _screenHeight,
       backgroundColor( _bgColorCss ),
-      paddingTop( args.screenInfo.unsafeOffsets.top.px )
+      paddingTop( args.screenInfo.unsafeOffsets.top.px ),
+      paddingLeft( args.screenInfo.unsafeOffsets.left.px )
     )
 
     val wrapper = style(
@@ -668,7 +670,7 @@ case class ScCss( args: IScCssArgs )
 
     val panel = style(
       Root.panelCommon,
-      width( 280.px )
+      width( (280 + args.screenInfo.unsafeOffsets.left).px )
     )
 
     val content = {
@@ -677,7 +679,7 @@ case class ScCss( args: IScCssArgs )
       val paddingTopPx = uo.top + minPaddingTopPx
       style(
         paddingTop( paddingTopPx.px ),
-        paddingLeft( uo.left.px ),
+        paddingLeft( Math.max(5, uo.left).px ),
         maxHeight( (args.screenInfo.screen.height - paddingTopPx).px ),
         overflow.auto
       )
@@ -701,7 +703,7 @@ case class ScCss( args: IScCssArgs )
       val rowContent = style(
         color( _fgColorCss ),
         position.relative,
-        width( 260.px ),
+        minWidth( 260.px ),
         margin(0.px, auto),
         fontFamily.attr := MFonts.OpenSansLight.fileName,
         fontSize( 14.px ),

@@ -28,6 +28,8 @@ class ScreenAh[M](
   /** Кол-во миллисекунд срабатывания таймера задержки реакции на произошедший ресайз. */
   private def RSZ_TIMER_MS = 100
 
+  private def scCssRebuildFx: Effect =
+    Effect.action( ScCssReBuild )
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -54,8 +56,6 @@ class ScreenAh[M](
     // Сигнал срабатывания таймера отложенной реакции на изменение размеров экрана.
     case ScreenRszTimer =>
       // TODO Opt Проверять, изменился ли экран по факту? Может быть изменился и вернулся назад за время таймера?
-      // Уведомить index-контроллер об изменении размера экрана
-      val scCssRebuildFx = Effect.action( ScCssReBuild )
 
       // Уведомить контроллер плитки, что пора пересчитать плитку.
       val gridReConfFx = Effect.action( GridReConf )
@@ -119,9 +119,9 @@ class ScreenAh[M](
         )
       )
 
-      // По идее, ребилдить можно прямо тут, но zoom-модель не повзоляет отсюда получить доступ к scCss.
-      // Запускаем ребилд css в фоне:
-      val fx = Effect.action( ScCssReBuild )
+      // По идее, ребилдить можно прямо тут, но zoom-модель не позволяет отсюда получить доступ к scCss.
+      // Выполнить ребилд ScCss в фоне:
+      val fx = scCssRebuildFx
       updated(v2, fx)
 
   }

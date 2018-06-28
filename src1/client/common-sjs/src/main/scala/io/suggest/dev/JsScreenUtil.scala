@@ -66,11 +66,10 @@ object JsScreenUtil extends Log {
 
       if (isIphone10Wh) {
         val orientation = MOrientations2d.forSize2d( mscreen )
-        // TODO Определять динамически. Для iphone 10 надо 20px, но визуально надо больше.
-        val offsetPx = 28
+        // TODO Определять как-то автоматически? Можно рендерить с css-свойствами и мерять координаты, затем накидывать смещения как-то.
         MTlbr(
-          topO  = OptionUtil.maybe(orientation ==* MOrientations2d.Vertical)( offsetPx ),
-          leftO = OptionUtil.maybe(orientation ==* MOrientations2d.Horizontal)( offsetPx )
+          topO  = OptionUtil.maybe(orientation ==* MOrientations2d.Vertical)( 28 ),
+          leftO = OptionUtil.maybe(orientation ==* MOrientations2d.Horizontal)( 36 )
           // TODO right или left? Надо как-то врубаться, куда ориентация направлена. Можно детектить через доп. css-свойства apple.
         )
       } else {

@@ -56,11 +56,11 @@ class UnsafeScreenAreaOffsetR(
               ),
 
               NBSP_STR,
-              mtlbr.toString,
-              NBSP_STR,
 
               // Увеличение
               <.a(
+                mtlbr.toString,
+                NBSP_STR,
                 ^.onClick --> _onIncDecClick(1),
                 PLUS,
                 GREATER
