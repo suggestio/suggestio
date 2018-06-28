@@ -98,7 +98,7 @@ class Sc3Circuit(
 
     val screenInfo = MScreenInfo(
       screen        = mscreen,
-      unsafeOffsets = JsScreenUtil.getScreenUnsafeAreas(mscreen, mplatform)
+      unsafeOffsets = JsScreenUtil.getScreenUnsafeAreas(mscreen)
     )
 
     /*

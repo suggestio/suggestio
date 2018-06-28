@@ -48,10 +48,9 @@ object JsScreenUtil extends Log {
     * iphone10 содержит вырез наверху экрана.
     *
     * @param mscreen Результат getScreen().
-    * @param platform Данные по текущей платформе.
     * @return Данные боковин экрана.
     */
-  def getScreenUnsafeAreas(mscreen: MScreen, platform: MPlatformS): MTlbr = {
+  def getScreenUnsafeAreas(mscreen: MScreen): MTlbr = {
     try {
       val ua = dom.window.navigator.userAgent
       val isIphone = ua.contains("iPhone")
@@ -80,7 +79,7 @@ object JsScreenUtil extends Log {
       }
     } catch {
       case ex: Throwable =>
-        LOG.error( ErrorMsgs.SCREEN_SAFE_AREA_DETECT_ERROR, ex, msg = (mscreen, platform) )
+        LOG.error( ErrorMsgs.SCREEN_SAFE_AREA_DETECT_ERROR, ex, msg = mscreen )
         MTlbr.empty
     }
   }

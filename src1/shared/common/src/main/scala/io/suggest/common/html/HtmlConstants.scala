@@ -55,7 +55,7 @@ object HtmlConstants {
   val ASTERISK                = "*"
 
   val LESSER                  = "<"
-  val GREAGER                 = ">"
+  val GREATER                 = ">"
 
   val `.`                     = "."
 

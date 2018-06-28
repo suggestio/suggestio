@@ -63,7 +63,7 @@ class UnsafeScreenAreaOffsetR(
               <.a(
                 ^.onClick --> _onIncDecClick(1),
                 PLUS,
-                GREAGER
+                GREATER
               )
             )
 

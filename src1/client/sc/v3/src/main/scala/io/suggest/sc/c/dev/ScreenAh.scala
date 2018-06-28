@@ -6,7 +6,7 @@ import io.suggest.dev.JsScreenUtil
 import io.suggest.sc.m.dev.MScScreenS
 import io.suggest.sc.m.grid.GridReConf
 import io.suggest.sc.m.inx.ScCssReBuild
-import io.suggest.sc.m.{MScRoot, ScreenReset, ScreenRszTimer, UpdateUnsafeScreenOffsetBy}
+import io.suggest.sc.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sc.c.search.SearchAh
@@ -61,13 +61,16 @@ class ScreenAh[M](
       val gridReConfFx = Effect.action( GridReConf )
       // Забыть о сработавшем таймере.
       val screen2 = JsScreenUtil.getScreen()
+      val uo2 = JsScreenUtil.getScreenUnsafeAreas(screen2)
 
       val v0 = value
 
       val v2 = value.copy(
-        info      = v0.info
-          .withScreen( screen2 ),
-        rszTimer  = None
+        info = v0.info.copy(
+          screen        = screen2,
+          unsafeOffsets = uo2
+        ),
+        rszTimer = None
       )
 
       // Аккамулируем эффект. Сначала перестройка основной вёрстки.
@@ -102,7 +105,6 @@ class ScreenAh[M](
             .map(_ + m.incDecBy)
             .filter(_ > 0)
       }
-
 
       val uo2 = uo0.copy(
         topO    = incDecF(uo0.topO),
