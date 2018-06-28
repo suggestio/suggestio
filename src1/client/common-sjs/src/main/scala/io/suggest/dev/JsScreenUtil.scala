@@ -1,7 +1,7 @@
 package io.suggest.dev
 
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.geom.d2.{MOrientation2d, MOrientations2d}
+import io.suggest.common.geom.d2.MOrientations2d
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.vm.wnd.WindowVm

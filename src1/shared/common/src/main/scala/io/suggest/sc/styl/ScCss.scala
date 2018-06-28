@@ -106,7 +106,7 @@ case class ScCss( args: IScCssArgs )
     }
   }
 
-  private def _styleAddClasses(cssClasses: String*) = style( addClassNames(cssClasses: _*) )
+  //private def _styleAddClasses(cssClasses: String*) = style( addClassNames(cssClasses: _*) )
   private def _styleAddClass(cssClass: String) = style( addClassName(cssClass) )
 
   private def `BUTTON` = "button"
@@ -673,9 +673,11 @@ case class ScCss( args: IScCssArgs )
 
     val content = {
       val minPaddingTopPx = 5
-      val paddingTopPx = args.screenInfo.unsafeOffsets.top + minPaddingTopPx
+      val uo = args.screenInfo.unsafeOffsets
+      val paddingTopPx = uo.top + minPaddingTopPx
       style(
         paddingTop( paddingTopPx.px ),
+        paddingLeft( uo.left.px ),
         maxHeight( (args.screenInfo.screen.height - paddingTopPx).px ),
         overflow.auto
       )
