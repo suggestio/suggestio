@@ -269,7 +269,8 @@ case class ScCss( args: IScCssArgs )
       borderColor( _fgColorCss ),
       // Для экранов с вырезами (iphone10) - расширяем заголовок вниз по вертикали:
       height( (ScCss.HEADER_HEIGHT_PX + args.screenInfo.unsafeOffsets.top).px ),
-      left( args.screenInfo.unsafeOffsets.left.px ),
+      // TODO На гориз.смартфоне криво, на декстопе - норм.
+      //left( args.screenInfo.unsafeOffsets.left.px ),
       // При выезде левой панели, заголовок ужимается в несколько строчек. Нельзя так.
       minWidth( 200.px )
     )
@@ -592,7 +593,8 @@ case class ScCss( args: IScCssArgs )
       _screenHeight,
       backgroundColor( _bgColorCss ),
       paddingTop( args.screenInfo.unsafeOffsets.top.px ),
-      paddingLeft( args.screenInfo.unsafeOffsets.left.px )
+      // TODO Гориз. iphone10 - разъезжается.
+      //paddingLeft( args.screenInfo.unsafeOffsets.left.px )
     )
 
     val wrapper = style(
