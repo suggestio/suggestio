@@ -269,7 +269,9 @@ case class ScCss( args: IScCssArgs )
       borderColor( _fgColorCss ),
       // Для экранов с вырезами (iphone10) - расширяем заголовок вниз по вертикали:
       height( (ScCss.HEADER_HEIGHT_PX + args.screenInfo.unsafeOffsets.top).px ),
-      left( args.screenInfo.unsafeOffsets.left.px )
+      left( args.screenInfo.unsafeOffsets.left.px ),
+      // При выезде левой панели, заголовок ужимается в несколько строчек. Нельзя так.
+      minWidth( 200.px )
     )
 
     object Buttons {
