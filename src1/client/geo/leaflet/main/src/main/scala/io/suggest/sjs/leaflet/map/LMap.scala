@@ -111,6 +111,9 @@ class LMap extends LEventTarget {
   var keyboard: IHandler = js.native
   var tap: IHandler = js.native
 
+  // private api
+  var _sizeChanged: js.UndefOr[Boolean] = js.native
+
   // TODO zoomControl, attributionControl.
 
 }

@@ -26,7 +26,6 @@ import japgolly.univeq._
   */
 object MMapInitState {
 
-
   implicit object MMapInitStateFastEq extends FastEq[MMapInitState] {
     override def eqv(a: MMapInitState, b: MMapInitState): Boolean = {
       (a.state      ===* b.state) &&
@@ -68,6 +67,6 @@ case class MMapInitState(
   def withRcvrsGeo(rcvrsGeo: Pot[MGeoNodesResp])    = copy( rcvrsGeo = rcvrsGeo )
   def withDelay(delay: Option[MMapDelay])           = copy( delay = delay )
   def withLoader(loader: Option[MGeoPoint])         = copy( loader = loader )
-  def withLInstance(lmap: Option[LMap])= copy( lmap = lmap )
+  def withLInstance(lmap: Option[LMap])             = copy( lmap = lmap )
 
 }

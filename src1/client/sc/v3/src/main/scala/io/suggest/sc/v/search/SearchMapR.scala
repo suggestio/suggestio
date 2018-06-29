@@ -127,7 +127,6 @@ class SearchMapR(
                     tileLayer,
                     locateControl,
                     rcvrsGeo,
-                    //rcvrsGeo,
                     loaderOpt
                   )
                 }

@@ -67,7 +67,7 @@ class SearchAh[M](
         } else {
           val mapInitFx = Effect {
             DomQuick
-              .timeoutPromiseT(25)(InitSearchMap)
+              .timeoutPromiseT(50)(InitSearchMap)
               .fut
           }
           Some( mapInitFx )
