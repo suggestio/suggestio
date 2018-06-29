@@ -90,9 +90,9 @@ object GridAh {
 
   /** Эффект скроллинга к указанной карточке. */
   def scrollToAdFx(toAd    : MScAdData,
-                            ads     : Pot[Seq[MScAdData]],
-                            gbRes   : MGridBuildResult
-                           ): Effect = {
+                   ads     : Pot[Seq[MScAdData]],
+                   gbRes   : MGridBuildResult
+                  ): Effect = {
     // Карточка уже открыта, её надо свернуть назад в main-блок.
     // Нужно узнать координату в плитке карточке
     val nodeIdOpt = toAd.nodeId
@@ -162,9 +162,11 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
 
   override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
     val g0 = ctx.value0.grid
+    val ads2 = g0.core.ads
+      .fail(ex)
     val g2 = g0.withCore(
       g0.core
-        .withAds( g0.core.ads.fail(ex) )
+        .withAds( ads2 )
     )
     ctx.value0.withGrid( g2 )
   }
@@ -184,7 +186,8 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
         // Собрать начальное состояние карточки.
         // Сервер может присылать уже открытые карточи - это нормально.
         // Главное - их сразу пропихивать и в focused, и в обычные блоки.
-        val isFocused = sc3AdData.jd.template.rootLabel.name ==* MJdTagNames.DOCUMENT
+        val tpl = sc3AdData.jd.template
+        val isFocused = tpl.rootLabel.name ==* MJdTagNames.DOCUMENT
         val jsEdgesMap = sc3AdData.jd
           .edgesMap
           .mapValues( MEdgeDataJs(_) )
@@ -192,19 +195,18 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
         MScAdData(
           nodeId    = sc3AdData.jd.nodeId,
           main      = MBlkRenderData(
-            template  = if (isFocused) {
+            template = {
               // Найти главный блок в шаблоне focused-карточки документа.
-              sc3AdData.jd.template.getMainBlockOrFirst
-            } else {
-              sc3AdData.jd.template
+              if (isFocused) tpl.getMainBlockOrFirst
+              else tpl
             },
-            edges     = jsEdgesMap
+            edges   = jsEdgesMap
           ),
           focused = if (isFocused) {
             // Сервер прислал focused-карточку.
             val v = MScFocAdData(
               MBlkRenderData(
-                template  = sc3AdData.jd.template,
+                template  = tpl,
                 edges     = jsEdgesMap
               ),
               canEdit = sc3AdData.canEdit.getOrElseFalse,

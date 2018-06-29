@@ -116,7 +116,6 @@ class HeaderR(
     .renderBackend[Backend]
     .build
 
-  private def _apply(props: Props) = component( props )
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(props: Props) = component( props )
 
 }

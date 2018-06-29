@@ -82,24 +82,35 @@ class SearchAh[M](
 
     // Клик по кнопке открытия поисковой панели.
     case m: SearchOpenClose =>
-      var v2 = value.withIsShown( m.open )
+      val v0 = value
+      if (v0.isShown ==* m.open) {
+        // Ничего делать не надо - ничего не изменилось.
+        noChange
 
-      // Если выставлен таб, то залить его в состояние:
-      for (tab <- m.onTab if v2.currTab !=* tab)
-        v2 = v2.withCurrTab(tab)
+      } else {
+        // Действительно изменилось состояние отображения панели:
+        var v2 = v0.withIsShown( m.open )
 
-      // Аккаумулятор сайд-эффектов.
-      val routeFx = Effect.action( ResetUrlRoute )
+        // Если выставлен таб, то залить его в состояние:
+        for (tab <- m.onTab if v2.currTab !=* tab)
+          v2 = v2.withCurrTab(tab)
 
-      // Требуется ли запусткать инициализацию карты или списка тегов? Да, если открытие на НЕинициализированной панели.
-      val fxOpt = OptionUtil.maybeOpt(m.open)( _maybeInitializeTab(m.onTab.getOrElse(v2.currTab), v2) )
+        // Аккаумулятор сайд-эффектов.
+        val routeFx = Effect.action( ResetUrlRoute )
 
-      // Объеденить эффекты:
-      val finalFx = (routeFx :: fxOpt.toList)
-        .mergeEffectsSet
-        .get
+        // Требуется ли запусткать инициализацию карты или списка тегов? Да, если открытие на НЕинициализированной панели.
+        val fxOpt = OptionUtil.maybeOpt(m.open) {
+          val nextTab = m.onTab getOrElse v2.currTab
+          _maybeInitializeTab(nextTab, v2)
+        }
 
-      updated(v2, finalFx)
+        // Объеденить эффекты:
+        val finalFx = (routeFx :: fxOpt.toList)
+          .mergeEffectsSet
+          .get
+
+        updated(v2, finalFx)
+      }
 
 
     // Запуск инициализации гео.карты.

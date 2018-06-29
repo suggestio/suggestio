@@ -138,7 +138,6 @@ class WelcomeR(
     .build
 
 
-  private def _apply(propsValProxy: Props) = component(propsValProxy)
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(propsValProxy: Props) = component(propsValProxy)
 
 }

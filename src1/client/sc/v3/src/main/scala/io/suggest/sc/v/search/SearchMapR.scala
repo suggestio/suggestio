@@ -91,46 +91,48 @@ class SearchMapR(
             ^.onTouchMove   ==> _stopPropagationF,
             ^.onTouchCancel ==> _stopPropagationF,
 
-            ReactCommonUtil.maybeEl(mapInit.ready) {
-              val geoMapCssSome = Some( mapCSS.geomap.htmlClass )
-              //val someFalse = Some(false)
-
+            {
               // Рендерим основную гео-карту:
-              val tileLayer = ReactLeafletUtil.Tiles.OsmDefault
+              lazy val tileLayer = ReactLeafletUtil.Tiles.OsmDefault
               // Плагин для геолокации текущего юзера.
-              val locateControl = LocateControlR()
+              lazy val locateControl = LocateControlR()
               // Рендер шейпов и маркеров текущий узлов.
-              val rcvrsGeo = s.rcvrsGeoC { RcvrMarkersR.applyNoChildren }
+              lazy val rcvrsGeo = s.rcvrsGeoC { RcvrMarkersR.applyNoChildren }
               // Рендер опционального маркера-крутилки для ожидания загрузки.
-              val loaderOpt = s.loaderOptC { _mapLoaderReuseF }
+              lazy val loaderOpt = s.loaderOptC { _mapLoaderReuseF }
 
-              // TODO Нужно как-то организовать reuse инстанса фунции. Эта фунция зависит от state, и хз, как это нормально организовать. Вынести в top-level?
-              s.mmapC { mmapProxy =>
-                mmapProxy.wrap { mmap =>
-                  MGeoMapPropsR(
-                    center        = mmap.center,
-                    zoom          = mmap.zoom,
-                    locationFound = mmap.locationFound,
-                    cssClass      = geoMapCssSome,
-                    // Вручную следим за ресайзом, т.к. у Leaflet это плохо получается (если карта хоть иногда бывает ЗА экраном, его считалка размеров ломается).
-                    //trackWndResize = someFalse,
-                    whenReady     = _onMapReadyOptF,
-                    //onDragStart   = _onMapDragStartOptF,
-                    onDragEnd     = _onMapDragEndOptF
-                  )
-                } { geoMapPropsProxy =>
-                  LMapR(
-                    LGeoMapR
-                      .lmMapSProxy2lMapProps( geoMapPropsProxy )
-                      .noAttribution
-                  )(
-                    tileLayer,
-                    locateControl,
-                    rcvrsGeo,
-                    loaderOpt
-                  )
+              ReactCommonUtil.maybeEl(mapInit.ready) {
+                val geoMapCssSome = Some( mapCSS.geomap.htmlClass )
+                //val someFalse = Some(false)
+
+                // TODO Нужно как-то организовать reuse инстанса фунции. Эта фунция зависит от state, и хз, как это нормально организовать. Вынести в top-level?
+                s.mmapC { mmapProxy =>
+                  mmapProxy.wrap { mmap =>
+                    MGeoMapPropsR(
+                      center        = mmap.center,
+                      zoom          = mmap.zoom,
+                      locationFound = mmap.locationFound,
+                      cssClass      = geoMapCssSome,
+                      // Вручную следим за ресайзом, т.к. у Leaflet это плохо получается (если карта хоть иногда бывает ЗА экраном, его считалка размеров ломается).
+                      //trackWndResize = someFalse,
+                      whenReady     = _onMapReadyOptF,
+                      //onDragStart   = _onMapDragStartOptF,
+                      onDragEnd     = _onMapDragEndOptF
+                    )
+                  } { geoMapPropsProxy =>
+                    LMapR(
+                      LGeoMapR
+                        .lmMapSProxy2lMapProps( geoMapPropsProxy )
+                        .noAttribution
+                    )(
+                      tileLayer,
+                      locateControl,
+                      rcvrsGeo,
+                      loaderOpt
+                    )
+                  }
+
                 }
-
               }
             }
 
@@ -149,7 +151,7 @@ class SearchMapR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("SMap")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { mapInitProxy =>
       State(
         mmapC       = mapInitProxy.connect(_.state),
