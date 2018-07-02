@@ -9,7 +9,7 @@ import io.suggest.react.ReactDiodeUtil
 import io.suggest.sc.m.grid._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactMouseEvent}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactMouseEvent, ScalaComponent}
 import japgolly.univeq._
 
 /**
@@ -23,7 +23,8 @@ import japgolly.univeq._
   */
 class GridCoreR(
                  jdGridUtil                 : JdGridUtil,
-                 jdR                        : JdR
+                 jdR                        : JdR,
+                 //getRouterCtlF              : GetRouterCtlF,
                ) {
 
   import MJdArgs.MJdArgsFastEq
@@ -55,6 +56,9 @@ class GridCoreR(
           tagName   = GridComponents.DIV
         )
       } {
+        //lazy val routerCtl = getRouterCtlF()
+        // TODO routerCtl.urlFor() внутри <a.href>
+
         val iter = for {
           (ad, i) <- mgrid.ads.iterator
             .flatten
@@ -110,7 +114,7 @@ class GridCoreR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("GridCore")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build
