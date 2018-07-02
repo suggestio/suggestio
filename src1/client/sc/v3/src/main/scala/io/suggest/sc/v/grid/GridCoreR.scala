@@ -9,7 +9,8 @@ import io.suggest.react.ReactDiodeUtil
 import io.suggest.sc.m.grid._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactMouseEvent}
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -35,8 +36,12 @@ class GridCoreR(
   class Backend($: BackendScope[Props, Unit]) {
 
     /** Клик по карточке в плитке. */
-    private def onBlockClick(nodeId: String): Callback = {
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, GridBlockClick(nodeId))
+    private def onBlockClick(nodeId: String)(e: ReactMouseEvent): Callback = {
+      if( e.button ==* 0 ) {
+        ReactDiodeUtil.dispatchOnProxyScopeCB($, GridBlockClick(nodeId))
+      } else {
+        Callback.empty
+      }
     }
 
 
@@ -83,7 +88,7 @@ class GridCoreR(
 
             // Реакция на клики, когда nodeId задан.
             ad.nodeId.whenDefined { nodeId =>
-              ^.onClick --> onBlockClick(nodeId)
+              ^.onClick ==> onBlockClick(nodeId)
             },
 
             mgridProxy.wrap { _ =>
