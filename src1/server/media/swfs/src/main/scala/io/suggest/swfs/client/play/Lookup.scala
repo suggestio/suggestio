@@ -38,17 +38,26 @@ trait Lookup extends ISwfsClientWs with OneMasterRequest { that =>
 
           if ( SwfsClientWs.isStatus2xx(s) ) {
             // Может быть пустой ответ: пустой JSON "{}" или вообще пустая строка "".
-            val r = if (wsResp.bodyAsBytes.lengthCompare(2) <= 0) {
-              LookupResponse.empty
+            if (wsResp.bodyAsBytes.lengthCompare(5) <= 0) {
+              LOGGER.warn(s"$logPrefix Empty json-resp=${wsResp.body} from swfs $url")
+              Right( LookupResponse(args.volumeId, Nil) )
             } else {
               try {
-                wsResp.json.as[LookupResponse]
+                val respParsedJsRes = wsResp
+                  .json
+                  .validate[LookupResponse]
+                  .asEither
+                for (errors <- respParsedJsRes.left) yield {
+                  val errorsAsString = errors.mkString(" \n")
+                  LOGGER.error(s"$logPrefix Cannot parse resp: ${wsResp.body}\n Req was = $url\n $errorsAsString")
+                  LookupError(volumeId = args.volumeId, error = errorsAsString)
+                }
               } catch { case ex: Throwable =>
-                LOGGER.error(s"$logPrefix Cannot parse resp: ${wsResp.body}\n Req was = $url", ex)
-                LookupResponse.empty
+                val msg = s"$logPrefix Cannot parse resp: ${wsResp.body}\n Req was = $url"
+                LOGGER.error(msg, ex)
+                Left( LookupError(volumeId = args.volumeId, error = msg) )
               }
             }
-            Right(r)
           } else if (s == 404) {
             Left( wsResp.json.as[LookupError] )
           } else {
