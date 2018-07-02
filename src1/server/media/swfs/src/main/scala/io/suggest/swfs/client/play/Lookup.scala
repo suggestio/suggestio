@@ -37,7 +37,18 @@ trait Lookup extends ISwfsClientWs with OneMasterRequest { that =>
           LOGGER.trace(s"$logPrefix Received answer from $url: HTTP $s, took = ${System.currentTimeMillis() - startMs} ms.\n ${wsResp.body}")
 
           if ( SwfsClientWs.isStatus2xx(s) ) {
-            Right( wsResp.json.as[LookupResponse] )
+            // Может быть пустой ответ: пустой JSON "{}" или вообще пустая строка "".
+            val r = if (wsResp.bodyAsBytes.lengthCompare(2) <= 0) {
+              LookupResponse.empty
+            } else {
+              try {
+                wsResp.json.as[LookupResponse]
+              } catch { case ex: Throwable =>
+                LOGGER.error(s"$logPrefix Cannot parse resp: ${wsResp.body}\n Req was = $url", ex)
+                LookupResponse.empty
+              }
+            }
+            Right(r)
           } else if (s == 404) {
             Left( wsResp.json.as[LookupError] )
           } else {

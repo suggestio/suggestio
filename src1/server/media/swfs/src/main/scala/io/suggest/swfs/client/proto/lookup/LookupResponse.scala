@@ -23,6 +23,8 @@ import play.api.libs.functional.syntax._
  */
 object LookupResponse {
 
+  def empty = LookupResponse(-1, Nil)
+
   /** Поддержка JSON. */
   implicit val FORMAT: Format[LookupResponse] = (
     VolumeId.FORMAT_STR and

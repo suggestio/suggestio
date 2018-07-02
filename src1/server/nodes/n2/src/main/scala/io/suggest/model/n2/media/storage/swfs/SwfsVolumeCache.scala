@@ -57,17 +57,27 @@ class SwfsVolumeCache @Inject() (
       val lr = LookupRequest(
         volumeId = volumeId
       )
-      val fut = for (tryRes <- client.lookup(lr)) yield {
-        tryRes match {
-          case Right(resp) =>
-            LOGGER.trace("Lookup volumeId=" + volumeId + " => " + resp.locations.iterator.map(_.publicUrl).mkString(",") )
-            resp.locations
-          case Left(err) =>
-            LOGGER.warn(s"Failed to lookup volumeId=$volumeId due to: ${err.error}")
-            err.locations
-        }
-      }
 
+      val fut = client
+        .lookup(lr)
+        .map { tryRes =>
+          tryRes.fold(
+            {err =>
+              LOGGER.warn(s"Failed to lookup volumeId=$volumeId due to: ${err.error}")
+              err.locations
+            },
+            {resp =>
+              LOGGER.trace("Lookup volumeId=" + volumeId + " => " + resp.locations.iterator.map(_.publicUrl).mkString(",") )
+              resp.locations
+            }
+          )
+        }
+        .recover { case ex: Throwable =>
+          LOGGER.error(s"Volume $volumeId lookup failed", ex)
+          Nil
+        }
+
+      // TODO  Говнокод какой-то: сохраняем в кэш, а затем удаляем. Надо просто не сохранять, не?
       // Если нет нормального результата, то нужно удалить фьючерс из кеша.
       for (ex <- fut.filter(_.nonEmpty).failed) {
         cache.remove(ck)
