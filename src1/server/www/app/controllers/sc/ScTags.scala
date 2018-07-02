@@ -4,7 +4,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScQs, MScRespActionTypes}
-import io.suggest.sc.search.{MSc3Tag, MSc3TagsResp}
+import io.suggest.sc.search.{MSc3NodeInfo, MSc3NodeSearchResp}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.req.IReq
@@ -48,7 +48,7 @@ trait ScTags
       geoIpUtil.fixedRemoteAddrFromRequest.remoteAddr
     )
 
-    lazy val mGeoLocOptFut = OptionUtil.maybeFut( _qs.search.rcvrId.isEmpty ) {
+    def mGeoLocOptFut = OptionUtil.maybeFut( _qs.search.rcvrId.isEmpty ) {
       geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLocOpt )( geoIpResOptFut )
     }
 
@@ -146,14 +146,14 @@ trait ScTags
         MSc3RespAction(
           acType = MScRespActionTypes.SearchRes,
           search = Some(
-            MSc3TagsResp(
-              tags = {
+            MSc3NodeSearchResp(
+              results = {
                 val iter = for {
                   tagNode <- tags.iterator
                   name    <- tagNode.guessDisplayName.iterator
                   nodeId  <- tagNode.id.iterator
                 } yield {
-                  MSc3Tag(
+                  MSc3NodeInfo(
                     name   = name,
                     nodeId = nodeId
                   )

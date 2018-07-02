@@ -173,17 +173,17 @@ class TagsRespHandler
     val tagsResp = ra.search.get
     val tagsList2 = if (reason.clear || t0.tagsReq.isEmpty || t0.tagsReq.exists(_.isEmpty)) {
       // Объединять текущий и полученный списки тегов не требуется.
-      tagsResp.tags
+      tagsResp.results
     } else {
       // Требуется склеить все имеющиеся списки тегов
-      t0.tagsReq.getOrElse(Nil) ++ tagsResp.tags
+      t0.tagsReq.getOrElse(Nil) ++ tagsResp.results
     }
 
     val tagsReq2 = t0.tagsReq.ready( tagsList2 )
 
     val t2 = t0.copy(
       tagsReq     = tagsReq2,
-      hasMoreTags = ctx.m.apiReq.search.limit.get >= tagsResp.tags.size,
+      hasMoreTags = ctx.m.apiReq.search.limit.get >= tagsResp.results.size,
       selectedId  = OptionUtil.maybeOpt( !reason.clear )( t0.selectedId )
     )
 

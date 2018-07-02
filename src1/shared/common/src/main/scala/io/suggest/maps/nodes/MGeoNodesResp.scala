@@ -2,7 +2,6 @@ package io.suggest.maps.nodes
 
 import io.suggest.geo.IGeoShape
 import io.suggest.geo.IGeoShape.JsonFormats.internalMinFormat
-import boopickle.Default._
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
 import play.api.libs.json._
@@ -16,11 +15,6 @@ import play.api.libs.functional.syntax._
   * Данная модель содержит все данные, необходимые для рендера шейпов и маркеров ресиверов на гео.карте.
   */
 object MGeoNodesResp {
-
-  implicit val MGEO_RCVR_NODES_RESP_PICKLER: Pickler[MGeoNodesResp] = {
-    implicit val mGeoNodePropsShapesP = MGeoNodePropsShapes.MGEO_NODE_PROPS_SHAPES_PICKLER
-    generatePickler[MGeoNodesResp]
-  }
 
   implicit def univEq: UnivEq[MGeoNodesResp] = UnivEq.derive
 
@@ -51,12 +45,6 @@ object MGeoNodePropsShapes {
     (__ \ "p").format[MAdvGeoMapNodeProps] and
     (__ \ "s").format[Iterable[IGeoShape]]
   )(apply, unlift(unapply))
-
-  implicit val MGEO_NODE_PROPS_SHAPES_PICKLER: Pickler[MGeoNodePropsShapes] = {
-    implicit val mAdvGeoMapNodePropsP = MAdvGeoMapNodeProps.mAdvGeoMapNodePropsPickler
-    implicit val iGeoShapeP = IGeoShape.GEO_SHAPE_PICKLER
-    generatePickler[MGeoNodePropsShapes]
-  }
 
   implicit def univEq: UnivEq[MGeoNodePropsShapes] = UnivEq.derive
 

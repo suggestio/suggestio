@@ -2,7 +2,7 @@ package io.suggest.sc.sc3
 
 import io.suggest.sc.ads.MSc3AdsResp
 import io.suggest.sc.index.MSc3IndexResp
-import io.suggest.sc.search.MSc3TagsResp
+import io.suggest.sc.search.MSc3NodeSearchResp
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -21,7 +21,7 @@ object MSc3RespAction {
     (__ \ "action").format[MScRespActionType] and
     (__ \ MScRespActionTypes.Index.value).formatNullable[MSc3IndexResp] and
     (__ \ MScRespActionTypes.AdsTile.value).formatNullable[MSc3AdsResp] and
-    (__ \ MScRespActionTypes.SearchRes.value).formatNullable[MSc3TagsResp]
+    (__ \ MScRespActionTypes.SearchRes.value).formatNullable[MSc3NodeSearchResp]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MSc3RespAction] = UnivEq.derive
@@ -42,5 +42,5 @@ case class MSc3RespAction(
                            acType    : MScRespActionType,
                            index     : Option[MSc3IndexResp]  = None,
                            ads       : Option[MSc3AdsResp]    = None,
-                           search    : Option[MSc3TagsResp]   = None,
+                           search    : Option[MSc3NodeSearchResp]   = None,
                          )

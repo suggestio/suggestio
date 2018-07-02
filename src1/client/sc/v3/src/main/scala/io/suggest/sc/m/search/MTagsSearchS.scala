@@ -3,7 +3,7 @@ package io.suggest.sc.m.search
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.empty.NonEmpty
-import io.suggest.sc.search.MSc3Tag
+import io.suggest.sc.search.MSc3NodeInfo
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -39,7 +39,7 @@ object MTagsSearchS {
   * @param hasMoreTags Есть ли ещё теги на сервере?
   */
 case class MTagsSearchS(
-                         tagsReq      : Pot[Seq[MSc3Tag]]     = Pot.empty,
+                         tagsReq      : Pot[Seq[MSc3NodeInfo]]     = Pot.empty,
                          hasMoreTags  : Boolean               = true,
                          // TODO Когда станет допустимо сразу несколько тегов, надо заменить на Set[String].
                          selectedId   : Option[String]        = None
@@ -47,7 +47,7 @@ case class MTagsSearchS(
   extends NonEmpty
 {
 
-  def withTagsReq(tagsReq: Pot[Seq[MSc3Tag]])       = copy(tagsReq = tagsReq)
+  def withTagsReq(tagsReq: Pot[Seq[MSc3NodeInfo]])       = copy(tagsReq = tagsReq)
   def withHasMoreTags(hasMoreTags: Boolean)         = copy(hasMoreTags = hasMoreTags)
   def withSelectedId(selectedId: Option[String])    = copy(selectedId = selectedId)
 

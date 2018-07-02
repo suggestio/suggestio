@@ -1,5 +1,6 @@
 package io.suggest.swfs.client.proto.lookup
 
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.swfs.client.proto.fid.{IVolumeId, VolumeId}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -25,7 +26,11 @@ object LookupResponse {
   /** Поддержка JSON. */
   implicit val FORMAT: Format[LookupResponse] = (
     VolumeId.FORMAT_STR and
-    (__ \ "locations").format[Seq[VolumeLocation]]
+    (__ \ "locations").formatNullable[Seq[VolumeLocation]]
+      .inmap[Seq[VolumeLocation]](
+        EmptyUtil.opt2ImplEmptyF( Nil ),
+        { vols => if (vols.isEmpty) None else Some(vols) }
+      )
   )(apply, unlift(unapply))
 
 }
