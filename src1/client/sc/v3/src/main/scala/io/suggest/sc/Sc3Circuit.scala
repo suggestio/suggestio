@@ -240,7 +240,8 @@ class Sc3Circuit(
       ),
       search = MAdsSearchReq(
         textQuery = mroot.index.search.text.searchQuery.toOption,
-        rcvrId    = currRcvrId.toEsUuIdOpt
+        rcvrId    = currRcvrId.toEsUuIdOpt,
+        tab       = Some( mroot.index.search.currTab )
       )
     )
   }

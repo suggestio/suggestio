@@ -44,4 +44,7 @@ object AdSearchConstants {
     */
   def TEXT_QUERY_FN = "q"
 
+  /** Имя поял с текущим таба поиска. */
+  def SEARCH_TAB_FN = "b"
+
 }

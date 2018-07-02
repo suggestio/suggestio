@@ -53,29 +53,47 @@ object JsScreenUtil extends Log {
   def getScreenUnsafeAreas(mscreen: MScreen): MTlbr = {
     try {
       val ua = dom.window.navigator.userAgent
-      val isIphone = ua.contains("iPhone")
-      val isIphone10Wh = isIphone && {
-        val wh = mscreen.width ::
-          mscreen.height ::
-          Nil
+      def orientation = MOrientations2d.forSize2d( mscreen )
 
-        (wh contains 812) &&
-          (wh contains 375) &&
-          (mscreen.pxRatio ==* MPxRatios.DPR3)
-      }
+      // Const: Отступ сверху на 12px
+      def TOP_12PX = MTlbr( topO = Some(12) )
 
-      if (isIphone10Wh) {
-        val orientation = MOrientations2d.forSize2d( mscreen )
-        // TODO Определять как-то автоматически? Можно рендерить с css-свойствами и мерять координаты, затем накидывать смещения как-то.
-        MTlbr(
-          topO  = OptionUtil.maybe(orientation ==* MOrientations2d.Vertical)( 28 ),
-          leftO = OptionUtil.maybe(orientation ==* MOrientations2d.Horizontal)( 36 )
-          // TODO right или left? Надо как-то врубаться, куда ориентация направлена. Можно детектить через доп. css-свойства apple.
-        )
+      if ( ua contains "iPhone" ) {
+        // Это айфон. Надо решить, сколько отсутупать.
+        val isIphone10Wh = {
+          val wh = mscreen.width ::
+            mscreen.height ::
+            Nil
+
+          (wh contains 812) &&
+            (wh contains 375) &&
+            (mscreen.pxRatio ==* MPxRatios.DPR3)
+        }
+
+        if (isIphone10Wh) {
+          // TODO Определять как-то автоматически? Можно рендерить с css-свойствами и мерять координаты, затем накидывать смещения как-то.
+          MTlbr(
+            topO  = OptionUtil.maybe(orientation ==* MOrientations2d.Vertical)( 28 ),
+            leftO = OptionUtil.maybe(orientation ==* MOrientations2d.Horizontal)( 36 )
+            // TODO right или left? Надо как-то врубаться, куда ориентация направлена. Можно детектить через доп. css-свойства apple.
+          )
+        } else {
+          // На остальных айфонах надо делать 12px сверху в вертикальной ориентации.
+          if (orientation ==* MOrientations2d.Vertical)
+            TOP_12PX
+          else
+            MTlbr.empty
+        }
+
+      } else if ( ua contains "iPad" ) {
+        // 12px сверху в любой ориентации
+        TOP_12PX
+
       } else {
         // Обычное устройство, всё ок.
         MTlbr.empty
       }
+
     } catch {
       case ex: Throwable =>
         LOG.error( ErrorMsgs.SCREEN_SAFE_AREA_DETECT_ERROR, ex, msg = mscreen )
