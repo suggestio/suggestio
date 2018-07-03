@@ -3,7 +3,7 @@ package io.suggest.sc.v.search
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.maps.m.{HandleMapReady, MGeoMapPropsR, MMapS, MapDragEnd}
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.r.{LGeoMapR, RcvrMarkersR, ReactLeafletUtil}
@@ -40,7 +40,8 @@ class SearchMapR(
   protected[this] case class State(
                                     mmapC       : ReactConnectProxy[MMapS],
                                     rcvrsGeoC   : ReactConnectProxy[Pot[MGeoNodesResp]],
-                                    loaderOptC  : ReactConnectProxy[Option[MGeoPoint]]
+                                    loaderOptC  : ReactConnectProxy[Option[MGeoPoint]],
+                                    userLocOptC : ReactConnectProxy[Option[MGeoLoc]],
                                   )
 
 
@@ -55,13 +56,19 @@ class SearchMapR(
     private val _onMapDragEndOptF = Some( ReactCommonUtil.cbFun1ToJsCb( _onMapDragEnd ) )
 
 
-    private val _mapLoaderReuseF = { loaderOpt: ModelProxy[Option[MGeoPoint]] =>
-      loaderOpt.value.whenDefinedEl { mgp =>
-        MapIcons.preloaderLMarker(
-          latLng = MapsUtil.geoPoint2LatLng( mgp )
-        )
+    // TODO Унести в отдельные компоненты...
+    private val _mapLoader = ScalaComponent
+      .builder[ModelProxy[Option[MGeoPoint]]]("LoaderMarker")
+      .stateless
+      .render_P { geoPointOptProxy =>
+        geoPointOptProxy.value.whenDefinedEl { mgp =>
+          MapIcons.preloaderLMarker(
+            latLng = MapsUtil.geoPoint2LatLng( mgp )
+          )
+        }
       }
-    }
+      .build
+    private val _mapLoaderReuseF: ReactConnectProps[Option[MGeoPoint]] =  _mapLoader.apply
 
 
     private def _onMapReady(e: IWhenReadyArgs): Callback = {
@@ -70,6 +77,18 @@ class SearchMapR(
     private val _onMapReadyOptF = {
       Some( ReactCommonUtil.cbFun1ToJsCb(_onMapReady) )
     }
+
+    // TODO Унести в отдельные компоненты...
+    private val _userLocShape = ScalaComponent
+      .builder[ModelProxy[Option[MGeoLoc]]]("UserLoc")
+      .stateless
+      .render_P { userLocOptProxy =>
+        userLocOptProxy.value.whenDefinedEl { userLoc =>
+          MapIcons.userLocCircle( userLoc )
+        }
+      }
+      .build
+    private val _userLocShapeF: ReactConnectProps[Option[MGeoLoc]] = _userLocShape.apply
 
 
     def render(mapInitProxy: Props, s: State): VdomElement = {
@@ -100,6 +119,8 @@ class SearchMapR(
               lazy val rcvrsGeo = s.rcvrsGeoC { RcvrMarkersR.applyNoChildren }
               // Рендер опционального маркера-крутилки для ожидания загрузки.
               lazy val loaderOpt = s.loaderOptC { _mapLoaderReuseF }
+              // Рендер круга текущей геолокации юзера:
+              lazy val userLoc = s.userLocOptC { _userLocShapeF }
 
               ReactCommonUtil.maybeEl(mapInit.ready) {
                 val geoMapCssSome = Some( mapCSS.geomap.htmlClass )
@@ -127,6 +148,7 @@ class SearchMapR(
                     )(
                       tileLayer,
                       locateControl,
+                      userLoc,
                       rcvrsGeo,
                       loaderOpt
                     )
@@ -156,7 +178,14 @@ class SearchMapR(
       State(
         mmapC       = mapInitProxy.connect(_.state),
         rcvrsGeoC   = mapInitProxy.connect(_.rcvrsGeo),
-        loaderOptC  = mapInitProxy.connect(_.loader)( OptFastEq.Plain )
+        loaderOptC  = mapInitProxy.connect(_.loader)( OptFastEq.Plain ),
+        userLocOptC = mapInitProxy.connect { mapInit =>
+          mapInit.userLoc
+            // Запретить конфликты шейпов с LocationControl-плагином. TODO Удалить плагин, геолокация полностью должна жить в состоянии и рендерится только отсюда.
+            .filter { _ =>
+              mapInit.state.locationFound.isEmpty
+            }
+        }
       )
     }
     .renderBackend[Backend]

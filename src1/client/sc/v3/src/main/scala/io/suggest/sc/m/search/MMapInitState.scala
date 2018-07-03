@@ -2,7 +2,7 @@ package io.suggest.sc.m.search
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.maps.m.MMapS
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.sjs.leaflet.map.LMap
@@ -33,7 +33,8 @@ object MMapInitState {
         (a.rcvrsGeo ===* b.rcvrsGeo) &&
         (a.delay    ===* b.delay) &&
         (a.loader   ===* b.loader) &&
-        (a.lmap     ===* b.lmap)
+        (a.lmap     ===* b.lmap) &&
+        (a.userLoc  ===* b.userLoc)
     }
   }
 
@@ -52,6 +53,7 @@ object MMapInitState {
   * @param loader Координата для отображения маркера текущей подгрузки выдачи.
   * @param lmap leaflet instance для воздействия напрямую на карта в обход в react-leaflet.
   *                  Возможно, станет ненужным при использовании react context api (react-leaflet v2+).
+  * @param userLoc Геолокация юзера, записанная в состояния.
   */
 case class MMapInitState(
                           state           : MMapS,
@@ -60,6 +62,7 @@ case class MMapInitState(
                           delay           : Option[MMapDelay]     = None,
                           loader          : Option[MGeoPoint]     = None,
                           lmap            : Option[LMap]          = None,
+                          userLoc         : Option[MGeoLoc]       = None,
                         ) {
 
   def withState(state: MMapS)                       = copy( state = state )
@@ -68,5 +71,6 @@ case class MMapInitState(
   def withDelay(delay: Option[MMapDelay])           = copy( delay = delay )
   def withLoader(loader: Option[MGeoPoint])         = copy( loader = loader )
   def withLInstance(lmap: Option[LMap])             = copy( lmap = lmap )
+  def withUserLoc(userLoc: Option[MGeoLoc])         = copy( userLoc = userLoc )
 
 }

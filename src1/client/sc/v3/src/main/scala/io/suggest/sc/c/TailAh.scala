@@ -153,7 +153,7 @@ class TailAh[M](
         if !currMainScreen.locEnv.contains(currGeoPoint)
       } {
         needUpdateUi = true
-        inx = withMapCenter(currGeoPoint, inx)
+        inx = withMapCenterInitReal(currGeoPoint, inx)
       }
 
       // Смотрим текущий выделенный тег
@@ -233,16 +233,26 @@ class TailAh[M](
     case m: GlPubSignal =>
       val v0 = value
 
-      // TODO Не перещёлкивать карту, когда часто приходят чуть-чуть разные координаты. Обновлять карту только при ОЧЕНЬ сильной необходимости.
       // Сейчас ожидаем максимально точных координат?
       v0.internals.geoLockTimer.fold {
         // Сейчас не ожидаются координаты. Просто сохранить координаты в состояние карты.
-        m.orig.locationOpt.fold( noChange ) { geoLoc =>
-          val v2 = withMapCenter(geoLoc.point, v0)
-          val isMapOpened = v0.index.search.isShownTab(MSearchTabs.GeoMap)
-          val isSilentUpdate = !isMapOpened
-          ah.updateMaybeSilent(isSilentUpdate)(v2)
-        }
+        m.orig
+          .locationOpt
+          // TODO Opt: iphone шлёт кучу одинаковых или похожих координат, раз в 1-2 секунды. Надо это фильтровать.
+          .fold( noChange ) { geoLoc =>
+            // TODO Не перещёлкивать карту, сохранять координаты рядом, а не туда, куда обычно.
+            val v2 = v0.withIndex(
+              v0.index.withSearch(
+                v0.index.search.withMapInit(
+                  v0.index.search.mapInit
+                    .withUserLoc( Some(geoLoc) )
+                )
+              )
+            )
+            val isMapOpened = v0.index.search.isShownTab(MSearchTabs.GeoMap)
+            val isSilentUpdate = !isMapOpened
+            ah.updateMaybeSilent(isSilentUpdate)(v2)
+          }
 
       } { geoLockTimerId =>
         // Прямо сейчас этот контроллер ожидает координаты.
@@ -264,7 +274,20 @@ class TailAh[M](
           // Есть какие-то координаты, но не факт, что ожидаемо точные.
           {geoLoc =>
             // Т.к. работает suppressor, то координаты можно всегда записывать в состояние, не боясь постороннего "шума".
-            val v1 = withMapCenter(geoLoc.point, v0)
+            val v1 = v0.withIndex(
+              v0.index.withSearch(
+                v0.index.search.withMapInit(
+                  v0.index.search.mapInit
+                    // Переместить карту в текущую точку.
+                    .withState(
+                      v0.index.search.mapInit.state
+                        .withCenterInitReal( geoLoc.point )
+                    )
+                    // Текущая позиция юзера - тут же.
+                    .withUserLoc( Some(geoLoc) )
+                )
+              )
+            )
 
             if (m.orig.glType.highAccuracy) {
               // Пришли точные координаты. Завершаем ожидание.
@@ -392,19 +415,14 @@ class TailAh[M](
   private def geoOffFx: Effect =
     Effect.action( GeoLocOnOff(enabled = false) )
 
-  private def withMapCenter(center: MGeoPoint, v1: MScRoot = value): MScRoot = {
-    v1.withIndex(
-      withMapCenter(center, v1.index)
-    )
-  }
-  private def withMapCenter(center: MGeoPoint, inx: MScIndex): MScIndex = {
+  private def withMapCenterInitReal(center: MGeoPoint, inx: MScIndex): MScIndex = {
     inx.withSearch(
       inx.search.withMapInit(
-        inx.search.mapInit.withState(
-          inx.search.mapInit.state.withCenterInitReal(
-            center
+        inx.search.mapInit
+          .withState(
+            inx.search.mapInit.state
+              .withCenterInitReal( center )
           )
-        )
       )
     )
   }

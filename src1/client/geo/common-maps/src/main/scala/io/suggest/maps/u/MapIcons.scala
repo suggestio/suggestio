@@ -2,6 +2,7 @@ package io.suggest.maps.u
 
 import diode.data.Pot
 import io.suggest.common.spa.SpaConst.LkPreLoaderConst
+import io.suggest.geo.MGeoLoc
 import io.suggest.i18n.MsgCodes
 import io.suggest.maps.vm.RadiusMarkerIcon
 import io.suggest.maps.vm.img.{IconVmStaticT, MarkerIcon, MarkerIconRetina, MarkerIconShadow}
@@ -15,8 +16,12 @@ import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sjs.common.log.Log
 import japgolly.scalajs.react.vdom.VdomElement
+import react.leaflet.circle.{CirclePropsR, CircleR}
+import react.leaflet.layer.LayerGroupR
+import react.leaflet.marker.{CircleMarkerPropsR, CircleMarkerR}
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 // Не удалять: нужно для MarkerR()...
 import japgolly.scalajs.react.vdom.Implicits._
 import react.leaflet.marker.{MarkerPropsR, MarkerR}
@@ -142,6 +147,46 @@ object MapIcons extends Log {
         }
       ): VdomElement
     }
+  }
+
+
+  /** Для отображения текущей геолокации юзера, рендерим слой: круг с центром. */
+  def userLocCircle( userLoc: MGeoLoc ): VdomElement = {
+    // Стиль рендера берём из locatecontrol
+    // https://github.com/domoritz/leaflet-locatecontrol/blob/gh-pages/src/L.Control.Locate.js#L94
+
+    val centerLatLng = MapsUtil.geoPoint2LatLng( userLoc.point )
+    val blueBgColor = "#136AEC"
+    val weight2 = 2
+
+    LayerGroupR()(
+      // Круга радиуса расположения.
+      userLoc.accuracyOptM.whenDefinedNode { accuracyM =>
+        CircleR(
+          new CirclePropsR {
+            override val center                       = centerLatLng
+            override val radius                       = accuracyM
+            override val weight: UndefOr[Int]         = weight2
+            override val opacity: UndefOr[Double]     = 0.5
+            override val fillColor: UndefOr[String]   = blueBgColor
+            override val fillOpacity: UndefOr[Double] = 0.15
+            override val color: UndefOr[String]       = blueBgColor
+          }
+        )
+      },
+
+      CircleMarkerR(
+        new CircleMarkerPropsR {
+          override val center                       = centerLatLng
+          override val color: UndefOr[String]       = blueBgColor
+          override val fillColor: UndefOr[String]   = "#2A93EE"
+          override val fillOpacity: UndefOr[Double] = 0.7
+          override val weight: UndefOr[Int]         = weight2
+          override val opacity: UndefOr[Double]     = 0.9
+          override val radius: UndefOr[Double]      = 5d
+        }
+      )
+    )
   }
 
 }
