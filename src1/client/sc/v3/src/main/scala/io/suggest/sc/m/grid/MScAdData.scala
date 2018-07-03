@@ -5,6 +5,7 @@ import diode.data.Pot
 import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.primo.id.OptStrId
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -45,7 +46,9 @@ case class MScAdData(
                       nodeId      : Option[String],
                       main        : MBlkRenderData,
                       focused     : Pot[MScFocAdData] = Pot.empty
-                    ) {
+                    )
+  extends OptStrId
+{
 
   def withFocused(focused: Pot[MScFocAdData]) = copy(focused = focused)
 
@@ -80,5 +83,7 @@ case class MScAdData(
     focused
       .fold(main.edges)(_.blkData.edges)
   }
+
+  override final def id: Option[String] = nodeId
 
 }

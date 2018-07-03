@@ -25,6 +25,7 @@ import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.d2.IWidth
+import io.suggest.primo.id.OptId
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
 
@@ -179,45 +180,78 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
     val gridResp = ra.ads.get
     val g0 = ctx.value0.grid
 
+    val isSilentOpt = ctx.m.reason match {
+      case gla: GridLoadAds => gla.silent
+      case _ => None
+    }
+
+    // Нельзя тут использовать ctx.m.reason: причина относится только к начальному resp-экшену (и то необязательно).
+    val isCleanLoad = ctx.m.apiReq.search.offset
+      .fold(true)(_ ==* 0)
+
+    // Если silent, то надо попытаться повторно пере-использовать уже имеющиеся карточки.
+    val reusableAdsMap: Map[String, MScAdData] = {
+      if (isCleanLoad  &&  isSilentOpt.contains(true)  &&  gridResp.ads.nonEmpty  &&  g0.core.ads.nonEmpty) {
+        // Есть условия для сборки карты текущих карточек:
+        OptId.els2idMap[String, MScAdData](
+          g0.core.ads
+            .iterator
+            .flatten
+        )
+      } else {
+        // Сборка карты текущих карточек не требуется в данной ситуации.
+        Map.empty
+      }
+    }
+
     // Подготовить полученные с сервера карточки:
     val newScAds = gridResp.ads
       .iterator
       .map { sc3AdData =>
-        // Собрать начальное состояние карточки.
-        // Сервер может присылать уже открытые карточи - это нормально.
-        // Главное - их сразу пропихивать и в focused, и в обычные блоки.
-        val tpl = sc3AdData.jd.template
-        val isFocused = tpl.rootLabel.name ==* MJdTagNames.DOCUMENT
-        val jsEdgesMap = sc3AdData.jd
-          .edgesMap
-          .mapValues( MEdgeDataJs(_) )
+        // Два пути: переиспользование текущей карточки или добавление новой карточки.
+        sc3AdData.jd
+          // Если есть id и карта переиспользуемых карточек не пуста, то поискать там текущую карточку:
+          .nodeId
+          .filter( _ => reusableAdsMap.nonEmpty )
+          .flatMap( reusableAdsMap.get )
+          // Если карточка не найдена среди reusable-карточек, то перейки к сброке состояния новой карточки:
+          .getOrElse {
+            // Собрать начальное состояние карточки.
+            // Сервер может присылать уже открытые карточи - это нормально.
+            // Главное - их сразу пропихивать и в focused, и в обычные блоки.
+            val tpl = sc3AdData.jd.template
+            val isFocused = tpl.rootLabel.name ==* MJdTagNames.DOCUMENT
+            val jsEdgesMap = sc3AdData.jd
+              .edgesMap
+              .mapValues( MEdgeDataJs(_) )
 
-        MScAdData(
-          nodeId    = sc3AdData.jd.nodeId,
-          main      = MBlkRenderData(
-            template = {
-              // Найти главный блок в шаблоне focused-карточки документа.
-              if (isFocused) tpl.getMainBlockOrFirst
-              else tpl
-            },
-            edges   = jsEdgesMap
-          ),
-          focused = if (isFocused) {
-            // Сервер прислал focused-карточку.
-            val v = MScFocAdData(
-              MBlkRenderData(
-                template  = tpl,
-                edges     = jsEdgesMap
+            MScAdData(
+              nodeId    = sc3AdData.jd.nodeId,
+              main      = MBlkRenderData(
+                template = {
+                  // Найти главный блок в шаблоне focused-карточки документа.
+                  if (isFocused) tpl.getMainBlockOrFirst
+                  else tpl
+                },
+                edges   = jsEdgesMap
               ),
-              canEdit = sc3AdData.canEdit.getOrElseFalse,
-              userFoc = false
+              focused = if (isFocused) {
+                // Сервер прислал focused-карточку.
+                val v = MScFocAdData(
+                  MBlkRenderData(
+                    template  = tpl,
+                    edges     = jsEdgesMap
+                  ),
+                  canEdit = sc3AdData.canEdit.getOrElseFalse,
+                  userFoc = false
+                )
+                Ready(v)
+              } else {
+                // Обычный grid-block.
+                Pot.empty
+              }
             )
-            Ready(v)
-          } else {
-            // Обычный grid-block.
-            Pot.empty
           }
-        )
       }
       .toVector
 
@@ -225,18 +259,14 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
     //if (gridResp.szMult !=* g0.core.jdConf.szMult)
     //  LOG.warn(WarnMsgs.SERVER_CLIENT_SZ_MULT_MISMATCH, msg = (gridResp.szMult, g0.core.jdConf.szMult))
 
-    // Нельзя тут использовать ctx.m.reason: причина относится только к начальному resp-экшену (и то необязательно).
-    val isCleanLoad = ctx.m.apiReq.search.offset.fold(true)(_ ==* 0)
 
     // Опциональный эффект скролла вверх.
     val scrollFxOpt = {
       // Возможно, требование скролла задано принудительно в исходном запросе перезагрузки плитки?
-      val isScrollUpOpt = ctx.m.reason match {
-        case gla: GridLoadAds => gla.silent
-        case _ => None
-      }
+      val isScrollUp = isSilentOpt
+        .map(!_)
+        .getOrElse( isCleanLoad )
       // А если вручную не задано, то определить нужность скроллинга автоматически:
-      val isScrollUp = isScrollUpOpt.getOrElse( isCleanLoad )
       OptionUtil.maybe(isScrollUp) {
         Effect.action {
           AnimateScroll.scrollToTop( GridScrollUtil.scrollOptions )
@@ -246,7 +276,7 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
     }
 
     val ads2 = if (isCleanLoad) {
-      g0.core.ads.ready(newScAds)
+      g0.core.ads.ready( newScAds )
 
     } else {
       val scAds2 = g0.core.ads.toOption.fold(newScAds)(_ ++ newScAds)

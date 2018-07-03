@@ -518,7 +518,7 @@ class Sc3Circuit(
         dispatch( GridLoadAds(
           clean = true,
           ignorePending = true,
-          silent = Some(false)
+          silent = Some(true)
         ))
       }
     }

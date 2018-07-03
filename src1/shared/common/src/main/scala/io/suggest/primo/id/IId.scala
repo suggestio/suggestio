@@ -55,7 +55,8 @@ trait IdUtil[IId_t[_]] {
     if (els.isEmpty)
       Map.empty
     else
-      els2idMapIter[Id_t, T](els).toMap
+      els2idMapIter[Id_t, T](els)
+        .toMap
   }
 
   /** Аналог els2idMap, но вокруг фьючерса. Появился просто из-за частой необходимости. */

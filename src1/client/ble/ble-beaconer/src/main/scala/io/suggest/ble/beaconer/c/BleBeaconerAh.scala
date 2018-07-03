@@ -7,7 +7,6 @@ import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
-import io.suggest.common.html.HtmlConstants
 import io.suggest.common.radio.RadioUtil
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.controller.DomQuick
