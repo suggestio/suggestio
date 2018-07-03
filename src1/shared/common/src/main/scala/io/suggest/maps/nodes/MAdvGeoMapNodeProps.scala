@@ -1,6 +1,6 @@
 package io.suggest.maps.nodes
 
-import boopickle.Default._
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.n2.node.meta.colors.MColors
 import japgolly.univeq.UnivEq
@@ -18,17 +18,11 @@ object MAdvGeoMapNodeProps {
 
   implicit def MAdvGeoMapNodePropsFormat: OFormat[MAdvGeoMapNodeProps] = (
     (__ \ "n").format[String] and
-    (__ \ "c").format[MColors] and
+    (__ \ "c").formatNullable[MColors]
+      .inmap[MColors]( EmptyUtil.opt2ImplMEmptyF(MColors), EmptyUtil.implEmpty2OptF) and
     (__ \ "h").formatNullable[String] and
     (__ \ "i").formatNullable[MMapNodeIconInfo]
   )(apply, unlift(unapply))
-
-  /** Поддержка boopickle. */
-  implicit val mAdvGeoMapNodePropsPickler: Pickler[MAdvGeoMapNodeProps] = {
-    implicit val mMapNodeIconInfoP = MMapNodeIconInfo.mMapNodeIconInfoPickler
-    implicit val mColorsP = MColors.mColorsPickler
-    generatePickler[MAdvGeoMapNodeProps]
-  }
 
   implicit def univEq: UnivEq[MAdvGeoMapNodeProps] = UnivEq.derive
 
@@ -42,7 +36,7 @@ object MAdvGeoMapNodeProps {
   */
 case class MAdvGeoMapNodeProps(
                                 nodeId          : String,
-                                colors          : MColors,
+                                colors          : MColors                   = MColors.empty,
                                 hint            : Option[String]            = None,
                                 icon            : Option[MMapNodeIconInfo]  = None
                               )
@@ -51,22 +45,16 @@ case class MAdvGeoMapNodeProps(
 
 object MMapNodeIconInfo {
 
-  implicit def MMapNodeIconInfoFormat: OFormat[MMapNodeIconInfo] = (
+  implicit def mMapNodeIconInfoFormat: OFormat[MMapNodeIconInfo] = (
     (__ \ "u").format[String] and
     (__ \ "wh").format[MSize2di]
   )(apply, unlift(unapply))
-
-  /** Поддержка boopickle. */
-  implicit val mMapNodeIconInfoPickler: Pickler[MMapNodeIconInfo] = {
-    implicit val size2diP = MSize2di.size2diPickler
-    generatePickler[MMapNodeIconInfo]
-  }
 
   implicit def univEq: UnivEq[MMapNodeIconInfo] = UnivEq.derive
 
 }
 
 case class MMapNodeIconInfo(
-  url     : String,
-  wh      : MSize2di
-)
+                             url     : String,
+                             wh      : MSize2di
+                           )

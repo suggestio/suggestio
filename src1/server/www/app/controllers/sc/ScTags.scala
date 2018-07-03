@@ -1,7 +1,11 @@
 package controllers.sc
 
+import akka.NotUsed
+import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.model.n2.node.IMNodes
+import io.suggest.maps.nodes.MAdvGeoMapNodeProps
+import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.sc.search.{MSc3NodeInfo, MSc3NodeSearchResp}
@@ -15,6 +19,7 @@ import util.geo.IGeoIpUtilDi
 import util.showcase.IScTagsUtilDi
 import util.stat.IStatUtil
 import japgolly.univeq._
+import util.adv.geo.IAdvGeoRcvrsUtilDi
 
 import scala.concurrent.Future
 
@@ -32,13 +37,14 @@ trait ScTags
   with IGeoIpUtilDi
   with IStatUtil
   with IMacroLogs
+  with IAdvGeoRcvrsUtilDi
 {
 
   import mCommonDi._
 
 
   /** Общая логика обработки tags-запросов выдачи. */
-  trait ScTagsLogicBase extends LogicCommonT with IRespActionFut {
+  trait ScTagsLogicBase extends LazyContext with IRespActionFut { logic =>
 
     lazy val logPrefix = s"${getClass.getSimpleName}#${System.currentTimeMillis()}:"
 
@@ -52,64 +58,117 @@ trait ScTags
       geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLocOpt )( geoIpResOptFut )
     }
 
-    lazy val tagsFoundFut = {
-      for {
-        mGeoLocOpt2 <- mGeoLocOptFut
-        msearch     <- scTagsUtil.qs2NodesSearch(_qs, mGeoLocOpt2)
-        found       <- mNodes.dynSearch(msearch)
-      } yield {
-        LOGGER.trace(s"$logPrefix tagsFound: ${found.length} tags\n geoLoc2=${mGeoLocOpt2.orNull}\n msearch=$msearch")
-        found
+    def nodesSearch: Future[MNodeSearch] = {
+      mGeoLocOptFut.flatMap { mGeoLocOpt2 =>
+        val msearch = scTagsUtil.qs2NodesSearch(_qs, mGeoLocOpt2)
+        LOGGER.trace(s"$logPrefix geoLoc2 = ${mGeoLocOpt2.orNull}\n msearch = $msearch")
+        msearch
       }
     }
 
-    /** Контекстно-зависимая сборка данных статистики. */
-    override def scStat: Future[Stat2] = {
-      val userSaOptFut = statUtil.userSaOptFutFromRequest()
-      for {
-        found         <- tagsFoundFut
-        _userSaOpt    <- userSaOptFut
-        geoIpResOpt   <- geoIpResOptFut
-      } yield {
-        new Stat2 {
-          override def statActions: List[MAction] = {
-            val acc0: List[MAction] = Nil
-
-            // Добавить offset, если задан
-            val acc1 = _qs.search.offset.fold(acc0) { offset =>
-              val limAction = MAction(
-                actions = MActionTypes.SearchOffset :: Nil,
-                count   = offset :: Nil
-              )
-              limAction :: acc0
-            }
-
-            // Добавить limit, если задан
-            val acc2 = _qs.search.limit.fold(acc1) { limit =>
-              val limAction = MAction(
-                actions = MActionTypes.SearchLimit :: Nil,
-                count   = limit :: Nil
-              )
-              limAction :: acc1
-            }
-
-            // Добавить tags-экшен в начало списка экшенов.
-            val tAction = MAction(
-              actions   = Seq(MActionTypes.ScTags),
-              nodeId    = found.flatMap(_.id),
-              nodeName  = found.flatMap(_.guessDisplayName),
-              count     = Seq(found.size),
-              // Поисковый запрос тегов, если есть.
-              textNi    = _qs.search.textQuery.toSeq
-            )
-            tAction :: acc2
+    /** Сборка sink'а для сохранения найденных узлов в статистику. */
+    def saveScStatSink: Sink[(MNode, MAdvGeoMapNodeProps), Future[_]] = {
+      Flow[(MNode, MAdvGeoMapNodeProps)]
+        // Накопить данные с узлов, для отправки в статистику:
+        .toMat(
+          Sink.fold( (Set.empty[String], Set.empty[String]) ) { case ((ids0, names0), (mnode, _)) =>
+            val ids2 = mnode.id.fold(ids0)(ids0 + _)
+            val names2 = mnode.guessDisplayName.fold(names0)(names0 + _)
+            (ids2, names2)
           }
-          override def userSaOpt    = _userSaOpt
-          override def locEnvOpt    = Some( _qs.common.locEnv )
-          override def geoIpLoc     = geoIpResOpt
-          override def components   = MComponents.Tags :: super.components
+        )( Keep.right )
+        // Собранные данные по узлам сохранить в статистику:
+        .mapMaterializedValue { idsAndNamesFut =>
+          val _userSaOptFut = statUtil.userSaOptFutFromRequest()
+          val _geoIpResOptFut = geoIpResOptFut
+          for {
+            _userSaOpt    <- _userSaOptFut
+            geoIpResOpt   <- _geoIpResOptFut
+            (nodeIds, nodeNames)  <- idsAndNamesFut
+            // Собрать инстанс данных для статистики:
+            stat2 = new statUtil.Stat2 {
+              override def statActions: List[MAction] = {
+                val acc0: List[MAction] = Nil
+
+                // Добавить offset, если задан
+                val acc1 = _qs.search.offset.fold(acc0) { offset =>
+                  val limAction = MAction(
+                    actions = MActionTypes.SearchOffset :: Nil,
+                    count   = offset :: Nil
+                  )
+                  limAction :: acc0
+                }
+
+                // Добавить limit, если задан
+                val acc2 = _qs.search.limit.fold(acc1) { limit =>
+                  val limAction = MAction(
+                    actions = MActionTypes.SearchLimit :: Nil,
+                    count   = limit :: Nil
+                  )
+                  limAction :: acc1
+                }
+
+                // Добавить tags-экшен в начало списка экшенов.
+                val tAction = MAction(
+                  actions   = MActionTypes.ScTags :: Nil,
+                  nodeId    = nodeIds.toSeq,
+                  nodeName  = nodeNames.toSeq,
+                  count     = nodeIds.size :: Nil,
+                  // Поисковый запрос тегов, если есть.
+                  textNi    = _qs.search.textQuery.toSeq
+                )
+                tAction :: acc2
+              }
+              override def ctx = logic.ctx
+              override def userSaOpt    = _userSaOpt
+              override def locEnvOpt    = Some( _qs.common.locEnv )
+              override def geoIpLoc     = geoIpResOpt
+              override def components   = MComponents.Tags :: super.components
+            }
+            // Выполнить сохранение статистики:
+            _ <- statUtil.saveStat( stat2 )
+          } yield {
+            None
+          }
         }
+    }
+
+    /** Реактивный поиск и json-рендер тегов и узлов, вместо старого обычного поиска тегов. */
+    def nodeInfosSrc: Source[MSc3NodeInfo, Future[NotUsed]] = {
+      val srcFut = for {
+        msearch <- nodesSearch
+      } yield {
+        advGeoRcvrsUtil
+          .nodesAdvGeoPropsSrc(msearch, wcAsLogo = false)
+          // Ответвление: Данные для статистики - материализовать, mat-итог запихать в статистику:
+          .alsoTo( saveScStatSink )
+          // Далее, надо рендерить в JSON для ответа сервера:
+          .map { case (mnode, advNodeInfo) =>
+            MSc3NodeInfo(
+              props     = advNodeInfo,
+              nodeType  = mnode.common.ntype
+            )
+          }
+          /*
+          // TODO Для chunked-выхлопа можно задействовать этот код в будущем. Пока что ScUniApi не поддерживает chunked-ответ, поэтому не нужно.
+          .jsValuesToJsonArrayByteStrings
+          // Надо запихать в JSON-ответ в формате sc3-resp-action.
+          .jsonEmbedIntoEmptyArrayIn(
+            MSc3Resp(
+              respActions = MSc3RespAction(
+                acType = MScRespActionTypes.SearchRes,
+                search = Some(
+                  MSc3NodeSearchResp(
+                    // Сюда будет отрендерен весь предшествующий json-array:
+                    results = Nil
+                  )
+                )
+              ) :: Nil
+            )
+          )
+          */
       }
+      Source.fromFutureSource( srcFut )
     }
 
   }
@@ -133,33 +192,21 @@ trait ScTags
 
     /** Сборка search-res-ответа без sc3Resp-обёртки. */
     override def respActionFut: Future[MSc3RespAction] = {
-      // Запустить фоновые задачи.
-      val _tagsFoundFut = tagsFoundFut
-
-      // Запустить сбор статистики
-      saveScStat()
+      // Запустить фоновые задачи:
+      val nodesFoundFut = nodeInfosSrc
+        // Статистика собирается уже внутри src сама.
+        .toMat( Sink.seq )(Keep.right)
+        .run()
 
       for {
-        tags <- _tagsFoundFut
+        nodesFound <- nodesFoundFut
       } yield {
-        LOGGER.trace(s"$logPrefix Found ${tags.size} tags")
+        LOGGER.trace(s"$logPrefix Found ${nodesFound.size} nodes")
         MSc3RespAction(
           acType = MScRespActionTypes.SearchRes,
           search = Some(
             MSc3NodeSearchResp(
-              results = {
-                val iter = for {
-                  tagNode <- tags.iterator
-                  name    <- tagNode.guessDisplayName.iterator
-                  nodeId  <- tagNode.id.iterator
-                } yield {
-                  MSc3NodeInfo(
-                    name   = name,
-                    nodeId = nodeId
-                  )
-                }
-                iter.toSeq
-              }
+              results = nodesFound
             )
           )
         )

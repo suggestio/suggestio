@@ -2,8 +2,8 @@ package io.suggest.streams
 
 import java.io.{File, FileOutputStream}
 import java.nio.charset.StandardCharsets
-import javax.inject.Inject
 
+import javax.inject.Inject
 import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Compression, Flow, Keep, Sink, Source}
@@ -11,7 +11,7 @@ import akka.util.ByteString
 import io.suggest.primo.Var
 import io.suggest.util.logs.IMacroLogs
 import org.reactivestreams.Publisher
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsValue, Json, Writes}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -25,6 +25,8 @@ class StreamsUtil @Inject() (
                               implicit private val ec   : ExecutionContext,
                               implicit private val mat  : Materializer
                             ) { outer =>
+
+  private def JSON_CHARSET = StandardCharsets.UTF_8
 
   /** Подсчёт кол-ва элементов в Source.
     *
@@ -139,7 +141,7 @@ class StreamsUtil @Inject() (
         * @return
         */
       def jsValuesToJsonArrayByteStrings: Source[ByteString, M] = {
-        val _s2bs = ByteString.fromString( _: String, StandardCharsets.UTF_8 )
+        val _s2bs = ByteString.fromString( _: String, JSON_CHARSET )
         src
           .map { m =>
             val jsonStr = Json.stringify(m)
@@ -155,6 +157,33 @@ class StreamsUtil @Inject() (
     }
 
 
+    /** Source[ByteString, _] */
+    implicit class JsonByteStringSourceExt[Mat]( val src: Source[ByteString, Mat] ) {
+      /** Завернуть JSON-выхлоп jsValuesToJsonArrayByteStrings() array внутрь другого JSON, переданного в параметре.
+        * Нужен пустой массив внутри outer, который будет заменён на текущий Source.
+        */
+      def jsonEmbedIntoEmptyArrayIn[Outer_t: Writes](outer: Outer_t ): Source[ByteString, Mat] = {
+        val outerStr = Json.toJson( outer ).toString()
+        jsonEmbedIntoEmptyArrayInStr( outerStr )
+      }
+
+      def jsonEmbedIntoEmptyArrayInStr(outerStr: String): Source[ByteString, Mat] = {
+        "\\[\\s*\\]"
+          .r
+          .split( outerStr ) match {
+            case Array(begin, end) =>
+              Source.single( ByteString(begin, JSON_CHARSET) )
+                .concatMat(src)(Keep.right)
+                .concat( Source.single(ByteString(end, JSON_CHARSET)) )
+            case other =>
+              throw new IllegalArgumentException(s"outerStr must contain only one empty array ([] or [ ]), but ${other.length - 1} empty arrays found.")
+          }
+      }
+
+    }
+
+
+    /** Sink[_, ByteString]. */
     implicit class ByteStringSinkExtOps[T](sink: Sink[T, Future[ByteString]]) {
 
       /** Выполнить фоновую подмену результирующей ByteString.
@@ -247,4 +276,8 @@ class StreamsUtil @Inject() (
       .via(Compression.gzip)
   }
 
+}
+
+trait IStreamsUtilDi {
+  val streamsUtil: StreamsUtil
 }

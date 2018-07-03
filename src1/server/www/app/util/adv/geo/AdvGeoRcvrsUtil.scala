@@ -7,6 +7,7 @@ import controllers.routes
 import io.suggest.adn.MAdnRights
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.{MPxRatios, MScreen}
@@ -149,12 +150,12 @@ class AdvGeoRcvrsUtil @Inject()(
     *         Карта нужна для удобства кэширования и как бы "сортировки", чтобы hashCode() или иные хэш-функции
     *         всегда возвращали один и тот же результат.
     */
-  def rcvrNodesMap(msearch: MNodeSearch): Source[(MNode, MGeoNodePropsShapes), NotUsed] = { // Future[Map[String, MGeoNodePropsShapes]] = {
+  def nodesAdvGeoPropsSrc(msearch: MNodeSearch, wcAsLogo: Boolean): Source[(MNode, MAdvGeoMapNodeProps), NotUsed] = {
     // Начать выкачивать все подходящие узлы из модели:
     lazy val logPrefix = s"rcvrNodesMap(${System.currentTimeMillis}):"
 
     val logoTargetSz = LOGO_WH_LIMITS_CSSPX
-    val wcFgTargetSz = WC_FG_LIMITS_CSSPX
+    val wcFgTargetSz = if (wcAsLogo) WC_FG_LIMITS_CSSPX else null
 
     val dpr = MPxRatios.XHDPI
     val targetScreenSome = Some(
@@ -172,11 +173,15 @@ class AdvGeoRcvrsUtil @Inject()(
       // Собрать логотипы узлов.
       .mapAsyncUnordered(NODE_LOGOS_PREPARING_PARALLELISM) { mnode =>
         // Подготовить инфу по логотипу узла.
-        val mapLogoImgWithLimitsOptRaw = welcomeUtil
-          .wcFgImg(mnode)
-          .map(_ -> wcFgTargetSz)
+        val mapLogoImgWithLimitsOptRaw = OptionUtil
+          .maybeOpt(wcAsLogo) {
+            welcomeUtil
+              .wcFgImg(mnode)
+              .map(_ -> wcFgTargetSz)
+          }
           .orElse {
-            logoUtil.getLogoOfNode(mnode)
+            logoUtil
+              .getLogoOfNode(mnode)
               .map(_ -> logoTargetSz)
           }
 
@@ -211,13 +216,6 @@ class AdvGeoRcvrsUtil @Inject()(
             None
           }
         }
-
-        // Собрать шейпы геолокации узла:
-        val geoShapes = mnode.edges
-          .withPredicateIter( MPredicates.NodeLocation )
-          .flatMap( _.info.geoShapes )
-          .map(_.shape)
-          .toSeq
 
         // Собираем props-константы за скобками, чтобы mnode-инстанс можно было "отпустить".
         val nodeId     = mnode.id.get
@@ -258,11 +256,33 @@ class AdvGeoRcvrsUtil @Inject()(
           )
 
           // Собрать и вернуть контейнер с данными мапы узлов:
-          mnode -> MGeoNodePropsShapes(
-            props  = props,
-            shapes = geoShapes
-          )
+          mnode -> props
         }
+      }
+  }
+
+  /** Добавить гео-шейпы NodeLocation в src из nodesForVisualRenderSrc()
+    *
+    * @param src Результат nodesForVisualRenderSrc().
+    * @tparam Mat Обычно NotUsed.
+    * @return Source, выдающий ноды и MGeoNodePropsShapes.
+    */
+  def withNodeLocShapes[Mat]( src: Source[(MNode, MAdvGeoMapNodeProps), Mat] ): Source[(MNode, MGeoNodePropsShapes), Mat] = {
+    src
+      .map { case (mnode, props) =>
+        // Собрать шейпы геолокации узла:
+        val geoShapes = mnode.edges
+          .withPredicateIter( MPredicates.NodeLocation )
+          .flatMap( _.info.geoShapes )
+          .map(_.shape)
+          .toSeq
+
+        val ngs = MGeoNodePropsShapes(
+          props  = props,
+          shapes = geoShapes
+        )
+
+        mnode -> ngs
       }
   }
 

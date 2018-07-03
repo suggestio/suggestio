@@ -109,6 +109,37 @@ class DynImgUtil @Inject() (
     )
   }
 
+  /** Собрать список MMedia для перечисленных картинок. Порядок любой. */
+  def imgs2medias(imgs: TraversableOnce[MImgT]): Future[Seq[MMedia]] = {
+    mMediasCache.multiGet {
+      imgs
+        .toIterator
+        .flatMap { mimg =>
+          mimg.dynImgId
+            .mediaIdWithOriginalMediaId
+        }
+    }
+  }
+
+  /** Сборка media-hosts map для картинок. */
+  def mkMediaHostsMap(imgs: TraversableOnce[MImgT]): Future[Map[String, Seq[MHostInfo]]] = {
+    if (imgs.isEmpty) {
+      Future.successful( Map.empty )
+    } else {
+      for {
+        // Получить на руки media-инстансы для оригиналов картинок:
+        medias <- imgs2medias(imgs)
+
+        // Узнать узлы, на которых хранятся связанные картинки.
+        mediaHostsMap <- cdnUtil.mediasHosts( medias )
+
+      } yield {
+        LOGGER.trace(s"nodeMediaHostsMap: ${mediaHostsMap.valuesIterator.flatten.map(_.namePublic).toSet.mkString(", ")}")
+        mediaHostsMap
+      }
+    }
+  }
+
 
   /**
    * Найти в базе готовую картинку, ранее уже отработанную, и сохранить её в файл.

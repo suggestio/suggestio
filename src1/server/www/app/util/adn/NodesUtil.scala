@@ -1,8 +1,8 @@
 package util.adn
 
 import java.time.OffsetDateTime
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.adn.MAdnRights
 import io.suggest.common.coll.Lists.Implicits._
@@ -26,6 +26,7 @@ import models.mwc.MWelcomeRenderArgs
 import play.api.i18n.Messages
 import play.api.mvc.Call
 import util.cdn.CdnUtil
+import util.img.DynImgUtil
 
 import scala.concurrent.Future
 import scala.util.Random
@@ -44,6 +45,7 @@ class NodesUtil @Inject() (
                             mExtTargets             : MExtTargets,
                             mMediasCache            : MMediasCache,
                             cdnUtil                 : CdnUtil,
+                            dynImgUtil              : DynImgUtil,
                             mCommonDi               : ICommonDi
                           )
   extends MacroLogsImpl
@@ -285,28 +287,8 @@ class NodesUtil @Inject() (
 
     allImgsAcc = logoImgOpt.prependTo(allImgsAcc)
 
-    if (allImgsAcc.isEmpty) {
-      Future.successful( Map.empty )
-    } else {
-      for {
-        // Получить на руки media-инстансы для оригиналов картинок:
-        medias <- mMediasCache.multiGet {
-          allImgsAcc
-            .iterator
-            .flatMap { mimg =>
-              mimg.dynImgId
-                .mediaIdWithOriginalMediaId
-            }
-        }
-
-        // Узнать узлы, на которых хранятся связанные картинки.
-        mediaHostsMap <- cdnUtil.mediasHosts( medias )
-
-      } yield {
-        LOGGER.trace(s"nodeMediaHostsMap: ${mediaHostsMap.valuesIterator.flatten.map(_.namePublic).toSet.mkString(", ")}")
-        mediaHostsMap
-      }
-    }
+    // Запустить сборку MediaHostsMap.
+    dynImgUtil.mkMediaHostsMap( allImgsAcc )
   }
 
 }

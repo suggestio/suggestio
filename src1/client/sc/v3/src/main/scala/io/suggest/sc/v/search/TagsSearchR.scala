@@ -50,6 +50,7 @@ class TagsSearchR(
       dispatchOnProxyScopeCB($, TagsScroll(scrollTop, scrollHeight))
     }
 
+
     private val _tagsRenderF = { tagsProxy: ModelProxy[MTagsSearchS] =>
       val scCss = getScCssF()
       val TabCSS = scCss.Search.Tabs.TagsTag
@@ -84,19 +85,19 @@ class TagsSearchR(
                   _tagRow,
 
                   // Используем nodeId как ключ. Контроллер должен выверять отсутствие дубликатов в списке тегов.
-                  ^.key := mtag.nodeId,
+                  ^.key := mtag.props.nodeId,
 
                   // Визуально разделять разные ряды.
                   if (i % 2 ==* 0) _odd else _even,
 
                   // Подсвечивать текущие выделенные теги.
-                  ReactCommonUtil.maybe(tagsS.selectedId contains mtag.nodeId) {
+                  ReactCommonUtil.maybe(tagsS.selectedId contains mtag.props.nodeId) {
                     TabCSS.selected
                   },
 
-                  ^.onClick --> _onTagClick(mtag.nodeId),
+                  ^.onClick --> _onTagClick(mtag.props.nodeId),
 
-                  mtag.name
+                  mtag.props.hint.whenDefined
                 )
               }
           }

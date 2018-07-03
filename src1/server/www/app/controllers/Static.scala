@@ -282,7 +282,12 @@ class Static @Inject() (
           // Организуем реактивную обработку нод с генерацией несжатых byte chunks:
           val NODES_PER_CHUNK = 30
           val chunkedUncompressedSrc = advGeoRcvrsUtil
-            .rcvrNodesMap( advGeoRcvrsUtil.onMapRcvrsSearch(NODES_PER_CHUNK) )
+            .withNodeLocShapes(
+              advGeoRcvrsUtil.nodesAdvGeoPropsSrc(
+                advGeoRcvrsUtil.onMapRcvrsSearch(NODES_PER_CHUNK),
+                wcAsLogo = true
+              )
+            )
             // JSON-рендер каждого item'а:
             .map { case (_, data) =>
               Json.toJson(data)

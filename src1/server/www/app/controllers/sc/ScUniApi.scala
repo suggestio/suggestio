@@ -172,9 +172,16 @@ trait ScUniApi
     }
 
     /** Исполнить абстрактную логику и сохранить статистику через интерфейс логики. */
-    private def _logic2stateRespActionFut(logic: LogicCommonT with IRespActionFut): Future[MSc3RespAction] = {
+    private def _logic2stateRespActionFut(logic: IRespActionFut): Future[MSc3RespAction] = {
       val raFut = logic.respActionFut
-      logic.saveScStat()
+      // Если logicCommon, то запустить в фоне сохранение статистики.
+      // TODO Собирать единую статистику для всего uni-запроса, а не для каждого экшена?
+      logic match {
+        case logicCommon: LogicCommonT =>
+          logicCommon.saveScStat()
+        case _ =>
+          // do nothing
+      }
       raFut
     }
 
@@ -197,7 +204,7 @@ trait ScUniApi
         logic       = TileAdsLogicV3(qs2)(_request)
         respAction  <- _logic2stateRespActionFut( logic )
       } yield {
-        LOGGER.trace(s"$logPrefix Search for grid ads => $respAction")
+        LOGGER.trace(s"$logPrefix Search for grid ads => ${respAction.ads.iterator.flatMap(_.ads).size} ads")
         respAction
       }
 
@@ -215,7 +222,7 @@ trait ScUniApi
           logic       = ScTagsLogicV3(qs2)(_request)
           respAction  <- _logic2stateRespActionFut( logic )
         } yield {
-          LOGGER.trace(s"$logPrefix Search tags => $respAction")
+          LOGGER.trace(s"$logPrefix Search tags => ${respAction.search.iterator.flatMap(_.results).size} results")
           respAction
         }
       }
