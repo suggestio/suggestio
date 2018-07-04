@@ -10,7 +10,7 @@ import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx._
-import io.suggest.sc.m.search.{GetMoreTags, MapReIndex}
+import io.suggest.sc.m.search.{DoSearch, MapReIndex}
 import io.suggest.sc.sc3._
 import io.suggest.sc.search.MSearchTabs
 import io.suggest.sc.styl.MScCssArgs
@@ -51,7 +51,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
     var i2 = i0.withResp(
       i0.resp.fail(ex)
     )
-    if (i2.search.mapInit.loader.nonEmpty) {
+    if (i2.search.geo.mapInit.loader.nonEmpty) {
       i2 = i2.withSearch(
         i2.search.resetMapLoader
       )
@@ -81,15 +81,17 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
         // Выставить полученную с сервера геоточку как текущую.
         s0 = inx.geoPoint
           .filter { mgp =>
-            !(i0.search.mapInit.state.center ~= mgp)
+            !(i0.search.geo.mapInit.state.center ~= mgp)
           }
           .fold(s0) { mgp =>
-            s0.withMapInit(
-              s0.mapInit.withState(
-                s0.mapInit.state.copy(
-                  centerInit = mgp,
-                  centerReal = None
-                  // TODO выставлять ли zoom?
+            s0.withGeo(
+              s0.geo.withMapInit(
+                s0.geo.mapInit.withState(
+                  s0.geo.mapInit.state.copy(
+                    centerInit = mgp,
+                    centerReal = None
+                    // TODO выставлять ли zoom?
+                  )
                 )
               )
             )
@@ -103,7 +105,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
           s0 = s0.withIsShown( false )
 
         // Сбросить флаг mapInit.loader, если он выставлен.
-        if (s0.mapInit.loader.nonEmpty)
+        if (s0.geo.mapInit.loader.nonEmpty)
           s0 = s0.resetMapLoader
 
         // 2018-03-23 Решено, что внутри узлов надо открывать сразу теги, ибо каталог.
@@ -122,7 +124,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
     // Если вкладка с тегами видна, то запустить получение тегов в фоне.
     if (i1.search.isShownTab(MSearchTabs.Tags) && !respActionTypes.contains(MScRespActionTypes.SearchRes)) {
       fxsAcc ::= Effect.action {
-        GetMoreTags(clear = true)
+        DoSearch(clear = true)
       }
     }
 
@@ -280,7 +282,7 @@ class IndexAh[M](
       val v0 = value
       if (
         (m.rcvrId.nonEmpty && m.rcvrId ==* v0.state.currRcvrId) ||
-        (m.rcvrId.isEmpty && v0.search.mapInit.state.isCenterRealNearInit)
+        (m.rcvrId.isEmpty && v0.search.geo.mapInit.state.isCenterRealNearInit)
       ) {
         // Ничего как бы и не изменилось.
         noChange
@@ -292,9 +294,11 @@ class IndexAh[M](
               .withRcvrNodeId( m.rcvrId.toList )
           )
           .withSearch(
-            v0.search.withMapInit(
-              v0.search.mapInit.withLoader(
-                Some( v0.search.mapInit.state.center )
+            v0.search.withGeo(
+              v0.search.geo.withMapInit(
+                v0.search.geo.mapInit.withLoader(
+                  Some( v0.search.geo.mapInit.state.center )
+                )
               )
             )
           )

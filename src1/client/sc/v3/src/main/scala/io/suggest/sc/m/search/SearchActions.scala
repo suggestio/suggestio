@@ -30,7 +30,7 @@ case class TagClick( nodeId: String ) extends ISearchAction
 case object ResetTags extends ISearchAction
 
 /** Экшен для запуска поиска тегов под текущую выдачу. */
-case class GetMoreTags(clear: Boolean, ignorePending: Boolean = false) extends ISearchAction with IScApiRespReason
+case class DoSearch(clear: Boolean, ignorePending: Boolean = false) extends ISearchAction with IScApiRespReason
 
 /** Происходит скроллинг в списке тегов. Возможно, надо подгрузить ещё тегов. */
 case class TagsScroll(scrollTop: Double, scrollHeight: Int) extends ISearchAction

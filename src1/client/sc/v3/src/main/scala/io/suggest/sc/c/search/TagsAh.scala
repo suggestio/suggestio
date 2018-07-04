@@ -51,7 +51,7 @@ class TagsAh[M](
       ) {
         // Требуется подгрузить ещё тегов.
         val fx = Effect.action {
-          GetMoreTags(clear = false, ignorePending = true)
+          DoSearch(clear = false, ignorePending = true)
         }
         val v2 = v0.withTagsReq(
           v0.tagsReq.pending()
@@ -81,7 +81,7 @@ class TagsAh[M](
       updated( v2, fx )
 
     // Команда к запуску поиска тегов.
-    case m: GetMoreTags =>
+    case m: DoSearch =>
       val v0 = value
       if (m.clear || m.ignorePending || !v0.tagsReq.isPending) {
         // Запустить эффект поиска, выставить запущенный запрос в состояние.
@@ -147,7 +147,7 @@ class TagsRespHandler
   }
 
   override def isMyReqReason(ctx: MRhCtx): Boolean = {
-    ctx.m.reason.isInstanceOf[GetMoreTags]
+    ctx.m.reason.isInstanceOf[DoSearch]
   }
 
   override def getPot(ctx: MRhCtx): Option[Pot[_]] = {
@@ -167,7 +167,7 @@ class TagsRespHandler
   }
 
   override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect]) = {
-    val reason = ctx.m.reason.asInstanceOf[GetMoreTags]
+    val reason = ctx.m.reason.asInstanceOf[DoSearch]
     val t0 = ctx.value0.index.search.tags
 
     val tagsResp = ra.search.get
@@ -176,7 +176,7 @@ class TagsRespHandler
       tagsResp.results
     } else {
       // Требуется склеить все имеющиеся списки тегов
-      t0.tagsReq.getOrElse(Nil) ++ tagsResp.results
+      t0.tagsReq.fold(tagsResp.results)(_ ++ tagsResp.results)
     }
 
     val tagsReq2 = t0.tagsReq.ready( tagsList2 )

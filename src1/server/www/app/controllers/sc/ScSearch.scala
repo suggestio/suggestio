@@ -66,13 +66,16 @@ trait ScSearch
     def saveScStatSink: Sink[(MNode, MAdvGeoMapNodeProps), Future[_]] = {
       Flow[(MNode, MAdvGeoMapNodeProps)]
         // Накопить данные с узлов, для отправки в статистику:
-        .toMat(
-          Sink.fold( (Set.empty[String], Set.empty[String]) ) { case ((ids0, names0), (mnode, _)) =>
+        .toMat {
+          Sink.fold {
+            val ss = Set.empty[String]
+            (ss, ss)
+          } { case ((ids0, names0), (mnode, _)) =>
             val ids2 = mnode.id.fold(ids0)(ids0 + _)
             val names2 = mnode.guessDisplayName.fold(names0)(names0 + _)
             (ids2, names2)
           }
-        )( Keep.right )
+        }( Keep.right )
         // Собранные данные по узлам сохранить в статистику:
         .mapMaterializedValue { idsAndNamesFut =>
           val _userSaOptFut = statUtil.userSaOptFutFromRequest()

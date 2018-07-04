@@ -12,6 +12,7 @@ import io.suggest.maps.m.OpenMapRcvr
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.proto.HttpConst
+import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.common.empty.JsOptionUtil
@@ -81,7 +82,6 @@ object RcvrMarkersR {
     /** Рендер всей гео.карты. */
     def render(rcvrsGeoPotProxy: Props, children: PropsChildren): VdomElement = {
       rcvrsGeoPotProxy().toOption.whenDefinedEl { mRcvrsGeo =>
-
         // Бывает, что требуются строго абсолютные URL (cordova). Тут - собираем фунцкию для причёсывания исходных ссылок.
         val maybeAbsUrlF: String => String = if (Xhr.PREFER_ABS_URLS) {
           // Фунция на случай, когда требуется причёсывать ссылки:
@@ -233,7 +233,7 @@ object RcvrMarkersR {
         LayerGroupR()(
 
           // Полигоны, мультиполигоны, круги.
-          shapeComponents9.headOption.whenDefinedEl { _ =>
+          ReactCommonUtil.maybeNode( shapeComponents9.nonEmpty ) {
             LayerGroupR()(
               // Используем ускоренный flattenRev вместо штатного flatten, т.к. порядок нам не важен.
               Lists.flattenRev( shapeComponents9 ): _*

@@ -54,7 +54,7 @@ case class MScRoot(
     MLocEnv(
       geoLocOpt = Some(
         MGeoLoc(
-          point = index.search.mapInit.state.center
+          point = index.search.geo.mapInit.state.center
         )
       ),
       bleBeacons = dev.beaconer.nearbyReport

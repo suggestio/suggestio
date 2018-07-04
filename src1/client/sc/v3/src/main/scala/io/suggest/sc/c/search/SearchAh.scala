@@ -8,7 +8,9 @@ import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sc.m.ResetUrlRoute
 import io.suggest.sc.m.hdr.SearchOpenClose
 import io.suggest.sc.m.search._
+import io.suggest.sc.sc3.MScQs
 import io.suggest.sc.search.{MSearchTab, MSearchTabs}
+import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
@@ -42,6 +44,8 @@ object SearchAh {
 
 
 class SearchAh[M](
+                   //api            : IScUniApi,
+                   //searchQsRO     : ModelRO[MScQs],
                    modelRW        : ModelRW[M, MScSearch]
                  )
   extends ActionHandler( modelRW )
@@ -53,15 +57,15 @@ class SearchAh[M](
       case MSearchTabs.Tags if v0.tags.tagsReq.isEmpty =>
         // Неинициализированная панель тегов: запустить загрузку тегов.
         val getMoreTagsFx = Effect.action {
-          GetMoreTags(clear = true)
+          DoSearch(clear = true)
         }
         Some(getMoreTagsFx)
 
       case MSearchTabs.GeoMap =>
-        if (v0.mapInit.ready) {
+        if (v0.geo.mapInit.ready) {
           // Надо запускать ручной ресайз, иначе карта может неверно увидеть свой фактический размер (т.к. размер окна мог меняться, пока карта была скрыта).
           // TODO Не запускать ресайз, если размер не менялся. У карты крышу сносит, если часто этот метод дёргать.
-          for (lInstance <- v0.mapInit.lmap) yield {
+          for (lInstance <- v0.geo.lmap) yield {
             SearchAh.mapResizeFx( lInstance )
           }
         } else {
@@ -118,10 +122,12 @@ class SearchAh[M](
       // Сбросить флаг инициализации карты, чтобы гео.карта тоже отрендерилась на экране.
       val v0 = value
 
-      if (!v0.mapInit.ready) {
-        val v2 = v0.withMapInit(
-          v0.mapInit
-            .withReady(true)
+      if (!v0.geo.mapInit.ready) {
+        val v2 = v0.withGeo(
+          v0.geo.withMapInit(
+            v0.geo.mapInit
+              .withReady(true)
+          )
         )
         updated( v2 )
 
@@ -157,7 +163,7 @@ class SearchAh[M](
       val tagsVisible = v0.isShownTab( MSearchTabs.Tags )
       // Требуется ли сразу перезагружать список тегов? Да, если открыта search-панель и вкладка тегов -- текущая.
       val needFxOpt = OptionUtil.maybe( tagsVisible ) {
-        Effect.action( GetMoreTags(clear = true) )
+        Effect.action( DoSearch(clear = true) )
       }
 
       val emptyState = MTagsSearchS.empty
@@ -178,7 +184,7 @@ class SearchAh[M](
       v0.currTab match {
         case MSearchTabs.Tags =>
           val fx = Effect.action {
-            GetMoreTags(clear = true, ignorePending = true)
+            DoSearch(clear = true, ignorePending = true)
           }
           effectOnly(fx)
 
@@ -190,8 +196,9 @@ class SearchAh[M](
     // Перехват инстанса leaflet map и сохранение в состояние.
     case m: HandleMapReady =>
       val v0 = value
-      val v2 = v0.withMapInit(
-        v0.mapInit.withLInstance( Some(m.map) )
+      val v2 = v0.withGeo(
+        v0.geo
+          .withLmap( Some(m.map) )
       )
       updatedSilent( v2 )
 

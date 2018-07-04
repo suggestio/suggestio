@@ -118,7 +118,7 @@ class SearchR(
   val component = ScalaComponent.builder[Props]("Search")
     .initialStateFromProps { propsProxy =>
       State(
-        mapInitC  = propsProxy.connect( _.mapInit ),
+        mapInitC  = propsProxy.connect( _.geo.mapInit ),
         sTextC    = propsProxy.connect( _.text ),
         tabC      = propsProxy.connect( _.currTab ),
         isShownC  = propsProxy.connect( p => Some(p.isShown) )( OptFastEq.OptValueEq )

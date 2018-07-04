@@ -80,7 +80,7 @@ class ScreenAh[M](
       // Если гео.карта видна юзера, то пнуть её после обновления вёрстки.
       val root = rootRO.value
       for {
-        lInstance <- root.index.search.mapInit.lmap
+        lInstance <- root.index.search.geo.lmap
         if root.index.search.isShownTab( MSearchTabs.GeoMap )
       } {
         fx >> SearchAh.mapResizeFx( lInstance )

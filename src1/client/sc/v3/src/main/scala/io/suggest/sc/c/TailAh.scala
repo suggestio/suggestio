@@ -46,7 +46,7 @@ object TailAh {
       // Это улучшит кэширование, возможно улучшит приватность при обмене ссылками.
       locEnv        = OptionUtil.maybe {
         currRcvrId.isEmpty || v0.index.search.isShown || v0.index.search.tags.selectedId.nonEmpty
-      }(v0.index.search.mapInit.state.center),
+      }(v0.index.search.geo.mapInit.state.center),
       generation    = Some( inxState.generation ),
       searchOpened  = searchOpened,
       searchTab     = OptionUtil.maybe(searchOpened)( v0.index.search.currTab ),
@@ -243,9 +243,11 @@ class TailAh[M](
             // Не двигать карту, сохранять координаты только в .userLoc
             val v2 = v0.withIndex(
               v0.index.withSearch(
-                v0.index.search.withMapInit(
-                  v0.index.search.mapInit
-                    .withUserLoc( Some(geoLoc) )
+                v0.index.search.withGeo(
+                  v0.index.search.geo.withMapInit(
+                    v0.index.search.geo.mapInit
+                      .withUserLoc( Some(geoLoc) )
+                  )
                 )
               )
             )
@@ -276,15 +278,17 @@ class TailAh[M](
             // Т.к. работает suppressor, то координаты можно всегда записывать в состояние, не боясь постороннего "шума".
             val v1 = v0.withIndex(
               v0.index.withSearch(
-                v0.index.search.withMapInit(
-                  v0.index.search.mapInit
-                    // Переместить карту в текущую точку.
-                    .withState(
-                      v0.index.search.mapInit.state
+                v0.index.search.withGeo(
+                  v0.index.search.geo.withMapInit(
+                    v0.index.search.geo.mapInit
+                      // Переместить карту в текущую точку.
+                      .withState(
+                      v0.index.search.geo.mapInit.state
                         .withCenterInitReal( geoLoc.point )
                     )
-                    // Текущая позиция юзера - тут же.
-                    .withUserLoc( Some(geoLoc) )
+                      // Текущая позиция юзера - тут же.
+                      .withUserLoc( Some(geoLoc) )
+                  )
                 )
               )
             )
@@ -417,12 +421,14 @@ class TailAh[M](
 
   private def withMapCenterInitReal(center: MGeoPoint, inx: MScIndex): MScIndex = {
     inx.withSearch(
-      inx.search.withMapInit(
-        inx.search.mapInit
-          .withState(
-            inx.search.mapInit.state
-              .withCenterInitReal( center )
-          )
+      inx.search.withGeo(
+        inx.search.geo.withMapInit(
+          inx.search.geo.mapInit
+            .withState(
+              inx.search.geo.mapInit.state
+                .withCenterInitReal( center )
+            )
+        )
       )
     )
   }

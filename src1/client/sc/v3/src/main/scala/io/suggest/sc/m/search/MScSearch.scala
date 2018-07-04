@@ -17,7 +17,7 @@ object MScSearch {
   /** Поддержка FastEq для инстансов [[MScSearch]]. */
   implicit object MScSearchFastEq extends FastEq[MScSearch] {
     override def eqv(a: MScSearch, b: MScSearch): Boolean = {
-      (a.mapInit    ===* b.mapInit)  &&
+      (a.geo        ===* b.geo)  &&
         (a.text     ===* b.text)     &&
         (a.tags     ===* b.tags)     &&
         (a.currTab  ===* b.currTab)  &&
@@ -40,14 +40,14 @@ object MScSearch {
   * @param isShown Открыта ли панель поиска на экране?
   */
 case class MScSearch(
-                      mapInit             : MMapInitState,
+                      geo                 : MGeoTabS,
                       text                : MScSearchText         = MScSearchText.empty,
                       tags                : MTagsSearchS          = MTagsSearchS.empty,
                       currTab             : MSearchTab            = MSearchTabs.default,
                       isShown             : Boolean               = false,
                     ) {
 
-  def withMapInit   ( mapInit: MMapInitState )          = copy( mapInit = mapInit )
+  def withGeo       ( geo: MGeoTabS )                   = copy( geo = geo )
   def withText      ( text: MScSearchText )             = copy( text = text )
   def withTags      ( tags: MTagsSearchS )              = copy( tags = tags )
   def withCurrTab   ( currTab: MSearchTab )             = copy( currTab = currTab )
@@ -76,11 +76,9 @@ case class MScSearch(
 
 
   /** Дедубликация кода сброса значения this.mapInit.loader. */
+  // TODO Заинлайнить? Код по факту переместился в под-модель geo, а тут просто дёргается.
   def resetMapLoader: MScSearch = {
-    withMapInit(
-      mapInit
-        .withLoader( None )
-    )
+    withGeo( geo.resetMapLoader )
   }
 
 }

@@ -28,6 +28,10 @@ object IMust {
     Some(flag)
   }
 
+  def mustOrShould(flag: Boolean): Must_t = {
+    if (flag) MUST else SHOULD
+  }
+
   /**
     * Сборка списка скомпиленных запросов в один запрос.
     * Обычно происходит заворачивание в bool query.

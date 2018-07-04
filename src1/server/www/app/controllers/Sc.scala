@@ -62,7 +62,7 @@ class Sc @Inject() (
                      override val ignoreAuth         : IgnoreAuth,
                      override val isNodeAdmin        : IsNodeAdmin,
                      override val canEditAd          : CanEditAd,
-                     override val scTagsUtil         : ScTagsUtil,
+                     override val scTagsUtil         : ScSearchUtil,
                      override val geoIpUtil          : GeoIpUtil,
                      override val extServicesUtil    : ExtServicesUtil,
                      override val mCommonDi          : ICommonDi

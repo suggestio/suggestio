@@ -7,6 +7,7 @@ import io.suggest.sjs.common.log.Logging
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.sjs.leaflet.Leaflet
 import org.scalajs.dom
 
@@ -75,6 +76,16 @@ object Sc3Main {
 
     val BodyCss = modules.getScCssF().Body
     body.className += BodyCss.smBody.htmlClass //+ HtmlConstants.SPACE + BodyCss.BgLogo.ru.htmlClass
+
+    // Инициализировать LkPreLoader:
+    for {
+      lkPreLoader <- LkPreLoader.find()
+    } yield {
+      // TODO Opt дважды вызывается find() тут.
+      LkPreLoader.PRELOADER_IMG_URL
+      lkPreLoader.remove()
+    }
+
 
     // TODO Добавить обеление фона body.
 

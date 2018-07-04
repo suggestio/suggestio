@@ -29,7 +29,7 @@ import io.suggest.sc.m._
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.inx.MScIndex
-import io.suggest.sc.m.search.{MMapInitState, MScSearch}
+import io.suggest.sc.m.search.{MGeoTabS, MMapInitState, MScSearch}
 import io.suggest.sc.sc3.{MScCommonQs, MScQs}
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.u.Sc3ConfUtil
@@ -127,8 +127,10 @@ class Sc3Circuit(
       index = MScIndex(
         resp = scIndexResp,
         search = MScSearch(
-          mapInit = MMapInitState(
-            state = MMapS(scInit.mapProps)
+          geo = MGeoTabS(
+            mapInit = MMapInitState(
+              state = MMapS(scInit.mapProps)
+            )
           )
         ),
         scCss = scCssFactory.mkScCss(
@@ -172,11 +174,12 @@ class Sc3Circuit(
   private val searchRW = indexRW.zoomRW(_.search) { _.withSearch(_) }
   private val tagsRW = searchRW.zoomRW(_.tags) { _.withTags(_) }
 
-  private val mapInitRW = searchRW.zoomRW(_.mapInit) { _.withMapInit(_) }
+  private val searchGeoRW = searchRW.zoomRW(_.geo) { _.withGeo(_) }
+  private val mapInitRW = searchGeoRW.zoomRW(_.mapInit) { _.withMapInit(_) }
   private val searchMapRcvrsPotRW = mapInitRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
   private val mmapsRW = mapInitRW.zoomRW(_.state) { _.withState(_) }
   private val searchTextRW = searchRW.zoomRW(_.text) { _.withText(_) }
-  private val mapDelayRW = mapInitRW.zoomRW(_.delay) { _.withDelay(_) }
+  private val mapDelayRW = searchGeoRW.zoomRW(_.delay) { _.withDelay(_) }
 
   private val gridRW = zoomRW(_.grid) { _.withGrid(_) }
 
