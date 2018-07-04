@@ -98,7 +98,7 @@ class SearchAh[M](
         // Аккаумулятор сайд-эффектов.
         val routeFx = Effect.action( ResetUrlRoute )
 
-        // Требуется ли запусткать инициализацию карты или списка тегов? Да, если открытие на НЕинициализированной панели.
+        // Требуется ли запускать инициализацию карты или списка тегов? Да, если открытие на НЕинициализированной панели.
         val fxOpt = OptionUtil.maybeOpt(m.open) {
           val nextTab = m.onTab getOrElse v2.currTab
           _maybeInitializeTab(nextTab, v2)

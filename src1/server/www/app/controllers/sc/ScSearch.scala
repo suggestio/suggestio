@@ -7,14 +7,11 @@ import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
-import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScQs, MScRespActionTypes}
+import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.sc.search.{MSc3NodeInfo, MSc3NodeSearchResp}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.req.IReq
-import play.api.libs.json.Json
-import play.api.mvc.Result
-import util.acl.IMaybeAuth
 import util.geo.IGeoIpUtilDi
 import util.showcase.IScTagsUtilDi
 import util.stat.IStatUtil
@@ -27,11 +24,10 @@ import scala.concurrent.Future
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 16.09.15 16:37
- * Description: Аддон для экшенов, связанных с тегами, в выдаче.
+ * Description: Аддон для функция выдачи, связанных с поиском узлов, тегов и т.д. в выдаче.
  */
-trait ScTags
+trait ScSearch
   extends ScController
-  with IMaybeAuth
   with IMNodes
   with IScTagsUtilDi
   with IGeoIpUtilDi
@@ -44,7 +40,7 @@ trait ScTags
 
 
   /** Общая логика обработки tags-запросов выдачи. */
-  trait ScTagsLogicBase extends LazyContext with IRespActionFut { logic =>
+  protected trait ScSearchLogic extends LazyContext with IRespActionFut { logic =>
 
     lazy val logPrefix = s"${getClass.getSimpleName}#${System.currentTimeMillis()}:"
 
@@ -172,23 +168,26 @@ trait ScTags
     }
 
   }
-
-
-
-  /** Логика для http-ответов для разных версий Sc API. */
-  abstract class ScTagsHttpLogic extends ScTagsLogicBase {
-    def execute(): Future[Result]
+  object ScSearchLogic {
+    def apply(scApiVsn: MScApiVsn): IScSearchLogicCompanion = {
+      if (scApiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
+        ScSearchLogicV3
+      } else {
+        throw new UnsupportedOperationException("Unknown API vsn: " + scApiVsn)
+      }
+    }
   }
 
-  /** Интерфейс для объекта-компаньона реализаций [[ScTagsHttpLogic]]. */
-  protected trait IScTagsHttpLogicCompanion {
-    def apply(qs: MScQs)(implicit request: IReq[_]): ScTagsHttpLogic
+
+  /** Интерфейс для объекта-компаньона реализаций ScTagsLogic. */
+  protected trait IScSearchLogicCompanion {
+    def apply(qs: MScQs)(implicit request: IReq[_]): ScSearchLogic
   }
 
 
   /** Реализация поддержки Sc APIv3. */
-  case class ScTagsLogicV3(override val _qs: MScQs)
-                          (override implicit val _request: IReq[_]) extends ScTagsHttpLogic {
+  case class ScSearchLogicV3(override val _qs: MScQs)
+                            (override implicit val _request: IReq[_]) extends ScSearchLogic {
 
     /** Сборка search-res-ответа без sc3Resp-обёртки. */
     override def respActionFut: Future[MSc3RespAction] = {
@@ -213,42 +212,7 @@ trait ScTags
       }
     }
 
-    override def execute(): Future[Result] = {
-      for {
-        sc3TagsRespAction <- respActionFut
-      } yield {
-        val respJson = Json.toJson(
-          MSc3Resp(
-            respActions = sc3TagsRespAction :: Nil
-          )
-        )
-        Ok( respJson )
-      }
-    }
-
   }
-  object ScTagsLogicV3 extends IScTagsHttpLogicCompanion
-
-
-  /** Переключалка между различными логиками для разных версий Sc API. */
-  def _apiVsn2logic(scApiVsn: MScApiVsn): IScTagsHttpLogicCompanion = {
-    if (scApiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
-      ScTagsLogicV3
-    } else {
-      throw new UnsupportedOperationException("Unknown API vsn: " + scApiVsn)
-    }
-  }
-
-
-  /**
-    * Поиск тегов по названиям.
-    *
-    * @param qs Аргументы поиска из URL query string.
-    * @return Рендер куска списка тегов, который раньше был списком узлов.
-    */
-  def tagsSearch(qs: MScQs) = maybeAuth().async { implicit request =>
-    val logic = _apiVsn2logic( qs.common.apiVsn )
-    logic(qs).execute()
-  }
+  object ScSearchLogicV3 extends IScSearchLogicCompanion
 
 }

@@ -20,11 +20,6 @@ GET  /favicon.ico                       @controllers.Assets.at(path = "/public",
 
 ## sc3+ Объединённое API:
 GET  /sc/api/pub                        @controllers.Sc.pubApi(a: io.suggest.sc.sc3.MScQs)
-## Дробное Sc api: TODO Удалить все 4 экшена. Вызовы идут теперь через pubApi().
-GET  /sc/index                          @controllers.Sc.index(a: io.suggest.sc.sc3.MScQs)
-GET  /sc/tile                           @controllers.Sc.findAds(a: io.suggest.sc.sc3.MScQs)
-GET  /sc/fads                           @controllers.Sc.focusedAds(a: io.suggest.sc.sc3.MScQs)
-GET  /sc/tags                           @controllers.Sc.tagsSearch(t: io.suggest.sc.sc3.MScQs)
 
 ## Рендер ровно одной карточки.
 GET  /sc/one/html                       @controllers.Sc.onlyOneAd(o: blk.OneAdQsArgs)

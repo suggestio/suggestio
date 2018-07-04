@@ -3,7 +3,6 @@ package controllers.sc
 import _root_.util.blocks.IBlkImgMakerDI
 import _root_.util.showcase.{IScAdSearchUtilDi, IScUtil}
 import _root_.util.stat.IStatUtil
-import io.suggest.ad.blk.BlockWidths
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MSzMult
 import io.suggest.model.n2.edge.MPredicates
@@ -11,15 +10,13 @@ import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.primo.TypeT
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.ads.{MSc3AdData, MSc3AdsResp}
-import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScQs, MScRespActionTypes}
+import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.im.make.MakeResult
 import models.req.IReq
-import play.api.mvc.Result
 import models.blk._
 import util.acl._
-import play.api.libs.json.Json
 import japgolly.univeq._
 
 import scala.concurrent.Future
@@ -32,7 +29,7 @@ import util.ad.IJdAdUtilDi
  * Created: 11.11.14 16:47
  * Description: Поддержка плитки в контроллере: логика подготовки к сборке ответа.
  */
-trait ScAdsTileBase
+trait ScAdsTile
   extends ScController
   with IMacroLogs
   with IScUtil
@@ -40,9 +37,13 @@ trait ScAdsTileBase
   with IBlkImgMakerDI
   with IScAdSearchUtilDi
   with ICanEditAdDi
+  with IStatUtil
+  with IJdAdUtilDi
 {
 
   import mCommonDi._
+
+  // TODO Надо переписать рендер на reactive-streams: на больших нагрузка скачки расходования памяти и CPU могут стать нестепримыми.
 
   /** Изменябельная логика обработки запроса рекламных карточек для плитки. */
   trait TileAdsLogic extends LogicCommonT with IRespActionFut with TypeT {
@@ -192,42 +193,11 @@ trait ScAdsTileBase
 
   }
 
-}
-
-
-/** Поддержка ответов плитки карточек на запросы из выдачи. */
-trait ScAdsTile
-  extends ScAdsTileBase
-  with IStatUtil
-  with IMaybeAuth
-  with IJdAdUtilDi
-{
-
-  import mCommonDi._
-
-
-  /** Выдать рекламные карточки в рамках ТЦ для категории и/или магазина.
-    * @param adSearch Поисковый запрос.
-    * @return JSONP с рекламными карточками для рендера в выдаче.
-    */
-  def findAds(adSearch: MScQs) = maybeAuth().async { implicit request =>
-    // В зависимости от версии API, используем ту или иную реализацию логики.
-    val logic = TileAdsLogicV( adSearch )
-    val resultFut = logic.resultFut
-
-    // В фоне собираем статистику
-    logic.saveScStat()
-
-    // Возвращаем собираемый результат
-    resultFut
-  }
-
-
   /** Компаньон логик для разруливания версий логик обработки HTTP-запросов. */
-  protected object TileAdsLogicV {
+  protected object TileAdsLogic {
 
     /** Собрать необходимую логику обработки запроса в зависимости от версии API. */
-    def apply(adSearch: MScQs)(implicit request: IReq[_]): TileAdsLogicV = {
+    def apply(adSearch: MScQs)(implicit request: IReq[_]): TileAdsLogic = {
       val v = adSearch.common.apiVsn
       if (v.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
         new TileAdsLogicV3( adSearch )
@@ -239,18 +209,8 @@ trait ScAdsTile
   }
 
 
-  /** Action logic содержит в себе более конкретную логику для сборки http-json-ответа по findAds(). */
-  protected trait TileAdsLogicV extends TileAdsLogic {
-    /** Рендер HTTP-результата. */
-    def resultFut: Future[Result]
-
-    def cellSizeCssPx: Int    = szMulted(BlockWidths.NARROW.value, tileArgs.szMult)
-    def cellPaddingCssPx: Int = szMulted(scUtil.GRID_COLS_CONF.cellPadding, tileArgs.szMult)
-  }
-
-
   case class TileAdsLogicV3(override val _qs: MScQs)
-                           (override implicit val _request: IReq[_]) extends TileAdsLogicV {
+                           (override implicit val _request: IReq[_]) extends TileAdsLogic {
 
     override type T = MSc3AdData
 
@@ -332,24 +292,6 @@ trait ScAdsTile
       }
     }
 
-
-    /** Рендер HTTP-результата. */
-    override def resultFut: Future[Result] = {
-      // Завернуть index-экшен в стандартный scv3-контейнер:
-      for {
-        adsTileRespAction <- respActionFut
-      } yield {
-        val scResp = MSc3Resp(
-          respActions = adsTileRespAction :: Nil
-        )
-
-        // Вернуть HTTP-ответ.
-        Ok( Json.toJson(scResp) )
-          .cacheControl( if(ctx.request.user.isAnon) 30 else 8 )
-      }
-    }
-
   }
-
 
 }

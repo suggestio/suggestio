@@ -1,13 +1,10 @@
 package controllers.sc
 
 import io.suggest.model.n2.node.MNode
-import io.suggest.sc.MScApiVsns
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.sc3.MScQs
-import japgolly.univeq._
 import models.msc._
 import models.req.IReq
-import play.api.mvc.Result
 import util.showcase.IScUtil
 
 import scala.concurrent.Future
@@ -24,36 +21,6 @@ trait ScIndexAdOpen
   with ScIndex
   with IScUtil
 {
-
-  import mCommonDi._
-
-
-  /** Тело экшена возврата медиа-кнопок расширено поддержкой переключения на index-выдачу узла-продьюсера
-    * рекламной карточки, которая заинтересовала юзера. */
-  override protected def _focusedAds(qs: MScQs)(implicit request: IReq[_]): Future[Result] = {
-    val resFut = for {
-      producerOpt <- scUtil.isFocGoToProducerIndexFut(qs)
-      producer = producerOpt.get
-      majorApiVsn = qs.common.apiVsn.majorVsn
-      idxLogic: ScIndexLogic = if (majorApiVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
-        ScFocToIndexLogicV3(producer, qs)(request)
-      } else {
-        throw new IllegalArgumentException("Unknown API: " + majorApiVsn)
-      }
-      result <- idxLogic.resultFut
-    } yield {
-      result
-    }
-
-    // Отрабатываем все возможные ошибки через вызов к super-методу.
-    resFut.recoverWith { case ex: Throwable =>
-      // Продьюсер неизвестен, не подходит под критерии или переброска отключена.
-      if ( !ex.isInstanceOf[NoSuchElementException] )
-        LOGGER.error("_focusedAds(): Suppressing unexpected exception for " + request.uri, ex)
-      super._focusedAds(qs)
-    }
-  }
-
 
   /** ScIndex-логика перехода на с focused-карточки в индекс выдачи продьюсера фокусируемой карточки.
     *

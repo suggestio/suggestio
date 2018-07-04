@@ -76,7 +76,7 @@ class Sc @Inject() (
   with ScOnlyOneAd
   with ScIndexAdOpen
   with ScJsRouter
-  with ScTags
+  with ScSearch
   with ScRemoteError
   with ScMap
   with ScPwaManifest

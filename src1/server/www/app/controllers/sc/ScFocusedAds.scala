@@ -8,21 +8,17 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.primo.id.OptId
-import io.suggest.sc.MScApiVsns
 import io.suggest.sc.ads.{MLookupMode, MLookupModes, MSc3AdData, MSc3AdsResp}
-import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScQs, MScRespActionTypes}
+import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.blk
 import models.msc._
 import models.req.IReq
-import play.api.mvc.Result
 import util.acl._
-import play.api.libs.json.Json
 import util.ad.IJdAdUtilDi
 import util.showcase.{IScAdSearchUtilDi, IScUtil}
 import util.stat.IStatUtil
-import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -42,7 +38,6 @@ trait ScFocusedAds
   with IScAdSearchUtilDi
   with ICanEditAdDi
   with IStatUtil
-  with IMaybeAuth
   with IJdAdUtilDi
 {
 
@@ -58,9 +53,6 @@ trait ScFocusedAds
     val _qs: MScQs
 
     lazy val logPrefix = s"foc(${ctx.timestamp}):"
-
-    /** Sync-состояние выдачи, если есть. */
-    def _scStateOpt: Option[ScJsState]
 
 
     lazy val mAdsSearchFut: Future[MNodeSearch] = {
@@ -605,18 +597,6 @@ trait ScFocusedAds
   }
 
 
-  /** Расширение базовой focused-ads-логики для написания HTTP-экшенов. */
-  protected trait FocusedAdsLogicHttp extends FocusedAdsLogic with IRespActionFut {
-
-    /** Синхронного состояния выдачи тут обычно нет. */
-    override def _scStateOpt: Option[ScJsState] = None
-
-    /** Сборка HTTP-ответа. */
-    def resultFut: Future[Result]
-
-  }
-
-
   /** V3-логика фокусировки на карточке.
     * Повторяет логику v2, но:
     * - client-side render.
@@ -629,7 +609,7 @@ trait ScFocusedAds
     */
   case class FocusedLogicHttpV3(override val _qs: MScQs)
                                (override implicit val _request: IReq[_])
-    extends FocusedAdsLogicHttp
+    extends FocusedAdsLogic
   {
     // TODO Код тут очень похож на код рендера одной карточки в ScAdsTileLogicV3. Потому что jd-карточки раскрываются в плитки.
 
@@ -687,57 +667,6 @@ trait ScFocusedAds
       }
     }
 
-    /** Сборка HTTP-ответа v3-выдачи. */
-    override def resultFut: Future[Result] = {
-      for {
-        focusedRespAction <- respActionFut
-      } yield {
-        val scResp = MSc3Resp(
-          respActions = focusedRespAction :: Nil
-        )
-
-        // Вернуть HTTP-ответ. Короткий кэш просто для защиты от дублирующихся запросов.
-        Ok( Json.toJson(scResp) )
-          .cacheControl( if (ctx.request.user.isAnon) 20 else 6 )
-      }
-    }
-
-  }
-
-
-  /** Экшен для рендера горизонтальной выдачи карточек.
-    *
-    * @param qs URL-аргументы запроса.
-    * @return JSONP с отрендеренными карточками.
-    */
-  def focusedAds(qs: MScQs) = maybeAuth().async { implicit request =>
-    // Запустить изменябельное тело экшена на исполнение.
-    _focusedAds(qs)
-  }
-
-
-  /**
-    * Тело экщена focusedAds() вынесено сюда для возможности перезаписывания.
-    *
-    * @param logic Экземпляр focused-логики.
-    * @return Фьючерс с результатом.
-    */
-  protected def _focusedAds(qs: MScQs)(implicit request: IReq[_]): Future[Result] = {
-
-    val logic: FocusedAdsLogicHttp = if (qs.common.apiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
-      FocusedLogicHttpV3(qs)(request)
-    } else {
-      throw new IllegalArgumentException(s"Unsupported API version: ${qs.common.apiVsn} :: ${request.method} ${request.uri} FROM ${request.remoteClientAddress}")
-    }
-
-    // Юзер просматривает карточки в раскрытом виде (фокусируется). Отрендерить браузер карточек.
-    val resultFut = logic.resultFut
-
-    // И запускаем сохранение статистики по текущему действу:
-    logic.saveScStat()
-
-    // Вернуть основной результат экшена.
-    resultFut
   }
 
 }

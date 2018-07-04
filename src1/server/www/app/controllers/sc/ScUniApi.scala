@@ -32,7 +32,7 @@ trait ScUniApi
   extends ScIndex
   with ScAdsTile
   with ScIndexAdOpen
-  with ScTags
+  with ScSearch
   with IMaybeAuth
   with IScUtil
 {
@@ -69,7 +69,7 @@ trait ScUniApi
     /** Собрать index-логику, когда требуется. */
     def indexLogicOptFut: Future[Option[ScIndexLogic]] = {
       if (qs.index.nonEmpty) {
-        val logic = ScIndexLogicHttp(qs)(_request)
+        val logic = ScIndexLogic(qs)(_request)
         LOGGER.trace(s"$logPrefix Normal index-logic created: $logic")
         Future.successful( Some(logic) )
       } else if ( qs.foc.exists(_.focIndexAllowed) ) {
@@ -201,7 +201,7 @@ trait ScUniApi
         isWithGrid  <- isWithGridFut
         if isWithGrid
         qs2         <- qsAfterIndexFut
-        logic       = TileAdsLogicV3(qs2)(_request)
+        logic       = TileAdsLogic(qs2)(_request)
         respAction  <- _logic2stateRespActionFut( logic )
       } yield {
         LOGGER.trace(s"$logPrefix Search for grid ads => ${respAction.ads.iterator.flatMap(_.ads).size} ads")
@@ -219,7 +219,7 @@ trait ScUniApi
       } yield {
         for {
           qs2         <- qsAfterIndexFut
-          logic       = ScTagsLogicV3(qs2)(_request)
+          logic       = ScSearchLogic(qs2.common.apiVsn)(qs2)(_request)
           respAction  <- _logic2stateRespActionFut( logic )
         } yield {
           LOGGER.trace(s"$logPrefix Search tags => ${respAction.search.iterator.flatMap(_.results).size} results")

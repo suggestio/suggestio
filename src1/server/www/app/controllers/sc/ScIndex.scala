@@ -33,8 +33,8 @@ import util.ble.IBleUtilDi
 import util.geo.IGeoIpUtilDi
 import util.img.IDynImgUtil
 import util.stat.{IStatCookiesUtilDi, IStatUtil}
-import japgolly.univeq._
 import util.showcase.IScUtil
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -54,7 +54,6 @@ trait ScIndex
   extends ScController
   with IMacroLogs
   with IStatCookiesUtilDi
-  with IMaybeAuth
   with IMNodes
   with INodesUtil
   with IWelcomeUtil
@@ -67,67 +66,6 @@ trait ScIndex
 {
 
   import mCommonDi._
-
-
-  /**
-    * Второе поколение геолокационной v2-выдачи.
-    * Произошла унификация geoShowcase() и showcase()-экшенов, зоопарка расходящихся index-логик.
-    * + by-design возможность выхода за пределы мышления в понятиях узлов-ресиверов.
-    *
-    * @param args Все qs-данные запроса экшена ровно одним набором.
-    * @return 200 OK + index выдачи в виде JSON.
-    */
-  // U.PersonNode запрашивается в фоне для сбора статистики внутри экшена.
-  def index(args: MScQs) = maybeAuth(U.PersonNode).async { implicit request =>
-    lazy val logPrefix = s"index[${System.currentTimeMillis()}]:"
-
-    // Чтобы избегать корявой многоэтажности, экспериментируем с Either:
-    (
-      if (args.index.nonEmpty) Right(None)
-      else Left {
-        LOGGER.debug(s"$logPrefix No or invalid .index in scQs = $args")
-        BadRequest("index args missing")
-      }
-    )
-      // В зависимости от версии API выбрать используемую логику сборки ответа.
-      .flatMap { _ =>
-        val logicOpt = if (args.common.apiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
-          Some( ScIndexLogicHttp(args)(request) )
-        } else {
-          LOGGER.error(s"$logPrefix No logic available for api vsn: ${args.common.apiVsn}. Forgot to implement? args = $args")
-          None
-        }
-        logicOpt
-          .toRight(
-            NotImplemented(s"Sc Index API not implemented for ${args.common.apiVsn}.")
-          )
-      }
-      // Запустить выбранную логику на исполнение:
-      .map { logic =>
-        // Собираем http-ответ.
-        val resultFut = for (res <- logic.resultFut) yield {
-          // Настроить кэш-контрол. Если нет locEnv, то для разных ip будут разные ответы, и CDN кешировать их не должна.
-          val (cacheControlMode, hdrs0) = if (!args.common.locEnv.isEmpty) {
-            "private" -> ((VARY -> X_FORWARDED_FOR) :: Nil)
-          } else {
-            "public" -> Nil
-          }
-          val hdrs1 = CACHE_CONTROL -> s"$cacheControlMode, max-age=${scUtil.SC_INDEX_CACHE_SECONDS}" ::
-            hdrs0
-          res.withHeaders(hdrs1: _*)
-        }
-
-        // Собираем статистику второго поколения...
-        logic.saveScStat()
-
-        resultFut.recover { case ex: NodeNotFoundException =>
-          // Эта ветвь вообще когда-нибудь вызывается? indexNodeFut всегда какой-то узел вроде возвращает.
-          LOGGER.trace(s"$logPrefix ${logic.logPrefix}: everything is missing; args = $args", ex)
-          NotFound( ex.getMessage )
-        }
-      }
-      .fold[Future[Result]]( identity(_), identity )
-  }
 
 
   /** Унифицированная логика выдачи в фазе index. */
@@ -685,6 +623,16 @@ trait ScIndex
     }
 
   }
+  object ScIndexLogic {
+    def apply(qs: MScQs)(implicit request: IReq[_]): ScIndexLogic = {
+      val scApiVsn = qs.common.apiVsn
+      if (scApiVsn.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
+        ScIndexLogicV3(qs)(request)
+      } else {
+        throw new UnsupportedOperationException("Unknown API vsn: " + scApiVsn)
+      }
+    }
+  }
 
 
   /** Раздача индекса выдачи v3.
@@ -694,7 +642,8 @@ trait ScIndex
     *
     * Сервер отвечает только параметрами для рендера, без html.
     */
-  case class ScIndexLogicHttp(override val _qs: MScQs)
-                             (override implicit val _request: IReq[_]) extends ScIndexLogic
+  case class ScIndexLogicV3(override val _qs: MScQs)
+                           (override implicit val _request: IReq[_]) extends ScIndexLogic
+
 
 }
