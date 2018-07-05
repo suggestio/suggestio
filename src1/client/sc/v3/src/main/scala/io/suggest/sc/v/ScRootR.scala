@@ -68,6 +68,7 @@ class ScRootR (
                                     menuOpenedSomeC     : ReactConnectProxy[Some[Boolean]],
                                     menuBlueToothOptC   : ReactConnectProxy[blueToothR.Props_t],
                                     mtlbrOptC           : ReactConnectProxy[unsafeScreenAreaOffsetR.Props_t],
+                                    isRenderScC         : ReactConnectProxy[Some[Boolean]],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -173,12 +174,21 @@ class ScRootR (
         )( searchSideBar )
       }
 
-      <.div(
-        // Рендер стилей перед снаружи и перед остальной выдачей.
-        s.scCssArgsC { scCssR.apply },
+      // Рендер стилей перед снаружи и перед остальной выдачей.
+      val scCssComp = s.scCssArgsC { scCssR.apply }
 
-        menuSideBar
-      )
+      // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
+      s.isRenderScC { isRenderSomeProxy =>
+        if (isRenderSomeProxy.value.value) {
+          <.div(
+            scCssComp,
+            menuSideBar
+          )
+        } else {
+          // Нет пока данных для рендера вообще
+          <.div
+        }
+      }
 
     }
 
@@ -291,7 +301,11 @@ class ScRootR (
           OptionUtil.maybe( mroot.internals.conf.debug ) {
             mroot.dev.screen.info.unsafeOffsets
           }
-        }( OptFastEq.Plain )
+        }( OptFastEq.Plain ),
+
+        isRenderScC = propsProxy.connect { mroot =>
+          Some( mroot.index.resp.nonEmpty )
+        }( OptFastEq.OptValueEq )
 
       )
     }
