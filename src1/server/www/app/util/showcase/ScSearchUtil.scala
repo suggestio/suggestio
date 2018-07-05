@@ -92,7 +92,7 @@ class ScSearchUtil @Inject()(
     if (isSearchGeoRcvrs) {
       // TODO Поиск по названию, с названием или даже без, с учётом координат.
       edgesCrs ::= Criteria(
-        predicates  = MPredicates.NodeLocation.Paid :: Nil,
+        predicates  = MPredicates.NodeLocation :: Nil,
         must        = should,
         // Ограничить поиск радиусом от текущей точки. Она обязательно задана, иначе бы этот код не вызывался (см. флаг выше).
         gsIntersect = for (geoLoc <- geoLocOpt2) yield {

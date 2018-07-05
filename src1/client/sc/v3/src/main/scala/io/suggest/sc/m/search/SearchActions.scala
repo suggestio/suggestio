@@ -30,7 +30,7 @@ case class TagClick( nodeId: String ) extends ISearchAction
 case object ResetTags extends ISearchAction
 
 /** Экшен для запуска поиска тегов под текущую выдачу. */
-case class DoSearch(clear: Boolean, ignorePending: Boolean = false) extends ISearchAction with IScApiRespReason
+case class DoTagsSearch(clear: Boolean, ignorePending: Boolean = false) extends ISearchAction with IScApiRespReason
 
 /** Происходит скроллинг в списке тегов. Возможно, надо подгрузить ещё тегов. */
 case class TagsScroll(scrollTop: Double, scrollHeight: Int) extends ISearchAction
@@ -54,3 +54,6 @@ case class MapDelayTimeOut( gen: Long ) extends ISearchAction
 
 /** Команда к запуску index-реакции на текущее состояние гео.карты. */
 case class MapReIndex( rcvrId: Option[String] ) extends ISc3Action with IScIndexRespReason
+
+/** Выполнить поиск узлов для гео-вкладки. */
+case class DoGeoSearch( clear: Boolean ) extends ISearchAction with IScApiRespReason

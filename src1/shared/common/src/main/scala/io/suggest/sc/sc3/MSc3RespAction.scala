@@ -21,7 +21,7 @@ object MSc3RespAction {
     (__ \ "action").format[MScRespActionType] and
     (__ \ MScRespActionTypes.Index.value).formatNullable[MSc3IndexResp] and
     (__ \ MScRespActionTypes.AdsTile.value).formatNullable[MSc3AdsResp] and
-    (__ \ MScRespActionTypes.SearchRes.value).formatNullable[MSc3NodeSearchResp]
+    (__ \ MScRespActionTypes.SearchNodes.value).formatNullable[MSc3NodeSearchResp]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MSc3RespAction] = UnivEq.derive

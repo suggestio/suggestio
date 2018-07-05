@@ -10,7 +10,7 @@ import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx._
-import io.suggest.sc.m.search.{DoSearch, MapReIndex}
+import io.suggest.sc.m.search.{DoTagsSearch, MapReIndex}
 import io.suggest.sc.sc3._
 import io.suggest.sc.search.MSearchTabs
 import io.suggest.sc.styl.MScCssArgs
@@ -122,9 +122,9 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
 
     val respActionTypes = ctx.m.tryResp.get.respActionTypes
     // Если вкладка с тегами видна, то запустить получение тегов в фоне.
-    if (i1.search.isShownTab(MSearchTabs.Tags) && !respActionTypes.contains(MScRespActionTypes.SearchRes)) {
+    if (i1.search.isShownTab(MSearchTabs.Tags) && !respActionTypes.contains(MScRespActionTypes.SearchNodes)) {
       fxsAcc ::= Effect.action {
-        DoSearch(clear = true)
+        DoTagsSearch(clear = true)
       }
     }
 

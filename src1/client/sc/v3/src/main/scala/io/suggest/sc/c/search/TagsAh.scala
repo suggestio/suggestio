@@ -51,7 +51,7 @@ class TagsAh[M](
       ) {
         // Требуется подгрузить ещё тегов.
         val fx = Effect.action {
-          DoSearch(clear = false, ignorePending = true)
+          DoTagsSearch(clear = false, ignorePending = true)
         }
         val v2 = v0.withTagsReq(
           v0.tagsReq.pending()
@@ -80,8 +80,9 @@ class TagsAh[M](
 
       updated( v2, fx )
 
+
     // Команда к запуску поиска тегов.
-    case m: DoSearch =>
+    case m: DoTagsSearch =>
       val v0 = value
       if (m.clear || m.ignorePending || !v0.tagsReq.isPending) {
         // Запустить эффект поиска, выставить запущенный запрос в состояние.
@@ -97,7 +98,7 @@ class TagsAh[M](
           }
           // TODO Лимит результатов - брать из высоты экрана.
           val limit = 30
-          val args2 = args0.copy(
+          val args2 = args0.withSearch(
             search = args0.search.withLimitOffset(
               limit     = Some(limit),
               offset    = offsetOpt
@@ -147,7 +148,7 @@ class TagsRespHandler
   }
 
   override def isMyReqReason(ctx: MRhCtx): Boolean = {
-    ctx.m.reason.isInstanceOf[DoSearch]
+    ctx.m.reason.isInstanceOf[DoTagsSearch]
   }
 
   override def getPot(ctx: MRhCtx): Option[Pot[_]] = {
@@ -163,11 +164,12 @@ class TagsRespHandler
   }
 
   override def isMyRespAction(raType: MScRespActionType, ctx: MRhCtx): Boolean = {
-    raType ==* MScRespActionTypes.SearchRes
+    (raType ==* MScRespActionTypes.SearchNodes) &&
+      isMyReqReason(ctx)
   }
 
   override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect]) = {
-    val reason = ctx.m.reason.asInstanceOf[DoSearch]
+    val reason = ctx.m.reason.asInstanceOf[DoTagsSearch]
     val t0 = ctx.value0.index.search.tags
 
     val tagsResp = ra.search.get
@@ -176,7 +178,8 @@ class TagsRespHandler
       tagsResp.results
     } else {
       // Требуется склеить все имеющиеся списки тегов
-      t0.tagsReq.fold(tagsResp.results)(_ ++ tagsResp.results)
+      t0.tagsReq
+        .fold(tagsResp.results)(_ ++ tagsResp.results)
     }
 
     val tagsReq2 = t0.tagsReq.ready( tagsList2 )

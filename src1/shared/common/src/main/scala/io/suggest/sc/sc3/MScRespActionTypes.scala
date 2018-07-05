@@ -24,8 +24,8 @@ object MScRespActionTypes extends StringEnum[MScRespActionType] {
   /** Тип экшена с карточками focused-выдачи. */
   case object AdsFoc extends MScRespActionType("f")
 
-  /** Экшен результата поиска. */
-  case object SearchRes extends MScRespActionType("s")
+  /** Экшен результата поиска узлов. */
+  case object SearchNodes extends MScRespActionType("s")
 
 
   /** Список всех значений модели. */

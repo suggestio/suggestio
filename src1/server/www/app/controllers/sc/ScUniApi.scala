@@ -215,7 +215,7 @@ trait ScUniApi
     /** Запуск поиска тегов, если запрошен. */
     def tagsRespActionFutOpt: Future[Option[MSc3RespAction]] = {
       val futOpt = for {
-        _ <- qs.common.searchTags
+        _ <- qs.common.searchNodes
       } yield {
         for {
           qs2         <- qsAfterIndexFut

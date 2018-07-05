@@ -205,7 +205,7 @@ trait ScSearch
       } yield {
         LOGGER.trace(s"$logPrefix Found ${nodesFound.size} nodes")
         MSc3RespAction(
-          acType = MScRespActionTypes.SearchRes,
+          acType = MScRespActionTypes.SearchNodes,
           search = Some(
             MSc3NodeSearchResp(
               results = nodesFound

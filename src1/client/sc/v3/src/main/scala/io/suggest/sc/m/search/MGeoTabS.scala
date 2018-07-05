@@ -43,6 +43,7 @@ case class MGeoTabS(
                    ) {
 
   def withMapInit(mapr: MMapInitState)              = copy( mapInit = mapr )
+  def withNodesSearch(nodesSearch: MGeoTabSearchS)  = copy( nodesSearch = nodesSearch )
   def withDelay(delay: Option[MMapDelay])           = copy( delay = delay )
   def withLmap(lmap: Option[LMap])                  = copy( lmap = lmap )
 

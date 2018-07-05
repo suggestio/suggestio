@@ -5,7 +5,7 @@ import io.suggest.jd.render.JdRenderModule
 import io.suggest.sc.c.IRespWithActionHandler
 import io.suggest.sc.c.grid.{GridFocusRespHandler, GridRespHandler}
 import io.suggest.sc.c.inx.IndexRespHandler
-import io.suggest.sc.c.search.TagsRespHandler
+import io.suggest.sc.c.search.{GeoSearchRespHandler, TagsRespHandler}
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v._
 import io.suggest.sc.v.grid.{GridCoreR, GridLoaderR, GridR}
@@ -72,6 +72,7 @@ class Sc3Module {
   lazy val tagsSearchR = wire[TagsSearchR]
   lazy val searchR = wire[SearchR]
   lazy val tagsRespHandler = wire[TagsRespHandler]
+  lazy val geoSearchRespHandler = wire[GeoSearchRespHandler]
 
 
   // menu
@@ -107,7 +108,8 @@ class Sc3Module {
       gridRespHandler,
       gridFocusRespHandler,
       indexRespHandler,
-      tagsRespHandler
+      tagsRespHandler,
+      geoSearchRespHandler
     )
   }
 

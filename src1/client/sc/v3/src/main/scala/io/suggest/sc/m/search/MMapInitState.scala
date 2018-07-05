@@ -5,6 +5,7 @@ import diode.data.Pot
 import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.maps.m.MMapS
 import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.sc.search.MSc3NodeInfo
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -26,14 +27,14 @@ object MMapInitState {
 
   implicit object MMapInitStateFastEq extends FastEq[MMapInitState] {
     override def eqv(a: MMapInitState, b: MMapInitState): Boolean = {
-      (a.state      ===* b.state) &&
-        (a.ready     ==* b.ready) &&
-        (a.rcvrsGeo ===* b.rcvrsGeo) &&
-        (a.loader   ===* b.loader) &&
-        (a.userLoc  ===* b.userLoc)
+      (a.state          ===* b.state) &&
+        (a.ready         ==* b.ready) &&
+        (a.rcvrsGeo     ===* b.rcvrsGeo) &&
+        (a.rcvrsFound  ===* b.rcvrsFound) &&
+        (a.loader       ===* b.loader) &&
+        (a.userLoc      ===* b.userLoc)
     }
   }
-
 
   implicit def univEq: UnivEq[MMapInitState] = UnivEq.derive
 
@@ -52,6 +53,7 @@ case class MMapInitState(
                           state           : MMapS,
                           ready           : Boolean               = false,
                           rcvrsGeo        : Pot[MGeoNodesResp]    = Pot.empty,
+                          rcvrsFound      : Pot[MGeoNodesResp]    = Pot.empty,
                           loader          : Option[MGeoPoint]     = None,
                           userLoc         : Option[MGeoLoc]       = None,
                         ) {
@@ -59,6 +61,7 @@ case class MMapInitState(
   def withState(state: MMapS)                       = copy( state = state )
   def withReady(ready: Boolean)                     = copy( ready = ready )
   def withRcvrsGeo(rcvrsGeo: Pot[MGeoNodesResp])    = copy( rcvrsGeo = rcvrsGeo )
+  def withRcvrsFound(rcvrsFound: Pot[MGeoNodesResp]) = copy( rcvrsFound = rcvrsFound )
   def withLoader(loader: Option[MGeoPoint])         = copy( loader = loader )
   def withUserLoc(userLoc: Option[MGeoLoc])         = copy( userLoc = userLoc )
 

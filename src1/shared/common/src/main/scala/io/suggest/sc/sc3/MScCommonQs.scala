@@ -54,12 +54,12 @@ object MScCommonQs {
   * @param apiVsn Версия Sc API.
   * @param locEnv Данные геолокации и физического окружения, если есть.
   * @param searchGridAds Флаг поиска и возврата разных карточек плитки в ответе.
-  * @param searchTags Флаг поиска и возврата тегов в ответе.
+  * @param searchNodes Флаг поиска узлов/тегов.
   */
 case class MScCommonQs(
                         apiVsn            : MScApiVsn           = MScApiVsns.unknownVsn,
                         screen            : Option[MScreen]     = None,
                         locEnv            : MLocEnv             = MLocEnv.empty,
                         searchGridAds     : Option[Boolean]     = None,
-                        searchTags        : Option[Boolean]     = None,
+                        searchNodes       : Option[Boolean]     = None,
                       )

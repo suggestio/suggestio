@@ -5,6 +5,7 @@ import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.ble.beaconer.c.BleBeaconerAh
 import io.suggest.ble.beaconer.m.BbOnOff
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.event.WndEvents
 import io.suggest.dev.{JsScreenUtil, MPxRatios, MScreenInfo}
 import io.suggest.es.model.MEsUuId
@@ -31,6 +32,7 @@ import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.m.search.{MGeoTabS, MMapInitState, MScSearch}
 import io.suggest.sc.sc3.{MScCommonQs, MScQs}
+import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.u.Sc3ConfUtil
 import io.suggest.sc.v.ScCssFactory
@@ -232,6 +234,13 @@ class Sc3Circuit(
 
   /** Аргументы для поиска тегов. */
   private val tagsSearchQsRO: ModelRO[MScQs] = zoom { mroot =>
+    _searchQs(mroot, MSearchTabs.Tags, withScreen = false)
+  }
+  private val geoSearchQsRO: ModelRO[MScQs] = zoom { mroot =>
+    _searchQs(mroot, MSearchTabs.GeoMap, withScreen = true)
+  }
+
+  private def _searchQs(mroot: MScRoot, tab: MSearchTab, withScreen: Boolean): MScQs = {
     val currRcvrId = mroot.index.state.currRcvrId
     MScQs(
       common = MScCommonQs(
@@ -239,15 +248,17 @@ class Sc3Circuit(
           if (currRcvrId.isEmpty) mroot.locEnv
           else MLocEnv.empty,
         apiVsn = mroot.internals.conf.apiVsn,
-        searchTags = Some(false)
+        searchNodes = Some(false),
+        screen = OptionUtil.maybe(withScreen)( mroot.dev.screen.info.screen )
       ),
       search = MAdsSearchReq(
         textQuery = mroot.index.search.text.searchQuery.toOption,
         rcvrId    = currRcvrId.toEsUuIdOpt,
-        tab       = Some( mroot.index.search.currTab )
+        tab       = Some( tab ) //mroot.index.search.currTab )
       )
     )
   }
+
 
   private val screenInfoRO = scScreenRW.zoom(_.info)
   private val screenRO = screenInfoRO.zoom(_.screen)
@@ -267,7 +278,9 @@ class Sc3Circuit(
   )
 
   private val geoTabAh = new GeoTabAh(
-    modelRW       = geoTabRW
+    modelRW         = geoTabRW,
+    api             = api,
+    geoSearchQsRO   = geoSearchQsRO
   )
 
   private val tagsAh = new TagsAh(

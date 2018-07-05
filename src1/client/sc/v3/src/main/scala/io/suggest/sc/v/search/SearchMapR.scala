@@ -177,10 +177,15 @@ class SearchMapR(
     .initialStateFromProps { mapInitProxy =>
       State(
         mmapC       = mapInitProxy.connect(_.state),
-        rcvrsGeoC   = mapInitProxy.connect(_.rcvrsGeo),
+        rcvrsGeoC   = mapInitProxy.connect { mapInit =>
+          // Отображать найденные в поиске ресиверы вместо всех.
+          mapInit.rcvrsFound
+            .orElse( mapInit.rcvrsGeo )
+        },
         loaderOptC  = mapInitProxy.connect(_.loader)( OptFastEq.Plain ),
         userLocOptC = mapInitProxy.connect { mapInit =>
-          mapInit.userLoc
+          mapInit
+            .userLoc
             // Запретить конфликты шейпов с LocationControl-плагином. TODO Удалить плагин, геолокация полностью должна жить в состоянии и рендерится только отсюда.
             .filter { _ =>
               mapInit.state.locationFound.isEmpty

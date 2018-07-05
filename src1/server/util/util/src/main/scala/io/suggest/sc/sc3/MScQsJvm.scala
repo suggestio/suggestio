@@ -49,7 +49,7 @@ object MScQsJvm {
               apiVsn          = apiVsn,
               locEnv          = locEnv,
               searchGridAds   = searchGridAdsOpt,
-              searchTags      = searchTagsOpt
+              searchNodes      = searchTagsOpt
             )
           }
         }
@@ -62,7 +62,7 @@ object MScQsJvm {
           apiVsnB.unbind      ( k(API_VSN_FN),            value.apiVsn ),
           locEnvB.unbind      ( k(LOC_ENV_FN),            value.locEnv ),
           boolOptB.unbind     ( k(SEARCH_GRID_ADS_FN),    value.searchGridAds ),
-          boolOptB.unbind     ( k(SEARCH_TAGS_FN),        value.searchTags )
+          boolOptB.unbind     ( k(SEARCH_TAGS_FN),        value.searchNodes )
         )
       }
 

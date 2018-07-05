@@ -2,7 +2,6 @@ package io.suggest.sc.c.search
 
 import diode._
 import io.suggest.common.empty.OptionUtil
-import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sc.m.ResetUrlRoute
 import io.suggest.sc.m.hdr.SearchOpenClose
@@ -52,7 +51,7 @@ class SearchAh[M](
       case MSearchTabs.Tags if v0.tags.tagsReq.isEmpty =>
         // Неинициализированная панель тегов: запустить загрузку тегов.
         val getMoreTagsFx = Effect.action {
-          DoSearch(clear = true)
+          DoTagsSearch(clear = true)
         }
         Some(getMoreTagsFx)
 
@@ -139,7 +138,7 @@ class SearchAh[M](
       val tagsVisible = v0.isShownTab( MSearchTabs.Tags )
       // Требуется ли сразу перезагружать список тегов? Да, если открыта search-панель и вкладка тегов -- текущая.
       val needFxOpt = OptionUtil.maybe( tagsVisible ) {
-        Effect.action( DoSearch(clear = true) )
+        Effect.action( DoTagsSearch(clear = true) )
       }
 
       val emptyState = MTagsSearchS.empty
@@ -155,19 +154,19 @@ class SearchAh[M](
 
 
     // Принудительный запуск поиска на текущей вкладке.
-    case m @ ReDoSearch =>
+    case ReDoSearch =>
       val v0 = value
-      v0.currTab match {
-        case MSearchTabs.Tags =>
-          val fx = Effect.action {
-            DoSearch(clear = true, ignorePending = true)
-          }
-          effectOnly(fx)
 
-        case t @ MSearchTabs.GeoMap =>
-          LOG.error( ErrorMsgs.NOT_IMPLEMENTED, msg = (m, t) )
-          noChange
+      val fx = Effect.action {
+        v0.currTab match {
+          case MSearchTabs.Tags =>
+            DoTagsSearch(clear = true, ignorePending = true)
+          case MSearchTabs.GeoMap =>
+            DoGeoSearch(clear = true)
+        }
       }
+
+      effectOnly(fx)
 
   }
 
