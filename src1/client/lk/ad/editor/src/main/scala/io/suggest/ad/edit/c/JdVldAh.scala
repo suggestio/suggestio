@@ -16,7 +16,7 @@ import io.suggest.jd.{JdDocValidator, MEdgePicInfo, MJdEdgeVldInfo}
   */
 class JdVldAh[M]( modelRW: ModelRW[M, MJdVldAh] ) extends ActionHandler(modelRW) {
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал об изменении в json-документе. Надо запустить пере-валидацию документа.
     case JdDocChanged =>

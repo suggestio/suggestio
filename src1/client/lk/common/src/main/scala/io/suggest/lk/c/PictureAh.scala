@@ -52,7 +52,7 @@ class PictureAh[V, M](
 
   private type ResPair_t = (MPictureAh[V], Effect)
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Выставлен файл в input'е заливки картинки.
     // 1. Отрендерить его на экране (т.е. сохранить в состоянии в виде блоба).

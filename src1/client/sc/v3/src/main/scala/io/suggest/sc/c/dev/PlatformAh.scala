@@ -109,7 +109,7 @@ class PlatformAh[M](
   with Log
 {
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал об изменении видимости системы.
     case m: PauseOrResume =>

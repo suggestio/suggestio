@@ -13,7 +13,7 @@ import io.suggest.lk.m.{CloseAllPopups, DocBodyClick, ErrorPopupCloseClick}
   */
 class TailAh[M](modelRW: ModelRW[M, MAeRoot]) extends ActionHandler(modelRW) {
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Перехват ненужного события клика в документе.
     case DocBodyClick =>

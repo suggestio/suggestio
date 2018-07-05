@@ -414,7 +414,7 @@ class GridAh[M](
   with Log
 { ah =>
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Реакция на событие скроллинга плитки: разобраться, стоит ли подгружать ещё карточки с сервера.
     case m: GridScroll =>

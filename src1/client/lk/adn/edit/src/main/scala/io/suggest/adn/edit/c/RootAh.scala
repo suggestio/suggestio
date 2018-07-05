@@ -25,7 +25,7 @@ class RootAh[M](
   with Log
 {
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Реакция на кнопку сохранения формы.
     case m @ Save =>

@@ -149,7 +149,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
       // Собрать функцию для запуска неотменяемого таймера.
       // Функция возвращает фьючерс, который исполнится через ~секунду.
       val tpFx = Effect {
-        WelcomeUtil.timeout( ScConstants.Welcome.HIDE_TIMEOUT_MS, tstamp )
+        WelcomeAh.timeout( ScConstants.Welcome.HIDE_TIMEOUT_MS, tstamp )
       }
 
       // Собрать начальное состояние приветствия:
@@ -262,7 +262,7 @@ class IndexAh[M](
   }
 
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Кто-то затребовал перерендерить css-стили выдачи. Скорее всего, размеры экрана изменились.
     case ScCssReBuild =>

@@ -27,7 +27,7 @@ class NodeEditAh[M](
     v.nonEmpty && v.trim.nonEmpty
   }
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Изменение цвета.
     case m: ColorChanged =>

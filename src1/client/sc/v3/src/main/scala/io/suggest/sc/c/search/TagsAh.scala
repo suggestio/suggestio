@@ -35,7 +35,7 @@ class TagsAh[M](
   with Log
 {
 
-  override val handle: PartialFunction[Any, ActionResult[M]] = {
+  override def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Скроллинг в списке тегов: возможно надо подгрузить ещё тегов.
     case m: TagsScroll =>

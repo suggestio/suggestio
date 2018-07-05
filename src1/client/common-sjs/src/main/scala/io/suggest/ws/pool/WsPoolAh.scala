@@ -41,7 +41,7 @@ class WsPoolAh[M](
   }
 
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сообщение из открытого сокета.
     case m: WsRawMsg =>

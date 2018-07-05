@@ -4,6 +4,9 @@ import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.m.inx.{MWelcomeState, WcClick, WcTimeOut}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.controller.DomQuick
+
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -12,6 +15,23 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
   * Description: Контроллер экрана приветствия.
   * Управляет только состоянием текущего отображения.
   */
+object WelcomeAh {
+
+  /** Запуск таймера переключения фазы приветствия.
+    *
+    * @param afterMs Через сколько мс переключение?
+    * @param tstamp Timestamp-маркер.
+    * @return Возвращает фьючерс, исполняющийся через afterMs миллисекунд.
+    */
+  def timeout(afterMs: Double, tstamp: Long): Future[WcTimeOut] = {
+    val tp = DomQuick.timeoutPromiseT( afterMs ) {
+      WcTimeOut( tstamp )
+    }
+    tp.fut
+  }
+
+}
+
 class WelcomeAh[M](
                     modelRW: ModelRW[M, Option[MWelcomeState]]
                   )
@@ -29,7 +49,7 @@ class WelcomeAh[M](
         // Сокрытие приветствия ещё не началось. Запустить таймер сокрытия приветствия.
         val fadeOutTstamp = System.currentTimeMillis()
         val tpF = { () =>
-          WelcomeUtil.timeout(ScConstants.Welcome.FADEOUT_TRANSITION_MS * 0.5, fadeOutTstamp)
+          WelcomeAh.timeout(ScConstants.Welcome.FADEOUT_TRANSITION_MS * 0.5, fadeOutTstamp)
         }
 
         val v2 = Some(

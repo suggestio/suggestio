@@ -35,7 +35,7 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
   }
 
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Карта была перемещена, у неё теперь новый центр.
     case m: MapMoveEnd =>

@@ -2,15 +2,12 @@ package io.suggest.sc.c.search
 
 import diode._
 import io.suggest.common.empty.OptionUtil
-import io.suggest.maps.m.HandleMapReady
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sc.m.ResetUrlRoute
 import io.suggest.sc.m.hdr.SearchOpenClose
 import io.suggest.sc.m.search._
-import io.suggest.sc.sc3.MScQs
 import io.suggest.sc.search.{MSearchTab, MSearchTabs}
-import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
@@ -44,8 +41,6 @@ object SearchAh {
 
 
 class SearchAh[M](
-                   //api            : IScUniApi,
-                   //searchQsRO     : ModelRO[MScQs],
                    modelRW        : ModelRW[M, MScSearch]
                  )
   extends ActionHandler( modelRW )
@@ -117,25 +112,6 @@ class SearchAh[M](
       }
 
 
-    // Запуск инициализации гео.карты.
-    case InitSearchMap =>
-      // Сбросить флаг инициализации карты, чтобы гео.карта тоже отрендерилась на экране.
-      val v0 = value
-
-      if (!v0.geo.mapInit.ready) {
-        val v2 = v0.withGeo(
-          v0.geo.withMapInit(
-            v0.geo.mapInit
-              .withReady(true)
-          )
-        )
-        updated( v2 )
-
-      } else {
-        noChange
-      }
-
-
     // Смена текущего таба на панели поиска.
     case m: SwitchTab =>
       val v0 = value
@@ -192,15 +168,6 @@ class SearchAh[M](
           LOG.error( ErrorMsgs.NOT_IMPLEMENTED, msg = (m, t) )
           noChange
       }
-
-    // Перехват инстанса leaflet map и сохранение в состояние.
-    case m: HandleMapReady =>
-      val v0 = value
-      val v2 = v0.withGeo(
-        v0.geo
-          .withLmap( Some(m.map) )
-      )
-      updatedSilent( v2 )
 
   }
 

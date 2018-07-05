@@ -104,7 +104,7 @@ class DocEditAh[M](
   }
 
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Набор текста в wysiwyg-редакторе.
     case m: TextChanged =>

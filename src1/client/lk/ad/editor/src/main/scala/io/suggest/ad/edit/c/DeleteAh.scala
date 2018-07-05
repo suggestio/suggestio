@@ -23,7 +23,7 @@ class DeleteAh[M](
   extends ActionHandler(modelRW)
 {
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Клик по кнопке удаления текущей карточки.
     case DeleteAdClick =>

@@ -31,7 +31,7 @@ class LayoutAh[M](
   }
 
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сообщение о скроллинге страницы.
     case m: HandleVScroll =>

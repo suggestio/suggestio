@@ -45,7 +45,7 @@ class ScMapDelayAh[M](
   }
 
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Юзер таскает карту, значит надо среагировать на перемещение карты.
     case _: MapDragEnd =>

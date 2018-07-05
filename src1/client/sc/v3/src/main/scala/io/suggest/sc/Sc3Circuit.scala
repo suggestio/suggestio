@@ -23,7 +23,7 @@ import io.suggest.sc.c.{IRespWithActionHandler, JsRouterInitAh, TailAh}
 import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.inx.{IndexAh, WelcomeAh}
 import io.suggest.sc.c.menu.MenuAh
-import io.suggest.sc.c.search.{STextAh, ScMapDelayAh, SearchAh, TagsAh}
+import io.suggest.sc.c.search._
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m._
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
@@ -173,13 +173,13 @@ class Sc3Circuit(
 
   private val searchRW = indexRW.zoomRW(_.search) { _.withSearch(_) }
   private val tagsRW = searchRW.zoomRW(_.tags) { _.withTags(_) }
+  private val geoTabRW = searchRW.zoomRW(_.geo) { _.withGeo(_) }
 
-  private val searchGeoRW = searchRW.zoomRW(_.geo) { _.withGeo(_) }
-  private val mapInitRW = searchGeoRW.zoomRW(_.mapInit) { _.withMapInit(_) }
+  private val mapInitRW = geoTabRW.zoomRW(_.mapInit) { _.withMapInit(_) }
   private val searchMapRcvrsPotRW = mapInitRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
   private val mmapsRW = mapInitRW.zoomRW(_.state) { _.withState(_) }
   private val searchTextRW = searchRW.zoomRW(_.text) { _.withText(_) }
-  private val mapDelayRW = searchGeoRW.zoomRW(_.delay) { _.withDelay(_) }
+  private val mapDelayRW = geoTabRW.zoomRW(_.delay) { _.withDelay(_) }
 
   private val gridRW = zoomRW(_.grid) { _.withGrid(_) }
 
@@ -264,6 +264,10 @@ class Sc3Circuit(
 
   private val searchAh = new SearchAh(
     modelRW       = searchRW
+  )
+
+  private val geoTabAh = new GeoTabAh(
+    modelRW       = geoTabRW
   )
 
   private val tagsAh = new TagsAh(
@@ -359,13 +363,9 @@ class Sc3Circuit(
 
     // top-level search AH всегда ожидает команд, когда TODO нет открытого левого меню закрыто или focused-выдачи
     acc ::= searchAh
-
-    // TODO Opt sTextAh не нужен, когда панель поиска скрыта.
     acc ::= sTextAh
-
-    //val searchS = searchRW.value
-    //if (searchS.isTagsVisible)
-      acc ::= tagsAh
+    acc ::= geoTabAh
+    acc ::= tagsAh
 
     //if ( indexWelcomeRW().nonEmpty )
       acc ::= new WelcomeAh( indexWelcomeRW )

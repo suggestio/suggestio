@@ -32,7 +32,7 @@ class ScreenAh[M](
     Effect.action( ScCssReBuild )
 
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал изменения размеров/ориентации экрана.
     case ScreenReset =>

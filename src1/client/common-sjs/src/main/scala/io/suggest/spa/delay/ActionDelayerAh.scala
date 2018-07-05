@@ -17,7 +17,7 @@ class ActionDelayerAh[M](stateRW: ModelRW[M, MDelayerS])
   with Log
 {
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Команда к откладывания экшена для повторного исполнения через какое-то время.
     case m: DelayAction =>

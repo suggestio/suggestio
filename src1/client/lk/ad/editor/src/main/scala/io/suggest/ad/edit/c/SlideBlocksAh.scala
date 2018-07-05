@@ -12,7 +12,7 @@ import io.suggest.lk.m.SlideBlockClick
   */
 class SlideBlocksAh[M](modelRW: ModelRW[M, MSlideBlocks]) extends ActionHandler(modelRW) {
 
-  override val handle: PartialFunction[Any, ActionResult[M]] = {
+  override def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Клик по заголовку какого-то слайд-блока.
     case m: SlideBlockClick =>

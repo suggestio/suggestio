@@ -95,7 +95,7 @@ class GeoLocAh[M](
   }
 
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Есть на руках местоположение.
     case loc: GlLocation =>

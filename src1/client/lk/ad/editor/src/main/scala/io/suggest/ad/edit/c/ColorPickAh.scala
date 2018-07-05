@@ -22,7 +22,7 @@ class ColorPickAh[M](
   extends ActionHandler( modelRW )
 {
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал об изменении цвета.
     case m: ColorChanged =>

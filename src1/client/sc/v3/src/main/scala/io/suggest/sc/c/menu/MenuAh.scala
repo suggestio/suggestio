@@ -19,7 +19,7 @@ class MenuAh[M](
   extends ActionHandler(modelRW)
 {
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Экшен управления менюшкой.
     case m: MenuOpenClose =>

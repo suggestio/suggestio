@@ -81,7 +81,7 @@ class TailAh[M](
   with Log
 { ah =>
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Заставить роутер собрать новую ссылку.
     case ResetUrlRoute =>

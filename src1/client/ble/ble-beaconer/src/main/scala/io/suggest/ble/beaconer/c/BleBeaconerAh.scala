@@ -311,7 +311,7 @@ class BleBeaconerAh[M](
   }
 
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // API сообщает, что получило сигнал от какого-то ble-маячка.
     case m: BeaconDetected =>

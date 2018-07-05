@@ -20,7 +20,7 @@ import io.suggest.scalaz.ZTreeUtil._
   */
 class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler(modelRW) {
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     case _: ColorBtnClick =>
       val v0 = value

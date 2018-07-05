@@ -25,7 +25,7 @@ class STextAh[M](
     */
   private def FAST_TYPING_TIMEOUT_MS = 600
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал о вводе текста в поле текстового поиска.
     case m: SearchTextChanged =>
