@@ -76,7 +76,7 @@ class SearchAh[M](
     }
   }
 
-  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Клик по кнопке открытия поисковой панели.
     case m: SearchOpenClose =>
