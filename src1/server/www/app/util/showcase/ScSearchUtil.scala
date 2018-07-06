@@ -54,7 +54,7 @@ class ScSearchUtil @Inject()(
 
     // По какоми эджам орудовать?
     var edgesCrs = List.empty[Criteria]
-    val should = IMust.SHOULD
+    val shouldOrMust = if (isMultiSearch) IMust.SHOULD else IMust.MUST
 
     // Собрать поиск по тегам:
     if (isSearchTags) {
@@ -84,7 +84,7 @@ class ScSearchUtil @Inject()(
             shapes = CircleGsJvm.toEsQueryMaker(circle) :: Nil
           )
         },
-        must = should
+        must = shouldOrMust
       )
     }
 
@@ -93,7 +93,6 @@ class ScSearchUtil @Inject()(
       // TODO Поиск по названию, с названием или даже без, с учётом координат.
       edgesCrs ::= Criteria(
         predicates  = MPredicates.NodeLocation :: Nil,
-        must        = should,
         // Ограничить поиск радиусом от текущей точки. Она обязательно задана, иначе бы этот код не вызывался (см. флаг выше).
         gsIntersect = for (geoLoc <- geoLocOpt2) yield {
           val circle = CircleGs(
@@ -105,7 +104,8 @@ class ScSearchUtil @Inject()(
             levels = MNodeGeoLevels.geoPlacesSearchAt,
             shapes = CircleGsJvm.toEsQueryMaker(circle) :: Nil
           )
-        }
+        },
+        must        = shouldOrMust
       )
 
       // TODO with distance sort

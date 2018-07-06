@@ -31,6 +31,7 @@ object MAdsSearchReq extends IEmpty {
     (__ \ TAG_NODE_ID_FN).formatNullable[MEsUuId] and
     (__ \ TEXT_QUERY_FN).formatNullable[String] and
     (__ \ SEARCH_TAB_FN).formatNullable[MSearchTab]
+    // Не забывать добавлять биндеры в MScQsJvm.
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MAdsSearchReq] = UnivEq.derive
