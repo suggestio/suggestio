@@ -136,9 +136,11 @@ class AdvBuilderUtil @Inject() (
     * @param b0 Билдер.
     * @param items Список item'ов.
     * @param predicate Предикат для создаваемых эджей.
+    * @param name2tag Заливать ли название узла в индекс поиска тегов?
+    *                 Это нужно для поиска узлов, размещённых на карте.
     * @return Обновлённый инстанс AdvBuilder в связке с оставшимися необработанными item'ами.
     */
-  def geoInstallNode(b0: IAdvBuilder, items: Iterable[MItem], predicate: MPredicate): IAdvBuilder = {
+  def geoInstallNode(b0: IAdvBuilder, items: Iterable[MItem], predicate: MPredicate, name2tag: Boolean): IAdvBuilder = {
     // При сборке эджей считаем, что происходит пересборка эджей с нуля.
     if (items.nonEmpty) {
 
@@ -159,24 +161,33 @@ class AdvBuilderUtil @Inject() (
       val geoPoints = grabGeoPoints4Stats( items )
         .toSeq
 
-      // Собираем единый эдж для геолокации карточки в месте на гео.карте.
-      val e = MEdge(
-        predicate = predicate,
-        info = MEdgeInfo(
-          geoShapes = geoShapes,
-          geoPoints = geoPoints
-        )
-      )
-
       LOGGER.trace(s"geoInstallNode($predicate): Found ${items.size} items for geo edge-building: ${geoShapes.size} geoshapes, ${geoPoints.size} geo points.")
 
       // Собрать новую карточку, аккамулятор, билдер...
       b0.withAccUpdated { acc0 =>
+        // Индексировать ли имя узла в теги эджа?
+        val tags: Set[String] = if (name2tag) {
+          val b = acc0.mnode.meta.basic
+          (b.nameOpt ++ b.nameShortOpt)
+            .toSet
+        } else {
+          Set.empty
+        }
+        // Собираем единый эдж для геолокации карточки в месте на гео.карте.
+        val e = MEdge(
+          predicate = predicate,
+          info = MEdgeInfo(
+            geoShapes = geoShapes,
+            geoPoints = geoPoints,
+            tags      = tags
+          )
+        )
+        // Патчим mnode новым эджем...
         acc0.withMnode(
           mnode = acc0.mnode.withEdges(
             acc0.mnode.edges.copy(
               out = {
-                val iter = acc0.mnode.edges.iterator ++ Seq(e)
+                val iter = acc0.mnode.edges.iterator ++ (e :: Nil)
                 MNodeEdges.edgesToMap1(iter)
               }
             )

@@ -234,14 +234,14 @@ class Sc3Circuit(
 
   /** Аргументы для поиска тегов. */
   private val tagsSearchQsRO: ModelRO[MScQs] = zoom { mroot =>
-    _searchQs(mroot, MSearchTabs.Tags, withScreen = false)
+    _searchQs(mroot, MSearchTabs.Tags, withScreen = false, mroot.index.state.currRcvrId)
   }
   private val geoSearchQsRO: ModelRO[MScQs] = zoom { mroot =>
-    _searchQs(mroot, MSearchTabs.GeoMap, withScreen = true)
+    _searchQs(mroot, MSearchTabs.GeoMap, withScreen = true, None)
   }
 
-  private def _searchQs(mroot: MScRoot, tab: MSearchTab, withScreen: Boolean): MScQs = {
-    val currRcvrId = mroot.index.state.currRcvrId
+  private def _searchQs(mroot: MScRoot, tab: MSearchTab, withScreen: Boolean,
+                        currRcvrId: Option[String]): MScQs = {
     MScQs(
       common = MScCommonQs(
         locEnv =

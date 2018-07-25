@@ -42,8 +42,11 @@ trait AdnMapBuilder extends IAdvBuilder {
       di.advBuilderUtil.geoInstallNode(
         b0        = this2,
         // Надо брать только самую свежую (последнюю) точку для размещения среди gItems.
-        items     = di.advBuilderUtil.lastStartedItem(gItems).toList,
-        predicate = _PRED
+        items     = di.advBuilderUtil
+          .lastStartedItem(gItems)
+          .toList,
+        predicate = _PRED,
+        name2tag = false
       )
     }
   }

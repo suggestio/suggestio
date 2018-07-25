@@ -26,6 +26,16 @@ object MarkerClusterGroupR {
 
   def apply(props: MarkerClusterGroupPropsR) = component( props )
 
+  /** Выставить в cluster-группу новую инфу. */
+  private[cluster] def _setLayers(props: MarkerClusterGroupPropsR, mcg: MarkerClusterGroup): Unit = {
+    mcg.addLayers( props.markers )
+    // TODO Сделать обработчики событий аналогично react-leaflet? Все, начинающиеся с "on" подхватывать и навешивать?
+    for (f <- props.markerClick)
+      mcg.on3(MarkerClusterEvents.CLICK, f)
+    for (f <- props.clusterClick)
+      mcg.on3( MarkerClusterEvents.CLUSTER_CLICK, f)
+  }
+
 }
 
 
@@ -37,20 +47,18 @@ sealed class MarkerClusterGroupC(_props: MarkerClusterGroupPropsR, _ctx: Context
   override type El_t = MarkerClusterGroup
 
   override def componentWillMount(): Unit = {
-    val markers = props.markers
     val mcg = MarkerClusterGroup(props)
-    mcg.addLayers( markers )
-    // TODO Сделать обработчики событий аналогично react-leaflet? Все, начинающиеся с "on" подхватывать и навешивать?
-    for (f <- props.markerClick) {
-      mcg.on3(MarkerClusterEvents.CLICK, f)
-    }
-    for (f <- props.clusterClick) {
-      mcg.on3( MarkerClusterEvents.CLUSTER_CLICK, f)
-    }
+    MarkerClusterGroupR._setLayers(props, mcg)
     leafletElement = mcg
   }
 
-  // TODO нужна реализация willUpdateProps(), сейчас пока компонент read-only как бы за ненадобностью read-write.
+  override def componentWillReceiveProps(nextProps: MarkerClusterGroupPropsR): Unit = {
+    val mcg = leafletElement
+    mcg.clearLayers()
+    // Дропнуть все листенеры, т.к. в setLayers будут повешены новые листенеры.
+    mcg.off()
+    MarkerClusterGroupR._setLayers(nextProps, mcg)
+  }
 
 }
 

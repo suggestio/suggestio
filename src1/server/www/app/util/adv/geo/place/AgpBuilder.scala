@@ -35,7 +35,8 @@ trait AgpBuilder extends IAdvBuilder {
     di.advBuilderUtil.geoInstallNode(
       b0        = this2,
       items     = gItems,
-      predicate = _PRED
+      predicate = _PRED,
+      name2tag  = false
     )
   }
 

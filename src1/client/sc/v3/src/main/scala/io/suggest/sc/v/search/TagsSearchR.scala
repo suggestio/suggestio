@@ -80,24 +80,25 @@ class TagsSearchR(
               .iterator
               .zipWithIndex
               .toVdomArray { case (mtag, i) =>
+                val p = mtag.propsShapes.props
                 // Рендер одного ряда.
                 <.div(
                   _tagRow,
 
                   // Используем nodeId как ключ. Контроллер должен выверять отсутствие дубликатов в списке тегов.
-                  ^.key := mtag.props.nodeId,
+                  ^.key := p.nodeId,
 
                   // Визуально разделять разные ряды.
                   if (i % 2 ==* 0) _odd else _even,
 
                   // Подсвечивать текущие выделенные теги.
-                  ReactCommonUtil.maybe(tagsS.selectedId contains mtag.props.nodeId) {
+                  ReactCommonUtil.maybe(tagsS.selectedId contains p.nodeId) {
                     TabCSS.selected
                   },
 
-                  ^.onClick --> _onTagClick(mtag.props.nodeId),
+                  ^.onClick --> _onTagClick(p.nodeId),
 
-                  mtag.props.hint.whenDefined
+                  p.hint.whenDefined
                 )
               }
           }

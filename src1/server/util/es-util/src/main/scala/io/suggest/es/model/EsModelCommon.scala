@@ -776,7 +776,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     * @tparam To тип одного элемента.
     * @return Source[T, NotUsed].
     */
-  def source[To](searchQuery: QueryBuilder, maxResults: Option[Long] = None)(implicit helper: IEsSourcingHelper[To]): Source[To, NotUsed] = {
+  def source[To: IEsSourcingHelper](searchQuery: QueryBuilder, maxResults: Option[Long] = None): Source[To, NotUsed] = {
+    val helper = implicitly[IEsSourcingHelper[To]]
     // Нужно помнить, что SearchDefinition -- это mutable-инстанс и всегда возвращает this.
     val scrollArgs = MScrollArgs(
       query           = searchQuery,

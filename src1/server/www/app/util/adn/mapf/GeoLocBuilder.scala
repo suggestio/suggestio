@@ -45,7 +45,9 @@ trait GeoLocBuilder extends IAdvBuilder {
         b0        = this2,
         // Интересует только самый последний item
         items     = lastItemOpt.toList,
-        predicate = _PRED
+        predicate = _PRED,
+        // Индексируем имя, чтобы работал поиск узлов на карте.
+        name2tag  = true
       )
     }
   }

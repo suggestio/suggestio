@@ -138,14 +138,17 @@ trait ScSearch
         msearch <- nodesSearch
       } yield {
         advGeoRcvrsUtil
-          .nodesAdvGeoPropsSrc(msearch, wcAsLogo = false)
-          // Ответвление: Данные для статистики - материализовать, mat-итог запихать в статистику:
-          .alsoTo( saveScStatSink )
+            .withNodeLocShapes(
+              advGeoRcvrsUtil
+                .nodesAdvGeoPropsSrc(msearch, wcAsLogo = false)
+                // Ответвление: Данные для статистики - материализовать, mat-итог запихать в статистику:
+                .alsoTo( saveScStatSink )
+            )
           // Далее, надо рендерить в JSON для ответа сервера:
-          .map { case (mnode, advNodeInfo) =>
+          .map { case (mnode, advNodePropsShapes) =>
             MSc3NodeInfo(
-              props     = advNodeInfo,
-              nodeType  = mnode.common.ntype
+              propsShapes   = advNodePropsShapes,
+              nodeType      = mnode.common.ntype
             )
           }
           /*

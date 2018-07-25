@@ -24,7 +24,9 @@ class MapComponentR[Props <: js.Any](
 
   var leafletElement: El_t = js.native
 
+  // React17: deprecated
   def componentWillMount(): Unit = js.native
+  def componentWillReceiveProps(nextProps: Props): Unit = js.native
 
   def componentDidMount(): Unit = js.native
 

@@ -40,9 +40,11 @@ class ScSearchUtil @Inject()(
       .getOrElse( 0 )
 
     // По каким типа узлов фильтровать? Зависит от текущей вкладки поиска.
-    var nodeTypes4search = List.empty[MNodeType]
     val tabOpt = qs.search.tab
     val isMultiSearch = tabOpt.isEmpty
+
+    // Акк разрешённых типов узлов, которые замешаны в поиске.
+    var nodeTypes4search = List.empty[MNodeType]
 
     val isSearchTags = isMultiSearch || tabOpt.contains(MSearchTabs.Tags)
     if (isSearchTags)
@@ -56,22 +58,28 @@ class ScSearchUtil @Inject()(
     var edgesCrs = List.empty[Criteria]
     val shouldOrMust = if (isMultiSearch) IMust.SHOULD else IMust.MUST
 
+    val tags: Seq[String] = TagFacesUtil.queryOpt2tags( qs.search.textQuery )
+    val tagCrs: Seq[TagCriteria] = if (tags.isEmpty) {
+      Nil
+    } else {
+      val tagsSet = tags.toSet
+      val lastTagOpt  = tags.lastOption
+      tagsSet
+        .iterator
+        .map { tagFace =>
+          TagCriteria(
+            face      = tagFace,
+            isPrefix  = lastTagOpt contains tagFace
+          )
+        }
+        .toSeq
+    }
+
     // Собрать поиск по тегам:
     if (isSearchTags) {
-      val tags: Seq[String] = TagFacesUtil.queryOpt2tags( qs.search.textQuery )
-      // TODO Надо отрабатывать все части, а не только последнюю
-      val searchTagOpt  = tags.lastOption
-
-      val tcrOpt = for (q <- searchTagOpt) yield {
-        TagCriteria(
-          face      = q,
-          isPrefix  = true
-        )
-      }
-
       edgesCrs ::= Criteria(
         predicates  = MPredicates.TaggedBy.Self :: Nil,
-        tags        = tcrOpt.toSeq,
+        tags        = tagCrs,
         nodeIds     = qs.search.rcvrId.toStringOpt.toSeq,
         // Отработать геолокацию: искать только теги, размещенные в текущей области.
         gsIntersect = for (geoLoc <- geoLocOpt2) yield {
@@ -105,11 +113,12 @@ class ScSearchUtil @Inject()(
             shapes = CircleGsJvm.toEsQueryMaker(circle) :: Nil
           )
         },
-        must        = shouldOrMust
+        must        = shouldOrMust,
+        // Поиск по имени проходит через индекс тегов, куда должно быть сохранено имя в соотв. adv-билдере
+        tags        = tagCrs
       )
 
-      // TODO with distance sort
-      // TODO name search
+      // TODO with distance sort - актуально для списка результатов. Менее актуально для карты (но всё-таки тоже актуально).
     }
 
     // Собрать итоговый поиск.

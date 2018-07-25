@@ -4,7 +4,7 @@ import diode._
 import diode.data.{PendingBase, Pot}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.maps.m.HandleMapReady
-import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
+import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.{HandleScApiResp, MScRoot}
 import io.suggest.sc.m.search.{DoGeoSearch, InitSearchMap, MGeoTabS}
@@ -189,17 +189,16 @@ class GeoSearchRespHandler extends IRespWithActionHandler {
 
     val req2 = g0.nodesSearch.req.ready( nodes2 )
     val g2 = g0
-      .withNodesSearch( g0.nodesSearch.withReq(req2) )
+      .withNodesSearch(
+        g0.nodesSearch.withReq(req2)
+      )
       .withMapInit(
         g0.mapInit
           .withRcvrsFound(
             g0.mapInit.rcvrsFound.ready(
               MGeoNodesResp(
                 nodes = for (mnode <- nodes2) yield {
-                  MGeoNodePropsShapes(
-                    props  = mnode.props,
-                    shapes = Nil
-                  )
+                  mnode.propsShapes
                 }
               )
             )

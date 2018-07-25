@@ -195,7 +195,7 @@ class AdvRcvrsUtil @Inject()(
       }
 
       // Деинсталлировать в биллинге всех/некоторых ресиверов для карточки.
-      unInstSql <- {
+      _ <- {
         if (forUnInstall.isEmpty) {
           DBIO.successful(0)
         } else {
