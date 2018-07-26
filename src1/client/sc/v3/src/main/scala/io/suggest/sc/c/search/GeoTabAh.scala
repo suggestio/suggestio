@@ -3,14 +3,18 @@ package io.suggest.sc.c.search
 import diode._
 import diode.data.{PendingBase, Pot}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.maps.m.HandleMapReady
+import io.suggest.maps.c.RcvrMarkersInitAh
+import io.suggest.maps.m.{HandleMapReady, InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.msg.ErrorMsgs
+import io.suggest.routes.IAdvRcvrsMapApi
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.{HandleScApiResp, MScRoot}
-import io.suggest.sc.m.search.{DoGeoSearch, InitSearchMap, MGeoTabS}
+import io.suggest.sc.m.search.{DoGeoSearch, InitSearchMap, MGeoTabS, MSearchRespInfo}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
 
 import scala.util.Success
@@ -23,10 +27,12 @@ import scala.util.Success
   */
 class GeoTabAh[M](
                    api            : IScUniApi,
+                   rcvrsMapApi    : IAdvRcvrsMapApi,
                    geoSearchQsRO  : ModelRO[MScQs],
                    modelRW        : ModelRW[M, MGeoTabS]
                  )
   extends ActionHandler( modelRW )
+  with Log
 {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
@@ -34,8 +40,9 @@ class GeoTabAh[M](
     // Запустить запрос поиска узлов
     case m: DoGeoSearch =>
       val v0 = value
-      if ( !v0.nodesSearch.req.isPending || m.clear ) {
-        val req2 = v0.nodesSearch.req.pending()
+      val req = v0.mapInit.rcvrs
+      if ( !req.isPending || m.clear ) {
+        val req2 = req.pending()
 
         // Подготовить аргументы запроса:
 
@@ -46,9 +53,9 @@ class GeoTabAh[M](
           // Надо запустить запрос на сервер
           val fx = Effect {
             val offsetOpt = OptionUtil.maybeOpt(!m.clear) {
-              v0.nodesSearch.req
+              v0.rcvrsNotCached
                 .toOption
-                .map(_.size)
+                .map(_.resp.nodes.size)
             }
             // TODO Лимит результатов - брать из высоты экрана.
             val limit = 30
@@ -66,27 +73,23 @@ class GeoTabAh[M](
                   reason        = m,
                   tryResp       = tryResp,
                   reqTimeStamp  = Some( req2.asInstanceOf[PendingBase].startTime ),
-                  apiReq        = args2
+                  qs            = args2
                 )
                 Success( action )
               }
           }
 
           // Сохранить в состояние данные по запускаемому запросу:
-          val v2 = v0.withNodesSearch(
-            v0.nodesSearch
-              .withReq( req2 )
+          val v2 = v0.withMapInit(
+            v0.mapInit.withRcvrs( req2 )
           )
           updated( v2, fx )
 
-        } else if (v0.nodesSearch.req.nonEmpty || v0.nodesSearch.req.isPending || v0.mapInit.rcvrsFound.nonEmpty) {
+        } else if (req.nonEmpty || req.isPending || v0.mapInit.rcvrs.nonEmpty) {
           // Пустой запрос для поиска. Сбросить состояние поиска.
           val v2 = v0
-            .withNodesSearch(
-              v0.nodesSearch.withReq( Pot.empty )
-            )
             .withMapInit(
-              v0.mapInit.withRcvrsFound( Pot.empty )
+              v0.mapInit.withRcvrs( v0.data.rcvrsCache )
             )
           updated(v2)
         } else {
@@ -119,9 +122,56 @@ class GeoTabAh[M](
     // Перехват инстанса leaflet map и сохранение в состояние.
     case m: HandleMapReady =>
       val v0 = value
-      val v2 = v0
-        .withLmap( Some(m.map) )
+      val v2 = v0.withData(
+        v0.data
+          .withLmap( Some(m.map) )
+      )
       updatedSilent( v2 )
+
+
+    // Сигнал запуска инициализации маркеров с сервера.
+    case RcvrMarkersInit =>
+      val v0 = value
+      if (!v0.data.rcvrsCache.isPending) {
+        // Эффект скачивания карты с сервера:
+        val fx = RcvrMarkersInitAh.startInitFx(rcvrsMapApi)
+        // silent, т.к. RcvrMarkersR работает с этим Pot как с Option, а больше это никого и не касается.
+        val v2 = v0.withData(
+          v0.data.withRcvrsCache( v0.data.rcvrsCache.pending() )
+        )
+        updatedSilent( v2, fx )
+
+      } else {
+        noChange
+      }
+
+
+    // Результат реквеста карты маркеров пришёл и готов к заливке в карту.
+    case m: InstallRcvrMarkers =>
+      val v0 = value
+      val rcvrsCache0 = v0.data.rcvrsCache
+      val rcvrsCache2 = m.tryResp.fold(
+        {ex =>
+          LOG.error( ErrorMsgs.INIT_RCVRS_MAP_FAIL, msg = m, ex = ex )
+          rcvrsCache0.fail(ex)
+        },
+        {resp =>
+          rcvrsCache0.ready(
+            MSearchRespInfo(
+              textQuery   = None,
+              resp        = resp
+            )
+          )
+        }
+      )
+      val v2 = v0.copy(
+        data = v0.data.withRcvrsCache( rcvrsCache2 ),
+        // И сразу залить в основное состояние карты ресиверов, если там нет иных данных.
+        mapInit = if (v0.mapInit.rcvrs.isEmpty)
+          v0.mapInit.withRcvrs( rcvrsCache2 )
+        else v0.mapInit
+      )
+      updated( v2 )
 
   }
 
@@ -146,14 +196,15 @@ class GeoSearchRespHandler extends IRespWithActionHandler {
   }
 
   override def getPot(ctx: MRhCtx): Option[Pot[_]] = {
-    Some( ctx.value0.index.search.geo.nodesSearch.req )
+    Some( ctx.value0.index.search.geo.mapInit.rcvrs )
   }
 
   override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
     val t0 = ctx.value0.index.search.geo
-    val t2 = t0.withNodesSearch(
-      t0.nodesSearch
-        .withReq( t0.nodesSearch.req.fail(ex) )
+    val t2 = t0.withMapInit(
+      t0.mapInit.withRcvrs(
+        t0.mapInit.rcvrs.fail(ex)
+      )
     )
     _withGeo(ctx, t2)
   }
@@ -171,39 +222,34 @@ class GeoSearchRespHandler extends IRespWithActionHandler {
     val nodesResp = ra.search.get
 
     // Надо решить, как поступать с исходным списком: конкатенация или перезапись.
-    val nodes2 = g0.nodesSearch
-      .req
+    val nodes2 = g0.rcvrsNotCached
       .filter { oldNodes =>
-        // Есть какой-то старый ответ, возможно - пустой.
-        // Дальше пропускать только НЕ-пустые ответы и если !clear
-        !reason.clear && oldNodes.nonEmpty
+        // Есть какой-то старый ответ, возможно - пустой. Дальше пропускать только НЕ-пустые ответы и если !clear
+        !reason.clear && oldNodes.resp.nodes.nonEmpty
       }
       .fold {
         // Нет старого списка. Просто возвращаем полученные узлы.
         nodesResp.results
       } { oldNodes =>
+        val res0 = oldNodes.resp.nodes
         // Дописать полученные узлы в конец.
-        if (nodesResp.results.isEmpty) oldNodes
-        else oldNodes ++ nodesResp.results
+        if (nodesResp.results.isEmpty) res0
+        else res0 ++ nodesResp.results
       }
 
-    val req2 = g0.nodesSearch.req.ready( nodes2 )
-    val g2 = g0
-      .withNodesSearch(
-        g0.nodesSearch.withReq(req2)
-      )
-      .withMapInit(
-        g0.mapInit
-          .withRcvrsFound(
-            g0.mapInit.rcvrsFound.ready(
-              MGeoNodesResp(
-                nodes = for (mnode <- nodes2) yield {
-                  mnode.propsShapes
-                }
+    val g2 = g0.withMapInit(
+      g0.mapInit
+        .withRcvrs(
+          g0.mapInit.rcvrs.ready(
+            MSearchRespInfo(
+              textQuery = ctx.m.qs.search.textQuery,
+              resp = MGeoNodesResp(
+                nodes = nodes2
               )
             )
           )
-      )
+        )
+    )
 
     val v2 = _withGeo(ctx, g2)
     (v2, None)

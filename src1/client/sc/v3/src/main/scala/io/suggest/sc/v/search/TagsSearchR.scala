@@ -69,18 +69,19 @@ class TagsSearchR(
         },
 
         // Рендер нормального списка найденных тегов.
-        tagsS.tagsReq.render { tags =>
-          if (tags.isEmpty) {
+        tagsS.tagsReq.render { tagsRi =>
+          if (tagsRi.resp.isEmpty) {
             <.div(
               _tagRow,
               Messages( MsgCodes.`No.tags.here` )
             )
           } else {
-            tags
+            tagsRi
+              .resp
               .iterator
               .zipWithIndex
               .toVdomArray { case (mtag, i) =>
-                val p = mtag.propsShapes.props
+                val p = mtag.props
                 // Рендер одного ряда.
                 <.div(
                   _tagRow,

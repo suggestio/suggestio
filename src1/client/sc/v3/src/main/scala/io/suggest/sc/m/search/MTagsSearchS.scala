@@ -3,7 +3,7 @@ package io.suggest.sc.m.search
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.empty.NonEmpty
-import io.suggest.sc.search.MSc3NodeInfo
+import io.suggest.maps.nodes.MGeoNodePropsShapes
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -39,7 +39,7 @@ object MTagsSearchS {
   * @param hasMoreTags Есть ли ещё теги на сервере?
   */
 case class MTagsSearchS(
-                         tagsReq      : Pot[Seq[MSc3NodeInfo]]     = Pot.empty,
+                         tagsReq      : Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]]     = Pot.empty,
                          hasMoreTags  : Boolean               = true,
                          // TODO Когда станет допустимо сразу несколько тегов, надо заменить на Set[String].
                          selectedId   : Option[String]        = None
@@ -47,7 +47,7 @@ case class MTagsSearchS(
   extends NonEmpty
 {
 
-  def withTagsReq(tagsReq: Pot[Seq[MSc3NodeInfo]])       = copy(tagsReq = tagsReq)
+  def withTagsReq(tagsReq: Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]]) = copy(tagsReq = tagsReq)
   def withHasMoreTags(hasMoreTags: Boolean)         = copy(hasMoreTags = hasMoreTags)
   def withSelectedId(selectedId: Option[String])    = copy(selectedId = selectedId)
 
@@ -63,7 +63,7 @@ case class MTagsSearchS(
       .append( `(` )
       .append(
         tagsReq.getClass.getSimpleName + COLON +
-          tagsReq.fold(0)(_.length) + COLON +
+          tagsReq.fold(0)(_.resp.length) + COLON +
           tagsReq.exceptionOption.fold("")(ex => ex.getClass + " " + ex.getMessage)
       )
       .append( COMMA )

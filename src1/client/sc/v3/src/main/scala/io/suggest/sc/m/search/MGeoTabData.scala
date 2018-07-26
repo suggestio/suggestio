@@ -1,0 +1,54 @@
+package io.suggest.sc.m.search
+
+import diode.FastEq
+import diode.data.Pot
+import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.sjs.leaflet.map.LMap
+import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.MapsUnivEq._
+import japgolly.univeq._
+
+/**
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 04.07.18 21:44
+  * Description: Модель, куда сваливаются доп.данные панели гео-поиска (карты).
+  * Эти данные НЕ участвуют в рендере панели, они свалены отдельно от моделей всяких компонентов.
+  *
+  * Неявно-пустая модель.
+  */
+object MGeoTabData {
+
+  def empty = apply()
+
+  implicit object MGeoTabDataFastEq extends FastEq[MGeoTabData] {
+    override def eqv(a: MGeoTabData, b: MGeoTabData): Boolean = {
+      (a.rcvrsCache ===* b.rcvrsCache) &&
+        (a.delay ===* b.delay) &&
+        (a.lmap ===* b.lmap)
+    }
+  }
+
+  implicit def univEq: UnivEq[MGeoTabData] = UnivEq.derive
+
+}
+
+
+/** Контейнер модели состояния поиска узлов на карте.
+  *
+  * @param rcvrsCache Кэш полной карты ресиверов.
+  * @param delay Модель подавления паразитных перемещений карты.
+  * @param lmap Перехваченный инстанс карты leaflet, который участвует в рендере.
+  */
+case class MGeoTabData(
+                        rcvrsCache      : Pot[MSearchRespInfo[MGeoNodesResp]]    = Pot.empty,
+                        delay           : Option[MMapDelay]     = None,
+                        lmap            : Option[LMap]          = None,
+                      ) {
+
+  def withRcvrsCache(rcvrsCache: Pot[MSearchRespInfo[MGeoNodesResp]]) = copy(rcvrsCache = rcvrsCache)
+  def withDelay(delay: Option[MMapDelay]) = copy(delay = delay)
+  def withLmap(lmap: Option[LMap]) = copy(lmap = lmap)
+
+}

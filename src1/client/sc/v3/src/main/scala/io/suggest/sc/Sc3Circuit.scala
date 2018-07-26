@@ -14,7 +14,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.JdCssFactory
-import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
+import io.suggest.maps.c.MapCommonAh
 import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs, WarnMsgs}
 import io.suggest.routes.AdvRcvrsMapApiHttpViaUrl
@@ -178,10 +178,10 @@ class Sc3Circuit(
   private val geoTabRW = searchRW.zoomRW(_.geo) { _.withGeo(_) }
 
   private val mapInitRW = geoTabRW.zoomRW(_.mapInit) { _.withMapInit(_) }
-  private val searchMapRcvrsPotRW = mapInitRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
   private val mmapsRW = mapInitRW.zoomRW(_.state) { _.withState(_) }
   private val searchTextRW = searchRW.zoomRW(_.text) { _.withText(_) }
-  private val mapDelayRW = geoTabRW.zoomRW(_.delay) { _.withDelay(_) }
+  private val geoTabDataRW = geoTabRW.zoomRW(_.data) { _.withData(_) }
+  private val mapDelayRW = geoTabDataRW.zoomRW(_.delay) { _.withDelay(_) }
 
   private val gridRW = zoomRW(_.grid) { _.withGrid(_) }
 
@@ -280,7 +280,8 @@ class Sc3Circuit(
   private val geoTabAh = new GeoTabAh(
     modelRW         = geoTabRW,
     api             = api,
-    geoSearchQsRO   = geoSearchQsRO
+    geoSearchQsRO   = geoSearchQsRO,
+    rcvrsMapApi     = advRcvrsMapApi
   )
 
   private val tagsAh = new TagsAh(
@@ -370,10 +371,6 @@ class Sc3Circuit(
     // Основные события индекса не частые, но доступны всегда:
     acc ::= indexAh
 
-    // Инициализатор карты ресиверов на гео-карте.
-    //if ( !searchMapRcvrsPotRW.value.isReady )
-      acc ::= new RcvrMarkersInitAh( advRcvrsMapApi, searchMapRcvrsPotRW )
-
     // top-level search AH всегда ожидает команд, когда TODO нет открытого левого меню закрыто или focused-выдачи
     acc ::= searchAh
     acc ::= sTextAh
@@ -414,7 +411,7 @@ class Sc3Circuit(
         // Запустить инициализацию начального индекса выдачи.
         try {
           // Запустить получения гео-маркеров с сервера.
-          if (searchMapRcvrsPotRW.value.isEmpty) {
+          if (geoTabRW.value.data.rcvrsCache.isEmpty) {
             Future {
               dispatch( RcvrMarkersInit )
             }

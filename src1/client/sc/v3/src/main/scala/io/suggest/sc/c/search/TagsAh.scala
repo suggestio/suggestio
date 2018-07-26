@@ -94,7 +94,7 @@ class TagsAh[M](
           val offsetOpt = OptionUtil.maybeOpt(!m.clear) {
             v0.tagsReq
               .toOption
-              .map(_.size)
+              .map(_.resp.size)
           }
           // TODO Лимит результатов - брать из высоты экрана.
           val limit = 30
@@ -112,7 +112,7 @@ class TagsAh[M](
                 reason        = m,
                 tryResp       = tryResp,
                 reqTimeStamp  = Some( req2.asInstanceOf[PendingBase].startTime ),
-                apiReq        = args2
+                qs        = args2
               )
               Success( action )
             }
@@ -173,20 +173,27 @@ class TagsRespHandler
     val t0 = ctx.value0.index.search.tags
 
     val tagsResp = ra.search.get
-    val tagsList2 = if (reason.clear || t0.tagsReq.isEmpty || t0.tagsReq.exists(_.isEmpty)) {
+    val tagsList2 = if (reason.clear || t0.tagsReq.isEmpty || t0.tagsReq.exists(_.resp.isEmpty)) {
       // Объединять текущий и полученный списки тегов не требуется.
       tagsResp.results
     } else {
       // Требуется склеить все имеющиеся списки тегов
       t0.tagsReq
-        .fold(tagsResp.results)(_ ++ tagsResp.results)
+        .fold(tagsResp.results) { tags0ri =>
+          tags0ri.resp ++ tagsResp.results
+        }
     }
 
-    val tagsReq2 = t0.tagsReq.ready( tagsList2 )
+    val tagsReq2 = t0.tagsReq.ready(
+      MSearchRespInfo(
+        resp        = tagsList2,
+        textQuery = ctx.m.qs.search.textQuery
+      )
+    )
 
     val t2 = t0.copy(
       tagsReq     = tagsReq2,
-      hasMoreTags = ctx.m.apiReq.search.limit.get >= tagsResp.results.size,
+      hasMoreTags = ctx.m.qs.search.limit.get >= tagsResp.results.size,
       selectedId  = OptionUtil.maybeOpt( !reason.clear )( t0.selectedId )
     )
 

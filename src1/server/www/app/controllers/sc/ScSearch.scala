@@ -3,12 +3,12 @@ package controllers.sc
 import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.maps.nodes.MAdvGeoMapNodeProps
+import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes}
 import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
-import io.suggest.sc.search.{MSc3NodeInfo, MSc3NodeSearchResp}
+import io.suggest.sc.search.{MSc3NodeSearchResp, MSearchTabs}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.req.IReq
@@ -65,8 +65,11 @@ trait ScSearch
     /** Сборка sink'а для сохранения найденных узлов в статистику. */
     def saveScStatSink: Sink[(MNode, MAdvGeoMapNodeProps), Future[_]] = {
       Flow[(MNode, MAdvGeoMapNodeProps)]
+        // Если результатов слишком много, то нет смысла их всех сохранять в статистику.
+        .take( 10 )
         // Накопить данные с узлов, для отправки в статистику:
         .toMat {
+          // TODO Opt Использовать Set.builder?
           Sink.fold {
             val ss = Set.empty[String]
             (ss, ss)
@@ -133,24 +136,33 @@ trait ScSearch
     }
 
     /** Реактивный поиск и json-рендер тегов и узлов, вместо старого обычного поиска тегов. */
-    def nodeInfosSrc: Source[MSc3NodeInfo, Future[NotUsed]] = {
+    def nodeInfosSrc: Source[MGeoNodePropsShapes, Future[NotUsed]] = {
       val srcFut = for {
         msearch <- nodesSearch
       } yield {
-        advGeoRcvrsUtil
-            .withNodeLocShapes(
-              advGeoRcvrsUtil
-                .nodesAdvGeoPropsSrc(msearch, wcAsLogo = false)
-                // Ответвление: Данные для статистики - материализовать, mat-итог запихать в статистику:
-                .alsoTo( saveScStatSink )
-            )
-          // Далее, надо рендерить в JSON для ответа сервера:
-          .map { case (mnode, advNodePropsShapes) =>
-            MSc3NodeInfo(
-              propsShapes   = advNodePropsShapes,
-              nodeType      = mnode.common.ntype
+        // Организовать чтение найденных узлов из БД:
+        val src0 = advGeoRcvrsUtil
+          .nodesAdvGeoPropsSrc(msearch, wcAsLogo = false)
+          // Ответвление: Данные для статистики - материализовать, mat-итог запихать в статистику:
+          .alsoTo( saveScStatSink )
+
+        // Надо решить: надо ли рендерить в ответе геоданные размещения или нет?
+        if (_qs.search.tab contains MSearchTabs.GeoMap) {
+          // Надо рендерить гео-данные:
+          advGeoRcvrsUtil
+            .withNodeLocShapes( src0 )
+            .map { case (_, advNodePropsShapes) =>
+              advNodePropsShapes
+            }
+        } else {
+          // Геоданные не нужны, просто заворачиваем результаты без гео-шейпов:
+          src0.map { case (_, advNodeProps) =>
+            MGeoNodePropsShapes(
+              props = advNodeProps,
+              shapes = Nil
             )
           }
+        }
           /*
           // TODO Для chunked-выхлопа можно задействовать этот код в будущем. Пока что ScUniApi не поддерживает chunked-ответ, поэтому не нужно.
           .jsValuesToJsonArrayByteStrings

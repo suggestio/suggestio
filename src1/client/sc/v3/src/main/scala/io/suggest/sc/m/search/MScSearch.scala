@@ -1,6 +1,7 @@
 package io.suggest.sc.m.search
 
 import diode.FastEq
+import diode.data.Pot
 import io.suggest.common.empty.OptionUtil
 import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 import io.suggest.ueq.UnivEqUtil._
@@ -79,6 +80,14 @@ case class MScSearch(
   // TODO Заинлайнить? Код по факту переместился в под-модель geo, а тут просто дёргается.
   def resetMapLoader: MScSearch = {
     withGeo( geo.resetMapLoader )
+  }
+
+  /** Вернуть pot поиска, относящийся к указанному (текущему) табу. */
+  def tabSearchPot(tab: MSearchTab = currTab): Pot[MSearchRespInfo[_]] = {
+    tab match {
+      case MSearchTabs.GeoMap => geo.mapInit.rcvrs
+      case MSearchTabs.Tags   => tags.tagsReq
+    }
   }
 
 }

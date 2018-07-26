@@ -179,8 +179,8 @@ class SearchMapR(
         mmapC       = mapInitProxy.connect(_.state),
         rcvrsGeoC   = mapInitProxy.connect { mapInit =>
           // Отображать найденные в поиске ресиверы вместо всех.
-          mapInit.rcvrsFound
-            .orElse( mapInit.rcvrsGeo )
+          mapInit.rcvrs
+            .map(_.resp)
         },
         loaderOptC  = mapInitProxy.connect(_.loader)( OptFastEq.Plain ),
         userLocOptC = mapInitProxy.connect { mapInit =>

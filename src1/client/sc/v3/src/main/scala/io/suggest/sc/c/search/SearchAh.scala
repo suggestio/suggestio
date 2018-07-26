@@ -59,7 +59,7 @@ class SearchAh[M](
         if (v0.geo.mapInit.ready) {
           // Надо запускать ручной ресайз, иначе карта может неверно увидеть свой фактический размер (т.к. размер окна мог меняться, пока карта была скрыта).
           // TODO Не запускать ресайз, если размер не менялся. У карты крышу сносит, если часто этот метод дёргать.
-          for (lInstance <- v0.geo.lmap) yield {
+          for (lInstance <- v0.geo.data.lmap) yield {
             SearchAh.mapResizeFx( lInstance )
           }
         } else {
@@ -127,6 +127,13 @@ class SearchAh[M](
         for (tabInitFx <- _maybeInitializeTab(m.newTab, v2))
           fx += tabInitFx
 
+        // Если изменился поиск, а новый таб не искался в таком запросе, то надо запустить поиск в новом табе:
+        val tgTextQuery = v0.text.searchQuery.toOption
+        val tgPot = v0.tabSearchPot( m.newTab )
+        val isNeedTextChangedFx = tgPot.exists(_.textQuery !=* tgTextQuery)
+        if (isNeedTextChangedFx)
+          fx += _reDoSearchFx(m.newTab)
+
         updated(v2, fx)
       }
 
@@ -156,18 +163,21 @@ class SearchAh[M](
     // Принудительный запуск поиска на текущей вкладке.
     case ReDoSearch =>
       val v0 = value
-
-      val fx = Effect.action {
-        v0.currTab match {
-          case MSearchTabs.Tags =>
-            DoTagsSearch(clear = true, ignorePending = true)
-          case MSearchTabs.GeoMap =>
-            DoGeoSearch(clear = true)
-        }
-      }
-
+      val fx = _reDoSearchFx(v0.currTab)
       effectOnly(fx)
 
+  }
+
+
+  def _reDoSearchFx(currTab: MSearchTab): Effect = {
+    Effect.action {
+      currTab match {
+        case MSearchTabs.Tags =>
+          DoTagsSearch(clear = true, ignorePending = true)
+        case MSearchTabs.GeoMap =>
+          DoGeoSearch(clear = true)
+      }
+    }
   }
 
 }

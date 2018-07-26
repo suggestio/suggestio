@@ -15,6 +15,10 @@
     <allow-intent href="sms:*" />
     <allow-intent href="mailto:*" />
     <allow-intent href="geo:*" />
+    <allow-navigation href="https://youtube.com/*" />
+    <allow-navigation href="https://*.youtube.com/*" />
+    <allow-navigation href="https://vimeo.com/*" />
+    <allow-navigation href="https://*.vimeo.com/*" />
     <platform name="android">
         <allow-intent href="market:*" />
         <splash density="land-hdpi" src="res/screen/android/screen-hdpi-landscape.png" />

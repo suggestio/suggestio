@@ -246,7 +246,7 @@ class IndexAh[M](
         .transform { tryRes =>
           val r2 = HandleScApiResp(
             reqTimeStamp  = Some(ts),
-            apiReq        = args,
+            qs        = args,
             tryResp       = tryRes,
             reason        = reason
           )

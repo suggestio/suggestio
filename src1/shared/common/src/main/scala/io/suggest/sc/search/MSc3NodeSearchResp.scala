@@ -1,7 +1,6 @@
 package io.suggest.sc.search
 
-import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes}
-import io.suggest.model.n2.node.MNodeType
+import io.suggest.maps.nodes.MGeoNodePropsShapes
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -16,7 +15,7 @@ object MSc3NodeSearchResp {
 
   /** Поддержка play-json для инстансов [[MSc3NodeSearchResp]]. */
   implicit def msc3NodesSearchRespFormat: OFormat[MSc3NodeSearchResp] = {
-    (__ \ "t").format[Seq[MSc3NodeInfo]]
+    (__ \ "t").format[Seq[MGeoNodePropsShapes]]
       .inmap(apply, _.results)
   }
 
@@ -27,31 +26,6 @@ object MSc3NodeSearchResp {
 
 }
 case class MSc3NodeSearchResp(
-                               results: Seq[MSc3NodeInfo]
+                               results: Seq[MGeoNodePropsShapes]
                              )
 
-
-/** Модель данных по одному найденному тегу. */
-object MSc3NodeInfo {
-
-  /** Поддержка play-json для инстансов [[MSc3NodeInfo]]. */
-  implicit def MSC3_TAG_FORMAT: OFormat[MSc3NodeInfo] = (
-    (__ \ "p").format[MGeoNodePropsShapes] and
-    (__ \ "t").format[MNodeType]
-  )(apply, unlift(unapply))
-
-  implicit def univEq: UnivEq[MSc3NodeInfo] = UnivEq.derive
-
-}
-
-/** Данные по одному узлу (изначально - найденному тегу).
-  *
-  * @param propsShapes Данные узла в формате узла гео-карты.
-  *              Может включать в себя логотип узла, если есть.
-  * @param nodeType Тип узла. Тег или adn-узел.
-  */
-case class MSc3NodeInfo(
-                         propsShapes    : MGeoNodePropsShapes,
-                         nodeType       : MNodeType,
-                         // Добавить сюда опциоальное кол-во карточек в теге или в узле?
-                       )

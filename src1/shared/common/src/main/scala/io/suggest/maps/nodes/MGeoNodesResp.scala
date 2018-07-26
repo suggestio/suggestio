@@ -3,6 +3,7 @@ package io.suggest.maps.nodes
 import io.suggest.geo.IGeoShape
 import io.suggest.geo.IGeoShape.JsonFormats.internalMinFormat
 import japgolly.univeq.UnivEq
+// НЕ УДАЛЯТЬ, используется для обоих UnivEq.derive
 import io.suggest.ueq.UnivEqUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -25,7 +26,7 @@ object MGeoNodesResp {
   * @param nodes Мета-данные и гео-шейпы узлов.
   */
 case class MGeoNodesResp(
-                          nodes   : Iterable[MGeoNodePropsShapes]
+                          nodes   : Seq[MGeoNodePropsShapes]
                         )
 
 
@@ -36,14 +37,14 @@ case class MGeoNodesResp(
   */
 case class MGeoNodePropsShapes(
                                 props    : MAdvGeoMapNodeProps,
-                                shapes   : Iterable[IGeoShape]
+                                shapes   : Seq[IGeoShape]
                               )
 
 object MGeoNodePropsShapes {
 
   implicit def MGeoNodePropsShapesFormat: OFormat[MGeoNodePropsShapes] = (
     (__ \ "p").format[MAdvGeoMapNodeProps] and
-    (__ \ "s").format[Iterable[IGeoShape]]
+    (__ \ "s").format[Seq[IGeoShape]]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MGeoNodePropsShapes] = UnivEq.derive

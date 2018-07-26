@@ -15,8 +15,25 @@ import scala.util.Success
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.12.16 16:36
-  * Description: Diode action handler для инициализации карты ресиверов.
+  * Description: Утиль для контроллера [[RcvrMarkersInitAh]].
   */
+object RcvrMarkersInitAh {
+
+  /** Запуск инициализации карты. */
+  def startInitFx(api: IAdvRcvrsMapApi): Effect = {
+    Effect {
+      api.advRcvrsMapJson()
+        .transform { tryResp =>
+          val r = InstallRcvrMarkers( tryResp )
+          Success( r )
+        }
+    }
+  }
+
+}
+
+
+/** Diode action handler для инициализации карты ресиверов. */
 class RcvrMarkersInitAh[M](
                             api       : IAdvRcvrsMapApi,
                             modelRW   : ModelRW[M, Pot[MGeoNodesResp]]
@@ -29,13 +46,7 @@ class RcvrMarkersInitAh[M](
 
     // Сигнал запуска инициализации маркеров с сервера.
     case RcvrMarkersInit =>
-      val fx = Effect {
-        api.advRcvrsMapJson()
-          .transform { tryResp =>
-            val r = InstallRcvrMarkers( tryResp )
-            Success( r )
-          }
-      }
+      val fx = RcvrMarkersInitAh.startInitFx(api)
       // silent, т.к. RcvrMarkersR работает с этим Pot как с Option, а больше это никого и не касается.
       updatedSilent( value.pending(), fx )
 

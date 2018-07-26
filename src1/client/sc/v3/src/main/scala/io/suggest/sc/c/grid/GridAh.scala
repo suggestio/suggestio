@@ -186,7 +186,7 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
     }
 
     // Нельзя тут использовать ctx.m.reason: причина относится только к начальному resp-экшену (и то необязательно).
-    val isCleanLoad = ctx.m.apiReq.search.offset
+    val isCleanLoad = ctx.m.qs.search.offset
       .fold(true)(_ ==* 0)
 
     // Если silent, то надо попытаться повторно пере-использовать уже имеющиеся карточки.
@@ -291,7 +291,7 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
         // Отребилдить плитку:
         gridBuild   = GridAh.rebuildGrid(ads2, g0.core.jdConf)
       ),
-      hasMoreAds  = ctx.m.apiReq.search.limit.fold(true) { limit =>
+      hasMoreAds  = ctx.m.qs.search.limit.fold(true) { limit =>
         gridResp.ads.lengthCompare(limit) >= 0
       }
     )
@@ -342,7 +342,7 @@ class GridFocusRespHandler( jdCssFactory: JdCssFactory )
   }
 
   override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect]) = {
-    val focQs = ctx.m.apiReq.foc.get
+    val focQs = ctx.m.qs.foc.get
     val nodeId = focQs.lookupAdId
     val g0 = ctx.value0.grid
     GridAh
@@ -483,7 +483,7 @@ class GridAh[M](
           fut.transform { tryRes =>
             val r = HandleScApiResp(
               reqTimeStamp  = Some(startTime),
-              apiReq        = args2,
+              qs        = args2,
               tryResp       = tryRes,
               reason        = m
             )
@@ -535,7 +535,7 @@ class GridAh[M](
                 .transform { tryResp =>
                   val r = HandleScApiResp(
                     reqTimeStamp  = None,
-                    apiReq        = args1,
+                    qs        = args1,
                     tryResp       = tryResp,
                     reason        = m
                   )

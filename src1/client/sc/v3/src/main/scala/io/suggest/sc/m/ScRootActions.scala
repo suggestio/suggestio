@@ -96,12 +96,12 @@ case object GeoLocTimeOut extends ISc3Action
 /** Экшен для запуска обработки унифицированного ответа выдачи, который бывает сложным и много-гранным.
   * @param reqTimeStamp Время запуска запроса к серверу.
   * @param tryResp Результат запроса к серверу.
-  * @param apiReq Оригинальный реквест к api выдачи.
+  * @param qs Оригинальный реквест к api выдачи.
   * @param reason Оригинальный исходный экшен, с которого всё действо началось.
   */
 case class HandleScApiResp(
                             reqTimeStamp   : Option[Long],
-                            apiReq         : MScQs,
+                            qs         : MScQs,
                             tryResp        : Try[MSc3Resp],
                             reason         : IScApiRespReason
                           )
