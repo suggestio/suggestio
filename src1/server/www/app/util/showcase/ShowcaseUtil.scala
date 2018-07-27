@@ -4,10 +4,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidth, BlockWidths}
 import io.suggest.dev.{MScreen, MSzMults}
 import io.suggest.grid.{GridCalc, MGridCalcConf}
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.sc3.MScQs
 import io.suggest.util.logs.MacroLogsImplLazy
@@ -246,22 +243,6 @@ class ShowcaseUtil @Inject() (
         if !(qs.search.rcvrId containsStr producerId )
 
         producer <- {
-          // 2015.sep.16: Нельзя перепрыгивать на продьюсера, у которого не больше одной карточки на главном экране.
-          val prodAdsCountFut: Future[Long] = {
-            val args = new MNodeSearchDfltImpl {
-              override def outEdges: Seq[ICriteria] = {
-                val cr = Criteria(
-                  predicates  = MPredicates.Receiver :: Nil,
-                  nodeIds     = producerId :: Nil
-                )
-                cr :: Nil
-              }
-              override def limit = 2
-              override def nodeTypes = MNodeTypes.Ad :: Nil
-            }
-            mNodes.dynCount(args)
-          }
-
           val prodFut = mNodesCache.getById(producerId)
             .map(_.get)
 
@@ -275,9 +256,7 @@ class ShowcaseUtil @Inject() (
           }
 
           // Фильтруем prodFut по кол-ву карточек, размещенных у него на главном экране.
-          prodAdsCountFut
-            .filter { _ > 1 }
-            .flatMap { _ => prodFut }
+          prodFut
         }
 
       } yield {
