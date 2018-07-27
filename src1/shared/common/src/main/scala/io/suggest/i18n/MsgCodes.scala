@@ -225,6 +225,7 @@ object MsgCodes {
   val `Upload.file` = "Upload.file"
 
   val `No.tags.here` = "No.tags.here"
+  val `No.tags.found.for.1.query` = "No.tags.found.for.1.query"
 
   val `Login.page.title` = "Login.page.title"
   val `Login.to.sio` = "Login.to.sio"

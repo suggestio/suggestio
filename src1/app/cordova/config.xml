@@ -15,6 +15,7 @@
     <allow-intent href="sms:*" />
     <allow-intent href="mailto:*" />
     <allow-intent href="geo:*" />
+    <allow-navigation href="https://suggest.io/*" />
     <allow-navigation href="https://youtube.com/*" />
     <allow-navigation href="https://*.youtube.com/*" />
     <allow-navigation href="https://vimeo.com/*" />

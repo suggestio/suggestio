@@ -229,6 +229,7 @@ class JsMessagesUtil @Inject() (
       MC.`Map` ::
       MC.`Tags` ::
       MC.`No.tags.here` ::
+      MC.`No.tags.found.for.1.query` ::
       MC.`Login.page.title` ::
       MC.`Go.to.node.ads` ::
       MC.`Personal.cabinet` ::

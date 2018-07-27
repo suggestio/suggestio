@@ -573,6 +573,10 @@ case class ScCss( args: IScCssArgs )
 
         val selected = _styleAddClass( __ + "selected" )
 
+        val icon = style(
+          height(20.px),
+          maxWidth(40.px)
+        )
       }
 
     }

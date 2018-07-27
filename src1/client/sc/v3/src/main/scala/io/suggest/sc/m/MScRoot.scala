@@ -50,14 +50,18 @@ case class MScRoot(
   def withInternals( internals: MScInternals )      = copy(internals = internals)
   def withGrid( grid: MGridS )                      = copy(grid = grid)
 
+  def locEnvGeoLocOpt: Option[MGeoLoc] = {
+    Some(
+      MGeoLoc(
+        point = index.search.geo.mapInit.state.center
+      )
+    )
+  }
+  def locEnvBleBeacons = dev.beaconer.nearbyReport
   def locEnv: MLocEnv = {
     MLocEnv(
-      geoLocOpt = Some(
-        MGeoLoc(
-          point = index.search.geo.mapInit.state.center
-        )
-      ),
-      bleBeacons = dev.beaconer.nearbyReport
+      geoLocOpt  = locEnvGeoLocOpt,
+      bleBeacons = locEnvBleBeacons
     )
   }
 

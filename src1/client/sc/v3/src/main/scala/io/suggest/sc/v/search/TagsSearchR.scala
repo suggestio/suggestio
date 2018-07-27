@@ -73,7 +73,12 @@ class TagsSearchR(
           if (tagsRi.resp.isEmpty) {
             <.div(
               _tagRow,
-              Messages( MsgCodes.`No.tags.here` )
+              // Надо, чтобы юзер понимал, что запрос поиска отработан.
+              tagsRi.textQuery.fold {
+                Messages( MsgCodes.`No.tags.here` )
+              } { query =>
+                Messages( MsgCodes.`No.tags.found.for.1.query`, query )
+              }
             )
           } else {
             tagsRi
@@ -99,7 +104,16 @@ class TagsSearchR(
 
                   ^.onClick --> _onTagClick(p.nodeId),
 
-                  p.hint.whenDefined
+                  p.hint.whenDefined,
+
+                  // Иконка узла.
+                  p.icon.whenDefined { ico =>
+                    <.img(
+                      TabCSS.icon,
+                      ^.src := ico.url
+                    )
+                  }
+
                 )
               }
           }

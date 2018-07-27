@@ -197,6 +197,12 @@ class Sc3Circuit(
 
   private val beaconerRW = devRW.zoomRW(_.beaconer) { _.withBeaconer(_) }
 
+  private def _getLocEnv(mroot: MScRoot, currRcvrId: Option[_]): MLocEnv = {
+    MLocEnv(
+      geoLocOpt  = OptionUtil.maybeOpt(currRcvrId.isEmpty)( mroot.locEnvGeoLocOpt ),
+      bleBeacons = mroot.locEnvBleBeacons
+    )
+  }
 
   private val gridAdsQsRO: ModelRO[MScQs] = zoom { mroot =>
     val inxState = mroot.index.state
@@ -218,10 +224,7 @@ class Sc3Circuit(
           else
             scr0
         },
-        locEnv = {
-          if (currRcvrId.isEmpty) mroot.locEnv
-          else MLocEnv.empty
-        }
+        locEnv = _getLocEnv(mroot, currRcvrId)
       ),
       search = MAdsSearchReq(
         rcvrId      = currRcvrId,
@@ -234,26 +237,24 @@ class Sc3Circuit(
 
   /** Аргументы для поиска тегов. */
   private val tagsSearchQsRO: ModelRO[MScQs] = zoom { mroot =>
-    _searchQs(mroot, MSearchTabs.Tags, withScreen = false, mroot.index.state.currRcvrId)
+    _searchQs(mroot, MSearchTabs.Tags, withScreen = false, mroot.index.state.currRcvrId.toEsUuIdOpt)
   }
   private val geoSearchQsRO: ModelRO[MScQs] = zoom { mroot =>
     _searchQs(mroot, MSearchTabs.GeoMap, withScreen = true, None)
   }
 
   private def _searchQs(mroot: MScRoot, tab: MSearchTab, withScreen: Boolean,
-                        currRcvrId: Option[String]): MScQs = {
+                        currRcvrId: Option[MEsUuId]): MScQs = {
     MScQs(
       common = MScCommonQs(
-        locEnv =
-          if (currRcvrId.isEmpty) mroot.locEnv
-          else MLocEnv.empty,
+        locEnv = _getLocEnv(mroot, currRcvrId),
         apiVsn = mroot.internals.conf.apiVsn,
         searchNodes = Some(false),
         screen = OptionUtil.maybe(withScreen)( mroot.dev.screen.info.screen )
       ),
       search = MAdsSearchReq(
         textQuery = mroot.index.search.text.searchQuery.toOption,
-        rcvrId    = currRcvrId.toEsUuIdOpt,
+        rcvrId    = currRcvrId,
         tab       = Some( tab ) //mroot.index.search.currTab )
       )
     )

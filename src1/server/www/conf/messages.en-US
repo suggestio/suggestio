@@ -971,6 +971,7 @@ This.block.is.the.only.main=Current block is the only main.
 This.block.is.not.main=Another block is main, but not current.
 No.main.blocks.First.block.is.main=No main blocks defined. Topmost block is main.
 No.tags.here=No tags found in current location
+No.tags.found.for.1.query=No tags found for "{0}"
 
 Go.to.node.ads=Go to node ads
 Personal.cabinet=Personal area

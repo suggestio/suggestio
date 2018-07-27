@@ -2,6 +2,7 @@ package io.suggest.sc.c.inx
 
 import diode._
 import diode.data.Pot
+import io.suggest.geo.MLocEnv
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.DiodeUtil.Implicits.ActionHandlerExt
 import io.suggest.sc.ScConstants
@@ -213,7 +214,9 @@ class IndexAh[M](
       val args = MScQs(
         common = MScCommonQs(
           apiVsn = root.internals.conf.apiVsn,
-          locEnv = root.locEnv,
+          // Когда уже задан id-ресивера, не надо слать на сервер маячки и географию.
+          locEnv = v0.state.currRcvrId
+            .fold(root.locEnv)(_ => MLocEnv.empty),
           screen = Some( root.dev.screen.info.screen ),
           searchGridAds = Some( true )
         ),
