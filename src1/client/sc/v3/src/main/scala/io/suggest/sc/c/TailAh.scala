@@ -9,7 +9,7 @@ import io.suggest.sc.m._
 import io.suggest.sc.m.grid._
 import io.suggest.sc.m.hdr.{MenuOpenClose, SearchOpenClose}
 import io.suggest.sc.m.inx.{GetIndex, MScIndex, WcTimeOut}
-import io.suggest.sc.m.search.{SwitchTab, TagClick}
+import io.suggest.sc.m.search.{SwitchTab, NodeRowClick}
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.sc.search.MSearchTabs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -163,7 +163,7 @@ class TailAh[M](
       } {
         // Имитируем клик по тегу, да и всё.
         fxsAcc ::= Effect.action {
-          TagClick( tagNodeId )
+          NodeRowClick( tagNodeId )
         }
       }
 

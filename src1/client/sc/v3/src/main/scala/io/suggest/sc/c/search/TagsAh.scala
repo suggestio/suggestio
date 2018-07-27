@@ -29,7 +29,7 @@ class TagsAh[M](
                  api              : IScUniApi,
                  tagsSearchQsRO   : ModelRO[MScQs],
                  screenRO         : ModelRO[MScreen],
-                 modelRW          : ModelRW[M, MTagsSearchS]
+                 modelRW          : ModelRW[M, MNodesFoundS]
                )
   extends ActionHandler( modelRW )
   with Log
@@ -38,12 +38,12 @@ class TagsAh[M](
   override def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Скроллинг в списке тегов: возможно надо подгрузить ещё тегов.
-    case m: TagsScroll =>
+    case m: NodesScroll =>
       val v0 = value
       // Надо подгружать ещё или нет?
       if (
-        !v0.tagsReq.isPending &&
-        v0.hasMoreTags && {
+        !v0.req.isPending &&
+        v0.hasMore && {
           val containerHeight = screenRO.value.height - ScCss.TABS_OFFSET_PX
           val scrollPxToGo = m.scrollHeight - containerHeight - m.scrollTop
           scrollPxToGo < GridConst.LOAD_MORE_SCROLL_DELTA_PX
@@ -53,8 +53,8 @@ class TagsAh[M](
         val fx = Effect.action {
           DoTagsSearch(clear = false, ignorePending = true)
         }
-        val v2 = v0.withTagsReq(
-          v0.tagsReq.pending()
+        val v2 = v0.withReq(
+          v0.req.pending()
         )
         // silent update, чтобы крутилка появилась только после GetMoreTags.
         updatedSilent( v2, fx )
@@ -65,7 +65,7 @@ class TagsAh[M](
 
 
     // Клик по тегу в списке тегов.
-    case m: TagClick =>
+    case m: NodeRowClick =>
       val v0 = value
       val isAlreadySelected = v0.selectedId contains m.nodeId
 
@@ -84,15 +84,15 @@ class TagsAh[M](
     // Команда к запуску поиска тегов.
     case m: DoTagsSearch =>
       val v0 = value
-      if (m.clear || m.ignorePending || !v0.tagsReq.isPending) {
+      if (m.clear || m.ignorePending || !v0.req.isPending) {
         // Запустить эффект поиска, выставить запущенный запрос в состояние.
-        val req2 = v0.tagsReq.pending()
+        val req2 = v0.req.pending()
 
         val fx = Effect {
           // Подготовить аргументы запроса:
           val args0 = tagsSearchQsRO.value
           val offsetOpt = OptionUtil.maybeOpt(!m.clear) {
-            v0.tagsReq
+            v0.req
               .toOption
               .map(_.resp.size)
           }
@@ -119,7 +119,7 @@ class TagsAh[M](
         }
 
         val v2 = v0
-          .withTagsReq( req2 )
+          .withReq( req2 )
 
         updated( v2, fx )
 
@@ -138,7 +138,7 @@ class TagsRespHandler
   extends IRespWithActionHandler
 {
 
-  private def _withTags(ctx: MRhCtx, tags2: MTagsSearchS): MScRoot = {
+  private def _withTags(ctx: MRhCtx, tags2: MNodesFoundS): MScRoot = {
     ctx.value0.withIndex(
       ctx.value0.index.withSearch(
         ctx.value0.index.search
@@ -152,13 +152,13 @@ class TagsRespHandler
   }
 
   override def getPot(ctx: MRhCtx): Option[Pot[_]] = {
-    Some( ctx.value0.index.search.tags.tagsReq )
+    Some( ctx.value0.index.search.tags.req )
   }
 
   override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
     val t0 = ctx.value0.index.search.tags
-    val t2 = t0.withTagsReq(
-      t0.tagsReq.fail(ex)
+    val t2 = t0.withReq(
+      t0.req.fail(ex)
     )
     _withTags(ctx, t2)
   }
@@ -173,18 +173,18 @@ class TagsRespHandler
     val t0 = ctx.value0.index.search.tags
 
     val tagsResp = ra.search.get
-    val tagsList2 = if (reason.clear || t0.tagsReq.isEmpty || t0.tagsReq.exists(_.resp.isEmpty)) {
+    val tagsList2 = if (reason.clear || t0.req.isEmpty || t0.req.exists(_.resp.isEmpty)) {
       // Объединять текущий и полученный списки тегов не требуется.
       tagsResp.results
     } else {
       // Требуется склеить все имеющиеся списки тегов
-      t0.tagsReq
+      t0.req
         .fold(tagsResp.results) { tags0ri =>
           tags0ri.resp ++ tagsResp.results
         }
     }
 
-    val tagsReq2 = t0.tagsReq.ready(
+    val tagsReq2 = t0.req.ready(
       MSearchRespInfo(
         resp        = tagsList2,
         textQuery = ctx.m.qs.search.textQuery
@@ -192,8 +192,8 @@ class TagsRespHandler
     )
 
     val t2 = t0.copy(
-      tagsReq     = tagsReq2,
-      hasMoreTags = ctx.m.qs.search.limit.get >= tagsResp.results.size,
+      req     = tagsReq2,
+      hasMore = ctx.m.qs.search.limit.get >= tagsResp.results.size,
       selectedId  = OptionUtil.maybeOpt( !reason.clear )( t0.selectedId )
     )
 

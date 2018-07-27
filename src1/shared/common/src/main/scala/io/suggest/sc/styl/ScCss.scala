@@ -536,10 +536,34 @@ case class ScCss( args: IScCssArgs )
       }
 
 
-      /** Стили для вкладки с тегами. */
-      object TagsTag {
+      /** Стили для списка найденных узлов (тегов и т.д.). */
+      object NodesFound {
 
-        private val TAGS = "shops"
+        private val NODES_LIST = TagsTab.TAGS + "-list"
+
+        /** Список тегов. */
+        val listDiv = _styleAddClass( NODES_LIST )
+
+        /** Один тег в списке тегов. */
+        val nodeRow = _styleAddClass( NODES_LIST + "_row" )
+
+        val oddRow  = _styleAddClass( __ + "odd" )
+        val evenRow = _styleAddClass( __ + "even")
+
+        val icon = style(
+          height(20.px),
+          maxWidth(40.px)
+        )
+
+        val selected = _styleAddClass( __ + "selected" )
+
+      }
+
+
+      /** Стили для вкладки с тегами. */
+      object TagsTab {
+
+        private[styl] val TAGS = "shops"
 
         private val OUTER = _SM_ + TAGS
 
@@ -560,23 +584,6 @@ case class ScCss( args: IScCssArgs )
           minHeight( TAB_BODY_HEIGHT_PX.px )
         )
 
-        private val TAGS_LIST = TAGS + "-list"
-
-        /** Список тегов. */
-        val tagsList = _styleAddClass( TAGS_LIST )
-
-        /** Один тег в списке тегов. */
-        val tagRow = _styleAddClass( TAGS_LIST + "_row" )
-
-        val oddRow  = _styleAddClass( __ + "odd" )
-        val evenRow = _styleAddClass( __ + "even")
-
-        val selected = _styleAddClass( __ + "selected" )
-
-        val icon = style(
-          height(20.px),
-          maxWidth(40.px)
-        )
       }
 
     }
@@ -744,7 +751,8 @@ case class ScCss( args: IScCssArgs )
     Search.SearchBar.Field.active,
     Search.Tabs.Single.Rounded.right,
     Search.Tabs.MapTab.inner,
-    Search.Tabs.TagsTag.inner,
+    Search.Tabs.NodesFound.listDiv,
+    Search.Tabs.TagsTab.inner,
 
     Grid.container,
     Grid.Loaders.spinnerInner,

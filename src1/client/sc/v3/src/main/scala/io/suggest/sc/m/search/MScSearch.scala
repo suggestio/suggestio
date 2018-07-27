@@ -43,14 +43,14 @@ object MScSearch {
 case class MScSearch(
                       geo                 : MGeoTabS,
                       text                : MScSearchText         = MScSearchText.empty,
-                      tags                : MTagsSearchS          = MTagsSearchS.empty,
+                      tags                : MNodesFoundS          = MNodesFoundS.empty,
                       currTab             : MSearchTab            = MSearchTabs.default,
                       isShown             : Boolean               = false,
                     ) {
 
   def withGeo       ( geo: MGeoTabS )                   = copy( geo = geo )
   def withText      ( text: MScSearchText )             = copy( text = text )
-  def withTags      ( tags: MTagsSearchS )              = copy( tags = tags )
+  def withTags      ( tags: MNodesFoundS )              = copy( tags = tags )
   def withCurrTab   ( currTab: MSearchTab )             = copy( currTab = currTab )
   def withIsShown   ( isShown: Boolean )                = copy( isShown = isShown )
 
@@ -68,7 +68,7 @@ case class MScSearch(
   }
 
   def resetTagsForce: MScSearch = {
-    withTags( MTagsSearchS.empty )
+    withTags( MNodesFoundS.empty )
   }
 
   def isShownTab(tab: MSearchTab): Boolean = {
@@ -86,7 +86,7 @@ case class MScSearch(
   def tabSearchPot(tab: MSearchTab = currTab): Pot[MSearchRespInfo[_]] = {
     tab match {
       case MSearchTabs.GeoMap => geo.mapInit.rcvrs
-      case MSearchTabs.Tags   => tags.tagsReq
+      case MSearchTabs.Tags   => tags.req
     }
   }
 

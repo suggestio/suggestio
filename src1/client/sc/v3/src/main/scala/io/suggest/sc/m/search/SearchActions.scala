@@ -24,7 +24,7 @@ case class SwitchTab( newTab: MSearchTab ) extends ISearchAction
 
 
 /** Клик по тегу. */
-case class TagClick( nodeId: String ) extends ISearchAction
+case class NodeRowClick(nodeId: String ) extends ISearchAction
 
 /** Сброс списка тегов. Если теги открыты сейчас, то они должны быть перезагружены. */
 case object ResetTags extends ISearchAction
@@ -33,7 +33,7 @@ case object ResetTags extends ISearchAction
 case class DoTagsSearch(clear: Boolean, ignorePending: Boolean = false) extends ISearchAction with IScApiRespReason
 
 /** Происходит скроллинг в списке тегов. Возможно, надо подгрузить ещё тегов. */
-case class TagsScroll(scrollTop: Double, scrollHeight: Int) extends ISearchAction
+case class NodesScroll(scrollTop: Double, scrollHeight: Int) extends ISearchAction
 
 
 /** Изменения фокуса на input'е текстового поиска. */

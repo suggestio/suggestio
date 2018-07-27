@@ -25,12 +25,13 @@ class SearchR(
                rightR         : RightR,
                searchMapR     : SearchMapR,
                getScCssF      : GetScCssF,
+               nodesFoundR    : NodesFoundR,
                tagsSearchR    : TagsSearchR
              ) {
 
   import MMapInitState.MMapInitStateFastEq
   import MScSearchText.MScSearchTextFastEq
-  import MTagsSearchS.MTagsSearchFastEq
+  import MNodesFoundS.MNodesFoundSFastEq
 
   type Props = ModelProxy[MScSearch]
 
@@ -40,6 +41,7 @@ class SearchR(
                                     sTextC              : ReactConnectProxy[MScSearchText],
                                     tabC                : ReactConnectProxy[MSearchTab],
                                     isShownC            : ReactConnectProxy[Some[Boolean]],
+                                    tagsFoundC          : ReactConnectProxy[MNodesFoundS],
                                   )
 
 
@@ -79,32 +81,33 @@ class SearchR(
 
           // Тело текущего таба.
           {
-            // Рендер карты:
-            val searchMap = s.mapInitC { searchMapR.apply }
-            // TODO Сделать connect? Есть мнение, что оно перерендеривается на каждый чих, т.к. на втором уровне.
-            val tagsSearch = props.wrap(_.tags) { tagsSearchR.apply }
+            // Рендер вкладки карты:
+            val geoTab = s.mapInitC { searchMapR.apply }
+
+            // Рендер наполнения вкладки тегов:
+            val tagsTab = tagsSearchR( props )(
+              s.tagsFoundC { nodesFoundR.apply }
+            )
 
             s.tabC { currTabProxy =>
               val currTab = currTabProxy.value
 
               // Контейнер всех содержимых вкладок.
               <.div(
-
                 // Содержимое вкладки с картой.
                 <.div(
                   _renderDisplayCss( currTab ==* MSearchTabs.GeoMap ),
-                  searchMap
+                  geoTab
                 ),
 
                 // Содержимое вкладки с тегами.
                 <.div(
                   _renderDisplayCss( currTab ==* MSearchTabs.Tags ),
-                  tagsSearch
+                  tagsTab
                 )
-
               )
-
             }
+
           }
         )
 
@@ -121,7 +124,8 @@ class SearchR(
         mapInitC  = propsProxy.connect( _.geo.mapInit ),
         sTextC    = propsProxy.connect( _.text ),
         tabC      = propsProxy.connect( _.currTab ),
-        isShownC  = propsProxy.connect( p => Some(p.isShown) )( OptFastEq.OptValueEq )
+        isShownC  = propsProxy.connect( p => Some(p.isShown) )( OptFastEq.OptValueEq ),
+        tagsFoundC = propsProxy.connect(_.tags)
       )
     }
     .renderBackend[Backend]
