@@ -136,7 +136,6 @@ class NodesFoundR(
               ex.getMessage
             )
           )
-
         }
 
       ) // nodesList

@@ -118,7 +118,7 @@ class SearchR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("Search")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
         mapInitC  = propsProxy.connect( _.geo.mapInit ),

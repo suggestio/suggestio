@@ -196,7 +196,6 @@ class SearchMapR(
     .renderBackend[Backend]
     .build
 
-  private def _apply(mapInitProxy: Props) = component(mapInitProxy)
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(mapInitProxy: Props) = component(mapInitProxy)
 
 }

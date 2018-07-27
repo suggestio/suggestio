@@ -32,6 +32,7 @@ object MGeoTabS {
   */
 case class MGeoTabS(
                      mapInit  : MMapInitState,
+                   // TODO Добавить сюда Option[MNodesFoundS] для рендера списка NodesFound рядом с картой. Через lazy val это реализовать не очень и не получается.
                      data     : MGeoTabData        = MGeoTabData.empty,
                    ) {
 

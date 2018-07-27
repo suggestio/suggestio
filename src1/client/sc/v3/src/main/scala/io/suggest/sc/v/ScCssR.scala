@@ -26,7 +26,7 @@ class ScCssR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("ScCss")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

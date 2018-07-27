@@ -63,7 +63,7 @@ class EditAdR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("EdAd")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

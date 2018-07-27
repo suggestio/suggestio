@@ -88,7 +88,7 @@ class HeaderR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("Header")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       def __fgColorDataOptProxy(hStates: MHeaderState*) = {
         propsProxy.connect { props =>

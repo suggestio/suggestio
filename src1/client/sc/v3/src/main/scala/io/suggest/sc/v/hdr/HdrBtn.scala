@@ -87,7 +87,7 @@ trait HdrBtn {
 
   }
 
-  protected[this] def _compName: String
+  protected[this] def _compName: String = getClass.getSimpleName
 
   val component = ScalaComponent.builder[Props]( _compName )
     .stateless

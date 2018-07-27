@@ -69,7 +69,7 @@ class AboutSioR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("AboutSio")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

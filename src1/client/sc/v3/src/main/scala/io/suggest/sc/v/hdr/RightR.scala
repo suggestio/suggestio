@@ -11,8 +11,6 @@ import io.suggest.sc.styl.GetScCssF
   */
 class RightR( getScCssF: GetScCssF ) extends HdrBtn {
 
-  override protected[this] def _compName = "Right"
-
   override protected[this] def cssStyle = getScCssF().Header.Buttons.rightCss
 
   override protected[this] def _btnClickAction = SearchOpenClose(open = false)

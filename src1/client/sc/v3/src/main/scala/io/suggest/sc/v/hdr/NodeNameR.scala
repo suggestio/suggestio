@@ -39,7 +39,7 @@ class NodeNameR( getScCssF: GetScCssF ) {
   }
 
 
-  val component = ScalaComponent.builder[Props]("NodeName")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

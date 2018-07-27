@@ -128,7 +128,7 @@ class WelcomeR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("Welcome")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
         nodeNameC = propsProxy.connect(_.flatMap(_.nodeName))

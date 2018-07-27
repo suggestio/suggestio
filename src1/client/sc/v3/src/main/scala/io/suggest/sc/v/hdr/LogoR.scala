@@ -78,7 +78,7 @@ class LogoR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("Logo")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { proxy =>
       State(
         nodeNameOptC = proxy.connect( _.flatMap(_.nodeNameOpt) )

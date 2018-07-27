@@ -1,6 +1,6 @@
 package io.suggest.sc.v.search
 
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.SwitchTab
@@ -81,12 +81,11 @@ class TabsR( getScCssF: GetScCssF ) {
   }
 
 
-  val component = ScalaComponent.builder[Props]("Tabs")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build
 
-  def _apply( p: Props ) = component( p )
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply( p: Props ) = component( p )
 
 }

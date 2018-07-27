@@ -118,7 +118,7 @@ class GridR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("Grid")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       // Наконец, сборка самого состояния.
       State(

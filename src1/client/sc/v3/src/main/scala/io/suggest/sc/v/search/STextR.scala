@@ -1,6 +1,6 @@
 package io.suggest.sc.v.search
 
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
@@ -75,12 +75,11 @@ class STextR( getScCssF: GetScCssF ) {
   }
 
 
-  val component = ScalaComponent.builder[Props]("SText")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build
 
-  private def _apply(scSearchTextOptProxy: Props) = component( scSearchTextOptProxy )
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(scSearchTextOptProxy: Props) = component( scSearchTextOptProxy )
 
 }

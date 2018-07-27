@@ -93,7 +93,7 @@ class EnterLkRowR(
     }
   }
 
-  val component = ScalaComponent.builder[Props]("EnterLk")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

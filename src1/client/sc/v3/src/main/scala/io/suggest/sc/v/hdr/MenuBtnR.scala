@@ -11,8 +11,6 @@ import io.suggest.sc.styl.GetScCssF
   */
 class MenuBtnR( getScCssF: GetScCssF ) extends HdrBtn {
 
-  override protected[this] def _compName: String = "Menu"
-
   override protected[this] def cssStyle = getScCssF().Header.Buttons.menu
 
   override protected[this] def _btnClickAction = MenuOpenClose(open = true)

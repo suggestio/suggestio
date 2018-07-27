@@ -18,16 +18,8 @@ class TagsSearchR(
                    getScCssF    : GetScCssF
                  ) {
 
-  //import MNodesFoundS.MNodesFoundSFastEq
-
   type Props = ModelProxy[_]
 
-
-  /*
-  protected case class State(
-                              tagsC        : ReactConnectProxy[MNodesFoundS]
-                            )
-  */
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -56,15 +48,8 @@ class TagsSearchR(
   }
 
 
-  val component = ScalaComponent.builder[Props](getClass.getSimpleName )
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .stateless
-    /*
-    .initialStateFromProps { tagSearchProxy =>
-      State(
-        tagsC = tagSearchProxy.connect(identity)
-      )
-    }
-    */
     .renderBackendWithChildren[Backend]
     .build
 
