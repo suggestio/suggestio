@@ -62,6 +62,7 @@ object ReactDiodeUtil {
     * @return Пропатченный компонент, который обновляется (и обновляет S) только если P.value отличается от S.
     */
   def statePropsValShouldComponentUpdate[P <: ModelProxy[S], C <: Children, S <: AnyRef: FastEq, B]: ScalaComponent.Config[P, C, S, B] = {
+    // TODO FastEq[S] - надо организовать примерный тип -S, иначе может вылетать invariant violation. Либо юзать костыль DiodeUtil.FastEqExt.AnyRefFastEq
     _.componentWillReceiveProps { $ =>
       val nextPropsVal = $.nextProps.value
       val currPropsVal = $.state

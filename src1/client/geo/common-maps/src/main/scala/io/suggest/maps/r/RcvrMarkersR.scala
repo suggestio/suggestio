@@ -1,5 +1,6 @@
 package io.suggest.maps.r
 
+import diode.FastEq
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.color.MColorData
@@ -12,7 +13,7 @@ import io.suggest.maps.m.OpenMapRcvr
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.proto.HttpConst
-import io.suggest.react.ReactCommonUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.common.empty.JsOptionUtil
@@ -23,6 +24,7 @@ import io.suggest.sjs.leaflet.event.MouseEvent
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.icon.IconOptions
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent, MarkerOptions}
+import io.suggest.spa.DiodeUtil
 import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ScalaComponent}
@@ -50,7 +52,7 @@ object RcvrMarkersR {
   val STROKE_OPACITY  = 0.7
   val STROKE_WEIGHT   = 1
 
-  protected class Backend($: BackendScope[Props, Unit]) {
+  protected class Backend($: BackendScope[Props, Props_t]) {
 
     private def onMarkerClicked(e: MarkerEvent): Callback = {
       val marker = e.layer
@@ -266,8 +268,10 @@ object RcvrMarkersR {
 
 
   val component = ScalaComponent.builder[Props]("RcvrMarkers")
-    .stateless
+    .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackendWithChildren[Backend]
+    // Тут мега-трэш-код, т.к. есть проблемы с дженериком состояния и отсутствующим FastEq[S].
+    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( DiodeUtil.FastEqExt.PotAsOptionFastEq( DiodeUtil.FastEqExt.AnyRefFastEq ) ) )
     .build
 
 

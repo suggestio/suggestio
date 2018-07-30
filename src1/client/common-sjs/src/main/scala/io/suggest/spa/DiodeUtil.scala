@@ -1,7 +1,7 @@
 package io.suggest.spa
 
 import diode.data.{PendingBase, Pot}
-import diode.{ActionHandler, ActionResult, Effect, EffectSet}
+import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
@@ -13,6 +13,27 @@ import japgolly.univeq._
   * Description: Без-react утиль для Diode.
   */
 object DiodeUtil {
+
+  object FastEqExt {
+
+    def PotAsOptionFastEq[T: FastEq]: FastEq[Pot[T]] = {
+      new FastEq[Pot[T]] {
+        override def eqv(a: Pot[T], b: Pot[T]): Boolean = {
+          val aEmpty = a.isEmpty
+          val bEmpty = b.isEmpty
+          (aEmpty && bEmpty) || {
+            !aEmpty && !bEmpty && implicitly[FastEq[T]].eqv(a.get, b.get)
+          }
+        }
+      }
+    }
+
+    /** Искуственная подстанова FastEq произвольного типа с eq-сравниванием. */
+    def AnyRefFastEq[T <: AnyRef]: FastEq[T] = {
+      FastEq.AnyRefEq.asInstanceOf[FastEq[T]]
+    }
+
+  }
 
   /** Не очень явные дополнения к API живут тут. */
   object Implicits {
