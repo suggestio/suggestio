@@ -14,11 +14,15 @@ import japgolly.univeq._
   */
 object DiodeUtil {
 
+
+  /** Расширенная утиль для FastEq. Не является implicit. */
   object FastEqExt {
 
+    /** Анализ Pot'а как Option'a, без учёта общего состояния Pot: сравнивается только значение или его отсутствие. */
     def PotAsOptionFastEq[T: FastEq]: FastEq[Pot[T]] = {
       new FastEq[Pot[T]] {
         override def eqv(a: Pot[T], b: Pot[T]): Boolean = {
+          // TODO Этот код дублирует OptFastEq.Wrapped. Надо бы через Pot/Option-typeclass унифицировать код.
           val aEmpty = a.isEmpty
           val bEmpty = b.isEmpty
           (aEmpty && bEmpty) || {
@@ -26,11 +30,6 @@ object DiodeUtil {
           }
         }
       }
-    }
-
-    /** Искуственная подстанова FastEq произвольного типа с eq-сравниванием. */
-    def AnyRefFastEq[T <: AnyRef]: FastEq[T] = {
-      FastEq.AnyRefEq.asInstanceOf[FastEq[T]]
     }
 
   }

@@ -28,6 +28,9 @@ import scalacss.ScalaCssReact._
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 29.11.17 21:52
   * Description: Компонент географической карты для панели поиска.
+  *
+  * Рендерится ЧЕРЕЗ wrap(), connect() будет тормозить сильно.
+  * Содержит в себе компоненты для карты и всего остального.
   */
 class SearchMapR(
                   getScCssF  : GetScCssF
@@ -97,6 +100,55 @@ class SearchMapR(
 
       val mapInit = mapInitProxy.value
 
+      // Все компоненты инициализируются с lazy, т.к. раньше встречались какие-то рандомные ошибки в некоторых слоях. race conditions?
+
+      // Рендерим основную гео-карту:
+      lazy val tileLayer = ReactLeafletUtil.Tiles.OsmDefault
+      // Плагин для геолокации текущего юзера.
+      lazy val locateControl = LocateControlR()
+      // Рендер шейпов и маркеров текущий узлов.
+      lazy val rcvrsGeo = s.rcvrsGeoC { RcvrMarkersR.applyNoChildren }
+      // Рендер опционального маркера-крутилки для ожидания загрузки.
+      lazy val loaderOpt = s.loaderOptC { _mapLoaderReuseF }
+      // Рендер круга текущей геолокации юзера:
+      lazy val userLoc = s.userLocOptC { _userLocShapeF }
+
+      // Рендер компонента leaflet-карты вне maybeEl чтобы избежать перерендеров.
+      // Вынос этого компонента за пределы maybeEl() поднял производительность карты на порядок.
+      lazy val mmapComp = {
+        val geoMapCssSome = Some( mapCSS.geomap.htmlClass )
+        //val someFalse = Some(false)
+
+        // TODO Нужно как-то организовать reuse инстанса фунции. Эта фунция зависит от state, и хз, как это нормально организовать. Вынести в top-level?
+        s.mmapC { mmapProxy =>
+          mmapProxy.wrap { mmap =>
+            MGeoMapPropsR(
+              center        = mmap.center,
+              zoom          = mmap.zoom,
+              locationFound = mmap.locationFound,
+              cssClass      = geoMapCssSome,
+              // Вручную следим за ресайзом, т.к. у Leaflet это плохо получается (если карта хоть иногда бывает ЗА экраном, его считалка размеров ломается).
+              //trackWndResize = someFalse,
+              whenReady     = _onMapReadyOptF,
+              //onDragStart   = _onMapDragStartOptF,
+              onDragEnd     = _onMapDragEndOptF
+            )
+          } { geoMapPropsProxy =>
+            LMapR(
+              LGeoMapR
+                .lmMapSProxy2lMapProps( geoMapPropsProxy )
+                .noAttribution
+            )(
+              tileLayer,
+              locateControl,
+              userLoc,
+              rcvrsGeo,
+              loaderOpt
+            )
+          }
+        }
+      }
+
       <.div(
         mapCSS.outer,
 
@@ -110,52 +162,9 @@ class SearchMapR(
             ^.onTouchMove   ==> _stopPropagationF,
             ^.onTouchCancel ==> _stopPropagationF,
 
-            {
-              // Рендерим основную гео-карту:
-              lazy val tileLayer = ReactLeafletUtil.Tiles.OsmDefault
-              // Плагин для геолокации текущего юзера.
-              lazy val locateControl = LocateControlR()
-              // Рендер шейпов и маркеров текущий узлов.
-              lazy val rcvrsGeo = s.rcvrsGeoC { RcvrMarkersR.applyNoChildren }
-              // Рендер опционального маркера-крутилки для ожидания загрузки.
-              lazy val loaderOpt = s.loaderOptC { _mapLoaderReuseF }
-              // Рендер круга текущей геолокации юзера:
-              lazy val userLoc = s.userLocOptC { _userLocShapeF }
-
-              ReactCommonUtil.maybeEl(mapInit.ready) {
-                val geoMapCssSome = Some( mapCSS.geomap.htmlClass )
-                //val someFalse = Some(false)
-
-                // TODO Нужно как-то организовать reuse инстанса фунции. Эта фунция зависит от state, и хз, как это нормально организовать. Вынести в top-level?
-                s.mmapC { mmapProxy =>
-                  mmapProxy.wrap { mmap =>
-                    MGeoMapPropsR(
-                      center        = mmap.center,
-                      zoom          = mmap.zoom,
-                      locationFound = mmap.locationFound,
-                      cssClass      = geoMapCssSome,
-                      // Вручную следим за ресайзом, т.к. у Leaflet это плохо получается (если карта хоть иногда бывает ЗА экраном, его считалка размеров ломается).
-                      //trackWndResize = someFalse,
-                      whenReady     = _onMapReadyOptF,
-                      //onDragStart   = _onMapDragStartOptF,
-                      onDragEnd     = _onMapDragEndOptF
-                    )
-                  } { geoMapPropsProxy =>
-                    LMapR(
-                      LGeoMapR
-                        .lmMapSProxy2lMapProps( geoMapPropsProxy )
-                        .noAttribution
-                    )(
-                      tileLayer,
-                      locateControl,
-                      userLoc,
-                      rcvrsGeo,
-                      loaderOpt
-                    )
-                  }
-
-                }
-              }
+            // Наконец, непосредственный рендер карты:
+            ReactCommonUtil.maybeEl(mapInit.ready) {
+              mmapComp
             }
 
           )

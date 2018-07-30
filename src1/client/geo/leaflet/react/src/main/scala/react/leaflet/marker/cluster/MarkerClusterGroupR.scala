@@ -7,7 +7,7 @@ import react.leaflet.Context
 import react.leaflet.layer.MapLayerR
 
 import scala.scalajs.js
-import scala.scalajs.js.{JSON, UndefOr}
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -56,7 +56,6 @@ sealed class MarkerClusterGroupC(_props: MarkerClusterGroupPropsR, _ctx: Context
   }
 
   override def componentWillReceiveProps(nextProps: MarkerClusterGroupPropsR): Unit = {
-    println(s"cWRP: ")
     val mcg = leafletElement
     mcg.clearLayers()
     // Дропнуть все листенеры, т.к. в setLayers будут повешены новые листенеры.

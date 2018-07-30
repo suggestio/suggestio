@@ -13,6 +13,9 @@ import japgolly.univeq._
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 30.11.17 16:45
   * Description: Модель состояния вкладки со списком тегов.
+  *
+  * Для простоты, модель следует считать неявно-пустой.
+  * Но при сбросе НАДО явно ЗАМЕНЯТЬ инстанс на статический empty.
   */
 object MNodesFoundS {
 

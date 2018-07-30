@@ -37,7 +37,6 @@ class SearchR(
 
 
   protected[this] case class State(
-                                    mapInitC            : ReactConnectProxy[MMapInitState],
                                     sTextC              : ReactConnectProxy[MScSearchText],
                                     tabC                : ReactConnectProxy[MSearchTab],
                                     isShownC            : ReactConnectProxy[Some[Boolean]],
@@ -77,18 +76,17 @@ class SearchR(
           // Переключалка вкладок карта-теги
           s.tabC { tabsR.apply },
 
-          // Карта.
-
           // Тело текущего таба.
           {
             // Рендер вкладки карты:
-            val geoTab = s.mapInitC { searchMapR.apply }
+            val geoTab = props.wrap(_.geo.mapInit) { searchMapR.apply }
 
             // Рендер наполнения вкладки тегов:
             val tagsTab = tagsSearchR( props )(
               s.tagsFoundC { nodesFoundR.apply }
             )
 
+            // TODO Это должно разруливаться полностью на уровне CSS. Но не ScCss, а где-то ещё. Там же в CSS и анимироваться.
             s.tabC { currTabProxy =>
               val currTab = currTabProxy.value
 
@@ -121,7 +119,6 @@ class SearchR(
   val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        mapInitC  = propsProxy.connect( _.geo.mapInit ),
         sTextC    = propsProxy.connect( _.text ),
         tabC      = propsProxy.connect( _.currTab ),
         isShownC  = propsProxy.connect( p => Some(p.isShown) )( OptFastEq.OptValueEq ),

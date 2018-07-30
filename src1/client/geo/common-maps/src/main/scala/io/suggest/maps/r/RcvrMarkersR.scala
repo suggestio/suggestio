@@ -24,7 +24,7 @@ import io.suggest.sjs.leaflet.event.MouseEvent
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.icon.IconOptions
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent, MarkerOptions}
-import io.suggest.spa.DiodeUtil
+import io.suggest.spa.{DiodeUtil, FastEqUtil}
 import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ScalaComponent}
@@ -271,7 +271,7 @@ object RcvrMarkersR {
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackendWithChildren[Backend]
     // Тут мега-трэш-код, т.к. есть проблемы с дженериком состояния и отсутствующим FastEq[S].
-    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( DiodeUtil.FastEqExt.PotAsOptionFastEq( DiodeUtil.FastEqExt.AnyRefFastEq ) ) )
+    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( DiodeUtil.FastEqExt.PotAsOptionFastEq( FastEqUtil.AnyRefFastEq ) ) )
     .build
 
 

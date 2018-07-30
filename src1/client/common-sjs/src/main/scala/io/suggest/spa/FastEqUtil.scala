@@ -43,4 +43,9 @@ object FastEqUtil {
     }
   }
 
+  /** Искуственная подстанова FastEq произвольного типа с eq-сравниванием. */
+  def AnyRefFastEq[T <: AnyRef]: FastEq[T] = {
+    FastEq.AnyRefEq.asInstanceOf[FastEq[T]]
+  }
+
 }

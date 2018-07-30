@@ -38,8 +38,9 @@ object MGeoTabData {
 /** Контейнер модели состояния поиска узлов на карте.
   *
   * @param rcvrsCache Кэш полной карты ресиверов.
-  * @param delay Модель подавления паразитных перемещений карты.
-  * @param lmap Перехваченный инстанс карты leaflet, который участвует в рендере.
+  * @param delay Опциональное состояние отложенной реакции на события карты.
+  * @param lmap leaflet instance для воздействия напрямую на карта в обход в react-leaflet.
+  *             Возможно, станет ненужным при использовании react context api (react-leaflet v2+).
   */
 case class MGeoTabData(
                         rcvrsCache      : Pot[MSearchRespInfo[MGeoNodesResp]]    = Pot.empty,

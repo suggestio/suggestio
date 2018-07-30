@@ -15,6 +15,7 @@ object MGeoTabS {
   implicit object MGeoTabSFastEq extends FastEq[MGeoTabS] {
     override def eqv(a: MGeoTabS, b: MGeoTabS): Boolean = {
       (a.mapInit  ===* b.mapInit) &&
+        //(a.found ===* b.found) &&
         (a.data ===* b.data)
     }
   }
@@ -26,18 +27,19 @@ object MGeoTabS {
 /** Класс-контейнер данных гео-таба.
   *
   * @param mapInit Состояние компонента [[io.suggest.sc.v.search.SearchMapR]].
-  * @param delay Опциональное состояние отложенной реакции на события карты.
-  * @param lmap leaflet instance для воздействия напрямую на карта в обход в react-leaflet.
-  *             Возможно, станет ненужным при использовании react context api (react-leaflet v2+).
+  * @param data Контейнер данных вкладки, используемых только в контроллерах. Не участвуют в рендере.
+  * @param found Найденные элементы или инстанс empty, когда поиск не активен.
   */
 case class MGeoTabS(
-                     mapInit  : MMapInitState,
+                     mapInit    : MMapInitState,
+                     //found      : MNodesFoundS       = MNodesFoundS.empty,
                    // TODO Добавить сюда Option[MNodesFoundS] для рендера списка NodesFound рядом с картой. Через lazy val это реализовать не очень и не получается.
-                     data     : MGeoTabData        = MGeoTabData.empty,
+                     data       : MGeoTabData        = MGeoTabData.empty,
                    ) {
 
   def withMapInit(mapr: MMapInitState) = copy( mapInit = mapr )
   def withData(data: MGeoTabData) = copy( data = data )
+  //def withFound(found: MNodesFoundS) = copy(found = found)
 
 
   /** Дедубликация кода сброса значения this.mapInit.loader. */
