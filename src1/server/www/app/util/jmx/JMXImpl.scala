@@ -18,6 +18,7 @@ import io.suggest.util.{JMXBase, JMXHelpers}
 import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.inject.ApplicationLifecycle
 import util.adv.direct.AdvRcvrsUtilJmx
+import util.adv.geo.AdvGeoRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.billing.cron.ReActivateCurrentAdvsJmx
 import util.es.SiowebEsModelJmx
@@ -35,7 +36,7 @@ import scala.concurrent.{ExecutionContext, Future}
 case class JMXImpl @Inject() (
                                mMediasJmx                    : MMediasJmx,
                                siowebEsModelJmx              : SiowebEsModelJmx,
-                               advUtilJmx                    : AdvRcvrsUtilJmx,
+                               advRcvrsUtilJmx               : AdvRcvrsUtilJmx,
                                mCalendarJmx                  : MCalendarJmx,
                                mNodesJmx                     : MNodesJmx,
                                geoTagsUtilJmx                : GeoTagsUtilJmx,
@@ -53,6 +54,7 @@ case class JMXImpl @Inject() (
                                sCryptUtilJmx                 : SCryptUtilJmx,
                                dynImgUtilJmx                 : DynImgUtilJmx,
                                reActivateCurrentAdvsJmx      : ReActivateCurrentAdvsJmx,
+                               advGeoRcvrsUtilJmx            : AdvGeoRcvrsUtilJmx,
                                lifecycle                     : ApplicationLifecycle,
                                implicit private val ec       : ExecutionContext
                              )

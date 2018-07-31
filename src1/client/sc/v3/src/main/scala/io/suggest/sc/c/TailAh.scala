@@ -283,9 +283,9 @@ class TailAh[M](
                     v0.index.search.geo.mapInit
                       // Переместить карту в текущую точку.
                       .withState(
-                      v0.index.search.geo.mapInit.state
-                        .withCenterInitReal( geoLoc.point )
-                    )
+                        v0.index.search.geo.mapInit.state
+                          .withCenterInitReal( geoLoc.point )
+                      )
                       // Текущая позиция юзера - тут же.
                       .withUserLoc( Some(geoLoc) )
                   )

@@ -1,20 +1,26 @@
 package io.suggest.sc.v.search
 
+import diode.FastEq
 import diode.react.ReactPot._
 import diode.react.ModelProxy
+import io.suggest.common.empty.OptionUtil
 import io.suggest.css.Css
+import io.suggest.geo.{DistanceUtil, MGeoLoc}
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.r.LkPreLoaderR
+import io.suggest.maps.u.MapsUtil
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{MNodesFoundS, NodeRowClick, NodesScroll}
 import io.suggest.sc.styl.GetScCssF
+import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromHtml, ScalaComponent}
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
+import io.suggest.common.html.HtmlConstants.`~`
 
 /**
   * Suggest.io
@@ -26,7 +32,24 @@ class NodesFoundR(
                    getScCssF   : GetScCssF
                  ) {
 
-  type Props_t = MNodesFoundS
+  /** Контейнер данных для рендера компонента.
+    *
+    * @param found Данные найденных тегов/узлов.
+    * @param withDistanceTo Рендерить расстояние до указанной локации. Инстанс mapInit.userLoc.
+    */
+  case class PropsVal(
+                       found            : MNodesFoundS,
+                       withDistanceTo   : Option[MGeoLoc]
+                     )
+  implicit object NodesFoundRPropsValFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      (a.found ===* b.found) &&
+        (a.withDistanceTo ===* b.withDistanceTo)
+    }
+  }
+
+
+  type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -44,28 +67,30 @@ class NodesFoundR(
     }
 
 
-    def render( nodeSearchProxy: ModelProxy[MNodesFoundS]): VdomElement = {
+    def render(propsProxy: Props): VdomElement = {
       val scCss = getScCssF()
       val NodesCSS = scCss.Search.Tabs.NodesFound
 
-      val mNodesSearch = nodeSearchProxy.value
-      val _tagRow = NodesCSS.nodeRow: TagMod
-      val _odd = NodesCSS.oddRow: TagMod
-      val _even = NodesCSS.evenRow: TagMod
+      val props = propsProxy.value
+      val mfound = props.found
+      val _tagRowCss = NodesCSS.nodeRow: TagMod
+      val _oddCss = NodesCSS.oddRow: TagMod
+      lazy val _evenCss = NodesCSS.evenRow: TagMod
+      lazy val _distanceCss = NodesCSS.distance: TagMod
 
       <.div(
         NodesCSS.listDiv,
 
         // Подписка на события скроллинга:
-        ReactCommonUtil.maybe(mNodesSearch.hasMore && !mNodesSearch.req.isPending) {
+        ReactCommonUtil.maybe(mfound.hasMore && !mfound.req.isPending) {
           ^.onScroll ==> _onNodesListScroll
         },
 
         // Рендер нормального списка найденных узлов.
-        mNodesSearch.req.render { tagsRi =>
+        mfound.req.render { tagsRi =>
           if (tagsRi.resp.isEmpty) {
             <.div(
-              _tagRow,
+              _tagRowCss,
               // Надо, чтобы юзер понимал, что запрос поиска отработан.
               tagsRi.textQuery.fold {
                 Messages( MsgCodes.`No.tags.here` )
@@ -78,20 +103,35 @@ class NodesFoundR(
               .resp
               .iterator
               .zipWithIndex
-              .toVdomArray { case (mtag, i) =>
-                val p = mtag.props
+              .toVdomArray { case (node, i) =>
+                val p = node.props
+
+                // Рассчитать наименьшее расстояние от юзера до узла:
+                val distancesIter = for {
+                  // Если задана точка нахождения юзера...
+                  loc <- props.withDistanceTo.iterator
+                  locLl = MapsUtil.geoPoint2LatLng( loc.point )
+                  // Перебрать гео-шейпы, попутно рассчитывая расстояние до центров:
+                  nodeShape <- node.shapes
+                  nodeCenterGp <- nodeShape.centerPoint
+                } yield {
+                  val nodeCenterLl = MapsUtil.geoPoint2LatLng( nodeCenterGp )
+                  locLl distanceTo nodeCenterLl
+                }
+                val distanceMOpt = OptionUtil.maybe( distancesIter.nonEmpty )( distancesIter.min )
+
                 // Рендер одного ряда.
                 <.div(
-                  _tagRow,
+                  _tagRowCss,
 
                   // Используем nodeId как ключ. Контроллер должен выверять отсутствие дубликатов в списке тегов.
                   ^.key := p.nodeId,
 
                   // Визуально разделять разные ряды.
-                  if (i % 2 ==* 0) _odd else _even,
+                  if (i % 2 ==* 0) _oddCss else _evenCss,
 
                   // Подсвечивать текущие выделенные теги.
-                  ReactCommonUtil.maybe(mNodesSearch.selectedId contains p.nodeId) {
+                  ReactCommonUtil.maybe(mfound.selectedId contains p.nodeId) {
                     NodesCSS.selected
                   },
 
@@ -105,34 +145,42 @@ class NodesFoundR(
                       NodesCSS.icon,
                       ^.src := ico.url
                     )
+                  },
+
+                  // Расстояние от юзера (точки) до указанного узла
+                  distanceMOpt.whenDefined { distanceM =>
+                    <.span(
+                      _distanceCss,
+                      `~`,
+                      DistanceUtil.formatDistanceM( distanceM )(Messages.f)
+                    )
                   }
 
                 )
               }
           }
-
         },
 
         // Рендер крутилки ожидания.
-        mNodesSearch.req.renderPending { _ =>
+        mfound.req.renderPending { _ =>
           <.div(
-            _tagRow,
+            _tagRowCss,
             LkPreLoaderR.AnimSmall
           )
         },
 
         // Рендер ошибки.
-        mNodesSearch.req.renderFailed { ex =>
+        mfound.req.renderFailed { ex =>
           VdomArray(
             <.div(
-              _tagRow,
+              _tagRowCss,
               ^.key := "e",
               ^.`class` := Css.Colors.RED,
               ex.getClass.getSimpleName
             ),
             <.div(
               ^.key := "m",
-              _tagRow,
+              _tagRowCss,
               ex.getMessage
             )
           )

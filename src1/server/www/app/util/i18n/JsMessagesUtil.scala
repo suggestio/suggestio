@@ -341,7 +341,12 @@ class JsMessagesUtil @Inject() (
 
   /** jsMessages для выдачи. */
   val scJsMsgsFactory: JsMessages = {
-    val msgs = SC.toSet
+    val msgs = Iterator(
+      SC,
+      DIST_UNITS
+    )
+      .flatten
+      .toSet
     val jsm = jsMessagesFactory.filtering( msgs.contains )
     // TODO Вычислять hash для кеширования?
     jsm

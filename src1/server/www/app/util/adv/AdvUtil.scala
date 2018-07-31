@@ -1,7 +1,6 @@
 package util.adv
 
 import java.time.{DayOfWeek, LocalDate}
-import javax.inject.Inject
 
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.bill._
@@ -11,6 +10,7 @@ import io.suggest.dt.{MYmd, YmdHelpersJvm}
 import io.suggest.model.n2.node.MNode
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
+import javax.inject.Inject
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
 import models.mcal.MCalsCtx
 import models.mctx.Context

@@ -37,6 +37,7 @@ trait ILatLng extends js.Object {
 @js.native
 trait LatLng extends ILatLng {
 
+  /** in meters */
   def distanceTo(other: LatLng): Double = js.native
 
   def equals(other: LatLng): Boolean = js.native

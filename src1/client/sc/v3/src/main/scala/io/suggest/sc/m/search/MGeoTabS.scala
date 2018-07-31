@@ -15,8 +15,8 @@ object MGeoTabS {
   implicit object MGeoTabSFastEq extends FastEq[MGeoTabS] {
     override def eqv(a: MGeoTabS, b: MGeoTabS): Boolean = {
       (a.mapInit  ===* b.mapInit) &&
-        //(a.found ===* b.found) &&
-        (a.data ===* b.data)
+        (a.found  ===* b.found) &&
+        (a.data   ===* b.data)
     }
   }
 
@@ -28,18 +28,17 @@ object MGeoTabS {
   *
   * @param mapInit Состояние компонента [[io.suggest.sc.v.search.SearchMapR]].
   * @param data Контейнер данных вкладки, используемых только в контроллерах. Не участвуют в рендере.
-  * @param found Найденные элементы или инстанс empty, когда поиск не активен.
+  * @param found Данные для списка найденных узлов, или инстанс empty, когда поиск не активен.
   */
 case class MGeoTabS(
                      mapInit    : MMapInitState,
-                     //found      : MNodesFoundS       = MNodesFoundS.empty,
-                   // TODO Добавить сюда Option[MNodesFoundS] для рендера списка NodesFound рядом с картой. Через lazy val это реализовать не очень и не получается.
+                     found      : MNodesFoundS       = MNodesFoundS.empty,
                      data       : MGeoTabData        = MGeoTabData.empty,
                    ) {
 
   def withMapInit(mapr: MMapInitState) = copy( mapInit = mapr )
   def withData(data: MGeoTabData) = copy( data = data )
-  //def withFound(found: MNodesFoundS) = copy(found = found)
+  def withFound(found: MNodesFoundS) = copy(found = found)
 
 
   /** Дедубликация кода сброса значения this.mapInit.loader. */

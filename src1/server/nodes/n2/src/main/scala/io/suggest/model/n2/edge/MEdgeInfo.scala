@@ -182,6 +182,8 @@ final case class MEdgeInfo(
   extends EmptyProduct
 {
 
+  def withTags(tags: Set[String]) = copy(tags = tags)
+
   /** Форматирование для вывода в шаблонах. */
   override def toString: String = {
     val sb = new StringBuilder(32)

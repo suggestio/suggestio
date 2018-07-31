@@ -58,6 +58,7 @@ object HtmlConstants {
   val GREATER                 = ">"
 
   val `.`                     = "."
+  val `~`                     = "~"
 
   @inline
   def TAG_PREFIX              = DIEZ

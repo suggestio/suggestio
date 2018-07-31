@@ -557,6 +557,10 @@ case class ScCss( args: IScCssArgs )
 
         val selected = _styleAddClass( __ + "selected" )
 
+        val distance = style(
+          fontSize.smaller
+        )
+
       }
 
 

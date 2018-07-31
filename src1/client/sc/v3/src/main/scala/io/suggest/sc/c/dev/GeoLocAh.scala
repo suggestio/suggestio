@@ -165,7 +165,7 @@ class GeoLocAh[M](
         )
 
         // Уведомить другие контроллеры о наступлении геолокации.
-        val notifyOthersFx = Effect.action( GlPubSignal(loc) )
+        val notifyOthersFx = _glPubSignalFx(loc)
 
         updatedSilent( v2, notifyOthersFx )
 
@@ -282,10 +282,15 @@ class GeoLocAh[M](
           val v2 = v0.withWatchers(
             v0.watchers + (m.glType -> wa2)
           )
-          val notifyOthersFx = Effect.action( GlPubSignal(m) )
+          val notifyOthersFx = _glPubSignalFx(m)
           updatedSilent(v2, notifyOthersFx)
         }
 
   }
+
+
+  /** Эффект сообщения GlPubSignal. */
+  private def _glPubSignalFx(loc: IGeoLocSignal): Effect =
+    Effect.action( GlPubSignal(loc) )
 
 }

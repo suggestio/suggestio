@@ -6,11 +6,12 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.maps.c.RcvrMarkersInitAh
 import io.suggest.maps.m.{HandleMapReady, InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.maps.u.MapsUtil
 import io.suggest.msg.ErrorMsgs
 import io.suggest.routes.IAdvRcvrsMapApi
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.{HandleScApiResp, MScRoot}
-import io.suggest.sc.m.search.{DoGeoSearch, InitSearchMap, MGeoTabS, MSearchRespInfo}
+import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -45,7 +46,6 @@ class GeoTabAh[M](
         val req2 = req.pending()
 
         // Подготовить аргументы запроса:
-
         val args0 = geoSearchQsRO.value
 
         if (args0.search.textQuery.exists(_.nonEmpty)) {
@@ -87,11 +87,12 @@ class GeoTabAh[M](
 
         } else if (req.nonEmpty || req.isPending || v0.mapInit.rcvrs.nonEmpty) {
           // Пустой запрос для поиска. Сбросить состояние поиска.
-          val v2 = v0
-            .withMapInit(
-              v0.mapInit.withRcvrs( v0.data.rcvrsCache )
-            )
+          val v2 = v0.copy(
+            mapInit = v0.mapInit.withRcvrs( v0.data.rcvrsCache ),
+            found   = MNodesFoundS.empty
+          )
           updated(v2)
+
         } else {
           // Ничего сбрасывать и запускать не надо.
           noChange
@@ -237,18 +238,56 @@ class GeoSearchRespHandler extends IRespWithActionHandler {
         else res0 ++ nodesResp.results
       }
 
-    val g2 = g0.withMapInit(
-      g0.mapInit
-        .withRcvrs(
-          g0.mapInit.rcvrs.ready(
-            MSearchRespInfo(
-              textQuery = ctx.m.qs.search.textQuery,
-              resp = MGeoNodesResp(
-                nodes = nodes2
-              )
-            )
+    val textQuery = ctx.m.qs.search.textQuery
+    val msri = MSearchRespInfo(
+      textQuery = textQuery,
+      resp = MGeoNodesResp(
+        nodes = nodes2
+      )
+    )
+
+    // Собрать ресиверы в итог:
+    val rcvrsPot2 = g0.mapInit.rcvrs.ready( msri )
+
+    // Заполнить/дополнить g0.found найденными элементами.
+    val mnf2 = textQuery.fold( MNodesFoundS.empty ) { _ =>
+      MNodesFoundS(
+        req = for (msri0 <- rcvrsPot2) yield {
+          // Надо рассчитать расстояния от юзера до каждой точки.
+          /*
+          val userLocLatLngOpt = for {
+            userLoc <- g0.mapInit.userLoc
+            if nodes2.exists(_.shapes.nonEmpty)
+          } yield {
+            val userLocLl = MapsUtil.geoPoint2LatLng( userLoc.point )
+            for (node0 <- nodes2) yield {
+              val distancesIter = node0.shapes
+                .iterator
+                .flatMap( _.centerPoint )
+                .map { gp =>
+                  val gpLl = MapsUtil.geoPoint2LatLng( gp )
+                  gpLl.distanceTo( userLocLl )
+                }
+              val minDistanceOpt = if (distancesIter.nonEmpty)
+                Some( distancesIter.min )
+              else
+                None
+            }
+          }*/
+          msri0.copy(
+            resp = nodes2
           )
-        )
+        },
+        // TODO Что тут выставлять? Сервер всё пачкой возвращает без limit'а.
+        hasMore     = false,
+        selectedId  = ctx.value0.index.state.currRcvrId
+      )
+    }
+
+    val g2 = g0.copy(
+      mapInit = g0.mapInit
+        .withRcvrs( rcvrsPot2 ),
+      found = mnf2
     )
 
     val v2 = _withGeo(ctx, g2)

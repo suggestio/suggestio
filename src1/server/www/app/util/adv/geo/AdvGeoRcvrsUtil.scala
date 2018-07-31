@@ -11,11 +11,13 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.{MPxRatios, MScreen}
+import io.suggest.es.model.IMust
 import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MMapNodeIconInfo}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.n2.node.{MNode, MNodeFields, MNodes}
+import io.suggest.util.JMXBase
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.MImgMakeArgs
 import models.im._
@@ -23,11 +25,12 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import play.api.mvc.Call
 import util.adn.NodesUtil
+import util.adv.build.AdvBuilderUtil
 import util.adv.direct.AdvRcvrsUtil
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, FitImgMaker, LogoUtil, WelcomeUtil}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -470,10 +473,96 @@ class AdvGeoRcvrsUtil @Inject()(
     isect == expected
   }
 
+
+  /** Без-биллинговый апгрейд эджей захвата геолокации.
+    * Есть много узлов, которые размещены на карте статично и вне биллинга.
+    * Этот метод пересобирает узлы, добавляя название узла в эдж геолокации.
+    *
+    * @return Фьючерс с кол-вом обновлённых элементов.
+    */
+  def updateAllGeoLocEdgeTags(): Future[Int] = {
+    // Инжектим инстанс, т.к. не нужен в остальном коде, а текущий метод - временный.
+    val inj = mCommonDi.current.injector
+    lazy val advBuilderUtil = inj.instanceOf[AdvBuilderUtil]
+
+    lazy val logPrefix = s"updateAllGeoLocEdgeTags()#${System.currentTimeMillis()}:"
+    LOGGER.info(s"$logPrefix Starting...")
+
+    val pred = MPredicates.NodeLocation
+
+    val geoLocNodesSearch = new MNodeSearchDfltImpl {
+      override def outEdges: Seq[ICriteria] = {
+        val cr = Criteria(
+          predicates = pred :: Nil,
+          must = IMust.MUST
+        )
+        cr :: Nil
+      }
+    }
+
+    mNodes.updateAll(
+      mNodes.startScroll(
+        queryOpt = geoLocNodesSearch.toEsQueryOpt
+      )
+    ) { mnode0 =>
+      // Есть NodeLocation-эджи, которые требуют заполнения поля tags.
+      val nodeLocEdgeTags = advBuilderUtil.nodeGeoLocTags(mnode0)
+      val mnode2 = mnode0.withEdges(
+        mnode0.edges.withOut(
+          for (e0 <- mnode0.edges.out) yield {
+            if (e0.predicate ==>> pred) {
+              // Апдейт tags
+              e0.withInfo(
+                e0.info.withTags( nodeLocEdgeTags )
+              )
+            } else {
+              e0
+            }
+          }
+        )
+      )
+      LOGGER.trace(s"$logPrefix Node#${mnode2.idOrNull} => tags=[${nodeLocEdgeTags.mkString(", ")}]")
+      Future.successful( mnode2 )
+    }
+  }
+
 }
 
 
 /** Интерфейс для DI-поля с инстансом [[AdvGeoRcvrsUtil]]. */
 trait IAdvGeoRcvrsUtilDi {
   def advGeoRcvrsUtil: AdvGeoRcvrsUtil
+}
+
+
+
+/** Интерфейс jmx mbean для [[AdvGeoRcvrsUtil]]. */
+trait AdvGeoRcvrsUtilJmxMBean {
+
+  /** Запуск чинилки поля tags в эдже NodeLocation. */
+  def updateAllGeoLocEdges(): String
+
+}
+
+/** Реализация JMX для [[AdvGeoRcvrsUtil]]. */
+class AdvGeoRcvrsUtilJmx @Inject() (
+                                     advGeoRcvrsUtil: AdvGeoRcvrsUtil,
+                                     override implicit val ec: ExecutionContext
+                                   )
+  extends JMXBase
+  with AdvGeoRcvrsUtilJmxMBean
+  with MacroLogsImpl
+{
+
+  override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
+
+  override def updateAllGeoLocEdges(): String = {
+    val fut = for {
+      countUpdated <- advGeoRcvrsUtil.updateAllGeoLocEdgeTags()
+    } yield {
+      s"Done, ${countUpdated} nodes updated."
+    }
+    awaitString(fut)
+  }
+
 }
