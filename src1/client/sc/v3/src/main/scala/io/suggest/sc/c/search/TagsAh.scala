@@ -10,6 +10,7 @@ import io.suggest.sc.m.{HandleScApiResp, MScRoot}
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
+import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 import io.suggest.sc.styl.ScCss
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -35,10 +36,15 @@ class TagsAh[M](
   with Log
 {
 
+  /** Проверить, что таб с nodes-списком относится к данному контроллеру. */
+  private def _isMyTab( tab: MSearchTab ) =
+    tab ==* MSearchTabs.Tags
+
+
   override def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Скроллинг в списке тегов: возможно надо подгрузить ещё тегов.
-    case m: NodesScroll =>
+    case m: NodesScroll if _isMyTab(m.onTab) =>
       val v0 = value
       // Надо подгружать ещё или нет?
       if (
@@ -65,7 +71,7 @@ class TagsAh[M](
 
 
     // Клик по тегу в списке тегов.
-    case m: NodeRowClick =>
+    case m: NodeRowClick if _isMyTab(m.onTab) =>
       val v0 = value
       val isAlreadySelected = v0.selectedId contains m.nodeId
 

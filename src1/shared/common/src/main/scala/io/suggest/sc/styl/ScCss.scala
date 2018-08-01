@@ -552,12 +552,18 @@ case class ScCss( args: IScCssArgs )
 
         /** Стиль иконки узла в списке узлов. */
         val icon = style(
-          // Нельзя addClassName( Css.Position.ABSOLUTE ): почему-то выравнивание идёт относительно панели, а не ряда.
-          position.absolute,
-          left( 6.px ),
-          marginTop( -8.px ),
-          height(30.px),
-          maxWidth(60.px)
+          verticalAlign.middle,
+          marginLeft(6.px),
+          maxHeight(30.px),
+          maxWidth(140.px)
+        )
+
+        /** Стиль ряда, когда нет иконки в ряду. */
+        val rowHasIcon = style(
+          textAlign.left
+        )
+        val rowNoIcon = style(
+          textAlign.center
         )
 
         val selected = _styleAddClass( __ + "selected" )

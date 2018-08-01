@@ -61,7 +61,8 @@ class SearchR(
       val geoTabMap = props.wrap(_.geo.mapInit) { searchMapR.apply }
 
       val geoNodesFound = s.nodesFoundC { nodesFoundProxy =>
-        ReactCommonUtil.maybeEl( nodesFoundProxy.value.found.nonEmpty ) {
+        val v = nodesFoundProxy.value
+        ReactCommonUtil.maybeEl( v.req.nonEmpty ) {
           nodesFoundR(nodesFoundProxy)
         }
       }
@@ -132,14 +133,20 @@ class SearchR(
         isShownC  = propsProxy.connect( p => Some(p.isShown) )( OptFastEq.OptValueEq ),
         nodesFoundC = propsProxy.connect { msearch =>
           nodesFoundR.PropsVal(
-            found = msearch.geo.found,
-            withDistanceTo = msearch.geo.mapInit.userLoc
+            req             = msearch.geo.found.req,
+            hasMore         = false,
+            selectedId      = None,    // TODO currRcvrId. Надо вынести коннекшены в top-level ScRoot.
+            withDistanceTo  = msearch.geo.mapInit.userLoc,
+            onTab           = MSearchTabs.GeoMap
           )
         },
         tagsFoundC = propsProxy.connect { msearch =>
           nodesFoundR.PropsVal(
-            found = msearch.tags,
-            withDistanceTo = None
+            req             = msearch.tags.req,
+            hasMore         = msearch.tags.hasMore,
+            selectedId      = msearch.tags.selectedId,
+            withDistanceTo  = None,
+            onTab           = MSearchTabs.Tags
           )
         }
       )

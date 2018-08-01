@@ -1,9 +1,11 @@
 package io.suggest.sc.v.search
 
 import diode.FastEq
+import diode.data.Pot
 import diode.react.ReactPot._
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.geo.{DistanceUtil, ILPolygonGs, MGeoLoc}
 import io.suggest.i18n.MsgCodes
@@ -11,8 +13,8 @@ import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.maps.u.MapsUtil
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.m.search.{MNodesFoundS, NodeRowClick, NodesScroll}
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
+import io.suggest.sc.m.search.{MSearchRespInfo, NodeRowClick, NodesScroll}
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -21,6 +23,8 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromHtml, Scala
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
 import io.suggest.common.html.HtmlConstants.`~`
+import io.suggest.maps.nodes.MGeoNodePropsShapes
+import io.suggest.sc.search.MSearchTab
 
 /**
   * Suggest.io
@@ -38,13 +42,21 @@ class NodesFoundR(
     * @param withDistanceTo Рендерить расстояние до указанной локации. Инстанс mapInit.userLoc.
     */
   case class PropsVal(
-                       found            : MNodesFoundS,
-                       withDistanceTo   : Option[MGeoLoc]
+                       req              : Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]],
+                       hasMore          : Boolean,
+                       // TODO Когда станет допустимо сразу несколько тегов, надо заменить на Set[String].
+                       selectedId       : Option[String],
+                       withDistanceTo   : Option[MGeoLoc],
+                       onTab            : MSearchTab,
                      )
   implicit object NodesFoundRPropsValFastEq extends FastEq[PropsVal] {
+    import io.suggest.ueq.JsUnivEqUtil._
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.found ===* b.found) &&
-        (a.withDistanceTo ===* b.withDistanceTo)
+      (a.req ===* b.req) &&
+        (a.hasMore ==* b.hasMore) &&
+        (a.selectedId ===* b.selectedId) &&
+        (a.withDistanceTo ===* b.withDistanceTo) &&
+        (a.onTab ===* b.onTab)
     }
   }
 
@@ -56,14 +68,19 @@ class NodesFoundR(
 
     /** Реакция на клик по одному элементу (ряду, узлу). */
     private def _onNodeRowClick(nodeId: String): Callback = {
-      dispatchOnProxyScopeCB($, NodeRowClick(nodeId))
+      dispatchOnProxyScopeCBf($) { propsProxy: Props =>
+        val v = propsProxy.value.onTab
+        NodeRowClick(nodeId, v)
+      }
     }
 
     /** Скроллинг в списке найденных узлов. */
     private def _onNodesListScroll(e: ReactEventFromHtml): Callback = {
       val scrollTop = e.target.scrollTop
       val scrollHeight = e.target.scrollHeight
-      dispatchOnProxyScopeCB($, NodesScroll(scrollTop, scrollHeight))
+      dispatchOnProxyScopeCBf($) { propsProxy: Props =>
+        NodesScroll(scrollTop, scrollHeight, propsProxy.value.onTab)
+      }
     }
 
 
@@ -72,22 +89,18 @@ class NodesFoundR(
       val NodesCSS = scCss.Search.Tabs.NodesFound
 
       val props = propsProxy.value
-      val mfound = props.found
       val _tagRowCss = NodesCSS.nodeRow: TagMod
-      val _oddCss = NodesCSS.oddRow: TagMod
-      lazy val _evenCss = NodesCSS.evenRow: TagMod
-      lazy val _distanceCss = NodesCSS.distance: TagMod
 
       <.div(
         NodesCSS.listDiv,
 
         // Подписка на события скроллинга:
-        ReactCommonUtil.maybe(mfound.hasMore && !mfound.req.isPending) {
+        ReactCommonUtil.maybe(props.hasMore && !props.req.isPending) {
           ^.onScroll ==> _onNodesListScroll
         },
 
         // Рендер нормального списка найденных узлов.
-        mfound.req.render { tagsRi =>
+        props.req.render { tagsRi =>
           if (tagsRi.resp.isEmpty) {
             <.div(
               _tagRowCss,
@@ -99,6 +112,14 @@ class NodesFoundR(
               }
             )
           } else {
+            val _oddCss = NodesCSS.oddRow: TagMod
+            val _evenCss = NodesCSS.evenRow: TagMod
+            val _distanceCss = NodesCSS.distance: TagMod
+            val _rowHasIconCss = NodesCSS.rowHasIcon: TagMod
+            val _rowNoIconCss = NodesCSS.rowNoIcon: TagMod
+            val _selectedCss = NodesCSS.selected: TagMod
+            val _iconCss = NodesCSS.icon: TagMod
+
             tagsRi
               .resp
               .iterator
@@ -128,7 +149,7 @@ class NodesFoundR(
                       }
                     }
                     .getOrElse {
-                      // TODO Последний вариант: взять любую точку шейпа. По-хорошему, этого происходить не должно вообще.
+                      // Последний вариант: взять любую точку шейпа. По-хорошему, этого происходить не должно вообще, но TODO сервер пока не шлёт точку, только шейпы.
                       MapsUtil.geoPoint2LatLng( nodeShape.firstPoint )
                     }
                   locLl distanceTo shapeCenterGp
@@ -139,9 +160,13 @@ class NodesFoundR(
                 <.div(
                   _tagRowCss,
 
+                  ^.onClick --> _onNodeRowClick(p.nodeId),
+
+                  // Цвет фона. Для прозрачных лого - нужна очень.
                   p.colors.bg.whenDefined { bgColor =>
-                    ^.backgroundColor := bgColor.hexCode,
+                    ^.backgroundColor := bgColor.hexCode
                   },
+                  // Цвет текста поверх фона c bgColor.
                   p.colors.fg.whenDefined { fgColor =>
                     ^.color := fgColor.hexCode
                   },
@@ -153,21 +178,21 @@ class NodesFoundR(
                   if (i % 2 ==* 0) _oddCss else _evenCss,
 
                   // Подсвечивать текущие выделенные теги.
-                  ReactCommonUtil.maybe(mfound.selectedId contains p.nodeId) {
-                    NodesCSS.selected
-                  },
-
-                  ^.onClick --> _onNodeRowClick(p.nodeId),
-
-                  p.hint.whenDefined,
+                  ReactCommonUtil.maybe(props.selectedId contains p.nodeId)( _selectedCss ),
 
                   // Иконка узла.
-                  p.icon.whenDefined { ico =>
-                    <.img(
-                      NodesCSS.icon,
-                      ^.src := ico.url
+                  p.icon.fold(_rowNoIconCss) { ico =>
+                    TagMod(
+                      _rowHasIconCss,
+                      <.img(
+                        _iconCss,
+                        ^.src := ico.url
+                      )
                     )
                   },
+                  HtmlConstants.NBSP_STR,
+
+                  p.hint.whenDefined,
 
                   // Расстояние от юзера (точки) до указанного узла
                   distanceMOpt.whenDefined { distanceM =>
@@ -184,7 +209,7 @@ class NodesFoundR(
         },
 
         // Рендер крутилки ожидания.
-        mfound.req.renderPending { _ =>
+        props.req.renderPending { _ =>
           <.div(
             _tagRowCss,
             LkPreLoaderR.AnimSmall
@@ -192,7 +217,7 @@ class NodesFoundR(
         },
 
         // Рендер ошибки.
-        mfound.req.renderFailed { ex =>
+        props.req.renderFailed { ex =>
           VdomArray(
             <.div(
               _tagRowCss,

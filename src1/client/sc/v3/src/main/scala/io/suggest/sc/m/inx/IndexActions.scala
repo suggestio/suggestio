@@ -1,6 +1,5 @@
 package io.suggest.sc.m.inx
 
-import io.suggest.maps.m.OpenMapRcvr
 import io.suggest.sc.m.{ISc3Action, IScIndexRespReason}
 
 /**
@@ -35,16 +34,6 @@ case object WcClick extends IIndexAction
   * @param timestamp Таймштамп-отметка, для проверки актуальности сработавшего таймера.
   */
 case class WcTimeOut(timestamp: Long) extends IIndexAction
-
-
-/** Отложенная реакция на клик по ресиверу на карте.*/
-case class MapRcvrClickDelayed(reason: OpenMapRcvr) extends IIndexAction
-
-
-/** Отложенный экшен реакции на окончание перетаскивания карты.
-  * Нужен, чтобы карта успела проанимироваться с минимумом рывков.
-  */
-case object MapDragEndDelayed extends IIndexAction
 
 
 /** Команда к ребилду текущего инстанса ScCss. */

@@ -13,6 +13,7 @@ import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.{HandleScApiResp, MScRoot}
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
+import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -35,6 +36,11 @@ class GeoTabAh[M](
   extends ActionHandler( modelRW )
   with Log
 {
+
+  /** Проверить, что таб с nodes-списком относится к данному контроллеру. */
+  private def _isMyTab( tab: MSearchTab ) =
+    tab ==* MSearchTabs.GeoMap
+
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -103,6 +109,14 @@ class GeoTabAh[M](
         noChange
       }
 
+    // Клик по узлу в списке найденных гео-узлов.
+    case m: NodeRowClick if _isMyTab(m.onTab) =>
+      val fx = Effect.action( MapReIndex(Some(m.nodeId)) )
+      effectOnly(fx)
+
+    case m: NodesScroll if _isMyTab(m.onTab) =>
+      // Пока сервер возвращает все результаты пачкой, без лимитов, реакции никакой не будет.
+      noChange
 
     // Запуск инициализации гео.карты.
     case InitSearchMap =>

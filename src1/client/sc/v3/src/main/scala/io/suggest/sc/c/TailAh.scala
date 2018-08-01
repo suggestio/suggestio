@@ -163,7 +163,7 @@ class TailAh[M](
       } {
         // Имитируем клик по тегу, да и всё.
         fxsAcc ::= Effect.action {
-          NodeRowClick( tagNodeId )
+          NodeRowClick( tagNodeId, MSearchTabs.Tags )
         }
       }
 
