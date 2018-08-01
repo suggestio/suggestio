@@ -5,7 +5,7 @@ import diode.react.ReactPot._
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.Css
-import io.suggest.geo.{DistanceUtil, MGeoLoc}
+import io.suggest.geo.{DistanceUtil, ILPolygonGs, MGeoLoc}
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.maps.u.MapsUtil
@@ -113,16 +113,38 @@ class NodesFoundR(
                   locLl = MapsUtil.geoPoint2LatLng( loc.point )
                   // Перебрать гео-шейпы, попутно рассчитывая расстояние до центров:
                   nodeShape <- node.shapes
-                  nodeCenterGp <- nodeShape.centerPoint
                 } yield {
-                  val nodeCenterLl = MapsUtil.geoPoint2LatLng( nodeCenterGp )
-                  locLl distanceTo nodeCenterLl
+                  // Поиск точки центра узла.
+                  val shapeCenterGp = nodeShape.centerPoint
+                    .map { MapsUtil.geoPoint2LatLng }
+                    .orElse {
+                      nodeShape match {
+                        case poly: ILPolygonGs =>
+                          val positions = MapsUtil.lPolygon2leafletCoords( poly )
+                          val c = MapsUtil.polyLatLngs2center( positions )
+                          Some(c)
+                        case _ =>
+                          None
+                      }
+                    }
+                    .getOrElse {
+                      // TODO Последний вариант: взять любую точку шейпа. По-хорошему, этого происходить не должно вообще.
+                      MapsUtil.geoPoint2LatLng( nodeShape.firstPoint )
+                    }
+                  locLl distanceTo shapeCenterGp
                 }
                 val distanceMOpt = OptionUtil.maybe( distancesIter.nonEmpty )( distancesIter.min )
 
                 // Рендер одного ряда.
                 <.div(
                   _tagRowCss,
+
+                  p.colors.bg.whenDefined { bgColor =>
+                    ^.backgroundColor := bgColor.hexCode,
+                  },
+                  p.colors.fg.whenDefined { fgColor =>
+                    ^.color := fgColor.hexCode
+                  },
 
                   // Используем nodeId как ключ. Контроллер должен выверять отсутствие дубликатов в списке тегов.
                   ^.key := p.nodeId,

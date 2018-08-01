@@ -631,6 +631,7 @@ trait ScIndex
     }
 
   }
+
   object ScIndexLogic {
     def apply(qs: MScQs)(implicit request: IReq[_]): ScIndexLogic = {
       val scApiVsn = qs.common.apiVsn

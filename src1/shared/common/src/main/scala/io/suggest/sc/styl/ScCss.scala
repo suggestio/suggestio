@@ -550,15 +550,21 @@ case class ScCss( args: IScCssArgs )
         val oddRow  = _styleAddClass( __ + "odd" )
         val evenRow = _styleAddClass( __ + "even")
 
+        /** Стиль иконки узла в списке узлов. */
         val icon = style(
-          height(20.px),
-          maxWidth(40.px)
+          // Нельзя addClassName( Css.Position.ABSOLUTE ): почему-то выравнивание идёт относительно панели, а не ряда.
+          position.absolute,
+          left( 6.px ),
+          marginTop( -8.px ),
+          height(30.px),
+          maxWidth(60.px)
         )
 
         val selected = _styleAddClass( __ + "selected" )
 
         val distance = style(
-          fontSize.smaller
+          fontSize.smaller,
+          float.right
         )
 
       }

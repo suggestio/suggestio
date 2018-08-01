@@ -98,7 +98,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
             )
           }
 
-        // Если возвращена userGeoLoc с сервера, которая запрашивалась и до сих пор нужна, то её выставить в состояние.
+        // Если возвращена userGeoLoc с сервера, которая запрашивалась и до сих пор она нужна, то её выставить в состояние.
         for {
           _ <- inx.userGeoLoc
           if s0.geo.mapInit.userLoc.isEmpty

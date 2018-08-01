@@ -167,9 +167,7 @@ object RcvrMarkersR {
               case lPolygon: ILPolygonGs =>
                 val _positions = MapsUtil.lPolygon2leafletCoords( lPolygon )
                 // Вычислить гео-центр этого полигона
-                val _centerLL = Leaflet.polygon( _positions )
-                  .getBounds()
-                  .getCenter()
+                val _centerLL = MapsUtil.polyLatLngs2center( _positions )
                 val _center = MapsUtil.latLng2geoPoint( _centerLL )
                 val opts = new PolygonPropsR {
                   override val positions    = _positions

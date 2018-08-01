@@ -109,6 +109,12 @@ object MapsUtil {
     }
   }
 
+  /** Вычислить гео-центр этого полигона, записанного в LatLng-виде. */
+  def polyLatLngs2center(positions: PolygonLatLngs_t): LatLng = {
+    Leaflet.polygon( positions )
+      .getBounds()
+      .getCenter()
+  }
 
   /** Сборка начального состояния MMapS.
     *

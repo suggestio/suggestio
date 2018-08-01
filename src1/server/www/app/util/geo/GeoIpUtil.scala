@@ -112,6 +112,8 @@ class GeoIpUtil @Inject() (
     fixRemoteAddr( request.remoteClientAddress )
   }
 
+
+  /** Костыль: приведение IGeoFindIpResult к MGeoLoc. */
   def geoIpRes2geoLocOptFut(geoIpResOptFut: Future[Option[IGeoFindIpResult]]): Future[Option[MGeoLoc]] = {
     for (geoIpOpt <- geoIpResOptFut) yield {
       for (geoIp <- geoIpOpt) yield {
