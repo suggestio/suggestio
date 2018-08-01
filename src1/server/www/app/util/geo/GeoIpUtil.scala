@@ -112,23 +112,25 @@ class GeoIpUtil @Inject() (
     fixRemoteAddr( request.remoteClientAddress )
   }
 
+  def geoIpRes2geoLocOptFut(geoIpResOptFut: Future[Option[IGeoFindIpResult]]): Future[Option[MGeoLoc]] = {
+    for (geoIpOpt <- geoIpResOptFut) yield {
+      for (geoIp <- geoIpOpt) yield {
+        geoIp.toGeoLoc
+      }
+    }
+  }
 
   /**
     * Попытаться заполнить возможно-пустующие данные модели геолокации по данным из geoip.
     * @param geoLocOpt0 Исходные опциональные данные геолокации.
-    * @param geoIpResOptFutF Функция запуска geoip-геолокации.
+    * @param geoIpLocOptFut Функция запуска geoip-геолокации.
     * @return Фьючерс с опциональным результатом MGeoLoc, как правило Some().
     */
   def geoLocOrFromIp(geoLocOpt0: Option[MGeoLoc])
-                    (geoIpResOptFutF: => Future[Option[IGeoFindIpResult]]): Future[Option[MGeoLoc]] = {
+                    (geoIpLocOptFut: => Future[Option[MGeoLoc]]): Future[Option[MGeoLoc]] = {
     geoLocOpt0.fold [Future[Option[MGeoLoc]]] {
-      val geoLoc2Fut = for (geoIpOpt <- geoIpResOptFutF) yield {
-        for (geoIp <- geoIpOpt) yield {
-          MGeoLoc( geoIp.center )
-        }
-      }
       // Подавить и залоггировать возможные проблемы.
-      geoLoc2Fut.recover { case ex: Throwable =>
+      geoIpLocOptFut.recover { case ex: Throwable =>
         LOGGER.warn(s"geoLocOrFromIp($geoLocOpt0): failed to geoIP", ex)
         None
       }

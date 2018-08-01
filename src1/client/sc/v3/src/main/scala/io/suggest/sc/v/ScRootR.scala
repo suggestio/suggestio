@@ -67,7 +67,7 @@ class ScRootR (
                                     menuC               : ReactConnectProxy[menuR.PropsVal],
                                     menuOpenedSomeC     : ReactConnectProxy[Some[Boolean]],
                                     menuBlueToothOptC   : ReactConnectProxy[blueToothR.Props_t],
-                                    mtlbrOptC           : ReactConnectProxy[unsafeScreenAreaOffsetR.Props_t],
+                                    dbgUnsafeOffsetsOptC: ReactConnectProxy[unsafeScreenAreaOffsetR.Props_t],
                                     isRenderScC         : ReactConnectProxy[Some[Boolean]],
                                   )
 
@@ -121,7 +121,7 @@ class ScRootR (
         s.menuBlueToothOptC { blueToothR.apply },
 
         // DEBUG: Если активна отладка, то вот это ещё отрендерить:
-        s.mtlbrOptC { unsafeScreenAreaOffsetR.apply }
+        s.dbgUnsafeOffsetsOptC { unsafeScreenAreaOffsetR.apply }
       )
       val menuSideBarBody = s.menuC { menuPropsProxy =>
         menuR( menuPropsProxy )( menuSideBarBodyInner )
@@ -297,7 +297,7 @@ class ScRootR (
           mroot.dev.beaconer.isEnabled
         },
 
-        mtlbrOptC = propsProxy.connect { mroot =>
+        dbgUnsafeOffsetsOptC = propsProxy.connect { mroot =>
           OptionUtil.maybe( mroot.internals.conf.debug ) {
             mroot.dev.screen.info.unsafeOffsets
           }

@@ -501,7 +501,7 @@ class AdvGeoRcvrsUtil @Inject()(
     }
 
     mNodes.updateAll(
-      mNodes.startScroll(
+      scroller = mNodes.startScroll(
         queryOpt = geoLocNodesSearch.toEsQueryOpt
       )
     ) { mnode0 =>

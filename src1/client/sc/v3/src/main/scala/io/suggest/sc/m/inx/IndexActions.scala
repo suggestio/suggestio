@@ -17,11 +17,13 @@ sealed trait IIndexAction extends ISc3Action
   *
   * @param withWelcome Требуется ли картинка приветствия?
   * @param focusedAdId Фокусироваться на id карточки.
+  * @param retUserLoc Определять геолокацию юзера силами сервера?
   */
 case class GetIndex(
                      withWelcome: Boolean,
                      geoIntoRcvr: Boolean,
-                     override val focusedAdId: Option[String]
+                     override val focusedAdId: Option[String],
+                     retUserLoc : Boolean,
                    )
   extends IIndexAction with IScIndexRespReason
 

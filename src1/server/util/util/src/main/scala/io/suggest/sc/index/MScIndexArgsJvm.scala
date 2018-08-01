@@ -1,5 +1,6 @@
 package io.suggest.sc.index
 
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sc.ScConstants.ReqArgs._
@@ -22,22 +23,26 @@ object MScIndexArgsJvm {
                                strOptB    : QueryStringBindable[Option[String]],
                               ): QueryStringBindable[MScIndexArgs] = {
     new QueryStringBindableImpl[MScIndexArgs] {
+
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScIndexArgs]] = {
         val f = key1F(key)
         for {
           withWelcomeE        <- boolB.bind  (f(WITH_WELCOME_FN),     params)
           adnIdOptE           <- strOptB.bind(f(NODE_ID_FN),          params)
           geoIntoRcvrE        <- boolOptB.bind(f(GEO_INTO_RCVR_FN),   params)
+          retUserLocOptE      <- boolOptB.bind(f(RET_GEO_LOC_FN),     params)
         } yield {
           for {
             _adnIdOpt         <- adnIdOptE.right
             _withWelcome      <- withWelcomeE.right
             _geoIntoRcvr      <- geoIntoRcvrE.right
+            _retUserLocOpt    <- retUserLocOptE.right
           } yield {
             MScIndexArgs(
               withWelcome     = _withWelcome,
               nodeId          = _adnIdOpt,
-              geoIntoRcvr     = _geoIntoRcvr.getOrElseTrue
+              geoIntoRcvr     = _geoIntoRcvr.getOrElseTrue,
+              retUserLoc      = _retUserLocOpt.getOrElseFalse
             )
           }
         }
@@ -48,7 +53,8 @@ object MScIndexArgsJvm {
         _mergeUnbinded1(
           boolB.unbind  (f(WITH_WELCOME_FN),      value.withWelcome),
           boolB.unbind  (f(GEO_INTO_RCVR_FN),     value.geoIntoRcvr),
-          strOptB.unbind(f(NODE_ID_FN),           value.nodeId)
+          strOptB.unbind(f(NODE_ID_FN),           value.nodeId),
+          boolOptB.unbind(f(RET_GEO_LOC_FN),      OptionUtil.maybeTrue(value.retUserLoc) )
         )
       }
 

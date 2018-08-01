@@ -204,7 +204,8 @@ class TailAh[M](
         // Целиковая перезагрузка выдачи.
         fxsAcc ::= getIndexFx(
           geoIntoRcvr = false,
-          focusedAdId = m.mainScreen.focusedAdId
+          focusedAdId = m.mainScreen.focusedAdId,
+          retUserLoc  = v2.index.search.geo.mapInit.userLoc.isEmpty
         )
         val fx = fxsAcc.mergeEffectsSet.get
         ah.updateMaybeSilentFx(needUpdateUi)(v2, fx)
@@ -259,8 +260,8 @@ class TailAh[M](
       } { geoLockTimerId =>
         // Прямо сейчас этот контроллер ожидает координаты.
         // Функция общего кода завершения ожидания координат: запустить выдачу, выключить geo loc, грохнуть таймер.
-        def __finished(v00: MScRoot) = {
-          val fxs = getIndexFx(geoIntoRcvr = true) + geoOffFx
+        def __finished(v00: MScRoot, isSuccess: Boolean) = {
+          val fxs = getIndexFx(geoIntoRcvr = true, retUserLoc = !isSuccess) + geoOffFx
           DomQuick.clearTimeout(geoLockTimerId)
           val v22 = _removeTimer(v00)
           updatedSilent(v22, fxs)
@@ -271,7 +272,7 @@ class TailAh[M](
           // Ожидаются координаты, но пришла ошибка. Можно ещё подождать, но пока считаем, что это конец.
           // Скорее всего, юзер отменил геолокацию или что-то ещё хуже.
           {_ =>
-            __finished(v0)
+            __finished(v0, isSuccess = false)
           },
           // Есть какие-то координаты, но не факт, что ожидаемо точные.
           {geoLoc =>
@@ -295,7 +296,7 @@ class TailAh[M](
 
             if (m.orig.glType.highAccuracy) {
               // Пришли точные координаты. Завершаем ожидание.
-              __finished(v1)
+              __finished(v1, isSuccess = true)
             } else {
               // Пока получены не точные координаты. Надо ещё подождать координат по-точнее...
               updatedSilent(v1)
@@ -313,7 +314,7 @@ class TailAh[M](
       } { _ =>
         // Удалить из состояния таймер геолокации, запустить выдачу.
         val v2 = _removeTimer(v0)
-        val fxs = getIndexFx(geoIntoRcvr = true) + geoOffFx
+        val fxs = getIndexFx(geoIntoRcvr = true, retUserLoc = true) + geoOffFx
         updatedSilent(v2, fxs)
       }
 
@@ -411,9 +412,9 @@ class TailAh[M](
     )
   }
 
-  private def getIndexFx(geoIntoRcvr: Boolean, focusedAdId: Option[String] = None): Effect = {
+  private def getIndexFx(geoIntoRcvr: Boolean, focusedAdId: Option[String] = None, retUserLoc: Boolean = false): Effect = {
     Effect.action(
-      GetIndex(withWelcome = true, geoIntoRcvr = geoIntoRcvr, focusedAdId = focusedAdId) )
+      GetIndex(withWelcome = true, geoIntoRcvr = geoIntoRcvr, focusedAdId = focusedAdId, retUserLoc = retUserLoc) )
   }
 
   private def geoOffFx: Effect =

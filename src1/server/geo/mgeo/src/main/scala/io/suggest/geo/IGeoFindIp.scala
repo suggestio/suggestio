@@ -38,4 +38,8 @@ trait IGeoFindIpResult {
   /** Точность ip-геолокации в метрах. */
   def accuracyMetersOpt: Option[Int]
 
+
+  def toGeoLoc: MGeoLoc =
+    MGeoLoc(center, accuracyMetersOpt.map(_.toDouble))
+
 }

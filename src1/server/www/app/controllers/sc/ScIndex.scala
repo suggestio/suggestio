@@ -97,11 +97,13 @@ trait ScIndex
       findFut
     }
 
+    /** Результат ip-геолокации. приведённый к MGeoLoc. */
+    lazy val geoIpLocOptFut = geoIpUtil.geoIpRes2geoLocOptFut( geoIpResOptFut )
+
     /** ip-геолокация, когда гео-координаты или иные полезные данные клиента отсутствуют. */
-    def reqGeoLocFut: Future[Option[MGeoLoc]] = {
-      geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLocOpt )(geoIpResOptFut)
+    lazy val reqGeoLocFut: Future[Option[MGeoLoc]] = {
+      geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLocOpt )( geoIpLocOptFut )
     }
-    lazy val reqGeoLocFutVal = reqGeoLocFut
 
 
     /** #00: поиск узла по id ресивера, указанного в qs.
@@ -171,7 +173,7 @@ trait ScIndex
       // Если с ресивером по id не фартует, но есть данные геолокации, то заодно запускаем поиск узла-ресивера по геолокации.
       // В понятиях старой выдачи, это поиск активного узла-здания.
       // Нет смысла выносить этот асинхронный код за пределы recoverWith(), т.к. он или не нужен, или же выполнится сразу синхронно.
-      val _reqGeoLocFut = reqGeoLocFutVal
+      val _reqGeoLocFut = reqGeoLocFut
 
       _reqGeoLocFut.flatMap { geoLocOpt =>
         // Пусть будет сразу NSEE, если нет данных геолокации.
@@ -577,6 +579,10 @@ trait ScIndex
       val _welcomeInfoOptFut   = welcomeInfoOptFut
       val _nodeGeoPointOptFut  = nodeGeoPointOptFut
       val _isMyNodeFut         = isMyNodeFut
+      // Возвращать геолокацию юзера только если затребовано в исходном запросе.
+      val _reqGeoLocOptFut = if (_scIndexArgs.retUserLoc) geoIpLocOptFut
+      else Future.successful(None)
+
       for {
         nodeIdOpt       <- _nodeIdOptFut
         nodeName        <- _nodeNameFut
@@ -585,6 +591,7 @@ trait ScIndex
         welcomeOpt      <- _welcomeInfoOptFut
         nodeGeoPointOpt <- _nodeGeoPointOptFut
         isMyNode        <- _isMyNodeFut
+        reqGeoLocOpt    <- _reqGeoLocOptFut
       } yield {
         val resp = MSc3IndexResp(
           nodeId        = nodeIdOpt,
@@ -594,7 +601,8 @@ trait ScIndex
           welcome       = welcomeOpt,
           geoPoint      = nodeGeoPointOpt,
           isMyNode      = isMyNode,
-          isRcvr        = nodeInfo.isRcvr
+          isRcvr        = nodeInfo.isRcvr,
+          userGeoLoc    = reqGeoLocOpt
         )
         MSc3RespAction(
           acType = respActionType,

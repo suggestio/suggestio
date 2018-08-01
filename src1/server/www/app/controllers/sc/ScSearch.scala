@@ -51,7 +51,7 @@ trait ScSearch
     )
 
     def mGeoLocOptFut = OptionUtil.maybeFut( _qs.search.rcvrId.isEmpty ) {
-      geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLocOpt )( geoIpResOptFut )
+      geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLocOpt )( geoIpUtil.geoIpRes2geoLocOptFut(geoIpResOptFut) )
     }
 
     def nodesSearch: Future[MNodeSearch] = {

@@ -88,7 +88,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
             s0.withGeo(
               s0.geo.withMapInit(
                 s0.geo.mapInit.withState(
-                  s0.geo.mapInit.state.copy(
+                  s0.geo.mapInit.state.withCenterInitReal(
                     centerInit = mgp,
                     centerReal = None
                     // TODO выставлять ли zoom?
@@ -97,6 +97,18 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
               )
             )
           }
+
+        // Если возвращена userGeoLoc с сервера, которая запрашивалась и до сих пор нужна, то её выставить в состояние.
+        for {
+          _ <- inx.userGeoLoc
+          if s0.geo.mapInit.userLoc.isEmpty
+        } {
+          s0 = s0.withGeo(
+            s0.geo.withMapInit(
+              s0.geo.mapInit.withUserLoc( inx.userGeoLoc )
+            )
+          )
+        }
 
         // Возможный сброс состояния тегов
         s0 = s0.maybeResetTags
@@ -204,7 +216,7 @@ class IndexAh[M](
     * @return ActionResult.
     */
   private def _getIndex(withWelcome: Boolean, silentUpdate: Boolean, v0: MScIndex,
-                        geoIntoRcvr: Boolean, reason: IScIndexRespReason): ActionResult[M] = {
+                        geoIntoRcvr: Boolean, reason: IScIndexRespReason, retUserLoc: Boolean): ActionResult[M] = {
     val ts = System.currentTimeMillis()
 
     val fx = Effect {
@@ -224,7 +236,8 @@ class IndexAh[M](
           MScIndexArgs(
             nodeId      = v0.state.currRcvrId,
             withWelcome = withWelcome,
-            geoIntoRcvr = geoIntoRcvr
+            geoIntoRcvr = geoIntoRcvr,
+            retUserLoc  = retUserLoc
           )
         ),
         // Фокусироваться надо при запуске. Для этого следует получать всё из reason, а не из состояния.
@@ -249,7 +262,7 @@ class IndexAh[M](
         .transform { tryRes =>
           val r2 = HandleScApiResp(
             reqTimeStamp  = Some(ts),
-            qs        = args,
+            qs            = args,
             tryResp       = tryRes,
             reason        = reason
           )
@@ -311,7 +324,8 @@ class IndexAh[M](
           silentUpdate  = false,
           v0            = v1,
           geoIntoRcvr   = m.rcvrId.nonEmpty,
-          reason        = m
+          reason        = m,
+          retUserLoc    = false
         )
       }
 
@@ -323,7 +337,8 @@ class IndexAh[M](
         silentUpdate  = true,
         v0            = value,
         geoIntoRcvr   = m.geoIntoRcvr,
-        reason        = m
+        reason        = m,
+        retUserLoc    = m.retUserLoc
       )
 
   }

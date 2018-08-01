@@ -1,6 +1,6 @@
 package io.suggest.sc.index
 
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.geo.MGeoPoint.JsonFormatters.QS_OBJECT
 import io.suggest.media.IMediaInfo
 import io.suggest.model.n2.node.meta.colors.MColors
@@ -26,7 +26,8 @@ object MSc3IndexResp {
     (__ \ "w").formatNullable[MWelcomeInfo] and
     (__ \ "g").formatNullable[MGeoPoint] and
     (__ \ "m").format[Boolean] and
-    (__ \ "r").format[Boolean]
+    (__ \ "r").format[Boolean] and
+    (__ \ "o").formatNullable[MGeoLoc]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MSc3IndexResp] = UnivEq.derive
@@ -46,6 +47,7 @@ object MSc3IndexResp {
   *               true - торговый центр
   *               false - это какой-то район города или иной узел-обложка.
   * @param isMyNode Есть ли у текущего юзера права доступа на этот узел?
+  * @param userGeoLoc Геолокация юзера, исходя из реквеста и если запрошена в реквесте.
   */
 case class MSc3IndexResp(
                          nodeId     : Option[String],
@@ -55,6 +57,7 @@ case class MSc3IndexResp(
                          welcome    : Option[MWelcomeInfo],
                          geoPoint   : Option[MGeoPoint],
                          isMyNode   : Boolean,
-                         isRcvr     : Boolean
+                         isRcvr     : Boolean,
+                         userGeoLoc : Option[MGeoLoc]
                        )
 

@@ -84,7 +84,7 @@ case class MGeoFindIpResult(city: MCity, range: MIpRange) extends IGeoFindIpResu
 
   override def accuracyMetersOpt: Option[Int] = {
     // TODO Нужно ли что-нибудь тут задать? 50км например?
-    None
+    Some( 20000 )
   }
 
 }
