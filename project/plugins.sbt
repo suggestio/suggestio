@@ -30,7 +30,7 @@ addSbtPlugin("org.github.ngbinh" % "sbt-simple-url-update" % "1.0.5-SNAPSHOT")
 
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.13")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.16")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.2")
 
@@ -42,7 +42,7 @@ addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.22")
 addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 
 // Плагины для интеграции scalajs + npm + webpack.
-addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.12.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.13.1")
 
 addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.9.0-SNAPSHOT")
 

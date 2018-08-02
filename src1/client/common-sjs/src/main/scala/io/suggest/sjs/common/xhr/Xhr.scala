@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import io.suggest.id.IdentConst
 import io.suggest.pick.{MimeConst, PickleUtil}
 import io.suggest.proto.HttpConst
-import io.suggest.sjs.common.model.HttpRouteExtractor
+import io.suggest.sjs.common.model.{HttpRoute, HttpRouteExtractor}
 import io.suggest.sjs.common.xhr.ex._
 import org.scalajs.dom.XMLHttpRequest
 
@@ -69,6 +69,23 @@ object Xhr extends Log {
       .exists(_.nonEmpty)
     !relUrlsOk
   }
+
+  /** Функция доп.обработки URL для допиливания их до ранга абсолютных, когда это необходимо.
+    * Бывает, что требуются строго абсолютные URL (cordova). Тут - собираем фунцкию для причёсывания исходных ссылок.
+    */
+  val mkAbsUrlIfPreferred: String => String = if (Xhr.PREFER_ABS_URLS) {
+    // Фунция на случай, когда требуется причёсывать ссылки:
+    val httpProto = HttpConst.Proto.HTTP
+    val isSecure = true
+
+    url0: String =>
+      HttpRoute.mkAbsUrl( protoPrefix = httpProto, secure = isSecure, relUrl = url0 )
+
+  } else {
+    // Причёсывать ссылки не требуется. Просто используем исходные ссылки.
+    identity[String]
+  }
+
 
   /** Флаг предпочтения https над http при сборки абсолютных ссылок. */
   lazy val PREFER_SECURE_URLS: Boolean = {

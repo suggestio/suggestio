@@ -3,6 +3,7 @@ package io.suggest.sjs.leaflet.marker.cluster
 import io.suggest.sjs.leaflet.event.LEventTarget
 import io.suggest.sjs.leaflet.layer.group.FeatureGroup
 import io.suggest.sjs.leaflet.map.Layer
+import io.suggest.sjs.leaflet.LEAFLET_IMPORT
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport

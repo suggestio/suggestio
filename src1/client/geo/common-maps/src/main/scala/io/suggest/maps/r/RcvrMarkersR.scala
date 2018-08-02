@@ -84,20 +84,6 @@ object RcvrMarkersR {
     /** Рендер всей гео.карты. */
     def render(rcvrsGeoPotProxy: Props, children: PropsChildren): VdomElement = {
       rcvrsGeoPotProxy().toOption.whenDefinedEl { mRcvrsGeo =>
-        // Бывает, что требуются строго абсолютные URL (cordova). Тут - собираем фунцкию для причёсывания исходных ссылок.
-        val maybeAbsUrlF: String => String = if (Xhr.PREFER_ABS_URLS) {
-          // Фунция на случай, когда требуется причёсывать ссылки:
-          val httpProto = HttpConst.Proto.HTTP
-          val isSecure = true
-
-          url0: String =>
-            HttpRoute.mkAbsUrl( protoPrefix = httpProto, secure = isSecure, relUrl = url0 )
-
-        } else {
-          // Причёсывать ссылки не требуется. Просто используем исходные ссылки.
-          identity[String]
-        }
-
         // Собираем сложный итератор, который на выходе в элементах выдаёт два аккамулятора: маркеры и шейпы.
         val iter = for {
           mnode <- mRcvrsGeo.nodes.iterator
@@ -120,7 +106,7 @@ object RcvrMarkersR {
               mnode.props.icon.fold ( MapIcons.pinMarkerIcon() ) { iconInfo =>
                 val o = IconOptions.empty
                 // Для cordova требуются абсолютные ссылки на картинки, иначе она подставит file:// в протокол.
-                o.iconUrl = maybeAbsUrlF( iconInfo.url )
+                o.iconUrl = Xhr.mkAbsUrlIfPreferred( iconInfo.url )
                 // Описываем размеры иконки по данным сервера.
                 o.iconSize = MapsUtil.size2d2LPoint( iconInfo.wh )
                 // Для иконки -- якорь прямо в середине.

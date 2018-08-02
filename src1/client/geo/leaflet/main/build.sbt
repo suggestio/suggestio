@@ -24,3 +24,11 @@ npmDependencies in Compile ++= Seq(
   "leaflet"               -> Common.leafletJsVsn,
   "leaflet.locatecontrol" -> Common.leafletControlLocateJsVsn
 )
+
+//npmDevDependencies in Compile ++= Seq(
+  // Используется только для leaflet-locatecontrol, чтобы отвязать от window.L окончательно.
+  //"imports-loader" -> Common.Vsn.IMPORTS_LOADER_JS,
+  //"exports-loader" -> Common.Vsn.EXPORTS_LOADER_JS
+  //"string-replace-loader" -> Common.Vsn.STRING_REPLACE_LOADER_JS
+//)
+

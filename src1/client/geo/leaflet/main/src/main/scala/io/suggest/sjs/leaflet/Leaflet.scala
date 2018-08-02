@@ -76,6 +76,7 @@ trait ILeaflet extends js.Object {
   def geoJson(data: js.Any = js.native, options: GjOptions = js.native): GeoJson = js.native
 
   /** Rollback window.L to previous value. */
+  // TODO Удалить, когда без-window.L-сборка окончательно зафиксируется в релизах leaflet.
   def noConflict(): Leaflet.type | js.Any = js.native
 
   val version: String = js.native

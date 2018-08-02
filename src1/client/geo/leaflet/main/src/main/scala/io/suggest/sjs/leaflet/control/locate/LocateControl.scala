@@ -11,6 +11,7 @@ import scala.scalajs.js.annotation.JSImport
   * Created: 20.11.15 12:06
   * Description: API for location control.
   */
+//@JSImport("string-replace-loader?search=L&replace=LLLLLLLLL!./node_modules/leaflet.locatecontrol/src/L.Control.Locate.js", JSImport.Namespace)
 @JSImport("leaflet.locatecontrol", JSImport.Namespace)
 @js.native
 class LocateControl(options: LocateOptions) extends IControl {

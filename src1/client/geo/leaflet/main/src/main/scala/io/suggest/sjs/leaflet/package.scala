@@ -13,7 +13,8 @@ import scala.scalajs.js.`|`
   */
 package object leaflet {
 
-  //final val LEAFLET_IMPORT = "string-replace-loader?search=window.L&replace=window.LLLLLLLL!./node_modules/leaflet/dist/leaflet.js"
+  // TODO esm-модуль уже работает, но проблема с MarkerCluster, которые требует старую window.L, и не понимает imports-loader через esm-js-файл
+  //final val LEAFLET_IMPORT = "leaflet/dist/leaflet-src.esm.js"
   final val LEAFLET_IMPORT = "leaflet"
 
   type MapTarget = String | HTMLElement

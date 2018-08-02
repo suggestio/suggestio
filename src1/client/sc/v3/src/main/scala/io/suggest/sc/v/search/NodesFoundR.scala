@@ -25,6 +25,7 @@ import scalacss.ScalaCssReact._
 import io.suggest.common.html.HtmlConstants.`~`
 import io.suggest.maps.nodes.MGeoNodePropsShapes
 import io.suggest.sc.search.MSearchTab
+import io.suggest.sjs.common.xhr.Xhr
 
 /**
   * Suggest.io
@@ -186,7 +187,7 @@ class NodesFoundR(
                       _rowHasIconCss,
                       <.img(
                         _iconCss,
-                        ^.src := ico.url
+                        ^.src := Xhr.mkAbsUrlIfPreferred( ico.url )
                       )
                     )
                   },

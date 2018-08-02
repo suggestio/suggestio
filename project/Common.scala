@@ -153,6 +153,11 @@ object Common {
       */
     val IMPORTS_LOADER_JS = "0.8.0"
 
+    /** Замена кода в js-файлах при сборке.
+      * @see [[https://www.npmjs.com/package/string-replace-loader]]
+      */
+    val STRING_REPLACE_LOADER_JS = "2.1.1"
+
     /** AsmCrypto.js hi-speed crypto routines.
       *
       * @see [[https://github.com/vibornoff/asmcrypto.js]]
@@ -249,7 +254,7 @@ object Common {
   )
 
   /** Версия play. */
-  val playVsn         = "2.6.13"
+  val playVsn         = "2.6.16"
 
 
   /** Версия bouncy castle. */
@@ -294,10 +299,12 @@ object Common {
    *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.
    *  Где-то в leaflet-плагинах есть зависимость от wildcard-версии вида [1.0.0,),
    *  что может вызвать проблемы на сборке с пустым ivy2-кешем во время освежения версии в webjars.
+   *  1.3.2 - Первая публичная версия без window.L вообще по дефолту. 1.3.3 - временный rollback.
    */
-  val leafletJsVsn              = "1.3.1"
+  val leafletJsVsn              = "1.3.3"
 
-  /** Версия L.control.locate.js. */
+  /** Версия L.control.locate.js.
+    * 0.62.0: грязно проверяет и работает с window.L, что конфликтует minified js. string-replace решает проблему. */
   val leafletControlLocateJsVsn = "0.62.0"
 
   /** Версия Leaflet.markercluster.js. */

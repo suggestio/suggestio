@@ -21,8 +21,11 @@ object Sc3Main {
 
   /** Здесь начинается исполнение кода выдачи. */
   def main(args: Array[String]): Unit = {
-    // Выпиливаем leaflet из window.L.
-    Leaflet.noConflict()
+    try {
+      Leaflet.noConflict()
+    } catch {
+      case _: Throwable => // do nothing
+    }
 
     // Сразу поискать js-роутер на странице.
     val jsRouterFut = SrvRouter.ensureJsRouter()

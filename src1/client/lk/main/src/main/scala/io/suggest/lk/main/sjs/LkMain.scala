@@ -31,8 +31,7 @@ object LkMain extends Log {
     try {
       Leaflet.noConflict()
     } catch {
-      case ex: Throwable =>
-        LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, ex, Leaflet )
+      case _: Throwable =>
     }
 
     try {

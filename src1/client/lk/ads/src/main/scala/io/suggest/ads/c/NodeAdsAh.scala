@@ -129,7 +129,6 @@ class NodeAdsAh[M](
 
     // Команда к скачке карточек с сервера.
     case m: GetMoreAds =>
-      println(m)
       val v0 = value
       if (!v0.hasMoreAds) {
         // Больше нет карточек на сервере
