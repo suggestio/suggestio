@@ -570,7 +570,8 @@ case class ScCss( args: IScCssArgs )
 
         val distance = style(
           fontSize.smaller,
-          float.right
+          float.right,
+          paddingTop(6.px)
         )
 
       }
