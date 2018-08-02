@@ -3,14 +3,12 @@ package io.suggest.sc.v.search
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.css.Css
-import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.search._
 import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v.hdr.RightR
-import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
 
@@ -40,8 +38,6 @@ class SearchR(
   protected[this] case class State(
                                     sTextC              : ReactConnectProxy[MScSearchText],
                                     tabC                : ReactConnectProxy[MSearchTab],
-                                    isShownC            : ReactConnectProxy[Some[Boolean]],
-                                    nodesFoundC         : ReactConnectProxy[nodesFoundR.Props_t],
                                     tagsFoundC          : ReactConnectProxy[nodesFoundR.Props_t],
                                   )
 
@@ -53,19 +49,12 @@ class SearchR(
 
   class Backend( $: BackendScope[Props, State] ) {
 
-    def render(props: Props, s: State): VdomElement = {
+    def render(props: Props, s: State, children: PropsChildren): VdomElement = {
       val scCss = getScCssF()
       val SearchCSS = scCss.Search
 
       // Рендер вкладки карты:
       val geoTabMap = props.wrap(_.geo.mapInit) { searchMapR.apply }
-
-      val geoNodesFound = s.nodesFoundC { nodesFoundProxy =>
-        val v = nodesFoundProxy.value
-        ReactCommonUtil.maybeEl( v.req.nonEmpty ) {
-          nodesFoundR(nodesFoundProxy)
-        }
-      }
 
       // Рендер наполнения вкладки тегов:
       val tagsTab = tagsSearchR( props )(
@@ -103,8 +92,8 @@ class SearchR(
               // Содержимое вкладки с картой.
               <.div(
                 _renderDisplayCss( currTab ==* MSearchTabs.GeoMap ),
-                // Списочек найденных элементов над картой:
-                geoNodesFound,
+                // Списочек найденных элементов над картой (унесён в ScRoot, т.к. зависит от разных top-level-доступных моделей)
+                children,
                 // Гео.карта:
                 geoTabMap
               ),
@@ -130,16 +119,6 @@ class SearchR(
       State(
         sTextC    = propsProxy.connect( _.text ),
         tabC      = propsProxy.connect( _.currTab ),
-        isShownC  = propsProxy.connect( p => Some(p.isShown) )( OptFastEq.OptValueEq ),
-        nodesFoundC = propsProxy.connect { msearch =>
-          nodesFoundR.PropsVal(
-            req             = msearch.geo.found.req,
-            hasMore         = false,
-            selectedId      = None,    // TODO currRcvrId. Надо вынести коннекшены в top-level ScRoot.
-            withDistanceTo  = msearch.geo.mapInit.userLoc,
-            onTab           = MSearchTabs.GeoMap
-          )
-        },
         tagsFoundC = propsProxy.connect { msearch =>
           nodesFoundR.PropsVal(
             req             = msearch.tags.req,
@@ -151,9 +130,9 @@ class SearchR(
         }
       )
     }
-    .renderBackend[Backend]
+    .renderBackendWithChildren[Backend]
     .build
 
-  def apply(scSearchProxy: Props) = component( scSearchProxy )
+  def apply(scSearchProxy: Props)(children: VdomNode*) = component( scSearchProxy )(children: _*)
 
 }

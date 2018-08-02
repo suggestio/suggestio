@@ -10,13 +10,14 @@ import io.suggest.sc.styl.{GetScCssF, ScCss}
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr.HeaderR
 import io.suggest.sc.v.inx.WelcomeR
-import io.suggest.sc.v.search.SearchR
+import io.suggest.sc.v.search.{NodesFoundR, SearchR}
 import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
+import io.suggest.sc.search.MSearchTabs
 import io.suggest.sc.v.menu._
 import io.suggest.spa.OptFastEq
 import scalacss.ScalaCssReact._
@@ -39,6 +40,7 @@ class ScRootR (
                 val welcomeR    : WelcomeR,
                 val blueToothR  : BlueToothR,
                 val unsafeScreenAreaOffsetR: UnsafeScreenAreaOffsetR,
+                val nodesFoundR : NodesFoundR,
                 getScCssF       : GetScCssF,
               ) {
 
@@ -69,6 +71,7 @@ class ScRootR (
                                     menuBlueToothOptC   : ReactConnectProxy[blueToothR.Props_t],
                                     dbgUnsafeOffsetsOptC: ReactConnectProxy[unsafeScreenAreaOffsetR.Props_t],
                                     isRenderScC         : ReactConnectProxy[Some[Boolean]],
+                                    searchNodesFoundC   : ReactConnectProxy[nodesFoundR.Props_t],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -105,7 +108,20 @@ class ScRootR (
         s.gridPropsOptC { gridR.apply }
       )
 
-      val searchBarBody = s.searchC { searchR.apply }
+      // Панель поиска: контент, зависимый от корневой модели:
+      val searchGeoNodesFound = s.searchNodesFoundC { nodesFoundProxy =>
+        val v = nodesFoundProxy.value
+        ReactCommonUtil.maybeEl( v.req.nonEmpty ) {
+          nodesFoundR(nodesFoundProxy)
+        }
+      }
+      // Непосредственно, панель поиска:
+      val searchBarBody = s.searchC {
+        searchR(_)(
+          searchGeoNodesFound
+        )
+      }
+
 
       val menuSideBarBodyInner = <.div(
         // Строка входа в личный кабинет
@@ -305,7 +321,18 @@ class ScRootR (
 
         isRenderScC = propsProxy.connect { mroot =>
           Some( mroot.index.resp.nonEmpty )
-        }( OptFastEq.OptValueEq )
+        }( OptFastEq.OptValueEq ),
+
+        searchNodesFoundC = propsProxy.connect { mroot =>
+          val geo = mroot.index.search.geo
+          nodesFoundR.PropsVal(
+            req             = geo.found.req,
+            hasMore         = false,
+            selectedId      = mroot.index.state.currRcvrId,
+            withDistanceTo  = geo.mapInit.userLoc,
+            onTab           = MSearchTabs.GeoMap
+          )
+        }
 
       )
     }
