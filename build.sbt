@@ -3,10 +3,10 @@ import sbt._
 import Keys._
 import com.typesafe.sbt.web.SbtWeb.autoImport._
 import WebScalaJS.autoImport._
-import ScalaJSPlugin.autoImport._
 
 import scalajsbundler.sbtplugin.WebScalaJSBundlerPlugin
 import WebScalaJSBundlerPlugin.autoImport._
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 
 val DIR0 = "src1/"
@@ -15,7 +15,9 @@ val DIR0 = "src1/"
 Common.settingsOrg
 
 /** Общий код серверной и клиентской частей подсистемы внешнего размещения. */
-lazy val common = (crossProject.crossType( CrossType.Pure ) in file(DIR0 + "shared/common"))
+lazy val common = crossProject(JSPlatform, JVMPlatform)
+  .crossType( CrossType.Pure )
+  .in( file(DIR0 + "shared/common") )
   .settings(
     Common.settingsOrg,
     version := "0.0.0-SNAPSHOT",

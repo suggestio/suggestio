@@ -12,6 +12,8 @@ resolvers ++= Seq(
   "bintray-nitram509-jbrotli"    at "http://ivy2-internal.cbca.ru/artifactory/bintray-nitram509-jbrotli"
 )
 
+addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.5.0")
+
 addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.1")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-gzip" % "1.0.2")
@@ -37,7 +39,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.2")
 // stylus assets
 addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2s49-SNAPSHOT")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.22")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.24")
 
 addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 
