@@ -1,6 +1,7 @@
 package io.suggest.sc.m.search
 
 import diode.FastEq
+import io.suggest.sc.v.search.SearchCss
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 
@@ -15,6 +16,7 @@ object MGeoTabS {
   implicit object MGeoTabSFastEq extends FastEq[MGeoTabS] {
     override def eqv(a: MGeoTabS, b: MGeoTabS): Boolean = {
       (a.mapInit  ===* b.mapInit) &&
+        (a.css    ===* b.css) &&
         (a.found  ===* b.found) &&
         (a.data   ===* b.data)
     }
@@ -32,11 +34,14 @@ object MGeoTabS {
   */
 case class MGeoTabS(
                      mapInit    : MMapInitState,
+                   // TODO Поле было на уровне MScSearch, но унесено сюда, чтобы GeoTabAh не перепиливать. После унификации tags tab, можно будет подумать ещё раз на этим.
+                     css        : SearchCss,
                      found      : MNodesFoundS       = MNodesFoundS.empty,
                      data       : MGeoTabData        = MGeoTabData.empty,
                    ) {
 
   def withMapInit(mapr: MMapInitState) = copy( mapInit = mapr )
+  def withCss(css: SearchCss) = copy(css = css)
   def withData(data: MGeoTabData) = copy( data = data )
   def withFound(found: MNodesFoundS) = copy(found = found)
 

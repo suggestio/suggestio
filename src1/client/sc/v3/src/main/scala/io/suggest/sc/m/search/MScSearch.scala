@@ -4,6 +4,7 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.empty.OptionUtil
 import io.suggest.sc.search.{MSearchTab, MSearchTabs}
+import io.suggest.sc.v.search.SearchCss
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 
@@ -18,17 +19,15 @@ object MScSearch {
   /** Поддержка FastEq для инстансов [[MScSearch]]. */
   implicit object MScSearchFastEq extends FastEq[MScSearch] {
     override def eqv(a: MScSearch, b: MScSearch): Boolean = {
-      (a.geo        ===* b.geo)  &&
-        (a.text     ===* b.text)     &&
-        (a.tags     ===* b.tags)     &&
-        (a.currTab  ===* b.currTab)  &&
+      (a.geo        ===* b.geo) &&
+        (a.text     ===* b.text) &&
+        (a.tags     ===* b.tags) &&
+        (a.currTab  ===* b.currTab) &&
         (a.isShown  ==* b.isShown)
     }
   }
 
-  implicit def univEq: UnivEq[MScSearch] = {
-    UnivEq.derive
-  }
+  implicit def univEq: UnivEq[MScSearch] = UnivEq.derive
 
 }
 

@@ -3,6 +3,7 @@ package io.suggest.sc.v
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.css.CssR
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.hdr.{MHeaderStates, MenuOpenClose, SearchOpenClose}
 import io.suggest.sc.m.search.MScSearch
@@ -29,7 +30,6 @@ import scalacss.ScalaCssReact._
   * Description: Корневой react-компонент для выдачи третьего поколения.
   */
 class ScRootR (
-                val scCssR      : ScCssR,
                 val gridR       : GridR,
                 searchR         : SearchR,
                 val headerR     : HeaderR,
@@ -191,7 +191,7 @@ class ScRootR (
       }
 
       // Рендер стилей перед снаружи и перед остальной выдачей.
-      val scCssComp = s.scCssArgsC { scCssR.apply }
+      val scCssComp = s.scCssArgsC { CssR.apply }
 
       // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
       s.isRenderScC { isRenderSomeProxy =>
@@ -330,7 +330,8 @@ class ScRootR (
             hasMore         = false,
             selectedId      = mroot.index.state.currRcvrId,
             withDistanceTo  = geo.mapInit.userLoc,
-            onTab           = MSearchTabs.GeoMap
+            onTab           = MSearchTabs.GeoMap,
+            searchCssOrNull = mroot.index.search.geo.css
           )
         }
 

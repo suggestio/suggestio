@@ -1,8 +1,9 @@
 package io.suggest.sc.v.search
 
+import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColorData
-import io.suggest.css.Css
+import io.suggest.css.{Css, CssR}
 import io.suggest.sc.m.search._
 import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 import io.suggest.sc.styl.GetScCssF
@@ -22,13 +23,14 @@ class SearchR(
                sTextR             : STextR,
                tabsR              : TabsR,
                rightR             : RightR,
+               geoMapOuterR       : GeoMapOuterR,
                searchMapR         : SearchMapR,
                getScCssF          : GetScCssF,
                val nodesFoundR    : NodesFoundR,
                tagsSearchR        : TagsSearchR
              ) {
 
-  import MMapInitState.MMapInitStateFastEq
+  import searchMapR.SearchMapRPropsValFastEq
   import MScSearchText.MScSearchTextFastEq
   import nodesFoundR.NodesFoundRPropsValFastEq
 
@@ -39,6 +41,7 @@ class SearchR(
                                     sTextC              : ReactConnectProxy[MScSearchText],
                                     tabC                : ReactConnectProxy[MSearchTab],
                                     tagsFoundC          : ReactConnectProxy[nodesFoundR.Props_t],
+                                    searchCssC          : ReactConnectProxy[SearchCss],
                                   )
 
 
@@ -54,15 +57,57 @@ class SearchR(
       val SearchCSS = scCss.Search
 
       // Рендер вкладки карты:
-      val geoTabMap = props.wrap(_.geo.mapInit) { searchMapR.apply }
+      val geoMap = props.wrap( props =>
+        searchMapR.PropsVal(
+          mapInit   = props.geo.mapInit,
+          searchCss = props.geo.css
+        )
+      ) { searchMapR.apply }
 
       // Рендер наполнения вкладки тегов:
       val tagsTab = tagsSearchR( props )(
         s.tagsFoundC { nodesFoundR.apply }
       )
 
+      // Тело текущего таба.
+      // TODO Это должно разруливаться полностью на уровне CSS. Но не ScCss, а где-то ещё. Там же в CSS и анимироваться.
+      val tabContentInner = s.tabC { currTabProxy =>
+        val currTab = currTabProxy.value
+
+        // Контейнер всех содержимых вкладок.
+        <.div(
+          // Содержимое вкладки с картой.
+          <.div(
+            _renderDisplayCss( currTab ==* MSearchTabs.GeoMap ),
+            // Списочек найденных элементов над картой (унесён в ScRoot, т.к. зависит от разных top-level-доступных моделей)
+            children,
+            // Гео.карта:
+            geoMap
+          ),
+
+          // Содержимое вкладки с тегами.
+          <.div(
+            _renderDisplayCss( currTab ==* MSearchTabs.Tags ),
+            tagsTab
+          )
+        )
+
+      }
+
+      val tabContentOuter = props.wrap { props =>
+        geoMapOuterR.PropsVal(props.geo.css, props.currTab ==* MSearchTabs.GeoMap )
+      } { cssProxy =>
+        geoMapOuterR(cssProxy)(
+          tabContentInner
+        )
+      }
+
+
       <.div(
         SearchCSS.panel,
+
+        // Рендер очень динамической search-only css'ки:
+        s.searchCssC { CssR.apply },
 
         // Фон панели.
         <.div(
@@ -82,30 +127,8 @@ class SearchR(
           // Переключалка вкладок карта-теги
           s.tabC { tabsR.apply },
 
-          // Тело текущего таба.
-          // TODO Это должно разруливаться полностью на уровне CSS. Но не ScCss, а где-то ещё. Там же в CSS и анимироваться.
-          s.tabC { currTabProxy =>
-            val currTab = currTabProxy.value
-
-            // Контейнер всех содержимых вкладок.
-            <.div(
-              // Содержимое вкладки с картой.
-              <.div(
-                _renderDisplayCss( currTab ==* MSearchTabs.GeoMap ),
-                // Списочек найденных элементов над картой (унесён в ScRoot, т.к. зависит от разных top-level-доступных моделей)
-                children,
-                // Гео.карта:
-                geoTabMap
-              ),
-
-              // Содержимое вкладки с тегами.
-              <.div(
-                _renderDisplayCss( currTab ==* MSearchTabs.Tags ),
-                tagsTab
-              )
-            )
-
-          }
+          // Контент вкладки, наконец.
+          tabContentOuter
 
         )
       )
@@ -127,7 +150,8 @@ class SearchR(
             withDistanceTo  = None,
             onTab           = MSearchTabs.Tags
           )
-        }
+        },
+        searchCssC = propsProxy.connect(_.geo.css)( FastEq.AnyRefEq )
       )
     }
     .renderBackendWithChildren[Backend]

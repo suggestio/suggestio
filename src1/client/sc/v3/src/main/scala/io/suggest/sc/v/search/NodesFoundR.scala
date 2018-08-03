@@ -49,6 +49,8 @@ class NodesFoundR(
                        selectedId       : Option[String],
                        withDistanceTo   : Option[MGeoLoc],
                        onTab            : MSearchTab,
+                       // TODO Сделать без orNull неопциональным, когда панель тегов будет унифицирована с основным списком.
+                       searchCssOrNull  : SearchCss = null
                      )
   implicit object NodesFoundRPropsValFastEq extends FastEq[PropsVal] {
     import io.suggest.ueq.JsUnivEqUtil._
@@ -57,7 +59,9 @@ class NodesFoundR(
         (a.hasMore ==* b.hasMore) &&
         (a.selectedId ===* b.selectedId) &&
         (a.withDistanceTo ===* b.withDistanceTo) &&
-        (a.onTab ===* b.onTab)
+        (a.onTab ===* b.onTab) &&
+        // Наверное, проверять css не нужно. Но мы всё же перерендериваем.
+        (a.searchCssOrNull ===* b.searchCssOrNull)
     }
   }
 
@@ -91,9 +95,12 @@ class NodesFoundR(
 
       val props = propsProxy.value
       val _tagRowCss = NodesCSS.nodeRow: TagMod
+      // TODO Сделать неопциональным, когда tags tab будет унифицирована с основной вкладкой.
+      val searchCssOpt = Option(props.searchCssOrNull)
 
       <.div(
         NodesCSS.listDiv,
+        searchCssOpt.whenDefined( _.NodesFound.nodesList ),
 
         // Подписка на события скроллинга:
         ReactCommonUtil.maybe(props.hasMore && !props.req.isPending) {
@@ -120,6 +127,7 @@ class NodesFoundR(
             val _rowNoIconCss = NodesCSS.rowNoIcon: TagMod
             val _selectedCss = NodesCSS.selected: TagMod
             val _iconCss = NodesCSS.icon: TagMod
+            val _rowCss2 = searchCssOpt.whenDefined(_.NodesFound.nodeRow)
 
             tagsRi
               .resp
@@ -159,7 +167,7 @@ class NodesFoundR(
 
                 // Рендер одного ряда.
                 <.div(
-                  _tagRowCss,
+                  _tagRowCss, _rowCss2,
 
                   ^.onClick --> _onNodeRowClick(p.nodeId),
 

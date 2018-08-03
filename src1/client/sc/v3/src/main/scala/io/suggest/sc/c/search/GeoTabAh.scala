@@ -3,10 +3,10 @@ package io.suggest.sc.c.search
 import diode._
 import diode.data.{PendingBase, Pot}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.dev.MScreenInfo
 import io.suggest.maps.c.RcvrMarkersInitAh
 import io.suggest.maps.m.{HandleMapReady, InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.maps.nodes.MGeoNodesResp
-import io.suggest.maps.u.MapsUtil
 import io.suggest.msg.ErrorMsgs
 import io.suggest.routes.IAdvRcvrsMapApi
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
@@ -14,10 +14,13 @@ import io.suggest.sc.m.{HandleScApiResp, MScRoot}
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.search.{MSearchTab, MSearchTabs}
+import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.u.api.IScUniApi
+import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
+import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.util.Success
 
@@ -27,15 +30,33 @@ import scala.util.Success
   * Created: 05.07.18 10:31
   * Description: Контроллер экшенов гео-таба.
   */
+object GeoTabAh {
+
+  def _mkSearchCss(nodesCount: Int, screenInfo: MScreenInfo): SearchCss = {
+    SearchCss(
+      MSearchCssProps(
+        screenInfo = screenInfo,
+        nodesFoundShownCount = {
+          val l = nodesCount
+          OptionUtil.maybe(l > 0)( Math.min(l, 3) )
+        }
+      )
+    )
+  }
+
+}
+
+
 class GeoTabAh[M](
                    api            : IScUniApi,
                    rcvrsMapApi    : IAdvRcvrsMapApi,
+                   screenInfoRO   : ModelRO[MScreenInfo],
                    geoSearchQsRO  : ModelRO[MScQs],
                    modelRW        : ModelRW[M, MGeoTabS]
                  )
   extends ActionHandler( modelRW )
   with Log
-{
+{ ah =>
 
   /** Проверить, что таб с nodes-списком относится к данному контроллеру. */
   private def _isMyTab( tab: MSearchTab ) =
@@ -95,9 +116,13 @@ class GeoTabAh[M](
           // Пустой запрос для поиска. Сбросить состояние поиска.
           val v2 = v0.copy(
             mapInit = v0.mapInit.withRcvrs( v0.data.rcvrsCache ),
-            found   = MNodesFoundS.empty
+            found   = MNodesFoundS.empty,
+            css     = GeoTabAh._mkSearchCss( 0, screenInfoRO.value )
           )
-          updated(v2)
+          val mapRszFxOpt = for (lmap <- v0.data.lmap) yield
+            SearchAh.mapResizeFx(lmap)
+
+          ah.updatedMaybeEffect(v2, mapRszFxOpt)
 
         } else {
           // Ничего сбрасывать и запускать не надо.
@@ -194,7 +219,8 @@ class GeoTabAh[M](
 
 
 /** Обработка sc-resp-экшенов. */
-class GeoSearchRespHandler extends IRespWithActionHandler {
+class GeoSearchRespHandler( getScCssF: GetScCssF )
+  extends IRespWithActionHandler {
 
   private def _withGeo(ctx: MRhCtx, geo2: MGeoTabS): MScRoot = {
     ctx.value0.withIndex(
@@ -301,11 +327,15 @@ class GeoSearchRespHandler extends IRespWithActionHandler {
     val g2 = g0.copy(
       mapInit = g0.mapInit
         .withRcvrs( rcvrsPot2 ),
-      found = mnf2
+      found = mnf2,
+      css = GeoTabAh._mkSearchCss( nodes2.length, getScCssF().args.screenInfo )
     )
 
+    val mapRszFxOpt = for (lmap <- g2.data.lmap) yield
+      SearchAh.mapResizeFx(lmap)
+
     val v2 = _withGeo(ctx, g2)
-    (v2, None)
+    (v2, mapRszFxOpt)
   }
 
 }

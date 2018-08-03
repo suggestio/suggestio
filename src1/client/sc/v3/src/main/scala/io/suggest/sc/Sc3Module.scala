@@ -39,7 +39,6 @@ class Sc3Module {
   val getScCssF: GetScCssF = sc3Circuit.scCssRO.apply
 
   lazy val scCssFactory = wire[ScCssFactory]
-  lazy val scCssR  = wire[ScCssR]
 
 
   // header
@@ -74,6 +73,7 @@ class Sc3Module {
   lazy val tagsRespHandler = wire[TagsRespHandler]
   lazy val geoSearchRespHandler = wire[GeoSearchRespHandler]
   lazy val nodesFoundR = wire[NodesFoundR]
+  lazy val geoMapOuterR = wire[GeoMapOuterR]
 
 
   // menu

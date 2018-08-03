@@ -30,12 +30,13 @@ import io.suggest.sc.m._
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.inx.MScIndex
-import io.suggest.sc.m.search.{MGeoTabS, MMapInitState, MScSearch}
+import io.suggest.sc.m.search.{MGeoTabS, MMapInitState, MScSearch, MSearchCssProps}
 import io.suggest.sc.sc3.{MScCommonQs, MScQs}
 import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.u.Sc3ConfUtil
 import io.suggest.sc.v.ScCssFactory
+import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
@@ -132,7 +133,10 @@ class Sc3Circuit(
           geo = MGeoTabS(
             mapInit = MMapInitState(
               state = MMapS(scInit.mapProps)
-            )
+            ),
+            css = SearchCss( MSearchCssProps(
+              screenInfo = screenInfo
+            ))
           )
         ),
         scCss = scCssFactory.mkScCss(
@@ -282,7 +286,8 @@ class Sc3Circuit(
     modelRW         = geoTabRW,
     api             = api,
     geoSearchQsRO   = geoSearchQsRO,
-    rcvrsMapApi     = advRcvrsMapApi
+    rcvrsMapApi     = advRcvrsMapApi,
+    screenInfoRO    = screenInfoRO
   )
 
   private val tagsAh = new TagsAh(

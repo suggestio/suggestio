@@ -457,18 +457,6 @@ case class ScCss( args: IScCssArgs )
 
       val tabsWrapper = _styleAddClass( _TABS + "-wrapper" )
 
-      private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - ScCss.TABS_OFFSET_PX - args.screenInfo.unsafeOffsets.top
-
-      private val TAB_BODY_HEIGHT    = height( TAB_BODY_HEIGHT_PX.px )
-
-      /** Форсировать скроллбар во внутреннем контейнере, если этого требует окружение. */
-      private val TAB_BODY_CONTENT_HEIGHT = if (ScCss.needOverrideScroll) {
-        height( (TAB_BODY_HEIGHT_PX + 1).px )
-      } else {
-        TAB_BODY_HEIGHT
-      }
-
-
       /** Стили для одного таба. */
       object Single {
 
@@ -491,6 +479,18 @@ case class ScCss( args: IScCssArgs )
         }
 
       }
+
+      private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - ScCss.TABS_OFFSET_PX - args.screenInfo.unsafeOffsets.top
+
+      private val TAB_BODY_HEIGHT    = height( TAB_BODY_HEIGHT_PX.px )
+
+      /** Форсировать скроллбар во внутреннем контейнере, если этого требует окружение. */
+      private val TAB_BODY_CONTENT_HEIGHT = if (ScCss.needOverrideScroll) {
+        height( (TAB_BODY_HEIGHT_PX + 1).px )
+      } else {
+        TAB_BODY_HEIGHT
+      }
+
 
       /** Стили содержимого вкладки с гео-картой. */
       object MapTab {

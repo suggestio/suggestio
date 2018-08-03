@@ -1,5 +1,6 @@
 package io.suggest.sc.v.search
 
+import diode.FastEq
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
@@ -21,7 +22,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import react.leaflet.control.LocateControlR
 import react.leaflet.lmap.LMapR
 import io.suggest.spa.OptFastEq
-import scalacss.ScalaCssReact._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -40,6 +41,17 @@ class SearchMapR(
   import MMapS.MMapSFastEq4Map
 
 
+  case class PropsVal(
+                       searchCss    : SearchCss,
+                       mapInit      : MMapInitState
+                     )
+  implicit object SearchMapRPropsValFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      (a.searchCss ===* b.searchCss) &&
+        (a.mapInit ===* b.mapInit)
+    }
+  }
+
   protected[this] case class State(
                                     mmapC       : ReactConnectProxy[MMapS],
                                     rcvrsGeoC   : ReactConnectProxy[Pot[MGeoNodesResp]],
@@ -48,7 +60,7 @@ class SearchMapR(
                                   )
 
 
-  type Props_t = MMapInitState
+  type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
 
   class Backend($: BackendScope[Props, State]) {
@@ -94,11 +106,8 @@ class SearchMapR(
     private val _userLocShapeF: ReactConnectProps[Option[MGeoLoc]] = _userLocShape.apply
 
 
-    def render(mapInitProxy: Props, s: State): VdomElement = {
-      val mapCSS = getScCssF().Search.Tabs.MapTab
-      val _stopPropagationF = ReactCommonUtil.stopPropagationCB _
-
-      val mapInit = mapInitProxy.value
+    def render(propsProxy: Props, s: State): VdomElement = {
+      val props = propsProxy.value
 
       // Все компоненты инициализируются с lazy, т.к. раньше встречались какие-то рандомные ошибки в некоторых слоях. race conditions?
 
@@ -116,7 +125,11 @@ class SearchMapR(
       // Рендер компонента leaflet-карты вне maybeEl чтобы избежать перерендеров.
       // Вынос этого компонента за пределы maybeEl() поднял производительность карты на порядок.
       lazy val mmapComp = {
-        val geoMapCssSome = Some( mapCSS.geomap.htmlClass )
+        val mapCSS = getScCssF().Search.Tabs.MapTab
+        val geoMapCssSome = Some(
+          (mapCSS.geomap.htmlClass :: props.searchCss.GeoMap.geomap.htmlClass :: Nil)
+            .mkString( HtmlConstants.SPACE )
+        )
         //val someFalse = Some(false)
 
         // TODO Нужно как-то организовать reuse инстанса фунции. Эта фунция зависит от state, и хз, как это нормально организовать. Вынести в top-level?
@@ -149,34 +162,10 @@ class SearchMapR(
         }
       }
 
-      <.div(
-        mapCSS.outer,
-
-        <.div(
-          mapCSS.wrapper,
-
-          <.div(
-            mapCSS.inner,
-            ^.onTouchStart  ==> _stopPropagationF,
-            ^.onTouchEnd    ==> _stopPropagationF,
-            ^.onTouchMove   ==> _stopPropagationF,
-            ^.onTouchCancel ==> _stopPropagationF,
-
-            // Наконец, непосредственный рендер карты:
-            ReactCommonUtil.maybeEl(mapInit.ready) {
-              mmapComp
-            }
-
-          )
-        ),
-
-        // Прицел для наведения. Пока не ясно, отображать его всегда или только когда карта перетаскивается.
-        <.div(
-          mapCSS.crosshair,
-          HtmlConstants.PLUS
-        )
-
-      )
+      // Наконец, непосредственный рендер карты:
+      ReactCommonUtil.maybeEl(props.mapInit.ready) {
+        mmapComp
+      }
     }
 
   }
@@ -185,19 +174,21 @@ class SearchMapR(
   val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { mapInitProxy =>
       State(
-        mmapC       = mapInitProxy.connect(_.state),
-        rcvrsGeoC   = mapInitProxy.connect { mapInit =>
+        mmapC       = mapInitProxy.connect(_.mapInit.state),
+        rcvrsGeoC   = mapInitProxy.connect { props =>
           // Отображать найденные в поиске ресиверы вместо всех.
-          mapInit.rcvrs
+          props
+            .mapInit.rcvrs
             .map(_.resp)
         },
-        loaderOptC  = mapInitProxy.connect(_.loader)( OptFastEq.Plain ),
-        userLocOptC = mapInitProxy.connect { mapInit =>
-          mapInit
+        loaderOptC  = mapInitProxy.connect(_.mapInit.loader)( OptFastEq.Plain ),
+        userLocOptC = mapInitProxy.connect { props =>
+          props
+            .mapInit
             .userLoc
             // Запретить конфликты шейпов с LocationControl-плагином. TODO Удалить плагин, геолокация полностью должна жить в состоянии и рендерится только отсюда.
             .filter { _ =>
-              mapInit.state.locationFound.isEmpty
+              props.mapInit.state.locationFound.isEmpty
             }
         }
       )

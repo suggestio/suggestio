@@ -22,6 +22,8 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 import io.suggest.sc.c.grid.GridAh
+import io.suggest.sc.c.search.SearchAh
+import io.suggest.sc.v.search.SearchCss
 import japgolly.univeq._
 
 import scala.util.Success
@@ -286,8 +288,17 @@ class IndexAh[M](
       val scCssArgs = MScRoot.scCssArgsFrom( rootRO.value )
       if (v0.scCss.args != scCssArgs) {
         val scCss2 = scCssFactory.mkScCss( scCssArgs )
-        val v2 = v0.withScCss( scCss2 )
-        updated(v2)
+        val searchCss2 = SearchCss( v0.search.geo.css.args.withScreenInfo(scCssArgs.screenInfo) )
+        val v2 = v0
+          .withScCss( scCss2 )
+          .withSearch(
+            v0.search.withGeo(
+              v0.search.geo
+                .withCss( searchCss2 )
+            )
+          )
+        val rszMapFx = for (lmap <- v0.search.geo.data.lmap) yield SearchAh.mapResizeFx(lmap)
+        ah.updatedMaybeEffect(v2, rszMapFx)
       } else {
         noChange
       }

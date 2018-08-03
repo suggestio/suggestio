@@ -1,42 +1,13 @@
 package io.suggest.sc.v
 
-import diode.react.ModelProxy
-import io.suggest.sc.styl.ScScalaCssDefaults._
-import io.suggest.sc.styl.ScCss
-import japgolly.scalajs.react.vdom.VdomElement
-import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 11.07.17 16:09
-  * Description: React-компонент, рендерящий динамический css выдачи.
   */
-class ScCssR {
-
-  type Props = ModelProxy[ScCss]
-
-  class Backend($: BackendScope[Props, Unit]) {
-    def render(props: Props): VdomElement = {
-      <.styleTag(
-        props.value.render[String]
-      )
-    }
-  }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
-    .stateless
-    .renderBackend[Backend]
-    .build
-
-  def apply(colorsProxy: Props) = component( colorsProxy )
-
-}
-
-
-// TODO Код ниже - актуален ли вообще?
+// TODO Код ниже - актуален ли вообще? Удалить это, наверное.
 import com.softwaremill.macwire._
 import io.suggest.sc.styl.{IScCssArgs, ScCss}
 
