@@ -14,7 +14,7 @@ import io.suggest.dev.{MPxRatios, MScreen}
 import io.suggest.es.model.IMust
 import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MMapNodeIconInfo}
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.n2.node.{MNode, MNodeFields, MNodes}
 import io.suggest.util.JMXBase
@@ -85,7 +85,7 @@ class AdvGeoRcvrsUtil @Inject()(
     */
   def onMapRcvrsSearch(limit1: Int, onlyWithIds: Seq[String] = Nil): MNodeSearch = {
     new MNodeSearchDfltImpl {
-      override def outEdges: Seq[ICriteria] = {
+      override def outEdges: Seq[Criteria] = {
         val crNodeLoc = Criteria(
           predicates  = MPredicates.NodeLocation :: Nil
         )
@@ -491,7 +491,7 @@ class AdvGeoRcvrsUtil @Inject()(
     val pred = MPredicates.NodeLocation
 
     val geoLocNodesSearch = new MNodeSearchDfltImpl {
-      override def outEdges: Seq[ICriteria] = {
+      override def outEdges: Seq[Criteria] = {
         val cr = Criteria(
           predicates = pred :: Nil,
           must = IMust.MUST

@@ -57,12 +57,12 @@ class SearchR(
       val SearchCSS = scCss.Search
 
       // Рендер вкладки карты:
-      val geoMap = props.wrap( props =>
+      val geoMap = props.wrap { props =>
         searchMapR.PropsVal(
           mapInit   = props.geo.mapInit,
           searchCss = props.geo.css
         )
-      ) { searchMapR.apply }
+      }( searchMapR.apply )
 
       // Рендер наполнения вкладки тегов:
       val tagsTab = tagsSearchR( props )(

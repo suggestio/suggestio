@@ -1,41 +1,39 @@
 package io.suggest.model.n2.edge.search
 
-import io.suggest.common.empty.{EmptyProduct, IIsNonEmpty}
+import io.suggest.common.empty.EmptyProduct
 import io.suggest.es.model.{IMust, Must_t}
 import io.suggest.model.n2.edge.MPredicate
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 02.10.15 14:42
- * Description: Критерий для поиска по node-edges.
- * Заданные здесь множества id-узлов и их предикатов проверяются в рамках каждого nested-объкета.
- * Для задания нескольких критериев поиска нужно несколько критериев перечислить.
- */
-
-trait ICriteria extends IIsNonEmpty with IMust {
-
-  /** id искомых узлов. */
-  def nodeIds     : Seq[String]
-
-  /** Каким образом трактовать nodeIds, если их >= 2?
-    * @return true значит объединять запрошенные nodeId через AND.
-    *         false - OR.
-    */
-  def nodeIdsMatchAll: Boolean
-
-  /** id предикатов. */
-  def predicates  : Seq[MPredicate]
-
-  /** Критерий для поиска по тегу. */
-  def tags        : Seq[TagCriteria]
-
-  /** Состояние дополнительного флага в контейнера info. */
-  def flag        : Option[Boolean]
-
-  /** Данные для поиска по гео-шейпам. */
-  def gsIntersect : Option[IGsCriteria]
-
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 02.10.15 14:42
+  * Description: Модель критерия для поиска по node-edges.
+  * Заданные здесь множества id-узлов и их предикатов проверяются в рамках каждого nested-объкета.
+  * Для задания нескольких критериев поиска нужно несколько критериев перечислить.
+  *
+  * @param nodeIds id искомых узлов.
+  * @param predicates искомые предикаты.
+  * @param must
+  * @param flag Состояние дополнительного флага в контейнера info.
+  * @param tags Критерии для поиска по тегам.
+  * @param gsIntersect Данные для поиска по гео-шейпам.
+  * @param nodeIdsMatchAll Каким образом трактовать nodeIds, если их >= 2?
+  *                        true значит объединять запрошенные nodeId через AND.
+  *                        false - OR.
+  */
+final case class Criteria(
+                           nodeIds           : Seq[String]          = Nil,
+                           predicates        : Seq[MPredicate]      = Nil,
+                           must              : Must_t               = IMust.SHOULD,
+                           flag              : Option[Boolean]      = None,
+                           tags              : Seq[TagCriteria]     = Nil,
+                           gsIntersect       : Option[IGsCriteria]  = None,
+                           nodeIdsMatchAll   : Boolean              = false,
+                         )
+  extends EmptyProduct
+  with IMust
+{
 
   /** Тест на наличие предиката или его дочерних предикатов в списке предикатов. */
   def containsPredicate(pred: MPredicate): Boolean = {
@@ -43,15 +41,12 @@ trait ICriteria extends IIsNonEmpty with IMust {
   }
 
   override def toString: String = {
-    val sb = new StringBuilder(32, getClass.getSimpleName)
+    val sb = new StringBuilder(32, productPrefix)
     sb.append('(')
 
-    sb.append {
-      must.fold ("should") {
-        case true   => "must"
-        case false  => "mustNot"
-      }
-    }
+    sb.append(
+      IMust.toString(must)
+    )
 
     val _preds = predicates
     if (_preds.nonEmpty) {
@@ -90,21 +85,4 @@ trait ICriteria extends IIsNonEmpty with IMust {
       .toString()
   }
 
-}
-
-
-/** Дефолтовая реализация [[ICriteria]]. */
-case class Criteria(
-                     override val nodeIds           : Seq[String]          = Nil,
-                     override val predicates        : Seq[MPredicate]      = Nil,
-                     override val must              : Must_t               = IMust.SHOULD,
-                     override val flag              : Option[Boolean]      = None,
-                     override val tags              : Seq[TagCriteria]     = Nil,
-                     override val gsIntersect       : Option[IGsCriteria]  = None,
-                     override val nodeIdsMatchAll   : Boolean              = false,
-                   )
-  extends ICriteria
-  with EmptyProduct
-{
-  override def toString: String = super.toString
 }

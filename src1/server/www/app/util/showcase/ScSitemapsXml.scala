@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 import controllers.routes
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.streams.StreamsUtil
@@ -61,7 +61,7 @@ class ScSitemapsXml @Inject() (
           Nil
       }
 
-      override def outEdges: Seq[ICriteria] = {
+      override def outEdges: Seq[Criteria] = {
         val preds = MPredicates.AdvGeoPlace ::
           MPredicates.Receiver ::
           MPredicates.TaggedBy.Agt ::

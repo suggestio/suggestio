@@ -98,19 +98,25 @@ object GridAh {
     // Нужно узнать координату в плитке карточке
     val nodeIdOpt = toAd.nodeId
     Effect.action {
-      gbRes.coords
+      val yCoordsIter = gbRes.coords
         .iterator
         .zip( ads.iterator.flatten )
-        .find { case (_, scAdData) =>
+        .filter { case (_, scAdData) =>
           scAdData.nodeId ==* nodeIdOpt
         }
-        .foreach { case (mcoordPx, _) =>
-          AnimateScroll.scrollTo(
-            // Сдвиг обязателен, т.к. карточки заезжают под заголовок.
-            to = Math.max(0, mcoordPx.y - ScCss.HEADER_HEIGHT_PX - BlockPaddings.default.value),
-            options = GridScrollUtil.scrollOptions
-          )
-        }
+
+      if (yCoordsIter.nonEmpty) {
+        // Выбрать самый верхний блок карточки, он не обязательно первый по порядку идёт.
+        val toY = yCoordsIter
+          .map(_._1.y)
+          .min
+        AnimateScroll.scrollTo(
+          // Сдвиг обязателен, т.к. карточки заезжают под заголовок.
+          to = Math.max(0, toY - ScCss.HEADER_HEIGHT_PX - BlockPaddings.default.value),
+          options = GridScrollUtil.scrollOptions
+        )
+      }
+
       GridScrollDone
     }
   }
@@ -350,6 +356,7 @@ class GridFocusRespHandler( jdCssFactory: JdCssFactory )
       .fold {
         LOG.warn(ErrorMsgs.FOC_LOOKUP_MISSING_AD, msg = focQs)
         ctx.value0 -> Option.empty[Effect]
+
       } { case (ad0, index) =>
         val focResp = ra.ads.get
         val focAd = focResp.ads.head
@@ -362,6 +369,7 @@ class GridFocusRespHandler( jdCssFactory: JdCssFactory )
             )
           )
         )
+
         val adsPot2 = for (ads0 <- g0.core.ads) yield {
           ads0
             .iterator
@@ -380,15 +388,17 @@ class GridFocusRespHandler( jdCssFactory: JdCssFactory )
             }
             .toVector
         }
+
+        val gridBuild2 = GridAh.rebuildGrid( adsPot2, g0.core.jdConf )
         val g2 = g0.withCore(
           g0.core.copy(
             jdCss     = jdCssFactory.mkJdCss( GridAh.jdCssArgs(adsPot2, g0.core.jdConf) ),
             ads       = adsPot2,
-            gridBuild = GridAh.rebuildGrid( adsPot2, g0.core.jdConf )
+            gridBuild = gridBuild2
           )
         )
         // Надо проскроллить выдачу на начало открытой карточки:
-        val scrollFx = GridAh.scrollToAdFx( ad1, adsPot2, g2.core.gridBuild )
+        val scrollFx = GridAh.scrollToAdFx( ad1, adsPot2, gridBuild2 )
         val resetRouteFx = Effect.action( ResetUrlRoute )
 
         val v2 = ctx.value0.withGrid( g2 )
@@ -552,15 +562,16 @@ class GridAh[M](
           } { _ =>
             val ad1 = ad0.withFocused( Pot.empty )
             val ads2 = GridAh.saveAdIntoAds(index, ad1, v0)
+            val gridBuild2 = GridAh.rebuildGrid(ads2, v0.core.jdConf)
             val v2 = v0.withCore(
               v0.core.copy(
                 ads       = ads2,
                 jdCss     = jdCssFactory.mkJdCss( GridAh.jdCssArgs(ads2, v0.core.jdConf) ),
-                gridBuild = GridAh.rebuildGrid(ads2, v0.core.jdConf)
+                gridBuild = gridBuild2
               )
             )
             // В фоне - запустить скроллинг к началу карточки.
-            val scrollFx = GridAh.scrollToAdFx( ad0, ads2, v2.core.gridBuild )
+            val scrollFx = GridAh.scrollToAdFx( ad0, ads2, gridBuild2 )
             val resetRouteFx = Effect.action( ResetUrlRoute )
             val fxs = scrollFx + resetRouteFx
             updated(v2, fxs)

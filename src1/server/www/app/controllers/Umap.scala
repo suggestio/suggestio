@@ -9,7 +9,7 @@ import javax.inject.Inject
 
 import io.suggest.geo.{GsTypes, MNodeGeoLevel, MNodeGeoLevels, PointGs}
 import io.suggest.model.n2.edge._
-import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
+import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.logs.MacroLogsImpl
@@ -118,7 +118,7 @@ class Umap @Inject() (
   /** Рендер одного слоя, перечисленного в карте слоёв. */
   def getDataLayerGeoJson(ngl: MNodeGeoLevel) = isSu().async { implicit request =>
     val msearch = new MNodeSearchDfltImpl {
-      override def outEdges: Seq[ICriteria] = {
+      override def outEdges: Seq[Criteria] = {
         // Ищем только с node-location'ами на текущем уровне.
         val cr = Criteria(
           predicates  = Seq( MPredicates.NodeLocation ),

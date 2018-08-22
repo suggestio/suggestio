@@ -3,7 +3,7 @@ package util.ident
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.mproj.ICommonDi
@@ -33,7 +33,7 @@ class IdentUtil @Inject() (
 
     // Нам тут не надо выводить элементы, нужно лишь определять кол-во личных кабинетов и данные по ним.
     val msearch = new MNodeSearchDfltImpl {
-      override def outEdges: Seq[ICriteria] = {
+      override def outEdges: Seq[Criteria] = {
         val cr = Criteria(Seq(personId), Seq(MPredicates.OwnedBy))
         Seq(cr)
       }

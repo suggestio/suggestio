@@ -4,7 +4,7 @@ import javax.inject.Inject
 import io.suggest.es.model.IMust
 import io.suggest.geo._
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
+import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNodeFields, MNodeTypes, MNodes}
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
@@ -107,7 +107,7 @@ class ScMapUtil @Inject() (
       override def hasGeoPoint  = Some(true)
 
       // Эджи должны ориентироваться на предикат NodeLocation.
-      override def outEdges: Seq[ICriteria] = {
+      override def outEdges: Seq[Criteria] = {
         // Сборка edge-критерия для выборки торговых центров и прочих объектов.
         val crBuildings = Criteria(
           predicates  = MPredicates.NodeLocation :: Nil,
@@ -163,7 +163,7 @@ class ScMapUtil @Inject() (
     // Сборка начального поиского запроса.
     val msearch = new _MNodeSearch4Points {
       override def nodeTypes = Seq( MNodeTypes.Ad )
-      override def outEdges: Seq[ICriteria] = {
+      override def outEdges: Seq[Criteria] = {
         // 2016.sep.29: Все перечисленные предикаты имеют точки в MEdge.info.geoPoints.
         // Но выставляться эти точки начали только с сегодняшнего дня, поэтому ноды со старыми размещениями в пролёте.
         val crAdvGeo = Criteria(

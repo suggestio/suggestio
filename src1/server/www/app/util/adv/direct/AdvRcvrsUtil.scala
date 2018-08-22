@@ -7,7 +7,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.EsModelUtil
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes, MNodesCache}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
@@ -317,7 +317,7 @@ class AdvRcvrsUtil @Inject()(
   def subRcvrsSearch(parentIds: Seq[String], onlyWithIds: Seq[String] = Nil, limit1: Int = 100 ): MNodeSearch = {
     new MNodeSearchDfltImpl {
       override def isEnabled = Some(true)
-      override def outEdges: Seq[ICriteria] = {
+      override def outEdges: Seq[Criteria] = {
         val cr = Criteria(
           nodeIds    = parentIds,
           predicates = MPredicates.OwnedBy :: Nil

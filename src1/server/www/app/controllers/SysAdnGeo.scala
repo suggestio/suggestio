@@ -3,7 +3,7 @@ package controllers
 import java.time.OffsetDateTime
 import javax.inject.Inject
 
-import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
+import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.mgeo.MGsPtr
@@ -587,7 +587,7 @@ class SysAdnGeo @Inject() (
   private def collectNodesOnLevels(glevels: Seq[MNodeGeoLevel]): Future[Seq[MNode]] = {
     // Собрать настройки поиска узлов:
     val msearch = new MNodeSearchDfltImpl {
-      override def outEdges: Seq[ICriteria] = {
+      override def outEdges: Seq[Criteria] = {
         val cr = Criteria(
           predicates = Seq( MPredicates.NodeLocation ),
           gsIntersect = Some(GsCriteria(
@@ -634,7 +634,7 @@ class SysAdnGeo @Inject() (
             val msearch = new MNodeSearchDfltImpl {
               override def limit = 1
 
-              override def outEdges: Seq[ICriteria] = {
+              override def outEdges: Seq[Criteria] = {
                 val gsCr = GsCriteria(
                   levels = geo.glevel.upper.toSeq,
                   shapes = GeoShapeJvm.toEsQueryMaker(shapeq) :: Nil

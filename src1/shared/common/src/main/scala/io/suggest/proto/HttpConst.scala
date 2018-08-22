@@ -101,7 +101,7 @@ object HttpConst {
       val s = HtmlConstants.SLASH
       s + s
     }
-    final def DELIM = HtmlConstants.COLON + CURR_PROTO
+    final def DELIM = COLON + CURR_PROTO
 
     final def WS = "ws"
     final def WSS = WS + SECURE_SUFFIX

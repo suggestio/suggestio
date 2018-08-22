@@ -12,7 +12,7 @@ import io.suggest.geo.{MGeoLoc, _}
 import io.suggest.i18n.MsgCodes
 import io.suggest.media.{IMediaInfo, MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
+import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, MNodeTypes, NodeNotFoundException}
 import io.suggest.sc.MScApiVsns
@@ -202,7 +202,7 @@ trait ScIndex
             override def withGeoDistanceSort = someGeoPoint
             // Неактивные узлы сразу вылетают из выдачи.
             override def isEnabled = someTrue
-            override def outEdges: Seq[ICriteria] = {
+            override def outEdges: Seq[Criteria] = {
               val gsCr = GsCriteria(
                 levels = ngl :: Nil,
                 shapes = qShape :: Nil

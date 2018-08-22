@@ -68,6 +68,13 @@ object IMust {
     }
   }
 
+  def toString(must: Must_t): String = {
+    must.fold ("should") {
+      case true   => "must"
+      case false  => "mustNot"
+    }
+  }
+
 }
 
 

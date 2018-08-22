@@ -17,14 +17,8 @@ object TagFacesUtil {
       .toSeq
   }
 
-  def handleTagsQueryOpt[T](qOpt: Option[String])(f: String => Seq[T]): Seq[T] = {
-    qOpt.fold [Seq[T]] (Nil) (f)
-  }
-
   def queryOpt2tags(qOpt: Option[String]): Seq[String] = {
-    handleTagsQueryOpt(qOpt) { q =>
-      query2tags(q)
-    }
+    qOpt.fold [Seq[String]] (Nil) (query2tags)
   }
 
 

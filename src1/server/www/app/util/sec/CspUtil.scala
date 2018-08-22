@@ -24,16 +24,14 @@ class CspUtil @Inject() (
                           contextUtil    : ContextUtil
                         ) {
 
-  private val VIDEO_SRCS = {
+  private val IFRAMES_SRCS: Set[String] = {
     // По идее, proto нужен только на dev, где всё по http. На prod будет https автоматом, т.к. там он везде.
-    val proto = "https://"
-    Set(
+    Set[String](
       Csp.Sources.BLOB,
       Csp.Sources.SELF,
-      proto + "youtube.com",
-      proto + "*.youtube.com",
-      proto + "vimeo.com",
-      proto + "*.vimeo.com"
+      // Раньше было перечисление youtube и vimeo, но теперь всё проще: пусть просто будут все сайты.
+      // Фильтрация по хостам должна быть где-то на сервере, а не в CSP.
+      HttpConst.Proto.HTTPS + HttpConst.Proto.DELIM + Csp.Sources.*
     )
   }
 
@@ -83,7 +81,7 @@ class CspUtil @Inject() (
           },
           reportUri = Some( routes.Static.handleCspReport().url ),
           //frameSrc = VIDEO_SRCS,    // frameSrc is depreacted.
-          childSrc = VIDEO_SRCS
+          childSrc = IFRAMES_SRCS
           // TODO На всякий случай, флешеапплеты разрешить только с youtube/video (или вообще запретить?).
           //objectSrc = Set( Csp.Sources.NONE )
         ),

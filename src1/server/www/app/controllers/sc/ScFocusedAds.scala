@@ -102,7 +102,9 @@ trait ScFocusedAds
     def firstAdsFut: Future[Seq[MNode]] = {
       firstAdIdsFut.flatMap { firstAdIds =>
         if (firstAdIds.nonEmpty) {
-          for (mads <- mNodesCache.multiGet(firstAdIds)) yield {
+          for {
+            mads <- mNodesCache.multiGet(firstAdIds)
+          } yield {
             // Залоггировать недостающие элементы.
             logMissingFirstIds(mads, firstAdIds)
             // 2016.jul.5 Восстановить исходный порядок first-элементов. v2-выдача плавно переехала на них.
@@ -121,14 +123,7 @@ trait ScFocusedAds
     /** Если выставлены forceFirstIds, то нужно подолнительно запросить получение указанных
       * id карточек и выставить их в начало списка mads1. */
     lazy val mads2Fut: Future[Seq[MNode]] = {
-      val _mads1Fut = mads1Fut
-      for {
-        firstAds  <- firstAdsFut
-        mads      <- _mads1Fut
-      } yield {
-        // Нано-оптимизация: По идее тут списки или stream'ы, а firstAds содержит только одну карточку. Поэтому можно попробовать смержить с О(1).
-        Lists.appendSeqHead(firstAds, mads)
-      }
+      firstAdsFut
     }
 
     def prodIdsFut: Future[Set[String]] = {
@@ -576,13 +571,6 @@ trait ScFocusedAds
       for (res <- adIdsLookupResFut) yield {
         res.ids.headOption.fold(0)(_.index) //+ 1
       }
-    }
-
-
-    /** 2016.jun.1 Поиск самих focused-карточек в v2 отсутствует.
-      * Ищутся только цепочки id, из них выделяются короткие сегменты, которые читаются через multiget. */
-    def mads1Fut: Future[Seq[MNode]] = {
-      Future.successful( Nil )
     }
 
 

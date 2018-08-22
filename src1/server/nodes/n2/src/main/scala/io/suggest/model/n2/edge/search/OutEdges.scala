@@ -18,9 +18,9 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 trait OutEdges extends DynSearchArgs with IMacroLogs {
 
   /** Поиск/фильтрация по out-эджам согласно описанным критериям. */
-  def outEdges: Seq[ICriteria]
+  def outEdges: Seq[Criteria]
 
-  private def _crs2query(crs: TraversableOnce[ICriteria]): QueryBuilder = {
+  private def _crs2query(crs: TraversableOnce[Criteria]): QueryBuilder = {
 
     val nestPath = E_OUT_FN
 
@@ -147,7 +147,8 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
       // Предикаты рёбер добавить через фильтр либо query.
       if (oe.predicates.nonEmpty) {
         val fn = EDGE_OUT_PREDICATE_FULL_FN
-        val predIds = oe.predicates.map(_.strId)
+        val predIds = oe.predicates
+          .map(_.strId)
         val predf = QueryBuilders.termsQuery(fn, predIds: _*)
         _qOpt = _qOpt.map { _q =>
           QueryBuilders.boolQuery()
@@ -228,7 +229,7 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
 
 /** Дефолтовая реализация [[OutEdges]]. */
 trait OutEdgesDflt extends OutEdges {
-  override def outEdges: Seq[ICriteria] = Nil
+  override def outEdges: Seq[Criteria] = Nil
 }
 
 

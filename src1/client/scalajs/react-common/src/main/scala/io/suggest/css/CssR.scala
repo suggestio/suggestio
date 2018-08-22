@@ -32,7 +32,7 @@ object CssR {
     .build
 
   def apply(cssProxy: Props) = component( cssProxy )
-  // TODO Нужно сделать val, и тогда можно будет заюзать в JdCssR.
+  // TODO Нужно сделать val, и тогда можно будет удалить в JdCssR.
   //val apply: ReactConnectProps[Props_t] = _apply  // Не компилится
 
 }

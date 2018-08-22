@@ -48,8 +48,8 @@ class SearchAh[M](
 
   private def _maybeInitializeTab(tab: MSearchTab, v0: MScSearch): Option[Effect] = {
     tab match {
+      // Неинициализированная панель тегов: запустить загрузку тегов.
       case MSearchTabs.Tags if v0.tags.req.isEmpty =>
-        // Неинициализированная панель тегов: запустить загрузку тегов.
         val getMoreTagsFx = Effect.action {
           DoTagsSearch(clear = true)
         }

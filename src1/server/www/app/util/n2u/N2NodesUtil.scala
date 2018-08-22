@@ -3,7 +3,7 @@ package util.n2u
 import javax.inject.Singleton
 
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.edge.search.ICriteria
+import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.extra.domain.MDomainModes
 import io.suggest.model.n2.node.MNode
 
@@ -43,7 +43,7 @@ class N2NodesUtil {
   }
 
   /** Попытаться узнать ресиверов в поисковых критериях эджей. */
-  def receiverIds(crs: TraversableOnce[ICriteria]): Iterator[String] = {
+  def receiverIds(crs: TraversableOnce[Criteria]): Iterator[String] = {
     crs.toIterator
       .filter { _.containsPredicate(MPredicates.Receiver) }
       .flatMap( _.nodeIds )

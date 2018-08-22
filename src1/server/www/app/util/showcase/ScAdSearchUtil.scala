@@ -6,7 +6,7 @@ import io.suggest.es.model.IMust
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
 import io.suggest.geo.{MNodeGeoLevels, PointGs, PointGsJvm}
 import io.suggest.model.n2.edge.{MPredicate, MPredicates}
-import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
+import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.sc.sc3.MScQs
@@ -58,7 +58,7 @@ class ScAdSearchUtil @Inject() (
     */
   def qsArgs2nodeSearch(args: MScQs): Future[MNodeSearch] = {
 
-    val _outEdges: Seq[ICriteria] = {
+    val _outEdges: Seq[Criteria] = {
       val must = IMust.MUST
       var eacc: List[Criteria] = Nil
 

@@ -165,7 +165,7 @@ class Sc3Circuit(
 
 
   // Кэш zoom'ов модели:
-  private val rootRW = zoomRW(m => m) { (_, new2) => new2 }
+  private val rootRW = zoomRW(identity) { (_, new2) => new2 }
 
   private val internalsRW = zoomRW(_.internals) { _.withInternals(_) }
   private val jsRouterRW = internalsRW.zoomRW(_.jsRouter) { _.withJsRouter(_) }
@@ -173,7 +173,6 @@ class Sc3Circuit(
   private val indexRW = zoomRW(_.index) { _.withIndex(_) }
   private val titleOptRO = indexRW.zoom( _.resp.toOption.flatMap(_.name) )( OptFastEq.Plain )
   private val indexWelcomeRW = indexRW.zoomRW(_.welcome) { _.withWelcome(_) }
-  //private val indexStateRW = indexRW.zoomRW(_.state) { _.withState(_) }
 
   val scCssRO: ModelRO[ScCss] = indexRW.zoom(_.scCss)
 

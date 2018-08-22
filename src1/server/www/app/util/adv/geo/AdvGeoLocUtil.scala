@@ -9,7 +9,7 @@ import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.order.MOrders
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
@@ -126,7 +126,7 @@ class AdvGeoLocUtil @Inject() (
     // Найти id всех карточек этого продьюсера
     val prodAdsSearch = new MNodeSearchDfltImpl {
       override def nodeTypes = Seq( MNodeTypes.Ad )
-      override def outEdges: Seq[ICriteria] = {
+      override def outEdges: Seq[Criteria] = {
         val cr = Criteria(
           predicates  = Seq( MPredicates.OwnedBy ),
           // Заодно выставляем текущего юзера в id продьюсеров, вдруг чего...

@@ -3,7 +3,7 @@ package models.mdr
 import io.suggest.es.model.IMust
 import io.suggest.es.search.{ILimit, IOffset}
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
@@ -99,7 +99,7 @@ case class MdrSearchArgs(
     override def offset  = that.offset
     override def limit   = that.limit
 
-    override def outEdges: Seq[ICriteria] = {
+    override def outEdges: Seq[Criteria] = {
       val must = IMust.MUST
 
       // Собираем self-receiver predicate, поиск бесплатных размещений начинается с этого

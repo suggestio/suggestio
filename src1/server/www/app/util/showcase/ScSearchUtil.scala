@@ -9,7 +9,6 @@ import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeType, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.sc.sc3.MScQs
-import io.suggest.sc.search.MSearchTabs
 
 import scala.concurrent.Future
 
@@ -27,6 +26,14 @@ class ScSearchUtil @Inject()(
   /** Дефолтовое значение limit, если не указано или некорректно. */
   private def LIMIT_DFLT    = 10
 
+  private def FTS_SEARCH_RADIUS_M = 100000
+
+  /** Список разрешённых для поиска типов узлов. */
+  private def _nodeTypes4search: List[MNodeType] =
+    MNodeTypes.Tag ::
+    MNodeTypes.AdnNode ::
+    Nil
+
 
   /** Компиляция значений query string в MNodeSearch. */
   def qs2NodesSearch(qs: MScQs): Future[MNodeSearch] = {
@@ -40,43 +47,37 @@ class ScSearchUtil @Inject()(
       .getOrElse( 0 )
 
     // По каким типа узлов фильтровать? Зависит от текущей вкладки поиска.
-    val tabOpt = qs.search.tab
-    val isMultiSearch = tabOpt.isEmpty
+    //val tabOpt = qs.search.tab
+    //val isMultiSearch = tabOpt.isEmpty
 
-    // Акк разрешённых типов узлов, которые замешаны в поиске.
-    var nodeTypes4search = List.empty[MNodeType]
-
-    val isSearchTags = isMultiSearch || tabOpt.contains(MSearchTabs.Tags)
-    if (isSearchTags)
-      nodeTypes4search ::= MNodeTypes.Tag
-
-    val isSearchGeoRcvrs = (isMultiSearch || tabOpt.contains(MSearchTabs.GeoMap)) && geoLocOpt2.nonEmpty
-    if (isSearchGeoRcvrs)
-      nodeTypes4search ::= MNodeTypes.AdnNode
-
+    //val isSearchTags = isMultiSearch || tabOpt.contains(MSearchTabs.Tags)
+    //val isSearchGeoRcvrs = (isMultiSearch || tabOpt.contains(MSearchTabs.GeoMap)) && geoLocOpt2.nonEmpty
     // По какоми эджам орудовать?
     var edgesCrs = List.empty[Criteria]
-    val shouldOrMust = if (isMultiSearch) IMust.SHOULD else IMust.MUST
 
-    val tags: Seq[String] = TagFacesUtil.queryOpt2tags( qs.search.textQuery )
-    val tagCrs: Seq[TagCriteria] = if (tags.isEmpty) {
+    val must = IMust.MUST
+    val should = IMust.SHOULD
+
+    val queryTextTags: Seq[String] = TagFacesUtil.queryOpt2tags( qs.search.textQuery )
+
+    val tagCrs: Seq[TagCriteria] = if (queryTextTags.isEmpty) {
       Nil
     } else {
-      val tagsSet = tags.toSet
-      val lastTagOpt  = tags.lastOption
+      val tagsSet = queryTextTags.toSet
+      val lastTagOpt  = queryTextTags.lastOption
       tagsSet
         .iterator
         .map { tagFace =>
           TagCriteria(
             face      = tagFace,
-            isPrefix  = lastTagOpt contains tagFace
+            isPrefix  = lastTagOpt contains tagFace,
+            must      = must
           )
         }
         .toSeq
     }
 
     // Собрать поиск по тегам:
-    if (isSearchTags) {
       edgesCrs ::= Criteria(
         predicates  = MPredicates.TaggedBy.Self :: Nil,
         tags        = tagCrs,
@@ -92,12 +93,11 @@ class ScSearchUtil @Inject()(
             shapes = CircleGsJvm.toEsQueryMaker(circle) :: Nil
           )
         },
-        must = shouldOrMust
+        must = should
       )
-    }
 
     // Активировать поиск по ресиверам.
-    if (isSearchGeoRcvrs) {
+    if (queryTextTags.nonEmpty) {
       // TODO Поиск по названию, с названием или даже без, с учётом координат.
       edgesCrs ::= Criteria(
         predicates  = MPredicates.NodeLocation :: Nil,
@@ -106,27 +106,27 @@ class ScSearchUtil @Inject()(
           val circle = CircleGs(
             center  = geoLoc.point,
             // 100км вокруг текущей точки
-            radiusM = 100000
+            radiusM = FTS_SEARCH_RADIUS_M
           )
           GsCriteria(
             levels = MNodeGeoLevels.geoPlacesSearchAt,
             shapes = CircleGsJvm.toEsQueryMaker(circle) :: Nil
           )
         },
-        must        = shouldOrMust,
+        must        = should,
         // Поиск по имени проходит через индекс тегов, куда должно быть сохранено имя в соотв. adv-билдере
         tags        = tagCrs
       )
-
-      // TODO with distance sort - актуально для списка результатов. Менее актуально для карты (но всё-таки тоже актуально).
     }
+
+    // TODO with distance sort - актуально для списка результатов. Менее актуально для карты (но всё-таки тоже актуально).
 
     // Собрать итоговый поиск.
     val r = new MNodeSearchDfltImpl {
       override def outEdges  = edgesCrs
       override def limit     = _limit
       override def offset    = _offset
-      override def nodeTypes = nodeTypes4search
+      override def nodeTypes = _nodeTypes4search
     }
 
     Future.successful(r)

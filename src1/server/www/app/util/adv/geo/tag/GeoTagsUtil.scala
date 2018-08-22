@@ -10,7 +10,7 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.n2.edge._
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria, TagCriteria}
+import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes, MNodesCache}
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -100,7 +100,7 @@ class GeoTagsUtil @Inject() (
     lazy val logPrefix = s"findTagNode($tagFace):"
 
     val msearch = new MNodeSearchDfltImpl {
-      override def outEdges: Seq[ICriteria] = {
+      override def outEdges: Seq[Criteria] = {
         val tcr = TagCriteria(
           face      = tagFace,
           isPrefix  = false,

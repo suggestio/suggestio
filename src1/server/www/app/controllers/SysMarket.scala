@@ -10,7 +10,7 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.OptId
@@ -256,7 +256,7 @@ class SysMarket @Inject() (
       // Узнаём входящие ребра
       val inEdgesFut = {
         val msearch = new MNodeSearchDfltImpl {
-          override def outEdges: Seq[ICriteria] = {
+          override def outEdges: Seq[Criteria] = {
             val cr = Criteria(nodeIds = Seq(nodeId))
             Seq(cr)
           }

@@ -4,7 +4,7 @@ import javax.inject.Singleton
 
 import io.suggest.lk.nodes.MLknNodeReq
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.util.logs.MacroLogsImpl
@@ -33,7 +33,7 @@ class LkNodesUtil
       override def limit  = SUB_NODES_LIMIT
       override def offset = offset1
 
-      override def outEdges: Seq[ICriteria] = {
+      override def outEdges: Seq[Criteria] = {
         val cr = Criteria(
           nodeIds     = nodeId :: Nil,
           predicates  = MPredicates.OwnedBy :: Nil

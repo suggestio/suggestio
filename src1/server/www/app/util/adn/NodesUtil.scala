@@ -6,7 +6,7 @@ import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.adn.MAdnRights
 import io.suggest.common.coll.Lists.Implicits._
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.media.MMediasCache
@@ -186,7 +186,7 @@ class NodesUtil @Inject() (
         val _limit = Math.max(50, count * 2)
         val dsa0 = new MNodeSearchDfltImpl {
           override def nodeTypes = Seq( MNodeTypes.Ad )
-          override def outEdges: Seq[ICriteria] = {
+          override def outEdges: Seq[Criteria] = {
             val cr = Criteria(
               nodeIds     = prodIds,
               predicates  = Seq( MPredicates.OwnedBy )

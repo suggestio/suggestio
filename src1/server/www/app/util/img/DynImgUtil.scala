@@ -12,7 +12,7 @@ import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.jd.MJdEdgeId
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.media.{MMedia, MMedias, MMediasCache}
 import io.suggest.model.n2.media.search.MMediaSearchDfltImpl
 import io.suggest.model.n2.media.storage.IMediaStorages
@@ -505,7 +505,7 @@ class DynImgUtil @Inject() (
     val nodesPerTime = 10
 
     val msearch = new MNodeSearchDfltImpl {
-      override def outEdges: Seq[ICriteria] = {
+      override def outEdges: Seq[Criteria] = {
         val cr = Criteria(
           predicates = MPredicates.JdContent.Image :: Nil
         )
