@@ -131,7 +131,7 @@ class QdRrrHtml(
               imagesCnt += 1
 
             // Рендер видео.
-            case MPredicates.JdContent.Video =>
+            case MPredicates.JdContent.Frame =>
               _insertVideo( e, qdOp, videosCnt )
               videosCnt += 1
 

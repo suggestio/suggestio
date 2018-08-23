@@ -58,7 +58,7 @@ class QuillDeltaJsUtil extends Log {
                           jsObj.image = imgSrc
                           jsObj: DeltaInsertData_t
                         }
-                      case MPredicates.JdContent.Video =>
+                      case MPredicates.JdContent.Frame =>
                         for (videoUrl <- e.jdEdge.url) yield {
                           jsObj.video = videoUrl
                           jsObj: DeltaInsertData_t
@@ -365,7 +365,7 @@ class QuillDeltaJsUtil extends Log {
               val pred = if (deltaEmbed.image.nonEmpty) {
                 jdContPred.Image
               } else if (deltaEmbed.video.nonEmpty) {
-                jdContPred.Video
+                jdContPred.Frame
               } else {
                 LOG.error( ErrorMsgs.EMBEDDABLE_MEDIA_INFO_EXPECTED, msg = JSON.stringify(deltaEmbed) )
                 throw new IllegalArgumentException(ErrorMsgs.EMBEDDABLE_MEDIA_INFO_EXPECTED)

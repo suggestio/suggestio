@@ -21,12 +21,12 @@ import models.mctx.Context
 import play.api.mvc.Call
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, IImgMaker}
-import util.vid.VideoUtil
 import models.blk.SzMult_t
 import util.showcase.ScWideMaker
 
 import scala.concurrent.{ExecutionContext, Future}
 import scalaz.Tree
+import util.ext.ExtRscUtil
 
 /**
   * Suggest.io
@@ -42,7 +42,7 @@ class JdAdUtil @Inject()(
                           mNodesCache                 : MNodesCache,
                           dynImgUtil                  : DynImgUtil,
                           cdnUtil                     : CdnUtil,
-                          videoUtil                   : VideoUtil,
+                          extRscUtil                  : ExtRscUtil,
                           implicit private val ec     : ExecutionContext
                         )
   extends MacroLogsImpl
@@ -51,7 +51,7 @@ class JdAdUtil @Inject()(
   /** img-предикат, используемый в jd-карточках. */
   def imgPredicate = MPredicates.JdContent.Image
 
-  def videoPredicate = MPredicates.JdContent.Video
+  def framePredicate = MPredicates.JdContent.Frame
 
 
   /** Получить на руки список MMedia для подготавливаемых картинок.
@@ -76,7 +76,7 @@ class JdAdUtil @Inject()(
     */
   def prepareVideoEdges(edges: MNodeEdges): Seq[MEdge] = {
     edges
-      .withPredicateIter( videoPredicate )
+      .withPredicateIter( framePredicate )
       .toSeq
   }
 
@@ -194,12 +194,21 @@ class JdAdUtil @Inject()(
       edgeUid     <- medge.doc.uid.iterator
       nodeId      <- medge.nodeIds.iterator
       mnode       <- videoNodes.get( nodeId )
-      extVideo    <- mnode.extras.extVideo
+      extUrl      <- {
+        mnode.extras
+          .extVideo
+          .map( extRscUtil.toIframeUrl )
+          .orElse {
+            for (rsc <- mnode.extras.resource) yield {
+              rsc.url
+            }
+          }
+      }
     } yield {
       MJdEdge(
-        predicate = videoPredicate,
+        predicate = framePredicate,
         id        = edgeUid,
-        url       = Some( videoUtil.toIframeUrl(extVideo) )
+        url       = Some( extUrl )
       )
     }
     iter.toSeq

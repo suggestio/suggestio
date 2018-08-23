@@ -1,15 +1,18 @@
-package util.vid
+package util.ext
 
-import javax.inject.{Inject, Singleton}
+import java.net.URL
 
+import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.MNodeExtras
+import io.suggest.model.n2.extra.rsc.{MHostNameIndexed, MRscExtra}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
+import io.suggest.text.util.UrlUtil
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 import io.suggest.vid.ext.{MVideoExtInfo, VideoExtUrlParsers}
+import javax.inject.{Inject, Singleton}
 import models.mproj.ICommonDi
 
 import scala.concurrent.Future
@@ -19,10 +22,11 @@ import scala.util.{Failure, Success}
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 25.10.17 14:09
-  * Description: Утиль для работы с видео.
+  * Description: Утиль для работы с внешними информационными ресурсами.
+  * (которые можно встраивать в рекламные карточки через фрейм).
   */
 @Singleton
-class VideoUtil @Inject() (
+class ExtRscUtil @Inject()(
                             mNodes    : MNodes,
                             mCommonDi : ICommonDi
                           )
@@ -34,67 +38,92 @@ class VideoUtil @Inject() (
   /** Взять ссылки, вернуть узлы для ссылок.
     * Все операции пакетные для ускорения при множестве результатов.
     *
-    * @param videoUrls Ссылки на внешние embed-видео.
+    * @param videoUrls Ссылки на внешние frame-ресурсы (вкл.видео).
     * @param personIdOpt id текущего юзера, если есть (для указания эджа CreatedBy на новых/создаваемых узлах).
     *
     * @return Карта из исходных ссылок и созданных узлов.
     */
-  def ensureExtVideoNodes(videoUrls: Iterable[String], personIdOpt: Option[String]): Future[Map[String, MNode]] = {
+  def ensureExtRscNodes(videoUrls: Iterable[String], personIdOpt: Option[String]): Future[Map[String, MNode]] = {
     if (videoUrls.isEmpty) {
-      LOGGER.trace("ensureExtVideoNodes(): No video urls, skipping.")
       Future.successful(Map.empty)
     } else {
-      _ensureExtVideoNodes( videoUrls, personIdOpt )
+      _ensureExtRscNodes( videoUrls, personIdOpt )
     }
   }
 
-  private def _ensureExtVideoNodes(videoUrls: Iterable[String], personIdOpt: Option[String]): Future[Map[String, MNode]] = {
+  private def _ensureExtRscNodes(videoUrls: Iterable[String], personIdOpt: Option[String]): Future[Map[String, MNode]] = {
     lazy val logPrefix = s"ensureExtVideoNodes(${videoUrls.size}u)[${System.currentTimeMillis}]:"
     LOGGER.trace(s"$logPrefix Ensuring following video URLs:\n ${videoUrls.mkString("\n ")}")
 
-    // Распарсить все ссылки на внешние видео, завернуть в id-узлов, поискать/создать эти узлы.
+    // Распарсить все ссылки на внешние видео и остальное, завернуть в id-узлов, поискать/создать эти узлы.
     // Для ускорения, делаем всё максимально пакетно.
-    val parsers = new VideoExtUrlParsers
+    val videoParsers = new VideoExtUrlParsers
+    val ntypes = MNodeTypes.ExternalRsc
 
-    // Произвести распарсенные эквиваленты для видео-ссылок:
-    val extVid2Urls = videoUrls
+    // Внутренний контейнер данных по узлу, который относится к ресурсу.
+    case class RscInfo(
+                        nodeType          : MNodeType,
+                        remoteUrl         : String,
+                        nodeRsc           : Option[MRscExtra],
+                        nodeVideoExt      : Option[MVideoExtInfo],
+                      )
+
+    // Произвести распарсенные эквиваленты для ссылок:
+    val rscNodeId2UrlsMap = videoUrls
       .iterator
-      .map { videoUrl =>
-        val pr = parsers
-          .parse( parsers.anySvcVideoUrlP, videoUrl )
+      .map { remoteUrl =>
+        val pr = videoParsers
+          .parse( videoParsers.anySvcVideoUrlP, remoteUrl )
 
-        if (pr.successful)
-          LOGGER.trace(s"$logPrefix URL $videoUrl => $pr")
-        else
-          LOGGER.error(s"$logPrefix Failed to parse URL $videoUrl: $pr")
-
-        // Пусть будет ошибка, если ссылка на видео некорректна: корректность должна проверяться на стадии валидации.
-        val ve = pr.get
-        ve -> videoUrl
+        // Сгенерить данные результат с выхлопа парсера:
+        pr
+          .map { ve =>
+            // Успешно распарсена ссылка на внешнее видео.
+            val nodeId = ve.toNodeId
+            LOGGER.trace(s"$logPrefix Video-URL $remoteUrl => $pr")
+            val r = RscInfo(
+              nodeType        = ntypes.VideoExt,
+              remoteUrl       = remoteUrl,
+              nodeRsc         = None,
+              nodeVideoExt    = Some(ve)
+            )
+            nodeId -> r
+          }
+          .getOrElse {
+            // Это какой-то внешний ресурс (страничка, веб-приложение и т.д.), который юзер пихает во фрейм.
+            val urlNorm = UrlUtil.normalize( remoteUrl )
+            val urlNormC = new URL(urlNorm)
+            val host = urlNormC.getHost
+            val nodeId = resourceUrl2nodeId( urlNormC )
+            LOGGER.trace(s"$logPrefix Just a resource:\n origURL = $remoteUrl\n normURL = $urlNorm\n nodeId = $nodeId")
+            val r = RscInfo(
+              nodeType        = ntypes.Resource,
+              remoteUrl       = remoteUrl,
+              nodeRsc         = Some( MRscExtra(
+                url = urlNorm,
+                hostNames = MHostNameIndexed(
+                  host = host
+                ) :: Nil,
+                hostTokens = host.split('.').toSet
+              )),
+              nodeVideoExt    = None
+            )
+            nodeId -> r
+          }
       }
-      // Объединяем разные ссылки по одинаковым распарасенным данным видео.
+      // Объединяем разные ссылки по одинаковым распарсенным данным видео.
       .toSeq
       .groupBy(_._1)
       .mapValues(_.map(_._2))
 
-    LOGGER.trace(s"$logPrefix Detected ${extVid2Urls.size} ext-videos from ${videoUrls.size} video URLs")
-
-    // Пора поискать узлы, указывающие на данные видео.
-    val nodeId2veMap = extVid2Urls
-      .keysIterator
-      .map { ve =>
-        ve.toNodeId -> ve
-      }
-      .toMap
-
-    val vidExtPred = MNodeTypes.ExternalRsc.VideoExt
+    LOGGER.trace(s"$logPrefix Detected ${rscNodeId2UrlsMap.size} ext-videos from ${videoUrls.size} video URLs")
 
     // Запустить поиск узлов, хранящих данные по запрошенным видео.
     val existVideoExtNodesSearch = new MNodeSearchDfltImpl {
-      override def withIds    = nodeId2veMap.keys.toSeq
+      override def withIds    = rscNodeId2UrlsMap.keySet.toSeq
       // Фильтруем только по типу узла: если узел неожиданного типа живёт под ожидаемым id, пусть будет перезаписан.
-      override def nodeTypes  = vidExtPred :: Nil
-      override def limit      = nodeId2veMap.size
+      override def nodeTypes  = ntypes.children
+      override def limit      = rscNodeId2UrlsMap.size
     }
     val existVideoNodesMapFut = mNodes.dynSearchMap( existVideoExtNodesSearch )
 
@@ -104,9 +133,13 @@ class VideoUtil @Inject() (
       existVideoNodesMap <- existVideoNodesMapFut
 
       // Нужно выяснить какие ноды уже существуют, а каких не хватает:
-      missingVideoExtNodes = nodeId2veMap.filterKeys( nodeId => !existVideoNodesMap.contains(nodeId) )
+      missingVideoExtNodes = rscNodeId2UrlsMap.filterKeys( nodeId => !existVideoNodesMap.contains(nodeId) )
 
-      allNodesMap <- if (missingVideoExtNodes.nonEmpty) {
+      allNodesMap <- if (missingVideoExtNodes.isEmpty) {
+        LOGGER.trace(s"$logPrefix No need to create any video-ext nodes")
+        Future.successful( existVideoNodesMap )
+
+      } else {
         LOGGER.info(s"$logPrefix Will create ${missingVideoExtNodes.size} nodes: [${missingVideoExtNodes.keysIterator.mkString(", ")}]")
 
         val edges: Seq[MEdge] = {
@@ -119,18 +152,26 @@ class VideoUtil @Inject() (
           createdByEdgeOpt.toList
         }
 
-        val nodeCommon = MNodeCommon(
-          ntype       = vidExtPred,
-          isDependent = true
-        )
 
         val bulk = esClient.prepareBulk()
         val newNodesByIdAcc = missingVideoExtNodes.foldLeft( List.empty[(String, MNode)] ) {
-          case (acc0, (nodeId, veData)) =>
+          case (acc0, (nodeId, infos)) =>
+            // Дедубликация кода извлечения первого заданного поля из списка RscInfo.
+            def __getInfoField[T](f: RscInfo => TraversableOnce[T]): Option[T] = {
+              infos.iterator
+                .flatMap(f)
+                .toStream
+                .headOption
+            }
+
             val mnode0 = MNode(
-              common = nodeCommon,
+              common = MNodeCommon(
+                ntype       = infos.head.nodeType,
+                isDependent = true
+              ),
               extras = MNodeExtras(
-                extVideo = Some(veData)
+                extVideo = __getInfoField(_.nodeVideoExt),
+                resource = __getInfoField(_.nodeRsc)
               ),
               // Без ссылки в meta, чтобы ссылка явно генерилась самостоятельно.
               edges = MNodeEdges(
@@ -170,21 +211,16 @@ class VideoUtil @Inject() (
               Future.successful( resMap )
             }
           }
-
-      } else {
-        LOGGER.trace(s"$logPrefix No need to create any video-ext nodes")
-        Future.successful( existVideoNodesMap )
       }
 
     } yield {
       // Используя карту всех VideoExt-узлов, собрать итоговую карту ответа: ориг.ссылка -> MNode
       val resIter = for {
         (nodeId, mnode) <- allNodesMap.iterator
-        ve      <- nodeId2veMap.get(nodeId).iterator
-        veUrls  <- extVid2Urls.get(ve).iterator
-        veUrl   <- veUrls.iterator
+        rscInfos  <- rscNodeId2UrlsMap.get(nodeId).iterator
+        rscInfo   <- rscInfos.iterator
       } yield {
-        veUrl -> mnode
+        rscInfo.remoteUrl -> mnode
       }
 
       val resMap = resIter.toMap
@@ -203,6 +239,17 @@ class VideoUtil @Inject() (
   def toIframeUrl(videoExt: MVideoExtInfo): String = {
     videoExt.videoService
       .iframeSrc( videoExt.remoteId )
+  }
+
+
+  /** Используя нормализованный URL, сгенерить id узла для ресурса.
+    *
+    * @param normUrl Нормализованная ссылка на ресурс.
+    * @return Строка с id узла для нормальной ссылки.
+    */
+  def resourceUrl2nodeId(url: URL): String = {
+    // id узла для ссылки: префикс + dkey + остальная часть ссылки (path, qs, etc)
+    "@" + UrlUtil.host2dkey(url.getHost) + url.getFile
   }
 
 }

@@ -169,11 +169,12 @@ object MPredicates extends StringEnum[MPredicate] {
     /** Картинка/изображение. */
     case object Image extends MPredicate("si") with _Child
 
-    /** Видео. */
-    case object Video extends MPredicate("sv") with _Child
+    /** Видео-плеер, вёб-приложение или что-то ещё, живущее во фрейме (зависит от узла).
+      * До 2018-08-23 здесь было только видео, поэтому v. */
+    case object Frame extends MPredicate("sv") with _Child
 
     override def children: List[MPredicate] = {
-      Text :: Image :: Video :: super.children
+      Text :: Image :: Frame :: super.children
     }
 
   }

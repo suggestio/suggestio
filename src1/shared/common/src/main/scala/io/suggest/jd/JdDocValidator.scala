@@ -380,7 +380,7 @@ class JdDocValidator(
     edgeOpt
       .filter { edge =>
         val P = MPredicates.JdContent
-        List(P.Video, P.Image)
+        List(P.Frame, P.Image)
           .contains( edge.jdEdge.predicate )
       }
       .fold [ValidationNel[String, Option[MQdAttrsEmbed]]] {

@@ -156,7 +156,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
       1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 1, url = Some("blob:asdasdasdsda")) ),
       3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 3, url = Some("blob:645v-56h65y5665h56")) ),
-      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) )
+      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Frame, 4, url = Some("https://youtu.be/art42364")) )
     )
 
     val jdTag0 = Tree.Leaf(
@@ -201,7 +201,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
       1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 1, url = Some("blob:asdasdasdsda")) ),
       3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 3, url = Some("blob:645v-56h65y5665h56")) ),
-      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) ),
+      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Frame, 4, url = Some("https://youtu.be/art42364")) ),
       0 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) )
     )
 
@@ -246,7 +246,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
       1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 1, url = Some("blob:asdasdasdsda")) ),
       3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 3, url = Some("blob:645v-56h65y5665h56")) ),
-      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) ),
+      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Frame, 4, url = Some("https://youtu.be/art42364")) ),
       0 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) ),
       5 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, 5, text = Some(strBefore)) )
     )
@@ -308,7 +308,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
       1 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 1, url = Some("blob:asdasdasdsda")) ),
       3 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Image, 3, url = Some("blob:645v-56h65y5665h56")) ),
-      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) )
+      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Frame, 4, url = Some("https://youtu.be/art42364")) )
     )
 
     val jdTag0 = Tree.Leaf(

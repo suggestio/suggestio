@@ -57,7 +57,7 @@ case class MAeRoot(
     MJdAdData(
       template = jdArgs.template,
       edges    = {
-        val videoPred = MPredicates.JdContent.Video
+        val videoPred = MPredicates.JdContent.Frame
         jdArgs
           .edges
           .mapValues { e =>

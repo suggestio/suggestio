@@ -5,6 +5,7 @@ import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
 import io.suggest.model.n2.extra.doc.{MNodeDoc, MNodeDocJvm}
 import io.suggest.model.n2.extra.domain.MDomainExtra
+import io.suggest.model.n2.extra.rsc.MRscExtra
 import io.suggest.vid.ext.{MVideoExtInfo, MVideoExtInfoEs}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{OFormat, _}
@@ -21,11 +22,7 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
   override type T = MNodeExtras
 
   /** Расшаренный пустой экземпляр для дедубликации пустых инстансов контейнера в памяти. */
-  override val empty: MNodeExtras = {
-    new MNodeExtras() {
-      override def nonEmpty = false
-    }
-  }
+  override val empty = MNodeExtras()
 
 
   /** Статическая модель полей модели [[MNodeExtras]]. */
@@ -86,6 +83,12 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
       def REMOTE_ID_FN      = _fullFn( F.REMOTE_ID_FN )
     }
 
+
+    object Resource extends PrefixedFn {
+      val RESOURCE_FN = "r"
+      override protected def _PARENT_FN = RESOURCE_FN
+    }
+
   }
 
 
@@ -100,7 +103,8 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
         { domains => if (domains.isEmpty) None else Some(domains) }
       ) and
     (__ \ Fields.MNDoc.MNDOC_FN).formatNullable[MNodeDoc] and
-    (__ \ Fields.VideoExt.VIDEO_EXT_FN).formatNullable[MVideoExtInfo]
+    (__ \ Fields.VideoExt.VIDEO_EXT_FN).formatNullable[MVideoExtInfo] and
+    (__ \ Fields.Resource.RESOURCE_FN).formatNullable[MRscExtra]
   )(apply, unlift(unapply))
 
 
@@ -115,21 +119,31 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
       _obj(Fields.Beacon.BEACON_FN, MBeaconExtra),
       FieldNestedObject(Fields.Domain.DOMAIN_FN, enabled = true, properties = MDomainExtra.generateMappingProps),
       _obj(Fields.MNDoc.MNDOC_FN,   MNodeDocJvm),
-      _obj(Fields.VideoExt.VIDEO_EXT_FN,  MVideoExtInfoEs)
+      _obj(Fields.VideoExt.VIDEO_EXT_FN,  MVideoExtInfoEs),
+      _obj(Fields.Resource.RESOURCE_FN,   MRscExtra)
     )
   }
 
 }
 
 
-/** Класс-контейнер-реализация модели. */
-case class MNodeExtras(
-                        adn       : Option[MAdnExtra]         = None,
-                        beacon    : Option[MBeaconExtra]      = None,
-                        domains   : Seq[MDomainExtra]         = Nil,
-                        doc       : Option[MNodeDoc]          = None,
-                        extVideo  : Option[MVideoExtInfo]     = None
-                      )
+/** Класс-контейнер-реализация модели.
+  *
+  * @param adn Данные для adn-узла (личного кабинета).
+  * @param beacon Данные bluetooth-маячка.
+  * @param domains Домены, подключенные к suggest.io в качестве интерфейса выдачи.
+  * @param doc jd-документ.
+  * @param extVideo Данные встраиваемого (связанного) видео, на каком-то видео-сервисе.
+  * @param resource Интернет-ресурс, доступный по ссылке.
+  */
+final case class MNodeExtras(
+                              adn       : Option[MAdnExtra]         = None,
+                              beacon    : Option[MBeaconExtra]      = None,
+                              domains   : Seq[MDomainExtra]         = Nil,
+                              doc       : Option[MNodeDoc]          = None,
+                              extVideo  : Option[MVideoExtInfo]     = None,
+                              resource  : Option[MRscExtra]         = None,
+                            )
   extends EmptyProduct
 {
 

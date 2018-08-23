@@ -1,11 +1,10 @@
 package io.suggest.model.n2.edge
 
-import io.suggest.common.empty.EmptyProduct
+import io.suggest.common.empty.{EmptyProduct, EmptyUtil}
 import io.suggest.model.PrefixedFn
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MNodeGeoLevel
-import io.suggest.primo.id.OptId
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -79,32 +78,14 @@ object MEdge extends IGenEsMappingProps {
 
   import Fields._
 
-  /** JSON-маппер для поля nodeIds.
-    * 2016.apr.1 nodeIds был Option[String], стал Set[String]. Поэтому тут reads с compat-костылём.
-    */
-  private val NODE_IDS_FORMAT = {
-    val path = __ \ NODE_ID_FN
-
-    val reads = path
-      .readNullable[Set[String]]
-      .map { _.getOrElse(Set.empty) }
-      .orElse {
-        path.readNullable[String]
-          .map { _.toSet }
-      }
-
-    val writes = path.writeNullable[Set[String]]
-      .contramap[Set[String]] { nodeIds =>
-        if (nodeIds.nonEmpty) Some(nodeIds) else None
-      }
-
-    OFormat(reads, writes)
-  }
-
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MEdge] = (
     (__ \ PREDICATE_FN).format(MPredicate.MPREDICATE_DEEP_FORMAT) and
-    NODE_IDS_FORMAT and
+    (__ \ NODE_ID_FN).formatNullable[Set[String]]
+      .inmap [Set[String]] (
+        EmptyUtil.opt2ImplEmptyF(Set.empty),
+        nodeIds => if (nodeIds.nonEmpty) Some(nodeIds) else None
+      ) and
     (__ \ ORDER_FN).formatNullable[Int] and
     (__ \ INFO_FN).formatNullable[MEdgeInfo]
       .inmap [MEdgeInfo] (
@@ -143,7 +124,7 @@ object MEdge extends IGenEsMappingProps {
   * @param predicate Предикат, т.е. некоторый тип эджа.
   * @param nodeIds id ноды на дальнем конце эджа, если есть.
   * @param order Для поддержкания порядка эджей можно использовать это опциональное поле.
-  * Можно также использовать для некоего внутреннего доп.идентификатора.
+  *              Можно также использовать для некоего внутреннего доп.идентификатора.
   * @param info Контейнер доп.данных текущего эджа.
   */
 case class MEdge(

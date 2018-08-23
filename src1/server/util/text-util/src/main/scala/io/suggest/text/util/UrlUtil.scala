@@ -182,7 +182,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
     try {
       humanizeUrlAggressive( new URL(url) )
     } catch {
-      case ex: Exception => url
+      case _: Exception => url
     }
   }
   def humanizeUrlAggressive(url: URL): String = {
@@ -207,7 +207,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
     try {
       humanizeUrl( new URL(url) )
     } catch {
-      case ex: Exception => url
+      case _: Exception => url
     }
   }
   def humanizeUrl(url: URL): String = {

@@ -340,9 +340,9 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
   def ways(memberIter: Iterator[OsmRelMember]) = {
     memberIter.flatMap { mmbr =>
       if (mmbr.typ == OsmElemTypes.WAY)
-        Seq(mmbr.obj.asInstanceOf[OsmWay])
+        mmbr.obj.asInstanceOf[OsmWay] :: Nil
       else
-        Seq()
+        Nil
     }
   }
 
@@ -352,7 +352,7 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
   /** Сгрупировать inner-пути в дырки, состоящие из путей. */
   def innerHoles = {
     innerWays
-      .foldLeft [List[List[OsmWay]]] (List(Nil)) { (acc, e) =>
+      .foldLeft [List[List[OsmWay]]] (Nil :: Nil) { (acc, e) =>
         val hole = e :: acc.head
         val acc1 = hole :: acc.tail
         if ( acc.head.last.firstNode == e.lastNode ) {
@@ -370,7 +370,7 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
   def firstOuter: OsmNode = outers.next().obj.firstNode
   def lastOuter: OsmNode = {
     outers
-      .reduceLeft[OsmRelMember] { (old, next) => next }
+      .reduceLeft[OsmRelMember] { (_, next) => next }
       .obj
       .lastNode
   }

@@ -6,11 +6,10 @@ import io.suggest.model.n2.edge.{EdgeUid_t, MPredicate, MPredicates}
 import io.suggest.primo.id.IId
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
-import io.suggest.vid.ext.{VideoExtUrlParsers, VideoExtUrlParsersT}
+import io.suggest.text.UrlUtil2
 import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-
 import scalaz.Validation
 import scalaz.syntax.apply._
 
@@ -51,8 +50,7 @@ object MJdEdge {
 
 
   /** Валидация данных эджа для его сохранения в БД. */
-  def validateForStore(e: MJdEdge,
-                       videoExtUrlParsers: VideoExtUrlParsersT = new VideoExtUrlParsers): StringValidationNel[MJdEdge] = {
+  def validateForStore(e: MJdEdge): StringValidationNel[MJdEdge] = {
     // Тут несколько вариантов: текст, картинка, видео. Поэтому разветвляем валидацию.
     val P = MPredicates.JdContent
     val `PRED` = "pred"
@@ -77,14 +75,15 @@ object MJdEdge {
 
       val urlVld = {
         val URL = "url"
-        if (e.predicate ==>> P.Video) {
+        if (e.predicate ==>> P.Frame) {
           ScalazUtil.liftNelSome(e.url, errMsgF(URL + `.` + ErrorConstants.Words.EXPECTED)) { url =>
-            //Раньше было так: UrlUtil2.validateUrl(url, errMsgF(URL + `.` + ErrorConstants.Words.INVALID))
-            // Теперь тут проверка включая видео-хостинг и id видео:
-            val pr = videoExtUrlParsers.parse( videoExtUrlParsers.anySvcVideoUrlP, url )
-            ScalazUtil.liftParseResult( pr ) { _ => errMsgF(URL + `.` + ErrorConstants.Words.INVALID) }
-              // На стадии валидации возвращаем ссылку на видео. TODO Возвращать пересобранную ссылку вместо оригинала?
-              .map { _ => url }
+            // Просто проверка ссылки.
+            UrlUtil2.validateUrl(url, errMsgF(URL + `.` + ErrorConstants.Words.INVALID))
+            // Раньше был парсинг ссылки на видеохостинг, но фреймы стали более абстрактными.
+            //val pr = videoExtUrlParsers.parse( videoExtUrlParsers.anySvcVideoUrlP, url )
+            //ScalazUtil.liftParseResult( pr ) { _ => errMsgF(URL + `.` + ErrorConstants.Words.INVALID) }
+            //  // На стадии валидации возвращаем ссылку на видео. TODO Возвращать пересобранную ссылку вместо оригинала?
+            //  .map { _ => url }
           }
         } else {
           ScalazUtil.liftNelNone(e.url, errMsgF(URL + `.` + ErrorConstants.Words.UNEXPECTED))

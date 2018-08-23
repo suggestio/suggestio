@@ -27,10 +27,10 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import util.acl.{BruteForceProtect, CanCreateOrEditAd, CanEditAd, IsNodeAdmin}
 import util.ad.{JdAdUtil, LkAdEdFormUtil}
+import util.ext.ExtRscUtil
 import util.mdr.SysMdrUtil
 import util.n2u.N2VldUtil
 import util.sec.CspUtil
-import util.vid.VideoUtil
 import views.html.lk.ad.edit._
 
 import scala.concurrent.Future
@@ -56,7 +56,7 @@ class LkAdEdit @Inject() (
                            jdAdUtil                               : JdAdUtil,
                            mNodes                                 : MNodes,
                            sysMdrUtil                             : SysMdrUtil,
-                           videoUtil                              : VideoUtil,
+                           extRscUtil                             : ExtRscUtil,
                            override val mCommonDi                 : ICommonDi
                          )
   extends SioControllerImpl
@@ -178,36 +178,36 @@ class LkAdEdit @Inject() (
                 {tpl2 =>
                   LOGGER.trace(s"$logPrefix Successfully validated template:\n${tpl2.drawTree}")
 
-                  val videoPred = MPredicates.JdContent.Video
-                  // Сграбить ссылки на внешнее видео -- для них надо создать videoExt-узлы, этим занимается VideoUtil:
-                  val videoExtEdgesFut = {
-                    val videoExtUrls = (
+                  val framePred = MPredicates.JdContent.Frame
+                  // Сграбить ссылки на внешние фрейморесурсы -- для них надо создать ext-узлы, этим занимается VideoUtil:
+                  val extRscEdgesFut = {
+                    val extRscUrls = (
                       for {
                         jdEdge <- edges2.iterator
-                        if jdEdge.predicate ==>> videoPred
+                        if jdEdge.predicate ==>> framePred
                         url    <- jdEdge.url
                       } yield {
                         url -> jdEdge.id
                       }
                     ).toMap
-                    videoUtil.ensureExtVideoNodes(videoExtUrls.keys, request.user.personIdOpt)
+                    extRscUtil.ensureExtRscNodes(extRscUrls.keys, request.user.personIdOpt)
                   }
 
                   val edgesAcc0Fut = for {
-                    videoExtEdges <- videoExtEdgesFut
+                    extRscEdges <- extRscEdgesFut
                   } yield {
-                    LOGGER.trace(s"$logPrefix ${videoExtEdges.size} VideoExtEdges = [${videoExtEdges.mapValues(_.idOrNull).mkString(", ")}]")
+                    LOGGER.trace(s"$logPrefix ${extRscEdges.size} ExtRscEdges = [${extRscEdges.mapValues(_.idOrNull).mkString(", ")}]")
 
                     var _acc0 = edges2.foldLeft(List.empty[MEdge]) { (acc0, jdEdge) =>
                       MEdge(
                         predicate = jdEdge.predicate,
                         nodeIds = {
-                          val videoNodeIdOpt = OptionUtil.maybeOpt(jdEdge.predicate ==>> videoPred) {
+                          val extRscNodeIdOpt = OptionUtil.maybeOpt(jdEdge.predicate ==>> framePred) {
                             jdEdge.url
-                              .flatMap( videoExtEdges.get )
+                              .flatMap( extRscEdges.get )
                               .flatMap( _.id )
                           }
-                          videoNodeIdOpt
+                          extRscNodeIdOpt
                             .orElse {
                               jdEdge.fileSrv.map(_.nodeId)
                             }

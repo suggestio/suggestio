@@ -703,8 +703,9 @@ Ntype.m=Медиа
 Ntype.i=Картинка
 Ntype.b=Маячок BLE
 Ntype.mf=Файл
-Ntype.e=Внешний ресурс
-Ntype.ev=Внешнее видео
+Ntype.e=Внешние ресурсы
+Ntype.ev=Видео
+Ntype.er=Ресурс
 
 Ntypes.p=Люди
 Ntypes.n=Кабинеты
@@ -715,7 +716,8 @@ Ntypes.i=Картинки
 Ntypes.b=Маячки BLE
 Ntypes.mf=Файлы
 Ntypes.e=Внешние ресурсы
-Ntypes.ev=Внешние видео
+Ntypes.ev=Видео
+Ntypes.er=Ресурсы
 Nodes=Узлы
 
 edge.predicate.a=Владелец

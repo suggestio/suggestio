@@ -72,7 +72,12 @@ object MNodeTypes extends StringEnum[MNodeType] {
     /** Видео, обслуживаемое внешним видео-сервисом. */
     case object VideoExt extends MNodeType("ev") with _Child
 
-    override def children = List[MNodeType](VideoExt)
+    /** Просто какая-то внешняя страница (внешний ресурс) без какой-либо явной специализации.
+      * Ресурс доступен по http/https, и обычно пригоден для использования через фрейм. */
+    case object Resource extends MNodeType("er") with _Child
+
+    override def children: List[MNodeType] =
+      VideoExt :: Resource :: Nil
 
   }
 

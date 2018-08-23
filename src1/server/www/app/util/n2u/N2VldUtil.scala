@@ -8,7 +8,6 @@ import io.suggest.model.n2.media.{MMedia, MMediasCache}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodesCache}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.vid.ext.VideoExtUrlParsers
 import javax.inject.{Inject, Singleton}
 import models.im.{MDynImgId, MImg3}
 import scalaz.std.iterable._
@@ -73,11 +72,10 @@ class N2VldUtil @Inject()(
     */
   def earlyValidateEdges(edges: Iterable[MJdEdge]): StringValidationNel[List[MJdEdge]] = {
     // Ранняя валидация корректности присланных эджей:
-    val videoExtUrlParsers = new VideoExtUrlParsers
-    ScalazUtil.validateAll(edges) {
+    ScalazUtil.validateAll(edges) { jdEdge =>
       MJdEdge
-        .validateForStore(_, videoExtUrlParsers)
-        .map(List(_))
+        .validateForStore(jdEdge)
+        .map(_ :: Nil)
     }
   }
 

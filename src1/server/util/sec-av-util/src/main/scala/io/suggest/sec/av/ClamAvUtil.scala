@@ -10,7 +10,6 @@ import akka.stream.{Materializer, OverflowStrategy}
 import akka.stream.scaladsl._
 import akka.util.ByteString
 import io.suggest.async.AsyncUtil
-import io.suggest.streams.ByteStringsChunker
 import io.suggest.util.logs._
 import japgolly.univeq._
 import play.api.Configuration
