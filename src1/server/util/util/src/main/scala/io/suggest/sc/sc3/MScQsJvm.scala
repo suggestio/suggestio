@@ -1,7 +1,6 @@
 package io.suggest.sc.sc3
 
 import io.suggest.dev.MScreen
-import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.sc.MScApiVsn
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
@@ -9,7 +8,6 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
 import io.suggest.sc.ads.{MAdsSearchReq, MLookupMode, MScFocusArgs}
 import io.suggest.sc.index.MScIndexArgs
-import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 
 
 /**
@@ -19,10 +17,6 @@ import io.suggest.sc.search.{MSearchTab, MSearchTabs}
   * Description: Серверная поддержка моделей [[MScQs]], [[MScCommonQs]].
   */
 object MScQsJvm {
-
-  implicit def searchTabQsb: QueryStringBindable[MSearchTab] = {
-    EnumeratumJvmUtil.valueEnumQsb( MSearchTabs )
-  }
 
   /** QSB-поддержка для [[MScCommonQs]]. */
   implicit def mScCommonQsQsb(implicit
@@ -84,7 +78,6 @@ object MScQsJvm {
                                  intOptB        : QueryStringBindable[Option[Int]],
                                  locEnvB        : QueryStringBindable[MLocEnv],
                                  strOptB        : QueryStringBindable[Option[String]],
-                                 searchTabOptB  : QueryStringBindable[Option[MSearchTab]]
                                 ): QueryStringBindable[MAdsSearchReq] = {
     new QueryStringBindableImpl[MAdsSearchReq] {
       import io.suggest.ad.search.AdSearchConstants._
@@ -99,7 +92,6 @@ object MScQsJvm {
           offsetOptE        <- intOptB.bind   (k(OFFSET_FN),          params)
           tagNodeIdOptE     <- esIdOptB.bind  (k(TAG_NODE_ID_FN),     params)
           textQueryOptE     <- strOptB.bind   (k(TEXT_QUERY_FN),      params)
-          searchTabOptE     <- searchTabOptB.bind(k(SEARCH_TAB_FN),   params)
         } yield {
           for {
             prodIdOpt       <- prodIdOptE.right
@@ -109,7 +101,6 @@ object MScQsJvm {
             offsetOpt       <- offsetOptE.right
             tagNodeIdOpt    <- tagNodeIdOptE.right
             textQueryOpt    <- textQueryOptE.right
-            searchTabOpt    <- searchTabOptE.right
           } yield {
             MAdsSearchReq(
               prodId        = prodIdOpt,
@@ -119,7 +110,6 @@ object MScQsJvm {
               offset        = offsetOpt,
               tagNodeId     = tagNodeIdOpt,
               textQuery     = textQueryOpt,
-              tab           = searchTabOpt
             )
           }
         }
@@ -134,8 +124,7 @@ object MScQsJvm {
           intOptB.unbind    (k(LIMIT_FN),           value.limit),
           intOptB.unbind    (k(OFFSET_FN),          value.offset),
           esIdOptB.unbind   (k(TAG_NODE_ID_FN),     value.tagNodeId),
-          strOptB.unbind    (k(TEXT_QUERY_FN),      value.textQuery),
-          searchTabOptB.unbind(k(SEARCH_TAB_FN),    value.tab)
+          strOptB.unbind    (k(TEXT_QUERY_FN),      value.textQuery)
         )
       }
     }

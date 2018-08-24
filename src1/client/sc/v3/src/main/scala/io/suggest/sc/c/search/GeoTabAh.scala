@@ -13,7 +13,6 @@ import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.{HandleScApiResp, MScRoot}
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
-import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sc.v.search.SearchCss
@@ -58,15 +57,10 @@ class GeoTabAh[M](
   with Log
 { ah =>
 
-  /** Проверить, что таб с nodes-списком относится к данному контроллеру. */
-  private def _isMyTab( tab: MSearchTab ) =
-    tab ==* MSearchTabs.GeoMap
-
-
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Запустить запрос поиска узлов
-    case m: DoGeoSearch =>
+    case m: DoNodesSearch =>
       val v0 = value
       val req = v0.mapInit.rcvrs
       if ( !req.isPending || m.clear ) {
@@ -113,7 +107,9 @@ class GeoTabAh[M](
           updated( v2, fx )
 
         } else if (req.nonEmpty || req.isPending || v0.mapInit.rcvrs.nonEmpty) {
-          // Пустой запрос для поиска. Сбросить состояние поиска.
+          // Пустой запрос для поиска.
+          // 1. Карту ресиверов - сбросить ресиверов на общую карту.
+          // 2. TODO Надо найти теги, размещённые в текущей точке.
           val v2 = v0.copy(
             mapInit = v0.mapInit.withRcvrs( v0.data.rcvrsCache ),
             found   = MNodesFoundS.empty,
@@ -135,11 +131,11 @@ class GeoTabAh[M](
       }
 
     // Клик по узлу в списке найденных гео-узлов.
-    case m: NodeRowClick if _isMyTab(m.onTab) =>
+    case m: NodeRowClick =>
       val fx = Effect.action( MapReIndex(Some(m.nodeId)) )
       effectOnly(fx)
 
-    case m: NodesScroll if _isMyTab(m.onTab) =>
+    case _: NodesScroll =>
       // Пока сервер возвращает все результаты пачкой, без лимитов, реакции никакой не будет.
       noChange
 
@@ -219,7 +215,7 @@ class GeoTabAh[M](
 
 
 /** Обработка sc-resp-экшенов. */
-class GeoSearchRespHandler( getScCssF: GetScCssF )
+class NodesSearchRespHandler(getScCssF: GetScCssF)
   extends IRespWithActionHandler {
 
   private def _withGeo(ctx: MRhCtx, geo2: MGeoTabS): MScRoot = {
@@ -233,7 +229,7 @@ class GeoSearchRespHandler( getScCssF: GetScCssF )
 
 
   override def isMyReqReason(ctx: MRhCtx): Boolean = {
-    ctx.m.reason.isInstanceOf[DoGeoSearch]
+    ctx.m.reason.isInstanceOf[DoNodesSearch]
   }
 
   override def getPot(ctx: MRhCtx): Option[Pot[_]] = {
@@ -257,7 +253,7 @@ class GeoSearchRespHandler( getScCssF: GetScCssF )
 
   override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect]) = {
     // Накатить результаты в состояние: помимо данных тегов, надо ещё и для карты маркеры подготовить.
-    val reason = ctx.m.reason.asInstanceOf[DoGeoSearch]
+    val reason = ctx.m.reason.asInstanceOf[DoNodesSearch]
     val g0 = ctx.value0.index.search.geo
 
     val nodesResp = ra.search.get

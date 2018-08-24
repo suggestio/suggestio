@@ -5,7 +5,7 @@ import io.suggest.jd.render.JdRenderModule
 import io.suggest.sc.c.IRespWithActionHandler
 import io.suggest.sc.c.grid.{GridFocusRespHandler, GridRespHandler}
 import io.suggest.sc.c.inx.IndexRespHandler
-import io.suggest.sc.c.search.{GeoSearchRespHandler, TagsRespHandler}
+import io.suggest.sc.c.search.NodesSearchRespHandler
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v._
 import io.suggest.sc.v.grid.{GridCoreR, GridLoaderR, GridR}
@@ -66,12 +66,9 @@ class Sc3Module {
 
   // search
   lazy val sTextR = wire[STextR]
-  lazy val tabsR = wire[TabsR]
   lazy val searchMapR = wire[SearchMapR]
-  lazy val tagsSearchR = wire[TagsSearchR]
   lazy val searchR = wire[SearchR]
-  lazy val tagsRespHandler = wire[TagsRespHandler]
-  lazy val geoSearchRespHandler = wire[GeoSearchRespHandler]
+  lazy val geoSearchRespHandler = wire[NodesSearchRespHandler]
   lazy val nodesFoundR = wire[NodesFoundR]
   lazy val geoMapOuterR = wire[GeoMapOuterR]
 
@@ -109,7 +106,6 @@ class Sc3Module {
       gridRespHandler,
       gridFocusRespHandler,
       indexRespHandler,
-      tagsRespHandler,
       geoSearchRespHandler
     )
   }

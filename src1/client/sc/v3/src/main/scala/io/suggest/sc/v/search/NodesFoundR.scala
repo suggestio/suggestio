@@ -13,7 +13,7 @@ import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.maps.u.MapsUtil
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{MSearchRespInfo, NodeRowClick, NodesScroll}
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.ueq.UnivEqUtil._
@@ -24,7 +24,6 @@ import japgolly.univeq._
 import scalacss.ScalaCssReact._
 import io.suggest.common.html.HtmlConstants.`~`
 import io.suggest.maps.nodes.MGeoNodePropsShapes
-import io.suggest.sc.search.MSearchTab
 import io.suggest.sjs.common.xhr.Xhr
 
 /**
@@ -48,7 +47,6 @@ class NodesFoundR(
                        // TODO Когда станет допустимо сразу несколько тегов, надо заменить на Set[String].
                        selectedId       : Option[String],
                        withDistanceTo   : Option[MGeoLoc],
-                       onTab            : MSearchTab,
                        // TODO Сделать без orNull неопциональным, когда панель тегов будет унифицирована с основным списком.
                        searchCssOrNull  : SearchCss = null
                      )
@@ -59,7 +57,6 @@ class NodesFoundR(
         (a.hasMore ==* b.hasMore) &&
         (a.selectedId ===* b.selectedId) &&
         (a.withDistanceTo ===* b.withDistanceTo) &&
-        (a.onTab ===* b.onTab) &&
         // Наверное, проверять css не нужно. Но мы всё же перерендериваем.
         (a.searchCssOrNull ===* b.searchCssOrNull)
     }
@@ -73,19 +70,14 @@ class NodesFoundR(
 
     /** Реакция на клик по одному элементу (ряду, узлу). */
     private def _onNodeRowClick(nodeId: String): Callback = {
-      dispatchOnProxyScopeCBf($) { propsProxy: Props =>
-        val v = propsProxy.value.onTab
-        NodeRowClick(nodeId, v)
-      }
+      dispatchOnProxyScopeCB($, NodeRowClick(nodeId) )
     }
 
     /** Скроллинг в списке найденных узлов. */
     private def _onNodesListScroll(e: ReactEventFromHtml): Callback = {
       val scrollTop = e.target.scrollTop
       val scrollHeight = e.target.scrollHeight
-      dispatchOnProxyScopeCBf($) { propsProxy: Props =>
-        NodesScroll(scrollTop, scrollHeight, propsProxy.value.onTab)
-      }
+      dispatchOnProxyScopeCB($, NodesScroll(scrollTop, scrollHeight) )
     }
 
 

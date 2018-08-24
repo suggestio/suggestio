@@ -301,7 +301,7 @@ object Common {
    *  что может вызвать проблемы на сборке с пустым ivy2-кешем во время освежения версии в webjars.
    *  1.3.2 - Первая публичная версия без window.L вообще по дефолту. 1.3.3 - временный rollback.
    */
-  val leafletJsVsn              = "1.3.3"
+  val leafletJsVsn              = "1.3.4"
 
   /** Версия L.control.locate.js.
     * 0.62.0: грязно проверяет и работает с window.L, что конфликтует minified js. string-replace решает проблему. */

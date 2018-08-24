@@ -32,7 +32,6 @@ import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.m.search.{MGeoTabS, MMapInitState, MScSearch, MSearchCssProps}
 import io.suggest.sc.sc3.{MScCommonQs, MScQs}
-import io.suggest.sc.search.{MSearchTab, MSearchTabs}
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.u.Sc3ConfUtil
 import io.suggest.sc.v.ScCssFactory
@@ -177,7 +176,6 @@ class Sc3Circuit(
   val scCssRO: ModelRO[ScCss] = indexRW.zoom(_.scCss)
 
   private val searchRW = indexRW.zoomRW(_.search) { _.withSearch(_) }
-  private val tagsRW = searchRW.zoomRW(_.tags) { _.withTags(_) }
   private val geoTabRW = searchRW.zoomRW(_.geo) { _.withGeo(_) }
 
   private val mapInitRW = geoTabRW.zoomRW(_.mapInit) { _.withMapInit(_) }
@@ -200,7 +198,7 @@ class Sc3Circuit(
 
   private val beaconerRW = devRW.zoomRW(_.beaconer) { _.withBeaconer(_) }
 
-  private def _getLocEnv(mroot: MScRoot, currRcvrId: Option[_]): MLocEnv = {
+  private def _getLocEnv(mroot: MScRoot, currRcvrId: Option[_] = None): MLocEnv = {
     MLocEnv(
       geoLocOpt  = OptionUtil.maybeOpt(currRcvrId.isEmpty)( mroot.locEnvGeoLocOpt ),
       bleBeacons = mroot.locEnvBleBeacons
@@ -232,33 +230,29 @@ class Sc3Circuit(
       search = MAdsSearchReq(
         rcvrId      = currRcvrId,
         genOpt      = Some( inxState.generation ),
-        tagNodeId   = mroot.index.search.tags.selectedId.toEsUuIdOpt
+        tagNodeId   = mroot.index.search.selTagNodeId.toEsUuIdOpt
         // limit и offset очень специфичны и выставляются в конкретных контроллерах карточек.
       )
     )
   }
 
   /** Аргументы для поиска тегов. */
-  private val tagsSearchQsRO: ModelRO[MScQs] = zoom { mroot =>
-    _searchQs(mroot, MSearchTabs.Tags, withScreen = false, mroot.index.state.currRcvrId.toEsUuIdOpt)
-  }
   private val geoSearchQsRO: ModelRO[MScQs] = zoom { mroot =>
-    _searchQs(mroot, MSearchTabs.GeoMap, withScreen = true, None)
+    _searchQs(mroot, withScreen = true, None)
   }
 
-  private def _searchQs(mroot: MScRoot, tab: MSearchTab, withScreen: Boolean,
+  private def _searchQs(mroot: MScRoot, withScreen: Boolean,
                         currRcvrId: Option[MEsUuId]): MScQs = {
     MScQs(
       common = MScCommonQs(
-        locEnv = _getLocEnv(mroot, currRcvrId),
+        locEnv = _getLocEnv(mroot),
         apiVsn = mroot.internals.conf.apiVsn,
         searchNodes = Some(false),
         screen = OptionUtil.maybe(withScreen)( mroot.dev.screen.info.screen )
       ),
       search = MAdsSearchReq(
         textQuery = mroot.index.search.text.searchQuery.toOption,
-        rcvrId    = currRcvrId,
-        tab       = Some( tab ) //mroot.index.search.currTab )
+        rcvrId    = mroot.index.state.currRcvrId.toEsUuIdOpt
       )
     )
   }
@@ -287,13 +281,6 @@ class Sc3Circuit(
     geoSearchQsRO   = geoSearchQsRO,
     rcvrsMapApi     = advRcvrsMapApi,
     screenInfoRO    = screenInfoRO
-  )
-
-  private val tagsAh = new TagsAh(
-    api             = api,
-    modelRW         = tagsRW,
-    tagsSearchQsRO  = tagsSearchQsRO,
-    screenRO        = screenRO
   )
 
   private val indexAh = new IndexAh(
@@ -376,11 +363,9 @@ class Sc3Circuit(
     // Основные события индекса не частые, но доступны всегда:
     acc ::= indexAh
 
-    // top-level search AH всегда ожидает команд, когда TODO нет открытого левого меню закрыто или focused-выдачи
     acc ::= searchAh
     acc ::= sTextAh
-    acc ::= geoTabAh
-    acc ::= tagsAh
+    acc ::= geoTabAh    // TODO Объеденить с searchAh
 
     //if ( indexWelcomeRW().nonEmpty )
       acc ::= new WelcomeAh( indexWelcomeRW )

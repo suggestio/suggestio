@@ -8,7 +8,7 @@ import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
-import io.suggest.sc.search.{MSc3NodeSearchResp, MSearchTabs}
+import io.suggest.sc.search.MSc3NodeSearchResp
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.req.IReq
@@ -147,22 +147,22 @@ trait ScSearch
           .alsoTo( saveScStatSink )
 
         // Надо решить: надо ли рендерить в ответе геоданные размещения или нет?
-        if (_qs.search.tab contains MSearchTabs.GeoMap) {
+
           // Надо рендерить гео-данные:
           advGeoRcvrsUtil
             .withNodeLocShapes( src0 )
             .map { case (_, advNodePropsShapes) =>
+              // TODO Не рендерить гео-данные для тегов!
               advNodePropsShapes
             }
-        } else {
           // Геоданные не нужны, просто заворачиваем результаты без гео-шейпов:
-          src0.map { case (_, advNodeProps) =>
-            MGeoNodePropsShapes(
-              props = advNodeProps,
-              shapes = Nil
-            )
-          }
-        }
+          //src0.map { case (_, advNodeProps) =>
+          //  MGeoNodePropsShapes(
+          //    props = advNodeProps,
+          //    shapes = Nil
+          //  )
+          //}
+
           /*
           // TODO Для chunked-выхлопа можно задействовать этот код в будущем. Пока что ScUniApi не поддерживает chunked-ответ, поэтому не нужно.
           .jsValuesToJsonArrayByteStrings

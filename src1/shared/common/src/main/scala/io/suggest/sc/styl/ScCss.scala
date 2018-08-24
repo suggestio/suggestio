@@ -53,7 +53,7 @@ object ScCss {
     * Если нет заголовка табов, то можно делать бОльший offset.
     * if (tabsHdr.isEmpty) 115 else 165
     */
-  val TABS_OFFSET_PX = 115
+  val TABS_OFFSET_PX = 65
 
   /** Высота заголовка. */
   val HEADER_HEIGHT_PX = 50
@@ -395,8 +395,6 @@ case class ScCss( args: IScCssArgs )
   /** Панель поиска. */
   object Search {
 
-    private val _PANEL = _SM_ + "categories-screen"
-
     def Z_INDEX = 11
 
     def PANEL_WIDTH_PX = 320
@@ -420,7 +418,7 @@ case class ScCss( args: IScCssArgs )
 
 
     /** Поля текстового поиска и контейнер оной. */
-    object SearchBar {
+    object TextBar {
 
       private val _BAR = _SM_ + "search-bar"
 
@@ -449,36 +447,6 @@ case class ScCss( args: IScCssArgs )
 
     /** Табы на поисковой панели. */
     object Tabs {
-
-      private val _TABS = _PANEL + "_tabs"
-
-      /** div-контейнер заголовков табов. */
-      val tabs = _styleAddClass( _TABS )
-
-      val tabsWrapper = _styleAddClass( _TABS + "-wrapper" )
-
-      /** Стили для одного таба. */
-      object Single {
-
-        val tabOuter = _styleAddClass( _PANEL + "_single-tab" )
-        val tabInner = style(
-          background := _fgColorCss,
-          color(_bgColorCss),
-          addClassName( _SM_ + "tab" )
-        )
-        val inactive = style(
-          color(_fgColorCss),
-          (background := none).important,
-          addClassName( __ + "inactive" )
-        )
-
-        object Rounded {
-          private val _ROUNDED_ = __ + "rounded-"
-          val left  = _styleAddClass( _ROUNDED_ + "left" )
-          val right = _styleAddClass( _ROUNDED_ + "right" )
-        }
-
-      }
 
       private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - ScCss.TABS_OFFSET_PX - args.screenInfo.unsafeOffsets.top
 
@@ -539,7 +507,7 @@ case class ScCss( args: IScCssArgs )
       /** Стили для списка найденных узлов (тегов и т.д.). */
       object NodesFound {
 
-        private val NODES_LIST = TagsTab.TAGS + "-list"
+        private val NODES_LIST = "shops-list"
 
         /** Список тегов. */
         val listDiv = _styleAddClass( NODES_LIST )
@@ -572,33 +540,6 @@ case class ScCss( args: IScCssArgs )
           fontSize.smaller,
           float.right,
           paddingTop(6.px)
-        )
-
-      }
-
-
-      /** Стили для вкладки с тегами. */
-      object TagsTab {
-
-        private[styl] val TAGS = "shops"
-
-        private val OUTER = _SM_ + TAGS
-
-        val outer = style(
-          addClassName(OUTER),
-          smFlex,
-          TAB_BODY_HEIGHT
-        )
-
-        val wrapper = style(
-          overflowScrollingMx,
-          smFlex,
-          TAB_BODY_HEIGHT
-        )
-
-        val inner = style(
-          addClassName( OUTER ),
-          minHeight( TAB_BODY_HEIGHT_PX.px )
         )
 
       }
@@ -765,11 +706,9 @@ case class ScCss( args: IScCssArgs )
     Header.Logo.Txt.Dots.dot,
     Header.Logo.Img.logo,
 
-    Search.SearchBar.Field.active,
-    Search.Tabs.Single.Rounded.right,
+    Search.TextBar.Field.active,
     Search.Tabs.MapTab.inner,
     Search.Tabs.NodesFound.listDiv,
-    Search.Tabs.TagsTab.inner,
 
     Grid.container,
     Grid.Loaders.spinnerInner,

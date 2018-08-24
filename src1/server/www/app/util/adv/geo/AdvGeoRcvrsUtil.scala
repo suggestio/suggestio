@@ -57,6 +57,9 @@ class AdvGeoRcvrsUtil @Inject()(
   import mNodes.Implicits._
 
 
+  /** "Версия" формата ресиверов, чтобы сбрасывать карту, даже когда она не изменилась. */
+  private def RCVRS_MAP_CRC_VSN = 5
+
   /** Максимально допустимый уровень рекурсивного погружения во вложенность ресиверов.
     * Первый уровень -- это 1. */
   private def RCVR_TREE_MAX_DEEP = 4
@@ -123,8 +126,9 @@ class AdvGeoRcvrsUtil @Inject()(
         q = onMapRcvrsSearch(0).toEsQuery
       )
     } yield {
-      // Тут костыль для "версии", чтобы сбрасывать некорректный кэш. TODO Удалить этот .map после окончания отладки.
-      hashSum0 + 4
+      // Тут костыль для "версии", чтобы сбрасывать некорректный кэш.
+      // TODO Удалить этот .map после окончания отладки. А лучше унести куда-нибудь в Static-контроллер, т.к. номер версии может быть связан с форматом данных.
+      hashSum0 + RCVRS_MAP_CRC_VSN
     }
 
   }
@@ -252,6 +256,7 @@ class AdvGeoRcvrsUtil @Inject()(
           // props'ы для одной точки.
           val props = MAdvGeoMapNodeProps(
             nodeId  = nodeId,
+            ntype   = mnode.common.ntype,
             hint    = hintOpt,
             // Цвета узла. Можно без цвета паттерна, т.к. он не нужен.
             colors  = mnode.meta.colors,

@@ -1,7 +1,6 @@
 package io.suggest.sc.sc3
 
 import io.suggest.geo.MGeoPoint
-import io.suggest.sc.search.MSearchTab
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -37,7 +36,6 @@ object Sc3Pages {
       (
         (__ \ ADN_ID_FN).formatNullable[String] and
         (__ \ CAT_SCR_OPENED_FN).formatNullable[Boolean].formatBooleanOrFalse and
-        (__ \ SEARCH_TAB_FN).formatNullable[MSearchTab] and
         (__ \ GENERATION_FN).formatNullable[Long] and
         (__ \ TAG_NODE_ID_FN).formatNullable[String] and
         (__ \ LOC_ENV_FN).formatNullable[MGeoPoint] and
@@ -52,7 +50,6 @@ object Sc3Pages {
   case class MainScreen(
                          nodeId         : Option[String]      = None,
                          searchOpened   : Boolean             = false,
-                         searchTab      : Option[MSearchTab]  = None,
                          generation     : Option[Long]        = None,
                          tagNodeId      : Option[String]      = None,
                          locEnv         : Option[MGeoPoint]   = None,

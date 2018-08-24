@@ -58,6 +58,21 @@ case class MNodesFoundS(
     MNodesFoundS.empty ===* this
   }
 
+  /** Текущий выбранный узел. Кэширование для O(N)-операции поиска узла. */
+  lazy val selectedNode: Option[MGeoNodePropsShapes] = {
+    val iter = for {
+      nodeId <- selectedId.iterator
+      resp   <- req.iterator
+      nodePS <- resp.resp.iterator
+      if nodePS.props.nodeId ==* nodeId
+    } yield {
+      nodePS
+    }
+    iter
+      .toStream
+      .headOption
+  }
+
   override final def toString: String = {
     import io.suggest.common.html.HtmlConstants._
 

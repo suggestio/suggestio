@@ -92,7 +92,7 @@ class JsRouterInitAh[M <: AnyRef](
 
         // Склеить все эффекты и обновить состояние.
         val allFxs = (delayedRouteToFx :: geoLocEnableFx :: timeoutFx :: Nil)
-          .mergeEffectsSet
+          .mergeEffects
           .get
         updatedSilent(v2, allFxs)
 

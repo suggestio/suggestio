@@ -10,7 +10,6 @@ import io.suggest.sc.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sc.c.search.SearchAh
-import io.suggest.sc.search.MSearchTabs
 
 /**
   * Suggest.io
@@ -81,7 +80,7 @@ class ScreenAh[M](
       val root = rootRO.value
       for {
         lInstance <- root.index.search.geo.data.lmap
-        if root.index.search.isShownTab( MSearchTabs.GeoMap )
+        if root.index.search.isShown
       } {
         fx >> SearchAh.mapResizeFx( lInstance )
       }

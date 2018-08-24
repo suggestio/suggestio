@@ -11,9 +11,8 @@ import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx._
-import io.suggest.sc.m.search.{DoTagsSearch, MapReIndex}
+import io.suggest.sc.m.search.{DoNodesSearch, MapReIndex}
 import io.suggest.sc.sc3._
-import io.suggest.sc.search.MSearchTabs
 import io.suggest.sc.styl.MScCssArgs
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sc.v.ScCssFactory
@@ -113,7 +112,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
         }
 
         // Возможный сброс состояния тегов
-        s0 = s0.maybeResetTags
+        s0 = s0.maybeResetNodesFound
 
         // Если заход в узел с карты, то надо скрыть search-панель.
         if (s0.isShown && inx.welcome.nonEmpty)
@@ -123,23 +122,15 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
         if (s0.geo.mapInit.loader.nonEmpty)
           s0 = s0.resetMapLoader
 
-        // 2018-03-23 Решено, что внутри узлов надо открывать сразу теги, ибо каталог.
-        // А на карте - в первую очередь открывать карту.
-        // Поэтому принудительно меняем текущую search-вкладку:
-        val nextSearchTab = MSearchTabs.defaultIfRcvr( inx.isRcvr )
-        if (nextSearchTab !=* s0.currTab)
-        // Надо сменить search-таб согласно режиму текущего возможного узла.
-          s0 = s0.withCurrTab(nextSearchTab)
-
         s0
       }
     )
 
     val respActionTypes = ctx.m.tryResp.get.respActionTypes
-    // Если вкладка с тегами видна, то запустить получение тегов в фоне.
-    if (i1.search.isShownTab(MSearchTabs.Tags) && !respActionTypes.contains(MScRespActionTypes.SearchNodes)) {
+    // Если панель поиск видна, то запустить поиск узлов в фоне.
+    if (i1.search.isShown && !respActionTypes.contains(MScRespActionTypes.SearchNodes)) {
       fxsAcc ::= Effect.action {
-        DoTagsSearch(clear = true)
+        DoNodesSearch(clear = true)
       }
     }
 
@@ -191,7 +182,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
       fxsAcc ::= mwc._1
 
     val v2 = ctx.value0.withIndex( i1 )
-    val fxOpt = fxsAcc.mergeEffectsSet
+    val fxOpt = fxsAcc.mergeEffects
     (v2, fxOpt)
   }
 

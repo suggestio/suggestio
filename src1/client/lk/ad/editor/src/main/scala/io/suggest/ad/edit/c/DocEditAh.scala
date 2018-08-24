@@ -179,7 +179,7 @@ class DocEditAh[M](
               fut
             }
           }
-          .mergeEffectsSet
+          .mergeEffects
 
         val maxEmbedWidth = BlockWidths.NARROW.value
         val qdSubTree3 = dataEdgesForUpload

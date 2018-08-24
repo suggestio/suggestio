@@ -117,7 +117,7 @@ class QdRrrHtml(
           qdEi <- qdOp.edgeInfo
           e <- jdArgs.edges.get( qdEi.edgeUid )
         } yield {
-          var videosCnt = counters.video
+          var framesCnt = counters.frame
           var imagesCnt = counters.image
           var othersCnt = counters.other
           e.jdEdge.predicate match {
@@ -130,16 +130,16 @@ class QdRrrHtml(
               _insertImage( e, qdOp, imagesCnt )
               imagesCnt += 1
 
-            // Рендер видео.
+            // Рендер видео (или иного фрейма).
             case MPredicates.JdContent.Frame =>
-              _insertVideo( e, qdOp, videosCnt )
-              videosCnt += 1
+              _insertFrame( e, qdOp, framesCnt )
+              framesCnt += 1
 
             case other =>
               throw new UnsupportedOperationException( ErrorMsgs.UNSUPPORTED_VALUE_OF_ARGUMENT + HtmlConstants.SPACE + (other, e) )
           }
           counters.copy(
-            video = videosCnt,
+            frame = framesCnt,
             image = imagesCnt,
             other = othersCnt
           )
@@ -238,7 +238,7 @@ class QdRrrHtml(
 
 
   /** Рендер video. */
-  private def _insertVideo(e: MEdgeDataJs, qdOp: MQdOp, i: Int): Unit = {
+  private def _insertFrame(e: MEdgeDataJs, qdOp: MQdOp, i: Int): Unit = {
     val resOpt = for {
       src <- e.jdEdge.url
     } yield {
@@ -246,7 +246,7 @@ class QdRrrHtml(
         jdArgs.jdCss.embedAttrStyleF( attrsEmbed )
       }
       val keyV = "V" + i
-      val videoFrame = <.iframe(
+      val iframe = <.iframe(
         ^.src := src,
         ^.key := keyV,
         ^.allowFullScreen := true,
@@ -270,13 +270,13 @@ class QdRrrHtml(
         outerAcc =
           (^.key := (keyV + "c")) ::
           (^.`class` := Css.flat(Css.Position.RELATIVE, Css.Display.INLINE_BLOCK)) ::
-          videoFrame ::
+          iframe ::
           outerAcc
         <.div( outerAcc: _* )
 
       } else {
         // Видео-фрейм без дополнительного div-контейнера.
-        videoFrame
+        iframe
       }
 
       _currLineAccRev ::= tm
@@ -653,7 +653,7 @@ object QdRrrHtml extends Log
   */
 protected sealed case class QdRrrOpKeyCounters(
                                                 image   : Int     = 0,
-                                                video   : Int     = 0,
+                                                frame   : Int     = 0,
                                                 other   : Int     = 0
                                               )
 

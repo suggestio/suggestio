@@ -14,7 +14,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import OptionUtil.BoolOptOps
 import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
-import io.suggest.sc.search.MSearchTabs
 
 import scala.scalajs.js.URIUtils
 import scala.util.Try
@@ -85,8 +84,6 @@ class Sc3SpaRouter(
             MainScreen(
               nodeId = tokens.get( keys.ADN_ID_FN ),
               searchOpened = _boolOrFalseTok( keys.CAT_SCR_OPENED_FN ),
-              searchTab = tokens.get( keys.SEARCH_TAB_FN )
-                .flatMap( MSearchTabs.withValueOpt ),
               generation = tokens.get( keys.GENERATION_FN )
                 .flatMap( MGen.parse ),
               tagNodeId = tokens.get( keys.TAG_NODE_ID_FN ),
@@ -135,12 +132,8 @@ class Sc3SpaRouter(
           }
 
           // Отрабатываем состояние правой панели.
-          if (mainScreen.searchOpened) {
+          if (mainScreen.searchOpened)
             acc ::= keys.CAT_SCR_OPENED_FN -> mainScreen.searchOpened.toString
-
-            for (currTab <- mainScreen.searchTab)
-              acc ::= keys.SEARCH_TAB_FN -> currTab.value
-          }
 
           // Отработать открытое меню.
           if (mainScreen.menuOpened)

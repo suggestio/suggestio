@@ -1,7 +1,6 @@
 package io.suggest.sc.m.search
 
 import io.suggest.sc.m.{ISc3Action, IScApiRespReason, IScIndexRespReason}
-import io.suggest.sc.search.MSearchTab
 
 
 /**
@@ -19,21 +18,11 @@ sealed trait ISearchAction extends ISc3Action
 case object InitSearchMap extends ISc3Action
 
 
-/** Переключение панели поиска на указанный таб. */
-case class SwitchTab( newTab: MSearchTab ) extends ISearchAction
-
-
 /** Клик по тегу. */
-case class NodeRowClick(nodeId: String, onTab: MSearchTab) extends ISearchAction
-
-/** Сброс списка тегов. Если теги открыты сейчас, то они должны быть перезагружены. */
-case object ResetTags extends ISearchAction
-
-/** Экшен для запуска поиска тегов под текущую выдачу. */
-case class DoTagsSearch(clear: Boolean, ignorePending: Boolean = false) extends ISearchAction with IScApiRespReason
+case class NodeRowClick(nodeId: String) extends ISearchAction
 
 /** Происходит скроллинг в списке тегов. Возможно, надо подгрузить ещё тегов. */
-case class NodesScroll(scrollTop: Double, scrollHeight: Int, onTab: MSearchTab) extends ISearchAction
+case class NodesScroll(scrollTop: Double, scrollHeight: Int) extends ISearchAction
 
 
 /** Изменения фокуса на input'е текстового поиска. */
@@ -56,4 +45,4 @@ case class MapDelayTimeOut( gen: Long ) extends ISearchAction
 case class MapReIndex( rcvrId: Option[String] ) extends ISc3Action with IScIndexRespReason
 
 /** Выполнить поиск узлов для гео-вкладки. */
-case class DoGeoSearch( clear: Boolean ) extends ISearchAction with IScApiRespReason
+case class DoNodesSearch(clear: Boolean ) extends ISearchAction with IScApiRespReason

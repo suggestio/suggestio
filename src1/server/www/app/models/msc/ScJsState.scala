@@ -54,7 +54,6 @@ object ScJsState extends MacroLogsImpl {
           maybeGeneration       <- longOptB.bind(GENERATION_FN,         params)
           maybeFadsOpened       <- strOptB.bind (FOCUSED_AD_ID_FN, params)
           maybeFadsOffset       <- intOptB.bind (FADS_OFFSET_FN,        params)
-          maybeSearchTab        <- boolOptB.bind(SEARCH_TAB_FN,         params)
           maybeProducerAdnId    <- strOptB.bind (PRODUCER_ADN_ID_FN,    params)
           geoPointOptEith       <- geoPointOptB.bind(LOC_ENV_FN,        params)
         } yield {
@@ -66,7 +65,6 @@ object ScJsState extends MacroLogsImpl {
               .orElse(generationDflt),
             fadOpenedIdOpt      = strNonEmpty( QsbUtil.eitherOpt2option(maybeFadsOpened) ),
             fadsOffsetOpt       = QsbUtil.eitherOpt2option(maybeFadsOffset),
-            searchTabListOpt    = noFalse( QsbUtil.eitherOpt2option(maybeSearchTab) ),
             fadsProdIdOpt       = strNonEmpty( QsbUtil.eitherOpt2option(maybeProducerAdnId) ),
             geoPoint            = QsbUtil.eitherOpt2option( geoPointOptEith )
           )
@@ -80,9 +78,8 @@ object ScJsState extends MacroLogsImpl {
           boolOptB.unbind (CAT_SCR_OPENED_FN,     value.searchScrOpenedOpt),
           boolOptB.unbind (GEO_SCR_OPENED_FN,     value.navScrOpenedOpt),
           longOptB.unbind (GENERATION_FN,         value.generationOpt),
-          strOptB.unbind  (FOCUSED_AD_ID_FN, value.fadOpenedIdOpt),
+          strOptB.unbind  (FOCUSED_AD_ID_FN,      value.fadOpenedIdOpt),
           intOptB.unbind  (FADS_OFFSET_FN,        value.fadsOffsetOpt),
-          boolOptB.unbind (SEARCH_TAB_FN,         value.searchTabListOpt),
           strOptB.unbind  (PRODUCER_ADN_ID_FN,    value.fadsProdIdOpt),
           geoPointOptB.unbind(LOC_ENV_FN,         value.geoPoint)
         )
@@ -107,7 +104,6 @@ object ScJsState extends MacroLogsImpl {
  * @param generationOpt "Поколение".
  * @param fadOpenedIdOpt id текущей открытой карточки.
  * @param fadsOffsetOpt текущий сдвиг в просматриваемых карточках.
- * @param searchTabListOpt Выбранная вкладка на поисковой панели.
  * @param fadsProdIdOpt id продьюсера просматриваемой карточки.
  * @param geoPoint Данные по текущему месту юзера на карте, если есть.
  */
@@ -119,7 +115,6 @@ case class ScJsState(
                       generationOpt       : Option[Long]     = ScJsState.generationDflt,
                       fadOpenedIdOpt      : Option[String]   = None,
                       fadsOffsetOpt       : Option[Int]      = None,
-                      searchTabListOpt    : Option[Boolean]  = None,
                       fadsProdIdOpt       : Option[String]   = None,
                       geoPoint            : Option[MGeoPoint] = None
 )
@@ -155,8 +150,6 @@ case class ScJsState(
   def isFadsOpened      : Boolean = fadOpenedIdOpt.isDefined
   def isSomethingOpened : Boolean = isAnyPanelOpened || isFadsOpened
 
-  def isSearchTabList   : Boolean = searchTabListOpt.exists(identity)
-  def isSearchTabCats   : Boolean = !isSearchTabList
 
   def fadsOffset        : Int     = orZero( fadsOffsetOpt )
 
@@ -181,7 +174,6 @@ case class ScJsState(
     navScrOpenedOpt     = None,
     generationOpt       = None,
     fadsOffsetOpt       = None,
-    searchTabListOpt    = None,
     fadsProdIdOpt       = None
   )
 

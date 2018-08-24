@@ -27,6 +27,7 @@ class GeoMapOuterR(
 
   case class PropsVal(
                        searchCss          : SearchCss,
+                     // TODO Удалить showCrossHair
                        showCrossHair      : Boolean
                      )
   case class State(

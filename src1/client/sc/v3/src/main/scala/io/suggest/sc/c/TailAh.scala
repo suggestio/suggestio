@@ -9,9 +9,8 @@ import io.suggest.sc.m._
 import io.suggest.sc.m.grid._
 import io.suggest.sc.m.hdr.{MenuOpenClose, SearchOpenClose}
 import io.suggest.sc.m.inx.{GetIndex, MScIndex, WcTimeOut}
-import io.suggest.sc.m.search.{SwitchTab, NodeRowClick}
+import io.suggest.sc.m.search.NodeRowClick
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
-import io.suggest.sc.search.MSearchTabs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
@@ -40,17 +39,19 @@ object TailAh {
     val inxState = v0.index.state
     val searchOpened = v0.index.search.isShown
     val currRcvrId = inxState.currRcvrId
+
+    val selTagIdOpt = v0.index.search.selTagNodeId
+
     MainScreen(
       nodeId        = currRcvrId,
       // Не рендерить координаты в URL, если находишься в контексте узла, закрыта панель поиска и нет выбранного тега.
       // Это улучшит кэширование, возможно улучшит приватность при обмене ссылками.
       locEnv        = OptionUtil.maybe {
-        currRcvrId.isEmpty || v0.index.search.isShown || v0.index.search.tags.selectedId.nonEmpty
+        currRcvrId.isEmpty || v0.index.search.isShown || selTagIdOpt.nonEmpty
       }(v0.index.search.geo.mapInit.state.center),
       generation    = Some( inxState.generation ),
       searchOpened  = searchOpened,
-      searchTab     = OptionUtil.maybe(searchOpened)( v0.index.search.currTab ),
-      tagNodeId     = v0.index.search.tags.selectedId,
+      tagNodeId     = selTagIdOpt,
       menuOpened    = v0.index.menu.opened,
       focusedAdId   = {
         val iter = for {
@@ -132,18 +133,10 @@ class TailAh[M](
         )
       }
 
-      // Текущий открытый таб на панели поиска
-      for {
-        mSearchTab <- m.mainScreen.searchTab
-        if !currMainScreen.searchTab.contains( mSearchTab )
-      } {
-        fxsAcc ::= Effect.action( SwitchTab( mSearchTab ) )
-      }
-
       // Проверка поля searchOpened
       if (m.mainScreen.searchOpened !=* currMainScreen.searchOpened) {
         // Вместо патчинга состояния имитируем клик: это чтобы возможные сайд-эффекты обычного клика тоже отработали.
-        fxsAcc ::= Effect.action( SearchOpenClose(m.mainScreen.searchOpened, m.mainScreen.searchTab) )
+        fxsAcc ::= Effect.action( SearchOpenClose(m.mainScreen.searchOpened) )
       }
       // TODO Возможно, SwitchTab надо запихнуть в else-ветвь тут?
 
@@ -163,7 +156,7 @@ class TailAh[M](
       } {
         // Имитируем клик по тегу, да и всё.
         fxsAcc ::= Effect.action {
-          NodeRowClick( tagNodeId, MSearchTabs.Tags )
+          NodeRowClick( tagNodeId )
         }
       }
 
@@ -195,7 +188,7 @@ class TailAh[M](
 
       } else if (v0.internals.geoLockTimer.nonEmpty) {
         // Блокирование загрузки.
-        val fxOpt = fxsAcc.mergeEffectsSet
+        val fxOpt = fxsAcc.mergeEffects
         ah.updatedSilentMaybeEffect(v2, fxOpt)
 
         // TODO Если новое состояние условно "пустое" (без rcvrId или координат), то запустить геолокацию, можно даже без таймера (поддерживается?), а просто запустить.
@@ -207,7 +200,7 @@ class TailAh[M](
           focusedAdId = m.mainScreen.focusedAdId,
           retUserLoc  = v2.index.search.geo.mapInit.userLoc.isEmpty
         )
-        val fx = fxsAcc.mergeEffectsSet.get
+        val fx = fxsAcc.mergeEffects.get
         ah.updateMaybeSilentFx(needUpdateUi)(v2, fx)
 
       } else if (gridNeedsReload) {
@@ -215,17 +208,17 @@ class TailAh[M](
         fxsAcc ::= Effect.action {
           GridLoadAds( clean = true, ignorePending = true )
         }
-        val fx = fxsAcc.mergeEffectsSet.get
+        val fx = fxsAcc.mergeEffects.get
         ah.updateMaybeSilentFx(needUpdateUi)(v2, fx)
 
       } else if (needUpdateUi) {
         // Изменения на уровне интерфейса.
-        val fxOpt = fxsAcc.mergeEffectsSet
+        val fxOpt = fxsAcc.mergeEffects
         ah.updatedMaybeEffect( v2, fxOpt )
 
       } else {
         // Ничего не изменилось или только эффекты.
-        val fxOpt = fxsAcc.mergeEffectsSet
+        val fxOpt = fxsAcc.mergeEffects
         ah.maybeEffectOnly( fxOpt )
       }
 
@@ -252,9 +245,7 @@ class TailAh[M](
                 )
               )
             )
-            val isMapOpened = v0.index.search.isShownTab(MSearchTabs.GeoMap)
-            val isSilentUpdate = !isMapOpened
-            ah.updateMaybeSilent(isSilentUpdate)(v2)
+            ah.updateMaybeSilent( !v0.index.search.isShown )(v2)
           }
 
       } { geoLockTimerId =>
@@ -389,7 +380,7 @@ class TailAh[M](
 
           val fxOpt9 = acc9.fxAccRev
             .reverse
-            .mergeEffectsSet
+            .mergeEffects
           ah.updatedMaybeEffect( acc9.v1, fxOpt9 )
         }
         // Вернуть Left или Right.

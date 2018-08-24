@@ -39,7 +39,7 @@ class STextR( getScCssF: GetScCssF ) {
 
     def render(propsProxy: Props): VdomElement = {
       val scCss = getScCssF()
-      val CSS = scCss.Search.SearchBar
+      val CSS = scCss.Search.TextBar
 
       val p = propsProxy.value
 

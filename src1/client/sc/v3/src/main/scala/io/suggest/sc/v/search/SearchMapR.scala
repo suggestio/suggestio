@@ -2,13 +2,13 @@ package io.suggest.sc.v.search
 
 import diode.FastEq
 import diode.data.Pot
-import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.maps.m.{HandleMapReady, MGeoMapPropsR, MMapS, MapDragEnd}
 import io.suggest.maps.nodes.MGeoNodesResp
-import io.suggest.maps.r.{LGeoMapR, RcvrMarkersR, ReactLeafletUtil}
-import io.suggest.maps.u.{MapIcons, MapsUtil}
+import io.suggest.maps.r.userloc.UlShapeR
+import io.suggest.maps.r.{LGeoMapR, MapLoaderMarkerR, RcvrMarkersR, ReactLeafletUtil}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -71,39 +71,12 @@ class SearchMapR(
     private val _onMapDragEndOptF = Some( ReactCommonUtil.cbFun1ToJsCb( _onMapDragEnd ) )
 
 
-    // TODO Унести в отдельные компоненты...
-    private val _mapLoader = ScalaComponent
-      .builder[ModelProxy[Option[MGeoPoint]]]("LoaderMarker")
-      .stateless
-      .render_P { geoPointOptProxy =>
-        geoPointOptProxy.value.whenDefinedEl { mgp =>
-          MapIcons.preloaderLMarker(
-            latLng = MapsUtil.geoPoint2LatLng( mgp )
-          )
-        }
-      }
-      .build
-    private val _mapLoaderReuseF: ReactConnectProps[Option[MGeoPoint]] =  _mapLoader.apply
-
-
     private def _onMapReady(e: IWhenReadyArgs): Callback = {
       dispatchOnProxyScopeCB( $, HandleMapReady(e.target) )
     }
     private val _onMapReadyOptF = {
       Some( ReactCommonUtil.cbFun1ToJsCb(_onMapReady) )
     }
-
-    // TODO Унести в отдельные компоненты...
-    private val _userLocShape = ScalaComponent
-      .builder[ModelProxy[Option[MGeoLoc]]]("UserLoc")
-      .stateless
-      .render_P { userLocOptProxy =>
-        userLocOptProxy.value.whenDefinedEl { userLoc =>
-          MapIcons.userLocCircle( userLoc )
-        }
-      }
-      .build
-    private val _userLocShapeF: ReactConnectProps[Option[MGeoLoc]] = _userLocShape.apply
 
 
     def render(propsProxy: Props, s: State): VdomElement = {
@@ -118,9 +91,9 @@ class SearchMapR(
       // Рендер шейпов и маркеров текущий узлов.
       lazy val rcvrsGeo = s.rcvrsGeoC { RcvrMarkersR.applyNoChildren }
       // Рендер опционального маркера-крутилки для ожидания загрузки.
-      lazy val loaderOpt = s.loaderOptC { _mapLoaderReuseF }
+      lazy val loaderOpt = s.loaderOptC { MapLoaderMarkerR.component.apply }
       // Рендер круга текущей геолокации юзера:
-      lazy val userLoc = s.userLocOptC { _userLocShapeF }
+      lazy val userLoc = s.userLocOptC { UlShapeR.component.apply }
 
       // Рендер компонента leaflet-карты вне maybeEl чтобы избежать перерендеров.
       // Вынос этого компонента за пределы maybeEl() поднял производительность карты на порядок.
@@ -132,7 +105,6 @@ class SearchMapR(
         )
         //val someFalse = Some(false)
 
-        // TODO Нужно как-то организовать reuse инстанса фунции. Эта фунция зависит от state, и хз, как это нормально организовать. Вынести в top-level?
         s.mmapC { mmapProxy =>
           mmapProxy.wrap { mmap =>
             MGeoMapPropsR(

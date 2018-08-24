@@ -18,7 +18,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
-import io.suggest.sc.search.MSearchTabs
 import io.suggest.sc.v.menu._
 import io.suggest.spa.OptFastEq
 import scalacss.ScalaCssReact._
@@ -330,7 +329,6 @@ class ScRootR (
             hasMore         = false,
             selectedId      = mroot.index.state.currRcvrId,
             withDistanceTo  = geo.mapInit.userLoc,
-            onTab           = MSearchTabs.GeoMap,
             searchCssOrNull = mroot.index.search.geo.css
           )
         }

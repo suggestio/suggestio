@@ -2,6 +2,7 @@ package io.suggest.maps.nodes
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.model.n2.node.MNodeType
 import io.suggest.model.n2.node.meta.colors.MColors
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
@@ -18,6 +19,7 @@ object MAdvGeoMapNodeProps {
 
   implicit def MAdvGeoMapNodePropsFormat: OFormat[MAdvGeoMapNodeProps] = (
     (__ \ "n").format[String] and
+    (__ \ "t").format[MNodeType] and
     (__ \ "c").formatNullable[MColors]
       .inmap[MColors]( EmptyUtil.opt2ImplMEmptyF(MColors), EmptyUtil.implEmpty2OptF) and
     (__ \ "h").formatNullable[String] and
@@ -31,11 +33,13 @@ object MAdvGeoMapNodeProps {
 /** Модель пропертей узлов, отображаемых на карте.
   *
   * @param nodeId id узла для возможности запроса попапа или какие-то ещё действия производить.
+  * @param ntypeOpt Тип узла, когда важен.
   * @param hint Подсказка при наведении на узел.
   * @param icon Логотип узла, отображаемый на карте.
   */
 case class MAdvGeoMapNodeProps(
                                 nodeId          : String,
+                                ntype           : MNodeType,
                                 colors          : MColors                   = MColors.empty,
                                 hint            : Option[String]            = None,
                                 icon            : Option[MMapNodeIconInfo]  = None

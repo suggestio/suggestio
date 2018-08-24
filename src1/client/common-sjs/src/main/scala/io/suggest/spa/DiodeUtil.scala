@@ -48,7 +48,7 @@ object DiodeUtil {
         * @return None, если передан пустой список эффектов.
         *         Some(fx) с объединённым, либо единственным, эффектом.
         */
-      def mergeEffectsSet: Option[Effect] = {
+      def mergeEffects: Option[Effect] = {
         OptionUtil.maybe(effects.nonEmpty) {
           val iter = effects.toIterator
           val fx1 = iter.next()

@@ -5,7 +5,6 @@ import play.api.libs.functional.syntax._
 import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.model.MEsUuId
-import io.suggest.sc.search.MSearchTab
 import japgolly.univeq.UnivEq
 
 /**
@@ -29,8 +28,7 @@ object MAdsSearchReq extends IEmpty {
     (__ \ RECEIVER_ID_FN).formatNullable[MEsUuId] and
     (__ \ GENERATION_FN).formatNullable[Long] and
     (__ \ TAG_NODE_ID_FN).formatNullable[MEsUuId] and
-    (__ \ TEXT_QUERY_FN).formatNullable[String] and
-    (__ \ SEARCH_TAB_FN).formatNullable[MSearchTab]
+    (__ \ TEXT_QUERY_FN).formatNullable[String]
     // Не забывать добавлять биндеры в MScQsJvm.
   )(apply, unlift(unapply))
 
@@ -47,7 +45,6 @@ case class MAdsSearchReq(
                           genOpt      : Option[Long]          = None,
                           tagNodeId   : Option[MEsUuId]       = None,
                           textQuery   : Option[String]        = None,
-                          tab         : Option[MSearchTab]    = None,
                         )
   extends EmptyProduct
 {

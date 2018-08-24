@@ -1,10 +1,8 @@
 package io.suggest.sc.m.search
 
 import diode.FastEq
-import diode.data.Pot
 import io.suggest.common.empty.OptionUtil
-import io.suggest.sc.search.{MSearchTab, MSearchTabs}
-import io.suggest.sc.v.search.SearchCss
+import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 
@@ -21,9 +19,7 @@ object MScSearch {
     override def eqv(a: MScSearch, b: MScSearch): Boolean = {
       (a.geo        ===* b.geo) &&
         (a.text     ===* b.text) &&
-        (a.tags     ===* b.tags) &&
-        (a.currTab  ===* b.currTab) &&
-        (a.isShown  ==* b.isShown)
+        (a.isShown  ==*  b.isShown)
     }
   }
 
@@ -42,36 +38,37 @@ object MScSearch {
 case class MScSearch(
                       geo                 : MGeoTabS,
                       text                : MScSearchText         = MScSearchText.empty,
-                      tags                : MNodesFoundS          = MNodesFoundS.empty,
-                      currTab             : MSearchTab            = MSearchTabs.default,
                       isShown             : Boolean               = false,
                     ) {
 
+  /** id текущего тега. Временный костыль, ведь тегов может быть много. */
+  lazy val selTagNodeId: Option[String] = {
+    geo.found.selectedId
+      .filter { _ =>
+        geo.found.selectedNode
+          .exists(_.props.ntype ==* MNodeTypes.Tag)
+      }
+  }
+
   def withGeo       ( geo: MGeoTabS )                   = copy( geo = geo )
   def withText      ( text: MScSearchText )             = copy( text = text )
-  def withTags      ( tags: MNodesFoundS )              = copy( tags = tags )
-  def withCurrTab   ( currTab: MSearchTab )             = copy( currTab = currTab )
   def withIsShown   ( isShown: Boolean )                = copy( isShown = isShown )
 
 
-  /** Сброс состояния тегов, если возможно. */
-  def maybeResetTags: MScSearch = {
-    resetTagsIfAny.getOrElse(this)
+  /** Сброс состояния найденных узлов (тегов), если возможно. */
+  def maybeResetNodesFound: MScSearch = {
+    resetNodesFoundIfAny.getOrElse(this)
   }
 
   /** Вернуть обновлённый инстанс [[MScSearch]], если теги изменились в ходе сброса. */
-  def resetTagsIfAny: Option[MScSearch] = {
-    OptionUtil.maybe( tags.nonEmpty ) {
+  def resetNodesFoundIfAny: Option[MScSearch] = {
+    OptionUtil.maybe( geo.found.nonEmpty ) {
       resetTagsForce
     }
   }
 
   def resetTagsForce: MScSearch = {
-    withTags( MNodesFoundS.empty )
-  }
-
-  def isShownTab(tab: MSearchTab): Boolean = {
-    isShown && currTab ==* tab
+    withGeo( geo.withFound( MNodesFoundS.empty ) )
   }
 
 
@@ -79,14 +76,6 @@ case class MScSearch(
   // TODO Заинлайнить? Код по факту переместился в под-модель geo, а тут просто дёргается.
   def resetMapLoader: MScSearch = {
     withGeo( geo.resetMapLoader )
-  }
-
-  /** Вернуть pot поиска, относящийся к указанному (текущему) табу. */
-  def tabSearchPot(tab: MSearchTab = currTab): Pot[MSearchRespInfo[_]] = {
-    tab match {
-      case MSearchTabs.GeoMap => geo.mapInit.rcvrs
-      case MSearchTabs.Tags   => tags.req
-    }
   }
 
 }
