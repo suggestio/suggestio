@@ -70,6 +70,7 @@ class Sc3Module {
   lazy val searchR = wire[SearchR]
   lazy val geoSearchRespHandler = wire[NodesSearchRespHandler]
   lazy val nodesFoundR = wire[NodesFoundR]
+  lazy val nodeFoundR = wire[NodeFoundR]
   lazy val geoMapOuterR = wire[GeoMapOuterR]
 
 

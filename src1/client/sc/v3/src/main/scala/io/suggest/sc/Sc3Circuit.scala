@@ -230,7 +230,9 @@ class Sc3Circuit(
       search = MAdsSearchReq(
         rcvrId      = currRcvrId,
         genOpt      = Some( inxState.generation ),
-        tagNodeId   = mroot.index.search.selTagNodeId.toEsUuIdOpt
+        tagNodeId   = mroot.index.search.geo.data.selTagIds
+          .headOption      // TODO Научить сервер поддерживать несколько тегов одновременно.
+          .toEsUuIdOpt
         // limit и offset очень специфичны и выставляются в конкретных контроллерах карточек.
       )
     )

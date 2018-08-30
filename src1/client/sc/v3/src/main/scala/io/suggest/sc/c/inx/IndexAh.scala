@@ -11,7 +11,7 @@ import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx._
-import io.suggest.sc.m.search.{DoNodesSearch, MapReIndex}
+import io.suggest.sc.m.search.MapReIndex
 import io.suggest.sc.sc3._
 import io.suggest.sc.styl.MScCssArgs
 import io.suggest.sc.u.api.IScUniApi
@@ -128,11 +128,8 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
 
     val respActionTypes = ctx.m.tryResp.get.respActionTypes
     // Если панель поиск видна, то запустить поиск узлов в фоне.
-    if (i1.search.isShown && !respActionTypes.contains(MScRespActionTypes.SearchNodes)) {
-      fxsAcc ::= Effect.action {
-        DoNodesSearch(clear = true)
-      }
-    }
+    if (i1.search.isShown && !respActionTypes.contains(MScRespActionTypes.SearchNodes))
+      fxsAcc ::= SearchAh.reDoSearchFx
 
     // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
     fxsAcc ::= Effect.action( ResetUrlRoute )
@@ -211,10 +208,16 @@ class IndexAh[M](
   private def _getIndex(withWelcome: Boolean, silentUpdate: Boolean, v0: MScIndex,
                         geoIntoRcvr: Boolean, reason: IScIndexRespReason, retUserLoc: Boolean): ActionResult[M] = {
     val ts = System.currentTimeMillis()
+    val root = rootRO.value
+
+    val isSearchNodes = root.index.search.isShown
+    val searchArgs = MAdsSearchReq(
+      limit  = Some( GridAh.adsPerReqLimit ),
+      genOpt = Some( root.index.state.generation ),
+      offset = Some( 0 )
+    )
 
     val fx = Effect {
-      val root = rootRO.value
-
       //println("get index @" + System.currentTimeMillis())
       val args = MScQs(
         common = MScCommonQs(
@@ -223,7 +226,9 @@ class IndexAh[M](
           locEnv = v0.state.currRcvrId
             .fold(root.locEnv)(_ => MLocEnv.empty),
           screen = Some( root.dev.screen.info.screen ),
-          searchGridAds = Some( true )
+          searchGridAds = Some( true ),
+          // Сразу запросить поиск по узлам, если панель поиска открыта.
+          searchNodes = if (isSearchNodes) Some(true) else None
         ),
         index = Some(
           MScIndexArgs(
@@ -243,11 +248,7 @@ class IndexAh[M](
             lookupAdId      = focAdId
           )
         },
-        search = MAdsSearchReq(
-          limit  = Some( GridAh.adsPerReqLimit ),
-          genOpt = Some( root.index.state.generation ),
-          offset = Some( 0 )
-        )
+        search = searchArgs
       )
 
       api
@@ -263,9 +264,23 @@ class IndexAh[M](
         }
     }
 
-    val v2 = v0.withResp(
+    var v2 = v0.withResp(
       v0.resp.pending(ts)
     )
+
+    // Выставить в состояние, что запущен поиск узлов, чтобы не было дублирующихся запросов от контроллера панели.
+    if (isSearchNodes) {
+      v2 = v2.withSearch(
+        v2.search.withGeo(
+          v2.search.geo.withFound(
+            v2.search.geo.found.withReqWithArgs(
+              req = v2.search.geo.found.req.pending(ts),
+              reqSearchArgs = Some(searchArgs)
+            )
+          )
+        )
+      )
+    }
 
     ah.updateMaybeSilentFx(silentUpdate)(v2, fx)
   }

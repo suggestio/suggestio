@@ -137,6 +137,7 @@ trait ScSearch
 
     /** Реактивный поиск и json-рендер тегов и узлов, вместо старого обычного поиска тегов. */
     def nodeInfosSrc: Source[MGeoNodePropsShapes, Future[NotUsed]] = {
+      LOGGER.warn("nodeInfoSrc: qs = " + _qs)
       val srcFut = for {
         msearch <- nodesSearch
       } yield {
@@ -146,15 +147,12 @@ trait ScSearch
           // Ответвление: Данные для статистики - материализовать, mat-итог запихать в статистику:
           .alsoTo( saveScStatSink )
 
-        // Надо решить: надо ли рендерить в ответе геоданные размещения или нет?
-
-          // Надо рендерить гео-данные:
-          advGeoRcvrsUtil
-            .withNodeLocShapes( src0 )
-            .map { case (_, advNodePropsShapes) =>
-              // TODO Не рендерить гео-данные для тегов!
-              advNodePropsShapes
-            }
+        advGeoRcvrsUtil
+          .withNodeLocShapes( src0 )
+          .map { case (_, advNodePropsShapes) =>
+            // TODO Не рендерить гео-данные для тегов!
+            advNodePropsShapes
+          }
           // Геоданные не нужны, просто заворачиваем результаты без гео-шейпов:
           //src0.map { case (_, advNodeProps) =>
           //  MGeoNodePropsShapes(

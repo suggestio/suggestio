@@ -35,7 +35,9 @@ object SearchAh {
     }
   }
 
-  def maybeInitSearch(v0: MScSearch): Option[Effect] = {
+
+  /** Опциональный экшен инициализации поисковой панели, если данные состояния предрасполагают. */
+  def maybeInitSearchPanel(v0: MScSearch): Option[Effect] = {
     var fxAcc = List.empty[Effect]
 
     // Эффект поиска тегов и узлов вообще. Надо подружать текущие теги/узлы или искать узлы по названию.
@@ -46,9 +48,8 @@ object SearchAh {
     if (v0.geo.mapInit.ready) {
       // Надо запускать ручной ресайз, иначе карта может неверно увидеть свой фактический размер (т.к. размер окна мог меняться, пока карта была скрыта).
       // TODO Не запускать ресайз, если размер не менялся. У карты крышу сносит, если часто этот метод дёргать.
-      for (lInstance <- v0.geo.data.lmap) yield {
+      for (lInstance <- v0.geo.data.lmap) yield
         SearchAh.mapResizeFx( lInstance )
-      }
     } else {
       val mapInitFx = Effect {
         DomQuick
@@ -62,6 +63,7 @@ object SearchAh {
   }
 
 
+  /** Эффект запуска поиска узлов. */
   def reDoSearchFx: Effect = {
     Effect.action {
       DoNodesSearch(clear = true)
@@ -96,7 +98,7 @@ class SearchAh[M](
 
         // Требуется ли запускать инициализацию карты или списка найденных узлов? Да, если открытие на НЕинициализированной панели.
         val fxOpt = OptionUtil.maybeOpt(m.open) {
-          SearchAh.maybeInitSearch(v2)
+          SearchAh.maybeInitSearchPanel(v2)
         }
 
         // Объеденить эффекты:

@@ -40,7 +40,8 @@ object TailAh {
     val searchOpened = v0.index.search.isShown
     val currRcvrId = inxState.currRcvrId
 
-    val selTagIdOpt = v0.index.search.selTagNodeId
+    // TODO Поддержка нескольких тегов в URL.
+    val selTagIdOpt = v0.index.search.geo.data.selTagIds.headOption
 
     MainScreen(
       nodeId        = currRcvrId,
@@ -53,18 +54,13 @@ object TailAh {
       searchOpened  = searchOpened,
       tagNodeId     = selTagIdOpt,
       menuOpened    = v0.index.menu.opened,
-      focusedAdId   = {
-        val iter = for {
-          scAdData <- v0.grid.core.focusedAdOpt
-          focData  <- scAdData.focused.toOption
-          if focData.userFoc
-          adNodeId <- scAdData.nodeId
-        } yield {
-          adNodeId
-        }
-        iter
-          .toStream
-          .headOption
+      focusedAdId   = for {
+        scAdData <- v0.grid.core.focusedAdOpt
+        focData  <- scAdData.focused.toOption
+        if focData.userFoc
+        adNodeId <- scAdData.nodeId
+      } yield {
+        adNodeId
       }
     )
   }

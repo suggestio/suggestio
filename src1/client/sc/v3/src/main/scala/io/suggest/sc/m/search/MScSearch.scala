@@ -2,7 +2,6 @@ package io.suggest.sc.m.search
 
 import diode.FastEq
 import io.suggest.common.empty.OptionUtil
-import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 
@@ -19,7 +18,7 @@ object MScSearch {
     override def eqv(a: MScSearch, b: MScSearch): Boolean = {
       (a.geo        ===* b.geo) &&
         (a.text     ===* b.text) &&
-        (a.isShown  ==*  b.isShown)
+        (a.isShown   ==* b.isShown)
     }
   }
 
@@ -40,15 +39,6 @@ case class MScSearch(
                       text                : MScSearchText         = MScSearchText.empty,
                       isShown             : Boolean               = false,
                     ) {
-
-  /** id текущего тега. Временный костыль, ведь тегов может быть много. */
-  lazy val selTagNodeId: Option[String] = {
-    geo.found.selectedId
-      .filter { _ =>
-        geo.found.selectedNode
-          .exists(_.props.ntype ==* MNodeTypes.Tag)
-      }
-  }
 
   def withGeo       ( geo: MGeoTabS )                   = copy( geo = geo )
   def withText      ( text: MScSearchText )             = copy( text = text )

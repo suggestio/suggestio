@@ -14,7 +14,7 @@ import io.suggest.maps.u.MapIcons
   * Description: UserLocShape - компонент для рендера локации юзера на карте.
   * Вид такой же как и в LocateControl: accuracy-круг с точкой в центре.
   */
-object UlShapeR {
+object LocShapeR {
 
   val component = ScalaComponent
     .builder[ModelProxy[Option[MGeoLoc]]](getClass.getSimpleName)

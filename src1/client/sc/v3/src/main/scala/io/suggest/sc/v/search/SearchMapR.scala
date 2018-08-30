@@ -7,7 +7,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.maps.m.{HandleMapReady, MGeoMapPropsR, MMapS, MapDragEnd}
 import io.suggest.maps.nodes.MGeoNodesResp
-import io.suggest.maps.r.userloc.UlShapeR
+import io.suggest.maps.r.userloc.LocShapeR
 import io.suggest.maps.r.{LGeoMapR, MapLoaderMarkerR, RcvrMarkersR, ReactLeafletUtil}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -93,7 +93,7 @@ class SearchMapR(
       // Рендер опционального маркера-крутилки для ожидания загрузки.
       lazy val loaderOpt = s.loaderOptC { MapLoaderMarkerR.component.apply }
       // Рендер круга текущей геолокации юзера:
-      lazy val userLoc = s.userLocOptC { UlShapeR.component.apply }
+      lazy val userLoc = s.userLocOptC { LocShapeR.component.apply }
 
       // Рендер компонента leaflet-карты вне maybeEl чтобы избежать перерендеров.
       // Вынос этого компонента за пределы maybeEl() поднял производительность карты на порядок.

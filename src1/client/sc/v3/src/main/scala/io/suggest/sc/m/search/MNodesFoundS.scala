@@ -3,7 +3,9 @@ package io.suggest.sc.m.search
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.empty.NonEmpty
+import io.suggest.common.html.HtmlConstants
 import io.suggest.maps.nodes.MGeoNodePropsShapes
+import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -12,9 +14,12 @@ import japgolly.univeq._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 30.11.17 16:45
-  * Description: Модель состояния вкладки со списком тегов.
+  * Description: Модель данных состояния поиска тегов.
   *
-  * Для простоты, модель следует считать неявно-пустой.
+  * Содержит в себе как данные для рендера, так и вспомогательные данные,
+  * поэтому шаблоны-компоненты должны по возможности использовать собственные модели.
+  *
+  * Неявно-пустя модель.
   * Но при сбросе НАДО явно ЗАМЕНЯТЬ инстанс на статический empty.
   */
 object MNodesFoundS {
@@ -24,9 +29,9 @@ object MNodesFoundS {
   /** Поддержка FastEq для инстансов [[MNodesFoundS]]. */
   implicit object MNodesFoundSFastEq extends FastEq[MNodesFoundS] {
     override def eqv(a: MNodesFoundS, b: MNodesFoundS): Boolean = {
-      (a.req            ===*  b.req) &&
-        (a.hasMore       ==*  b.hasMore) &&
-        (a.selectedId   ===*  b.selectedId)
+      (a.req             ===* b.req) &&
+        (a.reqSearchArgs ===* b.reqSearchArgs) &&
+        (a.hasMore        ==* b.hasMore)
     }
   }
 
@@ -38,39 +43,27 @@ object MNodesFoundS {
 /** Класс модели состояния вкладки со списком найденных узлов (изначально - только тегов).
   *
   * @param req Состояние реквеста к серверу.
-  * @param selectedId Выбранный тег (узел) в списке.
+  * @param reqSearchArgs Аргументы поиска для запущенного или последнего заверщённого запроса.
+  *                      Т.е. для req.pending; либо для req.ready/failed, если !pending.
+  *                      Используется для проверки необходимости запуска нового запроса.
   * @param hasMore Есть ли ещё теги на сервере?
   */
 case class MNodesFoundS(
                          req           : Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]]     = Pot.empty,
+                         reqSearchArgs : Option[MAdsSearchReq] = None,
                          hasMore       : Boolean               = true,
-                         // TODO Когда станет допустимо сразу несколько тегов, надо заменить на Set[String].
-                         selectedId    : Option[String]        = None
                        )
   extends NonEmpty
 {
 
   def withReq(req: Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]]) = copy(req = req)
+  def withReqSearchArgs(reqSearchArgs : Option[MAdsSearchReq]) = copy(reqSearchArgs = reqSearchArgs)
+  def withReqWithArgs(req: Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]], reqSearchArgs : Option[MAdsSearchReq]) =
+    copy(req = req, reqSearchArgs = reqSearchArgs)
   def withHasMore(hasMore: Boolean) = copy(hasMore = hasMore)
-  def withSelectedId(selectedId: Option[String]) = copy(selectedId = selectedId)
 
   override def isEmpty: Boolean = {
     MNodesFoundS.empty ===* this
-  }
-
-  /** Текущий выбранный узел. Кэширование для O(N)-операции поиска узла. */
-  lazy val selectedNode: Option[MGeoNodePropsShapes] = {
-    val iter = for {
-      nodeId <- selectedId.iterator
-      resp   <- req.iterator
-      nodePS <- resp.resp.iterator
-      if nodePS.props.nodeId ==* nodeId
-    } yield {
-      nodePS
-    }
-    iter
-      .toStream
-      .headOption
   }
 
   override final def toString: String = {
@@ -82,11 +75,12 @@ case class MNodesFoundS(
       .append(
         req.getClass.getSimpleName + COLON +
           req.fold(0)(_.resp.length) + COLON +
-          req.exceptionOption.fold("")(ex => ex.getClass + " " + ex.getMessage)
+          req.exceptionOption.fold("") { ex =>
+            ex.getClass + HtmlConstants.SPACE + ex.getMessage
+          }
       )
       .append( COMMA )
-      .append( hasMore ).append( COMMA )
-      .append( selectedId )
+      .append( hasMore )
       .append( `)` )
       .toString()
   }

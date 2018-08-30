@@ -2,6 +2,7 @@ package io.suggest.sc.m.inx
 
 import diode.FastEq
 import diode.data.Pot
+import io.suggest.maps.nodes.MGeoNodePropsShapes
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.m.search.MScSearch
@@ -33,6 +34,7 @@ object MScIndex {
 
 }
 
+
 case class MScIndex(
                      state      : MScIndexState           = MScIndexState.empty,
                      resp       : Pot[MSc3IndexResp]      = Pot.empty,
@@ -41,6 +43,25 @@ case class MScIndex(
                      scCss      : ScCss,
                      menu       : MMenuS                  = MMenuS.default
                    ) {
+
+  /** Выбранные id узлов. */
+  lazy val searchNodesSelectedIds: Set[String] = {
+    search.geo.data.selTagIds ++ state.currRcvrId
+  }
+
+  /** Текущие выбранные узлы. Кэш для O(N)-операции. */
+  lazy val searchNodesSelected: Stream[MGeoNodePropsShapes] = {
+    val iter = for {
+      nodeId <- searchNodesSelectedIds.iterator
+      resp   <- search.geo.found.req.iterator
+      nodePS <- resp.resp.iterator
+      if nodePS.props.nodeId ==* nodeId
+    } yield {
+      nodePS
+    }
+    iter
+      .toStream
+  }
 
   def withState(state: MScIndexState)             = copy(state = state)
   def withResp(resp: Pot[MSc3IndexResp])          = copy(resp = resp)

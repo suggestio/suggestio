@@ -326,10 +326,10 @@ class ScRootR (
           val geo = mroot.index.search.geo
           nodesFoundR.PropsVal(
             req             = geo.found.req,
-            hasMore         = false,
-            selectedId      = mroot.index.state.currRcvrId,
+            hasMore         = geo.found.hasMore,
+            selectedIds     = mroot.index.searchNodesSelectedIds,
             withDistanceTo  = geo.mapInit.userLoc,
-            searchCssOrNull = mroot.index.search.geo.css
+            searchCss = geo.css
           )
         }
 
