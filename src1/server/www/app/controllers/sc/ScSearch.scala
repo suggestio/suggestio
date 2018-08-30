@@ -2,7 +2,6 @@ package controllers.sc
 
 import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
-import io.suggest.common.empty.OptionUtil
 import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes}
 import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{IMNodes, MNode}
@@ -50,9 +49,8 @@ trait ScSearch
       geoIpUtil.fixedRemoteAddrFromRequest.remoteAddr
     )
 
-    def mGeoLocOptFut = OptionUtil.maybeFut( _qs.search.rcvrId.isEmpty ) {
+    def mGeoLocOptFut =
       geoIpUtil.geoLocOrFromIp( _qs.common.locEnv.geoLocOpt )( geoIpUtil.geoIpRes2geoLocOptFut(geoIpResOptFut) )
-    }
 
     def nodesSearch: Future[MNodeSearch] = {
       mGeoLocOptFut.flatMap { mGeoLocOpt2 =>
@@ -137,7 +135,6 @@ trait ScSearch
 
     /** Реактивный поиск и json-рендер тегов и узлов, вместо старого обычного поиска тегов. */
     def nodeInfosSrc: Source[MGeoNodePropsShapes, Future[NotUsed]] = {
-      LOGGER.warn("nodeInfoSrc: qs = " + _qs)
       val srcFut = for {
         msearch <- nodesSearch
       } yield {

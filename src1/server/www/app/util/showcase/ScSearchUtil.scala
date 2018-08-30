@@ -1,5 +1,6 @@
 package util.showcase
 
+import io.suggest.common.empty.OptionUtil
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.tags.TagFacesUtil
 import io.suggest.es.model.IMust
@@ -36,9 +37,6 @@ class ScSearchUtil @Inject()(
 
 
   /** Компиляция значений query string в MNodeSearch. */
-  def qs2NodesSearch(qs: MScQs): Future[MNodeSearch] = {
-    qs2NodesSearch(qs, qs.common.locEnv.geoLocOpt)
-  }
   def qs2NodesSearch(qs: MScQs, geoLocOpt2: Option[MGeoLoc]): Future[MNodeSearch] = {
     val _limit = qs.search.limit
       .getOrElse( LIMIT_DFLT )
@@ -77,21 +75,23 @@ class ScSearchUtil @Inject()(
         .toSeq
     }
 
-    // Собрать поиск по тегам:
+    // Поиск по тегам.
       edgesCrs ::= Criteria(
         predicates  = MPredicates.TaggedBy.Self :: Nil,
         tags        = tagCrs,
         nodeIds     = qs.search.rcvrId.toStringOpt.toSeq,
-        // Отработать геолокацию: искать только теги, размещенные в текущей области.
-        gsIntersect = for (geoLoc <- geoLocOpt2) yield {
-          val circle = CircleGs(
-            center  = geoLoc.point,
-            radiusM = 1
-          )
-          GsCriteria(
-            levels = MNodeGeoLevels.geoTag :: Nil,
-            shapes = CircleGsJvm.toEsQueryMaker(circle) :: Nil
-          )
+        // Отработать геолокацию: искать только теги, размещенные в текущей области (но если НЕ задан id узла-ресивера)
+        gsIntersect = OptionUtil.maybeOpt( qs.search.rcvrId.isEmpty ) {
+          for (geoLoc <- geoLocOpt2) yield {
+            val circle = CircleGs(
+              center  = geoLoc.point,
+              radiusM = 1
+            )
+            GsCriteria(
+              levels = MNodeGeoLevels.geoTag :: Nil,
+              shapes = CircleGsJvm.toEsQueryMaker(circle) :: Nil
+            )
+          }
         },
         must = should
       )

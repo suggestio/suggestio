@@ -240,17 +240,16 @@ class Sc3Circuit(
 
   /** Аргументы для поиска тегов. */
   private val geoSearchQsRO: ModelRO[MScQs] = zoom { mroot =>
-    _searchQs(mroot, withScreen = true, None)
+    _searchQs(mroot)
   }
 
-  private def _searchQs(mroot: MScRoot, withScreen: Boolean,
-                        currRcvrId: Option[MEsUuId]): MScQs = {
+  private def _searchQs(mroot: MScRoot): MScQs = {
     MScQs(
       common = MScCommonQs(
-        locEnv = _getLocEnv(mroot),
-        apiVsn = mroot.internals.conf.apiVsn,
-        searchNodes = Some(false),
-        screen = OptionUtil.maybe(withScreen)( mroot.dev.screen.info.screen )
+        locEnv      = _getLocEnv(mroot),
+        apiVsn      = mroot.internals.conf.apiVsn,
+        searchNodes = Some( false ),
+        screen      = Some( mroot.dev.screen.info.screen )
       ),
       search = MAdsSearchReq(
         textQuery = mroot.index.search.text.searchQuery.toOption,
