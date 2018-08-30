@@ -79,12 +79,17 @@ trait AgtBuilder extends IAdvBuilder {
                 .toSet
                 .toSeq
 
-              val nodeIdsSet = tagFacesSet.flatMap { tagFace =>
-                val tnOpt = ctxOuter.tagNodesMap.get(tagFace)
-                if (tnOpt.isEmpty)
-                  LOGGER.warn(s"$logPrefix No tag-node found for face: $tagFace")
-                tnOpt.flatMap(_.id)
-              }
+              val nodeIdsSet = tagFacesSet
+                .iterator
+                .flatMap { tagFace =>
+                  val tnOpt = ctxOuter.tagNodesMap.get(tagFace)
+                  val tnIdOpt = tnOpt.flatMap(_.id)
+                  // Сообщать о проблеме с тегом: неправильно вызывать этот код, если узел тега ещё не существует. TODO Может сразу делать throw?
+                  if (tnIdOpt.isEmpty)
+                    LOGGER.error(s"$logPrefix No tag-node found for tag-face or _id missing: $tnOpt")
+                  tnIdOpt
+                }
+                .toSet
 
               MEdge(
                 predicate = pred,

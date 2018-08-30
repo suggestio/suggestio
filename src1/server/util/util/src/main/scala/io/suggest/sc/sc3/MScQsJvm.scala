@@ -35,21 +35,21 @@ object MScQsJvm {
           apiVsnE               <- apiVsnB.bind     ( k(API_VSN_FN),            params )
           locEnvE               <- locEnvB.bind     ( k(LOC_ENV_FN),            params )
           searchGridAdsOptE     <- boolOptB.bind    ( k(SEARCH_GRID_ADS_FN),    params )
-          searchTagsOptE        <- boolOptB.bind    ( k(SEARCH_TAGS_FN),        params )
+          searchNodesOptE       <- boolOptB.bind    ( k(SEARCH_TAGS_FN),        params )
         } yield {
           for {
             screenOpt           <- screenOptE.right
             apiVsn              <- apiVsnE.right
             locEnv              <- locEnvE.right
             searchGridAdsOpt    <- searchGridAdsOptE.right
-            searchTagsOpt       <- searchTagsOptE.right
+            searchNodesOpt      <- searchNodesOptE.right
           } yield {
             MScCommonQs(
               screen          = screenOpt,
               apiVsn          = apiVsn,
               locEnv          = locEnv,
               searchGridAds   = searchGridAdsOpt,
-              searchNodes      = searchTagsOpt
+              searchNodes     = searchNodesOpt
             )
           }
         }

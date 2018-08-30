@@ -34,9 +34,6 @@ case class SearchTextChanged(newText: String) extends ISearchAction
 /** Таймаут фильтрации быстрых нажатий в поле ввода текста. */
 case class SearchTextTimerOut(timestamp: Long) extends ISearchAction
 
-/** Принудительный запуск поиска на текущей поисковой вкладке. */
-case object ReDoSearch extends ISearchAction
-
 
 /** Срабатывание таймера запуска реакции на действия на карте. */
 case class MapDelayTimeOut( gen: Long ) extends ISearchAction
@@ -45,4 +42,4 @@ case class MapDelayTimeOut( gen: Long ) extends ISearchAction
 case class MapReIndex( rcvrId: Option[String] ) extends ISc3Action with IScIndexRespReason
 
 /** Выполнить поиск узлов для гео-вкладки. */
-case class DoNodesSearch(clear: Boolean ) extends ISearchAction with IScApiRespReason
+case class DoNodesSearch(clear: Boolean, ignorePending: Boolean) extends ISearchAction with IScApiRespReason

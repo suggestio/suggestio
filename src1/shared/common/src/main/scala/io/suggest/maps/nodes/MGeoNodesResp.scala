@@ -2,6 +2,7 @@ package io.suggest.maps.nodes
 
 import io.suggest.geo.IGeoShape
 import io.suggest.geo.IGeoShape.JsonFormats.internalMinFormat
+import io.suggest.primo.id.IId
 import japgolly.univeq.UnivEq
 // НЕ УДАЛЯТЬ, используется для обоих UnivEq.derive
 import io.suggest.ueq.UnivEqUtil._
@@ -39,6 +40,10 @@ case class MGeoNodePropsShapes(
                                 props    : MAdvGeoMapNodeProps,
                                 shapes   : Seq[IGeoShape]
                               )
+  extends IId[String]
+{
+  override def id: String = props.nodeId
+}
 
 object MGeoNodePropsShapes {
 

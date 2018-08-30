@@ -41,8 +41,8 @@ object SearchAh {
     var fxAcc = List.empty[Effect]
 
     // Эффект поиска тегов и узлов вообще. Надо подружать текущие теги/узлы или искать узлы по названию.
-    if (v0.geo.found.isEmpty)
-      fxAcc ::= reDoSearchFx
+    if (v0.geo.found.isEmpty && !v0.geo.found.req.isPending)
+      fxAcc ::= reDoSearchFx( ignorePending = false )
 
     // Эффект инициализации/подгонки карты (разовый).
     if (v0.geo.mapInit.ready) {
@@ -64,9 +64,9 @@ object SearchAh {
 
 
   /** Эффект запуска поиска узлов. */
-  def reDoSearchFx: Effect = {
+  def reDoSearchFx(ignorePending: Boolean): Effect = {
     Effect.action {
-      DoNodesSearch(clear = true)
+      DoNodesSearch(clear = true, ignorePending = ignorePending)
     }
   }
 
@@ -108,12 +108,6 @@ class SearchAh[M](
 
         updated(v2, finalFx)
       }
-
-
-    // Принудительный запуск поиска на текущей вкладке.
-    case ReDoSearch =>
-      val fx = SearchAh.reDoSearchFx
-      effectOnly(fx)
 
   }
 

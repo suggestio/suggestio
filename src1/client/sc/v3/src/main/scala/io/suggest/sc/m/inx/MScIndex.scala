@@ -53,11 +53,9 @@ case class MScIndex(
   lazy val searchNodesSelected: Stream[MGeoNodePropsShapes] = {
     val iter = for {
       nodeId <- searchNodesSelectedIds.iterator
-      resp   <- search.geo.found.req.iterator
-      nodePS <- resp.resp.iterator
-      if nodePS.props.nodeId ==* nodeId
+      nodePs <- search.geo.found.nodesFoundMap.get( nodeId ).iterator
     } yield {
-      nodePS
+      nodePs
     }
     iter
       .toStream

@@ -84,7 +84,7 @@ class STextAh[M](
           updatedSilent(v2)
         } else {
           // Что-то надо искать, запустить экшен поиска.
-          val fx = Effect.action( ReDoSearch )
+          val fx = SearchAh.reDoSearchFx( ignorePending = true )
           updatedSilent(v2, fx)
         }
 

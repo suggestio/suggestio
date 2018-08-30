@@ -7,9 +7,11 @@ import io.suggest.dev.MScreenInfo
 import io.suggest.maps.c.RcvrMarkersInitAh
 import io.suggest.maps.m.{HandleMapReady, InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.routes.IAdvRcvrsMapApi
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
+import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.{HandleScApiResp, MScRoot}
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
@@ -71,107 +73,136 @@ class GeoTabAh[M](
       val v0 = value
       val req0 = v0.found.req
 
-      // Надо понять, изменилось ли состояние аргументов поиска?
-      // Подготовить аргументы запроса:
-      val args0 = geoSearchQsRO.value
-
-      val search2 = {
-        val offsetOpt = OptionUtil.maybeOpt(!m.clear) {
-          v0.rcvrsNotCached
-            .toOption
-            .map(_.resp.nodes.size)
-        }
-        // TODO Лимит результатов - брать из высоты экрана.
-        val limit = 30
-        args0.search.withLimitOffset(
-          limit     = Some(limit),
-          offset    = offsetOpt
-        )
-      }
-
-      // TODO Запустить поиск, если что-то изменилось.
-      if (v0.found.reqSearchArgs contains search2) {
-        // Данные для запроса не отличаются от уже запрошенных. Поэтому игнорируем сигнал.
+      if (req0.isPending && !m.ignorePending) {
+        // Не логгируем, т.к. это слишком частое явление при запуске системы с открытой панелью поиска.
+        //LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = m )
         noChange
 
       } else {
-        // Поисковый запрос действительно нужно организовать.
-        val req2 = req0.pending()
-        val req2p = req2.asInstanceOf[PendingBase]
+        // Надо понять, изменилось ли состояние аргументов поиска?
+        // Подготовить аргументы запроса:
+        val args0 = geoSearchQsRO.value
 
-        val runReqFx = Effect {
-          val args2 = args0.withSearch(
-            search = search2
+        val search2 = {
+          val offsetOpt = OptionUtil.maybeOpt(!m.clear) {
+            v0.rcvrsNotCached
+              .toOption
+              .map(_.resp.nodes.size)
+          }
+          // TODO Лимит результатов - брать из высоты экрана. Но сервер пока вообще игнорит лимиты для этого поиска...
+          val limit = 30
+          args0.search.withLimitOffset(
+            limit     = Some(limit),
+            offset    = offsetOpt
           )
-          // Запустить запрос.
-          api
-            .pubApi( args2 )
-            .transform { tryResp =>
-              val action = HandleScApiResp(
-                reason        = m,
-                tryResp       = tryResp,
-                reqTimeStamp  = Some( req2p.startTime ),
-                qs            = args2
-              )
-              Success( action )
-            }
         }
 
-        val found2 = v0.found.withReqWithArgs(
-          req = req2,
-          reqSearchArgs = Some(search2)
-        )
+        // Запустить поиск, если что-то изменилось.
+        if (v0.found.reqSearchArgs contains search2) {
+          // Данные для запроса не отличаются от уже запрошенных. Поэтому игнорируем сигнал.
+          noChange
 
-        // В зависимости от состояния textQuery, есть два похожих варианта работы: поиск только тегов и поиск всех узлов по имени.
-        // Если textQuery.isEmpty, то убедиться, что ресиверы сброшены на исходную
-        val rcvrs2 = if (search2.textQuery.isEmpty) {
-          // Сбросить rcvrs на закэшированное состояние.
-          // TODO Раньше при сбросе ресайзилась карта, т.к. список слетал полностью. Теперь поиск происходит даже на пустом запросе. Удалить этот коммент?
-          //val mapRszFxOpt = for (lmap <- v0.data.lmap) yield
-          //  SearchAh.mapResizeFx(lmap)
-          v0.data.rcvrsCache
         } else {
-          v0.mapInit.rcvrs
-            .pending( req2p.startTime )
+          // Поисковый запрос действительно нужно организовать.
+          val req2 = req0.pending()
+          val req2p = req2.asInstanceOf[PendingBase]
+
+          val runReqFx = Effect {
+            val args2 = args0.withSearch(
+              search = search2
+            )
+            // Запустить запрос.
+            api
+              .pubApi( args2 )
+              .transform { tryResp =>
+                val action = HandleScApiResp(
+                  reason        = m,
+                  tryResp       = tryResp,
+                  reqTimeStamp  = Some( req2p.startTime ),
+                  qs            = args2
+                )
+                Success( action )
+              }
+          }
+
+          val found2 = v0.found.withReqWithArgs(
+            req = req2,
+            reqSearchArgs = Some(search2)
+          )
+
+          // В зависимости от состояния textQuery, есть два похожих варианта работы: поиск только тегов и поиск всех узлов по имени.
+          // Если textQuery.isEmpty, то убедиться, что ресиверы сброшены на исходную
+          val rcvrs2 = if (search2.textQuery.isEmpty) {
+            // Сбросить rcvrs на закэшированное состояние.
+            // TODO Раньше при сбросе ресайзилась карта, т.к. список слетал полностью. Теперь поиск происходит даже на пустом запросе. Удалить этот коммент?
+            //val mapRszFxOpt = for (lmap <- v0.data.lmap) yield
+            //  SearchAh.mapResizeFx(lmap)
+            v0.data.rcvrsCache
+          } else {
+            v0.mapInit.rcvrs
+              .pending( req2p.startTime )
+          }
+          // Обновить карту ресиверов в состоянии, если инстанс изменился:
+          val mapInit2 = if (rcvrs2 !===* v0.mapInit.rcvrs)
+            v0.mapInit.withRcvrs( rcvrs2 )
+          else
+            v0.mapInit
+
+          // Обновлённое состояние.
+          val v2 = v0.copy(
+            found   = found2,
+            mapInit = mapInit2
+          )
+
+          updated(v2, runReqFx)
         }
-        // Обновить карту ресиверов в состоянии, если инстанс изменился:
-        val mapInit2 = if (rcvrs2 !===* v0.mapInit.rcvrs)
-          v0.mapInit.withRcvrs( rcvrs2 )
-        else
-          v0.mapInit
-
-        // Обновлённое состояние.
-        val v2 = v0.copy(
-          found   = found2,
-          mapInit = mapInit2
-        )
-
-        updated(v2, runReqFx)
       }
 
 
     // Клик по узлу в списке найденных гео-узлов.
     case m: NodeRowClick =>
-      /* TODO Надо найти, что за узел был окликнут. Для клика по тегу:
+      // Найти узел, который был окликнут.
       val v0 = value
-      val isAlreadySelected = v0.selectedId contains m.nodeId
+      v0.found
+        .nodesFoundMap
+        .get( m.nodeId )
+        .fold {
+          // Почему-то не найдено узла, по которому произошёл клик.
+          LOG.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          noChange
+        } { mnode =>
+          // Есть окликнутый узел. Действовать исходя из типа узла.
+          if (mnode.props.ntype ==* MNodeTypes.Tag) {
+            // Это тег. Обновить состояние выбранных тегов, искать в плитке.
+            val isAlreadySelected = v0.data.selTagIds contains m.nodeId
 
-      // Снять либо выставить выделение для тега.
-      val selectedId2 = OptionUtil.maybe( !isAlreadySelected )( m.nodeId )
-      val v2 = v0.withSelectedId( selectedId2 )
+            // Снять либо выставить выделение для тега:
+            val selTagIds2: Set[String] =
+              if (isAlreadySelected) Set.empty // TODO Когда будет поддержка >1 тега, сделать: v0.data.selTagIds - m.nodeId
+              else Set(m.nodeId) // TODO Пока поддерживается только 1 тег макс. Надо в будущем: v0.data.selTagIds + m.nodeId
 
-      // Обновить плитку при выборе тега.
-      val fx = Effect.action {
-        GridLoadAds(clean = true, ignorePending = true)
-      }
+            val v2 = v0.withData(
+              v0.data.withSelTagIds( selTagIds2 )
+            )
+            val fx = Effect.action {
+              GridLoadAds(clean = true, ignorePending = true)
+            }
+            updated(v2, fx)
 
-      updated( v2, fx )
-
-      */
-
-      // Для клика по adn-узлу:
-      val fx = Effect.action( MapReIndex(Some(m.nodeId)) )
-      effectOnly(fx)
+          } else {
+            // Это не тег, значит это adn-узел. Надо перейти в выдачу выбранного узла.
+            val fx = Effect.action( MapReIndex(Some(m.nodeId)) )
+            // Надо сбросить выбранные теги, есть есть.
+            if (v0.data.selTagIds.isEmpty) {
+              effectOnly(fx)
+            } else {
+              val v2 = v0.withData(
+                v0.data.withSelTagIds( Set.empty )
+              )
+              updated(v2, fx)
+            }
+          }
+        }
 
     case _: NodesScroll =>
       // Пока сервер возвращает все результаты пачкой, без лимитов, реакции никакой не будет.
@@ -315,42 +346,27 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
       }
 
     val textQuery = ctx.m.qs.search.textQuery
-    val msri = MSearchRespInfo(
-      textQuery = textQuery,
-      resp = MGeoNodesResp(
-        nodes = nodes2
-      )
-    )
 
     // Собрать ресиверы в итог:
-    val rcvrsPot2 = g0.mapInit.rcvrs.ready( msri )
+    val mapInit2 = textQuery.fold(g0.mapInit) { _ =>
+      val msri = MSearchRespInfo(
+        textQuery = textQuery,
+        resp = MGeoNodesResp(
+          nodes = nodes2
+        )
+      )
+      g0.mapInit.withRcvrs(
+        g0.mapInit.rcvrs
+          .ready( msri )
+      )
+    }
 
     // Заполнить/дополнить g0.found найденными элементами.
     val mnf2 = g0.found.copy(
-      req = for (msri0 <- rcvrsPot2) yield {
-          // Надо рассчитать расстояния от юзера до каждой точки.
-          /*
-          val userLocLatLngOpt = for {
-            userLoc <- g0.mapInit.userLoc
-            if nodes2.exists(_.shapes.nonEmpty)
-          } yield {
-            val userLocLl = MapsUtil.geoPoint2LatLng( userLoc.point )
-            for (node0 <- nodes2) yield {
-              val distancesIter = node0.shapes
-                .iterator
-                .flatMap( _.centerPoint )
-                .map { gp =>
-                  val gpLl = MapsUtil.geoPoint2LatLng( gp )
-                  gpLl.distanceTo( userLocLl )
-                }
-              val minDistanceOpt = if (distancesIter.nonEmpty)
-                Some( distancesIter.min )
-              else
-                None
-            }
-          }*/
-        msri0.copy(
-          resp = nodes2
+      req = g0.found.req.ready {
+        MSearchRespInfo(
+          textQuery = textQuery,
+          resp      = nodes2
         )
       },
       // TODO Что тут выставлять? Сервер всё пачкой возвращает без учёта limit'а.
@@ -359,8 +375,7 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
     )
 
     val g2 = g0.copy(
-      mapInit = g0.mapInit
-        .withRcvrs( rcvrsPot2 ),
+      mapInit = mapInit2,
       found = mnf2,
       css = GeoTabAh._mkSearchCss( nodes2.length, getScCssF().args.screenInfo )
     )

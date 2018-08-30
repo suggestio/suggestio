@@ -19,6 +19,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import HtmlConstants.`~`
+import io.suggest.common.empty.OptionUtil
 
 /**
   * Suggest.io
@@ -59,6 +60,7 @@ class NodeFoundR(
 
   type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
+
 
   class Backend($: BackendScope[Props, Props_t]) {
 
@@ -101,7 +103,7 @@ class NodeFoundR(
           }
         locLl distanceTo shapeCenterGp
       }
-      val distanceMOpt = distancesIter.buffered.headOption
+      val distanceMOpt = OptionUtil.maybe(distancesIter.nonEmpty)( distancesIter.min )
 
       val p = props.node.props
 

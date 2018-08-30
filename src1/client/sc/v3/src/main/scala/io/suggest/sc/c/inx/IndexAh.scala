@@ -129,7 +129,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
     val respActionTypes = ctx.m.tryResp.get.respActionTypes
     // Если панель поиск видна, то запустить поиск узлов в фоне.
     if (i1.search.isShown && !respActionTypes.contains(MScRespActionTypes.SearchNodes))
-      fxsAcc ::= SearchAh.reDoSearchFx
+      fxsAcc ::= SearchAh.reDoSearchFx( ignorePending = false )
 
     // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
     fxsAcc ::= Effect.action( ResetUrlRoute )
@@ -218,6 +218,7 @@ class IndexAh[M](
     )
 
     val fx = Effect {
+      val someTrue = Some( true )
       //println("get index @" + System.currentTimeMillis())
       val args = MScQs(
         common = MScCommonQs(
@@ -226,9 +227,9 @@ class IndexAh[M](
           locEnv = v0.state.currRcvrId
             .fold(root.locEnv)(_ => MLocEnv.empty),
           screen = Some( root.dev.screen.info.screen ),
-          searchGridAds = Some( true ),
+          searchGridAds = someTrue,
           // Сразу запросить поиск по узлам, если панель поиска открыта.
-          searchNodes = if (isSearchNodes) Some(true) else None
+          searchNodes = if (isSearchNodes) someTrue else None
         ),
         index = Some(
           MScIndexArgs(

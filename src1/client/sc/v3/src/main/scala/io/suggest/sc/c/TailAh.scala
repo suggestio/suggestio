@@ -134,7 +134,6 @@ class TailAh[M](
         // Вместо патчинга состояния имитируем клик: это чтобы возможные сайд-эффекты обычного клика тоже отработали.
         fxsAcc ::= Effect.action( SearchOpenClose(m.mainScreen.searchOpened) )
       }
-      // TODO Возможно, SwitchTab надо запихнуть в else-ветвь тут?
 
       // Смотрим координаты текущей точки.
       for {
