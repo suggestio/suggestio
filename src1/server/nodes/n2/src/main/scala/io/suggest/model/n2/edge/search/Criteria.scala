@@ -2,6 +2,7 @@ package io.suggest.model.n2.edge.search
 
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.es.model.{IMust, Must_t}
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.n2.edge.MPredicate
 
 /**
@@ -30,6 +31,7 @@ final case class Criteria(
                            tags              : Seq[TagCriteria]     = Nil,
                            gsIntersect       : Option[IGsCriteria]  = None,
                            nodeIdsMatchAll   : Boolean              = false,
+                           geoDistanceSort   : Option[MGeoPoint]    = None,
                          )
   extends EmptyProduct
   with IMust
@@ -79,6 +81,11 @@ final case class Criteria(
     for (_gsCr <- gsIntersect) {
       sb.append(",gs=")
         .append(_gsCr)
+    }
+
+    for (mgp <- geoDistanceSort) {
+      sb.append(",geoDistanceSort=")
+        .append(mgp.toQsStr)
     }
 
     sb.append(')')

@@ -41,7 +41,7 @@ trait NodeIdSearch extends DynSearchArgs {
         .map { qb0 =>
           QueryBuilders.boolQuery()
             .must( qb0 )
-            .must( nodeIdsQb )
+            .filter( nodeIdsQb )
         }
         .orElse {
           Some( nodeIdsQb )

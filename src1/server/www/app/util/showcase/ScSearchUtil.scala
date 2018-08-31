@@ -75,6 +75,8 @@ class ScSearchUtil @Inject()(
         .toSeq
     }
 
+    val distanceSort = geoLocOpt2.map(_.point)
+
     // Поиск по тегам.
       edgesCrs ::= Criteria(
         predicates  = MPredicates.TaggedBy.Self :: Nil,
@@ -93,7 +95,8 @@ class ScSearchUtil @Inject()(
             )
           }
         },
-        must = should
+        must = should,
+        geoDistanceSort = distanceSort
       )
 
     // Активировать поиск по ресиверам.
@@ -115,7 +118,8 @@ class ScSearchUtil @Inject()(
         },
         must        = should,
         // Поиск по имени проходит через индекс тегов, куда должно быть сохранено имя в соотв. adv-билдере
-        tags        = tagCrs
+        tags        = tagCrs,
+        geoDistanceSort = distanceSort
       )
     }
 

@@ -21,6 +21,7 @@ import util.adv.direct.AdvRcvrsUtilJmx
 import util.adv.geo.AdvGeoRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.billing.cron.ReActivateCurrentAdvsJmx
+import util.compat.MNodeGeo2EdgeMigrateJmx
 import util.es.SiowebEsModelJmx
 import util.img.DynImgUtilJmx
 
@@ -55,6 +56,7 @@ case class JMXImpl @Inject() (
                                dynImgUtilJmx                 : DynImgUtilJmx,
                                reActivateCurrentAdvsJmx      : ReActivateCurrentAdvsJmx,
                                advGeoRcvrsUtilJmx            : AdvGeoRcvrsUtilJmx,
+                               mNodeGeo2EdgeMigrateJmx       : MNodeGeo2EdgeMigrateJmx,
                                lifecycle                     : ApplicationLifecycle,
                                implicit private val ec       : ExecutionContext
                              )

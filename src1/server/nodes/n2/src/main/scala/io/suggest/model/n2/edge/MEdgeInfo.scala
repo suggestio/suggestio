@@ -183,6 +183,7 @@ final case class MEdgeInfo(
 {
 
   def withTags(tags: Set[String]) = copy(tags = tags)
+  def withGeoPoints(geoPoints: Seq[MGeoPoint]) = copy(geoPoints = geoPoints)
 
   /** Форматирование для вывода в шаблонах. */
   override def toString: String = {

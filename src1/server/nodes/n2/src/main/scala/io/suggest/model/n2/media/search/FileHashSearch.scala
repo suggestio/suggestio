@@ -43,18 +43,16 @@ trait FileHashSearch extends DynSearchArgs {
 
         // TODO Возможно, тут ошибка: все одновременно хэши быть не могут ведь? Надо сделать по аналогии с NodeIdSearch, где через пачку SHOULD сделано.
         if (cr.hTypes.nonEmpty) {
-          qb.must(
-            QueryBuilders.termsQuery( hashesTypeFn, cr.hTypes.map(_.value): _* )
-          )
+          val hTypesQb = QueryBuilders.termsQuery( hashesTypeFn, cr.hTypes.map(_.value): _* )
+          qb.filter( hTypesQb )
         }
 
         if (cr.hexValues.nonEmpty) {
-          qb.must(
-            QueryBuilders.termsQuery( hashesValueFn, cr.hexValues: _* )
-          )
+          val hValuesQb = QueryBuilders.termsQuery( hashesValueFn, cr.hexValues: _* )
+          qb.filter( hValuesQb )
         }
 
-        val qbNest = QueryBuilders.nestedQuery( nestedPath, qb, ScoreMode.Max )
+        val qbNest = QueryBuilders.nestedQuery( nestedPath, qb, ScoreMode.None )
 
         MWrapClause(
           must          = cr.must,
@@ -70,7 +68,7 @@ trait FileHashSearch extends DynSearchArgs {
       qbOpt0.map { qb0 =>
         QueryBuilders.boolQuery()
           .must( qb0 )
-          .must( allCrsQb )
+          .filter( allCrsQb )
       }.orElse {
         Some( allCrsQb )
       }

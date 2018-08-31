@@ -41,7 +41,7 @@ trait FileMimeSearch extends DynSearchArgs {
         .map { qb0 =>
           QueryBuilders.boolQuery()
             .must( qb0 )
-            .must( mimesQb )
+            .filter( mimesQb )
         }
         .orElse {
           Some( mimesQb )

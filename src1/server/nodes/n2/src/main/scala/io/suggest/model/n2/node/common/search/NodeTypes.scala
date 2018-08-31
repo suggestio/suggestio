@@ -23,26 +23,14 @@ trait NodeTypes extends DynSearchArgs {
       qbOpt0
     } else {
       val fn = MNodeFields.Common.NODE_TYPE_FN
-      if (nodeTypes.head == null) {
-        // Seq(null) -- режим поиска элементов, у которых отсутствует сохранянное значение в поле ntype.
-        val qb0 = qbOpt0 getOrElse {
-          QueryBuilders.matchAllQuery()
-        }
-        val qb1 = QueryBuilders.boolQuery()
+      val strNodeTypes = _nodeTypes.map(_.value)
+      val ntq = QueryBuilders.termsQuery(fn, strNodeTypes: _*)
+      qbOpt0.map { qb0 =>
+        QueryBuilders.boolQuery()
           .must(qb0)
-          .mustNot( QueryBuilders.existsQuery( fn ) )
-        Some(qb1)
-
-      } else {
-        val strNodeTypes = _nodeTypes.map(_.value)
-        val ntq = QueryBuilders.termsQuery(fn, strNodeTypes: _*)
-        qbOpt0.map { qb0 =>
-          QueryBuilders.boolQuery()
-            .must(qb0)
-            .filter(ntq)
-        }.orElse {
-          Some(ntq)
-        }
+          .filter(ntq)
+      }.orElse {
+        Some(ntq)
       }
     }
   }

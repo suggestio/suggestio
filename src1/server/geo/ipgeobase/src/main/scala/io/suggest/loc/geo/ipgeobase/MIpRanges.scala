@@ -71,7 +71,7 @@ abstract class MIpRangesAbstract
   /** Поиск элементов модели по ip-адресу. */
   def findForIp(ip: String): Future[Seq[MIpRange]] = {
     val fn = IP_RANGE_FN
-    val q =QueryBuilders.boolQuery()
+    val q = QueryBuilders.boolQuery()
       .must {
         QueryBuilders.rangeQuery(fn)
           .lte(ip)

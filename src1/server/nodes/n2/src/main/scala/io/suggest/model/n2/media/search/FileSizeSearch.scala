@@ -36,7 +36,7 @@ trait FileSizeSearch extends DynSearchArgs {
         .map { qb0 =>
           QueryBuilders.boolQuery()
             .must(qb0)
-            .must(qb2)
+            .filter(qb2)
         }
         .orElse {
           Some( qb2 )
