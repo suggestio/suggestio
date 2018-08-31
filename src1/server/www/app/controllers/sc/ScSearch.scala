@@ -1,6 +1,5 @@
 package controllers.sc
 
-import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
 import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes}
 import io.suggest.model.n2.node.search.MNodeSearch
@@ -134,13 +133,16 @@ trait ScSearch
     }
 
     /** Реактивный поиск и json-рендер тегов и узлов, вместо старого обычного поиска тегов. */
-    def nodeInfosSrc: Source[MGeoNodePropsShapes, Future[NotUsed]] = {
+    def nodeInfosSrc: Source[MGeoNodePropsShapes, _] = {
       val srcFut = for {
         msearch <- nodesSearch
       } yield {
+        // Нельзя сорсить напрямую через search scroll, т.к. это нарушает порядок сортировки. Имитируем Source через dynSearch:
+        val nodesSrc = mNodes.dynSearchSource( msearch )
+
         // Организовать чтение найденных узлов из БД:
         val src0 = advGeoRcvrsUtil
-          .nodesAdvGeoPropsSrc(msearch, wcAsLogo = false)
+          .nodesAdvGeoPropsSrc(nodesSrc, wcAsLogo = false)
           // Ответвление: Данные для статистики - материализовать, mat-итог запихать в статистику:
           .alsoTo( saveScStatSink )
 

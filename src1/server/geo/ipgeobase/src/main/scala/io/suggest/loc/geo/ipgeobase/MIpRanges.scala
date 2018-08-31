@@ -84,7 +84,7 @@ abstract class MIpRangesAbstract
       .setQuery(q)
       .setSize(3)    // Скорее всего тут всегда максимум 1 результат.
       .execute()
-      .map(searchResp2list)
+      .map(searchResp2stream)
 
     // Залоггировать асинхронный результат, если необходимо.
     if (LOGGER.underlying.isTraceEnabled()) {

@@ -75,7 +75,7 @@ class EmailActivations @Inject() (
       .setTypes(ES_TYPE_NAME)
       .setQuery(keyQuery)
       .execute()
-      .map { searchResp2list }
+      .map { searchResp2stream }
   }
 
 }

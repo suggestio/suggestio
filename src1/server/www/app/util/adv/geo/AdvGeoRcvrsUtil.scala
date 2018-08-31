@@ -1,7 +1,6 @@
 package util.adv.geo
 
 import javax.inject.Inject
-import akka.NotUsed
 import akka.stream.scaladsl.Source
 import controllers.routes
 import io.suggest.adn.MAdnRights
@@ -54,7 +53,6 @@ class AdvGeoRcvrsUtil @Inject()(
 {
 
   import mCommonDi._
-  import mNodes.Implicits._
 
 
   /** "Версия" формата ресиверов, чтобы сбрасывать карту, даже когда она не изменилась. */
@@ -152,12 +150,12 @@ class AdvGeoRcvrsUtil @Inject()(
 
   /** Карта ресиверов, размещённых через lk-adn-map.
     *
-    * @param msearch Инстас поисковых аргументов, собранный через rcvrsSearch().
+    * @param msearch Источник MNode. См. mNodes.source[MNode](...).
     * @return Фьючерс с картой узлов.
     *         Карта нужна для удобства кэширования и как бы "сортировки", чтобы hashCode() или иные хэш-функции
     *         всегда возвращали один и тот же результат.
     */
-  def nodesAdvGeoPropsSrc(msearch: MNodeSearch, wcAsLogo: Boolean): Source[(MNode, MAdvGeoMapNodeProps), NotUsed] = {
+  def nodesAdvGeoPropsSrc[M](nodesSrc: Source[MNode, M], wcAsLogo: Boolean): Source[(MNode, MAdvGeoMapNodeProps), M] = {
     // Начать выкачивать все подходящие узлы из модели:
     lazy val logPrefix = s"rcvrNodesMap(${System.currentTimeMillis}):"
 
@@ -175,9 +173,8 @@ class AdvGeoRcvrsUtil @Inject()(
     val logoSzMult = 1.0f
 
     // Пережевать все найденные узлы, собрать нужные данные в единый список.
-    mNodes
-      .source[MNode](msearch)
-      // Собрать логотипы узлов.
+    // Собрать логотипы узлов.
+    nodesSrc
       .mapAsyncUnordered(NODE_LOGOS_PREPARING_PARALLELISM) { mnode =>
         // Подготовить инфу по логотипу узла.
         val mapLogoImgWithLimitsOptRaw = OptionUtil

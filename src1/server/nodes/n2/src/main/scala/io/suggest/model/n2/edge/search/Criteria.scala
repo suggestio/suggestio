@@ -37,6 +37,10 @@ final case class Criteria(
   with IMust
 {
 
+  def isContainsSort: Boolean = {
+    geoDistanceSort.nonEmpty
+  }
+
   /** Тест на наличие предиката или его дочерних предикатов в списке предикатов. */
   def containsPredicate(pred: MPredicate): Boolean = {
     predicates.exists(_.eqOrHasParent(pred))

@@ -1,5 +1,6 @@
 package io.suggest.es.search
 
+import akka.stream.scaladsl.Source
 import io.suggest.es.model.{EsModelStaticT, ISearchResp}
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 import io.suggest.primo.id.OptId
@@ -110,9 +111,9 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
   }
 
   /** typeclass: возвращает результаты в виде инстансом моделей. */
-  class SeqTMapper extends EsSearchFutHelper[Seq[T]] {
-    override def mapSearchResp(searchResp: SearchResponse): Future[Seq[T]] = {
-      val result = searchResp2list(searchResp)
+  class LazyStreamMapper extends EsSearchFutHelper[Stream[T]] {
+    override def mapSearchResp(searchResp: SearchResponse): Future[Stream[T]] = {
+      val result = searchResp2stream(searchResp)
       Future.successful(result)
     }
   }
@@ -136,7 +137,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
   class OptionTMapper extends EsSearchFutHelper[Option[T]] {
     /** Парсинг и обработка сырого результата в некий результат. */
     override def mapSearchResp(searchResp: SearchResponse): Future[Option[T]] = {
-      val r = searchResp2list(searchResp)
+      val r = searchResp2stream(searchResp)
         .headOption
       Future.successful(r)
     }
@@ -173,8 +174,8 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
       new RawSearchRespMapper
     }
 
-    implicit def seqMapper: EsSearchFutHelper[Seq[T]] = {
-      new SeqTMapper
+    implicit def seqMapper: EsSearchFutHelper[Stream[T]] = {
+      new LazyStreamMapper
     }
 
     implicit def idsMapper: EsSearchFutHelper[ISearchResp[String]] = {
@@ -217,8 +218,19 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
    *
    * @return Список рекламных карточек, подходящих под требования.
    */
-  def dynSearch(dsa: A): Future[Seq[T]] = {
-    search [Seq[T]] (dsa)
+  def dynSearch(dsa: A): Future[Stream[T]] = {
+    search[Stream[T]] (dsa)
+  }
+
+  /** Поиск с возвратом akka-streams.
+    * Source эмулируется поверх dynSearch, никакого scroll'а тут нет, т.к. scroll не умеет сортировку, скоринг, лимиты.
+    * Просто для удобства сделано или на.
+    */
+  def dynSearchSource(dsa: A): Source[T, _] = {
+    Source.fromFutureSource {
+      dynSearch(dsa)
+        .map { Source.apply }
+    }
   }
 
   /**

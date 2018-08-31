@@ -170,7 +170,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   /** Запуск поискового запроса и парсинг результатов в представление этой модели. */
   def runSearch(srb: SearchRequestBuilder): Future[Seq[T]] = {
-    srb.execute().map { searchResp2list }
+    srb.execute().map { searchResp2stream }
   }
 
   /** Прочитать маппинг текущей ES-модели из ES. */
@@ -413,9 +413,14 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   }
 
   /** Список результатов с source внутри перегнать в распарсенный список. */
-  def searchResp2list(searchResp: SearchResponse): Seq[T] = {
+  def searchResp2iter(searchResp: SearchResponse): Iterator[T] = {
     searchRespMap(searchResp)(deserializeSearchHit)
-      .toSeq
+  }
+  // Stream! Нельзя менять тип. На ленивость завязана работа akka-stream Source, который имитируется поверх этого метода.
+  def searchResp2stream(searchResp: SearchResponse): Stream[T] = {
+    searchResp2iter(searchResp)
+      // Безопасно ли тут делать ленивый Stream? Обычно да, но java-код elasticsearch с mutable внутри может в будущем посчитать иначе.
+      .toStream
   }
 
   def deserializeSearchHit(hit: SearchHit): T = {

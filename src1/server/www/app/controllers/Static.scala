@@ -1,7 +1,6 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
-
 import akka.NotUsed
 import akka.stream.{FlowShape, Graph}
 import akka.stream.scaladsl.{Compression, Flow, Keep, Sink, Source}
@@ -10,7 +9,7 @@ import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
 import io.suggest.brotli.BrotliUtil
 import io.suggest.compress.{MCompressAlgo, MCompressAlgos}
 import io.suggest.ctx.{MCtxId, MCtxIds}
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.primo.Var
 import io.suggest.sec.csp.CspViolationReport
 import io.suggest.stat.m.{MComponents, MDiag}
@@ -279,12 +278,15 @@ class Static @Inject() (
       promiseOrCached.fold(
         // В кэше нет данных, то надо запустить рассчёты:
         {cachedPromise =>
+          import mNodes.Implicits._
+
           // Организуем реактивную обработку нод с генерацией несжатых byte chunks:
           val NODES_PER_CHUNK = 30
           val chunkedUncompressedSrc = advGeoRcvrsUtil
             .withNodeLocShapes(
               advGeoRcvrsUtil.nodesAdvGeoPropsSrc(
-                advGeoRcvrsUtil.onMapRcvrsSearch(NODES_PER_CHUNK),
+                mNodes.source[MNode](
+                  advGeoRcvrsUtil.onMapRcvrsSearch(NODES_PER_CHUNK) ),
                 wcAsLogo = true
               )
             )

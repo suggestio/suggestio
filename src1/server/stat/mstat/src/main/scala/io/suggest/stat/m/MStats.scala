@@ -148,7 +148,7 @@ abstract class MStatsAbstract
       .setSize(maxResults)
       .addSort(TIMESTAMP_FN, SortOrder.ASC)
       .execute()
-      .map { searchResp2list }
+      .map { searchResp2stream }
   }
 
   /** Удалить все данные до указанной даты. */

@@ -221,8 +221,9 @@ object OutEdges extends MacroLogsImpl {
         for (mgp <- oe.geoDistanceSort) {
           val fn = MNodeFields.Edges.E_OUT_INFO_GEO_POINTS_FN
           val geoPointStr = GeoPoint.toEsStr(mgp)
-          val scale = "1km"
-          val func = ScoreFunctionBuilders.gaussDecayFunction(fn, geoPointStr, scale)
+          val scale = "100km"
+          // decay=0.1 т.к. расстояния маленькие, и функция с умными формулами может подавить небольшие значения в ноль.
+          val func = ScoreFunctionBuilders.gaussDecayFunction(fn, geoPointStr, scale, 0, 0.1)
             .setWeight(10f)
           //.setOffset("0km") // TODO es-5.x А что надо тут выставить?
           val fq = _qOpt
@@ -231,6 +232,7 @@ object OutEdges extends MacroLogsImpl {
             }
             .boostMode( CombineFunction.REPLACE )
             .scoreMode( FiltersFunctionScoreQuery.ScoreMode.MAX )
+            .boost(10f)
           if (withQname)
             fq.queryName(s"f-score-q: $fn $geoPointStr scale=$scale overInner?${_qOpt.nonEmpty}")
           _qOpt = Some(fq)
@@ -265,7 +267,8 @@ trait OutEdges extends DynSearchArgs {
 
   /** Накатить эти сложные критерии на query. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
-    val _outEdgesIter = outEdges
+    val oes = outEdges
+    val _outEdgesIter = oes
       .iterator
       .filter { _.nonEmpty }
 
@@ -278,9 +281,14 @@ trait OutEdges extends DynSearchArgs {
       val qb2 = OutEdges._crs2query(_outEdgesIter)
       // Сборка основной query
       qbOpt0.map { qb0 =>
-        QueryBuilders.boolQuery()
+        val q = QueryBuilders.boolQuery()
           .must(qb0)
-          .filter(qb2)
+        if (oes.exists(_.isContainsSort)) {
+          // не-filter, когда внутри _score
+          q.must(qb2)
+        } else {
+          q.filter(qb2)
+        }
       }.orElse {
         Some(qb2)
       }
