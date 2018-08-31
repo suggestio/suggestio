@@ -27,8 +27,8 @@ class MPredicatesSpec extends FlatSpec with PlayJsonTestUtil {
     val p = OwnedBy
     assert( !p.hasParent(p), p )
   }
-  it should "properly support GeoParent << Direct" in {
-    assert(GeoParent.Direct hasParent GeoParent, GeoParent.Direct)
+  it should "properly support Receiver << Receiver.Self" in {
+    assert(Receiver.Self hasParent Receiver, Receiver.Self)
   }
 
 
@@ -36,32 +36,32 @@ class MPredicatesSpec extends FlatSpec with PlayJsonTestUtil {
     val p = OwnedBy
     assert( p.eqOrHasParent(p), p )
   }
-  it should "GeoParent <<== Direct" in {
-    assert(GeoParent.Direct eqOrHasParent GeoParent, GeoParent.Direct)
+  it should "Receiver <<== Receiver.Self" in {
+    assert(Receiver.Self eqOrHasParent Receiver, Receiver.Self)
   }
-  it should "GeoParent <<== GeoParent" in {
-    val p = GeoParent.Direct
+  it should "Receiver.Self <<== Receiver.Self" in {
+    val p = Receiver.Self
     assert(p eqOrHasParent p, p)
   }
 
 
-  "parentsIterator()" should "return empty iter for GeoParent" in {
-    val pi = GeoParent.parentsIterator
+  "parentsIterator()" should "return empty iter for Receiver" in {
+    val pi = Receiver.parentsIterator
     assert( pi.isEmpty, pi )
   }
-  it should "return non-empty iter for GeoParent.Direct" in {
-    val pi = GeoParent.Direct.parentsIterator
+  it should "return non-empty iter for Receiver.Self" in {
+    val pi = Receiver.Self.parentsIterator
     assert( pi.nonEmpty, pi )
-    assert( pi.next == GeoParent, pi )
+    assert( pi.next == Receiver, pi )
     assert( pi.isEmpty, pi )
   }
 
 
-  "meAndParentsIterator()" should "return GeoParent.Direct followed by GeoParent" in {
-    val mp = GeoParent.Direct.meAndParentsIterator.toList
+  "meAndParentsIterator()" should "return Receiver.Self followed by Receiver" in {
+    val mp = Receiver.Self.meAndParentsIterator.toList
     assert( mp.size == 2, mp )
-    assert( mp.head == GeoParent.Direct, mp)
-    assert( mp.tail == List(GeoParent), mp)
+    assert( mp.head == Receiver.Self, mp)
+    assert( mp.tail == List(Receiver), mp)
   }
 
 }

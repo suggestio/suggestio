@@ -25,7 +25,7 @@ class MEdgeSpec extends FlatSpec with PlayJsonTestUtil {
   it should "support full-filled model" in {
     jsonTest {
       MEdge(
-        predicate = MPredicates.GeoParent.Direct,
+        predicate = MPredicates.ModeratedBy,
         nodeIds   = Set("avf90fk43a90fk34af34f"),
         order     = Some(5),
         info      = MEdgeInfo(

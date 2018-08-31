@@ -4,7 +4,6 @@ import io.suggest.geo.MNodeGeoLevel
 import io.suggest.model._
 import io.suggest.model.n2.bill.tariff.MNodeTariffs
 import io.suggest.model.n2.edge.MNodeEdges
-import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.node.meta.MMeta
@@ -96,16 +95,6 @@ object MNodeFields {
 
     // Гео-точки
     def E_OUT_INFO_GEO_POINTS_FN                  = _fullFn( Out.OUT_INFO_GEO_POINTS_FN )
-
-  }
-
-  /** Абсолютные названия географических полей.*/
-  object Geo extends PrefixedFn {
-
-    def GEO_FN = "g"
-    override protected def _PARENT_FN = GEO_FN
-
-    def POINT_FN = _fullFn( MNodeGeo.Fields.POINT_FN )
 
   }
 

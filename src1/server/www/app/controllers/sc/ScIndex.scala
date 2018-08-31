@@ -184,7 +184,6 @@ trait ScIndex
         val someTrue = Some(true)
         val circle = CircleGs(geoLoc.point, radiusM = 1)
         val qShape = CircleGsJvm.toEsQueryMaker( circle )
-        val someGeoPoint = Some(geoLoc.point)
         val nodeLocPred = MPredicates.NodeLocation
 
         // Если запрещено погружение в реальные узлы-ресиверы (геолокация), то запрещаем получать узлы-ресиверы от elasticsearch:
@@ -198,11 +197,10 @@ trait ScIndex
         val nglsResultsFut = Future.traverse(MNodeGeoLevels.values: Iterable[MNodeGeoLevel]) { ngl =>
           val msearch = new MNodeSearchDfltImpl {
             override def limit = 1
-            // Очень маловероятно, что сортировка по близости к точке нужна, но мы её всё же оставим
-            override def withGeoDistanceSort = someGeoPoint
             // Неактивные узлы сразу вылетают из выдачи.
             override def isEnabled = someTrue
             override def outEdges: Seq[Criteria] = {
+              // Возможно, надо сортировать на предмет близости к точке.
               val gsCr = GsCriteria(
                 levels = ngl :: Nil,
                 shapes = qShape :: Nil
@@ -527,7 +525,8 @@ trait ScIndex
 
             val iterCenters = nodeLocEdges
               .flatMap { medge =>
-                medge.info.geoPoints
+                medge.info
+                  .geoPoints
                   .headOption
                   .orElse {
                     medge.info.geoShapes

@@ -40,9 +40,11 @@ object MPredicates extends StringEnum[MPredicate] {
 
   /** Ребро указывает на родительский узел в географическом смысле.
     * Не обязательно это прямой гео-родитель. */
+  @deprecated("Delete it after MNode.resaveMany()", "2018-08-31")
   case object GeoParent extends MPredicate("f") {
 
     /** Предикат прямого гео-родителя. */
+    @deprecated("Delete it after MNode.resaveMany()", "2018-08-31")
     case object Direct extends MPredicate("g") with _Child
 
     override def children: List[MPredicate] = {

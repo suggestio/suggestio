@@ -6,7 +6,6 @@ import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.bill.MNodeBilling
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges}
 import io.suggest.model.n2.extra.MNodeExtras
-import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.event.{MNodeDeleted, MNodeSaved}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
@@ -92,11 +91,6 @@ final class MNodes @Inject() (
         opt2ImplMEmptyF( MNodeEdges ),
         implEmpty2OptF
       ) and
-    (__ \ Fields.Geo.GEO_FN).formatNullable[MNodeGeo]
-      .inmap [MNodeGeo] (
-        opt2ImplMEmptyF( MNodeGeo ),
-        implEmpty2OptF
-      ) and
     (__ \ Fields.Ad.AD_FN).formatNullable[MNodeAd]
       .inmap [MNodeAd] (
         opt2ImplMEmptyF( MNodeAd ),
@@ -108,12 +102,12 @@ final class MNodes @Inject() (
         implEmpty2OptF
       )
   )(
-    {(common, meta, extras, edges, geo, ad, billing) =>
-      MNode(common, meta, extras, edges, geo, ad, billing)
+    {(common, meta, extras, edges, ad, billing) =>
+      MNode(common, meta, extras, edges, ad, billing)
     },
     {mnode =>
       import mnode._
-      (common, meta, extras, edges, geo, ad, billing)
+      (common, meta, extras, edges, ad, billing)
     }
   )
 
@@ -195,7 +189,6 @@ final class MNodes @Inject() (
       _obj(Fields.Meta.META_FN,       MMeta),
       _obj(Fields.Extras.EXTRAS_FN,   MNodeExtras),
       _obj(Fields.Edges.EDGES_FN,     MNodeEdges),
-      _obj(Fields.Geo.GEO_FN,         MNodeGeo),
       _obj(Fields.Ad.AD_FN,           MNodeAd),
       _obj(Fields.Billing.BILLING_FN, MNodeBilling)
     )
@@ -265,7 +258,6 @@ case class MNode(
   meta                        : MMeta           = MMeta(),
   extras                      : MNodeExtras     = MNodeExtras.empty,
   edges                       : MNodeEdges      = MNodeEdges.empty,
-  geo                         : MNodeGeo        = MNodeGeo.empty,
   ad                          : MNodeAd         = MNodeAd.empty,
   billing                     : MNodeBilling    = MNodeBilling.empty,
   override val id             : Option[String]  = None,

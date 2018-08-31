@@ -166,7 +166,10 @@ class Umap @Inject() (
       val centersFeaturesIter = nodes
         .iterator
         .flatMap { mnode =>
-          mnode.geo.point.map { pt =>
+          for {
+            e  <- mnode.edges.withPredicateIter( MPredicates.NodeLocation )
+            pt <- e.info.geoPoints
+          } yield {
             Feature(
               geometry = PointGs(pt),
               properties = Some(FeatureProperties(
@@ -289,14 +292,6 @@ class Umap @Inject() (
             }
             .toList
 
-          // Собираем новый эдж сразу, старый будет удалён без суд и следствия.
-          val locEdge = MEdge(
-            predicate = MPredicates.NodeLocation,
-            info = MEdgeInfo(
-              geoShapes = shapes
-            )
-          )
-
           // Узнаём точку-центр, если есть.
           val centerOpt = features
             .iterator
@@ -306,8 +301,24 @@ class Umap @Inject() (
                 case _          => Nil
               }
             }
-            .toStream
+            .buffered
             .headOption
+            .orElse {
+              shapes.iterator
+                .map { m =>
+                  m.shape.centerPoint getOrElse m.shape.firstPoint
+                }
+                .buffered
+                .headOption
+            }
+
+          // Собираем новый эдж сразу, старый будет удалён без суд и следствия.
+          val locEdge = MEdge(
+            predicate = MPredicates.NodeLocation,
+            info = MEdgeInfo(
+              geoShapes = shapes
+            )
+          )
 
           // Пытаемся сохранить новые геоданные в узел.
           mNodes.tryUpdate( mnodesMap(adnId) ) { mnode0 =>
@@ -318,9 +329,6 @@ class Umap @Inject() (
                   val newIter = Iterator.single( locEdge )
                   MNodeEdges.edgesToMap1( keepIter ++ newIter )
                 }
-              ),
-              geo = mnode0.geo.copy(
-                point   = centerOpt
               )
             )
           }

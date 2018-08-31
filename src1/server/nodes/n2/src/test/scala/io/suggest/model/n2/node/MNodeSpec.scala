@@ -7,7 +7,6 @@ import io.suggest.model.MockedEsSn
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
-import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import org.scalatest.Matchers._
@@ -81,9 +80,6 @@ class MNodeSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
                 )
               )
             }
-          ),
-          geo = MNodeGeo(
-            point = Some(MGeoPoint(lat = 10.0, lon = 33.2))
           ),
           ad = MNodeAd(
             blockMeta = Some(BlockMeta.DEFAULT)

@@ -3,7 +3,6 @@ package util.cdn
 import akka.stream.Materializer
 import javax.inject.{Inject, Singleton}
 
-import controllers.routes
 import play.api.Configuration
 import play.api.mvc.{Filter, RequestHeader, Result}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -11,8 +10,6 @@ import models.mctx.ContextUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.http.HeaderNames._
-
-import scala.util.matching.Regex
 
 /**
  * Suggest.io
@@ -94,8 +91,7 @@ class CorsUtil @Inject() (
     // TODO Отрефакторить этот быдлокод.
     SIMPLE_CORS_HEADERS.nonEmpty && {
       val uri = rh.uri
-      ADD_HEADERS_URL_RE.pattern.matcher(uri).find ||
-        uri.startsWith(routes.Sc.renderMapNodesAll().url) || {
+      ADD_HEADERS_URL_RE.pattern.matcher(uri).find || {
         // Проверять Origin header -- это наверное правильно. Аплоад можно делать только из LK.
         rh.headers
           .get(ORIGIN)

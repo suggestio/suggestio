@@ -21,7 +21,7 @@ import util.i18n.JsMessagesUtil
 import util.img.{DynImgUtil, IImgMaker, LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
 import util.sec.CspUtil
-import util.showcase.{ScMapUtil, _}
+import util.showcase._
 import util.stat.{StatCookiesUtil, StatUtil}
 
 
@@ -50,7 +50,6 @@ class Sc @Inject() (
                      override val advUtil            : AdvUtil,
                      @Named("blk") override val blkImgMaker  : IImgMaker,
                      override val dynImgUtil         : DynImgUtil,
-                     override val scMapUtil          : ScMapUtil,
                      override val advGeoLocUtil      : AdvGeoLocUtil,
                      override val jdAdUtil           : JdAdUtil,
                      override val jsMessagesUtil     : JsMessagesUtil,
@@ -78,7 +77,6 @@ class Sc @Inject() (
   with ScJsRouter
   with ScSearch
   with ScRemoteError
-  with ScMap
   with ScPwaManifest
   with ScUniApi
 

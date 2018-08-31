@@ -1,4 +1,4 @@
-@(args: msys.ISysGeoForNodeTplArgs)(implicit ctx: Context)
+@(args: msys.MSysGeoForNodeTplArgs)(implicit ctx: Context)
 
 @* Вывод гео-информации по узлу. *@
 
@@ -6,36 +6,6 @@
 @import datetime._
 @import stuff._
 @import mgeo.MGsPtr
-
-@* Отрендерить список нод на основе списка id нод. Используется карта parentsMap для доступа к инфе по узлу. *@
-@_renderNodes(nodesIds: TraversableOnce[String]) = {
-  @for(parentId <- nodesIds) {
-    <a href="@routes.SysMarket.showAdnNode(parentId)">
-      @args.parentsMap.get(parentId).fold {
-        @parentId
-      } { parentNode =>
-        <span title="@parentNode.meta.address.town / @parentId">
-          @parentNode.meta.basic.name
-        </span>
-      }
-    </a>,
-  }
-}
-
-@* Рендер одного списка узлов-геородителей. *@
-@_renderGeoParents(p: MPredicate, title: String, label: String) = {
-  @defining( args.mnode.edges.withPredicateIterIds(p) ) { parentIdsIter =>
-    @if( parentIdsIter.nonEmpty ) {
-      <p>
-        <span title="@title">
-          @label
-        </span>
-        @_renderNodes( parentIdsIter )
-      </p>
-    }
-  }
-}
-
 
 @* Рендер самой страницы. *@
 @geoBase(
@@ -129,52 +99,6 @@
       Визуальная проверка GeoJSON.
     </a>
   </p>
-
-
-  <br/><br/>
-  <h1>Геоданные узла</h1>
-  <p>Геоданные узла хранятся и индексируются в самом узле.</p>
-
-  @if( args.mnode.geo.isEmpty ) {
-    Отсутствуют.
-    <a href="@routes.SysAdnGeo.editAdnNodeGeodataPropose(nodeId)">
-      Попробовать автозаполнение геоданных...
-    </a>
-
-  } else {
-
-    @for(point <- args.mnode.geo.point) {
-      @* TODO Почему-то маркер точки не подсвечивается на карте, поэтому используем большое увеличение (18) и отметку по центру. *@
-      <span title="Примитивная координата, до которой можно измерить расстояние или использовать при сортировки по расстоянию. Например географический центр узла.">
-        Координата:
-      </span>
-      <a href="http://www.openstreetmap.org/#map=18/@point.lat/@point.lon"
-         target="_blank"
-         title="Открыть карту в новой вкладке. Цель будет в центре.">
-        <span title="(lat, lon), т.е. (широта, долгота) в WGS84.">
-          (@point.lat, @point.lon)
-        </span>
-      </a>
-      <br/>
-    }
-
-    @_renderGeoParents(
-      p = MPredicates.GeoParent.Direct,
-      title = "Прямые родители узла в географическом плане.",
-      label = "Геородительские узлы:"
-    )
-
-    @_renderGeoParents(
-      p = MPredicates.GeoParent,
-      title = "Все географически родительские узлы. Т.е. прямые родители и все их геородители.",
-      label = "Все геородительские узлы:"
-    )
-
-  }
-
-  <a href="@routes.SysAdnGeo.editAdnNodeGeodata(nodeId)">
-    @messages("Edit")...
-  </a>
 
 } @* defining nodeId *@
 } @* geoBase *@

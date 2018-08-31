@@ -1,11 +1,12 @@
 package util.adv.ext
 
 import java.io.File
-import javax.inject.Inject
 
+import javax.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import io.suggest.ahc.upload.IMpUploadArgs
 import io.suggest.fsm.FsmActor
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.IOAuth1AdvTargetActorArgs
 import models.adv.ext.Mad2ImgUrlCalcOuter
@@ -144,7 +145,13 @@ class OAuth1TargetActor @Inject() (
         override def target   = args.target.target
         override def mnode    = args.request.producer
         override def returnTo = args.target.returnTo
-        override def geo      = args.request.producer.geo.point
+        override def geo      = {
+          args.request.producer.edges
+            .withPredicateIter( MPredicates.NodeLocation )
+            .flatMap(_.info.geoPoints)
+            .buffered
+            .headOption
+        }
         override def attachments = _attachments
       }
       val mkPostFut = oa1Support.mkPost(mkPostArgs)

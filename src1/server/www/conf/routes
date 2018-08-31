@@ -27,7 +27,7 @@ GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.
 ## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
 GET  /sc/router.js                      @controllers.Sc.scJsRouter
 GET  /sc/routes/:c/router.js            @controllers.Sc.scJsRouterCache(c: Int)
-GET  /sc/map/nodes/all                  @controllers.Sc.renderMapNodesAll
+#GET  /sc/map/nodes/all                  @controllers.Sc.renderMapNodesAll
 GET  /sc/sc.webmanifest                 @controllers.Sc.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
 
 ## Дамп ошибок выдачи.
@@ -258,10 +258,6 @@ POST /sys/adn/geo/add/circl/:nodeId      @controllers.SysAdnGeo.createCircleSubm
 GET  /sys/adn/geo/edit/circl             @controllers.SysAdnGeo.editCircle(g: mgeo.MGsPtr)
 POST /sys/adn/geo/edit/circl             @controllers.SysAdnGeo.editCircleSubmit(g: mgeo.MGsPtr)
 GET  /sys/adn/geo/json                   @controllers.SysAdnGeo.showGeoJson(g: mgeo.MGsPtr)
-## node geodata
-GET  /sys/adn/geodata/edit/:nodeId       @controllers.SysAdnGeo.editAdnNodeGeodata(nodeId)
-GET  /sys/adn/geodata/propose/:nodeId    @controllers.SysAdnGeo.editAdnNodeGeodataPropose(nodeId)
-POST /sys/adn/geodata/edit/:nodeId       @controllers.SysAdnGeo.editAdnNodeGeodataSubmit(nodeId)
 
 ## Карта umap
 GET  /sys/umap/nodes                     @controllers.Umap.getAdnNodesMap

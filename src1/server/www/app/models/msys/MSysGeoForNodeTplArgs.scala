@@ -9,13 +9,10 @@ import io.suggest.model.n2.node.MNode
  * Created: 28.10.15 22:39
  * Description: Модель аргументов для шаблона [[views.html.sys1.market.adn.geo.forNodeTpl]].
  */
-trait ISysGeoForNodeTplArgs {
-
-  def mnode         : MNode
-
-  def parentsMap    : Map[String, MNode]
-
-  def mapStateHash  : Option[String]
+case class MSysGeoForNodeTplArgs(
+                                  mnode         : MNode,
+                                  mapStateHash  : Option[String]
+                                ) {
 
   def shapes: Iterator[MEdgeGeoShape] = {
     mnode.edges
@@ -29,11 +26,3 @@ trait ISysGeoForNodeTplArgs {
   }
 
 }
-
-
-case class MSysGeoForNodeTplArgs(
-  override val mnode         : MNode,
-  override val parentsMap    : Map[String, MNode],
-  override val mapStateHash  : Option[String]        = None
-)
-  extends ISysGeoForNodeTplArgs

@@ -1,11 +1,11 @@
 package io.suggest.model.n2.edge.search
 
-import io.suggest.es.model.{MWrapClause, IMust}
+import io.suggest.es.model.{IMust, MWrapClause}
 import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.geo.{MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.MNodeFields.Edges._
-import io.suggest.util.logs.IMacroLogs
+import io.suggest.util.logs.MacroLogsImpl
 import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -15,11 +15,9 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
  * Created: 02.10.15 14:45
  * Description: Поиск по nested-документам в out-эджах.
  */
-trait OutEdges extends DynSearchArgs with IMacroLogs {
+object OutEdges extends MacroLogsImpl {
 
-  /** Поиск/фильтрация по out-эджам согласно описанным критериям. */
-  def outEdges: Seq[Criteria]
-
+  /** Сборка edge-критериев в nested query. */
   private def _crs2query(crs: TraversableOnce[Criteria]): QueryBuilder = {
 
     val nestPath = E_OUT_FN
@@ -188,6 +186,14 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
     IMust.maybeWrapToBool(clauses)
   }
 
+}
+
+
+trait OutEdges extends DynSearchArgs {
+
+  /** Поиск/фильтрация по out-эджам согласно описанным критериям. */
+  def outEdges: Seq[Criteria]
+
 
   /** Накатить эти сложные критерии на query. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
@@ -201,7 +207,7 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
       qbOpt0
 
     } else {
-      val qb2 = _crs2query(_outEdgesIter)
+      val qb2 = OutEdges._crs2query(_outEdgesIter)
       // Сборка основной query
       qbOpt0.map { qb0 =>
         QueryBuilders.boolQuery()

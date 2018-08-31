@@ -35,7 +35,8 @@ trait SubSearches extends DynSearchArgs {
       )
 
       // Закинуть подзапросы в общую кучу...
-      val subQueries = _subArgs.iterator
+      val subQueries = _subArgs
+        .iterator
         .map { subArg =>
           MWrapClause(
             must = subArg.must,
@@ -43,7 +44,7 @@ trait SubSearches extends DynSearchArgs {
             queryBuilder = subArg.search.toEsQuery
           )
         }
-        .toTraversable
+        .toStream
 
       val q1 = IMust.maybeWrapToBool( subQueries )
 

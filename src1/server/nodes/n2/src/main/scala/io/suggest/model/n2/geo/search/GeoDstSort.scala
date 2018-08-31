@@ -1,8 +1,7 @@
 package io.suggest.model.n2.geo.search
 
-import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.es.search.DynSearchArgs
 import io.suggest.geo.{GeoPoint, MGeoPoint}
-import io.suggest.model.n2.node.MNodeFields
 import org.elasticsearch.common.lucene.search.function.CombineFunction
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
@@ -14,6 +13,7 @@ import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
  * Description: Поисковый аддон для сортировки результатов по дистанции
  * до указанной точки вместо алфавита.
  */
+// TODO Эвакуировать код в OutEdges и удалить окончательно. Нигде не используется.
 trait GeoDstSort extends DynSearchArgs {
 
   /** + сортировка результатов по расстоянию до указанной точки. */
@@ -22,7 +22,7 @@ trait GeoDstSort extends DynSearchArgs {
   override def toEsQuery: QueryBuilder = {
     val qb0 = super.toEsQuery
     withGeoDistanceSort.fold(qb0) { geoPoint =>
-      val fn = MNodeFields.Geo.POINT_FN
+      val fn = "ttttt" // MNodeFields.Geo.POINT_FN
       val func = ScoreFunctionBuilders
         .gaussDecayFunction(fn, GeoPoint.toEsStr(geoPoint), "1km")
         //.setOffset("0km") // TODO es-5.x А что надо тут выставить?
@@ -42,15 +42,3 @@ trait GeoDstSort extends DynSearchArgs {
   }
 }
 
-
-/** Дефолтовая реализация аддона [[GeoDstSort]]. */
-trait GeoDstSortDflt extends GeoDstSort {
-  override def withGeoDistanceSort: Option[MGeoPoint] = None
-}
-
-
-/** Дефолтовая реализация аддона [[GeoDstSort]]. */
-trait GeoDstSortWrap extends GeoDstSort with DynSearchArgsWrapper {
-  override type WT <: GeoDstSort
-  override def withGeoDistanceSort = _dsArgsUnderlying.withGeoDistanceSort
-}

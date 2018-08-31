@@ -9,7 +9,6 @@ import io.suggest.model.n2.geo.search._
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.common.search._
 import io.suggest.model.n2.node.meta.search._
-import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 
 /**
  * Suggest.io
@@ -32,14 +31,12 @@ trait MNodeSearch
   with ShowInScNl
   with IsEnabled
   with IsDependent
-  with GeoDstSort
   with NameSort
   with RandomSort
   with ConstScore
   with Limit
   with Offset
   with DateCreatedSort
-  with HasGeoPoint
 {
   override final def esTypes = MNodeFields.ES_TYPE_NAMES
 }
@@ -48,10 +45,6 @@ trait MNodeSearch
 abstract class MNodeSearchImpl
   extends MNodeSearch
 
-
-/** Объект-компаньон содержит рантаймовые статические константы для класса [[MNodeSearchDfltImpl]].
-  * Изначально, он хранил в себе связанный логгер. */
-object MNodeSearchDflt extends MacroLogsImpl
 
 /** Объединенные дефолтовые реализация поисковых критериев [[MNodeSearch]]. */
 trait MNodeSearchDflt
@@ -70,17 +63,12 @@ trait MNodeSearchDflt
   with ShowInScNlDflt
   with IsEnabledDflt
   with IsDependentDflt
-  with GeoDstSortDflt
   with NameSortDflt
   with RandomSortDflt
   with ConstScoreDflt
   with LimitDflt
   with OffsetDflt
   with DateCreatedSortDflt
-  with HasGeoPointDflt
-{
-  override def LOGGER = MNodeSearchDflt.LOGGER
-}
 
 
 /** Дефолтовая реализация [[MNodeSearchDflt]].
@@ -107,23 +95,12 @@ trait MNodeSearchWrap
   with ShowInScNlWrap
   with IsEnabledWrap
   with IsDependentWrap
-  with GeoDstSortWrap
   with NameSortWrap
   with RandomSortWrap
   with ConstScoreWrap
   with LimitWrap
   with OffsetWrap
   with DateCreatedSortWrap
-  with HasGeoPointWrap
-{
-  override type WT <: MNodeSearch
-}
-
-/** Реализация [[MNodeSearchWrap]] для упрощения жизни компиляторам. */
-abstract class MNodeSearchWrapImpl_
-  extends MNodeSearchImpl
-  with MNodeSearchWrap
-  with MacroLogsImplLazy
 {
   override type WT <: MNodeSearch
 }
