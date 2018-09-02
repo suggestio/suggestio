@@ -7,6 +7,7 @@ import securesocial.core.AuthenticationMethod
 import securesocial.core.providers.ProviderCompanion
 
 import scala.language.implicitConversions
+import scala.reflect.ClassTag
 
 /**
  * Suggest.io
@@ -67,7 +68,7 @@ trait ILoginProvider {
   def ssAuthMethod  : AuthenticationMethod
 
   /** SecureSocial provider companion. */
-  def ssProvider    : ProviderCompanion
+  def ssProviderClass: ClassTag[_ <: ProviderCompanion]
 
   /** Имя провайдера по мнению SecureSocial. */
   def ssProvName    : String

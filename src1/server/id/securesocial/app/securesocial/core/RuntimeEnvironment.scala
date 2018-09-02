@@ -1,5 +1,6 @@
 package securesocial.core
 
+import javax.inject.Inject
 import securesocial.core.providers._
 import securesocial.core.services._
 
@@ -19,7 +20,10 @@ trait RuntimeEnvironment[U] {
   def userService: UserService[U]
 }
 
-object RuntimeEnvironment {
+class RuntimeEnvironments @Inject() (
+                                      serviceInfoHelpers: ServiceInfoHelpers,
+                                      oAuth2SettingsUtil: OAuth2SettingsUtil,
+                                    ) {
 
   /**
    * A default runtime environment.  All built in services are included.
@@ -28,8 +32,8 @@ object RuntimeEnvironment {
   abstract class Default[U] extends RuntimeEnvironment[U] {
 
     protected def include(p: IdentityProvider) = p.id -> p
-    protected def oauth1ClientFor(provider: String) = new OAuth1Client.Default(ServiceInfoHelper.forProvider(provider), httpService)
-    protected def oauth2ClientFor(provider: String) = new OAuth2Client.Default(httpService, OAuth2Settings.forProvider(provider))
+    protected def oauth1ClientFor(provider: String) = new OAuth1Client.Default(serviceInfoHelpers.forProvider(provider), httpService)
+    protected def oauth2ClientFor(provider: String) = new OAuth2Client.Default(httpService, oAuth2SettingsUtil.forProvider(provider))
 
     override lazy val providers = ListMap(
       // oauth 2 client providers

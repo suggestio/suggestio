@@ -4,8 +4,7 @@ import io.suggest.file.up.MFile4UpProps
 import io.suggest.model.n2.media.storage.MAssignedStorage
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sec.QsbSigner
-import io.suggest.sec.m.SecretGetter
-import io.suggest.util.logs.MacroLogsImplLazy
+import io.suggest.sec.m.SecretKeyInit
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -15,7 +14,7 @@ import play.api.mvc.QueryStringBindable
   * Description: URL-qs-модель, защищённая подписью, для ссылки аплоада файла на сервер.
   */
 
-object MUploadTargetQs {
+object MUploadTargetQs extends SecretKeyInit {
 
   /** Имена полей модели. */
   object Fields {
@@ -31,14 +30,7 @@ object MUploadTargetQs {
 
   }
 
-
-  /** Статический секретный ключ для подписывания запросов. */
-  private val SIGN_SECRET: String = {
-    val sg = new SecretGetter with MacroLogsImplLazy {
-      override def confKey = "upload.url.sign.secret"
-    }
-    sg()
-  }
+  override def CONF_KEY = "upload.url.sign.secret"
 
   /** Поддержка QueryStringBindable. */
   implicit def uploadTargetQsQsb(implicit

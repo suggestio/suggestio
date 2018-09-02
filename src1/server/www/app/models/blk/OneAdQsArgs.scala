@@ -3,8 +3,7 @@ package models.blk
 import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sec.QsbSigner
-import io.suggest.sec.m.SecretGetter
-import io.suggest.util.logs.MacroLogsImplLazy
+import io.suggest.sec.m.SecretKeyInit
 import play.api.mvc.QueryStringBindable
 
 import scala.language.implicitConversions   // конверсий тут по факту нет.
@@ -16,15 +15,9 @@ import scala.language.implicitConversions   // конверсий тут по ф
  * Description: Модель qs-аргументов для ссылки запроса рендера одной конкретной карточки.
  */
 
-object OneAdQsArgs {
+object OneAdQsArgs extends SecretKeyInit {
 
-  /** Статический секретный ключ для подписывания запросов. */
-  private[this] val SIGN_SECRET: String = {
-    val sg = new SecretGetter with MacroLogsImplLazy {
-      override def confKey = "only.one.ad.qs.sign.key"
-    }
-    sg()
-  }
+  override def CONF_KEY = "only.one.ad.qs.sign.key"
 
   // Суффиксы названий qs-полей.
   def AD_ID_FN     = "a"

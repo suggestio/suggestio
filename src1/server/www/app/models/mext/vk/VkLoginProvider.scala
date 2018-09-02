@@ -2,7 +2,9 @@ package models.mext.vk
 
 import models.mext.ILoginProvider
 import securesocial.core.AuthenticationMethod
-import securesocial.core.providers.VkProvider
+import securesocial.core.providers.{VkProvider, VkProviders}
+
+import scala.reflect.ClassTag
 
 /**
  * Suggest.io
@@ -19,6 +21,6 @@ trait VkLoginProvider extends ILoginProvider {
   override def ssProvName = VkProvider.Vk
 
   /** SecureSocial provider companion. */
-  override def ssProvider = VkProvider
+  override def ssProviderClass = ClassTag( classOf[VkProviders] )
 
 }

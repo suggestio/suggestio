@@ -12,7 +12,7 @@ import io.suggest.model.n2.media.storage.MStorage
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.TypeT
 import io.suggest.sec.QsbSigner
-import io.suggest.sec.m.SecretGetter
+import io.suggest.sec.m.SecretKeyInit
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
@@ -37,12 +37,14 @@ import scala.concurrent.duration._
   * Не знаю, насколько это всё актуально в августе 2016, но модель пока здесь.
   */
 
-object MImgT extends MacroLogsImpl { model =>
+object MImgT extends MacroLogsImpl with SecretKeyInit { model =>
 
   def SIGN_FN             = "sig"
   def IMG_ID_FN           = "id"
   def DYN_FORMAT_FN       = "df"
   def COMPRESS_ALGO_FN    = "ca"
+
+  override def CONF_KEY = "dynimg.sign.key"
 
   /** Использовать QSB[UUID] напрямую нельзя, т.к. он выдает не-base64-выхлопы, что вызывает конфликты. */
   def rowKeyB(implicit strB: QueryStringBindable[String]): QueryStringBindable[String] = {
@@ -70,14 +72,6 @@ object MImgT extends MacroLogsImpl { model =>
     }
   }
 
-  /** Статический секретный ключ для подписывания запросов к dyn-картинкам. */
-  private val SIGN_SECRET: String = {
-    val sg = new SecretGetter {
-      override def confKey = "dynimg.sign.key"
-      override def LOGGER = model.LOGGER
-    }
-    sg()
-  }
 
   def qsbStandalone = {
     import ImOp._

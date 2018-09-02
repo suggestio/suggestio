@@ -20,7 +20,8 @@ import _root_.java.net.URLEncoder
 import _root_.java.util.UUID
 
 import com.typesafe.config.ConfigObject
-import play.api.Play
+import javax.inject.Inject
+import play.api.Configuration
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.libs.ws.WSResponse
 import play.api.mvc._
@@ -220,14 +221,10 @@ case class OAuth2Settings(authorizationUrl: String, accessTokenUrl: String, clie
   clientSecret: String, scope: Option[String],
   authorizationUrlParams: Map[String, String], accessTokenUrlParams: Map[String, String])
 
-object OAuth2Settings {
-  val AuthorizationUrl = "authorizationUrl"
-  val AccessTokenUrl = "accessTokenUrl"
-  val AuthorizationUrlParams = "authorizationUrlParams"
-  val AccessTokenUrlParams = "accessTokenUrlParams"
-  val ClientId = "clientId"
-  val ClientSecret = "clientSecret"
-  val Scope = "scope"
+class OAuth2SettingsUtil @Inject() (
+                                     config: Configuration,
+                                     identityProviders: IdentityProviders
+                                   ) {
 
   /**
    * Helper method to create an OAuth2Settings instance from the properties file.
@@ -236,7 +233,7 @@ object OAuth2Settings {
    * @return an OAuth2Settings instance
    */
   def forProvider(id: String): OAuth2Settings = {
-    import securesocial.core.IdentityProvider.loadProperty
+    import identityProviders.loadProperty
     val propertyKey = s"securesocial.$id."
 
     val result = for {
@@ -245,7 +242,6 @@ object OAuth2Settings {
       clientId          <- loadProperty(id, OAuth2Settings.ClientId)
       clientSecret      <- loadProperty(id, OAuth2Settings.ClientSecret)
     } yield {
-      val config = Play.current.configuration
       val scope = loadProperty(id, OAuth2Settings.Scope, optional = true)
       val authorizationUrlParams: Map[String, String] =
         config.getOptional[ConfigObject](propertyKey + OAuth2Settings.AuthorizationUrlParams).map { o =>
@@ -264,6 +260,17 @@ object OAuth2Settings {
     }
     result.get
   }
+
+}
+
+object OAuth2Settings {
+  val AuthorizationUrl = "authorizationUrl"
+  val AccessTokenUrl = "accessTokenUrl"
+  val AuthorizationUrlParams = "authorizationUrlParams"
+  val AccessTokenUrlParams = "accessTokenUrlParams"
+  val ClientId = "clientId"
+  val ClientSecret = "clientSecret"
+  val Scope = "scope"
 }
 
 object OAuth2Constants {

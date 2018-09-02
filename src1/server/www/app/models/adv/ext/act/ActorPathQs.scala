@@ -3,7 +3,7 @@ package models.adv.ext.act
 import akka.actor.ActorPath
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sec.QsbSigner
-import io.suggest.sec.m.SecretGetter
+import io.suggest.sec.m.SecretKeyInit
 import io.suggest.util.logs.MacroLogsDyn
 import play.api.mvc.QueryStringBindable
 
@@ -13,21 +13,13 @@ import play.api.mvc.QueryStringBindable
  * Created: 03.04.15 16:57
  * Description: Бывает, что нужно передавать actor path в URL. Тут qsb-модель для этой задачи.
  */
-object ActorPathQs extends MacroLogsDyn {
+object ActorPathQs extends MacroLogsDyn with SecretKeyInit {
 
   // Суффиксы имен qs-аргументов
   def PATH_FN  = "p"
   def SIGN_FN  = "sig"
 
-  /** Статический секретный ключ для подписывания запросов к dyn-картинкам. */
-  private[models] val SIGN_SECRET: String = {
-    val sg = new SecretGetter {
-      override def confKey = "qsb.actor.path.sign.key"
-      override def LOGGER = ActorPathQs.LOGGER
-    }
-    sg()
-  }
-
+  override def CONF_KEY = "qsb.actor.path.sign.key"
 
   /** qsb для извлечения нотариально заверенного путя из URL qs. */
   implicit def actorPathQsQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[ActorPathQs] = {

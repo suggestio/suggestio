@@ -18,6 +18,7 @@ package securesocial.core
 
 import _root_.java.util.UUID
 
+import javax.inject.Inject
 import play.api.libs.oauth._
 import play.api.mvc.{AnyContent, Request}
 import play.api.mvc.Results.Redirect
@@ -75,8 +76,7 @@ object OAuth1Client {
   }
 }
 
-object ServiceInfoHelper {
-  import IdentityProvider._
+class ServiceInfoHelpers @Inject() ( identityProviders: IdentityProviders ) {
 
   /**
    * A helper method to create a service info from the properties file
@@ -84,6 +84,7 @@ object ServiceInfoHelper {
    * @return
    */
   def forProvider(id: String): ServiceInfo = {
+    import identityProviders.loadProperty
     val result = for {
       requestTokenUrl <- loadProperty(id, OAuth1Provider.RequestTokenUrl)
       accessTokenUrl <- loadProperty(id, OAuth1Provider.AccessTokenUrl)
@@ -95,7 +96,7 @@ object ServiceInfoHelper {
     }
 
     if (result.isEmpty) {
-      throwMissingPropertiesException(id)
+      IdentityProvider.throwMissingPropertiesException(id)
     }
     result.get
 

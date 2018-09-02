@@ -16,8 +16,9 @@
  */
 package securesocial.core
 
+import javax.inject.Inject
 import play.api.mvc.{AnyContent, Request, Result}
-import play.api.Play
+import play.api.Configuration
 import securesocial.util.LazyLoggerImpl
 
 import concurrent.Future
@@ -53,9 +54,7 @@ trait IdentityProvider {
   def authenticate()(implicit request: Request[AnyContent]): Future[AuthenticationResult]
 }
 
-object IdentityProvider extends LazyLoggerImpl {
-
-  val SessionId = "sid"
+class IdentityProviders @Inject() (configuration: Configuration) {
 
   /**
    * Reads a property from the application.conf
@@ -64,12 +63,18 @@ object IdentityProvider extends LazyLoggerImpl {
    */
   def loadProperty(providerId: String, property: String, optional: Boolean = false): Option[String] = {
     val key = s"securesocial.$providerId.$property"
-    val result = Play.current.configuration.getOptional[String](key)
+    val result = configuration.getOptional[String](key)
     if (!result.isDefined && !optional) {
-      logger.warn(s"[securesocial] Missing property: $key ")
+      IdentityProvider.logger.warn(s"[securesocial] Missing property: $key ")
     }
     result
   }
+
+}
+
+object IdentityProvider extends LazyLoggerImpl {
+
+  val SessionId = "sid"
 
   def throwMissingPropertiesException(id: String) {
     val msg = s"[securesocial] Missing properties for provider '$id'. Verify your configuration file is properly set."

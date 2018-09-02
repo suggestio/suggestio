@@ -2,8 +2,7 @@ package models.adv
 
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sec.QsbSigner
-import io.suggest.sec.m.SecretGetter
-import io.suggest.util.logs.MacroLogsImplLazy
+import io.suggest.sec.m.SecretKeyInit
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -14,15 +13,9 @@ import play.api.mvc.QueryStringBindable
  * на внешних сервисах.
  */
 
-object MExtAdvQs {
+object MExtAdvQs extends SecretKeyInit {
 
-  /** Статический секретный ключ для подписывания запросов. */
-  private val SIGN_SECRET: String = {
-    val sg = new SecretGetter with MacroLogsImplLazy {
-      override def confKey = "ext.adv.qs.sign.key"
-    }
-    sg()
-  }
+  override def CONF_KEY = "ext.adv.qs.sign.key"
 
   def AD_ID_FN             = "a"
   def BEST_BEFORE_SEC_FN   = "b"

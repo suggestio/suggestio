@@ -22,7 +22,7 @@ import play.api.libs.ws.{WSClient, WSRequest}
 import play.api.mvc._
 import play.twirl.api.Html
 import securesocial.controllers.ProviderControllerHelper._
-import securesocial.core.RuntimeEnvironment.Default
+import securesocial.core.RuntimeEnvironments
 import securesocial.core._
 import securesocial.core.services.{CacheService, HttpService, RoutesService}
 import util.acl._
@@ -47,13 +47,14 @@ import scala.reflect.ClassTag
  */
 
 class ExternalLogin_ @Inject() (
-  routesSvc                       : SsRoutesService,
-  ssUserService                   : SsUserService,
-  ssHttpService                   : SsHttpService,
-  ssCacheService                  : SsCacheService,
-  override val identUtil          : IdentUtil,
-  mCommonDi                       : ICommonDi
-)
+                                 routesSvc                       : SsRoutesService,
+                                 ssUserService                   : SsUserService,
+                                 ssHttpService                   : SsHttpService,
+                                 ssCacheService                  : SsCacheService,
+                                 ssRuntimeEnvironments           : RuntimeEnvironments,
+                                 override val identUtil          : IdentUtil,
+                                 mCommonDi                       : ICommonDi
+                               )
   extends MacroLogsDyn
   with IIdentUtil
 {
@@ -70,7 +71,7 @@ class ExternalLogin_ @Inject() (
 
   /** secure-social настраивается через этот Enviroment. */
   implicit val env: RuntimeEnvironment[SsUser] = {
-    new Default[SsUser] {
+    new ssRuntimeEnvironments.Default[SsUser] {
       override def cacheService = ssCacheService
       override def httpService = ssHttpService
       override lazy val routes = routesSvc
@@ -81,9 +82,9 @@ class ExternalLogin_ @Inject() (
           .iterator
           .flatMap { _.loginProvider }
           .flatMap { prov =>
-            val provSt = prov.ssProvider
+            val provSt = current.injector.instanceOf( prov.ssProviderClass )
             try {
-              Seq( provSt(routes, cacheService, httpService) )
+              provSt(routes, cacheService, httpService) :: Nil
             } catch {
               case ex: Throwable =>
                 LOGGER.warn("Cannot initialize " + provSt.getClass.getSimpleName, ex)

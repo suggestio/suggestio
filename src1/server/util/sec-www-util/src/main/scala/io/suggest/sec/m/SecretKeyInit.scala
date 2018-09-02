@@ -2,9 +2,10 @@ package io.suggest.sec.m
 
 import java.security.SecureRandom
 
-import io.suggest.util.logs.IMacroLogs
-import play.api.Mode
-import play.api.Play.current
+import io.suggest.util.logs.MacroLogsImplLazy
+import play.api.{Configuration, Environment, Mode}
+import japgolly.univeq._
+import javax.inject.Inject
 
 import scala.annotation.tailrec
 import scala.util.Random
@@ -16,42 +17,49 @@ import scala.util.Random
  * Description: Доставатель секретных ключей из конфига. Если ключа в конфиге нет,
  * то будет предложено значение.
  */
-trait SecretGetter extends IMacroLogs {
-  
-  def confKey: String
-  
-  def getRandom = new Random(new SecureRandom())
+trait SecretKeyInit {
 
-  /** Кажется, этот параметр надо переименовать. Т.к. он по сути работает задом наперед. */
-  def useRandomIfMissing: Boolean = current.mode == Mode.Prod
+  protected[m] var SIGN_SECRET: String = null
 
-  def secretKeyLen: Int = 64
+  def CONF_KEY: String
+
+}
+
+
+class SecretKeyInitializer @Inject() (
+                                       configuration: Configuration,
+                                       env: Environment
+                                     )
+  extends MacroLogsImplLazy {
 
   def getRandomSecret: String = {
-    val _rnd = getRandom
-    val len = secretKeyLen
+    val _rnd = new Random(new SecureRandom())
+    val len = 64
     val sb = new StringBuilder(len)
     // Избегаем двойной ковычи в ключе, дабы не нарываться на проблемы при копипасте ключа в конфиг.
     @tailrec def nextPrintableCharNonQuote: Char = {
       val next = _rnd.nextPrintableChar()
-      if (next == '"' || next == '\\')
+      if (next ==* '"' || next ==* '\\')
         nextPrintableCharNonQuote
       else
         next
     }
-    for (i <- 1 to len) {
+    for (_ <- 1 to len) {
       sb append nextPrintableCharNonQuote
     }
     sb.toString()
   }
 
-  def warnMsg: String = s"Secret key '$confKey' not found found in your application.conf!"
-  def errorMsg: String = warnMsg
 
   /** Действия в случае отсутсвия секрета в конфиге. */
-  def secretMissing: String = {
+  def secretMissingFor(confKey: String): String = {
     val randomSecret = getRandomSecret
+    val useRandomIfMissing = env.mode == Mode.Prod
+
+    val warnMsg = s"Secret key '$confKey' not found found in your application.conf!"
+
     if (useRandomIfMissing) {
+      val errorMsg = warnMsg
       // В продакшене без ключа нельзя. Генерить его и в логи писать его тоже писать не стоит наверное.
       throw new IllegalStateException(
         s"""$errorMsg
@@ -70,13 +78,16 @@ trait SecretGetter extends IMacroLogs {
     }
   }
 
-  def getSecret = current.configuration.getOptional[String](confKey)
+  def doInitOne(cls: SecretKeyInit): Unit = {
+    val confKey = cls.CONF_KEY
+    val secretKey = configuration
+      .getOptional[String]( confKey )
+      .getOrElse( secretMissingFor(confKey) )
+    cls.SIGN_SECRET = secretKey
+  }
 
-  /**
-   * Используя имеющиеся данные, попытаться извлечь из конфига значение секретного ключа
-   * и принять последующие решения.
-   * @return Значение секретного ключа строкой либо экзепшен.
-   */
-  def apply(): String = getSecret.getOrElse( secretMissing )
+  def doInitAll(classesForInit: SecretKeyInit*): Unit = {
+    classesForInit.foreach( doInitOne )
+  }
 
 }

@@ -16,10 +16,11 @@
  */
 package securesocial.core.providers
 
+import javax.inject.Inject
 import play.api.libs.json.JsObject
 import play.api.libs.ws.WSResponse
 import securesocial.core._
-import securesocial.core.services.{ CacheService, RoutesService }
+import securesocial.core.services.{CacheService, RoutesService}
 
 import scala.concurrent.Future
 
@@ -27,10 +28,19 @@ import scala.concurrent.Future
  * A Facebook Provider
  */
 
-object FacebookProvider extends OAuth2ProviderCompanion {
+class FacebookProviders @Inject() (
+                                    override val oAuth2SettingsUtil: OAuth2SettingsUtil
+                                  )
+  extends OAuth2ProviderCompanion
+{
+  override def name = FacebookProvider.Facebook
+  override def apply(routesService: RoutesService, cacheService: CacheService, client: OAuth2Client): IdentityProvider = {
+    FacebookProvider(routesService, cacheService, client)
+  }
+}
 
+object FacebookProvider  {
   val Facebook = "facebook"
-  override def name = Facebook
 
   val MeApi = "https://graph.facebook.com/me?fields=name,first_name,last_name,picture.type(large),email&return_ssl_resources=1&access_token="
   val Error = "error"

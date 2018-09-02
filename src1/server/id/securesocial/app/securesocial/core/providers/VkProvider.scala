@@ -1,19 +1,26 @@
 package securesocial.core.providers
 
+import javax.inject.Inject
 import play.api.libs.json.JsObject
 import securesocial.core._
-import securesocial.core.services.{ CacheService, RoutesService }
+import securesocial.core.services.{CacheService, RoutesService}
 
 import scala.concurrent.Future
 
-/**
- * A Vk provider
- */
 
-object VkProvider extends OAuth2ProviderCompanion {
+class VkProviders @Inject() (
+                              override val oAuth2SettingsUtil: OAuth2SettingsUtil
+                            )
+  extends OAuth2ProviderCompanion
+{
+  override def name = VkProvider.Vk
+  override def apply(routesService: RoutesService, cacheService: CacheService, client: OAuth2Client): IdentityProvider = {
+    VkProvider(routesService, cacheService, client)
+  }
+}
 
+object VkProvider {
   val Vk = "vk"
-  override def name = Vk
 
   val GetProfilesApi = "https://api.vk.com/method/getProfiles?fields=uid,first_name,last_name,photo&access_token="
   val Response = "response"

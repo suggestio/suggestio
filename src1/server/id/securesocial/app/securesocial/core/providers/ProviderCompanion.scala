@@ -18,21 +18,12 @@ trait ProviderCompanion {
 
 trait OAuth2ProviderCompanion extends ProviderCompanion {
 
+  def oAuth2SettingsUtil: OAuth2SettingsUtil
+
   def apply(routesService: RoutesService, cacheService: CacheService, client: OAuth2Client): IdentityProvider
 
   override def apply(routesService: RoutesService, cacheService: CacheService, httpService: HttpService): IdentityProvider = {
-    val cl = new OAuth2Client.Default(httpService, OAuth2Settings.forProvider(name))
-    apply(routesService, cacheService, cl)
-  }
-}
-
-
-trait OAuth1ProviderCompanion extends ProviderCompanion {
-
-  def apply(routesService: RoutesService, cacheService: CacheService, client: OAuth1Client): IdentityProvider
-
-  override def apply(routesService: RoutesService, cacheService: CacheService, httpService: HttpService): IdentityProvider = {
-    val cl = new OAuth1Client.Default(ServiceInfoHelper.forProvider(name), httpService)
+    val cl = new OAuth2Client.Default(httpService, oAuth2SettingsUtil.forProvider(name))
     apply(routesService, cacheService, cl)
   }
 }
