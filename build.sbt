@@ -576,7 +576,7 @@ lazy val sio2 = {
     .aggregate(
       commonJS, commonJVM, logsMacro,
       commonSjs, commonReactSjs,
-      leafletSjs, leafletReactSjs,
+      leafletSjs, leafletReactSjs, leafletMarkerClusterSjs, leafletReactSjs, lkAdvGeoSjs,
       lkSjs, sc3Sjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
       tinyMceSjs, reactTinyMceSjs,

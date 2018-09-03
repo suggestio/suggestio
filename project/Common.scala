@@ -254,7 +254,7 @@ object Common {
   )
 
   /** Версия play. */
-  val playVsn         = "2.6.17"
+  val playVsn         = "2.6.18"
 
 
   /** Версия bouncy castle. */
@@ -293,7 +293,7 @@ object Common {
    *  Версия scalajs-react, используемая в проекте.
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactSjsVsn        = "1.2.0"
+  val reactSjsVsn        = "1.2.3"
 
   /** 
    *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.

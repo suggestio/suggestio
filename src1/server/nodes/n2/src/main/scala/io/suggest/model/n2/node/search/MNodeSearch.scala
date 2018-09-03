@@ -5,7 +5,6 @@ import io.suggest.model.n2.bill.tariff.daily.{TfDailyCurrencySearch, TfDailyCurr
 import io.suggest.model.n2.edge.search._
 import io.suggest.model.n2.extra.domain.{DomainsSearch, DomainsSearchDflt, DomainsSearchWrap}
 import io.suggest.model.n2.extra.search._
-import io.suggest.model.n2.geo.search._
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.common.search._
 import io.suggest.model.n2.node.meta.search._
