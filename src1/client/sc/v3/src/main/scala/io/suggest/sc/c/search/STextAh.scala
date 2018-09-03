@@ -25,6 +25,37 @@ class STextAh[M](
     */
   private def FAST_TYPING_TIMEOUT_MS = 600
 
+  private def _searchTextDo(v0: MScSearchText, timestampOpt: Option[Long]): ActionResult[M] = {
+    // Отфильтровать устаревший таймер:
+    if (timestampOpt.fold(true)(ts => v0.searchQuery isPendingWithStartTime ts)) {
+      // Нужно понять, есть ли какой-либо текст, выставив итог в поле searchQuery.
+      // Если нет, то очистить поле, выставив Pot.empty.
+      val searchQueryPot2 = if (v0.query.isEmpty || v0.query.trim.isEmpty) {
+        Pot.empty[String]
+      } else {
+        v0.searchQuery.ready( v0.query )
+      }
+      // Обновить состояние.
+      val v2 = v0.withSearchQueryTimer(
+        searchQuery   = searchQueryPot2,
+        searchTimerId = None
+      )
+
+      if (v0.searchQuery contains v0.query) {
+        // Ничего не изменилось в итоге, активировать поиск не требуется.
+        updatedSilent(v2)
+      } else {
+        // Что-то надо искать, запустить экшен поиска.
+        val fx = SearchAh.reDoSearchFx( ignorePending = true )
+        updatedSilent(v2, fx)
+      }
+
+    } else {
+      // Сигнал от какого-то неактуального таймера. Игнорим.
+      noChange
+    }
+  }
+
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал о вводе текста в поле текстового поиска.
@@ -47,52 +78,27 @@ class STextAh[M](
         val searchQueryPot2 = v1.searchQuery.pending( tstamp )
 
         // Запустить новый таймер, для фильтрации быстрых нажатий.
-        val tp = DomQuick.timeoutPromiseT(FAST_TYPING_TIMEOUT_MS)( SearchTextTimerOut( tstamp ) )
-
-        val fx = Effect( tp.fut )
-
-        val v2 = v1.withSearchQueryTimer(
-          searchQuery   = searchQueryPot2,
-          searchTimerId = Some( tp.timerId )
-        )
-
-        updated( v2, fx )
+        if (m.noWait) {
+          val tp = DomQuick.timeoutPromiseT(FAST_TYPING_TIMEOUT_MS)( SearchTextDo( Some(tstamp) ) )
+          val fx = Effect( tp.fut )
+          val v2 = v1.withSearchQueryTimer(
+            searchQuery   = searchQueryPot2,
+            searchTimerId = Some(tp.timerId)
+          )
+          updated(v2, fx)
+        } else {
+          val v2 = v1.withSearchQueryTimer(
+            searchQuery   = searchQueryPot2,
+            searchTimerId = None
+          )
+          _searchTextDo(v2, None)
+        }
       }
 
 
     // Сработал таймер запуска поисковых действий, связанных с возможным текстом в поле.
-    case m: SearchTextTimerOut =>
-      val v0 = value
-
-      // Отфильтровать устаревший таймер:
-      if (v0.searchQuery isPendingWithStartTime m.timestamp) {
-        // Нужно понять, есть ли какой-либо текст, выставив итог в поле searchQuery.
-        // Если нет, то очистить поле, выставив Pot.empty.
-        val searchQueryPot2 = if (v0.query.isEmpty || v0.query.trim.isEmpty) {
-          Pot.empty[String]
-        } else {
-          v0.searchQuery.ready( v0.query )
-        }
-        // Обновить состояние.
-        val v2 = v0.withSearchQueryTimer(
-          searchQuery   = searchQueryPot2,
-          searchTimerId = None
-        )
-
-        if (v0.searchQuery contains v0.query) {
-          // Ничего не изменилось в итоге, активировать поиск не требуется.
-          updatedSilent(v2)
-        } else {
-          // Что-то надо искать, запустить экшен поиска.
-          val fx = SearchAh.reDoSearchFx( ignorePending = true )
-          updatedSilent(v2, fx)
-        }
-
-      } else {
-        // Сигнал от какого-то неактуального таймера. Игнорим.
-        noChange
-      }
-
+    case m: SearchTextDo =>
+      _searchTextDo(value, m.timestamp)
 
     // Сигнал о focus/blur от текстового поля.
     case m: SearchTextFocus =>

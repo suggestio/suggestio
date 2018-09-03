@@ -29,10 +29,14 @@ case class NodesScroll(scrollTop: Double, scrollHeight: Int) extends ISearchActi
 case class SearchTextFocus(focused: Boolean) extends ISearchAction
 
 /** Происходит ввод текста в поисковый input. */
-case class SearchTextChanged(newText: String) extends ISearchAction
+case class SearchTextChanged(newText: String, noWait: Boolean = false) extends ISearchAction
 
-/** Таймаут фильтрации быстрых нажатий в поле ввода текста. */
-case class SearchTextTimerOut(timestamp: Long) extends ISearchAction
+/** Таймаут фильтрации быстрых нажатий в поле ввода текста.
+  *
+  * @param timestamp id таймера для проверки.
+  *                  None - значит без таймера, без проверок.
+  */
+case class SearchTextDo(timestamp: Option[Long] = None) extends ISearchAction
 
 
 /** Срабатывание таймера запуска реакции на действия на карте. */

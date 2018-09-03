@@ -30,7 +30,7 @@ class STextR( getScCssF: GetScCssF ) {
     /** Происходит ввод текста в input. */
     private def _onInput(e: ReactEventFromInput): Callback = {
       val text = e.target.value
-      _dispatchTextChanged(text)
+      dispatchOnProxyScopeCB($, SearchTextChanged(text))
     }
 
     private def _onFocusChange(focused: Boolean): Callback = {
@@ -38,11 +38,8 @@ class STextR( getScCssF: GetScCssF ) {
     }
 
     private def _onClearClick: Callback =
-      _dispatchTextChanged("")
+      dispatchOnProxyScopeCB($, SearchTextChanged("", noWait = true))
 
-    private def _dispatchTextChanged(text: String): Callback = {
-      dispatchOnProxyScopeCB($, SearchTextChanged(text))
-    }
 
     def render(propsProxy: Props): VdomElement = {
       val scCss = getScCssF()
