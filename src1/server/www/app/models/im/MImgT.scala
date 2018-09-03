@@ -45,6 +45,10 @@ object MImgT extends MacroLogsImpl with SecretKeyInit { model =>
   def COMPRESS_ALGO_FN    = "ca"
 
   override def CONF_KEY = "dynimg.sign.key"
+  private var SIGN_SECRET: String = _
+  override def setSignSecret(secretKey: String): Unit = {
+    SIGN_SECRET = secretKey
+  }
 
   /** Использовать QSB[UUID] напрямую нельзя, т.к. он выдает не-base64-выхлопы, что вызывает конфликты. */
   def rowKeyB(implicit strB: QueryStringBindable[String]): QueryStringBindable[String] = {

@@ -15,6 +15,12 @@ import play.api.mvc.QueryStringBindable
 
 object MExtAdvQs extends SecretKeyInit {
 
+  private var SIGN_SECRET: String = _
+
+  override def setSignSecret(secretKey: String): Unit = {
+    SIGN_SECRET = secretKey
+  }
+
   override def CONF_KEY = "ext.adv.qs.sign.key"
 
   def AD_ID_FN             = "a"

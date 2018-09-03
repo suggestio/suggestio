@@ -15,7 +15,6 @@ import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.jd.MJdEdgeId
-import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.search.aggregations.AggregationBuilders
@@ -92,11 +91,6 @@ final class MNodes @Inject() (
         opt2ImplMEmptyF( MNodeEdges ),
         implEmpty2OptF
     ) and
-    (__ \ Fields.Geo.GEO_FN).formatNullable[MNodeGeo]
-      .inmap [MNodeGeo] (
-        opt2ImplMEmptyF( MNodeGeo ),
-        implEmpty2OptF
-      ) and
     (__ \ Fields.Ad.AD_FN).formatNullable[MNodeAd]
       .inmap [MNodeAd] (
         opt2ImplMEmptyF( MNodeAd ),
@@ -108,12 +102,12 @@ final class MNodes @Inject() (
         implEmpty2OptF
       )
   )(
-    {(common, meta, extras, edges, geo, ad, billing) =>
-      MNode(common, meta, extras, edges, geo, ad, billing)
+    {(common, meta, extras, edges, ad, billing) =>
+      MNode(common, meta, extras, edges, ad, billing)
     },
     {mnode =>
       import mnode._
-      (common, meta, extras, edges, geo, ad, billing)
+      (common, meta, extras, edges, ad, billing)
     }
   )
 
@@ -264,7 +258,6 @@ case class MNode(
   meta                        : MMeta           = MMeta(),
   extras                      : MNodeExtras     = MNodeExtras.empty,
   edges                       : MNodeEdges      = MNodeEdges.empty,
-  geo                         : MNodeGeo        = MNodeGeo.empty,
   ad                          : MNodeAd         = MNodeAd.empty,
   billing                     : MNodeBilling    = MNodeBilling.empty,
   override val id             : Option[String]  = None,

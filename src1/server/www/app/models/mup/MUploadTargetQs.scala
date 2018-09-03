@@ -31,6 +31,10 @@ object MUploadTargetQs extends SecretKeyInit {
   }
 
   override def CONF_KEY = "upload.url.sign.secret"
+  private var SIGN_SECRET: String = _
+  override def setSignSecret(secretKey: String): Unit = {
+    SIGN_SECRET = secretKey
+  }
 
   /** Поддержка QueryStringBindable. */
   implicit def uploadTargetQsQsb(implicit

@@ -15,6 +15,12 @@ import play.api.mvc.QueryStringBindable
  */
 object ActorPathQs extends MacroLogsDyn with SecretKeyInit {
 
+  private var SIGN_SECRET: String = _
+
+  override def setSignSecret(secretKey: String): Unit = {
+    SIGN_SECRET = secretKey
+  }
+
   // Суффиксы имен qs-аргументов
   def PATH_FN  = "p"
   def SIGN_FN  = "sig"

@@ -127,7 +127,7 @@ class WsDispatcherActor extends Actor with MacroLogsImpl {
     case Terminated(actor) =>
       debug(s"Watched actor $actor unexpectedly stopped")
       wsMap = wsMap.filter {
-        case (k, v)  =>  v != actor
+        case (_, v)  =>  v != actor
       }
   }
 

@@ -19,7 +19,7 @@ import scala.util.Random
  */
 trait SecretKeyInit {
 
-  protected[m] var SIGN_SECRET: String = null
+  protected[m] def setSignSecret(secretKey: String): Unit
 
   def CONF_KEY: String
 
@@ -27,10 +27,11 @@ trait SecretKeyInit {
 
 
 class SecretKeyInitializer @Inject() (
-                                       configuration: Configuration,
-                                       env: Environment
+                                       configuration          : Configuration,
+                                       env                    : Environment,
                                      )
-  extends MacroLogsImplLazy {
+  extends MacroLogsImplLazy
+{
 
   def getRandomSecret: String = {
     val _rnd = new Random(new SecureRandom())
@@ -83,11 +84,17 @@ class SecretKeyInitializer @Inject() (
     val secretKey = configuration
       .getOptional[String]( confKey )
       .getOrElse( secretMissingFor(confKey) )
-    cls.SIGN_SECRET = secretKey
+    cls.setSignSecret( secretKey )
   }
 
-  def doInitAll(classesForInit: SecretKeyInit*): Unit = {
+  def initAll(classesForInit: SecretKeyInit*): Unit = {
     classesForInit.foreach( doInitOne )
+  }
+
+  def resetAll(classesForInit: SecretKeyInit*): Unit = {
+    for (m <- classesForInit) {
+      m.setSignSecret(null)
+    }
   }
 
 }

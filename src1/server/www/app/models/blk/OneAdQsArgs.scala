@@ -18,6 +18,10 @@ import scala.language.implicitConversions   // конверсий тут по ф
 object OneAdQsArgs extends SecretKeyInit {
 
   override def CONF_KEY = "only.one.ad.qs.sign.key"
+  private var SIGN_SECRET: String = _
+  override def setSignSecret(secretKey: String): Unit = {
+    SIGN_SECRET = secretKey
+  }
 
   // Суффиксы названий qs-полей.
   def AD_ID_FN     = "a"
