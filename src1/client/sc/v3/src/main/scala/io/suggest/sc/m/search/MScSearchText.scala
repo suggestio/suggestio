@@ -36,7 +36,7 @@ object MScSearchText {
   * @param focused Визуальный фокус на этом input'е?
   * @param query Состояние текста в текстовом поле на экране.
   * @param searchQuery Последний фактический поисковый запрос.
-  *                  Сюда вписывается готоовое для поиска значение.
+  *                    Сюда вписывается готовое для поиска значение.
   */
 case class MScSearchText(
                           focused           : Boolean               = false,

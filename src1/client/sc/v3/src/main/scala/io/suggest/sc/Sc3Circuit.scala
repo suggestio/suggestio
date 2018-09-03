@@ -281,7 +281,8 @@ class Sc3Circuit(
     api             = api,
     geoSearchQsRO   = geoSearchQsRO,
     rcvrsMapApi     = advRcvrsMapApi,
-    screenInfoRO    = screenInfoRO
+    screenInfoRO    = screenInfoRO,
+    getScCssF       = scCssRO.apply
   )
 
   private val indexAh = new IndexAh(

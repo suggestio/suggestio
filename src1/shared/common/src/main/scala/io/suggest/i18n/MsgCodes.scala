@@ -257,4 +257,6 @@ object MsgCodes {
   def onOff(isOn: Boolean): String =
     if (isOn) `On` else `Off`
 
+  val `Clear` = "Clear"
+
 }

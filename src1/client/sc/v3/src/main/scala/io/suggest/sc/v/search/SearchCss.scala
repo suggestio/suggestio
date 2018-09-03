@@ -33,7 +33,9 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
   private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - ScCss.TABS_OFFSET_PX - args.screenInfo.unsafeOffsets.top
 
   private val NODES_LIST_HEIGHT_PX = args.nodesFoundShownCount.fold(0) { nodesFoundCount =>
-    (Math.min(2.6, nodesFoundCount) * (NODE_ROW_HEIGHT_PX + 2*NODE_ROW_PADDING_PX)).toInt
+    val rowsCount = Math.min(2.6, nodesFoundCount)
+    val rowHeight = NODE_ROW_HEIGHT_PX + 2*NODE_ROW_PADDING_PX
+    (rowsCount * rowHeight).toInt
   }
 
   private val GEO_MAP_HEIGHT_PX = TAB_BODY_HEIGHT_PX - NODES_LIST_HEIGHT_PX

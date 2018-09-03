@@ -239,6 +239,7 @@ class JsMessagesUtil @Inject() (
       MC.`Please.wait` ::
       MC.`On` ::
       MC.`Off` ::
+      MC.`Clear` ::
       Nil
   }
 

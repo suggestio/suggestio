@@ -6,7 +6,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MScreenInfo
 import io.suggest.maps.c.RcvrMarkersInitAh
 import io.suggest.maps.m.{HandleMapReady, InstallRcvrMarkers, RcvrMarkersInit}
-import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.routes.IAdvRcvrsMapApi
@@ -20,9 +20,9 @@ import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
+import japgolly.univeq._
 
 import scala.util.Success
 
@@ -40,16 +40,31 @@ object GeoTabAh {
     * @param screenInfo Данные по экрану.
     * @return Инстанс SearchCss.
     */
-  def _mkSearchCss(nodesCount: Int, screenInfo: MScreenInfo): SearchCss = {
-    SearchCss(
-      MSearchCssProps(
-        screenInfo = screenInfo,
-        nodesFoundShownCount = {
-          val l = nodesCount
-          OptionUtil.maybe(l > 0)( Math.min(l, 3) )
-        }
-      )
+  def _mkSearchCss(req              : Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]],
+                   screenInfo       : MScreenInfo,
+                   searchCssOrNull  : SearchCss
+                  ): SearchCss = {
+    // Надо оценить кол-во рядов для стилей.
+    // Для pending/failed надо рассчитать кол-во рядов на 1 больше (для места на экране).
+    var h = req.fold(0)(m => Math.max(1, m.resp.length))
+    if (req.isPending)
+      h += 1
+    if (req.isFailed)
+      h += 2
+
+    h = Math.min(h, 3)
+
+    val args2 = MSearchCssProps(
+      screenInfo = screenInfo,
+      nodesFoundShownCount = OptionUtil.maybe(h > 0)(h)
     )
+    if (searchCssOrNull == null || (searchCssOrNull.args !=* args2)) {
+      // Пересобрать CSS.
+      SearchCss( args2 )
+    } else {
+      // Вернуть исходный CSS, т.к. одинаковые args - одинаковые CSS.
+      searchCssOrNull
+    }
   }
 
 }
@@ -60,6 +75,7 @@ class GeoTabAh[M](
                    rcvrsMapApi    : IAdvRcvrsMapApi,
                    screenInfoRO   : ModelRO[MScreenInfo],
                    geoSearchQsRO  : ModelRO[MScQs],
+                   getScCssF      : GetScCssF,
                    modelRW        : ModelRW[M, MGeoTabS]
                  )
   extends ActionHandler( modelRW )
@@ -71,9 +87,8 @@ class GeoTabAh[M](
     // Запустить запрос поиска узлов
     case m: DoNodesSearch =>
       val v0 = value
-      val req0 = v0.found.req
 
-      if (req0.isPending && !m.ignorePending) {
+      if (v0.found.req.isPending && !m.ignorePending) {
         // Не логгируем, т.к. это слишком частое явление при запуске системы с открытой панелью поиска.
         //LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = m )
         noChange
@@ -90,7 +105,7 @@ class GeoTabAh[M](
               .map(_.resp.nodes.size)
           }
           // TODO Лимит результатов - брать из высоты экрана. Но сервер пока вообще игнорит лимиты для этого поиска...
-          val limit = 30
+          val limit = 10
           args0.search.withLimitOffset(
             limit     = Some(limit),
             offset    = offsetOpt
@@ -104,7 +119,8 @@ class GeoTabAh[M](
 
         } else {
           // Поисковый запрос действительно нужно организовать.
-          val req2 = req0.pending()
+          val req2 = (if (m.clear) Pot.empty else v0.found.req)
+            .pending()
           val req2p = req2.asInstanceOf[PendingBase]
 
           val runReqFx = Effect {
@@ -134,9 +150,6 @@ class GeoTabAh[M](
           // Если textQuery.isEmpty, то убедиться, что ресиверы сброшены на исходную
           val rcvrs2 = if (search2.textQuery.isEmpty) {
             // Сбросить rcvrs на закэшированное состояние.
-            // TODO Раньше при сбросе ресайзилась карта, т.к. список слетал полностью. Теперь поиск происходит даже на пустом запросе. Удалить этот коммент?
-            //val mapRszFxOpt = for (lmap <- v0.data.lmap) yield
-            //  SearchAh.mapResizeFx(lmap)
             v0.data.rcvrsCache
           } else {
             v0.mapInit.rcvrs
@@ -151,7 +164,8 @@ class GeoTabAh[M](
           // Обновлённое состояние.
           val v2 = v0.copy(
             found   = found2,
-            mapInit = mapInit2
+            mapInit = mapInit2,
+            css = GeoTabAh._mkSearchCss(req2, getScCssF().args.screenInfo, v0.css)
           )
 
           updated(v2, runReqFx)
@@ -205,7 +219,7 @@ class GeoTabAh[M](
         }
 
     case _: NodesScroll =>
-      // Пока сервер возвращает все результаты пачкой, без лимитов, реакции никакой не будет.
+      // TODO Надо подгрузить ещё результатов, если проскроллили достаточно.
       noChange
 
     // Запуск инициализации гео.карты.
@@ -361,14 +375,20 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
       )
     }
 
-    // Заполнить/дополнить g0.found найденными элементами.
-    val mnf2 = g0.found.copy(
-      req = g0.found.req.ready {
+    val req2 = if (nodes2.isEmpty && textQuery.isEmpty) {
+      Pot.empty
+    } else {
+      g0.found.req.ready {
         MSearchRespInfo(
           textQuery = textQuery,
           resp      = nodes2
         )
-      },
+      }
+    }
+
+    // Заполнить/дополнить g0.found найденными элементами.
+    val mnf2 = g0.found.copy(
+      req = req2,
       // TODO Что тут выставлять? Сервер всё пачкой возвращает без учёта limit'а.
       hasMore = false
       // TODO Обновлять search-args? сервер модифицирует запрос, если запрос пришёл из IndexAh.
@@ -377,7 +397,11 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
     val g2 = g0.copy(
       mapInit = mapInit2,
       found = mnf2,
-      css = GeoTabAh._mkSearchCss( nodes2.length, getScCssF().args.screenInfo )
+      css = GeoTabAh._mkSearchCss(
+        req             = req2,
+        screenInfo      = getScCssF().args.screenInfo,
+        searchCssOrNull = g0.css
+      )
     )
 
     val mapRszFxOpt = for (lmap <- g2.data.lmap) yield

@@ -77,6 +77,8 @@ class NodesFoundR(
       val props = propsProxy.value
       val _tagRowCss = NodesCSS.nodeRow: TagMod
 
+      println(props)
+
       <.div(
         NodesCSS.listDiv,
         props.searchCss.NodesFound.nodesList,

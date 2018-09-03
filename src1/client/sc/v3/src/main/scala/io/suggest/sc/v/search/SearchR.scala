@@ -9,7 +9,6 @@ import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v.hdr.RightR
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
-import japgolly.univeq._
 import scalacss.ScalaCssReact._
 
 /**
@@ -94,7 +93,6 @@ class SearchR(
 
           // Контент вкладки, наконец.
           tabContentOuter
-
         )
       )
     }
@@ -105,7 +103,7 @@ class SearchR(
   val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        sTextC    = propsProxy.connect( _.text ),
+        sTextC     = propsProxy.connect( _.text ),
         searchCssC = propsProxy.connect(_.geo.css)( FastEq.AnyRefEq )
       )
     }

@@ -30,11 +30,18 @@ class STextR( getScCssF: GetScCssF ) {
     /** Происходит ввод текста в input. */
     private def _onInput(e: ReactEventFromInput): Callback = {
       val text = e.target.value
-      dispatchOnProxyScopeCB($, SearchTextChanged(text))
+      _dispatchTextChanged(text)
     }
 
     private def _onFocusChange(focused: Boolean): Callback = {
       dispatchOnProxyScopeCB($, SearchTextFocus(focused))
+    }
+
+    private def _onClearClick: Callback =
+      _dispatchTextChanged("")
+
+    private def _dispatchTextChanged(text: String): Callback = {
+      dispatchOnProxyScopeCB($, SearchTextChanged(text))
     }
 
     def render(propsProxy: Props): VdomElement = {
@@ -43,10 +50,10 @@ class STextR( getScCssF: GetScCssF ) {
 
       val p = propsProxy.value
 
+      // Рендер текстового поля с input'ом.
       <.div(
-        CSS.bar,
+        scCss.Search.TextBar.bar,
 
-        // Рендер текстового поля с input'ом.
         <.div(
           CSS.Field.field,
 
@@ -67,7 +74,16 @@ class STextR( getScCssF: GetScCssF ) {
             )
           )
 
-        )
+        ),
+
+        ReactCommonUtil.maybe(p.query.nonEmpty) {
+          <.span(
+            CSS.clearBtn,
+            ^.title := Messages( MsgCodes.`Clear` ),
+            ^.onClick --> _onClearClick,
+            "x"
+          )
+        }
 
       )
     }

@@ -424,6 +424,14 @@ case class ScCss( args: IScCssArgs )
 
       val bar       = _styleAddClass( _BAR )
 
+      // TODO Унести в статические стили
+      val clearBtn = style(
+        position.absolute,
+        top(20.px),
+        right(55.px),
+        cursor.pointer
+      )
+
       /** Сообщение, например "ничего не найдено". */
       val message   = _styleAddClass( _BAR + "_message" )
 

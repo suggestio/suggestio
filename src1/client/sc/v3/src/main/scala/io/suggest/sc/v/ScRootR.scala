@@ -108,12 +108,8 @@ class ScRootR (
       )
 
       // Панель поиска: контент, зависимый от корневой модели:
-      val searchGeoNodesFound = s.searchNodesFoundC { nodesFoundProxy =>
-        val v = nodesFoundProxy.value
-        ReactCommonUtil.maybeEl( v.req.nonEmpty ) {
-          nodesFoundR(nodesFoundProxy)
-        }
-      }
+      val searchGeoNodesFound = s.searchNodesFoundC { nodesFoundR.apply }
+
       // Непосредственно, панель поиска:
       val searchBarBody = s.searchC {
         searchR(_)(
