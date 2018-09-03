@@ -424,8 +424,9 @@ case class ScCss( args: IScCssArgs )
 
       val bar       = _styleAddClass( _BAR )
 
-      // TODO Унести в статические стили
+      /** Стили кнопки быстрой очистки поискового поля. */
       val clearBtn = style(
+        // TODO Унести в статические стили
         position.absolute,
         top(20.px),
         right(55.px),

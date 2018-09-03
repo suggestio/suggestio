@@ -152,32 +152,6 @@ trait ScSearch
             // TODO Не рендерить гео-данные для тегов!
             advNodePropsShapes
           }
-          // Геоданные не нужны, просто заворачиваем результаты без гео-шейпов:
-          //src0.map { case (_, advNodeProps) =>
-          //  MGeoNodePropsShapes(
-          //    props = advNodeProps,
-          //    shapes = Nil
-          //  )
-          //}
-
-          /*
-          // TODO Для chunked-выхлопа можно задействовать этот код в будущем. Пока что ScUniApi не поддерживает chunked-ответ, поэтому не нужно.
-          .jsValuesToJsonArrayByteStrings
-          // Надо запихать в JSON-ответ в формате sc3-resp-action.
-          .jsonEmbedIntoEmptyArrayIn(
-            MSc3Resp(
-              respActions = MSc3RespAction(
-                acType = MScRespActionTypes.SearchRes,
-                search = Some(
-                  MSc3NodeSearchResp(
-                    // Сюда будет отрендерен весь предшествующий json-array:
-                    results = Nil
-                  )
-                )
-              ) :: Nil
-            )
-          )
-          */
       }
       Source.fromFutureSource( srcFut )
     }

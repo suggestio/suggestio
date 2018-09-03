@@ -213,7 +213,7 @@ trait ScUniApi
 
 
     /** Запуск поиска тегов, если запрошен. */
-    def tagsRespActionFutOpt: Future[Option[MSc3RespAction]] = {
+    def searchRespActionFutOpt: Future[Option[MSc3RespAction]] = {
       val futOpt = for {
         _ <- qs.common.searchNodes
       } yield {
@@ -222,7 +222,7 @@ trait ScUniApi
           logic       = ScSearchLogic(qs2.common.apiVsn)(qs2)(_request)
           respAction  <- _logic2stateRespActionFut( logic )
         } yield {
-          LOGGER.trace(s"$logPrefix Search tags => ${respAction.search.iterator.flatMap(_.results).size} results")
+          LOGGER.trace(s"$logPrefix Search nodes => ${respAction.search.iterator.flatMap(_.results).size} results")
           respAction
         }
       }
@@ -235,21 +235,21 @@ trait ScUniApi
       val _indexRespActionOptFut = indexRespActionOptFut
       val _gridAdsRespActionOptFut = gridAdsRespActionOptFut
       val _focRespActionOptFut = focRespActionOptFut
-      val _tagsRespActionOptFut = tagsRespActionFutOpt
+      val _searchRespActionOptFut = searchRespActionFutOpt
       for {
         indexRaOpt      <- _indexRespActionOptFut
         gridAdsRaOpt    <- _gridAdsRespActionOptFut
         focRaOpt        <- _focRespActionOptFut
-        tagsRaOpt       <- _tagsRespActionOptFut
+        searchRaOpt     <- _searchRespActionOptFut
       } yield {
         val respActions = (
           indexRaOpt ::
           gridAdsRaOpt ::
           focRaOpt ::
-          tagsRaOpt ::
+          searchRaOpt ::
           Nil
         ).flatten
-        LOGGER.trace(s"$logPrefix Resp actions: foc?${focRaOpt.nonEmpty} grid?${gridAdsRaOpt.nonEmpty} index?${indexRaOpt.nonEmpty} tags?${tagsRaOpt.nonEmpty}, total=${respActions.size}")
+        LOGGER.trace(s"$logPrefix Resp actions: foc?${focRaOpt.nonEmpty} grid?${gridAdsRaOpt.nonEmpty} index?${indexRaOpt.nonEmpty} searchNodes?${searchRaOpt.nonEmpty}, total=${respActions.size}")
         MSc3Resp(
           respActions = respActions
         )

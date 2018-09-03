@@ -2,6 +2,7 @@ package io.suggest.sc.c.inx
 
 import diode._
 import diode.data.Pot
+import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MLocEnv
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.DiodeUtil.Implicits.ActionHandlerExt
@@ -214,7 +215,11 @@ class IndexAh[M](
     val searchArgs = MAdsSearchReq(
       limit  = Some( GridAh.adsPerReqLimit ),
       genOpt = Some( root.index.state.generation ),
-      offset = Some( 0 )
+      offset = Some( 0 ),
+      textQuery = OptionUtil.maybeOpt(isSearchNodes) {
+        Option( root.index.search.text.query )
+          .filter(_.nonEmpty)
+      }
     )
 
     val fx = Effect {
