@@ -33,9 +33,8 @@ class STextR( getScCssF: GetScCssF ) {
       dispatchOnProxyScopeCB($, SearchTextChanged(text))
     }
 
-    private def _onFocusChange(focused: Boolean): Callback = {
+    private def _onFocusChange(focused: Boolean): Callback =
       dispatchOnProxyScopeCB($, SearchTextFocus(focused))
-    }
 
     private def _onClearClick: Callback =
       dispatchOnProxyScopeCB($, SearchTextChanged("", noWait = true))

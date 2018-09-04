@@ -25,9 +25,10 @@ class STextAh[M](
     */
   private def FAST_TYPING_TIMEOUT_MS = 600
 
+  /** Непосредственный запуск запроса поиска по тексту. */
   private def _searchTextDo(v0: MScSearchText, timestampOpt: Option[Long]): ActionResult[M] = {
     // Отфильтровать устаревший таймер:
-    if (timestampOpt.fold(true)(ts => v0.searchQuery isPendingWithStartTime ts)) {
+    if (timestampOpt.fold(true)(v0.searchQuery.isPendingWithStartTime)) {
       // Нужно понять, есть ли какой-либо текст, выставив итог в поле searchQuery.
       // Если нет, то очистить поле, выставив Pot.empty.
       val searchQueryPot2 = if (v0.query.isEmpty || v0.query.trim.isEmpty) {
@@ -55,6 +56,7 @@ class STextAh[M](
       noChange
     }
   }
+
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 

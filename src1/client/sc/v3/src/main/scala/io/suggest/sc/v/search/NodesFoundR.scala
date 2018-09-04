@@ -5,7 +5,7 @@ import diode.data.Pot
 import diode.react.ReactPot._
 import diode.react.ModelProxy
 import io.suggest.css.Css
-import io.suggest.geo.MGeoLoc
+import io.suggest.geo.MGeoPoint
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.Messages
@@ -41,7 +41,7 @@ class NodesFoundR(
                        req              : Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]],
                        hasMore          : Boolean,
                        selectedIds      : Set[String],
-                       withDistanceTo   : Option[MGeoLoc],
+                       withDistanceTo   : MGeoPoint,
                        searchCss        : SearchCss
                      )
   implicit object NodesFoundRPropsValFastEq extends FastEq[PropsVal] {

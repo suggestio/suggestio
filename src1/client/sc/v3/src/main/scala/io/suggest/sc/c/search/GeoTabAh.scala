@@ -4,6 +4,7 @@ import diode._
 import diode.data.{PendingBase, Pot}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MScreenInfo
+import io.suggest.grid.GridConst
 import io.suggest.maps.c.RcvrMarkersInitAh
 import io.suggest.maps.m.{HandleMapReady, InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
@@ -15,7 +16,7 @@ import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.{HandleScApiResp, MScRoot}
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.{GetScCssF, ScCss}
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -33,6 +34,9 @@ import scala.util.Success
   * Description: Контроллер экшенов гео-таба.
   */
 object GeoTabAh {
+
+  /** Макс. кол-во результатов в одном запросе к серверу. */
+  private[search] def REQ_LIMIT = 5
 
   /** Пересборка SearchCSS.
     *
@@ -75,103 +79,108 @@ class GeoTabAh[M](
                    rcvrsMapApi    : IAdvRcvrsMapApi,
                    screenInfoRO   : ModelRO[MScreenInfo],
                    geoSearchQsRO  : ModelRO[MScQs],
-                   getScCssF      : GetScCssF,
                    modelRW        : ModelRW[M, MGeoTabS]
                  )
   extends ActionHandler( modelRW )
   with Log
 { ah =>
 
+  /** Метод подготовки запуска запроса поиска на сервер за нодами.
+    *
+    * @param m Инстанс экшена DoNodesSearch.
+    * @param v0 Состояние модели.
+    * @return ActionResult.
+    */
+  private def _doNodesSearch(m: DoNodesSearch, v0: MGeoTabS): ActionResult[M] = {
+    if (v0.found.req.isPending && !m.ignorePending) {
+      // Не логгируем, т.к. это слишком частое явление при запуске системы с открытой панелью поиска.
+      //LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = m )
+      noChange
+
+    } else {
+      // Надо понять, изменилось ли состояние аргументов поиска?
+      // Подготовить аргументы запроса:
+      val args0 = geoSearchQsRO.value
+
+      val search2 = {
+        val offsetOpt = OptionUtil.maybeOpt(!m.clear) {
+          v0.found.req
+            .toOption
+            .map(_.resp.length)
+        }
+        args0.search.withLimitOffset(
+          limit     = Some( GeoTabAh.REQ_LIMIT ),
+          offset    = offsetOpt
+        )
+      }
+
+      // Запустить поиск, если что-то изменилось.
+      if (v0.found.reqSearchArgs contains search2) {
+        // Данные для запроса не отличаются от уже запрошенных. Поэтому игнорируем сигнал.
+        noChange
+
+      } else {
+        // Поисковый запрос действительно нужно организовать.
+        val req2 = (if (m.clear) Pot.empty else v0.found.req)
+          .pending()
+        val req2p = req2.asInstanceOf[PendingBase]
+
+        val runReqFx = Effect {
+          val args2 = args0.withSearch(
+            search = search2
+          )
+          // Запустить запрос.
+          api
+            .pubApi( args2 )
+            .transform { tryResp =>
+              val action = HandleScApiResp(
+                reason        = m,
+                tryResp       = tryResp,
+                reqTimeStamp  = Some( req2p.startTime ),
+                qs            = args2
+              )
+              Success( action )
+            }
+        }
+
+        val found2 = v0.found.withReqWithArgs(
+          req = req2,
+          reqSearchArgs = Some(search2)
+        )
+
+        // В зависимости от состояния textQuery, есть два похожих варианта работы: поиск только тегов и поиск всех узлов по имени.
+        // Если textQuery.isEmpty, то убедиться, что ресиверы сброшены на исходную
+        val rcvrs2 = if (search2.textQuery.isEmpty) {
+          // Сбросить rcvrs на закэшированное состояние.
+          v0.data.rcvrsCache
+        } else {
+          v0.mapInit.rcvrs
+            .pending( req2p.startTime )
+        }
+        // Обновить карту ресиверов в состоянии, если инстанс изменился:
+        val mapInit2 = if (rcvrs2 !===* v0.mapInit.rcvrs)
+          v0.mapInit.withRcvrs( rcvrs2 )
+        else
+          v0.mapInit
+
+        // Обновлённое состояние.
+        val v2 = v0.copy(
+          found   = found2,
+          mapInit = mapInit2,
+          css = GeoTabAh._mkSearchCss(req2, screenInfoRO.value, v0.css)
+        )
+
+        updated(v2, runReqFx)
+      }
+    }
+  }
+
+
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Запустить запрос поиска узлов
     case m: DoNodesSearch =>
-      val v0 = value
-
-      if (v0.found.req.isPending && !m.ignorePending) {
-        // Не логгируем, т.к. это слишком частое явление при запуске системы с открытой панелью поиска.
-        //LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = m )
-        noChange
-
-      } else {
-        // Надо понять, изменилось ли состояние аргументов поиска?
-        // Подготовить аргументы запроса:
-        val args0 = geoSearchQsRO.value
-
-        val search2 = {
-          val offsetOpt = OptionUtil.maybeOpt(!m.clear) {
-            v0.rcvrsNotCached
-              .toOption
-              .map(_.resp.nodes.size)
-          }
-          // TODO Лимит результатов - брать из высоты экрана. Но сервер пока вообще игнорит лимиты для этого поиска...
-          val limit = 10
-          args0.search.withLimitOffset(
-            limit     = Some(limit),
-            offset    = offsetOpt
-          )
-        }
-
-        // Запустить поиск, если что-то изменилось.
-        if (v0.found.reqSearchArgs contains search2) {
-          // Данные для запроса не отличаются от уже запрошенных. Поэтому игнорируем сигнал.
-          noChange
-
-        } else {
-          // Поисковый запрос действительно нужно организовать.
-          val req2 = (if (m.clear) Pot.empty else v0.found.req)
-            .pending()
-          val req2p = req2.asInstanceOf[PendingBase]
-
-          val runReqFx = Effect {
-            val args2 = args0.withSearch(
-              search = search2
-            )
-            // Запустить запрос.
-            api
-              .pubApi( args2 )
-              .transform { tryResp =>
-                val action = HandleScApiResp(
-                  reason        = m,
-                  tryResp       = tryResp,
-                  reqTimeStamp  = Some( req2p.startTime ),
-                  qs            = args2
-                )
-                Success( action )
-              }
-          }
-
-          val found2 = v0.found.withReqWithArgs(
-            req = req2,
-            reqSearchArgs = Some(search2)
-          )
-
-          // В зависимости от состояния textQuery, есть два похожих варианта работы: поиск только тегов и поиск всех узлов по имени.
-          // Если textQuery.isEmpty, то убедиться, что ресиверы сброшены на исходную
-          val rcvrs2 = if (search2.textQuery.isEmpty) {
-            // Сбросить rcvrs на закэшированное состояние.
-            v0.data.rcvrsCache
-          } else {
-            v0.mapInit.rcvrs
-              .pending( req2p.startTime )
-          }
-          // Обновить карту ресиверов в состоянии, если инстанс изменился:
-          val mapInit2 = if (rcvrs2 !===* v0.mapInit.rcvrs)
-            v0.mapInit.withRcvrs( rcvrs2 )
-          else
-            v0.mapInit
-
-          // Обновлённое состояние.
-          val v2 = v0.copy(
-            found   = found2,
-            mapInit = mapInit2,
-            css = GeoTabAh._mkSearchCss(req2, getScCssF().args.screenInfo, v0.css)
-          )
-
-          updated(v2, runReqFx)
-        }
-      }
-
+      _doNodesSearch(m, value)
 
     // Клик по узлу в списке найденных гео-узлов.
     case m: NodeRowClick =>
@@ -218,9 +227,23 @@ class GeoTabAh[M](
           }
         }
 
-    case _: NodesScroll =>
-      // TODO Надо подгрузить ещё результатов, если проскроллили достаточно.
-      noChange
+    case m: NodesScroll =>
+      val v0 = value
+      // Надо подгружать ещё или нет?
+      if (
+        !v0.found.req.isPending &&
+        v0.found.hasMore && {
+          val containerHeight = screenInfoRO.value.screen.height - ScCss.TABS_OFFSET_PX
+          val scrollPxToGo = m.scrollHeight - containerHeight - m.scrollTop
+          // TODO Нужно выставить правильную delta, т.к. сдвиг плитки сюда никак не относится, и load-more происходит слишком рано.
+          scrollPxToGo < GridConst.LOAD_MORE_SCROLL_DELTA_PX
+        }
+      ) {
+        // Подгрузить ещё тегов.
+        _doNodesSearch( DoNodesSearch(clear = false, ignorePending = false), v0 )
+      } else {
+        noChange
+      }
 
     // Запуск инициализации гео.карты.
     case InitSearchMap =>
@@ -386,11 +409,12 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
       }
     }
 
+    val hasMore = nodesResp.results.lengthCompare(GeoTabAh.REQ_LIMIT) >= 0
+
     // Заполнить/дополнить g0.found найденными элементами.
     val mnf2 = g0.found.copy(
-      req = req2,
-      // TODO Что тут выставлять? Сервер всё пачкой возвращает без учёта limit'а.
-      hasMore = false
+      req     = req2,
+      hasMore = hasMore
       // TODO Обновлять search-args? сервер модифицирует запрос, если запрос пришёл из IndexAh.
     )
 

@@ -4,7 +4,7 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import scalacss.ScalaCssReact._
-import io.suggest.geo.{DistanceUtil, ILPolygonGs, MGeoLoc}
+import io.suggest.geo.{DistanceUtil, ILPolygonGs, MGeoPoint}
 import io.suggest.maps.nodes.MGeoNodePropsShapes
 import io.suggest.maps.u.MapsUtil
 import io.suggest.msg.Messages
@@ -43,7 +43,7 @@ class NodeFoundR(
                        node               : MGeoNodePropsShapes,
                        i                  : Int,
                        searchCss          : SearchCss,
-                       withDistanceTo     : Option[MGeoLoc],
+                       withDistanceTo     : MGeoPoint,
                        selected           : Boolean
                      )
 
@@ -77,10 +77,8 @@ class NodeFoundR(
       val props = propsProxy.value
 
       // Рассчитать наименьшее расстояние от юзера до узла:
+      val locLl = MapsUtil.geoPoint2LatLng( props.withDistanceTo )
       val distancesIter = for {
-        // Если задана точка нахождения юзера...
-        loc <- props.withDistanceTo.iterator
-        locLl = MapsUtil.geoPoint2LatLng( loc.point )
         // Перебрать гео-шейпы, попутно рассчитывая расстояние до центров:
         nodeShape <- props.node.shapes
       } yield {

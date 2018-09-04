@@ -324,7 +324,7 @@ class ScRootR (
             req             = geo.found.req,
             hasMore         = geo.found.hasMore,
             selectedIds     = mroot.index.searchNodesSelectedIds,
-            withDistanceTo  = geo.mapInit.userLoc,
+            withDistanceTo  = geo.mapInit.state.center,
             searchCss = geo.css
           )
         }
