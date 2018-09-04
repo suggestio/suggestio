@@ -94,18 +94,6 @@ class Static @Inject() (
   }
 
   /**
-   * Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
-   * Без этого костыля, запрос html'ки просто подвисает.
-   */
-  def tinymceColorpicker(filename: String) = maybeAuth() { implicit request =>
-    Ok(tinymce.colorpicker.indexTpl())
-      .withHeaders(
-        CACHE_CONTROL                                 -> "public, max-age=3600",
-        secHeadersFilterUtil.X_FRAME_OPTIONS_HEADER   -> "SAMEORIGIN"
-      )
-  }
-
-  /**
    * Доступ к привилегированным ассетам: js.map и прочие сорцы.
    * @param path Путь.
    * @param asset filename.

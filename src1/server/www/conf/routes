@@ -2,9 +2,6 @@
 
 ## Если path начинается с /~, то jsRevRouterTpl НЕ будет приписывать CSRF-токен к роуте.
 
-## Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
-## Без этого костыля, запрос html'ки просто подвисает. Регэксп нужен на случай обработки со стороны simple-url-replace.
-GET  /vassets/javascripts/lib/tinymce/js/tinymce/plugins/colorpicker/$fn<[^/]*index\.html>      @controllers.Static.tinymceColorpicker(fn)
 ## 2015.mar.04: Запрет доступа простых смертных к служебным ассетам, типа исходников и js-мапов. Внизу routes есть тоже самое для /assets/
 GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       @controllers.Static.vassetsSudo(path="/public", file: Asset)
 
@@ -27,7 +24,6 @@ GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.
 ## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
 GET  /sc/router.js                      @controllers.Sc.scJsRouter
 GET  /sc/routes/:c/router.js            @controllers.Sc.scJsRouterCache(c: Int)
-#GET  /sc/map/nodes/all                  @controllers.Sc.renderMapNodesAll
 GET  /sc/sc.webmanifest                 @controllers.Sc.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
 
 ## Дамп ошибок выдачи.
