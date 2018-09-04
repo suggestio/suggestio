@@ -222,8 +222,8 @@ object OutEdges extends MacroLogsImpl {
           val fn = MNodeFields.Edges.E_OUT_INFO_GEO_POINTS_FN
           val geoPointStr = GeoPoint.toEsStr(mgp)
           val scale = "100km"
-          // decay=0.1 т.к. расстояния маленькие, и функция с умными формулами может подавить небольшие значения в ноль.
-          val func = ScoreFunctionBuilders.gaussDecayFunction(fn, geoPointStr, scale, 0, 0.1)
+
+          val func = ScoreFunctionBuilders.gaussDecayFunction(fn, geoPointStr, scale, 0, 0.5)
             .setWeight(10f)
           //.setOffset("0km") // TODO es-5.x А что надо тут выставить?
           val fq = _qOpt
@@ -232,7 +232,7 @@ object OutEdges extends MacroLogsImpl {
             }
             .boostMode( CombineFunction.REPLACE )
             .scoreMode( FiltersFunctionScoreQuery.ScoreMode.MAX )
-            .boost(10f)
+            .boost(5f)
           if (withQname)
             fq.queryName(s"f-score-q: $fn $geoPointStr scale=$scale overInner?${_qOpt.nonEmpty}")
           _qOpt = Some(fq)
