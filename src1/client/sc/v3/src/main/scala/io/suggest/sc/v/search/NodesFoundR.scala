@@ -12,15 +12,18 @@ import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.m.search.{MSearchRespInfo, NodesScroll}
+import io.suggest.sc.m.search.{DoNodesSearch, MSearchRespInfo, NodesScroll}
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromHtml, ScalaComponent}
+import japgolly.scalajs.react._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
 import io.suggest.maps.nodes.MGeoNodePropsShapes
+
+import scala.scalajs.js
+import scala.scalajs.js.{UndefOr, |}
 
 /**
   * Suggest.io
@@ -69,6 +72,10 @@ class NodesFoundR(
       val scrollHeight = e.target.scrollHeight
       dispatchOnProxyScopeCB($, NodesScroll(scrollTop, scrollHeight) )
     }
+
+    /** Реакция по кнопке сброса списка. */
+    private def _onRefreshBtnClick: Callback =
+      dispatchOnProxyScopeCB($, DoNodesSearch(clear = true, ignorePending = true) )
 
 
     def render(propsProxy: Props): VdomElement = {
@@ -125,23 +132,41 @@ class NodesFoundR(
         props.req.renderPending { _ =>
           <.div(
             _tagRowCss,
-            LkPreLoaderR.AnimSmall
+            MuiCircularProgress(
+              new MuiCircularProgressProps {
+                override val variant = MuiProgressVariants.indeterminate
+                override val size = js.defined( 50 )
+              }
+            )
           )
         },
 
         // Рендер ошибки.
         props.req.renderFailed { ex =>
+          // TODO Портировать на material-ui.
+          // TODO Добавить кнопку reload для повторной загрузки списка.
+
           VdomArray(
             <.div(
-              _tagRowCss,
-              ^.key := "e",
-              ^.`class` := Css.Colors.RED,
-              ex.getClass.getSimpleName
-            ),
-            <.div(
               ^.key := "m",
+              ^.`class` := Css.Colors.RED,
               _tagRowCss,
               ex.getMessage
+            ),
+            <.div(
+              // При клике по ошибке надо открывать диалог с техническими подробностями и описанием ошибки.
+              Mui.SvgIcons.ErrorOutline()(),
+              MuiButton(
+                new MuiButtonProps {
+                  override val variant = MuiButtonVariants.fab
+                  override val onClick: UndefOr[js.Function1[ReactEvent, Unit]] = js.defined { _: ReactEvent =>
+                    _onRefreshBtnClick.runNow()
+                  }
+                  override val color = MuiColorTypes.primary
+                }
+              )(
+                Mui.SvgIcons.Refresh()()
+              )
             )
           )
         }

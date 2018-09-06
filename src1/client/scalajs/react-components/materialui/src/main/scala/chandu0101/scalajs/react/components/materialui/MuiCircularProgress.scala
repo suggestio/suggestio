@@ -1,49 +1,38 @@
 package chandu0101.scalajs.react.components
 package materialui
 
-import chandu0101.macros.tojs.JSMacro
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw._
-import japgolly.scalajs.react.vdom._
-import org.scalajs.dom
+
 import scala.scalajs.js
 import scala.scalajs.js.`|`
 
-/**
- * This file is generated - submit issues instead of PR against it
- */
-    
-case class MuiCircularProgress(
-  key:        js.UndefOr[String]                        = js.undefined,
-  ref:        js.UndefOr[MuiCircularProgressM => Unit]  = js.undefined,
-  /** Override the progress's color. */
-  color:      js.UndefOr[MuiColors | MuiColor | String] = js.undefined,
-  /** Style for inner wrapper div. */
-  innerStyle: js.UndefOr[CssProperties]                 = js.undefined,
-  /** The max value of progress, only works in determinate mode. */
-  max:        js.UndefOr[Double]                        = js.undefined,
-  /** The min value of progress, only works in determinate mode. */
-  min:        js.UndefOr[Double]                        = js.undefined,
-  /** The mode of show your progress, indeterminate
-     for when there is no value for progress. */
-  mode:       js.UndefOr[DeterminateIndeterminate]      = js.undefined,
-  /** The diameter of the progress in pixels. */
-  size:       js.UndefOr[Double]                        = js.undefined,
-  /** Override the inline-styles of the root element. */
-  style:      js.UndefOr[CssProperties]                 = js.undefined,
-  /** Stroke width in pixels. */
-  thickness:  js.UndefOr[Double]                        = js.undefined,
-  /** The value of progress, only works in determinate mode. */
-  value:      js.UndefOr[Double]                        = js.undefined){
+object MuiCircularProgress {
 
-  def apply() = {
-    
-    val props = JSMacro[MuiCircularProgress](this)
-    val f = JsComponent[js.Object, Children.None, Null](Mui.CircularProgress)
-    f(props)
+  val component = JsComponent[js.Object, Children.None, Null](Mui.CircularProgress)
+
+  def apply(props: MuiCircularProgressProps = new MuiCircularProgressProps {}) = {
+    component(props)
   }
+
 }
-        
+
+
+/** JSON для [[MuiCircularProgress]].props. */
+trait MuiCircularProgressProps extends js.Object {
+  val classes: js.UndefOr[MuiCircularProgressClasses] = js.undefined
+  val color: js.UndefOr[String] = js.undefined
+  val size: js.UndefOr[Double | String] = js.undefined
+  val thickness: js.UndefOr[Double] = js.undefined
+  val value: js.UndefOr[Double] = js.undefined
+  val variant: js.UndefOr[String] = js.undefined
+}
+
+/** JSON для [[MuiCircularProgressProps]].classes. */
+trait MuiCircularProgressClasses extends js.Object {
+  val root: js.UndefOr[String] = js.undefined
+  val static: js.UndefOr[String] = js.undefined
+  // TODO ... https://material-ui.com/api/circular-progress/#css-api
+}
 
 
 @js.native

@@ -463,14 +463,16 @@ object MuiSvgIcons {
   object ActionZoomIn extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/zoom-out", JSImport.Default)
   object ActionZoomOut extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/alert/add-alert", JSImport.Default)
-  object AlertAddAlert extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/alert/error-outline", JSImport.Default)
-  object AlertErrorOutline extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/alert/error", JSImport.Default)
-  object AlertError extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/alert/warning", JSImport.Default)
-  object AlertWarning extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/AddAlert", JSImport.Default)
+  object AddAlert extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ErrorOutline", JSImport.Default)
+  object ErrorOutline extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Error", JSImport.Default)
+  object Error extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Warning", JSImport.Default)
+  object Warning extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/NotificationImportant", JSImport.Default)
+  object NotificationImportant extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/add-to-queue", JSImport.Default)
   object AvAddToQueue extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/airplay", JSImport.Default)
@@ -1730,8 +1732,8 @@ object MuiSvgIcons {
   object NavigationMoreHoriz extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/navigation/more-vert", JSImport.Default)
   object NavigationMoreVert extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/refresh", JSImport.Default)
-  object NavigationRefresh extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Refresh", JSImport.Default)
+  object Refresh extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/navigation/subdirectory-arrow-left", JSImport.Default)
   object NavigationSubdirectoryArrowLeft extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/navigation/subdirectory-arrow-right",

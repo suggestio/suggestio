@@ -24,9 +24,13 @@ trait MuiPalette extends js.Object {
   val error: js.UndefOr[MuiColor] = js.undefined
   val contrastThreshold: js.UndefOr[Int] = js.undefined
   val tonalOffset: js.UndefOr[Double] = js.undefined
-
-  /** "dark" */
   val `type`: js.UndefOr[String] = js.undefined
+}
+
+/** Значения для [[MuiPalette]].type */
+object MuiPaletteTypes {
+  val dark = "dark"
+  val light = "light"
 }
 
 
@@ -44,3 +48,11 @@ trait MuiRawTheme extends js.Object {
 
 
 trait MuiTheme extends MuiRawTheme
+
+
+object MuiColorTypes {
+  val primary = "primary"
+  val secondary = "secondary"
+  val inherit = "inherit"
+  val default = "default"
+}
