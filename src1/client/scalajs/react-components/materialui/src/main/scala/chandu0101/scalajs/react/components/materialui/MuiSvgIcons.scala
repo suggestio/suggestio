@@ -1622,8 +1622,8 @@ object MuiSvgIcons {
   object MapsLocalMall extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/local-movies", JSImport.Default)
   object MapsLocalMovies extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/maps/local-offer", JSImport.Default)
-  object MapsLocalOffer extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/LocalOffer", JSImport.Default)
+  object LocalOffer extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/local-parking", JSImport.Default)
   object MapsLocalParking extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/local-pharmacy", JSImport.Default)

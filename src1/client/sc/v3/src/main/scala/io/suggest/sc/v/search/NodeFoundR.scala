@@ -6,6 +6,7 @@ import io.suggest.geo.{DistanceUtil, ILPolygonGs, MGeoPoint}
 import io.suggest.maps.nodes.MGeoNodePropsShapes
 import io.suggest.maps.u.MapsUtil
 import io.suggest.msg.Messages
+import scalacss.ScalaCssReact._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -14,11 +15,14 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponen
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
-import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps}
 import io.suggest.common.empty.OptionUtil
 import ReactCommonUtil.Implicits._
 import io.suggest.common.html.HtmlConstants
+import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.sc.styl.GetScCssF
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+import io.suggest.sjs.common.xhr.Xhr
 
 import scala.scalajs.js
 
@@ -28,7 +32,7 @@ import scala.scalajs.js
   * Created: 30.08.18 12:29
   * Description: React-компонент для рендера одного ряда в списке найденных рядов.
   */
-class NodeFoundR {
+class NodeFoundR(getScCssF: GetScCssF) {
 
   /** Контейнер пропертисов компонента.
     *
@@ -68,6 +72,7 @@ class NodeFoundR {
     /** Рендер вёрстки компонента. */
     def render(propsProxy: Props): VdomElement = {
       val props = propsProxy.value
+      val NodesCSS = getScCssF().Search.Tabs.NodesFound
 
       // Рассчитать наименьшее расстояние от юзера до узла:
       val locLl = MapsUtil.geoPoint2LatLng( props.withDistanceTo )
@@ -101,6 +106,8 @@ class NodeFoundR {
       val listItemCss = new MuiListItemClasses {
         override val root = props.searchCss.NodesFound.rowItemBgF(p.nodeId).htmlClass
       }
+      val isTag = p.ntype ==* MNodeTypes.Tag
+
       MuiListItem.component.withKey(p.nodeId)(
         new MuiListItemProps {
           override val classes = listItemCss
@@ -109,17 +116,22 @@ class NodeFoundR {
             _onNodeRowClick(p.nodeId).runNow()
           }
           override val selected = props.selected
+          // Если есть картинка, то сдвиги справа-слева лучше убрать
+          override val disableGutters = p.icon.nonEmpty
+          override val dense = !isTag
         }
       )(
+        // Иконка узла, присланная сервером:
         p.icon.whenDefinedEl { icon =>
           MuiListItemIcon()(
-            //Mui.SvgIcons.Inbox()()
             <.img(
-              ^.src := icon.url,
-              ^.height := icon.wh.height.px
+              NodesCSS.icon,
+              ^.src := Xhr.mkAbsUrlIfPreferred( icon.url )
             )
           )
         },
+
+        // Название узла
         p.hint.whenDefinedEl { nodeName =>
           val theClasses = new MuiListItemTextClasses {
             override val primary = props.searchCss.NodesFound.rowTextPrimaryF(p.nodeId).htmlClass
@@ -140,6 +152,13 @@ class NodeFoundR {
               override val secondary = text2ndOpt.toUndef
             }
           )()
+        },
+
+        // Если тег, то имеет смысл выставить пометку, что это тег:
+        ReactCommonUtil.maybeEl( isTag ) {
+          MuiListItemIcon()(
+            Mui.SvgIcons.LocalOffer()()
+          )
         }
       )
     }
