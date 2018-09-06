@@ -4,7 +4,7 @@ import diode.react.ModelProxy
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
-import io.suggest.sjs.common.empty.JsOptionUtil
+import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.sjs.leaflet.event.{Event, LocationEvent, PopupEvent}
 import io.suggest.sjs.leaflet.map.LMap
 import japgolly.scalajs.react.Callback
@@ -67,9 +67,9 @@ object LGeoMapR {
     // Карта должна рендерится с такими параметрами:
     new LMapPropsR {
       override val center    = MapsUtil.geoPoint2LatLng( v.center )
-      override val zoom      = v.zoom
+      override val zoom      = js.defined( v.zoom )
       // Значение требует markercluster, цифра взята с http://wiki.openstreetmap.org/wiki/Zoom_levels
-      override val maxZoom   = 18
+      override val maxZoom   = js.defined( 18 )
       override val useFlyTo  = true
       override val onLocationFound = {
         if ( v.locationFound.contains(true) ) {
@@ -85,10 +85,10 @@ object LGeoMapR {
       override val onMoveEnd    = js.defined( _onMoveEndF )
 
       // Пробрасываем extra-пропертисы:
-      override val whenReady    = JsOptionUtil.opt2undef( v.whenReady )
-      override val className    = JsOptionUtil.opt2undef( v.cssClass )
-      override val onDragStart  = JsOptionUtil.opt2undef( v.onDragStart )
-      override val onDragEnd    = JsOptionUtil.opt2undef( v.onDragEnd )
+      override val whenReady    = v.whenReady.toUndef
+      override val className    = v.cssClass.toUndef
+      override val onDragStart  = v.onDragStart.toUndef
+      override val onDragEnd    = v.onDragEnd.toUndef
     }
   }
 

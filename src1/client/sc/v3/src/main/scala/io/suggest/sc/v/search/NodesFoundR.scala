@@ -1,5 +1,6 @@
 package io.suggest.sc.v.search
 
+import chandu0101.scalajs.react.components.materialui._
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ReactPot._
@@ -99,22 +100,24 @@ class NodesFoundR(
               }
             )
           } else {
-            nodesRi
-              .resp
-              .iterator
-              .zipWithIndex
-              .toVdomArray { case (node, i) =>
-                // Рендер одного ряда. На уровне компонента обитает shouldComponentUpdate() для
-                propsProxy.wrap { props =>
-                  nodeFoundR.PropsVal(
-                    node            = node,
-                    i               = i,
-                    searchCss       = props.searchCss,
-                    withDistanceTo  = props.withDistanceTo,
-                    selected        = props.selectedIds contains node.props.nodeId
-                  )
-                }( nodeFoundR.component.withKey(node.props.nodeId)(_) )
-              }
+            <.div(
+              MuiList()(
+                nodesRi
+                .resp
+                .iterator
+                .toVdomArray { mnode =>
+                  // Рендер одного ряда. На уровне компонента обитает shouldComponentUpdate() для
+                  propsProxy.wrap { props =>
+                    nodeFoundR.PropsVal(
+                      node            = mnode,
+                      searchCss       = props.searchCss,
+                      withDistanceTo  = props.withDistanceTo,
+                      selected        = props.selectedIds contains mnode.props.nodeId
+                    )
+                  }( nodeFoundR.component.withKey(mnode.props.nodeId)(_) ): VdomNode
+                },
+              )
+            )
           }
         },
 

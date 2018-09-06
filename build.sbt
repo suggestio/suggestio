@@ -434,7 +434,17 @@ lazy val sc3Sjs = {
   Project(id = "sc3-sjs", base = file(DIR0 + "client/sc/v3"))
     .enablePlugins(WebScalaJS)
     // Поддержка BLE и Cordova не реализована. Надо извлечь из прошлой выдачи, которая была удалена 2018-04-03 после 7390c4e0af497795438e67b57e42c28281a100d2 из src1/client/sc/main
-    .dependsOn(scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSjs, mapsSjs, jdRenderSjs, reactSidebar, reactScroll)
+    .dependsOn(
+      scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSjs,
+      mapsSjs, jdRenderSjs, reactSidebar, reactScroll,
+      reactComponentsMaterialUiSjs
+    )
+}
+
+/** Экспорт material-ui core+icons с поправками для новой версии. */
+lazy val reactComponentsMaterialUiSjs = {
+  Project(id = "scalajs-react-components-materialui", base = file(DIR0 + "client/scalajs/react-components/materialui"))
+    .dependsOn( commonReactSjs )
 }
 
 /** json document react renderer */
@@ -576,6 +586,7 @@ lazy val sio2 = {
     .aggregate(
       commonJS, commonJVM, logsMacro,
       commonSjs, commonReactSjs,
+      reactComponentsMaterialUiSjs,
       leafletSjs, leafletReactSjs, leafletMarkerClusterSjs, leafletReactSjs, lkAdvGeoSjs,
       lkSjs, sc3Sjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,

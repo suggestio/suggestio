@@ -4,6 +4,7 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.n2.node.MNodeType
 import io.suggest.model.n2.node.meta.colors.MColors
+import io.suggest.primo.id.IId
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -44,7 +45,10 @@ case class MAdvGeoMapNodeProps(
                                 hint            : Option[String]            = None,
                                 icon            : Option[MMapNodeIconInfo]  = None
                               )
-
+  extends IId[String]
+{
+  @inline override final def id = nodeId
+}
 
 
 object MMapNodeIconInfo {

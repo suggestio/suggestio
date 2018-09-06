@@ -12,7 +12,7 @@
     options = MPredicates.values
       .iterator
       .map { p =>
-        p.strId -> messages(p.singular)
+        p.value -> messages(p.singular)
       }
       .toSeq,
     '_label -> messages("Predicate")

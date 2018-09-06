@@ -22,7 +22,8 @@ import japgolly.univeq.UnivEq
 object ScCss {
 
   // TODO Исходные цвета надо бы брать откуда-то, с сервера например.
-  def COLORS_DFLT = MColors(
+  // TODO val - т.к. нужен твёрдый инстанс для eq-сравнивания. Но это нужно только на первых секундах выдачи.
+  val COLORS_DFLT = MColors(
     bg = Some(MColorData( "111111" )),
     fg = Some(MColorData.Examples.WHITE)
   )
@@ -476,7 +477,6 @@ case class ScCss( args: IScCssArgs )
 
         /** Стиль внешнего контейнера. */
         val outer = style(
-          addClassName( OUTER ),
           smFlex,
           TAB_BODY_HEIGHT
         )

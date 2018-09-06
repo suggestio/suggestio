@@ -13,9 +13,13 @@ import scala.language.implicitConversions
   */
 object JsOptionUtil {
 
-  /** Конвертация Option[T] в UndefOr[T]. */
-  implicit def opt2undef[T](opt: Option[T]): UndefOr[T] = {
-    opt.fold [UndefOr[T]] (js.undefined) (v => v)
+  object Implicits {
+
+    implicit class JsOptionExt[T](opt: Option[T]) {
+      def toUndef: js.UndefOr[T] =
+        opt.fold [UndefOr[T]] (js.undefined) (v => v)
+    }
+
   }
 
 }

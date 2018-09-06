@@ -21,7 +21,7 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun2ToJsCb
 import io.suggest.dt.moment.MomentJsUtil.Implicits.MomentDateExt
 import io.suggest.i18n.MsgCodes
-import io.suggest.sjs.common.empty.JsOptionUtil.opt2undef
+import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 // TODO import io.suggest.sjs.common.dt.JsDateUtil.MRangeYmdFastEq + OptFastEq.Wrapped
 
@@ -124,10 +124,14 @@ object DtpOptions {
                               override val selectsStart: UndefOr[Boolean] = fn.selectsStart
                               override val selectsEnd: UndefOr[Boolean] = fn.selectsEnd
                               override val startDate: UndefOr[Date_t] = {
-                                customRangeOpt.map(_.dateStart.to[Moment])
+                                customRangeOpt
+                                  .map(_.dateStart.to[Moment])
+                                  .toUndef
                               }
                               override val endDate: UndefOr[Date_t] = {
-                                customRangeOpt.map(_.dateEnd.to[Moment])
+                                customRangeOpt
+                                  .map(_.dateEnd.to[Moment])
+                                  .toUndef
                               }
 
                               // TODO Opt инстансы callback-функций можно прооптимизировать, вынеся в val-карту функций или в state, например.

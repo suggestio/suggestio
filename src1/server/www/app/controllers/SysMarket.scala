@@ -218,7 +218,7 @@ class SysMarket @Inject() (
               .toStream
               .headOption
               .getOrElse("???")
-            (ei.medge.predicate.strId,
+            (ei.medge.predicate.value,
               ei.medge.order.getOrElse(Int.MaxValue),
               nodeName)
           }

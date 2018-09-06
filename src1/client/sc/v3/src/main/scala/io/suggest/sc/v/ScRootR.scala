@@ -1,9 +1,11 @@
 package io.suggest.sc.v
 
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiPalette, MuiRawTheme, MuiThemeProvider, MuiThemeProviderProps}
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
+import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.hdr.{MHeaderStates, MenuOpenClose, SearchOpenClose}
 import io.suggest.sc.m.search.MScSearch
@@ -19,7 +21,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.v.menu._
-import io.suggest.spa.OptFastEq
+import io.suggest.spa.{FastEqUtil, OptFastEq}
 import scalacss.ScalaCssReact._
 
 /**
@@ -71,6 +73,7 @@ class ScRootR (
                                     dbgUnsafeOffsetsOptC: ReactConnectProxy[unsafeScreenAreaOffsetR.Props_t],
                                     isRenderScC         : ReactConnectProxy[Some[Boolean]],
                                     searchNodesFoundC   : ReactConnectProxy[nodesFoundR.Props_t],
+                                    colorsC             : ReactConnectProxy[MColors]
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -188,12 +191,42 @@ class ScRootR (
       // Рендер стилей перед снаружи и перед остальной выдачей.
       val scCssComp = s.scCssArgsC { CssR.apply }
 
+      // Рендер провайдера тем MateriaUI, который заполняет react context.
+      val muiThemeProviderComp = s.colorsC { mcolorsProxy =>
+        val mcolors = mcolorsProxy.value
+        val bgHex = mcolors.bg.get.hexCode
+        val fgHex = mcolors.fg.get.hexCode
+        // Чтобы избежать Warning: Failed prop type: The following properties are not supported: `paletteRaw$1$f`. Please remove them.
+        // тут расписывается весь JSON построчно:
+        val primaryColor = new MuiColor {
+          override val main = bgHex
+          override val contrastText = fgHex
+        }
+        val secondaryColor = new MuiColor {
+          override val main = fgHex
+          override val contrastText = bgHex
+        }
+        val paletteRaw = new MuiPalette {
+          override val primary = primaryColor
+          override val secondary = secondaryColor
+        }
+        val themeRaw = new MuiRawTheme {
+          override val palette = paletteRaw
+        }
+        val themeCreated = Mui.Styles.createMuiTheme( themeRaw )
+        MuiThemeProvider(
+          new MuiThemeProviderProps {
+            override val theme = themeCreated
+          }
+        )( menuSideBar )
+      }
+
       // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
       s.isRenderScC { isRenderSomeProxy =>
         if (isRenderSomeProxy.value.value) {
           <.div(
             scCssComp,
-            menuSideBar
+            muiThemeProviderComp
           )
         } else {
           // Нет пока данных для рендера вообще
@@ -214,7 +247,9 @@ class ScRootR (
         gridPropsOptC = propsProxy.connect { mroot =>
           gridR.PropsVal(
             grid    = mroot.grid,
-            fgColor = mroot.index.resp.toOption.flatMap(_.colors.fg)
+            fgColor = mroot.index.resp
+              .toOption
+              .flatMap(_.colors.fg)
           )
         },
 
@@ -325,9 +360,14 @@ class ScRootR (
             hasMore         = geo.found.hasMore,
             selectedIds     = mroot.index.searchNodesSelectedIds,
             withDistanceTo  = geo.mapInit.state.center,
-            searchCss = geo.css
+            searchCss       = geo.css
           )
-        }
+        },
+
+        colorsC = propsProxy.connect { mroot =>
+          mroot.index.resp
+            .fold(ScCss.COLORS_DFLT)(_.colors)
+        }( FastEqUtil.AnyRefFastEq )
 
       )
     }

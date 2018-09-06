@@ -13,6 +13,18 @@ import scala.language.higherKinds
   */
 object FastEqUtil {
 
+  /** Условно быстрое последовательное сравнивание двух Map'ов по ключам и значениям. */
+  def KvCollFastEq[K, V, M[_] <: Iterable[_]](implicit feqK: FastEq[K], feqV: FastEq[V]): FastEq[M[(K, V)]] = {
+    val collFastEq = new FastEq[(K, V)] {
+      override def eqv(a: (K, V), b: (K, V)): Boolean = {
+        feqK.eqv(a._1, b._1) &&
+          feqV.eqv(a._2, b._2)
+      }
+    }
+    CollFastEq[(K, V), M]( collFastEq )
+  }
+
+
   /** Условно быстрое ~O((N+1)*M) сравнивание двух коллекций с запуском O(M) FastEq[T] над каждой парой элементов.
     *
     * @param feq FastEq для любых элементов коллекции.
@@ -21,16 +33,18 @@ object FastEqUtil {
     *           Используется Seq[T] вместо Seq[_], потому что компилятор плохо понимает типы внутри forall().
     * @return
     */
-  def DeepCollFastEq[T, M[_] <: Seq[_]](implicit feq: FastEq[T]): FastEq[M[T]] = {
+  def CollFastEq[T, M[_] <: Iterable[_]](implicit feq: FastEq[T]): FastEq[M[T]] = {
     new FastEq[M[T]] {
       override def eqv(a: M[T], b: M[T]): Boolean = {
         // Сравнить длины коллекций, т.к. поштучное сравнивание может не учитывать разность длин.
-        a.length ==* b.length && {
-          a.iterator
-            .zip(b.iterator)
-            .forall { case (x: T, y: T) =>
-              feq.eqv(x, y)
-            }
+        (a eq b) || {
+          (a.size ==* b.size) && {
+            a.iterator
+              .zip(b.iterator)
+              .forall { case (x: T, y: T) =>
+                feq.eqv(x, y)
+              }
+          }
         }
       }
     }

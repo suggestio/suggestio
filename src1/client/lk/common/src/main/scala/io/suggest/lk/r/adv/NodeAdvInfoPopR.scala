@@ -19,7 +19,6 @@ import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sjs.common.controller.DomQuick
 import react.image.gallery.{IgItem, ImageGalleryPropsR, ImageGalleryR}
-import io.suggest.sjs.common.empty.JsOptionUtil.opt2undef
 
 import scala.scalajs.js.JSConverters._
 import scala.scalajs.js

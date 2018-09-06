@@ -570,7 +570,7 @@ object FormUtil {
     )
     .transform [Option[MPredicate]] (
       _.flatMap(MPredicates.withValueOpt),
-      _.map(_.strId)
+      _.map(_.value)
     )
   }
 

@@ -29,19 +29,6 @@ object MFonts
   /** Трейт экземпляра модели. */
   sealed protected[this] trait ValT extends super.ValT with IStrId {
 
-    /**
-     * tinymce принимает данные по шрифту в style_formats в таком формате.
-     * @param tail Дополнительные json-поля.
-     * @return JsObject для передачи в init() style_formats.
-     */
-    def toJsonTinyMce(tail: List[(String, JsValue)] = Nil): JsObject = {
-      val title = "title" -> JsString(descr)
-      val styles = "styles" -> JsObject(Seq(
-        "font-family" -> JsString(cssFontFamily)
-      ))
-      JsObject(title :: styles :: tail)
-    }
-
     def fileName: String
 
     /** Название CSS font-family. */
@@ -197,19 +184,6 @@ object MFonts
 
 
   // Конец перечисления шрифтов в АЛФАВИТНОМ ПОРЯДКЕ.
-
-
-  /** Для рендера json-конфига tinyMCE лучше использовать этот метод. */
-  def valuesJsonTinyMce: JsArray = {
-    val inlineSpan = List(
-      "inline" -> JsString("span")
-    )
-    // iterator + toSeq используется из-за того, что values() - это Set[], а не Seq.
-    val jsons = values.iterator
-      .map { _.toJsonTinyMce(inlineSpan) }
-      .toSeq
-    JsArray(jsons)
-  }
 
 
   override protected val _nameMapVal = _nameMap

@@ -229,6 +229,11 @@ object Common {
       */
     val EDDYSTONE_WEB_BLUETOOTH_JS = "1.0.1"
 
+    /** Версия компонент.
+      * @see [[https://github.com/chandu0101/scalajs-react-components]]
+      */
+    val SJS_REACT_COMPONENTS = "1.2.3-SNAPSHOT"
+
   }
 
 
@@ -287,7 +292,7 @@ object Common {
    *  Версия react.js, используемая в проекте. 
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactJsVsn         = "16.2.0"
+  val reactJsVsn         = "16.4.2"
 
   /** 
    *  Версия scalajs-react, используемая в проекте.

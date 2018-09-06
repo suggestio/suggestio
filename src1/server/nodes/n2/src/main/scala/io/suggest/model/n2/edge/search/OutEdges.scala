@@ -185,7 +185,7 @@ object OutEdges extends MacroLogsImpl {
         if (oe.predicates.nonEmpty) {
           val fn = EDGE_OUT_PREDICATE_FULL_FN
           val predIds = oe.predicates
-            .map(_.strId)
+            .map(_.value)
           val predf = QueryBuilders.termsQuery(fn, predIds: _*)
           if (withQname)
             predf.queryName(s"predicate: $fn=${oe.predicates.length}[${oe.predicates.mkString(", ")}]")

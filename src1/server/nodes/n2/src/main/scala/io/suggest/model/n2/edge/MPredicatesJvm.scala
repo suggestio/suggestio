@@ -25,7 +25,7 @@ object MPredicatesJvm {
       }
 
       override def unbind(key: String, value: MPredicate): String = {
-        strB.unbind(key, value.strId)
+        strB.unbind(key, value.value)
       }
 
     }

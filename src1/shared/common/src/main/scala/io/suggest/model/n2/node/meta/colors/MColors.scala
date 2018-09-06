@@ -48,20 +48,16 @@ object MColors extends IEmpty {
   def fgF = { cs: MColors => cs.fg }
 
   /** Проверка валидности hex-цветов. */
-  def validateHexOpt(color: MColors): ValidationNel[String, MColors] = {
-    (
-      ScalazUtil.liftNelOpt(color.bg)( MColorData.validateHexCodeOnly ) |@|
-      ScalazUtil.liftNelOpt(color.fg)( MColorData.validateHexCodeOnly )
-    )(apply _)
-  }
+  def validateHexOpt(color: MColors): ValidationNel[String, MColors] = (
+    ScalazUtil.liftNelOpt(color.bg)( MColorData.validateHexCodeOnly ) |@|
+    ScalazUtil.liftNelOpt(color.fg)( MColorData.validateHexCodeOnly )
+  )(apply _)
 
   /** Проверка, что все цвета выставлены. */
-  def validateHexSome(color: MColors): StringValidationNel[MColors] = {
-    (
-      ScalazUtil.liftNelSome(color.bg, "bg." + ErrorConstants.Words.EXPECTED)( MColorData.validateHexCodeOnly ) |@|
-      ScalazUtil.liftNelSome(color.fg, "fg." + ErrorConstants.Words.EXPECTED)( MColorData.validateHexCodeOnly )
-    )(apply _)
-  }
+  def validateHexSome(color: MColors): StringValidationNel[MColors] = (
+    ScalazUtil.liftNelSome(color.bg, "bg." + ErrorConstants.Words.EXPECTED)( MColorData.validateHexCodeOnly ) |@|
+    ScalazUtil.liftNelSome(color.fg, "fg." + ErrorConstants.Words.EXPECTED)( MColorData.validateHexCodeOnly )
+  )(apply _)
 
   /** Костыль: проверка заданных цветов, но если цвета не заданы, то возвращать дефолтовые.
     * Появился тут, т.к. ранее через SysMarket создавались adn-узлы без цветов, но в новой lk-adn-edit форме цвета обязательны.
@@ -87,7 +83,8 @@ case class MColors(
 
   /** Вернуть все перечисленные цвета. */
   def allColorsIter: Iterator[MColorData] = {
-    Iterator( bg, fg )
+    (bg :: fg :: Nil)
+      .iterator
       .flatten
   }
 

@@ -405,7 +405,7 @@ class LkAdnEditFormR(
               }
               iter.toSeq
             }
-          }( FastEqUtil.DeepCollFastEq[nodeGalleryR.PropsValEl, Seq]( nodeGalleryR.NodeGalleryRPropsValElFastEq ) )
+          }( FastEqUtil.CollFastEq[nodeGalleryR.PropsValEl, Seq]( nodeGalleryR.NodeGalleryRPropsValElFastEq ) )
         }
 
       )

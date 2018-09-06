@@ -58,5 +58,5 @@ trait IExtService extends IStrId {
 
 
 trait IJsActorExtService extends IExtService {
-  override def extAdvServiceActorFactoryCt  = ClassTag( classOf[AdvExtServiceActorFactory] )
+  override def extAdvServiceActorFactoryCt = ClassTag( classOf[AdvExtServiceActorFactory] )
 }

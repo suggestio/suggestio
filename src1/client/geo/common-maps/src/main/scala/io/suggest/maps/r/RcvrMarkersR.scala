@@ -1,6 +1,5 @@
 package io.suggest.maps.r
 
-import diode.FastEq
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.color.MColorData
@@ -12,12 +11,10 @@ import io.suggest.maps.m.MonkeyNodeId.forJsObject
 import io.suggest.maps.m.OpenMapRcvr
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.u.{MapIcons, MapsUtil}
-import io.suggest.proto.HttpConst
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
-import io.suggest.sjs.common.empty.JsOptionUtil
-import io.suggest.sjs.common.model.HttpRoute
+import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.event.MouseEvent
@@ -71,7 +68,7 @@ object RcvrMarkersR {
       val colorOpt = for (mcd <- mcdOpt) yield {
         HtmlConstants.DIEZ + mcd.code
       }
-      JsOptionUtil.opt2undef( colorOpt )
+      colorOpt.toUndef
     }
 
 
@@ -114,7 +111,7 @@ object RcvrMarkersR {
                 Leaflet.icon(o)
               }
             }
-            override val title = JsOptionUtil.opt2undef( mnode.props.hint )
+            override val title = mnode.props.hint.toUndef
           }
 
 

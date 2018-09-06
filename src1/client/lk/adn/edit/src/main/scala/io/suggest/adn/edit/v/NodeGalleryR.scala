@@ -14,7 +14,7 @@ import io.suggest.react.ReactDiodeUtil
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.spa.FastEqUtil.DeepCollFastEq
+import io.suggest.spa.FastEqUtil.CollFastEq
 
 /**
   * Suggest.io
@@ -103,7 +103,7 @@ class NodeGalleryR(
   val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
-    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( DeepCollFastEq[PropsValEl, Seq] ) )
+    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( CollFastEq[PropsValEl, Seq] ) )
     .build
 
   def apply(propsValSeqProxy: Props) = component( propsValSeqProxy )

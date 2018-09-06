@@ -48,21 +48,14 @@ object GeoTabAh {
                    screenInfo       : MScreenInfo,
                    searchCssOrNull  : SearchCss
                   ): SearchCss = {
-    // Надо оценить кол-во рядов для стилей.
-    // Для pending/failed надо рассчитать кол-во рядов на 1 больше (для места на экране).
-    var h = req.fold(0)(m => Math.max(1, m.resp.length))
-    if (req.isPending)
-      h += 1
-    if (req.isFailed)
-      h += 2
-
-    h = Math.min(h, 3)
-
     val args2 = MSearchCssProps(
+      req        = req,
       screenInfo = screenInfo,
-      nodesFoundShownCount = OptionUtil.maybe(h > 0)(h)
     )
-    if (searchCssOrNull == null || (searchCssOrNull.args !=* args2)) {
+    val isNeedRebuild = searchCssOrNull == null ||
+      MSearchCssProps.MSearchCssPropsFastEq.neqv(searchCssOrNull.args, args2)
+
+    if (isNeedRebuild) {
       // Пересобрать CSS.
       SearchCss( args2 )
     } else {

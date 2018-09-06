@@ -1,0 +1,2 @@
+%s,material-ui,@material-ui/core,g
+%s/\([A-Za-z0-9_]\+\)", JSImport.Default/\1", "\1"/g

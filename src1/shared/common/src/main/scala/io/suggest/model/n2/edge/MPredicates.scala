@@ -2,7 +2,6 @@ package io.suggest.model.n2.edge
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.{EnumeratumUtil, TreeEnumEntry}
-import io.suggest.primo.IStrId
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 
@@ -191,16 +190,11 @@ object MPredicates extends StringEnum[MPredicate] {
 sealed abstract class MPredicate(override val value: String)
   extends StringEnumEntry
   with TreeEnumEntry[MPredicate]
-  with IStrId
 { that: MPredicate =>
-
-  /** Некий строковой ключ. Например, ключ элемента модели. */
-  // TODO Выкинуть strId?
-  @inline override final def strId: String = value
 
   /** Код i18n-сообщения с названием предиката в единственном числе. */
   def singular: String = {
-    "edge.predicate." + strId
+    "edge.predicate." + value
   }
 
 }

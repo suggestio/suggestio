@@ -139,7 +139,7 @@ case class MEdge(
   override def toString: String = {
     val sb = new StringBuilder(64)
       .append("E(")
-    sb.append(predicate.strId)
+    sb.append(predicate.value)
       .append(':')
     for (nodeId <- nodeIds) {
       sb.append(nodeId)
