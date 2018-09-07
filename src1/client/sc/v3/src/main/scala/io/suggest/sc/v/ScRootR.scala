@@ -1,6 +1,6 @@
 package io.suggest.sc.v
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiPalette, MuiRawTheme, MuiThemeProvider, MuiThemeProviderProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiPalette, MuiPaletteTypes, MuiRawTheme, MuiThemeProvider, MuiThemeProviderProps}
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -13,7 +13,7 @@ import io.suggest.sc.styl.{GetScCssF, ScCss}
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr.HeaderR
 import io.suggest.sc.v.inx.WelcomeR
-import io.suggest.sc.v.search.{NodesFoundR, STextR, SearchR}
+import io.suggest.sc.v.search.{NodesFoundR, NodesSearchR, STextR, SearchR}
 import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -23,6 +23,8 @@ import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.v.menu._
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import scalacss.ScalaCssReact._
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -42,7 +44,7 @@ class ScRootR (
                 val welcomeR    : WelcomeR,
                 val blueToothR  : BlueToothR,
                 val unsafeScreenAreaOffsetR: UnsafeScreenAreaOffsetR,
-                val nodesFoundR : NodesFoundR,
+                val nodesSearchR: NodesSearchR,
                 getScCssF       : GetScCssF,
               ) {
 
@@ -54,8 +56,7 @@ class ScRootR (
   import editAdR.EditAdRPropsValFastEq
   import aboutSioR.AboutSioRPropsValFastEq
   import welcomeR.WelcomeRPropsValFastEq
-  import MScSearchText.MScSearchTextFastEq
-
+  import nodesSearchR.NodesSearchRPropsValFastEq
 
   type Props = ModelProxy[MScRoot]
 
@@ -74,9 +75,7 @@ class ScRootR (
                                     menuBlueToothOptC   : ReactConnectProxy[blueToothR.Props_t],
                                     dbgUnsafeOffsetsOptC: ReactConnectProxy[unsafeScreenAreaOffsetR.Props_t],
                                     isRenderScC         : ReactConnectProxy[Some[Boolean]],
-                                    searchNodesFoundC   : ReactConnectProxy[nodesFoundR.Props_t],
                                     colorsC             : ReactConnectProxy[MColors],
-                                    searchTextC         : ReactConnectProxy[MScSearchText]
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -93,7 +92,7 @@ class ScRootR (
     private val _onOpenMenuSidebarF = ReactCommonUtil.cbFun1ToJsCb( _onOpenMenuSidebar )
 
 
-    def render(s: State): VdomElement = {
+    def render(mrootProxy: Props, s: State): VdomElement = {
       val scCss = getScCssF()
 
       // Рендерим всё линейно, а не деревом, чтобы избежать вложенных connect.apply-фунцкий и сопутствующих эффектов.
@@ -113,17 +112,27 @@ class ScRootR (
         s.gridPropsOptC { gridR.apply }
       )
 
-      // Поисковое текстовое поле:
-      val searchTextField = s.searchTextC { sTextR.apply }
-      // Панель поиска: контент, зависимый от корневой модели:
-      val searchGeoNodesFound = s.searchNodesFoundC { nodesFoundR.apply }
+
+      // Нода с единым скроллингом, передаваемая в children для SearchR:
+      val searchBarChild = mrootProxy.wrap { mroot =>
+        val search = mroot.index.search
+        val geo = mroot.index.search.geo
+        nodesSearchR.PropsVal(
+          text = search.text,
+          nodeFound = NodesFoundR.PropsVal(
+            req             = geo.found.req,
+            hasMore         = geo.found.hasMore,
+            selectedIds     = mroot.index.searchNodesSelectedIds,
+            withDistanceTo  = geo.mapInit.state.center,
+            searchCss       = geo.css
+          ),
+          searchCss = search.geo.css
+        )
+      }( nodesSearchR.apply )
 
       // Непосредственно, панель поиска:
       val searchBarBody = s.searchC {
-        searchR(_)(
-          searchTextField,
-          searchGeoNodesFound
-        )
+        searchR(_)( searchBarChild )
       }
 
 
@@ -215,6 +224,7 @@ class ScRootR (
         val paletteRaw = new MuiPalette {
           override val primary = primaryColor
           override val secondary = secondaryColor
+          override val `type` = MuiPaletteTypes.dark
         }
         val themeRaw = new MuiRawTheme {
           override val palette = paletteRaw
@@ -359,25 +369,10 @@ class ScRootR (
           Some( mroot.index.resp.nonEmpty )
         }( OptFastEq.OptValueEq ),
 
-        searchNodesFoundC = propsProxy.connect { mroot =>
-          val geo = mroot.index.search.geo
-          nodesFoundR.PropsVal(
-            req             = geo.found.req,
-            hasMore         = geo.found.hasMore,
-            selectedIds     = mroot.index.searchNodesSelectedIds,
-            withDistanceTo  = geo.mapInit.state.center,
-            searchCss       = geo.css
-          )
-        },
-
         colorsC = propsProxy.connect { mroot =>
           mroot.index.resp
             .fold(ScCss.COLORS_DFLT)(_.colors)
-        }( FastEqUtil.AnyRefFastEq ),
-
-        searchTextC = propsProxy.connect { mroot =>
-          mroot.index.search.text
-        }
+        }( FastEqUtil.AnyRefFastEq )
 
       )
     }

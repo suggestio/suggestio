@@ -11,15 +11,15 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.m.search.{DoNodesSearch, MSearchRespInfo, NodesScroll}
+import io.suggest.sc.m.search.{DoNodesSearch, MSearchRespInfo}
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 import japgolly.univeq._
 import io.suggest.maps.nodes.MGeoNodePropsShapes
-import io.suggest.sjs.common.empty.JsOptionUtil
 
 import scala.scalajs.js.UndefOr
 
@@ -31,48 +31,16 @@ import scala.scalajs.js.UndefOr
   */
 class NodesFoundR(
                    nodeFoundR       : NodeFoundR,
-                   getScCssF        : GetScCssF
+                   getScCssF        : GetScCssF,
                  ) {
 
-  /** Контейнер данных для рендера компонента.
-    *
-    * @param found Данные найденных тегов/узлов.
-    * @param withDistanceTo Рендерить расстояние до указанной локации. Инстанс mapInit.userLoc.
-    */
-  case class PropsVal(
-                       req              : Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]],
-                       hasMore          : Boolean,
-                       selectedIds      : Set[String],
-                       withDistanceTo   : MGeoPoint,
-                       searchCss        : SearchCss
-                     )
-  implicit object NodesFoundRPropsValFastEq extends FastEq[PropsVal] {
-    import io.suggest.ueq.JsUnivEqUtil._
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.req ===* b.req) &&
-        (a.hasMore ==* b.hasMore) &&
-        (a.selectedIds ===* b.selectedIds) &&
-        (a.withDistanceTo ===* b.withDistanceTo) &&
-        // Наверное, проверять css не нужно. Но мы всё же перерендериваем.
-        (a.searchCss ===* b.searchCss)
-    }
-  }
-
+  import NodesFoundR._
 
   type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
 
 
   class Backend($: BackendScope[Props, Unit]) {
-
-    /** Скроллинг в списке найденных узлов. */
-    private def _onNodesListScroll(e: ReactEventFromHtml): Callback = {
-      val scrollTop = e.target.scrollTop
-      val scrollHeight = e.target.scrollHeight
-      dispatchOnProxyScopeCB($, NodesScroll(scrollTop, scrollHeight) )
-    }
-    private lazy val _onNodesListScrollJsF = ReactCommonUtil.cbFun1ToJsCb( _onNodesListScroll )
-
 
     /** Реакция по кнопке сброса списка. */
     private def _onRefreshBtnClick(e: ReactEvent): Callback =
@@ -91,12 +59,9 @@ class NodesFoundR(
             .mkString( HtmlConstants.SPACE )
         }
       }
-      val onScrollUndefF = JsOptionUtil.maybeDefined(props.req.exists(_.resp.nonEmpty) && props.hasMore && !props.req.isPending) {
-        _onNodesListScrollJsF
-      }
       <.div(
-        // Горизонтальный прогресс-бар.
-        ReactCommonUtil.maybe( props.req.isPending ) {
+        // Горизонтальный прогресс-бар. Не нужен, если список уже не пустой, т.к. скачки экрана вызывает.
+        ReactCommonUtil.maybe( props.req.isPending && !props.req.exists(_.resp.nonEmpty) ) {
           val lpCss = new MuiLinearProgressClasses {
             override val root = NodesCSS.linearProgress.htmlClass
           }
@@ -111,7 +76,6 @@ class NodesFoundR(
         MuiList(
           new MuiListProps {
             override val classes = listClasses
-            override val onScroll = onScrollUndefF
           }
         )(
           // Рендер нормального списка найденных узлов.
@@ -206,5 +170,36 @@ class NodesFoundR(
     .build
 
   def apply(nodesFound: Props) = component( nodesFound )
+
+}
+
+
+object NodesFoundR {
+
+  /** Контейнер данных для рендера компонента.
+    *
+    * @param found Данные найденных тегов/узлов.
+    * @param withDistanceTo Рендерить расстояние до указанной локации. Инстанс mapInit.userLoc.
+    */
+  case class PropsVal(
+                       req              : Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]],
+                       hasMore          : Boolean,
+                       selectedIds      : Set[String],
+                       withDistanceTo   : MGeoPoint,
+                       searchCss        : SearchCss,
+                     )
+  implicit object NodesFoundRPropsValFastEq extends FastEq[PropsVal] {
+    import io.suggest.ueq.JsUnivEqUtil._
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      (a.req ===* b.req) &&
+        (a.hasMore ==* b.hasMore) &&
+        (a.selectedIds ===* b.selectedIds) &&
+        (a.withDistanceTo ===* b.withDistanceTo) &&
+        // Наверное, проверять css не нужно. Но мы всё же перерендериваем.
+        (a.searchCss ===* b.searchCss)
+    }
+  }
+
+  implicit def univEq: UnivEq[PropsVal] = UnivEq.derive
 
 }

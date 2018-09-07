@@ -50,6 +50,8 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     listHeightPx.toInt
   }
 
+  private val NODES_WITH_FIELD_HEIGHT_PX = NODES_LIST_HEIGHT_PX + ScCss.TABS_OFFSET_PX
+
   private val GEO_MAP_HEIGHT_PX = TAB_BODY_HEIGHT_PX - NODES_LIST_HEIGHT_PX - ScCss.TABS_OFFSET_PX
 
 
@@ -70,11 +72,16 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
   /** Доп.стили списка найденных узлов. */
   object NodesFound {
 
+    /** Контейнер поиска узлов и текстового поля для единого скроллинга. */
+    val container = style(
+      overflow.auto,
+      height( NODES_WITH_FIELD_HEIGHT_PX.px ),
+    )
+
     val nodesList = style(
-      height( NODES_LIST_HEIGHT_PX.px ),
       paddingTop( 0.px ),
       paddingBottom( 0.px ),
-      overflow.auto
+      overflow.hidden
     )
 
     // После втыкания materialUI, возникла необходимость описывать стили не-инлайново через classes.
