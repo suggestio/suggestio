@@ -745,14 +745,14 @@ object MuiSvgIcons {
   object ContentAddCircle extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/add", JSImport.Default)
   object ContentAdd extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/content/archive", JSImport.Default)
-  object ContentArchive extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/content/backspace", JSImport.Default)
-  object ContentBackspace extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/content/block", JSImport.Default)
-  object ContentBlock extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/content/clear", JSImport.Default)
-  object ContentClear extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Archive", JSImport.Default)
+  object Archive extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Backspace", JSImport.Default)
+  object Backspace extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Block", JSImport.Default)
+  object Block extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Clear", JSImport.Default)
+  object Clear extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/content-copy", JSImport.Default)
   object ContentContentCopy extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/content-cut", JSImport.Default)

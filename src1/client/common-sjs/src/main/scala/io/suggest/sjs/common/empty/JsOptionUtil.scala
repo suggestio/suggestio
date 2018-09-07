@@ -22,4 +22,12 @@ object JsOptionUtil {
 
   }
 
+
+  def maybeDefined[T](isDefined: Boolean)(f: => T): js.UndefOr[T] = {
+    if (isDefined)
+      js.defined(f)
+    else
+      js.undefined
+  }
+
 }

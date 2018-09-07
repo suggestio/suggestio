@@ -175,7 +175,6 @@ object MsgCodes {
   val `right` = "right"
 
 
-  val `Quick.search.for.offers` = "Quick.search.for.offers"
   val `Map` = "Map"
   val `Tags` = "Tags"
 
@@ -258,5 +257,6 @@ object MsgCodes {
     if (isOn) `On` else `Off`
 
   val `Clear` = "Clear"
+  val `Search.start.typing` = "Search.start.typing"
 
 }

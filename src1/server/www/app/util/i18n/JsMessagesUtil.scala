@@ -225,7 +225,6 @@ class JsMessagesUtil @Inject() (
 
   /** Сообщения для react-выдачи. */
   private def SC: TraversableOnce[String] = {
-    MC.`Quick.search.for.offers` ::
       MC.`Map` ::
       MC.`Tags` ::
       MC.`No.tags.here` ::
@@ -242,6 +241,7 @@ class JsMessagesUtil @Inject() (
       MC.`Clear` ::
       MC.`Something.gone.wrong` ::
       MC.`Error` ::
+      MC.`Search.start.typing` ::
       Nil
   }
 

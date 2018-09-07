@@ -327,7 +327,7 @@ case class ScCss( args: IScCssArgs )
           btn.htmlClass
         ),
         top( (14 + args.screenInfo.unsafeOffsets.top).px ),
-        right( -2.px ),
+        right( 2.px ),
         left.auto
       )
 
@@ -425,40 +425,13 @@ case class ScCss( args: IScCssArgs )
 
       val bar       = _styleAddClass( _BAR )
 
-      /** Стили кнопки быстрой очистки поискового поля. */
-      val clearBtn = style(
-        // TODO Унести в статические стили
-        position.absolute,
-        top(20.px),
-        right(55.px),
-        cursor.pointer
-      )
-
-      /** Сообщение, например "ничего не найдено". */
-      val message   = _styleAddClass( _BAR + "_message" )
-
-      /** CSS для текстовых полей поиска. */
-      object Field {
-        val field         = style(
-          addClassName( _BAR + "_field" ),
-          width( 245.px ),
-          left( -7.px )
-        )
-        val active        = _styleAddClass( __ + "active" )
-        val fieldWrapper  = _styleAddClass( _BAR + "_wrapper" )
-        val input         = style(
-          addClassName( _BAR + "_input" ),
-          color( _fgColorCss )
-        )
-      }
-
     }
 
 
     /** Табы на поисковой панели. */
     object Tabs {
 
-      private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - ScCss.TABS_OFFSET_PX - args.screenInfo.unsafeOffsets.top
+      private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - args.screenInfo.unsafeOffsets.top
 
       private val TAB_BODY_HEIGHT    = height( TAB_BODY_HEIGHT_PX.px )
 
@@ -518,14 +491,17 @@ case class ScCss( args: IScCssArgs )
 
         private val NODES_LIST = "shops-list"
 
+        /** Горизонтальный прогресс-бар запроса. */
+        val linearProgress = {
+          val h = 5.px
+          style(
+            marginTop( h ),
+            height( h )
+          )
+        }
+
         /** Список тегов. */
         val listDiv = _styleAddClass( NODES_LIST )
-
-        /** Один тег в списке тегов. */
-        val nodeRow = _styleAddClass( NODES_LIST + "_row" )
-
-        val oddRow  = _styleAddClass( __ + "odd" )
-        val evenRow = _styleAddClass( __ + "even")
 
         /** Стиль иконки узла в списке узлов. */
         val icon = style(
@@ -715,7 +691,7 @@ case class ScCss( args: IScCssArgs )
     Header.Logo.Txt.Dots.dot,
     Header.Logo.Img.logo,
 
-    Search.TextBar.Field.active,
+    Search.TextBar.bar,
     Search.Tabs.MapTab.inner,
     Search.Tabs.NodesFound.listDiv,
 

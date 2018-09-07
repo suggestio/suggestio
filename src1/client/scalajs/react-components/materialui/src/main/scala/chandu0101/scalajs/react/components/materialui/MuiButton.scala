@@ -9,7 +9,7 @@ import scala.scalajs.js
 
 object MuiButton {
 
-  val component = JsComponent[js.Object, Children.Varargs, Null](Mui.FlatButton)
+  val component = JsComponent[MuiButtonProps, Children.Varargs, Null](Mui.Button)
 
   def apply(props: MuiButtonProps)(children: VdomNode*) =
     component(props)(children: _*)
@@ -30,6 +30,7 @@ trait MuiButtonProps extends MuiPropsBase {
   val size: js.UndefOr[String] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
 }
+object MuiButtonProps extends MuiPropsBaseStatic[MuiButtonProps]
 
 
 /** JSON для [[MuiButtonProps]].classes. */

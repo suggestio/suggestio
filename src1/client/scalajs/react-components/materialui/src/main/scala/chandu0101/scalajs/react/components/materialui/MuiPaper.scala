@@ -9,18 +9,16 @@ import scala.scalajs.js
 
 object MuiPaper {
 
-  val component = JsComponent[js.Object, Children.Varargs, Null](Mui.Paper)
+  val component = JsComponent[MuiPaperProps, Children.Varargs, Null](Mui.Paper)
 
   /** @param children Children passed into the paper element. */
-  def apply(props: MuiPaperProps = new MuiPaperProps {})(children: VdomNode*) =
+  def apply(props: MuiPaperProps = MuiPaperProps.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
 
 
 trait MuiPaperProps extends js.Object {
-  val key:               js.UndefOr[String]        = js.undefined
-  val ref:               js.UndefOr[String]        = js.undefined
   /** Set to true to generate a circular paper container. */
   val circle:            js.UndefOr[Boolean]       = js.undefined
   /** By default, the paper container will have a border radius.
@@ -33,3 +31,4 @@ trait MuiPaperProps extends js.Object {
   /** This number represents the zDepth of the paper shadow. */
   val zDepth:            js.UndefOr[ZDepth]        = js.undefined
 }
+object MuiPaperProps extends MuiPropsBaseStatic[MuiPaperProps]

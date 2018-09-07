@@ -18,7 +18,6 @@ import scalacss.ScalaCssReact._
   * Description: Компонент поисковой панели (живёт справа).
   */
 class SearchR(
-               sTextR             : STextR,
                rightR             : RightR,
                geoMapOuterR       : GeoMapOuterR,
                searchMapR         : SearchMapR,
@@ -26,13 +25,11 @@ class SearchR(
              ) {
 
   import searchMapR.SearchMapRPropsValFastEq
-  import MScSearchText.MScSearchTextFastEq
 
   type Props = ModelProxy[MScSearch]
 
 
   protected[this] case class State(
-                                    sTextC              : ReactConnectProxy[MScSearchText],
                                     searchCssC          : ReactConnectProxy[SearchCss],
                                   )
 
@@ -85,9 +82,6 @@ class SearchR(
         <.div(
           scCss.Search.content,
 
-          // Рендер текстового поля поиска.
-          s.sTextC { sTextR.apply },
-
           // Стрелка для сворачивания вкладки.
           props.wrap {_ => Option(MColorData.Examples.WHITE) } ( rightR.applyReusable ),
 
@@ -103,7 +97,6 @@ class SearchR(
   val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        sTextC     = propsProxy.connect( _.text ),
         searchCssC = propsProxy.connect(_.geo.css)( FastEq.AnyRefEq )
       )
     }

@@ -18,8 +18,7 @@ import scalacss.internal.mutable.StyleSheet
 object SearchCss {
 
   // 32 - с потолка, для material-ui. В оригинале было 24
-  val NODE_ROW_HEIGHT_PX = 32
-  val NODE_ROW_PADDING_PX = 13
+  val NODE_ROW_HEIGHT_PX = 54.5
 
   implicit def univEq: UnivEq[SearchCss] = UnivEq.derive
 
@@ -32,27 +31,26 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
   import SearchCss._
 
 
-  private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - ScCss.TABS_OFFSET_PX - args.screenInfo.unsafeOffsets.top
+  private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - args.screenInfo.unsafeOffsets.top
 
   private val NODES_LIST_HEIGHT_PX = {
     // Надо оценить кол-во рядов для стилей.
     // Для pending/failed надо рассчитать кол-во рядов на 1 больше (для места на экране).
-    var h = args.req.fold(0)(m => Math.max(1, m.resp.length))
+    var rowsCount = 0
+    for (nodes <- args.req)
+      rowsCount += Math.max(1, nodes.resp.length)
     if (args.req.isPending)
-      h += 1
+      rowsCount += 1
     if (args.req.isFailed)
-      h += 2
+      rowsCount += 2
 
-    h = Math.min(h, 3)
+    rowsCount = Math.min(rowsCount, 3)
 
-
-    val nodesFoundCount = args.nodesMap.size
-    val rowsCount = Math.min(2.6, nodesFoundCount)
-    val rowHeight = NODE_ROW_HEIGHT_PX + 2*NODE_ROW_PADDING_PX
-    (rowsCount * rowHeight).toInt
+    val listHeightPx = rowsCount * SearchCss.NODE_ROW_HEIGHT_PX
+    listHeightPx.toInt
   }
 
-  private val GEO_MAP_HEIGHT_PX = TAB_BODY_HEIGHT_PX - NODES_LIST_HEIGHT_PX
+  private val GEO_MAP_HEIGHT_PX = TAB_BODY_HEIGHT_PX - NODES_LIST_HEIGHT_PX - ScCss.TABS_OFFSET_PX
 
 
   /** Стили для гео-карты гео-картой. */

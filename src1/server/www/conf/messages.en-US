@@ -71,7 +71,6 @@ Show.details=Show details
 Show=Show
 No.records=No records
 Nothing.found=Nothing found
-Quick.search.for.offers=Quick search for offers
 Provider=Provider
 Page=Page
 Signup.confirmation=Signup confirmation
@@ -982,4 +981,6 @@ Show.ad.opened=Show card opened?
 
 On=On
 Off=Off
+
+Search.start.typing=I'm looking for...
 

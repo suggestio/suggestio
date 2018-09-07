@@ -5,10 +5,9 @@ import diode.FastEq
 import diode.data.Pot
 import diode.react.ReactPot._
 import diode.react.ModelProxy
-import io.suggest.css.Css
+import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.MGeoPoint
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -19,11 +18,10 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 import japgolly.univeq._
-import scalacss.ScalaCssReact._
 import io.suggest.maps.nodes.MGeoNodePropsShapes
+import io.suggest.sjs.common.empty.JsOptionUtil
 
-import scala.scalajs.js
-import scala.scalajs.js.{UndefOr, |}
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -64,6 +62,7 @@ class NodesFoundR(
   type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
 
+
   class Backend($: BackendScope[Props, Unit]) {
 
     /** Скроллинг в списке найденных узлов. */
@@ -72,6 +71,8 @@ class NodesFoundR(
       val scrollHeight = e.target.scrollHeight
       dispatchOnProxyScopeCB($, NodesScroll(scrollTop, scrollHeight) )
     }
+    private lazy val _onNodesListScrollJsF = ReactCommonUtil.cbFun1ToJsCb( _onNodesListScroll )
+
 
     /** Реакция по кнопке сброса списка. */
     private def _onRefreshBtnClick(e: ReactEvent): Callback =
@@ -82,35 +83,52 @@ class NodesFoundR(
     def render(propsProxy: Props): VdomElement = {
       val scCss = getScCssF()
       val NodesCSS = scCss.Search.Tabs.NodesFound
-
       val props = propsProxy.value
-      val _tagRowCss = NodesCSS.nodeRow: TagMod
 
+      val listClasses = new MuiListClasses {
+        override val root: UndefOr[String] = {
+          (NodesCSS.listDiv.htmlClass :: props.searchCss.NodesFound.nodesList.htmlClass :: Nil)
+            .mkString( HtmlConstants.SPACE )
+        }
+      }
+      val onScrollUndefF = JsOptionUtil.maybeDefined(props.req.exists(_.resp.nonEmpty) && props.hasMore && !props.req.isPending) {
+        _onNodesListScrollJsF
+      }
       <.div(
-        NodesCSS.listDiv,
-        props.searchCss.NodesFound.nodesList,
-
-        // Подписка на события скроллинга:
-        ReactCommonUtil.maybe(props.hasMore && !props.req.isPending) {
-          ^.onScroll ==> _onNodesListScroll
+        // Горизонтальный прогресс-бар.
+        ReactCommonUtil.maybe( props.req.isPending ) {
+          val lpCss = new MuiLinearProgressClasses {
+            override val root = NodesCSS.linearProgress.htmlClass
+          }
+          MuiLinearProgress(
+            new MuiLinearProgressProps {
+              override val variant = MuiProgressVariants.indeterminate
+              override val classes = lpCss
+            }
+          )
         },
 
-        // Рендер нормального списка найденных узлов.
-        props.req.render { nodesRi =>
-          if (nodesRi.resp.isEmpty) {
-            <.div(
-              _tagRowCss,
+        MuiList(
+          new MuiListProps {
+            override val classes = listClasses
+            override val onScroll = onScrollUndefF
+          }
+        )(
+          // Рендер нормального списка найденных узлов.
+          props.req.render { nodesRi =>
+            if (nodesRi.resp.isEmpty) {
               // Надо, чтобы юзер понимал, что запрос поиска отработан.
-              nodesRi.textQuery.fold {
-                Messages( MsgCodes.`No.tags.here` )
-              } { query =>
-                Messages( MsgCodes.`No.tags.found.for.1.query`, query )
-              }
-            )
-          } else {
-            <.div(
-              MuiList()(
-                nodesRi
+              MuiListItem()(
+                MuiListItemText()(
+                  nodesRi.textQuery.fold {
+                    Messages( MsgCodes.`No.tags.here` )
+                  } { query =>
+                    Messages( MsgCodes.`No.tags.found.for.1.query`, query )
+                  }
+                )
+              )
+            } else {
+              nodesRi
                 .resp
                 .iterator
                 .toVdomArray { mnode =>
@@ -123,51 +141,61 @@ class NodesFoundR(
                       selected        = props.selectedIds contains mnode.props.nodeId
                     )
                   }( nodeFoundR.component.withKey(mnode.props.nodeId)(_) ): VdomNode
-                },
+                }
+            }
+          },
+
+          // Рендер крутилки ожидания.
+          props.req.renderPending { _ =>
+            MuiListItem()(
+              MuiCircularProgress(
+                new MuiCircularProgressProps {
+                  override val variant = MuiProgressVariants.indeterminate
+                  override val size = 50
+                }
+              )
+            )
+          },
+
+          // Рендер ошибки.
+          props.req.renderFailed { ex =>
+            val emptyProps = MuiListItemProps.empty
+            val errHint = Option(ex.getMessage)
+              .getOrElse(ex.getClass.getName)
+            VdomArray(
+              // Рендер технических подробностей ошибки.
+              MuiToolTip.component.withKey("e")(
+                // TODO Надо tooltip разнести над всем рядом, а не только над иконкой.
+                new MuiToolTipProps {
+                  override val title = errHint
+                  override val placement = MuiToolTipPlacements.Top
+                }
+              )(
+                MuiListItem(emptyProps)(
+                  MuiListItemText()(
+                    Messages( MsgCodes.`Something.gone.wrong` )
+                  ),
+                  MuiListItemIcon()(
+
+                    Mui.SvgIcons.ErrorOutline()()
+                  )
+                )
+              ),
+              // Кнопка reload для повторной загрузки списка.
+              MuiListItem.component.withKey("r")(emptyProps)(
+                MuiIconButton(
+                  new MuiIconButtonProps {
+                    override val onClick = _onRefreshBtnClickF
+                  }
+                )(
+                  Mui.SvgIcons.Refresh()()
+                )
               )
             )
           }
-        },
 
-        // Рендер крутилки ожидания.
-        props.req.renderPending { _ =>
-          <.div(
-            _tagRowCss,
-            MuiCircularProgress(
-              new MuiCircularProgressProps {
-                override val variant = MuiProgressVariants.indeterminate
-                override val size = 50
-              }
-            )
-          )
-        },
-
-        // Рендер ошибки.
-        props.req.renderFailed { ex =>
-          // TODO Портировать на material-ui.
-          // TODO При клике по ошибке надо открывать диалог с техническими подробностями и описанием ошибки?
-          VdomArray(
-            <.div(
-              ^.key := "m",
-              ^.title := ex.getMessage,
-              ^.`class` := Css.Colors.RED,
-              _tagRowCss,
-              Messages( MsgCodes.`Something.gone.wrong` )
-            ),
-            // Кнопка reload для повторной загрузки списка.
-            MuiButton.component.withKey("r")(
-              new MuiButtonProps {
-                override val variant = MuiButtonVariants.fab
-                override val onClick = _onRefreshBtnClickF
-                override val color = MuiColorTypes.primary
-              }
-            )(
-              Mui.SvgIcons.Refresh()()
-            )
-          )
-        }
-
-      ) // nodesList
+        ) // nodesList
+      )
     }
 
   }

@@ -12,9 +12,9 @@ import scala.scalajs.js
   */
 object MuiListItemIcon {
 
-  val component = JsComponent[js.Object, Children.Varargs, Null](Mui.ListItemIcon)
+  val component = JsComponent[MuiListItemIconProps, Children.Varargs, Null](Mui.ListItemIcon)
 
-  def apply(props: MuiListItemIconProps = new MuiListItemIconProps {})(children: VdomNode*) =
+  def apply(props: MuiListItemIconProps = MuiListItemIconProps.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -23,3 +23,4 @@ object MuiListItemIcon {
 trait MuiListItemIconProps extends js.Object {
   val classes: js.UndefOr[js.Object] = js.undefined
 }
+object MuiListItemIconProps extends MuiPropsBaseStatic[MuiListItemIconProps]

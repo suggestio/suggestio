@@ -8,12 +8,12 @@ import io.suggest.css.CssR
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.hdr.{MHeaderStates, MenuOpenClose, SearchOpenClose}
-import io.suggest.sc.m.search.MScSearch
+import io.suggest.sc.m.search.{MScSearch, MScSearchText}
 import io.suggest.sc.styl.{GetScCssF, ScCss}
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr.HeaderR
 import io.suggest.sc.v.inx.WelcomeR
-import io.suggest.sc.v.search.{NodesFoundR, SearchR}
+import io.suggest.sc.v.search.{NodesFoundR, STextR, SearchR}
 import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -33,6 +33,7 @@ import scalacss.ScalaCssReact._
 class ScRootR (
                 val gridR       : GridR,
                 searchR         : SearchR,
+                sTextR          : STextR,
                 val headerR     : HeaderR,
                 val menuR       : MenuR,
                 val enterLkRowR : EnterLkRowR,
@@ -53,6 +54,7 @@ class ScRootR (
   import editAdR.EditAdRPropsValFastEq
   import aboutSioR.AboutSioRPropsValFastEq
   import welcomeR.WelcomeRPropsValFastEq
+  import MScSearchText.MScSearchTextFastEq
 
 
   type Props = ModelProxy[MScRoot]
@@ -73,7 +75,8 @@ class ScRootR (
                                     dbgUnsafeOffsetsOptC: ReactConnectProxy[unsafeScreenAreaOffsetR.Props_t],
                                     isRenderScC         : ReactConnectProxy[Some[Boolean]],
                                     searchNodesFoundC   : ReactConnectProxy[nodesFoundR.Props_t],
-                                    colorsC             : ReactConnectProxy[MColors]
+                                    colorsC             : ReactConnectProxy[MColors],
+                                    searchTextC         : ReactConnectProxy[MScSearchText]
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -110,12 +113,15 @@ class ScRootR (
         s.gridPropsOptC { gridR.apply }
       )
 
+      // Поисковое текстовое поле:
+      val searchTextField = s.searchTextC { sTextR.apply }
       // Панель поиска: контент, зависимый от корневой модели:
       val searchGeoNodesFound = s.searchNodesFoundC { nodesFoundR.apply }
 
       // Непосредственно, панель поиска:
       val searchBarBody = s.searchC {
         searchR(_)(
+          searchTextField,
           searchGeoNodesFound
         )
       }
@@ -367,7 +373,11 @@ class ScRootR (
         colorsC = propsProxy.connect { mroot =>
           mroot.index.resp
             .fold(ScCss.COLORS_DFLT)(_.colors)
-        }( FastEqUtil.AnyRefFastEq )
+        }( FastEqUtil.AnyRefFastEq ),
+
+        searchTextC = propsProxy.connect { mroot =>
+          mroot.index.search.text
+        }
 
       )
     }

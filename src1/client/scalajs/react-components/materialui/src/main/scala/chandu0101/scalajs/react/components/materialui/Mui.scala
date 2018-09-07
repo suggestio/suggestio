@@ -13,6 +13,7 @@ object Mui {
       extends js.Any
   @js.native @JSImport("@material-ui/core/BottomNavigation/BottomNavigationItem", JSImport.Default) object BottomNavigationItem
       extends js.Any
+  @js.native @JSImport("@material-ui/core/Button", JSImport.Default) object Button extends js.Any
   @js.native @JSImport("@material-ui/core/Card", JSImport.Default) object Card extends js.Any
   @js.native @JSImport("@material-ui/core/Card/CardActions", JSImport.Default) object CardActions
       extends js.Any
@@ -33,15 +34,20 @@ object Mui {
   @js.native @JSImport("@material-ui/core/Drawer", JSImport.Default) object Drawer         extends js.Any
   @js.native @JSImport("@material-ui/core/DropDownMenu", JSImport.Default) object DropDownMenu
       extends js.Any
-  @js.native @JSImport("@material-ui/core/Button", JSImport.Default) object FlatButton extends js.Any
   @js.native @JSImport("@material-ui/core/FloatingActionButton", JSImport.Default) object FloatingActionButton
       extends js.Any
   @js.native @JSImport("@material-ui/core/FontIcon", JSImport.Default) object FontIcon extends js.Any
+  @js.native @JSImport("@material-ui/core/FormControl", JSImport.Default) object FormControl extends js.Any
   @js.native @JSImport("@material-ui/core/GridList", JSImport.Default) object GridList extends js.Any
   @js.native @JSImport("@material-ui/core/GridList/GridTile", JSImport.Default) object GridTile
       extends js.Any
   @js.native @JSImport("@material-ui/core/IconButton", JSImport.Default) object IconButton extends js.Any
   @js.native @JSImport("@material-ui/core/IconMenu", JSImport.Default) object IconMenu extends js.Any
+
+  @js.native @JSImport("@material-ui/core/Input", JSImport.Default) object Input extends js.Any
+  @js.native @JSImport("@material-ui/core/InputAdornment", JSImport.Default) object InputAdornment extends js.Any
+  @js.native @JSImport("@material-ui/core/InputLabel", JSImport.Default) object InputLabel extends js.Any
+
   @js.native @JSImport("@material-ui/core/LinearProgress", JSImport.Default) object LinearProgress extends js.Any
 
   @js.native @JSImport("@material-ui/core/List", JSImport.Default) object List extends js.Any
@@ -102,8 +108,8 @@ object Mui {
       extends js.Any
   @js.native @JSImport("@material-ui/core/Toolbar/ToolbarSeparator", JSImport.Default) object ToolbarSeparator
       extends js.Any
-  @js.native @JSImport("@material-ui/core/Toolbar/ToolbarTitle", JSImport.Default) object ToolbarTitle
-      extends js.Any
+  @js.native @JSImport("@material-ui/core/Toolbar/ToolbarTitle", JSImport.Default) object ToolbarTitle extends js.Any
+  @js.native @JSImport("@material-ui/core/Tooltip", JSImport.Default) object Tooltip extends js.Any
   @js.native @JSImport("@material-ui/core/styles", JSImport.Default) object Styles extends MuiStyles
   val SvgIcons = MuiSvgIcons
 }

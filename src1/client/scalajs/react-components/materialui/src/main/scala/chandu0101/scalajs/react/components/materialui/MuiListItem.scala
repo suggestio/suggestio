@@ -11,10 +11,10 @@ import scala.scalajs.js.`|`
 
 object MuiListItem {
 
-  val component = JsComponent[js.Object, Children.Varargs, Null](Mui.ListItem)
+  val component = JsComponent[MuiListItemProps, Children.Varargs, Null](Mui.ListItem)
 
   /** @param children Children passed into the `ListItem`. */
-  def apply(props: MuiListItemProps = new MuiListItemProps {})(children: VdomNode*) =
+  def apply(props: MuiListItemProps = MuiListItemProps.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -32,6 +32,7 @@ trait MuiListItemProps extends MuiPropsBase {
   val component:                   js.UndefOr[String | React.Element]                 = js.undefined
   val ContainerComponent:          js.UndefOr[String | React.Element]                 = js.undefined
 }
+object MuiListItemProps extends MuiPropsBaseStatic[MuiListItemProps]
 
 
 @js.native

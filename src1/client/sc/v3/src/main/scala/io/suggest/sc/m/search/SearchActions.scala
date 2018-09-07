@@ -25,9 +25,6 @@ case class NodeRowClick(nodeId: String) extends ISearchAction
 case class NodesScroll(scrollTop: Double, scrollHeight: Int) extends ISearchAction
 
 
-/** Изменения фокуса на input'е текстового поиска. */
-case class SearchTextFocus(focused: Boolean) extends ISearchAction
-
 /** Происходит ввод текста в поисковый input. */
 case class SearchTextChanged(newText: String, noWait: Boolean = false) extends ISearchAction
 

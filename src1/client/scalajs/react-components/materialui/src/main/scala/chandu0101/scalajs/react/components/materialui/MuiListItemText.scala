@@ -13,7 +13,7 @@ import scala.scalajs.js
   */
 object MuiListItemText {
 
-  val component = JsComponent[js.Object, Children.Varargs, Null](Mui.ListItemText)
+  val component = JsComponent[MuiListItemTextProps, Children.Varargs, Null](Mui.ListItemText)
 
   def apply(props: MuiListItemTextProps = new MuiListItemTextProps {})(children: VdomNode*) =
     component(props)(children: _*)
@@ -22,7 +22,6 @@ object MuiListItemText {
 
 
 trait MuiListItemTextProps extends js.Object {
-
   val classes: js.UndefOr[MuiListItemTextClasses] = js.undefined
   val disableTypography: js.UndefOr[Boolean] = js.undefined
   val inset: js.UndefOr[Boolean] = js.undefined
@@ -30,17 +29,15 @@ trait MuiListItemTextProps extends js.Object {
   val primaryTypographyProps: js.UndefOr[js.Object] = js.undefined
   val secondary: js.UndefOr[React.Node] = js.undefined
   val secondaryTypographyProps: js.UndefOr[js.Object] = js.undefined
-
 }
+object MuiListItemTextProps extends MuiPropsBaseStatic[MuiListItemTextProps]
 
 
 trait MuiListItemTextClasses extends js.Object {
-
   val root: js.UndefOr[String] = js.undefined
   val inset: js.UndefOr[String] = js.undefined
   val dense: js.UndefOr[String] = js.undefined
   val primary: js.UndefOr[String] = js.undefined
   val secondary: js.UndefOr[String] = js.undefined
   val textDense: js.UndefOr[String] = js.undefined
-
 }

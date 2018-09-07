@@ -1,5 +1,7 @@
 package chandu0101.scalajs.react.components
 
+import scala.scalajs.js.|
+
 package object materialui {
   type RowId    = Int
   type ColumnId = Int
@@ -13,4 +15,6 @@ package object materialui {
   type TouchTapEventH  = raw.TouchTapEvent[org.scalajs.dom.html.Element]
   type TouchTapEventI  = raw.TouchTapEvent[org.scalajs.dom.html.Input]
   type TouchTapEventTA = raw.TouchTapEvent[org.scalajs.dom.html.TextArea]
+
+  type MuiInputValue_t = String | Double | Boolean
 }

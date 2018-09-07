@@ -337,9 +337,14 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
 
   override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
     val t0 = ctx.value0.index.search.geo
-    val t2 = t0.withFound(
-      t0.found.withReq(
-        t0.found.req.fail(ex)
+    val req2 = t0.found.req.fail(ex)
+    val t2 = t0.copy(
+      found = t0.found.withReq( req2 ),
+      // При ошибках надо обновлять css, иначе ширина может быть неверной.
+      css = GeoTabAh._mkSearchCss(
+        req             = req2,
+        screenInfo      = getScCssF().args.screenInfo,
+        searchCssOrNull = t0.css
       )
     )
     _withGeo(ctx, t2)

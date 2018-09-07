@@ -71,7 +71,6 @@ Show.details=Показать подробности
 Show=Показать
 No.records=Нет записей
 Nothing.found=Ничего не найдено
-Quick.search.for.offers=Быстрый поиск по предложениям
 Provider=Провайдер
 Page=Страница
 Signup.confirmation=Подтверждение регистрации
@@ -990,4 +989,6 @@ Show.ad.opened=Отображать карточку развёрнутой?
 
 On=Вкл
 Off=Выкл
+
+Search.start.typing=Я ищу...
 

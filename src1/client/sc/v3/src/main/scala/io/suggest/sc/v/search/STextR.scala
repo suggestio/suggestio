@@ -1,16 +1,22 @@
 package io.suggest.sc.v.search
 
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiFormControl, MuiIconButton, MuiIconButtonProps, MuiInput, MuiInputAdornment, MuiInputAdornmentPositions, MuiInputAdornmentProps, MuiInputProps, MuiInputPropsMargins}
 import diode.react.ModelProxy
+import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.m.search.{MScSearchText, SearchTextChanged, SearchTextFocus}
+import io.suggest.sc.m.search.{MScSearchText, SearchTextChanged}
 import io.suggest.sc.styl.GetScCssF
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ReactEventFromInput, ScalaComponent}
+import org.scalajs.dom.raw.HTMLInputElement
 import scalacss.ScalaCssReact._
+
+import scala.scalajs.js
+import scala.scalajs.js.|
 
 /**
   * Suggest.io
@@ -32,55 +38,75 @@ class STextR( getScCssF: GetScCssF ) {
       val text = e.target.value
       dispatchOnProxyScopeCB($, SearchTextChanged(text))
     }
+    private val _onInputJsF = ReactCommonUtil.cbFun1ToJsCb( _onInput )
 
-    private def _onFocusChange(focused: Boolean): Callback =
-      dispatchOnProxyScopeCB($, SearchTextFocus(focused))
 
-    private def _onClearClick: Callback =
-      dispatchOnProxyScopeCB($, SearchTextChanged("", noWait = true))
+    /** Callback для клика по кнопке очистики поискового поля. */
+    private def _onClearClick(e: ReactEvent): Callback = {
+      var cb = dispatchOnProxyScopeCB($, SearchTextChanged("", noWait = true))
+      // focus на поле надо:
+      if (_htmlInputRef.nonEmpty) {
+        cb = cb >> Callback {
+          for (htmlInput <- _htmlInputRef) {
+            htmlInput.focus()
+          }
+        }
+      }
+      // И вернуть итоговый callback:
+      cb
+    }
+    lazy val _onClearClickJsF = ReactCommonUtil.cbFun1ToJsCb( _onClearClick )
 
+
+    /** Инстанс нативного элемента, чтобы фокусом отсюда управлять. */
+    private var _htmlInputRef: Option[HTMLInputElement] = None
+    /** Callback для перехвата ref'а DOM input-ноды. */
+    private lazy val _htmlInputRefHandlerJsF: js.Function1[HTMLInputElement, Unit] = {
+      el: HTMLInputElement =>
+        _htmlInputRef = Some( el )
+    }
 
     def render(propsProxy: Props): VdomElement = {
       val scCss = getScCssF()
-      val CSS = scCss.Search.TextBar
 
       val p = propsProxy.value
+      val inputId = "search-input-text"
+
+      // Сборка кнопки очистки поискового поля.
+      val clearBtn = MuiInputAdornment(
+        new MuiInputAdornmentProps {
+          override val position = MuiInputAdornmentPositions.end
+        }
+      )(
+        MuiIconButton(
+          new MuiIconButtonProps {
+            override val onClick = _onClearClickJsF
+          }
+        )(
+          Mui.SvgIcons.Backspace()()
+        )
+      )
 
       // Рендер текстового поля с input'ом.
       <.div(
         scCss.Search.TextBar.bar,
 
-        <.div(
-          CSS.Field.field,
-
-          // Рендерить __active, когда происходит ввод данных.
-          ReactCommonUtil.maybe(p.focused) {
-            CSS.Field.active
-          },
-
-          <.div(
-            CSS.Field.fieldWrapper,
-            <.input(
-              CSS.Field.input,
-              ^.placeholder := Messages( MsgCodes.`Quick.search.for.offers` ),
-              ^.onChange ==> _onInput,
-              ^.onFocus  --> _onFocusChange(true),
-              ^.onBlur   --> _onFocusChange(false),
-              ^.value     := p.query
-            )
+        MuiFormControl()(
+          MuiInput(
+            new MuiInputProps {
+              override val id = inputId
+              override val `type` = HtmlConstants.Input.text
+              override val onChange = _onInputJsF
+              override val placeholder = Messages( MsgCodes.`Search.start.typing` )
+              override val value = js.defined( p.query )
+              override val margin = if (p.query.length > 15) MuiInputPropsMargins.dense else MuiInputPropsMargins.none
+              // clear-кнопка:
+              override val endAdornment = clearBtn.rawNode
+              override val inputRef: js.UndefOr[js.Function1[HTMLInputElement, _] | js.Object] =
+                js.defined( _htmlInputRefHandlerJsF )
+            }
           )
-
-        ),
-
-        ReactCommonUtil.maybe(p.query.nonEmpty) {
-          <.span(
-            CSS.clearBtn,
-            ^.title := Messages( MsgCodes.`Clear` ),
-            ^.onClick --> _onClearClick,
-            "x"
-          )
-        }
-
+        )
       )
     }
 

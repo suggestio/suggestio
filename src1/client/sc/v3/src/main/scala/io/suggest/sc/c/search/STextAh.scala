@@ -48,7 +48,7 @@ class STextAh[M](
       } else {
         // Что-то надо искать, запустить экшен поиска.
         val fx = SearchAh.reDoSearchFx( ignorePending = true )
-        updatedSilent(v2, fx)
+        updated(v2, fx)
       }
 
     } else {
@@ -101,16 +101,6 @@ class STextAh[M](
     // Сработал таймер запуска поисковых действий, связанных с возможным текстом в поле.
     case m: SearchTextDo =>
       _searchTextDo(value, m.timestamp)
-
-    // Сигнал о focus/blur от текстового поля.
-    case m: SearchTextFocus =>
-      val v0 = value
-      if (v0.focused !=* m.focused && v0.query.isEmpty) {
-        val v2 = v0.withFocused( m.focused )
-        updated( v2 )
-      } else {
-        noChange
-      }
 
   }
 

@@ -7,9 +7,9 @@ import scala.scalajs.js
 
 object MuiLinearProgress {
 
-  val component = JsComponent[js.Object, Children.None, Null](Mui.LinearProgress)
+  val component = JsComponent[MuiLinearProgressProps, Children.None, Null](Mui.LinearProgress)
 
-  def apply(props: MuiLinearProgressProps = new MuiLinearProgressProps {}) =
+  def apply(props: MuiLinearProgressProps = MuiLinearProgressProps.empty) =
     component(props)
 
 }
@@ -22,7 +22,10 @@ trait MuiLinearProgressProps extends MuiPropsBase {
   val value: js.UndefOr[Double]                     = js.undefined
   val valueBuffer: js.UndefOr[Double]               = js.undefined
   val color: js.UndefOr[String]                     = js.undefined
+  val variant: js.UndefOr[String]                   = js.undefined
 }
+object MuiLinearProgressProps extends MuiPropsBaseStatic[MuiLinearProgressProps]
+
 
 /** JSON для [[MuiLinearProgressProps]].classes. */
 trait MuiLinearProgressClasses extends js.Object {
