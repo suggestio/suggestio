@@ -65,9 +65,10 @@ class NodeFoundR(getScCssF: GetScCssF) {
   class Backend($: BackendScope[Props, Props_t]) {
 
     /** Реакция на клик по одному элементу (ряд-узел). */
-    private def _onNodeRowClick(nodeId: String): Callback = {
+    private def _onNodeRowClick(nodeId: String)(e: ReactEvent): Callback =
       dispatchOnProxyScopeCB($, NodeRowClick(nodeId) )
-    }
+    private def _onNodeRowClickJsF(nodeId: String) =
+      ReactCommonUtil.cbFun1ToJsCb( _onNodeRowClick(nodeId) )
 
     /** Рендер вёрстки компонента. */
     def render(propsProxy: Props): VdomElement = {
@@ -112,9 +113,7 @@ class NodeFoundR(getScCssF: GetScCssF) {
         new MuiListItemProps {
           override val classes = listItemCss
           override val button = true
-          override val onClick = js.defined { _: ReactEvent =>
-            _onNodeRowClick(p.nodeId).runNow()
-          }
+          override val onClick = _onNodeRowClickJsF( p.nodeId )
           override val selected = props.selected
           // Если есть картинка, то сдвиги справа-слева лучше убрать
           override val disableGutters = p.icon.nonEmpty
@@ -145,10 +144,8 @@ class NodeFoundR(getScCssF: GetScCssF) {
             }
           MuiListItemText(
             new MuiListItemTextProps {
-              override val classes = js.defined {
-                theClasses
-              }
-              override val primary = js.defined( nodeName )
+              override val classes   = theClasses
+              override val primary   = js.defined( nodeName )
               override val secondary = text2ndOpt.toUndef
             }
           )()

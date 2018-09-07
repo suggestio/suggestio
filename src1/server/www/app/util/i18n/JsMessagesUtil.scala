@@ -240,6 +240,8 @@ class JsMessagesUtil @Inject() (
       MC.`On` ::
       MC.`Off` ::
       MC.`Clear` ::
+      MC.`Something.gone.wrong` ::
+      MC.`Error` ::
       Nil
   }
 

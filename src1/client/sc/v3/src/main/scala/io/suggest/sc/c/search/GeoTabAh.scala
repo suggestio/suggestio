@@ -337,9 +337,9 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
 
   override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
     val t0 = ctx.value0.index.search.geo
-    val t2 = t0.withMapInit(
-      t0.mapInit.withRcvrs(
-        t0.mapInit.rcvrs.fail(ex)
+    val t2 = t0.withFound(
+      t0.found.withReq(
+        t0.found.req.fail(ex)
       )
     )
     _withGeo(ctx, t2)

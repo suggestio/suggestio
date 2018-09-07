@@ -74,8 +74,9 @@ class NodesFoundR(
     }
 
     /** Реакция по кнопке сброса списка. */
-    private def _onRefreshBtnClick: Callback =
+    private def _onRefreshBtnClick(e: ReactEvent): Callback =
       dispatchOnProxyScopeCB($, DoNodesSearch(clear = true, ignorePending = true) )
+    private lazy val _onRefreshBtnClickF = ReactCommonUtil.cbFun1ToJsCb( _onRefreshBtnClick )
 
 
     def render(propsProxy: Props): VdomElement = {
@@ -135,7 +136,7 @@ class NodesFoundR(
             MuiCircularProgress(
               new MuiCircularProgressProps {
                 override val variant = MuiProgressVariants.indeterminate
-                override val size = js.defined( 50 )
+                override val size = 50
               }
             )
           )
@@ -144,29 +145,24 @@ class NodesFoundR(
         // Рендер ошибки.
         props.req.renderFailed { ex =>
           // TODO Портировать на material-ui.
-          // TODO Добавить кнопку reload для повторной загрузки списка.
-
+          // TODO При клике по ошибке надо открывать диалог с техническими подробностями и описанием ошибки?
           VdomArray(
             <.div(
               ^.key := "m",
+              ^.title := ex.getMessage,
               ^.`class` := Css.Colors.RED,
               _tagRowCss,
-              ex.getMessage
+              Messages( MsgCodes.`Something.gone.wrong` )
             ),
-            <.div(
-              // При клике по ошибке надо открывать диалог с техническими подробностями и описанием ошибки.
-              Mui.SvgIcons.ErrorOutline()(),
-              MuiButton(
-                new MuiButtonProps {
-                  override val variant = MuiButtonVariants.fab
-                  override val onClick: UndefOr[js.Function1[ReactEvent, Unit]] = js.defined { _: ReactEvent =>
-                    _onRefreshBtnClick.runNow()
-                  }
-                  override val color = MuiColorTypes.primary
-                }
-              )(
-                Mui.SvgIcons.Refresh()()
-              )
+            // Кнопка reload для повторной загрузки списка.
+            MuiButton.component.withKey("r")(
+              new MuiButtonProps {
+                override val variant = MuiButtonVariants.fab
+                override val onClick = _onRefreshBtnClickF
+                override val color = MuiColorTypes.primary
+              }
+            )(
+              Mui.SvgIcons.Refresh()()
             )
           )
         }
