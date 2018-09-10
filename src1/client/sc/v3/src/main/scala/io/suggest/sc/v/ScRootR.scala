@@ -8,7 +8,7 @@ import io.suggest.css.CssR
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.hdr.{MHeaderStates, MenuOpenClose, SearchOpenClose}
-import io.suggest.sc.m.search.{MScSearch, MScSearchText}
+import io.suggest.sc.m.search.MScSearch
 import io.suggest.sc.styl.{GetScCssF, ScCss}
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr.HeaderR
@@ -23,8 +23,6 @@ import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.v.menu._
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import scalacss.ScalaCssReact._
-
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io

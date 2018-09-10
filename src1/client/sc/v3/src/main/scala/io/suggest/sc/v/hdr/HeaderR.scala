@@ -1,7 +1,7 @@
 package io.suggest.sc.v.hdr
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.index.MSc3IndexResp

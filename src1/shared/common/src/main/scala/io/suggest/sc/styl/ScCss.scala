@@ -421,9 +421,7 @@ case class ScCss( args: IScCssArgs )
     /** Поля текстового поиска и контейнер оной. */
     object TextBar {
 
-      private val _BAR = _SM_ + "search-bar"
-
-      val bar       = _styleAddClass( _BAR )
+      val bar       = _styleAddClass( _SM_ + "search-bar" )
 
     }
 
@@ -435,18 +433,9 @@ case class ScCss( args: IScCssArgs )
 
       private val TAB_BODY_HEIGHT    = height( TAB_BODY_HEIGHT_PX.px )
 
-      /** Форсировать скроллбар во внутреннем контейнере, если этого требует окружение. */
-      private val TAB_BODY_CONTENT_HEIGHT = if (ScCss.needOverrideScroll) {
-        height( (TAB_BODY_HEIGHT_PX + 1).px )
-      } else {
-        TAB_BODY_HEIGHT
-      }
-
 
       /** Стили содержимого вкладки с гео-картой. */
       object MapTab {
-
-        private val OUTER = _SM_ + "categories"
 
         /** Стиль внешнего контейнера. */
         val outer = style(
@@ -461,10 +450,18 @@ case class ScCss( args: IScCssArgs )
           TAB_BODY_HEIGHT
         )
 
-        val inner = style(
-          addClassName( OUTER + "_content" ),
-          TAB_BODY_CONTENT_HEIGHT
-        )
+        val inner = {
+          /** Форсировать скроллбар во внутреннем контейнере, если этого требует окружение. */
+          val TAB_BODY_CONTENT_HEIGHT = if (ScCss.needOverrideScroll)
+            height( (TAB_BODY_HEIGHT_PX + 1).px )
+          else
+            TAB_BODY_HEIGHT
+          val OUTER = _SM_ + "categories"
+          style(
+            addClassName( OUTER + "_content" ),
+            TAB_BODY_CONTENT_HEIGHT
+          )
+        }
 
         /** Стиль контейнера карты. Контейнер порождается js'кой гео-карты, а не нами. */
         val geomap = {
@@ -489,8 +486,6 @@ case class ScCss( args: IScCssArgs )
       /** Стили для списка найденных узлов (тегов и т.д.). */
       object NodesFound {
 
-        private val NODES_LIST = "shops-list"
-
         /** Горизонтальный прогресс-бар запроса. */
         val linearProgress = {
           val h = 5.px
@@ -501,7 +496,7 @@ case class ScCss( args: IScCssArgs )
         }
 
         /** Список тегов. */
-        val listDiv = _styleAddClass( NODES_LIST )
+        val listDiv = _styleAddClass( "shops-list" )
 
         /** Стиль иконки узла в списке узлов. */
         val icon = style(
@@ -509,22 +504,6 @@ case class ScCss( args: IScCssArgs )
           marginLeft(6.px),
           maxHeight(30.px),
           maxWidth(140.px)
-        )
-
-        /** Стиль ряда, когда нет иконки в ряду. */
-        val rowHasIcon = style(
-          textAlign.left
-        )
-        val rowNoIcon = style(
-          textAlign.center
-        )
-
-        val selected = _styleAddClass( __ + "selected" )
-
-        val distance = style(
-          fontSize.smaller,
-          float.right,
-          paddingTop(6.px)
         )
 
       }

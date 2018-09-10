@@ -749,6 +749,8 @@ object MuiSvgIcons {
   object Archive extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Backspace", JSImport.Default)
   object Backspace extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BackspaceOutlined", JSImport.Default)
+  object BackspaceOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Block", JSImport.Default)
   object Block extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Clear", JSImport.Default)

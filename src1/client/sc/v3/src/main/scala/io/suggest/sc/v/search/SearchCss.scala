@@ -28,7 +28,6 @@ object SearchCss {
 case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
 
   import dsl._
-  import SearchCss._
 
 
   private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - args.screenInfo.unsafeOffsets.top
