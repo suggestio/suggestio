@@ -189,8 +189,10 @@ object MuiSvgIcons {
   object ActionHelpOutline extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/help", JSImport.Default)
   object ActionHelp extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/highlight-off", JSImport.Default)
-  object ActionHighlightOff extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/HighlightOff", JSImport.Default)
+  object HighlightOff extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/HighlightOffOutlined", JSImport.Default)
+  object HighlightOffOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/history", JSImport.Default)
   object ActionHistory extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/home", JSImport.Default)
@@ -1064,8 +1066,8 @@ object MuiSvgIcons {
   object EditorFormatUnderlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/functions", JSImport.Default)
   object EditorFunctions extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/editor/highlight", JSImport.Default)
-  object EditorHighlight extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Highlight", JSImport.Default)
+  object Highlight extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/insert-chart", JSImport.Default)
   object EditorInsertChart extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/editor/insert-comment", JSImport.Default)

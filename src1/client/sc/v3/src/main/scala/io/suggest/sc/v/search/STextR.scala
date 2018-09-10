@@ -83,7 +83,7 @@ class STextR( getScCssF: GetScCssF ) {
               override val onClick = _onClearClickJsF
             }
           )(
-            Mui.SvgIcons.BackspaceOutlined()()
+            Mui.SvgIcons.HighlightOffOutlined()()
           )
         )
         clearBtn.rawNode
@@ -107,7 +107,9 @@ class STextR( getScCssF: GetScCssF ) {
                 js.defined( _htmlInputRefHandlerJsF )
             }
           )
+
         )
+
       )
     }
 

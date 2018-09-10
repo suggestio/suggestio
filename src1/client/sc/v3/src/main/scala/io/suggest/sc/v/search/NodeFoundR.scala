@@ -15,16 +15,18 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponen
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemIconClasses, MuiListItemIconProps, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps}
 import io.suggest.common.empty.OptionUtil
 import ReactCommonUtil.Implicits._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.sc.styl.GetScCssF
+import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.sjs.common.xhr.Xhr
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -104,10 +106,18 @@ class NodeFoundR(getScCssF: GetScCssF) {
 
       val p = props.node.props
 
-      val listItemCss = new MuiListItemClasses {
-        override val root = props.searchCss.NodesFound.rowItemBgF(p.nodeId).htmlClass
-      }
       val isTag = p.ntype ==* MNodeTypes.Tag
+
+      var rowRootCssAcc = props.searchCss.NodesFound.rowItemBgF(p.nodeId) :: Nil
+      if (isTag)
+        rowRootCssAcc ::= NodesCSS.tagRow
+      val rowRootCss = rowRootCssAcc
+        .map(_.htmlClass)
+        .mkString( HtmlConstants.SPACE )
+
+      val listItemCss = new MuiListItemClasses {
+        override val root = rowRootCss
+      }
 
       MuiListItem.component.withKey(p.nodeId)(
         new MuiListItemProps {
@@ -116,23 +126,30 @@ class NodeFoundR(getScCssF: GetScCssF) {
           override val onClick = _onNodeRowClickJsF( p.nodeId )
           override val selected = props.selected
           // Если есть картинка, то сдвиги справа-слева лучше убрать
-          override val disableGutters = p.icon.nonEmpty
+          //override val disableGutters = p.icon.nonEmpty
           override val dense = !isTag
         }
       )(
-        // Иконка узла, присланная сервером:
-        p.icon.whenDefinedEl { icon =>
-          MuiListItemIcon()(
-            <.img(
-              NodesCSS.icon,
-              ^.src := Xhr.mkAbsUrlIfPreferred( icon.url )
-            )
+        // Если тег, то имеет смысл выставить пометку, что это тег:
+        ReactCommonUtil.maybeEl( isTag ) {
+          MuiListItemIcon {
+            val cls = new MuiListItemIconClasses {
+              override val root = NodesCSS.tagRowIcon.htmlClass
+            }
+            new MuiListItemIconProps {
+              override val classes = cls
+            }
+          }(
+            Mui.SvgIcons.LocalOffer()()
           )
         },
 
         // Название узла
         p.hint.whenDefinedEl { nodeName =>
+          // Для тегов: они идут кашей, поэтому отступ между названием тега и иконкой уменьшаем.
+          val rootCss = JsOptionUtil.maybeDefined(isTag)( NodesCSS.tagRowText.htmlClass )
           val theClasses = new MuiListItemTextClasses {
+            override val root = rootCss
             override val primary = props.searchCss.NodesFound.rowTextPrimaryF(p.nodeId).htmlClass
             override val secondary = props.searchCss.NodesFound.rowTextSecondaryF(p.nodeId).htmlClass
           }
@@ -151,12 +168,16 @@ class NodeFoundR(getScCssF: GetScCssF) {
           )()
         },
 
-        // Если тег, то имеет смысл выставить пометку, что это тег:
-        ReactCommonUtil.maybeEl( isTag ) {
+        // Иконка узла, присланная сервером:
+        p.icon.whenDefinedNode { icon =>
           MuiListItemIcon()(
-            Mui.SvgIcons.LocalOffer()()
+            <.img(
+              NodesCSS.icon,
+              ^.src := Xhr.mkAbsUrlIfPreferred( icon.url )
+            )
           )
         }
+
       )
     }
 

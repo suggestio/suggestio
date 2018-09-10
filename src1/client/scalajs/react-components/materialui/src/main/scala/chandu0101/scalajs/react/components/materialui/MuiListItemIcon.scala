@@ -20,7 +20,14 @@ object MuiListItemIcon {
 }
 
 
+/** JSON для [[MuiListItem]] props. */
 trait MuiListItemIconProps extends js.Object {
-  val classes: js.UndefOr[js.Object] = js.undefined
+  val classes: js.UndefOr[MuiListItemIconClasses] = js.undefined
 }
 object MuiListItemIconProps extends MuiPropsBaseStatic[MuiListItemIconProps]
+
+
+/** JSON для [[MuiListItemIconProps.classes]]. */
+trait MuiListItemIconClasses extends js.Object {
+  val root: js.UndefOr[String] = js.undefined
+}

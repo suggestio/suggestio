@@ -421,7 +421,12 @@ case class ScCss( args: IScCssArgs )
     /** Поля текстового поиска и контейнер оной. */
     object TextBar {
 
-      val bar       = _styleAddClass( _SM_ + "search-bar" )
+      // TODO Статический стиль - унести в статику.
+      val bar = style(
+        addClassName( _SM_ + "search-bar" ),
+        // Равняем полосу input'а с полосой заголовка.
+        marginTop(4.px)
+      )
 
     }
 
@@ -504,6 +509,24 @@ case class ScCss( args: IScCssArgs )
           marginLeft(6.px),
           maxHeight(30.px),
           maxWidth(140.px)
+        )
+
+        /** Ряд тега. ruby для - вертикальной упаковки тегов. */
+        val tagRow = style(
+          display.rubyBaseContainer,
+          paddingBottom( 6.px )
+        )
+
+        val tagRowText = style(
+          paddingLeft( 8.px )
+        )
+
+        /** Иконка тега. */
+        val tagRowIcon = style(
+          fontSize(16.px),
+          verticalAlign.middle,
+          marginRight.initial,
+
         )
 
       }
