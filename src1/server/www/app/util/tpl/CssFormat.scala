@@ -1,5 +1,6 @@
 package util.tpl
 
+import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 
 /**
@@ -16,7 +17,9 @@ object CssFormat {
     cssClasses
       .toIterator
       .filter(!_.isEmpty)
-      .flatMap { cc => Seq(" ", cc) }
+      .flatMap { cc =>
+        HtmlConstants.SPACE :: cc :: Nil
+      }
   }
 
 

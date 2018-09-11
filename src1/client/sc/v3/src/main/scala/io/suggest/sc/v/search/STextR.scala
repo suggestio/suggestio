@@ -3,6 +3,7 @@ package io.suggest.sc.v.search
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiInput, MuiInputClasses, MuiInputProps, MuiInputPropsMargins}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
+import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
@@ -16,7 +17,7 @@ import org.scalajs.dom.raw.HTMLInputElement
 import scalacss.ScalaCssReact._
 
 import scala.scalajs.js
-import scala.scalajs.js.|
+import scala.scalajs.js.{UndefOr, |}
 
 /**
   * Suggest.io
@@ -102,19 +103,26 @@ class STextR( getScCssF: GetScCssF ) {
           },
 
           // Кнопка быстрой очистки поля.
-          ReactCommonUtil.maybeNode( p.query.nonEmpty ) {
+          MuiIconButton {
             val iconBtnCss = new MuiIconButtonClasses {
-              override val root = TextBarCSS.clearBtnRoot.htmlClass
-            }
-            MuiIconButton(
-              new MuiIconButtonProps {
-                override val classes = iconBtnCss
-                override val onClick = _onClearClickJsF
+              override val root = {
+                val visibility =
+                  if (p.query.isEmpty) Css.Display.INVISIBLE
+                  else Css.Display.VISIBLE
+                val acc = visibility ::
+                  TextBarCSS.clearBtnRoot.htmlClass ::
+                  Nil
+                acc.mkString( HtmlConstants.SPACE )
               }
-            )(
-              Mui.SvgIcons.HighlightOffOutlined()()
-            )
-          }
+            }
+            new MuiIconButtonProps {
+              override val classes = iconBtnCss
+              override val onClick = _onClearClickJsF
+              override val disableRipple = true
+            }
+          }(
+            Mui.SvgIcons.HighlightOffOutlined()()
+          )
 
         )
 

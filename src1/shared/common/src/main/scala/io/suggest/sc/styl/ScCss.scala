@@ -65,6 +65,9 @@ object ScCss {
 
   implicit def univEq: UnivEq[ScCss] = UnivEq.derive
 
+  /** Ширина текстового поля поиска. */
+  val SEARCH_INPUT_WIDTH_PX = 224
+
 }
 
 
@@ -436,12 +439,13 @@ case class ScCss( args: IScCssArgs )
 
       /** Стиль для div-обёртки вокруг input'а. */
       val inputRoot = style(
-        width( 216.px )
+        width( ScCss.SEARCH_INPUT_WIDTH_PX.px )
       )
 
+      /** Стили для кнопки очистки search-поля. */
       val clearBtnRoot = style(
         position.absolute,
-        right(0.px),
+        left( (ScCss.SEARCH_INPUT_WIDTH_PX - 4).px),
         top(-6.px)
       )
 
