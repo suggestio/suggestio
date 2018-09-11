@@ -1,5 +1,6 @@
 package io.suggest.sc.v.search
 
+import io.suggest.color.MColorData
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.sc.styl.ScScalaCssDefaults._
 import io.suggest.sc.m.search.MSearchCssProps
@@ -98,13 +99,24 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
       }
     }
 
+    private def _colorTransparent(mcd: MColorData, transparent: Double) = {
+      val rgb = mcd.getRgb
+      val colorScss = rgba(
+        r = rgb.red,
+        g = rgb.green,
+        b = rgb.blue,
+        a = transparent
+      )
+      color( colorScss ).important
+    }
+
     /** Стиль переднего плана одноу узла. */
     val rowTextPrimaryF = styleF(nodeIdsDomain) { nodeId =>
       val nodeProps = args.nodesMap(nodeId)
       nodeProps.colors.fg.whenDefinedStyleS { mcd =>
         styleS(
           // "0xDD" - 0.87 alpha
-          color( Color(mcd.hexCode + "DD") ).important
+          _colorTransparent( mcd, 0.87 )
         )
       }
     }
@@ -114,7 +126,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
       nodeProps.colors.fg.whenDefinedStyleS { mcd =>
         styleS(
           // "0x89" - 0.54 alpha
-          color( Color(mcd.hexCode + "89") ).important
+          _colorTransparent( mcd, 0.54 )
         )
       }
     }

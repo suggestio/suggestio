@@ -1,25 +1,26 @@
 package io.suggest.color
 
-import java.awt.Color
-
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords3d
+import io.suggest.common.html.HtmlConstants
 import io.suggest.err.ErrorConstants
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-
 import scalaz.{Validation, ValidationNel}
 import scalaz.syntax.apply._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 06.10.17 16:51
   * Description: Модель RGB-цвета в виде int-триплета.
+  * Поле alpha добавлено позже.
   */
 
 /** Цвет-точка в 3-мерном пространстве цветов RGB. */
-case class MRgb(red: Int, green: Int, blue: Int) {
+case class MRgb(red: Int, green: Int, blue: Int, alpha: Option[Double] = None) {
 
   def toCoord3d = MCoords3d(x = red, y = green, z = blue)
 
@@ -32,6 +33,7 @@ object MRgb {
     val RED_FN    = "r"
     val GREEN_FN  = "g"
     val BLUE_FN   = "b"
+    val ALPHA_FN  = "a"
   }
 
   /** Поддержка play-json. */
@@ -40,28 +42,52 @@ object MRgb {
     (
       (__ \ F.RED_FN).format[Int] and
       (__ \ F.GREEN_FN).format[Int] and
-      (__ \ F.BLUE_FN).format[Int]
+      (__ \ F.BLUE_FN).format[Int] and
+      (__ \ F.ALPHA_FN).formatNullable[Double]
     )(apply, unlift(unapply))
   }
 
 
   /**
     * Парсер из hex в [[MRgb]].
-    * TODO И пока что он зависим от JVM...
+    * Пока без поддержки RGBA-формата.
     *
     * @param colorStr hex-строка вида "FFAA33" или "#FFAA33".
     * @return Инстанс RGB.
     *         Exception, если не удалось строку осилить.
     */
   def hex2rgb(colorStr: String): MRgb = {
-    // TODO Задейстсовать MColorData().hexCode?
-    val cs1 = if (colorStr startsWith "#")
-      colorStr
-    else
-      "#" + colorStr
-    // TODO Использовать Integer.parseInt("4F", 16)
-    val c = Color.decode(cs1)
-    MRgb(c.getRed, c.getGreen, c.getBlue)
+    // Если 8+ символов, то значит есть alpha-канал внутри hex-значения.
+    val EIGHT = 8
+    val ZERO = 0
+    val SIX = 6
+    val SIXTEEN = EIGHT * 2
+    //val isWithAlpha = colorStr.length >= EIGHT
+    // Если есть alpha-канал, то нужно дополнительно сдвигать все вычисления на байт.
+    //val rgbAlphaOffset = if (isWithAlpha) EIGHT else ZERO
+    // Убедиться, что # в начале нет, чтобы Integer.parseInt() не сломался.
+    var colorStrNoDiez =
+      if (colorStr startsWith HtmlConstants.DIEZ) colorStr.tail
+      else colorStr
+    // Укоротить до 6 символов, если требуется. Обычно это не нужно.
+    if (colorStrNoDiez.length > SIX)
+      colorStrNoDiez = colorStrNoDiez.substring(ZERO, SIX)
+    val intval = Integer.parseInt(colorStrNoDiez, SIXTEEN)
+    val i = intval.intValue()
+    def __extractShortInt(bitOffset: Int): Int = {
+      //val realBitOffset = rgbAlphaOffset + bitOffset
+      val i2 = if (bitOffset > ZERO) i >> bitOffset else i
+      i2 & 0xFF
+    }
+    MRgb(
+      red   = __extractShortInt(SIXTEEN),     // (i >> 16) & 0xFF,
+      green = __extractShortInt(EIGHT),       // (i >> 8) & 0xFF,
+      blue  = __extractShortInt(ZERO)         // i & 0xFF
+      // TODO Альфа-канал. parseInt() не может распарсить 4 байта, только 3.
+      /*alpha = OptionUtil.maybe(isWithAlpha)(
+        __extractShortInt(-EIGHT).toDouble / 255d
+      )*/
+    )
   }
 
 
@@ -77,7 +103,11 @@ object MRgb {
     (
       Validation.liftNel(mrgb.red)(isColorValid,    rgbErr("red")) |@|
       Validation.liftNel(mrgb.green)(isColorValid,  rgbErr("green")) |@|
-      Validation.liftNel(mrgb.blue)(isColorValid,   rgbErr("blue"))
+      Validation.liftNel(mrgb.blue)(isColorValid,   rgbErr("blue")) |@|
+      Validation.liftNel(mrgb.alpha)(
+        _.exists(a => a > 1.0 || a < 0d),
+        rgbErr("alpha")
+      )
     )( MRgb.apply )
     // Не ясно, нужна ли пересборка инстанса. С очевидной стороны -- не нужна,
     // а с другой: если вдруг появится новое поле в классе, но забыть дописать

@@ -114,6 +114,11 @@ case class MColorData(
 
   def hexCode = HtmlConstants.DIEZ + code
 
+  private val _parsedRgb = MRgb.hex2rgb( code )
+
+  /** Вернуть инстанс MRgb, даже если он отсутствует в полях. */
+  def getRgb: MRgb = rgb.getOrElse( _parsedRgb )
+
   def withCode(code: String)            = copy(code = code)
   def withRgb(rgb: Option[MRgb])        = copy(rgb = rgb)
   def withFreqPc(freqPc: Option[Int])   = copy(freqPc = freqPc)

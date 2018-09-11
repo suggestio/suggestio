@@ -93,8 +93,8 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
                   s0.geo.mapInit.state.copy(
                     centerInit = mgp,
                     centerReal = None,
+                    // Увеличить зум, чтобы приблизить.
                     zoom = 15
-                    // TODO выставлять ли zoom?
                   )
                 )
               )
