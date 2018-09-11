@@ -63,6 +63,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
 
     val crosshair = style(
       top( -(GEO_MAP_HEIGHT_PX / 2 + 12).px ),
+      width( 0.px )
     )
 
   }
