@@ -90,9 +90,10 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
             s0.withGeo(
               s0.geo.withMapInit(
                 s0.geo.mapInit.withState(
-                  s0.geo.mapInit.state.withCenterInitReal(
+                  s0.geo.mapInit.state.copy(
                     centerInit = mgp,
-                    centerReal = None
+                    centerReal = None,
+                    zoom = 15
                     // TODO выставлять ли zoom?
                   )
                 )

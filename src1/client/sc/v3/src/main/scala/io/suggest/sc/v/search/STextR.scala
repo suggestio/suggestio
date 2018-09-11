@@ -1,6 +1,6 @@
 package io.suggest.sc.v.search
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiFormControl, MuiIconButton, MuiIconButtonProps, MuiInput, MuiInputAdornment, MuiInputAdornmentPositions, MuiInputAdornmentProps, MuiInputProps, MuiInputPropsMargins}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiInput, MuiInputClasses, MuiInputProps, MuiInputPropsMargins}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
@@ -9,7 +9,6 @@ import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{MScSearchText, SearchTextChanged}
 import io.suggest.sc.styl.GetScCssF
-import io.suggest.sjs.common.empty.JsOptionUtil
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ReactEventFromInput, ScalaComponent}
@@ -71,42 +70,51 @@ class STextR( getScCssF: GetScCssF ) {
 
       val p = propsProxy.value
 
-      // Сборка кнопки очистки поискового поля.
-      val clearBtnUndef = JsOptionUtil.maybeDefined(p.query.nonEmpty) {
-        val clearBtn = MuiInputAdornment(
-          new MuiInputAdornmentProps {
-            override val position = MuiInputAdornmentPositions.end
+      // Рендер текстового поля с input'ом.
+      val TextBarCSS = scCss.Search.TextBar
+      val formCtlCss = new MuiFormControlClasses {
+        override val root = TextBarCSS.inputFormControl.htmlClass
+      }
+      <.div(
+        TextBarCSS.bar,
+
+        MuiFormControl(
+          new MuiFormControlProps {
+            override val classes = formCtlCss
           }
         )(
-          MuiIconButton(
-            new MuiIconButtonProps {
-              override val onClick = _onClearClickJsF
+          MuiInput {
+            val inputCss = new MuiInputClasses {
+              override val root = TextBarCSS.inputRoot.htmlClass
             }
-          )(
-            Mui.SvgIcons.HighlightOffOutlined()()
-          )
-        )
-        clearBtn.rawNode
-      }
-
-      // Рендер текстового поля с input'ом.
-      <.div(
-        scCss.Search.TextBar.bar,
-
-        MuiFormControl()(
-          MuiInput(
             new MuiInputProps {
+              override val classes = inputCss
               override val `type` = HtmlConstants.Input.text
               override val onChange = _onInputJsF
               override val placeholder = Messages( MsgCodes.`Search.start.typing` )
               override val value = js.defined( p.query )
               override val margin = if (p.query.length > 15) MuiInputPropsMargins.dense else MuiInputPropsMargins.none
               // clear-кнопка:
-              override val endAdornment = clearBtnUndef
+              //override val endAdornment = clearBtnUndef
               override val inputRef: js.UndefOr[js.Function1[HTMLInputElement, _] | js.Object] =
                 js.defined( _htmlInputRefHandlerJsF )
             }
-          )
+          },
+
+          // Кнопка быстрой очистки поля.
+          ReactCommonUtil.maybeNode( p.query.nonEmpty ) {
+            val iconBtnCss = new MuiIconButtonClasses {
+              override val root = TextBarCSS.clearBtnRoot.htmlClass
+            }
+            MuiIconButton(
+              new MuiIconButtonProps {
+                override val classes = iconBtnCss
+                override val onClick = _onClearClickJsF
+              }
+            )(
+              Mui.SvgIcons.HighlightOffOutlined()()
+            )
+          }
 
         )
 

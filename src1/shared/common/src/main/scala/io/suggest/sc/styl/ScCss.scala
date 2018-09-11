@@ -49,20 +49,21 @@ object ScCss {
       cssEnv.platform.userAgent.exists( _.contains("Mobile/") )
   }
 
+  /** Сдвиг по вертикали от начала наполнения search-панели.
+    * Появился для выравнивания полосы input'а относительно полосы заголовка. */
+  val SEARCH_TOP_OFFSET_PX = 4
+
   /**
     * Оффсет при наличии заголовка табов поиска.
     * Если нет заголовка табов, то можно делать бОльший offset.
     * if (tabsHdr.isEmpty) 115 else 165
     */
-  val TABS_OFFSET_PX = 65
+  val TABS_OFFSET_PX = 65 + SEARCH_TOP_OFFSET_PX
 
   /** Высота заголовка. */
   val HEADER_HEIGHT_PX = 50
 
   implicit def univEq: UnivEq[ScCss] = UnivEq.derive
-
-  /** Стандартный сдвиг кнопок заголовка сверху. */
-  val HEADER_BTN_TOP_OFFSET_PX = 7
 
 }
 
@@ -326,7 +327,7 @@ case class ScCss( args: IScCssArgs )
           Css.Position.ABSOLUTE,
           btn.htmlClass
         ),
-        top( (14 + args.screenInfo.unsafeOffsets.top).px ),
+        top( (17 + args.screenInfo.unsafeOffsets.top).px ),
         right( 2.px ),
         left.auto
       )
@@ -425,7 +426,23 @@ case class ScCss( args: IScCssArgs )
       val bar = style(
         addClassName( _SM_ + "search-bar" ),
         // Равняем полосу input'а с полосой заголовка.
-        marginTop(4.px)
+        marginTop( ScCss.SEARCH_TOP_OFFSET_PX.px )
+      )
+
+      val inputFormControl = style(
+        flexDirection.initial,
+        width(100.%%)
+      )
+
+      /** Стиль для div-обёртки вокруг input'а. */
+      val inputRoot = style(
+        width( 216.px )
+      )
+
+      val clearBtnRoot = style(
+        position.absolute,
+        right(0.px),
+        top(-6.px)
       )
 
     }
@@ -504,11 +521,19 @@ case class ScCss( args: IScCssArgs )
         val listDiv = _styleAddClass( "shops-list" )
 
         /** Стиль иконки узла в списке узлов. */
-        val icon = style(
+        val nodeLogo = style(
           verticalAlign.middle,
           marginLeft(6.px),
           maxHeight(30.px),
-          maxWidth(140.px)
+          maxWidth(140.px),
+          // без disableGutters, нужно рубить правый отступ
+          marginRight(0.px).important
+        )
+
+        /** Выставить сдвиги по бокам. gutters ставят 24px, без них просто 0px. А надо нечто среднее. */
+        val adnNodeRow = style(
+          paddingLeft(16.px).important,
+          paddingRight(16.px).important
         )
 
         /** Ряд тега. ruby для - вертикальной упаковки тегов. */

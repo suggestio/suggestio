@@ -26,7 +26,6 @@ import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.sjs.common.xhr.Xhr
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -109,8 +108,10 @@ class NodeFoundR(getScCssF: GetScCssF) {
       val isTag = p.ntype ==* MNodeTypes.Tag
 
       var rowRootCssAcc = props.searchCss.NodesFound.rowItemBgF(p.nodeId) :: Nil
-      if (isTag)
-        rowRootCssAcc ::= NodesCSS.tagRow
+      rowRootCssAcc ::= {
+        if (isTag) NodesCSS.tagRow
+        else NodesCSS.adnNodeRow
+      }
       val rowRootCss = rowRootCssAcc
         .map(_.htmlClass)
         .mkString( HtmlConstants.SPACE )
@@ -125,9 +126,8 @@ class NodeFoundR(getScCssF: GetScCssF) {
           override val button = true
           override val onClick = _onNodeRowClickJsF( p.nodeId )
           override val selected = props.selected
-          // Если есть картинка, то сдвиги справа-слева лучше убрать
-          //override val disableGutters = p.icon.nonEmpty
           override val dense = !isTag
+          override val disableGutters = true
         }
       )(
         // Если тег, то имеет смысл выставить пометку, что это тег:
@@ -172,7 +172,7 @@ class NodeFoundR(getScCssF: GetScCssF) {
         p.icon.whenDefinedNode { icon =>
           MuiListItemIcon()(
             <.img(
-              NodesCSS.icon,
+              NodesCSS.nodeLogo,
               ^.src := Xhr.mkAbsUrlIfPreferred( icon.url )
             )
           )
