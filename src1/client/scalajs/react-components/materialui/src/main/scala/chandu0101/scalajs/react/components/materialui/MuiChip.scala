@@ -1,88 +1,66 @@
 package chandu0101.scalajs.react.components
 package materialui
 
-import chandu0101.macros.tojs.JSMacro
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw._
-import japgolly.scalajs.react.vdom._
-import org.scalajs.dom
 import scala.scalajs.js
 import scala.scalajs.js.`|`
 
-/**
- * This file is generated - submit issues instead of PR against it
- */
-    
-case class MuiChip(
-  key:                  js.UndefOr[String]                                 = js.undefined,
-  ref:                  js.UndefOr[String]                                 = js.undefined,
-  /** Override the background color of the chip. */
-  backgroundColor:      js.UndefOr[MuiColors | MuiColor | String]          = js.undefined,
-  /** CSS `className` of the root element. */
-  className:            js.UndefOr[VdomNode]                               = js.undefined,
-  /** The element to use as the container for the Chip. Either a string to
-     use a DOM element or a ReactElement. */
-  containerElement:     js.UndefOr[String | VdomElement]                   = js.undefined,
-  /** Override the inline-styles of the delete icon. */
-  deleteIconStyle:      js.UndefOr[CssProperties]                          = js.undefined,
-  /** Override the label color. */
-  labelColor:           js.UndefOr[MuiColors | MuiColor | String]          = js.undefined,
-  /** Override the inline-styles of the label. */
-  labelStyle:           js.UndefOr[CssProperties]                          = js.undefined,
-  onBlur:               js.UndefOr[ReactFocusEvent => Callback]            = js.undefined,
-  /** Callback function fired when the `Chip` element is clicked.
-     @param {object} event Click event targeting the element. */
-  onClick:              js.UndefOr[ReactEvent => Callback]                 = js.undefined,
-  onFocus:              js.UndefOr[ReactFocusEvent => Callback]            = js.undefined,
-  onKeyDown:            js.UndefOr[ReactKeyboardEvent => Callback]         = js.undefined,
-  onKeyboardFocus:      js.UndefOr[(ReactFocusEvent, Boolean) => Callback] = js.undefined,
-  onMouseDown:          js.UndefOr[ReactMouseEvent => Callback]            = js.undefined,
-  onMouseEnter:         js.UndefOr[ReactMouseEvent => Callback]            = js.undefined,
-  onMouseLeave:         js.UndefOr[ReactMouseEvent => Callback]            = js.undefined,
-  onMouseUp:            js.UndefOr[ReactMouseEvent => Callback]            = js.undefined,
-  /** Callback function fired when the delete icon is clicked. If set, the delete icon will be shown.
-     @param {object} event `click` event targeting the element. */
-  onRequestDelete:      js.UndefOr[ReactTouchEvent => Callback]            = js.undefined,
-  onTouchEnd:           js.UndefOr[ReactTouchEvent => Callback]            = js.undefined,
-  onTouchStart:         js.UndefOr[ReactTouchEvent => Callback]            = js.undefined,
-  /** Override the inline-styles of the root element. */
-  style:                js.UndefOr[CssProperties]                          = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  centerRipple:         js.UndefOr[Boolean]                                = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  disableFocusRipple:   js.UndefOr[Boolean]                                = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  disableKeyboardFocus: js.UndefOr[Boolean]                                = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  disableTouchRipple:   js.UndefOr[Boolean]                                = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  disabled:             js.UndefOr[Boolean]                                = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  focusRippleColor:     js.UndefOr[MuiColors | MuiColor | String]          = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  focusRippleOpacity:   js.UndefOr[Double]                                 = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  href:                 js.UndefOr[String]                                 = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  keyboardFocused:      js.UndefOr[Boolean]                                = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  onKeyUp:              js.UndefOr[ReactKeyboardEvent => Callback]         = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  tabIndex:             js.UndefOr[Double]                                 = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  touchRippleColor:     js.UndefOr[MuiColors | MuiColor | String]          = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  touchRippleOpacity:   js.UndefOr[Double]                                 = js.undefined,
-  /** (Passed on to EnhancedButton) */
-  `type`:               js.UndefOr[String]                                 = js.undefined){
 
-  /**
-    * @param children Used to render elements inside the Chip.
-   */
-  def apply(children: VdomNode*) = {
-    
-    val props = JSMacro[MuiChip](this)
-    val f = JsComponent[js.Object, Children.Varargs, Null](Mui.Chip)
-    f(props)(children: _*)
-  }
+object MuiChip {
+
+  val component = JsComponent[MuiChipProps, Children.None, Null](Mui.Chip)
+
+  def apply(props: MuiChipProps) =
+    component(props)
+
+}
+
+
+/** React component props for [[MuiChip]]. */
+trait MuiChipProps extends MuiPropsBase {
+  val avatar: js.UndefOr[React.Element] = js.undefined
+  val classes: js.UndefOr[MuiChipClasses] = js.undefined
+  val clickable: js.UndefOr[Boolean] = js.undefined
+  /** See [[MuiColorTypes]] except 'inherit'. */
+  val color: js.UndefOr[String] = js.undefined
+  val component: js.UndefOr[String | js.Function | js.Object] = js.undefined
+  val deleteIcon: js.UndefOr[React.Element] = js.undefined
+  val label: js.UndefOr[React.Node] = js.undefined
+  val onDelete: js.UndefOr[js.Function1[ReactUIEventFromHtml, _]] = js.undefined
+  val variant: js.UndefOr[String] = js.undefined
+}
+object MuiChipProps extends MuiPropsBaseStatic[MuiChipProps]
+
+
+/** Values for [[MuiChipProps.variant]]. */
+object MuiChipVariants {
+  val default = "default"
+  val outlined = "outlined"
+}
+
+/** CSS styles for [[MuiChipProps.classes]]. */
+trait MuiChipClasses extends js.Object {
+  val root: js.UndefOr[String] = js.undefined
+  val colorPrimary: js.UndefOr[String] = js.undefined
+  val colorSecondary: js.UndefOr[String] = js.undefined
+  val clickable: js.UndefOr[String] = js.undefined
+  val clickableColorPrimary: js.UndefOr[String] = js.undefined
+  val clickableColorSecondary: js.UndefOr[String] = js.undefined
+  val deletable: js.UndefOr[String] = js.undefined
+  val deletableColorPrimary: js.UndefOr[String] = js.undefined
+  val deletableColorSecondary: js.UndefOr[String] = js.undefined
+  val outlined: js.UndefOr[String] = js.undefined
+  val outlinedPrimary: js.UndefOr[String] = js.undefined
+  val outlinedSecondary: js.UndefOr[String] = js.undefined
+  val avatar: js.UndefOr[String] = js.undefined
+  val avatarColorPrimary: js.UndefOr[String] = js.undefined
+  val avatarColorSecondary: js.UndefOr[String] = js.undefined
+  val avatarChildren: js.UndefOr[String] = js.undefined
+  val label: js.UndefOr[String] = js.undefined
+  val deleteIcon: js.UndefOr[String] = js.undefined
+  val deleteIconColorPrimary: js.UndefOr[String] = js.undefined
+  val deleteIconColorSecondary: js.UndefOr[String] = js.undefined
+  val deleteIconOutlinedColorPrimary: js.UndefOr[String] = js.undefined
+  val deleteIconOutlinedColorSecondary: js.UndefOr[String] = js.undefined
 }

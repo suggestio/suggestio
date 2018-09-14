@@ -17,7 +17,7 @@ import org.scalajs.dom.raw.HTMLInputElement
 import scalacss.ScalaCssReact._
 
 import scala.scalajs.js
-import scala.scalajs.js.{UndefOr, |}
+import scala.scalajs.js.|
 
 /**
   * Suggest.io

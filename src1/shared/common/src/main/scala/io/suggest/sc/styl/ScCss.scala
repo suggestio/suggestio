@@ -542,12 +542,16 @@ case class ScCss( args: IScCssArgs )
 
         /** Ряд тега. ruby для - вертикальной упаковки тегов. */
         val tagRow = style(
-          display.rubyBaseContainer,
-          paddingBottom( 6.px )
+          display.inlineFlex,
+          paddingBottom( 6.px ),
+          width.auto,
+          paddingLeft(8.px),
+          paddingRight(4.px)
         )
 
         val tagRowText = style(
-          paddingLeft( 8.px )
+          paddingLeft( 8.px ),
+          paddingRight(0.px)
         )
 
         /** Иконка тега. */

@@ -1,6 +1,5 @@
 package io.suggest.color
 
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords3d
 import io.suggest.common.html.HtmlConstants
 import io.suggest.err.ErrorConstants
@@ -83,7 +82,7 @@ object MRgb {
       red   = __extractShortInt(SIXTEEN),     // (i >> 16) & 0xFF,
       green = __extractShortInt(EIGHT),       // (i >> 8) & 0xFF,
       blue  = __extractShortInt(ZERO)         // i & 0xFF
-      // TODO Альфа-канал. parseInt() не может распарсить 4 байта, только 3.
+      // TODO Альфа-канал. parseInt() не может распарсить 4 байта, только 3, т.к. в java/scala int только signed. Возможно, окостылить parseUnsigned?
       /*alpha = OptionUtil.maybe(isWithAlpha)(
         __extractShortInt(-EIGHT).toDouble / 255d
       )*/

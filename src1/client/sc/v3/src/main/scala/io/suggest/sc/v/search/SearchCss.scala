@@ -2,6 +2,7 @@ package io.suggest.sc.v.search
 
 import io.suggest.color.MColorData
 import io.suggest.css.ScalaCssUtil.Implicits._
+import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.sc.styl.ScScalaCssDefaults._
 import io.suggest.sc.m.search.MSearchCssProps
 import io.suggest.sc.styl.ScCss
@@ -37,8 +38,20 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     // Надо оценить кол-во рядов для стилей.
     // Для pending/failed надо рассчитать кол-во рядов на 1 больше (для места на экране).
     var rowsCount = 0
-    for (nodes <- args.req)
-      rowsCount += Math.max(1, nodes.resp.length)
+    for (nodes <- args.req) {
+      // Теги могут занимать и треть и пол-ряда. Поэтому ряды тегов надо считать по-особому:
+      val nodesDoubleCount = nodes.resp
+        .iterator
+        .map { n =>
+          n.props.ntype match {
+            case MNodeTypes.Tag => 1
+            case _ => 2
+          }
+        }
+        .sum
+        .toInt
+      rowsCount += Math.max(1, nodesDoubleCount / 2)
+    }
     if (args.req.isPending)
       rowsCount += 1
     if (args.req.isFailed)
