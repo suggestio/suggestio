@@ -19,8 +19,3 @@ trait ReasonOptSlick extends IProfile {
   }
 
 }
-
-
-trait IReasonOpt {
-  def reasonOpt: Option[String]
-}

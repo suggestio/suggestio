@@ -19,7 +19,3 @@ trait RcvrIdOptSlick extends IProfile {
   }
 
 }
-
-trait IRcvrIdOpt {
-  def rcvrIdOpt: Option[String]
-}

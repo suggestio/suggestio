@@ -10,6 +10,10 @@ import io.suggest.slick.profile.IProfile
  */
 trait NodeIdSlick extends IProfile {
 
+  // TODO По таблице items:
+  // - Переименовать столбец ad_id в node_id
+  // - Обновить коммент к столбцу node_id.
+
   import profile.api._
 
   def NODE_ID_FN = "ad_id"
@@ -18,10 +22,4 @@ trait NodeIdSlick extends IProfile {
     def nodeId = column[String](NODE_ID_FN)
   }
 
-}
-
-
-/** Интерфейс для поля nodeId с уникальным идентификатором узла. */
-trait INodeId {
-  def nodeId: String
 }

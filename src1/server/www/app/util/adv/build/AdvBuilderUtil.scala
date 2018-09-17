@@ -14,6 +14,7 @@ import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
 import util.adv.geo.tag.GeoTagsUtil
 import util.billing.BillDebugUtil
+import io.suggest.mbill2.m.item.MItemJvm.Implicits._
 
 import scala.concurrent.Future
 

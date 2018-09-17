@@ -22,7 +22,3 @@ trait DateEndSlick extends IPgProfile {
   }
 
 }
-
-trait IDateEndOpt {
-  def dateEndOpt: Option[OffsetDateTime]
-}

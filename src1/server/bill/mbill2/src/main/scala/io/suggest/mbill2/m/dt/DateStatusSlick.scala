@@ -22,8 +22,3 @@ trait DateStatusSlick extends IPgProfile {
   }
 
 }
-
-
-trait IDateStatus {
-  def dateStatus: OffsetDateTime
-}

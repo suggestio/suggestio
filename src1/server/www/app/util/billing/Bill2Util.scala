@@ -11,7 +11,7 @@ import io.suggest.mbill2.m.dbg.MDebugs
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
-import io.suggest.mbill2.m.item.{IItem, IMItem, MItem, MItems}
+import io.suggest.mbill2.m.item.{IMItem, MItem, MItems}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
@@ -447,7 +447,7 @@ class Bill2Util @Inject() (
     * @param mitems Товары для анализа стоимости.
     * @return true, если хотя бы один товар требует денег.
     */
-  def itemsHasPrice(mitems: TraversableOnce[IItem]): Boolean = {
+  def itemsHasPrice(mitems: TraversableOnce[MItem]): Boolean = {
     hasPositivePrice {
       mitems.toIterator.map(_.price)
     }
@@ -472,7 +472,7 @@ class Bill2Util @Inject() (
     * @param order Обрабатываемый ордер вместе с item'ами.
     * @return DBIO-экшен, с какими-то данными или без них.
     */
-  def closeOrder(order: IOrderWithItems): DBIOAction[MOrderWithItems, NoStream, Effect.Write] = {
+  def closeOrder(order: MOrderWithItems): DBIOAction[MOrderWithItems, NoStream, Effect.Write] = {
     for {
       // Обновляем статус ордера.
       morder3 <- {
@@ -511,7 +511,7 @@ class Bill2Util @Inject() (
     *
     * @param order Результат prepareCartTxn().
     */
-  def maybeExecuteOrder(order: IOrderWithItems): DBIOAction[MCartIdeas.Idea, NoStream, RW] = {
+  def maybeExecuteOrder(order: MOrderWithItems): DBIOAction[MCartIdeas.Idea, NoStream, RW] = {
 
     lazy val logPrefix = s"maybeExecuteCart(${order.morder.id.orNull} ${System.currentTimeMillis}):"
 
@@ -645,7 +645,7 @@ class Bill2Util @Inject() (
     * @param owi Ордер и его item'ы.
     * @return DB-экшен.
     */
-  def forceFinalizeOrder(owi: IOrderWithItems): DBIOAction[ForceFinalizeOrderRes, NoStream, RWT] = {
+  def forceFinalizeOrder(owi: MOrderWithItems): DBIOAction[ForceFinalizeOrderRes, NoStream, RWT] = {
     val orderId = owi.morder.id.get
     val contractId = owi.morder.contractId
 
@@ -901,7 +901,7 @@ class Bill2Util @Inject() (
 
 
   /** Получить доступ к кошель юзера, купившего указанный item. */
-  private def _item2balance(mitem: IItem) = {
+  private def _item2balance(mitem: MItem) = {
     for {
       // Узнать id контракта, по которому проходит данный item.
       contractIdOpt <- mOrders.getContractId(mitem.orderId)

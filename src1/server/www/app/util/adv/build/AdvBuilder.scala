@@ -19,6 +19,7 @@ import util.adv.geo.place.AgpBuilder
 import util.adv.geo.tag.AgtBuilder
 import util.billing.Bill2Util
 import util.n2u.{IN2NodesUtilDi, N2NodesUtil}
+import io.suggest.mbill2.m.item.MItemJvm.Implicits._
 
 import scala.concurrent.Future
 

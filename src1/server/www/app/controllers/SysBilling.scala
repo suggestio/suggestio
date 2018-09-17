@@ -4,7 +4,6 @@ import javax.inject.Inject
 import controllers.sysctl.bill._
 import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.contract.MContracts
-import io.suggest.mbill2.m.gid.GidUtil
 import io.suggest.mbill2.m.txn.MTxns
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
@@ -33,7 +32,6 @@ class SysBilling @Inject() (
   override val isSuNodeContract     : IsSuNodeContract,
   override val isSuNodeNoContract   : IsSuNodeNoContract,
   override val bill2Util            : Bill2Util,
-  override val gidUtil              : GidUtil,
   override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl

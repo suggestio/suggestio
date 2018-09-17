@@ -1,7 +1,6 @@
 package io.suggest.mbill2.m.item
 
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.cols.INodeId
 import io.suggest.slick.profile.pg.IPgProfile
 import slick.jdbc.GetResult
 
@@ -26,20 +25,11 @@ trait MAdItemIdsSlick extends IPgProfile {
 }
 
 
-/** Интерфейс модели. */
-trait IAdItemIds extends INodeId {
-  /** Ключи item'ов, связанных с указанной рекламной карточкой. */
-  def itemIds: Seq[Gid_t]
-}
-
-
-/** Дефолтовая реализация модели [[IAdItemIds]].
-  *
+/**
   * @param nodeId id рекламной карточки.
   * @param itemIds Ключи item'ов.
   */
 case class MAdItemIds(
-  override val nodeId   : String,
-  override val itemIds  : Seq[Gid_t]
-)
-  extends IAdItemIds
+                       nodeId   : String,
+                       itemIds  : Seq[Gid_t]
+                     )

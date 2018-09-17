@@ -11,6 +11,7 @@ import org.threeten.extra.Interval
 import slick.dbio.Effect.Read
 import slick.sql.SqlAction
 import util.adv.build.{AdvBuilderFactory, AdvBuilderUtil}
+import io.suggest.mbill2.m.item.MItemJvm.Implicits._
 
 import scala.concurrent.Future
 

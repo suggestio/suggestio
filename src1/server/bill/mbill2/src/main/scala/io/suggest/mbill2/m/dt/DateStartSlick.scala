@@ -22,7 +22,3 @@ trait DateStartSlick extends IPgProfile {
   }
 
 }
-
-trait IDateStartOpt {
-  def dateStartOpt: Option[OffsetDateTime]
-}

@@ -19,7 +19,6 @@ import scalacss.internal.mutable.StyleSheet
   */
 object SearchCss {
 
-  // 32 - с потолка, для material-ui. В оригинале было 24
   val NODE_ROW_HEIGHT_PX = 54.5
 
   implicit def univEq: UnivEq[SearchCss] = UnivEq.derive

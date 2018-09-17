@@ -39,16 +39,3 @@ trait LegalContractIdT {
   }
 
 }
-
-
-case class LegalContractId(
-  override val contractId : Gid_t,
-  override val crand      : Int,
-  override val suffix     : Option[String] = None
-)
-  extends LegalContractIdT
-{
-
-  override lazy val legalContractId = super.legalContractId
-  override def toString: String = legalContractId
-}

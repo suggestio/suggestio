@@ -8,18 +8,7 @@ import io.suggest.mbill2.m.item.MItem
   * Created: 05.02.16 13:17
   * Description: Виртуальная модель-контейнер для ордера с item'ами.
   */
-trait IOrderWithItems {
-
-  def morder: MOrder
-
-  def mitems: Seq[MItem]
-
-}
-
-
-/** Дефолтовая реализация модели [[IOrderWithItems]]. */
 case class MOrderWithItems(
-  override val morder: MOrder,
-  override val mitems: Seq[MItem]
-)
-  extends IOrderWithItems
+                            morder: MOrder,
+                            mitems: Seq[MItem]
+                          )

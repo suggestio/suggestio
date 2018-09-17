@@ -39,7 +39,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.2")
 // stylus assets
 addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2s49-SNAPSHOT")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.24")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.25")
 
 addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 

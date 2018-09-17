@@ -16,7 +16,7 @@ Common.settingsOrg
 
 /** Общий код серверной и клиентской частей подсистемы внешнего размещения. */
 lazy val common = crossProject(JSPlatform, JVMPlatform)
-  .crossType( CrossType.Pure )
+  .crossType( CrossType.Full )
   .in( file(DIR0 + "shared/common") )
   .settings(
     Common.settingsOrg,
@@ -46,15 +46,22 @@ lazy val common = crossProject(JSPlatform, JVMPlatform)
   )
   .jsConfigure(_ enablePlugins ScalaJSWeb)
 
-lazy val commonJVM = common.jvm.settings(
-  name := "commonJVM",
-  scalaVersion := Common.SCALA_VSN
-)
+lazy val commonJVM = common.jvm
+  .settings(
+    name := "commonJVM",
+    scalaVersion := Common.SCALA_VSN
+  )
 
-lazy val commonJS = common.js.settings(
-  name := "commonJS",
-  scalaVersion := Common.SCALA_VSN_JS
-)
+/** common для client-only-сборки. */
+lazy val commonJS = common.js
+  .settings(
+    name := "commonJS",
+    scalaVersion := Common.SCALA_VSN_JS,
+    libraryDependencies ++= Seq(
+      // java.time-поддержка на клиенте:
+      "io.github.cquiroz" %%% "scala-java-time" % "2.+"
+    )
+  )
 
 
 /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
@@ -66,28 +73,13 @@ lazy val util = project
 lazy val commonSjs = {
   val name = "common-sjs"
   Project(id = name, base = file(DIR0 + "client/" ++ name))
-    //.enablePlugins(ScalaJSBundlerPlugin)
     .dependsOn(commonJS)
 }
 
 /** Расшаренная утиль для интеграции с react.js через scalajs-react. */
 lazy val commonReactSjs = {
   Project(id = "scalajs-react-common", base = file(DIR0 + "client/scalajs/react-common"))
-    //.enablePlugins(ScalaJSBundlerPlugin)
     .dependsOn(commonSjs)
-}
-
-/** Поддержка голого tinymce в scala.js.
-  * Изначально создан просто для доступа к npm/tinymce/dist/ файлам и ресурсам через sjs-bundler npmAssets.
-  */
-lazy val tinyMceSjs = {
-  Project(id = "scalajs-tinymce", base = file(DIR0 + "client/scalajs/tinymce"))
-}
-
-/** Sjs-фасад для react-компонента tinymce. */
-lazy val reactTinyMceSjs = {
-  Project(id = "scalajs-react-tinymce", base = file(DIR0 + "client/scalajs/react-tinymce"))
-    .dependsOn(commonReactSjs, tinyMceSjs)
 }
 
 /** Sjs-фасад для JSON-формата Quill Delta. */
@@ -166,8 +158,13 @@ lazy val commonSlickDriver = {
 lazy val lkCommonSjs = {
   val name = "lk-common-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/common"))
-    //.enablePlugins(ScalaJSBundlerPlugin)
     .dependsOn(commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs, reactImageCropSjs, asmCryptoSioSjs)
+}
+
+/** Компоненты для покупательской корзины suggest.io. */
+lazy val cartSjs = {
+  Project(id = "cart-sjs", base = file(DIR0 + "client/bill/cart"))
+    .dependsOn( lkCommonSjs, reactMaterialUiSjs, jdRenderSjs )
 }
 
 /** Самопальные биндинги для moment.js. */
@@ -347,7 +344,6 @@ lazy val mmgeoip2 = {
 //lazy val mapBoxSjs = {
 //  val name = "scalajs-mapbox"
 //  Project(id = name, base = file("scalajs/" + name))
-//    .enablePlugins(ScalaJSBundlerPlugin)
 //    .dependsOn(leafletSjs)
 //}
 
@@ -412,7 +408,7 @@ lazy val lkAdsSjs = {
 lazy val lkSjs = {
   Project(id = "lk-sjs", base = file(DIR0 + "client/lk/main"))
     .enablePlugins(WebScalaJS)
-    .dependsOn(lkAdvExtSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs, lkAdEditorSjs, lkAdsSjs, lkAdnEditSjs)
+    .dependsOn(lkAdvExtSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs, lkAdEditorSjs, lkAdsSjs, lkAdnEditSjs, cartSjs)
 }
 
 /** scala.js реализация системы мониторинга js-маячков. */
@@ -437,12 +433,12 @@ lazy val sc3Sjs = {
     .dependsOn(
       scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSjs,
       mapsSjs, jdRenderSjs, reactSidebar, reactScroll,
-      reactComponentsMaterialUiSjs
+      reactMaterialUiSjs
     )
 }
 
 /** Экспорт material-ui core+icons с поправками для новой версии. */
-lazy val reactComponentsMaterialUiSjs = {
+lazy val reactMaterialUiSjs = {
   Project(id = "scalajs-react-components-materialui", base = file(DIR0 + "client/scalajs/react-components/materialui"))
     .dependsOn( commonReactSjs )
 }
@@ -586,11 +582,10 @@ lazy val sio2 = {
     .aggregate(
       commonJS, commonJVM, logsMacro,
       commonSjs, commonReactSjs,
-      reactComponentsMaterialUiSjs,
+      reactMaterialUiSjs,
       leafletSjs, leafletReactSjs, leafletMarkerClusterSjs, leafletReactSjs, lkAdvGeoSjs,
       lkSjs, sc3Sjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
-      tinyMceSjs, reactTinyMceSjs,
       reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
       reactGridLayoutSjs, reactStoneCutterSjs, gridSjs, reactSidebar, reactScroll,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
@@ -600,7 +595,9 @@ lazy val sio2 = {
       util, esUtil, textUtil, swfs, n2, securesocial,
       ipgeobase, stat,
       mgeo, commonWww, nodesWww,
-      www, mbill2, payWww, secWwwUtil, secAvUtil, svgUtil
+      mbill2, payWww, cartSjs,
+      secWwwUtil, secAvUtil, svgUtil,
+      www
     )
 }
 

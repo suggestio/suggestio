@@ -121,7 +121,6 @@ class LkAdvGeo @Inject() (
         gp0         <- resLogic._geoPointFut
         a4fPropsOpt <- resLogic._a4fPropsOptFut
       } yield {
-        // TODO Распилить это на MMapProps и MGeoCircle.
         // Залить начальные данные в маппинг формы.
         MFormS(
           mapProps        = advGeoFormUtil.mapProps0(gp0),
@@ -240,6 +239,8 @@ class LkAdvGeo @Inject() (
 
   }
 
+
+  /** Проверка присланной карты ресиверов. */
   private def _checkFormRcvrs(mFormS0: MFormS): Future[MFormS] = {
     if (mFormS0.rcvrsMap.nonEmpty) {
       val rcvrKeys2Fut = advGeoRcvrsUtil.checkRcvrs(mFormS0.rcvrsMap.keys)
@@ -290,7 +291,7 @@ class LkAdvGeo @Inject() (
           val status   = advFormUtil.suFree2newItemStatus(isSuFree) // TODO Не пашет пока что. Нужно другой вызов тут.
 
           for {
-          // Прочитать узел юзера. Нужно для чтения/инциализации к контракта
+            // Прочитать узел юзера. Нужно для чтения/инциализации к контракта
             personNode0 <- request.user.personNodeFut
 
             // Узнать контракт юзера

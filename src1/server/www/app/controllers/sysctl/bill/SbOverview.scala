@@ -1,9 +1,10 @@
 package controllers.sysctl.bill
 
 import controllers.SioController
-import io.suggest.mbill2.m.balance.IMBalances
-import io.suggest.mbill2.m.gid.IGidUtilDi
+import io.suggest.mbill2.m.balance.{IMBalances, MBalance}
+import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.txn.IMTxns
+import io.suggest.primo.id.OptId
 import models.msys.bill.MBillOverviewTplArgs
 import util.acl.IIsSu
 import views.html.sys1.bill._
@@ -20,7 +21,6 @@ trait SbOverview
   with IIsSu
   with IMTxns
   with IMBalances
-  with IGidUtilDi
 {
 
   import mCommonDi._
@@ -45,8 +45,10 @@ trait SbOverview
         (Nil, Nil)
       }
 
-      val balancesMapFut = for ((_, balances) <- txnsBalancesFut) yield {
-        gidUtil.elements2map(balances)
+      val balancesMapFut = for {
+        (_, balances) <- txnsBalancesFut
+      } yield {
+        OptId.els2idMap[Gid_t, MBalance]( balances )
       }
 
       // Запустить рендер результата

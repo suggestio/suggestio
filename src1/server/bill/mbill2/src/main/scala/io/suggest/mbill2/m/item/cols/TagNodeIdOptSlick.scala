@@ -19,8 +19,3 @@ trait TagNodeIdOptSlick extends IProfile {
   }
 
 }
-
-
-trait ITagNodeIdOpt {
-  def tagNodeIdOpt: Option[String]
-}

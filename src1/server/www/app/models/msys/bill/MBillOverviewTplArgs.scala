@@ -11,13 +11,8 @@ import io.suggest.mbill2.m.txn.MTxn
   * Description: Модель аргументов для вызова шаблона [[views.html.sys1.bill.overviewTpl]].
   */
 
-trait IBillOverviewTplArgs extends IBillTxnsListTplArgs {
-}
-
-
-/** Дефолтовая реализация модели [[IBillOverviewTplArgs]]. */
 case class MBillOverviewTplArgs(
   override val txns         : Seq[MTxn],
   override val balancesMap  : Map[Gid_t, MBalance]
 )
-  extends IBillOverviewTplArgs
+  extends IBillTxnsListTplArgs
