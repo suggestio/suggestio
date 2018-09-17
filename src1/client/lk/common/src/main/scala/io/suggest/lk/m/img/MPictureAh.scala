@@ -28,7 +28,7 @@ object MPictureAh {
     }
   }
 
-  implicit def univEq[V: UnivEq]: UnivEq[MPictureAh[V]] = UnivEq.derive
+  @inline implicit def univEq[V: UnivEq]: UnivEq[MPictureAh[V]] = UnivEq.derive
 
 }
 

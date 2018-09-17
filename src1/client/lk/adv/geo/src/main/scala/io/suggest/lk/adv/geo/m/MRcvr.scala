@@ -6,6 +6,9 @@ import io.suggest.adv.geo.RcvrsMap_t
 import io.suggest.adv.rcvr.{MRcvrPopupResp, MRcvrPopupS}
 import io.suggest.lk.adv.m.IRcvrPopupProps
 import io.suggest.maps.nodes.MGeoNodesResp
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -20,10 +23,12 @@ object MRcvr {
   implicit object MRcvrFastEq extends FastEq[MRcvr] {
     override def eqv(a: MRcvr, b: MRcvr): Boolean = {
       IRcvrPopupProps.IRcvrPopupPropsFastEq.eqv(a, b) &&
-        (a.rcvrsGeo eq b.rcvrsGeo) &&
-        (a.rcvrsMap eq b.rcvrsMap)
+        (a.rcvrsGeo ===* b.rcvrsGeo) &&
+        (a.rcvrsMap ===* b.rcvrsMap)
     }
   }
+
+  @inline implicit def univEq: UnivEq[MRcvr] = UnivEq.derive
 
 }
 

@@ -50,7 +50,7 @@ object MEdgeDataJs {
     }
   }
 
-  implicit def univEq: UnivEq[MEdgeDataJs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MEdgeDataJs] = UnivEq.derive
 
 
   implicit object MEdgeDataJsTupleFastEq extends FastEq[(MJdEdgeId, MEdgeDataJs)] {

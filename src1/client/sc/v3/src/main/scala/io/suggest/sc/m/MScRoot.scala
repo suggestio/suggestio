@@ -27,8 +27,7 @@ object MScRoot {
     }
   }
 
-  implicit def univEq: UnivEq[MScRoot] = UnivEq.derive
-
+  @inline implicit def univEq: UnivEq[MScRoot] = UnivEq.derive
 
 
   def scCssArgsFrom(scRoot: MScRoot): MScCssArgs = {

@@ -23,7 +23,7 @@ object MErrorPopupS {
     }
   }
 
-  implicit def univEq: UnivEq[MErrorPopupS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MErrorPopupS] = UnivEq.derive
 
   def fromExOpt(exOpt: Option[Throwable]): Option[MErrorPopupS] = {
     for (_ <- exOpt) yield {

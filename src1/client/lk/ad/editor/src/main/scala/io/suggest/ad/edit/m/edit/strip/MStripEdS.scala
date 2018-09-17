@@ -21,7 +21,7 @@ object MStripEdS {
     }
   }
 
-  implicit def univEq: UnivEq[MStripEdS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MStripEdS] = UnivEq.derive
 
 }
 

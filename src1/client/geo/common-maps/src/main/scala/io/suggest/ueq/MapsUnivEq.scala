@@ -10,6 +10,6 @@ import japgolly.univeq.UnivEq
   */
 object MapsUnivEq {
 
-  implicit def lMapUe: UnivEq[LMap] = UnivEq.force
+  @inline implicit def lMapUe: UnivEq[LMap] = UnivEq.force
 
 }

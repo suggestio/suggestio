@@ -27,7 +27,7 @@ object MFileUploadS {
     }
   }
 
-  implicit def univEq: UnivEq[MFileUploadS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MFileUploadS] = UnivEq.derive
 
 }
 

@@ -19,7 +19,7 @@ object MGridS {
     }
   }
 
-  implicit def univEq: UnivEq[MGridS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MGridS] = UnivEq.derive
 
 }
 

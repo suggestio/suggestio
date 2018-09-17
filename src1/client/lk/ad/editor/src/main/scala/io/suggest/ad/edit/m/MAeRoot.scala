@@ -29,7 +29,7 @@ object MAeRoot {
     }
   }
 
-  implicit def univEq: UnivEq[MAeRoot] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAeRoot] = UnivEq.derive
 
 }
 

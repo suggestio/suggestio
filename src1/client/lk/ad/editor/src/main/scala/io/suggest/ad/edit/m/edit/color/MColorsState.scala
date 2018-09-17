@@ -22,7 +22,7 @@ object MColorsState {
     }
   }
 
-  implicit def univEq: UnivEq[MColorsState] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MColorsState] = UnivEq.derive
 
 
   /** Макс.длина списка презетов. Должна быть кратна 8 (зависит от color-picker'а). */

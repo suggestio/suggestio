@@ -21,7 +21,7 @@ object MAdnEditColorPickerS {
     }
   }
 
-  implicit def univEq: UnivEq[MAdnEditColorPickerS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAdnEditColorPickerS] = UnivEq.derive
 
 }
 

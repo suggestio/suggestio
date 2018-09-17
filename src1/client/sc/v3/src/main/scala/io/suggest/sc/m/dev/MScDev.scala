@@ -25,7 +25,7 @@ object MScDev {
     }
   }
 
-  implicit def univEq: UnivEq[MScDev] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScDev] = UnivEq.derive
 
 }
 

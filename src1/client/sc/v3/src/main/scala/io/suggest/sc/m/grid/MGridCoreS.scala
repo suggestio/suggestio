@@ -31,7 +31,7 @@ object MGridCoreS {
     }
   }
 
-  implicit def univEq: UnivEq[MGridCoreS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MGridCoreS] = UnivEq.derive
 
 
   /** Приведение списка карточек к блокам для обсчёта плитки.

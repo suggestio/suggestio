@@ -11,7 +11,7 @@ import japgolly.univeq.UnivEq
   */
 object MNodeEnabledUpdateState {
 
-  implicit def univEq: UnivEq[MNodeEnabledUpdateState] = UnivEq.force
+  @inline implicit def univEq: UnivEq[MNodeEnabledUpdateState] = UnivEq.force
 
 }
 

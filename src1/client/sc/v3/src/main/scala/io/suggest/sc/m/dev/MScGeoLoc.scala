@@ -27,7 +27,7 @@ object MScGeoLoc {
     }
   }
 
-  implicit def univEq: UnivEq[MScGeoLoc] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScGeoLoc] = UnivEq.derive
 
 }
 
@@ -68,7 +68,7 @@ case class MGeoLocWatcher(
   def withLastPos(lastPos: Pot[MGeoLoc]) = copy(lastPos = lastPos)
 }
 object MGeoLocWatcher {
-  implicit def univEq: UnivEq[MGeoLocWatcher] = {
+  @inline implicit def univEq: UnivEq[MGeoLocWatcher] = {
     import io.suggest.ueq.JsUnivEqUtil._
     UnivEq.derive
   }
@@ -89,5 +89,5 @@ case class Suppressor(
                        minWatch     : GeoLocType
                      )
 object Suppressor {
-  implicit def univEq: UnivEq[Suppressor] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[Suppressor] = UnivEq.derive
 }

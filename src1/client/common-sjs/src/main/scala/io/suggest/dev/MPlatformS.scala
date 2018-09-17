@@ -20,7 +20,7 @@ object MPlatformS {
     }
   }
 
-  implicit def univEq: UnivEq[MPlatformS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MPlatformS] = UnivEq.derive
 
 }
 

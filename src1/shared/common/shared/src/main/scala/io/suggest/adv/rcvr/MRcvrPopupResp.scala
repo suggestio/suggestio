@@ -4,6 +4,8 @@ import boopickle.Default._
 import io.suggest.common.tree.{NodesTreeApiIId, NodesTreeWalk}
 import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.primo.id.IId
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -18,6 +20,7 @@ object MRcvrPopupResp {
     implicit val mrpgP = IRcvrPopupNode.rcvrPopupGroupP
     generatePickler[MRcvrPopupResp]
   }
+  @inline implicit def univEq: UnivEq[MRcvrPopupResp] = UnivEq.derive
 }
 
 /** Модель ответа сервера на запрос попапа для ресивера.
@@ -51,6 +54,8 @@ object IRcvrPopupNode extends NodesTreeApiIId with NodesTreeWalk {
     implicit val selfP = compositePickler[IRcvrPopupNode]
     selfP.addConcreteType[MRcvrPopupNode]
   }
+
+  @inline implicit def univEq: UnivEq[IRcvrPopupNode] = UnivEq.force
 
 }
 
@@ -90,6 +95,7 @@ object MRcvrPopupMeta {
     implicit val mRangeOptP = MRangeYmdOpt.mRangeYmdOptPickler
     generatePickler[MRcvrPopupMeta]
   }
+  @inline implicit def univEq: UnivEq[MRcvrPopupMeta] = UnivEq.derive
 }
 /** Метаданные узла для размещения прямо на нём.
   *
@@ -117,3 +123,6 @@ case class MRcvrPopupGroup(
                             title  : Option[String],
                             nodes  : Seq[IRcvrPopupNode]
                           )
+object MRcvrPopupGroup {
+  @inline implicit def univEq: UnivEq[MRcvrPopupGroup] = UnivEq.derive
+}

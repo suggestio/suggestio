@@ -24,7 +24,7 @@ object MQdEditS {
     }
   }
 
-  implicit def univEq: UnivEq[MQdEditS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MQdEditS] = UnivEq.derive
 
 }
 

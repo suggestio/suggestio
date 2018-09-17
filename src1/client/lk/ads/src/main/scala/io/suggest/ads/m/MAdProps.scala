@@ -23,7 +23,7 @@ object MAdProps {
     }
   }
 
-  implicit def univEq: UnivEq[MAdProps] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAdProps] = UnivEq.derive
 
 }
 

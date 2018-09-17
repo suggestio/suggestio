@@ -12,8 +12,8 @@ import japgolly.univeq.UnivEq
   */
 object ReactUnivEqUtil {
 
-  implicit def tagModUnivEq: UnivEq[TagMod] = UnivEq.force
+  @inline implicit def tagModUnivEq: UnivEq[TagMod] = UnivEq.force
 
-  implicit def callbackUnivEq: UnivEq[Callback] = UnivEq.force
+  @inline implicit def callbackUnivEq: UnivEq[Callback] = UnivEq.force
 
 }

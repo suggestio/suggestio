@@ -19,7 +19,7 @@ object MTree {
     }
   }
 
-  implicit def univEq: UnivEq[MTree] = {
+  @inline implicit def univEq: UnivEq[MTree] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

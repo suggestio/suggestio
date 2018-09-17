@@ -34,7 +34,7 @@ object MJsFileInfo {
     }
   }
 
-  implicit def univEq: UnivEq[MJsFileInfo] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MJsFileInfo] = UnivEq.derive
 
 }
 

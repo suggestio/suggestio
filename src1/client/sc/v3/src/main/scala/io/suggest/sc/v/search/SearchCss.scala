@@ -21,7 +21,7 @@ object SearchCss {
 
   val NODE_ROW_HEIGHT_PX = 54.5
 
-  implicit def univEq: UnivEq[SearchCss] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[SearchCss] = UnivEq.derive
 
 }
 

@@ -22,7 +22,7 @@ object MGeoTabS {
     }
   }
 
-  implicit def univEq: UnivEq[MGeoTabS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MGeoTabS] = UnivEq.derive
 
 }
 

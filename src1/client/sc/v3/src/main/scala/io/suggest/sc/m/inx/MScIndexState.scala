@@ -22,7 +22,7 @@ object MScIndexState {
     }
   }
 
-  implicit def univEq: UnivEq[MScIndexState] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScIndexState] = UnivEq.derive
 
 }
 

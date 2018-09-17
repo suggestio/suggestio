@@ -24,7 +24,7 @@ object MSearchCssProps {
     }
   }
 
-  implicit def univEq: UnivEq[MSearchCssProps] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MSearchCssProps] = UnivEq.derive
 
 }
 

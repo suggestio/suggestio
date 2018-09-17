@@ -38,7 +38,7 @@ object JdCss {
     }
   }
 
-  implicit def univEq: UnivEq[JdCss] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[JdCss] = UnivEq.derive
 
 
   def valueEnumEntryDomainNameF[T] = {(vee: ValueEnumEntry[T], _: Int) =>

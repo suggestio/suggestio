@@ -23,7 +23,7 @@ object MColorPick {
     }
   }
 
-  implicit def univEq: UnivEq[MColorPick] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MColorPick] = UnivEq.derive
 
 }
 

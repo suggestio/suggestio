@@ -20,7 +20,7 @@ object MDeleteConfirmPopupS {
     }
   }
 
-  implicit def univEq: UnivEq[MDeleteConfirmPopupS] = UnivEq.force
+  @inline implicit def univEq: UnivEq[MDeleteConfirmPopupS] = UnivEq.force
 
 }
 

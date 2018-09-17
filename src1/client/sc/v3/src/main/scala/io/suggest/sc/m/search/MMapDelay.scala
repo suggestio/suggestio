@@ -11,7 +11,7 @@ import japgolly.univeq._
   */
 object MMapDelay {
 
-  implicit def univEq: UnivEq[MMapDelay] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMapDelay] = UnivEq.derive
 
 }
 

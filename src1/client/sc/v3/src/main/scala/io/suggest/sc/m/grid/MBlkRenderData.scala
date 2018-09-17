@@ -29,7 +29,7 @@ object MBlkRenderData {
     }
   }
 
-  implicit def univEq: UnivEq[MBlkRenderData] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MBlkRenderData] = UnivEq.derive
 
   /** Сборка инстанса [[MScAdData]] из инстанса MJdAdData. */
   def apply( jdAdData: MJdAdData ): MBlkRenderData = apply(

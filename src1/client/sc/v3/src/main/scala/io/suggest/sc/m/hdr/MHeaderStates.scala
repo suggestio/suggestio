@@ -26,6 +26,6 @@ sealed abstract class MHeaderState extends EnumEntry
 
 object MHeaderState {
 
-  implicit def univEq: UnivEq[MHeaderState] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MHeaderState] = UnivEq.derive
 
 }

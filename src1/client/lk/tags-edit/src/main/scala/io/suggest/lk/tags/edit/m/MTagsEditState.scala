@@ -4,6 +4,8 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.tags.edit.MTagsEditProps
 import io.suggest.common.tags.search.MTagsFound
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.JsUnivEqUtil._
 
 /**
   * Suggest.io
@@ -23,6 +25,8 @@ object MTagsEditState {
         (a.searchTimer eq b.searchTimer)
     }
   }
+
+  @inline implicit def univEq: UnivEq[MTagsEditState] = UnivEq.derive
 
 }
 

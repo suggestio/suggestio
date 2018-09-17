@@ -57,6 +57,6 @@ object IBleBeaconsApi extends Log {
 
   }
 
-  implicit def univEq: UnivEq[IBleBeaconsApi] = UnivEq.force
+  @inline implicit def univEq: UnivEq[IBleBeaconsApi] = UnivEq.force
 
 }

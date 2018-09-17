@@ -11,6 +11,6 @@ import japgolly.univeq.UnivEq
   */
 object QuillUnivEqUtil {
 
-  implicit def deltaUe: UnivEq[Delta] = UnivEq.force
+  @inline implicit def deltaUe: UnivEq[Delta] = UnivEq.force
 
 }

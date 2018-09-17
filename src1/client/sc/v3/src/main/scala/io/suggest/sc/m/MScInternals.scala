@@ -22,7 +22,7 @@ object MScInternals {
     }
   }
 
-  implicit def univEq: UnivEq[MScInternals] = UnivEq.force
+  @inline implicit def univEq: UnivEq[MScInternals] = UnivEq.force
 
 }
 

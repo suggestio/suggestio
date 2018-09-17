@@ -1,6 +1,7 @@
 package io.suggest.adv
 
 import io.suggest.adv.rcvr.RcvrKey
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -10,5 +11,7 @@ import io.suggest.adv.rcvr.RcvrKey
 package object geo {
 
   type RcvrsMap_t = Map[RcvrKey, Boolean]
+
+  @inline implicit def rcvrsMapUe: UnivEq[RcvrsMap_t] = UnivEq.force
 
 }

@@ -30,7 +30,7 @@ object MJdRenderArgs {
     }
   }
 
-  implicit def univEq: UnivEq[MJdRenderArgs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MJdRenderArgs] = UnivEq.derive
 
 }
 

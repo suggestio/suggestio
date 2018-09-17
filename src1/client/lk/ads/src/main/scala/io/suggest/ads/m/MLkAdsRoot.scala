@@ -20,7 +20,7 @@ object MLkAdsRoot {
     }
   }
 
-  implicit def univEq: UnivEq[MLkAdsRoot] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MLkAdsRoot] = UnivEq.derive
 
 }
 

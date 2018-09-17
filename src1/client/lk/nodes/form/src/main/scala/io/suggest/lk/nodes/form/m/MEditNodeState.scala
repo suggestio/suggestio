@@ -34,7 +34,7 @@ trait IEditNodeState[T <: IEditNodeState[T]] {
 }
 
 object MEditNodeState {
-  implicit def univEq: UnivEq[MEditNodeState] = UnivEq.force
+  @inline implicit def univEq: UnivEq[MEditNodeState] = UnivEq.force
 }
 
 

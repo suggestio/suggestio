@@ -15,7 +15,7 @@ object MLayoutS {
 
   def empty = apply()
 
-  implicit def univEq: UnivEq[MLayoutS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MLayoutS] = UnivEq.derive
 
   /** Поддержка FastEq для инстансов [[MLayoutS]]. */
   implicit object MLayoutSFastEq extends FastEq[MLayoutS] {

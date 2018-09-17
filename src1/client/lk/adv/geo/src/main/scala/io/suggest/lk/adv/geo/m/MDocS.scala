@@ -10,7 +10,7 @@ import japgolly.univeq.UnivEq
   */
 object MDocS {
 
-  implicit def univEq: UnivEq[MDocS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MDocS] = UnivEq.derive
 
 }
 

@@ -27,7 +27,7 @@ object MMapS {
   }
 
 
-  implicit def univEq: UnivEq[MMapS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMapS] = UnivEq.derive
 
   def apply(mapProps: MMapProps): MMapS = {
     MMapS(

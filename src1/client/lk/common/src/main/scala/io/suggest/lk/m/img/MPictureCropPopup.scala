@@ -25,7 +25,7 @@ object MPictureCropPopup {
     }
   }
 
-  implicit def univEq: UnivEq[MPictureCropPopup] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MPictureCropPopup] = UnivEq.derive
 
 }
 

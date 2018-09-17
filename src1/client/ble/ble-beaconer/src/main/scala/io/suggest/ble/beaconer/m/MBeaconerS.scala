@@ -22,7 +22,7 @@ object MBeaconerS {
 
   def empty = MBeaconerS()
 
-  implicit def univEq: UnivEq[MBeaconerS] = UnivEq.force
+  @inline implicit def univEq: UnivEq[MBeaconerS] = UnivEq.force
 
   implicit object MBeaconerSFastEq extends FastEq[MBeaconerS] {
     override def eqv(a: MBeaconerS, b: MBeaconerS): Boolean = {

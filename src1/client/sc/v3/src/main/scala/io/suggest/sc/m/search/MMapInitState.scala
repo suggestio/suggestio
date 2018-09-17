@@ -34,7 +34,7 @@ object MMapInitState {
     }
   }
 
-  implicit def univEq: UnivEq[MMapInitState] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMapInitState] = UnivEq.derive
 
 }
 

@@ -36,7 +36,7 @@ object MNodesFoundS {
     }
   }
 
-  implicit def univEq: UnivEq[MNodesFoundS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MNodesFoundS] = UnivEq.derive
 
 }
 

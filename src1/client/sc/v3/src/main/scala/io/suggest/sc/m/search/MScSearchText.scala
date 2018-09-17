@@ -25,7 +25,7 @@ object MScSearchText {
     }
   }
 
-  implicit def univEq: UnivEq[MScSearchText] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScSearchText] = UnivEq.derive
 
 }
 

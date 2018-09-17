@@ -13,7 +13,7 @@ sealed trait IDelayAction extends DAction
 
 /** Команда к отправки экшена в отложенные. */
 object DelayAction {
-  implicit def univEq: UnivEq[DelayAction] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[DelayAction] = UnivEq.derive
 }
 case class DelayAction(action: DAction, delayMs: Int) extends IDelayAction
 

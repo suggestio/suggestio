@@ -24,7 +24,7 @@ object MOther {
     }
   }
 
-  implicit def univEq: UnivEq[MOther] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MOther] = UnivEq.derive
 
 }
 

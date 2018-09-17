@@ -10,7 +10,7 @@ import japgolly.univeq.UnivEq
   */
 object MDelayedAction {
 
-  implicit def univEq: UnivEq[MDelayedAction] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MDelayedAction] = UnivEq.derive
 
 }
 

@@ -1,7 +1,7 @@
 package io.suggest.bill.price.dsl
 
 import io.suggest.bill.{MCurrencies, MPrice}
-import MCurrencies.{RUB, USD}
+import MCurrencies.RUB
 import minitest._
 
 /**

@@ -1,6 +1,7 @@
 package io.suggest.adv.free
 
 import boopickle.Default._
+import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -25,5 +26,7 @@ object MAdv4FreeProps {
     (__ \ "f").format[String] and
     (__ \ "t").format[String]
   )(apply, unlift(unapply))
+
+  @inline implicit def univEq: UnivEq[MAdv4FreeProps] = UnivEq.derive
 
 }

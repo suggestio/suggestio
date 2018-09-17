@@ -12,7 +12,7 @@ import japgolly.univeq.UnivEq
   */
 object MTsTimerId {
 
-  implicit def univEq: UnivEq[MTsTimerId] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MTsTimerId] = UnivEq.derive
 
 }
 

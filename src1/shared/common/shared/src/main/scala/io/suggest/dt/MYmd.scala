@@ -52,7 +52,7 @@ object MYmd {
     (__ \ "d").format[Int]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MYmd] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MYmd] = UnivEq.derive
 
 }
 

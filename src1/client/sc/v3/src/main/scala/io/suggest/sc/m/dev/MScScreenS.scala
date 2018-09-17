@@ -22,7 +22,7 @@ object MScScreenS {
     }
   }
 
-  implicit def univEq: UnivEq[MScScreenS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScScreenS] = UnivEq.derive
 
 }
 

@@ -200,6 +200,6 @@ object NodesFoundR {
     }
   }
 
-  implicit def univEq: UnivEq[PropsVal] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[PropsVal] = UnivEq.derive
 
 }

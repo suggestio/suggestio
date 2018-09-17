@@ -7,6 +7,7 @@ import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.tags.edit.m.MTagsEditState
 import io.suggest.maps.m.{MExistGeoS, MMapS, MRad}
 import io.suggest.sjs.common.controller.DomQuick
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -69,10 +70,10 @@ object MRoot {
   /** Реализация поддержки FastEq для инстансов [[MRoot]]. */
   implicit object MRootFastEq extends FastEq[MRoot] {
     override def eqv(a: MRoot, b: MRoot): Boolean = {
-      (a.mmap eq b.mmap) &&
-        (a.other eq b.other) &&
-        (a.adv4free eq b.adv4free) &&
-        (a.tags eq b.tags) &&
+      (a.mmap ===* b.mmap) &&
+        (a.other ===* b.other) &&
+        (a.adv4free ===* b.adv4free) &&
+        (a.tags ===* b.tags) &&
         (a.rcvr eq b.rcvr) &&
         (a.rad eq b.rad) &&
         (a.geoAdv eq b.geoAdv) &&

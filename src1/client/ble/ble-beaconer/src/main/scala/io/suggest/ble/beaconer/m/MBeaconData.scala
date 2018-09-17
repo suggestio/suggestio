@@ -11,7 +11,7 @@ import japgolly.univeq.UnivEq
   */
 object MBeaconData {
 
-  implicit def univEq: UnivEq[MBeaconData] = UnivEq.force
+  @inline implicit def univEq: UnivEq[MBeaconData] = UnivEq.force
 
 }
 

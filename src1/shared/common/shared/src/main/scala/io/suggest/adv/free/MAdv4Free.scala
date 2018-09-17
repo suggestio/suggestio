@@ -1,6 +1,7 @@
 package io.suggest.adv.free
 
 import boopickle.Default._
+import japgolly.univeq.UnivEq
 
 /** Модель diode-состояния суперюзерской формочки.
   *
@@ -19,5 +20,7 @@ object MAdv4Free {
     implicit val propsP = MAdv4FreeProps.a4fPropsPickler
     generatePickler[MAdv4Free]
   }
+
+  @inline implicit def univEq: UnivEq[MAdv4Free] = UnivEq.derive
 
 }

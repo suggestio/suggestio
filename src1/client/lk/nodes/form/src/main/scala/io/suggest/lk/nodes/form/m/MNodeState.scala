@@ -97,7 +97,7 @@ object MNodeState
     }
   }
 
-  implicit def univEq: UnivEq[MNodeState] = {
+  @inline implicit def univEq: UnivEq[MNodeState] = {
     import io.suggest.ueq.JsUnivEqUtil._
     UnivEq.derive
   }

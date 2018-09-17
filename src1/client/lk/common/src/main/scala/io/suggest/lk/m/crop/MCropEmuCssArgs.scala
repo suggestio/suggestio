@@ -12,7 +12,7 @@ import japgolly.univeq.UnivEq
   */
 object MCropEmuCssArgs {
 
-  implicit def univEq: UnivEq[MCropEmuCssArgs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MCropEmuCssArgs] = UnivEq.derive
 
 }
 

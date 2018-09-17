@@ -25,7 +25,7 @@ object MFormResourceKey {
     }
   }
 
-  implicit def univEq: UnivEq[MFormResourceKey] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MFormResourceKey] = UnivEq.derive
 
 }
 

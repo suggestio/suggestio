@@ -19,7 +19,7 @@ object MWelcomeState {
     }
   }
 
-  implicit def univEq: UnivEq[MWelcomeState] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MWelcomeState] = UnivEq.derive
 
 }
 

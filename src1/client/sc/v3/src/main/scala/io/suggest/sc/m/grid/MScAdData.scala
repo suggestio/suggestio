@@ -29,7 +29,7 @@ object MScAdData {
     }
   }
 
-  implicit def univEq: UnivEq[MScAdData] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScAdData] = UnivEq.derive
 
 }
 

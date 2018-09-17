@@ -32,7 +32,7 @@ object MJdCssArgs {
     )
   }
 
-  implicit def univEq: UnivEq[MJdCssArgs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MJdCssArgs] = UnivEq.derive
 
 }
 

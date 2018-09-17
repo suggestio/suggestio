@@ -24,7 +24,7 @@ object MAdnEditPopups {
     }
   }
 
-  implicit def univEq: UnivEq[MAdnEditPopups] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAdnEditPopups] = UnivEq.derive
 
 }
 

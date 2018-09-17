@@ -20,7 +20,7 @@ object MSlideBlocks {
     }
   }
 
-  implicit def univEq: UnivEq[MSlideBlocks] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MSlideBlocks] = UnivEq.derive
 
 }
 

@@ -18,7 +18,7 @@ trait DAction
 
 object DAction {
 
-  implicit def univEq: UnivEq[DAction] = UnivEq.force
+  @inline implicit def univEq: UnivEq[DAction] = UnivEq.force
 
   /** Требуется ActionType[X] в scope, чтобы компилятор узрел экшен. */
   implicit object DActionType extends DActionType

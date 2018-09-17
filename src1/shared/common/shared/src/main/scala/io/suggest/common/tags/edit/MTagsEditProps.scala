@@ -2,11 +2,12 @@ package io.suggest.common.tags.edit
 
 import io.suggest.i18n.MMessage
 import io.suggest.scalaz.ScalazUtil
-
+import japgolly.univeq.UnivEq
 import scalaz.{Validation, ValidationNel}
 import scalaz.syntax.apply._
 import scalaz.std.iterable._
 import scalaz.std.string._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -30,6 +31,8 @@ object MTagsEditProps {
     vld
   }
 
+  implicit def univEq: UnivEq[MTagsEditProps] = UnivEq.derive
+
 }
 
 
@@ -44,6 +47,10 @@ case class MTagsEditProps(
 
 }
 
+
+object MTagsEditQueryProps {
+  implicit def univEq: UnivEq[MTagsEditQueryProps] = UnivEq.derive
+}
 
 /** Состояние поиска. */
 case class MTagsEditQueryProps(

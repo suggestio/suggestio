@@ -18,7 +18,7 @@ import play.api.libs.functional.syntax._
   */
 object MGeoNodesResp {
 
-  implicit def univEq: UnivEq[MGeoNodesResp] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MGeoNodesResp] = UnivEq.derive
 
 }
 
@@ -52,7 +52,7 @@ object MGeoNodePropsShapes {
     (__ \ "s").format[Seq[IGeoShape]]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MGeoNodePropsShapes] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MGeoNodePropsShapes] = UnivEq.derive
 
 }
 

@@ -1,6 +1,8 @@
 package io.suggest.common.tags.search
 
 import boopickle.Default._
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -12,6 +14,8 @@ import boopickle.Default._
 object MTagFound {
 
   implicit val pickler: Pickler[MTagFound] = generatePickler[MTagFound]
+
+  @inline implicit def univEq: UnivEq[MTagFound] = UnivEq.derive
 
 }
 
@@ -29,6 +33,8 @@ object MTagsFound {
     implicit val mtfP = MTagFound.pickler
     generatePickler[MTagsFound]
   }
+
+  @inline implicit def univEq: UnivEq[MTagsFound] = UnivEq.derive
 
 }
 

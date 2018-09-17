@@ -11,7 +11,7 @@ import japgolly.univeq.UnivEq
   */
 object MSearchRespInfo {
 
-  implicit def univEq[T: UnivEq]: UnivEq[MSearchRespInfo[T]] = UnivEq.derive
+  @inline implicit def univEq[T: UnivEq]: UnivEq[MSearchRespInfo[T]] = UnivEq.derive
 
 }
 

@@ -11,8 +11,8 @@ import japgolly.univeq.UnivEq
   */
 object ReactImageCropUnivEqUtil {
 
-  implicit def percentCropUe: UnivEq[PercentCrop] = UnivEq.force
+  @inline implicit def percentCropUe: UnivEq[PercentCrop] = UnivEq.force
 
-  implicit def pixelCropUe: UnivEq[PixelCrop] = UnivEq.force
+  @inline implicit def pixelCropUe: UnivEq[PixelCrop] = UnivEq.force
 
 }

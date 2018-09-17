@@ -19,7 +19,7 @@ object MMenuS {
     }
   }
 
-  implicit def univEq: UnivEq[MMenuS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMenuS] = UnivEq.derive
 
 }
 

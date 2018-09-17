@@ -27,7 +27,7 @@ object MSaveS {
     }
   }
 
-  implicit def univEq: UnivEq[MSaveS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MSaveS] = UnivEq.derive
 
 }
 

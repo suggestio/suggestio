@@ -14,7 +14,7 @@ object MDelayerS {
 
   def default = MDelayerS()
 
-  implicit def univEq: UnivEq[MDelayerS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MDelayerS] = UnivEq.derive
 
   implicit object MDelayerFastEq extends FastEq[MDelayerS] {
     override def eqv(a: MDelayerS, b: MDelayerS): Boolean = {

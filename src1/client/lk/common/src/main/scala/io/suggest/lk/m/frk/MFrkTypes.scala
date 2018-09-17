@@ -30,6 +30,6 @@ sealed abstract class MFrkType extends EnumEntry
 
 object MFrkType {
 
-  implicit def univEq: UnivEq[MFrkType] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MFrkType] = UnivEq.derive
 
 }

@@ -27,7 +27,7 @@ object MAdnEditErrors {
     }
   }
 
-  implicit def univEq: UnivEq[MAdnEditErrors] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAdnEditErrors] = UnivEq.derive
 
 }
 

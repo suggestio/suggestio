@@ -22,7 +22,7 @@ object MAdnEditInternals {
     }
   }
 
-  implicit def univEq: UnivEq[MAdnEditInternals] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAdnEditInternals] = UnivEq.derive
 
 }
 

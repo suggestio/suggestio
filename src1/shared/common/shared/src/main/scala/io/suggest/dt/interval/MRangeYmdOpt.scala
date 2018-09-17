@@ -3,6 +3,7 @@ package io.suggest.dt.interval
 import boopickle.Default._
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.dt.{IYmdHelper, MYmd}
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -26,6 +27,8 @@ object MRangeYmdOpt {
   }
 
   def empty = MRangeYmdOpt()
+
+  @inline implicit def univEq: UnivEq[MRangeYmdOpt] = UnivEq.derive
 
 }
 

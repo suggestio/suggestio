@@ -21,7 +21,7 @@ object MWsPoolS {
     }
   }
 
-  implicit def univEq: UnivEq[MWsPoolS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MWsPoolS] = UnivEq.derive
 
 }
 

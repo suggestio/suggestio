@@ -4,6 +4,7 @@ import io.suggest.adv.geo.RcvrsMap_t
 import io.suggest.common.html.HtmlConstants
 import io.suggest.es.model.MEsUuId
 import io.suggest.scalaz.ScalazUtil
+import japgolly.univeq.UnivEq
 import scalaz.{Monoid, Validation, ValidationNel}
 import scalaz.syntax.apply._
 import scalaz.std.iterable._
@@ -47,5 +48,7 @@ object RcvrKey {
     val v2 = ScalazUtil.validateAll(rcvrKey)(rcvrIdV)
     (v1 |@| v2) { (_,_) => rcvrKey }
   }
+
+  @inline implicit def univEq: UnivEq[RcvrKey] = UnivEq.derive
 
 }
