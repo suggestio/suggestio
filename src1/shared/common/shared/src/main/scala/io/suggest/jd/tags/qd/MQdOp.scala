@@ -26,7 +26,7 @@ object MQdOp {
     (__ \ "e").formatNullable[MQdAttrsEmbed]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MQdOp] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MQdOp] = UnivEq.derive
 
 }
 

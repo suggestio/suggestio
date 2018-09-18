@@ -30,7 +30,7 @@ object MHistogram {
       .inmap[MHistogram](apply, _.sorted)
   }
 
-  implicit def univEq: UnivEq[MHistogram] = {
+  @inline implicit def univEq: UnivEq[MHistogram] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

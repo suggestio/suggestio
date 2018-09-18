@@ -31,7 +31,7 @@ object MTagsEditProps {
     vld
   }
 
-  implicit def univEq: UnivEq[MTagsEditProps] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MTagsEditProps] = UnivEq.derive
 
 }
 
@@ -49,7 +49,7 @@ case class MTagsEditProps(
 
 
 object MTagsEditQueryProps {
-  implicit def univEq: UnivEq[MTagsEditQueryProps] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MTagsEditQueryProps] = UnivEq.derive
 }
 
 /** Состояние поиска. */

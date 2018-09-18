@@ -23,7 +23,7 @@ object ITfDailyMode {
   }
 
 
-  implicit def univEq: UnivEq[ITfDailyMode] = {
+  @inline implicit def univEq: UnivEq[ITfDailyMode] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

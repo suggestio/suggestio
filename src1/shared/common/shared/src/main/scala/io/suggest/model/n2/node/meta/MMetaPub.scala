@@ -33,7 +33,7 @@ object MMetaPub {
     (__ \ "c").format[MColors]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MMetaPub] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMetaPub] = UnivEq.derive
 
 
   def validateName(name: String): StringValidationNel[String] =

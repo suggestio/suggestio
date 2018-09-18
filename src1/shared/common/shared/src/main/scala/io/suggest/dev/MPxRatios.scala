@@ -89,7 +89,7 @@ sealed abstract class MPxRatio(override val value: Short) extends ShortEnumEntry
 
 object MPxRatio {
 
-  implicit def univEq: UnivEq[MPxRatio] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MPxRatio] = UnivEq.derive
 
   implicit def devPixelRatioFormat: Format[MPxRatio] = {
     EnumeratumUtil.valueEnumEntryFormat( MPxRatios )

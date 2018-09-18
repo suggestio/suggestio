@@ -44,7 +44,7 @@ object MAddress extends IEmpty {
     generatePickler[MAddress]
   }
 
-  implicit def univEq: UnivEq[MAddress] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAddress] = UnivEq.derive
 
   def validateTown(town: Option[String]): StringValidationNel[Option[String]] =
     ScalazUtil.validateTextOpt( town, maxLen = 40, "town" )

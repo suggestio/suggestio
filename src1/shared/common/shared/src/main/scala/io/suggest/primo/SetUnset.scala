@@ -75,7 +75,7 @@ sealed trait ISetUnset[+T] extends NonEmpty {
 
 
 object SetVal {
-  implicit def univEq[T: UnivEq]: UnivEq[SetVal[T]] = UnivEq.derive
+  @inline implicit def univEq[T: UnivEq]: UnivEq[SetVal[T]] = UnivEq.derive
 }
 
 /** Выставление значения указанного типа. */
@@ -100,5 +100,5 @@ case object UnSetVal extends ISetUnset[Nothing] {
   override def foreach[U](f: (Nothing) => U): Unit = {}
   override def isEmpty = true
 
-  implicit def univEq: UnivEq[UnSetVal.type] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[UnSetVal.type] = UnivEq.derive
 }

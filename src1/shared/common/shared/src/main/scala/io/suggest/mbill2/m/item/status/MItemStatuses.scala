@@ -116,7 +116,7 @@ sealed abstract class MItemStatus(override val value: String) extends StringEnum
 
 object MItemStatus {
 
-  implicit def univEq: UnivEq[MItemStatus] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MItemStatus] = UnivEq.derive
 
   def unapplyStrId(x: MItemStatus): Option[String] = {
     Some( x.value )

@@ -27,7 +27,7 @@ object MAdvGeoMapNodeProps {
     (__ \ "i").formatNullable[MMapNodeIconInfo]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MAdvGeoMapNodeProps] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAdvGeoMapNodeProps] = UnivEq.derive
 
 }
 
@@ -58,7 +58,7 @@ object MMapNodeIconInfo {
     (__ \ "wh").format[MSize2di]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MMapNodeIconInfo] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMapNodeIconInfo] = UnivEq.derive
 
 }
 

@@ -185,7 +185,7 @@ object MCtxId extends MacroLogsImplLazy {
 
 
   /** Поддержка UnivEq. */
-  implicit def univEq: UnivEq[MCtxId] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MCtxId] = UnivEq.derive
 
   /** Название параметра конфига с секретным ключиком для сигнатуры sig. */
   private[ctx] def SECKET_KEY_CONF_NAME = "ctx.id.sig.secret"

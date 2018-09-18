@@ -3,6 +3,8 @@ package io.suggest.lk.adv.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.adv.rcvr.{MRcvrPopupResp, MRcvrPopupS}
+import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -15,8 +17,8 @@ object IRcvrPopupProps {
 
   implicit object IRcvrPopupPropsFastEq extends FastEq[IRcvrPopupProps] {
     override def eqv(a: IRcvrPopupProps, b: IRcvrPopupProps): Boolean = {
-      (a.popupResp eq b.popupResp) &&
-        (a.popupState eq b.popupState)
+      (a.popupResp ===* b.popupResp) &&
+      (a.popupState ===* b.popupState)
     }
   }
 

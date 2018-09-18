@@ -1,6 +1,7 @@
 package io.suggest.maps.m
 
 import io.suggest.geo.MGeoPoint
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -22,4 +23,9 @@ case class MRadS(
   def withCenterDragging(cd2: Option[MGeoPoint]) = copy(centerDragging = cd2)
   def withRadiusDragging(rd2: Boolean) = copy(radiusDragging = rd2)
 
+}
+
+
+object MRadS {
+  @inline implicit def univEq: UnivEq[MRadS] = UnivEq.derive
 }

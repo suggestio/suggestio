@@ -2,6 +2,7 @@ package io.suggest.adv.info
 
 import boopickle.Default._
 import io.suggest.bill.tf.daily.MTfDailyInfo
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -18,6 +19,8 @@ object MNodeAdvInfo4Ad {
     implicit val mTfDailyInfoP = MTfDailyInfo.mTfDailyInfoPickler
     generatePickler[MNodeAdvInfo4Ad]
   }
+
+  @inline implicit def univEq: UnivEq[MNodeAdvInfo4Ad] = UnivEq.derive
 
 }
 

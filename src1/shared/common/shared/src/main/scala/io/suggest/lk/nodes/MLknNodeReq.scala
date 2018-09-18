@@ -49,7 +49,7 @@ object MLknNodeReq {
     (nameV |@| idV) { (_,_) => req }
   }
 
-  implicit def univEq: UnivEq[MLknNodeReq] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MLknNodeReq] = UnivEq.derive
 
   implicit def mLknNodeReqFormat: OFormat[MLknNodeReq] = (
     (__ \ "n").format[String] and

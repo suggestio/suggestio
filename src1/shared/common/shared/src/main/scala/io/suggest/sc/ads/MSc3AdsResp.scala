@@ -25,7 +25,7 @@ object MSc3AdsResp {
   )(apply, unlift(unapply))
 
 
-  implicit def univEq: UnivEq[MSc3AdsResp] = {
+  @inline implicit def univEq: UnivEq[MSc3AdsResp] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

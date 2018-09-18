@@ -65,7 +65,7 @@ object MJdTagName {
     EnumeratumUtil.valueEnumEntryFormat( MJdTagNames )
   }
 
-  implicit def univEq: UnivEq[MJdTagName] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MJdTagName] = UnivEq.derive
 
 }
 

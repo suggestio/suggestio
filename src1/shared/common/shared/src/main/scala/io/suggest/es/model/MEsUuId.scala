@@ -62,7 +62,7 @@ object MEsUuId {
 
   implicit def esIdOpt2strOpt(esIdOpt: Option[MEsUuId]): Option[String] = esIdOpt.map(esId2string)
 
-  implicit def univEq: UnivEq[MEsUuId] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MEsUuId] = UnivEq.derive
 
 
   object Implicits {

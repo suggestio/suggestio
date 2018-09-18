@@ -16,7 +16,7 @@ import play.api.libs.functional.syntax._
 
 object MLknNodeResp {
 
-  implicit def univEq: UnivEq[MLknNodeResp] = {
+  @inline implicit def univEq: UnivEq[MLknNodeResp] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

@@ -41,7 +41,7 @@ sealed abstract class MVideoService(override val value: String) extends StringEn
 
 object MVideoService {
 
-  implicit def univEq: UnivEq[MVideoService] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MVideoService] = UnivEq.derive
 
   /** Поддержка play-json, если вдруг когда-нибудь пригодится. */
   implicit def MVIDEO_SERVICE_FORMAT: Format[MVideoService] = {

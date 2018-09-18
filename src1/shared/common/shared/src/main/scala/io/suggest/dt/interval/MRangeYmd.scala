@@ -36,7 +36,7 @@ object MRangeYmd {
     (__ \ "e").format[MYmd]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MRangeYmd] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MRangeYmd] = UnivEq.derive
 
 }
 

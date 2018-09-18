@@ -71,7 +71,7 @@ object MScApiVsn {
     EnumeratumUtil.valueEnumEntryFormat( MScApiVsns )
   }
 
-  implicit def univEq: UnivEq[MScApiVsn] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScApiVsn] = UnivEq.derive
 
 }
 

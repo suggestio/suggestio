@@ -22,7 +22,7 @@ object MGeoLoc {
     (__ \ ACCURACY_M_FN).formatNullable[Double]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MGeoLoc] = {
+  @inline implicit def univEq: UnivEq[MGeoLoc] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

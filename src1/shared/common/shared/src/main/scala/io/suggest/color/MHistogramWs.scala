@@ -27,7 +27,7 @@ object MHistogramWs {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MHistogramWs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MHistogramWs] = UnivEq.derive
 
 }
 

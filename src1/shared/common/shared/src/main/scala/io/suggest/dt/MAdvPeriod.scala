@@ -25,7 +25,7 @@ object MAdvPeriod {
       .inmap[MAdvPeriod](apply, _.info)
   }
 
-  implicit def univEq: UnivEq[MAdvPeriod] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAdvPeriod] = UnivEq.derive
 
 }
 

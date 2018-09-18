@@ -45,7 +45,7 @@ object MItem {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MItem] = {
+  @inline implicit def univEq: UnivEq[MItem] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

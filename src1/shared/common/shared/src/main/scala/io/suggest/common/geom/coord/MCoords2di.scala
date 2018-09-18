@@ -22,7 +22,7 @@ object MCoords2di {
   )(apply, unlift(unapply))
 
 
-  implicit def univEq: UnivEq[MCoords2di] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MCoords2di] = UnivEq.derive
 
 
   object Implicits {

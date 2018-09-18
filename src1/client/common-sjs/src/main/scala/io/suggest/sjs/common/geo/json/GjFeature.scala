@@ -1,5 +1,7 @@
 package io.suggest.sjs.common.geo.json
 
+import japgolly.univeq.UnivEq
+
 import scala.scalajs.js
 import scala.scalajs.js.{Any, Dictionary, UndefOr}
 
@@ -22,6 +24,8 @@ object GjFeature {
       override val properties   = fProperties
     }
   }
+
+  @inline implicit def univEq: UnivEq[GjFeature] = UnivEq.force
 
 }
 

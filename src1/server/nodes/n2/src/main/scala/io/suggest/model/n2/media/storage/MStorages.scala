@@ -57,6 +57,6 @@ object MStorage {
     EnumeratumJvmUtil.valueEnumQsb( MStorages )
   }
 
-  implicit def univEq: UnivEq[MStorage] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MStorage] = UnivEq.derive
 
 }

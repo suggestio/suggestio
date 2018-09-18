@@ -36,7 +36,7 @@ object QuickAdvPeriod {
       .addConcreteType[Custom.type]
   }
 
-  implicit def univEq: UnivEq[QuickAdvPeriod] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[QuickAdvPeriod] = UnivEq.derive
 
   implicit def quickAdvPeriodFormat: Format[QuickAdvPeriod] = {
     EnumeratumUtil.valueEnumEntryFormat( QuickAdvPeriods )

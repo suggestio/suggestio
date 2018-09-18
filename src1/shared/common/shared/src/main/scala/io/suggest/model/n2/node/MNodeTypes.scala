@@ -121,7 +121,7 @@ object MNodeType {
     EnumeratumUtil.valueEnumEntryFormat( MNodeTypes )
   }
 
-  implicit def univEq: UnivEq[MNodeType] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MNodeType] = UnivEq.derive
 
 }
 

@@ -31,7 +31,7 @@ object IMediaInfo {
     (__ \ "w").formatNullable[MSize2di]
   ).apply( MMediaInfo.apply, { imi: IMediaInfo => (imi.giType, imi.url, imi.thumb, imi.whPx) } )
 
-  implicit def univEq: UnivEq[IMediaInfo] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[IMediaInfo] = UnivEq.derive
 
 }
 

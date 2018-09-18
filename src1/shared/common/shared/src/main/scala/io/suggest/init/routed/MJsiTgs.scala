@@ -59,5 +59,5 @@ sealed abstract class MJsiTg(override val value: String) extends StringEnumEntry
 }
 
 object MJsiTg {
-  implicit def univEq: UnivEq[MJsiTg] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MJsiTg] = UnivEq.derive
 }

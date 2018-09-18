@@ -34,7 +34,7 @@ object MJdAdData {
   )(apply, unlift(unapply))
 
 
-  implicit def univEq: UnivEq[MJdAdData] = {
+  @inline implicit def univEq: UnivEq[MJdAdData] = {
     import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive

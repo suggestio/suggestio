@@ -35,7 +35,7 @@ object MTxn {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MTxn] = {
+  @inline implicit def univEq: UnivEq[MTxn] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

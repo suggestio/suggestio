@@ -5,6 +5,8 @@ import japgolly.univeq.UnivEq
 import org.scalajs.dom.{Blob, File, WebSocket}
 import org.scalajs.dom.raw.XMLHttpRequest
 
+import scala.scalajs.js
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -23,5 +25,7 @@ object JsUnivEqUtil {
   @inline implicit def potUe[T]         : UnivEq[Pot[T]]            = UnivEq.force
 
   @inline implicit def webSocketUe      : UnivEq[WebSocket]         = UnivEq.force
+
+  @inline implicit def jsArrayUe[T: UnivEq]: UnivEq[js.Array[T]]    = UnivEq.force
 
 }

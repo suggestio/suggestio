@@ -27,7 +27,7 @@ sealed abstract class MAppPlatform(override val value: String) extends StringEnu
 
 object MAppPlatform {
 
-  implicit def univEq: UnivEq[MAppPlatform] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAppPlatform] = UnivEq.derive
 
   implicit def MAPP_PLATFORM_FORMAT: Format[MAppPlatform] = {
     EnumeratumUtil.valueEnumEntryFormat( MAppPlatforms )

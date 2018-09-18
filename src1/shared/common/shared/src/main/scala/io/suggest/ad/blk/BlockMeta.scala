@@ -26,7 +26,7 @@ object BlockMeta {
   )(apply, unlift(unapply))
 
 
-  implicit def univEq: UnivEq[BlockMeta] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[BlockMeta] = UnivEq.derive
 
   /** STUB: Валидация инстансов BlockMeta. */
   def validate(bm: BlockMeta): ValidationNel[String, BlockMeta] = {

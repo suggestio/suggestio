@@ -37,7 +37,7 @@ object MMessage {
     MMessage(message, args)
   }
 
-  implicit def univEq: UnivEq[MMessage] = {
+  @inline implicit def univEq: UnivEq[MMessage] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

@@ -35,7 +35,7 @@ object MScreen {
     Math.round(pxRatioRaw * r).toDouble / r
   }
 
-  implicit def univEq: UnivEq[MScreen] = {
+  @inline implicit def univEq: UnivEq[MScreen] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

@@ -22,7 +22,7 @@ object MTfDailyInfo {
     generatePickler[MTfDailyInfo]
   }
 
-  implicit def univEq: UnivEq[MTfDailyInfo] = {
+  @inline implicit def univEq: UnivEq[MTfDailyInfo] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

@@ -44,7 +44,7 @@ object MQdScript {
     EnumeratumUtil.valueEnumEntryFormat( MQdScripts )
   }
 
-  implicit def univEq: UnivEq[MQdScript] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MQdScript] = UnivEq.derive
 
 }
 

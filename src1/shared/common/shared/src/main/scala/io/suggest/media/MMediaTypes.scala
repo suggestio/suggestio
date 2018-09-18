@@ -43,7 +43,7 @@ object MMediaType {
     EnumeratumUtil.valueEnumEntryFormat( MMediaTypes )
   }
 
-  implicit def univEq: UnivEq[MMediaType] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMediaType] = UnivEq.derive
 
 
   import boopickle.Default._

@@ -8,6 +8,7 @@ import io.suggest.lk.tags.edit.m.MTagsEditState
 import io.suggest.maps.m.{MExistGeoS, MMapS, MRad}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -67,6 +68,8 @@ case class MRoot(
 
 object MRoot {
 
+  @inline implicit def univEq: UnivEq[MRoot] = UnivEq.derive
+
   /** Реализация поддержки FastEq для инстансов [[MRoot]]. */
   implicit object MRootFastEq extends FastEq[MRoot] {
     override def eqv(a: MRoot, b: MRoot): Boolean = {
@@ -74,11 +77,12 @@ object MRoot {
         (a.other ===* b.other) &&
         (a.adv4free ===* b.adv4free) &&
         (a.tags ===* b.tags) &&
-        (a.rcvr eq b.rcvr) &&
-        (a.rad eq b.rad) &&
-        (a.geoAdv eq b.geoAdv) &&
-        (a.datePeriod eq b.datePeriod) &&
-        (a.bill eq b.bill)
+        (a.rcvr ===* b.rcvr) &&
+        (a.rad ===* b.rad) &&
+        (a.geoAdv ===* b.geoAdv) &&
+        (a.datePeriod ===* b.datePeriod) &&
+        (a.popups ===* b.popups) &&
+        (a.bill ===* b.bill)
     }
   }
 

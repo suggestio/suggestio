@@ -18,7 +18,7 @@ object MAdvDeclSpec {
     (__ \ "p").formatNullable[MAdvPeriod]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MAdvDeclSpec] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAdvDeclSpec] = UnivEq.derive
 
 }
 

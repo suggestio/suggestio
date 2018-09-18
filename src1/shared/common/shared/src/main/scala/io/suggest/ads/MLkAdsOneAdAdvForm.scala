@@ -24,7 +24,7 @@ object MLkAdsOneAdAdvForm {
   }
 
 
-  implicit def univEq: UnivEq[MLkAdsOneAdAdvForm] = {
+  @inline implicit def univEq: UnivEq[MLkAdsOneAdAdvForm] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

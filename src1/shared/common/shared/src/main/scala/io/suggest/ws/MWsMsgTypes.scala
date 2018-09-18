@@ -34,6 +34,6 @@ object MWsMsgType {
     EnumeratumUtil.valueEnumEntryFormat( MWsMsgTypes )
   }
 
-  implicit def univEq: UnivEq[MWsMsgType] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MWsMsgType] = UnivEq.derive
 
 }

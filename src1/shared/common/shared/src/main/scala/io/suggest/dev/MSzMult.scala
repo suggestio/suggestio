@@ -23,7 +23,7 @@ object MSzMult {
       .inmap(apply, _.multBody)
   }
 
-  implicit def univEq: UnivEq[MSzMult] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MSzMult] = UnivEq.derive
 
   protected[dev] final val SZ_MULT_MOD = PERCENTS_COUNT * PERCENTS_COUNT
 

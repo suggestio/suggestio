@@ -46,7 +46,7 @@ object MJdEdge {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MJdEdge] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MJdEdge] = UnivEq.derive
 
 
   /** Валидация данных эджа для его сохранения в БД. */

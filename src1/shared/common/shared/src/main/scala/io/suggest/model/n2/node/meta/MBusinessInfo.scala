@@ -63,7 +63,7 @@ object MBusinessInfo extends IEmpty {
     generatePickler[MBusinessInfo]
   }
 
-  implicit def univEq: UnivEq[MBusinessInfo] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MBusinessInfo] = UnivEq.derive
 
   def validateSiteUrl(siteUrl: Option[String]): StringValidationNel[Option[String]] = {
     ScalazUtil.liftNelOpt(siteUrl) { url =>

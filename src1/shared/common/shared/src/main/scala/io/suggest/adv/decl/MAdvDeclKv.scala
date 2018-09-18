@@ -12,7 +12,7 @@ import play.api.libs.functional.syntax._
   */
 object MAdvDeclKv {
 
-  implicit def univEq: UnivEq[MAdvDeclKv] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAdvDeclKv] = UnivEq.derive
 
   implicit def mAdvDeclKvFormat: OFormat[MAdvDeclKv] = (
     (__ \ "k").format[MAdvDeclKey] and

@@ -25,7 +25,7 @@ object MBalance {
     (__ \ "i").formatNullable[Gid_t]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MBalance] = {
+  @inline implicit def univEq: UnivEq[MBalance] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

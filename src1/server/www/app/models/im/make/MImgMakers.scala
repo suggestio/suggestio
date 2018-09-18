@@ -79,7 +79,7 @@ sealed abstract class MImgMaker(override val value: String) extends StringEnumEn
 
 object MImgMaker {
 
-  def univEq: UnivEq[MImgMaker] = UnivEq.derive
+  @inline def univEq: UnivEq[MImgMaker] = UnivEq.derive
 
   def mappingOpt = EnumeratumJvmUtil.stringIdOptMapping( MImgMakers )
   def mapping = FormMappingUtil.optMapping2required( mappingOpt )

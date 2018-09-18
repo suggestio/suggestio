@@ -43,7 +43,7 @@ object MScCommonQs {
     (__ \ Fields.SEARCH_TAGS_FN).formatNullable[Boolean]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MScCommonQs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScCommonQs] = UnivEq.derive
 
 }
 

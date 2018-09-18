@@ -17,7 +17,7 @@ object MPwaManifestQs {
     final def API_VSN_FN = ScConstants.ReqArgs.VSN_FN
   }
 
-  implicit def univEq: UnivEq[MPwaManifestQs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MPwaManifestQs] = UnivEq.derive
 
   /** Поддержка play-json. Не использовалось на момент внедрения. */
   implicit def MPWA_MANIFEST_QS_FORMAT: OFormat[MPwaManifestQs] = {

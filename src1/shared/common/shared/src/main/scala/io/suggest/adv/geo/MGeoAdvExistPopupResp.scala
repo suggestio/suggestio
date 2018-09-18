@@ -2,6 +2,8 @@ package io.suggest.adv.geo
 
 import boopickle.Default._
 import io.suggest.dt.interval.MRangeYmdOpt
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -10,10 +12,14 @@ import io.suggest.dt.interval.MRangeYmdOpt
   * Description: Модель ответа сервера на запрос данных попапа над геошейпом гео-размещения.
   */
 object MGeoAdvExistPopupResp {
+
   implicit val pickler: Pickler[MGeoAdvExistPopupResp] = {
     implicit val rowP = MGeoAdvExistRow.pickler
     generatePickler[MGeoAdvExistPopupResp]
   }
+
+  @inline implicit def univEq: UnivEq[MGeoAdvExistPopupResp] = UnivEq.derive
+
 }
 
 /**
@@ -35,6 +41,7 @@ object MGeoAdvExistRow {
     implicit val geoItemInfoP = MGeoItemInfo.mGeoItemInfoPickler
     generatePickler[MGeoAdvExistRow]
   }
+  @inline implicit def univEq: UnivEq[MGeoAdvExistRow] = UnivEq.derive
 }
 /** Кроссплатформенная модель данных по одному ряду в списке рядов просматриваемого шейпа. */
 case class MGeoAdvExistRow(
@@ -54,6 +61,7 @@ object MGeoItemInfo {
     implicit val payloadP = MGeoItemInfoPayload.pickler
     generatePickler[MGeoItemInfo]
   }
+  @inline implicit def univEq: UnivEq[MGeoItemInfo] = UnivEq.derive
 }
 
 
@@ -66,12 +74,13 @@ object MGeoItemInfoPayload {
       .addConcreteType[OnAdvsMap.type]
       .addConcreteType[OnGeoCapturing.type]
   }
+  @inline implicit def univEq: UnivEq[MGeoItemInfoPayload] = UnivEq.derive
 }
 sealed trait MGeoItemInfoPayload
 
 // lk-adv-geo
 case object OnMainScreen extends MGeoItemInfoPayload
-case class InGeoTag(tagFace: String) extends MGeoItemInfoPayload
+final case class InGeoTag(tagFace: String) extends MGeoItemInfoPayload
 
 // lk-adn-map
 case object OnAdvsMap extends MGeoItemInfoPayload

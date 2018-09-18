@@ -41,7 +41,7 @@ sealed abstract class MTxnType(override val value: String) extends StringEnumEnt
 
 object MTxnType {
 
-  implicit def univEq: UnivEq[MTxnType] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MTxnType] = UnivEq.derive
 
   def unapplyStrId(x: MTxnType): Option[String] = {
     Some( x.value )

@@ -39,7 +39,7 @@ sealed abstract class MDomainMode(override val value: String) extends StringEnum
 
 object MDomainMode {
 
-  implicit def univEq: UnivEq[MDomainMode] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MDomainMode] = UnivEq.derive
 
   def mappingOpt = EnumeratumJvmUtil.stringIdOptMapping( MDomainModes )
   def mapping = FormMappingUtil.optMapping2required( mappingOpt )

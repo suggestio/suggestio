@@ -42,7 +42,7 @@ object JdTag {
     (__ \ Fields.QD_PROPS_FN).formatNullable[MQdOp]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[JdTag] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[JdTag] = UnivEq.derive
 
 
   /** Билдер-функция для более удобной ручной сборки инстансов [[JdTag]] по сравнению с apply.

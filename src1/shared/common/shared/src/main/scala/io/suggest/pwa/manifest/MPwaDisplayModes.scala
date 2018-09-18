@@ -37,7 +37,7 @@ sealed abstract class MPwaDisplayMode(override val value: String)
 
 object MPwaDisplayMode {
 
-  implicit def univEq: UnivEq[MPwaDisplayMode] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MPwaDisplayMode] = UnivEq.derive
 
   /** Поддержка play-json. */
   implicit def MPWA_DISPLAY_FORMAT: Format[MPwaDisplayMode] = {

@@ -2,6 +2,8 @@ package io.suggest.bill
 
 import boopickle.Default._
 import io.suggest.bill.price.dsl.IPriceDslTerm
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -20,6 +22,8 @@ object MGetPriceResp {
     implicit val iPriceDslTermP = IPriceDslTerm.iPriceDslTermPickler
     generatePickler[MGetPriceResp]
   }
+
+  @inline implicit def univEq: UnivEq[MGetPriceResp] = UnivEq.derive
 
 }
 

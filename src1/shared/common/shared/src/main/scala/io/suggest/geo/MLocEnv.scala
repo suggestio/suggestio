@@ -33,7 +33,7 @@ object MLocEnv extends IEmpty {
       )
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MLocEnv] = {
+  @inline implicit def univEq: UnivEq[MLocEnv] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

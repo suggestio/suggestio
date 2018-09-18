@@ -36,7 +36,7 @@ object IPeriodInfo {
     }
   }
 
-  implicit def univEq: UnivEq[IPeriodInfo] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[IPeriodInfo] = UnivEq.derive
 
   implicit def periodInfoFormat: OFormat[IPeriodInfo] = {
     val isoFmt = MIsoPeriod.mIsoPeriodFormat
@@ -91,7 +91,8 @@ sealed trait IPeriodInfo {
 
 
 object MIsoPeriod {
-  implicit def univEq: UnivEq[MIsoPeriod] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MIsoPeriod] = UnivEq.derive
+
   implicit def mIsoPeriodFormat: OFormat[MIsoPeriod] = {
     (__ \ "i")
       .format[QuickAdvIsoPeriod]
@@ -132,7 +133,7 @@ case class MIsoPeriod(isoPeriod: QuickAdvIsoPeriod = QuickAdvPeriods.default ) e
 
 
 object MCustomPeriod {
-  implicit def univEq: UnivEq[MCustomPeriod] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MCustomPeriod] = UnivEq.derive
   implicit def mCustomPeriodFormat: OFormat[MCustomPeriod] = {
     (__ \ "c")
       .format[MRangeYmd]

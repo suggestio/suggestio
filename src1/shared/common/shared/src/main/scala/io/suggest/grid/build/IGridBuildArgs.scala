@@ -111,7 +111,7 @@ object MGridBuildResult {
     gridWh = MSize2di(0, 0)
   )
 
-  implicit def univEq: UnivEq[MGridBuildResult] = {
+  @inline implicit def univEq: UnivEq[MGridBuildResult] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

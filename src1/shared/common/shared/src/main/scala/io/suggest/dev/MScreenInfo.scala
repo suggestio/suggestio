@@ -15,7 +15,7 @@ import japgolly.univeq._
   */
 object MScreenInfo {
 
-  implicit def univEq: UnivEq[MScreenInfo] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScreenInfo] = UnivEq.derive
 
 }
 

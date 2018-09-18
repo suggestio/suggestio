@@ -29,7 +29,7 @@ object MHostUrl {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MHostUrl] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MHostUrl] = UnivEq.derive
 
 }
 

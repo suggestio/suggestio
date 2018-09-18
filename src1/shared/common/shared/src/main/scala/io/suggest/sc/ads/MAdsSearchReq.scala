@@ -32,7 +32,7 @@ object MAdsSearchReq extends IEmpty {
     // Не забывать добавлять биндеры в MScQsJvm.
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MAdsSearchReq] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAdsSearchReq] = UnivEq.derive
 
 }
 

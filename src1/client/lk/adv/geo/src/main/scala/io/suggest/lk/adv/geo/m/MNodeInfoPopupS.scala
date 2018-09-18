@@ -5,6 +5,9 @@ import diode.data.Pot
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.sjs.common.vm.spa.IMPot
+import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -16,10 +19,12 @@ object MNodeInfoPopupS {
 
   implicit object MNodeInfoPopupFastEq extends FastEq[MNodeInfoPopupS] {
     override def eqv(a: MNodeInfoPopupS, b: MNodeInfoPopupS): Boolean = {
-      (a.rcvrKey eq b.rcvrKey) &&
-        (a.req eq b.req)
+      (a.rcvrKey ===* b.rcvrKey) &&
+        (a.req ===* b.req)
     }
   }
+
+  @inline implicit def univEq: UnivEq[MNodeInfoPopupS] = UnivEq.derive
 
 }
 

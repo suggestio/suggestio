@@ -37,6 +37,6 @@ object MUaType {
   implicit def mUaTypeFormat: Format[MUaType] =
     EnumeratumUtil.valueEnumEntryFormat( MUaTypes )
 
-  implicit def univEq: UnivEq[MUaType] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MUaType] = UnivEq.derive
 
 }

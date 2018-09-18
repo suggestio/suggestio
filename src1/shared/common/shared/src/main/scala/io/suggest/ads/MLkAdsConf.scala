@@ -14,7 +14,7 @@ import play.api.libs.functional.syntax._
   */
 object MLkAdsConf {
 
-  implicit def univEq: UnivEq[MLkAdsConf] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MLkAdsConf] = UnivEq.derive
 
   implicit def MLK_ADS_FORM_FORMAT: OFormat[MLkAdsConf] = (
     (__ \ "i").format[RcvrKey] and

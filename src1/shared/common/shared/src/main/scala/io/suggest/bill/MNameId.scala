@@ -1,6 +1,7 @@
 package io.suggest.bill
 
 import boopickle.Default._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -16,6 +17,8 @@ object MNameId {
   implicit val mNameIdPickler: Pickler[MNameId] = {
     generatePickler[MNameId]
   }
+
+  @inline implicit def univEq: UnivEq[MNameId] = UnivEq.derive
 
 }
 

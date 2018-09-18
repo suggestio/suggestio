@@ -70,7 +70,7 @@ object MPictureMeta extends IGenEsMappingProps with IEmpty {
     )
   }
 
-  implicit def univEq: UnivEq[MPictureMeta] = {
+  @inline implicit def univEq: UnivEq[MPictureMeta] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

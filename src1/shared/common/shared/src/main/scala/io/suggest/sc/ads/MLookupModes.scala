@@ -64,7 +64,7 @@ object MLookupMode {
     EnumeratumUtil.valueEnumEntryFormat( MLookupModes )
   }
 
-  implicit def univEq: UnivEq[MLookupMode] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MLookupMode] = UnivEq.derive
 
 }
 

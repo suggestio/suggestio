@@ -19,7 +19,7 @@ object MScFocusArgs {
     (__ \ LOOKUP_AD_ID_FN).format[String]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MScFocusArgs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScFocusArgs] = UnivEq.derive
 
 }
 

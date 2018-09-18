@@ -2,6 +2,8 @@ package io.suggest.lk.adv.geo.m
 
 import diode.FastEq
 import io.suggest.lk.adv.m.MPriceS
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -14,9 +16,11 @@ object MBillS {
   /** Быстрый компаратор FastEq. */
   implicit object MBillSFastEq extends FastEq[MBillS] {
     override def eqv(a: MBillS, b: MBillS): Boolean = {
-      a.price eq b.price
+      a.price ===* b.price
     }
   }
+
+  @inline implicit def univEq: UnivEq[MBillS] = UnivEq.derive
 
 }
 

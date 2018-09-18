@@ -36,7 +36,7 @@ object MUploadResp {
       )
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MUploadResp] = {
+  @inline implicit def univEq: UnivEq[MUploadResp] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

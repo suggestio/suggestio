@@ -42,7 +42,7 @@ object MColors extends IEmpty {
     (__ \ MColorTypes.Fg.value).formatNullable[MColorData]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MColors] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MColors] = UnivEq.derive
 
   def bgF = { cs: MColors => cs.bg }
   def fgF = { cs: MColors => cs.fg }

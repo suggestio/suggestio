@@ -198,7 +198,7 @@ sealed abstract class MImgFmt(override val value: String) extends StringEnumEntr
 
 object MImgFmt {
 
-  implicit def univEq: UnivEq[MImgFmt] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MImgFmt] = UnivEq.derive
 
   /** Поддержка play-json. */
   implicit val OUT_IMG_FMT_FORMAT: Format[MImgFmt] = {

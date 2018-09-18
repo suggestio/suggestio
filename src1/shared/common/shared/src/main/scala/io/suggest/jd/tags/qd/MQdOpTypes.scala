@@ -36,6 +36,6 @@ object MQdOpType {
     EnumeratumUtil.valueEnumEntryFormat( MQdOpTypes )
   }
 
-  implicit def univEq: UnivEq[MQdOpType] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MQdOpType] = UnivEq.derive
 
 }

@@ -30,7 +30,7 @@ object MSc3IndexResp {
     (__ \ "o").formatNullable[MGeoLoc]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MSc3IndexResp] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MSc3IndexResp] = UnivEq.derive
 
 }
 

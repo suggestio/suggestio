@@ -49,6 +49,6 @@ object MColorType {
     EnumeratumUtil.valueEnumEntryFormat( MColorTypes )
   }
 
-  implicit def univEq: UnivEq[MColorType] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MColorType] = UnivEq.derive
 
 }

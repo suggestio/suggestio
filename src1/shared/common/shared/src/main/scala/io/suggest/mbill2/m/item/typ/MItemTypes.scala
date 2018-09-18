@@ -143,7 +143,7 @@ object MItemType {
       .addConcreteType[TagDirect.type]
   }
 
-  implicit def univEq: UnivEq[MItemType] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MItemType] = UnivEq.derive
 
   def unapplyStrId(x: MItemType): Option[String] = {
     Some(x.value)

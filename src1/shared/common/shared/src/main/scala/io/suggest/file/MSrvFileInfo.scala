@@ -62,7 +62,7 @@ object MSrvFileInfo {
       }
   }
 
-  implicit def univEq: UnivEq[MSrvFileInfo] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MSrvFileInfo] = UnivEq.derive
 
 }
 

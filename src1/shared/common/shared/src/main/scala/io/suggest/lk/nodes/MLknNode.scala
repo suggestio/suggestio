@@ -16,7 +16,7 @@ import play.api.libs.functional.syntax._
 
 object MLknNode {
 
-  implicit def univEq: UnivEq[MLknNode] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MLknNode] = UnivEq.derive
 
   implicit def mLknNodeFormat: OFormat[MLknNode] = (
     (__ \ "i").format[String] and

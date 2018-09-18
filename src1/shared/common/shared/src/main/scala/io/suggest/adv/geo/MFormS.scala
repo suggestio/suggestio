@@ -5,6 +5,8 @@ import io.suggest.common.tags.edit.MTagsEditProps
 import io.suggest.dt.MAdvPeriod
 import io.suggest.geo.CircleGs
 import io.suggest.maps.MMapProps
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -23,9 +25,6 @@ import io.suggest.maps.MMapProps
 
 object MFormS {
 
-  // TODO Opt Можно проверсти тюнинг boopickle на предмет скорости.
-  // https://github.com/ochrons/boopickle#optimizations-strategies
-
   implicit val pickler: Pickler[MFormS] = {
     implicit val mmapsP = MMapProps.mmapsPickler
     implicit val datePeriodP = MAdvPeriod.mAdvPeriodPickler
@@ -34,6 +33,8 @@ object MFormS {
   }
 
   def TZ_OFFSET_IGNORE = Int.MinValue
+
+  @inline implicit def univEq: UnivEq[MFormS] = UnivEq.derive
 
 }
 

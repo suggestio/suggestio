@@ -34,7 +34,7 @@ sealed abstract class MQdListType(override val value: String) extends StringEnum
 object MQdListType {
 
   /** Поддержка UnivEq. */
-  implicit def univEq: UnivEq[MQdListType] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MQdListType] = UnivEq.derive
 
   /** Поддержка play-json. */
   implicit val MQD_LIST_TYPE_FORMAT: Format[MQdListType] = {

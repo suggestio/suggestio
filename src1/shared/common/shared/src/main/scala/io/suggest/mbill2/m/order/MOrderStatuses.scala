@@ -94,7 +94,7 @@ sealed abstract class MOrderStatus(override val value: String) extends StringEnu
 
 object MOrderStatus {
 
-  implicit def univEq: UnivEq[MOrderStatus] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MOrderStatus] = UnivEq.derive
 
   def unapplyStrId(mos: MOrderStatus): Option[String] = {
     Some( mos.value )

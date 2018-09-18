@@ -20,7 +20,7 @@ object MLknConf {
     generatePickler[MLknConf]
   }
 
-  implicit def univEq: UnivEq[MLknConf] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MLknConf] = UnivEq.derive
 
   implicit def mLknConfFormat: OFormat[MLknConf] = (
     (__ \ "n").format[String] and

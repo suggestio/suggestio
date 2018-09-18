@@ -55,7 +55,7 @@ object MQdAttrsText {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MQdAttrsText] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MQdAttrsText] = UnivEq.derive
 
 
   /** Провалидировать для сохранения в БД.

@@ -24,7 +24,7 @@ object MSc3RespAction {
     (__ \ MScRespActionTypes.SearchNodes.value).formatNullable[MSc3NodeSearchResp]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MSc3RespAction] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MSc3RespAction] = UnivEq.derive
 
 }
 

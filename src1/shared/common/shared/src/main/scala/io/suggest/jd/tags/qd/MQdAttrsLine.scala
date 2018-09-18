@@ -42,7 +42,7 @@ object MQdAttrsLine {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MQdAttrsLine] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MQdAttrsLine] = UnivEq.derive
 
 
   /** Валидация инстанса MQdAttrsLine для дальнейшего сохранения в БД. */

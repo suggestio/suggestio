@@ -20,7 +20,7 @@ object MTlbr {
 
   def empty = apply()
 
-  implicit def univEq: UnivEq[MTlbr] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MTlbr] = UnivEq.derive
 
   private def _offsetOr0(offOpt: Option[Int]): Int =
     offOpt getOrElse 0

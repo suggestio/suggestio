@@ -80,7 +80,7 @@ object MCalType {
     EnumeratumUtil.valueEnumEntryFormat( MCalTypes )
   }
 
-  implicit def univEq: UnivEq[MCalType] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MCalType] = UnivEq.derive
 
   /** Поддержка бинарной сериализации.*/
   implicit val mCalTypePickler: Pickler[MCalType] = {

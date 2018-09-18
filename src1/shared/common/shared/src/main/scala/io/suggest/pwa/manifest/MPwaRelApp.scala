@@ -12,7 +12,7 @@ import play.api.libs.functional.syntax._
   */
 object MPwaRelApp {
 
-  implicit def univEq: UnivEq[MPwaRelApp] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MPwaRelApp] = UnivEq.derive
 
   implicit def MPWA_REL_APP_FORMAT: OFormat[MPwaRelApp] = (
     (__ \ "platform").format[MAppPlatform] and

@@ -31,7 +31,7 @@ object MOrder {
   }
 
 
-  implicit def univEq: UnivEq[MOrder] = {
+  @inline implicit def univEq: UnivEq[MOrder] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

@@ -12,7 +12,7 @@ import play.api.libs.functional.syntax._
   */
 object MLknFormInit {
 
-  implicit def univEq: UnivEq[MLknFormInit] = {
+  @inline implicit def univEq: UnivEq[MLknFormInit] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

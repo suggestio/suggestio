@@ -55,7 +55,7 @@ object MOrientation2d {
     EnumeratumUtil.valueEnumEntryFormat( MOrientations2d )
   }
 
-  implicit def univEq: UnivEq[MOrientation2d] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MOrientation2d] = UnivEq.derive
 
 }
 

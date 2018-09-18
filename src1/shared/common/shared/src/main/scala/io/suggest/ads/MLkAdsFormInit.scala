@@ -20,7 +20,7 @@ object MLkAdsFormInit {
       .inmap[MLkAdsFormInit]( apply, _.nodeKey )
   }
 
-  implicit def univEq: UnivEq[MLkAdsFormInit] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MLkAdsFormInit] = UnivEq.derive
 
 }
 

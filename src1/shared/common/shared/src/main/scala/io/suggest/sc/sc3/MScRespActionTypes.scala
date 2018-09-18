@@ -46,7 +46,7 @@ object MScRespActionType {
     EnumeratumUtil.valueEnumEntryFormat( MScRespActionTypes )
   }
 
-  implicit def univEq: UnivEq[MScRespActionType] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScRespActionType] = UnivEq.derive
 
 }
 

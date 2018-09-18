@@ -63,7 +63,7 @@ object BlockHeight {
     EnumeratumUtil.valueEnumEntryFormat( BlockHeights )
   }
 
-  implicit def univEq: UnivEq[BlockHeight] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[BlockHeight] = UnivEq.derive
 
 }
 

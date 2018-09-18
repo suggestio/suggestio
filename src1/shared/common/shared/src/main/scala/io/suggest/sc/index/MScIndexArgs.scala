@@ -27,7 +27,7 @@ object MScIndexArgs {
     (__ \ RET_GEO_LOC_FN).formatNullable[Boolean].formatBooleanOrFalse
   )( apply, unlift(unapply) )
 
-  implicit def univEq: UnivEq[MScIndexArgs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScIndexArgs] = UnivEq.derive
 
 }
 

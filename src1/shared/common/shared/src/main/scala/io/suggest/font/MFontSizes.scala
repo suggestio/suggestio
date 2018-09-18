@@ -96,7 +96,7 @@ object MFontSize {
     EnumeratumUtil.valueEnumEntryFormat( MFontSizes )
   }
 
-  implicit def univEq: UnivEq[MFontSize] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MFontSize] = UnivEq.derive
 
 }
 

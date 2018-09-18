@@ -3,6 +3,9 @@ package io.suggest.maps.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -15,10 +18,12 @@ object MExistGeoPopupS {
 
   implicit object MGeoCurPopupSFastEq extends FastEq[MExistGeoPopupS] {
     override def eqv(a: MExistGeoPopupS, b: MExistGeoPopupS): Boolean = {
-      (a.content eq b.content) &&
-        (a.state eq b.state)
+      (a.content ===* b.content) &&
+        (a.state ===* b.state)
     }
   }
+
+  @inline implicit def univEq: UnivEq[MExistGeoPopupS] = UnivEq.derive
 
 }
 

@@ -35,9 +35,7 @@ object MJdtProps1 extends IEmpty {
     (__ \ "g").formatNullable[Int]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MJdtProps1] = {
-    UnivEq.derive
-  }
+  @inline implicit def univEq: UnivEq[MJdtProps1] = UnivEq.derive
 
 }
 

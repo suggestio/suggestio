@@ -63,7 +63,7 @@ object ScCss {
   /** Высота заголовка. */
   val HEADER_HEIGHT_PX = 50
 
-  implicit def univEq: UnivEq[ScCss] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[ScCss] = UnivEq.derive
 
   /** Ширина текстового поля поиска. */
   val SEARCH_INPUT_WIDTH_PX = 224

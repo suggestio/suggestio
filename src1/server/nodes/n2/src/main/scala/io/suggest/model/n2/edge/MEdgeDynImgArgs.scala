@@ -39,7 +39,7 @@ object MEdgeDynImgArgs extends IGenEsMappingProps {
     )
   }
 
-  implicit def univEq: UnivEq[MEdgeDynImgArgs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MEdgeDynImgArgs] = UnivEq.derive
 
 }
 

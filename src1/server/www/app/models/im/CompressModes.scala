@@ -41,7 +41,7 @@ sealed abstract class CompressMode(override val value: String) extends StringEnu
 
 object CompressMode {
 
-  implicit def univEq: UnivEq[CompressMode] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[CompressMode] = UnivEq.derive
 
   def mappingOpt = EnumeratumJvmUtil.stringIdOptMapping( CompressModes )
   def mapping = FormMappingUtil.optMapping2required( mappingOpt )

@@ -4,6 +4,8 @@ import boopickle.Default._
 import io.suggest.bill.tf.daily.MTfDailyInfo
 import io.suggest.media.IMediaInfo
 import io.suggest.model.n2.node.meta.MMetaPub
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -21,6 +23,8 @@ object MNodeAdvInfo {
     implicit val mMediaInfoP = IMediaInfo.iMediaItemPickler
     generatePickler[MNodeAdvInfo]
   }
+
+  @inline implicit def univEq: UnivEq[MNodeAdvInfo] = UnivEq.derive
 
 }
 

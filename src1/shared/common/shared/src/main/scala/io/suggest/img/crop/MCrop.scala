@@ -44,7 +44,7 @@ object MCrop {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MCrop] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MCrop] = UnivEq.derive
 
 
   /** Валидация в контексте картинки и контейнера.

@@ -83,7 +83,7 @@ object GeoLocType {
     }
   }
 
-  implicit def univEq: UnivEq[GeoLocType] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[GeoLocType] = UnivEq.derive
 
 }
 

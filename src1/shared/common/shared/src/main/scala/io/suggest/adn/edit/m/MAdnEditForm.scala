@@ -18,7 +18,7 @@ import scalaz.syntax.apply._
   */
 object MAdnEditForm {
 
-  implicit def univEq: UnivEq[MAdnEditForm] = {
+  @inline implicit def univEq: UnivEq[MAdnEditForm] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

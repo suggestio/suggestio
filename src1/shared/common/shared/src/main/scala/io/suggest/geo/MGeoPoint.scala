@@ -134,7 +134,7 @@ object MGeoPoint {
 
   }
 
-  implicit def univEq: UnivEq[MGeoPoint] = {
+  @inline implicit def univEq: UnivEq[MGeoPoint] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

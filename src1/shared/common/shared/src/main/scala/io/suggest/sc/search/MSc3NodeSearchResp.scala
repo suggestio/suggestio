@@ -19,7 +19,7 @@ object MSc3NodeSearchResp {
       .inmap(apply, _.results)
   }
 
-  implicit def univEq: UnivEq[MSc3NodeSearchResp] = {
+  @inline implicit def univEq: UnivEq[MSc3NodeSearchResp] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

@@ -32,7 +32,7 @@ object MFile4UpProps {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MFile4UpProps] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MFile4UpProps] = UnivEq.derive
 
 
   import scalaz._

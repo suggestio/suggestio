@@ -46,7 +46,7 @@ object MAdnResView extends IEmpty {
       )
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MAdnResView] = {
+  @inline implicit def univEq: UnivEq[MAdnResView] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

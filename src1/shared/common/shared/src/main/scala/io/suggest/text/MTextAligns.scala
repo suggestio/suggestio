@@ -79,7 +79,7 @@ object MTextAlign {
     EnumeratumUtil.valueEnumEntryFormat( MTextAligns )
   }
 
-  implicit def univEq: UnivEq[MTextAlign] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MTextAlign] = UnivEq.derive
 
 }
 

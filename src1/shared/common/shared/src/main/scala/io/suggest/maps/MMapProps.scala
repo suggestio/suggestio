@@ -58,6 +58,6 @@ object MMapProps {
     Validation.liftNel(zoom)( !isZoomValid(_), "e.zoom.invalid" )
   }
 
-  implicit def univEq: UnivEq[MMapProps] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMapProps] = UnivEq.derive
 
 }

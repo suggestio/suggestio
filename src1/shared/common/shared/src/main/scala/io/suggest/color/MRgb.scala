@@ -90,7 +90,7 @@ object MRgb {
   }
 
 
-  implicit def univEq: UnivEq[MRgb] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MRgb] = UnivEq.derive
 
 
   /** Валидация значений через scalaz. */

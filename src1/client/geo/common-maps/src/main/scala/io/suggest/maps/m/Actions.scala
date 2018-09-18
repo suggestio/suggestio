@@ -6,6 +6,8 @@ import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.sjs.leaflet.map.{LMap, LatLng, Zoom_t}
 import io.suggest.spa.DAction
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.UnivEqUtil._
 
 import scala.util.Try
 
@@ -64,7 +66,9 @@ case class RadiusDragEnd(geoPoint: MGeoPoint) extends IMapsAction with IGeoPoint
 
 /** Команда к открытию попапа над гео-шейпом (кружком) по уже существующими размещениям. */
 case class OpenAdvGeoExistPopup(itemId: Double, geoPoint: MGeoPoint) extends ISetMapCenterForPopup
-
+object OpenAdvGeoExistPopup {
+  @inline implicit def univEq: UnivEq[OpenAdvGeoExistPopup] = UnivEq.derive
+}
 
 
 

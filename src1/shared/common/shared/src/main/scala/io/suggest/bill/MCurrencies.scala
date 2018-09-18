@@ -134,7 +134,7 @@ object MCurrency {
       .addConcreteType[USD.type]
   }
 
-  implicit def univEq: UnivEq[MCurrency] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MCurrency] = UnivEq.derive
 
   /** Поддержка play-json. */
   implicit def mCurrencyFormat: Format[MCurrency] = {

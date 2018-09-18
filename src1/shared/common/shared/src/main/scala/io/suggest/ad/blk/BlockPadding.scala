@@ -71,7 +71,7 @@ object BlockPadding {
     EnumeratumUtil.valueEnumEntryFormat( BlockPaddings )
   }
 
-  implicit def univEq: UnivEq[BlockPadding] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[BlockPadding] = UnivEq.derive
 
 
   /** Утиль для опциональных [[BlockPadding]]. */

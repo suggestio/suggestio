@@ -3,6 +3,9 @@ package io.suggest.lk.adv.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.bill.MGetPriceResp
+import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -14,9 +17,11 @@ object MPriceS {
 
   implicit object MPriceSFastEq extends FastEq[MPriceS] {
     override def eqv(a: MPriceS, b: MPriceS): Boolean = {
-      a.resp eq b.resp
+      a.resp ===* b.resp
     }
   }
+
+  @inline implicit def univEq: UnivEq[MPriceS] = UnivEq.derive
 
 }
 

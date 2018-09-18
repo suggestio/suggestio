@@ -13,7 +13,7 @@ import play.api.libs.json._
   */
 object MAdnEditFormConf {
 
-  implicit def univEq: UnivEq[MAdnEditFormConf] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAdnEditFormConf] = UnivEq.derive
 
   /** Поддержка play-json. */
   implicit def mAdnEditFormConfFormat: OFormat[MAdnEditFormConf] = {

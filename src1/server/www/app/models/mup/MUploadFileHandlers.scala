@@ -33,6 +33,6 @@ object MUploadFileHandler {
   }
 
   /** Поддержка UnivEq. */
-  implicit def univEq: UnivEq[MUploadFileHandler] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MUploadFileHandler] = UnivEq.derive
 
 }

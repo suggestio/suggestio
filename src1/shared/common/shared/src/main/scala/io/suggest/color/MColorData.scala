@@ -50,7 +50,7 @@ object MColorData {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MColorData] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MColorData] = UnivEq.derive
 
 
   def stripDiez(colorCode: String): String = {

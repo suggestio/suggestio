@@ -63,6 +63,6 @@ object MHash {
   }
 
   /** Поддержка UnivEq. */
-  implicit def univEq: UnivEq[MHash] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MHash] = UnivEq.derive
 
 }

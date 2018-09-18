@@ -35,7 +35,7 @@ object MScQs {
     (__ \ Fields.FOCUSED_ARGS_FN).formatNullable[MScFocusArgs]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MScQs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScQs] = UnivEq.derive
 
 }
 

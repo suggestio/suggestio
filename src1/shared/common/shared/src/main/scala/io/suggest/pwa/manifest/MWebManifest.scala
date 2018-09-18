@@ -38,7 +38,7 @@ import play.api.libs.functional.syntax._
   */
 object MWebManifest {
 
-  implicit def univEq: UnivEq[MWebManifest] = {
+  @inline implicit def univEq: UnivEq[MWebManifest] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

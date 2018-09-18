@@ -57,7 +57,7 @@ object BlockWidth {
     EnumeratumUtil.valueEnumEntryFormat( BlockWidths )
   }
 
-  implicit def univEq: UnivEq[BlockWidth] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[BlockWidth] = UnivEq.derive
 
 }
 

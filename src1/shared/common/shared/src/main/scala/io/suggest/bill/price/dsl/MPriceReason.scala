@@ -3,6 +3,8 @@ package io.suggest.bill.price.dsl
 import boopickle.Default._
 import io.suggest.bill.MNameId
 import io.suggest.geo.CircleGs
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -21,6 +23,8 @@ object MPriceReason {
     generatePickler[MPriceReason]
   }
 
+  @inline implicit def univEq: UnivEq[MPriceReason] = UnivEq.derive
+
 }
 
 
@@ -37,6 +41,6 @@ final case class MPriceReason(
                                ints         : Seq[Int]            = Nil,
                                strings      : Seq[String]         = Nil,
                                doubles      : Seq[Double]         = Nil,
-                               geoCircles   : Seq[CircleGs]     = Nil,
+                               geoCircles   : Seq[CircleGs]       = Nil,
                                nameIds      : Seq[MNameId]        = Nil
                              )

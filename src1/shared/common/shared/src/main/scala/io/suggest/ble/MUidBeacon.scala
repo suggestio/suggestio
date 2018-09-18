@@ -19,7 +19,7 @@ object MUidBeacon {
     (__ \ DISTANCE_CM_FN).format[Int]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MUidBeacon] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MUidBeacon] = UnivEq.derive
 
 }
 

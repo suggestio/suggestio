@@ -13,7 +13,7 @@ import play.api.libs.json._
   */
 object MIconInfo {
 
-  implicit def univEq: UnivEq[MIconInfo] = {
+  @inline implicit def univEq: UnivEq[MIconInfo] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

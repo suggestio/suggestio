@@ -120,7 +120,7 @@ object MSize2di {
     }
   }
 
-  implicit def univEq: UnivEq[MSize2di] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MSize2di] = UnivEq.derive
 
   def square(sidePx: Int) = apply(width = sidePx, height = sidePx)
 

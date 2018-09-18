@@ -25,7 +25,7 @@ object MWelcomeInfo {
     (__ \ "c").formatNullable[IMediaInfo]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MWelcomeInfo] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MWelcomeInfo] = UnivEq.derive
 
 }
 

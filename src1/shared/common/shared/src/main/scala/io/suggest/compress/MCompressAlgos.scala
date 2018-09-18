@@ -72,7 +72,7 @@ sealed abstract class MCompressAlgo(override val value: String) extends StringEn
 
 object MCompressAlgo {
 
-  implicit def univEq: UnivEq[MCompressAlgo] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MCompressAlgo] = UnivEq.derive
 
   implicit def MCOMPRESS_ALGO_FORMAT: Format[MCompressAlgo] = {
     EnumeratumUtil.valueEnumEntryFormat( MCompressAlgos )

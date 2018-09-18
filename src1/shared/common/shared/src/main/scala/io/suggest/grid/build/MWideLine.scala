@@ -46,6 +46,6 @@ case class MWideLine(
 
 }
 object MWideLine {
-  implicit def univEq: UnivEq[MWideLine] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MWideLine] = UnivEq.derive
 }
 

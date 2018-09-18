@@ -1,6 +1,7 @@
 package io.suggest.maps.m
 
 import io.suggest.geo.CircleGs
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -15,10 +16,12 @@ object MRad {
   implicit object MRadFastEq extends IMRadTFastEq[MRad] {
     override def eqv(a: MRad, b: MRad) = {
       super.eqv(a, b) &&
-        (a.enabled == b.enabled) &&
-        (a.centerPopup == b.centerPopup)
+        (a.enabled ==* b.enabled) &&
+        (a.centerPopup ==* b.centerPopup)
     }
   }
+
+  @inline implicit def univEq: UnivEq[MRad] = UnivEq.derive
 
 }
 

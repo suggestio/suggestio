@@ -5,6 +5,8 @@ import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.cal.m.MCalType
 import io.suggest.common.empty.{NonEmpty, OptionUtil}
 import io.suggest.dt.MYmd
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -34,6 +36,8 @@ object IPriceDslTerm {
       .addConcreteType[Mapper]
       .addConcreteType[Sum]
   }
+
+  @inline implicit def univEq: UnivEq[IPriceDslTerm] = UnivEq.derive
 
   // TODO Нужен v2-формат, без полиморфизма, на play-json + scalaz.Tree
 

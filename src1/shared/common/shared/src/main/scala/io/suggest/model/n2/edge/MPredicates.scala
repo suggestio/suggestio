@@ -245,6 +245,6 @@ object MPredicate {
     Format(PARENTRAL_READS, PARENTRAL_WRITES)
   }
 
-  implicit def univEq: UnivEq[MPredicate] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MPredicate] = UnivEq.derive
 
 }

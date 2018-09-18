@@ -25,7 +25,7 @@ object MHostInfo {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MHostInfo] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MHostInfo] = UnivEq.derive
 
 }
 

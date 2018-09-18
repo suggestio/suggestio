@@ -27,7 +27,7 @@ object MWsMsg {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MWsMsg] = {
+  @inline implicit def univEq: UnivEq[MWsMsg] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

@@ -37,7 +37,7 @@ sealed abstract class MPwaTextDirection(override val value: String) extends Stri
 
 object MPwaTextDirection {
 
-  implicit def univEq: UnivEq[MPwaTextDirection] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MPwaTextDirection] = UnivEq.derive
 
   implicit def MPWA_TEXT_DIRECTION_FORMAT: Format[MPwaTextDirection] = {
     EnumeratumUtil.valueEnumEntryFormat( MPwaTextDirections )

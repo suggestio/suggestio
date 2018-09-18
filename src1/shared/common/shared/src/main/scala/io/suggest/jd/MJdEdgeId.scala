@@ -47,7 +47,7 @@ object MJdEdgeId {
     OFormat(jdEdgeReads2, jdEdgeFmt0)
   }
 
-  implicit def univEq: UnivEq[MJdEdgeId] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MJdEdgeId] = UnivEq.derive
 
 
   /** Валидация инстанса [[MJdEdgeId]] с помощью остальных данных.

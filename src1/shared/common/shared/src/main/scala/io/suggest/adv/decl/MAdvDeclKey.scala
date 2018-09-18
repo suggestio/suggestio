@@ -16,7 +16,7 @@ import play.api.libs.functional.syntax._
   */
 object MAdvDeclKey {
 
-  implicit def univEq: UnivEq[MAdvDeclKey] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAdvDeclKey] = UnivEq.derive
 
   // TODO Поддержка tagFace пока выключена за неготовностью всего остального кода даже к rcvrKey.
 

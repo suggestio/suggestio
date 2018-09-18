@@ -88,7 +88,7 @@ object IGeoShape {
 
   }
 
-  implicit def univEq: UnivEq[IGeoShape] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[IGeoShape] = UnivEq.derive
 
 
   /** Вернуть объект-компаньон для указанного типа шейпа. */
@@ -172,7 +172,7 @@ object PointGs extends IGeoShapeCompanion[PointGs] {
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[PointGs]
   }
-  implicit def univEq: UnivEq[PointGs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[PointGs] = UnivEq.derive
 }
 /** Гео-шейп точки. */
 case class PointGs(coord: MGeoPoint) extends IGeoShapeQuerable {
@@ -200,7 +200,7 @@ object CircleGs extends IGeoShapeCompanion[CircleGs] {
     )( (_,_,_) => gc )
   }
 
-  implicit def univEq: UnivEq[CircleGs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[CircleGs] = UnivEq.derive
 
 }
 case class CircleGs(
@@ -261,7 +261,7 @@ case class GeometryCollectionGs(geoms: Seq[IGeoShape]) extends IGeoShape {
 
 }
 object GeometryCollectionGs extends IGeoShapeCompanion[GeometryCollectionGs] {
-  implicit def univEq: UnivEq[GeometryCollectionGs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[GeometryCollectionGs] = UnivEq.derive
   // TODO В целях безопасности, boopickle для GeometryCollectionGs генерится внутри IGeoShape с учётом рекурсии.
 }
 
@@ -287,7 +287,7 @@ object MultiPointGs extends MultiPointShapeStaticC[MultiPointGs] {
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[MultiPointGs]
   }
-  implicit def univEq: UnivEq[MultiPolygonGs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MultiPolygonGs] = UnivEq.derive
 }
 
 /** Гео-шейп для ListString geometry. */
@@ -300,7 +300,7 @@ object LineStringGs extends MultiPointShapeStaticC[LineStringGs] {
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[LineStringGs]
   }
-  implicit def univEq: UnivEq[LineStringGs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[LineStringGs] = UnivEq.derive
 }
 
 
@@ -335,7 +335,7 @@ object PolygonGs extends IGeoShapeCompanion[PolygonGs] {
     implicit val lineStringGsP = LineStringGs.LINE_STRING_PICKLER
     generatePickler[PolygonGs]
   }
-  implicit def univEq: UnivEq[PolygonGs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[PolygonGs] = UnivEq.derive
 
   def apply(lsgss: List[Seq[MGeoPoint]]): PolygonGs = {
     PolygonGs(
@@ -360,6 +360,6 @@ object MultiPolygonGs extends IGeoShapeCompanion[MultiPolygonGs] {
     generatePickler[MultiPolygonGs]
   }
 
-  implicit def univEq: UnivEq[MultiPolygonGs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MultiPolygonGs] = UnivEq.derive
 
 }

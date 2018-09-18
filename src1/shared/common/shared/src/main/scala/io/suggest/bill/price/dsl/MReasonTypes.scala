@@ -5,6 +5,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.DistanceUtil
 import io.suggest.i18n.{MessagesF_t, MsgCodes}
 import io.suggest.mbill2.m.item.typ.MItemTypes
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -13,24 +14,6 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
   * Description: Модели типов причины.
   * Причина начисления заворачивается в доп.класс, чтобы можно передавать какие-то пояснения или аргументы.
   */
-
-object MReasonType {
-
-  import boopickle.Default._
-  /** Поддержка бинарной сериализации. */
-  implicit val mReasonTypePickler: Pickler[MReasonType] = {
-    import MReasonTypes._
-    // TODO 2.12 Организовать с помощью sealed. В scala-2.12 должны были уже починить.
-    compositePickler[MReasonType]
-      .addConcreteType[OnMainScreen.type]
-      .addConcreteType[GeoArea.type]
-      .addConcreteType[BlockModulesCount.type]
-      .addConcreteType[Tag.type]
-      .addConcreteType[Rcvr.type]
-      .addConcreteType[GeoLocCapture.type]
-  }
-
-}
 
 
 /** Модель типов причин тарификации. */
@@ -147,5 +130,26 @@ sealed abstract class MReasonType(override val value: String) extends StringEnum
   }
 
   override final def toString = value
+
+}
+
+
+object MReasonType {
+
+  import boopickle.Default._
+  /** Поддержка бинарной сериализации. */
+  implicit val mReasonTypePickler: Pickler[MReasonType] = {
+    import MReasonTypes._
+    // TODO 2.12 Организовать с помощью sealed. В scala-2.12 должны были уже починить.
+    compositePickler[MReasonType]
+      .addConcreteType[OnMainScreen.type]
+      .addConcreteType[GeoArea.type]
+      .addConcreteType[BlockModulesCount.type]
+      .addConcreteType[Tag.type]
+      .addConcreteType[Rcvr.type]
+      .addConcreteType[GeoLocCapture.type]
+  }
+
+  @inline implicit def univEq: UnivEq[MReasonType] = UnivEq.derive
 
 }

@@ -29,7 +29,7 @@ object MLkAdsOneAdResp {
   )(apply, unlift(unapply))
 
 
-  implicit def univEq: UnivEq[MLkAdsOneAdResp] = {
+  @inline implicit def univEq: UnivEq[MLkAdsOneAdResp] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

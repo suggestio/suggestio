@@ -25,7 +25,7 @@ object MAdEditFormConf {
     (__ \ Fields.SRV_CTX_ID).format[String]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MAdEditFormConf] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MAdEditFormConf] = UnivEq.derive
 
 }
 

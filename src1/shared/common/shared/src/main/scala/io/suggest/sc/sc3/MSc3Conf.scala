@@ -28,7 +28,7 @@ object MSc3Conf {
       .inmap[Boolean]( _.getOrElseTrue, EmptyUtil.someF )
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MSc3Conf] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MSc3Conf] = UnivEq.derive
 
 }
 

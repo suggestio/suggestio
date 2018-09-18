@@ -19,14 +19,14 @@ sealed trait Sc3Pages
 /** Реализации допустимых роут. */
 object Sc3Pages {
 
-  implicit def univEq: UnivEq[Sc3Pages] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[Sc3Pages] = UnivEq.derive
 
 
   object MainScreen {
 
     def empty = apply()
 
-    implicit def univEq: UnivEq[MainScreen] = UnivEq.derive
+    @inline implicit def univEq: UnivEq[MainScreen] = UnivEq.derive
 
     /** Поддержка play-json для qs-модели нужна для эксплуатации _o2qs() в jsRouter'е. */
     implicit def MAIN_SCREEN_FORMAT: OFormat[MainScreen] = {

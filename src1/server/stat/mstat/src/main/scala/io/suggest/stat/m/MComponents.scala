@@ -62,7 +62,7 @@ sealed abstract class MComponent(override val value: String) extends StringEnumE
 
 object MComponent {
 
-  implicit def univEq: UnivEq[MComponent] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MComponent] = UnivEq.derive
 
   implicit def mComponentFormat: Format[MComponent] =
     EnumeratumUtil.valueEnumEntryFormat( MComponents )

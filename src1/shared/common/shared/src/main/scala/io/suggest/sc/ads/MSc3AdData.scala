@@ -20,7 +20,7 @@ object MSc3AdData {
     (__ \ "e").formatNullable[Boolean]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MSc3AdData] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MSc3AdData] = UnivEq.derive
 
 }
 

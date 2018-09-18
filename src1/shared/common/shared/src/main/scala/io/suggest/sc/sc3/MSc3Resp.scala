@@ -22,7 +22,7 @@ object MSc3Resp {
       .inmap[MSc3Resp]( apply, _.respActions )
   }
 
-  implicit def univEq: UnivEq[MSc3Resp] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MSc3Resp] = UnivEq.derive
 
 }
 

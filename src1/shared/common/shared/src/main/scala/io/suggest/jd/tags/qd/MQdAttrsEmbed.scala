@@ -37,7 +37,7 @@ object MQdAttrsEmbed {
   }
 
   /** Поддержка UnivEq. */
-  implicit def univEq: UnivEq[MQdAttrsEmbed] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MQdAttrsEmbed] = UnivEq.derive
 
 
   def validateForStore(attrsEmbed: MQdAttrsEmbed): ValidationNel[String, MQdAttrsEmbed] = {

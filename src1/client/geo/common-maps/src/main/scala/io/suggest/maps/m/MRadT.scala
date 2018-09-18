@@ -2,6 +2,7 @@ package io.suggest.maps.m
 
 import diode.FastEq
 import io.suggest.geo.{CircleGs, MGeoPoint}
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -16,8 +17,8 @@ import io.suggest.geo.{CircleGs, MGeoPoint}
   * Реализации должны дополнять eqv() своими полями. */
 trait IMRadTFastEq[T <: MRadT[_]] extends FastEq[T] {
   override def eqv(a: T, b: T): Boolean = {
-    (a.circle eq b.circle) &&
-      (a.state eq b.state)
+    (a.circle ===* b.circle) &&
+      (a.state ===* b.state)
   }
 }
 
