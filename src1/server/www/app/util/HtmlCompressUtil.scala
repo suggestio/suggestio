@@ -4,14 +4,19 @@ import java.io.File
 import java.nio.file.Files
 
 import akka.stream.Materializer
+import akka.stream.scaladsl.{Keep, Sink, Source}
+import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
 import com.googlecode.htmlcompressor.compressor.HtmlCompressor
 import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import io.suggest.playx.IsAppModes
+import play.api.http.HttpEntity
 import play.api.libs.json.JsString
-import play.api.mvc.Filter
+import play.api.mvc.{EssentialAction, Filter, Result}
 import play.api.{Configuration, Environment}
 import play.twirl.api.{Html, Txt}
+
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -130,12 +135,68 @@ class HtmlCompressUtil @Inject() (
 
 /** Реализация отключабельного play-фильтра. */
 class HtmlCompressFilter @Inject() (
-  hcu                         : HtmlCompressUtil,
-  override val configuration  : Configuration,
-  override val mat            : Materializer
-)
+                                     hcu                         : HtmlCompressUtil,
+                                     override val configuration  : Configuration,
+                                     override implicit val mat   : Materializer,
+                                     implicit private val ec     : ExecutionContext
+                                   )
   extends HTMLCompressorFilter
   with Filter
 {
+
   override val compressor = hcu.getForGlobalUsing
+
+  // Чтобы избежать https://github.com/playframework/playframework/issues/8010
+  // Далее в коде грязные костыли: перезапись перезаписанного apply() и копипаст приватного compressResult().
+
+  // Делаем компрессию без аккамулятора. Пока не ясно, насколько безопасно это.
+  override final def apply(next: EssentialAction): EssentialAction = {
+    EssentialAction { rh =>
+      next(rh).mapFuture { result0 =>
+        compressResult(result0)
+      }
+    }
+  }
+
+  /**
+   * Extracted from CompressorFilter.scala:
+   *
+   * Compress the result.
+   *
+   * @param result The result to compress.
+   * @return The compressed result.
+   */
+  private def compressResult(result: Result): Future[Result] = {
+    def compress(data: ByteString) = compressor.compress(data.decodeString(charset).trim).getBytes(charset)
+
+    if (isCompressible(result)) {
+      result.body match {
+        case body: HttpEntity.Strict =>
+          Future.successful(
+            result.copy(body = body.copy(ByteString(compress(body.data))))
+          )
+        case body: HttpEntity.Streamed =>
+          for {
+            bytes <- body.data
+              .toMat(Sink.fold(ByteString())(_ ++ _))(Keep.right)
+              // TODO Opt Тут материализация внутри Accumulator. Это плохо, потому что приводит к резкому падению производительности в неск.раз: https://github.com/playframework/playframework/issues/8010
+              .run()
+          } yield {
+            val compressed = compress(bytes)
+            val length = compressed.length
+            result.copy(
+              body = body.copy(
+                data = Source.single(ByteString(compressed)),
+                contentLength = Some(length.toLong)
+              )
+            )
+          }
+        case _ =>
+          Future.successful(result)
+      }
+    } else {
+      Future.successful(result)
+    }
+  }
+
 }

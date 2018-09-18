@@ -17,10 +17,10 @@ import io.suggest.proto.HttpConst
 object Csp {
 
   /** Название заголовка. */
-  val HDR_NAME = "Content-Security-Policy"
+  val CONTENT_SECURITY_POLICY = "Content-Security-Policy"
 
   /** Заголовок для разрешающей всё политики, но ругающейся в логи. */
-  val HDR_NAME_REPORT_ONLY = HDR_NAME + "-Report-Only"
+  val CONTENT_SECURITY_POLICY_REPORT_ONLY = CONTENT_SECURITY_POLICY + "-Report-Only"
 
 
   /** Синтаксис списков источников. */
@@ -100,9 +100,9 @@ case class CspHeader(
 
   def headerName: String = {
     if (reportOnly)
-      Csp.HDR_NAME_REPORT_ONLY
+      Csp.CONTENT_SECURITY_POLICY_REPORT_ONLY
     else
-      Csp.HDR_NAME
+      Csp.CONTENT_SECURITY_POLICY
   }
 
   def headerValue = policy.toString

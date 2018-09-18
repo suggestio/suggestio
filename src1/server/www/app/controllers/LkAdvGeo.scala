@@ -15,7 +15,7 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.order.MOrderStatuses
@@ -62,12 +62,9 @@ class LkAdvGeo @Inject() (
                            streamsUtil                     : StreamsUtil,
                            ymdHelpersJvm                   : YmdHelpersJvm,
                            reqUtil                         : ReqUtil,
-                           ignoreAuth                      : IgnoreAuth,
                            cspUtil                         : CspUtil,
                            mdrUtil                         : MdrUtil,
                            lkGeoCtlUtil                    : LkGeoCtlUtil,
-                           mItems                          : MItems,
-                           canAccessItem                   : CanAccessItem,
                            canThinkAboutAdvOnMapAdnNode    : CanThinkAboutAdvOnMapAdnNode,
                            canAdvAd                        : CanAdvAd,
                            override val isAuth             : IsAuth,
@@ -95,7 +92,8 @@ class LkAdvGeo @Inject() (
       // Если не получилось, то ищем начальную точку среди размещений продьюсера карточки.
       .orElse {
         FromProducerGeoAdvs(
-          producerIds  = Seq(request.producer.id, request.user.personIdOpt).flatten,
+          producerIds = (request.producer.id :: request.user.personIdOpt :: Nil)
+            .flatten,
           excludeAdIds = adIds
         )
       }

@@ -1,15 +1,13 @@
 package util.xplay
 
-import akka.stream.Materializer
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.sec.csp.Csp
 import play.api.http.ContentTypes
-import play.api.mvc.{Filter, RequestHeader, Result}
+import play.api.mvc._
 import util.acl.AclUtil
 import util.sec.CspUtil
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 /**
@@ -61,68 +59,66 @@ class SecHeadersFilter @Inject() (
                                    secHeadersFilterUtil       : SecHeadersFilterUtil,
                                    aclUtil                    : AclUtil,
                                    cspUtil                    : CspUtil,
-                                   implicit private val ec    : ExecutionContext,
-                                   override implicit val mat  : Materializer
+                                   implicit private val ec    : ExecutionContext
                                  )
-  extends Filter
+  extends EssentialFilter
 {
 
   import secHeadersFilterUtil._
 
+  override def apply(next: EssentialAction): EssentialAction = {
+    EssentialAction.apply { rh0 =>
+      val rh = aclUtil.reqHdrFromRequestHdr( rh0 )
 
-  /** Навесить на результат недостающие security-заголовки. */
-  override def apply(f: (RequestHeader) => Future[Result])(rh0: RequestHeader): Future[Result] = {
-    val rh = aclUtil.reqHdrFromRequestHdr( rh0 )
-    val respFut = f(rh)
+      for (resp <- next(rh)) yield {
+        // Добавить только заголовки, которые отсутсвуют в исходнике.
+        val hs = resp.header.headers
+        var acc: List[(String, String)] = Nil
 
-    val isSecure = rh.isTransferSecure
+        // TODO Opt Некоторые хидера нет смысла навешивать на не-html ответы. CSP включен только для html-страниц, но надо разобраться с остальными хидерами.
+        // Это снизит траффик.
 
-    for (resp <- respFut) yield {
-      // Добавить только заголовки, которые отсутсвуют в исходнике.
-      val hs = resp.header.headers
-      var acc: List[(String, String)] = Nil
+        val isHtml = resp.body.contentType.exists(_.startsWith( ContentTypes.HTML ))
 
-      // TODO Opt Некоторые хидера нет смысла навешивать на не-html ответы. CSP включен только для html-страниц, но надо разобраться с остальными хидерами.
-      // Это снизит траффик.
+        // Некоторые хидеры применимы только для html-страниц:
+        if (isHtml) {
 
-      val isHtml = resp.body.contentType.exists(_.startsWith( ContentTypes.HTML ))
+          // Фреймы. Наврядли фрейм-атаки актуальны для чего-то кроме веб-страниц.
+          if ( !hs.contains(X_FRAME_OPTIONS_HEADER) )
+            acc ::= X_FRAME_OPTIONS_HEADER -> DEFAULT_FRAME_OPTIONS
 
-      // Некоторые хидеры применимы только для html-страниц:
-      if (isHtml) {
+          // Только для IE8+, который его использует на веб-страницах. Малоактуально вообще, не только для вёб-страниц.
+          if ( !hs.contains(X_XSS_PROTECTION_HEADER) )
+            acc ::= X_XSS_PROTECTION_HEADER -> DEFAULT_XSS_PROTECTION
 
-        // Фреймы. Наврядли фрейм-атаки актуальны для чего-то кроме веб-страниц.
-        if ( !hs.contains(X_FRAME_OPTIONS_HEADER) )
-          acc ::= X_FRAME_OPTIONS_HEADER -> DEFAULT_FRAME_OPTIONS
+          // Только для всякого Adobe-мусора, которого в sio нет и быть не должно, поэтому выставляется только для html-страниц.
+          if ( !hs.contains(X_PERMITTED_CROSS_DOMAIN_POLICIES_HEADER) )
+            acc ::= X_PERMITTED_CROSS_DOMAIN_POLICIES_HEADER -> DEFAULT_PERMITTED_CROSS_DOMAIN_POLICIES
 
-        // Только для IE8+, который его использует на веб-страницах. Малоактуально вообще, не только для вёб-страниц.
-        if ( !hs.contains(X_XSS_PROTECTION_HEADER) )
-          acc ::= X_XSS_PROTECTION_HEADER -> DEFAULT_XSS_PROTECTION
+          // CSP, актуально только для html-страниц.
+          for {
+            cspKv <- cspUtil.CSP_KV_DFLT_OPT
+            // CSP: возможны два хидера: стандартный и report-only. Проверить, что их ещё нет в обрабатываемом ответе:
+            if !(hs.contains(Csp.CONTENT_SECURITY_POLICY) || hs.contains(Csp.CONTENT_SECURITY_POLICY_REPORT_ONLY))
+          } {
+            acc ::= cspKv
+          }
 
-        // Только для всякого Adobe-мусора, которого в sio нет и быть не должно, поэтому выставляется только для html-страниц.
-        if ( !hs.contains(X_PERMITTED_CROSS_DOMAIN_POLICIES_HEADER) )
-          acc ::= X_PERMITTED_CROSS_DOMAIN_POLICIES_HEADER -> DEFAULT_PERMITTED_CROSS_DOMAIN_POLICIES
-
-        // CSP, актуально только для html-страниц.
-        for {
-          cspKv <- cspUtil.CSP_KV_DFLT_OPT
-          // CSP: возможны два хидера: стандартный и report-only. Проверить, что их ещё нет в обрабатываемом ответе:
-          if !(hs.contains(Csp.HDR_NAME) || hs.contains(Csp.HDR_NAME_REPORT_ONLY))
-        } {
-          acc ::= cspKv
         }
 
+        val isSecure = rh.isTransferSecure
+
+        // Добавить HSTS-хидер, если https. Для голого HTTP в этом нет смысла и необходимости.
+        // Для любых ответов, даже для картинок. Это "заразный" хидер уровня целого сайта: пусть все знают, что suggest.io только httpS.
+        if (isSecure && !hs.contains(STRICT_TRANSPORT_SECURITY))
+          acc ::= STRICT_TRANSPORT_SECURITY -> DEFAULT_STRICT_TRANSPORT_SECURITY
+
+        // Явный запрет авто-определние content-type браузером. Для любых ответов, content-type обязан быть валидным, либо должна быть ошибка.
+        if ( !hs.contains(X_CONTENT_TYPE_OPTIONS_HEADER) )
+          acc ::= X_CONTENT_TYPE_OPTIONS_HEADER -> DEFAULT_CONTENT_TYPE_OPTIONS
+
+        resp.withHeaders(acc: _*)
       }
-
-      // Добавить HSTS-хидер, если https. Для голого HTTP в этом нет смысла и необходимости.
-      // Для любых ответов, даже для картинок. Это "заразный" хидер уровня целого сайта: пусть все знают, что suggest.io только httpS.
-      if (isSecure && !hs.contains(STRICT_TRANSPORT_SECURITY))
-        acc ::= STRICT_TRANSPORT_SECURITY -> DEFAULT_STRICT_TRANSPORT_SECURITY
-
-      // Явный запрет авто-определние content-type браузером. Для любых ответов, content-type обязан быть валидным, либо должна быть ошибка.
-      if ( !hs.contains(X_CONTENT_TYPE_OPTIONS_HEADER) )
-        acc ::= X_CONTENT_TYPE_OPTIONS_HEADER -> DEFAULT_CONTENT_TYPE_OPTIONS
-
-      resp.withHeaders(acc: _*)
     }
   }
 

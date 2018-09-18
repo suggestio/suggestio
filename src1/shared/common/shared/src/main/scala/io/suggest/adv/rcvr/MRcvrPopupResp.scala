@@ -14,7 +14,6 @@ import io.suggest.ueq.UnivEqUtil._
   * Description: Сериализуемые клиент-серверные модели содержимого попапа над ресивером на карте георазмещения.
   */
 
-
 object MRcvrPopupResp {
   implicit val pickler: Pickler[MRcvrPopupResp] = {
     implicit val mrpgP = IRcvrPopupNode.rcvrPopupGroupP

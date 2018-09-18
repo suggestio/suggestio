@@ -2,7 +2,6 @@ package io.suggest.sec
 
 import javax.inject.{Inject, Singleton}
 
-import akka.stream.Materializer
 import io.suggest.sec.m.msession.Keys._
 import io.suggest.sec.m.msession.{Keys, LoginTimestamp}
 import io.suggest.util.logs.MacroLogsImpl
@@ -154,13 +153,18 @@ class ExpireSessionAction @Inject() (
 /** Глобальный фильтр для запросов и ответов на тему работы с TTL sio-сессияй. */
 class ExpireSessionFilter @Inject() (
                                       expireSessionUtil          : ExpireSessionUtil,
-                                      override implicit val mat  : Materializer
+                                      implicit private val ec    : ExecutionContext
                                     )
-  extends Filter
+  extends EssentialFilter
 {
 
-  override def apply(f: (RequestHeader) => Future[Result])(rh0: RequestHeader): Future[Result] = {
-    expireSessionUtil._applyAction(rh0)(f)
+
+  override def apply(next: EssentialAction): EssentialAction = {
+    EssentialAction { rh =>
+      for (resp0 <- next(rh)) yield {
+        expireSessionUtil.processResult(rh, resp0)
+      }
+    }
   }
 
 }

@@ -1,14 +1,12 @@
 package util.cdn
 
-import akka.stream.Materializer
 import javax.inject.{Inject, Singleton}
-
 import play.api.Configuration
-import play.api.mvc.{Filter, RequestHeader, Result}
+import play.api.mvc._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import models.mctx.ContextUtil
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import play.api.http.HeaderNames._
 
 /**
@@ -113,30 +111,29 @@ trait ICorsUtilDi {
 class CorsFilter @Inject() (
   corsUtil                  : CorsUtil,
   implicit val ec           : ExecutionContext,
-  override implicit val mat : Materializer
 )
-  extends Filter
+  extends EssentialFilter
 {
 
-  override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
-    val fut0 = f(rh)
-    // Добавить CORS-заголовки, если необходимо.
-    if ( corsUtil.IS_ENABLED && corsUtil.isAppendAllowHdrsForRequest(rh) ) {
-      // Делаем замыкание независимым от окружающего тела apply(). scalac-2.12 оптимизатор сможет заменить такое синглтоном.
-      for (resp <- fut0) yield {
-        val st = resp.header.status
-        if (st >= 400 && st <= 599) {
-          // Ошибки можно возвращать так, без дополнительных CORS-хидеров.
-          resp
-        } else {
-          // Успешный подходящий запрос, навешиваем хидеры.
-          resp.withHeaders(corsUtil.SIMPLE_CORS_HEADERS: _*)
+  override def apply(next: EssentialAction): EssentialAction = {
+    EssentialAction { rh =>
+      val respFut0 = next(rh)
+      // Надо ли добавлять CORS-заголовки?
+      if ( corsUtil.IS_ENABLED && corsUtil.isAppendAllowHdrsForRequest(rh) ) {
+        for (resp <- respFut0) yield {
+          val st = resp.header.status
+          if (st >= 400 && st <= 599) {
+            // Ошибки можно возвращать так, без дополнительных CORS-хидеров.
+            resp
+          } else {
+            // Успешный подходящий запрос, навешиваем хидеры.
+            resp.withHeaders(corsUtil.SIMPLE_CORS_HEADERS: _*)
+          }
         }
+      } else {
+        // CORS-хидеры в ответе не требуются.
+        respFut0
       }
-
-    } else {
-      // CORS-изменения в ответе не требуются.
-      fut0
     }
   }
 
