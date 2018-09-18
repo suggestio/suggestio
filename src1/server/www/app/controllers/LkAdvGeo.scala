@@ -457,7 +457,9 @@ class LkAdvGeo @Inject() (
       val subNodesIdsFut = subNodesFut.map(OptId.els2idsSet)
 
       // Закинуть во множество подузлов id текущего ресивера.
-      val allNodesIdsFut = for (subNodesIds <- subNodesIdsFut) yield {
+      val allNodesIdsFut = for {
+        subNodesIds <- subNodesIdsFut
+      } yield {
         LOGGER.trace(s"$logPrefix Found ${subNodesIds.size} sub-nodes: ${subNodesIds.mkString(", ")}")
         subNodesIds + rcvrNodeId
       }
@@ -468,9 +470,7 @@ class LkAdvGeo @Inject() (
       } yield {
         subNodes
           // Сгруппировать узлы по их типам. Для текущего узла тип будет None. Тогда он отрендерится без заголовка и в самом начале списка узлов.
-          .groupBy { mnode =>
-            mnode.common.ntype
-          }
+          .groupBy( _.common.ntype )
           .toSeq
           // Очень кривая сортировка, но для наших нужд и такой пока достаточно. TODO Сортировать по messages-названиям
           .sortBy( _._1.value )

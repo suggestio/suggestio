@@ -18,12 +18,12 @@ object MuiButton {
 
 
 /** Модель props для [[MuiButton]]. */
-trait MuiButtonProps extends MuiPropsBase {
-  val classes: js.UndefOr[String] = js.undefined
+trait MuiButtonProps
+  extends MuiButtonBaseCommonProps
+  with MuiPropsBaseClasses[MuiButtonClasses]
+{
   val color: js.UndefOr[String] = js.undefined
-  val disabled: js.UndefOr[Boolean] = js.undefined
   val disableFocusRipple: js.UndefOr[Boolean] = js.undefined
-  val disableRipple: js.UndefOr[Boolean] = js.undefined
   val fullWidth: js.UndefOr[Boolean] = js.undefined
   val href: js.UndefOr[String] = js.undefined
   val mini: js.UndefOr[Boolean] = js.undefined
@@ -34,8 +34,7 @@ object MuiButtonProps extends MuiPropsBaseStatic[MuiButtonProps]
 
 
 /** JSON для [[MuiButtonProps]].classes. */
-trait MuiButtonClasses extends js.Object {
-  val root: js.UndefOr[String] = js.undefined
+trait MuiButtonClasses extends MuiClassesBase {
   // TODO https://material-ui.com/api/button/#css-api
 }
 

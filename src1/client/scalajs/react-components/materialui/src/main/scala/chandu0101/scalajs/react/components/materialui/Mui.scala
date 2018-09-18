@@ -87,19 +87,16 @@ object Mui {
   @js.native @JSImport("@material-ui/core/Snackbar", JSImport.Default) object Snackbar extends js.Any
   @js.native @JSImport("@material-ui/core/Tabs", JSImport.Default) object Tabs         extends js.Any
   @js.native @JSImport("@material-ui/core/Tabs/Tab", JSImport.Default) object Tab      extends js.Any
-  @js.native @JSImport("@material-ui/core/Table", JSImport.Default) object Table       extends js.Any
-  @js.native @JSImport("@material-ui/core/Table/TableBody", JSImport.Default) object TableBody
-      extends js.Any
-  @js.native @JSImport("@material-ui/core/Table/TableFooter", JSImport.Default) object TableFooter
-      extends js.Any
-  @js.native @JSImport("@material-ui/core/Table/TableHeader", JSImport.Default) object TableHeader
-      extends js.Any
-  @js.native @JSImport("@material-ui/core/Table/TableHeaderColumn", JSImport.Default) object TableHeaderColumn
-      extends js.Any
-  @js.native @JSImport("@material-ui/core/Table/TableRow", JSImport.Default) object TableRow
-      extends js.Any
-  @js.native @JSImport("@material-ui/core/Table/TableRowColumn", JSImport.Default) object TableRowColumn
-      extends js.Any
+
+  @js.native @JSImport("@material-ui/core/Table", JSImport.Default) object Table extends js.Any
+  @js.native @JSImport("@material-ui/core/TableBody", JSImport.Default) object TableBody extends js.Any
+  @js.native @JSImport("@material-ui/core/TableFooter", JSImport.Default) object TableFooter extends js.Any
+  @js.native @JSImport("@material-ui/core/TableHead", JSImport.Default) object TableHead extends js.Any
+  @js.native @JSImport("@material-ui/core/TableRow", JSImport.Default) object TableRow  extends js.Any
+  @js.native @JSImport("@material-ui/core/TableCell", JSImport.Default) object TableCell extends js.Any
+  @js.native @JSImport("@material-ui/core/TablePagination", JSImport.Default) object TablePagination extends js.Any
+  @js.native @JSImport("@material-ui/core/TableSortLabel", JSImport.Default) object TableSortLabel extends js.Any
+
   @js.native @JSImport("@material-ui/core/TextField", JSImport.Default) object TextField   extends js.Any
   @js.native @JSImport("@material-ui/core/TimePicker", JSImport.Default) object TimePicker extends js.Any
   @js.native @JSImport("@material-ui/core/Toggle", JSImport.Default) object Toggle         extends js.Any

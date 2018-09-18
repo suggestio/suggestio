@@ -544,29 +544,29 @@ trait LkBillOrders
         .contractIdOptFut
         // Выполнить необходимые операции в БД биллинга.
         .flatMap { contractIdOpt =>
-        // Если корзина не существует, то делать ничего не надо.
-        val contractId = contractIdOpt.get
+          // Если корзина не существует, то делать ничего не надо.
+          val contractId = contractIdOpt.get
 
-        // Запускаем без transaction на случай невозможности удаления ордера корзины.
-        slick.db.run {
-          bill2Util.clearCart(contractId)
+          // Запускаем без transaction на случай невозможности удаления ордера корзины.
+          slick.db.run {
+            bill2Util.clearCart(contractId)
+          }
         }
-      }
         // Подавить и залоггировать возможные ошибки.
         .recover { case ex: Exception =>
-        ex match {
-          case _: NoSuchElementException =>
-            LOGGER.trace(s"$logPrefix Unable to clear cart, because contract or cart order does NOT exists")
-          case _ =>
-            LOGGER.warn(s"$logPrefix Cart clear failed", ex)
+          ex match {
+            case _: NoSuchElementException =>
+              LOGGER.trace(s"$logPrefix Unable to clear cart, because contract or cart order does NOT exists")
+            case _ =>
+              LOGGER.warn(s"$logPrefix Cart clear failed", ex)
+          }
+          0
         }
-        0
-      }
         // Независимо от исхода, вернуть редирект куда надо.
         .map { itemsDeleted =>
-        LOGGER.trace(s"$logPrefix $itemsDeleted items deleted.")
-        RdrBackOr(r)(routes.LkBill2.cart(onNodeId))
-      }
+          LOGGER.trace(s"$logPrefix $itemsDeleted items deleted.")
+          RdrBackOr(r)(routes.LkBill2.cart(onNodeId))
+        }
     }
   }
 

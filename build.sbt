@@ -25,9 +25,9 @@ lazy val common = crossProject(JSPlatform, JVMPlatform)
     libraryDependencies ++= Seq(
       // Универсальные зависимости для клиента и сервера. Наследуются во ВСЕ компоненты проекта.
       // Сериализация:
-      // - 1. быстрая-компактная-ломучая бинарщина boopickle:
+      // Быстрая-компактная-ломучая бинарщина boopickle, которую надо удалить в пользу play-json.
       "io.suzaku"    %%% "boopickle"   % Common.boopickleVsn,
-      // - 2. Play-json стал кросс-платформенным, ура.
+      // Play-json стал кросс-платформенным, ура.
       //"org.julienrf" %%% "play-json-derived-codecs" % "4.0.0",
       "com.typesafe.play" %%% "play-json" % Common.Vsn.PLAY_JSON_VSN,
       // Вместо scala.Enumeration используем сие:
@@ -40,6 +40,8 @@ lazy val common = crossProject(JSPlatform, JVMPlatform)
       "com.github.japgolly.scalacss" %%% "core"          % Common.Vsn.SCALACSS,
       // Комбинируемые парсеры. Раньше они не были доступны для scala.js, поэтому жили только на сервере.
       "org.scala-lang.modules" %%% "scala-parser-combinators" % Common.Vsn.SCALA_PARSER_COMBINATORS,
+      // diode для FastEq в [common], а не только в js.
+      "io.suzaku"    %%% "diode-core"  % Common.diodeVsn,
       // Тесты, только [common] и не наследуются (наверное).
       "io.monix"     %%% "minitest"    % Common.minitestVsn  % Test
     )
