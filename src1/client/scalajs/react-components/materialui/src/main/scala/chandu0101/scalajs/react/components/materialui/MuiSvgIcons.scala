@@ -415,12 +415,12 @@ object MuiSvgIcons {
   object ActionTrackChanges extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/translate", JSImport.Default)
   object ActionTranslate extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/trending-down", JSImport.Default)
-  object ActionTrendingDown extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/trending-flat", JSImport.Default)
-  object ActionTrendingFlat extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/trending-up", JSImport.Default)
-  object ActionTrendingUp extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/TrendingDown", JSImport.Default)
+  object TrendingDown extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/TrendingFlat", JSImport.Default)
+  object TrendingFlat extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/TrendingUp", JSImport.Default)
+  object TrendingUp extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/turned-in-not", JSImport.Default)
   object ActionTurnedInNot extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/turned-in", JSImport.Default)
@@ -685,10 +685,10 @@ object MuiSvgIcons {
   object CommunicationInvertColorsOff extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/communication/live-help", JSImport.Default)
   object CommunicationLiveHelp extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/communication/location-off", JSImport.Default)
-  object CommunicationLocationOff extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/communication/location-on", JSImport.Default)
-  object CommunicationLocationOn extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/LocationOff", JSImport.Default)
+  object LocationOff extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/LocationOn", JSImport.Default)
+  object LocationOn extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/communication/mail-outline", JSImport.Default)
   object CommunicationMailOutline extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/communication/message", JSImport.Default)
@@ -901,10 +901,10 @@ object MuiSvgIcons {
   object DeviceGpsOff extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/graphic-eq", JSImport.Default)
   object DeviceGraphicEq extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/location-disabled", JSImport.Default)
-  object DeviceLocationDisabled extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/location-searching", JSImport.Default)
-  object DeviceLocationSearching extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/LocationDisabled", JSImport.Default)
+  object LocationDisabled extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/LocationSearching", JSImport.Default)
+  object LocationSearching extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/network-cell", JSImport.Default)
   object DeviceNetworkCell extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/network-wifi", JSImport.Default)
@@ -1556,8 +1556,10 @@ object MuiSvgIcons {
   object ImageWbIridescent extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/image/wb-sunny", JSImport.Default)
   object ImageWbSunny extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/maps/add-location", JSImport.Default)
-  object MapsAddLocation extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/AddLocation", JSImport.Default)
+  object AddLocation extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/NotListedLocation", JSImport.Default)
+  object NotListedLocation extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/beenhere", JSImport.Default)
   object MapsBeenhere extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/directions-bike", JSImport.Default)
@@ -1580,8 +1582,8 @@ object MuiSvgIcons {
   object MapsDirectionsWalk extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/directions", JSImport.Default)
   object MapsDirections extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/maps/edit-location", JSImport.Default)
-  object MapsEditLocation extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/EditLocation", JSImport.Default)
+  object EditLocation extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/ev-station", JSImport.Default)
   object MapsEvStation extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/flight", JSImport.Default)
@@ -1652,8 +1654,8 @@ object MuiSvgIcons {
   object MapsLocalTaxi extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/map", JSImport.Default)
   object MapsMap extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/maps/my-location", JSImport.Default)
-  object MapsMyLocation extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/MyLocation", JSImport.Default)
+  object MyLocation extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/navigation", JSImport.Default)
   object MapsNavigation extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/near-me", JSImport.Default)
@@ -1911,8 +1913,8 @@ object MuiSvgIcons {
   object SocialGroupAdd extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/social/group", JSImport.Default)
   object SocialGroup extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/location-city", JSImport.Default)
-  object SocialLocationCity extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/LocationCity", JSImport.Default)
+  object LocationCity extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/social/mood-bad", JSImport.Default)
   object SocialMoodBad extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/social/mood", JSImport.Default)

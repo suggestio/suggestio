@@ -1,7 +1,7 @@
 package io.suggest.lk.adv.r
 
 import diode.react.ModelProxy
-import io.suggest.bill.price.dsl.{BaseTfPrice, IPriceDslTerm, Mapper, Sum}
+import io.suggest.bill.price.dsl._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
@@ -43,9 +43,8 @@ object ItemsPricesR {
           val secondTd = <.td(
             ^.`class` := Css.flat1( tdCssBody ),
             ^.key := "s",
-
-            priceReason.reasonType
-              .i18nPayload(priceReason)( Messages.f )
+            // Рендер текста с описанием сути:
+            PriceReasonI18n.i18nPayload( priceReason )
               .getOrElse[String]( HtmlConstants.NBSP_STR )
           )
 

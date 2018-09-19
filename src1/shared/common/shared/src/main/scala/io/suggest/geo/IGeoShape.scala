@@ -75,16 +75,16 @@ object IGeoShape {
         .geoShape
     }
 
+    /** Сборка инстансов форматтера для более целевого использования. */
+    def minimalFormatter = MGsJsonFormatter(
+      gsFieldNames    = IGsFieldNames.Minimal,
+      gsTypeFormat    = GsType.GS_TYPE_FORMAT,
+      geoPointFormat  = MGeoPoint.FORMAT_GEO_ARRAY
+    )
 
     /** Внутренний sio JSON, минимальный по максимуму. Во благо оптимизации, здесь можно ломать совместимость. */
-    implicit def internalMinFormat: OFormat[IGeoShape] = {
-      MGsJsonFormatter(
-        gsFieldNames    = IGsFieldNames.Minimal,
-        gsTypeFormat    = GsType.GS_TYPE_FORMAT,
-        geoPointFormat  = MGeoPoint.FORMAT_GEO_ARRAY
-      )
-        .geoShape
-    }
+    implicit def minimalFormat: OFormat[IGeoShape] =
+      minimalFormatter.geoShape
 
   }
 

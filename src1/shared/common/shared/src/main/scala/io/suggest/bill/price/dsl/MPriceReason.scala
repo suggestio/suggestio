@@ -23,6 +23,7 @@ object MPriceReason {
     generatePickler[MPriceReason]
   }
 
+
   @inline implicit def univEq: UnivEq[MPriceReason] = UnivEq.derive
 
 }

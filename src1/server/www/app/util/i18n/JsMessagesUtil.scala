@@ -310,6 +310,19 @@ class JsMessagesUtil @Inject() (
   }
 
 
+  /** Клиент-сайд корзина/биллинг. */
+  private def BILL_CART_MSGS: TraversableOnce[String] = {
+    MC.`_order.Items` ::
+      MC.`Price` ::
+      MC.`Delete` ::
+      MC.`Tag` ::
+      MC.`Node` ::
+      MC.`Adv.on.map` ::
+      MC.`in.radius.of.0.from.1` ::
+      Nil
+  }
+
+
   /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
   val (lkJsMsgsFactory, hash): (JsMessages, Int) = {
     val msgs = Iterator(
@@ -329,7 +342,8 @@ class JsMessagesUtil @Inject() (
       LK_NODES_MSGS,
       LK_AD_EDIT_MSGS,
       LK_ADS_MSGS,
-      LK_ADN_EDIT_MSGS
+      LK_ADN_EDIT_MSGS,
+      BILL_CART_MSGS
     )
       .flatten
       .toSet

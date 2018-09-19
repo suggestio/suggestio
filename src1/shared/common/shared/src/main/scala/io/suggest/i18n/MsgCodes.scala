@@ -259,4 +259,10 @@ object MsgCodes {
   val `Clear` = "Clear"
   val `Search.start.typing` = "Search.start.typing"
 
+
+  val `Cart` = "Cart"
+  val `_order.Items` = "_order.Items"
+  val `Delete.all` = "Delete.all"
+  val `Node` = "Node"
+
 }

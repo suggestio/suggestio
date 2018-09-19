@@ -2,6 +2,8 @@ package io.suggest.bill
 
 import boopickle.Default._
 import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -19,6 +21,11 @@ object MNameId {
   }
 
   @inline implicit def univEq: UnivEq[MNameId] = UnivEq.derive
+
+  implicit def mNameIdFormat: OFormat[MNameId] = (
+    (__ \ "i").formatNullable[String] and
+    (__ \ "n").format[String]
+  )(apply, unlift(unapply))
 
 }
 

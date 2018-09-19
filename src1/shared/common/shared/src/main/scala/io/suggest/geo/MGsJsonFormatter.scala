@@ -8,7 +8,7 @@ import play.api.libs.functional.syntax._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 10.03.18 14:50
-  * Description: Конфигурация для рендера
+  * Description: Конфигурация для рендера в/из JSON.
   */
 
 trait IGsFieldNames {

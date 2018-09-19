@@ -1,7 +1,7 @@
 package io.suggest.maps.nodes
 
 import io.suggest.geo.IGeoShape
-import io.suggest.geo.IGeoShape.JsonFormats.internalMinFormat
+import io.suggest.geo.IGeoShape.JsonFormats.minimalFormat
 import io.suggest.primo.id.IId
 import japgolly.univeq.UnivEq
 // НЕ УДАЛЯТЬ, используется для обоих UnivEq.derive

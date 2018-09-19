@@ -38,6 +38,7 @@ Phone=Phone
 tel.=tel.
 Photo=Photo
 Node.photos=Shop photos
+Node=Node
 Welcome.screen=Welcome screen
 Logo=Logo
 Other=Other
@@ -580,7 +581,6 @@ till._date=till
 refused.adv=refused advertising
 approved.adv=accepted advertising
 
-Adv.on.map=Advertise on the map?
 Adv.on.map.hint=If enabled, a circle will be shown on the map. Users, located inside this circle, will see your promo-card.
 
 Using.add.shop.btn.you.can=Using "add shop" button, you always can create new shop with new showcase, new promo-cards and different design.

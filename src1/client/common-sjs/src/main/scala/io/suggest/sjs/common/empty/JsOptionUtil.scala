@@ -16,8 +16,19 @@ object JsOptionUtil {
   object Implicits {
 
     implicit class JsOptionExt[T](opt: Option[T]) {
+
+      @inline
+      def flatMapDefined[X](f: T => js.UndefOr[X]): js.UndefOr[X] =
+        opt.fold [UndefOr[X]] (js.undefined)(f)
+
+      @inline
+      def mapDefined[X](f: T => X): js.UndefOr[X] =
+        flatMapDefined(m => js.defined(f(m)))
+
+      @inline
       def toUndef: js.UndefOr[T] =
-        opt.fold [UndefOr[T]] (js.undefined) (v => v)
+        mapDefined(identity)
+
     }
 
   }

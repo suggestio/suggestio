@@ -2,6 +2,7 @@ package io.suggest.bill.cart
 
 import com.softwaremill.macwire._
 import io.suggest.bill.cart.v.CartR
+import io.suggest.bill.cart.v.order.ItemsTableHeadR
 
 /**
   * Suggest.io
@@ -12,5 +13,6 @@ import io.suggest.bill.cart.v.CartR
 class CartModules {
 
   lazy val cartR = wire[CartR]
+  lazy val orderContentsR = wire[ItemsTableHeadR]
 
 }

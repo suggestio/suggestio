@@ -18,13 +18,12 @@ object MuiChip {
 
 
 /** React component props for [[MuiChip]]. */
-trait MuiChipProps extends MuiPropsBase {
+trait MuiChipProps extends MuiPropsBase with MuiPropsBaseComponent {
   val avatar: js.UndefOr[React.Element] = js.undefined
   val classes: js.UndefOr[MuiChipClasses] = js.undefined
   val clickable: js.UndefOr[Boolean] = js.undefined
   /** See [[MuiColorTypes]] except 'inherit'. */
   val color: js.UndefOr[String] = js.undefined
-  val component: js.UndefOr[String | js.Function | js.Object] = js.undefined
   val deleteIcon: js.UndefOr[React.Element] = js.undefined
   val label: js.UndefOr[React.Node] = js.undefined
   val onDelete: js.UndefOr[js.Function1[ReactUIEventFromHtml, _]] = js.undefined
@@ -40,8 +39,7 @@ object MuiChipVariants {
 }
 
 /** CSS styles for [[MuiChipProps.classes]]. */
-trait MuiChipClasses extends js.Object {
-  val root: js.UndefOr[String] = js.undefined
+trait MuiChipClasses extends MuiClassesBase {
   val colorPrimary: js.UndefOr[String] = js.undefined
   val colorSecondary: js.UndefOr[String] = js.undefined
   val clickable: js.UndefOr[String] = js.undefined

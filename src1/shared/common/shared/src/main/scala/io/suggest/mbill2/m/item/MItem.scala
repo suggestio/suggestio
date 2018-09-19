@@ -37,7 +37,7 @@ object MItem {
       (__ \ "z").formatNullable[OffsetDateTime](dtFmt) and
       (__ \ "r").formatNullable[String] and
       (__ \ "e").formatNullable[String] and
-      (__ \ "g").formatNullable[IGeoShape]( IGeoShape.JsonFormats.internalMinFormat ) and
+      (__ \ "g").formatNullable[IGeoShape]( IGeoShape.JsonFormats.minimalFormat ) and
       (__ \ "f").formatNullable[String] and
       (__ \ "y").formatNullable[String] and
       (__ \ "u").format[OffsetDateTime](dtFmt) and
