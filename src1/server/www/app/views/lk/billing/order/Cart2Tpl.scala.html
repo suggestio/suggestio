@@ -1,0 +1,25 @@
+@(mnode: MNode, formStateB64: String)(implicit ctx: Context)
+
+@* Шаблон для react-компонента cart-page. *@
+
+@import lk.billing.billingBaseTpl
+@import ctx.messages
+@import lk.lkwdgts.price._rightPriceContTpl
+@import io.suggest.bill.cart.CartConstants.FORM_ID
+@import io.suggest.adv.AdvConstants
+@import lk.lkwdgts._formStateInputTpl
+@import io.suggest.i18n.MsgCodes
+
+@billingBaseTpl(
+  title       = messages( MsgCodes.`Cart` ),
+  mnode       = mnode,
+  rightCurrEl = Some( BillingRightPanelLinks.RPL_CART ),
+  rightAfter  = Some( _rightPriceContTpl()() )
+) {
+
+  @_formStateInputTpl( formStateB64 )
+
+  @* Контейнер для react-формы корзины. *@
+  <div id="@FORM_ID"></div>
+
+}

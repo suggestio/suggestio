@@ -2,9 +2,12 @@ package io.suggest.bill.cart
 
 import diode.FastEq
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.jd.MJdAdData
+import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.order.MOrder
 import io.suggest.mbill2.m.txn.MTxn
+import io.suggest.primo.id.{IId, OptId}
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import play.api.libs.json._
@@ -23,7 +26,8 @@ object MOrderContent {
     override def eqv(a: MOrderContent, b: MOrderContent): Boolean = {
       (a.order ===* b.order) &&
       (a.items ===* b.items) &&
-      (a.txns  ===* b.txns)
+      (a.txns  ===* b.txns) &&
+      (a.rcvrs ===* b.rcvrs)
     }
   }
 
@@ -34,12 +38,22 @@ object MOrderContent {
       (__ \ "i").formatNullable[Seq[MItem]]
         .inmap[Seq[MItem]](
           EmptyUtil.opt2ImplEmpty1F(Nil),
-          { items => if(items.isEmpty) None else Some(items) }
+          { items => if (items.isEmpty) None else Some(items) }
         ) and
       (__ \ "t").formatNullable[Seq[MTxn]]
         .inmap[Seq[MTxn]](
           EmptyUtil.opt2ImplEmpty1F(Nil),
-          { txns => if(txns.isEmpty) None else Some(txns) }
+          { txns => if (txns.isEmpty) None else Some(txns) }
+        ) and
+      (__ \ "r").formatNullable[Iterable[MAdvGeoMapNodeProps]]
+        .inmap[Iterable[MAdvGeoMapNodeProps]](
+          EmptyUtil.opt2ImplEmpty1F( Nil ),
+          { rcvrs => if (rcvrs.isEmpty) None else Some(rcvrs) }
+        ) and
+      (__ \ "j").formatNullable[Iterable[MJdAdData]]
+        .inmap[Iterable[MJdAdData]](
+          EmptyUtil.opt2ImplEmpty1F( Nil ),
+          { jds => if (jds.isEmpty) None else Some(jds) }
         )
     )(apply, unlift(unapply))
   }
@@ -56,7 +70,23 @@ object MOrderContent {
   * @param txns Денежные транзакции по ордеру.
   */
 case class MOrderContent(
-                          order    : Option[MOrder],
-                          items    : Seq[MItem],
-                          txns     : Seq[MTxn]
-                        )
+                          order       : Option[MOrder],
+                          items       : Seq[MItem],
+                          txns        : Seq[MTxn],
+                          rcvrs       : Iterable[MAdvGeoMapNodeProps],
+                          adsJdDatas  : Iterable[MJdAdData]
+                        ) {
+
+  /** Сборка инстанса карты ресиверов. Происходит на клиенте, когда наступает необходимость. */
+  lazy val rcvrsMap: Map[String, MAdvGeoMapNodeProps] =
+    IId.els2idMap[String, MAdvGeoMapNodeProps]( rcvrs )
+
+  /** Сборка карты отрендеренных карточек. */
+  lazy val adId2jdDataMap: Map[String, MJdAdData] =
+    OptId.els2idMap[String, MJdAdData]( adsJdDatas )
+
+  /** Карта item'ов, сгруппированных по id карточки. */
+  lazy val adId2itemsMap: Map[String, Seq[MItem]] =
+    items.groupBy( _.nodeId )
+
+}

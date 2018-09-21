@@ -1,10 +1,9 @@
-@(id: Option[String] = None)(content: Html = HtmlFormat.empty)
+@(id: String = io.suggest.adv.AdvConstants.Price.OUTER_CONT_ID)(content: Html = HtmlFormat.empty)
 
 @* Котейнер для виджета ценника. *@
 
 @import io.suggest.css.Css.Lk.Bars.RightBar.Price
 
-<div class="@Price.WIDGET"
-     @if(id){id="@id"}>
+<div id="@id" class="@Price.WIDGET">
   @content
 </div>

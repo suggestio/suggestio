@@ -3,8 +3,8 @@ package io.suggest.bill.cart.v.order
 import chandu0101.scalajs.react.components.materialui.{MuiCheckBox, MuiCheckBoxProps, MuiTableCell, MuiTableHead, MuiTableRow}
 import diode.FastEq
 import diode.react.ModelProxy
+import io.suggest.bill.cart.MOrderItemRowOpts
 import io.suggest.bill.cart.m.CartSelectItem
-import io.suggest.bill.cart.m.order.MOrderItemRowOpts
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
@@ -82,10 +82,9 @@ class ItemsTableHeadR {
             )
           },
 
-          // Разрешён рендер галочки:
+          // Разрешён рендер галочки?
           ReactCommonUtil.maybeNode( props.rowOpts.withCheckBox ) {
             MuiTableCell()(
-              // TODO Тут надо галочку вместо кнопки.
               MuiCheckBox(
                 new MuiCheckBoxProps {
                   override val onChange = _onCheckBoxClickCbF

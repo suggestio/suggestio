@@ -1,10 +1,8 @@
 package io.suggest.bill.cart.m
 
 import diode.FastEq
-import diode.data.Pot
-import io.suggest.bill.cart.MOrderContent
+import io.suggest.bill.cart.MCartConf
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 
 /**
@@ -17,7 +15,8 @@ object MCartRootS {
 
   implicit object MCartRootSFastEq extends FastEq[MCartRootS] {
     override def eqv(a: MCartRootS, b: MCartRootS): Boolean = {
-      a.content ===* b.content
+      (a.conf ===* b.conf) &&
+      (a.data ===* b.data)
     }
   }
 
@@ -28,8 +27,16 @@ object MCartRootS {
 
 /**
   * Корневая модель состояния корзины товаров и услуг.
-  * @param content Текущее наполнение заказа.
+  *
+  * @param data Текущие данные заказа, полученные с сервера.
+  * @param conf Данные конфигурации компонента, необходимые для запросов к серверу.
   */
 case class MCartRootS(
-                       content    : Pot[MOrderContent]    = Pot.empty
-                     )
+                       conf       : MCartConf,
+                       data       : MBillData,
+                     ) {
+
+  def withConf(conf: MCartConf) = copy(conf = conf)
+  def withData(data: MBillData) = copy(data = data)
+
+}

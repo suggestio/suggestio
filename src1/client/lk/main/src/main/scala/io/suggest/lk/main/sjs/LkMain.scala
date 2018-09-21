@@ -3,6 +3,7 @@ package io.suggest.lk.main.sjs
 import io.suggest.ad.edit.LkAdEditInit
 import io.suggest.adn.edit.LkAdnEditInit
 import io.suggest.ads.LkAdsInit
+import io.suggest.bill.cart.CartPageInit
 import io.suggest.lk.adn.map.init.LkAdnMapFormInitRouter
 import io.suggest.lk.adv.geo.AdvGeoFormInitRouter
 import io.suggest.lk.bill.txn.TxnsListInit
@@ -63,3 +64,4 @@ class LkInitRouter
   with FormEventsInitRouter
   with FlashInitRouter
   with LkAdnEditInit
+  with CartPageInit

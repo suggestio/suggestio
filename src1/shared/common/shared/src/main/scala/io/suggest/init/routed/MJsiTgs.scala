@@ -46,6 +46,9 @@ object MJsiTgs extends StringEnum[MJsiTg] {
   /** Цель инициализации react-формы редактирования ADN-узла. */
   case object LkAdnEditForm extends MJsiTg("s")
 
+  /** Цель для страницы с корзиной. */
+  case object LkCartPageForm extends MJsiTg("t")
+
 
   override def values = findValues
 

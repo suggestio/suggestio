@@ -133,4 +133,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def SCREEN_SAFE_AREA_DETECT_ERROR    = E(82)
 
+  def CART_CIRCUIT_ERROR               = E(83)
+
 }

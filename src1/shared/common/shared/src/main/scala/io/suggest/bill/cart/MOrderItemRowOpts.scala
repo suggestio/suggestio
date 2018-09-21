@@ -1,7 +1,9 @@
-package io.suggest.bill.cart.m.order
+package io.suggest.bill.cart
 
 import diode.UseValueEq
 import japgolly.univeq._
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -10,6 +12,12 @@ import japgolly.univeq._
   * Description: Модель пропертисов для рядов и заголовка.
   */
 object MOrderItemRowOpts {
+
+  /** Поддержка play-json. */
+  implicit def mOrderItemsRowOptsFormat: OFormat[MOrderItemRowOpts] = (
+    (__ \ "s").format[Boolean] and
+    (__ \ "c").format[Boolean]
+  )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MOrderItemRowOpts] = UnivEq.derive
 

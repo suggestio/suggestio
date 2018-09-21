@@ -7,7 +7,7 @@
 @import BillingRightPanelLinks._
 @import lk.right._
 @import util.tpl.CssFormat._
-@import views.html.stuff.bxslider._
+@*import views.html.stuff.bxslider._*@
 
 @rightBar = {
   @for(nodeId <- mnode.id) {
@@ -47,21 +47,19 @@
   @rightAfter
 }
 
+@*
 @headAfter1 = {
   @_bxSliderCssTpl()
 }
-
+*@
 
 @lk.lkBaseLayout(
   title       = title,
   leftCurrEl  = Some(LkLeftPanelLinks.LPL_BILLING),
   nodeOpt     = Some(mnode),
-  rightBar    = Some(rightBar),
-  headAfter   = Some(headAfter1)
-) {
-
+  rightBar    = Some(rightBar)
+)(content)
+@* {
   @content
-
   @_bxSliderJsTpl()
-
-}
+}*@

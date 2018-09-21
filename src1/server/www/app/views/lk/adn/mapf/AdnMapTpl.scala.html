@@ -9,7 +9,6 @@
 @import lk.lkwdgts.price._
 @import lk.lkwdgts._formStateInputTpl
 @import io.suggest.adn.mapf.AdnMapFormConstants.FORM_CONT_ID
-@import io.suggest.adv.AdvConstants.Price
 @import views.html.stuff._preLoaderLkTpl
 
 @mapfBase(
@@ -18,7 +17,7 @@
     args.mnode.guessDisplayNameOrId.getOrElse( messages("Current.node") )
   ),
   mnode = args.mnode,
-  rightBarAfter = Some( _rightPriceContTpl(id = Some(Price.OUTER_CONT_ID))() )
+  rightBarAfter = Some( _rightPriceContTpl()() )
 ) {
 
   @* Скрытый рендер как-то сериализованного состояния формы. *@

@@ -1,6 +1,7 @@
 package controllers.cbill
 
 import controllers.{SioController, routes}
+import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderItemRowOpts}
 import io.suggest.bill.{MCurrencies, MGetPriceResp, MPrice}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
@@ -25,6 +26,7 @@ import util.di.ILogoUtilDi
 import views.html.lk.billing.order._
 import japgolly.univeq._
 import models.im.make.MakeResult
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
 
@@ -386,6 +388,52 @@ trait LkBillOrders
         node2brArgs   = node2brArgsMap,
         node2items    = node2itemsMap
       )
+    }
+  }
+
+
+  /** Страница для react-корзины.
+    *
+    * @param onNodeId На каком узле рендерится страница.
+    * @param r Адресок для возврата.
+    * @return 200 OK + HTML-страница с данными для инициализации react-формы корзины.
+    */
+  def cart2(onNodeId: String, r: Option[String]) = csrf.AddToken {
+    isNodeAdmin(onNodeId, U.Lk, U.ContractId).async { implicit request =>
+      // Узнать id контракта юзера. Сам контракт не важен.
+      val mcIdOptFut = request.user.contractIdOptFut
+
+      // Найти ордер-корзину юзера в базе биллинга:
+      val cartOrderIdOptFut = mcIdOptFut.flatMap { mcIdOpt =>
+        FutureUtil.optFut2futOpt(mcIdOpt) { mcId =>
+          slick.db.run {
+            bill2Util.getCartOrderId(mcId)
+          }
+        }
+      }
+
+      // Настройки рендера интерфейса
+      val rowOpts = MOrderItemRowOpts(
+        withStatus    = false,
+        withCheckBox  = true
+      )
+
+      // Данные формы для инициализации.
+      for {
+        cartOrderIdOpt <- cartOrderIdOptFut
+      } yield {
+        val minit = MCartInit(
+          conf = MCartConf(
+            orderId  = cartOrderIdOpt,
+            onNodeId = request.mnode.id,
+            orderRowOpts = rowOpts
+          )
+        )
+        val formInitB64 = Json
+          .toJson( minit )
+          .toString()
+        Ok( Cart2Tpl( request.mnode, formInitB64 ) )
+      }
     }
   }
 

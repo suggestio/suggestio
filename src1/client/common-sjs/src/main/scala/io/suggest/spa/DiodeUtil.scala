@@ -3,6 +3,7 @@ package io.suggest.spa
 import diode.data.{PendingBase, Pot}
 import diode._
 import io.suggest.common.empty.OptionUtil
+import io.suggest.err.ErrorConstants
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 
@@ -13,6 +14,18 @@ import japgolly.univeq._
   * Description: Без-react утиль для Diode.
   */
 object DiodeUtil {
+
+  /** Сборка функции, возвращающей одноразовый результат, который будет сброшен в null. */
+  def mkOneShotFunction[T <: AnyRef](retValue: T): () => T = {
+    var v = retValue
+
+    {() =>
+      ErrorConstants.assertArg( v != null )
+      val ret = v
+      v = null.asInstanceOf[T]
+      ret
+    }
+  }
 
 
   /** Расширенная утиль для FastEq. Не является implicit. */

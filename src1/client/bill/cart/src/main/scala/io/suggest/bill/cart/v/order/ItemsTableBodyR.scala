@@ -1,15 +1,20 @@
 package io.suggest.bill.cart.v.order
 
-import chandu0101.scalajs.react.components.materialui.{MuiTableBody, MuiTableCell, MuiTableRow}
+import chandu0101.scalajs.react.components.materialui.MuiTableBody
 import diode.FastEq
+import diode.data.Pot
+import diode.react.ReactPot._
 import diode.react.ModelProxy
-import io.suggest.bill.cart.m.order.MOrderItemRowOpts
-import io.suggest.maps.nodes.MAdvGeoMapNodeProps
+import io.suggest.bill.cart.{MOrderContent, MOrderItemRowOpts}
+import io.suggest.jd.render.m.MJdArgs
+import io.suggest.jd.render.v.JdCss
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.MItem
+import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.react.ReactCommonUtil
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 
 /**
@@ -18,7 +23,10 @@ import japgolly.univeq._
   * Created: 19.09.18 13:11
   * Description: Компонент наполнения списка-таблицы заказа.
   */
-class ItemsTableBodyR {
+class ItemsTableBodyR(
+                       val itemRowR           : ItemRowR,
+                       val itemRowPreviewR    : ItemRowPreviewR
+                     ) {
 
   /** Модель пропертисов компонента.
     *
@@ -26,17 +34,17 @@ class ItemsTableBodyR {
     * @param rcvrs Карта узлов для рендера названий ресиверов и остального.
     */
   case class PropsVal(
-                       items          : Seq[MItem],
+                       orderContents  : Pot[MOrderContent],
                        selectedIds    : Set[Gid_t],
-                       rcvrs          : Map[String, MAdvGeoMapNodeProps],
-                       rowOpts        : MOrderItemRowOpts
+                       rowOpts        : MOrderItemRowOpts,
+                       jdCss          : JdCss,
                      )
   implicit object ItemsTableBodyRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.items          ===* b.items) &&
+      (a.orderContents  ===* b.orderContents) &&
         (a.selectedIds  ===* b.selectedIds) &&
-        (a.rcvrs        ===* b.rcvrs) &&
-        (a.rowOpts      ===* b.rowOpts)
+        (a.rowOpts      ===* b.rowOpts) &&
+        (a.jdCss        ===* b.jdCss)
     }
   }
 
@@ -49,8 +57,58 @@ class ItemsTableBodyR {
   class Backend($: BackendScope[Props, Unit]) {
 
     def render(propsProxy: Props): VdomElement = {
+      val props = propsProxy.value
+
       MuiTableBody()(
-        // TODO Рендерить ряды, навешивая key на каждый.
+
+        // Рендерить ряды, навешивая key на каждый.
+        props.orderContents.render { orderContent =>
+          val iter = for {
+            // Проходим группы item'ов в рамках каждой карточки:
+            (nodeId, nodeItems) <- orderContent.adId2itemsMap.iterator
+            nodeItemsCount = nodeItems.length
+
+            // Собрать ячейку с jd-рендером.
+            preview = propsProxy.wrap { _ =>
+              for {
+                jdAdData <- orderContent.adId2jdDataMap.get( nodeId )
+              } yield {
+                itemRowPreviewR.PropsVal(
+                  jdArgs    = MJdArgs(
+                    template = jdAdData.template,
+                    edges = jdAdData.edgesMap
+                      // TODO Инстанс карты с js-эджами следует собирать не тут, а в контроллере и хранить в состоянии.
+                      .mapValues(MEdgeDataJs(_)),
+                    jdCss = props.jdCss,
+                    conf  = props.jdCss.jdCssArgs.conf
+                  ),
+                  jdRowSpan = nodeItemsCount
+                )
+              }
+            }( itemRowPreviewR.apply )
+
+            // Пройти item'ы, наконец:
+            (mitem, i) <- nodeItems.iterator.zipWithIndex
+
+          } yield {
+            propsProxy.wrap { _ =>
+              itemRowR.PropsVal(
+                mitem       = mitem,
+                rowOpts     = props.rowOpts,
+                isSelected  = mitem.id.map(props.selectedIds.contains),
+                rcvrNode    = mitem.rcvrIdOpt.flatMap( orderContent.rcvrsMap.get )
+              )
+            } { itemPropsValProxy =>
+              itemRowR.component
+                .withKey(nodeId + i)( itemPropsValProxy )(
+                  // Рендерить первую ячейку с превьюшкой надо только в первом ряду, остальные ряды - rowspan'ятся
+                  ReactCommonUtil.maybeNode( i ==* 0 )( preview )
+                )
+            }
+          }
+
+          iter.toVdomArray
+        }
 
       )
     }

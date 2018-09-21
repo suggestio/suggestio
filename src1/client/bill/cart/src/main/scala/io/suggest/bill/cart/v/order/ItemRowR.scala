@@ -1,14 +1,13 @@
 package io.suggest.bill.cart.v.order
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiTableCell, MuiTableCellProps, MuiTableRow, MuiToolTip, MuiToolTipProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiTableCell, MuiTableRow, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.bill.cart.m.order.MOrderItemRowOpts
+import io.suggest.bill.cart.MOrderItemRowOpts
 import io.suggest.bill.price.dsl.PriceReasonI18n
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.CircleGs
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.JdR
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
@@ -19,16 +18,11 @@ import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.bill.cart.m.CartSelectItem
-import io.suggest.mbill2.m.gid.Gid_t
 import japgolly.scalajs.react.raw.React
-import japgolly.univeq._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.scalajs.js
-import scala.scalajs.js.{UndefOr, |}
 
 /**
   * Suggest.io
@@ -36,11 +30,7 @@ import scala.scalajs.js.{UndefOr, |}
   * Created: 19.09.18 13:32
   * Description: Компонент ряда одного item'а.
   */
-class ItemRowR(
-                jdR: JdR
-              ) {
-
-  import MJdArgs.MJdArgsFastEq
+class ItemRowR {
 
   /** Пропертисы для рендера одного ряда.
     *
@@ -51,19 +41,14 @@ class ItemRowR(
     */
   case class PropsVal(
                        mitem      : MItem,
-                       jdArgs     : Option[MJdArgs],
                        rowOpts    : MOrderItemRowOpts,
-                       jdRowSpan  : Option[Int],
                        isSelected : Option[Boolean],
                        rcvrNode   : Option[MAdvGeoMapNodeProps]
                      )
   implicit object ItemRowRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.mitem ===* b.mitem) &&
-      // Инстансы Option и MJdArgs могут пересобираться наверху на каждый чих.
-      OptFastEq.Wrapped(MJdArgsFastEq).eqv(a.jdArgs, b.jdArgs) &&
       (a.rowOpts ===* b.rowOpts) &&
-      (a.jdRowSpan ==* b.jdRowSpan) &&
       // Инстанс Option может быть нестабильным.
       OptFastEq.Plain.eqv(a.rcvrNode, b.rcvrNode)
     }
@@ -84,26 +69,16 @@ class ItemRowR(
     }
     private lazy val _itemCheckBoxChangedJsF = ReactCommonUtil.cbFun1ToJsCb( _itemCheckBoxChanged )
 
-    def render(propsProxy: Props): VdomElement = {
+
+    def render(propsProxy: Props, children: PropsChildren): VdomElement = {
       val props = propsProxy.value
 
       val isSelected = props.isSelected.getOrElseFalse
 
+      // Ключ ряда задаётся на уровне вызова компонента, не здесь.
       MuiTableRow()(
-        // Ключ ряда задаётся на уровне вызова компонента, не здесь.
 
-        // Рендер миниатюры карточки, если задана.
-        props.jdArgs.whenDefinedNode { jdArgs =>
-          // Ячейка с превьюшкой.
-          MuiTableCell(
-            new MuiTableCellProps {
-              // Передаём rowspan напрямую в атрибуты td:
-              val rowspan = props.jdRowSpan.mapDefined(_.toString)
-            }
-          )(
-            propsProxy.wrap(_ => jdArgs)(jdR.apply)
-          )
-        },
+        children,
 
         // Определение товара/услуги:
         MuiTableCell()(
@@ -217,10 +192,8 @@ class ItemRowR(
 
   val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
-    .renderBackend[Backend]
+    .renderBackendWithChildren[Backend]
     .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate )
     .build
-
-  def apply(propsProxy: Props) = component( propsProxy )
 
 }

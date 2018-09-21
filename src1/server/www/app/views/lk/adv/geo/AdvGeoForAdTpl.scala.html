@@ -10,14 +10,13 @@
 @import lk.lkwdgts.price._
 @import lk.lkwdgts._formStateInputTpl
 @import io.suggest.adv.geo.AdvGeoConstants._
-@import io.suggest.adv.AdvConstants.Price
 @import views.html.stuff._preLoaderLkTpl
 
 @agBase(
   title       = messages("Adv.on.map"),
   mnode       = args.producer,
   mad         = args.mad,
-  rightAfter  = Some( _rightPriceContTpl(id = Some(Price.OUTER_CONT_ID))() )
+  rightAfter  = Some( _rightPriceContTpl()() )
 ) {
 
   @* Скрытый рендер как-то сериализованного состояния формы. *@

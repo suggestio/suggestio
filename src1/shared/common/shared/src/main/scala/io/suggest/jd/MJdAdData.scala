@@ -2,12 +2,11 @@ package io.suggest.jd
 
 import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
-import io.suggest.primo.id.IId
+import io.suggest.primo.id.{IId, OptId}
 import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-
 import scalaz.Tree
 
 /**
@@ -54,7 +53,11 @@ case class MJdAdData(
                       template    : Tree[JdTag],
                       edges       : Iterable[MJdEdge],
                       nodeId      : Option[String]
-                    ) {
+                    )
+  extends OptId[String]
+{
+
+  override final def id = nodeId
 
   /** Кэшируемая карта эджей. */
   lazy val edgesMap = IId.els2idMap[EdgeUid_t, MJdEdge]( edges )
