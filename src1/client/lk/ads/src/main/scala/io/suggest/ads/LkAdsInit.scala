@@ -20,8 +20,8 @@ import org.scalajs.dom.raw.{HTMLDivElement, HTMLDocument}
 trait LkAdsInit extends InitRouter {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.LkAdsForm) {
+  override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
+    if (itg ==* MJsInitTargets.LkAdsForm) {
       _doInit()
     } else {
       super.routeInitTarget(itg)

@@ -4,7 +4,7 @@ import javax.inject.{Inject, Singleton}
 
 import controllers.ident._
 import io.suggest.ctx.CtxData
-import io.suggest.init.routed.{MJsiTg, MJsiTgs}
+import io.suggest.init.routed.{MJsInitTarget, MJsInitTargets}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.m.msession.Keys
 import io.suggest.sec.util.ScryptUtil
@@ -90,7 +90,7 @@ class Ident @Inject() (
   def mySioStartPage(r: Option[String]) = csrf.AddToken {
     isAnon().async { implicit request =>
       implicit val ctxData = CtxData(
-        jsiTgs = MJsiTgs.CaptchaForm :: MJsiTgs.HiddenCaptcha :: Nil
+        jsInitTargets = MJsInitTargets.CaptchaForm :: MJsInitTargets.HiddenCaptcha :: Nil
       )
       // TODO Затолкать это в отдельный шаблон!
       val ctx = implicitly[Context]
@@ -107,8 +107,8 @@ class Ident @Inject() (
 
   /** Вернуть список целей инициализации js.
     * Страницы ident-контроллера нуждаются в доп.центровке колонок по вертикали. */
-  override def jsiTgs(req: IReqHdr): List[MJsiTg] = {
-    MJsiTgs.IdentVCenterContent :: super.jsiTgs(req)
+  override def jsiTgs(req: IReqHdr): List[MJsInitTarget] = {
+    MJsInitTargets.IdentVCenterContent :: super.jsiTgs(req)
   }
 
 }

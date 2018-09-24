@@ -10,7 +10,7 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.tf.daily.ITfDailyMode
 import io.suggest.common.empty.{EmptyUtil, OptionUtil}
 import io.suggest.es.model.MEsUuId
-import io.suggest.init.routed.MJsiTgs
+import io.suggest.init.routed.MJsInitTargets
 import io.suggest.lk.nodes._
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
@@ -202,8 +202,8 @@ class LkNodes @Inject() (
     val ctxFut = for {
       lkCtxData <- request.user.lkCtxDataFut
     } yield {
-      implicit val lkCtxData2 = lkCtxData.withJsiTgs(
-        MJsiTgs.LkNodesForm :: lkCtxData.jsiTgs
+      implicit val lkCtxData2 = lkCtxData.withJsInitTargets(
+        MJsInitTargets.LkNodesForm :: lkCtxData.jsInitTargets
       )
       getContext2
     }

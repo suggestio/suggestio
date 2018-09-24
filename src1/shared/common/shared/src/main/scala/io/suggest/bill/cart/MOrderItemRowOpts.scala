@@ -35,3 +35,15 @@ case class MOrderItemRowOpts(
                               // TODO count-столбец для количества покупок?
                             )
   extends UseValueEq
+{
+
+  def toAddColsCount: Int = {
+    var cc = 0
+    if (withStatus)
+      cc += 1
+    if (withCheckBox)
+      cc += 1
+    cc
+  }
+
+}

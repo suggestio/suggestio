@@ -1,14 +1,16 @@
 package io.suggest.bill.cart.v.order
 
-import chandu0101.scalajs.react.components.materialui.MuiTableBody
+import chandu0101.scalajs.react.components.materialui.{MuiLinearProgress, MuiTableBody, MuiTableCell, MuiTableCellProps, MuiTableRow}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ReactPot._
 import diode.react.ModelProxy
 import io.suggest.bill.cart.{MOrderContent, MOrderItemRowOpts}
+import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.JdCss
 import io.suggest.mbill2.m.gid.Gid_t
+import io.suggest.msg.Messages
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactCommonUtil
 import io.suggest.ueq.UnivEqUtil._
@@ -59,55 +61,84 @@ class ItemsTableBodyR(
     def render(propsProxy: Props): VdomElement = {
       val props = propsProxy.value
 
+      // Сколько колонок всего? Не всегда это важно.
+      lazy val columnsCount = 3 + props.rowOpts.toAddColsCount
+
+      def fullRowCell(cells: VdomNode*) = MuiTableRow()(
+        MuiTableCell(
+          new MuiTableCellProps {
+            val colspan = columnsCount
+          }
+        )(cells: _*)
+      )
+
       MuiTableBody()(
+
+        // TODO renderEmpty - что рендерить? По идее, это не нужно, т.к. никогда не должно быть видимо Pot.empty.
 
         // Рендерить ряды, навешивая key на каждый.
         props.orderContents.render { orderContent =>
-          val iter = for {
-            // Проходим группы item'ов в рамках каждой карточки:
-            (nodeId, nodeItems) <- orderContent.adId2itemsMap.iterator
-            nodeItemsCount = nodeItems.length
+          if ( orderContent.items.isEmpty ) {
+            // Пустая корзина.
+            fullRowCell(
+              Messages( MsgCodes.`Your.cart.is.empty` )
+            )
 
-            // Собрать ячейку с jd-рендером.
-            preview = propsProxy.wrap { _ =>
-              for {
-                jdAdData <- orderContent.adId2jdDataMap.get( nodeId )
-              } yield {
-                itemRowPreviewR.PropsVal(
-                  jdArgs    = MJdArgs(
-                    template = jdAdData.template,
-                    edges = jdAdData.edgesMap
-                      // TODO Инстанс карты с js-эджами следует собирать не тут, а в контроллере и хранить в состоянии.
-                      .mapValues(MEdgeDataJs(_)),
-                    jdCss = props.jdCss,
-                    conf  = props.jdCss.jdCssArgs.conf
-                  ),
-                  jdRowSpan = nodeItemsCount
+          } else {
+            // Есть что рендерить: рендерим элементы.
+            val iter = for {
+              // Проходим группы item'ов в рамках каждой карточки:
+              (nodeId, nodeItems) <- orderContent.adId2itemsMap.iterator
+              nodeItemsCount = nodeItems.length
+
+              // Собрать ячейку с jd-рендером.
+              preview = propsProxy.wrap { _ =>
+                for {
+                  jdAdData <- orderContent.adId2jdDataMap.get( nodeId )
+                } yield {
+                  itemRowPreviewR.PropsVal(
+                    jdArgs    = MJdArgs(
+                      template = jdAdData.template,
+                      edges = jdAdData.edgesMap
+                        // TODO Инстанс карты с js-эджами следует собирать не тут, а в контроллере и хранить в состоянии.
+                        .mapValues(MEdgeDataJs(_)),
+                      jdCss = props.jdCss,
+                      conf  = props.jdCss.jdCssArgs.conf
+                    ),
+                    jdRowSpan = nodeItemsCount
+                  )
+                }
+              }( itemRowPreviewR.apply )
+
+              // Пройти item'ы, наконец:
+              (mitem, i) <- nodeItems.iterator.zipWithIndex
+
+            } yield {
+              propsProxy.wrap { _ =>
+                itemRowR.PropsVal(
+                  mitem       = mitem,
+                  rowOpts     = props.rowOpts,
+                  isSelected  = mitem.id.map(props.selectedIds.contains),
+                  rcvrNode    = mitem.rcvrIdOpt.flatMap( orderContent.rcvrsMap.get )
                 )
+              } { itemPropsValProxy =>
+                itemRowR.component
+                  .withKey(nodeId + i)( itemPropsValProxy )(
+                    // Рендерить первую ячейку с превьюшкой надо только в первом ряду, остальные ряды - rowspan'ятся
+                    ReactCommonUtil.maybeNode( i ==* 0 )( preview )
+                  )
               }
-            }( itemRowPreviewR.apply )
-
-            // Пройти item'ы, наконец:
-            (mitem, i) <- nodeItems.iterator.zipWithIndex
-
-          } yield {
-            propsProxy.wrap { _ =>
-              itemRowR.PropsVal(
-                mitem       = mitem,
-                rowOpts     = props.rowOpts,
-                isSelected  = mitem.id.map(props.selectedIds.contains),
-                rcvrNode    = mitem.rcvrIdOpt.flatMap( orderContent.rcvrsMap.get )
-              )
-            } { itemPropsValProxy =>
-              itemRowR.component
-                .withKey(nodeId + i)( itemPropsValProxy )(
-                  // Рендерить первую ячейку с превьюшкой надо только в первом ряду, остальные ряды - rowspan'ятся
-                  ReactCommonUtil.maybeNode( i ==* 0 )( preview )
-                )
             }
-          }
 
-          iter.toVdomArray
+            iter.toVdomArray
+          }
+        },
+
+        // Если идёт запрос, то рендерить "ожидалку".
+        props.orderContents.renderPending { _ =>
+          fullRowCell(
+            MuiLinearProgress()
+          )
         }
 
       )

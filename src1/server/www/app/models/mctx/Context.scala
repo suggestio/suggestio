@@ -163,12 +163,13 @@ trait ContextT { this: ITargets with IMCommonDi =>
                                  messages : Messages,
                                  ctxData  : CtxData = CtxData.empty): Context = {
     // Получить js init targets с уровня контроллера, объеденить с остальными, залить их в data.
-    val ctxData1 = ctxData.prependJsiTgs(
+    val ctxData1 = ctxData.withJsInitTargetsAll(
       jsiTgs(request),
       request.user.jsiTgs
     )
     // Собрать контекст с обновлёнными данными в ctxData.
-    mCommonDi.contextFactory.create(request, messages, ctxData1)
+    mCommonDi.contextFactory
+      .create(request, messages, ctxData1)
   }
 }
 

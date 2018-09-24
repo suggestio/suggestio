@@ -23,8 +23,8 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 /** Аддон для сборки роутера инициализации с поддержкой flashing-уведомлений. */
 trait FlashInitRouter extends InitRouter {
 
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.Flashing) {
+  override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
+    if (itg ==* MJsInitTargets.Flashing) {
       new FlashInit()
         .init()
     } else {

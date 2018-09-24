@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.controller
 
-import io.suggest.init.routed.{JsInitConstants, MJsiTg, MJsiTgs}
+import io.suggest.init.routed.JsInitConstants
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.util.SafeSyncVoid
 import io.suggest.sjs.common.vm.doc.DocumentVm
@@ -41,15 +41,16 @@ import io.suggest.sjs.common.log.Log
   * Контроллеры объединяются в единый роутер через stackable trait pattern. */
 trait InitRouter extends Log with SafeSyncVoid {
 
+  // TODO Заинлайнить этот тип и модель
   /** Модель таргетов используется только в роутере, поэтому она тут и живет. */
-  // TODO упразнить эту модель, сделать просто карту String -> F
-  val MInitTargets = MJsiTgs
+  val MJsInitTargets = io.suggest.init.routed.MJsInitTargets
 
   /** Тип одного экземпляра модели целей инициализации. Вынесен сюда для удобства построения API. */
-  final type MInitTarget = MJsiTg
+  final type MJsInitTarget = io.suggest.init.routed.MJsInitTarget
+
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
-  protected def routeInitTarget(itg: MInitTarget): Unit = {
+  protected def routeInitTarget(itg: MJsInitTarget): Unit = {
     LOG.error( ErrorMsgs.INIT_ROUTER_KNOWN_TARGET_NOT_SUPPORTED, msg = itg)
   }
 
@@ -70,7 +71,7 @@ trait InitRouter extends Log with SafeSyncVoid {
       val all = attr.split("\\s*;\\s*")
         .iterator
         .flatMap { raw =>
-          val res = MJsiTgs.withValueOpt(raw)
+          val res = MJsInitTargets.withValueOpt(raw)
           if (res.isEmpty)
             LOG.warn( ErrorMsgs.NOT_IMPLEMENTED, msg = raw )
           res

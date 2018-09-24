@@ -26,11 +26,37 @@ trait INodeOrderReq[A]
 
 /** Класс реквеста с ордером внутри. */
 case class MNodeOrderReq[A](
-                         override val morder   : MOrder,
-                         override val mnode    : MNode,
-                         override val user     : ISioUser,
-                         override val request  : Request[A]
-                       )
+                             override val morder   : MOrder,
+                             override val mnode    : MNode,
+                             override val user     : ISioUser,
+                             override val request  : Request[A]
+                           )
   extends MReqWrap[A]
   with INodeOrderReq[A]
 
+
+/** Реквест с опциональным mnode, по аналогии с [[MNodeOrderReq]]. */
+case class MNodeOptOrderReq[A](
+                                override val morder   : MOrder,
+                                override val mnodeOpt : Option[MNode],
+                                override val user     : ISioUser,
+                                override val request  : Request[A]
+                              )
+  extends MReqWrap[A]
+  with IOrderReq[A]
+  with INodeOptReq[A]
+
+
+
+/** Модель реквеста с опциональным инстансом MOrder. */
+case class MOrderOptReq[A](
+                            morderOpt             : Option[MOrder],
+                            override val user     : ISioUser,
+                            override val request  : Request[A]
+                          )
+  extends MReqWrap[A]
+
+object MOrderOptReq {
+  def apply[A](morderOpt: Option[MOrder], req: IReq[A]): MOrderOptReq[A] =
+    MOrderOptReq(morderOpt, req.user, req)
+}

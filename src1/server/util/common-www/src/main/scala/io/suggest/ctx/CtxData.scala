@@ -1,6 +1,6 @@
 package io.suggest.ctx
 
-import io.suggest.init.routed.MJsiTg
+import io.suggest.init.routed.MJsInitTarget
 import io.suggest.mbill2.m.balance.MBalance
 
 /**
@@ -13,25 +13,25 @@ import io.suggest.mbill2.m.balance.MBalance
 
 /**
  * Модель для произвольных данных, закидываемых в контекст.
- * @param jsiTgs Какие-то доп.цели инициализации, выставляемые на уровне экшена
+ * @param jsInitTargets Какие-то доп.цели инициализации, выставляемые на уровне экшена
  * @param mUsrBalances Остатки на счетах юзера, обычно приходят из request.user.balancesFut в контроллер.
  */
 case class CtxData(
-                    jsiTgs           : List[MJsiTg]    = Nil,
-                    mUsrBalances     : Seq[MBalance]   = Nil
+                    jsInitTargets    : List[MJsInitTarget]    = Nil,
+                    mUsrBalances     : Seq[MBalance]          = Nil
                   ) {
 
-  def withJsiTgs(jsiTgs2: List[MJsiTg]) = copy(jsiTgs = jsiTgs2)
+  def withJsInitTargets(jsInitTargets: List[MJsInitTarget]) = copy(jsInitTargets = jsInitTargets)
 
   /**
-   * builder-метод, враппер над copy. Приписывает новые цели js-инициализации перед текущими.
-   * @param jsiTgss Списки новых целей js-инициализации.
+   * Заменить jsInitTargets на список списков.
+   * @param jsInitTarget2 Списки новых целей js-инициализации.
    * @return Экземпляр [[CtxData]], этот либо обновлённый.
    */
-  def prependJsiTgs(jsiTgss: List[MJsiTg]*): CtxData = {
-    if (jsiTgss.exists(_.nonEmpty)) {
+  def withJsInitTargetsAll(jsInitTarget2: List[MJsInitTarget]*): CtxData = {
+    if (jsInitTarget2.exists(_.nonEmpty)) {
       copy(
-        jsiTgs = jsiTgss.iterator.flatten.toList
+        jsInitTargets = jsInitTarget2.iterator.flatten.toList
       )
     } else {
       this

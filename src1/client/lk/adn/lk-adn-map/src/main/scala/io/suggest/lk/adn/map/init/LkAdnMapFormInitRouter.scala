@@ -14,8 +14,8 @@ import japgolly.univeq._
 
 trait LkAdnMapFormInitRouter extends InitRouter {
 
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.AdnMapForm) {
+  override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
+    if (itg ==* MJsInitTargets.AdnMapForm) {
       (new LkAdnMapFormInit)
         .init()
     } else {

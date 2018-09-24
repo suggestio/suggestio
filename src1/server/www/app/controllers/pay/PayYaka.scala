@@ -765,24 +765,26 @@ class PayYaka @Inject() (
 
 
   /** Переброска сюда из fail() с отбросом ненужного мусора. */
-  def failLoggedIn(orderId: Gid_t, onNodeId: MEsUuId) = canViewOrder(orderId, onNodeId).async { implicit request =>
-    // Есть права на просмотр ордера. Попытаться разморозить этот ордер.
-    val unholdFut = slick.db
-      .run {
-        bill2Util.unholdOrder(orderId)
-      }
-      .recover { case ex: Throwable =>
-        LOGGER.error(s"failLoggedIn($orderId, $onNodeId): Failed to unhold the order", ex)
-        null
-      }
+  def failLoggedIn(orderId: Gid_t, onNodeId: MEsUuId) = {
+    canViewOrder(orderId, onNodeId = Some(onNodeId)).async { implicit request =>
+      // Есть права на просмотр ордера. Попытаться разморозить этот ордер.
+      val unholdFut = slick.db
+        .run {
+          bill2Util.unholdOrder(orderId)
+        }
+        .recover { case ex: Throwable =>
+          LOGGER.error(s"failLoggedIn($orderId, $onNodeId): Failed to unhold the order", ex)
+          null
+        }
 
-    // Когда обработка зафейленного ордера будет завершена, вернуть окончательный редирект.
-    for {
-      _ <- unholdFut
-    } yield {
-      Redirect( _callToOrder(orderId, onNodeId) )
-        .flashing(FLASH.ERROR -> implicitly[Context].messages("Pay.error"))
-        .withHeaders( FRAMES_ALLOWED: _* )
+      // Когда обработка зафейленного ордера будет завершена, вернуть окончательный редирект.
+      for {
+        _ <- unholdFut
+      } yield {
+        Redirect( _callToOrder(orderId, onNodeId) )
+          .flashing(FLASH.ERROR -> implicitly[Context].messages("Pay.error"))
+          .withHeaders( FRAMES_ALLOWED: _* )
+      }
     }
   }
 

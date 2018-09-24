@@ -5,6 +5,7 @@ import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderItemRowOpts}
 import io.suggest.bill.{MCurrencies, MGetPriceResp, MPrice}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
+import io.suggest.init.routed.MJsInitTargets
 import io.suggest.mbill2.m.balance.MBalance
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemTypes
@@ -13,11 +14,12 @@ import io.suggest.mbill2.m.order.{IMOrders, MOrder, OrderStatusChanged}
 import io.suggest.mbill2.m.txn.MTxnTypes
 import io.suggest.model.n2.node.MNode
 import io.suggest.primo.id.OptId
+import io.suggest.req.ReqUtil
 import io.suggest.util.logs.IMacroLogs
 import models.blk.{IRenderArgs, RenderArgs}
 import models.mbill._
 import models.mctx.Context
-import models.req.INodeReq
+import models.req.{IReq, MNodeOptOrderReq, MOrderOptReq, MReq}
 import play.api.i18n.Messages
 import util.acl._
 import util.blocks.IBlkImgMakerDI
@@ -27,6 +29,7 @@ import views.html.lk.billing.order._
 import japgolly.univeq._
 import models.im.make.MakeResult
 import play.api.libs.json.Json
+import play.api.mvc.{ActionBuilder, AnyContent}
 
 import scala.concurrent.Future
 
@@ -47,7 +50,10 @@ trait LkBillOrders
   with ICanAccessItemDi
   with ILogoUtilDi
   with IBlkImgMakerDI
+  with IIsAuth
 {
+
+  protected val reqUtil: ReqUtil
 
   import mCommonDi._
 
@@ -65,7 +71,7 @@ trait LkBillOrders
     * @param onNodeId id узла, на котором открыта морда ЛК.
     */
   def showOrder(orderId: Gid_t, onNodeId: MEsUuId) = csrf.AddToken {
-    canViewOrder(orderId, onNodeId, U.Lk).async { implicit request =>
+    canViewOrder(orderId, onNodeId = Some(onNodeId), U.Lk).async { implicit request =>
       // Поискать транзакцию по оплате ордера, если есть.
       val txnsFut = slick.db.run {
         bill2Util.getOrderTxns(orderId)
@@ -78,7 +84,7 @@ trait LkBillOrders
       }
 
       // Собрать данные для рендера списка узлов.
-      val mItemsTplArgsFut = _mItemsTplArgs(mitemsFut, ctxFut)
+      val mItemsTplArgsFut = _mItemsTplArgs(mitemsFut, ctxFut, request.mnodeOpt.get)
 
       // Собрать карту балансов по id. Она нужна для рендера валюты транзакции. Возможно ещё для чего-либо пригодится.
       // Нет смысла цеплять это об необязательно найденную транзакцию, т.к. U.Lk наверху гарантирует, что mBalancesFut уже запущен на исполнение.
@@ -259,7 +265,8 @@ trait LkBillOrders
     * @param request Текущий HTTP-реквест.
     * @return Фьючерс.
     */
-  private def _mItemsTplArgs(mitemsFut: Future[Seq[MItem]], ctxFut: Future[Context])(implicit request: INodeReq[_]): Future[MItemsTplArgs] = {
+  private def _mItemsTplArgs(mitemsFut: Future[Seq[MItem]], ctxFut: Future[Context], mnode: MNode)
+                            (implicit request: IReq[_]): Future[MItemsTplArgs] = {
     // Собрать id узлов, на которые завязаны item'ы.
     val itemNodeIdsFut = for (mitems <- mitemsFut) yield {
       mitems.iterator
@@ -381,7 +388,7 @@ trait LkBillOrders
       node2itemsMap   <- node2itemsMapFut
     } yield {
       MItemsTplArgs(
-        mnode         = request.mnode,
+        mnode         = mnode,
         nodesMap      = allNodesMap,
         itemNodes     = nodes,
         node2logo     = node2logosMap,
@@ -400,16 +407,24 @@ trait LkBillOrders
     */
   def cart2(onNodeId: String, r: Option[String]) = csrf.AddToken {
     isNodeAdmin(onNodeId, U.Lk, U.ContractId).async { implicit request =>
-      // Узнать id контракта юзера. Сам контракт не важен.
-      val mcIdOptFut = request.user.contractIdOptFut
 
-      // Найти ордер-корзину юзера в базе биллинга:
-      val cartOrderIdOptFut = mcIdOptFut.flatMap { mcIdOpt =>
+      // Найти ордер-корзину юзера в базе биллинга по id контракта:
+      val cartOrderIdOptFut = request.user.contractIdOptFut.flatMap { mcIdOpt =>
         FutureUtil.optFut2futOpt(mcIdOpt) { mcId =>
           slick.db.run {
             bill2Util.getCartOrderId(mcId)
           }
         }
+      }
+
+      // Готовить контекст для рендера:
+      val ctxFut = for {
+        lkCtxData <- request.user.lkCtxDataFut
+      } yield {
+        implicit val ctxData = lkCtxData.withJsInitTargets(
+          MJsInitTargets.LkCartPageForm :: lkCtxData.jsInitTargets
+        )
+        implicitly[Context]
       }
 
       // Настройки рендера интерфейса
@@ -418,9 +433,9 @@ trait LkBillOrders
         withCheckBox  = true
       )
 
-      // Данные формы для инициализации.
-      for {
-        cartOrderIdOpt <- cartOrderIdOptFut
+      // Отрендерить данные формы в JSON.
+      val formInitB64Fut = for {
+        cartOrderIdOpt  <- cartOrderIdOptFut
       } yield {
         val minit = MCartInit(
           conf = MCartConf(
@@ -429,11 +444,56 @@ trait LkBillOrders
             orderRowOpts = rowOpts
           )
         )
-        val formInitB64 = Json
+        Json
           .toJson( minit )
           .toString()
-        Ok( Cart2Tpl( request.mnode, formInitB64 ) )
       }
+
+      // Данные формы для инициализации.
+      for {
+        formInitB64     <- formInitB64Fut
+        ctx             <- ctxFut
+      } yield {
+        val html = Cart2Tpl( request.mnode, formInitB64 )(ctx)
+        Ok( html )
+      }
+    }
+  }
+
+
+  /** Запрос за данными корзины (JSON для react-формы).
+    *
+    * @param orderId id заказа, если известно.
+    *                None - значит корзина.
+    * @return 200 OK + JSON с содержимым запрошенного ордера.
+    */
+  def getOrder2(orderId: Option[Gid_t]) = csrf.Check {
+    // Два варианта action-обёртки ACL, в зависимости от наличия/отсутствия orderId:
+    val ab = orderId.fold[ActionBuilder[MOrderOptReq, AnyContent]] {
+      // Просмотр только текущей корзины. Юзер всегда может глядеть в свою корзину.
+      isAuth().andThen(
+        new reqUtil.ActionTransformerImpl[MReq, MOrderOptReq] {
+          override protected def transform[A](request: MReq[A]): Future[MOrderOptReq[A]] = {
+            val req2 = MOrderOptReq( None, request )
+            Future.successful( req2 )
+          }
+        }
+      )
+    } { orderId1 =>
+      // Просмотр одного конкретного ордера. Возможно, корзины.
+      canViewOrder( orderId1, onNodeId = None ).andThen(
+        new reqUtil.ActionTransformerImpl[MNodeOptOrderReq, MOrderOptReq] {
+          override protected def transform[A](request: MNodeOptOrderReq[A]): Future[MOrderOptReq[A]] = {
+            val req2 = MOrderOptReq( Some(request.morder), request )
+            Future.successful( req2 )
+          }
+        }
+      )
+    }
+
+    ab.async { implicit request =>
+      // TODO Собрать все данные для ответа, сериализовать и вернуть.
+      ???
     }
   }
 
@@ -448,11 +508,8 @@ trait LkBillOrders
   def cart(onNodeId: String, r: Option[String]) = csrf.AddToken {
     isNodeAdmin(onNodeId, U.Lk, U.ContractId).async { implicit request =>
 
-      // Узнать id контракта юзера. Сам контракт не важен.
-      val mcIdOptFut = request.user.contractIdOptFut
-
-      // Найти ордер-корзину юзера в базе биллинга:
-      val cartOptFut = mcIdOptFut.flatMap { mcIdOpt =>
+      // Найти ордер-корзину юзера в базе биллинга по контракту юзера:
+      val cartOptFut = request.user.contractIdOptFut.flatMap { mcIdOpt =>
         FutureUtil.optFut2futOpt(mcIdOpt) { mcId =>
           slick.db.run {
             bill2Util.getCartOrder(mcId)
@@ -476,7 +533,7 @@ trait LkBillOrders
       }
 
       // Начать сборку аргументов для рендера списка item'ов.
-      val mItemsTplArgsFut = _mItemsTplArgs(mitemsFut, ctxFut)
+      val mItemsTplArgsFut = _mItemsTplArgs(mitemsFut, ctxFut, request.mnode)
 
       // Рассчет общей стоимости корзины
       val totalPricingFut = for {

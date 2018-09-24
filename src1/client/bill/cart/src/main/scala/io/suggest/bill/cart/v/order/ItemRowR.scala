@@ -8,7 +8,6 @@ import io.suggest.bill.price.dsl.PriceReasonI18n
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.CircleGs
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.render.v.JdR
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.msg.{JsFormatUtil, Messages}

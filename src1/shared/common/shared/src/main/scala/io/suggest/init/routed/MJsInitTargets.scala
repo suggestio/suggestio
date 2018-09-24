@@ -5,49 +5,49 @@ import japgolly.univeq.UnivEq
 
 
 /** Кросс-платформенная модель целей js-инициализации. */
-object MJsiTgs extends StringEnum[MJsiTg] {
+object MJsInitTargets extends StringEnum[MJsInitTarget] {
 
   /** Активация всплывающих уведомлений. */
-  case object Flashing extends MJsiTg("a")
+  case object Flashing extends MJsInitTarget("a")
 
   /** js для формы внешнего размещения карточки. */
-  case object LkAdvExtForm extends MJsiTg("c")
+  case object LkAdvExtForm extends MJsInitTarget("c")
 
   /** js-исполнитель внешнего размещения. */
-  case object AdvExtRunner extends MJsiTg("d")
+  case object AdvExtRunner extends MJsInitTarget("d")
 
   /** Вертикальная центровка в ident. */
-  case object IdentVCenterContent extends MJsiTg("e")
+  case object IdentVCenterContent extends MJsInitTarget("e")
 
   /** init-target для включения js к форме ввода капчи. */
-  case object CaptchaForm extends MJsiTg("j")
+  case object CaptchaForm extends MJsInitTarget("j")
 
   /** Цель инициализации для поддержки скрытой капчи, загружаемой и отображаемой опционально. */
-  case object HiddenCaptcha extends MJsiTg("k")
+  case object HiddenCaptcha extends MJsInitTarget("k")
 
   /** Цель для инициализации страницы списка транзакций биллинга. */
-  case object BillTxnsList extends MJsiTg("l")
+  case object BillTxnsList extends MJsInitTarget("l")
 
   /** Цель для инициализации страницы размещения в геотегах. */
-  case object AdvGeoForm extends MJsiTg("m")
+  case object AdvGeoForm extends MJsInitTarget("m")
 
   /** Цель инициализации формы размещения ADN-узла на географической карте. */
-  case object AdnMapForm extends MJsiTg("o")
+  case object AdnMapForm extends MJsInitTarget("o")
 
   /** Цель инициализации формы управления узлами в ЛК узла. */
-  case object LkNodesForm extends MJsiTg("p")
+  case object LkNodesForm extends MJsInitTarget("p")
 
   /** Цель инициализации формы ЛК-редактора рекламной карточки на базе react. */
-  case object LkAdEditR extends MJsiTg("q")
+  case object LkAdEditR extends MJsInitTarget("q")
 
   /** Цель инициализации ЛК-формы управления карточками. */
-  case object LkAdsForm extends MJsiTg("r")
+  case object LkAdsForm extends MJsInitTarget("r")
 
   /** Цель инициализации react-формы редактирования ADN-узла. */
-  case object LkAdnEditForm extends MJsiTg("s")
+  case object LkAdnEditForm extends MJsInitTarget("s")
 
   /** Цель для страницы с корзиной. */
-  case object LkCartPageForm extends MJsiTg("t")
+  case object LkCartPageForm extends MJsInitTarget("t")
 
 
   override def values = findValues
@@ -57,10 +57,10 @@ object MJsiTgs extends StringEnum[MJsiTg] {
 
 
 /** Трейт для всех инстансов модели. */
-sealed abstract class MJsiTg(override val value: String) extends StringEnumEntry {
+sealed abstract class MJsInitTarget(override val value: String) extends StringEnumEntry {
   override final def toString = value
 }
 
-object MJsiTg {
-  @inline implicit def univEq: UnivEq[MJsiTg] = UnivEq.derive
+object MJsInitTarget {
+  @inline implicit def univEq: UnivEq[MJsInitTarget] = UnivEq.derive
 }

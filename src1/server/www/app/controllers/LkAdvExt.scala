@@ -2,7 +2,7 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.init.routed.MJsiTgs
+import io.suggest.init.routed.MJsInitTargets
 import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.csp.Csp
 import io.suggest.util.logs.MacroLogsImpl
@@ -154,8 +154,8 @@ class LkAdvExt @Inject() (
         advForm     = form,
         oneTgForm   = advExtFormUtil.formForTarget
       )
-      implicit val ctxData = ctxData0.withJsiTgs(
-        MJsiTgs.LkAdvExtForm :: ctxData0.jsiTgs
+      implicit val ctxData = ctxData0.withJsInitTargets(
+        MJsInitTargets.LkAdvExtForm :: ctxData0.jsInitTargets
       )
       rs( forAdTpl(args) )
     }
@@ -218,8 +218,8 @@ class LkAdvExt @Inject() (
         } else {
 
           for (ctxData0 <- request.user.lkCtxDataFut) yield {
-            implicit val ctxData = ctxData0.withJsiTgs(
-              MJsiTgs.AdvExtRunner :: ctxData0.jsiTgs
+            implicit val ctxData = ctxData0.withJsInitTargets(
+              MJsInitTargets.AdvExtRunner :: ctxData0.jsInitTargets
             )
             implicit val ctx = implicitly[Context]
             val wsArgs2 = wsArgs.copy(

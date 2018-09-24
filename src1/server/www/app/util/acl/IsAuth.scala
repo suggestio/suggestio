@@ -22,10 +22,10 @@ import play.api.http.{HeaderNames, MimeTypes}
 
 /** Аддон для контроллеров, добавляющий поддержку IsAuth action builder'ов. */
 @Singleton
-class IsAuth @Inject() (
-                         aclUtil            : AclUtil,
-                         reqUtil            : ReqUtil
-                       )
+final class IsAuth @Inject() (
+                               aclUtil            : AclUtil,
+                               reqUtil            : ReqUtil
+                             )
   extends MacroLogsImpl
 {
 

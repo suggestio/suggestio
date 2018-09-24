@@ -1,6 +1,6 @@
 package util.jsa.init
 
-import io.suggest.init.routed.{MJsiTg, MJsiTgs}
+import io.suggest.init.routed.{MJsInitTarget, MJsInitTargets}
 import models.req.IReqHdr
 
 /**
@@ -13,7 +13,7 @@ import models.req.IReqHdr
 /** Интерфейс для доступа к необходимым целям. */
 trait ITargets {
   /** Вернуть список целей инициализации js. */
-  def jsiTgs(req: IReqHdr): List[MJsiTg]
+  def jsiTgs(req: IReqHdr): List[MJsInitTarget]
 }
 
 
@@ -26,18 +26,18 @@ trait ITargets {
  *   }
  */
 trait ITargetsEmpty extends ITargets {
-  override def jsiTgs(req: IReqHdr): List[MJsiTg] = Nil
+  override def jsiTgs(req: IReqHdr): List[MJsInitTarget] = Nil
 }
 
 
 
 /** Поддержка добавления таргета для отображения flashing-уведомлений, если они есть. */
 trait FlashingJsInit extends ITargetsEmpty {
-  override def jsiTgs(req: IReqHdr): List[MJsiTg] = {
+  override def jsiTgs(req: IReqHdr): List[MJsInitTarget] = {
     var tgs = super.jsiTgs(req)
     // Добавить flashing-цель, если есть flashing-уведомления в запросе.
     if (!req.flash.isEmpty)
-      tgs ::= MJsiTgs.Flashing
+      tgs ::= MJsInitTargets.Flashing
     tgs
   }
 }

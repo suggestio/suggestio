@@ -3,7 +3,7 @@ package controllers.ident
 import controllers.{CaptchaValidator, SioController, routes}
 import io.suggest.ctx.CtxData
 import io.suggest.i18n.MsgCodes
-import io.suggest.init.routed.MJsiTgs
+import io.suggest.init.routed.MJsInitTargets
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
@@ -98,7 +98,7 @@ trait EmailPwReg
   /** Рендер страницы регистрации по email. */
   private def _epwRender(form: EmailPwRegReqForm_t)(implicit request: IReq[_]): Html = {
     implicit val ctxData = CtxData(
-      jsiTgs = MJsiTgs.CaptchaForm :: Nil
+      jsInitTargets = MJsInitTargets.CaptchaForm :: Nil
     )
     epwRegTpl(form, captchaShown = true)
   }

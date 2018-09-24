@@ -85,15 +85,22 @@ class ItemsTableHeadR {
           // Разрешён рендер галочки?
           ReactCommonUtil.maybeNode( props.rowOpts.withCheckBox ) {
             MuiTableCell()(
-              MuiCheckBox(
-                new MuiCheckBoxProps {
-                  override val onChange = _onCheckBoxClickCbF
-                  override val checked = js.defined {
-                    props.hasCheckedItems && !props.hasUnCheckedItems
+
+              // Есть хотя бы один какой-либо item? Иначе в галочке нет смысла.
+              if (props.hasUnCheckedItems || props.hasCheckedItems) {
+                MuiCheckBox(
+                  new MuiCheckBoxProps {
+                    override val onChange = _onCheckBoxClickCbF
+                    override val checked = js.defined {
+                      props.hasCheckedItems && !props.hasUnCheckedItems
+                    }
+                    override val indeterminate = props.hasCheckedItems && props.hasUnCheckedItems
                   }
-                  override val indeterminate = props.hasCheckedItems && props.hasUnCheckedItems
-                }
-              )
+                )
+              } else {
+                HtmlConstants.NBSP_STR
+              }
+
             )
           }
 

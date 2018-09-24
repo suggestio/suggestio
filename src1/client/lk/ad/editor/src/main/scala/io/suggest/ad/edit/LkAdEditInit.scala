@@ -21,8 +21,8 @@ import org.scalajs.dom.raw.HTMLDivElement
 trait LkAdEditInit extends InitRouter {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.LkAdEditR) {
+  override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
+    if (itg ==* MJsInitTargets.LkAdEditR) {
       initAdEditForm()
     } else {
       super.routeInitTarget(itg)

@@ -7,7 +7,7 @@ import io.suggest.adn.mapf.{MLamConf, MLamForm, MLamFormInit}
 import io.suggest.adv.geo.{OnAdvsMap, OnGeoCapturing}
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
-import io.suggest.init.routed.MJsiTgs
+import io.suggest.init.routed.MJsInitTargets
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.pick.PickleUtil
 import io.suggest.pick.PickleSrvUtil._
@@ -89,8 +89,8 @@ class LkAdnMap @Inject() (
       val geoPointFut = getGeoPoint0(nodeId)
 
       val ctxFut = for (ctxData0 <- request.user.lkCtxDataFut) yield {
-        implicit val ctxData = ctxData0.withJsiTgs(
-          MJsiTgs.AdnMapForm :: ctxData0.jsiTgs
+        implicit val ctxData = ctxData0.withJsInitTargets(
+          MJsInitTargets.AdnMapForm :: ctxData0.jsInitTargets
         )
         getContext2
       }

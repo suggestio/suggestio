@@ -2,7 +2,7 @@ package controllers.cbill
 
 import controllers.SioController
 import io.suggest.bill.TxnsListConstants
-import io.suggest.init.routed.MJsiTgs
+import io.suggest.init.routed.MJsInitTargets
 import io.suggest.mbill2.m.txn.{IMTxns, MTxn}
 import models.mbill.{MLkTxnsListTplArgs, MLkTxnsPageTplArgs}
 import play.twirl.api.Html
@@ -76,8 +76,8 @@ trait LkBillTxns
       } yield {
 
         // Подготовить данные контекста
-        implicit val ctxData = ctxData0.withJsiTgs(
-          MJsiTgs.BillTxnsList :: ctxData0.jsiTgs
+        implicit val ctxData = ctxData0.withJsInitTargets(
+          MJsInitTargets.BillTxnsList :: ctxData0.jsInitTargets
         )
 
         // Подготовить тело ответа.

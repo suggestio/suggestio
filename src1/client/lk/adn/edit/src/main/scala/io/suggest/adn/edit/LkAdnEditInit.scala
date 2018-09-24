@@ -18,8 +18,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 trait LkAdnEditInit extends InitRouter {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.LkAdnEditForm) {
+  override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
+    if (itg ==* MJsInitTargets.LkAdnEditForm) {
       main()
     } else {
       super.routeInitTarget(itg)

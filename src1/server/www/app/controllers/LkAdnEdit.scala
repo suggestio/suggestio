@@ -4,7 +4,7 @@ import io.suggest.adn.edit.m.{MAdnEditForm, MAdnEditFormConf, MAdnEditFormInit}
 import io.suggest.es.model.MEsUuId
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.img.MImgFmts
-import io.suggest.init.routed.MJsiTgs
+import io.suggest.init.routed.MJsInitTargets
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.MNodes
@@ -69,8 +69,8 @@ class LkAdnEdit @Inject() (
       val ctxFut = for {
         ctxData0 <- request.user.lkCtxDataFut
       } yield {
-        implicit val ctxData1 = ctxData0.withJsiTgs(
-          jsiTgs2 = MJsiTgs.LkAdnEditForm :: ctxData0.jsiTgs
+        implicit val ctxData1 = ctxData0.withJsInitTargets(
+          jsInitTargets = MJsInitTargets.LkAdnEditForm :: ctxData0.jsInitTargets
         )
         implicitly[Context]
       }

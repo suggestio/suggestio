@@ -111,6 +111,7 @@ GET  /lk/adn/pop/item/:itemId           @controllers.LkAdnMap.currentGeoItemPopu
 ## lk.bill2
 GET  /lk/cart/:nodeId                   @controllers.LkBill2.cart(nodeId, r: Option[String] ?= None)
 GET  /lk/cart2/:nodeId                  @controllers.LkBill2.cart2(nodeId, r: Option[String] ?= None)
+GET  /lk/order2                         @controllers.LkBill2.getOrder2(orderId: Option[Gid_t] ?= None)
 POST /lk/cart/:nodeId                   @controllers.LkBill2.cartSubmit(nodeId)
 GET  /lk/bill/txns/:nodeId              @controllers.LkBill2.txnsList(nodeId, page: Int ?= 0, inline: Boolean ?= false)
 GET  /lk/bill/:nodeId                   @controllers.LkBill2.onNode(nodeId)

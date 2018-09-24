@@ -13,7 +13,7 @@ import io.suggest.dt.{MAdvPeriod, YmdHelpersJvm}
 import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
-import io.suggest.init.routed.MJsiTgs
+import io.suggest.init.routed.MJsInitTargets
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -167,8 +167,8 @@ class LkAdvGeo @Inject() (
     }
 
     val _ctxFut = for (ctxData0 <- request.user.lkCtxDataFut) yield {
-      implicit val ctxData = ctxData0.withJsiTgs(
-        MJsiTgs.AdvGeoForm :: ctxData0.jsiTgs
+      implicit val ctxData = ctxData0.withJsInitTargets(
+        MJsInitTargets.AdvGeoForm :: ctxData0.jsInitTargets
       )
       getContext2
     }

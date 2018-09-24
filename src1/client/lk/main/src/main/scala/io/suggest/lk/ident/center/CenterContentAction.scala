@@ -18,8 +18,8 @@ trait CenterContentInitRouter extends InitRouter with SafeSyncVoid {
 
   private def jqWnd = jQuery(dom.window)
 
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.IdentVCenterContent) {
+  override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
+    if (itg ==* MJsInitTargets.IdentVCenterContent) {
       ccInitSafe()
     } else {
       super.routeInitTarget(itg)

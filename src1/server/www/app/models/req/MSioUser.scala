@@ -8,7 +8,7 @@ import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.CtxData
 import io.suggest.di.ISlickDbConfig
-import io.suggest.init.routed.MJsiTg
+import io.suggest.init.routed.MJsInitTarget
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodesCache}
@@ -70,7 +70,7 @@ sealed trait ISioUser {
   def mBalancesFut: Future[Seq[MBalance]]
 
   /** Дополнительные цели js-инициализации по мнению ActionBuilder'а. */
-  def jsiTgs: List[MJsiTg]
+  def jsiTgs: List[MJsInitTarget]
 
   /** Частый экземпяр CtxData для нужд ЛК. */
   def lkCtxDataFut: Future[CtxData]
@@ -190,7 +190,7 @@ trait MSioUserLazyFactory {
     * @param jsiTgs js init targets, выставленные ActionBuilder'ом, если есть.
     */
   def apply(personIdOpt: Option[String],
-            jsiTgs: List[MJsiTg]): MSioUserLazy
+            jsiTgs: List[MJsInitTarget]): MSioUserLazy
 }
 
 /** Контейнер со статическими моделями для инстансов [[MSioUserLazy]]. */
@@ -216,9 +216,9 @@ class MsuStatic @Inject()(
   * @param msuStatics Статические модели, необходимые для успешной работы ленивых полей инстанса.
   */
 case class MSioUserLazy @Inject() (
-  @Assisted override val personIdOpt  : Option[String],
-  @Assisted override val jsiTgs       : List[MJsiTg],
-  override val msuStatics             : MsuStatic
+                                    @Assisted override val personIdOpt  : Option[String],
+                                    @Assisted override val jsiTgs       : List[MJsInitTarget],
+                                    override val msuStatics             : MsuStatic
 )
   extends ISioUserT
 {
@@ -258,7 +258,7 @@ class MSioUsers @Inject() (
     * @param jsiTgs Список целей js-инициализации [Nil].
     * @return Инстанс какой-то реализации [[ISioUser]].
     */
-  def apply(personIdOpt: Option[String], jsiTgs: List[MJsiTg] = Nil): ISioUser = {
+  def apply(personIdOpt: Option[String], jsiTgs: List[MJsInitTarget] = Nil): ISioUser = {
     // Частые анонимные запросы можно огулять одним общим инстансом ISioUser.
     if (personIdOpt.isEmpty && jsiTgs.isEmpty) {
       empty

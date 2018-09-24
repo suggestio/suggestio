@@ -17,8 +17,8 @@ import scala.scalajs.js.ThisFunction
 trait CaptchaFormInit extends InitRouter {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.CaptchaForm) {
+  override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
+    if (itg ==* MJsInitTargets.CaptchaForm) {
       initForm()
     } else {
       super.routeInitTarget(itg)

@@ -18,8 +18,8 @@ import scala.scalajs.js.ThisFunction
 trait HiddenCaptchaInit extends InitRouter {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.HiddenCaptcha) {
+  override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
+    if (itg ==* MJsInitTargets.HiddenCaptcha) {
       showHiddenCaptchaOnFormInputsActivity()
     } else {
       super.routeInitTarget(itg)

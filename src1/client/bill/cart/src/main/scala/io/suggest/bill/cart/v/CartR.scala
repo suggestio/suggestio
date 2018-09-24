@@ -59,10 +59,11 @@ class CartR(
         orderHeadC = propsProxy.connect { props =>
           itemsTableHeadR.PropsVal(
             hasCheckedItems   = props.data.itemsSelected.nonEmpty,
-            hasUnCheckedItems = props.data.orderContents.exists { oc =>
-              oc.items.nonEmpty &&
-                (oc.items.lengthCompare( props.data.itemsSelected.size ) > 0)
-            },
+            hasUnCheckedItems = props.data.orderContents.nonEmpty &&
+              props.data.orderContents.exists { oc =>
+                oc.items.nonEmpty &&
+                  (oc.items.lengthCompare( props.data.itemsSelected.size ) > 0)
+              },
             rowOpts = props.conf.orderRowOpts
           )
         },

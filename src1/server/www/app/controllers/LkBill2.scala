@@ -2,7 +2,6 @@ package controllers
 
 import akka.util.ByteString
 import javax.inject.{Inject, Named, Singleton}
-
 import controllers.cbill._
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
 import io.suggest.common.fut.FutureUtil
@@ -12,6 +11,7 @@ import io.suggest.mbill2.m.txn.MTxns
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.node.MNode
 import io.suggest.pick.PickleUtil
+import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mbill._
 import models.mcal.MCalendars
@@ -40,6 +40,8 @@ class LkBill2 @Inject() (
                           mCalendars                  : MCalendars,
                           galleryUtil                 : GalleryUtil,
                           advUtil                     : AdvUtil,
+                          override val reqUtil        : ReqUtil,
+                          override val isAuth         : IsAuth,
                           nodesUtil                   : NodesUtil,
                           override val logoUtil       : LogoUtil,
                           override val canViewOrder   : CanViewOrder,

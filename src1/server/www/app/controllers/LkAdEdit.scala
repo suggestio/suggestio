@@ -7,7 +7,7 @@ import io.suggest.ad.form.AdFormConstants
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.MEsUuId
-import io.suggest.init.routed.MJsiTgs
+import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.MJdAdData
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge._
@@ -441,8 +441,8 @@ class LkAdEdit @Inject() (
   /** Собрать инстанс ctxData. */
   private def _ctxDataFut(implicit request: IReq[_]): Future[CtxData] = {
     for (ctxData0 <- request.user.lkCtxDataFut) yield {
-      ctxData0.withJsiTgs(
-        MJsiTgs.LkAdEditR :: ctxData0.jsiTgs
+      ctxData0.withJsInitTargets(
+        MJsInitTargets.LkAdEditR :: ctxData0.jsInitTargets
       )
     }
   }

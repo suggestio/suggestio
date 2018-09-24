@@ -19,8 +19,8 @@ import scala.scalajs.js.{Any, Dictionary}
 trait TxnsListInit extends InitRouter {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.BillTxnsList) {
+  override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
+    if (itg ==* MJsInitTargets.BillTxnsList) {
       new TxnList().init()
     } else {
       super.routeInitTarget(itg)

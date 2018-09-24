@@ -20,8 +20,8 @@ import scala.scalajs.js.{Dictionary, Any, Array}
 /** Реализация роутера для подхвата цели инициализации формы. */
 trait FormEventsInitRouter extends InitRouter {
 
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.LkAdvExtForm) {
+  override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
+    if (itg ==* MJsInitTargets.LkAdvExtForm) {
       new FormEvents()
         .bindFormEvents()
     } else {

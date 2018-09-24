@@ -24,8 +24,8 @@ import japgolly.univeq._
  */
 trait AdvGeoFormInitRouter extends InitRouter {
 
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.AdvGeoForm) {
+  override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
+    if (itg ==* MJsInitTargets.AdvGeoForm) {
       new AdvGeoFormInit()
         .init()
     } else {

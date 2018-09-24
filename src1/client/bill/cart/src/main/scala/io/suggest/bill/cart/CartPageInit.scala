@@ -4,6 +4,7 @@ import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.view.VUtil
 import japgolly.univeq._
 import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom.html
 
 /**
   * Suggest.io
@@ -14,8 +15,8 @@ import japgolly.scalajs.react.vdom.html_<^._
 trait CartPageInit extends InitRouter {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.LkCartPageForm) {
+  override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
+    if (itg ==* MJsInitTargets.LkCartPageForm) {
       _doInit()
     } else {
       super.routeInitTarget(itg)
@@ -32,7 +33,7 @@ trait CartPageInit extends InitRouter {
 
     // Рендер корзины на экране:
     // Найти на странице контейнер для формы и отрендерить:
-    val cartFormCont = VUtil.getElementById( CartConstants.FORM_ID ).get
+    val cartFormCont = VUtil.getElementById[html.Div]( CartConstants.FORM_ID ).get
     val formContent = circuit.wrap( identity(_) )( modules.cartR.apply )
     formContent.renderIntoDOM( cartFormCont )
   }

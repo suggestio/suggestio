@@ -23,8 +23,8 @@ import com.softwaremill.macwire._
 trait LkNodesInitRouter extends InitRouter {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
-  override protected def routeInitTarget(itg: MInitTarget): Unit = {
-    if (itg ==* MInitTargets.LkNodesForm) {
+  override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
+    if (itg ==* MJsInitTargets.LkNodesForm) {
       initLkNodesForm()
     } else {
       super.routeInitTarget(itg)
