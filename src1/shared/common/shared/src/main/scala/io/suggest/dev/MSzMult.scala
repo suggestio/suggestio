@@ -72,6 +72,8 @@ case class MSzMult(multBody: Int)
 /** Модель примеров размеров. */
 object MSzMults {
 
+  def `0.25`  = MSzMult(MSzMult.SZ_MULT_MOD / 4)
+
   /** Половинный размер. */
   def `0.5`   = MSzMult(MSzMult.SZ_MULT_MOD / 2)
 

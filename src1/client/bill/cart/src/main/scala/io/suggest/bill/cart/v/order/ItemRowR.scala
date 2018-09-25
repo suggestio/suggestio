@@ -83,34 +83,13 @@ class ItemRowR {
 
         // Определение товара/услуги:
         MuiTableCell()(
-          // Если это тег, то рендерить тег:
-          props.mitem.tagFaceOpt.whenDefinedNode { tagFace =>
-            MuiChip {
-              // Иконка тега: решётка + подсказка поверх при наведении/нажатии.
-              val ava = MuiAvatar()(
-                MuiToolTip(
-                  new MuiToolTipProps {
-                    override val title: React.Node = Messages( MsgCodes.`Tag` )
-                  }
-                )(
-                  <.span(
-                    HtmlConstants.DIEZ
-                  )
-                )
-              )
-              new MuiChipProps {
-                override val avatar = ava.rawElement
-                override val label = js.defined( tagFace )
-              }
-            }
-          },
 
           // Стрелочка-разделитель:
-          HtmlConstants.NBSP_STR,
-          Mui.SvgIcons.TrendingFlat()(),
-          HtmlConstants.NBSP_STR,
+          //HtmlConstants.NBSP_STR,
+          //Mui.SvgIcons.TrendingFlat()(),
+          //HtmlConstants.NBSP_STR,
 
-          MuiChip {
+          {
             val (avaIconComponent, iconHintCodeOpt) = if (props.mitem.rcvrIdOpt.isDefined) {
               // Размещение в узле
               // TODO Заюзать логотип узла, если он есть + с фоном? Иконку LocationCity показывать как fallback или выкинуть вообще?
@@ -123,42 +102,72 @@ class ItemRowR {
               Mui.SvgIcons.NotListedLocation -> None
             }
 
-            var avaIcon: VdomElement = avaIconComponent()()
+            var chip: VdomElement = MuiChip {
+
+              // Текст с описанием того, где размещение
+              new MuiChipProps {
+                // Завернуть в avatar, как требует чип:
+                override val avatar = {
+                  MuiAvatar()(
+                    avaIconComponent()()
+                  ).rawElement
+                }
+                override val label: js.UndefOr[React.Node] = {
+                  <.span(
+                    // Название узла-ресивера, если задан
+                    props.rcvrNode
+                      .flatMap(_.hint)
+                      .whenDefined,
+
+                    // Описание гео-шейпа, если он задан:
+                    props.mitem.geoShape.whenDefined {
+                      // TODO + ссылка для окошка с картой и шейпом.
+                      case circleGs: CircleGs =>
+                        PriceReasonI18n.i18nPayloadCircle( circleGs )
+                      case other =>
+                        // TODO Нужен какой-то нормальный рендер, не?
+                        other.toString()
+                    },
+
+                    // Если это тег, то рендерить тег:
+                    props.mitem.tagFaceOpt.whenDefinedNode { tagFace =>
+                      VdomArray(
+                        HtmlConstants.NBSP_STR,
+                        MuiToolTip.component.withKey("t")(
+                          new MuiToolTipProps {
+                            override val title: React.Node = Messages( MsgCodes.`Tag` )
+                          }
+                        )(
+                          MuiChip {
+                            // Иконка тега: решётка + подсказка поверх при наведении/нажатии.
+                            val ava = MuiAvatar()(
+                              HtmlConstants.DIEZ
+                            )
+                            new MuiChipProps {
+                              override val avatar = ava.rawElement
+                              override val label = js.defined( tagFace )
+                            }
+                          }
+                        )
+                      )
+                    }
+
+                  )
+                    .rawNode
+                }
+              }
+            }
 
             // Если задана подсказка, то завернуть иконку аватара в tooltip.
             for (hintMsgCode <- iconHintCodeOpt) {
-              avaIcon = MuiToolTip(
+              chip = MuiToolTip(
                 new MuiToolTipProps {
-                  override val title: React.Node = hintMsgCode
+                  override val title: React.Node = Messages( hintMsgCode )
                 }
-              )( avaIcon )
+              )( chip )
             }
-            // Завернуть в avatar, как требует чип:
-            avaIcon = MuiAvatar()(avaIcon)
 
-            // Текст с описанием того, где размещение
-            new MuiChipProps {
-              override val avatar = avaIcon.rawElement
-              override val label: js.UndefOr[React.Node] = {
-                <.span(
-                  // Название узла-ресивера, если задан
-                  props.rcvrNode
-                    .flatMap(_.hint)
-                    .whenDefined,
-
-                  // Описание гео-шейпа, если он задан:
-                  props.mitem.geoShape.whenDefined {
-                    // TODO + ссылка для окошка с картой и шейпом.
-                    case circleGs: CircleGs =>
-                      PriceReasonI18n.i18nPayloadCircle( circleGs )
-                    case other =>
-                      // TODO Нужен какой-то нормальный рендер, не?
-                      other.toString()
-                  }
-                )
-                  .rawNode
-              }
-            }
+            chip
           }
         ),
 

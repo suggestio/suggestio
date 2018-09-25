@@ -4,6 +4,7 @@ import chandu0101.scalajs.react.components.materialui.MuiTable
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.cart.m.MCartRootS
 import io.suggest.bill.cart.v.order.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR}
+import io.suggest.css.CssR
 import io.suggest.jd.render.v.{JdCss, JdCssR}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -16,6 +17,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: Корневой компонент корзины приобретённых товаров и услуг.
   */
 class CartR(
+             cartCss                : CartCss,
              jdCssR                 : JdCssR,
              val itemRowR           : ItemRowR,
              val itemsTableBodyR    : ItemsTableBodyR,
@@ -41,6 +43,9 @@ class CartR(
 
     def render(propsProxy: Props, s: State): VdomElement = {
       <.div(
+
+        // Статические стили плитки.
+        propsProxy.wrap(_ => cartCss)( CssR.apply ),
 
         // Рендер стилей отображаемых карточек.
         s.jdCssC { jdCssR.apply },

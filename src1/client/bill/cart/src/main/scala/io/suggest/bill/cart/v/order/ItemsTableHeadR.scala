@@ -1,10 +1,11 @@
 package io.suggest.bill.cart.v.order
 
-import chandu0101.scalajs.react.components.materialui.{MuiCheckBox, MuiCheckBoxProps, MuiTableCell, MuiTableHead, MuiTableRow}
+import chandu0101.scalajs.react.components.materialui.{MuiCheckBox, MuiCheckBoxProps, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableHead, MuiTableRow}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.bill.cart.MOrderItemRowOpts
 import io.suggest.bill.cart.m.CartSelectItem
+import io.suggest.bill.cart.v.CartCss
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
@@ -24,7 +25,9 @@ import scala.scalajs.js
   * Created: 18.09.18 18:46
   * Description: Компонент для рендера шапки таблицы заказа.
   */
-class ItemsTableHeadR {
+class ItemsTableHeadR(
+                       cartCss    : CartCss,
+                     ) {
 
   /** Модель пропертисов элемента. */
   case class PropsVal(
@@ -44,6 +47,7 @@ class ItemsTableHeadR {
   type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
 
+
   class Backend( $: BackendScope[Props, Unit] ) {
 
     private def _onCheckBoxClick(e: ReactEventFromInput): Callback = {
@@ -61,7 +65,14 @@ class ItemsTableHeadR {
         MuiTableRow()(
 
           // Столбец рендера карточки
-          MuiTableCell()(
+          MuiTableCell {
+            val cssClasses = new MuiTableCellClasses {
+              override val root = cartCss.ItemsTable.AdPreviewColumn.head.htmlClass
+            }
+            new MuiTableCellProps {
+              override val classes = cssClasses
+            }
+          }(
             HtmlConstants.NBSP_STR
           ),
 

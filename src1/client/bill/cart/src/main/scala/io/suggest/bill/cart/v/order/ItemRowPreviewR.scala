@@ -1,8 +1,9 @@
 package io.suggest.bill.cart.v.order
 
-import chandu0101.scalajs.react.components.materialui.{MuiTableCell, MuiTableCellProps}
+import chandu0101.scalajs.react.components.materialui.{MuiTableCell, MuiTableCellClasses, MuiTableCellProps}
 import diode.FastEq
 import diode.react.ModelProxy
+import io.suggest.bill.cart.v.CartCss
 import io.suggest.dev.MSzMults
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
@@ -22,7 +23,8 @@ import scalaz.Tree
   * Description: Обёртка над jd-рендером для рендера ячейки с превьюшкой карточки в таблице рендера.
   */
 class ItemRowPreviewR(
-                       jdR: JdR
+                       jdR        : JdR,
+                       cartCss    : CartCss,
                      ) {
 
   /** Модель пропертисов компонента.
@@ -52,10 +54,14 @@ class ItemRowPreviewR(
       propsProxy.value.whenDefinedEl { props =>
         // Рендер миниатюры карточки, если задана.
         // Ячейка с превьюшкой.
+        val cssClasses = new MuiTableCellClasses {
+          override val root = cartCss.ItemsTable.AdPreviewColumn.body.htmlClass
+        }
         MuiTableCell(
           new MuiTableCellProps {
             // Передаём rowspan напрямую в атрибуты td:
             val rowSpan = props.jdRowSpan.toString
+            override val classes = cssClasses
           }
         )(
           propsProxy.wrap(_ => props.jdArgs)(jdR.apply)
@@ -80,7 +86,7 @@ object ItemRowPreviewR {
   /** Инстанс jd-conf един среди всего компонента. */
   val JD_CONF = MJdConf(
     isEdit = false,
-    szMult = MSzMults.`0.5`,
+    szMult = MSzMults.`0.25`,
     gridColumnsCount = 2
   )
 
