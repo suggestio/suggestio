@@ -153,7 +153,7 @@ object TplDataFormatUtil {
     * @param ctx Контекст рендера.
     * @return Обновлённый инстанс MPrice.
     */
-  def setPriceAmountStr(mprice: MPrice)(implicit ctx: Context): MPrice = {
+  def setFormatPrice(mprice: MPrice)(implicit ctx: Context): MPrice = {
     mprice.withAmountStrOpt(
       Some(
         formatPriceAmount(mprice)

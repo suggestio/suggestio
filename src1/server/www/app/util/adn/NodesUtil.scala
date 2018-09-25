@@ -208,7 +208,7 @@ class NodesUtil @Inject() (
         } yield {
           madIdsRes( rnd.nextInt(count) )
         }
-        mNodes.multiGetRev(madIds2)
+        mNodes.multiGet(madIds2)
       }
 
       // Обновить карточки

@@ -292,7 +292,7 @@ class TfDailyUtil @Inject()(
               MCalTypes.WeekDay
           } { _.calType }
           val mprice0 = MPrice( mClause.amount, tf.currency )
-          val mprice1 = TplDataFormatUtil.setPriceAmountStr(mprice0)
+          val mprice1 = TplDataFormatUtil.setFormatPrice(mprice0)
           calType -> mprice1
         }
         .toMap

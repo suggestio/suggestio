@@ -1,6 +1,8 @@
 package io.suggest.es.model
 
 import akka.actor.ActorContext
+import akka.stream.Materializer
+import akka.stream.scaladsl.{Keep, Sink}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.di.{ICacheApi, IExecutionContext}
 import io.suggest.event.SNStaticSubscriber
@@ -27,6 +29,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
   with IExecutionContext
 {
 
+  implicit protected val mat: Materializer
 
   def companion: EsModelStaticT { type T = T1 }
 
@@ -62,51 +65,89 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
 
   /**
    * Аналог getByIdCached, но для multiget().
-   * @param ids id'шники, которые надо бы получить.
-   * @param acc0 Необязательный начальный аккамулятор.
+   * @param ids id'шники, которые надо бы получить. Ожидается, что будут без дубликатов.
    * @return Результаты в неопределённом порядке.
    */
-  def multiGet(ids: TraversableOnce[String], acc0: List[T1] = Nil): Future[Seq[T1]] = {
-    val accsFut2 = ids
-      .foldLeft (Future.successful(acc0 -> List.empty[String])) {
-        (accsFut0, id) =>
-          for {
-            mnodeOpt                <- getByIdFromCache(id)
-            (accCached, notCached)  <- accsFut0
-          } yield {
-            mnodeOpt.fold {
-              accCached -> (id :: notCached)
-            } { mnode =>
-              (mnode :: accCached) -> notCached
-            }
-          }
-      }
-    accsFut2.flatMap { case (cached, nonCachedIds) =>
-      val resultFut = companion.multiGetRev(nonCachedIds, acc0 = cached)
+  def multiGet(ids: Iterable[String]): Future[Seq[T1]] = {
+    if (ids.isEmpty) {
+      Future.successful(Nil)
 
-      // Асинхронно отправить в кеш всё, чего там ещё не было.
-      if (nonCachedIds.nonEmpty) {
-        for (results <- resultFut) {
-          val ncisSet = nonCachedIds.toSet
-          for (result <- results) {
-            val id = result.idOrNull
-            if (ncisSet contains id) {
-              val ck = cacheKey(id)
-              cache.set(ck, result, EXPIRE)
-            }
+    } else {
+      // Сначала ищем элементы в кэше. Можно искать в несколько потоков, что и делаем:
+      val cachedFoundEithersFut = Future.traverse( ids ) { id =>
+        for (resOpt <- getByIdFromCache(id)) yield
+          resOpt.toRight( id )
+      }
+
+      cachedFoundEithersFut.flatMap { cachedFoundEiths =>
+
+        // Как можно скорее запустить multiGET к базе за недостающими элементами:
+        val nonCachedIds = cachedFoundEiths
+          .iterator
+          .collect {
+            case Left(id) => id
           }
+          .toSet
+
+        // Ленивая коллекция уже закэшированных результатов:
+        val cachedResults = cachedFoundEiths
+          .iterator
+          .collect {
+            case Right(r) => r
+          }
+          // Максимально лениво, чтобы отложить это всё напотом без lazy val или def:
+          .toStream
+
+        // Если есть отсутствующие в кэше элементы, то поискать их в хранилищах:
+        if (nonCachedIds.nonEmpty) {
+          // Строим трубу для чтения и параллельного кэширования элементов. Не очень ясно, будет ли это быстрее, но вполне модно и реактивно:
+          val nonCachedResultsFut = companion
+            .multiGetSrc( nonCachedIds )
+            .alsoTo(
+              Sink.foreach[T1]( cacheThat )
+            )
+            // TODO Opt Дописывать сразу в аккамулятор из cachedResults вместо начально-пустого акка? Начальный seq builder инициализировать с size?
+            .toMat( Sink.seq )( Keep.right )
+            .run()
+
+          // Объеденить результаты из кэша и результаты из хранилища:
+          val allResFut = if (cachedResults.isEmpty) {
+            nonCachedResultsFut
+          } else {
+            for (nonCachedResults <- nonCachedResultsFut) yield
+              // Vector ++ Stream.
+              nonCachedResults ++ cachedResults
+          }
+
+          // Вернуть итоговый фьючерс с объединёнными результатами (в неочень неопределённом порядке):
+          allResFut
+
+        } else {
+          Future.successful( cachedResults )
         }
       }
-
-      // Вернуть ожидаемый результат.
-      resultFut
     }
   }
 
-  def multiGetMap(ids: TraversableOnce[String], acc0: List[T1] = Nil): Future[Map[String, T1]] = {
-    multiGet(ids, acc0)
+
+  def multiGetMap(ids: Set[String]): Future[Map[String, T1]] = {
+    multiGet(ids)
       .map { companion.resultsToMap }
   }
+
+
+  def cacheThat(result: T1): Unit = {
+    val id = result.id.get
+    val ck = cacheKey(id)
+    cache.set(ck, result, EXPIRE)
+  }
+
+  def cacheThese(results: T1*): Unit =
+    cacheThese1(results)
+
+  /** Принудительное кэширование для всех указанных item'ов. */
+  def cacheThese1(results: TraversableOnce[T1]): Unit =
+    results.foreach( cacheThat )
 
 
   /**

@@ -81,4 +81,6 @@ case class MItem(
     )
   }
 
+  def withPrice(price: MPrice) = copy(price = price)
+
 }

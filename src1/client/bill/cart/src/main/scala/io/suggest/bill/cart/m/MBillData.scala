@@ -40,7 +40,8 @@ case class MBillData(
                       jdCss            : JdCss,
                     ) {
 
-  def withOrderContent(orderContent: Pot[MOrderContent]) = copy(orderContents = orderContent)
+  def withOrderContents(orderContents: Pot[MOrderContent]) = copy(orderContents = orderContents)
   def withItemsSelected( itemsSelected: Set[Gid_t] ) = copy( itemsSelected = itemsSelected )
+  def withJdCss(jdCss: JdCss) = copy(jdCss = jdCss)
 
 }

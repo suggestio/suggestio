@@ -19,7 +19,7 @@ object MuiToolTip {
 
   val component = JsComponent[MuiToolTipProps, Children.Varargs, Null](Mui.Tooltip)
 
-  def apply(p: MuiToolTipProps)(children: VdomNode*) =
+  def apply(p: MuiToolTipProps)(children: VdomElement*) =
     component(p)(children: _*)
 
 }

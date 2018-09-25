@@ -456,10 +456,10 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     *
     * @return Результат - что-то неопределённом порядке.
     */
-  def searchResp2RtMultiget(searchResp: SearchResponse, acc0: List[T] = Nil): Future[List[T]] = {
+  def searchResp2RtMultiget(searchResp: SearchResponse): Future[Seq[T]] = {
     val searchHits = searchResp.getHits.getHits
     if (searchHits.isEmpty) {
-      Future successful acc0
+      Future successful Nil
     } else {
       val mgetReq = esClient.prepareMultiGet()
         .setRealtime(true)
@@ -468,7 +468,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
       }
       mgetReq
         .execute()
-        .map { mgetResp2list(_, acc0) }
+        .map { mgetResp2Stream }
     }
   }
 
@@ -483,6 +483,22 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
         deserializeOne2(mgetItem.getResponse) :: acc
       }
     }
+  }
+
+  /** Лениво распарсить выхлоп multi-GET. */
+  def mgetResp2Stream(mgetResp: MultiGetResponse): Stream[T] = {
+    mgetResp
+      .getResponses
+      .iterator
+      .flatMap { mgetItem =>
+        // Поиск может содержать элементы, которые были только что удалены. Нужно их отсеивать.
+        if (mgetItem.isFailed || !mgetItem.getResponse.isExists) {
+          Nil
+        } else {
+          deserializeOne2(mgetItem.getResponse) :: Nil
+        }
+      }
+      .toStream
   }
 
 

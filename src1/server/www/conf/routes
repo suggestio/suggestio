@@ -111,13 +111,17 @@ GET  /lk/adn/pop/item/:itemId           @controllers.LkAdnMap.currentGeoItemPopu
 ## lk.bill2
 GET  /lk/cart/:nodeId                   @controllers.LkBill2.cart(nodeId, r: Option[String] ?= None)
 GET  /lk/cart2/:nodeId                  @controllers.LkBill2.cart2(nodeId, r: Option[String] ?= None)
-GET  /lk/order2                         @controllers.LkBill2.getOrder2(orderId: Option[Gid_t] ?= None)
 POST /lk/cart/:nodeId                   @controllers.LkBill2.cartSubmit(nodeId)
 GET  /lk/bill/txns/:nodeId              @controllers.LkBill2.txnsList(nodeId, page: Int ?= 0, inline: Boolean ?= false)
 GET  /lk/bill/:nodeId                   @controllers.LkBill2.onNode(nodeId)
 GET  /lk/nai/:nodeId                    @controllers.LkBill2.nodeAdvInfo(nodeId, adId: Option[String] ?= None)
 POST /lk/cart/clear/:nodeId             @controllers.LkBill2.cartClear(nodeId, r: Option[String] ?= None)
 POST /lk/cart/item/del/:itemId          @controllers.LkBill2.cartDeleteItem(itemId: Gid_t, r: String)
+
+GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
+GET  /lk/orders/:onNodeId               @controllers.LkBill2.orders(onNodeId: MEsUuId, page: Int ?= 0)
+GET  /lk/order2                         @controllers.LkBill2.getOrder(orderId: Option[Gid_t] ?= None)
+GET  /lk/order/:onNodeId/:orderId       @controllers.LkBill2.showOrder(orderId: Gid_t, onNodeId: MEsUuId)
 
 ## lk pay systems
 GET  /pay/yaka/order/:onNodeId/:orderId @controllers.pay.PayYaka.payForm(orderId: Gid_t, onNodeId: MEsUuId)
@@ -138,10 +142,6 @@ GET  /demopay/yaka/success              @controllers.pay.PayYaka.demoSuccess(qs:
 GET  /demopay/yaka/fail                 @controllers.pay.PayYaka.demoFail(qs: mpay.yaka.MYakaReturnQs)
 GET  /demopay/yaka/fail                 @controllers.pay.PayYaka.demoFailUnknown
 POST /demopay/yaka/fail                 @controllers.pay.PayYaka.demoFailPostQs(qs: mpay.yaka.MYakaReturnQs)
-
-GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
-GET  /lk/orders/:onNodeId               @controllers.LkBill2.orders(onNodeId: MEsUuId, page: Int ?= 0)
-GET  /lk/order/:onNodeId/:orderId       @controllers.LkBill2.showOrder(orderId: Gid_t, onNodeId: MEsUuId)
 
 ## Принятие приглашения на управления узлом.
 GET  /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)

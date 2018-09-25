@@ -67,7 +67,7 @@ class ItemsTableBodyR(
       def fullRowCell(cells: VdomNode*) = MuiTableRow()(
         MuiTableCell(
           new MuiTableCellProps {
-            val colspan = columnsCount
+            val colSpan = columnsCount
           }
         )(cells: _*)
       )

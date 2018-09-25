@@ -232,14 +232,14 @@ class AdvUtil @Inject() (
     * @param ivl Период размещения.
     * @return Фьючерс с готовым к использованию контекстом rcvr-биллинга.
     */
-  def rcvrBillCtx(mad: MNode, rcvrIds: TraversableOnce[String], ivl: IDateStartEnd): Future[MAdvBillCtx] = {
+  def rcvrBillCtx(mad: MNode, rcvrIds: Iterable[String], ivl: IDateStartEnd): Future[MAdvBillCtx] = {
     // Посчитать размеры карточки
     rcvrBillCtx(rcvrIds, ivl, bmc = maybeAdModulesCount(mad))
   }
-  def rcvrBillCtx(rcvrIds: TraversableOnce[String], ivl: IDateStartEnd, bmc: Option[Int]): Future[MAdvBillCtx] = {
+  def rcvrBillCtx(rcvrIds: Iterable[String], ivl: IDateStartEnd, bmc: Option[Int]): Future[MAdvBillCtx] = {
 
     // Собираем все упомянутые узлы.
-    val rcvrsFut = mNodesCache.multiGet(rcvrIds)
+    val rcvrsFut = mNodesCache.multiGet( rcvrIds )
 
     // Собираем карту тарифов размещения на узлах.
     val tfsMapFut = rcvrsFut.flatMap( tfDailyUtil.getNodesTfsMap )
@@ -289,7 +289,7 @@ class AdvUtil @Inject() (
     */
   def prepareForRender(priceDsl: IPriceDslTerm)(implicit ctx: Context): IPriceDslTerm = {
     priceDsl.mapAllPrices { p0 =>
-      TplDataFormatUtil.setPriceAmountStr(
+      TplDataFormatUtil.setFormatPrice(
         p0.normalizeAmountByExponent
       )
     }

@@ -19,6 +19,7 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import util.TplDataFormatUtil
 import util.acl._
+import util.ad.JdAdUtil
 import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.billing.{Bill2Util, TfDailyUtil}
@@ -50,6 +51,7 @@ class LkBill2 @Inject() (
                           canViewNodeAdvInfo          : CanViewNodeAdvInfo,
                           override val isNodeAdmin    : IsNodeAdmin,
                           dynImgUtil                  : DynImgUtil,
+                          override val jdAdUtil       : JdAdUtil,
                           override val mItems         : MItems,
                           override val bill2Util      : Bill2Util,
                           override val mTxns          : MTxns,
@@ -195,7 +197,7 @@ class LkBill2 @Inject() (
         val tdDaily4ad = tfInfo.withClauses(
           tfInfo.clauses.mapValues { p0 =>
             val p2 = p0 * bmc
-            TplDataFormatUtil.setPriceAmountStr( p2 )(ctx)
+            TplDataFormatUtil.setFormatPrice( p2 )(ctx)
           }
         )
         val r = MNodeAdvInfo4Ad(

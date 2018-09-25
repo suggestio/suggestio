@@ -272,7 +272,7 @@ class Umap @Inject() (
         .groupBy(getAdnIdF)
 
       // Собираем карту узлов.
-      val mnodesMapFut = mNodesCache.multiGetMap( nodeFeatures.keysIterator )
+      val mnodesMapFut = mNodesCache.multiGetMap( nodeFeatures.keySet )
 
       val updAllFut = mnodesMapFut.flatMap { mnodesMap =>
         // Для каждого узла произвести персональное обновление.

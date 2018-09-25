@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node
 
+import akka.stream.Materializer
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.es.model.{EsModelCache, Sn4EsModelCache}
 import io.suggest.event.SioNotifier.Event
 import io.suggest.model.n2.node.event.{MNodeDeleted, MNodeSaved}
@@ -23,7 +23,8 @@ class MNodesCache @Inject()(
                              // Тут нельзя инжектить MCommonDi, т.к. будет circular dep.
                              mNodes                          : MNodes,
                              override val cache              : AsyncCacheApi,
-                             override implicit val ec        : ExecutionContext
+                             override implicit val ec        : ExecutionContext,
+                             override implicit val mat       : Materializer,
                            )
   extends EsModelCache[MNode]
   with Sn4EsModelCache

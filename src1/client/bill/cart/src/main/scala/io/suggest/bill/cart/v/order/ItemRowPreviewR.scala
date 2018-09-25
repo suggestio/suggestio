@@ -55,7 +55,7 @@ class ItemRowPreviewR(
         MuiTableCell(
           new MuiTableCellProps {
             // Передаём rowspan напрямую в атрибуты td:
-            val rowspan = props.jdRowSpan.toString
+            val rowSpan = props.jdRowSpan.toString
           }
         )(
           propsProxy.wrap(_ => props.jdArgs)(jdR.apply)

@@ -4,6 +4,7 @@ import chandu0101.scalajs.react.components.materialui.MuiTable
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.cart.m.MCartRootS
 import io.suggest.bill.cart.v.order.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR}
+import io.suggest.jd.render.v.{JdCss, JdCssR}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -15,6 +16,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: Корневой компонент корзины приобретённых товаров и услуг.
   */
 class CartR(
+             jdCssR                 : JdCssR,
              val itemRowR           : ItemRowR,
              val itemsTableBodyR    : ItemsTableBodyR,
              val itemsTableHeadR    : ItemsTableHeadR,
@@ -22,12 +24,14 @@ class CartR(
 
   import itemsTableHeadR.ItemsTableHeadRPropsValFastEq
   import itemsTableBodyR.ItemsTableBodyRPropsValFastEq
+  import JdCss.JdCssFastEq
 
 
   type Props_t = MCartRootS
   type Props = ModelProxy[Props_t]
 
   case class State(
+                    jdCssC       : ReactConnectProxy[JdCss],
                     orderHeadC   : ReactConnectProxy[itemsTableHeadR.Props_t],
                     orderBodyC   : ReactConnectProxy[itemsTableBodyR.Props_t]
                   )
@@ -37,6 +41,10 @@ class CartR(
 
     def render(propsProxy: Props, s: State): VdomElement = {
       <.div(
+
+        // Рендер стилей отображаемых карточек.
+        s.jdCssC { jdCssR.apply },
+
         MuiTable()(
 
           // Заголовок таблицы ордеров.
@@ -55,6 +63,8 @@ class CartR(
   val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
+
+        jdCssC = propsProxy.connect( _.data.jdCss )(JdCssFastEq),
 
         orderHeadC = propsProxy.connect { props =>
           itemsTableHeadR.PropsVal(

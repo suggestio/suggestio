@@ -111,17 +111,17 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    *
    * @param ids id документов этой модели. Можно передавать как коллекцию, так и свеженький итератор оной.
    * @param acc0 Начальный аккамулятор.
-   * @return Список результатов в неопределённом порядке.
+   * @return Список результатов в порядке ответа.
    */
-  def multiGetRev(ids: TraversableOnce[String], acc0: List[T] = Nil, options: GetOpts = _getArgsDflt): Future[List[T]] = {
+  def multiGet(ids: TraversableOnce[String], options: GetOpts = _getArgsDflt): Future[Stream[T]] = {
     if (ids.isEmpty) {
-      Future.successful(acc0)
+      Future.successful( Stream.empty )
     } else {
-      multiGetRevRaw(ids, acc0, options)
-        .map { mgetResp2list(_, acc0) }
+      multiGetRaw(ids, options)
+        .map( mgetResp2Stream )
     }
   }
-  def multiGetRevRaw(ids: TraversableOnce[String], acc0: List[T] = Nil, options: GetOpts = _getArgsDflt): Future[MultiGetResponse] = {
+  def multiGetRaw(ids: TraversableOnce[String], options: GetOpts = _getArgsDflt): Future[MultiGetResponse] = {
     val req = esClient.prepareMultiGet()
       .setRealtime(true)
     for (id <- ids) {
@@ -131,13 +131,6 @@ trait EsModelStaticT extends EsModelCommonStaticT {
       req.add(item)
     }
     req.execute()
-  }
-
-  /** Надстройка над multiGetRev(), но при этом возвращает элементы в исходном порядке (как в es response). */
-  def multiGet(ids: TraversableOnce[String], options: GetOpts = _getArgsDflt): Future[List[T]] = {
-    multiGetRev(ids, options = options)
-      // В инете не нагуглить гарантий того, что порядок результатов будет соблюдаться согласно ids.
-      .map { _.reverse }
   }
 
 
@@ -151,7 +144,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
       LOGGER.trace(s"$logPrefix Will source $idsCount items: ${ids.mkString(", ")}")
 
       val srcFut = for {
-        resp <- multiGetRevRaw(ids, options = options)
+        resp <- multiGetRaw(ids, options = options)
       } yield {
         LOGGER.trace(s"$logPrefix Fetched ${resp.getResponses.length} of ${ids.size}")
         val items = resp.getResponses
@@ -184,8 +177,8 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param acc0 Необязательный начальный акк. полезен, когда некоторые инстансы уже есть на руках.
    * @return Фьючерс с картой результатов.
    */
-  def multiGetMap(ids: TraversableOnce[String], acc0: List[T] = Nil, options: GetOpts = _getArgsDflt): Future[Map[String, T]] = {
-    multiGetRev(ids, acc0, options)
+  def multiGetMap(ids: TraversableOnce[String], options: GetOpts = _getArgsDflt): Future[Map[String, T]] = {
+    multiGet(ids, options = options)
       // Конвертим список результатов в карту, где ключ -- это id. Если id нет, то выкидываем.
       .map { resultsToMap }
   }

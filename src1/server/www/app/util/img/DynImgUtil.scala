@@ -118,6 +118,7 @@ class DynImgUtil @Inject() (
           mimg.dynImgId
             .mediaIdWithOriginalMediaId
         }
+        .toIterable
     }
   }
 

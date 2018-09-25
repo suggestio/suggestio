@@ -496,14 +496,16 @@ class JdAdUtil @Inject()(
           renderedImgs <- renderAdDocImgsFut
           mmedias <- mMediasCache.multiGet {
             // Интересуют только деривативы, которые могут прямо сейчас существовать в медиа-хранилище. Оригиналы возьмём из _origMediasForMediaHostsFut.
-            for {
+            val iter = for {
               renderedImg <- renderedImgs.iterator
               dynImgId = renderedImg.dynCallArgs.dynImgId
               if dynImgId.hasImgOps
             } yield {
               dynImgId.mediaId
             }
+            iter.toIterable
           }
+
           origMedias <- _origMediasForMediaHostsFut
         } yield {
           val res = mmedias.view ++ origMedias

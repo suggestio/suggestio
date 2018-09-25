@@ -1,5 +1,6 @@
 package io.suggest.react
 
+import io.suggest.common.html.HtmlConstants
 import japgolly.scalajs.react.vdom.{TagMod, TagOf, TopNode, VdomElement}
 import japgolly.scalajs.react.{Callback, CallbackTo, ReactEvent}
 import japgolly.scalajs.react.internal.OptionLike
@@ -124,6 +125,26 @@ object ReactCommonUtil {
           case null             => VdomNullElement
           case _                => maybeWrapInto(tm)
         }
+      }
+
+    }
+
+
+    /** Доп.утиль для строк в контексте рендера оных в реакте. */
+    implicit class ReactStringsExtOps(val str: String) extends AnyRef {
+
+      /** Изредка бывает, что нужно заменить пробелы в строке на NBSP.
+        * Например, когда рендером MPrice занимается сервер из-за нереализованности этого на клиенте.
+        */
+      def spacingToVdomNbspStrings: VdomArray = {
+        val nbsp = HtmlConstants.NBSP_STR
+        str
+          .split("\\s+")
+          .iterator
+          .flatMap( nbsp :: _ :: Nil )
+          .toStream
+          .tail
+          .toVdomArray(m => m: VdomNode)
       }
 
     }

@@ -67,6 +67,8 @@ sealed trait Controllers extends js.Object {
   /** Роуты LkAdnEdit-контроллера. */
   def LkAdnEdit: LkAdnEditCtlRoutes = js.native
 
+  def LkBill2: LkBill2CtlRoutes = js.native
+
 }
 
 
@@ -242,3 +244,16 @@ sealed trait LkAdnEditCtlRoutes extends js.Object {
 
 }
 
+
+/** Роуты для LkBill2-контроллера. */
+@js.native
+sealed trait LkBill2CtlRoutes extends js.Object {
+
+  def getOrder(orderId: js.UndefOr[Double]): Route = js.native
+
+  def txnsList(adnId: String, page: Int, inline: Boolean): Route = js.native
+
+  /** Получить бинарь с данными размещения по узлу. */
+  def nodeAdvInfo(nodeId: String, forAdId: String = null): Route = js.native
+
+}

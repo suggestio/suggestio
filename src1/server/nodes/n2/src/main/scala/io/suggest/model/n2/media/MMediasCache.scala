@@ -1,7 +1,7 @@
 package io.suggest.model.n2.media
 
+import akka.stream.Materializer
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.es.model.EsModelCache
 import play.api.cache.AsyncCacheApi
 
@@ -22,7 +22,8 @@ import scala.concurrent.duration._
 class MMediasCache @Inject()(
                               mMedias                         : MMedias,
                               override val cache              : AsyncCacheApi,
-                              override implicit val ec        : ExecutionContext
+                              override implicit val ec        : ExecutionContext,
+                              override implicit val mat       : Materializer,
                             )
   extends EsModelCache[MMedia]
 {

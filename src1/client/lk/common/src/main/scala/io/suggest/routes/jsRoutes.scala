@@ -21,8 +21,6 @@ object JsRoutes_LkControllers {
 @js.native
 sealed trait JsRoutes_LkControllers extends js.Object {
 
-  val LkBill2: LkBill2Routes = js.native
-
   val MarketAd: MarketAdFormCtl = js.native
 
 }

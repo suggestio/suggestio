@@ -47,7 +47,7 @@ object PriceReasonI18n {
     val coordsStr = circleGs.center.toHumanFriendlyString
     Messages(
       MsgCodes.`in.radius.of.0.from.1`,
-      distanceStr :: coordsStr :: Nil
+      distanceStr :: coordsStr :: Nil: _*
     )
   }
 

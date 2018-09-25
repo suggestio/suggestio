@@ -9,6 +9,8 @@
 @import io.suggest.adv.AdvConstants
 @import lk.lkwdgts._formStateInputTpl
 @import io.suggest.i18n.MsgCodes
+@import views.html.stuff.{jsTpl2HtmlTpl, _preLoaderLkTpl}
+@import views.js.stuff.jsRevRouterTpl
 
 @billingBaseTpl(
   title       = messages( MsgCodes.`Cart` ),
@@ -20,6 +22,14 @@
   @_formStateInputTpl( formStateB64 )
 
   @* Контейнер для react-формы корзины. *@
-  <div id="@FORM_ID"></div>
+  <div id="@FORM_ID">
+    @_preLoaderLkTpl()
+  </div>
+
+  @jsTpl2HtmlTpl( withScriptTag = true )(
+    jsRevRouterTpl( csrfAll = true, cdn = false )(
+      routes.javascript.LkBill2.getOrder
+    )
+  )
 
 }

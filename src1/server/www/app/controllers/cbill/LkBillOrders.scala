@@ -1,18 +1,20 @@
 package controllers.cbill
 
 import controllers.{SioController, routes}
-import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderItemRowOpts}
+import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderContent, MOrderItemRowOpts}
 import io.suggest.bill.{MCurrencies, MGetPriceResp, MPrice}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsInitTargets
+import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.balance.MBalance
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{IMItems, ItemStatusChanged, MItem}
-import io.suggest.mbill2.m.order.{IMOrders, MOrder, OrderStatusChanged}
-import io.suggest.mbill2.m.txn.MTxnTypes
+import io.suggest.mbill2.m.order.{IMOrders, MOrder, MOrderStatuses, OrderStatusChanged}
+import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes}
 import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.primo.id.OptId
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.IMacroLogs
@@ -30,6 +32,8 @@ import japgolly.univeq._
 import models.im.make.MakeResult
 import play.api.libs.json.Json
 import play.api.mvc.{ActionBuilder, AnyContent}
+import util.TplDataFormatUtil
+import util.ad.IJdAdUtilDi
 
 import scala.concurrent.Future
 
@@ -51,6 +55,7 @@ trait LkBillOrders
   with ILogoUtilDi
   with IBlkImgMakerDI
   with IIsAuth
+  with IJdAdUtilDi
 {
 
   protected val reqUtil: ReqUtil
@@ -467,7 +472,9 @@ trait LkBillOrders
     *                None - значит корзина.
     * @return 200 OK + JSON с содержимым запрошенного ордера.
     */
-  def getOrder2(orderId: Option[Gid_t]) = csrf.Check {
+  def getOrder(orderId: Option[Gid_t]) = csrf.Check {
+    lazy val logPrefix = s"getOrder(${orderId.fold("cart")(_.toString)}):"
+
     // Два варианта action-обёртки ACL, в зависимости от наличия/отсутствия orderId:
     val ab = orderId.fold[ActionBuilder[MOrderOptReq, AnyContent]] {
       // Просмотр только текущей корзины. Юзер всегда может глядеть в свою корзину.
@@ -481,7 +488,7 @@ trait LkBillOrders
       )
     } { orderId1 =>
       // Просмотр одного конкретного ордера. Возможно, корзины.
-      canViewOrder( orderId1, onNodeId = None ).andThen(
+      canViewOrder( orderId1, onNodeId = None, U.ContractId ).andThen(
         new reqUtil.ActionTransformerImpl[MNodeOptOrderReq, MOrderOptReq] {
           override protected def transform[A](request: MNodeOptOrderReq[A]): Future[MOrderOptReq[A]] = {
             val req2 = MOrderOptReq( Some(request.morder), request )
@@ -491,9 +498,161 @@ trait LkBillOrders
       )
     }
 
+    // Наконец, сборка данных для JSON-ответа:
     ab.async { implicit request =>
-      // TODO Собрать все данные для ответа, сериализовать и вернуть.
-      ???
+      // Получить текущий ордер-корзину, если в реквесте нет:
+      val morderOptFut = FutureUtil.opt2futureOpt( request.morderOpt ) {
+        request.user
+          .contractIdOptFut
+          .flatMap { contractIdOpt =>
+            LOGGER.trace(s"$logPrefix contractId=${contractIdOpt.orNull} personId#${request.user.personIdOpt.orNull}")
+            FutureUtil.optFut2futOpt( contractIdOpt ) { contractId =>
+              slick.db.run {
+                bill2Util.getCartOrder( contractId )
+              }
+            }
+          }
+      }
+
+      // Получить item'ы для текущего ордера:
+      val mitemsFut = morderOptFut.flatMap { morderOpt =>
+        morderOpt
+          .flatMap(_.id)
+          .fold [Future[Seq[MItem]]] ( Future.successful(Nil) ) { orderId =>
+            slick.db.run {
+              mItems.findByOrderId( orderId )
+            }
+          }
+      }
+
+      // Собрать транзакции, если это НЕ ордер-корзина:
+      val mTxnsFut = request
+        .morderOpt
+        .filter(_.status !=* MOrderStatuses.Draft)
+        .flatMap(_.id)
+        .fold [Future[Seq[MTxn]]] ( Future.successful(Nil) ) { orderId =>
+          slick.db.run {
+            bill2Util.getOrderTxns( orderId )
+          }
+        }
+
+      // Сборка всех искомых узлов (ресиверы, карточки) идёт одним multi-get:
+      val allNodesMapFut = for {
+        mitems <- mitemsFut
+        nodeIds = mitems
+          .iterator
+          .flatMap { mitem =>
+            mitem.nodeId ::
+              mitem.rcvrIdOpt.toList
+          }
+          .toSet
+        nodesMap <- mNodesCache.multiGetMap( nodeIds )
+      } yield {
+        nodesMap
+      }
+
+      // Собрать узлы-ресиверы, которые упоминаемые в items:
+      val rcvrsFut = for {
+        mitems <- mitemsFut
+        rcvrsIds = mitems
+          .iterator
+          .flatMap(_.rcvrIdOpt)
+          .toSet
+        allNodesMap <- allNodesMapFut
+      } yield {
+        val iter = for {
+          mnode  <- rcvrsIds.iterator.flatMap( allNodesMap.get )
+          nodeId <- mnode.id
+        } yield {
+          MAdvGeoMapNodeProps(
+            nodeId = nodeId,
+            ntype   = mnode.common.ntype,
+            // mnode.meta.colors,  // TODO Надо ли цвета рендерить?
+            colors  = MColors.empty,
+            hint    = mnode.guessDisplayNameOrId,
+            // Пока без иконки. TODO Решить, надо ли иконку рендерить?
+            icon    = None
+          )
+        }
+        iter.toSeq
+      }
+
+      val ctx = implicitly[Context]
+
+      // Отрендерить jd-карточки в JSON:
+      val jdAdDatasFut = for {
+        mitems <- mitemsFut
+
+        // Сбор id узлов, которые скорее всего являются карточками.
+        adIds = mitems
+          .iterator
+          .map(_.nodeId)
+          .toSet
+
+        // Дождаться прочитанных узлов:
+        allNodesMap <- allNodesMapFut
+        adNodesMap = allNodesMap.filterKeys( adIds.contains )
+        renderStartedAt = System.currentTimeMillis()
+
+        // Начинаем рендерить
+        adDatas <- Future.traverse( adNodesMap.values ) { mad =>
+          // Для ускорения рендера - каждую карточку отправляем сразу в фон:
+          Future {
+            val mainTpl = jdAdUtil.getMainBlockTpl( mad )
+            // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
+            val mainNonWideTpl = jdAdUtil.setBlkWide(mainTpl, wide2 = false)
+            val edges2 = jdAdUtil.filterEdgesForTpl(mainNonWideTpl, mad.edges)
+
+            jdAdUtil
+              .mkJdAdDataFor
+              .show(
+                nodeId        = mad.id,
+                nodeEdges     = edges2,
+                tpl           = mainNonWideTpl,
+                // Тут по идее надо четверть или половину, но с учётом плотности пикселей можно округлить до 1.0. Это и нагрузку снизит.
+                szMult        = 1.0f,
+                allowWide     = false,
+                forceAbsUrls  = false
+              )(ctx)
+              .execute()
+          }
+            .flatten
+        }
+
+      } yield {
+        LOGGER.trace(s"$logPrefix json-rendered ${adDatas.size} jd-ads in ${System.currentTimeMillis() - renderStartedAt} ms")
+        adDatas
+      }
+
+      // Надо отрендерить ценники на сервере:
+      val mitems2Fut = for {
+        mitems <- mitemsFut
+      } yield {
+        for (mitem <- mitems) yield {
+          mitem.withPrice(
+            TplDataFormatUtil.setFormatPrice(mitem.price)(ctx)
+          )
+        }
+      }
+
+      // Наконец, сборка результата:
+      for {
+        morderOpt <- morderOptFut
+        mitems    <- mitems2Fut
+        mTxns     <- mTxnsFut
+        rcvrs     <- rcvrsFut
+        jdAdDatas <- jdAdDatasFut
+      } yield {
+        LOGGER.trace(s"$logPrefix order#${morderOpt.flatMap(_.id).orNull}, ${mitems.length} items, ${mTxns.length} txns, ${rcvrs.length} rcvrs, ${jdAdDatas.size} jd-ads")
+        val resp = MOrderContent(
+          order       = morderOpt,
+          items       = mitems,
+          txns        = mTxns,
+          rcvrs       = rcvrs,
+          adsJdDatas  = jdAdDatas
+        )
+        Ok( Json.toJson(resp) )
+      }
     }
   }
 

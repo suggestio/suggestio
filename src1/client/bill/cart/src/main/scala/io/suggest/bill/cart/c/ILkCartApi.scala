@@ -1,7 +1,12 @@
 package io.suggest.bill.cart.c
 
-import diode.ModelRO
-import io.suggest.bill.cart.MCartConf
+import io.suggest.bill.cart.MOrderContent
+import io.suggest.mbill2.m.gid.Gid_t
+import io.suggest.routes.routes
+import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+import io.suggest.sjs.common.xhr.Xhr
+
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -11,10 +16,26 @@ import io.suggest.bill.cart.MCartConf
   */
 trait ILkCartApi {
 
+  /** Чтение данных ордера с сервера.
+    *
+    * @param orderId id ордера. None для корзины.
+    * @return Фьючерс с результатом запроса.
+    */
+  def getOrder(orderId: Option[Gid_t]): Future[MOrderContent]
+
 }
 
 
 /** Реализация Bill-Cart API поверх Http XHR. */
-class LkCartApiXhrImpl( confRO: ModelRO[MCartConf] ) extends ILkCartApi {
+class LkCartApiXhrImpl extends ILkCartApi {
+
+  override def getOrder(orderId: Option[Gid_t]): Future[MOrderContent] = {
+    val route = routes.controllers.LkBill2.getOrder(
+      orderId = orderId.mapDefined(_.asInstanceOf[Double])
+    )
+    Xhr.unJsonResp[MOrderContent] {
+      Xhr.requestJsonText(route)
+    }
+  }
 
 }

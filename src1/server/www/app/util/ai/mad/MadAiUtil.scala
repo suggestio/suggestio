@@ -135,7 +135,7 @@ class MadAiUtil @Inject() (
     // Запустить в фоне получение шаблонной карточки
     val tplMadFut = mNodes.getById(madAi.tplAdId)
       .map(_.get)
-    val targetAdsFut = mNodes.multiGetRev(madAi.targetAdIds)
+    val targetAdsFut = mNodes.multiGet(madAi.targetAdIds)
       .filter { mads => mads.size == madAi.targetAdIds.size}
 
     // Отрендерить шаблонную карточку с помощью цепочки рендереров.

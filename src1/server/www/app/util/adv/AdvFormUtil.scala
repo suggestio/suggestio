@@ -106,7 +106,7 @@ class AdvFormUtil @Inject() (
     if ( pricing.prices.exists(_.amountStrOpt.isEmpty) ) {
       pricing.withPrices(
         for (mprice <- pricing.prices) yield {
-          TplDataFormatUtil.setPriceAmountStr(mprice)
+          TplDataFormatUtil.setFormatPrice(mprice)
         }
       )
     } else {

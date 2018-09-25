@@ -1,7 +1,6 @@
 package models.req
 
 import javax.inject.{Inject, Singleton}
-
 import com.google.inject.ImplementedBy
 import com.google.inject.assistedinject.Assisted
 import io.suggest.bill.{MCurrencies, MPrice}
@@ -11,6 +10,7 @@ import io.suggest.di.ISlickDbConfig
 import io.suggest.init.routed.MJsInitTarget
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
+import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodesCache}
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.usr.MSuperUsers
@@ -55,7 +55,7 @@ sealed trait ISioUser {
   def isSuper: Boolean
 
   /** id контракта, записанный к узле юзера. */
-  def contractIdOptFut: Future[Option[Long]]
+  def contractIdOptFut: Future[Option[Gid_t]]
 
   /** Контракт юзера, если есть. */
   def mContractOptFut: Future[Option[MContract]]
@@ -88,7 +88,7 @@ class MSioUserEmpty extends ISioUser {
   override def mContractOptFut      = _futOptOk[MContract]
   override def personNodeOptFut     = _futOptOk[MNode]
   override def isSuper              = false
-  override def contractIdOptFut     = _futOptOk[Long]
+  override def contractIdOptFut     = _futOptOk[Gid_t]
   override def isAuth               = false
   override def jsiTgs               = Nil
   override def mBalancesFut         = Future.successful(Nil)
@@ -133,10 +133,9 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
       .map(_.get)
   }
 
-  override def contractIdOptFut: Future[Option[Long]] = {
-    for (mnodeOpt <- personNodeOptFut) yield {
+  override def contractIdOptFut: Future[Option[Gid_t]] = {
+    for (mnodeOpt <- personNodeOptFut) yield
       mnodeOpt.flatMap(_.billing.contractId)
-    }
   }
 
   override def mContractOptFut: Future[Option[MContract]] = {

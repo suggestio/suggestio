@@ -1,13 +1,16 @@
 package io.suggest.bill.cart
 
 import diode.react.ReactConnector
-import io.suggest.bill.cart.c.CartAh
-import io.suggest.bill.cart.m.{MBillData, MCartRootS}
+import io.suggest.bill.cart.c.{CartAh, ILkCartApi, LkCartApiXhrImpl}
+import io.suggest.bill.cart.m.{GetOrderContent, MBillData, MCartRootS}
 import io.suggest.bill.cart.v.order.ItemRowPreviewR
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.StateInp
 import play.api.libs.json.Json
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -57,15 +60,28 @@ abstract class CartCircuitBase
   //private lazy val rootRO = zoom(identity)
   private val billDataRW = zoomRW(_.data)(_.withData(_))
 
+  private def confRO = zoom(_.conf)
+
+
+  // server-API для контроллеров.
+  val lkCartApi: ILkCartApi = new LkCartApiXhrImpl
+
 
   // Контроллеры
   private val cartAh = new CartAh(
-    modelRW = billDataRW
+    lkCartApi   = lkCartApi,
+    modelRW     = billDataRW
   )
 
 
   override protected val actionHandler: HandlerFunction = {
     cartAh
+  }
+
+
+  // В конце инициализации - запустить к серверу запрос о текущем ордере.
+  Future {
+    dispatch( GetOrderContent( confRO.value.orderId ) )
   }
 
 }

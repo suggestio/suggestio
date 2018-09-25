@@ -14,12 +14,12 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{DoNodesSearch, MSearchRespInfo}
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 import japgolly.univeq._
 import io.suggest.maps.nodes.MGeoNodePropsShapes
+import io.suggest.ueq.JsUnivEqUtil._
 
 import scala.scalajs.js.UndefOr
 
@@ -188,8 +188,8 @@ object NodesFoundR {
                        withDistanceTo   : MGeoPoint,
                        searchCss        : SearchCss,
                      )
+
   implicit object NodesFoundRPropsValFastEq extends FastEq[PropsVal] {
-    import io.suggest.ueq.JsUnivEqUtil._
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.req ===* b.req) &&
         (a.hasMore ==* b.hasMore) &&

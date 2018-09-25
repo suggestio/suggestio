@@ -20,6 +20,7 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.bill.cart.m.CartSelectItem
 import japgolly.scalajs.react.raw.React
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import japgolly.univeq._
 
 import scala.scalajs.js
 
@@ -48,6 +49,7 @@ class ItemRowR {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.mitem ===* b.mitem) &&
       (a.rowOpts ===* b.rowOpts) &&
+      (a.isSelected ==* b.isSelected) &&
       // Инстанс Option может быть нестабильным.
       OptFastEq.Plain.eqv(a.rcvrNode, b.rcvrNode)
     }
@@ -91,7 +93,9 @@ class ItemRowR {
                     override val title: React.Node = Messages( MsgCodes.`Tag` )
                   }
                 )(
-                  HtmlConstants.DIEZ
+                  <.span(
+                    HtmlConstants.DIEZ
+                  )
                 )
               )
               new MuiChipProps {
@@ -160,7 +164,9 @@ class ItemRowR {
 
         // Колонка с ценником на изделие:
         MuiTableCell()(
-          JsFormatUtil.formatPrice( props.mitem.price )
+          JsFormatUtil
+            .formatPrice( props.mitem.price )
+            .spacingToVdomNbspStrings
         ),
 
         // Колонка со статусом обработки item'а:
@@ -178,6 +184,7 @@ class ItemRowR {
               new MuiCheckBoxProps {
                 override val onChange = _itemCheckBoxChangedJsF
                 override val checked = js.defined( isSelected )
+                override val indeterminate = false
               }
             )
           )

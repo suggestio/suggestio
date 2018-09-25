@@ -103,7 +103,7 @@ trait ScFocusedAds
       firstAdIdsFut.flatMap { firstAdIds =>
         if (firstAdIds.nonEmpty) {
           for {
-            mads <- mNodesCache.multiGet(firstAdIds)
+            mads <- mNodesCache.multiGet( firstAdIds )
           } yield {
             // Залоггировать недостающие элементы.
             logMissingFirstIds(mads, firstAdIds)
@@ -576,9 +576,8 @@ trait ScFocusedAds
 
     def firstAdIdsFut: Future[Seq[String]] = {
       for (res <- adIdsLookupResFut) yield {
-        for (idIndexed <- res.ids) yield {
+        for (idIndexed <- res.ids) yield
           idIndexed.nodeId
-        }
       }
     }
 
