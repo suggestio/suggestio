@@ -3,7 +3,7 @@ package io.suggest.bill.cart.v
 import chandu0101.scalajs.react.components.materialui.MuiTable
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.cart.m.MCartRootS
-import io.suggest.bill.cart.v.order.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR}
+import io.suggest.bill.cart.v.order.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR, ItemsToolBarR}
 import io.suggest.css.CssR
 import io.suggest.jd.render.v.{JdCss, JdCssR}
 import japgolly.scalajs.react._
@@ -22,20 +22,23 @@ class CartR(
              val itemRowR           : ItemRowR,
              val itemsTableBodyR    : ItemsTableBodyR,
              val itemsTableHeadR    : ItemsTableHeadR,
+             val itemsToolBarR      : ItemsToolBarR,
            ) {
 
   import itemsTableHeadR.ItemsTableHeadRPropsValFastEq
   import itemsTableBodyR.ItemsTableBodyRPropsValFastEq
   import JdCss.JdCssFastEq
+  import itemsToolBarR.ItemsToolBarRPropsValFastEq
 
 
   type Props_t = MCartRootS
   type Props = ModelProxy[Props_t]
 
   case class State(
-                    jdCssC       : ReactConnectProxy[JdCss],
-                    orderHeadC   : ReactConnectProxy[itemsTableHeadR.Props_t],
-                    orderBodyC   : ReactConnectProxy[itemsTableBodyR.Props_t]
+                    jdCssC          : ReactConnectProxy[JdCss],
+                    orderHeadC      : ReactConnectProxy[itemsTableHeadR.Props_t],
+                    orderBodyC      : ReactConnectProxy[itemsTableBodyR.Props_t],
+                    toolBarPropsC   : ReactConnectProxy[itemsToolBarR.Props_t],
                   )
 
   /** Ядро компонента корзины. */
@@ -49,6 +52,9 @@ class CartR(
 
         // Рендер стилей отображаемых карточек.
         s.jdCssC { jdCssR.apply },
+
+        // Панелька-тулбар
+        s.toolBarPropsC { itemsToolBarR.apply },
 
         MuiTable()(
 
@@ -79,7 +85,8 @@ class CartR(
                 oc.items.nonEmpty &&
                   (oc.items.lengthCompare( props.data.itemsSelected.size ) > 0)
               },
-            rowOpts = props.conf.orderRowOpts
+            rowOpts = props.conf.orderRowOpts,
+            isPendingReq = props.data.orderContents.isPending
           )
         },
 
@@ -89,6 +96,13 @@ class CartR(
             selectedIds   = props.data.itemsSelected,
             rowOpts       = props.conf.orderRowOpts,
             jdCss         = props.data.jdCss
+          )
+        },
+
+        toolBarPropsC = propsProxy.connect { props =>
+          itemsToolBarR.PropsVal(
+            countSelected = props.data.itemsSelected.size,
+            isPendingReq  = props.data.orderContents.isPending
           )
         }
 

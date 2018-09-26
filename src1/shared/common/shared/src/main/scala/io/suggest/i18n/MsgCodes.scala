@@ -265,5 +265,7 @@ object MsgCodes {
   val `Delete.all` = "Delete.all"
   val `Node` = "Node"
   val `Your.cart.is.empty` = "Your.cart.is.empty"
+  val `N.selected` = "N.selected"
+  val `Total` = "Total"
 
 }

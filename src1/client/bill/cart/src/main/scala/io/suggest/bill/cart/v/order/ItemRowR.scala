@@ -1,5 +1,7 @@
 package io.suggest.bill.cart.v.order
 
+import java.time.OffsetDateTime
+
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiTableCell, MuiTableRow, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.react.ModelProxy
@@ -20,6 +22,9 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.bill.cart.m.CartSelectItem
 import japgolly.scalajs.react.raw.React
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.dt.MYmd
+import io.suggest.dt.interval.MRangeYmdOpt
+import io.suggest.react.r.RangeYmdR
 import japgolly.univeq._
 
 import scala.scalajs.js
@@ -40,10 +45,11 @@ class ItemRowR {
     * @param jdRowSpan Для колонки с превьюшкой карточки - сколько рядов можно оккупировать?
     */
   case class PropsVal(
-                       mitem      : MItem,
-                       rowOpts    : MOrderItemRowOpts,
-                       isSelected : Option[Boolean],
-                       rcvrNode   : Option[MAdvGeoMapNodeProps]
+                       mitem          : MItem,
+                       rowOpts        : MOrderItemRowOpts,
+                       isSelected     : Option[Boolean],
+                       rcvrNode       : Option[MAdvGeoMapNodeProps],
+                       isPendingReq   : Boolean,
                      )
   implicit object ItemRowRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
@@ -51,13 +57,21 @@ class ItemRowR {
       (a.rowOpts ===* b.rowOpts) &&
       (a.isSelected ==* b.isSelected) &&
       // Инстанс Option может быть нестабильным.
-      OptFastEq.Plain.eqv(a.rcvrNode, b.rcvrNode)
+      OptFastEq.Plain.eqv(a.rcvrNode, b.rcvrNode) &&
+      (a.isPendingReq ==* b.isPendingReq)
     }
   }
 
 
   type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
+
+
+  private def _offsetDateTimeOpt2ymdOpt(odtOpt: Option[OffsetDateTime]): Option[MYmd] = {
+    import io.suggest.dt.CommonDateTimeUtil.Implicits._
+    for (odt <- odtOpt) yield
+      odt.toLocalDate.toYmd
+  }
 
 
   class Backend($: BackendScope[Props, Props_t]) {
@@ -103,7 +117,6 @@ class ItemRowR {
             }
 
             var chip: VdomElement = MuiChip {
-
               // Текст с описанием того, где размещение
               new MuiChipProps {
                 // Завернуть в avatar, как требует чип:
@@ -151,7 +164,6 @@ class ItemRowR {
                         )
                       )
                     }
-
                   )
                     .rawNode
                 }
@@ -168,7 +180,24 @@ class ItemRowR {
             }
 
             chip
-          }
+          },
+
+          // Если есть даты end/start, то вторая строка:
+          ReactCommonUtil.maybeNode( props.mitem.dateStartOpt.isDefined || props.mitem.dateEndOpt.isDefined )(
+            VdomArray(
+              <.br,
+              RangeYmdR(
+                RangeYmdR.Props(
+                  capFirst = false,
+                  rangeYmdOpt = MRangeYmdOpt(
+                    dateStartOpt = _offsetDateTimeOpt2ymdOpt( props.mitem.dateStartOpt ),
+                    dateEndOpt   = _offsetDateTimeOpt2ymdOpt( props.mitem.dateEndOpt )
+                  )
+                )
+              )
+            )
+          )
+
         ),
 
         // Колонка с ценником на изделие:
@@ -194,6 +223,7 @@ class ItemRowR {
                 override val onChange = _itemCheckBoxChangedJsF
                 override val checked = js.defined( isSelected )
                 override val indeterminate = false
+                override val disabled = props.isPendingReq
               }
             )
           )

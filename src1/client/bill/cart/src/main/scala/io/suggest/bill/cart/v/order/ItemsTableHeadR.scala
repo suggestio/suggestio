@@ -18,6 +18,7 @@ import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -33,13 +34,15 @@ class ItemsTableHeadR(
   case class PropsVal(
                        hasCheckedItems      : Boolean,
                        hasUnCheckedItems    : Boolean,
-                       rowOpts              : MOrderItemRowOpts
+                       rowOpts              : MOrderItemRowOpts,
+                       isPendingReq         : Boolean,
                      )
   implicit object ItemsTableHeadRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.hasCheckedItems       ==* b.hasCheckedItems) &&
       (a.hasUnCheckedItems     ==* b.hasUnCheckedItems) &&
-      (a.rowOpts              ===* b.rowOpts)
+      (a.rowOpts              ===* b.rowOpts) &&
+      (a.isPendingReq          ==* b.isPendingReq)
     }
   }
 
@@ -106,6 +109,7 @@ class ItemsTableHeadR(
                       props.hasCheckedItems && !props.hasUnCheckedItems
                     }
                     override val indeterminate = props.hasCheckedItems && props.hasUnCheckedItems
+                    override val disabled = props.isPendingReq
                   }
                 )
               } else {

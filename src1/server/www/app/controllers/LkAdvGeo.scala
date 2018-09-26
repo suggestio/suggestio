@@ -9,7 +9,7 @@ import io.suggest.adv.rcvr._
 import io.suggest.bill.MGetPriceResp
 import io.suggest.bin.ConvCodecs
 import io.suggest.common.tags.edit.MTagsEditProps
-import io.suggest.dt.{MAdvPeriod, YmdHelpersJvm}
+import io.suggest.dt.MAdvPeriod
 import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
@@ -60,7 +60,6 @@ class LkAdvGeo @Inject() (
                            advRcvrsUtil                    : AdvRcvrsUtil,
                            advGeoRcvrsUtil                 : AdvGeoRcvrsUtil,
                            streamsUtil                     : StreamsUtil,
-                           ymdHelpersJvm                   : YmdHelpersJvm,
                            reqUtil                         : ReqUtil,
                            cspUtil                         : CspUtil,
                            mdrUtil                         : MdrUtil,
@@ -79,7 +78,6 @@ class LkAdvGeo @Inject() (
 
   import mCommonDi._
   import streamsUtil.Implicits._
-  import ymdHelpersJvm.Implicits._
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */

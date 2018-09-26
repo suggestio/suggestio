@@ -1,6 +1,6 @@
 package io.suggest.dt
 
-import java.time.{OffsetDateTime, ZoneOffset}
+import java.time.{LocalDate, OffsetDateTime, ZoneOffset}
 
 import play.api.libs.json._
 import scalaz.{Validation, ValidationNel}
@@ -24,7 +24,7 @@ object CommonDateTimeUtil {
 
   /** Версия формата для переносимого json-array-формата даты.
     * Используются отрицательные числа, т.к. 0 и положительные числа используются для даты или её частей. */
-  val JSON_DT_FORMAT_VERSION_1 = -1
+  val OFFSET_DATE_TIME_FORMAT_VSN_1 = -1
 
   object Implicits {
 
@@ -37,7 +37,7 @@ object CommonDateTimeUtil {
         // Не совместим ни с чем, поэтому из-за elasticsearch его придётся дропнуть в будущем.
         case JsArray( valuesJsv ) =>
           try {
-            val Seq(JSON_DT_FORMAT_VERSION_1, year, month, dayOfMonth, hour, minute, seconds, nanoSec, zoneOffsetTotalSeconds) =
+            val Seq(OFFSET_DATE_TIME_FORMAT_VSN_1, year, month, dayOfMonth, hour, minute, seconds, nanoSec, zoneOffsetTotalSeconds) =
               valuesJsv
                 .asInstanceOf[Seq[JsNumber]]
                 // O(n)-операция, не делающая ровным счётом ничего. Для ускорения можно попробовать .asInstanceOf[Int].
@@ -66,7 +66,7 @@ object CommonDateTimeUtil {
           }
         */
         case other =>
-          JsError( "dtArray? " + other )
+          JsError( "[]? " + other )
       }
     }
 
@@ -74,7 +74,7 @@ object CommonDateTimeUtil {
     implicit def offsetDateTimeWrites: Writes[OffsetDateTime] = {
       Writes[OffsetDateTime] { o =>
         Json.arr(
-          JSON_DT_FORMAT_VERSION_1,
+          OFFSET_DATE_TIME_FORMAT_VSN_1,
           o.getYear,
           o.getMonthValue,
           o.getDayOfMonth,
@@ -90,6 +90,21 @@ object CommonDateTimeUtil {
 
     implicit def offsetDateTimeFormat: Format[OffsetDateTime] =
       Format( offsetDateTimeReads, offsetDateTimeWrites )
+
+
+    /** Доп.костыли для LocalDate. */
+    implicit class LocalDateOpsExt( val ld: LocalDate ) extends AnyVal {
+
+      /** Конвертация в легаси MYmd. */
+      def toYmd: MYmd = {
+        MYmd(
+          year  = ld.getYear,
+          month = ld.getMonthValue,
+          day   = ld.getDayOfMonth
+        )
+      }
+
+    }
 
   }
 

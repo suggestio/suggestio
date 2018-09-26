@@ -149,7 +149,9 @@ class PayYaka @Inject() (
 
   private def _payForm(profile: IYakaProfile, orderId: Gid_t, onNodeId: MEsUuId) = csrf.AddToken {
     canPayOrder(orderId, onNodeId, _alreadyPaid, U.Balance).async { implicit request =>
-      val orderPricesFut = bill2Util.getOrderPricesFut(orderId)
+      val orderPricesFut = slick.db.run {
+        bill2Util.getOrderPrices(orderId)
+      }
 
       val payPriceFut = for {
         payPrices0 <- bill2Util.getPayPrices(orderPricesFut, request.user.mBalancesFut)

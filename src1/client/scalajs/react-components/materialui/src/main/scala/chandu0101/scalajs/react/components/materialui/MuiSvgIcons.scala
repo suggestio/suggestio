@@ -121,10 +121,10 @@ object MuiSvgIcons {
   object ActionDashboard extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/date-range", JSImport.Default)
   object ActionDateRange extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/delete-forever", JSImport.Default)
-  object ActionDeleteForever extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/delete", JSImport.Default)
-  object ActionDelete extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/DeleteForever", JSImport.Default)
+  object DeleteForever extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Delete", JSImport.Default)
+  object Delete extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/description", JSImport.Default)
   object ActionDescription extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/dns", JSImport.Default)

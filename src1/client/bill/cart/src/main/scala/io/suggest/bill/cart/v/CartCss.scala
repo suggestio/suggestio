@@ -37,11 +37,34 @@ class CartCss extends StyleSheet.Inline {
 
     }
 
+
+    // Стили для тул-бара над таблицей.
+    object ToolBar {
+
+      /** Распорка между левым и правым элементами. */
+      val spacer = style(
+        flex := "1 1 100%"
+      )
+
+      /** Контейнер элементов тулбара. */
+      val root = style(
+        paddingRight( 32.px ).important,
+        paddingLeft( 70.px ).important
+      )
+
+      /** Контейнер заголовка на тулбаре. */
+      val title = style(
+        flex := "0 0 auto"
+      )
+
+    }
+
   }
 
 
   initInnerObjects(
-    ItemsTable.AdPreviewColumn.body
+    ItemsTable.AdPreviewColumn.body,
+    ItemsTable.ToolBar.spacer
   )
 
 }

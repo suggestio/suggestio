@@ -58,7 +58,10 @@ class CartAh[M](
 
     // Нажата кнопка удаления.
     case CartDeleteBtnClick =>
+      val v0 = value
+      // TODO Запросить на сервере удаление, возвращающее обновлённый MOrderContent.
       ???
+
 
     // Запуск запроса данных текущего ордера на сервер.
     case m: GetOrderContent =>

@@ -5,7 +5,6 @@ import javax.inject.{Inject, Singleton}
 
 import akka.stream.scaladsl.{Keep, Sink}
 import io.suggest.adv.geo._
-import io.suggest.dt.YmdHelpersJvm
 import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -39,7 +38,6 @@ protected class LkGeoCtlUtil @Inject() (
                                          mItems                  : MItems,
                                          canAccessItem           : CanAccessItem,
                                          advGeoFormUtil          : AdvGeoFormUtil,
-                                         ymdHelpersJvm           : YmdHelpersJvm,
                                          advGeoBillUtil          : AdvGeoBillUtil,
                                          override val mCommonDi  : MCommonDi
                                        )
@@ -49,7 +47,6 @@ protected class LkGeoCtlUtil @Inject() (
 
   import mCommonDi._
   import streamsUtil.Implicits._
-  import ymdHelpersJvm.Implicits._
 
 
   /** Макс.кол-во item'ов ресиверов, возвращаемых в одном rcvr-попапе. */

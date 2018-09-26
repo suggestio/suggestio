@@ -6,7 +6,7 @@ import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.cal.m.MCalTypes
-import io.suggest.dt.{MYmd, YmdHelpersJvm}
+import io.suggest.dt.MYmd
 import io.suggest.model.n2.node.MNode
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
@@ -32,14 +32,12 @@ import scala.concurrent.Future
 class AdvUtil @Inject() (
                           tfDailyUtil             : TfDailyUtil,
                           calendarUtil            : CalendarUtil,
-                          ymdHelpersJvm           : YmdHelpersJvm,
                           mCommonDi               : ICommonDi
                         )
   extends MacroLogsImpl
 {
 
   import mCommonDi._
-  import ymdHelpersJvm.Implicits.LocalDateYmdHelper
 
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
   private val WEEKEND_DAYS: Set[Int] = {

@@ -10,7 +10,7 @@ import io.suggest.adv.AdvConstants.Su
 import io.suggest.adv.free.MAdv4FreeProps
 import io.suggest.bill.MGetPriceResp
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dt.{IPeriodInfo, MAdvPeriod, MYmd, YmdHelpersJvm}
+import io.suggest.dt.{IPeriodInfo, MAdvPeriod, MYmd}
 import io.suggest.dt.interval.{MRangeYmd, QuickAdvPeriods}
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
@@ -30,12 +30,8 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class AdvFormUtil @Inject() (
-                              dtUtilJvm         : YmdHelpersJvm,
                               implicit private val ec: ExecutionContext
                             ) {
-
-  import dtUtilJvm.Implicits._
-
 
   /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
   def freeAdvFormM: Form[Option[Boolean]] = {

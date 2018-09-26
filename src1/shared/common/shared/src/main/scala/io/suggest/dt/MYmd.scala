@@ -12,6 +12,8 @@ import play.api.libs.functional.syntax._
   * Description: Сериализуемая легковесная модель даты.
   * Изначально задумывалась для задания дат размещения (adv-geo).
   */
+
+// TODO С появлением java.time на js, необходимость в этих костылях отпала. Надо удалить все ymd-модели, заменив их на java.time-модели.
 object MYmd {
 
   implicit val mYmdPickler: Pickler[MYmd] = generatePickler[MYmd]

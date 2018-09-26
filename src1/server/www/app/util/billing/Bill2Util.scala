@@ -1285,11 +1285,6 @@ class Bill2Util @Inject() (
       pricesIter.toSeq
     }
   }
-  def getOrderPricesFut(orderId: Gid_t): Future[Seq[MPrice]] = {
-    slick.db.run {
-      getOrderPrices(orderId)
-    }
-  }
 
 
   /**

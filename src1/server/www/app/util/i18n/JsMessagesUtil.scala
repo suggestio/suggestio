@@ -320,6 +320,8 @@ class JsMessagesUtil @Inject() (
       MC.`Adv.on.map` ::
       MC.`in.radius.of.0.from.1` ::
       MC.`Your.cart.is.empty` ::
+      MC.`N.selected` ::
+      MC.`Total` ::
       Nil
   }
 

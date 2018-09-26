@@ -8,7 +8,7 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dt.{DateTimeUtil, YmdHelpersJvm}
+import io.suggest.dt.DateTimeUtil
 import io.suggest.geo.CircleGsJvm
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
@@ -40,7 +40,6 @@ import scala.concurrent.Future
 class AdvGeoBillUtil @Inject() (
                                  bill2Util                           : Bill2Util,
                                  billDebugUtil                       : BillDebugUtil,
-                                 ymdHelpersJvm                       : YmdHelpersJvm,
                                  advUtil                             : AdvUtil,
                                  nodesUtil                           : NodesUtil,
                                  mNodes                              : MNodes,
@@ -52,7 +51,6 @@ class AdvGeoBillUtil @Inject() (
 
   import mCommonDi._
   import slick.profile.api._
-  import ymdHelpersJvm.Implicits._
 
 
   /**

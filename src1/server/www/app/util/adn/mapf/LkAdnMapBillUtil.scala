@@ -7,7 +7,7 @@ import io.suggest.adn.mapf.MLamForm
 import io.suggest.bill.price.dsl._
 import io.suggest.bill.MGetPriceResp
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dt.{DateTimeUtil, YmdHelpersJvm}
+import io.suggest.dt.DateTimeUtil
 import io.suggest.geo.{CircleGs, CircleGsJvm}
 import io.suggest.mbill2.m.dbg.MDebugs
 import io.suggest.mbill2.m.gid.Gid_t
@@ -40,7 +40,6 @@ class LkAdnMapBillUtil @Inject() (
                                    mDebugs                    : MDebugs,
                                    advUtil                    : AdvUtil,
                                    tfDailyUtil                : TfDailyUtil,
-                                   ymdHelpersJvm              : YmdHelpersJvm,
                                    protected val mCommonDi    : ICommonDi
                                  )
   extends MacroLogsImpl
@@ -48,7 +47,6 @@ class LkAdnMapBillUtil @Inject() (
 
   import mCommonDi._
   import slick.profile.api._
-  import ymdHelpersJvm.Implicits.LocalDateYmdHelper
 
   /** id узла-источника тарифа для рассчёта всего остального. */
   def TF_NODE_ID: String = bill2Util.CBCA_NODE_ID

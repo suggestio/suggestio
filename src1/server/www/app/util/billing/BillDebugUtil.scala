@@ -5,7 +5,6 @@ import java.time.{LocalDate, OffsetDateTime}
 import javax.inject.{Inject, Singleton}
 import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.bin.ConvCodecs
-import io.suggest.dt.YmdHelpersJvm
 import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.dbg.{MDbgKeys, MDebug, MDebugs}
 import io.suggest.mbill2.m.gid.Gid_t
@@ -36,7 +35,6 @@ class BillDebugUtil @Inject() (
                                 mBalances        : MBalances,
                                 mTxns            : MTxns,
                                 compressUtilJvm  : CompressUtilJvm,
-                                ymdHelpersJvm    : YmdHelpersJvm,
                                 val mCommonDi    : ICommonDi
                               )
   extends MacroLogsImpl
@@ -45,7 +43,6 @@ class BillDebugUtil @Inject() (
   import mCommonDi.ec
   import mCommonDi.slick.profile.api._
   import compressUtilJvm.Implicits._
-  import ymdHelpersJvm.Implicits._
 
 
   /** Сериализация инстанса PriceDSL в формат для хранения. */

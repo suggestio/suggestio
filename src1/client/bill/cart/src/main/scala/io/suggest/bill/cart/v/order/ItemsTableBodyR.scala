@@ -1,16 +1,17 @@
 package io.suggest.bill.cart.v.order
 
-import chandu0101.scalajs.react.components.materialui.{MuiLinearProgress, MuiTableBody, MuiTableCell, MuiTableCellProps, MuiTableRow}
+import chandu0101.scalajs.react.components.materialui.{MuiLinearProgress, MuiTableBody, MuiTableCell, MuiTableCellProps, MuiTableRow, MuiTableRowProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ReactPot._
 import diode.react.ModelProxy
 import io.suggest.bill.cart.{MOrderContent, MOrderItemRowOpts}
+import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.JdCss
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.msg.Messages
+import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactCommonUtil
 import io.suggest.ueq.UnivEqUtil._
@@ -64,13 +65,14 @@ class ItemsTableBodyR(
       // Сколько колонок всего? Не всегда это важно.
       lazy val columnsCount = 3 + props.rowOpts.toAddColsCount
 
-      def fullRowCell(cells: VdomNode*) = MuiTableRow()(
-        MuiTableCell(
-          new MuiTableCellProps {
-            val colSpan = columnsCount
-          }
-        )(cells: _*)
-      )
+      def fullRowCell(cells: VdomNode*) =
+        MuiTableRow()(
+          MuiTableCell(
+            new MuiTableCellProps {
+              val colSpan = columnsCount
+            }
+          )(cells: _*)
+        )
 
       MuiTableBody()(
 
@@ -86,7 +88,7 @@ class ItemsTableBodyR(
 
           } else {
             // Есть что рендерить: рендерим элементы.
-            val iter = for {
+            var iter = for {
               // Проходим группы item'ов в рамках каждой карточки:
               (nodeId, nodeItems) <- orderContent.adId2itemsMap.iterator
               nodeItemsCount = nodeItems.length
@@ -116,10 +118,11 @@ class ItemsTableBodyR(
             } yield {
               propsProxy.wrap { _ =>
                 itemRowR.PropsVal(
-                  mitem       = mitem,
-                  rowOpts     = props.rowOpts,
-                  isSelected  = mitem.id.map(props.selectedIds.contains),
-                  rcvrNode    = mitem.rcvrIdOpt.flatMap( orderContent.rcvrsMap.get )
+                  mitem         = mitem,
+                  rowOpts       = props.rowOpts,
+                  isSelected    = mitem.id.map(props.selectedIds.contains),
+                  rcvrNode      = mitem.rcvrIdOpt.flatMap( orderContent.rcvrsMap.get ),
+                  isPendingReq  = props.orderContents.isPending
                 )
               } { itemPropsValProxy =>
                 itemRowR.component
@@ -129,9 +132,47 @@ class ItemsTableBodyR(
                   )
               }
             }
+            val resAcc = iter.toVdomArray
 
-            iter.toVdomArray
+            // Если заданы order-prices, то надо ещё отрендерить ряд ИТОГО
+            if (orderContent.orderPrices.nonEmpty) {
+              val emptyCell = MuiTableCell()()
+              val typoProps = new MuiTypoGraphyProps {
+                override val variant = MuiTypoGraphyVariants.subheading
+              }
+              resAcc ++= List(
+                // spacer
+                MuiTableRow.component.withKey("s")( MuiTableRowProps.empty )(
+                  MuiTableCell(
+                    new MuiTableCellProps {
+                      val colSpan = columnsCount
+                    }
+                  )()
+                ),
+                // Итого-ряд:
+                MuiTableRow.component.withKey("t")(MuiTableRowProps.empty)(
+                  emptyCell,
+                  MuiTableCell()(
+                    MuiTypoGraphy( typoProps )(
+                      Messages( MsgCodes.`Total` ),
+                      HtmlConstants.SPACE,
+                      HtmlConstants.`(`, orderContent.items.length, HtmlConstants.`)`,
+                      HtmlConstants.COLON
+                    )
+                  ),
+                  MuiTableCell()(
+                    orderContent.orderPrices.toVdomArray { mprice =>
+                      MuiTypoGraphy.component.withKey(mprice.currency.value)( typoProps )(
+                        JsFormatUtil.formatPrice(mprice)
+                      )
+                    }
+                  )
+                )
+              )
+            }
+            resAcc
           }
+
         },
 
         // Если идёт запрос, то рендерить "ожидалку".

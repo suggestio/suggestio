@@ -1,5 +1,7 @@
 package io.suggest.dt
 
+import java.time.LocalDate
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -79,4 +81,43 @@ trait IYmdHelper[Date_t] {
 
 trait Month0Indexed[Date_t] extends IYmdHelper[Date_t] {
   override def MONTH_INDEX_OFFSET = -1
+}
+
+
+object IYmdHelper {
+
+  /** Поддержка связывания Joda-time и MYmd. */
+  implicit object LocalDateYmdHelper extends IYmdHelper[LocalDate] {
+
+    override def now: LocalDate = LocalDate.now()
+
+    override def plusDays(date: LocalDate, days: Int): LocalDate = {
+      date.plusDays(days)
+    }
+
+    override def plusMonths(date: LocalDate, months: Int): LocalDate = {
+      date.plusMonths(months)
+    }
+
+    override def yearDmonthDay2date(year: Int, dateMonth: Int, day: Int): LocalDate = {
+      LocalDate.of(year, dateMonth, day)
+    }
+
+    override def getDateMonthOfYear(date: LocalDate): Int = {
+      date.getMonthValue
+    }
+
+    override def getYear(date: LocalDate): Int = {
+      date.getYear
+    }
+
+    override def getDayOfMonth(date: LocalDate): Int = {
+      date.getDayOfMonth
+    }
+
+    /** Java-8 time использует человеческую нумерацию месяцев. Инопланетного сдвига нет. */
+    override def MONTH_INDEX_OFFSET = 0
+
+  }
+
 }

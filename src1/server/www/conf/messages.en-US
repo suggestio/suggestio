@@ -983,4 +983,6 @@ On=On
 Off=Off
 
 Search.start.typing=I'm looking for...
+N.selected={0} selected
+Total=Total
 

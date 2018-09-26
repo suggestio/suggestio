@@ -97,14 +97,11 @@ object Mui {
 
   @js.native @JSImport("@material-ui/core/TextField", JSImport.Default) object TextField   extends js.Any
   @js.native @JSImport("@material-ui/core/TimePicker", JSImport.Default) object TimePicker extends js.Any
-  @js.native @JSImport("@material-ui/core/Toggle", JSImport.Default) object Toggle         extends js.Any
-  @js.native @JSImport("@material-ui/core/Toolbar", JSImport.Default) object Toolbar       extends js.Any
-  @js.native @JSImport("@material-ui/core/Toolbar/ToolbarGroup", JSImport.Default) object ToolbarGroup
-      extends js.Any
-  @js.native @JSImport("@material-ui/core/Toolbar/ToolbarSeparator", JSImport.Default) object ToolbarSeparator
-      extends js.Any
-  @js.native @JSImport("@material-ui/core/Toolbar/ToolbarTitle", JSImport.Default) object ToolbarTitle extends js.Any
+  @js.native @JSImport("@material-ui/core/Toggle", JSImport.Default) object Toggle extends js.Any
+  @js.native @JSImport("@material-ui/core/Toolbar", JSImport.Default) object Toolbar extends js.Any
   @js.native @JSImport("@material-ui/core/Tooltip", JSImport.Default) object Tooltip extends js.Any
+  @js.native @JSImport("@material-ui/core/Typography", JSImport.Default) object Typography extends js.Any
+
   @js.native @JSImport("@material-ui/core/styles", JSImport.Default) object Styles extends MuiStyles
   val SvgIcons = MuiSvgIcons
 }

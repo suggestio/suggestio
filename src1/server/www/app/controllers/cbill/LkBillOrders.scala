@@ -536,6 +536,23 @@ trait LkBillOrders
           }
         }
 
+      val ctx = implicitly[Context]
+
+      // Рассчёт полной стоимости заказа.
+      val orderPricesFut = morderOptFut.flatMap { morderOpt =>
+        morderOpt
+          .flatMap(_.id)
+          .fold [Future[Seq[MPrice]]] ( Future.successful(Nil) ) { orderId =>
+            slick.db.run {
+              bill2Util.getOrderPrices( orderId )
+            }
+            .map { prices =>
+              for (mprice <- prices) yield
+                TplDataFormatUtil.setFormatPrice(mprice)(ctx)
+            }
+          }
+      }
+
       // Сборка всех искомых узлов (ресиверы, карточки) идёт одним multi-get:
       val allNodesMapFut = for {
         mitems <- mitemsFut
@@ -576,8 +593,6 @@ trait LkBillOrders
         }
         iter.toSeq
       }
-
-      val ctx = implicitly[Context]
 
       // Отрендерить jd-карточки в JSON:
       val jdAdDatasFut = for {
@@ -637,11 +652,12 @@ trait LkBillOrders
 
       // Наконец, сборка результата:
       for {
-        morderOpt <- morderOptFut
-        mitems    <- mitems2Fut
-        mTxns     <- mTxnsFut
-        rcvrs     <- rcvrsFut
-        jdAdDatas <- jdAdDatasFut
+        morderOpt     <- morderOptFut
+        mitems        <- mitems2Fut
+        mTxns         <- mTxnsFut
+        rcvrs         <- rcvrsFut
+        jdAdDatas     <- jdAdDatasFut
+        orderPrices   <- orderPricesFut
       } yield {
         LOGGER.trace(s"$logPrefix order#${morderOpt.flatMap(_.id).orNull}, ${mitems.length} items, ${mTxns.length} txns, ${rcvrs.length} rcvrs, ${jdAdDatas.size} jd-ads")
         val resp = MOrderContent(
@@ -649,7 +665,8 @@ trait LkBillOrders
           items       = mitems,
           txns        = mTxns,
           rcvrs       = rcvrs,
-          adsJdDatas  = jdAdDatas
+          adsJdDatas  = jdAdDatas,
+          orderPrices = orderPrices
         )
         Ok( Json.toJson(resp) )
       }

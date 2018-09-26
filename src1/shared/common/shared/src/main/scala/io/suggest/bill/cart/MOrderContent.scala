@@ -1,6 +1,7 @@
 package io.suggest.bill.cart
 
 import diode.FastEq
+import io.suggest.bill.MPrice
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.jd.MJdAdData
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
@@ -54,6 +55,11 @@ object MOrderContent {
         .inmap[Iterable[MJdAdData]](
           EmptyUtil.opt2ImplEmpty1F( Nil ),
           { jds => if (jds.isEmpty) None else Some(jds) }
+        ) and
+      (__ \ "p").formatNullable[Iterable[MPrice]]
+        .inmap[Iterable[MPrice]](
+          EmptyUtil.opt2ImplEmpty1F( Nil ),
+          { prices => if (prices.isEmpty) None else Some(prices) }
         )
     )(apply, unlift(unapply))
   }
@@ -68,13 +74,15 @@ object MOrderContent {
   * @param order Данные ордера.
   * @param items Содержимое ордера.
   * @param txns Денежные транзакции по ордеру.
+  * @param orderPrice Полная стоимость заказа.
   */
 case class MOrderContent(
                           order       : Option[MOrder],
                           items       : Seq[MItem],
                           txns        : Seq[MTxn],
                           rcvrs       : Iterable[MAdvGeoMapNodeProps],
-                          adsJdDatas  : Iterable[MJdAdData]
+                          adsJdDatas  : Iterable[MJdAdData],
+                          orderPrices : Iterable[MPrice]
                         ) {
 
   /** Сборка инстанса карты ресиверов. Происходит на клиенте, когда наступает необходимость. */

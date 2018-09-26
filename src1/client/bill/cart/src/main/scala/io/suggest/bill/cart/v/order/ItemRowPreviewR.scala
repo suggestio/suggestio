@@ -14,6 +14,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.ReactDiodeUtil
+import io.suggest.spa.OptFastEq.Wrapped
 import scalaz.Tree
 
 /**
@@ -48,7 +50,7 @@ class ItemRowPreviewR(
   type Props = ModelProxy[Props_t]
 
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($: BackendScope[Props, Props_t]) {
 
     def render(propsProxy: Props): VdomElement = {
       propsProxy.value.whenDefinedEl { props =>
@@ -73,13 +75,15 @@ class ItemRowPreviewR(
 
 
   val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
-    .stateless
+    .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
+    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate )
     .build
 
   def apply( propsValOptProxy: Props ) = component( propsValOptProxy )
 
 }
+
 
 object ItemRowPreviewR {
 
