@@ -2,7 +2,7 @@ package io.suggest.bill.cart.v.order
 
 import java.time.OffsetDateTime
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiTableCell, MuiTableRow, MuiToolTip, MuiToolTipProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.bill.cart.MOrderItemRowOpts
@@ -35,7 +35,9 @@ import scala.scalajs.js
   * Created: 19.09.18 13:32
   * Description: Компонент ряда одного item'а.
   */
-class ItemRowR {
+class ItemRowR(
+                orderCss: OrderCss
+              ) {
 
   /** Пропертисы для рендера одного ряда.
     *
@@ -50,6 +52,7 @@ class ItemRowR {
                        isSelected     : Option[Boolean],
                        rcvrNode       : Option[MAdvGeoMapNodeProps],
                        isPendingReq   : Boolean,
+                       previewRowSpan : Option[Int],
                      )
   implicit object ItemRowRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
@@ -58,7 +61,8 @@ class ItemRowR {
       (a.isSelected ==* b.isSelected) &&
       // Инстанс Option может быть нестабильным.
       OptFastEq.Plain.eqv(a.rcvrNode, b.rcvrNode) &&
-      (a.isPendingReq ==* b.isPendingReq)
+      (a.isPendingReq ==* b.isPendingReq) &&
+      OptFastEq.OptValueEq.eqv(a.previewRowSpan, b.previewRowSpan)
     }
   }
 
@@ -93,7 +97,21 @@ class ItemRowR {
       // Ключ ряда задаётся на уровне вызова компонента, не здесь.
       MuiTableRow()(
 
-        children,
+        // Рендер ячейки для миниатюры карточки, если задана.
+        props.previewRowSpan.whenDefinedNode { previewRowSpan =>
+          MuiTableCell {
+            val previewCssClasses = new MuiTableCellClasses {
+              override val root = orderCss.ItemsTable.NodePreviewColumn.body.htmlClass
+            }
+            new MuiTableCellProps {
+              // Передаём rowspan напрямую в атрибуты td:
+              val rowSpan = previewRowSpan.toString
+              override val classes = previewCssClasses
+            }
+          }(
+            children
+          )
+        },
 
         // Определение товара/услуги:
         MuiTableCell()(

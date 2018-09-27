@@ -13,7 +13,7 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{IMItems, ItemStatusChanged, MItem}
 import io.suggest.mbill2.m.order.{IMOrders, MOrder, MOrderStatuses, OrderStatusChanged}
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes}
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.play.qsb.QsbSeq
 import io.suggest.primo.id.OptId
@@ -610,14 +610,20 @@ trait LkBillOrders
       mitems <- mitemsFut
 
       // Сбор id узлов, которые скорее всего являются карточками.
-      adIds = mitems
+      itemNodeIds = mitems
         .iterator
         .map(_.nodeId)
         .toSet
 
       // Дождаться прочитанных узлов:
       allNodesMap <- allNodesMapFut
-      adNodesMap = allNodesMap.filterKeys( adIds.contains )
+      adNodesMap = allNodesMap
+        .filterKeys( itemNodeIds.contains )
+        .filter { case (_, mnode) =>
+          // Если не отфильтровать только карточки (могут быть и adn-узлы), то зафейлится jd-рендер.
+          (mnode.common.ntype ==* MNodeTypes.Ad) &&
+            mnode.extras.doc.nonEmpty
+        }
       renderStartedAt = System.currentTimeMillis()
 
       // Начинаем рендерить
@@ -691,6 +697,7 @@ trait LkBillOrders
     * @return 200 ОК с html страницей корзины.
     */
   def cart2(onNodeId: String, r: Option[String]) = csrf.AddToken {
+    // TODO Это старая без-react-овая корзина. Страшненькая и без jd-рендера. Надо удалить эту корзину и смежные экшены.
     isNodeAdmin(onNodeId, U.Lk, U.ContractId).async { implicit request =>
 
       // Найти ордер-корзину юзера в базе биллинга по контракту юзера:

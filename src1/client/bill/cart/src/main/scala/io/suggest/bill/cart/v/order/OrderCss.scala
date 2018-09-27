@@ -17,7 +17,7 @@ class OrderCss extends StyleSheet.Inline {
   object ItemsTable {
 
     /** Колонка с превьюшкой карточки. */
-    object AdPreviewColumn {
+    object NodePreviewColumn {
 
       /** Стиль для ячейки заголовка колонки. */
       val head = style(
@@ -83,7 +83,7 @@ class OrderCss extends StyleSheet.Inline {
 
 
   initInnerObjects(
-    ItemsTable.AdPreviewColumn.body,
+    ItemsTable.NodePreviewColumn.body,
     ItemsTable.ToolBar.spacer,
     ItemsTable.TBody.fullRowCell,
     PayBtn.root,

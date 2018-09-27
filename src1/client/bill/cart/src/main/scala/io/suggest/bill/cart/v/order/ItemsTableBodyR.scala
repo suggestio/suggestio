@@ -7,6 +7,7 @@ import diode.react.ReactPot._
 import diode.react.ModelProxy
 import io.suggest.bill.cart.m.LoadCurrentOrder
 import io.suggest.bill.cart.{MOrderContent, MOrderItemRowOpts}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.m.MJdArgs
@@ -162,8 +163,7 @@ class ItemsTableBodyR(
                         .mapValues(MEdgeDataJs(_)),
                       jdCss = props.jdCss,
                       conf  = props.jdCss.jdCssArgs.conf
-                    ),
-                    jdRowSpan = nodeItemsCount
+                    )
                   )
                 }
               }( itemRowPreviewR.apply )
@@ -172,19 +172,21 @@ class ItemsTableBodyR(
               (mitem, i) <- nodeItems.iterator.zipWithIndex
 
             } yield {
+              val isWithPreview = (i ==* 0)
               propsProxy.wrap { _ =>
                 itemRowR.PropsVal(
                   mitem         = mitem,
                   rowOpts       = props.rowOpts,
                   isSelected    = mitem.id.map(props.selectedIds.contains),
                   rcvrNode      = mitem.rcvrIdOpt.flatMap( orderContent.rcvrsMap.get ),
-                  isPendingReq  = props.orderContents.isPending
+                  isPendingReq  = props.orderContents.isPending,
+                  previewRowSpan = OptionUtil.maybe(isWithPreview)(nodeItemsCount)
                 )
               } { itemPropsValProxy =>
                 itemRowR.component
                   .withKey(nodeId + HtmlConstants.UNDERSCORE + mitem.id.get)( itemPropsValProxy )(
                     // Рендерить первую ячейку с превьюшкой надо только в первом ряду, остальные ряды - rowspan'ятся
-                    ReactCommonUtil.maybeNode( i ==* 0 )( preview )
+                    ReactCommonUtil.maybeNode( isWithPreview )( preview )
                   )
               }
             }

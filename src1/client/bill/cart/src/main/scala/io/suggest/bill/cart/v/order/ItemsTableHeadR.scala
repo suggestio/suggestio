@@ -69,7 +69,7 @@ class ItemsTableHeadR(
           // Столбец рендера карточки
           MuiTableCell {
             val cssClasses = new MuiTableCellClasses {
-              override val root = orderCss.ItemsTable.AdPreviewColumn.head.htmlClass
+              override val root = orderCss.ItemsTable.NodePreviewColumn.head.htmlClass
             }
             new MuiTableCellProps {
               override val classes = cssClasses

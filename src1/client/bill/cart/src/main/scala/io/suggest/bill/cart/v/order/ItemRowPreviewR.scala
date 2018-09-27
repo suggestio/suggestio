@@ -1,6 +1,5 @@
 package io.suggest.bill.cart.v.order
 
-import chandu0101.scalajs.react.components.materialui.{MuiTableCell, MuiTableCellClasses, MuiTableCellProps}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.dev.MSzMults
@@ -11,7 +10,6 @@ import io.suggest.jd.render.v.{JdCss, JdR}
 import io.suggest.jd.tags.JdTag
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.univeq._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.spa.OptFastEq.Wrapped
@@ -25,8 +23,9 @@ import scalaz.Tree
   */
 class ItemRowPreviewR(
                        jdR        : JdR,
-                       orderCss   : OrderCss,
                      ) {
+
+  // TODO Основной смысл компонента замёржился в другие компоненты. Заинлайнить вызов JdR прямо в OrderR?
 
   /** Модель пропертисов компонента.
     *
@@ -34,14 +33,12 @@ class ItemRowPreviewR(
     * @param jdRowSpan Сколько рядов по вертикали надо захватить?
     */
   case class PropsVal(
-                       jdArgs     : MJdArgs,
-                       jdRowSpan  : Int,
+                       jdArgs     : MJdArgs
                      )
   implicit object ItemRowPreviewRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       // Инстанс MJdArgs может пересобираться наверху на каждый чих.
-      MJdArgsFastEq.eqv( a.jdArgs, b.jdArgs ) &&
-      (a.jdRowSpan ==* b.jdRowSpan)
+      MJdArgsFastEq.eqv( a.jdArgs, b.jdArgs )
     }
   }
 
@@ -53,20 +50,7 @@ class ItemRowPreviewR(
 
     def render(propsProxy: Props): VdomElement = {
       propsProxy.value.whenDefinedEl { props =>
-        // Рендер миниатюры карточки, если задана.
-        // Ячейка с превьюшкой.
-        val cssClasses = new MuiTableCellClasses {
-          override val root = orderCss.ItemsTable.AdPreviewColumn.body.htmlClass
-        }
-        MuiTableCell(
-          new MuiTableCellProps {
-            // Передаём rowspan напрямую в атрибуты td:
-            val rowSpan = props.jdRowSpan.toString
-            override val classes = cssClasses
-          }
-        )(
-          propsProxy.wrap(_ => props.jdArgs)(jdR.apply)
-        )
+        propsProxy.wrap(_ => props.jdArgs)(jdR.apply)
       }
     }
 
