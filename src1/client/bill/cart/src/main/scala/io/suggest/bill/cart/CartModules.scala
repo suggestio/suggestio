@@ -1,7 +1,6 @@
 package io.suggest.bill.cart
 
 import com.softwaremill.macwire._
-import io.suggest.bill.cart.v.{CartCss, CartR}
 import io.suggest.bill.cart.v.order._
 import io.suggest.jd.render.JdRenderModule
 
@@ -18,13 +17,14 @@ class CartModules {
 
   lazy val cartPageCircuit = wire[CartPageCircuit]
 
-  lazy val cartR = wire[CartR]
-  lazy val cartCss = wire[CartCss]
+  lazy val orderR = wire[OrderR]
+  lazy val cartCss = wire[OrderCss]
 
   lazy val itemRowR = wire[ItemRowR]
   lazy val itemRowPreviewR = wire[ItemRowPreviewR]
   lazy val itemTableHeadR = wire[ItemsTableHeadR]
   lazy val itemTableBodyR = wire[ItemsTableBodyR]
   lazy val itemsToolBarR = wire[ItemsToolBarR]
+  lazy val goToPayBtnR = wire[GoToPayBtnR]
 
 }

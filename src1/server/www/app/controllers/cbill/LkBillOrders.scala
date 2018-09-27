@@ -15,6 +15,7 @@ import io.suggest.mbill2.m.order.{IMOrders, MOrder, MOrderStatuses, OrderStatusC
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes}
 import io.suggest.model.n2.node.MNode
 import io.suggest.model.n2.node.meta.colors.MColors
+import io.suggest.model.play.qsb.QsbSeq
 import io.suggest.primo.id.OptId
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.IMacroLogs
@@ -410,7 +411,7 @@ trait LkBillOrders
     * @param r Адресок для возврата.
     * @return 200 OK + HTML-страница с данными для инициализации react-формы корзины.
     */
-  def cart2(onNodeId: String, r: Option[String]) = csrf.AddToken {
+  def cart(onNodeId: String, r: Option[String]) = csrf.AddToken {
     isNodeAdmin(onNodeId, U.Lk, U.ContractId).async { implicit request =>
 
       // Найти ордер-корзину юзера в базе биллинга по id контракта:
@@ -473,8 +474,6 @@ trait LkBillOrders
     * @return 200 OK + JSON с содержимым запрошенного ордера.
     */
   def getOrder(orderId: Option[Gid_t]) = csrf.Check {
-    lazy val logPrefix = s"getOrder(${orderId.fold("cart")(_.toString)}):"
-
     // Два варианта action-обёртки ACL, в зависимости от наличия/отсутствия orderId:
     val ab = orderId.fold[ActionBuilder[MOrderOptReq, AnyContent]] {
       // Просмотр только текущей корзины. Юзер всегда может глядеть в свою корзину.
@@ -500,176 +499,186 @@ trait LkBillOrders
 
     // Наконец, сборка данных для JSON-ответа:
     ab.async { implicit request =>
-      // Получить текущий ордер-корзину, если в реквесте нет:
-      val morderOptFut = FutureUtil.opt2futureOpt( request.morderOpt ) {
-        request.user
-          .contractIdOptFut
-          .flatMap { contractIdOpt =>
-            LOGGER.trace(s"$logPrefix contractId=${contractIdOpt.orNull} personId#${request.user.personIdOpt.orNull}")
-            FutureUtil.optFut2futOpt( contractIdOpt ) { contractId =>
-              slick.db.run {
-                bill2Util.getCartOrder( contractId )
-              }
-            }
-          }
-      }
-
-      // Получить item'ы для текущего ордера:
-      val mitemsFut = morderOptFut.flatMap { morderOpt =>
-        morderOpt
-          .flatMap(_.id)
-          .fold [Future[Seq[MItem]]] ( Future.successful(Nil) ) { orderId =>
-            slick.db.run {
-              mItems.findByOrderId( orderId )
-            }
-          }
-      }
-
-      // Собрать транзакции, если это НЕ ордер-корзина:
-      val mTxnsFut = request
-        .morderOpt
-        .filter(_.status !=* MOrderStatuses.Draft)
-        .flatMap(_.id)
-        .fold [Future[Seq[MTxn]]] ( Future.successful(Nil) ) { orderId =>
-          slick.db.run {
-            bill2Util.getOrderTxns( orderId )
-          }
-        }
-
-      val ctx = implicitly[Context]
-
-      // Рассчёт полной стоимости заказа.
-      val orderPricesFut = morderOptFut.flatMap { morderOpt =>
-        morderOpt
-          .flatMap(_.id)
-          .fold [Future[Seq[MPrice]]] ( Future.successful(Nil) ) { orderId =>
-            slick.db.run {
-              bill2Util.getOrderPrices( orderId )
-            }
-            .map { prices =>
-              for (mprice <- prices) yield
-                TplDataFormatUtil.setFormatPrice(mprice)(ctx)
-            }
-          }
-      }
-
-      // Сборка всех искомых узлов (ресиверы, карточки) идёт одним multi-get:
-      val allNodesMapFut = for {
-        mitems <- mitemsFut
-        nodeIds = mitems
-          .iterator
-          .flatMap { mitem =>
-            mitem.nodeId ::
-              mitem.rcvrIdOpt.toList
-          }
-          .toSet
-        nodesMap <- mNodesCache.multiGetMap( nodeIds )
-      } yield {
-        nodesMap
-      }
-
-      // Собрать узлы-ресиверы, которые упоминаемые в items:
-      val rcvrsFut = for {
-        mitems <- mitemsFut
-        rcvrsIds = mitems
-          .iterator
-          .flatMap(_.rcvrIdOpt)
-          .toSet
-        allNodesMap <- allNodesMapFut
-      } yield {
-        val iter = for {
-          mnode  <- rcvrsIds.iterator.flatMap( allNodesMap.get )
-          nodeId <- mnode.id
-        } yield {
-          MAdvGeoMapNodeProps(
-            nodeId = nodeId,
-            ntype   = mnode.common.ntype,
-            // mnode.meta.colors,  // TODO Надо ли цвета рендерить?
-            colors  = MColors.empty,
-            hint    = mnode.guessDisplayNameOrId,
-            // Пока без иконки. TODO Решить, надо ли иконку рендерить?
-            icon    = None
-          )
-        }
-        iter.toSeq
-      }
-
-      // Отрендерить jd-карточки в JSON:
-      val jdAdDatasFut = for {
-        mitems <- mitemsFut
-
-        // Сбор id узлов, которые скорее всего являются карточками.
-        adIds = mitems
-          .iterator
-          .map(_.nodeId)
-          .toSet
-
-        // Дождаться прочитанных узлов:
-        allNodesMap <- allNodesMapFut
-        adNodesMap = allNodesMap.filterKeys( adIds.contains )
-        renderStartedAt = System.currentTimeMillis()
-
-        // Начинаем рендерить
-        adDatas <- Future.traverse( adNodesMap.values ) { mad =>
-          // Для ускорения рендера - каждую карточку отправляем сразу в фон:
-          Future {
-            val mainTpl = jdAdUtil.getMainBlockTpl( mad )
-            // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
-            val mainNonWideTpl = jdAdUtil.setBlkWide(mainTpl, wide2 = false)
-            val edges2 = jdAdUtil.filterEdgesForTpl(mainNonWideTpl, mad.edges)
-
-            jdAdUtil
-              .mkJdAdDataFor
-              .show(
-                nodeId        = mad.id,
-                nodeEdges     = edges2,
-                tpl           = mainNonWideTpl,
-                // Тут по идее надо четверть или половину, но с учётом плотности пикселей можно округлить до 1.0. Это и нагрузку снизит.
-                szMult        = 1.0f,
-                allowWide     = false,
-                forceAbsUrls  = false
-              )(ctx)
-              .execute()
-          }
-            .flatten
-        }
-
-      } yield {
-        LOGGER.trace(s"$logPrefix json-rendered ${adDatas.size} jd-ads in ${System.currentTimeMillis() - renderStartedAt} ms")
-        adDatas
-      }
-
-      // Надо отрендерить ценники на сервере:
-      val mitems2Fut = for {
-        mitems <- mitemsFut
-      } yield {
-        for (mitem <- mitems) yield {
-          mitem.withPrice(
-            TplDataFormatUtil.setFormatPrice(mitem.price)(ctx)
-          )
-        }
-      }
-
-      // Наконец, сборка результата:
       for {
-        morderOpt     <- morderOptFut
-        mitems        <- mitems2Fut
-        mTxns         <- mTxnsFut
-        rcvrs         <- rcvrsFut
-        jdAdDatas     <- jdAdDatasFut
-        orderPrices   <- orderPricesFut
+        orderContents <- _getOrderContents( request.morderOpt )
       } yield {
-        LOGGER.trace(s"$logPrefix order#${morderOpt.flatMap(_.id).orNull}, ${mitems.length} items, ${mTxns.length} txns, ${rcvrs.length} rcvrs, ${jdAdDatas.size} jd-ads")
-        val resp = MOrderContent(
-          order       = morderOpt,
-          items       = mitems,
-          txns        = mTxns,
-          rcvrs       = rcvrs,
-          adsJdDatas  = jdAdDatas,
-          orderPrices = orderPrices
-        )
-        Ok( Json.toJson(resp) )
+        Ok( Json.toJson(orderContents) )
       }
+    }
+  }
+
+
+  /** Общий код сборки инстанса MOrderContents. */
+  private def _getOrderContents(morderOpt: Option[MOrder])(implicit request: IReq[_]): Future[MOrderContent] = {
+    lazy val logPrefix = s"_getOrderContents(${morderOpt.flatMap(_.id).fold("cart")(_.toString)}):"
+
+    // Получить текущий ордер-корзину, если в реквесте нет:
+    val morderOptFut = FutureUtil.opt2futureOpt( morderOpt ) {
+      request.user
+        .contractIdOptFut
+        .flatMap { contractIdOpt =>
+          LOGGER.trace(s"$logPrefix contractId=${contractIdOpt.orNull} personId#${request.user.personIdOpt.orNull}")
+          FutureUtil.optFut2futOpt( contractIdOpt ) { contractId =>
+            slick.db.run {
+              bill2Util.getCartOrder( contractId )
+            }
+          }
+        }
+    }
+
+    // Получить item'ы для текущего ордера:
+    val mitemsFut = morderOptFut.flatMap { morderOpt =>
+      morderOpt
+        .flatMap(_.id)
+        .fold [Future[Seq[MItem]]] ( Future.successful(Nil) ) { orderId =>
+          slick.db.run {
+            mItems.findByOrderId( orderId )
+          }
+        }
+    }
+
+    // Собрать транзакции, если это НЕ ордер-корзина:
+    val mTxnsFut = morderOpt
+      .filter(_.status !=* MOrderStatuses.Draft)
+      .flatMap(_.id)
+      .fold [Future[Seq[MTxn]]] ( Future.successful(Nil) ) { orderId =>
+        slick.db.run {
+          bill2Util.getOrderTxns( orderId )
+        }
+      }
+
+    val ctx = implicitly[Context]
+
+    // Рассчёт полной стоимости заказа.
+    val orderPricesFut = morderOptFut.flatMap { morderOpt =>
+      morderOpt
+        .flatMap(_.id)
+        .fold [Future[Seq[MPrice]]] ( Future.successful(Nil) ) { orderId =>
+          slick.db.run {
+            bill2Util.getOrderPrices( orderId )
+          }
+          .map { prices =>
+            for (mprice <- prices) yield
+              TplDataFormatUtil.setFormatPrice(mprice)(ctx)
+          }
+        }
+    }
+
+    // Сборка всех искомых узлов (ресиверы, карточки) идёт одним multi-get:
+    val allNodesMapFut = for {
+      mitems <- mitemsFut
+      nodeIds = mitems
+        .iterator
+        .flatMap { mitem =>
+          mitem.nodeId ::
+            mitem.rcvrIdOpt.toList
+        }
+        .toSet
+      nodesMap <- mNodesCache.multiGetMap( nodeIds )
+    } yield {
+      nodesMap
+    }
+
+    // Собрать узлы-ресиверы, которые упоминаемые в items:
+    val rcvrsFut = for {
+      mitems <- mitemsFut
+      rcvrsIds = mitems
+        .iterator
+        .flatMap(_.rcvrIdOpt)
+        .toSet
+      allNodesMap <- allNodesMapFut
+    } yield {
+      val iter = for {
+        mnode  <- rcvrsIds.iterator.flatMap( allNodesMap.get )
+        nodeId <- mnode.id
+      } yield {
+        MAdvGeoMapNodeProps(
+          nodeId = nodeId,
+          ntype   = mnode.common.ntype,
+          // mnode.meta.colors,  // TODO Надо ли цвета рендерить?
+          colors  = MColors.empty,
+          hint    = mnode.guessDisplayNameOrId,
+          // Пока без иконки. TODO Решить, надо ли иконку рендерить?
+          icon    = None
+        )
+      }
+      iter.toSeq
+    }
+
+    // Отрендерить jd-карточки в JSON:
+    val jdAdDatasFut = for {
+      mitems <- mitemsFut
+
+      // Сбор id узлов, которые скорее всего являются карточками.
+      adIds = mitems
+        .iterator
+        .map(_.nodeId)
+        .toSet
+
+      // Дождаться прочитанных узлов:
+      allNodesMap <- allNodesMapFut
+      adNodesMap = allNodesMap.filterKeys( adIds.contains )
+      renderStartedAt = System.currentTimeMillis()
+
+      // Начинаем рендерить
+      adDatas <- Future.traverse( adNodesMap.values ) { mad =>
+        // Для ускорения рендера - каждую карточку отправляем сразу в фон:
+        Future {
+          val mainTpl = jdAdUtil.getMainBlockTpl( mad )
+          // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
+          val mainNonWideTpl = jdAdUtil.setBlkWide(mainTpl, wide2 = false)
+          val edges2 = jdAdUtil.filterEdgesForTpl(mainNonWideTpl, mad.edges)
+
+          jdAdUtil
+            .mkJdAdDataFor
+            .show(
+              nodeId        = mad.id,
+              nodeEdges     = edges2,
+              tpl           = mainNonWideTpl,
+              // Тут по идее надо четверть или половину, но с учётом плотности пикселей можно округлить до 1.0. Это и нагрузку снизит.
+              szMult        = 1.0f,
+              allowWide     = false,
+              forceAbsUrls  = false
+            )(ctx)
+            .execute()
+        }
+          .flatten
+      }
+
+    } yield {
+      LOGGER.trace(s"$logPrefix json-rendered ${adDatas.size} jd-ads in ${System.currentTimeMillis() - renderStartedAt} ms")
+      adDatas
+    }
+
+    // Надо отрендерить ценники на сервере:
+    val mitems2Fut = for {
+      mitems <- mitemsFut
+    } yield {
+      for (mitem <- mitems) yield {
+        mitem.withPrice(
+          TplDataFormatUtil.setFormatPrice(mitem.price)(ctx)
+        )
+      }
+    }
+
+    // Наконец, сборка результата:
+    for {
+      morderOpt     <- morderOptFut
+      mitems        <- mitems2Fut
+      mTxns         <- mTxnsFut
+      rcvrs         <- rcvrsFut
+      jdAdDatas     <- jdAdDatasFut
+      orderPrices   <- orderPricesFut
+    } yield {
+      LOGGER.trace(s"$logPrefix order#${morderOpt.flatMap(_.id).orNull}, ${mitems.length} items, ${mTxns.length} txns, ${rcvrs.length} rcvrs, ${jdAdDatas.size} jd-ads")
+      MOrderContent(
+        order       = morderOpt,
+        items       = mitems,
+        txns        = mTxns,
+        rcvrs       = rcvrs,
+        adsJdDatas  = jdAdDatas,
+        orderPrices = orderPrices
+      )
     }
   }
 
@@ -681,7 +690,7 @@ trait LkBillOrders
     * @param r Куда производить возврат из корзины.
     * @return 200 ОК с html страницей корзины.
     */
-  def cart(onNodeId: String, r: Option[String]) = csrf.AddToken {
+  def cart2(onNodeId: String, r: Option[String]) = csrf.AddToken {
     isNodeAdmin(onNodeId, U.Lk, U.ContractId).async { implicit request =>
 
       // Найти ордер-корзину юзера в базе биллинга по контракту юзера:
@@ -882,6 +891,30 @@ trait LkBillOrders
           LOGGER.warn(s"$logPrefix MItems.deleteById() returned invalid deleted rows count: $rowsDeleted")
           resp0.flashing(FLASH.ERROR -> implicitly[Messages].apply("Something.gone.wrong"))
         }
+      }
+    }
+  }
+
+
+  /** JSON API для удаления элементов корзины.
+    *
+    * @param itemIds
+    * @return Обновлённая корзина в виде JSON-выхлопа MOrderContent.
+    */
+  def deleteItems(itemIds: QsbSeq[Gid_t]) = csrf.Check {
+    canAccessItem(itemIds.items, edit = true).async { implicit request =>
+      for {
+        // Выполнить удаление item'ов
+        deletedCount <- slick.db.run {
+          mItems.deleteById( itemIds: _* )
+        }
+
+        // Получить обновлённые данные ордера-корзины:
+        orderContents <- _getOrderContents( None )
+
+      } yield {
+        LOGGER.trace(s"cartDeleteItems(${itemIds.mkString(", ")}): Deleted $deletedCount items.")
+        Ok( Json.toJson(orderContents) )
       }
     }
   }

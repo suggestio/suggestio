@@ -110,4 +110,20 @@ class MOrders @Inject() (
       .headOption
   }
 
+
+  def countByIdStatusContract(ids: Traversable[Gid_t],
+                              statuses: Traversable[MOrderStatus] = Nil,
+                              contractIds: Traversable[Gid_t] = Nil
+                             ): DBIOAction[Int, NoStream, Effect.Read] = {
+    var q = if (ids.isEmpty)
+      query
+    else
+      query.filter( _.id inSet ids )
+    if (statuses.isEmpty)
+      q = q.filter(_.statusStr inSet statuses.map(_.value))
+    if (contractIds.nonEmpty)
+      q = q.filter(_.contractId inSet contractIds)
+    q.size.result
+  }
+
 }

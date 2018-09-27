@@ -18,10 +18,10 @@ import scala.util.Success
   * Created: 20.09.18 16:12
   * Description: Контроллер для корзинных экшенов.
   */
-class CartAh[M](
-                 lkCartApi        : ILkCartApi,
-                 modelRW          : ModelRW[M, MBillData]
-               )
+class OrderItemsAh[M](
+                       lkCartApi        : ILkCartApi,
+                       modelRW          : ModelRW[M, MOrderItemsS]
+                     )
   extends ActionHandler(modelRW)
   with Log
 {
@@ -56,11 +56,29 @@ class CartAh[M](
       updated( v2 )
 
 
-    // Нажата кнопка удаления.
+    // Нажатие по кнопке удаления выбранных item'ов.
     case CartDeleteBtnClick =>
       val v0 = value
-      // TODO Запросить на сервере удаление, возвращающее обновлённый MOrderContent.
-      ???
+      if (v0.itemsSelected.isEmpty || v0.orderContents.isPending) {
+        noChange
+
+      } else {
+        // Запросить на сервере удаление, возвращающее обновлённый MOrderContent.
+        val req2 = v0.orderContents.pending()
+        val timestampMs = req2.asInstanceOf[PendingBase].startTime
+        val fx = Effect {
+          lkCartApi
+            .deleteItems( v0.itemsSelected )
+            .transform { orderContentTry =>
+              val action = HandleOrderContentResp( orderContentTry, timestampMs )
+              Success( action )
+            }
+        }
+        val v2 = v0.withOrderContents(
+          orderContents = req2
+        )
+        updated( v2, fx )
+      }
 
 
     // Запуск запроса данных текущего ордера на сервер.
@@ -103,7 +121,7 @@ class CartAh[M](
               .toSeq
           ),
           // Сброс (перефильтровать?) выделенных элементов, т.к. список item'ов изменился.
-          itemsSelected = Set.empty
+          itemsSelected = if (req2.isFailed) v0.itemsSelected else Set.empty
         )
         updated( v2 )
       } else {

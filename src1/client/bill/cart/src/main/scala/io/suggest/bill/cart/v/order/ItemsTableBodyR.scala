@@ -1,10 +1,11 @@
 package io.suggest.bill.cart.v.order
 
-import chandu0101.scalajs.react.components.materialui.{MuiLinearProgress, MuiTableBody, MuiTableCell, MuiTableCellProps, MuiTableRow, MuiTableRowProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTableRowProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ReactPot._
 import diode.react.ModelProxy
+import io.suggest.bill.cart.m.LoadCurrentOrder
 import io.suggest.bill.cart.{MOrderContent, MOrderItemRowOpts}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
@@ -13,12 +14,14 @@ import io.suggest.jd.render.v.JdCss
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.n2.edge.MEdgeDataJs
-import io.suggest.react.ReactCommonUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.JsUnivEqUtil._
+import japgolly.scalajs.react.raw.React
 import japgolly.univeq._
+
 
 /**
   * Suggest.io
@@ -27,6 +30,7 @@ import japgolly.univeq._
   * Description: Компонент наполнения списка-таблицы заказа.
   */
 class ItemsTableBodyR(
+                       orderCss               : OrderCss,
                        val itemRowR           : ItemRowR,
                        val itemRowPreviewR    : ItemRowPreviewR
                      ) {
@@ -59,24 +63,76 @@ class ItemsTableBodyR(
   /** Тело компонента, занимающегося рендером тела списка item'ов. */
   class Backend($: BackendScope[Props, Unit]) {
 
+    private def _onRefreshBtnClick(e: ReactEvent): Callback =
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, LoadCurrentOrder)
+    lazy val _onRefreshBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _onRefreshBtnClick )
+
+
     def render(propsProxy: Props): VdomElement = {
       val props = propsProxy.value
 
       // Сколько колонок всего? Не всегда это важно.
       lazy val columnsCount = 3 + props.rowOpts.toAddColsCount
 
+      // Пропертисы для fullRowCell:
+      lazy val fullRowCellProps = {
+        val css = new MuiTableCellClasses {
+          override val root = orderCss.ItemsTable.TBody.fullRowCell.htmlClass
+        }
+        new MuiTableCellProps {
+          override val classes = css
+          val colSpan = columnsCount
+        }
+      }
+
       def fullRowCell(cells: VdomNode*) =
         MuiTableRow()(
           MuiTableCell(
-            new MuiTableCellProps {
-              val colSpan = columnsCount
-            }
+            fullRowCellProps
           )(cells: _*)
         )
 
       MuiTableBody()(
 
         // TODO renderEmpty - что рендерить? По идее, это не нужно, т.к. никогда не должно быть видимо Pot.empty.
+
+        // Какие-то проблемы со список item'ов - ошибка и предложение перезагрузки.
+        props.orderContents.renderFailed { ex =>
+          fullRowCell(
+            // Уведомление о проблеме.
+            Mui.SvgIcons.Warning()(),
+            MuiToolTip(
+              new MuiToolTipProps {
+                override val title: React.Node = ex.toString
+              }
+            )(
+              MuiTypoGraphy(
+                new MuiTypoGraphyProps {
+                  override val noWrap = true
+                  override val variant = MuiTypoGraphyVariants.caption
+                }
+              )(
+                Messages( MsgCodes.`Something.gone.wrong` ),
+                HtmlConstants.ELLIPSIS
+              )
+            ),
+
+            // Кнопка перезагрузки...
+            MuiToolTip(
+              new MuiToolTipProps {
+                override val title: React.Node = Messages( MsgCodes.`Reload` )
+              }
+            )(
+              MuiIconButton(
+                new MuiIconButtonProps {
+                  override val onClick = _onRefreshBtnClickJsCbF
+                }
+              )(
+                Mui.SvgIcons.Refresh()()
+              )
+            )
+          )
+        },
 
         // Рендерить ряды, навешивая key на каждый.
         props.orderContents.render { orderContent =>
@@ -126,7 +182,7 @@ class ItemsTableBodyR(
                 )
               } { itemPropsValProxy =>
                 itemRowR.component
-                  .withKey(nodeId + i)( itemPropsValProxy )(
+                  .withKey(nodeId + HtmlConstants.UNDERSCORE + mitem.id.get)( itemPropsValProxy )(
                     // Рендерить первую ячейку с превьюшкой надо только в первом ряду, остальные ряды - rowspan'ятся
                     ReactCommonUtil.maybeNode( i ==* 0 )( preview )
                   )
@@ -166,7 +222,11 @@ class ItemsTableBodyR(
                         JsFormatUtil.formatPrice(mprice)
                       )
                     }
-                  )
+                  ),
+                  // В ячейке чек-бокса рендерим кнопку для перехода к оплате.
+                  ReactCommonUtil.maybeNode( props.rowOpts.withCheckBox ) {
+                    MuiTableCell()()
+                  }
                 )
               )
             }

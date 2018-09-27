@@ -28,7 +28,9 @@
 
   @jsTpl2HtmlTpl( withScriptTag = true )(
     jsRevRouterTpl( csrfAll = true, cdn = false )(
-      routes.javascript.LkBill2.getOrder
+      routes.javascript.LkBill2.getOrder,
+      routes.javascript.LkBill2.deleteItems,
+      routes.javascript.LkBill2.cartSubmit
     )
   )
 

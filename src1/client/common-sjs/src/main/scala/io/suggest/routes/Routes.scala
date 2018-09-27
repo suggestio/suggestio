@@ -251,6 +251,10 @@ sealed trait LkBill2CtlRoutes extends js.Object {
 
   def getOrder(orderId: js.UndefOr[Double]): Route = js.native
 
+  def deleteItems( itemIds: js.Array[Double]): Route = js.native
+
+  def cartSubmit(onNodeId: String): Route = js.native
+
   def txnsList(adnId: String, page: Int, inline: Boolean): Route = js.native
 
   /** Получить бинарь с данными размещения по узлу. */

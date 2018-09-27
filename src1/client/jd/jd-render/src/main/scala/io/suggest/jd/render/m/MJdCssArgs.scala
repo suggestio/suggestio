@@ -41,10 +41,13 @@ object MJdCssArgs {
   *
   * @param templates Все документы.
   * @param conf Конфигурация рендеринга.
+  * @param quirks Разрешить использовать костыли, которые могут нарушить рендер за пределами плитки.
+  *               Появилось, чтобы убрать position.absolute из root-контейнера.
   */
 case class MJdCssArgs(
                        templates  : Seq[Tree[JdTag]] = Nil,
-                       conf       : MJdConf
+                       conf       : MJdConf,
+                       quirks     : Boolean = true
                      ) {
 
   override final def toString: String = {

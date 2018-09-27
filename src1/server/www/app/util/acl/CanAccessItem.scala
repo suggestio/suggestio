@@ -1,18 +1,20 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.mbill2.m.order.MOrders
+import io.suggest.mbill2.m.order.{MOrderStatuses, MOrders}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.req.{MItemReq, MUserInit}
-import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
+import models.req.{MItemReq, MOrderIdsReq, MUserInit}
+import play.api.mvc._
+import japgolly.univeq._
+import slick.dbio.DBIOAction
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 /**
   * Suggest.io
@@ -34,12 +36,132 @@ class CanAccessItem @Inject() (
 
   import mCommonDi._
 
+  /** Если много ids за раз, то тут лимит по кол-ву. */
+  private def MAX_ITEM_IDS_PER_REQUEST = 50
+
+
+  /** Проверка прав доступа к read/write к целому списку item'ов.
+    *
+    * @param itemIds Список item-ids без дубликатов.
+    * @param edit Доступ на редактирование? false значит read-only.
+    * @param userInits1 Цели для параллельной инициализации.
+    * @return ActionBuider.
+    */
+  def apply(itemIds: Seq[Gid_t], edit: Boolean, userInits1: MUserInit*): ActionBuilder[MOrderIdsReq, AnyContent] = {
+    val itemIdsLen = itemIds.length
+    lazy val logPrefix = s"${getClass.getSimpleName}([$itemIdsLen]:${itemIds.mkString(",")}):"
+
+    new reqUtil.SioActionBuilderImpl[MOrderIdsReq] with InitUserCmds {
+
+      override def userInits = userInits1
+
+      override def invokeBlock[A](request: Request[A], block: MOrderIdsReq[A] => Future[Result]): Future[Result] = {
+        // Нужно с помощью нескольких SQL-запросов проверить, что item'ы находятся в статусе Draft,
+        // и все они относятся к draft-ордеру (ордерам?).
+        // Затем проверить доступ к ордеру по контракту текущего юзера.
+        val user = aclUtil.userFromRequest( request )
+
+        val maxItemIdsLen = MAX_ITEM_IDS_PER_REQUEST
+        if (itemIds.isEmpty) {
+          LOGGER.warn(s"$logPrefix No items defined in request url")
+          val resp = Results.BadRequest("Ids expected")
+          Future.successful(resp)
+
+        } else if (itemIdsLen > maxItemIdsLen) {
+          LOGGER.warn(s"$logPrefix Too many item ids: $itemIdsLen, allowed max = $maxItemIdsLen")
+          val resp = Results.BadRequest(s"Too many ids: $itemIdsLen/$maxItemIdsLen")
+          Future.successful(resp)
+
+        } else if (user.isAnon) {
+          // Анонимус по определению не может иметь доступа к биллингу.
+          LOGGER.trace(s"$logPrefix Not logged in")
+          isAuth.onUnauth(request)
+
+        } else {
+          val itemIdsSet = itemIds.toSet
+          val itemIdsCount = itemIdsSet.size
+          if (itemIdsCount !=* itemIdsLen) {
+            // В списке есть повторяющиеся элементы. В этом нет смысла, и дальнейшие проверки невозможны.
+            LOGGER.warn(s"$logPrefix Duplicate ids in itemIds, distict[$itemIdsCount, but $itemIdsLen expected] = [${itemIdsSet.mkString(", ")}]")
+            val res = Results.BadRequest("duplicate ids")
+            Future.successful(res)
+
+          } else {
+            // Запустить различные параллельные проверки. item'ов может быть много, поэтому все проверки - на стороне СУБД, без выкачивания item'ов сюда.
+            val mcIdOptFut = user.contractIdOptFut
+
+            // Запустить проверки на стороне СУБД:
+            // 1. Все item'ы существуют. И если edit, то существуют со статусом Draft.
+            // 2. Все ордеры этих item'ов в статусах корзин.
+            // 3. Все эти ордеры законтрактованы текущим юзером.
+            val checkItemsResFut = slick.db.run {
+              val dbAction = for {
+                // Посчитать, сколько item'ов подходит для ситуации:
+                okItemsCount <- mItems.countByIdStatus(
+                  itemIds  = itemIds,
+                  statuses = if (edit) MItemStatuses.Draft :: Nil else Nil
+                )
+                if okItemsCount ==* itemIdsCount
+
+                // Узнать id ордеров, к которым относятся item'ы.
+                orderIds <- mItems.getOrderIds( itemIds )
+                if orderIds.nonEmpty
+
+                // Проверить, что все ордеры относятся к контракту юзера, и находятся в нужном статусе
+                contractIdOpt <- DBIOAction.from( mcIdOptFut )
+                contractId = contractIdOpt.get
+                okOrdersCount <- mOrders.countByIdStatusContract(
+                  ids         = orderIds,
+                  statuses    = if (edit) MOrderStatuses.Draft :: Nil else Nil,
+                  contractIds = contractId :: Nil
+                )
+                if okOrdersCount ==* orderIds.size
+
+              } yield {
+                LOGGER.trace(s"$logPrefix Verified ok: orderIds=${orderIds.mkString(", ")} contractId=$contractId")
+                (orderIds, contractId)
+              }
+              // Не ясно, нужна ли транзакция, т.к. read-only.
+              import slick.profile.api._
+              dbAction.transactionally
+            }
+
+            // Запустить также инициализацию пользовательских данных в фоне, т.к. скорее всего проверка прав закончится успешно...
+            maybeInitUser(user)
+
+            // Трансформировать результат проверки в результат запроса:
+            checkItemsResFut.transformWith {
+              // Успешная проверка доступа.
+              case Success((orderIds, contractId)) =>
+                val mreq = MOrderIdsReq(
+                  orderIds    = orderIds,
+                  contractId  = contractId,
+                  request     = request,
+                  user        = user
+                )
+                block(mreq)
+
+              // Какая-то ошибка проверки прав.
+              case Failure(ex) =>
+                LOGGER.warn(s"$logPrefix Failed to ACL", ex)
+                isAuth.onUnauth( request )
+            }
+          }
+        }
+      }
+
+    }
+  }
+
+
   /** @param itemId Номер item'а в таблице MItems.
     * @param edit Запрашивается доступ для изменения?
     *             false -- планируется только чтение.
     *             true -- планируется изменение/удаление.
     */
   def apply(itemId: Gid_t, edit: Boolean, userInits1: MUserInit*): ActionBuilder[MItemReq, AnyContent] = {
+    lazy val logPrefix = s"${getClass.getSimpleName}($itemId):"
+
     new reqUtil.SioActionBuilderImpl[MItemReq] with InitUserCmds {
 
       override def userInits = userInits1
@@ -47,7 +169,7 @@ class CanAccessItem @Inject() (
       protected def isItemAccessable(mitem: MItem): Boolean = {
         if (edit) {
           // Для редактирования доступны только ещё не оплаченные item'ы.
-          mitem.status == MItemStatuses.Draft
+          mitem.status ==* MItemStatuses.Draft
         } else {
           true
         }
@@ -56,10 +178,6 @@ class CanAccessItem @Inject() (
 
       // Нужно пройти по цепочке: itemId -> orderId -> contractId. И сопоставить contractId с контрактом текущего юзера.
       override def invokeBlock[A](request: Request[A], block: (MItemReq[A]) => Future[Result]): Future[Result] = {
-
-        val _itemId = itemId
-        lazy val logPrefix = s"${getClass.getSimpleName}(${_itemId}):"
-
         val user = aclUtil.userFromRequest(request)
 
         if (user.isAnon) {
@@ -70,7 +188,7 @@ class CanAccessItem @Inject() (
         } else {
           // Получить на руки запрашиваемый MItem. Его нужно передать в action внутри реквеста.
           val mitemOptFut = slick.db.run {
-            mItems.getById(_itemId)
+            mItems.getById(itemId)
           }
 
           // Узнать id контракта юзера.

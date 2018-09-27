@@ -1,8 +1,8 @@
 package io.suggest.bill.cart
 
 import diode.react.ReactConnector
-import io.suggest.bill.cart.c.{CartAh, ILkCartApi, LkCartApiXhrImpl}
-import io.suggest.bill.cart.m.{GetOrderContent, MBillData, MCartRootS}
+import io.suggest.bill.cart.c.{BillConfAh, ILkCartApi, LkCartApiXhrImpl, OrderItemsAh}
+import io.suggest.bill.cart.m.{LoadCurrentOrder, MCartRootS, MOrderItemsS}
 import io.suggest.bill.cart.v.order.ItemRowPreviewR
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
@@ -33,7 +33,7 @@ object CartCircuit {
     // Сборка root-модели, готовой к работе.
     MCartRootS(
       conf = minit.conf,
-      data = MBillData(
+      order = MOrderItemsS(
         jdCss = ItemRowPreviewR.mkJdCss()
       )
     )
@@ -51,16 +51,15 @@ abstract class CartCircuitBase
   with ReactConnector[MCartRootS]
 {
 
-  import io.suggest.bill.cart.m.MBillData.MBillDataFastEq
+  import io.suggest.bill.cart.m.MOrderItemsS.MOrderItemsSFastEq
 
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.CART_CIRCUIT_ERROR
 
 
   // Модели
   //private lazy val rootRO = zoom(identity)
-  private val billDataRW = zoomRW(_.data)(_.withData(_))
-
-  private def confRO = zoom(_.conf)
+  private val orderRW = zoomRW(_.order)(_.withOrder(_))
+  private val confRW = zoomRW(_.conf)(_.withConf(_))
 
 
   // server-API для контроллеров.
@@ -68,20 +67,26 @@ abstract class CartCircuitBase
 
 
   // Контроллеры
-  private val cartAh = new CartAh(
+  private val orderItemsAh = new OrderItemsAh(
     lkCartApi   = lkCartApi,
-    modelRW     = billDataRW
+    modelRW     = orderRW
   )
 
+  private val billConfAh = new BillConfAh(
+    modelRW = confRW
+  )
 
   override protected val actionHandler: HandlerFunction = {
-    cartAh
+    composeHandlers(
+      orderItemsAh,
+      billConfAh
+    )
   }
 
 
   // В конце инициализации - запустить к серверу запрос о текущем ордере.
   Future {
-    dispatch( GetOrderContent( confRO.value.orderId ) )
+    dispatch( LoadCurrentOrder )
   }
 
 }

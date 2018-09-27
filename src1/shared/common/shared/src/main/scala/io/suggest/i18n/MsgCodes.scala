@@ -267,5 +267,7 @@ object MsgCodes {
   val `Your.cart.is.empty` = "Your.cart.is.empty"
   val `N.selected` = "N.selected"
   val `Total` = "Total"
+  val `Reload` = "Reload"
+  val `Go.to.payment.page` = "Go.to.payment.page"
 
 }

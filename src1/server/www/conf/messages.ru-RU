@@ -103,6 +103,7 @@ Read.more=Читать далее...
 Describe.problem=Опишите проблему
 Rotation=Вращение
 Clear=Очистить
+Reload=Перезагрузить
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -837,6 +838,7 @@ Order.N=Заказ №{0}
 Cost=Стоимость
 Order.already.paid=Заказ уже оплачен
 Pay.error=Ошибка при оплате
+Go.to.payment.page=Перейти на страницу оплаты
 Orders=Заказы
 No.orders.found=Заказов не найдено.
 Order.price=Стоимость заказа

@@ -5,7 +5,6 @@ import scalacss.ScalaCssReact._
 import diode.{FastEq, UseValueEq}
 import diode.react.ModelProxy
 import io.suggest.bill.cart.m.CartDeleteBtnClick
-import io.suggest.bill.cart.v.CartCss
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
@@ -15,8 +14,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import japgolly.univeq._
 
-import scala.scalajs.js.UndefOr
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -24,7 +21,7 @@ import scala.scalajs.js.UndefOr
   * Description: Тулбар для функций таблицы.
   */
 class ItemsToolBarR(
-                     cartCss: CartCss
+                     orderCss: OrderCss
                    ) {
 
   case class PropsVal(
@@ -55,7 +52,7 @@ class ItemsToolBarR(
       val props = propsProxy.value
 
       val tbCss = new MuiToolBarClasses {
-        override val root = cartCss.ItemsTable.ToolBar.root.htmlClass
+        override val root = orderCss.ItemsTable.ToolBar.root.htmlClass
       }
 
       MuiToolBar(
@@ -70,7 +67,8 @@ class ItemsToolBarR(
           VdomArray(
 
             <.div(
-              cartCss.ItemsTable.ToolBar.title,
+              ^.key := "t",
+              orderCss.ItemsTable.ToolBar.title,
 
               // Кол-во выбранных элементов:
               MuiTypoGraphy.component.withKey("n")(
@@ -85,7 +83,7 @@ class ItemsToolBarR(
 
             <.div(
               ^.key := "s",
-              cartCss.ItemsTable.ToolBar.spacer
+              orderCss.ItemsTable.ToolBar.spacer
             ),
 
             // Кнопка удаления:

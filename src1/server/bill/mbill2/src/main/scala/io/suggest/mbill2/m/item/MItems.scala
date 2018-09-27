@@ -19,6 +19,7 @@ import org.threeten.extra.Interval
 import slick.lifted.ProvenShape
 import slick.sql.SqlAction
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
+import io.suggest.err.ErrorConstants
 
 /**
  * Suggest.io
@@ -204,6 +205,26 @@ class MItems @Inject() (
     sql"SELECT #$NODE_ID_FN, array_agg(DISTINCT #$STATUS_FN) FROM #$TABLE_NAME WHERE ad_id IN (#$adIdsStr) AND #$STATUS_FN IN (#$statusesStr) GROUP BY ad_id"
       .as[MAdItemStatuses]
   }
+
+  def countByIdStatus(itemIds: Traversable[Gid_t], statuses: Traversable[MItemStatus] = Nil): DBIOAction[Int, NoStream, Effect.Read] = {
+    var q0 = if (itemIds.nonEmpty)
+      query.filter(_.id inSet itemIds)
+    else
+      query
+    if (statuses.nonEmpty)
+      q0 = q0.filter(_.statusStr inSet statuses.map(_.value))
+    q0.size
+      .result
+  }
+
+
+  def getOrderIds(itemIds: Traversable[Gid_t]): DBIOAction[Seq[Gid_t], Streaming[Gid_t], Effect.Read] = {
+    query.filter( _.id inSet itemIds )
+      .map(_.orderId)
+      .distinct
+      .result
+  }
+
 
   /**
     * Безвозвратно стереть все item'ы для указанного id заказа.

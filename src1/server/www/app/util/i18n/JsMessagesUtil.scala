@@ -322,6 +322,8 @@ class JsMessagesUtil @Inject() (
       MC.`Your.cart.is.empty` ::
       MC.`N.selected` ::
       MC.`Total` ::
+      MC.`Reload` ::
+      MC.`Go.to.payment.page` ::
       Nil
   }
 

@@ -46,7 +46,7 @@ object QsbSeq extends MacroLogsImplLazy {
 
         if (keysSet.isEmpty) {
           // Нет ничего интересного. Результат работы очевиден. None возвращать не следует.
-          Some(Right( QsbSeq(Nil)) )
+          Some( Right(QsbSeq(Nil)) )
 
         } else {
 

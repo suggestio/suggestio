@@ -1,5 +1,6 @@
 package models.req
 
+import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItem
 import play.api.mvc.Request
 
@@ -21,3 +22,13 @@ case class MItemReq[A](
 )
   extends MReqWrap[A]
   with IItemReq[A]
+
+
+/** Контейнер реквеста для order-ids. */
+case class MOrderIdsReq[A](
+                            orderIds                : Iterable[Gid_t],
+                            contractId              : Gid_t,
+                            override val request    : Request[A],
+                            override val user       : ISioUser
+                          )
+  extends MReqWrap[A]

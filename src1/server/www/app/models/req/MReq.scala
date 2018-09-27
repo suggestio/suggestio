@@ -74,6 +74,8 @@ case class MReqHdr(
 
 /** Реквест к sio. */
 case class MReq[A](
+                    // TODO Надо бы (в будущем) создать поле payload переменного типа P, и в него пихать все кастомные поля.
+                    // Но как это состыковать с типом A, который higher-kind в Action-билдерах
   override val request  : Request[A],
   override val user     : ISioUser
 )

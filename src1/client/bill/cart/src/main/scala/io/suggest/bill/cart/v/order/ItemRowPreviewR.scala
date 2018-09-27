@@ -3,7 +3,6 @@ package io.suggest.bill.cart.v.order
 import chandu0101.scalajs.react.components.materialui.{MuiTableCell, MuiTableCellClasses, MuiTableCellProps}
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.bill.cart.v.CartCss
 import io.suggest.dev.MSzMults
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
@@ -26,7 +25,7 @@ import scalaz.Tree
   */
 class ItemRowPreviewR(
                        jdR        : JdR,
-                       cartCss    : CartCss,
+                       orderCss   : OrderCss,
                      ) {
 
   /** Модель пропертисов компонента.
@@ -57,7 +56,7 @@ class ItemRowPreviewR(
         // Рендер миниатюры карточки, если задана.
         // Ячейка с превьюшкой.
         val cssClasses = new MuiTableCellClasses {
-          override val root = cartCss.ItemsTable.AdPreviewColumn.body.htmlClass
+          override val root = orderCss.ItemsTable.AdPreviewColumn.body.htmlClass
         }
         MuiTableCell(
           new MuiTableCellProps {
@@ -95,6 +94,7 @@ object ItemRowPreviewR {
   )
 
   /** Сборка пустого стиля для jd-рендера. */
-  def mkJdCss(templates: Seq[Tree[JdTag]] = Nil) = JdCss( MJdCssArgs(templates, JD_CONF) )
+  def mkJdCss(templates: Seq[Tree[JdTag]] = Nil): JdCss =
+    JdCss( MJdCssArgs(templates, JD_CONF, quirks = false) )
 
 }

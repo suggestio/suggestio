@@ -1,7 +1,6 @@
 package io.suggest.geo
 
 import io.suggest.ble.MUidBeacon
-import io.suggest.common.empty.EmptyProduct
 import io.suggest.loc.LocationConstants._
 import io.suggest.model.play.qsb.{QsbSeq, QueryStringBindableImpl}
 import play.api.mvc.QueryStringBindable

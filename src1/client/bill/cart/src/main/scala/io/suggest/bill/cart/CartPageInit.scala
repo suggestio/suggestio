@@ -34,7 +34,7 @@ trait CartPageInit extends InitRouter {
     // Рендер корзины на экране:
     // Найти на странице контейнер для формы и отрендерить:
     val cartFormCont = VUtil.getElementById[html.Div]( CartConstants.FORM_ID ).get
-    val formContent = circuit.wrap( identity(_) )( modules.cartR.apply )
+    val formContent = circuit.wrap( identity(_) )( modules.orderR.apply )
     formContent.renderIntoDOM( cartFormCont )
   }
 

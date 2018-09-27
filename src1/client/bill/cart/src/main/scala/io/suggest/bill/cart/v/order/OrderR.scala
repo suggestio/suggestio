@@ -1,14 +1,16 @@
-package io.suggest.bill.cart.v
+package io.suggest.bill.cart.v.order
 
 import chandu0101.scalajs.react.components.materialui.MuiTable
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.cart.m.MCartRootS
-import io.suggest.bill.cart.v.order.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR, ItemsToolBarR}
 import io.suggest.css.CssR
 import io.suggest.jd.render.v.{JdCss, JdCssR}
+import io.suggest.mbill2.m.order.MOrderStatuses
+import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -16,18 +18,20 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Created: 18.09.18 18:20
   * Description: Корневой компонент корзины приобретённых товаров и услуг.
   */
-class CartR(
-             cartCss                : CartCss,
-             jdCssR                 : JdCssR,
-             val itemRowR           : ItemRowR,
-             val itemsTableBodyR    : ItemsTableBodyR,
-             val itemsTableHeadR    : ItemsTableHeadR,
-             val itemsToolBarR      : ItemsToolBarR,
-           ) {
+class OrderR(
+              cartCss                : OrderCss,
+              jdCssR                 : JdCssR,
+              val itemRowR           : ItemRowR,
+              val itemsTableBodyR    : ItemsTableBodyR,
+              val itemsTableHeadR    : ItemsTableHeadR,
+              val itemsToolBarR      : ItemsToolBarR,
+              val goToPayBtnR        : GoToPayBtnR,
+            ) {
 
-  import itemsTableHeadR.ItemsTableHeadRPropsValFastEq
-  import itemsTableBodyR.ItemsTableBodyRPropsValFastEq
   import JdCss.JdCssFastEq
+  import goToPayBtnR.GoToPayBtnRPropsValFastEq
+  import itemsTableBodyR.ItemsTableBodyRPropsValFastEq
+  import itemsTableHeadR.ItemsTableHeadRPropsValFastEq
   import itemsToolBarR.ItemsToolBarRPropsValFastEq
 
 
@@ -39,6 +43,7 @@ class CartR(
                     orderHeadC      : ReactConnectProxy[itemsTableHeadR.Props_t],
                     orderBodyC      : ReactConnectProxy[itemsTableBodyR.Props_t],
                     toolBarPropsC   : ReactConnectProxy[itemsToolBarR.Props_t],
+                    goToPayPropsC   : ReactConnectProxy[goToPayBtnR.Props_t],
                   )
 
   /** Ядро компонента корзины. */
@@ -64,7 +69,13 @@ class CartR(
           // Содержимое таблицы.
           s.orderBodyC { itemsTableBodyR.apply }
 
-        )
+        ),
+
+        <.br,
+
+        // Кнопка перехода к оплате, когда оплата возможна (ордер-корзина + есть item'ы).
+        s.goToPayPropsC { goToPayBtnR.apply }
+
       )
     }
 
@@ -75,35 +86,50 @@ class CartR(
     .initialStateFromProps { propsProxy =>
       State(
 
-        jdCssC = propsProxy.connect( _.data.jdCss )(JdCssFastEq),
+        jdCssC = propsProxy.connect( _.order.jdCss )(JdCssFastEq),
 
         orderHeadC = propsProxy.connect { props =>
           itemsTableHeadR.PropsVal(
-            hasCheckedItems   = props.data.itemsSelected.nonEmpty,
-            hasUnCheckedItems = props.data.orderContents.nonEmpty &&
-              props.data.orderContents.exists { oc =>
+            hasCheckedItems   = props.order.itemsSelected.nonEmpty,
+            hasUnCheckedItems = props.order.orderContents.nonEmpty &&
+              props.order.orderContents.exists { oc =>
                 oc.items.nonEmpty &&
-                  (oc.items.lengthCompare( props.data.itemsSelected.size ) > 0)
+                  (oc.items.lengthCompare( props.order.itemsSelected.size ) > 0)
               },
             rowOpts = props.conf.orderRowOpts,
-            isPendingReq = props.data.orderContents.isPending
+            isPendingReq = props.order.orderContents.isPending
           )
         },
 
         orderBodyC = propsProxy.connect { props =>
           itemsTableBodyR.PropsVal(
-            orderContents = props.data.orderContents,
-            selectedIds   = props.data.itemsSelected,
+            orderContents = props.order.orderContents,
+            selectedIds   = props.order.itemsSelected,
             rowOpts       = props.conf.orderRowOpts,
-            jdCss         = props.data.jdCss
+            jdCss         = props.order.jdCss
           )
         },
 
         toolBarPropsC = propsProxy.connect { props =>
           itemsToolBarR.PropsVal(
-            countSelected = props.data.itemsSelected.size,
-            isPendingReq  = props.data.orderContents.isPending
+            countSelected = props.order.itemsSelected.size,
+            isPendingReq  = props.order.orderContents.isPending
           )
+        },
+
+        goToPayPropsC = propsProxy.connect { props =>
+          // TODO Разрешить сабмит без nodeId. Зависимость от nodeId - на уровне ЛК, хотя можно и без неё.
+          for {
+            onNodeId <- props.conf.onNodeId
+            if props.order.orderContents.exists { ord =>
+              ord.items.nonEmpty &&
+                ord.order.exists(_.status ==* MOrderStatuses.Draft)
+            }
+          } yield {
+            goToPayBtnR.PropsVal(
+              onNodeId = onNodeId
+            )
+          }
         }
 
       )

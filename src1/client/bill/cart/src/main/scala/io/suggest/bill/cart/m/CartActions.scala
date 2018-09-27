@@ -29,6 +29,9 @@ case object CartDeleteBtnClick extends ICartAction
 /** Экшен запуска запроса данных ордера на сервер. */
 case class GetOrderContent(orderId: Option[Gid_t]) extends ICartAction
 
+/** Сигнал загрузки ордера согласно текущей конфигурации. */
+case object LoadCurrentOrder extends ICartAction
+
 /** Экшен обработки ответа сервера с данными одного ордера. */
 case class HandleOrderContentResp(
                                    tryResp      : Try[MOrderContent],

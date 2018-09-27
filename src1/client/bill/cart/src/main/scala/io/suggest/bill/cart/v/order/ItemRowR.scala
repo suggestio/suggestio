@@ -185,8 +185,10 @@ class ItemRowR {
           // Если есть даты end/start, то вторая строка:
           ReactCommonUtil.maybeNode( props.mitem.dateStartOpt.isDefined || props.mitem.dateEndOpt.isDefined )(
             VdomArray(
-              <.br,
-              RangeYmdR(
+              <.br(
+                ^.key := "b"
+              ),
+              RangeYmdR.component.withKey("r")(
                 RangeYmdR.Props(
                   capFirst = false,
                   rangeYmdOpt = MRangeYmdOpt(

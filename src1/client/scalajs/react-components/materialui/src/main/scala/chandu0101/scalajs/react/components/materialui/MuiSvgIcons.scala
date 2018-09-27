@@ -259,8 +259,8 @@ object MuiSvgIcons {
   object ActionPageview extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/pan-tool", JSImport.Default)
   object ActionPanTool extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/payment", JSImport.Default)
-  object ActionPayment extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Payment", JSImport.Default)
+  object Payment extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/perm-camera-mic", JSImport.Default)
   object ActionPermCameraMic extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/perm-contact-calendar", JSImport.Default)

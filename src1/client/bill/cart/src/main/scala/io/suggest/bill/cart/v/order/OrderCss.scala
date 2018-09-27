@@ -1,4 +1,4 @@
-package io.suggest.bill.cart.v
+package io.suggest.bill.cart.v.order
 
 import io.suggest.css.ScalaCssDefaults._
 import scalacss.internal.mutable.StyleSheet
@@ -9,7 +9,7 @@ import scalacss.internal.mutable.StyleSheet
   * Created: 25.09.18 22:25
   * Description: Статические стили для компонента корзины.
   */
-class CartCss extends StyleSheet.Inline {
+class OrderCss extends StyleSheet.Inline {
 
   import dsl._
 
@@ -59,12 +59,34 @@ class CartCss extends StyleSheet.Inline {
 
     }
 
+
+    /** Стили, используемые для рендера тела таблицы: item'ов. */
+    object TBody {
+
+      val fullRowCell = style(
+        textAlign.center
+      )
+
+    }
+
+  }
+
+
+  object PayBtn {
+
+    /** Стили для кнопки перехода к оплате. */
+    val root = style(
+      float.right
+    )
+
   }
 
 
   initInnerObjects(
     ItemsTable.AdPreviewColumn.body,
-    ItemsTable.ToolBar.spacer
+    ItemsTable.ToolBar.spacer,
+    ItemsTable.TBody.fullRowCell,
+    PayBtn.root,
   )
 
 }

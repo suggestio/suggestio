@@ -5,7 +5,6 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.bill.cart.MOrderItemRowOpts
 import io.suggest.bill.cart.m.CartSelectItem
-import io.suggest.bill.cart.v.CartCss
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
@@ -27,7 +26,7 @@ import scala.scalajs.js.UndefOr
   * Description: Компонент для рендера шапки таблицы заказа.
   */
 class ItemsTableHeadR(
-                       cartCss    : CartCss,
+                       orderCss    : OrderCss,
                      ) {
 
   /** Модель пропертисов элемента. */
@@ -70,7 +69,7 @@ class ItemsTableHeadR(
           // Столбец рендера карточки
           MuiTableCell {
             val cssClasses = new MuiTableCellClasses {
-              override val root = cartCss.ItemsTable.AdPreviewColumn.head.htmlClass
+              override val root = orderCss.ItemsTable.AdPreviewColumn.head.htmlClass
             }
             new MuiTableCellProps {
               override val classes = cssClasses

@@ -66,8 +66,10 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   val smBlock = style(
     // Без addClassName("sm-block"), т.к. это ненужные transition и уже неактуальные стили (кроме overflow:hidden).
     overflow.hidden,
+
     // Без absolute, невлезающие элементы (текст/контент) будут вылезать за пределы границы div'а.
-    position.absolute,
+    // TODO Возможно, position.relative (или др.) сможет это пофиксить. Заодно можно будет удалить props-флаг quirks.
+    if (jdCssArgs.quirks) position.absolute else position.relative,
 
     // Дефолтовые настройки шрифтов внутри блока:
     fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),

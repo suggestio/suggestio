@@ -16,7 +16,7 @@ object MCartRootS {
   implicit object MCartRootSFastEq extends FastEq[MCartRootS] {
     override def eqv(a: MCartRootS, b: MCartRootS): Boolean = {
       (a.conf ===* b.conf) &&
-      (a.data ===* b.data)
+      (a.order ===* b.order)
     }
   }
 
@@ -28,15 +28,15 @@ object MCartRootS {
 /**
   * Корневая модель состояния корзины товаров и услуг.
   *
-  * @param data Текущие данные заказа, полученные с сервера.
+  * @param order Текущие данные заказа, полученные с сервера.
   * @param conf Данные конфигурации компонента, необходимые для запросов к серверу.
   */
 case class MCartRootS(
-                       conf       : MCartConf,
-                       data       : MBillData,
+                       conf        : MCartConf,
+                       order       : MOrderItemsS,
                      ) {
 
   def withConf(conf: MCartConf) = copy(conf = conf)
-  def withData(data: MBillData) = copy(data = data)
+  def withOrder(order: MOrderItemsS) = copy(order = order)
 
 }

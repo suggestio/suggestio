@@ -6,6 +6,7 @@ import io.suggest.routes.routes
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.sjs.common.xhr.Xhr
 
+import scala.scalajs.js.JSConverters._
 import scala.concurrent.Future
 
 /**
@@ -23,6 +24,13 @@ trait ILkCartApi {
     */
   def getOrder(orderId: Option[Gid_t]): Future[MOrderContent]
 
+  /** Удаление item'ов из ордера.
+    *
+    * @param itemIds id удаляемых item'ов.
+    * @return Обновлённые данные ордера корзины.
+    */
+  def deleteItems(itemIds: Iterable[Gid_t]): Future[MOrderContent]
+
 }
 
 
@@ -31,7 +39,16 @@ class LkCartApiXhrImpl extends ILkCartApi {
 
   override def getOrder(orderId: Option[Gid_t]): Future[MOrderContent] = {
     val route = routes.controllers.LkBill2.getOrder(
-      orderId = orderId.mapDefined(_.asInstanceOf[Double])
+      orderId = orderId.mapDefined(_.toDouble)
+    )
+    Xhr.unJsonResp[MOrderContent] {
+      Xhr.requestJsonText(route)
+    }
+  }
+
+  override def deleteItems(itemIds: Iterable[Gid_t]): Future[MOrderContent] = {
+    val route = routes.controllers.LkBill2.deleteItems(
+      itemIds = itemIds.iterator.map(_.toDouble).toJSArray
     )
     Xhr.unJsonResp[MOrderContent] {
       Xhr.requestJsonText(route)
