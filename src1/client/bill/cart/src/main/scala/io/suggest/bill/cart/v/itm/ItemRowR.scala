@@ -1,4 +1,4 @@
-package io.suggest.bill.cart.v.order
+package io.suggest.bill.cart.v.itm
 
 import java.time.OffsetDateTime
 
@@ -6,25 +6,26 @@ import chandu0101.scalajs.react.components.materialui.{Mui, MuiAvatar, MuiCheckB
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.bill.cart.MOrderItemRowOpts
+import io.suggest.bill.cart.m.CartSelectItem
+import io.suggest.bill.cart.v.order.OrderCss
 import io.suggest.bill.price.dsl.PriceReasonI18n
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.html.HtmlConstants
+import io.suggest.dt.MYmd
+import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.geo.CircleGs
 import io.suggest.i18n.MsgCodes
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.msg.{JsFormatUtil, Messages}
+import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.r.RangeYmdR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.bill.cart.m.CartSelectItem
 import japgolly.scalajs.react.raw.React
-import io.suggest.common.empty.OptionUtil.BoolOptOps
-import io.suggest.dt.MYmd
-import io.suggest.dt.interval.MRangeYmdOpt
-import io.suggest.react.r.RangeYmdR
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 
 import scala.scalajs.js

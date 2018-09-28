@@ -3,7 +3,7 @@ package io.suggest.bill.cart
 import diode.react.ReactConnector
 import io.suggest.bill.cart.c.{BillConfAh, ILkCartApi, LkCartApiXhrImpl, OrderItemsAh}
 import io.suggest.bill.cart.m.{LoadCurrentOrder, MCartRootS, MOrderItemsS}
-import io.suggest.bill.cart.v.order.ItemRowPreviewR
+import io.suggest.bill.cart.v.itm.ItemRowPreviewR
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.StateInp

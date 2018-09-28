@@ -59,6 +59,7 @@ object HtmlConstants {
 
   val `.`                     = "."
   val `~`                     = "~"
+  val PIPE                    = "|"
 
   @inline
   def TAG_PREFIX              = DIEZ

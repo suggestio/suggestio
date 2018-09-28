@@ -3,7 +3,7 @@ package io.suggest.bill.cart.c
 import diode.data.PendingBase
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.bill.cart.m._
-import io.suggest.bill.cart.v.order.ItemRowPreviewR
+import io.suggest.bill.cart.v.itm.ItemRowPreviewR
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx

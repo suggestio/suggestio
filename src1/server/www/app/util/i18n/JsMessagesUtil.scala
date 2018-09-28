@@ -9,6 +9,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import jsmessages.{JsMessages, JsMessagesFactory}
 import io.suggest.dt.interval.DatesIntervalConstants.{DAYS_OF_WEEK, MONTHS_OF_YEAR}
+import io.suggest.mbill2.m.order.MOrderStatuses
 
 /**
   * Suggest.io
@@ -310,6 +311,13 @@ class JsMessagesUtil @Inject() (
   }
 
 
+  private def ORDER_STATUSES_I18N: List[String] = {
+    MOrderStatuses.values
+      .iterator
+      .map(_.singular)
+      .toList
+  }
+
   /** Клиент-сайд корзина/биллинг. */
   private def BILL_CART_MSGS: TraversableOnce[String] = {
     MC.`_order.Items` ::
@@ -322,9 +330,11 @@ class JsMessagesUtil @Inject() (
       MC.`Your.cart.is.empty` ::
       MC.`N.selected` ::
       MC.`Total` ::
+      MC.`Cart` ::
       MC.`Reload` ::
       MC.`Go.to.payment.page` ::
-      Nil
+      MC.`Order.N` ::
+      ORDER_STATUSES_I18N
   }
 
 

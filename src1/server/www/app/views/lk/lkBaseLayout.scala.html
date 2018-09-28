@@ -19,7 +19,9 @@
   <div class="viewport">
 
     <article class="page_cnt">
-      <h1 class="page_title">@title</h1>
+      @if(title.nonEmpty) {
+        <h1 class="page_title">@title</h1>
+      }
       @content
     </article>
 

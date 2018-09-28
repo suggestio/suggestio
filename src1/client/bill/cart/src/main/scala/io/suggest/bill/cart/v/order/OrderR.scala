@@ -3,6 +3,7 @@ package io.suggest.bill.cart.v.order
 import chandu0101.scalajs.react.components.materialui.MuiTable
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.cart.m.MCartRootS
+import io.suggest.bill.cart.v.itm.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR, ItemsToolBarR}
 import io.suggest.css.CssR
 import io.suggest.jd.render.v.{JdCss, JdCssR}
 import io.suggest.mbill2.m.order.MOrderStatuses
@@ -26,6 +27,7 @@ class OrderR(
               val itemsTableHeadR    : ItemsTableHeadR,
               val itemsToolBarR      : ItemsToolBarR,
               val goToPayBtnR        : GoToPayBtnR,
+              val orderInfoR         : OrderInfoR,
             ) {
 
   import JdCss.JdCssFastEq
@@ -44,6 +46,7 @@ class OrderR(
                     orderBodyC      : ReactConnectProxy[itemsTableBodyR.Props_t],
                     toolBarPropsC   : ReactConnectProxy[itemsToolBarR.Props_t],
                     goToPayPropsC   : ReactConnectProxy[goToPayBtnR.Props_t],
+                    orderOptC       : ReactConnectProxy[orderInfoR.Props_t],
                   )
 
   /** Ядро компонента корзины. */
@@ -51,6 +54,9 @@ class OrderR(
 
     def render(propsProxy: Props, s: State): VdomElement = {
       <.div(
+
+        // Краткое описание заказа, если требуется:
+        s.orderOptC { orderInfoR.apply },
 
         // Статические стили плитки.
         propsProxy.wrap(_ => cartCss)( CssR.apply ),
@@ -71,6 +77,7 @@ class OrderR(
 
         ),
 
+        <.br,
         <.br,
 
         // Кнопка перехода к оплате, когда оплата возможна (ордер-корзина + есть item'ы).
@@ -130,6 +137,16 @@ class OrderR(
               onNodeId = onNodeId,
               disabled = props.order.orderContents.isPending
             )
+          }
+        },
+
+        orderOptC = propsProxy.connect { mroot =>
+          for {
+            oc <- mroot.order.orderContents.toOption
+            morder <- oc.order
+            if morder.status !=* MOrderStatuses.Draft
+          } yield {
+            morder
           }
         }
 

@@ -1,45 +1,32 @@
 package chandu0101.scalajs.react.components
 package materialui
 
-import chandu0101.macros.tojs.JSMacro
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw._
 import japgolly.scalajs.react.vdom._
-import org.scalajs.dom
 import scala.scalajs.js
-import scala.scalajs.js.`|`
 
-/**
- * This file is generated - submit issues instead of PR against it
- */
-    
-case class MuiCardMedia(
-  key:                   js.UndefOr[String]        = js.undefined,
-  ref:                   js.UndefOr[String]        = js.undefined,
-  /** If true, a click on this card component expands the card. */
-  actAsExpander:         js.UndefOr[Boolean]       = js.undefined,
-  /** If true, this card component is expandable. */
-  expandable:            js.UndefOr[Boolean]       = js.undefined,
-  /** Override the inline-styles of the Card Media. */
-  mediaStyle:            js.UndefOr[CssProperties] = js.undefined,
-  /** Can be used to render overlay element in Card Media. */
-  overlay:               js.UndefOr[VdomNode]      = js.undefined,
-  /** Override the inline-styles of the overlay container. */
-  overlayContainerStyle: js.UndefOr[CssProperties] = js.undefined,
-  /** Override the inline-styles of the overlay content. */
-  overlayContentStyle:   js.UndefOr[CssProperties] = js.undefined,
-  /** Override the inline-styles of the overlay element. */
-  overlayStyle:          js.UndefOr[CssProperties] = js.undefined,
-  /** Override the inline-styles of the root element. */
-  style:                 js.UndefOr[CssProperties] = js.undefined){
 
-  /**
-    * @param children Can be used to render elements inside the Card Media.
-   */
-  def apply(children: VdomNode*) = {
-    
-    val props = JSMacro[MuiCardMedia](this)
-    val f = JsComponent[js.Object, Children.Varargs, Null](Mui.CardMedia)
-    f(props)(children: _*)
-  }
+object MuiCardMedia {
+
+  val component = JsComponent[MuiCardMediaProps, Children.Varargs, Null](Mui.CardMedia)
+
+  def apply(props: MuiCardMediaProps = MuiCardMediaProps.empty)(children: VdomNode*) =
+    component(props)(children: _*)
+
+}
+
+
+trait MuiCardMediaProps
+  extends MuiPropsBase
+  with MuiPropsBaseClasses[MuiCardMediaClasses]
+  with MuiPropsBaseComponent
+{
+  val image: js.UndefOr[String] = js.undefined
+  val src: js.UndefOr[String] = js.undefined
+}
+object MuiCardMediaProps extends MuiPropsBaseStatic[MuiCardMediaProps]
+
+
+trait MuiCardMediaClasses extends MuiClassesBase {
+  val media: js.UndefOr[String] = js.undefined
 }

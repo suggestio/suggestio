@@ -415,6 +415,8 @@ trait LkBillOrders
     * @return 200 OK + HTML-страница с данными для инициализации react-формы корзины.
     */
   def cart(onNodeId: String, r: Option[String]) = csrf.AddToken {
+    // TODO Абстрагировать от корзины, разрешить просмотр любого ордера и корзины в том числе.
+    // TODO onNodeId сделать необязательным?
     isNodeAdmin(onNodeId, U.Lk, U.ContractId).async { implicit request =>
 
       // Найти ордер-корзину юзера в базе биллинга по id контракта:
@@ -657,7 +659,6 @@ trait LkBillOrders
       }
 
     } yield {
-      LOGGER.trace(s"$logPrefix json-rendered ${adDatas.size} jd-ads")
       adDatas
     }
 
@@ -717,7 +718,7 @@ trait LkBillOrders
       jdAdDatas     <- jdAdDatasFut
       orderPrices   <- orderPricesFut
     } yield {
-      LOGGER.trace(s"$logPrefix order#${morderOpt.flatMap(_.id).orNull}, ${mitems.length} items, ${mTxns.length} txns, ${itemAdnNodes.length} rcvrs, ${jdAdDatas.size} jd-ads")
+      LOGGER.trace(s"$logPrefix order#${morderOpt.flatMap(_.id).orNull}, ${mitems.length} items, ${mTxns.length} txns, ${itemAdnNodes.length} adn-nodes, ${jdAdDatas.size} jd-ads")
       MOrderContent(
         order       = morderOpt,
         items       = mitems,

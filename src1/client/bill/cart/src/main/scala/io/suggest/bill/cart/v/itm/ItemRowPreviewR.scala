@@ -1,4 +1,4 @@
-package io.suggest.bill.cart.v.order
+package io.suggest.bill.cart.v.itm
 
 import io.suggest.dev.MSzMults
 import io.suggest.jd.MJdConf

@@ -131,6 +131,7 @@ object MsgCodes {
   val `Total.amount._money` = "Total.amount._money"
   val `_N` = "_N"
   val `Order.0.is.paid` = "Order.0.is.paid"
+  val `Order.N` = "Order.N"
   val `We.received.payment.for.order.0` = "We.received.payment.for.order.0"
   val `Thank.you.for.using.our.service` = "Thank.you.for.using.our.service"
   val `Order.details` = "Order.details"

@@ -129,10 +129,10 @@ object MuiSvgIcons {
   object ActionDescription extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/dns", JSImport.Default)
   object ActionDns extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/done-all", JSImport.Default)
-  object ActionDoneAll extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/done", JSImport.Default)
-  object ActionDone extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/DoneAll", JSImport.Default)
+  object DoneAll extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Done", JSImport.Default)
+  object Done extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/donut-large", JSImport.Default)
   object ActionDonutLarge extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/donut-small", JSImport.Default)
@@ -297,8 +297,8 @@ object MuiSvgIcons {
   object ActionQueryBuilder extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/question-answer", JSImport.Default)
   object ActionQuestionAnswer extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/receipt", JSImport.Default)
-  object ActionReceipt extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Receipt", JSImport.Default)
+  object Receipt extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/record-voice-over", JSImport.Default)
   object ActionRecordVoiceOver extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/redeem", JSImport.Default)
@@ -483,8 +483,8 @@ object MuiSvgIcons {
   object AvAlbum extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/art-track", JSImport.Default)
   object AvArtTrack extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/av/av-timer", JSImport.Default)
-  object AvAvTimer extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/AvTimer", JSImport.Default)
+  object AvTimer extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/branding-watermark", JSImport.Default)
   object AvBrandingWatermark extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/call-to-action", JSImport.Default)
@@ -557,8 +557,8 @@ object MuiSvgIcons {
   object AvPauseCircleOutline extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/pause", JSImport.Default)
   object AvPause extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/av/play-arrow", JSImport.Default)
-  object AvPlayArrow extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/PlayArrow", JSImport.Default)
+  object PlayArrow extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/play-circle-filled", JSImport.Default)
   object AvPlayCircleFilled extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/play-circle-outline", JSImport.Default)

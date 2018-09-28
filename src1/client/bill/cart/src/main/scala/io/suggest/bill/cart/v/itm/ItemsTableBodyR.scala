@@ -1,11 +1,12 @@
-package io.suggest.bill.cart.v.order
+package io.suggest.bill.cart.v.itm
 
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTableRowProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.data.Pot
-import diode.react.ReactPot._
 import diode.react.ModelProxy
+import diode.react.ReactPot._
 import io.suggest.bill.cart.m.LoadCurrentOrder
+import io.suggest.bill.cart.v.order.OrderCss
 import io.suggest.bill.cart.{MOrderContent, MOrderItemRowOpts}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
@@ -16,11 +17,11 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.scalajs.react.raw.React
+import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
 

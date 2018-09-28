@@ -1,18 +1,19 @@
-package io.suggest.bill.cart.v.order
+package io.suggest.bill.cart.v.itm
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiTableBodyClasses, MuiToolBar, MuiToolBarClasses, MuiToolBarProps, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
-import scalacss.ScalaCssReact._
-import diode.{FastEq, UseValueEq}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiToolBar, MuiToolBarClasses, MuiToolBarProps, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.bill.cart.m.CartDeleteBtnClick
+import io.suggest.bill.cart.v.order.OrderCss
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.React
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import japgolly.univeq._
+import scalacss.ScalaCssReact._
 
 /**
   * Suggest.io

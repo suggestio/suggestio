@@ -16,11 +16,11 @@ object Mui {
   @js.native @JSImport("@material-ui/core/Button", JSImport.Default) object Button extends js.Any
 
   @js.native @JSImport("@material-ui/core/Card", JSImport.Default) object Card extends js.Any
+  @js.native @JSImport("@material-ui/core/CardActionArea", JSImport.Default) object CardActionArea extends js.Any
   @js.native @JSImport("@material-ui/core/CardActions", JSImport.Default) object CardActions extends js.Any
+  @js.native @JSImport("@material-ui/core/CardContent", JSImport.Default) object CardContent extends js.Any
   @js.native @JSImport("@material-ui/core/CardHeader", JSImport.Default) object CardHeader extends js.Any
   @js.native @JSImport("@material-ui/core/CardMedia", JSImport.Default) object CardMedia extends js.Any
-  @js.native @JSImport("@material-ui/core/CardTitle", JSImport.Default) object CardTitle extends js.Any
-  @js.native @JSImport("@material-ui/core/CardText", JSImport.Default) object CardText extends js.Any
 
   @js.native @JSImport("@material-ui/core/Checkbox", JSImport.Default) object CheckBox      extends js.Any
   @js.native @JSImport("@material-ui/core/Chip", JSImport.Default) object Chip              extends js.Any
