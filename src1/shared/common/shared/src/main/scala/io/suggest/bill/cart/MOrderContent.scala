@@ -6,8 +6,8 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.jd.MJdAdData
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
-import io.suggest.mbill2.m.order.MOrder
-import io.suggest.mbill2.m.txn.MTxn
+import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses}
+import io.suggest.mbill2.m.txn.MTxnPriced
 import io.suggest.primo.id.{IId, OptId}
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -41,8 +41,8 @@ object MOrderContent {
           EmptyUtil.opt2ImplEmpty1F(Nil),
           { items => if (items.isEmpty) None else Some(items) }
         ) and
-      (__ \ "t").formatNullable[Seq[MTxn]]
-        .inmap[Seq[MTxn]](
+      (__ \ "t").formatNullable[Seq[MTxnPriced]]
+        .inmap[Seq[MTxnPriced]](
           EmptyUtil.opt2ImplEmpty1F(Nil),
           { txns => if (txns.isEmpty) None else Some(txns) }
         ) and
@@ -80,7 +80,7 @@ object MOrderContent {
 case class MOrderContent(
                           order       : Option[MOrder],
                           items       : Seq[MItem],
-                          txns        : Seq[MTxn],
+                          txns        : Seq[MTxnPriced],
                           adnNodes    : Iterable[MAdvGeoMapNodeProps],
                           adsJdDatas  : Iterable[MJdAdData],
                           orderPrices : Iterable[MPrice]
@@ -97,5 +97,10 @@ case class MOrderContent(
   /** Карта item'ов, сгруппированных по id карточки. */
   lazy val adId2itemsMap: Map[String, Seq[MItem]] =
     items.groupBy( _.nodeId )
+
+
+  /** Рендерить ли чекбокс для управления item'ами? */
+  lazy val isItemsEditable: Boolean =
+    order.isEmpty || order.exists( _.status ==* MOrderStatuses.Draft )
 
 }

@@ -7,7 +7,7 @@ import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.bill.cart.m.LoadCurrentOrder
 import io.suggest.bill.cart.v.order.OrderCss
-import io.suggest.bill.cart.{MOrderContent, MOrderItemRowOpts}
+import io.suggest.bill.cart.MOrderContent
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
@@ -46,15 +46,13 @@ class ItemsTableBodyR(
   case class PropsVal(
                        orderContents  : Pot[MOrderContent],
                        selectedIds    : Set[Gid_t],
-                       rowOpts        : MOrderItemRowOpts,
                        jdCss          : JdCss,
                      )
   implicit object ItemsTableBodyRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.orderContents  ===* b.orderContents) &&
-        (a.selectedIds  ===* b.selectedIds) &&
-        (a.rowOpts      ===* b.rowOpts) &&
-        (a.jdCss        ===* b.jdCss)
+      (a.orderContents      ===* b.orderContents) &&
+        (a.selectedIds      ===* b.selectedIds) &&
+        (a.jdCss            ===* b.jdCss)
     }
   }
 
@@ -75,7 +73,7 @@ class ItemsTableBodyR(
       val props = propsProxy.value
 
       // Сколько колонок всего? Не всегда это важно.
-      lazy val columnsCount = 3 + props.rowOpts.toAddColsCount
+      val columnsCount = 4
 
       // Пропертисы для fullRowCell:
       lazy val fullRowCellProps = {
@@ -213,12 +211,12 @@ class ItemsTableBodyR(
               val isWithPreview = (i ==* 0)
               propsProxy.wrap { _ =>
                 itemRowR.PropsVal(
-                  mitem         = mitem,
-                  rowOpts       = props.rowOpts,
-                  isSelected    = mitem.id.map(props.selectedIds.contains),
-                  rcvrNode      = mitem.rcvrIdOpt.flatMap( orderContent.adnNodesMap.get ),
-                  isPendingReq  = props.orderContents.isPending,
-                  previewRowSpan = OptionUtil.maybe(isWithPreview)(nodeItemsCount)
+                  mitem           = mitem,
+                  isItemEditable  = orderContent.isItemsEditable,
+                  isSelected      = mitem.id.map(props.selectedIds.contains),
+                  rcvrNode        = mitem.rcvrIdOpt.flatMap( orderContent.adnNodesMap.get ),
+                  isPendingReq    = props.orderContents.isPending,
+                  previewRowSpan  = OptionUtil.maybe(isWithPreview)(nodeItemsCount)
                 )
               } { itemPropsValProxy =>
                 itemRowR.component
@@ -263,10 +261,8 @@ class ItemsTableBodyR(
                       )
                     }
                   ),
-                  // В ячейке чек-бокса рендерим кнопку для перехода к оплате.
-                  ReactCommonUtil.maybeNode( props.rowOpts.withCheckBox ) {
-                    MuiTableCell()()
-                  }
+                  // В ячейке чек-бокса или статуса - пока ничего.
+                  MuiTableCell()()
                 )
               )
             }

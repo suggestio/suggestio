@@ -235,7 +235,7 @@ class LkAdnMap @Inject() (
             val rCall = routes.LkAdnMap.forNode(esNodeId)
             val retCall = if (!isSuFree) {
               // Обычный юзер отправляется читать свою корзину заказов.
-              routes.LkBill2.cart(nodeId, r = Some(rCall.url))
+              routes.LkBill2.orderPage(nodeId, r = Some(rCall.url))
 
             } else {
               // Суперюзеры отправляются назад в эту же форму для дальнейшего размещения.

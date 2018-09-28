@@ -271,4 +271,11 @@ object MsgCodes {
   val `Reload` = "Reload"
   val `Go.to.payment.page` = "Go.to.payment.page"
 
+  val `Bill.id` = "Bill.id"
+  val `Bill.details` = "Bill.details"
+  val `Sum` = "Sum"
+  val `No.transactions.found` = "No.transactions.found"
+  val `Payment.for.order.N` = "Payment.for.order.N"
+  val `Transactions` = "Transactions"
+
 }

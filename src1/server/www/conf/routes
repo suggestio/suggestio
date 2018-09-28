@@ -109,8 +109,8 @@ GET  /lk/adn/current/:nodeId            @controllers.LkAdnMap.currentNodeGeoGj(n
 GET  /lk/adn/pop/item/:itemId           @controllers.LkAdnMap.currentGeoItemPopup( itemId: Gid_t )
 
 ## lk.bill2
-GET  /lk/cart/:nodeId                   @controllers.LkBill2.cart(nodeId, r: Option[String] ?= None)
-GET  /lk/cart2/:nodeId                  @controllers.LkBill2.cart2(nodeId, r: Option[String] ?= None)
+GET  /lk/order/:nodeId                  @controllers.LkBill2.orderPage(nodeId, orderId: Option[Gid_t] ?= None, r: Option[String] ?= None)
+#GET  /lk/cart2/:nodeId                 @controllers.LkBill2.cart2(nodeId, r: Option[String] ?= None)
 POST /lk/items/del                      @controllers.LkBill2.deleteItems( i: QsbSeq[Gid_t] )
 POST /lk/cart/:nodeId                   @controllers.LkBill2.cartSubmit(nodeId)
 GET  /lk/bill/txns/:nodeId              @controllers.LkBill2.txnsList(nodeId, page: Int ?= 0, inline: Boolean ?= false)
@@ -122,7 +122,7 @@ POST /lk/cart/item/del/:itemId          @controllers.LkBill2.cartDeleteItem(item
 GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
 GET  /lk/orders/:onNodeId               @controllers.LkBill2.orders(onNodeId: MEsUuId, page: Int ?= 0)
 GET  /lk/order2                         @controllers.LkBill2.getOrder(orderId: Option[Gid_t] ?= None)
-GET  /lk/order/:onNodeId/:orderId       @controllers.LkBill2.showOrder(orderId: Gid_t, onNodeId: MEsUuId)
+#GET  /lk/order/:onNodeId/:orderId       @controllers.LkBill2.showOrder(orderId: Gid_t, onNodeId: MEsUuId)
 
 ## lk pay systems
 GET  /pay/yaka/order/:onNodeId/:orderId @controllers.pay.PayYaka.payForm(orderId: Gid_t, onNodeId: MEsUuId)

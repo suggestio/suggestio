@@ -22,7 +22,7 @@ class DateTimeUtilSpec extends FlatSpec {
     // Присланный браузером сдвиг в минутах.
     val browserOffsetMinutes = -180
     // Оффсет времени на стороне клиента по мнению сервера:
-    val browserTzOff = DateTimeUtil.minutesOffset2TzOff(browserOffsetMinutes)
+    val browserTzOff = CommonDateTimeUtil.minutesOffset2TzOff(browserOffsetMinutes)
 
     nowTzOff shouldEqual browserTzOff
     nowTzOff.getTotalSeconds shouldEqual browserTzOff.getTotalSeconds

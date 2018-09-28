@@ -2,8 +2,8 @@ package controllers.cbill
 
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import controllers.{SioController, routes}
-import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderContent, MOrderItemRowOpts}
-import io.suggest.bill.{MCurrencies, MGetPriceResp, MPrice}
+import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderContent}
+import io.suggest.bill.{MCurrencies, MCurrency, MGetPriceResp, MPrice}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsInitTargets
@@ -13,7 +13,7 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{IMItems, ItemStatusChanged, MItem}
 import io.suggest.mbill2.m.order.{IMOrders, MOrder, MOrderStatuses, OrderStatusChanged}
-import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes}
+import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced, MTxnTypes}
 import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.play.qsb.QsbSeq
@@ -23,7 +23,7 @@ import io.suggest.util.logs.IMacroLogs
 import models.blk.{IRenderArgs, RenderArgs}
 import models.mbill._
 import models.mctx.Context
-import models.req.{IReq, MNodeOptOrderReq, MOrderOptReq, MReq}
+import models.req._
 import play.api.i18n.Messages
 import util.acl._
 import util.blocks.IBlkImgMakerDI
@@ -411,22 +411,48 @@ trait LkBillOrders
   /** Страница для react-корзины.
     *
     * @param onNodeId На каком узле рендерится страница.
+    * @param orderIdOpt Точный id заказа. Если None, то только корзина.
     * @param r Адресок для возврата.
     * @return 200 OK + HTML-страница с данными для инициализации react-формы корзины.
     */
-  def cart(onNodeId: String, r: Option[String]) = csrf.AddToken {
-    // TODO Абстрагировать от корзины, разрешить просмотр любого ордера и корзины в том числе.
-    // TODO onNodeId сделать необязательным?
-    isNodeAdmin(onNodeId, U.Lk, U.ContractId).async { implicit request =>
+  def orderPage(onNodeId: String, orderIdOpt: Option[Gid_t], r: Option[String]) = csrf.AddToken {
+    // Инициализация, необходимая внутри тела экшена.
+    val uinits = U.Lk :: U.ContractId :: Nil
 
-      // Найти ордер-корзину юзера в базе биллинга по id контракта:
-      val cartOrderIdOptFut = request.user.contractIdOptFut.flatMap { mcIdOpt =>
-        FutureUtil.optFut2futOpt(mcIdOpt) { mcId =>
-          slick.db.run {
-            bill2Util.getCartOrderId(mcId)
+    // Экшен-билдер. В зависимости от наличия или отсутствия orderId, собрать нужный билдер:
+    val ab = orderIdOpt.fold [ActionBuilder[MNodeOrderOptReq, AnyContent]] {
+      isNodeAdmin(onNodeId, uinits: _*).andThen(
+        new reqUtil.ActionTransformerImpl[MNodeReq, MNodeOrderOptReq] {
+          override protected def transform[A](request: MNodeReq[A]): Future[MNodeOrderOptReq[A]] = {
+            val req2 = MNodeOrderOptReq( None, request.mnode, request.user, request )
+            Future.successful( req2 )
           }
         }
-      }
+      )
+    } { orderId =>
+      canViewOrder(orderId, Some(onNodeId), uinits: _*).andThen(
+        new reqUtil.ActionTransformerImpl[MNodeOptOrderReq, MNodeOrderOptReq] {
+          override protected def transform[A](request: MNodeOptOrderReq[A]): Future[MNodeOrderOptReq[A]] = {
+            val req2 = MNodeOrderOptReq( Some(request.morder), request.mnodeOpt.get, request.user, request )
+            Future.successful( req2 )
+          }
+        }
+      )
+    }
+
+    // Сборка тела экшена, который вернёт страницу под react-форму.
+    ab.async { implicit request =>
+      // Найти ордер-корзину юзера в базе биллинга по id контракта:
+      val requestOrderIdOpt = request.morderOpt.flatMap(_.id)
+      val orderIdOptFut = requestOrderIdOpt.fold {
+        request.user.contractIdOptFut.flatMap { mcIdOpt =>
+          FutureUtil.optFut2futOpt(mcIdOpt) { mcId =>
+            slick.db.run {
+              bill2Util.getCartOrderId(mcId)
+            }
+          }
+        }
+      } { _ => Future.successful(requestOrderIdOpt) }
 
       // Готовить контекст для рендера:
       val ctxFut = for {
@@ -438,21 +464,14 @@ trait LkBillOrders
         implicitly[Context]
       }
 
-      // Настройки рендера интерфейса
-      val rowOpts = MOrderItemRowOpts(
-        withStatus    = false,
-        withCheckBox  = true
-      )
-
       // Отрендерить данные формы в JSON.
       val formInitB64Fut = for {
-        cartOrderIdOpt  <- cartOrderIdOptFut
+        orderIdOpt  <- orderIdOptFut
       } yield {
         val minit = MCartInit(
           conf = MCartConf(
-            orderId  = cartOrderIdOpt,
+            orderId  = orderIdOpt,
             onNodeId = request.mnode.id,
-            orderRowOpts = rowOpts
           )
         )
         Json
@@ -462,10 +481,15 @@ trait LkBillOrders
 
       // Данные формы для инициализации.
       for {
+        orderIdOpt  <- orderIdOptFut
         formInitB64     <- formInitB64Fut
         ctx             <- ctxFut
       } yield {
-        val html = Cart2Tpl( request.mnode, formInitB64 )(ctx)
+        val html = OrderPageTpl(
+          orderIdOpt    = orderIdOpt,
+          mnode         = request.mnode,
+          formStateB64  = formInitB64
+        )(ctx)
         Ok( html )
       }
     }
@@ -543,16 +567,31 @@ trait LkBillOrders
     }
 
     // Собрать транзакции, если это НЕ ордер-корзина:
-    val mTxnsFut = morderOpt
+    val mTxnsCurFut = morderOpt
       .filter(_.status !=* MOrderStatuses.Draft)
       .flatMap(_.id)
-      .fold [Future[Seq[MTxn]]] ( Future.successful(Nil) ) { orderId =>
+      .fold [Future[Seq[(MTxn, MCurrency)]]] ( Future.successful(Nil) ) { orderId =>
         slick.db.run {
-          bill2Util.getOrderTxns( orderId )
+          bill2Util.getOrderTxnsWithCurrencies( orderId )
         }
       }
 
     val ctx = implicitly[Context]
+
+    // Надо добавить ценники к найденным транзакциям.
+    val mTxnsPricedFut = for {
+      txnsCur <- mTxnsCurFut
+    } yield {
+      for {
+        (mtxn, mcurrency) <- txnsCur
+      } yield {
+        val price0 = MPrice(mtxn.amount, mcurrency)
+        MTxnPriced(
+          txn   = mtxn,
+          price = TplDataFormatUtil.setFormatPrice( price0 )(ctx)
+        )
+      }
+    }
 
     // Рассчёт полной стоимости заказа.
     val orderPricesFut = morderOptFut.flatMap { morderOpt =>
@@ -713,16 +752,16 @@ trait LkBillOrders
     for {
       morderOpt     <- morderOptFut
       mitems        <- mitems2Fut
-      mTxns         <- mTxnsFut
+      mTxnsPriced   <- mTxnsPricedFut
       itemAdnNodes  <- itemAdnNodesFut
       jdAdDatas     <- jdAdDatasFut
       orderPrices   <- orderPricesFut
     } yield {
-      LOGGER.trace(s"$logPrefix order#${morderOpt.flatMap(_.id).orNull}, ${mitems.length} items, ${mTxns.length} txns, ${itemAdnNodes.length} adn-nodes, ${jdAdDatas.size} jd-ads")
+      LOGGER.trace(s"$logPrefix order#${morderOpt.flatMap(_.id).orNull}, ${mitems.length} items, ${mTxnsPriced.length} txns, ${itemAdnNodes.length} adn-nodes, ${jdAdDatas.size} jd-ads")
       MOrderContent(
         order       = morderOpt,
         items       = mitems,
-        txns        = mTxns,
+        txns        = mTxnsPriced,
         adnNodes    = itemAdnNodes,
         adsJdDatas  = jdAdDatas,
         orderPrices = orderPrices
@@ -859,7 +898,7 @@ trait LkBillOrders
 
           // У юзера оказалась пустая корзина. Отредиректить в корзину с ошибкой.
           case MCartIdeas.NothingToDo =>
-            Redirect( routes.LkBill2.cart(onNodeId) )
+            Redirect( routes.LkBill2.orderPage(onNodeId) )
               .flashing( FLASH.ERROR -> ctx.messages("Your.cart.is.empty") )
         }
       }
@@ -904,7 +943,7 @@ trait LkBillOrders
         // Независимо от исхода, вернуть редирект куда надо.
         .map { itemsDeleted =>
           LOGGER.trace(s"$logPrefix $itemsDeleted items deleted.")
-          RdrBackOr(r)(routes.LkBill2.cart(onNodeId))
+          RdrBackOr(r)(routes.LkBill2.orderPage(onNodeId))
         }
     }
   }

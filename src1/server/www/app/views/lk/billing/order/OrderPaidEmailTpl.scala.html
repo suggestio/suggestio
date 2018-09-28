@@ -30,7 +30,7 @@
 
   @_rowTpl("padding: 10px 0 20px; border-bottom: 1px dashed #878787;") {
     <a style="color: #7b89a4;"
-       href="@ctxUtil.LK_URL_PREFIX@routes.LkBill2.showOrder(args.orderId, args.onNodeId)"
+       href="@ctxUtil.LK_URL_PREFIX@routes.LkBill2.orderPage( args.onNodeId, Some(args.orderId) )"
        target="_blank">
       @messages( MsgCodes.`Order.details` )
     </a>

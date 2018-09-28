@@ -14,6 +14,7 @@ import japgolly.scalajs.react.raw.React
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
+import ReactCommonUtil.Implicits._
 
 /**
   * Suggest.io
@@ -36,7 +37,7 @@ class ItemsToolBarR(
     }
   }
 
-  type Props_t = PropsVal
+  type Props_t = Option[PropsVal]
   type Props = ModelProxy[Props_t]
 
 
@@ -49,65 +50,64 @@ class ItemsToolBarR(
     lazy val _onDeleteBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _onDeleteBtnClick )
 
 
-    def render(propsProxy: Props): VdomElement = {
-      val props = propsProxy.value
-
-      val tbCss = new MuiToolBarClasses {
-        override val root = orderCss.ItemsTable.ToolBar.root.htmlClass
-      }
-
-      MuiToolBar(
-        new MuiToolBarProps {
-          override val classes = tbCss
-          override val disableGutters = true
+    def render(propsOptProxy: Props): VdomElement = {
+      propsOptProxy.value.whenDefinedEl { props =>
+        val tbCss = new MuiToolBarClasses {
+          override val root = orderCss.ItemsTable.ToolBar.root.htmlClass
         }
-      )(
 
-        // Кол-во выбранных элементов.
-        ReactCommonUtil.maybeNode( props.countSelected > 0 ) {
-          VdomArray(
+        MuiToolBar(
+          new MuiToolBarProps {
+            override val classes = tbCss
+            override val disableGutters = true
+          }
+        )(
+          // Кол-во выбранных элементов.
+          ReactCommonUtil.maybeNode( props.countSelected > 0 ) {
+            VdomArray(
 
-            <.div(
-              ^.key := "t",
-              orderCss.ItemsTable.ToolBar.title,
+              <.div(
+                ^.key := "t",
+                orderCss.ItemsTable.ToolBar.title,
 
-              // Кол-во выбранных элементов:
-              MuiTypoGraphy.component.withKey("n")(
-                new MuiTypoGraphyProps {
-                  override val variant = MuiTypoGraphyVariants.subheading
-                  override val noWrap = true
+                // Кол-во выбранных элементов:
+                MuiTypoGraphy.component.withKey("n")(
+                  new MuiTypoGraphyProps {
+                    override val variant = MuiTypoGraphyVariants.subheading
+                    override val noWrap = true
+                  }
+                )(
+                  Messages( MsgCodes.`N.selected`, props.countSelected )
+                )
+              ),
+
+              <.div(
+                ^.key := "s",
+                orderCss.ItemsTable.ToolBar.spacer
+              ),
+
+              // Кнопка удаления:
+              MuiToolTip.component.withKey("d")(
+                new MuiToolTipProps {
+                  override val title: React.Node = Messages( MsgCodes.`Delete` )
+                  override val placement = MuiToolTipPlacements.Top
                 }
               )(
-                Messages( MsgCodes.`N.selected`, props.countSelected )
+                MuiIconButton(
+                  new MuiIconButtonProps {
+                    override val onClick = _onDeleteBtnClickJsCbF
+                    override val disabled = props.isPendingReq
+                  }
+                )(
+                  Mui.SvgIcons.Delete()()
+                )
               )
-            ),
 
-            <.div(
-              ^.key := "s",
-              orderCss.ItemsTable.ToolBar.spacer
-            ),
-
-            // Кнопка удаления:
-            MuiToolTip.component.withKey("d")(
-              new MuiToolTipProps {
-                override val title: React.Node = Messages( MsgCodes.`Delete` )
-                override val placement = MuiToolTipPlacements.Top
-              }
-            )(
-              MuiIconButton(
-                new MuiIconButtonProps {
-                  override val onClick = _onDeleteBtnClickJsCbF
-                  override val disabled = props.isPendingReq
-                }
-              )(
-                Mui.SvgIcons.Delete()()
-              )
             )
+          }
 
-          )
-        }
-
-      )
+        )
+      }
     }
 
   }

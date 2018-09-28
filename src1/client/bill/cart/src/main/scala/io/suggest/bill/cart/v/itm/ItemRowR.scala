@@ -2,10 +2,9 @@ package io.suggest.bill.cart.v.itm
 
 import java.time.OffsetDateTime
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiToolTip, MuiToolTipProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiSvgIcon, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.bill.cart.MOrderItemRowOpts
 import io.suggest.bill.cart.m.CartSelectItem
 import io.suggest.bill.cart.v.order.OrderCss
 import io.suggest.bill.price.dsl.PriceReasonI18n
@@ -17,6 +16,8 @@ import io.suggest.geo.CircleGs
 import io.suggest.i18n.MsgCodes
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
+import io.suggest.mbill2.m.item.status.MItemStatuses
+import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.r.RangeYmdR
@@ -44,21 +45,21 @@ class ItemRowR(
     *
     * @param mitem Что рендерим.
     * @param jdArgs Данные для рендера превьюшки: шаблон, эджи, параметры.
-    * @param rowOpts
+    * @param isItemEditable Можно ли управлять item'ом?
     * @param jdRowSpan Для колонки с превьюшкой карточки - сколько рядов можно оккупировать?
     */
   case class PropsVal(
                        mitem          : MItem,
-                       rowOpts        : MOrderItemRowOpts,
+                       isItemEditable : Boolean,
                        isSelected     : Option[Boolean],
                        rcvrNode       : Option[MAdvGeoMapNodeProps],
                        isPendingReq   : Boolean,
-                       previewRowSpan : Option[Int],
+                       previewRowSpan : Option[Int]
                      )
   implicit object ItemRowRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.mitem ===* b.mitem) &&
-      (a.rowOpts ===* b.rowOpts) &&
+      (a.isItemEditable ==* b.isItemEditable) &&
       (a.isSelected ==* b.isSelected) &&
       // Инстанс Option может быть нестабильным.
       OptFastEq.Plain.eqv(a.rcvrNode, b.rcvrNode) &&
@@ -117,9 +118,14 @@ class ItemRowR(
 
           {
             val (avaIconComponent, iconHintCodeOpt) = if (props.mitem.rcvrIdOpt.isDefined) {
-              // Размещение в узле
-              // TODO Заюзать логотип узла, если он есть + с фоном? Иконку LocationCity показывать как fallback или выкинуть вообще?
-              Mui.SvgIcons.LocationCity -> Some(MsgCodes.`Node`)
+              // Размещение в узле. Отдельная иконка для ble-маячка
+              val nodeTypeHint = props.rcvrNode
+                .filter( _.ntype !=* MNodeTypes.AdnNode )
+                .fold( MsgCodes.`Node` )( _.ntype.singular )
+              val nodeIcon = props.rcvrNode
+                .filter( _.ntype ==* MNodeTypes.BleBeacon )
+                .fold[MuiSvgIcon] (Mui.SvgIcons.LocationCity) (_ => Mui.SvgIcons.BluetoothSearching)
+              nodeIcon -> Some(nodeTypeHint)
             } else if (props.mitem.geoShape.isDefined) {
               // На карте
               Mui.SvgIcons.MyLocation -> Some(MsgCodes.`Adv.on.map`)
@@ -222,15 +228,8 @@ class ItemRowR(
         ),
 
         // Колонка со статусом обработки item'а:
-        ReactCommonUtil.maybeNode( props.rowOpts.withStatus ) {
-          MuiTableCell()(
-            // TODO Рендерить иконку статуса
-            props.mitem.status.toString
-          )
-        },
-
-        // Колонка с галочкой, если требуется
-        ReactCommonUtil.maybeNode( props.rowOpts.withCheckBox ) {
+        if (props.isItemEditable) {
+          // Колонка с галочкой, если требуется
           MuiTableCell()(
             MuiCheckBox(
               new MuiCheckBoxProps {
@@ -241,7 +240,37 @@ class ItemRowR(
               }
             )
           )
-        }
+        } else {
+          // Колонка со статусом:
+          MuiTableCell()(
+            // TODO Рендерить иконку статуса
+            MuiToolTip(
+              new MuiToolTipProps {
+                override val title: React.Node = {
+                  <.span(
+                    Messages( props.mitem.status.nameI18n ),
+                    props.mitem.reasonOpt.whenDefinedNode { reason =>
+                      <.span(
+                        <.br,
+                        reason
+                      )
+                    }
+                  )
+                }
+                  .rawNode
+              }
+            )(
+              props.mitem.status match {
+                case MItemStatuses.Draft          => Mui.SvgIcons.Edit()()
+                case MItemStatuses.AwaitingMdr    => Mui.SvgIcons.AccessTime()()
+                case MItemStatuses.Finished       => Mui.SvgIcons.Done()()
+                case MItemStatuses.Offline        => Mui.SvgIcons.AccessAlarm()()
+                case MItemStatuses.Online         => Mui.SvgIcons.PlayArrow()()
+                case MItemStatuses.Refused        => Mui.SvgIcons.Report()()
+              }
+            )
+          )
+        },
 
       )
     }

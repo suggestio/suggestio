@@ -22,6 +22,18 @@ object CommonDateTimeUtil {
   }
 
 
+  /**
+    * Из JS могут приходить данные о тайм-зоне браузера в виде кол-ва минут относительно UTC.
+    * Этот метод приводит это кол-во минут к ZoneOffset.
+    *
+    * @param minutes Кол-во минут сдвига относительно UTC.
+    * @return ZoneOffset.
+    */
+  def minutesOffset2TzOff(minutes: Int): ZoneOffset = {
+    ZoneOffset.ofTotalSeconds( -minutes * 60 )
+  }
+
+
   /** Версия формата для переносимого json-array-формата даты.
     * Используются отрицательные числа, т.к. 0 и положительные числа используются для даты или её частей. */
   val OFFSET_DATE_TIME_FORMAT_VSN_1 = -1

@@ -1,14 +1,14 @@
 package util.adv.geo
 
 import java.time.{LocalDate, OffsetDateTime}
-import javax.inject.Inject
 
+import javax.inject.Inject
 import io.suggest.adv.geo.MFormS
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dt.DateTimeUtil
+import io.suggest.dt.CommonDateTimeUtil
 import io.suggest.geo.CircleGsJvm
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
@@ -172,7 +172,7 @@ class AdvGeoBillUtil @Inject() (
     val dateEnd   = ymdPeriod.dateEnd[LocalDate]
 
     // Инновация: берём временную зону прямо из браузера!
-    val tzOffset = DateTimeUtil.minutesOffset2TzOff( abc.res.tzOffsetMinutes )
+    val tzOffset = CommonDateTimeUtil.minutesOffset2TzOff( abc.res.tzOffsetMinutes )
 
     def __dt(localDate: LocalDate): Option[OffsetDateTime] = {
       Some( localDate.atStartOfDay().atOffset(tzOffset) )

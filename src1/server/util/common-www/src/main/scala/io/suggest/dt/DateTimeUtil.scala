@@ -1,7 +1,7 @@
 package io.suggest.dt
 
 import java.time.format.DateTimeFormatter
-import java.time.{OffsetDateTime, ZoneOffset}
+import java.time.OffsetDateTime
 import java.util.Locale
 
 /**
@@ -35,18 +35,6 @@ object DateTimeUtil {
     } catch {
       case _:Exception => None
     }
-  }
-
-
-  /**
-    * Из JS могут приходить данные о тайм-зоне браузера в виде кол-ва минут относительно UTC.
-    * Этот метод приводит это кол-во минут к ZoneOffset.
-    *
-    * @param minutes Кол-во минут сдвига относительно UTC.
-    * @return ZoneOffset.
-    */
-  def minutesOffset2TzOff(minutes: Int): ZoneOffset = {
-    ZoneOffset.ofTotalSeconds( -minutes * 60 )
   }
 
 }

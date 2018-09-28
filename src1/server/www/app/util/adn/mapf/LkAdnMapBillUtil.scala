@@ -1,13 +1,13 @@
 package util.adn.mapf
 
 import java.time.{LocalDate, OffsetDateTime}
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import io.suggest.adn.mapf.MLamForm
 import io.suggest.bill.price.dsl._
 import io.suggest.bill.MGetPriceResp
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dt.DateTimeUtil
+import io.suggest.dt.CommonDateTimeUtil
 import io.suggest.geo.{CircleGs, CircleGsJvm}
 import io.suggest.mbill2.m.dbg.MDebugs
 import io.suggest.mbill2.m.gid.Gid_t
@@ -104,7 +104,7 @@ class LkAdnMapBillUtil @Inject() (
     val dateEnd   = ymdPeriod.dateEnd[LocalDate]
 
     // Инновация: берём временную зону прямо из браузера!
-    val tzOffset = DateTimeUtil.minutesOffset2TzOff( formRes.tzOffsetMinutes )
+    val tzOffset = CommonDateTimeUtil.minutesOffset2TzOff( formRes.tzOffsetMinutes )
 
     def __dt(localDate: LocalDate): Option[OffsetDateTime] = {
       Some( localDate.atStartOfDay().atOffset(tzOffset) )

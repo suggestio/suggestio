@@ -4,9 +4,12 @@ import chandu0101.scalajs.react.components.materialui.MuiTable
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.cart.m.MCartRootS
 import io.suggest.bill.cart.v.itm.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR, ItemsToolBarR}
+import io.suggest.bill.cart.v.txn.TxnsR
+import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.jd.render.v.{JdCss, JdCssR}
 import io.suggest.mbill2.m.order.MOrderStatuses
+import io.suggest.spa.OptFastEq
 import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -28,6 +31,7 @@ class OrderR(
               val itemsToolBarR      : ItemsToolBarR,
               val goToPayBtnR        : GoToPayBtnR,
               val orderInfoR         : OrderInfoR,
+              val txnsR              : TxnsR,
             ) {
 
   import JdCss.JdCssFastEq
@@ -47,6 +51,7 @@ class OrderR(
                     toolBarPropsC   : ReactConnectProxy[itemsToolBarR.Props_t],
                     goToPayPropsC   : ReactConnectProxy[goToPayBtnR.Props_t],
                     orderOptC       : ReactConnectProxy[orderInfoR.Props_t],
+                    txnsPricedOptC  : ReactConnectProxy[txnsR.Props_t],
                   )
 
   /** Ядро компонента корзины. */
@@ -81,7 +86,13 @@ class OrderR(
         <.br,
 
         // Кнопка перехода к оплате, когда оплата возможна (ордер-корзина + есть item'ы).
-        s.goToPayPropsC { goToPayBtnR.apply }
+        s.goToPayPropsC { goToPayBtnR.apply },
+
+        <.br,
+        <.br,
+
+        // Список транзакций, если есть:
+        s.txnsPricedOptC { txnsR.apply }
 
       )
     }
@@ -103,8 +114,8 @@ class OrderR(
                 oc.items.nonEmpty &&
                   (oc.items.lengthCompare( props.order.itemsSelected.size ) > 0)
               },
-            rowOpts = props.conf.orderRowOpts,
-            isPendingReq = props.order.orderContents.isPending
+            isPendingReq = props.order.orderContents.isPending,
+            isItemsEditable = props.order.orderContents.exists(_.isItemsEditable)
           )
         },
 
@@ -112,16 +123,24 @@ class OrderR(
           itemsTableBodyR.PropsVal(
             orderContents = props.order.orderContents,
             selectedIds   = props.order.itemsSelected,
-            rowOpts       = props.conf.orderRowOpts,
             jdCss         = props.order.jdCss
           )
         },
 
         toolBarPropsC = propsProxy.connect { props =>
-          itemsToolBarR.PropsVal(
-            countSelected = props.order.itemsSelected.size,
-            isPendingReq  = props.order.orderContents.isPending
-          )
+          // Нужно отображать тулбар только если ордер-корзина
+          val ocPot = props.order.orderContents
+          OptionUtil.maybe {
+            ocPot.exists { oc =>
+              oc.items.nonEmpty &&
+                oc.order.exists(_.status ==* MOrderStatuses.Draft)
+            }
+          } {
+            itemsToolBarR.PropsVal(
+              countSelected = props.order.itemsSelected.size,
+              isPendingReq  = ocPot.isPending
+            )
+          }
         },
 
         goToPayPropsC = propsProxy.connect { props =>
@@ -148,7 +167,16 @@ class OrderR(
           } yield {
             morder
           }
-        }
+        }( OptFastEq.Plain ),
+
+        txnsPricedOptC = propsProxy.connect { mroot =>
+          for {
+            oc <- mroot.order.orderContents.toOption
+            if oc.order.exists(_.status !=* MOrderStatuses.Draft)
+          } yield {
+            oc.txns
+          }
+        }( OptFastEq.Plain )
 
       )
     }

@@ -331,7 +331,7 @@ class LkAdvGeo @Inject() (
             val retCall = if (!isSuFree) {
               // Обычный юзер отправляется читать свою корзину заказов.
               val producerId  = request.producer.id.get
-              routes.LkBill2.cart(producerId, r = Some(rCall.url))
+              routes.LkBill2.orderPage(producerId, r = Some(rCall.url))
               //implicit val messages = implicitly[Messages]
               // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.
               //Redirect()

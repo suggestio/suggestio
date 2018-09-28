@@ -16,8 +16,7 @@ object MCartConf {
   /** Поддержка play-json. */
   implicit def mCartConfFormat: OFormat[MCartConf] = (
     (__ \ "o").formatNullable[Gid_t] and
-    (__ \ "n").formatNullable[String] and
-    (__ \ "r").format[MOrderItemRowOpts]
+    (__ \ "n").formatNullable[String]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MCartConf] = UnivEq.derive
@@ -32,10 +31,8 @@ object MCartConf {
   *                Тогда по идее и сделать с корзиной ничего нельзя, т.к. нет item'ов тоже.
   * @param onNodeId На каком узле открыта корзина.
   *                 Исторически, сервер рендерит с точки зрения узла, хотя корзина к узлу не привязана.
-  * @param orderRowOpts Параметры для рендера содержимого ордеров.
   */
 case class MCartConf(
                       orderId         : Option[Gid_t],
                       onNodeId        : Option[String],
-                      orderRowOpts    : MOrderItemRowOpts
                     )

@@ -51,11 +51,7 @@
 
         <tr>
           @__td(false, "__radial-first", "ft-M", "dark-gray") {
-            <a href="@if( ord.id.exists(args.cartOrderId.contains) ) {
-                @routes.LkBill2.cart(args.mnode.id.get, r = ctx.r)
-              } else {
-                @routes.LkBill2.showOrder(ord.id.get, args.mnode.id.get)
-              }">
+            <a href="@routes.LkBill2.orderPage( args.mnode.id.get, orderId = ord.id )">
               @messages("_N") @ord.id
             </a>
           }

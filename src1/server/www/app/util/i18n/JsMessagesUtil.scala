@@ -9,7 +9,9 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import jsmessages.{JsMessages, JsMessagesFactory}
 import io.suggest.dt.interval.DatesIntervalConstants.{DAYS_OF_WEEK, MONTHS_OF_YEAR}
+import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderStatuses
+import io.suggest.model.n2.node.MNodeTypes
 
 /**
   * Suggest.io
@@ -318,6 +320,20 @@ class JsMessagesUtil @Inject() (
       .toList
   }
 
+  private def ITEM_STATUSES_I18N: List[String] = {
+    MItemStatuses.values
+      .iterator
+      .map(_.nameI18n)
+      .toList
+  }
+
+  private def NODE_TYPES_I18N: List[String] = {
+    MNodeTypes.values
+      .iterator
+      .map(_.singular)
+      .toList
+  }
+
   /** Клиент-сайд корзина/биллинг. */
   private def BILL_CART_MSGS: TraversableOnce[String] = {
     MC.`_order.Items` ::
@@ -334,9 +350,15 @@ class JsMessagesUtil @Inject() (
       MC.`Reload` ::
       MC.`Go.to.payment.page` ::
       MC.`Order.N` ::
-      ORDER_STATUSES_I18N
+      MC.`Bill.id` ::
+      MC.`Bill.details` ::
+      MC.`Date` ::
+      MC.`Sum` ::
+      MC.`No.transactions.found` ::
+      MC.`Payment.for.order.N` ::
+      MC.`Transactions` ::
+      (ORDER_STATUSES_I18N reverse_::: ITEM_STATUSES_I18N reverse_::: NODE_TYPES_I18N)
   }
-
 
   /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
   val (lkJsMsgsFactory, hash): (JsMessages, Int) = {

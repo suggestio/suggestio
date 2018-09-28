@@ -805,8 +805,8 @@ object MuiSvgIcons {
   object ContentReplyAll extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/reply", JSImport.Default)
   object ContentReply extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/content/report", JSImport.Default)
-  object ContentReport extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Report", JSImport.Default)
+  object Report extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/save", JSImport.Default)
   object ContentSave extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/select-all", JSImport.Default)
@@ -823,12 +823,12 @@ object MuiSvgIcons {
   object ContentUndo extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/weekend", JSImport.Default)
   object ContentWeekend extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/access-alarm", JSImport.Default)
-  object DeviceAccessAlarm extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/access-alarms", JSImport.Default)
-  object DeviceAccessAlarms extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/access-time", JSImport.Default)
-  object DeviceAccessTime extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/AccessAlarm", JSImport.Default)
+  object AccessAlarm extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/AccessAlarms", JSImport.Default)
+  object AccessAlarms extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/AccessTime", JSImport.Default)
+  object AccessTime extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/add-alarm", JSImport.Default)
   object DeviceAddAlarm extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/airplanemode-active", JSImport.Default)
@@ -869,14 +869,14 @@ object MuiSvgIcons {
   object DeviceBatteryStd extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/battery-unknown", JSImport.Default)
   object DeviceBatteryUnknown extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/bluetooth-connected", JSImport.Default)
-  object DeviceBluetoothConnected extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/bluetooth-disabled", JSImport.Default)
-  object DeviceBluetoothDisabled extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/bluetooth-searching", JSImport.Default)
-  object DeviceBluetoothSearching extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/bluetooth", JSImport.Default)
-  object DeviceBluetooth extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BluetoothConnected", JSImport.Default)
+  object BluetoothConnected extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BluetoothDisabled", JSImport.Default)
+  object BluetoothDisabled extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/BluetoothSearching", JSImport.Default)
+  object BluetoothSearching extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Bluetooth", JSImport.Default)
+  object Bluetooth extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/brightness-auto", JSImport.Default)
   object DeviceBrightnessAuto extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/brightness-high", JSImport.Default)
@@ -1342,8 +1342,8 @@ object MuiSvgIcons {
   object ImageDehaze extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/image/details", JSImport.Default)
   object ImageDetails extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/image/edit", JSImport.Default)
-  object ImageEdit extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Edit", JSImport.Default)
+  object Edit extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/image/exposure-neg-1", JSImport.Default)
   object ImageExposureNeg1 extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/image/exposure-neg-2", JSImport.Default)
@@ -1963,8 +1963,8 @@ object MuiSvgIcons {
   object SocialSentimentVerySatisfied extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/social/share", JSImport.Default)
   object SocialShare extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/social/whatshot", JSImport.Default)
-  object SocialWhatshot extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Whatshot", JSImport.Default)
+  object Whatshot extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/toggle/check-box-outline-blank", JSImport.Default)
   object ToggleCheckBoxOutlineBlank extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/toggle/check-box", JSImport.Default)

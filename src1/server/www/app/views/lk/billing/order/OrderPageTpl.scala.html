@@ -1,4 +1,4 @@
-@(mnode: MNode, formStateB64: String)(implicit ctx: Context)
+@(orderIdOpt: Option[Gid_t], mnode: MNode, formStateB64: String)(implicit ctx: Context)
 
 @* Шаблон для react-компонента cart-page. *@
 
@@ -13,7 +13,7 @@
 @import views.js.stuff.jsRevRouterTpl
 
 @billingBaseTpl(
-  title       = messages( MsgCodes.`Cart` ),
+  title       = orderIdOpt.fold( messages(MsgCodes.`Cart`) )( messages(MsgCodes.`Order.N`, _) ),
   mnode       = mnode,
   rightCurrEl = Some( BillingRightPanelLinks.RPL_CART ),
   rightAfter  = Some( _rightPriceContTpl()() )

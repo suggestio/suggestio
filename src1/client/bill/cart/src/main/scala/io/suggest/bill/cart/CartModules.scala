@@ -3,6 +3,7 @@ package io.suggest.bill.cart
 import com.softwaremill.macwire._
 import io.suggest.bill.cart.v.itm.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR, ItemsToolBarR}
 import io.suggest.bill.cart.v.order._
+import io.suggest.bill.cart.v.txn.TxnsR
 import io.suggest.jd.render.JdRenderModule
 
 /**
@@ -27,5 +28,6 @@ class CartModules {
   lazy val itemsToolBarR = wire[ItemsToolBarR]
   lazy val goToPayBtnR = wire[GoToPayBtnR]
   lazy val orderInfoR = wire[OrderInfoR]
+  lazy val txnsR = wire[TxnsR]
 
 }

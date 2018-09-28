@@ -1736,6 +1736,15 @@ class Bill2Util @Inject() (
   }
 
 
+  private def _getOrderTxnsQuery(orderId: Gid_t) = {
+    mTxns.query
+      .filter { t =>
+        (t.orderIdOpt === orderId) &&
+          (t.txTypeStr === MTxnTypes.PaySysTxn.value)
+      }
+  }
+
+
   /** Найти в базе платежную транзакцию, относящуюся к указанному заказу.
     * Т.е. транзакцию зачисления денег из платежной системы в sio-биллинг.
     *
@@ -1743,14 +1752,37 @@ class Bill2Util @Inject() (
     * @return DB-экшен с опциональной транзакцией.
     */
   def getOrderTxns(orderId: Gid_t): DBIOAction[Seq[MTxn], Streaming[MTxn], Effect.Read] = {
-    mTxns.query
-      .filter { t =>
-        (t.orderIdOpt === orderId) &&
-          (t.txTypeStr === MTxnTypes.PaySysTxn.value)
-      }
+    _getOrderTxnsQuery( orderId )
       // Если вдруг больше одной транзакции, то интересует самая ранняя. Такое возможно из-за логических ошибок при аппруве item'ов.
       .sortBy(_.id.asc)
       .result
+  }
+
+
+  /** Получить транзакции с валютами.
+    *
+    * @param orderId id заказа, к которому относятся транзакции.
+    * @return DB-экшен, возвращающий MTxn -> MCurrency.
+    */
+  def getOrderTxnsWithCurrencies(orderId: Gid_t): DBIOAction[Seq[(MTxn, MCurrency)], NoStream /*Streaming[(MTxn, MCurrency)]*/, Effect.Read] = {
+    // TODO Надо все item'ы ордера тоже подцепить сюда.
+    _getOrderTxnsQuery( orderId )
+      .join(
+        mBalances.query
+      )
+      .on { case (mtxns, mbalances) =>
+        mtxns.balanceId === mbalances.id
+      }
+      .map { case (mtxn, mbalance) =>
+        // TODO Надо currency, но почему-то slick неправильно отрабатывает mapped-projection.
+        (mtxn, mbalance.currencyCode)
+      }
+      .sortBy(_._1.id.asc)
+      .result
+      .map { mtxnCurrCodes =>
+        for ( (mtxn, currCode) <- mtxnCurrCodes ) yield
+          mtxn -> MCurrencies.withValue( currCode )
+      }
   }
 
 

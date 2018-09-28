@@ -47,6 +47,16 @@ case class MNodeOptOrderReq[A](
   with INodeOptReq[A]
 
 
+/** Узел + опциональный ордер. */
+case class MNodeOrderOptReq[A](
+                                morderOpt               : Option[MOrder],
+                                override val mnode      : MNode,
+                                override val user       : ISioUser,
+                                override val request    : Request[A]
+                              )
+  extends MReqWrap[A]
+  with INodeReq[A]
+
 
 /** Модель реквеста с опциональным инстансом MOrder. */
 case class MOrderOptReq[A](

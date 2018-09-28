@@ -3,7 +3,6 @@ package io.suggest.bill.cart.v.itm
 import chandu0101.scalajs.react.components.materialui.{MuiCheckBox, MuiCheckBoxProps, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableHead, MuiTableRow}
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.bill.cart.MOrderItemRowOpts
 import io.suggest.bill.cart.m.CartSelectItem
 import io.suggest.bill.cart.v.order.OrderCss
 import io.suggest.common.html.HtmlConstants
@@ -11,7 +10,6 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -33,14 +31,14 @@ class ItemsTableHeadR(
   case class PropsVal(
                        hasCheckedItems      : Boolean,
                        hasUnCheckedItems    : Boolean,
-                       rowOpts              : MOrderItemRowOpts,
+                       isItemsEditable      : Boolean,
                        isPendingReq         : Boolean,
                      )
   implicit object ItemsTableHeadRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.hasCheckedItems       ==* b.hasCheckedItems) &&
       (a.hasUnCheckedItems     ==* b.hasUnCheckedItems) &&
-      (a.rowOpts              ===* b.rowOpts) &&
+      (a.isItemsEditable       ==* b.isItemsEditable) &&
       (a.isPendingReq          ==* b.isPendingReq)
     }
   }
@@ -89,34 +87,24 @@ class ItemsTableHeadR(
           ),
 
           // Опциональный столбец статуса обработки одного item'а.
-          ReactCommonUtil.maybeNode( props.rowOpts.withStatus ) {
-            MuiTableCell()(
-              HtmlConstants.NBSP_STR
-            )
-          },
-
-          // Разрешён рендер галочки?
-          ReactCommonUtil.maybeNode( props.rowOpts.withCheckBox ) {
-            MuiTableCell()(
-
+          MuiTableCell()(
+            if ( props.isItemsEditable && (props.hasUnCheckedItems || props.hasCheckedItems) ) {
+              // Разрешён рендер галочки
               // Есть хотя бы один какой-либо item? Иначе в галочке нет смысла.
-              if (props.hasUnCheckedItems || props.hasCheckedItems) {
-                MuiCheckBox(
-                  new MuiCheckBoxProps {
-                    override val onChange = _onCheckBoxClickCbF
-                    override val checked = js.defined {
-                      props.hasCheckedItems && !props.hasUnCheckedItems
-                    }
-                    override val indeterminate = props.hasCheckedItems && props.hasUnCheckedItems
-                    override val disabled = props.isPendingReq
+              MuiCheckBox(
+                new MuiCheckBoxProps {
+                  override val onChange = _onCheckBoxClickCbF
+                  override val checked = js.defined {
+                    props.hasCheckedItems && !props.hasUnCheckedItems
                   }
-                )
-              } else {
-                HtmlConstants.NBSP_STR
-              }
-
-            )
-          }
+                  override val indeterminate = props.hasCheckedItems && props.hasUnCheckedItems
+                  override val disabled = props.isPendingReq
+                }
+              )
+            } else {
+              HtmlConstants.NBSP_STR
+            }
+          )
 
         )
       )
