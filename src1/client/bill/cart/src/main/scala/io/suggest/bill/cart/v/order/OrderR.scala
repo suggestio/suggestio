@@ -127,7 +127,8 @@ class OrderR(
             }
           } yield {
             goToPayBtnR.PropsVal(
-              onNodeId = onNodeId
+              onNodeId = onNodeId,
+              disabled = props.order.orderContents.isPending
             )
           }
         }

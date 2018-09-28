@@ -11,8 +11,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.routes.routes
 import io.suggest.ueq.UnivEqUtil._
-
-import scala.scalajs.js.UndefOr
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -25,11 +24,13 @@ class GoToPayBtnR(
                  ) {
 
   case class PropsVal(
-                       onNodeId: String
+                       onNodeId: String,
+                       disabled: Boolean,
                      )
   implicit object GoToPayBtnRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      a.onNodeId ===* b.onNodeId
+      (a.onNodeId ===* b.onNodeId) &&
+        (a.disabled ==* b.disabled)
     }
   }
 
@@ -51,10 +52,11 @@ class GoToPayBtnR(
               override val root = orderCss.PayBtn.root.htmlClass
             }
             new MuiButtonProps {
-              override val classes = css
-              override val variant = MuiButtonVariants.extendedFab
-              override val `type`  = HtmlConstants.Input.submit
-              override val color   = MuiColorTypes.secondary
+              override val classes    = css
+              override val variant    = MuiButtonVariants.extendedFab
+              override val `type`     = HtmlConstants.Input.submit
+              override val color      = MuiColorTypes.secondary
+              override val disabled   = props.disabled
             }
           }(
             Mui.SvgIcons.Payment()(),

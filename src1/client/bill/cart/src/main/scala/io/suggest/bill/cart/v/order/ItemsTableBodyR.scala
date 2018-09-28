@@ -11,7 +11,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.m.MJdArgs
-import io.suggest.jd.render.v.JdCss
+import io.suggest.jd.render.v.{JdCss, JdR}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.n2.edge.MEdgeDataJs
@@ -22,6 +22,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.scalajs.react.raw.React
 import japgolly.univeq._
+import scalacss.ScalaCssReact._
 
 
 /**
@@ -32,8 +33,8 @@ import japgolly.univeq._
   */
 class ItemsTableBodyR(
                        orderCss               : OrderCss,
+                       jdR                    : JdR,
                        val itemRowR           : ItemRowR,
-                       val itemRowPreviewR    : ItemRowPreviewR
                      ) {
 
   /** Модель пропертисов компонента.
@@ -151,22 +152,58 @@ class ItemsTableBodyR(
               nodeItemsCount = nodeItems.length
 
               // Собрать ячейку с jd-рендером.
-              preview = propsProxy.wrap { _ =>
-                for {
-                  jdAdData <- orderContent.adId2jdDataMap.get( nodeId )
-                } yield {
-                  itemRowPreviewR.PropsVal(
-                    jdArgs    = MJdArgs(
-                      template = jdAdData.template,
-                      edges = jdAdData.edgesMap
-                        // TODO Инстанс карты с js-эджами следует собирать не тут, а в контроллере и хранить в состоянии.
-                        .mapValues(MEdgeDataJs(_)),
-                      jdCss = props.jdCss,
-                      conf  = props.jdCss.jdCssArgs.conf
-                    )
-                  )
-                }
-              }( itemRowPreviewR.apply )
+              previewOpt = {
+                // Пытаемся отрендерить как jd-карточку:
+                orderContent
+                  .adId2jdDataMap
+                  .get( nodeId )
+                  .map[VdomElement] { jdAdData =>
+                    propsProxy.wrap { _ =>
+                      MJdArgs(
+                        template = jdAdData.template,
+                        edges = jdAdData.edgesMap
+                          // TODO Opt Инстанс карты с js-эджами следует собирать не тут, а в контроллере и хранить в состоянии.
+                          .mapValues(MEdgeDataJs(_)),
+                        jdCss = props.jdCss,
+                        conf  = props.jdCss.jdCssArgs.conf
+                      )
+                    }( jdR.apply )
+                  }
+                  .orElse {
+                    // Поискать в adn node logos
+                    orderContent
+                      .adnNodesMap
+                      .get( nodeId )
+                      .map[VdomElement] { nodeProps =>
+                        // Рендерим видимую часть: иконка или что-то ещё.
+                        val nodeName = nodeProps.hint.getOrElse( nodeProps.nodeId )
+                        MuiToolTip {
+                          new MuiToolTipProps {
+                            override val title: React.Node = nodeName
+                          }
+                        } {
+                          nodeProps.icon
+                            .map[VdomElement] { icon =>
+                              <.img(
+                                orderCss.ItemsTable.NodePreviewColumn.adnLogo,
+                                ^.src := icon.url,
+                                // Это нужно для logo, и вообще не нужно для wcAsLogo, TODO отработать как-то эту ситуацию?
+                                //nodeProps.colors.bg.whenDefined { mcd =>
+                                //  ^.backgroundColor := mcd.hexCode
+                                //}
+                              )
+                            }
+                            .getOrElse[VdomElement] {
+                              MuiTypoGraphy(
+                                new MuiTypoGraphyProps {
+                                  override val variant = MuiTypoGraphyVariants.subheading
+                                }
+                              )( nodeName )
+                            }
+                        }
+                      }
+                  }
+              }
 
               // Пройти item'ы, наконец:
               (mitem, i) <- nodeItems.iterator.zipWithIndex
@@ -178,7 +215,7 @@ class ItemsTableBodyR(
                   mitem         = mitem,
                   rowOpts       = props.rowOpts,
                   isSelected    = mitem.id.map(props.selectedIds.contains),
-                  rcvrNode      = mitem.rcvrIdOpt.flatMap( orderContent.rcvrsMap.get ),
+                  rcvrNode      = mitem.rcvrIdOpt.flatMap( orderContent.adnNodesMap.get ),
                   isPendingReq  = props.orderContents.isPending,
                   previewRowSpan = OptionUtil.maybe(isWithPreview)(nodeItemsCount)
                 )
@@ -186,7 +223,7 @@ class ItemsTableBodyR(
                 itemRowR.component
                   .withKey(nodeId + HtmlConstants.UNDERSCORE + mitem.id.get)( itemPropsValProxy )(
                     // Рендерить первую ячейку с превьюшкой надо только в первом ряду, остальные ряды - rowspan'ятся
-                    ReactCommonUtil.maybeNode( isWithPreview )( preview )
+                    ReactCommonUtil.maybeNode( isWithPreview )( previewOpt )
                   )
               }
             }

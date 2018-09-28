@@ -92,8 +92,6 @@ class ItemRowR(
     def render(propsProxy: Props, children: PropsChildren): VdomElement = {
       val props = propsProxy.value
 
-      val isSelected = props.isSelected.getOrElseFalse
-
       // Ключ ряда задаётся на уровне вызова компонента, не здесь.
       MuiTableRow()(
 
@@ -115,11 +113,6 @@ class ItemRowR(
 
         // Определение товара/услуги:
         MuiTableCell()(
-
-          // Стрелочка-разделитель:
-          //HtmlConstants.NBSP_STR,
-          //Mui.SvgIcons.TrendingFlat()(),
-          //HtmlConstants.NBSP_STR,
 
           {
             val (avaIconComponent, iconHintCodeOpt) = if (props.mitem.rcvrIdOpt.isDefined) {
@@ -241,7 +234,7 @@ class ItemRowR(
             MuiCheckBox(
               new MuiCheckBoxProps {
                 override val onChange = _itemCheckBoxChangedJsF
-                override val checked = js.defined( isSelected )
+                override val checked = js.defined( props.isSelected.getOrElseFalse )
                 override val indeterminate = false
                 override val disabled = props.isPendingReq
               }

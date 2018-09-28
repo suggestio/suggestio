@@ -1,5 +1,6 @@
 package controllers.cbill
 
+import akka.stream.scaladsl.{Keep, Sink, Source}
 import controllers.{SioController, routes}
 import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderContent, MOrderItemRowOpts}
 import io.suggest.bill.{MCurrencies, MGetPriceResp, MPrice}
@@ -35,6 +36,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{ActionBuilder, AnyContent}
 import util.TplDataFormatUtil
 import util.ad.IJdAdUtilDi
+import util.adv.geo.IAdvGeoRcvrsUtilDi
 
 import scala.concurrent.Future
 
@@ -57,6 +59,7 @@ trait LkBillOrders
   with IBlkImgMakerDI
   with IIsAuth
   with IJdAdUtilDi
+  with IAdvGeoRcvrsUtilDi
 {
 
   protected val reqUtil: ReqUtil
@@ -605,15 +608,18 @@ trait LkBillOrders
       iter.toSeq
     }
 
-    // Отрендерить jd-карточки в JSON:
-    val jdAdDatasFut = for {
-      mitems <- mitemsFut
-
-      // Сбор id узлов, которые скорее всего являются карточками.
-      itemNodeIds = mitems
+    // Собрать множество nodeId из mitems:
+    val itemNodeIdsFut = for (mitems <- mitemsFut) yield {
+      mitems
         .iterator
         .map(_.nodeId)
         .toSet
+    }
+
+    // Отрендерить jd-карточки в JSON:
+    val jdAdDatasFut = for {
+      // Сбор id узлов, которые скорее всего являются карточками.
+      itemNodeIds <- itemNodeIdsFut
 
       // Дождаться прочитанных узлов:
       allNodesMap <- allNodesMapFut
@@ -624,7 +630,6 @@ trait LkBillOrders
           (mnode.common.ntype ==* MNodeTypes.Ad) &&
             mnode.extras.doc.nonEmpty
         }
-      renderStartedAt = System.currentTimeMillis()
 
       // Начинаем рендерить
       adDatas <- Future.traverse( adNodesMap.values ) { mad =>
@@ -652,7 +657,7 @@ trait LkBillOrders
       }
 
     } yield {
-      LOGGER.trace(s"$logPrefix json-rendered ${adDatas.size} jd-ads in ${System.currentTimeMillis() - renderStartedAt} ms")
+      LOGGER.trace(s"$logPrefix json-rendered ${adDatas.size} jd-ads")
       adDatas
     }
 
@@ -667,21 +672,57 @@ trait LkBillOrders
       }
     }
 
+    // Отбираем adn-узлы, которые заявлены в item.nodeId, рендерим в props+logo, объединяем с отрендеренными ресиверами
+    val itemAdnNodesFut = for {
+
+      itemNodeIds <- itemNodeIdsFut
+      allNodesMap <- allNodesMapFut
+
+      // Оставляем только adn-узлы.
+      adnNodes = allNodesMap
+        .filterKeys( itemNodeIds.contains )
+        // Лениво фильтруем в immutable-коллекцию:
+        .valuesIterator
+        // Здесь интересны только adn-узлы:
+        .filter { mnode =>
+          mnode.common.ntype ==* MNodeTypes.AdnNode
+        }
+        .toStream
+
+      // Прогоняем через рендер базовых данных по узлам:
+      adnNodesPropsShapes <- {
+        advGeoRcvrsUtil.nodesAdvGeoPropsSrc(
+          nodesSrc = Source( adnNodes ),
+          // Т.к. интересует вертикальный/квадратный лого, то делаем приоритет на картинку приветствия.
+          wcAsLogo = true
+        )
+          .map(_._2)
+          .toMat( Sink.seq )(Keep.right)
+          .run()
+      }
+
+      // Объеденить с ресиверами из кода выше, т.к. все будут отправлены одной пачкой.
+      rcvrs <- rcvrsFut
+
+    } yield {
+      adnNodesPropsShapes ++ rcvrs
+    }
+
     // Наконец, сборка результата:
     for {
       morderOpt     <- morderOptFut
       mitems        <- mitems2Fut
       mTxns         <- mTxnsFut
-      rcvrs         <- rcvrsFut
+      itemAdnNodes  <- itemAdnNodesFut
       jdAdDatas     <- jdAdDatasFut
       orderPrices   <- orderPricesFut
     } yield {
-      LOGGER.trace(s"$logPrefix order#${morderOpt.flatMap(_.id).orNull}, ${mitems.length} items, ${mTxns.length} txns, ${rcvrs.length} rcvrs, ${jdAdDatas.size} jd-ads")
+      LOGGER.trace(s"$logPrefix order#${morderOpt.flatMap(_.id).orNull}, ${mitems.length} items, ${mTxns.length} txns, ${itemAdnNodes.length} rcvrs, ${jdAdDatas.size} jd-ads")
       MOrderContent(
         order       = morderOpt,
         items       = mitems,
         txns        = mTxns,
-        rcvrs       = rcvrs,
+        adnNodes    = itemAdnNodes,
         adsJdDatas  = jdAdDatas,
         orderPrices = orderPrices
       )

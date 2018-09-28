@@ -22,6 +22,7 @@ import util.acl._
 import util.ad.JdAdUtil
 import util.adn.NodesUtil
 import util.adv.AdvUtil
+import util.adv.geo.AdvGeoRcvrsUtil
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.img.{DynImgUtil, GalleryUtil, IImgMaker, LogoUtil}
 import views.html.lk.billing._
@@ -51,6 +52,7 @@ class LkBill2 @Inject() (
                           canViewNodeAdvInfo          : CanViewNodeAdvInfo,
                           override val isNodeAdmin    : IsNodeAdmin,
                           dynImgUtil                  : DynImgUtil,
+                          override val advGeoRcvrsUtil: AdvGeoRcvrsUtil,
                           override val jdAdUtil       : JdAdUtil,
                           override val mItems         : MItems,
                           override val bill2Util      : Bill2Util,

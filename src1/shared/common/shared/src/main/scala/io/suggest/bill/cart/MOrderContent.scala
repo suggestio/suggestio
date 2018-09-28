@@ -28,7 +28,7 @@ object MOrderContent {
       (a.order ===* b.order) &&
       (a.items ===* b.items) &&
       (a.txns  ===* b.txns) &&
-      (a.rcvrs ===* b.rcvrs)
+      (a.adnNodes ===* b.adnNodes)
     }
   }
 
@@ -75,19 +75,20 @@ object MOrderContent {
   * @param items Содержимое ордера.
   * @param txns Денежные транзакции по ордеру.
   * @param orderPrice Полная стоимость заказа.
+  * @param adnNodes ADN-узлы из item.nodeId, item.rcvrId и проч.
   */
 case class MOrderContent(
                           order       : Option[MOrder],
                           items       : Seq[MItem],
                           txns        : Seq[MTxn],
-                          rcvrs       : Iterable[MAdvGeoMapNodeProps],
+                          adnNodes    : Iterable[MAdvGeoMapNodeProps],
                           adsJdDatas  : Iterable[MJdAdData],
                           orderPrices : Iterable[MPrice]
                         ) {
 
   /** Сборка инстанса карты ресиверов. Происходит на клиенте, когда наступает необходимость. */
-  lazy val rcvrsMap: Map[String, MAdvGeoMapNodeProps] =
-    IId.els2idMap[String, MAdvGeoMapNodeProps]( rcvrs )
+  lazy val adnNodesMap: Map[String, MAdvGeoMapNodeProps] =
+    IId.els2idMap[String, MAdvGeoMapNodeProps]( adnNodes )
 
   /** Сборка карты отрендеренных карточек. */
   lazy val adId2jdDataMap: Map[String, MJdAdData] =

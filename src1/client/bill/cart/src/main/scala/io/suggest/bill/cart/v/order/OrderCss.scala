@@ -35,6 +35,11 @@ class OrderCss extends StyleSheet.Inline {
         )
       }
 
+      /** Стиль для картинки логотипа adn-узла.*/
+      val adnLogo = style(
+        width( 75.px )
+      )
+
     }
 
 

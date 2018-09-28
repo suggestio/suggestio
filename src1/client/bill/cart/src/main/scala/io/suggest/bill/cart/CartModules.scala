@@ -21,7 +21,6 @@ class CartModules {
   lazy val cartCss = wire[OrderCss]
 
   lazy val itemRowR = wire[ItemRowR]
-  lazy val itemRowPreviewR = wire[ItemRowPreviewR]
   lazy val itemTableHeadR = wire[ItemsTableHeadR]
   lazy val itemTableBodyR = wire[ItemsTableBodyR]
   lazy val itemsToolBarR = wire[ItemsToolBarR]
