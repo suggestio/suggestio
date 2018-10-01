@@ -3,35 +3,28 @@ package controllers.cbill
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import controllers.{SioController, routes}
 import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderContent}
-import io.suggest.bill.{MCurrencies, MCurrency, MGetPriceResp, MPrice}
+import io.suggest.bill.{MCurrency, MPrice}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
-import io.suggest.mbill2.m.balance.MBalance
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{IMItems, ItemStatusChanged, MItem}
 import io.suggest.mbill2.m.order.{IMOrders, MOrder, MOrderStatuses, OrderStatusChanged}
-import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced, MTxnTypes}
-import io.suggest.model.n2.node.{MNode, MNodeTypes}
+import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced}
+import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.play.qsb.QsbSeq
 import io.suggest.primo.id.OptId
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.IMacroLogs
-import models.blk.{IRenderArgs, RenderArgs}
 import models.mbill._
 import models.mctx.Context
 import models.req._
-import play.api.i18n.Messages
 import util.acl._
-import util.blocks.IBlkImgMakerDI
 import util.billing.IBill2UtilDi
-import util.di.ILogoUtilDi
 import views.html.lk.billing.order._
 import japgolly.univeq._
-import models.im.make.MakeResult
 import play.api.libs.json.Json
 import play.api.mvc.{ActionBuilder, AnyContent}
 import util.TplDataFormatUtil
@@ -55,8 +48,6 @@ trait LkBillOrders
   with IMItems
   with ICanViewOrder
   with ICanAccessItemDi
-  with ILogoUtilDi
-  with IBlkImgMakerDI
   with IIsAuth
   with IJdAdUtilDi
   with IAdvGeoRcvrsUtilDi
@@ -70,103 +61,8 @@ trait LkBillOrders
   /** Сколько ордеров рисовать на одной странице списка ордеров? */
   private def ORDERS_PER_PAGE = 10
 
-  /** Отображение карточек в таком вот размере. */
-  private def ADS_SZ_MULT = 0.33F
 
-
-  /** Показать страничку с заказом.
-    *
-    * @param orderId id ордера.
-    * @param onNodeId id узла, на котором открыта морда ЛК.
-    */
-  def showOrder(orderId: Gid_t, onNodeId: MEsUuId) = csrf.AddToken {
-    canViewOrder(orderId, onNodeId = Some(onNodeId), U.Lk).async { implicit request =>
-      // Поискать транзакцию по оплате ордера, если есть.
-      val txnsFut = slick.db.run {
-        bill2Util.getOrderTxns(orderId)
-      }
-
-      // Получить item'ы для рендера содержимого текущего заказа.
-      val mitemsFut = bill2Util.orderItemsFut(orderId)
-      val ctxFut = request.user.lkCtxDataFut.map { implicit lkCtxData =>
-        implicitly[Context]
-      }
-
-      // Собрать данные для рендера списка узлов.
-      val mItemsTplArgsFut = _mItemsTplArgs(mitemsFut, ctxFut, request.mnodeOpt.get)
-
-      // Собрать карту балансов по id. Она нужна для рендера валюты транзакции. Возможно ещё для чего-либо пригодится.
-      // Нет смысла цеплять это об необязательно найденную транзакцию, т.к. U.Lk наверху гарантирует, что mBalancesFut уже запущен на исполнение.
-      val mBalsMapFut = for {
-        mBals <- request.user.mBalancesFut
-      } yield {
-        OptId.els2idMap[Gid_t, MBalance](mBals)
-      }
-
-      // Посчитать текущую стоимость заказа:
-      val orderPricesFut = slick.db.run {
-        bill2Util.getOrderPrices(orderId)
-      }
-
-      // Карта стоимостей заказа по валютам нужна для определения некоторых особенностей рендера.
-      val orderPricesByCurFut = orderPricesFut
-        .map( MCurrencies.hardMapByCurrency )
-
-      // Бывают случаи, когда размер платежа превышает стоимость заказа: сработал минимальный платёж.
-      // Если сразу не вывести оплаченную сумму, то юзер может испугаться, не промотав до списка транзакций.
-      // Поэтому, считаем общую стоимость платежных транзакций, сравниваем с orderPrices.
-      val payPricesByCurFut = for {
-        txns          <- txnsFut
-        mBalsMap      <- mBalsMapFut
-      } yield {
-        val payTxnsIter = for {
-          mtxn <- txns.iterator
-          if mtxn.txType ==* MTxnTypes.PaySysTxn
-          mbal <- mBalsMap.get( mtxn.balanceId )
-        } yield {
-          MPrice( mtxn.amount, mbal.price.currency )
-        }
-        val payTxns = payTxnsIter.toSeq
-        MPrice.sumPricesByCurrency( payTxns )
-      }
-
-      // Вычисляем платежи, где транзакция ПС превышает стоимость заказа.
-      val payOverPricesFut = for {
-        payPricesByCur  <- payPricesByCurFut
-        orderPriceByCur <- orderPricesByCurFut
-      } yield {
-        val iter = for {
-          kv @ (cur, payPrice)  <- payPricesByCur.iterator
-          curOrderPrice         <- orderPriceByCur.get( cur )
-          if payPrice.amount > curOrderPrice.amount
-        } yield {
-          kv
-        }
-        iter.toMap
-      }
-
-      // Отрендерить ответ, когда всё будет готово.
-      for {
-        txns          <- txnsFut
-        orderPrices   <- orderPricesFut
-        mBalsMap      <- mBalsMapFut
-        ctx           <- ctxFut
-        mItemsTplArgs <- mItemsTplArgsFut
-        payOverPrices <- payOverPricesFut
-      } yield {
-
-        val tplArgs = MShowOrderTplArgs(
-          _underlying   = mItemsTplArgs,
-          morder        = request.morder,
-          orderPrices   = orderPrices,
-          txns          = txns,
-          balances      = mBalsMap,
-          payOverPrices = payOverPrices
-        )
-        Ok( ShowOrderTpl(tplArgs)(ctx) )
-      }
-    }
-  }
+  /* Код для вычисления переплат по транзакциям был в showOrder(), удалён после 09a112d9b548e68be06b7b5b057ead86dccc677e */
 
 
   /** Показать ордеры, относящиеся к текущему юзеру.
@@ -267,147 +163,6 @@ trait LkBillOrders
   }
 
 
-  /**
-    * Подготовка аргументов для рендера шаблона [[views.html.lk.billing.order._ItemsTpl]].
-    * @param mitemsFut Найденные в биллинге item'ы.
-    * @param ctxFut Контекст.
-    * @param request Текущий HTTP-реквест.
-    * @return Фьючерс.
-    */
-  private def _mItemsTplArgs(mitemsFut: Future[Seq[MItem]], ctxFut: Future[Context], mnode: MNode)
-                            (implicit request: IReq[_]): Future[MItemsTplArgs] = {
-    // Собрать id узлов, на которые завязаны item'ы.
-    val itemNodeIdsFut = for (mitems <- mitemsFut) yield {
-      mitems.iterator
-        .map(_.nodeId)
-        .toSet
-    }
-    // Собрать id узлов-ресиверов.
-    val rcvrIdsFut = for (mitems <- mitemsFut) yield {
-      mitems.iterator
-        .filter( _.iType != MItemTypes.GeoTag )
-        .flatMap( _.rcvrIdOpt )
-        .toSet
-    }
-
-    // Узнать все узлы, но в виде единой карты.
-    val allNodesMapFut = for {
-      itemNodeIds <- itemNodeIdsFut
-      rcvrIds     <- rcvrIdsFut
-      allNodeIds  = itemNodeIds ++ rcvrIds
-      allNodes    <- mNodesCache.multiGet(allNodeIds)
-    } yield {
-      OptId.els2idMap[String, MNode](allNodes)
-    }
-
-    lazy val logPrefix = s"cart[${System.currentTimeMillis()}]:"
-
-    // Собрать последовательность карточек для рендера, которые относятся к найденным mitem'ам:
-    val itemNodesFut = for {
-      mitems      <- mitemsFut
-      allNodeMap  <- allNodesMapFut
-    } yield {
-      mitems
-        .map(_.nodeId)
-        .distinct
-        .flatMap { itemNodeId =>
-          val r = allNodeMap.get(itemNodeId)
-          if (r.isEmpty)
-            LOGGER.warn(s"$logPrefix Cannot find item node $itemNodeId")
-          r
-        }
-    }
-
-    // Получаем мультипликатор размера отображения.
-    val szMult = ADS_SZ_MULT
-
-    // Собрать карту аргументов для рендера карточек
-    val node2brArgsMapFut: Future[Map[String, IRenderArgs]] = for {
-      itemNodeIds <- itemNodeIdsFut
-      allNodesMap <- allNodesMapFut
-      brArgss     <- Future.sequence {
-        // Интересуют только ноды, которые можно рендерить как рекламные карточки.
-        //val devScrOpt = ctx.deviceScreenOpt
-        for {
-          (nodeId, mad) <- allNodesMap
-          if itemNodeIds.contains(nodeId) && mad.ad.nonEmpty
-        } yield {
-          for {
-            bgOpt <-  Future.successful(Option.empty[MakeResult]) // TODO mad2 BgImg.maybeMakeBgImgWith(mad, blkImgMaker, szMult, devScrOpt)
-          } yield {
-            val ra = RenderArgs(
-              mad       = mad,
-              withEdit  = false,
-              bgImg     = bgOpt,
-              szMult    = szMult,
-              inlineStyles  = true,
-              isFocused     = false
-            )
-            mad.id.get -> ra
-          }
-        }
-      }
-    } yield {
-      brArgss.toMap
-    }
-
-    // Сборка карты итемов ордера, сгруппированных по adId
-    val node2itemsMapFut = for {
-      mitems <- mitemsFut
-    } yield {
-      mitems.groupBy(_.nodeId)
-    }
-
-    // Собрать карту картинок-логотипов узлов. ADN-узлы нельзя ренедрить как карточки, но можно взять логотипы.
-    val node2logoMapFut = for {
-      ctx         <- ctxFut
-      itemNodeIds <- itemNodeIdsFut
-      allNodesMap <- allNodesMapFut
-      devScreenOpt = ctx.deviceScreenOpt
-      node2logos  <- Future.sequence {
-        for {
-          (nodeId, mnode) <- allNodesMap
-          // Пока интересуют только логотипы узлов, которые вместо рекламных карточек будут отображаться.
-          if itemNodeIds.contains(nodeId) && mnode.ad.isEmpty
-        } yield {
-          // Готовим логотип данного узла... Если логотипа нет, то тут будет синхронное None.
-          val logoOptRaw = logoUtil.getLogoOfNode(mnode)
-          for {
-            logoOptScr     <- logoUtil.getLogoOpt4scr(logoOptRaw, devScreenOpt)
-          } yield {
-            for (logo <- logoOptScr; nodeId <- mnode.id) yield {
-              nodeId -> logo
-            }
-          }
-        }
-      }
-    } yield {
-      node2logos
-        .iterator
-        .flatten
-        .toMap
-    }
-
-    // Рендер и возврат ответа
-    for {
-      allNodesMap     <- allNodesMapFut
-      nodes           <- itemNodesFut
-      node2logosMap   <- node2logoMapFut
-      node2brArgsMap  <- node2brArgsMapFut
-      node2itemsMap   <- node2itemsMapFut
-    } yield {
-      MItemsTplArgs(
-        mnode         = mnode,
-        nodesMap      = allNodesMap,
-        itemNodes     = nodes,
-        node2logo     = node2logosMap,
-        node2brArgs   = node2brArgsMap,
-        node2items    = node2itemsMap
-      )
-    }
-  }
-
-
   /** Страница для react-корзины.
     *
     * @param onNodeId На каком узле рендерится страница.
@@ -481,7 +236,7 @@ trait LkBillOrders
 
       // Данные формы для инициализации.
       for {
-        orderIdOpt  <- orderIdOptFut
+        orderIdOpt      <- orderIdOptFut
         formInitB64     <- formInitB64Fut
         ctx             <- ctxFut
       } yield {
@@ -770,74 +525,6 @@ trait LkBillOrders
   }
 
 
-  /**
-    * Рендер страницы с корзиной покупок юзера в рамках личного кабинета узла.
-    *
-    * @param onNodeId На каком узле сейчас смотрим корзину текущего юзера?
-    * @param r Куда производить возврат из корзины.
-    * @return 200 ОК с html страницей корзины.
-    */
-  def cart2(onNodeId: String, r: Option[String]) = csrf.AddToken {
-    // TODO Это старая без-react-овая корзина. Страшненькая и без jd-рендера. Надо удалить эту корзину и смежные экшены.
-    isNodeAdmin(onNodeId, U.Lk, U.ContractId).async { implicit request =>
-
-      // Найти ордер-корзину юзера в базе биллинга по контракту юзера:
-      val cartOptFut = request.user.contractIdOptFut.flatMap { mcIdOpt =>
-        FutureUtil.optFut2futOpt(mcIdOpt) { mcId =>
-          slick.db.run {
-            bill2Util.getCartOrder(mcId)
-          }
-        }
-      }
-
-      // Найти item'ы корзины:
-      val mitemsFut = cartOptFut.flatMap { cartOpt =>
-        cartOpt
-          .flatMap(_.id)
-          .fold [Future[Seq[MItem]]] (Future.successful(Nil)) { bill2Util.orderItemsFut }
-      }
-
-      // Параллельно собираем контекст рендера
-      val ctxFut = for {
-        lkCtxData <- request.user.lkCtxDataFut
-      } yield {
-        implicit val ctxData = lkCtxData
-        implicitly[Context]
-      }
-
-      // Начать сборку аргументов для рендера списка item'ов.
-      val mItemsTplArgsFut = _mItemsTplArgs(mitemsFut, ctxFut, request.mnode)
-
-      // Рассчет общей стоимости корзины
-      val totalPricingFut = for {
-        mitems <- mitemsFut
-      } yield {
-        MGetPriceResp(
-          prices = MPrice.toSumPricesByCurrency(mitems).values
-        )
-      }
-
-      // Рендер и возврат ответа
-      for {
-        ctx             <- ctxFut
-        mItemsTplArgs   <- mItemsTplArgsFut
-        totalPricing    <- totalPricingFut
-      } yield {
-        // Сборка аргументов для вызова шаблона
-        val args = MCartTplArgs(
-          _underlying   = mItemsTplArgs,
-          r             = r,
-          totalPricing  = totalPricing
-        )
-
-        // Рендер результата
-        val html = CartTpl(args)(ctx)
-        Ok(html)
-      }
-    }
-  }
-
-
 
   /**
     * Сабмит формы подтверждения корзины.
@@ -900,84 +587,6 @@ trait LkBillOrders
           case MCartIdeas.NothingToDo =>
             Redirect( routes.LkBill2.orderPage(onNodeId) )
               .flashing( FLASH.ERROR -> ctx.messages("Your.cart.is.empty") )
-        }
-      }
-    }
-  }
-
-
-  /**
-    * Очистить корзину покупателя.
-    *
-    * @param onNodeId На какой ноде в ЛК происходит действие очистки.
-    * @param r Адрес страницы для возвращения юзера.
-    *          Если пусто, то юзер будет отправлен на страницу своей пустой корзины.
-    * @return Редирект.
-    */
-  def cartClear(onNodeId: String, r: Option[String]) = csrf.Check {
-    isNodeAdmin(onNodeId, U.ContractId).async { implicit request =>
-      lazy val logPrefix = s"cartClear(u=${request.user.personIdOpt.orNull},on=$onNodeId):"
-
-      request.user
-        .contractIdOptFut
-        // Выполнить необходимые операции в БД биллинга.
-        .flatMap { contractIdOpt =>
-          // Если корзина не существует, то делать ничего не надо.
-          val contractId = contractIdOpt.get
-
-          // Запускаем без transaction на случай невозможности удаления ордера корзины.
-          slick.db.run {
-            bill2Util.clearCart(contractId)
-          }
-        }
-        // Подавить и залоггировать возможные ошибки.
-        .recover { case ex: Exception =>
-          ex match {
-            case _: NoSuchElementException =>
-              LOGGER.trace(s"$logPrefix Unable to clear cart, because contract or cart order does NOT exists")
-            case _ =>
-              LOGGER.warn(s"$logPrefix Cart clear failed", ex)
-          }
-          0
-        }
-        // Независимо от исхода, вернуть редирект куда надо.
-        .map { itemsDeleted =>
-          LOGGER.trace(s"$logPrefix $itemsDeleted items deleted.")
-          RdrBackOr(r)(routes.LkBill2.orderPage(onNodeId))
-        }
-    }
-  }
-
-
-  /**
-    * Удалить item из корзины, вернувшись затем на указанную страницу.
-    *
-    * @param itemId id удаляемого item'а.
-    * @param r Обязательный адрес для возврата по итогам действа.
-    * @return Редирект в r.
-    */
-  def cartDeleteItem(itemId: Gid_t, r: String) = csrf.Check {
-    canAccessItem(itemId, edit = true).async { implicit request =>
-      lazy val logPrefix = s"cartDeleteItem($itemId):"
-
-      // Права уже проверены, item уже получен. Нужно просто удалить его.
-      val delFut0 = slick.db.run {
-        bill2Util.deleteItem( itemId )
-      }
-
-      // Подавить возможные ошибки удаления.
-      val delFut = delFut0.recover { case ex: Throwable =>
-        LOGGER.error(s"$logPrefix Item delete failed", ex)
-        0
-      }
-
-      for (rowsDeleted <- delFut) yield {
-        val resp0 = Redirect(r)
-        if (rowsDeleted ==* 1) {
-          resp0
-        } else {
-          LOGGER.warn(s"$logPrefix MItems.deleteById() returned invalid deleted rows count: $rowsDeleted")
-          resp0.flashing(FLASH.ERROR -> implicitly[Messages].apply("Something.gone.wrong"))
         }
       }
     }

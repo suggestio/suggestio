@@ -1,9 +1,0 @@
-@(advPricing: io.suggest.bill.MGetPriceResp)(implicit ctx: Context)
-
-@* Рендер плашки с ценой. *@
-@import ctx.messages
-@import util.TplDataFormatUtil.formatPrice
-
-@for(price <- advPricing.prices) {
-  @formatPrice(price)
-}

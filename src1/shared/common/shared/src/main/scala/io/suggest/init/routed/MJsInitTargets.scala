@@ -25,9 +25,6 @@ object MJsInitTargets extends StringEnum[MJsInitTarget] {
   /** Цель инициализации для поддержки скрытой капчи, загружаемой и отображаемой опционально. */
   case object HiddenCaptcha extends MJsInitTarget("k")
 
-  /** Цель для инициализации страницы списка транзакций биллинга. */
-  case object BillTxnsList extends MJsInitTarget("l")
-
   /** Цель для инициализации страницы размещения в геотегах. */
   case object AdvGeoForm extends MJsInitTarget("m")
 

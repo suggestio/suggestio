@@ -31,12 +31,6 @@
         css   = classesAct( rightCurrEl.contains(RPL_ORDERS), "__bill-orders" )
       )
 
-      @_navItemTpl(
-        title = messages("Transactions.history"),
-        href  = Some( routes.LkBill2.txnsList(nodeId, inline = false) ),
-        css   = classesAct( rightCurrEl.contains(RPL_TRANSACTIONS), "__transactions-history")
-      )
-
       @_navSysTpl(
         call  = routes.SysBilling.forNode(nodeId)
       )

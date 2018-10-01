@@ -34,7 +34,7 @@ object MuiPaletteTypes {
 }
 
 
-trait MuiTypography extends js.Object {
+trait MuiThemeTypoGraphy extends js.Object {
   val fontFamily: js.UndefOr[js.Array[String]] = js.undefined
   val fontSize: js.UndefOr[Int] = js.undefined
   val htmlFontSiz: js.UndefOr[Int] = js.undefined
@@ -43,7 +43,7 @@ trait MuiTypography extends js.Object {
 
 trait MuiRawTheme extends js.Object {
   val palette: MuiPalette
-  val typography: js.UndefOr[MuiTypography] = js.undefined
+  val typography: js.UndefOr[MuiThemeTypoGraphy] = js.undefined
 }
 
 

@@ -1,13 +1,12 @@
 package controllers
 
 import akka.util.ByteString
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.{Inject, Singleton}
 import controllers.cbill._
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.order.MOrders
-import io.suggest.mbill2.m.txn.MTxns
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.node.MNode
 import io.suggest.pick.PickleUtil
@@ -24,7 +23,7 @@ import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.adv.geo.AdvGeoRcvrsUtil
 import util.billing.{Bill2Util, TfDailyUtil}
-import util.img.{DynImgUtil, GalleryUtil, IImgMaker, LogoUtil}
+import util.img.GalleryUtil
 import views.html.lk.billing._
 
 import scala.concurrent.Future
@@ -45,24 +44,19 @@ class LkBill2 @Inject() (
                           override val reqUtil        : ReqUtil,
                           override val isAuth         : IsAuth,
                           nodesUtil                   : NodesUtil,
-                          override val logoUtil       : LogoUtil,
                           override val canViewOrder   : CanViewOrder,
                           override val canAccessItem  : CanAccessItem,
-                          @Named("blk") override val blkImgMaker  : IImgMaker,
                           canViewNodeAdvInfo          : CanViewNodeAdvInfo,
                           override val isNodeAdmin    : IsNodeAdmin,
-                          dynImgUtil                  : DynImgUtil,
                           override val advGeoRcvrsUtil: AdvGeoRcvrsUtil,
                           override val jdAdUtil       : JdAdUtil,
                           override val mItems         : MItems,
                           override val bill2Util      : Bill2Util,
-                          override val mTxns          : MTxns,
                           override val mOrders        : MOrders,
                           override val mCommonDi      : ICommonDi
                         )
   extends SioControllerImpl
   with MacroLogsImpl
-  with LkBillTxns
   with LkBillOrders
 {
 

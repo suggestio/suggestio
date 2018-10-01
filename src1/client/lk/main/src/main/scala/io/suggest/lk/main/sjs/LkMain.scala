@@ -6,7 +6,6 @@ import io.suggest.ads.LkAdsInit
 import io.suggest.bill.cart.CartPageInit
 import io.suggest.lk.adn.map.init.LkAdnMapFormInitRouter
 import io.suggest.lk.adv.geo.AdvGeoFormInitRouter
-import io.suggest.lk.bill.txn.TxnsListInit
 import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.ident.center.CenterContentInitRouter
 import io.suggest.lk.ident.center.captcha.{CaptchaFormInit, HiddenCaptchaInit}
@@ -56,7 +55,6 @@ class LkInitRouter
   with LkAdsInit
   with LkAdnMapFormInitRouter
   with CenterContentInitRouter
-  with TxnsListInit
   with CaptchaFormInit
   with HiddenCaptchaInit
   with LkNodesInitRouter

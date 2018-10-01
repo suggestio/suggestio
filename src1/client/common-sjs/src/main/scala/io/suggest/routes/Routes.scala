@@ -255,8 +255,6 @@ sealed trait LkBill2CtlRoutes extends js.Object {
 
   def cartSubmit(onNodeId: String): Route = js.native
 
-  def txnsList(adnId: String, page: Int, inline: Boolean): Route = js.native
-
   /** Получить бинарь с данными размещения по узлу. */
   def nodeAdvInfo(nodeId: String, forAdId: String = null): Route = js.native
 

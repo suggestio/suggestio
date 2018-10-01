@@ -20,7 +20,7 @@ object NodeRightPanelLinks extends Enumeration {
 /** Enum для задания параметра подсветки текущей ссылки на правой панели в разделе биллинга узла. */
 object BillingRightPanelLinks extends Enumeration {
   type T = Value
-  val RPL_BILLING, RPL_CART, RPL_ORDERS, RPL_TRANSACTIONS = Value : T
+  val RPL_BILLING, RPL_CART, RPL_ORDERS = Value : T
 }
 
 /** Enum для задания параметра подсветки текущей ссылки на левой панели ЛК.*/

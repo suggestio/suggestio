@@ -28,16 +28,6 @@ trait ITfDailyTplArgs {
 }
 
 
-trait ITfDailyTplArgsWrap extends ITfDailyTplArgs {
-  protected def underlying: ITfDailyTplArgs
-
-  override def mnode = underlying.mnode
-  override def tfDaily = underlying.tfDaily
-  override def madTfOpt = underlying.madTfOpt
-  override def calsMap = underlying.calsMap
-}
-
-
 /** Дефолтовая реализация [[ITfDailyTplArgs]]. */
 case class MTfDailyTplArgs(
                             override val mnode      : MNode,
