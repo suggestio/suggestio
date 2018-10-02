@@ -210,6 +210,12 @@ lazy val reactGridLayoutSjs = {
     .dependsOn( commonReactSjs )
 }
 
+/** Форма модерации. */
+lazy val sysMdrSjs = {
+  Project(id = "sys-mdr-sjs", base = file(s"${DIR0}client/sys/mdr"))
+    .dependsOn( lkCommonSjs, reactMaterialUiSjs, jdRenderSjs )
+}
+
 /** Scala.js-фасад для компонентов react-stonecutter (реализация grid layout). */
 lazy val reactStoneCutterSjs = {
   val name = "react-stonecutter"
@@ -410,7 +416,7 @@ lazy val lkAdsSjs = {
 lazy val lkSjs = {
   Project(id = "lk-sjs", base = file(DIR0 + "client/lk/main"))
     .enablePlugins(WebScalaJS)
-    .dependsOn(lkAdvExtSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs, lkAdEditorSjs, lkAdsSjs, lkAdnEditSjs, cartSjs)
+    .dependsOn(lkAdvExtSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs, lkAdEditorSjs, lkAdsSjs, lkAdnEditSjs, cartSjs, sysMdrSjs)
 }
 
 /** scala.js реализация системы мониторинга js-маячков. */
@@ -596,6 +602,7 @@ lazy val sio2 = {
       asmCryptoJsSjs, asmCryptoSioSjs,
       util, esUtil, textUtil, swfs, n2, securesocial,
       ipgeobase, stat,
+      sysMdrSjs,
       mgeo, commonWww, nodesWww,
       mbill2, payWww, cartSjs,
       secWwwUtil, secAvUtil, svgUtil,

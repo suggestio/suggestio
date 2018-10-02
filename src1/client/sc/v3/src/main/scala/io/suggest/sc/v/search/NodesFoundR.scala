@@ -140,7 +140,6 @@ class NodesFoundR(
                     Messages( MsgCodes.`Something.gone.wrong` )
                   ),
                   MuiListItemIcon()(
-
                     Mui.SvgIcons.ErrorOutline()()
                   )
                 )

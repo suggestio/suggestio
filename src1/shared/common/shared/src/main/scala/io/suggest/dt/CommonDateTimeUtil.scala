@@ -2,6 +2,8 @@ package io.suggest.dt
 
 import java.time.{LocalDate, OffsetDateTime, ZoneOffset}
 
+import io.suggest.dt.interval.MRangeYmdOpt
+import io.suggest.mbill2.m.item.MItem
 import play.api.libs.json._
 import scalaz.{Validation, ValidationNel}
 
@@ -113,6 +115,19 @@ object CommonDateTimeUtil {
           year  = ld.getYear,
           month = ld.getMonthValue,
           day   = ld.getDayOfMonth
+        )
+      }
+
+    }
+
+
+    implicit class ItemDtOpsExt( val mitem: MItem ) extends AnyVal {
+
+      def dtToRangeYmdOpt: MRangeYmdOpt = {
+        def _offDt2YmdF(offDt: OffsetDateTime) = offDt.toLocalDate.toYmd
+        MRangeYmdOpt(
+          dateStartOpt = mitem.dateStartOpt.map(_offDt2YmdF),
+          dateEndOpt   = mitem.dateEndOpt.map(_offDt2YmdF)
         )
       }
 

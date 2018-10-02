@@ -15,7 +15,10 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 object RangeYmdR {
 
-  final case class Props(capFirst: Boolean, rangeYmdOpt: MRangeYmdOpt)
+  final case class Props(
+                          capFirst: Boolean,
+                          rangeYmdOpt: MRangeYmdOpt
+                        )
 
   class Backend($: BackendScope[Props, Unit]) {
 

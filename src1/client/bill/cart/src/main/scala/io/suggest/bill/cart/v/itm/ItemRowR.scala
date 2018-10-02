@@ -11,8 +11,7 @@ import io.suggest.bill.price.dsl.PriceReasonI18n
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dt.MYmd
-import io.suggest.dt.interval.MRangeYmdOpt
-import io.suggest.geo.CircleGs
+import io.suggest.geo.{CircleGs, PointGs}
 import io.suggest.i18n.MsgCodes
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
@@ -28,6 +27,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.React
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
+import io.suggest.dt.CommonDateTimeUtil.Implicits._
 
 import scala.scalajs.js
 
@@ -71,13 +71,6 @@ class ItemRowR(
 
   type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
-
-
-  private def _offsetDateTimeOpt2ymdOpt(odtOpt: Option[OffsetDateTime]): Option[MYmd] = {
-    import io.suggest.dt.CommonDateTimeUtil.Implicits._
-    for (odt <- odtOpt) yield
-      odt.toLocalDate.toYmd
-  }
 
 
   class Backend($: BackendScope[Props, Props_t]) {
@@ -155,6 +148,9 @@ class ItemRowR(
                       // TODO + ссылка для окошка с картой и шейпом.
                       case circleGs: CircleGs =>
                         PriceReasonI18n.i18nPayloadCircle( circleGs )
+                      // PointGs здесь - Это скорее запасной костыль и для совместимости, нежели какое-то нужное обоснованное логичное решение.
+                      case point: PointGs =>
+                        point.coord.toHumanFriendlyString
                       case other =>
                         // TODO Нужен какой-то нормальный рендер, не?
                         other.toString()
@@ -209,10 +205,7 @@ class ItemRowR(
               RangeYmdR.component.withKey("r")(
                 RangeYmdR.Props(
                   capFirst = false,
-                  rangeYmdOpt = MRangeYmdOpt(
-                    dateStartOpt = _offsetDateTimeOpt2ymdOpt( props.mitem.dateStartOpt ),
-                    dateEndOpt   = _offsetDateTimeOpt2ymdOpt( props.mitem.dateEndOpt )
-                  )
+                  rangeYmdOpt = props.mitem.dtToRangeYmdOpt
                 )
               )
             )
@@ -261,12 +254,12 @@ class ItemRowR(
               }
             )(
               props.mitem.status match {
-                case MItemStatuses.Draft          => Mui.SvgIcons.Edit()()
-                case MItemStatuses.AwaitingMdr    => Mui.SvgIcons.AccessTime()()
                 case MItemStatuses.Finished       => Mui.SvgIcons.Done()()
-                case MItemStatuses.Offline        => Mui.SvgIcons.AccessAlarm()()
                 case MItemStatuses.Online         => Mui.SvgIcons.PlayArrow()()
+                case MItemStatuses.Offline        => Mui.SvgIcons.AccessAlarm()()
+                case MItemStatuses.AwaitingMdr    => Mui.SvgIcons.AccessTime()()
                 case MItemStatuses.Refused        => Mui.SvgIcons.Report()()
+                case MItemStatuses.Draft          => Mui.SvgIcons.Edit()()
               }
             )
           )

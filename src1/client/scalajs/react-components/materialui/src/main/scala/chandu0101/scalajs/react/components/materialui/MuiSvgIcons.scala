@@ -133,6 +133,8 @@ object MuiSvgIcons {
   object DoneAll extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Done", JSImport.Default)
   object Done extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/DoneOutline", JSImport.Default)
+  object DoneOutline extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/donut-large", JSImport.Default)
   object ActionDonutLarge extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/donut-small", JSImport.Default)

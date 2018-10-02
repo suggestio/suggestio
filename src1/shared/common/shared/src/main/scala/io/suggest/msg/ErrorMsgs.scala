@@ -135,4 +135,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def CART_CIRCUIT_ERROR               = E(83)
 
+  def SYS_MDR_CIRCUIT_ERROR            = E(84)
+
 }

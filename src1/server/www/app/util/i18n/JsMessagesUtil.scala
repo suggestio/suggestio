@@ -11,6 +11,7 @@ import jsmessages.{JsMessages, JsMessagesFactory}
 import io.suggest.dt.interval.DatesIntervalConstants.{DAYS_OF_WEEK, MONTHS_OF_YEAR}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderStatuses
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNodeTypes
 
 /**
@@ -212,10 +213,12 @@ class JsMessagesUtil @Inject() (
       Nil
   }
 
-  private def ITEM_TYPES: TraversableOnce[String] = {
-    for (i <- MItemTypes.values.iterator) yield {
-      i.nameI18n
-    }
+  private def ITEM_TYPES: List[String] = {
+    MItemTypes
+      .values
+      .iterator
+      .map(_.nameI18n)
+      .toList
   }
 
   private def LK_ADN_MAP_MSGS: TraversableOnce[String] = {
@@ -359,6 +362,14 @@ class JsMessagesUtil @Inject() (
       MC.`Transactions` ::
       (ORDER_STATUSES_I18N reverse_::: ITEM_STATUSES_I18N reverse_::: NODE_TYPES_I18N)
   }
+
+  private def SYS_MDR_MSGS: TraversableOnce[String] = {
+    MC.`All` ::
+      MPredicates.Receiver.Self.singular ::
+      MC.`Something.gone.wrong` ::
+      ITEM_TYPES
+  }
+
 
   /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
   val (lkJsMsgsFactory, hash): (JsMessages, Int) = {

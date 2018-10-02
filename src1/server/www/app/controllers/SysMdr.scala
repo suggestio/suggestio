@@ -29,7 +29,7 @@ class SysMdr @Inject() (
                          override val scUtil               : ShowcaseUtil,
                          override val n2NodesUtil          : N2NodesUtil,
                          override val isSuItem             : IsSuItem,
-                         override val isSuItemNode           : IsSuItemNode,
+                         override val isSuItemNode         : IsSuItemNode,
                          override val isSuMad              : IsSuMad,
                          override val isSuNode             : IsSuNode,
                          override val isSu                 : IsSu,
