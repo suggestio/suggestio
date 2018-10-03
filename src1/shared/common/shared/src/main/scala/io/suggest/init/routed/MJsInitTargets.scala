@@ -46,6 +46,9 @@ object MJsInitTargets extends StringEnum[MJsInitTarget] {
   /** Цель для страницы с корзиной. */
   case object LkCartPageForm extends MJsInitTarget("t")
 
+  /** Цель формы модерации размещений в sys. */
+  case object SysMdrForm extends MJsInitTarget("u")
+
 
   override def values = findValues
 

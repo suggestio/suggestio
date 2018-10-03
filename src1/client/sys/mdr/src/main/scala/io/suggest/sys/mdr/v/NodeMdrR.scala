@@ -8,11 +8,9 @@ import diode.react.ReactPot._
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
-import io.suggest.sys.mdr.MNodeMdrInfo
 import io.suggest.sys.mdr.m.MMdrActionInfo
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import ReactCommonUtil.Implicits._
 import io.suggest.bill.price.dsl.PriceReasonI18n
@@ -21,65 +19,74 @@ import io.suggest.react.r.RangeYmdR
 import japgolly.scalajs.react.raw.React
 import io.suggest.dt.CommonDateTimeUtil.Implicits._
 import io.suggest.geo.{CircleGs, PointGs}
+import io.suggest.maps.nodes.MAdvGeoMapNodeProps
+import io.suggest.mbill2.m.item.MItem
+import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.model.n2.edge.MPredicates
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 02.10.18 11:44
-  * Description: Компонент данных react-
+  * Description: React-компонент для кнопок управления модерацией узла (левая панель).
   */
 class NodeMdrR(
                 mdrRowR: MdrRowR
               ) {
 
   case class PropsVal(
-                       req: Pot[MNodeMdrInfo]
+                       itemsByType              : Map[MItemType, Seq[MItem]],
+                       nodesMap                 : Map[String, MAdvGeoMapNodeProps],
+                       directSelfNodesSorted    : Seq[MAdvGeoMapNodeProps],
                      )
   implicit object NodeMdrRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.req ===* b.req)
+      (a.itemsByType ===* b.itemsByType) &&
+      (a.nodesMap ===* b.nodesMap) &&
+      (a.directSelfNodesSorted ===* b.directSelfNodesSorted)
     }
   }
 
 
-  type Props_t = PropsVal
+  type Props_t = Pot[PropsVal]
   type Props = ModelProxy[Props_t]
 
 
   class Backend($: BackendScope[Props, Unit]) {
 
-
     def render(propsPotProxy: Props): VdomElement = {
-      val props = propsPotProxy.value
+      val propsPot = propsPotProxy.value
 
       <.div(
 
         // Идёт подгрузка:
-        props.req.renderPending { _ =>
+        propsPot.renderPending { _ =>
           MuiLinearProgress()
         },
 
         // Рендер элементов управления модерацией.
-        props.req.render { nodeMdrInfo =>
+        propsPot.render { props =>
           MuiList()(
 
             // Ряд полного аппрува всех item'ов вообще:
-            propsPotProxy.wrap { _ =>
-              mdrRowR.PropsVal(
-                actionInfo  = MMdrActionInfo(),
-                mtgVariant  = MuiTypoGraphyVariants.headline,
-                approveIcon = Mui.SvgIcons.DoneOutline,
-                dismissIcon = Mui.SvgIcons.Warning
-              )
-            } { mdrRowPropsProxy =>
-              val all = MsgCodes.`All`
-              mdrRowR.component.withKey( all + HtmlConstants.UNDERSCORE )( mdrRowPropsProxy )(
-                Messages( all )
-              )
+            ReactCommonUtil.maybeNode( props.itemsByType.nonEmpty || props.directSelfNodesSorted.nonEmpty ) {
+              propsPotProxy.wrap { _ =>
+                mdrRowR.PropsVal(
+                  actionInfo  = MMdrActionInfo(),
+                  mtgVariant  = MuiTypoGraphyVariants.headline,
+                  approveIcon = Mui.SvgIcons.DoneOutline,
+                  dismissIcon = Mui.SvgIcons.Warning
+                )
+              } { mdrRowPropsProxy =>
+                val all = MsgCodes.`All`
+                mdrRowR.component.withKey( all + HtmlConstants.UNDERSCORE )( mdrRowPropsProxy )(
+                  Messages( all )
+                )
+              }
             },
 
-            nodeMdrInfo
+            // Список item'ов биллинга, подлежащих модерации:
+            props
               .itemsByType
               .iterator
               .flatMap { case (itype, mitems) =>
@@ -142,7 +149,7 @@ class NodeMdrR(
                           // Рендер названия rcvr-узла.
                           mitem.rcvrIdOpt.whenDefinedNode { rcvrId =>
                             // Рендерить название узла, присланное сервером.
-                            nodeMdrInfo
+                            props
                               .nodesMap
                               .get(rcvrId)
                               .flatMap(_.hint)
@@ -188,7 +195,7 @@ class NodeMdrR(
 
             // Рендер своих узлов-ресиверов бесплатного размещения.
             // Сначала заголовок для бесплатных размещений:
-            ReactCommonUtil.maybeNode( nodeMdrInfo.directSelfNodeIds.nonEmpty ) {
+            ReactCommonUtil.maybeNode( props.directSelfNodesSorted.nonEmpty ) {
               propsPotProxy.wrap { _ =>
                 mdrRowR.PropsVal(
                   actionInfo  = MMdrActionInfo(
@@ -207,7 +214,7 @@ class NodeMdrR(
             },
 
             // Список размещений
-            nodeMdrInfo
+            props
               .directSelfNodesSorted
               .map { mnode =>
                 propsPotProxy.wrap { _ =>
@@ -232,7 +239,7 @@ class NodeMdrR(
         },
 
         // Рендер ошибок:
-        props.req.renderFailed { ex =>
+        propsPot.renderFailed { ex =>
           MuiToolTip(
             new MuiToolTipProps {
               override val title: React.Node = ex.toString
@@ -254,8 +261,6 @@ class NodeMdrR(
             )
           )
         },
-
-        // Левая панель: TODO jd-render для карточки.
 
       )
     }

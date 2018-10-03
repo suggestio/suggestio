@@ -47,6 +47,7 @@ object DiodeUtil {
 
   }
 
+
   /** Не очень явные дополнения к API живут тут. */
   object Implicits {
 

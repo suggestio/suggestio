@@ -1,16 +1,20 @@
 package util.mdr
 
 import java.time.OffsetDateTime
-import javax.inject.{Inject, Singleton}
 
+import io.suggest.es.model.IMust
+import javax.inject.{Inject, Singleton}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItem, ItemStatusChanged, MItem, MItems}
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
+import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.sys.mdr.MdrSearchArgs
 import io.suggest.util.logs.MacroLogsImpl
-import models.mdr.{MRefuseFormRes, MRefuseModes, MdrSearchArgs, RefuseForm_t}
+import models.mdr.{MRefuseFormRes, MRefuseModes, RefuseForm_t}
 import models.mproj.ICommonDi
 import models.req.{IAdReq, IReqHdr}
 
@@ -210,6 +214,55 @@ class SysMdrUtil @Inject() (
       .take( args.limit )
       .drop( args.offset )
       .result
+  }
+
+
+  /** Аргументы для поиска узлов, требующих бесплатной модерации. */
+  def freeMdrSearchArgs(args: MdrSearchArgs): MNodeSearch = {
+    new MNodeSearchDfltImpl {
+
+      /** Интересуют только карточки. */
+      override def nodeTypes =
+        MNodeTypes.Ad :: Nil
+
+      override def offset  = args.offset
+      override def limit   = args.limit
+
+      override def outEdges: Seq[Criteria] = {
+        val must = IMust.MUST
+
+        // Собираем self-receiver predicate, поиск бесплатных размещений начинается с этого
+        val srp = Criteria(
+          predicates  = MPredicates.Receiver.Self :: Nil,
+          must        = must
+        )
+
+        // Любое состояние эджа модерации является значимым и определяет результат.
+        val isAllowedCr = Criteria(
+          predicates  = MPredicates.ModeratedBy :: Nil,
+          flag        = args.isAllowed,
+          must        = Some( args.isAllowed.isDefined )
+        )
+
+        var crs = List[Criteria](
+          srp,
+          isAllowedCr
+        )
+
+        // Если задан продьюсер, то закинуть и его в общую кучу.
+        for (prodId <- args.producerId) {
+          crs ::= Criteria(
+            predicates  = MPredicates.OwnedBy :: Nil,
+            nodeIds     = prodId :: Nil,
+            must        = must
+          )
+        }
+
+        crs
+      }
+
+      override def withoutIds = args.hideAdIdOpt.toSeq
+    }
   }
 
 }

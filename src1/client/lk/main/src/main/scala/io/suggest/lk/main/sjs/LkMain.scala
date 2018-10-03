@@ -13,6 +13,7 @@ import io.suggest.lk.nodes.form.LkNodesInitRouter
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.leaflet.Leaflet
+import io.suggest.sys.mdr.SysMdrInit
 import io.suggest.xadv.ext.js.form.FormEventsInitRouter
 import io.suggest.xadv.ext.js.runner.c.AdvExtRunnerInitRouter
 
@@ -63,3 +64,5 @@ class LkInitRouter
   with FlashInitRouter
   with LkAdnEditInit
   with CartPageInit
+  // TODO унести в SysInitRouter, когда он будет
+  with SysMdrInit

@@ -1,6 +1,7 @@
 package io.suggest.sys.mdr.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.spa.DiodeUtil
 import io.suggest.sys.mdr.m.MSysMdrRootS
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -42,11 +43,17 @@ class SysMdrFormR(
   val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { mrootProxy =>
       State(
+
         nodeInfoC = mrootProxy.connect { mroot =>
-          nodeMdrR.PropsVal(
-            req = mroot.info
-          )
-        }
+          for (req <- mroot.info) yield {
+            nodeMdrR.PropsVal(
+              nodesMap                = req.nodesMap,
+              directSelfNodesSorted   = req.directSelfNodesSorted,
+              itemsByType             = req.itemsByType,
+            )
+          }
+        }( DiodeUtil.FastEqExt.PotAsOptionFastEq( nodeMdrR.NodeMdrRPropsValFastEq ) )
+
       )
     }
     .renderBackend[Backend]

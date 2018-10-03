@@ -4,6 +4,7 @@ import controllers.routes
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.n2.edge.MEdgeInfo
 import io.suggest.model.n2.node.IMNodes
+import io.suggest.sys.mdr.MdrSearchArgs
 import models.mdr._
 import util.acl.{IIsSu, IIsSuMad}
 import util.billing.IBill2UtilDi
@@ -28,6 +29,7 @@ trait SysMdrFree
 
   override val sysMdrUtil: SysMdrUtil
 
+
   /**
     * Страница с бесплатно-размещёнными рекламными карточками, подлежащими модерации s.io.
     *
@@ -40,7 +42,7 @@ trait SysMdrFree
   def freeAdvs(args: MdrSearchArgs) = csrf.AddToken {
     isSu().async { implicit request =>
       // Необходимо искать карточки, требующие модерации/обработки.
-      val madsFut = mNodes.dynSearch( args.toNodeSearch )
+      val madsFut = mNodes.dynSearch( sysMdrUtil.freeMdrSearchArgs(args) )
       _adsPage(madsFut, args)
     }
   }

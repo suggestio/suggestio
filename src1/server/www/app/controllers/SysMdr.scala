@@ -1,11 +1,12 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
-
 import controllers.sysctl.mdr.{SysMdrFree, SysMdrPaid}
+import io.suggest.ctx.CtxData
+import io.suggest.init.routed.MJsInitTargets
 import io.suggest.model.n2.node.MNodes
+import io.suggest.sys.mdr.MdrSearchArgs
 import io.suggest.util.logs.MacroLogsImpl
-import models.mdr.MdrSearchArgs
 import models.mproj.ICommonDi
 import util.acl._
 import util.billing.Bill2Util
@@ -72,10 +73,11 @@ class SysMdr @Inject() (
       .map(_.headOption.get)    // почему-то .head не возвращает NSEE.
       // Ищем след. карточку через бесплатные размещения.
       .recoverWith { case _: NoSuchElementException =>
-        // Если нет paid-модерируемых карточек, то поискать бесплатные размещения.
-        val fut = mNodes.dynSearchIds( args1.toNodeSearch )
         LOGGER.trace(s"rdrToNextAd(): No more paid advs, looking for free advs...\n $args")
-        for (res <- fut) yield {
+        for {
+          // Если нет paid-модерируемых карточек, то поискать бесплатные размещения.
+          res <- mNodes.dynSearchIds( sysMdrUtil.freeMdrSearchArgs(args1) )
+        } yield {
           res.head
         }
       }
@@ -86,6 +88,20 @@ class SysMdr @Inject() (
         Redirect( routes.SysMdr.index() )
           .flashing(FLASH.ERROR -> "Больше нет карточек для модерации.")
       }
+  }
+
+
+  /** react-форма для осуществления модерации.
+    *
+    * @return Страница под react-форму.
+    */
+  def form = csrf.AddToken {
+    isSu().async { implicit request =>
+      implicit val ctxData = CtxData(
+        jsInitTargets = MJsInitTargets.SysMdrForm :: Nil
+      )
+      Ok( SysMdrFormTpl() )
+    }
   }
 
 }

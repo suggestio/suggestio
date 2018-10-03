@@ -4,8 +4,8 @@ import controllers.SioController
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.node.MNode
 import io.suggest.primo.id.OptId
+import io.suggest.sys.mdr.MdrSearchArgs
 import io.suggest.util.logs.IMacroLogs
-import models.mdr._
 import models.msys.MSysMdrFreeAdvsTplArgs
 import models.req.IReq
 import play.api.mvc.Result
@@ -22,6 +22,7 @@ import scala.concurrent.Future
   * Created: 01.03.16 11:52
   * Description: Контроллер [[controllers.SysMdr]] пришлось разбить на куски, чтобы разгрузить код.
   */
+
 trait SysMdrBase
   extends SioController
   with IMacroLogs

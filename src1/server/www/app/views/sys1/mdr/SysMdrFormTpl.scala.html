@@ -1,0 +1,22 @@
+@()(implicit ctx: Context)
+
+@import io.suggest.sys.mdr.SysMdrConst
+
+@* Страница для react-формы модерации размещений. *@
+
+
+@hPathAfter = {
+  @* Ничего не отображаем, т.к. корневая ссылка из base-шаблона полностью устраивает. *@
+}
+
+@mdrBase(
+  title      = "Модерация",
+  hPathAfter = Some(hPathAfter)
+) {
+
+  @* Контейнер для рендера react-формы. *@
+  <div id="@SysMdrConst.FORM_ID"></div>
+
+}
+
+

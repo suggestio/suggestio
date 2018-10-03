@@ -16,3 +16,6 @@ case class ApproveOrDismiss( info: MMdrActionInfo, isApprove: Boolean ) extends 
 /** Форма подтверждения отказа в размещении. */
 case class DismissSubmit( info: MMdrActionInfo, reason: String ) extends ISysMdrAction
 
+
+/** Запросить с сервера данные узла, который требуется промодерировать. */
+case object MdrNextNode extends ISysMdrAction

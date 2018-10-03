@@ -220,8 +220,9 @@ POST /sys/cal/edit/:calId                @controllers.SysCalendar.editCalendarSu
 GET  /sys/cal/get/:calId                 @controllers.SysCalendar.getCalendarXml(calId)
 
 ## sys: mdr - модерация контента
+GET  /sys/mdr2                           @controllers.SysMdr.form
 GET  /sys/mdr                            @controllers.SysMdr.index
-GET  /sys/mdr/free/list                  @controllers.SysMdr.freeAdvs(a: mdr.MdrSearchArgs ?= mdr.MdrSearchArgs.default)
+GET  /sys/mdr/free/list                  @controllers.SysMdr.freeAdvs(a: io.suggest.sys.mdr.MdrSearchArgs ?= io.suggest.sys.mdr.MdrSearchArgs.default)
 GET  /sys/mdr/free/refuse/popup/:adId    @controllers.SysMdr.refuseFreeAdvPopup(adId)
 POST /sys/mdr/free/accept/:adId          @controllers.SysMdr.freeAdvMdrAccept(adId)
 POST /sys/mdr/free/refuse/:adId          @controllers.SysMdr.freeAdvMdrBan(adId)
@@ -229,8 +230,8 @@ GET  /sys/mdr/node/:nodeId               @controllers.SysMdr.forAd(nodeId)
 GET  /sys/mdr/item/refuse/:itemId        @controllers.SysMdr.refuseItemPopup(itemId: Gid_t)
 POST /sys/mdr/item/approve/:itemId       @controllers.SysMdr.approveItemSubmit(itemId: Gid_t)
 POST /sys/mdr/item/refuse/:itemId        @controllers.SysMdr.refuseItemSubmit(itemId: Gid_t)
-GET  /sys/mdr/list/paid                  @controllers.SysMdr.paidAdvs(a: mdr.MdrSearchArgs ?= mdr.MdrSearchArgs.default)
-GET  /sys/mdr/next                       @controllers.SysMdr.rdrToNextAd(a: mdr.MdrSearchArgs ?= mdr.MdrSearchArgs.default)
+GET  /sys/mdr/list/paid                  @controllers.SysMdr.paidAdvs(a: io.suggest.sys.mdr.MdrSearchArgs ?= io.suggest.sys.mdr.MdrSearchArgs.default)
+GET  /sys/mdr/next                       @controllers.SysMdr.rdrToNextAd(a: io.suggest.sys.mdr.MdrSearchArgs ?= io.suggest.sys.mdr.MdrSearchArgs.default)
 POST /sys/mdr/items/approve/:adId        @controllers.SysMdr.approveAllItemsSubmit(adId)
 GET  /sys/mdr/items/refuse/:adId         @controllers.SysMdr.refuseAllItems(adId)
 POST /sys/mdr/items/refuse/:adId         @controllers.SysMdr.refuseAllItemsSubmit(adId)

@@ -1,6 +1,7 @@
 package io.suggest.sys.mdr
 
 import com.softwaremill.macwire._
+import io.suggest.jd.render.JdRenderModule
 import io.suggest.sys.mdr.v._
 
 /**
@@ -11,6 +12,10 @@ import io.suggest.sys.mdr.v._
   */
 class SysMdrModules {
 
+  val jdModules = wire[JdRenderModule]
+  import jdModules._
+
+  lazy val nodeRenderR = wire[NodeRenderR]
   lazy val nodeMdrR = wire[NodeMdrR]
   lazy val mdrRowR = wire[MdrRowR]
   lazy val sysMdrFormR = wire[SysMdrFormR]
