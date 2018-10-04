@@ -1,6 +1,9 @@
 package io.suggest.sys.mdr.m
 
 import io.suggest.spa.DAction
+import io.suggest.sys.mdr.MNodeMdrInfo
+
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -19,3 +22,10 @@ case class DismissSubmit( info: MMdrActionInfo, reason: String ) extends ISysMdr
 
 /** Запросить с сервера данные узла, который требуется промодерировать. */
 case object MdrNextNode extends ISysMdrAction
+
+/** Ответ на запрос next-node для модерации. */
+case class MdrNextNodeResp(
+                            timestampMs   : Long,
+                            tryResp       : Try[Option[MNodeMdrInfo]]
+                          )
+  extends ISysMdrAction

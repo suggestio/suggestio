@@ -4,7 +4,10 @@ import diode.react.ReactConnector
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sys.mdr.c.{ISysMdrApi, NodeMdrAh, SysMdrApiXhrImpl}
-import io.suggest.sys.mdr.m.MSysMdrRootS
+import io.suggest.sys.mdr.m.{MSysMdrRootS, MdrNextNode}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -48,11 +51,17 @@ class SysMdrCircuit extends CircuitLog[MSysMdrRootS] with ReactConnector[MSysMdr
 
   // Controllers
   val nodeMdrAh = new NodeMdrAh(
+    api     = sysMdrApi,
     modelRW = rootRW
   )
 
   override protected def actionHandler: HandlerFunction = {
     nodeMdrAh
+  }
+
+  // После конструктора, запустить получение начальных данных с сервера:
+  Future {
+    dispatch( MdrNextNode )
   }
 
 }

@@ -367,6 +367,7 @@ class JsMessagesUtil @Inject() (
     MC.`All` ::
       MPredicates.Receiver.Self.singular ::
       MC.`Something.gone.wrong` ::
+      MC.`Nothing.found` ::
       ITEM_TYPES
   }
 
@@ -391,7 +392,9 @@ class JsMessagesUtil @Inject() (
       LK_AD_EDIT_MSGS,
       LK_ADS_MSGS,
       LK_ADN_EDIT_MSGS,
-      BILL_CART_MSGS
+      BILL_CART_MSGS,
+      // TODO Унести в sys-messages, когда они будут наконец.
+      SYS_MDR_MSGS
     )
       .flatten
       .toSet

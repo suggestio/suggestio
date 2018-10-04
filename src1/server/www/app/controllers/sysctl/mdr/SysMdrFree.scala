@@ -42,7 +42,7 @@ trait SysMdrFree
   def freeAdvs(args: MdrSearchArgs) = csrf.AddToken {
     isSu().async { implicit request =>
       // Необходимо искать карточки, требующие модерации/обработки.
-      val madsFut = mNodes.dynSearch( sysMdrUtil.freeMdrSearchArgs(args) )
+      val madsFut = mNodes.dynSearch( sysMdrUtil.freeMdrNodeSearchArgs(args, 12) )
       _adsPage(madsFut, args)
     }
   }
@@ -93,12 +93,14 @@ trait SysMdrFree
   def freeAdvMdrBan(adId: String) = csrf.Check {
     isSuMad(adId).async { implicit request =>
       lazy val logPrefix = s"freeAdvMdrBan($adId u:${request.user.personIdOpt.orNull}):"
+
       sysMdrUtil.refuseFormM.bindFromRequest().fold(
         {formWithErrors =>
           LOGGER.debug(s"$logPrefix Failed to bind form:\n${formatFormErrors(formWithErrors)}")
           Redirect( routes.SysMdr.forAd(adId) )
             .flashing(FLASH.ERROR -> "Возникли проблемы. см application.log")
         },
+
         {res =>
           val someReason = Some(res.reason)
 

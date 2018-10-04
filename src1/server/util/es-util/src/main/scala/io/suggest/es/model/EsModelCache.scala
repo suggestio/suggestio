@@ -2,7 +2,7 @@ package io.suggest.es.model
 
 import akka.actor.ActorContext
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Keep, Sink}
+import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.di.{ICacheApi, IExecutionContext}
 import io.suggest.event.SNStaticSubscriber
@@ -48,6 +48,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
     cache.get[T1](ck)
   }
 
+
   /**
    * Вернуть закешированный результат либо прочитать его из хранилища.
    * @param id id исходного документа.
@@ -62,6 +63,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
         getByIdAndCache(id, ck)
       }
   }
+
 
   /**
    * Аналог getByIdCached, но для multiget().
@@ -126,6 +128,20 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
           Future.successful( cachedResults )
         }
       }
+    }
+  }
+
+
+  /** Вернуть Source-источник для
+    *
+    * @param ids id искомых элементов.
+    * @return Source, для которого в фоне уже начали собираться возвращаемые элементы.
+    */
+  def multiGetSrc(ids: Iterable[String]): Source[T1, _] = {
+    // TODO Реализовать нормальную выкачку, более оптимальную по сравнению с multiGet()
+    Source.fromFutureSource {
+      for (els <- multiGet(ids)) yield
+        Source( els.toStream )
     }
   }
 

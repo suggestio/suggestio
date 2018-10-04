@@ -199,7 +199,7 @@ class SysMdrUtil @Inject() (
 
 
   /** SQL для экшена поиска id карточек, нуждающихся в модерации. */
-  def findPaidAdIds4MdrAction(args: MdrSearchArgs): DBIOAction[Seq[String], Streaming[String], Effect.Read] = {
+  def findPaidAdIds4MdrAction(args: MdrSearchArgs, limit: Int): DBIOAction[Seq[String], Streaming[String], Effect.Read] = {
     val b0 = mdrUtil.awaitingPaidMdrItemsSql
 
     val b1 = args.hideAdIdOpt.fold(b0) { hideAdId =>
@@ -211,14 +211,14 @@ class SysMdrUtil @Inject() (
     b1.map(_.nodeId)
       //.sortBy(_.id.asc)   // TODO Нужно подумать над сортировкой возвращаемого множества adId
       .distinct
-      .take( args.limit )
+      .take( limit )
       .drop( args.offset )
       .result
   }
 
 
   /** Аргументы для поиска узлов, требующих бесплатной модерации. */
-  def freeMdrSearchArgs(args: MdrSearchArgs): MNodeSearch = {
+  def freeMdrNodeSearchArgs(args: MdrSearchArgs, limit1: Int): MNodeSearch = {
     new MNodeSearchDfltImpl {
 
       /** Интересуют только карточки. */
@@ -226,7 +226,7 @@ class SysMdrUtil @Inject() (
         MNodeTypes.Ad :: Nil
 
       override def offset  = args.offset
-      override def limit   = args.limit
+      override def limit   = limit1
 
       override def outEdges: Seq[Criteria] = {
         val must = IMust.MUST

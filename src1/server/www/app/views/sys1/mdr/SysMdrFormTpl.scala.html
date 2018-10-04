@@ -1,6 +1,9 @@
 @()(implicit ctx: Context)
 
 @import io.suggest.sys.mdr.SysMdrConst
+@import views.html.stuff._preLoaderLkTpl
+@import views.js.stuff.jsRevRouterTpl
+@import views.html.stuff.jsTpl2HtmlTpl
 
 @* Страница для react-формы модерации размещений. *@
 
@@ -15,7 +18,18 @@
 ) {
 
   @* Контейнер для рендера react-формы. *@
-  <div id="@SysMdrConst.FORM_ID"></div>
+  <div id="@SysMdrConst.FORM_ID">
+    @_preLoaderLkTpl()
+  </div>
+
+
+  @jsTpl2HtmlTpl( withScriptTag = true )(
+    jsRevRouterTpl( csrfAll = true, cdn = true )(
+      routes.javascript.SysMdr.nextMdrInfo
+    )
+  )
+
+  <script src="@ctx.api.cdn.forCall( ctx.lkMessagesJs )"></script>
 
 }
 

@@ -1,5 +1,8 @@
 package io.suggest.sys.mdr
 
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -9,9 +12,12 @@ package io.suggest.sys.mdr
 
 object MdrSearchArgs {
 
+  def default = MdrSearchArgs()
+
+
   object Fields {
 
-    def PRODUCER_ID_FN          = "prodId"
+    def PRODUCER_ID_FN          = "p"
     def OFFSET_FN               = "o"
     def FREE_ADV_IS_ALLOWED_FN  = "f"
 
@@ -23,21 +29,28 @@ object MdrSearchArgs {
 
   }
 
-  def default = MdrSearchArgs()
+
+  /** Поддержка play-json. */
+  implicit def mdrSearchArgsFormat: OFormat[MdrSearchArgs] = {
+    val F = Fields
+    (
+      (__ \ F.OFFSET_FN).formatNullable[Int] and
+      (__ \ F.PRODUCER_ID_FN).formatNullable[String] and
+      (__ \ F.FREE_ADV_IS_ALLOWED_FN).formatNullable[Boolean] and
+      (__ \ F.HIDE_AD_ID_FN).formatNullable[String]
+    )(apply, unlift(unapply))
+  }
 
 }
 
 
 case class MdrSearchArgs(
-  offsetOpt             : Option[Int]       = None,
-  producerId            : Option[String]    = None,
-  isAllowed             : Option[Boolean]   = None,
-  hideAdIdOpt           : Option[String]    = None,
-  // limit не задаваем через qs, не было такой необходимости.
-  limitOpt              : Option[Int]       = None
-) {
+                          offsetOpt             : Option[Int]       = None,
+                          producerId            : Option[String]    = None,
+                          isAllowed             : Option[Boolean]   = None,
+                          hideAdIdOpt           : Option[String]    = None,
+                        ) {
 
   def offset  = offsetOpt.getOrElse(0)
-  def limit   = limitOpt.getOrElse(12)      // 3 ряда по 4 карточки.
 
 }

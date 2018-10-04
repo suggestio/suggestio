@@ -1556,14 +1556,14 @@ object MuiSvgIcons {
   object ImageWbIncandescent extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/image/wb-iridescent", JSImport.Default)
   object ImageWbIridescent extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/image/wb-sunny", JSImport.Default)
-  object ImageWbSunny extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/WbSunny", JSImport.Default)
+  object WbSunny extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/AddLocation", JSImport.Default)
   object AddLocation extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/NotListedLocation", JSImport.Default)
   object NotListedLocation extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/maps/beenhere", JSImport.Default)
-  object MapsBeenhere extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Beenhere", JSImport.Default)
+  object BeenHere extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/directions-bike", JSImport.Default)
   object MapsDirectionsBike extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/maps/directions-boat", JSImport.Default)

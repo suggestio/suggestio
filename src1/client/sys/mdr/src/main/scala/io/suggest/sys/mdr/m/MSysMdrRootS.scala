@@ -23,9 +23,9 @@ object MSysMdrRootS {
 }
 
 case class MSysMdrRootS(
-                         info       : Pot[MNodeMdrInfo]       = Pot.empty
+                         info       : Pot[Option[MNodeMdrInfo]]       = Pot.empty
                        ) {
 
-  def withInfo(info: Pot[MNodeMdrInfo]) = copy(info = info)
+  def withInfo(info: Pot[Option[MNodeMdrInfo]]) = copy(info = info)
 
 }

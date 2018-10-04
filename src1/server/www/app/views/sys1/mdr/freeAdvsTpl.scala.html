@@ -39,7 +39,7 @@
   @* Рендерим переключение страниц. *@
   @_simple3pTpl(
     count = args.mads.size,
-    limit = args.args0.limit,
+    limit = 12,
     offset = args.args0.offset,
     urlF   = { offset1 =>
       routes.SysMdr.freeAdvs( args.args0.copy(offsetOpt = Some(offset1)) )

@@ -1,13 +1,18 @@
 package controllers
 
+import akka.stream.scaladsl.{Keep, Sink}
 import javax.inject.{Inject, Singleton}
 import controllers.sysctl.mdr.{SysMdrFree, SysMdrPaid}
 import io.suggest.ctx.CtxData
 import io.suggest.init.routed.MJsInitTargets
-import io.suggest.model.n2.node.MNodes
-import io.suggest.sys.mdr.MdrSearchArgs
+import io.suggest.maps.nodes.MAdvGeoMapNodeProps
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.node.meta.colors.MColors
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
+import io.suggest.sys.mdr.{MNodeMdrInfo, MdrSearchArgs}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
+import play.api.libs.json.Json
 import util.acl._
 import util.billing.Bill2Util
 import util.lk.LkAdUtil
@@ -15,6 +20,9 @@ import util.mdr.SysMdrUtil
 import util.n2u.N2NodesUtil
 import util.showcase.ShowcaseUtil
 import views.html.sys1.mdr._
+import japgolly.univeq._
+import models.mctx.Context
+import util.ad.JdAdUtil
 
 /**
  * Suggest.io
@@ -25,6 +33,7 @@ import views.html.sys1.mdr._
  */
 @Singleton
 class SysMdr @Inject() (
+                         jdAdUtil                          : JdAdUtil,
                          override val lkAdUtil             : LkAdUtil,
                          override val mNodes               : MNodes,
                          override val scUtil               : ShowcaseUtil,
@@ -37,7 +46,7 @@ class SysMdr @Inject() (
                          override val bill2Util            : Bill2Util,
                          override val sysMdrUtil           : SysMdrUtil,
                          override val mCommonDi            : ICommonDi
-)
+                       )
   extends SioControllerImpl
   with MacroLogsImpl
   with SysMdrFree
@@ -45,6 +54,7 @@ class SysMdr @Inject() (
 {
 
   import mCommonDi._
+  import slick.profile.api._
 
 
   /** Отобразить начальную страницу раздела модерации рекламных карточек. */
@@ -61,14 +71,10 @@ class SysMdr @Inject() (
     */
   def rdrToNextAd(args: MdrSearchArgs) = isSu().async { implicit request =>
     // Выставляем в аргументы limit = 1, т.к. нам нужна только одна карточка.
-    val args1 = args.copy(
-      limitOpt = Some(1)
-    )
-
     slick.db
       // Ищем следующую карточку через биллинг и очередь на модерацию.
       .run {
-        sysMdrUtil.findPaidAdIds4MdrAction(args1)
+        sysMdrUtil.findPaidAdIds4MdrAction(args, limit = 1)
       }
       .map(_.headOption.get)    // почему-то .head не возвращает NSEE.
       // Ищем след. карточку через бесплатные размещения.
@@ -76,7 +82,7 @@ class SysMdr @Inject() (
         LOGGER.trace(s"rdrToNextAd(): No more paid advs, looking for free advs...\n $args")
         for {
           // Если нет paid-модерируемых карточек, то поискать бесплатные размещения.
-          res <- mNodes.dynSearchIds( sysMdrUtil.freeMdrSearchArgs(args1) )
+          res <- mNodes.dynSearchIds( sysMdrUtil.freeMdrNodeSearchArgs(args, 1) )
         } yield {
           res.head
         }
@@ -101,6 +107,172 @@ class SysMdr @Inject() (
         jsInitTargets = MJsInitTargets.SysMdrForm :: Nil
       )
       Ok( SysMdrFormTpl() )
+    }
+  }
+
+
+  /** Получение данных следующей карточки.
+    *
+    * @param args Аргументы модерации.
+    * @return 200 OK +  JSON-ответ MNodeMdrInfo с данными модерируемого узла/карточки.
+    *         204 No content - если больше нечего модерировать.
+    */
+  def nextMdrInfo(args: MdrSearchArgs) = isSu().async { implicit request =>
+    lazy val logPrefix = s"nextMdrInfo()#${System.currentTimeMillis()}:"
+    LOGGER.trace(s"$logPrefix args=$args moderator#${request.user.personIdOpt.orNull}")
+
+    // Поискать в биллинге узел, который надо модерировать:
+    val billedNodeOrExFut = for {
+      // Ищем следующую карточку через биллинг и очередь на модерацию.
+      nodeIds <- slick.db.run {
+        // TODO Добавить сортировку с учётом qs args.gen, чтобы разные модераторы получали бы разные элементы для модерации.
+        sysMdrUtil.findPaidAdIds4MdrAction(args, limit = 1)
+      }
+      mnodeOpt <- mNodesCache.getById( nodeIds.head )
+    } yield {
+      LOGGER.trace(s"$logPrefix mdr node => ${mnodeOpt.flatMap(_.id)}")
+      mnodeOpt.get
+    }
+
+    // Если не будет найдено биллинга для модерации, то надо поискать бесплатные немодерированные размещения.
+    val billedOrFreeNodeOrExFut = billedNodeOrExFut
+      .recoverWith { case _: NoSuchElementException =>
+        LOGGER.trace(s"rdrToNextAd(): No more paid advs, looking for free advs...\n $args")
+        for {
+          // Если нет paid-модерируемых карточек, то поискать бесплатные размещения.
+          res <- mNodes.dynSearchOne(
+            // TODO Добавить gen sort, где generation = args.gen, взятый например из personId.hashCode
+            sysMdrUtil.freeMdrNodeSearchArgs(args, 1)
+          )
+        } yield {
+          res.get
+        }
+      }
+
+    // Нужно запустить сборку списков item'ов на модерацию.
+    val mitemsFut = for {
+      mdrNode <- billedOrFreeNodeOrExFut
+      nodeId = mdrNode.id.get
+      items <- slick.db.run {
+        sysMdrUtil.itemsQueryAwaiting( nodeId )
+          // Ограничиваем кол-во запрашиваемых item'ов. Нет никакого смысла вываливать слишком много данных на экран.
+          .take(50)
+          // Тяжелая сортировка тут скорее всего не важна, поэтому опускаем её.
+          .result
+      }
+    } yield {
+      LOGGER.trace(s"$logPrefix Found ${items.length} awaitingMdr-items for node#$nodeId")
+      items
+    }
+
+    val ctx = implicitly[Context]
+
+    // Запустить jd-рендер целиком, если это рекламная карточка:
+    val jdAdDataSomeOrExFut = for {
+      mad <- billedOrFreeNodeOrExFut
+      if (mad.common.ntype ==* MNodeTypes.Ad) && mad.extras.doc.nonEmpty
+
+      // И организуется jd-рендер:
+      tpl = jdAdUtil.getNodeTpl( mad )
+      edges2 = jdAdUtil.filterEdgesForTpl(tpl, mad.edges)
+      jdAdData <- jdAdUtil
+        .mkJdAdDataFor
+        .show(
+          nodeId        = mad.id,
+          nodeEdges     = edges2,
+          tpl           = tpl,
+          szMult        = 1.5f,
+          allowWide     = true,
+          forceAbsUrls  = false
+        )(ctx)
+        .execute()
+
+    } yield {
+      Some( jdAdData )
+    }
+
+    // Сбор данных по бесплатным self-ресиверам
+    val selfRcvrsNeedMdrFut = for {
+      mad <- billedNodeOrExFut
+    } yield {
+      val selfEdges = mad.edges
+        .withPredicateIter( MPredicates.Receiver.Self )
+        .toStream
+      val isMdrNotNeeded = selfEdges.isEmpty || {
+        // Уже есть mdr-true-эдж?
+        mad.edges
+          .withPredicateIter( MPredicates.ModeratedBy )
+          .exists(_.info.flag contains true)
+      }
+      if (isMdrNotNeeded) {
+        Set.empty[String]
+      } else {
+        selfEdges
+          .iterator
+          .flatMap(_.nodeIds)
+          .toSet
+      }
+    }
+
+    // Сборка данных по узлам, требующихся для рендера
+    val nodesRenderedFut = for {
+      mitems <- mitemsFut
+      // Собрать id узлов, связанных с размещениями.
+      itemRcvrsSet = mitems
+        .iterator
+        .flatMap(_.rcvrIdOpt)
+        .toSet
+
+      selfRcvrsNeedMdr <- selfRcvrsNeedMdrFut
+
+      // Собрать все id всех затрагиваемых узлов.
+      needNodeIds = selfRcvrsNeedMdr ++ itemRcvrsSet
+
+      nodesRendered <- mNodesCache
+        .multiGetSrc( needNodeIds )
+        .map { mnode =>
+          // Пока интересует только название целевого узла.
+          MAdvGeoMapNodeProps(
+            nodeId  = mnode.id.get,
+            ntype   = mnode.common.ntype,
+            colors  = MColors.empty, //mnode.meta.colors,
+            hint    = mnode.guessDisplayName
+          )
+        }
+        .toMat( Sink.seq[MAdvGeoMapNodeProps] )( Keep.right )
+        .run()
+
+    } yield {
+      LOGGER.trace(s"$logPrefix Rendered ${nodesRendered.length} nodes into props.")
+      nodesRendered
+    }
+
+    // Сборка нормального положительного ответа на запрос:
+    val respFut = for {
+      mdrNode     <- billedOrFreeNodeOrExFut
+      jdAdDataOpt <- jdAdDataSomeOrExFut
+        .recover { case _: NoSuchElementException => None }
+      mitems            <- mitemsFut
+      selfRcvrsNeedMdr  <- selfRcvrsNeedMdrFut
+      nodes             <- nodesRenderedFut
+    } yield {
+      val respNodeId = mdrNode.id.get
+      LOGGER.trace(s"$logPrefix Done, returning mdr data for node#$respNodeId...")
+      val resp = MNodeMdrInfo(
+        nodeId  = respNodeId,
+        ad      = jdAdDataOpt,
+        items   = mitems,
+        nodes   = nodes,
+        directSelfNodeIds = selfRcvrsNeedMdr
+      )
+      Ok( Json.toJson(resp) )
+    }
+
+    // Не найдено узла? Это нормально, бывает.
+    respFut.recover { case _: NoSuchElementException =>
+      val msg = "No more nodes for moderation."
+      LOGGER.trace(s"$logPrefix $msg")
+      NoContent
     }
   }
 

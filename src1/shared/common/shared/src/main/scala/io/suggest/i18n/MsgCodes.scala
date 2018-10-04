@@ -279,4 +279,6 @@ object MsgCodes {
   val `Transactions` = "Transactions"
   val `All` = "All"
 
+  val `Nothing.found` = "Nothing.found"
+
 }

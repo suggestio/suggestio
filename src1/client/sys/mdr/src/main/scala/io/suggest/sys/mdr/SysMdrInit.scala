@@ -4,7 +4,7 @@ import io.suggest.sjs.common.controller.InitRouter
 import japgolly.univeq._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.view.VUtil
-import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.vdom.Implicits._
 import org.scalajs.dom.html
 import io.suggest.sys.mdr.m.MSysMdrRootS.MSysMdrRootSFastEq
 

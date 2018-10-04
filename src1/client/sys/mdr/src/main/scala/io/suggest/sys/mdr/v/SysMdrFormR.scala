@@ -1,7 +1,7 @@
 package io.suggest.sys.mdr.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.spa.DiodeUtil
+import io.suggest.spa.{DiodeUtil, OptFastEq}
 import io.suggest.sys.mdr.m.MSysMdrRootS
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -45,14 +45,18 @@ class SysMdrFormR(
       State(
 
         nodeInfoC = mrootProxy.connect { mroot =>
-          for (req <- mroot.info) yield {
-            nodeMdrR.PropsVal(
-              nodesMap                = req.nodesMap,
-              directSelfNodesSorted   = req.directSelfNodesSorted,
-              itemsByType             = req.itemsByType,
-            )
+          for {
+            reqOpt <- mroot.info
+          } yield {
+            for (req <- reqOpt) yield {
+              nodeMdrR.PropsVal(
+                nodesMap                = req.nodesMap,
+                directSelfNodesSorted   = req.directSelfNodesSorted,
+                itemsByType             = req.itemsByType,
+              )
+            }
           }
-        }( DiodeUtil.FastEqExt.PotAsOptionFastEq( nodeMdrR.NodeMdrRPropsValFastEq ) )
+        }( DiodeUtil.FastEqExt.PotAsOptionFastEq( OptFastEq.Wrapped(nodeMdrR.NodeMdrRPropsValFastEq) ) )
 
       )
     }
