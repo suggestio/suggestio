@@ -8,6 +8,7 @@ import io.suggest.di.{ICacheApi, IExecutionContext}
 import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
+import io.suggest.util.logs.MacroLogsImpl
 
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
@@ -27,6 +28,7 @@ import scala.reflect.ClassTag
 abstract class EsModelCache[T1 <: EsModelT : ClassTag]
   extends ICacheApi
   with IExecutionContext
+  with MacroLogsImpl
 {
 
   implicit protected val mat: Materializer
@@ -60,6 +62,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
     cache.get[T1](ck)
       .filter { _.isDefined }
       .recoverWith { case _: NoSuchElementException =>
+        LOGGER.trace(s"getById($id): Not found $id in cache")
         getByIdAndCache(id, ck)
       }
   }
@@ -186,10 +189,14 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    * @param ck0 Ключ в кеше.
    * @return Тоже самое, что и исходный getById().
    */
-  def getByIdAndCache(id: String, ck0: String = null): Future[Option[T1]] = {
-    val ck: String = if (ck0 != null) cacheKey(id) else ck0
+  def getByIdAndCache(id: String): Future[Option[T1]] = {
+    val ck = cacheKey(id)
+    getByIdAndCache(id, ck)
+  }
+  def getByIdAndCache(id: String, ck: String): Future[Option[T1]] = {
     val resultFut = companion.getById(id)
     for (adnnOpt <- resultFut) {
+      // TODO Кэш для None надо держать? Можно короткий EXPIRE организовать, просто для защиты от атак.
       for (adnn <- adnnOpt)
         cache.set(ck, adnn, EXPIRE)
     }

@@ -211,8 +211,8 @@ class SysMdrUtil @Inject() (
     b1.map(_.nodeId)
       //.sortBy(_.id.asc)   // TODO Нужно подумать над сортировкой возвращаемого множества adId
       .distinct
-      .take( limit )
       .drop( args.offset )
+      .take( limit )
       .result
   }
 

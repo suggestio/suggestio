@@ -3,8 +3,6 @@ package chandu0101.scalajs.react.components.materialui
 import scala.scalajs.js
 import japgolly.scalajs.react._
 
-import scala.scalajs.js.|
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -78,7 +76,7 @@ trait MuiPropsBaseClasses[Classes_t <: js.Object] extends js.Object {
   val classes: js.UndefOr[Classes_t] = js.undefined
 }
 trait MuiPropsBaseComponent extends js.Object {
-  val component: js.UndefOr[String | js.Function | js.Object] = js.undefined
+  val component: js.UndefOr[Component_t] = js.undefined
 }
 
 

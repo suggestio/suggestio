@@ -281,4 +281,8 @@ object MsgCodes {
 
   val `Nothing.found` = "Nothing.found"
 
+  val `Lost.node` = "Lost.node"
+  val `Approve` = "Approve"
+  val `Refuse` = "Refuse"
+
 }

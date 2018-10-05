@@ -845,7 +845,7 @@ class Bill2Util @Inject() (
     * @return DBIOAction создания/обновления кошелька узла.
     */
   def increaseBalanceAsIncome(contractId: Gid_t, price: MPrice): DBIOAction[MTxn, NoStream, RWT] = {
-    lazy val logPrefix = s"increaseBalanceSimple($contractId,$price)[${System.currentTimeMillis()}]:"
+    lazy val logPrefix = s"increaseBalanceSimple(c#$contractId, $price)[${System.currentTimeMillis()}]:"
     val dba = for {
       // Сразу искать баланс в нужной валюте:
       balOpt      <- mBalances.getByContractCurrency(contractId, price.currency).forUpdate
@@ -853,11 +853,11 @@ class Bill2Util @Inject() (
       // Залить средства на баланс целевого узла.
       bal2 <- balOpt.fold [DBIOAction[MBalance, NoStream, Effect.Write]] {
         val cb0 = MBalance(contractId, price)
-        LOGGER.trace(logPrefix + "Initializing new balance for this currency: " + cb0)
+        LOGGER.trace(s"$logPrefix Initializing new balance for this currency: $cb0")
         mBalances.insertOne(cb0)
 
       } { cb0 =>
-        LOGGER.trace(logPrefix + "Updating existing balance " + cb0)
+        LOGGER.trace(s"$logPrefix Updating existing balance $cb0")
         for {
           cb1Opt <- mBalances.incrAmountBy(cb0, price.amount)
           cb1 = cb1Opt.get
@@ -873,7 +873,7 @@ class Bill2Util @Inject() (
           amount      = price.amount,
           txType      = MTxnTypes.Income
         )
-        LOGGER.trace(logPrefix + "Inserting txn for balance #" + bal2.id.orNull)
+        LOGGER.trace(s"$logPrefix Inserting txn for balance #${bal2.id.orNull}")
         mTxns.insertOne(ctxn0)
       }
 

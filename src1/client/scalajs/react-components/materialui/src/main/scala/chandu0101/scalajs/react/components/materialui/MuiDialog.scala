@@ -74,3 +74,15 @@ case class MuiDialog(
     f(props)(children: _*)
   }
 }
+
+
+trait MuiDialogProps
+  extends MuiModalPropsBase
+  with MuiPropsBaseClasses[MuiDialogClasses]
+{
+  // TODO *
+}
+
+
+trait MuiDialogClasses extends MuiClassesBase {
+}

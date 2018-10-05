@@ -1,5 +1,6 @@
 package chandu0101.scalajs.react.components
 
+import scala.scalajs.js
 import scala.scalajs.js.|
 
 package object materialui {
@@ -17,4 +18,7 @@ package object materialui {
   type TouchTapEventTA = raw.TouchTapEvent[org.scalajs.dom.html.TextArea]
 
   type MuiInputValue_t = String | Double | Boolean
+
+  type Component_t = String | js.Function | js.Object
+
 }

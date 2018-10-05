@@ -1,7 +1,7 @@
 package io.suggest.sys.mdr.m
 
 import io.suggest.spa.DAction
-import io.suggest.sys.mdr.MNodeMdrInfo
+import io.suggest.sys.mdr.{MMdrActionInfo, MNodeMdrInfo}
 
 import scala.util.Try
 

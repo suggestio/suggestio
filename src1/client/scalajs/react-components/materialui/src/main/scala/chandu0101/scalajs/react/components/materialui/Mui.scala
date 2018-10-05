@@ -58,6 +58,8 @@ object Mui {
   //@js.native @JSImport("@material-ui/core/List/makeSelectable", JSImport.Default) object makeSelectable extends js.Any
   @js.native @JSImport("@material-ui/core/Menu", JSImport.Default) object Menu         extends js.Any
   @js.native @JSImport("@material-ui/core/MenuItem", JSImport.Default) object MenuItem extends js.Any
+  @js.native @JSImport("@material-ui/core/Modal", JSImport.Default) object Modal extends js.Any
+
   @js.native @JSImport("@material-ui/core/Paper", JSImport.Default) object Paper     extends js.Any
   @js.native @JSImport("@material-ui/core/Popover", JSImport.Default) object Popover extends js.Any
   @js.native @JSImport("@material-ui/core/RadioButton", JSImport.Default) object RadioButton
@@ -83,6 +85,7 @@ object Mui {
   @js.native @JSImport("@material-ui/core/Stepper/Stepper", JSImport.Default) object Stepper
       extends js.Any
   @js.native @JSImport("@material-ui/core/Snackbar", JSImport.Default) object Snackbar extends js.Any
+  @js.native @JSImport("@material-ui/core/SnackbarContent", JSImport.Default) object SnackbarContent extends js.Any
   @js.native @JSImport("@material-ui/core/Tabs", JSImport.Default) object Tabs         extends js.Any
   @js.native @JSImport("@material-ui/core/Tabs/Tab", JSImport.Default) object Tab      extends js.Any
 

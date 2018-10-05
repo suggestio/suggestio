@@ -71,6 +71,8 @@ sealed trait Controllers extends js.Object {
 
   def SysMdr: SysMdrCtlRoutes = js.native
 
+  def SysMarket: SysMarketCtlRoutes = js.native
+
 }
 
 
@@ -268,5 +270,14 @@ sealed trait LkBill2CtlRoutes extends js.Object {
 sealed trait SysMdrCtlRoutes extends js.Object {
 
   def nextMdrInfo(args: js.Dictionary[js.Any]): Route = js.native
+
+}
+
+
+/** Роуты для SysMarket. */
+@js.native
+trait SysMarketCtlRoutes extends js.Object {
+
+  def showAdnNode(nodeId: String): Route = js.native
 
 }

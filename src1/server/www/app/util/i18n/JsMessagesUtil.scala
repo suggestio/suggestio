@@ -368,6 +368,9 @@ class JsMessagesUtil @Inject() (
       MPredicates.Receiver.Self.singular ::
       MC.`Something.gone.wrong` ::
       MC.`Nothing.found` ::
+      MC.`Lost.node` ::
+      MC.`Approve` ::
+      MC.`Refuse` ::
       ITEM_TYPES
   }
 

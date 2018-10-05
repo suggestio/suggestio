@@ -14,7 +14,10 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Состоит из двух панелей, кнопок аппрува/отказа + отрендеренными данными по узлу.
   */
 class SysMdrFormR(
-                   val nodeMdrR: NodeMdrR
+                   val nodeMdrR       : NodeMdrR,
+                   val nodeRenderR    : NodeRenderR,
+                   val mdrErrorsR     : MdrErrorsR,
+                   val mdrDiaRefuseR  : MdrDiaRefuseR,
                  ) {
 
   type Props_t = MSysMdrRootS
@@ -22,7 +25,10 @@ class SysMdrFormR(
 
 
   case class State(
-                    nodeInfoC     : ReactConnectProxy[nodeMdrR.Props_t],
+                    nodeInfoC           : ReactConnectProxy[nodeMdrR.Props_t],
+                    nodeRenderC         : ReactConnectProxy[nodeRenderR.Props_t],
+                    mdrErrorsC          : ReactConnectProxy[mdrErrorsR.Props_t],
+                    diaRefuseC          : ReactConnectProxy[mdrDiaRefuseR.Props_t],
                   )
 
 
@@ -31,8 +37,17 @@ class SysMdrFormR(
     def render(propsProxy: Props, s: State): VdomElement = {
       <.div(
 
+        // Ошибки - здесь:
+        s.mdrErrorsC { mdrErrorsR.apply },
+
         // Содержимое формы модерации карточки:
-        s.nodeInfoC { nodeMdrR.apply }
+        s.nodeInfoC { nodeMdrR.apply },
+
+        // Визуальный рендер узла:
+        s.nodeRenderC { nodeRenderR.apply },
+
+        // Диалог отказа в размещении:
+        s.diaRefuseC { mdrDiaRefuseR.apply },
 
       )
     }
@@ -56,7 +71,42 @@ class SysMdrFormR(
               )
             }
           }
-        }( DiodeUtil.FastEqExt.PotAsOptionFastEq( OptFastEq.Wrapped(nodeMdrR.NodeMdrRPropsValFastEq) ) )
+        }( DiodeUtil.FastEqExt.PotAsOptionFastEq( OptFastEq.Wrapped(nodeMdrR.NodeMdrRPropsValFastEq) ) ),
+
+        nodeRenderC = mrootProxy.connect { mroot =>
+          for {
+            reqOpt <- mroot.info
+            if reqOpt.nonEmpty
+            req = reqOpt.get
+          } yield {
+            nodeRenderR.PropsVal(
+              adData      = req.ad,
+              jdCss       = mroot.jdCss,
+              adnNodeOpt  = req.mdrNodeOpt
+            )
+          }
+        }( DiodeUtil.FastEqExt.PotAsOptionFastEq( nodeRenderR.NodeRenderRPropsValFastEq ) ),
+
+        mdrErrorsC = mrootProxy.connect { mroot =>
+          for {
+            req <- mroot.info.toOption.flatten
+            if req.errorNodeIds.nonEmpty
+          } yield {
+            mdrErrorsR.PropsVal(
+              errorNodeIds = req.errorNodeIds
+            )
+          }
+        }( OptFastEq.Wrapped( mdrErrorsR.MdrErrorsRPropsValFastEq ) ),
+
+        diaRefuseC = mrootProxy.connect { mroot =>
+          for {
+            refuseState <- mroot.dialogs.refuse
+          } yield {
+            mdrDiaRefuseR.PropsVal(
+              state = refuseState
+            )
+          }
+        }( OptFastEq.Wrapped(mdrDiaRefuseR.MdrDiaRefuseRPropsValFastEq) )
 
       )
     }

@@ -8,6 +8,7 @@ import io.suggest.sys.mdr.m.{MSysMdrRootS, MdrNextNode, MdrNextNodeResp}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
+import io.suggest.sys.mdr.v.NodeRenderR
 
 import scala.util.Success
 
@@ -70,7 +71,17 @@ class NodeMdrAh[M](
           v0.info.fail,
           v0.info.ready
         )
-        val v2 = v0.withInfo( infoReq2 )
+        val jdCss2 = NodeRenderR.mkJdCss(v0.jdCss)(
+          infoReq2
+            .iterator
+            .flatten
+            .flatMap(_.ad)
+            .map(_.template)
+            .toSeq: _*
+        )
+        val v2 = v0
+          .withInfo( infoReq2 )
+          .withJdCss( jdCss2 )
         updated( v2 )
 
       } else {

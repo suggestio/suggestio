@@ -8,7 +8,7 @@ import diode.react.ReactPot._
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sys.mdr.m.{MMdrActionInfo, MdrNextNode}
+import io.suggest.sys.mdr.m.MdrNextNode
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
@@ -23,8 +23,7 @@ import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.model.n2.edge.MPredicates
-
-import scala.scalajs.js.UndefOr
+import io.suggest.sys.mdr.MMdrActionInfo
 
 /**
   * Suggest.io
@@ -67,11 +66,12 @@ class NodeMdrR(
 
       /** Кнопка быстрой перезагрузки данных модерации. */
       def _refreshBtn = {
-        MuiToolTip(
+        MuiToolTip {
+          val _title = Messages( MsgCodes.`Reload` ): React.Node
           new MuiToolTipProps {
-            override val title: React.Node = Messages( MsgCodes.`Reload` )
+            override val title: React.Node = _title
           }
-        )(
+        } (
           MuiIconButton(
             new MuiIconButtonProps {
               override val onClick = _refreshBtnClickJsCbF
@@ -100,7 +100,6 @@ class NodeMdrR(
               MuiCard()(
                 MuiCardContent()(
                   Mui.SvgIcons.WbSunny()(),
-
                   MuiTypoGraphy(
                     new MuiTypoGraphyProps {
                       override val variant = MuiTypoGraphyVariants.headline
@@ -173,21 +172,19 @@ class NodeMdrR(
                         val itemIdStr = itemId.toString
 
                         // Часть данных, не значимых для модерации, скрывается в tool-tip.
-                        MuiToolTip(
-                          new MuiToolTipProps {
-                            override val title: React.Node = {
-                              <.span(
-                                RangeYmdR(
-                                  RangeYmdR.Props(
-                                    capFirst    = true,
-                                    rangeYmdOpt = mitem.dtToRangeYmdOpt
-                                  )
-                                )
+                        MuiToolTip.component.withKey(itemId) {
+                          val _title = <.span(
+                            RangeYmdR(
+                              RangeYmdR.Props(
+                                capFirst    = true,
+                                rangeYmdOpt = mitem.dtToRangeYmdOpt
                               )
-                            }
-                              .rawNode
+                            )
+                          )
+                          new MuiToolTipProps {
+                            override val title: React.Node = _title.rawNode
                           }
-                        )(
+                        } (
                           mdrRowR.component.withKey( itemIdStr + HtmlConstants.MINUS )(mdrRowPropsProxy)(
 
                             // Надо отрендерить инфу по item'у в зависимости от типа item'а.
@@ -277,7 +274,7 @@ class NodeMdrR(
                     )
                   } { mdrRowPropsProxy =>
                     mdrRowR.component.withKey( mnode.nodeId + HtmlConstants.COMMA )( mdrRowPropsProxy )(
-                      mnode.hint getOrElse[String] mnode.nodeId,
+                      mnode.hintOrId,
                       // TODO Ссылка на sys-узел продьюсера.
                     )
                   }

@@ -1,10 +1,13 @@
-package io.suggest.sys.mdr.m
+package io.suggest.sys.mdr
 
 import diode.FastEq
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemType
-import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
+import io.suggest.common.empty.OptionUtil.BoolOptJsonFormatOps
 
 /**
   * Suggest.io
@@ -24,6 +27,15 @@ object MMdrActionInfo {
   }
 
   implicit def univEq: UnivEq[MMdrActionInfo] = UnivEq.derive
+
+
+  /** Поддержка play-json. */
+  implicit def mMdrActionInfoFormat: OFormat[MMdrActionInfo] = (
+    (__ \ "i").formatNullable[Gid_t] and
+    (__ \ "t").formatNullable[MItemType] and
+    (__ \ "d").formatNullable[Boolean].formatBooleanOrFalse and
+    (__ \ "s").formatNullable[String]
+  )(apply, unlift(unapply))
 
 }
 

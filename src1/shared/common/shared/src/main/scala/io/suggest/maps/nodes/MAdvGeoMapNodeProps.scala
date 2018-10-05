@@ -48,6 +48,10 @@ case class MAdvGeoMapNodeProps(
   extends IId[String]
 {
   @inline override final def id = nodeId
+
+  def hintOrId: String =
+    hint getOrElse id
+
 }
 
 

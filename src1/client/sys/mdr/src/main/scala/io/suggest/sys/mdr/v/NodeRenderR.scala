@@ -5,13 +5,19 @@ import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
 import diode.react.ReactPot._
-import io.suggest.jd.MJdAdData
-import io.suggest.jd.render.m.MJdArgs
+import io.suggest.jd.{MJdAdData, MJdConf}
+import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
 import io.suggest.jd.render.v.{JdCss, JdR}
+import io.suggest.jd.tags.JdTag
+import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.routes.routes
+import io.suggest.sys.mdr.SysMdrConst
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import scalaz.Tree
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -26,10 +32,13 @@ class NodeRenderR(
   case class PropsVal(
                        adData       : Option[MJdAdData],
                        jdCss        : JdCss,
+                       adnNodeOpt   : Option[MAdvGeoMapNodeProps],
                      )
   implicit object NodeRenderRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.adData ===* b.adData)
+      (a.adData ===* b.adData) &&
+      (a.jdCss  ===* b.jdCss) &&
+      (a.adnNodeOpt ===* b.adnNodeOpt)
     }
   }
 
@@ -65,7 +74,16 @@ class NodeRenderR(
                   conf      = props.jdCss.jdCssArgs.conf
                 )
               } { jdR.apply }
-            }
+            },
+
+            // Рендер данных об узле
+            props.adnNodeOpt.whenDefined { nodeProps =>
+              // TODO Логотип TODO Картинка приветствия, TODO Цвета
+              <.a(
+                ^.href := routes.controllers.SysMarket.showAdnNode( nodeProps.nodeId ).url,
+                nodeProps.hintOrId
+              )
+            },
 
           )
         },
@@ -90,5 +108,26 @@ class NodeRenderR(
     .build
 
   def apply( propsPotProxy: Props ) = component( propsPotProxy )
+
+}
+
+object NodeRenderR {
+
+  /** jdConf всегда один: */
+  val JD_CONF = MJdConf(
+    isEdit = false,
+    szMult = SysMdrConst.SZ_MULT,
+    gridColumnsCount = 2
+  )
+
+  /** Ленивая сборка jdCss на основе шаблонов. */
+  def mkJdCss(jdCss0: JdCss = null)(tpl: Tree[JdTag]*): JdCss = {
+    val args2 = MJdCssArgs(tpl, JD_CONF)
+    if ((jdCss0 !=* null) && MJdCssArgs.MJdCssArgsFastEq.neqv(args2, jdCss0.jdCssArgs)) {
+      JdCss( args2 )
+    } else {
+      jdCss0
+    }
+  }
 
 }

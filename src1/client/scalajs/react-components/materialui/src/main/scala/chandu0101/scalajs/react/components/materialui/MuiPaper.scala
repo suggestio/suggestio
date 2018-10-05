@@ -11,24 +11,52 @@ object MuiPaper {
 
   val component = JsComponent[MuiPaperProps, Children.Varargs, Null](Mui.Paper)
 
-  /** @param children Children passed into the paper element. */
   def apply(props: MuiPaperProps = MuiPaperProps.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
 
 
-trait MuiPaperProps extends js.Object {
-  /** Set to true to generate a circular paper container. */
-  val circle:            js.UndefOr[Boolean]       = js.undefined
-  /** By default, the paper container will have a border radius.
-     Set this to false to generate a container with sharp corners. */
-  val rounded:           js.UndefOr[Boolean]       = js.undefined
-  /** Override the inline-styles of the root element. */
-  val style:             js.UndefOr[CssProperties] = js.undefined
-  /** Set to false to disable CSS transitions for the paper element. */
-  val transitionEnabled: js.UndefOr[Boolean]       = js.undefined
-  /** This number represents the zDepth of the paper shadow. */
-  val zDepth:            js.UndefOr[ZDepth]        = js.undefined
+trait MuiPaperPropsBase
+  extends MuiPropsBase
+  with MuiPropsBaseComponent
+{
+  val elevation: js.UndefOr[Int] = js.undefined
+  val square: js.UndefOr[Boolean] = js.undefined
 }
+
+
+trait MuiPaperProps
+  extends MuiPaperPropsBase
+  with MuiPropsBaseClasses[MuiPaperClasses]
 object MuiPaperProps extends MuiPropsBaseStatic[MuiPaperProps]
+
+
+trait MuiPaperClasses extends MuiClassesBase {
+  val rounded: js.UndefOr[String] = js.undefined
+  val elevation0: js.UndefOr[String] = js.undefined
+  val elevation1: js.UndefOr[String] = js.undefined
+  val elevation2: js.UndefOr[String] = js.undefined
+  val elevation3: js.UndefOr[String] = js.undefined
+  val elevation4: js.UndefOr[String] = js.undefined
+  val elevation5: js.UndefOr[String] = js.undefined
+  val elevation6: js.UndefOr[String] = js.undefined
+  val elevation7: js.UndefOr[String] = js.undefined
+  val elevation8: js.UndefOr[String] = js.undefined
+  val elevation9: js.UndefOr[String] = js.undefined
+  val elevation10: js.UndefOr[String] = js.undefined
+  val elevation11: js.UndefOr[String] = js.undefined
+  val elevation12: js.UndefOr[String] = js.undefined
+  val elevation13: js.UndefOr[String] = js.undefined
+  val elevation14: js.UndefOr[String] = js.undefined
+  val elevation15: js.UndefOr[String] = js.undefined
+  val elevation16: js.UndefOr[String] = js.undefined
+  val elevation17: js.UndefOr[String] = js.undefined
+  val elevation18: js.UndefOr[String] = js.undefined
+  val elevation19: js.UndefOr[String] = js.undefined
+  val elevation20: js.UndefOr[String] = js.undefined
+  val elevation21: js.UndefOr[String] = js.undefined
+  val elevation22: js.UndefOr[String] = js.undefined
+  val elevation23: js.UndefOr[String] = js.undefined
+  val elevation24: js.UndefOr[String] = js.undefined
+}

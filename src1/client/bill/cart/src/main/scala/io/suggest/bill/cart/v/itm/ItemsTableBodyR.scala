@@ -175,7 +175,7 @@ class ItemsTableBodyR(
                       .get( nodeId )
                       .map[VdomElement] { nodeProps =>
                         // Рендерим видимую часть: иконка или что-то ещё.
-                        val nodeName = nodeProps.hint.getOrElse( nodeProps.nodeId )
+                        val nodeName = nodeProps.hintOrId
                         MuiToolTip {
                           new MuiToolTipProps {
                             override val title: React.Node = nodeName

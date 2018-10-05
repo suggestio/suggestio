@@ -1,15 +1,17 @@
 package io.suggest.sys.mdr.v
 
-import chandu0101.scalajs.react.components.materialui.{MuiIconButton, MuiIconButtonProps, MuiListItem, MuiListItemText, MuiSvgIcon, MuiTypoGraphy, MuiTypoGraphyProps}
+import chandu0101.scalajs.react.components.materialui.{MuiIconButton, MuiIconButtonProps, MuiListItem, MuiListItemProps, MuiListItemText, MuiSvgIcon, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
 import diode.react.ModelProxy
+import io.suggest.i18n.MsgCodes
+import io.suggest.msg.Messages
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sys.mdr.m.{ApproveOrDismiss, MMdrActionInfo}
+import io.suggest.sys.mdr.MMdrActionInfo
+import io.suggest.sys.mdr.m.ApproveOrDismiss
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 import io.suggest.ueq.UnivEqUtil._
-
-import scala.scalajs.js
+import japgolly.scalajs.react.raw.React
 
 /**
   * Suggest.io
@@ -52,16 +54,23 @@ class MdrRowR {
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, ApproveOrDismiss(info, isApprove) )
 
     /** Кнопка ряда. */
-    private def __rowBtn(actionInfo: MMdrActionInfo, icon: MuiSvgIcon): VdomElement = {
-      MuiIconButton(
-        new MuiIconButtonProps {
-          override val onClick: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.defined {
-            ReactCommonUtil.cbFun1ToJsCb(
-              onApproveOrDismissBtnClick( actionInfo, isApprove = true ) )
-          }
+    private def __rowBtn(actionInfo: MMdrActionInfo, icon: MuiSvgIcon, msgCode: String): VdomElement = {
+      MuiToolTip(
+        new MuiToolTipProps {
+          override val title: React.Node = Messages( msgCode )
+          override val placement = MuiToolTipPlacements.BottomStart
         }
       )(
-        icon()()
+        MuiIconButton {
+          val _onClickCbF = ReactCommonUtil.cbFun1ToJsCb(
+            onApproveOrDismissBtnClick( actionInfo, isApprove = true )
+          )
+          new MuiIconButtonProps {
+            override val onClick = _onClickCbF
+          }
+        } (
+          icon()()
+        )
       )
     }
 
@@ -69,7 +78,12 @@ class MdrRowR {
     def render(propsProxy: Props, children: PropsChildren): VdomElement = {
       val props = propsProxy.value
 
-      MuiListItem()(
+      MuiListItem(
+        new MuiListItemProps {
+          override val disableGutters = true
+          override val dense = true
+        }
+      )(
         MuiListItemText()(
           MuiTypoGraphy(
             new MuiTypoGraphyProps {
@@ -77,12 +91,12 @@ class MdrRowR {
             }
           )(
             // Кнопка "подтвердить"
-            __rowBtn( props.actionInfo, props.approveIcon),
+            __rowBtn( props.actionInfo, props.approveIcon, MsgCodes.`Approve` ),
 
             children,
 
             // Кнопка "отказать"
-            __rowBtn( props.actionInfo, props.dismissIcon )
+            __rowBtn( props.actionInfo, props.dismissIcon, MsgCodes.`Refuse` )
           )
         )
       )

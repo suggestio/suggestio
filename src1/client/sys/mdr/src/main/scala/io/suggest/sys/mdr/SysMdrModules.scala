@@ -19,6 +19,8 @@ class SysMdrModules {
   lazy val nodeMdrR = wire[NodeMdrR]
   lazy val mdrRowR = wire[MdrRowR]
   lazy val sysMdrFormR = wire[SysMdrFormR]
+  lazy val mdrErrorsR = wire[MdrErrorsR]
+  lazy val mdrDiaRefuseR = wire[MdrDiaRefuseR]
 
   lazy val sysMdrCircuit = wire[SysMdrCircuit]
 

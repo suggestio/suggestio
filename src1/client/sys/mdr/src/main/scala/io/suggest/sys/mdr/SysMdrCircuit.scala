@@ -6,6 +6,7 @@ import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sys.mdr.c.{ISysMdrApi, NodeMdrAh, SysMdrApiXhrImpl}
 import io.suggest.sys.mdr.m.{MSysMdrRootS, MdrNextNode}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sys.mdr.v.NodeRenderR
 
 import scala.concurrent.Future
 
@@ -28,6 +29,7 @@ object SysMdrCircuit {
 
     // Сборка root-модели, готовой к работе.
     MSysMdrRootS(
+      jdCss = NodeRenderR.mkJdCss()()
     )
   }
 

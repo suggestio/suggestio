@@ -1,6 +1,7 @@
 package io.suggest.sys.mdr
 
 import diode.FastEq
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.jd.MJdAdData
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
@@ -37,7 +38,12 @@ object MNodeMdrInfo {
     (__ \ "a").formatNullable[MJdAdData] and
     (__ \ "t").format[Seq[MItem]] and
     (__ \ "n").format[Iterable[MAdvGeoMapNodeProps]] and
-    (__ \ "d").format[Iterable[String]]
+    (__ \ "d").format[Iterable[String]] and
+    (__ \ "e").formatNullable[Iterable[String]]
+      .inmap[Iterable[String]](
+        EmptyUtil.opt2ImplEmpty1F(Nil),
+        { nodeIds => if (nodeIds.isEmpty) None else Some(nodeIds) }
+      )
   )(apply, unlift(unapply))
 
 }
@@ -56,6 +62,7 @@ case class MNodeMdrInfo(
                          items                : Seq[MItem],
                          nodes                : Iterable[MAdvGeoMapNodeProps],
                          directSelfNodeIds    : Iterable[String],
+                         errorNodeIds         : Iterable[String],
                        ) {
 
   /** Сгруппированные item'ы по типам. */
@@ -70,9 +77,10 @@ case class MNodeMdrInfo(
       .iterator
       .flatMap( nodesMap.get )
       .toSeq
-      .sortBy { m =>
-        m.hint getOrElse m.nodeId
-      }
+      .sortBy( _.hintOrId )
   }
+
+  lazy val mdrNodeOpt: Option[MAdvGeoMapNodeProps] =
+    nodesMap.get( nodeId )
 
 }
