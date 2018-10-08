@@ -16,9 +16,6 @@ sealed trait ISysMdrAction extends DAction
 /** Экшен реагирования на клик по кнопке аппрува или отказа в этом. */
 case class ApproveOrDismiss( info: MMdrActionInfo, isApprove: Boolean ) extends ISysMdrAction
 
-/** Форма подтверждения отказа в размещении. */
-case class DismissSubmit( info: MMdrActionInfo, reason: String ) extends ISysMdrAction
-
 
 /** Запросить с сервера данные узла, который требуется промодерировать. */
 case object MdrNextNode extends ISysMdrAction
@@ -29,3 +26,13 @@ case class MdrNextNodeResp(
                             tryResp       : Try[Option[MNodeMdrInfo]]
                           )
   extends ISysMdrAction
+
+
+/** Юзер вводит причину отказа в поле причины. */
+case class SetDismissReason(reason: String) extends ISysMdrAction
+
+/** Клик по кнопке подтверждения отказа в размещении. */
+case object DismissOkClick extends ISysMdrAction
+
+/** Клик по кнопке отмены диалога отказа. */
+case object DismissCancelClick extends ISysMdrAction

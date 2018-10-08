@@ -284,5 +284,6 @@ object MsgCodes {
   val `Lost.node` = "Lost.node"
   val `Approve` = "Approve"
   val `Refuse` = "Refuse"
+  val `Reason` = "Reason"
 
 }

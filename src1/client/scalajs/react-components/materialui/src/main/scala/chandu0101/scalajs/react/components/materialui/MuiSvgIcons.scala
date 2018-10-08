@@ -795,8 +795,8 @@ object MuiSvgIcons {
   object ContentMoveToInbox extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/next-week", JSImport.Default)
   object ContentNextWeek extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/content/redo", JSImport.Default)
-  object ContentRedo extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Redo", JSImport.Default)
+  object Redo extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/remove-circle-outline", JSImport.Default)
   object ContentRemoveCircleOutline extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/remove-circle", JSImport.Default)
@@ -821,8 +821,8 @@ object MuiSvgIcons {
   object ContentTextFormat extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/unarchive", JSImport.Default)
   object ContentUnarchive extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/content/undo", JSImport.Default)
-  object ContentUndo extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Undo", JSImport.Default)
+  object Undo extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/weekend", JSImport.Default)
   object ContentWeekend extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/AccessAlarm", JSImport.Default)

@@ -41,7 +41,7 @@ trait MuiSnackBarProps
   val open: js.UndefOr[Boolean] = js.undefined
   val resumeHideDuration: js.UndefOr[Double] = js.undefined
   val TransitionComponent: js.UndefOr[String | js.Function | js.Object] = js.undefined
-  val transitionDuration: js.UndefOr[Double | MuiSnackBarTransitionDuration] = js.undefined
+  val transitionDuration: js.UndefOr[Double | MuiTransitionDuration] = js.undefined
   val TransitionProps: js.UndefOr[js.Object] = js.undefined
 }
 object MuiSnackBarProps extends MuiPropsBaseStatic[MuiSnackBarProps]
@@ -62,7 +62,7 @@ object MuiSnackBarAnchorOrigin {
 
 
 /** JSON fop [[MuiSnackBarProps.transitionDuration]]. */
-trait MuiSnackBarTransitionDuration extends js.Object {
+trait MuiTransitionDuration extends js.Object {
   val enter: js.UndefOr[Double] = js.undefined
   val exit: js.UndefOr[Double] = js.undefined
 }

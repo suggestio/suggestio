@@ -28,6 +28,10 @@ object Mui {
       extends js.Any
   @js.native @JSImport("@material-ui/core/DatePicker", JSImport.Default) object DatePicker extends js.Any
   @js.native @JSImport("@material-ui/core/Dialog", JSImport.Default) object Dialog         extends js.Any
+  @js.native @JSImport("@material-ui/core/DialogActions", JSImport.Default) object DialogActions extends js.Any
+  @js.native @JSImport("@material-ui/core/DialogTitle", JSImport.Default) object DialogTitle extends js.Any
+  @js.native @JSImport("@material-ui/core/DialogContent", JSImport.Default) object DialogContent extends js.Any
+  @js.native @JSImport("@material-ui/core/DialogContentText", JSImport.Default) object DialogContentText extends js.Any
   @js.native @JSImport("@material-ui/core/Divider", JSImport.Default) object Divider       extends js.Any
   @js.native @JSImport("@material-ui/core/Drawer", JSImport.Default) object Drawer         extends js.Any
   @js.native @JSImport("@material-ui/core/DropDownMenu", JSImport.Default) object DropDownMenu

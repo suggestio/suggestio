@@ -1,5 +1,6 @@
 package io.suggest.sys.mdr.v
 
+import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.spa.{DiodeUtil, OptFastEq}
 import io.suggest.sys.mdr.m.MSysMdrRootS
@@ -103,7 +104,8 @@ class SysMdrFormR(
             refuseState <- mroot.dialogs.refuse
           } yield {
             mdrDiaRefuseR.PropsVal(
-              state = refuseState
+              state       = refuseState,
+              dismissReq  = Pot.empty    // TODO Брать текущий запрос, или возвращать Pot.empty
             )
           }
         }( OptFastEq.Wrapped(mdrDiaRefuseR.MdrDiaRefuseRPropsValFastEq) )

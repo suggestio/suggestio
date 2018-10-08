@@ -4,11 +4,12 @@ import diode.data.PendingBase
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.msg.WarnMsgs
 import io.suggest.sys.mdr.MdrSearchArgs
-import io.suggest.sys.mdr.m.{MSysMdrRootS, MdrNextNode, MdrNextNodeResp}
+import io.suggest.sys.mdr.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sys.mdr.v.NodeRenderR
+import japgolly.univeq._
 
 import scala.util.Success
 
@@ -27,6 +28,56 @@ class NodeMdrAh[M](
 {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+
+    // Ввод текста причины отказа в размещении.
+    case m: SetDismissReason =>
+      val v0 = value
+      v0.dialogs.refuse
+        .filter(_.reason !=* m.reason)
+        .fold(noChange) { refuse0 =>
+          val v2 = v0.withDialogs(
+            v0.dialogs.withRefuse(
+              Some( refuse0.withReason( m.reason ) )
+            )
+          )
+          updated(v2)
+        }
+
+    // Нажимание кнопок аппрува или отказа в списке размещений.
+    case m: ApproveOrDismiss =>
+      val v0 = value
+      if (m.isApprove) {
+        // Аппрув - немедленный эффект запроса на сервер.
+        println("TODO") // TODO
+        noChange
+
+      } else {
+        // Отказ - нужен диалог отказа с указанием причины отказа.
+        val v2 = v0.withDialogs(
+          v0.dialogs.withRefuse(
+            Some( MMdrRefuseDialogS(
+              actionInfo = m.info
+            ))
+          )
+        )
+        updated(v2)
+      }
+
+
+    // В диалоге отказа нажата кнопка отмены:
+    case DismissCancelClick =>
+      val v0 = value
+      v0.dialogs.refuse.fold {
+        // Дублирующееся событие, диалог уже закрыт.
+        noChange
+      } { _ =>
+        val v2 = v0.withDialogs(
+          v0.dialogs
+            .withRefuse(None)
+        )
+        updated(v2)
+      }
+
 
     // Переход к следующему узлу, который требует модерации.
     case MdrNextNode =>

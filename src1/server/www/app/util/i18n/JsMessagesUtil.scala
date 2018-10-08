@@ -371,6 +371,9 @@ class JsMessagesUtil @Inject() (
       MC.`Lost.node` ::
       MC.`Approve` ::
       MC.`Refuse` ::
+      MC.`Reason` ::
+      MC.`Cancel` ::
+      MC.`Error` ::
       ITEM_TYPES
   }
 

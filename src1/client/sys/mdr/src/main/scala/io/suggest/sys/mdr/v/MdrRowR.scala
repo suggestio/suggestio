@@ -54,7 +54,7 @@ class MdrRowR {
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, ApproveOrDismiss(info, isApprove) )
 
     /** Кнопка ряда. */
-    private def __rowBtn(actionInfo: MMdrActionInfo, icon: MuiSvgIcon, msgCode: String): VdomElement = {
+    private def __rowBtn(isApprove: Boolean, actionInfo: MMdrActionInfo, icon: MuiSvgIcon, msgCode: String): VdomElement = {
       MuiToolTip(
         new MuiToolTipProps {
           override val title: React.Node = Messages( msgCode )
@@ -63,7 +63,7 @@ class MdrRowR {
       )(
         MuiIconButton {
           val _onClickCbF = ReactCommonUtil.cbFun1ToJsCb(
-            onApproveOrDismissBtnClick( actionInfo, isApprove = true )
+            onApproveOrDismissBtnClick( actionInfo, isApprove = isApprove )
           )
           new MuiIconButtonProps {
             override val onClick = _onClickCbF
@@ -91,12 +91,12 @@ class MdrRowR {
             }
           )(
             // Кнопка "подтвердить"
-            __rowBtn( props.actionInfo, props.approveIcon, MsgCodes.`Approve` ),
+            __rowBtn( true, props.actionInfo, props.approveIcon, MsgCodes.`Approve` ),
 
             children,
 
             // Кнопка "отказать"
-            __rowBtn( props.actionInfo, props.dismissIcon, MsgCodes.`Refuse` )
+            __rowBtn( false, props.actionInfo, props.dismissIcon, MsgCodes.`Refuse` )
           )
         )
       )
