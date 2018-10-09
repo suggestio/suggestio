@@ -38,7 +38,7 @@ object MNodeMdrInfo {
     (__ \ "a").formatNullable[MJdAdData] and
     (__ \ "t").format[Seq[MItem]] and
     (__ \ "n").format[Iterable[MAdvGeoMapNodeProps]] and
-    (__ \ "d").format[Iterable[String]] and
+    (__ \ "d").format[Set[String]] and
     (__ \ "e").formatNullable[Iterable[String]]
       .inmap[Iterable[String]](
         EmptyUtil.opt2ImplEmpty1F(Nil),
@@ -61,7 +61,7 @@ case class MNodeMdrInfo(
                          ad                   : Option[MJdAdData],
                          items                : Seq[MItem],
                          nodes                : Iterable[MAdvGeoMapNodeProps],
-                         directSelfNodeIds    : Iterable[String],
+                         directSelfNodeIds    : Set[String],
                          errorNodeIds         : Iterable[String],
                        ) {
 

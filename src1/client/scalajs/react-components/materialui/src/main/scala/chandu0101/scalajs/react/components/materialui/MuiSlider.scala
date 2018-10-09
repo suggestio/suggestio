@@ -65,6 +65,8 @@ case class MuiSlider(
 }
         
 
+// Заглушка для связи с Drawer
+trait MuiSlideProps extends js.Object
 
 @js.native
 trait MuiSliderM extends js.Object {

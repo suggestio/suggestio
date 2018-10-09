@@ -177,9 +177,10 @@ class SysMdrUtil @Inject() (
             case _: NoSuchElementException =>
               LOGGER.warn(s"$logPrefix Possibly conficting mdr MItem UPDATE. Suppressed.")
               false
-            case ex: Throwable =>
-              LOGGER.error(s"$logPrefix Unknown error occured while approving item $itemId", ex)
-              true
+            // Пока вырублено подавление любых ошибок, т.к. скрывают реальные проблемы.
+            //case ex: Throwable =>
+            //  LOGGER.error(s"$logPrefix Unknown error occured while approving item $itemId", ex)
+            //  true
           }
       }
       itemsCount  = itemIds.size

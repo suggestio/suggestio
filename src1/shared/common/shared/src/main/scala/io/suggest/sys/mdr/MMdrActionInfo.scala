@@ -1,6 +1,7 @@
 package io.suggest.sys.mdr
 
 import diode.FastEq
+import io.suggest.common.empty.EmptyProduct
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.ueq.UnivEqUtil._
@@ -63,4 +64,15 @@ case class MMdrActionInfo(
                            directSelfAll : Boolean              = false,
                            directSelfId  : Option[String]       = None,
                          )
+  extends EmptyProduct
+{
+
+  override protected[this] def _nonEmptyValue(v: Any): Boolean = {
+    v match {
+      case x: Boolean => x
+      case _ => super._nonEmptyValue(v)
+    }
+  }
+
+}
 

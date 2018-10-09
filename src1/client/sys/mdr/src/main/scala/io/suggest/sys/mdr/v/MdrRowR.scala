@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiListItem, MuiListItemProps, MuiListItemText, MuiSvgIcon, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiColorTypes, MuiIconButton, MuiIconButtonProps, MuiListItem, MuiListItemProps, MuiListItemText, MuiSvgIcon, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
@@ -122,7 +122,13 @@ class MdrRowR {
               override val title: React.Node = errMsg.rawNode
             }
           )(
-            Mui.SvgIcons.SmsFailed()()
+            MuiTypoGraphy(
+              new MuiTypoGraphyProps {
+                override val color = MuiColorTypes.secondary
+              }
+            )(
+              Mui.SvgIcons.SmsFailed()()
+            )
           )
         }
 

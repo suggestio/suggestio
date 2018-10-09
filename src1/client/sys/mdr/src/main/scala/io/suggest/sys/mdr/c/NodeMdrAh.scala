@@ -2,6 +2,7 @@ package io.suggest.sys.mdr.c
 
 import diode.data.{PendingBase, Pot}
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.msg.WarnMsgs
 import io.suggest.sys.mdr.{MMdrActionInfo, MMdrResolution, MdrSearchArgs}
 import io.suggest.sys.mdr.m._
@@ -25,7 +26,7 @@ class NodeMdrAh[M](
                   )
   extends ActionHandler( modelRW )
   with Log
-{
+{ ah =>
 
   /** Эффект отправки mdr-команды на сервер с апдейтом состояния. pure-функция. */
   def _doMdrFx(info: MMdrActionInfo, reasonOpt: Option[String], v0: MSysMdrRootS): (MSysMdrRootS, Effect) = {
@@ -37,7 +38,7 @@ class NodeMdrAh[M](
         MMdrResolution(
           nodeId  = v0.info.get.get.nodeId,
           info    = info,
-          reason  = None
+          reason  = reasonOpt
         )
       ).transform { tryRes =>
         val act = DoMdrResp(
@@ -101,11 +102,62 @@ class NodeMdrAh[M](
               v0.dialogs
             }
 
+            // Надо почистить item'ы, которые осталось промодерировать.
+            val mdrRespPot2 = if (m.tryResp.isSuccess) {
+              // Если всё ок, то надо удалить уже-промодерированные-item'ы из состояния.
+              for (resp <- v0.info) yield {
+                for (info <- resp) yield {
+                  val isActionInfoEmpty = m.info.isEmpty
+
+                  val items2 = if (isActionInfoEmpty) {
+                    List.empty
+                  } else if ( m.info.itemType.isEmpty && m.info.itemId.isEmpty ) {
+                    info.items
+                  } else {
+                    info
+                      .items
+                      .filter { mitem =>
+                        (m.info.itemType contains mitem.iType) ||
+                          (m.info.isEmpty) ||
+                          (mitem.id ==* m.info.itemId)
+                      }
+                  }
+
+                  val directSelfNodeIds2 = if (isActionInfoEmpty || m.info.directSelfAll) {
+                    Set.empty[String]
+                  } else if (m.info.directSelfId.isEmpty) {
+                    info.directSelfNodeIds
+                  } else {
+                    info.directSelfNodeIds -- m.info.directSelfId
+                  }
+
+                  info.copy(
+                    items             = items2,
+                    directSelfNodeIds = directSelfNodeIds2
+                  )
+                }
+              }
+            } else {
+              // При ошибках не надо чистить данные ноды
+              v0.info
+            }
+
             val v2 = v0.copy(
               dialogs = dia2,
-              mdrPots = mdrPots2
+              mdrPots = mdrPots2,
+              info    = mdrRespPot2
             )
-            updated(v2)
+
+            // Если больше не осталось элементов для модерации, то надо запросить новый элемент для модерации.
+            val nextNodeFxOpt = OptionUtil.maybe {
+              mdrRespPot2.exists { _.exists { resp =>
+                resp.items.isEmpty  &&  resp.directSelfNodeIds.isEmpty
+              }}
+            } {
+              Effect.action( MdrNextNode )
+            }
+
+            ah.updatedMaybeEffect(v2, nextNodeFxOpt)
 
           } else {
             // Есть ещё какой-то запущенный запрос, который более актуален.

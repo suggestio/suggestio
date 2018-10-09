@@ -1,31 +1,34 @@
 package chandu0101.scalajs.react.components
 package materialui
 
-import chandu0101.macros.tojs.JSMacro
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw._
-import japgolly.scalajs.react.vdom._
-import org.scalajs.dom
 import scala.scalajs.js
-import scala.scalajs.js.`|`
 
-/**
- * This file is generated - submit issues instead of PR against it
- */
-    
-case class MuiDivider(
-  key:   js.UndefOr[String]        = js.undefined,
-  ref:   js.UndefOr[String]        = js.undefined,
-  /** If true, the `Divider` will be indented. */
-  inset: js.UndefOr[Boolean]       = js.undefined,
-  /** Override the inline-styles of the root element. */
-  style: js.UndefOr[CssProperties] = js.undefined){
 
-  def apply() = {
-    
-    val props = JSMacro[MuiDivider](this)
-    val f = JsComponent[js.Object, Children.None, Null](Mui.Divider)
-    f(props)
-  }
+object MuiDivider {
+
+  val component = JsComponent[MuiDividerProps, Children.None, Null](Mui.Divider)
+
+  def apply(props: MuiDividerProps = MuiDividerProps.empty) =
+    component(props)
+
 }
         
+
+trait MuiDividerProps
+  extends MuiPropsBase
+  with MuiPropsBaseClasses[MuiDividerClasses]
+  with MuiPropsBaseComponent
+{
+  val absolute: js.UndefOr[Boolean] = js.undefined
+  val inset: js.UndefOr[Boolean] = js.undefined
+  val light: js.UndefOr[Boolean] = js.undefined
+}
+object MuiDividerProps extends MuiPropsBaseStatic[MuiDividerProps]
+
+
+trait MuiDividerClasses extends MuiClassesBase {
+  val absolute: js.UndefOr[String] = js.undefined
+  val inset: js.UndefOr[String] = js.undefined
+  val light: js.UndefOr[String] = js.undefined
+}

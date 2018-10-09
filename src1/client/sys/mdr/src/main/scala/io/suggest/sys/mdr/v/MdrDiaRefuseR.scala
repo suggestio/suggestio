@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonVariants, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiLinearProgress, MuiTextField, MuiTextFieldProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonVariants, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiLinearProgress, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
@@ -106,7 +106,11 @@ class MdrDiaRefuseR {
 
           // При ошибках - тоже что-нибудь отрендерить:
           props.dismissReq.renderFailed { ex =>
-            <.div(
+            MuiTypoGraphy(
+              new MuiTypoGraphyProps {
+                override val color = MuiColorTypes.secondary
+              }
+            )(
               <.br,
               <.br,
               Messages( MsgCodes.`Error` ),
