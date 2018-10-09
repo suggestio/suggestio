@@ -2,6 +2,7 @@ package io.suggest.sys.mdr.v
 
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.jd.render.v.{JdCss, JdCssR}
 import io.suggest.spa.{DiodeUtil, OptFastEq}
 import io.suggest.sys.mdr.m.MSysMdrRootS
 import japgolly.scalajs.react._
@@ -19,13 +20,17 @@ class SysMdrFormR(
                    val nodeRenderR    : NodeRenderR,
                    val mdrErrorsR     : MdrErrorsR,
                    val mdrDiaRefuseR  : MdrDiaRefuseR,
+                   jdCssR             : JdCssR,
                  ) {
+
+  import JdCss.JdCssFastEq
 
   type Props_t = MSysMdrRootS
   type Props = ModelProxy[Props_t]
 
 
   case class State(
+                    jdCssC              : ReactConnectProxy[JdCss],
                     nodeInfoC           : ReactConnectProxy[nodeMdrR.Props_t],
                     nodeRenderC         : ReactConnectProxy[nodeRenderR.Props_t],
                     mdrErrorsC          : ReactConnectProxy[mdrErrorsR.Props_t],
@@ -37,6 +42,9 @@ class SysMdrFormR(
 
     def render(propsProxy: Props, s: State): VdomElement = {
       <.div(
+
+        // Рендер css карточки:
+        s.jdCssC { jdCssR.apply },
 
         // Ошибки - здесь:
         s.mdrErrorsC { mdrErrorsR.apply },
@@ -60,6 +68,8 @@ class SysMdrFormR(
     .initialStateFromProps { mrootProxy =>
       State(
 
+        jdCssC = mrootProxy.connect(_.jdCss),
+
         nodeInfoC = mrootProxy.connect { mroot =>
           for {
             reqOpt <- mroot.info
@@ -69,6 +79,7 @@ class SysMdrFormR(
                 nodesMap                = req.nodesMap,
                 directSelfNodesSorted   = req.directSelfNodesSorted,
                 itemsByType             = req.itemsByType,
+                mdrPots                 = mroot.mdrPots,
               )
             }
           }
@@ -100,15 +111,14 @@ class SysMdrFormR(
         }( OptFastEq.Wrapped( mdrErrorsR.MdrErrorsRPropsValFastEq ) ),
 
         diaRefuseC = mrootProxy.connect { mroot =>
-          for {
-            refuseState <- mroot.dialogs.refuse
-          } yield {
-            mdrDiaRefuseR.PropsVal(
-              state       = refuseState,
-              dismissReq  = Pot.empty    // TODO Брать текущий запрос, или возвращать Pot.empty
-            )
-          }
-        }( OptFastEq.Wrapped(mdrDiaRefuseR.MdrDiaRefuseRPropsValFastEq) )
+          val s = mroot.dialogs.refuse
+          mdrDiaRefuseR.PropsVal(
+            state      = s,
+            dismissReq = s.actionInfo
+              .flatMap(mroot.mdrPots.get)
+              .getOrElse( Pot.empty )
+          )
+        }( mdrDiaRefuseR.MdrDiaRefuseRPropsValFastEq )
 
       )
     }

@@ -1843,8 +1843,8 @@ object MuiSvgIcons {
   object NotificationSdCard extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/notification/sim-card-alert", JSImport.Default)
   object NotificationSimCardAlert extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/notification/sms-failed", JSImport.Default)
-  object NotificationSmsFailed extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SmsFailed", JSImport.Default)
+  object SmsFailed extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/notification/sms", JSImport.Default)
   object NotificationSms extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/notification/sync-disabled", JSImport.Default)

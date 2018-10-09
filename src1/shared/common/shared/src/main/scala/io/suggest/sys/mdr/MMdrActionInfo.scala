@@ -17,6 +17,14 @@ import io.suggest.common.empty.OptionUtil.BoolOptJsonFormatOps
   */
 object MMdrActionInfo {
 
+  object Fields {
+    val ITEM_ID_FN = "i"
+    val ITEM_TYPE_FN = "t"
+    val DIRECT_SELF_ALL_FN = "d"
+    val DIRECT_SELF_ID_FN = "s"
+  }
+
+
   implicit object MMdrActionInfoFastEq extends FastEq[MMdrActionInfo] {
     override def eqv(a: MMdrActionInfo, b: MMdrActionInfo): Boolean = {
       (a.itemId ===* b.itemId) &&
@@ -30,12 +38,15 @@ object MMdrActionInfo {
 
 
   /** Поддержка play-json. */
-  implicit def mMdrActionInfoFormat: OFormat[MMdrActionInfo] = (
-    (__ \ "i").formatNullable[Gid_t] and
-    (__ \ "t").formatNullable[MItemType] and
-    (__ \ "d").formatNullable[Boolean].formatBooleanOrFalse and
-    (__ \ "s").formatNullable[String]
-  )(apply, unlift(unapply))
+  implicit def mMdrActionInfoFormat: OFormat[MMdrActionInfo] = {
+    val F = Fields
+    (
+      (__ \ F.ITEM_ID_FN).formatNullable[Gid_t] and
+      (__ \ F.ITEM_TYPE_FN).formatNullable[MItemType] and
+      (__ \ F.DIRECT_SELF_ALL_FN).formatNullable[Boolean].formatBooleanOrFalse and
+      (__ \ F.DIRECT_SELF_ID_FN).formatNullable[String]
+    )(apply, unlift(unapply))
+  }
 
 }
 

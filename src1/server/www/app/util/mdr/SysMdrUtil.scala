@@ -2,21 +2,24 @@ package util.mdr
 
 import java.time.OffsetDateTime
 
+import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.IMust
 import javax.inject.{Inject, Singleton}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemType
-import io.suggest.mbill2.m.item.{IMItem, ItemStatusChanged, MItem, MItems}
+import io.suggest.mbill2.m.item.{IMItem, MItem, MItems}
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
+import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.sys.mdr.MdrSearchArgs
+import io.suggest.sys.mdr.{MMdrResolution, MdrSearchArgs}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mdr.{MRefuseFormRes, MRefuseModes, RefuseForm_t}
 import models.mproj.ICommonDi
-import models.req.{IAdReq, IReqHdr}
+import models.req.ISioUser
+import util.billing.Bill2Util
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -28,11 +31,12 @@ import scala.concurrent.Future
   */
 @Singleton
 class SysMdrUtil @Inject() (
-  val mItems        : MItems,
-  mdrUtil           : MdrUtil,
-  mNodes            : MNodes,
-  val mCommonDi     : ICommonDi
-)
+                             val mItems        : MItems,
+                             mdrUtil           : MdrUtil,
+                             mNodes            : MNodes,
+                             bill2Util         : Bill2Util,
+                             val mCommonDi     : ICommonDi
+                           )
   extends MacroLogsImpl
 {
 
@@ -40,47 +44,43 @@ class SysMdrUtil @Inject() (
 
   def someNow = Some(OffsetDateTime.now)
 
-  /** Сборка эджа от текущего модератора.
+  /** Сборка инфы эджа модерации.
     *
-    * @param reasonOpt None значит всё хорошо,
-    *                  Some() значит карточка не прошла модерацию по указанной причине.
-    * @return Готовый экземляр MEdge
+    * @param reasonOpt None - всё ок, модерация одобрена
+    *                  Some(reason) - бан.
+    * @return Инстанс MEdgeInfo.
     */
-  def mdrEdge(reasonOpt: Option[String] = None)(implicit request: IReqHdr): MEdge = {
-    mdrEdgeI {
-      MEdgeInfo(
-        dateNi    = someNow,
-        commentNi = reasonOpt,
-        flag      = Some(reasonOpt.isEmpty)
-      )
-    }
+  def mdrEdgeInfo(reasonOpt: Option[String]): MEdgeInfo = {
+    MEdgeInfo(
+      dateNi    = someNow,
+      commentNi = reasonOpt,
+      flag      = Some(reasonOpt.isEmpty)
+    )
   }
 
   /** Сборка эджа текущего модератора с указанной инфой по модерации. */
-  def mdrEdgeI(einfo: MEdgeInfo)(implicit request: IReqHdr): MEdge = {
+  def mdrEdge(mdrUser: ISioUser, einfo: MEdgeInfo): MEdge = {
     MEdge(
       predicate = MPredicates.ModeratedBy,
-      nodeIds   = request.user.personIdOpt.toSet,
+      nodeIds   = mdrUser.personIdOpt.toSet,
       info      = einfo
     )
   }
 
   /** Код обновления эджа модерации живёт здесь. */
-  def updMdrEdge(info: MEdgeInfo)(implicit request: IAdReq[_]): Future[MNode] = {
+  def updMdrEdge(mad: MNode, mdrEdge: MEdge): Future[MNode] = {
     // Сгенерить обновлённые данные модерации.
-    val mdr2 = mdrEdgeI(info)
-
-    LOGGER.trace(s"_updMdrEdge() Mdr mad[${request.mad.idOrNull}] with mdr-edge $mdr2")
+    LOGGER.trace(s"_updMdrEdge() Mdr mad[${mad.idOrNull}] with mdr-edge $mdrEdge")
 
     // Запускаем сохранение данных модерации.
-    mNodes.tryUpdate(request.mad) { mad0 =>
+    mNodes.tryUpdate(mad) { mad0 =>
       mad0.copy(
         edges = mad0.edges.copy(
           out = {
             MNodeEdges.edgesToMap1 {
               mad0.edges
                 .withoutPredicateIter( MPredicates.ModeratedBy )
-                .++( Iterator.single(mdr2) )
+                .++( mdrEdge :: Nil )
             }
           }
         )
@@ -117,7 +117,7 @@ class SysMdrUtil @Inject() (
 
   type Q_t = Query[mItems.MItemsTable, MItem, Seq]
 
-  def onlyReqs(q: Q_t): Q_t = {
+  def onlyAwaitingMdr(q: Q_t): Q_t = {
     q.filter( _.statusStr === MItemStatuses.AwaitingMdr.value)
   }
 
@@ -136,7 +136,7 @@ class SysMdrUtil @Inject() (
   }
 
   def itemsQueryAwaiting(nodeId: String): Q_t = {
-    onlyReqs(
+    onlyAwaitingMdr(
       itemsQuery(nodeId)
     )
   }
@@ -145,16 +145,9 @@ class SysMdrUtil @Inject() (
   /** Логика поштучной обработки item'ов. */
   def _processOneItem[Res_t <: IMItem](dbAction: DBIOAction[Res_t, NoStream, _]): Future[Res_t] = {
     // Запуск обновления MItems.
-    val saveFut = slick.db.run {
+    slick.db.run {
       dbAction.transactionally
     }
-
-    // Обрадовать другие компоненты системы новым событием
-    for (res <- saveFut) {
-      sn.publish( ItemStatusChanged(res.mitem) )
-    }
-
-    saveFut
   }
 
 
@@ -162,15 +155,15 @@ class SysMdrUtil @Inject() (
   sealed case class ProcessItemsRes(itemIds: Seq[Gid_t], successMask: Seq[Boolean], itemsCount: Int)
 
   /** Логика массовой обработки item'ов. */
-  def _processItemsForAd[Res_t <: IMItem](nodeId: String, q: Q_t)
-                                         (f: Gid_t => DBIOAction[Res_t, NoStream, _]): Future[ProcessItemsRes] = {
+  def _processItemsFor[Res_t <: IMItem](q: Q_t)
+                                       (f: Gid_t => DBIOAction[Res_t, NoStream, _]): Future[ProcessItemsRes] = {
     // TODO Opt Тут можно db.stream применять
     val itemIdsFut = slick.db.run {
       q.map(_.id)
         .result
     }
 
-    lazy val logPrefix = s"_processItemsForAd($nodeId ${System.currentTimeMillis}):"
+    lazy val logPrefix = s"_processItemsForAd()#${System.currentTimeMillis}:"
     LOGGER.trace(s"$logPrefix Bulk approve items, $f")
 
     for {
@@ -194,6 +187,118 @@ class SysMdrUtil @Inject() (
 
     } yield {
       ProcessItemsRes(itemIds, saveRes, itemsCount)
+    }
+  }
+
+
+  /** Выполнить команду модератора.
+    *
+    * @param mdrRes Резолюция модератора.
+    * @param mnode Узел, упомянутый в mdrRes.nodeId.
+    * @return Фьючерс готовности.
+    */
+  def processMdrResolution(mdrRes: MMdrResolution, mnode: MNode, mdrUser: ISioUser): Future[(MNode, Option[ProcessItemsRes])] = {
+    lazy val logPrefix = s"processMdrResolution(${mdrRes.isApprove} node#${mnode.idOrNull} mdrUser#${mdrUser.personIdOpt.orNull})#${System.currentTimeMillis()}:"
+    LOGGER.trace(s"$logPrefix res=$mdrRes")
+
+    val nfo = mdrRes.info
+    val isRefused = !mdrRes.isApprove
+
+    // free-модерация, чтобы по-скорее запустить обновление mnode, максимально до активации adv-билдеров.
+    var mnode2Fut: Future[MNode] = if (nfo.directSelfAll || nfo.directSelfId.nonEmpty) {
+      // Тут два варианта: полный аппрув выставлением mdr-эджа, или отказ в размещении на узле/узлах.
+      mNodes.tryUpdate(mnode) { mnode0 =>
+        // выполнить обновление эджей узла.
+        mnode0.withEdges(
+          mnode0.edges.withOut {
+            // Если isApproved, то просто выставить эдж
+            // Если !isApproved и directSelfAll, то удалить все rcvr.self-эджи
+            // Если !isApproved и directSelfId.nonEmpty, то удалить только конкретный rcvr-self-эдж.
+            val mdrEdge2 = mdrEdge(
+              mdrUser,
+              mdrEdgeInfo( mdrRes.reason )
+            )
+
+            // Какие предикаты вычищать полностью?
+            var rmPredicates: List[MPredicate] =
+              MPredicates.ModeratedBy :: Nil
+
+            // Удалить Rcvr.self-эджи при отрицательном вердикте.
+            if (isRefused && mdrRes.info.directSelfAll) {
+              LOGGER.trace(s"$logPrefix rm * self-rcvrs")
+              rmPredicates ::= MPredicates.Receiver.Self
+            }
+
+            var edgesIter2: Iterator[MEdge] = mnode0.edges
+              .withoutPredicateIter( rmPredicates: _* )
+              .++( mdrEdge2 :: Nil )
+
+            // Выпилить rcvrs.self с указанным node-id:
+            for {
+              selfId <- mdrRes.info.directSelfId
+              // TODO !isRefused, т.к. откат забана не реализован тут.
+              if isRefused && !mdrRes.info.directSelfAll
+            } {
+              LOGGER.trace(s"$logPrefix rm selfId=$selfId")
+              edgesIter2 = edgesIter2
+                .flatMap { medge =>
+                  if ((medge.predicate ==* MPredicates.Receiver.Self) &&
+                      (medge.nodeIds contains selfId)) {
+                    if (medge.nodeIds.size ==* 1) {
+                      Nil
+                    } else {
+                      val medge2 = medge.withNodeIds(medge.nodeIds - selfId)
+                      medge2 :: Nil
+                    }
+                  } else {
+                    medge :: Nil
+                  }
+                }
+            }
+
+            MNodeEdges.edgesToMap1( edgesIter2 )
+          }
+        )
+      }
+    } else {
+      // Нет элементов для набега на биллинг.
+      Future.successful( mnode )
+    }
+
+    // Если заданы критерии item'ов, то ковыряем биллинг:
+    for {
+      mnode2 <- mnode2Fut
+
+      billResOpt <- OptionUtil.maybeFut( nfo.itemId.nonEmpty || nfo.itemType.nonEmpty ) {
+        // TODO Нужна поддержка отката изменений: чтобы вместо бана можно было поверх наложить обратное решение.
+        val q = itemsQueryAwaiting( mdrRes.nodeId )
+          .filter { i =>
+            // Накопить аргументы для WHERE:
+            var acc = List.empty[Rep[Boolean]]
+            for (itemId <- mdrRes.info.itemId) {
+              LOGGER.trace(s"$logPrefix only itemId=$itemId")
+              acc ::= (i.id === itemId)
+            }
+            for (itemType <- mdrRes.info.itemType) {
+              LOGGER.trace(s"$logPrefix only itemType=$itemType")
+              acc ::= (i.iTypeStr === itemType.value)
+            }
+            acc.reduce(_ || _)
+          }
+
+        val billProcessFut = _processItemsFor(q) {
+          if (mdrRes.isApprove)
+            bill2Util.approveItem
+          else
+            bill2Util.refuseItem(_, mdrRes.reason)
+        }
+
+        billProcessFut.map(Some.apply)
+      }
+
+    } yield {
+      LOGGER.trace(s"$logPrefix Done all changes, bill=>${billResOpt.orNull}")
+      mnode2 -> billResOpt
     }
   }
 

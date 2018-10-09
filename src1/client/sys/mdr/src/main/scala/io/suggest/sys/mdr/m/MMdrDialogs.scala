@@ -27,12 +27,12 @@ object MMdrDialogs {
 
 /** Контейнер состояний диалогов модерации.
   *
-  * @param refuse Состояние refuse-диалога, если он открыт.
+  * @param refuse Состояние refuse-диалога, даже если он закрыт.
   */
 case class MMdrDialogs(
-                        refuse: Option[MMdrRefuseDialogS] = None
+                        refuse: MMdrRefuseDialogS = MMdrRefuseDialogS.empty
                       ) {
 
-  def withRefuse(refuse: Option[MMdrRefuseDialogS]) = copy(refuse = refuse)
+  def withRefuse(refuse: MMdrRefuseDialogS) = copy(refuse = refuse)
 
 }

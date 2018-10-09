@@ -13,10 +13,12 @@ import io.suggest.ueq.UnivEqUtil._
   */
 object MMdrRefuseDialogS {
 
+  def empty = apply()
+
   implicit object MMdrRefuseDialogSFastEq extends FastEq[MMdrRefuseDialogS] {
     override def eqv(a: MMdrRefuseDialogS, b: MMdrRefuseDialogS): Boolean = {
-      (a.actionInfo ===* b.actionInfo) &&
-      (a.reason ===* b.reason)
+      (a.reason ===* b.reason) &&
+      (a.actionInfo ===* b.actionInfo)
     }
   }
 
@@ -32,10 +34,11 @@ object MMdrRefuseDialogS {
   * @param reason Причина, набираемая модератором в окошке диалога.
   */
 case class MMdrRefuseDialogS(
-                              actionInfo  : MMdrActionInfo,
-                              reason      : String = ""
+                              reason      : String                    = "",
+                              actionInfo  : Option[MMdrActionInfo]    = None,
                             ) {
 
+  def withActionInfo(actionInfo: Option[MMdrActionInfo]) = copy(actionInfo = actionInfo)
   def withReason(reason: String) = copy(reason = reason)
 
 }

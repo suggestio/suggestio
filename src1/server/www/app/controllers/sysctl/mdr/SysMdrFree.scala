@@ -2,7 +2,6 @@ package controllers.sysctl.mdr
 
 import controllers.routes
 import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.model.n2.edge.MEdgeInfo
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.sys.mdr.MdrSearchArgs
 import models.mdr._
@@ -73,12 +72,13 @@ trait SysMdrFree
   def freeAdvMdrAccept(adId: String) = csrf.Check {
     isSuMad(adId).async { implicit request =>
       // Запускаем сохранение данных модерации.
-      val updFut = sysMdrUtil.updMdrEdge {
-        MEdgeInfo(
-          flag   = Some(true),
-          dateNi = sysMdrUtil.someNow
+      val updFut = sysMdrUtil.updMdrEdge(
+        request.mad,
+        sysMdrUtil.mdrEdge(
+          request.user,
+          sysMdrUtil.mdrEdgeInfo(None)
         )
-      }
+      )
 
       // После завершения асинхронный операций, вернуть результат.
       for (_ <- updFut) yield {
@@ -105,13 +105,13 @@ trait SysMdrFree
           val someReason = Some(res.reason)
 
           // Сохранить отказ в бесплатной модерации.
-          val saveFreeFut = sysMdrUtil.updMdrEdge {
-            MEdgeInfo(
-              dateNi    = sysMdrUtil.someNow,
-              commentNi = someReason,
-              flag      = Some(false)
+          val saveFreeFut = sysMdrUtil.updMdrEdge(
+            request.mad,
+            sysMdrUtil.mdrEdge(
+              request.user,
+              sysMdrUtil.mdrEdgeInfo( someReason )
             )
-          }
+          )
 
           // Если задан режим, то произвести какие-то дополнительные действия.
           res.mode match {
@@ -140,10 +140,7 @@ trait SysMdrFree
               }
               // Запустить необходимый отказ.
               val saveFut = saveFreeFut.flatMap { _ =>
-                sysMdrUtil._processItemsForAd(
-                  nodeId  = adId,
-                  q       = q1
-                )(bill2Util.refuseItem(_, someReason))
+                sysMdrUtil._processItemsFor(q1)( bill2Util.refuseItem(_, someReason) )
               }
               // Дождаться итогов, вернуть модератору результат.
               for (res <- saveFut) yield {

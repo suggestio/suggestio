@@ -6,11 +6,12 @@ import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderContent}
 import io.suggest.bill.{MCurrency, MPrice}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
+import io.suggest.i18n.MsgCodes
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.{IMItems, ItemStatusChanged, MItem}
-import io.suggest.mbill2.m.order.{IMOrders, MOrder, MOrderStatuses, OrderStatusChanged}
+import io.suggest.mbill2.m.item.{IMItems, MItem}
+import io.suggest.mbill2.m.order.{IMOrders, MOrder, MOrderStatuses}
 import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.meta.colors.MColors
@@ -573,20 +574,14 @@ trait LkBillOrders
 
           // Хватило денег на балансах или они не потребовались. Такое бывает в т.ч. после возврата юзера из платежной системы.
           // Ордер был исполнен вместе с его наполнением.
-          case oc: MCartIdeas.OrderClosed =>
-            // Уведомить об ордере.
-            sn.publish( OrderStatusChanged(oc.cart.morder) )
-            // Уведомить об item'ах.
-            for (mitem <- oc.cart.mitems) {
-              sn.publish( ItemStatusChanged(mitem) )
-            }
+          case _: MCartIdeas.OrderClosed =>
             // Отправить юзера на страницу "Спасибо за покупку"
             Redirect( routes.LkBill2.thanksForBuy(onNodeId) )
 
           // У юзера оказалась пустая корзина. Отредиректить в корзину с ошибкой.
           case MCartIdeas.NothingToDo =>
             Redirect( routes.LkBill2.orderPage(onNodeId) )
-              .flashing( FLASH.ERROR -> ctx.messages("Your.cart.is.empty") )
+              .flashing( FLASH.ERROR -> ctx.messages(MsgCodes.`Your.cart.is.empty`) )
         }
       }
     }

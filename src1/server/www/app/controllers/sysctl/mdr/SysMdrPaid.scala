@@ -218,7 +218,7 @@ trait SysMdrPaid
                                                  (f: Gid_t => DBIOAction[Res_t, NoStream, _]): Future[Result] = {
     lazy val logPrefix = s"_processItemsForAd($nodeId ${System.currentTimeMillis}):"
     for {
-      saveRes <- sysMdrUtil._processItemsForAd(nodeId, q)(f)
+      saveRes <- sysMdrUtil._processItemsFor(q)(f)
     } yield {
       val countOk = saveRes.successMask.count(identity)
       val countFail = saveRes.successMask.count(!_)

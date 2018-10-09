@@ -222,6 +222,7 @@ GET  /sys/cal/get/:calId                 @controllers.SysCalendar.getCalendarXml
 ## sys: mdr - модерация контента
 GET  /sys/mdr2                           @controllers.SysMdr.form
 GET  /sys/mdr2/next                      @controllers.SysMdr.nextMdrInfo(a: io.suggest.sys.mdr.MdrSearchArgs ?= io.suggest.sys.mdr.MdrSearchArgs.default)
+POST /sys/mdr2/do                        @controllers.SysMdr.doMdr(r: io.suggest.sys.mdr.MMdrResolution)
 GET  /sys/mdr                            @controllers.SysMdr.index
 GET  /sys/mdr/free/list                  @controllers.SysMdr.freeAdvs(a: io.suggest.sys.mdr.MdrSearchArgs ?= io.suggest.sys.mdr.MdrSearchArgs.default)
 GET  /sys/mdr/free/refuse/popup/:adId    @controllers.SysMdr.refuseFreeAdvPopup(adId)

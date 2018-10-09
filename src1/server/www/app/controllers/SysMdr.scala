@@ -9,7 +9,7 @@ import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.sys.mdr.{MNodeMdrInfo, MdrSearchArgs, SysMdrConst}
+import io.suggest.sys.mdr._
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import play.api.libs.json.Json
@@ -332,6 +332,24 @@ class SysMdr @Inject() (
       respFut.recover { case _: NoSuchElementException =>
         val msg = "No more nodes for moderation."
         LOGGER.trace(s"$logPrefix $msg")
+        NoContent
+      }
+    }
+  }
+
+
+  /** Пришла команда от модератора об изменении состояния элементов модерации.
+    *
+    * @param mdrRes Контейнер данных по одному действию модерации.
+    * @return
+    */
+  def doMdr(mdrRes: MMdrResolution) = csrf.Check {
+    isSuNode(mdrRes.nodeId).async { implicit request =>
+      // Надо организовать пакетное обновления в БД биллинга, в зависимости от значений полей резолюшена.
+      for {
+        _ <- sysMdrUtil.processMdrResolution( mdrRes, request.mnode, request.user )
+      } yield {
+        // Вернуть ответ -- обычно ничего возвращать не требуется.
         NoContent
       }
     }

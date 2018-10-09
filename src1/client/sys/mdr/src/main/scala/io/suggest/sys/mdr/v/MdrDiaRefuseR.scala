@@ -37,7 +37,7 @@ class MdrDiaRefuseR {
     }
   }
 
-  type Props_t = Option[PropsVal]
+  type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
 
 
@@ -64,92 +64,91 @@ class MdrDiaRefuseR {
 
 
     def render(propsOptProxy: Props): VdomElement = {
-      propsOptProxy.value.whenDefinedEl { props =>
+      val props = propsOptProxy.value
 
-        val inputsDisabled = props.dismissReq.isPending
-        val refuseMsg = Messages( MsgCodes.`Refuse` )
+      val inputsDisabled = props.dismissReq.isPending
+      val refuseMsg = Messages( MsgCodes.`Refuse` )
+      val isShown = props.state.actionInfo.isDefined
 
-        MuiDialog(
-          new MuiDialogProps {
-            override val open = true
-            override val onEscapeKeyDown = _onCancelClickF
-            override val maxWidth = js.defined( MuiDialogMaxWidths.md )
-            override val fullWidth = true
-          }
-        )(
-          // Заголовок диалога
-          MuiDialogTitle()(
+      MuiDialog(
+        new MuiDialogProps {
+          override val open = isShown
+          override val onEscapeKeyDown = _onCancelClickF
+          override val maxWidth = js.defined( MuiDialogMaxWidths.md )
+          override val fullWidth = true
+        }
+      )(
+        // Заголовок диалога
+        MuiDialogTitle()(
+          refuseMsg
+          // TODO Добавить подробности?
+        ),
+
+        // Тело диалога
+        MuiDialogContent()(
+
+          MuiTextField(
+            new MuiTextFieldProps {
+              override val autoFocus = isShown
+              override val placeholder = Messages( MsgCodes.`Reason` )
+              override val `type` = HtmlConstants.Input.text
+              override val value = js.defined( props.state.reason )
+              override val onChange = _onReasonChangedF
+              override val disabled = inputsDisabled
+              override val fullWidth = true
+            }
+          ),
+
+          // При ожидании запроса - рендерить прогресс-бар:
+          props.dismissReq.renderPending { _ =>
+            MuiLinearProgress()
+          },
+
+          // При ошибках - тоже что-нибудь отрендерить:
+          props.dismissReq.renderFailed { ex =>
+            <.div(
+              <.br,
+              <.br,
+              Messages( MsgCodes.`Error` ),
+              <.br,
+              ex.toString()
+            )
+          },
+
+        ),
+
+
+        // Кнопки действий диалога:
+        MuiDialogActions()(
+
+          // Кнопка отмены. Активная всегда, чтобы на зависших запросах можно было тоже закрыть окно.
+          MuiButton(
+            new MuiButtonProps {
+              override val variant = MuiButtonVariants.extendedFab
+              override val color = MuiColorTypes.secondary
+              override val onClick = _onCancelClickF
+            }
+          )(
+            Mui.SvgIcons.Undo()(),
+            Messages( MsgCodes.`Cancel` )
+          ),
+
+          // Кнопка подтверждения отказа в размещении.
+          MuiButton(
+            new MuiButtonProps {
+              override val variant = MuiButtonVariants.extendedFab
+              override val color = MuiColorTypes.primary
+              override val onClick = _onRefuseClickF
+              override val disabled = inputsDisabled
+            }
+          )(
+            Mui.SvgIcons.DeleteForever()(),
             refuseMsg
-            // TODO Добавить подробности?
           ),
 
+        ),
 
-          // Тело диалога
-          MuiDialogContent()(
-
-            MuiTextField(
-              new MuiTextFieldProps {
-                override val autoFocus = true
-                override val placeholder = Messages( MsgCodes.`Reason` )
-                override val `type` = HtmlConstants.Input.text
-                override val value = js.defined( props.state.reason )
-                override val onChange = _onReasonChangedF
-                override val disabled = inputsDisabled
-                override val fullWidth = true
-              }
-            ),
-
-            // При ожидании запроса - рендерить прогресс-бар:
-            props.dismissReq.renderPending { _ =>
-              MuiLinearProgress()
-            },
-
-            // При ошибках - тоже что-нибудь отрендерить:
-            props.dismissReq.renderFailed { ex =>
-              <.div(
-                <.br,
-                <.br,
-                Messages( MsgCodes.`Error` ),
-                <.br,
-                ex.toString()
-              )
-            },
-
-          ),
-
-
-          // Кнопки действий диалога:
-          MuiDialogActions()(
-
-            // Кнопка отмены. Активная всегда, чтобы на зависших запросах можно было тоже закрыть окно.
-            MuiButton(
-              new MuiButtonProps {
-                override val variant = MuiButtonVariants.extendedFab
-                override val color = MuiColorTypes.secondary
-                override val onClick = _onCancelClickF
-              }
-            )(
-              Mui.SvgIcons.Undo()(),
-              Messages( MsgCodes.`Cancel` )
-            ),
-
-            // Кнопка подтверждения отказа в размещении.
-            MuiButton(
-              new MuiButtonProps {
-                override val variant = MuiButtonVariants.extendedFab
-                override val color = MuiColorTypes.primary
-                override val onClick = _onRefuseClickF
-                override val disabled = inputsDisabled
-              }
-            )(
-              Mui.SvgIcons.DeleteForever()(),
-              refuseMsg
-            ),
-
-          ),
-
-        )
-      }
+      )
     }
 
   }

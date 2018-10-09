@@ -121,13 +121,17 @@ object NodeRenderR {
   )
 
   /** Ленивая сборка jdCss на основе шаблонов. */
-  def mkJdCss(jdCss0: JdCss = null)(tpl: Tree[JdTag]*): JdCss = {
+  def mkJdCss(jdCss0Opt: Option[JdCss] = None)(tpl: Tree[JdTag]*): JdCss = {
     val args2 = MJdCssArgs(tpl, JD_CONF)
-    if ((jdCss0 !=* null) && MJdCssArgs.MJdCssArgsFastEq.neqv(args2, jdCss0.jdCssArgs)) {
-      JdCss( args2 )
-    } else {
-      jdCss0
-    }
+    jdCss0Opt
+      // Не пересобирать JdCss, если args не изменились.
+      .filter { jdCss0 =>
+        MJdCssArgs.MJdCssArgsFastEq.eqv(args2, jdCss0.jdCssArgs)
+      }
+      .getOrElse {
+        // Пересборка JdCss.
+        JdCss( args2 )
+      }
   }
 
 }

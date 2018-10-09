@@ -222,7 +222,7 @@ class LkAdEdit @Inject() (
 
                     // Помечаем, как отмодерированный, если текущий юзер -- это супер-юзер.
                     if (request.user.isSuper)
-                      _acc0 ::= sysMdrUtil.mdrEdge()
+                      _acc0 ::= sysMdrUtil.mdrEdge(request.user, sysMdrUtil.mdrEdgeInfo(None))
 
                     _acc0
                   }

@@ -12,6 +12,7 @@ import io.suggest.sys.mdr.m.MdrNextNode
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 import ReactCommonUtil.Implicits._
 import io.suggest.bill.price.dsl.PriceReasonI18n
 import io.suggest.common.html.HtmlConstants
@@ -39,12 +40,14 @@ class NodeMdrR(
                        itemsByType              : Map[MItemType, Seq[MItem]],
                        nodesMap                 : Map[String, MAdvGeoMapNodeProps],
                        directSelfNodesSorted    : Seq[MAdvGeoMapNodeProps],
+                       mdrPots                  : Map[MMdrActionInfo, Pot[None.type]],
                      )
   implicit object NodeMdrRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.itemsByType ===* b.itemsByType) &&
       (a.nodesMap ===* b.nodesMap) &&
-      (a.directSelfNodesSorted ===* b.directSelfNodesSorted)
+      (a.directSelfNodesSorted ===* b.directSelfNodesSorted) &&
+      (a.mdrPots ===* b.mdrPots)
     }
   }
 
@@ -114,16 +117,22 @@ class NodeMdrR(
             )
 
           } { props =>
+            // Краткое получение pot'а для одного элемента списка.
+            def __mdrPot(ai: MMdrActionInfo) =
+              props.mdrPots.getOrElse(ai, Pot.empty)
+
             MuiList()(
 
               // Ряд полного аппрува всех item'ов вообще:
               ReactCommonUtil.maybeNode( props.itemsByType.nonEmpty || props.directSelfNodesSorted.nonEmpty ) {
                 propsPotProxy.wrap { _ =>
+                  val ai = MMdrActionInfo()
                   mdrRowR.PropsVal(
-                    actionInfo  = MMdrActionInfo(),
+                    actionInfo  = ai,
                     mtgVariant  = MuiTypoGraphyVariants.headline,
                     approveIcon = Mui.SvgIcons.DoneOutline,
-                    dismissIcon = Mui.SvgIcons.Warning
+                    dismissIcon = Mui.SvgIcons.Warning,
+                    mdrPot      = __mdrPot(ai)
                   )
                 } { mdrRowPropsProxy =>
                   val all = MsgCodes.`All`
@@ -140,13 +149,15 @@ class NodeMdrR(
                 .flatMap { case (itype, mitems) =>
                   // Ряд заголовка типа item'а.
                   val itypeCaption = propsPotProxy.wrap { _ =>
+                    val ai = MMdrActionInfo(
+                      itemType = Some( itype )
+                    )
                     mdrRowR.PropsVal(
-                      actionInfo  = MMdrActionInfo(
-                        itemType = Some( itype )
-                      ),
+                      actionInfo  = ai,
                       mtgVariant  = MuiTypoGraphyVariants.subheading,
                       approveIcon = Mui.SvgIcons.DoneAll,
-                      dismissIcon = Mui.SvgIcons.Error
+                      dismissIcon = Mui.SvgIcons.Error,
+                      mdrPot      = __mdrPot(ai)
                     )
                   } { mdrRowPropsProxy =>
                     mdrRowR.component.withKey( itype.toString + HtmlConstants.`~` )( mdrRowPropsProxy )(
@@ -159,13 +170,15 @@ class NodeMdrR(
                     .iterator
                     .map { mitem =>
                       propsPotProxy.wrap { _ =>
+                        val ai = MMdrActionInfo(
+                          itemId = mitem.id
+                        )
                         mdrRowR.PropsVal(
-                          actionInfo = MMdrActionInfo(
-                            itemId = mitem.id
-                          ),
-                          mtgVariant = MuiTypoGraphyVariants.body1,
+                          actionInfo  = ai,
+                          mtgVariant  = MuiTypoGraphyVariants.body1,
                           approveIcon = Mui.SvgIcons.Done,
-                          dismissIcon = Mui.SvgIcons.ErrorOutline
+                          dismissIcon = Mui.SvgIcons.ErrorOutline,
+                          mdrPot      = __mdrPot(ai)
                         )
                       } { mdrRowPropsProxy =>
                         val itemId = mitem.id.get
@@ -243,13 +256,15 @@ class NodeMdrR(
               // Сначала заголовок для бесплатных размещений:
               ReactCommonUtil.maybeNode( props.directSelfNodesSorted.nonEmpty ) {
                 propsPotProxy.wrap { _ =>
+                  val ai = MMdrActionInfo(
+                    directSelfAll = true
+                  )
                   mdrRowR.PropsVal(
-                    actionInfo  = MMdrActionInfo(
-                      directSelfAll = true
-                    ),
+                    actionInfo  = ai,
                     mtgVariant  = MuiTypoGraphyVariants.headline,
                     approveIcon = Mui.SvgIcons.DoneAll,
-                    dismissIcon = Mui.SvgIcons.ErrorOutline
+                    dismissIcon = Mui.SvgIcons.ErrorOutline,
+                    mdrPot      = __mdrPot(ai)
                   )
                 } { mdrRowPropsProxy =>
                   mdrRowR.component( mdrRowPropsProxy )(
@@ -264,13 +279,15 @@ class NodeMdrR(
                 .directSelfNodesSorted
                 .map { mnode =>
                   propsPotProxy.wrap { _ =>
+                    val ai = MMdrActionInfo(
+                      directSelfId = Some( mnode.nodeId )
+                    )
                     mdrRowR.PropsVal(
-                      actionInfo  = MMdrActionInfo(
-                        directSelfId = Some( mnode.nodeId )
-                      ),
+                      actionInfo  = ai,
                       mtgVariant  = MuiTypoGraphyVariants.subheading,
                       approveIcon = Mui.SvgIcons.Done,
-                      dismissIcon = Mui.SvgIcons.Error
+                      dismissIcon = Mui.SvgIcons.Error,
+                      mdrPot      = __mdrPot(ai)
                     )
                   } { mdrRowPropsProxy =>
                     mdrRowR.component.withKey( mnode.nodeId + HtmlConstants.COMMA )( mdrRowPropsProxy )(

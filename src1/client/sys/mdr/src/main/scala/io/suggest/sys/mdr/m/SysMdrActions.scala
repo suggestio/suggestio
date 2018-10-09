@@ -16,6 +16,8 @@ sealed trait ISysMdrAction extends DAction
 /** Экшен реагирования на клик по кнопке аппрува или отказа в этом. */
 case class ApproveOrDismiss( info: MMdrActionInfo, isApprove: Boolean ) extends ISysMdrAction
 
+/** Ответ сервера по команде модерации. */
+case class DoMdrResp(timestampMs: Long, info: MMdrActionInfo, tryResp: Try[_]) extends ISysMdrAction
 
 /** Запросить с сервера данные узла, который требуется промодерировать. */
 case object MdrNextNode extends ISysMdrAction
