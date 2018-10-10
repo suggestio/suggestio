@@ -270,7 +270,7 @@ case class Sum(
   override def price: MPrice = {
     finalPrice.getOrElse {
       if (isEmpty) {
-        MPrice(0d, MCurrencies.default)   // TODO Что с валютой делать?
+        MPrice(0, MCurrencies.default)   // TODO Что с валютой делать?
 
       } else {
 

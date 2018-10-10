@@ -91,19 +91,19 @@ class TplDataFormatUtilSpec extends PlaySpec {
     def t(amount: Amount_t) = f( MPrice(amount, MCurrencies.default) )
 
     "zero price" in {
-      t(0.00) mustBe "0.00"
+      t(0L) mustBe "0.00"
     }
     "1 RUB => 1.00" in {
-      t(1d) mustBe "1.00"
+      t(1L) mustBe "1.00"
     }
     "100500 RUB => 100500.00" in {
-      t(100500d) mustBe "100500.00"
+      t(100500L) mustBe "100500.00"
     }
     "100 500 100 500.10 RUB => 100500100500.10" in {
-      t(100500100500.10) mustBe "100500100500.10"
+      t(100500100500L) mustBe "100500100500.10"
     }
     "100 500 100 500.001 RUB => 100500100500.00" in {
-      t(100500100500.001) mustBe "100500100500.00"
+      t(100500100500L) mustBe "100500100500.00"
     }
 
   }

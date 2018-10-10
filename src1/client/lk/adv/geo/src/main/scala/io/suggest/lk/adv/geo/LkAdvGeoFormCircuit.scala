@@ -248,15 +248,17 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
   // Остатки конструктора могут вызываться только после выставления actionHandler'а.
 
   // Запустить получения списка кружочков текущих размещений.
-  dispatch( CurrGeoAdvsInit )
+  Future {
+    dispatch( CurrGeoAdvsInit )
+  }
 
   // Запустить инициализацию карты ресиверов после окончания инициализации circuit.
-  dispatch( RcvrMarkersInit )
+  Future {
+    dispatch(RcvrMarkersInit)
+  }
 
-
-  // post-constructor
-  {
-    // Если задано состояние rcvr-popup'а, то надо запустить в фоне запрос popup'а с сервера.
+  // Если задано состояние rcvr-popup'а, то надо запустить в фоне запрос popup'а с сервера.
+  Future {
     val pot = zoom(_.rcvr.popupResp).value
     if (pot.isEmpty && !pot.isPending) {
       for (rcvrPopupState <- zoom(_.rcvr.popupState).value) yield {
@@ -268,8 +270,10 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
         dispatch(a)
       }
     }
+  }
 
-    // Если задано состояние поиска тегов, запустить запрос поиска тегов на сервер.
+  // Если задано состояние поиска тегов, запустить запрос поиска тегов на сервер.
+  Future {
     val tagSearchText = zoom(_.tags.props.query).value.text
     if (tagSearchText.nonEmpty) {
       val pot = zoom(_.tags).value.found
@@ -277,7 +281,6 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
         dispatch( SetTagSearchQuery(tagSearchText) )
       }
     }
-
   }
 
 }

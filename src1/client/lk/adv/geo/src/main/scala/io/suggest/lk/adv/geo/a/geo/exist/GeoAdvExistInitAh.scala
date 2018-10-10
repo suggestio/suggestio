@@ -8,6 +8,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.geo.json.GjFeature
 
 import scala.scalajs.js
+import scala.util.Success
 
 /**
   * Suggest.io
@@ -27,17 +28,18 @@ class GeoAdvExistInitAh[M](
     // Сигнал к инициализации карты кружочков текущий размещений.
     case CurrGeoAdvsInit =>
       val fx = Effect {
-        for {
-          resp <- api.existGeoAdvsMap()
-        } yield {
-          SetCurrGeoAdvs(resp)
-        }
+        api.existGeoAdvsMap()
+          .transform { tryResp =>
+            Success( SetCurrGeoAdvs(tryResp) )
+          }
       }
       updated( value.pending(), fx )
 
     // Получен ответ сервера на тему текущих размещений.
-    case SetCurrGeoAdvs(resp) =>
-      updated( value.ready(resp) )
+    case m: SetCurrGeoAdvs =>
+      val v0 = value
+      val v2 = m.tryResp.fold( v0.fail, v0.ready )
+      updated( v2 )
 
   }
 

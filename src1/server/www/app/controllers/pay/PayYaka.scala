@@ -4,7 +4,7 @@ import javax.inject.Singleton
 
 import javax.inject.Inject
 import controllers.SioControllerImpl
-import io.suggest.bill.{MCurrencies, MPrice}
+import io.suggest.bill.MCurrencies
 import io.suggest.common.coll.Lists
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
@@ -319,7 +319,7 @@ class PayYaka @Inject() (
                     orderId             = yReq.orderId,
                     validContractId     = usrNodeOpt.get.billing.contractId.get,
                     paySys              = yakaUtil.paySystem,
-                    claimedOrderPrices  = MCurrencies.hardMapByCurrency( yReq :: Nil )
+                    claimedOrderPrices  = MCurrencies.hardMapByCurrency( yReq.price :: Nil )
                   )
 
                   // Стоимость заказа успешно выверена. Захолдить ордер.
@@ -445,7 +445,7 @@ class PayYaka @Inject() (
             // Базовые поля реквеста и md5 совпадают с ожидаемыми. Зачислить на баланс юзера оплаченные бабки, попытаться исполнить ордер.
             // Узнать узел юзера, для его contract_id и человеческого названия.
             val usrNodeOptFut = mNodesCache.getById( yReq.personId )
-            val mprice = MPrice(yReq)
+            val mprice = yReq.price
 
             // Собрать начальные stat-экшены.
             val statMas0Fut = _statActions0(yReq, usrNodeOptFut)

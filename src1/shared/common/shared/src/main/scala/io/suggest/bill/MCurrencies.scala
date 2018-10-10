@@ -21,7 +21,7 @@ object MCurrencies extends StringEnum[MCurrency] {
     override def htmlSymbol = "&#8381;"
     override def symbol     = "₽"
     override def iso4217    = 643
-    override def sioPaymentAmountMin: Amount_t = 1d
+    override def sioPaymentAmountMinCents: Amount_t = 1
   }
 
   /** Евро.
@@ -31,7 +31,7 @@ object MCurrencies extends StringEnum[MCurrency] {
     override def htmlSymbol = "&#8364;"
     override def symbol     = "€"
     override def iso4217    = 978
-    override def sioPaymentAmountMin: Amount_t = 10d
+    override def sioPaymentAmountMinCents: Amount_t = 10
   }
 
   /** Доллары США.
@@ -41,7 +41,7 @@ object MCurrencies extends StringEnum[MCurrency] {
     override def htmlSymbol = symbol
     override def symbol     = "$"
     override def iso4217    = 840
-    override def sioPaymentAmountMin: Amount_t = 10d
+    override def sioPaymentAmountMinCents: Amount_t = 10
   }
 
   def withIso4217Option(code: Int) = values.find(_.iso4217 == code)
@@ -104,18 +104,18 @@ sealed abstract class MCurrency(override val value: String) extends StringEnumEn
 
   /** Минимальный значимый объем средств.
     * Доли центов и копеек не имеют никакого смысла.
+    * Доли рубля вычислялись так: Math.pow(10, -exponent)
     */
-  def minAmount: Amount_t = Math.pow(10, -exponent)
-
-  /** Количество центов в долларе, копеек в рубле. */
-  def centsInUnit: Int = centsInUnit_d.toInt
+  def minAmount: Amount_t = 1L
 
   /** Количество центов в долларе, копеек в рубле в виде Double.
     * Math.pow() возвращает Double, и иногда нет смысла конвертировать в Int, используется этот метод. */
-  def centsInUnit_d: Double = Math.pow(10, exponent)
+  def centsInUnit: Amount_t =
+    Math.pow(10, exponent).toLong
 
   /** Минимальный размер платежа в данной валюте на suggest.io. */
-  def sioPaymentAmountMin: Amount_t
+  def sioPaymentAmountMinCents: Amount_t
+  final def sioPaymentAmountMin: Amount_t = sioPaymentAmountMinCents * exponent
 
 }
 
@@ -137,9 +137,8 @@ object MCurrency {
   @inline implicit def univEq: UnivEq[MCurrency] = UnivEq.derive
 
   /** Поддержка play-json. */
-  implicit def mCurrencyFormat: Format[MCurrency] = {
+  implicit def mCurrencyFormat: Format[MCurrency] =
     EnumeratumUtil.valueEnumEntryFormat( MCurrencies )
-  }
 
 }
 

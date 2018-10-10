@@ -61,7 +61,8 @@ protected class LkGeoCtlUtil @Inject() (
     * @param request Исходный HTTP-реквест.
     * @return HTTP-ответ.
     */
-  def currentNodeItemsGsToGeoJson(nodeId: String, itemTypes: TraversableOnce[MItemType])(implicit request: IReq[_]): Future[Result] = {
+  def currentNodeItemsGsToGeoJson(nodeId: String, itemTypes: TraversableOnce[MItemType])
+                                 (implicit request: IReq[_]): Future[Result] = {
     // Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
     val jsonsSrc = slick.db
       .stream {
@@ -95,7 +96,8 @@ protected class LkGeoCtlUtil @Inject() (
     * @param itemMapperF Функция-рендерер основной инфы с item'а в payload, пригодный для отправки клиенту.
     * @return Action.
     */
-  def currentItemPopup(itemId: Gid_t, itemTypes: Seq[MItemType])(itemMapperF: MAdvGeoBasicInfo => Option[MGeoItemInfoPayload]) = {
+  def currentItemPopup(itemId: Gid_t, itemTypes: Seq[MItemType])
+                      (itemMapperF: MAdvGeoBasicInfo => Option[MGeoItemInfoPayload]) = {
     canAccessItem(itemId, edit = false).async { implicit request =>
       def logPrefix = s"existGeoAdvsShapePopup($itemId):"
 

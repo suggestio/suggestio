@@ -271,7 +271,7 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
   }
 
   def getMd5(profile: IYakaProfile, yReq: IYakaReqSigned): String = {
-    getMd5(profile, yReq, yReq)
+    getMd5(profile, yReq, yReq.price)
   }
 
 

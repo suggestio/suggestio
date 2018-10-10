@@ -104,7 +104,7 @@ class AdvUtil @Inject() (
     // Извлечь подходящий тариф из карты тарифов узлов.
     abc.tfsMap.get(tfRcvrId).fold[IPriceDslTerm] {
       // TODO Валюта нулевого ценника берётся с потолка. Нужен более адекватный источник валюты.
-      val res = MPrice(0d, MCurrencies.default)
+      val res = MPrice(0, MCurrencies.default)
       LOGGER.debug(s"$logPrefix Missing TF for $tfRcvrId. Guessing adv as free: $res")
       BaseTfPrice(
         price = res
@@ -286,11 +286,8 @@ class AdvUtil @Inject() (
     * @return Price-терм, готовый к отправке клиенту.
     */
   def prepareForRender(priceDsl: IPriceDslTerm)(implicit ctx: Context): IPriceDslTerm = {
-    priceDsl.mapAllPrices { p0 =>
-      TplDataFormatUtil.setFormatPrice(
-        p0.normalizeAmountByExponent
-      )
-    }
+    priceDsl
+      .mapAllPrices { TplDataFormatUtil.setFormatPrice }
   }
 
 
@@ -301,8 +298,8 @@ class AdvUtil @Inject() (
     * @return Нормализованный price-терм.
     */
   def prepareForSave(priceDsl: IPriceDslTerm): IPriceDslTerm = {
+    // Раньше тут была нормализация дробной части стоимости, теперь ничего нет. TODO Удалить метод?
     priceDsl
-      .mapAllPrices(_.normalizeAmountByExponent)
   }
 
 }

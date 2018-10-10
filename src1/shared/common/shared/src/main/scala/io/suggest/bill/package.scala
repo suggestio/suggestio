@@ -7,6 +7,6 @@ package io.suggest
   */
 package object bill {
 
-  type Amount_t       = Double
+  type Amount_t       = Long
 
 }

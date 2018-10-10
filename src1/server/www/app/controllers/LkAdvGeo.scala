@@ -35,7 +35,6 @@ import util.adv.AdvFormUtil
 import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoRcvrsUtil}
 import util.billing.Bill2Util
 import util.lk.LkTagsSearchUtil
-import util.mdr.MdrUtil
 import util.sec.CspUtil
 import util.tags.TagsEditFormUtil
 import views.html.lk.adv.geo._
@@ -62,7 +61,7 @@ class LkAdvGeo @Inject() (
                            streamsUtil                     : StreamsUtil,
                            reqUtil                         : ReqUtil,
                            cspUtil                         : CspUtil,
-                           mdrUtil                         : MdrUtil,
+                           //mdrUtil                       : MdrUtil,
                            lkGeoCtlUtil                    : LkGeoCtlUtil,
                            canThinkAboutAdvOnMapAdnNode    : CanThinkAboutAdvOnMapAdnNode,
                            canAdvAd                        : CanAdvAd,

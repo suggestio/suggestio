@@ -187,7 +187,7 @@ class MBalances @Inject() (
   def initByContractCurrency(contractId: Gid_t, currency: MCurrency): DBIOAction[MBalance, NoStream, Effect.Write] = {
     val mb = MBalance(
       contractId  = contractId,
-      price       = MPrice(0.0, currency)
+      price       = MPrice(0L, currency)
     )
     insertOne(mb)
   }

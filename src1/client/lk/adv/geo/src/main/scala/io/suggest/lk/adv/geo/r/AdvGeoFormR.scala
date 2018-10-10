@@ -20,7 +20,9 @@ import japgolly.scalajs.react.vdom.html_<^._
 import react.leaflet.control.LocateControlR
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.react.ReactCommonUtil
 import react.leaflet.lmap.LMapR
+import react.leaflet.popup.LPopupR
 
 import scala.scalajs.js
 
@@ -133,9 +135,11 @@ object AdvGeoFormR {
             s.geoAdvPopupC( ExistPopupR.apply ),
 
             // Запрешаем рендер красного круга пока не нарисованы все остальные. Так надо, чтобы он был поверх их всех.
-            s.geoAdvExistGjC { potProx =>
+            s.geoAdvExistGjC { potProxy =>
+              val pot = potProxy.value
               // Георазмещение: рисуем настраиваемый круг для размещения в радиусе:
-              potProx().toOption.whenDefinedEl { _ =>
+              // TODO Отрендерить попап ошибки, если failed.
+              ReactCommonUtil.maybeEl( pot.isReady || pot.isFailed ) {
                 s.mRadOptC( RadR.apply )
               }
             },

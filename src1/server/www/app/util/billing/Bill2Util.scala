@@ -384,7 +384,7 @@ class Bill2Util @Inject() (
 
   /** Нулевая цена. */
   def zeroPrice: MPrice = {
-    MPrice(0.0, MCurrencies.default)
+    MPrice(0L, MCurrencies.default)
   }
 
   /** Нулевой прайсинг размещения. */

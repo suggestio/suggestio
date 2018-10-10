@@ -30,7 +30,7 @@ case class SetRcvrStatus(rcvrKey: RcvrKey, checked: Boolean) extends IAdvGeoForm
 /** Команда инициализации кружчков и др.фигурок текущего размещния. */
 case object CurrGeoAdvsInit extends IAdvGeoFormAction
 /** Выставить указанные данные размещения в состояние. */
-case class SetCurrGeoAdvs(resp: js.Array[GjFeature]) extends IAdvGeoFormAction
+case class SetCurrGeoAdvs( tryResp: Try[js.Array[GjFeature]] ) extends IAdvGeoFormAction
 
 
 /** Команда к реакции на полученние попапа над гео-областью. */

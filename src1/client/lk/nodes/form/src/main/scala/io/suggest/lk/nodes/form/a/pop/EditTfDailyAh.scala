@@ -36,7 +36,7 @@ class EditTfDailyAh[M](
           .orElse( tf.clauses.values.headOption )
       }
     val priceAmount = priceOpt
-      .fold[Amount_t](1.0) { _.amount }
+      .fold[Amount_t](1) { _.amount }
     val mprice = priceOpt.getOrElse {
       MPrice(priceAmount, nodeTfOpt.get.currency )
     }
@@ -56,8 +56,12 @@ class EditTfDailyAh[M](
       val v0 = value
       val v2 = for (v <- v0) yield {
         val (mode2, isValid) = try {
-          val amount2 = m.amount.trim.replace(',' , '.').toDouble
-          val mode22 = v.mode.manualOpt.fold( ManualTf(amount2) )( _.withAmount(amount2) )
+          val amount2 = m.amount
+            .trim
+            .replace(',' , '.')
+            .toLong
+          val mode22 = v.mode.manualOpt
+            .fold( ManualTf(amount2) )( _.withAmount(amount2) )
           mode22 -> true
         } catch {
           case _: Throwable =>

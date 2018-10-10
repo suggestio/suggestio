@@ -45,7 +45,7 @@ object MBalance {
 case class MBalance(
                      contractId        : Gid_t,
                      price             : MPrice,
-                     blocked           : Amount_t          = 0.0,
+                     blocked           : Amount_t          = 0L,
                      lowOpt            : Option[Amount_t]  = None,
                      override val id   : Option[Gid_t]     = None
                    )
@@ -53,7 +53,7 @@ case class MBalance(
   with IMCurrency
 {
 
-  def low = lowOpt.getOrElse( 0.0 )
+  def low: Amount_t = lowOpt.getOrElse( 0L )
 
   def withPrice(price2: MPrice) = copy(price = price2)
 
@@ -86,5 +86,11 @@ case class MBalance(
   //override def toString: String = {
   //  s"${getClass.getSimpleName}(#${id.orNull},c$contractId,$price+$blocked${lowOpt.fold("")(",low=" + _)})"
   //}
+
+  def realBlocked: Double =
+    MPrice.amountToReal( blocked, currency )
+
+  def realLow: Double =
+    MPrice.amountToReal( low, currency )
 
 }

@@ -1,6 +1,6 @@
 package models.mpay.yaka
 
-import io.suggest.bill.{IPrice, MCurrency}
+import io.suggest.bill.{IMCurrency, IMPrice, MCurrency, MPrice}
 import io.suggest.mbill2.m.gid.Gid_t
 
 /**
@@ -12,7 +12,7 @@ import io.suggest.mbill2.m.gid.Gid_t
 
 
 /** Интерфейс с подписанными полями яндекс-кассы. */
-trait IYakaReqSigned extends IPrice {
+trait IYakaReqSigned extends IMCurrency with IMPrice {
 
   /** Экшен: чек, aviso. */
   val action          : MYakaAction
@@ -28,6 +28,9 @@ trait IYakaReqSigned extends IPrice {
 
   /** customerNumber: id клиента, присланный из suggest.io. */
   val personId        : String
+
+  val realAmount: Double
+  final lazy val price = MPrice.fromRealAmount( realAmount, currency )
 
   // MD5(action;суммазаказа;orderSumCurrencyPaycash;orderSumBankPaycash;shopId;invoiceId;customerNumber;shopPassword)
 }
@@ -47,8 +50,8 @@ trait IYakaReq extends IYakaReqSigned {
 /** Класс модели данных запроса платежа. */
 case class MYakaReq(
                      override val action          : MYakaAction,
-                     override val amount          : Double,
-                     override val currency        : MCurrency,
+                     realAmount                   : Double,
+                     currency                     : MCurrency,
                      override val bankId          : Int,
                      override val shopId          : Long,
                      override val invoiceId       : Long,

@@ -43,7 +43,7 @@ class TfDailyUtil @Inject()(
 
   import mCommonDi._
 
-  def VERY_DEFAULT_WEEKDAY_CLAUSE = MDayClause("Будни", 1.0)
+  def VERY_DEFAULT_WEEKDAY_CLAUSE = MDayClause("Будни", MCurrencies.default.centsInUnit)
 
   /** Комиссия тарифа. 1.0 означает, что 100% улетает в suggest.io. */
   def COMISSION_DFLT = 1.0
@@ -64,7 +64,8 @@ class TfDailyUtil @Inject()(
   def tfDailyClauseM: Mapping[MDayClause] = {
     mapping(
       "name"        -> nonEmptyText(minLength = 3, maxLength = 32),
-      "amount"      -> doubleM,
+      // TODO Надо копейки к рублям приводить, центы к баксам и т.д. (и наоборот тоже).
+      "amount"      -> longNumber(min = 0),
       "calId"       -> optional(esIdM)
     )
     { MDayClause.apply }
@@ -348,7 +349,7 @@ class TfDailyUtil @Inject()(
     val tfdm2 = tfdm.manualOpt.fold(tfdm) { manTf =>
       val mprice = MPrice( manTf.amount, MCurrencies.default )
       manTf.withAmount(
-        mprice.normalizeAmountByExponent.amount
+        mprice.amount
       )
     }
     tfModeAmountOptV(tfdm2)

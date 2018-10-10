@@ -8,7 +8,7 @@ import play.api.libs.json.{Format, Json}
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 18.01.17 12:16
-  * Description: Тесты для серверной модели [[MCurrenciesJvm]].
+  * Description: Тесты для серверной модели [[MCurrencies]].
   */
 class MCurrenciesJvmSpec extends FlatSpec {
 

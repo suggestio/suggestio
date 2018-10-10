@@ -22,12 +22,13 @@ object MPaySystems extends StringEnum[MPaySystem] {
       // Поддерживаются только рубли.
       val rub = MCurrencies.RUB
       OptionUtil.maybe( currency == rub ) {
+        val centsInRub = rub.centsInUnit
         MCurrencyPayInfo(
           currency              = rub,
           // Нижний лимит: по картам нельзя платить ниже 1 рубля. Поэтому считаем, что платить просто нельзя.
-          lowerDebtLimitOpt     = Some( 1d ),
+          lowerDebtLimitOpt     = Some( centsInRub ),
           // Верхний предел: взят с потолка.
-          upperDebtLimitOpt     = Some( 1000000d )
+          upperDebtLimitOpt     = Some( 1000000 * centsInRub )
         )
       }
     }

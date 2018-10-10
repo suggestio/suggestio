@@ -20,22 +20,22 @@ object PriceDslSpec extends SimpleTestSuite {
     val dsl = Mapper(
       multiplifier = Some(3.0),
       underlying = BaseTfPrice(
-        price = MPrice(1.0, RUB)
+        price = MPrice(100, RUB)
       )
     )
 
-    assertEquals( dsl.price, MPrice(3.0, RUB) )
+    assertEquals( dsl.price, MPrice(300, RUB) )
   }
 
 
   test("Return correct price after summing") {
     val dsl = Sum(
-      BaseTfPrice( MPrice(1.0, RUB) ) ::
-        BaseTfPrice( MPrice(1.5, RUB) ) ::
+      BaseTfPrice( MPrice(100, RUB) ) ::
+        BaseTfPrice( MPrice(150, RUB) ) ::
         Nil
     )
 
-    assertEquals( dsl.price, MPrice(2.5, RUB) )
+    assertEquals( dsl.price, MPrice(250, RUB) )
   }
 
 
@@ -44,12 +44,12 @@ object PriceDslSpec extends SimpleTestSuite {
       multiplifier = Some(2.0),
       underlying = Sum(
         Seq(
-          BaseTfPrice( MPrice(1.0, RUB) ) * 2.0,
-          BaseTfPrice( MPrice(1.5, RUB ) ) * 2.0
+          BaseTfPrice( MPrice(100, RUB) ) * 2.0,
+          BaseTfPrice( MPrice(150, RUB ) ) * 2.0
         )
       )
     )
-    assertEquals( dsl.price, MPrice(10.0, RUB) )
+    assertEquals( dsl.price, MPrice(1000, RUB) )
   }
 
 
@@ -59,8 +59,8 @@ object PriceDslSpec extends SimpleTestSuite {
   // --------------------------------
   test("Correctly split items on Sum with simple sum") {
     val items = Seq(
-      BaseTfPrice( MPrice(1.0, RUB) ),
-      BaseTfPrice( MPrice(1.5, RUB ) ) * 2.0
+      BaseTfPrice( MPrice(100, RUB) ),
+      BaseTfPrice( MPrice(150, RUB ) ) * 2.0
     )
     val dsl = Sum( items )
     assertEquals(
@@ -77,29 +77,18 @@ object PriceDslSpec extends SimpleTestSuite {
       multiplifier = Some(3.0),
       underlying = Sum(
         Seq(
-          BaseTfPrice( MPrice(1.0, RUB) ) * 2.0,
-          BaseTfPrice( MPrice(1.5, RUB ) ) * 2.0
+          BaseTfPrice( MPrice(100, RUB) ) * 2.0,
+          BaseTfPrice( MPrice(150, RUB ) ) * 2.0
         )
       )
     )
     assertEquals(
       dsl.splitOnSum.toSeq,
       Seq(
-        BaseTfPrice( MPrice(1.0, RUB) ) * 2.0 * 3.0,
-        BaseTfPrice( MPrice(1.5, RUB ) ) * 2.0 * 3.0
+        BaseTfPrice( MPrice(100, RUB) ) * 2.0 * 3.0,
+        BaseTfPrice( MPrice(150, RUB ) ) * 2.0 * 3.0
       )
     )
-  }
-
-
-  // --------------------------------
-  // mapPrices()
-  // --------------------------------
-  test("mapPrices() simply, with price normalization") {
-    val dsl = BaseTfPrice( MPrice(1.111111112, RUB) ) * 2.0
-    val dsl2 = dsl.mapAllPrices( _.normalizeAmountByExponent )
-    assertEquals( dsl2.price.amount, 2.22 )
-    assertEquals( dsl2.price.currency, RUB )
   }
 
 }

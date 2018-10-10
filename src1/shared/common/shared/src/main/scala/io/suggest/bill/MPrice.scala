@@ -28,10 +28,10 @@ object MPrice {
 
 
   object HellImplicits {
-    /** Монойд для amount_t, который является double. */
+    /** Монойд для amount_t. */
     implicit def AmountMonoid: Monoid[Amount_t] = {
       new Monoid[Amount_t] {
-        override def zero: Amount_t = 0d
+        override def zero: Amount_t = 0
         override def append(f1: Amount_t, f2: => Amount_t): Amount_t = f1 + f2
       }
     }
@@ -64,7 +64,7 @@ object MPrice {
   /** Вернуть строковое значение цены без какой-либо валюты. */
   def amountStr(m: MPrice): String = {
     m.amountStrOpt
-      .getOrElse( "%1.2f".format(m.amount) )
+      .getOrElse( "%1.2f".format(m.realAmount) )
   }
 
 
@@ -118,7 +118,37 @@ object MPrice {
     UnivEq.derive
   }
 
+
+  /** С появлением целочисленных копеечных цен, возникла необходимость конвертации цен в целые и обратно.
+    *
+    * @param amount Сырая человекопонятая цена: 1.5 - полтора [рубля].
+    * @param currency Валюта цены.
+    * @return Инстанс MPrice с системным представлением цены.
+    */
+  def fromRealAmount(realAmount: Double, currency: MCurrency): MPrice = {
+    apply(
+      amount   = realAmountToAmount(realAmount, currency),
+      currency = currency
+    )
+  }
+
+
+  /** Конвертация системного целочисленного amount в человеко-понятный double-вариант.
+    *
+    * @param amount Хранимое в базах значение целого amount.
+    * @param mcurrency Валюта.
+    * @return
+    */
+  def amountToReal(amount: Amount_t, mcurrency: MCurrency): Double = {
+    amount.toDouble / mcurrency.centsInUnit
+  }
+
+  def realAmountToAmount(realAmount: Double, currency: MCurrency): Amount_t = {
+    (realAmount * currency.centsInUnit).toLong
+  }
+
 }
+
 
 /** Интерфейс для поля amount Double. */
 trait IAmount {
@@ -131,6 +161,10 @@ trait IAmount {
 trait IPrice
   extends IAmount
   with IMCurrency
+{
+  def realAmount: Double =
+    MPrice.amountToReal( amount, currency )
+}
 
 
 /**
@@ -156,24 +190,11 @@ case class MPrice(
   }
 
   /** Домножить amount на какой-то коэффициент. */
-  def multiplifiedBy(mult: Double) = withAmount(amount * mult)
+  def multiplifiedBy(mult: Double) = withAmount( (amount * mult).toLong )
   def *(mult: Double) = multiplifiedBy(mult)
 
   /** Увеличить (уменьшить) объем средств на указанное число. */
   def plusAmount(plusAmount: Amount_t) = withAmount(amount + plusAmount)
-
-  /** Нормировать значение amount согласно экспоненте валюты.
-    * Иными словами, отбросить доли копеек и прочего.
-    */
-  def normalizeAmountByExponent: MPrice = {
-    val expMult = currency.centsInUnit_d
-    val amount2 = (amount * expMult).toLong.toDouble / expMult
-    if (amount2 != amount) {
-      withAmount(amount2)
-    } else {
-      this
-    }
-  }
 
 }
 

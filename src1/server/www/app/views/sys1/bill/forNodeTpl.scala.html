@@ -7,6 +7,7 @@
 @import lk.dsl._
 @import sys1.stuff.ntable._
 @import datetime._
+@import util.TplDataFormatUtil.{formatPriceAmount, formatPriceRealAmount}
 
 @hPathAfter = { }
 
@@ -145,13 +146,13 @@
                   @mb.price.currency
                 }
                 @_td(sz) {
-                  @mb.price.amount
+                  @formatPriceAmount( mb.price )
                 }
                 @_td(sz) {
-                  @mb.blocked
+                  @formatPriceRealAmount( mb.realBlocked, mb.price.currency )
                 }
                 @_td(sz) {
-                  @mb.low
+                  @mb.realLow
                 }
               }
             }

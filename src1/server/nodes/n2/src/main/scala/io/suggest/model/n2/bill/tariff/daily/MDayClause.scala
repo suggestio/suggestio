@@ -1,5 +1,6 @@
 package io.suggest.model.n2.bill.tariff.daily
 
+import io.suggest.bill.Amount_t
 import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -18,18 +19,29 @@ object MDayClause extends IGenEsMappingProps {
 
   object Fields {
     val NAME_FN   = "n"
-    val AMOUNT_FN = "am"
+    private[MDayClause] val DOUBLE_AMOUNT_FN = "am"
+    val AMOUNT_FN = "m"
     val CAL_ID_FN = "cal"
   }
 
 
   import Fields._
 
-  implicit val FORMAT: Format[MDayClause] = (
-    (__ \ NAME_FN).format[String] and
-    (__ \ AMOUNT_FN).format[Double] and
-    (__ \ CAL_ID_FN).formatNullable[String]
-  )(apply, unlift(unapply))
+  implicit val FORMAT: Format[MDayClause] = {
+    val amountFmt = (__ \ AMOUNT_FN).format[Amount_t]
+    // Изначально, суммы были в double, поэтому тут FALLBACK: TODO Удалить FALLBACK после resaveMany().
+    val amountFallbackReads = amountFmt.orElse {
+      (__ \ DOUBLE_AMOUNT_FN).read[Double]
+        .map { x => (x * 100).toLong }
+    }
+    val amountFmt2 = OFormat( amountFallbackReads, amountFmt)
+
+    (
+      (__ \ NAME_FN).format[String] and
+      amountFmt2 and
+      (__ \ CAL_ID_FN).formatNullable[String]
+    )(apply, unlift(unapply))
+  }
 
 
   def clauses2map(clauses: MDayClause*): ClausesMap_t = {
@@ -57,7 +69,7 @@ object MDayClause extends IGenEsMappingProps {
   override def generateMappingProps: List[DocField] = {
     List(
       FieldText(NAME_FN, index = false, include_in_all = false),
-      FieldNumber(AMOUNT_FN, fieldType = DocFieldTypes.double, index = false, include_in_all = false),
+      FieldNumber(AMOUNT_FN, fieldType = DocFieldTypes.long, index = false, include_in_all = false),
       FieldKeyword(CAL_ID_FN, index = true, include_in_all = false)
     )
   }
@@ -67,10 +79,10 @@ object MDayClause extends IGenEsMappingProps {
 
 case class MDayClause(
   name    : String,
-  amount  : Double,
+  amount  : Amount_t,
   calId   : Option[String] = None
 ) {
 
-  def withAmount(amount2: Double) = copy(amount = amount2)
+  def withAmount(amount2: Amount_t) = copy(amount = amount2)
 
 }

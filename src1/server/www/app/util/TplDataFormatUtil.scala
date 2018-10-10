@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 import java.util.Locale
 
-import io.suggest.bill.{IMCurrency, IPrice, MCurrency, MPrice}
+import io.suggest.bill._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.html.HtmlConstants.ELLIPSIS
 import io.suggest.geo._
@@ -125,13 +125,14 @@ object TplDataFormatUtil {
     dcs.setGroupingSeparator(NBSP)
     // TODO выставить остальные сепараторы, чтобы не вызывать pricePostprocess()
     currFmt.setDecimalFormatSymbols(dcs)
-    currFmt.setGroupingUsed(price.amount >= NUMBER_GROUPING_THRESHOLD)
-    val formatted = currFmt.format(price.amount)
+    val realAmount = price.realAmount
+    currFmt.setGroupingUsed(realAmount >= NUMBER_GROUPING_THRESHOLD)
+    val formatted = currFmt.format(realAmount)
     pricePostprocess(formatted)
   }
 
   /** Напечатать цену согласно локали и валюте. */
-  def formatPrice(price: Double, currency: MCurrency)(implicit ctx: Context): String = {
+  def formatPrice(price: Amount_t, currency: MCurrency)(implicit ctx: Context): String = {
     formatPrice( MPrice(price, currency) )
   }
 
@@ -168,33 +169,38 @@ object TplDataFormatUtil {
     * @return Строка вида "10 034"
     */
   def formatPriceAmount(mprice: IPrice)(implicit ctx: Context): String = {
+    val realAmount = mprice.realAmount
+    formatPriceRealAmount(realAmount, mprice.currency)
+  }
+  def formatPriceRealAmount(realAmount: Double, currency: MCurrency)(implicit ctx: Context): String = {
     val formatPriceDigitsDF = {
       val currFmt = NumberFormat.getCurrencyInstance( ctx.messages.lang.locale )
         .asInstanceOf[DecimalFormat]
-      currFmt.setCurrency( mprice.currency.toJavaCurrency )
+      currFmt.setCurrency( currency.toJavaCurrency )
 
       val dcs = currFmt.getDecimalFormatSymbols
       dcs.setCurrencySymbol("")
       dcs.setGroupingSeparator(NBSP)
       currFmt.setDecimalFormatSymbols(dcs)
 
-      currFmt.setGroupingUsed( mprice.amount >= NUMBER_GROUPING_THRESHOLD )
+      currFmt.setGroupingUsed( realAmount >= NUMBER_GROUPING_THRESHOLD )
       // Рендерить 99.31, 100.5, 5421 без копеек.
       currFmt.setMaximumFractionDigits(
-        if (mprice.amount < 100) 2
-        else if (mprice.amount < 1000) 1
+        if (realAmount < 1000) 2
+        else if (realAmount < 10000) 1
         else 0
       )
       currFmt
     }
-    val formatted = formatPriceDigitsDF.format(mprice.amount)
+    val formatted = formatPriceDigitsDF
+      .format(realAmount)
       .trim
     pricePostprocess(formatted)
   }
 
 
   /** Отрендерить amount цены в сухом формате. */
-  def priceAmountPlainFmt(mprice: IMCurrency): DecimalFormat = {
+  def priceAmountPlainFmt(mcurrency: MCurrency): DecimalFormat = {
     val currFmt = NumberFormat.getNumberInstance( Locale.ROOT )
       .asInstanceOf[DecimalFormat]
     currFmt.setDecimalSeparatorAlwaysShown(true)
@@ -203,15 +209,15 @@ object TplDataFormatUtil {
     dcs.setDecimalSeparator('.')
     currFmt.setDecimalFormatSymbols(dcs)
 
-    val frac = mprice.currency.exponent
+    val frac = mcurrency.exponent
     currFmt.setMaximumFractionDigits( frac )
     currFmt.setMinimumFractionDigits( frac )
     currFmt.setGroupingUsed(false)
     currFmt
   }
   def formatPriceAmountPlain(mprice: IPrice): String = {
-    priceAmountPlainFmt(mprice)
-      .format(mprice.amount)
+    priceAmountPlainFmt(mprice.currency)
+      .format(mprice.realAmount)
   }
 
 

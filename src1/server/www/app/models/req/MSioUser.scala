@@ -161,8 +161,8 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
         balances
       } else {
         // Вернуть эфемерный баланс, пригодный для отображения в шаблонах.
-        val mb = MBalance(-1L, MPrice(0.0, MCurrencies.default))
-        Seq(mb)
+        val mb = MBalance(-1L, MPrice(0L, MCurrencies.default))
+        mb :: Nil
       }
     }
   }
