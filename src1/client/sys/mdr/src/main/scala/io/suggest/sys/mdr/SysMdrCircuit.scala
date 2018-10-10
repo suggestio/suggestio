@@ -63,7 +63,7 @@ class SysMdrCircuit extends CircuitLog[MSysMdrRootS] with ReactConnector[MSysMdr
 
   // После конструктора, запустить получение начальных данных с сервера:
   Future {
-    dispatch( MdrNextNode )
+    dispatch( MdrNextNode() )
   }
 
 }

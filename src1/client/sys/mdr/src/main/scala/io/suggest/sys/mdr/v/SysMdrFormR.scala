@@ -1,5 +1,6 @@
 package io.suggest.sys.mdr.v
 
+import chandu0101.scalajs.react.components.materialui.{MuiDivider, MuiDraweAnchors, MuiDrawer, MuiDrawerProps, MuiDrawerVariants}
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.jd.render.v.{JdCss, JdCssR}
@@ -48,9 +49,20 @@ class SysMdrFormR(
 
         // Ошибки - здесь:
         s.mdrErrorsC { mdrErrorsR.apply },
+        <.br,
 
-        // Содержимое формы модерации карточки:
-        s.nodeInfoC { nodeMdrR.apply },
+        // Левая панель:
+        MuiDrawer(
+          new MuiDrawerProps {
+            override val variant = MuiDrawerVariants.permanent
+            override val anchor = MuiDraweAnchors.right
+          }
+        )(
+          // Содержимое формы модерации карточки:
+          s.nodeInfoC { nodeMdrR.apply },
+
+          MuiDivider(),
+        ),
 
         // Визуальный рендер узла:
         s.nodeRenderC { nodeRenderR.apply },
@@ -80,6 +92,7 @@ class SysMdrFormR(
                 directSelfNodesSorted   = req.directSelfNodesSorted,
                 itemsByType             = req.itemsByType,
                 mdrPots                 = mroot.mdrPots,
+                nodeOffset              = mroot.nodeOffset - mroot.info.toOption.flatten.fold(0)(_.errorNodeIds.size),
               )
             }
           }

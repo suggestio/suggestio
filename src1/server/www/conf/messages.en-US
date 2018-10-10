@@ -988,4 +988,6 @@ Search.start.typing=I'm looking for...
 N.selected={0} selected
 Total=Total
 Lost.node=Lost node
+Next.node=Next node
+Previous.node=Previous node
 

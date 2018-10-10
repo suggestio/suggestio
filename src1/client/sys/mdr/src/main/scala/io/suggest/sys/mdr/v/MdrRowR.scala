@@ -102,6 +102,7 @@ class MdrRowR {
             // Кнопка "подтвердить"
             __rowBtn( true, props.actionInfo, props.approveIcon, MsgCodes.`Approve`, isDisabled ),
 
+            // Заголовок ряда
             children,
 
             // Кнопка "отказать"
@@ -130,7 +131,7 @@ class MdrRowR {
               Mui.SvgIcons.SmsFailed()()
             )
           )
-        }
+        },
 
       )
     }

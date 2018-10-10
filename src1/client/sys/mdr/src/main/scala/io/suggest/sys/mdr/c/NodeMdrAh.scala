@@ -154,7 +154,7 @@ class NodeMdrAh[M](
                 resp.items.isEmpty  &&  resp.directSelfNodeIds.isEmpty
               }}
             } {
-              Effect.action( MdrNextNode )
+              Effect.action( MdrNextNode( skipCurrentNode = true ) )
             }
 
             ah.updatedMaybeEffect(v2, nextNodeFxOpt)
@@ -214,7 +214,7 @@ class NodeMdrAh[M](
 
 
     // Переход к следующему узлу, который требует модерации.
-    case MdrNextNode =>
+    case m: MdrNextNode =>
       val v0 = value
       if (v0.info.isPending) {
         noChange
@@ -224,18 +224,40 @@ class NodeMdrAh[M](
 
         // Организовать запрос на сервер:
         val fx = Effect {
+          // Шагание обновляет offset:
+          var offset2 = v0.nodeOffset
+
+          // Если происходит переключение между модерируемыми узлами, то вычислить новый offset:
+          if (m.offsetDelta !=* 0) {
+            offset2 += m.offsetDelta
+            // При шагании назад надо автоматом "пропустить" ошибочные узлы:
+            if (m.offsetDelta < 0)
+              for {
+                info <- infoReq2.toOption
+                resp <- info
+                if resp.errorNodeIds.nonEmpty
+              } {
+                offset2 -= resp.errorNodeIds.size
+              }
+          }
+
           val args = MdrSearchArgs(
-            // Пропустить текущую карточку:
-            hideAdIdOpt = v0.info
-              .toOption
-              .flatten
-              .map(_.nodeId)
+            // Пропустить текущую карточку, если требуется экшеном:
+            hideAdIdOpt = OptionUtil.maybeOpt(m.skipCurrentNode) {
+              v0.info
+                .toOption
+                .flatten
+                .map(_.nodeId)
+            },
+            // Сдвиг соответствует запрашиваемому.
+            offsetOpt = Some( offset2 )
           )
           api.nextMdrInfo(args)
             .transform { tryResp =>
               val r = MdrNextNodeResp(
                 timestampMs   = infoReq2.asInstanceOf[PendingBase].startTime,
-                tryResp       = tryResp
+                tryResp       = tryResp,
+                reqOffset     = offset2
               )
               Success(r)
             }
@@ -268,6 +290,14 @@ class NodeMdrAh[M](
           info    = infoReq2,
           jdCss   = jdCss2,
           mdrPots = Map.empty,
+          nodeOffset = {
+            // Если успешный ответ содержит список ошибок узлов, то значит сервер перешагнул какие-то узлы автоматом. Надо тут их тоже прошагать с помощью offset:
+            val errOffset = m.tryResp
+              .toOption
+              .flatten
+              .fold(0)(_.errorNodeIds.size)
+            Math.max( 0, m.reqOffset + errOffset )
+          }
           // TODO Закрыть все открытые диалоги
         )
         updated( v2 )

@@ -497,10 +497,10 @@ object MuiSvgIcons {
   object AvEqualizer extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/explicit", JSImport.Default)
   object AvExplicit extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/av/fast-forward", JSImport.Default)
-  object AvFastForward extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/av/fast-rewind", JSImport.Default)
-  object AvFastRewind extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/FastForward", JSImport.Default)
+  object FastForward extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/FastRewind", JSImport.Default)
+  object FastRewind extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/featured-play-list", JSImport.Default)
   object AvFeaturedPlayList extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/featured-video", JSImport.Default)
@@ -597,10 +597,10 @@ object MuiSvgIcons {
   object AvReplay extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/shuffle", JSImport.Default)
   object AvShuffle extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/av/skip-next", JSImport.Default)
-  object AvSkipNext extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/av/skip-previous", JSImport.Default)
-  object AvSkipPrevious extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SkipNext", JSImport.Default)
+  object SkipNext extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/SkipPrevious", JSImport.Default)
+  object SkipPrevious extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/slow-motion-video", JSImport.Default)
   object AvSlowMotionVideo extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/av/snooze", JSImport.Default)

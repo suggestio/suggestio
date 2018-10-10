@@ -34,6 +34,7 @@ object Mui {
   @js.native @JSImport("@material-ui/core/DialogContentText", JSImport.Default) object DialogContentText extends js.Any
   @js.native @JSImport("@material-ui/core/Divider", JSImport.Default) object Divider       extends js.Any
   @js.native @JSImport("@material-ui/core/Drawer", JSImport.Default) object Drawer         extends js.Any
+  @js.native @JSImport("@material-ui/core/SwipeableDrawer", JSImport.Default) object SwipeableDrawer extends js.Any
   @js.native @JSImport("@material-ui/core/DropDownMenu", JSImport.Default) object DropDownMenu
       extends js.Any
   @js.native @JSImport("@material-ui/core/FloatingActionButton", JSImport.Default) object FloatingActionButton

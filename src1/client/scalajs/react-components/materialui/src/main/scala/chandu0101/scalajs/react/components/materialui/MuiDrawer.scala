@@ -12,7 +12,7 @@ object MuiDrawer {
 
   val component = JsComponent[MuiDrawerProps, Children.Varargs, Null](Mui.Drawer)
 
-  def apply(props: MuiDrawerProps)(children: VdomNode*) =
+  def apply(props: MuiDrawerProps = MuiDrawerProps.empty)(children: VdomNode*) =
     component(props)(children: _*)
 
 }
@@ -22,7 +22,7 @@ trait MuiDrawerPropsBase
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiDrawerClasses]
 {
-  val anchors: js.UndefOr[String] = js.undefined
+  val anchor: js.UndefOr[String] = js.undefined
   val elevation: js.UndefOr[Int] = js.undefined
   val ModalProps: js.UndefOr[MuiModalProps] = js.undefined
   val PaperProps: js.UndefOr[MuiPaperProps] = js.undefined

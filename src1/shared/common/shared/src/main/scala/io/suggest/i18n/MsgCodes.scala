@@ -286,4 +286,7 @@ object MsgCodes {
   val `Refuse` = "Refuse"
   val `Reason` = "Reason"
 
+  val `Next.node` = "Next.node"
+  val `Previous.node` = "Previous.node"
+
 }

@@ -996,4 +996,6 @@ Search.start.typing=Я ищу...
 N.selected={0} выбрано
 Total=Итого
 Lost.node=Потерянный узел
+Next.node=Следующий узел
+Previous.node=Предыдущий узел
 

@@ -19,13 +19,19 @@ case class ApproveOrDismiss( info: MMdrActionInfo, isApprove: Boolean ) extends 
 /** Ответ сервера по команде модерации. */
 case class DoMdrResp(timestampMs: Long, info: MMdrActionInfo, tryResp: Try[_]) extends ISysMdrAction
 
-/** Запросить с сервера данные узла, который требуется промодерировать. */
-case object MdrNextNode extends ISysMdrAction
+/** Запросить с сервера данные узла, который требуется промодерировать.
+  * @param skipCurrentNode true, если нужна перезагрузка с пропуском текущего узла.
+  * @param offsetDelta Сдвиг offset'а, чтобы различать пропуск вперёд, перезагрузку текущего и шаг назад.
+  */
+case class MdrNextNode(skipCurrentNode: Boolean = false, offsetDelta: Int = 0) extends ISysMdrAction
 
-/** Ответ на запрос next-node для модерации. */
+/** Ответ на запрос next-node для модерации.
+  * @param reqOffset offset запроса для данного ответа.
+  */
 case class MdrNextNodeResp(
                             timestampMs   : Long,
-                            tryResp       : Try[Option[MNodeMdrInfo]]
+                            tryResp       : Try[Option[MNodeMdrInfo]],
+                            reqOffset     : Int,
                           )
   extends ISysMdrAction
 
