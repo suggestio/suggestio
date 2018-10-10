@@ -6,7 +6,6 @@
 @import ctx.api.ctxUtil
 @import lk.lkBlock
 @import sys1.person.parts._personLinkTpl
-@import models.mdr._
 @import io.suggest.sys.mdr._
 @import args.mnode
 @import sys1.stuff.hpath._
@@ -157,23 +156,6 @@
       paddingPx = 28
     ) { Установка<br/>дефолтовых<br/>карточек }
 
-  }
-
-
-  @lkBlock("Модерация бесплатного размещения") {
-
-    <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left"
-       href="@routes.SysMdr.freeAdvs( MdrSearchArgs(producerId = mnode.id) )">
-      Очередь на модерацию
-    </a>
-    <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left"
-       href="@routes.SysMdr.freeAdvs( MdrSearchArgs(isAllowed = Some(true), producerId = mnode.id) )">
-      Одобренные
-    </a>
-    <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left"
-       href="@routes.SysMdr.freeAdvs( MdrSearchArgs(isAllowed = Some(false), producerId = mnode.id) )">
-      Отклонённые
-    </a>
   }
 
 

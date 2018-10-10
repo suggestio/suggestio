@@ -67,6 +67,7 @@ class MSuperUsers @Inject()(
    * @return true, если это админ. Иначе false.
    */
   def isSuperuserId(personId: String): Boolean = {
+    // TODO Нужно, чтобы было Future[Boolean]. Иначе есть проблема, что при запуске суперюзеры отсутствуют на небольшой момент времени.
     SU_IDS.contains(personId)
   }
 

@@ -7,13 +7,6 @@
 @import ctx.messages
 @import sys1.stuff.hpath._
 
-@headAfter1 = {
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/lk/ads-list.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/showcase.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/lk/common.css")'/>
-  @headAfter
-}
-
 @hPathAfter1 = {
 
   /
@@ -33,5 +26,5 @@
 @marketBase(
   title      = title,
   hPathAfter = Some(hPathAfter1),
-  headAfter  = Some(headAfter1)
+  headAfter  = headAfter
 )(content)

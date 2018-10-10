@@ -6,16 +6,14 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.IMust
 import javax.inject.{Inject, Singleton}
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItem, MItem, MItems}
-import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
+import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sys.mdr.{MMdrResolution, MdrSearchArgs}
 import io.suggest.util.logs.MacroLogsImpl
-import models.mdr.{MRefuseFormRes, MRefuseModes, RefuseForm_t}
 import models.mproj.ICommonDi
 import models.req.ISioUser
 import util.billing.Bill2Util
@@ -41,6 +39,7 @@ class SysMdrUtil @Inject() (
 {
 
   import mCommonDi._
+  import slick.profile.api._
 
   def someNow = Some(OffsetDateTime.now)
 
@@ -67,66 +66,12 @@ class SysMdrUtil @Inject() (
     )
   }
 
-  /** Код обновления эджа модерации живёт здесь. */
-  def updMdrEdge(mad: MNode, mdrEdge: MEdge): Future[MNode] = {
-    // Сгенерить обновлённые данные модерации.
-    LOGGER.trace(s"_updMdrEdge() Mdr mad[${mad.idOrNull}] with mdr-edge $mdrEdge")
-
-    // Запускаем сохранение данных модерации.
-    mNodes.tryUpdate(mad) { mad0 =>
-      mad0.copy(
-        edges = mad0.edges.copy(
-          out = {
-            MNodeEdges.edgesToMap1 {
-              mad0.edges
-                .withoutPredicateIter( MPredicates.ModeratedBy )
-                .++( mdrEdge :: Nil )
-            }
-          }
-        )
-      )
-    }
-  }
-
-
-  import play.api.data._
-  import Forms._
-  import util.FormUtil._
-
-
-  /** Маппинг причины отказа. */
-  def reasonM: Mapping[String] = {
-    nonEmptyText(minLength = 4, maxLength = 1024)
-      .transform(strTrimSanitizeF, strIdentityF)
-  }
-
-  /** Маппинг формы отказа в размещении. */
-  def refuseFormM: RefuseForm_t = {
-    val m = mapping(
-      "reason"  -> reasonM,
-      "mode"    -> MRefuseModes.mappingOpt
-    )
-    { MRefuseFormRes.apply }
-    { MRefuseFormRes.unapply }
-    Form(m)
-  }
-
-
-  import slick.profile.api._
 
 
   type Q_t = Query[mItems.MItemsTable, MItem, Seq]
 
   def onlyAwaitingMdr(q: Q_t): Q_t = {
     q.filter( _.statusStr === MItemStatuses.AwaitingMdr.value)
-  }
-
-  def onlyStatuses(q: Q_t, statuses: Seq[MItemStatus]): Q_t = {
-    q.filter(_.statusStr inSet statuses.iterator.map(_.value).toSeq)
-  }
-
-  def onlyItype(q: Q_t, itype: MItemType): Q_t = {
-    q.filter( _.iTypeStr === itype.value)
   }
 
   /** Общий код сборки всех SQL queries для сборки items модерации карточки. */
@@ -373,8 +318,3 @@ class SysMdrUtil @Inject() (
 
 }
 
-
-/** Интерфейс для DI-поля с инстансом [[SysMdrUtil]]. */
-trait ISysMdrUtilDi {
-  def sysMdrUtil: SysMdrUtil
-}
