@@ -25,6 +25,7 @@ import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.model.n2.edge.MPredicates
+import io.suggest.spa.OptFastEq
 import io.suggest.sys.mdr.MMdrActionInfo
 
 import scala.scalajs.js
@@ -39,25 +40,34 @@ class NodeMdrR(
                 mdrRowR: MdrRowR
               ) {
 
-  case class PropsVal(
-                       itemsByType              : Map[MItemType, Seq[MItem]],
-                       nodesMap                 : Map[String, MAdvGeoMapNodeProps],
-                       directSelfNodesSorted    : Seq[MAdvGeoMapNodeProps],
-                       mdrPots                  : Map[MMdrActionInfo, Pot[None.type]],
-                       nodeOffset               : Int,
-                     )
-  implicit object NodeMdrRPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+  case class NodePropsVal(
+                           itemsByType              : Map[MItemType, Seq[MItem]],
+                           nodesMap                 : Map[String, MAdvGeoMapNodeProps],
+                           directSelfNodesSorted    : Seq[MAdvGeoMapNodeProps],
+                           mdrPots                  : Map[MMdrActionInfo, Pot[None.type]],
+                         )
+  implicit object NodeMdrRNodePropsValFastEq extends FastEq[NodePropsVal] {
+    override def eqv(a: NodePropsVal, b: NodePropsVal): Boolean = {
       (a.itemsByType ===* b.itemsByType) &&
       (a.nodesMap ===* b.nodesMap) &&
       (a.directSelfNodesSorted ===* b.directSelfNodesSorted) &&
-      (a.mdrPots ===* b.mdrPots) &&
+      (a.mdrPots ===* b.mdrPots)
+    }
+  }
+
+  case class PropsVal(
+                       nodeOpt        : Option[NodePropsVal],
+                       nodeOffset     : Int,
+                     )
+  implicit object NodeMdrRPropsValFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      OptFastEq.Wrapped(NodeMdrRNodePropsValFastEq).eqv(a.nodeOpt, b.nodeOpt) &&
       (a.nodeOffset ==* b.nodeOffset)
     }
   }
 
 
-  type Props_t = Pot[Option[PropsVal]]
+  type Props_t = Pot[PropsVal]
   type Props = ModelProxy[Props_t]
 
 
@@ -106,20 +116,27 @@ class NodeMdrR(
         },
 
         // Рендер элементов управления модерацией.
-        propsPot.render { propsOpt =>
+        propsPot.render { props =>
+
+          val canGoToPrevious = props.nodeOffset <= 0
 
           <.div(
 
             <.span(
-              _btn( MsgCodes.`Previous.node`, Mui.SvgIcons.SkipPrevious, propsOpt.fold(false)(_.nodeOffset <= 0) )( _previousNodeBtnClickJsCbF ),
+              _btn( MsgCodes.`To.beginning`, Mui.SvgIcons.FastRewind, canGoToPrevious ) {
+                ReactCommonUtil.cbFun1ToJsCb(
+                  _refreshBtnClick( -props.nodeOffset )
+                )
+              },
+              _btn( MsgCodes.`Previous.node`, Mui.SvgIcons.SkipPrevious, canGoToPrevious )( _previousNodeBtnClickJsCbF ),
               _refreshBtn,
-              _btn( MsgCodes.`Next.node`, Mui.SvgIcons.SkipNext, propsOpt.isEmpty )( _nextNodeBtnClickJsCbF ),
+              _btn( MsgCodes.`Next.node`, Mui.SvgIcons.SkipNext, props.nodeOpt.isEmpty )( _nextNodeBtnClickJsCbF ),
             ),
 
             MuiDivider(),
 
             // Рендер, в зависимости от наличия данных в ответе. None значит нечего модерировать.
-            propsOpt.fold[VdomNode] {
+            props.nodeOpt.fold[VdomNode] {
               // TODO Подверстать, чтобы по центру всё было (и контент, и контейнер).
               MuiPaper()(
                 MuiCard()(
@@ -138,15 +155,15 @@ class NodeMdrR(
                 )
               )
 
-            } { props =>
+            } { nodeProps =>
               // Краткое получение pot'а для одного элемента списка.
               def __mdrPot(ai: MMdrActionInfo) =
-                props.mdrPots.getOrElse(ai, Pot.empty)
+                nodeProps.mdrPots.getOrElse(ai, Pot.empty)
 
               MuiList()(
 
                 // Ряд полного аппрува всех item'ов вообще:
-                ReactCommonUtil.maybeNode( props.itemsByType.nonEmpty || props.directSelfNodesSorted.nonEmpty ) {
+                ReactCommonUtil.maybeNode( nodeProps.itemsByType.nonEmpty || nodeProps.directSelfNodesSorted.nonEmpty ) {
                   val all = MsgCodes.`All`
                   propsPotProxy.wrap { _ =>
                     val ai = MMdrActionInfo()
@@ -166,7 +183,7 @@ class NodeMdrR(
                 },
 
                 // Список item'ов биллинга, подлежащих модерации:
-                props
+                nodeProps
                   .itemsByType
                   .iterator
                   .flatMap { case (itype, mitems) =>
@@ -231,7 +248,7 @@ class NodeMdrR(
                               // Рендер названия rcvr-узла.
                               mitem.rcvrIdOpt.whenDefinedNode { rcvrId =>
                                 // Рендерить название узла, присланное сервером.
-                                props
+                                nodeProps
                                   .nodesMap
                                   .get(rcvrId)
                                   .flatMap(_.hint)
@@ -277,7 +294,7 @@ class NodeMdrR(
 
                 // Рендер своих узлов-ресиверов бесплатного размещения.
                 // Сначала заголовок для бесплатных размещений:
-                ReactCommonUtil.maybeNode( props.directSelfNodesSorted.nonEmpty ) {
+                ReactCommonUtil.maybeNode( nodeProps.directSelfNodesSorted.nonEmpty ) {
                   propsPotProxy.wrap { _ =>
                     val ai = MMdrActionInfo(
                       directSelfAll = true
@@ -298,7 +315,7 @@ class NodeMdrR(
                 },
 
                 // Список размещений
-                props
+                nodeProps
                   .directSelfNodesSorted
                   .map { mnode =>
                     propsPotProxy.wrap { _ =>

@@ -45,6 +45,16 @@ object DiodeUtil {
       }
     }
 
+    def PotFastEq[T: FastEq]: FastEq[Pot[T]] = {
+      new FastEq[Pot[T]] {
+        override def eqv(a: Pot[T], b: Pot[T]): Boolean = {
+          (a.isPending ==* b.isPending) &&
+          OptFastEq.Plain.eqv(a.exceptionOption, b.exceptionOption) &&
+          PotAsOptionFastEq[T].eqv(a, b)
+        }
+      }
+    }
+
   }
 
 
