@@ -357,8 +357,8 @@ object MuiSvgIcons {
   object ActionSettingsRemote extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/settings-voice", JSImport.Default)
   object ActionSettingsVoice extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/settings", JSImport.Default)
-  object ActionSettings extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Settings", JSImport.Default)
+  object Settings extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/shop-two", JSImport.Default)
   object ActionShopTwo extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/shop", JSImport.Default)

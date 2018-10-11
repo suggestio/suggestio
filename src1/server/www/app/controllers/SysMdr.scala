@@ -150,7 +150,10 @@ class SysMdr @Inject() (
       // Запустить jd-рендер целиком, если это рекламная карточка:
       val jdAdDataSomeOrExFut = for {
         mad <- billedOrFreeNodeOrExFut
-        if (mad.common.ntype ==* MNodeTypes.Ad) && mad.extras.doc.nonEmpty
+        if {
+          LOGGER.trace( s"$logPrefix is jd ad? ntype=${mad.common.ntype} doc=${mad.extras.doc}" )
+          (mad.common.ntype ==* MNodeTypes.Ad) && mad.extras.doc.nonEmpty
+        }
 
         // И организуется jd-рендер:
         tpl = jdAdUtil.getNodeTpl( mad )

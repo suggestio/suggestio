@@ -25,6 +25,9 @@ import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.node.{MNodeType, MNodeTypes}
+import io.suggest.routes.routes
+import io.suggest.sjs.common.model.Route
 import io.suggest.spa.OptFastEq
 import io.suggest.sys.mdr.MMdrActionInfo
 
@@ -41,6 +44,8 @@ class NodeMdrR(
               ) {
 
   case class NodePropsVal(
+                           nodeId                   : String,
+                           ntypeOpt                 : Option[MNodeType],
                            itemsByType              : Map[MItemType, Seq[MItem]],
                            nodesMap                 : Map[String, MAdvGeoMapNodeProps],
                            directSelfNodesSorted    : Seq[MAdvGeoMapNodeProps],
@@ -48,6 +53,8 @@ class NodeMdrR(
                          )
   implicit object NodeMdrRNodePropsValFastEq extends FastEq[NodePropsVal] {
     override def eqv(a: NodePropsVal, b: NodePropsVal): Boolean = {
+      (a.nodeId ===* b.nodeId) &&
+      (a.ntypeOpt ==* b.ntypeOpt) &&
       (a.itemsByType ===* b.itemsByType) &&
       (a.nodesMap ===* b.nodesMap) &&
       (a.directSelfNodesSorted ===* b.directSelfNodesSorted) &&
@@ -131,6 +138,41 @@ class NodeMdrR(
               _btn( MsgCodes.`Previous.node`, Mui.SvgIcons.SkipPrevious, canGoToPrevious )( _previousNodeBtnClickJsCbF ),
               _refreshBtn,
               _btn( MsgCodes.`Next.node`, Mui.SvgIcons.SkipNext, props.nodeOpt.isEmpty )( _nextNodeBtnClickJsCbF ),
+
+              // Если есть узел, то надо ссылку на редактор сделать:
+              props.nodeOpt.whenDefined { mnode =>
+                def __nodeAnchorLink(hintCode: String, route: Route, icon: MuiSvgIcon) = {
+                  MuiToolTip(
+                    new MuiToolTipProps {
+                      override val title: React.Node = Messages( hintCode )
+                    }
+                  )(
+                    <.a(
+                      ^.href := route.url,    //routes.controllers.SysMarket.showAdnNode( mnode.nodeId ).url,
+                      ^.target.blank,
+                      MuiIconButton()(
+                        icon()()
+                      )
+                    )
+                  )
+                }
+
+                <.span(
+                  HtmlConstants.PIPE,
+
+                  // Ссылка на sys-страницу узла:
+                  __nodeAnchorLink( MsgCodes.`Node`, routes.controllers.SysMarket.showAdnNode( mnode.nodeId ), Mui.SvgIcons.Settings ),
+
+                  // Ссылка на лк-редактор узла в зависимости от типа узла.
+                  mnode.ntypeOpt.collect {
+                    case MNodeTypes.Ad      => routes.controllers.LkAdEdit.editAd( mnode.nodeId )
+                    case MNodeTypes.AdnNode => routes.controllers.LkAdnEdit.editNodePage( mnode.nodeId )
+                  }.whenDefined { route =>
+                    __nodeAnchorLink( MsgCodes.`Edit`, route, Mui.SvgIcons.Edit )
+                  }
+                )
+              }
+
             ),
 
             MuiDivider(),

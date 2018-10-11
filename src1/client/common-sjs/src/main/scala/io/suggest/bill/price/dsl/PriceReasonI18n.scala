@@ -53,7 +53,7 @@ object PriceReasonI18n {
 
 
   def i18nPayloadModulesCount(blockModulesCount: Int): String =
-    Messages( MsgCodes.`N.modules`, blockModulesCount :: Nil )
+    Messages( MsgCodes.`N.modules`, blockModulesCount )
 
   def i18nPayloadTagFace(tagFace: String): String =
     HtmlConstants.TAG_PREFIX + tagFace

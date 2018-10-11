@@ -284,24 +284,33 @@ class JdAdUtil @Inject()(
     *         например в renderAdDocImgs().
     */
   def collectImgEdges(nodeEdges: MNodeEdges, uids2jdEdgeId: Map[EdgeUid_t, MJdEdgeId]): Seq[(MEdge, MImg3)] = {
-    nodeEdges
-      .withPredicateIter( imgPredicate )
-      .map { medge =>
-        val dynImgId = MDynImgId(
-          rowKeyStr = medge.nodeIds.head,
-          // TODO По идее, тут достаточно MImgFmts.defaults, но почему-то всё тогда сглючивает.
-          dynFormat = medge.doc.uid
-            .flatMap(uids2jdEdgeId.get)
-            .flatMap(_.outImgFormat)
-            .getOrElse {
-              LOGGER.warn(s"collectImgEdges(): Not found edge ${medge.doc.uid} in edgesMap:\n ${uids2jdEdgeId.mkString(", ")}")
-              MImgFmts.default
-            }
-        )
-        val origImg = MImg3(dynImgId)
-        medge -> origImg
+    lazy val logPrefix = s"collectImgEdges()#${System.currentTimeMillis()}:"
+    LOGGER.trace(s"$logPrefix nodeEdges=${nodeEdges.out.length}edges, uids2jdEdgeId=${uids2jdEdgeId.size}map")
+
+    val iter = for {
+      medge <- nodeEdges.withPredicateIter( imgPredicate )
+      imgNodeId <- {
+        if (medge.nodeIds.isEmpty)
+          LOGGER.error(s"$logPrefix Missing nodeIds for img-edge: $medge")
+        medge.nodeIds
       }
-      .toSeq
+    } yield {
+      val dynImgId = MDynImgId(
+        rowKeyStr = imgNodeId,
+        // TODO По идее, тут достаточно MImgFmts.defaults, но почему-то всё тогда сглючивает.
+        dynFormat = medge.doc.uid
+          .flatMap(uids2jdEdgeId.get)
+          .flatMap(_.outImgFormat)
+          .getOrElse {
+            LOGGER.warn(s"collectImgEdges(): Not found edge ${medge.doc.uid} in edgesMap:\n ${uids2jdEdgeId.mkString(", ")}")
+            MImgFmts.default
+          }
+      )
+      val origImg = MImg3(dynImgId)
+      medge -> origImg
+    }
+
+    iter.toSeq
   }
 
 

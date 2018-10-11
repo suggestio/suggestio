@@ -4,6 +4,7 @@ import chandu0101.scalajs.react.components.materialui.{MuiDivider, MuiDraweAncho
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.jd.render.v.{JdCss, JdCssR}
+import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.spa.{DiodeUtil, OptFastEq}
 import io.suggest.sys.mdr.m.MSysMdrRootS
 import japgolly.scalajs.react._
@@ -87,6 +88,14 @@ class SysMdrFormR(
             nodeMdrR.PropsVal(
               nodeOpt = for (req <- reqOpt) yield {
                 nodeMdrR.NodePropsVal(
+                  nodeId                  = req.nodeId,
+                  ntypeOpt = req.ad
+                    .map(_ => MNodeTypes.Ad)
+                    .orElse {
+                      req.nodesMap
+                        .get(req.nodeId)
+                        .map(_.ntype)
+                    },
                   nodesMap                = req.nodesMap,
                   directSelfNodesSorted   = req.directSelfNodesSorted,
                   itemsByType             = req.itemsByType,

@@ -116,10 +116,9 @@ class NodeMdrAh[M](
                   } else {
                     info
                       .items
-                      .filter { mitem =>
+                      .filterNot { mitem =>
                         (m.info.itemType contains mitem.iType) ||
-                          (m.info.isEmpty) ||
-                          (mitem.id ==* m.info.itemId)
+                        (mitem.id ==* m.info.itemId)
                       }
                   }
 
