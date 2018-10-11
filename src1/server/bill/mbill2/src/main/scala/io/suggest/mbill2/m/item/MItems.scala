@@ -19,7 +19,6 @@ import org.threeten.extra.Interval
 import slick.lifted.ProvenShape
 import slick.sql.SqlAction
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
-import io.suggest.err.ErrorConstants
 
 /**
  * Suggest.io
@@ -202,7 +201,7 @@ class MItems @Inject() (
     // Возможно, стоит попробовать эту пионерскую поделку https://github.com/tarao/slick-jdbc-extension-scala
     val adIdsStr = _mkSqlInString( adIds )
     val statusesStr = _mkSqlInString( statuses.onlyIds )
-    sql"SELECT #$NODE_ID_FN, array_agg(DISTINCT #$STATUS_FN) FROM #$TABLE_NAME WHERE ad_id IN (#$adIdsStr) AND #$STATUS_FN IN (#$statusesStr) GROUP BY ad_id"
+    sql"SELECT #$NODE_ID_FN, array_agg(DISTINCT #$STATUS_FN) FROM #$TABLE_NAME WHERE #$NODE_ID_FN IN (#$adIdsStr) AND #$STATUS_FN IN (#$statusesStr) GROUP BY #$NODE_ID_FN"
       .as[MAdItemStatuses]
   }
 

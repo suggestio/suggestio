@@ -153,6 +153,7 @@ class LkAds @Inject() (
 
       slick.db
         .stream(
+          // TODO Надо отрабатывать ошибки. При sql-ошибках они не вызывают HTTP 500, не логгируются, сбивая с толку.
           mItems.findStatusesForAds(
             // Не добавляем сюда newAdId, т.к. если у только что созданной карточки размещений быть и не должно.
             adIds    = madIds,

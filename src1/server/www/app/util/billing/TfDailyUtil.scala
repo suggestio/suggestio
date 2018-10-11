@@ -60,29 +60,41 @@ class TfDailyUtil @Inject()(
     )
   }
 
+
+  // 2018-10-11 Тут mappings-велосипед, в связи с несовременной формой на фоне необходимости конвертить значения
+  // в Amount_t и обратно на основе валюты, которая задаётся на верхнем уровне маппингов.
+
+  private case class MDayClauseRealAmount(
+                                           name         : String,
+                                           realAmount   : Double,
+                                           calId        : Option[String] = None
+                                         )
+
   /** Маппинг инстанса MDailyTf. */
-  def tfDailyClauseM: Mapping[MDayClause] = {
+  private def tfDailyClauseM: Mapping[MDayClauseRealAmount] = {
     mapping(
       "name"        -> nonEmptyText(minLength = 3, maxLength = 32),
       // TODO Надо копейки к рублям приводить, центы к баксам и т.д. (и наоборот тоже).
-      "amount"      -> longNumber(min = 0),
+      "amount"      -> doubleM,
       "calId"       -> optional(esIdM)
     )
-    { MDayClause.apply }
-    { MDayClause.unapply }
+    { MDayClauseRealAmount.apply }
+    { MDayClauseRealAmount.unapply }
   }
 
   /** Маппинг карты условий тарифа. */
-  def tfDailyClausesM = {
+  private def tfDailyClausesM = {
     list( optional(tfDailyClauseM) )
-      .transform [List[MDayClause]] (
+      .transform [List[MDayClauseRealAmount]] (
         _.flatten,
         _.map(Some.apply)
       )
+      /*
       .transform [Map[String, MDayClause]] (
         { MDayClause.clauses2map1 },
         { MDayClause.clausesMap2list }
       )
+      */
   }
 
   /** Маппинг инстанса MDailyTf. */
@@ -92,8 +104,37 @@ class TfDailyUtil @Inject()(
       "clauses"       -> tfDailyClausesM,
       "comission"     -> optional(doubleM)
     )
-    { MTfDaily.apply }
-    { MTfDaily.unapply }
+    { (currency, clausesRA, comission) =>
+      val clauses = MDayClause.clauses2map1(
+        clausesRA
+          .iterator
+          .map { mdcRA =>
+            MDayClause(
+              name   = mdcRA.name,
+              amount = MPrice.realAmountToAmount( mdcRA.realAmount, currency ),
+              calId  = mdcRA.calId
+            )
+          }
+      )
+      MTfDaily( currency, clauses, comission )
+    }
+    {tfDaily =>
+      for {
+        (currency, clauses, comission) <- MTfDaily.unapply( tfDaily )
+      } yield {
+        val clausesRA: List[MDayClauseRealAmount] = clauses
+          .valuesIterator
+          .map { mdc =>
+            MDayClauseRealAmount(
+              name        = mdc.name,
+              realAmount  = MPrice.amountToReal(mdc.amount, currency),
+              calId       = mdc.calId
+            )
+          }
+          .toList
+        (currency, clausesRA, comission)
+      }
+    }
   }
 
   /** Маппинг формы создания/редактирования MDailyTf. */
@@ -245,7 +286,7 @@ class TfDailyUtil @Inject()(
   }
 
 
-  /** Приведение режима тарикации, заданного юзером, к значению поля mnode.billing.tariffs.daily.
+  /** Приведение режима тарификации, заданного юзером, к значению поля mnode.billing.tariffs.daily.
     *
     * @param tfMode Режим тарификации, задаваемый юзером.
     * @return Фьючерс с опциональным посуточным тарифом.
@@ -253,10 +294,11 @@ class TfDailyUtil @Inject()(
   def tfMode2tfDaily(tfMode: ITfDailyMode): Future[Option[MTfDaily]] = {
     FutureUtil.optFut2futOpt( tfMode.manualOpt ) { manTf =>
       for (ftf <- fallbackTf()) yield {
+        val minClauseAmount = ftf.defaultClause
         val tf2 = ftf.withClauses(
           ftf.clauses.mapValues { mdc =>
             mdc.withAmount(
-              mdc.amount * manTf.amount
+              mdc.amount * manTf.amount / minClauseAmount.amount
             )
           }
         )

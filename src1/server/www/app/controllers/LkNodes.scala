@@ -672,6 +672,7 @@ class LkNodes @Inject() (
 
         // Всё ок, обновить текущий узел.
         {tfdm =>
+          LOGGER.trace(s"$logPrefix new tf-daily mode: $tfdm")
           for {
             // Вычислить тариф для узла на основе заданного режима.
             tfDailyOpt <- tfDailyUtil.tfMode2tfDaily( tfdm )

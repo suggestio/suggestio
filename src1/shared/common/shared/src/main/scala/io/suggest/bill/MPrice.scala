@@ -136,11 +136,11 @@ object MPrice {
   /** Конвертация системного целочисленного amount в человеко-понятный double-вариант.
     *
     * @param amount Хранимое в базах значение целого amount.
-    * @param mcurrency Валюта.
+    * @param currency Валюта.
     * @return
     */
-  def amountToReal(amount: Amount_t, mcurrency: MCurrency): Double = {
-    amount.toDouble / mcurrency.centsInUnit
+  def amountToReal(amount: Amount_t, currency: MCurrency): Double = {
+    amount.toDouble / currency.centsInUnit
   }
 
   def realAmountToAmount(realAmount: Double, currency: MCurrency): Amount_t = {

@@ -1,6 +1,6 @@
 package io.suggest.model.n2.bill.tariff.daily
 
-import io.suggest.bill.{IMCurrency, MCurrency}
+import io.suggest.bill.{IMCurrency, MCurrency, MPrice}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.es.model.IGenEsMappingProps
@@ -88,17 +88,20 @@ case class MTfDaily(
 
   private def _err(msg: String) = throw new IllegalArgumentException(msg)
 
+  private def defaultClauseOpt = clauses.valuesIterator.find(_.calId.isEmpty)
+  def defaultClause = defaultClauseOpt.get
+
   if (clauses.isEmpty)
     _err("Clauses must be non-empty.")
 
-  if ( !clauses.valuesIterator.exists(_.calId.isEmpty) )
+  if ( defaultClauseOpt.isEmpty )
     _err("At least one clause must be default: calId must be None.")
 
   if ( clauses.valuesIterator.count(_.calId.isEmpty) > 1 )
     _err("Too many default clauses with empty calId field.")
 
   override def toString: String = {
-    s"$currency(${clauses.valuesIterator.map(_.amount).mkString(";")})-${comissionPc.fold("")(_ + "%%")}"
+    s"$currency(${clauses.valuesIterator.map(cl => MPrice.amountToReal(cl.amount, currency)).mkString(";")})-${comissionPc.fold("")(_ + "%%")}"
   }
 
   def calIdsIter: Iterator[String] = {

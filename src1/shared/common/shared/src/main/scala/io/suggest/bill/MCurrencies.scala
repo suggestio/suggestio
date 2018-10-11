@@ -21,7 +21,7 @@ object MCurrencies extends StringEnum[MCurrency] {
     override def htmlSymbol = "&#8381;"
     override def symbol     = "₽"
     override def iso4217    = 643
-    override def sioPaymentAmountMinCents: Amount_t = 1
+    override def sioPaymentAmountMinUnits: Amount_t = 100
   }
 
   /** Евро.
@@ -31,7 +31,7 @@ object MCurrencies extends StringEnum[MCurrency] {
     override def htmlSymbol = "&#8364;"
     override def symbol     = "€"
     override def iso4217    = 978
-    override def sioPaymentAmountMinCents: Amount_t = 10
+    override def sioPaymentAmountMinUnits: Amount_t = 5
   }
 
   /** Доллары США.
@@ -41,7 +41,7 @@ object MCurrencies extends StringEnum[MCurrency] {
     override def htmlSymbol = symbol
     override def symbol     = "$"
     override def iso4217    = 840
-    override def sioPaymentAmountMinCents: Amount_t = 10
+    override def sioPaymentAmountMinUnits: Amount_t = 5
   }
 
   def withIso4217Option(code: Int) = values.find(_.iso4217 == code)
@@ -114,8 +114,8 @@ sealed abstract class MCurrency(override val value: String) extends StringEnumEn
     Math.pow(10, exponent).toLong
 
   /** Минимальный размер платежа в данной валюте на suggest.io. */
-  def sioPaymentAmountMinCents: Amount_t
-  final def sioPaymentAmountMin: Amount_t = sioPaymentAmountMinCents * exponent
+  def sioPaymentAmountMinUnits: Amount_t
+  final def sioPaymentAmountMin: Amount_t = sioPaymentAmountMinUnits * centsInUnit
 
 }
 

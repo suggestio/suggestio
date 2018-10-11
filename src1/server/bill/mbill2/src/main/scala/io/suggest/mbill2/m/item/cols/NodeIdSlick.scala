@@ -6,7 +6,7 @@ import io.suggest.slick.profile.IProfile
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 02.12.15 15:04
- * Description: Аддон для поддержки поля ad_id в slick-моделях.
+ * Description: Аддон для поддержки поля node_id в slick-моделях.
  */
 trait NodeIdSlick extends IProfile {
 

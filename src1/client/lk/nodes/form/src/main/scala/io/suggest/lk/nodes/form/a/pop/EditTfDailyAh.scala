@@ -53,31 +53,32 @@ class EditTfDailyAh[M](
 
     // Сигнал редактирования amount.
     case m: TfDailyManualAmountChanged =>
-      val v0 = value
-      val v2 = for (v <- v0) yield {
+      val v0Opt = value
+      val v2Opt = for (v0 <- v0Opt) yield {
+        // TODO Нужна поддержка пустого значения.
         val (mode2, isValid) = try {
-          val amount2 = m.amount
+          val realAmount2 = m.amount
             .trim
             .replace(',' , '.')
-            .toLong
-          val mode22 = v.mode.manualOpt
+            .toDouble
+
+          val amount2 = MPrice.realAmountToAmount( realAmount2, v0.nodeTfOpt.get.currency )
+          val mode22 = v0.mode.manualOpt
             .fold( ManualTf(amount2) )( _.withAmount(amount2) )
           mode22 -> true
         } catch {
           case _: Throwable =>
-            v.mode -> false
+            v0.mode -> false
         }
-        v.withModeInputAmount(
-          mode2,
-          Some(
-            MInputAmount(
-              value   = m.amount,
-              isValid = isValid
-            )
+        val inputAmount2 = Some(
+          MInputAmount(
+            value   = m.amount,
+            isValid = isValid
           )
         )
+        v0.withModeInputAmount( mode2, inputAmount2 )
       }
-      updated( v2 )
+      updated( v2Opt )
 
 
     // Сигнал запуска редактирования посуточного тарифа. Инициализировать состояние редактора тарифа.
