@@ -20,7 +20,7 @@ trait ICurrencyPayInfo {
   def lowerDebtLimitOpt: Option[Amount_t]
 
   /** Минимальный размер платежа в текущей валюте или 0. */
-  def lowerDebtLimit = lowerDebtLimitOpt.getOrElse(0d)
+  def lowerDebtLimit: Amount_t = lowerDebtLimitOpt.getOrElse(0)
 
 
   /** Максимальный размер платежа, если есть. */

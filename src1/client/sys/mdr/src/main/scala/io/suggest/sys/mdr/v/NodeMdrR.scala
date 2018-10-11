@@ -117,11 +117,6 @@ class NodeMdrR(
 
         propsPot.renderEmpty( _refreshBtn ),
 
-        // Идёт подгрузка:
-        propsPot.renderPending { _ =>
-          MuiLinearProgress()
-        },
-
         // Рендер элементов управления модерацией.
         propsPot.render { props =>
 
@@ -403,6 +398,14 @@ class NodeMdrR(
               // TODO Кнопка релоада: сделать onClick:
               _refreshBtn
             )
+          )
+        },
+
+        // Идёт подгрузка:
+        propsPot.renderPending { _ =>
+          <.div(
+            <.br,
+            MuiLinearProgress()
           )
         },
 

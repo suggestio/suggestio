@@ -460,7 +460,7 @@ class Bill2Util @Inject() (
     */
   def hasPositivePrice(prices: TraversableOnce[MPrice]): Boolean = {
     prices.exists { price =>
-      price.amount > 0.0
+      price.amount > 0
     }
   }
 
@@ -964,7 +964,7 @@ class Bill2Util @Inject() (
 
       // Запустить В ФОНЕ вне транзакции сбор базовой инфы о получателе денег. "mr" означает "Money Receiver".
       mrInfoOptFut: Future[Option[EnsuredNodeContract]] = {
-        if (mitem0.price.amount <= 0.0) {
+        if (mitem0.price.amount <= 0) {
           Future.successful( None )
         } else {
           val mrNodeId = if (mitem0.iType.moneyRcvrIsCbca) {
