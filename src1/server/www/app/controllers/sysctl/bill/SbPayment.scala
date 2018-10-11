@@ -1,15 +1,15 @@
 package controllers.sysctl.bill
 
 import controllers.{SioController, routes}
-import io.suggest.bill.MCurrencies
+import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.mbill2.m.balance.IMBalances
 import io.suggest.util.logs.IMacroLogs
 import models.msys.bill.{MPaymentFormResult, MPaymentTplArgs}
 import models.req.INodeContractReq
 import play.api.data.Form
-import play.api.data.Forms.{mapping, text, longNumber}
+import play.api.data.Forms.{mapping, text}
 import play.api.mvc.Result
-import util.FormUtil.{currencyOrDfltM, toStrOptM}
+import util.FormUtil.{currencyOrDfltM, toStrOptM, doubleM}
 import util.acl.IIsSuNodeContract
 import util.billing.IBill2UtilDi
 import views.html.sys1.bill.contract.balance._
@@ -37,12 +37,25 @@ trait SbPayment
     import MPaymentFormResult._
     Form(
       mapping(
-        AMOUNT_FN         -> longNumber,
+        AMOUNT_FN         -> doubleM,
         CURRENCY_CODE_FN  -> currencyOrDfltM,
         COMMENT_FN        -> toStrOptM( text(maxLength = 256) )
       )
-      { MPaymentFormResult.apply }
-      { MPaymentFormResult.unapply }
+      { (realAmount, currency, commentOpt) =>
+        MPaymentFormResult(
+          amount        = MPrice.realAmountToAmount(realAmount, currency),
+          currencyCode  = currency,
+          comment       = commentOpt
+        )
+      }
+      {mpfr =>
+        for {
+          (amount, currency, commentOpt) <- MPaymentFormResult.unapply(mpfr)
+        } yield {
+          val realAmount = MPrice.amountToReal( amount, currency )
+          (realAmount, currency, commentOpt)
+        }
+      }
     )
   }
 
