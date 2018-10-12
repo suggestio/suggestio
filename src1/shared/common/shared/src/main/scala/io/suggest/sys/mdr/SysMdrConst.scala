@@ -13,6 +13,6 @@ object SysMdrConst {
   /** id контейнера react-формы. */
   def FORM_ID = "smf"
 
-  def SZ_MULT = MSzMults.`1.5`
+  def SZ_MULT = MSzMults.`1.0`
 
 }
