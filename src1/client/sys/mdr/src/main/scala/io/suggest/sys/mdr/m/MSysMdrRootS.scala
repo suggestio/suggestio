@@ -3,7 +3,7 @@ package io.suggest.sys.mdr.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.jd.render.v.JdCss
-import io.suggest.sys.mdr.{MMdrActionInfo, MNodeMdrInfo}
+import io.suggest.sys.mdr.{MMdrActionInfo, MMdrNextResp}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
@@ -44,14 +44,14 @@ object MSysMdrRootS {
   */
 case class MSysMdrRootS(
                          jdCss      : JdCss,
-                         info       : Pot[Option[MNodeMdrInfo]]             = Pot.empty,
+                         info       : Pot[MMdrNextResp]                     = Pot.empty,
                          dialogs    : MMdrDialogs                           = MMdrDialogs.empty,
                          mdrPots    : Map[MMdrActionInfo, Pot[None.type]]   = Map.empty,
                          nodeOffset : Int                                   = 0,
                        ) {
 
   def withJdCss( jdCss: JdCss ) = copy(jdCss = jdCss)
-  def withInfo( info: Pot[Option[MNodeMdrInfo]] ) = copy(info = info)
+  def withInfo( info: Pot[MMdrNextResp] ) = copy(info = info)
   def withDialogs( dialogs: MMdrDialogs ) = copy(dialogs = dialogs)
   def withMdrPots( mdrPots: Map[MMdrActionInfo, Pot[None.type]] ) = copy(mdrPots = mdrPots)
   def withNodeOffset(nodeOffset: Int) = copy(nodeOffset = nodeOffset)

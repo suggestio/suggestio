@@ -61,21 +61,20 @@ class MdrPanelStepBtnR {
         MdrNextNode(offsetDelta = props.value.offsetDelta)
       }
     }
-    private val _refreshBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _btnClick )
+    private val _btnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _btnClick )
 
 
     def render(propsProxy: Props): VdomElement = {
       val p = propsProxy.value
 
       MuiToolTip {
-        val _title = Messages( p.titleMsgCode ): React.Node
         new MuiToolTipProps {
-          override val title: React.Node = _title
+          override val title: React.Node = Messages( p.titleMsgCode )
         }
       } (
         MuiIconButton(
           new MuiIconButtonProps {
-            override val onClick  = _refreshBtnClickJsCbF
+            override val onClick  = _btnClickJsCbF
             override val disabled = p.isDisabled
           }
         )(

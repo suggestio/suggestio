@@ -7,7 +7,7 @@ import org.scalajs.dom.ext.AjaxException
 import japgolly.univeq._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.xhr.ex.XhrUnexpectedRespStatusException
-import io.suggest.sys.mdr.{MMdrResolution, MNodeMdrInfo, MdrSearchArgs}
+import io.suggest.sys.mdr.{MMdrNextResp, MMdrResolution, MdrSearchArgs}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
 
@@ -22,7 +22,7 @@ import scala.concurrent.Future
 trait ISysMdrApi {
 
   /** Запрос на сервер за данными для модерации. */
-  def nextMdrInfo(args: MdrSearchArgs): Future[Option[MNodeMdrInfo]]
+  def nextMdrInfo(args: MdrSearchArgs): Future[MMdrNextResp]
 
   /** Запрос на сервер с резолюцией модератора. */
   def doMdr(mdrRes: MMdrResolution): Future[_]
@@ -44,15 +44,13 @@ class SysMdrApiXhrImpl extends ISysMdrApi {
   }
 
 
-  override def nextMdrInfo(args: MdrSearchArgs): Future[Option[MNodeMdrInfo]] = {
+  override def nextMdrInfo(args: MdrSearchArgs): Future[MMdrNextResp] = {
     val route = routes.controllers.SysMdr.nextMdrInfo(
       args = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject(args) )
     )
-    Xhr.unJsonResp[MNodeMdrInfo] {
+    Xhr.unJsonResp[MMdrNextResp] {
       Xhr.requestJsonText(route)
     }
-      .map( Some.apply )
-      .recover( _recover204ToNone )
   }
 
 

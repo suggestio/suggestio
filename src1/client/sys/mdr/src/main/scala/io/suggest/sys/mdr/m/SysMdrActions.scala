@@ -1,7 +1,7 @@
 package io.suggest.sys.mdr.m
 
 import io.suggest.spa.DAction
-import io.suggest.sys.mdr.{MMdrActionInfo, MNodeMdrInfo}
+import io.suggest.sys.mdr.{MMdrActionInfo, MMdrNextResp}
 
 import scala.util.Try
 
@@ -30,7 +30,7 @@ case class MdrNextNode(skipCurrentNode: Boolean = false, offsetDelta: Int = 0) e
   */
 case class MdrNextNodeResp(
                             timestampMs   : Long,
-                            tryResp       : Try[Option[MNodeMdrInfo]],
+                            tryResp       : Try[MMdrNextResp],
                             reqOffset     : Int,
                           )
   extends ISysMdrAction

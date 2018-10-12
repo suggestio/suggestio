@@ -91,8 +91,8 @@ class SysMdrFormR(
         jdCssC = mrootProxy.connect(_.jdCss),
 
         nodeInfoC = mrootProxy.connect { mroot =>
-          for (reqOpt <- mroot.info) yield {
-            for (req <- reqOpt) yield {
+          for (nextResp <- mroot.info) yield {
+            for (req <- nextResp.nodeOpt) yield {
               nodeMdrR.PropsVal(
                 nodeId                  = req.nodeId,
                 ntypeOpt = req.ad
@@ -113,9 +113,9 @@ class SysMdrFormR(
 
         nodeRenderC = mrootProxy.connect { mroot =>
           for {
-            reqOpt <- mroot.info
-            if reqOpt.nonEmpty
-            req = reqOpt.get
+            nextResp <- mroot.info
+            if nextResp.nodeOpt.nonEmpty
+            req = nextResp.nodeOpt.get
           } yield {
             nodeRenderR.PropsVal(
               adData      = req.ad,
@@ -127,7 +127,7 @@ class SysMdrFormR(
 
         mdrErrorsC = mrootProxy.connect { mroot =>
           for {
-            req <- mroot.info.toOption.flatten
+            req <- mroot.info.toOption
             if req.errorNodeIds.nonEmpty
           } yield {
             mdrErrorsR.PropsVal(
@@ -147,7 +147,9 @@ class SysMdrFormR(
         }( mdrDiaRefuseR.MdrDiaRefuseRPropsValFastEq ),
 
         controlPanelC = mrootProxy.connect { mroot =>
-          val nodeInfoOpt = mroot.info.toOption.flatten
+          val nextRespOpt = mroot.info.toOption
+          val nodeInfoOpt = nextRespOpt.flatMap(_.nodeOpt)
+
           mdrControlPanelR.PropsVal(
             nodePending = mroot.info.isPending,
             nodeOffset = mroot.nodeOffset,
@@ -163,8 +165,8 @@ class SysMdrFormR(
                   adnNode.ntype
                 }
               },
-            queueReportOpt = nodeInfoOpt.map(_.mdrQueue),
-            errorsCount = nodeInfoOpt.fold(0)(_.errorNodeIds.size)
+            queueReportOpt = nextRespOpt.map(_.mdrQueue),
+            errorsCount = nextRespOpt.fold(0)(_.errorNodeIds.size)
           )
         }( mdrControlPanelR.MdrControlPanelRPropsValFastEq ),
 

@@ -1,7 +1,6 @@
 package io.suggest.sys.mdr
 
 import diode.FastEq
-import io.suggest.common.empty.EmptyUtil
 import io.suggest.jd.MJdAdData
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
@@ -35,13 +34,7 @@ object MNodeMdrInfo {
     (__ \ "a").formatNullable[MJdAdData] and
     (__ \ "t").format[Seq[MItem]] and
     (__ \ "n").format[Iterable[MAdvGeoMapNodeProps]] and
-    (__ \ "d").format[Set[String]] and
-    (__ \ "e").formatNullable[Iterable[String]]
-      .inmap[Iterable[String]](
-        EmptyUtil.opt2ImplEmpty1F(Nil),
-        { nodeIds => if (nodeIds.isEmpty) None else Some(nodeIds) }
-      ) and
-    (__ \ "q").format[MMdrQueueReport]
+    (__ \ "d").format[Set[String]]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MNodeMdrInfo] = UnivEq.derive
@@ -62,8 +55,6 @@ case class MNodeMdrInfo(
                          items                : Seq[MItem],
                          nodes                : Iterable[MAdvGeoMapNodeProps],
                          directSelfNodeIds    : Set[String],
-                         errorNodeIds         : Iterable[String],
-                         mdrQueue             : MMdrQueueReport,
                        ) {
 
   /** Сгруппированные item'ы по типам. */

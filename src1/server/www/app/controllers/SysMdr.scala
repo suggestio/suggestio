@@ -20,6 +20,7 @@ import models.mctx.Context
 import util.ad.JdAdUtil
 
 import scala.concurrent.Future
+import scala.util.Success
 
 /**
  * Suggest.io
@@ -61,8 +62,7 @@ class SysMdr @Inject() (
   /** Получение данных следующей карточки.
     *
     * @param args Аргументы модерации.
-    * @return 200 OK +  JSON-ответ MNodeMdrInfo с данными модерируемого узла/карточки.
-    *         204 No content - если больше нечего модерировать.
+    * @return 200 OK + JSON-ответ MMdrNextResp с данными модерируемого узла/карточки.
     */
   def nextMdrInfo(args: MdrSearchArgs) = csrf.Check {
     isSu().async { implicit request =>
@@ -72,10 +72,11 @@ class SysMdr @Inject() (
       // Заготовка sql-запроса, который занимается поиском немодерированных узлов в биллинге:
       val paidNodesSql = sysMdrUtil.findPaidNodeIds4MdrQ(args)
 
+      var errNodeIdsAcc = List.empty[String]
+
       /** Цикл поиска id узла, который требуется промодерировать.
         * Появился для отработки ситуации, когда база нарушена, и узел из nodeid уже удалён. */
-      def _findBillNode4MdrOrNseeFut(args0: MdrSearchArgs = args,
-                                     errNodeIdAcc: List[String] = Nil): Future[(MNode, List[String])] = {
+      def _findBillNode4MdrOrNseeFut(args0: MdrSearchArgs = args): Future[MNode] = {
         if (args0.offset > 50)
           throw new IllegalArgumentException(s"$logPrefix Too may retries, too many invalid nodes.")
 
@@ -98,7 +99,7 @@ class SysMdr @Inject() (
             throw new IllegalStateException( nodeId )
           } else {
             LOGGER.trace(s"$logPrefix mdr node => ${mnodeOpt.flatMap(_.id)} (${nodeIds.length})")
-            mnodeOpt.get -> errNodeIdAcc
+            mnodeOpt.get
           }
         }
 
@@ -109,17 +110,17 @@ class SysMdr @Inject() (
           val args2 = args0.copy(
             offsetOpt = Some( offset2 )
           )
-          _findBillNode4MdrOrNseeFut( args2, nodeId :: errNodeIdAcc )
+          errNodeIdsAcc ::= nodeId
+          _findBillNode4MdrOrNseeFut( args2 )
         }
       }
 
       // Поискать в биллинге узел, который надо модерировать:
       val billNodeWithErrorIdsOrNseeFut = _findBillNode4MdrOrNseeFut()
-      val billedNodeOrExFut = billNodeWithErrorIdsOrNseeFut.map(_._1)
+      val billedNodeOrExFut = billNodeWithErrorIdsOrNseeFut
 
       val errorNodeIdsFut = billNodeWithErrorIdsOrNseeFut
-        .map(_._2.toSet)
-        .recover { case _ => Nil }
+        .transform { case _ => Success(errNodeIdsAcc.toSet) }
 
       // TODO Добавить gen sort, где generation = args.gen, взятый например из personId.hashCode
       lazy val freeMdrsSearch = sysMdrUtil.freeMdrNodeSearchArgs(args, 1)
@@ -153,6 +154,8 @@ class SysMdr @Inject() (
         }
       }
 
+      implicit val ctx = implicitly[Context]
+
       // Нужно запустить сборку списков item'ов на модерацию.
       val mitemsFut = for {
         mdrNode <- billedOrFreeNodeOrExFut
@@ -168,8 +171,6 @@ class SysMdr @Inject() (
         LOGGER.trace(s"$logPrefix Found ${items.length} awaitingMdr-items for node#$nodeId")
         items
       }
-
-      val ctx = implicitly[Context]
 
       // Запустить jd-рендер целиком, если это рекламная карточка:
       val jdAdDataSomeOrExFut = for {
@@ -273,37 +274,47 @@ class SysMdr @Inject() (
       }
 
       // Сборка нормального положительного ответа на запрос:
-      val respFut = for {
-        mdrNode      <- billedOrFreeNodeOrExFut
+      val nodeInfoOptFut = (
+        for {
+          mdrNode      <- billedOrFreeNodeOrExFut
+          jdAdDataOpt  <- jdAdDataSomeOrExFut
+            .recover { case _: NoSuchElementException => None }
 
-        errorNodeIds <- errorNodeIdsFut
-        jdAdDataOpt <- jdAdDataSomeOrExFut
-          .recover { case _: NoSuchElementException => None }
+          mitems            <- mitemsFut
+          selfRcvrsNeedMdr  <- selfRcvrsNeedMdrFut
+          nodes             <- nodesRenderedFut
+        } yield {
+          val respNodeId = mdrNode.id.get
+          LOGGER.trace(s"$logPrefix Done, returning mdr data for node#$respNodeId...")
+          val nodeMdr = MNodeMdrInfo(
+            nodeId  = respNodeId,
+            ad      = jdAdDataOpt,
+            items   = mitems,
+            nodes   = nodes,
+            directSelfNodeIds = selfRcvrsNeedMdr,
+          )
+          Some(nodeMdr)
+        }
+      )
+        // Не найдено узла? Это нормально, бывает.
+        .recover { case _: NoSuchElementException =>
+          val msg = "No more nodes for moderation."
+          LOGGER.trace(s"$logPrefix $msg")
+          None
+        }
 
-        mitems            <- mitemsFut
-        selfRcvrsNeedMdr  <- selfRcvrsNeedMdrFut
-        nodes             <- nodesRenderedFut
-        mdrQueueReport    <- mdrQueueReportFut
+      // Сборка итогового JSON-ответа.
+      for {
+        errorNodeIds   <- errorNodeIdsFut
+        mdrQueueReport <- mdrQueueReportFut
+        nodeInfoOpt    <- nodeInfoOptFut
       } yield {
-        val respNodeId = mdrNode.id.get
-        LOGGER.trace(s"$logPrefix Done, returning mdr data for node#$respNodeId...")
-        val resp = MNodeMdrInfo(
-          nodeId  = respNodeId,
-          ad      = jdAdDataOpt,
-          items   = mitems,
-          nodes   = nodes,
-          directSelfNodeIds = selfRcvrsNeedMdr,
-          errorNodeIds      = errorNodeIds,
-          mdrQueue = mdrQueueReport
+        val resp = MMdrNextResp(
+          nodeOpt       = nodeInfoOpt,
+          errorNodeIds  = errorNodeIds,
+          mdrQueue      = mdrQueueReport
         )
         Ok( Json.toJson(resp) )
-      }
-
-      // Не найдено узла? Это нормально, бывает.
-      respFut.recover { case _: NoSuchElementException =>
-        val msg = "No more nodes for moderation."
-        LOGGER.trace(s"$logPrefix $msg")
-        NoContent
       }
     }
   }

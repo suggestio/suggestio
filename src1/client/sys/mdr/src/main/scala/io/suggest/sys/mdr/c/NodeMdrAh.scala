@@ -36,7 +36,7 @@ class NodeMdrAh[M](
       val startTimestampMs = pot2.asInstanceOf[PendingBase].startTime
       api.doMdr(
         MMdrResolution(
-          nodeId  = v0.info.get.get.nodeId,
+          nodeId  = v0.info.get.nodeOpt.get.nodeId,
           info    = info,
           reason  = reasonOpt
         )
@@ -106,35 +106,37 @@ class NodeMdrAh[M](
             val mdrRespPot2 = if (m.tryResp.isSuccess) {
               // Если всё ок, то надо удалить уже-промодерированные-item'ы из состояния.
               for (resp <- v0.info) yield {
-                for (info <- resp) yield {
-                  val isActionInfoEmpty = m.info.isEmpty
+                resp.withNodeOpt(
+                  for (nodeInfo <- resp.nodeOpt) yield {
+                    val isActionInfoEmpty = m.info.isEmpty
 
-                  val items2 = if (isActionInfoEmpty) {
-                    List.empty
-                  } else if ( m.info.itemType.isEmpty && m.info.itemId.isEmpty ) {
-                    info.items
-                  } else {
-                    info
-                      .items
-                      .filterNot { mitem =>
-                        (m.info.itemType contains mitem.iType) ||
-                        (mitem.id ==* m.info.itemId)
-                      }
+                    val items2 = if (isActionInfoEmpty) {
+                      List.empty
+                    } else if ( m.info.itemType.isEmpty && m.info.itemId.isEmpty ) {
+                      nodeInfo.items
+                    } else {
+                      nodeInfo
+                        .items
+                        .filterNot { mitem =>
+                          (m.info.itemType contains mitem.iType) ||
+                          (mitem.id ==* m.info.itemId)
+                        }
+                    }
+
+                    val directSelfNodeIds2 = if (isActionInfoEmpty || m.info.directSelfAll) {
+                      Set.empty[String]
+                    } else if (m.info.directSelfId.isEmpty) {
+                      nodeInfo.directSelfNodeIds
+                    } else {
+                      nodeInfo.directSelfNodeIds -- m.info.directSelfId
+                    }
+
+                    nodeInfo.copy(
+                      items             = items2,
+                      directSelfNodeIds = directSelfNodeIds2
+                    )
                   }
-
-                  val directSelfNodeIds2 = if (isActionInfoEmpty || m.info.directSelfAll) {
-                    Set.empty[String]
-                  } else if (m.info.directSelfId.isEmpty) {
-                    info.directSelfNodeIds
-                  } else {
-                    info.directSelfNodeIds -- m.info.directSelfId
-                  }
-
-                  info.copy(
-                    items             = items2,
-                    directSelfNodeIds = directSelfNodeIds2
-                  )
-                }
+                )
               }
             } else {
               // При ошибках не надо чистить данные ноды
@@ -149,7 +151,7 @@ class NodeMdrAh[M](
 
             // Если больше не осталось элементов для модерации, то надо запросить новый элемент для модерации.
             val nextNodeFxOpt = OptionUtil.maybe {
-              mdrRespPot2.exists { _.exists { resp =>
+              mdrRespPot2.exists { _.nodeOpt.exists { resp =>
                 resp.items.isEmpty  &&  resp.directSelfNodeIds.isEmpty
               }}
             } {
@@ -233,10 +235,9 @@ class NodeMdrAh[M](
             if (m.offsetDelta < 0)
               for {
                 info <- infoReq2.toOption
-                resp <- info
-                if resp.errorNodeIds.nonEmpty
+                if info.errorNodeIds.nonEmpty
               } {
-                offset2 -= resp.errorNodeIds.size
+                offset2 -= info.errorNodeIds.size
               }
           }
 
@@ -245,7 +246,7 @@ class NodeMdrAh[M](
             hideAdIdOpt = OptionUtil.maybeOpt(m.skipCurrentNode) {
               v0.info
                 .toOption
-                .flatten
+                .flatMap(_.nodeOpt)
                 .map(_.nodeId)
             },
             // Сдвиг соответствует запрашиваемому.
@@ -280,7 +281,7 @@ class NodeMdrAh[M](
         val jdCss2 = NodeRenderR.mkJdCss( Some(v0.jdCss) )(
           infoReq2
             .iterator
-            .flatten
+            .flatMap(_.nodeOpt)
             .flatMap(_.ad)
             .map(_.template)
             .toSeq: _*
@@ -293,7 +294,6 @@ class NodeMdrAh[M](
             // Если успешный ответ содержит список ошибок узлов, то значит сервер перешагнул какие-то узлы автоматом. Надо тут их тоже прошагать с помощью offset:
             val errOffset = m.tryResp
               .toOption
-              .flatten
               .fold(0)(_.errorNodeIds.size)
             Math.max( 0, m.reqOffset + errOffset )
           }
