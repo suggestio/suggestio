@@ -1,5 +1,7 @@
 package io.suggest.sjs.common.model
 
+import japgolly.univeq.UnivEq
+
 import scala.scalajs.js
 
 /**
@@ -32,3 +34,8 @@ sealed trait Route extends js.Object {
   def webSocketURL(secure: Boolean = js.native): String = js.native
 
 }
+
+object Route {
+  implicit def univEq: UnivEq[Route] = UnivEq.force
+}
+

@@ -20,7 +20,7 @@ object MMdrDialogs {
     }
   }
 
-  implicit def univEq: UnivEq[MMdrDialogs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMdrDialogs] = UnivEq.derive
 
 }
 

@@ -216,7 +216,6 @@ class MItems @Inject() (
       .result
   }
 
-
   def getOrderIds(itemIds: Traversable[Gid_t]): DBIOAction[Seq[Gid_t], Streaming[Gid_t], Effect.Read] = {
     query.filter( _.id inSet itemIds )
       .map(_.orderId)

@@ -19,7 +19,7 @@ object MCartInit {
       .inmap[MCartInit]( apply, _.conf )
   }
 
-  implicit def univEq: UnivEq[MCartInit] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MCartInit] = UnivEq.derive
 
 }
 

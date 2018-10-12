@@ -26,7 +26,7 @@ object MSysMdrRootS {
     }
   }
 
-  implicit def univEq: UnivEq[MSysMdrRootS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MSysMdrRootS] = UnivEq.derive
 
 }
 

@@ -1,5 +1,6 @@
 package io.suggest.sys.mdr
 
+import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -40,6 +41,9 @@ object MdrSearchArgs {
       (__ \ F.HIDE_AD_ID_FN).formatNullable[String]
     )(apply, unlift(unapply))
   }
+
+
+  @inline implicit def univEq: UnivEq[MdrSearchArgs] = UnivEq.derive
 
 }
 

@@ -22,7 +22,7 @@ object MMdrRefuseDialogS {
     }
   }
 
-  implicit def univEq: UnivEq[MMdrRefuseDialogS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMdrRefuseDialogS] = UnivEq.derive
 
 }
 

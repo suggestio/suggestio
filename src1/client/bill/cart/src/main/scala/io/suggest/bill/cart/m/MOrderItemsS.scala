@@ -25,7 +25,7 @@ object MOrderItemsS {
     }
   }
 
-  implicit def univEq: UnivEq[MOrderItemsS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MOrderItemsS] = UnivEq.derive
 
 }
 

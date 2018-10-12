@@ -7,6 +7,7 @@ import io.suggest.jd.render.v.{JdCss, JdCssR}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.spa.{DiodeUtil, OptFastEq}
 import io.suggest.sys.mdr.m.MSysMdrRootS
+import io.suggest.sys.mdr.v.pane.MdrControlPanelR
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -18,11 +19,12 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Состоит из двух панелей, кнопок аппрува/отказа + отрендеренными данными по узлу.
   */
 class SysMdrFormR(
-                   val nodeMdrR       : NodeMdrR,
-                   val nodeRenderR    : NodeRenderR,
-                   val mdrErrorsR     : MdrErrorsR,
-                   val mdrDiaRefuseR  : MdrDiaRefuseR,
-                   jdCssR             : JdCssR,
+                   val nodeMdrR           : NodeMdrR,
+                   val nodeRenderR        : NodeRenderR,
+                   val mdrErrorsR         : MdrErrorsR,
+                   val mdrDiaRefuseR      : MdrDiaRefuseR,
+                   val mdrControlPanelR   : MdrControlPanelR,
+                   jdCssR                 : JdCssR,
                  ) {
 
   import JdCss.JdCssFastEq
@@ -37,6 +39,7 @@ class SysMdrFormR(
                     nodeRenderC         : ReactConnectProxy[nodeRenderR.Props_t],
                     mdrErrorsC          : ReactConnectProxy[mdrErrorsR.Props_t],
                     diaRefuseC          : ReactConnectProxy[mdrDiaRefuseR.Props_t],
+                    controlPanelC       : ReactConnectProxy[mdrControlPanelR.Props_t],
                   )
 
 
@@ -59,10 +62,14 @@ class SysMdrFormR(
             override val anchor = MuiDraweAnchors.right
           }
         )(
+          // Панель управления модерации.
+          s.controlPanelC { mdrControlPanelR.apply },
+
+          // Отделяем панель от кнопок модерации.
+          MuiDivider(),
+
           // Содержимое формы модерации карточки:
           s.nodeInfoC { nodeMdrR.apply },
-
-          MuiDivider(),
         ),
 
         // Визуальный рендер узла:
@@ -85,27 +92,24 @@ class SysMdrFormR(
 
         nodeInfoC = mrootProxy.connect { mroot =>
           for (reqOpt <- mroot.info) yield {
-            nodeMdrR.PropsVal(
-              nodeOpt = for (req <- reqOpt) yield {
-                nodeMdrR.NodePropsVal(
-                  nodeId                  = req.nodeId,
-                  ntypeOpt = req.ad
-                    .map(_ => MNodeTypes.Ad)
-                    .orElse {
-                      req.nodesMap
-                        .get(req.nodeId)
-                        .map(_.ntype)
-                    },
-                  nodesMap                = req.nodesMap,
-                  directSelfNodesSorted   = req.directSelfNodesSorted,
-                  itemsByType             = req.itemsByType,
-                  mdrPots                 = mroot.mdrPots,
-                )
-              },
-              nodeOffset = mroot.nodeOffset - mroot.info.toOption.flatten.fold(0)(_.errorNodeIds.size)
-            )
+            for (req <- reqOpt) yield {
+              nodeMdrR.PropsVal(
+                nodeId                  = req.nodeId,
+                ntypeOpt = req.ad
+                  .map(_ => MNodeTypes.Ad)
+                  .orElse {
+                    req.nodesMap
+                      .get(req.nodeId)
+                      .map(_.ntype)
+                  },
+                nodesMap                = req.nodesMap,
+                directSelfNodesSorted   = req.directSelfNodesSorted,
+                itemsByType             = req.itemsByType,
+                mdrPots                 = mroot.mdrPots,
+              )
+            }
           }
-        }( DiodeUtil.FastEqExt.PotFastEq( nodeMdrR.NodeMdrRPropsValFastEq) ),
+        }( DiodeUtil.FastEqExt.PotFastEq( OptFastEq.Wrapped(nodeMdrR.NodeMdrRPropsValFastEq)) ),
 
         nodeRenderC = mrootProxy.connect { mroot =>
           for {
@@ -140,7 +144,29 @@ class SysMdrFormR(
               .flatMap(mroot.mdrPots.get)
               .getOrElse( Pot.empty )
           )
-        }( mdrDiaRefuseR.MdrDiaRefuseRPropsValFastEq )
+        }( mdrDiaRefuseR.MdrDiaRefuseRPropsValFastEq ),
+
+        controlPanelC = mrootProxy.connect { mroot =>
+          val nodeInfoOpt = mroot.info.toOption.flatten
+          mdrControlPanelR.PropsVal(
+            nodePending = mroot.info.isPending,
+            nodeOffset = mroot.nodeOffset,
+            nodeIdOpt = nodeInfoOpt.map(_.nodeId),
+            ntypeOpt = nodeInfoOpt
+              .flatMap(_.ad)
+              .map(_ => MNodeTypes.Ad)
+              .orElse {
+                for {
+                  nodeInfo <- nodeInfoOpt
+                  adnNode  <- nodeInfo.nodesMap.get( nodeInfo.nodeId )
+                } yield {
+                  adnNode.ntype
+                }
+              },
+            queueReportOpt = nodeInfoOpt.map(_.mdrQueue),
+            errorsCount = nodeInfoOpt.fold(0)(_.errorNodeIds.size)
+          )
+        }( mdrControlPanelR.MdrControlPanelRPropsValFastEq ),
 
       )
     }

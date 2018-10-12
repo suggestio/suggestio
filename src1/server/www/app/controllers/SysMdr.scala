@@ -69,6 +69,9 @@ class SysMdr @Inject() (
       lazy val logPrefix = s"nextMdrInfo()#${System.currentTimeMillis()}:"
       LOGGER.trace(s"$logPrefix args=$args moderator#${request.user.personIdOpt.orNull}")
 
+      // Заготовка sql-запроса, который занимается поиском немодерированных узлов в биллинге:
+      val paidNodesSql = sysMdrUtil.findPaidNodeIds4MdrQ(args)
+
       /** Цикл поиска id узла, который требуется промодерировать.
         * Появился для отработки ситуации, когда база нарушена, и узел из nodeid уже удалён. */
       def _findBillNode4MdrOrNseeFut(args0: MdrSearchArgs = args,
@@ -81,7 +84,7 @@ class SysMdr @Inject() (
           // Ищем следующую карточку через биллинг и очередь на модерацию.
           nodeIds <- slick.db.run {
             // TODO Добавить сортировку с учётом qs args0.gen, чтобы разные модераторы получали бы разные элементы для модерации.
-            sysMdrUtil.findPaidAdIds4MdrAction(args0, limit = 1)
+            sysMdrUtil.getFirstNodesInDba( args0, paidNodesSql, limit = 1 )
           }
           // Возможна NSEE, это нормально. Обходим проблемы совместимости NSEE с Vector через headOption.get (вместо head):
           nodeId = nodeIds.headOption.get
@@ -114,20 +117,41 @@ class SysMdr @Inject() (
       val billNodeWithErrorIdsOrNseeFut = _findBillNode4MdrOrNseeFut()
       val billedNodeOrExFut = billNodeWithErrorIdsOrNseeFut.map(_._1)
 
+      val errorNodeIdsFut = billNodeWithErrorIdsOrNseeFut
+        .map(_._2.toSet)
+        .recover { case _ => Nil }
+
+      // TODO Добавить gen sort, где generation = args.gen, взятый например из personId.hashCode
+      lazy val freeMdrsSearch = sysMdrUtil.freeMdrNodeSearchArgs(args, 1)
+
       // Если не будет найдено биллинга для модерации, то надо поискать бесплатные немодерированные размещения.
       val billedOrFreeNodeOrExFut = billedNodeOrExFut
         .recoverWith { case _: NoSuchElementException =>
           LOGGER.trace(s"$logPrefix No more paid advs, looking for free advs...\n $args")
           for {
             // Если нет paid-модерируемых карточек, то поискать бесплатные размещения.
-            res <- mNodes.dynSearchOne(
-              // TODO Добавить gen sort, где generation = args.gen, взятый например из personId.hashCode
-              sysMdrUtil.freeMdrNodeSearchArgs(args, 1)
-            )
+            res <- mNodes.dynSearchOne( freeMdrsSearch )
           } yield {
             res.get
           }
         }
+
+      // Надо оценить длину очереди на модерацию. Точно узнать нельзя, но можно примерно посчитать кол-во узлов в paid и free, выбрать наибольшее.
+      val mdrQueueReportFut: Future[MMdrQueueReport] = {
+        val freeMdrsCountFut = mNodes.dynCount( freeMdrsSearch )
+        val paidMdrNodesCountFut = slick.db.run {
+          paidNodesSql.size.result
+        }
+        for {
+          freeMdrsCount         <- freeMdrsCountFut
+          paidMdrNodesCount     <- paidMdrNodesCountFut
+        } yield {
+          val minQueueLen = Math.max( freeMdrsCount.toInt, paidMdrNodesCount )
+          val maybeHaveMore = freeMdrsCount > 0 && paidMdrNodesCount > 0
+          LOGGER.trace(s"$logPrefix Mdr queue lenghts: free=$freeMdrsCount paid=$paidMdrNodesCount => report=$minQueueLen${if(maybeHaveMore) "+" else ""}")
+          MMdrQueueReport(minQueueLen, maybeHaveMore)
+        }
+      }
 
       // Нужно запустить сборку списков item'ов на модерацию.
       val mitemsFut = for {
@@ -252,16 +276,14 @@ class SysMdr @Inject() (
       val respFut = for {
         mdrNode      <- billedOrFreeNodeOrExFut
 
-        errorNodeIds <- billNodeWithErrorIdsOrNseeFut
-          .map(_._2.toSet)
-          .recover { case _ => Nil }
-
+        errorNodeIds <- errorNodeIdsFut
         jdAdDataOpt <- jdAdDataSomeOrExFut
           .recover { case _: NoSuchElementException => None }
 
         mitems            <- mitemsFut
         selfRcvrsNeedMdr  <- selfRcvrsNeedMdrFut
         nodes             <- nodesRenderedFut
+        mdrQueueReport    <- mdrQueueReportFut
       } yield {
         val respNodeId = mdrNode.id.get
         LOGGER.trace(s"$logPrefix Done, returning mdr data for node#$respNodeId...")
@@ -272,6 +294,7 @@ class SysMdr @Inject() (
           nodes   = nodes,
           directSelfNodeIds = selfRcvrsNeedMdr,
           errorNodeIds      = errorNodeIds,
+          mdrQueue = mdrQueueReport
         )
         Ok( Json.toJson(resp) )
       }

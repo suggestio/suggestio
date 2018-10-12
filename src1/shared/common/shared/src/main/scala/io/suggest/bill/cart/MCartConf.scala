@@ -19,7 +19,7 @@ object MCartConf {
     (__ \ "n").formatNullable[String]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MCartConf] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MCartConf] = UnivEq.derive
 
 }
 

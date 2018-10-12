@@ -20,7 +20,7 @@ object MCartRootS {
     }
   }
 
-  implicit def univEq: UnivEq[MCartRootS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MCartRootS] = UnivEq.derive
 
 }
 

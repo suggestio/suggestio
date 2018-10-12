@@ -289,5 +289,6 @@ object MsgCodes {
   val `Next.node` = "Next.node"
   val `Previous.node` = "Previous.node"
   val `To.beginning` = "To.beginning"
+  val `To.end` = "To.end"
 
 }

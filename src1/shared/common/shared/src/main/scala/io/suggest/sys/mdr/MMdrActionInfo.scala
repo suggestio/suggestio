@@ -35,7 +35,7 @@ object MMdrActionInfo {
     }
   }
 
-  implicit def univEq: UnivEq[MMdrActionInfo] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMdrActionInfo] = UnivEq.derive
 
 
   /** Поддержка play-json. */

@@ -1,14 +1,13 @@
 package io.suggest.sys.mdr.v
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiCard, MuiCardContent, MuiDivider, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiPaper, MuiSvgIcon, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiCard, MuiCardContent, MuiLinearProgress, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiPaper, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sys.mdr.m.MdrNextNode
+import io.suggest.react.ReactCommonUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
@@ -25,13 +24,9 @@ import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.{MNodeType, MNodeTypes}
-import io.suggest.routes.routes
-import io.suggest.sjs.common.model.Route
-import io.suggest.spa.OptFastEq
+import io.suggest.model.n2.node.MNodeType
 import io.suggest.sys.mdr.MMdrActionInfo
-
-import scala.scalajs.js
+import io.suggest.sys.mdr.v.pane.MdrPanelStepBtnR
 
 /**
   * Suggest.io
@@ -40,19 +35,20 @@ import scala.scalajs.js
   * Description: React-компонент для кнопок управления модерацией узла (левая панель).
   */
 class NodeMdrR(
-                mdrRowR: MdrRowR
+                mdrRowR               : MdrRowR,
+                mdrPanelStepBtnR      : MdrPanelStepBtnR,
               ) {
 
-  case class NodePropsVal(
-                           nodeId                   : String,
-                           ntypeOpt                 : Option[MNodeType],
-                           itemsByType              : Map[MItemType, Seq[MItem]],
-                           nodesMap                 : Map[String, MAdvGeoMapNodeProps],
-                           directSelfNodesSorted    : Seq[MAdvGeoMapNodeProps],
-                           mdrPots                  : Map[MMdrActionInfo, Pot[None.type]],
-                         )
-  implicit object NodeMdrRNodePropsValFastEq extends FastEq[NodePropsVal] {
-    override def eqv(a: NodePropsVal, b: NodePropsVal): Boolean = {
+  case class PropsVal(
+                       nodeId                   : String,
+                       ntypeOpt                 : Option[MNodeType],
+                       itemsByType              : Map[MItemType, Seq[MItem]],
+                       nodesMap                 : Map[String, MAdvGeoMapNodeProps],
+                       directSelfNodesSorted    : Seq[MAdvGeoMapNodeProps],
+                       mdrPots                  : Map[MMdrActionInfo, Pot[None.type]],
+                     )
+  implicit object NodeMdrRPropsValFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.nodeId ===* b.nodeId) &&
       (a.ntypeOpt ==* b.ntypeOpt) &&
       (a.itemsByType ===* b.itemsByType) &&
@@ -62,56 +58,18 @@ class NodeMdrR(
     }
   }
 
-  case class PropsVal(
-                       nodeOpt        : Option[NodePropsVal],
-                       nodeOffset     : Int,
-                     )
-  implicit object NodeMdrRPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      OptFastEq.Wrapped(NodeMdrRNodePropsValFastEq).eqv(a.nodeOpt, b.nodeOpt) &&
-      (a.nodeOffset ==* b.nodeOffset)
-    }
-  }
 
-
-  type Props_t = Pot[PropsVal]
+  type Props_t = Pot[Option[PropsVal]]
   type Props = ModelProxy[Props_t]
 
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    /** Callback клика по кнопке перезагрузки данных модерации. */
-    private def _refreshBtnClick(offsetDelta: Int)(e: ReactEvent): Callback =
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, MdrNextNode(offsetDelta = offsetDelta) )
-    private lazy val _previousNodeBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _refreshBtnClick(-1) )
-    private lazy val _refreshBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _refreshBtnClick(0) )
-    private lazy val _nextNodeBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _refreshBtnClick(+1) )
-
-
     def render(propsPotProxy: Props): VdomElement = {
       val propsPot = propsPotProxy.value
 
-      // Сборка icon-кнопки с подсказкой.
-      def _btn(titleMsgCode: String, icon: MuiSvgIcon, isDisabled: Boolean = false)(cb: js.Function1[ReactEvent, Unit]): VdomElement = {
-        MuiToolTip {
-          val _title = Messages( titleMsgCode ): React.Node
-          new MuiToolTipProps {
-            override val title: React.Node = _title
-          }
-        } (
-          MuiIconButton(
-            new MuiIconButtonProps {
-              override val onClick = cb
-              override val disabled = isDisabled || propsPot.isPending
-            }
-          )(
-            icon()()
-          )
-        )
-      }
-
       // Кнопка быстрой перезагрузки данных модерации.
-      val _refreshBtn = _btn( MsgCodes.`Reload`, Mui.SvgIcons.Refresh )( _refreshBtnClickJsCbF )
+      lazy val _refreshBtn = propsPotProxy.wrap(pp => mdrPanelStepBtnR.PropsVal.Refresh(pp.isPending))( mdrPanelStepBtnR.apply )
 
       <.div(
 
@@ -119,61 +77,10 @@ class NodeMdrR(
 
         // Рендер элементов управления модерацией.
         propsPot.render { props =>
-
-          val canGoToPrevious = props.nodeOffset <= 0
-
           <.div(
 
-            <.span(
-              _btn( MsgCodes.`To.beginning`, Mui.SvgIcons.FastRewind, canGoToPrevious ) {
-                ReactCommonUtil.cbFun1ToJsCb(
-                  _refreshBtnClick( -props.nodeOffset )
-                )
-              },
-              _btn( MsgCodes.`Previous.node`, Mui.SvgIcons.SkipPrevious, canGoToPrevious )( _previousNodeBtnClickJsCbF ),
-              _refreshBtn,
-              _btn( MsgCodes.`Next.node`, Mui.SvgIcons.SkipNext, props.nodeOpt.isEmpty )( _nextNodeBtnClickJsCbF ),
-
-              // Если есть узел, то надо ссылку на редактор сделать:
-              props.nodeOpt.whenDefined { mnode =>
-                def __nodeAnchorLink(hintCode: String, route: Route, icon: MuiSvgIcon) = {
-                  MuiToolTip(
-                    new MuiToolTipProps {
-                      override val title: React.Node = Messages( hintCode )
-                    }
-                  )(
-                    <.a(
-                      ^.href := route.url,    //routes.controllers.SysMarket.showAdnNode( mnode.nodeId ).url,
-                      ^.target.blank,
-                      MuiIconButton()(
-                        icon()()
-                      )
-                    )
-                  )
-                }
-
-                <.span(
-                  HtmlConstants.PIPE,
-
-                  // Ссылка на sys-страницу узла:
-                  __nodeAnchorLink( MsgCodes.`Node`, routes.controllers.SysMarket.showAdnNode( mnode.nodeId ), Mui.SvgIcons.Settings ),
-
-                  // Ссылка на лк-редактор узла в зависимости от типа узла.
-                  mnode.ntypeOpt.collect {
-                    case MNodeTypes.Ad      => routes.controllers.LkAdEdit.editAd( mnode.nodeId )
-                    case MNodeTypes.AdnNode => routes.controllers.LkAdnEdit.editNodePage( mnode.nodeId )
-                  }.whenDefined { route =>
-                    __nodeAnchorLink( MsgCodes.`Edit`, route, Mui.SvgIcons.Edit )
-                  }
-                )
-              }
-
-            ),
-
-            MuiDivider(),
-
             // Рендер, в зависимости от наличия данных в ответе. None значит нечего модерировать.
-            props.nodeOpt.fold[VdomNode] {
+            props.fold[VdomNode] {
               // TODO Подверстать, чтобы по центру всё было (и контент, и контейнер).
               MuiPaper()(
                 MuiCard()(

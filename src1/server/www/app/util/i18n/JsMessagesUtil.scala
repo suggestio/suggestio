@@ -377,6 +377,7 @@ class JsMessagesUtil @Inject() (
       MC.`Previous.node` ::
       MC.`Next.node` ::
       MC.`To.beginning` ::
+      MC.`To.end` ::
       ITEM_TYPES
   }
 

@@ -96,6 +96,7 @@ class SysMdrUtil @Inject() (
   }
 
 
+
   /** Результат вызова _processItemsForAd(). */
   sealed case class ProcessItemsRes(itemIds: Seq[Gid_t], successMask: Seq[Boolean], itemsCount: Int)
 
@@ -149,9 +150,12 @@ class SysMdrUtil @Inject() (
 
     val nfo = mdrRes.info
     val isRefused = !mdrRes.isApprove
+    val infoApplyAll = nfo.isEmpty
 
     // free-модерация, чтобы по-скорее запустить обновление mnode, максимально до активации adv-билдеров.
-    var mnode2Fut: Future[MNode] = if (nfo.directSelfAll || nfo.directSelfId.nonEmpty) {
+    var mnode2Fut: Future[MNode] = if (infoApplyAll || nfo.directSelfAll || nfo.directSelfId.nonEmpty) {
+      LOGGER.trace(s"$logPrefix Will process mdr-edges for free mdr, applyAll?$infoApplyAll")
+
       // Тут два варианта: полный аппрув выставлением mdr-эджа, или отказ в размещении на узле/узлах.
       mNodes.tryUpdate(mnode) { mnode0 =>
         // выполнить обновление эджей узла.
@@ -211,14 +215,17 @@ class SysMdrUtil @Inject() (
       Future.successful( mnode )
     }
 
+    val infoHasBillCrs = nfo.itemId.nonEmpty || nfo.itemType.nonEmpty
     // Если заданы критерии item'ов, то ковыряем биллинг:
     for {
       mnode2 <- mnode2Fut
 
-      billResOpt <- OptionUtil.maybeFut( nfo.itemId.nonEmpty || nfo.itemType.nonEmpty ) {
+      billResOpt <- OptionUtil.maybeFut( infoHasBillCrs || infoApplyAll ) {
+        var q = itemsQueryAwaiting( mdrRes.nodeId )
+
         // TODO Нужна поддержка отката изменений: чтобы вместо бана можно было поверх наложить обратное решение.
-        val q = itemsQueryAwaiting( mdrRes.nodeId )
-          .filter { i =>
+        if (infoHasBillCrs) {
+          q = q.filter { i =>
             // Накопить аргументы для WHERE:
             var acc = List.empty[Rep[Boolean]]
             for (itemId <- mdrRes.info.itemId) {
@@ -231,6 +238,9 @@ class SysMdrUtil @Inject() (
             }
             acc.reduce(_ || _)
           }
+        } else {
+          LOGGER.trace(s"$logPrefix Will process ALL billing data.")
+        }
 
         val billProcessFut = _processItemsFor(q) {
           if (mdrRes.isApprove)
@@ -249,8 +259,7 @@ class SysMdrUtil @Inject() (
   }
 
 
-  /** SQL для экшена поиска id карточек, нуждающихся в модерации. */
-  def findPaidAdIds4MdrAction(args: MdrSearchArgs, limit: Int): DBIOAction[Seq[String], Streaming[String], Effect.Read] = {
+  def findPaidNodeIds4MdrQ(args: MdrSearchArgs): Query[Rep[String], String, Seq] = {
     val b0 = mdrUtil.awaitingPaidMdrItemsSql
 
     val b1 = args.hideAdIdOpt.fold(b0) { hideAdId =>
@@ -260,8 +269,12 @@ class SysMdrUtil @Inject() (
     }
 
     b1.map(_.nodeId)
-      //.sortBy(_.id.asc)   // TODO Нужно подумать над сортировкой возвращаемого множества adId
       .distinct
+  }
+
+  /** SQL для экшена поиска id карточек, нуждающихся в модерации. */
+  def getFirstNodesInDba(args: MdrSearchArgs, q: Query[Rep[String], String, Seq], limit: Int): DBIOAction[Seq[String], Streaming[String], Effect.Read] = {
+    q
       .drop( args.offset )
       .take( limit )
       .result

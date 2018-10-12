@@ -28,7 +28,7 @@ object MMdrResolution {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MMdrResolution] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMdrResolution] = UnivEq.derive
 
 }
 

@@ -3,6 +3,7 @@ package io.suggest.sys.mdr
 import com.softwaremill.macwire._
 import io.suggest.jd.render.JdRenderModule
 import io.suggest.sys.mdr.v._
+import io.suggest.sys.mdr.v.pane._
 
 /**
   * Suggest.io
@@ -21,6 +22,10 @@ class SysMdrModules {
   lazy val sysMdrFormR = wire[SysMdrFormR]
   lazy val mdrErrorsR = wire[MdrErrorsR]
   lazy val mdrDiaRefuseR = wire[MdrDiaRefuseR]
+
+  lazy val mdrControlPanelR = wire[MdrControlPanelR]
+  lazy val mdrPanelAnchorBtnR = wire[MdrPanelAnchorBtnR]
+  lazy val mdrPanelBtnR = wire[MdrPanelStepBtnR]
 
   lazy val sysMdrCircuit = wire[SysMdrCircuit]
 

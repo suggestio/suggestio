@@ -29,9 +29,6 @@ object MNodeMdrInfo {
     }
   }
 
-  implicit def univEq: UnivEq[MNodeMdrInfo] = UnivEq.derive
-
-
   /** Поддержка play-json. */
   implicit def mNodeMdrInfoFormat: OFormat[MNodeMdrInfo] = (
     (__ \ "i").format[String] and
@@ -43,8 +40,11 @@ object MNodeMdrInfo {
       .inmap[Iterable[String]](
         EmptyUtil.opt2ImplEmpty1F(Nil),
         { nodeIds => if (nodeIds.isEmpty) None else Some(nodeIds) }
-      )
+      ) and
+    (__ \ "q").format[MMdrQueueReport]
   )(apply, unlift(unapply))
+
+  @inline implicit def univEq: UnivEq[MNodeMdrInfo] = UnivEq.derive
 
 }
 
@@ -63,6 +63,7 @@ case class MNodeMdrInfo(
                          nodes                : Iterable[MAdvGeoMapNodeProps],
                          directSelfNodeIds    : Set[String],
                          errorNodeIds         : Iterable[String],
+                         mdrQueue             : MMdrQueueReport,
                        ) {
 
   /** Сгруппированные item'ы по типам. */
