@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v
 
-import chandu0101.scalajs.react.components.materialui.{MuiDivider, MuiDraweAnchors, MuiDrawer, MuiDrawerProps, MuiDrawerVariants}
+import chandu0101.scalajs.react.components.materialui.{MuiAppBar, MuiAppBarProps, MuiDivider, MuiDraweAnchors, MuiDrawer, MuiDrawerProps, MuiDrawerVariants, MuiToolBar}
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.jd.render.v.{JdCss, JdCssR}
@@ -10,6 +10,8 @@ import io.suggest.sys.mdr.m.MSysMdrRootS
 import io.suggest.sys.mdr.v.pane.MdrControlPanelR
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -46,10 +48,22 @@ class SysMdrFormR(
   class Backend( $: BackendScope[Props, State] ) {
 
     def render(propsProxy: Props, s: State): VdomElement = {
+      // Панель управления модерации.
       <.div(
 
         // Рендер css карточки:
         s.jdCssC { jdCssR.apply },
+
+        MuiAppBar(
+          new MuiAppBarProps {
+            override val position = "relative"
+          }
+        )(
+          MuiToolBar()(
+            s.controlPanelC { mdrControlPanelR.apply }
+          )
+        ),
+        <.br,
 
         // Ошибки - здесь:
         s.mdrErrorsC { mdrErrorsR.apply },
@@ -62,12 +76,6 @@ class SysMdrFormR(
             override val anchor = MuiDraweAnchors.right
           }
         )(
-          // Панель управления модерации.
-          s.controlPanelC { mdrControlPanelR.apply },
-
-          // Отделяем панель от кнопок модерации.
-          MuiDivider(),
-
           // Содержимое формы модерации карточки:
           s.nodeInfoC { nodeMdrR.apply },
         ),

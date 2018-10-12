@@ -24,6 +24,7 @@ import models.mproj.ICommonDi
 import models.adv.geo.cur.AdvGeoShapeInfo_t
 import slick.sql.SqlAction
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -122,7 +123,7 @@ class Bill2Util @Inject() (
 
   /** Когда ордер нормально закрыт, какой статус выставлять item'у указанного типа?. */
   private def orderClosedItemStatus( iType: MItemType ): MItemStatus = {
-    if (iType == MItemTypes.BalanceCredit) {
+    if (iType ==* MItemTypes.BalanceCredit) {
       // Это пополнение собственного баланса. Проходит без промежуточных шагов и сразу же закрывается.
       MItemStatuses.Finished
 
@@ -179,7 +180,7 @@ class Bill2Util @Inject() (
       // Проверить, является ли контракт-подсказка связанным с узлом.
       .filter { mc =>
         val ncIdOpt = mnode.billing.contractId
-        val res = ncIdOpt == mc.id
+        val res = (ncIdOpt ==* mc.id)
         if (!res)
           LOGGER.warn(s"ensureNodeContract(): Unrelated contract[${mc.id}] passed as hint for node[${mnode.idOrNull}]. Expected node's contract is [$ncIdOpt].")
         res
@@ -479,7 +480,7 @@ class Bill2Util @Inject() (
         val morder2 = order.morder.withStatus( MOrderStatuses.Closed )
         for {
           ordersUpdated <- mOrders.saveStatus( morder2 )
-          if ordersUpdated == 1
+          if ordersUpdated ==* 1
         } yield {
           morder2
         }
@@ -491,7 +492,7 @@ class Bill2Util @Inject() (
           val itm2 = itm.withStatus( orderClosedItemStatus(itm.iType) )
           for {
             itemsUpdated <- mItems.updateStatus(itm2)
-            if itemsUpdated == 1
+            if itemsUpdated ==* 1
           } yield {
             itm2
           }
@@ -723,7 +724,7 @@ class Bill2Util @Inject() (
               // Сохранить обновлённый статус item'а, убедившись, что item действительно сейчас есть в таблице.
               val itmUpdDbAct = for {
                 itemsUpdated <- mItems.updateStatus(mitem2)
-                if itemsUpdated == 1
+                if itemsUpdated ==* 1
               } yield {
                 LOGGER.trace(s"$logPrefix Item ${mitem2.id.orNull} of type ${mitem2.iType} ($itemAmount) status updated to ${mitem2.status}")
                 mitem2
@@ -761,7 +762,7 @@ class Bill2Util @Inject() (
               .map { bal =>
                 for {
                   balsUpdated <- mBalances.saveAmountAndBlocked(bal)
-                  if balsUpdated == 1
+                  if balsUpdated ==* 1
                 } yield {
                   bal
                 }
@@ -810,7 +811,7 @@ class Bill2Util @Inject() (
             val morder2 = owi.morder.withStatus( MOrderStatuses.Closed )
             for {
               ordersUpdated <- mOrders.saveStatus( morder2 )
-              if ordersUpdated == 1
+              if ordersUpdated ==* 1
             } yield {
               LOGGER.debug(s"$logPrefix Order#$orderId closed.")
               morder2
@@ -1001,7 +1002,7 @@ class Bill2Util @Inject() (
             (i.status, i.dateStatus)
           }
           .update((mitem1.status, mitem1.dateStatus))
-          .filter(_ == 1)
+          .filter(_ ==* 1)
           .map(_ => mitem1)
       }
 
@@ -1123,7 +1124,7 @@ class Bill2Util @Inject() (
             (i.status, i.dateStatus, i.reasonOpt)
           }
           .update((mi2.status, mi2.dateStatus, mi2.reasonOpt))
-          .filter(_ == 1)
+          .filter(_ ==* 1)
           .map(_ => mi2)
       }
 
@@ -1343,7 +1344,7 @@ class Bill2Util @Inject() (
     */
   def pricesMinusBalances(prices: Seq[MPrice], balsMap: Map[MCurrency, MBalance]): Seq[MPrice] = {
     assert(
-      prices.iterator.map(_.currency).toSet.size == prices.size,
+      prices.iterator.map(_.currency).toSet.size ==* prices.size,
       s"Prices contains duplicates by currency: $prices"
     )
 
@@ -1490,7 +1491,7 @@ class Bill2Util @Inject() (
   def holdOrder(mOrder: MOrder): DBIOAction[MOrder, NoStream, Effect.Write] = {
     val holdStatus = MOrderStatuses.Hold
     def logPrefix = s"holdOrder(${mOrder.id.orNull}):"
-    if (mOrder.status == holdStatus) {
+    if (mOrder.status ==* holdStatus) {
       LOGGER.debug(s"$logPrefix Not holding order, because already hold since ${mOrder.dateStatus}: $mOrder")
       DBIO.successful(mOrder)
     } else {
@@ -1498,7 +1499,7 @@ class Bill2Util @Inject() (
       val o2 = mOrder.withStatus( holdStatus )
       for {
         rowsUpdated <- mOrders.saveStatus( o2 )
-        if rowsUpdated == 1
+        if rowsUpdated ==* 1
       } yield {
         LOGGER.debug(s"$logPrefix Order marked as HOLD.")
         o2
@@ -1521,7 +1522,7 @@ class Bill2Util @Inject() (
 
       // Выполнять какие-то действия, только если позволяет текущий статус ордера.
       morder2 <- {
-        if (morder.status == MOrderStatuses.Hold) {
+        if (morder.status ==* MOrderStatuses.Hold) {
           val morder22 = morder.withStatus( MOrderStatuses.Draft )
           for {
             // Поискать текущую корзину, вдруг юзер ещё что-то в корзину швырнул, пока текущий ордер был HOLD.
@@ -1529,7 +1530,7 @@ class Bill2Util @Inject() (
               .forUpdate
 
             ordersUpdated <- mOrders.saveStatus( morder22 )
-            if ordersUpdated == 1
+            if ordersUpdated ==* 1
 
             // Текущий ордер теперь снова стал корзиной.
             // Но возможно, что уже существует ещё одна корзина? Их надо объеденить в пользу текущего ордера.
@@ -1548,7 +1549,7 @@ class Bill2Util @Inject() (
             morder22
           }
 
-        } else if (morder.status == MOrderStatuses.Draft) {
+        } else if (morder.status ==* MOrderStatuses.Draft) {
           LOGGER.debug(s"$logPrefix Already draft since ${morder.dateStatus}. Nothing to do, skipped.")
           DBIO.successful( morder )
         } else {
@@ -1585,7 +1586,7 @@ class Bill2Util @Inject() (
         LOGGER.info(s"$logPrefix $depRowsUpdated order deps moved from oldOrder#$orderIdForDelete to target order#$toOrderId. Deleting old order...")
         mOrders.deleteById( orderIdForDelete )
       }
-      if ordersDeleted == 1
+      if ordersDeleted ==* 1
 
       // Удалить любые дебажные вещи, касающиеся удаляемого ордера
       orderDebugsDeleted <- mDebugs.deleteByObjectId( orderIdForDelete )

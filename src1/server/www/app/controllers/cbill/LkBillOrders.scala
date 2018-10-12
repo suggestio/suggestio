@@ -543,22 +543,20 @@ trait LkBillOrders
         contractId  = enc.mc.id.get
 
         // Дальше надо бы делать транзакцию
-        res <- {
-          // Произвести чтение, анализ и обработку товарной корзины:
-          slick.db.run {
-            import slick.profile.api._
-            val dbAction = for {
+        // Произвести чтение, анализ и обработку товарной корзины:
+        res <- slick.db.run {
+          import slick.profile.api._
+          val dbAction = for {
             // Прочитать текущую корзину
-              cart0   <- bill2Util.prepareCartTxn( contractId )
-              // На основе наполнения корзины нужно выбрать дальнейший путь развития событий:
-              txnRes  <- bill2Util.maybeExecuteOrder(cart0)
-            } yield {
-              // Сформировать результат работы экшена
-              txnRes
-            }
-            // Форсировать весь этот экшен в транзакции:
-            dbAction.transactionally
+            cart0   <- bill2Util.prepareCartTxn( contractId )
+            // На основе наполнения корзины нужно выбрать дальнейший путь развития событий:
+            txnRes  <- bill2Util.maybeExecuteOrder(cart0)
+          } yield {
+            // Сформировать результат работы экшена
+            txnRes
           }
+          // Форсировать весь этот экшен в транзакции:
+          dbAction.transactionally
         }
 
       } yield {

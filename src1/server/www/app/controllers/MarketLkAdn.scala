@@ -12,6 +12,7 @@ import io.suggest.sec.util.ScryptUtil
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.UsrCreateNodeForm_t
+import models.mctx.Context
 import models.mlk.MNodeShowArgs
 import models.mproj.ICommonDi
 import models.req.{INodeReq, MReq}
@@ -119,11 +120,17 @@ class MarketLkAdn @Inject() (
         }
       }
 
-      implicit val ctx = getContext2
+      val ctxFut = request.user.lkCtxDataFut.map { implicit lkCtxData =>
+        implicitly[Context]
+      }
 
       // Подготовить галеру к работе через CDN:
-      val galleryCallsFut = galleryFut.flatMap { galleryImgs =>
-        galleryUtil.renderGalleryCdn(galleryImgs, mediaHostsMapFut)(ctx)
+      val galleryCallsFut = for {
+        galleryImgs   <- galleryFut
+        ctx           <- ctxFut
+        galleryCalls  <- galleryUtil.renderGalleryCdn(galleryImgs, mediaHostsMapFut)(ctx)
+      } yield {
+        galleryCalls
       }
 
       // Подготовить аргументы для рендера шаблона:
@@ -144,6 +151,7 @@ class MarketLkAdn @Inject() (
       for {
         ctxData         <- request.user.lkCtxDataFut
         tplArgs         <- tplArgsFut
+        ctx             <- ctxFut
       } yield {
         implicit val ctxData1 = ctxData
         val html = adnNodeShowTpl( tplArgs )(ctx)
