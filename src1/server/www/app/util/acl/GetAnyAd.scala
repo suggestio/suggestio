@@ -1,13 +1,12 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.model.n2.node.MNodeTypes
 import models.mproj.ICommonDi
 import models.req.MAdReq
 import play.api.mvc._
-import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
+import play.api.http.Status
 
 import scala.concurrent.Future
 
@@ -48,9 +47,8 @@ class GetAnyAd @Inject() (
       }
 
       /** Что возвращать, если карточка не найдена. */
-      def adNotFound(request: Request[_]): Future[Result] = {
-        Results.NotFound("Ad not found: " + adId)
-      }
+      def adNotFound(request: RequestHeader): Future[Result] =
+        errorHandler.onClientError( request, Status.NOT_FOUND, s"Ad not found: $adId")
 
     }
   }

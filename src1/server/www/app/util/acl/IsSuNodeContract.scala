@@ -1,12 +1,13 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.contract.MContracts
 import io.suggest.req.ReqUtil
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.req.{IReqHdr, MNodeContractReq, MReq}
+import models.req.{MNodeContractReq, MReq}
+import play.api.http.Status
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
@@ -23,7 +24,9 @@ class IsSuNodeContract @Inject() (
                                    isSu         : IsSu,
                                    reqUtil      : ReqUtil,
                                    mCommonDi    : ICommonDi
-                                 ) {
+                                 )
+  extends MacroLogsImpl
+{
 
   import mCommonDi._
 
@@ -43,7 +46,8 @@ class IsSuNodeContract @Inject() (
           val mnodeOptFut = mNodesCache.getById(nodeId)
           mnodeOptFut.flatMap {
             case Some(mnode) =>
-              val mcOptFut = FutureUtil.optFut2futOpt(mnode.billing.contractId) { contractId =>
+              val countractIOpt = mnode.billing.contractId
+              val mcOptFut = FutureUtil.optFut2futOpt(countractIOpt) { contractId =>
                 val act = mContracts.getById(contractId)
                 slick.db.run(act)
               }
@@ -54,24 +58,20 @@ class IsSuNodeContract @Inject() (
                   block(req1)
 
                 case None =>
-                  contractNotFound(reqErr)
+                  val msg = s"Countract#${countractIOpt.orNull} not found"
+                  LOGGER.debug(msg)
+                  errorHandler.onClientError(reqErr, Status.NOT_FOUND, msg)
               }
 
             case None =>
-              nodeNotFound(reqErr)
+              val msg = s"Node#${nodeId} not found"
+              LOGGER.debug(msg)
+              errorHandler.onClientError(reqErr, Status.NOT_FOUND, msg)
           }
 
         } else {
           isSu.supOnUnauthFut(reqErr)
         }
-      }
-
-      def nodeNotFound(req: IReqHdr): Future[Result] = {
-        errorHandler.http404Fut(req)
-      }
-
-      def contractNotFound(req: IReqHdr): Future[Result] = {
-        errorHandler.http404Fut(req)
       }
 
     }

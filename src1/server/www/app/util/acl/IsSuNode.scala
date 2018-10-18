@@ -1,10 +1,11 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.req.ReqUtil
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.req.{IReqHdr, MNodeReq, MReq}
+import models.req.{MNodeReq, MReq}
+import play.api.http.Status
 
 import scala.concurrent.Future
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
@@ -23,7 +24,9 @@ class IsSuNode @Inject() (
                            isSu       : IsSu,
                            reqUtil    : ReqUtil,
                            mCommonDi  : ICommonDi
-                         ) {
+                         )
+  extends MacroLogsImpl
+{
 
   import mCommonDi._
 
@@ -37,6 +40,8 @@ class IsSuNode @Inject() (
       override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)
 
+        def req1 = MReq(request, user)
+
         if (user.isSuper) {
           val mnodeOptFut = mNodesCache.getById(nodeId)
           mnodeOptFut.flatMap {
@@ -45,22 +50,16 @@ class IsSuNode @Inject() (
               block(req1)
 
             case None =>
-              val req1 = MReq(request, user)
-              nodeNotFound(req1)
+              LOGGER.debug(s"Node $nodeId not found")
+              errorHandler.onClientError(req1, Status.NOT_FOUND)
           }
 
         } else {
-          val req1 = MReq(request, user)
           isSu.supOnUnauthFut(req1)
         }
       }
 
     }
-  }
-
-
-  def nodeNotFound(req: IReqHdr): Future[Result] = {
-    errorHandler.http404Fut(req)
   }
 
 }

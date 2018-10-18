@@ -22,6 +22,9 @@ object RcvrKey {
     rcvrKey.mkString( HtmlConstants.SLASH )
   }
 
+  def from(rcvrKeySeq: Seq[String]) =
+    rcvrKeySeq.toList
+
   // Затычка для scalaz, чтобы можно было провалидировать коллекцию из RcvrKey.
   implicit object rcvrKeyDirtyMonoid extends Monoid[RcvrKey] {
     override def zero: RcvrKey = Nil

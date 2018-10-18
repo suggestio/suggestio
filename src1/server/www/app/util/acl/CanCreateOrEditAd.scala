@@ -1,13 +1,13 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.util.logs.MacroLogsImpl
 import models.req._
 import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
 import japgolly.univeq._
+import play.api.http.{HttpErrorHandler, Status}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -26,7 +26,8 @@ class CanCreateOrEditAd @Inject() (
                                     canEditAd   : CanEditAd,
                                     isNodeAdmin : IsNodeAdmin,
                                     reqUtil     : ReqUtil,
-                                    implicit private val ec: ExecutionContext
+                                    httpErrorHandler        : HttpErrorHandler,
+                                    implicit private val ec : ExecutionContext,
                                   )
   extends MacroLogsImpl
 {
@@ -41,7 +42,7 @@ class CanCreateOrEditAd @Inject() (
         override def invokeBlock[A](request: Request[A], block: (MAdOptProdReq[A]) => Future[Result]): Future[Result] = {
           val msg = "Exact one arg expected"
           LOGGER.warn(s"$logPrefix $msg adId=${adIdOpt.orNull}, nodeId=${producerIdOpt.orNull}")
-          Results.PreconditionFailed(msg)
+          httpErrorHandler.onClientError( request, Status.PRECONDITION_FAILED, msg )
         }
       }
 

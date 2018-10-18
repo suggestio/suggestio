@@ -1,13 +1,13 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.mbill2.m.item.MItems
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.req.{IReqHdr, MItemNodeReq, MReq}
+import models.req.{MItemNodeReq, MReq}
+import play.api.http.Status
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
@@ -41,6 +41,7 @@ class IsSuItemNode @Inject()(
         val user = aclUtil.userFromRequest(request)
 
         def req1 = MReq(request, user)
+        lazy val logPrefix = s"item#$itemId:"
 
         if (user.isSuper) {
           val mitemOptFut = slick.db.run {
@@ -55,27 +56,19 @@ class IsSuItemNode @Inject()(
                   block(req1)
 
                 case None =>
-                  madNotFound(mitem, req1)
+                  LOGGER.warn(s"$logPrefix item node#${mitem.nodeId} not found")
+                  errorHandler.onClientError(req1, Status.NOT_FOUND)
               }
 
             case None =>
-              itemNotFound(req1)
+              LOGGER.debug(s"$logPrefix Item does not exist")
+              errorHandler.onClientError(req1, Status.NOT_FOUND)
           }
 
         } else {
+          LOGGER.trace(s"$logPrefix SU expected, but user#${user.personIdOpt.orNull} is here.")
           isSu.supOnUnauthFut(req1)
         }
-      }
-
-      /** Реакция на отсутствующий item. */
-      def itemNotFound(req: IReqHdr): Future[Result] = {
-        LOGGER.debug(s"itemNotFound(): $itemId")
-        errorHandler.http404Fut(req)
-      }
-
-      def madNotFound(mitem: MItem, req: IReqHdr): Future[Result] = {
-        LOGGER.warn(s"madNotFound(${mitem.id.orNull}): ${mitem.nodeId}")
-        errorHandler.http404Fut(req)
       }
 
     }

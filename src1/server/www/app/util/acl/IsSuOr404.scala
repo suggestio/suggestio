@@ -3,6 +3,7 @@ package util.acl
 import javax.inject.{Inject, Singleton}
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser, MReq}
+import play.api.http.Status
 import play.api.mvc.{ActionBuilder, AnyContent, Result}
 
 import scala.concurrent.Future
@@ -26,7 +27,7 @@ class IsSuOr404Ctl @Inject() (
 
     override protected def _onUnauth(req: IReqHdr): Future[Result] = {
       isSu.logBlockedAccess(req)
-      errorHandler.http404Fut(req)
+      errorHandler.onClientError(req, Status.NOT_FOUND)
     }
 
   }

@@ -46,7 +46,7 @@ class SysMdrApiXhrImpl extends ISysMdrApi {
 
   override def nextMdrInfo(args: MdrSearchArgs): Future[MMdrNextResp] = {
     val route = routes.controllers.SysMdr.nextMdrInfo(
-      args = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject(args) )
+      args    = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject(args) )
     )
     Xhr.unJsonResp[MMdrNextResp] {
       Xhr.requestJsonText(route)

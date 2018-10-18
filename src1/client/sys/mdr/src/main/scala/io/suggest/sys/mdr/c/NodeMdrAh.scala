@@ -232,22 +232,24 @@ class NodeMdrAh[M](
           if (m.offsetDelta !=* 0) {
             offset2 += m.offsetDelta
             // При шагании назад надо автоматом "пропустить" ошибочные узлы:
-            if (m.offsetDelta < 0)
-              for {
-                info <- infoReq2.toOption
-                if info.errorNodeIds.nonEmpty
-              } {
-                offset2 -= info.errorNodeIds.size
-              }
+            if (m.offsetDelta < 0) for {
+              info <- infoReq2.toOption
+              if info.errorNodeIds.nonEmpty
+            } {
+              offset2 -= info.errorNodeIds.size
+            }
           }
 
           val args = MdrSearchArgs(
+            // TODO Добавить поддержку rcvrKey.
             // Пропустить текущую карточку, если требуется экшеном:
             hideAdIdOpt = OptionUtil.maybeOpt(m.skipCurrentNode) {
-              v0.info
-                .toOption
-                .flatMap(_.nodeOpt)
-                .map(_.nodeId)
+              for {
+                resp  <- v0.info.toOption
+                mnode <- resp.nodeOpt
+              } yield {
+                mnode.nodeId
+              }
             },
             // Сдвиг соответствует запрашиваемому.
             offsetOpt = Some( offset2 )
@@ -268,6 +270,7 @@ class NodeMdrAh[M](
           .withInfo( infoReq2 )
         updated(v2 , fx)
       }
+
 
     // Поступил результат реквеста к серверу за новыми данными для модерации.
     case m: MdrNextNodeResp =>

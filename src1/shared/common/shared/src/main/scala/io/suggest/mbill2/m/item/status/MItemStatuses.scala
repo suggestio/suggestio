@@ -27,6 +27,7 @@ object MItemStatuses extends StringEnum[MItemStatus] {
     override def isMoneyWithdrawed      = false
   }
 
+
   /** Item оплачен. Ожидается подтверждение со стороны suggest.io: модерация. */
   case object AwaitingMdr extends MItemStatus("b") {
 
@@ -35,6 +36,7 @@ object MItemStatuses extends StringEnum[MItemStatus] {
     /** Деньги списаны с доступного баланса на заблокированный. */
     override def isMoneyBlockedOnBuyer  = true
   }
+
 
   /** Отказано продавцом или поставщиком услуги. Например, размещение не прошло модерацию. */
   case object Refused extends MItemStatus("c") with NotBusy with AdvInactual {

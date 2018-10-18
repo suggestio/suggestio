@@ -147,7 +147,6 @@ GET  /lk/h/support/at/:nodeId           @controllers.LkHelp.supportFormNode(node
 POST /lk/h/support/at/:nodeId           @controllers.LkHelp.supportFormNodeSubmit(nodeId, r: Option[String] ?= None)
 GET  /lk/h/support                      @controllers.LkHelp.supportForm(r: Option[String] ?= None)
 POST /lk/h/support                      @controllers.LkHelp.supportFormSubmit(r: Option[String] ?= None)
-POST /lk/h/geo/node/:adnId              @controllers.LkHelp.askGeo4NodeSubmit(adnId, r: Option[String] ?= None)
 GET  /lk/h/about                        @controllers.LkHelp.companyAbout(nodeId: Option[String] ?= None)
 
 ## Языки и локализация
@@ -220,7 +219,7 @@ POST /sys/cal/edit/:calId                @controllers.SysCalendar.editCalendarSu
 GET  /sys/cal/get/:calId                 @controllers.SysCalendar.getCalendarXml(calId)
 
 ## sys: mdr - модерация контента
-GET  /sys/mdr                           @controllers.SysMdr.index
+GET  /sys/mdr                           @controllers.SysMdr.sysPage
 GET  /sys/mdr/next                      @controllers.SysMdr.nextMdrInfo(a: io.suggest.sys.mdr.MdrSearchArgs ?= io.suggest.sys.mdr.MdrSearchArgs.default)
 POST /sys/mdr/do                        @controllers.SysMdr.doMdr(r: io.suggest.sys.mdr.MMdrResolution)
 

@@ -1,5 +1,6 @@
 package io.suggest.sys.mdr
 
+import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.empty.OptionUtil
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemType
@@ -17,31 +18,33 @@ object MdrSearchArgsJvm {
 
   /** Поддержка qs-биндинга для [[MdrSearchArgs]]. */
   implicit def mdrSearchArgsQsb(implicit
-                                strOptB   : QueryStringBindable[Option[String]],
-                                intOptB   : QueryStringBindable[Option[Int]],
-                                boolOptB  : QueryStringBindable[Option[Boolean]]
+                                strOptB     : QueryStringBindable[Option[String]],
+                                intOptB     : QueryStringBindable[Option[Int]],
+                                boolOptB    : QueryStringBindable[Option[Boolean]],
+                                rcvrKeyOptB : QueryStringBindable[Option[RcvrKey]],
                                ): QueryStringBindable[MdrSearchArgs] = {
     new QueryStringBindableImpl[MdrSearchArgs] {
+
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MdrSearchArgs]] = {
         val k1 = key1F(key)
         val F = MdrSearchArgs.Fields
         for {
-          maybeOffsetOpt        <- intOptB.bind  (k1(F.OFFSET_FN),                 params)
-          maybeProducerIdOpt    <- strOptB.bind  (k1(F.PRODUCER_ID_FN),            params)
-          maybeFreeAdvIsAllowed <- boolOptB.bind (k1(F.FREE_ADV_IS_ALLOWED_FN),    params)
-          maybeHideAdIdOpt      <- strOptB.bind  (k1(F.HIDE_AD_ID_FN),             params)
+          offsetOptE            <- intOptB.bind     (k1(F.OFFSET_FN),                 params)
+          freeAdvIsAllowedE     <- boolOptB.bind    (k1(F.FREE_ADV_IS_ALLOWED_FN),    params)
+          hideAdIdOptE          <- strOptB.bind     (k1(F.HIDE_AD_ID_FN),             params)
+          rcvrKeyOptE           <- rcvrKeyOptB.bind (k1(F.RCVR_KEY_FN),               params)
         } yield {
           for {
-            offsetOpt           <- maybeOffsetOpt.right
-            prodIdOpt           <- maybeProducerIdOpt.right
-            freeAdvIsAllowed    <- maybeFreeAdvIsAllowed.right
-            hideAdIdOpt         <- maybeHideAdIdOpt.right
+            offsetOpt           <- offsetOptE.right
+            freeAdvIsAllowed    <- freeAdvIsAllowedE.right
+            hideAdIdOpt         <- hideAdIdOptE.right
+            rcvrKeyOpt          <- rcvrKeyOptE.right
           } yield {
             MdrSearchArgs(
               offsetOpt         = offsetOpt,
-              producerId        = prodIdOpt,
               isAllowed         = freeAdvIsAllowed,
-              hideAdIdOpt       = hideAdIdOpt
+              hideAdIdOpt       = hideAdIdOpt,
+              rcvrKey           = rcvrKeyOpt
             )
           }
         }
@@ -51,12 +54,13 @@ object MdrSearchArgsJvm {
         val k1 = key1F(key)
         val F = MdrSearchArgs.Fields
         _mergeUnbinded1(
-          strOptB.unbind (k1(F.PRODUCER_ID_FN),          value.producerId),
-          intOptB.unbind (k1(F.OFFSET_FN),               value.offsetOpt),
-          boolOptB.unbind(k1(F.FREE_ADV_IS_ALLOWED_FN),  value.isAllowed),
-          strOptB.unbind (k1(F.HIDE_AD_ID_FN),           value.hideAdIdOpt)
+          intOptB.unbind        (k1(F.OFFSET_FN),               value.offsetOpt),
+          boolOptB.unbind       (k1(F.FREE_ADV_IS_ALLOWED_FN),  value.isAllowed),
+          strOptB.unbind        (k1(F.HIDE_AD_ID_FN),           value.hideAdIdOpt),
+          rcvrKeyOptB.unbind    (k1(F.RCVR_KEY_FN),             value.rcvrKey),
         )
       }
+
     }
   }
 

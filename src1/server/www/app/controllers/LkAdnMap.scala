@@ -179,7 +179,7 @@ class LkAdnMap @Inject() (
         {violations =>
           val violsStr = violations.iterator.mkString(", ")
           debug(s"$logPrefix: Unable to bind form:\n $violsStr")
-          NotAcceptable( violsStr )
+          errorHandler.onClientError(request, NOT_ACCEPTABLE, violsStr)
         },
 
         // Бинд удался. Обработать покупку.
@@ -262,7 +262,7 @@ class LkAdnMap @Inject() (
         {violations =>
           val violationsStr = violations.iterator.mkString(", ")
           LOGGER.error(s"$logPrefix Failed to bind form:\n $violationsStr")
-          NotAcceptable( violationsStr )
+          errorHandler.onClientError(request, NOT_ACCEPTABLE, violationsStr)
         },
 
         // Забиндилось ок. Считаем ценник и рендерим результат...

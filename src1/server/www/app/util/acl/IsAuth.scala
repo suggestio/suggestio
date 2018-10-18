@@ -29,12 +29,12 @@ final class IsAuth @Inject() (
   extends MacroLogsImpl
 {
 
-  /** Основная синхронная реакция на выявленную необходимость залогинится.
+  /** Что делать, когда юзер не авторизован?
     *
-    * @param request реквест.
-    * @return Ответ с редиректом.
+    * @param request
+    * @return ответ с редиректом или ошибкой.
     */
-  def onUnauthBase(request: RequestHeader): Result = {
+  def onUnauth(request: RequestHeader): Future[Result] = {
     val rOpt = Some(request.path)
 
     // Ожидает ли клиент в ответе увидеть HTML-форму? Нужно для защиты от совсем бессмыленного отвечания на запрос.
@@ -47,15 +47,10 @@ final class IsAuth @Inject() (
     if (clientAcceptsHtmlForm) {
       Results.Redirect( url )
     } else {
-      LOGGER.trace(s"onUnauthBase($request): 401, because Accept: $acceptOpt")
+      LOGGER.trace(s"onUnauth($request): 401, because Accept: $acceptOpt")
       Results.Unauthorized
         .withHeaders( IdentConst.HTTP_HDR_SUDDEN_AUTH_FORM_RESP -> url.url )
     }
-  }
-
-  /** Что делать, когда юзер не авторизован? Асинхронная реакция. */
-  def onUnauth(request: RequestHeader): Future[Result] = {
-    onUnauthBase(request)
   }
 
 

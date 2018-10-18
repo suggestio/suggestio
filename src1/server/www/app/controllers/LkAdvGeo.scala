@@ -367,7 +367,7 @@ class LkAdvGeo @Inject() (
       advGeoFormUtil.validateFromRequest().fold(
         {violations =>
           LOGGER.debug(s"$logPrefix Failed to validate form data: ${violations.iterator.mkString("\n", "\n ", "")}")
-          NotAcceptable( violations.toString )
+          errorHandler.onClientError(request, NOT_ACCEPTABLE, violations.toString)
         },
         {mFormS =>
           val mFromS2Fut = _checkFormRcvrs(mFormS)

@@ -1,13 +1,12 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import models.req.{MPersonReq, MReq}
 import play.api.mvc._
-import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
+import play.api.http.Status
 
 import scala.concurrent.Future
 
@@ -61,9 +60,8 @@ class IsSuPerson @Inject()(
       }
 
       /** Юзер не найден. */
-      def personNotFound(request: Request[_]): Future[Result] = {
-        Results.NotFound("person not exists: " + personId)
-      }
+      def personNotFound(request: Request[_]): Future[Result] =
+        errorHandler.onClientError(request, Status.NOT_FOUND, s"person not exists: $personId")
 
     }
   }

@@ -78,7 +78,7 @@ class Upload @Inject()(
   with MacroLogsImpl
 {
 
-  import mCommonDi.ec
+  import mCommonDi.{ec, errorHandler}
 
 
   // TODO Opt В будущем, особенно когда будет поддержка заливки видео (или иных больших файлов), надо будет
@@ -694,7 +694,7 @@ class Upload @Inject()(
         __deleteUploadedFiles()
         val errMsg = errSb.toString()
         LOGGER.warn(s"$logPrefix Failed to sync-validate upload data:\n$errMsg")
-        NotAcceptable(s"Problems:\n\n$errMsg")
+        errorHandler.onClientError(request, NOT_ACCEPTABLE, s"Problems:\n\n$errMsg")
 
       } { resFut =>
         // Если файл не подхвачен файловой моделью (типа MLocalImg или другой), то его надо удалить:
@@ -704,10 +704,10 @@ class Upload @Inject()(
         }
 
         // Отрендерить ответ клиенту:
-        resFut.recover { case ex: Throwable =>
+        resFut.recoverWith { case ex: Throwable =>
           val errMsg = errSb.toString()
           LOGGER.error(s"$logPrefix Async exception occured, possible reasons:\n$errMsg", ex)
-          NotAcceptable(s"Errors:\n\n$errMsg")
+          errorHandler.onClientError(request, NOT_ACCEPTABLE, s"Errors:\n\n$errMsg")
         }
       }
     }

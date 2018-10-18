@@ -52,7 +52,6 @@ trait SysNodeInstall
       srcNodes <- mNodesCache.multiGet(nodesUtil.ADN_IDS_INIT_ADS_SOURCE)
     } yield {
       val allLangs = langs.availables
-      val langsSorted = allLangs.sortBy(_.code)
       val langCode2msgs = allLangs.iterator
         .map { l =>
           l.code -> mCommonDi.messagesApi.preferred( l :: Nil )

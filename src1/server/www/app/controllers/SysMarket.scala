@@ -7,6 +7,7 @@ import controllers.sysctl.invite.SmSendEmailInvite
 import io.suggest.adn.MAdnRights
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
+import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
@@ -174,7 +175,7 @@ class SysMarket @Inject() (
         ntypes0  <- ntypesFut
       } yield {
         val allNti = MNodeTypeInfo(
-          name      = ctx.messages("All"),
+          name      = ctx.messages( MsgCodes.`All` ),
           ntypeOpt  = None,
           count     = allCount
         )
@@ -257,8 +258,8 @@ class SysMarket @Inject() (
       val inEdgesFut = {
         val msearch = new MNodeSearchDfltImpl {
           override def outEdges: Seq[Criteria] = {
-            val cr = Criteria(nodeIds = Seq(nodeId))
-            Seq(cr)
+            val cr = Criteria(nodeIds = nodeId :: Nil)
+            cr :: Nil
           }
           override def limit = 200
         }
@@ -272,7 +273,7 @@ class SysMarket @Inject() (
                 .map { medge =>
                   MNodeEdgeInfo(
                     medge       = medge,
-                    mnodeEiths  = Seq(Right(mnode)),
+                    mnodeEiths  = Right(mnode) :: Nil,
                     edgeId      = None
                   )
                 }
@@ -322,7 +323,8 @@ class SysMarket @Inject() (
       import request.mnode
       lazy val logPrefix = s"deleteAdnNodeSubmit($nodeId):"
       LOGGER.info(s"$logPrefix by user[${request.user.personIdOpt}] request. Deleting...")
-      mNodes.deleteById(nodeId)
+      mNodes
+        .deleteById(nodeId)
         .filter(identity)
         .map { _ =>
           // Нужно перебрасывать на вкладку с узлами того же типа, что и удалённый.
@@ -334,8 +336,9 @@ class SysMarket @Inject() (
         }
         .recoverWith {
           case _: NoSuchElementException =>
-            warn(s"deleteAdnNodeSubmit($nodeId): Node not found. Anyway, resources re-erased.")
-            isSuNode.nodeNotFound(request)
+            val msg = "Node not found. Anyway, resources re-erased."
+            warn(s"deleteAdnNodeSubmit($nodeId): $msg")
+            errorHandler.onClientError(request, NOT_FOUND, msg)
         }
     }
   }
@@ -445,9 +448,10 @@ class SysMarket @Inject() (
               }
 
               // Отрендерить ошибку совпадения id с существующим узлом...
-              resFut.recover { case ex: NoSuchElementException =>
-                LOGGER.error(s"$logPrefix Node already exists: ${ncp.withId}", ex)
-                Conflict(s"Node with ${ncp.withId.orNull} already exists.")
+              resFut.recoverWith { case ex: NoSuchElementException =>
+                val msg = s"Node${ncp.withId.orNull} already exists"
+                LOGGER.error(s"$logPrefix $msg", ex)
+                errorHandler.onClientError(request, CONFLICT, msg)
               }
             }
           )

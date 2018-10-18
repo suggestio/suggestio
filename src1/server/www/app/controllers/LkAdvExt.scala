@@ -36,7 +36,6 @@ import scala.concurrent.Future
  * Created: 24.12.14 14:45
  * Description: Этот контроллер руководит взаимодейтсвием пользователя с системой размещения карточек в соц.сетях и
  * иных сервисах, занимающихся PR-деятельстью.
- * Логический родственник [[MarketAdv]], который занимается размещениями карточек на узлах.
  */
 @Singleton
 class LkAdvExt @Inject() (
@@ -242,7 +241,7 @@ class LkAdvExt @Inject() (
     }
   }
 
-  private sealed case class ExceptionWithResult(res: Result) extends Exception
+  private sealed case class ExceptionWithResult(result: Result) extends Exception
 
   /**
    * Открытие websocket'а, запускающее также процессы размещения, акторы и т.д.
@@ -296,8 +295,11 @@ class LkAdvExt @Inject() (
         .recoverWith { case _: NoSuchElementException =>
           val msg = s"Node not found: ${qsArgs.adId}"
           LOGGER.error(s"$logPrefix $msg")
-          val ex2 = ExceptionWithResult(NotFound(msg))
-          Future.failed(ex2)
+          errorHandler
+            .onClientError(requestHeader, NOT_FOUND, msg)
+            .flatMap { resp =>
+              Future.failed( ExceptionWithResult(resp) )
+            }
         }
 
       // Собрать кое-какие синхронные данные.
@@ -313,8 +315,9 @@ class LkAdvExt @Inject() (
           .recoverWith { case _: NoSuchElementException =>
             val msg = s"$logPrefix User[$user] not allowed to adv ad#${mad.idOrNull}"
             LOGGER.warn(msg)
-            val resp = Forbidden(msg)
-            Future.failed( ExceptionWithResult(resp) )
+            errorHandler.onClientError(requestHeader, FORBIDDEN, msg).flatMap { resp =>
+              Future.failed( ExceptionWithResult(resp) )
+            }
           }
       }
 
@@ -331,13 +334,17 @@ class LkAdvExt @Inject() (
       Right(aFlow)
     }
 
-    resFut.recover {
-      case ExceptionWithResult(res) =>
-        LOGGER.trace(s"$logPrefix Returning HTTP ${res.header.status} (failure), see logs upper.")
-        Left(res)
-      case ex: Throwable =>
-        LOGGER.error(s"$logPrefix Failure, qs = $qsArgs", ex)
-        Left(InternalServerError("500 Internal server error. Please try again later."))
+    resFut.recoverWith { case ex: Throwable =>
+      val resFut = ex match {
+        case ExceptionWithResult(res) =>
+          LOGGER.trace(s"$logPrefix Returning HTTP ${res.header.status} (failure), see logs upper.")
+          Future.successful(res)
+        case ex: Throwable =>
+          LOGGER.error(s"$logPrefix Failure, qs = $qsArgs", ex)
+          errorHandler.onClientError(requestHeader, INTERNAL_SERVER_ERROR)
+      }
+      resFut
+        .map( Left.apply )
     }
   }
 

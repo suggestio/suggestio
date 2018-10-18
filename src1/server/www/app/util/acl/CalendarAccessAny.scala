@@ -1,13 +1,12 @@
 package util.acl
 
 import javax.inject.Inject
-
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
 import models.req.MCalendarReq
 import play.api.mvc._
-import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.req.ReqUtil
+import play.api.http.Status
 
 import scala.concurrent.Future
 
@@ -32,9 +31,8 @@ class CalendarAccessAny @Inject() (
   def apply(calId: String): ActionBuilder[MCalendarReq, AnyContent] = {
     new reqUtil.SioActionBuilderImpl[MCalendarReq] {
 
-      def calNotFound(request: Request[_]): Future[Result] = {
-        Results.NotFound(s"Calendar $calId does not exist.")
-      }
+      def calNotFound(request: Request[_]): Future[Result] =
+        errorHandler.onClientError( request, Status.NOT_FOUND, s"Calendar $calId does not exist.")
 
       override def invokeBlock[A](request: Request[A], block: (MCalendarReq[A]) => Future[Result]): Future[Result] = {
         val mcalOptFut = mCalendars.getById(calId)

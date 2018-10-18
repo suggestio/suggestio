@@ -1,20 +1,19 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
-import models.mproj.ICommonDi
 import models.mup.{MUploadReq, MUploadTargetQs}
 import models.req.MSioUsers
+import play.api.http.{HttpErrorHandler, Status}
 import play.api.mvc._
 import util.cdn.CdnUtil
 import util.up.UploadUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -29,12 +28,11 @@ class CanUploadFile @Inject()(
                                dab                        : DefaultActionBuilder,
                                cdnUtil                    : CdnUtil,
                                mCtxIds                    : MCtxIds,
-                               mCommonDi                  : ICommonDi
+                               httpErrorHandler           : HttpErrorHandler,
+                               implicit private val ec    : ExecutionContext,
                              )
   extends MacroLogsImpl
 {
-
-  import mCommonDi.ec
 
   /** Логика кода проверки прав, заворачивающая за собой фактический экшен, живёт здесь.
     * Это позволяет использовать код и в ActionBuilder, и в Action'ах.
@@ -56,7 +54,7 @@ class CanUploadFile @Inject()(
       // TTL upload-ссылки истёк. Огорчить юзера.
       val msg = "URL TTL expired"
       LOGGER.warn(s"$logPrefix $msg: ${upTg.validTillS}; now was == $uploadNow")
-      Results.NotAcceptable(msg)
+      httpErrorHandler.onClientError(request0, Status.NOT_ACCEPTABLE, msg)
 
     } else {
       // 2017.oct.19 Для кукисов затянуты гайки, и они теперь точно не передаются на ноды. Берём данные сессии прямо из подписанного URL запроса.
@@ -66,7 +64,7 @@ class CanUploadFile @Inject()(
         // Юзер прислал неправильный ctxId. Такое возможно, если юзер перелогинился в одной вкладке, но не в другой. Либо попытка подмены.
         val msg = "CtxId is not valid."
         LOGGER.warn(s"$logPrefix $msg for user#${user.personIdOpt.orNull}, userMatchesCtxId?${user.personIdOpt ==* ctxId.personId}, raw ctxId = $ctxId")
-        Results.Forbidden(msg)
+        httpErrorHandler.onClientError(request0, Status.FORBIDDEN, msg)
 
       } else {
         val respFut = for {
@@ -84,11 +82,11 @@ class CanUploadFile @Inject()(
         } yield {
           resp
         }
-        respFut.recover { case ex: Throwable =>
+        respFut.recoverWith { case ex: Throwable =>
           // Рядом с текущим узлом нет искомой swfs volume. Это значит, что юзер подменил хостнейм в сгенеренной ссылке,
           // и пытается залить файл мимо целевого сервера (либо какая-то ошибка в конфигурации).
           LOGGER.warn(s"$logPrefix Failed to validate SWFS upload args", ex)
-          Results.ExpectationFailed(s"Storage ${upTg.storage}:${upTg.storage.host.nameInt}:${upTg.storage.storage} looks unavailable for upload from ${uploadUtil.MY_NODE_PUBLIC_URL}.")
+          httpErrorHandler.onClientError(request0, Status.EXPECTATION_FAILED, s"Storage ${upTg.storage}:${upTg.storage.host.nameInt}:${upTg.storage.storage} looks unavailable for upload from ${uploadUtil.MY_NODE_PUBLIC_URL}.")
         }
       }
     }

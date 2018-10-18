@@ -14,7 +14,7 @@ import models.msys._
 import models.req.INodeReq
 import play.api.data.Forms._
 import play.api.data._
-import play.api.mvc.Result
+import play.api.mvc.{RequestHeader, Result}
 import util.FormUtil._
 import util.acl._
 import util.geo.osm.{OsmClient, OsmClientStatusCodeInvalidException}
@@ -197,8 +197,8 @@ class SysAdnGeo @Inject() (
   }
 
   /** Повесить recover на фьючерс фетч-парсинга osm.xml чтобы вернуть админу на экран нормальную ошибку. */
-  private def recoverOsm(fut: Future[Result], glevel: MNodeGeoLevel, urlPrOpt: Option[OsmUrlParseResult]): Future[Result] = {
-    fut recover { case ex: Exception =>
+  private def recoverOsm(fut: Future[Result], glevel: MNodeGeoLevel, urlPrOpt: Option[OsmUrlParseResult])(implicit rh: RequestHeader): Future[Result] = {
+    fut.recoverWith { case ex: Exception =>
       val rest = urlPrOpt.fold("-") { urlPr =>
         urlPr.osmType.xmlUrl(urlPr.id)
       }

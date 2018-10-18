@@ -127,7 +127,7 @@ class Umap @Inject() (
             gjsonCompat = Some(true)
           ))
         )
-        Seq(cr)
+        cr :: Nil
       }
 
       override def limit                = 600
@@ -197,7 +197,7 @@ class Umap @Inject() (
   /** Получение геослоя в рамках карты одного узла. */
   def getDataLayerNodeGeoJson(nodeId: String, ngl: MNodeGeoLevel) = isSuNode(nodeId).async { implicit request =>
     val adnIdOpt = request.mnode.id
-    val nodes = Seq(request.mnode)
+    val nodes = request.mnode :: Nil
     _getDataLayerGeoJson(adnIdOpt, ngl, nodes)
   }
 
@@ -249,7 +249,7 @@ class Umap @Inject() (
     val logPrefix = s"saveMapDataLayer($ngl): "
     // Для обновления слоя нужно удалить все renderable-данные в этом слое, и затем залить в слой все засабмиченные через bulk request.
     request.body.file("geojson").fold[Future[Result]] {
-      NotAcceptable("geojson not found in response")
+      errorHandler.onClientError(request, NOT_ACCEPTABLE, "GeoJSON not found in response")
 
     } { tempFile =>
       // Парсим json в потоке с помощью play.json:
@@ -297,7 +297,7 @@ class Umap @Inject() (
             .iterator
             .flatMap { f =>
               f.geometry match {
-                case p: PointGs => List(p.coord)
+                case p: PointGs => p.coord :: Nil
                 case _          => Nil
               }
             }
@@ -316,7 +316,9 @@ class Umap @Inject() (
           val locEdge = MEdge(
             predicate = MPredicates.NodeLocation,
             info = MEdgeInfo(
-              geoShapes = shapes
+              geoShapes = shapes,
+              // Выставление geoPoints появилось после anti-MNodeGeo-рефакторинга. Надо проконтроллировать, всё ли правильно.
+              geoPoints = centerOpt.toSeq
             )
           )
 

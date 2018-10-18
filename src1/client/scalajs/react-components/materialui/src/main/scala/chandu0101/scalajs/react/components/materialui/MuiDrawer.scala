@@ -54,7 +54,7 @@ object MuiDrawerVariants {
 }
 
 
-object MuiDraweAnchors {
+object MuiDrawerAnchors {
   val left = "left"
   val right = "right"
   val top = "top"

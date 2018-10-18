@@ -145,8 +145,9 @@ class LkAdEdit @Inject() (
         lkAdEdFormUtil.earlyValidateEdges( request.body ).fold(
           // Не удалось понять присланные эджи:
           {errorsNel =>
-            LOGGER.warn(s"$logPrefix Failed to validate remote edges: ${errorsNel.iterator.mkString(", ")}")
-            NotAcceptable("edges")
+            val msg = errorsNel.iterator.mkString(", ")
+            LOGGER.warn(s"$logPrefix Failed to validate remote edges: $msg")
+            errorHandler.onClientError(request, NOT_ACCEPTABLE, s"edges: $msg")
           },
 
           // Есть проверенные эджи, похожие на валидные. Надо заняться валидацией самого шаблона.
@@ -171,7 +172,7 @@ class LkAdEdit @Inject() (
                 {failedMsgs =>
                   val msgsConcat = failedMsgs.iterator.mkString(", ")
                   LOGGER.warn(s"$logPrefix Unable to validate template: $msgsConcat")
-                  NotAcceptable( s"tpl: $msgsConcat" )
+                  errorHandler.onClientError(request, NOT_ACCEPTABLE, s"tpl: $msgsConcat")
                 },
 
                 // Есть на руках валидный шаблон. Можно создавать новую карточку.

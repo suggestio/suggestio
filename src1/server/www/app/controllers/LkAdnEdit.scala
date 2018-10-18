@@ -237,7 +237,7 @@ class LkAdnEdit @Inject() (
           {errors =>
             val msg = errors.iterator.mkString("\n")
             LOGGER.debug(s"$logPrefix Failed to validate form edges:\n$msg")
-            NotAcceptable( msg )
+            errorHandler.onClientError(request, NOT_ACCEPTABLE, msg)
           },
           // Всё ок, переходим к дальнейшим асинхронным проверкам:
           {edges2 =>
@@ -249,7 +249,7 @@ class LkAdnEdit @Inject() (
                 {errors =>
                   val msg = errors.iterator.mkString("\n")
                   LOGGER.debug(s"$logPrefix Failed to validate form: \n$msg")
-                  NotAcceptable(msg)
+                  errorHandler.onClientError(request, NOT_ACCEPTABLE, msg)
                 },
                 {form =>
                   // Все данные проверены, перейти к апдейту данных узла.

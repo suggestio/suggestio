@@ -1,16 +1,15 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.common.fut.FutureUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.req._
 import play.api.mvc._
 import util.n2u.N2NodesUtil
-import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
+import play.api.http.Status
 
 import scala.concurrent.Future
 
@@ -43,17 +42,12 @@ class CanEditAd @Inject() (
     /** id рекламной карточки, которую клиент хочет поредактировать. */
     def adId: String
 
-    def forbidden[A](msg: String, request: Request[A]): Result = {
-      Results.Forbidden(s"Forbidden access for ad[$adId]: $msg")
-    }
-
-    def forbiddenFut[A](msg: String, request: Request[A]): Future[Result] = {
-      forbidden(msg, request)
-    }
+    def forbiddenFut[A](msg: String, request: Request[A]): Future[Result] =
+      errorHandler.onClientError( request, Status.FORBIDDEN, s"No access to ad#$adId: $msg" )
 
     def adNotFound(req: IReqHdr): Future[Result] = {
       LOGGER.trace(s"invokeBlock(): Ad not found: $adId")
-      errorHandler.http404Fut(req)
+      errorHandler.onClientError(req, Status.NOT_FOUND)
     }
 
   }
@@ -106,9 +100,8 @@ class CanEditAd @Inject() (
 
       override def userInits = userInits1
 
-      def prodNotFound( mreq: IReqHdr, nodeIdOpt: Option[String]): Future[Result] = {
-        Results.NotFound("Ad producer not found: " + nodeIdOpt)
-      }
+      def prodNotFound( mreq: IReqHdr, nodeIdOpt: Option[String]): Future[Result] =
+        errorHandler.onClientError(mreq, Status.NOT_FOUND, s"Ad producer not found: ${nodeIdOpt.orNull}")
 
       override def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)

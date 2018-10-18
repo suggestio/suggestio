@@ -40,10 +40,10 @@ object MMdrResolution {
   * @param reason Причина отказа в размещении.
   */
 case class MMdrResolution(
-                       nodeId       : String,
-                       info         : MMdrActionInfo,
-                       reason       : Option[String]
-                     ) {
+                           nodeId       : String,
+                           info         : MMdrActionInfo,
+                           reason       : Option[String],
+                         ) {
 
   def isApprove: Boolean = reason.isEmpty
 

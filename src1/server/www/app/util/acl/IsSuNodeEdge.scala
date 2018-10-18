@@ -1,14 +1,13 @@
 package util.acl
 
 import javax.inject.Inject
-
 import models.mproj.ICommonDi
 import models.msys.MNodeEdgeIdQs
 import models.req._
 import play.api.mvc._
-import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
+import play.api.http.Status
 
 import scala.concurrent.Future
 
@@ -80,19 +79,16 @@ class IsSuNodeEdge @Inject() (
       }
 
       /** Узел не найден. */
-      def nodeNotFound(req: IReqHdr): Future[Result] = {
-        errorHandler.http404Fut(req)
-      }
+      def nodeNotFound(req: IReqHdr): Future[Result] =
+        errorHandler.onClientError(req, Status.NOT_FOUND)
 
       /** Запрошенная версия узла неактуальна. */
-      def nodeVsnInvalid(req: INodeReq[_]): Future[Result] = {
-        Results.Conflict(s"Node ${qs.nodeId} has been changed by someone, requested version ${qs.nodeVsn} is outdated.")
-      }
+      def nodeVsnInvalid(req: INodeReq[_]): Future[Result] =
+        errorHandler.onClientError(req, Status.CONFLICT, s"Node ${qs.nodeId} has been changed by someone, requested version ${qs.nodeVsn} is outdated.")
 
       /** Не найден эдж с указанным id. */
-      def edgeNotFound(req: INodeReq[_]): Future[Result] = {
-        Results.NotFound(s"Node ${qs.nodeId} does NOT have edge #${qs.edgeId}.")
-      }
+      def edgeNotFound(req: INodeReq[_]): Future[Result] =
+        errorHandler.onClientError(req, Status.NOT_FOUND, s"Node ${qs.nodeId} does NOT have edge #${qs.edgeId}.")
 
     }
   }

@@ -1,5 +1,6 @@
 package io.suggest.sys.mdr
 
+import io.suggest.adv.rcvr.RcvrKey
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -18,7 +19,6 @@ object MdrSearchArgs {
 
   object Fields {
 
-    def PRODUCER_ID_FN          = "p"
     def OFFSET_FN               = "o"
     def FREE_ADV_IS_ALLOWED_FN  = "f"
 
@@ -28,6 +28,7 @@ object MdrSearchArgs {
       */
     def HIDE_AD_ID_FN           = "h"
 
+    def RCVR_KEY_FN             = "r"
   }
 
 
@@ -36,9 +37,9 @@ object MdrSearchArgs {
     val F = Fields
     (
       (__ \ F.OFFSET_FN).formatNullable[Int] and
-      (__ \ F.PRODUCER_ID_FN).formatNullable[String] and
       (__ \ F.FREE_ADV_IS_ALLOWED_FN).formatNullable[Boolean] and
-      (__ \ F.HIDE_AD_ID_FN).formatNullable[String]
+      (__ \ F.HIDE_AD_ID_FN).formatNullable[String] and
+      (__ \ F.RCVR_KEY_FN).formatNullable[RcvrKey]
     )(apply, unlift(unapply))
   }
 
@@ -50,9 +51,9 @@ object MdrSearchArgs {
 
 case class MdrSearchArgs(
                           offsetOpt             : Option[Int]       = None,
-                          producerId            : Option[String]    = None,
                           isAllowed             : Option[Boolean]   = None,
                           hideAdIdOpt           : Option[String]    = None,
+                          rcvrKey               : Option[RcvrKey]   = None,
                         ) {
 
   def offset  = offsetOpt.getOrElse(0)

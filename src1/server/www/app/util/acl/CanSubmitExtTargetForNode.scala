@@ -1,16 +1,15 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.mproj.ICommonDi
-import models.req.{IReq, ISioUser, MNodeExtTgSubmitReq, MReq}
+import models.req.{IReq, MNodeExtTgSubmitReq, MReq}
 import play.api.mvc._
 import util.adv.ext.AdvExtFormUtil
 import io.suggest.common.fut.FutureUtil
-import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.req.ReqUtil
+import play.api.http.Status
 
 import scala.concurrent.Future
 
@@ -49,7 +48,7 @@ class CanSubmitExtTargetForNode @Inject() (
 
       override def invokeBlock[A](request0: Request[A], block: (MNodeExtTgSubmitReq[A]) => Future[Result]): Future[Result] = {
         val request = aclUtil.reqFromRequest( request0 )
-        val user = aclUtil.userFromRequest(request)
+        val user = request.user
 
         val isAdnNodeAdmFut = isNodeAdmin.isAdnNodeAdmin(nodeId, user)
         val formBinded = advExtFormUtil.oneTargetFullFormM(nodeId).bindFromRequest()(request)
@@ -84,7 +83,7 @@ class CanSubmitExtTargetForNode @Inject() (
                   allOk(someTg)
                 } else {
                   // [xakep] Ксакеп отакует: попытка перезаписать чужую цель.
-                  breakInAttempted(user, request, tg)
+                  breakInAttempted(request, tg)
                 }
             }
 
@@ -95,9 +94,9 @@ class CanSubmitExtTargetForNode @Inject() (
         }
       }
 
-      def breakInAttempted(user: ISioUser, request: IReq[_], tg: MExtTarget): Future[Result] = {
-        LOGGER.warn(s"FORBIDDEN: User[${user.personIdOpt}] @${request.remoteClientAddress} tried to rewrite foreign target[${tg.id.get}] via node[$nodeId]. AdnNode expected = ${tg.adnId}.")
-        Results.Forbidden(s"Target ${tg.id.get} doesn't belongs to node[$nodeId].")
+      def breakInAttempted(request: IReq[_], tg: MExtTarget): Future[Result] = {
+        LOGGER.warn(s"FORBIDDEN: User[${request.user.personIdOpt}] @${request.remoteClientAddress} tried to rewrite foreign target[${tg.id.get}] via node[$nodeId]. AdnNode expected = ${tg.adnId}.")
+        errorHandler.onClientError( request, Status.FORBIDDEN, s"Target ${tg.id.get} doesn't belongs to node[$nodeId]." )
       }
 
     }

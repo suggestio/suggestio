@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v
 
-import chandu0101.scalajs.react.components.materialui.{MuiAppBar, MuiAppBarProps, MuiDivider, MuiDraweAnchors, MuiDrawer, MuiDrawerProps, MuiDrawerVariants, MuiToolBar}
+import chandu0101.scalajs.react.components.materialui.{MuiDrawerAnchors, MuiDrawer, MuiDrawerProps, MuiDrawerVariants, MuiToolBar}
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.jd.render.v.{JdCss, JdCssR}
@@ -10,8 +10,6 @@ import io.suggest.sys.mdr.m.MSysMdrRootS
 import io.suggest.sys.mdr.v.pane.MdrControlPanelR
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -47,21 +45,16 @@ class SysMdrFormR(
 
   class Backend( $: BackendScope[Props, State] ) {
 
-    def render(propsProxy: Props, s: State): VdomElement = {
+    def render(s: State): VdomElement = {
       // Панель управления модерации.
       <.div(
 
         // Рендер css карточки:
         s.jdCssC { jdCssR.apply },
 
-        MuiAppBar(
-          new MuiAppBarProps {
-            override val position = "relative"
-          }
-        )(
-          MuiToolBar()(
-            s.controlPanelC { mdrControlPanelR.apply }
-          )
+        // Тулбар, без AppBar, т.к. он неуместен и делает неконтрастный фон.
+        MuiToolBar()(
+          s.controlPanelC { mdrControlPanelR.apply }
         ),
         <.br,
 
@@ -73,7 +66,7 @@ class SysMdrFormR(
         MuiDrawer(
           new MuiDrawerProps {
             override val variant = MuiDrawerVariants.permanent
-            override val anchor = MuiDraweAnchors.right
+            override val anchor  = MuiDrawerAnchors.right
           }
         )(
           // Содержимое формы модерации карточки:

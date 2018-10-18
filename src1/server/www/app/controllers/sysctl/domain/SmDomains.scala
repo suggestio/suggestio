@@ -13,6 +13,8 @@ import util.acl.IIsSuNodeDi
 import util.sys.ISysMarketUtilDi
 import views.html.sys1.domains._
 
+import scala.concurrent.Future
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -85,22 +87,24 @@ trait SmDomains
     * @return 200, 403/302.
     */
   def editNodeDomain(nodeId: String, dkey: String) = csrf.AddToken {
-    isSuNode(nodeId) { implicit request =>
+    isSuNode(nodeId).async { implicit request =>
       _editNodeDomainBody(dkey, Ok) { sysMarketUtil.mDomainExtraFormM.fill }
     }
   }
 
-  private def _editNodeDomainBody(dkey: String, rs: Status)(formF: MDomainExtra => Form[MDomainExtra])(implicit request: INodeReq[_]): Result = {
-    request.mnode.extras.domains.find(_.dkey == dkey).fold {
-      NotFound(s"Domain '$dkey' not found on node ${request.mnode.id.orNull}.")
-    } { mdx =>
-      val args = MSysNodeDomainEditFormTplArgs(
-        mdx     = mdx,
-        form    = formF(mdx),
-        mnode   = request.mnode
-      )
-      rs( editNodeDomainTpl(args) )
-    }
+  private def _editNodeDomainBody(dkey: String, rs: Status)(formF: MDomainExtra => Form[MDomainExtra])(implicit request: INodeReq[_]): Future[Result] = {
+    request.mnode.extras.domains
+      .find(_.dkey == dkey)
+      .fold {
+        errorHandler.onClientError(request, NOT_FOUND, s"Domain '$dkey' not found on node ${request.mnode.id.orNull}.")
+      } { mdx =>
+        val args = MSysNodeDomainEditFormTplArgs(
+          mdx     = mdx,
+          form    = formF(mdx),
+          mnode   = request.mnode
+        )
+        rs( editNodeDomainTpl(args) )
+      }
   }
 
   /** Реакция на сабмит формы редактирования одного домена, относящегося к узлу. */

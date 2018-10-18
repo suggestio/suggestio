@@ -136,8 +136,8 @@ class Static @Inject() (
     badResult = { req0 =>
       val req = aclUtil.reqHdrFromRequestHdr(req0)
       LOGGER.debug(s"_cspBp: Dropped request from ${req.remoteClientAddress} with unknown content type ${req.contentType}")
-      // Нет никакой надобности отвечать html-страницами, т.к. на CSP-экшены никто кроме браузеров не обращается.
-      UnsupportedMediaType( "CSP-report expected" )
+      // Нет никакой надобности отвечать html-страницами, т.к. на CSP-экшены никто кроме браузеров не обращается. Но для надёжности, ответим через обычный путь:
+      errorHandler.onClientError(req0, UNSUPPORTED_MEDIA_TYPE, "CSP-report expected")
     }
   )
 
@@ -186,8 +186,9 @@ class Static @Inject() (
       request.body.validate[CspViolationReport].fold(
         // Ошибка парсинга JSON-тела. Вообще, это обычно неправильно.
         {violations =>
-          LOGGER.warn(s"$logPrefix Invalid JSON: ${violations.mkString(", ")}")
-          BadRequest("WOW!")
+          val msg = s"Invalid JSON: ${violations.mkString(", ")}"
+          LOGGER.warn(s"$logPrefix $msg")
+          errorHandler.onClientError(request, BAD_REQUEST, msg)
         },
 
         // Всё ок распарсилось.
@@ -490,7 +491,7 @@ class Static @Inject() (
     def logPrefix = s"wsChannel():"
 
     // Используем match вместо .fold, чтобы не прописывать тут сложный тип вида Future[Either[...,Flow[...]]]
-    val res = canOpenWsChannel.can(ctxId) match {
+    canOpenWsChannel.can(ctxId) match {
       // Разрешаем коннекшен
       case Some(mrh) =>
         LOGGER.trace(s"$logPrefix Opening connection for user#${mrh.user.personIdOpt.orNull} ctx#${ctxId.key}...")
@@ -500,17 +501,16 @@ class Static @Inject() (
             wsChannelActors.props(args)
           }
         )
-        Right(aFlow)
+        val r = Right(aFlow)
+        Future.successful(r)
 
       // Не разрешён коннект: чтоо-то нет так с ctxId.
       case None =>
         val ctxIdStr = ctxId.toString
         LOGGER.warn(s"$logPrefix not allowed: $ctxIdStr")
-        val result = Forbidden(s"Forbidden: $ctxIdStr")
-        Left(result)
+        errorHandler.onClientError(rh, FORBIDDEN, s"Forbidden: $ctxIdStr")
+          .map(Left.apply)
     }
-
-    Future.successful(res)
   }
 
 }

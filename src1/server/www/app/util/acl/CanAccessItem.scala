@@ -11,6 +11,7 @@ import models.mproj.ICommonDi
 import models.req.{MItemReq, MOrderIdsReq, MUserInit}
 import play.api.mvc._
 import japgolly.univeq._
+import play.api.http.Status
 import slick.dbio.DBIOAction
 
 import scala.concurrent.Future
@@ -64,13 +65,11 @@ class CanAccessItem @Inject() (
         val maxItemIdsLen = MAX_ITEM_IDS_PER_REQUEST
         if (itemIds.isEmpty) {
           LOGGER.warn(s"$logPrefix No items defined in request url")
-          val resp = Results.BadRequest("Ids expected")
-          Future.successful(resp)
+          errorHandler.onClientError( request, Status.BAD_REQUEST, "Ids expected")
 
         } else if (itemIdsLen > maxItemIdsLen) {
           LOGGER.warn(s"$logPrefix Too many item ids: $itemIdsLen, allowed max = $maxItemIdsLen")
-          val resp = Results.BadRequest(s"Too many ids: $itemIdsLen/$maxItemIdsLen")
-          Future.successful(resp)
+          errorHandler.onClientError( request, Status.BAD_REQUEST, s"Too many ids: $itemIdsLen/$maxItemIdsLen" )
 
         } else if (user.isAnon) {
           // Анонимус по определению не может иметь доступа к биллингу.
@@ -83,8 +82,7 @@ class CanAccessItem @Inject() (
           if (itemIdsCount !=* itemIdsLen) {
             // В списке есть повторяющиеся элементы. В этом нет смысла, и дальнейшие проверки невозможны.
             LOGGER.warn(s"$logPrefix Duplicate ids in itemIds, distict[$itemIdsCount, but $itemIdsLen expected] = [${itemIdsSet.mkString(", ")}]")
-            val res = Results.BadRequest("duplicate ids")
-            Future.successful(res)
+            errorHandler.onClientError( request, Status.BAD_REQUEST, "duplicate ids" )
 
           } else {
             // Запустить различные параллельные проверки. item'ов может быть много, поэтому все проверки - на стороне СУБД, без выкачивания item'ов сюда.

@@ -2,13 +2,12 @@ package util.acl
 
 import akka.actor.ActorSystem
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{BfpArgs, IReq}
 import play.api.mvc._
-import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
 import play.api.cache.AsyncCacheApi
+import play.api.http.{HttpErrorHandler, Status}
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.concurrent.duration._
@@ -32,7 +31,8 @@ final class BruteForceProtect @Inject() (
                                           actorSystem             : ActorSystem,
                                           defaultActionBuilder    : DefaultActionBuilder,
                                           reqUtil                 : ReqUtil,
-                                          implicit private val ec : ExecutionContext
+                                          httpErrorHandler        : HttpErrorHandler,
+                                          implicit private val ec : ExecutionContext,
                                         )
   extends MacroLogsImpl
 {
@@ -50,14 +50,15 @@ final class BruteForceProtect @Inject() (
 
     // Для противодействию брутфорсу добавляем асинхронную задержку выполнения проверки по методике https://stackoverflow.com/a/17284760
     val ck = args.cachePrefix + remoteClientAddr
-    cacheApi.get[Int](ck)
+    cacheApi
+      .get[Int](ck)
       .map(_ getOrElse 0)
       .flatMap { prevTryCount =>
 
         if (prevTryCount > args.tryCountDeadline) {
           // Наступил предел толерантности к атаке.
           LOGGER.warn(s"$logPrefix Too many bruteforce retries. Dropping request...")
-          Results.TooManyRequests("Too many requests. Do not want.")
+          httpErrorHandler.onClientError(request0, Status.TOO_MANY_REQUESTS, "Too many requests. Do not want.")
 
         } else {
           val lagMs = {

@@ -1,12 +1,11 @@
 package util.acl
 
 import javax.inject.Inject
-
 import models.mcal.MCalendars
 import models.req.{MCalendarReq, MReq}
 import play.api.mvc._
-import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.req.ReqUtil
+import play.api.http.{HttpErrorHandler, Status}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -22,7 +21,8 @@ class IsSuCalendar @Inject()(
                               mCalendars              : MCalendars,
                               isSu                    : IsSu,
                               reqUtil                 : ReqUtil,
-                              implicit private val ec : ExecutionContext
+                              httpErrorHandler        : HttpErrorHandler,
+                              implicit private val ec : ExecutionContext,
                             ) {
 
   /**
@@ -41,7 +41,7 @@ class IsSuCalendar @Inject()(
               block(req1)
 
             case None =>
-              Results.NotFound("Calendar not found: " + calId)
+              httpErrorHandler.onClientError( request, Status.NOT_FOUND, s"Calendar not found: $calId")
           }
 
         } else {

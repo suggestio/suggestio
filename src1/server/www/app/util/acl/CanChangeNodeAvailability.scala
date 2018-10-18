@@ -10,6 +10,7 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{IReqHdr, ISioUser, MNodeReq}
+import play.api.http.Status
 import play.api.mvc._
 import util.billing.Bill2Util
 
@@ -102,7 +103,8 @@ class CanChangeNodeAvailability @Inject() (
         val mnodeOptFut = isNodeAdmin.isAdnNodeAdmin(nodeId, user)
 
         def logPrefix = s"node$nodeId<-u#$user:"
-        def forbidden: Future[Result] = Results.Forbidden(s"Not enought rights for node$nodeId.")
+        def forbidden: Future[Result] =
+          errorHandler.onClientError(request, Status.FORBIDDEN, s"Not enought rights for node$nodeId.")
 
         mnodeOptFut.flatMap {
           // Уже есть админский доступ к узлу. Проверить, есть ли у юзеров возможность влиять на availability этого узла?

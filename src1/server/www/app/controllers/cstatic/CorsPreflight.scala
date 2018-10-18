@@ -12,15 +12,17 @@ import play.api.http.HeaderNames
  */
 trait CorsPreflight
   extends SioController
-    with ICorsUtilDi
+  with ICorsUtilDi
 {
+
+  import mCommonDi.errorHandler
 
   /**
    * Реакция на options-запрос, хидеры выставит CORS-фильтр, подключенный в Global.
    * @param path Путь, к которому запрошены опшыны.
    * @return
    */
-  def corsPreflight(path: String) = Action { implicit request =>
+  def corsPreflight(path: String) = Action.async { implicit request =>
     val isEnabled = corsUtil.CORS_PREFLIGHT_ALLOWED
 
     if (isEnabled && request.headers.get( HeaderNames.ACCESS_CONTROL_REQUEST_METHOD ).nonEmpty) {
@@ -30,9 +32,8 @@ trait CorsPreflight
       Ok.withHeaders( headers2 : _* )
 
     } else {
-
       val body = if (isEnabled) "Missing nessesary CORS headers" else "CORS is disabled"
-      NotFound(body)
+      errorHandler.onClientError(request, NOT_FOUND, body)
     }
   }
 

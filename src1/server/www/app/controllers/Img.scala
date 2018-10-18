@@ -74,13 +74,15 @@ class Img @Inject() (
 
     // Сначала обработать 304-кэширование, если есть что-то:
     val isNotModified = request.mmediaOpt.exists { mmedia =>
-      request.headers.get(IF_MODIFIED_SINCE).exists { ifModifiedSince =>
-        val dateCreated = mmedia.file.dateCreated
-        val newModelInstant = withoutMs(dateCreated.toInstant.toEpochMilli)
-        val r = isNotModifiedSinceCached(newModelInstant, ifModifiedSince)
-        LOGGER.trace(s"$logPrefix isNotModified?$r dateCreated=$dateCreated")
-        r
-      }
+      request.headers
+        .get(IF_MODIFIED_SINCE)
+        .exists { ifModifiedSince =>
+          val dateCreated = mmedia.file.dateCreated
+          val newModelInstant = withoutMs(dateCreated.toInstant.toEpochMilli)
+          val r = isNotModifiedSinceCached(newModelInstant, ifModifiedSince)
+          LOGGER.trace(s"$logPrefix isNotModified?$r dateCreated=$dateCreated")
+          r
+        }
     }
 
     // HTTP-заголовок для картинок.
@@ -161,17 +163,22 @@ class Img @Inject() (
               )
           }
       }
-        .recover { case ex: Throwable =>
+        .recoverWith { case ex: Throwable =>
           // TODO Пересобрать неисправную картинку, если не-оригинал?
           ex match {
             case _: NoSuchElementException =>
               LOGGER.error(s"$logPrefix Image not exist in ${request.storageInfo}")
-              NotFound("Image unexpectedly missing.")
-                .withHeaders(CACHE_CONTROL -> s"public, max-age=30")
+              for (
+                resp <- errorHandler.onClientError(request, NOT_FOUND, "Image unexpectedly missing.")
+              ) yield
+                resp.withHeaders(CACHE_CONTROL -> s"public, max-age=30")
+
             case _ =>
               LOGGER.error(s"$logPrefix Failed to read image from ${request.storageInfo}", ex)
-              ServiceUnavailable("Internal error occured during fetching/creating an image.")
-                .withHeaders(RETRY_AFTER -> "60")
+              for (
+                resp <- errorHandler.onClientError(request, SERVICE_UNAVAILABLE, "Internal error occured during fetching/creating an image.")
+              ) yield
+                resp.withHeaders(RETRY_AFTER -> "60")
           }
         }
     }

@@ -1,7 +1,6 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
@@ -10,6 +9,7 @@ import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNode
 import io.suggest.req.ReqUtil
+import play.api.http.Status
 
 import scala.concurrent.Future
 import play.api.mvc._
@@ -40,7 +40,7 @@ class IsNodeAdmin @Inject()(
   /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
   def onUnauthNode(req: IReqHdr): Future[Result] = {
     if (req.user.isAuth) {
-      Results.Forbidden("403 Forbidden")
+      errorHandler.onClientError( req, Status.FORBIDDEN )
     } else {
       isAuth.onUnauth(req)
     }

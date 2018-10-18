@@ -1,13 +1,12 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{MAdProdNodesChainReq, MUserInit}
 import play.api.mvc._
-import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
+import play.api.http.{HttpErrorHandler, Status}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -24,7 +23,8 @@ class CanFreelyAdvAdOnNode @Inject() (
                                        canAdvAd                 : CanAdvAd,
                                        isNodeAdmin              : IsNodeAdmin,
                                        reqUtil                  : ReqUtil,
-                                       implicit private val ec  : ExecutionContext
+                                       httpErrorHandler         : HttpErrorHandler,
+                                       implicit private val ec  : ExecutionContext,
                                      )
   extends MacroLogsImpl
 {
@@ -70,13 +70,13 @@ class CanFreelyAdvAdOnNode @Inject() (
               // Был доступ к карточке, но нет доступа на указанный узел. В норме этой ситуации не должно возникать.
               case None =>
                 LOGGER.warn(s"$logPrefix User#$user have adv access to ad#$adId, but nodes chain access validation failed.")
-                Results.Forbidden(s"Failed in ${nodeKey.mkString("/")}")
+                httpErrorHandler.onClientError( request, Status.FORBIDDEN, s"Failed in ${RcvrKey.rcvrKey2urlPath(nodeKey)}" )
             }
 
           // Проверка прав на карточку рекламную не пройдена.
           case None =>
             LOGGER.warn(s"$logPrefix User have no access for ad#$adId.")
-            Results.Forbidden(s"No access for ad#$adId")
+            httpErrorHandler.onClientError( request, Status.FORBIDDEN, s"No access for ad#$adId" )
         }
 
       }

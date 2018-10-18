@@ -21,6 +21,8 @@ trait LkJsMessages
   with IMacroLogs
 {
 
+  import mCommonDi.errorHandler
+
 
   /** Сколько секунд кэшировать на клиенте js'ник с локализацией. */
   private val CACHE_MAX_AGE_SECONDS = if (mCommonDi.isProd) 864000 else 5
@@ -47,12 +49,12 @@ trait LkJsMessages
           .withHeaders(CACHE_CONTROL -> ("public, max-age=" + CACHE_MAX_AGE_SECONDS))
 
       } else {
-        NotFound("lang: " + langCode)
+        errorHandler.onClientError(request, NOT_FOUND, s"Lang: $langCode")
       }
 
     } else {
       LOGGER.trace(s"${request.path} hash=$hash must be ${jsMessagesUtil.hash}")
-      NotFound("hash: " + hash)
+      errorHandler.onClientError(request, NOT_FOUND, s"hash: $hash")
     }
   }
 

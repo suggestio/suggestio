@@ -1,15 +1,15 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import models.req.{IAdProdReq, MNodeMaybeAdminReq}
 import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import io.suggest.model.n2.node.MNodesCache
 import io.suggest.req.ReqUtil
+import play.api.http.{HttpErrorHandler, Status}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -19,19 +19,18 @@ import scala.concurrent.Future
   * Можно
   */
 class CanViewNodeAdvInfo @Inject() (
-                                     aclUtil                : AclUtil,
-                                     canAdvAd               : CanAdvAd,
-                                     isAuth                 : IsAuth,
-                                     isNodeAdmin            : IsNodeAdmin,
-                                     dab                    : DefaultActionBuilder,
-                                     reqUtil                : ReqUtil,
-                                     mCommonDi              : ICommonDi
+                                     aclUtil                    : AclUtil,
+                                     canAdvAd                   : CanAdvAd,
+                                     isAuth                     : IsAuth,
+                                     isNodeAdmin                : IsNodeAdmin,
+                                     dab                        : DefaultActionBuilder,
+                                     reqUtil                    : ReqUtil,
+                                     mNodesCache                : MNodesCache,
+                                     httpErrorHandler           : HttpErrorHandler,
+                                     implicit private val ec    : ExecutionContext,
                                    )
   extends MacroLogsImpl
 { outer =>
-
-  import mCommonDi.{ec, mNodesCache}
-
 
   /** Вся ACL-логика живёт здесь.
     *
@@ -57,19 +56,18 @@ class CanViewNodeAdvInfo @Inject() (
       val mnodeOptFut = mNodesCache.getById(nodeId)
 
       // Ответ при проблемах с доступом для залогиненного юзера всегда один:
-      def forbidden: Result = {
-        Results.Forbidden( s"No access to node $nodeId." )
-      }
+      def forbidden: Future[Result] =
+        httpErrorHandler.onClientError( request, Status.FORBIDDEN, s"No access to node $nodeId.")
 
       // Запустить в фоне проверку доступа к опциональной карточке.
-      val madProdReqOptFut = forAdIdOpt.fold [Future[Either[Result, Option[IAdProdReq[A]]]]] {
+      val madProdReqOptFut = forAdIdOpt.fold [Future[Either[Future[Result], Option[IAdProdReq[A]]]]] {
         LOGGER.trace(s"$logPrefix adId undefined, skipped.")
         Right(None)
       } { forAdId =>
         for {
           madReqOpt <- canAdvAd.maybeAllowed( forAdId, request )
         } yield {
-          madReqOpt.fold [Either[Result, Option[IAdProdReq[A]]]] {
+          madReqOpt.fold [Either[Future[Result], Option[IAdProdReq[A]]]] {
             LOGGER.warn(s"$logPrefix User#$personId has NO access to ad#$forAdId")
             Left( forbidden )
           } { adProdReq =>

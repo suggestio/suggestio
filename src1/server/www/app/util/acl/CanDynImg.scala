@@ -1,7 +1,6 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.model.n2.media.{MMedia, MMediasCache}
 import io.suggest.model.n2.node.{MNodeTypes, MNodesCache}
 import io.suggest.req.ReqUtil
@@ -12,6 +11,7 @@ import play.api.mvc._
 import japgolly.univeq._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.proto.HttpConst
+import play.api.http.{HttpErrorHandler, Status}
 import util.cdn.CdnUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,6 +30,7 @@ class CanDynImg @Inject() (
                             mMediasCache            : MMediasCache,
                             cdnUtil                 : CdnUtil,
                             mNodesCache             : MNodesCache,
+                            errorHandler            : HttpErrorHandler,
                             implicit private val ec : ExecutionContext
                           )
   extends MacroLogsImpl
@@ -59,6 +60,10 @@ class CanDynImg @Inject() (
         }
 
         lazy val logPrefix = s"(${mimg.dynImgId.mediaId})#${System.currentTimeMillis()}:"
+
+        /** Ответ клиенту, когда картинка не найдена или недоступна. */
+        def _imageNotFound: Future[Result] =
+          errorHandler.onClientError( request, Status.NOT_FOUND, "Image not found." )
 
         mnodeOptFut.flatMap {
           case Some( mnode ) if mnode.common.isEnabled && (mnode.common.ntype ==* MNodeTypes.Media.Image) =>
@@ -142,11 +147,6 @@ class CanDynImg @Inject() (
         }
       }
 
-
-      /** Ответ клиенту, когда картинка не найдена или недоступна. */
-      def _imageNotFound: Future[Result] = {
-        Results.NotFound( "Image not found." )
-      }
 
     }
   }

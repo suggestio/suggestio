@@ -1,12 +1,13 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.req.ReqUtil
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MItemReq, MReq}
+import play.api.http.Status
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
@@ -23,7 +24,9 @@ class IsSuItem @Inject() (
                            isSu        : IsSu,
                            reqUtil     : ReqUtil,
                            mCommonDi   : ICommonDi
-                         ) {
+                         )
+  extends MacroLogsImpl
+{
 
   import mCommonDi._
 
@@ -35,6 +38,7 @@ class IsSuItem @Inject() (
 
       override def invokeBlock[A](request: Request[A], block: (MItemReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)
+        def req1 = MReq(request, user)
 
         if (user.isSuper) {
           val mitemOptFut = slick.db.run {
@@ -46,19 +50,14 @@ class IsSuItem @Inject() (
               block(req1)
 
             case None =>
-              val req1 = MReq(request, user)
-              itemNotFound(req1)
+              val msg = s"Item#$itemId not found."
+              LOGGER.debug(msg)
+              errorHandler.onClientError(req1, Status.NOT_FOUND, msg)
           }
 
         } else {
-          val req1 = MReq(request, user)
           isSu.supOnUnauthFut(req1)
         }
-      }
-
-      /** Реакция на отсутствующий item. */
-      def itemNotFound(req: IReqHdr): Future[Result] = {
-        errorHandler.http404Fut(req)
       }
 
     }

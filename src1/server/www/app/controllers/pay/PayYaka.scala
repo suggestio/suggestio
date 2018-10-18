@@ -81,7 +81,7 @@ class PayYaka @Inject() (
   with MacroLogsImpl
 {
 
-  import mCommonDi.{ec, mNodesCache, slick, csrf}
+  import mCommonDi.{ec, mNodesCache, slick, csrf, errorHandler}
 
 
   /** Заголовок ответа, разрешающий открытие ресурсов sio из фреймов.
@@ -670,7 +670,7 @@ class PayYaka @Inject() (
   }
 
 
-  def success(qs: MYakaReturnQs) = maybeAuth() { implicit request =>
+  def success(qs: MYakaReturnQs) = maybeAuth().async { implicit request =>
     _success(yakaUtil.PRODUCTION, qs)
   }
   def demoSuccess(qs: MYakaReturnQs) = {
@@ -678,7 +678,7 @@ class PayYaka @Inject() (
       maybeAuth()
     else
       isSuOrNotProduction()
-    actionBuilder { implicit request =>
+    actionBuilder.async { implicit request =>
       _success(yakaUtil.DEMO, qs)
     }
   }
@@ -687,29 +687,31 @@ class PayYaka @Inject() (
     * Сессия юзера могла истечь, пока он платил, поэтому тут maybeAuth.
     * @param qs QS-аргументы запроса.
     */
-  private def _success(profile: IYakaProfile, qs: MYakaReturnQs)(implicit request: IReq[_]): Result = {
+  private def _success(profile: IYakaProfile, qs: MYakaReturnQs)(implicit request: IReq[_]): Future[Result] = {
     lazy val logPrefix = s"success[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix User returned with $qs")
 
-    val resp = if (qs.action != MYakaReturnActions.Success) {
+    val respFut: Future[Result] = if (qs.action != MYakaReturnActions.Success) {
       LOGGER.warn(s"$logPrefix unexpected qs action: ${qs.action}")
-      ExpectationFailed(s"No success: ${qs.action}")
+      errorHandler.onClientError(request, EXPECTATION_FAILED, s"No success: ${qs.action}")
 
     } else if (qs.shopId != profile.shopId) {
       LOGGER.warn(s"$logPrefix Unexpected shopId for returned user: ${qs.shopId}")
-      NotAcceptable("Invalid shop.")
+      errorHandler.onClientError(request, NOT_ACCEPTABLE, "Invalid shopID.")
 
     } else if (request.user.personIdOpt.nonEmpty && !request.user.personIdOpt.contains(qs.personId)) {
       LOGGER.warn(s"$logPrefix Unexpected personId for returned user: ${qs.personId}, but expected ${request.user.personIdOpt}")
-      Forbidden("Invalid user.")
+      errorHandler.onClientError(request, FORBIDDEN, "Invalid user.")
 
     } else {
       // Юзер либо аноним, либо правильный. Надо отредиректить юзера на его узел, где он может просмотреть итоги оплаты.
-      Redirect( _callToOrder(qs.orderId, qs.onNodeId) )
+      val rdr = Redirect( _callToOrder(qs.orderId, qs.onNodeId) )
         .flashing(FLASH.SUCCESS -> implicitly[Context].messages("Thanks.for.buy"))
+      Future.successful(rdr)
     }
 
-    resp.withHeaders( FRAMES_ALLOWED: _* )
+    for (resp <- respFut) yield
+      resp.withHeaders( FRAMES_ALLOWED: _* )
   }
 
 

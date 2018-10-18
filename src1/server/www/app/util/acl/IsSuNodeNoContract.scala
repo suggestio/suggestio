@@ -1,11 +1,11 @@
 package util.acl
 
 import javax.inject.Inject
-
-import io.suggest.model.n2.node.MNode
 import io.suggest.req.ReqUtil
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.req.{IReqHdr, MNodeReq, MReq}
+import models.req.{MNodeReq, MReq}
+import play.api.http.Status
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
@@ -21,7 +21,9 @@ class IsSuNodeNoContract @Inject() (
                                      isSu       : IsSu,
                                      reqUtil    : ReqUtil,
                                      mCommonDi  : ICommonDi
-                                   ) {
+                                   )
+  extends MacroLogsImpl
+{
 
   import mCommonDi._
 
@@ -44,24 +46,19 @@ class IsSuNodeNoContract @Inject() (
                 val req1 = MNodeReq(mnode, request, user)
                 block(req1)
               } else {
-                nodeHasContract(mnode, reqErr)
+                val msg = s"Node#$nodeId has contract#${mnode.billing.contractId.orNull}, but must not."
+                errorHandler.onClientError(reqErr, Status.NOT_FOUND, msg)
               }
 
             case None =>
-              nodeNotFound(reqErr)
+              val msg = s"Node#$nodeId is missing"
+              LOGGER.debug(msg)
+              errorHandler.onClientError(reqErr, Status.NOT_FOUND, msg)
           }
 
         } else {
           isSu.supOnUnauthFut(reqErr)
         }
-      }
-
-      def nodeNotFound(req: IReqHdr): Future[Result] = {
-        errorHandler.http404Fut(req)
-      }
-
-      def nodeHasContract(mnode: MNode, req: IReqHdr): Future[Result] = {
-        nodeNotFound(req)
       }
 
     }

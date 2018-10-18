@@ -1,12 +1,11 @@
 package util.acl
 
 import javax.inject.Inject
-
 import models.ai.MAiMads
 import models.mproj.ICommonDi
 import models.req.{MAiMadReq, MReq}
-import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
+import play.api.http.Status
 
 import scala.concurrent.Future
 import play.api.mvc._
@@ -44,7 +43,8 @@ class IsSuAiMad @Inject() (
               val req1 = MAiMadReq(madAi, request, user)
               block(req1)
 
-            case None => aiMadNotFound
+            case None =>
+              aiMadNotFound(request)
           }
 
         } else {
@@ -53,9 +53,8 @@ class IsSuAiMad @Inject() (
         }
       }
 
-      def aiMadNotFound: Future[Result] = {
-        Results.NotFound(s"MAiMad($aiMadId) not found.")
-      }
+      def aiMadNotFound(rh: RequestHeader): Future[Result] =
+        errorHandler.onClientError(rh, Status.NOT_FOUND, s"MAiMad($aiMadId) not found.")
 
     }
   }

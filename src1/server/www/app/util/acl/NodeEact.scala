@@ -65,9 +65,10 @@ class NodeEact @Inject() (
                   // email, на который выслан запрос, уже зареган в системе, но текущий юзер не подходит: тут у нас анонимус или левый юзер.
                   case Some(epwIdent) if epwIdent.isVerified && !user.personIdOpt.contains(epwIdent.personId) =>
                     LOGGER.debug(s"eAct has email = ${epwIdent.email}. This is personId[${epwIdent.personId}], but current pwOpt = ${user.personIdOpt.orNull} :: Rdr user to login...")
-                    val result = isAuth.onUnauthBase(request)
-                    val res2 = if (user.isAuth) result.withNewSession else result
-                    Future successful res2
+                    var resFut = isAuth.onUnauth(request)
+                    if (user.isAuth)
+                      resFut = for (res <- resFut) yield res.withNewSession
+                    resFut
 
                   // Юзер анонимус и такие email неизвестны системе, либо тут у нас текущий необходимый юзер.
                   case epwIdOpt =>

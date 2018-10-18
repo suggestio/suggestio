@@ -273,7 +273,7 @@ class SysMdrUtil @Inject() (
   }
 
   /** SQL для экшена поиска id карточек, нуждающихся в модерации. */
-  def getFirstNodesInDba(args: MdrSearchArgs, q: Query[Rep[String], String, Seq], limit: Int): DBIOAction[Seq[String], Streaming[String], Effect.Read] = {
+  def getFirstIn(args: MdrSearchArgs, q: Query[Rep[String], String, Seq], limit: Int): DBIOAction[Seq[String], Streaming[String], Effect.Read] = {
     q
       .drop( args.offset )
       .take( limit )
@@ -314,6 +314,7 @@ class SysMdrUtil @Inject() (
         )
 
         // Если задан продьюсер, то закинуть и его в общую кучу.
+        /*
         for (prodId <- args.producerId) {
           crs ::= Criteria(
             predicates  = MPredicates.OwnedBy :: Nil,
@@ -321,6 +322,7 @@ class SysMdrUtil @Inject() (
             must        = must
           )
         }
+        */
 
         crs
       }

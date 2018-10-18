@@ -1,13 +1,13 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.model.n2.node.MNodeTypes
 import models.mproj.ICommonDi
 import models.req.{MAdReq, MReq}
 import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
+import play.api.http.Status
 
 import scala.concurrent.Future
 
@@ -55,9 +55,8 @@ class IsSuMad @Inject()(
         }
       }
 
-      def madNotFound(request: Request[_]): Future[Result] = {
-        Results.NotFound("ad not found: " + adId)
-      }
+      def madNotFound(request: Request[_]): Future[Result] =
+        errorHandler.onClientError( request, Status.NOT_FOUND, s"ad not found: $adId" )
 
     }
   }

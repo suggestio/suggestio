@@ -296,7 +296,7 @@ class LkNodes @Inject() (
             // Конвертим violations в нормальную коллекцию, чтобы просто её отформатировать без боли.
             val violsList = violations.asIterable
             LOGGER.debug(s"$logPrefix Failed to validate data:\n ${request.body}\n Violations: ${violsList.mkString(", ")}")
-            NotAcceptable(s"Invalidated: ${violsList.mkString("\n", ",\n", "")}")
+            errorHandler.onClientError(request, NOT_ACCEPTABLE, s"Invalidated: ${violsList.mkString("\n", ",\n", "")}")
           },
 
           // Данные по создаваемому узлу приняты и выверены. Произвести создание нового узла.
@@ -500,7 +500,7 @@ class LkNodes @Inject() (
         lkNodesUtil.validateNodeReq( request.body, isEdit = true ).fold(
           {violations =>
             LOGGER.debug(s"$logPrefix Failed to bind form: ${violations.iterator.mkString(", ")}")
-            NotAcceptable("Invalid name.")
+            errorHandler.onClientError(request, NOT_ACCEPTABLE, "Invalid name.")
           },
 
           {binded =>
@@ -667,7 +667,7 @@ class LkNodes @Inject() (
         {violations =>
           val violsStr = violations.iterator.mkString("\n ")
           LOGGER.debug(s"$logPrefix Failed to validate tf-mode:\n $violsStr")
-          NotAcceptable( violsStr )
+          errorHandler.onClientError(request, NOT_ACCEPTABLE, violsStr)
         },
 
         // Всё ок, обновить текущий узел.
@@ -737,7 +737,7 @@ class LkNodes @Inject() (
 
       madEdgeSelfOpt.fold [Future[Result]] {
         LOGGER.warn(s"$logPrefix Cannot modify showOpened on in-exising edge $pred")
-        NotFound(s"!pred: $pred for $nodeId")
+        errorHandler.onClientError(request, NOT_FOUND, s"!pred: $pred for $nodeId")
 
       } { edge0 =>
         if (edge0.info.flag.getOrElseFalse ==* isEnabled) {

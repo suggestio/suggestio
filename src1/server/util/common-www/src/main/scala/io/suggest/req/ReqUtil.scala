@@ -1,7 +1,6 @@
 package io.suggest.req
 
 import javax.inject.{Inject, Singleton}
-
 import boopickle.Pickler
 import io.suggest.pick.PickleUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -19,7 +18,7 @@ import scala.language.higherKinds
 @Singleton
 final class ReqUtil @Inject() (
                                 parse                   : PlayBodyParsers,
-                                implicit private val ec : ExecutionContext
+                                implicit private val ec : ExecutionContext,
                               )
   extends MacroLogsImpl
 {

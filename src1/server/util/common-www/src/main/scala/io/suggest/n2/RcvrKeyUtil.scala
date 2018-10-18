@@ -1,8 +1,10 @@
 package io.suggest.n2
 
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.common.html.HtmlConstants
 import io.suggest.model.play.psb.PathBindableImpl
-import play.api.mvc.PathBindable
+import io.suggest.model.play.qsb.{QsbSeq, QueryStringBindableImpl}
+import play.api.mvc.{PathBindable, QueryStringBindable}
 
 /**
   * Suggest.io
@@ -25,7 +27,7 @@ object RcvrKeyUtil {
           if (value.isEmpty) {
             Left("error.required")
           } else {
-            val nodeIdsArr = value.split('/')
+            val nodeIdsArr = value.split( HtmlConstants.SLASH.head )
             if (nodeIdsArr.length < 1) {
               Left( "error.empty" )
             } else if (nodeIdsArr.length <= RCVR_KEY_MAXLEN) {
@@ -37,7 +39,31 @@ object RcvrKeyUtil {
         }
 
         override def unbind(key: String, value: RcvrKey): String = {
-          value.mkString("/")
+          value.mkString( HtmlConstants.SLASH )
+        }
+
+      }
+    }
+
+
+    /** QSB для rcvrKey. */
+    implicit def rcvrKeyQsb(implicit qsbSeqStrB: QueryStringBindable[QsbSeq[String]]): QueryStringBindable[RcvrKey] = {
+      new QueryStringBindableImpl[RcvrKey] {
+
+        override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, RcvrKey]] = {
+          for {
+            qsbSeqE <- qsbSeqStrB.bind(key, params)
+          } yield {
+            for {
+              qsbSeq <- qsbSeqE.right
+            } yield {
+              RcvrKey.from( qsbSeq.items )
+            }
+          }
+        }
+
+        override def unbind(key: String, value: RcvrKey): String = {
+          qsbSeqStrB.unbind(key, QsbSeq(value))
         }
 
       }

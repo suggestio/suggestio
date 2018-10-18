@@ -123,7 +123,7 @@ class SysCalendar @Inject() (
           val codeId = hc.getId.toLowerCase
           getClass.getClassLoader.getResourceAsStream(s"holidays/Holidays_$codeId.xml") match {
             case null =>
-              NotFound("Template calendar not found: " + codeId)
+              errorHandler.onClientError(request, NOT_FOUND, s"Template calendar not found: $codeId")
             case stream =>
               try {
                 val sw = new StringWriter()

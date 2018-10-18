@@ -1,14 +1,13 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.MExtTargets
 import models.req.{MExtTargetNodeReq, MReq}
 import play.api.mvc._
-import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
+import play.api.http.Status
 
 import scala.concurrent.Future
 
@@ -65,9 +64,8 @@ class CanAccessExtTarget @Inject() (
       }
 
       /** Что делать и что возвращать юзеру, если цель не найдена? */
-      def tgNotFound(request: Request[_]): Future[Result] = {
-        Results.NotFound("Target does not exist: " + tgId)
-      }
+      def tgNotFound(request: Request[_]): Future[Result] =
+        errorHandler.onClientError( request, Status.NOT_FOUND, s"Target does not exist: $tgId")
 
     }
   }

@@ -1,6 +1,7 @@
 package controllers
 
 import akka.stream.scaladsl.{Keep, Sink, Source}
+import io.suggest.adv.rcvr.RcvrKey
 import javax.inject.{Inject, Singleton}
 import io.suggest.ctx.CtxData
 import io.suggest.init.routed.MJsInitTargets
@@ -8,6 +9,7 @@ import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.req.ReqUtil
 import io.suggest.sys.mdr._
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
@@ -17,6 +19,7 @@ import util.mdr.SysMdrUtil
 import views.html.sys1.mdr._
 import japgolly.univeq._
 import models.mctx.Context
+import models.req.{MNodesChainReq, MReq}
 import util.ad.JdAdUtil
 
 import scala.concurrent.Future
@@ -32,9 +35,11 @@ import scala.util.Success
 class SysMdr @Inject() (
                          jdAdUtil                 : JdAdUtil,
                          mNodes                   : MNodes,
+                         reqUtil                  : ReqUtil,
                          isSuNode                 : IsSuNode,
                          isSu                     : IsSu,
                          sysMdrUtil               : SysMdrUtil,
+                         isNodeAdmin              : IsNodeAdmin,
                          override val mCommonDi   : ICommonDi,
                        )
   extends SioControllerImpl
@@ -45,16 +50,38 @@ class SysMdr @Inject() (
   import slick.profile.api._
 
 
-  /** react-форма для осуществления модерации.
+  /** react-форма для осуществления модерации в /sys/.
     *
     * @return Страница под react-форму.
     */
-  def index = csrf.AddToken {
+  def sysPage = csrf.AddToken {
     isSu().async { implicit request =>
       implicit val ctxData = CtxData(
         jsInitTargets = MJsInitTargets.SysMdrForm :: Nil
       )
       Ok( SysMdrFormTpl() )
+    }
+  }
+
+
+  /** Страница модерации карточек на узле.
+    *
+    * @param rcvrKey Ключ узла.
+    * @return 200 OK с html-страницей личного кабинета модерации.
+    */
+  def lkPage(rcvrKey: RcvrKey) = csrf.AddToken {
+    isNodeAdmin(rcvrKey, U.Lk).async { implicit request =>
+      // Готовим контекст...
+      val ctxFut = request.user.lkCtxDataFut.map { implicit ctxData =>
+        implicitly[Context]
+      }
+
+      // Рендер страницы и ответа клиенту.
+      for {
+        ctx <- ctxFut
+      } yield {
+        ???
+      }
     }
   }
 
@@ -65,8 +92,27 @@ class SysMdr @Inject() (
     * @return 200 OK + JSON-ответ MMdrNextResp с данными модерируемого узла/карточки.
     */
   def nextMdrInfo(args: MdrSearchArgs) = csrf.Check {
-    isSu().async { implicit request =>
-      lazy val logPrefix = s"nextMdrInfo()#${System.currentTimeMillis()}:"
+    //val rcvrIdOpt = rcvrKeyOpt.flatMap(_.lastOption)
+    lazy val logPrefix = s"nextMdrInfo(${args.rcvrKey.flatMap(_.lastOption).getOrElse("")})#${System.currentTimeMillis()}:"
+
+    // Если задан producerId, то надо организовать проверку на уровне юзера и личного кабинета.
+    val ab = args.rcvrKey.fold {
+      // Не задан id ресивера - значит только супер-юзер допустим.
+      isSu().andThen {
+        new reqUtil.ActionTransformerImpl[MReq, MNodesChainReq] {
+          override protected def transform[A](request: MReq[A]): Future[MNodesChainReq[A]] = {
+            val nodeOptReq = MNodesChainReq(Nil, request, request.user)
+            Future.successful( nodeOptReq )
+          }
+        }
+      }
+    } { rcvrKey =>
+      // Может быть и супер-юзер, и обычный владелец личного кабинета.
+      isNodeAdmin( rcvrKey )
+    }
+
+    // Сборка тела экшена.
+    ab.async { implicit request =>
       LOGGER.trace(s"$logPrefix args=$args moderator#${request.user.personIdOpt.orNull}")
 
       // Заготовка sql-запроса, который занимается поиском немодерированных узлов в биллинге:
@@ -85,7 +131,7 @@ class SysMdr @Inject() (
           // Ищем следующую карточку через биллинг и очередь на модерацию.
           nodeIds <- slick.db.run {
             // TODO Добавить сортировку с учётом qs args0.gen, чтобы разные модераторы получали бы разные элементы для модерации.
-            sysMdrUtil.getFirstNodesInDba( args0, paidNodesSql, limit = 1 )
+            sysMdrUtil.getFirstIn( args0, paidNodesSql, limit = 1 )
           }
           // Возможна NSEE, это нормально. Обходим проблемы совместимости NSEE с Vector через headOption.get (вместо head):
           nodeId = nodeIds.headOption.get
@@ -298,8 +344,7 @@ class SysMdr @Inject() (
       )
         // Не найдено узла? Это нормально, бывает.
         .recover { case _: NoSuchElementException =>
-          val msg = "No more nodes for moderation."
-          LOGGER.trace(s"$logPrefix $msg")
+          LOGGER.trace(s"$logPrefix No more nodes for moderation.")
           None
         }
 

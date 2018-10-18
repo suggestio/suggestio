@@ -393,7 +393,7 @@ trait ScSite
         _geoSiteResult(logic)
 
       } else {
-        NotImplemented( s"sc.api.vsn=${siteArgs.apiVsn} not implemented" )
+        errorHandler.onClientError(request, NOT_IMPLEMENTED, s"sc.api.vsn=${siteArgs.apiVsn} not implemented")
       }
     }
   }
