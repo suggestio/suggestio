@@ -35,7 +35,7 @@ final class IsAuth @Inject() (
     * @return ответ с редиректом или ошибкой.
     */
   def onUnauth(request: RequestHeader): Future[Result] = {
-    val rOpt = Some(request.path)
+    val rOpt = Some(request.uri)
 
     // Ожидает ли клиент в ответе увидеть HTML-форму? Нужно для защиты от совсем бессмыленного отвечания на запрос.
     val acceptOpt = request.headers.get( HeaderNames.ACCEPT )

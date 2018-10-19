@@ -7,7 +7,7 @@ import models.mproj.ICommonDi
 import models.req._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.req.ReqUtil
 import play.api.http.Status
 
@@ -85,6 +85,103 @@ class IsNodeAdmin @Inject()(
   }
 
 
+  /** Проверка прав на узел путём поднятия вверх по цепочке узлов, которая выстраивается на лету.
+    * Удобна для проверки доступа к узлам, которые известны только по id.
+    * Появилась для проверки доступа юзеров на управление размещением на ресиверах.
+    *
+    * @param mnode Узел.
+    * @param user Данные пользователя.
+    * @param maxLevels Макс.кол-во итераций поднятия наверх.
+    * @return Фьючерс с цепочкой вычисленных узлов от юзера до узла.
+    *         Если SU-юзер, то цепочка всегжа будет иметь длину 1.
+    */
+  def isNodeAdminUpFrom(nodeId: String, user: ISioUser, maxLevels: Int = 3): Future[Option[List[MNode]]] = {
+    lazy val logPrefix = s"isNodeAdminUpFrom(u#${user.personIdOpt.orNull} -> node#$nodeId)#${System.currentTimeMillis()}:"
+
+    user.personIdOpt.fold {
+      LOGGER.debug(s"$logPrefix Anonymous user prohibited")
+      Future.successful( Option.empty[List[MNode]] )
+
+    } { personId =>
+      lazy val adnTreeNTypes = MNodeTypes.adnTreeMemberTypes
+      val userIdSet = Set(personId)
+
+      def _isNodeAdminAnyOfOrUpTo(currNodeId: String, counter: Int, accRev: List[MNode]): Future[Option[List[MNode]]] = {
+        lazy val logPrefix2 = s"$logPrefix[$counter #$currNodeId]:"
+
+        if (counter >= maxLevels) {
+          // Гулять уже больше некуда.
+          LOGGER.warn(s"$logPrefix2 Too many levels deep for checking, limit=$maxLevels reached, giving up.")
+          Future.successful(None)
+        } else {
+          for {
+            // Получить на руки узел, который проверяется:
+            mnodeOpt <- mNodesCache.getById(currNodeId)
+            mnode = mnodeOpt.get
+
+            // Есть ли доступ у юзера?
+            res <- {
+              lazy val ownerEdges = mnode.edges
+                .withPredicateIter( MPredicates.OwnedBy )
+                .toStream
+
+              val userIsSuper = user.isSuper
+              if ( userIsSuper || isNodeAdminCheckStrict(mnode, userIdSet) ) {
+                // Всё ок, цепочка узлов построена.
+                LOGGER.trace(s"$logPrefix2 User SU?$userIsSuper, allowed")
+                Future.successful( Some(mnode :: accRev) )
+
+              } else if (
+                (adnTreeNTypes contains mnode.common.ntype) &&
+                ownerEdges.exists(_.nodeIds.nonEmpty)
+              ) {
+                // Пока не понятно, есть ли доступ, но узел подразумевает, что доступ может быть с родительских узлов:
+                val parentNodeIds = ownerEdges
+                  .iterator
+                  .flatMap(_.nodeIds)
+                  .toSet
+                LOGGER.trace( s"$logPrefix2 Found ${parentNodeIds.size} parent nodes: ${parentNodeIds.mkString(", ")}" )
+                val nextCounter = counter + 1
+                val nextAccRev = mnode :: accRev
+
+                // Переход на проверку родитльских узлов
+                for {
+                  // Маппинг: Запустить рекурсивную проверку родительских узлов:
+                  nodesAnalyzed <- Future.traverse(parentNodeIds) { parentNodeId =>
+                    LOGGER.trace(s"$logPrefix2 Will check $parentNodeId...")
+                    _isNodeAdminAnyOfOrUpTo(parentNodeId, nextCounter, nextAccRev)
+                  }
+                } yield {
+                  // Редукция: найти в результатах первый успешный родительский узел (первый Some-результат).
+                  nodesAnalyzed
+                    .find(_.nonEmpty)
+                    .flatten
+                }
+
+              } else {
+                // Тип узла не подразумевает возможность иметь над-узел с доступом юзера. Значит, надо окончить обход этой ветви.
+                LOGGER.trace(s"$logPrefix Node is NOT owned by user, and node type#${mnode.common.ntype} does not permits checking for upper levels.")
+                Future.successful( None )
+              }
+            }
+
+          } yield {
+            LOGGER.trace(s"$logPrefix2 nodes chain => ${res.map(_.iterator.flatMap(_.id).mkString("/"))}")
+            res
+          }
+        }
+      }
+
+      // Запустить цикл проверки, гуляя вверх от текущего узла.
+      _isNodeAdminAnyOfOrUpTo(
+        currNodeId  = nodeId,
+        counter     = 0,
+        accRev      = Nil
+      )
+    }
+  }
+
+
   /** Rcvr-key может быть использован вместо id узла.
     *
     * @param nodeKey Ключ узла: цепочка из id'шников узлов.
@@ -144,14 +241,13 @@ class IsNodeAdmin @Inject()(
   }
 
   /** Проверка прав на домен без учёта суперюзеров. */
-  def isNodeAdminCheckStrict(mnode: MNode, user: ISioUser): Boolean = {
+  def isNodeAdminCheckStrict(mnode: MNode, user: ISioUser): Boolean =
     isNodeAdminCheckStrict(mnode, user.personIdOpt.toSet)
-  }
   def isNodeAdminCheckStrict(mnode: MNode, personIds: Set[String]): Boolean = {
     personIds.nonEmpty && {
       // Проверка admin-доступа к v2: проверять OwnedBy
       val allowedOwn = mnode.edges
-         .withPredicateIterIds( MPredicates.OwnedBy )
+        .withPredicateIterIds( MPredicates.OwnedBy )
         .exists( personIds.contains )
 
       allowedOwn || mnode.id.exists( personIds.contains )

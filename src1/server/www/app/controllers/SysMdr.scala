@@ -40,6 +40,7 @@ class SysMdr @Inject() (
                          isSu                     : IsSu,
                          sysMdrUtil               : SysMdrUtil,
                          isNodeAdmin              : IsNodeAdmin,
+                         canMdrResolute           : CanMdrResolute,
                          override val mCommonDi   : ICommonDi,
                        )
   extends SioControllerImpl
@@ -371,7 +372,7 @@ class SysMdr @Inject() (
     * @return
     */
   def doMdr(mdrRes: MMdrResolution) = csrf.Check {
-    isSuNode(mdrRes.nodeId).async { implicit request =>
+    canMdrResolute(mdrRes).async { implicit request =>
       // Надо организовать пакетное обновления в БД биллинга, в зависимости от значений полей резолюшена.
       for {
         _ <- sysMdrUtil.processMdrResolution( mdrRes, request.mnode, request.user )

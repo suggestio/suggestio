@@ -84,6 +84,8 @@ object MNodeTypes extends StringEnum[MNodeType] {
 
   override val values = TreeEnumEntry.deepFindValue( findValues )
 
+  def adnTreeMemberTypes: List[MNodeType] = AdnNode :: Ad :: BleBeacon :: Nil
+
 }
 
 

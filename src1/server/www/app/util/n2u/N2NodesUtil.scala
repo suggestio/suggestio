@@ -1,7 +1,6 @@
 package util.n2u
 
 import javax.inject.Singleton
-
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.extra.domain.MDomainModes

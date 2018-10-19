@@ -2,6 +2,7 @@ package util.mdr
 
 import java.time.OffsetDateTime
 
+import akka.stream.scaladsl.Sink
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.IMust
 import javax.inject.{Inject, Singleton}
@@ -12,12 +13,14 @@ import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.streams.StreamsUtil
 import io.suggest.sys.mdr.{MMdrResolution, MdrSearchArgs}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.ISioUser
 import util.billing.Bill2Util
 import japgolly.univeq._
+import util.acl.IsNodeAdmin
 
 import scala.concurrent.Future
 
@@ -33,6 +36,8 @@ class SysMdrUtil @Inject() (
                              mdrUtil           : MdrUtil,
                              mNodes            : MNodes,
                              bill2Util         : Bill2Util,
+                             streamsUtil       : StreamsUtil,
+                             isNodeAdmin       : IsNodeAdmin,
                              val mCommonDi     : ICommonDi
                            )
   extends MacroLogsImpl
@@ -40,6 +45,7 @@ class SysMdrUtil @Inject() (
 
   import mCommonDi._
   import slick.profile.api._
+  import streamsUtil.Implicits._
 
   def someNow = Some(OffsetDateTime.now)
 
@@ -142,6 +148,7 @@ class SysMdrUtil @Inject() (
     *
     * @param mdrRes Резолюция модератора.
     * @param mnode Узел, упомянутый в mdrRes.nodeId.
+    * @param mdrUser
     * @return Фьючерс готовности.
     */
   def processMdrResolution(mdrRes: MMdrResolution, mnode: MNode, mdrUser: ISioUser): Future[(MNode, Option[ProcessItemsRes])] = {
@@ -153,7 +160,11 @@ class SysMdrUtil @Inject() (
     val infoApplyAll = nfo.isEmpty
 
     // free-модерация, чтобы по-скорее запустить обновление mnode, максимально до активации adv-билдеров.
-    var mnode2Fut: Future[MNode] = if (infoApplyAll || nfo.directSelfAll || nfo.directSelfId.nonEmpty) {
+
+    // Для user-mdr: nfo.direct* должны быть уже отфильтрованы/отработаны на уровне ACL.
+    // Этот метод не занимается проверкой прав доступа, но из-за isSuper всё же косвенно предотвращает нецелевое использование.
+
+    var mnode2Fut: Future[MNode] = if ((infoApplyAll && mdrUser.isSuper) || nfo.directSelfAll || nfo.directSelfId.nonEmpty) {
       LOGGER.trace(s"$logPrefix Will process mdr-edges for free mdr, applyAll?$infoApplyAll")
 
       // Тут два варианта: полный аппрув выставлением mdr-эджа, или отказ в размещении на узле/узлах.
@@ -218,9 +229,11 @@ class SysMdrUtil @Inject() (
     val infoHasBillCrs = nfo.itemId.nonEmpty || nfo.itemType.nonEmpty
     // Если заданы критерии item'ов, то ковыряем биллинг:
     for {
+      // Дождаться окончания freeMdr-действий, чтобы не было конфликтов при перезаписи узла в bill-части:
       mnode2 <- mnode2Fut
 
       billResOpt <- OptionUtil.maybeFut( infoHasBillCrs || infoApplyAll ) {
+
         var q = itemsQueryAwaiting( mdrRes.nodeId )
 
         // TODO Нужна поддержка отката изменений: чтобы вместо бана можно было поверх наложить обратное решение.
@@ -228,11 +241,11 @@ class SysMdrUtil @Inject() (
           q = q.filter { i =>
             // Накопить аргументы для WHERE:
             var acc = List.empty[Rep[Boolean]]
-            for (itemId <- mdrRes.info.itemId) {
+            for (itemId <- nfo.itemId) {
               LOGGER.trace(s"$logPrefix only itemId=$itemId")
               acc ::= (i.id === itemId)
             }
-            for (itemType <- mdrRes.info.itemType) {
+            for (itemType <- nfo.itemType) {
               LOGGER.trace(s"$logPrefix only itemType=$itemType")
               acc ::= (i.iTypeStr === itemType.value)
             }
@@ -242,18 +255,86 @@ class SysMdrUtil @Inject() (
           LOGGER.trace(s"$logPrefix Will process ALL billing data.")
         }
 
-        val billProcessFut = _processItemsFor(q) {
-          if (mdrRes.isApprove)
-            bill2Util.approveItem
-          else
-            bill2Util.refuseItem(_, mdrRes.reason)
+        // Модерация в рамках ресивера: выставить ресивер в sql-запрос.
+        for (mdrRcvrId <- mdrRes.rcvrIdOpt) {
+          LOGGER.trace(s"$logPrefix Limited only to rcvrId#$mdrRcvrId")
+          q = q.filter(_.rcvrIdOpt === mdrRcvrId)
         }
 
-        billProcessFut.map(Some.apply)
+        for {
+          // Запустить подготовку списка допустимых ресиверов, если !su-модерация:
+          allowedRcvrIds <- {
+            if ( !mdrUser.isSuper ) {
+              // Когда юзер - не супер-пользователь,
+              // то нужно ограничить запрос только множеством ресиверов, на которые у юзера есть права.
+              // Для этого запускаем текущую sql query с возвратом distinct rcvr_id.
+              LOGGER.trace(s"$logPrefix Will collect allowed rcvrs for user#${mdrUser.personIdOpt.orNull}...")
+              def __strOptToList(nodeIdOpt: Option[String]) = nodeIdOpt.toList
+
+              slick.db
+                .stream {
+                  q .map(_.rcvrIdOpt)
+                    .distinct
+                    .result
+                }
+                .toSource
+                .mapConcat( __strOptToList )
+                // т.к. distinct на уровне СУБД, то дедубликация rcvr_id не нужна. Переходим к поштучной обработке:
+                .mapAsyncUnordered(10) { rcvrId =>
+                  // Запустить проверку прав доступа на данный ресивер:
+                  for {
+                    nodeChainOpt <- isNodeAdmin.isNodeAdminUpFrom(rcvrId, mdrUser)
+                  } yield {
+                    val rcvrAllowed = nodeChainOpt.nonEmpty
+                    LOGGER.trace(s"$logPrefix rcvrId=$rcvrId allowed?$rcvrAllowed")
+                    OptionUtil.maybe( rcvrAllowed )( rcvrId )
+                  }
+                }
+                .mapConcat( __strOptToList )
+                // Собрать финальное множество допущенных nodeid:
+                .runWith( Sink.collection[String, Set[String]] )
+                // Сразу проверяем, чтобы был хотя бы один rcvrId.
+                // Нет смысла продолжать дальнейшую обработку, если не найдено разрешённых ресиверов, т.е. критерии !su-модерации заведомо невыполнимы.
+                .filter { allowedRcvrIds =>
+                  LOGGER.trace(s"$logPrefix Allowed rcvrs[${allowedRcvrIds.size}]: [${allowedRcvrIds.mkString(", ")}]")
+                  val r = allowedRcvrIds.nonEmpty
+                  if (!r)
+                    LOGGER.warn(s"$logPrefix Mdr impossible, since !su, but allowed rcvrs is empty")
+                  r
+                }
+
+            } else {
+              // Для супер-юзеров: берём ресивера из qs, а если его нет - то модерация не ограничена.
+              val allRcvrs = mdrRes.rcvrIdOpt.toSet
+              Future.successful( allRcvrs )
+            }
+          }
+
+          // Запустить биллинговую часть: аппрув item'а или отказ в модерации item'а.
+          billProcessRes <- {
+            LOGGER.trace(s"$logPrefix Will bill-mdr, ${allowedRcvrIds.size}-allowedRcvs, approve?${mdrRes.isApprove}...")
+            _processItemsFor {
+              if (allowedRcvrIds.isEmpty) q
+              else q.filter { i =>
+                i.rcvrIdOpt inSet allowedRcvrIds
+              }
+            } {
+              if (mdrRes.isApprove)
+                bill2Util.approveItem
+              else
+                bill2Util.refuseItem(_, mdrRes.reason)
+            }
+          }
+
+        } yield {
+          LOGGER.trace(s"$logPrefix Bill mdr done, res => $billProcessRes")
+          Some( billProcessRes )
+        }
+
       }
 
     } yield {
-      LOGGER.trace(s"$logPrefix Done all changes, bill=>${billResOpt.orNull}")
+      LOGGER.trace(s"$logPrefix Done all changes")
       mnode2 -> billResOpt
     }
   }

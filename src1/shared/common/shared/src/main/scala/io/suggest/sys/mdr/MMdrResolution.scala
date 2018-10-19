@@ -16,6 +16,7 @@ object MMdrResolution {
     val NODE_ID_FN      = "n"
     val INFO_FN         = "i"
     val REASON_FN       = "r"
+    val RCVR_ID_FN      = "c"
   }
 
   /** Поддержка play-json, чтобы прогнать через js-router в qs. */
@@ -24,7 +25,8 @@ object MMdrResolution {
     (
       (__ \ F.NODE_ID_FN).format[String] and
       (__ \ F.INFO_FN).format[MMdrActionInfo] and
-      (__ \ F.REASON_FN).formatNullable[String]
+      (__ \ F.REASON_FN).formatNullable[String] and
+      (__ \ F.RCVR_ID_FN).formatNullable[String]
     )(apply, unlift(unapply))
   }
 
@@ -38,11 +40,14 @@ object MMdrResolution {
   * @param nodeId id модерируемого узла.
   * @param info Данные экшена.
   * @param reason Причина отказа в размещении.
+  * @param rcvrIdOpt Опциональный id узла, который ограничивает команду модерации размещениями только на указанном узле.
   */
 case class MMdrResolution(
                            nodeId       : String,
                            info         : MMdrActionInfo,
                            reason       : Option[String],
+                           // TODO Поле отчасти дублируется в info.directSelfId, надо проунифицировать как-то этот вопрос...
+                           rcvrIdOpt    : Option[String]
                          ) {
 
   def isApprove: Boolean = reason.isEmpty

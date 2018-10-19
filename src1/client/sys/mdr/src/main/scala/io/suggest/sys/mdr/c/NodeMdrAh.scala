@@ -38,7 +38,8 @@ class NodeMdrAh[M](
         MMdrResolution(
           nodeId  = v0.info.get.nodeOpt.get.nodeId,
           info    = info,
-          reason  = reasonOpt
+          reason  = reasonOpt,
+          rcvrIdOpt = None // TODO Если модерация в контексте одного узла-ресивера, то надо брать rcvrId из состояния: v0.conf
         )
       ).transform { tryRes =>
         val act = DoMdrResp(

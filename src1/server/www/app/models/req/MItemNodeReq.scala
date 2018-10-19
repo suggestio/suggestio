@@ -10,12 +10,12 @@ import play.api.mvc.Request
   * Created: 01.03.16 11:21
   * Description: Модель-контейнер данных реквестов с mad и mitem внутри одновременно.
   */
-trait IItemAdReq[A]
+trait IItemNodeReq[A]
   extends IItemReq[A]
   with INodeReq[A]
 
 
-/** Дефолтовая реализация [[IItemAdReq]]. */
+/** Дефолтовая реализация [[IItemNodeReq]]. */
 case class MItemNodeReq[A](
                             override val mitem    : MItem,
                             override val mnode    : MNode,
@@ -23,4 +23,5 @@ case class MItemNodeReq[A](
                             override val request  : Request[A]
                           )
   extends MReqWrap[A]
-  with IItemAdReq[A]
+  with IItemNodeReq[A]
+

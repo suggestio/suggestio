@@ -129,16 +129,19 @@ object MdrSearchArgsJvm {
           nodeIdE       <- strB.bind            ( k(F.NODE_ID_FN),      params )
           infoE         <- mdrActionInfoB.bind  ( k(F.INFO_FN),         params )
           reasonOptE    <- strOptB.bind         ( k(F.REASON_FN),       params )
+          rcvrIdOptE    <- strOptB.bind         ( k(F.RCVR_ID_FN),      params )
         } yield {
           for {
             nodeId      <- nodeIdE.right
             info        <- infoE.right
             reasonOpt   <- reasonOptE.right
+            rcvrIdOpt   <- rcvrIdOptE.right
           } yield {
             MMdrResolution(
               nodeId    = nodeId,
               info      = info,
-              reason    = reasonOpt
+              reason    = reasonOpt,
+              rcvrIdOpt = rcvrIdOpt
             )
           }
         }
@@ -151,6 +154,7 @@ object MdrSearchArgsJvm {
           strB.unbind           ( k(F.NODE_ID_FN),      value.nodeId ),
           mdrActionInfoB.unbind ( k(F.INFO_FN),         value.info ),
           strOptB.unbind        ( k(F.REASON_FN),       value.reason ),
+          strOptB.unbind        ( k(F.RCVR_ID_FN),      value.rcvrIdOpt ),
         )
       }
 

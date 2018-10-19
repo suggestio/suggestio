@@ -2,6 +2,7 @@ package util.adn
 
 import java.time.OffsetDateTime
 
+import akka.stream.scaladsl.Sink
 import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.adn.MAdnRights
@@ -40,14 +41,14 @@ import scala.util.Random
  * 2015.mar.18: Для новосозданного узла нужно создавать начальные рекламные карточки.
  */
 @Singleton
-class NodesUtil @Inject() (
-                            mNodes                  : MNodes,
-                            mExtTargets             : MExtTargets,
-                            mMediasCache            : MMediasCache,
-                            cdnUtil                 : CdnUtil,
-                            dynImgUtil              : DynImgUtil,
-                            mCommonDi               : ICommonDi
-                          )
+final class NodesUtil @Inject() (
+                                  mNodes                  : MNodes,
+                                  mExtTargets             : MExtTargets,
+                                  mMediasCache            : MMediasCache,
+                                  cdnUtil                 : CdnUtil,
+                                  dynImgUtil              : DynImgUtil,
+                                  mCommonDi               : ICommonDi
+                                )
   extends MacroLogsImpl
 {
 
@@ -289,6 +290,71 @@ class NodesUtil @Inject() (
 
     // Запустить сборку MediaHostsMap.
     dynImgUtil.mkMediaHostsMap( allImgsAcc )
+  }
+
+
+  /** Сбор всех дочерних id в одну кучу по owned_by предикатам.
+    *
+    * @param parentNodeIds Интересующие id родительских узлов.
+    * @return Фьючерс с множеством дочерних узлов.
+    */
+  def collectOwnedNodeIdsDown(parentNodeIds: Set[String], maxDeep: Int = 3, perStepLimit: Int = 100): Future[Set[String]] = {
+    val _predicates = MPredicates.OwnedBy :: Nil
+
+    // Асинхронная рекурсия поиска id-узлов с погружением на под-уровни.
+    def __fold(parentNodeIdsCurrent: Set[String], acc0Fut: Future[Set[String]], counter: Int): Future[Set[String]] = {
+      if (counter >= maxDeep || parentNodeIds.isEmpty) {
+        acc0Fut
+
+      } else {
+        mNodes
+          .dynSearchIds {
+            val crs = Criteria(
+              nodeIds = parentNodeIds.toSeq,
+              predicates = _predicates
+            ) :: Nil
+            new MNodeSearchDfltImpl {
+              override def outEdges = crs
+              override def limit = perStepLimit
+            }
+          }
+          .flatMap { idsResp =>
+            val idsSet = idsResp.toSet
+            acc0Fut.flatMap { acc0 =>
+              val acc2Fut = Future( acc0 ++ idsSet )
+
+              // Чтобы не было циклов графа, надо выкинуть id уже пройденных узлов. В норме - тут просто пересборка idsSet.
+              val alreadyUsedIds = idsSet intersect acc0
+              val nextIdsSet2 = if (alreadyUsedIds.isEmpty) idsSet
+              else idsSet -- alreadyUsedIds
+
+              // И перейти на следующую итерацию:
+              __fold(nextIdsSet2, acc2Fut, counter + 1)
+            }
+          }
+      }
+    }
+
+    // Запуск рекурсии.
+    __fold(
+      parentNodeIdsCurrent  = parentNodeIds,
+      acc0Fut               = Future.successful( parentNodeIds ),
+      counter               = 0
+    )
+  }
+
+
+  /** Собрать id родительских узлов по отношению к указанным дочерним узлам. */
+  def directOwnerIdsOf(childrenIds: Iterable[String]): Future[Set[String]] = {
+    // Чтобы узнать родительские узлы, надо прочитать текущие узлы:
+    mNodesCache
+      .multiGetSrc( childrenIds )
+      .mapConcat { mnode =>
+        mnode.edges
+          .withPredicateIterIds( MPredicates.OwnedBy )
+          .toSet
+      }
+      .runWith( Sink.collection[String, Set[String]] )
   }
 
 }

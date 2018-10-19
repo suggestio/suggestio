@@ -65,6 +65,9 @@ object MItemTypes extends StringEnum[MItemType] {
   }
 
 
+  override val values = findValues
+
+
   /** Только типы item'ов, относящиеся к гео-размещениям. */
   def advGeoTypes     : List[MItemType]     = GeoTag :: GeoPlace :: Nil
 
@@ -79,7 +82,8 @@ object MItemTypes extends StringEnum[MItemType] {
 
   def tagTypes        : List[MItemType]     = GeoTag :: TagDirect :: Nil
 
-  override val values = findValues
+  /** Для каких типов разрешена модерация уровная ЛК юзера? */
+  def userMdrAllowed  : List[MItemType]     = advDirectTypes
 
 }
 

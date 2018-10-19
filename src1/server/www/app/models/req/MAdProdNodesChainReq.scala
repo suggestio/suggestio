@@ -1,5 +1,6 @@
 package models.req
 
+import io.suggest.mbill2.m.item.MItem
 import io.suggest.model.n2.node.MNode
 import play.api.mvc.Request
 
@@ -24,3 +25,15 @@ case class MAdProdNodesChainReq[A](
                                   )
   extends MReqWrap[A]
   with IAdProdNodesChainReq[A]
+
+
+case class MItemOptAdNodesChainReq[A](
+                                       mitemOpt                   : Option[MItem],
+                                       override val mnode         : MNode,
+                                       override val nodesChain    : Seq[MNode],
+                                       override val user          : ISioUser,
+                                       override val request       : Request[A],
+                                     )
+  extends MReqWrap[A]
+  with INodesChainReq[A]
+  with INodeReq[A]
