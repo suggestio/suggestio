@@ -6,7 +6,9 @@ import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sys.mdr.c.{ISysMdrApi, NodeMdrAh, SysMdrApiXhrImpl}
 import io.suggest.sys.mdr.m.{MSysMdrRootS, MdrNextNode}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.spa.StateInp
 import io.suggest.sys.mdr.v.NodeRenderR
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
 
@@ -18,18 +20,18 @@ import scala.concurrent.Future
   */
 object SysMdrCircuit {
 
+  /** Сборка начального состояния по данным из DOM. */
   def getInitModelFromDom(): MSysMdrRootS = {
-    /*
     val stateInp = StateInp.find().get
     val json = stateInp.value.get
-    val minit = Json
+    val mconf = Json
       .parse(json)
-      .as[]
-     */
+      .as[MMdrConf]
 
     // Сборка root-модели, готовой к работе.
     MSysMdrRootS(
-      jdCss = NodeRenderR.mkJdCss()()
+      jdCss = NodeRenderR.mkJdCss()(),
+      conf  = mconf,
     )
   }
 

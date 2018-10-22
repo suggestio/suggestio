@@ -2,6 +2,7 @@
 
 @* Реализация левой панели для ноды. *@
 
+@import io.suggest.i18n.MsgCodes
 @import ctx.messages
 @import LkLeftPanelLinks._
 @import util.tpl.CssFormat._
@@ -28,6 +29,13 @@
       href  = routes.LkBill2.onNode(nodeId),
       css   = classesAct(leftCurrEl.contains(LPL_BILLING), "__billing")
     )()
+
+    @_leftBarItemTpl(
+      title = messages( MsgCodes.`Moderation` ),
+      href  = routes.SysMdr.lkMdr(nodeId :: Nil)
+    ) {
+      Mdr
+    }
 
     @if(ctx.user.isSuper) {
       @* Кнопка вызова системной панели. Временно ушла с правой панели (вместе с панелью). *@

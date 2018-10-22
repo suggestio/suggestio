@@ -3,7 +3,7 @@ package io.suggest.sys.mdr.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.jd.render.v.JdCss
-import io.suggest.sys.mdr.{MMdrActionInfo, MMdrNextResp}
+import io.suggest.sys.mdr.{MMdrActionInfo, MMdrConf, MMdrNextResp}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
@@ -16,13 +16,15 @@ import japgolly.univeq._
   */
 object MSysMdrRootS {
 
+  /** Поддержка FastEq для корневой модели. */
   implicit object MSysMdrRootSFastEq extends FastEq[MSysMdrRootS] {
     override def eqv(a: MSysMdrRootS, b: MSysMdrRootS): Boolean = {
       (a.jdCss ===* b.jdCss) &&
       (a.info ===* b.info) &&
       (a.dialogs ===* b.dialogs) &&
       (a.mdrPots ===* b.mdrPots) &&
-      (a.nodeOffset ==* b.nodeOffset)
+      (a.nodeOffset ==* b.nodeOffset) &&
+      (a.conf ===* b.conf)
     }
   }
 
@@ -33,6 +35,7 @@ object MSysMdrRootS {
 
 /** Корневой контейнер данных состояния react-формы sys-mdr.
   *
+  * @param conf Конфиг формы.
   * @param jdCss Стили рендера рекламной карточки.
   * @param info Ответ сервера с данными для модерации.
   * @param dialogs Состояния диалогов.
@@ -48,6 +51,7 @@ case class MSysMdrRootS(
                          dialogs    : MMdrDialogs                           = MMdrDialogs.empty,
                          mdrPots    : Map[MMdrActionInfo, Pot[None.type]]   = Map.empty,
                          nodeOffset : Int                                   = 0,
+                         conf       : MMdrConf,
                        ) {
 
   def withJdCss( jdCss: JdCss ) = copy(jdCss = jdCss)

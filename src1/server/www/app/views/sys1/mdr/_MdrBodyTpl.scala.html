@@ -1,0 +1,29 @@
+@(formState: String)(implicit ctx: Context)
+
+@* "Тело" формы модерации, для sys и для лк. *@
+
+@import io.suggest.sys.mdr.SysMdrConst
+@import views.html.stuff._preLoaderLkTpl
+@import views.js.stuff.jsRevRouterTpl
+@import views.html.stuff.jsTpl2HtmlTpl
+@import lk.lkwdgts._formStateInputTpl
+
+@_formStateInputTpl(formState)
+
+@* Контейнер для рендера react-формы. *@
+<div id="@SysMdrConst.FORM_ID">
+  @_preLoaderLkTpl()
+</div>
+
+@jsTpl2HtmlTpl( withScriptTag = true )(
+  jsRevRouterTpl( csrfAll = true, cdn = true )(
+    routes.javascript.SysMdr.nextMdrInfo ::
+    routes.javascript.SysMdr.doMdr ::
+    routes.javascript.LkAdEdit.editAd ::
+    routes.javascript.LkAdnEdit.editNodePage ::
+    routes.javascript.SysMarket.showAdnNode ::
+    (if (ctx.request.user.isSuper) routes.javascript.SysMarket.showAdnNode :: Nil else Nil): _*
+  )
+)
+
+<script src="@ctx.api.cdn.forCall( ctx.lkMessagesJs )"></script>

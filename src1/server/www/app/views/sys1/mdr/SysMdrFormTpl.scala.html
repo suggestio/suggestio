@@ -1,11 +1,11 @@
-@()(implicit ctx: Context)
+@(formState: String)(implicit ctx: Context)
+
+@* Страница для react-формы модерации размещений. *@
 
 @import io.suggest.sys.mdr.SysMdrConst
 @import views.html.stuff._preLoaderLkTpl
 @import views.js.stuff.jsRevRouterTpl
 @import views.html.stuff.jsTpl2HtmlTpl
-
-@* Страница для react-формы модерации размещений. *@
 
 
 @hPathAfter = {
@@ -17,25 +17,6 @@
   hPathAfter = Some(hPathAfter)
 ) {
 
-  @* Контейнер для рендера react-формы. *@
-  <div id="@SysMdrConst.FORM_ID">
-    @_preLoaderLkTpl()
-  </div>
-
-
-  @jsTpl2HtmlTpl( withScriptTag = true )(
-    jsRevRouterTpl( csrfAll = true, cdn = true )(
-      routes.javascript.SysMdr.nextMdrInfo,
-      routes.javascript.SysMdr.doMdr,
-      routes.javascript.SysMarket.showAdnNode,
-      routes.javascript.LkAdEdit.editAd,
-      routes.javascript.LkAdnEdit.editNodePage,
-      routes.javascript.SysMarket.showAdnNode
-    )
-  )
-
-  <script src="@ctx.api.cdn.forCall( ctx.lkMessagesJs )"></script>
+  @_MdrBodyTpl(formState)
 
 }
-
-

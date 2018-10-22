@@ -1,0 +1,18 @@
+@(mnode: MNode, formState: String)(implicit ctx: Context)
+
+@* Шаблон для страницы с формой модерации личного кабинета. *@
+
+@import io.suggest.i18n.MsgCodes
+@import sys1.mdr._MdrBodyTpl
+@import ctx.messages
+
+@lk.lkBaseLayout(
+  title         = messages( MsgCodes.`Moderation` ),
+  nodeOpt       = Some( mnode ),
+  leftCurrEl    = Some( LkLeftPanelLinks.LPL_MDR ),
+) {
+
+  @_MdrBodyTpl(formState)
+
+}
+

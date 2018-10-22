@@ -255,8 +255,10 @@ class SysMdrUtil @Inject() (
           LOGGER.trace(s"$logPrefix Will process ALL billing data.")
         }
 
+        val mdrRcvrIdOpt = mdrRes.conf.rcvrIdOpt
+
         // Модерация в рамках ресивера: выставить ресивер в sql-запрос.
-        for (mdrRcvrId <- mdrRes.rcvrIdOpt) {
+        for (mdrRcvrId <- mdrRcvrIdOpt) {
           LOGGER.trace(s"$logPrefix Limited only to rcvrId#$mdrRcvrId")
           q = q.filter(_.rcvrIdOpt === mdrRcvrId)
         }
@@ -305,7 +307,7 @@ class SysMdrUtil @Inject() (
 
             } else {
               // Для супер-юзеров: берём ресивера из qs, а если его нет - то модерация не ограничена.
-              val allRcvrs = mdrRes.rcvrIdOpt.toSet
+              val allRcvrs = mdrRcvrIdOpt.toSet
               Future.successful( allRcvrs )
             }
           }
@@ -341,15 +343,25 @@ class SysMdrUtil @Inject() (
 
 
   def findPaidNodeIds4MdrQ(args: MdrSearchArgs): Query[Rep[String], String, Seq] = {
-    val b0 = mdrUtil.awaitingPaidMdrItemsSql
+    var q = mdrUtil.awaitingPaidMdrItemsSql
 
-    val b1 = args.hideAdIdOpt.fold(b0) { hideAdId =>
-      b0.filter { i =>
+    // Пропуск произвольного узла
+    for (hideAdId <- args.hideAdIdOpt) {
+      q = q.filter { i =>
         i.nodeId =!= hideAdId
       }
     }
 
-    b1.map(_.nodeId)
+    // Поиск только на ресивере
+    for {
+      rcvrId <- args.conf.rcvrIdOpt
+    } {
+      q = q.filter { i =>
+        i.rcvrIdOpt === rcvrId
+      }
+    }
+
+    q .map(_.nodeId)
       .distinct
   }
 

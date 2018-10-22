@@ -280,6 +280,8 @@ object MsgCodes {
   val `All` = "All"
 
   val `Nothing.found` = "Nothing.found"
+  val `Nothing.to.moderate` = "Nothing.to.moderate"
+  val `No.incoming.adv.requests` = "No.incoming.adv.requests"
 
   val `Lost.node` = "Lost.node"
   val `Approve` = "Approve"
@@ -290,5 +292,6 @@ object MsgCodes {
   val `Previous.node` = "Previous.node"
   val `To.beginning` = "To.beginning"
   val `To.end` = "To.end"
+  val `Moderation` = "Moderation"
 
 }

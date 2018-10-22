@@ -107,24 +107,24 @@ class SysMdrFormR(
                 directSelfNodesSorted   = req.directSelfNodesSorted,
                 itemsByType             = req.itemsByType,
                 mdrPots                 = mroot.mdrPots,
+                withTopOffset           = mroot.conf.onNodeKey.nonEmpty,
               )
             }
           }
         }( DiodeUtil.FastEqExt.PotFastEq( OptFastEq.Wrapped(nodeMdrR.NodeMdrRPropsValFastEq)) ),
 
         nodeRenderC = mrootProxy.connect { mroot =>
-          for {
-            nextResp <- mroot.info
-            if nextResp.nodeOpt.nonEmpty
-            req = nextResp.nodeOpt.get
-          } yield {
-            nodeRenderR.PropsVal(
-              adData      = req.ad,
-              jdCss       = mroot.jdCss,
-              adnNodeOpt  = req.mdrNodeOpt
-            )
+          for (nextResp <- mroot.info) yield {
+            for (req <- nextResp.nodeOpt) yield {
+              nodeRenderR.PropsVal(
+                adData      = req.ad,
+                jdCss       = mroot.jdCss,
+                adnNodeOpt  = req.mdrNodeOpt,
+                isSu        = mroot.conf.isSu
+              )
+            }
           }
-        }( DiodeUtil.FastEqExt.PotAsOptionFastEq( nodeRenderR.NodeRenderRPropsValFastEq ) ),
+        }( DiodeUtil.FastEqExt.PotAsOptionFastEq( OptFastEq.Wrapped(nodeRenderR.NodeRenderRPropsValFastEq) ) ),
 
         mdrErrorsC = mrootProxy.connect { mroot =>
           for {

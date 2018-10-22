@@ -1,15 +1,18 @@
 package io.suggest.sys.mdr.v
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiCircularProgress}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiCard, MuiCardContent, MuiCircularProgress, MuiPaper, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
 import diode.react.ReactPot._
+import io.suggest.common.html.HtmlConstants
+import io.suggest.i18n.MsgCodes
 import io.suggest.jd.{MJdAdData, MJdConf}
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
 import io.suggest.jd.render.v.{JdCss, JdR}
 import io.suggest.jd.tags.JdTag
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
+import io.suggest.msg.Messages
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.routes.routes
 import io.suggest.sys.mdr.SysMdrConst
@@ -33,63 +36,100 @@ class NodeRenderR(
                        adData       : Option[MJdAdData],
                        jdCss        : JdCss,
                        adnNodeOpt   : Option[MAdvGeoMapNodeProps],
+                       isSu         : Boolean,
                      )
   implicit object NodeRenderRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.adData ===* b.adData) &&
       (a.jdCss  ===* b.jdCss) &&
-      (a.adnNodeOpt ===* b.adnNodeOpt)
+      (a.adnNodeOpt ===* b.adnNodeOpt) &&
+      (a.isSu ==* b.isSu)
     }
   }
 
 
-  type Props_t = Pot[PropsVal]
+  type Props_t = Pot[Option[PropsVal]]
   type Props = ModelProxy[Props_t]
 
 
   class Backend( $: BackendScope[Props, Unit] ) {
 
-    def render(propsPotProxy: Props): VdomElement = {
-      val propsPot = propsPotProxy.value
+    def render(propsOptPotProxy: Props): VdomElement = {
+      val propsOptPot = propsOptPotProxy.value
 
       <.div(
 
         // Ожидание загрузки.
-        propsPot.renderPending { _ =>
+        propsOptPot.renderPending { _ =>
           MuiCircularProgress()
         },
 
         // Рендер узла
-        propsPot.render { props =>
-          <.div(
-
-            // Рендер jd-карточки:
-            props.adData.whenDefined { adData =>
-              propsPotProxy.wrap { _ =>
-                MJdArgs(
-                  template  = adData.template,
-                  edges     = adData.edgesMap
-                    .mapValues( MEdgeDataJs(_) ),
-                  jdCss     = props.jdCss,
-                  conf      = props.jdCss.jdCssArgs.conf
-                )
-              } { jdR.apply }
-            },
-
-            // Рендер данных об узле
-            props.adnNodeOpt.whenDefined { nodeProps =>
-              // TODO Логотип TODO Картинка приветствия, TODO Цвета
-              <.a(
-                ^.href := routes.controllers.SysMarket.showAdnNode( nodeProps.nodeId ).url,
-                nodeProps.hintOrId
+        propsOptPot.render { propsOpt =>
+          propsOpt.fold[VdomNode] {
+            // Плашка о том, что ничего не найдено:
+            MuiPaper()(
+              MuiCard()(
+                MuiCardContent()(
+                  MuiTypoGraphy(
+                    new MuiTypoGraphyProps {
+                      override val variant = MuiTypoGraphyVariants.headline
+                    }
+                  )(
+                    HtmlConstants.NBSP_STR,
+                    Messages( MsgCodes.`Nothing.to.moderate` ),
+                  ),
+                  <.span(
+                    Mui.SvgIcons.WbSunny()()(
+                      ^.float.right,
+                    )
+                  ),
+                  <.br,
+                  MuiTypoGraphy(
+                    new MuiTypoGraphyProps {
+                      override val variant = MuiTypoGraphyVariants.body1
+                    }
+                  )(
+                    Messages( MsgCodes.`No.incoming.adv.requests` ),
+                  )
+                ),
               )
-            },
+            )
 
-          )
+          } { props =>
+            // Рендер узла:
+            <.div(
+
+              // Рендер jd-карточки:
+              props.adData.whenDefined { adData =>
+                propsOptPotProxy.wrap { _ =>
+                  MJdArgs(
+                    template  = adData.template,
+                    edges     = adData.edgesMap
+                      .mapValues( MEdgeDataJs(_) ),
+                    jdCss     = props.jdCss,
+                    conf      = props.jdCss.jdCssArgs.conf
+                  )
+                } { jdR.apply }
+              },
+
+              // Рендер данных об узле
+              props.adnNodeOpt
+                .filter(_ => props.isSu)
+                .whenDefined { nodeProps =>
+                  // TODO Логотип TODO Картинка приветствия, TODO Цвета
+                  <.a(
+                    ^.href := routes.controllers.SysMarket.showAdnNode( nodeProps.nodeId ).url,
+                    nodeProps.hintOrId
+                  )
+                },
+
+            )
+          }
         },
 
         // Ошибка загрузки.
-        propsPot.renderFailed { ex =>
+        propsOptPot.renderFailed { ex =>
           <.div(
             Mui.SvgIcons.Error()(),
             ex.toString()

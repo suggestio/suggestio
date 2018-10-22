@@ -219,9 +219,10 @@ POST /sys/cal/edit/:calId                @controllers.SysCalendar.editCalendarSu
 GET  /sys/cal/get/:calId                 @controllers.SysCalendar.getCalendarXml(calId)
 
 ## sys: mdr - модерация контента
-GET  /sys/mdr                           @controllers.SysMdr.sysPage
-GET  /sys/mdr/next                      @controllers.SysMdr.nextMdrInfo(a: io.suggest.sys.mdr.MdrSearchArgs ?= io.suggest.sys.mdr.MdrSearchArgs.default)
-POST /sys/mdr/do                        @controllers.SysMdr.doMdr(r: io.suggest.sys.mdr.MMdrResolution)
+GET  /lk/mdr/*onNode                     @controllers.SysMdr.lkMdr( onNode: RcvrKey )
+GET  /sys/mdr                            @controllers.SysMdr.sysPage
+GET  /sys/mdr/next                       @controllers.SysMdr.nextMdrInfo(a: io.suggest.sys.mdr.MdrSearchArgs)
+POST /sys/mdr/do                         @controllers.SysMdr.doMdr(r: io.suggest.sys.mdr.MMdrResolution)
 
 ## sys node geo
 GET  /sys/adn/geo/all/:nodeId            @controllers.SysAdnGeo.forNode(nodeId)

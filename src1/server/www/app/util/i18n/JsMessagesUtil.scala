@@ -367,7 +367,8 @@ class JsMessagesUtil @Inject() (
     MC.`All` ::
       MPredicates.Receiver.Self.singular ::
       MC.`Something.gone.wrong` ::
-      MC.`Nothing.found` ::
+      MC.`Nothing.to.moderate` ::
+      MC.`No.incoming.adv.requests` ::
       MC.`Lost.node` ::
       MC.`Approve` ::
       MC.`Refuse` ::

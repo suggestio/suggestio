@@ -1,10 +1,9 @@
 package io.suggest.sys.mdr
 
-import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.empty.OptionUtil
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemType
-import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.model.play.qsb.{QsbSeq, QueryStringBindableImpl}
 import play.api.mvc.QueryStringBindable
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 
@@ -21,7 +20,7 @@ object MdrSearchArgsJvm {
                                 strOptB     : QueryStringBindable[Option[String]],
                                 intOptB     : QueryStringBindable[Option[Int]],
                                 boolOptB    : QueryStringBindable[Option[Boolean]],
-                                rcvrKeyOptB : QueryStringBindable[Option[RcvrKey]],
+                                mdrConfB    : QueryStringBindable[MMdrConf],
                                ): QueryStringBindable[MdrSearchArgs] = {
     new QueryStringBindableImpl[MdrSearchArgs] {
 
@@ -32,19 +31,19 @@ object MdrSearchArgsJvm {
           offsetOptE            <- intOptB.bind     (k1(F.OFFSET_FN),                 params)
           freeAdvIsAllowedE     <- boolOptB.bind    (k1(F.FREE_ADV_IS_ALLOWED_FN),    params)
           hideAdIdOptE          <- strOptB.bind     (k1(F.HIDE_AD_ID_FN),             params)
-          rcvrKeyOptE           <- rcvrKeyOptB.bind (k1(F.RCVR_KEY_FN),               params)
+          mdrConfE              <- mdrConfB.bind    (k1(F.MDR_CONF_FN),               params)
         } yield {
           for {
             offsetOpt           <- offsetOptE.right
             freeAdvIsAllowed    <- freeAdvIsAllowedE.right
             hideAdIdOpt         <- hideAdIdOptE.right
-            rcvrKeyOpt          <- rcvrKeyOptE.right
+            mdrConf             <- mdrConfE.right
           } yield {
             MdrSearchArgs(
               offsetOpt         = offsetOpt,
               isAllowed         = freeAdvIsAllowed,
               hideAdIdOpt       = hideAdIdOpt,
-              rcvrKey           = rcvrKeyOpt
+              conf              = mdrConf
             )
           }
         }
@@ -54,10 +53,10 @@ object MdrSearchArgsJvm {
         val k1 = key1F(key)
         val F = MdrSearchArgs.Fields
         _mergeUnbinded1(
-          intOptB.unbind        (k1(F.OFFSET_FN),               value.offsetOpt),
-          boolOptB.unbind       (k1(F.FREE_ADV_IS_ALLOWED_FN),  value.isAllowed),
-          strOptB.unbind        (k1(F.HIDE_AD_ID_FN),           value.hideAdIdOpt),
-          rcvrKeyOptB.unbind    (k1(F.RCVR_KEY_FN),             value.rcvrKey),
+          intOptB.unbind        (k1(F.OFFSET_FN),               value.offsetOpt   ),
+          boolOptB.unbind       (k1(F.FREE_ADV_IS_ALLOWED_FN),  value.isAllowed   ),
+          strOptB.unbind        (k1(F.HIDE_AD_ID_FN),           value.hideAdIdOpt ),
+          mdrConfB.unbind       (k1(F.MDR_CONF_FN),             value.conf        ),
         )
       }
 
@@ -119,6 +118,7 @@ object MdrSearchArgsJvm {
                                 strB                : QueryStringBindable[String],
                                 mdrActionInfoB      : QueryStringBindable[MMdrActionInfo],
                                 strOptB             : QueryStringBindable[Option[String]],
+                                mdrConfB            : QueryStringBindable[MMdrConf],
                                ): QueryStringBindable[MMdrResolution] = {
     new QueryStringBindableImpl[MMdrResolution] {
 
@@ -129,19 +129,19 @@ object MdrSearchArgsJvm {
           nodeIdE       <- strB.bind            ( k(F.NODE_ID_FN),      params )
           infoE         <- mdrActionInfoB.bind  ( k(F.INFO_FN),         params )
           reasonOptE    <- strOptB.bind         ( k(F.REASON_FN),       params )
-          rcvrIdOptE    <- strOptB.bind         ( k(F.RCVR_ID_FN),      params )
+          mdrConfE      <- mdrConfB.bind        ( k(F.MDR_CONF_FN),     params )
         } yield {
           for {
             nodeId      <- nodeIdE.right
             info        <- infoE.right
             reasonOpt   <- reasonOptE.right
-            rcvrIdOpt   <- rcvrIdOptE.right
+            mdrConf     <- mdrConfE.right
           } yield {
             MMdrResolution(
               nodeId    = nodeId,
               info      = info,
               reason    = reasonOpt,
-              rcvrIdOpt = rcvrIdOpt
+              conf      = mdrConf
             )
           }
         }
@@ -154,11 +154,51 @@ object MdrSearchArgsJvm {
           strB.unbind           ( k(F.NODE_ID_FN),      value.nodeId ),
           mdrActionInfoB.unbind ( k(F.INFO_FN),         value.info ),
           strOptB.unbind        ( k(F.REASON_FN),       value.reason ),
-          strOptB.unbind        ( k(F.RCVR_ID_FN),      value.rcvrIdOpt ),
+          mdrConfB.unbind       ( k(F.MDR_CONF_FN),     value.conf ),
         )
       }
 
     }
   }
+
+
+  /** Поддержка биндинга инстансов MMdrConf. */
+  implicit def mdrConfQsb(implicit
+                          boolB             : QueryStringBindable[Boolean],
+                          qsbSeqStrOptB     : QueryStringBindable[Option[QsbSeq[String]]],
+                         ): QueryStringBindable[MMdrConf] = {
+    new QueryStringBindableImpl[MMdrConf] {
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MMdrConf]] = {
+        val k = key1F(key)
+        val F = MMdrConf.Fields
+        for {
+          isSysE          <- boolB.bind( k(F.IS_SU_FN), params )
+          onNodeKeyOptE   <- qsbSeqStrOptB.bind( k(F.ON_NODE_KEY_FN), params )
+        } yield {
+          for {
+            isSys         <- isSysE.right
+            onNodeKeyOpt  <- onNodeKeyOptE.right
+          } yield {
+            MMdrConf(
+              isSu       = isSys,
+              onNodeKey   = onNodeKeyOpt.map(_.items.toList)
+            )
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MMdrConf): String = {
+        val k = key1F( key )
+        val F = MMdrConf.Fields
+        _mergeUnbinded1(
+          boolB.unbind          ( k(F.IS_SU_FN),         value.isSu ),
+          qsbSeqStrOptB.unbind  ( k(F.ON_NODE_KEY_FN),    value.onNodeKey.map(QsbSeq.apply) ),
+        )
+      }
+
+    }
+  }
+
 
 }

@@ -39,7 +39,7 @@ class NodeMdrAh[M](
           nodeId  = v0.info.get.nodeOpt.get.nodeId,
           info    = info,
           reason  = reasonOpt,
-          rcvrIdOpt = None // TODO Если модерация в контексте одного узла-ресивера, то надо брать rcvrId из состояния: v0.conf
+          conf    = v0.conf,
         )
       ).transform { tryRes =>
         val act = DoMdrResp(
@@ -253,7 +253,8 @@ class NodeMdrAh[M](
               }
             },
             // Сдвиг соответствует запрашиваемому.
-            offsetOpt = Some( offset2 )
+            offsetOpt = Some( offset2 ),
+            conf = v0.conf
           )
           api.nextMdrInfo(args)
             .transform { tryResp =>

@@ -73,7 +73,9 @@ class CanMdrResolute @Inject()(
               // Юзер модерирует входящие AdvDirect, ЛИБО item по id (в рамках разрешённых типов - это проверяется асинхронно):
               (nfo.itemId.nonEmpty && nfo.itemType.nonEmpty) ||
               // Нельзя модерировать типы, которые недопускаются моделью для user-модерации:
-              !nfo.itemType.fold(true)( userMdrAllowedItemTypes.contains )
+              !nfo.itemType.fold(true)( userMdrAllowedItemTypes.contains ) ||
+              // sys-флаг в conf доступен только для супер-юзера, который должен был быть отработан в if выше.
+              mdrRes.conf.isSu
             ) {
               LOGGER.warn(s"$logPrefix User#${req0.user.personIdOpt.orNull} !su and cannot resolute in such way: $mdrRes")
               // Недопустимо для обычного юзера модерачить такие размещения.
@@ -93,8 +95,10 @@ class CanMdrResolute @Inject()(
                 Some(allowedRcvrChain)
               }
 
+              val confRcvrIdOpt = mdrRes.conf.onNodeKey
+                .flatMap(_.lastOption)
               // Запустить проверку ресивера, заданного в mdrRes.
-              val qsRcvrAllowedChainOptFut = FutureUtil.optFut2futOpt(mdrRes.rcvrIdOpt) { __checkRcvrAllowed }
+              val qsRcvrAllowedChainOptFut = FutureUtil.optFut2futOpt(confRcvrIdOpt) { __checkRcvrAllowed }
 
               val itemNodeChainOptOrExFut = nfo.itemId.fold {
                 // itemId не задан. Если rcvrId тоже не задан, то права можно дальше не проверять: границы исполнения будут неявно навязаны в теле экшена.
@@ -136,9 +140,9 @@ class CanMdrResolute @Inject()(
                     isItemTypeOk
                   } && {
                     // Если задан mdrRes.rcvrId, то он должен точно совпадать c mitem.rcvrId:
-                    val r = mdrRes.rcvrIdOpt.fold(true)(mitem.rcvrIdOpt.contains)
+                    val r = mdrRes.conf.onNodeKey.fold(true)(mitem.rcvrIdOpt.contains)
                     if (!r)
-                      LOGGER.warn(s"$logPrefix Item#$itemId.rcvrId#${mitem.rcvrIdOpt.orNull} does not match to qs.rcvrId=${mdrRes.rcvrIdOpt.orNull}")
+                      LOGGER.warn(s"$logPrefix Item#$itemId.rcvrId#${confRcvrIdOpt.orNull} does not match to qs.rcvrId=${confRcvrIdOpt.orNull}")
                     r
                   }
 
@@ -150,7 +154,7 @@ class CanMdrResolute @Inject()(
                   }
 
                   // Проверяем item.rcvrId:
-                  itemRcvrIdNodeChainOpt <- if (mdrRes.rcvrIdOpt.isEmpty) {
+                  itemRcvrIdNodeChainOpt <- if (mdrRes.conf.onNodeKey.isEmpty) {
                     // Возможна ситуация, когда mdrRes.rcvrId пуст, но у item'а есть ресивер - тогда надо проверить item.rcvrId отдельно:
                     val itemRcvrIdNodeChainOptFut = __checkRcvrAllowed(itemRcvrId)
                     // Убедится, что проверка mdrRes.rcvrId закончена без exception:

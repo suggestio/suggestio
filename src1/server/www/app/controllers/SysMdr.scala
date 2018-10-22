@@ -17,6 +17,7 @@ import play.api.libs.json.Json
 import util.acl._
 import util.mdr.SysMdrUtil
 import views.html.sys1.mdr._
+import views.html.lk.mdr._
 import japgolly.univeq._
 import models.mctx.Context
 import models.req.{MNodesChainReq, MReq}
@@ -60,7 +61,8 @@ class SysMdr @Inject() (
       implicit val ctxData = CtxData(
         jsInitTargets = MJsInitTargets.SysMdrForm :: Nil
       )
-      Ok( SysMdrFormTpl() )
+      val formState = Json.toJson( MMdrConf.Variants.sys ).toString()
+      Ok( SysMdrFormTpl(formState) )
     }
   }
 
@@ -70,18 +72,25 @@ class SysMdr @Inject() (
     * @param rcvrKey Ключ узла.
     * @return 200 OK с html-страницей личного кабинета модерации.
     */
-  def lkPage(rcvrKey: RcvrKey) = csrf.AddToken {
+  def lkMdr(rcvrKey: RcvrKey) = csrf.AddToken {
     isNodeAdmin(rcvrKey, U.Lk).async { implicit request =>
       // Готовим контекст...
-      val ctxFut = request.user.lkCtxDataFut.map { implicit ctxData =>
+      val ctxFut = request.user.lkCtxDataFut.map { lkCtxData =>
+        implicit val ctxData2 = lkCtxData.withJsInitTargets(
+          MJsInitTargets.SysMdrForm :: lkCtxData.jsInitTargets
+        )
         implicitly[Context]
       }
+
+      val formState = MMdrConf.Variants.lk( rcvrKey, isSu = request.user.isSuper )
+      val formStateJson = Json.toJson( formState ).toString()
 
       // Рендер страницы и ответа клиенту.
       for {
         ctx <- ctxFut
       } yield {
-        ???
+        val html = LkMdrTpl(request.mnode, formStateJson)(ctx)
+        Ok(html)
       }
     }
   }
@@ -94,10 +103,10 @@ class SysMdr @Inject() (
     */
   def nextMdrInfo(args: MdrSearchArgs) = csrf.Check {
     //val rcvrIdOpt = rcvrKeyOpt.flatMap(_.lastOption)
-    lazy val logPrefix = s"nextMdrInfo(${args.rcvrKey.flatMap(_.lastOption).getOrElse("")})#${System.currentTimeMillis()}:"
+    lazy val logPrefix = s"nextMdrInfo(${args.conf.rcvrIdOpt.getOrElse("")})#${System.currentTimeMillis()}:"
 
     // Если задан producerId, то надо организовать проверку на уровне юзера и личного кабинета.
-    val ab = args.rcvrKey.fold {
+    val ab = args.conf.onNodeKey.fold {
       // Не задан id ресивера - значит только супер-юзер допустим.
       isSu().andThen {
         new reqUtil.ActionTransformerImpl[MReq, MNodesChainReq] {

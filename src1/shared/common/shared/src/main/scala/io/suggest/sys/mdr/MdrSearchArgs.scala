@@ -1,6 +1,5 @@
 package io.suggest.sys.mdr
 
-import io.suggest.adv.rcvr.RcvrKey
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -14,21 +13,18 @@ import play.api.libs.functional.syntax._
 
 object MdrSearchArgs {
 
-  def default = MdrSearchArgs()
-
-
   object Fields {
 
-    def OFFSET_FN               = "o"
-    def FREE_ADV_IS_ALLOWED_FN  = "f"
+    val OFFSET_FN               = "o"
+    val FREE_ADV_IS_ALLOWED_FN  = "f"
 
     /**
       * Можно скрыть какую-нибудь карточку. Полезно скрывать только что отмодерированную, т.к. она
       * некоторое время ещё будет висеть на этой странице.
       */
-    def HIDE_AD_ID_FN           = "h"
+    val HIDE_AD_ID_FN           = "h"
 
-    def RCVR_KEY_FN             = "r"
+    val MDR_CONF_FN             = "c"
   }
 
 
@@ -39,7 +35,7 @@ object MdrSearchArgs {
       (__ \ F.OFFSET_FN).formatNullable[Int] and
       (__ \ F.FREE_ADV_IS_ALLOWED_FN).formatNullable[Boolean] and
       (__ \ F.HIDE_AD_ID_FN).formatNullable[String] and
-      (__ \ F.RCVR_KEY_FN).formatNullable[RcvrKey]
+      (__ \ F.MDR_CONF_FN).format[MMdrConf]
     )(apply, unlift(unapply))
   }
 
@@ -53,7 +49,7 @@ case class MdrSearchArgs(
                           offsetOpt             : Option[Int]       = None,
                           isAllowed             : Option[Boolean]   = None,
                           hideAdIdOpt           : Option[String]    = None,
-                          rcvrKey               : Option[RcvrKey]   = None,
+                          conf                  : MMdrConf,
                         ) {
 
   def offset  = offsetOpt.getOrElse(0)

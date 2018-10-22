@@ -1000,4 +1000,6 @@ Next.node=Следующий узел
 Previous.node=Предыдущий узел
 To.beginning=В начало
 To.end=В конец
+Nothing.to.moderate=Нечего модерировать
+No.incoming.adv.requests=Входящие запросы размещения отсутствуют.
 

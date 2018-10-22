@@ -1,32 +1,32 @@
 package io.suggest.sys.mdr.v
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiCard, MuiCardContent, MuiLinearProgress, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiPaper, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiLinearProgress, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiToolTip, MuiToolTipProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
 import diode.react.ReactPot._
-import io.suggest.i18n.MsgCodes
-import io.suggest.msg.Messages
-import io.suggest.react.ReactCommonUtil
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.ueq.UnivEqUtil._
-import io.suggest.ueq.JsUnivEqUtil._
-import ReactCommonUtil.Implicits._
 import io.suggest.bill.price.dsl.PriceReasonI18n
 import io.suggest.common.html.HtmlConstants
-import io.suggest.react.r.RangeYmdR
-import japgolly.scalajs.react.raw.React
-import japgolly.univeq._
 import io.suggest.dt.CommonDateTimeUtil.Implicits._
 import io.suggest.geo.{CircleGs, PointGs}
+import io.suggest.i18n.MsgCodes
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNodeType
+import io.suggest.msg.Messages
+import io.suggest.react.ReactCommonUtil
+import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.r.RangeYmdR
 import io.suggest.sys.mdr.MMdrActionInfo
 import io.suggest.sys.mdr.v.pane.MdrPanelStepBtnR
+import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.raw.React
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -46,6 +46,7 @@ class NodeMdrR(
                        nodesMap                 : Map[String, MAdvGeoMapNodeProps],
                        directSelfNodesSorted    : Seq[MAdvGeoMapNodeProps],
                        mdrPots                  : Map[MMdrActionInfo, Pot[None.type]],
+                       withTopOffset            : Boolean,
                      )
   implicit object NodeMdrRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
@@ -54,7 +55,8 @@ class NodeMdrR(
       (a.itemsByType ===* b.itemsByType) &&
       (a.nodesMap ===* b.nodesMap) &&
       (a.directSelfNodesSorted ===* b.directSelfNodesSorted) &&
-      (a.mdrPots ===* b.mdrPots)
+      (a.mdrPots ===* b.mdrPots) &&
+      (a.withTopOffset ==* b.withTopOffset)
     }
   }
 
@@ -77,32 +79,18 @@ class NodeMdrR(
 
         // Рендер элементов управления модерацией.
         propsPot.render { props =>
-          <.div(
-
-            // Рендер, в зависимости от наличия данных в ответе. None значит нечего модерировать.
-            props.fold[VdomNode] {
-              // TODO Подверстать, чтобы по центру всё было (и контент, и контейнер).
-              MuiPaper()(
-                MuiCard()(
-                  MuiCardContent()(
-                    Mui.SvgIcons.WbSunny()(),
-                    MuiTypoGraphy(
-                      new MuiTypoGraphyProps {
-                        override val variant = MuiTypoGraphyVariants.headline
-                      }
-                    )(
-                      Messages( MsgCodes.`Nothing.found` ),
-                    ),
-                    <.br,
-                    _refreshBtn,
-                  ),
-                )
-              )
-
-            } { nodeProps =>
+          // Рендер, в зависимости от наличия данных в ответе. None значит нечего модерировать.
+          props.whenDefinedNode { nodeProps =>
               // Краткое получение pot'а для одного элемента списка.
               def __mdrPot(ai: MMdrActionInfo) =
                 nodeProps.mdrPots.getOrElse(ai, Pot.empty)
+
+            <.div(
+
+              // Для сдвига по вертикали в ЛК, чтобы не заезжать по топ-панель:
+              ReactCommonUtil.maybe( nodeProps.withTopOffset ) {
+                ^.paddingTop := 20.px
+              },
 
               MuiList()(
 
@@ -283,8 +271,8 @@ class NodeMdrR(
                   .toVdomArray
 
               )
-            }
-          )
+            )
+          }
         },
 
         // Рендер ошибок:

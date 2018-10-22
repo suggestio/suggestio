@@ -45,13 +45,13 @@
       @if(nodeOpt.isEmpty) {
         <img class="header_logo-text" src='@asset("images/market/index/logo_retina.png")' width="101" height="26"/>
       } else {
-        @nodeOpt.map { mnode =>
+        @for(mnode <- nodeOpt) {
           <span class="header_logo-text">@mnode.meta.basic.name</span>
         }
       }
 
       @* Виджет для отображения денег на счете юзера и ссылка на биллинг. *@
-      @nodeIdOpt.map { nodeId =>
+      @for(nodeId <- nodeIdOpt) {
         @billing._billBallanceWidgetTpl(nodeId)
       }
     </div>
