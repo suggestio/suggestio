@@ -1,4 +1,4 @@
-package io.suggest.sys.mdr.v
+package io.suggest.sys.mdr.v.main
 
 import chandu0101.scalajs.react.components.materialui.{MuiColorTypes, MuiSnackBarContent, MuiSnackBarContentProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
@@ -8,11 +8,12 @@ import io.suggest.common.html.HtmlConstants.{COLON, SPACE}
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.routes.routes
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -23,11 +24,13 @@ import io.suggest.ueq.UnivEqUtil._
 class MdrErrorsR {
 
   case class PropsVal(
-                       errorNodeIds: Iterable[String]
+                       errorNodeIds : Iterable[String],
+                       isSu         : Boolean,
                      )
   implicit object MdrErrorsRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.errorNodeIds ===* b.errorNodeIds)
+      (a.errorNodeIds ===* b.errorNodeIds) &&
+      (a.isSu ==* b.isSu)
     }
   }
 
@@ -67,10 +70,12 @@ class MdrErrorsR {
                     Messages( MsgCodes.`Lost.node` ),
                     COLON, SPACE,
                     errNodeId,
-                    <.a(
-                      ^.href := routes.controllers.SysMarket.showAdnNode( errNodeId ).url,
-                      HtmlConstants.`~`
-                    )
+                    ReactCommonUtil.maybeNode( props.isSu ) {
+                      <.a(
+                        ^.href := routes.controllers.SysMarket.showAdnNode( errNodeId ).url,
+                        HtmlConstants.`~`
+                      )
+                    }
                   )
                 )
                 new MuiSnackBarContentProps {

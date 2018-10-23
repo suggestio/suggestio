@@ -1,4 +1,4 @@
-package io.suggest.sys.mdr.v
+package io.suggest.sys.mdr.v.dia
 
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonVariants, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiLinearProgress, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
@@ -8,13 +8,12 @@ import diode.react.ReactPot._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sys.mdr.m.{DismissCancelClick, DismissOkClick, MMdrRefuseDialogS, SetDismissReason}
-import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 
 import scala.scalajs.js
 

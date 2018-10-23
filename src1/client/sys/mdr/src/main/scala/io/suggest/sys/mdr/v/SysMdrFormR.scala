@@ -1,13 +1,16 @@
 package io.suggest.sys.mdr.v
 
-import chandu0101.scalajs.react.components.materialui.{MuiDrawerAnchors, MuiDrawer, MuiDrawerProps, MuiDrawerVariants, MuiToolBar}
+import chandu0101.scalajs.react.components.materialui.{MuiDrawer, MuiDrawerAnchors, MuiDrawerProps, MuiDrawerVariants, MuiToolBar}
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.jd.render.v.{JdCss, JdCssR}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.spa.{DiodeUtil, OptFastEq}
 import io.suggest.sys.mdr.m.MSysMdrRootS
-import io.suggest.sys.mdr.v.pane.MdrControlPanelR
+import io.suggest.sys.mdr.v.dia.MdrDiaRefuseR
+import io.suggest.sys.mdr.v.main.{MdrErrorsR, NodeRenderR}
+import io.suggest.sys.mdr.v.pane.MdrSidePanelR
+import io.suggest.sys.mdr.v.toolbar.MdrToolBarR
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -19,15 +22,13 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Состоит из двух панелей, кнопок аппрува/отказа + отрендеренными данными по узлу.
   */
 class SysMdrFormR(
-                   val nodeMdrR           : NodeMdrR,
+                   val mdrSidePanelR      : MdrSidePanelR,
                    val nodeRenderR        : NodeRenderR,
                    val mdrErrorsR         : MdrErrorsR,
                    val mdrDiaRefuseR      : MdrDiaRefuseR,
-                   val mdrControlPanelR   : MdrControlPanelR,
+                   val mdrControlPanelR   : MdrToolBarR,
                    jdCssR                 : JdCssR,
                  ) {
-
-  import JdCss.JdCssFastEq
 
   type Props_t = MSysMdrRootS
   type Props = ModelProxy[Props_t]
@@ -35,7 +36,7 @@ class SysMdrFormR(
 
   case class State(
                     jdCssC              : ReactConnectProxy[JdCss],
-                    nodeInfoC           : ReactConnectProxy[nodeMdrR.Props_t],
+                    nodeInfoC           : ReactConnectProxy[mdrSidePanelR.Props_t],
                     nodeRenderC         : ReactConnectProxy[nodeRenderR.Props_t],
                     mdrErrorsC          : ReactConnectProxy[mdrErrorsR.Props_t],
                     diaRefuseC          : ReactConnectProxy[mdrDiaRefuseR.Props_t],
@@ -70,7 +71,7 @@ class SysMdrFormR(
           }
         )(
           // Содержимое формы модерации карточки:
-          s.nodeInfoC { nodeMdrR.apply },
+          s.nodeInfoC { mdrSidePanelR.apply },
         ),
 
         // Визуальный рендер узла:
@@ -89,12 +90,12 @@ class SysMdrFormR(
     .initialStateFromProps { mrootProxy =>
       State(
 
-        jdCssC = mrootProxy.connect(_.jdCss),
+        jdCssC = mrootProxy.connect(_.jdCss)( JdCss.JdCssFastEq ),
 
         nodeInfoC = mrootProxy.connect { mroot =>
           for (nextResp <- mroot.info) yield {
             for (req <- nextResp.nodeOpt) yield {
-              nodeMdrR.PropsVal(
+              mdrSidePanelR.PropsVal(
                 nodeId                  = req.nodeId,
                 ntypeOpt = req.ad
                   .map(_ => MNodeTypes.Ad)
@@ -111,7 +112,7 @@ class SysMdrFormR(
               )
             }
           }
-        }( DiodeUtil.FastEqExt.PotFastEq( OptFastEq.Wrapped(nodeMdrR.NodeMdrRPropsValFastEq)) ),
+        }( DiodeUtil.FastEqExt.PotFastEq( OptFastEq.Wrapped(mdrSidePanelR.NodeMdrRPropsValFastEq)) ),
 
         nodeRenderC = mrootProxy.connect { mroot =>
           for (nextResp <- mroot.info) yield {
@@ -132,7 +133,8 @@ class SysMdrFormR(
             if req.errorNodeIds.nonEmpty
           } yield {
             mdrErrorsR.PropsVal(
-              errorNodeIds = req.errorNodeIds
+              errorNodeIds  = req.errorNodeIds,
+              isSu          = mroot.conf.isSu,
             )
           }
         }( OptFastEq.Wrapped( mdrErrorsR.MdrErrorsRPropsValFastEq ) ),

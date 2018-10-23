@@ -1,4 +1,4 @@
-package io.suggest.sys.mdr.v
+package io.suggest.sys.mdr.v.pane
 
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiLinearProgress, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiToolTip, MuiToolTipProps, MuiTypoGraphyVariants}
 import diode.FastEq
@@ -20,7 +20,7 @@ import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.r.RangeYmdR
 import io.suggest.sys.mdr.MMdrActionInfo
-import io.suggest.sys.mdr.v.pane.MdrPanelStepBtnR
+import io.suggest.sys.mdr.v.toolbar.MdrTbStepBtnR
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
@@ -34,10 +34,10 @@ import japgolly.univeq._
   * Created: 02.10.18 11:44
   * Description: React-компонент для кнопок управления модерацией узла (левая панель).
   */
-class NodeMdrR(
-                mdrRowR               : MdrRowR,
-                mdrPanelStepBtnR      : MdrPanelStepBtnR,
-              ) {
+class MdrSidePanelR(
+                     mdrRowR               : MdrRowR,
+                     mdrTbStepBtnR         : MdrTbStepBtnR,
+                   ) {
 
   case class PropsVal(
                        nodeId                   : String,
@@ -71,7 +71,7 @@ class NodeMdrR(
       val propsPot = propsPotProxy.value
 
       // Кнопка быстрой перезагрузки данных модерации.
-      lazy val _refreshBtn = propsPotProxy.wrap(pp => mdrPanelStepBtnR.PropsVal.Refresh(pp.isPending))( mdrPanelStepBtnR.apply )
+      lazy val _refreshBtn = propsPotProxy.wrap(pp => mdrTbStepBtnR.PropsVal.Refresh(pp.isPending))( mdrTbStepBtnR.apply )
 
       <.div(
 
@@ -89,7 +89,7 @@ class NodeMdrR(
 
               // Для сдвига по вертикали в ЛК, чтобы не заезжать по топ-панель:
               ReactCommonUtil.maybe( nodeProps.withTopOffset ) {
-                ^.paddingTop := 20.px
+                ^.paddingTop := 60.px
               },
 
               MuiList()(

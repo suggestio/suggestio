@@ -7,7 +7,7 @@ import io.suggest.sys.mdr.c.{ISysMdrApi, NodeMdrAh, SysMdrApiXhrImpl}
 import io.suggest.sys.mdr.m.{MSysMdrRootS, MdrNextNode}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.StateInp
-import io.suggest.sys.mdr.v.NodeRenderR
+import io.suggest.sys.mdr.v.main.NodeRenderR
 import play.api.libs.json.Json
 
 import scala.concurrent.Future

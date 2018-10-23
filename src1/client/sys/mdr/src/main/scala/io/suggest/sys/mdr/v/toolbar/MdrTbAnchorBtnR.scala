@@ -1,4 +1,4 @@
-package io.suggest.sys.mdr.v.pane
+package io.suggest.sys.mdr.v.toolbar
 
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiSvgIcon, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
@@ -19,7 +19,7 @@ import japgolly.univeq.UnivEq
   * Created: 11.10.18 18:38
   * Description: Кнопка-ссылка на панели инструментов.
   */
-class MdrPanelAnchorBtnR {
+class MdrTbAnchorBtnR {
 
   case class PropsVal(
                        hintCode   : String,

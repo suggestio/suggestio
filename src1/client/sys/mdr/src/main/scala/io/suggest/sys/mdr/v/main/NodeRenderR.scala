@@ -1,4 +1,4 @@
-package io.suggest.sys.mdr.v
+package io.suggest.sys.mdr.v.main
 
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiCard, MuiCardContent, MuiCircularProgress, MuiPaper, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
@@ -7,10 +7,10 @@ import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.{MJdAdData, MJdConf}
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
 import io.suggest.jd.render.v.{JdCss, JdR}
 import io.suggest.jd.tags.JdTag
+import io.suggest.jd.{MJdAdData, MJdConf}
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.msg.Messages
 import io.suggest.n2.edge.MEdgeDataJs
@@ -19,8 +19,8 @@ import io.suggest.sys.mdr.SysMdrConst
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import scalaz.Tree
 import japgolly.univeq._
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -76,7 +76,6 @@ class NodeRenderR(
                       override val variant = MuiTypoGraphyVariants.headline
                     }
                   )(
-                    HtmlConstants.NBSP_STR,
                     Messages( MsgCodes.`Nothing.to.moderate` ),
                   ),
                   <.span(

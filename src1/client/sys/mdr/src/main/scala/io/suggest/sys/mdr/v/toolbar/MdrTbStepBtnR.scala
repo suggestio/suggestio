@@ -1,6 +1,5 @@
-package io.suggest.sys.mdr.v.pane
+package io.suggest.sys.mdr.v.toolbar
 
-import japgolly.univeq._
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiSvgIcon, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProps}
@@ -8,10 +7,11 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sys.mdr.m.MdrNextNode
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.React
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -19,7 +19,7 @@ import japgolly.scalajs.react.raw.React
   * Created: 11.10.18 18:28
   * Description: Базовый класс для какой-то не-href кнопки на панели кнопок.
   */
-class MdrPanelStepBtnR {
+class MdrTbStepBtnR {
 
   final case class PropsVal(
                              titleMsgCode   : String,

@@ -1,4 +1,4 @@
-package io.suggest.sys.mdr.v.pane
+package io.suggest.sys.mdr.v.toolbar
 
 import chandu0101.scalajs.react.components.materialui.{MuiChip, MuiChipProps, MuiChipVariants}
 import diode.FastEq
@@ -20,10 +20,10 @@ import scala.scalajs.js
   * Created: 11.10.18 18:13
   * Description: Тулбар с кнопками панели управления системой модерации.
   */
-class MdrControlPanelR(
-                        mdrPanelStepBtnR      : MdrPanelStepBtnR,
-                        mdrPanelAnchorBtnR    : MdrPanelAnchorBtnR,
-                      ) {
+class MdrToolBarR(
+                   mdrTbStepBtnR      : MdrTbStepBtnR,
+                   mdrTbAnchorBtnR    : MdrTbAnchorBtnR,
+                 ) {
 
   case class PropsVal(
                        nodePending      : Boolean,
@@ -53,16 +53,16 @@ class MdrControlPanelR(
     def render(propsProxy: Props): VdomElement = {
       val props = propsProxy.value
 
-      def __stepBtn(btnProps: mdrPanelStepBtnR.Props_t) =
-        propsProxy.wrap(_ => btnProps)(mdrPanelStepBtnR.apply)
+      def __stepBtn(btnProps: mdrTbStepBtnR.Props_t) =
+        propsProxy.wrap(_ => btnProps)(mdrTbStepBtnR.apply)
 
-      def __anchorBtn( btnProps: mdrPanelAnchorBtnR.Props_t ) =
-        propsProxy.wrap(_ => btnProps)(mdrPanelAnchorBtnR.apply)
+      def __anchorBtn( btnProps: mdrTbAnchorBtnR.Props_t ) =
+        propsProxy.wrap(_ => btnProps)(mdrTbAnchorBtnR.apply)
 
       val canNotGoToPrevious = props.nodeOffset - props.errorsCount <= 0
 
-      val A = mdrPanelAnchorBtnR.PropsVal
-      val S = mdrPanelStepBtnR.PropsVal
+      val A = mdrTbAnchorBtnR.PropsVal
+      val S = mdrTbStepBtnR.PropsVal
 
       <.span(
         __stepBtn( S.ToBeginning(canNotGoToPrevious, -props.nodeOffset) ),

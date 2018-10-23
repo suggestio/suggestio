@@ -9,7 +9,7 @@ import io.suggest.sys.mdr.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.sys.mdr.v.NodeRenderR
+import io.suggest.sys.mdr.v.main.NodeRenderR
 import japgolly.univeq._
 
 import scala.util.Success

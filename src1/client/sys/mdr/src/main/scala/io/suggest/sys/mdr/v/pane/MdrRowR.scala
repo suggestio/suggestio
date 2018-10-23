@@ -1,4 +1,4 @@
-package io.suggest.sys.mdr.v
+package io.suggest.sys.mdr.v.pane
 
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiColorTypes, MuiIconButton, MuiIconButtonProps, MuiListItem, MuiListItemProps, MuiListItemText, MuiSvgIcon, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
@@ -11,12 +11,12 @@ import io.suggest.msg.Messages
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sys.mdr.MMdrActionInfo
 import io.suggest.sys.mdr.m.ApproveOrDismiss
-import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react._
-import io.suggest.ueq.UnivEqUtil._
-import japgolly.scalajs.react.raw.React
-import japgolly.univeq._
 import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.raw.React
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 
 /**
   * Suggest.io
