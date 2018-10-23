@@ -15,13 +15,14 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import play.api.libs.json.Json
 import util.acl._
-import util.mdr.SysMdrUtil
 import views.html.sys1.mdr._
 import views.html.lk.mdr._
 import japgolly.univeq._
 import models.mctx.Context
 import models.req.{MNodesChainReq, MReq}
 import util.ad.JdAdUtil
+import util.adn.NodesUtil
+import util.mdr.MdrUtil
 
 import scala.concurrent.Future
 import scala.util.Success
@@ -39,9 +40,10 @@ class SysMdr @Inject() (
                          reqUtil                  : ReqUtil,
                          isSuNode                 : IsSuNode,
                          isSu                     : IsSu,
-                         sysMdrUtil               : SysMdrUtil,
+                         mdrUtil                  : MdrUtil,
                          isNodeAdmin              : IsNodeAdmin,
                          canMdrResolute           : CanMdrResolute,
+                         nodesUtil                : NodesUtil,
                          override val mCommonDi   : ICommonDi,
                        )
   extends SioControllerImpl
@@ -125,8 +127,23 @@ class SysMdr @Inject() (
     ab.async { implicit request =>
       LOGGER.trace(s"$logPrefix args=$args moderator#${request.user.personIdOpt.orNull}")
 
+      // Если задан ресивер, то надо найти все дочерние под-узлы, включая текущий.
+      val rcvrIdsFut = args.conf.rcvrIdOpt.fold [Future[Set[String]]] {
+        Future.successful( Set.empty )
+      } { rcvrId =>
+        val rcvrIdSet = Set(rcvrId)
+        for {
+          childIds <- nodesUtil.collectChildIds( rcvrIdSet )
+        } yield {
+          LOGGER.trace(s"$logPrefix Collected ${childIds.size} child ids of parent#$rcvrId: [${childIds.mkString(", ")}]")
+          childIds ++ rcvrIdSet
+        }
+      }
+
       // Заготовка sql-запроса, который занимается поиском немодерированных узлов в биллинге:
-      val paidNodesSql = sysMdrUtil.findPaidNodeIds4MdrQ(args)
+      val paidNodesSqlFut = for (rcvrIds <- rcvrIdsFut) yield {
+        mdrUtil.findPaidNodeIds4MdrQ(args, rcvrIds)
+      }
 
       var errNodeIdsAcc = List.empty[String]
 
@@ -138,24 +155,29 @@ class SysMdr @Inject() (
 
         // Поискать в биллинге узел, который надо модерировать:
         val mnodeFut = for {
+          // По идее, paidNodesSql надо дожидаться вне этой функции-цикла, но тут не особо важно:
+          // в норме эта функция вызывает максимум 1 раз, а при ошибках - оверхед низкий.
+          paidNodesSql <- paidNodesSqlFut
+
           // Ищем следующую карточку через биллинг и очередь на модерацию.
           nodeIds <- slick.db.run {
             // TODO Добавить сортировку с учётом qs args0.gen, чтобы разные модераторы получали бы разные элементы для модерации.
-            sysMdrUtil.getFirstIn( args0, paidNodesSql, limit = 1 )
+            mdrUtil.getFirstIn( args0, paidNodesSql, limit = 1 )
           }
+
           // Возможна NSEE, это нормально. Обходим проблемы совместимости NSEE с Vector через headOption.get (вместо head):
           nodeId = nodeIds.headOption.get
           mnodeOpt <- mNodesCache.getById( nodeId )
+
         } yield {
-          // TODO Возможна ситуация, когда узел уже удалён, но в биллинге - ещё не модерирован. Эта ошибка в базах блокирует работу системы модерации.
-          if (mnodeOpt.isEmpty) {
+          // Возможна ситуация, когда узел уже удалён, но в биллинге - ещё не модерирован. Модер должен принять решение об удалении.
+          mnodeOpt.fold[MNode] {
             // item + node_id есть, а узел отсутствует. Может быть кластер развалился, а может это ошибка в базе. Пока просто логгируем.
-            // TODO Уведомлять юзера об ошибках в СУБД. На экране браузера отрендерить?
             LOGGER.error(s"$logPrefix node $nodeId missing, but present in items\n req=${request.uri}")
             throw new IllegalStateException( nodeId )
-          } else {
+          } { mnode =>
             LOGGER.trace(s"$logPrefix mdr node => ${mnodeOpt.flatMap(_.id)} (${nodeIds.length})")
-            mnodeOpt.get
+            mnode
           }
         }
 
@@ -179,7 +201,7 @@ class SysMdr @Inject() (
         .transform { case _ => Success(errNodeIdsAcc.toSet) }
 
       // TODO Добавить gen sort, где generation = args.gen, взятый например из personId.hashCode
-      lazy val freeMdrsSearch = sysMdrUtil.freeMdrNodeSearchArgs(args, 1)
+      lazy val freeMdrsSearch = mdrUtil.freeMdrNodeSearchArgs(args, 1)
 
       // Если не будет найдено биллинга для модерации, то надо поискать бесплатные немодерированные размещения.
       val billedOrFreeNodeOrExFut = billedNodeOrExFut
@@ -194,20 +216,18 @@ class SysMdr @Inject() (
         }
 
       // Надо оценить длину очереди на модерацию. Точно узнать нельзя, но можно примерно посчитать кол-во узлов в paid и free, выбрать наибольшее.
-      val mdrQueueReportFut: Future[MMdrQueueReport] = {
-        val freeMdrsCountFut = mNodes.dynCount( freeMdrsSearch )
-        val paidMdrNodesCountFut = slick.db.run {
+      val freeMdrsCountFut = mNodes.dynCount( freeMdrsSearch )
+      val mdrQueueReportFut = for {
+        paidNodesSql      <- paidNodesSqlFut
+        paidMdrNodesCount <- slick.db.run {
           paidNodesSql.size.result
         }
-        for {
-          freeMdrsCount         <- freeMdrsCountFut
-          paidMdrNodesCount     <- paidMdrNodesCountFut
-        } yield {
-          val minQueueLen = Math.max( freeMdrsCount.toInt, paidMdrNodesCount )
-          val maybeHaveMore = freeMdrsCount > 0 && paidMdrNodesCount > 0
-          LOGGER.trace(s"$logPrefix Mdr queue lenghts: free=$freeMdrsCount paid=$paidMdrNodesCount => report=$minQueueLen${if(maybeHaveMore) "+" else ""}")
-          MMdrQueueReport(minQueueLen, maybeHaveMore)
-        }
+        freeMdrsCount     <- freeMdrsCountFut
+      } yield {
+        val minQueueLen = Math.max( freeMdrsCount.toInt, paidMdrNodesCount )
+        val maybeHaveMore = freeMdrsCount > 0 && paidMdrNodesCount > 0
+        LOGGER.trace(s"$logPrefix Mdr queue lenghts: free=$freeMdrsCount paid=$paidMdrNodesCount => report=$minQueueLen${if(maybeHaveMore) "+" else ""}")
+        MMdrQueueReport(minQueueLen, maybeHaveMore)
       }
 
       implicit val ctx = implicitly[Context]
@@ -217,7 +237,7 @@ class SysMdr @Inject() (
         mdrNode <- billedOrFreeNodeOrExFut
         nodeId = mdrNode.id.get
         items <- slick.db.run {
-          sysMdrUtil.itemsQueryAwaiting( nodeId )
+          mdrUtil.itemsQueryAwaiting( nodeId )
             // Ограничиваем кол-во запрашиваемых item'ов. Нет никакого смысла вываливать слишком много данных на экран.
             .take(50)
             // Тяжелая сортировка тут скорее всего не важна, поэтому опускаем её.
@@ -384,7 +404,7 @@ class SysMdr @Inject() (
     canMdrResolute(mdrRes).async { implicit request =>
       // Надо организовать пакетное обновления в БД биллинга, в зависимости от значений полей резолюшена.
       for {
-        _ <- sysMdrUtil.processMdrResolution( mdrRes, request.mnode, request.user )
+        _ <- mdrUtil.processMdrResolution( mdrRes, request.mnode, request.user )
       } yield {
         // Вернуть ответ -- обычно ничего возвращать не требуется.
         NoContent

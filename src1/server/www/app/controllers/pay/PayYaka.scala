@@ -1,7 +1,6 @@
 package controllers.pay
 
 import javax.inject.Singleton
-
 import javax.inject.Inject
 import controllers.SioControllerImpl
 import io.suggest.bill.MCurrencies
@@ -19,7 +18,7 @@ import io.suggest.stat.m.{MAction, MActionTypes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mbill.MEmailOrderPaidTplArgs
 import models.mctx.Context
-import models.mdr.MSysMdrEmailTplArgs
+import models.mdr.MMdrNotifyMeta
 import models.mpay.yaka._
 import models.mproj.ICommonDi
 import models.req.{INodeOrderReq, IReq, IReqHdr}
@@ -460,7 +459,7 @@ class PayYaka @Inject() (
               contractId = usrNode.billing.contractId.get
 
               // Выполнить действия в биллинге, связанные с проведением платежа.
-              (balTxn, isMdrNotifyNeeded, ffor) <- slick.db.run {
+              (balTxn, mdrNotifyCtx, ffor) <- slick.db.run {
                 import slick.profile.api._
                 val a = for {
                   // Проверить ордер, что он в статусе HOLD или DRAFT.
@@ -479,14 +478,14 @@ class PayYaka @Inject() (
                   owi <- bill2Util.prepareCartOrderItems(mOrder0)
 
                   // Узнать, потребуется ли уведомлять модеров по email при успешном завершении транзакции.
-                  isMdrNotifyNeeded1 <- mdrUtil.isMdrNotifyNeeded
+                  mdrNotifyCtx1 <- mdrUtil.mdrNotifyPrepareCtx()
 
                   // Запустить действия, связанные с вычитанием бабла с баланса юзера и реализацией MItem'ов заказа.
-                  // Здесь используется более и сложный и более толерантный вариант экзекуции ордера. Fallback-вариант -- это bill2Util.maybeExecuteOrder(owi).
+                  // Здесь используется более сложный и толерантный вариант экзекуции ордера. Fallback-вариант -- это bill2Util.maybeExecuteOrder(owi).
                   ffor1 <- bill2Util.forceFinalizeOrder(owi)
 
                 } yield {
-                  (balTxn, isMdrNotifyNeeded1, ffor1)
+                  (balTxn, mdrNotifyCtx1, ffor1)
                 }
 
                 a.transactionally
@@ -502,24 +501,27 @@ class PayYaka @Inject() (
               if (ffor.okItemsCount > 0) {
                 LOGGER.info(s"$logPrefix Order ${yReq.orderId} closed successfully. Invoice ${yReq.invoiceId}")
                 // Уведомить модераторов, если необходимо.
-                if (isMdrNotifyNeeded) {
+                if (mdrUtil.isMdrNotifyNeeded(mdrNotifyCtx)) {
                   val usrDisplayNameOptFut = FutureUtil.opt2futureOpt( usrNode.guessDisplayName ) {
                     for (usrEmails <- userEmailsFut) yield {
                       usrEmails.headOption
                     }
                   }
+                  val ctx = implicitly[Context]
                   for (usrDisplayNameOpt <- usrDisplayNameOptFut) {
                     mdrUtil.sendMdrNotify(
-                      MSysMdrEmailTplArgs(
+                      mdrNotifyCtx,
+                      MMdrNotifyMeta(
                         paid        = Some( mprice ),
                         orderId     = Some( yReq.orderId ),
                         txn         = Some( balTxn ),
                         personId    = Some( yReq.personId ),
                         personName  = usrDisplayNameOpt
                       )
-                    )
+                    )(ctx)
                   }
                 }
+
                 // Собрать stat-экшен.
                 statMasAcc ::= MAction(
                   actions = MActionTypes.Success :: Nil

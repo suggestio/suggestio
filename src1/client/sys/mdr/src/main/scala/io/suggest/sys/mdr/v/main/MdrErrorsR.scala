@@ -49,7 +49,7 @@ class MdrErrorsR {
 
             // Рендер списка направильных узлов, присланных сервером:
             props.errorNodeIds.toVdomArray { errNodeId =>
-              MuiSnackBarContent.component.withKey( errNodeId) {
+              MuiSnackBarContent.component.withKey(errNodeId) {
                 val _message = <.span(
                   MuiTypoGraphy(
                     new MuiTypoGraphyProps {
@@ -78,6 +78,7 @@ class MdrErrorsR {
                     }
                   )
                 )
+
                 new MuiSnackBarContentProps {
                   override val message = _message.rawNode
                 }

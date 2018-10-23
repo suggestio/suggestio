@@ -95,8 +95,7 @@ class CanMdrResolute @Inject()(
                 Some(allowedRcvrChain)
               }
 
-              val confRcvrIdOpt = mdrRes.conf.onNodeKey
-                .flatMap(_.lastOption)
+              val confRcvrIdOpt = mdrRes.conf.rcvrIdOpt
               // Запустить проверку ресивера, заданного в mdrRes.
               val qsRcvrAllowedChainOptFut = FutureUtil.optFut2futOpt(confRcvrIdOpt) { __checkRcvrAllowed }
 
@@ -140,7 +139,7 @@ class CanMdrResolute @Inject()(
                     isItemTypeOk
                   } && {
                     // Если задан mdrRes.rcvrId, то он должен точно совпадать c mitem.rcvrId:
-                    val r = mdrRes.conf.onNodeKey.fold(true)(mitem.rcvrIdOpt.contains)
+                    val r = mdrRes.conf.rcvrIdOpt.fold(true)(mitem.rcvrIdOpt.contains)
                     if (!r)
                       LOGGER.warn(s"$logPrefix Item#$itemId.rcvrId#${confRcvrIdOpt.orNull} does not match to qs.rcvrId=${confRcvrIdOpt.orNull}")
                     r

@@ -293,25 +293,26 @@ final class NodesUtil @Inject() (
   }
 
 
-  /** Сбор всех дочерних id в одну кучу по owned_by предикатам.
+  /** Сбор всех дочерних id в одну кучу по OwnedBy предикату.
     *
     * @param parentNodeIds Интересующие id родительских узлов.
-    * @return Фьючерс с множеством дочерних узлов.
+    * @param maxLevels Максимальное кол-во шагов.
+    * @return Фьючерс с множеством дочерних узлов + parentNodeIds.
     */
-  def collectOwnedNodeIdsDown(parentNodeIds: Set[String], maxDeep: Int = 3, perStepLimit: Int = 100): Future[Set[String]] = {
+  def collectChildIds(parentNodeIds: Set[String], maxLevels: Int = 3, perStepLimit: Int = 100): Future[Set[String]] = {
     val _predicates = MPredicates.OwnedBy :: Nil
 
     // Асинхронная рекурсия поиска id-узлов с погружением на под-уровни.
     def __fold(parentNodeIdsCurrent: Set[String], acc0Fut: Future[Set[String]], counter: Int): Future[Set[String]] = {
-      if (counter >= maxDeep || parentNodeIds.isEmpty) {
+      if (counter >= maxLevels || parentNodeIdsCurrent.isEmpty) {
         acc0Fut
 
       } else {
         mNodes
           .dynSearchIds {
             val crs = Criteria(
-              nodeIds = parentNodeIds.toSeq,
-              predicates = _predicates
+              nodeIds     = parentNodeIdsCurrent.toSeq,
+              predicates  = _predicates
             ) :: Nil
             new MNodeSearchDfltImpl {
               override def outEdges = crs
@@ -325,11 +326,14 @@ final class NodesUtil @Inject() (
 
               // Чтобы не было циклов графа, надо выкинуть id уже пройденных узлов. В норме - тут просто пересборка idsSet.
               val alreadyUsedIds = idsSet intersect acc0
-              val nextIdsSet2 = if (alreadyUsedIds.isEmpty) idsSet
-              else idsSet -- alreadyUsedIds
+
+              // Акк уже готов, но нужно собрать список родительских узлов для следующей итерации:
+              val idsSet2 =
+                if (alreadyUsedIds.isEmpty) idsSet
+                else idsSet -- alreadyUsedIds
 
               // И перейти на следующую итерацию:
-              __fold(nextIdsSet2, acc2Fut, counter + 1)
+              __fold(idsSet2, acc2Fut, counter + 1)
             }
           }
       }

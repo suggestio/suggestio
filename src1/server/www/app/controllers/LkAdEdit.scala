@@ -28,7 +28,7 @@ import play.api.mvc._
 import util.acl.{BruteForceProtect, CanCreateOrEditAd, CanEditAd, IsNodeAdmin}
 import util.ad.{JdAdUtil, LkAdEdFormUtil}
 import util.ext.ExtRscUtil
-import util.mdr.SysMdrUtil
+import util.mdr.MdrUtil
 import util.n2u.N2VldUtil
 import util.sec.CspUtil
 import views.html.lk.ad.edit._
@@ -55,7 +55,7 @@ class LkAdEdit @Inject() (
                            bruteForceProtect                      : BruteForceProtect,
                            jdAdUtil                               : JdAdUtil,
                            mNodes                                 : MNodes,
-                           sysMdrUtil                             : SysMdrUtil,
+                           mdrUtil                                : MdrUtil,
                            extRscUtil                             : ExtRscUtil,
                            override val mCommonDi                 : ICommonDi
                          )
@@ -223,7 +223,7 @@ class LkAdEdit @Inject() (
 
                     // Помечаем, как отмодерированный, если текущий юзер -- это супер-юзер.
                     if (request.user.isSuper)
-                      _acc0 ::= sysMdrUtil.mdrEdge(request.user, sysMdrUtil.mdrEdgeInfo(None))
+                      _acc0 ::= mdrUtil.mdrEdge(request.user, mdrUtil.mdrEdgeInfo(None))
 
                     _acc0
                   }
