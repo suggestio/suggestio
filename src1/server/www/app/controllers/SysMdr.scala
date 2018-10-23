@@ -4,6 +4,7 @@ import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.adv.rcvr.RcvrKey
 import javax.inject.{Inject, Singleton}
 import io.suggest.ctx.CtxData
+import io.suggest.err.ErrorConstants
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.model.n2.edge.MPredicates
@@ -20,6 +21,7 @@ import views.html.lk.mdr._
 import japgolly.univeq._
 import models.mctx.Context
 import models.req.{MNodesChainReq, MReq}
+import play.api.mvc.{ActionBuilder, AnyContent}
 import util.ad.JdAdUtil
 import util.adn.NodesUtil
 import util.mdr.MdrUtil
@@ -44,6 +46,7 @@ class SysMdr @Inject() (
                          isNodeAdmin              : IsNodeAdmin,
                          canMdrResolute           : CanMdrResolute,
                          nodesUtil                : NodesUtil,
+                         isAuth                   : IsAuth,
                          override val mCommonDi   : ICommonDi,
                        )
   extends SioControllerImpl
@@ -104,41 +107,62 @@ class SysMdr @Inject() (
     * @return 200 OK + JSON-ответ MMdrNextResp с данными модерируемого узла/карточки.
     */
   def nextMdrInfo(args: MdrSearchArgs) = csrf.Check {
-    //val rcvrIdOpt = rcvrKeyOpt.flatMap(_.lastOption)
     lazy val logPrefix = s"nextMdrInfo(${args.conf.rcvrIdOpt.getOrElse("")})#${System.currentTimeMillis()}:"
 
+    // Сборка ActionBuilder'а, который проверит и подготовит данные для запуска экшена:
     // Если задан producerId, то надо организовать проверку на уровне юзера и личного кабинета.
-    val ab = args.conf.onNodeKey.fold {
+    val ab = args.conf.onNodeKey.fold [ActionBuilder[MNodesChainReq, AnyContent]] {
       // Не задан id ресивера - значит только супер-юзер допустим.
-      isSu().andThen {
-        new reqUtil.ActionTransformerImpl[MReq, MNodesChainReq] {
-          override protected def transform[A](request: MReq[A]): Future[MNodesChainReq[A]] = {
-            val nodeOptReq = MNodesChainReq(Nil, request, request.user)
-            Future.successful( nodeOptReq )
+      if (args.conf.isSu) {
+        // Работа от имени супер-юзера вне какого-либо узла.
+        isSu().andThen {
+          new reqUtil.ActionTransformerImpl[MReq, MNodesChainReq] {
+            override protected def transform[A](request: MReq[A]): Future[MNodesChainReq[A]] = {
+              val nodeOptReq = MNodesChainReq(Nil, request, request.user)
+              Future.successful( nodeOptReq )
+            }
+          }
+        }
+      } else {
+        isAuth().andThen {
+          new reqUtil.ActionTransformerImpl[MReq, MNodesChainReq] {
+            override protected def transform[A](request: MReq[A]): Future[MNodesChainReq[A]] = {
+              LOGGER.trace(s"$logPrefix PersonId#${request.user.personIdOpt.orNull} as parent-node")
+              for (personNode <- request.user.personNodeFut) yield {
+                MNodesChainReq(personNode :: Nil, request, request.user)
+              }
+            }
           }
         }
       }
     } { rcvrKey =>
-      // Может быть и супер-юзер, и обычный владелец личного кабинета.
+      // Модерация в контексте указанного узла. Может быть и супер-юзер, и обычный владелец личного кабинета.
+      LOGGER.trace(s"$logPrefix Mdr on node#${RcvrKey.rcvrKey2urlPath(rcvrKey)}")
       isNodeAdmin( rcvrKey )
     }
 
-    // Сборка тела экшена.
+    // Сборка тела экшена: функция поиска и возврата данных узла для модерации:
     ab.async { implicit request =>
       LOGGER.trace(s"$logPrefix args=$args moderator#${request.user.personIdOpt.orNull}")
 
       // Если задан ресивер, то надо найти все дочерние под-узлы, включая текущий.
-      val rcvrIdsFut = args.conf.rcvrIdOpt.fold [Future[Set[String]]] {
-        Future.successful( Set.empty )
-      } { rcvrId =>
-        val rcvrIdSet = Set(rcvrId)
-        for {
-          childIds <- nodesUtil.collectChildIds( rcvrIdSet )
-        } yield {
-          LOGGER.trace(s"$logPrefix Collected ${childIds.size} child ids of parent#$rcvrId: [${childIds.mkString(", ")}]")
-          childIds ++ rcvrIdSet
+      val rcvrIdsFut = request.mnodeOpt
+        .fold [Future[Set[String]]] {
+          // Нет ресивера - значит sio-модератор/суперюзер листает всё в системе, что отправлено на модерацию.
+          // В норме этот assert не нужен, т.к. проверки должны быть выполнены в ACL. Просто самоконтроль по мере развития и усложнения кода экшена.
+          ErrorConstants.assertArg( request.user.isSuper )
+          Future.successful( Set.empty )
+        } { rcvrNode =>
+          // Нельзя выполнять экшен на эфемерных узлах, т.к. отсутствие узла и его id
+          val rcvrId = rcvrNode.id.get
+          val rcvrIdSet = Set(rcvrId)
+          for {
+            childIds <- nodesUtil.collectChildIds( rcvrIdSet )
+          } yield {
+            LOGGER.trace(s"$logPrefix Collected ${childIds.size} child ids of parent#$rcvrId: [${childIds.mkString(", ")}]")
+            childIds ++ rcvrIdSet
+          }
         }
-      }
 
       // Заготовка sql-запроса, который занимается поиском немодерированных узлов в биллинге:
       val paidNodesSqlFut = for (rcvrIds <- rcvrIdsFut) yield {
