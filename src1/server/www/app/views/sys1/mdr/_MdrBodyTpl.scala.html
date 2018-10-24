@@ -22,7 +22,11 @@
     routes.javascript.LkAdEdit.editAd ::
     routes.javascript.LkAdnEdit.editNodePage ::
     routes.javascript.SysMarket.showAdnNode ::
-    (if (ctx.request.user.isSuper) routes.javascript.SysMarket.showAdnNode :: Nil else Nil): _*
+    (if (ctx.request.user.isSuper)
+      routes.javascript.SysMarket.showAdnNode ::
+      routes.javascript.SysMdr.fixNode ::
+      Nil
+     else Nil): _*
   )
 )
 

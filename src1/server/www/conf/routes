@@ -223,6 +223,7 @@ GET  /lk/mdr/*onNode                     @controllers.SysMdr.lkMdr( onNode: Rcvr
 GET  /sys/mdr                            @controllers.SysMdr.sysPage
 GET  /sys/mdr/next                       @controllers.SysMdr.nextMdrInfo(a: io.suggest.sys.mdr.MdrSearchArgs)
 POST /sys/mdr/do                         @controllers.SysMdr.doMdr(r: io.suggest.sys.mdr.MMdrResolution)
+POST /sys/mdr/repair/:nodeId             @controllers.SysMdr.fixNode(nodeId: MEsUuId)
 
 ## sys node geo
 GET  /sys/adn/geo/all/:nodeId            @controllers.SysAdnGeo.forNode(nodeId)

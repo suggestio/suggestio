@@ -1097,7 +1097,7 @@ class Bill2Util @Inject() (
     * @return
     */
   def refuseItem(itemId: Gid_t, reasonOpt: Option[String]): DBIOAction[RefuseItemResult, NoStream, RWT] = {
-    lazy val logPrefix = s"refuseItemAction($itemId):"
+    lazy val logPrefix = s"refuseItem($itemId):"
     val dbAction = for {
       // Получить и заблокировать текущий item.
       mitem0 <- _prepareAwaitingItem(itemId)
@@ -1110,7 +1110,7 @@ class Bill2Util @Inject() (
 
       // Отметить item как отказанный в размещении
       mitem2 <- {
-        LOGGER.debug(s"$logPrefix Unlocked user balance[${balance0.id.orNull}] amount ${mitem0.price.amount}: ${balance0.price.amount} => $amount2 ${balance0.price.currency}")
+        LOGGER.debug(s"$logPrefix Unlocked user balance[${balance0.id.orNull}] amount ${mitem0.price}: ${balance0.price} => ${amount2.orNull} ${balance0.price.currency}")
 
         // Чтобы вернуть новый item, не считывая его из таблицы повторно, имитируем его прямо тут...
         val mi2 = mitem0.copy(

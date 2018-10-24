@@ -501,4 +501,37 @@ class MdrUtil @Inject() (
     }
   }
 
+
+  /** Автоматически загасить любые проблемы с модерацией указанного узла.
+    *
+    * @param nodeId id узла, который не может быть отмодерирован.
+    * @param reasonOpt Причина.
+    * @return Фьючерс.
+    */
+  def fixNode(nodeId: String, reasonOpt: Option[String]): Future[_] = {
+    // Узел отсутствует, но должны быть какие-то item'ы для модерации.
+    lazy val logPrefix = s"fixNode($nodeId)#${System.currentTimeMillis()}:"
+    LOGGER.info(s"$logPrefix Starting, reason = ${reasonOpt.orNull}")
+
+    slick.db.stream {
+      mItems.query
+        .filter { i =>
+          (i.nodeId === nodeId) &&
+          (i.statusStr === MItemStatuses.AwaitingMdr.value)
+        }
+        .map(_.id)
+        // distinct не требуется, т.к. primary key.
+        .result
+    }
+      .toSource
+      .mapAsyncUnordered(4) { itemId =>
+        slick.db.run {
+          bill2Util.refuseItem(itemId, reasonOpt)
+        }
+      }
+      .runForeach { refuseRes =>
+        LOGGER.trace(s"$logPrefix item#${refuseRes.mitem.id.orNull} => $refuseRes")
+      }
+  }
+
 }

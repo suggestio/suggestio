@@ -89,8 +89,8 @@ object MuiSvgIcons {
   object ActionBookmark extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/bug-report", JSImport.Default)
   object ActionBugReport extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/build", JSImport.Default)
-  object ActionBuild extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Build", JSImport.Default)
+  object Build extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/cached", JSImport.Default)
   object ActionCached extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/camera-enhance", JSImport.Default)
@@ -785,6 +785,8 @@ object MuiSvgIcons {
   object Inbox extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Link", JSImport.Default)
   object Link extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/LinkOff", JSImport.Default)
+  object LinkOff extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/LowPriority", JSImport.Default)
   object LowPriority extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/content/mail", JSImport.Default)

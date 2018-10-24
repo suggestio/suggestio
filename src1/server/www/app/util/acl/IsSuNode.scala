@@ -4,7 +4,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.req.{MNodeReq, MReq}
+import models.req.{IReq, MNodeReq, MReq}
 import play.api.http.Status
 
 import scala.concurrent.Future
@@ -59,6 +59,30 @@ class IsSuNode @Inject() (
         }
       }
 
+    }
+  }
+
+
+  /** Надо, чтобы узел ОТСУТСТВОВАЛ. */
+  def nodeMissing(nodeId: String): ActionBuilder[IReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[IReq] {
+      override def invokeBlock[A](request: Request[A], block: IReq[A] => Future[Result]): Future[Result] = {
+        val req1 = aclUtil.reqFromRequest(request)
+
+        if (req1.user.isSuper) {
+          val mnodeOptFut = mNodesCache.getById(nodeId)
+          mnodeOptFut.flatMap {
+            case None =>
+              block(req1)
+            case _ =>
+              LOGGER.debug(s"Node $nodeId exist, but must miss.")
+              errorHandler.onClientError(req1, Status.NOT_FOUND)
+          }
+
+        } else {
+          isSu.supOnUnauthFut(req1)
+        }
+      }
     }
   }
 

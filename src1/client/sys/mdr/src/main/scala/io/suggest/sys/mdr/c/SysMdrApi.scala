@@ -27,6 +27,9 @@ trait ISysMdrApi {
   /** Запрос на сервер с резолюцией модератора. */
   def doMdr(mdrRes: MMdrResolution): Future[_]
 
+  /** Запрос на ремонт узла. */
+  def fixNode(nodeId: String): Future[_]
+
 }
 
 
@@ -61,6 +64,16 @@ class SysMdrApiXhrImpl extends ISysMdrApi {
     // TODO Десериализовать/обработать ответ.
     Xhr.requestJsonText( route )
       .recover( _recover204ToNone )
+  }
+
+
+  override def fixNode(nodeId: String): Future[_] = {
+    val route = routes.controllers.SysMdr.fixNode(
+      nodeId = nodeId
+    )
+    Xhr.successIfStatus( HttpConst.Status.NO_CONTENT ) {
+      Xhr.send(route)
+    }
   }
 
 }

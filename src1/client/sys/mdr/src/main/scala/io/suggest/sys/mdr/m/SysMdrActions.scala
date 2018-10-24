@@ -44,3 +44,10 @@ case object DismissOkClick extends ISysMdrAction
 
 /** Клик по кнопке отмены диалога отказа. */
 case object DismissCancelClick extends ISysMdrAction
+
+
+/** Экшен активации ремонта узла. */
+case class FixNode(nodeId: String) extends ISysMdrAction
+
+/** Экшен завершения запроса к серверу на тему ремонта узла. */
+case class FixNodeResp(reason: FixNode, timeStampMs: Long, tryResp: Try[_]) extends ISysMdrAction

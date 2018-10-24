@@ -5,8 +5,11 @@ import io.suggest.adv.rcvr.RcvrKey
 import javax.inject.{Inject, Singleton}
 import io.suggest.ctx.CtxData
 import io.suggest.err.ErrorConstants
+import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
+import io.suggest.mbill2.m.item.MItems
+import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
@@ -24,6 +27,7 @@ import models.req.{MNodesChainReq, MReq}
 import play.api.mvc.{ActionBuilder, AnyContent}
 import util.ad.JdAdUtil
 import util.adn.NodesUtil
+import util.billing.Bill2Util
 import util.mdr.MdrUtil
 
 import scala.concurrent.Future
@@ -156,8 +160,14 @@ class SysMdr @Inject() (
           // Нельзя выполнять экшен на эфемерных узлах, т.к. отсутствие узла и его id
           val rcvrId = rcvrNode.id.get
           val rcvrIdSet = Set(rcvrId)
+
+          // Сколько уровней children искать? Если пляшем от текущего юзера, то можно искать на один уровень глубже.
+          var maxLevelsDeep = 3
+          if (request.user.personIdOpt contains rcvrId)
+            maxLevelsDeep += 1
+
           for {
-            childIds <- nodesUtil.collectChildIds( rcvrIdSet )
+            childIds <- nodesUtil.collectChildIds( rcvrIdSet, maxLevelsDeep )
           } yield {
             LOGGER.trace(s"$logPrefix Collected ${childIds.size} child ids of parent#$rcvrId: [${childIds.mkString(", ")}]")
             childIds ++ rcvrIdSet
@@ -431,6 +441,20 @@ class SysMdr @Inject() (
         _ <- mdrUtil.processMdrResolution( mdrRes, request.mnode, request.user )
       } yield {
         // Вернуть ответ -- обычно ничего возвращать не требуется.
+        NoContent
+      }
+    }
+  }
+
+
+  /** Авто-ремонт узла, который  */
+  def fixNode(nodeId: MEsUuId) = csrf.Check {
+    // Сразу проверяем, что узел отсутсвует. Тогда его можно чинить.
+    isSuNode.nodeMissing(nodeId).async { implicit request =>
+      val refuseReasonOpt: Option[String] = Some( "fixNode" )
+      for {
+        _ <- mdrUtil.fixNode(nodeId.id, refuseReasonOpt )
+      } yield {
         NoContent
       }
     }

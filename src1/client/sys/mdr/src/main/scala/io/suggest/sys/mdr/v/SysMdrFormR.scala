@@ -135,6 +135,7 @@ class SysMdrFormR(
             mdrErrorsR.PropsVal(
               errorNodeIds  = req.errorNodeIds,
               isSu          = mroot.conf.isSu,
+              fixNodesPots  = mroot.fixNodePots
             )
           }
         }( OptFastEq.Wrapped( mdrErrorsR.MdrErrorsRPropsValFastEq ) ),

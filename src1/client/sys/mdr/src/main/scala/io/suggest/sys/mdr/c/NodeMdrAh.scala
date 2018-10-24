@@ -3,7 +3,7 @@ package io.suggest.sys.mdr.c
 import diode.data.{PendingBase, Pot}
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.msg.WarnMsgs
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sys.mdr.{MMdrActionInfo, MMdrResolution, MdrSearchArgs}
 import io.suggest.sys.mdr.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -301,7 +301,8 @@ class NodeMdrAh[M](
               .toOption
               .fold(0)(_.errorNodeIds.size)
             Math.max( 0, m.reqOffset + errOffset )
-          }
+          },
+          fixNodePots = Map.empty
           // TODO Закрыть все открытые диалоги
         )
         updated( v2 )
@@ -311,6 +312,58 @@ class NodeMdrAh[M](
         LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
       }
+
+
+    // Юзер кликнул по кнопке запуска авто-ремонта узла.
+    case m: FixNode =>
+      val v0 = value
+      val potOpt0 = v0.fixNodePots.get(m.nodeId)
+      val pot0 = potOpt0 getOrElse Pot.empty
+
+      if (pot0.isPending) {
+        noChange
+
+      } else {
+        val timestamp = System.currentTimeMillis()
+        val fx = Effect {
+          api
+            .fixNode( m.nodeId )
+            .transform { tryResp =>
+              Success( FixNodeResp(m, timestamp, tryResp) )
+            }
+        }
+        val pot2 = pot0.pending( timestamp )
+        val v2 = v0.withFixNodePots(
+          v0.fixNodePots + (m.nodeId -> pot2)
+        )
+        updated(v2, fx)
+      }
+
+
+    // Запрос к серверу за ремонтом узла завершился.
+    case m: FixNodeResp =>
+      val v0 = value
+      v0.fixNodePots
+        .get( m.reason.nodeId )
+        .fold {
+          LOG.warn( ErrorMsgs.EXPECTED_FILE_MISSING, msg = m )
+          noChange
+        } { pot0 =>
+          if (pot0 isPendingWithStartTime m.timeStampMs) {
+            val pot2 = m.tryResp.fold(
+              pot0.fail,
+              { _ => pot0.ready(None) }
+            )
+            val v2 = v0.withFixNodePots(
+              v0.fixNodePots + (m.reason.nodeId -> pot2)
+            )
+            updated(v2)
+
+          } else {
+            LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+            noChange
+          }
+        }
 
   }
 

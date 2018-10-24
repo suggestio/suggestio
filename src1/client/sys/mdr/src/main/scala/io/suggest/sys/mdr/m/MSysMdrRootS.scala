@@ -23,6 +23,7 @@ object MSysMdrRootS {
       (a.info ===* b.info) &&
       (a.dialogs ===* b.dialogs) &&
       (a.mdrPots ===* b.mdrPots) &&
+      (a.fixNodePots ===* b.fixNodePots) &&
       (a.nodeOffset ==* b.nodeOffset) &&
       (a.conf ===* b.conf)
     }
@@ -44,12 +45,14 @@ object MSysMdrRootS {
   *                   Позволяет пропустить узел, или вернуться назад к пропущенному узлу.
   *                   В норме - ноль.
   *                   Списки ошибкок узлов с сервера должны инкрементить это значение.
+  * @param fixNodePots Запросы ремонта.
   */
 case class MSysMdrRootS(
                          jdCss      : JdCss,
                          info       : Pot[MMdrNextResp]                     = Pot.empty,
                          dialogs    : MMdrDialogs                           = MMdrDialogs.empty,
                          mdrPots    : Map[MMdrActionInfo, Pot[None.type]]   = Map.empty,
+                         fixNodePots: Map[String, Pot[None.type]]           = Map.empty,
                          nodeOffset : Int                                   = 0,
                          conf       : MMdrConf,
                        ) {
@@ -59,5 +62,6 @@ case class MSysMdrRootS(
   def withDialogs( dialogs: MMdrDialogs ) = copy(dialogs = dialogs)
   def withMdrPots( mdrPots: Map[MMdrActionInfo, Pot[None.type]] ) = copy(mdrPots = mdrPots)
   def withNodeOffset(nodeOffset: Int) = copy(nodeOffset = nodeOffset)
+  def withFixNodePots( fixNodePots: Map[String, Pot[None.type]] ) = copy(fixNodePots = fixNodePots)
 
 }

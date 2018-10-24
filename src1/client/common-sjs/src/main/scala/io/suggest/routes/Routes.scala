@@ -273,6 +273,8 @@ sealed trait SysMdrCtlRoutes extends js.Object {
 
   def doMdr(mdrRes: js.Dictionary[js.Any]): Route = js.native
 
+  def fixNode(nodeId: String): Route = js.native
+
 }
 
 
