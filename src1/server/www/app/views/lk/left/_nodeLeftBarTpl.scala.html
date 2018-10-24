@@ -32,19 +32,17 @@
 
     @_leftBarItemTpl(
       title = messages( MsgCodes.`Moderation` ),
-      href  = routes.SysMdr.lkMdr(nodeId :: Nil)
-    ) {
-      Mdr
-    }
+      href  = routes.SysMdr.lkMdr(nodeId :: Nil),
+      css   = classesAct(leftCurrEl.contains(LPL_MDR), "__mdr")
+    )()
 
+    @* Кнопка вызова системной панели. Временно ушла с правой панели (вместе с панелью). *@
     @if(ctx.user.isSuper) {
-      @* Кнопка вызова системной панели. Временно ушла с правой панели (вместе с панелью). *@
       @_leftBarItemTpl(
         title = "System",
-        href  = routes.SysMarket.showAdnNode(nodeId)
-      ) {
-        System
-      }
+        href  = routes.SysMarket.showAdnNode(nodeId),
+        css   = classesAct(false, "__sys")
+      )()
     }
 
   } @* nodeId *@
