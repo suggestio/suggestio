@@ -29,6 +29,7 @@ class SysMdrModules {
   lazy val mdrToolBarR = wire[MdrToolBarR]
   lazy val mdrTbAnchorBtnR = wire[MdrTbAnchorBtnR]
   lazy val mdrTbStepBtnR = wire[MdrTbStepBtnR]
+  lazy val mdrForceAllNodesR = wire[MdrForceAllNodesR]
 
   lazy val sysMdrCircuit = wire[SysMdrCircuit]
 

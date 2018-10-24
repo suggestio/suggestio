@@ -58,4 +58,6 @@ case class MMdrConf(
 
   lazy val rcvrIdOpt = onNodeKey.flatMap(_.lastOption)
 
+  def withNodeKey(onNodeKey: Option[RcvrKey]) = copy(onNodeKey = onNodeKey)
+
 }

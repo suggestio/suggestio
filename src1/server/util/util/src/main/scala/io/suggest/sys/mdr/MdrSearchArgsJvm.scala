@@ -182,7 +182,9 @@ object MdrSearchArgsJvm {
           } yield {
             MMdrConf(
               isSu       = isSys,
-              onNodeKey   = onNodeKeyOpt.map(_.items.toList)
+              onNodeKey  = onNodeKeyOpt
+                .filter(_.items.nonEmpty)
+                .map(_.items.toList)
             )
           }
         }

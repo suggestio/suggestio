@@ -1,11 +1,8 @@
 package io.suggest.sys.mdr.m
 
 import diode.FastEq
-import diode.data.Pot
-import io.suggest.jd.render.v.JdCss
-import io.suggest.sys.mdr.{MMdrActionInfo, MMdrConf, MMdrNextResp}
+import io.suggest.sys.mdr.MMdrConf
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 
 /**
@@ -19,12 +16,9 @@ object MSysMdrRootS {
   /** Поддержка FastEq для корневой модели. */
   implicit object MSysMdrRootSFastEq extends FastEq[MSysMdrRootS] {
     override def eqv(a: MSysMdrRootS, b: MSysMdrRootS): Boolean = {
-      (a.jdCss ===* b.jdCss) &&
-      (a.info ===* b.info) &&
+      (a.node ===* b.node) &&
       (a.dialogs ===* b.dialogs) &&
-      (a.mdrPots ===* b.mdrPots) &&
-      (a.fixNodePots ===* b.fixNodePots) &&
-      (a.nodeOffset ==* b.nodeOffset) &&
+      (a.form ===* b.form) &&
       (a.conf ===* b.conf)
     }
   }
@@ -36,32 +30,18 @@ object MSysMdrRootS {
 
 /** Корневой контейнер данных состояния react-формы sys-mdr.
   *
+  * @param node Инстанс состояния модерации узла.
   * @param conf Конфиг формы.
-  * @param jdCss Стили рендера рекламной карточки.
-  * @param info Ответ сервера с данными для модерации.
-  * @param dialogs Состояния диалогов.
-  * @param mdrPots Состояния элементов модерации.
-  * @param nodeOffset Сдвиг среди модерируемых узлов.
-  *                   Позволяет пропустить узел, или вернуться назад к пропущенному узлу.
-  *                   В норме - ноль.
-  *                   Списки ошибкок узлов с сервера должны инкрементить это значение.
-  * @param fixNodePots Запросы ремонта.
   */
 case class MSysMdrRootS(
-                         jdCss      : JdCss,
-                         info       : Pot[MMdrNextResp]                     = Pot.empty,
-                         dialogs    : MMdrDialogs                           = MMdrDialogs.empty,
-                         mdrPots    : Map[MMdrActionInfo, Pot[None.type]]   = Map.empty,
-                         fixNodePots: Map[String, Pot[None.type]]           = Map.empty,
-                         nodeOffset : Int                                   = 0,
-                         conf       : MMdrConf,
+                         node         : MMdrNodeS,
+                         dialogs      : MMdrDialogs       = MMdrDialogs.empty,
+                         form         : MMdrFormS         = MMdrFormS.empty,
+                         conf         : MMdrConf,
                        ) {
 
-  def withJdCss( jdCss: JdCss ) = copy(jdCss = jdCss)
-  def withInfo( info: Pot[MMdrNextResp] ) = copy(info = info)
   def withDialogs( dialogs: MMdrDialogs ) = copy(dialogs = dialogs)
-  def withMdrPots( mdrPots: Map[MMdrActionInfo, Pot[None.type]] ) = copy(mdrPots = mdrPots)
-  def withNodeOffset(nodeOffset: Int) = copy(nodeOffset = nodeOffset)
-  def withFixNodePots( fixNodePots: Map[String, Pot[None.type]] ) = copy(fixNodePots = fixNodePots)
+  def withNode(node: MMdrNodeS) = copy(node = node)
+  def withForm(form: MMdrFormS) = copy(form = form)
 
 }

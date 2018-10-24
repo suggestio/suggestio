@@ -379,6 +379,8 @@ class JsMessagesUtil @Inject() (
       MC.`Next.node` ::
       MC.`To.beginning` ::
       MC.`To.end` ::
+      MC.`Moderate.all.nodes` ::
+      MC.`Moderate.requests.from.all.nodes` ::
       ITEM_TYPES
   }
 
@@ -404,7 +406,6 @@ class JsMessagesUtil @Inject() (
       LK_ADS_MSGS,
       LK_ADN_EDIT_MSGS,
       BILL_CART_MSGS,
-      // TODO Унести в sys-messages, когда они будут наконец.
       SYS_MDR_MSGS
     )
       .flatten

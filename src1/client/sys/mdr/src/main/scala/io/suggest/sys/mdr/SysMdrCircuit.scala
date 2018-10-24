@@ -4,7 +4,7 @@ import diode.react.ReactConnector
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sys.mdr.c.{ISysMdrApi, NodeMdrAh, SysMdrApiXhrImpl}
-import io.suggest.sys.mdr.m.{MSysMdrRootS, MdrNextNode}
+import io.suggest.sys.mdr.m.{MMdrNodeS, MSysMdrRootS, MdrNextNode}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.StateInp
 import io.suggest.sys.mdr.v.main.NodeRenderR
@@ -30,7 +30,9 @@ object SysMdrCircuit {
 
     // Сборка root-модели, готовой к работе.
     MSysMdrRootS(
-      jdCss = NodeRenderR.mkJdCss()(),
+      node = MMdrNodeS(
+        jdCss = NodeRenderR.mkJdCss()(),
+      ),
       conf  = mconf,
     )
   }

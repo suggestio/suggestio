@@ -8,8 +8,6 @@ import io.suggest.err.ErrorConstants
 import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
-import io.suggest.mbill2.m.item.MItems
-import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
@@ -27,7 +25,6 @@ import models.req.{MNodesChainReq, MReq}
 import play.api.mvc.{ActionBuilder, AnyContent}
 import util.ad.JdAdUtil
 import util.adn.NodesUtil
-import util.billing.Bill2Util
 import util.mdr.MdrUtil
 
 import scala.concurrent.Future
@@ -432,7 +429,7 @@ class SysMdr @Inject() (
   /** Пришла команда от модератора об изменении состояния элементов модерации.
     *
     * @param mdrRes Контейнер данных по одному действию модерации.
-    * @return
+    * @return 204 No Content, когда всё ок.
     */
   def doMdr(mdrRes: MMdrResolution) = csrf.Check {
     canMdrResolute(mdrRes).async { implicit request =>
@@ -447,7 +444,11 @@ class SysMdr @Inject() (
   }
 
 
-  /** Авто-ремонт узла, который  */
+  /** Авто-ремонт узла, который запускает автоматическое исправление проблем с узлом.
+    *
+    * @param nodeId id узла с которым есть проблемы модерации.
+    * @return 204 No Content, если всё ок.
+    */
   def fixNode(nodeId: MEsUuId) = csrf.Check {
     // Сразу проверяем, что узел отсутсвует. Тогда его можно чинить.
     isSuNode.nodeMissing(nodeId).async { implicit request =>

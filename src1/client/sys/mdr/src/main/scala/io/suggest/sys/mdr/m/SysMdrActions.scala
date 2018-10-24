@@ -51,3 +51,7 @@ case class FixNode(nodeId: String) extends ISysMdrAction
 
 /** Экшен завершения запроса к серверу на тему ремонта узла. */
 case class FixNodeResp(reason: FixNode, timeStampMs: Long, tryResp: Try[_]) extends ISysMdrAction
+
+
+/** Выставление нового значения флага на сборку данных со всех узлов. */
+case class SetForceAllNodes( forceAllNodes: Boolean ) extends ISysMdrAction

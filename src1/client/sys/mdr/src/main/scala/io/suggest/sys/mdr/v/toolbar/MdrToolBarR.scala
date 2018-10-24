@@ -65,6 +65,24 @@ class MdrToolBarR(
       val S = mdrTbStepBtnR.PropsVal
 
       <.span(
+
+        MuiChip(
+          new MuiChipProps {
+
+            override val variant = MuiChipVariants.outlined
+            override val label: js.UndefOr[React.Node] = {
+              <.span(
+                (props.nodeOffset + props.errorsCount).toString,
+                NBSP_STR, SLASH, NBSP_STR,
+                props.queueReportOpt.fold(QUESTION_MARK) { _.toHumanReadableString }
+              )
+                .rawNode
+            }
+          }
+        ),
+
+        NBSP_STR,
+
         __stepBtn( S.ToBeginning(canNotGoToPrevious, -props.nodeOffset) ),
         __stepBtn( S.PreviousNode(canNotGoToPrevious) ),
         __stepBtn( S.Refresh(props.nodePending) ),
@@ -93,23 +111,6 @@ class MdrToolBarR(
               }
           )
         },
-
-        PIPE, NBSP_STR,
-
-        MuiChip(
-          new MuiChipProps {
-
-            override val variant = MuiChipVariants.outlined
-            override val label: js.UndefOr[React.Node] = {
-              <.span(
-                (props.nodeOffset + props.errorsCount).toString,
-                NBSP_STR, SLASH, NBSP_STR,
-                props.queueReportOpt.fold(QUESTION_MARK) { _.toHumanReadableString }
-              )
-                .rawNode
-            }
-          }
-        )
 
       )
     }

@@ -294,4 +294,7 @@ object MsgCodes {
   val `To.end` = "To.end"
   val `Moderation` = "Moderation"
 
+  val `Moderate.all.nodes` = "Moderate.all.nodes"
+  val `Moderate.requests.from.all.nodes` = "Moderate.requests.from.all.nodes"
+
 }

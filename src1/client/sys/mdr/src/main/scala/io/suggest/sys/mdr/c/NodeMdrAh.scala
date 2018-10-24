@@ -4,7 +4,7 @@ import diode.data.{PendingBase, Pot}
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.sys.mdr.{MMdrActionInfo, MMdrResolution, MdrSearchArgs}
+import io.suggest.sys.mdr.{MMdrActionInfo, MMdrConf, MMdrResolution, MdrSearchArgs}
 import io.suggest.sys.mdr.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -20,6 +20,21 @@ import scala.util.Success
   * Created: 01.10.18 22:30
   * Description: Контроллер формы модерации.
   */
+object NodeMdrAh {
+
+  /** Вернуть конфиг для реквестов на сервер. */
+  def getReqMdrConf(v0: MSysMdrRootS): MMdrConf = {
+    if (v0.form.forceAllRcrvs && v0.conf.onNodeKey.nonEmpty) {
+      v0.conf.withNodeKey( None )
+    } else {
+      v0.conf
+    }
+  }
+
+}
+
+
+/** Класс контроллера формы модерации. */
 class NodeMdrAh[M](
                     api       : ISysMdrApi,
                     modelRW   : ModelRW[M, MSysMdrRootS]
@@ -30,16 +45,16 @@ class NodeMdrAh[M](
 
   /** Эффект отправки mdr-команды на сервер с апдейтом состояния. pure-функция. */
   def _doMdrFx(info: MMdrActionInfo, reasonOpt: Option[String], v0: MSysMdrRootS): (MSysMdrRootS, Effect) = {
-    val pot0 = v0.mdrPots.getOrElse(info, Pot.empty)
+    val pot0 = v0.node.mdrPots.getOrElse(info, Pot.empty)
     val pot2 = pot0.pending()
     val fx = Effect {
       val startTimestampMs = pot2.asInstanceOf[PendingBase].startTime
       api.doMdr(
         MMdrResolution(
-          nodeId  = v0.info.get.nodeOpt.get.nodeId,
+          nodeId  = v0.node.info.get.nodeOpt.get.nodeId,
           info    = info,
           reason  = reasonOpt,
-          conf    = v0.conf,
+          conf    = NodeMdrAh.getReqMdrConf( v0 ),
         )
       ).transform { tryRes =>
         val act = DoMdrResp(
@@ -51,8 +66,11 @@ class NodeMdrAh[M](
       }
     }
 
-    val mdrPots2 = v0.mdrPots + (info -> pot2)
-    val v2 = v0.withMdrPots( mdrPots2 )
+    val mdrPots2 = v0.node.mdrPots + (info -> pot2)
+    val v2 = v0.withNode(
+      v0.node
+        .withMdrPots( mdrPots2 )
+    )
     (v2, fx)
   }
 
@@ -79,17 +97,17 @@ class NodeMdrAh[M](
     // Результат запроса с командой модерации
     case m: DoMdrResp =>
       val v0 = value
-      v0.mdrPots
+      v0.node.mdrPots
         .get( m.info )
         .fold(noChange) { pot0 =>
           if (pot0 isPendingWithStartTime m.timestampMs) {
             // Это ожидаемый ответ сервера. Обработать его:
             val mdrPots2 = m.tryResp.fold(
               {ex =>
-                v0.mdrPots + (m.info -> pot0.fail(ex))
+                v0.node.mdrPots + (m.info -> pot0.fail(ex))
               },
               {_ =>
-                v0.mdrPots - m.info
+                v0.node.mdrPots - m.info
               }
             )
 
@@ -106,7 +124,7 @@ class NodeMdrAh[M](
             // Надо почистить item'ы, которые осталось промодерировать.
             val mdrRespPot2 = if (m.tryResp.isSuccess) {
               // Если всё ок, то надо удалить уже-промодерированные-item'ы из состояния.
-              for (resp <- v0.info) yield {
+              for (resp <- v0.node.info) yield {
                 resp.withNodeOpt(
                   for (nodeInfo <- resp.nodeOpt) yield {
                     val isActionInfoEmpty = m.info.isEmpty
@@ -141,13 +159,15 @@ class NodeMdrAh[M](
               }
             } else {
               // При ошибках не надо чистить данные ноды
-              v0.info
+              v0.node.info
             }
 
             val v2 = v0.copy(
               dialogs = dia2,
-              mdrPots = mdrPots2,
-              info    = mdrRespPot2
+              node = v0.node.copy(
+                mdrPots = mdrPots2,
+                info    = mdrRespPot2
+              )
             )
 
             // Если больше не осталось элементов для модерации, то надо запросить новый элемент для модерации.
@@ -218,16 +238,16 @@ class NodeMdrAh[M](
     // Переход к следующему узлу, который требует модерации.
     case m: MdrNextNode =>
       val v0 = value
-      if (v0.info.isPending) {
+      if (v0.node.info.isPending) {
         noChange
 
       } else {
-        val infoReq2 = v0.info.pending()
+        val infoReq2 = v0.node.info.pending()
 
         // Организовать запрос на сервер:
         val fx = Effect {
           // Шагание обновляет offset:
-          var offset2 = v0.nodeOffset
+          var offset2 = v0.node.nodeOffset
 
           // Если происходит переключение между модерируемыми узлами, то вычислить новый offset:
           if (m.offsetDelta !=* 0) {
@@ -246,7 +266,7 @@ class NodeMdrAh[M](
             // Пропустить текущую карточку, если требуется экшеном:
             hideAdIdOpt = OptionUtil.maybeOpt(m.skipCurrentNode) {
               for {
-                resp  <- v0.info.toOption
+                resp  <- v0.node.info.toOption
                 mnode <- resp.nodeOpt
               } yield {
                 mnode.nodeId
@@ -254,7 +274,7 @@ class NodeMdrAh[M](
             },
             // Сдвиг соответствует запрашиваемому.
             offsetOpt = Some( offset2 ),
-            conf = v0.conf
+            conf = NodeMdrAh.getReqMdrConf( v0 )
           )
           api.nextMdrInfo(args)
             .transform { tryResp =>
@@ -268,8 +288,10 @@ class NodeMdrAh[M](
         }
 
         // И результат экшена...
-        val v2 = v0
-          .withInfo( infoReq2 )
+        val v2 = v0.withNode(
+          v0.node
+            .withInfo( infoReq2 )
+        )
         updated(v2 , fx)
       }
 
@@ -277,13 +299,13 @@ class NodeMdrAh[M](
     // Поступил результат реквеста к серверу за новыми данными для модерации.
     case m: MdrNextNodeResp =>
       val v0 = value
-      if (v0.info isPendingWithStartTime m.timestampMs) {
+      if (v0.node.info isPendingWithStartTime m.timestampMs) {
         // Это ожидаемый ответ сервера. Обработать его:
         val infoReq2 = m.tryResp.fold(
-          v0.info.fail,
-          v0.info.ready
+          v0.node.info.fail,
+          v0.node.info.ready
         )
-        val jdCss2 = NodeRenderR.mkJdCss( Some(v0.jdCss) )(
+        val jdCss2 = NodeRenderR.mkJdCss( Some(v0.node.jdCss) )(
           infoReq2
             .iterator
             .flatMap(_.nodeOpt)
@@ -291,19 +313,21 @@ class NodeMdrAh[M](
             .map(_.template)
             .toSeq: _*
         )
-        val v2 = v0.copy(
-          info    = infoReq2,
-          jdCss   = jdCss2,
-          mdrPots = Map.empty,
-          nodeOffset = {
-            // Если успешный ответ содержит список ошибок узлов, то значит сервер перешагнул какие-то узлы автоматом. Надо тут их тоже прошагать с помощью offset:
-            val errOffset = m.tryResp
-              .toOption
-              .fold(0)(_.errorNodeIds.size)
-            Math.max( 0, m.reqOffset + errOffset )
-          },
-          fixNodePots = Map.empty
-          // TODO Закрыть все открытые диалоги
+        val v2 = v0.withNode(
+          v0.node.copy(
+            info    = infoReq2,
+            jdCss   = jdCss2,
+            mdrPots = Map.empty,
+            nodeOffset = {
+              // Если успешный ответ содержит список ошибок узлов, то значит сервер перешагнул какие-то узлы автоматом. Надо тут их тоже прошагать с помощью offset:
+              val errOffset = m.tryResp
+                .toOption
+                .fold(0)(_.errorNodeIds.size)
+              Math.max( 0, m.reqOffset + errOffset )
+            },
+            fixNodePots = Map.empty
+            // TODO Закрыть все открытые диалоги
+          )
         )
         updated( v2 )
 
@@ -317,7 +341,7 @@ class NodeMdrAh[M](
     // Юзер кликнул по кнопке запуска авто-ремонта узла.
     case m: FixNode =>
       val v0 = value
-      val potOpt0 = v0.fixNodePots.get(m.nodeId)
+      val potOpt0 = v0.node.fixNodePots.get(m.nodeId)
       val pot0 = potOpt0 getOrElse Pot.empty
 
       if (pot0.isPending) {
@@ -333,8 +357,10 @@ class NodeMdrAh[M](
             }
         }
         val pot2 = pot0.pending( timestamp )
-        val v2 = v0.withFixNodePots(
-          v0.fixNodePots + (m.nodeId -> pot2)
+        val v2 = v0.withNode(
+          v0.node.withFixNodePots(
+            v0.node.fixNodePots + (m.nodeId -> pot2)
+          )
         )
         updated(v2, fx)
       }
@@ -343,7 +369,8 @@ class NodeMdrAh[M](
     // Запрос к серверу за ремонтом узла завершился.
     case m: FixNodeResp =>
       val v0 = value
-      v0.fixNodePots
+      v0.node
+        .fixNodePots
         .get( m.reason.nodeId )
         .fold {
           LOG.warn( ErrorMsgs.EXPECTED_FILE_MISSING, msg = m )
@@ -354,8 +381,10 @@ class NodeMdrAh[M](
               pot0.fail,
               { _ => pot0.ready(None) }
             )
-            val v2 = v0.withFixNodePots(
-              v0.fixNodePots + (m.reason.nodeId -> pot2)
+            val v2 = v0.withNode(
+              v0.node.withFixNodePots(
+                v0.node.fixNodePots + (m.reason.nodeId -> pot2)
+              )
             )
             updated(v2)
 
@@ -364,6 +393,25 @@ class NodeMdrAh[M](
             noChange
           }
         }
+
+
+    // Изменение состояния галочки форсирования поиска со всех узлов.
+    case m: SetForceAllNodes =>
+      val v0 = value
+      if (m.forceAllNodes ==* v0.form.forceAllRcrvs) {
+        noChange
+
+      } else {
+        val v2 = v0.withForm(
+          v0.form
+            .withForceAllRcvrs( m.forceAllNodes )
+        )
+        // Запустить пересборку текущего view с перемоткой в начало:
+        val fx = Effect.action(
+          MdrNextNode( offsetDelta = -v0.node.nodeOffset )
+        )
+        updated( v2, fx )
+      }
 
   }
 
