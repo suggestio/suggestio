@@ -41,6 +41,7 @@ object Mui {
       extends js.Any
   @js.native @JSImport("@material-ui/core/FontIcon", JSImport.Default) object FontIcon extends js.Any
   @js.native @JSImport("@material-ui/core/FormControl", JSImport.Default) object FormControl extends js.Any
+  @js.native @JSImport("@material-ui/core/FormControlLabel", JSImport.Default) object FormControlLabel extends js.Any
   @js.native @JSImport("@material-ui/core/GridList", JSImport.Default) object GridList extends js.Any
   @js.native @JSImport("@material-ui/core/GridList/GridTile", JSImport.Default) object GridTile
       extends js.Any
@@ -90,6 +91,8 @@ object Mui {
   @js.native @JSImport("@material-ui/core/Stepper/Stepper", JSImport.Default) object Stepper
       extends js.Any
   @js.native @JSImport("@material-ui/core/Snackbar", JSImport.Default) object Snackbar extends js.Any
+  @js.native @JSImport("@material-ui/core/Switch", JSImport.Default) object Switch extends js.Any
+
   @js.native @JSImport("@material-ui/core/SnackbarContent", JSImport.Default) object SnackbarContent extends js.Any
   @js.native @JSImport("@material-ui/core/Tabs", JSImport.Default) object Tabs         extends js.Any
   @js.native @JSImport("@material-ui/core/Tabs/Tab", JSImport.Default) object Tab      extends js.Any

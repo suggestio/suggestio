@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v.toolbar
 
-import chandu0101.scalajs.react.components.materialui.{MuiCheckBox, MuiCheckBoxProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import chandu0101.scalajs.react.components.materialui.{MuiFormControlLabel, MuiFormControlLabelProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
@@ -23,7 +23,12 @@ import scala.scalajs.js.annotation.JSName
   */
 class MdrForceAllNodesR {
 
-  type Props_t = Option[Boolean]
+  case class PropsVal(
+                       checked    : Boolean,
+                       disabled   : Boolean
+                     )
+
+  type Props_t = Option[PropsVal]
   type Props = ModelProxy[Props_t]
 
 
@@ -35,9 +40,10 @@ class MdrForceAllNodesR {
 
 
     def render(isEnabledOptProxy: Props): VdomElement = {
-      isEnabledOptProxy.value.whenDefinedEl { isEnabled =>
+      isEnabledOptProxy.value.whenDefinedEl { props =>
         <.span(
           HtmlConstants.PIPE,
+          HtmlConstants.NBSP_STR,
 
           // Чек-бокс
           MuiToolTip(
@@ -45,17 +51,23 @@ class MdrForceAllNodesR {
               override val title: React.Node = Messages( MsgCodes.`Moderate.requests.from.all.nodes` )
             }
           )(
-            <.label(
-              MuiCheckBox(
-                new MuiCheckBoxProps {
-                  override val checked    = js.defined( isEnabled )
+            MuiFormControlLabel {
+              val switchEl = MuiSwitch(
+                new MuiSwitchProps {
+                  override val checked    = js.defined( props.checked )
                   @JSName("onChange")
                   override val onChange2  = _onChangeJsCbF
+                  override val disabled = props.disabled
                 }
-              ),
-
-              Messages( MsgCodes.`Moderate.all.nodes` ),
-            )
+              )
+              new MuiFormControlLabelProps {
+                override val control = switchEl.rawElement
+                override val label = js.defined(
+                  Messages( MsgCodes.`Moderate.all.nodes` )
+                )
+                override val disabled = props.disabled
+              }
+            },
           )
         )
       }

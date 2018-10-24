@@ -182,7 +182,10 @@ class SysMdrFormR(
 
         mdrForceAllNodesC = mrootProxy.connect { mroot =>
           for (_ <- mroot.conf.rcvrIdOpt) yield {
-            mroot.form.forceAllRcrvs
+            mdrForceAllNodesR.PropsVal(
+              checked  = mroot.form.forceAllRcrvs,
+              disabled = mroot.node.info.isPending
+            )
           }
         }( OptFastEq.OptValueEq ),
 

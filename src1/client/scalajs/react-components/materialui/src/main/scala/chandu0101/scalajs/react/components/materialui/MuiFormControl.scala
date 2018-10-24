@@ -21,9 +21,11 @@ object MuiFormControl {
 }
 
 
-trait MuiFormControlProps extends MuiPropsBase {
-  val classes: js.UndefOr[MuiFormControlClasses] = js.undefined
-  val component: js.UndefOr[String | js.Function | js.Object] = js.undefined
+trait MuiFormControlProps
+  extends MuiPropsBase
+  with MuiPropsBaseClasses[MuiFormControlClasses]
+  with MuiPropsBaseComponent
+{
   val disabled: js.UndefOr[Boolean] = js.undefined
   val error: js.UndefOr[Boolean] = js.undefined
   val fullWidth: js.UndefOr[Boolean] = js.undefined
@@ -33,8 +35,7 @@ trait MuiFormControlProps extends MuiPropsBase {
 object MuiFormControlProps extends MuiPropsBaseStatic[MuiFormControlProps]
 
 
-trait MuiFormControlClasses extends js.Object {
-  val root: js.UndefOr[String] = js.undefined
+trait MuiFormControlClasses extends MuiClassesBase {
   val marginNormal: js.UndefOr[String] = js.undefined
   val marginDense: js.UndefOr[String] = js.undefined
   val fullWidth: js.UndefOr[String] = js.undefined
