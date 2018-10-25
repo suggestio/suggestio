@@ -234,16 +234,26 @@ class SysMdr @Inject() (
         .transform { case _ => Success(errNodeIdsAcc.toSet) }
 
       // Инстанс для поиска бесплатных модераций.
-      val freeMdrsSearchFut = for {
+      lazy val freeMdrsSearchFut = for {
         rcvrIds <- rcvrIdsFut
       } yield {
         // TODO Добавить gen sort, где generation = args.gen, взятый например из personId.hashCode
         mdrUtil.freeMdrNodeSearchArgs(args, rcvrIds.toSeq, 1)
       }
 
+      // Free-mdr пост-модерация доступна только для супер-юзеров и вторична.
+      val isWithFreeMdr = request.user.isSuper
+
+      // Точно узнать трудно, но можно примерно посчитать кол-во узлов в paid и free, выбрать наибольшее.
+      val freeMdrsCountFut =
+        if (isWithFreeMdr) freeMdrsSearchFut.flatMap( mNodes.dynCount )
+        else Future.successful(0L)
+
       // Если не будет найдено биллинга для модерации, то надо поискать бесплатные немодерированные размещения.
-      val billedOrFreeNodeOrExFut = billedNodeOrExFut
-        .recoverWith { case _: NoSuchElementException =>
+      var billedOrFreeNodeOrExFut = billedNodeOrExFut
+      if (isWithFreeMdr) {
+        // поддержка пост-модерации free-узлов для суперюзеров, если bill-размещения закончились.
+        billedOrFreeNodeOrExFut = billedOrFreeNodeOrExFut.recoverWith { case _: NoSuchElementException =>
           LOGGER.trace(s"$logPrefix No more paid advs, looking for free advs...\n $args")
           for {
             freeMdrsSearch <- freeMdrsSearchFut
@@ -253,13 +263,9 @@ class SysMdr @Inject() (
             res.get
           }
         }
+      }
 
-      // TODO Не должно быть участия free-mdr за пределами супер-юзера.
-
-      // Надо оценить длину очереди на модерацию. Точно узнать нельзя, но можно примерно посчитать кол-во узлов в paid и free, выбрать наибольшее.
-      val freeMdrsCountFut = freeMdrsSearchFut
-        .flatMap( mNodes.dynCount )
-
+      // Надо оценить итоговую длину очереди на модерацию.
       val mdrQueueReportFut = for {
         paidNodesSql      <- paidNodesSqlFut
         paidMdrNodesCount <- slick.db.run {
@@ -269,7 +275,7 @@ class SysMdr @Inject() (
       } yield {
         val minQueueLen = Math.max( freeMdrsCount.toInt, paidMdrNodesCount )
         val maybeHaveMore = freeMdrsCount > 0 && paidMdrNodesCount > 0
-        LOGGER.trace(s"$logPrefix Mdr queue lenghts: free=$freeMdrsCount paid=$paidMdrNodesCount => report=$minQueueLen${if(maybeHaveMore) "+" else ""}")
+        LOGGER.trace(s"$logPrefix Mdr queue lenghts: free?${isWithFreeMdr}=$freeMdrsCount paid=$paidMdrNodesCount => report=$minQueueLen${if(maybeHaveMore) "+" else ""}")
         MMdrQueueReport(minQueueLen, maybeHaveMore)
       }
 
