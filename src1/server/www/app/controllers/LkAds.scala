@@ -231,6 +231,7 @@ class LkAds @Inject() (
       for {
         madId2advStatusesMap <- madId2advStatusesMapFut
       } yield {
+        LOGGER.trace(s"$logPrefix Statuses map[${madId2advStatusesMap.size}]: ${madId2advStatusesMap.mkString(" | ")}")
         adsRenderedSrc
           .map { case (madIdOpt, jdAdData, shownAtParent) =>
             val oneAdResp = MLkAdsOneAdResp(

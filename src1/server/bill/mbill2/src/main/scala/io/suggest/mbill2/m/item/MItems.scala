@@ -196,7 +196,7 @@ class MItems @Inject() (
     * @param statuses Интересующие статусы item'ов или все возможные.
     * @return Пары adId -> [[io.suggest.mbill2.m.item.MAdItemStatuses]].
     */
-  def findStatusesForAds(adIds: Traversable[String], statuses: Traversable[MItemStatus] = MItemStatuses.values) = {
+  def findStatusesForAds(adIds: Traversable[String], statuses: Traversable[MItemStatus]) = {
     // TODO Sec Возможность SQL injection, нужно передавать список через args, но slick sql не умеет IN (...) синтаксис.
     // Возможно, стоит попробовать эту пионерскую поделку https://github.com/tarao/slick-jdbc-extension-scala
     val adIdsStr = _mkSqlInString( adIds )

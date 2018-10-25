@@ -176,6 +176,12 @@ object Css {
           def AD_ITEM_PREVIEW_BOTTOM_ZIGZAG = AD_ITEM_PREVIEW + "-border"
           def EDIT_BTN = AD_ITEM + "_edit-btn"
           def CONTROLS = "ads-list-block__controls"
+
+          object AdvStatusOvh {
+            def ADV_ITEM_STATUS = "adv-item_status"
+            def ONLINE = __ + "ok"
+            def AWAITING_MDR = __ + "request"
+          }
         }
       }
     }

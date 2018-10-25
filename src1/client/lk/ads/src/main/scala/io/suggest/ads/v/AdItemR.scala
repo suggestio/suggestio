@@ -15,6 +15,7 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.r.LkPreLoaderR
+import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.msg.Messages
 import io.suggest.routes.routes
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}
@@ -50,6 +51,7 @@ class AdItemR(
     }
   }
 
+  private val _itemStatusesGreen = Set[MItemStatus]( MItemStatuses.Offline, MItemStatuses.Online )
 
   type Props = ModelProxy[PropsVal]
 
@@ -72,15 +74,21 @@ class AdItemR(
           Css.flat1( cssAcc )
         },
 
+        // Покрытие зелёное или синее.
+        <.span(
+          ^.classSet1(
+            ItemCss.AdvStatusOvh.ADV_ITEM_STATUS,
+            ItemCss.AdvStatusOvh.ONLINE       -> (s.ad.adResp.advStatuses intersect _itemStatusesGreen).nonEmpty,
+            ItemCss.AdvStatusOvh.AWAITING_MDR -> (s.ad.adResp.advStatuses contains MItemStatuses.AwaitingMdr)
+          )
+        ),
+
         // Рендер превьюшки карточки: TODO Завернуть в коннекшен или как-то ещё защитить от перерендера.
         <.div(
           ^.`class` := ItemCss.AD_ITEM_PREVIEW,
 
           // Рендер
           <.div(
-            // TODO Почему-то все карточки сжимаются. Вероятно, этот стиль неактуален.
-            //^.`class` := ItemCss.AD_ITEM_PREVIEW_CONTAINER,
-
             // Рендер карточки:
             propsProxy.wrap { props =>
               val jdData = props.ad.adResp.jdAdData

@@ -18,7 +18,11 @@ trait MAdItemStatusesSlick extends IPgProfile {
   implicit val adItemStatusesGr = GetResult { r =>
     MAdItemStatuses(
       nodeId      = r.nextString(),
-      statusesStr = r.<<[Seq[String]]
+      statuses    = {
+        r.<<[Seq[String]]
+          .flatMap(MItemStatuses.withValueOpt)
+          .toSet
+      }
     )
   }
 
@@ -32,11 +36,6 @@ trait MAdItemStatusesSlick extends IPgProfile {
   */
 case class MAdItemStatuses(
                             nodeId                : String,
-                            statusesStr           : Seq[String]
-                          ) {
+                            statuses              : Set[MItemStatus],
+                          )
 
-  lazy val statuses: Set[MItemStatus] = {
-    statusesStr.flatMap(MItemStatuses.withValueOpt).toSet
-  }
-
-}
