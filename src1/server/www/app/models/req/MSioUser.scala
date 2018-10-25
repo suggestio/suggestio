@@ -4,6 +4,7 @@ import javax.inject.{Inject, Singleton}
 import com.google.inject.ImplementedBy
 import com.google.inject.assistedinject.Assisted
 import io.suggest.bill.{MCurrencies, MPrice}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.CtxData
 import io.suggest.di.ISlickDbConfig
@@ -16,6 +17,8 @@ import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.usr.MSuperUsers
 import org.elasticsearch.client.Client
 import play.api.db.slick.DatabaseConfigProvider
+import util.adn.NodesUtil
+import util.mdr.MdrUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -67,13 +70,16 @@ sealed trait ISioUser {
     *
     * @return Фьючерс со списком остатков на балансах в различных валютах.
    */
-  def mBalancesFut: Future[Seq[MBalance]]
+  def balancesFut: Future[Seq[MBalance]]
 
   /** Дополнительные цели js-инициализации по мнению ActionBuilder'а. */
   def jsiTgs: List[MJsInitTarget]
 
   /** Частый экземпяр CtxData для нужд ЛК. */
   def lkCtxDataFut: Future[CtxData]
+
+  /** Кол-во элементов для модерации. */
+  def lkMdrCountOptFut: Future[Option[Int]]
 
   override def toString: String = s"U(${personIdOpt.getOrElse("")})"
 
@@ -91,10 +97,11 @@ class MSioUserEmpty extends ISioUser {
   override def contractIdOptFut     = _futOptOk[Gid_t]
   override def isAuth               = false
   override def jsiTgs               = Nil
-  override def mBalancesFut         = Future.successful(Nil)
+  override def balancesFut         = Future.successful(Nil)
   override def personNodeFut: Future[MNode] = {
     Future.failed( new NoSuchElementException("personIdOpt is empty") )
   }
+  override def lkMdrCountOptFut = Future.successful(None)
 
   override def lkCtxDataFut = Future.successful(CtxData.empty)
 }
@@ -107,6 +114,7 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
   // DI-инжектируемые контейнер со статическими моделями.
   protected val msuStatics: MsuStatic
   import msuStatics._
+  import slick.profile.api._
 
 
   override def isAuth = personIdOpt.isDefined
@@ -147,16 +155,16 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
     }
   }
 
-  override def mBalancesFut: Future[Seq[MBalance]] = {
+  override def balancesFut: Future[Seq[MBalance]] = {
     // Мысленный эксперимент показал, что кеш здесь практически НЕ нужен. Работаем без кеша, заодно и проблем меньше.
-    val fut = contractIdOptFut.flatMap { contractIdOpt =>
-      contractIdOpt.fold [Future[Seq[MBalance]]] (Future.successful(Nil)) { contractId =>
+    // Если баланса не найдено, то надо его сочинить в уме. Реальный баланс будет создан во время фактической оплаты.
+    for {
+      contractIdOpt <- contractIdOptFut
+      balances <- contractIdOpt.fold [Future[Seq[MBalance]]] (Future.successful(Nil)) { contractId =>
         val action = mBalances.findByContractId(contractId)
         slick.db.run(action)
       }
-    }
-    // Если баланса не найдено, то надо его сочинить в уме. Реальный баланс будет создан во время фактической оплаты.
-    for (balances <- fut) yield {
+    } yield {
       if (balances.nonEmpty) {
         balances
       } else {
@@ -168,12 +176,39 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
   }
 
   override def lkCtxDataFut: Future[CtxData] = {
+    val _balancesFut = balancesFut
+    val _mdrCountOptFut = lkMdrCountOptFut
     for {
-      mBalances <- mBalancesFut
+      balances    <- _balancesFut
+      mdrCountOpt <- _mdrCountOptFut
     } yield {
       CtxData(
-        mUsrBalances  = mBalances
+        mUsrBalances  = balances,
+        mdrNodesCount = mdrCountOpt
       )
+    }
+  }
+
+  override def lkMdrCountOptFut: Future[Option[Int]] = {
+    // Нужно собрать всех ресиверов, которыми владеет текущий юзер.
+    FutureUtil.optFut2futOpt( personIdOpt ) { personId =>
+      val futOrNsee = for {
+        // Собрать все id дочерних узлов текущего юзера.
+        childIds <- nodesUtil.collectChildIds(
+          parentNodeIds = Set(personId),
+          maxLevels     = mdrUtil.maxLevelsDeepFor(isPerson = true)
+        )
+        if childIds.nonEmpty
+        // Запустить подсчёт кол-ва узлов по биллингу:
+        paidNodesSql = mdrUtil.findPaidNodeIds4MdrQ( rcvrIds = childIds )
+        paidMdrNodesCount <- slick.db.run {
+          paidNodesSql.size.result
+        }
+      } yield {
+        OptionUtil.maybe( paidMdrNodesCount > 0 )( paidMdrNodesCount )
+      }
+
+      futOrNsee.recover { case _: Throwable => None }
     }
   }
 
@@ -200,6 +235,8 @@ class MsuStatic @Inject()(
                            val mBalances                 : MBalances,
                            // Не следует тут юзать MCommonDi, т.к. тут живёт слишком фундаментальный для проекта компонент.
                            val mNodeCache                : MNodesCache,
+                           val mdrUtil                   : MdrUtil,
+                           val nodesUtil                 : NodesUtil,
                            override val _slickConfigProvider : DatabaseConfigProvider,
                            implicit val ec               : ExecutionContext,
                            implicit val esClient         : Client
@@ -225,10 +262,11 @@ case class MSioUserLazy @Inject() (
   override lazy val personNodeOptFut  = super.personNodeOptFut
   override lazy val contractIdOptFut  = super.contractIdOptFut
   override lazy val mContractOptFut   = super.mContractOptFut
-  override lazy val mBalancesFut      = super.mBalancesFut
+  override lazy val balancesFut       = super.balancesFut
   override lazy val isSuper           = super.isSuper
 
   override lazy val lkCtxDataFut      = super.lkCtxDataFut
+  override lazy val lkMdrCountOptFut  = super.lkMdrCountOptFut
 
   override def toString: String = {
     s"U(${personIdOpt.getOrElse("")}${jsiTgs.mkString(";[", ",", "]")})"

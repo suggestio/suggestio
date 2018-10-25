@@ -15,10 +15,12 @@ import io.suggest.mbill2.m.balance.MBalance
  * Модель для произвольных данных, закидываемых в контекст.
  * @param jsInitTargets Какие-то доп.цели инициализации, выставляемые на уровне экшена
  * @param mUsrBalances Остатки на счетах юзера, обычно приходят из request.user.balancesFut в контроллер.
+ * @param mdrNodesCount Кол-во узлов в очереди на модерацию.
  */
 case class CtxData(
                     jsInitTargets    : List[MJsInitTarget]    = Nil,
-                    mUsrBalances     : Seq[MBalance]          = Nil
+                    mUsrBalances     : Seq[MBalance]          = Nil,
+                    mdrNodesCount    : Option[Int]            = None,
                   ) {
 
   def withJsInitTargets(jsInitTargets: List[MJsInitTarget]) = copy(jsInitTargets = jsInitTargets)
@@ -26,7 +28,7 @@ case class CtxData(
   /**
    * Заменить jsInitTargets на список списков.
    * @param jsInitTarget2 Списки новых целей js-инициализации.
-   * @return Экземпляр [[CtxData]], этот либо обновлённый.
+   * @return this, либо обновлённый экземпляр.
    */
   def withJsInitTargetsAll(jsInitTarget2: List[MJsInitTarget]*): CtxData = {
     if (jsInitTarget2.exists(_.nonEmpty)) {
@@ -44,5 +46,6 @@ case class CtxData(
 object CtxData {
 
   /** Часто-используемый пустой инстанс [[CtxData]]. */
-  val empty = CtxData()
+  val empty = apply()
+
 }

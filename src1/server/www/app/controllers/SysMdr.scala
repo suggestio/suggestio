@@ -2,6 +2,7 @@ package controllers
 
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.common.empty.OptionUtil
 import javax.inject.{Inject, Singleton}
 import io.suggest.ctx.CtxData
 import io.suggest.err.ErrorConstants
@@ -159,9 +160,7 @@ class SysMdr @Inject() (
           val rcvrIdSet = Set(rcvrId)
 
           // Сколько уровней children искать? Если пляшем от текущего юзера, то можно искать на один уровень глубже.
-          var maxLevelsDeep = 3
-          if (request.user.personIdOpt contains rcvrId)
-            maxLevelsDeep += 1
+          val maxLevelsDeep = mdrUtil.maxLevelsDeepFor( request.user.personIdOpt contains rcvrId )
 
           for {
             childIds <- nodesUtil.collectChildIds( rcvrIdSet, maxLevelsDeep )
@@ -173,7 +172,10 @@ class SysMdr @Inject() (
 
       // Заготовка sql-запроса, который занимается поиском немодерированных узлов в биллинге:
       val paidNodesSqlFut = for (rcvrIds <- rcvrIdsFut) yield {
-        mdrUtil.findPaidNodeIds4MdrQ(args, rcvrIds)
+        mdrUtil.findPaidNodeIds4MdrQ(
+          hideNodeIdOpt = args.hideAdIdOpt,
+          rcvrIds       = rcvrIds
+        )
       }
 
       var errNodeIdsAcc = List.empty[String]
@@ -231,14 +233,20 @@ class SysMdr @Inject() (
       val errorNodeIdsFut = billNodeWithErrorIdsOrNseeFut
         .transform { case _ => Success(errNodeIdsAcc.toSet) }
 
-      // TODO Добавить gen sort, где generation = args.gen, взятый например из personId.hashCode
-      lazy val freeMdrsSearch = mdrUtil.freeMdrNodeSearchArgs(args, 1)
+      // Инстанс для поиска бесплатных модераций.
+      val freeMdrsSearchFut = for {
+        rcvrIds <- rcvrIdsFut
+      } yield {
+        // TODO Добавить gen sort, где generation = args.gen, взятый например из personId.hashCode
+        mdrUtil.freeMdrNodeSearchArgs(args, rcvrIds.toSeq, 1)
+      }
 
       // Если не будет найдено биллинга для модерации, то надо поискать бесплатные немодерированные размещения.
       val billedOrFreeNodeOrExFut = billedNodeOrExFut
         .recoverWith { case _: NoSuchElementException =>
           LOGGER.trace(s"$logPrefix No more paid advs, looking for free advs...\n $args")
           for {
+            freeMdrsSearch <- freeMdrsSearchFut
             // Если нет paid-модерируемых карточек, то поискать бесплатные размещения.
             res <- mNodes.dynSearchOne( freeMdrsSearch )
           } yield {
@@ -246,8 +254,12 @@ class SysMdr @Inject() (
           }
         }
 
+      // TODO Не должно быть участия free-mdr за пределами супер-юзера.
+
       // Надо оценить длину очереди на модерацию. Точно узнать нельзя, но можно примерно посчитать кол-во узлов в paid и free, выбрать наибольшее.
-      val freeMdrsCountFut = mNodes.dynCount( freeMdrsSearch )
+      val freeMdrsCountFut = freeMdrsSearchFut
+        .flatMap( mNodes.dynCount )
+
       val mdrQueueReportFut = for {
         paidNodesSql      <- paidNodesSqlFut
         paidMdrNodesCount <- slick.db.run {
@@ -433,9 +445,26 @@ class SysMdr @Inject() (
     */
   def doMdr(mdrRes: MMdrResolution) = csrf.Check {
     canMdrResolute(mdrRes).async { implicit request =>
+      // Т.к. решение модерации является *маской* группы item'ов - надо собрать ресиверы.
+      // Без конкретных ресиверов может быть только su-модерация.
+      val ignoreRcvrs = request.user.isSuper || request.mitemOpt.flatMap(_.rcvrIdOpt).nonEmpty
+      val rcvrIdsOptFut = OptionUtil.maybeFut( !ignoreRcvrs ) {
+        // Нужно собрать множество id ресиверов текущего юзера или текущего узла.
+        val (parentRcvrId, isPerson) = mdrRes.conf.rcvrIdOpt
+          .fold(request.user.personIdOpt.get -> true)(_ -> false)
+        val rcvrsLevelsDeep = mdrUtil.maxLevelsDeepFor(isPerson)
+        for {
+          rcvrIds <- nodesUtil.collectChildIds( Set(parentRcvrId), rcvrsLevelsDeep )
+        } yield {
+          Some( rcvrIds )
+        }
+      }
+
       // Надо организовать пакетное обновления в БД биллинга, в зависимости от значений полей резолюшена.
       for {
-        _ <- mdrUtil.processMdrResolution( mdrRes, request.mnode, request.user )
+        rcvrIdsOpt <- rcvrIdsOptFut
+        rcvrIds = rcvrIdsOpt getOrElse Set.empty
+        _ <- mdrUtil.processMdrResolution( mdrRes, request.mnode, request.user, rcvrIds )
       } yield {
         // Вернуть ответ -- обычно ничего возвращать не требуется.
         NoContent

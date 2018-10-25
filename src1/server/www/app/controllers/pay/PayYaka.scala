@@ -153,7 +153,7 @@ class PayYaka @Inject() (
       }
 
       val payPriceFut = for {
-        payPrices0 <- bill2Util.getPayPrices(orderPricesFut, request.user.mBalancesFut)
+        payPrices0 <- bill2Util.getPayPrices(orderPricesFut, request.user.balancesFut)
       } yield {
         yakaUtil.assertPricesForPay(payPrices0)
       }

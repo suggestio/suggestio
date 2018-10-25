@@ -32,7 +32,7 @@ object MUserInits extends TypeT {
   sealed trait BalanceT extends ValTDummy {
     override def initUser(user: ISioUser): Unit = {
       super.initUser(user)
-      user.mBalancesFut
+      user.balancesFut
     }
   }
   object Balance extends BalanceT

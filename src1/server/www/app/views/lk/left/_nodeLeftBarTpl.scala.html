@@ -34,7 +34,11 @@
       title = messages( MsgCodes.`Moderation` ),
       href  = routes.SysMdr.lkMdr(nodeId :: Nil),
       css   = classesAct(leftCurrEl.contains(LPL_MDR), "__mdr")
-    )()
+    ) {
+      @for(count <- ctx.data.mdrNodesCount) {
+        <span class="left-bar_menu-bubble">@count</span>
+      }
+    }
 
     @* Кнопка вызова системной панели. Временно ушла с правой панели (вместе с панелью). *@
     @if(ctx.user.isSuper) {

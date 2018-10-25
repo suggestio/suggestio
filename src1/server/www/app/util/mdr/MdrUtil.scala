@@ -2,7 +2,6 @@ package util.mdr
 
 import java.time.OffsetDateTime
 
-import akka.stream.scaladsl.Sink
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.IMust
 import io.suggest.mbill2.m.gid.Gid_t
@@ -23,6 +22,7 @@ import models.mproj.ICommonDi
 import models.req.ISioUser
 import models.usr.MSuperUsers
 import util.acl.IsNodeAdmin
+import util.adn.NodesUtil
 import util.billing.Bill2Util
 import util.mail.IMailerWrapper
 import views.html.sys1.mdr._mdrNeededEmailTpl
@@ -42,6 +42,7 @@ class MdrUtil @Inject() (
                           mNodes            : MNodes,
                           bill2Util         : Bill2Util,
                           streamsUtil       : StreamsUtil,
+                          nodesUtil         : NodesUtil,
                           isNodeAdmin       : IsNodeAdmin,
                           val mCommonDi     : ICommonDi,
                         )
@@ -51,6 +52,19 @@ class MdrUtil @Inject() (
   import mCommonDi.{configuration, current, ec, mat, slick}
   import slick.profile.api._
   import streamsUtil.Implicits._
+
+
+  /** Кол-во уровней погружения в поисках под-узлов в зависимости от для ситуации.
+    *
+    * @param isPerson Является ли корневой родительский узел - юзером?
+    * @return Кол-во уровней, которые надо пройти в поисках под-узлов.
+    */
+  def maxLevelsDeepFor(isPerson: Boolean): Int = {
+    var res = 3
+    if (isPerson)
+      res += 1
+    res
+  }
 
 
   /** Кого надо уведомить о необходимости заняться модерацией? */
@@ -195,8 +209,8 @@ class MdrUtil @Inject() (
         .result
     }
 
-    lazy val logPrefix = s"_processItemsForAd()#${System.currentTimeMillis}:"
-    LOGGER.trace(s"$logPrefix Bulk approve items, $f")
+    lazy val logPrefix = s"_processItemsFor()#${System.currentTimeMillis}:"
+    LOGGER.trace(s"$logPrefix Bulk approving items...")
 
     for {
       itemIds <- itemIdsFut
@@ -228,10 +242,13 @@ class MdrUtil @Inject() (
     *
     * @param mdrRes Резолюция модератора.
     * @param mnode Узел, упомянутый в mdrRes.nodeId.
-    * @param mdrUser
+    * @param mdrUser Юзер-модератор.
+    * @param rcvrIds Список допустимых id ресиверов.
     * @return Фьючерс готовности.
     */
-  def processMdrResolution(mdrRes: MMdrResolution, mnode: MNode, mdrUser: ISioUser): Future[(MNode, Option[ProcessItemsRes])] = {
+  def processMdrResolution(mdrRes: MMdrResolution, mnode: MNode, mdrUser: ISioUser,
+                           rcvrIds: Set[String]): Future[(MNode, Option[ProcessItemsRes])] = {
+
     lazy val logPrefix = s"processMdrResolution(${mdrRes.isApprove} node#${mnode.idOrNull} mdrUser#${mdrUser.personIdOpt.orNull})#${System.currentTimeMillis()}:"
     LOGGER.trace(s"$logPrefix res=$mdrRes")
 
@@ -335,70 +352,20 @@ class MdrUtil @Inject() (
           LOGGER.trace(s"$logPrefix Will process ALL billing data.")
         }
 
-        val mdrRcvrIdOpt = mdrRes.conf.rcvrIdOpt
-
         // Модерация в рамках ресивера: выставить ресивер в sql-запрос.
-        for (mdrRcvrId <- mdrRcvrIdOpt) {
-          LOGGER.trace(s"$logPrefix Limited only to rcvrId#$mdrRcvrId")
-          q = q.filter(_.rcvrIdOpt === mdrRcvrId)
+        if (rcvrIds.nonEmpty) {
+          LOGGER.trace(s"$logPrefix Limited only to rcvrIds: ##[${rcvrIds.mkString(", ")}]")
+          q = q.filter(_.rcvrIdOpt inSet rcvrIds)
         }
 
         for {
-          // Запустить подготовку списка допустимых ресиверов, если !su-модерация:
-          allowedRcvrIds <- {
-            if ( !mdrUser.isSuper ) {
-              // Когда юзер - не супер-пользователь,
-              // то нужно ограничить запрос только множеством ресиверов, на которые у юзера есть права.
-              // Для этого запускаем текущую sql query с возвратом distinct rcvr_id.
-              LOGGER.trace(s"$logPrefix Will collect allowed rcvrs for user#${mdrUser.personIdOpt.orNull}...")
-              def __strOptToList(nodeIdOpt: Option[String]) = nodeIdOpt.toList
-
-              slick.db
-                .stream {
-                  q .map(_.rcvrIdOpt)
-                    .distinct
-                    .result
-                }
-                .toSource
-                .mapConcat( __strOptToList )
-                // т.к. distinct на уровне СУБД, то дедубликация rcvr_id не нужна. Переходим к поштучной обработке:
-                .mapAsyncUnordered(10) { rcvrId =>
-                  // Запустить проверку прав доступа на данный ресивер:
-                  for {
-                    nodeChainOpt <- isNodeAdmin.isNodeAdminUpFrom(rcvrId, mdrUser)
-                  } yield {
-                    val rcvrAllowed = nodeChainOpt.nonEmpty
-                    LOGGER.trace(s"$logPrefix rcvrId=$rcvrId allowed?$rcvrAllowed")
-                    OptionUtil.maybe( rcvrAllowed )( rcvrId )
-                  }
-                }
-                .mapConcat( __strOptToList )
-                // Собрать финальное множество допущенных nodeid:
-                .runWith( Sink.collection[String, Set[String]] )
-                // Сразу проверяем, чтобы был хотя бы один rcvrId.
-                // Нет смысла продолжать дальнейшую обработку, если не найдено разрешённых ресиверов, т.е. критерии !su-модерации заведомо невыполнимы.
-                .filter { allowedRcvrIds =>
-                  LOGGER.trace(s"$logPrefix Allowed rcvrs[${allowedRcvrIds.size}]: [${allowedRcvrIds.mkString(", ")}]")
-                  val r = allowedRcvrIds.nonEmpty
-                  if (!r)
-                    LOGGER.warn(s"$logPrefix Mdr impossible, since !su, but allowed rcvrs is empty")
-                  r
-                }
-
-            } else {
-              // Для супер-юзеров: берём ресивера из qs, а если его нет - то модерация не ограничена.
-              val allRcvrs = mdrRcvrIdOpt.toSet
-              Future.successful( allRcvrs )
-            }
-          }
-
           // Запустить биллинговую часть: аппрув item'а или отказ в модерации item'а.
           billProcessRes <- {
-            LOGGER.trace(s"$logPrefix Will bill-mdr, ${allowedRcvrIds.size}-allowedRcvs, approve?${mdrRes.isApprove}...")
+            LOGGER.trace(s"$logPrefix Will bill-mdr, ${rcvrIds.size}-allowedRcvs, approve?${mdrRes.isApprove}...")
             _processItemsFor {
-              if (allowedRcvrIds.isEmpty) q
+              if (rcvrIds.isEmpty) q
               else q.filter { i =>
-                i.rcvrIdOpt inSet allowedRcvrIds
+                i.rcvrIdOpt inSet rcvrIds
               }
             } {
               if (mdrRes.isApprove)
@@ -422,13 +389,14 @@ class MdrUtil @Inject() (
   }
 
 
-  def findPaidNodeIds4MdrQ(args: MdrSearchArgs, rcvrIds: Traversable[String]): Query[Rep[String], String, Seq] = {
+  def findPaidNodeIds4MdrQ(hideNodeIdOpt    : Option[String]        = None,
+                           rcvrIds          : Traversable[String]   = Nil): Query[Rep[String], String, Seq] = {
     var q = awaitingPaidMdrItemsSql
 
     // Пропуск произвольного узла
-    for (hideAdId <- args.hideAdIdOpt) {
+    for (hideNodeId <- hideNodeIdOpt) {
       q = q.filter { i =>
-        i.nodeId =!= hideAdId
+        i.nodeId =!= hideNodeId
       }
     }
 
@@ -443,6 +411,7 @@ class MdrUtil @Inject() (
       .distinct
   }
 
+
   /** SQL для экшена поиска id карточек, нуждающихся в модерации. */
   def getFirstIn(args: MdrSearchArgs, q: Query[Rep[String], String, Seq], limit: Int): DBIOAction[Seq[String], Streaming[String], Effect.Read] = {
     q .drop( args.offset )
@@ -451,8 +420,8 @@ class MdrUtil @Inject() (
   }
 
 
-  /** Аргументы для поиска узлов, требующих бесплатной модерации. */
-  def freeMdrNodeSearchArgs(args: MdrSearchArgs, limit1: Int): MNodeSearch = {
+  /** Аргументы для поиска узлов (карточек), требующих бесплатной модерации. */
+  def freeMdrNodeSearchArgs(args: MdrSearchArgs, rcvrIds: Seq[String], limit1: Int): MNodeSearch = {
     new MNodeSearchDfltImpl {
 
       /** Интересуют только карточки. */
@@ -468,7 +437,8 @@ class MdrUtil @Inject() (
         // Собираем self-receiver predicate, поиск бесплатных размещений начинается с этого
         val srp = Criteria(
           predicates  = MPredicates.Receiver.Self :: Nil,
-          must        = must
+          must        = must,
+          nodeIds     = rcvrIds
         )
 
         // Любое состояние эджа модерации является значимым и определяет результат.
@@ -478,23 +448,10 @@ class MdrUtil @Inject() (
           must        = Some( args.isAllowed.isDefined )
         )
 
-        var crs = List[Criteria](
+        List[Criteria](
           srp,
           isAllowedCr
         )
-
-        // Если задан продьюсер, то закинуть и его в общую кучу.
-        /*
-        for (prodId <- args.producerId) {
-          crs ::= Criteria(
-            predicates  = MPredicates.OwnedBy :: Nil,
-            nodeIds     = prodId :: Nil,
-            must        = must
-          )
-        }
-        */
-
-        crs
       }
 
       override def withoutIds = args.hideAdIdOpt.toSeq
