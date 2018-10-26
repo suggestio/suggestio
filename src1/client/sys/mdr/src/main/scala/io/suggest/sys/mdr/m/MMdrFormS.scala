@@ -28,9 +28,10 @@ object MMdrFormS {
   *
   * @param forceAllRcrvs Форсировать поиск модерации за пределами текущего ресивера, если он задан.
   *                      На сервер не будет отсылаться id/key текущего ресивера в запросах.
+  *                      По умолчанию - true, т.к. mdr-счётчик ЛК работает на уровне юзера.
   */
 case class MMdrFormS(
-                      forceAllRcrvs     : Boolean         = false
+                      forceAllRcrvs     : Boolean         = true
                     ) {
 
   def withForceAllRcvrs(forceAllRcrvs: Boolean) = copy(forceAllRcrvs = forceAllRcrvs)
