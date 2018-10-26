@@ -70,7 +70,7 @@ object Common {
 
       /** Версия драйвера common-slick-driver.
         * Он идёт как бинарная зависимость, поэтому зависимые подпроекты. */
-      val COMMON_SLICK_DRIVER = "1.0.3-SNAPSHOT"
+      val COMMON_SLICK_DRIVER = "1.2.0-SNAPSHOT"
 
     }
 

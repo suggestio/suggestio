@@ -280,6 +280,7 @@ class GeoTagsUtil @Inject() (
           .map(_.geoShapeOpt)
           .distinct
           .result
+          .forPgStreaming(10)
       }
       .toSource
       .mapConcat(_.toList)
@@ -303,6 +304,7 @@ class GeoTagsUtil @Inject() (
           .map(_.rcvrIdOpt)
           .distinct
           .result
+          .forPgStreaming(30)
       }
       .toSource
       .mapConcat(_.toList)

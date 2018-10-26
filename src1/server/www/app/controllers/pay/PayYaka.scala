@@ -478,7 +478,7 @@ class PayYaka @Inject() (
                   owi <- bill2Util.prepareCartOrderItems(mOrder0)
 
                   // Узнать, потребуется ли уведомлять модеров по email при успешном завершении транзакции.
-                  mdrNotifyCtx1 <- mdrUtil.mdrNotifyPrepareCtx()
+                  mdrNotifyCtx1 <- mdrUtil.mdrNotifyPrepareCtx(owi)
 
                   // Запустить действия, связанные с вычитанием бабла с баланса юзера и реализацией MItem'ов заказа.
                   // Здесь используется более сложный и толерантный вариант экзекуции ордера. Fallback-вариант -- это bill2Util.maybeExecuteOrder(owi).

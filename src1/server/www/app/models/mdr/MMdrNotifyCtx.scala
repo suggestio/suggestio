@@ -13,5 +13,6 @@ package models.mdr
   *                     Да, если модерация на карте мира или если у ресивера нет юзера-владельца.
   */
 case class MMdrNotifyCtx(
-                          needSuNotify: Boolean
+                          needSuNotify  : Boolean,
+                          rcvrIds       : Set[String],
                         )

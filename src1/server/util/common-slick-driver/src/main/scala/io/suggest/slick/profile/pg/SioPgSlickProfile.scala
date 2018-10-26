@@ -1,6 +1,7 @@
 package io.suggest.slick.profile.pg
 
 import com.github.tminglei.slickpg._
+import slick.jdbc.{ResultSetConcurrency, ResultSetType}
 import slick.sql.SqlAction
 
 /**
@@ -30,16 +31,42 @@ trait SioPgSlickProfileT
     //implicit val strListTypeMapper    = _strArrayTypeMapper.to(_.toList)
     implicit val strSeqTypeMapper     = _strArrayTypeMapper.to(_.toSeq)
 
-    /** Костыль-поддержка, связанный с [[https://github.com/slick/slick/issues/92]]. */
-    // TODO Когда в slick наконец реализуют поддержку FOR-LOCK clauses, нужно его удалить.
-    implicit class SelectForExtensionMethods[R, S <: NoStream, E <: Effect.Read](val a: SqlAction[R, S, E]) {
 
-      /** Заблокировать выбранные ряды  */
+    /** Костыли для SqlAction */
+    implicit class SqlActionPgExtensionMethods[R, S <: NoStream, E <: Effect.Read](val a: SqlAction[R, S, E]) {
+
+      /** Заблокировать найденные ряды для последующего апдейта.
+        *
+        * @see Костыль-поддержка, связанный с [[https://github.com/slick/slick/issues/92]].
+         */
+      // TODO Когда в slick наконец реализуют поддержку FOR-LOCK clauses, нужно его удалить.
       def forUpdate = {
         a.overrideStatements {
           a.statements.map { _ + " FOR UPDATE" }
         }
       }
+
+    }
+
+
+    /** Костыли для DBIOAction. */
+    implicit class SioDbioActionPgOpsExt[R, S <: NoStream, E <: Effect.Read](val a: DBIOAction[R, S, E]) {
+
+      /** Согласно докам slick, для эффективного db.stream() для postgresql требуются некоторые костыли.
+        * Эта функция окостыливает экшен для достижения макс.производительности.
+        * Её нужно вызывать аналогично forUpdate, т.е. в финале.
+        *
+        * @see [[http://slick.lightbend.com/doc/3.2.0/dbio.html?highlight=stream#streaming]]
+        */
+      def forPgStreaming(fetchSize: Int) = {
+        a.withStatementParameters(
+          rsType        = ResultSetType.ForwardOnly,
+          rsConcurrency = ResultSetConcurrency.ReadOnly,
+          fetchSize     = fetchSize
+        )
+          .transactionally
+      }
+
     }
 
   }

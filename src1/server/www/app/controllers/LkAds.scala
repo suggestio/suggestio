@@ -45,6 +45,7 @@ class LkAds @Inject() (
 
   import mCommonDi._
   import streamsUtil.Implicits._
+  import slick.profile.api._
 
 
   /** Рендер странице с react-формой управления карточками.
@@ -154,11 +155,13 @@ class LkAds @Inject() (
       slick.db
         .stream(
           // TODO Надо отрабатывать ошибки. При sql-ошибках они не вызывают HTTP 500, не логгируются, сбивая с толку.
-          mItems.findStatusesForAds(
-            // Не добавляем сюда newAdId, т.к. если у только что созданной карточки размещений быть и не должно.
-            adIds    = madIds,
-            statuses = MItemStatuses.advBusy.toStream
-          )
+          mItems
+            .findStatusesForAds(
+              // Не добавляем сюда newAdId, т.к. если у только что созданной карточки размещений быть и не должно.
+              adIds    = madIds,
+              statuses = MItemStatuses.advBusy.toStream
+            )
+            .forPgStreaming(30)
         )
         .toSource
         .map { a =>

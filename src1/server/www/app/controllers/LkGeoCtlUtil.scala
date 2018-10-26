@@ -47,6 +47,7 @@ protected class LkGeoCtlUtil @Inject() (
 
   import mCommonDi._
   import streamsUtil.Implicits._
+  import slick.profile.api._
 
 
   /** Макс.кол-во item'ов ресиверов, возвращаемых в одном rcvr-попапе. */
@@ -67,7 +68,9 @@ protected class LkGeoCtlUtil @Inject() (
     val jsonsSrc = slick.db
       .stream {
         val query = mItems.findCurrentForNode( nodeId, itemTypes )
-        bill2Util.onlyGeoShapesInfo(query)
+        bill2Util
+          .onlyGeoShapesInfo(query)
+          .forPgStreaming(20)
       }
       .toSource
       // Причесать сырой выхлоп базы, состоящий из пачки Option'ов.
@@ -109,23 +112,22 @@ protected class LkGeoCtlUtil @Inject() (
       // Наврядли можно отрендерить в попапе даже это количество...
       val itemsMax = RCVR_ITEMS_PER_POPUP_LIMIT
 
-      // Запросить у базы инфы по размещениям в текущем месте...
-      val itemsSrc0 = slick.db
-        .stream {
-          advGeoBillUtil.itemsWithSameGeoShapeAs(
-            query0  = mItems.findCurrentForNode( request.mitem.nodeId, itemTypes ),
-            itemId  = itemId,
-            limit   = itemsMax
-          )
-        }
-        .toSource
-
-      // Сразу создаём ответвление от потока, которое будет считать полученные результаты, материализуя общее кол-во на выходе:
-      val itemsSrc = itemsSrc0.alsoToMat( streamsUtil.Sinks.count )(Keep.right)
-
       implicit val ctx = implicitly[Context]
 
-      val (itemsCountFut, rowsMsFut) = itemsSrc
+      // Запросить у базы инфы по размещениям в текущем месте...
+      val (itemsCountFut, rowsMsFut) = slick.db
+        .stream {
+          advGeoBillUtil
+            .itemsWithSameGeoShapeAs(
+              query0  = mItems.findCurrentForNode( request.mitem.nodeId, itemTypes ),
+              itemId  = itemId,
+              limit   = itemsMax
+            )
+            .forPgStreaming(20)
+        }
+        .toSource
+        // Сразу создаём ответвление от потока, которое будет считать полученные результаты, материализуя общее кол-во на выходе:
+        .alsoToMat( streamsUtil.Sinks.count )(Keep.right)
         // Причесать кортежи в нормальные инстансы
         .map( MAdvGeoBasicInfo.apply )
         // Сгруппировать и объеденить по периодам размещения.

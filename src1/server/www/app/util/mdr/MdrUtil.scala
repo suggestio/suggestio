@@ -7,6 +7,7 @@ import io.suggest.es.model.IMust
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{IMItem, MItem, MItems}
+import io.suggest.mbill2.m.order.MOrderWithItems
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
@@ -103,14 +104,23 @@ class MdrUtil @Inject() (
     *
     * @return true/false если требуется или нет.
     */
-  def mdrNotifyPrepareCtx(): DBIOAction[MMdrNotifyCtx, NoStream, Effect.Read] = {
-    // Отправка письма потребуется, если прямо сейчас нет ни одного item'а, ожидающего модерации.
+  def mdrNotifyPrepareCtx(owi: MOrderWithItems): DBIOAction[MMdrNotifyCtx, NoStream, Effect.Read] = {
+    // Уведомление юзеров по email: можно собрать rcrvId из данных ордера. Потом по ним определить, кого уведомлять.
+    /*
+    val notifyUserMdrRcvrIds = owi.mitems
+      .iterator
+      .flatMap(_.rcvrIdOpt)
+      .toSet
+    */
+
     for {
+      // Отправка письма для супер-юзеров потребуется, если прямо сейчас нет ни одного item'а, ожидающего модерации.
       isAlreadyExistPaidMdrItems <- awaitingPaidMdrItemsSql.exists.result
     } yield {
       MMdrNotifyCtx(
         // Если уже существуют paid-mdr-items, то модерация после обработки не требуется:
-        needSuNotify = !isAlreadyExistPaidMdrItems
+        needSuNotify  = !isAlreadyExistPaidMdrItems,
+        rcvrIds       = Set.empty //notifyUserMdrRcvrIds
       )
     }
   }
@@ -125,6 +135,15 @@ class MdrUtil @Inject() (
   /** Отправить уведомление модератором о необходимости модерации чего-либо. */
   def sendMdrNotify(mdrCtx: MMdrNotifyCtx, tplArgs: MMdrNotifyMeta = MMdrNotifyMeta.empty)
                    (implicit ctx: Context): Future[_] = {
+    if (mdrCtx.rcvrIds.nonEmpty) {
+      // TODO Запустить асинхронную работу в фоне на тему сбора данных по ресиверам и email'ам тех, каких юзеров надо уведомить.
+      // TODO Для этого можно подниматься вверх по узлам от текущих в поисках узлов-юзеров,
+      // TODO затем найти email-адреса юзеров и нагенерить писем.
+      // TODO Для упрощения можно подниматься вверх по ресиверам, проходя их поштучно, и объединяя итоговые результаты по юзерам на выходе,
+      // но это может быть неэффективно, хотя это можно немного подавить через разогрев кэша через multiGet(rcvrIds) перед первым шагом.
+      LOGGER.warn(s"sendMdrNotify(): Not implemented, rcvrIds[${mdrCtx.rcvrIds.size}]: ${mdrCtx.rcvrIds.mkString(", ")}")
+    }
+
     // Исполняем всё в фоновом потоке, чтобы
     Future {
       // Если требуется уведомлять супер-юзеров, то отправить su email:
@@ -479,6 +498,7 @@ class MdrUtil @Inject() (
         .map(_.id)
         // distinct не требуется, т.к. primary key.
         .result
+        .forPgStreaming(40)
     }
       .toSource
       .mapAsyncUnordered(4) { itemId =>

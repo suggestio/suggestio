@@ -77,6 +77,7 @@ class LkAdvGeo @Inject() (
 
   import mCommonDi._
   import streamsUtil.Implicits._
+  import slick.profile.api._
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */
@@ -477,15 +478,17 @@ class LkAdvGeo @Inject() (
         allNodeIds <- allNodesIdsFut
       } yield {
         slick.db.stream {
-          advGeoBillUtil.findCurrForAdToRcvrs(
-            adId      = adId,
-            // TODO Добавить поддержку групп маячков ресиверов.
-            rcvrIds   = allNodeIds,
-            // Интересуют и черновики, и текущие размещения
-            statuses  = MItemStatuses.advActual,
-            // TODO Надо бы тут порешить, какой limit требуется на деле и требуется ли вообще. 20 взято с потолка.
-            limitOpt  = Some(300)
-          )
+          advGeoBillUtil
+            .findCurrForAdToRcvrs(
+              adId      = adId,
+              // TODO Добавить поддержку групп маячков ресиверов.
+              rcvrIds   = allNodeIds,
+              // Интересуют и черновики, и текущие размещения
+              statuses  = MItemStatuses.advActual,
+              // TODO Надо бы тут порешить, какой limit требуется на деле и требуется ли вообще. 20 взято с потолка.
+              limitOpt  = Some(300)
+            )
+            .forPgStreaming(20)
         }
       }
 

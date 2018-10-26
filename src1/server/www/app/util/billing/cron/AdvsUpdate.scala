@@ -50,7 +50,6 @@ abstract class AdvsUpdate
   with AdvMNodesTryUpdateBuilderT
 {
 
-  import LOGGER._
   import mCommonDi._
   import slick.profile.api._
 
@@ -71,13 +70,13 @@ abstract class AdvsUpdate
       .filter( _itemsSql )
       .map(_.nodeId)
       .distinct
-      .take(limit)
 
     // Если задан offset,
     for (off <- offset)
       q = q.drop( off )
 
-    q.result
+    q.take(limit)
+     .result
   }
 
   val now = OffsetDateTime.now()
@@ -117,7 +116,7 @@ abstract class AdvsUpdate
     // У нас тут рекурсия, но надо защищаться от бесконечности. Ограничиваем счетчик вызовов run().
     val maxTotalAds = MAX_ADS_PER_RUNS
     if (maxTotalAds > 0  &&  counter > maxTotalAds) {
-      warn(s"$logPrefix Too many ads for processing, lets stop it unconditionally. Something going wrong?")
+      LOGGER.warn(s"$logPrefix Too many ads for processing, lets stop it unconditionally. Something going wrong?")
       Future.successful(counter)
 
     } else {
@@ -134,11 +133,13 @@ abstract class AdvsUpdate
         }
 
         ress <- {
+          if (adIds.nonEmpty)
+            LOGGER.trace(s"$logPrefix Found ${adIds} nodeIds, head=${adIds.headOption.orNull}")
           Future.traverse(adIds) { adId =>
             runForNodeId(adId)
               .map(_ => true)
               .recover { case ex: Throwable =>
-                error(s"$logPrefix Failed to process ad[$adId]", ex)
+                LOGGER.error(s"$logPrefix Failed to process ad[$adId]", ex)
                 false
               }
             }
@@ -151,7 +152,7 @@ abstract class AdvsUpdate
           val counter2 = counter + count
           // Если было слишком много карточек за раз, то продолжить работу после небольшой паузы.
           if (count >= MAX_ADS_PER_RUN) {
-            info(s"$logPrefix Done $count adv-items (failed=$countFail), but DB has more, lets run again...")
+            LOGGER.info(s"$logPrefix Done $count adv-items (failed=$countFail), but DB has more, lets run again...")
             // Теги косячат при такой пакетной обработке. Надо паузу делать тут, рефреш индекса принудительный.
             // Иначе свежие теги НЕ находятся в индексе на последующих итерациях.
             mNodes.refreshIndex().flatMap { _ =>
@@ -161,7 +162,7 @@ abstract class AdvsUpdate
 
           } else {
             if (count > 0)
-              info(s"$logPrefix Finished. $countOk ok, failed = $countFail. Total: $counter2")
+              LOGGER.info(s"$logPrefix Finished. $countOk ok, failed = $countFail. Total: $counter2")
             Future.successful(counter2)
           }
         }
@@ -222,7 +223,7 @@ abstract class AdvsUpdate
     val madOptFut = mNodesCache.getById(nodeId)
 
     lazy val logPrefix = s"runForAdId($nodeId/${System.currentTimeMillis}):"
-    trace(s"$logPrefix Starting...")
+    LOGGER.trace(s"$logPrefix Starting...")
 
     // Нужны только item'ы, которые поддерживаются adv-билдерами
     val acc0Fut = for (madOpt <- madOptFut) yield {
@@ -258,7 +259,7 @@ abstract class AdvsUpdate
       _ <- DBIO.seq(acc2.dbActions: _*)
 
     } yield {
-      trace(s"$logPrefix Done")
+      LOGGER.trace(s"$logPrefix Done")
       acc2.mnode
     }
 
@@ -274,10 +275,10 @@ abstract class AdvsUpdate
       // ex НЕ логгируем, оно залогируется где-нибудь уровнем выше.
       for (madOpt <- madOptFut) {
         if (madOpt.nonEmpty) {
-          warn(s"$logPrefix Possibly no items for ad[$nodeId], but they expected to be moments ago. Race conditions?")
+          LOGGER.warn(s"$logPrefix Possibly no items for ad[$nodeId], but they expected to be moments ago. Race conditions?")
         } else {
           // Какая-то инфа о размещении карточки (узла), которая уже удалена.
-          warn(s"$logPrefix Node(ad) is missing, but zombie items is here. Purging zombies...")
+          LOGGER.warn(s"$logPrefix Node(ad) is missing, but zombie items is here. Purging zombies...")
           purgeItemsForAd(nodeId)
         }
       }
@@ -310,9 +311,9 @@ abstract class AdvsUpdate
 
     fut.onComplete {
       case Success(count) =>
-        info(s"$logPrefix Purged $count items for node")
+        LOGGER.info(s"$logPrefix Purged $count items for node")
       case Failure(ex) =>
-        error(s"$logPrefix Failed to purge zombie items for current missing node", ex)
+        LOGGER.error(s"$logPrefix Failed to purge zombie items for current missing node", ex)
     }
 
     fut
