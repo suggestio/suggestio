@@ -2,6 +2,7 @@ package util.billing.cron
 
 import java.time.OffsetDateTime
 
+import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.EsModelUtil
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
@@ -61,15 +62,22 @@ abstract class AdvsUpdate
   /** Поиск id карточек, которые нужно глянуть на следующей стадии.
     * Запрос идёт вне транзакций, race-conditions будут учтены в последующем коде.
     * Главное требование: чтобы adId не повторялись в рамках одного потока. Проблем по идее быть не должно, но всё же.
+    * @param offset Обязателен при ребилдах, т.к. таблица items не изменяется по статусам.
+    *               None при нормальном процессинге, т.к. статусы обновляются.
     */
-  def findAdIds(max: Int = MAX_ADS_PER_RUN): StreamingDBIO[Traversable[String], String] = {
+  def findAdIds(limit: Int = MAX_ADS_PER_RUN, offset: Option[Int]): StreamingDBIO[Traversable[String], String] = {
     // Ищем только карточки, у которых есть offline ads с dateStart < now
-    mItems.query
+    var q = mItems.query
       .filter( _itemsSql )
       .map(_.nodeId)
       .distinct
-      .take(max)
-      .result
+      .take(limit)
+
+    // Если задан offset,
+    for (off <- offset)
+      q = q.drop( off )
+
+    q.result
   }
 
   val now = OffsetDateTime.now()
@@ -87,6 +95,8 @@ abstract class AdvsUpdate
     */
   def MAX_ADS_PER_RUNS: Int = 500
 
+
+  def isReBuild: Boolean = false
 
   /** Основная метод запуска всего модуля на исполнение.
     *
@@ -115,9 +125,15 @@ abstract class AdvsUpdate
       _builderCtxOuterFut
 
       for {
-        adIds <- slick.db.run( findAdIds(MAX_ADS_PER_RUN) )
+        // TODO Переписать в db.stream? Эта мудотряска с limit/offset/counter и асинхронным циклом-рекурсией не очень-то способствует пониманию кода.
+        adIds <- slick.db.run {
+          findAdIds(
+            limit  = MAX_ADS_PER_RUN,
+            offset = OptionUtil.maybe(isReBuild)(counter)
+          )
+        }
 
-        ress  <- {
+        ress <- {
           Future.traverse(adIds) { adId =>
             runForNodeId(adId)
               .map(_ => true)
