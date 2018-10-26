@@ -32,7 +32,7 @@ object Common {
     /** Версия slick-pg.
       * @see [[https://github.com/tminglei/slick-pg#install]]
       */
-    val SLICK_PG     = "0.15.0-RC"
+    val SLICK_PG     = "0.16.+"
 
     /** Версия play-slick прослойки. */
     val PLAY_SLICK   = "3.0.+"
@@ -70,7 +70,7 @@ object Common {
 
       /** Версия драйвера common-slick-driver.
         * Он идёт как бинарная зависимость, поэтому зависимые подпроекты. */
-      val COMMON_SLICK_DRIVER = "1.0.2-SNAPSHOT"
+      val COMMON_SLICK_DRIVER = "1.0.3-SNAPSHOT"
 
     }
 
