@@ -1,5 +1,6 @@
 package util.billing.cron
 
+import akka.stream.scaladsl.Keep
 import javax.inject.Inject
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -55,7 +56,8 @@ class ReActivateCurrentAdvs @Inject() (
 
     mNodes
       .source[String]( msearch.toEsQuery )
-      .mapAsyncUnordered(4) { mnodeId =>
+      // Параллелизм выключен, чтобы завершить отладку и пересборку тегов.
+      .mapAsyncUnordered(1) { mnodeId =>
         LOGGER.trace(s"$logPrefix Processing node #$mnodeId...")
         runForNodeId(mnodeId)
           .recover { case ex: Throwable =>
@@ -63,7 +65,8 @@ class ReActivateCurrentAdvs @Inject() (
             None
           }
       }
-      .runFold(0) { (acc, _) => acc + 1 }
+      .toMat( streamsUtil.Sinks.count )( Keep.right )
+      .run()
   }
 
   override def hasItemsForProcessing(mitems: Iterable[MItem]): Boolean = {

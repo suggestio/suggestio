@@ -191,7 +191,7 @@ class BillDebugUtil @Inject() (
           }
         } else {
           // item с нулевой стоимостью. Возможно, это бесплатное размещение суперюзера.
-          LOGGER.debug(s"$logPrefix Item price is too low to rollback money: ${mitem.price}. Will skip re-pricing.")
+          LOGGER.trace(s"$logPrefix Item price is too low to rollback money: ${mitem.price}. Will skip re-pricing.")
           DBIO.successful( None )
         }
       }
@@ -204,7 +204,7 @@ class BillDebugUtil @Inject() (
           .filter( _.withIds(itemId))
 
         priceDslOpt2.fold [DBIOAction[_, NoStream, RWT]] {
-          LOGGER.debug(s"$logPrefix PriceDSL filtered into None. No money need to be returned to user. Keeping item price as-is.")
+          LOGGER.trace(s"$logPrefix PriceDSL filtered into None. No money need to be returned to user. Keeping item price as-is.")
           // Обновить некоторые поля у item'а
           for {
             itemsUpdated <- {
