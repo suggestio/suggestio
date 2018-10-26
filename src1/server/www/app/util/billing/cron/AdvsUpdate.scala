@@ -105,7 +105,8 @@ abstract class AdvsUpdate
   def run(counter: Int): Future[Int] = {
     lazy val logPrefix = s"run($counter):"
     // У нас тут рекурсия, но надо защищаться от бесконечности. Ограничиваем счетчик вызовов run().
-    if (counter > MAX_ADS_PER_RUNS) {
+    val maxTotalAds = MAX_ADS_PER_RUNS
+    if (maxTotalAds > 0  &&  counter > maxTotalAds) {
       warn(s"$logPrefix Too many ads for processing, lets stop it unconditionally. Something going wrong?")
       Future.successful(counter)
 

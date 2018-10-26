@@ -36,6 +36,9 @@ class ReActivateCurrentAdvs @Inject() (
 
   override def MAX_ADS_PER_RUN = 30
 
+  /** Тут требуется проходить все узлы, без каких-либо ограничений. */
+  override def MAX_ADS_PER_RUNS: Int = -1
+
   /** Ищем только карточки, у которых есть offline ads с dateStart < now. */
   override def _itemsSql(i: mItems.MItemsTable): Rep[Option[Boolean]] = {
     (i.statusStr === MItemStatuses.Online.value).?
