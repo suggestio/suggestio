@@ -26,10 +26,6 @@ abstract class ActivateAdvs
   import mCommonDi._
   import slick.profile.api._
 
-
-  /** Окно обработки можно увеличить, т.к. тут инкрементальный апдейт и мало mitem'ов запрашивается. */
-  override def MAX_ADS_PER_RUN = 20
-
   /** Фьючерс внешнего контекста для adv-билдера. */
   override def builderCtxOuterFut: Future[MCtxOuter] = {
     val sql = mItems.query

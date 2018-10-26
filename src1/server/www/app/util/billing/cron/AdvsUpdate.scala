@@ -2,12 +2,13 @@ package util.billing.cron
 
 import java.time.OffsetDateTime
 
-import io.suggest.common.empty.OptionUtil
+import akka.stream.scaladsl.Keep
 import io.suggest.es.model.EsModelUtil
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
 import io.suggest.model.n2.node.MNode
+import io.suggest.streams.IStreamsUtilDi
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT, MCtxOuter}
 import models.mproj.IMCommonDi
@@ -48,8 +49,10 @@ abstract class AdvsUpdate
   with AdvBuilderFactoryDi
   with IMItems
   with AdvMNodesTryUpdateBuilderT
+  with IStreamsUtilDi
 {
 
+  import streamsUtil.Implicits._
   import mCommonDi._
   import slick.profile.api._
 
@@ -57,120 +60,53 @@ abstract class AdvsUpdate
   /** Частичные критерии выборки подходящих item'ов из таблицы. */
   def _itemsSql(i: mItems.MItemsTable): Rep[Option[Boolean]]
 
-
-  /** Поиск id карточек, которые нужно глянуть на следующей стадии.
-    * Запрос идёт вне транзакций, race-conditions будут учтены в последующем коде.
-    * Главное требование: чтобы adId не повторялись в рамках одного потока. Проблем по идее быть не должно, но всё же.
-    * @param offset Обязателен при ребилдах, т.к. таблица items не изменяется по статусам.
-    *               None при нормальном процессинге, т.к. статусы обновляются.
-    */
-  def findAdIds(limit: Int = MAX_ADS_PER_RUN, offset: Option[Int]): StreamingDBIO[Traversable[String], String] = {
-    // Ищем только карточки, у которых есть offline ads с dateStart < now
-    var q = mItems.query
-      .filter( _itemsSql )
-      .map(_.nodeId)
-      .distinct
-
-    // Если задан offset,
-    for (off <- offset)
-      q = q.drop( off )
-
-    q.take(limit)
-     .result
-  }
-
   val now = OffsetDateTime.now()
 
-
-  /** Обработка одной карточки обычно тяжелая асинхронная операция,
-    * которая может вызвать слишком резкие скачки нагрузки. Надо ограничивать аппетиты обработки.
-    * Если уперлись в этот лимит, то будет повторный вызов run() (рекурсивно).
-    */
-  def MAX_ADS_PER_RUN: Int  = 10
-
-  /** Делать передышку (прерывать обработку) в непрерывной обработке после этого числа пройденных карточек.
-    * Если уперлись в этот лимит, то продолжение будет только после вызова run() извне.
-    * Нужно в основном для защиты от нештатных ситуаций (бесконечный цикл, сильная долгая нагрузка на сеть/СУБД).
-    */
-  def MAX_ADS_PER_RUNS: Int = 500
-
-
-  def isReBuild: Boolean = false
 
   /** Основная метод запуска всего модуля на исполнение.
     *
     * @return Фьючерс с кол-вом отработанных карточек.
     */
   def run(): Future[Int] = {
-    run(0)
-  }
+    lazy val logPrefix = s"run()#${now.toInstant.toEpochMilli}:"
 
-  /** 1. Запуск поиска id карточек, требующих обновления.
-    * Функция также старается следить за расходование ресурсов системы, сглаживая возможную резкую нагрузку.
-    *
-    * @param counter Счетчик уже пройденных карточек.
-    * @return Фьючерс с кол-вом отработанных карточек
-    */
-  def run(counter: Int): Future[Int] = {
-    lazy val logPrefix = s"run($counter):"
-    // У нас тут рекурсия, но надо защищаться от бесконечности. Ограничиваем счетчик вызовов run().
-    val maxTotalAds = MAX_ADS_PER_RUNS
-    if (maxTotalAds > 0  &&  counter > maxTotalAds) {
-      LOGGER.warn(s"$logPrefix Too many ads for processing, lets stop it unconditionally. Something going wrong?")
-      Future.successful(counter)
+    // запустить асинхронную подготовку общего контекста
+    _builderCtxOuterFut
 
-    } else {
-      // запустить асинхронную подготовку общего контекста
-      _builderCtxOuterFut
-
-      for {
-        // TODO Переписать в db.stream? Эта мудотряска с limit/offset/counter и асинхронным циклом-рекурсией не очень-то способствует пониманию кода.
-        adIds <- slick.db.run {
-          findAdIds(
-            limit  = MAX_ADS_PER_RUN,
-            offset = OptionUtil.maybe(isReBuild)(counter)
-          )
-        }
-
-        ress <- {
-          if (adIds.nonEmpty)
-            LOGGER.trace(s"$logPrefix Found ${adIds} nodeIds, head=${adIds.headOption.orNull}")
-          Future.traverse(adIds) { adId =>
-            runForNodeId(adId)
-              .map(_ => true)
-              .recover { case ex: Throwable =>
-                LOGGER.error(s"$logPrefix Failed to process ad[$adId]", ex)
-                false
-              }
-            }
-          }
-
-        result <- {
-          val countOk = ress.count(identity)
-          val countFail = ress.count(!_)
-          val count = countOk + countFail
-          val counter2 = counter + count
-          // Если было слишком много карточек за раз, то продолжить работу после небольшой паузы.
-          if (count >= MAX_ADS_PER_RUN) {
-            LOGGER.info(s"$logPrefix Done $count adv-items (failed=$countFail), but DB has more, lets run again...")
-            // Теги косячат при такой пакетной обработке. Надо паузу делать тут, рефреш индекса принудительный.
-            // Иначе свежие теги НЕ находятся в индексе на последующих итерациях.
-            mNodes.refreshIndex().flatMap { _ =>
-              LOGGER.trace(s"$logPrefix [$counter2] Refreshed nodes index, continue...")
-              run(counter2)
-            }
-
-          } else {
-            if (count > 0)
-              LOGGER.info(s"$logPrefix Finished. $countOk ok, failed = $countFail. Total: $counter2")
-            Future.successful(counter2)
-          }
-        }
-      } yield {
-        result
+    slick.db
+      // Поиск id карточек, которые нужно глянуть на следующей стадии.
+      .stream {
+        // Ищем только карточки, у которых есть offline ads с dateStart < now
+        mItems.query
+          .filter( _itemsSql )
+          .map(_.nodeId)
+          .distinct
+          .result
+          .forPgStreaming( 10 )
       }
-
-    }
+      .toSource
+      // Делаем всё последовательно, чтобы отладить наблюдающиеся проблемы с гео-тегами.
+      .mapAsync(1) { nodeId =>
+        runForNodeId( nodeId )
+          .map(_ => true)
+          .recover { case ex: Throwable =>
+            LOGGER.error(s"$logPrefix Failed to process ad[$nodeId]", ex)
+            false
+          }
+      }
+      .toMat( streamsUtil.Sinks.count )( Keep.right )
+      .run()
+      .flatMap { countTotal =>
+        if (countTotal > 0)
+          LOGGER.info(s"$logPrefix Done, total processed: $countTotal")
+        // Теги косячат при такой пакетной обработке. Надо паузу делать тут, рефреш индекса принудительный.
+        // Иначе свежие теги НЕ находятся в индексе на последующих итерациях. TODO Актуально ли это ещё? Теги ребилдятся в отдельном потоке, вроде.
+        mNodes.refreshIndex()
+          .recover { case ex: Throwable =>
+            LOGGER.error(s"$logPrefix Can't refresh es-index", ex)
+          }
+          .map(_ => countTotal)
+      }
   }
 
   /** Фьючерс внешнего контекста для adv-билдера. */

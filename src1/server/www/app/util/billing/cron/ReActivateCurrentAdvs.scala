@@ -5,6 +5,7 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
+import io.suggest.streams.StreamsUtil
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.MacroLogsDyn
 import models.mproj.ICommonDi
@@ -26,6 +27,7 @@ class ReActivateCurrentAdvs @Inject() (
                                         override val mNodes             : MNodes,
                                         override val mItems             : MItems,
                                         override val advBuilderFactory  : AdvBuilderFactory,
+                                        override val streamsUtil        : StreamsUtil,
                                         override val mCommonDi          : ICommonDi
                                       )
   extends ActivateAdvs
@@ -34,13 +36,6 @@ class ReActivateCurrentAdvs @Inject() (
   import mCommonDi._
   import slick.profile.api._
 
-  override def MAX_ADS_PER_RUN = 30
-
-  /** Тут требуется проходить все узлы, без каких-либо ограничений. */
-  override final def MAX_ADS_PER_RUNS: Int = -1
-
-  /** Это ребилд. Обязательно выставлять offset при поиске новых item'ов для обработки. */
-  override final def isReBuild = true
 
   /** Ищем только карточки, у которых есть offline ads с dateStart < now. */
   override def _itemsSql(i: mItems.MItemsTable): Rep[Option[Boolean]] = {

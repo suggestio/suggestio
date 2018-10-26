@@ -12,6 +12,7 @@ import slick.dbio.Effect.Read
 import slick.sql.SqlAction
 import util.adv.build.{AdvBuilderFactory, AdvBuilderUtil}
 import io.suggest.mbill2.m.item.MItemJvm.Implicits._
+import io.suggest.streams.StreamsUtil
 
 import scala.concurrent.Future
 
@@ -28,6 +29,7 @@ class DisableExpiredAdvs @Inject() (
   override val mNodes             : MNodes,
   override val mCommonDi          : ICommonDi,
   override val advBuilderFactory  : AdvBuilderFactory,
+  override val streamsUtil        : StreamsUtil,
   override val mItems             : MItems
 )
   extends AdvsUpdate
