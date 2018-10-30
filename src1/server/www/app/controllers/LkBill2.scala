@@ -713,7 +713,6 @@ class LkBill2 @Inject() (
   }
 
 
-
   /**
     * Сабмит формы подтверждения корзины.
     *
@@ -722,7 +721,7 @@ class LkBill2 @Inject() (
     */
   def cartSubmit(onNodeId: String) = csrf.Check {
     isNodeAdmin(onNodeId, U.PersonNode, U.Contract).async { implicit request =>
-      lazy val logPrefix = s"cartSubmit($onNodeId)#${System.currentTimeMillis()}"
+      lazy val logPrefix = s"cartSubmit($onNodeId)#${System.currentTimeMillis()}:"
 
       // Если цена нулевая, то контракт оформить как выполненный. Иначе -- заняться оплатой.
       // Чтение ордера, item'ов, кошелька, etc и их возможную модификацию надо проводить внутри одной транзакции.
@@ -753,7 +752,7 @@ class LkBill2 @Inject() (
         }
 
       } yield {
-        LOGGER.trace(s"$logPrefix Done, person#${request.user.personIdOpt.orNull} contract#$contractId order#${owi.morder.id.orNull} with ${owi.mitems.size} items\n => ${cartIdea.getClass.getSimpleName}")
+        LOGGER.debug(s"$logPrefix Done, person#${request.user.personIdOpt.orNull} contract#$contractId order#${owi.morder.id.orNull} with ${owi.mitems.size} items\n => ${cartIdea.getClass.getSimpleName}")
 
         cartIdea match {
 

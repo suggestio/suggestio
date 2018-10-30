@@ -12,12 +12,14 @@ import io.suggest.init.routed.MJsInitTarget
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
+import io.suggest.mbill2.m.item.MItems
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodesCache}
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.usr.MSuperUsers
 import org.elasticsearch.client.Client
 import play.api.db.slick.DatabaseConfigProvider
 import util.adn.NodesUtil
+import util.billing.Bill2Util
 import util.mdr.MdrUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -81,6 +83,9 @@ sealed trait ISioUser {
   /** Кол-во элементов для модерации. */
   def lkMdrCountOptFut: Future[Option[Int]]
 
+  /** Кол-во элементов в корзине. */
+  def cartItemsCountOptFut: Future[Option[Int]]
+
   override def toString: String = s"U(${personIdOpt.getOrElse("")})"
 
 }
@@ -102,6 +107,7 @@ class MSioUserEmpty extends ISioUser {
     Future.failed( new NoSuchElementException("personIdOpt is empty") )
   }
   override def lkMdrCountOptFut = Future.successful(None)
+  override def cartItemsCountOptFut = Future.successful(None)
 
   override def lkCtxDataFut = Future.successful(CtxData.empty)
 }
@@ -178,13 +184,16 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
   override def lkCtxDataFut: Future[CtxData] = {
     val _balancesFut = balancesFut
     val _mdrCountOptFut = lkMdrCountOptFut
+    val _cartItemsCountOptFut = cartItemsCountOptFut
     for {
-      balances    <- _balancesFut
-      mdrCountOpt <- _mdrCountOptFut
+      balances            <- _balancesFut
+      mdrCountOpt         <- _mdrCountOptFut
+      cartItemsCountOpt   <- _cartItemsCountOptFut
     } yield {
       CtxData(
-        mUsrBalances  = balances,
-        mdrNodesCount = mdrCountOpt
+        mUsrBalances      = balances,
+        mdrNodesCount     = mdrCountOpt,
+        cartItemsCount    = cartItemsCountOpt,
       )
     }
   }
@@ -212,6 +221,31 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
     }
   }
 
+  override def cartItemsCountOptFut: Future[Option[Int]] = {
+    val futOrEx = for {
+      // Узнать id контракта юзера.
+      contractIdOpt <- contractIdOptFut
+      contractId = contractIdOpt.get
+
+      // Поиск id ордера-корзины
+      itemsCount <- slick.db.run {
+        for {
+          cartOrderIdOpt  <- bill2Util.getCartOrderId( contractId )
+          cartOrderId      = cartOrderIdOpt.get
+          // Посчитать item'ы в ордере:
+          itemsCount      <- mItems.countByOrderId(cartOrderId)
+        } yield {
+          itemsCount
+        }
+      }
+    } yield {
+      OptionUtil.maybe(itemsCount > 0)(itemsCount)
+    }
+    // Исключение - это нормально здесь. Гасим NSEE и заодно остальные исключения.
+    futOrEx
+      .recover { case _: Throwable => None }
+  }
+
 }
 
 
@@ -237,6 +271,8 @@ class MsuStatic @Inject()(
                            val mNodeCache                : MNodesCache,
                            val mdrUtil                   : MdrUtil,
                            val nodesUtil                 : NodesUtil,
+                           val bill2Util                 : Bill2Util,
+                           val mItems                    : MItems,
                            override val _slickConfigProvider : DatabaseConfigProvider,
                            implicit val ec               : ExecutionContext,
                            implicit val esClient         : Client
@@ -267,6 +303,7 @@ case class MSioUserLazy @Inject() (
 
   override lazy val lkCtxDataFut      = super.lkCtxDataFut
   override lazy val lkMdrCountOptFut  = super.lkMdrCountOptFut
+  override lazy val cartItemsCountOptFut = super.cartItemsCountOptFut
 
   override def toString: String = {
     s"U(${personIdOpt.getOrElse("")}${jsiTgs.mkString(";[", ",", "]")})"

@@ -11,19 +11,19 @@
     title = messages("Adv"),
     href  = Some( routes.LkAdvGeo.forAd(madId) ),
     css   = classesAct(curr.contains( L.GEO ), "__geotag")
-  )
+  )()
 
   @_navItemTpl(
     title = messages("Adv.in.ext.services"),
     href  = Some( routes.LkAdvExt.forAd(madId) ),
     css   = classesAct(curr.contains( L.EXT ), "__social")
-  )
+  )()
 
   @_navItemTpl(
     title = messages("Adv.in.nodes"),
     href  = Some( routes.LkNodes.nodesForAd(madId) ),
     css   = classesAct(curr.contains( L.AD_NODES ), "__nodes")
-  )
+  )()
 
   @_navSysTpl(
     call  = routes.SysMarket.showAd(madId)

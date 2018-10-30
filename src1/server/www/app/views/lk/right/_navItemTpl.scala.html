@@ -1,4 +1,4 @@
-@(title: String, href: Option[Call] = None, css: TraversableOnce[String] = Nil, delimAfter: Boolean = true)(implicit ctx: Context)
+@(title: String, href: Option[Call] = None, css: TraversableOnce[String] = Nil, delimAfter: Boolean = true)(content: Html = HtmlFormat.empty)(implicit ctx: Context)
 
 @* Шаблон одного item'а правой панели. *@
 

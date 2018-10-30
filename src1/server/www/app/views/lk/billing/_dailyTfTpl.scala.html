@@ -5,6 +5,8 @@
 @import io.suggest.cal.m.{MCalTypes, MCalType}
 @import io.suggest.model.n2.bill.tariff.daily.MTfDaily
 @import io.suggest.i18n.MsgCodes
+@import io.suggest.common.html.HtmlConstants.ELLIPSIS
+@import io.suggest.css.Css
 
 @* Общий код рендера строки с ценниками. *@
 @__renderTfDaily(tf: MTfDaily) = {
@@ -83,6 +85,9 @@
           args.mnode.meta.basic.name,
           ctx.now.getYear.toString
         )
+        <a class="@Css.Lk.BLUE_LINK" href="@routes.LkNodes.nodesOf(args.mnode.id.get)">
+          @ctx.messages( MsgCodes.`Change` )@ELLIPSIS
+        </a>
       </td>
     </tr>
 

@@ -7,7 +7,7 @@
 @import BillingRightPanelLinks._
 @import lk.right._
 @import util.tpl.CssFormat._
-@*import views.html.stuff.bxslider._*@
+@import io.suggest.common.html.HtmlConstants.{`(`, `)`, SPACE}
 
 @rightBar = {
   @for(nodeId <- mnode.id) {
@@ -17,19 +17,19 @@
         title = messages("Bill.account.and.tariffs"),
         href  = Some( routes.LkBill2.onNode(nodeId) ),
         css   = classesAct( rightCurrEl.contains(RPL_BILLING), "__node-billing")
-      )
+      )()
 
       @_navItemTpl(
-        title = messages("Cart"),
+        title = messages("Cart") + ctx.data.cartItemsCount.fold("")( SPACE + `(` + _ + `)` ),
         href  = Some( routes.LkBill2.orderPage(nodeId) ),
         css   = classesAct( rightCurrEl.contains(RPL_CART), "__bill-cart" )
-      )
+      )()
 
       @_navItemTpl(
         title = messages("Orders"),
         href  = Some( routes.LkBill2.orders(nodeId) ),
         css   = classesAct( rightCurrEl.contains(RPL_ORDERS), "__bill-orders" )
-      )
+      )()
 
       @_navSysTpl(
         call  = routes.SysBilling.forNode(nodeId)

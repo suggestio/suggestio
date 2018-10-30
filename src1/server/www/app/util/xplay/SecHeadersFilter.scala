@@ -38,11 +38,10 @@ class SecHeadersFilterUtil {
   val DEFAULT_CONTENT_TYPE_OPTIONS              = "nosniff"
   val DEFAULT_PERMITTED_CROSS_DOMAIN_POLICIES   = "master-only"
 
-  // TODO Надо выставить хотя бы 12 недель, а лучше год, и флаг preload для доступа в hardcoded-списки браузеров.
   // Сейчас это пока не сделано, т.к. есть проблемы с letsEncrypt, nginx reload, других возможных проблем.
-  // TODO Разрулить проблему сертификата с http://backend.suggest.io/
-  //val DEFAULT_STRICT_TRANSPORT_SECURITY       = "max-age=1000000; includeSubDomains"
-  val DEFAULT_STRICT_TRANSPORT_SECURITY         = s"max-age=${20.days.toSeconds}"
+  val DEFAULT_STRICT_TRANSPORT_SECURITY         = s"max-age=${180.days.toSeconds}"
+  // TODO includeSubDomains - убедится в безопасности этой опции и добавить.
+  // TODO preload для доступа в hardcoded-списки браузеров
 
 
   // Хром не умеет в ALLOW-FROM. Надо разруливать через CSP frame-ancestors.

@@ -3,7 +3,6 @@ package models.mctx
 import java.net.IDN
 import java.time.{Instant, OffsetDateTime, ZoneId}
 
-import _root_.models.im.MImgT
 import com.google.inject.assistedinject.Assisted
 import javax.inject.{Inject, Singleton}
 import controllers.routes
@@ -311,11 +310,6 @@ trait Context {
       lang = messages.lang.code.toLowerCase,
       hash = api.jsMessagesUtil.hash
     )
-  }
-
-  def dynImgCall(img: MImgT): Call = {
-    val imgCall = api.dynImgUtil.imgCall(img)
-    api.cdn.forCall(imgCall)(this)
   }
 
 }

@@ -274,6 +274,15 @@ class MItems @Inject() (
       }
   }
 
+
+  /** Подсчёт item'ов в указанном ордере. */
+  def countByOrderId(orderId: Gid_t): DBIOAction[Int, NoStream, Effect.Read] = {
+    query
+      .filter(_.orderId === orderId)
+      .size
+      .result
+  }
+
 }
 
 

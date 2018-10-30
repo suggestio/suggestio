@@ -16,11 +16,13 @@ import io.suggest.mbill2.m.balance.MBalance
  * @param jsInitTargets Какие-то доп.цели инициализации, выставляемые на уровне экшена
  * @param mUsrBalances Остатки на счетах юзера, обычно приходят из request.user.balancesFut в контроллер.
  * @param mdrNodesCount Кол-во узлов в очереди на модерацию.
+ * @param cartItemsCount Кол-во элементов в заказе-корзине.
  */
 case class CtxData(
                     jsInitTargets    : List[MJsInitTarget]    = Nil,
                     mUsrBalances     : Seq[MBalance]          = Nil,
                     mdrNodesCount    : Option[Int]            = None,
+                    cartItemsCount   : Option[Int]            = None,
                   ) {
 
   def withJsInitTargets(jsInitTargets: List[MJsInitTarget]) = copy(jsInitTargets = jsInitTargets)

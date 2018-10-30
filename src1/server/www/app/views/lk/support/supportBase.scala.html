@@ -18,14 +18,14 @@
         title = messages( MsgCodes.`Support.request` ),
         href  = Some( ctx.supportFormCall( nodeIdOpt ) ),
         css   = classesAct( rightLink == MRightLinks.Support )
-      )
+      )()
 
       @* Ссылка на страницу "О компании" *@
       @_navItemTpl(
         title = messages( MsgCodes.`Company.about` ),
         href  = Some( routes.LkHelp.companyAbout(nodeIdOpt) ),
         css   = classesAct( rightLink == MRightLinks.CompanyAbout )
-      )
+      )()
 
     }
   }

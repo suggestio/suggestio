@@ -5,7 +5,7 @@
 @* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин). *@
 
 @import ctx._
-@import ctx.api.cdn.asset
+@import ctx.api.cdn
 @import stuff._
 @import lk.popup._
 @import lk.left._
@@ -20,12 +20,12 @@
   <title>@title @if(nodeOpt){ | @_nodeTitleTpl(nodeOpt) } | Suggest.io</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-  <link rel="stylesheet" type="text/css" href='@asset("stylesheets/market/lk/common.css")'/>
-  <link rel="stylesheet" type="text/css" href='@asset("stylesheets/market/showcase.css")'/>
+  <link rel="stylesheet" type="text/css" href='@cdn.asset("stylesheets/market/lk/common.css")'/>
+  <link rel="stylesheet" type="text/css" href='@cdn.asset("stylesheets/market/showcase.css")'/>
 
-  <link rel="stylesheet" type="text/css" href='@asset("stylesheets/market/lk_new-design/lk.css")'/>
+  <link rel="stylesheet" type="text/css" href='@cdn.asset("stylesheets/market/lk_new-design/lk.css")'/>
 
-  <script src='@asset("javascripts/jquery.min.js")'></script>
+  <script src='@cdn.asset("javascripts/jquery.min.js")'></script>
 
   @static._faviconsTpl()
 
@@ -37,17 +37,26 @@
 
   <header class="header">
     <a class="header_logo-link" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">
-      <img class="header_logo-image" src='@asset("images/market/new-design/logo_retina.png")' alt="logo" width="53" height="51"/>
+      <img class="header_logo-image" src='@cdn.asset("images/market/new-design/logo_retina.png")' alt="logo" width="53" height="51"/>
     </a>
 
     <div class="header_cnt">
 
-      @if(nodeOpt.isEmpty) {
-        <img class="header_logo-text" src='@asset("images/market/index/logo_retina.png")' width="101" height="26"/>
-      } else {
-        @for(mnode <- nodeOpt) {
-          <span class="header_logo-text">@mnode.meta.basic.name</span>
-        }
+      @nodeOpt.fold {
+        <img class="header_logo-text" src='@cdn.asset("images/market/index/logo_retina.png")' width="101" height="26"/>
+      } { mnode =>
+        <span class="header_logo-text">@mnode.meta.basic.name</span>
+        @* TODO Виджет корзины со счётчиком. *@
+      }
+
+      @for(nodeId <- nodeIdOpt) {
+        <a class="header_cart __bill-cart __act" title="@ctx.messages( MsgCodes.`Cart` )" href="@routes.LkBill2.orderPage(nodeId)">
+          <span class="">
+            @for(count <- ctx.data.cartItemsCount) {
+              <span class="left-bar_menu-bubble">@count</span>
+            }
+          </span>
+        </a>
       }
 
       @* Виджет для отображения денег на счете юзера и ссылка на биллинг. *@
@@ -105,9 +114,9 @@
   </aside>
 
 
-  <script src="@asset("javascripts/market/lk/mx_cof.js")"></script>
+  <script src="@cdn.asset("javascripts/market/lk/mx_cof.js")"></script>
   @* TODO 2018-09-04: Удалить окончательно, если не нужно:
-  <script src="@asset("javascripts/jquery-ui.custom.min.js")"></script>
+  <script src="@cdn.asset("javascripts/jquery-ui.custom.min.js")"></script>
   *@
 
   <script src="@ctx.api.cdn.forCall( ctx.lkMessagesJs )"></script>
