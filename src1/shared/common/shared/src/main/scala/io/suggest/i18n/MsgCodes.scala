@@ -293,8 +293,10 @@ object MsgCodes {
   val `To.beginning` = "To.beginning"
   val `To.end` = "To.end"
   val `Moderation` = "Moderation"
+  val `Moderation.needed` = "Moderation.needed"
 
   val `Moderate.all.nodes` = "Moderate.all.nodes"
   val `Moderate.requests.from.all.nodes` = "Moderate.requests.from.all.nodes"
+  val `Go.to.moderation` = "Go.to.moderation"
 
 }

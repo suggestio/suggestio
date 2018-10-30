@@ -79,7 +79,7 @@ class MPersonIdents @Inject() (
     * @param personId id юзера
     * @return Список email'ов юзера в неопределённом порядке, возможно даже с дубликатами.
     */
-  def findAllEmails(personId: String): Future[Seq[String]] = {
+  def findEmails(personId: String): Future[Seq[String]] = {
     val personIdQuery = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
     val identModels = IDENT_MODELS
     val identTypes = identModels.map(_.ES_TYPE_NAME)
@@ -94,12 +94,58 @@ class MPersonIdents @Inject() (
           hit.getType match {
             case emailPwIdents.ES_TYPE_NAME =>
               val email = emailPwIdents.deserializeOne2(hit).email
-              Seq(email)
+              email :: Nil
             case mExtIdents.ES_TYPE_NAME =>
               mExtIdents.deserializeOne2(hit).email
           }
         }
       }
+  }
+
+
+  /** Оптовая сборка всех почтовых адресов для произвольного множества юзеров.
+    *
+    * @param personIds id юзеров.
+    * @return Фьючерс с результатами поиска, сгруппированными по person_id.
+    */
+  def findPersonsEmails(personIds: Seq[String]): Future[Map[String, Set[String]]] = {
+    if (personIds.isEmpty) {
+      Future.successful( Map.empty )
+
+    } else {
+      val personIdQuery = QueryBuilders.termsQuery(PERSON_ID_ESFN, personIds: _*)
+      val identModels = IDENT_MODELS
+      val identTypes = identModels.map(_.ES_TYPE_NAME)
+      val indices = identModels.map(_.ES_INDEX_NAME).distinct
+      esClient.prepareSearch(indices : _*)
+        .setTypes(identTypes : _*)
+        .setQuery(personIdQuery)
+        .execute()
+        .map { searchResp =>
+          searchResp
+            .getHits
+            .getHits
+            .iterator
+            .flatMap { hit =>
+              hit.getType match {
+                case emailPwIdents.ES_TYPE_NAME =>
+                  val epwIdent = emailPwIdents.deserializeOne2(hit)
+                  val kv = epwIdent.personId -> epwIdent.email
+                  kv :: Nil
+                case mExtIdents.ES_TYPE_NAME =>
+                  val extIdent = mExtIdents.deserializeOne2(hit)
+                  for (email <- extIdent.email) yield {
+                    extIdent.personId -> email
+                  }
+              }
+            }
+            .toStream
+            .groupBy(_._1)
+            .map { case (k, vs) =>
+              k -> vs.iterator.map(_._2).toSet
+            }
+        }
+    }
   }
 
 }

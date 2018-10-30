@@ -93,7 +93,7 @@ trait SioController
       .getOrElse { super.request2lang }*/
     val messages0 = super.request2Messages
     val lang0 = messages0.lang
-    if (!lang0.country.isEmpty) {
+    if (lang0.country.nonEmpty) {
       messages0
     } else {
       // Нужно трансформировать язык к локаль исходя из доступных messages-локалей

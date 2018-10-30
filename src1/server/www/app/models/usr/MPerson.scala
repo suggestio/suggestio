@@ -32,7 +32,7 @@ class MPerson @Inject() (
 
   /** Асинхронно найти подходящее имя юзера в хранилищах и подмоделях. */
   def findUsername(personId: String): Future[Option[String]] = {
-    for (emails <- mPersonIdents.findAllEmails(personId)) yield {
+    for (emails <- mPersonIdents.findEmails(personId)) yield {
       emails.headOption
     }
   }

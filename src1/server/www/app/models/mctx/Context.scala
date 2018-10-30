@@ -197,8 +197,11 @@ trait Context {
 
   /** Текущий язык запроса. Определеляется в контроллерах на основе запроса. */
   implicit val messages: Messages
+
   /** Функция типа MessagesF_t, которую можно использовать в кросс-платформенном коде. */
   def messagesF: MessagesF_t = messages( _, _: _* )
+
+  def withMessages(messages: Messages): Context
 
   /** Для быстрого задания значений r-параметров (path для возврата, см. routes) можно использовать этот метод. */
   def r = Some(request.uri)
@@ -360,8 +363,9 @@ case class Context2 @Inject() (
 )
   extends Context
 {
-  override def withData(data1: CtxData): Context = {
-    copy(data = data1)
-  }
+
+  override def withMessages(messages: Messages) = copy(messages = messages)
+  override def withData(data1: CtxData) = copy(data = data1)
+
 }
 

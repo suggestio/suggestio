@@ -209,6 +209,13 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
     cache.set(ck, value, EXPIRE)
   }
 
+
+  /** Гуляние по графу узлов/элементов через кэш с помощью функции. */
+  def walk[A](acc0: A, ids: Set[String])
+             (f: (A, T1) => (A, Set[String])): Future[A] = {
+    companion.walkUsing(acc0, ids, multiGetSrc(_))(f)
+  }
+
 }
 
 

@@ -1,6 +1,6 @@
 package io.suggest.es.model
 
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.util.SioEsUtil._
@@ -252,6 +252,63 @@ trait EsModelStaticT extends EsModelCommonStaticT {
       irb.setRouting(rkOpt.get)
 
     irb
+  }
+
+
+  def MAX_WALK_STEPS = 50
+
+  /** Обойти с помощью функции, которая выдаёт узлы для следующего шага.
+    *
+    * @param ids id элементов.
+    * @param acc0 Аккамулятор.
+    * @param multiGetSrcF Функция для сорсинга. Для кэша модели можно переопределить.
+    * @param f Функция обработки одного элемента.
+    * @tparam A Тип аккамулятора.
+    * @return Фьючерс с финальным аккамулятором.
+    */
+  def walkUsing[A](acc0: A,  ids: Set[String],  multiGetSrcF: Set[String] => Source[T, _], counter: Int = 0)
+                  (f: (A, T) => (A, Set[String])): Future[A] = {
+    lazy val logPrefix = s"walkUsing(${ids.size})[$counter]:"
+
+    if (counter >= MAX_WALK_STEPS) {
+      LOGGER.error(s"$logPrefix Stop, too many walk steps.\n ids[${ids.size}] = ${ids.mkString(", ")}")
+      Future.failed( new IllegalArgumentException(s"$logPrefix Too many iterations: $counter") )
+
+    } else if (ids.isEmpty) {
+      Future.successful(acc0)
+
+    } else {
+      // Сорсим элементы по id из хранилища:
+      LOGGER.trace(s"$logPrefix Step#${counter}")
+      multiGetSrc(ids)
+        .toMat(
+          Sink.fold (acc0 -> Set.empty[String]) {
+            case ((xacc0, idsAcc0), el) =>
+              // TODO Opt Для теоретического ускорения работы можно запускать чтение НОВЫХ id сразу после каждого f() и заброс фьючерсов в акк.
+              val (xacc2, ids2) = f(xacc0, el)
+              xacc2 -> (idsAcc0 ++ ids2)
+          }
+        )( Keep.right )
+        .run()
+        .flatMap { case (acc2, needIds2) =>
+          walkUsing(acc2, needIds2, multiGetSrcF)(f)
+        }
+    }
+  }
+
+
+  /** Обойти с помощью функции, которая выдаёт узлы для следующего шага.
+    * Можно применить Пригодно для поиска
+    *
+    * @param els Узлы, начиная от которых надо плясать.
+    * @param acc0 Начальный аккамулятор.
+    * @param f Функция, определяющая новый акк и список узлов, которые тоже надо тоже отработать.
+    * @tparam A Тип аккамулятора.
+    * @return Итоговый аккамулятор функции.
+    */
+  def walk[A](acc0: A, ids: Set[String])
+             (f: (A, T) => (A, Set[String])): Future[A] = {
+    walkUsing(acc0, ids, multiGetSrc(_))(f)
   }
 
 }

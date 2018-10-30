@@ -27,6 +27,7 @@ import play.api.i18n.Messages
 import play.api.mvc._
 import play.twirl.api.Xml
 import util.acl._
+import util.adn.NodesUtil
 import util.billing.Bill2Util
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
@@ -71,6 +72,7 @@ class PayYaka @Inject() (
                           secHeadersFilterUtil     : SecHeadersFilterUtil,
                           mailerWrapper            : IMailerWrapper,
                           mPersonIdents            : MPersonIdents,
+                          nodesUtil                : NodesUtil,
                           mSuperUsers              : MSuperUsers,
                           mdrUtil                  : MdrUtil,
                           identUtil                : IdentUtil,
@@ -163,7 +165,7 @@ class PayYaka @Inject() (
       // Попытаться определить email клиента.
       val userEmailOptFut = for {
         // TODO Opt Надо бы искать максимум 1 элемент.
-        epws <- mPersonIdents.findAllEmails(personId)
+        epws <- mPersonIdents.findEmails(personId)
       } yield {
         epws.headOption
       }
@@ -450,7 +452,7 @@ class PayYaka @Inject() (
             val statMas0Fut = _statActions0(yReq, usrNodeOptFut)
 
             // В фоне узнать все email'ы юзера-плательщика.
-            val userEmailsFut = mPersonIdents.findAllEmails( yReq.personId )
+            val userEmailsFut = mPersonIdents.findEmails( yReq.personId )
 
             val payFut: Future[(List[MAction], Xml)] = for {
               // Дождаться данных по узлу юзера.
@@ -502,23 +504,21 @@ class PayYaka @Inject() (
                 LOGGER.info(s"$logPrefix Order ${yReq.orderId} closed successfully. Invoice ${yReq.invoiceId}")
                 // Уведомить модераторов, если необходимо.
                 if (mdrUtil.isMdrNotifyNeeded(mdrNotifyCtx)) {
-                  val usrDisplayNameOptFut = FutureUtil.opt2futureOpt( usrNode.guessDisplayName ) {
-                    for (usrEmails <- userEmailsFut) yield {
-                      usrEmails.headOption
-                    }
-                  }
+                  val usrDisplayNameOptFut = nodesUtil.getPersonName( usrNodeOptFut, Some(userEmailsFut) )
                   val ctx = implicitly[Context]
-                  for (usrDisplayNameOpt <- usrDisplayNameOptFut) {
-                    mdrUtil.sendMdrNotify(
-                      mdrNotifyCtx,
-                      MMdrNotifyMeta(
-                        paid        = Some( mprice ),
-                        orderId     = Some( yReq.orderId ),
-                        txn         = Some( balTxn ),
-                        personId    = Some( yReq.personId ),
-                        personName  = usrDisplayNameOpt
-                      )
-                    )(ctx)
+                  for {
+                    usrDisplayNameOpt <- usrDisplayNameOptFut
+
+                    tplArgs = MMdrNotifyMeta(
+                      paidTotal   = Some( mprice ),
+                      orderId     = Some( yReq.orderId ),
+                      txn         = Some( balTxn ),
+                      personId    = Some( yReq.personId ),
+                      personName  = usrDisplayNameOpt
+                    )
+                    _ <- mdrUtil.sendMdrNotify( mdrNotifyCtx, tplArgs )(ctx)
+                  } {
+                    LOGGER.trace(s"$logPrefix mdr notify finished ok")
                   }
                 }
 

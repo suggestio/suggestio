@@ -2,7 +2,6 @@ package util.billing.cron
 
 import java.time.OffsetDateTime
 
-import akka.stream.scaladsl.Keep
 import io.suggest.es.model.EsModelUtil
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
@@ -94,8 +93,7 @@ abstract class AdvsUpdate
             false
           }
       }
-      .toMat( streamsUtil.Sinks.count )( Keep.right )
-      .run()
+      .runWith( streamsUtil.Sinks.count )
       .flatMap { countTotal =>
         if (countTotal > 0)
           LOGGER.info(s"$logPrefix Done, total processed: $countTotal")

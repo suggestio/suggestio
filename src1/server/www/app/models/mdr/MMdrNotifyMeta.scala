@@ -18,11 +18,21 @@ object MMdrNotifyMeta {
 }
 
 
+/** Контейнер данных для рендера шаблона [[views.html.sys1.mdr._mdrNeededEmailTpl]].
+  *
+  * @param paidTotal
+  * @param orderId
+  * @param txn
+  * @param personId
+  * @param personName
+  * @param toMdrNodeId На какой узел рендерить ссылку. Если None, то будет
+  */
 case class MMdrNotifyMeta(
-                           paid      : Option[MPrice]  = None,
-                           orderId   : Option[Gid_t]   = None,
-                           txn       : Option[MTxn]    = None,
-                           personId  : Option[String]  = None,
-                           personName: Option[String]  = None
+                           paidTotal    : Option[MPrice]  = None,
+                           orderId      : Option[Gid_t]   = None,
+                           txn          : Option[MTxn]    = None,
+                           personId     : Option[String]  = None,
+                           personName   : Option[String]  = None,
+                           toMdrNodeId  : Option[String]  = None,
                          )
   extends EmptyProduct

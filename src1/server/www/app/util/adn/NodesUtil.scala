@@ -7,6 +7,7 @@ import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.adn.MAdnRights
 import io.suggest.common.coll.Lists.Implicits._
+import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
@@ -24,6 +25,7 @@ import models.madn.{MNodeRegSuccess, NodeDfltColors}
 import models.mext.MExtServices
 import models.mproj.ICommonDi
 import models.mwc.MWelcomeRenderArgs
+import models.usr.MPersonIdents
 import play.api.i18n.Messages
 import play.api.mvc.Call
 import util.cdn.CdnUtil
@@ -46,6 +48,7 @@ final class NodesUtil @Inject() (
                                   mExtTargets             : MExtTargets,
                                   mMediasCache            : MMediasCache,
                                   cdnUtil                 : CdnUtil,
+                                  mPersonIdents           : MPersonIdents,
                                   dynImgUtil              : DynImgUtil,
                                   mCommonDi               : ICommonDi
                                 )
@@ -359,6 +362,32 @@ final class NodesUtil @Inject() (
           .toSet
       }
       .runWith( Sink.collection[String, Set[String]] )
+  }
+
+
+  /** Вычислить personName для tplArgs писем-уведомлений о модерации.
+    *
+    * @param personNodeOptFut request.personNodeOpt
+    * @param userEmailsFutOpt Почтовые адреса юзера, если уже обрабатываются снаружи.
+    * @return Фьючерс с найденным именем юзера.
+    */
+  def getPersonName(personNodeOptFut: Future[Option[MNode]],
+                    userEmailsFutOpt: => Option[Future[Seq[String]]] = None): Future[Option[String]] = {
+    personNodeOptFut.flatMap { personNodeOpt =>
+      val nodeNameOpt = personNodeOpt.flatMap(_.guessDisplayName)
+      FutureUtil.opt2futureOpt( nodeNameOpt ) {
+        val userEmailsFut = userEmailsFutOpt.getOrElse {
+          personNodeOpt
+            .flatMap(_.id)
+            .fold( Future.successful(List.empty: Seq[String]) ) { personId =>
+              mPersonIdents.findEmails( personId )
+            }
+        }
+        for (usrEmails <- userEmailsFut) yield {
+          usrEmails.headOption
+        }
+      }
+    }
   }
 
 }

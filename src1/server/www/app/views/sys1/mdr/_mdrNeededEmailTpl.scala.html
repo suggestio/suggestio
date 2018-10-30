@@ -4,15 +4,16 @@
 
 @import ctx.api.ctxUtil.LK_URL_PREFIX
 @import util.TplDataFormatUtil.formatPrice
+@import io.suggest.i18n.MsgCodes
 
-@if(args.nonEmpty) {
   <p>
-    Поступила оплата
-    @for(price <- args.paid) {
-      <strong>@formatPrice(price)</strong>
-    }
+
     @for(orderId <- args.orderId) {
-      по заказу #@orderId
+      ctx.messages( MsgCodes.`We.received.payment.for.order.0`, orderId )
+    }
+    @for(price <- args.paidTotal) {
+      &nbsp;
+      <strong>@formatPrice(price)</strong>
     }
 
     @if(args.personId || args.personName) {
@@ -42,11 +43,8 @@
       }
     </p>
   }
-}
 
 <p>
-  Для начала модерации
-  <a href="@LK_URL_PREFIX@routes.SysMdr.sysPage()">
-    перейдите по ссылке.
-  </a>
+  <a href="@LK_URL_PREFIX@args.toMdrNodeId.fold(routes.SysMdr.sysPage())(nodeId => routes.SysMdr.lkMdr(nodeId :: Nil))">
+    ctx.messages( MsgCodes.`Go.to.moderation` )</a>.
 </p>

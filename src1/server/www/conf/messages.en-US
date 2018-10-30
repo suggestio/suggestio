@@ -869,6 +869,7 @@ Item.type.l=Users' geolocation capturing
 
 Moderation=Moderation
 Picture.editing=Picture editing
+Moderation.needed=Moderation requested
 
 Refuse.mode.i=Only this adv
 Refuse.mode.req=This and any requested advs
@@ -996,4 +997,5 @@ Nothing.to.moderate=Nothing to moderate
 No.incoming.adv.requests=No incoming advertising requests.
 Moderate.all.nodes=Moderate all nodes
 Moderate.requests.from.all.nodes=Moderate requests from ALL nodes, not only from current node?
+Go.to.moderation=Go to moderation
 

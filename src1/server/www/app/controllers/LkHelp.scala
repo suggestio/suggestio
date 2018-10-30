@@ -94,7 +94,7 @@ class LkHelp @Inject()(
       .fold [Future[Seq[String]]] {
         Future.successful( Nil )
       } { personId =>
-        mPersonIdents.findAllEmails(personId)
+        mPersonIdents.findEmails(personId)
       }
     emailsDfltFut.flatMap { emailsDflt =>
       val emailDflt = emailsDflt.headOption.getOrElse("")
@@ -142,7 +142,7 @@ class LkHelp @Inject()(
 
       {lsr =>
         val personId = request.user.personIdOpt.get
-        val userEmailsFut = mPersonIdents.findAllEmails(personId)
+        val userEmailsFut = mPersonIdents.findEmails(personId)
         trace(logPrefix + "Processing from ip=" + request.remoteClientAddress)
 
         val msg = mailer.instance

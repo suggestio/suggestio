@@ -11,7 +11,7 @@ import io.suggest.mbill2.m.order.MOrderWithItems
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.streams.StreamsUtil
 import io.suggest.sys.mdr.{MMdrResolution, MdrSearchArgs}
 import io.suggest.util.logs.MacroLogsImpl
@@ -21,14 +21,19 @@ import models.mctx.Context
 import models.mdr.{MMdrNotifyCtx, MMdrNotifyMeta}
 import models.mproj.ICommonDi
 import models.req.ISioUser
-import models.usr.MSuperUsers
+import models.usr.{MPersonIdents, MSuperUsers}
 import util.acl.IsNodeAdmin
 import util.adn.NodesUtil
 import util.billing.Bill2Util
 import util.mail.IMailerWrapper
 import views.html.sys1.mdr._mdrNeededEmailTpl
+import OptionUtil.BoolOptOps
+import io.suggest.i18n.MsgCodes
+import io.suggest.primo.id.OptId
+import play.api.i18n.Lang
 
 import scala.concurrent.Future
+import scala.util.Failure
 
 /**
   * Suggest.io
@@ -42,15 +47,17 @@ class MdrUtil @Inject() (
                           val mItems        : MItems,
                           mNodes            : MNodes,
                           bill2Util         : Bill2Util,
+                          mPersonIdents     : MPersonIdents,
                           streamsUtil       : StreamsUtil,
                           nodesUtil         : NodesUtil,
+                          mSuperUsers       : MSuperUsers,
                           isNodeAdmin       : IsNodeAdmin,
                           val mCommonDi     : ICommonDi,
                         )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.{configuration, current, ec, mat, slick}
+  import mCommonDi.{configuration, current, ec, mat, slick, mNodesCache, messagesApi, langs}
   import slick.profile.api._
   import streamsUtil.Implicits._
 
@@ -132,22 +139,200 @@ class MdrUtil @Inject() (
   }
 
 
+  val USER_MDR_NOTIFY_ALSO_SU = configuration.getOptional[Boolean]("mdr.user.notify.su").getOrElseFalse
+
+  /** Модель аккамулятора данных внутри обхаживалки графа узлов.
+    *
+    * @param seenNodeIds id узлов, которые уже были запрошены.ю
+    * @param child2ownGraph Аккамулятор графа id связей узлов.
+    *                    Для вычисления id родительских узлов в ссылках.
+    * @param personsAcc Аккамулятор найденных юзеров.
+    */
+  private case class MdrNotifyAcc(
+                                   seenNodeIds      : Set[String],
+                                   child2ownGraph   : List[(String, Set[String])]   = List.empty,
+                                   personsAcc       : List[MNode]                   = List.empty,
+                                 ) {
+    def withSeenNodeIds(seenNodeIds: Set[String]) = copy(seenNodeIds = seenNodeIds)
+  }
+
   /** Отправить уведомление модератором о необходимости модерации чего-либо. */
   def sendMdrNotify(mdrCtx: MMdrNotifyCtx, tplArgs: MMdrNotifyMeta = MMdrNotifyMeta.empty)
                    (implicit ctx: Context): Future[_] = {
-    if (mdrCtx.rcvrIds.nonEmpty) {
-      // TODO Запустить асинхронную работу в фоне на тему сбора данных по ресиверам и email'ам тех, каких юзеров надо уведомить.
-      // TODO Для этого можно подниматься вверх по узлам от текущих в поисках узлов-юзеров,
-      // TODO затем найти email-адреса юзеров и нагенерить писем.
-      // TODO Для упрощения можно подниматься вверх по ресиверам, проходя их поштучно, и объединяя итоговые результаты по юзерам на выходе,
-      // но это может быть неэффективно, хотя это можно немного подавить через разогрев кэша через multiGet(rcvrIds) перед первым шагом.
-      LOGGER.warn(s"sendMdrNotify(): Not implemented, rcvrIds[${mdrCtx.rcvrIds.size}]: ${mdrCtx.rcvrIds.mkString(", ")}")
+
+    val userMdrNotifyFut = if (mdrCtx.rcvrIds.nonEmpty) {
+      lazy val logPrefix = s"sendMdrNotify(rcvrIds[${mdrCtx.rcvrIds.size}])#${System.currentTimeMillis()}:"
+
+      // Организовать асинхронную работу в фоне на тему сбора данных по ресиверам и email'ам тех, каких юзеров надо уведомить.
+      for {
+
+        // Запуск гуляния по графу узлов в поиске юзеров:
+        walkAcc2 <- {
+          val goUpNodeTypes = Set[MNodeType](
+            MNodeTypes.AdnNode,
+            MNodeTypes.BleBeacon
+          )
+
+          mNodesCache.walk( MdrNotifyAcc(mdrCtx.rcvrIds), mdrCtx.rcvrIds ) { (acc0, mnode) =>
+            // Сюда приходят узлы, которые скорее всего есть в seen - это нормально. По идее, это можно удалить, используя готовое значение из акка.
+            val seenIds2 = if (mnode.id.exists(acc0.seenNodeIds.contains)) {
+              acc0.seenNodeIds
+            } else {
+              acc0.seenNodeIds ++ mnode.id
+            }
+
+            if (mnode.common.ntype ==* MNodeTypes.Person) {
+              // Если это person-node, то его запихнуть в акк.
+              val acc2 = acc0.copy(
+                personsAcc  = mnode :: acc0.personsAcc,
+                seenNodeIds = seenIds2
+              )
+              (acc2, Set.empty)
+
+            } else if (goUpNodeTypes contains mnode.common.ntype) {
+              // Это узел, по которому можно подниматься вверх.
+              val ownerIds = mnode.edges
+                .withPredicateIterIds( MPredicates.OwnedBy )
+                .filter { nodeId =>
+                  val isAlreadySeen = acc0.seenNodeIds.contains(nodeId)
+                  !isAlreadySeen &&
+                  // Если уведомлять супер-юзеров запрещено, то проверить id узла по модели суперюзеров:
+                  (USER_MDR_NOTIFY_ALSO_SU || !mSuperUsers.isSuperuserId(nodeId))
+                }
+                .toSet
+
+              val acc2 = acc0.copy(
+                seenNodeIds     = seenIds2 ++ ownerIds,
+                child2ownGraph  = (mnode.id.get -> ownerIds) :: acc0.child2ownGraph
+              )
+              (acc2, ownerIds)
+
+            } else {
+              // Это какой-то неожиданный или неподходящий узел, пропустить.
+              LOGGER.debug(s"$logPrefix Skipped node#${mnode.idOrNull} of unexpected type#${mnode.common.ntype}")
+              val acc2 = acc0.withSeenNodeIds( seenIds2 )
+              (acc2, Set.empty)
+            }
+          }
+        }
+
+        // Проверить, что есть какие-либо полезные результаты обхода:
+        if {
+          val r = walkAcc2.personsAcc.nonEmpty
+          LOGGER.trace {
+            if (!r) s"$logPrefix No persons found for rcvrs. Stop."
+            else s"$logPrefix Walked ${walkAcc2.seenNodeIds.size} nodes, ~${walkAcc2.personsAcc.size} persons found, withSU?$USER_MDR_NOTIFY_ALSO_SU"
+          }
+          r
+        }
+
+        personsMap = OptId.els2idMap[String, MNode]( walkAcc2.personsAcc )
+
+        // Запустить в фоне сборку email'ы юзеров, которые требуется обработать.
+        personEmailsFut = mPersonIdents.findPersonsEmails( personsMap.keySet.toSeq )
+
+        // Пакетно готовим messages под языки найденных юзеров.
+        langCode2MessagesMap = {
+          val allLangCodes = personsMap
+            .valuesIterator
+            .flatMap(_.meta.basic.langs)
+            .toSet
+          val availLangs = langs.availables.toList
+          val iter = for {
+            langCode   <- allLangCodes.iterator
+            lang       <- Lang.get( langCode )
+          } yield {
+            val msgs = messagesApi.preferred( lang :: availLangs )
+            langCode -> msgs
+          }
+          iter.toMap
+        }
+
+        personId2emailsMap <- personEmailsFut
+
+        // Есть почта, пора рендерить шаблоны email-уведомлений для юзеров
+        // Надо сгенерить ссылку на модерацию, для этого надо определить на каком узле рендерить.
+        // Ищем первый прямой дочерний узел для каждого юзера: выворачиваем child2ownAcc наизнанку и делаем Map.
+        own2ChildrenMap = {
+          ( for {
+              (childNodeId, ownerIds) <- walkAcc2.child2ownGraph.iterator
+              ownerId <- ownerIds.iterator
+            } yield {
+              ownerId -> childNodeId
+            })
+            .toStream
+            .groupBy(_._1)
+            .map { case (k, kvs) =>
+              val vs = kvs.iterator
+                .map(_._2)
+                .toSet
+              k -> vs
+            }
+        }
+
+        // Рендер и отправка email-сообщений
+        _ <- Future.traverse(personId2emailsMap) { case (personId, emails) =>
+          val personNodeOpt = personsMap.get( personId )
+
+          // Разобраться с языком для рендера контекста.
+          implicit val ctx2 = personNodeOpt
+            .iterator
+            .flatMap( _.meta.basic.langs )
+            .flatMap( langCode2MessagesMap.get )
+            .buffered
+            .headOption
+            .fold {
+              LOGGER.warn( s"$logPrefix i18n failed for person#$personId, available langs = [${langCode2MessagesMap.keysIterator.mkString(", ")}]" )
+              ctx
+            }(ctx.withMessages)
+
+          // Вычислить id узла, на который генерить ссылку для юзера.
+          val mdrNodeId = own2ChildrenMap
+            .get( personId )
+            .flatMap(_.headOption)
+            .getOrElse {
+              LOGGER.warn( s"$logPrefix No child node found for person#$personId, will render URL into person-node." )
+              personId
+            }
+          val toMdrNodeId = Some(mdrNodeId)
+
+          val tplArgs2 = tplArgs.copy(
+            // Пусть ссылка будет в личный кабинет узла юзера.
+            toMdrNodeId = toMdrNodeId,
+            // Данные биллинга исходного юзера не нужны. orderId оставить, чтобы был идентификатор на всякий случай.
+            txn         = None,
+            personId    = None,
+            paidTotal   = None,
+          )
+          LOGGER.trace(s"$logPrefix Will send message for person#$personId emails=${emails.mkString("|")}, mdrNodeId#$mdrNodeId")
+
+          mailerWrapper
+            .instance
+            .setSubject(
+              ctx2.messages( MsgCodes.`Moderation.needed` )
+            )
+            .setRecipients(emails.toSeq: _*)
+            .setHtml(
+              _mdrNeededEmailTpl(tplArgs2)(ctx2).body
+            )
+            .send()
+            .andThen {
+              case Failure(ex) =>
+                LOGGER.warn(s"$logPrefix Unable to send email for person#$personId to $emails", ex)
+              case _ => // do nothing
+            }
+        }
+
+      } yield {
+        LOGGER.debug(s"$logPrefix Done, processed ${personId2emailsMap.size} persons with ${personId2emailsMap.valuesIterator.flatten.size} emails.")
+      }
+    } else {
+      Future.successful( None )
     }
 
-    // Исполняем всё в фоновом потоке, чтобы
-    Future {
-      // Если требуется уведомлять супер-юзеров, то отправить su email:
-      if (mdrCtx.needSuNotify) {
+    // Если требуется уведомлять супер-юзеров, то отправить su email:
+    val suMdrNotifyFut = if (mdrCtx.needSuNotify) {
+      Future {
         mailerWrapper
           .instance
           .setSubject("Требуется модерация")
@@ -155,8 +340,13 @@ class MdrUtil @Inject() (
           .setHtml(_mdrNeededEmailTpl(tplArgs).body)
           .send()
       }
-
+    } else {
+      Future.successful(None)
     }
+
+    // Объеденить оба процесса.
+    userMdrNotifyFut
+      .flatMap(_ => suMdrNotifyFut)
   }
 
 

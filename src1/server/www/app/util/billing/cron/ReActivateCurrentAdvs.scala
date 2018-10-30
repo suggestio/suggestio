@@ -1,6 +1,5 @@
 package util.billing.cron
 
-import akka.stream.scaladsl.Keep
 import javax.inject.Inject
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -65,8 +64,7 @@ class ReActivateCurrentAdvs @Inject() (
             None
           }
       }
-      .toMat( streamsUtil.Sinks.count )( Keep.right )
-      .run()
+      .runWith( streamsUtil.Sinks.count )
   }
 
   override def hasItemsForProcessing(mitems: Iterable[MItem]): Boolean = {

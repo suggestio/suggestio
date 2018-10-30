@@ -28,16 +28,6 @@ class StreamsUtil @Inject() (
 
   private def JSON_CHARSET = StandardCharsets.UTF_8
 
-  /** Подсчёт кол-ва элементов в Source.
-    *
-    * @param src Источник элементов.
-    * @return Фьючерс с кол-вом элементов.
-    */
-  def runCount(src: Source[_, _]): Future[Int] = {
-    src
-      .toMat( Sinks.count )(Keep.right)
-      .run()
-  }
 
   object Sinks {
 

@@ -1,20 +1,20 @@
 package controllers
 
 import javax.inject.Inject
-
-import controllers.clk.LkJsMessages
 import io.suggest.common.fut.FutureUtil
+import io.suggest.i18n.I18nConst
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mproj.ICommonDi
 import play.api.data.Form
-import play.api.i18n.Lang
+import play.api.i18n.{Lang, Messages}
 import play.api.mvc.Result
 import util.FormUtil.uiLangM
 import util.acl.MaybeAuth
 import util.i18n.JsMessagesUtil
 import views.html.lk.lang._
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -27,12 +27,11 @@ import scala.concurrent.Future
  */
 class LkLang @Inject() (
   mNodes                          : MNodes,
-  override val maybeAuth          : MaybeAuth,
-  override val jsMessagesUtil     : JsMessagesUtil,
+  maybeAuth                       : MaybeAuth,
+  jsMessagesUtil                  : JsMessagesUtil,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
-  with LkJsMessages
   with MacroLogsImpl
 {
 
@@ -70,8 +69,8 @@ class LkLang @Inject() (
       .toMap
 
     val englishLang = langCodes
-      .filter(_.language == "en")
-      .sortBy(_.country == "US")
+      .filter(_.language ==* "en")
+      .sortBy(_.country ==* "US")
       .headOption
       .getOrElse { Lang.defaultLang }
 
@@ -81,7 +80,7 @@ class LkLang @Inject() (
     val html = langChooserTpl(
       english = english,
       lf      = langForm,
-      isNowEnglish = ctx.messages.lang.language == "en",
+      isNowEnglish = ctx.messages.lang.language ==* "en",
       langs   = langCodes.sortBy(_.code),
       nodeOpt = nodeOpt,
       rr      = r,
@@ -142,6 +141,39 @@ class LkLang @Inject() (
             .withLang(newLang)
         }
       )
+    }
+  }
+
+
+  /** Сколько секунд кэшировать на клиенте js'ник с локализацией. */
+  private val LK_MESSAGES_CACHE_MAX_AGE_SECONDS = if (mCommonDi.isProd) 864000 else 5
+
+  /** 2016.dec.6: Из-за опытов с react.js возникла необходимость использования client-side messages.
+    * Тут экшен, раздающий messages для личного кабинета.
+    *
+    * @param hash PROJECT LAST_MODIFIED hash code.
+    * @param langCode Изначальное не проверяется, но для решения проблем с кешированием вбит в адрес ссылки.
+    * @return js asset с локализованными мессагами внутрях.
+    */
+  def lkMessagesJs(langCode: String, hash: Int) = maybeAuth().async { implicit request =>
+
+    // Проверить хеш
+    if (hash == jsMessagesUtil.hash) {
+      val messages = implicitly[Messages]
+
+      // Проверить langCode
+      if (messages.lang.code equalsIgnoreCase langCode) {
+        val js = jsMessagesUtil.lkJsMsgsFactory( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(messages)
+        Ok(js)
+          .withHeaders(CACHE_CONTROL -> ("public, max-age=" + LK_MESSAGES_CACHE_MAX_AGE_SECONDS))
+
+      } else {
+        errorHandler.onClientError(request, NOT_FOUND, s"Lang: $langCode")
+      }
+
+    } else {
+      LOGGER.trace(s"${request.path} hash=$hash must be ${jsMessagesUtil.hash}")
+      errorHandler.onClientError(request, NOT_FOUND, s"hash: $hash")
     }
   }
 

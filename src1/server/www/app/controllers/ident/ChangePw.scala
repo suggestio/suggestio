@@ -91,7 +91,7 @@ trait ChangePwAction
         val savedIds: Future[Seq[String]] = emailPwIdents.findByPersonId(personId).flatMap { epws =>
           if (epws.isEmpty) {
             // Юзер меняет пароль, но залогинен через внешние сервисы. Нужно вычислить email и создать EmailPwIdent.
-            mPersonIdents.findAllEmails(personId) flatMap { emails =>
+            mPersonIdents.findEmails(personId) flatMap { emails =>
               if (emails.isEmpty) {
                 LOGGER.warn("Unknown user session: " + personId)
                 Future.successful( Seq.empty[String] )
