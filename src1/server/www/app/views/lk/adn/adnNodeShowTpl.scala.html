@@ -10,14 +10,23 @@
 @import lk.lkProp
 @import lk.dsl._
 @import views.html.stuff.bxslider._
-
-@* Инлайнинг старого _galleryTpl, который должен быть удалён вместе с кучей старого API. *@
-@import ctx.api.galleryUtil
+@import io.suggest.common.html.HtmlConstants.{ELLIPSIS, NBSP_STR, SPACE, COLON}
+@import io.suggest.i18n.MsgCodes
+@import io.suggest.css.Css
 @import io.suggest.css.Css.Lk.BxSlider.JS_PHOTO_SLIDER
-
+@import io.suggest.mbill2.m.item.status.MItemStatuses
+@import datetime._dateStartEndTpl
 
 @headAfter1 = {
   @_bxSliderCssTpl()
+}
+
+@__nodesLink(name: String) = {
+  @for( nodeId <- args.mnode.id ) {
+    <a class="@Css.Lk.BLUE_LINK" href="@routes.LkNodes.nodesOf( nodeId )">
+      @name@ELLIPSIS
+    </a>
+  }
 }
 
 @nodeBaseTpl(
@@ -28,13 +37,10 @@
 ) {
 
   <div class="profile_logo-bar">
-    @if(args.mnode.meta.colors.bg.isDefined) {
-      @for(logoImgCall <- args.logoImgCallOpt) {
-        <div class="image __size-L"
-             @for(bgColor <- args.mnode.meta.colors.bg) {style="background-color: #@bgColor.code;"}>
-          <img class="image_src" src="@logoImgCall" alt="@args.mnode.meta.basic.name"/>
-        </div>
-      }
+    @for(logoImgCall <- args.logoImgCallOpt) {
+      <div class="image __size-L" style="background-color: #@args.bgColor;">
+        <img class="image_src" src="@logoImgCall" alt="@args.mnode.meta.basic.name"/>
+      </div>
     }
   </div>
 
@@ -45,37 +51,126 @@
       @args.mnode.meta.basic.name
     }
 
-    @args.mnode.meta.address.town.map { town =>
+    @for(town <- args.mnode.meta.address.town if town.nonEmpty) {
       @lkProp( messages("Address")) {
         @town@args.mnode.meta.address.address.map { addr =>, @addr}
       }
     }
 
-    @args.mnode.meta.business.siteUrl.map { siteUrl =>
+    @for( nodeId <- args.mnode.id ) {
+      @lkProp( NBSP_STR ) {
+        <a class="@Css.Lk.BLUE_LINK" href="@routes.LkAdnEdit.editNodePage( nodeId )">
+          @messages( MsgCodes.`Edit` )@ELLIPSIS
+        </a>
+      }
+    }
+
+    @defining( args.mnode.extras.adn.exists(_.isReceiver) ) { isRcvr =>
+      @if(isRcvr) {
+        @_delimTpl()
+      }
+
+      @* TODO Добавить инфу по размещению на карте. *@
+      @if(isRcvr || args.adnMapAdvs.nonEmpty) {
+        @lkProp( messages(MsgCodes.`On.the.map`) ) {
+          @if( args.adnMapAdvs.isEmpty ) {
+            @messages( MsgCodes.`Does.not.adv.on.map` )
+          } else {
+            @for(mitem <- args.adnMapAdvs) {
+              <p>
+                @mitem.status match {
+                  case MItemStatuses.Draft => {
+                    @for( nodeId <- args.mnode.id) {
+                      <a class="@Css.Lk.BLUE_LINK" href="@routes.LkBill2.orderPage(nodeId)">
+                        @messages( MsgCodes.`In.cart` )@ELLIPSIS
+                      </a>
+                    }
+                  }
+                  case MItemStatuses.AwaitingMdr => {
+                    @messages( MsgCodes.`Adv.req.sent` )
+                  }
+                  case MItemStatuses.Offline => {
+                    @messages( MsgCodes.`Will.be.adv` )
+                  }
+                  case MItemStatuses.Online => {
+                    @messages( MsgCodes.`Adv.req.refused` )
+                  }
+                  case s @ MItemStatuses.Finished => {
+                    @messages( s.nameI18n )
+                  }
+                  case other => {
+                    @messages( MsgCodes.`Something.gone.wrong` )@COLON
+                    <strong>@other</strong>
+                  }
+                }
+                @_dateStartEndTpl( mitem.dateStartOpt, mitem.dateEndOpt )
+                @for(reason <- mitem.reasonOpt) {
+                  <strong>@reason</strong>
+                }
+              </p>
+            }
+          }
+          @for( nodeId <- args.mnode.id) {
+            <br/>
+            <br/>
+            <a class="@Css.Lk.BLUE_LINK" href="@routes.LkAdnMap.forNode(nodeId)">
+              @messages( MsgCodes.`Change` )@ELLIPSIS
+            </a>
+          }
+        }
+      }
+
+      @* Статистика по под-узлам текущего узла. *@
+      @if(isRcvr || args.ownedNodesStats.nonEmpty) {
+        @lkProp( messages(MsgCodes.`Subnodes`) ) {
+          @if( args.ownedNodesStats.nonEmpty ) {
+            @for( (ntype, count) <- args.ownedNodesStats) {
+              @lkProp( messages( if (count <= 1) ntype.singular else ntype.plural ) ) {
+                @count
+              }
+            }
+            @__nodesLink( messages(MsgCodes.`Change`) )
+          } else {
+            @messages( MsgCodes.`No.subnodes` )
+            <br/>
+            @__nodesLink( messages(MsgCodes.`Nodes.management`) )
+          }
+        }
+      }
+
+    }
+
+    @_delimTpl()
+
+    @for(siteUrl <- args.mnode.meta.business.siteUrl if siteUrl.nonEmpty) {
       @lkProp( messages("Site")) {
         <a class="link" href="@siteUrl" target="_blank">@siteUrl</a>
       }
     }
 
-    @args.mnode.meta.business.info.map { info =>
+    @for(info <- args.mnode.meta.business.info if info.nonEmpty) {
       @lkProp( messages("Info.about.prods.and.svcs")) {
         @info
       }
     }
 
-
-    @if( args.mnode.extras.adn.exists(_.isReceiver) ) {
-      @_delimTpl()
-
+    @for(htraf <- args.mnode.meta.business.humanTraffic if htraf.nonEmpty) {
       @lkProp( messages("Daily.people.traffic")) {
-        @args.mnode.meta.business.humanTraffic
+        @htraf
       }
+    }
+
+    @for(aDescr <- args.mnode.meta.business.audienceDescr if aDescr.nonEmpty) {
       @lkProp( messages("Audience.descr")) {
-        @args.mnode.meta.business.audienceDescr
+        @aDescr
       }
+    }
 
-      @* TODO добавить вывод картинки приветствия *@
 
+
+    @* TODO добавить вывод картинки приветствия *@
+
+    @if(args.gallery.nonEmpty) {
       @_delimTpl()
       <div class="prop">
         <p class="prop_name __block">@messages("Node.photos"):</p>

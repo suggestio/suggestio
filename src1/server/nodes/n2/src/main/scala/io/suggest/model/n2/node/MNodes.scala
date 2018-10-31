@@ -9,7 +9,7 @@ import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.event.{MNodeDeleted, MNodeSaved}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
-import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model._
@@ -23,7 +23,6 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 import scala.collection.JavaConverters._
-import scala.collection.Map
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -62,7 +61,7 @@ final class MNodes @Inject() (
   def Fields = MNodeFields
 
   @deprecated("Delete it, use deserializeOne2() instead.", "2015.sep.11")
-  override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): MNode = {
+  override def deserializeOne(id: Option[String], m: collection.Map[String, AnyRef], version: Option[Long]): MNode = {
     throw new UnsupportedOperationException("Deprecated API NOT IMPLEMENTED.")
   }
 
@@ -157,9 +156,9 @@ final class MNodes @Inject() (
    * @param dsa Критерий выборки, если требуется.
    * @return Карта, где ключ -- тип узла, а значение -- кол-во результатов в индексе.
    */
-  def ntypeStats(dsa: MNodeSearch = new MNodeSearchDfltImpl): Future[Map[MNodeType, Long]] = {
+  def ntypeStats(dsa: MNodeSearch = null): Future[Map[MNodeType, Long]] = {
     val aggName = "ntypeAgg"
-    prepareSearch(dsa)
+    (if (dsa == null) prepareSearch() else prepareSearch(dsa))
       .addAggregation(
         AggregationBuilders.terms(aggName)
           .field( MNodeFields.Common.NODE_TYPE_FN )

@@ -3,9 +3,13 @@ package controllers
 import controllers.ident._
 import io.suggest.color.MColorData
 import io.suggest.common.fut.FutureUtil
+import io.suggest.mbill2.m.item.MItems
+import io.suggest.mbill2.m.item.typ.MItemTypes
+import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge.{MEdge, MPredicates}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.m.msession.Keys
 import io.suggest.sec.util.ScryptUtil
@@ -50,6 +54,7 @@ class MarketLkAdn @Inject() (
                               override val mPersonIdents          : MPersonIdents,
                               emailActivations                    : EmailActivations,
                               logoUtil                            : LogoUtil,
+                              mItems                              : MItems,
                               galleryUtil                         : GalleryUtil,
                               isAuth                              : IsAuth,
                               isNodeAdmin                         : IsNodeAdmin,
@@ -66,6 +71,8 @@ class MarketLkAdn @Inject() (
 
   import LOGGER._
   import mCommonDi._
+  import slick.profile.api._
+  import mItems.MItemsTable._
 
   /** Список личных кабинетов юзера. */
   def lkList(fromAdnId: Option[String]) = csrf.AddToken {
@@ -98,6 +105,32 @@ class MarketLkAdn @Inject() (
       // Запустить обсчёт логотипа и галереи узла:
       val logoImgOpt = logoUtil.getLogoOfNode( request.mnode )
       val galleryFut = galleryUtil.galleryImgs( request.mnode )
+
+      // Собрать статистику по подчинённым узлам:
+      val ownedNodesStatsFut = mNodes.ntypeStats(
+        new MNodeSearchDfltImpl {
+          override val outEdges: Seq[Criteria] = {
+            val cr = Criteria(
+              predicates  = MPredicates.OwnedBy :: Nil,
+              nodeIds     = nodeId :: Nil
+            )
+            cr :: Nil
+          }
+          override val nodeTypes = {
+            MNodeTypes.adnTreeMemberTypes
+              .filter(_ != MNodeTypes.Ad)
+          }
+        }
+      )
+
+      // Собрать данные по размещениям узла на карте (lk-adn-map):
+      val adnMapAdvsFut = slick.db.run {
+        mItems.query
+          .withNodeId( nodeId )
+          .withTypes( MItemTypes.adnMapTypes )
+          .itemsCurrentFor()
+          .result
+      }
 
       // Собрать карту media-хостов для картинок, которые надо будет рендерить:
       val mediaHostsMapFut = for {
@@ -135,15 +168,19 @@ class MarketLkAdn @Inject() (
 
       // Подготовить аргументы для рендера шаблона:
       val tplArgsFut = for {
-        logoImgCallOpt  <- logoImgCallOptFut
-        galleryCalls    <- galleryCallsFut
+        logoImgCallOpt        <- logoImgCallOptFut
+        galleryCalls          <- galleryCallsFut
+        ownedNodesStats       <- ownedNodesStatsFut
+        adnMapAdvs            <- adnMapAdvsFut
       } yield {
         MNodeShowArgs(
-          mnode           = request.mnode,
-          bgColor         = colorCodeOrDflt(request.mnode.meta.colors.bg, scUtil.SITE_BGCOLOR_DFLT),
-          fgColor         = colorCodeOrDflt(request.mnode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT),
-          gallery         = galleryCalls,
-          logoImgCallOpt  = logoImgCallOpt
+          mnode               = request.mnode,
+          bgColor             = colorCodeOrDflt(request.mnode.meta.colors.bg, scUtil.SITE_BGCOLOR_DFLT),
+          fgColor             = colorCodeOrDflt(request.mnode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT),
+          gallery             = galleryCalls,
+          logoImgCallOpt      = logoImgCallOpt,
+          ownedNodesStats     = ownedNodesStats,
+          adnMapAdvs          = adnMapAdvs,
         )
       }
 

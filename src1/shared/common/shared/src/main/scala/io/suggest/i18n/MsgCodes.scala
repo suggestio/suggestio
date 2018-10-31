@@ -9,6 +9,7 @@ package io.suggest.i18n
 object MsgCodes {
 
   val `Subnodes` = "Subnodes"
+  val `No.subnodes` = "No.subnodes"
   val `N.nodes` = "N.nodes"
   val `N.disabled` = "N.disabled"
   val `Is.enabled` = "Is.enabled"
@@ -298,5 +299,13 @@ object MsgCodes {
   val `Moderate.all.nodes` = "Moderate.all.nodes"
   val `Moderate.requests.from.all.nodes` = "Moderate.requests.from.all.nodes"
   val `Go.to.moderation` = "Go.to.moderation"
+  val `Nodes.management` = "Nodes.management"
+  val `On.the.map` = "On.the.map"
+  val `Does.not.adv.on.map` = "Does.not.adv.on.map"
+  val `In.cart` = "In.cart"
+  val `Adv.req.sent` = "Adv.req.sent"
+  val `Will.be.adv` = "Will.be.adv"
+  val `Adv.req.refused` = "Adv.req.refused"
+  val `To.adv.on.map` = "To.adv.on.map"
 
 }

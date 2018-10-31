@@ -83,7 +83,7 @@ sealed trait ISioUser {
   /** Кол-во элементов для модерации. */
   def lkMdrCountOptFut: Future[Option[Int]]
 
-  /** Кол-во элементов в корзине. */
+  /** Кол-во элементов в корзине. 0 возвращает None. */
   def cartItemsCountOptFut: Future[Option[Int]]
 
   override def toString: String = s"U(${personIdOpt.getOrElse("")})"

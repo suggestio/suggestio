@@ -1208,7 +1208,7 @@ class Bill2Util @Inject() (
         if (rcvrIds.isEmpty) {
           i0.?
         } else {
-          i0 && i.withRcvrs(rcvrIds)
+          i0 && i.withRcvrIds(rcvrIds)
         }
       }
       .map { i =>

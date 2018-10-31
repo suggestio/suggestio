@@ -746,7 +746,8 @@ Last.name=Last name
 
 Type.digits.from.picture=Please type digits from the picture.
 
-Adv.on.map=Advertise on the map
+To.adv.on.map=Advertise on map
+Adv.on.map=Advertising on map
 No.enought.deposit=Not enought money on deposit
 City.place.choose=City/place choose
 
@@ -889,6 +890,7 @@ Current.ad=Current ad
 Current.node=Current node
 x.on.advertisers.map={0} on adverisers map
 On.the.map=On the map
+Does.not.adv.on.map=Does not placed on map.
 You.can.place.adn.node.on.map.below=You can place your current node on the adverting nodes using the map below. Users will be able to advertise inside your node.
 Your.sc.will.be.opened.auto.when.user.geolocated.inside.circle=Your showcase will opened automatically for any user, geolocated inside the circle on the map below.
 Publish.node.on.adv.map=Publishing node on the advertisers map
@@ -922,6 +924,7 @@ N.disabled={0} disabled
 Adv.in.nodes=Advertising in nodes
 Node.with.such.id.already.exists=Node with such id already exist.
 New.node=New node
+No.subnodes=No bluetooth-beacons or other sub-nodes.
 
 Coverage.area=Coverage area
 Ad.area.modules.count=Promo-card area (modules count)
@@ -998,4 +1001,7 @@ No.incoming.adv.requests=No incoming advertising requests.
 Moderate.all.nodes=Moderate all nodes
 Moderate.requests.from.all.nodes=Moderate requests from ALL nodes, not only from current node?
 Go.to.moderation=Go to moderation
+In.cart=In cart
+Adv.req.sent=Advertising request sent
+Will.be.adv=Will be advertised
 

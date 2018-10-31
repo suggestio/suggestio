@@ -320,7 +320,6 @@ trait Context {
 @Singleton
 class ContextApi @Inject() (
                              override val ctxUtil    : ContextUtil,
-                             val galleryUtil         : GalleryUtil,
                              val cdn                 : CdnUtil,
                              val dynImgUtil          : DynImgUtil,
                              val n2NodesUtil         : N2NodesUtil,

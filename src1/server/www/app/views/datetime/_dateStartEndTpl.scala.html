@@ -1,6 +1,10 @@
-@(dateStart: java.time.LocalDate, dateEnd: java.time.LocalDate)(implicit ctx: Context)
+@(dateStartOpt: Option[java.time.OffsetDateTime], dateEndOpt: Option[java.time.OffsetDateTime])(implicit ctx: Context)
 
 @* Рендер абстрактного диапазона дат. *@
 
-@_dateTpl("from", dateStart)
-@_dateTpl("till", dateEnd)
+@for( dtStart <- dateStartOpt ) {
+  @_dateTpl("from", dtStart.toLocalDate)
+}
+@for( dtEnd <- dateEndOpt ) {
+  @_dateTpl("till", dtEnd.toLocalDate)
+}

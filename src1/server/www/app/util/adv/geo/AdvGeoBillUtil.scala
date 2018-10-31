@@ -577,7 +577,7 @@ class AdvGeoBillUtil @Inject() (
         // Интересует только указанная карточка...
         i.withNodeId(adId) &&
           // Размещаяемая на указанных узлах-ресиверах
-          i.withRcvrs( rcvrIds ) &&
+          i.withRcvrIds( rcvrIds ) &&
           // и только прямые размещения на узлах.
           i.withTypes( MItemTypes.advDirectTypes ) &&
           // и только текущие размещения (по статусам)
