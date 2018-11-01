@@ -3,7 +3,7 @@ package io.suggest.react
 import diode._
 import diode.data.Pot
 import diode.react.ModelProxy
-import japgolly.scalajs.react.{BackendScope, Callback, Children, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, Children, ScalaComponent, UpdateSnapshot}
 import japgolly.scalajs.react.extra.Reusability
 import japgolly.scalajs.react.vdom.VdomElement
 
@@ -61,7 +61,7 @@ object ReactDiodeUtil {
     * @tparam S AnyRef
     * @return Пропатченный компонент, который обновляется (и обновляет S) только если P.value отличается от S.
     */
-  def statePropsValShouldComponentUpdate[P <: ModelProxy[S], C <: Children, S <: AnyRef: FastEq, B]: ScalaComponent.Config[P, C, S, B] = {
+  def statePropsValShouldComponentUpdate[P <: ModelProxy[S], C <: Children, S <: AnyRef: FastEq, B, US <: UpdateSnapshot]: ScalaComponent.Config[P, C, S, B, US, US] = {
     // TODO FastEq[S] - надо организовать примерный тип -S, иначе может вылетать invariant violation. Либо юзать костыль DiodeUtil.FastEqExt.AnyRefFastEq
     _.componentWillReceiveProps { $ =>
       val nextPropsVal = $.nextProps.value
@@ -82,7 +82,7 @@ object ReactDiodeUtil {
     * @tparam P Тип Props с поддержкой FastEq.
     * @return Сконфигуренный компонент.
     */
-  def propsFastEqShouldComponentUpdate[P: FastEq, C <: Children, S, B]: ScalaComponent.Config[P, C, S, B] = {
+  def propsFastEqShouldComponentUpdate[P: FastEq, C <: Children, S, B, US <: UpdateSnapshot]: ScalaComponent.Config[P, C, S, B, US, US] = {
     _.shouldComponentUpdatePure { $ =>
       implicitly[FastEq[P]].neqv( $.currentProps, $.nextProps )
     }

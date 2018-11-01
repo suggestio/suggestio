@@ -2,7 +2,6 @@ package chandu0101.scalajs.react.components
 package materialui
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw._
 import japgolly.scalajs.react.vdom._
 import scala.scalajs.js
 import scala.scalajs.js.`|`
@@ -23,14 +22,14 @@ trait MuiSnackBarProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiSnackBarClasses]
 {
-  val action: js.UndefOr[React.Node] = js.undefined
+  val action: js.UndefOr[raw.React.Node] = js.undefined
   val anchorOrigin: js.UndefOr[MuiSnackBarAnchorOrigin] = js.undefined
   val autoHideDuration: js.UndefOr[Double] = js.undefined
   val ClickAwayListenerProps: js.UndefOr[js.Object] = js.undefined
   val ContentProps: js.UndefOr[js.Object] = js.undefined
   val disableWindowBlurListener: js.UndefOr[Boolean] = js.undefined
   val key: js.UndefOr[js.Any] = js.undefined
-  val message: js.UndefOr[React.Node] = js.undefined
+  val message: js.UndefOr[raw.React.Node] = js.undefined
   val onClose: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
   val onEnter: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
   val onEntered: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined

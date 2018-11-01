@@ -3,9 +3,7 @@ package materialui
 
 import chandu0101.macros.tojs.JSMacro
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw._
 import japgolly.scalajs.react.vdom._
-import org.scalajs.dom
 import scala.scalajs.js
 import scala.scalajs.js.`|`
 
@@ -30,7 +28,7 @@ case class MuiTabs[T](
   /** Override the inline-styles of the InkBar. */
   inkBarStyle:               js.UndefOr[CssProperties]                                      = js.undefined,
   /** Called when the selected value change. */
-  onChange:                  js.UndefOr[(T, ReactEventFromHtml, React.Element) => Callback] = js.undefined,
+  onChange:                  js.UndefOr[(T, ReactEventFromHtml, raw.React.Element) => Callback] = js.undefined,
   /** Override the inline-styles of the root element. */
   style:                     js.UndefOr[CssProperties]                                      = js.undefined,
   /** Override the inline-styles of the tab-labels container. */

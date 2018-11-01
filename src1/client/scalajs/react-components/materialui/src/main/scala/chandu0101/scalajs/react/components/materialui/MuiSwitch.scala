@@ -1,7 +1,6 @@
 package chandu0101.scalajs.react.components.materialui
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw._
 import org.scalajs.dom.raw.HTMLInputElement
 
 import scala.scalajs.js
@@ -24,11 +23,11 @@ trait MuiSwitchProps
   with MuiPropsBaseClasses[MuiSwitchClasses]
 {
   val checked: js.UndefOr[Boolean | String] = js.undefined
-  val checkedIcon: js.UndefOr[React.Node] = js.undefined
+  val checkedIcon: js.UndefOr[raw.React.Node] = js.undefined
   val color: js.UndefOr[String] = js.undefined
   val disabled: js.UndefOr[Boolean] = js.undefined
   val disableRipple: js.UndefOr[Boolean] = js.undefined
-  val icon: js.UndefOr[React.Node] = js.undefined
+  val icon: js.UndefOr[raw.React.Node] = js.undefined
   val id: js.UndefOr[String] = js.undefined
   val inputProps: js.UndefOr[js.Object] = js.undefined
   val inputRef: js.UndefOr[js.Function1[HTMLInputElement, _] | js.Object] = js.undefined

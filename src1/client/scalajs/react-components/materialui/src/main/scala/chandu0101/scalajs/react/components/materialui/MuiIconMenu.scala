@@ -2,10 +2,12 @@ package chandu0101.scalajs.react.components
 package materialui
 
 import chandu0101.macros.tojs.JSMacro
+import chandu0101.scalajs.react.components.materialui.raw1.TouchTapEvent
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw._
 import japgolly.scalajs.react.vdom._
 import org.scalajs.dom
+
 import scala.scalajs.js
 import scala.scalajs.js.`|`
 
@@ -50,7 +52,7 @@ case class MuiIconMenu[T](
   /** Callback function fired when a menu item is selected with a click.
      @param {object} event Click event targeting the selected menu item element.
      @param {object} child The selected element. */
-  onItemClick:              js.UndefOr[(ReactEvent, React.Element) => Callback]      = js.undefined,
+  onItemClick:              js.UndefOr[(ReactEvent, raw.React.Element) => Callback]      = js.undefined,
   /** Callback function fired when the `IconButton` element is focused or blurred by the keyboard.
      @param {object} event `focus` or `blur` event targeting the `IconButton` element.
      @param {boolean} keyboardFocused If true, the `IconButton` element is focused. */

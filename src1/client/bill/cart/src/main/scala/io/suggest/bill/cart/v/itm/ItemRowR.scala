@@ -1,7 +1,5 @@
 package io.suggest.bill.cart.v.itm
 
-import java.time.OffsetDateTime
-
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiSvgIcon, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.react.ModelProxy
@@ -10,7 +8,6 @@ import io.suggest.bill.cart.v.order.OrderCss
 import io.suggest.bill.price.dsl.PriceReasonI18n
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.html.HtmlConstants
-import io.suggest.dt.MYmd
 import io.suggest.geo.{CircleGs, PointGs}
 import io.suggest.i18n.MsgCodes
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps

@@ -2,7 +2,6 @@ package chandu0101.scalajs.react.components
 package materialui
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw._
 import scala.scalajs.js
 import scala.scalajs.js.`|`
 
@@ -22,13 +21,13 @@ trait MuiTextFieldProps extends MuiFormControlProps {
   val autoFocus: js.UndefOr[Boolean] = js.undefined
   val defaultValue: js.UndefOr[String | Double] = js.undefined
   val FormHelperTextProps: js.UndefOr[js.Object] = js.undefined
-  val helperText: js.UndefOr[React.Node] = js.undefined
+  val helperText: js.UndefOr[raw.React.Node] = js.undefined
   val id: js.UndefOr[String] = js.undefined
   val InputLabelProps: js.UndefOr[MuiInputLabelProps] = js.undefined
   val InputProps: js.UndefOr[MuiInputProps] = js.undefined
   val inputProps: js.UndefOr[js.Dictionary[String]] = js.undefined
   val inputRef: js.UndefOr[js.Object | js.Function1[js.Any, Unit]] = js.undefined
-  val label: js.UndefOr[React.Node] = js.undefined
+  val label: js.UndefOr[raw.React.Node] = js.undefined
   val multiline: js.UndefOr[Boolean] = js.undefined
   val name: js.UndefOr[String] = js.undefined
   val placeholder: js.UndefOr[String] = js.undefined

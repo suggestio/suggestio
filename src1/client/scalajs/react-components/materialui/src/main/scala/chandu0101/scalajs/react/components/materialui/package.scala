@@ -12,10 +12,7 @@ package object materialui {
     def MuiThemeProvider = m.Styles.MuiThemeProvider
   }
 
-  type TouchTapEvent   = raw.TouchTapEvent[org.scalajs.dom.Node]
-  type TouchTapEventH  = raw.TouchTapEvent[org.scalajs.dom.html.Element]
-  type TouchTapEventI  = raw.TouchTapEvent[org.scalajs.dom.html.Input]
-  type TouchTapEventTA = raw.TouchTapEvent[org.scalajs.dom.html.TextArea]
+  type TouchTapEvent   = raw1.TouchTapEvent[org.scalajs.dom.Node]
 
   type MuiInputValue_t = String | Double | Boolean
 

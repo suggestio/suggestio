@@ -2,9 +2,7 @@ package chandu0101.scalajs.react.components
 package materialui
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw._
 import scala.scalajs.js
-import scala.scalajs.js.`|`
 
 
 object MuiChip {
@@ -19,13 +17,13 @@ object MuiChip {
 
 /** React component props for [[MuiChip]]. */
 trait MuiChipProps extends MuiPropsBase with MuiPropsBaseComponent {
-  val avatar: js.UndefOr[React.Element] = js.undefined
+  val avatar: js.UndefOr[raw.React.Element] = js.undefined
   val classes: js.UndefOr[MuiChipClasses] = js.undefined
   val clickable: js.UndefOr[Boolean] = js.undefined
   /** See [[MuiColorTypes]] except 'inherit'. */
   val color: js.UndefOr[String] = js.undefined
-  val deleteIcon: js.UndefOr[React.Element] = js.undefined
-  val label: js.UndefOr[React.Node] = js.undefined
+  val deleteIcon: js.UndefOr[raw.React.Element] = js.undefined
+  val label: js.UndefOr[raw.React.Node] = js.undefined
   val onDelete: js.UndefOr[js.Function1[ReactUIEventFromHtml, _]] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
 }

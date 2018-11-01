@@ -292,13 +292,13 @@ object Common {
    *  Версия react.js, используемая в проекте. 
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactJsVsn         = "16.4.2"
+  val reactJsVsn         = "16.5.1"
 
   /** 
    *  Версия scalajs-react, используемая в проекте.
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactSjsVsn        = "1.2.3"
+  val reactSjsVsn        = "1.3.1" // И контроллировать суффикс diodeReactVsn ниже!
 
   /** 
    *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.
@@ -319,7 +319,8 @@ object Common {
   /** Версия diode.
     * @see [[https://github.com/ochrons/diode/]]
     */
-  val diodeVsn = "1.1.4s"
+  val diodeVsn = "1.1.4"
+  val diodeReactVsn = diodeVsn + ".131"
 
   /** Версия сериализатора boopickle. 
     * @see [[https://github.com/ochrons/boopickle]]

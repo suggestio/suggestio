@@ -2,8 +2,8 @@ package chandu0101.scalajs.react.components
 package materialui
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw._
 import japgolly.scalajs.react.vdom._
+
 import scala.scalajs.js
 
 
@@ -22,12 +22,12 @@ trait MuiCardHeaderProps
   with MuiPropsBaseClasses[MuiCardHeaderClasses]
   with MuiPropsBaseComponent
 {
-  val action: js.UndefOr[React.Node] = js.undefined
-  val avatar: js.UndefOr[React.Node] = js.undefined
+  val action: js.UndefOr[raw.React.Node] = js.undefined
+  val avatar: js.UndefOr[raw.React.Node] = js.undefined
   val disableTypography: js.UndefOr[Boolean] = js.undefined
-  val subheader: js.UndefOr[React.Node] = js.undefined
+  val subheader: js.UndefOr[raw.React.Node] = js.undefined
   val subheaderTypographyProps: js.UndefOr[MuiTypoGraphyProps] = js.undefined
-  val title: js.UndefOr[React.Node] = js.undefined
+  val title: js.UndefOr[raw.React.Node] = js.undefined
   val titleTypographyProps: js.UndefOr[MuiTypoGraphyProps] = js.undefined
 }
 object MuiCardHeaderProps extends MuiPropsBaseStatic[MuiCardHeaderProps]

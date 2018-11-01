@@ -3,9 +3,7 @@ package materialui
 
 import chandu0101.macros.tojs.JSMacro
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw._
 import japgolly.scalajs.react.vdom._
-import org.scalajs.dom
 import scala.scalajs.js
 import scala.scalajs.js.`|`
 
@@ -29,7 +27,7 @@ case class MuiTab[T](
      Use this event to specify any functionality when an active tab changes.
      For example - we are using this to route to home when the third tab becomes active.
      This function will always recieve the active tab as it\'s first argument. */
-  onActive:             js.UndefOr[React.Element => Callback]              = js.undefined,
+  onActive:             js.UndefOr[raw.React.Element => Callback]              = js.undefined,
   /** This property is overriden by the Tabs component. */
   onClick:              js.UndefOr[ReactEvent => Callback]                 = js.undefined,
   /** Defines if the current tab is selected or not.

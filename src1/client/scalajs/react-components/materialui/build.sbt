@@ -7,7 +7,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "scalajs-react-components-materialui"
 
-version := "0.0.0"
+version := "3.3.2"
 
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
@@ -25,7 +25,7 @@ libraryDependencies ++= Seq(
 )
 
 npmDependencies in Compile ++= Seq(
-  "@material-ui/core"  -> "3.0.2",
+  "@material-ui/core"  -> version.value,
   "@material-ui/icons" -> "3.0.1"
 )
 

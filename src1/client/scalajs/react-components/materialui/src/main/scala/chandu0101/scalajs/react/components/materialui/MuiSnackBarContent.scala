@@ -1,7 +1,6 @@
 package chandu0101.scalajs.react.components.materialui
 
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw._
 import scala.scalajs.js
 
 /**
@@ -24,8 +23,8 @@ trait MuiSnackBarContentProps
   extends MuiPaperPropsBase
   with MuiPropsBaseClasses[MuiSnackBarContentClasses]
 {
-  val action: js.UndefOr[React.Node] = js.undefined
-  val message: js.UndefOr[React.Node] = js.undefined
+  val action: js.UndefOr[raw.React.Node] = js.undefined
+  val message: js.UndefOr[raw.React.Node] = js.undefined
 }
 object MuiSnackBarContentProps extends MuiPropsBaseStatic[MuiSnackBarContentProps]
 
