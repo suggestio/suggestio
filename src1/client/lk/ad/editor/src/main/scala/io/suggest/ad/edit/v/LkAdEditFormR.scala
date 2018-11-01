@@ -8,7 +8,7 @@ import io.suggest.ad.edit.m.{MAeRoot, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
 import io.suggest.ad.edit.v.edit._
 import io.suggest.ad.edit.v.edit.color.ColorCheckboxR
-import io.suggest.ad.edit.v.edit.content.ContentEditCssR
+import io.suggest.ad.edit.v.edit.content.{ContentEditCssR, ContentLayersR}
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
@@ -63,6 +63,7 @@ class LkAdEditFormR(
                      val colorPickerR           : ColorPickerR,
                      val quillEditorR           : QuillEditorR,
                      val contentEditCssR        : ContentEditCssR,
+                     val contentLayersR         : ContentLayersR,
                    ) {
 
   import MJdArgs.MJdArgsFastEq
@@ -106,6 +107,7 @@ class LkAdEditFormR(
                               quillEdOptC                     : ReactConnectProxy[Option[quillEditorR.PropsVal]],
                               rotateOptC                      : ReactConnectProxy[Option[rotateR.PropsVal]],
                               contentEditCssC                 : ReactConnectProxy[contentEditCssR.Props_t],
+                              contentLayersC                  : ReactConnectProxy[contentLayersR.Props_t],
                             )
 
   case class SlideBlocksState(
@@ -234,7 +236,11 @@ class LkAdEditFormR(
               s.colors.contentBgCbOptC { colorCheckboxR.apply },
 
               // Вращение: галочка + опциональный слайдер.
-              s.rotateOptC { rotateR.apply }
+              s.rotateOptC { rotateR.apply },
+
+              // Управление слоями
+              s.contentLayersC { contentLayersR.apply },
+
             )
             // Редактор контента (текста)
             val contentSlideBlock = s.slideBlocks.content { propsOpt =>
@@ -591,7 +597,24 @@ class LkAdEditFormR(
               }
             }
           )
-        }
+        },
+
+        contentLayersC = p.connect { mroot =>
+          val jdArgs = mroot.doc.jdArgs
+          for {
+            selJdtTreeLoc <- jdArgs.selJdt.treeLocOpt
+            selJdt = selJdtTreeLoc.getLabel
+            if selJdt.name ==* MJdTagNames.QD_CONTENT
+            // selPath - по идее можно использовать .get, но делаем всё красово:
+            selPath       <- jdArgs.renderArgs.selPath
+            position      <- selPath.lastOption
+          } yield {
+            contentLayersR.PropsVal(
+              position = position,
+              max      = selJdtTreeLoc.lefts.length + selJdtTreeLoc.rights.length
+            )
+          }
+        }( OptFastEq.OptValueEq )
 
       )
     }

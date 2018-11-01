@@ -128,7 +128,7 @@ lazy val lkAdvExtSjs = {
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
-    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, asmCryptoSioSjs )
+    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, asmCryptoSioSjs, reactMaterialUiSjs )
 }
 
 /** Трейты для поддержки простых логов. */

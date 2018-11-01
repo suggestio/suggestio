@@ -145,6 +145,10 @@ object DiodeUtil {
       }
 
 
+      def maybeUpdated(v2Opt: Option[T]): ActionResult[M] =
+        v2Opt.fold( ah.noChange )( ah.updated(_) )
+
+
       def updatedMaybeEffect(v2: T, effectOpt: Option[Effect]): ActionResult[M] = {
         effectOpt.fold( ah.updated(v2) ) { fx => ah.updated(v2, fx) }
       }

@@ -7,7 +7,7 @@ import io.suggest.ad.edit.m.edit.color.MColorPick
 import io.suggest.ad.edit.m.{MAeRoot, MDocS}
 import io.suggest.ad.edit.v.edit._
 import io.suggest.ad.edit.v.edit.color.ColorCheckboxR
-import io.suggest.ad.edit.v.edit.content.ContentEditCssR
+import io.suggest.ad.edit.v.edit.content.{ContentEditCssR, ContentLayerBtnR, ContentLayersR}
 import io.suggest.ad.edit.v.edit.strip._
 import io.suggest.ad.edit.v.pop.LaePopupsR
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
@@ -71,6 +71,10 @@ class LkAdEditModule {
   lazy val rotateR = wire[RotateR]
 
   lazy val contentEditCssR = wire[ContentEditCssR]
+
+
+  lazy val contentLayerR = wire[ContentLayersR]
+  lazy val contentLayerBtnR = wire[ContentLayerBtnR]
 
 
   // circuit deps

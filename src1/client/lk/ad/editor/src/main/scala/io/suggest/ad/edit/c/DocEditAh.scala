@@ -733,7 +733,8 @@ class DocEditAh[M](
         .root
         .findByLabel( m.strip )
         .get
-        // Добавляем как последний дочерний элемент текущего стрипа. TODO Opt Может как начальный добавлять? Это быстрее будет, хоть и менее логично.
+        // Добавляем как последний дочерний элемент текущего стрипа.
+        // TODO Opt Может как начальный добавлять? Это быстрее будет, хоть и менее логично.
         .insertDownLast( dndJdtTree2 )
 
       val tpl2 = dndJdtLoc3.toTree
@@ -959,6 +960,60 @@ class DocEditAh[M](
             )
           updated( v2 )
         }
+
+
+    // Изменение слоя для выделенного контента.
+    case m: JdChangeLayer =>
+      val v0 = value
+      // Текущий тег в дереве - держим на руках:
+      val loc0 = v0.jdArgs.selJdt.treeLocOpt.get
+
+      val loc2OrNull: TreeLoc[JdTag] = if (!m.bounded) {
+        // Если !m.bounded, то поменять тег местами с соседними тегами.
+        // Если шаг влево и есть теги слева...
+        if (!m.up && loc0.lefts.nonEmpty) {
+          // Меняем местами первый левый тег с текущим
+          val leftLoc = loc0.left.get
+          leftLoc
+            .setTree( loc0.tree )
+            .right.get.setTree( leftLoc.tree )
+        } else if (m.up && loc0.rights.nonEmpty) {
+          val rightLoc = loc0.right.get
+          rightLoc
+            .setTree( loc0.tree )
+            .left.get.setTree( rightLoc.tree )
+        } else {
+          null
+        }
+
+      } else if (loc0.lefts.nonEmpty || loc0.rights.nonEmpty) {
+        // bounded: Можно и нужно двигать до края, значит надо удалить текущий элемент из treeLoc и добавить в начало/конец через parent.
+        val parentLoc1 = loc0
+          .delete.get
+          .parent.get
+        if (!m.up) parentLoc1.insertDownFirst( loc0.tree )
+        else parentLoc1.insertDownLast( loc0.tree )
+
+      } else {
+        // Нет соседних элементов для движения по слоям.
+        null
+      }
+
+      Option(loc2OrNull).fold(noChange) { loc2 =>
+        val tpl2 = loc2.toTree
+        val v2 = v0.withJdArgs(
+          v0.jdArgs
+            .withTemplate( tpl2 )
+            // Надо пересчитать path до перемещённого тега.
+            .withRenderArgs(
+              v0.jdArgs.renderArgs.withSelPath(
+                tpl2.nodeToPath( loc0.getLabel )
+              )
+            )
+            // css можно не обновлять, т.к. там просто поменяется порядок стилей без видимых изменений.
+        )
+        updated(v2)
+      }
 
 
     // Замена состояния галочки широкого рендера текущего стрипа новым значением

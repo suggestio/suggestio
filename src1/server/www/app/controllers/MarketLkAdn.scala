@@ -63,7 +63,7 @@ class MarketLkAdn @Inject() (
                               dynImgUtil                          : DynImgUtil,
                               override val scryptUtil             : ScryptUtil,
                               override val mCommonDi              : ICommonDi
-)
+                            )
   extends SioControllerImpl
   with MacroLogsImpl
   with ChangePwAction
@@ -73,6 +73,7 @@ class MarketLkAdn @Inject() (
   import mCommonDi._
   import slick.profile.api._
   import mItems.MItemsTable._
+
 
   /** Список личных кабинетов юзера. */
   def lkList(fromAdnId: Option[String]) = csrf.AddToken {

@@ -1700,44 +1700,44 @@ object MuiSvgIcons {
   object MapsZoomOutMap extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/navigation/apps", JSImport.Default)
   object NavigationApps extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/arrow-back", JSImport.Default)
-  object NavigationArrowBack extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/arrow-downward", JSImport.Default)
-  object NavigationArrowDownward extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/arrow-drop-down-circle", JSImport.Default)
-  object NavigationArrowDropDownCircle extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/arrow-drop-down", JSImport.Default)
-  object NavigationArrowDropDown extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/arrow-drop-up", JSImport.Default)
-  object NavigationArrowDropUp extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/arrow-forward", JSImport.Default)
-  object NavigationArrowForward extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/arrow-upward", JSImport.Default)
-  object NavigationArrowUpward extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/cancel", JSImport.Default)
-  object NavigationCancel extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/check", JSImport.Default)
-  object NavigationCheck extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/chevron-left", JSImport.Default)
-  object NavigationChevronLeft extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/chevron-right", JSImport.Default)
-  object NavigationChevronRight extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/close", JSImport.Default)
-  object NavigationClose extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/expand-less", JSImport.Default)
-  object NavigationExpandLess extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/expand-more", JSImport.Default)
-  object NavigationExpandMore extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/first-page", JSImport.Default)
-  object NavigationFirstPage extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/fullscreen-exit", JSImport.Default)
-  object NavigationFullscreenExit extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/fullscreen", JSImport.Default)
-  object NavigationFullscreen extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/last-page", JSImport.Default)
-  object NavigationLastPage extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/navigation/menu", JSImport.Default)
-  object NavigationMenu extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ArrowBack", JSImport.Default)
+  object ArrowBack extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ArrowDownward", JSImport.Default)
+  object ArrowDownward extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ArrowDropDownCircle", JSImport.Default)
+  object ArrowDropDownCircle extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/navigation/ArrowDropDown", JSImport.Default)
+  object ArrowDropDown extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ArrowDropUp", JSImport.Default)
+  object ArrowDropUp extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ArrowForward", JSImport.Default)
+  object ArrowForward extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ArrowUpward", JSImport.Default)
+  object ArrowUpward extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Cancel", JSImport.Default)
+  object Cancel extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Check", JSImport.Default)
+  object Check extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ChevronLeft", JSImport.Default)
+  object ChevronLeft extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ChevronRight", JSImport.Default)
+  object ChevronRight extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Close", JSImport.Default)
+  object Close extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ExpandLess", JSImport.Default)
+  object ExpandLess extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ExpandMore", JSImport.Default)
+  object ExpandMore extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/FirstPage", JSImport.Default)
+  object FirstPage extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/FullscreenExit", JSImport.Default)
+  object FullscreenExit extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Fullscreen", JSImport.Default)
+  object Fullscreen extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/LastPage", JSImport.Default)
+  object LastPage extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/Menu", JSImport.Default)
+  object Menu extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/navigation/more-horiz", JSImport.Default)
   object NavigationMoreHoriz extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/navigation/more-vert", JSImport.Default)

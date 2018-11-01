@@ -30,7 +30,7 @@
 }
 
 @nodeBaseTpl(
-  title         = args.mnode.meta.basic.name + " | " + messages("Profile"),
+  title         = args.mnode.meta.basic.name + " | " + messages(MsgCodes.`Profile`),
   mnode         = args.mnode,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE,
   headAfter	    = Some(headAfter1)
@@ -47,12 +47,12 @@
   <div class="profile_info-bar">
     @_delimTpl()
 
-    @lkProp( messages("Name")) {
+    @lkProp( messages( MsgCodes.`Name` )) {
       @args.mnode.meta.basic.name
     }
 
     @for(town <- args.mnode.meta.address.town if town.nonEmpty) {
-      @lkProp( messages("Address")) {
+      @lkProp( messages(MsgCodes.`Address`)) {
         @town@args.mnode.meta.address.address.map { addr =>, @addr}
       }
     }
@@ -143,25 +143,25 @@
     @_delimTpl()
 
     @for(siteUrl <- args.mnode.meta.business.siteUrl if siteUrl.nonEmpty) {
-      @lkProp( messages("Site")) {
+      @lkProp( messages(MsgCodes.`Site`)) {
         <a class="link" href="@siteUrl" target="_blank">@siteUrl</a>
       }
     }
 
     @for(info <- args.mnode.meta.business.info if info.nonEmpty) {
-      @lkProp( messages("Info.about.prods.and.svcs")) {
+      @lkProp( messages(MsgCodes.`Info.about.prods.and.svcs`) ) {
         @info
       }
     }
 
     @for(htraf <- args.mnode.meta.business.humanTraffic if htraf.nonEmpty) {
-      @lkProp( messages("Daily.people.traffic")) {
+      @lkProp( messages(MsgCodes.`Daily.people.traffic`) ) {
         @htraf
       }
     }
 
     @for(aDescr <- args.mnode.meta.business.audienceDescr if aDescr.nonEmpty) {
-      @lkProp( messages("Audience.descr")) {
+      @lkProp( messages(MsgCodes.`Audience.descr`) ) {
         @aDescr
       }
     }
@@ -173,7 +173,7 @@
     @if(args.gallery.nonEmpty) {
       @_delimTpl()
       <div class="prop">
-        <p class="prop_name __block">@messages("Node.photos"):</p>
+        <p class="prop_name __block">@messages(MsgCodes.`Node.photos`):</p>
         <div class="profile_photo-lst">
 
           @* Инлайнинг старой galleryTpl (новая - это react-image-gallery): *@

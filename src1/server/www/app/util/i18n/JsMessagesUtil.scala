@@ -283,6 +283,12 @@ class JsMessagesUtil @Inject() (
       MC.`Background` ::
       MC.`Upload.file` ::
       MC.`Rotation` ::
+      MC.`Layer` ::
+      MC.`Layers` ::
+      MC.`Uppermost` ::
+      MC.`Downmost` ::
+      MC.`Above` ::
+      MC.`Below` ::
       Nil
   }
 

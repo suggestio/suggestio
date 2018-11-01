@@ -196,6 +196,7 @@ object MsgCodes {
   val `Example.text` = "Example.text"
   val `Bg.color` = "Bg.color"
   val `Fg.color.of.sc.hint` = "Fg.color.of.sc.hint"
+  val `Profile` = "Profile"
 
   val `File.is.not.a.picture` = "File.is.not.a.picture"
   val `Apply` = "Apply"
@@ -307,5 +308,12 @@ object MsgCodes {
   val `Will.be.adv` = "Will.be.adv"
   val `Adv.req.refused` = "Adv.req.refused"
   val `To.adv.on.map` = "To.adv.on.map"
+
+  val `Layer`  = "Layer"
+  val `Layers` = "Layers"
+  val `Uppermost` = "Uppermost"
+  val `Downmost` = "Downmost"
+  val `Above` = "Above"
+  val `Below` = "Below"
 
 }
