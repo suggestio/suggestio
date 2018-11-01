@@ -642,7 +642,7 @@ class DocEditAh[M](
       val tpl0 = v0.jdArgs.template
 
       // Найти tree loc текущего тега наиболее оптимальным путём. С некоторой вероятностью это -- selected-тег:
-      val dndJdtLoc = {
+      val dndJdtLoc0 = {
         // Получить на руки инстанс сброшенного тега.
         // Прячемся от общего scope, чтобы работать с элементом только через его tree loc.
         val dndJdt = m.foreignTag
@@ -664,80 +664,83 @@ class DocEditAh[M](
           .get
       }
 
-      // Извлекаем тег из старого местоположения:
-      val dndJdtTree0 = dndJdtLoc.tree
-      val dndJdtLocNoSrc = dndJdtLoc.delete.get
-      // Фокус на соседнем или родительском узле.
+      // Найти исходный strip в исходном шаблоне:
+      val strip0Opt = dndJdtLoc0
+        .findUpByType( MJdTagNames.STRIP )
+
+      val isSameStrip = strip0Opt.fold(false)(_.getLabel ==* m.strip)
 
       // Дополнительно обработать Y-координату.
       val clXy0 = m.clXy
-      // Найти исходный strip в исходном шаблоне. Оптимально: подняться по parents от текущего таскаемого элемента.
-      val clXy2 = dndJdtLocNoSrc
-        .findUpByType( MJdTagNames.STRIP )
-        .fold(clXy0) { fromStripLoc =>
-          val fromStrip = fromStripLoc.getLabel
-          // Изменился стрип или сброшено на тот же?
-          if (fromStrip ==* m.strip) {
-            // Перемещение в рамках одного стрипа
-            clXy0
-          } else {
-            // Перемещение между разными strip'ами. Надо пофиксить координату Y, иначе добавляемый элемент отрендерится где-то за экраном.
-            val strips = tpl0
-              .deepOfTypeIter( MJdTagNames.STRIP )
-              .toSeq
-            // TODO Отработать ситуацию, когда хотя бы один из index'ов == -1
-            val fromStripIndex = strips.indexOf(fromStrip)
-            val toStripIndex = strips.indexOf(m.strip)
-            val (topStrip, bottomStrip, yModSign) = if (fromStripIndex <= toStripIndex) {
-              (fromStrip, m.strip, -1)
-            } else {
-              (m.strip, fromStrip, +1)
-            }
-            // Собрать все стрипы от [текущего до целевого), просуммировать высоту блоков, вычесть из Y
-            val iter = tpl0
-              .deepOfTypeIter( MJdTagNames.STRIP )
-              .dropWhile(_ !=* topStrip)
-              .takeWhile(_ !=* bottomStrip)
-              .flatMap(_.props1.bm)
-            if (iter.nonEmpty) {
-              val yDiff = iter
-                .map { _.h.value }
-                .sum
-              val y2 = clXy0.y + yModSign * yDiff
-              //println(s"mod Y: ${clXy0.y} by $yDiff => $y2")
-              clXy0.withY( y2 )
-            } else {
-              // Странно: нет пройденных стрипов, хотя они должны бы быть
-              LOG.warn( msg = s"$clXy0 [$fromStrip => ${m.strip})" )
-              clXy0
-            }
-          }
+
+      // Если strip изменился, то надо пересчитать координаты относительно нового стрипа:
+      val clXy2 = if (isSameStrip || strip0Opt.isEmpty) {
+        clXy0
+      } else {
+        val fromStrip = strip0Opt.get.getLabel
+        // Перемещение между разными strip'ами. Надо пофиксить координату Y, иначе добавляемый элемент отрендерится где-то за экраном.
+        val strips = tpl0
+          .deepOfTypeIter( MJdTagNames.STRIP )
+          .toSeq
+        // TODO Отработать ситуацию, когда хотя бы один из index'ов == -1
+        val fromStripIndex = strips.indexOf(fromStrip)
+        val toStripIndex = strips.indexOf(m.strip)
+        val (topStrip, bottomStrip, yModSign) = if (fromStripIndex <= toStripIndex) {
+          (fromStrip, m.strip, -1)
+        } else {
+          (m.strip, fromStrip, +1)
         }
+        // Собрать все стрипы от [текущего до целевого), просуммировать высоту блоков, вычесть из Y
+        val iter = tpl0
+          .deepOfTypeIter( MJdTagNames.STRIP )
+          .dropWhile(_ !=* topStrip)
+          .takeWhile(_ !=* bottomStrip)
+          .flatMap(_.props1.bm)
+        if (iter.nonEmpty) {
+          val yDiff = iter
+            .map { _.h.value }
+            .sum
+          val y2 = clXy0.y + yModSign * yDiff
+          //println(s"mod Y: ${clXy0.y} by $yDiff => $y2")
+          clXy0.withY( y2 )
+        } else {
+          // Странно: нет пройденных стрипов, хотя они должны бы быть
+          LOG.warn( msg = s"$clXy0 [$fromStrip => ${m.strip})" )
+          clXy0
+        }
+      }
 
-      // Выставить новые координаты тегу
-      val dndJdtTree2 = Tree.Node(
-        root = {
-          val dndJdt0 = dndJdtTree0.rootLabel
-          dndJdt0
-            .withProps1(
-              dndJdt0.props1
-                .withTopLeft( Some(clXy2) )
-            )
-        },
-        forest = dndJdtTree0.subForest
-      )
+      val jdtLabel2 = {
+        val dndJdt0 = dndJdtLoc0.getLabel
+        dndJdt0
+          .withProps1(
+            dndJdt0.props1
+              .withTopLeft( Some(clXy2) )
+          )
+      }
 
-      // Добавить перетащенный тег в целевой стрип:
-      val dndJdtLoc3 = dndJdtLocNoSrc
-        // Найти целевой стрип:
-        .root
-        .findByLabel( m.strip )
-        .get
-        // Добавляем как последний дочерний элемент текущего стрипа.
-        // TODO Opt Может как начальный добавлять? Это быстрее будет, хоть и менее логично.
-        .insertDownLast( dndJdtTree2 )
+      val loc2 = if (isSameStrip) {
+        // strip не изменился. Надо обновить узел не меняя местоположения в дереве.
+        dndJdtLoc0.setLabel( jdtLabel2 )
 
-      val tpl2 = dndJdtLoc3.toTree
+      } else {
+        // Изменился стрип. Удалить из старого места, закинуть в хвост новому блоку/стрипу. Выставить новые координаты тегу
+        val dndJdtTree2 = Tree.Node(
+          root   = jdtLabel2,
+          forest = dndJdtLoc0.tree.subForest
+        )
+        // Извлекаем тег из старого местоположения:
+        dndJdtLoc0.delete.get
+          // Фокус на соседнем или родительском узле.
+          .root
+          // Найти целевой стрип:
+          .findByLabel( m.strip )
+          .get
+          // Добавляем как последний дочерний элемент текущего стрипа. Пусть будет поверх всех.
+          .insertDownLast( dndJdtTree2 )
+      }
+
+      val tpl2 = loc2.toTree
 
       // Пересобрать данные для рендера.
       val v2 = v0.withJdArgs(
@@ -748,7 +751,7 @@ class DocEditAh[M](
           ),
           renderArgs  = v0.jdArgs.renderArgs
             .withSelPath(
-              tpl2.nodeToPath( dndJdtTree2.rootLabel )
+              tpl2.nodeToPath( loc2.getLabel )
             )
             .withDnd( MJdDndS.empty )
         )
