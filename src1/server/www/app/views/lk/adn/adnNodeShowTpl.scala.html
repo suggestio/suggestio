@@ -30,7 +30,7 @@
 }
 
 @nodeBaseTpl(
-  title         = args.mnode.meta.basic.name + " | " + messages(MsgCodes.`Profile`),
+  title         = messages( MsgCodes.`Node` ) + SPACE + args.mnode.guessDisplayNameOrIdOrQuestions,
   mnode         = args.mnode,
   rightCurrEl   = NodeRightPanelLinks.RPL_NODE,
   headAfter	    = Some(headAfter1)
