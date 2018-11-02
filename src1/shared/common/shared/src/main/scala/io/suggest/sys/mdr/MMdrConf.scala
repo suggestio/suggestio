@@ -4,7 +4,6 @@ import io.suggest.adv.rcvr.RcvrKey
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.common.empty.OptionUtil.BoolOptJsonFormatOps
 
 /**
   * Suggest.io
@@ -23,7 +22,7 @@ object MMdrConf {
   implicit def mMdrConfFormat: OFormat[MMdrConf] = {
     val F = Fields
     (
-      (__ \ F.IS_SU_FN).formatNullable[Boolean].formatBooleanOrFalse and
+      (__ \ F.IS_SU_FN).format[Boolean] and
       (__ \ F.ON_NODE_KEY_FN).formatNullable[RcvrKey]
     )(apply, unlift(unapply))
   }

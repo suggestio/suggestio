@@ -9,6 +9,7 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.mproj.ICommonDi
 import models.usr.{MExtIdents, MSuperUsers}
 import play.api.mvc._
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -34,10 +35,13 @@ class IdentUtil @Inject() (
     // Нам тут не надо выводить элементы, нужно лишь определять кол-во личных кабинетов и данные по ним.
     val msearch = new MNodeSearchDfltImpl {
       override def outEdges: Seq[Criteria] = {
-        val cr = Criteria(Seq(personId), Seq(MPredicates.OwnedBy))
-        Seq(cr)
+        val cr = Criteria(
+          nodeIds     = personId :: Nil,
+          predicates  = MPredicates.OwnedBy :: Nil
+        )
+        cr :: Nil
       }
-      override def nodeTypes = Seq( MNodeTypes.AdnNode )
+      override def nodeTypes = MNodeTypes.AdnNode :: Nil
       override def limit = 2
     }
 
@@ -49,7 +53,7 @@ class IdentUtil @Inject() (
       val rdrOrNull: Call = if (mnodeIds.isEmpty) {
         // У юзера нет рекламных узлов во владении. Некуда его редиректить, вероятно ошибся адресом.
         null
-      } else if (mnodeIds.size == 1) {
+      } else if (mnodeIds.size ==* 1) {
         // У юзера есть один рекламный узел
         val nodeId = mnodeIds.head
         routes.LkAds.adsPage(nodeId :: Nil)

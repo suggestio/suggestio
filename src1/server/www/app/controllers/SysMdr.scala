@@ -130,7 +130,9 @@ class SysMdr @Inject() (
           new reqUtil.ActionTransformerImpl[MReq, MNodesChainReq] {
             override protected def transform[A](request: MReq[A]): Future[MNodesChainReq[A]] = {
               LOGGER.trace(s"$logPrefix PersonId#${request.user.personIdOpt.orNull} as parent-node")
-              for (personNode <- request.user.personNodeFut) yield {
+              for {
+                personNode <- request.user.personNodeFut
+              } yield {
                 MNodesChainReq(personNode :: Nil, request, request.user)
               }
             }
