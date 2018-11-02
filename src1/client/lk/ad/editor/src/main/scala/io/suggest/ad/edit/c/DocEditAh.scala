@@ -443,7 +443,7 @@ class DocEditAh[M](
           )
 
         // Запустить эффект хэширования и дальнейшей закачки файла на сервер.
-        val hashFx = Effect.action( FileHashStart(dataEdge2.id, blobUrl) )
+        val hashFx = FileHashStart(dataEdge2.id, blobUrl).toEffectPure
         updated(v2, hashFx)
       }
 
@@ -611,7 +611,7 @@ class DocEditAh[M](
           updated( v2 )
         } else {
           // Активировать текущий тег
-          val fx = Effect.action( JdTagSelect(m.jdTag) )
+          val fx = JdTagSelect(m.jdTag).toEffectPure
           updated( v2, fx )
         }
 

@@ -176,7 +176,7 @@ class NodeMdrAh[M](
                 resp.items.isEmpty  &&  resp.directSelfNodeIds.isEmpty
               }}
             } {
-              Effect.action( MdrNextNode( skipCurrentNode = true ) )
+              MdrNextNode( skipCurrentNode = true ).toEffectPure
             }
 
             ah.updatedMaybeEffect(v2, nextNodeFxOpt)
@@ -407,9 +407,9 @@ class NodeMdrAh[M](
             .withForceAllRcvrs( m.forceAllNodes )
         )
         // Запустить пересборку текущего view с перемоткой в начало:
-        val fx = Effect.action(
-          MdrNextNode( offsetDelta = -v0.node.nodeOffset )
-        )
+        val fx = MdrNextNode( offsetDelta = -v0.node.nodeOffset )
+          .toEffectPure
+
         updated( v2, fx )
       }
 

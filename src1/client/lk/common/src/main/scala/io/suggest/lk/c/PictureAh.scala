@@ -77,7 +77,7 @@ class PictureAh[V, M](
               v2 = v2.withCropPopup(None)
 
             // Отправить в очередь задачу по зачистке карты эджей:
-            val fx = Effect.action(PurgeUnusedEdges)
+            val fx = PurgeUnusedEdges.toEffectPure
             updated( v2, fx )
           }
 
@@ -179,7 +179,7 @@ class PictureAh[V, M](
                   }
 
                 // Запустить хеширование файла в фоне:
-                val hashFx = Effect.action( FileHashStart(edgeUid2, blobUrlNew) )
+                val hashFx = FileHashStart(edgeUid2, blobUrlNew).toEffectPure
                 val edges2 = v0.edges.updated(edgeUid2, dataEdge2)
                 (dataEdge2, edges2, Some(hashFx))
 
@@ -493,14 +493,13 @@ class PictureAh[V, M](
                     updated(v2)
                   } { _ =>
                     // Есть ctxId - нужен веб-сокет
-                    val wsEnsureFx = Effect.action {
-                      WsEnsureConn(
-                        target = MWsConnTg(
-                          host = m.hostUrl.host
-                        ),
-                        closeAfterSec = Some(120)
-                      )
-                    }
+                    val wsMsg = WsEnsureConn(
+                      target = MWsConnTg(
+                        host = m.hostUrl.host
+                      ),
+                      closeAfterSec = Some(120)
+                    )
+                    val wsEnsureFx = wsMsg.toEffectPure
                     updated(v2, wsEnsureFx)
                   }
 
@@ -849,7 +848,7 @@ class PictureAh[V, M](
       v0.histograms
         .updated(nodeId, colors)
     )
-    val fx = Effect.action( HandleNewHistogramInstalled(nodeId) )
+    val fx = HandleNewHistogramInstalled(nodeId).toEffectPure
     (v2, fx)
   }
   private def _resPair2res(withHistRes: ResPair_t): ActionResult[M] = {

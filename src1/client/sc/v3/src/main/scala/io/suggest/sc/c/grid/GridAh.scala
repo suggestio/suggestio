@@ -399,7 +399,7 @@ class GridFocusRespHandler( jdCssFactory: JdCssFactory )
         )
         // Надо проскроллить выдачу на начало открытой карточки:
         val scrollFx = GridAh.scrollToAdFx( ad1, adsPot2, gridBuild2 )
-        val resetRouteFx = Effect.action( ResetUrlRoute )
+        val resetRouteFx = ResetUrlRoute.toEffectPure
 
         val v2 = ctx.value0.withGrid( g2 )
         val fxOpt = Some(scrollFx + resetRouteFx)
@@ -440,9 +440,8 @@ class GridAh[M](
         }
       ) {
         // В фоне надо будет запустить подгрузку новых карточек.
-        val fx = Effect.action {
-          GridLoadAds(clean = false, ignorePending = true)
-        }
+        val fx = GridLoadAds(clean = false, ignorePending = true)
+          .toEffectPure
         // Выставить pending в состояние, чтобы повторные события скролла игнорились.
         val v2 = v0.withCore(
           v0.core
@@ -572,7 +571,7 @@ class GridAh[M](
             )
             // В фоне - запустить скроллинг к началу карточки.
             val scrollFx = GridAh.scrollToAdFx( ad0, ads2, gridBuild2 )
-            val resetRouteFx = Effect.action( ResetUrlRoute )
+            val resetRouteFx = ResetUrlRoute.toEffectPure
             val fxs = scrollFx + resetRouteFx
             updated(v2, fxs)
           }

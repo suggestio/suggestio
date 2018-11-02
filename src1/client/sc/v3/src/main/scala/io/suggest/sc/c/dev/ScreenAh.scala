@@ -28,7 +28,7 @@ class ScreenAh[M](
   private def RSZ_TIMER_MS = 100
 
   private def scCssRebuildFx: Effect =
-    Effect.action( ScCssReBuild )
+    ScCssReBuild.toEffectPure
 
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
@@ -58,7 +58,7 @@ class ScreenAh[M](
       // TODO Opt Проверять, изменился ли экран по факту? Может быть изменился и вернулся назад за время таймера?
 
       // Уведомить контроллер плитки, что пора пересчитать плитку.
-      val gridReConfFx = Effect.action( GridReConf )
+      val gridReConfFx = GridReConf.toEffectPure
       // Забыть о сработавшем таймере.
       val screen2 = JsScreenUtil.getScreen()
       val uo2 = JsScreenUtil.getScreenUnsafeAreas(screen2)

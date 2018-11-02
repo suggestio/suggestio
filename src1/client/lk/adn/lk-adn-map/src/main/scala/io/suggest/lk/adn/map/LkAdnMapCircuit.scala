@@ -92,7 +92,7 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
     )
 
     // Эффект пересчёта стоимости размещения с помощью сервера.
-    val priceUpdateEffect = Effect.action( ResetPrice )
+    val priceUpdateEffect = ResetPrice.toEffectPure
 
     // Обновлять состояние при изменении конфигурации карты.
     val mapCommonAh = new MapCommonAh(

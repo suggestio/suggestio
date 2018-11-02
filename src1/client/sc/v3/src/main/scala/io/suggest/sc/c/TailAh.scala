@@ -132,7 +132,7 @@ class TailAh[M](
       // Проверка поля searchOpened
       if (m.mainScreen.searchOpened !=* currMainScreen.searchOpened) {
         // Вместо патчинга состояния имитируем клик: это чтобы возможные сайд-эффекты обычного клика тоже отработали.
-        fxsAcc ::= Effect.action( SearchOpenClose(m.mainScreen.searchOpened) )
+        fxsAcc ::= SearchOpenClose(m.mainScreen.searchOpened).toEffectPure
       }
 
       // Смотрим координаты текущей точки.
@@ -150,14 +150,15 @@ class TailAh[M](
         if !currMainScreen.tagNodeId.contains( tagNodeId )
       } {
         // Имитируем клик по тегу, да и всё.
-        fxsAcc ::= Effect.action {
+        fxsAcc ::= {
           NodeRowClick( tagNodeId )
+            .toEffectPure
         }
       }
 
       // Сверить панель меню открыта или закрыта
       if (m.mainScreen.menuOpened !=* currMainScreen.menuOpened)
-        fxsAcc ::= Effect.action( MenuOpenClose(m.mainScreen.menuOpened) )
+        fxsAcc ::= MenuOpenClose(m.mainScreen.menuOpened).toEffectPure
 
       // Сверить focused ad id:
       if (
@@ -168,7 +169,7 @@ class TailAh[M](
           focusedAdId <- m.mainScreen.focusedAdId
             .orElse( currMainScreen.focusedAdId )
         } {
-          fxsAcc ::= Effect.action( GridBlockClick(nodeId = focusedAdId) )
+          fxsAcc ::= GridBlockClick(nodeId = focusedAdId).toEffectPure
         }
       }
 
@@ -200,9 +201,7 @@ class TailAh[M](
 
       } else if (gridNeedsReload) {
         // Узел не требует обновления, но требуется перезагрузка плитки.
-        fxsAcc ::= Effect.action {
-          GridLoadAds( clean = true, ignorePending = true )
-        }
+        fxsAcc ::= GridLoadAds( clean = true, ignorePending = true ).toEffectPure
         val fx = fxsAcc.mergeEffects.get
         ah.updateMaybeSilentFx(needUpdateUi)(v2, fx)
 
@@ -399,12 +398,12 @@ class TailAh[M](
   }
 
   private def getIndexFx(geoIntoRcvr: Boolean, focusedAdId: Option[String] = None, retUserLoc: Boolean = false): Effect = {
-    Effect.action(
-      GetIndex(withWelcome = true, geoIntoRcvr = geoIntoRcvr, focusedAdId = focusedAdId, retUserLoc = retUserLoc) )
+    GetIndex(withWelcome = true, geoIntoRcvr = geoIntoRcvr, focusedAdId = focusedAdId, retUserLoc = retUserLoc)
+      .toEffectPure
   }
 
   private def geoOffFx: Effect =
-    Effect.action( GeoLocOnOff(enabled = false) )
+    GeoLocOnOff(enabled = false).toEffectPure
 
   private def withMapCenterInitReal(center: MGeoPoint, inx: MScIndex): MScIndex = {
     inx.withSearch(

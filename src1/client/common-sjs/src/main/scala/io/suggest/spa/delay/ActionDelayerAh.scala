@@ -47,7 +47,7 @@ class ActionDelayerAh[M](stateRW: ModelRW[M, MDelayerS])
         LOG.warn( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
       } { delayed =>
-        val fx = Effect.action( delayed.info.action )
+        val fx = delayed.info.action.toEffectPure
         val v2 = v0.withDelayed(
           v0.delayed - m.actionId
         )

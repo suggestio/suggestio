@@ -7,9 +7,8 @@
 @import io.suggest.i18n.MsgCodes
 
   <p>
-
     @for(orderId <- args.orderId) {
-      ctx.messages( MsgCodes.`We.received.payment.for.order.0`, orderId )
+      @ctx.messages( MsgCodes.`We.received.payment.for.order.0`, orderId )
     }
     @for(price <- args.paidTotal) {
       &nbsp;
@@ -22,8 +21,8 @@
       @for(personId <- args.personId) {
         <a href="@LK_URL_PREFIX@routes.SysBilling.forNode(personId)">
       }
-          пользователя
-          @args.personName.orElse( args.personId ).getOrElse("???")
+        пользователя
+        @args.personName.orElse( args.personId ).getOrElse("???")
       @if(args.personId) {
         </a>
       }
@@ -46,5 +45,5 @@
 
 <p>
   <a href="@LK_URL_PREFIX@args.toMdrNodeId.fold(routes.SysMdr.sysPage())(nodeId => routes.SysMdr.lkMdr(nodeId :: Nil))">
-    ctx.messages( MsgCodes.`Go.to.moderation` )</a>.
+    @ctx.messages( MsgCodes.`Go.to.moderation` )</a>.
 </p>

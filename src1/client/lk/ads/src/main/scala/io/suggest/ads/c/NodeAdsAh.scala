@@ -52,7 +52,7 @@ class NodeAdsAh[M](
         }
       ) {
         // Надо подгрузить ещё карточек.
-        val fx = Effect.action( GetMoreAds(clean = false) )
+        val fx = GetMoreAds(clean = false).toEffectPure
         effectOnly(fx)
       } else {
         // Скролл отфильтрован.

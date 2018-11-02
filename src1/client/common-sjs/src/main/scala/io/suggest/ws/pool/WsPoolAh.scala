@@ -53,14 +53,13 @@ class WsPoolAh[M](
 
       } { _ =>
         // Есть коннекшен, значит разрешаем полученное сообщение. Парсим и отправляем наверх, чтобы кто-нибудь другой подхватил.
-        val mWsMsgFx = Effect.action {
-          WsChannelMsg(
-            target = m.target,
-            msg = Json
-              .parse(m.payload.asInstanceOf[String])
-              .as[MWsMsg]
-          )
-        }
+        val wsMsg = WsChannelMsg(
+          target = m.target,
+          msg = Json
+            .parse(m.payload.asInstanceOf[String])
+            .as[MWsMsg]
+        )
+        val mWsMsgFx = wsMsg.toEffectPure
         effectOnly( mWsMsgFx )
       }
 

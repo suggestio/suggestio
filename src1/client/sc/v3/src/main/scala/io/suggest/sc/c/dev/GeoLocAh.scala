@@ -291,6 +291,6 @@ class GeoLocAh[M](
 
   /** Эффект сообщения GlPubSignal. */
   private def _glPubSignalFx(loc: IGeoLocSignal): Effect =
-    Effect.action( GlPubSignal(loc) )
+    GlPubSignal(loc).toEffectPure
 
 }

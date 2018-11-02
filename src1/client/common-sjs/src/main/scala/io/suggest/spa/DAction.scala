@@ -1,7 +1,8 @@
 package io.suggest.spa
 
-import diode.ActionType
+import diode.{ActionType, Effect}
 import japgolly.univeq.UnivEq
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**
   * Suggest.io
@@ -22,6 +23,17 @@ object DAction {
 
   /** Требуется ActionType[X] в scope, чтобы компилятор узрел экшен. */
   implicit object DActionType extends DActionType
+
+  /** Дополнительные методы для экшенов. */
+  implicit class DActionOpsExt(val act: DAction) extends AnyVal {
+
+    /** Ускоренное заворачивание в Effect.action() с отбрасыванием ленивости исполнения.
+      * Когда нет сайд-эффектов, нет тяжелых действия или сложных манипуляций, этого достаточно.
+      */
+    def toEffectPure: Effect =
+      Effect.action(act)
+
+  }
 
 }
 

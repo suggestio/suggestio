@@ -82,7 +82,7 @@ class TagsEditAh[M](
       } else {
         // Запланировать эффект запуска запроса с помощью эффекта ожидания.
         val now = System.currentTimeMillis()
-        val awaitFx = Effect.action(StartSearchReq(now))
+        val awaitFx = StartSearchReq(now).toEffectPure
           .after( TagsEditConstants.Search.START_SEARCH_TIMER_MS.milliseconds )
 
         // Залить в состояние итоги запуска запроса:

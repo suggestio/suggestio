@@ -81,7 +81,7 @@ class ScMapDelayAh[M](
         v0 <- value
         if v0.generation ==* m.gen
       } yield {
-        val fx = Effect.action( MapReIndex(v0.rcvrId) )
+        val fx = MapReIndex(v0.rcvrId).toEffectPure
         updatedSilent( None, fx )
       }
       resOpt

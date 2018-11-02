@@ -65,9 +65,8 @@ object SearchAh {
 
   /** Эффект запуска поиска узлов. */
   def reDoSearchFx(ignorePending: Boolean): Effect = {
-    Effect.action {
-      DoNodesSearch(clear = true, ignorePending = ignorePending)
-    }
+    DoNodesSearch(clear = true, ignorePending = ignorePending)
+      .toEffectPure
   }
 
 }
@@ -94,7 +93,7 @@ class SearchAh[M](
         var v2 = v0.withIsShown( m.open )
 
         // Аккаумулятор сайд-эффектов.
-        val routeFx = Effect.action( ResetUrlRoute )
+        val routeFx = ResetUrlRoute.toEffectPure
 
         // Требуется ли запускать инициализацию карты или списка найденных узлов? Да, если открытие на НЕинициализированной панели.
         val fxOpt = OptionUtil.maybeOpt(m.open) {

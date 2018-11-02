@@ -125,7 +125,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
   override protected val actionHandler: HandlerFunction = {
 
     // Эффект пересчёта стоимости размещения с помощью сервера.
-    val priceUpdateEffect = Effect.action( ResetPrice )
+    val priceUpdateEffect = ResetPrice.toEffectPure
 
     val rcvrRW  = zoomRW(_.rcvr) { _.withRcvr(_) }
     val rcvrPopupRW = rcvrRW.zoomRW(_.popupResp) { _.withPopupResp(_) }

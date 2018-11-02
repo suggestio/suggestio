@@ -23,6 +23,7 @@ import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.search.SearchAh
+import io.suggest.sc.m.hdr.MenuOpenClose
 import io.suggest.sc.v.search.SearchCss
 import japgolly.univeq._
 
@@ -134,13 +135,12 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
       fxsAcc ::= SearchAh.reDoSearchFx( ignorePending = false )
 
     // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
-    fxsAcc ::= Effect.action( ResetUrlRoute )
+    fxsAcc ::= ResetUrlRoute.toEffectPure
 
     // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
     if ( !respActionTypes.contains(MScRespActionTypes.AdsTile) ) {
-      fxsAcc ::= Effect.action {
-        GridLoadAds(clean = true, ignorePending = true)
-      }
+      fxsAcc ::= GridLoadAds(clean = true, ignorePending = true)
+        .toEffectPure
     }
 
     // Инициализация приветствия. Подготовить состояние welcome.
@@ -294,6 +294,21 @@ class IndexAh[M](
 
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+
+    // Экшен управления менюшкой.
+    case m: MenuOpenClose =>
+      val v0 = value
+      if (v0.menu.opened !=* m.open) {
+        val v2 = v0.withMenu(
+          v0.menu.withOpened( m.open )
+        )
+        // Обновить URL.
+        val fx = ResetUrlRoute.toEffectPure
+        updated( v2, fx )
+      } else {
+        noChange
+      }
+
 
     // Кто-то затребовал перерендерить css-стили выдачи. Скорее всего, размеры экрана изменились.
     case ScCssReBuild =>

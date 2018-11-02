@@ -27,7 +27,7 @@ class MenuAh[M](
       if (v0.opened !=* m.open) {
         val v2 = v0.withOpened( m.open )
         // Обновить URL.
-        val fx = Effect.action( ResetUrlRoute )
+        val fx = ResetUrlRoute.toEffectPure
         updated( v2, fx )
       } else {
         noChange

@@ -201,18 +201,15 @@ class GeoTabAh[M](
             val v2 = v0.withData(
               v0.data.withSelTagIds( selTagIds2 )
             )
-            val gridLoadFx = Effect.action {
-              GridLoadAds(clean = true, ignorePending = true)
-            }
-            val closeSearchFx = Effect.action {
-              SearchOpenClose(open = false)
-            }
+            val gridLoadFx = GridLoadAds(clean = true, ignorePending = true).toEffectPure
+            val closeSearchFx = SearchOpenClose(open = false).toEffectPure
+
             val fx = gridLoadFx >> closeSearchFx
             updated(v2, fx)
 
           } else {
             // Это не тег, значит это adn-узел. Надо перейти в выдачу выбранного узла.
-            val fx = Effect.action( MapReIndex(Some(m.nodeId)) )
+            val fx = MapReIndex(Some(m.nodeId)).toEffectPure
             // Надо сбросить выбранные теги, есть есть.
             if (v0.data.selTagIds.isEmpty) {
               effectOnly(fx)

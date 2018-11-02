@@ -1,9 +1,8 @@
 package io.suggest.bill.cart.c
 
-import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.bill.cart.MCartConf
 import io.suggest.bill.cart.m.{GetOrderContent, LoadCurrentOrder}
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**
   * Suggest.io
@@ -22,11 +21,8 @@ class BillConfAh[M](
     // Экшен загрузки/перезагрузки текущего ордера. Может быть инициирован юзером.
     case LoadCurrentOrder =>
       val v0 = value
-      val fx = Effect.action(
-        GetOrderContent(
-          orderId = v0.orderId
-        )
-      )
+      val fx = GetOrderContent( orderId = v0.orderId )
+        .toEffectPure
       effectOnly(fx)
 
   }

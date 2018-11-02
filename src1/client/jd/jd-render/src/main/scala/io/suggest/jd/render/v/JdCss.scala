@@ -41,8 +41,9 @@ object JdCss {
   @inline implicit def univEq: UnivEq[JdCss] = UnivEq.derive
 
 
-  def valueEnumEntryDomainNameF[T] = {(vee: ValueEnumEntry[T], _: Int) =>
-    vee.value
+  def valueEnumEntryDomainNameF[T] = {
+    (vee: ValueEnumEntry[T], _: Int) =>
+      vee.value
   }
 
 }
@@ -126,13 +127,15 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   /** Стили контейнеров полосок, описываемых через props1.BlockMeta. */
   val bmStyleF = {
-    val strips = _allJdTagsIter
-      .filter(_.props1.bm.nonEmpty)
-      .toIndexedSeq
+    val pc50 = 50.%%.value
 
-    val stripsDomain = new Domain.OverSeq( strips )
-
-    styleF(stripsDomain) { strip =>
+    styleF(
+      new Domain.OverSeq(
+        _allJdTagsIter
+          .filter(_.props1.bm.nonEmpty)
+          .toIndexedSeq
+      )
+    ) { strip =>
       var accS = List.empty[ToStyle]
 
       // Стиль размеров блока-полосы.
@@ -146,7 +149,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           // Если wide, то надо отцентровать блок внутри wide-контейнера.
           // Формула по X банальна: с середины внешнего контейнера вычесть середину smBlock и /2.
           import io.suggest.common.html.HtmlConstants._
-          val calcFormula = 50.%%.value + SPACE + MINUS + SPACE + (szMulted.width / 2).px.value
+          val calcFormula = pc50 + SPACE + MINUS + SPACE + (szMulted.width / 2).px.value
           val calcAV: ToStyle = {
             left.attr := Css.Calc( calcFormula )
           }
@@ -162,17 +165,18 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
 
   /** Стили для фоновых картинок стрипов. */
-  val stripBgStyleF = {
-    // Интересуют только стрипы c bgImg, но без wide
-    val strips = _allJdTagsIter
-      .filter { jdt =>
-        val p1 = jdt.props1
-        p1.bm.nonEmpty && (jdt.name ==* MJdTagNames.STRIP) && p1.bgImg.nonEmpty
-      }
-      .toIndexedSeq
-    val stripsDomain = new Domain.OverSeq( strips )
-
-    styleF(stripsDomain) { strip =>
+  val stripBgStyleF =
+    styleF(
+      new Domain.OverSeq(
+        _allJdTagsIter
+          .filter { jdt =>
+            // Интересуют только стрипы c bgImg, но без wide
+            val p1 = jdt.props1
+            p1.bm.nonEmpty && (jdt.name ==* MJdTagNames.STRIP) && p1.bgImg.nonEmpty
+          }
+          .toIndexedSeq
+      )
+    ) { strip =>
       strip.props1.bm.whenDefinedStyleS { bm =>
         styleS(
           // Записываем одну из двух сторон картинки.
@@ -186,17 +190,17 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         )
       }
     }
-  }
 
 
   /** Стили контейнера блока с широким фоном. */
-  val bmWideStyleF = {
-    // TODO Не используется в редакторе из-за проблем с вёрсткой. Но стили всё равно генерятся.
-    val wideStrips = _allJdTagsIter
-      .filter(_.props1.bm.exists(_.wide))
-      .toIndexedSeq
-    val wideStripsDomain = new Domain.OverSeq( wideStrips )
-    styleF( wideStripsDomain ) { strip =>
+  val bmWideStyleF =
+    styleF(
+      new Domain.OverSeq(
+        _allJdTagsIter
+          .filter(_.props1.bm.exists(_.wide))
+          .toIndexedSeq
+      )
+    ) { strip =>
       var accS: List[ToStyle] = Nil
       // Уточнить размеры wide-блока:
       for (bm <- strip.props1.bm) {
@@ -222,18 +226,19 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       // Объеденить все стили:
       styleS( accS: _* )
     }
-  }
 
 
   /** Цвет фона бывает у разнотипных тегов, поэтому выносим CSS для цветов фона в отдельный каталог стилей. */
-  val bgColorOptStyleF = {
-    val bgColorsHex1 = _allJdTagsIter
-      .flatMap(_.props1.bgColor)
-      .map(_.hexCode)
-      .toSet
-      .toIndexedSeq
-    val bgColorsDomain = new Domain.OverSeq( bgColorsHex1 )
-    styleF( bgColorsDomain ) (
+  val bgColorOptStyleF =
+    styleF(
+      new Domain.OverSeq(
+        _allJdTagsIter
+          .flatMap(_.props1.bgColor)
+          .map(_.hexCode)
+          .toSet
+          .toIndexedSeq
+      )
+    ) (
       { bgColorHex =>
         styleS(
           backgroundColor( Color(bgColorHex) )
@@ -241,7 +246,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       },
       (colorHex, _) => MColorData.stripDiez(colorHex)
     )
-  }
 
 
   // -------------------------------------------------------------------------------
@@ -254,14 +258,14 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   )
 
   /** Стили для элементов, отпозиционированных абсолютно. */
-  val absPosStyleF = {
-    val absPosDomain = {
-      val tags = _allJdTagsIter
-        .filter(_.props1.topLeft.nonEmpty)
-        .toIndexedSeq
-      new Domain.OverSeq(tags)
-    }
-    styleF(absPosDomain) { jdt =>
+  val absPosStyleF =
+    styleF(
+      new Domain.OverSeq(
+        _allJdTagsIter
+          .filter(_.props1.topLeft.nonEmpty)
+          .toIndexedSeq
+      )
+    ) { jdt =>
       jdt.props1.topLeft.whenDefinedStyleS { topLeft =>
         styleS(
           top( (topLeft.y * blkSzMultD).px ),
@@ -269,24 +273,24 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         )
       }
     }
-  }
+
 
   /** Стили ширин для элементов, у которых задана принудительная ширина. */
-  val forcedWidthStyleF = {
-    val widthsDomain = {
-      val tags = _allJdTagsIter
-        .filter(_.props1.widthPx.nonEmpty)
-        .toIndexedSeq
-      new Domain.OverSeq(tags)
-    }
-    styleF(widthsDomain) { jdt =>
+  val forcedWidthStyleF =
+    styleF(
+      new Domain.OverSeq(
+        _allJdTagsIter
+          .filter(_.props1.widthPx.nonEmpty)
+          .toIndexedSeq
+      )
+    ) { jdt =>
       jdt.props1.widthPx.whenDefinedStyleS { widthPx =>
         styleS(
           width( szMultedSide(widthPx).px )
         )
       }
     }
-  }
+
 
   // -------------------------------------------------------------------------------
   // fonts
@@ -304,15 +308,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   /** styleF для стилей текстов. */
   val textStyleF = {
-    // Домен стилей для текстов.
-    val _textStylesDomain = {
-      val textAttrsSeq = _qdOpsIter
-        .flatMap(_.attrsText.iterator)
-        .filter(_.isCssStyled)
-        .toIndexedSeq
-      new Domain.OverSeq( textAttrsSeq )
-    }
-
     // Получаем на руки инстансы, чтобы по-быстрее использовать их в цикле и обойтись без lazy call-by-name cssAttr в __applyToColor().
     val _colorAttr = color
     val _bgColorAttr = backgroundColor
@@ -320,7 +315,14 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     val _fontSizeAttr = fontSize
     val _lineHeightAttr = lineHeight
 
-    styleF( _textStylesDomain ) { attrsText =>
+    styleF(
+      new Domain.OverSeq(
+        _qdOpsIter
+          .flatMap(_.attrsText.iterator)
+          .filter(_.isCssStyled)
+          .toIndexedSeq
+      )
+    ) { attrsText =>
       var acc = List.empty[ToStyle]
 
       // Отрендерить аттрибут одного цвета.
@@ -370,11 +372,10 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // text-align
 
   /** styleF допустимых выравниваний текста. */
-  val textAlignsStyleF = {
-     // Домен допустимых выравниваний текста по горизонтали.
-    val textAlignsDomain = new Domain.OverSeq( MTextAligns.values )
-
-    styleF( textAlignsDomain )(
+  val textAlignsStyleF =
+    styleF(
+      new Domain.OverSeq( MTextAligns.values )
+    )(
       { align =>
         val taAttr = textAlign
         val av = align match {
@@ -389,7 +390,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       },
       JdCss.valueEnumEntryDomainNameF
     )
-  }
 
 
   // -------------------------------------------------------------------------------
@@ -409,15 +409,15 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // -------------------------------------------------------------------------------
   // text indents.
 
-  val embedAttrStyleF = {
-    val embedAttrsSeq = _qdOpsIter
-      .flatMap( _.attrsEmbed )
-      .filter( _.nonEmpty )
-      .toIndexedSeq
-
-    val embedAttrsDomain = new Domain.OverSeq( embedAttrsSeq )
-
-    styleF( embedAttrsDomain ) { embedAttrs =>
+  val embedAttrStyleF =
+    styleF(
+      new Domain.OverSeq(
+        _qdOpsIter
+          .flatMap( _.attrsEmbed )
+          .filter( _.nonEmpty )
+          .toIndexedSeq
+      )
+    ) { embedAttrs =>
       var acc = List.empty[ToStyle]
 
       for (heightSU <- embedAttrs.height; heightPx <- heightSU)
@@ -429,17 +429,18 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         acc: _*
       )
     }
-  }
 
-  val rotateF = {
-    val rotatedSeq = _allJdTagsIter
-      .flatMap(_.props1.rotateDeg)
-      // Порядок не важен, но нужно избегать одинаковых углов поворота в списке допустимых значений:
-      .toSet
-      .toIndexedSeq
 
-    val rotationsDomain = new Domain.OverSeq( rotatedSeq )
-    styleF.apply( rotationsDomain )(
+  val rotateF =
+    styleF.apply(
+      new Domain.OverSeq(
+        _allJdTagsIter
+          .flatMap(_.props1.rotateDeg)
+          // Порядок не важен, но нужно избегать одинаковых углов поворота в списке допустимых значений:
+          .toSet
+          .toIndexedSeq
+      )
+    )(
       {rotateDeg =>
         styleS(
           transform := ("rotate(" + rotateDeg + "deg)" )
@@ -447,7 +448,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       },
       DslMacros.defaultStyleFClassNameSuffixI
     )
-  }
 
 
   val videoStyle = {
