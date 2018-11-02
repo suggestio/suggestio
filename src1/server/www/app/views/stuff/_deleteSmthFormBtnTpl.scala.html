@@ -4,9 +4,10 @@
 
 @import helper._
 @import ctx._
+@import io.suggest.i18n.MsgCodes
 
 @form(call, 'class -> formClass) {
   <input type="submit"
          class="btn @btnClass"
-         value="@btnText.getOrElse(messages("Delete"))"/>
+         value="@btnText.getOrElse( messages(MsgCodes.`Delete`) )"/>
 }

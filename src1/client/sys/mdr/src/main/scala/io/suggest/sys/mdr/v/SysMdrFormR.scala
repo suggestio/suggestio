@@ -115,6 +115,7 @@ class SysMdrFormR(
                 itemsByType             = req.itemsByType,
                 mdrPots                 = mroot.node.mdrPots,
                 withTopOffset           = mroot.conf.onNodeKey.nonEmpty,
+                currentRcvrId           = mroot.conf.rcvrIdOpt,
               )
             }
           }

@@ -394,7 +394,9 @@ class Sc3Circuit(
   // Отработать инициализацию js-роутера в самом начале конструктора.
   // По факту, инициализация уже наверное запущена в main(), но тут ещё и подписка на события...
   {
-    dispatch( JsRouterInit )
+    Future {
+      dispatch( JsRouterInit )
+    }
 
     val jsRouterReadyP = Promise[None.type]()
     val unSubscribeJsRouterF = subscribe( jsRouterRW ) { jsRouterPotProxy =>
@@ -477,6 +479,7 @@ class Sc3Circuit(
         val readyTimeoutId = DomQuick.setTimeout( 7000 ) { () =>
           if (!isPlatformReadyRO.value) {
             LOG.error( ErrorMsgs.PLATFORM_READY_NOT_FIRED )
+            // Без Future() т.к. это и так в контексте таймера.
             dispatch( SetPlatformReady )
           }
         }
@@ -518,12 +521,13 @@ class Sc3Circuit(
         // TODO Если сигнал пришёл, когда уже идёт запрос плитки/индекса, то надо это уведомление отправлять в очередь?
 
       } else {
-        // Надо запустить пересборку плитки.
-        dispatch( GridLoadAds(
-          clean = true,
+        // Надо запустить пересборку плитки. Без Future, т.к. это - callback-функция.
+        val action = GridLoadAds(
+          clean         = true,
           ignorePending = true,
-          silent = Some(true)
-        ))
+          silent        = Some(true)
+        )
+        dispatch( action )
       }
     }
 

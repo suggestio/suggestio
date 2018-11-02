@@ -21,7 +21,10 @@ class SysMdrModules {
 
   lazy val nodeRenderR = wire[NodeRenderR]
   lazy val mdrSidePanelR = wire[MdrSidePanelR]
+
   lazy val mdrRowR = wire[MdrRowR]
+  lazy val mdrRowBtnR = wire[MdrRowBtnR]
+
   lazy val sysMdrFormR = wire[SysMdrFormR]
   lazy val mdrErrorsR = wire[MdrErrorsR]
   lazy val mdrDiaRefuseR = wire[MdrDiaRefuseR]

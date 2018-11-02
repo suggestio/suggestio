@@ -387,6 +387,7 @@ class JsMessagesUtil @Inject() (
       MC.`To.end` ::
       MC.`Moderate.all.nodes` ::
       MC.`Moderate.requests.from.all.nodes` ::
+      MC.`_N` ::
       ITEM_TYPES
   }
 

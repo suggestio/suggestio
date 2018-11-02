@@ -186,7 +186,7 @@ case class MGeoPoint(
 
   /** (12.1234 65.5633) */
   def toHumanFriendlyString: String = {
-    def _fmt(coord: Double) = "%1.4f".format(coord)
+    def _fmt(coord: Double) = "%1.2f".format(coord)
     "(" + _fmt(lat) + HtmlConstants.SPACE + _fmt(lon) + ")"
   }
 

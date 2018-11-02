@@ -841,7 +841,7 @@ Order.details=Order details
 Paid=Paid
 
 Radius=Radius
-in.radius.of.0.from.1=in radius of {0} from {2}
+in.radius.of.0.from.1=in {0} near {2}
 n.km._kilometers={0} km
 n.m._meters={0} m
 in.geopoint.x=in geo-point {0}
@@ -859,14 +859,14 @@ Item.status.o=Displaying now
 Item.status.z=Finished
 
 
-Item.type.a=Direct advertisement
-Item.type.t=Geo-tag advertisement
+Item.type.a=On node main screen
+Item.type.t=Geo-tag on map
 Item.type.e=External deployment
-Item.type.g=In-the-place advertising
-Item.type.m=Publish in advertisning nodes map
-Item.type.d=Publish inside node tag
-Item.type.e=Add money to user balance
-Item.type.l=Users' geolocation capturing
+Item.type.g=Geo-advertising
+Item.type.m=On nodes map
+Item.type.d=Inside node tag
+Item.type.e=Add money to balance
+Item.type.l=Geolocation capturing
 
 Moderation=Moderation
 Picture.editing=Picture editing

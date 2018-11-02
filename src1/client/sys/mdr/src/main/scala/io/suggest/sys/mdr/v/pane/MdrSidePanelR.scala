@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v.pane
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiLinearProgress, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiToolTip, MuiToolTipProps, MuiTypoGraphyVariants}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiDivider, MuiLinearProgress, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiToolTip, MuiToolTipProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
@@ -24,7 +24,6 @@ import io.suggest.sys.mdr.v.toolbar.MdrTbStepBtnR
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.raw.React
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 
@@ -47,6 +46,7 @@ class MdrSidePanelR(
                        directSelfNodesSorted    : Seq[MAdvGeoMapNodeProps],
                        mdrPots                  : Map[MMdrActionInfo, Pot[None.type]],
                        withTopOffset            : Boolean,
+                       currentRcvrId            : Option[String],
                      )
   implicit object NodeMdrRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
@@ -56,7 +56,8 @@ class MdrSidePanelR(
       (a.nodesMap ===* b.nodesMap) &&
       (a.directSelfNodesSorted ===* b.directSelfNodesSorted) &&
       (a.mdrPots ===* b.mdrPots) &&
-      (a.withTopOffset ==* b.withTopOffset)
+      (a.withTopOffset ==* b.withTopOffset) &&
+      (a.currentRcvrId ===* b.currentRcvrId)
     }
   }
 
@@ -82,8 +83,10 @@ class MdrSidePanelR(
           // Рендер, в зависимости от наличия данных в ответе. None значит нечего модерировать.
           props.whenDefinedNode { nodeProps =>
               // Краткое получение pot'а для одного элемента списка.
-              def __mdrPot(ai: MMdrActionInfo) =
-                nodeProps.mdrPots.getOrElse(ai, Pot.empty)
+            def __mdrPot(ai: MMdrActionInfo) =
+              nodeProps.mdrPots.getOrElse(ai, Pot.empty)
+
+            val divider = MuiDivider()
 
             <.div(
 
@@ -110,9 +113,9 @@ class MdrSidePanelR(
                     mdrRowR.component.withKey( all + HtmlConstants.UNDERSCORE )( mdrRowPropsProxy )(
                       Messages(all)
                     )
-
                   }
                 },
+                divider,
 
                 // Список item'ов биллинга, подлежащих модерации:
                 nodeProps
@@ -120,6 +123,7 @@ class MdrSidePanelR(
                   .iterator
                   .flatMap { case (itype, mitems) =>
                     // Ряд заголовка типа item'а.
+                    val itypeName = Messages( itype.nameI18n )
                     val itypeCaption = propsPotProxy.wrap { _ =>
                       val ai = MMdrActionInfo(
                         itemType = Some( itype )
@@ -129,11 +133,11 @@ class MdrSidePanelR(
                         mtgVariant  = MuiTypoGraphyVariants.subheading,
                         approveIcon = Mui.SvgIcons.DoneAll,
                         dismissIcon = Mui.SvgIcons.Error,
-                        mdrPot      = __mdrPot(ai)
+                        mdrPot      = __mdrPot(ai),
                       )
                     } { mdrRowPropsProxy =>
                       mdrRowR.component.withKey( itype.toString + HtmlConstants.`~` )( mdrRowPropsProxy )(
-                        Messages( itype.nameI18n )
+                        itypeName
                       )
                     }
 
@@ -150,7 +154,8 @@ class MdrSidePanelR(
                             mtgVariant  = MuiTypoGraphyVariants.body1,
                             approveIcon = Mui.SvgIcons.Done,
                             dismissIcon = Mui.SvgIcons.ErrorOutline,
-                            mdrPot      = __mdrPot(ai)
+                            mdrPot      = __mdrPot(ai),
+                            itemIdOpt   = mitem.id,
                           )
                         } { mdrRowPropsProxy =>
                           val itemId = mitem.id.get
@@ -167,35 +172,39 @@ class MdrSidePanelR(
                               )
                             )
                             new MuiToolTipProps {
-                              override val title: React.Node = _title.rawNode
+                              override val title = _title.rawNode
                             }
                           } (
                             mdrRowR.component.withKey( itemIdStr + HtmlConstants.MINUS )(mdrRowPropsProxy)(
 
-                              // Надо отрендерить инфу по item'у в зависимости от типа item'а.
-                              HtmlConstants.DIEZ,
-                              itemIdStr,
-                              HtmlConstants.SPACE,
-
-                              // Рендер названия rcvr-узла.
-                              mitem.rcvrIdOpt.whenDefinedNode { rcvrId =>
-                                // Рендерить название узла, присланное сервером.
-                                nodeProps
-                                  .nodesMap
-                                  .get(rcvrId)
-                                  .flatMap(_.hint)
-                                  .getOrElse[String]( rcvrId )
-                                  // TODO Нужна ссылка на узел-ресивер
-                              },
-
                               // Рендерить данные по гео-размещению.
                               mitem.tagFaceOpt.whenDefinedNode { tagFace =>
                                 VdomArray(
-                                  HtmlConstants.SPACE,
-                                  tagFace,
-                                  // TODO Нужна ссылка на узел-тег.
+                                  <.strong(
+                                    HtmlConstants.DIEZ,
+                                    tagFace,
+                                    // TODO Нужна ссылка на узел-тег.
+                                  ),
+                                  HtmlConstants.NBSP_STR,
                                 )
                               },
+
+                              // Рендер названия rcvr-узла. Но не нужно рендерить название, если это текущий узел.
+                              mitem
+                                .rcvrIdOpt
+                                .filterNot(nodeProps.currentRcvrId.contains)
+                                .fold [VdomNode] {
+                                  ReactCommonUtil.maybeNode( mitem.rcvrIdOpt.nonEmpty && mitem.tagFaceOpt.isEmpty )( itypeName )
+                                } { rcvrId =>
+                                  // Рендерить название узла, присланное сервером.
+                                  nodeProps
+                                    .nodesMap
+                                    .get(rcvrId)
+                                    .map(_.hintOrId)
+                                    // TODO Нужна ссылка на узел-ресивер для суперюзеров.
+                                },
+
+                              HtmlConstants.NBSP_STR,
 
                               // Рендерить данные гео-шейпа.
                               mitem.geoShape.whenDefinedNode {
@@ -220,7 +229,10 @@ class MdrSidePanelR(
                       }
                       .toStream
 
-                    itypeCaption #:: itemRows
+                    itypeCaption #::
+                      itemRows #:::
+                      divider #::
+                      Stream.empty
                   }
                   .toVdomArray,
 
@@ -279,7 +291,7 @@ class MdrSidePanelR(
         propsPot.renderFailed { ex =>
           MuiToolTip(
             new MuiToolTipProps {
-              override val title: React.Node = ex.toString
+              override val title: raw.React.Node = ex.toString
             }
           )(
             MuiListItem()(

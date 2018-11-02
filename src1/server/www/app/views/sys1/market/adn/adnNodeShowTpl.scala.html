@@ -15,6 +15,7 @@
 @import io.suggest.sc.sc3.MScQs
 @import io.suggest.sc.ads.MAdsSearchReq
 @import helper._
+@import io.suggest.i18n.MsgCodes
 
 
 @* Подшаблон генерации квадратной кнопки. *@
@@ -62,7 +63,7 @@
     </strong>
 
     <a class="edit-btn __color-1 __ft-XS" href="@routes.SysMarket.editAdnNode(mnode.id.get)">
-      @messages("Edit")
+      @messages( MsgCodes.`Edit` )
     </a>
   }
 

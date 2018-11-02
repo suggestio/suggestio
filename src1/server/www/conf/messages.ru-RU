@@ -850,7 +850,7 @@ Order.details=Подробности заказа
 Paid=Оплачено
 
 Radius=Радиус
-in.radius.of.0.from.1=в радиусе {0} от {1}
+in.radius.of.0.from.1=в {0} от {1}
 n.km._kilometers={0} км
 n.m._meters={0} м
 in.geopoint.x=в точке {0}
@@ -868,14 +868,14 @@ Item.status.o=Отображается сейчас
 Item.status.z=Завершено
 
 
-Item.type.a=Прямое размещение
-Item.type.t=Размещение в геотеге
+Item.type.a=На главной узла
+Item.type.t=В геотеге на карте
 Item.type.e=Внешнее размещение
-Item.type.g=Размещение на карте
-Item.type.m=Размещение на карте рекламных узлов
-Item.type.d=Размещение в теге на узле
-Item.type.e=Пополнение баланса пользователя
-Item.type.l=Захват геолокации пользователей
+Item.type.g=На карте
+Item.type.m=На карте рекламных узлов
+Item.type.d=В теге узла
+Item.type.e=Пополнение баланса
+Item.type.l=Захват геолокации
 
 Moderation=Модерация
 Picture.editing=Редактирование изображения
