@@ -5,8 +5,13 @@
 @import ctx.api.ctxUtil.LK_URL_PREFIX
 @import util.TplDataFormatUtil.formatPrice
 @import io.suggest.i18n.MsgCodes
+@import email._
 
-  <p>
+@emailBaseTpl(
+  title = ctx.messages( MsgCodes.`Moderation.needed` )
+) {
+
+  @_rowTpl() {
     @for(orderId <- args.orderId) {
       @ctx.messages( MsgCodes.`We.received.payment.for.order.0`, orderId )
     }
@@ -27,10 +32,10 @@
         </a>
       }
     }
-  </p>
+  }
 
   @for(txn <- args.txn) {
-    <p>
+    @_rowTpl() {
       Транзакция #@txn.id
       @for(psTxnUid <- txn.psTxnUidOpt) {
         инвойс @psTxnUid
@@ -40,10 +45,12 @@
       @for(comment <- txn.paymentComment) {
         <strong>@comment</strong>
       }
-    </p>
+    }
   }
 
-<p>
-  <a href="@LK_URL_PREFIX@args.toMdrNodeId.fold(routes.SysMdr.sysPage())(nodeId => routes.SysMdr.lkMdr(nodeId :: Nil))">
-    @ctx.messages( MsgCodes.`Go.to.moderation` )</a>.
-</p>
+  @_rowTpl() {
+    <a href="@LK_URL_PREFIX@args.toMdrNodeId.fold(routes.SysMdr.sysPage())(nodeId => routes.SysMdr.lkMdr(nodeId :: Nil))">
+      @ctx.messages( MsgCodes.`Go.to.moderation` )</a>.
+  }
+
+}

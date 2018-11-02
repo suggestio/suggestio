@@ -171,12 +171,12 @@ class MdrRowBtnR {
 
       val hintSuffixNodes = p.itemIdOpt.fold {
         List.empty[VdomNode]
-      } { itemIdStr =>
+      } { itemId =>
         // Надо отрендерить инфу по item'у в зависимости от типа item'а.
         List[VdomNode](
           HtmlConstants.SPACE,
           Messages( MsgCodes.`_N` ),
-          itemIdStr
+          itemId
         )
       }
       val titleNode = (
