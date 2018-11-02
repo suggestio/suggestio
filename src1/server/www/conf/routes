@@ -185,6 +185,7 @@ GET  /sys/market/adn/invite/email/:id   @controllers.SysMarket.showNodeOwnerEmai
 # sys.market.shop
 GET  /sys/market/shop/eact/:id          @controllers.SysMarket.showEmailInviteMsg(id)
 GET  /sys/market/mad/email/:adId        @controllers.SysMarket.showShopEmailAdDisableMsg(adId)
+POST /sys/market/login/to/:nodeId       @controllers.SysMarket.loginIntoNode(nodeId: MEsUuId)
 
 # sys.ad
 GET  /sys/mad/:adId/show                @controllers.SysMarket.showAd(adId)

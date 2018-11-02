@@ -14,6 +14,7 @@
 @import msc._
 @import io.suggest.sc.sc3.MScQs
 @import io.suggest.sc.ads.MAdsSearchReq
+@import helper._
 
 
 @* Подшаблон генерации квадратной кнопки. *@
@@ -166,6 +167,15 @@
       @_blueLink( routes.SysMarket.showEmailInviteMsg(mnode.id.get) ) {
         HTML
       }
+    </p>
+
+    <br/>
+
+    <p>
+      @stuff._deleteSmthFormBtnTpl(
+        call    = CSRF( routes.SysMarket.loginIntoNode( mnode.id.get ) ),
+        btnText = Some("Залогиниться от имени узла")
+      )
     </p>
 
   }

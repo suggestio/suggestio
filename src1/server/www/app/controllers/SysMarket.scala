@@ -17,6 +17,7 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.OptId
 import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.sc3.{MScCommonQs, MScQs}
+import io.suggest.sec.m.msession.Keys
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mproj.ICommonDi
@@ -45,6 +46,7 @@ import views.html.sys1.market.adn._
 import scala.concurrent.Future
 import japgolly.univeq._
 import models.madn.NodeDfltColors
+import util.ident.IdentUtil
 
 /**
  * Suggest.io
@@ -71,9 +73,10 @@ class SysMarket @Inject() (
                             isSu                            : IsSu,
                             isSuOr404                       : IsSuOr404,
                             scAdSearchUtil                  : ScAdSearchUtil,
+                            identUtil                       : IdentUtil,
                             override val mNodes             : MNodes,
                             override val mCommonDi          : ICommonDi
-)
+                          )
   extends SioControllerImpl
   with MacroLogsImpl
   with SysNodeInstall
@@ -920,6 +923,25 @@ class SysMarket @Inject() (
       } yield {
         RdrBackOr(r) { routes.SysMarket.analyzeAdRcvrs(adId) }
           .flashing(FLASH.SUCCESS -> "Из узла вычищены все ребра ресиверов. Биллинг не затрагивался.")
+      }
+    }
+  }
+
+
+  /** Залогинится в указанный узел.
+    *
+    * @param nodeId id узла.
+    * @return Редирект в ЛК с новой сессией.
+    */
+  def loginIntoNode(nodeIdU: MEsUuId) = csrf.Check {
+    val nodeId = nodeIdU.id
+    isSuNode(nodeId).async { implicit request =>
+      LOGGER.info(s"loginIntoNode($nodeId): from personId#${request.user.personIdOpt.orNull}")
+      for {
+        call <- identUtil.redirectCallUserSomewhere( nodeId )
+      } yield {
+        Redirect( call )
+          .withSession(Keys.PersonId.value -> nodeId)
       }
     }
   }
