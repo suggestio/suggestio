@@ -1,6 +1,7 @@
 package io.suggest.model.n2.node.search
 
 import io.suggest.es.search._
+import io.suggest.model.n2.bill.search.{ContractIdSearch, ContractIdSearchDflt, ContractIdSearchWrap}
 import io.suggest.model.n2.bill.tariff.daily.{TfDailyCurrencySearch, TfDailyCurrencySearchDflt, TfDailyCurrencySearchWrap}
 import io.suggest.model.n2.edge.search._
 import io.suggest.model.n2.extra.domain.{DomainsSearch, DomainsSearchDflt, DomainsSearchWrap}
@@ -36,6 +37,7 @@ trait MNodeSearch
   with Limit
   with Offset
   with DateCreatedSort
+  with ContractIdSearch
 {
   override final def esTypes = MNodeFields.ES_TYPE_NAMES
 }
@@ -68,7 +70,7 @@ trait MNodeSearchDflt
   with LimitDflt
   with OffsetDflt
   with DateCreatedSortDflt
-
+  with ContractIdSearchDflt
 
 /** Дефолтовая реализация [[MNodeSearchDflt]].
   * Упрощает жизнь компилятору при сборке недефолтовых классов-реализаций. */
@@ -100,6 +102,7 @@ trait MNodeSearchWrap
   with LimitWrap
   with OffsetWrap
   with DateCreatedSortWrap
+  with ContractIdSearchWrap
 {
   override type WT <: MNodeSearch
 }

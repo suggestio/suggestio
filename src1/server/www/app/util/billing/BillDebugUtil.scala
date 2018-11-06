@@ -5,6 +5,7 @@ import java.time.{LocalDate, OffsetDateTime}
 import javax.inject.{Inject, Singleton}
 import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.bin.ConvCodecs
+import io.suggest.di.ISlickDbConfig
 import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.dbg.{MDbgKeys, MDebug, MDebugs}
 import io.suggest.mbill2.m.gid.Gid_t
@@ -15,9 +16,12 @@ import io.suggest.mbill2.m.order.MOrders
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect.{RWT, WT}
 import io.suggest.pick.PickleUtil
-import io.suggest.util.CompressUtilJvm
+import io.suggest.util.{CompressUtilJvm, JMXBase}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
+import play.api.db.slick.DatabaseConfigProvider
+
+import scala.concurrent.ExecutionContext
 
 /**
   * Suggest.io
@@ -342,6 +346,59 @@ class BillDebugUtil @Inject() (
       LOGGER.trace(s"$logPrefix Done, $itemsUpdated items udpated")
       itemsUpdated
     }
+  }
+
+}
+
+
+trait BillDebugUtilJmxMBean {
+
+  def getPriceDebug(id: Gid_t): String
+
+  def interruptItem(itemId: Gid_t): String
+
+}
+
+class BillDebugUtilJmx @Inject() (
+                                   billDebugUtil                      : BillDebugUtil,
+                                   override val _slickConfigProvider  : DatabaseConfigProvider,
+                                   override implicit val ec           : ExecutionContext,
+                                 )
+  extends JMXBase
+  with BillDebugUtilJmxMBean
+  with ISlickDbConfig
+  with MacroLogsImpl
+{
+
+  override def jmxName = "io.suggest:type=bill,name=" + getClass.getSimpleName.replace("Jmx", "")
+
+  override def getPriceDebug(id: Gid_t): String = {
+    lazy val logPrefix = s"getPriceDebug($id)"
+    LOGGER.debug(s"$logPrefix Starting")
+    val strFut = for {
+      res <- slick.db.run {
+        billDebugUtil.getPriceDebug( id )
+      }
+    } yield {
+      LOGGER.info(s"$logPrefix => ${res.orNull}")
+      res.toString
+    }
+    awaitString( strFut )
+  }
+
+  override def interruptItem(itemId: Gid_t): String = {
+    lazy val logPrefix = s"interruptItem($itemId):"
+    LOGGER.debug(s"$logPrefix Starting")
+    val strFut = for {
+      res <- slick.db.run {
+        billDebugUtil.interruptItem(itemId)
+      }
+    } yield {
+      val msg = s"Done, res = $res"
+      LOGGER.info(s"$logPrefix $msg")
+      msg
+    }
+    awaitString(strFut)
   }
 
 }

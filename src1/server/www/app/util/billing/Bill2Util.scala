@@ -1,8 +1,10 @@
 package util.billing
 
 import java.time.{Duration, OffsetDateTime}
-import javax.inject.{Inject, Singleton}
+import java.util.concurrent.atomic.AtomicInteger
 
+import akka.stream.scaladsl.{Keep, Sink}
+import javax.inject.{Inject, Singleton}
 import io.suggest.bill._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
@@ -18,15 +20,18 @@ import io.suggest.mbill2.util.effect._
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.pay.MPaySystem
 import io.suggest.primo.id.OptId
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
 import models.adv.geo.cur.AdvGeoShapeInfo_t
 import slick.sql.SqlAction
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.streams.StreamsUtil
+import io.suggest.util.JMXBase
 import japgolly.univeq._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 /**
@@ -51,6 +56,7 @@ class Bill2Util @Inject() (
   mTxns                           : MTxns,
   mNodes                          : MNodes,
   mDebugs                         : MDebugs,
+  streamsUtil                     : StreamsUtil,
   val mCommonDi                   : ICommonDi
 )
   extends MacroLogsImpl
@@ -58,6 +64,7 @@ class Bill2Util @Inject() (
 
   import mCommonDi._
   import slick.profile.api._
+  import streamsUtil.Implicits._
 
 
   /** id узла, на который должна сыпаться комиссия с этого биллинга. */
@@ -1850,11 +1857,114 @@ class Bill2Util @Inject() (
       .result
   }
 
-}
 
+  /** Если база контрактов вдруг потерялась или содержит сомнения, то нужно пройтись по узлам и проверить
+    * contract_id узлов на предмет наличия существующего контракта в contracts.
+    *
+    * @return Фьючерс.
+    */
+  def fsckNodesContracts(): Future[(Int, Int)] = {
+    import mNodes.Implicits._
+
+    lazy val logPrefix = s"fsckNodesContracts()#${System.currentTimeMillis()}:"
+    val someTrue = Some(true)
+
+    // Для ускорения - собрать множество всех id для контрактов в базе. TODO Memory, на большой базе может не хватить RAM.
+    val allContractIdsFut = slick.db.stream {
+      mContracts.query
+        .map(_.id)
+        .result
+    }
+      .toSource
+      .toMat(
+        Sink.collection[Gid_t, Set[Gid_t]]
+      )(Keep.right)
+      .run()
+
+    // Не ясно, даёт ли вынос source() за пределы for ускорение. По идее - нет.
+    val src0 = mNodes.source[MNode](
+      searchQuery = new MNodeSearchDfltImpl {
+        override def contractIdDefined = someTrue
+      }.toEsQuery
+    )
+
+    val bp = mNodes.bulkProcessor(
+      new mNodes.BulkProcessorListener(logPrefix)
+    )
+    val totalCounter = new AtomicInteger(0)
+    val repairCounter = new AtomicInteger(0)
+
+    for {
+      allContractIds <- allContractIdsFut
+      _ = LOGGER.debug(s"$logPrefix Found ${allContractIds.size} contracts.")
+
+      _ <- src0.runForeach { mnode =>
+        mnode.billing.contractId.fold[Any] {
+          LOGGER.warn(s"$logPrefix Node#${mnode.idOrNull} missing contract id, but expected")
+        } { contractId =>
+          if (allContractIds contains contractId) {
+            LOGGER.trace(s"$logPrefix Node#${mnode.idOrNull}, contract#${contractId} OK")
+          } else {
+            LOGGER.info(s"$logPrefix Repair node#${mnode.idOrNull}, contract#${contractId} NOT exist.")
+            val mnode2 = mNodes.prepareIndex(
+              mnode.withBilling(
+                mnode.billing
+                  .withContractId( None )
+              )
+            )
+            bp.add( mnode2.request() )
+            repairCounter.incrementAndGet()
+          }
+        }
+        totalCounter.incrementAndGet()
+      }
+    } yield {
+      bp.close()
+      val repaired = repairCounter.intValue()
+      val total = totalCounter.intValue()
+      LOGGER.info(s"$logPrefix Repaired $repaired of $total")
+      (repaired, total)
+    }
+  }
+
+}
 
 /** Интерфейс для DI. */
 trait IBill2UtilDi {
   /** Инстанс DI-поля. */
   def bill2Util: Bill2Util
+}
+
+
+/** JMX-интерфейс. */
+trait Bill2UtilJmxMBean {
+
+  def fsckNodesContracts(): String
+
+}
+
+class Bill2UtilJmx @Inject()(
+                              bill2Util                           : Bill2Util,
+                              override implicit val ec            : ExecutionContext,
+                            )
+  extends JMXBase
+  with Bill2UtilJmxMBean
+  with MacroLogsDyn
+{
+
+  override def jmxName = "io.suggest:type=bill,name=" + getClass.getSimpleName.replace("Jmx", "")
+
+  override def fsckNodesContracts(): String = {
+    val logPrefix = s"fsckNodesContracts()#${System.currentTimeMillis()}:"
+    LOGGER.info(s"$logPrefix Starting")
+    val strFut = for {
+      res <- bill2Util.fsckNodesContracts()
+    } yield {
+      val msg = s"Done => $res"
+      LOGGER.info(s"$logPrefix $msg")
+      msg
+    }
+    awaitString( strFut )
+  }
+
 }

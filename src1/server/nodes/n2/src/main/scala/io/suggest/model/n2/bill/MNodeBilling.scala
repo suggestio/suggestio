@@ -68,5 +68,11 @@ object MNodeBilling extends IGenEsMappingProps with IEmpty {
 case class MNodeBilling(
                          contractId    : Option[Gid_t]     = None,
                          tariffs       : MNodeTariffs      = MNodeTariffs.empty
-)
+                       )
   extends EmptyProduct
+{
+
+  def withContractId(contractId: Option[Gid_t]) = copy(contractId = contractId)
+  def withTariffs(tariffs: MNodeTariffs) = copy(tariffs = tariffs)
+
+}

@@ -2,6 +2,7 @@ package io.suggest.model.n2.node
 
 import io.suggest.geo.MNodeGeoLevel
 import io.suggest.model._
+import io.suggest.model.n2.bill.MNodeBilling
 import io.suggest.model.n2.bill.tariff.MNodeTariffs
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -117,6 +118,8 @@ object MNodeFields {
 
     def TARIFFS_DAILY_CURRENCY_FN       = _fullFn( MNodeTariffs.Fields.Daily.CURRENCY_FN )
     def TARIFFS_DAILY_CLAUSES_CAL_ID_FN = _fullFn( MNodeTariffs.Fields.Daily.CLAUSES_CAL_ID_FN )
+
+    def BILLING_CONTRACT_ID_FN          = _fullFn( MNodeBilling.Fields.CONTRACT_ID_FN )
 
   }
 

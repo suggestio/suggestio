@@ -295,6 +295,7 @@ case class MNode(
     guessDisplayNameOrId.getOrElse(or)
   }
 
+  def withBilling(billing: MNodeBilling) = copy(billing = billing)
   def withEdges(edges: MNodeEdges) = copy(edges = edges)
   def withId(idOpt: Option[String]) = copy(id = idOpt)
   override def withVersion(versionOpt: Option[Long]) = copy(versionOpt = versionOpt)
