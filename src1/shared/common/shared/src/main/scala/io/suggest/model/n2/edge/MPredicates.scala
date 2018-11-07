@@ -152,11 +152,6 @@ object MPredicates extends StringEnum[MPredicate] {
   case object PlacedIn extends MPredicate("p")
 
 
-  /** Размещение ADN-узла на географической карте рекламополучателей. */
-  @deprecated("Толком никакой смысловой нагрузки не было, и оно замёржено в NodeLocation", "2017-06-02")
-  case object AdnMap extends MPredicate("r")
-
-
   /** Неявный эдж для jd-content'а, т.е. частей содержимого некоего json-документа.
     * Обычно не используется напрямую, а дёргаются конкретные дочерние эджи.
     * Появилось для кодирования эджей в jd-контексте.

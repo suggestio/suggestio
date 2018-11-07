@@ -53,7 +53,7 @@ trait GeoLocBuilder extends IAdvBuilder {
   }
 
 
-  /** Аналогично [[AdnMapBuilder]], надо дропать предыдущие размещения. */
+  /** Надо дропать предыдущие размещения. */
   override def installSql(items: Iterable[MItem]): IAdvBuilder = {
     val b0 = super.installSql(items)
     // Предварительно завершить все остальные adn-item'ы с частичным возвратом средств или без оного.

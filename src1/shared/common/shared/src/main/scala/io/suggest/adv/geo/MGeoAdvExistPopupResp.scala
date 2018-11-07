@@ -71,7 +71,6 @@ object MGeoItemInfoPayload {
     compositePickler[MGeoItemInfoPayload]
       .addConcreteType[OnMainScreen.type]
       .addConcreteType[InGeoTag]
-      .addConcreteType[OnAdvsMap.type]
       .addConcreteType[OnGeoCapturing.type]
   }
   @inline implicit def univEq: UnivEq[MGeoItemInfoPayload] = UnivEq.derive
@@ -83,5 +82,4 @@ case object OnMainScreen extends MGeoItemInfoPayload
 final case class InGeoTag(tagFace: String) extends MGeoItemInfoPayload
 
 // lk-adn-map
-case object OnAdvsMap extends MGeoItemInfoPayload
 case object OnGeoCapturing extends MGeoItemInfoPayload

@@ -5,6 +5,7 @@ import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -19,50 +20,21 @@ object MItemTypes extends StringEnum[MItemType] {
     * Это было самый первый тип размещения в suggest.io.
     * Скорее всего, этот же тип будет для размещения в маячках и группах маячков.
     */
-  case object AdvDirect extends MItemType("a") {
-    override def isInterruptable = true
-  }
+  case object AdvDirect extends MItemType("a")
 
   /** Заказ геотеггинга для карточки. Размещение по шейпу и id узла-тега-ресивера. */
-  case object GeoTag extends MItemType("t") {
-    override def isInterruptable = true
-    override def isTag = true
-  }
+  case object GeoTag extends MItemType("t")
 
   /** Покупка размещения в каком-то месте на карте: по геошейпу без ресиверов. */
-  case object GeoPlace extends MItemType("g") {
-    override def isInterruptable = true
-  }
-
-  /** Размещение ADN-узла (магазина/ТЦ/etc) на карте. */
-  @deprecated("Смысл замёржился в GeoLocCaptureArea", "2017-06-02")
-  case object AdnNodeMap extends MItemType("m") {
-    /** Это размещение узлов ЛК на карте. К карточкам это не относится никак. */
-    override def sendToMdrOnOrderClose = false
-    override def isInterruptable = true
-  }
+  case object GeoPlace extends MItemType("g")
 
   /** Прямое размещение тега на узле. */
-  case object TagDirect extends MItemType("d") {
-    override def isInterruptable = true
-    override def isTag = true
-  }
+  case object TagDirect extends MItemType("d")
 
   /** Юзер просто пополняет sio-баланс, перекачивая на него деньги из внешнего источника денег. */
-  case object BalanceCredit extends MItemType("e") {
-    /** Это кредитование баланса. Поэтому false. */
-    override def isDebt = false
-    /** Никакой рекламной составляющей это действо не несёт. */
-    override def sendToMdrOnOrderClose = false
-    /** Юзер просто закидывает деньги себе на счёт, аппрува для этого не требуется. */
-    override def isApprovable = false
-    override def isInterruptable = false
-  }
+  case object BalanceCredit extends MItemType("e")
 
-  case object GeoLocCaptureArea extends MItemType("l") {
-    override def sendToMdrOnOrderClose = true
-    override def isInterruptable = true
-  }
+  case object GeoLocCaptureArea extends MItemType("l")
 
 
   override val values = findValues
@@ -73,12 +45,12 @@ object MItemTypes extends StringEnum[MItemType] {
 
   def advDirectTypes  : List[MItemType]     = AdvDirect :: TagDirect :: Nil
 
-  def adnMapTypes     : List[MItemType]     = AdnNodeMap :: GeoLocCaptureArea :: Nil
+  def adnMapTypes     : List[MItemType]     = GeoLocCaptureArea :: Nil
 
   /** Типы, допустимые к использованию в модели MAdvDeclKey. */
   def advDeclTypes    : List[MItemType]     = AdvDirect :: Nil
 
-  def interruptable = values.filter(_.isInterruptable)
+  def interruptable   = values.filter(_.isInterruptable)
 
   def tagTypes        : List[MItemType]     = GeoTag :: TagDirect :: Nil
 
@@ -96,39 +68,8 @@ sealed abstract class MItemType(override val value: String) extends StringEnumEn
     "Item.type." + value
   }
 
-  /** Является ли ресивером денег CBCA?
-    * Для рекламных размещений внутри suggest.io -- она.
-    * Для прочих возможных сделок -- нужно анализировать содержимое MItem.rcvrIdOpt.
-    */
-  def moneyRcvrIsCbca: Boolean = true
-
-  /** Тип item'а относится к рекламным размещениям или иным услугам, отправляемым на модерацию? */
-  def sendToMdrOnOrderClose: Boolean = true
-
-  /** @return true когда требуется/подразумевается стадия аппрува s.io в ЖЦ item'а. */
-  def isApprovable: Boolean = true
-
   /** final, чтобы в case object'ах не было перезаписи. */
   override final def toString = value
-
-  /** Цена item'а является долгом/обязательством клиентам перед сервисом?
-    * @return true - дебет, т.е. для всяких оплат товаров и услуг.
-    *         false - это крЕдит, т.е. источник средств.
-    *         Оплаченный item обогащает sio-баланс клиента своей стоимостью.
-    */
-  def isDebt: Boolean = true
-
-  /** Можно ли "прерывать" item данного типа?
-    * Прерывание item'а: это когда в online-режиме происходит коррекция dateEnd с частичным возвратом средств.
-    *
-    * По идее, изначально допускается прерывание любых adv и adn-item'ов.
-    * Но реализовано на том этапе только прерывание adn-item'ов в lk-adn-map-форме при перезаписи размещения.
-    * Нельзя прерывать всякие не-sio товары и услуги.
-    */
-  def isInterruptable: Boolean
-
-  /** Это какой-либо теггинг. */
-  def isTag: Boolean = false
 
 }
 
@@ -143,7 +84,7 @@ object MItemType {
       .addConcreteType[AdvDirect.type]
       .addConcreteType[GeoTag.type]
       .addConcreteType[GeoPlace.type]
-      .addConcreteType[AdnNodeMap.type]
+      .addConcreteType[GeoLocCaptureArea.type]
       .addConcreteType[TagDirect.type]
   }
 
@@ -155,6 +96,59 @@ object MItemType {
 
   implicit def mItemTypeFormat: Format[MItemType] = {
     EnumeratumUtil.valueEnumEntryFormat( MItemTypes )
+  }
+
+
+  implicit class ItemTypeOpsExt(val itype: MItemType) extends AnyVal {
+
+    /** Является ли ресивером денег CBCA?
+      * Для рекламных размещений внутри suggest.io -- она.
+      * Для прочих возможных сделок -- нужно анализировать содержимое MItem.rcvrIdOpt.
+      */
+    def moneyRcvrIsCbca: Boolean = {
+      true
+    }
+
+    /** Можно ли "прерывать" item данного типа?
+      * Прерывание item'а: это когда в online-режиме происходит коррекция dateEnd с частичным возвратом средств.
+      *
+      * По идее, изначально допускается прерывание любых adv и adn-item'ов.
+      * Но реализовано на том этапе только прерывание adn-item'ов в lk-adn-map-форме при перезаписи размещения.
+      * Нельзя прерывать всякие не-sio товары и услуги.
+      */
+    def isInterruptable: Boolean =
+      !_isBalanceCredit
+
+    /** Это какой-либо теггинг? */
+    def isTag: Boolean = {
+      itype match {
+        case MItemTypes.GeoTag | MItemTypes.TagDirect => true
+        case _ => false
+      }
+    }
+
+    /** Цена item'а является долгом/обязательством клиентам перед сервисом?
+      * @return true - дебет, т.е. для всяких оплат товаров и услуг.
+      *         false - это крЕдит, т.е. источник средств.
+      *         Оплаченный item обогащает sio-баланс клиента своей стоимостью.
+      */
+    def isDebt: Boolean =
+      !_isBalanceCredit // Это кредитование баланса. Поэтому false.
+
+    private def _isBalanceCredit: Boolean =
+      itype ==* MItemTypes.BalanceCredit
+
+    def sendToMdrOnOrderClose = {
+      itype match {
+        case MItemTypes.GeoLocCaptureArea | MItemTypes.BalanceCredit => false
+        case _ => true
+      }
+    }
+
+    /** @return true когда требуется/подразумевается стадия аппрува s.io в ЖЦ item'а. */
+    def isApprovable: Boolean =
+      _isBalanceCredit  // Юзер просто закидывает деньги себе на счёт, аппрува для этого не требуется.
+
   }
 
 }

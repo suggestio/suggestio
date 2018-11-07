@@ -4,7 +4,7 @@ import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.adn.mapf.{MLamConf, MLamForm, MLamFormInit}
-import io.suggest.adv.geo.{OnAdvsMap, OnGeoCapturing}
+import io.suggest.adv.geo.OnGeoCapturing
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
 import io.suggest.init.routed.MJsInitTargets
@@ -303,8 +303,6 @@ class LkAdnMap @Inject() (
     lazy val logPrefix = s"existGeoAdvsShapePopup($itemId):"
     lkGeoCtlUtil.currentItemPopup(itemId, MItemTypes.adnMapTypes) { m =>
       m.iType match {
-        case MItemTypes.AdnNodeMap =>
-          Some( OnAdvsMap )
         case MItemTypes.GeoLocCaptureArea =>
           Some( OnGeoCapturing )
         case otherType =>

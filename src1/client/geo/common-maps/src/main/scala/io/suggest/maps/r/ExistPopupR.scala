@@ -1,7 +1,7 @@
 package io.suggest.maps.r
 
 import diode.react.{ModelProxy, ReactConnectProps}
-import io.suggest.adv.geo.{InGeoTag, OnAdvsMap, OnGeoCapturing, OnMainScreen}
+import io.suggest.adv.geo.{InGeoTag, OnGeoCapturing, OnMainScreen}
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
@@ -94,8 +94,6 @@ object ExistPopupR {
                         face
                       )
                     // lk-adn-map
-                    case OnAdvsMap =>
-                      Messages(MItemTypes.AdnNodeMap.nameI18n)
                     case OnGeoCapturing =>
                       Messages(MItemTypes.GeoLocCaptureArea.nameI18n)
                   },
