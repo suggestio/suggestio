@@ -27,6 +27,7 @@ trait TfDailyCurrencySearch extends DynSearchArgs {
     val currsOpt = tfDailyCurrencies
 
     currsOpt.fold( qbOpt0 ) { currs =>
+      // TODO Кажется, тут что-то неисправно: поиск не работает нормально.
       val fn = MNodeFields.Billing.TARIFFS_DAILY_CURRENCY_FN
 
       val sqb: QueryBuilder = if (currs.isEmpty) {

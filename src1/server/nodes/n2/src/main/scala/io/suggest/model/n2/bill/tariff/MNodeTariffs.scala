@@ -24,7 +24,7 @@ object MNodeTariffs extends IGenEsMappingProps with IEmpty {
     object Daily extends PrefixedFn {
       override protected def _PARENT_FN = DAILY_FN
       def CLAUSES_CAL_ID_FN = _fullFn( MTfDaily.Fields.Clauses.CAL_ID_FN )
-      def CURRENCY_FN       = _fullFn( MTfDaily.Fields.CLAUSES_FN )
+      def CURRENCY_FN       = _fullFn( MTfDaily.Fields.CURRENCY_FN )
     }
 
   }

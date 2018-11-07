@@ -1,7 +1,8 @@
 package util.billing
 
-import javax.inject.{Inject, Singleton}
+import java.util.concurrent.atomic.AtomicInteger
 
+import javax.inject.{Inject, Singleton}
 import io.suggest.bill.tf.daily._
 import io.suggest.bill.{Amount_t, MCurrencies, MPrice}
 import io.suggest.cal.m.{MCalType, MCalTypes}
@@ -10,7 +11,7 @@ import io.suggest.model.n2.bill.tariff.daily.{MDayClause, MTfDaily}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.scalaz.ScalazUtil
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.mcal.MCalendars
 import models.mctx.Context
 import models.mproj.ICommonDi
@@ -19,11 +20,13 @@ import play.api.data._
 import util.FormUtil.{currencyM, doubleM, esIdM}
 import util.TplDataFormatUtil
 import MPrice.HellImplicits.AmountMonoid
-
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.util.JMXBase
 import scalaz._
 import scalaz.syntax.apply._
 import scalaz.std.option._
-import scala.concurrent.Future
+
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -170,11 +173,8 @@ class TfDailyUtil @Inject()(
 
   /** Вернуть fallback-тариф. */
   def fallbackTf(): Future[MTfDaily] = {
-    val cbcaNodeId = bill2Conf.CBCA_NODE_ID
-    val cbcaNodeOptFut = mNodesCache.getById( cbcaNodeId )
-
     for {
-      cbcaNodeOpt <- cbcaNodeOptFut
+      cbcaNodeOpt <- mNodesCache.getById( bill2Conf.CBCA_NODE_ID )
     } yield {
       cbcaNodeOpt
         .flatMap(_.billing.tariffs.daily)
@@ -190,8 +190,27 @@ class TfDailyUtil @Inject()(
     * Если тариф на узле отсутствует, то будет использован унаследованный сверху или дефолтовый тариф.
     */
   def nodeTf(mnode: MNode): Future[MTfDaily] = {
-    FutureUtil.opt2future( mnode.billing.tariffs.daily ) {
-      inheritedNodeTf( mnode :: Nil )
+    val tfDailyFut0 = FutureUtil.opt2future( mnode.billing.tariffs.daily ) {
+      _inheritedNodeTf( mnode :: Nil )
+    }
+    val fallbackTfFut = fallbackTf()
+
+    // Размер комиссии нужно брать из тарифа узла CBCA.
+    for {
+      tfDaily0   <- tfDailyFut0
+      tfDaily2   <- {
+        if (tfDaily0.comissionPc.isEmpty) {
+          // Комиссия не задана. Брать её из cbca.
+          for (fallbackTf <- fallbackTfFut) yield
+            tfDaily0.withComission( fallbackTf.comissionPc )
+        } else {
+          // Задана какая-то комиссия. CBCA не интересен.
+          Future.successful( tfDaily0 )
+        }
+      }
+
+    } yield {
+      tfDaily2
     }
   }
 
@@ -204,7 +223,7 @@ class TfDailyUtil @Inject()(
     *              Если слишком много уровней, то будет IllegalStateException.
     * @return Фьючерс с найденным тарифом.
     */
-  def inheritedNodeTf(mnodes: TraversableOnce[MNode], level: Int = 1): Future[MTfDaily] = {
+  private def _inheritedNodeTf(mnodes: TraversableOnce[MNode], level: Int = 1): Future[MTfDaily] = {
     // Запретить погружаться слишком глубоко.
     if (level > 8)
       throw new IllegalStateException(s"Too much recursion steps: $level")
@@ -245,7 +264,7 @@ class TfDailyUtil @Inject()(
           mNodesCache
             .multiGet(ownNodeIds)
             .flatMap { mnodes2 =>
-              inheritedNodeTf(mnodes2, level + 1)
+              _inheritedNodeTf(mnodes2, level + 1)
             }
         }
       }
@@ -290,18 +309,22 @@ class TfDailyUtil @Inject()(
   /** Приведение режима тарификации, заданного юзером, к значению поля mnode.billing.tariffs.daily.
     *
     * @param tfMode Режим тарификации, задаваемый юзером.
+    * @param nodeTfOpt0 Текущий тариф узла, если есть.
     * @return Фьючерс с опциональным посуточным тарифом.
     */
-  def tfMode2tfDaily(tfMode: ITfDailyMode): Future[Option[MTfDaily]] = {
+  def tfMode2tfDaily(tfMode: ITfDailyMode, nodeTfOpt0: Option[MTfDaily]): Future[Option[MTfDaily]] = {
     FutureUtil.optFut2futOpt( tfMode.manualOpt ) { manTf =>
       for (ftf <- fallbackTf()) yield {
         val minClauseAmount = ftf.defaultClause
-        val tf2 = ftf.withClauses(
-          ftf.clauses.mapValues { mdc =>
+        val tf2 = ftf.copy(
+          clauses = ftf.clauses.mapValues { mdc =>
             mdc.withAmount(
               mdc.amount * manTf.amount / minClauseAmount.amount
             )
-          }
+          },
+          // Переносим размер данные о размере комиссии в обновлённый тариф.
+          // Размер комиссии может быть задан вручную администрацией s.io, но не юзером.
+          comissionPc = nodeTfOpt0.flatMap(_.comissionPc)
         )
         Some(tf2)
       }
@@ -398,11 +421,85 @@ class TfDailyUtil @Inject()(
     tfModeAmountOptV(tfdm2)
   }
 
+
+  /** Сброс всех комиссионных всех узлов.
+    *
+    * @return Фьючерс с данными по пройденным узлам.
+    */
+  def resetAllTfDailyComissions(): Future[_] = {
+    // поле MTfDaily.comissionPc(double) не индексируется, поэтому ищем просто по наличию тарифа и дофильтровываем тут.
+    import mNodes.Implicits._
+
+    val logPrefix = s"resetAllTfDailyComissions()#${System.currentTimeMillis()}:"
+    LOGGER.warn(s"$logPrefix Starting")
+
+    val bp = mNodes.bulkProcessor(
+      listener = new mNodes.BulkProcessorListener( logPrefix )
+    )
+    val counter = new AtomicInteger(0)
+
+    mNodes
+      .source[MNode](
+        searchQuery = new MNodeSearchDfltImpl {
+          override val withoutIds = bill2Conf.CBCA_NODE_ID :: Nil
+          // TODO Не работает фильтрация по валюте тарифа, надо разобраться.
+          //override def tfDailyCurrencies = Some( Nil )
+        }.toEsQuery
+      )
+      .runForeach { mnode =>
+        if (mnode.billing.tariffs.daily.exists(_.comissionPc.nonEmpty)) {
+          LOGGER.trace(s"$logPrefix Will update ${mnode.idOrNull}, tf0=${mnode.billing.tariffs.daily.orNull}")
+          // Есть тариф с заданной комиссей. Надо сбросить значение поля.
+          val mnode2 = mnode.withBilling(
+            mnode.billing.withTariffs(
+              mnode.billing.tariffs.copy(
+                daily = mnode.billing.tariffs.daily.map { tfDaily0 =>
+                  tfDaily0.withComission( None )
+                }
+              )
+            )
+          )
+          bp.add( mNodes.prepareIndex(mnode2).request() )
+          counter.incrementAndGet()
+        } else {
+          LOGGER.trace(s"$logPrefix Skip node#${mnode.idOrNull}.")
+        }
+      }
+      .map { _ =>
+        bp.close()
+        val totalUpdated = counter.get
+        LOGGER.info(s"$logPrefix Updated $totalUpdated nodes")
+        totalUpdated
+      }
+  }
+
 }
 
 
-/** Интерфейс для доступа к DI-полю с экземпляром [[TfDailyUtil]]. */
-trait ITfDailyUtilDi {
-  /** DI-инстанс утили формы для daily-тарифов. */
-  def tfDailyUtil: TfDailyUtil
+trait TfDailyUtilJmxMBean {
+  def resetAllTfDailyComissions(): String
+}
+
+final class TfDailyUtilJmx @Inject()(
+                                      tfDailyUtil: TfDailyUtil,
+                                      override implicit val ec: ExecutionContext
+                                    )
+  extends JMXBase
+  with TfDailyUtilJmxMBean
+  with MacroLogsDyn
+{
+
+  override def jmxName = "io.suggest:type=bill,name=" + classOf[TfDailyUtil].getSimpleName
+
+  override def resetAllTfDailyComissions(): String = {
+    val resFut = for {
+      res <- tfDailyUtil.resetAllTfDailyComissions()
+    } yield {
+      val str = s"Done, res => $res"
+      LOGGER.info(str)
+      str
+    }
+    awaitString(resFut)
+  }
+
 }

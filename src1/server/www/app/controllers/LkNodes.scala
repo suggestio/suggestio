@@ -675,7 +675,7 @@ class LkNodes @Inject() (
           LOGGER.trace(s"$logPrefix new tf-daily mode: $tfdm")
           for {
             // Вычислить тариф для узла на основе заданного режима.
-            tfDailyOpt <- tfDailyUtil.tfMode2tfDaily( tfdm )
+            tfDailyOpt <- tfDailyUtil.tfMode2tfDaily( tfdm, request.mnode.billing.tariffs.daily )
 
             // Обновить узел новым тарифом.
             mnode2 <- {
