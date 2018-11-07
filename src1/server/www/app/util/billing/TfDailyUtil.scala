@@ -33,11 +33,11 @@ import scala.concurrent.Future
  */
 @Singleton
 class TfDailyUtil @Inject()(
-  bill2Util   : Bill2Util,
-  mNodes      : MNodes,
-  mCalendars  : MCalendars,
-  mCommonDi   : ICommonDi
-)
+                             bill2Conf   : Bill2Conf,
+                             mNodes      : MNodes,
+                             mCalendars  : MCalendars,
+                             mCommonDi   : ICommonDi
+                           )
   extends MacroLogsImpl
 {
 
@@ -46,7 +46,8 @@ class TfDailyUtil @Inject()(
   def VERY_DEFAULT_WEEKDAY_CLAUSE = MDayClause("Будни", MCurrencies.default.centsInUnit)
 
   /** Комиссия тарифа. 1.0 означает, что 100% улетает в suggest.io. */
-  def COMISSION_DFLT = 1.0
+  def COMISSION_FULL = 1.0
+  def COMISSION_DFLT = COMISSION_FULL
 
 
   private def VERY_DEFAULT_FT = {
@@ -169,7 +170,7 @@ class TfDailyUtil @Inject()(
 
   /** Вернуть fallback-тариф. */
   def fallbackTf(): Future[MTfDaily] = {
-    val cbcaNodeId = bill2Util.CBCA_NODE_ID
+    val cbcaNodeId = bill2Conf.CBCA_NODE_ID
     val cbcaNodeOptFut = mNodesCache.getById( cbcaNodeId )
 
     for {
@@ -178,7 +179,7 @@ class TfDailyUtil @Inject()(
       cbcaNodeOpt
         .flatMap(_.billing.tariffs.daily)
         .getOrElse {
-          LOGGER.debug(s"fallbackTf(): CBCA ${bill2Util.CBCA_NODE_ID} dailyTF is not defined!")
+          LOGGER.debug(s"fallbackTf(): CBCA ${bill2Conf.CBCA_NODE_ID} dailyTF is not defined!")
           VERY_DEFAULT_FT
         }
     }

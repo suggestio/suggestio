@@ -33,7 +33,7 @@ import play.api.mvc.Result
 import util.acl._
 import util.adv.AdvFormUtil
 import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoRcvrsUtil}
-import util.billing.Bill2Util
+import util.billing.{Bill2Conf, Bill2Util}
 import util.lk.LkTagsSearchUtil
 import util.sec.CspUtil
 import util.tags.TagsEditFormUtil
@@ -54,6 +54,7 @@ class LkAdvGeo @Inject() (
                            advGeoFormUtil                  : AdvGeoFormUtil,
                            advGeoBillUtil                  : AdvGeoBillUtil,
                            advFormUtil                     : AdvFormUtil,
+                           bill2Conf                       : Bill2Conf,
                            bill2Util                       : Bill2Util,
                            advGeoLocUtil                   : AdvGeoLocUtil,
                            advRcvrsUtil                    : AdvRcvrsUtil,
@@ -141,7 +142,7 @@ class LkAdvGeo @Inject() (
 
   private def _getPricing(isSuFree: Boolean, mFormS: MFormS)
                          (implicit request: IAdProdReq[_], ctx: Context): Future[MGetPriceResp] = {
-    bill2Util.maybeFreePricing(isSuFree) {
+    bill2Conf.maybeFreePricing(isSuFree) {
       // Найти все узлы, принадлежащие текущему юзеру:
       for {
         billCtx     <- advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS, addFreeRcvrs = true)

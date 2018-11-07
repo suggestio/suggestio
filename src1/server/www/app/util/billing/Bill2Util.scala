@@ -17,7 +17,7 @@ import io.suggest.mbill2.m.item.{IMItem, MItem, MItems}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
-import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pay.MPaySystem
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
@@ -26,13 +26,13 @@ import models.mproj.ICommonDi
 import models.adv.geo.cur.AdvGeoShapeInfo_t
 import slick.sql.SqlAction
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.JMXBase
 import japgolly.univeq._
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
 
 /**
   * Suggest.io
@@ -49,43 +49,26 @@ import scala.util.{Failure, Success}
   */
 @Singleton
 class Bill2Util @Inject() (
-  mOrders                         : MOrders,
-  mContracts                      : MContracts,
-  mItems                          : MItems,
-  mBalances                       : MBalances,
-  mTxns                           : MTxns,
-  mNodes                          : MNodes,
-  mDebugs                         : MDebugs,
-  streamsUtil                     : StreamsUtil,
-  val mCommonDi                   : ICommonDi
-)
+                            bill2Conf                       : Bill2Conf,
+                            mOrders                         : MOrders,
+                            mContracts                      : MContracts,
+                            mItems                          : MItems,
+                            mBalances                       : MBalances,
+                            mTxns                           : MTxns,
+                            mNodes                          : MNodes,
+                            mDebugs                         : MDebugs,
+                            streamsUtil                     : StreamsUtil,
+                            tfDailyUtil                     : TfDailyUtil,
+                            val mCommonDi                   : ICommonDi
+                          )
   extends MacroLogsImpl
 {
 
+  import Bill2Util._
   import mCommonDi._
   import slick.profile.api._
   import streamsUtil.Implicits._
 
-
-  /** id узла, на который должна сыпаться комиссия с этого биллинга. */
-  val CBCA_NODE_ID: String = {
-    val ck = "bill.cbca.node.id"
-    val res = configuration
-      .getOptional[String](ck)
-      .getOrElse {
-        val r = "-vr-hrgNRd6noyQ3_teu_A"
-        LOGGER.debug("CBCA node id defaulted to " + r)
-        r
-      }
-    // Проверить в фоне, существует ли узел.
-    for (_ <- mNodesCache.getById(res).map(_.get).failed) {
-      // Что-то пошло не так, надо застрелиться, ругнувшись в логи.
-      LOGGER.error(s"CBCA NODE[$res] IS MISSING! Billing will work wrong, giving up. Check conf.key: $ck")
-      mCommonDi.actorSystem.terminate()
-    }
-    // Вернуть id узла.
-    res
-  }
 
   /** Через сколько времени считать ордер повисшим и разворачивать его назад в ордер-корзину? */
   private val RELEASE_HOLD_ORDERS_AFTER_HOURS: Int = {
@@ -169,9 +152,7 @@ class Bill2Util @Inject() (
     _getDaysCountFix( dur.toDays.toInt )
   }
 
-  def cbcaNodeOptFut = mNodesCache.getById(CBCA_NODE_ID)
-
-  sealed case class EnsuredNodeContract(mc: MContract, mnode: MNode)
+  def cbcaNodeOptFut = mNodesCache.getById( bill2Conf.CBCA_NODE_ID )
 
 
   /**
@@ -231,48 +212,43 @@ class Bill2Util @Inject() (
     // Отработать случай, когда контракта нет.
     res0Fut.recoverWith { case _: NoSuchElementException =>
       // Контракт не найден, значит нужно создать новый, сохранить везде и вернуть.
-      for {
-        // Создать новый контракт в БД биллинга
-        mc2 <- {
-          val mc = MContract()
-          slick.db.run {
-            mContracts.insertOne(mc)
-          }
-        }
-
-        // Сохранить id свежесозданного контракта в текущую ноду
-        mnode2 <- {
-          val updFut = mNodes.tryUpdate(mnode) { mnode0 =>
-            mnode0.copy(
-              billing = mnode0.billing.copy(
-                contractId = mc2.id
-              )
-            )
-          }
-
-          // В фоне среагировать на завершение обновления узла.
-          updFut.onComplete {
-            // Всё хорошо, тихо залоггировать.
-            case _: Success[_] =>
-              LOGGER.debug(s"$logPrefix Initialized new contract[${mc2.id}] for node.")
-            // Не удалось сохранить contract_id в ноду, откатить свежесозданный ордер
-            case _: Failure[_] =>
-              for (id <- mc2.id) {
-                slick.db.run {
-                  mOrders.deleteById(id)
-                }
-              }
-              LOGGER.error(s"$logPrefix Rollback contact[${mc2.id}] init, because unable to update MNode.")
-          }
-
-          updFut
-        }
-
-      } yield {
-        EnsuredNodeContract(mc2, mnode2)
+      slick.db.run {
+        initNodeContract(mnode)
       }
     }
   }
+
+
+  def initNodeContract(mnode: MNode) = {
+    lazy val logPrefix = s"initNodeContract(${mnode.idOrNull}):"
+
+    val encDbio = for {
+      // Создать новый контракт в БД биллинга
+      mc2 <- {
+        val mc = MContract()
+        mContracts.insertOne(mc)
+      }
+      if mc2.id.nonEmpty
+
+      // Сохранить id свежесозданного контракта в текущую ноду
+      mnode2 <- DBIO.from {
+        LOGGER.trace(s"$logPrefix Init contract#${mc2.id.orNull}")
+
+        mNodes.tryUpdate(mnode) { mnode0 =>
+          mnode0.copy(
+            billing = mnode0.billing.copy(
+              contractId = mc2.id
+            )
+          )
+        }
+      }
+    } yield {
+      LOGGER.debug(s"$logPrefix Done, contract#${mc2.id.orNull}")
+      EnsuredNodeContract(mc2, mnode2)
+    }
+    encDbio.transactionally
+  }
+
 
   /** Поиск ордера-корзины. */
   def getCartOrder(contractId: Gid_t) = getLastOrder(contractId, MOrderStatuses.Draft)
@@ -352,20 +328,6 @@ class Bill2Util @Inject() (
   }
 
 
-  /** Найти корзину и очистить её. */
-  def clearCart(contractId: Gid_t): DBIOAction[Int, NoStream, RWT] = {
-    val a = for {
-      cartOrderOpt    <- getCartOrder(contractId)
-      cartOrderIdOpt   = cartOrderOpt.flatMap(_.id)
-      itemsDeleted    <- maybeDeleteOrder( cartOrderIdOpt )
-    } yield {
-      itemsDeleted
-    }
-    // Явно требуем транзакцию, чтобы избежать смены состояния items/orders во время обработки.
-    a.transactionally
-  }
-
-
   def ensureCart(contractId: Gid_t, status0: MOrderStatus = MOrderStatuses.Draft): DBIOAction[MOrder, NoStream, RW] = {
     getLastOrder(contractId, status0).flatMap { orderOpt =>
       ensureCartOrder(orderOpt, contractId, status0)
@@ -388,36 +350,6 @@ class Bill2Util @Inject() (
         order2
       }
     } { DBIO.successful }
-  }
-
-  /** Нулевая цена. */
-  def zeroPrice: MPrice = {
-    MPrice(0L, MCurrencies.default)
-  }
-
-  /** Нулевой прайсинг размещения. */
-  def zeroPricing: MGetPriceResp = {
-    val prices = zeroPrice :: Nil
-    MGetPriceResp(prices)
-  }
-  def zeroPricingFut = Future.successful( zeroPricing )
-
-
-  def getAdvPricing(prices: Iterable[MPrice]): MGetPriceResp = {
-    // Если есть разные валюты, то операция уже невозможна.
-    if (prices.nonEmpty) {
-      MGetPriceResp(prices)
-    } else {
-      zeroPricing
-    }
-  }
-
-
-  /** Найти все item'ы указанного ордера. */
-  def orderItemsFut(orderId: Gid_t): Future[Seq[MItem]] = {
-    slick.db.run {
-      mItems.findByOrderId(orderId)
-    }
   }
 
 
@@ -635,13 +567,6 @@ class Bill2Util @Inject() (
       }
     }
   }
-
-  sealed case class ForceFinalizeOrderRes(
-                                          closedOrder         : MOrder,
-                                          skippedCartOpt      : Option[MOrder],
-                                          newBalances         : Map[MCurrency, MBalance],
-                                          okItemsCount        : Int
-                                         )
 
   /**
     * Принудительное исполнение ордера.
@@ -934,26 +859,159 @@ class Bill2Util @Inject() (
     * @return Future с итогом работы.
     *         Если Future(None), то нет возможности получить данные по ресиверу.
     */
-  def prepareMoneyReceiver(nodeId: String): Future[Option[EnsuredNodeContract]] = {
+  def prepareMoneyReceiver(nodeId: String): Future[EnsuredNodeContract] = {
+    lazy val logPrefix = s"prepareMoneyReceiver($nodeId)#${System.currentTimeMillis()}:"
+    LOGGER.trace(s"$logPrefix Starting")
+
     // Организовать сборку данных по контракту получателя.
-    val fut0 = for {
-      rcvrNodeOpt <- mNodesCache.getById( nodeId )
-      rcvrNode    =  rcvrNodeOpt.get
+    for {
+
+      // Гуляем по графу в поисках узла-получателя денег. Это узел с контрактом или узел-юзер.
+      mrCandidateNodes <- mNodesCache.walk(List.empty[MNode], Set(nodeId)) { (acc0, mnode) =>
+        if (
+          mnode.billing.contractId.nonEmpty ||
+          (mnode.common.ntype ==* MNodeTypes.Person)
+        ) {
+          // Это подходящий узел, запихнуть его в акк.
+          LOGGER.trace(s"$logPrefix Found node#${mnode.idOrNull} contract#${mnode.billing.contractId.orNull}")
+          val acc2 = mnode :: acc0
+          (acc2, Set.empty)
+        } else if (acc0.isEmpty) {
+          // Этот узел не подходит и подходящих найденных кандидатов нет, поэтому вернуть ownerIds
+          val nextIds = mnode.edges
+            .withPredicateIterIds(MPredicates.OwnedBy)
+            .toSet
+          LOGGER.trace(s"$logPrefix Looking for parent-nodes of #${mnode.idOrNull}: [${nextIds.size}] - ${nextIds.mkString(" ")}")
+          (acc0, nextIds)
+        } else {
+          // Узел не подходит, и уже есть найденные подходящие узлы-кандидаты.
+          LOGGER.trace(s"$logPrefix Skipping #${mnode.idOrNull}, nodes already found.")
+          (acc0, Set.empty)
+        }
+      }
+
+      // Надо разобраться, есть ли среди узлов-кандидатов подходящий узел-получатель для денег.
+      // Поискать первый законтрактованный узел, или поискать юзера и инициализировать контракт.
+      // Если нет подходящих получателей, то заюзать узел CBCA для получения денег.
+      // Для сложных схем это может быть неудобно или не прокатить, но пусть будет так.
+
+      rcvrNode <- {
+        LOGGER.trace(s"$logPrefix Found ${mrCandidateNodes.length} candidate-nodes for money receivers.")
+        if (mrCandidateNodes.isEmpty) {
+          // Не найдено ни одного узла-кандидата, вероятно суперюзеры создали и разместили какой-то узел в выдаче.
+          val cbcaNodeId = bill2Conf.CBCA_NODE_ID
+          val r = mNodesCache.getById( cbcaNodeId )
+            .map(_.get)
+          LOGGER.warn(s"$logPrefix Not money-rcvrs, will drop money to CBCA#$cbcaNodeId")
+          r
+        } else {
+          // Есть хотя бы один узел-кандидат. Выбрать наиболее подходящий узел из списка кандидатов.
+          // TODO Нужен нормальный алгоритм отбора кандидатов для сложных сценариев, например юзер-владелец-бенефициар + какие-то юзеры-модераторы узла.
+          // Ищем первый законтактованный узел. Если его нет, то берём первый попавшийся узел.
+          val r = mrCandidateNodes
+            .find(_.billing.contractId.nonEmpty)
+            .getOrElse( mrCandidateNodes.head )
+          LOGGER.trace(s"$logPrefix Money rcvr => ${r.idOrNull} contractId#${r.billing.contractId.orNull}")
+          Future.successful(r)
+        }
+      }
+
       enc         <- ensureNodeContract(rcvrNode)
+
     } yield {
-      Some(enc)
-    }
-    // Ресивер денег может быть не готов к профиту, но это невероятная ситуация.
-    fut0.recover { case _: NoSuchElementException =>
-      LOGGER.warn(s"prepareMoneyReceiver($nodeId): Receiver node not found/not exists.")
-      None
+      LOGGER.debug(s"$logPrefix => Money rcvr#${enc.mnode.idOrNull}, contract#${enc.mc.id.orNull}")
+      enc
     }
   }
 
 
-  /** Контейнер результата экшена аппрува item'а. */
-  sealed case class ApproveItemResult(override val mitem: MItem)
-    extends IMItem
+  /** Распедалить по бенефициарам деньги в случае проведения указанного item'а.
+    *
+    * @param mitem Item, который планируется проводить.
+    * @return Список данные по узлам-бенефециарам, куда пойдёт сколько денег.
+    */
+  def prepareMoneyReceivers(mitem: MItem): Future[List[MoneyRcvrInfo]] = {
+    // Нужна Map[nodeId -> EnsuredNodeContract] в зависимости от itype, тарифа (комиссии s.io) и прочего.
+    lazy val logPrefix = s"prepareMoneyReceivers(${mitem.id.orNull}):"
+    if (mitem.price.amount <= 0) {
+      LOGGER.trace(s"$logPrefix Zero price - no money receivers")
+      Future.successful( Nil )
+
+    } else {
+      mitem
+        .rcvrIdOpt
+        .filter { rcvrId =>
+          val r = !mitem.iType.moneyRcvrOnlyCbca &&
+                  (rcvrId !=* bill2Conf.CBCA_NODE_ID)
+          LOGGER.trace(s"$logPrefix rcvrId#$rcvrId Money rcvr ONLY cbca?$r")
+          r
+        }
+        .fold {
+          // На item'ах данного типа все деньги должны сливаются в узел CBCA без учёта тарифа.
+          val mrNodeId = bill2Conf.CBCA_NODE_ID
+          LOGGER.trace(s"$logPrefix money rcrv = $mrNodeId == cbca")
+          for {
+            enc <- prepareMoneyReceiver(mrNodeId)
+          } yield {
+            MoneyRcvrInfo(mitem.price, enc) :: Nil
+          }
+        } { rcvrId =>
+          for {
+            mnodeOpt <- mNodesCache.getById(rcvrId)
+            mnode = mnodeOpt.get
+            tfDaily <- tfDailyUtil.nodeTf( mnode )
+
+            // На руках есть тариф. Надо понять, как распределять деньги между ресивером и CBCA.
+
+            // Вычисляем итоговую комиссию s.io:
+            comissionPc = tfDaily.comissionPc
+              .getOrElse( tfDailyUtil.COMISSION_DFLT )
+
+            // Является ли cbca получателем денег?
+            (cbcaComissedPriceOpt0, rcvrPriceOpt0) = {
+              LOGGER.trace(s"$logPrefix item price=${mitem.price} comission=$comissionPc")
+              if (comissionPc >= tfDailyUtil.COMISSION_FULL) {
+                // Все деньги улетают в CBCA
+                (Some(mitem.price), None)
+              } else if (comissionPc > 0d) {
+                // Делим деньги между CBCA и узлом. Комиссию округляем вниз, и вычисляем премию узла вычитанием комисси.
+                val comissionPrice = mitem.price * comissionPc
+                val retainedPrice = mitem.price plusAmount -comissionPrice.amount
+                LOGGER.trace(s"$logPrefix Split price: cbca=>$comissionPrice rcvr#$rcvrId=>$retainedPrice")
+                (Some(comissionPrice), Some(retainedPrice))
+              } else {
+                // Все деньги уходят узлу-ресиверу.
+                LOGGER.warn(s"$logPrefix Comission==0, ALL money going to node#$rcvrId")
+                (None, Some(mitem.price))
+              }
+            }
+
+            // Подготовить данные по всем бенефициарам:
+            resp <- Future.traverse {
+              (bill2Conf.CBCA_NODE_ID -> cbcaComissedPriceOpt0) ::
+              (rcvrId                 -> rcvrPriceOpt0) ::
+              Nil
+            } { case (nodeId, priceOptRaw) =>
+              // Чтобы гарантировано не было неправильных или нулевых транзакций, фильтруем результаты
+              val priceOpt = priceOptRaw
+                .filter(_.amount > 0)
+              FutureUtil.optFut2futOpt(priceOpt) { mprice =>
+                for (enc <- prepareMoneyReceiver(nodeId)) yield {
+                  val mri = MoneyRcvrInfo(mprice, enc)
+                  Some( mri )
+                }
+              }
+            }
+
+          } yield {
+            val resp2 = resp.flatten
+            LOGGER.debug(s"$logPrefix Finally, found ${resp2.length} money-rcvrs: ${resp2.iterator.map{ mri => s"${mri.price} -> c#${mri.enc.mc.id.orNull} node#${mri.enc.mnode.idOrNull}" }.mkString("\n ")}")
+            resp2
+          }
+        }
+    }
+  }
+
 
   /**
     * Аппрув модерация item'а.
@@ -971,24 +1029,7 @@ class Bill2Util @Inject() (
       mitem0 <- _prepareAwaitingItem(itemId)
 
       // Запустить В ФОНЕ вне транзакции сбор базовой инфы о получателе денег. "mr" означает "Money Receiver".
-      mrInfoOptFut: Future[Option[EnsuredNodeContract]] = {
-        if (mitem0.price.amount <= 0) {
-          Future.successful( None )
-        } else {
-          val mrNodeId = if (mitem0.iType.moneyRcvrIsCbca) {
-            CBCA_NODE_ID
-
-          } else {
-            mitem0.rcvrIdOpt.getOrElse {
-              val cbcaNodeId = CBCA_NODE_ID
-              LOGGER.warn(s"$logPrefix Item has itype=${mitem0.iType}, rcvr is NOT cbca, but item.rcvrIdOpt is empty! Money receiver will be CBCA $cbcaNodeId")
-              cbcaNodeId
-            }
-          }
-          LOGGER.trace(s"$logPrefix Money receiver => $mrNodeId")
-          prepareMoneyReceiver(mrNodeId)
-        }
-      }
+      mrsFut = prepareMoneyReceivers(mitem0)
 
       // Получить и заблокировать баланс покупателя
       balance0 <- _item2balance(mitem0)
@@ -999,52 +1040,56 @@ class Bill2Util @Inject() (
       // Запустить обновление полностью на стороне БД.
       mitem2 <- {
         LOGGER.debug(s"$logPrefix Buyer blocked balance[${balance0.id.orNull}] freed ${mitem0.price.amount}: ${balance0.blocked} => ${usrAmtBlocked2.orNull} ${balance0.price.currency}")
-        val mitem1 = mitem0.copy(
-          status      = approvedItemStatus( mitem0.iType ),
-          dateStatus  = OffsetDateTime.now()
-        )
-        mItems.query
-          .filter(_.id === itemId)
-          .map { i =>
-            (i.status, i.dateStatus)
-          }
-          .update((mitem1.status, mitem1.dateStatus))
-          .filter(_ ==* 1)
-          .map(_ => mitem1)
+        val status2 = approvedItemStatus( mitem0.iType )
+        val dateStatus2 = OffsetDateTime.now()
+
+        for {
+          rowsUpdated <- mItems.query
+            .filter(_.id === itemId)
+            .map { i =>
+              (i.status, i.dateStatus)
+            }
+            .update((status2, dateStatus2))
+          if rowsUpdated ==* 1
+        } yield {
+          LOGGER.trace(s"$logPrefix item#$itemId updated status => $status2")
+          mitem0.copy(
+            status      = status2,
+            dateStatus  = dateStatus2,
+          )
+        }
       }
 
       // Залить деньги получателю денег, если возможно.
-      mrInfoOpt <- DBIO.from( mrInfoOptFut )
+      mrs <- DBIO.from( mrsFut )
+
+      // Организовать зачисление денег на счета бенефициаров:
       _ <- {
         LOGGER.trace(s"$logPrefix item[${mitem2.id.orNull}] status: ${mitem0.status} => ${mitem2.status}")
 
-        mrInfoOpt.fold [DBIOAction[Option[MBalance], NoStream, RWT]] {
+        if (mrs.isEmpty) {
           LOGGER.warn(s"$logPrefix Money income skipped, so they are lost.")
           DBIO.successful(None)
-
-        } { mrInfo =>
-          // Есть получатель финансов, зачислить ему на необходимый баланс.
-          val price = mitem2.price
-          // TODO Отработать комиссию с item'а здесь? Если да, то откуда её брать? С тарифа узла и типа item'а?
-          for {
-            // Найти/создать кошелек получателя денег
-            mrBalance0    <- ensureBalanceFor(mrInfo.mc.id.get, price.currency)
-            // Зачислить деньги на баланс.
-            // TODO В будущем, когда будет нормальная торговля между юзерами, надо будет проводить какие-то транзакции на стороне seller'а.
-            // TODO И по идее надо будет зачислять селлеру как blocked, т.к. продавца надо держать на поводке.
-            mrAmount2Opt  <- mBalances.incrAmountBy(mrBalance0.id.get, price.amount)
-            // seller-транзакцию не создаём, т.к. она на раннем этапе не нужна: будет куча ненужного мусора в txn-таблице.
-            // Возможно, транзакции потом будут храниться в elasticsearch, в т.ч. для статистики.
-          } yield {
-            val mrAmount2 = mrAmount2Opt.get
-            LOGGER.debug(s"$logPrefix Money receiver[${mrInfo.mnode.id.orNull}] contract[${mrInfo.mc.id.orNull}] balance[${mrBalance0.id.orNull}] updated: ${mrBalance0.blocked} + ${price.amount} => $mrAmount2 ${mrBalance0.price.currency}")
-            val mrBalance1 = mrBalance0.copy(
-              price = mrBalance0.price.copy(
-                amount = mrAmount2
-              )
-            )
-            Some(mrBalance1)
+        } else {
+          // Есть бенефициары, зачислить им всем на балансы.
+          val actions = for (mr <- mrs) yield {
+            // TODO Отработать комиссию с item'а здесь? Если да, то откуда её брать? С тарифа узла и типа item'а?
+            for {
+              // Найти/создать кошелек получателя денег
+              mrBalance0    <- ensureBalanceFor(mr.enc.mc.id.get, mr.price.currency)
+              // Зачислить деньги на баланс.
+              // TODO В будущем, когда будет нормальная торговля между юзерами, надо будет проводить какие-то транзакции на стороне seller'а.
+              // TODO И по идее надо будет зачислять селлеру как blocked, т.к. продавца надо держать на поводке.
+              mrAmount2Opt  <- mBalances.incrAmountBy(mrBalance0.id.get, mr.price.amount)
+              // seller-транзакцию не создаём, т.к. она на раннем этапе не нужна: будет куча ненужного мусора в txn-таблице.
+              // Возможно, транзакции потом будут храниться в elasticsearch, в т.ч. для статистики.
+            } yield {
+              // foreach в виде map, т.к. DBIO не подразумевает foreach
+              val mrAmount2 = mrAmount2Opt.get
+              LOGGER.debug(s"$logPrefix Money receiver[${mr.enc.mnode.id.orNull}] contract[${mr.enc.mc.id.orNull}] balance[${mrBalance0.id.orNull}] updated: ${mrBalance0.blocked} + ${mr.price.amount} => $mrAmount2 ${mrBalance0.price.currency}")
+            }
           }
+          DBIO.seq(actions: _*)
         }
       }
 
@@ -1091,10 +1136,6 @@ class Bill2Util @Inject() (
     dbAction.transactionally
   }
 
-
-  /** Результат исполнения экшена refuseItemAction(). */
-  sealed case class RefuseItemResult(override val mitem: MItem, mtxn: MTxn)
-    extends IMItem
 
   /**
     * Item не прошел модерацию или продавец/поставщик отказал по какой-то [уважительной] причине.
@@ -1244,18 +1285,6 @@ class Bill2Util @Inject() (
       .map(_.contractId)
       .result
       .headOption
-  }
-
-
-  /**
-    * У админов есть бесплатное размещение.
-    * Код обработки бесплатного размещения вынесен сюда.
-    */
-  def maybeFreePricing(forceFree: Boolean)(f: => Future[MGetPriceResp]): Future[MGetPriceResp] = {
-    if (forceFree)
-      zeroPricingFut
-    else
-      f
   }
 
 
@@ -1928,6 +1957,39 @@ class Bill2Util @Inject() (
   }
 
 }
+
+
+object Bill2Util {
+
+  sealed case class EnsuredNodeContract(mc: MContract, mnode: MNode)
+
+  sealed case class ForceFinalizeOrderRes(
+                                          closedOrder         : MOrder,
+                                          skippedCartOpt      : Option[MOrder],
+                                          newBalances         : Map[MCurrency, MBalance],
+                                          okItemsCount        : Int
+                                         )
+
+  /** Модель инфы по получателю денег: кол-во денег и описание узла с контрактом.
+    *
+    * @param price Цена, которая отходит указанному бенефициару.
+    * @param enc Данные по узлу и его контракту.
+    */
+  final case class MoneyRcvrInfo(
+                                  price : MPrice,
+                                  enc   : EnsuredNodeContract
+                                )
+
+  /** Контейнер результата экшена аппрува item'а. */
+  sealed case class ApproveItemResult(override val mitem: MItem)
+    extends IMItem
+
+  /** Результат исполнения экшена refuseItemAction(). */
+  sealed case class RefuseItemResult(override val mitem: MItem, mtxn: MTxn)
+    extends IMItem
+
+}
+
 
 /** Интерфейс для DI. */
 trait IBill2UtilDi {

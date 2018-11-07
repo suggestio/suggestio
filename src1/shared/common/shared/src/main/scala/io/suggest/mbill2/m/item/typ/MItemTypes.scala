@@ -101,12 +101,18 @@ object MItemType {
 
   implicit class ItemTypeOpsExt(val itype: MItemType) extends AnyVal {
 
-    /** Является ли ресивером денег CBCA?
-      * Для рекламных размещений внутри suggest.io -- она.
-      * Для прочих возможных сделок -- нужно анализировать содержимое MItem.rcvrIdOpt.
+    /** Является ли ресивером денег только CBCA?
+      * Для рекламных гео-размещений внутри suggest.io -- она.
+      * 2018-10-07 Для платных размещений в узлах - распределение с учётом тарифа (комиссии) целевого узла.
       */
-    def moneyRcvrIsCbca: Boolean = {
-      true
+    def moneyRcvrOnlyCbca: Boolean = {
+      itype match {
+        case MItemTypes.GeoLocCaptureArea |
+             MItemTypes.GeoTag |
+             MItemTypes.GeoPlace =>
+          true
+        case _ => false
+      }
     }
 
     /** Можно ли "прерывать" item данного типа?
@@ -122,7 +128,8 @@ object MItemType {
     /** Это какой-либо теггинг? */
     def isTag: Boolean = {
       itype match {
-        case MItemTypes.GeoTag | MItemTypes.TagDirect => true
+        case MItemTypes.GeoTag |
+             MItemTypes.TagDirect => true
         case _ => false
       }
     }
@@ -140,14 +147,15 @@ object MItemType {
 
     def sendToMdrOnOrderClose = {
       itype match {
-        case MItemTypes.GeoLocCaptureArea | MItemTypes.BalanceCredit => false
+        case MItemTypes.GeoLocCaptureArea |
+             MItemTypes.BalanceCredit => false
         case _ => true
       }
     }
 
     /** @return true когда требуется/подразумевается стадия аппрува s.io в ЖЦ item'а. */
     def isApprovable: Boolean =
-      _isBalanceCredit  // Юзер просто закидывает деньги себе на счёт, аппрува для этого не требуется.
+      !_isBalanceCredit  // Юзер просто закидывает деньги себе на счёт, аппрува для этого не требуется.
 
   }
 

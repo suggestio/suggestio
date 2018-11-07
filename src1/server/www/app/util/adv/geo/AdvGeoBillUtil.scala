@@ -25,7 +25,7 @@ import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import util.adn.NodesUtil
 import util.adv.AdvUtil
-import util.billing.{Bill2Util, BillDebugUtil}
+import util.billing.{Bill2Conf, BillDebugUtil}
 
 import scala.concurrent.Future
 
@@ -38,7 +38,7 @@ import scala.concurrent.Future
   * Через год сюда приехал биллинг ресиверов в попапах.
   */
 class AdvGeoBillUtil @Inject() (
-                                 bill2Util                           : Bill2Util,
+                                 bill2Conf                           : Bill2Conf,
                                  billDebugUtil                       : BillDebugUtil,
                                  advUtil                             : AdvUtil,
                                  nodesUtil                           : NodesUtil,
@@ -57,7 +57,7 @@ class AdvGeoBillUtil @Inject() (
     * id узла, с которого надо брать посуточный тариф для размещения на карте.
     * По идее, тут всегда узел CBCA.
     */
-  private def GEO_TF_SRC_NODE_ID = bill2Util.CBCA_NODE_ID
+  private def GEO_TF_SRC_NODE_ID = bill2Conf.CBCA_NODE_ID
 
   /**
     * Посчитать мультипликатор стоимости на основе даты и радиуса размещения.
@@ -194,7 +194,7 @@ class AdvGeoBillUtil @Inject() (
 
         // Для бесплатных размещений надо выставлять нулевую цену.
         val price = if (isFreeAdv)
-          bill2Util.zeroPrice
+          bill2Conf.zeroPrice
         else
           term2.price
 
@@ -330,7 +330,7 @@ class AdvGeoBillUtil @Inject() (
     val priceDsl0 = calcAdvGeoPrice(abc)
 
     val gpResp = if (priceDsl0.isEmpty) {
-      bill2Util.zeroPricing
+      bill2Conf.zeroPricing
 
     } else {
       val priceDsl2 = advUtil.prepareForRender(priceDsl0)

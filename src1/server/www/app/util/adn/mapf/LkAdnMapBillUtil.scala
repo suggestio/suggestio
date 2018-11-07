@@ -22,8 +22,7 @@ import models.mctx.Context
 import models.mdt.MDateStartEnd
 import models.mproj.ICommonDi
 import util.adv.AdvUtil
-import util.billing.{Bill2Util, BillDebugUtil, TfDailyUtil}
-
+import util.billing.{Bill2Conf, BillDebugUtil, TfDailyUtil}
 import scala.concurrent.Future
 
 /**
@@ -34,7 +33,7 @@ import scala.concurrent.Future
   */
 @Singleton
 class LkAdnMapBillUtil @Inject() (
-                                   bill2Util                  : Bill2Util,
+                                   bill2Conf                  : Bill2Conf,
                                    billDebugUtil              : BillDebugUtil,
                                    mItems                     : MItems,
                                    mDebugs                    : MDebugs,
@@ -49,7 +48,7 @@ class LkAdnMapBillUtil @Inject() (
   import slick.profile.api._
 
   /** id узла-источника тарифа для рассчёта всего остального. */
-  def TF_NODE_ID: String = bill2Util.CBCA_NODE_ID
+  def TF_NODE_ID: String = bill2Conf.CBCA_NODE_ID
 
 
   def advBillCtx(isSuFree: Boolean, mnode: MNode, res: MLamForm): Future[MAdvBillCtx] = {
@@ -125,7 +124,7 @@ class LkAdnMapBillUtil @Inject() (
 
         // Если status соответствует уже одобренному размещению, то значит цену записывать не требуется.
         val itemPrice = if (isFreeAdv)
-          bill2Util.zeroPrice
+          bill2Conf.zeroPrice
         else
           priceTerm.price
 
@@ -165,7 +164,7 @@ class LkAdnMapBillUtil @Inject() (
   /** Рассчёт ценника размещения. */
   def getPricing(formRes: MLamForm, isSuFree: Boolean, abc: IAdvBillCtx)(implicit ctx: Context): Future[MGetPriceResp] = {
     if (isSuFree) {
-      bill2Util.zeroPricingFut
+      bill2Conf.zeroPricingFut
     } else {
       getPricing(formRes, abc)
     }
