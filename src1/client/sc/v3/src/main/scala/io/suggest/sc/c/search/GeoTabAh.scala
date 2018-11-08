@@ -235,7 +235,8 @@ class GeoTabAh[M](
         }
       ) {
         // Подгрузить ещё тегов.
-        _doNodesSearch( DoNodesSearch(clear = false, ignorePending = false), v0 )
+        val action = DoNodesSearch(clear = false, ignorePending = false)
+        _doNodesSearch( action, v0 )
       } else {
         noChange
       }
