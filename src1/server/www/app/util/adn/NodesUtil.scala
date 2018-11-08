@@ -130,11 +130,18 @@ final class NodesUtil @Inject() (
       edges = MNodeEdges(
         out = {
           personIdOpt.fold[Seq[MEdge]] (Nil) { personId =>
-            val medge = MEdge(
+            val personIdSet = Set(personId)
+            val ownedByEdge = MEdge(
               predicate = MPredicates.OwnedBy,
-              nodeIds   = Set(personId)
+              nodeIds   = personIdSet,
+              // Выставлять создателю порядок, чтобы именно он получал деньги, даже при появлении ещё одного владельца узла.
+              order     = Some(0)
             )
-            MNodeEdges.edgesToMap(medge)
+            val createdByEdge = MEdge(
+              predicate = MPredicates.CreatedBy,
+              nodeIds   = personIdSet
+            )
+            MNodeEdges.edgesToMap(ownedByEdge, createdByEdge)
           }
         }
       )
