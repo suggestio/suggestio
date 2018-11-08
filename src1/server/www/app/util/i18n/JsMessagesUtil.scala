@@ -357,7 +357,7 @@ class JsMessagesUtil @Inject() (
       MC.`Total` ::
       MC.`Cart` ::
       MC.`Reload` ::
-      MC.`Go.to.payment.page` ::
+      MC.`Pay` ::
       MC.`Order.N` ::
       MC.`Bill.id` ::
       MC.`Bill.details` ::

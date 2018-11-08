@@ -23,7 +23,6 @@ import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.search.SearchAh
-import io.suggest.sc.m.hdr.MenuOpenClose
 import io.suggest.sc.v.search.SearchCss
 import japgolly.univeq._
 
@@ -295,18 +294,64 @@ class IndexAh[M](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
-    // Экшен управления менюшкой.
-    case m: MenuOpenClose =>
+    // Экшен управления отображением боковых панелей выдачи.
+    case m: SideBarOpenClose =>
       val v0 = value
-      if (v0.menu.opened !=* m.open) {
-        val v2 = v0.withMenu(
-          v0.menu.withOpened( m.open )
-        )
-        // Обновить URL.
-        val fx = ResetUrlRoute.toEffectPure
-        updated( v2, fx )
-      } else {
-        noChange
+      m.bar match {
+        case MScSideBars.Search =>
+          if (v0.search.isShown ==* m.open) {
+            // Ничего делать не надо - ничего не изменилось.
+            noChange
+
+          } else {
+            // Действительно изменилось состояние отображения панели:
+            var v2 = v0.withSearch(
+              v0.search
+                .withIsShown( m.open )
+            )
+
+            // Не допускать открытости обеих панелей одновременно:
+            if (m.open && v2.menu.opened) {
+              v2 = v2.withMenu(
+                v2.menu.withOpened(false)
+              )
+            }
+
+            // Аккаумулятор сайд-эффектов.
+            val routeFx = ResetUrlRoute.toEffectPure
+
+            // Требуется ли запускать инициализацию карты или списка найденных узлов? Да, если открытие на НЕинициализированной панели.
+            val fxOpt = OptionUtil.maybeOpt(m.open) {
+              SearchAh.maybeInitSearchPanel(v2.search)
+            }
+
+            // Объеденить эффекты:
+            val finalFx = (routeFx :: fxOpt.toList)
+              .mergeEffects
+              .get
+
+            updated(v2, finalFx)
+          }
+
+        case MScSideBars.Menu =>
+          if (v0.menu.opened !=* m.open) {
+            var v2 = v0.withMenu(
+              v0.menu.withOpened( m.open )
+            )
+            // Обновить URL.
+            val fx = ResetUrlRoute.toEffectPure
+
+            // Не допускать открытости обоих панелей одновременно.
+            if (m.open && v2.search.isShown) {
+              v2 = v2.withSearch(
+                v2.search.withIsShown(false)
+              )
+            }
+
+            updated( v2, fx )
+          } else {
+            noChange
+          }
       }
 
 

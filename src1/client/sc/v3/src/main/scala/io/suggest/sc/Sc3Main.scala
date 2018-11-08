@@ -89,10 +89,7 @@ object Sc3Main {
       lkPreLoader.remove()
     }
 
-
     // TODO Добавить обеление фона body.
-
-    // TODO Запустить разные FSM: геолокация, platform, BLE. Переписав их в circuit'ы предварительно.
   }
 
 }

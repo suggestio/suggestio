@@ -7,8 +7,7 @@ import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sc.GetRouterCtlF
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid._
-import io.suggest.sc.m.hdr.{MenuOpenClose, SearchOpenClose}
-import io.suggest.sc.m.inx.{GetIndex, MScIndex, WcTimeOut}
+import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.NodeRowClick
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -132,7 +131,7 @@ class TailAh[M](
       // Проверка поля searchOpened
       if (m.mainScreen.searchOpened !=* currMainScreen.searchOpened) {
         // Вместо патчинга состояния имитируем клик: это чтобы возможные сайд-эффекты обычного клика тоже отработали.
-        fxsAcc ::= SearchOpenClose(m.mainScreen.searchOpened).toEffectPure
+        fxsAcc ::= SideBarOpenClose(MScSideBars.Search, m.mainScreen.searchOpened).toEffectPure
       }
 
       // Смотрим координаты текущей точки.
@@ -158,7 +157,7 @@ class TailAh[M](
 
       // Сверить панель меню открыта или закрыта
       if (m.mainScreen.menuOpened !=* currMainScreen.menuOpened)
-        fxsAcc ::= MenuOpenClose(m.mainScreen.menuOpened).toEffectPure
+        fxsAcc ::= SideBarOpenClose(MScSideBars.Menu, m.mainScreen.menuOpened).toEffectPure
 
       // Сверить focused ad id:
       if (

@@ -38,3 +38,12 @@ case class WcTimeOut(timestamp: Long) extends IIndexAction
 
 /** Команда к ребилду текущего инстанса ScCss. */
 case object ScCssReBuild extends IIndexAction
+
+
+/** Управление открытием-сокрытием какой-либо боковой панели.
+  *
+  * @param bar Панель, которую надо открыть/закрыть.
+  * @param open Открыть панель?
+  */
+case class SideBarOpenClose(bar: MScSideBar, open: Boolean) extends IIndexAction
+

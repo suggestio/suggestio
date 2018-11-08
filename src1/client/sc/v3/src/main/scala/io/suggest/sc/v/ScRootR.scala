@@ -7,7 +7,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.m.MScRoot
-import io.suggest.sc.m.hdr.{MHeaderStates, MenuOpenClose, SearchOpenClose}
+import io.suggest.sc.m.hdr.MHeaderStates
 import io.suggest.sc.m.search.MScSearch
 import io.suggest.sc.styl.{GetScCssF, ScCss}
 import io.suggest.sc.v.grid.GridR
@@ -20,6 +20,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
+import io.suggest.sc.m.inx._
 import io.suggest.sc.v.menu._
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import scalacss.ScalaCssReact._
@@ -78,16 +79,10 @@ class ScRootR (
 
   class Backend($: BackendScope[Props, State]) {
 
-    private def _onOpenSearchSidebar(opened: Boolean): Callback = {
-      dispatchOnProxyScopeCB( $, SearchOpenClose(opened) )
-    }
-    private val _onOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb( _onOpenSearchSidebar )
-
-
-    private def _onOpenMenuSidebar(opened: Boolean): Callback = {
-      dispatchOnProxyScopeCB( $, MenuOpenClose(opened) )
-    }
-    private val _onOpenMenuSidebarF = ReactCommonUtil.cbFun1ToJsCb( _onOpenMenuSidebar )
+    private def _onOpenSideBar(sideBar: MScSideBar, opened: Boolean): Callback =
+      dispatchOnProxyScopeCB( $, SideBarOpenClose(sideBar, opened) )
+    private val _onOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb( _onOpenSideBar(MScSideBars.Search, _: Boolean) )
+    private val _onOpenMenuSidebarF = ReactCommonUtil.cbFun1ToJsCb( _onOpenSideBar(MScSideBars.Menu, _: Boolean) )
 
 
     def render(mrootProxy: Props, s: State): VdomElement = {

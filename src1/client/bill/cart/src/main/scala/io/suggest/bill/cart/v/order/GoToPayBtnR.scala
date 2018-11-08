@@ -61,8 +61,7 @@ class GoToPayBtnR(
           }(
             Mui.SvgIcons.Payment()(),
             HtmlConstants.NBSP_STR,
-            Messages( MsgCodes.`Go.to.payment.page` ),
-            HtmlConstants.ELLIPSIS
+            Messages( MsgCodes.`Pay` )
           )
 
         )

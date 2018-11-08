@@ -129,6 +129,7 @@ object MsgCodes {
   val `Order.number` = "Order.number"
   val `Payment.method` = "Payment.method"
   val `Total.to.pay` = "Total.to.pay"
+  val `Pay` = "Pay"
   val `Total.amount._money` = "Total.amount._money"
   val `_N` = "_N"
   val `Order.0.is.paid` = "Order.0.is.paid"

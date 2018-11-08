@@ -2046,13 +2046,6 @@ object Bill2Util {
 }
 
 
-/** Интерфейс для DI. */
-trait IBill2UtilDi {
-  /** Инстанс DI-поля. */
-  def bill2Util: Bill2Util
-}
-
-
 /** JMX-интерфейс. */
 trait Bill2UtilJmxMBean {
 

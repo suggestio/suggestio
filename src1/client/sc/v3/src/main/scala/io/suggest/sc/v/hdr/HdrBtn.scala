@@ -4,7 +4,7 @@ import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.color.MColorData
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.m.hdr.IScHdrAction
+import io.suggest.sc.m.ISc3Action
 import io.suggest.svg.SvgConst
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^.{< => html, ^ => htmlAttrs}
@@ -49,7 +49,7 @@ trait HdrBtn {
 
   protected[this] def svgPath: String
 
-  protected[this] def _btnClickAction: IScHdrAction
+  protected[this] def _btnClickAction: ISc3Action
 
   protected class Backend($: BackendScope[Props, _]) {
 

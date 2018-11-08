@@ -23,7 +23,6 @@ import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c.{IRespWithActionHandler, JsRouterInitAh, TailAh}
 import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.inx.{IndexAh, WelcomeAh}
-import io.suggest.sc.c.menu.MenuAh
 import io.suggest.sc.c.search._
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m._
@@ -192,8 +191,6 @@ class Sc3Circuit(
 
   private val confRO = internalsRW.zoom(_.conf)
 
-  private val menuRW = indexRW.zoomRW(_.menu) { _.withMenu(_) }
-
   private val platformRW = devRW.zoomRW(_.platform) { _.withPlatform(_) }
 
   private val beaconerRW = devRW.zoomRW(_.beaconer) { _.withBeaconer(_) }
@@ -272,10 +269,6 @@ class Sc3Circuit(
     respWithActionHandlers = respWithActionHandlers,
   )
 
-  private val searchAh = new SearchAh(
-    modelRW       = searchRW
-  )
-
   private val geoTabAh = new GeoTabAh(
     modelRW         = geoTabRW,
     api             = api,
@@ -323,10 +316,6 @@ class Sc3Circuit(
     modelRW     = scGeoLocRW
   )
 
-  private val menuAh = new MenuAh(
-    modelRW = menuRW
-  )
-
   private val platformAh = new PlatformAh(
     modelRW = platformRW
   )
@@ -355,16 +344,12 @@ class Sc3Circuit(
       )
     //}
 
-    // Менюшка. По идее, используется не чаще, чем index.
-    acc ::= menuAh
-
     // События уровня платформы.
     acc ::= platformAh
 
     // Основные события индекса не частые, но доступны всегда:
     acc ::= indexAh
 
-    acc ::= searchAh
     acc ::= sTextAh
     acc ::= geoTabAh    // TODO Объеденить с searchAh
 

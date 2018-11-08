@@ -1,17 +1,12 @@
 package io.suggest.sc.c.search
 
 import diode._
-import io.suggest.common.empty.OptionUtil
-import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.sc.m.ResetUrlRoute
-import io.suggest.sc.m.hdr.SearchOpenClose
 import io.suggest.sc.m.search._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
-import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.leaflet.map.LMap
+import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
-import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -67,47 +62,6 @@ object SearchAh {
   def reDoSearchFx(ignorePending: Boolean): Effect = {
     DoNodesSearch(clear = true, ignorePending = ignorePending)
       .toEffectPure
-  }
-
-}
-
-
-class SearchAh[M](
-                   modelRW        : ModelRW[M, MScSearch]
-                 )
-  extends ActionHandler( modelRW )
-  with Log
-{ ah =>
-
-  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
-
-    // Клик по кнопке открытия поисковой панели.
-    case m: SearchOpenClose =>
-      val v0 = value
-      if (v0.isShown ==* m.open) {
-        // Ничего делать не надо - ничего не изменилось.
-        noChange
-
-      } else {
-        // Действительно изменилось состояние отображения панели:
-        var v2 = v0.withIsShown( m.open )
-
-        // Аккаумулятор сайд-эффектов.
-        val routeFx = ResetUrlRoute.toEffectPure
-
-        // Требуется ли запускать инициализацию карты или списка найденных узлов? Да, если открытие на НЕинициализированной панели.
-        val fxOpt = OptionUtil.maybeOpt(m.open) {
-          SearchAh.maybeInitSearchPanel(v2)
-        }
-
-        // Объеденить эффекты:
-        val finalFx = (routeFx :: fxOpt.toList)
-          .mergeEffects
-          .get
-
-        updated(v2, finalFx)
-      }
-
   }
 
 }

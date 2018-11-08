@@ -13,7 +13,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.routes.IAdvRcvrsMapApi
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.grid.GridLoadAds
-import io.suggest.sc.m.hdr.SearchOpenClose
+import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.{HandleScApiResp, MScRoot}
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
@@ -202,7 +202,7 @@ class GeoTabAh[M](
               v0.data.withSelTagIds( selTagIds2 )
             )
             val gridLoadFx = GridLoadAds(clean = true, ignorePending = true).toEffectPure
-            val closeSearchFx = SearchOpenClose(open = false).toEffectPure
+            val closeSearchFx = SideBarOpenClose(MScSideBars.Search, open = false).toEffectPure
 
             val fx = gridLoadFx >> closeSearchFx
             updated(v2, fx)
