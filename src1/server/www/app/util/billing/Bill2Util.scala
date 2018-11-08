@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import akka.stream.scaladsl.{Keep, Sink}
 import javax.inject.{Inject, Singleton}
 import io.suggest.bill._
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
@@ -867,27 +868,57 @@ class Bill2Util @Inject() (
     for {
 
       // Гуляем по графу в поисках узла-получателя денег. Это узел с контрактом или узел-юзер.
-      mrCandidateNodes <- mNodesCache.walk(List.empty[MNode], Set(nodeId)) { (acc0, mnode) =>
-        if (
-          mnode.billing.contractId.nonEmpty ||
-          (mnode.common.ntype ==* MNodeTypes.Person)
-        ) {
-          // Это подходящий узел, запихнуть его в акк.
-          LOGGER.trace(s"$logPrefix Found node#${mnode.idOrNull} contract#${mnode.billing.contractId.orNull}")
-          val acc2 = mnode :: acc0
-          (acc2, Set.empty)
-        } else if (acc0.isEmpty) {
-          // Этот узел не подходит и подходящих найденных кандидатов нет, поэтому вернуть ownerIds
-          val nextIds = mnode.edges
-            .withPredicateIterIds(MPredicates.OwnedBy)
-            .toSet
-          LOGGER.trace(s"$logPrefix Looking for parent-nodes of #${mnode.idOrNull}: [${nextIds.size}] - ${nextIds.mkString(" ")}")
-          (acc0, nextIds)
-        } else {
-          // Узел не подходит, и уже есть найденные подходящие узлы-кандидаты.
-          LOGGER.trace(s"$logPrefix Skipping #${mnode.idOrNull}, nodes already found.")
-          (acc0, Set.empty)
-        }
+      (mrCandidateNodes, nodesInfoMap) <- mNodesCache.walk(
+        acc0 = List.empty[MNode] -> Map(nodeId -> Set.empty[Int]),
+        ids  = Set(nodeId)
+      ) {
+        case (acc0 @ (nodesAcc0, nodeIdsAcc0), mnode) =>
+          if (
+            mnode.billing.contractId.nonEmpty ||
+            (mnode.common.ntype ==* MNodeTypes.Person)
+          ) {
+            // Это подходящий узел, запихнуть его в акк.
+            LOGGER.trace(s"$logPrefix Found node#${mnode.idOrNull} contract#${mnode.billing.contractId.orNull}")
+            val nodesAcc2 = mnode :: nodesAcc0
+            val acc2 = (nodesAcc2, nodeIdsAcc0)
+            (acc2, Set.empty)
+
+          } else if (nodesAcc0.isEmpty) {
+            // Этот узел не подходит и подходящих найденных кандидатов нет, поэтому вернуть ownerIds
+            val nextOwnEdges = mnode.edges
+              .withPredicateIter( MPredicates.OwnedBy )
+              .toStream
+
+            val nextIds = nextOwnEdges
+              .iterator
+              .flatMap(_.nodeIds)
+              // Этот узел не запрашивался ранее (защита от циклов в графе):
+              .filterNot { nodeIdsAcc0.contains }
+              .toSet
+
+            // Залить в nodeIdsAcc0 данные по узлам и эджам. Надо сохранить sortId для скоринга кандидатов.
+            val nodeIdsAcc2 = nextOwnEdges.foldLeft( nodeIdsAcc0 ) { (xnodeIdsAcc0, e) =>
+              // TODO Opt можно отбрасывать низко-приоритетные эджи прямо тут. Сейчас инфа по всем приоритетам здесь только накапливается с минимальным анализом.
+              val orderSet = e.order.toSet
+              e.nodeIds.foldLeft(xnodeIdsAcc0) { (xxNodeIdsAcc0, nodeId) =>
+                val v2 = xxNodeIdsAcc0
+                  .get( nodeId )
+                  .map(_ ++ orderSet)
+                  .getOrElse( orderSet )
+                xxNodeIdsAcc0.updated(nodeId, v2)
+              }
+            }
+
+            LOGGER.trace(s"$logPrefix Looking for parent-nodes of #${mnode.idOrNull}: [${nextIds.size}] - ${nextIds.mkString(" ")}")
+            val acc2 = (nodesAcc0, nodeIdsAcc2)
+            (acc2, nextIds)
+
+          } else {
+            // Узел не подходит, и уже есть найденные подходящие узлы-кандидаты.
+            // TODO Возможно, это искусственное подавление walk-цикла архитектурно-неверно: ведь на верхних уровнях могут быть более приоритетные деньго-получатели (на более сложных схемах деньго-проведения).
+            LOGGER.trace(s"$logPrefix Skipping #${mnode.idOrNull}, nodes already found.")
+            (acc0, Set.empty)
+          }
       }
 
       // Надо разобраться, есть ли среди узлов-кандидатов подходящий узел-получатель для денег.
@@ -906,12 +937,35 @@ class Bill2Util @Inject() (
           r
         } else {
           // Есть хотя бы один узел-кандидат. Выбрать наиболее подходящий узел из списка кандидатов.
-          // TODO Нужен нормальный алгоритм отбора кандидатов для сложных сценариев, например юзер-владелец-бенефициар + какие-то юзеры-модераторы узла.
-          // Ищем первый законтактованный узел. Если его нет, то берём первый попавшийся узел.
-          val r = mrCandidateNodes
-            .find(_.billing.contractId.nonEmpty)
+          // Поискать сначала по собранным приоритетам узлов из эджей:
+          val prioNodeOpt = {
+            val iter = nodesInfoMap
+              .iterator
+              .filter( _._2.nonEmpty )
+            // Если задан приоритет у хотя бы одного узла, значит он и будет получателем денег.
+            // Чем ниже значение MEdge.order - тем выше приоритет.
+            OptionUtil.maybe(iter.nonEmpty) {
+              iter
+                .map { case (k, vs) => (k, vs.min) }
+                .minBy(_._2)
+                ._1
+            }
+          }
+
+          lazy val nodesMap = OptId.els2idMap[String, MNode]( mrCandidateNodes )
+          val r = prioNodeOpt
+            .flatMap( nodesMap.get )
+            .orElse {
+              // Ищем первый законтактованный узел. Если его нет, то берём первый попавшийся узел.
+              // TODO Этот выбор носит скорее рандомный характер, нежеле осмысленный. Удалить эту ветвь orElse?
+              if (mrCandidateNodes.lengthCompare(1) > 0)
+                LOGGER.warn(s"$logPrefix Multiple owners for money-receive w/o MEdge.order prios: [${mrCandidateNodes.iterator.flatMap(_.id).toSet.mkString(" ")}]. Choosing first contracted...")
+              mrCandidateNodes
+                .find(_.billing.contractId.nonEmpty)
+            }
             .getOrElse( mrCandidateNodes.head )
-          LOGGER.trace(s"$logPrefix Money rcvr => ${r.idOrNull} contractId#${r.billing.contractId.orNull}")
+
+          LOGGER.trace(s"$logPrefix Money rcvr => ${r.idOrNull} contractId#${r.billing.contractId.orNull} prioNode#${prioNodeOpt.orNull}")
           Future.successful(r)
         }
       }
