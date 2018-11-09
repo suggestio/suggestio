@@ -1,6 +1,6 @@
 package io.suggest.sc.v
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiDrawerAnchors, MuiPalette, MuiPaletteTypes, MuiRawTheme, MuiSwipeableDrawer, MuiSwipeableDrawerProps, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiDrawerAnchors, MuiList, MuiPalette, MuiPaletteTypes, MuiRawTheme, MuiSwipeableDrawer, MuiSwipeableDrawerProps, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -210,7 +210,7 @@ class ScRootR (
       }
 
       // Сборка панели меню:
-      val menuSideBarBodyInner = <.div(
+      val menuSideBarBodyInner = MuiList()(
         // Строка входа в личный кабинет
         s.enterLkRowC { enterLkRowR.apply },
 

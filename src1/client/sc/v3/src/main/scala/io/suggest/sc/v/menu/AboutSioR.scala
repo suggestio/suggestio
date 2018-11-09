@@ -3,6 +3,7 @@ package io.suggest.sc.v.menu
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProps}
 import _root_.io.suggest.sc.GetRouterCtlF
+import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.sc.styl.GetScCssF
@@ -42,28 +43,29 @@ class AboutSioR(
     def render(propsValProxy: Props): VdomElement = {
       propsValProxy.value.whenDefinedEl { props =>
         val menuRowsCss = getScCssF().Menu.Rows
-        <.div(
-          menuRowsCss.rowOuter,
 
-          // Это типа ссылка <a>, но уже с выставленным href + go-событие.
-          spaRouter()
-            .link( Sc3Pages.MainScreen(
-              nodeId = Some( props.aboutNodeId )
-            ))(
+        // Это типа ссылка <a>, но уже с выставленным href + go-событие.
+        spaRouter()
+          .link( Sc3Pages.MainScreen(
+            nodeId = Some( props.aboutNodeId )
+          ))(
+            menuRowsCss.rowLink,
+            ^.title := Messages( MsgCodes.`Suggest.io._transcription` ),
 
-              menuRowsCss.rowLink,
-
-              ^.title := Messages( MsgCodes.`Suggest.io._transcription` ),
-
-              // Сборка ссылки для входа туда, куда наверное хочет попасть пользователь.
-
-              <.div(
-                menuRowsCss.rowContent,
-                Messages( MsgCodes.`Suggest.io.Project` )
+            MuiListItem(
+              new MuiListItemProps {
+                override val disableGutters = true
+                override val button = true
+              }
+            )(
+              MuiListItemText()(
+                <.span(
+                  menuRowsCss.rowContent,
+                  Messages( MsgCodes.`Suggest.io.Project` ),
+                )
               )
             )
-
-        )
+          )
       }
     }
   }

@@ -1,21 +1,14 @@
 package io.suggest.sc.v.search
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.color.MColorData
 import io.suggest.css.{Css, CssR}
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.search._
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v.hdr.RightR
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ReactEvent, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
 import scalacss.ScalaCssReact._
-
-import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -41,11 +34,6 @@ class SearchR(
 
 
   class Backend( $: BackendScope[Props, State] ) {
-
-    private def _onClosePanelBtnClick(e: ReactEvent): Callback =
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, SideBarOpenClose(MScSideBars.Search, open = false))
-    private val _onClosePanelBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _onClosePanelBtnClick )
-
 
     def render(props: Props, s: State, children: PropsChildren): VdomElement = {
       val scCss = getScCssF()

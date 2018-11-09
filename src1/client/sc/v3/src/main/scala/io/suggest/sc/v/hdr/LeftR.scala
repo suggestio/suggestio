@@ -1,7 +1,12 @@
 package io.suggest.sc.v.hdr
 
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps}
+import diode.react.ModelProxy
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.styl.GetScCssF
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -9,14 +14,41 @@ import io.suggest.sc.styl.GetScCssF
   * Created: 10.07.17 16:56
   * Description: Компонент кнопки, указывающей вправо (или "вперёд").
   */
-class LeftR( getScCssF: GetScCssF ) extends HdrBtn {
+class LeftR( getScCssF: GetScCssF ) {
 
-  override protected[this] def cssStyle = getScCssF().Header.Buttons.leftCss
+  type Props_t = None.type
+  type Props = ModelProxy[Props_t]
 
-  override protected[this] def _btnClickAction = SideBarOpenClose(MScSideBars.Menu, open = false)
+  class Backend($: BackendScope[Props, Unit]) {
 
-  override protected[this] def svgPath = {
-    """M21.81 25.705c-.233 0-.474-.084-.663-.252l-7.55-6.703c-.214-.188-.336-.46-.336-.748s.123-.558.337-.748l7.55-6.703c.412-.365 1.043-.33 1.412.085.364.413.327 1.045-.085 1.412l-6.708 5.955 6.708 5.955c.412.366.45.998.084 1.412-.198.22-.473.335-.75.335z"""
+    private def _onClosePanelBtnClick(e: ReactEvent): Callback =
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, SideBarOpenClose(MScSideBars.Menu, open = false))
+    private val _onClosePanelBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _onClosePanelBtnClick )
+
+
+    def render(propsProxy: Props): VdomElement = {
+      MuiIconButton {
+        val cssClasses = new MuiIconButtonClasses {
+          override val label = getScCssF().Menu.hideBtn.htmlClass
+        }
+        new MuiIconButtonProps {
+          override val onClick = _onClosePanelBtnClickJsCbF
+          override val classes = cssClasses
+        }
+      }(
+        Mui.SvgIcons.ArrowBackIos()()
+      )
+    }
+
   }
+
+
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
+    .stateless
+    .renderBackend[Backend]
+    .build
+
+  def apply(noneProxy: Props) = component( noneProxy )
 
 }

@@ -1,7 +1,8 @@
 package io.suggest.sc.v.menu
 
+import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.sc.styl.GetScCssF
@@ -43,21 +44,27 @@ class EditAdR(
     def render(propsValProxy: Props): VdomElement = {
       propsValProxy.value.whenDefinedEl { props =>
         val menuRowsCss = getScCssF().Menu.Rows
-        <.div(
-          menuRowsCss.rowOuter,
 
-          <.a(
-            menuRowsCss.rowLink,
-            ^.href := props.scRoutes.controllers.LkAdEdit.editAd( props.adId ).url,
+        <.a(
+          menuRowsCss.rowLink,
+          ^.href := props.scRoutes.controllers.LkAdEdit.editAd( props.adId ).url,
 
-            <.div(
-              menuRowsCss.rowContent,
-              Messages( MsgCodes.`Edit` )
+          // Ссылка на вход или на личный кабинет
+          MuiListItem(
+            new MuiListItemProps {
+              override val disableGutters = true
+              override val button = true
+            }
+          )(
+            MuiListItemText()(
+              <.span(
+                menuRowsCss.rowContent,
+                Messages( MsgCodes.`Edit` )
+              )
             )
-
           )
-
         )
+
       }
     }
   }

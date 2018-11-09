@@ -2,7 +2,6 @@ package io.suggest.sc.v.menu
 
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.color.MColorData
 import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v.hdr.LeftR
@@ -60,7 +59,7 @@ class MenuR(
           menuCss.content,
 
           // Кнопка сокрытия панели влево
-          propsProxy.wrap {_ => Option(MColorData.Examples.WHITE) } ( leftR.applyReusable ),
+          propsProxy.wrap(_ => None)( leftR.apply ),
 
           // Менюшка
           <.div(

@@ -1,7 +1,8 @@
 package io.suggest.sc.v.menu
 
+import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.routes.IJsRouter
@@ -14,6 +15,8 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import scalacss.ScalaCssReact._
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -72,22 +75,27 @@ class EnterLkRowR(
           (r, txt)
         }
 
-        // Ссылка на вход или на личный кабинет
-        <.div(
-          menuRowsCss.rowOuter,
+        // Сборка ссылки для входа туда, куда наверное хочет попасть пользователь.
+        <.a(
+          menuRowsCss.rowLink,
+          ^.href := hrefRoute.url,
 
-          <.a(
-            menuRowsCss.rowLink,
-
-            // Сборка ссылки для входа туда, куда наверное хочет попасть пользователь.
-            ^.href := hrefRoute.url,
-
-            <.div(
-              menuRowsCss.rowContent,
-              Messages( msgCode )
+          // Ссылка на вход или на личный кабинет
+          MuiListItem(
+            new MuiListItemProps {
+              override val disableGutters = true
+              override val button = true
+            }
+          )(
+            MuiListItemText()(
+              <.span(
+                menuRowsCss.rowContent,
+                Messages( msgCode )
+              )
             )
           )
         )
+
       }
 
     }

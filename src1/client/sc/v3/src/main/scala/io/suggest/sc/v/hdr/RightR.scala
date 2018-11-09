@@ -29,8 +29,6 @@ class RightR(
 
 
     def render(propsProxy: Props): VdomElement = {
-      // Стрелка для сворачивания вкладки.
-      //props.wrap { _ => Option(MColorData.Examples.WHITE) } ( rightR.applyReusable ),
       MuiIconButton {
         val cssClasses = new MuiIconButtonClasses {
           override val root = getScCssF().Search.hideBtn.htmlClass

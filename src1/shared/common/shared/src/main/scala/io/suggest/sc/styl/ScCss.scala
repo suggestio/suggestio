@@ -660,6 +660,10 @@ case class ScCss( args: IScCssArgs )
       width( (280 + args.screenInfo.unsafeOffsets.left).px )
     )
 
+    val hideBtn = style(
+      marginLeft( 5.px )
+    )
+
     val content = {
       val minPaddingTopPx = 5
       val uo = args.screenInfo.unsafeOffsets

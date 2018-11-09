@@ -106,13 +106,8 @@ class STextR( getScCssF: GetScCssF ) {
           MuiIconButton {
             val iconBtnCss = new MuiIconButtonClasses {
               override val root = {
-                //val visibility =
-                  if (p.query.isEmpty) Css.Display.INVISIBLE
-                  else Css.Display.VISIBLE
-                //val acc = visibility ::
-                //  TextBarCSS.clearBtnRoot.htmlClass ::
-                //  Nil
-                //acc.mkString( HtmlConstants.SPACE )
+                if (p.query.isEmpty) Css.Display.INVISIBLE
+                else Css.Display.VISIBLE
               }
             }
             new MuiIconButtonProps {
