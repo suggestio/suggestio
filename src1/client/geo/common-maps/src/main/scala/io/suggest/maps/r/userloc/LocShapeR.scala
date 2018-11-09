@@ -2,10 +2,11 @@ package io.suggest.maps.r.userloc
 
 import diode.react.ModelProxy
 import japgolly.scalajs.react.ScalaComponent
-import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.geo.MGeoLoc
 import io.suggest.maps.u.MapIcons
+import io.suggest.react.ReactDiodeUtil
+import io.suggest.spa.OptFastEq
 
 /**
   * Suggest.io
@@ -18,12 +19,17 @@ object LocShapeR {
 
   val component = ScalaComponent
     .builder[ModelProxy[Option[MGeoLoc]]](getClass.getSimpleName)
-    .stateless
+    .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .render_P { userLocOptProxy =>
       userLocOptProxy.value.whenDefinedEl { userLoc =>
         MapIcons.userLocCircle( userLoc )
       }
     }
+    .configure(
+      ReactDiodeUtil.statePropsValShouldComponentUpdate(
+        OptFastEq.Wrapped( MGeoLoc.GeoLocNearbyFastEq )
+      )
+    )
     .build
 
 }

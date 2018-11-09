@@ -73,7 +73,7 @@ class NodeRenderR(
                 MuiCardContent()(
                   MuiTypoGraphy(
                     new MuiTypoGraphyProps {
-                      override val variant = MuiTypoGraphyVariants.headline
+                      override val variant = MuiTypoGraphyVariants.h5
                     }
                   )(
                     Messages( MsgCodes.`Nothing.to.moderate` ),
@@ -86,7 +86,7 @@ class NodeRenderR(
                   <.br,
                   MuiTypoGraphy(
                     new MuiTypoGraphyProps {
-                      override val variant = MuiTypoGraphyVariants.body1
+                      override val variant = MuiTypoGraphyVariants.body2
                     }
                   )(
                     Messages( MsgCodes.`No.incoming.adv.requests` ),

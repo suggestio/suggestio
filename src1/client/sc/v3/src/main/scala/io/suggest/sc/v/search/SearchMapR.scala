@@ -5,7 +5,7 @@ import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.{MGeoLoc, MGeoPoint}
-import io.suggest.maps.m.{HandleMapReady, MGeoMapPropsR, MMapS, MapDragEnd}
+import io.suggest.maps.m._
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.r.userloc.LocShapeR
 import io.suggest.maps.r.{LGeoMapR, MapLoaderMarkerR, RcvrMarkersR, ReactLeafletUtil}
@@ -14,9 +14,8 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.MMapInitState
 import io.suggest.sc.styl.GetScCssF
-import io.suggest.sjs.leaflet.event.DragEndEvent
+import io.suggest.sjs.leaflet.event.{DragEndEvent, Event => LEvent}
 import io.suggest.sjs.leaflet.map.IWhenReadyArgs
-import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import react.leaflet.control.LocateControlR
@@ -48,7 +47,7 @@ class SearchMapR(
   implicit object SearchMapRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.searchCss ===* b.searchCss) &&
-        (a.mapInit ===* b.mapInit)
+      (a.mapInit ===* b.mapInit)
     }
   }
 
@@ -65,15 +64,18 @@ class SearchMapR(
 
   class Backend($: BackendScope[Props, State]) {
 
-    private def _onMapDragEnd(e: DragEndEvent): Callback = {
+    private def _onMapDragEnd(e: DragEndEvent): Callback =
       dispatchOnProxyScopeCB( $, MapDragEnd(distancePx = e.distance) )
-    }
     private val _onMapDragEndOptF = Some( ReactCommonUtil.cbFun1ToJsCb( _onMapDragEnd ) )
 
 
-    private def _onMapReady(e: IWhenReadyArgs): Callback = {
+    //private def _onMapDragStart(e: LEvent): Callback =
+    //  dispatchOnProxyScopeCB( $, MapDragStart )
+    //private val _onMapDragStartOptF = Some( ReactCommonUtil.cbFun1ToJsCb( _onMapDragStart ) )
+
+
+    private def _onMapReady(e: IWhenReadyArgs): Callback =
       dispatchOnProxyScopeCB( $, HandleMapReady(e.target) )
-    }
     private val _onMapReadyOptF = {
       Some( ReactCommonUtil.cbFun1ToJsCb(_onMapReady) )
     }
@@ -103,35 +105,42 @@ class SearchMapR(
           (mapCSS.geomap.htmlClass :: props.searchCss.GeoMap.geomap.htmlClass :: Nil)
             .mkString( HtmlConstants.SPACE )
         )
-        //val someFalse = Some(false)
+        val _stopPropagationF = ReactCommonUtil.stopPropagationCB _
 
-        s.mmapC { mmapProxy =>
-          mmapProxy.wrap { mmap =>
-            MGeoMapPropsR(
-              center        = mmap.center,
-              zoom          = mmap.zoom,
-              locationFound = mmap.locationFound,
-              cssClass      = geoMapCssSome,
-              // Вручную следим за ресайзом, т.к. у Leaflet это плохо получается (если карта хоть иногда бывает ЗА экраном, его считалка размеров ломается).
-              //trackWndResize = someFalse,
-              whenReady     = _onMapReadyOptF,
-              //onDragStart   = _onMapDragStartOptF,
-              onDragEnd     = _onMapDragEndOptF
-            )
-          } { geoMapPropsProxy =>
-            LMapR(
-              LGeoMapR
-                .lmMapSProxy2lMapProps( geoMapPropsProxy )
-                .noAttribution
-            )(
-              tileLayer,
-              locateControl,
-              userLoc,
-              rcvrsGeo,
-              loaderOpt
-            )
+        <.div(
+          ^.onTouchStart  ==> _stopPropagationF,
+          ^.onTouchEnd    ==> _stopPropagationF,
+          ^.onTouchMove   ==> _stopPropagationF,
+          ^.onTouchCancel ==> _stopPropagationF,
+
+          s.mmapC { mmapProxy =>
+            mmapProxy.wrap { mmap =>
+              MGeoMapPropsR(
+                center        = mmap.center,
+                zoom          = mmap.zoom,
+                locationFound = mmap.locationFound,
+                cssClass      = geoMapCssSome,
+                // Вручную следим за ресайзом, т.к. у Leaflet это плохо получается (если карта хоть иногда бывает ЗА экраном, его считалка размеров ломается).
+                //trackWndResize = someFalse,
+                whenReady     = _onMapReadyOptF,
+                //onDragStart   = _onMapDragStartOptF,
+                onDragEnd     = _onMapDragEndOptF,
+              )
+            } { geoMapPropsProxy =>
+              LMapR(
+                LGeoMapR
+                  .lmMapSProxy2lMapProps( geoMapPropsProxy )
+                  .noAttribution
+              )(
+                tileLayer,
+                locateControl,
+                userLoc,
+                rcvrsGeo,
+                loaderOpt
+              )
+            }
           }
-        }
+        )
       }
 
       // Наконец, непосредственный рендер карты:

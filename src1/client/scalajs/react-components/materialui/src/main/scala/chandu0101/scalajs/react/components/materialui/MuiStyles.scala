@@ -38,6 +38,8 @@ trait MuiThemeTypoGraphy extends js.Object {
   val fontFamily: js.UndefOr[js.Array[String]] = js.undefined
   val fontSize: js.UndefOr[Int] = js.undefined
   val htmlFontSiz: js.UndefOr[Int] = js.undefined
+  // https://material-ui.com/style/typography/#migration-to-typography-v2
+  val useNextVariants: js.UndefOr[Boolean] = js.undefined
 }
 
 

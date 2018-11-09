@@ -16,9 +16,9 @@ object MScSearch {
   /** Поддержка FastEq для инстансов [[MScSearch]]. */
   implicit object MScSearchFastEq extends FastEq[MScSearch] {
     override def eqv(a: MScSearch, b: MScSearch): Boolean = {
-      (a.geo        ===* b.geo) &&
-        (a.text     ===* b.text) &&
-        (a.isShown   ==* b.isShown)
+      (a.geo       ===* b.geo)    &&
+      (a.panel     ===* b.panel)  &&
+      (a.text      ===* b.text)
     }
   }
 
@@ -31,18 +31,17 @@ object MScSearch {
   *
   * @param mapInit Состояние инициализации карты.
   * @param text Состояние текстового поиска.
-  * @param currTab Текущий таб на панели поиска.
-  * @param isShown Открыта ли панель поиска на экране?
+  * @param panel Состояние компонента панели на экране для панели поиска?
   */
 case class MScSearch(
                       geo                 : MGeoTabS,
+                      panel               : MSearchPanelS         = MSearchPanelS.default,
                       text                : MScSearchText         = MScSearchText.empty,
-                      isShown             : Boolean               = false,
                     ) {
 
   def withGeo       ( geo: MGeoTabS )                   = copy( geo = geo )
   def withText      ( text: MScSearchText )             = copy( text = text )
-  def withIsShown   ( isShown: Boolean )                = copy( isShown = isShown )
+  def withPanel     ( panel: MSearchPanelS )            = copy( panel = panel )
 
 
   /** Сброс состояния найденных узлов (тегов), если возможно. */

@@ -20,6 +20,9 @@ object ReactCommonUtil {
   def stopPropagationCB(e: ReactEvent): Callback = {
     e.stopPropagationCB
   }
+  def preventDefaultCB(e: ReactEvent): Callback = {
+    e.preventDefaultCB
+  }
 
   def cbFun1ToF[Arg, Res](fun: Arg => CallbackTo[Res]): (Arg) => Res = {
     fun

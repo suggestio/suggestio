@@ -39,7 +39,6 @@ class GeoMapOuterR(
   class Backend($: BackendScope[Props, State]) {
 
     def render(searchCssProxy: Props, s: State, children: PropsChildren): VdomElement = {
-      val _stopPropagationF = ReactCommonUtil.stopPropagationCB _
       val mapTabCSS = getScCssF().Search.Tabs.MapTab
       val searchCss = searchCssProxy.value.searchCss
 
@@ -51,11 +50,6 @@ class GeoMapOuterR(
 
           <.div(
             mapTabCSS.inner,
-
-            ^.onTouchStart  ==> _stopPropagationF,
-            ^.onTouchEnd    ==> _stopPropagationF,
-            ^.onTouchMove   ==> _stopPropagationF,
-            ^.onTouchCancel ==> _stopPropagationF,
 
             // Наконец, непосредственный рендер карты:
             children

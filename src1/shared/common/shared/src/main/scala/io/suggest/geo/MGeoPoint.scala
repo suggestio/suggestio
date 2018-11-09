@@ -1,10 +1,10 @@
 package io.suggest.geo
 
 import boopickle.Default._
+import diode.FastEq
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.GeoConstants.Qs
 import japgolly.univeq.UnivEq
-
 import scalaz.ValidationNel
 import scalaz.syntax.apply._
 
@@ -158,6 +158,13 @@ object MGeoPoint {
     /** Центр СПб, адмиралтейство / штаб ВМФ. */
     def RU_SPB_CENTER = MGeoPoint(lat = 59.93769, lon = 30.30887)
 
+  }
+
+
+  object GeoPointsNearbyFastEq extends FastEq[MGeoPoint] {
+    override def eqv(a: MGeoPoint, b: MGeoPoint): Boolean = {
+      a ~= b
+    }
   }
 
 }

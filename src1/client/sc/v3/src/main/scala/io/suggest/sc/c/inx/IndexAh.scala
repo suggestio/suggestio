@@ -117,8 +117,11 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
         s0 = s0.maybeResetNodesFound
 
         // Если заход в узел с карты, то надо скрыть search-панель.
-        if (s0.isShown && inx.welcome.nonEmpty)
-          s0 = s0.withIsShown( false )
+        if (s0.panel.opened && inx.welcome.nonEmpty) {
+          s0 = s0.withPanel(
+            s0.panel.withOpened( false )
+          )
+        }
 
         // Сбросить флаг mapInit.loader, если он выставлен.
         if (s0.geo.mapInit.loader.nonEmpty)
@@ -130,7 +133,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
 
     val respActionTypes = ctx.m.tryResp.get.respActionTypes
     // Если панель поиск видна, то запустить поиск узлов в фоне.
-    if (i1.search.isShown && !respActionTypes.contains(MScRespActionTypes.SearchNodes))
+    if (i1.search.panel.opened && !respActionTypes.contains(MScRespActionTypes.SearchNodes))
       fxsAcc ::= SearchAh.reDoSearchFx( ignorePending = false )
 
     // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
@@ -211,7 +214,7 @@ class IndexAh[M](
     val ts = System.currentTimeMillis()
     val root = rootRO.value
 
-    val isSearchNodes = root.index.search.isShown
+    val isSearchNodes = root.index.search.panel.opened
     val searchArgs = MAdsSearchReq(
       limit  = Some( GridAh.adsPerReqLimit ),
       genOpt = Some( root.index.state.generation ),
@@ -299,15 +302,17 @@ class IndexAh[M](
       val v0 = value
       m.bar match {
         case MScSideBars.Search =>
-          if (v0.search.isShown ==* m.open) {
+          if (v0.search.panel.opened ==* m.open) {
             // Ничего делать не надо - ничего не изменилось.
             noChange
 
           } else {
             // Действительно изменилось состояние отображения панели:
             var v2 = v0.withSearch(
-              v0.search
-                .withIsShown( m.open )
+              v0.search.withPanel(
+                v0.search.panel
+                  .withOpened( m.open )
+              )
             )
 
             // Не допускать открытости обеих панелей одновременно:
@@ -342,9 +347,12 @@ class IndexAh[M](
             val fx = ResetUrlRoute.toEffectPure
 
             // Не допускать открытости обоих панелей одновременно.
-            if (m.open && v2.search.isShown) {
+            if (m.open && v2.search.panel.opened) {
               v2 = v2.withSearch(
-                v2.search.withIsShown(false)
+                v2.search.withPanel(
+                  v2.search.panel
+                    .withOpened( false )
+                )
               )
             }
 

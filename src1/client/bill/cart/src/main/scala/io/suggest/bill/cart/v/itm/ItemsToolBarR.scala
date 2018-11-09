@@ -73,7 +73,7 @@ class ItemsToolBarR(
                 // Кол-во выбранных элементов:
                 MuiTypoGraphy.component.withKey("n")(
                   new MuiTypoGraphyProps {
-                    override val variant = MuiTypoGraphyVariants.subheading
+                    override val variant = MuiTypoGraphyVariants.subtitle1
                     override val noWrap = true
                   }
                 )(

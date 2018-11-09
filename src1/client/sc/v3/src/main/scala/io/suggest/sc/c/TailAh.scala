@@ -36,7 +36,7 @@ object TailAh {
     */
   def getMainScreenSnapShot(v0: MScRoot): MainScreen = {
     val inxState = v0.index.state
-    val searchOpened = v0.index.search.isShown
+    val searchOpened = v0.index.search.panel.opened
     val currRcvrId = inxState.currRcvrId
 
     // TODO Поддержка нескольких тегов в URL.
@@ -47,7 +47,7 @@ object TailAh {
       // Не рендерить координаты в URL, если находишься в контексте узла, закрыта панель поиска и нет выбранного тега.
       // Это улучшит кэширование, возможно улучшит приватность при обмене ссылками.
       locEnv        = OptionUtil.maybe {
-        currRcvrId.isEmpty || v0.index.search.isShown || selTagIdOpt.nonEmpty
+        currRcvrId.isEmpty || searchOpened || selTagIdOpt.nonEmpty
       }(v0.index.search.geo.mapInit.state.center),
       generation    = Some( inxState.generation ),
       searchOpened  = searchOpened,
@@ -238,7 +238,7 @@ class TailAh[M](
                 )
               )
             )
-            ah.updateMaybeSilent( !v0.index.search.isShown )(v2)
+            ah.updateMaybeSilent( !v0.index.search.panel.opened )(v2)
           }
 
       } { geoLockTimerId =>

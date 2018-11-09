@@ -76,5 +76,4 @@ trait LMapPropsR extends MapOptions {
   // https://github.com/PaulLeCam/react-leaflet/pull/331
   val whenReady: UndefOr[js.Function1[IWhenReadyArgs, _]] = js.undefined
 
-
 }

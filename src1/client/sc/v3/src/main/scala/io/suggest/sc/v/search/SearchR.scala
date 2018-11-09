@@ -49,7 +49,7 @@ class SearchR(
       }( searchMapR.apply )
 
       // Тело текущего таба.
-      val tabContentInner =  <.div(
+      val tabContentInner = <.div(
         // Содержимое вкладки с картой.
         ^.`class` := Css.Display.DISPLAY_BLOCK,
         // Списочек найденных элементов над картой (унесён в ScRoot, т.к. зависит от разных top-level-доступных моделей)

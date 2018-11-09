@@ -39,7 +39,7 @@ class TxnsR {
           // Заголовок:
           MuiTypoGraphy(
             new MuiTypoGraphyProps {
-              override val variant = MuiTypoGraphyVariants.headline
+              override val variant = MuiTypoGraphyVariants.h5
             }
           )(
             Messages( MsgCodes.`Transactions` )

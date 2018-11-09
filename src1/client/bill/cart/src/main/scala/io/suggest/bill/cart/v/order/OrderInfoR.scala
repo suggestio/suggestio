@@ -35,7 +35,7 @@ class OrderInfoR {
             // Заголовок - Заказ N3343 | или Корзина | ...
             MuiTypoGraphy(
               new MuiTypoGraphyProps {
-                override val variant = MuiTypoGraphyVariants.headline
+                override val variant = MuiTypoGraphyVariants.h5
               }
             )(
               morder.id

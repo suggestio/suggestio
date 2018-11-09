@@ -4,7 +4,9 @@ import io.suggest.geo.GeoConstants.GeoLocQs._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import MGeoPoint.JsonFormatters.QS_OBJECT
-import japgolly.univeq.UnivEq
+import diode.FastEq
+import io.suggest.spa.OptFastEq
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -25,6 +27,26 @@ object MGeoLoc {
   @inline implicit def univEq: UnivEq[MGeoLoc] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
+  }
+
+
+  /** Сравнивание Accuracy с отбросом неважной части расстояния. */
+  object AccuracyMNearbyFastEq extends FastEq[Double] {
+    override def eqv(a: Double, b: Double): Boolean = {
+      // Это как бы разница не более/в районе 1 метра.
+      // TODO Безопасно ли? По идее, предел int - 2,4 миллиона км, тут недосягаем.
+      a.toInt ==* b.toInt
+    }
+  }
+  /** Опциональное сравнивание accuracy в метрах с игнором неважной части расстояния. */
+  lazy val AccuracyMOptNearbyFastEq = OptFastEq.Wrapped( AccuracyMNearbyFastEq )
+
+  /** Примерное сравнивание инстансов MGeoLoc с игнором неважных долей координат и расстояния. */
+  object GeoLocNearbyFastEq extends FastEq[MGeoLoc] {
+    override def eqv(a: MGeoLoc, b: MGeoLoc): Boolean = {
+      MGeoPoint.GeoPointsNearbyFastEq.eqv(a.point, b.point) &&
+      AccuracyMOptNearbyFastEq.eqv( a.accuracyOptM, b.accuracyOptM )
+    }
   }
 
 }

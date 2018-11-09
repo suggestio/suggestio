@@ -55,6 +55,13 @@ object DiodeUtil {
       }
     }
 
+
+    object RefValFastEq extends FastEq[AnyRef] {
+      override def eqv(a: AnyRef, b: AnyRef): Boolean = {
+        FastEq.AnyRefEq.eqv(a, b) || FastEq.ValueEq.eqv(a, b)
+      }
+    }
+
   }
 
 

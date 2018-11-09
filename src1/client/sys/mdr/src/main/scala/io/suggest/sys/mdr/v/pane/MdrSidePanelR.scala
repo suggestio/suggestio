@@ -104,7 +104,7 @@ class MdrSidePanelR(
                     val ai = MMdrActionInfo()
                     mdrRowR.PropsVal(
                       actionInfo  = ai,
-                      mtgVariant  = MuiTypoGraphyVariants.headline,
+                      mtgVariant  = MuiTypoGraphyVariants.h5,
                       approveIcon = Mui.SvgIcons.DoneOutline,
                       dismissIcon = Mui.SvgIcons.Warning,
                       mdrPot      = __mdrPot(ai),
@@ -130,7 +130,7 @@ class MdrSidePanelR(
                       )
                       mdrRowR.PropsVal(
                         actionInfo  = ai,
-                        mtgVariant  = MuiTypoGraphyVariants.subheading,
+                        mtgVariant  = MuiTypoGraphyVariants.subtitle1,
                         approveIcon = Mui.SvgIcons.DoneAll,
                         dismissIcon = Mui.SvgIcons.Error,
                         mdrPot      = __mdrPot(ai),
@@ -151,7 +151,7 @@ class MdrSidePanelR(
                           )
                           mdrRowR.PropsVal(
                             actionInfo  = ai,
-                            mtgVariant  = MuiTypoGraphyVariants.body1,
+                            mtgVariant  = MuiTypoGraphyVariants.body2,
                             approveIcon = Mui.SvgIcons.Done,
                             dismissIcon = Mui.SvgIcons.ErrorOutline,
                             mdrPot      = __mdrPot(ai),
@@ -245,7 +245,7 @@ class MdrSidePanelR(
                     )
                     mdrRowR.PropsVal(
                       actionInfo  = ai,
-                      mtgVariant  = MuiTypoGraphyVariants.headline,
+                      mtgVariant  = MuiTypoGraphyVariants.h5,
                       approveIcon = Mui.SvgIcons.DoneAll,
                       dismissIcon = Mui.SvgIcons.ErrorOutline,
                       mdrPot      = __mdrPot(ai),
@@ -268,7 +268,7 @@ class MdrSidePanelR(
                       )
                       mdrRowR.PropsVal(
                         actionInfo  = ai,
-                        mtgVariant  = MuiTypoGraphyVariants.subheading,
+                        mtgVariant  = MuiTypoGraphyVariants.subtitle1,
                         approveIcon = Mui.SvgIcons.Done,
                         dismissIcon = Mui.SvgIcons.Error,
                         mdrPot      = __mdrPot(ai)

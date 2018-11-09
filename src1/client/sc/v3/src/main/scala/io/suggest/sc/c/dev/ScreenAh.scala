@@ -80,7 +80,7 @@ class ScreenAh[M](
       val root = rootRO.value
       for {
         lInstance <- root.index.search.geo.data.lmap
-        if root.index.search.isShown
+        if root.index.search.panel.opened
       } {
         fx >> SearchAh.mapResizeFx( lInstance )
       }

@@ -50,5 +50,3 @@ object OptFastEq {
   }
 
 }
-
-

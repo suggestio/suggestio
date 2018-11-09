@@ -2,8 +2,10 @@ package chandu0101.scalajs.react.components.materialui
 
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom._
+
 import scala.scalajs.js
 import scala.scalajs.js.`|`
+import scala.scalajs.js.annotation.JSName
 
 /**
   * Suggest.io
@@ -35,7 +37,8 @@ trait MuiModalPropsBase extends MuiPropsBase {
   val keepMounted: js.UndefOr[Boolean] = js.undefined
   val manager: js.UndefOr[js.Object] = js.undefined
   val onBackdropClick: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
-  val onClose: js.UndefOr[js.Function2[ReactEvent, String, Unit]] = js.undefined
+  @JSName("onClose")
+  val onClose2: js.UndefOr[js.Function2[ReactEvent, String, Unit]] = js.undefined
   val onEscapeKeyDown: js.UndefOr[js.Function1[ReactKeyboardEvent, Unit]] = js.undefined
   val onRendered: js.UndefOr[js.Function0[Unit]] = js.undefined
   val open: Boolean

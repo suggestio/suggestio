@@ -64,7 +64,7 @@ class MdrErrorsR {
                 val _message = <.span(
                   MuiTypoGraphy(
                     new MuiTypoGraphyProps {
-                      override val variant = MuiTypoGraphyVariants.headline
+                      override val variant = MuiTypoGraphyVariants.h5
                       override val color = MuiColorTypes.secondary
                     }
                   )(
@@ -74,7 +74,7 @@ class MdrErrorsR {
 
                   MuiTypoGraphy(
                     new MuiTypoGraphyProps {
-                      override val variant = MuiTypoGraphyVariants.subheading
+                      override val variant = MuiTypoGraphyVariants.subtitle1
                       override val color = MuiColorTypes.secondary
                     }
                   )(

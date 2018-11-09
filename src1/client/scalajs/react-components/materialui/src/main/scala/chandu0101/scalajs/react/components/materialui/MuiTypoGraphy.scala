@@ -38,15 +38,15 @@ object MuiTypoGraphyProps extends MuiPropsBaseStatic[MuiTypoGraphyProps]
 
 /** Общие поля для [[MuiTypoGraphyProps]] и [[MuiTypoGraphyProps.headlineMapping]]. */
 sealed trait MuiTypoGraphyMappings extends js.Object {
-  val display4: js.UndefOr[String] = js.undefined
-  val display3: js.UndefOr[String] = js.undefined
-  val display2: js.UndefOr[String] = js.undefined
-  val display1: js.UndefOr[String] = js.undefined
-  val headline: js.UndefOr[String] = js.undefined
-  val title: js.UndefOr[String] = js.undefined
-  val subheading: js.UndefOr[String] = js.undefined
-  val body2: js.UndefOr[String] = js.undefined
+  val h1: js.UndefOr[String] = js.undefined
+  val h2: js.UndefOr[String] = js.undefined
+  val h3: js.UndefOr[String] = js.undefined
+  val h4: js.UndefOr[String] = js.undefined
+  val h5: js.UndefOr[String] = js.undefined
+  val h6: js.UndefOr[String] = js.undefined
+  val subtitle1: js.UndefOr[String] = js.undefined
   val body1: js.UndefOr[String] = js.undefined
+  val body2: js.UndefOr[String] = js.undefined
 }
 
 
@@ -103,17 +103,23 @@ trait MuiTypoGraphyHeadlineMapping
 
 /** Values for [[MuiTypoGraphyProps.variant]]. */
 object MuiTypoGraphyVariants {
-  val display4 = "display4"
-  val display3 = "display3"
-  val display2 = "display2"
-  val display1 = "display1"
-  val headline = "headline"
-  val title = "title"
-  val subheading = "subheading"
-  val body2 = "body2"
+  val h1 = "h1"
+  val h2 = "h2"
+  val h3 = "h3"
+  val h4 = "h4"
+  val h5 = "h5"
+  val h6 = "h6"
+
+  val subtitle1 = "subtitle1"
+  val subtitle2 = "subtitle2"
+
   val body1 = "body1"
+  val body2 = "body2"
+
   val caption = "caption"
   val button = "button"
+  val overline = "overline"
+
   val srOnly = "srOnly"
   val inherit = "inherit"
 }

@@ -195,7 +195,7 @@ class ItemsTableBodyR(
                             .getOrElse[VdomElement] {
                               MuiTypoGraphy(
                                 new MuiTypoGraphyProps {
-                                  override val variant = MuiTypoGraphyVariants.subheading
+                                  override val variant = MuiTypoGraphyVariants.subtitle1
                                 }
                               )( nodeName )
                             }
@@ -232,7 +232,7 @@ class ItemsTableBodyR(
             if (orderContent.orderPrices.nonEmpty) {
               val emptyCell = MuiTableCell()()
               val typoProps = new MuiTypoGraphyProps {
-                override val variant = MuiTypoGraphyVariants.subheading
+                override val variant = MuiTypoGraphyVariants.subtitle1
               }
               resAcc ++= List(
                 // spacer
