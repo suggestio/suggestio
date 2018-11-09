@@ -85,11 +85,11 @@ class STextR( getScCssF: GetScCssF ) {
           }
         )(
           MuiInput {
-            val inputCss = new MuiInputClasses {
-              override val root = TextBarCSS.inputRoot.htmlClass
-            }
+            //val inputCss = new MuiInputClasses {
+            //  override val root = TextBarCSS.inputRoot.htmlClass
+            //}
             new MuiInputProps {
-              override val classes = inputCss
+              //override val classes = inputCss
               override val `type` = HtmlConstants.Input.text
               override val onChange = _onInputJsF
               override val placeholder = Messages( MsgCodes.`Search.start.typing` )
@@ -106,13 +106,13 @@ class STextR( getScCssF: GetScCssF ) {
           MuiIconButton {
             val iconBtnCss = new MuiIconButtonClasses {
               override val root = {
-                val visibility =
+                //val visibility =
                   if (p.query.isEmpty) Css.Display.INVISIBLE
                   else Css.Display.VISIBLE
-                val acc = visibility ::
-                  TextBarCSS.clearBtnRoot.htmlClass ::
-                  Nil
-                acc.mkString( HtmlConstants.SPACE )
+                //val acc = visibility ::
+                //  TextBarCSS.clearBtnRoot.htmlClass ::
+                //  Nil
+                //acc.mkString( HtmlConstants.SPACE )
               }
             }
             new MuiIconButtonProps {

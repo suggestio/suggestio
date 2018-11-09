@@ -1,7 +1,12 @@
 package io.suggest.sc.v.hdr
 
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps}
+import diode.react.ModelProxy
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.styl.GetScCssF
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent}
 
 /**
   * Suggest.io
@@ -9,14 +14,45 @@ import io.suggest.sc.styl.GetScCssF
   * Created: 10.07.17 16:56
   * Description: Компонент кнопки, указывающей вправо (или "вперёд").
   */
-class RightR( getScCssF: GetScCssF ) extends HdrBtn {
+class RightR(
+              getScCssF: GetScCssF
+            ) {
 
-  override protected[this] def cssStyle = getScCssF().Header.Buttons.rightCss
+  type Props_t = None.type
+  type Props = ModelProxy[Props_t]
 
-  override protected[this] def _btnClickAction = SideBarOpenClose(MScSideBars.Search, open = false)
+  class Backend($: BackendScope[Props, Unit]) {
 
-  override protected[this] def svgPath: String = {
-    """M14.26 10.3c.235 0 .475.083.665.252l7.55 6.702c.214.188.336.46.336.748s-.12.56-.334.748l-7.55 6.703c-.412.364-1.043.33-1.412-.085-.366-.412-.33-1.046.084-1.412L20.306 18l-6.708-5.954c-.413-.366-.45-.998-.084-1.41.196-.223.473-.338.748-.338z"""
+    private def _onClosePanelBtnClick(e: ReactEvent): Callback =
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, SideBarOpenClose(MScSideBars.Search, open = false))
+    private val _onClosePanelBtnClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _onClosePanelBtnClick )
+
+
+    def render(propsProxy: Props): VdomElement = {
+      // Стрелка для сворачивания вкладки.
+      //props.wrap { _ => Option(MColorData.Examples.WHITE) } ( rightR.applyReusable ),
+      MuiIconButton {
+        val cssClasses = new MuiIconButtonClasses {
+          override val root = getScCssF().Search.hideBtn.htmlClass
+        }
+        new MuiIconButtonProps {
+          override val onClick = _onClosePanelBtnClickJsCbF
+          override val classes = cssClasses
+        }
+      }(
+        Mui.SvgIcons.ArrowForwardIos()()
+      )
+    }
+
   }
+
+
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
+    .stateless
+    .renderBackend[Backend]
+    .build
+
+  def apply(noneProxy: Props) = component( noneProxy )
 
 }

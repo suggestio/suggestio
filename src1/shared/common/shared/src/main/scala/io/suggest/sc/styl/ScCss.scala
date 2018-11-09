@@ -410,6 +410,11 @@ case class ScCss( args: IScCssArgs )
       Root.panelCommon
     )
 
+    /** Кнопка сокрытия панели. */
+    val hideBtn = style(
+      top(-5.px)
+    )
+
     val content = {
       val paddingTopPx = args.screenInfo.unsafeOffsets.top
       style(
@@ -429,24 +434,13 @@ case class ScCss( args: IScCssArgs )
       val bar = style(
         addClassName( _SM_ + "search-bar" ),
         // Равняем полосу input'а с полосой заголовка.
-        marginTop( ScCss.SEARCH_TOP_OFFSET_PX.px )
+        marginTop( ScCss.SEARCH_TOP_OFFSET_PX.px ),
+        display.inlineFlex,
       )
 
       val inputFormControl = style(
         flexDirection.initial,
         width(100.%%)
-      )
-
-      /** Стиль для div-обёртки вокруг input'а. */
-      val inputRoot = style(
-        width( ScCss.SEARCH_INPUT_WIDTH_PX.px )
-      )
-
-      /** Стили для кнопки очистки search-поля. */
-      val clearBtnRoot = style(
-        position.absolute,
-        left( (ScCss.SEARCH_INPUT_WIDTH_PX - 4).px),
-        top(-6.px)
       )
 
     }

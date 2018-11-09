@@ -1,6 +1,6 @@
 package io.suggest.sc.v
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiDrawerAnchors, MuiPalette, MuiPaletteTypes, MuiRawTheme, MuiSwipeableDrawer, MuiSwipeableDrawerProps, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiDrawerAnchors, MuiPalette, MuiPaletteTypes, MuiRawTheme, MuiSwipeableDrawer, MuiSwipeableDrawerProps, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -11,9 +11,9 @@ import io.suggest.sc.m.hdr.MHeaderStates
 import io.suggest.sc.m.search.{MScSearch, MSearchPanelS}
 import io.suggest.sc.styl.{GetScCssF, ScCss}
 import io.suggest.sc.v.grid.GridR
-import io.suggest.sc.v.hdr.HeaderR
+import io.suggest.sc.v.hdr.{HeaderR, RightR}
 import io.suggest.sc.v.inx.WelcomeR
-import io.suggest.sc.v.search.{NodesFoundR, NodesSearchR, STextR, SearchR}
+import io.suggest.sc.v.search.{NodesFoundR, NodesSearchContR, STextR, SearchR}
 import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent}
@@ -21,8 +21,11 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.inx._
 import io.suggest.sc.v.menu._
+import io.suggest.sc.v.search.SearchCss.SearchCssFastEq
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import scalacss.ScalaCssReact._
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -31,19 +34,21 @@ import scalacss.ScalaCssReact._
   * Description: Корневой react-компонент для выдачи третьего поколения.
   */
 class ScRootR (
-                val gridR       : GridR,
-                searchR         : SearchR,
-                sTextR          : STextR,
-                val headerR     : HeaderR,
-                val menuR       : MenuR,
-                val enterLkRowR : EnterLkRowR,
-                val editAdR     : EditAdR,
-                val aboutSioR   : AboutSioR,
-                val welcomeR    : WelcomeR,
-                val blueToothR  : BlueToothR,
+                val gridR               : GridR,
+                searchR                 : SearchR,
+                val sTextR              : STextR,
+                val headerR             : HeaderR,
+                val menuR               : MenuR,
+                val enterLkRowR         : EnterLkRowR,
+                val editAdR             : EditAdR,
+                val aboutSioR           : AboutSioR,
+                val welcomeR            : WelcomeR,
+                val blueToothR          : BlueToothR,
                 val unsafeScreenAreaOffsetR: UnsafeScreenAreaOffsetR,
-                val nodesSearchR: NodesSearchR,
-                getScCssF       : GetScCssF,
+                val nodesSearchContR    : NodesSearchContR,
+                val nodesFoundR         : NodesFoundR,
+                rightR                  : RightR,
+                getScCssF               : GetScCssF,
               ) {
 
   import MScSearch.MScSearchFastEq
@@ -54,7 +59,7 @@ class ScRootR (
   import editAdR.EditAdRPropsValFastEq
   import aboutSioR.AboutSioRPropsValFastEq
   import welcomeR.WelcomeRPropsValFastEq
-  import nodesSearchR.NodesSearchRPropsValFastEq
+  import io.suggest.sc.m.search.MScSearchText.MScSearchTextFastEq
 
   type Props = ModelProxy[MScRoot]
 
@@ -75,6 +80,9 @@ class ScRootR (
                                     dbgUnsafeOffsetsOptC: ReactConnectProxy[unsafeScreenAreaOffsetR.Props_t],
                                     isRenderScC         : ReactConnectProxy[Some[Boolean]],
                                     colorsC             : ReactConnectProxy[MColors],
+                                    sTextC              : ReactConnectProxy[sTextR.Props_t],
+                                    nodesFoundC         : ReactConnectProxy[nodesFoundR.Props_t],
+                                    nodesSearchContC    : ReactConnectProxy[nodesSearchContR.Props_t],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -111,29 +119,39 @@ class ScRootR (
         s.gridPropsOptC { gridR.apply }
       )
 
+      // Наполнение контейнера поиска узлов:
+      val nodeSearchInner = <.div(
+        // Поисковое текстовое поле:
+        MuiToolBar(
+          new MuiToolBarProps {
+            override val disableGutters = true
+          }
+        )(
+          // Элементы поиска:
+          s.sTextC { sTextR.apply },
+
+          // Кнопка сворачивания:
+          mrootProxy.wrap(_ => None)( rightR.apply )
+        ),
+
+        // Панель поиска: контент, зависимый от корневой модели:
+        s.nodesFoundC { nodesFoundR.apply },
+      )
 
       // Нода с единым скроллингом, передаваемая в children для SearchR:
-      val searchBarChild = mrootProxy.wrap { mroot =>
-        val search = mroot.index.search
-        val geo = mroot.index.search.geo
-        nodesSearchR.PropsVal(
-          text = search.text,
-          nodeFound = NodesFoundR.PropsVal(
-            req             = geo.found.req,
-            hasMore         = geo.found.hasMore,
-            selectedIds     = mroot.index.searchNodesSelectedIds,
-            withDistanceTo  = geo.mapInit.state.center,
-            searchCss       = geo.css
-          ),
-          searchCss = search.geo.css
+      val searchBarChild = s.nodesSearchContC {
+        nodesSearchContR(_)(
+          nodeSearchInner
         )
-      }( nodesSearchR.apply )
+      }
 
       // Непосредственно, панель поиска:
       val searchBarBody = s.searchC {
         searchR(_)( searchBarChild )
       }
+
       /*
+      // TODO Не работает нормально сворачивание search-панели, конфликтует с гео-картой.
       val searchSideBar2 = {
         val _onOpen  = _mkSetOpenSideBarCbF( SideBarOpenClose(MScSideBars.Search, open = true) )
         val _onClose = _mkSetOpenSideBarCbF( SideBarOpenClose(MScSideBars.Search, open = false) )
@@ -404,7 +422,24 @@ class ScRootR (
         colorsC = propsProxy.connect { mroot =>
           mroot.index.resp
             .fold(ScCss.COLORS_DFLT)(_.colors)
-        }( FastEqUtil.AnyRefFastEq )
+        }( FastEqUtil.AnyRefFastEq ),
+
+        sTextC = propsProxy.connect(_.index.search.text)( MScSearchTextFastEq ),
+
+        nodesFoundC = propsProxy.connect { mroot =>
+          val geo = mroot.index.search.geo
+          NodesFoundR.PropsVal(
+            req             = geo.found.req,
+            hasMore         = geo.found.hasMore,
+            selectedIds     = mroot.index.searchNodesSelectedIds,
+            withDistanceTo  = geo.mapInit.state.center,
+            searchCss       = geo.css
+          )
+        }( NodesFoundR.NodesFoundRPropsValFastEq ),
+
+        nodesSearchContC = propsProxy.connect { mroot =>
+          mroot.index.search.geo.css
+        }( SearchCssFastEq ),
 
       )
     }
