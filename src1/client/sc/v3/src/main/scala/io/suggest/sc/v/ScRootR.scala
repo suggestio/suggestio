@@ -1,6 +1,6 @@
 package io.suggest.sc.v
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiDrawerAnchors, MuiList, MuiPalette, MuiPaletteTypes, MuiRawTheme, MuiSwipeableDrawer, MuiSwipeableDrawerProps, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiDrawerAnchors, MuiList, MuiPalette, MuiPaletteAction, MuiPaletteBackground, MuiPaletteText, MuiPaletteTypes, MuiRawTheme, MuiSwipeableDrawer, MuiSwipeableDrawerProps, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -24,8 +24,6 @@ import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search.SearchCss.SearchCssFastEq
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import scalacss.ScalaCssReact._
-
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -266,16 +264,33 @@ class ScRootR (
             override val main = fgHex
             override val contrastText = bgHex
           }
+          val paletteText = new MuiPaletteText {
+            override val primary = fgHex
+            override val secondary = bgHex
+          }
+          val palletteBg = new MuiPaletteBackground {
+            override val paper = bgHex
+            override val default = bgHex
+          }
+          val btnsPalette = new MuiPaletteAction {
+            override val active = fgHex
+          }
           val paletteRaw = new MuiPalette {
-            override val primary = primaryColor
-            override val secondary = secondaryColor
-            override val `type` = MuiPaletteTypes.dark
+            //override val common = paletteCommon
+            override val primary      = primaryColor
+            override val secondary    = secondaryColor
+            override val `type`       = MuiPaletteTypes.dark
+            override val text         = paletteText
+            override val background   = palletteBg
+            override val action       = btnsPalette
           }
           val themeRaw = new MuiRawTheme {
             override val palette = paletteRaw
             override val typography = typographyProps
+            //override val shadows = js.Array("none")
           }
           val themeCreated = Mui.Styles.createMuiTheme( themeRaw )
+          //println( JSON.stringify(themeCreated) )
           MuiThemeProvider(
             new MuiThemeProviderProps {
               override val theme = themeCreated

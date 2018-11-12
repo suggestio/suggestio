@@ -34,7 +34,7 @@ trait MuiSwitchProps
   @JSName("onChange")
   val onChange2: js.UndefOr[js.Function2[ReactEventFromInput, Boolean, _]] = js.undefined
   val `type`: js.UndefOr[String] = js.undefined
-  val value: js.UndefOr[String] = js.undefined
+  val value: js.UndefOr[String | Double | Boolean] = js.undefined
 }
 object MuiSwitchProps extends MuiPropsBaseStatic[MuiSwitchProps]
 

@@ -1,5 +1,6 @@
 package io.suggest.sc.v.menu
 
+import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -38,38 +39,43 @@ class UnsafeScreenAreaOffsetR(
 
         val menuRowsCss = getScCssF().Menu.Rows
 
-        <.div(
-          menuRowsCss.rowOuter,
-
-          <.div(
-            menuRowsCss.rowContent,
-            "Unsafe offset",
-
+        // Ссылка на вход или на личный кабинет
+        MuiListItem(
+          new MuiListItemProps {
+            override val disableGutters = true
+            override val button = false
+          }
+        )(
+          MuiListItemText()(
             <.span(
-              ^.`class` := Css.Floatt.RIGHT,
+              menuRowsCss.rowContent,
+              "Unsafe offset",
 
-              // Уменьшение
-              <.a(
-                ^.onClick --> _onIncDecClick(-1),
-                LESSER,
-                MINUS
-              ),
+              <.span(
+                ^.`class` := Css.Floatt.RIGHT,
 
-              NBSP_STR,
+                // Уменьшение
+                <.a(
+                  ^.onClick --> _onIncDecClick(-1),
+                  LESSER,
+                  MINUS
+                ),
 
-              // Увеличение
-              <.a(
-                mtlbr.toString,
                 NBSP_STR,
-                ^.onClick --> _onIncDecClick(1),
-                PLUS,
-                GREATER
+
+                // Увеличение
+                <.a(
+                  mtlbr.toString,
+                  NBSP_STR,
+                  ^.onClick --> _onIncDecClick(1),
+                  PLUS,
+                  GREATER
+                )
               )
             )
-
           )
-
         )
+
       }
     }
 

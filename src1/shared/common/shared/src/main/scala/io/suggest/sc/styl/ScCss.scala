@@ -702,6 +702,12 @@ case class ScCss( args: IScCssArgs )
         textTransform.uppercase
       )
 
+      /** стили для mui-switch в пунктах меню. */
+      val switch = style(
+        float.right,
+        marginTop(-10.px)
+      )
+
     }
 
   }

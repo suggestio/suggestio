@@ -1,7 +1,7 @@
 package io.suggest.sc.v.menu
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import _root_.io.suggest.sc.GetRouterCtlF
 import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import io.suggest.i18n.MsgCodes

@@ -1,20 +1,21 @@
 package io.suggest.sc.v.menu
 
+import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemProps, MuiListItemText, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
 import diode.data.Pot
 import diode.react.ModelProxy
 import io.suggest.ble.beaconer.m.BbOnOff
-import io.suggest.common.html.HtmlConstants
-import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.sc.styl.GetScCssF
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent, raw}
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil
-import io.suggest.react.ReactDiodeUtil.Implicits._
 import scalacss.ScalaCssReact._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil
+import io.suggest.react.ReactDiodeUtil.Implicits._
+import japgolly.scalajs.react.raw.React.Node
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -33,10 +34,13 @@ class BlueToothR(
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    /** Реакция на клики по bluetooth. */
-    private def _btOnOffClick(isEnable: Boolean): Callback = {
-      dispatchOnProxyScopeCB( $, BbOnOff(isEnable, hard = true) )
-    }
+    /** Реакция на клики по bluetooth.
+      * @param isEnable Новое состояние bluetooth. Задаётся в вёрстве, чтобы визуально наблюдаемое состояние
+      *                 четко отражало намерения пользователя.
+      */
+    private def _btOnOffClick(isEnable: Boolean)(e: ReactEvent): Callback =
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, BbOnOff(isEnable, hard = true) )
+
 
     def render(propsProxy: Props): VdomElement = {
       val isEnabledPot = propsProxy.value
@@ -44,53 +48,47 @@ class BlueToothR(
         // Доступно API для bluetooth.
         val scCss = getScCssF()
         val menuRowsCss = scCss.Menu.Rows
+        val isClickDisabled = isEnabledPot.isPending
 
-        <.div(
-          menuRowsCss.rowOuter,
-
-          <.a(
-            menuRowsCss.rowLink,
-
-            // Кликать можно только, когда не pending и есть какое-то реальное состояние.
-            ReactCommonUtil.maybe(!isEnabledPot.isPending) {
-              TagMod(
-                ^.onClick --> _btOnOffClick( !isEnabledNow ),
-                ^.`class` := Css.CLICKABLE
-              )
-            },
-
-            <.div(
+        // Ссылка на вход или на личный кабинет
+        MuiListItem(
+          new MuiListItemProps {
+            override val disableGutters = true
+            override val button = !isClickDisabled
+            override val onClick = {
+              if (isClickDisabled) js.undefined
+              else js.defined {
+                ReactCommonUtil.cbFun1ToJsCb( _btOnOffClick(!isEnabledNow) )
+              }
+            }
+          }
+        )(
+          MuiListItemText()(
+            <.span(
               menuRowsCss.rowContent,
-
-              // Не переводим на другие языки - всегда латиница.
-              MsgCodes.`Bluetooth`,
-
+              MsgCodes.`Bluetooth`
+            ),
+            MuiToolTip {
+              new MuiToolTipProps {
+                override val title: raw.React.Node = Messages( MsgCodes.onOff(isEnabledNow) )
+              }
+            }(
               <.span(
-                ^.`class` := Css.Floatt.RIGHT,
-
-                if (isEnabledPot.isPending) {
-                  // LkPreLoader тут недоступен, поэтому просто многоточие пока рисуем:
-                  TagMod(
-                    ^.title := Messages( MsgCodes.`Please.wait` ),
-                    HtmlConstants.ELLIPSIS
-                  )
-                } else if (isEnabledPot.isFailed) {
-                  isEnabledPot.exceptionOption.whenDefined { ex =>
-                    TagMod(
-                      ^.title := ex.toString,
-                      ^.`class` := Css.Text.BOLD,
-                      Messages( MsgCodes.`Error` )
-                    )
+                menuRowsCss.switch,
+                MuiSwitch(
+                  new MuiSwitchProps {
+                    override val disabled = isClickDisabled
+                    override val checked = js.defined {
+                      if (isClickDisabled) !isEnabledNow
+                      else isEnabledNow
+                    }
                   }
-                } else {
-                  Messages( MsgCodes.onOff(isEnabledNow) )
-                }
+                )
               )
             )
-
           )
-
         )
+
       }
     }
 
