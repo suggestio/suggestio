@@ -1704,6 +1704,8 @@ object MuiSvgIcons {
   object ArrowBack extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/ArrowBackIos", JSImport.Default)
   object ArrowBackIos extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ArrowBackIosOutlined", JSImport.Default)
+  object ArrowBackIosOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/ArrowDownward", JSImport.Default)
   object ArrowDownward extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/ArrowDropDownCircle", JSImport.Default)
@@ -1716,6 +1718,8 @@ object MuiSvgIcons {
   object ArrowForward extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/ArrowForwardIos", JSImport.Default)
   object ArrowForwardIos extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/ArrowForwardIosOutlined", JSImport.Default)
+  object ArrowForwardIosOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/ArrowUpward", JSImport.Default)
   object ArrowUpward extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Cancel", JSImport.Default)

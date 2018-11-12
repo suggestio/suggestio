@@ -38,7 +38,7 @@ trait MuiPaletteBackground extends js.Object {
 trait MuiPaletteAction extends js.Object {
   val active: js.UndefOr[String] = js.undefined
   val hover: js.UndefOr[String] = js.undefined
-  val hoverOpacity: js.UndefOr[String] = js.undefined
+  val hoverOpacity: js.UndefOr[Double] = js.undefined
   val selected: js.UndefOr[String] = js.undefined
   val disabled: js.UndefOr[String] = js.undefined
   val disabledBackground: js.UndefOr[String] = js.undefined

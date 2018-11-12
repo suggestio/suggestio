@@ -309,7 +309,7 @@ case class ScCss( args: IScCssArgs )
           _btnClass("search"),
           Align.rightAligned.htmlClass,
           Css.Position.ABSOLUTE,
-          btn.htmlClass
+          btn.htmlClass,
         ),
         top( (args.screenInfo.unsafeOffsets.top + 5).px )
       )
@@ -319,7 +319,7 @@ case class ScCss( args: IScCssArgs )
         addClassNames(
           Align.leftAligned.htmlClass,
           Css.Position.ABSOLUTE,
-          btn.htmlClass
+          btn.htmlClass,
         ),
         top( (args.screenInfo.unsafeOffsets.top + 7).px ),
       )
@@ -408,11 +408,6 @@ case class ScCss( args: IScCssArgs )
     val panel = style(
       width( PANEL_WIDTH_PX.px ),
       Root.panelCommon
-    )
-
-    /** Кнопка сокрытия панели. */
-    val hideBtn = style(
-      top(-5.px)
     )
 
     val content = {

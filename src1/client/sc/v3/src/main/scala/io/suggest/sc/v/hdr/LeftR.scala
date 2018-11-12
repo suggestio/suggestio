@@ -1,10 +1,9 @@
 package io.suggest.sc.v.hdr
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps}
 import diode.react.ModelProxy
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
-import io.suggest.sc.styl.GetScCssF
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -14,7 +13,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Created: 10.07.17 16:56
   * Description: Компонент кнопки, указывающей вправо (или "вперёд").
   */
-class LeftR( getScCssF: GetScCssF ) {
+class LeftR {
 
   type Props_t = None.type
   type Props = ModelProxy[Props_t]
@@ -28,15 +27,11 @@ class LeftR( getScCssF: GetScCssF ) {
 
     def render(propsProxy: Props): VdomElement = {
       MuiIconButton {
-        val cssClasses = new MuiIconButtonClasses {
-          override val label = getScCssF().Menu.hideBtn.htmlClass
-        }
         new MuiIconButtonProps {
           override val onClick = _onClosePanelBtnClickJsCbF
-          override val classes = cssClasses
         }
       }(
-        Mui.SvgIcons.ArrowBackIos()()
+        Mui.SvgIcons.ArrowBackIosOutlined()()
       )
     }
 

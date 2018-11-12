@@ -1,28 +1,27 @@
 package io.suggest.sc.v
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiDrawerAnchors, MuiList, MuiPalette, MuiPaletteAction, MuiPaletteBackground, MuiPaletteText, MuiPaletteTypes, MuiRawTheme, MuiSwipeableDrawer, MuiSwipeableDrawerProps, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiList, MuiPalette, MuiPaletteAction, MuiPaletteBackground, MuiPaletteText, MuiPaletteTypes, MuiRawTheme, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.model.n2.node.meta.colors.MColors
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.hdr.MHeaderStates
+import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.{MScSearch, MSearchPanelS}
 import io.suggest.sc.styl.{GetScCssF, ScCss}
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr.{HeaderR, RightR}
 import io.suggest.sc.v.inx.WelcomeR
+import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search.{NodesFoundR, NodesSearchContR, STextR, SearchR}
 import io.suggest.spa.OptFastEq.Wrapped
-import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent}
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.react.{ReactCommonUtil, StyleProps}
-import io.suggest.sc.m.inx._
-import io.suggest.sc.v.menu._
-import io.suggest.sc.v.search.SearchCss.SearchCssFastEq
 import io.suggest.spa.{FastEqUtil, OptFastEq}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import scalacss.ScalaCssReact._
 
 /**
@@ -49,6 +48,7 @@ class ScRootR (
                 getScCssF               : GetScCssF,
               ) {
 
+  import io.suggest.sc.v.search.SearchCss.SearchCssFastEq
   import MScSearch.MScSearchFastEq
   import gridR.GridPropsValFastEq
   import headerR.HeaderPropsValFastEq
@@ -87,14 +87,10 @@ class ScRootR (
 
     private def _onOpenSideBar(sideBar: MScSideBar, opened: Boolean): Callback =
       dispatchOnProxyScopeCB( $, SideBarOpenClose(sideBar, opened) )
-    private val _onSetOpenSearchSidebarF = ReactCommonUtil.cbFun1ToJsCb( _onOpenSideBar(MScSideBars.Search, _: Boolean) )
-
-    //private val _onOpenMenuSidebarF = ReactCommonUtil.cbFun1ToJsCb( _onOpenSideBar(MScSideBars.Menu, _: Boolean) )
-    private def _mkSetOpenSideBarCbF(sboc: => SideBarOpenClose) = {
-      ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent =>
-        dispatchOnProxyScopeCB( $, sboc )
-      }
-    }
+    private def _mkSetOpenSideBarCbF(sideBar: MScSideBar) =
+      ReactCommonUtil.cbFun1ToJsCb( _onOpenSideBar(sideBar, _: Boolean) )
+    private val _onSetOpenSearchSidebarF = _mkSetOpenSideBarCbF( MScSideBars.Search )
+    private val _onSetOpenMenuSidebarF = _mkSetOpenSideBarCbF( MScSideBars.Menu )
 
 
     def render(mrootProxy: Props, s: State): VdomElement = {
@@ -148,63 +144,42 @@ class ScRootR (
         searchR(_)( searchBarChild )
       }
 
-      /*
-      // TODO Не работает нормально сворачивание search-панели, конфликтует с гео-картой.
-      val searchSideBar2 = {
-        val _onOpen  = _mkSetOpenSideBarCbF( SideBarOpenClose(MScSideBars.Search, open = true) )
-        val _onClose = _mkSetOpenSideBarCbF( SideBarOpenClose(MScSideBars.Search, open = false) )
-        s.searchSideBarC { stateProxy =>
-          val s = stateProxy.value
-          MuiSwipeableDrawer(
-            new MuiSwipeableDrawerProps {
-              override val open    = s.opened
-              override val onOpen  = _onOpen
-              override val onClose = _onClose
-              override val anchor  = MuiDrawerAnchors.right
-              override val disableBackdropTransition = true
-              override val hideBackdrop = true
-              // При таскании карты нужно запрещать свайпинг. Через stopPropagation() это сделать нельзя, т.к. в хроме нельзя прерывать touchmove, а touchstart просто игнорируется в mui.
-              override val disableDiscovery = s.fixed
-              override val disableSwipeToOpen = s.fixed
-              override val variant = MuiDrawerVariants.temporary
-            }
-          )( searchBarBody )
-        }
-      }
-      */
+      val css_initial = scalacss.internal.Literal.Typed.initial.value
+      val sideBarZIndex = scCss.Search.Z_INDEX
 
-      val searchStyles = {
-        val css_initial = scalacss.internal.Literal.Typed.initial.value
-        val searchContentStyl = new StyleProps {
-          override val zIndex    = scCss.Search.Z_INDEX
-          override val overflowY = css_initial
-        }
-        val contentStyl = new StyleProps {
-          override val overflowY = css_initial
-        }
-        val overlayStyl = new StyleProps {
-          override val zIndex = -100
-        }
-        new SidebarStyles {
-          override val sidebar = searchContentStyl
-          override val content = contentStyl
-          override val overlay = overlayStyl
-        }
-      }
-
-      val searchSideBar = s.searchSideBarC { searchOpenedSomeProxy =>
-        // Используем react-sidebar вместо mui.SwipeableDrawer, т.к. последний конфиликтует с гео-картой на уровне touch-событий.
-        Sidebar(
-          new SidebarProps {
-            override val sidebar      = searchBarBody.rawNode
-            override val onSetOpen    = _onSetOpenSearchSidebarF
-            override val open         = searchOpenedSomeProxy.value.opened
-            override val transitions  = true
-            override val touch        = true
-            override val pullRight    = true
-            override val styles       = searchStyles
+      val searchSideBar = {
+        val searchStyles = {
+          val sidebarStyl = new StyleProps {
+            override val zIndex    = sideBarZIndex
+            override val overflowY = css_initial
           }
-        )( gridBody )
+          val contentStyl = new StyleProps {
+            override val overflowY = css_initial
+          }
+          val overlayStyl = new StyleProps {
+            override val zIndex = -100
+          }
+          new SidebarStyles {
+            override val sidebar = sidebarStyl
+            override val content = contentStyl
+            override val overlay = overlayStyl
+          }
+        }
+        s.searchSideBarC { searchOpenedSomeProxy =>
+          // Используем react-sidebar вместо mui.SwipeableDrawer, т.к. последний конфиликтует с гео-картой на уровне touch-событий.
+          Sidebar(
+            new SidebarProps {
+              override val sidebar      = searchBarBody.rawNode
+              override val onSetOpen    = _onSetOpenSearchSidebarF
+              override val open         = searchOpenedSomeProxy.value.opened
+              override val transitions  = true
+              override val touch        = true
+              override val pullRight    = true
+              override val shadow       = true
+              override val styles       = searchStyles
+            }
+          )( gridBody )
+        }
       }
 
       // Сборка панели меню:
@@ -227,18 +202,35 @@ class ScRootR (
       val menuSideBarBody = s.menuC { menuPropsProxy =>
         menuR( menuPropsProxy )( menuSideBarBodyInner )
       }
-      val menuSideBar2 = {
-        val _onOpen  = _mkSetOpenSideBarCbF( SideBarOpenClose(MScSideBars.Menu, open = true) )
-        val _onClose = _mkSetOpenSideBarCbF( SideBarOpenClose(MScSideBars.Menu, open = false) )
+
+      val menuSideBar = {
+        val menuSideBarStyles = {
+          val zIndexBase = sideBarZIndex * 2
+          val sidebarStyl = new StyleProps {
+            override val zIndex    = zIndexBase
+            override val overflowY = css_initial
+          }
+          val overlayStyl = new StyleProps {
+            override val zIndex = zIndexBase - 1
+          }
+          new SidebarStyles {
+            override val sidebar = sidebarStyl
+            override val overlay = overlayStyl
+          }
+        }
         s.menuOpenedSomeC { menuOpenedSomeProxy =>
-          MuiSwipeableDrawer(
-            new MuiSwipeableDrawerProps {
-              override val open     = menuOpenedSomeProxy.value.value
-              override val onOpen   = _onOpen
-              override val onClose  = _onClose
-              override val anchor   = MuiDrawerAnchors.left
+          Sidebar(
+            new SidebarProps {
+              override val sidebar      = menuSideBarBody.rawNode
+              override val pullRight    = false
+              override val touch        = true
+              override val transitions  = true
+              override val open         = menuOpenedSomeProxy.value.value
+              override val onSetOpen    = _onSetOpenMenuSidebarF
+              override val shadow       = true
+              override val styles       = menuSideBarStyles
             }
-          )( menuSideBarBody )
+          )( searchSideBar )
         }
       }
 
@@ -296,8 +288,7 @@ class ScRootR (
               override val theme = themeCreated
             }
           )(
-            menuSideBar2,
-            searchSideBar,
+            menuSideBar
           )
         }
       }
