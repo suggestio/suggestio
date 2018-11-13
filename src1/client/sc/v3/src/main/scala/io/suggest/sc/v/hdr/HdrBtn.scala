@@ -1,21 +1,16 @@
 package io.suggest.sc.v.hdr
 
-import chandu0101.scalajs.react.components.materialui.{MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps}
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.ModelProxy
 import io.suggest.color.MColorData
-import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.ISc3Action
 import io.suggest.svg.SvgConst
 import japgolly.scalajs.react.vdom.html_<^.{< => html, ^ => htmlAttrs}
 import japgolly.scalajs.react.vdom.svg_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import scalacss.ScalaCssReact._
 import scalacss.internal.StyleA
-
-import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -47,7 +42,7 @@ object HdrBtn {
 
 trait HdrBtn {
 
-  import HdrBtn.{Props_t, Props}
+  import HdrBtn.Props
 
   protected[this] def cssStyle: StyleA
 
@@ -98,6 +93,5 @@ trait HdrBtn {
     .build
 
   def apply(fgColorDataOptProxy: Props) = component.withKey(_compName)( fgColorDataOptProxy )
-  lazy val applyReusable: ReactConnectProps[Props_t] = apply
 
 }

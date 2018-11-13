@@ -1,11 +1,10 @@
 package io.suggest.sc.v.hdr
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.media.IMediaInfo
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.styl.GetScCssF
-import io.suggest.spa.OptFastEq.Plain
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -87,7 +86,6 @@ class LogoR(
     .renderBackend[Backend]
     .build
 
-  private def _apply(nodeInfoOptProxy: Props) = component( nodeInfoOptProxy )
-  val apply: ReactConnectProps[Props_t] = _apply
+  def apply(nodeInfoOptProxy: Props) = component( nodeInfoOptProxy )
 
 }

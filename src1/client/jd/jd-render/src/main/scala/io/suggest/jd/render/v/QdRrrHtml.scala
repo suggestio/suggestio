@@ -73,6 +73,10 @@ class QdRrrHtml(
       .toList
   }
 
+  /** Аттрибут href для ссылки, чтобы не было паразитных переходов в редакторе. */
+  private def _hrefAttr =
+    if (jdArgs.conf.isEdit) ^.title else ^.href
+
 
   /** Выполнить рендеринг текущего qd-тега. */
   final def render(): VdomElement = {
@@ -196,7 +200,7 @@ class QdRrrHtml(
         finalTm = <.a(
           keyTm,
           // Если редактор открыт, то не надо рендерить ссылку кликабельной. Просто пусть будет подсказка.
-          (if (jdArgs.conf.isEdit) ^.title else ^.href) := link,
+          _hrefAttr := link,
           finalTm
         )
       }
@@ -414,7 +418,7 @@ class QdRrrHtml(
       for (linkSU <- attrs.link; link <- linkSU) {
         var hrefAttrs = List[TagMod](
           keyTm,
-          ^.href := link,
+          _hrefAttr := link,
           acc
         )
         for (textStyle <- textStyleOpt) {

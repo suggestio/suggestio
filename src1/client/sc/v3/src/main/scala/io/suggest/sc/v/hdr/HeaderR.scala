@@ -42,7 +42,7 @@ class HeaderR(
   implicit object HeaderPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.hdrState ===* b.hdrState) &&
-        (a.node ===* b.node)
+      (a.node ===* b.node)
     }
   }
 
@@ -52,35 +52,34 @@ class HeaderR(
 
   /** Коннекшены для props'ов кнопок. */
   protected case class State(
-                              plainGridC      : ReactConnectProxy[Option[MColorData]],
-                              //menuC           : ReactConnectProxy[Option[MColorData]],
-                              //searchC         : ReactConnectProxy[Option[MColorData]],
-                              logoPropsOptC   : ReactConnectProxy[Option[logoR.PropsVal]]
+                              hdrGridBtnOptC          : ReactConnectProxy[Option[MColorData]],
+                              hdrLogoOptC             : ReactConnectProxy[Option[logoR.PropsVal]],
                             )
 
 
   /** Рендерер. */
   protected class Backend($: BackendScope[Props, State]) {
 
-    private val _plainGridBtnsF = { fgColorOptProxy: ModelProxy[Option[MColorData]] =>
-      <.span(
-        menuBtnR( fgColorOptProxy ),
-        searchBtnR( fgColorOptProxy )
-      ): VdomElement
-    }
-
     def render(propsProxy: Props, s: State): VdomElement = {
+
+      // Кнопки заголовка в зависимости от состояния.
+      // Кнопки при нахождении в обычной выдаче без посторонних вещей.
+      val plainGridBtns = s.hdrGridBtnOptC { fgColorOptProxy =>
+        <.span(
+          menuBtnR( fgColorOptProxy ),
+          searchBtnR( fgColorOptProxy ),
+        )
+      }
+
+      // Логотип посередине заголовка.
+      val logo = s.hdrLogoOptC { logoR.apply }
+
       propsProxy().whenDefinedEl { _ =>
         val scCss = getScCssF()
         <.div(
           scCss.Header.header,
-
-          // Кнопки заголовка в зависимости от состояния.
-          // Кнопки при нахождении в обычной выдаче без посторонних вещей.
-          s.plainGridC( _plainGridBtnsF ),
-
-          // Логотип посередине заголовка.
-          s.logoPropsOptC { logoR.apply }
+          plainGridBtns,
+          logo,
         )
       }
     }
@@ -88,22 +87,25 @@ class HeaderR(
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps { propsProxy =>
-      def __fgColorDataOptProxy(hStates: MHeaderState*) = {
-        propsProxy.connect { props =>
-          props
-            .map(_.node)
-            .filter { _ => props.map(_.hdrState).exists(hStates.contains) }
-            .flatMap(_.colors.fg)
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
+    .initialStateFromProps { propsOptProxy =>
+
+      def __fgColorDataOptProxy(hStates: MHeaderState*): ReactConnectProxy[Option[MColorData]] = {
+        propsOptProxy.connect { propsOpt =>
+          for {
+            props <- propsOpt
+            if hStates contains props.hdrState
+            fgColor <- props.node.colors.fg
+          } yield {
+            fgColor
+          }
         }( OptFastEq.Plain )
       }
-      val HS = MHeaderStates
+
       State(
-        plainGridC  = __fgColorDataOptProxy( HS.PlainGrid ),
-        //menuC       = __fgColorDataOptProxy( HS.Menu ),
-        //searchC     = __fgColorDataOptProxy( HS.Search ),
-        logoPropsOptC    = propsProxy.connect { propsOpt =>
+        hdrGridBtnOptC = __fgColorDataOptProxy( MHeaderStates.PlainGrid ),
+        hdrLogoOptC = propsOptProxy.connect { propsOpt =>
           for (props <- propsOpt) yield {
             logoR.PropsVal(
               logoOpt     = props.node.logoOpt,
