@@ -3,18 +3,18 @@ package io.suggest.sc.v
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiList, MuiPalette, MuiPaletteAction, MuiPaletteBackground, MuiPaletteText, MuiPaletteTypes, MuiRawTheme, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.MScRoot
-import io.suggest.sc.m.hdr.MHeaderStates
 import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.{MScSearch, MSearchPanelS}
 import io.suggest.sc.styl.{GetScCssF, ScCss}
 import io.suggest.sc.v.grid.GridR
-import io.suggest.sc.v.hdr.{HeaderR, RightR}
+import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx.WelcomeR
 import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search.{NodesFoundR, NodesSearchContR, STextR, SearchR}
@@ -45,42 +45,49 @@ class ScRootR (
                 val nodesSearchContR    : NodesSearchContR,
                 val nodesFoundR         : NodesFoundR,
                 rightR                  : RightR,
+                val logoR               : LogoR,
+                menuBtnR                : MenuBtnR,
+                searchBtnR              : SearchBtnR,
+                val hdrProgressR        : HdrProgressR,
                 getScCssF               : GetScCssF,
               ) {
 
   import io.suggest.sc.v.search.SearchCss.SearchCssFastEq
   import MScSearch.MScSearchFastEq
   import gridR.GridPropsValFastEq
-  import headerR.HeaderPropsValFastEq
   import menuR.MenuRPropsValFastEq
   import enterLkRowR.EnterLkRowRPropsValFastEq
   import editAdR.EditAdRPropsValFastEq
   import aboutSioR.AboutSioRPropsValFastEq
   import welcomeR.WelcomeRPropsValFastEq
   import io.suggest.sc.m.search.MScSearchText.MScSearchTextFastEq
+  import logoR.LogoPropsValFastEq
 
   type Props = ModelProxy[MScRoot]
 
 
   protected[this] case class State(
-                                    scCssArgsC          : ReactConnectProxy[ScCss],
-                                    gridPropsOptC       : ReactConnectProxy[gridR.PropsVal],
-                                    headerPropsC        : ReactConnectProxy[Option[headerR.PropsVal]],
-                                    wcPropsOptC         : ReactConnectProxy[Option[welcomeR.PropsVal]],
-                                    enterLkRowC         : ReactConnectProxy[Option[enterLkRowR.PropsVal]],
-                                    editAdC             : ReactConnectProxy[Option[editAdR.PropsVal]],
-                                    aboutSioC           : ReactConnectProxy[Option[aboutSioR.PropsVal]],
-                                    searchC             : ReactConnectProxy[MScSearch],
-                                    searchSideBarC      : ReactConnectProxy[MSearchPanelS],
-                                    menuC               : ReactConnectProxy[menuR.PropsVal],
-                                    menuOpenedSomeC     : ReactConnectProxy[Some[Boolean]],
-                                    menuBlueToothOptC   : ReactConnectProxy[blueToothR.Props_t],
-                                    dbgUnsafeOffsetsOptC: ReactConnectProxy[unsafeScreenAreaOffsetR.Props_t],
-                                    isRenderScC         : ReactConnectProxy[Some[Boolean]],
-                                    colorsC             : ReactConnectProxy[MColors],
-                                    sTextC              : ReactConnectProxy[sTextR.Props_t],
-                                    nodesFoundC         : ReactConnectProxy[nodesFoundR.Props_t],
-                                    nodesSearchContC    : ReactConnectProxy[nodesSearchContR.Props_t],
+                                    scCssArgsC                : ReactConnectProxy[ScCss],
+                                    gridPropsOptC             : ReactConnectProxy[gridR.PropsVal],
+                                    hdrPropsC                 : ReactConnectProxy[headerR.Props_t],
+                                    wcPropsOptC               : ReactConnectProxy[Option[welcomeR.PropsVal]],
+                                    enterLkRowC               : ReactConnectProxy[Option[enterLkRowR.PropsVal]],
+                                    editAdC                   : ReactConnectProxy[Option[editAdR.PropsVal]],
+                                    aboutSioC                 : ReactConnectProxy[Option[aboutSioR.PropsVal]],
+                                    searchC                   : ReactConnectProxy[MScSearch],
+                                    searchSideBarC            : ReactConnectProxy[MSearchPanelS],
+                                    menuC                     : ReactConnectProxy[menuR.PropsVal],
+                                    menuOpenedSomeC           : ReactConnectProxy[Some[Boolean]],
+                                    menuBlueToothOptC         : ReactConnectProxy[blueToothR.Props_t],
+                                    dbgUnsafeOffsetsOptC      : ReactConnectProxy[unsafeScreenAreaOffsetR.Props_t],
+                                    isRenderScC               : ReactConnectProxy[Some[Boolean]],
+                                    colorsC                   : ReactConnectProxy[MColors],
+                                    sTextC                    : ReactConnectProxy[sTextR.Props_t],
+                                    nodesFoundC               : ReactConnectProxy[nodesFoundR.Props_t],
+                                    nodesSearchContC          : ReactConnectProxy[nodesSearchContR.Props_t],
+                                    hdrLogoOptC               : ReactConnectProxy[Option[logoR.PropsVal]],
+                                    hdrOnGridBtnColorOptC     : ReactConnectProxy[Option[MColorData]],
+                                    hdrProgressC              : ReactConnectProxy[hdrProgressR.Props_t],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -96,18 +103,39 @@ class ScRootR (
     def render(mrootProxy: Props, s: State): VdomElement = {
       val scCss = getScCssF()
 
+      // Сборка компонента заголовка выдачи:
+      val hdr = {
+        val hdrLogo       = s.hdrLogoOptC { logoR.apply }
+        val hdrMenuBtn    = s.hdrOnGridBtnColorOptC { menuBtnR.apply }
+        val hdrSearchBtn  = s.hdrOnGridBtnColorOptC { searchBtnR.apply }
+        val hdrProgress   = s.hdrProgressC { hdrProgressR.apply }
+
+        // Компонент заголовка выдачи:
+        s.hdrPropsC { hdrProxy =>
+          headerR(hdrProxy)(
+            hdrLogo,
+
+            // -- Кнопки заголовка в зависимости от состояния выдачи --
+            // Кнопки при нахождении в обычной выдаче без посторонних вещей:
+            hdrMenuBtn,
+            hdrSearchBtn,
+            hdrProgress,
+          )
+        }
+      }
+
       // Рендерим всё линейно, а не деревом, чтобы избежать вложенных connect.apply-фунцкий и сопутствующих эффектов.
       // Содержимое правой панели (панель поиска)
       // search (правый) sidebar.
-      val gridBody = <.div(
+      val scBody = <.div(
         // Ссылаемся на стиль.
         scCss.Root.root,
 
         // Экран приветствия узла:
         s.wcPropsOptC { welcomeR.apply },
 
-        // Компонент заголовка выдачи:
-        s.headerPropsC { headerR.apply },
+        // заголовок выдачи:
+        hdr,
 
         // Рендер плитки карточек узла:
         s.gridPropsOptC { gridR.apply }
@@ -178,7 +206,7 @@ class ScRootR (
               override val shadow       = true
               override val styles       = searchStyles
             }
-          )( gridBody )
+          )( scBody )
         }
       }
 
@@ -271,6 +299,7 @@ class ScRootR (
             //override val common = paletteCommon
             override val primary      = primaryColor
             override val secondary    = secondaryColor
+            // TODO Нужно портировать getLuminance() и выбирать dark/light на основе формулы luma >= 0.5. https://github.com/mui-org/material-ui/blob/355317fb479dc234c6b1e374428578717b91bdc0/packages/material-ui/src/styles/colorManipulator.js#L151
             override val `type`       = MuiPaletteTypes.dark
             override val text         = paletteText
             override val background   = palletteBg
@@ -325,22 +354,9 @@ class ScRootR (
           )
         },
 
-        headerPropsC = propsProxy.connect { props =>
-          for {
-            resp <- props.index.resp.toOption
-          } yield {
-            headerR.PropsVal(
-              hdrState  = if (props.index.search.panel.opened) {
-                MHeaderStates.Search
-              } else if (props.index.menu.opened) {
-                MHeaderStates.Menu
-              } else {
-                MHeaderStates.PlainGrid
-              },
-              node      = resp
-            )
-          }
-        },
+        hdrPropsC = propsProxy.connect { props =>
+          Some( props.index.resp.nonEmpty )
+        }( OptFastEq.OptValueEq ),
 
         wcPropsOptC = propsProxy.connect { props =>
           for {
@@ -446,6 +462,33 @@ class ScRootR (
         nodesSearchContC = propsProxy.connect { mroot =>
           mroot.index.search.geo.css
         }( SearchCssFastEq ),
+
+        hdrLogoOptC = propsProxy.connect { mroot =>
+          for {
+            mnode <- mroot.index.resp.toOption
+          } yield {
+            logoR.PropsVal(
+              logoOpt     = mnode.logoOpt,
+              nodeNameOpt = mnode.name
+            )
+          }
+        }( OptFastEq.Wrapped(LogoPropsValFastEq) ),
+
+        hdrOnGridBtnColorOptC = propsProxy.connect { mroot =>
+          OptionUtil.maybeOpt( !mroot.index.search.panel.opened && !mroot.index.menu.opened ) {
+            mroot.index.resp
+              .toOption
+              .flatMap( _.colors.fg )
+          }
+        }( OptFastEq.Plain ),
+
+        hdrProgressC = propsProxy.connect { mroot =>
+          val r = mroot.index.resp.isPending || {
+            val ads = mroot.grid.core.ads
+            ads.isPending && ads.isEmpty
+          }
+          Some(r)
+        }( OptFastEq.OptValueEq ),
 
       )
     }

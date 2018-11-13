@@ -15,6 +15,28 @@ trait MuiStyles extends js.Object {
   def createMuiTheme(options: MuiRawTheme): MuiTheme = js.native
 
   val MuiThemeProvider: js.Dynamic = js.native
+  //val colorManipulator: MuiStylesColorManipulator = js.native // TODO not exported.
+}
+
+trait MuiColorDecomposed extends js.Object {
+  val `type`: String
+  val values: js.Array[Double]
+}
+
+@js.native
+trait MuiStylesColorManipulator extends js.Object {
+  def convertHexToRGB(color: String): String = js.native
+  def rgbToHex(hex: String): String = js.native
+  def decomposeColor(color: String): MuiColorDecomposed = js.native
+  def recomposeColor(d: MuiColorDecomposed): String = js.native
+  /** @return 0..21 */
+  def getContrastRatio(foreground: String, background: String): Double = js.native
+  /** @return 0..1 */
+  def getLuminance(color: String): Double = js.native
+  def emphasize(color: String, coefficient: Double = js.native): String = js.native
+  def fade(color: String, value: Double): String = js.native
+  def darken(color: String, coefficient: Double): String = js.native
+  def lighten(color: String, coefficient: Double): String = js.native
 }
 
 

@@ -267,6 +267,15 @@ case class ScCss( args: IScCssArgs )
     /** Корневое имя класса, от которого идёт остальное словообразование. */
     private def HEADER = _SM_ + "producer-header"
 
+    /** Стили для прогресс-бара. */
+    val progress = style(
+      position.absolute,
+      bottom(0.px),
+      width(100.%%),
+      backgroundColor( _fgColorCss ),
+      height(2.px),
+    )
+
     /** Стили контейнера любого заголовка. */
     val header = style(
       addClassNames( HEADER, Css.Position.ABSOLUTE ),
