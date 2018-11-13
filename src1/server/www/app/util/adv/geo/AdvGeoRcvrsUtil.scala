@@ -142,10 +142,13 @@ class AdvGeoRcvrsUtil @Inject()(
     for {
       nodesHashSum <- rcvrNodesMapHashSumCached()
     } yield {
-      cdnUtil.forCall(
-        routes.Static.advRcvrsMapJson( nodesHashSum )
-      )(ctx)
+      mkRcvrNodesMapUrl(nodesHashSum)(ctx)
     }
+  }
+  def mkRcvrNodesMapUrl(hashSum: Int)(implicit ctx: Context): Call = {
+    cdnUtil.forCall(
+      routes.Static.advRcvrsMapJson( hashSum )
+    )(ctx)
   }
 
   /** Карта ресиверов, размещённых через lk-adn-map.

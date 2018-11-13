@@ -297,13 +297,9 @@ trait ScSite
     // Кэшируем часто-используемый инстанс JSON formatter'а для MSc3Init.
     private val _msc3InitFormat = MSc3Init.MSC3_INIT_FORMAT
 
-    private def rcvrsMapUrlFut: Future[String] = {
-      for {
-        nodesMapUrlCall <- advGeoRcvrsUtil.rcvrNodesMapUrl()(ctx)
-      } yield {
-        cdnUtil.maybeAbsUrl(_siteQsArgs.apiVsn.forceAbsUrls )( nodesMapUrlCall )(ctx)
-      }
-    }
+    /** Рассчёт и кэширование хэша для сборки URL для JSON-карты ресиверов. */
+    private def rcvrNodesHashSumFut = advGeoRcvrsUtil.rcvrNodesMapHashSumCached()
+
 
     /** Какой узел должен быть за about? */
     private def aboutSioNodeIdFut: Future[String] = {
@@ -324,7 +320,7 @@ trait ScSite
     override def scriptHtmlFut: Future[Html] = {
       // Поиска начальную точку для гео.карты.
       val _geoPoint0Fut = geoPoint0Fut
-      val _rcvrsMapUrlFut = rcvrsMapUrlFut
+      val _rcvrNodesHashSumFut = rcvrNodesHashSumFut
 
       // Синхронно скомпилить js-messages для рендера прямо в html-шаблоне.
       val jsMessagesJs = jsMessagesUtil.scJsMsgsFactory( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(ctx.messages)
@@ -337,23 +333,29 @@ trait ScSite
       // Собрать все результаты в итоговый скрипт.
       for {
         geoPoint0             <- _geoPoint0Fut
-        rcvrsMapUrl           <- _rcvrsMapUrlFut
         aboutSioNodeId        <- _aboutSioNodeIdFut
         scriptCacheHashCode   <- _scriptCacheHashCodeFut
+        rcvrsMapHashSum       <- _rcvrNodesHashSumFut
       } yield {
+        // Сборка модели данных инициализации выдачи:
         val state0 = MSc3Init(
           mapProps = MMapProps(
             center = geoPoint0,
             zoom   = MMapProps.ZOOM_DEFAULT
           ),
           conf = MSc3Conf(
-            rcvrsMapUrl     = rcvrsMapUrl,
-            isLoggedIn      = _request.user.isAuth,
-            aboutSioNodeId  = aboutSioNodeId,
-            apiVsn          = _siteQsArgs.apiVsn,
-            debug           = SC_JS_DEBUG
+            isLoggedIn        = _request.user.isAuth,
+            aboutSioNodeId    = aboutSioNodeId,
+            apiVsn            = _siteQsArgs.apiVsn,
+            debug             = SC_JS_DEBUG,
+            // Хост-порт для запросов через CDN:
+            cdnHost           = cdnUtil.ctx2CdnHost(ctx)
+              .getOrElse( ctx.api.ctxUtil.HOST_PORT ),
+            rcvrsMapHashSum   = rcvrsMapHashSum,
           )
         )
+
+        // Данные для рендера html-страницы:
         val scriptRenderArgs = MSc3ScriptRenderArgs(
           state0 = Json
             .toJson(state0)(_msc3InitFormat)

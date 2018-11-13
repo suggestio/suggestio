@@ -19,13 +19,14 @@ object MSc3Conf {
     * def, ведь на клиенте это нужно только один раз.
     */
   implicit def MSC3_CONF_FORMAT: OFormat[MSc3Conf] = (
-    (__ \ "r").format[String] and
     (__ \ "l").format[Boolean] and
     (__ \ "a").format[String] and
     (__ \ "v").format[MScApiVsn] and
     (__ \ "d").formatNullable[Boolean]
-      // Отладка включена по-умолчанию, если явно не задана в конфиге!
-      .inmap[Boolean]( _.getOrElseTrue, EmptyUtil.someF )
+      // Если очень надо, отладка может быть ВКЛючена по-умолчанию, если явно не задана в конфиге: .getOrElseTrue
+      .inmap[Boolean]( _.getOrElseFalse, EmptyUtil.someF ) and
+    (__ \ "c").format[String] and
+    (__ \ "m").format[Int]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MSc3Conf] = UnivEq.derive
@@ -35,12 +36,15 @@ object MSc3Conf {
 
 /** Контейнер данных конфигурации, задаваемой на сервере.
   *
-  * @param rcvrsMapUrl Ссылка на данные карты ресиверов.
+  * @param cdnHost Хост-порт для организации запросов через CDN.
+  *                Используется для сборки rcvrsMapUrl.
+  * @param rcvrsMapHashSum Ключ для сборки ссылки на rcvrsMap.
   */
 case class MSc3Conf(
-                     rcvrsMapUrl    : String,
-                     isLoggedIn     : Boolean,
-                     aboutSioNodeId : String,
-                     apiVsn         : MScApiVsn,
-                     debug          : Boolean,
+                     isLoggedIn         : Boolean,
+                     aboutSioNodeId     : String,
+                     apiVsn             : MScApiVsn,
+                     debug              : Boolean,
+                     cdnHost            : String,
+                     rcvrsMapHashSum    : Int,
                    )

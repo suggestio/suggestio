@@ -85,6 +85,9 @@ sealed trait StaticCtlRoutes extends js.Object {
   /** Роута для доступа к унифицированному websocket channel. */
   def wsChannel(ctxId: String): Route = js.native
 
+  /** Роута до JSON-карты ресиверов. */
+  def advRcvrsMapJson(hashSum: Int): Route = js.native
+
 }
 
 

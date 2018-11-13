@@ -17,7 +17,8 @@ import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.maps.c.MapCommonAh
 import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs, WarnMsgs}
-import io.suggest.routes.AdvRcvrsMapApiHttpViaUrl
+import io.suggest.proto.HttpConst
+import io.suggest.routes.{AdvRcvrsMapApiHttpViaUrl, ScJsRoutes}
 import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c.{IRespWithActionHandler, JsRouterInitAh, TailAh}
@@ -40,6 +41,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.sjs.common.vm.wnd.WindowVm
+import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.spa.OptFastEq
 import org.scalajs.dom
 import org.scalajs.dom.Event
@@ -326,7 +328,18 @@ class Sc3Circuit(
   )
 
 
-  private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( confRO.value.rcvrsMapUrl )
+  private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl(
+    // Готовим функция дял сборки ссылки на карту:
+    url = {
+      val conf = confRO.value
+      // Подготовить относительную ссылку:
+      val route = ScJsRoutes.controllers.Static.advRcvrsMapJson( conf.rcvrsMapHashSum )
+      // прикрутить CDN-host
+      val hostedUrl = HttpConst.Proto.CURR_PROTO + conf.cdnHost + route.url
+      // Дописать протокол для связи с сервером, если у нас тут приложение или иные особые условия:
+      Xhr.mkAbsUrlIfPreferred( hostedUrl )
+    }
+  )
 
   override protected val actionHandler: HandlerFunction = {
     var acc = List.empty[HandlerFunction]

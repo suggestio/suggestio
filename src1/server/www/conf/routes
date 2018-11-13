@@ -22,7 +22,6 @@ GET  /sc/api/pub                        @controllers.Sc.pubApi(a: io.suggest.sc.
 GET  /sc/one/html                       @controllers.Sc.onlyOneAd(o: blk.OneAdQsArgs)
 GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.OneAdQsArgs)
 ## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
-GET  /sc/router.js                      @controllers.Sc.scJsRouter
 GET  /sc/routes/:c/router.js            @controllers.Sc.scJsRouterCache(c: Int)
 GET  /sc/sc.webmanifest                 @controllers.Sc.webAppManifest(x: io.suggest.sc.pwa.MPwaManifestQs)
 

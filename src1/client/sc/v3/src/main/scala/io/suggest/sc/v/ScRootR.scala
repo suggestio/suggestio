@@ -340,7 +340,8 @@ class ScRootR (
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
         scCssArgsC  = propsProxy.connect(_.index.scCss),

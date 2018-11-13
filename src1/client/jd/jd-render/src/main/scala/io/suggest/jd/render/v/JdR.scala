@@ -620,7 +620,7 @@ class JdR(
   } // Backend
 
 
-  val component = ScalaComponent.builder[Props]("Jd")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     // В состоянии храним последний инстанс MJdArgs. Это поможет подавлять паразитные перерендеры.
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]

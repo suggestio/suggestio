@@ -9,6 +9,7 @@
 @jsRevRouterTpl(NAME)(
   routes.javascript.Sc.pubApi,
   routes.javascript.Sc.handleScError,
+  routes.javascript.Static.advRcvrsMapJson,
 
   routes.javascript.Ident.mySioStartPage,
   routes.javascript.Ident.rdrUserSomewhere,
