@@ -6,6 +6,7 @@ import japgolly.univeq._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.maps.nodes.MRcvrsMapUrlArgs
 
 /**
   * Suggest.io
@@ -25,8 +26,7 @@ object MSc3Conf {
     (__ \ "d").formatNullable[Boolean]
       // Если очень надо, отладка может быть ВКЛючена по-умолчанию, если явно не задана в конфиге: .getOrElseTrue
       .inmap[Boolean]( _.getOrElseFalse, EmptyUtil.someF ) and
-    (__ \ "c").format[String] and
-    (__ \ "m").format[Int]
+    (__ \ "r").format[MRcvrsMapUrlArgs]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MSc3Conf] = UnivEq.derive
@@ -36,15 +36,12 @@ object MSc3Conf {
 
 /** Контейнер данных конфигурации, задаваемой на сервере.
   *
-  * @param cdnHost Хост-порт для организации запросов через CDN.
-  *                Используется для сборки rcvrsMapUrl.
-  * @param rcvrsMapHashSum Ключ для сборки ссылки на rcvrsMap.
+  * @param rcvrsMap Данные для выкачивания карты ресиверов.
   */
 case class MSc3Conf(
                      isLoggedIn         : Boolean,
                      aboutSioNodeId     : String,
                      apiVsn             : MScApiVsn,
                      debug              : Boolean,
-                     cdnHost            : String,
-                     rcvrsMapHashSum    : Int,
+                     rcvrsMap           : MRcvrsMapUrlArgs,
                    )

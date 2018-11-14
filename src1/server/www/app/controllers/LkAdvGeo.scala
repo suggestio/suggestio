@@ -172,7 +172,7 @@ class LkAdvGeo @Inject() (
       getContext2
     }
 
-    val _rcvrsMapCallFut = _ctxFut.flatMap( advGeoRcvrsUtil.rcvrNodesMapUrl()(_) )
+    val _rcvrsMapUrlArgsFut = _ctxFut.flatMap( advGeoRcvrsUtil.rcvrsMapUrlArgs()(_) )
 
     val _a4fPropsOptFut = advFormUtil.a4fPropsOpt0CtxFut( _ctxFut )
 
@@ -196,10 +196,10 @@ class LkAdvGeo @Inject() (
 
       // Отрендерить текущие радиусные размещения в форму MRoot.
       val formStateSerFut: Future[String] = for {
-        a4fPropsOpt   <- _a4fPropsOptFut
-        rcvrsMapCall  <- _rcvrsMapCallFut
-        formS         <- formFut
-        advPricing    <- advPricingFut
+        a4fPropsOpt       <- _a4fPropsOptFut
+        rcvrsMapUrlArgs   <- _rcvrsMapUrlArgsFut
+        formS             <- formFut
+        advPricing        <- advPricingFut
       } yield {
         // Собираем исходную root-модель формы.
         val mFormInit = MFormInit(
@@ -207,7 +207,7 @@ class LkAdvGeo @Inject() (
           adv4FreeProps = a4fPropsOpt,
           advPricing    = advPricing,
           form          = formS,
-          rcvrsMapUrl   = rcvrsMapCall.url
+          rcvrsMap      = rcvrsMapUrlArgs,
         )
 
         // Сериализуем модель через boopickle + base64 для рендера бинаря прямо в HTML.

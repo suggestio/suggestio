@@ -4,8 +4,8 @@ import diode._
 import diode.data.Pot
 import io.suggest.maps.m.{InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.maps.u.IAdvRcvrsMapApi
 import io.suggest.msg.ErrorMsgs
-import io.suggest.routes.IAdvRcvrsMapApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 
@@ -33,7 +33,7 @@ object RcvrMarkersInitAh {
 }
 
 
-/** Diode action handler для инициализации карты ресиверов. */
+/** Diode action handler для обслуживания карты ресиверов. */
 class RcvrMarkersInitAh[M](
                             api       : IAdvRcvrsMapApi,
                             modelRW   : ModelRW[M, Pot[MGeoNodesResp]]

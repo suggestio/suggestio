@@ -20,14 +20,12 @@ import io.suggest.sjs.dt.period.r.DtpAh
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import MOther.MOtherFastEq
-import diode.Effect
 import io.suggest.lk.adv.geo.a.DocAh
 import io.suggest.lk.adv.geo.a.oms.OnMainScreenAh
 import io.suggest.maps.c.{MapCommonAh, RadAh, RcvrMarkersInitAh}
 import io.suggest.maps.m._
-import io.suggest.maps.u.MapsUtil
+import io.suggest.maps.u.{AdvRcvrsMapApiHttpViaUrl, IAdvRcvrsMapApi, MapsUtil}
 import io.suggest.msg.ErrorMsgs
-import io.suggest.routes.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.spa.StateInp
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 // TODO import MAdv4Free....FastEq
@@ -64,8 +62,8 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       MRoot(
         mmap = MapsUtil.initialMapStateFrom( mFormInit.form.mapProps ),
         other = MOther(
-          adId        = mFormInit.adId,
-          rcvrsMapUrl = mFormInit.rcvrsMapUrl
+          adId     = mFormInit.adId,
+          rcvrsMap = mFormInit.rcvrsMap
         ),
         adv4free = for (a4fProps <- mFormInit.adv4FreeProps) yield {
           MAdv4Free(
@@ -189,7 +187,11 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       modelRW = geoAdvRW.zoomRW(_.popup) { _.withPopup(_) }
     )
 
-    val advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( otherRW.value.rcvrsMapUrl )
+    val advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl(
+      route = { () =>
+        IAdvRcvrsMapApi.rcvrsMapRouteFromArgs( otherRW.value.rcvrsMap )
+      }
+    )
     val rcvrsMapInitAh = new RcvrMarkersInitAh(
       api       = advRcvrsMapApi,
       modelRW   = rcvrRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }

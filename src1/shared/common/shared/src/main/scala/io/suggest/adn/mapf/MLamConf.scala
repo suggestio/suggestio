@@ -1,5 +1,7 @@
 package io.suggest.adn.mapf
 
+import io.suggest.maps.nodes.MRcvrsMapUrlArgs
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -8,5 +10,5 @@ package io.suggest.adn.mapf
   */
 case class MLamConf(
                      nodeId       : String,
-                     rcvrsMapUrl  : String
+                     rcvrsMap     : MRcvrsMapUrlArgs,
                    )

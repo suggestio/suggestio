@@ -112,6 +112,10 @@ class CdnUtil @Inject() (
   def ctx2CdnHost(implicit ctx: Context): Option[String] = {
     chooseHostForProto( ctx.request.myProto )
   }
+  def ctx2CdnHostOrDflt(implicit ctx: Context): String = {
+    chooseHostForProto( ctx.request.myProto )
+      .getOrElse( ctx.api.ctxUtil.HOST_PORT )
+  }
 
   /** Генератор вызовов к CDN или внутренних. */
   def forCall(c: Call)(implicit ctx: Context): Call = {

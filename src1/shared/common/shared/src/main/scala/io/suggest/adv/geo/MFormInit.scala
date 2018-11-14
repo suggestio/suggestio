@@ -3,6 +3,7 @@ package io.suggest.adv.geo
 import boopickle.Default._
 import io.suggest.adv.free.MAdv4FreeProps
 import io.suggest.bill.MGetPriceResp
+import io.suggest.maps.nodes.MRcvrsMapUrlArgs
 
 /**
   * Suggest.io
@@ -19,15 +20,16 @@ object MFormInit {
     implicit val a4fP   = MAdv4FreeProps.a4fPropsPickler
     implicit val advPricingP = MGetPriceResp.getPriceRespPickler
     implicit val formP  = MFormS.pickler
+    implicit val rcvrsMapUrlArgsP = MRcvrsMapUrlArgs.rcvrsMapUrlArgsP
     generatePickler[MFormInit]
   }
 
 }
 
 case class MFormInit(
-  adId          : String,
-  adv4FreeProps : Option[MAdv4FreeProps],
-  advPricing    : MGetPriceResp,
-  form          : MFormS,
-  rcvrsMapUrl   : String
-)
+                      adId          : String,
+                      adv4FreeProps : Option[MAdv4FreeProps],
+                      advPricing    : MGetPriceResp,
+                      form          : MFormS,
+                      rcvrsMap      : MRcvrsMapUrlArgs,
+                    )

@@ -2,6 +2,7 @@ package io.suggest.adn.mapf
 
 import io.suggest.adv.free.MAdv4FreeProps
 import io.suggest.bill.MGetPriceResp
+import io.suggest.maps.nodes.MRcvrsMapUrlArgs
 
 /**
   * Suggest.io
@@ -18,6 +19,7 @@ object MLamFormInit {
     implicit val mGetPriceRespP = MGetPriceResp.getPriceRespPickler
     implicit val mLamFormP = MLamForm.mLamFormPickler
     implicit val a4fPropsP = MAdv4FreeProps.a4fPropsPickler
+    implicit val rcvrsMapUrlArgsP = MRcvrsMapUrlArgs.rcvrsMapUrlArgsP
     generatePickler[MLamFormInit]
   }
 

@@ -2,7 +2,6 @@ package controllers
 
 import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.adn.mapf.{MLamConf, MLamForm, MLamFormInit}
 import io.suggest.adv.geo.OnGeoCapturing
 import io.suggest.es.model.MEsUuId
@@ -30,6 +29,7 @@ import util.mdr.MdrUtil
 import util.sec.CspUtil
 import views.html.lk.adn.mapf._
 import io.suggest.scalaz.ScalazUtil.Implicits._
+import util.cdn.CdnUtil
 
 import scala.concurrent.Future
 
@@ -53,6 +53,7 @@ class LkAdnMap @Inject() (
                            lkGeoCtlUtil                  : LkGeoCtlUtil,
                            cspUtil                       : CspUtil,
                            isNodeAdmin                   : IsNodeAdmin,
+                           cdnUtil                       : CdnUtil,
                            override val mCommonDi        : ICommonDi
                          )
   extends SioControllerImpl
@@ -95,7 +96,7 @@ class LkAdnMap @Inject() (
         getContext2
       }
 
-      val rcvrsMapUrlCallFut = ctxFut.flatMap( advGeoRcvrsUtil.rcvrNodesMapUrl()(_) )
+      val rcvrsMapUrlArgsFut = ctxFut.flatMap( advGeoRcvrsUtil.rcvrsMapUrlArgs()(_) )
 
       // Готовим дефолтовый MAdv4FreeProps.
       val a4fPropsOptFut = advFormUtil.a4fPropsOpt0CtxFut( ctxFut )
@@ -128,12 +129,12 @@ class LkAdnMap @Inject() (
         priceResp       <- priceRespFut
         lamForm         <- lamFormFut
         a4fPropsOpt     <- a4fPropsOptFut
-        rcvrsMapUrlCall <- rcvrsMapUrlCallFut
+        rcvrsMapUrlArgs <- rcvrsMapUrlArgsFut
       } yield {
         val init = MLamFormInit(
           conf = MLamConf(
             nodeId        = nodeId,
-            rcvrsMapUrl   = rcvrsMapUrlCall.url
+            rcvrsMap      = rcvrsMapUrlArgs
           ),
           priceResp       = priceResp,
           form            = lamForm,

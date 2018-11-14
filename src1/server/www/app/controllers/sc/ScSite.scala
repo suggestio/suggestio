@@ -298,7 +298,7 @@ trait ScSite
     private val _msc3InitFormat = MSc3Init.MSC3_INIT_FORMAT
 
     /** Рассчёт и кэширование хэша для сборки URL для JSON-карты ресиверов. */
-    private def rcvrNodesHashSumFut = advGeoRcvrsUtil.rcvrNodesMapHashSumCached()
+    private def rcvrNodesUrlArgsFut = advGeoRcvrsUtil.rcvrsMapUrlArgs()(ctx)
 
 
     /** Какой узел должен быть за about? */
@@ -320,7 +320,7 @@ trait ScSite
     override def scriptHtmlFut: Future[Html] = {
       // Поиска начальную точку для гео.карты.
       val _geoPoint0Fut = geoPoint0Fut
-      val _rcvrNodesHashSumFut = rcvrNodesHashSumFut
+      val _rcvrsMapUrlArgsFut = rcvrNodesUrlArgsFut
 
       // Синхронно скомпилить js-messages для рендера прямо в html-шаблоне.
       val jsMessagesJs = jsMessagesUtil.scJsMsgsFactory( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(ctx.messages)
@@ -335,7 +335,7 @@ trait ScSite
         geoPoint0             <- _geoPoint0Fut
         aboutSioNodeId        <- _aboutSioNodeIdFut
         scriptCacheHashCode   <- _scriptCacheHashCodeFut
-        rcvrsMapHashSum       <- _rcvrNodesHashSumFut
+        rcvrsMapUrlArgs       <- _rcvrsMapUrlArgsFut
       } yield {
         // Сборка модели данных инициализации выдачи:
         val state0 = MSc3Init(
@@ -349,9 +349,7 @@ trait ScSite
             apiVsn            = _siteQsArgs.apiVsn,
             debug             = SC_JS_DEBUG,
             // Хост-порт для запросов через CDN:
-            cdnHost           = cdnUtil.ctx2CdnHost(ctx)
-              .getOrElse( ctx.api.ctxUtil.HOST_PORT ),
-            rcvrsMapHashSum   = rcvrsMapHashSum,
+            rcvrsMap          = rcvrsMapUrlArgs,
           )
         )
 

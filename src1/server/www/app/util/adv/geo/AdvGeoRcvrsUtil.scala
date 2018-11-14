@@ -11,7 +11,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.{MPxRatios, MScreen}
 import io.suggest.es.model.IMust
-import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MMapNodeIconInfo}
+import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MMapNodeIconInfo, MRcvrsMapUrlArgs}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
@@ -134,6 +134,16 @@ class AdvGeoRcvrsUtil @Inject()(
     import scala.concurrent.duration._
     cacheApiUtil.getOrElseFut("advRcvrsHash", expiration = 10.seconds) {
       rcvrNodesMapHashSum()
+    }
+  }
+
+  def rcvrsMapUrlArgs()(implicit ctx: Context): Future[MRcvrsMapUrlArgs] = {
+    val hashSumFut = rcvrNodesMapHashSumCached()
+    val cdnHost = cdnUtil.ctx2CdnHostOrDflt(ctx)
+    for {
+      hashSum <- hashSumFut
+    } yield {
+      MRcvrsMapUrlArgs( cdnHost, hashSum )
     }
   }
 

@@ -1,6 +1,7 @@
 package io.suggest.lk.adv.geo.m
 
 import diode.FastEq
+import io.suggest.maps.nodes.MRcvrsMapUrlArgs
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 
@@ -18,9 +19,9 @@ object MOther {
   implicit object MOtherFastEq extends FastEq[MOther] {
     override def eqv(a: MOther, b: MOther): Boolean = {
       (a.adId ===* b.adId) &&
-        (a.rcvrsMapUrl ==* b.rcvrsMapUrl) &&
-        (a.onMainScreen ==* b.onMainScreen) &&
-        (a.doc ===* b.doc)
+      (a.rcvrsMap ===* b.rcvrsMap) &&
+      (a.onMainScreen ==* b.onMainScreen) &&
+      (a.doc ===* b.doc)
     }
   }
 
@@ -38,10 +39,10 @@ object MOther {
   * @param onMainScreen Текущее Состояние галочки размещения на главном экране.
   */
 case class MOther(
-  adId          : String,
-  rcvrsMapUrl   : String,
-  onMainScreen  : Boolean             = true,
-  doc           : MDocS               = MDocS()
+                   adId          : String,
+                   rcvrsMap      : MRcvrsMapUrlArgs,
+                   onMainScreen  : Boolean             = true,
+                   doc           : MDocS               = MDocS()
 ) {
 
   def withOnMainScreen(oms2: Boolean) = copy(onMainScreen = oms2)
