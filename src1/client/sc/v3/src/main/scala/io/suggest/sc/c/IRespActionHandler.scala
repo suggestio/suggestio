@@ -53,7 +53,7 @@ trait IRespActionHandler {
   /** Применить respAction к состоянию выдачи.
     *
     * @param ra Resp action.
-    * @param value0 Начальное значение.
+    * @param ctx Контекст с начальным значением состояния.
     * @return Обновлённое состояние + опциональный сайд-эффект.
     */
   def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect])

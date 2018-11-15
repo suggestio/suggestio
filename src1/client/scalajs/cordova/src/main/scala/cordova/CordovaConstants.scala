@@ -11,7 +11,7 @@ import scala.scalajs.js
 object CordovaConstants {
 
   /** Является ли данная платформа - Cordova? */
-  def isCordovaPlatform: Boolean = !js.isUndefined( Cordova )
+  def isCordovaPlatform(): Boolean = !js.isUndefined( Cordova )
 
 
   object Events {

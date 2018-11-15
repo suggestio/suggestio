@@ -3,7 +3,7 @@ package io.suggest.maps.c
 import diode._
 import diode.data.Pot
 import io.suggest.maps.m.{InstallRcvrMarkers, RcvrMarkersInit}
-import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.maps.nodes.{MGeoNodesResp, MRcvrsMapUrlArgs}
 import io.suggest.maps.u.IAdvRcvrsMapApi
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -20,9 +20,9 @@ import scala.util.Success
 object RcvrMarkersInitAh {
 
   /** Запуск инициализации карты. */
-  def startInitFx(api: IAdvRcvrsMapApi): Effect = {
+  def startInitFx(args: MRcvrsMapUrlArgs, api: IAdvRcvrsMapApi): Effect = {
     Effect {
-      api.advRcvrsMapJson()
+      api.advRcvrsMapJson(args)
         .transform { tryResp =>
           val r = InstallRcvrMarkers( tryResp )
           Success( r )
@@ -36,6 +36,7 @@ object RcvrMarkersInitAh {
 /** Diode action handler для обслуживания карты ресиверов. */
 class RcvrMarkersInitAh[M](
                             api       : IAdvRcvrsMapApi,
+                            argsRO    : ModelRO[MRcvrsMapUrlArgs],
                             modelRW   : ModelRW[M, Pot[MGeoNodesResp]]
                           )
   extends ActionHandler(modelRW)
@@ -46,7 +47,7 @@ class RcvrMarkersInitAh[M](
 
     // Сигнал запуска инициализации маркеров с сервера.
     case RcvrMarkersInit =>
-      val fx = RcvrMarkersInitAh.startInitFx(api)
+      val fx = RcvrMarkersInitAh.startInitFx( argsRO.value, api )
       // silent, т.к. RcvrMarkersR работает с этим Pot как с Option, а больше это никого и не касается.
       updatedSilent( value.pending(), fx )
 

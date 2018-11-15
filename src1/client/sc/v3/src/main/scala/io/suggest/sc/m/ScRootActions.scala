@@ -101,7 +101,7 @@ case object GeoLocTimeOut extends ISc3Action
   */
 case class HandleScApiResp(
                             reqTimeStamp   : Option[Long],
-                            qs         : MScQs,
+                            qs             : MScQs,
                             tryResp        : Try[MSc3Resp],
                             reason         : IScApiRespReason
                           )

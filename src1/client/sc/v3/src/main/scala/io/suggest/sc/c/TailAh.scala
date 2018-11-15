@@ -70,7 +70,8 @@ object TailAh {
 /** Непосредственный контроллер "последних" сообщений. */
 class TailAh[M](
                  modelRW                  : ModelRW[M, MScRoot],
-                 respWithActionHandlers   : Seq[IRespWithActionHandler],
+                 scRespHandlers           : Seq[IRespHandler],
+                 scRespActionHandlers     : Seq[IRespActionHandler],
                  routerCtlF               : GetRouterCtlF
                )
   extends ActionHandler(modelRW)
@@ -309,7 +310,7 @@ class TailAh[M](
       val value0 = value
 
       val rhCtx0 = MRhCtx(value0, m)
-      val respHandler = respWithActionHandlers
+      val respHandler = scRespHandlers
         .find { rh =>
           rh.isMyReqReason(rhCtx0)
         }
@@ -352,7 +353,7 @@ class TailAh[M](
             val rhCtx1 = rhCtx0.copy(
               value0 = acc0.v1
             )
-            respWithActionHandlers
+            scRespActionHandlers
               .find { rah =>
                 rah.isMyRespAction( ra.acType, rhCtx0 )
               }

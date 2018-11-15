@@ -7,6 +7,7 @@ import play.api.http.HttpVerbs
 import play.api.libs.ws.WSResponse
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -31,6 +32,8 @@ trait Lookup extends ISwfsClientWs with OneMasterRequest { that =>
       override def _mkUrl(master: String): String = {
         MASTER_PROTO + "://" + master + "/dir/lookup" + args.toQs
       }
+      override def requestTimeout = Some( 5.seconds )
+
       override def _handleResp(url: String, fut: Future[WSResponse]): Future[Res_t] = {
         for (wsResp <- fut) yield {
           val s = wsResp.status

@@ -16,20 +16,37 @@ import io.suggest.maps.nodes.MRcvrsMapUrlArgs
   */
 object MSc3Conf {
 
+  object Fields {
+    val LOGGED_IN_FN                = "l"
+    val ABOUT_SIO_NODE_ID_FN        = "a"
+    val RCVRS_MAP_FN                = "r"
+    val API_VSN_FN                  = "v"
+    val DEBUG_FN                    = "d"
+    val SERVER_GENERATED_AT_FN      = "g"
+    val CLIENT_UPDATED_AT_FN        = "u"
+  }
+
   /** Поддержка play-json.
     * def, ведь на клиенте это нужно только один раз.
     */
-  implicit def MSC3_CONF_FORMAT: OFormat[MSc3Conf] = (
-    (__ \ "l").format[Boolean] and
-    (__ \ "a").format[String] and
-    (__ \ "v").format[MScApiVsn] and
-    (__ \ "d").formatNullable[Boolean]
-      // Если очень надо, отладка может быть ВКЛючена по-умолчанию, если явно не задана в конфиге: .getOrElseTrue
-      .inmap[Boolean]( _.getOrElseFalse, EmptyUtil.someF ) and
-    (__ \ "r").format[MRcvrsMapUrlArgs]
-  )(apply, unlift(unapply))
+  implicit def MSC3_CONF_FORMAT: OFormat[MSc3Conf] = {
+    val F = Fields
+    (
+      (__ \ F.LOGGED_IN_FN).format[Boolean] and
+      (__ \ F.ABOUT_SIO_NODE_ID_FN).format[String] and
+      (__ \ F.API_VSN_FN).format[MScApiVsn] and
+      (__ \ F.DEBUG_FN).formatNullable[Boolean]
+        // Если очень надо, отладка может быть ВКЛючена по-умолчанию, если явно не задана в конфиге: .getOrElseTrue
+        .inmap[Boolean]( _.getOrElseFalse, EmptyUtil.someF ) and
+      (__ \ F.RCVRS_MAP_FN).format[MRcvrsMapUrlArgs] and
+      (__ \ F.SERVER_GENERATED_AT_FN).format[Long] and
+      (__ \ F.CLIENT_UPDATED_AT_FN).formatNullable[Long]
+    )(apply, unlift(unapply))
+  }
 
   @inline implicit def univEq: UnivEq[MSc3Conf] = UnivEq.derive
+
+  def timestampSec() = System.currentTimeMillis() / 1000
 
 }
 
@@ -37,6 +54,8 @@ object MSc3Conf {
 /** Контейнер данных конфигурации, задаваемой на сервере.
   *
   * @param rcvrsMap Данные для выкачивания карты ресиверов.
+  * @param serverCreatedAt Timestamp генерации сервером данных этого конфига.
+  * @param clientUpdatedAt Timestamp сохранение данных на клиенте.
   */
 case class MSc3Conf(
                      isLoggedIn         : Boolean,
@@ -44,4 +63,11 @@ case class MSc3Conf(
                      apiVsn             : MScApiVsn,
                      debug              : Boolean,
                      rcvrsMap           : MRcvrsMapUrlArgs,
-                   )
+                     serverCreatedAt    : Long              = MSc3Conf.timestampSec(),
+                     clientUpdatedAt    : Option[Long]      = None,
+                   ) {
+
+  def withRcvrsMap(rcvrsMap: MRcvrsMapUrlArgs) = copy( rcvrsMap = rcvrsMap )
+  def withClientUpdatedAt(clientUpdatedAt: Option[Long]) = copy(clientUpdatedAt = clientUpdatedAt)
+
+}

@@ -40,7 +40,7 @@ object PlatformAh {
     var isBleAvail = false
 
     // Инициализация для cordova-окружения:
-    val isCordova = CordovaConstants.isCordovaPlatform
+    val isCordova = CordovaConstants.isCordovaPlatform()
     if (isCordova) {
       // Это кордова-контейнер для веб-приложения.
       // Кордова в момент инициализации обычно не готова ни к чему.

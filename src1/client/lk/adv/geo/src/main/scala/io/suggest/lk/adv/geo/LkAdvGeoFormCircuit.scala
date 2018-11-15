@@ -24,7 +24,7 @@ import io.suggest.lk.adv.geo.a.DocAh
 import io.suggest.lk.adv.geo.a.oms.OnMainScreenAh
 import io.suggest.maps.c.{MapCommonAh, RadAh, RcvrMarkersInitAh}
 import io.suggest.maps.m._
-import io.suggest.maps.u.{AdvRcvrsMapApiHttpViaUrl, IAdvRcvrsMapApi, MapsUtil}
+import io.suggest.maps.u.{AdvRcvrsMapApiHttpViaUrl, MapsUtil}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.StateInp
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -187,14 +187,11 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       modelRW = geoAdvRW.zoomRW(_.popup) { _.withPopup(_) }
     )
 
-    val advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl(
-      route = { () =>
-        IAdvRcvrsMapApi.rcvrsMapRouteFromArgs( otherRW.value.rcvrsMap )
-      }
-    )
+    val advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl()
     val rcvrsMapInitAh = new RcvrMarkersInitAh(
       api       = advRcvrsMapApi,
-      modelRW   = rcvrRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
+      modelRW   = rcvrRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) },
+      argsRO    = otherRW.zoom(_.rcvrsMap),
     )
 
     val radAh = new RadAh(

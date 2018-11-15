@@ -13,11 +13,19 @@ import play.api.libs.json._
   */
 object MSc3Init {
 
+  object Fields {
+    val MAP_PROPS_FN                = "m"
+    val SC_CONF_FN                  = "r"
+  }
+
   /** Поддержка play-json. */
-  implicit def MSC3_INIT_FORMAT: OFormat[MSc3Init] = (
-    (__ \ "m").format[MMapProps] and
-    (__ \ "r").format[MSc3Conf]
-  )(apply, unlift(unapply))
+  implicit def MSC3_INIT_FORMAT: OFormat[MSc3Init] = {
+    val F = Fields
+    (
+      (__ \ F.MAP_PROPS_FN).format[MMapProps] and
+      (__ \ F.SC_CONF_FN).format[MSc3Conf]
+    )(apply, unlift(unapply))
+  }
 
 }
 
@@ -27,6 +35,6 @@ object MSc3Init {
   * @param mapProps Начальные настройки карты.
   */
 case class MSc3Init(
-                     mapProps     : MMapProps,
-                     conf         : MSc3Conf
+                     mapProps           : MMapProps,
+                     conf               : MSc3Conf,
                    )

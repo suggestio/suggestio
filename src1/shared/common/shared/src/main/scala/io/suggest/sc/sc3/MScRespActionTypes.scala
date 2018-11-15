@@ -27,6 +27,9 @@ object MScRespActionTypes extends StringEnum[MScRespActionType] {
   /** Экшен результата поиска узлов. */
   case object SearchNodes extends MScRespActionType("s")
 
+  /** Тип экшена обновления данных конфигурации. */
+  case object ConfUpdate extends MScRespActionType("c")
+
 
   /** Список всех значений модели. */
   override val values = findValues

@@ -15,7 +15,7 @@ import io.suggest.lk.adv.m.{MPriceS, ResetPrice}
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.MMapS.MMapSFastEq4Map
 import io.suggest.maps.m.{MRadS, RcvrMarkersInit}
-import io.suggest.maps.u.{AdvRcvrsMapApiHttpViaUrl, IAdvRcvrsMapApi, MapsUtil}
+import io.suggest.maps.u.{AdvRcvrsMapApiHttpViaUrl, MapsUtil}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import io.suggest.pick.PickleUtil
@@ -145,14 +145,11 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
     val rcvrsRw = zoomRW(_.rcvrs) { _.withRcvrs(_) }
 
     // Карта покрытия с данными ресиверов:
-    val rcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl(
-      route = { () =>
-        IAdvRcvrsMapApi.rcvrsMapRouteFromArgs( confRO.value.rcvrsMap )
-      }
-    )
+    val rcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl()
     val rcvrsInitAh = new RcvrMarkersInitAh(
       api     = rcvrsMapApi,
-      modelRW = rcvrsRw.zoomRW(_.nodesResp) { _.withNodesResp(_) }
+      modelRW = rcvrsRw.zoomRW(_.nodesResp) { _.withNodesResp(_) },
+      argsRO  = confRO.zoom(_.rcvrsMap)
     )
 
     val rcvrMarkerPopupAh = new LamRcvrMarkerPopupAh(

@@ -5,6 +5,7 @@ import io.suggest.geo.{MGeoLoc, MLocEnv}
 import io.suggest.sc.m.dev.MScDev
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx.MScIndex
+import io.suggest.sc.sc3.MSc3Init
 import io.suggest.sc.styl.MScCssArgs
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
@@ -63,6 +64,17 @@ case class MScRoot(
       bleBeacons = locEnvBleBeacons
     )
   }
+
+
+  /** Перегонка в инстанс MSc3Init. */
+  def toScInit: MSc3Init = {
+    MSc3Init(
+      mapProps  = index.search.geo.mapInit.state.toMapProps,
+      conf      = internals.conf,
+      // TODO clientTimstamp
+    )
+  }
+
 
 }
 

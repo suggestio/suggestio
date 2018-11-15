@@ -7,6 +7,7 @@ import io.suggest.util.logs.IMacroLogs
 import play.api.libs.ws.WSResponse
 
 import scala.concurrent.Future
+import scala.concurrent.duration.FiniteDuration
 
 /**
  * Suggest.io
@@ -30,6 +31,9 @@ trait OneMasterRequest
     def _args: Args_t
 
     def _mkUrl(master: String): String
+
+    /** Override request timeout. */
+    def requestTimeout: Option[FiniteDuration] = None
 
     def mkOp(restMasters: List[String]): Future[Res_t] = {
       if (restMasters.isEmpty) {
@@ -62,8 +66,15 @@ trait OneMasterRequest
 
     def mkOp(master: String): Future[Res_t] = {
       val url = _mkUrl(master)
-      val fut = wsClient.url( url )
-        .execute(_method)
+
+      var req = wsClient
+        .url( url )
+
+      for (timeout <- requestTimeout)
+        req = req.withRequestTimeout( timeout )
+
+      val fut = req.execute(_method)
+
       // Логгируем ответы на запросы трейсом
       if (LOGGER.underlying.isTraceEnabled()) {
         fut.onSuccess { case resp =>

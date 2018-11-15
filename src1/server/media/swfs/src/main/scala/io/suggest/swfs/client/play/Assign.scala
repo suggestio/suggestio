@@ -6,6 +6,7 @@ import play.api.http.HttpVerbs
 import play.api.libs.ws.WSResponse
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -27,9 +28,12 @@ trait Assign extends ISwfsClientWs with OneMasterRequest { that =>
       override type Res_t   = AssignResponse
       override def _method  = HttpVerbs.POST
       override def _args    = args
+      override def requestTimeout = Some( 5.seconds )
+
       override def _mkUrl(master: String): String = {
         MASTER_PROTO + "://" + master + "/dir/assign" + _args.toQs
       }
+
       override def _handleResp(url: String, fut: Future[WSResponse]): Future[AssignResponse] = {
         fut.filter { resp =>
           val respBody = resp.body

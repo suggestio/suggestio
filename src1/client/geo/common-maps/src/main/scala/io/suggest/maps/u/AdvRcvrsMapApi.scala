@@ -4,7 +4,7 @@ import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp, MRcvrsMapUrlAr
 import io.suggest.proto.HttpConst
 import io.suggest.routes.{IJsRouter, routes}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.model.{HttpRoute, HttpRouteExtractor}
+import io.suggest.sjs.common.model.HttpRoute
 import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.Future
@@ -20,14 +20,24 @@ import scala.concurrent.Future
 trait IAdvRcvrsMapApi {
 
   /** Получение десериализованного инстанса с данными гео.карты рекламщиков. */
-  def advRcvrsMapJson(): Future[MGeoNodesResp]
+  def advRcvrsMapJson(args: MRcvrsMapUrlArgs): Future[MGeoNodesResp]
 
 }
 
 
-object IAdvRcvrsMapApi {
+/** Реализация [[IAdvRcvrsMapApi]] с запросом через произвольную ссылку. */
+class AdvRcvrsMapApiHttpViaUrl(jsRoutes: IJsRouter = routes) extends IAdvRcvrsMapApi {
 
-  def _advRcvrsMapRequest[HttpRoute: HttpRouteExtractor](route: HttpRoute): Future[MGeoNodesResp] = {
+  override def advRcvrsMapJson(args: MRcvrsMapUrlArgs): Future[MGeoNodesResp] = {
+    // Подготовить относительную ссылку:
+    val route0 = jsRoutes.controllers.Static.advRcvrsMapJson( args.hashSum )
+    // прикрутить CDN-host
+    val hostedUrl = HttpConst.Proto.CURR_PROTO + args.cdnHost + route0.url
+    // Дописать протокол для связи с сервером, если у нас тут приложение или иные особые условия:
+    val route = HttpRoute(
+      method = route0.method,
+      url    = Xhr.mkAbsUrlIfPreferred( hostedUrl )
+    )
     for {
       list <- Xhr.unJsonResp[List[MGeoNodePropsShapes]] {
         Xhr.requestJsonText( route )
@@ -35,36 +45,6 @@ object IAdvRcvrsMapApi {
     } yield {
       MGeoNodesResp( list )
     }
-  }
-
-
-  /** Сборка роуты на json-карту ресиверов.
-    *
-    * @param rcvrsMapHashSum Ключ для карты.
-    * @param cdnHost Хост для связи, обычно CDN-хост.
-    * @param jsRoutes Используемый js-роутер.
-    * @return Абсолютная ссылка на ресурс.
-    */
-  def rcvrsMapRouteFromArgs(args: MRcvrsMapUrlArgs, jsRoutes: IJsRouter = routes): HttpRoute = {
-    // Подготовить относительную ссылку:
-    val route = jsRoutes.controllers.Static.advRcvrsMapJson( args.hashSum )
-    // прикрутить CDN-host
-    val hostedUrl = HttpConst.Proto.CURR_PROTO + args.cdnHost + route.url
-    // Дописать протокол для связи с сервером, если у нас тут приложение или иные особые условия:
-    HttpRoute(
-      method = route.method,
-      url    = Xhr.mkAbsUrlIfPreferred( hostedUrl )
-    )
-  }
-
-}
-
-
-/** Реализация [[IAdvRcvrsMapApi]] с запросом через произвольную ссылку. */
-class AdvRcvrsMapApiHttpViaUrl[Route_t: HttpRouteExtractor](route: () => Route_t) extends IAdvRcvrsMapApi {
-
-  override def advRcvrsMapJson(): Future[MGeoNodesResp] = {
-    IAdvRcvrsMapApi._advRcvrsMapRequest( route() )
   }
 
 }

@@ -4,7 +4,7 @@ import io.suggest.common.empty.OptionUtil
 import OptionUtil.Implicits._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.sc.{MScApiVsns, ScConstants}
-import io.suggest.sc.sc3.{MSc3Resp, MSc3RespAction, MScQs}
+import io.suggest.sc.sc3._
 import util.acl.IMaybeAuth
 import japgolly.univeq._
 import io.suggest.es.model.MEsUuId.Implicits._
@@ -67,7 +67,7 @@ trait ScUniApi
 
 
     /** Собрать index-логику, когда требуется. */
-    def indexLogicOptFut: Future[Option[ScIndexLogic]] = {
+    lazy val indexLogicOptFut: Future[Option[ScIndexLogic]] = {
       if (qs.index.nonEmpty) {
         val logic = ScIndexLogic(qs)(_request)
         LOGGER.trace(s"$logPrefix Normal index-logic created: $logic")
@@ -86,13 +86,13 @@ trait ScUniApi
     }
 
     // Сначала запускать index, если есть в запросе:
-    lazy val indexRespActionOptFut = _logicOpt2stateRespActionOptFut( indexLogicOptFut )
+    lazy val indexRaOptFut = _logicOpt2stateRespActionOptFut( indexLogicOptFut )
 
     /** qs после перехода в новый index.
       * Если перехода в index нет, то будут исходные qs. */
     lazy val qsAfterIndexFut: Future[MScQs] = {
       for {
-        scIndexRespActionOpt <- indexRespActionOptFut
+        scIndexRespActionOpt <- indexRaOptFut
       } yield {
         LOGGER.trace(s"$logPrefix scIndexRespActionOpt = ${scIndexRespActionOpt.orNull}")
         val qsAfterIndex = for {
@@ -154,7 +154,7 @@ trait ScUniApi
 
 
     /** Запустить focused-логику, когда это требуется запросом. */
-    def focRespActionOptFut =
+    def focRaOptFut =
       _logicOpt2stateRespActionOptFut( focLogicOptFut )
 
     /** Запустить абстрактную логику на исполнение через её интерфейс. */
@@ -187,7 +187,7 @@ trait ScUniApi
 
 
     // Запустить сбор карточек плитки, если требуется:
-    def gridAdsRespActionOptFut: Future[Option[MSc3RespAction]] = {
+    def gridAdsRaOptFut: Future[Option[MSc3RespAction]] = {
       val isWithGridFut = if (qs.common.searchGridAds.nonEmpty) {
         Future.successful( true )
       } else {
@@ -213,7 +213,7 @@ trait ScUniApi
 
 
     /** Запуск поиска тегов, если запрошен. */
-    def searchRespActionFutOpt: Future[Option[MSc3RespAction]] = {
+    def searchRaOptFut: Future[Option[MSc3RespAction]] = {
       val futOpt = for {
         _ <- qs.common.searchNodes
       } yield {
@@ -229,27 +229,70 @@ trait ScUniApi
       FutureUtil.optFut2futOptPlain( futOpt )
     }
 
+    /** Рассчёт контрольной суммы rcvrsMap для confUpdate или иных целей. */
+    def rcvrsMapUrlArgsFut = advGeoRcvrsUtil.rcvrsMapUrlArgs()(ctx)
+
+
+    /**
+      * Попутно раздаются свежие данные для обновления данных в конфиге выдачи:
+      * Изначально - текущую версию rcvrsMap.json, например.
+      */
+    private def confUpdateRaOptFut: Future[Option[MSc3RespAction]] = {
+      val someRaOrNseeFut = for {
+        // 2018-11-15 Только на index-ответы возвращать конфиг. Апдейты не часты, поэтому возвращать их на каждый чих не нужно.
+        // В будущем можно чаще/реже возвращать всё это добро.
+        indexLogicOpt <- indexLogicOptFut
+        if indexLogicOpt.nonEmpty
+
+        // Решено, что надо вернуть свежие "новости".
+        // Запустить рассчёт данных карты:
+        rcvrsMapUrlArgs <- rcvrsMapUrlArgsFut
+
+      } yield {
+        val ra = MSc3RespAction(
+          acType = MScRespActionTypes.ConfUpdate,
+          confUpdate = Some(
+            MScConfUpdate(
+              rcvrsMap = Some(rcvrsMapUrlArgs)
+            )
+          )
+        )
+        Some(ra)
+      }
+
+      someRaOrNseeFut.recover { case ex: Throwable =>
+        if (!ex.isInstanceOf[NoSuchElementException])
+          LOGGER.error(s"$logPrefix Unable to confUpdate", ex)
+        None
+      }
+    }
+
 
     /** Сборка JSON-ответа сервера. */
     def scRespFut: Future[MSc3Resp] = {
-      val _indexRespActionOptFut = indexRespActionOptFut
-      val _gridAdsRespActionOptFut = gridAdsRespActionOptFut
-      val _focRespActionOptFut = focRespActionOptFut
-      val _searchRespActionOptFut = searchRespActionFutOpt
+      val _indexRaOptFut      = indexRaOptFut
+      val _gridAdsRaOptFut    = gridAdsRaOptFut
+      val _focRaOptFut        = focRaOptFut
+      val _searchRaOptFut     = searchRaOptFut
+      val _confUpdateRaOptFut = confUpdateRaOptFut
       for {
-        indexRaOpt      <- _indexRespActionOptFut
-        gridAdsRaOpt    <- _gridAdsRespActionOptFut
-        focRaOpt        <- _focRespActionOptFut
-        searchRaOpt     <- _searchRespActionOptFut
+        indexRaOpt      <- _indexRaOptFut
+        gridAdsRaOpt    <- _gridAdsRaOptFut
+        focRaOpt        <- _focRaOptFut
+        searchRaOpt     <- _searchRaOptFut
+        confUpdateRaOpt <- _confUpdateRaOptFut
       } yield {
         val respActions = (
           indexRaOpt ::
           gridAdsRaOpt ::
           focRaOpt ::
           searchRaOpt ::
+          confUpdateRaOpt ::
           Nil
-        ).flatten
-        LOGGER.trace(s"$logPrefix Resp actions: foc?${focRaOpt.nonEmpty} grid?${gridAdsRaOpt.nonEmpty} index?${indexRaOpt.nonEmpty} searchNodes?${searchRaOpt.nonEmpty}, total=${respActions.size}")
+        )
+          .flatten
+
+        LOGGER.trace(s"$logPrefix Resp actions[${respActions.length}]: foc?${focRaOpt.nonEmpty} grid?${gridAdsRaOpt.nonEmpty} index?${indexRaOpt.nonEmpty} searchNodes?${searchRaOpt.nonEmpty}, total=${respActions.size}, confUpd?${confUpdateRaOpt.nonEmpty}")
         MSc3Resp(
           respActions = respActions
         )

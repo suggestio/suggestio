@@ -21,7 +21,8 @@ object MSc3RespAction {
     (__ \ "action").format[MScRespActionType] and
     (__ \ MScRespActionTypes.Index.value).formatNullable[MSc3IndexResp] and
     (__ \ MScRespActionTypes.AdsTile.value).formatNullable[MSc3AdsResp] and
-    (__ \ MScRespActionTypes.SearchNodes.value).formatNullable[MSc3NodeSearchResp]
+    (__ \ MScRespActionTypes.SearchNodes.value).formatNullable[MSc3NodeSearchResp] and
+    (__ \ MScRespActionTypes.ConfUpdate.value).formatNullable[MScConfUpdate]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MSc3RespAction] = UnivEq.derive
@@ -37,10 +38,12 @@ object MSc3RespAction {
   * @param index Тело index-ответа.
   * @param ads Тело ответа для плитки jd-карточек.
   * @param search Тело ответа с результатами поиска тегов/узлов/etc.
+  * @param confUpdate Данные для обновления конфига.
   */
 case class MSc3RespAction(
                            acType    : MScRespActionType,
-                           index     : Option[MSc3IndexResp]  = None,
-                           ads       : Option[MSc3AdsResp]    = None,
+                           index     : Option[MSc3IndexResp]        = None,
+                           ads       : Option[MSc3AdsResp]          = None,
                            search    : Option[MSc3NodeSearchResp]   = None,
+                           confUpdate: Option[MScConfUpdate]        = None,
                          )

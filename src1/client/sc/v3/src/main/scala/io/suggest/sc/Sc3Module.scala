@@ -2,9 +2,9 @@ package io.suggest.sc
 
 import com.softwaremill.macwire._
 import io.suggest.jd.render.JdRenderModule
-import io.suggest.sc.c.IRespWithActionHandler
+import io.suggest.sc.c.{IRespActionHandler, IRespHandler, IRespWithActionHandler}
 import io.suggest.sc.c.grid.{GridFocusRespHandler, GridRespHandler}
-import io.suggest.sc.c.inx.IndexRespHandler
+import io.suggest.sc.c.inx.{ConfUpdateRah, IndexRespHandler}
 import io.suggest.sc.c.search.NodesSearchRespHandler
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v._
@@ -55,6 +55,7 @@ class Sc3Module {
   // index
   lazy val welcomeR = wire[WelcomeR]
   lazy val indexRespHandler = wire[IndexRespHandler]
+  lazy val confUpdateRah = wire[ConfUpdateRah]
 
 
   // grid
@@ -103,14 +104,24 @@ class Sc3Module {
   lazy val sc3Circuit = wire[Sc3Circuit]
 
 
-  /** Список обработчиков resp-action в ответах сервера. */
-  lazy val respWithActionHandlers: Seq[IRespWithActionHandler] = {
-    List[IRespWithActionHandler](
+  /** Списки обработчиков ответов сервера и resp-action в этих ответах. */
+  lazy val (respHandlers, respActionHandlers) = {
+    // Часть модулей является универсальной, поэтому шарим хвост списка между обоими списками:
+    val mixed = List[IRespWithActionHandler](
       gridRespHandler,
       gridFocusRespHandler,
       indexRespHandler,
       geoSearchRespHandler
     )
+
+    val rahs: List[IRespActionHandler] =
+      confUpdateRah ::
+      mixed
+
+    val rhs: List[IRespHandler] =
+      mixed
+
+    (rhs, rahs)
   }
 
 }

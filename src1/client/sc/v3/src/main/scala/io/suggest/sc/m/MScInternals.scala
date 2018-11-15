@@ -38,6 +38,7 @@ case class MScInternals(
                          geoLockTimer  : Option[Int]             = None,
                        ) {
 
+  def withConf(conf: MSc3Conf) = copy(conf = conf)
   def withJsRouter(jsRouter: Pot[ScJsRoutes.type])    = copy(jsRouter = jsRouter)
   def withGeoLockTimer(geoLockTimer: Option[Int])   = copy(geoLockTimer = geoLockTimer)
 

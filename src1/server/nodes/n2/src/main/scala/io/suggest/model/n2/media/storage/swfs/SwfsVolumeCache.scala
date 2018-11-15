@@ -1,7 +1,7 @@
 package io.suggest.model.n2.media.storage.swfs
 
+import akka.actor.ActorSystem
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.playx.CacheApiUtil
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.swfs.client.proto.VolumeId_t
@@ -26,6 +26,7 @@ class SwfsVolumeCache @Inject() (
   cacheUtil                 : CacheApiUtil,
   configuration             : Configuration,
   client                    : ISwfsClient,
+  actorSystem               : ActorSystem,
   implicit private val ec   : ExecutionContext
 )
   extends MacroLogsImpl
@@ -53,12 +54,13 @@ class SwfsVolumeCache @Inject() (
    */
   def getLocations(volumeId: VolumeId_t): Future[Seq[IVolumeLocation]] = {
     val ck = _ck(volumeId)
+
     cacheUtil.getOrElseFut(ck, CACHE_DURATION) {
       val lr = LookupRequest(
         volumeId = volumeId
       )
 
-      val fut = client
+      client
         .lookup(lr)
         .map { tryRes =>
           tryRes.fold(
@@ -67,26 +69,24 @@ class SwfsVolumeCache @Inject() (
               err.locations
             },
             {resp =>
-              LOGGER.trace("Lookup volumeId=" + volumeId + " => " + resp.locations.iterator.map(_.publicUrl).mkString(",") )
+              if (resp.locations.nonEmpty)
+                LOGGER.trace("Lookup volumeId=" + volumeId + " => " + resp.locations.iterator.map(_.publicUrl).mkString(",") )
+              else
+                LOGGER.error(s"Volume $volumeId lookup failed")
+
               resp.locations
             }
           )
         }
         .recover { case ex: Throwable =>
           LOGGER.error(s"Volume $volumeId lookup failed", ex)
+          // Удаляем из кэша ошибку, чтобы система могла по-скорее попробовать ещё раз.
+          actorSystem.scheduler.scheduleOnce( 1.second ) {
+            // Наверное, не надо перепроверять фьючерс в кэше - наврядли он может быть заменён.
+            cache.remove(ck)
+          }
           Nil
         }
-
-      // TODO  Говнокод какой-то: сохраняем в кэш, а затем удаляем. Надо просто не сохранять, не?
-      // Если нет нормального результата, то нужно удалить фьючерс из кеша.
-      for (ex <- fut.filter(_.nonEmpty).failed) {
-        cache.remove(ck)
-        if (!ex.isInstanceOf[NoSuchElementException])
-          LOGGER.error(s"Volume $volumeId lookup failed", ex)
-      }
-
-      // Вернуть фьючерс результата
-      fut
     }
   }
 

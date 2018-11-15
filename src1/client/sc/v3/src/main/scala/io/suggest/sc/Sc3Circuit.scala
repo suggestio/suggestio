@@ -16,12 +16,12 @@ import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.maps.c.MapCommonAh
 import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
-import io.suggest.maps.u.{AdvRcvrsMapApiHttpViaUrl, IAdvRcvrsMapApi}
+import io.suggest.maps.u.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs, WarnMsgs}
 import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
-import io.suggest.sc.c.{IRespWithActionHandler, JsRouterInitAh, TailAh}
+import io.suggest.sc.c._
 import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.inx.{IndexAh, WelcomeAh}
 import io.suggest.sc.c.search._
@@ -59,7 +59,8 @@ class Sc3Circuit(
                   jdCssFactory              : JdCssFactory,
                   api                       : ISc3Api,
                   getRouterCtlF             : GetRouterCtlF,
-                  respWithActionHandlers    : Seq[IRespWithActionHandler],
+                  scRespHandlers            : Seq[IRespHandler],
+                  scRespActionHandlers      : Seq[IRespActionHandler],
                 )
   extends CircuitLog[MScRoot]
   with ReactConnector[MScRoot]
@@ -87,9 +88,8 @@ class Sc3Circuit(
 
   override protected def initialModel: MScRoot = {
     // Сначала надо подготовить конфиг, прочитав его со страницы (если он там есть).
-    val scInit = Sc3ConfUtil.initFromDom()
+    val scInit = Sc3ConfUtil.getFreshestInit()
       .getOrElse {
-        // TODO Нужен какой-то авто-конфиг. С сервера надо получать разные полезные данные, запихивать результат в circuit-конструктор.
         val emsg = ErrorMsgs.GRID_CONFIGURATION_INVALID
         LOG.error( emsg )
         throw new NoSuchElementException( emsg )
@@ -265,9 +265,10 @@ class Sc3Circuit(
 
   // хвостовой контроллер -- в самом конце, когда остальные отказались обрабатывать сообщение.
   private val tailAh = new TailAh(
-    modelRW     = rootRW,
-    routerCtlF  = getRouterCtlF,
-    respWithActionHandlers = respWithActionHandlers,
+    modelRW               = rootRW,
+    routerCtlF            = getRouterCtlF,
+    scRespHandlers        = scRespHandlers,
+    scRespActionHandlers  = scRespActionHandlers,
   )
 
   private val geoTabAh = new GeoTabAh(
@@ -276,6 +277,7 @@ class Sc3Circuit(
     geoSearchQsRO   = geoSearchQsRO,
     rcvrsMapApi     = advRcvrsMapApi,
     screenInfoRO    = screenInfoRO,
+    rcvrMapArgsRO   = confRO.zoom(_.rcvrsMap),
   )
 
   private val indexAh = new IndexAh(
@@ -327,14 +329,7 @@ class Sc3Circuit(
   )
 
 
-  private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl(
-    route = { () =>
-      IAdvRcvrsMapApi.rcvrsMapRouteFromArgs(
-        args      = confRO.value.rcvrsMap,
-        jsRoutes  = ScJsRoutes,
-      )
-    }
-  )
+  private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( ScJsRoutes )
 
   override protected val actionHandler: HandlerFunction = {
     var acc = List.empty[HandlerFunction]

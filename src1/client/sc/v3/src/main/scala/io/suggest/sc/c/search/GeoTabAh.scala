@@ -7,7 +7,7 @@ import io.suggest.dev.MScreenInfo
 import io.suggest.grid.GridConst
 import io.suggest.maps.c.RcvrMarkersInitAh
 import io.suggest.maps.m.{HandleMapReady, InstallRcvrMarkers, RcvrMarkersInit}
-import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
+import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp, MRcvrsMapUrlArgs}
 import io.suggest.maps.u.IAdvRcvrsMapApi
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
@@ -73,6 +73,7 @@ class GeoTabAh[M](
                    rcvrsMapApi    : IAdvRcvrsMapApi,
                    screenInfoRO   : ModelRO[MScreenInfo],
                    geoSearchQsRO  : ModelRO[MScQs],
+                   rcvrMapArgsRO  : ModelRO[MRcvrsMapUrlArgs],
                    modelRW        : ModelRW[M, MGeoTabS]
                  )
   extends ActionHandler( modelRW )
@@ -272,7 +273,7 @@ class GeoTabAh[M](
       val v0 = value
       if (!v0.data.rcvrsCache.isPending) {
         // Эффект скачивания карты с сервера:
-        val fx = RcvrMarkersInitAh.startInitFx(rcvrsMapApi)
+        val fx = RcvrMarkersInitAh.startInitFx( rcvrMapArgsRO(), rcvrsMapApi )
         // silent, т.к. RcvrMarkersR работает с этим Pot как с Option, а больше это никого и не касается.
         val v2 = v0.withData(
           v0.data.withRcvrsCache( v0.data.rcvrsCache.pending() )

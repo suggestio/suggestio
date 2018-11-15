@@ -137,4 +137,10 @@ object ErrorMsgs extends MsgsStaticT {
 
   def SYS_MDR_CIRCUIT_ERROR            = E(84)
 
+  def KV_STORAGE_CHECK_FAILED          = E(85)
+
+  def KV_STORAGE_ACTION_FAILED         = E(86)
+
+  def CONF_SAVE_FAILED                 = E(87)
+
 }
