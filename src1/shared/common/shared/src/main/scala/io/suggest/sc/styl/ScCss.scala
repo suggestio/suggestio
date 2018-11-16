@@ -1,6 +1,6 @@
 package io.suggest.sc.styl
 
-import io.suggest.color.MColorData
+import io.suggest.color.{MColorData, MColors}
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.common.html.HtmlConstants
@@ -8,7 +8,6 @@ import io.suggest.css.Css
 import io.suggest.dev.MScreenInfo
 import io.suggest.font.MFonts
 import io.suggest.i18n.MsgCodes
-import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.ScConstants
 import japgolly.univeq.UnivEq
 

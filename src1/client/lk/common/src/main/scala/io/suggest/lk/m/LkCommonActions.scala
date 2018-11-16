@@ -2,14 +2,13 @@ package io.suggest.lk.m
 
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import diode.FastEq
-import io.suggest.color.MColorData
+import io.suggest.color.{MColorData, MColorType}
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.crypto.hash.MHash
 import io.suggest.file.up.MUploadResp
 import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.model.n2.edge.EdgeUid_t
-import io.suggest.model.n2.node.meta.colors.MColorType
 import io.suggest.spa.DAction
 import io.suggest.url.MHostUrl
 import org.scalajs.dom.File

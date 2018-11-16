@@ -14,8 +14,9 @@ import io.suggest.es.model.IMust
 import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MMapNodeIconInfo, MRcvrsMapUrlArgs}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.scripts.RcvrsMapNodesHashSumAggScripts
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.model.n2.node.{MNode, MNodeFields, MNodes}
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.MImgMakeArgs
@@ -113,16 +114,23 @@ class AdvGeoRcvrsUtil @Inject()(
     */
   protected def rcvrNodesMapHashSum(): Future[Int] = {
     for {
-      hashSum0 <- mNodes.docsHashSum(
-        sourceFields = List(
-          // Эджи. Там array, поэтому дальше погружаться нельзя. TODO А интересуют только эджи захвата геолокации и логотипа узла
-          MNodeFields.Edges.E_OUT_FN,
-          // Название узла тоже интересует. Но его может и не быть, поэтому интересуемся только контейнер meta.basic, который есть всегда
-          MNodeFields.Meta.META_BASIC_FN,
-          MNodeFields.Meta.META_COLORS_FN
-        ),
-        q = onMapRcvrsSearch(0).toEsQuery
-      )
+      hashSum0 <- {
+        /*
+        val aggScripts = FieldsHashSumsAggScripts(
+          sourceFields = List(
+            // Эджи. Там array, поэтому дальше погружаться нельзя. TODO А интересуют только эджи захвата геолокации и логотипа узла
+            MNodeFields.Edges.E_OUT_FN,
+            // Название узла тоже интересует. Но его может и не быть, поэтому интересуемся только контейнер meta.basic, который есть всегда
+            MNodeFields.Meta.META_BASIC_FN,
+            MNodeFields.Meta.META_COLORS_FN
+          )
+        )
+        */
+        val aggScripts = new RcvrsMapNodesHashSumAggScripts
+        val query = onMapRcvrsSearch(0)
+          .toEsQuery
+        mNodes.docsHashSum( aggScripts, query )
+      }
     } yield {
       // Тут костыль для "версии", чтобы сбрасывать некорректный кэш.
       // TODO Удалить этот .map после окончания отладки. А лучше унести куда-нибудь в Static-контроллер, т.к. номер версии может быть связан с форматом данных.

@@ -38,6 +38,9 @@ class MEdgeInfoSpec extends FlatSpec with PlayJsonTestUtil {
               radiusM = Distance(10.55, DistanceUnit.KILOMETERS).meters
             )
           )
+        ),
+        geoPoints = List(
+          MGeoPoint(-10.1, 20.55)
         )
       )
     }

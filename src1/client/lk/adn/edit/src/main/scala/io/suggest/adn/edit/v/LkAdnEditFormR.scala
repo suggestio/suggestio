@@ -3,7 +3,7 @@ package io.suggest.adn.edit.v
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.adn.edit.m._
-import io.suggest.color.MColorData
+import io.suggest.color.{MColorData, MColorType, MColorTypes}
 import io.suggest.css.Css
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -17,7 +17,6 @@ import io.suggest.lk.m.frk.{MFormResourceKey, MFrkTypes}
 import io.suggest.lk.r.{PropTableR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorBtnR, ColorPickerR}
 import io.suggest.lk.r.img.{ImgEditBtnPropsVal, ImgEditBtnR}
-import io.suggest.model.n2.node.meta.colors.{MColorType, MColorTypes}
 import io.suggest.msg.Messages
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB

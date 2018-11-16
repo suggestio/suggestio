@@ -1,9 +1,9 @@
 package io.suggest.maps.nodes
 
+import io.suggest.color.MColors
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.n2.node.MNodeType
-import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.primo.id.IId
 import japgolly.univeq.UnivEq
 import play.api.libs.json._

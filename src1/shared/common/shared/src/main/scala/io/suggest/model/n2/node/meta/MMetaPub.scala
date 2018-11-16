@@ -2,8 +2,8 @@ package io.suggest.model.n2.node.meta
 
 import boopickle.Default._
 import io.suggest.adn.edit.NodeEditConstants
+import io.suggest.color.MColors
 import io.suggest.common.empty.EmptyProduct
-import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.scalaz.StringValidationNel
 import japgolly.univeq.UnivEq
 import play.api.libs.json._

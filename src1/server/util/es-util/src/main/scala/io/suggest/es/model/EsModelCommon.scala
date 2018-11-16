@@ -6,6 +6,7 @@ import akka.NotUsed
 import akka.stream.scaladsl.Source
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.scripts.IAggScripts
 import io.suggest.primo.TypeT
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.OptStrId
@@ -18,7 +19,6 @@ import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentType
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
-import org.elasticsearch.script.Script
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
@@ -31,10 +31,9 @@ import scala.concurrent.Future
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 16.10.15 18:24
- * Description:
+ * Description: Общий код для обычный и child-моделей.
+ * Был вынесен из-за разделения в логике работы обычный и child-моделей.
  */
-
-/** Общий код для обычный и child-моделей. Был вынесен из-за разделения в логике работы обычный и child-моделей. */
 trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   import mCommonDi._
@@ -897,17 +896,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     * @param sourceFields Полные названия полей документа, которые участвую в рассчёте хэша.
     * @return Фьючерс с Int'ом внутри.
     */
-  def docsHashSum(sourceFields: Iterable[String], q: QueryBuilder = QueryBuilders.matchAllQuery()): Future[Int] = {
-    if (sourceFields.isEmpty)
-      throw new IllegalArgumentException("sourceFields may not be empty")
-
-    val fieldPrefix = "params._source."
-    val fieldSuffix = ".hashCode()"
-    val fieldsFormula = sourceFields
-      .iterator
-      .map { fieldPrefix + _ + fieldSuffix }
-      .mkString(" + ")
-
+  def docsHashSum(scripts: IAggScripts, q: QueryBuilder = QueryBuilders.matchAllQuery()): Future[Int] = {
     val aggName = "dcrc"
 
     for {
@@ -918,10 +907,10 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
         .addAggregation(
           AggregationBuilders
             .scriptedMetric( aggName )
-            .initScript( new Script("params._agg.hashes = []") )
-            .mapScript( new Script(s"params._agg.hashes.add( $fieldsFormula )") )
-            .combineScript( new Script("int xsum = 0; for (h in params._agg.hashes) { xsum += h } return xsum") )
-            .reduceScript( new Script("int asum = 0; for (a in params._aggs) { asum += a } return asum") )
+            .initScript( scripts.initScript )
+            .mapScript( scripts.mapScript )
+            .combineScript( scripts.combineScript )
+            .reduceScript( scripts.reduceScript )
         )
         .execute()
     } yield {

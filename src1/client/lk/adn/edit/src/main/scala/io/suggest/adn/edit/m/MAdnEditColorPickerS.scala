@@ -1,8 +1,8 @@
 package io.suggest.adn.edit.m
 
 import diode.FastEq
+import io.suggest.color.MColorType
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.model.n2.node.meta.colors.MColorType
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 

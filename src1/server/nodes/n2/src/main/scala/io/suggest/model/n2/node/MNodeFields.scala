@@ -43,6 +43,9 @@ object MNodeFields {
     def BASIC_NAME_SHORT_NOTOK_FN   = _fullFn( F.Basic.NAME_SHORT_NOTOK_FN )
     def DATE_CREATED_FN             = _fullFn( F.Basic.DATE_CREATED_FN )
     def META_COLORS_FN              = _fullFn( F.Colors.COLORS_FN )
+    def META_COLORS_BG_CODE_FN      = _fullFn( F.Colors.BG_CODE_FN )
+    def META_COLORS_FG_CODE_FN      = _fullFn( F.Colors.FG_CODE_FN )
+    def META_BASIC_NAME_FN          = _fullFn( F.Basic.BASIC_NAME_FN )
   }
 
   /** Абсолютные имена ES-полей в .extras */

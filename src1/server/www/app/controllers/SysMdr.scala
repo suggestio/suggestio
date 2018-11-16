@@ -2,6 +2,7 @@ package controllers
 
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.color.MColors
 import io.suggest.common.empty.OptionUtil
 import javax.inject.{Inject, Singleton}
 import io.suggest.ctx.CtxData
@@ -10,7 +11,6 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.sys.mdr._

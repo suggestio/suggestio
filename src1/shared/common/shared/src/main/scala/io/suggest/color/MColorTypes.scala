@@ -1,8 +1,8 @@
-package io.suggest.model.n2.node.meta.colors
+package io.suggest.color
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
-import io.suggest.color.MColorData
 import io.suggest.enum2.EnumeratumUtil
+import io.suggest.model.PrefixedFn
 import io.suggest.sc.ScConstants
 import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
@@ -50,5 +50,12 @@ object MColorType {
   }
 
   @inline implicit def univEq: UnivEq[MColorType] = UnivEq.derive
+
+
+  implicit class ColorTypeOpsExt( val mct: MColorType ) extends AnyVal {
+
+    def COLOR_CODE_FN = PrefixedFn.fullFn(mct.value, MColorData.Fields.CODE_FN)
+
+  }
 
 }

@@ -134,8 +134,8 @@ class MItems @Inject() (
 
       def itemsCurrentFor(now: OffsetDateTime = OffsetDateTime.now()) = {
         q.filter { mitem =>
-          mitem.dateStartOpt >= now &&
-            mitem.dateEndOpt < now
+          mitem.dateStartOpt <= now &&
+          mitem.dateEndOpt >= now
         }
       }
 

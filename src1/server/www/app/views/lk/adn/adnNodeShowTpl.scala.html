@@ -93,6 +93,9 @@
                     @messages( MsgCodes.`Will.be.adv` )
                   }
                   case MItemStatuses.Online => {
+                    @messages( MsgCodes.`Approved._adv` )
+                  }
+                  case MItemStatuses.Refused => {
                     @messages( MsgCodes.`Adv.req.refused` )
                   }
                   case s @ MItemStatuses.Finished => {

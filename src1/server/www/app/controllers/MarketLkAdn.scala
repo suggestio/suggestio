@@ -103,6 +103,8 @@ class MarketLkAdn @Inject() (
   def showAdnNode(nodeId: String) = csrf.AddToken {
     isNodeAdmin(nodeId, U.Lk).async { implicit request =>
 
+      lazy val logPrefix = s"showAdnNode($nodeId):"
+
       // Запустить обсчёт логотипа и галереи узла:
       val logoImgOpt = logoUtil.getLogoOfNode( request.mnode )
       val galleryFut = galleryUtil.galleryImgs( request.mnode )
@@ -174,6 +176,7 @@ class MarketLkAdn @Inject() (
         ownedNodesStats       <- ownedNodesStatsFut
         adnMapAdvs            <- adnMapAdvsFut
       } yield {
+        LOGGER.trace(s"$logPrefix adnMapAdvs[${adnMapAdvs.length}], subNodes=${ownedNodesStats}")
         MNodeShowArgs(
           mnode               = request.mnode,
           bgColor             = colorCodeOrDflt(request.mnode.meta.colors.bg, scUtil.SITE_BGCOLOR_DFLT),

@@ -2,10 +2,10 @@ package io.suggest.sc.styl
 
 import diode.FastEq
 import diode.data.Pot
+import io.suggest.color.MColors
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MScreenInfo
 import io.suggest.media.IMediaInfo
-import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
 import io.suggest.spa.OptFastEq
 import japgolly.univeq._

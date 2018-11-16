@@ -2,10 +2,10 @@ package io.suggest.adn.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.adn.edit.m._
+import io.suggest.color.MColorTypes
 import io.suggest.common.empty.OptionUtil
 import io.suggest.lk.m.{ColorBtnClick, ColorChanged, DocBodyClick, PurgeUnusedEdges}
 import io.suggest.model.n2.node.meta.{MAddress, MBusinessInfo, MMetaPub}
-import io.suggest.model.n2.node.meta.colors.MColorTypes
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._

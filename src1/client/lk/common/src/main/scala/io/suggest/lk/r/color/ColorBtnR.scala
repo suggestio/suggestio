@@ -2,11 +2,10 @@ package io.suggest.lk.r.color
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProps}
-import io.suggest.color.MColorData
+import io.suggest.color.{MColorData, MColorType}
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.css.Css
 import io.suggest.lk.m.ColorBtnClick
-import io.suggest.model.n2.node.meta.colors.MColorType
 import japgolly.scalajs.react.{BackendScope, Callback, ReactMouseEvent, ScalaComponent}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement

@@ -1,15 +1,14 @@
-package io.suggest.model.n2.node.meta.colors
+package io.suggest.color
 
 import boopickle.Default._
-import io.suggest.color.MColorData
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.err.ErrorConstants
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import japgolly.univeq.UnivEq
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import scalaz.{Validation, ValidationNel}
+import play.api.libs.json._
 import scalaz.syntax.apply._
+import scalaz.{Validation, ValidationNel}
 
 /**
   * Suggest.io
@@ -21,6 +20,16 @@ import scalaz.syntax.apply._
   * Есть мнение, что это неправильно, и класс нужно заменить на коллекцию.
   */
 object MColors extends IEmpty {
+
+  object Fields {
+    object Bg {
+      def BG_CODE_FN = MColorTypes.Bg.COLOR_CODE_FN
+    }
+    object Fg {
+      def FG_CODE_FN = MColorTypes.Fg.COLOR_CODE_FN
+    }
+  }
+
 
   override type T = MColors
 

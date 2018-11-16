@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node.meta
 
+import io.suggest.color.MColors
 import io.suggest.model.PrefixedFn
-import io.suggest.model.n2.node.meta.colors.MColors
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.EmptyUtil._
@@ -26,6 +26,7 @@ object MMeta extends IGenEsMappingProps {
       override protected def _PARENT_FN = BASIC_FN
 
       import MBasicMeta.{Fields => F}
+      def BASIC_NAME_FN       = _fullFn( F.NAME_FN )
       def NAME_SHORT_NOTOK_FN = _fullFn( F.NameShort.NAME_SHORT_NOTOK_FN )
       def DATE_CREATED_FN     = _fullFn( F.DATE_CREATED_FN )
     }
@@ -42,8 +43,12 @@ object MMeta extends IGenEsMappingProps {
       val BUSINESS_FN   = "u"
     }
 
-    object Colors {
+    object Colors extends PrefixedFn {
       val COLORS_FN     = "c"
+      override protected def _PARENT_FN = COLORS_FN
+
+      def BG_CODE_FN = _fullFn( MColors.Fields.Bg.BG_CODE_FN )
+      def FG_CODE_FN = _fullFn( MColors.Fields.Fg.FG_CODE_FN )
     }
 
   }

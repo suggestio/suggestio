@@ -5,6 +5,7 @@ import akka.util.ByteString
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
 import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderContent}
 import io.suggest.bill.{MCurrency, MPrice}
+import io.suggest.color.MColors
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.i18n.MsgCodes
@@ -16,7 +17,6 @@ import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses, MOrders}
 import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.node.{MNode, MNodeTypes}
-import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.play.qsb.QsbSeq
 import io.suggest.pick.PickleUtil
 import io.suggest.primo.id.OptId

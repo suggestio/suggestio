@@ -1,8 +1,7 @@
 package models.madn
 
 import enumeratum.{Enum, EnumEntry}
-import io.suggest.color.MColorData
-import io.suggest.model.n2.node.meta.colors.MColors
+import io.suggest.color.{MColorData, MColors}
 
 import scala.util.Random
 
