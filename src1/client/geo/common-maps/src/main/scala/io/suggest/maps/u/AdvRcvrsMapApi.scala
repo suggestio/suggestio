@@ -36,7 +36,7 @@ class AdvRcvrsMapApiHttpViaUrl(jsRoutes: IJsRouter = routes) extends IAdvRcvrsMa
     // Дописать протокол для связи с сервером, если у нас тут приложение или иные особые условия:
     val route = HttpRoute(
       method = route0.method,
-      url    = Xhr.mkAbsUrlIfPreferred( hostedUrl )
+      url    = hostedUrl
     )
     for {
       list <- Xhr.unJsonResp[List[MGeoNodePropsShapes]] {

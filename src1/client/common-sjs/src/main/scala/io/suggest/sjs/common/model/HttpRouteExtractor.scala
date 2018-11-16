@@ -57,7 +57,11 @@ object HttpRoute {
 
   /** Метод сборки абсолютной ссылки. */
   def mkAbsUrl(protoPrefix: String, secure: Boolean, relUrl: String): String = {
-    assert( relUrl.startsWith( HttpConst.Proto.CURR_PROTO ) )
+    // TODO Добавить поддержку уже абсолютных URL в relUrl?
+    assert(
+      relUrl.startsWith( HttpConst.Proto.CURR_PROTO ),
+      protoPrefix + ", " + secure + ", " + relUrl
+    )
     protoPrefix +
       (if(secure) HttpConst.Proto.SECURE_SUFFIX else "") +
       HttpConst.Proto.COLON +

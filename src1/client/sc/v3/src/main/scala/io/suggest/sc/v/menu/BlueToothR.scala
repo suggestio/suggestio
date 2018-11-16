@@ -13,6 +13,7 @@ import io.suggest.react.ReactCommonUtil
 import scalacss.ScalaCssReact._
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.Implicits._
+import io.suggest.sjs.common.empty.JsOptionUtil
 import japgolly.scalajs.react.raw.React.Node
 
 import scala.scalajs.js
@@ -51,18 +52,16 @@ class BlueToothR(
         val isClickDisabled = isEnabledPot.isPending
 
         // Ссылка на вход или на личный кабинет
-        MuiListItem(
+        MuiListItem {
+          val _onClickF = JsOptionUtil.maybeDefined(!isClickDisabled) {
+            ReactCommonUtil.cbFun1ToJsCb( _btOnOffClick(!isEnabledNow) )
+          }
           new MuiListItemProps {
             override val disableGutters = true
             override val button = !isClickDisabled
-            override val onClick = {
-              if (isClickDisabled) js.undefined
-              else js.defined {
-                ReactCommonUtil.cbFun1ToJsCb( _btOnOffClick(!isEnabledNow) )
-              }
-            }
+            override val onClick = _onClickF
           }
-        )(
+        } (
           MuiListItemText()(
             <.span(
               menuRowsCss.rowContent,
@@ -75,15 +74,15 @@ class BlueToothR(
             }(
               <.span(
                 menuRowsCss.switch,
-                MuiSwitch(
+                MuiSwitch {
+                  val _isChecked =
+                    if (isClickDisabled) !isEnabledNow
+                    else isEnabledNow
                   new MuiSwitchProps {
                     override val disabled = isClickDisabled
-                    override val checked = js.defined {
-                      if (isClickDisabled) !isEnabledNow
-                      else isEnabledNow
-                    }
+                    override val checked = js.defined( _isChecked )
                   }
-                )
+                }
               )
             )
           )
