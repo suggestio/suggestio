@@ -132,6 +132,7 @@ object Xhr extends Log {
         withCredentials = false,
         responseType = ""
       )
+        .catchAjaxEx(method = method, url = url)
     }
   }
 
@@ -143,7 +144,7 @@ object Xhr extends Log {
     * @param httpStatuses Допустимые http-статусы.
     * @param xhrFut Выполненяемый XHR, собранный в send().
     * @return Future, где success наступает только при указанных статусах.
-    *         [[io.suggest.sjs.common.xhr.ex.XhrUnexpectedRespStatusException]] когда статус ответа не подпадает под критерий.
+    *         [[io.suggest.sjs.common.xhr.ex.XhrFailedException]] когда статус ответа не подпадает под критерий.
     */
   def successIfStatus(httpStatuses: Int*)(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
     successIfStatusF( httpStatuses.contains )(xhrFut)
@@ -159,7 +160,7 @@ object Xhr extends Log {
       if ( isOkF(xhr.status) ) {
         xhr
       } else {
-        throw XhrUnexpectedRespStatusException(xhr)
+        throw XhrFailedException(xhr)
       }
     }
   }
@@ -216,7 +217,7 @@ object Xhr extends Log {
     val xhrFut = successIf200 {
       send(
         route   = route,
-        headers = Seq(HttpConst.Headers.ACCEPT -> MimeConst.TEXT_HTML)
+        headers = (HttpConst.Headers.ACCEPT -> MimeConst.TEXT_HTML) :: Nil
       )
     }
     for (xhr <- xhrFut) yield {
@@ -253,15 +254,18 @@ object Xhr extends Log {
                                                 headers: List[(String, String)] = Nil): Future[XMLHttpRequest] = {
     _handleUnauthorized {
       val hrex = implicitly[HttpRouteExtractor[HttpRoute]]
+      val method = hrex.method(route)
+      val url = hrex.url(route)
       Ajax(
-        method          = hrex.method(route),
-        url             = hrex.url(route),
+        method          = method,
+        url             = url,
         data            = body.asInstanceOf[Ajax.InputData],
         timeout         = 0,
         headers         = ((HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_OCTET_STREAM) :: headers).toMap,
         withCredentials = false,
         responseType    = respType
       )
+        .catchAjaxEx(method = method, url = url)
     }
   }
 
@@ -321,6 +325,25 @@ object Xhr extends Log {
     for (jsonStr <- respFut) yield {
       Json.parse(jsonStr).as[T]
     }
+  }
+
+
+  implicit class XhrFutExtOps(val xhrFut: Future[XMLHttpRequest]) extends AnyVal {
+
+    /** Перехват и подмена стандартной AjaxException на более логгируемый вариант. */
+    def catchAjaxEx(method: String = null, url: String = null): Future[XMLHttpRequest] = {
+      xhrFut.recoverWith { case ex: AjaxException =>
+        // Плохое логгирование исправляем сразу:
+        val ex2 = XhrFailedException(
+          xhr       = ex.xhr,
+          url       = url,
+          method    = method,
+          getCause  = ex
+        )
+        Future.failed(ex2)
+      }
+    }
+
   }
 
 }

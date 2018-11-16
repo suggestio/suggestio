@@ -10,9 +10,9 @@ import io.suggest.pick.MimeConst
 import io.suggest.proto.HttpConst
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.xhr.ex.XhrFailedException
 import io.suggest.url.MHostUrl
 import org.scalajs.dom.FormData
-import org.scalajs.dom.ext.AjaxException
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -79,7 +79,7 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
           // 20х и 406 содержат body в одинаковом формате. Перехватить HTTP Not acceptable:
           .recover {
             // Сервер разные коды прислывает, но мы сами коды игнорим, важен - контент.
-            case aex: AjaxException if aex.xhr.status == HttpConst.Status.NOT_ACCEPTABLE =>
+            case aex: XhrFailedException if aex.xhr.status == HttpConst.Status.NOT_ACCEPTABLE =>
               aex.xhr.response.asInstanceOf[String]
           }
       }

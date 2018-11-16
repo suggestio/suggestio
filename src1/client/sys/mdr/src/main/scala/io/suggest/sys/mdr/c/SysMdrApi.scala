@@ -3,10 +3,9 @@ package io.suggest.sys.mdr.c
 import io.suggest.proto.HttpConst
 import io.suggest.routes.routes
 import io.suggest.sjs.common.xhr.Xhr
-import org.scalajs.dom.ext.AjaxException
 import japgolly.univeq._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.xhr.ex.XhrUnexpectedRespStatusException
+import io.suggest.sjs.common.xhr.ex.XhrFailedException
 import io.suggest.sys.mdr.{MMdrNextResp, MMdrResolution, MdrSearchArgs}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
@@ -40,9 +39,7 @@ class SysMdrApiXhrImpl extends ISysMdrApi {
     status ==* HttpConst.Status.NO_CONTENT
 
   private val _recover204ToNone: PartialFunction[Throwable, None.type] = {
-    case ex: XhrUnexpectedRespStatusException if _isOkNothingInteresting(ex.xhr.status) =>
-      None
-    case ex: AjaxException if _isOkNothingInteresting(ex.xhr.status) =>
+    case ex: XhrFailedException if _isOkNothingInteresting(ex.xhr.status) =>
       None
   }
 
