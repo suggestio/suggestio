@@ -6,7 +6,7 @@
 @import ctx.request
 @import views.js.stuff.jsRevRouterTpl
 
-@jsRevRouterTpl(NAME)(
+@jsRevRouterTpl(NAME, cdn = true)(
   routes.javascript.Sc.pubApi,
   routes.javascript.Sc.handleScError,
   routes.javascript.Static.advRcvrsMapJson,

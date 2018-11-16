@@ -147,11 +147,10 @@ class AdvGeoRcvrsUtil @Inject()(
 
   def rcvrsMapUrlArgs()(implicit ctx: Context): Future[MRcvrsMapUrlArgs] = {
     val hashSumFut = rcvrNodesMapHashSumCached()
-    val cdnHost = cdnUtil.ctx2CdnHostOrDflt(ctx)
     for {
       hashSum <- hashSumFut
     } yield {
-      MRcvrsMapUrlArgs( cdnHost, hashSum )
+      MRcvrsMapUrlArgs( hashSum )
     }
   }
 

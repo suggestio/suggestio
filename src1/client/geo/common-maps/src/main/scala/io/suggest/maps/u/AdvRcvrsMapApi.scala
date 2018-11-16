@@ -29,15 +29,7 @@ trait IAdvRcvrsMapApi {
 class AdvRcvrsMapApiHttpViaUrl(jsRoutes: IJsRouter = routes) extends IAdvRcvrsMapApi {
 
   override def advRcvrsMapJson(args: MRcvrsMapUrlArgs): Future[MGeoNodesResp] = {
-    // Подготовить относительную ссылку:
-    val route0 = jsRoutes.controllers.Static.advRcvrsMapJson( args.hashSum )
-    // прикрутить CDN-host
-    val hostedUrl = HttpConst.Proto.CURR_PROTO + args.cdnHost + route0.url
-    // Дописать протокол для связи с сервером, если у нас тут приложение или иные особые условия:
-    val route = HttpRoute(
-      method = route0.method,
-      url    = hostedUrl
-    )
+    val route = jsRoutes.controllers.Static.advRcvrsMapJson( args.hashSum )
     for {
       list <- Xhr.unJsonResp[List[MGeoNodePropsShapes]] {
         Xhr.requestJsonText( route )

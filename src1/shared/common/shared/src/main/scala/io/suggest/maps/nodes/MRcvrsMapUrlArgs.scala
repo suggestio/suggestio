@@ -13,10 +13,10 @@ import play.api.libs.functional.syntax._
 object MRcvrsMapUrlArgs {
 
   /** Поддержка play-json. */
-  implicit def mRcvrsMapUrlArgsFormat: OFormat[MRcvrsMapUrlArgs] = (
-    (__ \ "c").format[String] and
+  implicit def mRcvrsMapUrlArgsFormat: OFormat[MRcvrsMapUrlArgs] = {
     (__ \ "h").format[Int]
-  )(apply, unlift(unapply))
+      .inmap[MRcvrsMapUrlArgs](apply, _.hashSum)
+  }
 
   @inline implicit def univEq: UnivEq[MRcvrsMapUrlArgs] = UnivEq.derive
 
@@ -32,10 +32,8 @@ object MRcvrsMapUrlArgs {
 
 /** Контейнер данных для сборки ссылки.
   *
-  * @param cdnHost Хост-порт.
   * @param hashSum Контрольная сумма.
   */
 case class MRcvrsMapUrlArgs(
-                             cdnHost    : String,
                              hashSum    : Int
                            )
