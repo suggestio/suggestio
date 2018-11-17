@@ -31,6 +31,6 @@ case class XhrFailedException(
   }
 
   override final def toString = getMessage
-  
+
 }
 

@@ -1,10 +1,8 @@
 package io.suggest.maps.u
 
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp, MRcvrsMapUrlArgs}
-import io.suggest.proto.HttpConst
 import io.suggest.routes.{IJsRouter, routes}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.model.HttpRoute
 import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.Future
@@ -26,7 +24,7 @@ trait IAdvRcvrsMapApi {
 
 
 /** Реализация [[IAdvRcvrsMapApi]] с запросом через произвольную ссылку. */
-class AdvRcvrsMapApiHttpViaUrl(jsRoutes: IJsRouter = routes) extends IAdvRcvrsMapApi {
+class AdvRcvrsMapApiHttpViaUrl(jsRoutes: => IJsRouter = routes) extends IAdvRcvrsMapApi {
 
   override def advRcvrsMapJson(args: MRcvrsMapUrlArgs): Future[MGeoNodesResp] = {
     val route = jsRoutes.controllers.Static.advRcvrsMapJson( args.hashSum )

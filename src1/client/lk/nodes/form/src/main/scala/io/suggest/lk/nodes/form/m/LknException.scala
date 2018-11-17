@@ -20,9 +20,9 @@ object LknException {
     ex match {
       case ae: XhrFailedException =>
         if (ae.xhr.status == HttpConst.Status.CONFLICT) {
-          LknException( "Node.with.such.id.already.exists", ex )
+          LknException( "Node.with.such.id.already.exists", ae )
         } else {
-          unknown(ex)
+          unknown(ae)
         }
 
       case _ =>
