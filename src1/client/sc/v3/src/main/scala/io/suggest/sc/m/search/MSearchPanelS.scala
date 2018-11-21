@@ -1,7 +1,7 @@
 package io.suggest.sc.m.search
 
 import diode.{FastEq, UseValueEq}
-import io.suggest.spa.DiodeUtil
+import io.suggest.spa.FastEqUtil
 import japgolly.univeq.UnivEq
 
 /**
@@ -16,7 +16,7 @@ object MSearchPanelS {
 
   /** Костыль для поддержки FastEq. */
   implicit def MSearchPanelSFastEq: FastEq[MSearchPanelS] =
-    DiodeUtil.FastEqExt.RefValFastEq
+    FastEqUtil.RefValFastEq
       .asInstanceOf[FastEq[MSearchPanelS]]
 
   @inline implicit def univEq: UnivEq[MSearchPanelS] = UnivEq.derive

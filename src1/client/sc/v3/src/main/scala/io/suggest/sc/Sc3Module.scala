@@ -84,6 +84,8 @@ class Sc3Module {
   lazy val editAdR = wire[EditAdR]
   lazy val blueToothR = wire[BlueToothR]
   lazy val unsafeScreenAreaOffsetR = wire[UnsafeScreenAreaOffsetR]
+  lazy val slideMenuItemR = wire[SlideMenuItemR]
+  lazy val geoLocR = wire[GeoLocR]
 
 
   // sc3 top level

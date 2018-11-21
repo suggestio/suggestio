@@ -6,6 +6,7 @@ import io.suggest.common.empty.EmptyProduct
 import io.suggest.geo.{GeoLocType, MGeoLoc}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import io.suggest.ueq.JsUnivEqUtil._
 
 /**
   * Suggest.io
@@ -23,7 +24,9 @@ object MScGeoLoc {
   implicit object MScGeoFastEq extends FastEq[MScGeoLoc] {
     override def eqv(a: MScGeoLoc, b: MScGeoLoc): Boolean = {
       (a.watchers   ===* b.watchers) &&
-        (a.suppressor ===* b.suppressor)
+      (a.suppressor ===* b.suppressor) &&
+      (a.onOff    ===* b.onOff) &&
+      (a.hardLock    ==* b.hardLock)
     }
   }
 
@@ -37,17 +40,21 @@ object MScGeoLoc {
   * @param watchers Наблюдение за геолокацией осуществяется подпиской на события.
   *                 Здесь инфа об активных подписках и данные для отписки.
   *                 Если пусто, то можно считать эту подсистему выключенной.
+  * @param onOff Включена геолокация или выключена?
+                   Pot.empty: Бывает, что геолокация недоступна (нет поддержки вообще, голый http и т.д.).
+  * @param hardLock Состояние on/off жестко задан пользователем?
   */
 case class MScGeoLoc(
-                      watchers     : Map[GeoLocType, MGeoLocWatcher]   = Map.empty,
-                      suppressor   : Option[Suppressor]                = None
+                      watchers        : Map[GeoLocType, MGeoLocWatcher]     = Map.empty,
+                      suppressor      : Option[Suppressor]                  = None,
+                      onOff           : Pot[Boolean]                        = Pot.empty,
+                      hardLock        : Boolean                             = false,
                     ) {
 
   def withWatchers(watchers: Map[GeoLocType, MGeoLocWatcher]) = copy(watchers = watchers)
   def withSuppressor(suppressor: Option[Suppressor]) = copy(suppressor = suppressor)
-
-  /** Активна ли система геолокации сейчас? */
-  def isEnabled = watchers.nonEmpty
+  def withOnOff(onOff: Pot[Boolean]) = copy(onOff = onOff)
+  def withHardLock(hardLock: Boolean) = copy(hardLock = hardLock)
 
 }
 

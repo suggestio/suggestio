@@ -246,7 +246,7 @@ class TailAh[M](
         // Прямо сейчас этот контроллер ожидает координаты.
         // Функция общего кода завершения ожидания координат: запустить выдачу, выключить geo loc, грохнуть таймер.
         def __finished(v00: MScRoot, isSuccess: Boolean) = {
-          val fxs = getIndexFx(geoIntoRcvr = true, retUserLoc = !isSuccess) + geoOffFx
+          val fxs = getIndexFx(geoIntoRcvr = true, retUserLoc = !isSuccess)
           DomQuick.clearTimeout(geoLockTimerId)
           val v22 = _removeTimer(v00)
           updatedSilent(v22, fxs)
@@ -299,7 +299,7 @@ class TailAh[M](
       } { _ =>
         // Удалить из состояния таймер геолокации, запустить выдачу.
         val v2 = _removeTimer(v0)
-        val fxs = getIndexFx(geoIntoRcvr = true, retUserLoc = true) + geoOffFx
+        val fxs = getIndexFx(geoIntoRcvr = true, retUserLoc = true)
         updatedSilent(v2, fxs)
       }
 
@@ -401,9 +401,6 @@ class TailAh[M](
     GetIndex(withWelcome = true, geoIntoRcvr = geoIntoRcvr, focusedAdId = focusedAdId, retUserLoc = retUserLoc)
       .toEffectPure
   }
-
-  private def geoOffFx: Effect =
-    GeoLocOnOff(enabled = false).toEffectPure
 
   private def withMapCenterInitReal(center: MGeoPoint, inx: MScIndex): MScIndex = {
     inx.withSearch(

@@ -2,6 +2,8 @@ package io.suggest.sc.v
 
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiList, MuiPalette, MuiPaletteAction, MuiPaletteBackground, MuiPaletteText, MuiPaletteTypes, MuiRawTheme, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
+import diode.FastEq
+import diode.data.{Pot, Ready}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.{MColorData, MColors}
 import io.suggest.common.empty.OptionUtil
@@ -48,6 +50,7 @@ class ScRootR (
                 menuBtnR                : MenuBtnR,
                 searchBtnR              : SearchBtnR,
                 val hdrProgressR        : HdrProgressR,
+                val geoLocR             : GeoLocR,
                 getScCssF               : GetScCssF,
               ) {
 
@@ -87,6 +90,7 @@ class ScRootR (
                                     hdrLogoOptC               : ReactConnectProxy[Option[logoR.PropsVal]],
                                     hdrOnGridBtnColorOptC     : ReactConnectProxy[Option[MColorData]],
                                     hdrProgressC              : ReactConnectProxy[hdrProgressR.Props_t],
+                                    menuGeoLocC               : ReactConnectProxy[geoLocR.Props_t],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -220,11 +224,14 @@ class ScRootR (
         // Рендер кнопки "О проекте"
         s.aboutSioC { aboutSioR.apply },
 
+        // Рендер переключателя геолокации
+        s.menuGeoLocC { geoLocR.OnOffR.apply },
+
         // Рендер кнопки/подменю для управления bluetooth.
-        s.menuBlueToothOptC { blueToothR.apply },
+        s.menuBlueToothOptC { blueToothR.OnOffR.apply },
 
         // DEBUG: Если активна отладка, то вот это ещё отрендерить:
-        s.dbgUnsafeOffsetsOptC { unsafeScreenAreaOffsetR.apply }
+        s.dbgUnsafeOffsetsOptC { unsafeScreenAreaOffsetR.apply },
       )
       val menuSideBarBody = s.menuC { menuPropsProxy =>
         menuR( menuPropsProxy )( menuSideBarBodyInner )
@@ -429,7 +436,7 @@ class ScRootR (
 
         menuBlueToothOptC = propsProxy.connect { mroot =>
           mroot.dev.beaconer.isEnabled
-        },
+        }( FastEq.ValueEq ),
 
         dbgUnsafeOffsetsOptC = propsProxy.connect { mroot =>
           OptionUtil.maybe( mroot.internals.conf.debug ) {
@@ -489,6 +496,10 @@ class ScRootR (
           }
           Some(r)
         }( OptFastEq.OptValueEq ),
+
+        menuGeoLocC = propsProxy.connect { mroot =>
+          mroot.dev.geoLoc.onOff
+        }( FastEqUtil.RefValFastEq ),
 
       )
     }

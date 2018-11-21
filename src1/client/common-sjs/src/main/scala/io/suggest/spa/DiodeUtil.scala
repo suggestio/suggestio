@@ -28,43 +28,6 @@ object DiodeUtil {
   }
 
 
-  /** Расширенная утиль для FastEq. Не является implicit. */
-  object FastEqExt {
-
-    /** Анализ Pot'а как Option'a, без учёта общего состояния Pot: сравнивается только значение или его отсутствие. */
-    def PotAsOptionFastEq[T: FastEq]: FastEq[Pot[T]] = {
-      new FastEq[Pot[T]] {
-        override def eqv(a: Pot[T], b: Pot[T]): Boolean = {
-          // TODO Этот код дублирует OptFastEq.Wrapped. Надо бы через Pot/Option-typeclass унифицировать код.
-          val aEmpty = a.isEmpty
-          val bEmpty = b.isEmpty
-          (aEmpty && bEmpty) || {
-            !aEmpty && !bEmpty && implicitly[FastEq[T]].eqv(a.get, b.get)
-          }
-        }
-      }
-    }
-
-    def PotFastEq[T: FastEq]: FastEq[Pot[T]] = {
-      new FastEq[Pot[T]] {
-        override def eqv(a: Pot[T], b: Pot[T]): Boolean = {
-          (a.isPending ==* b.isPending) &&
-          OptFastEq.Plain.eqv(a.exceptionOption, b.exceptionOption) &&
-          PotAsOptionFastEq[T].eqv(a, b)
-        }
-      }
-    }
-
-
-    object RefValFastEq extends FastEq[AnyRef] {
-      override def eqv(a: AnyRef, b: AnyRef): Boolean = {
-        FastEq.AnyRefEq.eqv(a, b) || FastEq.ValueEq.eqv(a, b)
-      }
-    }
-
-  }
-
-
   /** Не очень явные дополнения к API живут тут. */
   object Implicits {
 
@@ -120,17 +83,13 @@ object DiodeUtil {
     implicit class ActionHandlerExt[M, T](val ah: ActionHandler[M, T]) extends AnyVal {
 
       def updateMaybeSilent(silent: Boolean)(v2: T): ActionResult[M] = {
-        if (silent)
-          ah.updatedSilent(v2)
-        else
-          ah.updated(v2)
+        if (silent) ah.updatedSilent(v2)
+        else ah.updated(v2)
       }
 
       def updateMaybeSilentFx(silent: Boolean)(v2: T, fx: Effect): ActionResult[M] = {
-        if (silent)
-          ah.updatedSilent(v2, fx)
-        else
-          ah.updated(v2, fx)
+        if (silent) ah.updatedSilent(v2, fx)
+        else ah.updated(v2, fx)
       }
 
       def optionalResult(v2Opt: Option[T] = None, fxOpt: Option[Effect] = None): ActionResult[M] = {

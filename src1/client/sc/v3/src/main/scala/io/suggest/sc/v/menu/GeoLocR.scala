@@ -2,21 +2,20 @@ package io.suggest.sc.v.menu
 
 import diode.data.Pot
 import diode.react.ModelProxy
-import io.suggest.ble.beaconer.m.BbOnOff
 import io.suggest.i18n.MsgCodes
+import io.suggest.sc.m.GeoLocOnOff
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.ScalaComponent
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 19.06.18 19:18
-  * Description: Класс для компонента bluetooth-подменюшки, которая управляет
-  * bluetooth-подсистемой, отображает её состояние и возможную справочную информацию.
+  * Created: 20.11.18 18:20
+  * Description: Компонент item'а управления геолокацией.
   */
-class BlueToothR(
-                  slideMenuItemR: SlideMenuItemR
-                ) {
+class GeoLocR(
+               slideMenuItemR: SlideMenuItemR
+             ) {
 
   import slideMenuItemR.SlideItemRPropsValFastEq
 
@@ -26,20 +25,21 @@ class BlueToothR(
 
   private lazy val _onOffClickAction = {
     onOff: Boolean =>
-      BbOnOff( isEnabled = onOff, hard = true )
+      // TODO выставлять как hard, когда будет возможность. Чтобы не сбивалось управление через автоматику.
+      GeoLocOnOff( enabled = onOff, isHard = true )
   }
 
 
   val OnOffR = ScalaComponent
-    .builder[Props](getClass.getSimpleName )
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .render_P { propsPotProxy =>
       propsPotProxy.wrap { propsPot =>
         for (isEnabled <- propsPot) yield {
           slideMenuItemR.PropsVal(
             isEnabled   = isEnabled,
-            text        = MsgCodes.`Bluetooth`,
-            useMessages = false,
+            text        = MsgCodes.`Geolocation`,
+            useMessages = true,
             onOffAction = _onOffClickAction
           )
         }

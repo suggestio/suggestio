@@ -5,7 +5,7 @@ import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.jd.render.v.{JdCss, JdCssR}
 import io.suggest.model.n2.node.MNodeTypes
-import io.suggest.spa.{DiodeUtil, OptFastEq}
+import io.suggest.spa.{FastEqUtil, OptFastEq}
 import io.suggest.sys.mdr.m.MSysMdrRootS
 import io.suggest.sys.mdr.v.dia.MdrDiaRefuseR
 import io.suggest.sys.mdr.v.main.{MdrErrorsR, NodeRenderR}
@@ -119,7 +119,7 @@ class SysMdrFormR(
               )
             }
           }
-        }( DiodeUtil.FastEqExt.PotFastEq( OptFastEq.Wrapped(mdrSidePanelR.NodeMdrRPropsValFastEq)) ),
+        }( FastEqUtil.PotFastEq( OptFastEq.Wrapped(mdrSidePanelR.NodeMdrRPropsValFastEq)) ),
 
         nodeRenderC = mrootProxy.connect { mroot =>
           for (nextResp <- mroot.node.info) yield {
@@ -132,7 +132,7 @@ class SysMdrFormR(
               )
             }
           }
-        }( DiodeUtil.FastEqExt.PotAsOptionFastEq( OptFastEq.Wrapped(nodeRenderR.NodeRenderRPropsValFastEq) ) ),
+        }( FastEqUtil.PotAsOptionFastEq( OptFastEq.Wrapped(nodeRenderR.NodeRenderRPropsValFastEq) ) ),
 
         mdrErrorsC = mrootProxy.connect { mroot =>
           for {

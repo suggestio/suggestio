@@ -317,5 +317,6 @@ object MsgCodes {
   val `Above` = "Above"
   val `Below` = "Below"
   val `Approved._adv` = "Approved._adv"
+  val `Geolocation` = "Geolocation"
 
 }

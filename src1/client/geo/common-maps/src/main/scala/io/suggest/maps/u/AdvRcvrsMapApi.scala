@@ -23,7 +23,11 @@ trait IAdvRcvrsMapApi {
 }
 
 
-/** Реализация [[IAdvRcvrsMapApi]] с запросом через произвольную ссылку. */
+/** Реализация [[IAdvRcvrsMapApi]] с запросом через произвольную ссылку.
+  * @param jsRoutes Функция, возвращающая инстанс js-роутера.
+  *                 Напрямую использовать инстанс пока нельзя: cordova-ios выбрасывает undefined слишком рано.
+  *                 Надо унифицировать js-роутеры, и можно будет убрать этот параметр полностью.
+  */
 class AdvRcvrsMapApiHttpViaUrl(jsRoutes: => IJsRouter = routes) extends IAdvRcvrsMapApi {
 
   override def advRcvrsMapJson(args: MRcvrsMapUrlArgs): Future[MGeoNodesResp] = {

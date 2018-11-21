@@ -1,5 +1,6 @@
 package io.suggest.geo
 
+import io.suggest.common.html.HtmlConstants
 import org.scalajs.dom.PositionError
 
 /**
@@ -8,20 +9,12 @@ import org.scalajs.dom.PositionError
   * Created: 05.12.17 18:20
   * Description: Модель исключения геопозиционирования.
   */
-case class PositionException(code: Int, message: String) extends RuntimeException
+case class PositionException(pe: PositionError) extends RuntimeException {
 
-object PositionException {
-
-  /** Сборка экзепшена на основе нативной браузерной ошибки позиционирования.
-    *
-    * @param pe Экземпляр dom.PositionError.
-    * @return Инстанс [[PositionException]].
-    */
-  def apply(pe: PositionError): PositionException = {
-    PositionException(
-      code    = pe.code,
-      message = pe.message
-    )
+  override def getMessage: String = {
+    pe.code.toString + HtmlConstants.SPACE + pe.message
   }
+
+  override final def toString = getMessage
 
 }

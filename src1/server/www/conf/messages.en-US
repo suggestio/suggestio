@@ -104,6 +104,7 @@ Describe.problem=Describe a problem
 Rotation=Rotation
 Clear=Clear
 Reload=Reload
+Geolocation=Geolocation
 
 requisites=Payment details for withdrawal
 

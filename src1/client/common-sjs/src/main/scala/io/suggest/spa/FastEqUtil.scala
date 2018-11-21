@@ -1,6 +1,7 @@
 package io.suggest.spa
 
 import diode.FastEq
+import diode.data.Pot
 import japgolly.univeq._
 
 import scala.language.higherKinds
@@ -60,6 +61,38 @@ object FastEqUtil {
   /** Искуственная подстанова FastEq произвольного типа с eq-сравниванием. */
   def AnyRefFastEq[T <: AnyRef]: FastEq[T] = {
     FastEq.AnyRefEq.asInstanceOf[FastEq[T]]
+  }
+
+
+  /** Анализ Pot'а как Option'a, без учёта общего состояния Pot: сравнивается только значение или его отсутствие. */
+  def PotAsOptionFastEq[T: FastEq]: FastEq[Pot[T]] = {
+    new FastEq[Pot[T]] {
+      override def eqv(a: Pot[T], b: Pot[T]): Boolean = {
+        // TODO Этот код дублирует OptFastEq.Wrapped. Надо бы через Pot/Option-typeclass унифицировать код.
+        val aEmpty = a.isEmpty
+        val bEmpty = b.isEmpty
+        (aEmpty && bEmpty) || {
+          !aEmpty && !bEmpty && implicitly[FastEq[T]].eqv(a.get, b.get)
+        }
+      }
+    }
+  }
+
+  def PotFastEq[T: FastEq]: FastEq[Pot[T]] = {
+    new FastEq[Pot[T]] {
+      override def eqv(a: Pot[T], b: Pot[T]): Boolean = {
+        (a.isPending ==* b.isPending) &&
+        OptFastEq.Plain.eqv(a.exceptionOption, b.exceptionOption) &&
+        PotAsOptionFastEq[T].eqv(a, b)
+      }
+    }
+  }
+
+
+  object RefValFastEq extends FastEq[AnyRef] {
+    override def eqv(a: AnyRef, b: AnyRef): Boolean = {
+      FastEq.AnyRefEq.eqv(a, b) || FastEq.ValueEq.eqv(a, b)
+    }
   }
 
 }
