@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import io.suggest.common.html.HtmlConstants
+import io.suggest.common.html.HtmlConstants.{SPACE, `(`, `)`}
 import org.scalajs.dom.PositionError
 
 /**
@@ -9,11 +9,10 @@ import org.scalajs.dom.PositionError
   * Created: 05.12.17 18:20
   * Description: Модель исключения геопозиционирования.
   */
-case class PositionException(pe: PositionError) extends RuntimeException {
+case class PositionException(domError: PositionError) extends RuntimeException {
 
-  override def getMessage: String = {
-    pe.code.toString + HtmlConstants.SPACE + pe.message
-  }
+  override def getMessage: String =
+    domError.message + SPACE + `(` + domError.code + `)`
 
   override final def toString = getMessage
 

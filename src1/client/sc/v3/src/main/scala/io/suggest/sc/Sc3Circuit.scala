@@ -492,11 +492,22 @@ class Sc3Circuit(
       LOG.error( ErrorMsgs.CATCHED_CONSTRUCTOR_EXCEPTION, ex )
     }
 
+    // Управление активированностью фоновой геолокации:
+    def __dispatchGeoLocOnOff(enable: Boolean): Unit = {
+      // TODO Не диспатчить экшен, когда в этом нет необходимости. Проверять текущее состояние геолокации, прежде чем диспатчить экшен.
+      Future {
+        dispatch( GeoLocOnOff(enabled = enable, isHard = false) )
+      }
+    }
+
     // Реагировать на события активности приложения выдачи.
-    subscribe( platformRW.zoom(_.isUsingNow) ) { _ =>
+    subscribe( platformRW.zoom(_.isUsingNow) ) { isUsingNowProxy =>
       // Отключать мониторинг BLE-маячков, когда платформа позволяет это делать.
       __dispatchBleBeaconerOnOff()
-      // TODO Глушить фоновый GPS-мониторинг
+
+      // Глушить фоновый GPS-мониторинг:
+      val isUsingNow = isUsingNowProxy.value
+      __dispatchGeoLocOnOff(isUsingNow)
     }
 
     // Подписаться на события изменения списка наблюдаемых маячков.

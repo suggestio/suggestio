@@ -1,9 +1,11 @@
 package io.suggest.sc.v.menu
 
-import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemProps, MuiListItemText, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiListItem, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSwitch, MuiSwitchClasses, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
+import io.suggest.common.html.HtmlConstants
+import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.sc.styl.GetScCssF
@@ -82,7 +84,14 @@ class SlideMenuItemR(
             override val onClick = _onClickF
           }
         } (
-          MuiListItemText()(
+          MuiListItemText {
+            val cssClasses = new MuiListItemTextClasses {
+              override val root = menuRowsCss.rowText.htmlClass
+            }
+            new MuiListItemTextProps {
+              override val classes = cssClasses
+            }
+          } (
 
             <.span(
               menuRowsCss.rowContent,
@@ -90,23 +99,47 @@ class SlideMenuItemR(
               else props.text
             ),
 
-            MuiToolTip {
-              new MuiToolTipProps {
-                override val title: raw.React.Node = Messages( MsgCodes.onOff(props.isEnabled) )
-              }
-            }(
-              <.span(
-                menuRowsCss.switch,
+            <.span(
+              ^.`class` := Css.Floatt.RIGHT,
+
+              // Рендер инфы о ошибке:
+              propsPot.exceptionOption.whenDefined { ex =>
+                val msg = Messages( MsgCodes.`Error` ) +
+                  HtmlConstants.COLON +
+                  HtmlConstants.SPACE +
+                  ex.getMessage
+
+                MuiToolTip {
+                  new MuiToolTipProps {
+                    override val title: raw.React.Node = msg
+                  }
+                }(
+                  Mui.SvgIcons.Warning()()
+                )
+              },
+
+              // Рендер самого переключателя:
+              MuiToolTip {
+                new MuiToolTipProps {
+                  override val title: raw.React.Node = Messages( MsgCodes.onOff(props.isEnabled) )
+                }
+              }(
                 MuiSwitch {
                   val _isChecked =
                     if (isClickDisabled) !props.isEnabled
                     else props.isEnabled
+                  val cssClasses = new MuiSwitchClasses {
+                    override val root = menuRowsCss.switch.htmlClass
+                    override val switchBase = menuRowsCss.switchBase.htmlClass
+                  }
                   new MuiSwitchProps {
                     override val disabled = isClickDisabled
                     override val checked  = js.defined( _isChecked )
+                    override val classes  = cssClasses
                   }
                 }
               )
+
             )
 
           )

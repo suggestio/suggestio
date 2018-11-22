@@ -694,6 +694,10 @@ case class ScCss( args: IScCssArgs )
         cursor.pointer
       )
 
+      val rowText = style(
+        height( 28.px )
+      )
+
       val rowContent = style(
         color( _fgColorCss ),
         position.relative,
@@ -707,8 +711,12 @@ case class ScCss( args: IScCssArgs )
 
       /** стили для mui-switch в пунктах меню. */
       val switch = style(
-        float.right,
-        marginTop(-10.px)
+        marginTop( -16.px )
+      )
+
+      /** стили для mui-switch base в пунктах меню. */
+      val switchBase = style(
+        height(28.px)
       )
 
     }

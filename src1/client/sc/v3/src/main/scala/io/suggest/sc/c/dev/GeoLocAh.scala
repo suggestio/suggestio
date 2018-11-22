@@ -2,7 +2,7 @@ package io.suggest.sc.c.dev
 
 import diode.data.{FailedStale, Ready}
 import diode._
-import io.suggest.geo.{GeoLocType, GeoLocTypes, MGeoLocJs, PositionException}
+import io.suggest.geo._
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sc.m.dev.{MGeoLocWatcher, MScGeoLoc, Suppressor}
 import io.suggest.sc.m._
@@ -33,28 +33,7 @@ class GeoLocAh[M](
   with Log
 { ah =>
 
-  private def _geoLocApiOpt = WindowVm().geolocation
-
-  /** Доп.операции для списков "наблюдателей" за геолокацией. */
-  implicit class WatchersExtOps(val watchers: TraversableOnce[(GeoLocType, MGeoLocWatcher)]) {
-
-    def clearWatchers(): Iterator[(GeoLocType, MGeoLocWatcher)] = {
-      for {
-        glApi         <- _geoLocApiOpt.iterator
-        (wtype, w1)   <- watchers.toIterator
-        w2 = w1.watchId.fold(w1) { watchId =>
-          glApi.clearWatch(watchId)
-          w1.copy(watchId = None)
-        }
-        // Если новый MglWatch пустой получился, то отбросить его.
-        if w2.nonEmpty
-      } yield {
-        wtype -> w2
-      }
-    }
-
-  }
-
+  import GeoLocAh.WatchersExtOps
 
   /** Доп.операции для списка типов наблюдателей за геолокацией. */
   implicit class GeoLocTypesOps(val wTypes: TraversableOnce[GeoLocType]) {
@@ -198,60 +177,49 @@ class GeoLocAh[M](
     // Активация/деактивация геолокации.
     case m: GeoLocOnOff =>
       val v0 = value
-      if (
-        (v0.onOff contains m.enabled) &&
-        (!v0.hardLock || m.isHard)
-      ) {
-        // Система уже активна, делать ничего не требуется. Или жесткий запрет на изменение состояния.
-        //println(s"ignor: m=$m hardLock=${v0.hardLock} v0.onOff=${v0.onOff}, 1=${v0.onOff contains m.enabled} 2=${!v0.hardLock || m.isHard}")
-        noChange
-
-      } else {
-        if (m.enabled) {
-          _geoLocApiOpt.fold {
-            LOG.warn( ErrorMsgs.GEO_LOC_FAILED, msg = m )
-            noChange
-          } { geoApi =>
-            // Запустить мониторинг геолокации.
-            val needWatchers =
-              if (m.onlyTypes.isEmpty) GeoLocTypes.all
-              else m.onlyTypes
-
-            val watchers2 = needWatchers
-              .startWatchers(geoApi)
-              .toMap
-            // Сохранить новых watcher'ов в состояние.
-            val v2 = v0.copy(
-              watchers = v0.watchers ++ watchers2,
-              onOff    = v0.onOff.ready( true ).pending(),
-            )
-            ah.updateMaybeSilent(v0.onOff ==* v2.onOff)(v2)
-          }
-
-        } else {
-          // Заглушить геолокацию и suppressor.
-          for (s <- v0.suppressor)
-            DomQuick.clearTimeout(s.timerId)
-
-          // TODO Нужна поддержка частичной остановки watcher'ов. Пока assert для защиты от ошибочного использования нереализованной частичной остановки.
-          assert( m.onlyTypes.isEmpty )
-
-          val v2 = v0.copy(
-            watchers = v0.watchers
-              .iterator
-              .clearWatchers()
-              .toMap,
-            // Убрать suppressor, если активен.
-            suppressor = None,
-            // pending будет заменён на первом GlLocation/GlError.
-            onOff      = v0.onOff.ready(false),
-            hardLock   = m.isHard,
-          )
-
-          ah.updateMaybeSilent(v0.onOff ==* v2.onOff)(v2)
+      // Оформляем всю логику через option, чтобы не было паутины if:
+      Some(m.enabled)
+        // Нельзя менять состояние off=>off или on=>on:
+        .filterNot {
+          v0.onOff contains
         }
+        // Нельзя включать геолокацию, если она жестко выключена юзером:
+        .filter { nextEnabled =>
+          !nextEnabled || (!v0.hardLock || m.isHard)
+        }
+        .fold(noChange) {
+          // Включение геолокации:
+          case true =>
+             GeoLocAh._geoLocApiOpt.fold {
+              // should never happen(?)
+              LOG.warn( ErrorMsgs.GEO_LOC_FAILED, msg = m )
+              noChange
+            } { geoApi =>
+              // Запустить мониторинг геолокации.
+              val needWatchers =
+                if (m.onlyTypes.isEmpty) GeoLocTypes.all
+                else m.onlyTypes
 
-      }
+              val watchers2 = needWatchers
+                .startWatchers(geoApi)
+                .toMap
+              // Сохранить новых watcher'ов в состояние.
+              val v2 = v0.copy(
+                watchers = v0.watchers ++ watchers2,
+                onOff    = v0.onOff.ready( true ).pending(),
+              )
+              ah.updateMaybeSilent(v0.onOff ==* v2.onOff)(v2)
+            }
+
+          // Заглушить геолокацию и suppressor.
+          case false =>
+            val v2 = GeoLocAh.doDisable(v0, m.isHard)
+
+            // TODO Нужна поддержка частичной остановки watcher'ов. Пока assert для защиты от ошибочного использования нереализованной частичной остановки.
+            assert( m.onlyTypes.isEmpty )
+
+            ah.updateMaybeSilent(v0.onOff ==* v2.onOff)(v2)
+        }
 
 
     // Сработал таймер окончания подавления suppressor'ом.
@@ -261,7 +229,7 @@ class GeoLocAh[M](
       val resOpt = for {
         s     <- v0.suppressor
         if s.generation ==* m.generation
-        glApi <- _geoLocApiOpt
+        glApi <- GeoLocAh._geoLocApiOpt
       } yield {
         val watches1Iter = s.minWatch
           .allPrevious
@@ -293,26 +261,36 @@ class GeoLocAh[M](
           LOG.error( WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = m )
           noChange
         } { watcher0 =>
-          LOG.warn( ErrorMsgs.GEO_LOC_FAILED, msg = m )
-          // Сохранить ошибку в lastLoc
-          val wa2 = watcher0.withLastPos(
-            watcher0.lastPos.fail( m.error )
-          )
+          if (m.error.domError.code ==* Html5GeoLocApiErrors.PERMISSION_DENIED) {
+            // TODO Отрабатывать так для всех ошибок? Ведь таймаут геолокации и POSITION_UNAVAILABLE аналогичны по сути:
+            // Если ошибка DENIED, то выключить геолокацию жестко:
+            val v2 = GeoLocAh.doDisable(v0, isHard = true, withException = m.error)
+            updated(v2)
 
-          val v2 = v0.withWatchers(
-            v0.watchers + (m.glType -> wa2)
-          )
-
-          // Если onOff - pending, то сохранить ошибку:
-          val notifyOthersFx = _glPubSignalFx(m)
-          if (v2.onOff.isPending) {
-            val v3 = v2.withOnOff {
-              val isOnOff = v2.onOff.getOrElse(true)
-              FailedStale(isOnOff, m.error)
-            }
-            updated(v3, notifyOthersFx)
           } else {
-            updatedSilent(v2, notifyOthersFx)
+            // Т.к. геолокация качается из нескольких источников, то остальные ошибки отрабатываются отдельно.
+            // TODO Возможно, это неправильно, и геолокация надо сразу вырубать при любой ошибке.
+            LOG.warn( ErrorMsgs.GEO_LOC_FAILED, msg = m )
+            // Сохранить ошибку в lastLoc
+            val wa2 = watcher0.withLastPos(
+              watcher0.lastPos.fail( m.error )
+            )
+
+            val v2 = v0.withWatchers(
+              v0.watchers + (m.glType -> wa2)
+            )
+
+            // Если onOff - pending, то сохранить ошибку:
+            val notifyOthersFx = _glPubSignalFx(m)
+            if (v2.onOff.isPending) {
+              val isOnOff2 = v2.onOff.getOrElse(true)
+
+              val onOff2 = FailedStale(isOnOff2, m.error)
+              val v3 = v2.withOnOff( onOff2 )
+              updated(v3, notifyOthersFx)
+            } else {
+              updatedSilent(v2, notifyOthersFx)
+            }
           }
         }
 
@@ -322,5 +300,56 @@ class GeoLocAh[M](
   /** Эффект сообщения GlPubSignal. */
   private def _glPubSignalFx(loc: IGeoLocSignal): Effect =
     GlPubSignal(loc).toEffectPure
+
+}
+
+
+object GeoLocAh {
+
+  private def _geoLocApiOpt = WindowVm().geolocation
+
+  /** Доп.операции для списков "наблюдателей" за геолокацией. */
+  implicit class WatchersExtOps(val watchers: TraversableOnce[(GeoLocType, MGeoLocWatcher)]) {
+
+    def clearWatchers(): Iterator[(GeoLocType, MGeoLocWatcher)] = {
+      for {
+        glApi         <- _geoLocApiOpt.iterator
+        (wtype, w1)   <- watchers.toIterator
+        w2 = w1.watchId.fold(w1) { watchId =>
+          glApi.clearWatch(watchId)
+          w1.copy(watchId = None)
+        }
+        // Если новый MglWatch пустой получился, то отбросить его.
+        if w2.nonEmpty
+      } yield {
+        wtype -> w2
+      }
+    }
+
+  }
+
+
+  /** Выполнить действия выключения геолокации. */
+  def doDisable(v0: MScGeoLoc, isHard: Boolean, withException: Exception = null): MScGeoLoc = {
+    for (s <- v0.suppressor)
+      DomQuick.clearTimeout(s.timerId)
+
+    v0.copy(
+      watchers = v0.watchers
+        .iterator
+        .clearWatchers()
+        .toMap,
+      // Убрать suppressor, если активен.
+      suppressor = None,
+      // pending будет заменён на первом GlLocation/GlError.
+      onOff      = {
+        var onOff2 = v0.onOff.ready(false)
+        if (withException != null)
+          onOff2 = onOff2.fail( withException )
+        onOff2
+      },
+      hardLock   = isHard,
+    )
+  }
 
 }

@@ -79,6 +79,10 @@ class JsRouterInitAh[M <: AnyRef](
         }
       }
 
+      // Эффект запуска всех доступных вариантов геолокации:
+      val geoLocEnableFx = GeoLocOnOff(enabled = true, isHard = false)
+        .toEffectPure
+
       // Запустить в фоне геолокацию, если нет полезной инфы в принятом состоянии.
       // И запрос js-роутера с сервера и запрос геолокации пойдут параллельно.
       if (m.mainScreen.needGeoLoc) {
@@ -86,9 +90,6 @@ class JsRouterInitAh[M <: AnyRef](
         val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut )
         val v2 = v0.withGeoLockTimer( Some(tp.timerId) )
         val timeoutFx = Effect( tp.fut )
-
-        // Эффект запуска всех доступных вариантов геолокации.
-        val geoLocEnableFx = GeoLocOnOff(enabled = true, isHard = false).toEffectPure
 
         // Склеить все эффекты и обновить состояние.
         val allFxs = (delayedRouteToFx :: geoLocEnableFx :: timeoutFx :: Nil)
@@ -98,7 +99,8 @@ class JsRouterInitAh[M <: AnyRef](
 
       } else {
         // Уже известны какие-то данные для запуска выдачи. Значит, просто ждём js-роутер с сервера.
-        effectOnly(delayedRouteToFx)
+        val allFxs = delayedRouteToFx + geoLocEnableFx
+        effectOnly( allFxs )
       }
 
   }

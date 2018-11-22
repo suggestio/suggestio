@@ -46,7 +46,7 @@ case object ScreenRszTimer extends IScRootAction
 /** Управление подсистемой геолокации в режиме вкл/выкл.
   *
   * @param enabled Включена?
-  * @param isHard Это жесткая фиксация вкл/выкл силами юзера?
+  * @param isHard Жестко выключено силами юзера?
   * @param onlyTypes изменение касается только указанных типов. [] эквивалентен GeoLocTypes.all
   */
 case class GeoLocOnOff(
