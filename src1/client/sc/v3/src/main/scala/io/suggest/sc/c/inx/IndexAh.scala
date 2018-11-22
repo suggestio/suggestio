@@ -239,14 +239,14 @@ class IndexAh[M](
           // Сразу запросить поиск по узлам, если панель поиска открыта.
           searchNodes = if (isSearchNodes) someTrue else None
         ),
-        index = Some(
+        index = Some {
           MScIndexArgs(
             nodeId      = v0.state.currRcvrId,
             withWelcome = withWelcome,
             geoIntoRcvr = geoIntoRcvr,
             retUserLoc  = retUserLoc
           )
-        ),
+        },
         // Фокусироваться надо при запуске. Для этого следует получать всё из reason, а не из состояния.
         foc = for {
           focAdId <- reason.focusedAdId

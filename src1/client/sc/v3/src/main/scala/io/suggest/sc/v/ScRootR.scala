@@ -3,7 +3,6 @@ package io.suggest.sc.v
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiColor, MuiList, MuiPalette, MuiPaletteAction, MuiPaletteBackground, MuiPaletteText, MuiPaletteTypes, MuiRawTheme, MuiThemeProvider, MuiThemeProviderProps, MuiThemeTypoGraphy, MuiToolBar, MuiToolBarProps}
 import com.github.balloob.react.sidebar.{Sidebar, SidebarProps, SidebarStyles}
 import diode.FastEq
-import diode.data.{Pot, Ready}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.{MColorData, MColors}
 import io.suggest.common.empty.OptionUtil
@@ -498,7 +497,7 @@ class ScRootR (
         }( OptFastEq.OptValueEq ),
 
         menuGeoLocC = propsProxy.connect { mroot =>
-          mroot.dev.geoLoc.onOff
+          mroot.dev.geoLoc.switch.onOff
         }( FastEqUtil.RefValFastEq ),
 
       )

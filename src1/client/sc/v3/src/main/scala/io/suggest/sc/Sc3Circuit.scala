@@ -494,9 +494,20 @@ class Sc3Circuit(
 
     // Управление активированностью фоновой геолокации:
     def __dispatchGeoLocOnOff(enable: Boolean): Unit = {
-      // TODO Не диспатчить экшен, когда в этом нет необходимости. Проверять текущее состояние геолокации, прежде чем диспатчить экшен.
-      Future {
-        dispatch( GeoLocOnOff(enabled = enable, isHard = false) )
+      // Не диспатчить экшен, когда в этом нет необходимости. Проверять текущее состояние геолокации, прежде чем диспатчить экшен.
+      val mgl = scGeoLocRW()
+      val isEnabled = mgl.switch.onOff.contains(true)
+      val isToEnable = (enable && !isEnabled && !mgl.switch.hardLock)
+      if (
+        isToEnable || (!enable && isEnabled)
+      ) {
+        Future {
+          dispatch( GeoLocOnOff(enabled = enable, isHard = false) )
+        }
+        // При включении - запустить таймер геолокации, чтобы обновился index на новую геолокацию.
+        if (isToEnable) Future {
+          dispatch( GeoLocTimerStart )
+        }
       }
     }
 

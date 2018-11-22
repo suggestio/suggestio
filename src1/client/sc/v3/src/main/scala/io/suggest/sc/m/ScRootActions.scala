@@ -81,12 +81,14 @@ case class GlError(override val glType: GeoLocType, error: PositionException) ex
 }
 
 /** Сигнал о наступлении геолокации (или ошибке оной) для ожидающего геолокацию. */
-case class GlPubSignal( orig: IGeoLocSignal ) extends IScRootAction
+case class GlPubSignal( origOpt: Option[IGeoLocSignal] ) extends IScRootAction
 
 
 /** Сработал таймер подавления нежелательных координат. */
 case class GlSuppressTimeout(generation: Long) extends IScRootAction
 
+/** Запросить восстановление работы геолокации с перемещением в новую точку. */
+case object GlCheckAfterResume extends IScRootAction
 
 /** Из js-роутера пришла весточка, что нужно обновить состояние из данных в URL. */
 case class RouteTo( mainScreen: MainScreen ) extends IScRootAction
@@ -94,7 +96,8 @@ case class RouteTo( mainScreen: MainScreen ) extends IScRootAction
 /** Команда к обновлению ссылки в адресе согласно обновившемуся состоянию. */
 case object ResetUrlRoute extends IScRootAction
 
-
+/** Наступление таймаута получения гео-координат. */
+case object GeoLocTimerStart extends ISc3Action
 /** Наступление таймаута получения гео-координат. */
 case object GeoLocTimeOut extends ISc3Action
 

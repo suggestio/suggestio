@@ -25,8 +25,7 @@ object MScGeoLoc {
     override def eqv(a: MScGeoLoc, b: MScGeoLoc): Boolean = {
       (a.watchers   ===* b.watchers) &&
       (a.suppressor ===* b.suppressor) &&
-      (a.onOff    ===* b.onOff) &&
-      (a.hardLock    ==* b.hardLock)
+      (a.switch     ===* b.switch)
     }
   }
 
@@ -40,21 +39,50 @@ object MScGeoLoc {
   * @param watchers Наблюдение за геолокацией осуществяется подпиской на события.
   *                 Здесь инфа об активных подписках и данные для отписки.
   *                 Если пусто, то можно считать эту подсистему выключенной.
-  * @param onOff Включена геолокация или выключена?
-                   Pot.empty: Бывает, что геолокация недоступна (нет поддержки вообще, голый http и т.д.).
-  * @param hardLock Состояние on/off жестко задан пользователем?
+
   */
 case class MScGeoLoc(
                       watchers        : Map[GeoLocType, MGeoLocWatcher]     = Map.empty,
                       suppressor      : Option[Suppressor]                  = None,
-                      onOff           : Pot[Boolean]                        = Pot.empty,
-                      hardLock        : Boolean                             = false,
+                      switch          : MGeoLocSwitchS                      = MGeoLocSwitchS.empty,
                     ) {
 
   def withWatchers(watchers: Map[GeoLocType, MGeoLocWatcher]) = copy(watchers = watchers)
   def withSuppressor(suppressor: Option[Suppressor]) = copy(suppressor = suppressor)
+  def withSwitch(switch: MGeoLocSwitchS) = copy(switch = switch)
+
+}
+
+
+object MGeoLocSwitchS {
+  def empty = apply()
+  implicit object MGeoLocSwitchSFastEq extends FastEq[MGeoLocSwitchS] {
+    override def eqv(a: MGeoLocSwitchS, b: MGeoLocSwitchS): Boolean = {
+      (a.onOff      ===* b.onOff) &&
+      (a.hardLock    ==* b.hardLock) &&
+      (a.prevGeoLoc ===* b.prevGeoLoc)
+    }
+  }
+  @inline implicit def univEq: UnivEq[MGeoLocSwitchS] = UnivEq.derive
+}
+/** Контейнер данных состояния "рубильника" геолокации.
+  *
+  * @param onOff Включена геолокация или выключена?
+  *              Pot.empty: Бывает, что геолокация недоступна (нет поддержки вообще, голый http и т.д.).
+  * @param hardLock Состояние on/off жестко задан пользователем?
+  * @param prevGeoLoc Последняя геолокация с предшествующего сеанса геолокации, если есть.
+  *                   При врЕменном прерывании геолокации (экран выключили, например) значение сохраняется сюда,
+  *                   чтобы после узнать, изменилось ли местоположение с момента предыдущего состояния выдачи.
+  */
+case class MGeoLocSwitchS(
+                           onOff           : Pot[Boolean]                        = Pot.empty,
+                           hardLock        : Boolean                             = false,
+                           prevGeoLoc      : Option[MGeoLoc]                     = None,
+                         ) {
+
   def withOnOff(onOff: Pot[Boolean]) = copy(onOff = onOff)
   def withHardLock(hardLock: Boolean) = copy(hardLock = hardLock)
+  def withPrevGeoLoc(prevGeoLoc: Option[MGeoLoc]) = copy(prevGeoLoc = prevGeoLoc)
 
 }
 
@@ -75,10 +103,7 @@ case class MGeoLocWatcher(
   def withLastPos(lastPos: Pot[MGeoLoc]) = copy(lastPos = lastPos)
 }
 object MGeoLocWatcher {
-  @inline implicit def univEq: UnivEq[MGeoLocWatcher] = {
-    import io.suggest.ueq.JsUnivEqUtil._
-    UnivEq.derive
-  }
+  @inline implicit def univEq: UnivEq[MGeoLocWatcher] = UnivEq.derive
 }
 
 

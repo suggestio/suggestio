@@ -2,6 +2,7 @@ package io.suggest.sc.c.dev
 
 import diode.data.{FailedStale, Ready}
 import diode._
+import io.suggest.common.empty.OptionUtil
 import io.suggest.geo._
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sc.m.dev.{MGeoLocWatcher, MScGeoLoc, Suppressor}
@@ -84,25 +85,25 @@ class GeoLocAh[M](
       //println(loc)
       val v0 = value
 
-      // Собрать новые данные watcher'а
-      val mgl1 = v0.watchers
-        .get( loc.glType )
-        .fold {
-          LOG.warn( WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = loc.glType.toString )
-          MGeoLocWatcher( watchId = None, lastPos = Ready(loc.location) )
-        } { mgl0 =>
-          mgl0.withLastPos(
-            lastPos = mgl0.lastPos.ready( loc.location )
-          )
-        }
-
-      // !!! Из-за итераторов тут довольно взрывоопасный код, надо быть осторожнее.
-
-      // Откладываем перестройку карты на последний момент: если нужен suppressor, то эта перестройка будет лишней.
-      val watchers1Iter = v0.watchers.iterator
-
       // Не подпадает ли текущая геолокация под нож подавления?
       if ( _isLocNotSuppressed(loc.glType, v0) ) {
+        // Собрать новые данные watcher'а
+        val mgl1 = v0.watchers
+          .get( loc.glType )
+          .fold {
+            LOG.warn( WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = loc.glType.toString )
+            MGeoLocWatcher( watchId = None, lastPos = Ready(loc.location) )
+          } { mgl0 =>
+            mgl0.withLastPos(
+              lastPos = mgl0.lastPos.ready( loc.location )
+            )
+          }
+
+        // !!! Из-за итераторов тут довольно взрывоопасный код, надо быть осторожнее.
+
+        // Откладываем перестройку карты на последний момент: если нужен suppressor, то эта перестройка будет лишней.
+        val watchers1Iter = v0.watchers.iterator
+
         // Если приходят высокоточные данные GPS, то надо отказаться от неточных данных геолокации хотя бы на какое-то время.
         val supprOpt = for {
           ttlMs <- loc.glType.suppressorTtlMs
@@ -142,35 +143,31 @@ class GeoLocAh[M](
         }.toMap
 
         // Если pending, то переставить в ready.
-        val onOff2 = if (v0.onOff.isPending) {
-          val isOnOff = v0.onOff.getOrElse(true)
-          v0.onOff.ready( isOnOff )
+        val switch2 = if (v0.switch.onOff.isPending) {
+          val isOnOff = v0.switch.onOff.getOrElse(true)
+          v0.switch.withOnOff(
+            v0.switch.onOff.ready( isOnOff )
+          )
         } else {
-          v0.onOff
+          v0.switch
         }
 
         // Сохранить новые данные в состояние.
         val v2 = v0.copy(
           watchers   = watchers3,
           suppressor = supprOpt.map(_._1),
-          onOff      = onOff2
+          switch     = switch2
         )
 
         // Уведомить другие контроллеры о наступлении геолокации.
-        val notifyOthersFx = _glPubSignalFx(loc)
+        val notifyOthersFx = GeoLocAh._glPubSignalFx(loc)
 
-        ah.updateMaybeSilentFx( v0.onOff ===* v2.onOff )(v2, notifyOthersFx)
-
-        // Уведомить subscriber'ов о новой локации.
-        //_notifySubscribers(loc)
+        ah.updateMaybeSilentFx( v0.switch.onOff ===* v2.switch.onOff )(v2, notifyOthersFx)
 
       } else {
         // Данная геолокация подпадает под подавление. Скорее всего что-то пошло не так.
         //LOG.warn(WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = (loc, v0.suppressor))
-        val v2 = v0.withWatchers(
-          watchers1Iter.toMap
-        )
-        updatedSilent( v2 )
+        noChange
       }
 
 
@@ -181,13 +178,23 @@ class GeoLocAh[M](
       Some(m.enabled)
         // Нельзя менять состояние off=>off или on=>on:
         .filterNot {
-          v0.onOff contains
+          v0.switch.onOff contains
         }
         // Нельзя включать геолокацию, если она жестко выключена юзером:
         .filter { nextEnabled =>
-          !nextEnabled || (!v0.hardLock || m.isHard)
+          !nextEnabled || (!v0.switch.hardLock || m.isHard)
         }
-        .fold(noChange) {
+        .fold {
+          // Нельзя включить геолокацию сейчас.
+          if (v0.switch.hardLock && !m.isHard) {
+            // Жесткое выключение. Уведомить другие подсистемы, что в итоге нет геолокации:
+            val fx = GlPubSignal( None ).toEffectPure
+            effectOnly(fx)
+          } else {
+            // И даже уведомлять никого не надо ни о чём.
+            noChange
+          }
+        } {
           // Включение геолокации:
           case true =>
              GeoLocAh._geoLocApiOpt.fold {
@@ -203,12 +210,14 @@ class GeoLocAh[M](
               val watchers2 = needWatchers
                 .startWatchers(geoApi)
                 .toMap
-              // Сохранить новых watcher'ов в состояние.
+
+              val onOff2 = v0.switch.onOff.ready( true ).pending()
+
               val v2 = v0.copy(
                 watchers = v0.watchers ++ watchers2,
-                onOff    = v0.onOff.ready( true ).pending(),
+                switch   = v0.switch.withOnOff( onOff2 ),
               )
-              ah.updateMaybeSilent(v0.onOff ==* v2.onOff)(v2)
+              ah.updateMaybeSilent(v0.switch.onOff ==* v2.switch.onOff)(v2)
             }
 
           // Заглушить геолокацию и suppressor.
@@ -218,7 +227,7 @@ class GeoLocAh[M](
             // TODO Нужна поддержка частичной остановки watcher'ов. Пока assert для защиты от ошибочного использования нереализованной частичной остановки.
             assert( m.onlyTypes.isEmpty )
 
-            ah.updateMaybeSilent(v0.onOff ==* v2.onOff)(v2)
+            ah.updateMaybeSilent(v0.switch.onOff ==* v2.switch.onOff)(v2)
         }
 
 
@@ -261,11 +270,14 @@ class GeoLocAh[M](
           LOG.error( WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = m )
           noChange
         } { watcher0 =>
+          // Если onOff - pending, то сохранить ошибку:
+          val notifyOthersFx = GeoLocAh._glPubSignalFx(m)
+
           if (m.error.domError.code ==* Html5GeoLocApiErrors.PERMISSION_DENIED) {
             // TODO Отрабатывать так для всех ошибок? Ведь таймаут геолокации и POSITION_UNAVAILABLE аналогичны по сути:
             // Если ошибка DENIED, то выключить геолокацию жестко:
             val v2 = GeoLocAh.doDisable(v0, isHard = true, withException = m.error)
-            updated(v2)
+            updated(v2, notifyOthersFx)
 
           } else {
             // Т.к. геолокация качается из нескольких источников, то остальные ошибки отрабатываются отдельно.
@@ -280,13 +292,13 @@ class GeoLocAh[M](
               v0.watchers + (m.glType -> wa2)
             )
 
-            // Если onOff - pending, то сохранить ошибку:
-            val notifyOthersFx = _glPubSignalFx(m)
-            if (v2.onOff.isPending) {
-              val isOnOff2 = v2.onOff.getOrElse(true)
+            if (v2.switch.onOff.isPending) {
+              val isOnOff2 = v2.switch.onOff.getOrElse(true)
 
               val onOff2 = FailedStale(isOnOff2, m.error)
-              val v3 = v2.withOnOff( onOff2 )
+              val v3 = v2.withSwitch(
+                v2.switch.withOnOff( onOff2 )
+              )
               updated(v3, notifyOthersFx)
             } else {
               updatedSilent(v2, notifyOthersFx)
@@ -296,17 +308,20 @@ class GeoLocAh[M](
 
   }
 
-
-  /** Эффект сообщения GlPubSignal. */
-  private def _glPubSignalFx(loc: IGeoLocSignal): Effect =
-    GlPubSignal(loc).toEffectPure
-
 }
 
 
+/** Статическая утиль для контроллера [[GeoLocAh]]. */
 object GeoLocAh {
 
+  /** Эффект сообщения GlPubSignal. */
+  private def _glPubSignalFx(loc: IGeoLocSignal): Effect =
+    GlPubSignal( Some(loc) ).toEffectPure
+
+
+  /** Доступ к HTML5 Geolocation API. */
   private def _geoLocApiOpt = WindowVm().geolocation
+
 
   /** Доп.операции для списков "наблюдателей" за геолокацией. */
   implicit class WatchersExtOps(val watchers: TraversableOnce[(GeoLocType, MGeoLocWatcher)]) {
@@ -335,20 +350,44 @@ object GeoLocAh {
       DomQuick.clearTimeout(s.timerId)
 
     v0.copy(
+      // Выключить все watcher'ы:
       watchers = v0.watchers
         .iterator
         .clearWatchers()
         .toMap,
+
       // Убрать suppressor, если активен.
       suppressor = None,
+
       // pending будет заменён на первом GlLocation/GlError.
-      onOff      = {
-        var onOff2 = v0.onOff.ready(false)
-        if (withException != null)
-          onOff2 = onOff2.fail( withException )
-        onOff2
-      },
-      hardLock   = isHard,
+      switch = v0.switch.copy(
+
+        onOff = {
+          var onOff2 = v0.switch.onOff.ready(false)
+          if (withException != null)
+            onOff2 = onOff2.fail( withException )
+          onOff2
+        },
+        hardLock = isHard,
+
+        // Найти наиболее точное местоположение в списке известных и сохранить в prevGeoLoc:
+        prevGeoLoc = {
+          val watchers0 = v0.watchers
+            .iterator
+            .filter(_._2.lastPos.nonEmpty)
+            .toSeq
+          OptionUtil.maybeOpt( watchers0.nonEmpty ) {
+            watchers0
+              .iterator
+              // Интересует наиболее точная геолокация.
+              // TODO Учитывать опциональную gl.accuracyM вместо glType.precision? Ведь GPS может быть не всегда точнее значения Bss.
+              .maxBy(_._1.precision)
+              ._2.lastPos.toOption
+          }
+        }
+
+      )
+
     )
   }
 

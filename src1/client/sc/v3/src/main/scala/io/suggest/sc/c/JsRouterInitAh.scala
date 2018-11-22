@@ -87,9 +87,7 @@ class JsRouterInitAh[M <: AnyRef](
       // И запрос js-роутера с сервера и запрос геолокации пойдут параллельно.
       if (m.mainScreen.needGeoLoc) {
         val v0 = value
-        val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut )
-        val v2 = v0.withGeoLockTimer( Some(tp.timerId) )
-        val timeoutFx = Effect( tp.fut )
+        val (v2, timeoutFx) = TailAh.mkGeoLocTimer( v0 )
 
         // Склеить все эффекты и обновить состояние.
         val allFxs = (delayedRouteToFx :: geoLocEnableFx :: timeoutFx :: Nil)

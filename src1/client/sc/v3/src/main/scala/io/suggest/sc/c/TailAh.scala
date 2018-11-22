@@ -4,7 +4,7 @@ import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.sc.GetRouterCtlF
+import io.suggest.sc.{GetRouterCtlF, ScConstants}
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid._
 import io.suggest.sc.m.inx._
@@ -62,6 +62,54 @@ object TailAh {
         adNodeId
       }
     )
+  }
+
+
+  private def _removeTimer(v0: MScRoot): MScRoot = {
+    v0.withInternals(
+      v0.internals
+        .withGeoLockTimer( None )
+    )
+  }
+
+
+  /** Сборка таймера геолокации.
+    *
+    * @param v0 Состояние MScInternals.
+    * @return Обновлённое состояние + эффект ожидания срабатывания таймера.
+    *         Но таймер - уже запущен к этому моменту.
+    */
+  def mkGeoLocTimer(v0: MScInternals): (MScInternals, Effect) = {
+    val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut )
+    val v2 = v0.withGeoLockTimer( Some(tp.timerId) )
+    val timeoutFx = Effect( tp.fut )
+    (v2, timeoutFx)
+  }
+
+
+  private def withMapCenterInitReal(center: MGeoPoint, inx: MScIndex): MScIndex = {
+    inx.withSearch(
+      inx.search.withGeo(
+        inx.search.geo.withMapInit(
+          inx.search.geo.mapInit
+            .withState(
+              inx.search.geo.mapInit.state
+                .withCenterInitReal( center )
+            )
+        )
+      )
+    )
+  }
+
+
+  private def getIndexFx(geoIntoRcvr: Boolean, focusedAdId: Option[String] = None, retUserLoc: Boolean = false): Effect = {
+    GetIndex(
+      withWelcome = true,
+      geoIntoRcvr = geoIntoRcvr,
+      focusedAdId = focusedAdId,
+      retUserLoc  = retUserLoc,
+    )
+      .toEffectPure
   }
 
 }
@@ -141,7 +189,7 @@ class TailAh[M](
         if !currMainScreen.locEnv.contains(currGeoPoint)
       } {
         needUpdateUi = true
-        inx = withMapCenterInitReal(currGeoPoint, inx)
+        inx = TailAh.withMapCenterInitReal(currGeoPoint, inx)
       }
 
       // Смотрим текущий выделенный тег
@@ -191,7 +239,7 @@ class TailAh[M](
         // TODO Иначе - остановить геолокацию, если она запущена сейчас -- т.к. состояние "непустое".
       } else if (nodeIndexNeedsReload) {
         // Целиковая перезагрузка выдачи.
-        fxsAcc ::= getIndexFx(
+        fxsAcc ::= TailAh.getIndexFx(
           geoIntoRcvr = false,
           focusedAdId = m.mainScreen.focusedAdId,
           retUserLoc  = v2.index.search.geo.mapInit.userLoc.isEmpty
@@ -224,8 +272,8 @@ class TailAh[M](
       // Сейчас ожидаем максимально точных координат?
       v0.internals.geoLockTimer.fold {
         // Сейчас не ожидаются координаты. Просто сохранить координаты в состояние карты.
-        m.orig
-          .locationOpt
+        m.origOpt
+          .flatMap(_.locationOpt)
           // TODO Opt: iphone шлёт кучу одинаковых или похожих координат, раз в 1-2 секунды. Надо это фильтровать?
           .fold( noChange ) { geoLoc =>
             // Не двигать карту, сохранять координаты только в .userLoc
@@ -246,21 +294,20 @@ class TailAh[M](
         // Прямо сейчас этот контроллер ожидает координаты.
         // Функция общего кода завершения ожидания координат: запустить выдачу, выключить geo loc, грохнуть таймер.
         def __finished(v00: MScRoot, isSuccess: Boolean) = {
-          val fxs = getIndexFx(geoIntoRcvr = true, retUserLoc = !isSuccess)
+          val fxs = TailAh.getIndexFx(geoIntoRcvr = true, retUserLoc = !isSuccess)
           DomQuick.clearTimeout(geoLockTimerId)
-          val v22 = _removeTimer(v00)
+          val v22 = TailAh._removeTimer(v00)
           updatedSilent(v22, fxs)
         }
 
-        // Ожидаются координаты геолокации прямо сейчас.
-        m.orig.either.fold(
-          // Ожидаются координаты, но пришла ошибка. Можно ещё подождать, но пока считаем, что это конец.
-          // Скорее всего, юзер отменил геолокацию или что-то ещё хуже.
-          {_ =>
+        m.origOpt
+          .flatMap(_.either.right.toOption)
+          .fold {
+            // Ожидаются координаты, но пришла ошибка. Можно ещё подождать, но пока считаем, что это конец.
+            // Скорее всего, юзер отменил геолокацию или что-то ещё хуже.
             __finished(v0, isSuccess = false)
-          },
-          // Есть какие-то координаты, но не факт, что ожидаемо точные.
-          {geoLoc =>
+          } { geoLoc =>
+            // Есть какие-то координаты, но не факт, что ожидаемо точные.
             // Т.к. работает suppressor, то координаты можно всегда записывать в состояние, не боясь постороннего "шума".
             val v1 = v0.withIndex(
               v0.index.withSearch(
@@ -279,7 +326,7 @@ class TailAh[M](
               )
             )
 
-            if (m.orig.glType.highAccuracy) {
+            if (m.origOpt.exists(_.glType.highAccuracy)) {
               // Пришли точные координаты. Завершаем ожидание.
               __finished(v1, isSuccess = true)
             } else {
@@ -287,7 +334,6 @@ class TailAh[M](
               updatedSilent(v1)
             }
           }
-        )
       }
 
 
@@ -298,10 +344,18 @@ class TailAh[M](
         noChange
       } { _ =>
         // Удалить из состояния таймер геолокации, запустить выдачу.
-        val v2 = _removeTimer(v0)
-        val fxs = getIndexFx(geoIntoRcvr = true, retUserLoc = true)
+        val v2 = TailAh._removeTimer(v0)
+        val fxs = TailAh.getIndexFx(geoIntoRcvr = true, retUserLoc = true)
         updatedSilent(v2, fxs)
       }
+
+
+    // Рукопашный запуск таймера геолокации.
+    case GeoLocTimerStart =>
+      val v0 = value
+      val (vi2, fx) = TailAh.mkGeoLocTimer( v0.internals )
+      val v2 = v0.withInternals( vi2 )
+      updated(v2, fx)
 
 
     // Объединённая обработка результатов API-запросов к серверу.
@@ -389,31 +443,6 @@ class TailAh[M](
     case DoNothing =>
       noChange
 
-  }
-
-  private def _removeTimer(v0: MScRoot = value): MScRoot = {
-    v0.withInternals(
-      v0.internals.withGeoLockTimer( None )
-    )
-  }
-
-  private def getIndexFx(geoIntoRcvr: Boolean, focusedAdId: Option[String] = None, retUserLoc: Boolean = false): Effect = {
-    GetIndex(withWelcome = true, geoIntoRcvr = geoIntoRcvr, focusedAdId = focusedAdId, retUserLoc = retUserLoc)
-      .toEffectPure
-  }
-
-  private def withMapCenterInitReal(center: MGeoPoint, inx: MScIndex): MScIndex = {
-    inx.withSearch(
-      inx.search.withGeo(
-        inx.search.geo.withMapInit(
-          inx.search.geo.mapInit
-            .withState(
-              inx.search.geo.mapInit.state
-                .withCenterInitReal( center )
-            )
-        )
-      )
-    )
   }
 
 }
