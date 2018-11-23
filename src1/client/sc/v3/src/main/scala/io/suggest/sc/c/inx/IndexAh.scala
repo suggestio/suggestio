@@ -70,121 +70,140 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
     val i0 = ctx.value0.index
     val inx = ra.index.get
 
-    // Сайд-эффекты закидываются в этот аккамулятор:
-    var fxsAcc = List.empty[Effect]
+    // Сравнивать полученный index с текущим состоянием. Может быть ничего сохранять не надо?
+    if (i0.resp contains inx) {
+      // Не изменился index. Не ясно, надо ли вообще что-нибудь делать.
+      println("index not changed")
+      var i1 = i0
+      // Убрать
+      if (i1.resp.isPending) {
+        i1 = i1.withResp( i1.resp.ready( i1.resp.get ) )
+      }
+      val v2 = ctx.value0.withIndex( i1 )
+      // TODO Запустить эффект обновления плитки?
+      (v2, None)
 
-    // TODO Сравнивать полученный index с текущим состоянием. Может быть ничего сохранять не надо?
-    var i1 = i0.copy(
-      resp = i0.resp.ready(inx),
-      state = i0.state
-        .withRcvrNodeId( inx.nodeId.toList ),
-      search = {
-        var s0 = i0.search
+    } else {
+      // Индекс изменился, значит заливаем новый индекс в состояние:
 
-        // Выставить полученную с сервера геоточку как текущую.
-        s0 = inx.geoPoint
-          .filter { mgp =>
-            !(i0.search.geo.mapInit.state.center ~= mgp)
-          }
-          .fold(s0) { mgp =>
-            s0.withGeo(
-              s0.geo.withMapInit(
-                s0.geo.mapInit.withState(
-                  s0.geo.mapInit.state.copy(
-                    centerInit = mgp,
-                    centerReal = None,
-                    // Увеличить зум, чтобы приблизить.
-                    zoom = 15
+      // Сайд-эффекты закидываются в этот аккамулятор:
+      var fxsAcc = List.empty[Effect]
+
+      var i1 = i0.copy(
+        resp = i0.resp.ready(inx),
+        state = i0.state
+          .withRcvrNodeId( inx.nodeId.toList ),
+        search = {
+          var s0 = i0.search
+
+          // Выставить полученную с сервера геоточку как текущую.
+          // TODO Не сбрасывать точку, если index не изменился.
+          s0 = inx.geoPoint
+            .filter { mgp =>
+              !(i0.search.geo.mapInit.state.center ~= mgp)
+            }
+            .fold(s0) { mgp =>
+              s0.withGeo(
+                s0.geo.withMapInit(
+                  s0.geo.mapInit.withState(
+                    s0.geo.mapInit.state.copy(
+                      centerInit = mgp,
+                      centerReal = None,
+                      // Увеличить зум, чтобы приблизить.
+                      zoom = 15
+                    )
                   )
                 )
+              )
+            }
+
+          // Если возвращена userGeoLoc с сервера, которая запрашивалась и до сих пор она нужна, то её выставить в состояние.
+          for {
+            _ <- inx.userGeoLoc
+            if s0.geo.mapInit.userLoc.isEmpty
+          } {
+            s0 = s0.withGeo(
+              s0.geo.withMapInit(
+                s0.geo.mapInit.withUserLoc( inx.userGeoLoc )
               )
             )
           }
 
-        // Если возвращена userGeoLoc с сервера, которая запрашивалась и до сих пор она нужна, то её выставить в состояние.
-        for {
-          _ <- inx.userGeoLoc
-          if s0.geo.mapInit.userLoc.isEmpty
-        } {
-          s0 = s0.withGeo(
-            s0.geo.withMapInit(
-              s0.geo.mapInit.withUserLoc( inx.userGeoLoc )
+          // Возможный сброс состояния тегов
+          s0 = s0.maybeResetNodesFound
+
+          // Если заход в узел с карты, то надо скрыть search-панель.
+          if (s0.panel.opened && inx.welcome.nonEmpty) {
+            s0 = s0.withPanel(
+              s0.panel.withOpened( false )
             )
-          )
+          }
+
+          // Сбросить флаг mapInit.loader, если он выставлен.
+          if (s0.geo.mapInit.loader.nonEmpty)
+            s0 = s0.resetMapLoader
+
+          s0
         }
-
-        // Возможный сброс состояния тегов
-        s0 = s0.maybeResetNodesFound
-
-        // Если заход в узел с карты, то надо скрыть search-панель.
-        if (s0.panel.opened && inx.welcome.nonEmpty) {
-          s0 = s0.withPanel(
-            s0.panel.withOpened( false )
-          )
-        }
-
-        // Сбросить флаг mapInit.loader, если он выставлен.
-        if (s0.geo.mapInit.loader.nonEmpty)
-          s0 = s0.resetMapLoader
-
-        s0
-      }
-    )
-
-    val respActionTypes = ctx.m.tryResp.get.respActionTypes
-    // Если панель поиск видна, то запустить поиск узлов в фоне.
-    if (i1.search.panel.opened && !respActionTypes.contains(MScRespActionTypes.SearchNodes))
-      fxsAcc ::= SearchAh.reDoSearchFx( ignorePending = false )
-
-    // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
-    fxsAcc ::= ResetUrlRoute.toEffectPure
-
-    // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
-    if ( !respActionTypes.contains(MScRespActionTypes.AdsTile) ) {
-      fxsAcc ::= GridLoadAds(clean = true, ignorePending = true)
-        .toEffectPure
-    }
-
-    // Инициализация приветствия. Подготовить состояние welcome.
-    val mWcSFutOpt = for {
-      resp <- i1.resp.toOption
-      if !i1.resp.isFailed      // Всякие FailingStale содержат старый ответ и новую ошибку, их надо отсеять.
-      _    <- resp.welcome
-    } yield {
-      val tstamp = System.currentTimeMillis()
-
-      // Собрать функцию для запуска неотменяемого таймера.
-      // Функция возвращает фьючерс, который исполнится через ~секунду.
-      val tpFx = Effect {
-        WelcomeAh.timeout( ScConstants.Welcome.HIDE_TIMEOUT_MS, tstamp )
-      }
-
-      // Собрать начальное состояние приветствия:
-      val mWcS = MWelcomeState(
-        isHiding    = false,
-        timerTstamp = tstamp
       )
 
-      (tpFx, mWcS)
+      val respActionTypes = ctx.m.tryResp.get.respActionTypes
+      // Если панель поиск видна, то запустить поиск узлов в фоне.
+      if (i1.search.panel.opened && !respActionTypes.contains(MScRespActionTypes.SearchNodes))
+        fxsAcc ::= SearchAh.reDoSearchFx( ignorePending = false )
+
+      // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
+      fxsAcc ::= ResetUrlRoute.toEffectPure
+
+      // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
+      if ( !(respActionTypes contains MScRespActionTypes.AdsTile) ) {
+        fxsAcc ::= GridLoadAds(clean = true, ignorePending = true)
+          .toEffectPure
+      }
+
+      // Инициализация приветствия. Подготовить состояние welcome.
+      val mWcSFutOpt = for {
+        resp <- i1.resp.toOption
+        if !i1.resp.isFailed      // Всякие FailingStale содержат старый ответ и новую ошибку, их надо отсеять.
+        wcInfo2 <- resp.welcome
+        // Не надо отображать текущее приветствие повторно:
+        if !i0.resp.exists(_.welcome contains wcInfo2)
+      } yield {
+        val tstamp = System.currentTimeMillis()
+
+        // Собрать функцию для запуска неотменяемого таймера.
+        // Функция возвращает фьючерс, который исполнится через ~секунду.
+        val tpFx = Effect {
+          WelcomeAh.timeout( ScConstants.Welcome.HIDE_TIMEOUT_MS, tstamp )
+        }
+
+        // Собрать начальное состояние приветствия:
+        val mWcS = MWelcomeState(
+          isHiding    = false,
+          timerTstamp = tstamp
+        )
+
+        (tpFx, mWcS)
+      }
+      i1 = i1.withWelcome( mWcSFutOpt.map(_._2) )
+
+      // Нужно отребилдить ScCss, но только если что-то реально изменилось.
+      val scCssArgs2 = MScCssArgs.from(i1.resp, ctx.value0.dev.screen.info)
+      if (scCssArgs2 != i1.scCss.args) {
+        // Изменились аргументы. Пора отребилдить ScCss.
+        i1 = i1.withScCss(
+          scCssFactory.mkScCss( scCssArgs2 )
+        )
+      }
+
+      // Объединить эффекты плитки и приветствия воедино:
+      for (mwc <- mWcSFutOpt)
+        fxsAcc ::= mwc._1
+
+      val v2 = ctx.value0.withIndex( i1 )
+      val fxOpt = fxsAcc.mergeEffects
+      (v2, fxOpt)
     }
-    i1 = i1.withWelcome( mWcSFutOpt.map(_._2) )
-
-    // Нужно отребилдить ScCss, но только если что-то реально изменилось.
-    val scCssArgs2 = MScCssArgs.from(i1.resp, ctx.value0.dev.screen.info)
-    if (scCssArgs2 != i1.scCss.args) {
-      // Изменились аргументы. Пора отребилдить ScCss.
-      i1 = i1.withScCss(
-        scCssFactory.mkScCss( scCssArgs2 )
-      )
-    }
-
-    // Объединить эффекты плитки и приветствия воедино:
-    for (mwc <- mWcSFutOpt)
-      fxsAcc ::= mwc._1
-
-    val v2 = ctx.value0.withIndex( i1 )
-    val fxOpt = fxsAcc.mergeEffects
-    (v2, fxOpt)
   }
 
 }
