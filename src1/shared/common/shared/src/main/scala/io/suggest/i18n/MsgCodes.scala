@@ -319,4 +319,6 @@ object MsgCodes {
   val `Approved._adv` = "Approved._adv"
   val `Geolocation` = "Geolocation"
 
+  val `Go.into` = "Go.into"
+
 }

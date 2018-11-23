@@ -4,6 +4,7 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.geo.{GeoLocType, MGeoLoc}
+import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import io.suggest.ueq.JsUnivEqUtil._
@@ -58,9 +59,10 @@ object MGeoLocSwitchS {
   def empty = apply()
   implicit object MGeoLocSwitchSFastEq extends FastEq[MGeoLocSwitchS] {
     override def eqv(a: MGeoLocSwitchS, b: MGeoLocSwitchS): Boolean = {
-      (a.onOff      ===* b.onOff) &&
-      (a.hardLock    ==* b.hardLock) &&
-      (a.prevGeoLoc ===* b.prevGeoLoc)
+      (a.onOff        ===* b.onOff) &&
+      (a.hardLock      ==* b.hardLock) &&
+      (a.prevGeoLoc   ===* b.prevGeoLoc) &&
+      (a.scSwitch     ===* b.scSwitch)
     }
   }
   @inline implicit def univEq: UnivEq[MGeoLocSwitchS] = UnivEq.derive
@@ -73,16 +75,20 @@ object MGeoLocSwitchS {
   * @param prevGeoLoc Последняя геолокация с предшествующего сеанса геолокации, если есть.
   *                   При врЕменном прерывании геолокации (экран выключили, например) значение сохраняется сюда,
   *                   чтобы после узнать, изменилось ли местоположение с момента предыдущего состояния выдачи.
+  * @param scSwitch Доп.состояние switch-контекста, которое сбрасывается после первого pub-сигнала.
   */
 case class MGeoLocSwitchS(
                            onOff           : Pot[Boolean]                        = Pot.empty,
                            hardLock        : Boolean                             = false,
                            prevGeoLoc      : Option[MGeoLoc]                     = None,
+                           scSwitch        : Option[MScSwitchCtx]                = None,
                          ) {
 
   def withOnOff(onOff: Pot[Boolean]) = copy(onOff = onOff)
   def withHardLock(hardLock: Boolean) = copy(hardLock = hardLock)
   def withPrevGeoLoc(prevGeoLoc: Option[MGeoLoc]) = copy(prevGeoLoc = prevGeoLoc)
+  def withScSwitch(scSwitch: Option[MScSwitchCtx]) = copy(scSwitch = scSwitch)
+  def withOutScSwitch= if (scSwitch.isEmpty) this else withScSwitch(None)
 
 }
 

@@ -249,6 +249,7 @@ class JsMessagesUtil @Inject() (
       MC.`Error` ::
       MC.`Search.start.typing` ::
       MC.`Geolocation` ::
+      MC.`Go.into` ::
       Nil
   }
 

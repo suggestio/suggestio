@@ -8,9 +8,9 @@ import io.suggest.sc.c.inx.{ConfUpdateRah, IndexRespHandler}
 import io.suggest.sc.c.search.NodesSearchRespHandler
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v._
-import io.suggest.sc.v.grid.{GridCoreR, GridLoaderR, GridR}
+import io.suggest.sc.v.grid._
 import io.suggest.sc.v.hdr._
-import io.suggest.sc.v.inx.WelcomeR
+import io.suggest.sc.v.inx._
 import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search._
 
@@ -56,6 +56,7 @@ class Sc3Module {
   lazy val welcomeR = wire[WelcomeR]
   lazy val indexRespHandler = wire[IndexRespHandler]
   lazy val confUpdateRah = wire[ConfUpdateRah]
+  lazy val indexSwitchAskR = wire[IndexSwitchAskR]
 
 
   // grid

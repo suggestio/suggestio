@@ -145,11 +145,12 @@ class GeoLocAh[M](
         // Если pending, то переставить в ready.
         val switch2 = if (v0.switch.onOff.isPending) {
           val isOnOff = v0.switch.onOff.getOrElse(true)
-          v0.switch.withOnOff(
-            v0.switch.onOff.ready( isOnOff )
+          v0.switch.copy(
+            onOff    = v0.switch.onOff.ready( isOnOff ),
+            scSwitch = None
           )
         } else {
-          v0.switch
+          v0.switch.withOutScSwitch
         }
 
         // Сохранить новые данные в состояние.
@@ -160,7 +161,7 @@ class GeoLocAh[M](
         )
 
         // Уведомить другие контроллеры о наступлении геолокации.
-        val notifyOthersFx = GeoLocAh._glPubSignalFx(loc)
+        val notifyOthersFx = GlPubSignal( Some(loc), v0.switch.scSwitch ).toEffectPure
 
         ah.updateMaybeSilentFx( v0.switch.onOff ===* v2.switch.onOff )(v2, notifyOthersFx)
 
@@ -175,6 +176,9 @@ class GeoLocAh[M](
     case m: GeoLocOnOff =>
       val v0 = value
       // Оформляем всю логику через option, чтобы не было паутины if:
+      def glPubErrFx = GlPubSignal( None, m.scSwitch.orElse(v0.switch.scSwitch) )
+        .toEffectPure
+
       Some(m.enabled)
         // Нельзя менять состояние off=>off или on=>on:
         .filterNot {
@@ -188,11 +192,16 @@ class GeoLocAh[M](
           // Нельзя включить геолокацию сейчас.
           if (v0.switch.hardLock && !m.isHard) {
             // Жесткое выключение. Уведомить другие подсистемы, что в итоге нет геолокации:
-            val fx = GlPubSignal( None ).toEffectPure
-            effectOnly(fx)
+            val v2 = v0.withSwitch(
+              v0.switch.withOutScSwitch
+            )
+            updatedSilent(v2, glPubErrFx)
+
           } else {
-            // И даже уведомлять никого не надо ни о чём.
-            noChange
+            // И даже уведомлять никого не надо ни о чём (но надо, если задан scSwitch-контекст).
+            m.scSwitch.fold(noChange) { _ =>
+              effectOnly(glPubErrFx)
+            }
           }
         } {
           // Включение геолокации:
@@ -200,7 +209,7 @@ class GeoLocAh[M](
              GeoLocAh._geoLocApiOpt.fold {
               // should never happen(?)
               LOG.warn( ErrorMsgs.GEO_LOC_FAILED, msg = m )
-              noChange
+              effectOnly(glPubErrFx)
             } { geoApi =>
               // Запустить мониторинг геолокации.
               val needWatchers =
@@ -213,9 +222,14 @@ class GeoLocAh[M](
 
               val onOff2 = v0.switch.onOff.ready( true ).pending()
 
+              var switch2 = v0.switch
+                .withOnOff( onOff2 )
+              if (m.scSwitch.nonEmpty)
+                switch2 = switch2.withScSwitch( m.scSwitch )
+
               val v2 = v0.copy(
                 watchers = v0.watchers ++ watchers2,
-                switch   = v0.switch.withOnOff( onOff2 ),
+                switch   = switch2,
               )
               ah.updateMaybeSilent(v0.switch.onOff ==* v2.switch.onOff)(v2)
             }
@@ -271,12 +285,15 @@ class GeoLocAh[M](
           noChange
         } { watcher0 =>
           // Если onOff - pending, то сохранить ошибку:
-          val notifyOthersFx = GeoLocAh._glPubSignalFx(m)
+          val notifyOthersFx = GlPubSignal( Some(m), v0.switch.scSwitch ).toEffectPure
 
           if (m.error.domError.code ==* Html5GeoLocApiErrors.PERMISSION_DENIED) {
             // TODO Отрабатывать так для всех ошибок? Ведь таймаут геолокации и POSITION_UNAVAILABLE аналогичны по сути:
             // Если ошибка DENIED, то выключить геолокацию жестко:
-            val v2 = GeoLocAh.doDisable(v0, isHard = true, withException = m.error)
+            val v1 = if (v0.switch.scSwitch.isEmpty) v0
+                     else v0.withSwitch( v0.switch.withOutScSwitch )
+
+            val v2 = GeoLocAh.doDisable(v1, isHard = true, withException = m.error)
             updated(v2, notifyOthersFx)
 
           } else {
@@ -288,8 +305,9 @@ class GeoLocAh[M](
               watcher0.lastPos.fail( m.error )
             )
 
-            val v2 = v0.withWatchers(
-              v0.watchers + (m.glType -> wa2)
+            val v2 = v0.copy(
+              watchers = v0.watchers + (m.glType -> wa2),
+              switch   = v0.switch.withOutScSwitch
             )
 
             if (v2.switch.onOff.isPending) {
@@ -297,7 +315,8 @@ class GeoLocAh[M](
 
               val onOff2 = FailedStale(isOnOff2, m.error)
               val v3 = v2.withSwitch(
-                v2.switch.withOnOff( onOff2 )
+                v2.switch
+                  .withOnOff( onOff2 )
               )
               updated(v3, notifyOthersFx)
             } else {
@@ -313,11 +332,6 @@ class GeoLocAh[M](
 
 /** Статическая утиль для контроллера [[GeoLocAh]]. */
 object GeoLocAh {
-
-  /** Эффект сообщения GlPubSignal. */
-  private def _glPubSignalFx(loc: IGeoLocSignal): Effect =
-    GlPubSignal( Some(loc) ).toEffectPure
-
 
   /** Доступ к HTML5 Geolocation API. */
   private def _geoLocApiOpt = WindowVm().geolocation

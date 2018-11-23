@@ -17,8 +17,9 @@ object MScIndexState {
   /** Поддержка FastEq для классов [[MScIndexState]]. */
   implicit object MScIndexStateFastEq extends FastEq[MScIndexState] {
     override def eqv(a: MScIndexState, b: MScIndexState): Boolean = {
-        (a.generation ==* b.generation) &&
-        (a.rcvrIds ===* b.rcvrIds)
+      (a.generation ==* b.generation) &&
+      (a.rcvrIds ===* b.rcvrIds) &&
+      (a.switchAsk ===* b.switchAsk)
     }
   }
 
@@ -32,10 +33,12 @@ object MScIndexState {
   * @param generation Random seed выдачи.
   * @param rcvrIds id текущего отображаемого узла в начале списка.
   *                Затем "предыдущие" узлы, если есть.
+  * @param switchAsk Состояния на-экранного вопроса на тему переключения в новый узел.
   */
 case class MScIndexState(
-                          generation      : Long                = System.currentTimeMillis(),
-                          rcvrIds         : List[String]        = Nil
+                          generation      : Long                      = System.currentTimeMillis(),
+                          rcvrIds         : List[String]              = Nil,
+                          switchAsk       : Option[MInxSwitchAskS]    = None,
                         ) {
 
   // val или lazy val, т.к. часто нужен инстанс именно текущего узла.
@@ -44,5 +47,6 @@ case class MScIndexState(
 
   def withGeneration(generation: Long)            = copy( generation = generation )
   def withRcvrNodeId( rcvrNodeId: List[String] )  = copy( rcvrIds = rcvrNodeId )
+  def withSwitchAsk( switchAsk: Option[MInxSwitchAskS] ) = copy( switchAsk = switchAsk )
 
 }

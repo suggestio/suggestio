@@ -5,6 +5,8 @@ import java.time.OffsetDateTime
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 
+import scala.util.Try
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -57,5 +59,7 @@ object UnivEqUtil {
 
   // java.time
   @inline implicit def offsetDateTimeUe   : UnivEq[OffsetDateTime]  = UnivEq.force
+
+  @inline implicit def tryUe[T: UnivEq]   : UnivEq[Try[T]]          = UnivEq.force
 
 }

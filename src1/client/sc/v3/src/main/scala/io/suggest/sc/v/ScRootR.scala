@@ -15,7 +15,7 @@ import io.suggest.sc.m.search.{MScSearch, MSearchPanelS}
 import io.suggest.sc.styl.{GetScCssF, ScCss}
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
-import io.suggest.sc.v.inx.WelcomeR
+import io.suggest.sc.v.inx.{IndexSwitchAskR, WelcomeR}
 import io.suggest.sc.v.menu._
 import io.suggest.sc.v.search.{NodesFoundR, NodesSearchContR, STextR, SearchR}
 import io.suggest.spa.OptFastEq.Wrapped
@@ -50,6 +50,7 @@ class ScRootR (
                 searchBtnR              : SearchBtnR,
                 val hdrProgressR        : HdrProgressR,
                 val geoLocR             : GeoLocR,
+                val indexSwitchAskR     : IndexSwitchAskR,
                 getScCssF               : GetScCssF,
               ) {
 
@@ -90,6 +91,7 @@ class ScRootR (
                                     hdrOnGridBtnColorOptC     : ReactConnectProxy[Option[MColorData]],
                                     hdrProgressC              : ReactConnectProxy[hdrProgressR.Props_t],
                                     menuGeoLocC               : ReactConnectProxy[geoLocR.Props_t],
+                                    indexSwitchAskC           : ReactConnectProxy[indexSwitchAskR.Props_t],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -327,13 +329,19 @@ class ScRootR (
         }
       }
 
+      // Нормальный полный рендер выдачи:
+      val fullRender = <.div(
+        scCssComp,
+        muiThemeProviderComp,
+
+        // Всплывающая плашка для смены узла:
+        s.indexSwitchAskC { indexSwitchAskR.apply },
+      )
+
       // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
       s.isRenderScC { isRenderSomeProxy =>
         if (isRenderSomeProxy.value.value) {
-          <.div(
-            scCssComp,
-            muiThemeProviderComp
-          )
+          fullRender
         } else {
           // Нет пока данных для рендера вообще
           <.div
@@ -499,6 +507,10 @@ class ScRootR (
         menuGeoLocC = propsProxy.connect { mroot =>
           mroot.dev.geoLoc.switch.onOff
         }( FastEqUtil.RefValFastEq ),
+
+        indexSwitchAskC = propsProxy.connect { mroot =>
+          mroot.index.state.switchAsk
+        }( OptFastEq.Wrapped( MInxSwitchAskS.MInxSwitchAskSFastEq ) ) ,
 
       )
     }

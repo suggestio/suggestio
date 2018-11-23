@@ -4,9 +4,9 @@ import diode._
 import io.suggest.sc.m._
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.sc.ScConstants
+import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sc.m.inx.MScSwitchCtx
 
 import scala.concurrent.Promise
 import scala.util.Success
@@ -87,7 +87,14 @@ class JsRouterInitAh[M <: AnyRef](
       // И запрос js-роутера с сервера и запрос геолокации пойдут параллельно.
       if (m.mainScreen.needGeoLoc) {
         val v0 = value
-        val (v2, timeoutFx) = TailAh.mkGeoLocTimer( v0 )
+        val switchCtx = MScSwitchCtx(
+          indexQsArgs = MScIndexArgs(
+            withWelcome = true,
+            geoIntoRcvr = true,
+            retUserLoc  = true,
+          )
+        )
+        val (v2, timeoutFx) = TailAh.mkGeoLocTimer( switchCtx, v0 )
 
         // Склеить все эффекты и обновить состояние.
         val allFxs = (delayedRouteToFx :: geoLocEnableFx :: timeoutFx :: Nil)

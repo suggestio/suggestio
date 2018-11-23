@@ -15,6 +15,7 @@ import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits.OptionListExtOps
+import io.suggest.sc.index.MScIndexArgs
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -79,8 +80,8 @@ object TailAh {
     * @return Обновлённое состояние + эффект ожидания срабатывания таймера.
     *         Но таймер - уже запущен к этому моменту.
     */
-  def mkGeoLocTimer(v0: MScInternals): (MScInternals, Effect) = {
-    val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut )
+  def mkGeoLocTimer(switchCtx: MScSwitchCtx, v0: MScInternals): (MScInternals, Effect) = {
+    val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut(switchCtx) )
     val v2 = v0.withGeoLockTimer( Some(tp.timerId) )
     val timeoutFx = Effect( tp.fut )
     (v2, timeoutFx)
@@ -102,13 +103,9 @@ object TailAh {
   }
 
 
-  private def getIndexFx(geoIntoRcvr: Boolean, focusedAdId: Option[String] = None, retUserLoc: Boolean = false): Effect = {
-    GetIndex(
-      withWelcome = true,
-      geoIntoRcvr = geoIntoRcvr,
-      focusedAdId = focusedAdId,
-      retUserLoc  = retUserLoc,
-    )
+  /* Было: (geoIntoRcvr: Boolean, focusedAdId: Option[String] = None, retUserLoc: Boolean = false) */
+  private def getIndexFx( switchCtx: MScSwitchCtx ): Effect = {
+    GetIndex( switchCtx )
       .toEffectPure
   }
 
@@ -160,9 +157,11 @@ class TailAh[M](
       // Проверка id узла. Если отличается, то надо перезаписать.
       if (m.mainScreen.nodeId !=* currMainScreen.nodeId) {
         nodeIndexNeedsReload = true
+        /* Ранее, nodeId передавался в запрос прямо через состояние, что было некорректно:
         inx = inx.withState {
           inx.state.withRcvrNodeId( m.mainScreen.nodeId.toList )
         }
+        */
       }
 
       // Проверка поля generation
@@ -239,11 +238,16 @@ class TailAh[M](
         // TODO Иначе - остановить геолокацию, если она запущена сейчас -- т.к. состояние "непустое".
       } else if (nodeIndexNeedsReload) {
         // Целиковая перезагрузка выдачи.
-        fxsAcc ::= TailAh.getIndexFx(
-          geoIntoRcvr = false,
+        val switchCtx = MScSwitchCtx(
+          indexQsArgs = MScIndexArgs(
+            geoIntoRcvr = false,
+            retUserLoc  = v2.index.search.geo.mapInit.userLoc.isEmpty,
+            withWelcome = true,
+            nodeId      = m.mainScreen.nodeId,
+          ),
           focusedAdId = m.mainScreen.focusedAdId,
-          retUserLoc  = v2.index.search.geo.mapInit.userLoc.isEmpty
         )
+        fxsAcc ::= TailAh.getIndexFx( switchCtx )
         val fx = fxsAcc.mergeEffects.get
         ah.updateMaybeSilentFx(needUpdateUi)(v2, fx)
 
@@ -294,7 +298,16 @@ class TailAh[M](
         // Прямо сейчас этот контроллер ожидает координаты.
         // Функция общего кода завершения ожидания координат: запустить выдачу, выключить geo loc, грохнуть таймер.
         def __finished(v00: MScRoot, isSuccess: Boolean) = {
-          val fxs = TailAh.getIndexFx(geoIntoRcvr = true, retUserLoc = !isSuccess)
+          val switchCtx = m.scSwitch.getOrElse {
+            MScSwitchCtx(
+              indexQsArgs = MScIndexArgs(
+                geoIntoRcvr = true,
+                retUserLoc  = !isSuccess,
+                withWelcome = true,
+              )
+            )
+          }
+          val fxs = TailAh.getIndexFx( switchCtx )
           DomQuick.clearTimeout(geoLockTimerId)
           val v22 = TailAh._removeTimer(v00)
           updatedSilent(v22, fxs)
@@ -338,22 +351,20 @@ class TailAh[M](
 
 
     // Наступил таймаут ожидания геолокации. Нужно активировать инициализацию в имеющемся состоянии
-    case GeoLocTimeOut =>
+    case m: GeoLocTimeOut =>
       val v0 = value
-      v0.internals.geoLockTimer.fold {
-        noChange
-      } { _ =>
+      v0.internals.geoLockTimer.fold(noChange) { _ =>
         // Удалить из состояния таймер геолокации, запустить выдачу.
         val v2 = TailAh._removeTimer(v0)
-        val fxs = TailAh.getIndexFx(geoIntoRcvr = true, retUserLoc = true)
+        val fxs = TailAh.getIndexFx( m.switchCtx )
         updatedSilent(v2, fxs)
       }
 
 
     // Рукопашный запуск таймера геолокации.
-    case GeoLocTimerStart =>
+    case m: GeoLocTimerStart =>
       val v0 = value
-      val (vi2, fx) = TailAh.mkGeoLocTimer( v0.internals )
+      val (vi2, fx) = TailAh.mkGeoLocTimer( m.switchCtx, v0.internals )
       val v2 = v0.withInternals( vi2 )
       updated(v2, fx)
 

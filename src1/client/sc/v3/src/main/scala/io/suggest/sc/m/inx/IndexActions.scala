@@ -12,18 +12,8 @@ import io.suggest.sc.m.{ISc3Action, IScIndexRespReason}
 /** Интерфейс-маркер для index-экшенов. */
 sealed trait IIndexAction extends ISc3Action
 
-/** Дёрнуть индекс с сервера и накатить.
-  *
-  * @param withWelcome Требуется ли картинка приветствия?
-  * @param focusedAdId Фокусироваться на id карточки.
-  * @param retUserLoc Определять геолокацию юзера силами сервера?
-  */
-case class GetIndex(
-                     withWelcome: Boolean,
-                     geoIntoRcvr: Boolean,
-                     override val focusedAdId: Option[String],
-                     retUserLoc : Boolean,
-                   )
+/** Дёрнуть индекс с сервера и накатить. */
+case class GetIndex( switchCtx: MScSwitchCtx )
   extends IIndexAction with IScIndexRespReason
 
 
@@ -47,3 +37,9 @@ case object ScCssReBuild extends IIndexAction
   */
 case class SideBarOpenClose(bar: MScSideBar, open: Boolean) extends IIndexAction
 
+
+/** Отмена переключения индекса выдачи в новую локацию. */
+case object CancelIndexSwitch extends IIndexAction
+
+/** Подтверждение переключения индекса в новую локацию. */
+case object ApproveIndexSwitch extends IIndexAction

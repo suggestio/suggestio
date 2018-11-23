@@ -67,20 +67,53 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
   }
 
   override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect]) = {
-    val i0 = ctx.value0.index
+    val v0 = ctx.value0
+    val i0 = v0.index
     val inx = ra.index.get
 
     // Сравнивать полученный index с текущим состоянием. Может быть ничего сохранять не надо?
     if (i0.resp contains inx) {
       // Не изменился index. Не ясно, надо ли вообще что-нибудь делать.
-      println("index not changed")
       var i1 = i0
-      // Убрать
+
+      // Убрать возможный pending из resp:
       if (i1.resp.isPending) {
-        i1 = i1.withResp( i1.resp.ready( i1.resp.get ) )
+        i1 = i1.withResp(
+          i1.resp
+            .ready( i1.resp.get )
+        )
       }
-      val v2 = ctx.value0.withIndex( i1 )
-      // TODO Запустить эффект обновления плитки?
+      if (i1.state.switchAsk.nonEmpty) {
+        i1 = i1.withState(
+          i1.state.withSwitchAsk( None )
+        )
+      }
+
+      val v2 = v0.withIndex( i1 )
+
+      // Запустить эффект обновления плитки, если плитка не пришла автоматом.
+      val gridLoadFxOpt = OptionUtil.maybe( !ctx.m.tryResp.toOption.exists(_.respActionTypes contains MScRespActionTypes.AdsTile) ) {
+        GridLoadAds(clean = true, ignorePending = true)
+          .toEffectPure
+      }
+
+      (v2, gridLoadFxOpt)
+
+    } else if (ctx.m.switchCtxOpt.exists(_.demandLocTest)) {
+      // Это тест переключения выдачи в новое местоположение, и узел явно изменился.
+      // Вместо переключения узла, надо спросить юзера, можно ли переходить полученный узел:
+      val switchAskState = MInxSwitchAskS(
+        okAction = ctx.m,
+        nextIndex = inx
+      )
+
+      val v2 = v0.withIndex(
+        v0.index.withState(
+          v0.index.state
+            .withSwitchAsk( Some(switchAskState) )
+        )
+      )
+
       (v2, None)
 
     } else {
@@ -91,8 +124,10 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
 
       var i1 = i0.copy(
         resp = i0.resp.ready(inx),
-        state = i0.state
-          .withRcvrNodeId( inx.nodeId.toList ),
+        state = i0.state.copy(
+          rcvrIds   = inx.nodeId.toList,
+          switchAsk = None,
+        ),
         search = {
           var s0 = i0.search
 
@@ -188,7 +223,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
       i1 = i1.withWelcome( mWcSFutOpt.map(_._2) )
 
       // Нужно отребилдить ScCss, но только если что-то реально изменилось.
-      val scCssArgs2 = MScCssArgs.from(i1.resp, ctx.value0.dev.screen.info)
+      val scCssArgs2 = MScCssArgs.from(i1.resp, v0.dev.screen.info)
       if (scCssArgs2 != i1.scCss.args) {
         // Изменились аргументы. Пора отребилдить ScCss.
         i1 = i1.withScCss(
@@ -200,7 +235,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
       for (mwc <- mWcSFutOpt)
         fxsAcc ::= mwc._1
 
-      val v2 = ctx.value0.withIndex( i1 )
+      val v2 = v0.withIndex( i1 )
       val fxOpt = fxsAcc.mergeEffects
       (v2, fxOpt)
     }
@@ -221,15 +256,14 @@ class IndexAh[M](
 
   /** Непосредственный запуск получения индекса с сервера.
     *
-    * @param withWelcome Надо ли серверу готовить и возвращать welcome-данные.
     * @param silentUpdate Не рендерить на экране изменений?
     * @param v0 Исходныое значение MScIndex.
-    * @param geoIntoRcvr Допускать geo-детектирование ресивера.
     * @param reason Экшен-причина, приведший к запуску запроса.
+    * @param switchCtx Данные контекст обновления всей выдачи.
     * @return ActionResult.
     */
-  private def _getIndex(withWelcome: Boolean, silentUpdate: Boolean, v0: MScIndex,
-                        geoIntoRcvr: Boolean, reason: IScIndexRespReason, retUserLoc: Boolean): ActionResult[M] = {
+  private def _getIndex(silentUpdate: Boolean, v0: MScIndex,
+                        reason: IScIndexRespReason, switchCtx: MScSwitchCtx): ActionResult[M] = {
     val ts = System.currentTimeMillis()
     val root = rootRO.value
 
@@ -246,29 +280,21 @@ class IndexAh[M](
 
     val fx = Effect {
       val someTrue = Some( true )
-      //println("get index @" + System.currentTimeMillis())
       val args = MScQs(
         common = MScCommonQs(
           apiVsn = root.internals.conf.apiVsn,
           // Когда уже задан id-ресивера, не надо слать на сервер маячки и географию.
-          locEnv = v0.state.currRcvrId
+          locEnv = switchCtx.indexQsArgs.nodeId
             .fold(root.locEnv)(_ => MLocEnv.empty),
           screen = Some( root.dev.screen.info.screen ),
           searchGridAds = someTrue,
           // Сразу запросить поиск по узлам, если панель поиска открыта.
           searchNodes = if (isSearchNodes) someTrue else None
         ),
-        index = Some {
-          MScIndexArgs(
-            nodeId      = v0.state.currRcvrId,
-            withWelcome = withWelcome,
-            geoIntoRcvr = geoIntoRcvr,
-            retUserLoc  = retUserLoc
-          )
-        },
+        index = Some( switchCtx.indexQsArgs ),
         // Фокусироваться надо при запуске. Для этого следует получать всё из reason, а не из состояния.
         foc = for {
-          focAdId <- reason.focusedAdId
+          focAdId <- switchCtx.focusedAdId
         } yield {
           MScFocusArgs(
             focIndexAllowed = true,
@@ -286,7 +312,8 @@ class IndexAh[M](
             reqTimeStamp  = Some(ts),
             qs            = args,
             tryResp       = tryRes,
-            reason        = reason
+            reason        = reason,
+            switchCtxOpt  = Some(switchCtx)
           )
           Success(r2)
         }
@@ -430,13 +457,20 @@ class IndexAh[M](
             )
           )
 
+        val switchCtx = MScSwitchCtx(
+          indexQsArgs = MScIndexArgs(
+            withWelcome   = m.rcvrId.nonEmpty,
+            geoIntoRcvr   = m.rcvrId.nonEmpty,
+            retUserLoc    = false,
+            nodeId        = m.rcvrId,
+          )
+        )
+
         _getIndex(
-          withWelcome   = m.rcvrId.nonEmpty,
           silentUpdate  = false,
           v0            = v1,
-          geoIntoRcvr   = m.rcvrId.nonEmpty,
           reason        = m,
-          retUserLoc    = false
+          switchCtx     = switchCtx,
         )
       }
 
@@ -444,13 +478,41 @@ class IndexAh[M](
     // Команда запроса и получения индекса выдачи с сервера для текущего состояния.
     case m: GetIndex =>
       _getIndex(
-        withWelcome   = m.withWelcome,
         silentUpdate  = true,
         v0            = value,
-        geoIntoRcvr   = m.geoIntoRcvr,
         reason        = m,
-        retUserLoc    = m.retUserLoc
+        switchCtx     = m.switchCtx,
       )
+
+
+    // Юзер подтверждает переход в новую локацию.
+    case ApproveIndexSwitch =>
+      // Надо выпустить на свободу экшен внутри switch-состояния, обнулив switch-состояние.
+      val v0 = value
+      v0.state.switchAsk.fold(noChange) { switchS =>
+        val fx = switchS.okAction
+          // Надо сбросить switch-состояние, иначе диалог зациклится без видимых результатов.
+          .withSwitchCtxOpt( None )
+          .toEffectPure
+
+        // И убрать сам диалог с экрана:
+        val v2 = v0.withState(
+          v0.state.withSwitchAsk( None )
+        )
+
+        updated( v2, fx )
+      }
+
+
+    // Юзер не хочет уходить из текущего узла в новую определённую локацию.
+    case CancelIndexSwitch =>
+      val v0 = value
+      v0.state.switchAsk.fold(noChange) { _ =>
+        val v2 = v0.withState(
+          v0.state.withSwitchAsk( None )
+        )
+        updated( v2 )
+      }
 
   }
 

@@ -41,7 +41,7 @@ case class MScIndex(
                      welcome    : Option[MWelcomeState]   = None,
                      search     : MScSearch,
                      scCss      : ScCss,
-                     menu       : MMenuS                  = MMenuS.default
+                     menu       : MMenuS                  = MMenuS.default,
                    ) {
 
   /** Выбранные id узлов. */

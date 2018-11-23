@@ -492,9 +492,9 @@ class GridAh[M](
           fut.transform { tryRes =>
             val r = HandleScApiResp(
               reqTimeStamp  = Some(startTime),
-              qs        = args2,
+              qs            = args2,
               tryResp       = tryRes,
-              reason        = m
+              reason        = m,
             )
             Success(r)
           }
@@ -546,7 +546,7 @@ class GridAh[M](
                     reqTimeStamp  = None,
                     qs        = args1,
                     tryResp       = tryResp,
-                    reason        = m
+                    reason        = m,
                   )
                   Success(r)
                 }

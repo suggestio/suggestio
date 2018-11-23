@@ -25,11 +25,11 @@ import io.suggest.sc.c._
 import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.inx.{IndexAh, WelcomeAh}
 import io.suggest.sc.c.search._
-import io.suggest.sc.index.MSc3IndexResp
+import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.m._
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
-import io.suggest.sc.m.inx.MScIndex
+import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
 import io.suggest.sc.m.search.{MGeoTabS, MMapInitState, MScSearch, MSearchCssProps}
 import io.suggest.sc.sc3.{MScCommonQs, MScQs}
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
@@ -203,9 +203,15 @@ class Sc3Circuit(
     )
   }
 
+
+  /** Модель аргументов для поиска новых карточек в плитке. */
   private val gridAdsQsRO: ModelRO[MScQs] = zoom { mroot =>
     val inxState = mroot.index.state
+
+    // TODO Унести сборку этого qs в контроллер или в утиль? Тут используется currRcvrId:
+    // nodeId ресивера может быть задан в switchCtx, который известен только в контроллере, и отличаться от значения currRcvrId.
     val currRcvrId = inxState.currRcvrId.toEsUuIdOpt
+
     MScQs(
       common = MScCommonQs(
         apiVsn = mroot.internals.conf.apiVsn,
@@ -501,12 +507,24 @@ class Sc3Circuit(
       if (
         isToEnable || (!enable && isEnabled)
       ) {
+        lazy val sctx = MScSwitchCtx(
+          indexQsArgs = MScIndexArgs(
+            geoIntoRcvr = true,
+            retUserLoc  = false,
+          ),
+          demandLocTest = true,
+        )
         Future {
-          dispatch( GeoLocOnOff(enabled = enable, isHard = false) )
+          dispatch( GeoLocOnOff(
+            enabled = enable,
+            isHard = false,
+            scSwitch = OptionUtil.maybe(isToEnable)(sctx)
+          ) )
         }
         // При включении - запустить таймер геолокации, чтобы обновился index на новую геолокацию.
         if (isToEnable) Future {
-          dispatch( GeoLocTimerStart )
+          // Передавать контекст, в котором явно указано, что это фоновая проверка смены локации, и всё должно быть тихо.
+          dispatch( GeoLocTimerStart(sctx) )
         }
       }
     }

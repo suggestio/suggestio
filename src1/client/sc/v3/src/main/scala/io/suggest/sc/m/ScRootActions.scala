@@ -2,9 +2,11 @@ package io.suggest.sc.m
 
 import io.suggest.geo.{GeoLocType, MGeoLoc, PositionException}
 import io.suggest.routes.ScJsRoutes
+import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sc.sc3.{MSc3Resp, MScQs, MScRespActionType}
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.spa.DAction
+import japgolly.univeq.UnivEq
 
 import scala.util.Try
 
@@ -20,10 +22,8 @@ trait ISc3Action extends DAction
 
 /** Интерфейс для допустимых значений поля HandleScApiResp.tryResp. */
 trait IScApiRespReason extends ISc3Action
-/** Интерфейс для Index-resp reason. */
-trait IScIndexRespReason extends IScApiRespReason {
-  def focusedAdId: Option[String] = None
-}
+/** Интерфейс-маркер для Index-resp reason. */
+trait IScIndexRespReason extends IScApiRespReason
 
 
 /** Интерфейс корневых экшенов. */
@@ -53,6 +53,8 @@ case class GeoLocOnOff(
                         enabled     : Boolean,
                         isHard      : Boolean,
                         onlyTypes   : Traversable[GeoLocType] = Nil,
+                        // TODO Записывать это напрямую в состояние из circuit? Или эффектом отдельным? Или...?
+                        scSwitch    : Option[MScSwitchCtx]    = None,
                       )
   extends IScRootAction
 
@@ -81,7 +83,7 @@ case class GlError(override val glType: GeoLocType, error: PositionException) ex
 }
 
 /** Сигнал о наступлении геолокации (или ошибке оной) для ожидающего геолокацию. */
-case class GlPubSignal( origOpt: Option[IGeoLocSignal] ) extends IScRootAction
+case class GlPubSignal( origOpt: Option[IGeoLocSignal], scSwitch: Option[MScSwitchCtx] ) extends IScRootAction
 
 
 /** Сработал таймер подавления нежелательных координат. */
@@ -96,10 +98,12 @@ case class RouteTo( mainScreen: MainScreen ) extends IScRootAction
 /** Команда к обновлению ссылки в адресе согласно обновившемуся состоянию. */
 case object ResetUrlRoute extends IScRootAction
 
+
 /** Наступление таймаута получения гео-координат. */
-case object GeoLocTimerStart extends ISc3Action
+case class GeoLocTimerStart( switchCtx: MScSwitchCtx ) extends ISc3Action
+
 /** Наступление таймаута получения гео-координат. */
-case object GeoLocTimeOut extends ISc3Action
+case class GeoLocTimeOut( switchCtx: MScSwitchCtx ) extends ISc3Action
 
 
 /** Экшен для запуска обработки унифицированного ответа выдачи, который бывает сложным и много-гранным.
@@ -107,12 +111,14 @@ case object GeoLocTimeOut extends ISc3Action
   * @param tryResp Результат запроса к серверу.
   * @param qs Оригинальный реквест к api выдачи.
   * @param reason Оригинальный исходный экшен, с которого всё действо началось.
+  * @param switchCtxOpt Опциональный контекст глобального переключения выдачи.
   */
 case class HandleScApiResp(
                             reqTimeStamp   : Option[Long],
                             qs             : MScQs,
                             tryResp        : Try[MSc3Resp],
-                            reason         : IScApiRespReason
+                            reason         : IScApiRespReason,
+                            switchCtxOpt   : Option[MScSwitchCtx] = None,
                           )
   extends ISc3Action
 {
@@ -132,6 +138,12 @@ case class HandleScApiResp(
   def withTryRespTs(tryResp: Try[MSc3Resp], reqTimeStamp: Option[Long] = None) =
     copy(tryResp = tryResp, reqTimeStamp = reqTimeStamp)
 
+  def withSwitchCtxOpt(switchCtxOpt: Option[MScSwitchCtx]) =
+    copy(switchCtxOpt = switchCtxOpt)
+
+}
+object HandleScApiResp {
+  @inline implicit def univEq: UnivEq[HandleScApiResp] = UnivEq.force
 }
 
 
