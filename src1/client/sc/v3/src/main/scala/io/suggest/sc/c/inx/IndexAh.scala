@@ -8,7 +8,7 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.DiodeUtil.Implicits.ActionHandlerExt
 import io.suggest.sc.ScConstants
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
-import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid.GridLoadAds
 import io.suggest.sc.m.inx._
@@ -70,10 +70,12 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
     val v0 = ctx.value0
     val i0 = v0.index
     val inx = ra.index.get
+    val isDemandLocTest = ctx.m.switchCtxOpt.exists(_.demandLocTest)
 
     // Сравнивать полученный index с текущим состоянием. Может быть ничего сохранять не надо?
-    if (i0.resp contains inx) {
-      // Не изменился index. Не ясно, надо ли вообще что-нибудь делать.
+    if (
+      v0.index.resp.exists { MSc3IndexResp.isLookingSame(_, inx) }
+    ) {
       var i1 = i0
 
       // Убрать возможный pending из resp:
@@ -83,6 +85,9 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
             .ready( i1.resp.get )
         )
       }
+      // Убрать крутилку-preloader с гео-карты:
+      if (i1.search.geo.mapInit.loader.nonEmpty)
+        i1 = i1.withSearch( i1.search.resetMapLoader )
       if (i1.state.switchAsk.nonEmpty) {
         i1 = i1.withState(
           i1.state.withSwitchAsk( None )
@@ -91,15 +96,25 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
 
       val v2 = v0.withIndex( i1 )
 
+
+      // Сравнить гео-точку состояния с новой гео-точкой: TODO Opt Проверять перед вызовом GridLoadAds и не вызывать, если совпадает?
+      //val isSameGeoPoint = ctx.m.qs.common.locEnv.geoLocOpt.exists { gl =>
+      //  i0.state.inxGeoPoint.contains(gl.point)
+      //}
+
       // Запустить эффект обновления плитки, если плитка не пришла автоматом.
-      val gridLoadFxOpt = OptionUtil.maybe( !ctx.m.tryResp.toOption.exists(_.respActionTypes contains MScRespActionTypes.AdsTile) ) {
+      val gridLoadFxOpt = OptionUtil.maybe(
+        !ctx.m.tryResp
+          .toOption
+          .exists(_.respActionTypes contains MScRespActionTypes.AdsTile)
+      ) {
         GridLoadAds(clean = true, ignorePending = true)
           .toEffectPure
       }
 
       (v2, gridLoadFxOpt)
 
-    } else if (ctx.m.switchCtxOpt.exists(_.demandLocTest)) {
+    } else if (isDemandLocTest) {
       // Это тест переключения выдачи в новое местоположение, и узел явно изменился.
       // Вместо переключения узла, надо спросить юзера, можно ли переходить полученный узел:
       val switchAskState = MInxSwitchAskS(
@@ -107,12 +122,12 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
         nextIndex = inx
       )
 
-      val v2 = v0.withIndex(
+      val v2 = v0.withIndex {
         v0.index.withState(
           v0.index.state
             .withSwitchAsk( Some(switchAskState) )
         )
-      )
+      }
 
       (v2, None)
 
@@ -127,6 +142,12 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
         state = i0.state.copy(
           rcvrIds   = inx.nodeId.toList,
           switchAsk = None,
+          // Если nodeId не задан, то взять гео-точку из qs
+          inxGeoPoint = OptionUtil.maybeOpt( inx.nodeId.isEmpty ) {
+            // Не используем текущее значение карты, т.к. карта тоже могла измениться:
+            ctx.m.qs.common.locEnv.geoLocOpt
+              .map(_.point)
+          }
         ),
         search = {
           var s0 = i0.search
@@ -184,7 +205,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
 
       val respActionTypes = ctx.m.tryResp.get.respActionTypes
       // Если панель поиск видна, то запустить поиск узлов в фоне.
-      if (i1.search.panel.opened && !respActionTypes.contains(MScRespActionTypes.SearchNodes))
+      if (i1.search.panel.opened && !(respActionTypes contains MScRespActionTypes.SearchNodes))
         fxsAcc ::= SearchAh.reDoSearchFx( ignorePending = false )
 
       // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
@@ -279,22 +300,28 @@ class IndexAh[M](
     )
 
     val fx = Effect {
-      val someTrue = Some( true )
+      val withAdditional = !switchCtx.demandLocTest
       val args = MScQs(
         common = MScCommonQs(
           apiVsn = root.internals.conf.apiVsn,
           // Когда уже задан id-ресивера, не надо слать на сервер маячки и географию.
-          locEnv = switchCtx.indexQsArgs.nodeId
-            .fold(root.locEnv)(_ => MLocEnv.empty),
+          locEnv = {
+            // Слать на сервер координаты с карты или с gps, если идёт определение местоположения.
+            if (switchCtx.demandLocTest) root.locEnvUser
+            else if (switchCtx.indexQsArgs.nodeId.isEmpty) root.locEnvMap
+            else MLocEnv.empty
+          },
           screen = Some( root.dev.screen.info.screen ),
-          searchGridAds = someTrue,
+          // Не надо плитку присылать, если demandLocTest: вопрос на экране не требует плитки.
+          searchGridAds = OptionUtil.maybeTrue( withAdditional ),
           // Сразу запросить поиск по узлам, если панель поиска открыта.
-          searchNodes = if (isSearchNodes) someTrue else None
+          searchNodes = OptionUtil.maybeTrue( isSearchNodes && withAdditional ),
         ),
         index = Some( switchCtx.indexQsArgs ),
         // Фокусироваться надо при запуске. Для этого следует получать всё из reason, а не из состояния.
         foc = for {
           focAdId <- switchCtx.focusedAdId
+          if withAdditional
         } yield {
           MScFocusArgs(
             focIndexAllowed = true,
@@ -443,10 +470,6 @@ class IndexAh[M](
       } else {
         // Выставить новое состояние и запустить GetIndex.
         val v1 = v0
-          .withState(
-            v0.state
-              .withRcvrNodeId( m.rcvrId.toList )
-          )
           .withSearch(
             v0.search.withGeo(
               v0.search.geo.withMapInit(

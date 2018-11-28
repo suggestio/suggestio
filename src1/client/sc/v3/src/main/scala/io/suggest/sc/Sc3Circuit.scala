@@ -198,7 +198,7 @@ class Sc3Circuit(
 
   private def _getLocEnv(mroot: MScRoot, currRcvrId: Option[_] = None): MLocEnv = {
     MLocEnv(
-      geoLocOpt  = OptionUtil.maybeOpt(currRcvrId.isEmpty)( mroot.locEnvGeoLocOpt ),
+      geoLocOpt  = OptionUtil.maybeOpt(currRcvrId.isEmpty)( mroot.geoLocOpt ),
       bleBeacons = mroot.locEnvBleBeacons
     )
   }
@@ -501,9 +501,12 @@ class Sc3Circuit(
     // Управление активированностью фоновой геолокации:
     def __dispatchGeoLocOnOff(enable: Boolean): Unit = {
       // Не диспатчить экшен, когда в этом нет необходимости. Проверять текущее состояние геолокации, прежде чем диспатчить экшен.
-      val mgl = scGeoLocRW()
+      val mroot = rootRW()
+      val mgl = mroot.dev.geoLoc
       val isEnabled = mgl.switch.onOff.contains(true)
       val isToEnable = (enable && !isEnabled && !mgl.switch.hardLock)
+      // Надо запускать обновление выдачи, если включение геолокации и панель карты закрыта.
+      val isRunGeoLocInx = isToEnable && !mroot.index.search.panel.opened
       if (
         isToEnable || (!enable && isEnabled)
       ) {
@@ -515,14 +518,15 @@ class Sc3Circuit(
           demandLocTest = true,
         )
         Future {
-          dispatch( GeoLocOnOff(
-            enabled = enable,
-            isHard = false,
-            scSwitch = OptionUtil.maybe(isToEnable)(sctx)
-          ) )
+          val msg = GeoLocOnOff(
+            enabled  = enable,
+            isHard   = false,
+            scSwitch = OptionUtil.maybe(isRunGeoLocInx)(sctx)
+          )
+          dispatch( msg )
         }
         // При включении - запустить таймер геолокации, чтобы обновился index на новую геолокацию.
-        if (isToEnable) Future {
+        if (isRunGeoLocInx) Future {
           // Передавать контекст, в котором явно указано, что это фоновая проверка смены локации, и всё должно быть тихо.
           dispatch( GeoLocTimerStart(sctx) )
         }

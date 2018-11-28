@@ -320,5 +320,6 @@ object MsgCodes {
   val `Geolocation` = "Geolocation"
 
   val `Go.into` = "Go.into"
+  val `Location.changed` = "Location.changed"
 
 }

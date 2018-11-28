@@ -27,6 +27,7 @@ class IndexSwitchAskR(
   type Props_t = Option[MInxSwitchAskS]
   type Props = ModelProxy[Props_t]
 
+
   class Backend($: BackendScope[Props, Unit]) {
 
     /** Закрытие плашки без аппрува. */
@@ -60,7 +61,7 @@ class IndexSwitchAskR(
         MuiSnackBarContent {
           // Содержимое левой части сообщения:
           val _message: VdomNode = <.span(
-            "Switch into?",   // TODO Оформить/придумать текст
+            Messages( MsgCodes.`Location.changed` ),
 
             <.br,
             // Логотип узла:
@@ -82,10 +83,10 @@ class IndexSwitchAskR(
               // Кнопка подтверждения перехода в узел:
               val msgCode = MsgCodes.`Go.into`
               MuiButton.component.withKey( msgCode )(
-              new MuiButtonProps {
-                override val onClick = _onApproveJsCbF
-                override val size = MuiButtonSizes.small
-              }
+                new MuiButtonProps {
+                  override val onClick = _onApproveJsCbF
+                  override val size = MuiButtonSizes.small
+                }
               )(
                 Messages( msgCode ),
                 HtmlConstants.ELLIPSIS,

@@ -4,7 +4,7 @@ import io.suggest.color.MColors
 import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.geo.MGeoPoint.JsonFormatters.QS_OBJECT
 import io.suggest.media.IMediaInfo
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -31,6 +31,18 @@ object MSc3IndexResp {
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MSc3IndexResp] = UnivEq.derive
+
+  /** Индексы выглядят одинаково?
+    * Это чтобы фильтровать случаи, когда приходит дубликат индекса.
+    * Такое бывает на эфемерных узлах или всяких районах.
+    */
+  def isLookingSame(a: MSc3IndexResp, b: MSc3IndexResp): Boolean = {
+    (a.nodeId ==* b.nodeId) &&
+    (a.geoPoint ==* b.geoPoint) &&
+    (a.name ==* b.name) &&
+    (a.colors ==* b.colors) &&
+    (a.logoOpt ==* b.logoOpt)
+  }
 
 }
 

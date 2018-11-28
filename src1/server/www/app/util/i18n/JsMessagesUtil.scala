@@ -250,6 +250,7 @@ class JsMessagesUtil @Inject() (
       MC.`Search.start.typing` ::
       MC.`Geolocation` ::
       MC.`Go.into` ::
+      MC.`Location.changed` ::
       Nil
   }
 

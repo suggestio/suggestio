@@ -50,21 +50,32 @@ case class MScRoot(
   def withInternals( internals: MScInternals )      = copy(internals = internals)
   def withGrid( grid: MGridS )                      = copy(grid = grid)
 
-  def locEnvGeoLocOpt: Option[MGeoLoc] = {
+  def userLocOpt: Option[MGeoLoc] = {
+    index.search.geo.mapInit.userLoc
+  }
+  def geoLocOpt: Option[MGeoLoc] = {
     Some(
       MGeoLoc(
         point = index.search.geo.mapInit.state.center
       )
     )
   }
-  def locEnvBleBeacons = dev.beaconer.nearbyReport
-  def locEnv: MLocEnv = {
+
+  def locEnvBleBeacons = {
+    dev.beaconer.nearbyReport
+  }
+  def locEnvMap: MLocEnv = {
     MLocEnv(
-      geoLocOpt  = locEnvGeoLocOpt,
+      geoLocOpt  = geoLocOpt,
       bleBeacons = locEnvBleBeacons
     )
   }
-
+  def locEnvUser: MLocEnv = {
+    MLocEnv(
+      geoLocOpt  = userLocOpt,
+      bleBeacons = locEnvBleBeacons
+    )
+  }
 
   /** Перегонка в инстанс MSc3Init. */
   def toScInit: MSc3Init = {

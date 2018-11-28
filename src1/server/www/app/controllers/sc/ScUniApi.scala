@@ -105,10 +105,8 @@ trait ScUniApi
             ),
             common = qs.common.copy(
               locEnv = qs.common.locEnv.copy(
-                geoLocOpt = if (scIndexResp.nodeId.nonEmpty) {
-                  // Задан узел - координаты не нужны.
-                  None
-                } else {
+                // Когда задан узел - координаты не нужны.
+                geoLocOpt = OptionUtil.maybeOpt( scIndexResp.nodeId.isEmpty ) {
                   // Узел не задан. Попытаться достать координаты.
                   scIndexResp.geoPoint
                     .map( MGeoLoc(_) )

@@ -356,8 +356,11 @@ class TailAh[M](
       v0.internals.geoLockTimer.fold(noChange) { _ =>
         // Удалить из состояния таймер геолокации, запустить выдачу.
         val v2 = TailAh._removeTimer(v0)
-        val fxs = TailAh.getIndexFx( m.switchCtx )
-        updatedSilent(v2, fxs)
+        // Если demandLocTest, то и остановиться на этой ошибке:
+        val fxOpt = OptionUtil.maybe( !m.switchCtx.demandLocTest ) {
+          TailAh.getIndexFx( m.switchCtx )
+        }
+        ah.updatedSilentMaybeEffect(v2, fxOpt)
       }
 
 

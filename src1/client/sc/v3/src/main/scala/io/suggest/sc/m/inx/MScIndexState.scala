@@ -1,6 +1,7 @@
 package io.suggest.sc.m.inx
 
 import diode.FastEq
+import io.suggest.geo.MGeoPoint
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 
@@ -19,6 +20,7 @@ object MScIndexState {
     override def eqv(a: MScIndexState, b: MScIndexState): Boolean = {
       (a.generation ==* b.generation) &&
       (a.rcvrIds ===* b.rcvrIds) &&
+      (a.inxGeoPoint ===* b.inxGeoPoint) &&
       (a.switchAsk ===* b.switchAsk)
     }
   }
@@ -33,11 +35,14 @@ object MScIndexState {
   * @param generation Random seed выдачи.
   * @param rcvrIds id текущего отображаемого узла в начале списка.
   *                Затем "предыдущие" узлы, если есть.
+  * @param inxGeoPoint Гео-точка текущего загруженного индекса.
+  *                    Обычно совпадает с центром гео-карты, но не всегда.
   * @param switchAsk Состояния на-экранного вопроса на тему переключения в новый узел.
   */
 case class MScIndexState(
                           generation      : Long                      = System.currentTimeMillis(),
                           rcvrIds         : List[String]              = Nil,
+                          inxGeoPoint     : Option[MGeoPoint]         = None,
                           switchAsk       : Option[MInxSwitchAskS]    = None,
                         ) {
 
@@ -47,6 +52,7 @@ case class MScIndexState(
 
   def withGeneration(generation: Long)            = copy( generation = generation )
   def withRcvrNodeId( rcvrNodeId: List[String] )  = copy( rcvrIds = rcvrNodeId )
+  def withInxGeoPoint( inxGeoPoint: Option[MGeoPoint] ) = copy( inxGeoPoint = inxGeoPoint )
   def withSwitchAsk( switchAsk: Option[MInxSwitchAskS] ) = copy( switchAsk = switchAsk )
 
 }
