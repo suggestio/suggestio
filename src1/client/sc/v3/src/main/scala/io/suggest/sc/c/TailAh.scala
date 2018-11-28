@@ -325,16 +325,20 @@ class TailAh[M](
             val v1 = v0.withIndex(
               v0.index.withSearch(
                 v0.index.search.withGeo(
-                  v0.index.search.geo.withMapInit(
-                    v0.index.search.geo.mapInit
-                      // Переместить карту в текущую точку.
-                      .withState(
+                  v0.index.search.geo.withMapInit {
+                    var mi2 = v0.index.search.geo.mapInit
+                      // Текущая позиция юзера - всегда обновляется.
+                      .withUserLoc( Some(geoLoc) )
+                    // Нельзя менять местоположение на карте, если это просто фоновое тестирование индекса.
+                    if (!m.scSwitch.exists(_.demandLocTest)) {
+                      // Нормальное ожидаемое определение местоположения. Переместить карту в текущую точку.
+                      mi2 = mi2.withState(
                         v0.index.search.geo.mapInit.state
                           .withCenterInitReal( geoLoc.point )
                       )
-                      // Текущая позиция юзера - тут же.
-                      .withUserLoc( Some(geoLoc) )
-                  )
+                    }
+                    mi2
+                  }
                 )
               )
             )

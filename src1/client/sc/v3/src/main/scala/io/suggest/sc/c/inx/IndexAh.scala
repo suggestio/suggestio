@@ -180,7 +180,8 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
           } {
             s0 = s0.withGeo(
               s0.geo.withMapInit(
-                s0.geo.mapInit.withUserLoc( inx.userGeoLoc )
+                s0.geo.mapInit
+                  .withUserLoc( inx.userGeoLoc )
               )
             )
           }

@@ -503,8 +503,12 @@ class Sc3Circuit(
       // Не диспатчить экшен, когда в этом нет необходимости. Проверять текущее состояние геолокации, прежде чем диспатчить экшен.
       val mroot = rootRW()
       val mgl = mroot.dev.geoLoc
-      val isEnabled = mgl.switch.onOff.contains(true)
-      val isToEnable = (enable && !isEnabled && !mgl.switch.hardLock)
+      val isEnabled = mgl.switch.onOff contains true
+      // Надо попытаться всё-равно включить геолокацию в DEV-mode, т.к. браузеры не дают геолокацию без ssl в локалке.
+      val isToEnable = (
+        enable && !isEnabled &&
+        (scalajs.LinkingInfo.developmentMode || !mgl.switch.hardLock)
+      )
       // Надо запускать обновление выдачи, если включение геолокации и панель карты закрыта.
       val isRunGeoLocInx = isToEnable && !mroot.index.search.panel.opened
       if (
