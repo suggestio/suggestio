@@ -18,6 +18,7 @@ object DomEvents
   def CHANGE = "change"
 
   def MESSAGE = "message"
+  def FETCH = "fetch"
 
   def PROGRESS = "progress"
 

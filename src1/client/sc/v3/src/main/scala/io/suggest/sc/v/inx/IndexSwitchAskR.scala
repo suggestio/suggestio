@@ -1,15 +1,18 @@
 package io.suggest.sc.v.inx
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiIconButton, MuiIconButtonProps, MuiSnackBar, MuiSnackBarAnchorOrigin, MuiSnackBarContent, MuiSnackBarContentProps, MuiSnackBarProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiSnackBar, MuiSnackBarAnchorOrigin, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps}
 import diode.react.ModelProxy
-import io.suggest.common.html.HtmlConstants
+import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{ApproveIndexSwitch, CancelIndexSwitch, MInxSwitchAskS}
+import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v.hdr.LogoR
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -18,7 +21,8 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: wrap-React-компонент всплывающего вопроса о переключении выдачи в новую локацию.
   */
 class IndexSwitchAskR(
-                       val logoR: LogoR
+                       val logoR: LogoR,
+                       getScCssF: GetScCssF,
                      ) {
 
   import io.suggest.spa.OptFastEq.Wrapped
@@ -77,6 +81,11 @@ class IndexSwitchAskR(
             },
           )
 
+          val scCss = getScCssF()
+          val btnIconProps = new MuiSvgIconProps {
+            override val className = scCss.Notifies.smallBtnSvgIcon.htmlClass
+          }
+
           // Содержание правой части:
           val _action = VdomArray(
             {
@@ -85,33 +94,45 @@ class IndexSwitchAskR(
               MuiButton.component.withKey( msgCode )(
                 new MuiButtonProps {
                   override val onClick = _onApproveJsCbF
+                  override val variant = MuiButtonVariants.text
                   override val size = MuiButtonSizes.small
+                  override val color = MuiColorTypes.inherit
                 }
               )(
-                Messages( msgCode ),
-                HtmlConstants.ELLIPSIS,
+                Mui.SvgIcons.CheckCircle(btnIconProps)(),
+                Messages( msgCode )
               )
             },
-
+            <.br,
             {
               // Кнопка сокрытия уведомления:
-              val msgCode = MsgCodes.`Close`
+              val msgCode = MsgCodes.`Cancel`
               // Сделать ToolTip с банальной подсказкой? Надо?
-              MuiIconButton.component.withKey(msgCode)(
-                new MuiIconButtonProps {
+              MuiButton.component.withKey(msgCode)(
+                new MuiButtonProps {
                   override val onClick = _onCloseJsCbF
+                  override val variant = MuiButtonVariants.text
+                  override val size = MuiButtonSizes.small
+                  override val color = MuiColorTypes.inherit
                 }
               )(
-                Mui.SvgIcons.Close()()
+                Mui.SvgIcons.CancelOutlined(btnIconProps)(),
+                Messages( msgCode )
               )
             },
 
           )
 
+          val cssClasses = new MuiSnackBarContentClasses {
+            // Чтобы кнопки выравнивались вертикально, а не горизонтально
+            override val action = scCss.Notifies.snackActionCont.htmlClass
+          }
+
           // Объединяем всё:
           new MuiSnackBarContentProps {
             override val message = _message.rawNode
             override val action = _action.rawNode
+            override val classes = cssClasses
           }
         }
 

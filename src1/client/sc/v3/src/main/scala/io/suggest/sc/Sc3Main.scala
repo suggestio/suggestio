@@ -89,7 +89,6 @@ object Sc3Main {
       lkPreLoader.remove()
     }
 
-    // TODO Добавить обеление фона body.
   }
 
 }

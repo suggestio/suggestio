@@ -182,6 +182,22 @@ case class ScCss( args: IScCssArgs )
   }
 
 
+  object Notifies {
+
+    /** Стиль для SnackbackContentText.action, чтобы кнопки отображались вертикально. */
+    val snackActionCont = style(
+      display.block
+    )
+
+    /** Внутренняя иконка кнопки требует выравнивания вручную. */
+    val smallBtnSvgIcon = style(
+      paddingRight( 4.px ),
+      marginTop( -4.px )
+    )
+
+  }
+
+
   object Welcome {
 
     private val _SM_WELCOME_AD = _SM_ + "welcome-ad"
@@ -733,6 +749,7 @@ case class ScCss( args: IScCssArgs )
     */
   initInnerObjects(
     Root.root,
+    Notifies.snackActionCont,
     Body.BgLogo.ru,
     Welcome.Bg.bgImg,
     Welcome.Fg.fgImg,

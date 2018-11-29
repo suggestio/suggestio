@@ -251,6 +251,7 @@ class JsMessagesUtil @Inject() (
       MC.`Geolocation` ::
       MC.`Go.into` ::
       MC.`Location.changed` ::
+      MC.`Cancel` ::
       Nil
   }
 

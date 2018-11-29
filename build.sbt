@@ -445,6 +445,13 @@ lazy val sc3Sjs = {
     )
 }
 
+/** ServiceWorker для выдачи. */
+lazy val scSwSjs = {
+  Project(id = "sc-sw-sjs", base = file(DIR0 + "client/sc/sw"))
+    .enablePlugins( WebScalaJS )
+    .dependsOn( commonSjs )
+}
+
 /** Экспорт material-ui core+icons с поправками для новой версии. */
 lazy val reactMaterialUiSjs = {
   Project(id = "scalajs-react-components-materialui", base = file(DIR0 + "client/scalajs/react-components/materialui"))
@@ -543,8 +550,7 @@ lazy val www = project
     svgUtil, ipgeobase, stat
   )
   .settings(
-    // Это связка для
-    scalaJSProjects := Seq(lkSjs, sc3Sjs),
+    scalaJSProjects := Seq(lkSjs, sc3Sjs/*, scSwSjs*/),
     pipelineStages in Assets ++= Seq(scalaJSPipeline),
     // Скопипастить некоторые ассеты прямо из npm:
     // react DatePicker
@@ -592,7 +598,9 @@ lazy val sio2 = {
       commonSjs, commonReactSjs,
       reactMaterialUiSjs,
       leafletSjs, leafletReactSjs, leafletMarkerClusterSjs, leafletReactSjs, lkAdvGeoSjs,
-      lkSjs, sc3Sjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
+      lkSjs,
+      scCommonSjs, sc3Sjs, scSwSjs,
+      momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
       reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
       reactGridLayoutSjs, reactStoneCutterSjs, gridSjs, reactSidebar, reactScroll,

@@ -26,6 +26,7 @@ trait MuiSvgIconProps extends js.Object {
   val onMouseLeave: js.UndefOr[ReactMouseEventFromHtml => Unit] = js.undefined
   val style: js.UndefOr[CssProperties] = js.undefined
   val viewBox: js.UndefOr[String] = js.undefined
+  val className: js.UndefOr[String] = js.undefined
 }
 
 @js.native
@@ -103,8 +104,8 @@ object MuiSvgIcons {
   object ActionCardTravel extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/change-history", JSImport.Default)
   object ActionChangeHistory extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/action/check-circle", JSImport.Default)
-  object ActionCheckCircle extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/CheckCircle", JSImport.Default)
+  object CheckCircle extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/chrome-reader-mode", JSImport.Default)
   object ActionChromeReaderMode extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/action/class", JSImport.Default)
@@ -1724,6 +1725,8 @@ object MuiSvgIcons {
   object ArrowUpward extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Cancel", JSImport.Default)
   object Cancel extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/CancelOutlined", JSImport.Default)
+  object CancelOutlined extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/Check", JSImport.Default)
   object Check extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/ChevronLeft", JSImport.Default)
