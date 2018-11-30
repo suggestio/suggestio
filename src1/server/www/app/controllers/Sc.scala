@@ -64,6 +64,7 @@ class Sc @Inject() (
                      override val scTagsUtil         : ScSearchUtil,
                      override val geoIpUtil          : GeoIpUtil,
                      override val extServicesUtil    : ExtServicesUtil,
+                     assets                          : Assets,
                      override val mCommonDi          : ICommonDi
                    )
   extends SioControllerImpl
@@ -79,4 +80,9 @@ class Sc @Inject() (
   with ScRemoteError
   with ScPwaManifest
   with ScUniApi
+{
 
+  /** Экшен для доступа к ServiceWorker-скрипту выдачи. */
+  def swJs(path: String, asset: Assets.Asset) = assets.versioned(path, asset)
+
+}

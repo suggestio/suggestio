@@ -1,12 +1,13 @@
 # This file defines all application routes (Higher priority routes first)
 
-## Если path начинается с /~, то jsRevRouterTpl НЕ будет приписывать CSRF-токен к роуте.
 
+## Если path начинается с /~, то jsRevRouterTpl НЕ будет приписывать CSRF-токен к роуте.
 ## 2015.mar.04: Запрет доступа простых смертных к служебным ассетам, типа исходников и js-мапов. Внизу routes есть тоже самое для /assets/
-GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       @controllers.Static.vassetsSudo(path="/public", file: Asset)
+GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt(-bundle)?\.js).*>       @controllers.Static.vassetsSudo(path="/public", file: Asset)
 
 ## Map static resources from the /public folder to the /assets URL path
 GET  /vassets/*file                     @controllers.Assets.versioned(path="/public", file: Asset)
+
 
 ## Home page
 GET  /                                  @controllers.Sc.geoSite(a: msc.ScJsState ?= msc.ScJsState.veryEmpty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
@@ -27,6 +28,9 @@ GET  /sc/sc.webmanifest                 @controllers.Sc.webAppManifest(x: io.sug
 
 ## Дамп ошибок выдачи.
 POST /sc/error                          @controllers.Sc.handleScError
+
+## ServiceWorker выдачи из-за scope должен жить в корне, иначе не сможет обрабатывать / (sc-site).
+GET  /$file<([0-9a-h]{16,60}-)?sc-sw-sjs(-(fast)?opt)(-bundle)?\.js.*>          @controllers.Sc.swJs( path="/public", file: Asset )
 
 GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
 

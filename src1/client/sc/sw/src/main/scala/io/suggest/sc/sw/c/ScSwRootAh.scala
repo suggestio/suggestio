@@ -2,7 +2,7 @@ package io.suggest.sc.sw.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.sc.sw.m.{HandleFetch, HandleMessage, MScSwRoot}
-import io.suggest.spa.ServiceWorkerUtil.Implicits._
+import io.suggest.sw.ServiceWorkerUtil.Implicits._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.dom.experimental.{Fetch, Response}
 import org.scalajs.dom.experimental.serviceworkers.FetchEvent
@@ -38,6 +38,7 @@ class ScSwRootAh[M](
     case m: HandleFetch =>
       // Сюда приходят только запросы к API.
       // API-запросы - кэшируем, но отвечаем с приоритетом запроса.
+      //println( m.getClass.getSimpleName + " " + m.event.request.url )
       val jsRespFut = self.caches
         .`match`(m.event.request)
         .toFuture

@@ -234,6 +234,11 @@ object Common {
       */
     val SJS_REACT_COMPONENTS = "1.2.3-SNAPSHOT"
 
+    /** ServiceWorker toolbox.
+      * @see [[https://www.npmjs.com/package/sw-toolbox]]
+      */
+    val SW_TOOLBOX = "3.6.0"
+
   }
 
 

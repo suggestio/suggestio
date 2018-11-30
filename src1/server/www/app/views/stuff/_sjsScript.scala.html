@@ -16,30 +16,10 @@
   *@
 
 @import ctx.api.cdn
+@import io.suggest.sjs.SjsUtil
 
-@__fileName(suffix: String) = @{ s"$prefix-${if(ctx.api.isProd) "" else "fast"}opt$suffix.js" }
-
-@__jsScript(fileName: String) = {
-  <script type="text/javascript" src="@cdn.asset( fileName )"></script>
-}
 
 @* Нужно определить, что на руках: бандл или library? *@
-@defining( __fileName("-bundle") ) { bundleFileName =>
-  @if( getClass.getResource( s"/public/$bundleFileName" ) != null ) {
-    @* Рендер bundle-сборки. *@
-    @__jsScript( bundleFileName )
-
-  } else {
-    @* Рендер library-режима *@
-    @* LibraryOnly: дёргаем либу *@
-    @__jsScript( __fileName("-library") )
-
-    @* LibraryOnly: loader из двух строчек.
-       TODO Может его прямо сюда захардкодить? С CSP всё будет нормально? *@
-    @__jsScript( __fileName("-loader") )
-
-    @* LibraryOnly: само приложение, наконец *@
-    @__jsScript( __fileName("") )
-  }
-
+@for( fileName <- SjsUtil.jsScripts("/public", prefix, ctx.api.isProd) ) {
+  <script type="text/javascript" src="@cdn.asset( fileName )"></script>
 }

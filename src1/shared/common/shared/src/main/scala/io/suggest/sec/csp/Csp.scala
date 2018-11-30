@@ -189,6 +189,11 @@ object CspPolicy {
       __append("plugin-types", policy.pluginTypes)
 
 
+    // CSP L3
+    if (policy.workerSrc.nonEmpty)
+      __append("worker-src", policy.workerSrc)
+
+
     sb.toString()
   }
 
@@ -212,6 +217,7 @@ object CspPolicy {
   * @param formAction Defines valid sources that can be used as a HTML <form> action.
   * @param frameAncestors Defines valid sources for embedding the resource using <frame> <iframe> <object> <embed> <applet>. Setting this directive to 'none' should be roughly equivalent to X-Frame-Options: DENY
   * @param pluginTypes Defines valid MIME types for plugins invoked via <object> and <embed>. To load an <applet> you must specify application/x-java-applet.
+  * @param workerSrc Valid sources for Worker, SharedWorker, or ServiceWorker scripts.
   */
 case class CspPolicy(
                       // TODO Заменить Seq на Set? Это будет удобно для сложных случаев, но нарушает порядок.
@@ -231,7 +237,8 @@ case class CspPolicy(
                       childSrc          : Set[String]     = Set.empty,
                       formAction        : Set[String]     = Set.empty,
                       frameAncestors    : Set[String]     = Set.empty,
-                      pluginTypes       : Set[String]     = Set.empty
+                      pluginTypes       : Set[String]     = Set.empty,
+                      workerSrc         : Set[String]     = Set.empty,
                     )
   extends EmptyProduct
 {

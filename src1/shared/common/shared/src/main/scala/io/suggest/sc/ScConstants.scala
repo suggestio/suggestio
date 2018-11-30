@@ -178,6 +178,13 @@ object ScConstants {
 
   }
 
+  /** ServiceWorker выдачи. */
+  object Sw {
+
+    /** id инпута в siteTpl, который содержит в себе URL для scsw.js.  */
+    def URL_INPUT_ID = "scsw"
+
+  }
 
   /**
     * Константы имён полей, связанных с состоянием client-side выдачи.

@@ -37,14 +37,15 @@ object EventTargetVm {
 
   /** Проверка и её результат сохраняется тут. */
   val FACADE: IFacade = {
-    val e = SafeEventTargetStub( dom.document )
-    val ael = e.addEventListener
-    if (ael.isDefined) {
-      new StdFacade
-    } else if (e.attachEvent.isDefined) {
+    if (
+      // ServiceWorker не имеет ни window, ни window.document в scope.
+      !js.isUndefined(dom.window) &&
+      !js.isUndefined(dom.document) &&
+      SafeEventTargetStub( dom.document ).attachEvent.isDefined
+    ) {
       new IeFacade
     } else {
-      throw new UnsupportedOperationException("E01")
+      new StdFacade
     }
   }
 

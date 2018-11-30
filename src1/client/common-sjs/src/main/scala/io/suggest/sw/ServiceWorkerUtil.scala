@@ -1,6 +1,8 @@
-package io.suggest.spa
+package io.suggest.sw
 
 import org.scalajs.dom.experimental.serviceworkers.{ServiceWorker, ServiceWorkerMessageEvent}
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -21,5 +23,14 @@ object ServiceWorkerUtil {
     }
 
   }
+
+}
+
+
+
+/** Модель опций ServiceWorker'а. */
+trait SwOptions extends js.Object {
+
+  val scope: js.UndefOr[String] = js.undefined
 
 }

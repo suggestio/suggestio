@@ -81,9 +81,10 @@ class CspUtil @Inject() (
           },
           reportUri = Some( routes.Static.handleCspReport().url ),
           //frameSrc = VIDEO_SRCS,    // frameSrc is depreacted.
-          childSrc = IFRAMES_SRCS
+          childSrc = IFRAMES_SRCS,
           // TODO На всякий случай, флешеапплеты разрешить только с youtube/video (или вообще запретить?).
           //objectSrc = Set( Csp.Sources.NONE )
+          //workerSrc = commonSources,
         ),
         reportOnly = CSP_REPORT_ONLY
       )

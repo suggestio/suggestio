@@ -426,6 +426,11 @@ lazy val bleBeaconerSjs = {
     .dependsOn(commonSjs, cordovaSjs, cordovaBleSjs)
 }
 
+/** ServiceWorker toolbox. */
+lazy val swToolBoxSjs = {
+  val id = "sw-toolbox"
+  Project(id = id + "-sjs", base = file(DIR0 + "client/scalajs/" + id))
+}
 
 /** Утили для выдачи. Общий код выдач разных поколений. */
 lazy val scCommonSjs = {
@@ -449,7 +454,7 @@ lazy val sc3Sjs = {
 lazy val scSwSjs = {
   Project(id = "sc-sw-sjs", base = file(DIR0 + "client/sc/sw"))
     .enablePlugins( WebScalaJS )
-    .dependsOn( commonSjs )
+    .dependsOn( commonSjs, swToolBoxSjs )
 }
 
 /** Экспорт material-ui core+icons с поправками для новой версии. */
@@ -536,7 +541,6 @@ lazy val payWww = {
     .dependsOn(commonWww, mbill2)
 }
 
-
 /** веб-интерфейс suggest.io v2. */
 lazy val www = project
   .in( file(DIR0 + "server/www") )
@@ -550,7 +554,7 @@ lazy val www = project
     svgUtil, ipgeobase, stat
   )
   .settings(
-    scalaJSProjects := Seq(lkSjs, sc3Sjs/*, scSwSjs*/),
+    scalaJSProjects := Seq(lkSjs, sc3Sjs, scSwSjs),
     pipelineStages in Assets ++= Seq(scalaJSPipeline),
     // Скопипастить некоторые ассеты прямо из npm:
     // react DatePicker
@@ -599,7 +603,8 @@ lazy val sio2 = {
       reactMaterialUiSjs,
       leafletSjs, leafletReactSjs, leafletMarkerClusterSjs, leafletReactSjs, lkAdvGeoSjs,
       lkSjs,
-      scCommonSjs, sc3Sjs, scSwSjs,
+      scCommonSjs, sc3Sjs,
+      scSwSjs, swToolBoxSjs,
       momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
       reactImageGallerySjs, reactColorSjs, reactImageCropSjs,

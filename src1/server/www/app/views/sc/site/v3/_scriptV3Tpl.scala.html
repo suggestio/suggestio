@@ -5,23 +5,28 @@
 @import views.html.stuff._
 @import views.html.stuff.mapbox._
 @import ctx.api.cdn
-@import io.suggest.sc.ScConstants.JsRouter.DOM_ID
-@import io.suggest.sc.ScConstants.Layout
+@import io.suggest.sc.ScConstants
 @import lk.lkwdgts._formStateInputTpl
 @import stuff.geo.maps._
+@import io.suggest.sjs.SjsUtil
 
 @_formStateInputTpl( args.state0 )
 
-<div id="@Layout.ROOT_ID">
+<div id="@ScConstants.Layout.ROOT_ID">
 </div>
 
 @* id-атрибут у script-тега нарушает HTML-валидацию, но это плевать. *@
-<script id="@DOM_ID" type="text/javascript" async
+<script id="@ScConstants.JsRouter.DOM_ID" type="text/javascript" async
         src="@cdn.forCall( routes.Sc.scJsRouterCache(args.cacheHashCode) )">
 </script>
 
 @* Рендер jsMessages прямо тут. *@
 @jsTpl2HtmlTpl( withScriptTag = true )( args.jsMessagesJs )
+
+@* Скрытые адрес скрипта service-worker'а выдачи. Должен идти ПЕРЕД sc3-sjs.js *@
+<input type="hidden"
+       id="@ScConstants.Sw.URL_INPUT_ID"
+       value="@routes.Sc.swJs( SjsUtil.jsScripts("/public", "sc-sw-sjs", ctx.api.isProd).last )" />
 
 @_sjsScript("sc3-sjs")
 
