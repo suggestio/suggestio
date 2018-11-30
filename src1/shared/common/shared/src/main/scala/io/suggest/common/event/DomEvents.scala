@@ -19,6 +19,8 @@ object DomEvents
 
   def MESSAGE = "message"
   def FETCH = "fetch"
+  def INSTALL = "install"
+  def ACTIVATE = "activate"
 
   def PROGRESS = "progress"
 

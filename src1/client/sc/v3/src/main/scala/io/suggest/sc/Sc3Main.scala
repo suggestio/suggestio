@@ -57,7 +57,9 @@ object Sc3Main {
       for {
         // Найти на странице input ссылки скрипта воркера.
         inputEl <- Option( doc._underlying.getElementById(ScConstants.Sw.URL_INPUT_ID) )
-        if !js.isUndefined( dom.window.navigator.serviceWorker )
+        if !js.isUndefined( dom.window.navigator.serviceWorker ) &&
+          // Не переустанавливать уже установленный sw. TODO получать версию SW с сервера в хидерах ответов, и перерегистрировать.
+          dom.window.navigator.serviceWorker.controller == null
         swInp = StateInp( inputEl.asInstanceOf[HTMLInputElement] )
         swUrl <- swInp.value
       } {
