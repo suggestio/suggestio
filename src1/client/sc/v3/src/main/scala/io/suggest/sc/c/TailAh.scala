@@ -157,11 +157,7 @@ class TailAh[M](
       // Проверка id узла. Если отличается, то надо перезаписать.
       if (m.mainScreen.nodeId !=* currMainScreen.nodeId) {
         nodeIndexNeedsReload = true
-        /* Ранее, nodeId передавался в запрос прямо через состояние, что было некорректно:
-        inx = inx.withState {
-          inx.state.withRcvrNodeId( m.mainScreen.nodeId.toList )
-        }
-        */
+        needUpdateUi = true
       }
 
       // Проверка поля generation
@@ -185,7 +181,7 @@ class TailAh[M](
       // Смотрим координаты текущей точки.
       for {
         currGeoPoint <- m.mainScreen.locEnv
-        if !currMainScreen.locEnv.contains(currGeoPoint)
+        if !(currMainScreen.locEnv contains currGeoPoint)
       } {
         needUpdateUi = true
         inx = TailAh.withMapCenterInitReal(currGeoPoint, inx)
@@ -224,7 +220,7 @@ class TailAh[M](
       lazy val v2 = v0.withIndex( inx )
 
       // Принять решение о перезагрузке выдачи, если необходимо.
-      if ( fxsAcc.isEmpty && !needUpdateUi && !gridNeedsReload && inx ===* v0.index) {
+      if ( fxsAcc.isEmpty && !needUpdateUi && !gridNeedsReload && !nodeIndexNeedsReload && inx ===* v0.index) {
         // Роутер шлёт RouteTo на каждый чих, даже просто в ответ на выставление этой самой роуты.
         // TODO надо как-то отучить его от этой привычки.
         noChange

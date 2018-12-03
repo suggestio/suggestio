@@ -6,7 +6,7 @@ import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sc.index.MScIndexArgs
-import io.suggest.sc.m.inx.MScSwitchCtx
+import io.suggest.sc.m.inx.{GetIndex, MScSwitchCtx}
 
 import scala.concurrent.Promise
 import scala.util.Success
@@ -94,6 +94,7 @@ class JsRouterInitAh[M <: AnyRef](
             retUserLoc  = true,
           )
         )
+
         val (v2, timeoutFx) = TailAh.mkGeoLocTimer( switchCtx, v0 )
 
         // Склеить все эффекты и обновить состояние.
@@ -104,6 +105,18 @@ class JsRouterInitAh[M <: AnyRef](
 
       } else {
         // Уже известны какие-то данные для запуска выдачи. Значит, просто ждём js-роутер с сервера.
+        /*
+        val switchCtx = MScSwitchCtx(
+          indexQsArgs = MScIndexArgs(
+            withWelcome = true,
+            geoIntoRcvr = false,
+            retUserLoc  = true,
+            nodeId      = m.mainScreen.nodeId
+          )
+        )
+        val goOutFx = delayedRouteToFx >> GetIndex(switchCtx).toEffectPure
+        * */
+
         val allFxs = delayedRouteToFx + geoLocEnableFx
         effectOnly( allFxs )
       }

@@ -575,8 +575,9 @@ trait ScIndex
       val _nodeGeoPointOptFut  = nodeGeoPointOptFut
       val _isMyNodeFut         = isMyNodeFut
       // Возвращать геолокацию юзера только если затребовано в исходном запросе.
-      val _reqGeoLocOptFut = if (_scIndexArgs.retUserLoc) geoIpLocOptFut
-      else Future.successful(None)
+      val _reqGeoLocOptFut =
+        if (_scIndexArgs.retUserLoc) geoIpLocOptFut
+        else Future.successful(None)
 
       for {
         nodeIdOpt       <- _nodeIdOptFut
