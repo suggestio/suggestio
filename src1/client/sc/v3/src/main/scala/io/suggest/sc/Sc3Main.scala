@@ -6,7 +6,7 @@ import io.suggest.pwa.WebAppUtil
 import io.suggest.sc.log.ScRmeLogAppender
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.log.Logging
-import io.suggest.sjs.common.view.VUtil
+import io.suggest.sjs.common.view.{CommonPage, VUtil}
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.spa.LkPreLoader
@@ -57,7 +57,8 @@ object Sc3Main {
       for {
         // Найти на странице input ссылки скрипта воркера.
         inputEl <- Option( doc._underlying.getElementById(ScConstants.Sw.URL_INPUT_ID) )
-        if !js.isUndefined( dom.window.navigator.serviceWorker ) &&
+        if CommonPage.isSecure &&
+          !js.isUndefined( dom.window.navigator.serviceWorker ) &&
           // Не переустанавливать уже установленный sw. TODO получать версию SW с сервера в хидерах ответов, и перерегистрировать.
           dom.window.navigator.serviceWorker.controller == null
         swInp = StateInp( inputEl.asInstanceOf[HTMLInputElement] )

@@ -24,9 +24,11 @@
 @jsTpl2HtmlTpl( withScriptTag = true )( args.jsMessagesJs )
 
 @* Скрытые адрес скрипта service-worker'а выдачи. Должен идти ПЕРЕД sc3-sjs.js *@
-<input type="hidden"
-       id="@ScConstants.Sw.URL_INPUT_ID"
-       value="@routes.Sc.swJs( SjsUtil.jsScripts("/public", "sc-sw-sjs", ctx.api.isProd).last )" />
+@if( args.withServiceWorker ) {
+  <input type="hidden"
+         id="@ScConstants.Sw.URL_INPUT_ID"
+         value="@routes.Sc.swJs( SjsUtil.jsScripts("/public", "sc-sw-sjs", ctx.api.isProd).last )" />
+}
 
 @_sjsScript("sc3-sjs")
 

@@ -328,6 +328,9 @@ trait ScSite
 
       val _scriptCacheHashCodeFut = scriptCacheHashCodeFut
 
+      // Рендерить скрипт ServiceWorker'а только для домена suggest.io
+      val _withServiceWorkerFut = domainNodeOptFut.map(_.isEmpty)
+
       // Надо ссылку на список ресиверов отправить. Раньше через роутер приходила, но это без CDN как-то не очень.
       // TODO В будущем, можно будет кэширование организовать: хэш в ссылке + длительный кэш.
       // Собрать все результаты в итоговый скрипт.
@@ -336,6 +339,7 @@ trait ScSite
         aboutSioNodeId        <- _aboutSioNodeIdFut
         scriptCacheHashCode   <- _scriptCacheHashCodeFut
         rcvrsMapUrlArgs       <- _rcvrsMapUrlArgsFut
+        withServiceWorker     <- _withServiceWorkerFut
       } yield {
         // Сборка модели данных инициализации выдачи:
         val state0 = MSc3Init(
@@ -358,8 +362,9 @@ trait ScSite
           state0 = Json
             .toJson(state0)(_msc3InitFormat)
             .toString(),
-          jsMessagesJs = jsMessagesJs,
-          cacheHashCode = scriptCacheHashCode
+          jsMessagesJs        = jsMessagesJs,
+          cacheHashCode       = scriptCacheHashCode,
+          withServiceWorker   = withServiceWorker
         )
         _scriptV3Tpl(scriptRenderArgs)(ctx)
       }

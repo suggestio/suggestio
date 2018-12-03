@@ -127,14 +127,11 @@ class CdnUtil @Inject() (
       new ExternalCall( ctx.relUrlPrefix + c.url )
     } else {
       val reqHost = ctx.request.host
-      val urlPrefixOpt = OptionUtil.maybeOpt(DISABLED_ON_HOSTS contains reqHost) {
+      val urlPrefixOpt = OptionUtil.maybeOpt(!(DISABLED_ON_HOSTS contains reqHost)) {
         val protoLc = ctx.request.myProto
         for {
           cdnHost <- chooseHostForProto(protoLc)
-          if {
-            !(DISABLED_ON_HOSTS contains reqHost) &&
-            !(cdnHost equalsIgnoreCase reqHost)
-          }
+          if !(cdnHost equalsIgnoreCase reqHost)
         } yield {
           // Не указываем протокол. Это хорошо, когда CDN работает по HTTP, а раздаёт по HTTPS.
           HttpConst.Proto.CURR_PROTO + cdnHost

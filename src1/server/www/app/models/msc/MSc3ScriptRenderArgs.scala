@@ -9,7 +9,8 @@ import play.twirl.api.JavaScript
   * Description: Модель параметров рендера скрипта для React-sc (третье поколение).
   */
 case class MSc3ScriptRenderArgs(
-                                 state0         : String,
-                                 jsMessagesJs   : JavaScript,
-                                 cacheHashCode  : Int
+                                 state0             : String,
+                                 jsMessagesJs       : JavaScript,
+                                 cacheHashCode      : Int,
+                                 withServiceWorker  : Boolean,
                                )
