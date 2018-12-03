@@ -105,18 +105,6 @@ class JsRouterInitAh[M <: AnyRef](
 
       } else {
         // Уже известны какие-то данные для запуска выдачи. Значит, просто ждём js-роутер с сервера.
-        /*
-        val switchCtx = MScSwitchCtx(
-          indexQsArgs = MScIndexArgs(
-            withWelcome = true,
-            geoIntoRcvr = false,
-            retUserLoc  = true,
-            nodeId      = m.mainScreen.nodeId
-          )
-        )
-        val goOutFx = delayedRouteToFx >> GetIndex(switchCtx).toEffectPure
-        * */
-
         val allFxs = delayedRouteToFx + geoLocEnableFx
         effectOnly( allFxs )
       }

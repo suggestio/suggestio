@@ -169,7 +169,7 @@ class Sc3SpaRouter(
                 parsed
               }
               iter
-                .toStream
+                .buffered
                 .headOption
             } catch {
               case ex: Throwable =>

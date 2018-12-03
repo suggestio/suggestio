@@ -217,21 +217,15 @@ class TailAh[M](
       }
 
       // Обновлённое состояние, которое может быть и не обновлялось:
-      lazy val v2 = v0.withIndex( inx )
+      lazy val v2 = if (inx ===* v0.index) v0
+                    else v0.withIndex( inx )
 
       // Принять решение о перезагрузке выдачи, если необходимо.
-      if ( fxsAcc.isEmpty && !needUpdateUi && !gridNeedsReload && !nodeIndexNeedsReload && inx ===* v0.index) {
-        // Роутер шлёт RouteTo на каждый чих, даже просто в ответ на выставление этой самой роуты.
-        // TODO надо как-то отучить его от этой привычки.
-        noChange
-
-      } else if (v0.internals.geoLockTimer.nonEmpty) {
+      if (v0.internals.geoLockTimer.nonEmpty) {
         // Блокирование загрузки.
         val fxOpt = fxsAcc.mergeEffects
         ah.updatedSilentMaybeEffect(v2, fxOpt)
 
-        // TODO Если новое состояние условно "пустое" (без rcvrId или координат), то запустить геолокацию, можно даже без таймера (поддерживается?), а просто запустить.
-        // TODO Иначе - остановить геолокацию, если она запущена сейчас -- т.к. состояние "непустое".
       } else if (nodeIndexNeedsReload) {
         // Целиковая перезагрузка выдачи.
         val switchCtx = MScSwitchCtx(
@@ -258,10 +252,15 @@ class TailAh[M](
         val fxOpt = fxsAcc.mergeEffects
         ah.updatedMaybeEffect( v2, fxOpt )
 
-      } else {
+      } else if (fxsAcc.nonEmpty) {
         // Ничего не изменилось или только эффекты.
         val fxOpt = fxsAcc.mergeEffects
         ah.maybeEffectOnly( fxOpt )
+
+      } else {
+        // Роутер шлёт RouteTo на каждый чих, даже просто в ответ на выставление этой самой роуты.
+        // TODO надо как-то отучить роутер от этой привычки.
+        noChange
       }
 
 
