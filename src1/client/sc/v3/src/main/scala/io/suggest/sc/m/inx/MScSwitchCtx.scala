@@ -1,5 +1,6 @@
 package io.suggest.sc.m.inx
 
+import io.suggest.geo.MGeoLoc
 import io.suggest.sc.index.MScIndexArgs
 import japgolly.univeq.UnivEq
 
@@ -23,10 +24,12 @@ object MScSwitchCtx {
   * @param focusedAdId Фокусироваться на id карточки.
   * @param demandLocTest Это процесс проверки смены локации после ре-активации существующей выдачи?
   * @param indexQsArgs Аргументы для запроса индекса.
+  * @param forceGeoLoc Форсировать указанную геолокацию для запроса индекса.
   */
 case class MScSwitchCtx(
                          indexQsArgs      : MScIndexArgs,
                          focusedAdId      : Option[String]    = None,
                          demandLocTest    : Boolean           = false,
+                         forceGeoLoc      : Option[MGeoLoc]   = None,
                        )
 

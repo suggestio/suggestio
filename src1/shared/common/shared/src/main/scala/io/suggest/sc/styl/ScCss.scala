@@ -320,7 +320,15 @@ case class ScCss( args: IScCssArgs )
           left.auto,
           right( 5.px )
         )
+
       }
+
+      /** Кнопка "назад" относительно кнопки меню. */
+      val backBtn = style(
+        left( 40.px ),
+        top( (args.screenInfo.unsafeOffsets.top + 1).px ),
+        position.absolute,
+      )
 
       //val leftGeoBtn = _styleAddClasses( _btnMx, HEADER + "_geo-button", Align.LEFT )
 

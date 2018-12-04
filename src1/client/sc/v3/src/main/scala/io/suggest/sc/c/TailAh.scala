@@ -38,7 +38,7 @@ object TailAh {
   def getMainScreenSnapShot(v0: MScRoot): MainScreen = {
     val inxState = v0.index.state
     val searchOpened = v0.index.search.panel.opened
-    val currRcvrId = inxState.currRcvrId
+    val currRcvrId = inxState.rcvrId
 
     // TODO Поддержка нескольких тегов в URL.
     val selTagIdOpt = v0.index.search.geo.data.selTagIds.headOption

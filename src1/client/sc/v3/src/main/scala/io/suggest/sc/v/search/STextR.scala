@@ -76,6 +76,7 @@ class STextR( getScCssF: GetScCssF ) {
       val formCtlCss = new MuiFormControlClasses {
         override val root = TextBarCSS.inputFormControl.htmlClass
       }
+
       <.div(
         TextBarCSS.bar,
 

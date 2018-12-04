@@ -4,6 +4,7 @@ import java.time.OffsetDateTime
 
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
+import scalaz.NonEmptyList
 
 import scala.util.Try
 
@@ -61,5 +62,8 @@ object UnivEqUtil {
   @inline implicit def offsetDateTimeUe   : UnivEq[OffsetDateTime]  = UnivEq.force
 
   @inline implicit def tryUe[T: UnivEq]   : UnivEq[Try[T]]          = UnivEq.force
+
+  // scalaz
+  @inline implicit def nelUe[T: UnivEq]   : UnivEq[NonEmptyList[T]] = UnivEq.force
 
 }

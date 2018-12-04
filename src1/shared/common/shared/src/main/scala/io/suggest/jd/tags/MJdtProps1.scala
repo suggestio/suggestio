@@ -53,7 +53,7 @@ object MJdtProps1 extends IEmpty {
   */
 case class MJdtProps1(
                        bgColor    : Option[MColorData]        = None,
-                       bgImg      : Option[MJdEdgeId]   = None,
+                       bgImg      : Option[MJdEdgeId]         = None,
                        bm         : Option[BlockMeta]         = None,
                        topLeft    : Option[MCoords2di]        = None,
                        isMain     : Option[Boolean]           = None,
@@ -64,7 +64,7 @@ case class MJdtProps1(
 {
 
   def withBgColor(bgColor: Option[MColorData])        = copy(bgColor = bgColor)
-  def withBgImg(bgImg: Option[MJdEdgeId])       = copy(bgImg = bgImg)
+  def withBgImg(bgImg: Option[MJdEdgeId])             = copy(bgImg = bgImg)
   def withBm(bm: Option[BlockMeta])                   = copy(bm = bm)
   def withTopLeft(topLeft: Option[MCoords2di])        = copy(topLeft = topLeft)
   def withIsMain(isMain: Option[Boolean])             = copy(isMain = isMain)

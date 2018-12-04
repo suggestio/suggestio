@@ -50,6 +50,7 @@ class Sc3Module {
   lazy val rightR = wire[RightR]
   lazy val searchBtnR = wire[SearchBtnR]
   lazy val hdrProgressR = wire[HdrProgressR]
+  lazy val goBackR = wire[GoBackR]
 
 
   // index

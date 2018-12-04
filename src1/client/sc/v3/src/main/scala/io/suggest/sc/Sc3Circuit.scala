@@ -210,7 +210,7 @@ class Sc3Circuit(
 
     // TODO Унести сборку этого qs в контроллер или в утиль? Тут используется currRcvrId:
     // nodeId ресивера может быть задан в switchCtx, который известен только в контроллере, и отличаться от значения currRcvrId.
-    val currRcvrId = inxState.currRcvrId.toEsUuIdOpt
+    val currRcvrId = inxState.rcvrId.toEsUuIdOpt
 
     MScQs(
       common = MScCommonQs(
@@ -257,7 +257,7 @@ class Sc3Circuit(
       ),
       search = MAdsSearchReq(
         textQuery = mroot.index.search.text.searchQuery.toOption,
-        rcvrId    = mroot.index.state.currRcvrId.toEsUuIdOpt
+        rcvrId    = mroot.index.state.rcvrId.toEsUuIdOpt
       )
     )
   }

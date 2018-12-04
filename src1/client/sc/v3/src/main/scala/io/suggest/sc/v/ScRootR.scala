@@ -51,6 +51,7 @@ class ScRootR (
                 val hdrProgressR        : HdrProgressR,
                 val geoLocR             : GeoLocR,
                 val indexSwitchAskR     : IndexSwitchAskR,
+                val goBackR             : GoBackR,
                 getScCssF               : GetScCssF,
               ) {
 
@@ -92,6 +93,7 @@ class ScRootR (
                                     hdrProgressC              : ReactConnectProxy[hdrProgressR.Props_t],
                                     menuGeoLocC               : ReactConnectProxy[geoLocR.Props_t],
                                     indexSwitchAskC           : ReactConnectProxy[indexSwitchAskR.Props_t],
+                                    goBackC                   : ReactConnectProxy[goBackR.Props_t],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -113,14 +115,17 @@ class ScRootR (
         val hdrMenuBtn    = s.hdrOnGridBtnColorOptC { menuBtnR.apply }
         val hdrSearchBtn  = s.hdrOnGridBtnColorOptC { searchBtnR.apply }
         val hdrProgress   = s.hdrProgressC { hdrProgressR.apply }
+        val hdrGoBack     = s.goBackC { goBackR.apply }
 
         // Компонент заголовка выдачи:
         s.hdrPropsC { hdrProxy =>
           headerR(hdrProxy)(
+
             hdrLogo,
 
             // -- Кнопки заголовка в зависимости от состояния выдачи --
             // Кнопки при нахождении в обычной выдаче без посторонних вещей:
+            hdrGoBack,
             hdrMenuBtn,
             hdrSearchBtn,
             hdrProgress,
@@ -402,7 +407,7 @@ class ScRootR (
               isLoggedIn      = props.internals.conf.isLoggedIn,
               // TODO А если текущий узел внутри карточки, то что тогда? Надо как-то по adn-типу фильтровать.
               isMyAdnNodeId   = props.index.state
-                .currRcvrId
+                .rcvrId
                 .filter { _ =>
                   props.index.resp.exists(_.isMyNode)
                 },
@@ -489,7 +494,7 @@ class ScRootR (
         }( OptFastEq.Wrapped(LogoPropsValFastEq) ),
 
         hdrOnGridBtnColorOptC = propsProxy.connect { mroot =>
-          OptionUtil.maybeOpt( !mroot.index.search.panel.opened && !mroot.index.menu.opened ) {
+          OptionUtil.maybeOpt( !mroot.index.isAnyPanelOpened ) {
             mroot.index.resp
               .toOption
               .flatMap( _.colors.fg )
@@ -511,6 +516,12 @@ class ScRootR (
         indexSwitchAskC = propsProxy.connect { mroot =>
           mroot.index.state.switchAsk
         }( OptFastEq.Wrapped( MInxSwitchAskS.MInxSwitchAskSFastEq ) ) ,
+
+        goBackC = propsProxy.connect { mroot =>
+          OptionUtil.maybeOpt( !mroot.index.isAnyPanelOpened ) {
+            mroot.index.state.prevNodeOpt
+          }
+        }( OptFastEq.Plain )
 
       )
     }

@@ -252,6 +252,8 @@ class JsMessagesUtil @Inject() (
       MC.`Go.into` ::
       MC.`Location.changed` ::
       MC.`Cancel` ::
+      MC.`Go.back` ::
+      MC.`Go.back.to.0` ::
       Nil
   }
 

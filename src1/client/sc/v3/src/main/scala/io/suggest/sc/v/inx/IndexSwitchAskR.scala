@@ -87,7 +87,7 @@ class IndexSwitchAskR(
           }
 
           // Содержание правой части:
-          val _action = VdomArray(
+          val _action = <.span(
             {
               // Кнопка подтверждения перехода в узел:
               val msgCode = MsgCodes.`Go.into`
@@ -120,7 +120,6 @@ class IndexSwitchAskR(
                 Messages( msgCode )
               )
             },
-
           )
 
           val cssClasses = new MuiSnackBarContentClasses {

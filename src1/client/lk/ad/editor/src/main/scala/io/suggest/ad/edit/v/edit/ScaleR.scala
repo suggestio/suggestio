@@ -55,7 +55,7 @@ class ScaleR(
     /** Реакция на смену масштаба. */
     private def onScaleChange(e: ReactEventFromInput): Callback = {
       val newValue = e.target.value
-      $.props >>= { propsOptProxy =>
+      $.props >>= { propsOptProxy: Props =>
         // Распарсить значение масштаба в процентах:
         val szMultPct = newValue.toInt
         // Найти выбранный вариант в props и отправить сигнал с ним наверх.

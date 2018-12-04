@@ -3,16 +3,16 @@ package io.suggest.sc.c.inx
 import diode._
 import diode.data.Pot
 import io.suggest.common.empty.OptionUtil
-import io.suggest.geo.MLocEnv
+import io.suggest.geo.{MGeoLoc, MLocEnv}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.DiodeUtil.Implicits.ActionHandlerExt
 import io.suggest.sc.ScConstants
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.m._
-import io.suggest.sc.m.grid.GridLoadAds
+import io.suggest.sc.m.grid.{GridBlockClick, GridLoadAds}
 import io.suggest.sc.m.inx._
-import io.suggest.sc.m.search.MapReIndex
+import io.suggest.sc.m.search.{MapReIndex, SearchTextChanged}
 import io.suggest.sc.sc3._
 import io.suggest.sc.styl.MScCssArgs
 import io.suggest.sc.u.api.IScUniApi
@@ -25,6 +25,7 @@ import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.search.SearchAh
 import io.suggest.sc.v.search.SearchCss
 import japgolly.univeq._
+import scalaz.NonEmptyList
 
 import scala.util.Success
 
@@ -137,16 +138,28 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
       // Сайд-эффекты закидываются в этот аккамулятор:
       var fxsAcc = List.empty[Effect]
 
+      val nextIndexView = MIndexView(
+        rcvrId    = inx.nodeId,
+        // Если nodeId не задан, то взять гео-точку из qs
+        inxGeoPoint = OptionUtil.maybeOpt( inx.nodeId.isEmpty ) {
+          // Не используем текущее значение карты, т.к. карта тоже могла измениться:
+          ctx.m.qs.common.locEnv.geoLocOpt
+            .map(_.point)
+        },
+        name = inx.name
+      )
+
       var i1 = i0.copy(
         resp = i0.resp.ready(inx),
         state = i0.state.copy(
-          rcvrIds   = inx.nodeId.toList,
           switchAsk = None,
-          // Если nodeId не задан, то взять гео-точку из qs
-          inxGeoPoint = OptionUtil.maybeOpt( inx.nodeId.isEmpty ) {
-            // Не используем текущее значение карты, т.к. карта тоже могла измениться:
-            ctx.m.qs.common.locEnv.geoLocOpt
-              .map(_.point)
+          // Если фокусировка, то разрешить шаг наверх:
+          views = if ( ctx.m.reason.isInstanceOf[GridBlockClick] ) {
+            //println("append: " + nextIndexView + " :: " + i0.state.views)
+            nextIndexView <:: i0.state.views
+          } else {
+            //println("replace: " + nextIndexView + " " + ctx.m.reason)
+            NonEmptyList( nextIndexView )
           }
         ),
         search = {
@@ -199,6 +212,10 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
           // Сбросить флаг mapInit.loader, если он выставлен.
           if (s0.geo.mapInit.loader.nonEmpty)
             s0 = s0.resetMapLoader
+
+          // Сбросить текст поиска, чтобы теги отобразились на экране.
+          if (s0.text.query.nonEmpty)
+            fxsAcc ::= SearchTextChanged("").toEffectPure
 
           s0
         }
@@ -309,6 +326,7 @@ class IndexAh[M](
           locEnv = {
             // Слать на сервер координаты с карты или с gps, если идёт определение местоположения.
             if (switchCtx.demandLocTest) root.locEnvUser
+            else if (switchCtx.forceGeoLoc.nonEmpty) MLocEnv(switchCtx.forceGeoLoc, root.locEnvBleBeacons)
             else if (switchCtx.indexQsArgs.nodeId.isEmpty) root.locEnvMap
             else MLocEnv.empty
           },
@@ -437,6 +455,31 @@ class IndexAh[M](
       }
 
 
+    // Клик по кнопке перехода на другой узел.
+    case m @ GoToPrevIndexView =>
+      val v0 = value
+      v0.state.prevNodeOpt.fold(noChange) { prevNodeView =>
+        // Контекст переключения.
+        val switchCtx = MScSwitchCtx(
+          indexQsArgs = MScIndexArgs(
+            nodeId      = prevNodeView.rcvrId,
+            withWelcome = prevNodeView.rcvrId.nonEmpty,
+          ),
+          forceGeoLoc = for (mgp <- prevNodeView.inxGeoPoint) yield {
+            MGeoLoc(point = mgp)
+          }
+        )
+
+        // Запустить загрузку индекса - надо гео-точку подхватить.
+        _getIndex(
+          silentUpdate  = false,
+          v0            = v0,
+          reason        = m,
+          switchCtx     = switchCtx
+        )
+      }
+
+
     // Кто-то затребовал перерендерить css-стили выдачи. Скорее всего, размеры экрана изменились.
     case ScCssReBuild =>
       val v0 = value
@@ -463,7 +506,7 @@ class IndexAh[M](
     case m: MapReIndex =>
       val v0 = value
       if (
-        (m.rcvrId.nonEmpty && m.rcvrId ==* v0.state.currRcvrId) ||
+        (m.rcvrId.nonEmpty && m.rcvrId ==* v0.state.rcvrId) ||
         (m.rcvrId.isEmpty && v0.search.geo.mapInit.state.isCenterRealNearInit)
       ) {
         // Ничего как бы и не изменилось.

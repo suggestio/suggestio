@@ -46,7 +46,7 @@ case class MScIndex(
 
   /** Выбранные id узлов. */
   lazy val searchNodesSelectedIds: Set[String] = {
-    search.geo.data.selTagIds ++ state.currRcvrId
+    search.geo.data.selTagIds ++ state.rcvrId
   }
 
   /** Текущие выбранные узлы. Кэш для O(N)-операции. */
@@ -67,5 +67,9 @@ case class MScIndex(
   def withSearch(search: MScSearch)               = copy(search = search)
   def withScCss(scCss: ScCss)                     = copy(scCss = scCss)
   def withMenu(menu: MMenuS)                      = copy(menu = menu)
+
+  def isAnyPanelOpened: Boolean = {
+    search.panel.opened || menu.opened
+  }
 
 }

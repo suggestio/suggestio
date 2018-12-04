@@ -43,3 +43,7 @@ case object CancelIndexSwitch extends IIndexAction
 
 /** Подтверждение переключения индекса в новую локацию. */
 case object ApproveIndexSwitch extends IIndexAction
+
+
+/** Команда перехода на предыдущий узел. */
+case object GoToPrevIndexView extends IIndexAction with IScIndexRespReason

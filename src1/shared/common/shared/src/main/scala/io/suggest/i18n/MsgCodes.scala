@@ -321,5 +321,7 @@ object MsgCodes {
 
   val `Go.into` = "Go.into"
   val `Location.changed` = "Location.changed"
+  val `Go.back` = "Go.back"
+  val `Go.back.to.0` = "Go.back.to.0"
 
 }
