@@ -1,12 +1,12 @@
 package io.suggest.sc
 
-import cordova.CordovaConstants
 import io.suggest.common.html.HtmlConstants
+import io.suggest.proto.HttpConst
 import io.suggest.pwa.WebAppUtil
 import io.suggest.sc.log.ScRmeLogAppender
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.log.Logging
-import io.suggest.sjs.common.view.{CommonPage, VUtil}
+import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.spa.LkPreLoader
@@ -18,7 +18,7 @@ import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLInputElement
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -38,49 +38,62 @@ object Sc3Main {
 
     // Сразу поискать js-роутер на странице.
     val jsRouterFut = SrvRouter.ensureJsRouter()
+    val doc  = DocumentVm()
+    val docLoc = doc._underlying.location
 
     // 2018-02-27: После установки веб-приложения, есть проблема, что запуск приложения идёт по уже установленным
     // координатам из исходного URL. На новых девайсах это решабельно через webmanifest.start_url, а на яббле нужен доп.костыль:
     if (
       WebAppUtil.isStandalone() &&
-      Option(dom.document.location.hash)
+      Option(docLoc.hash)
         .exists(_.nonEmpty)
     ) {
-      dom.document.location.hash = ""
+      docLoc.hash = ""
     }
-
-    val doc  = DocumentVm()
-    val body = doc.body
 
     // Запустить фоновую установку ServiceWorker'а:
     try {
       for {
         // Найти на странице input ссылки скрипта воркера.
         inputEl <- Option( doc._underlying.getElementById(ScConstants.Sw.URL_INPUT_ID) )
-        if CommonPage.isSecure &&
-          !js.isUndefined( dom.window.navigator.serviceWorker ) &&
-          // Не переустанавливать уже установленный sw. TODO получать версию SW с сервера в хидерах ответов, и перерегистрировать.
-          dom.window.navigator.serviceWorker.controller == null
+        sw = dom.window.navigator.serviceWorker
+        if !js.isUndefined( sw )
+        // Не переустанавливать уже установленный sw. TODO получать версию SW с сервера в хидерах ответов, и перерегистрировать.
         swInp = StateInp( inputEl.asInstanceOf[HTMLInputElement] )
-        swUrl <- swInp.value
+        swUrl2 <- swInp.value
+        // Проверить URL service-worker'а, надо ли устанавливать/обновлять sw.js.
+        if Try {
+          val swCtl = sw.controller
+          swCtl == null || {
+            val swUrl0 = swCtl.scriptURL
+            //println("swUrl0 = " + swUrl0 + "\nswUrl2 = " + swUrl2)
+            (swUrl0 == null) ||
+            !(swUrl0 endsWith swUrl2) ||
+            // Для http-протокола разрешить установку всегда, т.к. это локалхост в dev-режиме выдачи. В prod-режиме может быть только https
+            (docLoc.protocol equalsIgnoreCase HttpConst.Proto.HTTP_)
+          }
+        }.getOrElse(true)
       } {
+        //println("installing sw")
         val swOpts = new SwOptions {
           override val scope = HtmlConstants.`.`
         }
-        dom.window.navigator.serviceWorker
-          .register( swUrl, swOpts )
-          .toFuture
-          .onComplete { tryRes =>
-            tryRes.fold(
-              ex => println(" !sw " + ex),
-              swr => println("SW "  + swr)
-            )
-          }
+        // Установка service-worker:
+        for {
+          ex <- sw
+            .register( swUrl2, swOpts )
+            .toFuture
+            .failed
+        } {
+          println("!sw " + ex)
+        }
       }
     } catch {
       case ex: Throwable =>
         println("!!SW " + ex)
     }
+
+    val body = doc.body
 
     // Самый корневой рендер -- отрабатывается первым.
     val rootDiv = {
