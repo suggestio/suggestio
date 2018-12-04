@@ -48,6 +48,7 @@ class IndexSwitchAskR(
     def render(propsOptProxy: Props): VdomElement = {
       // Чтобы диалог выплывал снизу, надо чтобы контейнер компонента был заранее (всегда) отрендеренным в DOM.
       val propsOpt = propsOptProxy.value
+      val scCss = getScCssF().Notifies
 
       MuiSnackBar {
         val _anchorOrigin = new MuiSnackBarAnchorOrigin {
@@ -64,7 +65,8 @@ class IndexSwitchAskR(
         // Содержимое плашки - приглашение на смену узла.
         MuiSnackBarContent {
           // Содержимое левой части сообщения:
-          val _message: VdomNode = <.span(
+          val _message: VdomNode = <.div(
+            ^.`class` := scCss.content.htmlClass,
             Messages( MsgCodes.`Location.changed` ),
 
             <.br,
@@ -81,9 +83,8 @@ class IndexSwitchAskR(
             },
           )
 
-          val scCss = getScCssF()
           val btnIconProps = new MuiSvgIconProps {
-            override val className = scCss.Notifies.smallBtnSvgIcon.htmlClass
+            override val className = scCss.smallBtnSvgIcon.htmlClass
           }
 
           // Содержание правой части:
@@ -103,7 +104,9 @@ class IndexSwitchAskR(
                 Messages( msgCode )
               )
             },
+
             <.br,
+
             {
               // Кнопка сокрытия уведомления:
               val msgCode = MsgCodes.`Cancel`
@@ -124,7 +127,7 @@ class IndexSwitchAskR(
 
           val cssClasses = new MuiSnackBarContentClasses {
             // Чтобы кнопки выравнивались вертикально, а не горизонтально
-            override val action = scCss.Notifies.snackActionCont.htmlClass
+            override val action = scCss.snackActionCont.htmlClass
           }
 
           // Объединяем всё:

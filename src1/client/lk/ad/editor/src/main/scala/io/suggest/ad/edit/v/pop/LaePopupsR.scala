@@ -57,7 +57,7 @@ class LaePopupsR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("LaePops")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .initialStateFromProps { rootProxy =>
       State(
         popupsContPropsC = rootProxy.connect { mroot =>

@@ -64,7 +64,7 @@ class AddR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("Add")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build

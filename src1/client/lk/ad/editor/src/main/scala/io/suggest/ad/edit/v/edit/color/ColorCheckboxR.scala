@@ -109,7 +109,7 @@ class ColorCheckboxR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("BgColor")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .initialStateFromProps { propsOptProxy =>
       val colorBtnCssOpt = Option( lkAdEditCss.BgColorOptPicker.colorRound.htmlClass )
       State(

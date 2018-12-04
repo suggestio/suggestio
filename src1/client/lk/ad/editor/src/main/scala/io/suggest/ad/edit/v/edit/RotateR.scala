@@ -116,7 +116,7 @@ class RotateR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("Rotate")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build

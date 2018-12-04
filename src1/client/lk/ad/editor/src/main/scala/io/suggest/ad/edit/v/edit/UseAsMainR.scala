@@ -123,7 +123,7 @@ class UseAsMainR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("UseAsMain")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build

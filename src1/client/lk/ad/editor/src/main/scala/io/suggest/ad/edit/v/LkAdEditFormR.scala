@@ -295,7 +295,7 @@ class LkAdEditFormR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("AdEd")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .initialStateFromProps { p =>
 
       // Фунция с дедублицированным кодом сборки коннекшена до пропертисов plus-minus control'ов (для стрипов).

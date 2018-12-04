@@ -195,6 +195,11 @@ case class ScCss( args: IScCssArgs )
       marginTop( -4.px )
     )
 
+    /** Стиль для контейнера наполнения. */
+    val content = style(
+      marginTop(10.px)
+    )
+
   }
 
 
