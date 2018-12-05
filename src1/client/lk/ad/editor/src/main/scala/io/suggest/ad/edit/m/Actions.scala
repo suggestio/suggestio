@@ -1,6 +1,7 @@
 package io.suggest.ad.edit.m
 
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
+import io.suggest.color.IColorPickerMarker
 import io.suggest.common.MHand
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.MSzMult
@@ -49,10 +50,6 @@ sealed trait IAddAction extends ILkEditAction
 case object AddContentClick extends IAddAction
 /** Клик по кнопке добавления стрипа. */
 case object AddStripClick extends IAddAction
-
-
-/** Изменилось состояние галочки напротив color picker'а для выставления bgColor тега. */
-case class ColorCheckboxChange(isEnabled: Boolean) extends ILkEditAction
 
 
 /** Сообщение о завершении фоновой конвертации из base64 data-URL в натуральный блоб. */

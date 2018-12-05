@@ -2,7 +2,6 @@ package io.suggest.ad.edit.m.edit
 
 import com.quilljs.delta.Delta
 import diode.FastEq
-import io.suggest.ad.edit.m.edit.color.{IBgColorPickerS, MColorPickerS}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.QuillUnivEqUtil._
 import japgolly.univeq.UnivEq
@@ -19,8 +18,7 @@ object MQdEditS {
   implicit object MQdEditSFastEq extends FastEq[MQdEditS] {
     override def eqv(a: MQdEditS, b: MQdEditS): Boolean = {
       (a.initDelta ===* b.initDelta) &&
-        (a.realDelta ===* b.realDelta) &&
-        (a.bgColorPick ===* b.bgColorPick)
+      (a.realDelta ===* b.realDelta)
     }
   }
 
@@ -37,22 +35,16 @@ object MQdEditS {
   *                  Используется как fallback, чтобы в момент незапланированного пере-рендера
   *                  quill-редактора, всё-таки был доступ к корректной дельте.
   *                  None означает, что текущая актуальная дельта лежит в initDelta.
-  * @param bgColorPick Цвет фона, если необходим.
   */
 case class MQdEditS(
                      initDelta                  : Delta,
                      realDelta                  : Option[Delta]     = None,
-                     override val bgColorPick   : MColorPickerS     = MColorPickerS.empty
                    )
-  extends IBgColorPickerS
 {
-
-  override type T = MQdEditS
 
   def withInitRealDelta(initDelta: Delta, realDelta: Option[Delta] = None) = copy(initDelta = initDelta, realDelta = realDelta)
   def withInitDelta(initDelta: Delta)                     = copy(initDelta = initDelta)
   def withRealDelta(realDelta: Option[Delta])             = copy(realDelta = realDelta)
-  override def withBgColorPick(bgColor: MColorPickerS)    = copy(bgColorPick = bgColor)
 
 
   /** Залить realDelta в init, чтобы принудительно освежить состояние.

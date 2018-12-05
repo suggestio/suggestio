@@ -8,7 +8,8 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.lk.m.ColorChanged
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil
+import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -29,14 +30,14 @@ class ColorPickerR {
                        color          : MColorData,
                        colorPresets   : List[MColorData]    = Nil,
                        cssClass       : Option[String]      = None,
-                       topLeftPx      : Option[MCoords2di]  = None
+                       topLeftPx      : Option[MCoords2di]  = None,
                      )
   implicit object ColorPickerPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.color ===* b.color) &&
-        (a.colorPresets ===* b.colorPresets) &&
-        (a.cssClass ===* b.cssClass) &&
-        (a.topLeftPx ===* b.topLeftPx)
+      (a.colorPresets ===* b.colorPresets) &&
+      (a.cssClass ===* b.cssClass) &&
+      OptFastEq.Plain.eqv(a.topLeftPx, b.topLeftPx)
     }
   }
 
@@ -56,7 +57,7 @@ class ColorPickerR {
       val mcd = MColorData(
         code = MColorData.stripDiez(color.hex)
       )
-      dispatchOnProxyScopeCB($, ColorChanged(mcd, isCompleted = isComplete))
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, ColorChanged(mcd, isCompleted = isComplete))
     }
 
 

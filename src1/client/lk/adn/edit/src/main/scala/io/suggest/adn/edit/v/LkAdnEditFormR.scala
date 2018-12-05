@@ -3,9 +3,10 @@ package io.suggest.adn.edit.v
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.adn.edit.m._
-import io.suggest.color.{MColorData, MColorType, MColorTypes}
+import io.suggest.color.{IColorPickerMarker, MColorData, MColorType, MColorTypes}
 import io.suggest.css.Css
 import japgolly.scalajs.react._
+import japgolly.univeq._
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import io.suggest.css.ScalaCssDefaults._
@@ -235,7 +236,7 @@ class LkAdnEditFormR(
   val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .initialStateFromProps { propsProxy =>
       // Сборка коннекшена до цвета:
-      def __getColorBtnC(colorType: MColorType): ReactConnectProxy[colorBtnR.Props_t] = {
+      def __getColorBtnC(colorType: MColorType with IColorPickerMarker): ReactConnectProxy[colorBtnR.Props_t] = {
         val colorTypeSome = Some(colorType)
         lazy val mcdDflt = MColorData( colorType.scDefaultHex )
         propsProxy.connect { props =>
@@ -244,7 +245,7 @@ class LkAdnEditFormR(
             .getOrElse( mcdDflt )
           val propsVal = colorBtnR.PropsVal(
             color     = mcd,
-            colorType = colorTypeSome
+            marker    = colorTypeSome
           )
           Some( propsVal ): colorBtnR.Props_t
         }( OptFastEq.Wrapped )
@@ -316,15 +317,22 @@ class LkAdnEditFormR(
         fgColorC = __getColorBtnC( MColorTypes.Fg ),
         colorPickerC = propsProxy.connect { props =>
           for {
-            cps <- props.node.colorPicker
+            cps <- props.internals.colorState.picker
+            marker0 <- cps.marker
+            marker = marker0.asInstanceOf[MColorType]
             mcd = props.node.meta.colors
-              .ofType( cps.ofColorType )
-              .getOrElse( MColorData(cps.ofColorType.scDefaultHex) )
+              .ofType( marker )
+              .getOrElse( MColorData(marker.scDefaultHex) )
           } yield {
             colorPickerR.PropsVal(
               color         = mcd,
-              colorPresets  = props.node.colorPresets,
-              topLeftPx     = Some( cps.topLeftPx ),
+              colorPresets  = props.internals.colorState.colorPresets,
+              topLeftPx     = Some(
+                cps.shownAt.copy(
+                  x = cps.shownAt.x - (if (marker ==* MColorTypes.Fg) 220 else 0),
+                  y = cps.shownAt.y - 260
+                )
+              ),
               cssClass      = Some( lkAdEditCss.colorPicker.htmlClass )
             )
           }

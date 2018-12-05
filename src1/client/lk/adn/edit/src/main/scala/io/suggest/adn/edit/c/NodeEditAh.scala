@@ -2,9 +2,7 @@ package io.suggest.adn.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.adn.edit.m._
-import io.suggest.color.MColorTypes
-import io.suggest.common.empty.OptionUtil
-import io.suggest.lk.m.{ColorBtnClick, ColorChanged, DocBodyClick, PurgeUnusedEdges}
+import io.suggest.lk.m.PurgeUnusedEdges
 import io.suggest.model.n2.node.meta.{MAddress, MBusinessInfo, MMetaPub}
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.sjs.common.log.Log
@@ -28,75 +26,6 @@ class NodeEditAh[M](
   }
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
-
-    // Изменение цвета.
-    case m: ColorChanged =>
-      val v0 = value
-      v0.colorPicker.fold {
-        noChange
-      } { cp0 =>
-        // Узнать, как цвет сейчас изменён:
-        val v2 = v0.withMeta(
-          v0.meta.withColors(
-            v0.meta.colors
-              .withColorOfType(cp0.ofColorType, Some(m.mcd))
-          )
-        )
-        updated(v2)
-      }
-
-
-    // Нажатие кнопки выбора цвета.
-    case m: ColorBtnClick =>
-      val v0 = value
-      val colorType = m.colorTypeOpt.get
-
-      def cp2F = MAdnEditColorPickerS(
-        ofColorType = colorType,
-        topLeftPx   = m.vpXy.copy(
-          x = m.vpXy.x - (if (colorType ==* MColorTypes.Fg) 220 else 0),
-          y = m.vpXy.y - 260
-        )
-      )
-
-      val v2 = v0.colorPicker.fold {
-        // Сейчас color picker скрыт. Открыть его:
-        v0.withColorPicker( Some(cp2F) )
-      } { cp0 =>
-        // Какой-то color picker уже открыт. Или закрыть текущий, или открыть другой.
-        val cp2Opt = OptionUtil.maybe( cp0.ofColorType !=* colorType )( cp2F )
-        val v1 = v0.withColorPicker( cp2Opt )
-        // Залить цвет в picker
-        v0.meta.colors
-          .ofType(colorType)
-          .fold(v1) { addColor =>
-            v1.withColorPresets {
-              val l = v0.colorPresetsLen
-              val cps1 = if (l > 10) {
-                // Надо укоротить список цветов
-                ( v0.colorPresets.view(0, 7) ::
-                  v0.colorPresets.view(l - 2, l) ::
-                  Nil
-                )
-                  .flatten
-              } else {
-                v0.colorPresets
-              }
-              (addColor :: cps1).distinct
-            }
-          }
-      }
-      updated(v2)
-
-
-    // Клик где-то в документе, чтобы скрыть автоматические попапы. Скрыть color-picker'ы.
-    case DocBodyClick =>
-      val v0 = value
-      v0.colorPicker.fold(noChange) { _ =>
-        val v2 = v0.withColorPicker( None )
-        updated(v2)
-      }
-
 
     // Выставление новое названия узла:
     case m: SetName =>

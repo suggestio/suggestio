@@ -1,11 +1,11 @@
-package io.suggest.ad.edit.c
+package io.suggest.lk.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.ad.edit.m.edit.color.MColorPick
-import io.suggest.ad.edit.m.ColorCheckboxChange
-import io.suggest.color.MColorData
+import io.suggest.color.{IColorPickerMarker, MColorData}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.lk.m.{ColorBtnClick, ColorChanged, DocBodyClick}
+import io.suggest.lk.m.color.{MColorPick, MColorPickerS}
+import io.suggest.lk.m.{ColorBtnClick, ColorChanged, ColorCheckboxChange, DocBodyClick}
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -14,25 +14,34 @@ import io.suggest.lk.m.{ColorBtnClick, ColorChanged, DocBodyClick}
   * Description: Action handler для опциональных color-picker'ов.
   * Здесь используется собственная модель вместо MDocS чтобы астрагироваться от множества
   * однотипных colorPick'ов ровно одним контроллером с помощью разных zoomRW-комбинаций.
+  * @param myMarker маркер, который ожидается в сообщениях.
   */
 class ColorPickAh[M](
+                      myMarker    : Option[IColorPickerMarker],
                       // TODO Надо как-то избавится от Option, он только мешает.
-                      modelRW: ModelRW[M, Option[MColorPick]]
+                      modelRW     : ModelRW[M, Option[MColorPick]]
                     )
   extends ActionHandler( modelRW )
 {
 
+  private def isMyMarker(marker: Option[IColorPickerMarker]): Boolean =
+    marker ==* myMarker
+
+  private def isMyPickerOpened(): Boolean =
+    value.exists(_.colorsState.picker.exists(_.marker ==* myMarker))
+
+
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал об изменении цвета.
-    case m: ColorChanged =>
+    case m: ColorChanged if isMyPickerOpened()  =>
       val v0 = value.get
       var v2 = v0.withColorOpt(
         colorOpt = Some( m.mcd )
       )
 
       // Запилить в состояние презетов выбранный цвет.
-      if (m.isCompleted && !v2.colorsState.colorPresets.contains(m.mcd)) {
+      if (m.isCompleted && !(v2.colorsState.colorPresets contains m.mcd)) {
         v2 = v2.withColorsState(
           v2.colorsState
             .prependPresets( m.mcd )
@@ -43,13 +52,12 @@ class ColorPickAh[M](
 
 
     // Клик где-то за пределами picker'а, когда тот открыт. Значит надо скрыть текущий picker.
-    case DocBodyClick if value.exists(_.pickS.isShown) =>
+    case DocBodyClick if isMyPickerOpened() =>
       val v0 = value.get
 
       // Убрать с экрана picker
-      var v2 = v0.withPickS(
-        v0.pickS
-          .withShownAt( None )
+      var v2 = v0.withColorsState(
+        v0.colorsState.withPicker( None )
       )
 
       // Сохранить текущий цвет.
@@ -67,13 +75,13 @@ class ColorPickAh[M](
 
     // Color picker
     // Переключение между прозрачным цветом и заливкой.
-    case m: ColorCheckboxChange =>
+    case m: ColorCheckboxChange if isMyMarker(m.marker) =>
       val v0 = value.get
 
       if (m.isEnabled && v0.colorOpt.isEmpty) {
         // Включен выбор цвета вместо прозрачного. Пошукать "старый" цвет, который был до выключения. Или какой-нибудь дефолтовый.
-        val mcd2 = v0.pickS
-          .oldColor
+        val mcd2 = v0.colorsState.picker
+          .flatMap(_.oldColor)
           .orElse {
             // "Старого" цвета нет, но возможно есть среди других цветов что-нибудь
             v0.colorsState
@@ -82,7 +90,7 @@ class ColorPickAh[M](
           }
           .getOrElse {
             // Вообще нет никаких цветов, ужас какой-то.
-            MColorData("000000")
+            MColorData.Examples.BLACK
           }
         val v2 = v0.withColorOpt( Some(mcd2) )
         updated( Some(v2) )
@@ -93,10 +101,11 @@ class ColorPickAh[M](
         // Выключился цвет. Переместить текущий цвет в colorPicker-состояние, picker скрыть, основной цвет в None
         val v2 = v0.copy(
           colorOpt    = None,
-          pickS       = v0.pickS.withOldColor( v0.colorOpt ),
           // И запихивать старый цвет в список цветов вместо oldColor?
-          colorsState = v0.colorsState.withColorPresets(
-            (color0 :: v0.colorsState.colorPresets).distinct
+          colorsState = v0.colorsState.copy(
+            colorPresets = (color0 :: v0.colorsState.colorPresets).distinct,
+            picker = for (p <- v0.colorsState.picker)
+              yield p.withOldColor( v0.colorOpt )
           )
         )
         updated( Some(v2) )
@@ -107,14 +116,18 @@ class ColorPickAh[M](
 
 
     // Сигнал клика по селектору цвета.
-    case m: ColorBtnClick =>
+    case m: ColorBtnClick if isMyMarker(m.marker) =>
       val v0 = value.get
-      val shownAt2 = OptionUtil.maybe( !v0.pickS.isShown ) {
-        m.vpXy
+      val pickerOpt2 = OptionUtil.maybe( v0.colorsState.picker.isEmpty ) {
+        MColorPickerS(
+          shownAt  = m.vpXy,
+          marker   = m.marker,
+          oldColor = v0.colorsState.picker.flatMap(_.oldColor)
+        )
       }
-      val v2 = v0.withPickS(
-        v0.pickS
-          .withShownAt( shownAt2 )
+      val v2 = v0.withColorsState(
+        v0.colorsState
+          .withPicker( pickerOpt2 )
       )
       updated( Some(v2) )
 

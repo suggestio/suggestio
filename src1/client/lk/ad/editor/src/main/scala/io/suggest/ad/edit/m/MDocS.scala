@@ -1,11 +1,11 @@
 package io.suggest.ad.edit.m
 
 import diode.FastEq
-import io.suggest.ad.edit.m.edit.color.MColorsState
 import io.suggest.ad.edit.m.edit.MQdEditS
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.layout.MSlideBlocks
 import io.suggest.jd.render.m.MJdArgs
+import io.suggest.lk.m.color.MColorsState
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 
@@ -21,10 +21,10 @@ object MDocS {
   implicit object MDocSFastEq extends FastEq[MDocS] {
     override def eqv(a: MDocS, b: MDocS): Boolean = {
       (a.jdArgs ===* b.jdArgs) &&
-        (a.qdEdit ===* b.qdEdit) &&
-        (a.stripEd ===* b.stripEd) &&
-        (a.colorsState ===* b.colorsState) &&
-        (a.slideBlocks ===* b.slideBlocks)
+      (a.qdEdit ===* b.qdEdit) &&
+      (a.stripEd ===* b.stripEd) &&
+      (a.colorsState ===* b.colorsState) &&
+      (a.slideBlocks ===* b.slideBlocks)
     }
   }
 

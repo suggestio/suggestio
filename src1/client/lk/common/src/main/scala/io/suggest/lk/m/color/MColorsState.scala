@@ -1,4 +1,4 @@
-package io.suggest.ad.edit.m.edit.color
+package io.suggest.lk.m.color
 
 import diode.FastEq
 import io.suggest.color.{MColorData, MHistogram}
@@ -18,7 +18,8 @@ object MColorsState {
   implicit object MColorsDataSFastEq extends FastEq[MColorsState] {
     override def eqv(a: MColorsState, b: MColorsState): Boolean = {
       (a.colorPresets ===* b.colorPresets) &&
-        (a.histograms ===* b.histograms)
+      (a.histograms ===* b.histograms) &&
+      (a.picker ===* b.picker)
     }
   }
 
@@ -42,16 +43,20 @@ object MColorsState {
   *
   * @param colorPresets Избранные цвета.
   * @param histograms nodeId картинки -> MHistogram
+  * @param picker Состояние текущего открытого color-picker'а.
+  *               None - color picker отсутствует.
   */
 case class MColorsState(
-                         // TODO Надо бы карту презетов для разных картинок.
                          colorPresets    : List[MColorData]           = Nil,
-                         histograms      : Map[String, MHistogram]    = Map.empty
+                         histograms      : Map[String, MHistogram]    = Map.empty,
+                         picker          : Option[MColorPickerS]      = None,
                        ) {
 
   def withColorPresets(colorPresets: List[MColorData])        = copy(colorPresets = colorPresets)
   def withHistograms(histograms: Map[String, MHistogram])     = copy(histograms = histograms)
+  def withPicker(picker: Option[MColorPickerS])               = copy(picker = picker)
 
+  lazy val colorPresetsLen = colorPresets.length
 
   def prependPresets(mcd: MColorData) = withColorPresets( MColorsState.prependPresets(colorPresets, mcd) )
 

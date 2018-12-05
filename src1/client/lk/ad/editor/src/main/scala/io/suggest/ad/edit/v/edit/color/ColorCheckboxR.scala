@@ -2,15 +2,15 @@ package io.suggest.ad.edit.v.edit.color
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
-import io.suggest.ad.edit.m.ColorCheckboxChange
 import io.suggest.ad.edit.v.LkAdEditCss
-import io.suggest.color.MColorData
+import io.suggest.color.{IColorPickerMarker, MColorData}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
+import io.suggest.lk.m.ColorCheckboxChange
 import io.suggest.lk.r.color.ColorBtnR
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
@@ -38,12 +38,14 @@ class ColorCheckboxR(
     */
   case class PropsVal(
                        color          : Option[MColorData],
-                       label          : String
+                       label          : String,
+                       marker         : Option[IColorPickerMarker],
                      )
   implicit object ColorCheckboxPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.color ===* b.color) &&
-        (a.label ===* b.label)
+      (a.label ===* b.label) &&
+      (a.marker ===* b.marker)
     }
   }
 
@@ -60,10 +62,15 @@ class ColorCheckboxR(
     /** Реакция на клики по галочке заливки цветом. */
     private def _onCheckBoxChanged(e: ReactEventFromInput): Callback = {
       val isChecked = e.target.checked
-      dispatchOnProxyScopeCB($, ColorCheckboxChange(isChecked))
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
+        ColorCheckboxChange(isChecked, marker = props.value.flatMap(_.marker))
+      }
     }
 
     def render(propsOptProxy: Props, s: State): VdomElement = {
+      // Кнопка активации color-picker'а:
+      val innerBtnC = s.colorBtnPropsC { colorBtnR.apply }
+
       propsOptProxy.value.whenDefinedEl { props =>
         val C = lkAdEditCss.BgColorOptPicker
 
@@ -98,7 +105,7 @@ class ColorCheckboxR(
               HtmlConstants.NBSP_STR,
 
               // Кнопка активации color-picker'а:
-              s.colorBtnPropsC { colorBtnR.apply }
+              innerBtnC,
 
             )
           }
@@ -119,8 +126,9 @@ class ColorCheckboxR(
             color <- props.color
           } yield {
             colorBtnR.PropsVal(
-              color = color,
-              cssClass = colorBtnCssOpt
+              color     = color,
+              cssClass  = colorBtnCssOpt,
+              marker    = props.marker,
             )
           }
         }( OptFastEq.Wrapped )

@@ -16,12 +16,12 @@ import play.api.libs.json.Format
 object MColorTypes extends StringEnum[MColorType] {
 
   /** Цвет фона. */
-  case object Bg extends MColorType("b") {
+  case object Bg extends MColorType("b") with IColorPickerMarker {
     override def scDefaultHex = ScConstants.Defaults.BG_COLOR
   }
 
   /** Цвет контента. */
-  case object Fg extends MColorType("f") {
+  case object Fg extends MColorType("f") with IColorPickerMarker {
     override def scDefaultHex = ScConstants.Defaults.FG_COLOR
   }
 
@@ -59,3 +59,11 @@ object MColorType {
   }
 
 }
+
+
+/** Интерфейс для маркирования текущего color-picker'а в формах, где несколько picker'ов. */
+trait IColorPickerMarker extends Product
+object IColorPickerMarker {
+  @inline implicit def univEq: UnivEq[IColorPickerMarker] = UnivEq.force
+}
+

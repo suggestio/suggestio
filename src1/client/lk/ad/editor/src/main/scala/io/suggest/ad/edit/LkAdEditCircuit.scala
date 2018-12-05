@@ -7,11 +7,8 @@ import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
 import io.suggest.sjs.common.log.CircuitLog
 import play.api.libs.json.Json
 import io.suggest.ad.edit.c._
-import io.suggest.ad.edit.m.edit.color.{IBgColorPickerS, MColorPick, MColorsState}
-import io.suggest.ad.edit.m.edit.MQdEditS
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags._
-import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.layout.MLayoutS
 import io.suggest.ad.edit.m.vld.MJdVldAh
 import io.suggest.ad.edit.srv.LkAdEditApiHttp
@@ -23,10 +20,12 @@ import io.suggest.spa.{OptFastEq, StateInp}
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
 import org.scalajs.dom
-import io.suggest.lk.c.PictureAh
+import io.suggest.lk.c.{ColorPickAh, PictureAh}
+import io.suggest.lk.m.color
+import io.suggest.lk.m.color.{MColorPick, MColorsState}
 import io.suggest.lk.m.img.MPictureAh
 import io.suggest.msg.ErrorMsgs
-import scalaz.Tree
+import scalaz.{Tree, TreeLoc}
 import io.suggest.scalaz.ZTreeUtil._
 
 /**
@@ -38,7 +37,6 @@ import io.suggest.scalaz.ZTreeUtil._
 class LkAdEditCircuit(
                        jdCssFactory         : JdCssFactory,
                        docEditAhFactory     : (ModelRW[MAeRoot, MDocS]) => DocEditAh[MAeRoot],
-                       colorPickAhFactory   : (ModelRW[MAeRoot, Option[MColorPick]] => ColorPickAh[MAeRoot])
                      )
   extends CircuitLog[MAeRoot]
   with ReactConnector[MAeRoot]
@@ -153,81 +151,98 @@ class LkAdEditCircuit(
 
   private val layoutAh = new LayoutAh( layoutRW, mDocSRw )
 
-  /** Сборка RW-зума до опционального инстанса MColorPick.
-    *
-    * @param doc2bgColorContF Фунция доступа к опциональному модели контейнеру с полем bgColorPick.
-    * @param bgColorCont2mdoc Фунция сборки нового инстанса MDocS на основе старого инстанса и обновлённого состояния StateOuter_t.
+
+  /** Класс для сборки зумма для color-picker'а.
     * @tparam StateOuter_t Состояние редактирования текущего типа компонента, например MStripEdS.
-    * @return ZoomRW до Option[MColorPick].
     */
-  private def _zoomToBgColorPickS[StateOuter_t <: IBgColorPickerS { type T = StateOuter_t }]
-                                 (jdtName: MJdTagName)
-                                 (doc2bgColorContF: MDocS => Option[StateOuter_t])
-                                 (bgColorCont2mdoc: (MDocS, Option[StateOuter_t]) => MDocS) = {
-    def __filteredSelTag(mdoc: MDocS) = {
+  private abstract class ZoomToBgColorPick {
+
+    def getSelTagLoc(mdoc: MDocS): Option[TreeLoc[JdTag]]
+
+    /** @return ZoomRW до Option[MColorPick]. */
+    def getZoom: ModelRW[MAeRoot, Option[MColorPick]] = {
+      mDocSRw.zoomRW[Option[MColorPick]] { mdoc =>
+        for {
+          currTag <- getSelTagLoc(mdoc)
+        } yield {
+          color.MColorPick(
+            colorOpt    = currTag.getLabel.props1.bgColor,
+            colorsState = mdoc.colorsState,
+          )
+        }
+      } { (mdoc0, mColorAhOpt) =>
+        // Что-то изменилось с моделью MColorAhOpt во время деятельности контроллера.
+        // Нужно обновить текущий стрип.
+        val mdoc2Opt = for {
+          jdt0     <- getSelTagLoc( mdoc0 )
+          mColorAh <- mColorAhOpt
+        } yield {
+          val strip2 = jdt0.modifyLabel { s0 =>
+            s0.withProps1(
+              s0.props1.withBgColor(
+                mColorAh.colorOpt
+              )
+            )
+          }
+          val tpl2 = strip2.toTree
+          val css2 = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf) )
+
+          mdoc0
+            .withJdArgs {
+              mdoc0.jdArgs
+                .withTemplate( tpl2 )
+                .withJdCss( css2 )
+            }
+            .withColorsState(
+              mColorAh.colorsState
+            )
+        }
+        // Чисто теоретически возможна какая-то нештатная ситуация, но мы подавляем её в пользу исходного состояния circuit.
+        mdoc2Opt.getOrElse {
+          LOG.error( ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, msg = s"$mdoc0 + $mColorAhOpt = $mdoc2Opt" )
+          mdoc0
+        }
+      }(OptFastEq.Wrapped)
+    }
+
+  }
+
+  /** Трейт для фильтрации по jd tag name. */
+  private trait JdTagNameFilter { this: ZoomToBgColorPick =>
+
+    def jdtName: MJdTagName
+
+    def getSelTagLoc(mdoc: MDocS): Option[TreeLoc[JdTag]] = {
       mdoc.jdArgs
         .selJdt.treeLocOpt
         .filter( JdTag.treeLocByTypeFilterF(jdtName) )
     }
 
-    mDocSRw.zoomRW[Option[MColorPick]] { mdoc =>
-      for {
-        currTag <- __filteredSelTag(mdoc)
-        mColorCont <- doc2bgColorContF( mdoc )
-      } yield {
-        MColorPick(
-          colorOpt    = currTag.getLabel.props1.bgColor,
-          colorsState = mdoc.colorsState,
-          pickS       = mColorCont.bgColorPick
-        )
-      }
-    } { (mdoc0, mColorAhOpt) =>
-      // Что-то изменилось с моделью MColorAhOpt во время деятельности контроллера.
-      // Нужно обновить текущий стрип.
-      val mdoc2Opt = for {
-        jdt0     <- __filteredSelTag( mdoc0 )
-        mColorAh <- mColorAhOpt
-      } yield {
-        val strip2 = jdt0.modifyLabel { s0 =>
-          s0.withProps1(
-            s0.props1.withBgColor(
-              mColorAh.colorOpt
-            )
-          )
-        }
-        val tpl2 = strip2.toTree
-        val css2 = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf) )
-
-        val stateOuter2 = for (state <- doc2bgColorContF(mdoc0)) yield {
-          state.withBgColorPick( mColorAh.pickS )
-        }
-
-        val mdoc1 = mdoc0
-          .withJdArgs {
-            mdoc0.jdArgs
-              .withTemplate( tpl2 )
-              .withJdCss( css2 )
-          }
-          .withColorsState( mColorAh.colorsState )
-        bgColorCont2mdoc( mdoc1, stateOuter2 )
-      }
-      // Чисто теоретически возможна какая-то нештатная ситуация, но мы подавляем её в пользу исходного состояния circuit.
-      mdoc2Opt.getOrElse {
-        LOG.error( ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, msg = s"$mdoc0 + $mColorAhOpt = $mdoc2Opt" )
-        mdoc0
-      }
-    }(OptFastEq.Wrapped)
   }
 
+
   /** Контроллер настройки цвета фона стрипа. */
-  private val stripBgColorAh = colorPickAhFactory(
-    _zoomToBgColorPickS[MStripEdS](MJdTagNames.STRIP)(_.stripEd) { _.withStripEd(_) }
-  )
+  private val stripBgColorAh = {
+    val zoomBuilder = new ZoomToBgColorPick with JdTagNameFilter {
+      override def jdtName = MJdTagNames.STRIP
+    }
+    new ColorPickAh(
+      myMarker = Some(MJdTagNames.STRIP),
+      modelRW  = zoomBuilder.getZoom
+    )
+  }
 
   /** Контроллер настройки цвета фона контента. */
-  private val qdTagBgColorAh = colorPickAhFactory(
-    _zoomToBgColorPickS[MQdEditS](MJdTagNames.QD_CONTENT)(_.qdEdit) { _.withQdEdit(_) }
-  )
+  private val qdTagBgColorAh = {
+    val zoomBuilder = new ZoomToBgColorPick with JdTagNameFilter {
+      override def jdtName = MJdTagNames.QD_CONTENT
+    }
+    new ColorPickAh(
+      myMarker = Some(MJdTagNames.QD_CONTENT),
+      modelRW  = zoomBuilder.getZoom
+    )
+  }
+
 
   private val mPictureAhRW = zoomRW[MPictureAh[Tree[JdTag]]] { mroot =>
     val mdoc = mroot.doc

@@ -5,7 +5,6 @@ import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.edit.MQdEditS
-import io.suggest.ad.edit.m.edit.color.MColorsState
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.color.MColorData
 import io.suggest.common.MHands
@@ -21,6 +20,7 @@ import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd._
+import io.suggest.lk.m.color.MColorsState
 import io.suggest.lk.m.{FileHashStart, HandleNewHistogramInstalled, PurgeUnusedEdges}
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.msg.{ErrorMsgs, Messages, WarnMsgs}

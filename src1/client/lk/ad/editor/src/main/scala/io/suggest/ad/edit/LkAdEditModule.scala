@@ -2,8 +2,7 @@ package io.suggest.ad.edit
 
 import com.softwaremill.macwire._
 import diode.ModelRW
-import io.suggest.ad.edit.c.{ColorPickAh, DocEditAh}
-import io.suggest.ad.edit.m.edit.color.MColorPick
+import io.suggest.ad.edit.c.DocEditAh
 import io.suggest.ad.edit.m.{MAeRoot, MDocS}
 import io.suggest.ad.edit.v.edit._
 import io.suggest.ad.edit.v.edit.color.ColorCheckboxR
@@ -13,6 +12,7 @@ import io.suggest.ad.edit.v.pop.LaePopupsR
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.render.JdRenderModule
 import io.suggest.lk.LkCommonModule
+import io.suggest.lk.m.color.MColorPick
 import io.suggest.lk.r.SlideBlockR
 import io.suggest.quill.QuillSioModule
 
@@ -80,8 +80,6 @@ class LkAdEditModule {
   // circuit deps
 
   def docEditAhFactory = (modelRW: ModelRW[M, MDocS]) => wire[DocEditAh[M]]
-
-  def colorPickAh = (modelRW: ModelRW[M, Option[MColorPick]]) => wire[ColorPickAh[M]]
 
   lazy val lkAdEditCircuit = wire[LkAdEditCircuit]
 

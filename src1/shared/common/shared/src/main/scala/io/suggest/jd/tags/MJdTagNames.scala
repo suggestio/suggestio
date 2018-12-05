@@ -1,8 +1,9 @@
 package io.suggest.jd.tags
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.color.IColorPickerMarker
 import io.suggest.enum2.EnumeratumUtil
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.json.Format
 
 /**
@@ -26,12 +27,10 @@ object MJdTagNames extends StringEnum[MJdTagName] {
   /** "Полоса" карточки, т.е. элемент вертикальной разбивки документа наподобии
     * абзаца или страницы.
     */
-  case object STRIP extends MJdTagName("s") {
-    override def isBgImgAllowed = true
-  }
+  case object STRIP extends MJdTagName("s") with IColorPickerMarker
 
   /** Тег, хранящий текст, отформатированный через quill-editor. */
-  case object QD_CONTENT extends MJdTagName("q")
+  case object QD_CONTENT extends MJdTagName("q") with IColorPickerMarker
 
   /** Тег одной qd-операций.
     * Ранее, операции лежали внутри jdt.props1.qdOps, но пришлось запихать из children.
@@ -52,9 +51,6 @@ sealed abstract class MJdTagName(override val value: String) extends StringEnumE
 
   override final def toString = value
 
-  /** Допустимо ли использовать фоновое изображение для указанного тега? */
-  def isBgImgAllowed: Boolean = false
-
 }
 
 
@@ -66,6 +62,16 @@ object MJdTagName {
   }
 
   @inline implicit def univEq: UnivEq[MJdTagName] = UnivEq.derive
+
+
+  implicit class MJdTagNameOpsExt(val jdtn: MJdTagName) extends AnyVal {
+
+    /** Допустимо ли использовать фоновое изображение для указанного тега? */
+    def isBgImgAllowed = {
+      jdtn ==* MJdTagNames.STRIP
+    }
+
+  }
 
 }
 

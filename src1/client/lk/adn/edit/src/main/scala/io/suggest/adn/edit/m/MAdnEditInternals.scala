@@ -2,6 +2,7 @@ package io.suggest.adn.edit.m
 
 import diode.FastEq
 import diode.data.Pot
+import io.suggest.lk.m.color.MColorsState
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
@@ -18,7 +19,8 @@ object MAdnEditInternals {
   implicit object MAdnEditInternalsFastEq extends FastEq[MAdnEditInternals] {
     override def eqv(a: MAdnEditInternals, b: MAdnEditInternals): Boolean = {
       (a.saving ===* b.saving) &&
-        (a.conf ===* b.conf)
+      (a.conf ===* b.conf) &&
+      (a.colorState ===* b.colorState)
     }
   }
 
@@ -31,12 +33,15 @@ object MAdnEditInternals {
   *
   * @param conf Конфиг формы.
   * @param saving Состояние сохранение формы.
+  * @param colorState Состояние цветов для контроллера ColorPickAh и color-picker'ов формы.
   */
 case class MAdnEditInternals(
                               conf          : MAdnEditFormConf,
-                              saving        : Pot[MAdnEditForm] = Pot.empty
+                              saving        : Pot[MAdnEditForm] = Pot.empty,
+                              colorState    : MColorsState      = MColorsState.empty,
                             ) {
 
   def withSaving(saving: Pot[MAdnEditForm]) = copy(saving = saving)
+  def withColorState(colorState: MColorsState) = copy(colorState = colorState)
 
 }

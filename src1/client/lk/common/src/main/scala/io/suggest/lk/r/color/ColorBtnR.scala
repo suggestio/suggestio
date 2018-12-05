@@ -2,7 +2,7 @@ package io.suggest.lk.r.color
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProps}
-import io.suggest.color.{MColorData, MColorType}
+import io.suggest.color.{IColorPickerMarker, MColorData}
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.css.Css
 import io.suggest.lk.m.ColorBtnClick
@@ -30,13 +30,14 @@ class ColorBtnR {
 
   case class PropsVal(
                        color        : MColorData,
-                       colorType    : Option[MColorType] = None,
+                       marker       : Option[IColorPickerMarker] = None,
                        cssClass     : Option[String] = None
                      )
   implicit object ColorBtnRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.color ===* b.color) &&
-        (a.cssClass ===* b.cssClass)
+      (a.marker ===* b.marker) &&
+      (a.cssClass ===* b.cssClass)
     }
   }
 
@@ -53,7 +54,7 @@ class ColorBtnR {
         y = e.clientY.toInt
       )
       ReactCommonUtil.stopPropagationCB(e) >> dispatchOnProxyScopeCBf($) { propsProxy: Props =>
-        val colorTypeOpt = propsProxy.value.flatMap(_.colorType)
+        val colorTypeOpt = propsProxy.value.flatMap(_.marker)
         ColorBtnClick(fixedCoord, colorTypeOpt)
       }
     }
@@ -73,7 +74,7 @@ class ColorBtnR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("ColorBtn")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build

@@ -4,13 +4,15 @@ import diode.react.ReactConnector
 import io.suggest.adn.edit.api.{ILkAdnEditApi, LKAdnEditApiHttp}
 import io.suggest.adn.edit.c.{NodeEditAh, RootAh}
 import io.suggest.adn.edit.m._
-import io.suggest.lk.c.PictureAh
+import io.suggest.color.{IColorPickerMarker, MColorType, MColorTypes}
+import io.suggest.lk.c.{ColorPickAh, PictureAh}
+import io.suggest.lk.m.color.{MColorPick, MColorsState}
 import io.suggest.lk.m.img.MPictureAh
 import io.suggest.msg.ErrorMsgs
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.routes.routes
 import io.suggest.sjs.common.log.CircuitLog
-import io.suggest.spa.StateInp
+import io.suggest.spa.{OptFastEq, StateInp}
 import play.api.libs.json.Json
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.{IUploadApi, UploadApiHttp}
@@ -29,6 +31,7 @@ class LkAdnEditCircuit
   import MLkAdnEditRoot.MLkAdnEditRootFastEq
   import MAdnNodeS.MAdnNodeSFastEq
   import MPictureAh.MPictureAhFastEq
+  import MColorPick.MColorPickFastEq
 
 
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.LK_ADN_EDIT_FORM_FAILED
@@ -42,11 +45,13 @@ class LkAdnEditCircuit
 
     MLkAdnEditRoot(
       internals = MAdnEditInternals(
-        conf = minit.conf
+        conf = minit.conf,
+        colorState = MColorsState(
+          colorPresets  = minit.form.meta.colors.allColorsIter.toList,
+        ),
       ),
       node = MAdnNodeS(
         meta          = minit.form.meta,
-        colorPresets  = minit.form.meta.colors.allColorsIter.toList,
         edges         = MEdgeDataJs.jdEdges2EdgesDataMap( minit.form.edges ),
         resView       = minit.form.resView
       )
@@ -55,11 +60,11 @@ class LkAdnEditCircuit
 
 
   // Models
-  val rootRW = zoomRW(identity(_))((_, root2) => root2)
+  private[edit] val rootRW = zoomRW(identity(_))((_, root2) => root2)
 
-  val nodeRW = zoomRW(_.node)(_.withNode(_))
+  private val nodeRW = zoomRW(_.node)(_.withNode(_))
 
-  val mPictureAhRW = zoomRW [MPictureAh[MAdnResView]] { mroot =>
+  private val mPictureAhRW = zoomRW [MPictureAh[MAdnResView]] { mroot =>
     MPictureAh(
       edges       = mroot.node.edges,
       view        = mroot.node.resView,
@@ -93,23 +98,55 @@ class LkAdnEditCircuit
     mroot2
   }
 
-  val internalsRW = zoomRW(_.internals) { _.withInternals(_) }
+  private val internalsRW = zoomRW(_.internals) { _.withInternals(_) }
 
-  val confRO = internalsRW.zoom(_.conf)
+  private val confRO = internalsRW.zoom(_.conf)
 
 
   // API
-  val uploadApi: IUploadApi = new UploadApiHttp( confRO )
+  private val uploadApi: IUploadApi = new UploadApiHttp( confRO )
 
-  val lkAdnEditApi: ILkAdnEditApi = new LKAdnEditApiHttp( confRO )
+  private val lkAdnEditApi: ILkAdnEditApi = new LKAdnEditApiHttp( confRO )
 
 
   // Controllers
-  val nodeEditAh = new NodeEditAh(
+  private val nodeEditAh = new NodeEditAh(
     modelRW = nodeRW
   )
 
-  val pictureAh = {
+  /** Сборка инстансов контроллера ColorPickAh для разных picker'ов цвета фона и переднего плана. */
+  private def _mkColorPickerAh(colorOfType: MColorType with IColorPickerMarker): ColorPickAh[MLkAdnEditRoot] = {
+    new ColorPickAh[MLkAdnEditRoot](
+      myMarker = Some(colorOfType),
+      modelRW  = zoomRW [Option[MColorPick]] { mroot =>
+        // TODO Выкинуть этот Option, он не нужен.
+        val mcp = MColorPick(
+          colorOpt    = mroot.node.meta.colors.ofType(colorOfType),
+          colorsState = mroot.internals.colorState
+        )
+        Some(mcp)
+      } { (mroot0, mcpOpt2) =>
+        val mroot2 = mcpOpt2.fold(mroot0) { mcp2 =>
+          mroot0.copy(
+            node = mroot0.node.withMeta(
+              mroot0.node.meta.withColors(
+                mroot0.node.meta.colors
+                  .withColorOfType(colorOfType, mcp2.colorOpt)
+              )
+            ),
+            internals = mroot0.internals
+              .withColorState( mcp2.colorsState )
+          )
+        }
+        mroot2
+      }( OptFastEq.Wrapped(MColorPickFastEq) )
+    )
+  }
+
+  private val bgColorPickAh = _mkColorPickerAh( MColorTypes.Bg )
+  private val fgColorPickAh = _mkColorPickerAh( MColorTypes.Fg )
+
+  private val pictureAh = {
     import MAdnResViewUtil._
     new PictureAh(
       // Возвращать роуты контроллера LkAdnEdit в зав-ти от предиката и прочих данных из $1?
@@ -123,7 +160,7 @@ class LkAdnEditCircuit
     )
   }
 
-  val rootAh = new RootAh(
+  private val rootAh = new RootAh(
     api     = lkAdnEditApi,
     modelRW = rootRW
   )
@@ -131,6 +168,8 @@ class LkAdnEditCircuit
 
   override protected val actionHandler: HandlerFunction = {
     composeHandlers(
+      bgColorPickAh,
+      fgColorPickAh,
       nodeEditAh,
       pictureAh,
       rootAh

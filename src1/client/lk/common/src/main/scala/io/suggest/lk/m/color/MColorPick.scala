@@ -1,4 +1,4 @@
-package io.suggest.ad.edit.m.edit.color
+package io.suggest.lk.m.color
 
 import diode.FastEq
 import io.suggest.color.MColorData
@@ -18,8 +18,7 @@ object MColorPick {
   implicit object MColorPickFastEq extends FastEq[MColorPick] {
     override def eqv(a: MColorPick, b: MColorPick): Boolean = {
       (a.colorOpt ===* b.colorOpt) &&
-        (a.colorsState ===* b.colorsState) &&
-        (a.pickS ===* b.pickS)
+      (a.colorsState ===* b.colorsState)
     }
   }
 
@@ -28,20 +27,17 @@ object MColorPick {
 }
 
 
-/** Класс контейнера данных для контроллера [[io.suggest.ad.edit.c.ColorPickAh]].
+/** Класс контейнера данных для контроллера [[io.suggest.lk.c.ColorPickAh]].
   *
   * @param colorOpt Текущее состояние цвета.
   * @param colorsState Пошаренное состояние всех цветов.
-  * @param pickS Состояние конкретного color picker'а.
   */
 case class MColorPick(
                        colorOpt     : Option[MColorData],
                        colorsState  : MColorsState,
-                       pickS        : MColorPickerS
                      ) {
 
   def withColorOpt(colorOpt: Option[MColorData]) = copy(colorOpt = colorOpt)
   def withColorsState(colorsState: MColorsState) = copy(colorsState = colorsState)
-  def withPickS(pickS: MColorPickerS) = copy(pickS = pickS)
 
 }

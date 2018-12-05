@@ -6,7 +6,8 @@ import io.suggest.css.Css
 import io.suggest.jd.render.m.IJdAction
 import io.suggest.jd.tags.MJdTagNames
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
-import io.suggest.lk.m.{ColorBtnClick, ColorChanged, DocBodyClick}
+import io.suggest.lk.c.ColorPickAh
+import io.suggest.lk.m.{ColorBtnClick, ColorChanged, ColorCheckboxChange, DocBodyClick}
 import japgolly.univeq._
 import io.suggest.ueq.ReactUnivEqUtil._
 import io.suggest.scalaz.ZTreeUtil._
@@ -28,12 +29,13 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
       val needTransformOpt = for {
         // Если выделен стрип, имеющий фоновое изображение...
         selJdt <- v0.jdArgs.selJdt.treeLocOpt.toLabelOpt
-        if selJdt.name ==* MJdTagNames.STRIP &&
-           selJdt.props1.bgImg.nonEmpty
-        // и открыт стрип-редактор...
-        stripEd <- v0.stripEd
+        if (selJdt.name ==* MJdTagNames.STRIP) &&
+           selJdt.props1.bgImg.nonEmpty &&
+           // и открыт стрип-редактор...
+           v0.stripEd.nonEmpty
+           // TODO И m.colorTypeOpt содержит маркер фона стрипа.
       } yield {
-        stripEd.bgColorPick.isShown
+        v0.colorsState.picker.nonEmpty
       }
 
       needTransformOpt.fold(noChange)(_doTransform(_, v0))

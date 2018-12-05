@@ -9,6 +9,7 @@ import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, Sho
 import io.suggest.ad.edit.v.edit._
 import io.suggest.ad.edit.v.edit.color.ColorCheckboxR
 import io.suggest.ad.edit.v.edit.content.{ContentEditCssR, ContentLayersR}
+import io.suggest.color.IColorPickerMarker
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
@@ -126,9 +127,10 @@ class LkAdEditFormR(
 
   protected class Backend($: BackendScope[Props, State]) {
 
-    private def _onClick: Callback = {
+    /** Любой клик где-то в форме. Нужно для вычисления кликов за пределами каких-либо элементов. */
+    private def _onBodyClick: Callback =
       dispatchOnProxyScopeCB($, DocBodyClick)
-    }
+
 
     def render(p: Props, s: State): VdomElement = {
       val LCSS = lkAdEditCss.Layout
@@ -137,7 +139,7 @@ class LkAdEditFormR(
         ^.`class` := Css.Overflow.HIDDEN,
 
         // TODO Opt спиливать onClick, когда по состоянию нет ни одного открытого modal'а, например открытого color-picker'а.
-        ^.onClick --> _onClick,
+        ^.onClick --> _onBodyClick,
 
         // Отрендерить доп.стили для quill-редактора.
         <.styleTag(
@@ -314,7 +316,8 @@ class LkAdEditFormR(
 
       val MSG_BG_COLOR = Messages( MsgCodes.`Bg.color` )
       // Фунция сборки коннекшена до состояния чекбокса выбора цвета.
-      def __mkBgColorCbC(jdtName: MJdTagName) = {
+      def __mkBgColorCbC(jdtName: MJdTagName with IColorPickerMarker) = {
+        val jdtNameSome = Some(jdtName)
         p.connect { mroot =>
           for {
             selJdtTreeLoc <- mroot.doc.jdArgs.selJdt.treeLocOpt
@@ -323,7 +326,8 @@ class LkAdEditFormR(
           } yield {
             colorCheckboxR.PropsVal(
               color         = selJdt.props1.bgColor,
-              label         = MSG_BG_COLOR
+              label         = MSG_BG_COLOR,
+              marker        = jdtNameSome
             )
           }
         }( OptFastEq.Wrapped )
@@ -479,14 +483,7 @@ class LkAdEditFormR(
             val cssClassOpt = Some( lkAdEditCss.BgColorOptPicker.pickerCont.htmlClass )
             p.connect { mroot =>
               for {
-                pickerS <- {
-                  mroot.doc.stripEd
-                    .orElse {
-                      mroot.doc.qdEdit
-                    }
-                    .map(_.bgColorPick)
-                }
-                if pickerS.shownAt.isDefined
+                pickerS <- mroot.doc.colorsState.picker
                 selJdtTreeLoc   <- mroot.doc.jdArgs.selJdt.treeLocOpt
                 bgColor         <- selJdtTreeLoc.getLabel.props1.bgColor
               } yield {
@@ -494,7 +491,7 @@ class LkAdEditFormR(
                   color         = bgColor,
                   colorPresets  = mroot.doc.colorsState.colorPresets,
                   cssClass      = cssClassOpt,
-                  topLeftPx     = pickerS.shownAt
+                  topLeftPx     = Some(pickerS.shownAt)
                 )
               }
             }

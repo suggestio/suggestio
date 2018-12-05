@@ -2,7 +2,7 @@ package io.suggest.lk.m
 
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import diode.FastEq
-import io.suggest.color.{MColorData, MColorType}
+import io.suggest.color.{IColorPickerMarker, MColorData}
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.crypto.hash.MHash
@@ -49,16 +49,21 @@ case object DeleteConfirmPopupCancel extends ILkCommonPopupCloseAction
 /** Клик по заголовку slide-блока. */
 case class SlideBlockClick(key: String) extends ILkCommonAction
 
-
 /** Изменился цвет в color picker'е.
   * @param isCompleted Окончательное выставление цвета?
   *                    Если false, то юзер пока ещё выбирает.
   * @param forceTransform Если цвет пришёл из ColorSuggest или иного источника, то выставляется true.
   */
-case class ColorChanged(mcd: MColorData, isCompleted: Boolean, forceTransform: Boolean = false) extends ILkCommonAction
+case class ColorChanged(mcd: MColorData,
+                        isCompleted: Boolean,
+                        forceTransform: Boolean = false) extends ILkCommonAction
 
 /** Клик на "цвете" для выбора цвета. */
-case class ColorBtnClick(vpXy: MCoords2di, colorTypeOpt: Option[MColorType]) extends ILkCommonAction
+case class ColorBtnClick(vpXy: MCoords2di, marker: Option[IColorPickerMarker]) extends ILkCommonAction
+
+/** Изменилось состояние галочки напротив color picker'а для выставления bgColor тега. */
+case class ColorCheckboxChange(isEnabled: Boolean, marker: Option[IColorPickerMarker]) extends ILkCommonAction
+
 
 /** Клик просто где-то в body. */
 case object DocBodyClick extends ILkCommonAction
