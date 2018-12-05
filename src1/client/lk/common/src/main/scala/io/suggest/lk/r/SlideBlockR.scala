@@ -2,8 +2,6 @@ package io.suggest.lk.r
 
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.css.Css
-import io.suggest.css.ScalaCssDefaults._
 import io.suggest.lk.m.SlideBlockClick
 import io.suggest.react.ReactCommonUtil
 import io.suggest.ueq.UnivEqUtil._
@@ -12,7 +10,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
-import scalacss.internal.mutable.StyleSheet
 import scalacss.ScalaCssReact._
 
 /**
@@ -21,60 +18,10 @@ import scalacss.ScalaCssReact._
   * Created: 10.11.17 10:35
   * Description: Реализация slide-block'ов на базе существующей lk-вёрстки с добавлением
   * [[https://codepen.io/adamaoc/pen/wBGGQv]], т.е. нативная анимация и всё такое.
+  * DI-инжектируемая утиль для сборки slide-block'а, завязанного на react+diode.
   */
-
-trait SlideBlockCss extends StyleSheet.Inline {
-
-  import dsl._
-
-  /** Непосредственно стили slide-блоков, которые можно перезаписывать при необходимости. */
-  protected trait SlideBlockStylesT {
-
-    import Css.Lk.SlideBlocks._
-
-    val outer = style(
-      addClassName( OUTER ),
-      minWidth( 350.px )
-    )
-
-    val title = style(
-      addClassName( TITLE )
-    )
-
-    val opened = style(
-      addClassName( OPENED )
-    )
-
-    val titleBtn = style(
-      addClassName( TITLE_BTN )
-    )
-
-    val bodyWrap = {
-      val T = Css.Anim.Transition
-      style(
-        addClassName( Css.Lk.SlideBlocks.BODY ),
-        height(0.px),
-        background := "none",
-        overflow.hidden,
-        transition := T.all(0.2, T.TimingFuns.EASE_IN)
-      )
-    }
-
-    val bodyWrapExpanded = style(
-      height.auto,
-      paddingBottom( 5.px )
-    )
-
-  }
-
-  val SlideBlock = new SlideBlockStylesT {}
-
-}
-
-
-/** DI-инжектируемая утиль для сборки slide-block'а, завязанного на react+diode. */
 class SlideBlockR(
-                  slideBlockCss: SlideBlockCss
+                  lkCss: LkCss,
                 ) {
 
   case class PropsVal(
@@ -95,7 +42,7 @@ class SlideBlockR(
   class Backend($: BackendScope[Props, Unit]) {
 
     private def onTitleClick: Callback = {
-      dispatchOnProxyScopeCBf($) { props =>
+      dispatchOnProxyScopeCBf($) { props: Props =>
         SlideBlockClick(
           key = props.value
             .flatMap(_.key)
@@ -106,7 +53,7 @@ class SlideBlockR(
 
     def render(propsOptProxy: Props, children: PropsChildren): VdomElement = {
       propsOptProxy.value.whenDefinedEl { props =>
-        val CSS = slideBlockCss.SlideBlock
+        val CSS = lkCss.SlideBlock
         val openedCssTm: TagMod = ReactCommonUtil.maybe(props.expanded) {
           CSS.opened
         }
@@ -148,7 +95,7 @@ class SlideBlockR(
 
   }
 
-  val component = ScalaComponent.builder[Props]("Slide")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackendWithChildren[Backend]
     .build

@@ -295,6 +295,8 @@ class JsMessagesUtil @Inject() (
       MC.`Downmost` ::
       MC.`Above` ::
       MC.`Below` ::
+      MC.`Text.shadow` ::
+      MC.`Color` ::
       Nil
   }
 

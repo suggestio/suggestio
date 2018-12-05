@@ -5,7 +5,6 @@ import diode.ModelRW
 import io.suggest.ad.edit.c.DocEditAh
 import io.suggest.ad.edit.m.{MAeRoot, MDocS}
 import io.suggest.ad.edit.v.edit._
-import io.suggest.ad.edit.v.edit.color.ColorCheckboxR
 import io.suggest.ad.edit.v.edit.content.{ContentEditCssR, ContentLayerBtnR, ContentLayersR}
 import io.suggest.ad.edit.v.edit.strip._
 import io.suggest.ad.edit.v.pop.LaePopupsR
@@ -14,6 +13,7 @@ import io.suggest.jd.render.JdRenderModule
 import io.suggest.lk.LkCommonModule
 import io.suggest.lk.m.color.MColorPick
 import io.suggest.lk.r.SlideBlockR
+import io.suggest.lk.r.color.ColorCheckBoxR
 import io.suggest.quill.QuillSioModule
 
 /**
@@ -55,8 +55,6 @@ class LkAdEditModule {
 
   lazy val addR = wire[AddR]
 
-  lazy val colorCheckboxR = wire[ColorCheckboxR]
-
   lazy val scaleR = wire[ScaleR]
 
   lazy val showWideR = wire[ShowWideR]
@@ -64,6 +62,8 @@ class LkAdEditModule {
   lazy val useAsMainR = wire[UseAsMainR]
 
   lazy val deleteBtnR = wire[DeleteBtnR]
+
+  lazy val textShadowR = wire[TextShadowR]
 
 
   lazy val laePopupsR = wire[LaePopupsR]

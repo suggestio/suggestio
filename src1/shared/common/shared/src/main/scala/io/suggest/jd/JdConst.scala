@@ -24,4 +24,13 @@ object JdConst {
   /** Максимально-допустимое вращение jd-элемента. */
   final def ROTATE_MAX_ABS = 180
 
+
+  object Shadow {
+    object TextShadow {
+      final def HORIZ_OFFSET_MIN_MAX = 30
+      final def VERT_OFFSET_MIN_MAX = 50
+      final def BLUR_MAX = 10
+    }
+  }
+
 }

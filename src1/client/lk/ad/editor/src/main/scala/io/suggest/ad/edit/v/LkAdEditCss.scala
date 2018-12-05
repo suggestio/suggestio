@@ -2,8 +2,6 @@ package io.suggest.ad.edit.v
 
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
-import io.suggest.lk.r.SlideBlockCss
-import io.suggest.lk.r.color.ColorBtnR
 import scalacss.internal.mutable.StyleSheet
 
 /**
@@ -14,7 +12,6 @@ import scalacss.internal.mutable.StyleSheet
   */
 class LkAdEditCss
   extends StyleSheet.Inline
-  with SlideBlockCss
 {
 
   import dsl._
@@ -97,36 +94,6 @@ class LkAdEditCss
   }
 
 
-  /** Стили для опционального цвета фона. */
-  object BgColorOptPicker {
-
-    val container = style(
-      addClassName( Css.Display.BLOCK ),
-      height( 50.px ),
-      lineHeight( 33.px )
-    )
-
-    val label = style(
-      addClassName( Css.CLICKABLE ),
-      verticalAlign.top
-    )
-
-    val colorRound = {
-      val whPx = 30.px
-      style(
-        addClassNames( ColorBtnR.defaultCssClasses: _* ),
-        width( whPx ),
-        height( whPx )
-      )
-    }
-
-    val pickerCont = style(
-      position.fixed
-    )
-
-  }
-
-
   /** Стили для кропа. */
   object Crop {
 
@@ -149,26 +116,11 @@ class LkAdEditCss
   }
 
 
-  object RangeInput {
-
-    val rangeSlider = style(
-      verticalAlign.middle
-    )
-
-    val rangeText = style(
-      width(60.px).important
-    )
-
-  }
-
-
   initInnerObjects(
     WhControls.contWidth,
     Layout.editorsCont,
-    BgColorOptPicker.colorRound,
     Crop.popup,
     StripMain.showAll,
-    RangeInput.rangeSlider
   )
 
 }

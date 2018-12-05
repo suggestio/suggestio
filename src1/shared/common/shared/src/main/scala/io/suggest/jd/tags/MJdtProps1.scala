@@ -32,7 +32,8 @@ object MJdtProps1 extends IEmpty {
     (__ \ "d").formatNullable[MCoords2di] and
     (__ \ "e").formatNullable[Boolean] and
     (__ \ "f").formatNullable[Int] and
-    (__ \ "g").formatNullable[Int]
+    (__ \ "g").formatNullable[Int] and
+    (__ \ "s").formatNullable[MJdShadow]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MJdtProps1] = UnivEq.derive
@@ -59,6 +60,7 @@ case class MJdtProps1(
                        isMain     : Option[Boolean]           = None,
                        widthPx    : Option[Int]               = None,
                        rotateDeg  : Option[Int]               = None,
+                       textShadow : Option[MJdShadow]         = None,
                      )
   extends EmptyProduct
 {
@@ -70,5 +72,6 @@ case class MJdtProps1(
   def withIsMain(isMain: Option[Boolean])             = copy(isMain = isMain)
   def withWidthPx(widthPx: Option[Int])               = copy(widthPx = widthPx)
   def withRotateDeg(rotateDeg: Option[Int])           = copy(rotateDeg = rotateDeg)
+  def withTextShadow(textShadow: Option[MJdShadow])   = copy(textShadow = textShadow)
 
 }

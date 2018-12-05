@@ -97,3 +97,13 @@ case class DeleteAdResp( tryResp: Try[String] ) extends ILkEditAction
 
 /** Переключательство галочки вращения элемента. */
 case class RotateSet( degrees: Option[Int] ) extends ILkEditAction
+
+
+/** Управление тенью текста. */
+case class SetTextShadowEnabled(enabled: Boolean) extends ILkEditAction
+
+/** Выставление горизонтального сдвига тени. */
+case class SetHorizOffTextShadow(offset: Int) extends ILkEditAction
+/** Выставление вертикального сдвига тени. */
+case class SetVertOffTextShadow(offset: Int) extends ILkEditAction
+case class SetBlurTextShadow(blur: Int) extends ILkEditAction

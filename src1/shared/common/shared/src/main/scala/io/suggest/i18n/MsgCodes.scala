@@ -324,4 +324,7 @@ object MsgCodes {
   val `Go.back` = "Go.back"
   val `Go.back.to.0` = "Go.back.to.0"
 
+  val `Text.shadow` = "Text.shadow"
+  val `Color` = "Color"
+
 }

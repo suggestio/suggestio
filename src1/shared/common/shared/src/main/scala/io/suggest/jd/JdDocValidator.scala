@@ -5,7 +5,7 @@ import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.err.ErrorConstants
-import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
+import io.suggest.jd.tags.{JdTag, MJdShadow, MJdTagNames, MJdtProps1}
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.jd.tags.qd._
 import io.suggest.math.MathConst
@@ -34,6 +34,8 @@ class JdDocValidator(
   private def PROPS1  = "props1"
   private def XY      = "xy"
   private def WIDTH   = "w"
+  private def HEIGHT  = "h"
+  private def BLUR    = "blur"
   private def STRIP   = "strip"
   private def S       = "s"
   private def STRIPS  = STRIP + S
@@ -42,6 +44,7 @@ class JdDocValidator(
   private def QD_OP   = QD + `.` + OP
   private def MAIN    = "main"
   private def ROTATE  = "rot"
+  private def TEXT_SHADOW = "txSh"
 
   import ErrorConstants.Words._
 
@@ -127,7 +130,8 @@ class JdDocValidator(
         Validation.liftNel(_)(!_, errMsgF(`MAIN` + `.` + INVALID))
       } |@|
       ScalazUtil.liftNelNone(props1.widthPx, errMsgF(WIDTH + `.` + UNEXPECTED)) |@|
-      ScalazUtil.liftNelNone(props1.rotateDeg, errMsgF(ROTATE + `.` + UNEXPECTED))
+      ScalazUtil.liftNelNone(props1.rotateDeg, errMsgF(ROTATE + `.` + UNEXPECTED)) |@|
+      ScalazUtil.liftNelNone(props1.textShadow, errMsgF(TEXT_SHADOW + `.` + UNEXPECTED))
     )( MJdtProps1.apply )
   }
 
@@ -221,10 +225,39 @@ class JdDocValidator(
           max = JdConst.ROTATE_MAX_ABS,
           errMsgF(ROTATE)
         )
-      }
+      } |@|
+      ScalazUtil.liftNelOpt(qdProps1.textShadow)( validateQdTextShadow )
     )( MJdtProps1.apply )
   }
 
+  /** Валидация настроек тени. */
+  private def validateQdTextShadow(shadow: MJdShadow): ValidationNel[String, MJdShadow] = {
+    val C = JdConst.Shadow.TextShadow
+    val errMsgF = ErrorConstants.emsgF(PROPS1 + `.` + TEXT_SHADOW)
+    (
+      MathConst.Counts.validateMinMax(
+        v   = shadow.hOffset,
+        min = -C.HORIZ_OFFSET_MIN_MAX,
+        max = C.HORIZ_OFFSET_MIN_MAX,
+        errMsgF(WIDTH) + `.`
+      ) |@|
+      MathConst.Counts.validateMinMax(
+        v   = shadow.hOffset,
+        min = -C.VERT_OFFSET_MIN_MAX,
+        max = C.VERT_OFFSET_MIN_MAX,
+        errMsgF(HEIGHT) + `.`
+      ) |@|
+      ScalazUtil.liftNelOpt( shadow.color ) { MColorData.validateHexCodeOnly } |@|
+      ScalazUtil.liftNelOpt( shadow.blur ) { blur =>
+        MathConst.Counts.validateMinMax(
+          v   = blur,
+          min = 0,
+          max = C.BLUR_MAX,
+          errMsgF(BLUR) + `.`
+        )
+      }
+    )( MJdShadow.apply )
+  }
 
   /** Валидация значения координаты qd-тега.
     *

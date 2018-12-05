@@ -1,16 +1,14 @@
-package io.suggest.ad.edit.v.edit.color
+package io.suggest.lk.r.color
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
-import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.color.{IColorPickerMarker, MColorData}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.lk.m.ColorCheckboxChange
-import io.suggest.lk.r.color.ColorBtnR
-import io.suggest.react.ReactCommonUtil
+import io.suggest.lk.r.LkCss
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
@@ -24,9 +22,9 @@ import scalacss.ScalaCssReact._
   * Created: 14.09.17 11:38
   * Description: React-компонент с галочкой выбора цвета.
   */
-class ColorCheckboxR(
-                      lkAdEditCss     : LkAdEditCss,
-                      val colorBtnR   : ColorBtnR
+class ColorCheckBoxR(
+                      lkCss           : LkCss,
+                      val colorBtnR   : ColorBtnR,
                     ) {
 
   import colorBtnR.ColorBtnRPropsValFastEq
@@ -41,7 +39,7 @@ class ColorCheckboxR(
                        label          : String,
                        marker         : Option[IColorPickerMarker],
                      )
-  implicit object ColorCheckboxPropsValFastEq extends FastEq[PropsVal] {
+  implicit object ColorCheckBoxPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.color ===* b.color) &&
       (a.label ===* b.label) &&
@@ -72,7 +70,7 @@ class ColorCheckboxR(
       val innerBtnC = s.colorBtnPropsC { colorBtnR.apply }
 
       propsOptProxy.value.whenDefinedEl { props =>
-        val C = lkAdEditCss.BgColorOptPicker
+        val C = lkCss.ColorOptPicker
 
         <.div(
           C.container,
@@ -118,7 +116,7 @@ class ColorCheckboxR(
 
   val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .initialStateFromProps { propsOptProxy =>
-      val colorBtnCssOpt = Option( lkAdEditCss.BgColorOptPicker.colorRound.htmlClass )
+      val colorBtnCssOpt = Option( lkCss.ColorOptPicker.colorRound.htmlClass )
       State(
         colorBtnPropsC = propsOptProxy.connect { propsOpt =>
           for {

@@ -7,11 +7,10 @@ import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.{MAeRoot, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
 import io.suggest.ad.edit.v.edit._
-import io.suggest.ad.edit.v.edit.color.ColorCheckboxR
 import io.suggest.ad.edit.v.edit.content.{ContentEditCssR, ContentLayersR}
 import io.suggest.color.IColorPickerMarker
 import io.suggest.scalaz.ZTreeUtil._
-import io.suggest.css.Css
+import io.suggest.css.{Css, CssR}
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.dev.MSzMults
 import io.suggest.jd.render.m.MJdArgs
@@ -23,8 +22,8 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.{MJdTagName, MJdTagNames}
 import io.suggest.lk.m.{CropOpen, DocBodyClick}
 import io.suggest.lk.m.frk.MFormResourceKey
-import io.suggest.lk.r.{SaveR, SlideBlockR, UploadStatusR}
-import io.suggest.lk.r.color.{ColorPickerR, ColorsSuggestR}
+import io.suggest.lk.r.{LkCss, SaveR, SlideBlockR, UploadStatusR}
+import io.suggest.lk.r.color.{ColorCheckBoxR, ColorPickerR, ColorsSuggestR}
 import io.suggest.lk.r.img.{CropBtnR, ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -46,6 +45,7 @@ class LkAdEditFormR(
                      jdR                        : JdR,
                      addR                       : AddR,
                      lkAdEditCss                : LkAdEditCss,
+                     lkCss                      : LkCss,
                      quillCssFactory            : => QuillCss,
                      val scaleR                 : ScaleR,
                      uploadStatusR              : UploadStatusR,
@@ -58,13 +58,14 @@ class LkAdEditFormR(
                      val plusMinusControlsR     : PlusMinusControlsR,
                      deleteStripBtnR            : DeleteStripBtnR,
                      val showWideR              : ShowWideR,
-                     val colorCheckboxR         : ColorCheckboxR,
+                     val colorCheckBoxR         : ColorCheckBoxR,
                      val rotateR                : RotateR,
                      val slideBlockR            : SlideBlockR,
                      val colorPickerR           : ColorPickerR,
                      val quillEditorR           : QuillEditorR,
                      val contentEditCssR        : ContentEditCssR,
                      val contentLayersR         : ContentLayersR,
+                     val textShadowR            : TextShadowR,
                    ) {
 
   import MJdArgs.MJdArgsFastEq
@@ -77,7 +78,7 @@ class LkAdEditFormR(
   import plusMinusControlsR.PlusMinusControlsPropsValFastEq
   import MStripEdS.MStripEdSFastEq
   import showWideR.ShowWideRPropsValFastEq
-  import colorCheckboxR.ColorCheckboxPropsValFastEq
+  import colorCheckBoxR.ColorCheckBoxPropsValFastEq
   import io.suggest.lk.r.img.ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq
   import rotateR.RotateRPropsValFastEq
   import slideBlockR.SlideBlockPropsValFastEq
@@ -109,6 +110,7 @@ class LkAdEditFormR(
                               rotateOptC                      : ReactConnectProxy[Option[rotateR.PropsVal]],
                               contentEditCssC                 : ReactConnectProxy[contentEditCssR.Props_t],
                               contentLayersC                  : ReactConnectProxy[contentLayersR.Props_t],
+                              textShadowC                     : ReactConnectProxy[textShadowR.Props_t],
                             )
 
   case class SlideBlocksState(
@@ -120,8 +122,8 @@ class LkAdEditFormR(
 
   case class ColorsState(
                           picker            : ReactConnectProxy[Option[colorPickerR.PropsVal]],
-                          stripBgCbOptC     : ReactConnectProxy[Option[colorCheckboxR.PropsVal]],
-                          contentBgCbOptC   : ReactConnectProxy[Option[colorCheckboxR.PropsVal]]
+                          stripBgCbOptC     : ReactConnectProxy[Option[colorCheckBoxR.PropsVal]],
+                          contentBgCbOptC   : ReactConnectProxy[Option[colorCheckBoxR.PropsVal]]
                         )
 
 
@@ -146,10 +148,9 @@ class LkAdEditFormR(
           quillCssFactory.render[String]
         ),
 
-        // Отрендерить стили редактора.
-        <.styleTag(
-          lkAdEditCss.render[String]
-        ),
+        // Отрендерить стили редактора:
+        p.wrap(_ => lkCss)(CssR.apply),
+        p.wrap(_ => lkAdEditCss)(CssR.apply),
 
         // Рендер css
         s.jdCssArgsC { jdCssR.apply },
@@ -203,7 +204,7 @@ class LkAdEditFormR(
               ^.`class` := Css.Overflow.HIDDEN,
 
               // Выбор цвета фона блока.
-              s.colors.stripBgCbOptC { colorCheckboxR.apply },
+              s.colors.stripBgCbOptC { colorCheckBoxR.apply },
 
               // Рендер цветов текущей картинки
               s.colSuggPropsOptC { colorsSuggestR.apply },
@@ -235,10 +236,13 @@ class LkAdEditFormR(
               <.br,
 
               // Цвет фона контента.
-              s.colors.contentBgCbOptC { colorCheckboxR.apply },
+              s.colors.contentBgCbOptC { colorCheckBoxR.apply },
 
               // Вращение: галочка + опциональный слайдер.
               s.rotateOptC { rotateR.apply },
+
+              // Управление тенью текста:
+              s.textShadowC { textShadowR.apply },
 
               // Управление слоями
               s.contentLayersC { contentLayersR.apply },
@@ -324,7 +328,7 @@ class LkAdEditFormR(
             selJdt = selJdtTreeLoc.getLabel
             if selJdt.name ==* jdtName
           } yield {
-            colorCheckboxR.PropsVal(
+            colorCheckBoxR.PropsVal(
               color         = selJdt.props1.bgColor,
               label         = MSG_BG_COLOR,
               marker        = jdtNameSome
@@ -480,7 +484,7 @@ class LkAdEditFormR(
         colors = ColorsState(
           picker = {
             // Класс элемента color-picker'а. По идее, неизменный, поэтому живёт снаружи.
-            val cssClassOpt = Some( lkAdEditCss.BgColorOptPicker.pickerCont.htmlClass )
+            val cssClassOpt = Some( lkCss.ColorOptPicker.pickerCont.htmlClass )
             p.connect { mroot =>
               for {
                 pickerS <- mroot.doc.colorsState.picker
@@ -611,7 +615,18 @@ class LkAdEditFormR(
               max      = selJdtTreeLoc.lefts.length + selJdtTreeLoc.rights.length
             )
           }
-        }( OptFastEq.OptValueEq )
+        }( OptFastEq.OptValueEq ),
+
+        textShadowC = p.connect { mroot =>
+          for {
+            loc <- mroot.doc.jdArgs.draggingTagLoc
+            textShadow <- loc.getLabel.props1.textShadow
+          } yield {
+            textShadowR.PropsVal(
+              jdShadow = textShadow
+            )
+          }
+        }( OptFastEq.Wrapped(textShadowR.TextShadowRPropsValFastEq) )
 
       )
     }
