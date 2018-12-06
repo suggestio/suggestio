@@ -5,6 +5,7 @@ import _root_.util.showcase.{IScAdSearchUtilDi, IScUtil}
 import _root_.util.stat.IStatUtil
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MSzMult
+import io.suggest.es.model.MEsUuId
 import io.suggest.es.search.MRandomSortData
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
@@ -101,18 +102,19 @@ trait ScAdsTile
       }
     }
 
+    lazy val nodeId404 = nodesUtil.noAdsFound404NodeId( ctx.messages.lang )
 
     /** Рекламные карточки, когда не найдено рекламных карточек. */
     def mads404: Future[Seq[MNode]] = {
-      val nodeId404 = nodesUtil.noAdsFound404NodeId( ctx.messages.lang )
-      LOGGER.trace(s"$logPrefix No ads found, will open from 404-node#$nodeId404")
+      val _nodeId404 = nodeId404
+      LOGGER.trace(s"$logPrefix No ads found, will open from 404-node#${_nodeId404}")
 
       // Ищем карточки в узле-404 и их возвращаем:
       val msearchAds404 = new MNodeSearchDfltImpl {
         override val nodeTypes = MNodeTypes.Ad :: Nil
         override val outEdges: Seq[Criteria] = {
           val cr = Criteria(
-            nodeIds = nodeId404 :: Nil,
+            nodeIds = _nodeId404 :: Nil,
             predicates = MPredicates.Receiver :: Nil
           )
           cr :: Nil
@@ -261,18 +263,27 @@ trait ScAdsTile
 
     override type T = MSc3AdData
 
+    /** Список ресиверов, в которых допускается рендер карточек в-раскрытую. */
+    private lazy val _adDisplayOpenedRcvrIds = {
+      MEsUuId(nodeId404) ::
+        _qs.search.rcvrId.toList reverse_:::
+        _qs.search.tagNodeId.toList
+    }
+
     // TODO brArgs содержит кучу неактуального мусора, потому что рендер уехал на клиент. Следует удалить лишние поля следом за v2-выдачей.
     override def renderMadAsync(brArgs: RenderArgs): Future[T] = {
       // Требуется рендер только main-блока карточки.
       Future {
         // Можно рендерить карточку сразу целиком, если на данном узле карточка размещена как заранее открытая.
-        val isDisplayOpened = (_qs.search.rcvrId.toList reverse_::: _qs.search.tagNodeId.toList)
+        // 404-узел сюда же на правах костыля:
+        val isDisplayOpened = _adDisplayOpenedRcvrIds
           .exists { nodeId =>
             brArgs.mad.edges
               .withPredicateIter( MPredicates.Receiver, MPredicates.TaggedBy )
               .exists { medge =>
-                medge.nodeIds.contains(nodeId) &&
-                  medge.info.flag.contains(true)
+                // Сначала проверяем flag - это O(1). Перестановка мест слагаемых для оптимизации.
+                (medge.info.flag contains true) &&
+                (medge.nodeIds contains nodeId.id)
               }
           }
 
