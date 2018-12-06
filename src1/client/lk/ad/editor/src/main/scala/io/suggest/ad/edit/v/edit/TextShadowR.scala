@@ -89,7 +89,7 @@ class TextShadowR(
             propsOptProxy.wrap { _ =>
               val slProps = inputSliderR.PropsVal(
                 min = 0,
-                max = C.BLUR_MAX,
+                max = C.BLUR_MAX * C.BLUR_FRAC,
                 value = props.jdShadow.blur.getOrElse(0),
                 onChange = SetBlurTextShadow(_)
               )
@@ -100,7 +100,7 @@ class TextShadowR(
             propsOptProxy.wrap { _ =>
               val p = colorCheckBoxR.PropsVal(
                 color  = props.jdShadow.color,
-                label  = Messages( MsgCodes.`Color` ),
+                label  = Messages( MsgCodes.`Shadow.color` ),
                 marker = Some( MJdShadow.ColorMarkers.TextShadow )
               )
               Some(p): colorCheckBoxR.Props_t

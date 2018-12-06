@@ -10,6 +10,7 @@ import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.font.{MFontSizes, MFonts}
+import io.suggest.jd.JdConst
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.qd.MQdOp
@@ -305,6 +306,28 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     display.block
   )
 
+  /** Тени текста. */
+  val contentShadowF = {
+    styleF(
+      new Domain.OverSeq(
+        _allJdTagsIter
+          .filter(_.props1.textShadow.nonEmpty)
+          .toIndexedSeq
+      )
+    ) { jdt =>
+      val shadow = jdt.props1.textShadow.get
+      var acc: List[String] = Nil
+      for (mcd <- shadow.color)
+        acc ::= mcd.hexCode
+      for (blur <- shadow.blur)
+        acc ::= (blur.toDouble / JdConst.Shadow.TextShadow.BLUR_FRAC).px.value
+      acc ::= shadow.vOffset.px.value
+      acc ::= shadow.hOffset.px.value
+      styleS(
+        textShadow := acc.mkString( HtmlConstants.SPACE )
+      )
+    }
+  }
 
   /** styleF для стилей текстов. */
   val textStyleF = {

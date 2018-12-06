@@ -19,7 +19,7 @@ import io.suggest.quill.v.{QuillCss, QuillEditorR}
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.tags.{MJdTagName, MJdTagNames}
+import io.suggest.jd.tags.{MJdShadow, MJdTagName, MJdTagNames}
 import io.suggest.lk.m.{CropOpen, DocBodyClick}
 import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.lk.r.{LkCss, SaveR, SlideBlockR, UploadStatusR}
@@ -241,6 +241,7 @@ class LkAdEditFormR(
               // Вращение: галочка + опциональный слайдер.
               s.rotateOptC { rotateR.apply },
 
+              <.br,
               // Управление тенью текста:
               s.textShadowC { textShadowR.apply },
 
@@ -489,13 +490,22 @@ class LkAdEditFormR(
               for {
                 pickerS <- mroot.doc.colorsState.picker
                 selJdtTreeLoc   <- mroot.doc.jdArgs.selJdt.treeLocOpt
-                bgColor         <- selJdtTreeLoc.getLabel.props1.bgColor
+                bgColor         <- {
+                  val p1 = selJdtTreeLoc.getLabel.props1
+                  pickerS.marker match {
+                    case Some(MJdShadow.ColorMarkers.TextShadow) =>
+                      p1.textShadow.flatMap(_.color)
+                    case _ =>
+                      p1.bgColor
+                  }
+                }
               } yield {
+                val topY = pickerS.shownAt.y - 235
                 colorPickerR.PropsVal(
                   color         = bgColor,
                   colorPresets  = mroot.doc.colorsState.colorPresets,
                   cssClass      = cssClassOpt,
-                  topLeftPx     = Some(pickerS.shownAt)
+                  topLeftPx     = Some( pickerS.shownAt.withY(topY) )
                 )
               }
             }
@@ -619,7 +629,7 @@ class LkAdEditFormR(
 
         textShadowC = p.connect { mroot =>
           for {
-            loc <- mroot.doc.jdArgs.draggingTagLoc
+            loc <- mroot.doc.jdArgs.selJdt.treeLocOpt
             textShadow <- loc.getLabel.props1.textShadow
           } yield {
             textShadowR.PropsVal(

@@ -104,6 +104,37 @@ class DocEditAh[M](
   }
 
 
+  implicit class MDocSOptOpsExt( val treeLocOpt: Option[TreeLoc[JdTag]] ) {
+
+    def shadowUpdated(v0: MDocS)(f: Option[MJdShadow] => Option[MJdShadow]): ActionResult[M] = {
+      treeLocOpt.fold(noChange) { treeLoc =>
+        val tpl2 = treeLoc
+          .modifyLabel { jdt0 =>
+            jdt0.withProps1(
+              jdt0.props1.withTextShadow {
+                f( jdt0.props1.textShadow )
+              }
+            )
+          }
+          .toTree
+
+        val v2 = v0.withJdArgs(
+          v0.jdArgs
+            .withJdCss(
+              jdCssFactory.mkJdCss(
+                MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
+              )
+            )
+            .withTemplate( tpl2 )
+        )
+
+        updated(v2)
+      }
+    }
+
+  }
+
+
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Набор текста в wysiwyg-редакторе.
@@ -1298,6 +1329,64 @@ class DocEditAh[M](
         )
       updated(v2)
 
+
+    // Включение-выключение тени для текста/контента
+    case m: SetTextShadowEnabled =>
+      val v0 = value
+      v0.jdArgs.selJdt
+        .treeLocOpt
+        .filter { treeLoc =>
+          val jdt = treeLoc.getLabel
+          (jdt.name ==* MJdTagNames.QD_CONTENT) &&
+          (jdt.props1.textShadow.isDefined !=* m.enabled)
+        }
+        .shadowUpdated(v0) { _ =>
+          OptionUtil.maybe(m.enabled) {
+            MJdShadow(
+              hOffset = 4,
+              vOffset = 4,
+              color   = None,
+              blur    = Some(1)
+            )
+          }
+        }
+
+    // Выставление горизонтального параметра тени.
+    case m: SetHorizOffTextShadow =>
+      val v0 = value
+      v0.jdArgs.selJdt
+        .treeLocOpt
+        .shadowUpdated(v0) { shadOpt0 =>
+          for (shad0 <- shadOpt0) yield {
+            shad0.withHOffset(
+              m.offset
+            )
+          }
+        }
+
+    case m: SetVertOffTextShadow =>
+      val v0 = value
+      v0.jdArgs.selJdt
+        .treeLocOpt
+        .shadowUpdated(v0) { shadOpt0 =>
+          for (shad0 <- shadOpt0) yield {
+            shad0.withVOffset( m.offset )
+          }
+        }
+
+    case m: SetBlurTextShadow =>
+      val v0 = value
+      v0.jdArgs.selJdt
+        .treeLocOpt
+        .shadowUpdated(v0) { shadOpt0 =>
+          for (shad0 <- shadOpt0) yield {
+            shad0.withBlur(
+              OptionUtil.maybe(m.blur > 0)(m.blur)
+            )
+          }
+        }
+
   }
+
 
 }

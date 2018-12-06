@@ -1,7 +1,6 @@
 package io.suggest.ad.edit.m
 
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
-import io.suggest.color.IColorPickerMarker
 import io.suggest.common.MHand
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.MSzMult

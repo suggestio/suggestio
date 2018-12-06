@@ -374,6 +374,11 @@ class JdR(
           jdArgs.jdCss.forcedWidthStyleF(qdTag)
         },
 
+        // Стиль для теней
+        ReactCommonUtil.maybe( qdTag.props1.textShadow.nonEmpty ) {
+          jdArgs.jdCss.contentShadowF( qdTag )
+        },
+
         // Рендерить особые указатели мыши в режиме редактирования.
         ReactCommonUtil.maybe(jdArgs.conf.isEdit) {
           if (isCurrentSelected) {

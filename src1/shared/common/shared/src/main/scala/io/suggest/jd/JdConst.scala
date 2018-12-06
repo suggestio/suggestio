@@ -29,7 +29,12 @@ object JdConst {
     object TextShadow {
       final def HORIZ_OFFSET_MIN_MAX = 30
       final def VERT_OFFSET_MIN_MAX = 50
-      final def BLUR_MAX = 10
+
+      /** На сколько делить/умножать хранимое значение.
+        * Для упрощения, дробные пиксели хранятся в целых числах. */
+      final def BLUR_FRAC = 10
+      /** Максимальная размывка в пикселях экрана. */
+      final def BLUR_MAX = 5
     }
   }
 

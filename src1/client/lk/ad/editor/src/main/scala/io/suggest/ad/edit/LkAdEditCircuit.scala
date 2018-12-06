@@ -12,6 +12,7 @@ import io.suggest.jd.tags._
 import io.suggest.ad.edit.m.layout.MLayoutS
 import io.suggest.ad.edit.m.vld.MJdVldAh
 import io.suggest.ad.edit.srv.LkAdEditApiHttp
+import io.suggest.color.MColorData
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.up.UploadApiHttp
 import io.suggest.dev.MSzMults
@@ -146,18 +147,24 @@ class LkAdEditCircuit(
 
   private val slideBlocksRW = mDocSRw.zoomRW(_.slideBlocks) { _.withSlideBlocks(_) }
 
-
-  // ---- Контроллеры
-
-  private val layoutAh = new LayoutAh( layoutRW, mDocSRw )
-
-
-  /** Класс для сборки зумма для color-picker'а.
-    * @tparam StateOuter_t Состояние редактирования текущего типа компонента, например MStripEdS.
-    */
+  /** Класс для сборки зумма для color-picker'а. */
   private abstract class ZoomToBgColorPick {
 
-    def getSelTagLoc(mdoc: MDocS): Option[TreeLoc[JdTag]]
+    def getSelTagLoc(mdoc: MDocS): Option[TreeLoc[JdTag]] = {
+      mdoc.jdArgs.selJdt
+        .treeLocOpt
+    }
+
+    def getColorOpt(jdTag: JdTag): Option[MColorData] = {
+      jdTag.props1.bgColor
+    }
+
+    def setColorOpt(jdTag: JdTag, colorOpt2: Option[MColorData]): JdTag = {
+      jdTag.withProps1(
+        jdTag.props1
+          .withBgColor( colorOpt2 )
+      )
+    }
 
     /** @return ZoomRW до Option[MColorPick]. */
     def getZoom: ModelRW[MAeRoot, Option[MColorPick]] = {
@@ -166,7 +173,7 @@ class LkAdEditCircuit(
           currTag <- getSelTagLoc(mdoc)
         } yield {
           color.MColorPick(
-            colorOpt    = currTag.getLabel.props1.bgColor,
+            colorOpt    = getColorOpt(currTag.getLabel),
             colorsState = mdoc.colorsState,
           )
         }
@@ -178,11 +185,7 @@ class LkAdEditCircuit(
           mColorAh <- mColorAhOpt
         } yield {
           val strip2 = jdt0.modifyLabel { s0 =>
-            s0.withProps1(
-              s0.props1.withBgColor(
-                mColorAh.colorOpt
-              )
-            )
+            setColorOpt( s0, mColorAh.colorOpt )
           }
           val tpl2 = strip2.toTree
           val css2 = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf) )
@@ -208,17 +211,43 @@ class LkAdEditCircuit(
   }
 
   /** Трейт для фильтрации по jd tag name. */
-  private trait JdTagNameFilter { this: ZoomToBgColorPick =>
+  private trait JdTagNameFilter extends ZoomToBgColorPick {
 
     def jdtName: MJdTagName
 
-    def getSelTagLoc(mdoc: MDocS): Option[TreeLoc[JdTag]] = {
-      mdoc.jdArgs
-        .selJdt.treeLocOpt
+    override def getSelTagLoc(mdoc: MDocS): Option[TreeLoc[JdTag]] = {
+      super.getSelTagLoc(mdoc)
         .filter( JdTag.treeLocByTypeFilterF(jdtName) )
     }
 
   }
+
+  /** Цвет тени RW. */
+  private val shadowColorRW = {
+    val zoomer = new ZoomToBgColorPick {
+      override def getColorOpt(jdTag: JdTag): Option[MColorData] = {
+        jdTag.props1.textShadow
+          .flatMap(_.color)
+      }
+
+      override def setColorOpt(jdTag: JdTag, colorOpt2: Option[MColorData]): JdTag = {
+        jdTag.withProps1(
+          jdTag.props1.withTextShadow(
+            for (shad0 <- jdTag.props1.textShadow) yield {
+              shad0.withColor( colorOpt2 )
+            }
+          )
+        )
+      }
+
+    }
+    zoomer.getZoom
+  }
+
+
+  // ---- Контроллеры
+
+  private val layoutAh = new LayoutAh( layoutRW, mDocSRw )
 
 
   /** Контроллер настройки цвета фона стрипа. */
@@ -232,17 +261,24 @@ class LkAdEditCircuit(
     )
   }
 
+  /** Контроллер для цвета тени. */
+  private val shadowColorAh = new ColorPickAh(
+    myMarker = Some( MJdShadow.ColorMarkers.TextShadow ),
+    modelRW  = shadowColorRW
+  )
+
   /** Контроллер настройки цвета фона контента. */
   private val qdTagBgColorAh = {
     val zoomBuilder = new ZoomToBgColorPick with JdTagNameFilter {
       override def jdtName = MJdTagNames.QD_CONTENT
     }
-    new ColorPickAh(
+    val p2 = new ColorPickAh(
       myMarker = Some(MJdTagNames.QD_CONTENT),
       modelRW  = zoomBuilder.getZoom
     )
+    // Цвет фона контента, цвет тени контента.
+    foldHandlers(p2, shadowColorAh)
   }
-
 
   private val mPictureAhRW = zoomRW[MPictureAh[Tree[JdTag]]] { mroot =>
     val mdoc = mroot.doc

@@ -1025,4 +1025,5 @@ Location.changed=Местоположение изменилось
 Go.back.to.0=Назад в {0}
 
 Text.shadow=Тень текста
+Shadow.color=Цвет тени
 

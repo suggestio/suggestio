@@ -252,7 +252,7 @@ class JdDocValidator(
         MathConst.Counts.validateMinMax(
           v   = blur,
           min = 0,
-          max = C.BLUR_MAX,
+          max = C.BLUR_MAX * C.BLUR_FRAC,
           errMsgF(BLUR) + `.`
         )
       }

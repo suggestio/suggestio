@@ -36,7 +36,7 @@ object MJdShadow {
   *
   * @param hOffset Сдвиг по горизонтали.
   * @param vOffset Сдвиг по вертикали.
-  * @param color Цвет тени.
+  * @param color Цвет тени (1/10).
   * @param blur Параметр размывки.
   */
 case class MJdShadow(
@@ -44,4 +44,11 @@ case class MJdShadow(
                       vOffset   : Int,
                       color     : Option[MColorData],
                       blur      : Option[Int],
-                    )
+                    ) {
+
+  def withHOffset(hOffset: Int) = copy(hOffset = hOffset)
+  def withVOffset(vOffset: Int) = copy(vOffset = vOffset)
+  def withColor(color: Option[MColorData]) = copy(color = color)
+  def withBlur(blur: Option[Int]) = copy(blur = blur)
+
+}

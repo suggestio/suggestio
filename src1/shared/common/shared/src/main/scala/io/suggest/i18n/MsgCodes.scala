@@ -326,5 +326,6 @@ object MsgCodes {
 
   val `Text.shadow` = "Text.shadow"
   val `Color` = "Color"
+  val `Shadow.color` = "Shadow.color"
 
 }

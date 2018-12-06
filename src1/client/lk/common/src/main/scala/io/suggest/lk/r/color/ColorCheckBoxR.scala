@@ -9,12 +9,12 @@ import io.suggest.lk.m.ColorCheckboxChange
 import io.suggest.lk.r.LkCss
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
+import io.suggest.spa.OptFastEq.Wrapped
 
 /**
   * Suggest.io
@@ -51,11 +51,9 @@ class ColorCheckBoxR(
   type Props = ModelProxy[Props_t]
 
 
-  case class State(
-                    colorBtnPropsC    : ReactConnectProxy[colorBtnR.Props_t]
-                  )
+  private val _colorBtnCssOpt = Option( lkCss.ColorOptPicker.colorRound.htmlClass )
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($: BackendScope[Props, Unit]) {
 
     /** Реакция на клики по галочке заливки цветом. */
     private def _onCheckBoxChanged(e: ReactEventFromInput): Callback = {
@@ -65,10 +63,8 @@ class ColorCheckBoxR(
       }
     }
 
-    def render(propsOptProxy: Props, s: State): VdomElement = {
+    def render(propsOptProxy: Props): VdomElement = {
       // Кнопка активации color-picker'а:
-      val innerBtnC = s.colorBtnPropsC { colorBtnR.apply }
-
       propsOptProxy.value.whenDefinedEl { props =>
         val C = lkCss.ColorOptPicker
 
@@ -94,7 +90,7 @@ class ColorCheckBoxR(
             )
           ),
 
-          props.color.whenDefined { _ =>
+          props.color.whenDefined { mcd =>
             <.span(
               ^.`class` := Css.flat(Css.CLICKABLE, Css.Display.INLINE_BLOCK),
               ^.onClick ==> ReactCommonUtil.stopPropagationCB,
@@ -103,7 +99,14 @@ class ColorCheckBoxR(
               HtmlConstants.NBSP_STR,
 
               // Кнопка активации color-picker'а:
-              innerBtnC,
+              propsOptProxy.wrap { _ =>
+                val p = colorBtnR.PropsVal(
+                  color     = mcd,
+                  cssClass  = _colorBtnCssOpt,
+                  marker    = props.marker,
+                )
+                Some(p): colorBtnR.Props_t
+              }( colorBtnR.apply ),
 
             )
           }
@@ -115,23 +118,7 @@ class ColorCheckBoxR(
 
 
   val component = ScalaComponent.builder[Props](getClass.getSimpleName)
-    .initialStateFromProps { propsOptProxy =>
-      val colorBtnCssOpt = Option( lkCss.ColorOptPicker.colorRound.htmlClass )
-      State(
-        colorBtnPropsC = propsOptProxy.connect { propsOpt =>
-          for {
-            props <- propsOpt
-            color <- props.color
-          } yield {
-            colorBtnR.PropsVal(
-              color     = color,
-              cssClass  = colorBtnCssOpt,
-              marker    = props.marker,
-            )
-          }
-        }( OptFastEq.Wrapped )
-      )
-    }
+    .stateless
     .renderBackend[Backend]
     .build
 
