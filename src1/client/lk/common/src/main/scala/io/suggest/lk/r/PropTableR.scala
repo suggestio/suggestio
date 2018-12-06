@@ -24,7 +24,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 object PropTableR {
 
-  val Outer = ScalaComponent.builder[Unit]("PropTable")
+  val Outer = ScalaComponent.builder[Unit](getClass.getSimpleName)
     .stateless
     .render_C { children =>
       <.table(
@@ -47,7 +47,7 @@ object PropTableR {
   }
 
   /** Один ряд таблицы. */
-  val Row = ScalaComponent.builder[TagMod]("PropTableRow")
+  val Row = ScalaComponent.builder[TagMod](getClass.getSimpleName + "Row")
     .stateless
     .renderPC { (_, name, children) =>
       <.tr(

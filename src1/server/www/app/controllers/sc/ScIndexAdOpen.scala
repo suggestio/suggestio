@@ -45,7 +45,9 @@ trait ScIndexAdOpen
       )
     }
 
-    override def isFocusedAdOpen = true
+    override def isFocusedAdOpen = {
+      true
+    }
 
     override lazy val indexNodeFut: Future[MIndexNodeInfo] = {
       val nodeInfo = MIndexNodeInfo(

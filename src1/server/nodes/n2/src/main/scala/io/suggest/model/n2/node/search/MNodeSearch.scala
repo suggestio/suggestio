@@ -28,7 +28,6 @@ trait MNodeSearch
   with AdnIsTest
   with NodeTypes
   with WithoutIds
-  with ShowInScNl
   with IsEnabled
   with IsDependent
   with NameSort
@@ -61,7 +60,6 @@ trait MNodeSearchDflt
   with AdnIsTestDflt
   with NodeTypesDflt
   with WithoutIdsDflt
-  with ShowInScNlDflt
   with IsEnabledDflt
   with IsDependentDflt
   with NameSortDflt
@@ -93,7 +91,6 @@ trait MNodeSearchWrap
   with AdnIsTestWrap
   with NodeTypesWrap
   with WithoutIdsWrap
-  with ShowInScNlWrap
   with IsEnabledWrap
   with IsDependentWrap
   with NameSortWrap

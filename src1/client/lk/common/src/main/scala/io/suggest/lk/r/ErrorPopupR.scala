@@ -90,7 +90,7 @@ object ErrorPopupR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("ErrorPopup")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build

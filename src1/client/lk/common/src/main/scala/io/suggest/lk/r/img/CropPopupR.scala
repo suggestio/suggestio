@@ -141,7 +141,7 @@ class CropPopupR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("CropPop")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build

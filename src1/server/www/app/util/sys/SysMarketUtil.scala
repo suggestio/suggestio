@@ -103,20 +103,18 @@ class SysMarketUtil extends MacroLogsDyn {
     "rights"        -> adnRightsM,
     "testNode"      -> boolean,
     "isUser"        -> boolean,
-    "showInScNl"    -> boolean
   )
-  {(shownTypeIdOpt, rights, isTestNode, isUser, showInScNl) =>
+  {(shownTypeIdOpt, rights, isTestNode, isUser) =>
     MAdnExtra(
       rights          = rights,
       shownTypeIdOpt  = shownTypeIdOpt,
       testNode        = isTestNode,
       isUser          = isUser,
-      showInScNl      = showInScNl
     )
   }
   {mae =>
     import mae._
-    Some((shownTypeIdOpt, rights, testNode, isUser, showInScNl))
+    Some((shownTypeIdOpt, rights, testNode, isUser))
   }
 
 

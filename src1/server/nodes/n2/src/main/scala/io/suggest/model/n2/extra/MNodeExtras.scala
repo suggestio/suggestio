@@ -37,7 +37,6 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
       def IS_TEST_FN          = _fullFn( F.IS_TEST )
       def RIGHTS_FN           = _fullFn( F.RIGHTS )
       def SHOWN_TYPE_FN       = _fullFn( F.SHOWN_TYPE )
-      def SHOW_IN_SC_NL_FN    = _fullFn( F.SHOW_IN_SC_NL )
     }
 
 

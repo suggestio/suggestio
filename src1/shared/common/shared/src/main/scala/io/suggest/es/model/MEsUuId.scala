@@ -16,10 +16,10 @@ import japgolly.univeq._
 
 object MEsUuId {
 
-  def charsAllowedRe = "[_a-zA-Z0-9-]"
+  def charsAllowedRe = "[._a-zA-Z0-9-]"
 
   /** Регэксп для проверки валидности id. */
-  val uuidB64Re = (charsAllowedRe + "{19,25}").r
+  val uuidB64Re = (charsAllowedRe + "{16,25}").r
 
   /** Регэксп для парсинга uuid, закодированного в base64, допускающего необычно-большую длину.
     * Удлиненние id может быть у маячков.

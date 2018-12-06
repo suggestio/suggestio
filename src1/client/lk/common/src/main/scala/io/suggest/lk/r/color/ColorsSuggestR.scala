@@ -83,7 +83,7 @@ class ColorsSuggestR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("ColorSuggest")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build

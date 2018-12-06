@@ -26,7 +26,6 @@ class MAdnExtraSpec extends FlatSpec with PlayJsonTestUtil {
         isUser = true,
         shownTypeIdOpt = Some("a"),
         testNode = true,
-        showInScNl = true
       )
     }
   }

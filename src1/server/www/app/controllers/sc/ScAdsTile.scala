@@ -5,8 +5,11 @@ import _root_.util.showcase.{IScAdSearchUtilDi, IScUtil}
 import _root_.util.stat.IStatUtil
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MSzMult
+import io.suggest.es.search.MRandomSortData
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.{IMNodes, MNode}
+import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.primo.TypeT
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.ads.{MSc3AdData, MSc3AdsResp}
@@ -22,6 +25,7 @@ import japgolly.univeq._
 import scala.concurrent.Future
 import models.blk
 import util.ad.IJdAdUtilDi
+import util.adn.INodesUtil
 
 /**
  * Suggest.io
@@ -39,6 +43,7 @@ trait ScAdsTile
   with ICanEditAdDi
   with IStatUtil
   with IJdAdUtilDi
+  with INodesUtil
 {
 
   import mCommonDi._
@@ -96,18 +101,60 @@ trait ScAdsTile
       }
     }
 
-    // Группировка groupNarrowAds отключена, т.к. новый focused-порядок не соответствует плитке,
-    // а плитка страдает от выравнивания по 2 столбца.
-    def madsGroupedFut = madsFut//.map { scUtil.groupNarrowAds }
+
+    /** Рекламные карточки, когда не найдено рекламных карточек. */
+    def mads404: Future[Seq[MNode]] = {
+      val nodeId404 = nodesUtil.noAdsFound404NodeId( ctx.messages.lang )
+      LOGGER.trace(s"$logPrefix No ads found, will open from 404-node#$nodeId404")
+
+      // Ищем карточки в узле-404 и их возвращаем:
+      val msearchAds404 = new MNodeSearchDfltImpl {
+        override val nodeTypes = MNodeTypes.Ad :: Nil
+        override val outEdges: Seq[Criteria] = {
+          val cr = Criteria(
+            nodeIds = nodeId404 :: Nil,
+            predicates = MPredicates.Receiver :: Nil
+          )
+          cr :: Nil
+        }
+        override val randomSort: Option[MRandomSortData] = {
+          for (gen <- _qs.search.genOpt) yield
+            MRandomSortData(gen)
+        }
+        override def offset = 0
+        override def limit = nodesUtil.MAX_404_ADS_ONCE
+      }
+      val ads404Fut = mNodes.dynSearch(msearchAds404)
+
+      if (LOGGER.underlying.isTraceEnabled)
+        for (ads404 <- ads404Fut)
+          LOGGER.trace(s"$logPrefix Returning ${ads404.length} of 404-ads: [${ads404.iterator.flatMap(_.id).mkString(", ")}]")
+
+      ads404Fut
+    }
+
 
     /** Очень параллельный рендер в HTML всех необходимых карточек. */
     def madsRenderedFut: Future[Seq[T]] = {
-      // Запускаем асинхронные операции
-      val _madsGroupedFut = madsGroupedFut
-        .map { _.zipWithIndex }
       // Для доступа к offset для вычисления index (порядкового номера карточки).
       val offsetFut = adSearch2Fut
         .map { _.offset }
+
+      val _madsFut = for {
+        mads    <- madsFut
+        offset  <- offsetFut
+        mads2   <- {
+          if (mads.isEmpty  &&  offset <= 0) {
+            // TODO Передавать на клиент, что нет больше карточек, чтобы не было дальнейшего запроса подгрузки ещё карточек.
+            LOGGER.trace(s"$logPrefix mads[${mads.length}] offset=$offset => 404")
+            mads404
+          } else {
+            Future.successful(mads)
+          }
+        }
+      } yield {
+        mads2.zipWithIndex
+      }
 
       // Получаем синхронные данные
       //val devScreenOpt = ctx.deviceScreenOpt
@@ -115,7 +162,7 @@ trait ScAdsTile
 
       // Продолжаем асинхронную обработку
       for {
-        madsIndexed   <- _madsGroupedFut
+        madsIndexed   <- _madsFut
         offset        <- offsetFut
         renderStartedAt = System.currentTimeMillis()
         madsRendered  <- {

@@ -26,7 +26,6 @@ object MAdnExtra extends IGenEsMappingProps {
     val IS_BY_USER          = "u"
     val SHOWN_TYPE          = "s"
     val IS_TEST             = "t"
-    val SHOW_IN_SC_NL       = "n"
 
   }
 
@@ -55,11 +54,6 @@ object MAdnExtra extends IGenEsMappingProps {
       .inmap [Boolean] (
         _.getOrElseFalse,
         someF
-      ) and
-    (__ \ SHOW_IN_SC_NL).formatNullable[Boolean]
-      .inmap [Boolean] (
-        _.getOrElseTrue,
-        someF
       )
   )(apply, unlift(unapply))
 
@@ -73,7 +67,6 @@ object MAdnExtra extends IGenEsMappingProps {
       FieldBoolean(IS_BY_USER, index = true, include_in_all = false),
       FieldKeyword(SHOWN_TYPE, index = true, include_in_all = false),
       FieldBoolean(IS_TEST, index = true, include_in_all = false),
-      FieldBoolean(SHOW_IN_SC_NL, index = true, include_in_all = false)
     )
   }
 
@@ -87,7 +80,6 @@ object MAdnExtra extends IGenEsMappingProps {
   *                       Появилось, когда понадобилось обозначить торговый центр вокзалом/портом, не меняя его свойств.
   * @param testNode Отметка о тестовом характере существования этого узла.
   *                 Он не должен отображаться для обычных участников сети, а только для других тестовых узлов.
-  * @param showInScNl Можно ли узел отображать в списке узлов выдачи?
   * @param resView Уровень представления ресурсов adn-узла. Логотипы, картинки приветствия и т.д. - сюда.
   */
 case class MAdnExtra(
@@ -96,7 +88,6 @@ case class MAdnExtra(
                       isUser                : Boolean                   = false,
                       shownTypeIdOpt        : Option[String]            = None,
                       testNode              : Boolean                   = false,
-                      showInScNl            : Boolean                   = true,
                     ) {
 
   def withResView(resView: MAdnResView) = copy(resView = resView)

@@ -45,7 +45,13 @@
       @nodeOpt.fold {
         <img class="header_logo-text" src='@cdn.asset("images/market/index/logo_retina.png")' width="101" height="26"/>
       } { mnode =>
-        <span class="header_logo-text">@mnode.meta.basic.name</span>
+        <span class="header_logo-text">
+          @mnode.meta.basic.nameOpt.orElse(mnode.id)
+          @* Рендерить флаг тестового (внутреннего) узла. *@
+          @if( mnode.extras.adn.exists(_.testNode) ) {
+            <strong>⚗</strong>
+          }
+        </span>
         @* TODO Виджет корзины со счётчиком. *@
       }
 

@@ -50,7 +50,7 @@ class CropBtnR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("CropBtn")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build

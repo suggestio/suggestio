@@ -100,7 +100,7 @@ class ColorPickerR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("ColorPick")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build

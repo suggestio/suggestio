@@ -59,7 +59,6 @@ object MNodeFields {
     def ADN_IS_TEST_FN          = _fullFn( F.Adn.IS_TEST_FN )
     def ADN_RIGHTS_FN           = _fullFn( F.Adn.RIGHTS_FN )
     def ADN_SHOWN_TYPE_FN       = _fullFn( F.Adn.SHOWN_TYPE_FN )
-    def ADN_SHOW_IN_SC_NL_FN    = _fullFn( F.Adn.SHOW_IN_SC_NL_FN )
 
     def BEACON_UUID_FN          = _fullFn( F.Beacon.UUID_FN )
     def BEACON_MAJOR_FN         = _fullFn( F.Beacon.MAJOR_FN )

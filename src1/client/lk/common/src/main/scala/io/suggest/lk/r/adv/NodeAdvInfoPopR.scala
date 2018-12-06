@@ -328,7 +328,7 @@ object NodeAdvInfoPopR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("NodeAdvInfoPop")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build

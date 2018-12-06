@@ -328,4 +328,6 @@ object MsgCodes {
   val `Color` = "Color"
   val `Shadow.color` = "Shadow.color"
 
+  val `No.ads.found.node.id` = "No.ads.found.node.id"
+
 }

@@ -16,6 +16,7 @@ import models.msc.TileArgs
 import util.adv.AdvUtil
 import util.n2u.N2NodesUtil
 import io.suggest.common.empty.OptionUtil.Implicits._
+import util.adn.NodesUtil
 
 import scala.concurrent.Future
 
@@ -29,6 +30,7 @@ import scala.concurrent.Future
 class ShowcaseUtil @Inject() (
                                advUtil      : AdvUtil,
                                n2NodesUtil  : N2NodesUtil,
+                               nodesUtil    : NodesUtil,
                                mNodes       : MNodes,
                                mCommonDi    : ICommonDi
                              )
@@ -240,7 +242,9 @@ class ShowcaseUtil @Inject() (
             .get
         }
 
-        if !(qs.search.rcvrId containsStr producerId )
+        // Запрещать переход в самого себя:
+        if !(qs.search.rcvrId containsStr producerId ) &&
+          !nodesUtil.is404Node( producerId )   // Запрещать переход на 404-узел и 404-карточку.
 
         producer <- {
           val prodFut = mNodesCache.getById(producerId)

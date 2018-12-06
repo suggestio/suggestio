@@ -119,7 +119,7 @@ object DeleteConfirmPopupR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("DelConfPop")
+  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
     .stateless
     .renderBackend[Backend]
     .build

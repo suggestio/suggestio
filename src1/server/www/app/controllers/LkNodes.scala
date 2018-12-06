@@ -359,7 +359,6 @@ class LkNodes @Inject() (
                 adn = Some(MAdnExtra(
                   rights      = Set( MAdnRights.RECEIVER ),
                   isUser      = !request.user.isSuper,
-                  showInScNl  = false
                 ))
               ),
 

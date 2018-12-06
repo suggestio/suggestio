@@ -26,7 +26,7 @@ import models.mext.MExtServices
 import models.mproj.ICommonDi
 import models.mwc.MWelcomeRenderArgs
 import models.usr.MPersonIdents
-import play.api.i18n.Messages
+import play.api.i18n.{Lang, Langs, Messages}
 import play.api.mvc.Call
 import util.cdn.CdnUtil
 import util.img.DynImgUtil
@@ -40,7 +40,8 @@ import scala.util.Random
  * Created: 10.02.15 9:53
  * Description: Утиль для работы с нодами. Появилось, когда понадобилась функция создания пользовательского узла
  * в нескольких контроллерах.
- * 2015.mar.18: Для новосозданного узла нужно создавать начальные рекламные карточки.
+ *
+ * Обязательно singleton, т.к. инициализация 404-узлов идёт здесь.
  */
 @Singleton
 final class NodesUtil @Inject() (
@@ -124,7 +125,6 @@ final class NodesUtil @Inject() (
           isUser          = true,
           shownTypeIdOpt  = Some(AdnShownTypes.SHOP.name),
           testNode        = false,
-          showInScNl      = false
         ))
       ),
       edges = MNodeEdges(
@@ -396,6 +396,79 @@ final class NodesUtil @Inject() (
       }
     }
   }
+
+
+  /** Префикс id узла, содержащего 404-карточки. */
+  def NO_ADS_FOUND_404_NODE_ID_PREFIX = ".___404___."
+  /** Сборка id узла, содержащего 404-карточки для указанного языка. */
+  def noAdsFound404NodeId(lang: Lang): String =
+    NO_ADS_FOUND_404_NODE_ID_PREFIX + lang.code
+
+  /** Проверить, является ли id данного узла служебным, относящимся к 404-узлу.
+    *
+    * @param nodeId id узла.
+    * @return true, если данный id узла относится к 404-узлу.
+    */
+  def is404Node(nodeId: String): Boolean =
+    nodeId startsWith NO_ADS_FOUND_404_NODE_ID_PREFIX
+
+  /** Макс. кол-во карточек 404 за порцию плитки в выдаче. */
+  def MAX_404_ADS_ONCE = 10
+
+  /** Запуск инициализации пустых 404-узлов.
+    *
+    * @return Фьючерс.
+    */
+  def init404nodes(): Future[_] = {
+    lazy val logPrefix = s"init404nodes()#${System.currentTimeMillis()}:"
+
+    val langs = current.injector.instanceOf[Langs]
+    val nodesFut = Future.traverse( langs.availables ) { lang =>
+      val nodeId = noAdsFound404NodeId( lang )
+      for {
+        mnodeOpt <- mNodesCache.getById( nodeId )
+        resNode <- FutureUtil.opt2future( mnodeOpt ) {
+          LOGGER.info(s"$logPrefix Will initialize 404-node#$nodeId for lang#${lang.code}")
+          // Узел максимально прост и примитивен, т.к. не должен нести какой-либо доп.нагрузки: всё в карточках.
+          val mnode = MNode(
+            id = Some(nodeId),
+            common = MNodeCommon(
+              ntype       = MNodeTypes.AdnNode,
+              isDependent = false,
+              isEnabled   = true,
+            ),
+            extras = MNodeExtras(
+              adn = Some(MAdnExtra(
+                rights   = Set( MAdnRights.PRODUCER, MAdnRights.RECEIVER ),
+                isUser   = false,
+                testNode = true,
+              ))
+            ),
+            meta = MMeta(
+              basic = MBasicMeta(
+                hiddenDescr = Some(s"Узел-контейнер 404-карточек для языка ${lang.code}.")
+              )
+            )
+          )
+          for (_ <- mNodes.save( mnode )) yield
+            mnode
+        }
+      } yield {
+        resNode
+      }
+    }
+
+    // Залоггировать id узлов:
+    if (LOGGER.underlying.isTraceEnabled)
+      for (nodes <- nodesFut)
+        LOGGER.trace(s"$logPrefix ${nodes.length} nodes: [${nodes.iterator.flatMap(_.id).mkString(", ")}]")
+
+    nodesFut
+  }
+
+
+  // Конструктор - зарегать все 404-узлы:
+  init404nodes()
 
 }
 
