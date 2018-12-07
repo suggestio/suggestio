@@ -1,18 +1,13 @@
 package io.suggest.sjs.common.xhr
 
-import io.suggest.id.IdentConst
 import io.suggest.proto.HttpConst
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.model.{HttpRoute, HttpRouteExtractor}
-import io.suggest.sjs.common.xhr.ex._
-import org.scalajs.dom.XMLHttpRequest
+import org.scalajs.dom
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future
 import scala.scalajs.js
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.controller.DomQuick
-import io.suggest.sjs.common.log.Log
-import org.scalajs.dom
-import org.scalajs.dom.ext.{Ajax, AjaxException}
 
 /**
   * Suggest.io
@@ -84,33 +79,6 @@ object Xhr extends Log {
   }
 
 
-  /**
-    * Отправка асинхронного запроса силами голого js.
-    *
-    * @see [[http://stackoverflow.com/a/8567149 StackOverflow]]
-    * @param method HTTP-метод.
-    * @param url Ссылка.
-    * @param timeoutMsOpt Таймаут запроса в миллисекундах, если необходимо.
-    * @return Фьючерс с результатом.
-    */
-  def execute(httpReq: HttpReq): HttpRespHolder = {
-    XhrHttpRespHolder(
-      xhrFut = _handleUnauthorized {
-        Ajax(
-          method          = httpReq.method,
-          url             = httpReq.url,
-          data            = httpReq.data.body,
-          timeout         = httpReq.data.timeoutMsOr0,
-          headers         = httpReq.data.headers,
-          withCredentials = httpReq.data.xhrWithCredentialsCrossSite,
-          responseType    = httpReq.data.respType.xhrResponseType,
-        )
-          .catchAjaxEx(method = httpReq.method, url = httpReq.url)
-      }
-    )
-  }
-
-
   def route2url[HttpRoute: HttpRouteExtractor](route: HttpRoute): String = {
     val hre = implicitly[HttpRouteExtractor[HttpRoute]]
     if (PREFER_ABS_URLS)
@@ -120,45 +88,46 @@ object Xhr extends Log {
   }
 
 
-  /** Повесить на XHR-ответы фоновую слушалку ответов сервера, чтобы отработать случаи завершения пользователькой сессии.
+  /**
+    * Отправка асинхронного запроса силами голого js.
     *
-    * @param xhrFut Выхлоп Ajax().
-    * @return Фьючерс с XHR внутри.
+    * @param method HTTP-метод.
+    * @param url Ссылка.
+    * @param timeoutMsOpt Таймаут запроса в миллисекундах, если необходимо.
+    * @return Фьючерс с результатом.
     */
-  private def _handleUnauthorized(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
-    xhrFut.failed.foreach {
-      case AjaxException(xhr) =>
-        if (xhr.status == HttpConst.Status.UNAUTHORIZED) {
-          // 401 в ответе означает, что сессия истекла и продолжать нормальную работу невозможно.
-          DomQuick.reloadPage()
-        }
-
-      case _ => // Do nothing
-    }
-
-    // Повесить слушалку на как-будто-бы-положительные XHR-ответы, чтобы выявлять редиректы из-за отсутствия сессии.
-    for (xhr <- xhrFut) {
-      if (xhr.status == HttpConst.Status.OK && Option(xhr.getResponseHeader(IdentConst.HTTP_HDR_SUDDEN_AUTH_FORM_RESP)).nonEmpty ) {
-        // Пришла HTML-форма в ответе. Такое бывает, когда сессия истекла, но "Accept:" допускает HTML-ответы.
-        DomQuick.reloadPage()
-      }
-    }
-
-    // Вернуть исходный реквест, ибо side-effect'ы работают сами по себе.
-    xhrFut
+  val execute: HttpClientExecutor = {
+    Stream.cons[HttpClientExecutor](
+      FetchExecutor,
+      XhrExecutor #:: Stream.empty[HttpClientExecutor]
+    )
+      .find(_.isAvailable)
+      .get
   }
 
+}
 
-  implicit class XhrFutExtOps(val xhrFut: Future[XMLHttpRequest]) extends AnyVal {
 
-    /** Перехват и подмена стандартной AjaxException на более логгируемый вариант. */
-    def catchAjaxEx(method: String = null, url: String = null): Future[XMLHttpRequest] = {
-      xhrFut.recoverWith { case ex: AjaxException =>
-        // Плохое логгирование исправляем сразу:
-        val ex2 = XhrFailedException(
-          xhr       = ex.xhr,
-          url       = url,
-          method    = method,
+/** Интерфейс для http-клиент обёрток над нативным API. */
+trait HttpClientExecutor {
+
+  /** Доступно ли указанное API? */
+  def isAvailable: Boolean
+
+  /** Запустить http-запрос. */
+  def apply(httpReq: HttpReq): HttpRespHolder
+
+}
+object HttpClientExecutor {
+
+  implicit class FutureOpsExt[T]( val fut: Future[T] ) extends AnyVal {
+
+    /** Любой экзепшен нативного http-клиента надо отобразить в текущий формат. */
+    def exception2httpEx(httpReq: HttpReq): Future[T] = {
+      fut.recoverWith { case ex: Throwable =>
+        val ex2 = HttpFailedException(
+          url       = httpReq.url,
+          method    = httpReq.method,
           getCause  = ex
         )
         Future.failed(ex2)

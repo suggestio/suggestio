@@ -39,6 +39,7 @@ class SysMdrApiXhrImpl extends ISysMdrApi {
       data = HttpReqData.justAcceptJson
     )
     Xhr.execute(req)
+      .respAuthFut
       .successIf200
       .unJson[MMdrNextResp]
   }
@@ -52,8 +53,8 @@ class SysMdrApiXhrImpl extends ISysMdrApi {
       data = HttpReqData.justAcceptJson
     )
     Xhr.execute(req)
+      .respAuthFut
       .successIfStatus( HttpConst.Status.NO_CONTENT )
-      .future
       // TODO Десериализовать/обработать ответ.
   }
 
@@ -65,8 +66,8 @@ class SysMdrApiXhrImpl extends ISysMdrApi {
       )
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIfStatus( HttpConst.Status.NO_CONTENT )
-      .future
   }
 
 }

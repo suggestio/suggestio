@@ -99,6 +99,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       data  = HttpReqData.justAcceptJson
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unJson[MLknNodeResp]
   }
@@ -113,6 +114,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       )
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unJson[MLknNode]
   }
@@ -124,6 +126,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       data  = HttpReqData.justAcceptJson
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unJson[MLknNode]
   }
@@ -135,10 +138,10 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       route = routes.controllers.LkNodes.deleteNode(nodeId)
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIfStatus( NO_CONTENT, NOT_FOUND )
-      .responseStatusFut
-      .map { status =>
-        status ==* NO_CONTENT
+      .map { resp =>
+        resp.status ==* NO_CONTENT
       }
   }
 
@@ -152,6 +155,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       )
     )
     Xhr.execute(req)
+      .respAuthFut
       .successIf200
       .unJson[MLknNode]
   }
@@ -167,6 +171,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       data = HttpReqData.justAcceptJson
     )
     Xhr.execute(req)
+      .respAuthFut
       .successIf200
       .unJson[MLknNode]
   }
@@ -183,6 +188,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       )
     )
     Xhr.execute(req)
+      .respAuthFut
       .successIf200
       .unJson[MLknNode]
   }
@@ -193,8 +199,8 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       route = routes.controllers.LkNodes.setAdvShowOpened(adId, isShowOpened, RcvrKey.rcvrKey2urlPath(onNode))
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIfStatus( S.OK, S.NO_CONTENT )
-      .responseRawFut
   }
 
 }

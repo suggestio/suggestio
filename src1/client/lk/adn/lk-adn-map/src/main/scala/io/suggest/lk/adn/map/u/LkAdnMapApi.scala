@@ -54,6 +54,7 @@ class LkAdnMapApiHttpImpl
       )
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unBooPickle[MGetPriceResp]
   }
@@ -69,6 +70,7 @@ class LkAdnMapApiHttpImpl
       )
     )
     Xhr.execute( req )
+      .respAuthFut
       .responseTextFut
   }
 
@@ -79,6 +81,7 @@ class LkAdnMapApiHttpImpl
       data  = HttpReqData.justAcceptJson
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .nativeJsonFut[js.Array[GjFeature]]
   }
@@ -93,6 +96,7 @@ class LkAdnMapApiHttpImpl
       )
     )
     Xhr.execute(req)
+      .respAuthFut
       .successIf200
       .unBooPickle[MGeoAdvExistPopupResp]
   }

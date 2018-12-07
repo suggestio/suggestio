@@ -78,6 +78,7 @@ class LkAdEditApiHttp(
     )
 
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unJson[MAdEditFormInit]
   }
@@ -93,6 +94,7 @@ class LkAdEditApiHttp(
       )
     )
     Xhr.execute( req )
+      .respAuthFut
       .responseTextFut
   }
 

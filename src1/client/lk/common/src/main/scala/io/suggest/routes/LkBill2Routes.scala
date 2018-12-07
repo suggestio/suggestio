@@ -38,6 +38,7 @@ trait LkBill2NodeAdvInfoHttpApiImpl extends ILkBill2NodeAdvInfoApi {
       )
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unBooPickle[MNodeAdvInfo]
   }

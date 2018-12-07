@@ -36,6 +36,7 @@ class AdvRcvrsMapApiHttpViaUrl(jsRoutes: => IJsRouter = routes) extends IAdvRcvr
       data  = HttpReqData.justAcceptJson
     )
     Xhr.execute(req)
+      .respAuthFut
       .successIf200
       .unJson[List[MGeoNodePropsShapes]]
       .map { MGeoNodesResp.apply }

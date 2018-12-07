@@ -44,6 +44,7 @@ object ScJsRoutesUtil {
       )
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unJson[RespT]
   }

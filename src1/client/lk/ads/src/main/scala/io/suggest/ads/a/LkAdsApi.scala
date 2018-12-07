@@ -38,6 +38,7 @@ class LkAdsApiHttp() extends ILkAdsApi {
       data = HttpReqData.justAcceptJson
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unJson[Seq[MLkAdsOneAdResp]]
   }

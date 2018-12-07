@@ -66,6 +66,7 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
     )
     val S = HttpConst.Status
     Xhr.execute( req )
+      .respAuthFut
       .successIfStatus( S.CREATED, S.ACCEPTED, S.NOT_ACCEPTABLE )
       .unJson[MUploadResp]
   }
@@ -99,6 +100,7 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
     )
 
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unJson[MUploadResp]
   }

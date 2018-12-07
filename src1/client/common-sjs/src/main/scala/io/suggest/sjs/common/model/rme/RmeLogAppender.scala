@@ -54,8 +54,8 @@ abstract class RmeLogAppender extends ILogAppender {
     )
 
     val fut = Xhr.execute( req )
+      .respAuthFut
       .successIfStatus( HttpStatuses.NO_CONTENT )
-      .future
 
     // Залоггировать проблемы реквеста в консоль.
     for (ex <- fut.failed) {

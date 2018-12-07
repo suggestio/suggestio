@@ -1,7 +1,8 @@
 package io.suggest.lk.nodes.form.m
 
 import io.suggest.proto.HttpConst
-import io.suggest.sjs.common.xhr.ex.XhrFailedException
+import io.suggest.sjs.common.xhr.HttpFailedException
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -18,8 +19,8 @@ object LknException {
 
   def apply(ex: Throwable): ILknException = {
     ex match {
-      case ae: XhrFailedException =>
-        if (ae.xhr.status == HttpConst.Status.CONFLICT) {
+      case ae: HttpFailedException =>
+        if (ae.resp.exists(_.status ==* HttpConst.Status.CONFLICT)) {
           LknException( "Node.with.such.id.already.exists", ae )
         } else {
           unknown(ae)

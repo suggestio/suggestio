@@ -35,6 +35,7 @@ trait RcvrPopupHttpApiImpl extends IRcvrPopupApi {
       )
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unBooPickle[MRcvrPopupResp]
   }

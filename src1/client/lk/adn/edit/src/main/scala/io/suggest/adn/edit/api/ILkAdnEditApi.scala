@@ -33,6 +33,7 @@ class LKAdnEditApiHttp( confRO: ModelRO[MAdnEditFormConf] ) extends ILkAdnEditAp
       )
     )
     Xhr.execute(req)
+      .respAuthFut
       .successIf200
       .unJson[MAdnEditForm]
   }

@@ -75,6 +75,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
       data = HttpReqData.justAcceptJson
     )
     Xhr.execute(req)
+      .respAuthFut
       .successIf200
       .nativeJsonFut[js.Array[GjFeature]]
   }
@@ -88,6 +89,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
       )
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unBooPickle[MGeoAdvExistPopupResp]
   }
@@ -105,6 +107,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
       )
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unBooPickle[MGetPriceResp]
   }
@@ -121,6 +124,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
       )
     )
     Xhr.execute( req )
+      .respAuthFut
       .responseTextFut
   }
 

@@ -45,6 +45,7 @@ class LkCartApiXhrImpl extends ILkCartApi {
       data = HttpReqData.justAcceptJson
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unJson[MOrderContent]
   }
@@ -57,6 +58,7 @@ class LkCartApiXhrImpl extends ILkCartApi {
       data = HttpReqData.justAcceptJson
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unJson[MOrderContent]
   }

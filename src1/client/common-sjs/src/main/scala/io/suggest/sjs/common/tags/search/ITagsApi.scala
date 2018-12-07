@@ -37,6 +37,7 @@ trait TagsHttpApiImpl extends ITagsApi {
       )
     )
     Xhr.execute( req )
+      .respAuthFut
       .successIf200
       .unBooPickle[MTagsFound]
   }
