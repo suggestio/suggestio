@@ -3,13 +3,10 @@ package io.suggest.ad.edit.srv
 import diode.ModelRO
 import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit}
 import io.suggest.jd.MJdAdData
-import io.suggest.pick.MimeConst
-import io.suggest.proto.HttpConst
 import io.suggest.routes.routes
-import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 import io.suggest.up.IUploadApi
 import play.api.libs.json.Json
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.model.Route
 
 import scala.concurrent.Future
@@ -70,37 +67,33 @@ class LkAdEditApiHttp(
       adId       = adIdNull,
       producerId = producerIdNull
     )
-    val jsonMime = MimeConst.APPLICATION_JSON
 
-    val xhrFut =
-      Xhr.successIf200 {
-        Xhr.send(
-          route = route,
-          timeoutMsOpt = XHR_REQ_TIMEOUT_MS_OPT,
-          headers = Seq(
-            HttpConst.Headers.CONTENT_TYPE -> jsonMime,
-            HttpConst.Headers.ACCEPT -> jsonMime
-          ),
-          body = Json.toJson(form).toString()
-        )
-      }
+    val req = HttpReq.routed(
+      route = route,
+      data  = HttpReqData(
+        timeoutMs = XHR_REQ_TIMEOUT_MS_OPT,
+        headers   = HttpReqData.headersJsonSendAccept,
+        body      = Json.toJson(form).toString()
+      )
+    )
 
-    for (xhr <- xhrFut) yield {
-      Json
-        .parse( xhr.responseText )
-        .as[MAdEditFormInit]
-    }
+    Xhr.execute( req )
+      .successIf200
+      .unJson[MAdEditFormInit]
   }
 
 
   override def deleteSubmit(adId: String): Future[String] = {
     val adId = confRO.value.adId.get
     val route = routes.controllers.LkAdEdit.deleteSubmit( adId )
-    for {
-      xhr <- Xhr.send(route, timeoutMsOpt = XHR_REQ_TIMEOUT_MS_OPT)
-    } yield {
-      xhr.responseText
-    }
+    val req = HttpReq.routed(
+      route = route,
+      data  = HttpReqData(
+        timeoutMs = XHR_REQ_TIMEOUT_MS_OPT
+      )
+    )
+    Xhr.execute( req )
+      .responseTextFut
   }
 
 }

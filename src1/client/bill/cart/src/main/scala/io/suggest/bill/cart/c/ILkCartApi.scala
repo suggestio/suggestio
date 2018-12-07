@@ -4,7 +4,7 @@ import io.suggest.bill.cart.MOrderContent
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.routes.routes
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 
 import scala.scalajs.js.JSConverters._
 import scala.concurrent.Future
@@ -38,21 +38,27 @@ trait ILkCartApi {
 class LkCartApiXhrImpl extends ILkCartApi {
 
   override def getOrder(orderId: Option[Gid_t]): Future[MOrderContent] = {
-    val route = routes.controllers.LkBill2.getOrder(
-      orderId = orderId.mapDefined(_.toDouble)
+    val req = HttpReq.routed(
+      route = routes.controllers.LkBill2.getOrder(
+        orderId = orderId.mapDefined(_.toDouble)
+      ),
+      data = HttpReqData.justAcceptJson
     )
-    Xhr.unJsonResp[MOrderContent] {
-      Xhr.requestJsonText(route)
-    }
+    Xhr.execute( req )
+      .successIf200
+      .unJson[MOrderContent]
   }
 
   override def deleteItems(itemIds: Iterable[Gid_t]): Future[MOrderContent] = {
-    val route = routes.controllers.LkBill2.deleteItems(
-      itemIds = itemIds.iterator.map(_.toDouble).toJSArray
+    val req = HttpReq.routed(
+      route = routes.controllers.LkBill2.deleteItems(
+        itemIds = itemIds.iterator.map(_.toDouble).toJSArray
+      ),
+      data = HttpReqData.justAcceptJson
     )
-    Xhr.unJsonResp[MOrderContent] {
-      Xhr.requestJsonText(route)
-    }
+    Xhr.execute( req )
+      .successIf200
+      .unJson[MOrderContent]
   }
 
 }

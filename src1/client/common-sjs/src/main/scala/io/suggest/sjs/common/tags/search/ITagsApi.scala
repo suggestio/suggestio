@@ -3,7 +3,7 @@ package io.suggest.sjs.common.tags.search
 import io.suggest.common.tags.search.MTagsFound
 import io.suggest.common.tags.search.MTagsFound.pickler
 import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, HttpRespTypes, Xhr}
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -29,10 +29,16 @@ trait TagsHttpApiImpl extends ITagsApi {
   protected def _tagsSearchRoute: js.Dictionary[js.Any] => Route
 
   override def tagsSearch(args: MTagSearchArgs): Future[MTagsFound] = {
-    val route = _tagsSearchRoute( MTagSearchArgs.toJson(args) )
-    Xhr.unBooPickleResp[MTagsFound] {
-      Xhr.requestBinary(route)
-    }
+    val req = HttpReq.routed(
+      route = _tagsSearchRoute( MTagSearchArgs.toJson(args) ),
+      data  = HttpReqData(
+        headers  = HttpReqData.headersBinaryAccept,
+        respType = HttpRespTypes.ArrayBuffer
+      )
+    )
+    Xhr.execute( req )
+      .successIf200
+      .unBooPickle[MTagsFound]
   }
 
 }

@@ -3,12 +3,12 @@ package io.suggest.lk.nodes.form.a
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.tf.daily.ITfDailyMode
 import io.suggest.lk.nodes.{MLknNode, MLknNodeReq, MLknNodeResp}
-import io.suggest.pick.MimeConst
 import io.suggest.proto.HttpConst
 import io.suggest.routes.routes
-import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import play.api.libs.json.Json
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -93,96 +93,108 @@ trait ILkNodesApi {
 /** Реализация [[ILkNodesApi]] для взаимодействия с серверным контроллером LkNodes через обычные HTTP-запросы. */
 class LkNodesApiHttpImpl extends ILkNodesApi {
 
-  private def _JSON_BODY_HEADERS = List(
-    HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON
-  )
-
   override def nodeInfo(nodeId: String): Future[MLknNodeResp] = {
-    Xhr.unJsonResp[MLknNodeResp] {
-      Xhr.requestJsonText(
-        route = routes.controllers.LkNodes.nodeInfo(nodeId)
-      )
-    }
+    val req = HttpReq.routed(
+      route = routes.controllers.LkNodes.nodeInfo(nodeId),
+      data  = HttpReqData.justAcceptJson
+    )
+    Xhr.execute( req )
+      .successIf200
+      .unJson[MLknNodeResp]
   }
 
 
   override def createSubNodeSubmit(parentId: String, data: MLknNodeReq): Future[MLknNode] = {
-    Xhr.unJsonResp[MLknNode] {
-      Xhr.requestJsonText(
-        route = routes.controllers.LkNodes.createSubNodeSubmit(parentId),
-        body  = Json.toJson(data).toString(),
-        headers = _JSON_BODY_HEADERS
+    val req = HttpReq.routed(
+      route = routes.controllers.LkNodes.createSubNodeSubmit(parentId),
+      data = HttpReqData(
+        body    = Json.toJson(data).toString(),
+        headers = HttpReqData.headersJsonSendAccept
       )
-    }
+    )
+    Xhr.execute( req )
+      .successIf200
+      .unJson[MLknNode]
   }
 
 
   override def setNodeEnabled(nodeId: String, isEnabled: Boolean): Future[MLknNode] = {
-    Xhr.unJsonResp[MLknNode] {
-      Xhr.requestJsonText(
-        route = routes.controllers.LkNodes.setNodeEnabled(nodeId, isEnabled)
-      )
-    }
+    val req = HttpReq.routed(
+      route = routes.controllers.LkNodes.setNodeEnabled(nodeId, isEnabled),
+      data  = HttpReqData.justAcceptJson
+    )
+    Xhr.execute( req )
+      .successIf200
+      .unJson[MLknNode]
   }
 
 
   override def deleteNode(nodeId: String): Future[Boolean] = {
     import io.suggest.proto.HttpConst.Status._
-    for {
-      resp <- Xhr.successIfStatus( NO_CONTENT, NOT_FOUND ) {
-        Xhr.send(
-          route = routes.controllers.LkNodes.deleteNode(nodeId)
-        )
+    val req = HttpReq.routed(
+      route = routes.controllers.LkNodes.deleteNode(nodeId)
+    )
+    Xhr.execute( req )
+      .successIfStatus( NO_CONTENT, NOT_FOUND )
+      .responseStatusFut
+      .map { status =>
+        status ==* NO_CONTENT
       }
-    } yield {
-      // В логах нередко встречаются null вместо инстансов XHR. Поэтому залезаем в реквест аккуратно.
-      resp == null || resp.status == NO_CONTENT
-    }
   }
 
 
   override def editNode(nodeId: String, data: MLknNodeReq): Future[MLknNode] = {
-    Xhr.unJsonResp[MLknNode] {
-      Xhr.requestJsonText(
-        route = routes.controllers.LkNodes.editNode(nodeId),
-        body  = Json.toJson(data).toString(),
-        headers = _JSON_BODY_HEADERS
+    val req = HttpReq.routed(
+      route = routes.controllers.LkNodes.editNode(nodeId),
+      data = HttpReqData(
+        body    = Json.toJson(data).toString(),
+        headers = HttpReqData.headersJsonSendAccept
       )
-    }
+    )
+    Xhr.execute(req)
+      .successIf200
+      .unJson[MLknNode]
   }
 
 
   override def setAdv(adId: String, isEnabled: Boolean, onNode: RcvrKey): Future[MLknNode] = {
-    Xhr.unJsonResp[MLknNode] {
-      Xhr.requestJsonText(
-        route = routes.controllers.LkNodes.setAdv(
-          adId          = adId,
-          isEnabled     = isEnabled,
-          onNodeRcvrKey = RcvrKey.rcvrKey2urlPath( onNode )
-        )
-      )
-    }
+    val req = HttpReq.routed(
+      route = routes.controllers.LkNodes.setAdv(
+        adId          = adId,
+        isEnabled     = isEnabled,
+        onNodeRcvrKey = RcvrKey.rcvrKey2urlPath( onNode )
+      ),
+      data = HttpReqData.justAcceptJson
+    )
+    Xhr.execute(req)
+      .successIf200
+      .unJson[MLknNode]
   }
 
 
   override def setTfDaily(onNode: RcvrKey, mode: ITfDailyMode): Future[MLknNode] = {
-    Xhr.unJsonResp[MLknNode] {
-      Xhr.requestJsonText(
-        route = routes.controllers.LkNodes.setTfDaily(
-          onNodeRcvrKey = RcvrKey.rcvrKey2urlPath( onNode )
-        ),
-        body = Json.toJson(mode).toString(),
-        headers = _JSON_BODY_HEADERS
+    val req = HttpReq.routed(
+      route = routes.controllers.LkNodes.setTfDaily(
+        onNodeRcvrKey = RcvrKey.rcvrKey2urlPath( onNode )
+      ),
+      data = HttpReqData(
+        body    = Json.toJson(mode).toString(),
+        headers = HttpReqData.headersJsonSendAccept
       )
-    }
+    )
+    Xhr.execute(req)
+      .successIf200
+      .unJson[MLknNode]
   }
 
   override def setAdvShowOpened(adId: String, isShowOpened: Boolean, onNode: RcvrKey): Future[_] = {
-    Xhr.successIfStatus( HttpConst.Status.OK, HttpConst.Status.NO_CONTENT ) {
-      Xhr.send(
-        route = routes.controllers.LkNodes.setAdvShowOpened(adId, isShowOpened, RcvrKey.rcvrKey2urlPath(onNode))
-      )
-    }
+    val S = HttpConst.Status
+    val req = HttpReq.routed(
+      route = routes.controllers.LkNodes.setAdvShowOpened(adId, isShowOpened, RcvrKey.rcvrKey2urlPath(onNode))
+    )
+    Xhr.execute( req )
+      .successIfStatus( S.OK, S.NO_CONTENT )
+      .responseRawFut
   }
 
 }

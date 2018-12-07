@@ -242,7 +242,7 @@ class JdDocValidator(
         errMsgF(WIDTH) + `.`
       ) |@|
       MathConst.Counts.validateMinMax(
-        v   = shadow.hOffset,
+        v   = shadow.vOffset,
         min = -C.VERT_OFFSET_MIN_MAX,
         max = C.VERT_OFFSET_MIN_MAX,
         errMsgF(HEIGHT) + `.`

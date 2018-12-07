@@ -2,7 +2,7 @@ package io.suggest.routes
 
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, HttpRespTypes, Xhr}
 
 import scala.concurrent.Future
 
@@ -30,9 +30,16 @@ trait LkBill2NodeAdvInfoHttpApiImpl extends ILkBill2NodeAdvInfoApi {
   }
 
   override def nodeAdvInfo(nodeId: String): Future[MNodeAdvInfo] = {
-    Xhr.unBooPickleResp[MNodeAdvInfo](
-      Xhr.requestBinary( _nodeAdvInfoRoute(nodeId) )
+    val req = HttpReq.routed(
+      route = _nodeAdvInfoRoute(nodeId),
+      data = HttpReqData(
+        headers  = HttpReqData.headersBinaryAccept,
+        respType = HttpRespTypes.ArrayBuffer
+      )
     )
+    Xhr.execute( req )
+      .successIf200
+      .unBooPickle[MNodeAdvInfo]
   }
 
 }

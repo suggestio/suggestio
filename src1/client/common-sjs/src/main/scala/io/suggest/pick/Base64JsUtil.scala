@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import io.suggest.bin.{ConvCodecs, IDataConv}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.proto.HttpConst
-import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.xhr.HttpRespTypes
 import io.suggest.text.CharSeqUtil
 import japgolly.univeq._
 import org.scalajs.dom.Blob
@@ -98,7 +98,7 @@ object Base64JsUtil {
           timeout = 0,
           headers = Map.empty,
           withCredentials = false,
-          responseType = Xhr.RESP_BLOB
+          responseType = HttpRespTypes.Blob.xhrResponseType
         )
       } yield {
         assert( xhr.status ==* HttpConst.Status.OK )

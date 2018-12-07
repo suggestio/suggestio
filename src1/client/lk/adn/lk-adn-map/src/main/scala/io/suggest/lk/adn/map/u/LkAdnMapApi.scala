@@ -5,9 +5,8 @@ import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.bill.MGetPriceResp
 import io.suggest.pick.PickleUtil
 import io.suggest.routes.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, routes}
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.geo.json.GjFeature
-import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, HttpRespTypes, Xhr}
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -46,42 +45,56 @@ class LkAdnMapApiHttpImpl
 
 
   override def getPriceSubmit(nodeId: String, mForm: MLamForm): Future[MGetPriceResp] = {
-    Xhr.unBooPickleResp[MGetPriceResp](
-      Xhr.requestBinary(
-        route = routes.controllers.LkAdnMap.getPriceSubmit(nodeId),
-        body  = PickleUtil.pickle( mForm )
+    val req = HttpReq.routed(
+      route = routes.controllers.LkAdnMap.getPriceSubmit(nodeId),
+      data  = HttpReqData(
+        headers   = HttpReqData.headersBinarySendAccept,
+        body      = PickleUtil.pickle( mForm ),
+        respType  = HttpRespTypes.ArrayBuffer
       )
     )
+    Xhr.execute( req )
+      .successIf200
+      .unBooPickle[MGetPriceResp]
   }
 
 
   override def forNodeSubmit(nodeId: String, mForm: MLamForm): Future[String] = {
-    for {
-      xhr <- Xhr.successIf200 {
-        Xhr.sendBinary(
-          route     = routes.controllers.LkAdnMap.forNodeSubmit(nodeId),
-          body      = PickleUtil.pickle( mForm ),
-          respType  = Xhr.RespTypes.ANY
-        )
-      }
-    } yield {
-      xhr.responseText
-    }
+    val req = HttpReq.routed(
+      route = routes.controllers.LkAdnMap.forNodeSubmit(nodeId),
+      data  = HttpReqData(
+        headers = HttpReqData.headersBinarySend,
+        body      = PickleUtil.pickle( mForm ),
+        respType  = HttpRespTypes.Default
+      )
+    )
+    Xhr.execute( req )
+      .responseTextFut
   }
 
 
   override def currentNodeGeoGj(nodeId: String): Future[js.Array[GjFeature]] = {
-    val route = routes.controllers.LkAdnMap.currentNodeGeoGj( nodeId )
-    Xhr.requestJson(route)
-      .asInstanceOf[Future[js.Array[GjFeature]]]
+    val req = HttpReq.routed(
+      route = routes.controllers.LkAdnMap.currentNodeGeoGj( nodeId ),
+      data  = HttpReqData.justAcceptJson
+    )
+    Xhr.execute( req )
+      .successIf200
+      .nativeJsonFut[js.Array[GjFeature]]
   }
 
 
   override def currentGeoItemPopup(itemId: Double): Future[MGeoAdvExistPopupResp] = {
-    val route = routes.controllers.LkAdnMap.currentGeoItemPopup(itemId)
-    Xhr.unBooPickleResp[MGeoAdvExistPopupResp] {
-      Xhr.requestBinary(route)
-    }
+    val req = HttpReq.routed(
+      route = routes.controllers.LkAdnMap.currentGeoItemPopup(itemId),
+      data  = HttpReqData(
+        headers   = HttpReqData.headersBinaryAccept,
+        respType  = HttpRespTypes.ArrayBuffer
+      )
+    )
+    Xhr.execute(req)
+      .successIf200
+      .unBooPickle[MGeoAdvExistPopupResp]
   }
 
 }

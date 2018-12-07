@@ -2,10 +2,7 @@ package io.suggest.sys.mdr.c
 
 import io.suggest.proto.HttpConst
 import io.suggest.routes.routes
-import io.suggest.sjs.common.xhr.Xhr
-import japgolly.univeq._
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.xhr.ex.XhrFailedException
+import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 import io.suggest.sys.mdr.{MMdrNextResp, MMdrResolution, MdrSearchArgs}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
@@ -34,43 +31,42 @@ trait ISysMdrApi {
 
 class SysMdrApiXhrImpl extends ISysMdrApi {
 
-  /** Сервер отвечает 204, если нечего возвращать в ответе при положительном исходе запроса. */
-  private def _isOkNothingInteresting(status: Int): Boolean =
-    status ==* HttpConst.Status.NO_CONTENT
-
-  private val _recover204ToNone: PartialFunction[Throwable, None.type] = {
-    case ex: XhrFailedException if _isOkNothingInteresting(ex.xhr.status) =>
-      None
-  }
-
-
   override def nextMdrInfo(args: MdrSearchArgs): Future[MMdrNextResp] = {
-    val route = routes.controllers.SysMdr.nextMdrInfo(
-      args    = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject(args) )
+    val req = HttpReq.routed(
+      route = routes.controllers.SysMdr.nextMdrInfo(
+        args = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject(args) )
+      ),
+      data = HttpReqData.justAcceptJson
     )
-    Xhr.unJsonResp[MMdrNextResp] {
-      Xhr.requestJsonText(route)
-    }
+    Xhr.execute(req)
+      .successIf200
+      .unJson[MMdrNextResp]
   }
 
 
   override def doMdr(mdrRes: MMdrResolution): Future[_] = {
-    val route = routes.controllers.SysMdr.doMdr(
-      mdrRes = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject(mdrRes) )
+    val req = HttpReq.routed(
+      route = routes.controllers.SysMdr.doMdr(
+        mdrRes = PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject(mdrRes) )
+      ),
+      data = HttpReqData.justAcceptJson
     )
-    // TODO Десериализовать/обработать ответ.
-    Xhr.requestJsonText( route )
-      .recover( _recover204ToNone )
+    Xhr.execute(req)
+      .successIfStatus( HttpConst.Status.NO_CONTENT )
+      .future
+      // TODO Десериализовать/обработать ответ.
   }
 
 
   override def fixNode(nodeId: String): Future[_] = {
-    val route = routes.controllers.SysMdr.fixNode(
-      nodeId = nodeId
+    val req = HttpReq.routed(
+      route = routes.controllers.SysMdr.fixNode(
+        nodeId = nodeId
+      )
     )
-    Xhr.successIfStatus( HttpConst.Status.NO_CONTENT ) {
-      Xhr.send(route)
-    }
+    Xhr.execute( req )
+      .successIfStatus( HttpConst.Status.NO_CONTENT )
+      .future
   }
 
 }

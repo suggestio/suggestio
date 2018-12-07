@@ -1,9 +1,6 @@
 package io.suggest.sjs.common.xhr
 
-import java.nio.ByteBuffer
-
 import io.suggest.id.IdentConst
-import io.suggest.pick.{MimeConst, PickleUtil}
 import io.suggest.proto.HttpConst
 import io.suggest.sjs.common.model.{HttpRoute, HttpRouteExtractor}
 import io.suggest.sjs.common.xhr.ex._
@@ -11,15 +8,11 @@ import org.scalajs.dom.XMLHttpRequest
 
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.scalajs.js.JSON
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
 import org.scalajs.dom
 import org.scalajs.dom.ext.{Ajax, AjaxException}
-import play.api.libs.json.{Json, Reads}
-
-import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 
 /**
   * Suggest.io
@@ -31,12 +24,6 @@ import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
   * Тут остались только обёртки над штатным Ajax.
   */
 object Xhr extends Log {
-
-  object RespTypes {
-    def ARRAY_BUF = "arraybuffer"
-    def ANY       = ""
-  }
-
 
   private def myProto: Option[String] = {
     Option( dom.window.location )
@@ -97,20 +84,6 @@ object Xhr extends Log {
   }
 
 
-  def send[HttpRoute: HttpRouteExtractor](route: HttpRoute,
-                                          timeoutMsOpt: Option[Int] = None,
-                                          headers: TraversableOnce[(String, String)] = Nil,
-                                          body: Ajax.InputData = null): Future[XMLHttpRequest] = {
-    val hre = implicitly[HttpRouteExtractor[HttpRoute]]
-    sendRaw(
-      method        = hre.method(route),
-      url           = route2url( route ),
-      timeoutMsOpt  = timeoutMsOpt,
-      headers       = headers,
-      body          = body
-    )
-  }
-
   /**
     * Отправка асинхронного запроса силами голого js.
     *
@@ -120,154 +93,32 @@ object Xhr extends Log {
     * @param timeoutMsOpt Таймаут запроса в миллисекундах, если необходимо.
     * @return Фьючерс с результатом.
     */
-  def sendRaw(method: String, url: String, timeoutMsOpt: Option[Int] = None,
-              headers: TraversableOnce[(String, String)] = Nil, body: Ajax.InputData = null): Future[XMLHttpRequest] = {
-    _handleUnauthorized {
-      Ajax(
-        method = method,
-        url    = url,
-        data   = body,
-        timeout = timeoutMsOpt.getOrElse(0),
-        headers = headers.toMap,
-        withCredentials = false,
-        responseType = ""
-      )
-        .catchAjaxEx(method = method, url = url)
-    }
-  }
-
-
-
-  /**
-    * Фильтровать результат по http-статусу ответа сервера.
-    *
-    * @param httpStatuses Допустимые http-статусы.
-    * @param xhrFut Выполненяемый XHR, собранный в send().
-    * @return Future, где success наступает только при указанных статусах.
-    *         [[io.suggest.sjs.common.xhr.ex.XhrFailedException]] когда статус ответа не подпадает под критерий.
-    */
-  def successIfStatus(httpStatuses: Int*)(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
-    successIfStatusF( httpStatuses.contains )(xhrFut)
-  }
-  def successIf200(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
-    successIfStatus( HttpStatuses.OK )(xhrFut)
-  }
-  def successIf30(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
-    successIfStatusF(_ / 10 == 30)(xhrFut)
-  }
-  def successIfStatusF(isOkF: Int => Boolean)(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
-    for (xhr <- xhrFut) yield {
-      if ( isOkF(xhr.status) ) {
-        xhr
-      } else {
-        throw XhrFailedException(xhr)
+  def execute(httpReq: HttpReq): HttpRespHolder = {
+    XhrHttpRespHolder(
+      xhrFut = _handleUnauthorized {
+        Ajax(
+          method          = httpReq.method,
+          url             = httpReq.url,
+          data            = httpReq.data.body,
+          timeout         = httpReq.data.timeoutMsOr0,
+          headers         = httpReq.data.headers,
+          withCredentials = httpReq.data.xhrWithCredentialsCrossSite,
+          responseType    = httpReq.data.respType.xhrResponseType,
+        )
+          .catchAjaxEx(method = httpReq.method, url = httpReq.url)
       }
-    }
+    )
   }
 
-  def someIfStatus(httpStatuses: Int*)(xhrFut: Future[XMLHttpRequest]): Future[Option[XMLHttpRequest]] = {
-    for (xhr <- xhrFut) yield {
-      if (httpStatuses.contains(xhr.status)) {
-        Some(xhr)
-      } else {
-        None
-      }
-    }
-  }
 
-  def route2url[HttpRoute: HttpRouteExtractor](route: HttpRoute, preferAbsolute: Boolean = PREFER_ABS_URLS): String = {
+  def route2url[HttpRoute: HttpRouteExtractor](route: HttpRoute): String = {
     val hre = implicitly[HttpRouteExtractor[HttpRoute]]
-    if (preferAbsolute)
+    if (PREFER_ABS_URLS)
       hre.absoluteUrl( route, PREFER_SECURE_URLS )
     else
       hre.url( route )
   }
 
-  /**
-    * HTTP-запрос через js-роутер и ожидание HTTP 200 Ok ответа.
-    *
-    * @param route Маршрут jsrouter'а. Он содержит данные по URL и METHOD для запроса.
-    * @return Фьючерс с десериализованным JSON.
-    */
-  def requestJson[HttpRoute: HttpRouteExtractor](route: HttpRoute): Future[js.Dynamic] = {
-    for (jsonText <- requestJsonText(route)) yield {
-      JSON.parse( jsonText )
-    }
-  }
-
-  /**
-    * Запрос JSON сервера без парсинга JSON на клиенте.
-    * Метод появился как временный костыль к play-json, который через API парсит только строки.
-    */
-  def requestJsonText[HttpRoute: HttpRouteExtractor](route: HttpRoute, timeoutMsOpt: Option[Int] = None, body: Ajax.InputData = null, headers: List[(String, String)] = Nil): Future[String] = {
-    val xhrFut = successIf200 {
-      send(
-        route         = route,
-        headers       = (HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_JSON) :: headers,
-        timeoutMsOpt  = timeoutMsOpt,
-        body          = body
-      )
-    }
-    for (xhr <- xhrFut) yield {
-      xhr.responseText
-    }
-  }
-
-  def requestHtml[HttpRoute: HttpRouteExtractor](route: HttpRoute): Future[String] = {
-    val xhrFut = successIf200 {
-      send(
-        route   = route,
-        headers = (HttpConst.Headers.ACCEPT -> MimeConst.TEXT_HTML) :: Nil
-      )
-    }
-    for (xhr <- xhrFut) yield {
-      xhr.responseText
-    }
-  }
-
-  val RESP_ARRAY_BUFFER = "arraybuffer"
-  val RESP_BLOB = "blob"
-
-  /**
-    * Запрос бинарщины с сервера. Ответ обычно подхватывается через boopickle.
-    *
-    * @see По мотивам autowire-клиента из [[https://github.com/ochrons/scalajs-spa-tutorial/blob/290c3f7cb3f0c9168cbb61d2b39cc330a09ebe4c/client/src/main/scala/spatutorial/client/services/AjaxClient.scala#L12]]
-    *
-    * @param route Роута
-    * @param body Опциональное тело запроса.
-    * @return Фьючерс с блобом.
-    */
-  def requestBinary[HttpRoute: HttpRouteExtractor](route: HttpRoute, body: Ajax.InputData = null): Future[ByteBuffer] = {
-    respAsBinary {
-      successIf200 {
-        sendBinary(
-          route     = route,
-          body      = body,
-          respType  = RESP_ARRAY_BUFFER,
-          headers   = (HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_OCTET_STREAM) :: Nil
-        )
-      }
-    }
-  }
-
-  def sendBinary[HttpRoute: HttpRouteExtractor](route: HttpRoute, body: Ajax.InputData, respType: String,
-                                                headers: List[(String, String)] = Nil): Future[XMLHttpRequest] = {
-    _handleUnauthorized {
-      val hrex = implicitly[HttpRouteExtractor[HttpRoute]]
-      val method = hrex.method(route)
-      val url = hrex.url(route)
-      Ajax(
-        method          = method,
-        url             = url,
-        data            = body.asInstanceOf[Ajax.InputData],
-        timeout         = 0,
-        headers         = ((HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_OCTET_STREAM) :: headers).toMap,
-        withCredentials = false,
-        responseType    = respType
-      )
-        .catchAjaxEx(method = method, url = url)
-    }
-  }
 
   /** Повесить на XHR-ответы фоновую слушалку ответов сервера, чтобы отработать случаи завершения пользователькой сессии.
     *
@@ -295,36 +146,6 @@ object Xhr extends Log {
 
     // Вернуть исходный реквест, ибо side-effect'ы работают сами по себе.
     xhrFut
-  }
-
-  def respAsBinary(xhrFut: Future[XMLHttpRequest]): Future[ByteBuffer] = {
-    for (xhr <- xhrFut) yield {
-      TypedArrayBuffer.wrap( xhr.response.asInstanceOf[ArrayBuffer] )
-    }
-  }
-
-
-  import boopickle.Default._
-
-  /**
-    * Декодировать будущий ответ сервера в инстанс какой-то модели с помощью boopickle и десериализатора,
-    * переданного в implicit typeclass'е.
-    *
-    * @param respFut Фьючерс с ответом сервера.
-    * @param u Модуль сериализации boopickle.
-    * @tparam T Тип отрабатываемой модели.
-    * @return Фьючерс с десериализованным инстансом произвольной модели.
-    */
-  def unBooPickleResp[T](respFut: Future[ByteBuffer])(implicit u: Pickler[T]): Future[T] = {
-    for (bbuf <- respFut) yield {
-      PickleUtil.unpickle[T](bbuf)
-    }
-  }
-
-  def unJsonResp[T: Reads](respFut: Future[String]): Future[T] = {
-    for (jsonStr <- respFut) yield {
-      Json.parse(jsonStr).as[T]
-    }
   }
 
 

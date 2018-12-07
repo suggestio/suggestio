@@ -7,11 +7,10 @@ import io.suggest.lk.adv.a.{IRcvrPopupApi, RcvrPopupHttpApiImpl}
 import io.suggest.lk.adv.geo.m.MOther
 import io.suggest.pick.PickleUtil
 import io.suggest.routes.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, routes}
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.tags.search.{ITagsApi, TagsHttpApiImpl}
-import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, HttpRespTypes, Xhr}
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -57,7 +56,6 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
 {
 
   import MGeoAdvExistPopupResp.pickler
-  import io.suggest.routes.JsRoutes_LkControllers._
 
   /** Функция-генератор роуты поиска тегов на сервере. */
   override protected def _tagsSearchRoute = routes.controllers.LkAdvGeo.tagsSearch2
@@ -70,42 +68,60 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
   }
 
   override def existGeoAdvsMap(): Future[js.Array[GjFeature]] = {
-    val route = routes.controllers.LkAdvGeo.existGeoAdvsMap(
-      adId = confRO().adId
+    val req = HttpReq.routed(
+      route = routes.controllers.LkAdvGeo.existGeoAdvsMap(
+        adId = confRO().adId
+      ),
+      data = HttpReqData.justAcceptJson
     )
-    Xhr.requestJson(route)
-      .asInstanceOf[Future[js.Array[GjFeature]]]
+    Xhr.execute(req)
+      .successIf200
+      .nativeJsonFut[js.Array[GjFeature]]
   }
 
   override def existGeoAdvsShapePopup(itemId: Double): Future[MGeoAdvExistPopupResp] = {
-    val route = routes.controllers.LkAdvGeo.existGeoAdvsShapePopup(itemId)
-    Xhr.unBooPickleResp[MGeoAdvExistPopupResp] {
-      Xhr.requestBinary(route)
-    }
+    val req = HttpReq.routed(
+      route = routes.controllers.LkAdvGeo.existGeoAdvsShapePopup(itemId),
+      data  = HttpReqData(
+        headers  = HttpReqData.headersBinaryAccept,
+        respType = HttpRespTypes.ArrayBuffer
+      )
+    )
+    Xhr.execute( req )
+      .successIf200
+      .unBooPickle[MGeoAdvExistPopupResp]
   }
 
   /** Запросить у сервера рассчёт цены. */
   override def getPrice(mFormS: MFormS): Future[MGetPriceResp] = {
-    val route = routes.controllers.LkAdvGeo.getPriceSubmit(
-      adId = confRO().adId
+    val req = HttpReq.routed(
+      route = routes.controllers.LkAdvGeo.getPriceSubmit(
+        adId = confRO().adId
+      ),
+      data = HttpReqData(
+        headers   = HttpReqData.headersBinarySendAccept,
+        body      = PickleUtil.pickle(mFormS),
+        respType  = HttpRespTypes.ArrayBuffer
+      )
     )
-    val bbuf = PickleUtil.pickle(mFormS)
-    Xhr.unBooPickleResp[MGetPriceResp] {
-      Xhr.requestBinary(route, bbuf)
-    }
+    Xhr.execute( req )
+      .successIf200
+      .unBooPickle[MGetPriceResp]
   }
 
   override def formSubmit(mFormS: MFormS): Future[String] = {
-    val route = routes.controllers.LkAdvGeo.forAdSubmit(
-      adId = confRO().adId
+    val req = HttpReq.routed(
+      route = routes.controllers.LkAdvGeo.forAdSubmit(
+        adId = confRO().adId
+      ),
+      data = HttpReqData(
+        headers   = HttpReqData.headersBinarySend,
+        body      = PickleUtil.pickle(mFormS),
+        respType  = HttpRespTypes.Default
+      )
     )
-    val bbuf = PickleUtil.pickle(mFormS)
-    val fut = Xhr.successIf200 {
-      Xhr.sendBinary(route, bbuf, Xhr.RespTypes.ANY)
-    }
-    for (xhr <- fut) yield {
-      xhr.responseText
-    }
+    Xhr.execute( req )
+      .responseTextFut
   }
 
 

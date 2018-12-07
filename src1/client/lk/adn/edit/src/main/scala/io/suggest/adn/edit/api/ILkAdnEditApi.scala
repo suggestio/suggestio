@@ -2,10 +2,8 @@ package io.suggest.adn.edit.api
 
 import diode.ModelRO
 import io.suggest.adn.edit.m.{MAdnEditForm, MAdnEditFormConf}
-import io.suggest.pick.MimeConst
-import io.suggest.proto.HttpConst
 import io.suggest.routes.routes
-import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -26,18 +24,17 @@ trait ILkAdnEditApi {
 class LKAdnEditApiHttp( confRO: ModelRO[MAdnEditFormConf] ) extends ILkAdnEditApi {
 
   override def save(form: MAdnEditForm): Future[MAdnEditForm] = {
-    val jsonMime = MimeConst.APPLICATION_JSON
-    Xhr.unJsonResp[MAdnEditForm] {
-      Xhr.requestJsonText(
-        route = routes.controllers.LkAdnEdit.save( confRO.value.nodeId ),
-        timeoutMsOpt = Some(5000),
-        body = Json.toJson( form ).toString(),
-        headers = List(
-          HttpConst.Headers.CONTENT_TYPE  -> jsonMime,
-          HttpConst.Headers.ACCEPT        -> jsonMime
-        )
+    val req = HttpReq.routed(
+      route = routes.controllers.LkAdnEdit.save( confRO.value.nodeId ),
+      data  = HttpReqData(
+        timeoutMs = Some(5000),
+        body      = Json.toJson( form ).toString(),
+        headers   = HttpReqData.headersJsonSendAccept
       )
-    }
+    )
+    Xhr.execute(req)
+      .successIf200
+      .unJson[MAdnEditForm]
   }
 
 }

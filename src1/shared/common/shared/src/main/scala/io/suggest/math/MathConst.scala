@@ -34,6 +34,7 @@ object MathConst {
     /** Провалидировать, чтобы значение было в указанном диапазоне. */
     def validateMinMax[T](v: T, min: T, max: T, eMsgPrefix: => String = "count")(implicit ev: Numeric[T]): ValidationNel[String, T] = {
       val errMsg = ErrorConstants.emsgF(eMsgPrefix + `.` + "too")
+      // lt/gt без eq, т.к. "ниже минимума" и "выше максимума".
       (
         Validation.liftNel(v)(ev.lt(_, min), errMsg(s"low")) |@|
         Validation.liftNel(v)(ev.gt(_, max), errMsg(s"big"))

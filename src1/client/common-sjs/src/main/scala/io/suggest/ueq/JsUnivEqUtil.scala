@@ -2,6 +2,7 @@ package io.suggest.ueq
 
 import diode.data.Pot
 import japgolly.univeq.UnivEq
+import org.scalajs.dom.ext.Ajax
 import org.scalajs.dom.{Blob, File, WebSocket}
 import org.scalajs.dom.raw.XMLHttpRequest
 
@@ -27,5 +28,7 @@ object JsUnivEqUtil {
   @inline implicit def webSocketUe      : UnivEq[WebSocket]         = UnivEq.force
 
   @inline implicit def jsArrayUe[T: UnivEq]: UnivEq[js.Array[T]]    = UnivEq.force
+
+  @inline implicit def ajaxInputDataUe  : UnivEq[Ajax.InputData]    = UnivEq.force
 
 }

@@ -6,7 +6,7 @@ import io.suggest.pick.MimeConst
 import io.suggest.proto.HttpConst
 import io.suggest.sjs.common.log.{ILogAppender, LogMsg, Severity}
 import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.xhr.{HttpStatuses, Xhr}
+import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, HttpStatuses, Xhr}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.text.StringUtil
 
@@ -31,14 +31,14 @@ abstract class RmeLogAppender extends ILogAppender {
 
   private def _logAppendInto(logMsg: LogMsg, route: Route): Future[_] = {
     // Организовать запрос на сервер по указанной ссылке.
-    val fut = Xhr.successIfStatus( HttpStatuses.NO_CONTENT ) {
-      Xhr.send(
-        route   = route,      // TODO Отработать отсутствие роуты через /sc/error
-        headers = {
-          val hdrCt = HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON
-          hdrCt :: Nil
-        },
-        body    = {
+    val req = HttpReq.routed(
+      // TODO Отработать отсутствие роуты через /sc/error
+      route = route,
+      data = HttpReqData(
+        headers = Map(
+          HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON
+        ),
+        body = {
           val c = ErrorConstants.Remote
           val report = MRmeReport(
             severity = logMsg.severity,
@@ -51,7 +51,11 @@ abstract class RmeLogAppender extends ILogAppender {
           JSON.stringify(json)
         }
       )
-    }
+    )
+
+    val fut = Xhr.execute( req )
+      .successIfStatus( HttpStatuses.NO_CONTENT )
+      .future
 
     // Залоггировать проблемы реквеста в консоль.
     for (ex <- fut.failed) {

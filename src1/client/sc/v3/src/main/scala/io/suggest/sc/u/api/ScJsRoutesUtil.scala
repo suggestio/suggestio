@@ -2,7 +2,7 @@ package io.suggest.sc.u.api
 
 import io.suggest.sc.sc3.MSc3Resp
 import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.{Json, OWrites, Reads}
 
@@ -36,10 +36,16 @@ object ScJsRoutesUtil {
   def mkRequest[ArgsT: OWrites, RespT: Reads](args: ArgsT, route: js.Dictionary[js.Any] => Route): Future[RespT] = {
     val argsPj = Json.toJsObject( args )
     val argsJsDict = PlayJsonSjsUtil.toNativeJsonObj( argsPj )
-
-    Xhr.unJsonResp[RespT] {
-      Xhr.requestJsonText( route(argsJsDict), REQ_TIMEOUT_MS )
-    }
+    val req = HttpReq.routed(
+      route = route(argsJsDict),
+      data  = HttpReqData(
+        headers   = HttpReqData.headersJsonAccept,
+        timeoutMs = REQ_TIMEOUT_MS
+      )
+    )
+    Xhr.execute( req )
+      .successIf200
+      .unJson[RespT]
   }
 
 }

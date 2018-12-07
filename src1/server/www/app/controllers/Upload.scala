@@ -289,6 +289,7 @@ class Upload @Inject()(
     *
     * @param uploadArgs Подписанные данные аплоада
     * @param ctxIdOpt Подписанный (но пока непроверенный) ctxId.
+    * @return Ok + MUploadResp | NotAcceptable
     */
   def doFileUpload(uploadArgs: MUploadTargetQs, ctxIdOpt: Option[MCtxId]) = {
     // Csrf выключен, потому что session cookie не пробрасывается на ноды.

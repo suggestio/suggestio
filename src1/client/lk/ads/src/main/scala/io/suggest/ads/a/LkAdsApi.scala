@@ -3,7 +3,7 @@ package io.suggest.ads.a
 import io.suggest.ads.MLkAdsOneAdResp
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.routes.routes
-import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 
 import scala.concurrent.Future
 
@@ -30,13 +30,16 @@ trait ILkAdsApi {
 class LkAdsApiHttp() extends ILkAdsApi {
 
   override def getAds(nodeKey: RcvrKey, offset: Int): Future[Seq[MLkAdsOneAdResp]] = {
-    val route = routes.controllers.LkAds.getAds(
-      rcvrKey = RcvrKey.rcvrKey2urlPath( nodeKey ),
-      offset  = offset
+    val req = HttpReq.routed(
+      route = routes.controllers.LkAds.getAds(
+        rcvrKey = RcvrKey.rcvrKey2urlPath( nodeKey ),
+        offset  = offset
+      ),
+      data = HttpReqData.justAcceptJson
     )
-    Xhr.unJsonResp[Seq[MLkAdsOneAdResp]] {
-      Xhr.requestJsonText(route)
-    }
+    Xhr.execute( req )
+      .successIf200
+      .unJson[Seq[MLkAdsOneAdResp]]
   }
 
 }

@@ -2,7 +2,7 @@ package io.suggest.lk.adv.a
 
 import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, HttpRespTypes, Xhr}
 
 import scala.concurrent.Future
 
@@ -27,9 +27,16 @@ trait RcvrPopupHttpApiImpl extends IRcvrPopupApi {
 
   /** Запрос с сервера попапа над ресивером. */
   override def rcvrPopup(nodeId: String): Future[MRcvrPopupResp] = {
-    Xhr.unBooPickleResp[MRcvrPopupResp] {
-      Xhr.requestBinary( _rcvrPopupRoute(nodeId) )
-    }
+    val req = HttpReq.routed(
+      route = _rcvrPopupRoute(nodeId),
+      data  = HttpReqData(
+        headers  = HttpReqData.headersBinaryAccept,
+        respType = HttpRespTypes.ArrayBuffer
+      )
+    )
+    Xhr.execute( req )
+      .successIf200
+      .unBooPickle[MRcvrPopupResp]
   }
 
 }
