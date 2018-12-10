@@ -293,7 +293,7 @@ case class ScCss( args: IScCssArgs )
       bottom(0.px),
       width(100.%%),
       backgroundColor( _fgColorCss ),
-      height(2.px),
+      height(1.px),
     )
 
     /** Стили контейнера любого заголовка. */

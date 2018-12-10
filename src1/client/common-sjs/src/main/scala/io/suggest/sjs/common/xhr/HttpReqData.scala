@@ -2,6 +2,7 @@ package io.suggest.sjs.common.xhr
 
 import io.suggest.pick.MimeConst
 import io.suggest.proto.HttpConst
+import io.suggest.sjs.common.xhr.cache.MHttpCacheInfo
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.ext.Ajax
 
@@ -62,12 +63,14 @@ object HttpReqData {
   *             Используется формат Ajax.InputData, который напрямую совместим с Ajax().
   * @param timeoutMs Таймаут. К данным реквеста не относится, но он тут, т.к. в XHR он задаётся до execute().
   * @param responseType Тип возвращаемого ответа.
+  * @param cache Параметры кэширования.
   */
 case class HttpReqData(
                         headers       : Map[String, String]   = Map.empty,
                         body          : Ajax.InputData        = null,
                         timeoutMs     : Option[Int]           = None,
                         respType      : HttpRespType          = HttpRespTypes.Default,
+                        cache         : MHttpCacheInfo        = MHttpCacheInfo.default,
                       ) {
 
   def withHeaders(headers: Map[String, String]) = copy(headers = headers)

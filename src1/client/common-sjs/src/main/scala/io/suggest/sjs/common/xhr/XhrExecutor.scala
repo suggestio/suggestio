@@ -27,7 +27,7 @@ case object XhrExecutor extends HttpClientExecutor {
 
 
   /** Запустить http-запрос. */
-  override def apply(httpReq: HttpReq): HttpRespHolder = {
+  override def apply(httpReq: HttpReq): XhrHttpRespHolder = {
     val req = new dom.XMLHttpRequest()
     val promise = Promise[XhrHttpResp]()
     val httpRes = XhrHttpResp(req)

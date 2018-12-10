@@ -2,6 +2,7 @@ package io.suggest.sjs.common.xhr
 
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.empty.JsOptionUtil
+import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import org.scalajs.dom.experimental._
 
 import scala.concurrent.Future
@@ -28,12 +29,32 @@ case object FetchExecutor extends HttpClientExecutor {
   }
 
   /** Запустить http-запрос. */
-  override def apply(httpReq: HttpReq): HttpRespHolder = {
+  override def apply(httpReq: HttpReq): FetchHttpRespHolder = {
     // Abort-контроллер, поддержка которого может отсутствовать.
     val abortCtlUnd = JsOptionUtil.maybeDefined( !js.isUndefined(AbortController) ) {
       new AbortController()
     }
     val abortSignalUnd = abortCtlUnd.map(_.signal)
+    val reqInit = HttpFetchUtil.toRequestInit( httpReq, abortSignalUnd )
+
+    val respFut = Fetch
+      .fetch( httpReq.url, reqInit.toRequestInit )
+      .toFuture
+      .map { FetchHttpResp.apply }
+      // Любой экзепшен отобразить в текущий формат.
+      .exception2httpEx(httpReq)
+
+    new FetchHttpRespHolder( abortCtlUnd, respFut )
+  }
+
+}
+
+
+/** Статическая утиль для Fetch API. */
+object HttpFetchUtil {
+
+  /** Сборка HttpReq в нативный RequestInit для fetch() или Request(). */
+  def toRequestInit(httpReq: HttpReq, abortSignalUnd: js.UndefOr[AbortSignal] = js.undefined): FetchRequestInit = {
     val bodyUnd: js.UndefOr[BodyInit] = {
       val b = httpReq.data.body
       JsOptionUtil.maybeDefined( b != null ) {
@@ -55,7 +76,7 @@ case object FetchExecutor extends HttpClientExecutor {
       .toUpperCase()
       .asInstanceOf[HttpMethod]
 
-    val reqInit: FetchRequestInit = new FetchRequestInit {
+    new FetchRequestInit {
       override val method       = httpMethod
       override val headers      = headersUnd
       override val body         = bodyUnd
@@ -64,17 +85,6 @@ case object FetchExecutor extends HttpClientExecutor {
       override val credentials  = RequestCredentials.`same-origin`
       val signal                = abortSignalUnd
     }
-
-    val respFut = Fetch.fetch(
-      httpReq.url,
-      reqInit.toRequestInit
-    )
-      .toFuture
-      .map { FetchHttpResp.apply }
-      // Любой экзепшен отобразить в текущий формат.
-      .exception2httpEx(httpReq)
-
-    new FetchHttpRespHolder( abortCtlUnd, respFut )
   }
 
 }
@@ -134,9 +144,7 @@ case class FetchHttpResp( resp: Response ) extends HttpResp {
   override def getHeader(headerName: String): Option[String] = {
     resp.headers
       .get( headerName )
-      .toOption
-      // фильтруем null внутри undefined
-      .flatMap( Option.apply )
+      .toOptionNullable
   }
   override def bodyUsed = resp.bodyUsed
   override def text() = resp.text().toFuture

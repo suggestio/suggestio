@@ -1,7 +1,6 @@
 package io.suggest.sjs.common.empty
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 import scala.language.implicitConversions
 
@@ -15,11 +14,11 @@ object JsOptionUtil {
 
   object Implicits {
 
-    implicit class JsOptionExt[T](opt: Option[T]) {
+    implicit class JsOptionExt[T](val opt: Option[T]) extends AnyVal {
 
       @inline
       def flatMapDefined[X](f: T => js.UndefOr[X]): js.UndefOr[X] =
-        opt.fold [UndefOr[X]] (js.undefined)(f)
+        opt.fold [js.UndefOr[X]] (js.undefined)(f)
 
       @inline
       def mapDefined[X](f: T => X): js.UndefOr[X] =
@@ -28,6 +27,19 @@ object JsOptionUtil {
       @inline
       def toUndef: js.UndefOr[T] =
         mapDefined(identity)
+
+    }
+
+
+    implicit class UndefExt[T <: AnyRef](val und: js.UndefOr[T]) extends AnyVal {
+
+      /** Приведеление null/undefined к None, значение - к Some(). */
+      def toOptionNullable: Option[T] = {
+        und
+          .toOption
+          // фильтруем null внутри undefined:
+          .flatMap( Option.apply )
+      }
 
     }
 

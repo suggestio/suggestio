@@ -147,7 +147,7 @@ object HttpResp {
         case Success(resp) =>
           if (
             // TODO Удалить эту строку, выставив в fetch redirect=error, и чтобы сервер это отрабатывал корректно. Сейчас redirect=follow, повторяется логика XHR.
-            resp.status ==* HttpConst.Status.OK &&
+            (resp.status ==* HttpConst.Status.OK) &&
             resp.getHeader(IdentConst.HTTP_HDR_SUDDEN_AUTH_FORM_RESP).nonEmpty
           ) {
             // Пришла HTML-форма в ответе. Такое бывает, когда сессия истекла, но "Accept:" допускает HTML-ответы.

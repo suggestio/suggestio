@@ -308,6 +308,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   /** Тени текста. */
   val contentShadowF = {
+    val szMult = jdCssArgs.conf.szMult.toDouble
     styleF(
       new Domain.OverSeq(
         _allJdTagsIter
@@ -321,8 +322,8 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         acc ::= mcd.hexCode
       for (blur <- shadow.blur)
         acc ::= (blur.toDouble / JdConst.Shadow.TextShadow.BLUR_FRAC).px.value
-      acc ::= shadow.vOffset.px.value
-      acc ::= shadow.hOffset.px.value
+      acc ::= (shadow.vOffset * szMult).px.value
+      acc ::= (shadow.hOffset * szMult).px.value
       styleS(
         textShadow := acc.mkString( HtmlConstants.SPACE )
       )
