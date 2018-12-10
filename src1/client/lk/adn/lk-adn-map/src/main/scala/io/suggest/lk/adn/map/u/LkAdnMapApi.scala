@@ -71,6 +71,7 @@ class LkAdnMapApiHttpImpl
     )
     Xhr.execute( req )
       .respAuthFut
+      .successIf200
       .responseTextFut
   }
 

@@ -115,7 +115,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
   }
 
   private def submitFormFut(): Future[String] = {
-    _apiF2fut( API.formSubmit )
+    _apiF2fut( API.forAdSubmit )
   }
 
 

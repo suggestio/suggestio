@@ -42,7 +42,7 @@ trait ILkAdvGeoApi
   def getPrice(mFormS: MFormS): Future[MGetPriceResp]
 
   /** Окончательный сабмит формы георазмещения. */
-  def formSubmit(mFormS: MFormS): Future[String]
+  def forAdSubmit(mFormS: MFormS): Future[String]
 
 }
 
@@ -112,7 +112,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
       .unBooPickle[MGetPriceResp]
   }
 
-  override def formSubmit(mFormS: MFormS): Future[String] = {
+  override def forAdSubmit(mFormS: MFormS): Future[String] = {
     val req = HttpReq.routed(
       route = routes.controllers.LkAdvGeo.forAdSubmit(
         adId = confRO().adId
@@ -125,6 +125,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
     )
     Xhr.execute( req )
       .respAuthFut
+      .successIf200
       .responseTextFut
   }
 

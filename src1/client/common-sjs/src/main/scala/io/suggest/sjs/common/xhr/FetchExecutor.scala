@@ -29,26 +29,40 @@ case object FetchExecutor extends HttpClientExecutor {
 
   /** Запустить http-запрос. */
   override def apply(httpReq: HttpReq): HttpRespHolder = {
+    // Abort-контроллер, поддержка которого может отсутствовать.
+    val abortCtlUnd = JsOptionUtil.maybeDefined( !js.isUndefined(AbortController) ) {
+      new AbortController()
+    }
+    val abortSignalUnd = abortCtlUnd.map(_.signal)
+    val bodyUnd: js.UndefOr[BodyInit] = {
+      val b = httpReq.data.body
+      JsOptionUtil.maybeDefined( b != null ) {
+        b.asInstanceOf[BodyInit]
+      }
+    }
+    val headersUnd: js.UndefOr[HeadersInit] = {
+      val hs = httpReq.data.headers
+      JsOptionUtil.maybeDefined( hs.nonEmpty ) {
+        hs.iterator
+          .map { case (k, v) =>
+            js.Array(k, v)
+          }
+          .toJSArray: HeadersInit
+      }
+    }
+    val httpMethod = httpReq
+      .method
+      .toUpperCase()
+      .asInstanceOf[HttpMethod]
+
     val reqInit: FetchRequestInit = new FetchRequestInit {
-      override val method = httpReq.method.toUpperCase().asInstanceOf[HttpMethod]
-      override val headers: js.UndefOr[HeadersInit] = {
-        val hs = httpReq.data.headers
-        JsOptionUtil.maybeDefined( hs.nonEmpty ) {
-          hs.iterator
-            .map { case (k, v) =>
-              js.Array(k, v)
-            }
-            .toJSArray: HeadersInit
-        }
-      }
-      override val body: js.UndefOr[BodyInit] = {
-        val b = httpReq.data.body
-        JsOptionUtil.maybeDefined( b != null ) {
-          b.asInstanceOf[BodyInit]
-        }
-      }
-      override val mode = RequestMode.cors    // TODO Передавать в реквесте? cord - дефолт.
-      override val credentials = RequestCredentials.`same-origin`
+      override val method       = httpMethod
+      override val headers      = headersUnd
+      override val body         = bodyUnd
+      // TODO Передавать в реквесте? cors - дефолт.
+      override val mode         = RequestMode.cors
+      override val credentials  = RequestCredentials.`same-origin`
+      val signal                = abortSignalUnd
     }
 
     val respFut = Fetch.fetch(
@@ -56,10 +70,11 @@ case object FetchExecutor extends HttpClientExecutor {
       reqInit.toRequestInit
     )
       .toFuture
+      .map { FetchHttpResp.apply }
       // Любой экзепшен отобразить в текущий формат.
       .exception2httpEx(httpReq)
 
-    FetchHttpRespHolder( respFut )
+    new FetchHttpRespHolder( abortCtlUnd, respFut )
   }
 
 }
@@ -96,17 +111,17 @@ trait FetchApiStub extends js.Object {
 /** Реализация [[HttpRespHolder]] над Fetch API.
   * @param fetchRespFut Фьючерс ответа.
   */
-case class FetchHttpRespHolder(
-                                fetchRespFut: Future[Response]
-                              )
+class FetchHttpRespHolder(
+                           abortCtlUnd          : js.UndefOr[AbortController],
+                           override val respFut : Future[FetchHttpResp]
+                         )
   extends HttpRespHolder
 {
 
-  def withRespFut(respFut: Future[Response]) = copy(fetchRespFut = respFut)
-
-  override lazy val respFut: Future[HttpResp] = {
-    for (resp <- fetchRespFut) yield
-      FetchHttpResp( resp )
+  /** Прервать запрос. */
+  override def abortOrFail(): Unit = {
+    for (abortCtl <- abortCtlUnd)
+      abortCtl.abort()
   }
 
 }

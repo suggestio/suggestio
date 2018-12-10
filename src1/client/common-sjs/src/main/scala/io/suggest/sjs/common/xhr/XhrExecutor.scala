@@ -1,12 +1,12 @@
 package io.suggest.sjs.common.xhr
 
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import org.scalajs.dom
 import org.scalajs.dom.XMLHttpRequest
-import org.scalajs.dom.ext.{Ajax, AjaxException}
 
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -15,8 +15,6 @@ import scala.scalajs.js.typedarray.ArrayBuffer
   * Description: Реализация HTTP-клиента поверх нативного XMLHttpRequest.
   */
 case object XhrExecutor extends HttpClientExecutor {
-
-  import HttpClientExecutor._
 
   /** Считаем, что этот древний механизм всегда доступен. */
   override def isAvailable: Boolean = {
@@ -30,36 +28,56 @@ case object XhrExecutor extends HttpClientExecutor {
 
   /** Запустить http-запрос. */
   override def apply(httpReq: HttpReq): HttpRespHolder = {
-    val xhrFut = Ajax(
-      method          = httpReq.method,
-      url             = httpReq.url,
-      data            = httpReq.data.body,
-      timeout         = httpReq.data.timeoutMsOr0,
-      headers         = httpReq.data.headers,
-      withCredentials = httpReq.data.xhrWithCredentialsCrossSite,
-      responseType    = httpReq.data.respType.xhrResponseType,
-    )
-      .exception2httpEx(httpReq)
+    val req = new dom.XMLHttpRequest()
+    val promise = Promise[XhrHttpResp]()
+    val httpRes = XhrHttpResp(req)
 
-    XhrHttpRespHolder( xhrFut )
+    req.onreadystatechange = { (_: dom.Event) =>
+      if (req.readyState ==* XMLHttpRequest.DONE) {
+        // Если запрос невозможен (связи нет, например), то будет DONE и status=0
+        if (req.status > 0)
+          promise.success(httpRes)
+        else promise.failure(
+          HttpFailedException(
+            url     = httpReq.url,
+            method  = httpReq.method,
+            resp    = Some(httpRes)
+          )
+        )
+      }
+    }
+
+    req.open(httpReq.method, httpReq.url)
+    val d = httpReq.data
+    req.responseType = d.respType.xhrResponseType
+    if (d.timeoutMsOr0 > 0)
+      req.timeout = d.timeoutMsOr0
+    req.withCredentials = d.xhrWithCredentialsCrossSite
+
+    for (kv <- d.headers)
+      req.setRequestHeader(kv._1, kv._2)
+
+    if (d.body == null)
+      req.send()
+    else
+      req.send(d.body)
+
+    new XhrHttpRespHolder( req, promise.future )
   }
 
 }
 
 
 /** Поддержка нативного XMLHttpRequest. */
-case class XhrHttpRespHolder(
-                              xhrFut: Future[XMLHttpRequest]
-                            )
+class XhrHttpRespHolder(
+                         xhr                  : XMLHttpRequest,
+                         override val respFut : Future[XhrHttpResp]
+                       )
   extends HttpRespHolder
 {
 
-  def withXhrFut(xhrFut: Future[XMLHttpRequest]) = copy(xhrFut = xhrFut)
-
-  override lazy val respFut: Future[HttpResp] = {
-    for (xhr <- xhrFut) yield
-      XhrHttpResp( xhr )
-  }
+  override def abortOrFail(): Unit =
+    xhr.abort()
 
 }
 

@@ -1,6 +1,7 @@
 package io.suggest.sjs.common.xhr
 
 import scala.concurrent.Future
+import scala.scalajs.js.JavaScriptException
 
 /**
   * Suggest.io
@@ -14,7 +15,19 @@ trait HttpRespHolder {
   /** Вернуть обёртку результата запроса. */
   def respFut: Future[HttpResp]
 
-  // TODO Поддержка abort() через AbortController.
+  /** Прервать запрос.
+    * @throws JavaScriptException Теоретически возможно. */
+  def abortOrFail(): Unit
+
+  /** Прервать запрос, подавить возможные исключения. */
+  def abort(): Unit = {
+    try
+      abortOrFail()
+    catch { case ex: Throwable =>
+      println(ex.toString)
+    }
+  }
+
   // TODO Поддержка progress'а (для upload'а).
 
 }

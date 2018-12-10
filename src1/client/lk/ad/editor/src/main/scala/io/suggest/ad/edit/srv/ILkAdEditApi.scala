@@ -95,6 +95,7 @@ class LkAdEditApiHttp(
     )
     Xhr.execute( req )
       .respAuthFut
+      .successIf200
       .responseTextFut
   }
 

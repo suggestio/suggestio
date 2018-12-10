@@ -108,7 +108,7 @@ object Xhr extends Log {
 }
 
 
-/** Интерфейс для http-клиент обёрток над нативным API. */
+/** Интерфейс для унифицированных http-client-обёрток над нативными API. */
 trait HttpClientExecutor {
 
   /** Доступно ли указанное API? */
@@ -125,12 +125,17 @@ object HttpClientExecutor {
     /** Любой экзепшен нативного http-клиента надо отобразить в текущий формат. */
     def exception2httpEx(httpReq: HttpReq): Future[T] = {
       fut.recoverWith { case ex: Throwable =>
-        val ex2 = HttpFailedException(
-          url       = httpReq.url,
-          method    = httpReq.method,
-          getCause  = ex
-        )
-        Future.failed(ex2)
+        val ex9 = ex match {
+          case _: HttpFailedException =>
+            ex
+          case _ =>
+            HttpFailedException(
+              url       = httpReq.url,
+              method    = httpReq.method,
+              getCause  = ex
+            )
+        }
+        Future.failed(ex9)
       }
     }
 
