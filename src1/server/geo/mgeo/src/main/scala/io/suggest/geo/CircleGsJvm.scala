@@ -43,7 +43,7 @@ object CircleGsJvm extends GsStaticJvmQuerable {
 
   override def toEsShapeBuilder(gs: Shape_t) = {
     ShapeBuilders.newCircleBuilder()
-      .center(gs.center.lon, gs.center.lat)
+      .center(gs.center.lon.doubleValue(), gs.center.lat.doubleValue())
       .radius(gs.radiusM, DistanceUnit.METERS)
   }
 

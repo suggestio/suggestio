@@ -30,6 +30,9 @@ trait HttpResp {
   /** Текстовый статус HTTP-ответа. */
   def statusText: String
 
+  /** Ответ из кэша? */
+  def isFromInnerCache: Boolean
+
   /** Доступ к заголовкам ответа. */
   def getHeader(headerName: String): Option[String]
 

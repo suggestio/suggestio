@@ -2,11 +2,16 @@ package io.suggest.geo
 
 import boopickle.Default._
 import diode.FastEq
-import io.suggest.common.html.HtmlConstants
+import io.suggest.common.geom.coord.GeoCoord_t
+import io.suggest.common.html.HtmlConstants.{SPACE, `(`, `)`}
 import io.suggest.geo.GeoConstants.Qs
+import io.suggest.math.MathConst
 import japgolly.univeq.UnivEq
 import scalaz.ValidationNel
 import scalaz.syntax.apply._
+import io.suggest.ueq.UnivEqUtil._
+
+import scala.util.Try
 
 /**
  * Suggest.io
@@ -19,24 +24,54 @@ object MGeoPoint {
 
   implicit val MGEO_POINT_PICKLER: Pickler[MGeoPoint] = generatePickler[MGeoPoint]
 
+  /** Константы для описания точности точек.
+    * osm.org использует точность в зависимости от масштаба, но не более 5 знаков после запятой.
+    */
+  object FracScale {
+    /** Обычная (высокая) точность. */
+    val DEFAULT = 5
+    /** Точность условно-близких точек. */
+    val NEAR = DEFAULT - 1
+  }
+
+
+  /** Сборка инстанс [[MGeoPoint]] на основе обычных double-значений координат.
+    *
+    * У double проблема, что координата вида 50.345 может принимать вид 50.34499999693999401,
+    * что вызывает кучу проблем с кэшированием, округлением, хранением, передачей и проч.
+    *
+    * Поэтому, 2018-12-11 всё заполыхало окончательно, и был выполнен переход на BigDecimal.
+    * А тут метод для совместимости, вместо apply(), который автоматом нормализует представление.
+    *
+    * @return Инстанс MGeoPoint с нормализованными координатами.
+    */
+  def fromDouble(lat: Double, lon: Double): MGeoPoint = {
+    apply(lat = lat, lon = lon)
+      .withCoordScale( FracScale.DEFAULT )
+  }
+
+  def unapplyDouble(mgp: MGeoPoint) = {
+    for ((a, b) <- unapply(mgp)) yield
+      (a.doubleValue(), b.doubleValue())
+  }
+
   /** Проверить точку на валидность координат. */
   def isValid(gp: MGeoPoint): Boolean = {
-    Lat.isValid(gp.lat) && Lon.isValid(gp.lon)
+    Lat.isValid(gp.lat) &&
+    Lon.isValid(gp.lon)
   }
 
 
   def fromString(str: String): Option[MGeoPoint] = {
     str.split(Qs.LAT_LON_DELIM_FN) match {
       case Array(latStr, lonStr) =>
-        try {
-          val gp = MGeoPoint(
+        Try(
+          MGeoPoint.fromDouble(
             lat = latStr.toDouble,
             lon = lonStr.toDouble
           )
-          Some(gp)
-        } catch { case _: Throwable =>
-          None
-        }
+        )
+          .toOption
 
       case _ =>
         None
@@ -57,11 +92,11 @@ object MGeoPoint {
 
   val READS_GEO_ARRAY = Reads[MGeoPoint] {
     case JsArray(Seq(lonV, latV)) =>
-      val latOpt = latV.asOpt[Double]
+      val latOpt = latV.asOpt[GeoCoord_t]
       if ( !latOpt.exists(Lat.isValid) ) {
         JsError( Lat.E_INVALID )
       } else {
-        val lonOpt = lonV.asOpt[Double]
+        val lonOpt = lonV.asOpt[GeoCoord_t]
         if ( !lonOpt.exists(Lon.isValid) ) {
           JsError( Lon.E_INVALID )
         } else {
@@ -86,10 +121,15 @@ object MGeoPoint {
   /** Десериализация из js-массива вида [-13.22,45.34]. */
   val FORMAT_GEO_ARRAY = Format[MGeoPoint](READS_GEO_ARRAY, WRITES_GEO_ARRAY)
 
-  def objFormat(latName: String, lonName: String): OFormat[MGeoPoint] = (
-    (__ \ latName).format[Double] and
-    (__ \ lonName).format[Double]
-  )(apply, unlift(unapply))
+
+  /** Рендер в JsObject. */
+  def objFormat(latName: String, lonName: String): OFormat[MGeoPoint] = {
+    val formatter = implicitly[Format[GeoCoord_t]]
+    (
+      (__ \ latName).format(formatter) and
+      (__ \ lonName).format(formatter)
+    )(apply, unlift(unapply))
+  }
 
 
   /** JSON-формат для ввода-вывода в виде JSON-объекта с полями lat и lon. */
@@ -144,9 +184,9 @@ object MGeoPoint {
 
     /** Примерно равная точка -- это находящаяся ну очень близко. */
     def ~=(other: MGeoPoint): Boolean = {
-      val maxDiff = 0.000005
-      Math.abs(that.lat - other.lat) < maxDiff &&
-        Math.abs(that.lon - other.lon) < maxDiff
+      val maxDiff: GeoCoord_t = Math.pow(10, -FracScale.DEFAULT)
+      (that.lat - other.lat).abs < maxDiff &&
+      (that.lon - other.lon).abs < maxDiff
     }
 
   }
@@ -174,27 +214,30 @@ object MGeoPoint {
 case class MGeoPoint(
                       // TODO Надо обменять порядок аргументов на (lon,lat).
                       // TODO Надо это учесть в FormUtil.geoPointM, GeoPoint.FORMAT_ES_OBJECT, Implicits.MGEO_POINT_FORMAT_QS_OBJECT, в Sc3Router
-                      lat: Double,
-                      lon: Double
+                      lat: GeoCoord_t,
+                      lon: GeoCoord_t,
                     ) {
 
-  def withLat(lat2: Double) = copy(lat = lat2)
-  def withLon(lon2: Double) = copy(lon = lon2)
+  def withLat(lat2: GeoCoord_t) = copy(lat = lat2)
+  def withLon(lon2: GeoCoord_t) = copy(lon = lon2)
 
   // TODO заменить на "lon|lat" ? Пользователю в браузере конечно удобенее "lat|lon", надо поразмыслить над этим.
-  override def toString: String = {
+  override def toString: String =
     lat.toString + Qs.LAT_LON_DELIM_FN + lon.toString
-  }
-
-  /** Сериализованное представление координат точки. */
-  // TODO Оно используется только в устаревшем GeoMode.
-  def toQsStr = lat.toString + "," + lon.toString
 
 
   /** (12.1234 65.5633) */
   def toHumanFriendlyString: String = {
-    def _fmt(coord: Double) = "%1.2f".format(coord)
-    "(" + _fmt(lat) + HtmlConstants.SPACE + _fmt(lon) + ")"
+    def _fmt(coord: GeoCoord_t) = "%1.2f".format(coord)
+    `(` + _fmt(lat) + SPACE + _fmt(lon) + `)`
+  }
+
+
+  def withCoordScale(scale: Int): MGeoPoint = {
+    copy(
+      lat = MathConst.FracScale.scaledOptimal(lat, scale),
+      lon = MathConst.FracScale.scaledOptimal(lon, scale),
+    )
   }
 
 }

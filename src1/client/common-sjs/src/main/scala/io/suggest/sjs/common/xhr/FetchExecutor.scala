@@ -3,6 +3,7 @@ package io.suggest.sjs.common.xhr
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+import io.suggest.sjs.common.xhr.cache.HttpCaching
 import org.scalajs.dom.experimental._
 
 import scala.concurrent.Future
@@ -37,12 +38,15 @@ case object FetchExecutor extends HttpClientExecutor {
     val abortSignalUnd = abortCtlUnd.map(_.signal)
     val reqInit = HttpFetchUtil.toRequestInit( httpReq, abortSignalUnd )
 
-    val respFut = Fetch
-      .fetch( httpReq.url, reqInit.toRequestInit )
-      .toFuture
-      .map { FetchHttpResp.apply }
-      // Любой экзепшен отобразить в текущий формат.
-      .exception2httpEx(httpReq)
+    // Ответ сервера - через собственный кэш:
+    val respFut = HttpCaching.processCaching(httpReq, reqInit) { request =>
+      Fetch
+        .fetch( request )
+        .toFuture
+        .map { FetchHttpResp(_, isFromInnerCache = false) }
+        // Любой экзепшен отобразить в текущий формат.
+        .exception2httpEx(httpReq)
+    }
 
     new FetchHttpRespHolder( abortCtlUnd, respFut )
   }
@@ -138,7 +142,12 @@ class FetchHttpRespHolder(
 
 
 /** Реализация [[HttpResp]] для Fetch-результатов. */
-case class FetchHttpResp( resp: Response ) extends HttpResp {
+case class FetchHttpResp(
+                          resp: Response,
+                          override val isFromInnerCache: Boolean,
+                        )
+  extends HttpResp
+{
   override def status = resp.status
   override def statusText = resp.statusText
   override def getHeader(headerName: String): Option[String] = {

@@ -20,6 +20,9 @@ object MHttpCachingPolicies extends Enum[MHttpCachingPolicy] {
   /** Что быстрее, то и ответ, но ответ - кэшируется. */
   case object Fastest extends MHttpCachingPolicy
 
+  /** Сначала поискать в кэше. Если нет - делать запрос. */
+  case object CacheFirst extends MHttpCachingPolicy
+
 
   override def values = findValues
 

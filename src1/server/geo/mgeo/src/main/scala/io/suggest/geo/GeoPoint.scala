@@ -13,6 +13,7 @@ import org.elasticsearch.common.geo.{GeoPoint => EsGeoPoint}
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
 import au.id.jazzy.play.geojson.LngLat
+import io.suggest.common.geom.coord.GeoCoord_t
 
 /**
   * Suggest.io
@@ -145,11 +146,14 @@ object GeoPoint extends MacroLogsImpl {
   def toEsStr(gp: MGeoPoint): String = gp.lat.toString + "," + gp.lon.toString
 
   /** Пространственная координата в терминах JTS. */
-  def toJtsCoordinate(gp: MGeoPoint) = new Coordinate(gp.lon, gp.lat)
+  def toJtsCoordinate(gp: MGeoPoint) = new Coordinate(gp.lon.doubleValue(), gp.lat.doubleValue())
 
   /** (Lon,lat,alt) является основным порядком гео.координат в sio2. */
   def toLngLat(gp: MGeoPoint): LngLat = {
-    LngLat(lng = gp.lon, lat = gp.lat)
+    LngLat(
+      lng = gp.lon.doubleValue(),
+      lat = gp.lat.doubleValue()
+    )
   }
 
   // Предвартильно выпилено на корню в целях борьбы с зоопарком форматов координат.
@@ -176,10 +180,10 @@ object GeoPoint extends MacroLogsImpl {
           } yield {
             // play-2.6: scala-2.12+ syntax:
             latEith
-              .filterOrElse( Lat.isValid, Lat.E_INVALID )
+              .filterOrElse( Lat.isValid(_), Lat.E_INVALID )
               .flatMap { lat =>
                 lonEith
-                  .filterOrElse( Lon.isValid, Lon.E_INVALID )
+                  .filterOrElse( Lon.isValid(_), Lon.E_INVALID )
                   .map { lon =>
                     MGeoPoint(
                       lat = lat,
@@ -187,30 +191,6 @@ object GeoPoint extends MacroLogsImpl {
                     )
                   }
               }
-
-            // scala 2.11 syntax: Заменить верхним синтаксисом и удалить после апдейта сервера до scala-2.12 (см. TODO выше).
-            /*
-            latEith match {
-              case Right(lat) =>
-                if (Lat.isValid(lat)) {
-                  lonEith match {
-                    case Right(lon) =>
-                      if (Lon.isValid(lon)) {
-                        Right(MGeoPoint(
-                          lat = lat,
-                          lon = lon
-                        ))
-                      } else {
-                        Left( Lon.E_INVALID )
-                      }
-                    case Left(e) => Left(e)
-                  }
-                } else {
-                  Left( Lat.E_INVALID )
-                }
-              case Left(e) => Left(e)
-            }
-            */
           }
         }
 
@@ -218,8 +198,8 @@ object GeoPoint extends MacroLogsImpl {
           _mergeUnbinded {
             val k = key1F(key)
             Seq(
-              doubleB.unbind(k(Lat.QS_FN), value.lat),
-              doubleB.unbind(k(Lon.QS_FN), value.lon)
+              doubleB.unbind(k(Lat.QS_FN), value.lat.doubleValue()),
+              doubleB.unbind(k(Lon.QS_FN), value.lon.doubleValue())
             )
           }
         }

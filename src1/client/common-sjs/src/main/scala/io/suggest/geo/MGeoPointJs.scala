@@ -15,26 +15,26 @@ import scala.scalajs.js
 object MGeoPointJs {
 
   def apply(domCoords: Coordinates): MGeoPoint = {
-    MGeoPoint(
+    MGeoPoint.fromDouble(
       lat = domCoords.latitude,
       lon = domCoords.longitude
     )
   }
 
   /** Массив координат в стандартной нотации: [lon,lat] т.е. [x,y]. */
-  def toArray(gp: MGeoPoint): GjCoord_t = js.Array[Double](gp.lon, gp.lat)
+  def toArray(gp: MGeoPoint): GjCoord_t = js.Array[Double](gp.lon.doubleValue(), gp.lat.doubleValue())
 
   def toJsArray(gp: MGeoPoint) = toArray(gp)//.asInstanceOf[ js.Array[js.Any] ]
 
   def fromGjArray(arr: js.Array[Double]): MGeoPoint = {
-    MGeoPoint(
+    MGeoPoint.fromDouble(
       lon = arr(0),
       lat = arr(1)
     )
   }
 
   /** leaflet использовать массивы в традиционной нотации: [y, x] то бишь [lat, lon]. */
-  def toLatLngArray(gp: MGeoPoint) = js.Array[Double](gp.lat, gp.lon)
+  def toLatLngArray(gp: MGeoPoint) = js.Array[Double](gp.lat.doubleValue(), gp.lon.doubleValue())
 
   def toGjPoint(gp: MGeoPoint): GjGeometry = {
     GjGeometry(
@@ -44,8 +44,8 @@ object MGeoPointJs {
   }
 
   def toJsObject(gp: MGeoPoint) = js.Dictionary[Double](
-    Lat.QS_FN -> gp.lat,
-    Lon.QS_FN -> gp.lon
+    Lat.QS_FN -> gp.lat.doubleValue(),
+    Lon.QS_FN -> gp.lon.doubleValue()
   )
 
 }

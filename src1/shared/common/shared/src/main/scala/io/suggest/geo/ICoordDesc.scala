@@ -1,5 +1,8 @@
 package io.suggest.geo
 
+import io.suggest.common.geom.coord.GeoCoord_t
+import io.suggest.math.MathConst
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -17,24 +20,24 @@ sealed trait ICoordDesc {
   def QS_FN: String = ES_FN
 
   /** Абсолютная граница значений координаты: -bound <= x <= +bound. */
-  def BOUND: Double
+  def BOUND: GeoCoord_t
 
-  def BOUND_UPPER = BOUND
-  def BOUND_LOWER = -BOUND
+  def BOUND_UPPER: GeoCoord_t = BOUND
+  def BOUND_LOWER: GeoCoord_t = -BOUND
 
   /** messages-код сообщения об ошибке. */
   def E_INVALID = "e.coord." + ES_FN
 
   /** Проверка на валидность значения координаты. */
-  def isValid(value: Double): Boolean = {
+  def isValid(value: GeoCoord_t): Boolean = {
     value >= BOUND_LOWER &&
-      value <= BOUND_UPPER
+    value <= BOUND_UPPER
   }
 
   /** Принудительное запихивание значения координаты в разрешенный диапазон. */
-  def ensureInBounds(value: Double): Double = {
-    Math.min(BOUND_UPPER,
-      Math.max(BOUND_LOWER, value)
+  def ensureInBounds(value: GeoCoord_t): GeoCoord_t = {
+    BOUND_UPPER.min(
+      BOUND_LOWER.max( value )
     )
   }
 
@@ -42,8 +45,9 @@ sealed trait ICoordDesc {
   import scalaz.Validation
   import scalaz.ValidationNel
 
-  def validator(value: Double): ValidationNel[String, Double] = {
-    Validation.liftNel(value)(!isValid(_), E_INVALID)
+  def validator(value: GeoCoord_t): ValidationNel[String, GeoCoord_t] = {
+    val v = MathConst.FracScale.scaledOptimal(value, MGeoPoint.FracScale.DEFAULT)
+    Validation.liftNel(v)(!isValid(_), E_INVALID)
   }
 
 }

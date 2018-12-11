@@ -52,3 +52,6 @@ case class MLocEnv(
                     bleBeacons    : Seq[MUidBeacon]    = Nil
                   )
   extends EmptyProduct
+{
+  def withGeoLocOpt(geoLocOpt: Option[MGeoLoc]) = copy(geoLocOpt = geoLocOpt)
+}

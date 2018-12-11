@@ -17,7 +17,7 @@ object MGeoLocJs {
 
   def apply(pos: Position): MGeoLoc = {
     MGeoLoc(
-      point     = MGeoPointJs(pos.coords),
+      point        = MGeoPointJs(pos.coords),
       accuracyOptM = Some(pos.coords.accuracy)
     )
   }

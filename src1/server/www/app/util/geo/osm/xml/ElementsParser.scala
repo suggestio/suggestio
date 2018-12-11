@@ -137,7 +137,7 @@ trait ElementsParserT
     val getNode = {
       OsmNode(
         id = getId,
-        gp = MGeoPoint(
+        gp = MGeoPoint.fromDouble(
           lat = thisTagAttrs.getValue(ATTR_LAT).toDouble,
           lon = thisTagAttrs.getValue(ATTR_LON).toDouble
         )

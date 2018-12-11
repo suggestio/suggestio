@@ -51,6 +51,7 @@ case class MAdsSearchReq(
 
   def withOffset(offset: Option[Int] = None) = copy(offset = offset)
   def withLimit(limit: Option[Int] = None)   = copy(limit = limit)
+  def withGenOpt(genOpt: Option[Long])       = copy(genOpt = genOpt)
 
   def withLimitOffset(limit: Option[Int], offset: Option[Int]) = copy(limit = limit, offset = offset)
 

@@ -1,7 +1,8 @@
 package io.suggest.sjs.common.xhr.cache
 
-import java.time.LocalDate
+import java.time.{LocalDate, ZoneOffset}
 
+import io.suggest.msg.ErrorMsgs
 import org.scalajs.dom
 import org.scalajs.dom.Window
 import org.scalajs.dom.experimental.serviceworkers.{Cache, CacheStorage}
@@ -12,6 +13,8 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+
+import scala.scalajs.js.JavaScriptException
 
 /**
   * Suggest.io
@@ -25,8 +28,8 @@ object MCaches {
 
   import WindowCachesStub._
 
-  /** Мажорная версия кэша, нарастает инкрементально: AA, AB, AC...ZZ... */
-  final def CACHE_VERSION = "aa"
+  /** Мажорная версия кэша, нарастает инкрементально: 00, 01,... 0A,... 0Z, 10,..., ZZ... */
+  final def CACHE_VERSION = "00"
 
   /** Разделитель морфем в ключе кэша. */
   private final def CACHE_KEY_DELIM = "_"
@@ -38,9 +41,9 @@ object MCaches {
     dom.window.cachesOrUndef.nonEmpty
   // TODO По голому http может не работать, только по https - нужно сбрасывать в false при ошибках.
 
+
   /** Проверить доступность API хранилища кэширования. */
   def isAvailable = _isAvailable
-
 
   /** Быстрый доступ к хранилищу. */
   def storage = dom.window.caches
@@ -48,25 +51,50 @@ object MCaches {
 
   /** Поиск закэшированного реквеста через match(). */
   def findMatching(req: Request): Future[Option[Response]] = {
-    storage.`match`(req)
-      .toFuture
-      .map { _.asInstanceOf[js.UndefOr[Response]].toOptionNullable }
+    _tryAvailable { () =>
+      storage
+        .`match`(req)
+        .toFuture
+        .map { _.asInstanceOf[js.UndefOr[Response]].toOptionNullable }
+    }
   }
-
 
   /** Открыть кэш для использования. */
   def open(cacheName: String): Future[MCache] = {
-    storage
-      .open( cacheName )
-      .toFuture
-      .map( MCache.apply )
+    _tryAvailable { () =>
+      storage
+        .open( cacheName )
+        .toFuture
+        .map( MCache.apply )
+    }
   }
 
+  /** Кэш может не работать. Например, благодаря https-only. Его нужно вырубать автоматом. */
+  private def _tryAvailable[T](f: () => Future[T]): Future[T] = {
+    if (isAvailable) {
+      try {
+        val futRes = f()
+        for (ex <- futRes.failed) {
+          _isAvailable = false
+          Future.failed( new UnsupportedOperationException(ErrorMsgs.CACHING_ERROR, ex) )
+        }
+        futRes
+      } catch { case ex: JavaScriptException =>
+        _isAvailable = false
+        Future.failed( new IllegalStateException(ErrorMsgs.CACHING_ERROR, ex) )
+      }
+    } else {
+      Future.failed( new NoSuchElementException(ErrorMsgs.CACHING_ERROR) )
+    }
+  }
+
+  /** Обычный вызов now() требует жирную базу временных зон, её на руках нет. */
+  private def _localDateNow = LocalDate.now( ZoneOffset.UTC )
 
   /** Ключи кэша идут по дням. */
-  def cacheKey(date: LocalDate = LocalDate.now()): String = {
+  def cacheKey(date: LocalDate = _localDateNow): String = {
     val delim = CACHE_KEY_DELIM
-    "hc" + delim +
+    "c" + delim +
       CACHE_VERSION + delim +
       date.getYear + date.getMonthValue + date.getDayOfMonth
   }
@@ -74,28 +102,30 @@ object MCaches {
 
   /** Быстрое удаление старых кэшей по rolling-ключам. */
   def gc(): Future[_] = {
-    val allCacheKeysFut = storage.keys().toFuture
-    val yesterday = LocalDate.now()
-      .minusDays( CACHE_MAX_DAYS )
-    val maxKey = cacheKey( yesterday )
-    for {
-      allCacheKeys <- allCacheKeysFut
-      if allCacheKeys.nonEmpty
+    _tryAvailable { () =>
+      val allCacheKeysFut = storage.keys().toFuture
+      val yesterday = _localDateNow
+        .minusDays( CACHE_MAX_DAYS )
+      val maxKey = cacheKey( yesterday )
+      for {
+        allCacheKeys <- allCacheKeysFut
+        if allCacheKeys.nonEmpty
 
-      cacheKeysForDelete = allCacheKeys
-        .iterator
-        .filter( _ >= maxKey )
-        .toStream
-      if cacheKeysForDelete.nonEmpty
+        cacheKeysForDelete = allCacheKeys
+          .iterator
+          .filter( _ >= maxKey )
+          .toStream
+        if cacheKeysForDelete.nonEmpty
 
-      results <- Future.traverse( cacheKeysForDelete ) { ck4d =>
-        storage
-          .delete( ck4d )
-          .toFuture
+        results <- Future.traverse( cacheKeysForDelete ) { ck4d =>
+          storage
+            .delete( ck4d )
+            .toFuture
+        }
+
+      } yield {
+        results
       }
-
-    } yield {
-      results
     }
   }
 

@@ -41,6 +41,10 @@ object UnivEqUtil {
   // Поддержка разных типов для UnivEq.
   @inline implicit def doubleUe           : UnivEq[Double]          = UnivEq.force
   @inline implicit def floadUe            : UnivEq[Float]           = UnivEq.force
+  @inline implicit def sBigDecimalUe      : UnivEq[BigDecimal]      = UnivEq.force
+  @inline implicit def jBigDecimalUe      : UnivEq[java.math.BigDecimal] = UnivEq.force
+  @inline implicit def jBigIntUe          : UnivEq[java.math.BigInteger] = UnivEq.force
+
 
   @inline implicit def seqUe[T: UnivEq]         : UnivEq[Seq[T]]          = UnivEq.force
   @inline implicit def indexedSeqUe[T: UnivEq]  : UnivEq[IndexedSeq[T]]   = UnivEq.force

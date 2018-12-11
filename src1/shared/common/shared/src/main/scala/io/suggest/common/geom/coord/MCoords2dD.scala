@@ -28,9 +28,9 @@ object MCoords2dD {
 
 /** Двумерные double-координаты. */
 case class MCoords2dD(
-  override val x: Double,
-  override val y: Double
-)
+                       override val x: Double,
+                       override val y: Double,
+                     )
   extends ICoord2d[Double]
   with DoubleMathModifiers[MCoords2dD]
 {

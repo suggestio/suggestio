@@ -89,7 +89,7 @@ final case class Criteria(
 
     for (mgp <- geoDistanceSort) {
       sb.append(",geoDistanceSort=")
-        .append(mgp.toQsStr)
+        .append(mgp.toHumanFriendlyString)
     }
 
     sb.append(')')

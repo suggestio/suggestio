@@ -2,6 +2,7 @@ package io.suggest.sc.u.api
 
 import io.suggest.sc.sc3.MSc3Resp
 import io.suggest.sjs.common.model.Route
+import io.suggest.sjs.common.xhr.cache.{MHttpCacheInfo, MHttpCachingPolicies}
 import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.{Json, OWrites, Reads}
@@ -40,7 +41,11 @@ object ScJsRoutesUtil {
       route = route(argsJsDict),
       data  = HttpReqData(
         headers   = HttpReqData.headersJsonAccept,
-        timeoutMs = REQ_TIMEOUT_MS
+        timeoutMs = REQ_TIMEOUT_MS,
+        /*cache = MHttpCacheInfo(
+          policy = MHttpCachingPolicies.NetworkFirst,
+          // TODO rewriteUrl
+        )*/
       )
     )
     Xhr.execute( req )

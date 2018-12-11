@@ -385,6 +385,11 @@ object FormUtil {
       { _.replace(',', '.').toDouble},
       { _.toString }
     )
+  def bigDecimalM: Mapping[BigDecimal] = {
+    doubleM.transform[BigDecimal](
+      BigDecimal(_), _.doubleValue()
+    )
+  }
 
   /** Form mapping для LocalDate. */
   def localDateM = text(maxLength = 32)
@@ -471,12 +476,13 @@ object FormUtil {
   /** Маппер для lat-lon координат, заданных в двух полях формы.
     * val потому что некоторые XFormUtil юзают это как val. */
   val geoPointM: Mapping[MGeoPoint] = {
+    val vMapper = doubleM
     mapping(
-      "lat" -> doubleM,
-      "lon" -> doubleM
+      "lat" -> vMapper,
+      "lon" -> vMapper
     )
-    { MGeoPoint.apply }
-    { MGeoPoint.unapply }
+    { MGeoPoint.fromDouble }
+    { MGeoPoint.unapplyDouble }
   }
 
   /** Опциональный маппер для lat-lon координат. */

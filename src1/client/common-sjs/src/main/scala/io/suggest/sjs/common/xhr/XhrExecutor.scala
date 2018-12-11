@@ -84,6 +84,7 @@ class XhrHttpRespHolder(
 
 /** Реализация [[HttpResp]] для XHR-результата. */
 case class XhrHttpResp( xhr: XMLHttpRequest ) extends HttpResp {
+  override def isFromInnerCache = false
   override def status = xhr.status
   override def statusText = xhr.statusText
   override def getHeader(headerName: String): Option[String] = {

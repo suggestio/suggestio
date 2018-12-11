@@ -62,4 +62,8 @@ case class MScCommonQs(
                         locEnv            : MLocEnv             = MLocEnv.empty,
                         searchGridAds     : Option[Boolean]     = None,
                         searchNodes       : Option[Boolean]     = None,
-                      )
+                      ) {
+
+  def withLocEnv(locEnv: MLocEnv) = copy(locEnv = locEnv)
+
+}

@@ -143,4 +143,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def CONF_SAVE_FAILED                 = E(87)
 
+  def CACHING_ERROR                    = E(88)
+
 }

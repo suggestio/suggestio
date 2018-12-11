@@ -88,9 +88,16 @@ class GeoLocAh[M](
       // Не подпадает ли текущая геолокация под нож подавления?
       if ( _isLocNotSuppressed(loc.glType, v0) ) {
         // Собрать новые данные watcher'а
-        val mgl1 = v0.watchers
-          .get( loc.glType )
-          .fold {
+        //val coordNorm = loc.location.point
+
+        val mglw0 = v0.watchers.get( loc.glType )
+        if ( mglw0.exists(_.lastPos contains loc.location) ) {
+          // Данная точка уже была получена в прошлый раз, повторно уведомлять не требуется.
+          noChange
+
+        } else {
+
+          val mglw1 = mglw0.fold {
             LOG.warn( WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = loc.glType.toString )
             MGeoLocWatcher( watchId = None, lastPos = Ready(loc.location) )
           } { mgl0 =>
@@ -99,72 +106,73 @@ class GeoLocAh[M](
             )
           }
 
-        // !!! Из-за итераторов тут довольно взрывоопасный код, надо быть осторожнее.
+          // !!! Из-за итераторов тут довольно взрывоопасный код, надо быть осторожнее.
 
-        // Откладываем перестройку карты на последний момент: если нужен suppressor, то эта перестройка будет лишней.
-        val watchers1Iter = v0.watchers.iterator
+          // Откладываем перестройку карты на последний момент: если нужен suppressor, то эта перестройка будет лишней.
+          val watchers1Iter = v0.watchers.iterator
 
-        // Если приходят высокоточные данные GPS, то надо отказаться от неточных данных геолокации хотя бы на какое-то время.
-        val supprOpt = for {
-          ttlMs <- loc.glType.suppressorTtlMs
-        } yield {
-          // Отменить старый таймер подавления
-          for (s <- v0.suppressor) {
-            DomQuick.clearTimeout(s.timerId)
+          // Если приходят высокоточные данные GPS, то надо отказаться от неточных данных геолокации хотя бы на какое-то время.
+          val supprOpt = for {
+            ttlMs <- loc.glType.suppressorTtlMs
+          } yield {
+            // Отменить старый таймер подавления
+            for (s <- v0.suppressor) {
+              DomQuick.clearTimeout(s.timerId)
+            }
+
+            // Найти и отрубить гео-watcher'ы, которые теперь подавляются.
+            val (ws4cleanIter, wsKeepIter) = watchers1Iter.partition {
+              case (wtype, _) =>
+                wtype.precision <= loc.glType.precision
+            }
+            val watchers2Iter = ws4cleanIter.clearWatchers() ++ wsKeepIter
+
+            // Запустить новый таймер подавления
+            val generation = System.currentTimeMillis()
+            // Здесь можно сделать эффект поверх future, заместо прямого дёрганья dispatcher'а.
+            val timerId = DomQuick.setTimeout(ttlMs) { () =>
+              dispatcher( GlSuppressTimeout(generation) )
+            }
+
+            // Собрать и вернуть данные состояния
+            val suppr = Suppressor(
+              timerId     = timerId,
+              generation  = generation,
+              minWatch    = loc.glType
+            )
+            (suppr, watchers2Iter)
           }
 
-          // Найти и отрубить гео-watcher'ы, которые теперь подавляются.
-          val (ws4cleanIter, wsKeepIter) = watchers1Iter.partition {
-            case (wtype, _) =>
-              wtype.precision <= loc.glType.precision
-          }
-          val watchers2Iter = ws4cleanIter.clearWatchers() ++ wsKeepIter
+          // Полученный хардкорный итератор гео-вотчеров дополняется ещё и обновлёнными данными текущей геолокации.
+          val watchers3 = {
+            val tl = (loc.glType -> mglw1) :: Nil
+            supprOpt.fold(watchers1Iter)(_._2)  ++  tl
+          }.toMap
 
-          // Запустить новый таймер подавления
-          val generation = System.currentTimeMillis()
-          // Здесь можно сделать эффект поверх future, заместо прямого дёрганья dispatcher'а.
-          val timerId = DomQuick.setTimeout(ttlMs) { () =>
-            dispatcher( GlSuppressTimeout(generation) )
+          // Если pending, то переставить в ready.
+          val switch2 = if (v0.switch.onOff.isPending) {
+            val isOnOff = v0.switch.onOff.getOrElse(true)
+            v0.switch.copy(
+              onOff    = v0.switch.onOff.ready( isOnOff ),
+              scSwitch = None
+            )
+          } else {
+            v0.switch.withOutScSwitch
           }
 
-          // Собрать и вернуть данные состояния
-          val suppr = Suppressor(
-            timerId     = timerId,
-            generation  = generation,
-            minWatch    = loc.glType
+          // Сохранить новые данные в состояние.
+          val v2 = v0.copy(
+            watchers   = watchers3,
+            suppressor = supprOpt.map(_._1),
+            switch     = switch2
           )
-          (suppr, watchers2Iter)
+
+          // Уведомить другие контроллеры о наступлении геолокации.
+          val notifyOthersFx = GlPubSignal( Some(loc), v0.switch.scSwitch ).toEffectPure
+
+          ah.updateMaybeSilentFx( v0.switch.onOff ===* v2.switch.onOff )(v2, notifyOthersFx)
+
         }
-
-        // Полученный хардкорный итератор гео-вотчеров дополняется ещё и обновлёнными данными текущей геолокации.
-        val watchers3 = {
-          val tl = (loc.glType -> mgl1) :: Nil
-          supprOpt.fold(watchers1Iter)(_._2)  ++  tl
-        }.toMap
-
-        // Если pending, то переставить в ready.
-        val switch2 = if (v0.switch.onOff.isPending) {
-          val isOnOff = v0.switch.onOff.getOrElse(true)
-          v0.switch.copy(
-            onOff    = v0.switch.onOff.ready( isOnOff ),
-            scSwitch = None
-          )
-        } else {
-          v0.switch.withOutScSwitch
-        }
-
-        // Сохранить новые данные в состояние.
-        val v2 = v0.copy(
-          watchers   = watchers3,
-          suppressor = supprOpt.map(_._1),
-          switch     = switch2
-        )
-
-        // Уведомить другие контроллеры о наступлении геолокации.
-        val notifyOthersFx = GlPubSignal( Some(loc), v0.switch.scSwitch ).toEffectPure
-
-        ah.updateMaybeSilentFx( v0.switch.onOff ===* v2.switch.onOff )(v2, notifyOthersFx)
-
       } else {
         // Данная геолокация подпадает под подавление. Скорее всего что-то пошло не так.
         //LOG.warn(WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = (loc, v0.suppressor))

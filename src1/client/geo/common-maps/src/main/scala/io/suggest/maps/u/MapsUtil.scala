@@ -28,7 +28,7 @@ object MapsUtil {
 
   /** Конверсия L.LatLng в MGeoPoint. */
   def latLng2geoPoint(ll: LatLng): MGeoPoint = {
-    MGeoPoint(
+    MGeoPoint.fromDouble(
       lat = ll.lat,
       lon = ll.lng
     )
@@ -66,7 +66,7 @@ object MapsUtil {
     // Изображаем дробь:
     val dLon = geoCircle.radiusM / (
       earthRadiusM * Math.cos(
-        Math.PI * geoCircle.center.lat / D180
+        Math.PI * geoCircle.center.lat.doubleValue() / D180
       )
     )
     geoCircle.center.withLon(

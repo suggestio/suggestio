@@ -19,7 +19,14 @@ object MHttpCacheInfo {
 
 }
 
+
+/** Требования по кэшированию.
+  *
+  * @param policy Политика кэширования.
+  * @param rewriteUrl Ссылка, под которой надо сохранять в кэш.
+  *                   По задумке, было множество ссылок, но IndexedDB требует на это отдельное разрешение и доп.пиление.
+  */
 case class MHttpCacheInfo(
-                           policy           : MHttpCachingPolicy   = MHttpCachingPolicies.NetworkOnly,
-                           rewriteUrl       : Iterable[String]     = Nil
+                           policy           : MHttpCachingPolicy      = MHttpCachingPolicies.NetworkOnly,
+                           rewriteUrl       : Option[String]          = None,
                          )

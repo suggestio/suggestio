@@ -73,7 +73,7 @@ class CityParsers extends CityIdParser {
           cityId    = cityId,
           cityName  = cityName,
           region    = Option(region),
-          center    = MGeoPoint(lat = lat, lon = lon)
+          center    = MGeoPoint.fromDouble(lat = lat, lon = lon)
         )
     }
   }
