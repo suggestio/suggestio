@@ -1,41 +1,9 @@
-package io.suggest.sjs.common.controller
+package io.suggest.init.routed
 
-import io.suggest.init.routed.JsInitConstants
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.util.SafeSyncVoid
 import io.suggest.sjs.common.vm.doc.DocumentVm
-import io.suggest.sjs.common.log.Log
-
-/**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 24.04.15 14:29
- * Description: Трейт для сборки систем routed init. Суть работы системы:
- * - При запуске скрипта JSApp дергает RoutedInitImpl.init().
- * - Этот init считывает данные для инициализации из data-аттрибутов тега body:
- *   &lt; body data-ri="ctl1[: action1[, ...] [; ctl2: ...] ]" &gt;
- *   Пример значения аттрибута data-ri:
- *   data-ri="ctl1: action1, action2; ctl2: action3; ctl3."
- * - В ходе обработки аттрибутов автоматически происходят вызовы для инициализации:
- *   RoutedInitImpl.getController("ctl1") => Option[Ctl1]
- *   Ctl1.init() => Future[_]
- *   Ctl1.riAction("action1") => Future[_]
- *   Ctl1.riAction("action2") => Future[_]
- *   ...
- *   RoutedInitImpl.initFinished() => _
- *
- * Таким образом можно эффективно управлять инициализацией используемого кода в fat js.
- * Реализация формируется с помощью stackable trait pattern.
- *
- * Отсутсвующие контроллеры или экшены будут отображены в логах, но инициализация при этом не прерывается.
- *
- * 2015.apr.27: RoutedInit переименован в InitRouter.
- *              RoutedInitController переименован в InitController.
- *
- * @see [[http://stackoverflow.com/a/9059603 Идея в общих чертах, но через стандартные аттрибутов]].
- * @see [[http://viget.com/inspire/extending-paul-irishs-comprehensive-dom-ready-execution Причины использования data-аттрибутов]].
- */
-
 
 /** Заготовка главного контроллера, который производит инициализацию компонентов в контексте текущей страницы.
   * Контроллеры объединяются в единый роутер через stackable trait pattern. */
@@ -91,4 +59,3 @@ trait InitRouter extends Log with SafeSyncVoid {
   }
 
 }
-

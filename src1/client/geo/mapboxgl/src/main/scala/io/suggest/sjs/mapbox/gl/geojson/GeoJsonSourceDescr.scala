@@ -1,6 +1,6 @@
 package io.suggest.sjs.mapbox.gl.geojson
 
-import io.suggest.sjs.common.geo.json.GjType
+import io.suggest.geo.json.GjType
 import io.suggest.sjs.common.model.FromDict
 import io.suggest.sjs.mapbox.gl.Zoom_t
 import io.suggest.sjs.mapbox.gl.source.{SourceDescr, SourceTypes}

@@ -1,14 +1,14 @@
 package io.suggest.xadv.ext.js.form
 
-import io.suggest.sjs.common.controller.InitRouter
 import org.scalajs.dom
 import org.scalajs.dom.{Element, XMLHttpRequest}
 import org.scalajs.jquery._
 import io.suggest.adv.ext.view.FormPage._
+import io.suggest.init.routed.InitRouter
 import japgolly.univeq._
 
 import scala.scalajs.js
-import scala.scalajs.js.{Dictionary, Any, Array}
+import scala.scalajs.js.{Any, Array, Dictionary}
 
 /**
  * Suggest.io

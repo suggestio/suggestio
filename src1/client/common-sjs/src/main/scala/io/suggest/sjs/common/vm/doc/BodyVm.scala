@@ -1,8 +1,6 @@
 package io.suggest.sjs.common.vm.doc
 
-import io.suggest.sjs.common.vm.content.EraseBg
 import io.suggest.sjs.common.vm.{IVm, VmT}
-import io.suggest.sjs.common.vm.overflow.OverflowT
 import org.scalajs.dom.Node
 import org.scalajs.dom.raw.HTMLBodyElement
 
@@ -10,10 +8,9 @@ import org.scalajs.dom.raw.HTMLBodyElement
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 11.07.17 18:12
-  * Description:
   */
 
-object SafeBody extends VmT with OverflowT with EraseBg {
+object SafeBody extends VmT {
 
   override type T = HTMLBodyElement
 

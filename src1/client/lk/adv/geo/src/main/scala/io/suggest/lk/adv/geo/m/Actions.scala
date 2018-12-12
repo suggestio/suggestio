@@ -3,8 +3,8 @@ package io.suggest.lk.adv.geo.m
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.geo.json.GjFeature
 import io.suggest.maps.m.{IMapsAction, OpenAdvGeoExistPopup}
-import io.suggest.sjs.common.geo.json.GjFeature
 
 import scala.scalajs.js
 import scala.util.Try

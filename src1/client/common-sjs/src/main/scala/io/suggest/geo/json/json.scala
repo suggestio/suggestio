@@ -1,14 +1,12 @@
-package io.suggest.sjs.common.geo
+package io.suggest.geo
 
 import scala.scalajs.js
 import scala.scalajs.js.|
 
-import scala.language.implicitConversions
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 01.06.17 23:12
+  * Created: 12.12.18 13:53
   */
 package object json {
 

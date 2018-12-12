@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import io.suggest.sjs.common.geo.json.{GjCoord_t, GjGeometry, GjTypes}
+import io.suggest.geo.json._
 import org.scalajs.dom.Coordinates
 
 import scala.scalajs.js

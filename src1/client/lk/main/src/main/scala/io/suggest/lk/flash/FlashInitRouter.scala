@@ -1,12 +1,13 @@
 package io.suggest.lk.flash
 
-import io.suggest.sjs.common.controller.{DomQuick, InitRouter}
 import io.suggest.sjs.common.util.SafeSyncVoid
 import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.jquery._
 import io.suggest.flash.FlashConstants._
+import io.suggest.init.routed.InitRouter
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.dom.DomQuick
 import japgolly.univeq._
 
 import scala.concurrent.{Future, Promise}

@@ -3,13 +3,13 @@ package io.suggest.lk.adv.geo.r
 import diode.ModelRO
 import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp}
 import io.suggest.bill.MGetPriceResp
+import io.suggest.geo.json.GjFeature
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model.{Route, _}
 import io.suggest.lk.adv.a.{IRcvrPopupApi, RcvrPopupHttpApiImpl}
 import io.suggest.lk.adv.geo.m.MOther
 import io.suggest.pick.PickleUtil
 import io.suggest.routes.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, routes}
-import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.tags.search.{ITagsApi, TagsHttpApiImpl}
 
 import scala.concurrent.Future

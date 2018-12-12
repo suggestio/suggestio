@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.controller
+package io.suggest.sjs.dom
 
 import io.suggest.sjs.common.model.TimeoutPromise
 import org.scalajs.dom

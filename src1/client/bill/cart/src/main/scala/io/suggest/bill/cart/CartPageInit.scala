@@ -1,6 +1,6 @@
 package io.suggest.bill.cart
 
-import io.suggest.sjs.common.controller.InitRouter
+import io.suggest.init.routed.InitRouter
 import io.suggest.sjs.common.view.VUtil
 import japgolly.univeq._
 import japgolly.scalajs.react.vdom.html_<^._

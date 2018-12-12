@@ -38,9 +38,9 @@ import io.suggest.sc.v.ScCssFactory
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.sjs.common.vm.wnd.WindowVm
+import io.suggest.sjs.dom.DomQuick
 import io.suggest.spa.OptFastEq
 import org.scalajs.dom
 import org.scalajs.dom.Event

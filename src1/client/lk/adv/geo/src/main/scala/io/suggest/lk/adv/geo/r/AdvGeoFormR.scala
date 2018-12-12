@@ -4,6 +4,7 @@ import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.css.Css
+import io.suggest.geo.json.GjFeature
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.r.rcvr.RcvrPopupR
@@ -13,7 +14,6 @@ import io.suggest.maps.m.{MExistGeoPopupS, MGeoMapPropsR, MRad}
 import io.suggest.maps.r.rad.{RadEnabledR, RadR}
 import io.suggest.maps.r._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.dt.period.r._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._

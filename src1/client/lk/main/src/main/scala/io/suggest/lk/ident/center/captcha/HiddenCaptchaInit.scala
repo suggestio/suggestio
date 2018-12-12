@@ -1,8 +1,8 @@
 package io.suggest.lk.ident.center.captcha
 
-import io.suggest.sjs.common.controller.InitRouter
 import org.scalajs.jquery.{JQueryEventObject, jQuery}
 import io.suggest.captcha.CaptchaConstants._
+import io.suggest.init.routed.InitRouter
 import japgolly.univeq._
 
 import scala.scalajs.js.ThisFunction

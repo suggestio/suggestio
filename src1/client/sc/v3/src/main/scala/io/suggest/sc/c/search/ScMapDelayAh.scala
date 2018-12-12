@@ -3,8 +3,8 @@ package io.suggest.sc.c.search
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.maps.m.{MapDragEnd, MapMoveEnd, OpenMapRcvr}
 import io.suggest.sc.m.search.{MMapDelay, MapDelayTimeOut, MapReIndex}
-import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.dom.DomQuick
 import japgolly.univeq._
 
 /**

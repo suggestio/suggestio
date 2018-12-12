@@ -1,10 +1,8 @@
 package io.suggest.sjs.common.vm.wnd
 
 import io.suggest.sjs.common.vm.evtg.EventTargetVmT
-import io.suggest.sjs.common.vm.scroll.ScrollT
 import io.suggest.sjs.common.vm.wnd.compstyle.GetComputedStyleT
 import io.suggest.sjs.common.vm.wnd.dpr.DevPxRatioT
-import io.suggest.sjs.common.vm.wnd.hist.HistoryApiT
 import io.suggest.sjs.common.vm.wnd.nav.NavigatorVm
 import org.scalajs.dom
 import org.scalajs.dom.{MediaQueryList, Navigator, Window}
@@ -22,9 +20,7 @@ import scala.scalajs.js.UndefOr
 trait WindowVmT
   extends DevPxRatioT
   with GetComputedStyleT
-  with HistoryApiT
   with EventTargetVmT
-  with ScrollT
 {
   override type T <: Window
 

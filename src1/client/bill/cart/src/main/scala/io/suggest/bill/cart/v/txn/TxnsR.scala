@@ -13,7 +13,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.r.YmdR
 import io.suggest.dt.CommonDateTimeUtil.Implicits._
-import io.suggest.sjs.common.controller.DomQuick
+import io.suggest.sjs.dom.DomQuick
 
 /**
   * Suggest.io

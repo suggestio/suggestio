@@ -5,7 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.adv.AdvConstants.CurrShapes
 import io.suggest.geo.{GeoConstants, MGeoPoint, MGeoPointJs}
 import io.suggest.maps.m.MGeoAdvExistGjFtProps.fromAny
-import io.suggest.sjs.common.geo.json.{GjFeature, GjFeatureCollection, GjGeometry}
+import io.suggest.geo.json._
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.event.{Events, LayerEvent}

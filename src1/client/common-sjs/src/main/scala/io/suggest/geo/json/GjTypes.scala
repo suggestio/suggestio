@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.geo.json
+package io.suggest.geo.json
 
 import io.suggest.i18n.MsgCodes
 

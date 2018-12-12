@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.runner.c
 
-import io.suggest.sjs.common.controller.InitRouter
+import io.suggest.init.routed.InitRouter
 import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
 import io.suggest.sjs.common.view.CommonPage
 import io.suggest.xadv.ext.js.fb.c.FbAdapter

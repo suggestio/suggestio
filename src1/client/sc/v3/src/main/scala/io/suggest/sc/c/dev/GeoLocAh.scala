@@ -7,10 +7,10 @@ import io.suggest.geo._
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sc.m.dev.{MGeoLocWatcher, MScGeoLoc, Suppressor}
 import io.suggest.sc.m._
-import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.wnd.WindowVm
+import io.suggest.sjs.dom.DomQuick
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._

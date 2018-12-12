@@ -9,12 +9,12 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.radio.RadioUtil
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.model.MTsTimerId
 import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.univeq._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.dom.DomQuick
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Success

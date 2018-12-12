@@ -8,8 +8,8 @@ import io.suggest.sc.m.grid.GridReConf
 import io.suggest.sc.m.inx.ScCssReBuild
 import io.suggest.sc.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sc.c.search.SearchAh
+import io.suggest.sjs.dom.DomQuick
 
 /**
   * Suggest.io

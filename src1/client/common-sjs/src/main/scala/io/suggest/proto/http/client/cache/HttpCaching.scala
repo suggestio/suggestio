@@ -4,9 +4,9 @@ import io.suggest.msg.ErrorMsgs
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.adp.fetch.{FetchHttpResp, FetchRequestInit}
 import io.suggest.proto.http.model.{HttpReq, MHttpCaches}
-import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil._
+import io.suggest.sjs.dom.DomQuick
 import org.scalajs.dom.experimental.{Request, Response}
 
 import scala.concurrent.{Future, Promise}

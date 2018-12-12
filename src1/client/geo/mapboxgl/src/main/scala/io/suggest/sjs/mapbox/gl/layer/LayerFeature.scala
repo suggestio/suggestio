@@ -1,6 +1,6 @@
 package io.suggest.sjs.mapbox.gl.layer
 
-import io.suggest.sjs.common.geo.json.GjFeature
+import io.suggest.geo.json.GjFeature
 
 /**
   * Suggest.io

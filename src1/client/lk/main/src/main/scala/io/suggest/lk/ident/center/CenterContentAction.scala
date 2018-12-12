@@ -1,9 +1,9 @@
 package io.suggest.lk.ident.center
 
-import io.suggest.sjs.common.controller.InitRouter
+import io.suggest.init.routed.InitRouter
 import io.suggest.sjs.common.util.SafeSyncVoid
 import org.scalajs.dom
-import org.scalajs.jquery.{JQueryEventObject, JQuery, jQuery}
+import org.scalajs.jquery.{JQuery, JQueryEventObject, jQuery}
 import japgolly.univeq._
 
 /**

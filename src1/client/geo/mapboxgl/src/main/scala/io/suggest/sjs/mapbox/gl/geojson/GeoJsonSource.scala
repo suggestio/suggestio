@@ -1,6 +1,6 @@
 package io.suggest.sjs.mapbox.gl.geojson
 
-import io.suggest.sjs.common.geo.json.GjType
+import io.suggest.geo.json.GjType
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal

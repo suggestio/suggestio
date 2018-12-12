@@ -4,10 +4,10 @@ import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.maps.m.{MExistGeoPopupS, MExistGeoS}
 import io.suggest.maps.r.{ExistAdvGeoShapesR, ExistPopupR}
-import io.suggest.sjs.common.geo.json.GjFeature
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import react.leaflet.layer.LayerGroupR
 import MExistGeoPopupS.MGeoCurPopupSFastEq
+import io.suggest.geo.json.GjFeature
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
 

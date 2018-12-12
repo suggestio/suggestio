@@ -1,6 +1,6 @@
 package io.suggest.sjs.leaflet.geojson
 
-import io.suggest.sjs.common.geo.json.GjFeature
+import io.suggest.geo.json.GjFeature
 import io.suggest.sjs.leaflet.{PolygonCoords_t, PolygonLatLngs_t}
 import io.suggest.sjs.leaflet.map.{LMap, LatLng, LatLngBounds, Layer}
 import io.suggest.sjs.leaflet.LEAFLET_IMPORT

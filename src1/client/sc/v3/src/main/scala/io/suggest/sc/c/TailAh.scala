@@ -11,11 +11,11 @@ import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.NodeRowClick
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits.OptionListExtOps
 import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sjs.dom.DomQuick
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._

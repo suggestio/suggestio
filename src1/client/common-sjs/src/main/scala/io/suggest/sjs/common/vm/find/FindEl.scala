@@ -3,7 +3,6 @@ package io.suggest.sjs.common.vm.find
 import io.suggest.primo.{IApplyOpt1, TypeT}
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.util._
-import org.scalajs.dom.raw.HTMLDivElement
 import org.scalajs.dom.{Element, Node}
 
 /**
@@ -52,10 +51,3 @@ trait FindElT
 {
   override def find(): Option[T] = _find(DOM_ID)
 }
-
-
-/** Частоиспользуемый код для vm-компаньонов, обслуживающих div'ы со статическими id. */
-trait FindDiv extends FindElT {
-  override type Dom_t = HTMLDivElement
-}
-

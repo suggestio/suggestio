@@ -1,7 +1,7 @@
 package io.suggest.maps.u
 
 import diode.data.Pot
-import io.suggest.common.spa.SpaConst.LkPreLoaderConst
+import io.suggest.spa.SpaConst.LkPreLoaderConst
 import io.suggest.geo.MGeoLoc
 import io.suggest.i18n.MsgCodes
 import io.suggest.maps.vm.RadiusMarkerIcon

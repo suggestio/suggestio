@@ -4,8 +4,8 @@ import diode._
 import io.suggest.ad.edit.m.{DeleteAdClick, DeleteAdResp, MAdEditFormConf}
 import io.suggest.ad.edit.srv.ILkAdEditApi
 import io.suggest.lk.m.{DeleteConfirmPopupCancel, DeleteConfirmPopupOk, MDeleteConfirmPopupS}
-import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.dom.DomQuick
 
 import scala.util.Success
 

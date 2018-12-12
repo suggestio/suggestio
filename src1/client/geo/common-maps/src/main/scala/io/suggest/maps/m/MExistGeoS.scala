@@ -2,7 +2,7 @@ package io.suggest.maps.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.sjs.common.geo.json.GjFeature
+import io.suggest.geo.json.GjFeature
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq

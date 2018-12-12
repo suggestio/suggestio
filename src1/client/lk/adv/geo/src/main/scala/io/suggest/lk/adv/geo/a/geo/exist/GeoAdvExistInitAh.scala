@@ -2,10 +2,10 @@ package io.suggest.lk.adv.geo.a.geo.exist
 
 import diode._
 import diode.data.Pot
+import io.suggest.geo.json.GjFeature
 import io.suggest.lk.adv.geo.m.{CurrGeoAdvsInit, SetCurrGeoAdvs}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.geo.json.GjFeature
 
 import scala.scalajs.js
 import scala.util.Success

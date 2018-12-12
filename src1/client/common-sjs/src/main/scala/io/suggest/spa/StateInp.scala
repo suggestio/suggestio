@@ -1,6 +1,5 @@
 package io.suggest.spa
 
-import io.suggest.common.spa.SpaConst
 import io.suggest.sjs.common.vm.attr.StringInputValueT
 import io.suggest.sjs.common.vm.find.FindElT
 import io.suggest.sjs.common.vm.rm.SelfRemoveT

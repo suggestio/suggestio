@@ -1,8 +1,5 @@
 package io.suggest.sjs.common.vm.util
 
-import io.suggest.sjs.common.vm.of.OfHtmlElement
-import org.scalajs.dom.raw.HTMLElement
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -33,10 +30,3 @@ trait DomId extends IDomIdApiImpl {
 
 }
 
-
-/** Поддержка проверки id элемента в of-фреймворке. */
-trait OfHtmlElDomIdRelated extends OfHtmlElement with IDomIdApi {
-  abstract override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
-    super._isWantedHtmlEl(el) && isDomIdRelated(el.id)
-  }
-}

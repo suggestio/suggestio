@@ -6,7 +6,7 @@ import io.suggest.adv.geo.MFormS
 import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.tags.edit.m.MTagsEditState
 import io.suggest.maps.m.{MExistGeoS, MMapS, MRad}
-import io.suggest.sjs.common.controller.DomQuick
+import io.suggest.sjs.dom.DomQuick
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 

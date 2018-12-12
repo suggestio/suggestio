@@ -4,7 +4,6 @@ import io.suggest.lk.nodes.LkNodesConst
 import io.suggest.lk.nodes.form.r.LkNodesFormR
 import io.suggest.lk.nodes.form.r.pop.LknPopupsR
 import io.suggest.lk.pop.PopupsContR
-import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.lk.nodes.form.m.MLkNodesRoot.MLknRootFastEq
@@ -13,6 +12,7 @@ import org.scalajs.dom.raw.HTMLDivElement
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.univeq._
 import com.softwaremill.macwire._
+import io.suggest.init.routed.InitRouter
 
 /**
   * Suggest.io

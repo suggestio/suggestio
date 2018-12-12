@@ -2,9 +2,9 @@ package io.suggest.lk.adn.map.a
 
 import diode._
 import diode.data.Pot
+import io.suggest.geo.json.GjFeature
 import io.suggest.lk.adn.map.m.{CurrGeoAdvsInit, SetCurrGeoAdvs}
 import io.suggest.lk.adn.map.u.ILkAdnMapApi
-import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.scalajs.js

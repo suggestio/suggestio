@@ -3,11 +3,11 @@ package io.suggest.lk.adn.map.u
 import io.suggest.adn.mapf.MLamForm
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.bill.MGetPriceResp
+import io.suggest.geo.json.GjFeature
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.proto.http.model._
 import io.suggest.pick.PickleUtil
 import io.suggest.routes.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, routes}
-import io.suggest.sjs.common.geo.json.GjFeature
 
 import scala.concurrent.Future
 import scala.scalajs.js

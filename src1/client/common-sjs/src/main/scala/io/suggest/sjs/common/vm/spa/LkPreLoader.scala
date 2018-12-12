@@ -1,10 +1,10 @@
 package io.suggest.sjs.common.vm.spa
 
-import io.suggest.common.spa.SpaConst
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.find.FindElT
 import io.suggest.sjs.common.vm.rm.SelfRemoveT
 import io.suggest.sjs.common.vm.style.ShowHideDisplayT
+import io.suggest.spa.SpaConst
 import org.scalajs.dom.raw.HTMLImageElement
 
 /**

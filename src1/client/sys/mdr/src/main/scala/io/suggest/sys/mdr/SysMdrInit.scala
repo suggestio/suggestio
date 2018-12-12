@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr
 
-import io.suggest.sjs.common.controller.InitRouter
+import io.suggest.init.routed.InitRouter
 import japgolly.univeq._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.view.VUtil

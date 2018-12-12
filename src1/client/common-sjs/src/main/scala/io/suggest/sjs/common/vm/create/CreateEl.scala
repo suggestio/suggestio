@@ -1,9 +1,7 @@
 package io.suggest.sjs.common.vm.create
 
-import io.suggest.sjs.common.vm.find.{IApplyEl, TypeDomT}
-import io.suggest.sjs.common.vm.util.DomId
+import io.suggest.sjs.common.vm.find.TypeDomT
 import org.scalajs.dom
-import org.scalajs.dom.Element
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**

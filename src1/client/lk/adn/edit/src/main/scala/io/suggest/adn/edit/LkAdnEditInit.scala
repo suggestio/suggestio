@@ -1,8 +1,8 @@
 package io.suggest.adn.edit
 
-import io.suggest.sjs.common.controller.InitRouter
 import japgolly.univeq._
 import com.softwaremill.macwire._
+import io.suggest.init.routed.InitRouter
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.sjs.common.view.VUtil
 import org.scalajs.dom.raw.HTMLDivElement

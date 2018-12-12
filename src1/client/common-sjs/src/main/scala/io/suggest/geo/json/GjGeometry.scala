@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.geo.json
+package io.suggest.geo.json
 
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
