@@ -74,8 +74,7 @@ class FitImgMaker @Inject()(
         val outputWhCssPx = __mkOutputSz( args.szMult )
 
         val pxRatio = args.devScreenOpt
-          .map(_.pxRatio)
-          .getOrElse(MPxRatios.default)
+          .fold(MPxRatios.default)(_.pxRatio)
 
         val outputWhPx    = __mkOutputSz( args.szMult * pxRatio.pixelRatio )
 

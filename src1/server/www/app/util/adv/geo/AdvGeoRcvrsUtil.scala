@@ -9,7 +9,7 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.dev.{MPxRatios, MScreen}
+import io.suggest.dev.MScreen
 import io.suggest.es.model.IMust
 import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MMapNodeIconInfo, MRcvrsMapUrlArgs}
 import io.suggest.model.n2.edge.MPredicates
@@ -17,6 +17,7 @@ import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.scripts.RcvrsMapNodesHashSumAggScripts
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.sc.ScConstants
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.MImgMakeArgs
@@ -57,7 +58,7 @@ class AdvGeoRcvrsUtil @Inject()(
 
 
   /** "Версия" формата ресиверов, чтобы сбрасывать карту, даже когда она не изменилась. */
-  private def RCVRS_MAP_CRC_VSN = 5
+  private def RCVRS_MAP_CRC_VSN = 7
 
   /** Максимально допустимый уровень рекурсивного погружения во вложенность ресиверов.
     * Первый уровень -- это 1. */
@@ -70,9 +71,10 @@ class AdvGeoRcvrsUtil @Inject()(
   private def NODE_LOGOS_PREPARING_PARALLELISM = 16
 
   /** Предельные размеры логотипо в px. */
-  private def LOGO_WH_LIMITS_CSSPX = MSize2di(width = 120, height = 20)
+  private def LOGO_WH_LIMITS_CSSPX = MSize2di(width = 120, height = ScConstants.Logo.HEIGHT_CSSPX)
 
-  private def WC_FG_LIMITS_CSSPX = MSize2di(width = 40, height = 40)
+  // TODO Нормальный логотип - 30px в выдаче. Но для приветствия используется 40px. Как-то надо проунифицировать это.
+  private def WC_FG_LIMITS_CSSPX = MSize2di(width = 120, height = 40)
 
 
   /** Сборка ES-аргументов для поиска узлов, отображаемых на карте.
@@ -179,14 +181,11 @@ class AdvGeoRcvrsUtil @Inject()(
     // Начать выкачивать все подходящие узлы из модели:
     lazy val logPrefix = s"rcvrNodesMap(${System.currentTimeMillis}):"
 
+    val targetScreenSome = Some( MScreen.default )
+
     val logoTargetSz = LOGO_WH_LIMITS_CSSPX
     val wcFgTargetSz = if (wcAsLogo) WC_FG_LIMITS_CSSPX else null
 
-    val dpr = MPxRatios.XHDPI
-    val targetScreenSome = Some(
-      MScreen.default
-        .withPxRatio( dpr )
-    )
     val compressModeSome = Some(
       CompressModes.Fg
     )
@@ -265,7 +264,9 @@ class AdvGeoRcvrsUtil @Inject()(
                   targetWh.withWidth(
                     (szCss.width.toDouble / (szCss.height.toDouble / targetWh.height.toDouble)).toInt
                   )
-                } else szCss
+                } else {
+                  szCss
+                }
               }
             )
           }
