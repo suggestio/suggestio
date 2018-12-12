@@ -1,7 +1,7 @@
 package io.suggest.sc.v.inx
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
+import diode.react.ModelProxy
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.ScConstants
@@ -38,31 +38,23 @@ class WelcomeR(
   implicit object WelcomeRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.wcInfo     ===* b.wcInfo) &&
-        (a.nodeName ===* b.nodeName) &&
-        (a.state    ===* b.state)
+      (a.nodeName   ===* b.nodeName) &&
+      (a.state      ===* b.state)
     }
   }
 
-  /** Модель внутреннего состояния компонента приветствия.
-    *
-    * @param nodeNameC Коннекшен до названия узла.
-    */
-  protected[this] case class State(
-                                    nodeNameC: ReactConnectProxy[Option[String]]
-                                  )
 
   type Props_t = Option[PropsVal]
   type Props = ModelProxy[Props_t]
 
 
-  class Backend( $: BackendScope[Props, State] ) {
+  class Backend( $: BackendScope[Props, Unit] ) {
 
-    private def _onClick: Callback = {
+    private def _onClick: Callback =
       dispatchOnProxyScopeCB( $, WcClick )
-    }
 
 
-    def render(propsProxy: Props, s: State): VdomElement = {
+    def render(propsProxy: Props): VdomElement = {
       propsProxy().whenDefinedEl { p =>
         val AnimCss = ScConstants.Welcome.Anim
         val fadingOutNow = p.state.isHiding
@@ -106,7 +98,7 @@ class WelcomeR(
           },
 
           // Текстовый логотип-подпись, если доступно название узла.
-          p.nodeName.whenDefined { _ =>
+          p.nodeName.whenDefined { nodeName =>
             <.div(
               CSS.Fg.fgText,
               // Выровнять по вертикали с учётом картинки переднего плана:
@@ -117,7 +109,13 @@ class WelcomeR(
                   ^.marginTop := (whPx.height / 2).px
                 },
               // Отобразить текстовый логотип, такой же как и в заголовке:
-              s.nodeNameC { nodeNameR.apply }
+              propsProxy.wrap { _ =>
+                val nnProps = nodeNameR.PropsVal(
+                  nodeName = nodeName,
+                  styled   = true
+                )
+                Some(nnProps): nodeNameR.Props_t
+              }( nodeNameR.apply ),
             )
           }
 
@@ -128,12 +126,9 @@ class WelcomeR(
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps { propsProxy =>
-      State(
-        nodeNameC = propsProxy.connect(_.flatMap(_.nodeName))
-      )
-    }
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
+    .stateless
     .renderBackend[Backend]
     .build
 

@@ -73,9 +73,6 @@ class AdvGeoRcvrsUtil @Inject()(
   /** Предельные размеры логотипо в px. */
   private def LOGO_WH_LIMITS_CSSPX = MSize2di(width = 120, height = ScConstants.Logo.HEIGHT_CSSPX)
 
-  // TODO Нормальный логотип - 30px в выдаче. Но для приветствия используется 40px. Как-то надо проунифицировать это.
-  private def WC_FG_LIMITS_CSSPX = MSize2di(width = 120, height = 40)
-
 
   /** Сборка ES-аргументов для поиска узлов, отображаемых на карте.
     * Этот набор критериев отбора используется и для сборки карты,
@@ -184,7 +181,6 @@ class AdvGeoRcvrsUtil @Inject()(
     val targetScreenSome = Some( MScreen.default )
 
     val logoTargetSz = LOGO_WH_LIMITS_CSSPX
-    val wcFgTargetSz = if (wcAsLogo) WC_FG_LIMITS_CSSPX else null
 
     val compressModeSome = Some(
       CompressModes.Fg
@@ -200,13 +196,12 @@ class AdvGeoRcvrsUtil @Inject()(
           .maybeOpt(wcAsLogo) {
             welcomeUtil
               .wcFgImg(mnode)
-              .map(_ -> wcFgTargetSz)
           }
           .orElse {
             logoUtil
               .getLogoOfNode(mnode)
-              .map(_ -> logoTargetSz)
           }
+          .map(_ -> logoTargetSz)
 
         if (mapLogoImgWithLimitsOptRaw.isEmpty)
           LOGGER.trace(s"$logPrefix Missing logo for node ${mnode.idOrNull}")

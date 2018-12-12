@@ -400,11 +400,13 @@ case class ScCss( args: IScCssArgs )
 
         private val TXT_LOGO = HEADER + "_txt-" + `logo_`
 
-        val txtLogo = style(
-          addClassName( TXT_LOGO ),
+        val logo = style(
+          addClassName( TXT_LOGO )
+        )
+
+        val colored = style(
           color( _fgColorCss ),
           borderColor( _fgColorCss )
-          //top( args.screenInfo.unsafeOffsets.top.px )
         )
 
         /** Точки по краям названия узла. */
@@ -414,6 +416,10 @@ case class ScCss( args: IScCssArgs )
           /** Стиль для одной точки. */
           val dot = style(
             addClassName( DOT ),
+          )
+
+          /** Цвет точки. */
+          val dotColor = style(
             backgroundColor( _fgColorCss )
           )
 
@@ -426,9 +432,10 @@ case class ScCss( args: IScCssArgs )
 
       object Img {
 
-        val img = style(
+        val hdr = style(
           position.relative,
-          top( 10.px )
+          // было 10px, но в итоге получилось 5 после унификацией с логотипами карты.
+          padding( ((ScCss.HEADER_HEIGHT_PX - ScConstants.Logo.HEIGHT_CSSPX) / 2).px )
         )
 
       }
@@ -761,7 +768,7 @@ case class ScCss( args: IScCssArgs )
 
     Header.Buttons.Align.leftAligned,
     Header.Logo.Txt.Dots.dot,
-    Header.Logo.Img.img,
+    Header.Logo.Img.hdr,
 
     Search.TextBar.bar,
     Search.Tabs.MapTab.inner,

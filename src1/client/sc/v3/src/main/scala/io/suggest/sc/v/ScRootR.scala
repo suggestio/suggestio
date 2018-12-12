@@ -488,7 +488,8 @@ class ScRootR (
           } yield {
             logoR.PropsVal(
               logoOpt     = mnode.logoOpt,
-              nodeNameOpt = mnode.name
+              nodeNameOpt = mnode.name,
+              styled      = true,
             )
           }
         }( OptFastEq.Wrapped(LogoPropsValFastEq) ),

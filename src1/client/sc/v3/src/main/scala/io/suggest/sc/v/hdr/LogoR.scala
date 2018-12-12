@@ -1,7 +1,7 @@
 package io.suggest.sc.v.hdr
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.ModelProxy
 import io.suggest.media.IMediaInfo
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.ScConstants
@@ -10,6 +10,8 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import scalacss.ScalaCssReact._
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -26,40 +28,51 @@ class LogoR(
              getScCssF: GetScCssF,
            ) {
 
+  import nodeNameR.NodeNameRPropsValFastEq
+  import io.suggest.spa.OptFastEq.Wrapped
+
   type Props_t = Option[PropsVal]
   type Props = ModelProxy[Props_t]
 
+  /**
+    * @param logoOpt Графический логотип узла.
+    * @param nodeNameOpt Текстовое имя узла.
+    * @param styled Стилизовать цветами узла?
+    */
   case class PropsVal(
                        logoOpt      : Option[IMediaInfo],
-                       nodeNameOpt  : Option[String]
+                       nodeNameOpt  : Option[String],
+                       styled       : Boolean,
                      )
-
   implicit object LogoPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.logoOpt eq b.logoOpt) &&
-        (a.nodeNameOpt eq b.nodeNameOpt)
+      (a.logoOpt     ===* b.logoOpt) &&
+      (a.nodeNameOpt ===* b.nodeNameOpt) &&
+      (a.styled       ==* b.styled)
     }
   }
 
 
-  protected[this] case class State(
-                                   nodeNameOptC: ReactConnectProxy[Option[String]]
-                                  )
+  class Backend($: BackendScope[Props, Unit]) {
 
-  class Backend($: BackendScope[Props, State]) {
-
-    def render(propsProxy: Props, s: State): VdomElement = {
+    def render(propsProxy: Props): VdomElement = {
       propsProxy().whenDefinedEl { nodeInfo =>
         // Нужно решить, что вообще надо рендерить: логотип, название узла или что-то иное?
         nodeInfo.logoOpt.fold[VdomElement] {
           // Графический логотип не доступен. Попробовать отрендерить текстовый логотип.
-          s.nodeNameOptC { nodeNameR.apply }
+          propsProxy.wrap { _ =>
+            for (nodeName <- nodeInfo.nodeNameOpt) yield {
+              nodeNameR.PropsVal(
+                nodeName = nodeName,
+                styled   = nodeInfo.styled
+              )
+            }
+          }( nodeNameR.apply )
 
         } { logoInfo =>
-          val ImgLogoCss = getScCssF().Header.Logo.Img
           // Рендерим картинку графического логотипа узла.
           <.img(
-            ImgLogoCss.img,
+            getScCssF().Header.Logo.Img.hdr,
             ^.src := logoInfo.url,
             nodeInfo.nodeNameOpt.whenDefined { nodeName =>
               ^.title := nodeName
@@ -67,19 +80,15 @@ class LogoR(
             ^.height := ScConstants.Logo.HEIGHT_CSSPX.px
           )
         }
-
       }
     }
 
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps { proxy =>
-      State(
-        nodeNameOptC = proxy.connect( _.flatMap(_.nodeNameOpt) )
-      )
-    }
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
+    .stateless
     .renderBackend[Backend]
     .build
 

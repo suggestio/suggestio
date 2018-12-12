@@ -73,7 +73,8 @@ class IndexSwitchAskR(
               propsOptProxy.wrap { _ =>
                 val logoProps = logoR.PropsVal(
                   logoOpt     = i.logoOpt,
-                  nodeNameOpt = i.name
+                  nodeNameOpt = i.name,
+                  styled      = false,
                 )
                 Some( logoProps ): logoR.Props_t
               }( logoR.apply )
