@@ -1,8 +1,8 @@
 package io.suggest.routes
 
 import io.suggest.adv.info.MNodeAdvInfo
-import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, HttpRespTypes, Xhr}
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.model.{Route, _}
 
 import scala.concurrent.Future
 
@@ -37,7 +37,7 @@ trait LkBill2NodeAdvInfoHttpApiImpl extends ILkBill2NodeAdvInfoApi {
         respType = HttpRespTypes.ArrayBuffer
       )
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unBooPickle[MNodeAdvInfo]

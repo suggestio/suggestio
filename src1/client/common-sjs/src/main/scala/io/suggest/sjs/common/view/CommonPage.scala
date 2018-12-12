@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.view
 
 import io.suggest.common.event.DomEvents
-import io.suggest.proto.HttpConst
+import io.suggest.proto.http.HttpConst
 import org.scalajs.dom
 import org.scalajs.dom.WebSocket
 import org.scalajs.jquery._

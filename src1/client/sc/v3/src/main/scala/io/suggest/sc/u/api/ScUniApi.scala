@@ -2,11 +2,11 @@ package io.suggest.sc.u.api
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.client.cache.{MHttpCacheInfo, MHttpCachingPolicies}
+import io.suggest.proto.http.model.{Route, _}
 import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.sc3.{MSc3Resp, MScQs}
-import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.xhr.cache.{MHttpCacheInfo, MHttpCachingPolicies}
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
 import io.suggest.ueq.UnivEqUtil._
@@ -101,12 +101,12 @@ trait ScUniApiHttpImpl extends IScUniApi {
             scQs4Caching <- ScUniApi.stripQsForCaching(scQs)
           } yield {
             val route = ScUniApi.scQs2Route(scQs4Caching)
-            Xhr.route2url(route)
+            HttpClient.route2url(route)
           }
         )
       )
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[MSc3Resp]

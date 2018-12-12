@@ -6,6 +6,7 @@ import io.suggest.color.MColorData
 import io.suggest.common.coll.Lists
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo._
+import io.suggest.proto.http.client.HttpClient
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.MonkeyNodeId.forJsObject
 import io.suggest.maps.m.OpenMapRcvr
@@ -15,7 +16,6 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.event.MouseEvent
 import io.suggest.sjs.leaflet.map.LatLng
@@ -103,7 +103,7 @@ object RcvrMarkersR {
               mnode.props.icon.fold ( MapIcons.pinMarkerIcon() ) { iconInfo =>
                 val o = IconOptions.empty
                 // Для cordova требуются абсолютные ссылки на картинки, иначе она подставит file:// в протокол.
-                o.iconUrl = Xhr.mkAbsUrlIfPreferred( iconInfo.url )
+                o.iconUrl = HttpClient.mkAbsUrlIfPreferred( iconInfo.url )
                 // Описываем размеры иконки по данным сервера.
                 o.iconSize = MapsUtil.size2d2LPoint( iconInfo.wh )
                 // Для иконки -- якорь прямо в середине.

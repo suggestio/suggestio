@@ -19,9 +19,9 @@ import io.suggest.lk.m.img.{MPictureAh, MPictureCropPopup}
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.proto.http.model.Route
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.model.Route
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.IUploadApi
 import io.suggest.ws.MWsMsgTypes

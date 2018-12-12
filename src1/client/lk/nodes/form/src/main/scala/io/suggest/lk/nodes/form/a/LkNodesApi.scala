@@ -2,10 +2,11 @@ package io.suggest.lk.nodes.form.a
 
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.tf.daily.ITfDailyMode
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.model._
 import io.suggest.lk.nodes.{MLknNode, MLknNodeReq, MLknNodeResp}
-import io.suggest.proto.HttpConst
+import io.suggest.proto.http.HttpConst
 import io.suggest.routes.routes
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import play.api.libs.json.Json
 import japgolly.univeq._
@@ -98,7 +99,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       route = routes.controllers.LkNodes.nodeInfo(nodeId),
       data  = HttpReqData.justAcceptJson
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[MLknNodeResp]
@@ -113,7 +114,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
         headers = HttpReqData.headersJsonSendAccept
       )
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[MLknNode]
@@ -125,7 +126,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       route = routes.controllers.LkNodes.setNodeEnabled(nodeId, isEnabled),
       data  = HttpReqData.justAcceptJson
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[MLknNode]
@@ -133,11 +134,11 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
 
 
   override def deleteNode(nodeId: String): Future[Boolean] = {
-    import io.suggest.proto.HttpConst.Status._
+    import HttpConst.Status._
     val req = HttpReq.routed(
       route = routes.controllers.LkNodes.deleteNode(nodeId)
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIfStatus( NO_CONTENT, NOT_FOUND )
       .map { resp =>
@@ -154,7 +155,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
         headers = HttpReqData.headersJsonSendAccept
       )
     )
-    Xhr.execute(req)
+    HttpClient.execute(req)
       .respAuthFut
       .successIf200
       .unJson[MLknNode]
@@ -170,7 +171,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       ),
       data = HttpReqData.justAcceptJson
     )
-    Xhr.execute(req)
+    HttpClient.execute(req)
       .respAuthFut
       .successIf200
       .unJson[MLknNode]
@@ -187,7 +188,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
         headers = HttpReqData.headersJsonSendAccept
       )
     )
-    Xhr.execute(req)
+    HttpClient.execute(req)
       .respAuthFut
       .successIf200
       .unJson[MLknNode]
@@ -198,7 +199,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
     val req = HttpReq.routed(
       route = routes.controllers.LkNodes.setAdvShowOpened(adId, isShowOpened, RcvrKey.rcvrKey2urlPath(onNode))
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIfStatus( S.OK, S.NO_CONTENT )
   }

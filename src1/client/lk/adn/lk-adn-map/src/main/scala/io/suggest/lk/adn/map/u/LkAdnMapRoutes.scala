@@ -1,7 +1,7 @@
 package io.suggest.lk.adn.map.u
 
+import io.suggest.proto.http.model.Route
 import io.suggest.routes.Controllers
-import io.suggest.sjs.common.model.Route
 
 import scala.scalajs.js
 import scala.language.implicitConversions

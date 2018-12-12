@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.xhr
+package io.suggest.proto.http.model
 
 import scala.concurrent.Future
 import scala.scalajs.js.JavaScriptException

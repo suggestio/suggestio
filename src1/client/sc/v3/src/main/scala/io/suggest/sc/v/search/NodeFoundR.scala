@@ -19,11 +19,11 @@ import chandu0101.scalajs.react.components.materialui.{Mui, MuiListItem, MuiList
 import io.suggest.common.empty.OptionUtil
 import ReactCommonUtil.Implicits._
 import io.suggest.common.html.HtmlConstants
+import io.suggest.proto.http.client.HttpClient
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import io.suggest.sjs.common.xhr.Xhr
 
 import scala.scalajs.js
 
@@ -173,7 +173,7 @@ class NodeFoundR(getScCssF: GetScCssF) {
           MuiListItemIcon()(
             <.img(
               NodesCSS.nodeLogo,
-              ^.src := Xhr.mkAbsUrlIfPreferred( icon.url )
+              ^.src := HttpClient.mkAbsUrlIfPreferred( icon.url )
             )
           )
         }

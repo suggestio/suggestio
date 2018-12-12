@@ -1,6 +1,6 @@
-package io.suggest.sjs.common.model
+package io.suggest.proto.http.model
 
-import io.suggest.proto.HttpConst
+import io.suggest.proto.http.HttpConst
 
 /**
   * Suggest.io

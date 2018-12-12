@@ -1,10 +1,9 @@
 package util.sec
 
 import javax.inject.{Inject, Singleton}
-
 import controllers.routes
 import io.suggest.common.empty.OptionUtil
-import io.suggest.proto.HttpConst
+import io.suggest.proto.http.HttpConst
 import io.suggest.sec.csp.{Csp, CspHeader, CspPolicy, CspViolationReport}
 import models.mctx.ContextUtil
 import play.api.Configuration

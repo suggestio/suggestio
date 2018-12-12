@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.xhr.cache
+package io.suggest.proto.http.client.cache
 
 import japgolly.univeq._
 
@@ -13,7 +13,6 @@ object MHttpCacheInfo {
   def default = apply()
 
   @inline implicit def univEq: UnivEq[MHttpCacheInfo] = {
-    import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }
 

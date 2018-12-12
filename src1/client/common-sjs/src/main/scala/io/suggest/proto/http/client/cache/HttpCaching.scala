@@ -1,16 +1,16 @@
-package io.suggest.sjs.common.xhr.cache
+package io.suggest.proto.http.client.cache
 
 import io.suggest.msg.ErrorMsgs
-import io.suggest.proto.HttpConst
-import io.suggest.sjs.common.xhr.{FetchHttpResp, FetchRequestInit, HttpReq}
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.proto.http.HttpConst
+import io.suggest.proto.http.client.adp.fetch.{FetchHttpResp, FetchRequestInit}
+import io.suggest.proto.http.model.{HttpReq, MHttpCaches}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.async.AsyncUtil._
 import org.scalajs.dom.experimental.{Request, Response}
 
 import scala.concurrent.{Future, Promise}
 import scala.concurrent.duration._
-
 
 /**
   * Suggest.io
@@ -25,12 +25,13 @@ object HttpCaching extends Log {
   // Конструктор вызывается один раз.
   // Нужно выполнить отложенный gc() для удаления старых кэшей.
   // Отложенный - на случай отсутствия данных на старте.
+  // TODO Надо чистить кэш после завершения *уже*успешных* запросов. Т.е. только в онлайне. И далее 1-2-3 раза сутки по таймеру до закрытия вкладки.
   Future {
-    if (MCaches.isAvailable)
+    if (MHttpCaches.isAvailable)
       DomQuick.setTimeout(15.seconds.toMillis) { () =>
         // Повторно проверяем кэш, т.к. он мог отвалится за это время, т.к. после запуска были запросы-ответы.
-        if (MCaches.isAvailable)
-          MCaches.gc()
+        if (MHttpCaches.isAvailable)
+          MHttpCaches.gc()
       }
   }
 
@@ -60,9 +61,9 @@ object HttpCaching extends Log {
 
     // Запуск поиска в кэше.
     lazy val __cachedRespOptFut: Future[Option[FetchHttpResp]] = {
-      if (MCaches.isAvailable) {
+      if (MHttpCaches.isAvailable) {
         for {
-          respOpt <- MCaches.findMatching( cachedReq )
+          respOpt <- MHttpCaches.findMatching( cachedReq )
         } yield {
           for (resp <- respOpt) yield
             FetchHttpResp(resp, isFromInnerCache = true)
@@ -75,24 +76,24 @@ object HttpCaching extends Log {
 
     // Сохранить в кэш. Может вернуть экзепшен, когда статус ответа слишком неожиданный.
     def __saveToCacheFut(resp: Response): Future[_] = {
-      if ( MCaches.isAvailable ) {
+      if ( MHttpCaches.isAvailable ) {
         val S = HttpConst.Status
         if (resp.status < S.OK  ||  resp.status >= S.MULTIPLE_CHOICES) {
           // Нельзя кэшировать ошибочные ответы, редиректы и прочее.
           Future.failed( new NoSuchElementException(resp.status.toString) )
         } else {
           try {
-            val cacheKey = MCaches.cacheKey()
-            val fut = MCaches
+            val cacheKey = MHttpCaches.cacheKey()
+            val fut = MHttpCaches
               .open(cacheKey)
               .flatMap(_.put(cachedReq, resp))
             // Логгирование, т.к. результат этой функции обычно дропается.
             for (ex <- fut.failed)
-              LOG.error(ErrorMsgs.CACHING_ERROR, ex = ex)
+              LOG.info(ErrorMsgs.CACHING_ERROR, ex = ex)
             fut
           } catch {
             case ex: Throwable =>
-              LOG.error(ErrorMsgs.CACHING_ERROR, ex = ex)
+              LOG.info(ErrorMsgs.CACHING_ERROR, ex = ex)
               Future.failed(ex)
           }
         }
@@ -110,7 +111,7 @@ object HttpCaching extends Log {
 
       case MHttpCachingPolicies.NetworkFirst =>
         val netRespFut = __networkRespFut
-        if (MCaches.isAvailable) {
+        if (MHttpCaches.isAvailable) {
           netRespFut
             .map { netResp =>
               val resp4cache = netResp.resp.clone()
@@ -128,10 +129,10 @@ object HttpCaching extends Log {
         } else {
           netRespFut
         }
-        
+
 
       case MHttpCachingPolicies.Fastest =>
-        if (MCaches.isAvailable) {
+        if (MHttpCaches.isAvailable) {
           val cachedResOptFut = __cachedRespOptFut
 
           val p = Promise[FetchHttpResp]()
@@ -162,7 +163,7 @@ object HttpCaching extends Log {
 
 
       case MHttpCachingPolicies.CacheFirst =>
-        if (MCaches.isAvailable) {
+        if (MHttpCaches.isAvailable) {
           __cachedRespOptFut
             .map(_.get)
             .recoverWith { case _: Throwable =>
@@ -178,6 +179,11 @@ object HttpCaching extends Log {
         } else {
           __networkRespFut
         }
+
+
+      case MHttpCachingPolicies.CacheOnly =>
+        __cachedRespOptFut
+          .map(_.get)
 
     }
   }

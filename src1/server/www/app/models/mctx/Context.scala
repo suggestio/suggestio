@@ -11,7 +11,7 @@ import io.suggest.playx.{ICurrentAppHelpers, IsAppModes}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.ctx.{CtxData, MCtxId, MCtxIds}
 import io.suggest.dev.{MScreen, MScreenJvm}
-import io.suggest.proto.HttpConst
+import io.suggest.proto.http.HttpConst
 import io.suggest.sc.ScConstants
 import models.mproj.IMCommonDi
 import models.req.IReqHdr

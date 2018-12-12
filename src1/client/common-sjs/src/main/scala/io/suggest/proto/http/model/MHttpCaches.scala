@@ -1,18 +1,17 @@
-package io.suggest.sjs.common.xhr.cache
+package io.suggest.proto.http.model
 
 import java.time.{LocalDate, ZoneOffset}
 
 import io.suggest.msg.ErrorMsgs
 import org.scalajs.dom
-import org.scalajs.dom.Window
-import org.scalajs.dom.experimental.serviceworkers.{Cache, CacheStorage}
+import org.scalajs.dom.experimental.serviceworkers.Cache
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.dom.experimental.{Request, Response}
 
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+import io.suggest.sjs.dom.DomWindowCaches._
 
 import scala.scalajs.js.JavaScriptException
 
@@ -24,9 +23,7 @@ import scala.scalajs.js.JavaScriptException
   *
   * Для чистки старых кэшей используется rolling-схема нумерации индексов по дням, и удаление старых.
   */
-object MCaches {
-
-  import WindowCachesStub._
+object MHttpCaches {
 
   /** Мажорная версия кэша, нарастает инкрементально: 00, 01,... 0A,... 0Z, 10,..., ZZ... */
   final def CACHE_VERSION = "00"
@@ -60,12 +57,12 @@ object MCaches {
   }
 
   /** Открыть кэш для использования. */
-  def open(cacheName: String): Future[MCache] = {
+  def open(cacheName: String): Future[MHttpCache] = {
     _tryAvailable { () =>
       storage
         .open( cacheName )
         .toFuture
-        .map( MCache.apply )
+        .map( MHttpCache.apply )
     }
   }
 
@@ -133,26 +130,10 @@ object MCaches {
 
 
 /** Обёртка для конкретного кэша. */
-case class MCache(cache: Cache) {
+case class MHttpCache(cache: Cache) {
 
   /** Запихивание ответа в кэш. */
   def put(key: Request, value: Response): Future[Unit] =
     cache.put(key, value).toFuture
 
 }
-
-
-@js.native
-trait WindowCachesStub extends js.Object {
-
-  @JSName("caches")
-  val cachesOrUndef: js.UndefOr[js.Function] = js.native
-
-  def caches: CacheStorage = js.native
-
-}
-object WindowCachesStub {
-  implicit def apply( window: Window ): WindowCachesStub =
-    window.asInstanceOf[WindowCachesStub]
-}
-

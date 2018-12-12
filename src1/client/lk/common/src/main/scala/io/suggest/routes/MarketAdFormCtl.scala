@@ -1,6 +1,6 @@
 package io.suggest.routes
 
-import io.suggest.sjs.common.model.Route
+import io.suggest.proto.http.model.Route
 
 import scala.scalajs.js
 

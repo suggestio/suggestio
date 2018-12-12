@@ -10,7 +10,7 @@ import models.req.MMediaOptNodeReq
 import play.api.mvc._
 import japgolly.univeq._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.proto.HttpConst
+import io.suggest.proto.http.HttpConst
 import play.api.http.{HttpErrorHandler, Status}
 import util.cdn.CdnUtil
 

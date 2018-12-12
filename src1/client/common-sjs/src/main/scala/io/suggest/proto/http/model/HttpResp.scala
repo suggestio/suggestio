@@ -1,10 +1,9 @@
-package io.suggest.sjs.common.xhr
+package io.suggest.proto.http.model
 
-import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 import boopickle.Pickler
 import io.suggest.id.IdentConst
 import io.suggest.pick.PickleUtil
-import io.suggest.proto.HttpConst
+import io.suggest.proto.http.HttpConst
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import japgolly.univeq._
@@ -13,6 +12,7 @@ import play.api.libs.json.{Json, Reads}
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSON
+import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 import scala.util.{Failure, Success}
 
 /**
@@ -86,7 +86,7 @@ object HttpResp {
     def successIfStatus(httpStatuses: Int*): Future[HttpResp] =
       successIfStatusF( httpStatuses.contains )
 
-    def successIf200 = successIfStatus( HttpStatuses.OK )
+    def successIf200 = successIfStatus( HttpConst.Status.OK )
 
     def successIfStatusStartsWith00X(statusPrefix: Int) =
       successIfStatusF(_ / 10 ==* statusPrefix)

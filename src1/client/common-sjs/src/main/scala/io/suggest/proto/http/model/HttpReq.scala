@@ -1,6 +1,6 @@
-package io.suggest.sjs.common.xhr
+package io.suggest.proto.http.model
 
-import io.suggest.sjs.common.model.HttpRouteExtractor
+import io.suggest.proto.http.client.HttpClient
 import japgolly.univeq.UnivEq
 
 /**
@@ -10,7 +10,7 @@ import japgolly.univeq.UnivEq
   * Description: Модель данных реквеста.
   * Появилась для абстрагирования HTTP-реквестов над разными нижележащими
   * http-клиентами (fetch(), XmlHTTPRequest, etc),
-  * а также для отказа от передачи пачек аргументов между разными методами внутри [[Xhr]].
+  * а также для отказа от передачи пачек аргументов между разными методами внутри [[HttpClient]].
   */
 object HttpReq {
 
@@ -24,7 +24,7 @@ object HttpReq {
     val hre = implicitly[HttpRouteExtractor[HttpRoute]]
     apply(
       method    = hre.method(route),
-      url       = Xhr.route2url(route),
+      url       = HttpClient.route2url(route),
       data      = data,
     )
   }

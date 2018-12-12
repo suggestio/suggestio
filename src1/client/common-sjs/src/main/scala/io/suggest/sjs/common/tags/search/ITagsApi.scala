@@ -2,8 +2,8 @@ package io.suggest.sjs.common.tags.search
 
 import io.suggest.common.tags.search.MTagsFound
 import io.suggest.common.tags.search.MTagsFound.pickler
-import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, HttpRespTypes, Xhr}
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.model.{Route, _}
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -36,7 +36,7 @@ trait TagsHttpApiImpl extends ITagsApi {
         respType = HttpRespTypes.ArrayBuffer
       )
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unBooPickle[MTagsFound]

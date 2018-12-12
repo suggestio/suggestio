@@ -1,8 +1,9 @@
 package io.suggest.sys.mdr.c
 
-import io.suggest.proto.HttpConst
+import io.suggest.proto.http.HttpConst
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.model._
 import io.suggest.routes.routes
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 import io.suggest.sys.mdr.{MMdrNextResp, MMdrResolution, MdrSearchArgs}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.Json
@@ -38,7 +39,7 @@ class SysMdrApiXhrImpl extends ISysMdrApi {
       ),
       data = HttpReqData.justAcceptJson
     )
-    Xhr.execute(req)
+    HttpClient.execute(req)
       .respAuthFut
       .successIf200
       .unJson[MMdrNextResp]
@@ -52,7 +53,7 @@ class SysMdrApiXhrImpl extends ISysMdrApi {
       ),
       data = HttpReqData.justAcceptJson
     )
-    Xhr.execute(req)
+    HttpClient.execute(req)
       .respAuthFut
       .successIfStatus( HttpConst.Status.NO_CONTENT )
       // TODO Десериализовать/обработать ответ.
@@ -65,7 +66,7 @@ class SysMdrApiXhrImpl extends ISysMdrApi {
         nodeId = nodeId
       )
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIfStatus( HttpConst.Status.NO_CONTENT )
   }

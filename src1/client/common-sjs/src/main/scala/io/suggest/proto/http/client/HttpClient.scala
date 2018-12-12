@@ -1,12 +1,14 @@
-package io.suggest.sjs.common.xhr
+package io.suggest.proto.http.client
 
-import io.suggest.proto.HttpConst
-import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.model.{HttpRoute, HttpRouteExtractor}
-import org.scalajs.dom
+import io.suggest.proto.http.HttpConst
+import io.suggest.proto.http.client.adp.HttpClientAdp
+import io.suggest.proto.http.client.adp.fetch.FetchAdp
+import io.suggest.proto.http.client.adp.xhr.XhrAdp
+import io.suggest.proto.http.model.{HttpRoute, HttpRouteExtractor}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.Log
+import org.scalajs.dom
 
-import scala.concurrent.Future
 import scala.scalajs.js
 
 /**
@@ -18,7 +20,7 @@ import scala.scalajs.js
   * 2016.dec.15: Низкоуровневый код работы с XMLHttpRequest удалён. Теперь просто вызывается scalajs.ext.Ajax().
   * Тут остались только обёртки над штатным Ajax.
   */
-object Xhr extends Log {
+object HttpClient extends Log {
 
   private def myProto: Option[String] = {
     Option( dom.window.location )
@@ -55,7 +57,7 @@ object Xhr extends Log {
   /** Функция доп.обработки URL для допиливания их до ранга абсолютных, когда это необходимо.
     * Бывает, что требуются строго абсолютные URL (cordova). Тут - собираем фунцкию для причёсывания исходных ссылок.
     */
-  val mkAbsUrlIfPreferred: String => String = if (Xhr.PREFER_ABS_URLS) {
+  val mkAbsUrlIfPreferred: String => String = if (HttpClient.PREFER_ABS_URLS) {
     // Фунция на случай, когда требуется причёсывать ссылки:
     val httpProto = HttpConst.Proto.HTTP
     val isSecure = true
@@ -96,10 +98,10 @@ object Xhr extends Log {
     * @param timeoutMsOpt Таймаут запроса в миллисекундах, если необходимо.
     * @return Фьючерс с результатом.
     */
-  val execute: HttpClientExecutor = {
-    Stream.cons[HttpClientExecutor](
-      FetchExecutor,
-      XhrExecutor #:: Stream.empty[HttpClientExecutor]
+  val execute: HttpClientAdp = {
+    Stream.cons[HttpClientAdp](
+      FetchAdp,
+      XhrAdp #:: Stream.empty[HttpClientAdp]
     )
       .find(_.isAvailable)
       .get
@@ -108,37 +110,3 @@ object Xhr extends Log {
 }
 
 
-/** Интерфейс для унифицированных http-client-обёрток над нативными API. */
-trait HttpClientExecutor {
-
-  /** Доступно ли указанное API? */
-  def isAvailable: Boolean
-
-  /** Запустить http-запрос. */
-  def apply(httpReq: HttpReq): HttpRespHolder
-
-}
-object HttpClientExecutor {
-
-  implicit class FutureOpsExt[T]( val fut: Future[T] ) extends AnyVal {
-
-    /** Любой экзепшен нативного http-клиента надо отобразить в текущий формат. */
-    def exception2httpEx(httpReq: HttpReq): Future[T] = {
-      fut.recoverWith { case ex: Throwable =>
-        val ex9 = ex match {
-          case _: HttpFailedException =>
-            ex
-          case _ =>
-            HttpFailedException(
-              url       = httpReq.url,
-              method    = httpReq.method,
-              getCause  = ex
-            )
-        }
-        Future.failed(ex9)
-      }
-    }
-
-  }
-
-}

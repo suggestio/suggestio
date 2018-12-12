@@ -1,4 +1,4 @@
-package io.suggest.proto
+package io.suggest.proto.http
 
 import io.suggest.common.html.HtmlConstants
 

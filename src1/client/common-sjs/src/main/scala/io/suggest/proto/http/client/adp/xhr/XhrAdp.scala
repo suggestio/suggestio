@@ -1,5 +1,7 @@
-package io.suggest.sjs.common.xhr
+package io.suggest.proto.http.client.adp.xhr
 
+import io.suggest.proto.http.client.adp.HttpClientAdp
+import io.suggest.proto.http.model._
 import org.scalajs.dom
 import org.scalajs.dom.XMLHttpRequest
 
@@ -14,7 +16,7 @@ import japgolly.univeq._
   * Created: 07.12.18 18:45
   * Description: Реализация HTTP-клиента поверх нативного XMLHttpRequest.
   */
-case object XhrExecutor extends HttpClientExecutor {
+case object XhrAdp extends HttpClientAdp {
 
   /** Считаем, что этот древний механизм всегда доступен. */
   override def isAvailable: Boolean = {

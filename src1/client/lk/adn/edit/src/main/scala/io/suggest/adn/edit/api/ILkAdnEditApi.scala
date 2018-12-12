@@ -2,8 +2,9 @@ package io.suggest.adn.edit.api
 
 import diode.ModelRO
 import io.suggest.adn.edit.m.{MAdnEditForm, MAdnEditFormConf}
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.model._
 import io.suggest.routes.routes
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -32,7 +33,7 @@ class LKAdnEditApiHttp( confRO: ModelRO[MAdnEditFormConf] ) extends ILkAdnEditAp
         headers   = HttpReqData.headersJsonSendAccept
       )
     )
-    Xhr.execute(req)
+    HttpClient.execute(req)
       .respAuthFut
       .successIf200
       .unJson[MAdnEditForm]

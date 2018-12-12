@@ -2,12 +2,12 @@ package io.suggest.ad.edit.srv
 
 import diode.ModelRO
 import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit}
+import io.suggest.proto.http.client.HttpClient
 import io.suggest.jd.MJdAdData
+import io.suggest.proto.http.model.{Route, _}
 import io.suggest.routes.routes
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 import io.suggest.up.IUploadApi
 import play.api.libs.json.Json
-import io.suggest.sjs.common.model.Route
 
 import scala.concurrent.Future
 
@@ -77,7 +77,7 @@ class LkAdEditApiHttp(
       )
     )
 
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[MAdEditFormInit]
@@ -93,7 +93,7 @@ class LkAdEditApiHttp(
         timeoutMs = XHR_REQ_TIMEOUT_MS_OPT
       )
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .responseTextFut

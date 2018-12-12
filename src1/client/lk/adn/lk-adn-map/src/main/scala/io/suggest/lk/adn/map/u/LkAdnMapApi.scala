@@ -3,10 +3,11 @@ package io.suggest.lk.adn.map.u
 import io.suggest.adn.mapf.MLamForm
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.bill.MGetPriceResp
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.model._
 import io.suggest.pick.PickleUtil
 import io.suggest.routes.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, routes}
 import io.suggest.sjs.common.geo.json.GjFeature
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, HttpRespTypes, Xhr}
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -53,7 +54,7 @@ class LkAdnMapApiHttpImpl
         respType  = HttpRespTypes.ArrayBuffer
       )
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unBooPickle[MGetPriceResp]
@@ -69,7 +70,7 @@ class LkAdnMapApiHttpImpl
         respType  = HttpRespTypes.Default
       )
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .responseTextFut
@@ -81,7 +82,7 @@ class LkAdnMapApiHttpImpl
       route = routes.controllers.LkAdnMap.currentNodeGeoGj( nodeId ),
       data  = HttpReqData.justAcceptJson
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .nativeJsonFut[js.Array[GjFeature]]
@@ -96,7 +97,7 @@ class LkAdnMapApiHttpImpl
         respType  = HttpRespTypes.ArrayBuffer
       )
     )
-    Xhr.execute(req)
+    HttpClient.execute(req)
       .respAuthFut
       .successIf200
       .unBooPickle[MGeoAdvExistPopupResp]

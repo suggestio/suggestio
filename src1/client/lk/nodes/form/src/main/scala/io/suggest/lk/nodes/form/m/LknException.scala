@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes.form.m
 
-import io.suggest.proto.HttpConst
-import io.suggest.sjs.common.xhr.HttpFailedException
+import io.suggest.proto.http.HttpConst
+import io.suggest.proto.http.model.HttpFailedException
 import japgolly.univeq._
 
 /**

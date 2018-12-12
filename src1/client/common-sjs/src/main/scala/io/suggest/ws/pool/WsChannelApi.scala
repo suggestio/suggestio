@@ -1,9 +1,9 @@
 package io.suggest.ws.pool
 
 import diode.ModelRO
-import io.suggest.proto.HttpConst
+import io.suggest.proto.http.HttpConst
+import io.suggest.proto.http.client.HttpClient
 import io.suggest.routes.routes
-import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.ws.pool.m.MWsConnTg
 import org.scalajs.dom.raw.WebSocket
 
@@ -34,7 +34,7 @@ class WsChannelApiHttp(ctxIdRO: ModelRO[String]) extends IWsChannelApi {
   override def wsChannel(target: MWsConnTg): Future[WebSocket] = {
     val route = routes.controllers.Static.wsChannel( ctxIdRO.value )
 
-    val wsProto = HttpConst.Proto.wsOrWss( Xhr.PREFER_SECURE_URLS )
+    val wsProto = HttpConst.Proto.wsOrWss( HttpClient.PREFER_SECURE_URLS )
     val wsUrl = wsProto + HttpConst.Proto.DELIM + target.host + route.url
 
     val ws = new WebSocket(wsUrl)

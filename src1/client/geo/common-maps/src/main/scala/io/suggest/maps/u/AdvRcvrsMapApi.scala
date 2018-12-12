@@ -1,10 +1,11 @@
 package io.suggest.maps.u
 
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.client.cache.{MHttpCacheInfo, MHttpCachingPolicies}
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp, MRcvrsMapUrlArgs}
+import io.suggest.proto.http.model._
 import io.suggest.routes.{IJsRouter, routes}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.xhr.cache.{MHttpCacheInfo, MHttpCachingPolicies}
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -42,12 +43,12 @@ class AdvRcvrsMapApiHttpViaUrl(jsRoutes: => IJsRouter = routes) extends IAdvRcvr
           // Здесь кэш - контр-аварийный. Т.е. запрос в сеть может уйти, но браузер должен ещё и сам корректно отработать вопрос кэширования.
           // TODO Нужно какое-то железобетонное кэширование, чтобы закэшированная текущая ссылка опрашивалась, потом network, потом аварийный вариант с прошлым кэшем.
           policy     = MHttpCachingPolicies.NetworkFirst,
-          rewriteUrl = Some( Xhr.route2url(__mkRoute(js.undefined)) )
+          rewriteUrl = Some( HttpClient.route2url(__mkRoute(js.undefined)) )
         )
       )
     )
 
-    Xhr.execute(req)
+    HttpClient.execute(req)
       .respAuthFut
       .successIf200
       .unJson[List[MGeoNodePropsShapes]]

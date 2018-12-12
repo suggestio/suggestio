@@ -4,8 +4,8 @@ import java.nio.ByteBuffer
 
 import io.suggest.bin.{ConvCodecs, IDataConv}
 import io.suggest.common.html.HtmlConstants
-import io.suggest.proto.HttpConst
-import io.suggest.sjs.common.xhr.HttpRespTypes
+import io.suggest.proto.http.HttpConst
+import io.suggest.proto.http.model.HttpRespTypes
 import io.suggest.text.CharSeqUtil
 import japgolly.univeq._
 import org.scalajs.dom.Blob

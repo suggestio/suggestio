@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.xhr.cache
+package io.suggest.proto.http.client.cache
 
 import enumeratum._
 import japgolly.univeq.UnivEq
@@ -22,6 +22,9 @@ object MHttpCachingPolicies extends Enum[MHttpCachingPolicy] {
 
   /** Сначала поискать в кэше. Если нет - делать запрос. */
   case object CacheFirst extends MHttpCachingPolicy
+
+  /** Только кэш. */
+  case object CacheOnly extends MHttpCachingPolicy
 
 
   override def values = findValues

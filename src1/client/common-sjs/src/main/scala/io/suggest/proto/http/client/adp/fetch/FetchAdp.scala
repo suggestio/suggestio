@@ -1,9 +1,12 @@
-package io.suggest.sjs.common.xhr
+package io.suggest.proto.http.client.adp.fetch
 
+import io.suggest.proto.http.client.adp.HttpClientAdp
+import io.suggest.proto.http.client.cache.HttpCaching
+import io.suggest.proto.http.model._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import io.suggest.sjs.common.xhr.cache.HttpCaching
+import io.suggest.sjs.dom.{AbortController, AbortSignal}
 import org.scalajs.dom.experimental._
 
 import scala.concurrent.Future
@@ -16,9 +19,9 @@ import scala.scalajs.js.JSConverters._
   * Created: 07.12.18 20:29
   * Description: Xhr-адаптер для Fetch API.
   */
-case object FetchExecutor extends HttpClientExecutor {
+case object FetchAdp extends HttpClientAdp {
 
-  import HttpClientExecutor._
+  import HttpClientAdp._
 
   /** Доступно ли указанное API? */
   override def isAvailable: Boolean = {
@@ -123,6 +126,7 @@ trait FetchApiStub extends js.Object {
 
 
 /** Реализация [[HttpRespHolder]] над Fetch API.
+ *
   * @param fetchRespFut Фьючерс ответа.
   */
 class FetchHttpRespHolder(

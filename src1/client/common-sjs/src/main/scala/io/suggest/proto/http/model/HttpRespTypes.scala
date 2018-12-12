@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.xhr
+package io.suggest.proto.http.model
 
 import enumeratum._
 import japgolly.univeq.UnivEq

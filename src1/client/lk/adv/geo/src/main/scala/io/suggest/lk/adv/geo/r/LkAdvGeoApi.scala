@@ -3,14 +3,14 @@ package io.suggest.lk.adv.geo.r
 import diode.ModelRO
 import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp}
 import io.suggest.bill.MGetPriceResp
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.model.{Route, _}
 import io.suggest.lk.adv.a.{IRcvrPopupApi, RcvrPopupHttpApiImpl}
 import io.suggest.lk.adv.geo.m.MOther
 import io.suggest.pick.PickleUtil
 import io.suggest.routes.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, routes}
 import io.suggest.sjs.common.geo.json.GjFeature
-import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.tags.search.{ITagsApi, TagsHttpApiImpl}
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, HttpRespTypes, Xhr}
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -74,7 +74,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
       ),
       data = HttpReqData.justAcceptJson
     )
-    Xhr.execute(req)
+    HttpClient.execute(req)
       .respAuthFut
       .successIf200
       .nativeJsonFut[js.Array[GjFeature]]
@@ -88,7 +88,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
         respType = HttpRespTypes.ArrayBuffer
       )
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unBooPickle[MGeoAdvExistPopupResp]
@@ -106,7 +106,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
         respType  = HttpRespTypes.ArrayBuffer
       )
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unBooPickle[MGetPriceResp]
@@ -123,7 +123,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
         respType  = HttpRespTypes.Default
       )
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .responseTextFut

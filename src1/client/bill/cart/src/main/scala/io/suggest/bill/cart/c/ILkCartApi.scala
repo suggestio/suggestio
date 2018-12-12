@@ -1,10 +1,11 @@
 package io.suggest.bill.cart.c
 
 import io.suggest.bill.cart.MOrderContent
+import io.suggest.proto.http.client.HttpClient
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.routes.routes
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
+import io.suggest.proto.http.model._
 
 import scala.scalajs.js.JSConverters._
 import scala.concurrent.Future
@@ -44,7 +45,7 @@ class LkCartApiXhrImpl extends ILkCartApi {
       ),
       data = HttpReqData.justAcceptJson
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[MOrderContent]
@@ -57,7 +58,7 @@ class LkCartApiXhrImpl extends ILkCartApi {
       ),
       data = HttpReqData.justAcceptJson
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[MOrderContent]

@@ -4,11 +4,11 @@ import diode.ModelRO
 import io.suggest.ctx.ICtxIdStrOpt
 import io.suggest.file.MJsFileInfo
 import io.suggest.file.up.{MFile4UpProps, MUploadResp}
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.model.{Route, _}
 import io.suggest.js.UploadConstants
 import io.suggest.pick.MimeConst
-import io.suggest.proto.HttpConst
-import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
+import io.suggest.proto.http.HttpConst
 import io.suggest.url.MHostUrl
 import org.scalajs.dom.FormData
 import play.api.libs.json.Json
@@ -65,7 +65,7 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
       )
     )
     val S = HttpConst.Status
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIfStatus( S.CREATED, S.ACCEPTED, S.NOT_ACCEPTABLE )
       .unJson[MUploadResp]
@@ -99,7 +99,7 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
       )
     )
 
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[MUploadResp]

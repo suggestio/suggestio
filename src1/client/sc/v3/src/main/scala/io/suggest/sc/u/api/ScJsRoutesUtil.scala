@@ -1,9 +1,8 @@
 package io.suggest.sc.u.api
 
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.model.{Route, _}
 import io.suggest.sc.sc3.MSc3Resp
-import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.xhr.cache.{MHttpCacheInfo, MHttpCachingPolicies}
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.{Json, OWrites, Reads}
 
@@ -48,7 +47,7 @@ object ScJsRoutesUtil {
         )*/
       )
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[RespT]

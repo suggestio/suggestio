@@ -1,7 +1,7 @@
 package io.suggest.sc
 
 import io.suggest.common.html.HtmlConstants
-import io.suggest.proto.HttpConst
+import io.suggest.proto.http.HttpConst
 import io.suggest.pwa.WebAppUtil
 import io.suggest.sc.log.ScRmeLogAppender
 import io.suggest.sc.router.SrvRouter

@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.xhr
+package io.suggest.sjs.dom
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal

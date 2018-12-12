@@ -5,8 +5,8 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
+import io.suggest.proto.http.model.Route
 import io.suggest.routes.routes
-import io.suggest.sjs.common.model.Route
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.raw.React

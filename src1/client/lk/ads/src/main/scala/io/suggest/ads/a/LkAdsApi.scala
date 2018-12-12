@@ -2,8 +2,9 @@ package io.suggest.ads.a
 
 import io.suggest.ads.MLkAdsOneAdResp
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.model._
 import io.suggest.routes.routes
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, Xhr}
 
 import scala.concurrent.Future
 
@@ -37,7 +38,7 @@ class LkAdsApiHttp() extends ILkAdsApi {
       ),
       data = HttpReqData.justAcceptJson
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unJson[Seq[MLkAdsOneAdResp]]

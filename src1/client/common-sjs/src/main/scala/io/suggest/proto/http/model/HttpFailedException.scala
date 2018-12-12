@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.xhr
+package io.suggest.proto.http.model
 
 import io.suggest.common.html.HtmlConstants.SPACE
 
@@ -10,9 +10,9 @@ import io.suggest.common.html.HtmlConstants.SPACE
  * Если включена фильтрация по http-статусу ответа сервера, то будет этот экзепшен при недопустимом статусе.
  */
 case class HttpFailedException(
-                               resp: Option[HttpResp] = None,
-                               url: String = null,
-                               method: String = null,
+                               resp   : Option[HttpResp] = None,
+                               url    : String = null,
+                               method : String = null,
                                override val getCause: Throwable = null
                              )
   extends RuntimeException {

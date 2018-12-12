@@ -5,9 +5,9 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
+import io.suggest.proto.http.model.Route
 import io.suggest.routes.IJsRouter
 import io.suggest.sc.styl.GetScCssF
-import io.suggest.sjs.common.model.Route
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._

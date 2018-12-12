@@ -2,7 +2,7 @@ package io.suggest.sec.csp
 
 import io.suggest.common.empty.{EmptyProduct, OptionUtil}
 import io.suggest.common.html.HtmlConstants
-import io.suggest.proto.HttpConst
+import io.suggest.proto.http.HttpConst
 
 /**
   * Suggest.io

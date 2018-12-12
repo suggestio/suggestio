@@ -1,8 +1,8 @@
 package io.suggest.lk.adv.a
 
 import io.suggest.adv.rcvr.MRcvrPopupResp
-import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, HttpRespTypes, Xhr}
+import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.model.{Route, _}
 
 import scala.concurrent.Future
 
@@ -34,7 +34,7 @@ trait RcvrPopupHttpApiImpl extends IRcvrPopupApi {
         respType = HttpRespTypes.ArrayBuffer
       )
     )
-    Xhr.execute( req )
+    HttpClient.execute( req )
       .respAuthFut
       .successIf200
       .unBooPickle[MRcvrPopupResp]

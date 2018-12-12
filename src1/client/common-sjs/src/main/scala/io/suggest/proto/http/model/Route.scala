@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.model
+package io.suggest.proto.http.model
 
 import japgolly.univeq.UnivEq
 

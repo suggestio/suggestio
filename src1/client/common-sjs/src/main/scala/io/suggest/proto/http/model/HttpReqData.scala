@@ -1,8 +1,8 @@
-package io.suggest.sjs.common.xhr
+package io.suggest.proto.http.model
 
 import io.suggest.pick.MimeConst
-import io.suggest.proto.HttpConst
-import io.suggest.sjs.common.xhr.cache.MHttpCacheInfo
+import io.suggest.proto.http.HttpConst
+import io.suggest.proto.http.client.cache.MHttpCacheInfo
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.ext.Ajax
 

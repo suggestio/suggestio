@@ -1,12 +1,12 @@
 package io.suggest.sjs.common.model.rme
 
 import io.suggest.err.ErrorConstants
+import io.suggest.proto.http.client.HttpClient
 import io.suggest.msg.ErrorMsgs
 import io.suggest.pick.MimeConst
-import io.suggest.proto.HttpConst
+import io.suggest.proto.http.HttpConst
+import io.suggest.proto.http.model.{Route, _}
 import io.suggest.sjs.common.log.{ILogAppender, LogMsg, Severity}
-import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.xhr.{HttpReq, HttpReqData, HttpStatuses, Xhr}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.text.StringUtil
 
@@ -53,9 +53,9 @@ abstract class RmeLogAppender extends ILogAppender {
       )
     )
 
-    val fut = Xhr.execute( req )
+    val fut = HttpClient.execute( req )
       .respAuthFut
-      .successIfStatus( HttpStatuses.NO_CONTENT )
+      .successIfStatus( HttpConst.Status.NO_CONTENT )
 
     // Залоггировать проблемы реквеста в консоль.
     for (ex <- fut.failed) {

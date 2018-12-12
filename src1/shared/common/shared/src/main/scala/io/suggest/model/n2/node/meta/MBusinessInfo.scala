@@ -3,7 +3,7 @@ package io.suggest.model.n2.node.meta
 import boopickle.Default._
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.err.ErrorConstants
-import io.suggest.proto.HttpConst
+import io.suggest.proto.http.HttpConst
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.text.UrlUtil2
 import japgolly.univeq.UnivEq

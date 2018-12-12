@@ -1,7 +1,6 @@
 package util.cdn
 
 import javax.inject.{Inject, Singleton}
-
 import controllers.routes
 import io.suggest.common.empty.OptionUtil
 import io.suggest.file.up.MFile4UpProps
@@ -9,7 +8,6 @@ import io.suggest.model.n2.media.MMedia
 import io.suggest.model.n2.media.storage._
 import io.suggest.model.n2.media.storage.swfs.{SwfsStorage, SwfsStorages, SwfsVolumeCache}
 import io.suggest.playx.ExternalCall
-import io.suggest.proto.HttpConst
 import io.suggest.swfs.client.proto.lookup.IVolumeLocation
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
@@ -18,6 +16,7 @@ import models.mup.MSwfsFidInfo
 import play.api.Configuration
 import play.api.mvc.Call
 import OptionUtil.BoolOptOps
+import io.suggest.proto.http.HttpConst
 import util.up.UploadUtil
 import japgolly.univeq._
 
