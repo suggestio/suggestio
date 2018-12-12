@@ -424,6 +424,15 @@ case class ScCss( args: IScCssArgs )
 
       }
 
+      object Img {
+
+        val img = style(
+          position.relative,
+          top( 10.px )
+        )
+
+      }
+
     }
 
   }
@@ -564,7 +573,8 @@ case class ScCss( args: IScCssArgs )
         /** Ряд тега. ruby для - вертикальной упаковки тегов. */
         val tagRow = style(
           display.inlineFlex,
-          paddingBottom( 6.px ),
+          paddingTop( 2.px ),    // Было 6px, не помню уже почем
+          paddingBottom( 0.px ),    // Было 6px, не помню уже почем
           width.auto,
           paddingLeft(8.px),
           paddingRight(4.px)
@@ -575,12 +585,24 @@ case class ScCss( args: IScCssArgs )
           paddingRight(0.px)
         )
 
-        /** Иконка тега. */
-        val tagRowIcon = style(
+        val tagRowIcon = {
+          val side = 0.7.em
+          style(
+            width( side ),
+            height( side )
+          )
+        }
+
+        /** div иконки тега. */
+        val tagRowIconCont = style(
           fontSize(16.px),
           verticalAlign.middle,
           marginRight.initial,
+        )
 
+        /** Слишком большой шрифт у тегов, уменьшить. */
+        val tagRowTextPrimary = style(
+          fontSize( 0.9.rem )
         )
 
       }
@@ -739,6 +761,7 @@ case class ScCss( args: IScCssArgs )
 
     Header.Buttons.Align.leftAligned,
     Header.Logo.Txt.Dots.dot,
+    Header.Logo.Img.img,
 
     Search.TextBar.bar,
     Search.Tabs.MapTab.inner,

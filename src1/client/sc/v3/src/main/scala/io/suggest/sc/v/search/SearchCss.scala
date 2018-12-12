@@ -21,7 +21,7 @@ import scalacss.internal.mutable.StyleSheet
   */
 object SearchCss {
 
-  val NODE_ROW_HEIGHT_PX = 54.5
+  val NODE_ROW_HEIGHT_PX = 27
 
   @inline implicit def univEq: UnivEq[SearchCss] = UnivEq.derive
 

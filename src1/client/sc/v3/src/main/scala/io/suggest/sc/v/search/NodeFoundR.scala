@@ -15,7 +15,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponen
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemIconClasses, MuiListItemIconProps, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemIconClasses, MuiListItemIconProps, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconProps}
 import io.suggest.common.empty.OptionUtil
 import ReactCommonUtil.Implicits._
 import io.suggest.common.html.HtmlConstants
@@ -26,6 +26,7 @@ import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -134,13 +135,17 @@ class NodeFoundR(getScCssF: GetScCssF) {
         ReactCommonUtil.maybeEl( isTag ) {
           MuiListItemIcon {
             val cls = new MuiListItemIconClasses {
-              override val root = NodesCSS.tagRowIcon.htmlClass
+              override val root = NodesCSS.tagRowIconCont.htmlClass
             }
             new MuiListItemIconProps {
               override val classes = cls
             }
           }(
-            Mui.SvgIcons.LocalOffer()()
+            Mui.SvgIcons.LocalOffer {
+              new MuiSvgIconProps {
+                override val className = NodesCSS.tagRowIcon.htmlClass
+              }
+            }()
           )
         },
 
@@ -148,9 +153,17 @@ class NodeFoundR(getScCssF: GetScCssF) {
         p.hint.whenDefinedEl { nodeName =>
           // Для тегов: они идут кашей, поэтому отступ между названием тега и иконкой уменьшаем.
           val rootCss = JsOptionUtil.maybeDefined(isTag)( NodesCSS.tagRowText.htmlClass )
+
+          // Текст состоит из статической и динамической вёрстки.
+          val primaryCss = (
+            NodesCSS.tagRowTextPrimary.htmlClass ::
+            props.searchCss.NodesFound.rowTextPrimaryF(p.nodeId).htmlClass ::
+            Nil
+          ).mkString( HtmlConstants.SPACE )
+
           val theClasses = new MuiListItemTextClasses {
             override val root = rootCss
-            override val primary = props.searchCss.NodesFound.rowTextPrimaryF(p.nodeId).htmlClass
+            override val primary = primaryCss
             override val secondary = props.searchCss.NodesFound.rowTextSecondaryF(p.nodeId).htmlClass
           }
 
