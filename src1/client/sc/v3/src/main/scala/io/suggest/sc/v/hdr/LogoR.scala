@@ -4,11 +4,10 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.media.IMediaInfo
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.ScConstants
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
-import scalacss.ScalaCssReact._
 
 /**
   * Suggest.io
@@ -22,7 +21,6 @@ import scalacss.ScalaCssReact._
   */
 class LogoR(
              nodeNameR: NodeNameR,
-             getScCssF: GetScCssF
            ) {
 
   type Props_t = Option[PropsVal]
@@ -49,25 +47,19 @@ class LogoR(
 
     def render(propsProxy: Props, s: State): VdomElement = {
       propsProxy().whenDefinedEl { nodeInfo =>
-
-        val scCss = getScCssF()
-        val logoCss = scCss.Header.Logo
-
         // Нужно решить, что вообще надо рендерить: логотип, название узла или что-то иное?
         nodeInfo.logoOpt.fold[VdomElement] {
           // Графический логотип не доступен. Попробовать отрендерить текстовый логотип.
           s.nodeNameOptC { nodeNameR.apply }
 
         } { logoInfo =>
-          val imgStyles = logoCss.Img
           // Рендерим картинку графического логотипа узла.
           <.img(
-            imgStyles.logo,
             ^.src := logoInfo.url,
             nodeInfo.nodeNameOpt.whenDefined { nodeName =>
               ^.title := nodeName
             },
-            ^.height := imgStyles.IMG_HEIGHT_CSSPX.px
+            ^.height := ScConstants.Logo.HEIGHT_CSSPX.px
           )
         }
 

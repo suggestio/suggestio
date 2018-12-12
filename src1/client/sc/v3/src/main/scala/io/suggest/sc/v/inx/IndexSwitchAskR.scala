@@ -2,7 +2,6 @@ package io.suggest.sc.v.inx
 
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiSnackBar, MuiSnackBarAnchorOrigin, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps}
 import diode.react.ModelProxy
-import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -11,8 +10,6 @@ import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v.hdr.LogoR
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
-
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io

@@ -32,7 +32,7 @@ class HeaderR(
         <.div(
           scCss.Header.header,
 
-          children,
+          children
         )
       }
     }

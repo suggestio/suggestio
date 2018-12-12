@@ -120,13 +120,13 @@ class ScRootR (
         // Компонент заголовка выдачи:
         s.hdrPropsC { hdrProxy =>
           headerR(hdrProxy)(
+            hdrGoBack,
+            hdrMenuBtn,
 
             hdrLogo,
 
             // -- Кнопки заголовка в зависимости от состояния выдачи --
             // Кнопки при нахождении в обычной выдаче без посторонних вещей:
-            hdrGoBack,
-            hdrMenuBtn,
             hdrSearchBtn,
             hdrProgress,
           )

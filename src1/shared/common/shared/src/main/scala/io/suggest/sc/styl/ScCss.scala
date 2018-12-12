@@ -297,17 +297,20 @@ case class ScCss( args: IScCssArgs )
     )
 
     /** Стили контейнера любого заголовка. */
-    val header = style(
-      addClassNames( HEADER, Css.Position.ABSOLUTE ),
-      backgroundColor( _bgColorCss ),
-      borderColor( _fgColorCss ),
-      // Для экранов с вырезами (iphone10) - расширяем заголовок вниз по вертикали:
-      height( (ScCss.HEADER_HEIGHT_PX + args.screenInfo.unsafeOffsets.top).px ),
-      // TODO На гориз.смартфоне криво, на декстопе - норм.
-      //left( args.screenInfo.unsafeOffsets.left.px ),
-      // При выезде левой панели, заголовок ужимается в несколько строчек. Нельзя так.
-      minWidth( 200.px )
-    )
+    val header = {
+      style(
+        addClassNames( HEADER, Css.Position.ABSOLUTE ),
+        backgroundColor( _bgColorCss ),
+        borderColor( _fgColorCss ),
+        // Для экранов с вырезами (iphone10) - расширяем заголовок вниз по вертикали:
+        height( ScCss.HEADER_HEIGHT_PX.px ),
+        // TODO На гориз.смартфоне криво, на декстопе - норм.
+        //left( args.screenInfo.unsafeOffsets.left.px ),
+        // При выезде левой панели, заголовок ужимается в несколько строчек. Нельзя так.
+        minWidth( 200.px ),
+        paddingTop( args.screenInfo.unsafeOffsets.top.px )
+      )
+    }
 
     object Buttons {
 
@@ -330,9 +333,10 @@ case class ScCss( args: IScCssArgs )
 
       /** Кнопка "назад" относительно кнопки меню. */
       val backBtn = style(
-        left( 40.px ),
-        top( (args.screenInfo.unsafeOffsets.top + 1).px ),
-        position.absolute,
+        addClassName( Css.Floatt.LEFT ),
+        //left( 40.px ),
+        //top( (args.screenInfo.unsafeOffsets.top + 1).px ),
+        position.relative,
       )
 
       //val leftGeoBtn = _styleAddClasses( _btnMx, HEADER + "_geo-button", Align.LEFT )
@@ -345,20 +349,22 @@ case class ScCss( args: IScCssArgs )
         addClassNames(
           _btnClass("search"),
           Align.rightAligned.htmlClass,
-          Css.Position.ABSOLUTE,
+          Css.Floatt.RIGHT,
           btn.htmlClass,
         ),
-        top( (args.screenInfo.unsafeOffsets.top + 5).px )
+        position.relative,
+        top( 5.px )
       )
 
       /** Стиль кнопки меню слева. */
       val menu = style(
         addClassNames(
           Align.leftAligned.htmlClass,
-          Css.Position.ABSOLUTE,
           btn.htmlClass,
+          Css.Floatt.LEFT,
         ),
-        top( (args.screenInfo.unsafeOffsets.top + 7).px ),
+        position.relative,
+        top( 7.px ),
       )
 
       /** Стиль кнопки заголовка, который указывает вправо. */
@@ -397,8 +403,8 @@ case class ScCss( args: IScCssArgs )
         val txtLogo = style(
           addClassName( TXT_LOGO ),
           color( _fgColorCss ),
-          borderColor( _fgColorCss ),
-          top( args.screenInfo.unsafeOffsets.top.px )
+          borderColor( _fgColorCss )
+          //top( args.screenInfo.unsafeOffsets.top.px )
         )
 
         /** Точки по краям названия узла. */
@@ -416,17 +422,6 @@ case class ScCss( args: IScCssArgs )
           def allSides = left :: right :: Nil
         }
 
-      }
-
-
-      /** CSS для картинки-логотипа. */
-      object Img {
-        /** Алиас основного стиля логотипа. */
-        val logo = style(
-          //_styleAddClass( HEADER + "_" + `logo_` )
-          paddingTop( (args.screenInfo.unsafeOffsets.top + 10).px )
-        )
-        def IMG_HEIGHT_CSSPX = 30
       }
 
     }
@@ -637,31 +632,6 @@ case class ScCss( args: IScCssArgs )
 
       private val _SM_GRID_ADS_LOADER = _SM_GRID_ADS + "_loader"
 
-      /* Это svg-изображение, с помощью которого рисовалась zip-линия отрыва внизу для ещё неподгруженной плитки.
-      // TODO Это должно быть значением background-image для корневого div'а.
-      private val enableBackgroundAttr = VdomAttr("enable-background")
-      private def _renderBottomZipSvg(fillColor: String) = {
-        val zero = 0
-        val w = 10
-        val h = 5
-        val viewBox = zero + SPACE + zero + SPACE + w + SPACE + h
-        <.svg(
-          ^.x := 0.px,
-          ^.y := 0.px,
-          ^.width := w.px,
-          ^.height := h.px,
-          ^.viewBox := viewBox,
-          // TODO Тут исторический костыль, и не ясно, нужен он или нет. Вроде бы этот аттрибут сдох (depreacted) и не особо реализован в браузерах.
-          enableBackgroundAttr := ("new" + SPACE + viewBox),
-          ^.xmlSpace := "preserve",
-          <.polygon(
-            ^.fill := Color(fillColor),
-            ^.points := "10,3.16 5,0 0,3.16 0,5 5,1.84 10,5"
-          )
-        )
-      }
-      */
-
       /** Внешний контейнер спиннера. */
       val outer = style(
         addClassName( _SM_GRID_ADS_LOADER ),
@@ -769,7 +739,6 @@ case class ScCss( args: IScCssArgs )
 
     Header.Buttons.Align.leftAligned,
     Header.Logo.Txt.Dots.dot,
-    Header.Logo.Img.logo,
 
     Search.TextBar.bar,
     Search.Tabs.MapTab.inner,
