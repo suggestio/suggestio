@@ -4,7 +4,7 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.{Css, CssR}
 import io.suggest.sc.m.search._
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
 import io.suggest.sc.v.hdr.RightR
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
@@ -58,6 +58,7 @@ class SearchR(
       )
 
       <.div(
+        ScCssStatic.Root.panelCommon,
         SearchCSS.panel,
 
         // Рендер очень динамической search-only css'ки:
@@ -65,7 +66,8 @@ class SearchR(
 
         // Фон панели.
         <.div(
-          scCss.Root.panelBg
+          ScCssStatic.Root.panelBg,
+          scCss.bgColor
         ),
 
         // Наполнение панели.

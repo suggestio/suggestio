@@ -1,7 +1,7 @@
 package io.suggest.sc.v.grid
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.MSize2di
@@ -9,7 +9,7 @@ import io.suggest.grid.{GridConst, GridScrollUtil}
 import io.suggest.jd.render.v._
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.sc.m.grid.{GridScroll, MGridCoreS, MGridS}
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
 import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
@@ -74,12 +74,13 @@ class GridR(
     def render(s: State): VdomElement = {
       val ScCss = getScCssF()
       val GridCss = ScCss.Grid
+      val smFlex: TagMod = ScCssStatic.smFlex
 
       <.div(
-        ScCss.smFlex, GridCss.outer,
+        smFlex, GridCss.outer,
 
         <.div(
-          ScCss.smFlex, GridCss.wrapper,
+          smFlex, GridCss.wrapper,
           ^.id := GridScrollUtil.SCROLL_CONTAINER_ID,
           ^.onScroll ==> onGridScroll,
 

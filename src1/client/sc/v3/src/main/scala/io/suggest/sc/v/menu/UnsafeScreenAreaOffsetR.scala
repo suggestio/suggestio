@@ -11,7 +11,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.UpdateUnsafeScreenOffsetBy
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
 import scalacss.ScalaCssReact._
 
 /**
@@ -29,15 +29,14 @@ class UnsafeScreenAreaOffsetR(
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    private def _onIncDecClick(incDecBy: Int): Callback = {
+    private def _onIncDecClick(incDecBy: Int): Callback =
       dispatchOnProxyScopeCB( $, UpdateUnsafeScreenOffsetBy(incDecBy) )
-    }
 
     def render(propsOptProxy: Props): VdomElement = {
       propsOptProxy.value.whenDefinedEl { mtlbr =>
         import HtmlConstants._
 
-        val menuRowsCss = getScCssF().Menu.Rows
+        val scCss = getScCssF()
 
         // Ссылка на вход или на личный кабинет
         MuiListItem(
@@ -48,7 +47,9 @@ class UnsafeScreenAreaOffsetR(
         )(
           MuiListItemText()(
             <.span(
-              menuRowsCss.rowContent,
+              ScCssStatic.Menu.Rows.rowContent,
+              scCss.fgColor,
+
               "Unsafe offset",
 
               <.span(

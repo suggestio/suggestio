@@ -10,6 +10,8 @@ import io.suggest.font.MFonts
 import io.suggest.i18n.MsgCodes
 import io.suggest.sc.ScConstants
 import japgolly.univeq.UnivEq
+import Css.__
+import Css.Lk.{_SM_PREFIX_ => _SM_}
 
 /**
   * Suggest.io
@@ -27,8 +29,6 @@ object ScCss {
     fg = Some(MColorData.Examples.WHITE)
   )
 
-  lazy val isSafari = cssEnv.platform.name.contains("Safari")
-
   /**
     * Некоторые браузеры скроллят внешний контейнер вместо внутреннего, когда оба скроллабельны.
     * С помощью это флага можно активировать логику перезаписи scrollbar'а внутренним контейнером,
@@ -37,6 +37,7 @@ object ScCss {
     *         false, когда костыли не нужны (по умолчанию).
     */
   lazy val needOverrideScroll: Boolean = {
+    val isSafari = cssEnv.platform.name.contains("Safari")
     /*
      * Мобильная сафари не может скроллить внутренний контейнер, когда можно скроллить внешний.
      * Нужно форсировать появление скроллбара у внутреннего контейнера.
@@ -64,8 +65,225 @@ object ScCss {
 
   @inline implicit def univEq: UnivEq[ScCss] = UnivEq.derive
 
-  /** Ширина текстового поля поиска. */
-  val SEARCH_INPUT_WIDTH_PX = 224
+}
+
+
+/** Статические стили ScCss, которые не меняются в ходе работы выдачи. */
+object ScCssStatic extends StyleSheet.Inline {
+
+  import dsl._
+
+  //def _styleAddClasses(cssClasses: String*) = style( addClassNames(cssClasses: _*) )
+  def _styleAddClass(cssClass: String) = style( addClassName(cssClass) )
+
+  val overflowScrollingMx: StyleS = {
+    if (ScCss.needOverrideScroll) {
+      mixin(
+        addClassName( _SM_ + "overflow-scrolling" )
+      )
+    } else {
+      mixin(
+        overflowY.auto
+      )
+    }
+  }
+
+  val smFlex = _styleAddClass( _SM_ + "flex" )
+
+  object Body {
+
+    /** Главный обязательный статический класс для body. */
+    val smBody = style(
+      //addClassName( _SM_ + "body" ),
+      overflow.hidden
+    )
+
+  }
+
+  /** Стили для #sioMartRoot и каких-то вложенных контейнеров */
+  object Root {
+
+    /** корневой div-контейнер. */
+    val root = ScCssStatic._styleAddClass( _SM_ + "showcase" )
+
+    /** Общий стиль для всех панелей. */
+    val panelCommon = style(
+      height( 100.%% ),
+    )
+
+    /** Фон одной панели. */
+    val panelBg = {
+      val pc100 = 100.%%
+      val px0 = 0.px
+      style(
+        position.absolute,
+        top(px0),
+        left(px0),
+        width( pc100 ),
+        height( pc100 ),
+        // 90% - эффекта затемнения сливается с незатемённой областью. 80% - эффект уже виден.
+        filter := "brightness(80%)",
+        zIndex(-1)
+      )
+    }
+
+  }
+
+  object Notifies {
+
+    /** Стиль для SnackbackContentText.action, чтобы кнопки отображались вертикально. */
+    val snackActionCont = style(
+      display.block
+    )
+
+    /** Внутренняя иконка кнопки требует выравнивания вручную. */
+    val smallBtnSvgIcon = style(
+      paddingRight( 4.px ),
+      marginTop( -4.px )
+    )
+
+    /** Стиль для контейнера наполнения. */
+    val content = style(
+      marginTop(10.px)
+    )
+
+  }
+
+  object Welcome {
+
+    val _SM_WELCOME_AD = _SM_ + "welcome-ad"
+
+    val welcome = style(
+      addClassNames( _SM_WELCOME_AD ),
+    )
+
+  }
+
+
+  object Search {
+
+    /** Стили для списка найденных узлов (тегов и т.д.). */
+    object NodesFound {
+
+      /** Горизонтальный прогресс-бар запроса. */
+      val linearProgress = {
+        val h = 5.px
+        style(
+          marginTop( h ),
+          height( h )
+        )
+      }
+
+      /** Список тегов. */
+      val listDiv = ScCssStatic._styleAddClass( "shops-list" )
+
+      /** Стиль иконки узла в списке узлов. */
+      val nodeLogo = style(
+        verticalAlign.middle,
+        marginLeft(6.px),
+        maxHeight(30.px),
+        maxWidth(140.px),
+        // без disableGutters, нужно рубить правый отступ
+        marginRight(0.px).important
+      )
+
+      /** Выставить сдвиги по бокам. gutters ставят 24px, без них просто 0px. А надо нечто среднее. */
+      val adnNodeRow = style(
+        paddingLeft(16.px).important,
+        paddingRight(16.px).important
+      )
+
+      /** Ряд тега. ruby для - вертикальной упаковки тегов. */
+      val tagRow = style(
+        display.inlineFlex,
+        paddingTop( 2.px ),    // Было 6px, не помню уже почем
+        paddingBottom( 0.px ),    // Было 6px, не помню уже почем
+        width.auto,
+        paddingLeft(8.px),
+        paddingRight(4.px)
+      )
+
+      val tagRowText = style(
+        paddingLeft( 8.px ),
+        paddingRight(0.px)
+      )
+
+      val tagRowIcon = {
+        val side = 0.7.em
+        style(
+          width( side ),
+          height( side )
+        )
+      }
+
+      /** div иконки тега. */
+      val tagRowIconCont = style(
+        fontSize(16.px),
+        verticalAlign.middle,
+        marginRight.initial,
+      )
+
+      /** Слишком большой шрифт у тегов, уменьшить. */
+      val tagRowTextPrimary = style(
+        fontSize( 0.9.rem )
+      )
+
+    }
+
+  }
+
+
+  object Menu {
+
+    /** Стили строк меню */
+    object Rows {
+
+      val rowsContainer = style(
+        position.relative
+      )
+
+      val rowLink = style(
+        textDecoration := none
+      )
+
+      val rowText = style(
+        height( 28.px )
+      )
+
+      /** стили для mui-switch в пунктах меню. */
+      val switch = style(
+        marginTop( -16.px )
+      )
+
+      /** стили для mui-switch base в пунктах меню. */
+      val switchBase = style(
+        height(28.px)
+      )
+
+      /** Стили строк меню. */
+      val rowContent = style(
+        position.relative,
+        minWidth( 260.px ),
+        margin(0.px, auto),
+        fontFamily.attr := MFonts.OpenSansLight.fileName,
+        fontSize( 14.px ),
+        padding(12.px, 0.px),
+        textTransform.uppercase
+      )
+
+    }
+
+  }
+
+
+  initInnerObjects(
+    Body.smBody,
+    Root.root,
+    Notifies.snackActionCont,
+    Welcome.welcome,
+    Search.NodesFound.listDiv,
+    Menu.Rows.rowContent,
+  )
 
 }
 
@@ -92,125 +310,27 @@ case class ScCss( args: IScCssArgs )
 
   import dsl._
 
-  val colors = args.customColorsOpt.getOrElse( ScCss.COLORS_DFLT )
-
-  /** Строковые обозначения стилей наподобии i.s.css.Css. */
-  private def __ = Css.__
-  private def _SM_ = Css.Lk._SM_PREFIX_
-
-  val overflowScrollingMx: StyleS = {
-    if (ScCss.needOverrideScroll) {
-      mixin(
-        addClassName( _SM_ + "overflow-scrolling" )
-      )
-    } else {
-      mixin(
-        overflowY.auto
-      )
-    }
+  private val (_bgColorCss, _fgColorCss) = {
+    val colors = args.customColorsOpt getOrElse ScCss.COLORS_DFLT
+    def _colorCss( colorOpt: Option[MColorData], dflt: => String ) = Color( colorOpt.fold(dflt)(_.hexCode) )
+    val bg = _colorCss( colors.bg, ScConstants.Defaults.BG_COLOR )
+    val fg = _colorCss( colors.fg, ScConstants.Defaults.FG_COLOR )
+    (bg, fg)
   }
 
-  //private def _styleAddClasses(cssClasses: String*) = style( addClassNames(cssClasses: _*) )
-  private def _styleAddClass(cssClass: String) = style( addClassName(cssClass) )
+  /** Стиль цвета фона для произвольного элемента выдачи. */
+  val bgColor = style(
+    backgroundColor( _bgColorCss ),
+  )
 
-  private def `BUTTON` = "button"
-  private def _SM_BUTTON = _SM_ + `BUTTON`
-
-  private def _colorCss( colorOpt: Option[MColorData], dflt: => String ) = Color( colorOpt.fold(dflt)(_.hexCode) )
-  private val _bgColorCss = _colorCss( colors.bg, ScConstants.Defaults.BG_COLOR )
-  private val _fgColorCss = _colorCss( colors.fg, ScConstants.Defaults.FG_COLOR )
-
-  //val button = _styleAddClasses( _SM_BUTTON )
-
-  val clear = _styleAddClass( Css.CLEAR )
-
-  val smFlex = _styleAddClass( _SM_ + "flex" )
-
-
-  /** Стили для html.body . */
-  // TODO Этот код наверное не нужен. Т.к. оно вне react-компонента.
-  object Body {
-
-    /** Главный обязательный статический класс для body. */
-    val smBody = style(
-      //addClassName( _SM_ + "body" ),
-      overflow.hidden
-    )
-
-    /** Фоновый SVG-логотип ЯПРЕДЛАГАЮ. Его в теории может и не быть, поэтому оно отдельно от класса body. */
-    object BgLogo {
-      lazy val ru = _styleAddClass( __ + "ru" )
-      lazy val en = _styleAddClass( __ + "en" )
-    }
-
-    /** Исторически как-то сложилось, что активация body происходит через style-аттрибут. Но это плевать наверое. */
-    val smBodyReady = style(
-      backgroundColor.white
-    )
-
-  }
-
-
-  /** Стили для #sioMartRoot и каких-то вложенных контейнеров */
-  object Root {
-
-    /** корневой div-контейнер. */
-    val root = _styleAddClass( _SM_ + "showcase" )
-
-    /** Общий стиль для всех панелей. */
-    val panelCommon = mixin(
-      height( 100.%% ),
-    )
-
-    /** Фон одной панели. */
-    val panelBg = {
-      val pc100 = 100.%%
-      val px0 = 0.px
-      style(
-        position.absolute,
-        top(px0),
-        left(px0),
-        width( pc100 ),
-        height( pc100 ),
-        background := _bgColorCss,
-        // 90% - эффекта затемнения сливается с незатемённой областью. 80% - эффект уже виден.
-        filter := "brightness(80%)",
-        zIndex(-1)
-      )
-    }
-
-  }
-
-
-  object Notifies {
-
-    /** Стиль для SnackbackContentText.action, чтобы кнопки отображались вертикально. */
-    val snackActionCont = style(
-      display.block
-    )
-
-    /** Внутренняя иконка кнопки требует выравнивания вручную. */
-    val smallBtnSvgIcon = style(
-      paddingRight( 4.px ),
-      marginTop( -4.px )
-    )
-
-    /** Стиль для контейнера наполнения. */
-    val content = style(
-      marginTop(10.px)
-    )
-
-  }
+  val fgColor = style(
+    color( _fgColorCss )
+  )
 
 
   object Welcome {
 
-    private val _SM_WELCOME_AD = _SM_ + "welcome-ad"
-
-    val welcome = style(
-      addClassNames( _SM_WELCOME_AD ),
-      backgroundColor( _bgColorCss )
-    )
+    import ScCssStatic.Welcome._SM_WELCOME_AD
 
     private def _imgWhMixin(wh: ISize2di, margin: ISize2di) = {
       mixin(
@@ -273,9 +393,9 @@ case class ScCss( args: IScCssArgs )
         )
       }
 
-      val fgText = _styleAddClass( _SM_WELCOME_AD + "_fg-text" )
+      val fgText = ScCssStatic._styleAddClass( _SM_WELCOME_AD + "_fg-text" )
 
-      val helper = _styleAddClass( _SM_WELCOME_AD + "_helper" )
+      val helper = ScCssStatic._styleAddClass( _SM_WELCOME_AD + "_helper" )
     }
 
   }
@@ -315,7 +435,7 @@ case class ScCss( args: IScCssArgs )
     object Buttons {
 
       val btn = style(
-        addClassNames( _SM_BUTTON, HEADER + "_btn" )
+        addClassNames( Css.Lk._SM_BUTTON, HEADER + "_btn" )
       )
 
       /** Выравнивание кнопок. */
@@ -342,7 +462,7 @@ case class ScCss( args: IScCssArgs )
       //val leftGeoBtn = _styleAddClasses( _btnMx, HEADER + "_geo-button", Align.LEFT )
 
       private def _btnClass(root: String): String =
-        HEADER + HtmlConstants.UNDERSCORE + root + HtmlConstants.MINUS + `BUTTON`
+        HEADER + HtmlConstants.UNDERSCORE + root + HtmlConstants.MINUS + Css.Lk.`BUTTON`
 
       /** Стиль кнопки поиска. */
       val search = style(
@@ -423,8 +543,8 @@ case class ScCss( args: IScCssArgs )
             backgroundColor( _fgColorCss )
           )
 
-          val left = _styleAddClass( __ + MsgCodes.`left` )
-          val right = _styleAddClass( __ + MsgCodes.`right` )
+          val left = ScCssStatic._styleAddClass( __ + MsgCodes.`left` )
+          val right = ScCssStatic._styleAddClass( __ + MsgCodes.`right` )
           def allSides = left :: right :: Nil
         }
 
@@ -455,7 +575,6 @@ case class ScCss( args: IScCssArgs )
     /** CSS-класс div-контейнера правой панели. */
     val panel = style(
       width( PANEL_WIDTH_PX.px ),
-      Root.panelCommon
     )
 
     val content = {
@@ -492,24 +611,24 @@ case class ScCss( args: IScCssArgs )
     /** Табы на поисковой панели. */
     object Tabs {
 
-      private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - args.screenInfo.unsafeOffsets.top
-
-      private val TAB_BODY_HEIGHT    = height( TAB_BODY_HEIGHT_PX.px )
-
-
       /** Стили содержимого вкладки с гео-картой. */
       object MapTab {
 
+        private val TAB_BODY_HEIGHT_PX = args.screenInfo.screen.height - args.screenInfo.unsafeOffsets.top
+
+        private val TAB_BODY_HEIGHT    = height( TAB_BODY_HEIGHT_PX.px )
+
+
         /** Стиль внешнего контейнера. */
         val outer = style(
-          smFlex,
+          ScCssStatic.smFlex,
           TAB_BODY_HEIGHT
         )
 
         /** Стиль wrap-контейнера. */
         val wrapper = style(
-          overflowScrollingMx,
-          smFlex,
+          ScCssStatic.overflowScrollingMx,
+          ScCssStatic.smFlex,
           TAB_BODY_HEIGHT
         )
 
@@ -546,74 +665,6 @@ case class ScCss( args: IScCssArgs )
       }
 
 
-      /** Стили для списка найденных узлов (тегов и т.д.). */
-      object NodesFound {
-
-        /** Горизонтальный прогресс-бар запроса. */
-        val linearProgress = {
-          val h = 5.px
-          style(
-            marginTop( h ),
-            height( h )
-          )
-        }
-
-        /** Список тегов. */
-        val listDiv = _styleAddClass( "shops-list" )
-
-        /** Стиль иконки узла в списке узлов. */
-        val nodeLogo = style(
-          verticalAlign.middle,
-          marginLeft(6.px),
-          maxHeight(30.px),
-          maxWidth(140.px),
-          // без disableGutters, нужно рубить правый отступ
-          marginRight(0.px).important
-        )
-
-        /** Выставить сдвиги по бокам. gutters ставят 24px, без них просто 0px. А надо нечто среднее. */
-        val adnNodeRow = style(
-          paddingLeft(16.px).important,
-          paddingRight(16.px).important
-        )
-
-        /** Ряд тега. ruby для - вертикальной упаковки тегов. */
-        val tagRow = style(
-          display.inlineFlex,
-          paddingTop( 2.px ),    // Было 6px, не помню уже почем
-          paddingBottom( 0.px ),    // Было 6px, не помню уже почем
-          width.auto,
-          paddingLeft(8.px),
-          paddingRight(4.px)
-        )
-
-        val tagRowText = style(
-          paddingLeft( 8.px ),
-          paddingRight(0.px)
-        )
-
-        val tagRowIcon = {
-          val side = 0.7.em
-          style(
-            width( side ),
-            height( side )
-          )
-        }
-
-        /** div иконки тега. */
-        val tagRowIconCont = style(
-          fontSize(16.px),
-          verticalAlign.middle,
-          marginRight.initial,
-        )
-
-        /** Слишком большой шрифт у тегов, уменьшить. */
-        val tagRowTextPrimary = style(
-          fontSize( 0.9.rem )
-        )
-
-      }
-
     }
 
   }
@@ -637,7 +688,7 @@ case class ScCss( args: IScCssArgs )
     )
 
     val wrapper = style(
-      overflowScrollingMx,
+      ScCssStatic.overflowScrollingMx,
       _screenHeight,
       overflowX.hidden
     )
@@ -673,10 +724,10 @@ case class ScCss( args: IScCssArgs )
       val _SM_GRID_ADS_LOADER_SPINNER = _SM_GRID_ADS_LOADER + "-spinner"
 
       /** Внешний контейнер для спиннера. */
-      val spinnerOuter = _styleAddClass( _SM_GRID_ADS_LOADER_SPINNER )
+      val spinnerOuter = ScCssStatic._styleAddClass( _SM_GRID_ADS_LOADER_SPINNER )
 
       /** Наконец, контейнер для анимированной SVG'шки. */
-      val spinnerInner = _styleAddClass( _SM_GRID_ADS_LOADER_SPINNER + "-inner" )
+      val spinnerInner = ScCssStatic._styleAddClass( _SM_GRID_ADS_LOADER_SPINNER + "-inner" )
 
     }
 
@@ -687,12 +738,7 @@ case class ScCss( args: IScCssArgs )
   object Menu {
 
     val panel = style(
-      Root.panelCommon,
       width( (280 + args.screenInfo.unsafeOffsets.left).px )
-    )
-
-    val hideBtn = style(
-      marginLeft( 5.px )
     )
 
     val content = {
@@ -707,48 +753,6 @@ case class ScCss( args: IScCssArgs )
       )
     }
 
-    /** Стили строк меню */
-    object Rows {
-
-      val rowsContainer = style(
-        position.relative
-      )
-
-      val rowLink = style(
-        textDecoration := none
-      )
-
-      val rowOuter = style(
-        cursor.pointer
-      )
-
-      val rowText = style(
-        height( 28.px )
-      )
-
-      val rowContent = style(
-        color( _fgColorCss ),
-        position.relative,
-        minWidth( 260.px ),
-        margin(0.px, auto),
-        fontFamily.attr := MFonts.OpenSansLight.fileName,
-        fontSize( 14.px ),
-        padding(12.px, 0.px),
-        textTransform.uppercase
-      )
-
-      /** стили для mui-switch в пунктах меню. */
-      val switch = style(
-        marginTop( -16.px )
-      )
-
-      /** стили для mui-switch base в пунктах меню. */
-      val switchBase = style(
-        height(28.px)
-      )
-
-    }
-
   }
 
 
@@ -760,9 +764,6 @@ case class ScCss( args: IScCssArgs )
     * @see [[https://japgolly.github.io/scalacss/book/gotchas.html]]
     */
   initInnerObjects(
-    Root.root,
-    Notifies.snackActionCont,
-    Body.BgLogo.ru,
     Welcome.Bg.bgImg,
     Welcome.Fg.fgImg,
 
@@ -772,11 +773,10 @@ case class ScCss( args: IScCssArgs )
 
     Search.TextBar.bar,
     Search.Tabs.MapTab.inner,
-    Search.Tabs.NodesFound.listDiv,
 
     Grid.container,
     Grid.Loaders.spinnerInner,
-    Menu.Rows.rowContent
+    Menu.panel,
   )
 
 }

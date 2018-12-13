@@ -7,7 +7,7 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MWelcomeInfo
 import io.suggest.sc.m.inx.{MWelcomeState, WcClick}
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
 import io.suggest.sc.v.hdr.NodeNameR
 import io.suggest.spa.OptFastEq.Plain
 import io.suggest.ueq.UnivEqUtil._
@@ -63,7 +63,9 @@ class WelcomeR(
         val CSS = scCss.Welcome
 
         <.div(
-          CSS.welcome,
+          scCss.bgColor,
+          ScCssStatic.Welcome.welcome,
+
           ^.classSet1(
             AnimCss.WILL_FADEOUT_CSS_CLASS,
             AnimCss.TRANS_02_CSS_CLASS     -> fadingOutNow,

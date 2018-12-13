@@ -12,7 +12,7 @@ import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.{MScSearch, MSearchPanelS}
-import io.suggest.sc.styl.{GetScCssF, ScCss}
+import io.suggest.sc.styl.{GetScCssF, ScCss, ScCssStatic}
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx.{IndexSwitchAskR, WelcomeR}
@@ -138,7 +138,7 @@ class ScRootR (
       // search (правый) sidebar.
       val scBody = <.div(
         // Ссылаемся на стиль.
-        scCss.Root.root,
+        ScCssStatic.Root.root,
 
         // Экран приветствия узла:
         s.wcPropsOptC { welcomeR.apply },
@@ -308,7 +308,6 @@ class ScRootR (
             override val active = fgHex
           }
           val paletteRaw = new MuiPalette {
-            //override val common = paletteCommon
             override val primary      = primaryColor
             override val secondary    = secondaryColor
             // TODO Нужно портировать getLuminance() и выбирать dark/light на основе формулы luma >= 0.5. https://github.com/mui-org/material-ui/blob/355317fb479dc234c6b1e374428578717b91bdc0/packages/material-ui/src/styles/colorManipulator.js#L151
@@ -336,10 +335,14 @@ class ScRootR (
 
       // Нормальный полный рендер выдачи:
       val fullRender = <.div(
+        // css, который рендерится только один раз:
+        mrootProxy.wrap(_ => ScCssStatic)( CssR.apply )(implicitly, FastEq.AnyRefEq),
+        // Динамический css всей выдачи:
         scCssComp,
+
         muiThemeProviderComp,
 
-        // Всплывающая плашка для смены узла:
+        // Всплывающая плашка для смены узла: TODO Запихнуть внутрь theme-provider?
         s.indexSwitchAskC { indexSwitchAskR.apply },
       )
 

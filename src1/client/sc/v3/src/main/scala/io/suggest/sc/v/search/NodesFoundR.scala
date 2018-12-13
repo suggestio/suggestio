@@ -12,7 +12,7 @@ import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{DoNodesSearch, MSearchRespInfo}
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.ScCssStatic
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -31,7 +31,6 @@ import scala.scalajs.js.UndefOr
   */
 class NodesFoundR(
                    nodeFoundR       : NodeFoundR,
-                   getScCssF        : GetScCssF,
                  ) {
 
   import NodesFoundR._
@@ -49,8 +48,7 @@ class NodesFoundR(
 
 
     def render(propsProxy: Props): VdomElement = {
-      val scCss = getScCssF()
-      val NodesCSS = scCss.Search.Tabs.NodesFound
+      val NodesCSS = ScCssStatic.Search.NodesFound
       val props = propsProxy.value
 
       val listClasses = new MuiListClasses {

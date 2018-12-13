@@ -21,12 +21,11 @@ import ReactCommonUtil.Implicits._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.model.n2.node.MNodeTypes
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.ScCssStatic
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -34,7 +33,7 @@ import scala.scalajs.js.UndefOr
   * Created: 30.08.18 12:29
   * Description: React-компонент для рендера одного ряда в списке найденных рядов.
   */
-class NodeFoundR(getScCssF: GetScCssF) {
+class NodeFoundR {
 
   /** Контейнер пропертисов компонента.
     *
@@ -75,7 +74,7 @@ class NodeFoundR(getScCssF: GetScCssF) {
     /** Рендер вёрстки компонента. */
     def render(propsProxy: Props): VdomElement = {
       val props = propsProxy.value
-      val NodesCSS = getScCssF().Search.Tabs.NodesFound
+      val NodesCSS = ScCssStatic.Search.NodesFound
 
       // Рассчитать наименьшее расстояние от юзера до узла:
       val locLl = MapsUtil.geoPoint2LatLng( props.withDistanceTo )

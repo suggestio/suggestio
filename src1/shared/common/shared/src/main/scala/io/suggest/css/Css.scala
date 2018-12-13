@@ -106,6 +106,8 @@ object Css {
 
     def _SM_PREFIX_ = "sm-"
     def SM_NOTE = _SM_PREFIX_ + "note"
+    def `BUTTON` = "button"
+    def _SM_BUTTON = _SM_PREFIX_ + `BUTTON`
 
     def PREFIX = "lk-"
     def MINOR_TITLE = "minor-" + _TITLE

@@ -8,7 +8,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent, raw}
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil
@@ -70,7 +70,7 @@ class SlideMenuItemR(
       propsPot.renderEl { props =>
         // Доступно API для bluetooth.
         val scCss = getScCssF()
-        val menuRowsCss = scCss.Menu.Rows
+        val R = ScCssStatic.Menu.Rows
         val isClickDisabled = propsPot.isPending
 
         // Ссылка на вход или на личный кабинет
@@ -86,7 +86,7 @@ class SlideMenuItemR(
         } (
           MuiListItemText {
             val cssClasses = new MuiListItemTextClasses {
-              override val root = menuRowsCss.rowText.htmlClass
+              override val root = R.rowText.htmlClass
             }
             new MuiListItemTextProps {
               override val classes = cssClasses
@@ -94,7 +94,8 @@ class SlideMenuItemR(
           } (
 
             <.span(
-              menuRowsCss.rowContent,
+              R.rowContent,
+              scCss.fgColor,
               if (props.useMessages) Messages( props.text )
               else props.text
             ),
@@ -129,8 +130,8 @@ class SlideMenuItemR(
                     if (isClickDisabled) !props.isEnabled
                     else props.isEnabled
                   val cssClasses = new MuiSwitchClasses {
-                    override val root = menuRowsCss.switch.htmlClass
-                    override val switchBase = menuRowsCss.switchBase.htmlClass
+                    override val root = R.switch.htmlClass
+                    override val switchBase = R.switchBase.htmlClass
                   }
                   new MuiSwitchProps {
                     override val disabled = isClickDisabled

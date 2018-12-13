@@ -5,7 +5,7 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
@@ -43,10 +43,11 @@ class EditAdR(
   class Backend($: BackendScope[Props, Unit]) {
     def render(propsValProxy: Props): VdomElement = {
       propsValProxy.value.whenDefinedEl { props =>
-        val menuRowsCss = getScCssF().Menu.Rows
+        val scCss = getScCssF()
+        val R = ScCssStatic.Menu.Rows
 
         <.a(
-          menuRowsCss.rowLink,
+          R.rowLink,
           ^.href := props.scRoutes.controllers.LkAdEdit.editAd( props.adId ).url,
 
           // Ссылка на вход или на личный кабинет
@@ -58,7 +59,8 @@ class EditAdR(
           )(
             MuiListItemText()(
               <.span(
-                menuRowsCss.rowContent,
+                R.rowContent,
+                scCss.fgColor,
                 Messages( MsgCodes.`Edit` )
               )
             )

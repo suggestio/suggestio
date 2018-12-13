@@ -7,7 +7,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.proto.http.model.Route
 import io.suggest.routes.IJsRouter
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -15,8 +15,6 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import scalacss.ScalaCssReact._
-
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -51,7 +49,8 @@ class EnterLkRowR(
 
     def render(propsProxy: Props): VdomElement = {
       propsProxy.value.whenDefinedEl { props =>
-        val menuRowsCss = getScCssF().Menu.Rows
+        val scCss = getScCssF()
+        val R = ScCssStatic.Menu.Rows
 
         val (hrefRoute, msgCode) = props.isMyAdnNodeId.fold [(Route, String)] {
           if (props.isLoggedIn) {
@@ -77,7 +76,7 @@ class EnterLkRowR(
 
         // Сборка ссылки для входа туда, куда наверное хочет попасть пользователь.
         <.a(
-          menuRowsCss.rowLink,
+          R.rowLink,
           ^.href := hrefRoute.url,
 
           // Ссылка на вход или на личный кабинет
@@ -89,7 +88,8 @@ class EnterLkRowR(
           )(
             MuiListItemText()(
               <.span(
-                menuRowsCss.rowContent,
+                R.rowContent,
+                scCss.fgColor,
                 Messages( msgCode )
               )
             )

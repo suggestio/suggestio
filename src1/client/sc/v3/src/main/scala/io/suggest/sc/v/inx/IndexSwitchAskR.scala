@@ -6,7 +6,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{ApproveIndexSwitch, CancelIndexSwitch, MInxSwitchAskS}
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.ScCssStatic
 import io.suggest.sc.v.hdr.LogoR
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -19,7 +19,6 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class IndexSwitchAskR(
                        val logoR: LogoR,
-                       getScCssF: GetScCssF,
                      ) {
 
   import io.suggest.spa.OptFastEq.Wrapped
@@ -45,7 +44,7 @@ class IndexSwitchAskR(
     def render(propsOptProxy: Props): VdomElement = {
       // Чтобы диалог выплывал снизу, надо чтобы контейнер компонента был заранее (всегда) отрендеренным в DOM.
       val propsOpt = propsOptProxy.value
-      val scCss = getScCssF().Notifies
+      val scCss = ScCssStatic.Notifies
 
       MuiSnackBar {
         val _anchorOrigin = new MuiSnackBarAnchorOrigin {

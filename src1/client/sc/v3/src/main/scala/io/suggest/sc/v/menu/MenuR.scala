@@ -3,12 +3,11 @@ package io.suggest.sc.v.menu
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.sc.m.menu.MMenuS
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
 import io.suggest.sc.v.hdr.LeftR
 import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-
 import scalacss.ScalaCssReact._
 import io.suggest.ueq.UnivEqUtil._
 
@@ -47,11 +46,13 @@ class MenuR(
       val menuCss = scCss.Menu
 
       <.div(
+        ScCssStatic.Root.panelCommon,
         menuCss.panel,
 
         // Фон панели.
         <.div(
-          scCss.Root.panelBg
+          ScCssStatic.Root.panelBg,
+          scCss.bgColor
         ),
 
         // Контейнер для непосредственного контента панели.
@@ -63,7 +64,7 @@ class MenuR(
 
           // Менюшка
           <.div(
-            menuCss.Rows.rowsContainer,
+            ScCssStatic.Menu.Rows.rowsContainer,
 
             children
           )  // .rowsContainer
