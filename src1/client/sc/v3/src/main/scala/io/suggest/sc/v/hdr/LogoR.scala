@@ -5,7 +5,8 @@ import diode.react.ModelProxy
 import io.suggest.media.IMediaInfo
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.ScConstants
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.ScCssStatic
+import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -25,11 +26,7 @@ import japgolly.univeq._
   */
 class LogoR(
              nodeNameR: NodeNameR,
-             getScCssF: GetScCssF,
            ) {
-
-  import nodeNameR.NodeNameRPropsValFastEq
-  import io.suggest.spa.OptFastEq.Wrapped
 
   type Props_t = Option[PropsVal]
   type Props = ModelProxy[Props_t]
@@ -67,12 +64,12 @@ class LogoR(
                 styled   = nodeInfo.styled
               )
             }
-          }( nodeNameR.apply )
+          }( nodeNameR.apply )(implicitly, OptFastEq.Wrapped(nodeNameR.NodeNameRPropsValFastEq) )
 
         } { logoInfo =>
           // Рендерим картинку графического логотипа узла.
           <.img(
-            getScCssF().Header.Logo.Img.hdr,
+            ScCssStatic.Header.Logo.Img.hdr,
             ^.src := logoInfo.url,
             nodeInfo.nodeNameOpt.whenDefined { nodeName =>
               ^.title := nodeName

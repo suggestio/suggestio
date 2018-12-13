@@ -9,7 +9,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import ReactCommonUtil.Implicits._
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.ScCssStatic
 
 /**
   * Suggest.io
@@ -17,9 +17,7 @@ import io.suggest.sc.styl.GetScCssF
   * Created: 10.07.17 16:56
   * Description: Компонент кнопки, указывающей вправо (или "вперёд").
   */
-class GoBackR(
-               getScCssF: GetScCssF
-             ) {
+class GoBackR {
 
   type Props_t = Option[MIndexView]
   type Props = ModelProxy[Props_t]
@@ -34,8 +32,6 @@ class GoBackR(
 
     def render(propsProxy: Props): VdomElement = {
       propsProxy.value.whenDefinedEl { miv =>
-        val scCss = getScCssF().Header.Buttons
-
         MuiToolTip {
           val titleStr = miv.name.fold {
             Messages( MsgCodes.`Go.back` )
@@ -48,7 +44,7 @@ class GoBackR(
         } (
           MuiIconButton {
             val cssClasses = new MuiIconButtonClasses {
-              override val root = scCss.backBtn.htmlClass
+              override val root = ScCssStatic.Header.Buttons.backBtn.htmlClass
             }
             new MuiIconButtonProps {
               override val onClick = _onBtnClickJsCbF

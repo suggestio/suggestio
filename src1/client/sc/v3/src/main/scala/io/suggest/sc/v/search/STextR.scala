@@ -9,7 +9,7 @@ import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{MScSearchText, SearchTextChanged}
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ReactEventFromInput, ScalaComponent}
@@ -26,7 +26,7 @@ import scala.scalajs.js.|
   * Description: React-компонент поиского поля.
   * Скорее всего, его можно использовать через .wrap() вместо .connect.
   */
-class STextR( getScCssF: GetScCssF ) {
+class STextR {
 
   type Props_t = MScSearchText
   type Props = ModelProxy[Props_t]
@@ -67,12 +67,10 @@ class STextR( getScCssF: GetScCssF ) {
     }
 
     def render(propsProxy: Props): VdomElement = {
-      val scCss = getScCssF()
-
       val p = propsProxy.value
 
       // Рендер текстового поля с input'ом.
-      val TextBarCSS = scCss.Search.TextBar
+      val TextBarCSS = ScCssStatic.Search.TextBar
       val formCtlCss = new MuiFormControlClasses {
         override val root = TextBarCSS.inputFormControl.htmlClass
       }

@@ -129,6 +129,90 @@ object ScCssStatic extends StyleSheet.Inline {
 
   }
 
+
+  /** Стили для заголовка. */
+  object Header {
+
+    /** Корневое имя класса, от которого идёт остальное словообразование. */
+    def HEADER = _SM_ + "producer-header"
+
+    object Buttons {
+
+      val btn = style(
+        addClassNames(
+          Css.Lk._SM_BUTTON,
+          ScCssStatic.Header.HEADER + "_btn"
+        )
+      )
+
+      /** Выравнивание кнопок. */
+      object Align {
+        // Новые стили
+        val leftAligned = style(
+          left( 5.px )
+        )
+        val rightAligned = style(
+          left.auto,
+          right( 5.px )
+        )
+
+      }
+
+      /** Кнопка "назад" относительно кнопки меню. */
+      val backBtn = style(
+        addClassName( Css.Floatt.LEFT ),
+        //left( 40.px ),
+        //top( (args.screenInfo.unsafeOffsets.top + 1).px ),
+        position.relative,
+      )
+
+      //val leftGeoBtn = _styleAddClasses( _btnMx, HEADER + "_geo-button", Align.LEFT )
+
+      private def _btnClass(root: String): String =
+        ScCssStatic.Header.HEADER + HtmlConstants.UNDERSCORE + root + HtmlConstants.MINUS + Css.Lk.`BUTTON`
+
+      /** Стиль кнопки поиска. */
+      val search = style(
+        addClassNames(
+          _btnClass("search"),
+          Align.rightAligned.htmlClass,
+          Css.Floatt.RIGHT,
+          btn.htmlClass,
+        ),
+        position.relative,
+        top( 5.px )
+      )
+
+      /** Стиль кнопки меню слева. */
+      val menu = style(
+        addClassNames(
+          Align.leftAligned.htmlClass,
+          btn.htmlClass,
+          Css.Floatt.LEFT,
+        ),
+        position.relative,
+        top( 7.px ),
+      )
+
+    }
+
+    object Logo {
+
+      object Img {
+
+        val hdr = style(
+          position.relative,
+          // было 10px, но в итоге получилось 5 после унификацией с логотипами карты.
+          padding( ((ScCss.HEADER_HEIGHT_PX - ScConstants.Logo.HEIGHT_CSSPX) / 2).px )
+        )
+
+      }
+
+    }
+
+  }
+
+  /** Стили для нотификации. */
   object Notifies {
 
     /** Стиль для SnackbackContentText.action, чтобы кнопки отображались вертикально. */
@@ -162,6 +246,24 @@ object ScCssStatic extends StyleSheet.Inline {
 
   object Search {
 
+    /** Поля текстового поиска и контейнер оной. */
+    object TextBar {
+
+      // TODO Статический стиль - унести в статику.
+      val bar = style(
+        addClassName( _SM_ + "search-bar" ),
+        // Равняем полосу input'а с полосой заголовка.
+        marginTop( ScCss.SEARCH_TOP_OFFSET_PX.px ),
+        display.inlineFlex,
+      )
+
+      val inputFormControl = style(
+        flexDirection.initial,
+        width(100.%%)
+      )
+
+    }
+
     /** Стили для списка найденных узлов (тегов и т.д.). */
     object NodesFound {
 
@@ -188,10 +290,13 @@ object ScCssStatic extends StyleSheet.Inline {
       )
 
       /** Выставить сдвиги по бокам. gutters ставят 24px, без них просто 0px. А надо нечто среднее. */
-      val adnNodeRow = style(
-        paddingLeft(16.px).important,
-        paddingRight(16.px).important
-      )
+      val adnNodeRow = {
+        val px16 = 16.px
+        style(
+          paddingLeft(px16).important,
+          paddingRight(px16).important
+        )
+      }
 
       /** Ряд тега. ruby для - вертикальной упаковки тегов. */
       val tagRow = style(
@@ -279,9 +384,13 @@ object ScCssStatic extends StyleSheet.Inline {
   initInnerObjects(
     Body.smBody,
     Root.root,
+    Header.Buttons.search,
+    Header.Buttons.Align.leftAligned,
+    Header.Logo.Img.hdr,
     Notifies.snackActionCont,
     Welcome.welcome,
     Search.NodesFound.listDiv,
+    Search.TextBar.bar,
     Menu.Rows.rowContent,
   )
 
@@ -312,7 +421,8 @@ case class ScCss( args: IScCssArgs )
 
   private val (_bgColorCss, _fgColorCss) = {
     val colors = args.customColorsOpt getOrElse ScCss.COLORS_DFLT
-    def _colorCss( colorOpt: Option[MColorData], dflt: => String ) = Color( colorOpt.fold(dflt)(_.hexCode) )
+    def _colorCss( colorOpt: Option[MColorData], dflt: => String ) =
+      Color( colorOpt.fold(dflt)(_.hexCode) )
     val bg = _colorCss( colors.bg, ScConstants.Defaults.BG_COLOR )
     val fg = _colorCss( colors.fg, ScConstants.Defaults.FG_COLOR )
     (bg, fg)
@@ -404,9 +514,6 @@ case class ScCss( args: IScCssArgs )
   /** Стили для заголовка. */
   object Header {
 
-    /** Корневое имя класса, от которого идёт остальное словообразование. */
-    private def HEADER = _SM_ + "producer-header"
-
     /** Стили для прогресс-бара. */
     val progress = style(
       position.absolute,
@@ -419,7 +526,10 @@ case class ScCss( args: IScCssArgs )
     /** Стили контейнера любого заголовка. */
     val header = {
       style(
-        addClassNames( HEADER, Css.Position.ABSOLUTE ),
+        addClassNames(
+          ScCssStatic.Header.HEADER,
+          Css.Position.ABSOLUTE
+        ),
         backgroundColor( _bgColorCss ),
         borderColor( _fgColorCss ),
         // Для экранов с вырезами (iphone10) - расширяем заголовок вниз по вертикали:
@@ -432,82 +542,6 @@ case class ScCss( args: IScCssArgs )
       )
     }
 
-    object Buttons {
-
-      val btn = style(
-        addClassNames( Css.Lk._SM_BUTTON, HEADER + "_btn" )
-      )
-
-      /** Выравнивание кнопок. */
-      object Align {
-        // Новые стили
-        val leftAligned = style(
-          left( 5.px )
-        )
-        val rightAligned = style(
-          left.auto,
-          right( 5.px )
-        )
-
-      }
-
-      /** Кнопка "назад" относительно кнопки меню. */
-      val backBtn = style(
-        addClassName( Css.Floatt.LEFT ),
-        //left( 40.px ),
-        //top( (args.screenInfo.unsafeOffsets.top + 1).px ),
-        position.relative,
-      )
-
-      //val leftGeoBtn = _styleAddClasses( _btnMx, HEADER + "_geo-button", Align.LEFT )
-
-      private def _btnClass(root: String): String =
-        HEADER + HtmlConstants.UNDERSCORE + root + HtmlConstants.MINUS + Css.Lk.`BUTTON`
-
-      /** Стиль кнопки поиска. */
-      val search = style(
-        addClassNames(
-          _btnClass("search"),
-          Align.rightAligned.htmlClass,
-          Css.Floatt.RIGHT,
-          btn.htmlClass,
-        ),
-        position.relative,
-        top( 5.px )
-      )
-
-      /** Стиль кнопки меню слева. */
-      val menu = style(
-        addClassNames(
-          Align.leftAligned.htmlClass,
-          btn.htmlClass,
-          Css.Floatt.LEFT,
-        ),
-        position.relative,
-        top( 7.px ),
-      )
-
-      /** Стиль кнопки заголовка, который указывает вправо. */
-      val rightCss = style(
-        addClassNames(
-          Css.Position.ABSOLUTE,
-          btn.htmlClass
-        ),
-        top( (17 + args.screenInfo.unsafeOffsets.top).px ),
-        right( 2.px ),
-        left.auto
-      )
-
-      /** Стиль кнопки заголовка, которая указывает влево. */
-      val leftCss = style(
-        addClassNames(
-          Align.leftAligned.htmlClass,
-          btn.htmlClass
-        )
-      )
-
-    }
-
 
     /** Доступ к стилям логотипа узла. */
     object Logo {
@@ -518,7 +552,7 @@ case class ScCss( args: IScCssArgs )
       /** Стили текстового логотипа узла.*/
       object Txt {
 
-        private val TXT_LOGO = HEADER + "_txt-" + `logo_`
+        private val TXT_LOGO = ScCssStatic.Header.HEADER + "_txt-" + `logo_`
 
         val logo = style(
           addClassName( TXT_LOGO )
@@ -550,16 +584,6 @@ case class ScCss( args: IScCssArgs )
 
       }
 
-      object Img {
-
-        val hdr = style(
-          position.relative,
-          // было 10px, но в итоге получилось 5 после унификацией с логотипами карты.
-          padding( ((ScCss.HEADER_HEIGHT_PX - ScConstants.Logo.HEIGHT_CSSPX) / 2).px )
-        )
-
-      }
-
     }
 
   }
@@ -587,25 +611,6 @@ case class ScCss( args: IScCssArgs )
 
     /** CSS-класс заголовка внутри панели поиска. */
     //val panelHeader = _styleAddClasses( _PANEL + "_header" )
-
-
-    /** Поля текстового поиска и контейнер оной. */
-    object TextBar {
-
-      // TODO Статический стиль - унести в статику.
-      val bar = style(
-        addClassName( _SM_ + "search-bar" ),
-        // Равняем полосу input'а с полосой заголовка.
-        marginTop( ScCss.SEARCH_TOP_OFFSET_PX.px ),
-        display.inlineFlex,
-      )
-
-      val inputFormControl = style(
-        flexDirection.initial,
-        width(100.%%)
-      )
-
-    }
 
 
     /** Табы на поисковой панели. */
@@ -767,11 +772,8 @@ case class ScCss( args: IScCssArgs )
     Welcome.Bg.bgImg,
     Welcome.Fg.fgImg,
 
-    Header.Buttons.Align.leftAligned,
     Header.Logo.Txt.Dots.dot,
-    Header.Logo.Img.hdr,
 
-    Search.TextBar.bar,
     Search.Tabs.MapTab.inner,
 
     Grid.container,

@@ -1,7 +1,7 @@
 package io.suggest.sc.v.hdr
 
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.ScCssStatic
 
 /**
   * Suggest.io
@@ -9,9 +9,9 @@ import io.suggest.sc.styl.GetScCssF
   * Created: 10.07.17 15:44
   * Description: Компонент кнопки меню.
   */
-class MenuBtnR( getScCssF: GetScCssF ) extends HdrBtn {
+class MenuBtnR extends HdrBtn {
 
-  override protected[this] def cssStyle = getScCssF().Header.Buttons.menu
+  override protected[this] def cssStyle = ScCssStatic.Header.Buttons.menu
 
   override protected[this] def _btnClickAction = SideBarOpenClose(MScSideBars.Menu, open = true)
 

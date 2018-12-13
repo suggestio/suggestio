@@ -1,7 +1,7 @@
 package io.suggest.sc.v.hdr
 
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.ScCssStatic
 
 /**
   * Suggest.io
@@ -10,9 +10,9 @@ import io.suggest.sc.styl.GetScCssF
   * Description: React-компонент для кнопки поиска на панели заголовка.
   * Для рендера используется inline SVG также как и в предыдущих версиях системы.
   */
-class SearchBtnR( getScCssF: GetScCssF ) extends HdrBtn {
+class SearchBtnR extends HdrBtn {
 
-  override protected[this] def cssStyle = getScCssF().Header.Buttons.search
+  override protected[this] def cssStyle = ScCssStatic.Header.Buttons.search
 
   override protected[this] def _btnClickAction = SideBarOpenClose(MScSideBars.Search, open = true)
 
