@@ -1,7 +1,7 @@
 package io.suggest.sc.c.inx
 
 import diode._
-import diode.data.Pot
+import diode.data.{Pot, Ready}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.{MGeoLoc, MLocEnv}
 import io.suggest.msg.ErrorMsgs
@@ -12,7 +12,7 @@ import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid.{GridBlockClick, GridLoadAds}
 import io.suggest.sc.m.inx._
-import io.suggest.sc.m.search.{MapReIndex, SearchTextChanged}
+import io.suggest.sc.m.search.{MSearchCssProps, MSearchRespInfo, MapReIndex, SearchTextChanged}
 import io.suggest.sc.sc3._
 import io.suggest.sc.styl.MScCssArgs
 import io.suggest.sc.u.api.IScUniApi
@@ -67,15 +67,22 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
     raType ==* MScRespActionTypes.Index
   }
 
+
   override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect]) = {
     val v0 = ctx.value0
     val i0 = v0.index
-    val inx = ra.index.get
-    val isDemandLocTest = ctx.m.switchCtxOpt.exists(_.demandLocTest)
+
+    // Если нод много, то надо плашку рисовать на экране.
+    val resp = ra.search.get
+    val isMultiNodeResp = resp.hasManyNodes
 
     // Сравнивать полученный index с текущим состоянием. Может быть ничего сохранять не надо?
     if (
-      v0.index.resp.exists { MSc3IndexResp.isLookingSame(_, inx) }
+      !isMultiNodeResp &&
+      resp.results.exists { node =>
+        v0.index.resp
+          .exists { MSc3IndexResp.isLookingSame(_, node.props) }
+      }
     ) {
       var i1 = i0
 
@@ -97,12 +104,6 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
 
       val v2 = v0.withIndex( i1 )
 
-
-      // Сравнить гео-точку состояния с новой гео-точкой: TODO Opt Проверять перед вызовом GridLoadAds и не вызывать, если совпадает?
-      //val isSameGeoPoint = ctx.m.qs.common.locEnv.geoLocOpt.exists { gl =>
-      //  i0.state.inxGeoPoint.contains(gl.point)
-      //}
-
       // Запустить эффект обновления плитки, если плитка не пришла автоматом.
       val gridLoadFxOpt = OptionUtil.maybe(
         !ctx.m.tryResp
@@ -115,12 +116,19 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
 
       (v2, gridLoadFxOpt)
 
-    } else if (isDemandLocTest) {
+    } else if (isMultiNodeResp || ctx.m.switchCtxOpt.exists(_.demandLocTest)) {
       // Это тест переключения выдачи в новое местоположение, и узел явно изменился.
       // Вместо переключения узла, надо спросить юзера, можно ли переходить полученный узел:
       val switchAskState = MInxSwitchAskS(
-        okAction = ctx.m,
-        nextIndex = inx
+        okAction  = ctx.m,
+        nodesResp = resp,
+        searchCss = OptionUtil.maybe(isMultiNodeResp) {
+          val cssArgs = MSearchCssProps(
+            req         = Ready( MSearchRespInfo(resp = resp.results) ),
+            screenInfo  = ctx.value0.dev.screen.info
+          )
+          SearchCss( cssArgs )
+        },
       )
 
       val v2 = v0.withIndex {
@@ -134,6 +142,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
 
     } else {
       // Индекс изменился, значит заливаем новый индекс в состояние:
+      val inx = resp.results.head.props
 
       // Сайд-эффекты закидываются в этот аккамулятор:
       var fxsAcc = List.empty[Effect]

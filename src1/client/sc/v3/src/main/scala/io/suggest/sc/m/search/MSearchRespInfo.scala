@@ -23,6 +23,6 @@ object MSearchRespInfo {
   * @tparam T Тип модели ответа сервера.
   */
 case class MSearchRespInfo[T](
-                               textQuery      : Option[String],
+                               textQuery      : Option[String] = None,
                                resp           : T
                              )

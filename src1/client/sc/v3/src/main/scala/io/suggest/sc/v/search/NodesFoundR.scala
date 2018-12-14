@@ -94,15 +94,17 @@ class NodesFoundR(
                 .resp
                 .iterator
                 .toVdomArray { mnode =>
+                  // Нельзя nodeId.get, т.к. могут быть узлы без id.
+                  val nodeId = mnode.props.nameOrIdOrEmpty
                   // Рендер одного ряда. На уровне компонента обитает shouldComponentUpdate() для
                   propsProxy.wrap { props =>
                     nodeFoundR.PropsVal(
-                      node            = mnode,
-                      searchCss       = props.searchCss,
-                      withDistanceTo  = props.withDistanceTo,
-                      selected        = props.selectedIds contains mnode.props.nodeId
+                      node                = mnode,
+                      searchCss           = props.searchCss,
+                      withDistanceToNull  = props.withDistanceToNull,
+                      selected            = props.selectedIds contains nodeId
                     )
-                  }( nodeFoundR.component.withKey(mnode.props.nodeId)(_) ): VdomNode
+                  }( nodeFoundR.component.withKey(nodeId)(_) ): VdomNode
                 }
             }
           },
@@ -161,7 +163,8 @@ class NodesFoundR(
 
   }
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build
@@ -179,11 +182,11 @@ object NodesFoundR {
     * @param withDistanceTo Рендерить расстояние до указанной локации. Инстанс mapInit.userLoc.
     */
   case class PropsVal(
-                       req              : Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]],
-                       hasMore          : Boolean,
-                       selectedIds      : Set[String],
-                       withDistanceTo   : MGeoPoint,
-                       searchCss        : SearchCss,
+                       req                  : Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]],
+                       hasMore              : Boolean,
+                       selectedIds          : Set[String],
+                       withDistanceToNull   : MGeoPoint = null,
+                       searchCss            : SearchCss,
                      )
 
   implicit object NodesFoundRPropsValFastEq extends FastEq[PropsVal] {
@@ -191,7 +194,7 @@ object NodesFoundR {
       (a.req ===* b.req) &&
         (a.hasMore ==* b.hasMore) &&
         (a.selectedIds ===* b.selectedIds) &&
-        (a.withDistanceTo ===* b.withDistanceTo) &&
+        (a.withDistanceToNull ===* b.withDistanceToNull) &&
         // Наверное, проверять css не нужно. Но мы всё же перерендериваем.
         (a.searchCss ===* b.searchCss)
     }

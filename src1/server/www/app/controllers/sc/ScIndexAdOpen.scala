@@ -3,7 +3,6 @@ package controllers.sc
 import io.suggest.model.n2.node.MNode
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.sc3.MScQs
-import models.msc._
 import models.req.IReq
 import util.showcase.IScUtil
 
@@ -49,12 +48,12 @@ trait ScIndexAdOpen
       true
     }
 
-    override lazy val indexNodeFut: Future[MIndexNodeInfo] = {
+    override lazy val indexNodesFut: Future[Seq[MIndexNodeInfo]] = {
       val nodeInfo = MIndexNodeInfo(
         mnode   = producer,
         isRcvr  = true
       )
-      Future.successful( nodeInfo )
+      Future.successful( nodeInfo :: Nil )
     }
 
   }

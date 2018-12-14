@@ -10,7 +10,6 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.i18n.MsgCodes
 import io.suggest.init.routed.MJsInitTargets
-import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses, MOrders}
@@ -21,6 +20,7 @@ import io.suggest.model.play.qsb.QsbSeq
 import io.suggest.pick.PickleUtil
 import io.suggest.primo.id.OptId
 import io.suggest.req.ReqUtil
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
 import javax.inject.{Inject, Singleton}
@@ -577,16 +577,15 @@ class LkBill2 @Inject() (
     } yield {
       val iter = for {
         mnode  <- rcvrsIds.iterator.flatMap( allNodesMap.get )
-        nodeId <- mnode.id
+        if mnode.id.nonEmpty
       } yield {
-        MAdvGeoMapNodeProps(
-          nodeId = nodeId,
+        MSc3IndexResp(
+          nodeId  = mnode.id,
           ntype   = mnode.common.ntype,
           // mnode.meta.colors,  // TODO Надо ли цвета рендерить?
           colors  = MColors.empty,
-          hint    = mnode.guessDisplayNameOrId,
+          name    = mnode.guessDisplayNameOrId,
           // Пока без иконки. TODO Решить, надо ли иконку рендерить?
-          icon    = None
         )
       }
       iter.toSeq

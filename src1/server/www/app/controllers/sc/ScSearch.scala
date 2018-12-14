@@ -1,9 +1,10 @@
 package controllers.sc
 
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
-import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes}
+import io.suggest.maps.nodes.MGeoNodePropsShapes
 import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{IMNodes, MNode}
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
 import io.suggest.sc.search.MSc3NodeSearchResp
@@ -60,8 +61,8 @@ trait ScSearch
     }
 
     /** Сборка sink'а для сохранения найденных узлов в статистику. */
-    def saveScStatSink: Sink[(MNode, MAdvGeoMapNodeProps), Future[_]] = {
-      Flow[(MNode, MAdvGeoMapNodeProps)]
+    def saveScStatSink: Sink[(MNode, MSc3IndexResp), Future[_]] = {
+      Flow[(MNode, MSc3IndexResp)]
         // Если результатов слишком много, то нет смысла их всех сохранять в статистику.
         .take( 10 )
         // Накопить данные с узлов, для отправки в статистику:

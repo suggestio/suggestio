@@ -10,7 +10,6 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.{CircleGs, PointGs}
 import io.suggest.i18n.MsgCodes
-import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.n2.node.MNodeTypes
@@ -25,6 +24,7 @@ import japgolly.scalajs.react.raw.React
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import io.suggest.dt.CommonDateTimeUtil.Implicits._
+import io.suggest.sc.index.MSc3IndexResp
 
 import scala.scalajs.js
 
@@ -49,7 +49,7 @@ class ItemRowR(
                        mitem          : MItem,
                        isItemEditable : Boolean,
                        isSelected     : Option[Boolean],
-                       rcvrNode       : Option[MAdvGeoMapNodeProps],
+                       rcvrNode       : Option[MSc3IndexResp],
                        isPendingReq   : Boolean,
                        previewRowSpan : Option[Int]
                      )
@@ -137,7 +137,7 @@ class ItemRowR(
                   <.span(
                     // Название узла-ресивера, если задан
                     props.rcvrNode
-                      .flatMap(_.hint)
+                      .flatMap(_.name)
                       .whenDefined,
 
                     // Описание гео-шейпа, если он задан:

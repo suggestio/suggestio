@@ -90,7 +90,7 @@ object RcvrMarkersR {
 
           _onClickCbF = { _mgp: MGeoPoint =>
             cbFun1ToJsCb { _: MouseEvent =>
-              _clickEvent(nodeId, _mgp)
+              _clickEvent(nodeId.get, _mgp)
             }
           }
 
@@ -100,18 +100,22 @@ object RcvrMarkersR {
             override val clickable = true //nodeIdOpt.isDefined
             // Иконка обязательна, иначе отображать будет нечего. Собрать иконку из присланных сервером данных.
             override val icon = js.defined {
-              mnode.props.icon.fold ( MapIcons.pinMarkerIcon() ) { iconInfo =>
+              val liconOpt = for {
+                iconInfo <- mnode.props.logoOpt
+                wh       <- iconInfo.whPx
+              } yield {
                 val o = IconOptions.empty
                 // Для cordova требуются абсолютные ссылки на картинки, иначе она подставит file:// в протокол.
                 o.iconUrl = HttpClient.mkAbsUrlIfPreferred( iconInfo.url )
                 // Описываем размеры иконки по данным сервера.
-                o.iconSize = MapsUtil.size2d2LPoint( iconInfo.wh )
+                o.iconSize = MapsUtil.size2d2LPoint( wh )
                 // Для иконки -- якорь прямо в середине.
-                o.iconAnchor = MapsUtil.size2d2LPoint( iconInfo.wh / 2 )
+                o.iconAnchor = MapsUtil.size2d2LPoint( wh / 2 )
                 Leaflet.icon(o)
               }
+              liconOpt getOrElse MapIcons.pinMarkerIcon()
             }
-            override val title = mnode.props.hint.toUndef
+            override val title = mnode.props.name.toUndef
           }
 
 
@@ -197,7 +201,7 @@ object RcvrMarkersR {
           } { markerOptions =>*/
             // Есть данные для рендера маркера. Собираем маркер:
             val marker = Leaflet.marker( resTuple.latLng, markerOptions )
-            marker.nodeId = nodeId
+            marker.nodeId = nodeId.get
             val markers = marker :: Nil
             (markers, shapeComponents0)
           //}

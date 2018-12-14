@@ -2,7 +2,8 @@ package io.suggest.maps.nodes
 
 import io.suggest.geo.IGeoShape
 import io.suggest.geo.IGeoShape.JsonFormats.minimalFormat
-import io.suggest.primo.id.IId
+import io.suggest.primo.id.OptStrId
+import io.suggest.sc.index.MSc3IndexResp
 import japgolly.univeq.UnivEq
 // НЕ УДАЛЯТЬ, используется для обоих UnivEq.derive
 import io.suggest.ueq.UnivEqUtil._
@@ -37,18 +38,18 @@ case class MGeoNodesResp(
   * @param shapes Все гео-шейпы узла, которые надо отрендерить.
   */
 case class MGeoNodePropsShapes(
-                                props    : MAdvGeoMapNodeProps,
+                                props    : MSc3IndexResp,
                                 shapes   : Seq[IGeoShape]
                               )
-  extends IId[String]
+  extends OptStrId
 {
-  override def id: String = props.nodeId
+  override def id = props.nodeId
 }
 
 object MGeoNodePropsShapes {
 
   implicit def MGeoNodePropsShapesFormat: OFormat[MGeoNodePropsShapes] = (
-    (__ \ "p").format[MAdvGeoMapNodeProps] and
+    (__ \ "p").format[MSc3IndexResp] and
     (__ \ "s").format[Seq[IGeoShape]]
   )(apply, unlift(unapply))
 

@@ -4,11 +4,11 @@ import diode.FastEq
 import io.suggest.bill.MPrice
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.jd.MJdAdData
-import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses}
 import io.suggest.mbill2.m.txn.MTxnPriced
 import io.suggest.primo.id.{IId, OptId}
+import io.suggest.sc.index.MSc3IndexResp
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import play.api.libs.json._
@@ -46,8 +46,8 @@ object MOrderContent {
           EmptyUtil.opt2ImplEmpty1F(Nil),
           { txns => if (txns.isEmpty) None else Some(txns) }
         ) and
-      (__ \ "r").formatNullable[Iterable[MAdvGeoMapNodeProps]]
-        .inmap[Iterable[MAdvGeoMapNodeProps]](
+      (__ \ "r").formatNullable[Iterable[MSc3IndexResp]]
+        .inmap[Iterable[MSc3IndexResp]](
           EmptyUtil.opt2ImplEmpty1F( Nil ),
           { rcvrs => if (rcvrs.isEmpty) None else Some(rcvrs) }
         ) and
@@ -81,14 +81,14 @@ case class MOrderContent(
                           order       : Option[MOrder],
                           items       : Seq[MItem],
                           txns        : Seq[MTxnPriced],
-                          adnNodes    : Iterable[MAdvGeoMapNodeProps],
+                          adnNodes    : Iterable[MSc3IndexResp],
                           adsJdDatas  : Iterable[MJdAdData],
                           orderPrices : Iterable[MPrice]
                         ) {
 
   /** Сборка инстанса карты ресиверов. Происходит на клиенте, когда наступает необходимость. */
-  lazy val adnNodesMap: Map[String, MAdvGeoMapNodeProps] =
-    IId.els2idMap[String, MAdvGeoMapNodeProps]( adnNodes )
+  lazy val adnNodesMap: Map[String, MSc3IndexResp] =
+    OptId.els2idMap[String, MSc3IndexResp]( adnNodes )
 
   /** Сборка карты отрендеренных карточек. */
   lazy val adId2jdDataMap: Map[String, MJdAdData] =

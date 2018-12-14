@@ -1,8 +1,9 @@
 package io.suggest.sc.m.inx
 
 import diode.FastEq
-import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.m.HandleScApiResp
+import io.suggest.sc.search.MSc3NodeSearchResp
+import io.suggest.sc.v.search.SearchCss
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
 
@@ -16,8 +17,9 @@ object MInxSwitchAskS {
 
   implicit object MInxSwitchAskSFastEq extends FastEq[MInxSwitchAskS] {
     override def eqv(a: MInxSwitchAskS, b: MInxSwitchAskS): Boolean = {
-      (a.okAction ===* b.okAction) &&
-      (a.nextIndex ===* b.nextIndex)
+      (a.okAction  ===* b.okAction) &&
+      (a.nodesResp ===* b.nodesResp) &&
+      (a.searchCss ===* b.searchCss)
     }
   }
 
@@ -28,5 +30,6 @@ object MInxSwitchAskS {
 
 case class MInxSwitchAskS(
                            okAction     : HandleScApiResp,
-                           nextIndex    : MSc3IndexResp,
+                           nodesResp    : MSc3NodeSearchResp,
+                           searchCss    : Option[SearchCss],
                          )

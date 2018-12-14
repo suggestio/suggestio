@@ -284,9 +284,9 @@ final class NodesUtil @Inject() (
     *                см. [[util.img.GalleryUtil.galleryImgs()]]
     * @return Выхлоп [[util.cdn.CdnUtil.mediasHosts()]].
     */
-  def nodeMediaHostsMap(logoImgOpt: Option[MImgT]               = None,
-                        welcomeOpt: Option[MWelcomeRenderArgs]  = None,
-                        gallery   : List[MImgT]                 = Nil
+  def nodeMediaHostsMap(logoImgOpt    : Iterable[MImgT]                 = Nil,
+                        welcomeOpt    : Iterable[MWelcomeRenderArgs]    = Nil,
+                        gallery       : List[MImgT]                 = Nil
                        ): Future[Map[String, Seq[MHostInfo]]] = {
     var allImgsAcc = gallery
 
@@ -296,7 +296,7 @@ final class NodesUtil @Inject() (
       .map(_.mimg)
       .prependRevTo( allImgsAcc )
 
-    allImgsAcc = logoImgOpt.prependTo(allImgsAcc)
+    allImgsAcc = logoImgOpt.prependRevTo(allImgsAcc)
 
     // Запустить сборку MediaHostsMap.
     dynImgUtil.mkMediaHostsMap( allImgsAcc )

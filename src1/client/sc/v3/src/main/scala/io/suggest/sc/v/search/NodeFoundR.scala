@@ -45,16 +45,16 @@ class NodeFoundR {
   case class PropsVal(
                        node               : MGeoNodePropsShapes,
                        searchCss          : SearchCss,
-                       withDistanceTo     : MGeoPoint,
+                       withDistanceToNull : MGeoPoint,
                        selected           : Boolean
                      )
 
   implicit object NodeFoundRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.node               ===* b.node) &&
-        (a.searchCss        ===* b.searchCss) &&
-        (a.withDistanceTo   ===* b.withDistanceTo) &&
-        (a.selected          ==* b.selected)
+      (a.node                 ===* b.node) &&
+      (a.searchCss            ===* b.searchCss) &&
+      (a.withDistanceToNull   ===* b.withDistanceToNull) &&
+      (a.selected              ==* b.selected)
     }
   }
 
@@ -77,37 +77,47 @@ class NodeFoundR {
       val NodesCSS = ScCssStatic.Search.NodesFound
 
       // Рассчитать наименьшее расстояние от юзера до узла:
-      val locLl = MapsUtil.geoPoint2LatLng( props.withDistanceTo )
-      val distancesIter = for {
-        // Перебрать гео-шейпы, попутно рассчитывая расстояние до центров:
-        nodeShape <- props.node.shapes
-      } yield {
-        // Поиск точки центра узла.
-        val shapeCenterGp = nodeShape.centerPoint
-          .map { MapsUtil.geoPoint2LatLng }
-          .orElse {
-            nodeShape match {
-              case poly: ILPolygonGs =>
-                val positions = MapsUtil.lPolygon2leafletCoords( poly )
-                val c = MapsUtil.polyLatLngs2center( positions )
-                Some(c)
-              case _ =>
-                None
+      val distanceMOpt = for {
+        distanceToPoint <- Option( props.withDistanceToNull )
+
+        locLl = MapsUtil.geoPoint2LatLng( distanceToPoint )
+
+        distancesIter = for {
+          // Перебрать гео-шейпы, попутно рассчитывая расстояние до центров:
+          nodeShape <- props.node.shapes.iterator
+        } yield {
+          // Поиск точки центра узла.
+          val shapeCenterGp = nodeShape.centerPoint
+            .map { MapsUtil.geoPoint2LatLng }
+            .orElse {
+              nodeShape match {
+                case poly: ILPolygonGs =>
+                  val positions = MapsUtil.lPolygon2leafletCoords( poly )
+                  val c = MapsUtil.polyLatLngs2center( positions )
+                  Some(c)
+                case _ =>
+                  None
+              }
             }
-          }
-          .getOrElse {
-            // Последний вариант: взять любую точку шейпа. По-хорошему, этого происходить не должно вообще, но TODO сервер пока не шлёт точку, только шейпы.
-            MapsUtil.geoPoint2LatLng( nodeShape.firstPoint )
-          }
-        locLl distanceTo shapeCenterGp
-      }
-      val distanceMOpt = OptionUtil.maybe(distancesIter.nonEmpty)( distancesIter.min )
+            .getOrElse {
+              // Последний вариант: взять любую точку шейпа. По-хорошему, этого происходить не должно вообще, но TODO сервер пока не шлёт точку, только шейпы.
+              MapsUtil.geoPoint2LatLng( nodeShape.firstPoint )
+            }
+          locLl distanceTo shapeCenterGp
+        }
+
+        distance <- OptionUtil.maybe(distancesIter.nonEmpty)( distancesIter.min )
+
+      } yield distance
 
       val p = props.node.props
 
+      // Нельзя nodeId.get, т.к. могут быть узлы без id (по идее - максимум 1 узел в списке).
+      val nodeId = p.nameOrIdOrEmpty
+
       val isTag = p.ntype ==* MNodeTypes.Tag
 
-      var rowRootCssAcc = props.searchCss.NodesFound.rowItemBgF(p.nodeId) :: Nil
+      var rowRootCssAcc = props.searchCss.NodesFound.rowItemBgF(nodeId) :: Nil
       rowRootCssAcc ::= {
         if (isTag) NodesCSS.tagRow
         else NodesCSS.adnNodeRow
@@ -120,11 +130,11 @@ class NodeFoundR {
         override val root = rowRootCss
       }
 
-      MuiListItem.component.withKey(p.nodeId)(
+      MuiListItem.component.withKey(nodeId)(
         new MuiListItemProps {
           override val classes = listItemCss
           override val button = true
-          override val onClick = _onNodeRowClickJsF( p.nodeId )
+          override val onClick = _onNodeRowClickJsF( nodeId )
           override val selected = props.selected
           override val dense = !isTag
           override val disableGutters = true
@@ -149,21 +159,21 @@ class NodeFoundR {
         },
 
         // Название узла
-        p.hint.whenDefinedEl { nodeName =>
+        p.name.whenDefinedEl { nodeName =>
           // Для тегов: они идут кашей, поэтому отступ между названием тега и иконкой уменьшаем.
           val rootCss = JsOptionUtil.maybeDefined(isTag)( NodesCSS.tagRowText.htmlClass )
 
           // Текст состоит из статической и динамической вёрстки.
           val primaryCss = (
             NodesCSS.tagRowTextPrimary.htmlClass ::
-            props.searchCss.NodesFound.rowTextPrimaryF(p.nodeId).htmlClass ::
+            props.searchCss.NodesFound.rowTextPrimaryF(nodeId).htmlClass ::
             Nil
           ).mkString( HtmlConstants.SPACE )
 
           val theClasses = new MuiListItemTextClasses {
             override val root = rootCss
             override val primary = primaryCss
-            override val secondary = props.searchCss.NodesFound.rowTextSecondaryF(p.nodeId).htmlClass
+            override val secondary = props.searchCss.NodesFound.rowTextSecondaryF(nodeId).htmlClass
           }
 
           val text2ndOpt = distanceMOpt
@@ -181,7 +191,7 @@ class NodeFoundR {
         },
 
         // Иконка узла, присланная сервером:
-        p.icon.whenDefinedNode { icon =>
+        p.logoOpt.whenDefinedNode { icon =>
           MuiListItemIcon()(
             <.img(
               NodesCSS.nodeLogo,

@@ -27,5 +27,9 @@ object MSc3NodeSearchResp {
 }
 case class MSc3NodeSearchResp(
                                results: Seq[MGeoNodePropsShapes]
-                             )
+                             ) {
+
+  def hasManyNodes = results.lengthCompare(1) > 0
+
+}
 

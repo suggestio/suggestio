@@ -175,13 +175,13 @@ class ItemsTableBodyR(
                       .get( nodeId )
                       .map[VdomElement] { nodeProps =>
                         // Рендерим видимую часть: иконка или что-то ещё.
-                        val nodeName = nodeProps.hintOrId
+                        val nodeName = nodeProps.nameOrIdOrEmpty
                         MuiToolTip {
                           new MuiToolTipProps {
                             override val title: React.Node = nodeName
                           }
                         } {
-                          nodeProps.icon
+                          nodeProps.logoOpt
                             .map[VdomElement] { icon =>
                               <.img(
                                 orderCss.ItemsTable.NodePreviewColumn.adnLogo,

@@ -139,7 +139,7 @@ class MarketLkAdn @Inject() (
       val mediaHostsMapFut = for {
         gallery         <- galleryFut
         mediaHostsMap0  <- nodesUtil.nodeMediaHostsMap(
-          logoImgOpt  = logoImgOpt,
+          logoImgOpt  = logoImgOpt.toList,
           gallery     = gallery
         )
       } yield {

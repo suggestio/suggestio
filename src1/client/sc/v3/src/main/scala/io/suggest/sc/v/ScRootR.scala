@@ -335,26 +335,24 @@ class ScRootR (
 
       // Нормальный полный рендер выдачи:
       val fullRender = <.div(
-        // css, который рендерится только один раз:
-        mrootProxy.wrap(_ => ScCssStatic)( CssR.apply )(implicitly, FastEq.AnyRefEq),
         // Динамический css всей выдачи:
         scCssComp,
-
         muiThemeProviderComp,
+      )
+
+      // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
+      <.div(
+        // css, который рендерится только один раз:
+        mrootProxy.wrap(_ => ScCssStatic)( CssR.apply )(implicitly, FastEq.AnyRefEq),
+
+        s.isRenderScC { isRenderSomeProxy =>
+          // Когда нет пока данных для рендера вообще, то ничего и не рендерить.
+          ReactCommonUtil.maybeEl( isRenderSomeProxy.value.value )( fullRender )
+        },
 
         // Всплывающая плашка для смены узла: TODO Запихнуть внутрь theme-provider?
         s.indexSwitchAskC { indexSwitchAskR.apply },
       )
-
-      // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
-      s.isRenderScC { isRenderSomeProxy =>
-        if (isRenderSomeProxy.value.value) {
-          fullRender
-        } else {
-          // Нет пока данных для рендера вообще
-          <.div
-        }
-      }
 
     }
 
@@ -412,7 +410,7 @@ class ScRootR (
               isMyAdnNodeId   = props.index.state
                 .rcvrId
                 .filter { _ =>
-                  props.index.resp.exists(_.isMyNode)
+                  props.index.resp.exists(_.isMyNode contains true)
                 },
               scJsRouter = scJsRouter
             )
@@ -473,11 +471,11 @@ class ScRootR (
         nodesFoundC = propsProxy.connect { mroot =>
           val geo = mroot.index.search.geo
           NodesFoundR.PropsVal(
-            req             = geo.found.req,
-            hasMore         = geo.found.hasMore,
-            selectedIds     = mroot.index.searchNodesSelectedIds,
-            withDistanceTo  = geo.mapInit.state.center,
-            searchCss       = geo.css
+            req                 = geo.found.req,
+            hasMore             = geo.found.hasMore,
+            selectedIds         = mroot.index.searchNodesSelectedIds,
+            withDistanceToNull  = geo.mapInit.state.center,
+            searchCss           = geo.css
           )
         }( NodesFoundR.NodesFoundRPropsValFastEq ),
 

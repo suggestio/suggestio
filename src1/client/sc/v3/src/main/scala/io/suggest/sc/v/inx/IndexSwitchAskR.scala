@@ -2,12 +2,14 @@ package io.suggest.sc.v.inx
 
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiSnackBar, MuiSnackBarAnchorOrigin, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps}
 import diode.react.ModelProxy
+import io.suggest.css.CssR
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{ApproveIndexSwitch, CancelIndexSwitch, MInxSwitchAskS}
 import io.suggest.sc.styl.ScCssStatic
 import io.suggest.sc.v.hdr.LogoR
+import io.suggest.sc.v.search.NodesFoundR
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -18,7 +20,8 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: wrap-React-компонент всплывающего вопроса о переключении выдачи в новую локацию.
   */
 class IndexSwitchAskR(
-                       val logoR: LogoR,
+                       val logoR    : LogoR,
+                       nodesFoundR  : NodesFoundR,
                      ) {
 
   import io.suggest.spa.OptFastEq.Wrapped
@@ -66,18 +69,35 @@ class IndexSwitchAskR(
             Messages( MsgCodes.`Location.changed` ),
 
             <.br,
+
             // Логотип узла:
             propsOpt.whenDefined { props =>
-              val i = props.nextIndex
-              propsOptProxy.wrap { _ =>
-                val logoProps = logoR.PropsVal(
-                  logoOpt     = i.logoOpt,
-                  nodeNameOpt = i.name,
-                  styled      = false,
+              props.searchCss.fold [VdomElement] {
+                val i = props.nodesResp.results.head.props
+                propsOptProxy.wrap { _ =>
+                  val logoProps = logoR.PropsVal(
+                    logoOpt     = i.logoOpt,
+                    nodeNameOpt = i.name,
+                    styled      = false,
+                  )
+                  Some( logoProps ): logoR.Props_t
+                }( logoR.apply )
+              } { searchCss =>
+                <.div(
+                  propsOptProxy.wrap(_ => searchCss)( CssR.apply ),
+                  propsOptProxy.wrap { _ =>
+                    NodesFoundR.PropsVal(
+                      req             = searchCss.args.req,
+                      hasMore         = false,
+                      selectedIds     = Set.empty,
+                      searchCss       = searchCss,
+                    )
+                  }( nodesFoundR.apply )
                 )
-                Some( logoProps ): logoR.Props_t
-              }( logoR.apply )
+
+              }
             },
+
           )
 
           val btnIconProps = new MuiSvgIconProps {

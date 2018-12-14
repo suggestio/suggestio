@@ -3,8 +3,8 @@ package io.suggest.sc.m.search
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.dev.MScreenInfo
-import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes}
-import io.suggest.primo.id.IId
+import io.suggest.maps.nodes.MGeoNodePropsShapes
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
@@ -37,11 +37,13 @@ case class MSearchCssProps(
   def withScreenInfo(screenInfo: MScreenInfo) = copy(screenInfo = screenInfo)
 
   /** Карта узлов. */
-  lazy val nodesMap: Map[String, MAdvGeoMapNodeProps] = {
-    val iter = req.iterator
+  lazy val nodesMap: Map[String, MSc3IndexResp] = {
+    req.iterator
       .flatMap(_.resp)
-      .map(_.props)
-    IId.els2idMap( iter )
+      .map { m =>
+        m.props.nameOrIdOrEmpty -> m.props
+      }
+      .toMap
   }
 
 }

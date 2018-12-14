@@ -4,6 +4,8 @@ import io.suggest.color.MColors
 import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.geo.MGeoPoint.JsonFormatters.QS_OBJECT
 import io.suggest.media.IMediaInfo
+import io.suggest.model.n2.node.MNodeType
+import io.suggest.primo.id.OptStrId
 import japgolly.univeq._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -20,13 +22,14 @@ object MSc3IndexResp {
   /** Поддержка play-json сериализации. */
   implicit def MSC_NODE_INFO_FORMAT: OFormat[MSc3IndexResp] = (
     (__ \ "a").formatNullable[String] and
+    (__ \ "t").format[MNodeType] and
     (__ \ "n").formatNullable[String] and
     (__ \ "c").format[MColors] and
     (__ \ "l").formatNullable[IMediaInfo] and
     (__ \ "w").formatNullable[MWelcomeInfo] and
     (__ \ "g").formatNullable[MGeoPoint] and
-    (__ \ "m").format[Boolean] and
-    (__ \ "r").format[Boolean] and
+    (__ \ "m").formatNullable[Boolean] and
+    //(__ \ "r").format[Boolean] and
     (__ \ "o").formatNullable[MGeoLoc]
   )(apply, unlift(unapply))
 
@@ -51,25 +54,36 @@ object MSc3IndexResp {
   * На всякий случай, модель максимально толерантна к данными и целиком необязательна.
   *
   * @param nodeId id узла в s.io.
+  *               Для не-ресиверов (район города, итд) - None.
   * @param name Название узла (или текущего метоположения), если есть.
   * @param colors Цвета, если есть.
   * @param logoOpt Данные по логотипу-иллюстрации.
   * @param welcome Данные для рендера экрана приветствия.
-  * @param isRcvr Является ли этот узел ресивером?
-  *               true - торговый центр
-  *               false - это какой-то район города или иной узел-обложка.
   * @param isMyNode Есть ли у текущего юзера права доступа на этот узел?
+  *                 None - если не проверялось (не требуется в текущем запросе).
   * @param userGeoLoc Геолокация юзера, исходя из реквеста и если запрошена в реквесте.
   */
 case class MSc3IndexResp(
                          nodeId     : Option[String],
+                         ntype      : MNodeType,
                          name       : Option[String],
                          colors     : MColors,
-                         logoOpt    : Option[IMediaInfo],
-                         welcome    : Option[MWelcomeInfo],
-                         geoPoint   : Option[MGeoPoint],
-                         isMyNode   : Boolean,
-                         isRcvr     : Boolean,
-                         userGeoLoc : Option[MGeoLoc]
+                         logoOpt    : Option[IMediaInfo]    = None,
+                         welcome    : Option[MWelcomeInfo]  = None,
+                         geoPoint   : Option[MGeoPoint]     = None,
+                         isMyNode   : Option[Boolean]       = None,
+                         //isRcvr     : Option[Boolean],
+                         userGeoLoc : Option[MGeoLoc]       = None,
                        )
+  extends OptStrId
+{
+
+  override final def id = nodeId
+
+  /** Отображаемое имя узла. По идее, None быть не должно. */
+  def nameOrIdOpt = name orElse nodeId
+  /** Отображаемое имя узла, либо пустая строка. */
+  def nameOrIdOrEmpty = nameOrIdOpt getOrElse ""
+
+}
 

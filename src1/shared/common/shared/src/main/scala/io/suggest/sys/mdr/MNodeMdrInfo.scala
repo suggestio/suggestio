@@ -2,9 +2,9 @@ package io.suggest.sys.mdr
 
 import diode.FastEq
 import io.suggest.jd.MJdAdData
-import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
-import io.suggest.primo.id.IId
+import io.suggest.primo.id.OptId
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
@@ -33,7 +33,7 @@ object MNodeMdrInfo {
     (__ \ "i").format[String] and
     (__ \ "a").formatNullable[MJdAdData] and
     (__ \ "t").format[Seq[MItem]] and
-    (__ \ "n").format[Iterable[MAdvGeoMapNodeProps]] and
+    (__ \ "n").format[Iterable[MSc3IndexResp]] and
     (__ \ "d").format[Set[String]]
   )(apply, unlift(unapply))
 
@@ -53,7 +53,7 @@ case class MNodeMdrInfo(
                          nodeId               : String,
                          ad                   : Option[MJdAdData],
                          items                : Seq[MItem],
-                         nodes                : Iterable[MAdvGeoMapNodeProps],
+                         nodes                : Iterable[MSc3IndexResp],
                          directSelfNodeIds    : Set[String],
                        ) {
 
@@ -61,18 +61,18 @@ case class MNodeMdrInfo(
   lazy val itemsByType = items.groupBy(_.iType)
 
   /** Карта узлов по id. */
-  lazy val nodesMap = IId.els2idMap[String, MAdvGeoMapNodeProps]( nodes )
+  lazy val nodesMap = OptId.els2idMap[String, MSc3IndexResp]( nodes )
 
   /** Список бесплатных размещений на "своих" узлах в обход биллингов. */
-  lazy val directSelfNodesSorted: Seq[MAdvGeoMapNodeProps] = {
+  lazy val directSelfNodesSorted: Seq[MSc3IndexResp] = {
     directSelfNodeIds
       .iterator
       .flatMap( nodesMap.get )
       .toSeq
-      .sortBy( _.hintOrId )
+      .sortBy( _.nameOrIdOrEmpty )
   }
 
-  lazy val mdrNodeOpt: Option[MAdvGeoMapNodeProps] =
+  lazy val mdrNodeOpt: Option[MSc3IndexResp] =
     nodesMap.get( nodeId )
 
 }

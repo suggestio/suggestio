@@ -9,10 +9,10 @@ import io.suggest.ctx.CtxData
 import io.suggest.err.ErrorConstants
 import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsInitTargets
-import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sys.mdr._
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
@@ -384,14 +384,14 @@ class SysMdr @Inject() (
           src0
             .map { mnode =>
               // Пока интересует только название целевого узла.
-              MAdvGeoMapNodeProps(
-                nodeId  = mnode.id.get,
+              MSc3IndexResp(
+                nodeId  = mnode.id,
                 ntype   = mnode.common.ntype,
                 colors  = MColors.empty, //mnode.meta.colors,
-                hint    = mnode.guessDisplayName
+                name    = mnode.guessDisplayName
               )
             }
-            .toMat( Sink.seq[MAdvGeoMapNodeProps] )( Keep.right )
+            .toMat( Sink.seq[MSc3IndexResp] )( Keep.right )
             .run()
         }
 

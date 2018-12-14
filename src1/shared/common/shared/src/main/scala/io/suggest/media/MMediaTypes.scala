@@ -15,11 +15,9 @@ import play.api.libs.json._
 object MMediaTypes extends StringEnum[MMediaType] {
 
   /** Картинка (изображение). */
-  case object Image extends MMediaType("i") {
-    override def isImage = true
-  }
+  case object Image extends MMediaType("i")
 
-  // TODO video, когда поддержка будет.
+  // TODO video, audio, etc...
 
   override def values = findValues
 
@@ -30,8 +28,6 @@ object MMediaTypes extends StringEnum[MMediaType] {
 sealed abstract class MMediaType(override val value: String) extends StringEnumEntry {
 
   override final def toString = value
-
-  def isImage: Boolean
 
 }
 

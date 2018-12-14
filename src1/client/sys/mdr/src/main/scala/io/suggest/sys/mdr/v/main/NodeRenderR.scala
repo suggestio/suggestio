@@ -5,16 +5,15 @@ import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
 import diode.react.ReactPot._
-import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
 import io.suggest.jd.render.v.{JdCss, JdR}
 import io.suggest.jd.tags.JdTag
 import io.suggest.jd.{MJdAdData, MJdConf}
-import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.msg.Messages
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.routes.routes
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sys.mdr.SysMdrConst
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
@@ -35,7 +34,7 @@ class NodeRenderR(
   case class PropsVal(
                        adData       : Option[MJdAdData],
                        jdCss        : JdCss,
-                       adnNodeOpt   : Option[MAdvGeoMapNodeProps],
+                       adnNodeOpt   : Option[MSc3IndexResp],
                        isSu         : Boolean,
                      )
   implicit object NodeRenderRPropsValFastEq extends FastEq[PropsVal] {
@@ -118,8 +117,10 @@ class NodeRenderR(
                 .whenDefined { nodeProps =>
                   // TODO Логотип TODO Картинка приветствия, TODO Цвета
                   <.a(
-                    ^.href := routes.controllers.SysMarket.showAdnNode( nodeProps.nodeId ).url,
-                    nodeProps.hintOrId
+                    nodeProps.nodeId.whenDefined { nodeId =>
+                      ^.href := routes.controllers.SysMarket.showAdnNode(nodeId).url
+                    },
+                    nodeProps.nameOrIdOrEmpty
                   )
                 },
 

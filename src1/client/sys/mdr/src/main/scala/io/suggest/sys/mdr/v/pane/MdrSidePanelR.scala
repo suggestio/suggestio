@@ -10,7 +10,6 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.dt.CommonDateTimeUtil.Implicits._
 import io.suggest.geo.{CircleGs, PointGs}
 import io.suggest.i18n.MsgCodes
-import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.model.n2.edge.MPredicates
@@ -19,6 +18,7 @@ import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.r.RangeYmdR
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sys.mdr.MMdrActionInfo
 import io.suggest.sys.mdr.v.toolbar.MdrTbStepBtnR
 import io.suggest.ueq.JsUnivEqUtil._
@@ -42,8 +42,8 @@ class MdrSidePanelR(
                        nodeId                   : String,
                        ntypeOpt                 : Option[MNodeType],
                        itemsByType              : Map[MItemType, Seq[MItem]],
-                       nodesMap                 : Map[String, MAdvGeoMapNodeProps],
-                       directSelfNodesSorted    : Seq[MAdvGeoMapNodeProps],
+                       nodesMap                 : Map[String, MSc3IndexResp],
+                       directSelfNodesSorted    : Seq[MSc3IndexResp],
                        mdrPots                  : Map[MMdrActionInfo, Pot[None.type]],
                        withTopOffset            : Boolean,
                        currentRcvrId            : Option[String],
@@ -200,7 +200,7 @@ class MdrSidePanelR(
                                   nodeProps
                                     .nodesMap
                                     .get(rcvrId)
-                                    .map(_.hintOrId)
+                                    .map(_.nameOrIdOrEmpty)
                                     // TODO Нужна ссылка на узел-ресивер для суперюзеров.
                                 },
 
@@ -264,7 +264,7 @@ class MdrSidePanelR(
                   .map { mnode =>
                     propsPotProxy.wrap { _ =>
                       val ai = MMdrActionInfo(
-                        directSelfId = Some( mnode.nodeId )
+                        directSelfId = mnode.nodeId
                       )
                       mdrRowR.PropsVal(
                         actionInfo  = ai,
@@ -275,7 +275,7 @@ class MdrSidePanelR(
                       )
                     } { mdrRowPropsProxy =>
                       mdrRowR.component.withKey( mnode.nodeId + HtmlConstants.COMMA )( mdrRowPropsProxy )(
-                        mnode.hintOrId,
+                        mnode.nameOrIdOrEmpty,
                         // TODO Ссылка на sys-узел продьюсера.
                       )
                     }

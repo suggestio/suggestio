@@ -94,10 +94,14 @@ trait ScUniApi
       for {
         scIndexRespActionOpt <- indexRaOptFut
       } yield {
-        LOGGER.trace(s"$logPrefix scIndexRespActionOpt = ${scIndexRespActionOpt.orNull}")
+        LOGGER.trace(s"$logPrefix scIndexRespActionOpt ? ${scIndexRespActionOpt.nonEmpty}")
         val qsAfterIndex = for {
           scIndexRespAction   <- scIndexRespActionOpt
-          scIndexResp         <- scIndexRespAction.index
+          if scIndexRespAction.acType ==* MScRespActionTypes.Index
+          nodesResp = scIndexRespAction.search.get
+          if !nodesResp.hasManyNodes
+          ps <- nodesResp.results.headOption
+          scIndexResp = ps.props
         } yield {
           val qs2 = qs.copy(
             search = qs.search.copy(

@@ -10,7 +10,7 @@ import Keys._
 object Common {
 
   /** Версия scala для сервной части и дефолтовая версия для scala.js. */
-  val SCALA_VSN = "2.12.6"
+  val SCALA_VSN = "2.12.8"
 
   /** Версия scala для scala.js. */
   @inline final def SCALA_VSN_JS = SCALA_VSN

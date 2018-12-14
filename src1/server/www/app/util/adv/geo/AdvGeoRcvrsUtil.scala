@@ -11,13 +11,15 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MScreen
 import io.suggest.es.model.IMust
-import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MMapNodeIconInfo, MRcvrsMapUrlArgs}
+import io.suggest.maps.nodes.{MGeoNodePropsShapes, MRcvrsMapUrlArgs}
+import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.scripts.RcvrsMapNodesHashSumAggScripts
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.sc.ScConstants
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.MImgMakeArgs
@@ -46,7 +48,6 @@ class AdvGeoRcvrsUtil @Inject()(
                                  advRcvrsUtil: AdvRcvrsUtil,
                                  nodesUtil   : NodesUtil,
                                  cdnUtil     : CdnUtil,
-                                 mAnyImgs    : MAnyImgs,
                                  dynImgUtil  : DynImgUtil,
                                  fitImgMaker : FitImgMaker,
                                  mCommonDi   : ICommonDi
@@ -58,7 +59,7 @@ class AdvGeoRcvrsUtil @Inject()(
 
 
   /** "Версия" формата ресиверов, чтобы сбрасывать карту, даже когда она не изменилась. */
-  private def RCVRS_MAP_CRC_VSN = 7
+  private def RCVRS_MAP_CRC_VSN = 8
 
   /** Максимально допустимый уровень рекурсивного погружения во вложенность ресиверов.
     * Первый уровень -- это 1. */
@@ -114,17 +115,6 @@ class AdvGeoRcvrsUtil @Inject()(
   protected def rcvrNodesMapHashSum(): Future[Int] = {
     for {
       hashSum0 <- {
-        /*
-        val aggScripts = FieldsHashSumsAggScripts(
-          sourceFields = List(
-            // Эджи. Там array, поэтому дальше погружаться нельзя. TODO А интересуют только эджи захвата геолокации и логотипа узла
-            MNodeFields.Edges.E_OUT_FN,
-            // Название узла тоже интересует. Но его может и не быть, поэтому интересуемся только контейнер meta.basic, который есть всегда
-            MNodeFields.Meta.META_BASIC_FN,
-            MNodeFields.Meta.META_COLORS_FN
-          )
-        )
-        */
         val aggScripts = new RcvrsMapNodesHashSumAggScripts
         val query = onMapRcvrsSearch(0)
           .toEsQuery
@@ -135,8 +125,8 @@ class AdvGeoRcvrsUtil @Inject()(
       // TODO Удалить этот .map после окончания отладки. А лучше унести куда-нибудь в Static-контроллер, т.к. номер версии может быть связан с форматом данных.
       hashSum0 + RCVRS_MAP_CRC_VSN
     }
-
   }
+  /** Кэшируемое значение хэша rcvrs map. */
   def rcvrNodesMapHashSumCached(): Future[Int] = {
     import scala.concurrent.duration._
     cacheApiUtil.getOrElseFut("advRcvrsHash", expiration = 10.seconds) {
@@ -174,7 +164,7 @@ class AdvGeoRcvrsUtil @Inject()(
     *         Карта нужна для удобства кэширования и как бы "сортировки", чтобы hashCode() или иные хэш-функции
     *         всегда возвращали один и тот же результат.
     */
-  def nodesAdvGeoPropsSrc[M](nodesSrc: Source[MNode, M], wcAsLogo: Boolean): Source[(MNode, MAdvGeoMapNodeProps), M] = {
+  def nodesAdvGeoPropsSrc[M](nodesSrc: Source[MNode, M], wcAsLogo: Boolean): Source[(MNode, MSc3IndexResp), M] = {
     // Начать выкачивать все подходящие узлы из модели:
     lazy val logPrefix = s"rcvrNodesMap(${System.currentTimeMillis}):"
 
@@ -244,17 +234,20 @@ class AdvGeoRcvrsUtil @Inject()(
           logoMakeResOpt <- logoMakeResOptFut
           logoOpt        = logoMakeResOpt.map(_._1.dynCallArgs)
           // Тут сборка MediaHostsMap для одного узла через пакетное API. Это не слишком эффективно, но в целом всё равно работает через кэш.
-          mediaHostsMap  <- nodesUtil.nodeMediaHostsMap( logoImgOpt = logoOpt )
+          mediaHostsMap  <- nodesUtil.nodeMediaHostsMap(
+            logoImgOpt = logoOpt.toList
+          )
         } yield {
           // Заверуть найденную иконку в пригодный для сериализации на клиент результат:
           val iconInfoOpt = for {
             (logoMakeRes, targetWh) <- logoMakeResOpt
           } yield {
-            MMapNodeIconInfo(
-              url = dynImgUtil.distCdnImgCall( logoMakeRes.dynCallArgs, mediaHostsMap ).url,
-              wh  = {
+            MMediaInfo(
+              giType = MMediaTypes.Image,
+              url    = dynImgUtil.distCdnImgCall( logoMakeRes.dynCallArgs, mediaHostsMap ).url,
+              whPx   = {
                 val szCss = logoMakeRes.szCss
-                if (logoMakeRes.isFake) {
+                val szFinal = if (logoMakeRes.isFake) {
                   // Фейковый рендер, значит на выходе оригинальный размер. Надо спроецировать этот размер на targetWh по высоте:
                   targetWh.withWidth(
                     (szCss.width.toDouble / (szCss.height.toDouble / targetWh.height.toDouble)).toInt
@@ -262,18 +255,19 @@ class AdvGeoRcvrsUtil @Inject()(
                 } else {
                   szCss
                 }
+                Some(szFinal)
               }
             )
           }
 
           // props'ы для одной точки.
-          val props = MAdvGeoMapNodeProps(
-            nodeId  = nodeId,
+          val props = MSc3IndexResp(
+            nodeId  = Some( nodeId ),
             ntype   = mnode.common.ntype,
-            hint    = hintOpt,
+            name    = hintOpt,
             // Цвета узла. Можно без цвета паттерна, т.к. он не нужен.
             colors  = mnode.meta.colors,
-            icon    = iconInfoOpt
+            logoOpt    = iconInfoOpt
           )
 
           // Собрать и вернуть контейнер с данными мапы узлов:
@@ -288,7 +282,7 @@ class AdvGeoRcvrsUtil @Inject()(
     * @tparam Mat Обычно NotUsed.
     * @return Source, выдающий ноды и MGeoNodePropsShapes.
     */
-  def withNodeLocShapes[Mat]( src: Source[(MNode, MAdvGeoMapNodeProps), Mat] ): Source[(MNode, MGeoNodePropsShapes), Mat] = {
+  def withNodeLocShapes[Mat]( src: Source[(MNode, MSc3IndexResp), Mat] ): Source[(MNode, MGeoNodePropsShapes), Mat] = {
     src
       .map { case (mnode, props) =>
         // Собрать шейпы геолокации узла:

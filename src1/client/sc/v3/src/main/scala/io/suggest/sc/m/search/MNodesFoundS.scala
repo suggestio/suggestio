@@ -5,7 +5,7 @@ import diode.data.Pot
 import io.suggest.common.empty.NonEmpty
 import io.suggest.common.html.HtmlConstants
 import io.suggest.maps.nodes.MGeoNodePropsShapes
-import io.suggest.primo.id.IId
+import io.suggest.primo.id.OptId
 import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
@@ -94,7 +94,7 @@ case class MNodesFoundS(
 
   /** Кэш для id-карты найденных узлов. */
   lazy val nodesFoundMap: Map[String, MGeoNodePropsShapes] = {
-    IId.els2idMap( nodesFoundIter )
+    OptId.els2idMap( nodesFoundIter )
   }
 
 }
