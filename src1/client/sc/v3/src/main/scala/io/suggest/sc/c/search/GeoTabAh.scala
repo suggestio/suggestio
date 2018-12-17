@@ -178,7 +178,7 @@ class GeoTabAh[M](
       _doNodesSearch(m, value)
 
     // Клик по узлу в списке найденных гео-узлов.
-    case m: NodeRowClick =>
+    case m: NodeRowClick if value.found.req.nonEmpty =>
       // Найти узел, который был окликнут.
       val v0 = value
       v0.found

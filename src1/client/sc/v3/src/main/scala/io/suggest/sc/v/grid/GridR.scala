@@ -1,16 +1,16 @@
 package io.suggest.sc.v.grid
 
+import chandu0101.scalajs.react.components.materialui.{MuiCircularProgress, MuiCircularProgressClasses, MuiCircularProgressProps, MuiColorTypes}
 import diode.FastEq
+import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.color.MColorData
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.grid.{GridConst, GridScrollUtil}
 import io.suggest.jd.render.v._
-import io.suggest.react.ReactDiodeUtil
-import io.suggest.sc.m.grid.{GridScroll, MGridCoreS, MGridS}
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.sc.m.grid.{GridScroll, MGridCoreS, MGridS, MScAdData}
 import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
-import io.suggest.spa.OptFastEq
+import io.suggest.spa.FastEqUtil
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -26,30 +26,12 @@ import scalacss.ScalaCssReact._
 class GridR(
              gridCoreR                  : GridCoreR,
              jdCssR                     : JdCssR,
-             val gridLoaderR            : GridLoaderR,
              getScCssF                  : GetScCssF
            ) {
 
-  import JdCss.JdCssFastEq
-  import MGridCoreS.MGridCoreSFastEq
-  import gridLoaderR.GridLoaderPropsValFastEq
 
-
-  /** Модель пропертисов компонента плитки.
-    *
-    * param grid Состояние плитки.
-    * param screen Состояние экрана.
-    */
-  case class PropsVal(
-                       grid       : MGridS,
-                       fgColor    : Option[MColorData]
-                     )
-  implicit object GridPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.grid ===* b.grid) &&
-        (a.fgColor ===* b.fgColor)
-    }
-  }
+  type Props_t = MGridS
+  type Props = ModelProxy[Props_t]
 
 
   /** Модель состояния компонента. */
@@ -57,11 +39,8 @@ class GridR(
                                     jdCssC              : ReactConnectProxy[JdCss],
                                     coreC               : ReactConnectProxy[MGridCoreS],
                                     gridSzC             : ReactConnectProxy[MSize2di],
-                                    loaderPropsOptC     : ReactConnectProxy[Option[gridLoaderR.PropsVal]]
+                                    loaderPotC          : ReactConnectProxy[Pot[Vector[MScAdData]]],
                                   )
-
-  type Props_t = PropsVal
-  type Props = ModelProxy[Props_t]
 
   class Backend($: BackendScope[Props, State]) {
 
@@ -100,6 +79,7 @@ class GridR(
                 val gridSz = gridSzProxy.value
 
                 <.div(
+                  ScCssStatic.Grid.container,
                   GridCss.container,
                   ^.width  := gridSz.width.px,
                   ^.height := (gridSz.height + GridConst.CONTAINER_OFFSET_BOTTOM + GridConst.CONTAINER_OFFSET_TOP).px,
@@ -110,7 +90,20 @@ class GridR(
             },
 
             // Крутилка подгрузки карточек.
-            s.loaderPropsOptC { gridLoaderR.apply }
+            s.loaderPotC { adsPotProxy =>
+              ReactCommonUtil.maybeEl( adsPotProxy.value.isPending ) {
+                MuiCircularProgress {
+                  val cssClasses = new MuiCircularProgressClasses {
+                    override val root = ScCss.Grid.loader.htmlClass
+                  }
+                  new MuiCircularProgressProps {
+                    override val color   = MuiColorTypes.secondary
+                    override val classes = cssClasses
+                  }
+                }
+              }
+            }
+
           )
         )
       )
@@ -119,32 +112,26 @@ class GridR(
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       // Наконец, сборка самого состояния.
       State(
         jdCssC = propsProxy.connect { props =>
-          props.grid.core.jdCss
-        },
+          props.core.jdCss
+        }( JdCss.JdCssFastEq ),
 
         coreC = propsProxy.connect { props =>
-          props.grid.core
-        },
+          props.core
+        }( MGridCoreS.MGridCoreSFastEq ),
 
         gridSzC = propsProxy.connect { props =>
-          props.grid.core.gridBuild.gridWh
-        }( FastEq.ValueEq ) ,
+          props.core.gridBuild.gridWh
+        }( FastEq.ValueEq ),
 
-        loaderPropsOptC = propsProxy.connect { props =>
-          OptionUtil.maybe(props.grid.core.ads.isPending) {
-            val fgColor = props.fgColor.getOrElse( MColorData.Examples.WHITE )
-            gridLoaderR.PropsVal(
-              fgColor = fgColor,
-              // В оригинальной выдачи, линия отрыва шла через весь экран. Тут для простоты -- только под внутренним контейнером.
-              widthPx = Some( props.grid.core.gridBuild.gridWh.width )
-            )
-          }
-        }( OptFastEq.Wrapped )
+        loaderPotC = propsProxy.connect { props =>
+          props.core.ads
+        }( FastEqUtil.PotIsPendingFastEq ),
 
       )
     }

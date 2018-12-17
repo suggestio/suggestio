@@ -1,6 +1,6 @@
 package io.suggest.sc.v.search
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiInput, MuiInputClasses, MuiInputProps, MuiInputPropsMargins}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiInput, MuiInputProps, MuiInputPropsMargins}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -9,7 +9,7 @@ import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{MScSearchText, SearchTextChanged}
-import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
+import io.suggest.sc.styl.ScCssStatic
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ReactEventFromInput, ScalaComponent}

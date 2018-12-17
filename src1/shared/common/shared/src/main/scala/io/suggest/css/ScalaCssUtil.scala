@@ -1,5 +1,6 @@
 package io.suggest.css
 
+import io.suggest.common.html.HtmlConstants
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.common.html.HtmlConstants.{`(`, `)`}
 import scalacss.internal.DslBase.ToStyle
@@ -45,6 +46,20 @@ object ScalaCssUtil {
       /** Отрендерить css-функцию. */
       def envFcnCall(fcnName: Value, arg0: Value): Value =
         fcnName + `(` + arg0 + `)`
+
+    }
+
+
+    implicit class StyleATravOnceOpsExt( val styles: TraversableOnce[StyleA] ) extends AnyVal {
+
+      /** Объединить в html css-класс. */
+      def toHtmlClass: String = {
+        styles
+          .toIterator
+          // Можно сделать инлайнинг val .htmlClass, но зачем инлайнить val?
+          .map(_.htmlClass)
+          .mkString( HtmlConstants.SPACE )
+      }
 
     }
 

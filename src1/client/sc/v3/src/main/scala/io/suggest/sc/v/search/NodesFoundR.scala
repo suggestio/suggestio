@@ -5,7 +5,6 @@ import diode.FastEq
 import diode.data.Pot
 import diode.react.ReactPot._
 import diode.react.ModelProxy
-import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.MGeoPoint
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
@@ -20,8 +19,7 @@ import japgolly.scalajs.react._
 import japgolly.univeq._
 import io.suggest.maps.nodes.MGeoNodePropsShapes
 import io.suggest.ueq.JsUnivEqUtil._
-
-import scala.scalajs.js.UndefOr
+import io.suggest.css.ScalaCssUtil.Implicits._
 
 /**
   * Suggest.io
@@ -51,12 +49,6 @@ class NodesFoundR(
       val NodesCSS = ScCssStatic.Search.NodesFound
       val props = propsProxy.value
 
-      val listClasses = new MuiListClasses {
-        override val root: UndefOr[String] = {
-          (NodesCSS.listDiv.htmlClass :: props.searchCss.NodesFound.nodesList.htmlClass :: Nil)
-            .mkString( HtmlConstants.SPACE )
-        }
-      }
       <.div(
         // Горизонтальный прогресс-бар. Не нужен, если список уже не пустой, т.к. скачки экрана вызывает.
         ReactCommonUtil.maybe( props.req.isPending && !props.req.exists(_.resp.nonEmpty) ) {
@@ -71,11 +63,14 @@ class NodesFoundR(
           )
         },
 
-        MuiList(
+        MuiList {
+          val listClasses = new MuiListClasses {
+            override val root = (NodesCSS.listDiv :: NodesCSS.nodesList :: Nil).toHtmlClass
+          }
           new MuiListProps {
             override val classes = listClasses
           }
-        )(
+        } (
           // Рендер нормального списка найденных узлов.
           props.req.render { nodesRi =>
             if (nodesRi.resp.isEmpty) {
@@ -92,7 +87,6 @@ class NodesFoundR(
             } else {
               nodesRi
                 .resp
-                .iterator
                 .toVdomArray { mnode =>
                   // Нельзя nodeId.get, т.к. могут быть узлы без id.
                   val nodeId = mnode.props.nameOrIdOrEmpty
@@ -102,7 +96,7 @@ class NodesFoundR(
                       node                = mnode,
                       searchCss           = props.searchCss,
                       withDistanceToNull  = props.withDistanceToNull,
-                      selected            = props.selectedIds contains nodeId
+                      selected            = props.selectedIds contains nodeId,
                     )
                   }( nodeFoundR.component.withKey(nodeId)(_) ): VdomNode
                 }
@@ -192,11 +186,11 @@ object NodesFoundR {
   implicit object NodesFoundRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.req ===* b.req) &&
-        (a.hasMore ==* b.hasMore) &&
-        (a.selectedIds ===* b.selectedIds) &&
-        (a.withDistanceToNull ===* b.withDistanceToNull) &&
-        // Наверное, проверять css не нужно. Но мы всё же перерендериваем.
-        (a.searchCss ===* b.searchCss)
+      (a.hasMore ==* b.hasMore) &&
+      (a.selectedIds ===* b.selectedIds) &&
+      (a.withDistanceToNull ===* b.withDistanceToNull) &&
+      // Наверное, проверять css не нужно. Но мы всё же перерендериваем.
+      (a.searchCss ===* b.searchCss)
     }
   }
 

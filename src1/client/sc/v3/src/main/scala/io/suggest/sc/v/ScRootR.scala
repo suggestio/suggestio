@@ -10,8 +10,9 @@ import io.suggest.css.CssR
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.MScRoot
+import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx._
-import io.suggest.sc.m.search.{MScSearch, MSearchPanelS}
+import io.suggest.sc.m.search.MSearchPanelS
 import io.suggest.sc.styl.{GetScCssF, ScCss, ScCssStatic}
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
@@ -56,8 +57,6 @@ class ScRootR (
               ) {
 
   import io.suggest.sc.v.search.SearchCss.SearchCssFastEq
-  import MScSearch.MScSearchFastEq
-  import gridR.GridPropsValFastEq
   import menuR.MenuRPropsValFastEq
   import enterLkRowR.EnterLkRowRPropsValFastEq
   import editAdR.EditAdRPropsValFastEq
@@ -71,13 +70,12 @@ class ScRootR (
 
   protected[this] case class State(
                                     scCssArgsC                : ReactConnectProxy[ScCss],
-                                    gridPropsOptC             : ReactConnectProxy[gridR.PropsVal],
+                                    gridPropsOptC             : ReactConnectProxy[gridR.Props_t],
                                     hdrPropsC                 : ReactConnectProxy[headerR.Props_t],
                                     wcPropsOptC               : ReactConnectProxy[Option[welcomeR.PropsVal]],
                                     enterLkRowC               : ReactConnectProxy[Option[enterLkRowR.PropsVal]],
                                     editAdC                   : ReactConnectProxy[Option[editAdR.PropsVal]],
-                                    aboutSioC                 : ReactConnectProxy[Option[aboutSioR.PropsVal]],
-                                    searchC                   : ReactConnectProxy[MScSearch],
+                                    aboutSioC                 : ReactConnectProxy[aboutSioR.Props_t],
                                     searchSideBarC            : ReactConnectProxy[MSearchPanelS],
                                     menuC                     : ReactConnectProxy[menuR.PropsVal],
                                     menuOpenedSomeC           : ReactConnectProxy[Some[Boolean]],
@@ -177,7 +175,7 @@ class ScRootR (
       }
 
       // Непосредственно, панель поиска:
-      val searchBarBody = s.searchC {
+      val searchBarBody = mrootProxy.wrap(_.index.search) {
         searchR(_)( searchBarChild )
       }
 
@@ -365,14 +363,7 @@ class ScRootR (
       State(
         scCssArgsC  = propsProxy.connect(_.index.scCss),
 
-        gridPropsOptC = propsProxy.connect { mroot =>
-          gridR.PropsVal(
-            grid    = mroot.grid,
-            fgColor = mroot.index.resp
-              .toOption
-              .flatMap(_.colors.fg)
-          )
-        },
+        gridPropsOptC = propsProxy.connect( _.grid )( MGridS.MGridSFastEq ),
 
         hdrPropsC = propsProxy.connect { props =>
           Some( props.index.resp.nonEmpty )
@@ -391,8 +382,6 @@ class ScRootR (
             )
           }
         },
-
-        searchC = propsProxy.connect(_.index.search),
 
         menuC = propsProxy.connect { props =>
           menuR.PropsVal(

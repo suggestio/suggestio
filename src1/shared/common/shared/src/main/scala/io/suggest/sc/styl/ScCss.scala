@@ -212,6 +212,23 @@ object ScCssStatic extends StyleSheet.Inline {
 
   }
 
+
+  /** Плитка. */
+  object Grid {
+
+    val _SM_GRID_ADS = _SM_ + "grid-ads"
+
+    val container = style(
+      addClassName( _SM_GRID_ADS + "_container" ),
+      left(0.px),
+      opacity(1),
+      // 2017-12-14: Чтобы блоки могли за экран выезжать: нужно для широких карточек.
+      overflow.initial
+    )
+
+  }
+
+
   /** Стили для нотификации. */
   object Notifies {
 
@@ -266,6 +283,15 @@ object ScCssStatic extends StyleSheet.Inline {
 
     /** Стили для списка найденных узлов (тегов и т.д.). */
     object NodesFound {
+
+      val nodesList = {
+        val zeroPx = 0.px
+        style(
+          paddingTop( zeroPx ),
+          paddingBottom( zeroPx ),
+          overflow.hidden
+        )
+      }
 
       /** Горизонтальный прогресс-бар запроса. */
       val linearProgress = {
@@ -387,6 +413,7 @@ object ScCssStatic extends StyleSheet.Inline {
     Header.Buttons.search,
     Header.Buttons.Align.leftAligned,
     Header.Logo.Img.hdr,
+    Grid.container,
     Notifies.snackActionCont,
     Welcome.welcome,
     Search.NodesFound.listDiv,
@@ -678,10 +705,16 @@ case class ScCss( args: IScCssArgs )
   /** Стили для плитки карточек, точнее для контейнеров этой плитки. */
   object Grid {
 
-    private val _SM_GRID_ADS = _SM_ + "grid-ads"
+    import ScCssStatic.Grid._SM_GRID_ADS
 
     private val _screenHeightPx = (args.screenInfo.screen.height - args.screenInfo.unsafeOffsets.top).px
     private val _screenHeight = height( _screenHeightPx )
+
+    /** Крутилка внизу экрана. */
+    val loader = style(
+      left( (args.screenInfo.screen.width / 2).px ),
+      position.relative,
+    )
 
     val outer = style(
       addClassName( _SM_GRID_ADS ),
@@ -703,38 +736,8 @@ case class ScCss( args: IScCssArgs )
     )
 
     val container = style(
-      addClassName( _SM_GRID_ADS + "_container" ),
       minHeight( _screenHeightPx ),
-      left(0.px),
-      opacity(1),
-      // 2017-12-14: Чтобы блоки могли за экран выезжать: нужно для широких карточек.
-      overflow.initial
     )
-
-
-    /** Стили для анимации подгрузки. */
-    object Loaders {
-
-      private val _SM_GRID_ADS_LOADER = _SM_GRID_ADS + "_loader"
-
-      /** Внешний контейнер спиннера. */
-      val outer = style(
-        addClassName( _SM_GRID_ADS_LOADER ),
-        // TODO Надо собрать содержимое svg вручную через Vdom и загонять в строку.
-        backgroundImage := ("""url('data:image/svg+xml;utf8,<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="10px" height="5px" viewBox="0 0 10 5" enable-background="new 0 0 10 5" xml:space="preserve"><polygon fill="#""" + _fgColorCss.value + """" points="10,3.16 5,0 0,3.16 0,5 5,1.84 10,5 "/></svg>')"""),
-        backgroundRepeat := "repeat-x"
-        // Ещё есть width(max grid outer width), но оно в шаблоне живёт.
-      )
-
-      val _SM_GRID_ADS_LOADER_SPINNER = _SM_GRID_ADS_LOADER + "-spinner"
-
-      /** Внешний контейнер для спиннера. */
-      val spinnerOuter = ScCssStatic._styleAddClass( _SM_GRID_ADS_LOADER_SPINNER )
-
-      /** Наконец, контейнер для анимированной SVG'шки. */
-      val spinnerInner = ScCssStatic._styleAddClass( _SM_GRID_ADS_LOADER_SPINNER + "-inner" )
-
-    }
 
   }
 
@@ -777,7 +780,6 @@ case class ScCss( args: IScCssArgs )
     Search.Tabs.MapTab.inner,
 
     Grid.container,
-    Grid.Loaders.spinnerInner,
     Menu.panel,
   )
 

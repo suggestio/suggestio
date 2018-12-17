@@ -61,7 +61,6 @@ class Sc3Module {
 
 
   // grid
-  lazy val gridLoaderR = wire[GridLoaderR]
   lazy val gridCoreR = wire[GridCoreR]
   lazy val gridR   = wire[GridR]
   lazy val gridRespHandler = wire[GridRespHandler]

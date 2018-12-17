@@ -30,9 +30,9 @@ object MNodesFoundS {
   /** Поддержка FastEq для инстансов [[MNodesFoundS]]. */
   implicit object MNodesFoundSFastEq extends FastEq[MNodesFoundS] {
     override def eqv(a: MNodesFoundS, b: MNodesFoundS): Boolean = {
-      (a.req             ===* b.req) &&
-        (a.reqSearchArgs ===* b.reqSearchArgs) &&
-        (a.hasMore        ==* b.hasMore)
+      (a.req           ===* b.req) &&
+      (a.reqSearchArgs ===* b.reqSearchArgs) &&
+      (a.hasMore        ==* b.hasMore)
     }
   }
 
@@ -63,9 +63,8 @@ case class MNodesFoundS(
     copy(req = req, reqSearchArgs = reqSearchArgs)
   def withHasMore(hasMore: Boolean) = copy(hasMore = hasMore)
 
-  override def isEmpty: Boolean = {
+  override def isEmpty: Boolean =
     MNodesFoundS.empty ===* this
-  }
 
   override final def toString: String = {
     import io.suggest.common.html.HtmlConstants._

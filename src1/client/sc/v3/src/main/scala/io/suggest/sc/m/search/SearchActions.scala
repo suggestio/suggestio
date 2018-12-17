@@ -18,7 +18,10 @@ sealed trait ISearchAction extends ISc3Action
 case object InitSearchMap extends ISc3Action
 
 
-/** Клик по тегу. */
+/** Клик по тегу.
+  * @param nodeId id узла.
+  * @param marker маркер для различания различных источников события.
+  */
 case class NodeRowClick(nodeId: String) extends ISearchAction
 
 /** Происходит скроллинг в списке тегов. Возможно, надо подгрузить ещё тегов. */

@@ -62,4 +62,6 @@ case class MMapInitState(
   def withLoader(loader: Option[MGeoPoint])         = copy( loader = loader )
   def withUserLoc(userLoc: Option[MGeoLoc])         = copy( userLoc = userLoc )
 
+  lazy val someReady = Some(ready)
+
 }

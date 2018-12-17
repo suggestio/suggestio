@@ -3,7 +3,6 @@ package io.suggest.sc.v.search
 import diode.FastEq
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.maps.m._
 import io.suggest.maps.nodes.MGeoNodesResp
@@ -14,14 +13,15 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.MMapInitState
 import io.suggest.sc.styl.GetScCssF
-import io.suggest.sjs.leaflet.event.{DragEndEvent, Event => LEvent}
+import io.suggest.sjs.leaflet.event.DragEndEvent
 import io.suggest.sjs.leaflet.map.IWhenReadyArgs
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import react.leaflet.control.LocateControlR
 import react.leaflet.lmap.LMapR
-import io.suggest.spa.OptFastEq
+import io.suggest.spa.{FastEqUtil, OptFastEq}
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.css.ScalaCssUtil.Implicits._
 
 /**
   * Suggest.io
@@ -56,6 +56,7 @@ class SearchMapR(
                                     rcvrsGeoC   : ReactConnectProxy[Pot[MGeoNodesResp]],
                                     loaderOptC  : ReactConnectProxy[Option[MGeoPoint]],
                                     userLocOptC : ReactConnectProxy[Option[MGeoLoc]],
+                                    isInitSomeC : ReactConnectProxy[Some[Boolean]],
                                   )
 
 
@@ -102,8 +103,8 @@ class SearchMapR(
       lazy val mmapComp = {
         val mapCSS = getScCssF().Search.Tabs.MapTab
         val geoMapCssSome = Some(
-          (mapCSS.geomap.htmlClass :: props.searchCss.GeoMap.geomap.htmlClass :: Nil)
-            .mkString( HtmlConstants.SPACE )
+          (mapCSS.geomap :: props.searchCss.GeoMap.geomap :: Nil)
+            .toHtmlClass
         )
         val _stopPropagationF = ReactCommonUtil.stopPropagationCB _
 
@@ -144,8 +145,10 @@ class SearchMapR(
       }
 
       // Наконец, непосредственный рендер карты:
-      ReactCommonUtil.maybeEl(props.mapInit.ready) {
-        mmapComp
+      s.isInitSomeC { someReadyProxy =>
+        ReactCommonUtil.maybeEl( someReadyProxy.value.value ) {
+          mmapComp
+        }
       }
     }
 
@@ -171,7 +174,8 @@ class SearchMapR(
             .filter { _ =>
               props.mapInit.state.locationFound.isEmpty
             }
-        }
+        },
+        isInitSomeC = mapInitProxy.connect(_.mapInit.someReady)( FastEqUtil.RefValFastEq )
       )
     }
     .renderBackend[Backend]

@@ -12,7 +12,7 @@ import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid.{GridBlockClick, GridLoadAds}
 import io.suggest.sc.m.inx._
-import io.suggest.sc.m.search.{MSearchCssProps, MSearchRespInfo, MapReIndex, SearchTextChanged}
+import io.suggest.sc.m.search._
 import io.suggest.sc.sc3._
 import io.suggest.sc.styl.MScCssArgs
 import io.suggest.sc.u.api.IScUniApi
@@ -487,6 +487,12 @@ class IndexAh[M](
           switchCtx     = switchCtx
         )
       }
+
+
+    // Клик по узлу в списке предлагаемых узлов:
+    case m: NodeRowClick if value.state.switchAsk.nonEmpty =>
+      val v0 = value
+      ???
 
 
     // Кто-то затребовал перерендерить css-стили выдачи. Скорее всего, размеры экрана изменились.

@@ -9,7 +9,6 @@ import io.suggest.msg.Messages
 import scalacss.ScalaCssReact._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.NodeRowClick
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent, raw}
 import japgolly.scalajs.react.vdom.VdomElement
@@ -24,6 +23,7 @@ import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.sc.styl.ScCssStatic
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+import io.suggest.css.ScalaCssUtil.Implicits._
 
 import scala.scalajs.js
 
@@ -46,7 +46,7 @@ class NodeFoundR {
                        node               : MGeoNodePropsShapes,
                        searchCss          : SearchCss,
                        withDistanceToNull : MGeoPoint,
-                       selected           : Boolean
+                       selected           : Boolean,
                      )
 
   implicit object NodeFoundRPropsValFastEq extends FastEq[PropsVal] {
@@ -67,7 +67,7 @@ class NodeFoundR {
 
     /** Реакция на клик по одному элементу (ряд-узел). */
     private def _onNodeRowClick(nodeId: String)(e: ReactEvent): Callback =
-      dispatchOnProxyScopeCB($, NodeRowClick(nodeId) )
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, NodeRowClick(nodeId))
     private def _onNodeRowClickJsF(nodeId: String) =
       ReactCommonUtil.cbFun1ToJsCb( _onNodeRowClick(nodeId) )
 
@@ -165,10 +165,10 @@ class NodeFoundR {
 
           // Текст состоит из статической и динамической вёрстки.
           val primaryCss = (
-            NodesCSS.tagRowTextPrimary.htmlClass ::
-            props.searchCss.NodesFound.rowTextPrimaryF(nodeId).htmlClass ::
+            NodesCSS.tagRowTextPrimary ::
+            props.searchCss.NodesFound.rowTextPrimaryF(nodeId) ::
             Nil
-          ).mkString( HtmlConstants.SPACE )
+          ).toHtmlClass
 
           val theClasses = new MuiListItemTextClasses {
             override val root = rootCss
@@ -206,7 +206,8 @@ class NodeFoundR {
   }
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
     .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate )

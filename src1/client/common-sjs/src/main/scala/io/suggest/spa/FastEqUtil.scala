@@ -89,6 +89,13 @@ object FastEqUtil {
   }
 
 
+  /** Сравнение только isPending.
+    * Используется, чтобы не плодить объекты и не сравнивать Pot'ы целиком. */
+  implicit object PotIsPendingFastEq extends FastEq[Pot[_]] {
+    override def eqv(a: Pot[_], b: Pot[_]): Boolean =
+      (a.isPending ==* b.isPending)
+  }
+
   object RefValFastEq extends FastEq[AnyRef] {
     override def eqv(a: AnyRef, b: AnyRef): Boolean = {
       FastEq.AnyRefEq.eqv(a, b) || FastEq.ValueEq.eqv(a, b)

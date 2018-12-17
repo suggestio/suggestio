@@ -52,7 +52,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
         .map { n =>
           n.props.ntype match {
             case MNodeTypes.Tag => 1
-            case _ => 2
+            case _ => 4
           }
         }
         .sum
@@ -64,7 +64,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     if (args.req.isFailed)
       rowsCount += 2
 
-    rowsCount = Math.min(rowsCount, 3)
+    rowsCount = Math.min(rowsCount, 6)
 
     val listHeightPx = rowsCount * SearchCss.NODE_ROW_HEIGHT_PX
     listHeightPx.toInt
@@ -97,12 +97,6 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
     val container = style(
       overflow.auto,
       height( NODES_WITH_FIELD_HEIGHT_PX.px ),
-    )
-
-    val nodesList = style(
-      paddingTop( 0.px ),
-      paddingBottom( 0.px ),
-      overflow.hidden
     )
 
     // После втыкания materialUI, возникла необходимость описывать стили не-инлайново через classes.
@@ -156,7 +150,7 @@ case class SearchCss( args: MSearchCssProps ) extends StyleSheet.Inline {
 
   initInnerObjects(
     GeoMap.geomap,
-    NodesFound.nodesList
+    NodesFound.container,
   )
 
 }
