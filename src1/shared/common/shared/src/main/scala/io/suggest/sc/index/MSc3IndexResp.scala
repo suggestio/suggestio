@@ -29,7 +29,6 @@ object MSc3IndexResp {
     (__ \ "w").formatNullable[MWelcomeInfo] and
     (__ \ "g").formatNullable[MGeoPoint] and
     (__ \ "m").formatNullable[Boolean] and
-    //(__ \ "r").format[Boolean] and
     (__ \ "o").formatNullable[MGeoLoc]
   )(apply, unlift(unapply))
 
@@ -72,7 +71,6 @@ case class MSc3IndexResp(
                          welcome    : Option[MWelcomeInfo]  = None,
                          geoPoint   : Option[MGeoPoint]     = None,
                          isMyNode   : Option[Boolean]       = None,
-                         //isRcvr     : Option[Boolean],
                          userGeoLoc : Option[MGeoLoc]       = None,
                        )
   extends OptStrId

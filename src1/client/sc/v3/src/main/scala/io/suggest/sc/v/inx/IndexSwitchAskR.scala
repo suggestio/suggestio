@@ -1,15 +1,14 @@
 package io.suggest.sc.v.inx
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiSnackBar, MuiSnackBarAnchorOrigin, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiSnackBar, MuiSnackBarAnchorOrigin, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps}
 import diode.react.ModelProxy
 import io.suggest.css.CssR
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.m.inx.{ApproveIndexSwitch, CancelIndexSwitch, MInxSwitchAskS}
+import io.suggest.sc.m.inx.{CancelIndexSwitch, MInxSwitchAskS}
 import io.suggest.sc.styl.ScCssStatic
-import io.suggest.sc.v.hdr.LogoR
-import io.suggest.sc.v.search.NodesFoundR
+import io.suggest.sc.v.search.{NodesFoundR, SearchCss}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -20,16 +19,11 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: wrap-React-компонент всплывающего вопроса о переключении выдачи в новую локацию.
   */
 class IndexSwitchAskR(
-                       val logoR    : LogoR,
                        nodesFoundR  : NodesFoundR,
                      ) {
 
-  import io.suggest.spa.OptFastEq.Wrapped
-  import logoR.LogoPropsValFastEq
-
   type Props_t = Option[MInxSwitchAskS]
   type Props = ModelProxy[Props_t]
-
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -37,11 +31,6 @@ class IndexSwitchAskR(
     private def _onClose(e: ReactEvent): Callback =
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, CancelIndexSwitch )
     private lazy val _onCloseJsCbF = ReactCommonUtil.cbFun1ToJsCb( _onClose )
-
-
-    private def _onApprove(e: ReactEvent): Callback =
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, ApproveIndexSwitch )
-    private lazy val _onApproveJsCbF = ReactCommonUtil.cbFun1ToJsCb( _onApprove )
 
 
     def render(propsOptProxy: Props): VdomElement = {
@@ -63,81 +52,46 @@ class IndexSwitchAskR(
 
         // Содержимое плашки - приглашение на смену узла.
         MuiSnackBarContent {
+          val btnIconProps = new MuiSvgIconProps {
+            override val className = scCss.smallBtnSvgIcon.htmlClass
+          }
+
           // Содержимое левой части сообщения:
           val _message: VdomNode = <.div(
             ^.`class` := scCss.content.htmlClass,
             Messages( MsgCodes.`Location.changed` ),
 
+            // Кнопка сокрытия уведомления:
+            MuiButton.component {
+              val cssClasses = new MuiButtonClasses {
+                override val root = scCss.cancel.htmlClass
+              }
+              new MuiButtonProps {
+                override val onClick = _onCloseJsCbF
+                override val variant = MuiButtonVariants.text
+                override val size = MuiButtonSizes.small
+                override val color = MuiColorTypes.inherit
+                override val classes = cssClasses
+              }
+            } (
+              Mui.SvgIcons.CancelOutlined(btnIconProps)(),
+              Messages( MsgCodes.`Cancel` )
+            ),
+
             <.br,
 
             // Логотип узла:
             propsOpt.whenDefined { props =>
-              props.searchCss.fold [VdomElement] {
-                val i = props.nodesResp.results.head.props
+              <.div(
+                propsOptProxy.wrap(_ => props.searchCss)( CssR.apply )(implicitly, SearchCss.SearchCssFastEq),
                 propsOptProxy.wrap { _ =>
-                  val logoProps = logoR.PropsVal(
-                    logoOpt     = i.logoOpt,
-                    nodeNameOpt = i.name,
-                    styled      = false,
+                  NodesFoundR.PropsVal(
+                    req             = props.searchCss.args.req,
+                    hasMore         = false,
+                    selectedIds     = Set.empty,
+                    searchCss       = props.searchCss,
                   )
-                  Some( logoProps ): logoR.Props_t
-                }( logoR.apply )
-              } { searchCss =>
-                <.div(
-                  propsOptProxy.wrap(_ => searchCss)( CssR.apply ),
-                  propsOptProxy.wrap { _ =>
-                    NodesFoundR.PropsVal(
-                      req             = searchCss.args.req,
-                      hasMore         = false,
-                      selectedIds     = Set.empty,
-                      searchCss       = searchCss,
-                    )
-                  }( nodesFoundR.apply )
-                )
-
-              }
-            },
-
-          )
-
-          val btnIconProps = new MuiSvgIconProps {
-            override val className = scCss.smallBtnSvgIcon.htmlClass
-          }
-
-          // Содержание правой части:
-          val _action = <.span(
-            {
-              // Кнопка подтверждения перехода в узел:
-              val msgCode = MsgCodes.`Go.into`
-              MuiButton.component.withKey( msgCode )(
-                new MuiButtonProps {
-                  override val onClick = _onApproveJsCbF
-                  override val variant = MuiButtonVariants.text
-                  override val size = MuiButtonSizes.small
-                  override val color = MuiColorTypes.inherit
-                }
-              )(
-                Mui.SvgIcons.CheckCircle(btnIconProps)(),
-                Messages( msgCode )
-              )
-            },
-
-            <.br,
-
-            {
-              // Кнопка сокрытия уведомления:
-              val msgCode = MsgCodes.`Cancel`
-              // Сделать ToolTip с банальной подсказкой? Надо?
-              MuiButton.component.withKey(msgCode)(
-                new MuiButtonProps {
-                  override val onClick = _onCloseJsCbF
-                  override val variant = MuiButtonVariants.text
-                  override val size = MuiButtonSizes.small
-                  override val color = MuiColorTypes.inherit
-                }
-              )(
-                Mui.SvgIcons.CancelOutlined(btnIconProps)(),
-                Messages( msgCode )
+                }( nodesFoundR.apply )(implicitly, NodesFoundR.NodesFoundRPropsValFastEq)
               )
             },
           )
@@ -150,7 +104,6 @@ class IndexSwitchAskR(
           // Объединяем всё:
           new MuiSnackBarContentProps {
             override val message = _message.rawNode
-            override val action = _action.rawNode
             override val classes = cssClasses
           }
         }

@@ -41,9 +41,5 @@ case class SideBarOpenClose(bar: MScSideBar, open: Boolean) extends IIndexAction
 /** Отмена переключения индекса выдачи в новую локацию. */
 case object CancelIndexSwitch extends IIndexAction
 
-/** Подтверждение переключения индекса в новую локацию. */
-case object ApproveIndexSwitch extends IIndexAction
-
-
 /** Команда перехода на предыдущий узел. */
 case object GoToPrevIndexView extends IIndexAction with IScIndexRespReason

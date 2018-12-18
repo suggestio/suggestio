@@ -31,5 +31,5 @@ object MInxSwitchAskS {
 case class MInxSwitchAskS(
                            okAction     : HandleScApiResp,
                            nodesResp    : MSc3NodeSearchResp,
-                           searchCss    : Option[SearchCss],
+                           searchCss    : SearchCss,
                          )

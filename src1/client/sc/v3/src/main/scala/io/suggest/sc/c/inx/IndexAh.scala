@@ -37,7 +37,9 @@ import scala.util.Success
   * Description: Контроллер index'а выдачи.
   */
 
-class IndexRah(scCssFactory: ScCssFactory )
+class IndexRah(
+                scCssFactory: ScCssFactory
+              )
   extends IRespWithActionHandler
   with Log
 {
@@ -124,7 +126,7 @@ class IndexRah(scCssFactory: ScCssFactory )
       val switchAskState = MInxSwitchAskS(
         okAction  = ctx.m,
         nodesResp = resp,
-        searchCss = OptionUtil.maybe(isMultiNodeResp) {
+        searchCss = {
           val cssArgs = MSearchCssProps(
             req         = Ready( MSearchRespInfo(resp = resp.results) ),
             screenInfo  = ctx.value0.dev.screen.info
@@ -327,7 +329,7 @@ class IndexAh[M](
   /** Непосредственный запуск получения индекса с сервера.
     *
     * @param silentUpdate Не рендерить на экране изменений?
-    * @param v0 Исходныое значение MScIndex.
+    * @param v0 Исходное значение MScIndex.
     * @param reason Экшен-причина, приведший к запуску запроса.
     * @param switchCtx Данные контекст обновления всей выдачи.
     * @return ActionResult.
@@ -602,26 +604,6 @@ class IndexAh[M](
         reason        = m,
         switchCtx     = m.switchCtx,
       )
-
-
-    // Юзер подтверждает переход в новую локацию.
-      // TODO Эта кнопка актуальная, если несколько индексов?
-    case ApproveIndexSwitch =>
-      // Надо выпустить на свободу экшен внутри switch-состояния, обнулив switch-состояние.
-      val v0 = value
-      v0.state.switchAsk.fold(noChange) { switchS =>
-        val fx = switchS.okAction
-          // Надо сбросить switch-состояние, иначе диалог зациклится без видимых результатов.
-          .withSwitchCtxOpt( None )
-          .toEffectPure
-
-        // И убрать сам диалог с экрана:
-        val v2 = v0.withState(
-          v0.state.withSwitchAsk( None )
-        )
-
-        updated( v2, fx )
-      }
 
 
     // Юзер не хочет уходить из текущего узла в новую определённую локацию.

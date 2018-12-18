@@ -248,6 +248,12 @@ object ScCssStatic extends StyleSheet.Inline {
       marginTop(10.px)
     )
 
+    /** Кнопка отмены справа наверху. */
+    val cancel = style(
+      float.right,
+      top(-5.px),
+    )
+
   }
 
   object Welcome {
