@@ -4,8 +4,9 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.empty.NonEmpty
 import io.suggest.common.html.HtmlConstants
-import io.suggest.maps.nodes.MGeoNodePropsShapes
+import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.sc.ads.MAdsSearchReq
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -49,16 +50,16 @@ object MNodesFoundS {
   * @param hasMore Есть ли ещё теги на сервере?
   */
 case class MNodesFoundS(
-                         req           : Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]]     = Pot.empty,
+                         req           : Pot[MSearchRespInfo[MGeoNodesResp]]     = Pot.empty,
                          reqSearchArgs : Option[MAdsSearchReq] = None,
                          hasMore       : Boolean               = true,
                        )
   extends NonEmpty
 {
 
-  def withReq(req: Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]]) = copy(req = req)
+  def withReq(req: Pot[MSearchRespInfo[MGeoNodesResp]]) = copy(req = req)
   def withReqSearchArgs(reqSearchArgs : Option[MAdsSearchReq]) = copy(reqSearchArgs = reqSearchArgs)
-  def withReqWithArgs(req: Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]], reqSearchArgs : Option[MAdsSearchReq]) =
+  def withReqWithArgs(req: Pot[MSearchRespInfo[MGeoNodesResp]], reqSearchArgs : Option[MAdsSearchReq]) =
     copy(req = req, reqSearchArgs = reqSearchArgs)
   def withHasMore(hasMore: Boolean) = copy(hasMore = hasMore)
 
@@ -73,7 +74,7 @@ case class MNodesFoundS(
       .append( `(` )
       .append(
         req.getClass.getSimpleName + COLON +
-          req.fold(0)(_.resp.length) + COLON +
+          req.fold(0)(_.resp.nodes.length) + COLON +
           req.exceptionOption.fold("") { ex =>
             ex.getClass + HtmlConstants.SPACE + ex.getMessage
           }
@@ -84,19 +85,10 @@ case class MNodesFoundS(
       .toString()
   }
 
-  /** Сборка итератора найденных узлов. */
-  def nodesFoundIter: Iterator[MGeoNodePropsShapes] = {
-    req.iterator
-      .flatMap(_.resp)
-  }
-
   // TODO Унести как-то внутрь Pot[], чтобы не пересобирать на каждый чих.
   /** Кэш для id-карты найденных узлов. */
-  lazy val nodesFoundMap: Map[String, MGeoNodePropsShapes] = {
-    req.iterator
-      .flatMap(_.resp)
-      .map { m => m.props.nameOrIdOrEmpty -> m }
-      .toMap
+  def nodesFoundMap: Map[String, MSc3IndexResp] = {
+    req.fold( Map.empty[String, MSc3IndexResp] )(_.resp.nodesMap)
   }
 
 }

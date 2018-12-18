@@ -353,7 +353,7 @@ trait ScSite
             apiVsn            = _siteQsArgs.apiVsn,
             debug             = SC_JS_DEBUG,
             // Хост-порт для запросов через CDN:
-            rcvrsMap          = rcvrsMapUrlArgs,
+            rcvrsMapUrl          = rcvrsMapUrlArgs,
           )
         )
 

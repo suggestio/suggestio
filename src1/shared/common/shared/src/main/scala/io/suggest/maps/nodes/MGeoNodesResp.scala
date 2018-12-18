@@ -21,6 +21,12 @@ object MGeoNodesResp {
 
   @inline implicit def univEq: UnivEq[MGeoNodesResp] = UnivEq.derive
 
+    /** Поддержка play-json для инстансов [[MGeoNodesResp]]. */
+  implicit def msc3NodesSearchRespFormat: OFormat[MGeoNodesResp] = {
+    (__ \ "t").format[Seq[MGeoNodePropsShapes]]
+      .inmap(apply, _.nodes)
+  }
+
 }
 
 /** Класс модели ответа сервера с гео.инфой для рендера узлов-ресиверов на карте мира.
@@ -29,7 +35,21 @@ object MGeoNodesResp {
   */
 case class MGeoNodesResp(
                           nodes   : Seq[MGeoNodePropsShapes]
-                        )
+                        ) {
+
+  def hasManyNodes = nodes.lengthCompare(1) > 0
+
+  /** Карта узлов. */
+  lazy val nodesMap: Map[String, MSc3IndexResp] = {
+    nodes
+      .iterator
+      .map { m =>
+        m.props.idOrNameOrEmpty -> m.props
+      }
+      .toMap
+  }
+
+}
 
 
 /** Контейнер props и shapes.

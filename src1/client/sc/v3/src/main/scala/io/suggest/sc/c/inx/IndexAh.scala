@@ -5,6 +5,7 @@ import diode.data.{Pot, Ready}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MScreenInfo
 import io.suggest.geo.{MGeoLoc, MLocEnv}
+import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.DiodeUtil.Implicits.ActionHandlerExt
 import io.suggest.sc.ScConstants
@@ -82,7 +83,7 @@ class IndexRah(
     // Сравнивать полученный index с текущим состоянием. Может быть ничего сохранять не надо?
     if (
       !isMultiNodeResp &&
-      resp.results.exists { node =>
+      resp.nodes.exists { node =>
         v0.index.resp.exists { rn =>
           MSc3IndexResp.isLookingSame(rn, node.props)
         }
@@ -128,7 +129,7 @@ class IndexRah(
         nodesResp = resp,
         searchCss = {
           val cssArgs = MSearchCssProps(
-            req         = Ready( MSearchRespInfo(resp = resp.results) ),
+            req         = Ready( MSearchRespInfo(resp = MGeoNodesResp(resp.nodes)) ),
             screenInfo  = ctx.value0.dev.screen.info
           )
           SearchCss( cssArgs )
@@ -148,7 +149,7 @@ class IndexRah(
       // Индекс изменился, значит заливаем новый индекс в состояние:
       val actRes1 = indexUpdated(
         i0        = v0.index,
-        inx       = resp.results.head.props,
+        inx       = resp.nodes.head.props,
         m         = ctx.m,
         mscreen   = v0.dev.screen.info
       )
@@ -519,8 +520,8 @@ class IndexAh[M](
       // Надо сгенерить экшен переключения index'а в новое состояние. Все индексы включая выбранный уже есть в состоянии.
       val actResOpt = for {
         switchS <- v0.state.switchAsk
-        inx0    <- switchS.nodesResp.results
-          .find(_.props.nameOrIdOrEmpty ==* m.nodeId)
+        inx0    <- switchS.nodesResp.nodes
+          .find(_.props.idOrNameOrEmpty ==* m.nodeId)
       } yield {
         indexRah.indexUpdated(
           i0      = v0.withState(
@@ -616,7 +617,7 @@ class IndexAh[M](
         if (v0.resp.isEmpty) {
           // Если нет открытого узла (выдача скрыта), то надо выбрать первый узел из списка.
           val fx = NodeRowClick(
-            nodeId = switchS.nodesResp.results.head.props.nameOrIdOrEmpty
+            nodeId = switchS.nodesResp.nodes.head.props.idOrNameOrEmpty
           )
             .toEffectPure
           effectOnly(fx)

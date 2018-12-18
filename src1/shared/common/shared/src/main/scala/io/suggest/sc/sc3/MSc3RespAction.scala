@@ -1,7 +1,7 @@
 package io.suggest.sc.sc3
 
+import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.sc.ads.MSc3AdsResp
-import io.suggest.sc.search.MSc3NodeSearchResp
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -19,7 +19,7 @@ object MSc3RespAction {
   implicit def MSC3_RESP_ACTION_FORMAT: OFormat[MSc3RespAction] = (
     (__ \ "action").format[MScRespActionType] and
     (__ \ MScRespActionTypes.AdsTile.value).formatNullable[MSc3AdsResp] and
-    (__ \ MScRespActionTypes.SearchNodes.value).formatNullable[MSc3NodeSearchResp] and
+    (__ \ MScRespActionTypes.SearchNodes.value).formatNullable[MGeoNodesResp] and
     (__ \ MScRespActionTypes.ConfUpdate.value).formatNullable[MScConfUpdate]
   )(apply, unlift(unapply))
 
@@ -41,6 +41,6 @@ object MSc3RespAction {
 case class MSc3RespAction(
                            acType    : MScRespActionType,
                            ads       : Option[MSc3AdsResp]          = None,
-                           search    : Option[MSc3NodeSearchResp]   = None,
+                           search    : Option[MGeoNodesResp]        = None,
                            confUpdate: Option[MScConfUpdate]        = None,
                          )

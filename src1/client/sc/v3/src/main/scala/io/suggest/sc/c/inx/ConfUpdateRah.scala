@@ -34,9 +34,9 @@ class ConfUpdateRah
     // JSON-карта ресиверов:
     for {
       rcvrsMap2 <- action.rcvrsMap
-      if rcvrsMap2 !=* conf0.rcvrsMap
+      if rcvrsMap2 !=* conf0.rcvrsMapUrl
     } {
-      conf2 = conf2.withRcvrsMap( rcvrsMap2 )
+      conf2 = conf2.withRcvrsMapUrl( rcvrsMap2 )
       // TODO Организовать эффект или таймер для обновления карты. Таймер нужен, чтобы карта не обновлялась слишком часто.
     }
 

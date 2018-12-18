@@ -1,8 +1,8 @@
 package io.suggest.sc.m.inx
 
 import diode.FastEq
+import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.sc.m.HandleScApiResp
-import io.suggest.sc.search.MSc3NodeSearchResp
 import io.suggest.sc.v.search.SearchCss
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
@@ -30,6 +30,6 @@ object MInxSwitchAskS {
 
 case class MInxSwitchAskS(
                            okAction     : HandleScApiResp,
-                           nodesResp    : MSc3NodeSearchResp,
+                           nodesResp    : MGeoNodesResp,
                            searchCss    : SearchCss,
                          )

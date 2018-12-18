@@ -19,7 +19,7 @@ object MSc3Conf {
   object Fields {
     val LOGGED_IN_FN                = "l"
     val ABOUT_SIO_NODE_ID_FN        = "a"
-    val RCVRS_MAP_FN                = "r"
+    val RCVRS_MAP_URL_FN            = "r"
     val API_VSN_FN                  = "v"
     val DEBUG_FN                    = "d"
     val SERVER_GENERATED_AT_FN      = "g"
@@ -38,7 +38,7 @@ object MSc3Conf {
       (__ \ F.DEBUG_FN).formatNullable[Boolean]
         // Если очень надо, отладка может быть ВКЛючена по-умолчанию, если явно не задана в конфиге: .getOrElseTrue
         .inmap[Boolean]( _.getOrElseFalse, EmptyUtil.someF ) and
-      (__ \ F.RCVRS_MAP_FN).format[MRcvrsMapUrlArgs] and
+      (__ \ F.RCVRS_MAP_URL_FN).format[MRcvrsMapUrlArgs] and
       (__ \ F.SERVER_GENERATED_AT_FN).format[Long] and
       (__ \ F.CLIENT_UPDATED_AT_FN).formatNullable[Long]
     )(apply, unlift(unapply))
@@ -53,7 +53,7 @@ object MSc3Conf {
 
 /** Контейнер данных конфигурации, задаваемой на сервере.
   *
-  * @param rcvrsMap Данные для выкачивания карты ресиверов.
+  * @param rcvrsMapUrl Данные для выкачивания карты ресиверов.
   * @param serverCreatedAt Timestamp генерации сервером данных этого конфига.
   * @param clientUpdatedAt Timestamp сохранение данных на клиенте.
   */
@@ -62,12 +62,12 @@ case class MSc3Conf(
                      aboutSioNodeId     : String,
                      apiVsn             : MScApiVsn,
                      debug              : Boolean,
-                     rcvrsMap           : MRcvrsMapUrlArgs,
+                     rcvrsMapUrl        : MRcvrsMapUrlArgs,
                      serverCreatedAt    : Long              = MSc3Conf.timestampSec(),
                      clientUpdatedAt    : Option[Long]      = None,
                    ) {
 
-  def withRcvrsMap(rcvrsMap: MRcvrsMapUrlArgs) = copy( rcvrsMap = rcvrsMap )
+  def withRcvrsMapUrl(rcvrsMap: MRcvrsMapUrlArgs) = copy( rcvrsMapUrl = rcvrsMap )
   def withClientUpdatedAt(clientUpdatedAt: Option[Long]) = copy(clientUpdatedAt = clientUpdatedAt)
 
 }

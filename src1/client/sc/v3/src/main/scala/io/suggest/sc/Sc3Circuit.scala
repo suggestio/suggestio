@@ -284,7 +284,7 @@ class Sc3Circuit(
     geoSearchQsRO   = geoSearchQsRO,
     rcvrsMapApi     = advRcvrsMapApi,
     screenInfoRO    = screenInfoRO,
-    rcvrMapArgsRO   = confRO.zoom(_.rcvrsMap),
+    rcvrMapArgsRO   = confRO.zoom(_.rcvrsMapUrl),
   )
 
   private val indexAh = new IndexAh(
@@ -358,11 +358,12 @@ class Sc3Circuit(
     // События уровня платформы.
     acc ::= platformAh
 
-    // Основные события индекса не частые, но доступны всегда:
-    acc ::= indexAh
 
     acc ::= sTextAh
     acc ::= geoTabAh    // TODO Объеденить с searchAh
+
+    // Основные события индекса не частые, но доступны всегда *ДО*geoTabAh*:
+    acc ::= indexAh
 
     //if ( indexWelcomeRW().nonEmpty )
       acc ::= new WelcomeAh( indexWelcomeRW )

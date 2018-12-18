@@ -113,7 +113,7 @@ class NodeFoundR {
       val p = props.node.props
 
       // Нельзя nodeId.get, т.к. могут быть узлы без id (по идее - максимум 1 узел в списке).
-      val nodeId = p.nameOrIdOrEmpty
+      val nodeId = p.idOrNameOrEmpty
 
       val isTag = p.ntype ==* MNodeTypes.Tag
 

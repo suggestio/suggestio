@@ -7,7 +7,7 @@ import io.suggest.dev.MScreenInfo
 import io.suggest.grid.GridConst
 import io.suggest.maps.c.RcvrMarkersInitAh
 import io.suggest.maps.m.{HandleMapReady, InstallRcvrMarkers, RcvrMarkersInit}
-import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp, MRcvrsMapUrlArgs}
+import io.suggest.maps.nodes.{MGeoNodesResp, MRcvrsMapUrlArgs}
 import io.suggest.maps.u.IAdvRcvrsMapApi
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
@@ -45,7 +45,7 @@ object GeoTabAh {
     * @param screenInfo Данные по экрану.
     * @return Инстанс SearchCss.
     */
-  def _mkSearchCss(req              : Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]],
+  def _mkSearchCss(req              : Pot[MSearchRespInfo[MGeoNodesResp]],
                    screenInfo       : MScreenInfo,
                    searchCssOrNull  : SearchCss
                   ): SearchCss = {
@@ -101,7 +101,7 @@ class GeoTabAh[M](
         val offsetOpt = OptionUtil.maybeOpt(!m.clear) {
           v0.found.req
             .toOption
-            .map(_.resp.length)
+            .map(_.resp.nodes.length)
         }
         args0.search.withLimitOffset(
           limit     = Some( GeoTabAh.REQ_LIMIT ),
@@ -178,7 +178,7 @@ class GeoTabAh[M](
       _doNodesSearch(m, value)
 
     // Клик по узлу в списке найденных гео-узлов.
-    case m: NodeRowClick if value.found.req.nonEmpty =>
+    case m: NodeRowClick =>
       // Найти узел, который был окликнут.
       val v0 = value
       v0.found
@@ -189,15 +189,16 @@ class GeoTabAh[M](
           LOG.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
           noChange
         } { mnode =>
+          val nodeId = mnode.nodeId.get
           // Есть окликнутый узел. Действовать исходя из типа узла.
-          if (mnode.props.ntype ==* MNodeTypes.Tag) {
+          if (mnode.ntype ==* MNodeTypes.Tag) {
             // Это тег. Обновить состояние выбранных тегов, искать в плитке.
-            val isAlreadySelected = v0.data.selTagIds contains m.nodeId
+            val isAlreadySelected = v0.data.selTagIds contains nodeId
 
             // Снять либо выставить выделение для тега:
             val selTagIds2: Set[String] =
               if (isAlreadySelected) Set.empty // TODO Когда будет поддержка >1 тега, сделать: v0.data.selTagIds - m.nodeId
-              else Set(m.nodeId) // TODO Пока поддерживается только 1 тег макс. Надо в будущем: v0.data.selTagIds + m.nodeId
+              else Set(nodeId) // TODO Пока поддерживается только 1 тег макс. Надо в будущем: v0.data.selTagIds + m.nodeId
 
             val v2 = v0.withData(
               v0.data.withSelTagIds( selTagIds2 )
@@ -210,7 +211,7 @@ class GeoTabAh[M](
 
           } else {
             // Это не тег, значит это adn-узел. Надо перейти в выдачу выбранного узла.
-            val fx = MapReIndex(Some(m.nodeId)).toEffectPure
+            val fx = MapReIndex(mnode.nodeId).toEffectPure
             // Надо сбросить выбранные теги, есть есть.
             if (v0.data.selTagIds.isEmpty) {
               effectOnly(fx)
@@ -365,7 +366,8 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
     val nodesResp = ra.search.get
 
     // Надо решить, как поступать с исходным списком: конкатенация или перезапись.
-    val nodes2 = g0.rcvrsNotCached
+    val nodes2 = g0
+      .rcvrsNotCached
       .filter { oldNodes =>
         // Есть какой-то старый ответ, возможно - пустой. Дальше пропускать только НЕ-пустые ответы и если !clear
         val isClear = ctx.m.reason match {
@@ -374,14 +376,13 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
         }
         !isClear && oldNodes.resp.nodes.nonEmpty
       }
-      .fold {
-        // Нет старого списка. Просто возвращаем полученные узлы.
-        nodesResp.results
-      } { oldNodes =>
+      // Нет старого списка. Просто возвращаем полученные узлы.
+      .fold(nodesResp) { oldNodes =>
+        // Дописать новые полученные узлы в конец.
         val res0 = oldNodes.resp.nodes
-        // Дописать полученные узлы в конец.
-        if (nodesResp.results.isEmpty) res0
-        else res0 ++ nodesResp.results
+        val n2 = if (nodesResp.nodes.isEmpty) res0
+        else res0 ++ nodesResp.nodes
+        MGeoNodesResp( n2 )
       }
 
     val textQuery = ctx.m.qs.search.textQuery
@@ -390,9 +391,7 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
     val mapInit2 = textQuery.fold(g0.mapInit) { _ =>
       val msri = MSearchRespInfo(
         textQuery = textQuery,
-        resp = MGeoNodesResp(
-          nodes = nodes2
-        )
+        resp      = nodes2
       )
       g0.mapInit.withRcvrs(
         g0.mapInit.rcvrs
@@ -400,7 +399,7 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
       )
     }
 
-    val req2 = if (nodes2.isEmpty && textQuery.isEmpty) {
+    val req2 = if (nodes2.nodes.isEmpty && textQuery.isEmpty) {
       Pot.empty
     } else {
       g0.found.req.ready {
@@ -411,7 +410,7 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
       }
     }
 
-    val hasMore = nodesResp.results.lengthCompare(GeoTabAh.REQ_LIMIT) >= 0
+    val hasMore = nodesResp.nodes.lengthCompare(GeoTabAh.REQ_LIMIT) >= 0
 
     // Заполнить/дополнить g0.found найденными элементами.
     val mnf2 = g0.found.copy(

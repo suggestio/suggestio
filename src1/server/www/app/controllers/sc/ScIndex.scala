@@ -10,7 +10,7 @@ import io.suggest.es.model.IMust
 import io.suggest.es.search.MSubSearch
 import io.suggest.geo.{MGeoLoc, _}
 import io.suggest.i18n.MsgCodes
-import io.suggest.maps.nodes.MGeoNodePropsShapes
+import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.media.{IMediaInfo, MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
@@ -19,7 +19,6 @@ import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes, NodeNotFoundExcepti
 import io.suggest.sc.MScApiVsns
 import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
-import io.suggest.sc.search.MSc3NodeSearchResp
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.IMacroLogs
@@ -630,8 +629,8 @@ trait ScIndex
         MSc3RespAction(
           acType = respActionType,
           search = Some {
-            MSc3NodeSearchResp(
-              results = respActions.map( MGeoNodePropsShapes(_, Nil) )
+            MGeoNodesResp(
+              nodes = respActions.map( MGeoNodePropsShapes(_, Nil) )
             )
           }
         )

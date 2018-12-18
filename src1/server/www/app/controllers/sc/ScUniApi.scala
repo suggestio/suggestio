@@ -100,7 +100,7 @@ trait ScUniApi
           if scIndexRespAction.acType ==* MScRespActionTypes.Index
           nodesResp = scIndexRespAction.search.get
           if !nodesResp.hasManyNodes
-          ps <- nodesResp.results.headOption
+          ps <- nodesResp.nodes.headOption
           scIndexResp = ps.props
         } yield {
           val qs2 = qs.copy(
@@ -224,7 +224,7 @@ trait ScUniApi
           logic       = ScSearchLogic(qs2.common.apiVsn)(qs2)(_request)
           respAction  <- _logic2stateRespActionFut( logic )
         } yield {
-          LOGGER.trace(s"$logPrefix Search nodes => ${respAction.search.iterator.flatMap(_.results).size} results")
+          LOGGER.trace(s"$logPrefix Search nodes => ${respAction.search.iterator.flatMap(_.nodes).size} results")
           respAction
         }
       }

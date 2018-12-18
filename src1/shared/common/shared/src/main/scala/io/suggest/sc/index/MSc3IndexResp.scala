@@ -83,5 +83,7 @@ case class MSc3IndexResp(
   /** Отображаемое имя узла, либо пустая строка. */
   def nameOrIdOrEmpty = nameOrIdOpt getOrElse ""
 
+  def idOrNameOrEmpty = nodeId.orElse(name).getOrElse("")
+
 }
 

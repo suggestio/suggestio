@@ -6,7 +6,7 @@ import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sc.index.MScIndexArgs
-import io.suggest.sc.m.inx.{GetIndex, MScSwitchCtx}
+import io.suggest.sc.m.inx.MScSwitchCtx
 
 import scala.concurrent.Promise
 import scala.util.Success

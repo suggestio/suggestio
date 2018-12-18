@@ -17,7 +17,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
 import japgolly.univeq._
-import io.suggest.maps.nodes.MGeoNodePropsShapes
+import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.css.ScalaCssUtil.Implicits._
 
@@ -51,7 +51,7 @@ class NodesFoundR(
 
       <.div(
         // Горизонтальный прогресс-бар. Не нужен, если список уже не пустой, т.к. скачки экрана вызывает.
-        ReactCommonUtil.maybe( props.req.isPending && !props.req.exists(_.resp.nonEmpty) ) {
+        ReactCommonUtil.maybe( props.req.isPending && !props.req.exists(_.resp.nodes.nonEmpty) ) {
           val lpCss = new MuiLinearProgressClasses {
             override val root = NodesCSS.linearProgress.htmlClass
           }
@@ -73,7 +73,7 @@ class NodesFoundR(
         } (
           // Рендер нормального списка найденных узлов.
           props.req.render { nodesRi =>
-            if (nodesRi.resp.isEmpty) {
+            if (nodesRi.resp.nodes.isEmpty) {
               // Надо, чтобы юзер понимал, что запрос поиска отработан.
               MuiListItem()(
                 MuiListItemText()(
@@ -87,9 +87,10 @@ class NodesFoundR(
             } else {
               nodesRi
                 .resp
+                .nodes
                 .toVdomArray { mnode =>
                   // Нельзя nodeId.get, т.к. могут быть узлы без id.
-                  val nodeId = mnode.props.nameOrIdOrEmpty
+                  val nodeId = mnode.props.idOrNameOrEmpty
                   // Рендер одного ряда. На уровне компонента обитает shouldComponentUpdate() для
                   propsProxy.wrap { props =>
                     nodeFoundR.PropsVal(
@@ -176,7 +177,7 @@ object NodesFoundR {
     * @param withDistanceTo Рендерить расстояние до указанной локации. Инстанс mapInit.userLoc.
     */
   case class PropsVal(
-                       req                  : Pot[MSearchRespInfo[Seq[MGeoNodePropsShapes]]],
+                       req                  : Pot[MSearchRespInfo[MGeoNodesResp]],
                        hasMore              : Boolean,
                        selectedIds          : Set[String],
                        withDistanceToNull   : MGeoPoint = null,

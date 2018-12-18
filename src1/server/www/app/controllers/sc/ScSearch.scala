@@ -1,13 +1,12 @@
 package controllers.sc
 
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
-import io.suggest.maps.nodes.MGeoNodePropsShapes
+import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.{MScApiVsn, MScApiVsns}
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionTypes}
-import io.suggest.sc.search.MSc3NodeSearchResp
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.req.IReq
@@ -194,8 +193,8 @@ trait ScSearch
         MSc3RespAction(
           acType = MScRespActionTypes.SearchNodes,
           search = Some(
-            MSc3NodeSearchResp(
-              results = nodesFound
+            MGeoNodesResp(
+              nodes = nodesFound
             )
           )
         )

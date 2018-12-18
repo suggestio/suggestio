@@ -25,9 +25,9 @@ object MGeoTabData {
   implicit object MGeoTabDataFastEq extends FastEq[MGeoTabData] {
     override def eqv(a: MGeoTabData, b: MGeoTabData): Boolean = {
       (a.rcvrsCache ===* b.rcvrsCache) &&
-        (a.delay ===* b.delay) &&
-        (a.lmap ===* b.lmap) &&
-        (a.selTagIds ===* b.selTagIds)
+      (a.delay ===* b.delay) &&
+      (a.lmap ===* b.lmap) &&
+      (a.selTagIds ===* b.selTagIds)
     }
   }
 
