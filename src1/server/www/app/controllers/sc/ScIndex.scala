@@ -312,7 +312,13 @@ trait ScIndex
     def indexNodesFut: Future[Seq[MIndexNodeInfo]] = {
       l00_rcvrByIdFut.recoverWith { case _: NoSuchElementException =>
         val beaconsNodesFut = l10_detectUsingNearBeacons
-        val coordsNodesFut  = l50_detectUsingCoords
+        val coordsNodesFut  = for (coordNodes <- l50_detectUsingCoords) yield {
+          // Надо выкинуть !isRcvr, если ЕСТЬ isRcvr.
+          if ( coordNodes.exists(m => !m.isRcvr) && coordNodes.exists(_.isRcvr) )
+            coordNodes.filter(_.isRcvr)
+          else
+            coordNodes
+        }
 
         // Запуск параллельной сборки узлов по маячкам, по gps и просто по заглушке.
         val futs1 =
@@ -322,7 +328,7 @@ trait ScIndex
 
         // Не надо собирать доп.узлы, если по координатам уже есть узел с !isRcvr
         val ephemeralNodesFut = coordsNodesFut.flatMap { coordNodes =>
-          if (coordNodes.isEmpty || coordNodes.exists(m => !m.isRcvr)) {
+          if (coordNodes.nonEmpty) {
             Future.successful(Nil)
           } else {
             l95_ephemeralNodesFromPool
@@ -449,45 +455,39 @@ trait ScIndex
         * Карта на клиенте будет отцентрована по этой точке. */
       def nodeGeoPointOptFut: Future[Option[MGeoPoint]] = {
         // Если география уже активна на уровне index-запроса, то тут ничего делать не требуется.
-        val mgpOpt = if (!isFocusedAdOpen && _qs.common.locEnv.geoLocOpt.nonEmpty) {
-          // Не искать гео-точку для узла, если география на клиенте и так активна.
-          None
-
-        } else {
+        val mgpOpt = OptionUtil.maybeOpt( isRcvr ) {
           // Если нет географии, то поискать центр для найденного узла.
           // Для нормальных узлов (не районов) следует возвращать клиенту их координату.
-          OptionUtil.maybeOpt( isRcvr ) {
-            def nodeLocEdges =
-              mnode.edges
-                .withPredicateIter( MPredicates.NodeLocation )
+          def nodeLocEdges =
+            mnode.edges
+              .withPredicateIter( MPredicates.NodeLocation )
 
-            val iterCenters = nodeLocEdges
-              .flatMap { medge =>
-                medge.info
-                  .geoPoints
-                  .headOption
-                  .orElse {
-                    medge.info.geoShapes
-                      .iterator
-                      .flatMap { gs =>
-                        gs.shape.centerPoint
-                      }
-                      .toStream
-                      .headOption
-                  }
-              }
+          val iterCenters = nodeLocEdges
+            .flatMap { medge =>
+              medge.info
+                .geoPoints
+                .headOption
+                .orElse {
+                  medge.info.geoShapes
+                    .iterator
+                    .flatMap { gs =>
+                      gs.shape.centerPoint
+                    }
+                    .toStream
+                    .headOption
+                }
+            }
 
-            val iterFirstPoints = nodeLocEdges
-              .flatMap(_.info.geoShapes)
-              .map(_.shape.firstPoint)
+          val iterFirstPoints = nodeLocEdges
+            .flatMap(_.info.geoShapes)
+            .map(_.shape.firstPoint)
 
-            val r = (iterCenters ++ iterFirstPoints)
-              .toStream
-              .headOption
+          val r = (iterCenters ++ iterFirstPoints)
+            .toStream
+            .headOption
 
-            LOGGER.trace(s"$logPrefix Node#${mnode.id} geo pt. => $r")
-            r
-          }
+          LOGGER.trace(s"$logPrefix Node#${mnode.id} geo pt. => $r")
+          r
         }
 
         Future.successful(mgpOpt)

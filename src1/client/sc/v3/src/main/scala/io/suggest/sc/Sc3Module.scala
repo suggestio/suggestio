@@ -4,7 +4,7 @@ import com.softwaremill.macwire._
 import io.suggest.jd.render.JdRenderModule
 import io.suggest.sc.c.{IRespActionHandler, IRespHandler, IRespWithActionHandler}
 import io.suggest.sc.c.grid.{GridFocusRespHandler, GridRespHandler}
-import io.suggest.sc.c.inx.{ConfUpdateRah, IndexRespHandler}
+import io.suggest.sc.c.inx.{ConfUpdateRah, IndexRah}
 import io.suggest.sc.c.search.NodesSearchRespHandler
 import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
 import io.suggest.sc.v._
@@ -55,7 +55,7 @@ class Sc3Module {
 
   // index
   lazy val welcomeR = wire[WelcomeR]
-  lazy val indexRespHandler = wire[IndexRespHandler]
+  lazy val indexRespHandler = wire[IndexRah]
   lazy val confUpdateRah = wire[ConfUpdateRah]
   lazy val indexSwitchAskR = wire[IndexSwitchAskR]
 

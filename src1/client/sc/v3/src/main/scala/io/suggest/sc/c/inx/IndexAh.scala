@@ -3,6 +3,7 @@ package io.suggest.sc.c.inx
 import diode._
 import diode.data.{Pot, Ready}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.dev.MScreenInfo
 import io.suggest.geo.{MGeoLoc, MLocEnv}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.spa.DiodeUtil.Implicits.ActionHandlerExt
@@ -36,7 +37,7 @@ import scala.util.Success
   * Description: Контроллер index'а выдачи.
   */
 
-class IndexRespHandler( scCssFactory: ScCssFactory )
+class IndexRah(scCssFactory: ScCssFactory )
   extends IRespWithActionHandler
   with Log
 {
@@ -68,7 +69,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
   }
 
 
-  override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect]) = {
+  override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): ActionResult[MScRoot] = {
     val v0 = ctx.value0
     val i0 = v0.index
 
@@ -80,8 +81,9 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
     if (
       !isMultiNodeResp &&
       resp.results.exists { node =>
-        v0.index.resp
-          .exists { MSc3IndexResp.isLookingSame(_, node.props) }
+        v0.index.resp.exists { rn =>
+          MSc3IndexResp.isLookingSame(rn, node.props)
+        }
       }
     ) {
       var i1 = i0
@@ -114,7 +116,7 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
           .toEffectPure
       }
 
-      (v2, gridLoadFxOpt)
+      ActionResult( Some(v2), gridLoadFxOpt )
 
     } else if (isMultiNodeResp || ctx.m.switchCtxOpt.exists(_.demandLocTest)) {
       // Это тест переключения выдачи в новое местоположение, и узел явно изменился.
@@ -138,164 +140,184 @@ class IndexRespHandler( scCssFactory: ScCssFactory )
         )
       }
 
-      (v2, None)
+      ActionResult.ModelUpdate(v2)
 
     } else {
       // Индекс изменился, значит заливаем новый индекс в состояние:
-      val inx = resp.results.head.props
-
-      // Сайд-эффекты закидываются в этот аккамулятор:
-      var fxsAcc = List.empty[Effect]
-
-      val nextIndexView = MIndexView(
-        rcvrId    = inx.nodeId,
-        // Если nodeId не задан, то взять гео-точку из qs
-        inxGeoPoint = OptionUtil.maybeOpt( inx.nodeId.isEmpty ) {
-          // Не используем текущее значение карты, т.к. карта тоже могла измениться:
-          ctx.m.qs.common.locEnv.geoLocOpt
-            .map(_.point)
-        },
-        name = inx.name
+      val actRes1 = indexUpdated(
+        i0        = v0.index,
+        inx       = resp.results.head.props,
+        m         = ctx.m,
+        mscreen   = v0.dev.screen.info
       )
+      ActionResult(
+        for (inx2 <- actRes1.newModelOpt) yield {
+          v0.withIndex(inx2)
+        },
+        actRes1.effectOpt
+      )
+    }
+  }
 
-      var i1 = i0.copy(
-        resp = i0.resp.ready(inx),
-        state = i0.state.copy(
-          switchAsk = None,
-          // Если фокусировка, то разрешить шаг наверх:
-          views = if ( ctx.m.reason.isInstanceOf[GridBlockClick] ) {
-            //println("append: " + nextIndexView + " :: " + i0.state.views)
-            nextIndexView <:: i0.state.views
-          } else {
-            //println("replace: " + nextIndexView + " " + ctx.m.reason)
-            NonEmptyList( nextIndexView )
+
+  /** Непосредственное обновление индекса.
+    *
+    * @param inx Новый индекс.
+    * @return ActionResult.
+    */
+  def indexUpdated(i0: MScIndex, inx: MSc3IndexResp, m: HandleScApiResp, mscreen: MScreenInfo): ActionResult[MScIndex] = {
+    // Сайд-эффекты закидываются в этот аккамулятор:
+    var fxsAcc = List.empty[Effect]
+
+    val nextIndexView = MIndexView(
+      rcvrId    = inx.nodeId,
+      // Если nodeId не задан, то взять гео-точку из qs
+      inxGeoPoint = OptionUtil.maybeOpt( inx.nodeId.isEmpty ) {
+        // Не используем текущее значение карты, т.к. карта тоже могла измениться:
+        m.qs.common.locEnv.geoLocOpt
+          .map(_.point)
+      },
+      name = inx.name
+    )
+
+    var i1 = i0.copy(
+      resp = i0.resp.ready(inx),
+      state = i0.state.copy(
+        switchAsk = None,
+        // Если фокусировка, то разрешить шаг наверх:
+        views = if ( m.reason.isInstanceOf[GridBlockClick] ) {
+          //println("append: " + nextIndexView + " :: " + i0.state.views)
+          nextIndexView <:: i0.state.views
+        } else {
+          //println("replace: " + nextIndexView + " " + ctx.m.reason)
+          NonEmptyList( nextIndexView )
+        }
+      ),
+      search = {
+        var s0 = i0.search
+
+        // Выставить полученную с сервера геоточку как текущую.
+        // TODO Не сбрасывать точку, если index не изменился.
+        s0 = inx.geoPoint
+          .filter { mgp =>
+            !(i0.search.geo.mapInit.state.center ~= mgp)
           }
-        ),
-        search = {
-          var s0 = i0.search
-
-          // Выставить полученную с сервера геоточку как текущую.
-          // TODO Не сбрасывать точку, если index не изменился.
-          s0 = inx.geoPoint
-            .filter { mgp =>
-              !(i0.search.geo.mapInit.state.center ~= mgp)
-            }
-            .fold(s0) { mgp =>
-              s0.withGeo(
-                s0.geo.withMapInit(
-                  s0.geo.mapInit.withState(
-                    s0.geo.mapInit.state.copy(
-                      centerInit = mgp,
-                      centerReal = None,
-                      // Увеличить зум, чтобы приблизить.
-                      zoom = 15
-                    )
+          .fold(s0) { mgp =>
+            s0.withGeo(
+              s0.geo.withMapInit(
+                s0.geo.mapInit.withState(
+                  s0.geo.mapInit.state.copy(
+                    centerInit = mgp,
+                    centerReal = None,
+                    // Увеличить зум, чтобы приблизить.
+                    zoom = 15
                   )
                 )
               )
-            }
-
-          // Если возвращена userGeoLoc с сервера, которая запрашивалась и до сих пор она нужна, то её выставить в состояние.
-          for {
-            _ <- inx.userGeoLoc
-            if s0.geo.mapInit.userLoc.isEmpty
-          } {
-            s0 = s0.withGeo(
-              s0.geo.withMapInit(
-                s0.geo.mapInit
-                  .withUserLoc( inx.userGeoLoc )
-              )
             )
           }
 
-          // Возможный сброс состояния тегов
-          s0 = s0.maybeResetNodesFound
-
-          // Если заход в узел с карты, то надо скрыть search-панель.
-          if (s0.panel.opened && inx.welcome.nonEmpty) {
-            s0 = s0.withPanel(
-              s0.panel.withOpened( false )
+        // Если возвращена userGeoLoc с сервера, которая запрашивалась и до сих пор она нужна, то её выставить в состояние.
+        for {
+          _ <- inx.userGeoLoc
+          if s0.geo.mapInit.userLoc.isEmpty
+        } {
+          s0 = s0.withGeo(
+            s0.geo.withMapInit(
+              s0.geo.mapInit
+                .withUserLoc( inx.userGeoLoc )
             )
-          }
-
-          // Сбросить флаг mapInit.loader, если он выставлен.
-          if (s0.geo.mapInit.loader.nonEmpty)
-            s0 = s0.resetMapLoader
-
-          // Сбросить текст поиска, чтобы теги отобразились на экране.
-          if (s0.text.query.nonEmpty)
-            fxsAcc ::= SearchTextChanged("").toEffectPure
-
-          s0
+          )
         }
+
+        // Возможный сброс состояния тегов
+        s0 = s0.maybeResetNodesFound
+
+        // Если заход в узел с карты, то надо скрыть search-панель.
+        if (s0.panel.opened && inx.welcome.nonEmpty) {
+          s0 = s0.withPanel(
+            s0.panel.withOpened( false )
+          )
+        }
+
+        // Сбросить флаг mapInit.loader, если он выставлен.
+        if (s0.geo.mapInit.loader.nonEmpty)
+          s0 = s0.resetMapLoader
+
+        // Сбросить текст поиска, чтобы теги отобразились на экране.
+        if (s0.text.query.nonEmpty)
+          fxsAcc ::= SearchTextChanged("").toEffectPure
+
+        s0
+      }
+    )
+
+    val respActionTypes = m.tryResp.get.respActionTypes
+    // Если панель поиск видна, то запустить поиск узлов в фоне.
+    if (i1.search.panel.opened && !(respActionTypes contains MScRespActionTypes.SearchNodes))
+      fxsAcc ::= SearchAh.reDoSearchFx( ignorePending = false )
+
+    // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
+    fxsAcc ::= ResetUrlRoute.toEffectPure
+
+    // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
+    if ( !(respActionTypes contains MScRespActionTypes.AdsTile) ) {
+      fxsAcc ::= GridLoadAds(clean = true, ignorePending = true)
+        .toEffectPure
+    }
+
+    // Инициализация приветствия. Подготовить состояние welcome.
+    val mWcSFutOpt = for {
+      resp <- i1.resp.toOption
+      if !i1.resp.isFailed      // Всякие FailingStale содержат старый ответ и новую ошибку, их надо отсеять.
+      wcInfo2 <- resp.welcome
+      // Не надо отображать текущее приветствие повторно:
+      if !i0.resp.exists(_.welcome contains wcInfo2)
+    } yield {
+      val tstamp = System.currentTimeMillis()
+
+      // Собрать функцию для запуска неотменяемого таймера.
+      // Функция возвращает фьючерс, который исполнится через ~секунду.
+      val tpFx = Effect {
+        WelcomeAh.timeout( ScConstants.Welcome.HIDE_TIMEOUT_MS, tstamp )
+      }
+
+      // Собрать начальное состояние приветствия:
+      val mWcS = MWelcomeState(
+        isHiding    = false,
+        timerTstamp = tstamp
       )
 
-      val respActionTypes = ctx.m.tryResp.get.respActionTypes
-      // Если панель поиск видна, то запустить поиск узлов в фоне.
-      if (i1.search.panel.opened && !(respActionTypes contains MScRespActionTypes.SearchNodes))
-        fxsAcc ::= SearchAh.reDoSearchFx( ignorePending = false )
-
-      // Возможно, нужно организовать обновление URL в связи с обновлением состояния узла.
-      fxsAcc ::= ResetUrlRoute.toEffectPure
-
-      // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
-      if ( !(respActionTypes contains MScRespActionTypes.AdsTile) ) {
-        fxsAcc ::= GridLoadAds(clean = true, ignorePending = true)
-          .toEffectPure
-      }
-
-      // Инициализация приветствия. Подготовить состояние welcome.
-      val mWcSFutOpt = for {
-        resp <- i1.resp.toOption
-        if !i1.resp.isFailed      // Всякие FailingStale содержат старый ответ и новую ошибку, их надо отсеять.
-        wcInfo2 <- resp.welcome
-        // Не надо отображать текущее приветствие повторно:
-        if !i0.resp.exists(_.welcome contains wcInfo2)
-      } yield {
-        val tstamp = System.currentTimeMillis()
-
-        // Собрать функцию для запуска неотменяемого таймера.
-        // Функция возвращает фьючерс, который исполнится через ~секунду.
-        val tpFx = Effect {
-          WelcomeAh.timeout( ScConstants.Welcome.HIDE_TIMEOUT_MS, tstamp )
-        }
-
-        // Собрать начальное состояние приветствия:
-        val mWcS = MWelcomeState(
-          isHiding    = false,
-          timerTstamp = tstamp
-        )
-
-        (tpFx, mWcS)
-      }
-      i1 = i1.withWelcome( mWcSFutOpt.map(_._2) )
-
-      // Нужно отребилдить ScCss, но только если что-то реально изменилось.
-      val scCssArgs2 = MScCssArgs.from(i1.resp, v0.dev.screen.info)
-      if (scCssArgs2 != i1.scCss.args) {
-        // Изменились аргументы. Пора отребилдить ScCss.
-        i1 = i1.withScCss(
-          scCssFactory.mkScCss( scCssArgs2 )
-        )
-      }
-
-      // Объединить эффекты плитки и приветствия воедино:
-      for (mwc <- mWcSFutOpt)
-        fxsAcc ::= mwc._1
-
-      val v2 = v0.withIndex( i1 )
-      val fxOpt = fxsAcc.mergeEffects
-      (v2, fxOpt)
+      (tpFx, mWcS)
     }
+    i1 = i1.withWelcome( mWcSFutOpt.map(_._2) )
+
+    // Нужно отребилдить ScCss, но только если что-то реально изменилось.
+    val scCssArgs2 = MScCssArgs.from(i1.resp, mscreen)
+    if (scCssArgs2 != i1.scCss.args) {
+      // Изменились аргументы. Пора отребилдить ScCss.
+      i1 = i1.withScCss(
+        scCssFactory.mkScCss( scCssArgs2 )
+      )
+    }
+
+    // Объединить эффекты плитки и приветствия воедино:
+    for (mwc <- mWcSFutOpt)
+      fxsAcc ::= mwc._1
+
+    val fxOpt = fxsAcc.mergeEffects
+    ActionResult( Some(i1), fxOpt )
   }
 
 }
 
 
+/** diode-контроллер. */
 class IndexAh[M](
                   api           : IScUniApi,
                   modelRW       : ModelRW[M, MScIndex],
                   rootRO        : ModelRO[MScRoot],
+                  indexRah      : IndexRah,
                   scCssFactory  : ScCssFactory,
                 )
   extends ActionHandler( modelRW )
@@ -492,7 +514,22 @@ class IndexAh[M](
     // Клик по узлу в списке предлагаемых узлов:
     case m: NodeRowClick if value.state.switchAsk.nonEmpty =>
       val v0 = value
-      ???
+      // Надо сгенерить экшен переключения index'а в новое состояние. Все индексы включая выбранный уже есть в состоянии.
+      val actResOpt = for {
+        switchS <- v0.state.switchAsk
+        inx0    <- switchS.nodesResp.results
+          .find(_.props.nameOrIdOrEmpty ==* m.nodeId)
+      } yield {
+        indexRah.indexUpdated(
+          i0      = v0.withState(
+            v0.state.withSwitchAsk( None )
+          ),
+          inx     = inx0.props,
+          m       = switchS.okAction,
+          mscreen = rootRO.value.dev.screen.info,
+        )
+      }
+      ah.updatedFrom( actResOpt )
 
 
     // Кто-то затребовал перерендерить css-стили выдачи. Скорее всего, размеры экрана изменились.
@@ -568,6 +605,7 @@ class IndexAh[M](
 
 
     // Юзер подтверждает переход в новую локацию.
+      // TODO Эта кнопка актуальная, если несколько индексов?
     case ApproveIndexSwitch =>
       // Надо выпустить на свободу экшен внутри switch-состояния, обнулив switch-состояние.
       val v0 = value
@@ -589,11 +627,21 @@ class IndexAh[M](
     // Юзер не хочет уходить из текущего узла в новую определённую локацию.
     case CancelIndexSwitch =>
       val v0 = value
-      v0.state.switchAsk.fold(noChange) { _ =>
-        val v2 = v0.withState(
+      v0.state.switchAsk.fold(noChange) { switchS =>
+        val v1 = v0.withState(
           v0.state.withSwitchAsk( None )
         )
-        updated( v2 )
+        if (v0.resp.isEmpty) {
+          // Если нет открытого узла (выдача скрыта), то надо выбрать первый узел из списка.
+          val fx = NodeRowClick(
+            nodeId = switchS.nodesResp.results.head.props.nameOrIdOrEmpty
+          )
+            .toEffectPure
+          effectOnly(fx)
+        } else {
+          // Есть открытый узел. Просто скрыть диалог.
+          updated( v1 )
+        }
       }
 
   }

@@ -358,7 +358,7 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
     raType ==* MScRespActionTypes.SearchNodes
   }
 
-  override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect]) = {
+  override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): ActionResult[MScRoot] = {
     // Накатить результаты в состояние: помимо данных тегов, надо ещё и для карты маркеры подготовить.
     val g0 = ctx.value0.index.search.geo
 
@@ -434,7 +434,7 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
       SearchAh.mapResizeFx(lmap)
 
     val v2 = _withGeo(ctx, g2)
-    (v2, mapRszFxOpt)
+    ActionResult( Some(v2), mapRszFxOpt )
   }
 
 }

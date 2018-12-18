@@ -431,18 +431,23 @@ class TailAh[M](
                 // Resp-экшен не поддерживается системой. Такое возможно, только когда есть тип экшена, для которого забыли накодить RespActionHandler.
                 LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = ra )
                 acc0
-              } { case (v2, fxOpt) =>
+              } { actRes =>
                 acc0.copy(
-                  v1 = v2,
-                  fxAccRev = fxOpt.prependTo( acc0.fxAccRev )
+                  v1        = actRes.newModelOpt getOrElse acc0.v1,
+                  fxAccRev  = actRes.effectOpt prependTo acc0.fxAccRev
                 )
               }
           }
 
+          // Если value изменилась, то надо её обновлять:
+          val v9Opt = OptionUtil.maybe(acc9.v1 !===* value0)( acc9.v1 )
+
+          // Эффекты - объеденить:
           val fxOpt9 = acc9.fxAccRev
             .reverse
             .mergeEffects
-          ah.updatedMaybeEffect( acc9.v1, fxOpt9 )
+
+          ah.optionalResult( v9Opt, fxOpt9 )
         }
         // Вернуть Left или Right.
         .fold(identity, identity)

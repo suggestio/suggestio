@@ -182,7 +182,7 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
     raType ==* MScRespActionTypes.AdsTile
   }
 
-  override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect]) = {
+  override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): ActionResult[MScRoot] = {
     val gridResp = ra.ads.get
     val g0 = ctx.value0.grid
 
@@ -305,7 +305,7 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
 
     // И вернуть новый акк:
     val v2 = ctx.value0.withGrid(g2)
-    (v2, scrollFxOpt)
+    ActionResult(Some(v2), scrollFxOpt)
   }
 
 }
@@ -347,15 +347,15 @@ class GridFocusRespHandler( jdCssFactory: JdCssFactory )
     raType ==* MScRespActionTypes.AdsFoc
   }
 
-  override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect]) = {
+  override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): ActionResult[MScRoot] = {
     val focQs = ctx.m.qs.foc.get
     val nodeId = focQs.lookupAdId
     val g0 = ctx.value0.grid
     GridAh
       .findAd(nodeId, g0.core)
-      .fold {
+      .fold [ActionResult[MScRoot]] {
         LOG.warn(ErrorMsgs.FOC_LOOKUP_MISSING_AD, msg = focQs)
-        ctx.value0 -> Option.empty[Effect]
+        ActionResult.NoChange //ModelUpdate( ctx.value0 )
 
       } { case (ad0, index) =>
         val focResp = ra.ads.get
@@ -403,7 +403,7 @@ class GridFocusRespHandler( jdCssFactory: JdCssFactory )
 
         val v2 = ctx.value0.withGrid( g2 )
         val fxOpt = Some(scrollFx + resetRouteFx)
-        (v2, fxOpt)
+        ActionResult(Some(v2), fxOpt)
       }
   }
 

@@ -23,7 +23,7 @@ import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
 import io.suggest.sc.c.grid.GridAh
-import io.suggest.sc.c.inx.{IndexAh, WelcomeAh}
+import io.suggest.sc.c.inx.{IndexAh, IndexRah, WelcomeAh}
 import io.suggest.sc.c.search._
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.m._
@@ -61,6 +61,7 @@ class Sc3Circuit(
                   getRouterCtlF             : GetRouterCtlF,
                   scRespHandlers            : Seq[IRespHandler],
                   scRespActionHandlers      : Seq[IRespActionHandler],
+                  indexRah                  : IndexRah,
                 )
   extends CircuitLog[MScRoot]
   with ReactConnector[MScRoot]
@@ -290,7 +291,8 @@ class Sc3Circuit(
     api     = api,
     modelRW = indexRW,
     rootRO  = rootRW,
-    scCssFactory = scCssFactory
+    scCssFactory = scCssFactory,
+    indexRah     = indexRah,
   )
 
   private val mapAhs = {

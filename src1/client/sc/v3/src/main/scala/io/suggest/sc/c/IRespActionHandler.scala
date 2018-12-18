@@ -1,6 +1,6 @@
 package io.suggest.sc.c
 
-import diode.Effect
+import diode.ActionResult
 import diode.data.Pot
 import io.suggest.sc.m.{HandleScApiResp, MScRoot}
 import io.suggest.sc.sc3.{MSc3RespAction, MScRespActionType}
@@ -56,7 +56,7 @@ trait IRespActionHandler {
     * @param ctx Контекст с начальным значением состояния.
     * @return Обновлённое состояние + опциональный сайд-эффект.
     */
-  def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect])
+  def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): ActionResult[MScRoot]
 
 }
 

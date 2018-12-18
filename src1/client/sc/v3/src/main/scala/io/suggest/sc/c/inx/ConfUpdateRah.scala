@@ -1,6 +1,6 @@
 package io.suggest.sc.c.inx
 
-import diode.Effect
+import diode.ActionResult
 import io.suggest.sc.c.{IRespActionHandler, MRhCtx}
 import io.suggest.sc.m.MScRoot
 import io.suggest.sc.sc3.{MSc3Conf, MSc3RespAction, MScRespActionType, MScRespActionTypes}
@@ -25,7 +25,7 @@ class ConfUpdateRah
   }
 
 
-  override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): (MScRoot, Option[Effect]) = {
+  override def applyRespAction(ra: MSc3RespAction, ctx: MRhCtx): ActionResult[MScRoot] = {
     val action = ra.confUpdate.get
     val v0 = ctx.value0
     val conf0 = v0.internals.conf
@@ -42,7 +42,7 @@ class ConfUpdateRah
 
     // Если конфиг изменился, и у нас тут постоянная установка, то надо сохранить новый конфиг в состояние.
     if (conf0 ===* conf2) {
-      (v0, None)
+      ActionResult.ModelUpdate(v0)
 
     } else {
       // Конфиг изменился. Залить новый конфиг в состояние, запустить обновление и сохранение конфига, если необходимо.
@@ -59,7 +59,7 @@ class ConfUpdateRah
 
       // TODO Что с эффектом перезагрузки карты или иными возможными эффектами?
 
-      (v2, None)
+      ActionResult.ModelUpdate(v2)
     }
   }
 

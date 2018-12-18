@@ -92,6 +92,11 @@ object DiodeUtil {
         else ah.updated(v2, fx)
       }
 
+      def updatedFrom( actRes: ActionResult[T]): ActionResult[M] =
+        optionalResult( actRes.newModelOpt, actRes.effectOpt )
+      def updatedFrom( actResOpt: Option[ActionResult[T]]): ActionResult[M] =
+        actResOpt.fold( ah.noChange )( updatedFrom )
+
       def optionalResult(v2Opt: Option[T] = None, fxOpt: Option[Effect] = None): ActionResult[M] = {
         (v2Opt, fxOpt) match {
           case (Some(v2), Some(fx)) => ah.updated(v2, fx)
