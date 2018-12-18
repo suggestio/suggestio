@@ -27,8 +27,6 @@ lazy val common = crossProject(JSPlatform, JVMPlatform)
       // Сериализация:
       // Быстрая-компактная-ломучая бинарщина boopickle, которую надо удалить в пользу play-json.
       "io.suzaku"    %%% "boopickle"   % Common.boopickleVsn,
-      // Play-json стал кросс-платформенным, ура.
-      //"org.julienrf" %%% "play-json-derived-codecs" % "4.0.0",
       "com.typesafe.play" %%% "play-json" % Common.Vsn.PLAY_JSON_VSN,
       // Вместо scala.Enumeration используем сие:
       "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,
