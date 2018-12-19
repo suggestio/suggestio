@@ -7,7 +7,7 @@ import io.suggest.jd.MJdAdData
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses}
 import io.suggest.mbill2.m.txn.MTxnPriced
-import io.suggest.primo.id.{IId, OptId}
+import io.suggest.primo.id.OptId
 import io.suggest.sc.index.MSc3IndexResp
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._

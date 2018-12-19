@@ -493,10 +493,9 @@ class ScRootR (
         }( OptFastEq.Plain ),
 
         hdrProgressC = propsProxy.connect { mroot =>
-          val r = mroot.index.resp.isPending || {
-            val ads = mroot.grid.core.ads
-            ads.isPending && ads.isEmpty
-          }
+          val r =
+            mroot.index.resp.isPending ||
+            mroot.grid.core.adsHasPending
           Some(r)
         }( OptFastEq.OptValueEq ),
 

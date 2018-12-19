@@ -101,6 +101,13 @@ case class MGridCoreS(
       }
   }
 
+  /** Происходит ли сейчас загрузка какой-либо карточки? */
+  lazy val _adsHasPending: Boolean =
+    ads.iterator.flatten.exists(_.focused.isPending)
+
+  /** Происходит ли сейчас загрузка какой-либо карточки или карточек? */
+  def adsHasPending: Boolean =
+    ads.isPending || _adsHasPending
 
   def adsGridBlocksIter: Iterator[IGbBlockPayload] =
     MGridCoreS.ads2gridBlocks( ads.iterator.flatten )

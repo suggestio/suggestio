@@ -37,7 +37,7 @@ object ScSwMain {
     }
 
     // Обновлять корневую страницу в фоне.
-    SwToolBox.router.any("/", SwToolBox.fastest)
+    SwToolBox.router.any("/", SwToolBox.networkFirst)
 
     // API-вызовы кэшировать, но делать.
     // TODO Разобраться, что и как кэшировать и использовать.
