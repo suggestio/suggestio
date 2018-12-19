@@ -278,12 +278,16 @@ class CdnUtil @Inject() (
         storages2hostsMap <- iMediaStorages.getStoragesHosts( medias.map(_.storage).toSet )
       } yield {
         LOGGER.trace(s"mediaHosts(${medias.size} medias): Done\n mediaIds = ${medias.iterator.map(_.idOrNull).mkString(", ")}\n storages = ${storages2hostsMap.keys.mkString(", ")}")
-        medias
-          .iterator
-          .map { media =>
-            media.id.get -> storages2hostsMap(media.storage)
-          }
-          .toMap
+        val iter = for {
+          media <- medias.iterator
+          key   <- media.id
+          value <- storages2hostsMap.get(media.storage)
+          // Нет необходимости возвращать пустой набор данных:
+          if value.nonEmpty
+        } yield {
+          key -> value
+        }
+        iter.toMap
       }
     }
   }

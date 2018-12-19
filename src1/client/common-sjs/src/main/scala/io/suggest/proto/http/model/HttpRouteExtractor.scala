@@ -1,6 +1,7 @@
 package io.suggest.proto.http.model
 
 import io.suggest.proto.http.HttpConst
+import io.suggest.text.UrlUtil2
 
 /**
   * Suggest.io
@@ -36,7 +37,7 @@ case class HttpRoute(
                     ) {
 
   private def _absUrl(proto: String, secure: Boolean): String = {
-    HttpRoute.mkAbsUrl(
+    UrlUtil2.mkAbsUrl(
       protoPrefix = proto,
       secure = secure,
       relUrl = url
@@ -49,23 +50,6 @@ case class HttpRoute(
 
   def webSocketUrl(secure: Boolean): String = {
     _absUrl( HttpConst.Proto.WS, secure)
-  }
-
-}
-
-object HttpRoute {
-
-  /** Метод сборки абсолютной ссылки. */
-  def mkAbsUrl(protoPrefix: String, secure: Boolean, relUrl: String): String = {
-    // TODO Добавить поддержку уже абсолютных URL в relUrl?
-    assert(
-      relUrl.startsWith( HttpConst.Proto.CURR_PROTO ),
-      protoPrefix + ", " + secure + ", " + relUrl
-    )
-    protoPrefix +
-      (if(secure) HttpConst.Proto.SECURE_SUFFIX else "") +
-      HttpConst.Proto.COLON +
-      relUrl
   }
 
 }

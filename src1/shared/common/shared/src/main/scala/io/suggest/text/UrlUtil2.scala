@@ -2,6 +2,8 @@ package io.suggest.text
 
 import java.net.URI
 
+import io.suggest.common.html.HtmlConstants
+import io.suggest.proto.http.HttpConst
 import scalaz.{Validation, ValidationNel}
 
 /**
@@ -53,6 +55,27 @@ object UrlUtil2 {
       .filter(nonEmptyF)
       .map(_.replaceFirst("^[#!?]+", ""))
       .filter(nonEmptyF)
+  }
+
+
+  /** Метод сборки абсолютной ссылки. */
+  def mkAbsUrl(protoPrefix: String, secure: Boolean, relUrl: String): String = {
+    val H = HttpConst.Proto
+    if (relUrl.matches(s"^${H.HTTP}${H.SECURE_SUFFIX}?${H.DELIM}")) {
+      // Уже абсолютная ссылка
+      relUrl
+    } else if (relUrl startsWith HttpConst.Proto.CURR_PROTO) {
+      protoPrefix +
+        (if(secure) HttpConst.Proto.SECURE_SUFFIX else "") +
+        HttpConst.Proto.COLON +
+        relUrl
+    //} else if (relUrl startsWith HtmlConstants.SLASH) {
+    // TODO Ссылка относительно корня сайта (/...). А что считать хостом и дефолтовым протоколом? Это должен бы js-роутер определять.
+    } else {
+      // Какая-то недоссылка. В норме сюда выполнение заходить не должно никогда.
+      val d = HtmlConstants.COMMA + HtmlConstants.SPACE
+      throw new IllegalArgumentException(protoPrefix + d + secure + d + relUrl)
+    }
   }
 
 }

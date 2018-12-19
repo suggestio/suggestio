@@ -4,9 +4,10 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.client.adp.fetch.FetchAdp
 import io.suggest.proto.http.client.adp.xhr.XhrAdp
-import io.suggest.proto.http.model.{HttpRoute, HttpRouteExtractor}
+import io.suggest.proto.http.model.HttpRouteExtractor
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
+import io.suggest.text.UrlUtil2
 import org.scalajs.dom
 
 import scala.scalajs.js
@@ -63,7 +64,7 @@ object HttpClient extends Log {
     val isSecure = true
 
     url0: String =>
-      HttpRoute.mkAbsUrl( protoPrefix = httpProto, secure = isSecure, relUrl = url0 )
+      UrlUtil2.mkAbsUrl( protoPrefix = httpProto, secure = isSecure, relUrl = url0 )
 
   } else {
     // Причёсывать ссылки не требуется. Просто используем исходные ссылки.

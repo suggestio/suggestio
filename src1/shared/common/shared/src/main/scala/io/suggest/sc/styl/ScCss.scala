@@ -612,7 +612,6 @@ case class ScCss( args: IScCssArgs )
 
           val left = ScCssStatic._styleAddClass( __ + MsgCodes.`left` )
           val right = ScCssStatic._styleAddClass( __ + MsgCodes.`right` )
-          def allSides = left :: right :: Nil
         }
 
       }
