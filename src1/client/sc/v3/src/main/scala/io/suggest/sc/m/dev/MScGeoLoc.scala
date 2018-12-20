@@ -5,6 +5,7 @@ import diode.data.Pot
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.geo.{GeoLocType, MGeoLoc}
 import io.suggest.sc.m.inx.MScSwitchCtx
+import io.suggest.sjs.dom.GeoLocWatchId_t
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import io.suggest.ueq.JsUnivEqUtil._
@@ -100,7 +101,7 @@ case class MGeoLocSwitchS(
   *                Тут можно хранить ошибки позиционирования тоже.
   */
 case class MGeoLocWatcher(
-                           watchId    : Option[Int],
+                           watchId    : Option[GeoLocWatchId_t],
                            lastPos    : Pot[MGeoLoc]   = Pot.empty
                          )
   extends EmptyProduct

@@ -2,7 +2,7 @@ package io.suggest.geo
 
 import boopickle.Default._
 import diode.FastEq
-import io.suggest.common.geom.coord.GeoCoord_t
+import io.suggest.common.geom.coord.{GeoCoord_t, ICoord2dHelper}
 import io.suggest.common.html.HtmlConstants.{SPACE, `(`, `)`}
 import io.suggest.geo.GeoConstants.Qs
 import io.suggest.math.MathConst
@@ -205,6 +205,13 @@ object MGeoPoint {
     override def eqv(a: MGeoPoint, b: MGeoPoint): Boolean = {
       a ~= b
     }
+  }
+
+  /** Адаптер-typeclass для поддержки статических операций в CoordOps. */
+  implicit object GeoPointCoord2dHelper extends ICoord2dHelper[MGeoPoint, GeoCoord_t] {
+    // lat -> Y, lon -> X согласно требованиям математики.
+    override def getX(mgp: MGeoPoint): GeoCoord_t = mgp.lon
+    override def getY(mgp: MGeoPoint): GeoCoord_t = mgp.lat
   }
 
 }

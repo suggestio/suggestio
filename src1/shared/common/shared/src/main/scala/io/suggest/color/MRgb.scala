@@ -1,6 +1,6 @@
 package io.suggest.color
 
-import io.suggest.common.geom.coord.MCoords3d
+import io.suggest.common.geom.coord.ICoord3dHelper
 import io.suggest.common.html.HtmlConstants
 import io.suggest.err.ErrorConstants
 import japgolly.univeq.UnivEq
@@ -19,14 +19,16 @@ import io.suggest.ueq.UnivEqUtil._
   */
 
 /** Цвет-точка в 3-мерном пространстве цветов RGB. */
-case class MRgb(red: Int, green: Int, blue: Int, alpha: Option[Double] = None) {
-
-  def toCoord3d = MCoords3d(x = red, y = green, z = blue)
-
-}
+case class MRgb(red: Int, green: Int, blue: Int, alpha: Option[Double] = None)
 
 
 object MRgb {
+
+  implicit object RgbCoord3dHelper extends ICoord3dHelper[MRgb, Int] {
+    override def getX(rgb: MRgb): Int = rgb.red
+    override def getY(rgb: MRgb): Int = rgb.green
+    override def getZ(rgb: MRgb): Int = rgb.blue
+  }
 
   object Fields {
     val RED_FN    = "r"

@@ -9,6 +9,7 @@ import io.suggest.dev.MScreenInfo
 import io.suggest.font.MFonts
 import io.suggest.i18n.MsgCodes
 import io.suggest.sc.ScConstants
+import io.suggest.math.SimpleArithmetics._
 import japgolly.univeq.UnivEq
 import Css.__
 import Css.Lk.{_SM_PREFIX_ => _SM_}

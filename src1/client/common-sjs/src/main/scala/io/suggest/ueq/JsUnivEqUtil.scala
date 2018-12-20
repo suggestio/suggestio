@@ -31,4 +31,6 @@ object JsUnivEqUtil {
 
   @inline implicit def ajaxInputDataUe  : UnivEq[Ajax.InputData]    = UnivEq.force
 
+  @inline implicit def jsAnyUe          : UnivEq[js.Any]            = UnivEq.force
+
 }

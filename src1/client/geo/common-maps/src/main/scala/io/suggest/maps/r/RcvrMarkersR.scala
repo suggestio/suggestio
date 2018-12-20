@@ -29,6 +29,7 @@ import react.leaflet.circle.{CirclePropsR, CircleR}
 import react.leaflet.layer.LayerGroupR
 import react.leaflet.marker.cluster.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
 import react.leaflet.poly.{PolygonPropsR, PolygonR}
+import io.suggest.math.SimpleArithmetics._
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._

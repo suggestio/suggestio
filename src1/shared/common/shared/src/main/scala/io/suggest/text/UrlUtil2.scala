@@ -48,9 +48,7 @@ object UrlUtil2 {
 
   /** Выбрасывание из URL-хвоста лишнего префикса и прочего. */
   def clearUrlHash(urlHash: String): Option[String] = {
-    val nonEmptyF = { s: String =>
-      s.nonEmpty
-    }
+    def nonEmptyF(s: String) = s.nonEmpty
     Option(urlHash)
       .filter(nonEmptyF)
       .map(_.replaceFirst("^[#!?]+", ""))
@@ -60,21 +58,18 @@ object UrlUtil2 {
 
   /** Метод сборки абсолютной ссылки. */
   def mkAbsUrl(protoPrefix: String, secure: Boolean, relUrl: String): String = {
-    val H = HttpConst.Proto
-    if (relUrl.matches(s"^${H.HTTP}${H.SECURE_SUFFIX}?${H.DELIM}")) {
-      // Уже абсолютная ссылка
-      relUrl
-    } else if (relUrl startsWith HttpConst.Proto.CURR_PROTO) {
+    if (relUrl startsWith HttpConst.Proto.CURR_PROTO) {
       protoPrefix +
         (if(secure) HttpConst.Proto.SECURE_SUFFIX else "") +
         HttpConst.Proto.COLON +
         relUrl
     //} else if (relUrl startsWith HtmlConstants.SLASH) {
-    // TODO Ссылка относительно корня сайта (/...). А что считать хостом и дефолтовым протоколом? Это должен бы js-роутер определять.
     } else {
-      // Какая-то недоссылка. В норме сюда выполнение заходить не должно никогда.
-      val d = HtmlConstants.COMMA + HtmlConstants.SPACE
-      throw new IllegalArgumentException(protoPrefix + d + secure + d + relUrl)
+      // Уже абсолютная ссылка или что-то ещё. В любом случае, вернуть наверх.
+      // TODO Ссылка относительно корня сайта (/...). А что считать хостом и дефолтовым протоколом? Это должен бы js-роутер определять.
+      relUrl
+      //val d = HtmlConstants.COMMA + HtmlConstants.SPACE
+      //throw new IllegalArgumentException(protoPrefix + d + secure + d + relUrl)
     }
   }
 

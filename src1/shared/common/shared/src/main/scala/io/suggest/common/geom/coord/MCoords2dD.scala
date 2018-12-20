@@ -1,6 +1,6 @@
 package io.suggest.common.geom.coord
 
-import io.suggest.math.{DoubleMathModifiers, IBinaryMathOp}
+import io.suggest.math.SimpleArithmetics
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -15,32 +15,34 @@ import play.api.libs.functional.syntax._
 object MCoords2dD {
 
   /** Поддержка JSON для экземпляров модели черех play-json. */
-  implicit val MCOORD_2DD_FORMAT: OFormat[MCoords2dD] = (
-    (__ \ ICoord.X_FN).format[Double] and
-    (__ \ ICoord.Y_FN).format[Double]
-  )(apply, unlift(unapply))
+  implicit val MCOORD_2DD_FORMAT: OFormat[MCoords2dD] = {
+    val F = MCoords2di.Fields
+    (
+      (__ \ F.X_FN).format[Double] and
+      (__ \ F.Y_FN).format[Double]
+    )(apply, unlift(unapply))
+  }
 
 
   @inline implicit def univEq: UnivEq[MCoords2di] = UnivEq.derive
+
+  implicit object MCoords2dDSimpleArithmeticHelper extends SimpleArithmetics[MCoords2dD, Double] {
+    override def applyMathOp(v: MCoords2dD)(op: Double => Double): MCoords2dD = {
+      v.copy(
+        x = op(v.x),
+        y = op(v.y)
+      )
+    }
+  }
 
 }
 
 
 /** Двумерные double-координаты. */
 case class MCoords2dD(
-                       override val x: Double,
-                       override val y: Double,
-                     )
-  extends ICoord2d[Double]
-  with DoubleMathModifiers[MCoords2dD]
-{
-
-  override protected[this] def applyMathOp(op: IBinaryMathOp[Double], arg2: Double): MCoords2dD = {
-    copy(
-      x = op(x, arg2),
-      y = op(y, arg2)
-    )
-  }
+                       x: Double,
+                       y: Double,
+                     ) {
 
   def toInt: MCoords2di = {
     MCoords2di(

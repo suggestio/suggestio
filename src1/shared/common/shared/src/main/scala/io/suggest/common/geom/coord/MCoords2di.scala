@@ -1,7 +1,7 @@
 package io.suggest.common.geom.coord
 
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.math.{IBinaryMathOp, IntMathModifiers}
+import io.suggest.math.SimpleArithmetics
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -15,28 +15,27 @@ import play.api.libs.json._
 
 object MCoords2di {
 
+  object Fields {
+    val X_FN = "x"
+    val Y_FN = "y"
+  }
+
   /** Поддержка JSON для экземпляров модели черех play-json. */
   implicit val MCOORD_2DI_FORMAT: OFormat[MCoords2di] = (
-    (__ \ ICoord.X_FN).format[Int] and
-    (__ \ ICoord.Y_FN).format[Int]
+    (__ \ Fields.X_FN).format[Int] and
+    (__ \ Fields.Y_FN).format[Int]
   )(apply, unlift(unapply))
 
 
   @inline implicit def univEq: UnivEq[MCoords2di] = UnivEq.derive
 
-
-  object Implicits {
-
-    /** Поддержка сортировки с приоритетом на X. */
-    implicit def xyOrdering: Ordering[MCoords2di] = {
-      Ordering.by { t: MCoords2di => t.tuple2 }
+  implicit object MCoords2diSimpleArithmeticHelper extends SimpleArithmetics[MCoords2di, Int] {
+    override def applyMathOp(v: MCoords2di)(op: Int => Int): MCoords2di = {
+      v.copy(
+        x = op(v.x),
+        y = op(v.y)
+      )
     }
-
-    /** Поддержка сортировки с приоритетом на Y. */
-    implicit def yxOrdering: Ordering[MCoords2di] = {
-      Ordering.by { t: MCoords2di => t.tuple2swap }
-    }
-
   }
 
 }
@@ -48,19 +47,9 @@ object MCoords2di {
   * @param y Вертикальная координата.
   */
 case class MCoords2di(
-                      override val x: Int,
-                      override val y: Int
-                    )
-  extends ICoord2d[Int]
-  with IntMathModifiers[MCoords2di]
-{
-
-  override protected[this] def applyMathOp(op: IBinaryMathOp[Int], arg2: Int): MCoords2di = {
-    copy(
-      x = op(x, arg2),
-      y = op(y, arg2)
-    )
-  }
+                      x: Int,
+                      y: Int
+                    ) {
 
   def toDouble: MCoords2dD = {
     MCoords2dD(

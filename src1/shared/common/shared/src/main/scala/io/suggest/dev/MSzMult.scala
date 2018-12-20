@@ -1,7 +1,7 @@
 package io.suggest.dev
 
 import io.suggest.common.html.HtmlConstants
-import io.suggest.math.{IBinaryMathOp, IntMathModifiers}
+import io.suggest.math.SimpleArithmetics
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -33,6 +33,15 @@ object MSzMult {
     apply( pct )
   }
 
+
+  implicit object MSzMultSimpleArithmeticHelper extends SimpleArithmetics[MSzMult, Int] {
+    override def applyMathOp(v: MSzMult)(op: Int => Int): MSzMult = {
+      v.withMultPc(
+        multPc = op( v.multBody )
+      )
+    }
+  }
+
 }
 
 
@@ -41,9 +50,7 @@ object MSzMult {
   * @param multBody Размер в целочисленных долях от исходного.
   *                 Изначально, тут были проценты.
   */
-case class MSzMult(multBody: Int)
-  extends IntMathModifiers[MSzMult]
-{
+case class MSzMult(multBody: Int) {
 
   def toIntPct = Math.round(toDouble * PERCENTS_COUNT)
 
@@ -59,12 +66,6 @@ case class MSzMult(multBody: Int)
   override def toString = multBody + HtmlConstants.SLASH + MSzMult.SZ_MULT_MOD
 
   def withMultPc(multPc: Int) = copy(multBody = multPc)
-
-  override protected[this] def applyMathOp(op: IBinaryMathOp[Int], arg2: Int): MSzMult = {
-    withMultPc(
-      op(multBody, arg2)
-    )
-  }
 
 }
 

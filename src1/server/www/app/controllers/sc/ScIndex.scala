@@ -5,6 +5,7 @@ import io.suggest.adn.MAdnRights
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
+import io.suggest.common.geom.coord.{CoordOps, GeoCoord_t}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.IMust
 import io.suggest.es.search.MSubSearch
@@ -457,11 +458,12 @@ trait ScIndex
         val mgpOpt = OptionUtil.maybeOpt( isRcvr ) {
           // Если нет географии, то поискать центр для найденного узла.
           // Для нормальных узлов (не районов) следует возвращать клиенту их координату.
-          def nodeLocEdges =
-            mnode.edges
-              .withPredicateIter( MPredicates.NodeLocation )
+          val nodeLocEdges = mnode.edges
+            .withPredicateIter( MPredicates.NodeLocation )
+            .toStream
 
-          val iterCenters = nodeLocEdges
+          // Ленивая коллекция гео-точек для NodeLocation-эджей
+          val edgesPoints = nodeLocEdges
             .flatMap { medge =>
               medge.info
                 .geoPoints
@@ -472,18 +474,39 @@ trait ScIndex
                     .flatMap { gs =>
                       gs.shape.centerPoint
                     }
-                    .toStream
+                    .buffered
                     .headOption
                 }
             }
 
-          val iterFirstPoints = nodeLocEdges
-            .flatMap(_.info.geoShapes)
-            .map(_.shape.firstPoint)
-
-          val r = (iterCenters ++ iterFirstPoints)
-            .toStream
-            .headOption
+          // Надо вернуть
+          // - Ближайшую к текущей локации точку, чтобы избежать ситуации.
+          // - либо первую центральную точку,
+          // - либо первую попавшующся точку вообще.
+          val r = _qs.common.locEnv.geoLocOpt
+            // Если есть хотя бы 2 точки, то надо выбирать ближайшую.
+            .filter { _ => edgesPoints.lengthCompare(1) > 0 }
+            .map { geoLoc =>
+              // Есть геолокация. Найти ближайшую точку среди имеющихся.
+              edgesPoints.minBy { centerPoint =>
+                CoordOps.distanceXY[MGeoPoint, GeoCoord_t]( centerPoint, geoLoc.point )
+                  .abs
+                  .doubleValue()
+              }
+            }
+            // Нет геолокации - ищем первую попавщуюся центральную точку:
+            .orElse {
+              edgesPoints.headOption
+            }
+            // Нет центральных точек - взять первую попавшуюся из любого шейпа.
+            .orElse {
+              nodeLocEdges
+                .iterator
+                .flatMap(_.info.geoShapes)
+                .map(_.shape.firstPoint)
+                .buffered
+                .headOption
+            }
 
           LOGGER.trace(s"$logPrefix Node#${mnode.id} geo pt. => $r")
           r

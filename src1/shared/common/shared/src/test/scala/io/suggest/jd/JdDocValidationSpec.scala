@@ -6,6 +6,7 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.MPredicates
+import io.suggest.math.SimpleArithmetics._
 import minitest._
 
 import scalaz.Tree

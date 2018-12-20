@@ -1,6 +1,6 @@
 package io.suggest.common.geom.d2
 
-import io.suggest.math.{IBinaryMathOp, IntMathModifiers}
+import io.suggest.math.SimpleArithmetics
 import io.suggest.media.MediaConst
 import japgolly.univeq.UnivEq
 
@@ -124,6 +124,16 @@ object MSize2di {
 
   def square(sidePx: Int) = apply(width = sidePx, height = sidePx)
 
+
+  implicit object MSize2diSimpleArithmeticHelper extends SimpleArithmetics[MSize2di, Int] {
+    override def applyMathOp(v: MSize2di)(op: Int => Int): MSize2di = {
+      v.copy(
+        width   = op(v.width),
+        height  = op(v.height)
+      )
+    }
+  }
+
 }
 
 /** Дефолтовая реализация [[ISize2di]]. */
@@ -132,16 +142,7 @@ final case class MSize2di(
                           override val height : Int
                         )
   extends ISize2di
-  with IntMathModifiers[MSize2di]
 {
-
-  /** Модифицировать ширину и длину одной математической операцией. */
-  override protected[this] def applyMathOp(op: IBinaryMathOp[Int], arg2: Int): MSize2di = {
-    copy(
-      width   = op(width, arg2),
-      height  = op(height, arg2)
-    )
-  }
 
   def withWidth(width: Int)   = copy( width = width )
   def withHeight(height: Int) = copy( height = height )

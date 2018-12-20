@@ -4,6 +4,7 @@ import java.io.File
 
 import functional.OneAppPerSuiteNoGlobalStart
 import io.suggest.color.MRgb
+import io.suggest.common.geom.coord.CoordOps
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.scalatestplus.play._
 import play.api.test.Helpers._
@@ -48,10 +49,9 @@ class MainColorDetectorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
       val detectResult = await(detectResultFut)
       detectResult.nonEmpty  mustBe  true
       val dmchRgb = detectResult.get.rgb.get
-      val dmchRgbXyz = dmchRgb.toCoord3d
       for (mch <- mainColorsHex) {
         val mchRgb = MRgb.hex2rgb(mch)
-        val distance = dmchRgbXyz distance3dTo mchRgb.toCoord3d
+        val distance = CoordOps.distanceXYZ[MRgb, Int]( dmchRgb, mchRgb )
         distance mustBe <= (maxColorDistance)
       }
     }

@@ -7,41 +7,69 @@ package io.suggest.common.geom.coord
  * Description: TypeClass'ы для операций над координатами.
  */
 
-trait ICoord1dOps[V, T <: ICoord1d[V]] {
-  /** Растояние по X. */
-  def deltaX(p1: T, p2: T): V
-}
-
-/** Интерфейс typeclass'а для двумерных координат. */
-trait ICoord2dOps[V, T <: ICoord2d[V]] {
-  /** Расстояние между точками. */
-  def distance(p1: T, p2: T): V
-  /** Расстояние по Y. */
-  def deltaY(p1: T, p2: T): V
-}
-
 object CoordOps {
 
-  sealed class Coord1dDOpsImpl extends ICoord1dOps[Double, ICoord1d[Double]] {
-    override def deltaX(p1: ICoord1d[Double], p2: ICoord1d[Double]): Double = {
-      p1.x - p2.x
-    }
+  def deltaX[T, Coord_t](a: T, b: T)(implicit helper: ICoord1dHelper[T, Coord_t], maths: Numeric[Coord_t]): Coord_t = {
+    import maths._
+    helper.getX(a) - helper.getX(b)
   }
 
-  /** typeclass для операций над одномерными Double координатами. */
-  implicit lazy val coord1dDoubleOps = new Coord1dDOpsImpl
-
-  /** typeclass для операций над 2-мерными Double координатами. */
-  implicit lazy val coord2dDoubleOps = new Coord1dDOpsImpl with ICoord2dOps[Double, ICoord2d[Double]] {
-
-    override def distance(p1: ICoord2d[Double], p2: ICoord2d[Double]): Double = {
-      // Теорема пифагора.
-      Math.sqrt( Math.pow(deltaX(p2, p1), 2.0)  +  Math.pow(deltaY(p2, p1), 2.0) )
-    }
-
-    override def deltaY(p1: ICoord2d[Double], p2: ICoord2d[Double]): Double = {
-      p1.y - p2.y
-    }
+  def deltaY[T, Coord_t](a: T, b: T)(implicit helper: ICoord2dHelper[T, Coord_t], maths: Numeric[Coord_t]): Coord_t = {
+    import maths._
+    helper.getY(a) - helper.getY(b)
   }
 
+  def deltaZ[T, Coord_t](a: T, b: T)(implicit helper: ICoord3dHelper[T, Coord_t], maths: Numeric[Coord_t]): Coord_t = {
+    import maths._
+    helper.getZ(a) - helper.getZ(b)
+  }
+
+  /** Возведение в квадрат разницы между двумя координатами. */
+  def deltaPow2[T, Coord_t](a: T, b: T)(f: T => Coord_t)
+                           (implicit maths: Numeric[Coord_t]): Coord_t = {
+    import maths._
+    val p = f(a) - f(b)
+    p * p
+  }
+
+  /** Абстрактный рассчёт расстояния между двумя точками в двумерном пространстве. */
+  def distanceXY[T, Coord_t](a: T, b: T)
+                            (implicit helper: ICoord2dHelper[T, Coord_t],
+                                      maths: Numeric[Coord_t]): Double = {
+    import maths._
+    val dp2 = deltaPow2[T, Coord_t](a, b) _
+    val v2 =
+      dp2(helper.getX) +
+      dp2(helper.getY)
+
+    math.sqrt( v2.toDouble() )
+  }
+
+
+  /** Расстояние между точками в трёхмерном пространстве. */
+  def distanceXYZ[T, Coord_t](a: T, b: T)
+                             (implicit helper: ICoord3dHelper[T, Coord_t], maths: Numeric[Coord_t]): Double = {
+    // Теорема пифагора по трём осям:
+    import maths._
+    val dp2 = deltaPow2[T, Coord_t](a, b) _
+    val v2 =
+      dp2(helper.getX) +
+      dp2(helper.getY) +
+      dp2(helper.getZ)
+
+    math.sqrt( v2.toDouble() )
+  }
+
+}
+
+/** Интерфейс typeclass'а для доступа к X-координате. */
+trait ICoord1dHelper[T, Coord_t] {
+  def getX(t: T): Coord_t
+}
+/** Интерфейс typeclass'а для доступа к Y-координате. */
+trait ICoord2dHelper[T, Coord_t] extends ICoord1dHelper[T, Coord_t] {
+  def getY(t: T): Coord_t
+}
+trait ICoord3dHelper[T, Coord_t] extends ICoord2dHelper[T, Coord_t] {
+  def getZ(t: T): Coord_t
 }

@@ -16,10 +16,7 @@ import scala.scalajs.js
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 20.05.15 11:14
-  * Description: Утиль для поддержки асинхронных запросов.
-  *
-  * 2016.dec.15: Низкоуровневый код работы с XMLHttpRequest удалён. Теперь просто вызывается scalajs.ext.Ajax().
-  * Тут остались только обёртки над штатным Ajax.
+  * Description: HTTP-клиент, .
   */
 object HttpClient extends Log {
 
@@ -76,7 +73,7 @@ object HttpClient extends Log {
   lazy val PREFER_SECURE_URLS: Boolean = {
     myHttpProto.fold(true) { proto =>
       // Обычно протокол описан как "http:" или "https:". Поэтому просто проверяем наличие буквы s в строке.
-      proto.contains("s")
+      proto contains HttpConst.Proto.SECURE_SUFFIX
     }
     //println("Xhr.secure = " + r)    // Нельзя тут LOG, иначе будет StackOverflowError во время инициализации RME-логгера.
   }

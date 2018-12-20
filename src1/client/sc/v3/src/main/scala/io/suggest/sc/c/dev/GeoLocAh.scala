@@ -10,14 +10,14 @@ import io.suggest.sc.m._
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.vm.wnd.WindowVm
-import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.dom._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
-import org.scalajs.dom.{Geolocation, Position, PositionError, PositionOptions}
+import org.scalajs.dom.{Geolocation, Position, PositionError}
 import io.suggest.spa.DiodeUtil.Implicits._
 
-import scala.scalajs.js
+import scala.concurrent.duration._
 
 /**
   * Suggest.io
@@ -40,20 +40,24 @@ class GeoLocAh[M](
   implicit class GeoLocTypesOps(val wTypes: TraversableOnce[GeoLocType]) {
 
     def startWatchers(glApi: Geolocation): Iterator[(GeoLocType, MGeoLocWatcher)] = {
+      // Время кэша, чтобы можно было задействовать старую геолокацию.
+      val maxAgeMs = 2.minutes.toMillis.toDouble
       wTypes
         .toIterator
         .flatMap { wtype =>
           try {
-            val posOpts = js.Dictionary.empty[js.Any]
-              .asInstanceOf[PositionOptions]
-            posOpts.enableHighAccuracy = wtype.highAccuracy
+            val posOpts = new PositionOptions {
+              override val enableHighAccuracy = wtype.highAccuracy
+              override val maximumAge         = maxAgeMs
+            }
 
             // Вешаем непрерывную слушалку событий геолокации.
-            val wid = glApi.watchPosition(
+            val wid = glApi.watchPosition2(
               { p: Position =>
                 val mgl = MGeoLocJs(p)
                 dispatcher( GlLocation(wtype, mgl) )
-              }, { pe: PositionError =>
+              },
+              { pe: PositionError =>
                 dispatcher( GlError(wtype, PositionException(pe)) )
               },
               posOpts
@@ -353,7 +357,7 @@ object GeoLocAh {
         glApi         <- _geoLocApiOpt.iterator
         (wtype, w1)   <- watchers.toIterator
         w2 = w1.watchId.fold(w1) { watchId =>
-          glApi.clearWatch(watchId)
+          glApi.clearWatch2(watchId)
           w1.copy(watchId = None)
         }
         // Если новый MglWatch пустой получился, то отбросить его.
