@@ -7,7 +7,9 @@ package io.suggest.common.geom
   */
 package object coord {
 
-  /** Тип значеия гео-координаты: lat, lon. */
+  /** Тип значения гео-координаты: lat, lon.
+    * Double не подходит, т.к. необходимо управлять точностью.
+    */
   type GeoCoord_t = BigDecimal
 
 }

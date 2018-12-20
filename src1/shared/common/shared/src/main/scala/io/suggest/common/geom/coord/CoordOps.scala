@@ -25,8 +25,8 @@ object CoordOps {
   }
 
   /** Возведение в квадрат разницы между двумя координатами. */
-  def deltaPow2[T, Coord_t](a: T, b: T)(f: T => Coord_t)
-                           (implicit maths: Numeric[Coord_t]): Coord_t = {
+  private def deltaPow2[T, Coord_t](a: T, b: T)(f: T => Coord_t)
+                                   (implicit maths: Numeric[Coord_t]): Coord_t = {
     import maths._
     val p = f(a) - f(b)
     p * p

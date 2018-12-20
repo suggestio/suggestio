@@ -66,10 +66,14 @@ class NodeFoundR {
   class Backend($: BackendScope[Props, Props_t]) {
 
     /** Реакция на клик по одному элементу (ряд-узел). */
-    private def _onNodeRowClick(nodeId: String)(e: ReactEvent): Callback =
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, NodeRowClick(nodeId))
-    private def _onNodeRowClickJsF(nodeId: String) =
-      ReactCommonUtil.cbFun1ToJsCb( _onNodeRowClick(nodeId) )
+    private def _onNodeRowClick(e: ReactEvent): Callback = {
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { propsProxy: Props =>
+        NodeRowClick(
+          nodeId = propsProxy.value.node.props.idOrNameOrEmpty
+        )
+      }
+    }
+    private val _onNodeRowClickJsF = ReactCommonUtil.cbFun1ToJsCb( _onNodeRowClick )
 
     /** Рендер вёрстки компонента. */
     def render(propsProxy: Props): VdomElement = {
@@ -134,7 +138,7 @@ class NodeFoundR {
         new MuiListItemProps {
           override val classes = listItemCss
           override val button = true
-          override val onClick = _onNodeRowClickJsF( nodeId )
+          override val onClick = _onNodeRowClickJsF
           override val selected = props.selected
           override val dense = !isTag
           override val disableGutters = true
