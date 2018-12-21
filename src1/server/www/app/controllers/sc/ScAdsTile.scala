@@ -158,10 +158,6 @@ trait ScAdsTile
         mads2.zipWithIndex
       }
 
-      // Получаем синхронные данные
-      //val devScreenOpt = ctx.deviceScreenOpt
-      //val _szMult = szMult
-
       // Продолжаем асинхронную обработку
       for {
         madsIndexed   <- _madsFut
@@ -169,12 +165,13 @@ trait ScAdsTile
         renderStartedAt = System.currentTimeMillis()
         madsRendered  <- {
           Future.traverse(madsIndexed) { case (mad, relIndex) =>
-            val bgImgOptFut = Future.successful( Option.empty[MakeResult] )   // TODO mad2 BgImg.maybeMakeBgImgWith(mad, blkImgMaker, _szMult, devScreenOpt)
-            bgImgOptFut.flatMap { bgImgOpt =>
-              val indexOpt = Some(offset + relIndex)
-              val brArgs1 = _brArgsFor(mad, bgImgOpt, indexOpt)
-              renderMadAsync(brArgs1)
-            }
+            val indexOpt = Some(offset + relIndex)
+            val brArgs1 = _brArgsFor(
+              mad       = mad,
+              bgImg     = None,
+              indexOpt  = indexOpt
+            )
+            renderMadAsync( brArgs1 )
           }
         }
       } yield {

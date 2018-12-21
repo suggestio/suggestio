@@ -384,7 +384,9 @@ object GridBuilderUtil {
             res.topLeft.x * paddedCellWidthPx
           } { widthOrigPx =>
             // Отцентровать используя указанный сдвиг относительно центра плитки.
-            ((gridWidthPx - widthOrigPx) * szMultD / 2).toInt // ((gridWidthPx * szMultD / 2).toInt + centerOffsetX) / 2
+            /*val r =*/ ((gridWidthPx - widthOrigPx) * szMultD / 2).toInt // ((gridWidthPx * szMultD / 2).toInt + centerOffsetX) / 2
+            //println(r)
+            //r
           },
           y = Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
         )
