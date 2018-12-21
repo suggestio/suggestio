@@ -66,7 +66,6 @@ object GridAh {
   def rebuildGrid(ads: Pot[Seq[MScAdData]], jdConf: MJdConf): MGridBuildResult = {
     GridBuilderUtil.buildGrid(
       MGridBuildArgs(
-        columnsCount  = jdConf.gridColumnsCount,
         itemsExtDatas = MGridCoreS
           .ads2gridBlocks( ads.iterator.flatten )
           .toList,

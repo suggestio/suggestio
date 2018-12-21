@@ -16,13 +16,11 @@ import japgolly.univeq._
 
 /** Модель аргументов для вызова [[GridBuilderUtil]].buildGrid().
   *
-  * @param columnsCount Кол-во колонок плитки.
   * @param itemsExtDatas Данные по item'мам рассчитываемой плитки.
   * @param jdConf Конфигурация рендера.
   * @param offY Сдвиг по Y.
   */
 case class MGridBuildArgs(
-                           columnsCount  : Int,
                            itemsExtDatas : List[IGbBlockPayload],
                            jdConf        : MJdConf,
                            offY          : Int

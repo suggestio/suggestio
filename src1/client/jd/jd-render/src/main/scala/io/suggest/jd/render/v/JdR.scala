@@ -306,7 +306,6 @@ class JdR(
                   }
                   .toList,
                 jdConf = jdArgs.conf,
-                columnsCount = jdArgs.conf.gridColumnsCount,
                 offY = 0
               )
             },

@@ -301,16 +301,14 @@ object GridBuilderUtil {
       // Инициализация состояния плитки, в котором будет хранится инфа по высоте колонок.
       val colsInfo: Array[MColumnState] = {
         val mcs0 = MColumnState()
-        Array.fill( args.columnsCount )(mcs0)
+        Array.fill( args.jdConf.gridColumnsCount )(mcs0)
       }
 
       override def columnToAbs(ci: Int) = ci
       override def lineToAbs(cl: Int) = cl
       override def colLineToAbs(xy: MCoords2di) = xy
 
-      override def colsCount: Int = {
-        args.columnsCount
-      }
+      override def colsCount = args.jdConf.gridColumnsCount
 
       /** Прочитать состояние уже использованной высоты для указанной колонки. */
       override def getHeightUsed(ci: Int) = {
@@ -384,9 +382,7 @@ object GridBuilderUtil {
             res.topLeft.x * paddedCellWidthPx
           } { widthOrigPx =>
             // Отцентровать используя указанный сдвиг относительно центра плитки.
-            /*val r =*/ ((gridWidthPx - widthOrigPx) * szMultD / 2).toInt // ((gridWidthPx * szMultD / 2).toInt + centerOffsetX) / 2
-            //println(r)
-            //r
+            ((gridWidthPx - widthOrigPx) * szMultD / 2).toInt // ((gridWidthPx * szMultD / 2).toInt + centerOffsetX) / 2
           },
           y = Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
         )

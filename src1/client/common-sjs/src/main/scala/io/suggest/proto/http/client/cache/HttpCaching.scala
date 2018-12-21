@@ -89,11 +89,11 @@ object HttpCaching extends Log {
               .flatMap(_.put(cachedReq, resp))
             // Логгирование, т.к. результат этой функции обычно дропается.
             for (ex <- fut.failed)
-              LOG.info(ErrorMsgs.CACHING_ERROR, ex = ex)
+              LOG.info(ErrorMsgs.CACHING_ERROR, msg = ex.toString)
             fut
           } catch {
             case ex: Throwable =>
-              LOG.info(ErrorMsgs.CACHING_ERROR, ex = ex)
+              LOG.info(ErrorMsgs.CACHING_ERROR, msg = ex.toString)
               Future.failed(ex)
           }
         }
