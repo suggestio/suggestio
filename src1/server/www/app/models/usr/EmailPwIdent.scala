@@ -92,7 +92,6 @@ final case class EmailPwIdent(
     with MPIWithEmail
 {
   override def id: Option[String] = Some(email)
-  override def idType: MPersonIdentType = IdTypes.EMAIL_PW
   override def key: String = email
   override def writeVerifyInfo = true
   override def value: Option[String] = Some(pwHash)

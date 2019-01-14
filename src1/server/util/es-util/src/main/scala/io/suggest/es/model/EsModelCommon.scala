@@ -133,7 +133,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     // Интересуют только id документов
     val totalFut = scroller
       .setFetchSource(false)
-      .execute()
+      .executeFut()
       .flatMap { searchResp =>
         EsModelUtil.foldSearchScroll(searchResp, acc0 = 0, firstReq = true, keepAliveMs = SCROLL_KEEPALIVE_MS_DFLT) {
           (acc01, hits) =>
@@ -169,7 +169,9 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   /** Запуск поискового запроса и парсинг результатов в представление этой модели. */
   def runSearch(srb: SearchRequestBuilder): Future[Seq[T]] = {
-    srb.execute().map { searchResp2stream }
+    srb
+      .executeFut()
+      .map { searchResp2stream }
   }
 
   /** Прочитать маппинг текущей ES-модели из ES. */
@@ -210,7 +212,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   def foldLeft[A](acc0: A, scroller: SearchRequestBuilder, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
                  (f: (A, T) => A): Future[A] = {
     scroller
-      .execute()
+      .executeFut()
       .flatMap { searchResp =>
         EsModelUtil.foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
           (acc01, hits) =>
@@ -245,7 +247,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   def foldLeftAsync1[A](acc0: A, scroller: SearchRequestBuilder, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
                        (f: (Future[A], T) => Future[A]): Future[A] = {
     scroller
-      .execute()
+      .executeFut()
       .flatMap { searchResp =>
         EsModelUtil.foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
           (acc01, hits) =>
@@ -339,7 +341,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
       .setSize(maxPerStep)
       .setFetchSource(false)
       //.setNoFields()
-      .execute()
+      .executeFut()
       .flatMap { searchResp =>
         EsModelUtil.searchScrollResp2ids(
           searchResp,
@@ -359,7 +361,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   def countByQuery(query: QueryBuilder): Future[Long] = {
     prepareCount()
       .setQuery(query)
-      .execute()
+      .executeFut()
       .map { _.getHits.getTotalHits }
   }
 
@@ -444,7 +446,10 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   def searchResp2fnList[T](searchResp: SearchResponse, fn: String): Seq[T] = {
     searchRespMap(searchResp) { hit =>
-      hit.getField(fn).getValue[T]
+      hit
+        .getFields()
+        .get(fn)
+        .getValue[T]
     }
       .toSeq
   }
@@ -466,7 +471,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
         mgetReq.add(hit.getIndex, hit.getType, hit.getId)
       }
       mgetReq
-        .execute()
+        .executeFut()
         .map { mgetResp2Stream }
     }
   }
@@ -624,7 +629,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   def copyContent(fromClient: Client, toClient: Client, reqSize: Int = 50, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT): Future[CopyContentResult] = {
     prepareScroll( new TimeValue(keepAliveMs), srb = prepareSearch(fromClient))
       .setSize(reqSize)
-      .execute()
+      .executeFut()
       .flatMap { searchResp =>
         // для различания сообщений в логах, дополнительно генерим id текущей операции на базе первого скролла.
         val logPrefix = s"copyContent(${searchResp.getScrollId.hashCode / 1000L}): "
@@ -639,7 +644,9 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
                 val model = deserializeSearchHit(hit)
                 bulk.add( prepareIndexNoVsn(model, toClient) )
               }
-              for (bulkResult <- bulk.execute()) yield {
+              for {
+                bulkResult <- bulk.executeFut()
+              } yield {
                 if (bulkResult.hasFailures)
                   LOGGER.error("copyContent(): Failed to write bulk into target:\n " + bulkResult.buildFailureMessage())
                 val failedCount = bulkResult.iterator()
@@ -752,7 +759,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    */
   def save(m: T): Future[String] = {
     prepareIndex(m)
-      .execute()
+      .executeFut()
       .map { _.getId }
   }
 
@@ -912,7 +919,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
             .combineScript( scripts.combineScript )
             .reduceScript( scripts.reduceScript )
         )
-        .execute()
+        .executeFut()
     } yield {
       // Извлечь результат из ES-ответа:
       val agg = resp.getAggregations.get[ScriptedMetric](aggName)

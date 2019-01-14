@@ -1,13 +1,15 @@
 package io.suggest.es.util
 
+import java.io.ByteArrayInputStream
+
 import io.suggest.util.SioConstants._
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
-import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsResponse
-import org.elasticsearch.action.{ActionListener, ListenableActionFuture}
+import org.elasticsearch.action.support.master.AcknowledgedResponse
+import org.elasticsearch.action.{ActionListener, ActionRequestBuilder, ActionResponse}
 import org.elasticsearch.client.Client
 import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.bytes.BytesArray
+import org.elasticsearch.common.Strings
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.TransportAddress
 import org.elasticsearch.common.xcontent.{XContentBuilder, XContentType}
@@ -101,7 +103,7 @@ object SioEsUtil extends MacroLogsImpl {
       .indices()
       .prepareCreate(indexName)
       .setSettings(getNewIndexSettings(shards=shards, replicas=replicas))
-      .execute()
+      .executeFut()
       .map(_.isAcknowledged)
   }
 
@@ -121,7 +123,7 @@ object SioEsUtil extends MacroLogsImpl {
       .preparePutMapping(indexName)
       .setType(typeName)
       .setSource(mapping)
-      .execute()
+      .executeFut()
       .map(_.isAcknowledged)
   }
 
@@ -135,7 +137,7 @@ object SioEsUtil extends MacroLogsImpl {
     client.admin()
       .indices()
       .prepareExists(indexNames: _*)
-      .execute()
+      .executeFut()
       .map(_.isExists)
   }
 
@@ -166,7 +168,7 @@ object SioEsUtil extends MacroLogsImpl {
     client.admin()
       .indices()
       .prepareClose(indexName)
-      .execute()
+      .executeFut()
       .map { _.isAcknowledged }
   }
 
@@ -181,7 +183,7 @@ object SioEsUtil extends MacroLogsImpl {
     trace(logPrefix + "Sending open request...")
     client.admin().indices()
       .prepareOpen(indexName)
-      .execute()
+      .executeFut()
       .map { _.isAcknowledged }
   }
 
@@ -424,6 +426,7 @@ object SioEsUtil extends MacroLogsImpl {
 
   /** Запустить добавление новых настроек в индекс. Для этого индекс надо закрыть. */
   def updateIndex2_1To2_2(indexName: String)(implicit ec: ExecutionContext, client: Client) = {
+    // TODO ES-6.x - Заменить string() на Strings.toString(xcb)
     updateIndex(indexName)( getIndexSettingsV2_2.string() )
   }
 
@@ -435,7 +438,7 @@ object SioEsUtil extends MacroLogsImpl {
    * @return Фьючерс.
    */
   def updateIndex(indexName: String)(settings: String)
-                 (implicit ec: ExecutionContext, client: Client): Future[UpdateSettingsResponse] = {
+                 (implicit ec: ExecutionContext, client: Client): Future[AcknowledgedResponse] = {
     // Закрываем индекс...
     val closeFut = closeIndex(indexName)
     // Заливаем изменения сеттингов.
@@ -444,7 +447,7 @@ object SioEsUtil extends MacroLogsImpl {
         .indices()
         .prepareUpdateSettings(indexName)
         .setSettings( settings, XContentType.JSON )
-        .execute()
+        .executeFut()
     }
     // Переоткрыть индекс, когда всё будет сделано.
     val reOpenFut = updateFut
@@ -453,7 +456,7 @@ object SioEsUtil extends MacroLogsImpl {
         error("Failed to update index [" + indexName + "] with settings:\n" + settings, ex)
         null
       }
-      .flatMap { updateResp =>
+      .flatMap { _ =>
         openIndex(indexName)
       }
     // Сформировать результат фьючерса, дождавшись переоткрытия индекса.
@@ -546,17 +549,24 @@ object SioEsUtil extends MacroLogsImpl {
   }
 
 
-  /**
-   * Неявный конвертов вызова execute() в scala-future.
-    *
-    * @param laf результат execute(), т.е. ListenableActionFuture.
-   * @tparam T Тип, с которым работаем.
-   * @return Фьючерс типа T.
-   */
-  implicit def laFuture2sFuture[T](laf: ListenableActionFuture[T]): Future[T] = {
-    val p = Promise[T]()
-    laf.addListener(new EsAction2Promise(p))
-    p.future
+  /** Класс для ActionRequestBuilder'ов, который явно возвращает Future.
+    * Для ES >= 6.x, возможно для младших версий.
+    */
+  implicit class EsActionBuilderOpsExt[AResp <: ActionResponse](val esActionBuilder: ActionRequestBuilder[_, AResp, _]) extends AnyVal {
+
+    /** Запуск экшена с возвращением Future[AResp]. */
+    def executeFut(): Future[AResp] = {
+      val p = Promise[AResp]()
+      val l = new ActionListener[AResp] {
+        override def onResponse(response: AResp): Unit =
+          p.success(response)
+        override def onFailure(e: Exception): Unit =
+          p.failure(e)
+      }
+      esActionBuilder.execute(l)
+      p.future
+    }
+
   }
 
 
@@ -923,7 +933,8 @@ trait FieldNullable extends Field {
   }
 }
   
-  
+
+@deprecated("not supported anymore", "ES >= 6.0")
 trait FieldIncludeInAll extends Field {
   def include_in_all : Boolean
   override def fieldsBuilder(implicit b: XContentBuilder) {
@@ -957,7 +968,7 @@ with FieldNullable
 case class FieldText(
   id : String,
   index : Boolean,
-  include_in_all : Boolean,
+  @deprecated("not supported anymore", "ES >= 6.0") include_in_all : Boolean,
   index_name : String = null,
   // _field_indexable
   store : Boolean = false,
@@ -994,7 +1005,7 @@ case class FieldText(
 case class FieldKeyword(
   id : String,
   index : Boolean,
-  include_in_all : Boolean,
+  @deprecated("not supported anymore", "ES >= 6.0") include_in_all : Boolean,
   index_name : String = null,
   // _field_indexable
   store : Boolean = false,
@@ -1038,7 +1049,7 @@ case class FieldIp(
   override val id             : String,
   override val boost          : Option[Float]         = None,
   override val docValues      : Option[Boolean]       = None,
-  override val include_in_all : Boolean               = true,
+  @deprecated("not supported anymore", "ES >= 6.0") override val include_in_all : Boolean               = true,
   override val index          : Boolean,
   override val null_value     : String                = null,
   override val precisionStep  : Int                   = -1,
@@ -1080,7 +1091,7 @@ case class FieldNumber(
   id : String,
   fieldType : DocFieldType,
   index : Boolean,
-  include_in_all : Boolean,
+  @deprecated("not supported anymore", "ES >= 6.0") include_in_all : Boolean,
   index_name : String = null,
   store : Boolean = false,
   boost : Option[Float] = None,
@@ -1095,7 +1106,7 @@ case class FieldNumber(
 case class FieldDate(
   id : String,
   index : Boolean,
-  include_in_all : Boolean,
+  @deprecated("not supported anymore", "ES >= 6.0") include_in_all : Boolean,
   index_name : String = null,
   store : Boolean = false,
   boost : Option[Float] = None,
@@ -1111,7 +1122,7 @@ case class FieldDate(
 case class FieldBoolean(
   id : String,
   index : Boolean,
-  include_in_all : Boolean,
+  @deprecated("not supported anymore", "ES >= 6.0") include_in_all : Boolean,
   index_name : String = null,
   store : Boolean = false,
   boost : Option[Float] = None,
@@ -1254,9 +1265,10 @@ extends JsonObject {
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
+
     b.field("match", nameMatch)
      .field("match_mapping_type", matchMappingType)
-     .rawField("mapping", new BytesArray(mapping1.getBytes), XContentType.JSON)
+     .rawField("mapping", new ByteArrayInputStream( mapping1.getBytes ), XContentType.JSON)
   }
 }
 
@@ -1406,24 +1418,4 @@ case class FieldGeoShape(
 // END: DSL полей документа --------------------------------------------------------------------------------------------
 
 } // END: object SioEsUtil
-
-
-
-/**
-  * ES-листенер, отражающий результат работы ListenableActionFuture[T] на Promise[T].
-  *
-  * @param promise Пустой объект обещания.
-  * @tparam T Тип будущего значения.
-  * @return ActionListener[T] пригодный для навешивания на ListenableActionFuture.
-  */
-class EsAction2Promise[T](promise: Promise[T]) extends ActionListener[T] {
-  override def onResponse(response: T) {
-    promise.success(response)
-  }
-
-  override def onFailure(ex: Exception): Unit = {
-    promise.failure(ex)
-  }
-
-}
 

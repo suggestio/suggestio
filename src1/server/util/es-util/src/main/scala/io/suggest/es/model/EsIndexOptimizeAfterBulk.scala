@@ -1,6 +1,6 @@
 package io.suggest.es.model
 
-import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.common.settings.Settings
 
@@ -28,7 +28,7 @@ trait EsIndexOptimizeAfterBulk extends IEsModelDi with IMacroLogs {
         .prepareForceMerge(newIndexName)
         .setMaxNumSegments(1)
         .setFlush(true)
-        .execute()
+        .executeFut()
     }
 
     lazy val logPrefix = s"optimizeAfterBulk($newIndexName):"
@@ -43,7 +43,7 @@ trait EsIndexOptimizeAfterBulk extends IEsModelDi with IMacroLogs {
         esClient.admin().indices()
           .prepareUpdateSettings(newIndexName)
           .setSettings( settings2 )
-          .execute()
+          .executeFut()
       }
 
       LOGGER.trace(s"$logPrefix Optimize took ${updInxSettingsAt - startedAt} ms")

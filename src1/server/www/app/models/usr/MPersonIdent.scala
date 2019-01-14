@@ -1,6 +1,5 @@
 package models.usr
 
-import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.es.model.EsModelUtil._
 import javax.inject.{Inject, Singleton}
@@ -52,7 +51,7 @@ class MPersonIdents @Inject() (
     val indices = identModels.map(_.ES_INDEX_NAME).distinct
     esClient.prepareSearch(indices : _*)
       .setQuery(iq)
-      .execute()
+      .executeFut()
       .map { searchResp =>
         searchResp.getHits.getHits.foldLeft[List[MPersonIdent]] (Nil) { (acc, hit) =>
           // Выбрать десериализатор исходя из типа.
@@ -88,7 +87,7 @@ class MPersonIdents @Inject() (
       .setTypes(identTypes : _*)
       .setQuery(personIdQuery)
       // TODO ограничить возвращаемые поля только необходимыми
-      .execute()
+      .executeFut()
       .map { searchResp =>
         searchResp.getHits.getHits.flatMap { hit =>
           hit.getType match {
@@ -120,7 +119,7 @@ class MPersonIdents @Inject() (
       esClient.prepareSearch(indices : _*)
         .setTypes(identTypes : _*)
         .setQuery(personIdQuery)
-        .execute()
+        .executeFut()
         .map { searchResp =>
           searchResp
             .getHits
@@ -160,9 +159,6 @@ trait MPersonIdent extends EsModelT {
 
   /** id юзера в системе. */
   def personId: String
-
-  /** Подтип PersonIdent. */
-  def idType: MPersonIdentType
 
   /** Некий индексируемый ключ, по которому должен идти поиск/фильтрация.
     * В случае email-pw -- это юзернейм, т.е. email.
@@ -234,7 +230,7 @@ trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT  {
   def findByPersonId(personId: String): Future[Seq[T]] = {
     prepareSearch()
       .setQuery( personIdQuery(personId) )
-      .execute()
+      .executeFut()
       .map { searchResp2stream }
   }
 
@@ -247,23 +243,3 @@ trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT  {
 trait MPIWithEmail {
   def email: String
 }
-
-
-/** Типы поддерживаемых алгоритмов идентификаций. В базу пока не сохраняются. */
-object IdTypes extends Enumeration with EnumMaybeWithName {
-
-  /** Абстрактный экземпляр модели. */
-  protected[this] class Val extends super.Val {
-  }
-
-  override type T = Val
-
-  val EMAIL_PW: T = new Val
-
-  val EMAIL_ACT: T = new Val
-
-  val EXT_ID: T = new Val
-
-}
-
-

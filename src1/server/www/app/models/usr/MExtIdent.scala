@@ -121,10 +121,8 @@ case class MExtIdent(
   versionOpt          : Option[Long] = None
 )
   extends MPersonIdent
-    with IProfileDflt
+  with IProfileDflt
 {
-
-  override def idType     = IdTypes.EXT_ID
 
   /** Ключём модели является userId. */
   override def key = userId

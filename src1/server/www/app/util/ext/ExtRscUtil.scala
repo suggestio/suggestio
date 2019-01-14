@@ -2,7 +2,7 @@ package util.ext
 
 import java.net.URL
 
-import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.rsc.{MHostNameIndexed, MRscExtra}
@@ -186,7 +186,7 @@ class ExtRscUtil @Inject()(
         }
 
         // Запускаем сохранение новых узлов в БД.
-        val saveFut = bulk.execute()
+        val saveFut = bulk.executeFut()
 
         val newNodesByIdMap = newNodesByIdAcc.toMap
         saveFut

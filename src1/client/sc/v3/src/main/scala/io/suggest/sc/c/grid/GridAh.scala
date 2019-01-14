@@ -196,7 +196,7 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
 
     // Если silent, то надо попытаться повторно пере-использовать уже имеющиеся карточки.
     val reusableAdsMap: Map[String, MScAdData] = {
-      if (isCleanLoad  &&  isSilentOpt.contains(true)  &&  gridResp.ads.nonEmpty  &&  g0.core.ads.nonEmpty) {
+      if (isCleanLoad  &&  (isSilentOpt contains true)  &&  gridResp.ads.nonEmpty  &&  g0.core.ads.nonEmpty) {
         // Есть условия для сборки карты текущих карточек:
         OptId.els2idMap[String, MScAdData](
           g0.core.ads

@@ -87,6 +87,7 @@ class TransportEsClient @Inject() (
           }
       }
       .map( new InetSocketTransportAddress(_) )
+      // TODO ES-6.0+: .map( new TransportAddress(_) )
       .toSeq
 
     LOGGER.debug(s"$logPrefix Transport addrs: ${addrs.mkString(", ")}")

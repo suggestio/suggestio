@@ -163,7 +163,7 @@ final class MNodes @Inject() (
         AggregationBuilders.terms(aggName)
           .field( MNodeFields.Common.NODE_TYPE_FN )
       )
-      .execute()
+      .executeFut()
       .map { resp =>
         resp.getAggregations
           .get[Terms](aggName)

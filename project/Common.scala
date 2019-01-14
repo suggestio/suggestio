@@ -45,6 +45,8 @@ object Common {
 
     /** Версия elasticsearch. */
     val ELASTIC_SEARCH = "5.6.8"
+    //val ELASTIC_SEARCH = "6.5.4"
+    // TODO 6.x Нужно объеденить остаточные модели в MNode, разъеденить оставшиеся типы по разным индексам.
 
     /** Бывает, что используется slf4j. Тут его версия.
       * По-хорошему, у нас на сервере logback, на клиенте -- scala-logging поверх slf4j.

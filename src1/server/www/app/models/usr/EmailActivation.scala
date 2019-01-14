@@ -74,7 +74,7 @@ class EmailActivations @Inject() (
     esClient.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(keyQuery)
-      .execute()
+      .executeFut()
       .map { searchResp2stream }
   }
 
@@ -113,7 +113,6 @@ final case class EmailActivation(
 
   override def personId = email
   override def writeVerifyInfo = false
-  override def idType = IdTypes.EMAIL_ACT
   override def isVerified = true
   override def value: Option[String] = None
   override def versionOpt = None

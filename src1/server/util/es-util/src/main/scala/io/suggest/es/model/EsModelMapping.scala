@@ -67,7 +67,7 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with IMacroLog
       .preparePutMapping(ES_INDEX_NAME)
       .setType(ES_TYPE_NAME)
       .setSource(generateMapping)
-      .execute()
+      .executeFut()
       .map { _.isAcknowledged }
 
     fut.onComplete {
@@ -89,7 +89,7 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with IMacroLog
     LOGGER.trace(s"refreshIndex(): Will refresh $indexName")
     esClient.admin().indices()
       .prepareRefresh(indexName)
-      .execute()
+      .executeFut()
   }
 
 }

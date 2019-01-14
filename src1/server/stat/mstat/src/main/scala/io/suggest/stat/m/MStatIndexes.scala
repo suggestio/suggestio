@@ -3,7 +3,7 @@ package io.suggest.stat.m
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import org.elasticsearch.common.settings.Settings
-import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import io.suggest.util.logs.MacroLogsImpl
 
 import scala.collection.JavaConverters._
@@ -78,7 +78,7 @@ class MStatIndexes @Inject() (
     esClient.admin().indices()
       .prepareGetAliases()
       .addIndices( INDEX_ALIAS_NAME + EsIndexUtil.DELIM + "*" )
-      .execute()
+      .executeFut()
       .map { resp =>
         val as = resp.getAliases
         if (as.isEmpty) {

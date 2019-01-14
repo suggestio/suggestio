@@ -1,6 +1,6 @@
 package io.suggest.es.model
 
-import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.common.settings.Settings
 
@@ -25,7 +25,7 @@ trait EsIndexDynCreate extends IEsModelDi with IMacroLogs {
       .prepareCreate(newIndexName)
       // Надо сразу отключить index refresh в целях оптимизации bulk-заливки в индекс.
       .setSettings( indexSettingsCreate )
-      .execute()
+      .executeFut()
       .map(_.isShardsAcked)
 
     lazy val logPrefix = s"createIndex($newIndexName):"

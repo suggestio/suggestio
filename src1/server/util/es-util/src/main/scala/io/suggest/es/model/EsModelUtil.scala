@@ -142,16 +142,22 @@ object EsModelUtil extends MacroLogsImpl {
   def ensureIndex(indexName: String, shards: Int = 5, replicas: Int = 1)
                  (implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
     val adm = client.admin().indices()
-    adm.prepareExists(indexName).execute().flatMap { existsResp =>
-      if (existsResp.isExists) {
+    for {
+      existsResp <- adm
+        .prepareExists(indexName)
+        .executeFut()
+
+      _ <- if (existsResp.isExists) {
         Future.successful(false)
       } else {
         val indexSettings = SioEsUtil.getIndexSettingsV2(shards=shards, replicas=replicas)
         adm.prepareCreate(indexName)
           .setSettings(indexSettings)
-          .execute()
+          .executeFut()
           .map { _ => true }
       }
+    } yield {
+      true
     }
   }
 
@@ -177,7 +183,7 @@ object EsModelUtil extends MacroLogsImpl {
     client.admin().cluster()
       .prepareState()
       .setIndices(indexName)
-      .execute()
+      .executeFut()
       .map { cs =>
         val maybeResult = cs.getState
           .getMetaData
@@ -251,15 +257,19 @@ object EsModelUtil extends MacroLogsImpl {
       val canContinue = maxAccLen <= 0 || nextAccLen < maxAccLen
       val nextScrollRespFut = if (canContinue) {
         // Лимит длины акк-ра ещё не пробит. Запустить в фоне получение следующей порции результатов...
-        client.prepareSearchScroll(searchResp.getScrollId)
+        client
+          .prepareSearchScroll(searchResp.getScrollId)
           .setScroll(new TimeValue(keepAliveMs))
-          .execute()
+          .executeFut()
       } else {
         null
       }
       // Если акк заполнен, то надо запустить очистку курсора на стороне ES.
       if (!canContinue) {
-        client.prepareClearScroll().addScrollId(searchResp.getScrollId).execute()
+        client
+          .prepareClearScroll()
+          .addScrollId( searchResp.getScrollId )
+          .executeFut()
       }
       // Синхронно залить результаты текущего реквеста в аккамулятор
       val accNew = hits.foldLeft[List[String]] (acc0) { (acc1, hit) =>
@@ -307,9 +317,10 @@ object EsModelUtil extends MacroLogsImpl {
       if (firstReq)
         assert(scrollId != null && !scrollId.isEmpty, "Scrolling looks like disabled. Cannot continue.")
       val nextScrollRespFut: Future[SearchResponse] = {
-        client.prepareSearchScroll(scrollId)
+        client
+          .prepareSearchScroll(scrollId)
           .setScroll(new TimeValue(keepAliveMs))
-          .execute()
+          .executeFut()
       }
       // Синхронно залить результаты текущего реквеста в аккамулятор
       val acc1Fut = f(acc0, hits)

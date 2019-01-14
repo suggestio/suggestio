@@ -12,9 +12,6 @@ package object usr {
   /** Тип экземпляра данных SecureSocial, вокруг которого крутится весь API SecureSocial. */
   type SsUser = MExtIdent
 
-  /** Тип подмодели ident. */
-  type MPersonIdentType = IdTypes.T
-
   /** Тип формы для логина по email+пароль. */
   type EmailPwLoginForm_t   = Form[EpwLoginFormBind]
 }

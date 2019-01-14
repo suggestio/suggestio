@@ -2,7 +2,7 @@ package io.suggest.es.search
 
 import akka.stream.scaladsl.Source
 import io.suggest.es.model.{EsModelStaticT, ISearchResp}
-import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
@@ -80,7 +80,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
       val srb = prepareSearchRequest(args)
 
       val fut = srb
-        .execute()
+        .executeFut()
         .flatMap( mapSearchResp )
 
       // Логгируем всё вместе с es-индексом и типом, чтобы облегчить curl-отладку на основе залоггированного.

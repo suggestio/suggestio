@@ -147,7 +147,7 @@ abstract class MStatsAbstract
       .setQuery( beforeDtQuery(dt) )
       .setSize(maxResults)
       .addSort(TIMESTAMP_FN, SortOrder.ASC)
-      .execute()
+      .executeFut()
       .map { searchResp2stream }
   }
 
@@ -181,7 +181,7 @@ abstract class MStatsAbstract
               .max(aggName)
               .field(TIMESTAMP_FN)
           }
-          .execute()
+          .executeFut()
       }
     } yield {
       /*

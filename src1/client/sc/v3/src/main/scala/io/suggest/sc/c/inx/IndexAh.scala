@@ -520,14 +520,14 @@ class IndexAh[M](
       // Надо сгенерить экшен переключения index'а в новое состояние. Все индексы включая выбранный уже есть в состоянии.
       val actResOpt = for {
         switchS <- v0.state.switchAsk
-        inx0    <- switchS.nodesResp.nodes
+        inxPs2  <- switchS.nodesResp.nodes
           .find(_.props.idOrNameOrEmpty ==* m.nodeId)
       } yield {
         indexRah.indexUpdated(
           i0      = v0.withState(
             v0.state.withSwitchAsk( None )
           ),
-          inx     = inx0.props,
+          inx     = inxPs2.props,
           m       = switchS.okAction,
           mscreen = rootRO.value.dev.screen.info,
         )

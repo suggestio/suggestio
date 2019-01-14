@@ -83,7 +83,7 @@ abstract class MIpRangesAbstract
     val resFut = prepareSearch()
       .setQuery(q)
       .setSize(3)    // Скорее всего тут всегда максимум 1 результат.
-      .execute()
+      .executeFut()
       .map(searchResp2stream)
 
     // Залоггировать асинхронный результат, если необходимо.

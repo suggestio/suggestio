@@ -1,7 +1,6 @@
 package io.suggest.es.model
 
-import io.suggest.es.util.SioEsUtil.laFuture2sFuture
-import org.elasticsearch.action.DocWriteResponse.Result
+import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import org.elasticsearch.action.index.IndexRequestBuilder
 
 import scala.concurrent.Future
@@ -33,13 +32,13 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
     prepareGet(id, parentId)
       //.setFields()
       .setFetchSource(false)
-      .execute()
+      .executeFut()
       .map { _.isExists }
   }
 
   def get(id: String, parentId: String): Future[Option[T]] = {
     prepareGet(id, parentId)
-      .execute()
+      .executeFut()
       .map { v =>
         deserializeGetRespFull(v)
           .filter { _.parentId == parentId }
@@ -54,7 +53,7 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
    */
   def getRawContent(id: String, parentId: String): Future[Option[String]] = {
     prepareGet(id, parentId)
-      .execute()
+      .executeFut()
       .map { EsModelUtil.deserializeGetRespBodyRawStr }
   }
 
@@ -65,7 +64,7 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
    */
   def getRaw(id: String, parentId: String): Future[Option[String]] = {
     prepareGet(id, parentId)
-      .execute()
+      .executeFut()
       .map { EsModelUtil.deserializeGetRespFullRawStr }
   }
 
@@ -77,7 +76,7 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
    */
   def delete(id: String, parentId: String): Future[Boolean] = {
     prepareDelete(id, parentId)
-      .execute()
+      .executeFut()
       .map { EsModelStaticT.delResp2isDeleted }
   }
 

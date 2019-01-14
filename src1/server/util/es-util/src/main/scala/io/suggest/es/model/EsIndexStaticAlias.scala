@@ -1,6 +1,6 @@
 package io.suggest.es.model
 
-import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.ResourceNotFoundException
 
@@ -33,7 +33,7 @@ trait EsIndexStaticAlias extends IEsModelDi with IMacroLogs {
       .removeAlias("*", aliasName)
       // Добавить алиас на новый индекс.
       .addAlias(newIndexName, aliasName)
-      .execute()
+      .executeFut()
       .map( _.isAcknowledged )
 
     // Подключить логгирование к работе...
@@ -51,11 +51,9 @@ trait EsIndexStaticAlias extends IEsModelDi with IMacroLogs {
 
   /** Узнать имя индекса, сокрытого за глобальным алиасом INDEX_ALIAS_NAME. */
   def getAliasedIndexName(): Future[Set[String]] = {
-    val fut = esClient.admin().indices()
+    esClient.admin().indices()
       .prepareGetAliases(INDEX_ALIAS_NAME)
-      .execute()
-
-    fut
+      .executeFut()
       .map { resp =>
         LOGGER.trace(s"${_gAIN_logPrefix} Ok, found ${resp.getAliases.size()} indexes.")
         resp.getAliases

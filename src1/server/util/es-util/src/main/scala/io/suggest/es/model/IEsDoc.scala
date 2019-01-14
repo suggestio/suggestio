@@ -28,7 +28,7 @@ object IEsDoc {
       v.getSourceAsString
     }
     override def bodyAsScalaMap(v: SearchHit): collection.Map[String, AnyRef] = {
-      v.getSource.asScala
+      v.getSourceAsMap.asScala
     }
   }
 

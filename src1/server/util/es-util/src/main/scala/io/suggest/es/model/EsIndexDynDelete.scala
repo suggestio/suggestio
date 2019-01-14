@@ -1,6 +1,6 @@
 package io.suggest.es.model
 
-import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.ResourceNotFoundException
 
@@ -21,7 +21,7 @@ trait EsIndexDynDelete extends IEsModelDi with IMacroLogs {
   def deleteIndex(oldIndexName: String): Future[_] = {
     val fut: Future[_] = esClient.admin().indices()
       .prepareDelete(oldIndexName)
-      .execute()
+      .executeFut()
       .map { _.isAcknowledged }
 
     val logPrefix = s"deleteIndex($oldIndexName):"

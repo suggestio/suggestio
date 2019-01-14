@@ -2,13 +2,13 @@ package io.suggest.es.model
 
 import javax.inject.Inject
 
-import akka.actor.{Actor, ActorRefFactory, ActorSystem, PoisonPill, Props, Stash}
+import akka.actor.{Actor, ActorSystem, PoisonPill, Props, Stash}
 import com.google.inject.assistedinject.Assisted
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.client.Client
 import org.elasticsearch.search.SearchHit
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
-import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import org.elasticsearch.action.search.SearchResponse
 
 import scala.collection.mutable
@@ -151,14 +151,14 @@ class EsPublishActor @Inject() (
           .setSize( scrollArgs.resultsPerScroll )
         scrollArgs.sourcingHelper
           .prepareSrb(srb0)
-          .execute()
+          .executeFut()
           .onComplete { result => self ! result }
 
       } { id =>
         // Продолжается скроллинг.
         esClient.prepareSearchScroll( id )
           .setScroll( scrollArgs.keepAlive )
-          .execute()
+          .executeFut()
           .onComplete(result => self ! result)
       }
       // we switch state while we're waiting on elasticsearch, so we know not to send another request to ES
@@ -196,9 +196,10 @@ class EsPublishActor @Inject() (
     case Success(resp: SearchResponse) if resp.getHits.getHits.isEmpty =>
       s.onComplete()
       for (scrollIdStr <- scrollIdOpt) {
-        esClient.prepareClearScroll()
+        esClient
+          .prepareClearScroll()
           .addScrollId(scrollIdStr)
-          .execute()
+          .executeFut()
       }
       context.stop(self)
 

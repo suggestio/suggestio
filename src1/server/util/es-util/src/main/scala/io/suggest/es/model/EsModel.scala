@@ -53,7 +53,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   def isExist(id: String): Future[Boolean] = {
     prepareGet(id)
       .setFetchSource(false)
-      .execute()
+      .executeFut()
       .map { _.isExists }
   }
 
@@ -71,7 +71,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
     for (sf <- options.sourceFiltering) {
       rq.setFetchSource(sf.includes.toArray, sf.excludes.toArray)
     }
-    rq.execute()
+    rq.executeFut()
       .map { deserializeGetRespFull }
   }
 
@@ -90,7 +90,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    */
   def getRawContentById(id: String): Future[Option[String]] = {
     prepareGet(id)
-      .execute()
+      .executeFut()
       .map { EsModelUtil.deserializeGetRespBodyRawStr }
   }
 
@@ -102,7 +102,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    */
   def getRawById(id: String): Future[Option[String]] = {
     prepareGet(id)
-      .execute()
+      .executeFut()
       .map { EsModelUtil.deserializeGetRespFullRawStr }
   }
 
@@ -130,7 +130,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
         item.fetchSourceContext( sf.toFetchSourceCtx )
       req.add(item)
     }
-    req.execute()
+    req.executeFut()
   }
 
 
@@ -212,7 +212,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    */
   def deleteById(id: String): Future[Boolean] = {
     deleteRequestBuilder(id)
-      .execute()
+      .executeFut()
       .map { EsModelStaticT.delResp2isDeleted }
   }
 
@@ -229,7 +229,8 @@ trait EsModelStaticT extends EsModelCommonStaticT {
           prepareDelete(id)
         )
       }
-      bulk.execute()
+      bulk
+        .executeFut()
         .map( EmptyUtil.someF )
     }
   }
