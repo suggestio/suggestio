@@ -2,6 +2,8 @@ package util.acl
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.EsModel
+import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.req._
@@ -23,6 +25,8 @@ import scala.concurrent.Future
 /** Аддон для контроллеров, занимающихся редактированием рекламных карточек. */
 @Singleton
 class CanEditAd @Inject() (
+                            esModel                 : EsModel,
+                            mNodes                  : MNodes,
                             aclUtil                 : AclUtil,
                             isNodeAdmin             : IsNodeAdmin,
                             n2NodesUtil             : N2NodesUtil,
@@ -34,6 +38,7 @@ class CanEditAd @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Кое какая утиль для action builder'ов, редактирующих карточку. */
@@ -56,7 +61,10 @@ class CanEditAd @Inject() (
 
   def isUserCanEditAd(user: ISioUser, adId: String): Future[Option[MAdProd]] = {
     FutureUtil.optFut2futOpt(user.personIdOpt) { _ =>
-      val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
+      val madOptFut = mNodes
+        .getByIdCache(adId)
+        .withNodeType(MNodeTypes.Ad)
+
       lazy val logPrefix = s"isUserCanEditAd1(${user.personIdOpt.orNull}, $adId):"
       madOptFut.flatMap { madOpt =>
         if (madOpt.isEmpty)
@@ -70,7 +78,7 @@ class CanEditAd @Inject() (
   def isUserCanEditAd(user: ISioUser, mad: MNode): Future[Option[MAdProd]] = {
     FutureUtil.optFut2futOpt(user.personIdOpt) { _ =>
       val prodIdOpt = n2NodesUtil.madProducerId(mad)
-      val prodNodeOptFut = mNodesCache.maybeGetByIdCached(prodIdOpt)
+      val prodNodeOptFut = mNodes.maybeGetByIdCached(prodIdOpt)
       lazy val logPrefix = s"isUserCanEditAd2(${user.personIdOpt.orNull}, ${mad.id.orNull}):"
       for (prodNodeOpt <- prodNodeOptFut) yield {
         if (prodNodeOpt.isEmpty)

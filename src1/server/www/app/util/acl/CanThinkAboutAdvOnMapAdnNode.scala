@@ -1,7 +1,7 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
-
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -19,6 +19,7 @@ import scala.concurrent.Future
   * Description: ACL для проверок возможности размещения
   */
 class CanThinkAboutAdvOnMapAdnNode @Inject() (
+                                               esModel                : EsModel,
                                                aclUtil                : AclUtil,
                                                mNodes                 : MNodes,
                                                canAdvAd               : CanAdvAd,
@@ -32,6 +33,7 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Собрать ACL ActionBuilder.
@@ -49,7 +51,9 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
 
         user.personIdOpt.fold( isAuth.onUnauth(request) ) { _ =>
           // Юзер залогинен. Сразу же собираем все параллельные задачи...
-          val madOptFut   = mNodesCache.getByIdType(adId,   MNodeTypes.Ad)
+          val madOptFut   = mNodes
+            .getByIdCache(adId)
+            .withNodeType(MNodeTypes.Ad)
 
           // Ищем целевой узел, проверяя права размещения на узле прямо в рамках ES-запроса:
           val nodeOptFut = mNodes.dynSearchOne(

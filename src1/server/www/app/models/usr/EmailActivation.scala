@@ -8,14 +8,14 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.{EsModelJMXBaseImpl, EsModelJMXMBeanI, EsmV2Deserializer, IEsDocMeta}
+import io.suggest.es.model._
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.id.OptStrId
 import io.suggest.text.StringUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -122,9 +122,9 @@ final case class EmailActivation(
 // JMX
 trait EmailActivationsJmxMBean extends EsModelJMXMBeanI
 final class EmailActivationsJmx @Inject() (
-  override val companion  : EmailActivations,
-  override val ec         : ExecutionContext
-)
+                                            override val companion    : EmailActivations,
+                                            override val esModelJmxDi : EsModelJmxDi,
+                                          )
   extends EsModelJMXBaseImpl
     with EmailActivationsJmxMBean
 {

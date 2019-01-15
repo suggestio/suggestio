@@ -1,5 +1,7 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
+import io.suggest.model.n2.node.MNodes
 import javax.inject.{Inject, Singleton}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -20,6 +22,8 @@ import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
  */
 @Singleton
 class IsSuNode @Inject() (
+                           esModel    : EsModel,
+                           mNodes     : MNodes,
                            aclUtil    : AclUtil,
                            isSu       : IsSu,
                            reqUtil    : ReqUtil,
@@ -29,6 +33,7 @@ class IsSuNode @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
@@ -43,7 +48,7 @@ class IsSuNode @Inject() (
         def req1 = MReq(request, user)
 
         if (user.isSuper) {
-          val mnodeOptFut = mNodesCache.getById(nodeId)
+          val mnodeOptFut = mNodes.getByIdCache(nodeId)
           mnodeOptFut.flatMap {
             case Some(mnode) =>
               val req1 = MNodeReq(mnode, request, user)
@@ -70,7 +75,7 @@ class IsSuNode @Inject() (
         val req1 = aclUtil.reqFromRequest(request)
 
         if (req1.user.isSuper) {
-          val mnodeOptFut = mNodesCache.getById(nodeId)
+          val mnodeOptFut = mNodes.getByIdCache(nodeId)
           mnodeOptFut.flatMap {
             case None =>
               block(req1)

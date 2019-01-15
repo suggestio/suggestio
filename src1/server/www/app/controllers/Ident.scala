@@ -1,15 +1,14 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
-
 import controllers.ident._
 import io.suggest.ctx.CtxData
+import io.suggest.es.model.EsModel
 import io.suggest.init.routed.{MJsInitTarget, MJsInitTargets}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.m.msession.Keys
 import io.suggest.sec.util.ScryptUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models._
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.IReqHdr
@@ -34,6 +33,7 @@ import views.html.ident.reg.email._regColumnTpl
 
 @Singleton
 class Ident @Inject() (
+                        override val esModel              : EsModel,
                         override val mNodes               : MNodes,
                         override val mailer               : IMailerWrapper,
                         override val identUtil            : IdentUtil,
@@ -71,7 +71,7 @@ class Ident @Inject() (
    */
   // TODO Добавить CSRF
   def logout = Action { implicit request =>
-    Redirect(MAIN_PAGE_CALL)
+    Redirect(models.MAIN_PAGE_CALL)
       .removingFromSession(Keys.PersonId.value, Keys.Timestamp.value)
   }
 

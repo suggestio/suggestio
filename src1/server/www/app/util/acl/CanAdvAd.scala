@@ -1,8 +1,8 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
 import javax.inject.{Inject, Singleton}
-
-import io.suggest.model.n2.node.{MNode, MNodeTypes}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
@@ -22,6 +22,8 @@ import scala.concurrent.Future
 /** Аддон для контроллеров для проверки права размещать рекламную карточку. */
 @Singleton
 class CanAdvAd @Inject()(
+                          esModel                 : EsModel,
+                          mNodes                  : MNodes,
                           aclUtil                 : AclUtil,
                           isNodeAdmin             : IsNodeAdmin,
                           n2NodeUtil              : N2NodesUtil,
@@ -32,6 +34,7 @@ class CanAdvAd @Inject()(
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Является ли указанный узел рекламодателем? */
@@ -40,7 +43,10 @@ class CanAdvAd @Inject()(
   }
 
   def maybeAllowed[A](adId: String, req: IReq[A]): Future[Option[MAdProdReq[A]]] = {
-    val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
+    val madOptFut = mNodes
+      .getByIdCache(adId)
+      .withNodeType(MNodeTypes.Ad)
+
     madOptFut.flatMap {
       case Some(mad) =>
         maybeAllowed(mad, req)
@@ -60,7 +66,7 @@ class CanAdvAd @Inject()(
   def maybeAllowed[A](mad: MNode, req: IReq[A]): Future[Option[MAdProdReq[A]]] = {
     val prodIdOpt = n2NodeUtil.madProducerId(mad)
     // TODO Далее говнокод какой-то, переписать.
-    def prodOptFut = mNodesCache.maybeGetByIdCached(prodIdOpt)
+    def prodOptFut = mNodes.maybeGetByIdCached( prodIdOpt )
     def req2(mnode: MNode) = MAdProdReq(mad, mnode, req, req.user)
     if (req.user.isSuper) {
       for (prodOpt <- prodOptFut) yield {
@@ -105,7 +111,10 @@ class CanAdvAd @Inject()(
       override def userInits = userInits1
 
       def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
-        val madFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
+        val madFut = mNodes
+          .getByIdCache(adId)
+          .withNodeType(MNodeTypes.Ad)
+
         val user = aclUtil.userFromRequest(request)
 
         // Оптимистично запустить сбор запрошенных данных MSioUser.

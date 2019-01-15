@@ -3,13 +3,13 @@ package controllers
 import java.io.File
 import java.net.InetAddress
 import java.nio.file.Path
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import io.suggest.color.{MColorData, MHistogram, MHistogramWs}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.crypto.hash.MHash
 import io.suggest.ctx.MCtxId
-import io.suggest.es.model.IMust
+import io.suggest.es.model.{EsModel, IMust}
 import io.suggest.file.MSrvFileInfo
 import io.suggest.file.up.{MFile4UpProps, MUploadResp}
 import io.suggest.fio.WriteRequest
@@ -56,6 +56,7 @@ import scalaz.ValidationNel
   */
 @Singleton
 class Upload @Inject()(
+                        esModel                   : EsModel,
                         mMedias                   : MMedias,
                         uploadUtil                : UploadUtil,
                         canUploadFile             : CanUploadFile,
@@ -67,7 +68,6 @@ class Upload @Inject()(
                         mImgs3                    : MImgs3,
                         mLocalImgs                : MLocalImgs,
                         clamAvUtil                : ClamAvUtil,
-                        mMediasCache              : MMediasCache,
                         imgFileUtil               : ImgFileUtil,
                         uploadCtxFactory          : IUploadCtxFactory,
                         mainColorDetector         : MainColorDetector,
@@ -79,6 +79,7 @@ class Upload @Inject()(
 {
 
   import mCommonDi.{ec, errorHandler}
+  import esModel.api._
 
 
   // TODO Opt В будущем, особенно когда будет поддержка заливки видео (или иных больших файлов), надо будет
@@ -192,7 +193,7 @@ class Upload @Inject()(
                 val origImg3 = foundFileImg.original
                 LOGGER.trace(s"$logPrefix Will try original img for colors histogram: $origImg3")
                 for {
-                  origMediaOpt <- mMediasCache.getById(origImg3.dynImgId.mediaId)
+                  origMediaOpt <- mMedias.getByIdCache( origImg3.dynImgId.mediaId )
                 } yield {
                   // TODO Если не найдено оригинала, то может быть сразу ошибку? Потому что это будет нечто неюзабельное.
                   if (origMediaOpt.isEmpty)
@@ -548,7 +549,7 @@ class Upload @Inject()(
 
           // Потом в фоне вне основного экшена сохранить результат детектирования основных цветов картинки в MMedia.PictureMeta:
           _ = {
-            mMediasCache.put( mmedia1 )
+            mMedias.putToCache( mmedia1 )
 
             for (colorDetectFut <- colorDetectOptFut) {
               val saveColorsFut = for (colorHist <- colorDetectFut) yield {

@@ -29,6 +29,7 @@ import util.sec.ICspUtilDi
 import util.showcase.IScUtil
 import util.stat.IStatUtil
 import OptionUtil.BoolOptOps
+import io.suggest.es.model.EsModelDi
 import views.html.sc._
 
 import scala.concurrent.Future
@@ -57,9 +58,11 @@ trait ScSite
   with IAdvGeoLocUtilDi
   with IJsMessagesUtilDi
   with IAdvGeoRcvrsUtilDi
+  with EsModelDi
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /** Изначальное значение флага отладки js-выдачи управляется флагом в конфиге. */
   private lazy val SC_JS_DEBUG = configuration.getOptional[Boolean]("sc.js.debug").getOrElseFalse
@@ -121,7 +124,7 @@ trait ScSite
       val _domainNodeOptFut = domainNodeOptFut
 
       // Поиска id узла среди параметров URL QS.
-      val qsNodeOptFut = mNodesCache.maybeGetByIdCached( _siteQsArgs.adnId )
+      val qsNodeOptFut = mNodes.maybeGetByIdCached( _siteQsArgs.adnId )
 
       // Опционально объеденить оба фьючерса.
       OptionUtil.orElseFut( _domainNodeOptFut )( qsNodeOptFut )
@@ -132,7 +135,7 @@ trait ScSite
     /** Добавки к тегу head в siteTpl. */
     def headAfterFut: Future[List[Html]] = {
       val fut = for {
-        madOpt <- mNodesCache.maybeGetByIdCached( _siteQsArgs.povAdId )
+        madOpt <- mNodes.maybeGetByIdCached( _siteQsArgs.povAdId )
         mad = madOpt.get
         if mad.edges
           .withPredicateIter( MPredicates.Receiver )

@@ -6,6 +6,7 @@ import javax.inject.Inject
 import de.jollyday.util.XMLUtil
 import de.jollyday.{HolidayCalendar, HolidayManager}
 import io.suggest.cal.m.MCalTypes
+import io.suggest.es.model.EsModel
 import io.suggest.util.logs.MacroLogsImpl
 import models.mcal.{MCalTypesJvm, MCalendar, MCalendars}
 import models.mproj.ICommonDi
@@ -30,6 +31,7 @@ import scala.concurrent.Future
  * @see [[http://jollyday.sourceforge.net/index.html]]
  */
 class SysCalendar @Inject() (
+                              esModel                     : EsModel,
                               mCalendars                  : MCalendars,
                               isSuCalendar                : IsSuCalendar,
                               isSu                        : IsSu,
@@ -43,6 +45,7 @@ class SysCalendar @Inject() (
 
   import LOGGER._
   import mCommonDi._
+  import esModel.api._
 
   /** Форма с селектом шаблона нового календаря. */
   private def newCalTplFormM = Form(

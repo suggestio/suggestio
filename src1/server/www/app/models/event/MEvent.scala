@@ -15,7 +15,6 @@ import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.collection.Map
-import scala.concurrent.ExecutionContext
 
 // TODO Модель оставлена тут только для совместимости с legacy-кодом из lk-adv-ext.
 
@@ -187,9 +186,9 @@ case class MEvent(
 
 trait MEventsJmxMBean extends EsModelJMXMBeanI
 final class MEventsJmx @Inject() (
-  override val companion  : MEvents,
-  override val ec         : ExecutionContext
-)
+                                   override val companion     : MEvents,
+                                   override val esModelJmxDi  : EsModelJmxDi,
+                                 )
   extends EsModelJMXBaseImpl
   with MEventsJmxMBean
 {

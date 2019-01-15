@@ -1,5 +1,6 @@
 package controllers
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
@@ -26,19 +27,21 @@ import scala.concurrent.Future
  */
 // TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
 class SysPerson @Inject() (
-  mPerson                   : MPerson,
-  mNodes                    : MNodes,
-  mSuperUsers               : MSuperUsers,
-  emailPwIdents             : EmailPwIdents,
-  mExtIdents                : MExtIdents,
-  isSu                      : IsSu,
-  isSuPerson                : IsSuPerson,
-  override val mCommonDi    : ICommonDi
-)
+                            esModel                   : EsModel,
+                            mPerson                   : MPerson,
+                            mNodes                    : MNodes,
+                            mSuperUsers               : MSuperUsers,
+                            emailPwIdents             : EmailPwIdents,
+                            mExtIdents                : MExtIdents,
+                            isSu                      : IsSu,
+                            isSuPerson                : IsSuPerson,
+                            override val mCommonDi    : ICommonDi
+                          )
   extends SioControllerImpl
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /** Генерация экземпляра EmailActivation с бессмысленными данными. */
   private def dummyEa = EmailActivation(

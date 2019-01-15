@@ -6,8 +6,9 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import io.suggest.es.model.EsModel
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.{MNode, MNodeTypes}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import play.api.http.Status
 
@@ -25,6 +26,8 @@ import play.api.mvc.Result
 /** Аддон для контроллеров для проверки admin-прав доступа к узлу. */
 @Singleton
 class IsNodeAdmin @Inject()(
+                             esModel          : EsModel,
+                             mNodes           : MNodes,
                              aclUtil          : AclUtil,
                              isAuth           : IsAuth,
                              reqUtil          : ReqUtil,
@@ -35,6 +38,7 @@ class IsNodeAdmin @Inject()(
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
@@ -80,7 +84,7 @@ class IsNodeAdmin @Inject()(
   }
 
   def isAdnNodeAdmin(adnId: String, user: ISioUser): Future[Option[MNode]] = {
-    val fut = mNodesCache.getById(adnId)
+    val fut = mNodes.getByIdCache(adnId)
     checkNodeCredsOpt(fut, adnId, user)
   }
 
@@ -116,7 +120,7 @@ class IsNodeAdmin @Inject()(
         } else {
           for {
             // Получить на руки узел, который проверяется:
-            mnodeOpt <- mNodesCache.getById(currNodeId)
+            mnodeOpt <- mNodes.getByIdCache(currNodeId)
             mnode = mnodeOpt.get
 
             // Есть ли доступ у юзера?
@@ -197,7 +201,7 @@ class IsNodeAdmin @Inject()(
     def __fold(
                 ownersAcc  : Set[String]                  = user.personIdOpt.toSet,
                 accRev     : List[MNode]                  = Nil,
-                rest       : List[Future[Option[MNode]]]  = nodeKey.map { mNodesCache.getById },
+                rest       : List[Future[Option[MNode]]]  = nodeKey.map { mNodes.getByIdCache },
                 level      : Int                          = 1
               ): Future[Option[List[MNode]]] = {
 

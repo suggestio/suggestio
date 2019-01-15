@@ -24,6 +24,7 @@ import play.api.libs.json._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -52,8 +53,13 @@ final class MNodes @Inject() (
   with IGenEsMappingProps
   with EsModelJsonWrites
   with EsDynSearchStatic[MNodeSearch]
+  with EsModelStaticCacheableT
 {
   import mCommonDi._
+
+  // cache
+  override val EXPIRE = 60.seconds
+  override val CACHE_KEY_SUFFIX = ".nc"
 
   override type T = MNode
   override def ES_TYPE_NAME = MNodeFields.ES_TYPE_NAME
@@ -117,17 +123,6 @@ final class MNodes @Inject() (
 
   /** Сериализация в JSON. */
   override def esDocWrites = DATA_FORMAT
-
-
-  /** Враппер над getById(), осуществляющий ещё и фильтрацию по типу узла. */
-  def getByIdType(id: String, ntype: MNodeType): Future[Option[T]] = {
-    // TODO Opt фильтрация идёт client-side. Надо бы сделать server-side БЕЗ серьезных потерь производительности и реалтайма.
-    getById(id).map {
-      _.filter {
-        _.common.ntype eqOrHasParent ntype
-      }
-    }
-  }
 
 
   /** Собрать инстанс юзера на основе compat-API модели MPerson.apply(). */
@@ -336,12 +331,27 @@ case class MNode(
 
 }
 
+object MNode {
+  implicit class MNodeOptFutOps(val mnodeOptFut: Future[Option[MNode]]) extends AnyVal {
+
+    /** Отфильтровать узел по типу. Создано для замены MNodesCache.getByIdType(). */
+    def withNodeType(ntype: MNodeType)(implicit ec: ExecutionContext): Future[Option[MNode]] = {
+      for (mnodeOpt <- mnodeOptFut) yield {
+        mnodeOpt.filter { mnode =>
+          mnode.common.ntype eqOrHasParent ntype
+        }
+      }
+    }
+
+  }
+}
+
 
 trait MNodesJmxMBean extends EsModelJMXMBeanI
 final class MNodesJmx @Inject() (
-  override val companion  : MNodes,
-  override val ec         : ExecutionContext
-)
+                                  override val companion      : MNodes,
+                                  override val esModelJmxDi   : EsModelJmxDi,
+                                )
   extends EsModelJMXBaseImpl
     with MNodesJmxMBean
 {

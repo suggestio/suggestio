@@ -1,11 +1,12 @@
 package util.n2u
 
 import io.suggest.common.empty.OptionUtil
+import io.suggest.es.model.EsModel
 import io.suggest.img.MImgFmts
 import io.suggest.jd.{MEdgePicInfo, MJdEdge, MJdEdgeVldInfo}
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
-import io.suggest.model.n2.media.{MMedia, MMediasCache}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodesCache}
+import io.suggest.model.n2.media.{MMedia, MMedias}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
@@ -24,12 +25,15 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 @Singleton
 class N2VldUtil @Inject()(
-                           mMediasCache               : MMediasCache,
-                           mNodesCache                : MNodesCache,
+                           esModel                    : EsModel,
+                           mMedias                    : MMedias,
+                           mNodes                     : MNodes,
                            implicit private val ec    : ExecutionContext
                          )
   extends MacroLogsImpl
 {
+
+  import esModel.api._
 
   /** Извлечь данные по картинкам из карты эджей.
     *
@@ -63,7 +67,7 @@ class N2VldUtil @Inject()(
       .toSet
 
     // Поискать узлы, упомянутые в этих эджах.
-    mNodesCache.multiGetMap( edgeNodeIds )
+    mNodes.multiGetMapCache( edgeNodeIds )
   }
 
 
@@ -86,7 +90,7 @@ class N2VldUtil @Inject()(
     * @return Фьючерс с картой MMedia.
     */
   def imgsMedias(edgeImgIdsMap: TraversableOnce[MDynImgId]): Future[Map[String, MMedia]] = {
-    mMediasCache.multiGetMap(
+    mMedias.multiGetMapCache(
       // Собрать id запрашиваемых media-оригиналов.
       edgeImgIdsMap
         .toIterator

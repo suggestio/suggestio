@@ -1,7 +1,8 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
-import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import models.mproj.ICommonDi
 import models.req.MAdReq
 import play.api.mvc._
@@ -17,12 +18,15 @@ import scala.concurrent.Future
  * Description: ActionBuild для запроса действия над любой карточкой без проверки прав.
  */
 class GetAnyAd @Inject() (
+                           esModel    : EsModel,
+                           mNodes     : MNodes,
                            aclUtil    : AclUtil,
                            reqUtil    : ReqUtil,
                            mCommonDi  : ICommonDi
                          ) {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Публичный доступ к указанной рекламной карточке.
@@ -33,7 +37,9 @@ class GetAnyAd @Inject() (
     new reqUtil.SioActionBuilderImpl[MAdReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MAdReq[A]) => Future[Result]): Future[Result] = {
-        val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
+        val madOptFut = mNodes
+          .getByIdCache(adId)
+          .withNodeType(MNodeTypes.Ad)
 
         val user = aclUtil.userFromRequest(request)
 

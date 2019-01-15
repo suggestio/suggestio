@@ -6,13 +6,13 @@ import controllers.SioControllerImpl
 import io.suggest.bill.MCurrencies
 import io.suggest.common.coll.Lists
 import io.suggest.common.empty.OptionUtil
-import io.suggest.es.model.MEsUuId
+import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.order.MOrders
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.stat.m.{MAction, MActionTypes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mbill.MEmailOrderPaidTplArgs
@@ -58,6 +58,8 @@ import scala.concurrent.Future
   */
 @Singleton
 class PayYaka @Inject() (
+                          esModel                  : EsModel,
+                          mNodes                   : MNodes,
                           maybeAuth                : MaybeAuth,
                           canPayOrder              : CanPayOrder,
                           canViewOrder             : CanViewOrder,
@@ -81,7 +83,8 @@ class PayYaka @Inject() (
   with MacroLogsImpl
 {
 
-  import mCommonDi.{ec, mNodesCache, slick, csrf, errorHandler}
+  import mCommonDi.{ec, slick, csrf, errorHandler}
+  import esModel.api._
 
 
   /** Заголовок ответа, разрешающий открытие ресурсов sio из фреймов.
@@ -301,7 +304,7 @@ class PayYaka @Inject() (
             _assertDemoSu(profile, yReq)
 
             // Проверяем связь юзера и ордера: Узнать id контракта юзера.
-            val usrNodeOptFut = mNodesCache.getById(yReq.personId)
+            val usrNodeOptFut = mNodes.getByIdCache(yReq.personId)
 
             // Начальные stat-экшены.
             val statMas0Fut = _statActions0(yReq, usrNodeOptFut)
@@ -444,7 +447,7 @@ class PayYaka @Inject() (
 
             // Базовые поля реквеста и md5 совпадают с ожидаемыми. Зачислить на баланс юзера оплаченные бабки, попытаться исполнить ордер.
             // Узнать узел юзера, для его contract_id и человеческого названия.
-            val usrNodeOptFut = mNodesCache.getById( yReq.personId )
+            val usrNodeOptFut = mNodes.getByIdCache( yReq.personId )
             val mprice = yReq.price
 
             // Собрать начальные stat-экшены.

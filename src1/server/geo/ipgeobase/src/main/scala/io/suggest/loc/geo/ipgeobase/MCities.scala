@@ -10,7 +10,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import scala.collection.Map
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -168,9 +168,9 @@ trait MCitiesJmxMBean extends EsModelJMXMBeanI {
 
 /** Реализация интерфейса jmx mbean'а [[MCitiesJmxMBean]]. */
 final class MCitiesJmx @Inject() (
-  override val companion    : MCities,
-  override implicit val ec  : ExecutionContext
-)
+                                   override val companion    : MCities,
+                                   override val esModelJmxDi : EsModelJmxDi,
+                                 )
   extends EsModelJMXBaseImpl
   with MCitiesJmxMBean
 {

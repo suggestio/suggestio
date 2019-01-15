@@ -1,8 +1,8 @@
 package util.img
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
-
-import io.suggest.model.n2.media.MMediasCache
+import io.suggest.model.n2.media.MMedias
 import models.im._
 import models.im.make.MakeResult
 
@@ -16,9 +16,12 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 
 class ImgMakerUtil @Inject() (
-                                mMediasCache              : MMediasCache,
+                                esModel                   : EsModel,
+                                mMedias                   : MMedias,
                                 implicit private val ec   : ExecutionContext
                               ) {
+
+  import esModel.api._
 
   /** Вернуть оригинал картинки в качестве результата make.
     *
@@ -27,7 +30,7 @@ class ImgMakerUtil @Inject() (
     */
   def returnImg(dynImgId: MDynImgId): Future[MakeResult] = {
     for {
-      mediaOpt <- mMediasCache.getById( dynImgId.mediaId )
+      mediaOpt <- mMedias.getByIdCache( dynImgId.mediaId )
     } yield {
       val szReal = mediaOpt
         .get

@@ -1,6 +1,7 @@
 package controllers.ident
 
 import controllers.SioController
+import io.suggest.es.model.EsModelDi
 import io.suggest.id.IdentConst
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.sec.m.msession.{Keys, LongTtl, ShortTtl, Ttl}
@@ -37,9 +38,11 @@ trait EmailPwSubmit
   with IMNodes
   with IEmailPwIdentsDi
   with IScryptUtilDi
+  with EsModelDi
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /** Форма логина по email и паролю. */
   def emailPwLoginFormM: EmailPwLoginForm_t = {
@@ -96,7 +99,10 @@ trait EmailPwSubmit
               if (epwOpt.exists(pwIdent => scryptUtil.checkHash(binded.password, pwIdent.pwHash))) {
                 // Логин удался.
                 val personId = epwOpt.get.personId
-                val mpersonOptFut = mNodes.getByIdType(personId, MNodeTypes.Person)
+                val mpersonOptFut = mNodes
+                  .getByIdCache(personId)
+                  .withNodeType(MNodeTypes.Person)
+
                 val rdrFut = RdrBackOrFut(r) { emailSubmitOkCall(personId) }
                 var addToSession: List[(String, String)] = List(
                   Keys.PersonId.value -> personId

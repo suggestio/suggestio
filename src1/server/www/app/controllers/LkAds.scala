@@ -4,6 +4,7 @@ import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.ads.{LkAdsFormConst, MLkAdsFormInit, MLkAdsOneAdResp}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.EsModel
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.{MAdItemStatuses, MItems}
@@ -32,6 +33,7 @@ import views.html.lk.ads._
   * React-замена MarketLkAdn.showNodeAds() и связанным экшенам.
   */
 class LkAds @Inject() (
+                        esModel                 : EsModel,
                         isNodeAdmin             : IsNodeAdmin,
                         jdAdUtil                : JdAdUtil,
                         mNodes                  : MNodes,
@@ -46,6 +48,7 @@ class LkAds @Inject() (
   import mCommonDi._
   import streamsUtil.Implicits._
   import slick.profile.api._
+  import esModel.api._
 
 
   /** Рендер странице с react-формой управления карточками.
@@ -131,7 +134,9 @@ class LkAds @Inject() (
         // Узнать, есть ли карточка в этом списке?
         if !madIds.contains( newAdId )
         // Нет в списке, значит это свеже-созданная карточка, которую надо прочитать из БД и добавить в началов списка карточек:
-        newAdOpt <- mNodesCache.getByIdType(newAdId, MNodeTypes.Ad)
+        newAdOpt <- mNodes
+          .getByIdCache(newAdId)
+          .withNodeType(MNodeTypes.Ad)
         // Проверить права доступа на карточку: TODO Вынести проверку в ACL или дёргать уже существующую проверку.
         if newAdOpt.exists { newAd =>
           newAd.edges

@@ -1,7 +1,8 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
+import io.suggest.model.n2.node.MNodes
 import javax.inject.Inject
-
 import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{MNodeOptReq, MUserInit}
@@ -19,6 +20,8 @@ import scala.concurrent.Future
  */
 
 class IsAdnNodeAdminOptOrAuth @Inject() (
+                                          esModel                 : EsModel,
+                                          mNodes                  : MNodes,
                                           aclUtil                 : AclUtil,
                                           isNodeAdmin             : IsNodeAdmin,
                                           isAuth                  : IsAuth,
@@ -27,6 +30,7 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
                                         ) {
 
   import mCommonDi._
+  import esModel.api._
 
   /** Сборка action-builder'ов, занимающихся вышеописанной проверкой.
     * @param nodeIdOpt id узла, если есть.
@@ -40,7 +44,7 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
         val user = aclUtil.userFromRequest(request)
 
         user.personIdOpt.fold( isAuth.onUnauth(request) ) { _ =>
-          val mnodeOptFut = mNodesCache.maybeGetByIdCached(nodeIdOpt)
+          val mnodeOptFut = mNodes.maybeGetByIdCached(nodeIdOpt)
 
           // Запустить в фоне получение кошелька юзера, т.к. экшены все относятся к этому кошельку
           maybeInitUser(user)

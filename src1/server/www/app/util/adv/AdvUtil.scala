@@ -7,7 +7,8 @@ import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.cal.m.MCalTypes
 import io.suggest.dt.MYmd
-import io.suggest.model.n2.node.MNode
+import io.suggest.es.model.EsModel
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.Inject
@@ -30,6 +31,8 @@ import scala.concurrent.Future
   * Description: Какая-то очень общая утиль для размещения.
   */
 class AdvUtil @Inject() (
+                          esModel                 : EsModel,
+                          mNodes                  : MNodes,
                           tfDailyUtil             : TfDailyUtil,
                           calendarUtil            : CalendarUtil,
                           mCommonDi               : ICommonDi
@@ -38,6 +41,7 @@ class AdvUtil @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
   private val WEEKEND_DAYS: Set[Int] = {
@@ -237,7 +241,7 @@ class AdvUtil @Inject() (
   def rcvrBillCtx(rcvrIds: Iterable[String], ivl: IDateStartEnd, bmc: Option[Int]): Future[MAdvBillCtx] = {
 
     // Собираем все упомянутые узлы.
-    val rcvrsFut = mNodesCache.multiGet( rcvrIds )
+    val rcvrsFut = mNodes.multiGetCache( rcvrIds )
 
     // Собираем карту тарифов размещения на узлах.
     val tfsMapFut = rcvrsFut.flatMap( tfDailyUtil.getNodesTfsMap )

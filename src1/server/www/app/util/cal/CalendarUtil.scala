@@ -7,6 +7,7 @@ import controllers.routes
 import de.jollyday.HolidayManager
 import de.jollyday.parameter.UrlManagerParameter
 import io.suggest.async.AsyncUtil
+import io.suggest.es.model.EsModel
 import models.mcal.{MCalCtx, MCalendars, MCalsCtx}
 import models.mproj.ICommonDi
 
@@ -21,12 +22,14 @@ import scala.concurrent.Future
   */
 @Singleton
 class CalendarUtil @Inject() (
-  mCalendars              : MCalendars,
-  asyncUtil               : AsyncUtil,
-  mCommonDi               : ICommonDi
-) {
+                               esModel                 : EsModel,
+                               mCalendars              : MCalendars,
+                               asyncUtil               : AsyncUtil,
+                               mCommonDi               : ICommonDi
+                             ) {
 
   import mCommonDi._
+  import esModel.api._
 
   /**
     * Ссылка на самого себя для нужд календарей.

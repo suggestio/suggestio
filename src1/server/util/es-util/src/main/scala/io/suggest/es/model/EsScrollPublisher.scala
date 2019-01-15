@@ -100,6 +100,7 @@ object EsPublishActor {
 class EsPublishActor @Inject() (
                                  @Assisted scrollArgs  : IScrollArgs,
                                  @Assisted s           : Subscriber[_ >: SearchHit],
+                                 esModel               : EsModel,
                                  esClient              : Client
                                )
   extends Actor
@@ -107,6 +108,7 @@ class EsPublishActor @Inject() (
 {
 
   import context.dispatcher
+  import esModel.api._
 
   private var scrollIdOpt: Option[String] = None
   private var processed: Long = 0

@@ -66,14 +66,14 @@ trait EsModelJMXMBeanI extends EsModelJMXMBeanCommonI {
 
 trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
-  import LOGGER._
+  import esModelJmxDi.esModel.api._
 
   override type X <: EsModelT
 
   override def companion: EsModelStaticT { type T = X }
 
   override def resave(id: String): String = {
-    info(s"resave($id): jmx")
+    LOGGER.info(s"resave($id): jmx")
     val fut = companion.resave(id) map {
       case Some(_id) => "Resaved " + _id
       case None      => "Not found id: " + id
@@ -83,13 +83,13 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
   override def deleteById(id: String): Boolean = {
     val id1 = id.trim
-    warn(s"deleteById($id1)")
+    LOGGER.warn(s"deleteById($id1)")
     companion.deleteById(id1)
   }
 
   override def getById(id: String): String = {
     val id1 = id.trim
-    debug(s"getById($id1)")
+    LOGGER.debug(s"getById($id1)")
     val fut = for (res <- companion.getById(id1)) yield {
       res.fold("not found")(companion.toJsonPretty)
     }
@@ -98,7 +98,7 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
   override def getRawById(id: String): String = {
     val id1 = id.trim
-    debug(s"getRawById($id1)")
+    LOGGER.debug(s"getRawById($id1)")
     val fut = for (res <- companion.getRawById(id1)) yield {
       res.fold("not found")(JacksonWrapper.prettify)
     }
@@ -107,8 +107,10 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
   override def getRawContentById(id: String): String = {
     val id1 = id.trim
-    debug(s"getRawContentById($id1)")
-    val fut = for (res <- companion.getRawContentById(id1)) yield {
+    LOGGER.debug(s"getRawContentById($id1)")
+    val fut = for (
+      res <- companion.getRawContentById(id1)
+    ) yield {
       res.fold("not found")(JacksonWrapper.prettify)
     }
     awaitString(fut)
@@ -117,7 +119,7 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
   override def putOne(id: String, data: String): String = {
     val id1 = id.trim
     val logPrefix = s"putOne($id1):"
-    info(s"$logPrefix $data")
+    LOGGER.info(s"$logPrefix $data")
     val idOpt = Option(id1)
       .filter(!_.isEmpty)
     try {
@@ -132,7 +134,7 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
   override def putAll(all: String): String = {
     import SioEsUtil.StdFns._
-    info("putAll(): " + all)
+    LOGGER.info("putAll(): " + all)
     try {
       val raws = JacksonWrapper.deserialize[List[Map[String, AnyRef]]](all)
       val idsFut = Future.traverse(raws) { tmap =>

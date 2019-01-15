@@ -22,10 +22,10 @@ trait IExtTargetSearchArgs
 
 /** Дефолтовая реализация аргументов динамического поиска. */
 case class ExtTargetSearchArgs(
-  override val adnId            : Option[String] = None,
-  override val sortByDate       : Option[SortOrder] = None,
-  override val limit            : Int = EsModelUtil.MAX_RESULTS_DFLT,
-  override val offset           : Int = 0
+                                override val adnId            : Option[String] = None,
+                                override val sortByDate       : Option[SortOrder] = None,
+                                override val limit            : Int = EsModelUtil.MAX_RESULTS_DFLT,
+                                override val offset           : Int = 0
 )
   extends IExtTargetSearchArgs
 

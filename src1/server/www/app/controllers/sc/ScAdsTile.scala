@@ -5,7 +5,7 @@ import _root_.util.showcase.{IScAdSearchUtilDi, IScUtil}
 import _root_.util.stat.IStatUtil
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MSzMult
-import io.suggest.es.model.MEsUuId
+import io.suggest.es.model.{EsModelDi, MEsUuId}
 import io.suggest.es.search.MRandomSortData
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
@@ -45,9 +45,11 @@ trait ScAdsTile
   with IStatUtil
   with IJdAdUtilDi
   with INodesUtil
+  with EsModelDi
 {
 
   import mCommonDi._
+  import esModel.api._
 
   // TODO Надо переписать рендер на reactive-streams: на больших нагрузка скачки расходования памяти и CPU могут стать нестепримыми.
 
@@ -185,8 +187,8 @@ trait ScAdsTile
       val rcvrIdOpt = _qs.search.rcvrId
       val prodIdOpt = _qs.search.prodId
 
-      val _rcvrOptFut   = mNodesCache.maybeGetByEsIdCached( rcvrIdOpt )
-      val _prodOptFut   = mNodesCache.maybeGetByEsIdCached( prodIdOpt )
+      val _rcvrOptFut   = mNodes.maybeGetByEsIdCached( rcvrIdOpt )
+      val _prodOptFut   = mNodes.maybeGetByEsIdCached( prodIdOpt )
 
       val _userSaOptFut = statUtil.userSaOptFutFromRequest()
       val _madsFut      = madsFut

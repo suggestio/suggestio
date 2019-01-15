@@ -12,7 +12,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import scala.collection.Map
-import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -34,9 +34,13 @@ class MMedias @Inject() (
   with MacroLogsImpl
   with EsModelJsonWrites
   with EsDynSearchStatic[MMediaSearch]
+  with EsModelStaticCacheableT
 { that =>
 
   import iMediaStorages.FORMAT
+
+  override val EXPIRE = 10.seconds
+  override val CACHE_KEY_SUFFIX = ".mme"
 
   override type T = MMedia
 
@@ -144,9 +148,9 @@ case class MMedia(
 trait MMediasJmxMBean extends EsModelJMXMBeanI
 
 final class MMediasJmx @Inject()(
-  override val companion  : MMedias,
-  override val ec         : ExecutionContext
-)
+                                  override val companion      : MMedias,
+                                  override val esModelJmxDi   : EsModelJmxDi,
+                                )
   extends EsModelJMXBaseImpl
   with MMediasJmxMBean
 {

@@ -1,11 +1,11 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import models.mproj.ICommonDi
 import models.req.{MAdReq, MReq}
 import play.api.mvc._
-import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import io.suggest.es.model.EsModel
 import io.suggest.req.ReqUtil
 import play.api.http.Status
 
@@ -20,6 +20,8 @@ import scala.concurrent.Future
  */
 @Singleton
 class IsSuMad @Inject()(
+                         esModel    : EsModel,
+                         mNodes     : MNodes,
                          aclUtil    : AclUtil,
                          isSu       : IsSu,
                          reqUtil    : ReqUtil,
@@ -27,6 +29,7 @@ class IsSuMad @Inject()(
                        ) {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /**
@@ -36,7 +39,9 @@ class IsSuMad @Inject()(
     new reqUtil.SioActionBuilderImpl[MAdReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MAdReq[A]) => Future[Result]): Future[Result] = {
-        val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
+        val madOptFut = mNodes
+          .getByIdCache(adId)
+          .withNodeType(MNodeTypes.Ad)
 
         val user = aclUtil.userFromRequest(request)
 

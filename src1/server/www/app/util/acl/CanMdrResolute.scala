@@ -1,9 +1,11 @@
 package util.acl
 
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
+import io.suggest.model.n2.node.MNodes
 import io.suggest.req.ReqUtil
 import io.suggest.sys.mdr.MMdrResolution
 import io.suggest.util.logs.MacroLogsImpl
@@ -23,6 +25,8 @@ import scala.concurrent.Future
   * Description: ACL для проверки команды модерации от обычного или необычного юзера.
   */
 class CanMdrResolute @Inject()(
+                                esModel                 : EsModel,
+                                mNodes                  : MNodes,
                                 aclUtil                 : AclUtil,
                                 reqUtil                 : ReqUtil,
                                 mItems                  : MItems,
@@ -33,7 +37,8 @@ class CanMdrResolute @Inject()(
   extends MacroLogsImpl
 {
 
-  import mCommonDi.{slick, ec, mNodesCache, errorHandler => httpErrorHandler}
+  import mCommonDi.{slick, ec, errorHandler => httpErrorHandler}
+  import esModel.api._
 
   /** Проверка прав доступа на дальнейшее исполнение резолюции модерации.
     * Следует помнить, что тело экшена также должно понимать, что это su-вызов или обычный юзер это модерирует,
@@ -53,7 +58,7 @@ class CanMdrResolute @Inject()(
         LOGGER.trace(s"$logPrefix Starting for $mdrRes")
 
         // Запустить получение данных по узлу.
-        val mnodeOptFut = mNodesCache.getById( mdrRes.nodeId )
+        val mnodeOptFut = mNodes.getByIdCache( mdrRes.nodeId )
 
         mnodeOptFut.flatMap {
           // Найден узел, как и ожидалось. Надо понять, есть ли доступ у юзера на модерацию.

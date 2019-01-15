@@ -4,6 +4,7 @@ import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.coll.Lists
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.dev.MSzMult
+import io.suggest.es.model.EsModelDi
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.model.n2.node.search.MNodeSearch
@@ -39,9 +40,11 @@ trait ScFocusedAds
   with ICanEditAdDi
   with IStatUtil
   with IJdAdUtilDi
+  with EsModelDi
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /** Базовая логика обработки запросов сбора данных по рекламным карточкам и компиляции оных в результаты выполнения запросов. */
   abstract class FocusedAdsLogic extends LogicCommonT with IRespActionFut {
@@ -103,7 +106,7 @@ trait ScFocusedAds
       firstAdIdsFut.flatMap { firstAdIds =>
         if (firstAdIds.nonEmpty) {
           for {
-            mads <- mNodesCache.multiGet( firstAdIds )
+            mads <- mNodes.multiGetCache( firstAdIds )
           } yield {
             // Залоггировать недостающие элементы.
             logMissingFirstIds(mads, firstAdIds)
@@ -145,7 +148,7 @@ trait ScFocusedAds
       * Порядок продьюсеров в списке неопределён. */
     def mads2ProdsFut: Future[Seq[MNode]] = {
       prodIdsFut.flatMap { prodIds =>
-        mNodesCache.multiGet(prodIds)
+        mNodes.multiGetCache(prodIds)
       }
     }
 
@@ -239,8 +242,8 @@ trait ScFocusedAds
 
     /** Контекстно-зависимая сборка данных статистики. */
     override def scStat: Future[Stat2] = {
-      val _rcvrOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.rcvrId )
-      val _prodOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.prodId )
+      val _rcvrOptFut   = mNodes.maybeGetByEsIdCached( _qs.search.rcvrId )
+      val _prodOptFut   = mNodes.maybeGetByEsIdCached( _qs.search.prodId )
 
       val _userSaOptFut = statUtil.userSaOptFutFromRequest()
 

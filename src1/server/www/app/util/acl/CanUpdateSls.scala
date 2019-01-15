@@ -1,7 +1,8 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
+import io.suggest.model.n2.node.MNodes
 import javax.inject.Inject
-
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models._
@@ -21,6 +22,8 @@ import scala.concurrent.Future
  */
 
 class CanUpdateSls @Inject() (
+                               esModel                : EsModel,
+                               mNodes                 : MNodes,
                                aclUtil                : AclUtil,
                                isNodeAdmin            : IsNodeAdmin,
                                canEditAd              : CanEditAd,
@@ -32,6 +35,7 @@ class CanUpdateSls @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
   def apply(adId1: String): ActionBuilder[MAdProdReq, AnyContent] = {
     new reqUtil.SioActionBuilderImpl[MAdProdReq] with canEditAd.AdEditBase {
@@ -39,7 +43,9 @@ class CanUpdateSls @Inject() (
       override final def adId = adId1
 
       override def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
-        val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
+        val madOptFut = mNodes
+          .getByIdCache(adId)
+          .withNodeType(MNodeTypes.Ad)
 
         val user = aclUtil.userFromRequest(request)
 
@@ -67,7 +73,7 @@ class CanUpdateSls @Inject() (
               } else {
 
                 val producerIdOpt = n2NodesUtil.madProducerId(mad)
-                mNodesCache.maybeGetByIdCached(producerIdOpt).flatMap { producerOpt =>
+                mNodes.maybeGetByIdCached(producerIdOpt).flatMap { producerOpt =>
                   val userIsNodeAdmin = producerOpt.exists { producer =>
                     isNodeAdmin.isNodeAdminCheck(producer, user)
                   }

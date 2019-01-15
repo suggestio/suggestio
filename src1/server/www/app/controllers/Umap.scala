@@ -5,8 +5,8 @@ import java.io.FileInputStream
 import _root_.util.acl._
 import _root_.util.geo.umap._
 import _root_.util.sec.CspUtil
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
-
 import io.suggest.geo.{GsTypes, MNodeGeoLevel, MNodeGeoLevels, PointGs}
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
@@ -34,18 +34,20 @@ import scala.concurrent.Future
  * Description: Контроллер для umap-backend'ов.
  */
 class Umap @Inject() (
-  umapUtil                        : UmapUtil,
-  mNodes                          : MNodes,
-  isSu                            : IsSu,
-  isSuNode                        : IsSuNode,
-  cspUtil                         : CspUtil,
-  override val mCommonDi          : ICommonDi
-)
+                       esModel                         : EsModel,
+                       umapUtil                        : UmapUtil,
+                       mNodes                          : MNodes,
+                       isSu                            : IsSu,
+                       isSuNode                        : IsSuNode,
+                       cspUtil                         : CspUtil,
+                       override val mCommonDi          : ICommonDi,
+                     )
   extends SioControllerImpl
   with MacroLogsImpl
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /** Разрешено ли редактирование глобальной карты всех узлов? */
   val GLOBAL_MAP_EDIT_ALLOWED: Boolean = {
@@ -272,7 +274,7 @@ class Umap @Inject() (
         .groupBy(getAdnIdF)
 
       // Собираем карту узлов.
-      val mnodesMapFut = mNodesCache.multiGetMap( nodeFeatures.keySet )
+      val mnodesMapFut = mNodes.multiGetMapCache( nodeFeatures.keySet )
 
       val updAllFut = mnodesMapFut.flatMap { mnodesMap =>
         // Для каждого узла произвести персональное обновление.

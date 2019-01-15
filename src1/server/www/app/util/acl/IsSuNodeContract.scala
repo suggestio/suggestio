@@ -2,7 +2,9 @@ package util.acl
 
 import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.contract.MContracts
+import io.suggest.model.n2.node.MNodes
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
@@ -19,6 +21,8 @@ import scala.concurrent.Future
  * Description: Доступ к узлу и его контракту для суперюзера.
  */
 class IsSuNodeContract @Inject() (
+                                   esModel      : EsModel,
+                                   mNodes       : MNodes,
                                    aclUtil      : AclUtil,
                                    mContracts   : MContracts,
                                    isSu         : IsSu,
@@ -29,6 +33,7 @@ class IsSuNodeContract @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Доступ к узлу с контрактом.
@@ -43,7 +48,7 @@ class IsSuNodeContract @Inject() (
         def reqErr = MReq(request, user)
 
         if (user.isSuper) {
-          val mnodeOptFut = mNodesCache.getById(nodeId)
+          val mnodeOptFut = mNodes.getByIdCache(nodeId)
           mnodeOptFut.flatMap {
             case Some(mnode) =>
               val countractIOpt = mnode.billing.contractId

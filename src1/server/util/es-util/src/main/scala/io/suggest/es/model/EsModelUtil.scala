@@ -1,6 +1,5 @@
 package io.suggest.es.model
 
-import io.suggest.es.util.SioEsUtil
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.util.logs.MacroLogsImpl
@@ -8,7 +7,6 @@ import javax.inject.{Inject, Singleton}
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.Client
-import org.elasticsearch.cluster.metadata.{IndexMetaData, MappingMetaData}
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.{ToXContent, XContentFactory}
 import org.elasticsearch.index.engine.VersionConflictEngineException
@@ -23,15 +21,20 @@ import scala.util.{Failure, Success}
  * Created: 19.02.14 14:41
  * Description: Общее для elasticsearch-моделей лежит в этом файле. Обычно используется общий индекс для хранилища.
  * 2014.sep.04: Появились child-модели. Произошло разделение api трейтов: статических и немного динамических.
+ * EsModelUtil находится НАД EsModel по иехрархии, ЕsIndexUtil ПОД EsModel.
  */
 @Singleton
 class EsModelUtil @Inject()(
-                             implicit ec      : ExecutionContext,
-                             esClient         : Client
-                           )
+                              esModel          : EsModel,
+                              esIndexUtil      : EsIndexUtil,
+                            )(
+                              implicit ec      : ExecutionContext,
+                              esClient         : Client
+                            )
   extends MacroLogsImpl
 {
 
+  import esModel.api._
 
   private def esModelId(esModel: EsModelCommonStaticT): String = {
     s"${esModel.ES_INDEX_NAME}/${esModel.ES_TYPE_NAME}"
@@ -92,34 +95,6 @@ class EsModelUtil @Inject()(
   }
 
 
-  /**
-    * Убедиться, что индекс существует.
-    *
-    * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
-    *         Если индекс уже существует, то false.
-    */
-  def ensureIndex(indexName: String, shards: Int = 5, replicas: Int = 1): Future[Boolean] = {
-    for {
-      existsResp <- esClient.admin().indices()
-        .prepareExists(indexName)
-        .executeFut()
-
-      _ <- if (existsResp.isExists) {
-        Future.successful(false)
-      } else {
-        val indexSettings = SioEsUtil.getIndexSettingsV2(shards=shards, replicas=replicas)
-        esClient.admin().indices()
-          .prepareCreate(indexName)
-          .setSettings(indexSettings)
-          .executeFut()
-          .map { _ => true }
-      }
-    } yield {
-      true
-    }
-  }
-
-
   /** Пройтись по всем ES_MODELS и проверить, что всех ихние индексы существуют. */
   def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT]): Future[_] = {
     val indices = models.map { esModel =>
@@ -127,7 +102,7 @@ class EsModelUtil @Inject()(
     }.toMap
     Future.traverse(indices) {
       case (inxName, (shards, replicas)) =>
-        ensureIndex(inxName, shards=shards, replicas=replicas)
+        esIndexUtil.ensureIndex(inxName, shards=shards, replicas=replicas)
     }
   }
 
@@ -180,113 +155,6 @@ object EsModelUtil {
 
   }
 
-
-  /**
-   * Узнать метаданные индекса.
-   *
-   * @param indexName Название индекса.
-   * @return Фьючерс с опциональными метаданными индекса.
-   */
-  def getIndexMeta(indexName: String)(implicit ec: ExecutionContext, client: Client): Future[Option[IndexMetaData]] = {
-    client.admin().cluster()
-      .prepareState()
-      .setIndices(indexName)
-      .executeFut()
-      .map { cs =>
-        val maybeResult = cs.getState
-          .getMetaData
-          .index(indexName)
-        Option(maybeResult)
-      }
-  }
-
-  /**
-   * Прочитать метаданные маппинга.
-   *
-   * @param indexName Название индекса.
-   * @param typeName Название типа.
-   * @return Фьючерс с опциональными метаданными маппинга.
-   */
-  def getIndexTypeMeta(indexName: String, typeName: String)
-                      (implicit ec: ExecutionContext, client: Client): Future[Option[MappingMetaData]] = {
-    getIndexMeta(indexName) map { imdOpt =>
-      imdOpt.flatMap { imd =>
-        Option(imd.mapping(typeName))
-      }
-    }
-  }
-
-  /**
-   * Существует ли указанный маппинг в хранилище? Используется, когда модель хочет проверить наличие маппинга
-   * внутри общего индекса.
-   *
-   * @param typeName Имя типа.
-   * @return Да/нет.
-   */
-  def isMappingExists(indexName: String, typeName: String)
-                     (implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
-    getIndexTypeMeta(indexName, typeName = typeName)
-      .map { _.isDefined }
-  }
-
-  /** Прочитать текст маппинга из хранилища. */
-  def getCurrentMapping(indexName: String, typeName: String)
-                       (implicit ec: ExecutionContext, client: Client): Future[Option[String]] = {
-    getIndexTypeMeta(indexName, typeName = typeName) map {
-      _.map { _.source().string() }
-    }
-  }
-
-
-  /**
-   * Собрать указанные значения id'шников в аккамулятор-множество.
-   *
-   * @param searchResp Экземпляр searchResponse.
-   * @param acc0 Начальный акк.
-   * @param keepAliveMs keepAlive для курсоров на стороне сервера ES в миллисекундах.
-   * @return Фьчерс с результирующим аккамулятором-множеством.
-   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/search.html#scrolling]]
-   */
-  def searchScrollResp2ids(searchResp: SearchResponse, maxAccLen: Int, firstReq: Boolean, currAccLen: Int = 0,
-                           acc0: List[String] = Nil, keepAliveMs: Long = 60000L)
-                          (implicit ec: ExecutionContext, client: Client): Future[List[String]] = {
-    val hits = searchResp.getHits.getHits
-    if (!firstReq && hits.isEmpty) {
-      Future successful acc0
-    } else {
-      val nextAccLen = currAccLen + hits.length
-      val canContinue = maxAccLen <= 0 || nextAccLen < maxAccLen
-      val nextScrollRespFut = if (canContinue) {
-        // Лимит длины акк-ра ещё не пробит. Запустить в фоне получение следующей порции результатов...
-        client
-          .prepareSearchScroll(searchResp.getScrollId)
-          .setScroll(new TimeValue(keepAliveMs))
-          .executeFut()
-      } else {
-        null
-      }
-      // Если акк заполнен, то надо запустить очистку курсора на стороне ES.
-      if (!canContinue) {
-        client
-          .prepareClearScroll()
-          .addScrollId( searchResp.getScrollId )
-          .executeFut()
-      }
-      // Синхронно залить результаты текущего реквеста в аккамулятор
-      val accNew = hits.foldLeft[List[String]] (acc0) { (acc1, hit) =>
-        hit.getId :: acc1
-      }
-      if (canContinue) {
-        // Асинхронно перейти на следующую итерацию, дождавшись новой порции результатов.
-        nextScrollRespFut flatMap { searchResp2 =>
-          searchScrollResp2ids(searchResp2, maxAccLen, firstReq = false, currAccLen = nextAccLen, acc0 = accNew, keepAliveMs = keepAliveMs)
-        }
-      } else {
-        // Пробит лимит аккамулятора по maxAccLen - вернуть акк не продолжая обход.
-        Future successful accNew
-      }
-    }
-  }
 
 
   /** Рекурсивная асинхронная сверстка скролл-поиска в ES.

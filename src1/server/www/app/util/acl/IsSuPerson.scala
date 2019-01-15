@@ -1,7 +1,8 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
-import io.suggest.model.n2.node.{MNode, MNodeTypes}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import models.req.{MPersonReq, MReq}
 import play.api.mvc._
 import io.suggest.req.ReqUtil
@@ -18,6 +19,8 @@ import scala.concurrent.Future
  */
 
 class IsSuPerson @Inject()(
+                            esModel   : EsModel,
+                            mNodes    : MNodes,
                             aclUtil   : AclUtil,
                             isSu      : IsSu,
                             reqUtil   : ReqUtil,
@@ -25,6 +28,7 @@ class IsSuPerson @Inject()(
                           ) {
 
   import mCommonDi._
+  import esModel.api._
 
   /** @param personId id юзера. */
   def apply(personId: String): ActionBuilder[MPersonReq, AnyContent] = {
@@ -41,7 +45,9 @@ class IsSuPerson @Inject()(
             if (user.personIdOpt.contains(_personId)) {
               user.personNodeOptFut
             } else {
-              mNodesCache.getByIdType(_personId, MNodeTypes.Person)
+              mNodes
+                .getByIdCache(_personId)
+                .withNodeType(MNodeTypes.Person)
             }
           }
 

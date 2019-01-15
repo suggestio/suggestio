@@ -13,7 +13,6 @@ import io.suggest.util.JacksonParsing.{iteratorParser, strListParser, stringPars
 import io.suggest.util.logs.MacroLogsImpl
 
 import scala.collection.Map
-import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -133,9 +132,9 @@ case class MAiMad(
 trait MAiMadJmxMBean extends EsModelJMXMBeanI
 /** Реализация JMX MBean для модели [[MAiMad]]. */
 final class MAiMadJmx @Inject() (
-  override val companion  : MAiMads,
-  override val ec         : ExecutionContext
-)
+                                  override val companion    : MAiMads,
+                                  override val esModelJmxDi : EsModelJmxDi,
+                                )
   extends EsModelJMXBaseImpl
     with MAiMadJmxMBean
 {

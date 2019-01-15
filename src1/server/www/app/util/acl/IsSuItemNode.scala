@@ -1,8 +1,10 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
+import io.suggest.model.n2.node.MNodes
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
@@ -19,6 +21,8 @@ import scala.concurrent.Future
   * Description: Аддон для контроллеров для поддержки получения MItem вместе со связанной mad.
   */
 class IsSuItemNode @Inject()(
+                              esModel                : EsModel,
+                              mNodes                 : MNodes,
                               aclUtil                : AclUtil,
                               isSu                   : IsSu,
                               mItems                 : MItems,
@@ -29,6 +33,7 @@ class IsSuItemNode @Inject()(
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /**
@@ -49,7 +54,7 @@ class IsSuItemNode @Inject()(
           }
           mitemOptFut.flatMap {
             case Some(mitem) =>
-              val mnodeOptFut = mNodesCache.getById(mitem.nodeId)
+              val mnodeOptFut = mNodes.getByIdCache(mitem.nodeId)
               mnodeOptFut.flatMap {
                 case Some(mad) =>
                   val req1 = MItemNodeReq(mitem, mad, user, request)

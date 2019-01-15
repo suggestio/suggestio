@@ -11,7 +11,6 @@ import play.api.libs.functional.syntax._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.collection.Map
-import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -102,9 +101,9 @@ final case class EmailPwIdent(
 // JMX
 trait EmailPwIdentsJmxMBean extends EsModelJMXMBeanI
 final class EmailPwIdentsJmx @Inject()(
-  override val companion  : EmailPwIdents,
-  override val ec         : ExecutionContext
-)
+                                        override val companion    : EmailPwIdents,
+                                        override val esModelJmxDi : EsModelJmxDi,
+                                      )
   extends EsModelJMXBaseImpl
     with EmailPwIdentsJmxMBean
 {

@@ -18,7 +18,6 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 
 import scala.collection.Map
-import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -168,9 +167,9 @@ case class MExtTarget(
 // Поддержка JMX для ES-модели.
 trait MExtTargetsJmxMBean extends EsModelJMXMBeanI
 final class MExtTargetsJmx @Inject()(
-  override val companion  : MExtTargets,
-  override val ec         : ExecutionContext
-)
+                                      override val companion      : MExtTargets,
+                                      override val esModelJmxDi   : EsModelJmxDi,
+                                    )
   extends EsModelJMXBaseImpl
   with MExtTargetsJmxMBean
 {

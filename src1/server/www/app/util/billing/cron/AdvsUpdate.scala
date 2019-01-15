@@ -2,7 +2,7 @@ package util.billing.cron
 
 import java.time.OffsetDateTime
 
-import io.suggest.es.model.EsModelUtil
+import io.suggest.es.model.{EsModelDi, EsModelUtil}
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
@@ -49,11 +49,13 @@ abstract class AdvsUpdate
   with IMItems
   with AdvMNodesTryUpdateBuilderT
   with IStreamsUtilDi
+  with EsModelDi
 {
 
   import streamsUtil.Implicits._
   import mCommonDi._
   import slick.profile.api._
+  import esModel.api._
 
 
   /** Частичные критерии выборки подходящих item'ов из таблицы. */
@@ -154,7 +156,7 @@ abstract class AdvsUpdate
     * @param nodeId id обрабатываемого узла.
     */
   def runForNodeId(nodeId: String): Future[_] = {
-    val madOptFut = mNodesCache.getById(nodeId)
+    val madOptFut = mNodes.getByIdCache(nodeId)
 
     lazy val logPrefix = s"runForAdId($nodeId/${System.currentTimeMillis}):"
     LOGGER.trace(s"$logPrefix Starting...")

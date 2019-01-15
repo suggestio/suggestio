@@ -1,5 +1,7 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
+import io.suggest.model.n2.node.MNodes
 import javax.inject.Inject
 import models.mproj.ICommonDi
 import models.msys.MNodeEdgeIdQs
@@ -18,6 +20,8 @@ import scala.concurrent.Future
   * Description: ACL-аддон для sys-контроллеров для экшенов управления эджами.
   */
 class IsSuNodeEdge @Inject() (
+                               esModel    : EsModel,
+                               mNodes     : MNodes,
                                aclUtil    : AclUtil,
                                isSu       : IsSu,
                                reqUtil    : ReqUtil,
@@ -27,6 +31,7 @@ class IsSuNodeEdge @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Комбинация IsSuperuser + IsAdnAdmin + доступ к эджу по индексу.
@@ -42,7 +47,7 @@ class IsSuNodeEdge @Inject() (
         val user = aclUtil.userFromRequest(request)
 
         if (user.isSuper) {
-          val mnodeOptFut = mNodesCache.getById(qs.nodeId)
+          val mnodeOptFut = mNodes.getByIdCache(qs.nodeId)
           mnodeOptFut.flatMap {
 
             // Запрошенный узел найден.

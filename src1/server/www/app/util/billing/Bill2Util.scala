@@ -27,6 +27,7 @@ import models.mproj.ICommonDi
 import models.adv.geo.cur.AdvGeoShapeInfo_t
 import slick.sql.SqlAction
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
+import io.suggest.es.model.EsModel
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.streams.StreamsUtil
@@ -50,13 +51,14 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 @Singleton
 class Bill2Util @Inject() (
+                            esModel                         : EsModel,
                             bill2Conf                       : Bill2Conf,
                             mOrders                         : MOrders,
                             mContracts                      : MContracts,
                             mItems                          : MItems,
                             mBalances                       : MBalances,
                             mTxns                           : MTxns,
-                            mNodes                          : MNodes,
+                            val mNodes                      : MNodes,
                             mDebugs                         : MDebugs,
                             streamsUtil                     : StreamsUtil,
                             tfDailyUtil                     : TfDailyUtil,
@@ -69,6 +71,7 @@ class Bill2Util @Inject() (
   import mCommonDi._
   import slick.profile.api._
   import streamsUtil.Implicits._
+  import esModel.api._
 
 
   /** Через сколько времени считать ордер повисшим и разворачивать его назад в ордер-корзину? */
@@ -153,7 +156,7 @@ class Bill2Util @Inject() (
     _getDaysCountFix( dur.toDays.toInt )
   }
 
-  def cbcaNodeOptFut = mNodesCache.getById( bill2Conf.CBCA_NODE_ID )
+  def cbcaNodeOptFut = mNodes.getByIdCache( bill2Conf.CBCA_NODE_ID )
 
 
   /**
@@ -868,7 +871,7 @@ class Bill2Util @Inject() (
     for {
 
       // Гуляем по графу в поисках узла-получателя денег. Это узел с контрактом или узел-юзер.
-      (mrCandidateNodes, nodesInfoMap) <- mNodesCache.walk(
+      (mrCandidateNodes, nodesInfoMap) <- mNodes.walkCache(
         acc0 = List.empty[MNode] -> Map(nodeId -> Set.empty[Int]),
         ids  = Set(nodeId)
       ) {
@@ -931,7 +934,7 @@ class Bill2Util @Inject() (
         if (mrCandidateNodes.isEmpty) {
           // Не найдено ни одного узла-кандидата, вероятно суперюзеры создали и разместили какой-то узел в выдаче.
           val cbcaNodeId = bill2Conf.CBCA_NODE_ID
-          val r = mNodesCache.getById( cbcaNodeId )
+          val r = mNodes.getByIdCache( cbcaNodeId )
             .map(_.get)
           LOGGER.warn(s"$logPrefix Not money-rcvrs, will drop money to CBCA#$cbcaNodeId")
           r
@@ -1012,7 +1015,7 @@ class Bill2Util @Inject() (
           }
         } { rcvrId =>
           for {
-            mnodeOpt <- mNodesCache.getById(rcvrId)
+            mnodeOpt <- mNodes.getByIdCache(rcvrId)
             mnode = mnodeOpt.get
             tfDaily <- tfDailyUtil.nodeTf( mnode )
 

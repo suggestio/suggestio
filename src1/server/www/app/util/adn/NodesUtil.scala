@@ -8,10 +8,10 @@ import controllers.routes
 import io.suggest.adn.MAdnRights
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.EsModel
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
-import io.suggest.model.n2.media.MMediasCache
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
@@ -28,7 +28,6 @@ import models.mwc.MWelcomeRenderArgs
 import models.usr.MPersonIdents
 import play.api.i18n.{Lang, Langs, Messages}
 import play.api.mvc.Call
-import util.cdn.CdnUtil
 import util.img.DynImgUtil
 
 import scala.concurrent.Future
@@ -45,10 +44,9 @@ import scala.util.Random
  */
 @Singleton
 final class NodesUtil @Inject() (
+                                  esModel                 : EsModel,
                                   mNodes                  : MNodes,
                                   mExtTargets             : MExtTargets,
-                                  mMediasCache            : MMediasCache,
-                                  cdnUtil                 : CdnUtil,
                                   mPersonIdents           : MPersonIdents,
                                   dynImgUtil              : DynImgUtil,
                                   mCommonDi               : ICommonDi
@@ -58,6 +56,7 @@ final class NodesUtil @Inject() (
 
   import LOGGER._
   import mCommonDi._
+  import esModel.api._
 
   /** Через сколько секунд отправлять юзера в ЛК ноды после завершения реги юзера. */
   private def NODE_CREATED_SUCCESS_RDR_AFTER: Int = 5
@@ -263,11 +262,10 @@ final class NodesUtil @Inject() (
           mNodes.save(mad1)
         }
       }
-
       // Если не было adnId узлов-источников, то
       .recover { case _: NoSuchElementException =>
         LOGGER.warn(logPrefix + " Node default ads installer is disabled!")
-        Nil
+        Stream.empty
       }
   }
 
@@ -361,8 +359,8 @@ final class NodesUtil @Inject() (
   /** Собрать id родительских узлов по отношению к указанным дочерним узлам. */
   def directOwnerIdsOf(childrenIds: Iterable[String]): Future[Set[String]] = {
     // Чтобы узнать родительские узлы, надо прочитать текущие узлы:
-    mNodesCache
-      .multiGetSrc( childrenIds )
+    mNodes
+      .multiGetCacheSrc( childrenIds )
       .mapConcat { mnode =>
         mnode.edges
           .withPredicateIterIds( MPredicates.OwnedBy )
@@ -426,7 +424,7 @@ final class NodesUtil @Inject() (
     val nodesFut = Future.traverse( langs.availables ) { lang =>
       val nodeId = noAdsFound404NodeId( lang )
       for {
-        mnodeOpt <- mNodesCache.getById( nodeId )
+        mnodeOpt <- mNodes.getByIdCache( nodeId )
         resNode <- FutureUtil.opt2future( mnodeOpt ) {
           LOGGER.info(s"$logPrefix Will initialize 404-node#$nodeId for lang#${lang.code}")
           // Узел максимально прост и примитивен, т.к. не должен нести какой-либо доп.нагрузки: всё в карточках.

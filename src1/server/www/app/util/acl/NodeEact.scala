@@ -1,7 +1,8 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
+import io.suggest.model.n2.node.MNodes
 import javax.inject.Inject
-
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
@@ -19,6 +20,8 @@ import scala.concurrent.Future
  * Аддон подмешивается к контроллерам, где необходима поддержка NodeEact.
  */
 class NodeEact @Inject() (
+                           esModel                : EsModel,
+                           mNodes                 : MNodes,
                            aclUtil                : AclUtil,
                            emailPwIdents          : EmailPwIdents,
                            emailActivations       : EmailActivations,
@@ -30,6 +33,7 @@ class NodeEact @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Сборка ActionBuider'ов, проверяющих запросы активации инвайта на узел.
@@ -45,7 +49,7 @@ class NodeEact @Inject() (
 
       override def invokeBlock[A](request: Request[A], block: (MNodeEactReq[A]) => Future[Result]): Future[Result] = {
         val eaOptFut = emailActivations.getById(eaId)
-        val nodeOptFut = mNodesCache.getById(nodeId)
+        val nodeOptFut = mNodes.getByIdCache(nodeId)
 
         val user = aclUtil.userFromRequest(request)
 

@@ -1,6 +1,7 @@
 package util.xplay
 
-import io.suggest.model.n2.node.{MNode, MNodeTypes}
+import io.suggest.es.model.EsModelDi
+import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import models.mproj.IMCommonDi
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc.Result
@@ -13,13 +14,24 @@ import scala.concurrent.Future
  * Created: 23.03.15 18:39
  * Description: Утиль для поддержки языков.
  */
-trait SetLangCookieUtil extends I18nSupport with IMCommonDi {
+trait SetLangCookieUtil
+  extends I18nSupport
+  with IMCommonDi
+  with EsModelDi
+  with IMNodes
+{
 
   import mCommonDi._
+  import esModel.api._
 
   /** Выставить lang.cookie. */
   def setLangCookie1(resFut: Future[Result], personId: String): Future[Result] = {
-    setLangCookie2(resFut, mNodesCache.getByIdType(personId, MNodeTypes.Person))
+    setLangCookie2(
+      resFut,
+      mNodes
+        .getByIdCache(personId)
+        .withNodeType(MNodeTypes.Person)
+    )
   }
 
   def setLangCookie2(resFut: Future[Result], mpersonOptFut: Future[Option[MNode]]): Future[Result] = {

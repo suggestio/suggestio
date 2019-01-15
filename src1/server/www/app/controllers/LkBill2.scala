@@ -7,7 +7,7 @@ import io.suggest.bill.cart.{MCartConf, MCartInit, MOrderContent}
 import io.suggest.bill.{MCurrency, MPrice}
 import io.suggest.color.MColors
 import io.suggest.common.fut.FutureUtil
-import io.suggest.es.model.MEsUuId
+import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.i18n.MsgCodes
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.mbill2.m.gid.Gid_t
@@ -15,7 +15,7 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses, MOrders}
 import io.suggest.mbill2.m.txn.{MTxn, MTxnPriced}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
-import io.suggest.model.n2.node.{MNode, MNodeTypes}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.play.qsb.QsbSeq
 import io.suggest.pick.PickleUtil
 import io.suggest.primo.id.OptId
@@ -55,6 +55,8 @@ import scala.concurrent.Future
   */
 @Singleton
 class LkBill2 @Inject() (
+                          esModel                     : EsModel,
+                          mNodes                      : MNodes,
                           tfDailyUtil                 : TfDailyUtil,
                           mCalendars                  : MCalendars,
                           galleryUtil                 : GalleryUtil,
@@ -79,6 +81,7 @@ class LkBill2 @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
   private def _dailyTfArgsFut(mnode: MNode, madOpt: Option[MNode] = None): Future[Option[MTfDailyTplArgs]] = {
     if (mnode.extras.adn.exists(_.isReceiver)) {
@@ -561,7 +564,7 @@ class LkBill2 @Inject() (
             mitem.rcvrIdOpt.toList
         }
         .toSet
-      nodesMap <- mNodesCache.multiGetMap( nodeIds )
+      nodesMap <- mNodes.multiGetMapCache( nodeIds )
     } yield {
       nodesMap
     }

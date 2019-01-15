@@ -1,7 +1,6 @@
 package util.adv.geo.tag
 
 import javax.inject.Inject
-
 import akka.stream.scaladsl.{Keep, Sink}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.util.SioEsUtil
@@ -12,7 +11,7 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes, MNodesCache}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.OptId
@@ -21,6 +20,7 @@ import io.suggest.util.JMXBase
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import models.adv.build.MCtxOuter
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
+import io.suggest.es.model.EsModel
 import models.mproj.ICommonDi
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,6 +38,7 @@ import scala.util.{Failure, Success}
   * Сброс хлама в теги необходим для поиска тегов.
   */
 class GeoTagsUtil @Inject() (
+                              esModel       : EsModel,
                               mNodes        : MNodes,
                               mItems        : MItems,
                               streamsUtil   : StreamsUtil,
@@ -51,6 +52,7 @@ class GeoTagsUtil @Inject() (
   import slick.profile.api._
   import streamsUtil.Implicits._
   import mNodes.Implicits.elSourcingHelper
+  import esModel.api._
 
   /** Предикат эджей, используемых в рамках этого модуля. */
   private def _PRED = MPredicates.TaggedBy.Self
@@ -466,7 +468,7 @@ class GeoTagsUtil @Inject() (
       tagIds = OptId.optIds2ids(tagIdsOpts).toSet
 
       // Получить узлы через кеш
-      tagNodesMap <- mNodesCache.multiGetMap(tagIds)
+      tagNodesMap <- mNodes.multiGetMapCache(tagIds)
 
     } yield {
       val tnMapSize = tagNodesMap.size
@@ -563,14 +565,17 @@ trait GeoTagsUtilJmxMBean {
 }
 
 class GeoTagsUtilJmx @Inject() (
+                                 esModel                   : EsModel,
                                  geoTagsUtil               : GeoTagsUtil,
-                                 mNodesCache               : MNodesCache,
+                                 mNodes                    : MNodes,
                                  override implicit val ec  : ExecutionContext
                                )
   extends JMXBase
   with GeoTagsUtilJmxMBean
   with MacroLogsImplLazy
 {
+
+  import esModel.api._
 
   override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
 
@@ -583,7 +588,9 @@ class GeoTagsUtilJmx @Inject() (
 
   override def rebuildTagByNodeId(nodeId: String): String = {
     val fut = for {
-      mnodeOpt <- mNodesCache.getByIdType(nodeId, MNodeTypes.Tag)
+      mnodeOpt <- mNodes
+        .getByIdCache(nodeId)
+        .withNodeType(MNodeTypes.Tag)
       mnode = mnodeOpt.get
       mnodeOpt2 <- geoTagsUtil.rebuildTag( mnode )
     } yield {

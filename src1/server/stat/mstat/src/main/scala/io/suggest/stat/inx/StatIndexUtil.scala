@@ -1,12 +1,12 @@
 package io.suggest.stat.inx
 
 import java.time.Instant
-import javax.inject.{Inject, Singleton}
 
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
-import io.suggest.es.model.{EsIndexUtil, IEsModelDiVal}
-import io.suggest.stat.m.{MStatIndexes, MStatInxInfo, MStatsTmpFactory}
+import io.suggest.es.model.{EsIndexUtil, EsModel, IEsModelDiVal}
+import io.suggest.stat.m.{MStatIndexes, MStatInxInfo, MStatsModel, MStatsTmpFactory}
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import org.threeten.extra.Interval
@@ -21,14 +21,18 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 @Singleton
 class StatIndexUtil @Inject() (
-  mStatIndexes      : MStatIndexes,
-  mStatsTmpFactory  : MStatsTmpFactory,
-  mCommonDi         : IEsModelDiVal
-)
+                                esModel           : EsModel,
+                                mStatsModel       : MStatsModel,
+                                mStatIndexes      : MStatIndexes,
+                                mStatsTmpFactory  : MStatsTmpFactory,
+                                mCommonDi         : IEsModelDiVal
+                              )
   extends MacroLogsImpl
 {
 
   import mCommonDi._
+  import esModel.api._
+  import mStatsModel.api._
 
 
   /** Максимальное кол-во документов в одном stat-индексе.

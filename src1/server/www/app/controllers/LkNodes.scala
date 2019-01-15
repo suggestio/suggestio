@@ -9,7 +9,7 @@ import io.suggest.adn.MAdnRights
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.tf.daily.ITfDailyMode
 import io.suggest.common.empty.{EmptyUtil, OptionUtil}
-import io.suggest.es.model.MEsUuId
+import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.lk.nodes._
 import io.suggest.mbill2.m.item.typ.MItemTypes
@@ -53,6 +53,7 @@ import scala.concurrent.Future
   */
 @Singleton
 class LkNodes @Inject() (
+                          esModel                   : EsModel,
                           bill2Util                 : Bill2Util,
                           isNodeAdmin               : IsNodeAdmin,
                           lkNodesUtil               : LkNodesUtil,
@@ -70,6 +71,7 @@ class LkNodes @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   // TODO Этот говнокод надо заменить на нормальную common-модель с JSON и всеми делами.
@@ -305,7 +307,7 @@ class LkNodes @Inject() (
 
             // Нужно проверить, не занят ли указанный id каким-то другим узлом.
             val currIdNodeOptFut = FutureUtil.optFut2futOpt( addNodeInfo.id ) { newNodeId =>
-              mNodesCache.getById(newNodeId)
+              mNodes.getByIdCache(newNodeId)
             }
             val nodeWithIdNotExistsFut = currIdNodeOptFut.filter(_.isEmpty)
 

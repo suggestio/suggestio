@@ -1,5 +1,6 @@
 package util.billing.cron
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemType
@@ -25,13 +26,14 @@ import scala.concurrent.Future
   */
 
 class DisableExpiredAdvs @Inject() (
-  advBuilderUtil                  : AdvBuilderUtil,
-  override val mNodes             : MNodes,
-  override val mCommonDi          : ICommonDi,
-  override val advBuilderFactory  : AdvBuilderFactory,
-  override val streamsUtil        : StreamsUtil,
-  override val mItems             : MItems
-)
+                                     override val esModel            : EsModel,
+                                     advBuilderUtil                  : AdvBuilderUtil,
+                                     override val mNodes             : MNodes,
+                                     override val mCommonDi          : ICommonDi,
+                                     override val advBuilderFactory  : AdvBuilderFactory,
+                                     override val streamsUtil        : StreamsUtil,
+                                     override val mItems             : MItems
+                                   )
   extends AdvsUpdate
 {
 

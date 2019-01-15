@@ -4,14 +4,15 @@ import javax.inject.{Inject, Named, Singleton}
 import io.suggest.ad.blk.BlockWidths
 import io.suggest.color.MHistogram
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.es.model.EsModel
 import io.suggest.file.MSrvFileInfo
 import io.suggest.img.MImgFmts
 import io.suggest.jd.{MJdAdData, MJdEdge, MJdEdgeId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.model.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.media.{MFileMetaHash, MMedia, MMediasCache}
-import io.suggest.model.n2.node.{MNode, MNodesCache}
+import io.suggest.model.n2.media.{MFileMetaHash, MMedia, MMedias}
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
@@ -36,10 +37,11 @@ import util.ext.ExtRscUtil
   */
 @Singleton
 class JdAdUtil @Inject()(
+                          esModel                     : EsModel,
                           @Named("blk") blkImgMaker   : IImgMaker,
                           wideImgMaker                : ScWideMaker,
-                          mMediasCache                : MMediasCache,
-                          mNodesCache                 : MNodesCache,
+                          mMedias                     : MMedias,
+                          mNodes                      : MNodes,
                           dynImgUtil                  : DynImgUtil,
                           cdnUtil                     : CdnUtil,
                           extRscUtil                  : ExtRscUtil,
@@ -47,6 +49,8 @@ class JdAdUtil @Inject()(
                         )
   extends MacroLogsImpl
 {
+
+  import esModel.api._
 
   /** img-предикат, используемый в jd-карточках. */
   def imgPredicate = MPredicates.JdContent.Image
@@ -60,7 +64,7 @@ class JdAdUtil @Inject()(
     * @return Фьючерс с картой MMedia.
     */
   def prepareImgMedias(imgsEdges: TraversableOnce[(MEdge, MImg3)]): Future[Map[String, MMedia]] = {
-    mMediasCache.multiGetMap {
+    mMedias.multiGetMapCache {
       imgsEdges
         .toIterator
         .map(_._2.dynImgId.mediaId)
@@ -89,7 +93,7 @@ class JdAdUtil @Inject()(
     * @param videoEdges Подготовленные video-эджи, полученные из prepareVideoEdges().
     */
   def prepareMediaNodes(imgsEdges: TraversableOnce[(MEdge, MImg3)], videoEdges: Seq[MEdge]): Future[Map[String, MNode]] = {
-    mNodesCache.multiGetMap {
+    mNodes.multiGetMapCache {
       // Перечисляем все интересующие img-ноды:
       val imgNodeIdsIter = imgsEdges
         .toIterator
@@ -503,7 +507,7 @@ class JdAdUtil @Inject()(
         val _origMediasForMediaHostsFut = super.mediasForMediaHostsFut
         for {
           renderedImgs <- renderAdDocImgsFut
-          mmedias <- mMediasCache.multiGet {
+          mmedias <- mMedias.multiGetCache {
             // Интересуют только деривативы, которые могут прямо сейчас существовать в медиа-хранилище. Оригиналы возьмём из _origMediasForMediaHostsFut.
             val iter = for {
               renderedImg <- renderedImgs.iterator

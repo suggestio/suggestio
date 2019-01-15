@@ -7,7 +7,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.coord.{CoordOps, GeoCoord_t}
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.es.model.IMust
+import io.suggest.es.model.{EsModelDi, IMust}
 import io.suggest.es.search.MSubSearch
 import io.suggest.geo.{MGeoLoc, _}
 import io.suggest.i18n.MsgCodes
@@ -58,9 +58,11 @@ trait ScIndex
   with IBleUtilDi
   with IDynImgUtil
   with IIsNodeAdmin
+  with EsModelDi
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Унифицированная логика выдачи в фазе index. */
@@ -107,7 +109,7 @@ trait ScIndex
       val adnIdOpt = _scIndexArgs.nodeId
 
       val rFut = for {
-        mnodeOpt <- mNodesCache.maybeGetByIdCached( adnIdOpt )
+        mnodeOpt <- mNodes.maybeGetByIdCached( adnIdOpt )
       } yield {
         // Если узел-ресивер запрошен, но не найден, прервать работу над index: это какая-то нештатная ситуация.
         if (mnodeOpt.isEmpty && adnIdOpt.nonEmpty)
@@ -278,7 +280,7 @@ trait ScIndex
       val ephNodeId = Option( ctx.messages("conf.sc.node.ephemeral.id") )
         .filter(_.nonEmpty)
         .get
-      val _mnodeOptFut = mNodesCache.getById( ephNodeId )
+      val _mnodeOptFut = mNodes.getByIdCache( ephNodeId )
       LOGGER.trace(s"$logPrefix Index node not geolocated. Trying to get ephemeral covering node[$ephNodeId] for lang=${ctx.messages.lang.code}.")
 
       for (mnodeOpt <- _mnodeOptFut) yield {

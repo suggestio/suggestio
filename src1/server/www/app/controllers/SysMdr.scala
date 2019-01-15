@@ -7,7 +7,7 @@ import io.suggest.common.empty.OptionUtil
 import javax.inject.{Inject, Singleton}
 import io.suggest.ctx.CtxData
 import io.suggest.err.ErrorConstants
-import io.suggest.es.model.MEsUuId
+import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
@@ -39,6 +39,7 @@ import scala.util.Success
  */
 @Singleton
 class SysMdr @Inject() (
+                         esModel                  : EsModel,
                          jdAdUtil                 : JdAdUtil,
                          mNodes                   : MNodes,
                          reqUtil                  : ReqUtil,
@@ -57,6 +58,7 @@ class SysMdr @Inject() (
 
   import mCommonDi._
   import slick.profile.api._
+  import esModel.api._
 
 
   /** react-форма для осуществления модерации в /sys/.
@@ -202,7 +204,7 @@ class SysMdr @Inject() (
 
           // Возможна NSEE, это нормально. Обходим проблемы совместимости NSEE с Vector через headOption.get (вместо head):
           nodeId = nodeIds.headOption.get
-          mnodeOpt <- mNodesCache.getById( nodeId )
+          mnodeOpt <- mNodes.getByIdCache( nodeId )
 
         } yield {
           // Возможна ситуация, когда узел уже удалён, но в биллинге - ещё не модерирован. Модер должен принять решение об удалении.
@@ -374,8 +376,7 @@ class SysMdr @Inject() (
         }
 
         nodesRendered <- {
-          var src0 = mNodesCache
-            .multiGetSrc( needNodeIds )
+          var src0 = mNodes.multiGetCacheSrc( needNodeIds )
           // Если текущий узел тоже требуется рендерить, то добавить его готовый инстанс в начало:
           if (isAddMdrNodeToNodes)
             src0 = Source.single( mdrNode ) ++ src0

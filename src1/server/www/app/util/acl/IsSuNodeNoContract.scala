@@ -1,5 +1,7 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
+import io.suggest.model.n2.node.MNodes
 import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -17,6 +19,8 @@ import scala.concurrent.Future
  * Description: Доступ суперюзера к узлу, обязательно БЕЗ контракта.
  */
 class IsSuNodeNoContract @Inject() (
+                                     esModel    : EsModel,
+                                     mNodes     : MNodes,
                                      aclUtil    : AclUtil,
                                      isSu       : IsSu,
                                      reqUtil    : ReqUtil,
@@ -26,6 +30,7 @@ class IsSuNodeNoContract @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /**
     * @param nodeId id запрашиваемого узла.
@@ -39,7 +44,7 @@ class IsSuNodeNoContract @Inject() (
         def reqErr = MReq(request, user)
 
         if (user.isSuper) {
-          val mnodeOptFut = mNodesCache.getById(nodeId)
+          val mnodeOptFut = mNodes.getByIdCache(nodeId)
           mnodeOptFut.flatMap {
             case Some(mnode) =>
               if (mnode.billing.contractId.isEmpty) {

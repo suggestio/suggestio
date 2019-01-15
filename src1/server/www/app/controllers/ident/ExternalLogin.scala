@@ -1,9 +1,9 @@
 package controllers.ident
 
 import javax.inject.Inject
-
 import controllers.{SioController, routes}
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.EsModelDi
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
@@ -131,9 +131,11 @@ trait ExternalLogin
   with IMNodes
   with IMaybeAuth
   with IMExtIdentsDi
+  with EsModelDi
 {
 
   import mCommonDi._
+  import esModel.api._
 
   val canConfirmIdpReg: CanConfirmIdpReg
 
@@ -244,7 +246,9 @@ trait ExternalLogin
                 // Можно перенести внутрь match всю эту логику. Т.к. она очень предсказуема. Но это наверное ещё добавит сложности кода.
                 val mpersonOptFut = newMpersonOpt match {
                   case None =>
-                    mNodes.getByIdType(ident.personId, MNodeTypes.Person)
+                    mNodes
+                      .getByIdCache(ident.personId)
+                      .withNodeType(MNodeTypes.Person)
                   case some =>
                     Future.successful( some )
                 }

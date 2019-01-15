@@ -1,8 +1,8 @@
 package controllers
 
 import javax.inject.{Inject, Named, Singleton}
-
 import controllers.sc._
+import io.suggest.es.model.EsModel
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.ContextUtil
@@ -64,6 +64,7 @@ class Sc @Inject() (
                      override val scTagsUtil         : ScSearchUtil,
                      override val geoIpUtil          : GeoIpUtil,
                      override val extServicesUtil    : ExtServicesUtil,
+                     override val esModel            : EsModel,
                      assets                          : Assets,
                      override val mCommonDi          : ICommonDi
                    )

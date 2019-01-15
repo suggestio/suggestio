@@ -1,6 +1,8 @@
 package controllers.sysctl
 
 import controllers.{SioController, routes}
+import io.suggest.es.model.EsModelDi
+import io.suggest.model.n2.node.IMNodes
 import io.suggest.util.logs.IMacroLogs
 import models.mctx.Context
 import models.msys.MSysNodeInstallFormData
@@ -26,9 +28,12 @@ trait SysNodeInstall
   with INodesUtil
   with IIsSuNodeDi
   with ISysMarketUtilDi
+  with EsModelDi
+  with IMNodes
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Вернуть страницу с формой установки дефолтовых карточек на узлы. */
@@ -49,7 +54,7 @@ trait SysNodeInstall
   private def _installRender(form: Form[MSysNodeInstallFormData], rs: Status)
                             (implicit ctx: Context, request: INodeReq[_]): Future[Result] = {
     for {
-      srcNodes <- mNodesCache.multiGet(nodesUtil.ADN_IDS_INIT_ADS_SOURCE)
+      srcNodes <- mNodes.multiGetCache(nodesUtil.ADN_IDS_INIT_ADS_SOURCE)
     } yield {
       val allLangs = langs.availables
       val langCode2msgs = allLangs.iterator

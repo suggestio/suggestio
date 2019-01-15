@@ -1,8 +1,8 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.model.n2.media.{MMedia, MMediasCache}
-import io.suggest.model.n2.node.{MNodeTypes, MNodesCache}
+import io.suggest.model.n2.media.{MMedia, MMedias}
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.MImgT
@@ -10,6 +10,7 @@ import models.req.MMediaOptNodeReq
 import play.api.mvc._
 import japgolly.univeq._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
+import io.suggest.es.model.EsModel
 import io.suggest.proto.http.HttpConst
 import play.api.http.{HttpErrorHandler, Status}
 import util.cdn.CdnUtil
@@ -25,16 +26,19 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 @Singleton
 class CanDynImg @Inject() (
+                            esModel                 : EsModel,
+                            mNodes                  : MNodes,
+                            mMedias                 : MMedias,
                             aclUtil                 : AclUtil,
                             reqUtil                 : ReqUtil,
-                            mMediasCache            : MMediasCache,
                             cdnUtil                 : CdnUtil,
-                            mNodesCache             : MNodesCache,
                             errorHandler            : HttpErrorHandler,
                             implicit private val ec : ExecutionContext
                           )
   extends MacroLogsImpl
 { outer =>
+
+  import esModel.api._
 
   /** Проверка доступа к динамической картинке.
     *
@@ -46,8 +50,8 @@ class CanDynImg @Inject() (
 
       override def invokeBlock[A](request: Request[A], block: MMediaOptNodeReq[A] => Future[Result]): Future[Result] = {
         // Запустить в фоне считывание инстансов MNode и MMedia.
-        val mnodeOptFut = mNodesCache.getById( mimg.dynImgId.nodeId )
-        val mmediaOptFut = mMediasCache.getById( mimg.dynImgId.mediaId )
+        val mnodeOptFut = mNodes.getByIdCache( mimg.dynImgId.nodeId )
+        val mmediaOptFut = mMedias.getByIdCache( mimg.dynImgId.mediaId )
 
         // TODO Различия формата с оригиналом тут не определить. Как выкручиваться из такой ситуации? Сделать dynFormat как Option?
         val isImgOrig = !mimg.dynImgId.hasImgOps
@@ -56,7 +60,7 @@ class CanDynImg @Inject() (
         lazy val mmediaOrigOptFut = if (isImgOrig) {
           mmediaOptFut
         } else {
-          mMediasCache.getById(mimg.dynImgId.original.mediaId)
+          mMedias.getByIdCache(mimg.dynImgId.original.mediaId)
         }
 
         lazy val logPrefix = s"(${mimg.dynImgId.mediaId})#${System.currentTimeMillis()}:"

@@ -9,6 +9,7 @@ import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dt.CommonDateTimeUtil
+import io.suggest.es.model.EsModel
 import io.suggest.geo.CircleGsJvm
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
@@ -38,6 +39,7 @@ import scala.concurrent.Future
   * Через год сюда приехал биллинг ресиверов в попапах.
   */
 class AdvGeoBillUtil @Inject() (
+                                 esModel                             : EsModel,
                                  bill2Conf                           : Bill2Conf,
                                  billDebugUtil                       : BillDebugUtil,
                                  advUtil                             : AdvUtil,
@@ -51,6 +53,7 @@ class AdvGeoBillUtil @Inject() (
 
   import mCommonDi._
   import slick.profile.api._
+  import esModel.api._
 
 
   /**
@@ -131,7 +134,7 @@ class AdvGeoBillUtil @Inject() (
               .flatMap(_.lastOption)
               .toSet
               .--(rcvrIdsSet)
-            mNodesCache.multiGetMap(missNodeIds)
+            mNodes.multiGetMapCache(missNodeIds)
           } else {
             Future.successful( Map.empty )
           }

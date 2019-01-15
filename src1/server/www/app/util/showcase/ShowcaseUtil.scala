@@ -16,6 +16,7 @@ import models.msc.TileArgs
 import util.adv.AdvUtil
 import util.n2u.N2NodesUtil
 import io.suggest.common.empty.OptionUtil.Implicits._
+import io.suggest.es.model.EsModel
 import util.adn.NodesUtil
 
 import scala.concurrent.Future
@@ -28,6 +29,7 @@ import scala.concurrent.Future
  */
 @Singleton
 class ShowcaseUtil @Inject() (
+                               esModel      : EsModel,
                                advUtil      : AdvUtil,
                                n2NodesUtil  : N2NodesUtil,
                                nodesUtil    : NodesUtil,
@@ -38,6 +40,7 @@ class ShowcaseUtil @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /** Значение cache-control для index-выдачи. */
   def SC_INDEX_CACHE_SECONDS = 20
@@ -233,7 +236,7 @@ class ShowcaseUtil @Inject() (
     } yield {
       for {
         // Прочитать из хранилища указанную карточку.
-        madOpt <- mNodesCache.getById( focQs.lookupAdId )
+        madOpt <- mNodes.getByIdCache( focQs.lookupAdId )
 
         // .get приведёт к NSEE, это нормально.
         producerId = {
@@ -247,7 +250,7 @@ class ShowcaseUtil @Inject() (
           !nodesUtil.is404Node( producerId )   // Запрещать переход на 404-узел и 404-карточку.
 
         producer <- {
-          val prodFut = mNodesCache.getById(producerId)
+          val prodFut = mNodes.getByIdCache(producerId)
             .map(_.get)
 
           // Как выяснилось, бывают карточки-сироты (продьюсер удален, карточка -- нет). Нужно сообщать об этой ошибке.

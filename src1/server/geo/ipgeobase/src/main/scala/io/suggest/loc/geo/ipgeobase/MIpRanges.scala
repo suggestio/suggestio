@@ -9,7 +9,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import scala.collection.Map
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -172,9 +172,9 @@ trait MIpRangesJmxMBean extends EsModelJMXMBeanI {
 }
 /** Реализация jmx mbean [[MIpRangesJmxMBean]]. */
 final class MIpRangesJmx @Inject() (
-  override val companion    : MIpRanges,
-  override implicit val ec  : ExecutionContext
-)
+                                     override val companion      : MIpRanges,
+                                     override val esModelJmxDi   : EsModelJmxDi,
+                                   )
   extends EsModelJMXBaseImpl
   with MIpRangesJmxMBean
 {

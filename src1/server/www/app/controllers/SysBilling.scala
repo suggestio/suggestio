@@ -2,6 +2,7 @@ package controllers
 
 import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
@@ -36,6 +37,7 @@ import scala.concurrent.Future
  * Второй биллинг имеет тарифы внутри узлов и контракты-ордеры-item'ы в РСУБД.
  */
 class SysBilling @Inject() (
+                             esModel                    : EsModel,
                              tfDailyUtil                : TfDailyUtil,
                              mNodes                     : MNodes,
                              mCalendars                 : MCalendars,
@@ -57,6 +59,7 @@ class SysBilling @Inject() (
 
 
   import mCommonDi._
+  import esModel.api._
 
   /**
    * Отображение страницы биллинга для узла.

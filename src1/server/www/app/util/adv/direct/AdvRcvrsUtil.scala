@@ -4,12 +4,12 @@ import java.time.OffsetDateTime
 
 import io.suggest.adn.MAdnRights
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.EsModelUtil
+import io.suggest.es.model.{EsModel, EsModelUtil}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes, MNodesCache}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
@@ -32,6 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class AdvRcvrsUtil @Inject()(
+                              esModel                 : EsModel,
                               mItems                  : MItems,
                               override val mNodes     : MNodes,
                               advBuilderFactory       : AdvBuilderFactory,
@@ -45,6 +46,7 @@ class AdvRcvrsUtil @Inject()(
   import LOGGER._
   import mCommonDi._
   import slick.profile.api._
+  import esModel.api._
 
   /** Причина hard-отказа в размещении со стороны suggest.io, а не узла.
     * Потом надо это заменить на нечто иное: чтобы суперюзер s.io вводил причину. */
@@ -144,7 +146,9 @@ class AdvRcvrsUtil @Inject()(
     * @return Boolean, который обычно не имеет смысла.
     */
   def depublishAdOn(adId: String, rcvrIdOpt: Option[String]): Future[MNode] = {
-    mNodesCache.getByIdType(adId, MNodeTypes.Ad)
+    mNodes
+      .getByIdCache(adId)
+      .withNodeType(MNodeTypes.Ad)
       .map(_.get)
       .flatMap(depublishAdOn(_, rcvrIdOpt.toSet))
   }
@@ -373,14 +377,16 @@ trait AdvRcvrsUtilJmxMBean {
 
 /** Реализация MBean'а для прямого взаимодействия с AdvUtil. */
 final class AdvRcvrsUtilJmx @Inject()(
+                                       esModel                      : EsModel,
                                        advRcvrsUtil                 : AdvRcvrsUtil,
-                                       mNodesCache                  : MNodesCache,
+                                       mNodes                       : MNodes,
                                        override implicit val ec     : ExecutionContext
                                      )
   extends AdvRcvrsUtilJmxMBean
   with JMXBase
   with MacroLogsImplLazy
 {
+  import esModel.api._
 
   override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
 
@@ -393,7 +399,7 @@ final class AdvRcvrsUtilJmx @Inject()(
   }
 
   override def resetReceiversForAd(adId: String): String = {
-    val s = mNodesCache.getById(adId).flatMap {
+    val s = mNodes.getByIdCache(adId).flatMap {
       case Some(mad) =>
         for (_ <- advRcvrsUtil.resetReceiversFor(mad)) yield {
           "Successfully reset receivers for " + adId

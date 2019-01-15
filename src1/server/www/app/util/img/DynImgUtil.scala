@@ -9,11 +9,12 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import controllers.routes
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.es.model.EsModel
 import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.jd.MJdEdgeId
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.media.{MMedia, MMedias, MMediasCache}
+import io.suggest.model.n2.media.{MMedia, MMedias}
 import io.suggest.model.n2.media.search.MMediaSearchDfltImpl
 import io.suggest.model.n2.media.storage.IMediaStorages
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -42,6 +43,7 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class DynImgUtil @Inject() (
+                             esModel                   : EsModel,
                              mImgs3                    : MImgs3,
                              mLocalImgs                : MLocalImgs,
                              im4jAsyncUtil             : Im4jAsyncUtil,
@@ -51,13 +53,13 @@ class DynImgUtil @Inject() (
                              // Только для удаления и чистки базы:
                              iMediaStorages            : IMediaStorages,
                              mMedias                   : MMedias,
-                             mMediasCache              : MMediasCache,
                              mCommonDi                 : ICommonDi
                            )
   extends MacroLogsImpl
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /** Сколько времени кешировать результат подготовки картинки?
     * Кеш используется для подавления параллельных запросов. */
@@ -111,7 +113,7 @@ class DynImgUtil @Inject() (
 
   /** Собрать список MMedia для перечисленных картинок. Порядок любой. */
   def imgs2medias(imgs: TraversableOnce[MImgT]): Future[Seq[MMedia]] = {
-    mMediasCache.multiGet {
+    mMedias.multiGetCache {
       imgs
         .toIterator
         .flatMap { mimg =>
@@ -446,7 +448,7 @@ class DynImgUtil @Inject() (
         Future.successful(whOpt)
 
       case other =>
-        val mediasFut = mMediasCache.multiGet {
+        val mediasFut = mMedias.multiGetCache {
           // Если getWhFromOps() позволяет, то попытаться скопировать WH с оригинала.
           if (other.isEmpty) {
             LOGGER.trace(s"$logPrefix Ok to use orig.img#${dynImgId.rowKeyStr} as fallback. Will fetch both orig. and derivative MMedias...")
@@ -566,7 +568,7 @@ class DynImgUtil @Inject() (
 
         for {
           // Поискать оригинал картинки через media-кэш. Это даст ускорение.
-          mmediasMap <- mMediasCache.multiGetMap( mediaId2edgeUid.values.toSet )
+          mmediasMap <- mMedias.multiGetMapCache( mediaId2edgeUid.values.toSet )
         } yield {
           def _upgradeJdIdOpt(jdIdOpt: Option[MJdEdgeId]): Option[MJdEdgeId] = {
             val resOpt = for {

@@ -1,7 +1,7 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
-
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
@@ -35,12 +35,14 @@ class CanConfirmEmailPwReg @Inject()(
                                       emailActivations        : EmailActivations,
                                       isAuth                  : IsAuth,
                                       reqUtil                 : ReqUtil,
+                                      esModel                 : EsModel,
                                       mCommonDi               : ICommonDi
                                     )
   extends MacroLogsImpl
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /** Сборка ActionBuilder'а, проверяющего права доступа на подтверждение реги по email.
     *

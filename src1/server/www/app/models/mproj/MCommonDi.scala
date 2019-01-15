@@ -15,7 +15,6 @@ import play.api.db.slick.DatabaseConfigProvider
 import play.api.i18n.{Langs, MessagesApi}
 import io.suggest.di.{ICacheApi, ISlickDbConfig}
 import io.suggest.es.model.{EsScrollPublisherFactory, IEsModelDiVal}
-import io.suggest.model.n2.node.{INodeCache, MNodesCache}
 import io.suggest.sec.util.Csrf
 import util.HtmlCompressUtil
 
@@ -35,7 +34,6 @@ trait ICommonDi
   with IEsModelDiVal
   with ICacheApi
   with ISlickDbConfig
-  with INodeCache
 {
   // Для возможно оптимизации, всё объявляем как val, т.к. по сути так оно и есть.
   val contextFactory                  : Context2Factory
@@ -66,7 +64,6 @@ final class MCommonDi @Inject() (
                                   override val csrf                   : Csrf,
                                   override val cache                  : AsyncCacheApi,
                                   override val cacheApiUtil           : CacheApiUtil,
-                                  override val mNodesCache            : MNodesCache,
                                   override val esScrollPublisherFactory: EsScrollPublisherFactory,
                                   override val _slickConfigProvider   : DatabaseConfigProvider,
                                   override val messagesApi            : MessagesApi,

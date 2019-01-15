@@ -2,7 +2,8 @@ package util.billing
 
 import akka.actor.ActorSystem
 import io.suggest.bill.{MCurrencies, MGetPriceResp, MPrice}
-import io.suggest.model.n2.node.MNodesCache
+import io.suggest.es.model.EsModel
+import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsDyn
 import javax.inject.{Inject, Singleton}
 import play.api.Configuration
@@ -25,7 +26,8 @@ class Bill2Conf @Inject() (
 {
 
   implicit private def ec = injector.instanceOf[ExecutionContext]
-  private def mNodesCache = injector.instanceOf[MNodesCache]
+  private def mNodes = injector.instanceOf[MNodes]
+  private def _esModel = injector.instanceOf[EsModel]
   private def actorSystem = injector.instanceOf[ActorSystem]
 
   /** id узла, на который должна сыпаться комиссия с этого биллинга. */
@@ -39,9 +41,12 @@ class Bill2Conf @Inject() (
         r
       }
 
+    val esModel = _esModel
+    import esModel.api._
+
     // Проверить в фоне, существует ли узел.
     for {
-      _ <- mNodesCache.getById(res)
+      _ <- mNodes.getByIdCache(res)
         .map(_.get)
         .failed
     } {

@@ -1,5 +1,6 @@
 package controllers
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.ai._
@@ -22,18 +23,20 @@ import scala.util.matching.Regex
  * На момент создания здесь система заполнения карточек, живущая в MadAiUtil и её модель.
  */
 class SysAi @Inject() (
-  madAiUtil                       : MadAiUtil,
-  mAiMads                         : MAiMads,
-  isSuAiMad                       : IsSuAiMad,
-  isSu                            : IsSu,
-  override val mCommonDi          : ICommonDi
-)
+                        esModel                         : EsModel,
+                        madAiUtil                       : MadAiUtil,
+                        mAiMads                         : MAiMads,
+                        isSuAiMad                       : IsSuAiMad,
+                        isSu                            : IsSu,
+                        override val mCommonDi          : ICommonDi
+                      )
   extends SioControllerImpl
   with MacroLogsImplLazy
 {
 
   import LOGGER._
   import mCommonDi._
+  import esModel.api._
 
 
   /** Раздача страницы с оглавлением по ai-подсистемам. */
@@ -48,7 +51,7 @@ class SysAi @Inject() (
   def madIndex = csrf.AddToken {
     isSu().async { implicit request =>
       val aisFut = mAiMads.getAll()
-      aisFut map { ais =>
+      for (ais <- aisFut) yield {
         Ok(madIndexTpl(ais))
       }
     }

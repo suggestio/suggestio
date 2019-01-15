@@ -1,6 +1,8 @@
 package controllers
 
+import io.suggest.es.model.EsModelDi
 import io.suggest.img.{MImgFmtJvm, MImgFmts}
+import io.suggest.model.n2.node.IMNodes
 import io.suggest.util.logs.IMacroLogs
 import models.blk.{OneAdQsArgs, OneAdWideQsArgs}
 import models.msc.OneAdRenderVariant
@@ -48,6 +50,7 @@ class SysAdRenderUtil {
 }
 
 
+// TODO Замёржить в SysMarket
 /** Аддон для sys-контроллера для добавления экшенов, связанных с рендером карточки. */
 trait SysAdRender
   extends SioController
@@ -55,11 +58,15 @@ trait SysAdRender
   with IIsSuMad
   with IN2NodesUtilDi
   with IAdvUtilDi
+  with EsModelDi
+  with IMNodes
 {
 
   import mCommonDi._
+  import esModel.api._
 
   val sysAdRenderUtil: SysAdRenderUtil
+
 
   import sysAdRenderUtil._
 
@@ -96,7 +103,7 @@ trait SysAdRender
   private def _showOneAdFormRender(qf: Form[OneAdQsArgs], rvar: OneAdRenderVariant, rs: Status)
                                   (implicit request: IAdReq[_]): Future[Result] = {
     val producerIdOpt = n2NodesUtil.madProducerId(request.mad)
-    val nodeOptFut = mNodesCache.maybeGetByIdCached( producerIdOpt )
+    val nodeOptFut = mNodes.maybeGetByIdCached( producerIdOpt )
     for {
       nodeOpt <- nodeOptFut
     } yield {

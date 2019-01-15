@@ -10,7 +10,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MScreen
-import io.suggest.es.model.IMust
+import io.suggest.es.model.{EsModel, IMust}
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MRcvrsMapUrlArgs}
 import io.suggest.media.{MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.edge.MPredicates
@@ -34,6 +34,7 @@ import util.cdn.CdnUtil
 import util.img.{DynImgUtil, FitImgMaker, LogoUtil, WelcomeUtil}
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 /**
   * Suggest.io
@@ -42,6 +43,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: Утиль для форм размещения с гео-картам.
   */
 class AdvGeoRcvrsUtil @Inject()(
+                                 esModel     : EsModel,
                                  mNodes      : MNodes,
                                  logoUtil    : LogoUtil,
                                  welcomeUtil : WelcomeUtil,
@@ -56,6 +58,7 @@ class AdvGeoRcvrsUtil @Inject()(
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** "Версия" формата ресиверов, чтобы сбрасывать карту, даже когда она не изменилась. */
@@ -198,31 +201,31 @@ class AdvGeoRcvrsUtil @Inject()(
 
         val logoMakeResOptFut = FutureUtil.optFut2futOpt(mapLogoImgWithLimitsOptRaw) { case (logoRaw, targetSz) =>
           // Используем FitImgMaker, чтобы вписать лого в ограничения логотипа для этой карты.
-          val imakeArgs = MImgMakeArgs(
-            img           = logoRaw,
-            targetSz      = targetSz,
-            szMult        = logoSzMult,
-            // На всех один и тот же экран, т.к. так быстрее. Логотипов десятки и сотни, и они мелкие, поэтому не важно.
-            devScreenOpt  = targetScreenSome,
-            compressMode  = compressModeSome
-          )
-          val fut = for {
-            logoMakeRes <- fitImgMaker.icompile( imakeArgs )
-          } yield {
-            LOGGER.trace(s"$logPrefix wh = ${logoMakeRes.szCss}csspx/${logoMakeRes.szReal}px for img $logoRaw")
-            Some( logoMakeRes -> targetSz )
-          }
-
-          // Подавлять ошибки рендера логотипа. Дефолтовщины хватит, главное чтобы всё было ок.
-          fut.recover { case ex: Throwable =>
-            val msg = s"$logPrefix Node[${mnode.idOrNull}] with possible logo[$logoRaw] failed to prepare the logo for map"
-            if (ex.isInstanceOf[NoSuchElementException] && !LOGGER.underlying.isTraceEnabled) {
-              LOGGER.warn(msg)
-            } else {
-              LOGGER.warn(msg, ex)
+          fitImgMaker
+            .icompile {
+              MImgMakeArgs(
+                img           = logoRaw,
+                targetSz      = targetSz,
+                szMult        = logoSzMult,
+                // На всех один и тот же экран, т.к. так быстрее. Логотипов десятки и сотни, и они мелкие, поэтому не важно.
+                devScreenOpt  = targetScreenSome,
+                compressMode  = compressModeSome
+              )
             }
-            None
-          }
+            .transform {
+              case Success(logoMakeRes) =>
+                LOGGER.trace(s"$logPrefix wh = ${logoMakeRes.szCss}csspx/${logoMakeRes.szReal}px for img $logoRaw")
+                val r = Some( logoMakeRes -> targetSz )
+                Success(r)
+              case Failure(ex) =>
+                val msg = s"$logPrefix Node[${mnode.idOrNull}] with possible logo[$logoRaw] failed to prepare the logo for map"
+                if (ex.isInstanceOf[NoSuchElementException] && !LOGGER.underlying.isTraceEnabled) {
+                  LOGGER.warn(msg)
+                } else {
+                  LOGGER.warn(msg, ex)
+                }
+                Success( None )
+            }
         }
 
         // Собираем props-константы за скобками, чтобы mnode-инстанс можно было "отпустить".

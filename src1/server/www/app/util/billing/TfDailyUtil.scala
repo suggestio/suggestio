@@ -20,6 +20,7 @@ import play.api.data._
 import util.FormUtil.{currencyM, doubleM, esIdM}
 import util.TplDataFormatUtil
 import MPrice.HellImplicits.AmountMonoid
+import io.suggest.es.model.EsModel
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.JMXBase
 import scalaz._
@@ -36,6 +37,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class TfDailyUtil @Inject()(
+                             esModel     : EsModel,
                              bill2Conf   : Bill2Conf,
                              mNodes      : MNodes,
                              mCalendars  : MCalendars,
@@ -45,6 +47,8 @@ class TfDailyUtil @Inject()(
 {
 
   import mCommonDi._
+  import esModel.api._
+
 
   def VERY_DEFAULT_WEEKDAY_CLAUSE = MDayClause("Будни", MCurrencies.default.centsInUnit)
 
@@ -174,7 +178,7 @@ class TfDailyUtil @Inject()(
   /** Вернуть fallback-тариф. */
   def fallbackTf(): Future[MTfDaily] = {
     for {
-      cbcaNodeOpt <- mNodesCache.getById( bill2Conf.CBCA_NODE_ID )
+      cbcaNodeOpt <- mNodes.getByIdCache( bill2Conf.CBCA_NODE_ID )
     } yield {
       cbcaNodeOpt
         .flatMap(_.billing.tariffs.daily)
@@ -245,7 +249,7 @@ class TfDailyUtil @Inject()(
       fallbackTf()
 
     } else {
-      val ownNodesFut = mNodesCache.multiGet(ownNodeIds)
+      val ownNodesFut = mNodes.multiGetCache(ownNodeIds)
       LOGGER.trace(s"$logPrefix Candidate owners-nodes: ${ownNodeIds.mkString(", ")}")
 
       // Получаем узлы сразу, т.к. при любом раскладе все они будут получены сюда.
@@ -261,8 +265,8 @@ class TfDailyUtil @Inject()(
         FutureUtil.opt2future(ownTfDailyOpt) {
           // Нет ни одного тарифа на узлах-владельцах.
           LOGGER.trace(s"$logPrefix Nodes with dailyTF not found in nodes. Looking for parent nodes...")
-          mNodesCache
-            .multiGet(ownNodeIds)
+          mNodes
+            .multiGetCache(ownNodeIds)
             .flatMap { mnodes2 =>
               _inheritedNodeTf(mnodes2, level + 1)
             }

@@ -1,5 +1,6 @@
 package util.billing.cron
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -22,6 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: Система повторной переактивации текущих размещений.
   */
 class ReActivateCurrentAdvs @Inject() (
+                                        override val esModel            : EsModel,
                                         override val advBuilderUtil     : AdvBuilderUtil,
                                         override val geoTagsUtil        : GeoTagsUtil,
                                         override val mNodes             : MNodes,

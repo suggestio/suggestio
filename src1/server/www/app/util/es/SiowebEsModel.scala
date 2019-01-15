@@ -1,7 +1,7 @@
 package util.es
 
 import javax.inject.Inject
-import io.suggest.es.model.{CopyContentResult, EsModelCommonStaticT, EsModelUtil}
+import io.suggest.es.model.{CopyContentResult, EsModel, EsModelCommonStaticT, EsModelUtil}
 import io.suggest.es.util.{EsClientUtil, SioEsUtil}
 import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
@@ -27,23 +27,25 @@ import scala.util.{Failure, Success}
  * Description: Дополнительная утиль для ES-моделей.
  */
 class SiowebEsModel @Inject() (
-  mNodes              : MNodes,
-  mMedias             : MMedias,
-  mCalendars          : MCalendars,
-  mExtTargets         : MExtTargets,
-  mAiMads             : MAiMads,
-  emailPwIdents       : EmailPwIdents,
-  emailActivations    : EmailActivations,
-  mExtIdents          : MExtIdents,
-  mAsymKeys           : MAsymKeys,
-  esModelUtil         : EsModelUtil,
-  mCommonDi           : ICommonDi
-)
+                                esModel             : EsModel,
+                                mNodes              : MNodes,
+                                mMedias             : MMedias,
+                                mCalendars          : MCalendars,
+                                mExtTargets         : MExtTargets,
+                                mAiMads             : MAiMads,
+                                emailPwIdents       : EmailPwIdents,
+                                emailActivations    : EmailActivations,
+                                mExtIdents          : MExtIdents,
+                                mAsymKeys           : MAsymKeys,
+                                esModelUtil         : EsModelUtil,
+                                mCommonDi           : ICommonDi
+                              )
   extends MacroLogsImplLazy
 {
 
   import mCommonDi._
   import LOGGER._
+  import esModel.api._
 
   // Constructor
   initializeEsModels()
@@ -94,13 +96,13 @@ class SiowebEsModel @Inject() (
         throw ex
     }
     val toClient = mCommonDi.esClient
-    val resultFut = Future.traverse(esModels) { esModel =>
-      val copyResultFut = esModel.copyContent(fromClient, toClient)
+    val resultFut = Future.traverse(esModels) { esM =>
+      val copyResultFut = esM.copyContent(fromClient, toClient)
       copyResultFut.onComplete {
         case Success(result) =>
-          info(s"$logPrefix Copy finished for model ${esModel.getClass.getSimpleName}. Total success=${result.success} failed=${result.failed}")
+          info(s"$logPrefix Copy finished for model ${esM.getClass.getSimpleName}. Total success=${result.success} failed=${result.failed}")
         case Failure(ex) =>
-          error(s"$logPrefix Copy failed for model ${esModel.getClass.getSimpleName}", ex)
+          error(s"$logPrefix Copy failed for model ${esM.getClass.getSimpleName}", ex)
       }
       copyResultFut
     }

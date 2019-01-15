@@ -5,7 +5,8 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.req.{IAdProdReq, MNodeMaybeAdminReq}
 import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.model.n2.node.MNodesCache
+import io.suggest.es.model.EsModel
+import io.suggest.model.n2.node.MNodes
 import io.suggest.req.ReqUtil
 import play.api.http.{HttpErrorHandler, Status}
 
@@ -19,18 +20,21 @@ import scala.concurrent.{ExecutionContext, Future}
   * Можно
   */
 class CanViewNodeAdvInfo @Inject() (
+                                     esModel                    : EsModel,
+                                     mNodes                     : MNodes,
                                      aclUtil                    : AclUtil,
                                      canAdvAd                   : CanAdvAd,
                                      isAuth                     : IsAuth,
                                      isNodeAdmin                : IsNodeAdmin,
                                      dab                        : DefaultActionBuilder,
                                      reqUtil                    : ReqUtil,
-                                     mNodesCache                : MNodesCache,
                                      httpErrorHandler           : HttpErrorHandler,
                                      implicit private val ec    : ExecutionContext,
                                    )
   extends MacroLogsImpl
 { outer =>
+
+  import esModel.api._
 
   /** Вся ACL-логика живёт здесь.
     *
@@ -53,7 +57,7 @@ class CanViewNodeAdvInfo @Inject() (
 
     } { personId =>
       // Юзер залогинен. В фоне запускаем чтение запрошенного узла...
-      val mnodeOptFut = mNodesCache.getById(nodeId)
+      val mnodeOptFut = mNodes.getByIdCache(nodeId)
 
       // Ответ при проблемах с доступом для залогиненного юзера всегда один:
       def forbidden: Future[Result] =

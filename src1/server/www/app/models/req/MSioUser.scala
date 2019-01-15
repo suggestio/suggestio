@@ -8,12 +8,13 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.CtxData
 import io.suggest.di.ISlickDbConfig
+import io.suggest.es.model.EsModel
 import io.suggest.init.routed.MJsInitTarget
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodesCache}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.usr.MSuperUsers
 import org.elasticsearch.client.Client
@@ -121,6 +122,7 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
   protected val msuStatics: MsuStatic
   import msuStatics._
   import slick.profile.api._
+  import esModel.api._
 
 
   override def isAuth = personIdOpt.isDefined
@@ -133,7 +135,9 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
 
   override def personNodeOptFut: Future[Option[MNode]] = {
     FutureUtil.optFut2futOpt( personIdOpt ) { personId =>
-      val optFut0 = mNodeCache.getByIdType(personId, MNodeTypes.Person)
+      val optFut0 = mNodes
+        .getByIdCache(personId)
+        .withNodeType(MNodeTypes.Person)
       for (resOpt <- optFut0 if resOpt.isEmpty) {
         // should never happen
         LOGGER.warn(s"personNodeOptFut(): Person[$personId] doesn't exist, but it should!")
@@ -268,11 +272,12 @@ class MsuStatic @Inject()(
                            val mContracts                : MContracts,
                            val mBalances                 : MBalances,
                            // Не следует тут юзать MCommonDi, т.к. тут живёт слишком фундаментальный для проекта компонент.
-                           val mNodeCache                : MNodesCache,
+                           val mNodes                    : MNodes,
                            val mdrUtil                   : MdrUtil,
                            val nodesUtil                 : NodesUtil,
                            val bill2Util                 : Bill2Util,
                            val mItems                    : MItems,
+                           val esModel                   : EsModel,
                            override val _slickConfigProvider : DatabaseConfigProvider,
                            implicit val ec               : ExecutionContext,
                            implicit val esClient         : Client

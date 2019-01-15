@@ -7,14 +7,14 @@ import org.elasticsearch.index.query.QueryBuilders
 import securesocial.core.IProfileDflt
 import io.suggest.util.JacksonParsing.stringParser
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.{EsModelJMXBaseImpl, EsModelJMXMBeanI, EsmV2Deserializer, IEsDocMeta}
+import io.suggest.es.model._
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import scala.collection.Map
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -25,8 +25,8 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class MExtIdents @Inject() (
-  override val mCommonDi: ICommonDi
-)
+                             override val mCommonDi: ICommonDi
+                           )
   extends MPersonIdentSubmodelStatic
     with MacroLogsImpl
     with EsmV2Deserializer
@@ -145,9 +145,9 @@ case class MExtIdent(
 // Поддержка JMX.
 trait MExtIdentJmxMBean extends EsModelJMXMBeanI
 final class MExtIdentJmx @Inject() (
-  override val companion  : MExtIdents,
-  override val ec         : ExecutionContext
-)
+                                     override val companion      : MExtIdents,
+                                     override val esModelJmxDi   : EsModelJmxDi,
+                                   )
   extends EsModelJMXBaseImpl
   with MExtIdentJmxMBean
 {

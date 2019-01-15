@@ -6,7 +6,7 @@ import controllers.sysctl.domain.SmDomains
 import controllers.sysctl.invite.SmSendEmailInvite
 import io.suggest.adn.MAdnRights
 import io.suggest.common.fut.FutureUtil
-import io.suggest.es.model.MEsUuId
+import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -56,6 +56,7 @@ import util.ident.IdentUtil
  */
 @Singleton
 class SysMarket @Inject() (
+                            override val esModel            : EsModel,
                             override val nodesUtil          : NodesUtil,
                             lkAdUtil                        : LkAdUtil,
                             advRcvrsUtil                    : AdvRcvrsUtil,
@@ -89,6 +90,7 @@ class SysMarket @Inject() (
   import LOGGER._
   import mCommonDi._
   import sysMarketUtil._
+  import esModel.api._
 
 
   /**
@@ -230,7 +232,7 @@ class SysMarket @Inject() (
 
       // Узнаём исходящие ребра.
       val outEdgesFut: Future[Seq[MNodeEdgeInfo]] = {
-        val mnodesMapFut = mNodesCache.multiGetMap {
+        val mnodesMapFut = mNodes.multiGetMapCache {
           mnode.edges
             .iterator
             .flatMap(_.nodeIds)
@@ -620,7 +622,7 @@ class SysMarket @Inject() (
           }
       }
 
-      val adnNodeOptFut = FutureUtil.optFut2futOpt(adnNodeIdOpt)( mNodesCache.getById )
+      val adnNodeOptFut = FutureUtil.optFut2futOpt(adnNodeIdOpt)( mNodes.getByIdCache )
 
       // Собираем карту размещений рекламных карточек.
       val ad2advMapFut: Future[Map[String, Seq[MItem]]] = {
@@ -662,7 +664,7 @@ class SysMarket @Inject() (
       val rcvrsFut: Future[Map[String, Seq[MNode]]] = if (rcvrIds.nonEmpty) {
         // Используем только переданные ресиверы.
         Future
-          .traverse(rcvrIds) { mNodesCache.getById }
+          .traverse(rcvrIds) { mNodes.getByIdCache }
           .flatMap { rcvrOpts =>
             val rcvrs = rcvrOpts.flatten
             madsFut map { mads =>
@@ -681,7 +683,7 @@ class SysMarket @Inject() (
               .flatten
               .flatMap(_.rcvrIdOpt)
               .toSet
-            mNodesCache.multiGet(allRcvrIdsSet)
+            mNodes.multiGetCache(allRcvrIdsSet)
           }
 
         } yield {
@@ -810,7 +812,7 @@ class SysMarket @Inject() (
 
       // Определить узла-продьюсера
       val producerIdOpt = n2NodesUtil.madProducerId( mad )
-      val producerOptFut = mNodesCache.maybeGetByIdCached( producerIdOpt )
+      val producerOptFut = mNodes.maybeGetByIdCached( producerIdOpt )
 
       // Собрать инфу по картинкам.
       // TODO Тут код наверное уже не актуален. Просто подправлен тут для совместимости.
@@ -845,7 +847,7 @@ class SysMarket @Inject() (
     isSuMad(adId).async { implicit request =>
       import request.mad
       val producerId = n2NodesUtil.madProducerId(mad).get
-      val producerOptFut = mNodesCache.getById(producerId)
+      val producerOptFut = mNodes.getByIdCache(producerId)
 
       val newRcvrsMapFut = for {
         producerOpt <- producerOptFut
@@ -870,11 +872,11 @@ class SysMarket @Inject() (
         }
         val adnIds1 = _nodeIds(rcvrsMap)
         for {
-          adns1       <- mNodesCache.multiGet(adnIds1)
+          adns1       <- mNodes.multiGetCache(adnIds1)
           newRcvrsMap <- newRcvrsMapFut
           newAdns     <- {
             val newRcvrIds = _nodeIds(newRcvrsMap)
-            mNodesCache.multiGet(newRcvrIds -- adnIds1)
+            mNodes.multiGetCache(newRcvrIds -- adnIds1)
           }
         } yield {
           val iter = adns1.iterator ++ newAdns.iterator

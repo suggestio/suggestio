@@ -22,7 +22,6 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
-import org.elasticsearch.search.sort.SortBuilders
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -95,242 +94,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
       req.setRouting(rk.get)
     req
   }
-
-  /**
-    * В es 2.0 удалили поддержку delete by Query.
-    * Тут реализация этого недостающего функционала.
-    *
-    * @param scroller выхлоп startScroll.
-    * @return Фьючерс с результатами.
-    */
-  final def deleteByQuery(scroller: SearchRequestBuilder): Future[Int] = {
-    lazy val logPrefix = s"deleteByQuery(${System.currentTimeMillis}):"
-    LOGGER.trace(s"$logPrefix Starting...")
-
-    val counter = new AtomicInteger(0)
-
-    val listener = new BulkProcessor.Listener {
-      /** Перед отправкой каждого bulk-реквеста... */
-      override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
-        LOGGER.trace(s"$logPrefix $executionId Before bulk delete ${request.numberOfActions()} documents...")
-      }
-
-      /** Документы в очереди успешно удалены. */
-      override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit = {
-        val countDeleted = response.getItems.length
-        LOGGER.trace(s"$logPrefix $executionId Successfully deleted $countDeleted, ${response.buildFailureMessage()}")
-        counter.addAndGet(countDeleted)
-      }
-
-      /** Ошибка bulk-удаления. */
-      override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit = {
-        LOGGER.error(s"$logPrefix Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
-      }
-    }
-
-    // Собираем асинхронный bulk-процессор, т.к. элементов может быть ну очень много.
-    val bp = bulkProcessor(listener, BULK_DELETE_QUEUE_LEN)
-
-    // Интересуют только id документов
-    val totalFut = scroller
-      .setFetchSource(false)
-      .executeFut()
-      .flatMap { searchResp =>
-        EsModelUtil.foldSearchScroll(searchResp, acc0 = 0, firstReq = true, keepAliveMs = SCROLL_KEEPALIVE_MS_DFLT) {
-          (acc01, hits) =>
-            for (hit <- hits.iterator().asScala) {
-              val req = esClient.prepareDelete(hit.getIndex, hit.getType, hit.getId)
-                .request()
-              bp.add(req)
-            }
-            val docsDeletedNow = hits.getHits.length
-            val acc02 = acc01 + docsDeletedNow
-            LOGGER.trace(s"$logPrefix $docsDeletedNow docs queued for deletion, total queued now: $acc02 docs.")
-            Future.successful(acc02)
-        }
-      }
-
-    for (total <- totalFut) yield {
-      bp.close()
-      LOGGER.debug(s"$logPrefix $total DEL reqs sent, now deleted ${counter.get()} docs.")
-      total
-    }
-  }
-
   /** Кол-во item'ов в очереди на удаление. */
   def BULK_DELETE_QUEUE_LEN = 200
-
-
-  final def prepareScroll(keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT, srb: SearchRequestBuilder = prepareSearch()): SearchRequestBuilder = {
-    srb
-      .setScroll(keepAlive)
-      // Elasticsearch-2.1+: вместо search_type=SCAN желательно юзать сортировку по полю _doc.
-      .addSort( SortBuilders.fieldSort( StdFns.FIELD_DOC ) )
-  }
-
-  /** Запуск поискового запроса и парсинг результатов в представление этой модели. */
-  final def runSearch(srb: SearchRequestBuilder): Future[Seq[T]] = {
-    srb
-      .executeFut()
-      .map { searchResp2stream }
-  }
-
-  /** Прочитать маппинг текущей ES-модели из ES. */
-  final def getCurrentMapping(): Future[Option[String]] = {
-    EsModelUtil.getCurrentMapping(ES_INDEX_NAME, typeName = ES_TYPE_NAME)
-  }
-
-  /**
-   * Метод для краткого запуска скроллинга над моделью.
-   *
-   * @param queryOpt Поисковый запрос, по которому скроллим. Если None, то будет matchAll().
-   * @param resultsPerScroll Кол-во результатов за каждую итерацию скролла.
-   * @param keepAliveMs TTL scroll-курсора на стороне ES.
-   * @return Фьючерс, подлежащий дальнейшей обработке.
-   */
-  final def startScroll(queryOpt: Option[QueryBuilder] = None, resultsPerScroll: Int = SCROLL_SIZE_DFLT,
-                        keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT): SearchRequestBuilder = {
-    val query = queryOpt.getOrElse {
-      QueryBuilders.matchAllQuery()
-    }
-    val req = prepareScroll(new TimeValue(keepAliveMs))
-      .setQuery(query)
-      .setSize(resultsPerScroll)
-      .setFetchSource(true)
-    LOGGER.trace(s"startScroll($queryOpt, rps=$resultsPerScroll, kaMs=$keepAliveMs): query = $query")
-    req
-  }
-
-  /**
-   * Пройтись асинхронно по всем документам модели.
-   *
-   * @param acc0 Начальный аккамулятор.
-   * @param keepAliveMs Таймаут курсора на стороне ES.
-   * @param f Асинхронная функция обхода.
-   * @tparam A Тип аккамулятора.
-   * @return Финальный аккамулятор.
-   */
-  final def foldLeft[A](acc0: A, scroller: SearchRequestBuilder, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                       (f: (A, T) => A): Future[A] = {
-    scroller
-      .executeFut()
-      .flatMap { searchResp =>
-        EsModelUtil.foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
-          (acc01, hits) =>
-            val acc02 = hits
-              .iterator()
-              .asScala
-              .map { deserializeSearchHit }
-              .foldLeft(acc01)(f)
-            Future.successful( acc02 )
-        }
-      }
-  }
-
-  /**
-   * Аналог foldLeft, но с асинхронным аккамулированием. Полезно, если функция совершает какие-то сайд-эффекты.
-   *
-   * @param acc0 Начальный акк.
-   * @param resultsPerScroll Кол-во результатов с каждой шарды за одну scroll-итерацию [10].
-   * @param keepAliveMs TTL scroll-курсора на стороне ES.
-   * @param f Функция асинхронной сверстки.
-   * @tparam A Тип значения аккамулятора (без Future[]).
-   * @return Фьючерс с результирующим аккамулятором.
-   */
-  // TODO Удалить эту прослойку.
-  final def foldLeftAsync[A](acc0: A, resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT,
-                             queryOpt: Option[QueryBuilder] = None)
-                            (f: (Future[A], T) => Future[A]): Future[A] = {
-    val scroller = startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs, queryOpt = queryOpt)
-    foldLeftAsync1(acc0, scroller, keepAliveMs)(f)
-  }
-
-  final def foldLeftAsync1[A](acc0: A, scroller: SearchRequestBuilder, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                             (f: (Future[A], T) => Future[A]): Future[A] = {
-    scroller
-      .executeFut()
-      .flatMap { searchResp =>
-        EsModelUtil.foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
-          (acc01, hits) =>
-            hits.iterator()
-              .asScala
-              .map { deserializeSearchHit }
-              .foldLeft(Future.successful(acc01))( f )
-        }
-      }
-  }
-
-
-  /**
-   * Реактивное обновление всех документов модели.
-   * Документы читаются пачками через scroll и сохраняются пачками через bulk по мере готовности оных.
-   * Функция обработчик может быть асинхронной, т.е. может затрагивать другие модели или производить другие
-   * асинхронные сайд-эффекты. Функция обработчки никогда НЕ должна вызывать save(), а лишь порождать новый
-   * экземпляр модели, пригодный для сохранения.
-   * Внутри метода используется BulkProcessor, который асинхронно, по мере наполнения очереди индексации,
-   * отправляет реквесты на индексацию.
-   * Метод полезен для обновления модели, которое затрагивает внутреннюю структуру данных.
-   *
-   * @param bulkActions Макс.кол-во запросов в очереди на bulk-индексацию. После пробоя этого значения,
-   *                    вся очередь реквестов будет отправлена на индексацию.
-   * @param f Функция-маппер, которая порождает фьючерс с новым обновлённым экземпляром модели.
-   * @return Фьючес с кол-вом обработанных экземпляров модели.
-   */
-  final def updateAll(scroller: SearchRequestBuilder, bulkActions: Int = BULK_PROCESSOR_BULK_SIZE_DFLT)
-                     (f: T => Future[T]): Future[Int] = {
-
-    val logPrefix = s"update(${System.currentTimeMillis}):"
-
-    val bpListener = new BulkProcessorListener(logPrefix)
-    val bp = bulkProcessor(bpListener)
-
-    // Создаём атомный счетчик, который будет инкрементится из разных потоков одновременно.
-    // Можно счетчик гнать через аккамулятор, но это будет порождать много бессмысленного мусора.
-    val counter = new AtomicInteger(0)
-
-    // Выполнить обход модели. Аккамулятор фиксирован (не используется).
-    val foldFut = foldLeftAsync1(None, scroller) {
-      (accFut, v) =>
-        f(v).flatMap {
-          case null =>
-            LOGGER.trace(s"$logPrefix Skipped update of [${v.idOrNull}], f() returned null")
-            accFut
-          case v1 =>
-            bp.add( prepareIndex(v1).request )
-            counter.incrementAndGet()
-            accFut
-        }
-    }
-
-    // Вернуть результат
-    for (_ <- foldFut) yield {
-      bp.close()
-      counter.get
-    }
-  }
-
-
-  /**
-   * Сервисная функция для получения списка всех id.
-   *
-   * @return Список всех id в неопределённом порядке.
-   */
-  final def getAllIds(maxResults: Int, maxPerStep: Int = MAX_RESULTS_DFLT): Future[List[String]] = {
-    prepareScroll()
-      .setQuery( QueryBuilders.matchAllQuery() )
-      .setSize(maxPerStep)
-      .setFetchSource(false)
-      //.setNoFields()
-      .executeFut()
-      .flatMap { searchResp =>
-        EsModelUtil.searchScrollResp2ids(
-          searchResp,
-          firstReq    = true,
-          maxAccLen   = maxResults,
-          keepAliveMs = SCROLL_KEEPALIVE_MS_DFLT
-        )
-      }
-  }
 
   /**
    * Примитив для рассчета кол-ва документов, удовлетворяющих указанному запросу.
@@ -345,22 +110,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
       .map { _.getHits.getTotalHits }
   }
 
-  /**
-   * Посчитать кол-во документов в текущей модели.
-   *
-   * @return Неотрицательное целое.
-   */
-  final def countAll(): Future[Long] = {
-    countByQuery(QueryBuilders.matchAllQuery())
-  }
-
-  // TODO Нужно проверять, что текущий маппинг не устарел, и обновлять его.
-  final def isMappingExists(): Future[Boolean] = {
-    EsModelUtil.isMappingExists(
-      indexName = ES_INDEX_NAME,
-      typeName  = ES_TYPE_NAME
-    )
-  }
 
   /**
    * Десериализация одного элементам модели.
@@ -464,35 +213,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   }
 
 
-  /** Генератор реквеста для генерации запроса для getAll(). */
-  final def getAllReq(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false): SearchRequestBuilder = {
-    prepareSearch()
-      .setQuery(QueryBuilders.matchAllQuery())
-      .setSize(maxResults)
-      .setFrom(offset)
-      .setVersion(withVsn)
-  }
-
-
-  /**
-   * Выдать все магазины. Метод подходит только для административных задач.
-   *
-   * @param maxResults Макс. размер выдачи.
-   * @param offset Абсолютный сдвиг в выдаче.
-   * @param withVsn Возвращать ли версии?
-   * @return Список магазинов в порядке их создания.
-   */
-  final def getAll(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false): Future[Seq[T]] = {
-    runSearch(
-      getAllReq(
-        maxResults = maxResults,
-        offset = offset,
-        withVsn = withVsn
-      )
-    )
-  }
-
-
   final def deserializeGetRespFull(getResp: GetResponse): Option[T] = {
     if (getResp.isExists) {
       val result = deserializeOne2(getResp)
@@ -575,54 +295,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   def UPDATE_RETRIES_MAX: Int = EsModelUtil.UPDATE_RETRIES_MAX_DFLT
 
 
-  /**
-   * Запустить пакетное копирование данных модели из одного ES-клиента в другой.
-   *
-   * @param fromClient Откуда брать данные?
-   * @param toClient Куда записывать данные?
-   * @param reqSize Размер реквеста. По умолчанию 50.
-   * @param keepAliveMs Время жизни scroll-курсора на стороне from-сервера.
-   * @return Фьючерс для синхронизации.
-   */
-  final def copyContent(fromClient: Client, toClient: Client, reqSize: Int = 50, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT): Future[CopyContentResult] = {
-    prepareScroll( new TimeValue(keepAliveMs), srb = prepareSearchViaClient(fromClient))
-      .setSize(reqSize)
-      .executeFut()
-      .flatMap { searchResp =>
-        // для различания сообщений в логах, дополнительно генерим id текущей операции на базе первого скролла.
-        val logPrefix = s"copyContent(${searchResp.getScrollId.hashCode / 1000L}): "
-        EsModelUtil.foldSearchScroll(searchResp, CopyContentResult(0L, 0L), keepAliveMs = keepAliveMs) {
-          (acc0, hits) =>
-            LOGGER.trace(s"$logPrefix${hits.getHits.length} hits read from source")
-            // Нужно запустить bulk request, который зальёт все хиты в toClient
-            val iter = hits.iterator().asScala
-            if (iter.nonEmpty) {
-              val bulk = toClient.prepareBulk()
-              for (hit <- iter) {
-                val model = deserializeSearchHit(hit)
-                bulk.add( prepareIndexNoVsnUsingClient(model, toClient) )
-              }
-              for {
-                bulkResult <- bulk.executeFut()
-              } yield {
-                if (bulkResult.hasFailures)
-                  LOGGER.error("copyContent(): Failed to write bulk into target:\n " + bulkResult.buildFailureMessage())
-                val failedCount = bulkResult.iterator()
-                  .asScala
-                  .count(_.isFailed)
-                val acc1 = acc0.copy(
-                  success = acc0.success + bulkResult.getItems.length - failedCount,
-                  failed  = acc0.failed + failedCount
-                )
-                LOGGER.trace(s"${logPrefix}bulk write finished. acc.success = ${acc1.success} acc.failed = ${acc1.failed}")
-                acc1
-              }
-            } else {
-              Future.successful(acc0)
-            }
-        }(ec, fromClient) // implicit'ы передаём вручную, т.к. несколько es-клиентов
-      }
-  }
 
 
   /**

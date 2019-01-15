@@ -40,7 +40,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
     * @return Фьючерс с результатом типа R.
     */
   // TODO Может быть вынести [A] в implicit convertions, а тут выставить SearchRequestBuilder?
-  def search[R](args: A)(implicit helper: IEsSearchHelper[R]): Future[R] = {
+  final def search[R](args: A)(implicit helper: IEsSearchHelper[R]): Future[R] = {
     // Логика очень варьируется от типа возвращаемого значения, поэтому сразу передаём управление в helper.
     helper.run(args)
   }
@@ -48,10 +48,10 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
 
   // TODO С prepareSearch() пока какой-то говнокод. args.prepareSearchRequest следовало бы вынести за пределы модели DynSearchArgs куда-то сюда.
   /** Сборка билдера поискового запроса. */
-  def prepareSearch(args: A): SearchRequestBuilder = {
+  final def prepareSearch(args: A): SearchRequestBuilder = {
     prepareSearch(args, prepareSearch())
   }
-  def prepareSearch(args: A, srb0: SearchRequestBuilder): SearchRequestBuilder = {
+  final def prepareSearch(args: A, srb0: SearchRequestBuilder): SearchRequestBuilder = {
     args.prepareSearchRequest(srb0)
   }
 
@@ -162,7 +162,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
       searchResp2RtMultiget(searchResp)
     }
   }
-  def seqRtMapper: EsSearchFutHelper[Seq[T]] = {
+  final def seqRtMapper: EsSearchFutHelper[Seq[T]] = {
     new SeqRtMapper
   }
 
@@ -218,7 +218,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
    *
    * @return Список рекламных карточек, подходящих под требования.
    */
-  def dynSearch(dsa: A): Future[Stream[T]] = {
+  final def dynSearch(dsa: A): Future[Stream[T]] = {
     search[Stream[T]] (dsa)
   }
 
@@ -226,7 +226,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
     * Source эмулируется поверх dynSearch, никакого scroll'а тут нет, т.к. scroll не умеет сортировку, скоринг, лимиты.
     * Просто для удобства сделано или на.
     */
-  def dynSearchSource(dsa: A): Source[T, _] = {
+  final def dynSearchSource(dsa: A): Source[T, _] = {
     Source.fromFutureSource {
       dynSearch(dsa)
         .map { Source.apply }
@@ -239,7 +239,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
    * @param dsa Поисковые критерии.
    * @return Карта с найденными элементами в неопределённом порядке.
    */
-  def dynSearchMap(dsa: A): Future[Map[String, T]] = {
+  final def dynSearchMap(dsa: A): Future[Map[String, T]] = {
     search [Map[String,T]] (dsa)
   }
 
@@ -249,7 +249,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
    * @param dsa Аргументы поиска.
    * @return Фьючерс с Option[T] внутри.
    */
-  def dynSearchOne(dsa: A): Future[Option[T]] = {
+  final def dynSearchOne(dsa: A): Future[Option[T]] = {
     search [Option[T]] (dsa)
   }
 
@@ -259,7 +259,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
    * @param dsa Поисковый запрос.
    * @return Список id, подходящих под запрос, в неопределённом порядке.
    */
-  def dynSearchIds(dsa: A): Future[ISearchResp[String]] = {
+  final def dynSearchIds(dsa: A): Future[ISearchResp[String]] = {
     search [ISearchResp[String]] (dsa)
   }
 
@@ -276,7 +276,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
 
   /** Поиск id, подходящих под запрос и последующий multiget. Используется для реалтаймого получения
     * изменчивых результатов, например поиск сразу после сохранения. */
-  def dynSearchRt(dsa: A): Future[Seq[T]] = {
+  final def dynSearchRt(dsa: A): Future[Seq[T]] = {
     search(dsa)( seqRtMapper )
   }
 

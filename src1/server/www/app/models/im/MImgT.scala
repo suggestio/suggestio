@@ -1,26 +1,15 @@
 package models.im
 
-import java.io.FileNotFoundException
-
-import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.compress.MCompressAlgo
-import io.suggest.di.ICacheApiUtil
 import io.suggest.img.MImgFmt
-import io.suggest.model.img.ImgSzDated
-import io.suggest.model.n2.media.{IMMedias, IMediasCacheDi, MMedia}
 import io.suggest.model.n2.media.storage.MStorage
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.TypeT
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretKeyInit
-import io.suggest.streams.StreamsUtil
 import io.suggest.util.UuidUtil
-import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
-import models.mproj.IMCommonDi
+import io.suggest.util.logs.MacroLogsImpl
 import play.api.mvc.QueryStringBindable
-
-import scala.concurrent.Future
-import scala.concurrent.duration._
 
 /**
   * Suggest.io
@@ -142,170 +131,6 @@ object MImgT extends MacroLogsImpl with SecretKeyInit { model =>
       }
     }
   }
-
-}
-
-
-/** Частичная реализация [[MAnyImgsT]] для permanent-моделей.
-  * Появилась при окончательном DI-рефакторинге Img-моделей для упрощение переезда
-  * кода из MImgT в статику. */
-trait MImgsT
-  extends MAnyImgsT[MImgT]
-    with IMacroLogs
-    with ICacheApiUtil
-    with IMMedias
-    with IMediasCacheDi
-    with IMCommonDi
-    with IMLocalImgs
-{
-
-  import mCommonDi._
-
-  protected val streamsUtil: StreamsUtil
-
-  def mediaOptFut(mimg: MImgT): Future[Option[MMedia]] = {
-    mMediasCache.getById(mimg.dynImgId.mediaId)
-  }
-  protected def _mediaFut(mediaOptFut: Future[Option[MMedia]]): Future[MMedia] = {
-    mediaOptFut.map(_.get)
-  }
-
-  override def toLocalImg(mimg: MImgT): Future[Option[MLocalImg]] = {
-    val inst = mimg.toLocalInstance
-    if (mLocalImgs.isExists(inst)) {
-      mLocalImgs.touchAsync( inst )
-      Future.successful( Some(inst) )
-
-    } else {
-      // Защищаемся от параллельных чтений одной и той же картинки. Это может создать ненужную нагрузку на сеть.
-      // Готовим поточное чтение из стораджа:
-      val source = getStream(mimg)
-
-      // Подготовится к запуску записи в файл.
-      mLocalImgs.prepareWriteFile( inst )
-
-      // Запустить запись в файл.
-      val toFile = mLocalImgs.fileOf(inst)
-      val writeFut = for {
-        _ <- streamsUtil.sourceIntoFile(source, toFile)
-      } yield {
-        Option(inst)
-      }
-
-      // Отработать ошибки записи.
-      writeFut.recover { case ex: Throwable =>
-        val logPrefix = "toLocalImg(): "
-        if (ex.isInstanceOf[NoSuchElementException]) {
-          if (LOGGER.underlying.isDebugEnabled) {
-            if (mimg.dynImgId.hasImgOps) {
-              LOGGER.debug(s"$logPrefix non-orig img not in permanent storage: $toFile")
-            } else {
-              def msg = s"$logPrefix img not found in permanent storage: $toFile"
-              if (ex.isInstanceOf[NoSuchElementException]) LOGGER.debug(msg)
-              else LOGGER.debug(msg, ex)
-            }
-          }
-        } else {
-          LOGGER.warn(s"$logPrefix _getImgBytes2 or writeIntoFile $toFile failed", ex)
-        }
-        None
-      }
-    }
-  }
-
-  val ORIG_META_CACHE_SECONDS: Int = configuration.getOptional[Int]("m.img.org.meta.cache.ttl.seconds")
-    .getOrElse(60)
-
-  /** Закешированный результат чтения метаданных из постоянного хранилища. */
-  def permMetaCached(mimg: MImgT): Future[Option[ImgSzDated]] = {
-    cacheApiUtil.getOrElseFut(mimg.dynImgId.fileName + ".giwh", ORIG_META_CACHE_SECONDS.seconds) {
-      _getImgMeta(mimg)
-    }
-  }
-
-  protected def _getImgMeta(mimg: MImgT): Future[Option[ImgSzDated]]
-
-  /** Получить ширину и длину картинки. */
-  override def getImageWH(mimg: MImgT): Future[Option[ISize2di]] = {
-    // Фетчим паралельно из обеих моделей. Кто первая, от той и принимаем данные.
-    val mimg2Fut = permMetaCached(mimg)
-      .filter(_.isDefined)
-
-    val localInst = mimg.toLocalInstance
-    lazy val logPrefix = s"getImageWh(${mimg.dynImgId.fileName}): "
-
-    val fut = if (mLocalImgs.isExists(localInst)) {
-      // Есть локальная картинка. Попробовать заодно потанцевать вокруг неё.
-      val localFut = mLocalImgs.getImageWH(localInst)
-      mimg2Fut.recoverWith {
-        case ex: Exception =>
-          if (!ex.isInstanceOf[NoSuchElementException])
-            LOGGER.warn(logPrefix + "Unable to read img info from PERMANENT models", ex)
-          localFut
-      }
-
-    } else {
-      // Сразу запускаем выкачивание локальной картинки. Если не понадобится сейчас, то скорее всего понадобится
-      // чуть позже -- на раздаче самой картинки, а не её метаданных.
-      val toLocalImgFut = toLocalImg(mimg)
-      mimg2Fut.recoverWith { case ex: Throwable =>
-        // Запустить детектирование размеров.
-        val whOptFut = toLocalImgFut.flatMap { localImgOpt =>
-          localImgOpt.fold {
-            LOGGER.warn(logPrefix + "local img was NOT read. cannot collect img meta.")
-            Future.successful( Option.empty[MSize2di] )
-          } { mLocalImgs.getImageWH }
-        }
-        if (ex.isInstanceOf[NoSuchElementException])
-          LOGGER.debug(logPrefix + "No wh in DB, and nothing locally stored. Recollection img meta")
-        // Сохранить полученные метаданные в хранилище.
-        // Если есть уже сохраненная карта метаданных, то дополнить их данными WH, а не перезатереть.
-        for (localWhOpt <- whOptFut;  localImgOpt <- toLocalImgFut) {
-          for (localWh <- localWhOpt;  localImg <- localImgOpt) {
-            _updateMetaWith(mimg, localWh, localImg)
-          }
-        }
-        // Вернуть фьючерс с метаданными, не дожидаясь сохранения оных.
-        whOptFut
-      }
-    }
-    // Любое исключение тут можно подавить:
-    fut.recover {
-      case ex: Exception =>
-        LOGGER.warn(logPrefix + "Unable to read img info meta from all models", ex)
-        None
-    }
-  }
-
-  /** Потенциально ненужная операция обновления метаданных. В новой архитектуре её быть не должно бы,
-    * т.е. метаданные обязательные изначально. */
-  protected def _updateMetaWith(mimg: MImgT, localWh: ISize2di, localImg: MLocalImg): Unit
-
-  override def rawImgMeta(mimg: MImgT): Future[Option[ImgSzDated]] = {
-    permMetaCached(mimg)
-      .filter(_.isDefined)
-      .recoverWith {
-        // Пытаемся прочитать эти метаданные из модели MLocalImg.
-        case _: Exception  =>
-          mLocalImgs.rawImgMeta( mimg.toLocalInstance )
-      }
-  }
-
-  /** Отправить лежащее в файле на диске в постоянное хранилище. */
-  def saveToPermanent(mimg: MImgT): Future[_] = {
-    val loc = mimg.toLocalInstance
-    if (mLocalImgs.isExists(loc)) {
-      _doSaveToPermanent(mimg)
-    } else {
-      val ex = new FileNotFoundException(s"saveToPermanent($mimg): Img file not exists localy - unable to save into permanent storage: ${mLocalImgs.fileOf(loc).getAbsolutePath}")
-      Future.failed(ex)
-    }
-  }
-
-  protected def _doSaveToPermanent(mimg: MImgT): Future[_]
-
-  /** Существует ли картинка в хранилище? */
-  def existsInPermanent(mimg: MImgT): Future[Boolean]
 
 }
 

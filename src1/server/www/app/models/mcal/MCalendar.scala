@@ -12,7 +12,6 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 import scala.collection.Map
-import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -132,9 +131,9 @@ case class MCalendar(
 trait MCalendarJmxMBean extends EsModelJMXMBeanI
 
 class MCalendarJmx @Inject() (
-  override val companion  : MCalendars,
-  override val ec         : ExecutionContext
-)
+                               override val companion    : MCalendars,
+                               override val esModelJmxDi : EsModelJmxDi,
+                             )
   extends EsModelJMXBaseImpl
   with MCalendarJmxMBean
 {

@@ -3,7 +3,7 @@ package util.mdr
 import java.time.OffsetDateTime
 
 import io.suggest.common.empty.OptionUtil
-import io.suggest.es.model.IMust
+import io.suggest.es.model.{EsModel, IMust}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{IMItem, MItem, MItems}
@@ -43,6 +43,7 @@ import scala.util.Failure
   */
 @Singleton
 class MdrUtil @Inject() (
+                          esModel           : EsModel,
                           mailerWrapper     : IMailerWrapper,
                           val mItems        : MItems,
                           mNodes            : MNodes,
@@ -57,9 +58,10 @@ class MdrUtil @Inject() (
   extends MacroLogsImpl
 {
 
-  import mCommonDi.{configuration, current, ec, mat, slick, mNodesCache, messagesApi, langs}
+  import mCommonDi.{configuration, current, ec, mat, slick, messagesApi, langs}
   import slick.profile.api._
   import streamsUtil.Implicits._
+  import esModel.api._
 
 
   /** Кол-во уровней погружения в поисках под-узлов в зависимости от для ситуации.
@@ -173,7 +175,7 @@ class MdrUtil @Inject() (
             MNodeTypes.BleBeacon
           )
 
-          mNodesCache.walk( MdrNotifyAcc(mdrCtx.rcvrIds), mdrCtx.rcvrIds ) { (acc0, mnode) =>
+          mNodes.walkCache( MdrNotifyAcc(mdrCtx.rcvrIds), mdrCtx.rcvrIds ) { (acc0, mnode) =>
             // Сюда приходят узлы, которые скорее всего есть в seen - это нормально. По идее, это можно удалить, используя готовое значение из акка.
             val seenIds2 = if (mnode.id.exists(acc0.seenNodeIds.contains)) {
               acc0.seenNodeIds
