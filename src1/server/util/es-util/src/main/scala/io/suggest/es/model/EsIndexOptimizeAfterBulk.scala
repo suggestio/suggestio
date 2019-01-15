@@ -19,7 +19,7 @@ trait EsIndexOptimizeAfterBulk extends IEsModelDi with IMacroLogs {
 
   /** Когда заливка данных закончена, выполнить подготовку индекса к эсплуатации.
     * elasticsearch 2.0+: переименовали операцию optimize в force merge. */
-  def optimizeAfterBulk(newIndexName: String): Future[_] = {
+  final def optimizeAfterBulk(newIndexName: String): Future[_] = {
     val startedAt = System.currentTimeMillis()
 
     // Запустить оптимизацию всего ES-индекса.

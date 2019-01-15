@@ -21,7 +21,7 @@ trait EsModelJsonWrites extends EsModelCommonStaticT {
       .toString()
   }
 
-  override final def toJsonPretty(m: T): String = {
+  override def toJsonPretty(m: T): String = {
     Json.prettyPrint( esDocWrites.writes(m) )
   }
 

@@ -78,10 +78,6 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with IMacroLog
     fut
   }
 
-  def ensureIndex() = {
-    EsModelUtil.ensureIndex(ES_INDEX_NAME, shards = SHARDS_COUNT, replicas = REPLICAS_COUNT)
-  }
-
 
   /** Рефреш всего индекса, в котором живёт эта модель. */
   def refreshIndex(): Future[_] = {

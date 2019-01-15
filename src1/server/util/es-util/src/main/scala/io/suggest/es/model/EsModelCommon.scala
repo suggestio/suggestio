@@ -59,19 +59,20 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   // Короткие враппер для типичных операций в рамках статической модели.
 
-  def prepareSearch(): SearchRequestBuilder = prepareSearch(esClient)
-  def prepareSearch(client: Client): SearchRequestBuilder = {
+  final def prepareSearch(): SearchRequestBuilder =
+    prepareSearchViaClient(esClient)
+  final def prepareSearchViaClient(client: Client): SearchRequestBuilder = {
     client
       .prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
   }
 
-  def prepareCount(): SearchRequestBuilder = {
+  final def prepareCount(): SearchRequestBuilder = {
     prepareSearch()
       .setSize(0)
   }
 
-  def prepareGetBase(id: String) = {
+  final def prepareGetBase(id: String) = {
     val req = esClient.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
     val rk = getRoutingKey(id)
     if (rk.isDefined)
@@ -79,7 +80,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     req
   }
 
-  def prepareUpdateBase(id: String) = {
+  final def prepareUpdateBase(id: String) = {
     val req = esClient.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, id)
     val rk = getRoutingKey(id)
     if (rk.isDefined)
@@ -87,7 +88,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     req
   }
 
-  def prepareDeleteBase(id: String) = {
+  final def prepareDeleteBase(id: String) = {
     val req = esClient.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
     val rk = getRoutingKey(id)
     if (rk.isDefined)
@@ -102,7 +103,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     * @param scroller выхлоп startScroll.
     * @return Фьючерс с результатами.
     */
-  def deleteByQuery(scroller: SearchRequestBuilder): Future[Int] = {
+  final def deleteByQuery(scroller: SearchRequestBuilder): Future[Int] = {
     lazy val logPrefix = s"deleteByQuery(${System.currentTimeMillis}):"
     LOGGER.trace(s"$logPrefix Starting...")
 
@@ -160,7 +161,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   def BULK_DELETE_QUEUE_LEN = 200
 
 
-  def prepareScroll(keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT, srb: SearchRequestBuilder = prepareSearch()): SearchRequestBuilder = {
+  final def prepareScroll(keepAlive: TimeValue = SCROLL_KEEPALIVE_DFLT, srb: SearchRequestBuilder = prepareSearch()): SearchRequestBuilder = {
     srb
       .setScroll(keepAlive)
       // Elasticsearch-2.1+: вместо search_type=SCAN желательно юзать сортировку по полю _doc.
@@ -168,14 +169,14 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   }
 
   /** Запуск поискового запроса и парсинг результатов в представление этой модели. */
-  def runSearch(srb: SearchRequestBuilder): Future[Seq[T]] = {
+  final def runSearch(srb: SearchRequestBuilder): Future[Seq[T]] = {
     srb
       .executeFut()
       .map { searchResp2stream }
   }
 
   /** Прочитать маппинг текущей ES-модели из ES. */
-  def getCurrentMapping(): Future[Option[String]] = {
+  final def getCurrentMapping(): Future[Option[String]] = {
     EsModelUtil.getCurrentMapping(ES_INDEX_NAME, typeName = ES_TYPE_NAME)
   }
 
@@ -187,8 +188,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    * @param keepAliveMs TTL scroll-курсора на стороне ES.
    * @return Фьючерс, подлежащий дальнейшей обработке.
    */
-  def startScroll(queryOpt: Option[QueryBuilder] = None, resultsPerScroll: Int = SCROLL_SIZE_DFLT,
-                  keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT): SearchRequestBuilder = {
+  final def startScroll(queryOpt: Option[QueryBuilder] = None, resultsPerScroll: Int = SCROLL_SIZE_DFLT,
+                        keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT): SearchRequestBuilder = {
     val query = queryOpt.getOrElse {
       QueryBuilders.matchAllQuery()
     }
@@ -209,8 +210,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    * @tparam A Тип аккамулятора.
    * @return Финальный аккамулятор.
    */
-  def foldLeft[A](acc0: A, scroller: SearchRequestBuilder, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                 (f: (A, T) => A): Future[A] = {
+  final def foldLeft[A](acc0: A, scroller: SearchRequestBuilder, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
+                       (f: (A, T) => A): Future[A] = {
     scroller
       .executeFut()
       .flatMap { searchResp =>
@@ -237,15 +238,15 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    * @return Фьючерс с результирующим аккамулятором.
    */
   // TODO Удалить эту прослойку.
-  def foldLeftAsync[A](acc0: A, resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT,
-                       queryOpt: Option[QueryBuilder] = None)
-                      (f: (Future[A], T) => Future[A]): Future[A] = {
+  final def foldLeftAsync[A](acc0: A, resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT,
+                             queryOpt: Option[QueryBuilder] = None)
+                            (f: (Future[A], T) => Future[A]): Future[A] = {
     val scroller = startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs, queryOpt = queryOpt)
     foldLeftAsync1(acc0, scroller, keepAliveMs)(f)
   }
 
-  def foldLeftAsync1[A](acc0: A, scroller: SearchRequestBuilder, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                       (f: (Future[A], T) => Future[A]): Future[A] = {
+  final def foldLeftAsync1[A](acc0: A, scroller: SearchRequestBuilder, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
+                             (f: (Future[A], T) => Future[A]): Future[A] = {
     scroller
       .executeFut()
       .flatMap { searchResp =>
@@ -259,27 +260,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
       }
   }
 
-  // !!! map() с сохранением реализован в методе updateAll() !!!
-
-  /**
-   * foreach для асинхронного обхода всех документов модели.
-   *
-   * @param resultsPerScroll По сколько документов скроллить?
-   * @param keepAliveMs Время жизни scroll-курсора на стороне es.
-   * @param f Функция обработки одного результата.
-   * @return Future синхронизации завершения обхода или ошибки.
-   *         Цифра внутри содержит кол-во пройденных результатов.
-   */
-  def foreach[U](resultsPerScroll: Int = SCROLL_SIZE_DFLT, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT)
-                (f: T => U): Future[Long] = {
-    // Оборачиваем foldLeft(), просто фиксируя аккамулятор.
-    val scroller = startScroll(resultsPerScroll = resultsPerScroll, keepAliveMs = keepAliveMs)
-    foldLeft(0L, scroller, keepAliveMs = keepAliveMs) {
-      (acc, inst) =>
-        f(inst)
-        acc + 1L
-    }
-  }
 
   /**
    * Реактивное обновление всех документов модели.
@@ -296,8 +276,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    * @param f Функция-маппер, которая порождает фьючерс с новым обновлённым экземпляром модели.
    * @return Фьючес с кол-вом обработанных экземпляров модели.
    */
-  def updateAll(scroller: SearchRequestBuilder, bulkActions: Int = BULK_PROCESSOR_BULK_SIZE_DFLT)
-               (f: T => Future[T]): Future[Int] = {
+  final def updateAll(scroller: SearchRequestBuilder, bulkActions: Int = BULK_PROCESSOR_BULK_SIZE_DFLT)
+                     (f: T => Future[T]): Future[Int] = {
 
     val logPrefix = s"update(${System.currentTimeMillis}):"
 
@@ -335,7 +315,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    *
    * @return Список всех id в неопределённом порядке.
    */
-  def getAllIds(maxResults: Int, maxPerStep: Int = MAX_RESULTS_DFLT): Future[List[String]] = {
+  final def getAllIds(maxResults: Int, maxPerStep: Int = MAX_RESULTS_DFLT): Future[List[String]] = {
     prepareScroll()
       .setQuery( QueryBuilders.matchAllQuery() )
       .setSize(maxPerStep)
@@ -358,7 +338,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    * @param query Произвольный поисковый запрос.
    * @return Кол-во найденных документов.
    */
-  def countByQuery(query: QueryBuilder): Future[Long] = {
+  final def countByQuery(query: QueryBuilder): Future[Long] = {
     prepareCount()
       .setQuery(query)
       .executeFut()
@@ -370,12 +350,12 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    *
    * @return Неотрицательное целое.
    */
-  def countAll(): Future[Long] = {
+  final def countAll(): Future[Long] = {
     countByQuery(QueryBuilders.matchAllQuery())
   }
 
   // TODO Нужно проверять, что текущий маппинг не устарел, и обновлять его.
-  def isMappingExists(): Future[Boolean] = {
+  final def isMappingExists(): Future[Boolean] = {
     EsModelUtil.isMappingExists(
       indexName = ES_INDEX_NAME,
       typeName  = ES_TYPE_NAME
@@ -406,7 +386,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
 
   /** Внутренний метод для укорачивания кода парсеров ES SearchResponse. */
-  def searchRespMap[A](searchResp: SearchResponse)(f: SearchHit => A): Iterator[A] = {
+  final def searchRespMap[A](searchResp: SearchResponse)(f: SearchHit => A): Iterator[A] = {
     searchResp.getHits
       .iterator()
       .asScala
@@ -414,22 +394,22 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   }
 
   /** Список результатов с source внутри перегнать в распарсенный список. */
-  def searchResp2iter(searchResp: SearchResponse): Iterator[T] = {
+  final def searchResp2iter(searchResp: SearchResponse): Iterator[T] = {
     searchRespMap(searchResp)(deserializeSearchHit)
   }
   // Stream! Нельзя менять тип. На ленивость завязана работа akka-stream Source, который имитируется поверх этого метода.
-  def searchResp2stream(searchResp: SearchResponse): Stream[T] = {
+  final def searchResp2stream(searchResp: SearchResponse): Stream[T] = {
     searchResp2iter(searchResp)
       // Безопасно ли тут делать ленивый Stream? Обычно да, но java-код elasticsearch с mutable внутри может в будущем посчитать иначе.
       .toStream
   }
 
-  def deserializeSearchHit(hit: SearchHit): T = {
+  final def deserializeSearchHit(hit: SearchHit): T = {
     deserializeOne2(hit)
   }
 
   /** Список результатов в список id. */
-  def searchResp2idsList(searchResp: SearchResponse): ISearchResp[String] = {
+  final def searchResp2idsList(searchResp: SearchResponse): ISearchResp[String] = {
     val hitsArr = searchResp.getHits.getHits
     new AbstractSearchResp[String] {
       override def total: Long = {
@@ -444,23 +424,13 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     }
   }
 
-  def searchResp2fnList[T](searchResp: SearchResponse, fn: String): Seq[T] = {
-    searchRespMap(searchResp) { hit =>
-      hit
-        .getFields()
-        .get(fn)
-        .getValue[T]
-    }
-      .toSeq
-  }
-
 
   /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
     * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
     *
     * @return Результат - что-то неопределённом порядке.
     */
-  def searchResp2RtMultiget(searchResp: SearchResponse): Future[Seq[T]] = {
+  final def searchResp2RtMultiget(searchResp: SearchResponse): Future[Seq[T]] = {
     val searchHits = searchResp.getHits.getHits
     if (searchHits.isEmpty) {
       Future successful Nil
@@ -477,20 +447,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   }
 
 
-  /** Распарсить выхлоп мультигета. */
-  def mgetResp2list(mgetResp: MultiGetResponse, acc0: List[T] = Nil): List[T] = {
-    mgetResp.getResponses.foldLeft (acc0) { (acc, mgetItem) =>
-      // Поиск может содержать элементы, которые были только что удалены. Нужно их отсеивать.
-      if (mgetItem.isFailed || !mgetItem.getResponse.isExists) {
-        acc
-      } else {
-        deserializeOne2(mgetItem.getResponse) :: acc
-      }
-    }
-  }
-
   /** Лениво распарсить выхлоп multi-GET. */
-  def mgetResp2Stream(mgetResp: MultiGetResponse): Stream[T] = {
+  final def mgetResp2Stream(mgetResp: MultiGetResponse): Stream[T] = {
     mgetResp
       .getResponses
       .iterator
@@ -507,7 +465,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
 
   /** Генератор реквеста для генерации запроса для getAll(). */
-  def getAllReq(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false): SearchRequestBuilder = {
+  final def getAllReq(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false): SearchRequestBuilder = {
     prepareSearch()
       .setQuery(QueryBuilders.matchAllQuery())
       .setSize(maxResults)
@@ -524,7 +482,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    * @param withVsn Возвращать ли версии?
    * @return Список магазинов в порядке их создания.
    */
-  def getAll(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false): Future[Seq[T]] = {
+  final def getAll(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false): Future[Seq[T]] = {
     runSearch(
       getAllReq(
         maxResults = maxResults,
@@ -535,7 +493,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   }
 
 
-  def deserializeGetRespFull(getResp: GetResponse): Option[T] = {
+  final def deserializeGetRespFull(getResp: GetResponse): Option[T] = {
     if (getResp.isExists) {
       val result = deserializeOne2(getResp)
       Some(result)
@@ -569,7 +527,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
 
 
-  def bulkProcessor(listener: BulkProcessor.Listener, queueLen: Int = 100): BulkProcessor = {
+  final def bulkProcessor(listener: BulkProcessor.Listener, queueLen: Int = 100): BulkProcessor = {
     BulkProcessor.builder(esClient, listener)
       .setBulkActions( queueLen )
       .build()
@@ -580,7 +538,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    *
    * @return
    */
-  def resaveAll(): Future[Int] = {
+  final def resaveAll(): Future[Int] = {
     val I = Implicits
     import I._
 
@@ -626,8 +584,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    * @param keepAliveMs Время жизни scroll-курсора на стороне from-сервера.
    * @return Фьючерс для синхронизации.
    */
-  def copyContent(fromClient: Client, toClient: Client, reqSize: Int = 50, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT): Future[CopyContentResult] = {
-    prepareScroll( new TimeValue(keepAliveMs), srb = prepareSearch(fromClient))
+  final def copyContent(fromClient: Client, toClient: Client, reqSize: Int = 50, keepAliveMs: Long = SCROLL_KEEPALIVE_MS_DFLT): Future[CopyContentResult] = {
+    prepareScroll( new TimeValue(keepAliveMs), srb = prepareSearchViaClient(fromClient))
       .setSize(reqSize)
       .executeFut()
       .flatMap { searchResp =>
@@ -642,7 +600,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
               val bulk = toClient.prepareBulk()
               for (hit <- iter) {
                 val model = deserializeSearchHit(hit)
-                bulk.add( prepareIndexNoVsn(model, toClient) )
+                bulk.add( prepareIndexNoVsnUsingClient(model, toClient) )
               }
               for {
                 bulkResult <- bulk.executeFut()
@@ -700,7 +658,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   }
 
   /** Вместо TryUpdateData.apply(). */
-  def tryUpdateData(inst: T) = {
+  final def tryUpdateData(inst: T) = {
     new TryUpdateData(inst)
   }
 
@@ -714,7 +672,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    * @return Тоже самое, что и save().
    *         Если updateF запретила апдейт (вернула null), то будет Future.successfull(inst0).
    */
-  def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T): Future[T] = {
+  final def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T): Future[T] = {
     // 2015.feb.20: Код переехал в EsModelUtil, а тут остались только wrapper для вызова этого кода.
     val data0 = tryUpdateData(inst0)
     val data2Fut = EsModelUtil.tryUpdate[T, TryUpdateData](this, data0, UPDATE_RETRIES_MAX) { data =>
@@ -728,23 +686,19 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     }
   }
 
-  def esTypeName(m: T) = ES_TYPE_NAME
-  def esIndexName(m: T) = ES_INDEX_NAME
-
-  def prepareIndexNoVsn(m: T): IndexRequestBuilder = prepareIndexNoVsn(m, esClient)
-  def prepareIndexNoVsn(m: T, client: Client): IndexRequestBuilder = {
-    val indexName = esIndexName(m)
-    val typeName = esTypeName(m)
+  def prepareIndexNoVsn(m: T): IndexRequestBuilder =
+    prepareIndexNoVsnUsingClient(m, esClient)
+  final def prepareIndexNoVsnUsingClient(m: T, client: Client): IndexRequestBuilder = {
     val idOrNull = m.idOrNull
     val json = toJson(m)
     //LOGGER.trace(s"prepareIndexNoVsn($indexName/$typeName/$idOrNull): $json")
     client
-      .prepareIndex(indexName, typeName, idOrNull)
+      .prepareIndex(ES_INDEX_NAME, ES_TYPE_NAME, idOrNull)
       .setSource(json, XContentType.JSON)
   }
 
 
-  def prepareIndex(m: T): IndexRequestBuilder = {
+  final def prepareIndex(m: T): IndexRequestBuilder = {
     val irb = prepareIndexNoVsn(m)
     if (m.versionOpt.isDefined)
       irb.setVersion(m.versionOpt.get)
@@ -767,7 +721,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   def toJson(m: T): String
 
   /** Общий код моделей, которые занимаются resave'ом. */
-  def resaveBase( getFut: Future[Option[T]] ): Future[Option[String]] = {
+  final def resaveBase( getFut: Future[Option[T]] ): Future[Option[String]] = {
     getFut.flatMap { getResOpt =>
       FutureUtil.optFut2futOpt(getResOpt) { e =>
         save(e)
@@ -778,7 +732,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
 
   /** Отрендерить экземпляр модели в JSON, обёрнутый в некоторое подобие метаданных ES (без _index и без _type). */
-  def toEsJsonDoc(e: T): String = {
+  final def toEsJsonDoc(e: T): String = {
     import StdFns._
 
     var kvs = List[String] (s""" "$FIELD_SOURCE": ${toJson(e)}""")
@@ -790,7 +744,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   }
 
   /** Отрендерить экземпляры моделей в JSON. */
-  def toEsJsonDocs(e: TraversableOnce[T]): String = {
+  final def toEsJsonDocs(e: TraversableOnce[T]): String = {
     e.toIterator
       .map { toEsJsonDoc }
       .mkString("[",  ",\n",  "]")
@@ -803,7 +757,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     * @tparam To тип одного элемента.
     * @return Source[T, NotUsed].
     */
-  def source[To: IEsSourcingHelper](searchQuery: QueryBuilder, maxResults: Option[Long] = None): Source[To, NotUsed] = {
+  final def source[To: IEsSourcingHelper](searchQuery: QueryBuilder, maxResults: Option[Long] = None): Source[To, NotUsed] = {
     val helper = implicitly[IEsSourcingHelper[To]]
     // Нужно помнить, что SearchDefinition -- это mutable-инстанс и всегда возвращает this.
     val scrollArgs = MScrollArgs(
@@ -903,7 +857,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     * @param sourceFields Полные названия полей документа, которые участвую в рассчёте хэша.
     * @return Фьючерс с Int'ом внутри.
     */
-  def docsHashSum(scripts: IAggScripts, q: QueryBuilder = QueryBuilders.matchAllQuery()): Future[Int] = {
+  final def docsHashSum(scripts: IAggScripts, q: QueryBuilder = QueryBuilders.matchAllQuery()): Future[Int] = {
     val aggName = "dcrc"
 
     for {

@@ -20,7 +20,7 @@ trait EsIndexDynCreate extends IEsModelDi with IMacroLogs {
   import mCommonDi._
 
   /** Собрать новый индекс для заливки туда моделей ipgeobase. */
-  def createIndex(newIndexName: String): Future[_] = {
+  final def createIndex(newIndexName: String): Future[_] = {
     val fut = esClient.admin().indices()
       .prepareCreate(newIndexName)
       // Надо сразу отключить index refresh в целях оптимизации bulk-заливки в индекс.

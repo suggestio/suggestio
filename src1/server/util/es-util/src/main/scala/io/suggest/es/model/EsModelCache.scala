@@ -43,9 +43,9 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    * @param id id исходного документа.
    * @return Строка, пригодная для использования в качестве ключа кеша.
    */
-  def cacheKey(id: String): String = id + CACHE_KEY_SUFFIX
+  final def cacheKey(id: String): String = id + CACHE_KEY_SUFFIX
 
-  def getByIdFromCache(id: String): Future[Option[T1]] = {
+  final def getByIdFromCache(id: String): Future[Option[T1]] = {
     val ck = cacheKey(id)
     cache.get[T1](ck)
   }
@@ -56,7 +56,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    * @param id id исходного документа.
    * @return Тоже самое, что и исходный getById().
    */
-  def getById(id: String): Future[Option[T1]] = {
+  final def getById(id: String): Future[Option[T1]] = {
     // 2014.nov.24: Форсируем полный асинхрон при работе с кешем.
     val ck = cacheKey(id)
     cache.get[T1](ck)
@@ -73,7 +73,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    * @param ids id'шники, которые надо бы получить. Ожидается, что будут без дубликатов.
    * @return Результаты в неопределённом порядке.
    */
-  def multiGet(ids: Iterable[String]): Future[Seq[T1]] = {
+  final def multiGet(ids: Iterable[String]): Future[Seq[T1]] = {
     if (ids.isEmpty) {
       Future.successful(Nil)
 
@@ -140,7 +140,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
     * @param ids id искомых элементов.
     * @return Source, для которого в фоне уже начали собираться возвращаемые элементы.
     */
-  def multiGetSrc(ids: Iterable[String]): Source[T1, _] = {
+  final def multiGetSrc(ids: Iterable[String]): Source[T1, _] = {
     // TODO Реализовать нормальную выкачку, более оптимальную по сравнению с multiGet()
     Source.fromFutureSource {
       for (els <- multiGet(ids)) yield
@@ -149,23 +149,23 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
   }
 
 
-  def multiGetMap(ids: Set[String]): Future[Map[String, T1]] = {
+  final def multiGetMap(ids: Set[String]): Future[Map[String, T1]] = {
     multiGet(ids)
       .map { companion.resultsToMap }
   }
 
 
-  def cacheThat(result: T1): Unit = {
+  final def cacheThat(result: T1): Unit = {
     val id = result.id.get
     val ck = cacheKey(id)
     cache.set(ck, result, EXPIRE)
   }
 
-  def cacheThese(results: T1*): Unit =
+  final def cacheThese(results: T1*): Unit =
     cacheThese1(results)
 
   /** Принудительное кэширование для всех указанных item'ов. */
-  def cacheThese1(results: TraversableOnce[T1]): Unit =
+  final def cacheThese1(results: TraversableOnce[T1]): Unit =
     results.foreach( cacheThat )
 
 
@@ -174,10 +174,10 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    * @param idOpt Опциональный id.
    * @return Тоже самое, что и [[getById]].
    */
-  def maybeGetByIdCached(idOpt: Option[String]): Future[Option[T1]] = {
+  final def maybeGetByIdCached(idOpt: Option[String]): Future[Option[T1]] = {
     FutureUtil.optFut2futOpt(idOpt)(getById)
   }
-  def maybeGetByEsIdCached(esIdOpt: Option[MEsUuId]): Future[Option[T1]] = {
+  final def maybeGetByEsIdCached(esIdOpt: Option[MEsUuId]): Future[Option[T1]] = {
     maybeGetByIdCached(
       esIdOpt.map(_.id)
     )
@@ -189,11 +189,11 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    * @param ck0 Ключ в кеше.
    * @return Тоже самое, что и исходный getById().
    */
-  def getByIdAndCache(id: String): Future[Option[T1]] = {
+  final def getByIdAndCache(id: String): Future[Option[T1]] = {
     val ck = cacheKey(id)
     getByIdAndCache(id, ck)
   }
-  def getByIdAndCache(id: String, ck: String): Future[Option[T1]] = {
+  final def getByIdAndCache(id: String, ck: String): Future[Option[T1]] = {
     val resultFut = companion.getById(id)
     for (adnnOpt <- resultFut) {
       // TODO Кэш для None надо держать? Можно короткий EXPIRE организовать, просто для защиты от атак.
@@ -204,15 +204,15 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
   }
 
 
-  def put(value: T1): Future[_] = {
+  final def put(value: T1): Future[_] = {
     val ck = cacheKey( value.id.get )
     cache.set(ck, value, EXPIRE)
   }
 
 
   /** Гуляние по графу узлов/элементов через кэш с помощью функции. */
-  def walk[A](acc0: A, ids: Set[String])
-             (f: (A, T1) => (A, Set[String])): Future[A] = {
+  final def walk[A](acc0: A, ids: Set[String])
+                   (f: (A, T1) => (A, Set[String])): Future[A] = {
     companion.walkUsing(acc0, ids, multiGetSrc(_))(f)
   }
 

@@ -74,7 +74,9 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
 
   override def resaveAll(): String = {
     warn(s"resaveAll()")
-    val fut = for (totalProcessed <- companion.resaveAll()) yield {
+    val fut = for (
+      totalProcessed <- companion.resaveAll()
+    ) yield {
       s"Total: $totalProcessed; failures: ??? (unawailable here, see logs)"
     }
     awaitString(fut)

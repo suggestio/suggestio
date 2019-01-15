@@ -36,6 +36,7 @@ class SiowebEsModel @Inject() (
   emailActivations    : EmailActivations,
   mExtIdents          : MExtIdents,
   mAsymKeys           : MAsymKeys,
+  esModelUtil         : EsModelUtil,
   mCommonDi           : ICommonDi
 )
   extends MacroLogsImplLazy
@@ -67,7 +68,7 @@ class SiowebEsModel @Inject() (
   /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */
   def maybeErrorIfIncorrectModels() {
     if (configuration.getOptional[Boolean]("es.mapping.model.conflict.check.enabled").getOrElseTrue)
-      EsModelUtil.errorIfIncorrectModels(ES_MODELS)
+      esModelUtil.errorIfIncorrectModels(ES_MODELS)
   }
 
   /** Отправить маппинги всех моделей в хранилище. */
@@ -75,7 +76,7 @@ class SiowebEsModel @Inject() (
     val ignoreExist = configuration.getOptional[Boolean]("es.mapping.model.ignore_exist")
       .getOrElseFalse
     trace("putAllMappings(): ignoreExists = " + ignoreExist)
-    EsModelUtil.putAllMappings(models, ignoreExist)
+    esModelUtil.putAllMappings(models, ignoreExist)
   }
 
 
@@ -122,7 +123,7 @@ class SiowebEsModel @Inject() (
   def initializeEsModels(triedIndexUpdate: Boolean = false): Future[_] = {
     maybeErrorIfIncorrectModels()
     val esModels = ES_MODELS
-    val futInx = EsModelUtil.ensureEsModelsIndices(esModels)
+    val futInx = esModelUtil.ensureEsModelsIndices(esModels)
     val logPrefix = "initializeEsModels(): "
     futInx.onComplete {
       case Success(result) => debug(logPrefix + "ensure() -> " + result)

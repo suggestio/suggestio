@@ -18,7 +18,7 @@ trait EsIndexDynDelete extends IEsModelDi with IMacroLogs {
   import mCommonDi._
 
   /** Логика удаления старого ненужного индекса. */
-  def deleteIndex(oldIndexName: String): Future[_] = {
+  final def deleteIndex(oldIndexName: String): Future[_] = {
     val fut: Future[_] = esClient.admin().indices()
       .prepareDelete(oldIndexName)
       .executeFut()

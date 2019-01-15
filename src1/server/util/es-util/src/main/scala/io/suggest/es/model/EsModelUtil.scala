@@ -4,6 +4,7 @@ import io.suggest.es.util.SioEsUtil
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.util.logs.MacroLogsImpl
+import javax.inject.{Inject, Singleton}
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.Client
@@ -12,7 +13,6 @@ import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.{ToXContent, XContentFactory}
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.search.SearchHits
-import play.api.libs.json._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -24,9 +24,13 @@ import scala.util.{Failure, Success}
  * Description: Общее для elasticsearch-моделей лежит в этом файле. Обычно используется общий индекс для хранилища.
  * 2014.sep.04: Появились child-модели. Произошло разделение api трейтов: статических и немного динамических.
  */
-object EsModelUtil extends MacroLogsImpl {
-
-  import LOGGER._
+@Singleton
+class EsModelUtil @Inject()(
+                             implicit ec      : ExecutionContext,
+                             esClient         : Client
+                           )
+  extends MacroLogsImpl
+{
 
 
   private def esModelId(esModel: EsModelCommonStaticT): String = {
@@ -56,10 +60,9 @@ object EsModelUtil extends MacroLogsImpl {
 
 
   /** Отправить маппинги всех моделей в ES. */
-  def putAllMappings(models: Seq[EsModelCommonStaticT], ignoreExists: Boolean = false)
-                    (implicit ec: ExecutionContext, client: Client): Future[Boolean] = {
+  def putAllMappings(models: Seq[EsModelCommonStaticT], ignoreExists: Boolean = false): Future[Boolean] = {
     Future.traverse(models) { esModelStatic =>
-      val logPrefix = esModelStatic.getClass.getSimpleName + ".putMapping(): "
+      val logPrefix = s"${esModelStatic.getClass.getSimpleName}.putMapping():"
       val imeFut = if (ignoreExists) {
         Future.successful(false)
       } else {
@@ -67,26 +70,71 @@ object EsModelUtil extends MacroLogsImpl {
       }
       imeFut.flatMap {
         case false =>
-          trace(logPrefix + "Trying to push mapping for model...")
+          LOGGER.trace(s"$logPrefix Trying to push mapping for model...")
           val fut = esModelStatic.putMapping()
           fut.onComplete {
             case Success(true)  =>
-              trace(logPrefix + "-> OK" )
+              LOGGER.trace(s"$logPrefix -> OK" )
             case Success(false) =>
-              warn(logPrefix  + "NOT ACK!!! Possibly out-of-sync.")
+              LOGGER.warn(s"$logPrefix NOT ACK!!! Possibly out-of-sync.")
             case Failure(ex)    =>
-              error(s"$logPrefix FAILed to put mapping to ${esModelStatic.ES_INDEX_NAME}/${esModelStatic.ES_TYPE_NAME}:\n-------------\n${esModelStatic.generateMapping.string()}\n-------------\n", ex)
+              LOGGER.error(s"$logPrefix FAILed to put mapping to ${esModelStatic.ES_INDEX_NAME}/${esModelStatic.ES_TYPE_NAME}:\n-------------\n${esModelStatic.generateMapping.string()}\n-------------\n", ex)
           }
           fut
 
         case true =>
-          trace(logPrefix + "Mapping already exists in index. Skipping...")
+          LOGGER.trace(s"$logPrefix Mapping already exists in index. Skipping...")
           Future successful true
       }
-    } map {
+    }.map {
       _.reduceLeft { _ && _ }
     }
   }
+
+
+  /**
+    * Убедиться, что индекс существует.
+    *
+    * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
+    *         Если индекс уже существует, то false.
+    */
+  def ensureIndex(indexName: String, shards: Int = 5, replicas: Int = 1): Future[Boolean] = {
+    for {
+      existsResp <- esClient.admin().indices()
+        .prepareExists(indexName)
+        .executeFut()
+
+      _ <- if (existsResp.isExists) {
+        Future.successful(false)
+      } else {
+        val indexSettings = SioEsUtil.getIndexSettingsV2(shards=shards, replicas=replicas)
+        esClient.admin().indices()
+          .prepareCreate(indexName)
+          .setSettings(indexSettings)
+          .executeFut()
+          .map { _ => true }
+      }
+    } yield {
+      true
+    }
+  }
+
+
+  /** Пройтись по всем ES_MODELS и проверить, что всех ихние индексы существуют. */
+  def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT]): Future[_] = {
+    val indices = models.map { esModel =>
+      esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
+    }.toMap
+    Future.traverse(indices) {
+      case (inxName, (shards, replicas)) =>
+        ensureIndex(inxName, shards=shards, replicas=replicas)
+    }
+  }
+
+}
+
+
+object EsModelUtil {
 
   /** Сколько раз по дефолту повторять попытку update при конфликте версий. */
   def UPDATE_RETRIES_MAX_DFLT = 5
@@ -132,46 +180,6 @@ object EsModelUtil extends MacroLogsImpl {
 
   }
 
-
-  /**
-    * Убедиться, что индекс существует.
-    *
-    * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
-    *         Если индекс уже существует, то false.
-    */
-  def ensureIndex(indexName: String, shards: Int = 5, replicas: Int = 1)
-                 (implicit ec:ExecutionContext, client: Client): Future[Boolean] = {
-    val adm = client.admin().indices()
-    for {
-      existsResp <- adm
-        .prepareExists(indexName)
-        .executeFut()
-
-      _ <- if (existsResp.isExists) {
-        Future.successful(false)
-      } else {
-        val indexSettings = SioEsUtil.getIndexSettingsV2(shards=shards, replicas=replicas)
-        adm.prepareCreate(indexName)
-          .setSettings(indexSettings)
-          .executeFut()
-          .map { _ => true }
-      }
-    } yield {
-      true
-    }
-  }
-
-  /** Пройтись по всем ES_MODELS и проверить, что всех ихние индексы существуют. */
-  def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT])
-                           (implicit ec: ExecutionContext, client: Client): Future[_] = {
-    val indices = models.map { esModel =>
-      esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
-    }.toMap
-    Future.traverse(indices) {
-      case (inxName, (shards, replicas)) =>
-        ensureIndex(inxName, shards=shards, replicas=replicas)
-    }
-  }
 
   /**
    * Узнать метаданные индекса.
@@ -229,13 +237,6 @@ object EsModelUtil extends MacroLogsImpl {
     }
   }
 
-  /** Сериализация набора строк. */
-  def asJsonStrArray(strings : Iterable[String]): JsArray = {
-    val strSeq = strings.foldLeft [List[JsString]] (Nil) {(acc, e) =>
-      JsString(e) :: acc
-    }
-    JsArray(strSeq)
-  }
 
   /**
    * Собрать указанные значения id'шников в аккамулятор-множество.

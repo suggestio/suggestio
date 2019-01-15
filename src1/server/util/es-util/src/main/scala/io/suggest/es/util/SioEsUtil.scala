@@ -9,7 +9,6 @@ import org.elasticsearch.action.support.master.AcknowledgedResponse
 import org.elasticsearch.action.{ActionListener, ActionRequestBuilder, ActionResponse}
 import org.elasticsearch.client.Client
 import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.Strings
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.TransportAddress
 import org.elasticsearch.common.xcontent.{XContentBuilder, XContentType}
@@ -408,66 +407,7 @@ object SioEsUtil extends MacroLogsImpl {
     }
   }
 
-  /** 2015.sep.02: Добавить поддержку анализа тегов. */
-  def getIndexSettingsV2_2: XContentBuilder = {
-    jsonGenerator { implicit b =>
-      IndexSettings(
-        tokenizers = Seq(
-          _KEYWORD_TOKENIZER
-        ),
-        analyzers = Seq(
-          _KW_LC_ANALYZER,
-          _FTS_NOSTOP_AN,
-          _ENGRAM_AN1_NOSTOP
-        )
-      )
-    }
-  }
-
-  /** Запустить добавление новых настроек в индекс. Для этого индекс надо закрыть. */
-  def updateIndex2_1To2_2(indexName: String)(implicit ec: ExecutionContext, client: Client) = {
-    // TODO ES-6.x - Заменить string() на Strings.toString(xcb)
-    updateIndex(indexName)( getIndexSettingsV2_2.string() )
-  }
-
-  /**
-   * Обновление сеттингов индекса.
-    *
-    * @param indexName Название обновляемого индекса.
-   * @param settings Генератор обновленных сеттингов.
-   * @return Фьючерс.
-   */
-  def updateIndex(indexName: String)(settings: String)
-                 (implicit ec: ExecutionContext, client: Client): Future[AcknowledgedResponse] = {
-    // Закрываем индекс...
-    val closeFut = closeIndex(indexName)
-    // Заливаем изменения сеттингов.
-    val updateFut = closeFut.flatMap { _ =>
-      client.admin()
-        .indices()
-        .prepareUpdateSettings(indexName)
-        .setSettings( settings, XContentType.JSON )
-        .executeFut()
-    }
-    // Переоткрыть индекс, когда всё будет сделано.
-    val reOpenFut = updateFut
-      // Подавляем все возможные ошибки.
-      .recoverWith { case ex =>
-        error("Failed to update index [" + indexName + "] with settings:\n" + settings, ex)
-        null
-      }
-      .flatMap { _ =>
-        openIndex(indexName)
-      }
-    // Сформировать результат фьючерса, дождавшись переоткрытия индекса.
-    for {
-      _     <- reOpenFut
-      resp  <- updateFut
-      if resp.isAcknowledged
-    } yield {
-      resp
-    }
-  }
+  // Здесь был код установки анализатора тегов индекса (v2.2).
 
 
   /** Генератор мульти-полей title и contentText для маппинга страниц. Helper для getPageMapping(). */

@@ -14,9 +14,9 @@ trait EsModelPlayJsonStaticT extends EsModelCommonStaticT {
 
   def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc
 
-  def toPlayJson(m: T) = JsObject(toPlayJsonAcc(m))
-  def toPlayJsonAcc(m: T) = writeJsonFields(m, Nil)
-  def toPlayJsonWithId(m: T): JsObject = {
+  final def toPlayJson(m: T) = JsObject(toPlayJsonAcc(m))
+  final def toPlayJsonAcc(m: T) = writeJsonFields(m, Nil)
+  final def toPlayJsonWithId(m: T): JsObject = {
     var acc = toPlayJsonAcc(m)
     val _id = m.id
     if (_id.isDefined)

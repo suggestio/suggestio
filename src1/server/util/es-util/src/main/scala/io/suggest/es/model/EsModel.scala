@@ -37,12 +37,11 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
   import mCommonDi._
 
-  def prepareGet(id: String) = {
+  final def prepareGet(id: String) =
     prepareGetBase(id)
-  }
 
-  def prepareUpdate(id: String) = prepareUpdateBase(id)
-  def prepareDelete(id: String) = prepareDeleteBase(id)
+  final def prepareUpdate(id: String) = prepareUpdateBase(id)
+  final def prepareDelete(id: String) = prepareDeleteBase(id)
 
   /**
    * Существует ли указанный документ в текущем типе?
@@ -50,7 +49,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param id id документа.
    * @return true/false
    */
-  def isExist(id: String): Future[Boolean] = {
+  final def isExist(id: String): Future[Boolean] = {
     prepareGet(id)
       .setFetchSource(false)
       .executeFut()
@@ -66,7 +65,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param id Ключ документа.
    * @return Экземпляр сабжа, если такой существует.
    */
-  def getById(id: String, options: GetOpts = _getArgsDflt): Future[Option[T]] = {
+  final def getById(id: String, options: GetOpts = _getArgsDflt): Future[Option[T]] = {
     val rq = prepareGet(id)
     for (sf <- options.sourceFiltering) {
       rq.setFetchSource(sf.includes.toArray, sf.excludes.toArray)
@@ -76,7 +75,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   }
 
   /** Вернуть id если он задан. Часто бывает, что idOpt, а не id. */
-  def maybeGetById(idOpt: Option[String], options: GetOpts = _getArgsDflt): Future[Option[T]] = {
+  final def maybeGetById(idOpt: Option[String], options: GetOpts = _getArgsDflt): Future[Option[T]] = {
     FutureUtil.optFut2futOpt(idOpt) {
       getById(_, options)
     }
@@ -88,7 +87,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param id id документа.
    * @return Строка json с содержимым документа или None.
    */
-  def getRawContentById(id: String): Future[Option[String]] = {
+  final def getRawContentById(id: String): Future[Option[String]] = {
     prepareGet(id)
       .executeFut()
       .map { EsModelUtil.deserializeGetRespBodyRawStr }
@@ -100,7 +99,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param id id документа.
    * @return Строка json с документом полностью или None.
    */
-  def getRawById(id: String): Future[Option[String]] = {
+  final def getRawById(id: String): Future[Option[String]] = {
     prepareGet(id)
       .executeFut()
       .map { EsModelUtil.deserializeGetRespFullRawStr }
@@ -113,7 +112,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param acc0 Начальный аккамулятор.
    * @return Список результатов в порядке ответа.
    */
-  def multiGet(ids: TraversableOnce[String], options: GetOpts = _getArgsDflt): Future[Stream[T]] = {
+  final def multiGet(ids: TraversableOnce[String], options: GetOpts = _getArgsDflt): Future[Stream[T]] = {
     if (ids.isEmpty) {
       Future.successful( Stream.empty )
     } else {
@@ -135,7 +134,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
 
   /** Тоже самое, что и multiget, но этап разбора ответа сервера поточный: элементы возвращаются по мере парсинга. */
-  def multiGetSrc(ids: Traversable[String], options: GetOpts = _getArgsDflt): Source[T, _] = {
+  final def multiGetSrc(ids: Traversable[String], options: GetOpts = _getArgsDflt): Source[T, _] = {
     if (ids.isEmpty) {
       Source.empty
     } else {
@@ -177,7 +176,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param acc0 Необязательный начальный акк. полезен, когда некоторые инстансы уже есть на руках.
    * @return Фьючерс с картой результатов.
    */
-  def multiGetMap(ids: TraversableOnce[String], options: GetOpts = _getArgsDflt): Future[Map[String, T]] = {
+  final def multiGetMap(ids: TraversableOnce[String], options: GetOpts = _getArgsDflt): Future[Map[String, T]] = {
     multiGet(ids, options = options)
       // Конвертим список результатов в карту, где ключ -- это id. Если id нет, то выкидываем.
       .map { resultsToMap }
@@ -185,7 +184,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
 
   /** Сконвертить распарсенные результаты в карту. */
-  def resultsToMap(results: TraversableOnce[T]): Map[String, T] = {
+  final def resultsToMap(results: TraversableOnce[T]): Map[String, T] = {
     OptId.els2idMap[String, T](results)
   }
 
@@ -196,7 +195,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
    * @param id adId
    * @return Новый экземпляр DeleteRequestBuilder.
    */
-  def deleteRequestBuilder(id: String): DeleteRequestBuilder = {
+  final def deleteRequestBuilder(id: String): DeleteRequestBuilder = {
     val req = prepareDelete(id)
     val rk = getRoutingKey(id)
     if (rk.isDefined)
@@ -236,11 +235,11 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   }
 
 
-  def resave(id: String): Future[Option[String]] = {
+  final def resave(id: String): Future[Option[String]] = {
     resaveBase( getById(id) )
   }
 
-  def reget(inst0: T): Future[Option[T]] = {
+  final def reget(inst0: T): Future[Option[T]] = {
     getById(inst0.id.get)
   }
 
@@ -267,8 +266,8 @@ trait EsModelStaticT extends EsModelCommonStaticT {
     * @tparam A Тип аккамулятора.
     * @return Фьючерс с финальным аккамулятором.
     */
-  def walkUsing[A](acc0: A,  ids: Set[String],  multiGetSrcF: Set[String] => Source[T, _], counter: Int = 0)
-                  (f: (A, T) => (A, Set[String])): Future[A] = {
+  final def walkUsing[A](acc0: A,  ids: Set[String],  multiGetSrcF: Set[String] => Source[T, _], counter: Int = 0)
+                        (f: (A, T) => (A, Set[String])): Future[A] = {
     lazy val logPrefix = s"walkUsing(${ids.size})[$counter]:"
 
     if (counter >= MAX_WALK_STEPS) {
@@ -307,8 +306,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
     * @tparam A Тип аккамулятора.
     * @return Итоговый аккамулятор функции.
     */
-  def walk[A](acc0: A, ids: Set[String])
-             (f: (A, T) => (A, Set[String])): Future[A] = {
+  final def walk[A](acc0: A, ids: Set[String])(f: (A, T) => (A, Set[String])): Future[A] = {
     walkUsing(acc0, ids, multiGetSrc(_))(f)
   }
 
