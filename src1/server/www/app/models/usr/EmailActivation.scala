@@ -32,8 +32,8 @@ import scala.concurrent.Future
   * Модель нужна для хранения ключей для проверки/активации почтовых ящиков. */
 @Singleton
 class EmailActivations @Inject() (
-                                   esModel: EsModel,
-                                   override val mCommonDi: ICommonDi
+                                   esModel    : EsModel,
+                                   mCommonDi  : ICommonDi
                                  )
   extends EsModelStaticIdentT
     with MacroLogsImpl

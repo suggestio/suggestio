@@ -1,5 +1,6 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import models.ai.MAiMads
 import models.mproj.ICommonDi
@@ -17,6 +18,7 @@ import play.api.mvc._
  * Description: Аддон для контроллеров для IsSuperuser + доступ к AiMad по id.
  */
 class IsSuAiMad @Inject() (
+                            esModel                 : EsModel,
                             aclUtil                 : AclUtil,
                             mAiMads                 : MAiMads,
                             isSu                    : IsSu,
@@ -25,6 +27,7 @@ class IsSuAiMad @Inject() (
                           ) {
 
   import mCommonDi._
+  import esModel.api._
 
   /** IsSuperuser + доступ к указанному MAiMad.
     *

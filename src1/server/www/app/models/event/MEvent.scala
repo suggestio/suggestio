@@ -63,9 +63,7 @@ object MEvent {
 
 
 @Singleton
-class MEvents @Inject() (
-  override val mCommonDi: IEsModelDiVal
-)
+class MEvents
   extends EsModelStatic
     with MacroLogsImpl
     with EsmV2Deserializer

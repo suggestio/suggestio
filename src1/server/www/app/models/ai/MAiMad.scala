@@ -7,7 +7,6 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.OptStrId
-import models.mproj.ICommonDi
 import play.api.libs.json.{JsArray, JsString}
 import io.suggest.util.JacksonParsing.{iteratorParser, strListParser, stringParser}
 import io.suggest.util.logs.MacroLogsImpl
@@ -24,9 +23,7 @@ import scala.collection.Map
 // TODO Объеденить модель с MNodes, когда дойдут до AiMad руки.
 
 @Singleton
-class MAiMads @Inject() (
-  override val mCommonDi: ICommonDi
-)
+class MAiMads
   extends EsModelStatic
     with MacroLogsImpl
     with EsModelPlayJsonStaticT

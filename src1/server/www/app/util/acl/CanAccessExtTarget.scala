@@ -1,5 +1,6 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.MExtTargets
@@ -19,6 +20,7 @@ import scala.concurrent.Future
  */
 
 class CanAccessExtTarget @Inject() (
+                                     esModel            : EsModel,
                                      aclUtil            : AclUtil,
                                      mExtTargets        : MExtTargets,
                                      isNodeAdmin        : IsNodeAdmin,
@@ -29,6 +31,7 @@ class CanAccessExtTarget @Inject() (
 { outer =>
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** @param tgId id ранее сохранённого экземпляра [[models.adv.MExtTarget]]. */

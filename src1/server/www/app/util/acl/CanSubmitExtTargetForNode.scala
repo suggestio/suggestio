@@ -8,6 +8,7 @@ import models.req.{IReq, MNodeExtTgSubmitReq, MReq}
 import play.api.mvc._
 import util.adv.ext.AdvExtFormUtil
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.EsModel
 import io.suggest.req.ReqUtil
 import play.api.http.Status
 
@@ -25,6 +26,7 @@ import scala.concurrent.Future
 
 /** Аддон для контроллера для добавления поддержки */
 class CanSubmitExtTargetForNode @Inject() (
+                                            esModel                 : EsModel,
                                             aclUtil                 : AclUtil,
                                             advExtFormUtil          : AdvExtFormUtil,
                                             mExtTargets             : MExtTargets,
@@ -36,6 +38,7 @@ class CanSubmitExtTargetForNode @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** ActionBuilder проверки доступа на запись (create, edit) для target'а,

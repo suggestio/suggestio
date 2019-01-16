@@ -204,7 +204,7 @@ class IpgbImporter @Inject() (
       // Создание нового ES-индекса
       createIndexFut = {
         debug(s"$logPrefix Will create new index: $newIndexName")
-        mIndexes.createIndex(newIndexName)
+        esModel.createIndex(newIndexName, mIndexes.indexSettingsCreate)
       }
 
       // Дождаться готовности нового индекса...
@@ -226,21 +226,20 @@ class IpgbImporter @Inject() (
       }(asyncUtil.singleThreadIoContext)
 
       // Привести индекс к рабочему состоянию.
-      optimizeFut      = {
-        mIndexes.optimizeAfterBulk(newIndexName)
-      }
+      optimizeFut      = esModel.optimizeAfterBulk(newIndexName, mIndexes.indexSettingsAfterBulk)
+
       // Параллельно: узнать имя старого индекса (старых индексов)
-      oldIndexNamesFut = mIndexes.getAliasedIndexName()
+      oldIndexNamesFut = esModel.getAliasedIndexName( mIndexes.INDEX_ALIAS_NAME )
 
       // Дождаться окончания оптимизациии и чтения имени старого индекса
       _             <- optimizeFut
       oldIndexNames <- oldIndexNamesFut
 
       // Переключить всю систему на новый индекс.
-      _             <- mIndexes.resetIndexAliasTo(newIndexName)
+      _             <- esModel.resetAliasToIndex( newIndexName, mIndexes.INDEX_ALIAS_NAME )
 
       // Удалить старые индексы, если есть.
-      _             <- Future.traverse(oldIndexNames)(mIndexes.deleteIndex)
+      _             <- Future.traverse(oldIndexNames)(esModel.deleteIndex)
     } yield {
       info(logPrefix + s"Done, took = ${System.currentTimeMillis - startedAtMs} ms.")
     }
@@ -258,7 +257,7 @@ class IpgbImporter @Inject() (
     // Если была ошибка во время doFut, то удалить новый индекс.
     for (ex <- doFut.failed) {
       error(s"$logPrefix FAILED. Deleting NEW index, it may be corrupted.", ex)
-      mIndexes.deleteIndex(newIndexName)
+      esModel.deleteIndex( newIndexName )
     }
 
     // Вернуть основной фьючерс.

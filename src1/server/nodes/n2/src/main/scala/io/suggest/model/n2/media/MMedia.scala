@@ -27,7 +27,6 @@ import scala.concurrent.duration._
 @Singleton
 class MMedias @Inject() (
                           iMediaStorages          : IMediaStorages,
-                          override val mCommonDi  : IEsModelDiVal
                         )
   extends EsModelStatic
   with EsmV2Deserializer

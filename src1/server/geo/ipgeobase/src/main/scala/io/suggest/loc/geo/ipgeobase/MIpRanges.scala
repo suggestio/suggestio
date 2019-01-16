@@ -137,7 +137,6 @@ abstract class MIpRangesAbstract
 @Singleton
 class MIpRanges @Inject() (
   mIndexes                : MIndexes,
-  override val mCommonDi  : IEsModelDiVal
 )
   extends MIpRangesAbstract
 {
@@ -148,7 +147,6 @@ class MIpRanges @Inject() (
 /** Реализаци статической части модели для периодических нужд взаимодействия с произвольным индексом. */
 class MIpRangesTmp @Inject() (
   @Assisted override val ES_INDEX_NAME  : String,
-  override val mCommonDi                : IEsModelDiVal
 )
   extends MIpRangesAbstract
 

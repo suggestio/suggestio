@@ -1,5 +1,6 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
@@ -17,6 +18,7 @@ import scala.concurrent.Future
  * Description: Доступ к календарю вообще без проверки ACL.
  */
 class CalendarAccessAny @Inject() (
+                                    esModel               : EsModel,
                                     aclUtil               : AclUtil,
                                     mCalendars            : MCalendars,
                                     reqUtil               : ReqUtil,
@@ -25,6 +27,7 @@ class CalendarAccessAny @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** @param calId id календаря, с которым происходит взаимодействие. */

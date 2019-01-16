@@ -22,8 +22,8 @@ import scala.collection.Map
  */
 @Singleton
 class MAsymKeys @Inject() (
-  override val mCommonDi: IEsModelDiVal
-)
+                            mCommonDi: IEsModelDiVal
+                          )
   extends EsModelStatic
   with MacroLogsImpl
   with EsmV2Deserializer

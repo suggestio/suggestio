@@ -22,9 +22,11 @@ import org.elasticsearch.action.get.MultiGetResponse
 import org.elasticsearch.client.Client
 import play.api.cache.AsyncCacheApi
 import japgolly.univeq._
+import org.elasticsearch.ResourceNotFoundException
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.cluster.metadata.{IndexMetaData, MappingMetaData}
+import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.{XContentBuilder, XContentType}
 import org.elasticsearch.index.engine.VersionConflictEngineException
@@ -74,7 +76,48 @@ final class EsModel @Inject()(
     }
   }
 
-  // TODO Код ниже уровня моделей унести в classs EsIndexUtil.
+  /** Собрать новый индекс для заливки туда моделей ipgeobase. */
+  def createIndex(newIndexName: String, settings: Settings): Future[_] = {
+    val fut = esClient.admin().indices()
+      .prepareCreate(newIndexName)
+      // Надо сразу отключить index refresh в целях оптимизации bulk-заливки в индекс.
+      .setSettings( settings )
+      .executeFut()
+      .map(_.isShardsAcked)
+
+    lazy val logPrefix = s"createIndex($newIndexName):"
+    fut.onComplete {
+      case Success(res) => LOGGER.info(s"$logPrefix Ok, $res")
+      case Failure(ex)  => LOGGER.error(s"$logPrefix failed", ex)
+    }
+
+    fut
+  }
+
+  /** Логика удаления старого ненужного индекса. */
+  def deleteIndex(oldIndexName: String): Future[_] = {
+    val fut: Future[_] = esClient.admin().indices()
+      .prepareDelete(oldIndexName)
+      .executeFut()
+      .map { _.isAcknowledged }
+
+    val logPrefix = s"deleteIndex($oldIndexName):"
+
+    // Отрабатывать ситуацию, когда индекс не найден.
+    val fut1 = fut.recover { case ex: ResourceNotFoundException =>
+      LOGGER.debug(s"$logPrefix Looks like, index not exist, already deleted?", ex)
+      false
+    }
+
+    // Логгировать завершение команды.
+    fut1.onComplete {
+      case Success(res) => LOGGER.debug(s"$logPrefix Index deleted ok: $res")
+      case Failure(ex)  => LOGGER.error(s"$logPrefix Failed to delete index", ex)
+    }
+
+    fut1
+  }
+
   /**
     * Убедиться, что индекс существует.
     *
@@ -101,6 +144,91 @@ final class EsModel @Inject()(
     } yield {
       true
     }
+  }
+
+
+  /** Выставить алиас на текущий индекс, забыв о предыдущих данных алиаса. */
+  def resetAliasToIndex(aliasName: String, newIndexName: String): Future[_] = {
+    lazy val logPrefix = s"installIndexAliasTo($newIndexName <= $aliasName)[${System.currentTimeMillis()}]:"
+    LOGGER.info(s"$logPrefix Starting, alias = $aliasName")
+
+    val fut = esClient.admin().indices()
+      .prepareAliases()
+      // Удалить все алиасы с необходимым именем.
+      .removeAlias("*", aliasName)
+      // Добавить алиас на новый индекс.
+      .addAlias(newIndexName, aliasName)
+      .executeFut()
+      .map( _.isAcknowledged )
+
+    // Подключить логгирование к работе...
+    fut.onComplete {
+      case Success(r)  => LOGGER.debug(s"$logPrefix OK, ack=$r")
+      case Failure(ex) => LOGGER.error(s"$logPrefix Failed to update index alias $aliasName", ex)
+    }
+
+    fut
+  }
+
+
+  /** Узнать имя индекса, сокрытого за алиасом. */
+  def getAliasedIndexName(aliasName: String): Future[Set[String]] = {
+    def logPrefix = "getAliasesIndexName():"
+    esClient.admin().indices()
+      .prepareGetAliases( aliasName )
+      .executeFut()
+      .map { resp =>
+        LOGGER.trace(s"$logPrefix Ok, found ${resp.getAliases.size()} indexes.")
+        resp.getAliases
+          .keysIt()
+          .asScala
+          .toSet
+      }
+      .recover { case ex: ResourceNotFoundException =>
+        // Если алиасов не найдено, ES обычно возвращает ошибку 404. Это тоже отработать надо бы.
+        LOGGER.warn(s"$logPrefix 404, suppressing error to empty result.", ex)
+        Set.empty
+      }
+  }
+
+
+  /** Когда заливка данных закончена, выполнить подготовку индекса к эсплуатации.
+    * elasticsearch 2.0+: переименовали операцию optimize в force merge. */
+  def optimizeAfterBulk(indexName: String, indexSettingsAfterBulk: Option[Settings] = None): Future[_] = {
+    val startedAt = System.currentTimeMillis()
+
+    // Запустить оптимизацию всего ES-индекса.
+    val inxOptFut: Future[_] = {
+      esClient.admin().indices()
+        .prepareForceMerge(indexName)
+        .setMaxNumSegments(1)
+        .setFlush(true)
+        .executeFut()
+    }
+
+    lazy val logPrefix = s"optimizeAfterBulk($indexName):"
+
+    // Потом нужно выставить не-bulk настройки для готового к работе индекса.
+    val inxSettingsFut = inxOptFut.flatMap { _ =>
+      val updInxSettingsAt = System.currentTimeMillis()
+
+      val fut2: Future[_] = indexSettingsAfterBulk.fold[Future[_]] {
+        Future.successful(None)
+      } { settings2 =>
+        esClient.admin().indices()
+          .prepareUpdateSettings(indexName)
+          .setSettings( settings2 )
+          .executeFut()
+      }
+
+      LOGGER.trace(s"$logPrefix Optimize took ${updInxSettingsAt - startedAt} ms")
+      for (_ <- fut2)
+        LOGGER.trace(s"$logPrefix Update index settings took ${System.currentTimeMillis() - updInxSettingsAt} ms.")
+
+      fut2
+    }
+
+    inxSettingsFut
   }
 
 
@@ -342,8 +470,8 @@ final class EsModel @Inject()(
     * @tparam D Тип обновляемых данных.
     * @return Удачно-сохраненный экземпляр data: T.
     */
-  def tryUpdateM[X <: EsModelCommonT, D <: ITryUpdateData[X, D]]
-                (companion: EsModelCommonStaticT { type T = X }, data0: D, maxRetries: Int = 5)
+  def tryUpdateM[X <: EsModelT, D <: ITryUpdateData[X, D]]
+                (companion: EsModelStaticT { type T = X }, data0: D, maxRetries: Int = 5)
                 (updateF: D => Future[D]): Future[D] = {
     import api._
     lazy val logPrefix = s"tryUpdateM(${System.currentTimeMillis}):"
@@ -370,9 +498,12 @@ final class EsModel @Inject()(
                 if (maxRetries > 0) {
                   val n1 = maxRetries - 1
                   LOGGER.warn(s"$logPrefix Version conflict while tryUpdate(). Retry ($n1)...")
-                  data1._reget.flatMap { data2 =>
-                    tryUpdateM[X, D](companion, data2, n1)(updateF)
-                  }
+                  companion
+                    .reget( data1._saveable )
+                    .flatMap { opt =>
+                      val data2  = data1._instance(opt.get)
+                      tryUpdateM[X, D](companion, data2, n1)(updateF)
+                    }
                 } else {
                   val ex2 = new RuntimeException(s"$logPrefix Too many save-update retries failed", exVsn)
                   Future.failed(ex2)
@@ -474,6 +605,28 @@ final class EsModel @Inject()(
       def prepareCount(): SearchRequestBuilder = {
         prepareSearch()
           .setSize(0)
+      }
+
+      def prepareGet(id: String) = {
+        val req = esClient.prepareGet(model.ES_INDEX_NAME, model.ES_TYPE_NAME, id)
+        val rk = model.getRoutingKey(id)
+        if (rk.isDefined)
+          req.setRouting(rk.get)
+        req
+      }
+
+      /**
+        * Существует ли указанный документ в текущем типе?
+        *
+        * @param id id документа.
+        * @return true/false
+        */
+      def isExist(id: String): Future[Boolean] = {
+        model
+          .prepareGet(id)
+          .setFetchSource(false)
+          .executeFut()
+          .map { _.isExists }
       }
 
       /**
@@ -892,43 +1045,6 @@ final class EsModel @Inject()(
           .mkString("[",  ",\n",  "]")
       }
 
-
-      /** Реализация контейнера для вызова [[EsModelUtil]].tryUpdate() для es-моделей. */
-      class TryUpdateData(override val _saveable: T1)
-        extends model.TryUpdateDataAbstract[TryUpdateData]
-      {
-        override protected def _instance(m: T1) = new TryUpdateData(m)
-      }
-
-      /** Вместо TryUpdateData.apply(). */
-      def tryUpdateData(inst: T1) = {
-        new TryUpdateData(inst)
-      }
-
-      /**
-       * Попытаться обновить экземпляр модели с помощью указанной функции.
-       * Метод является надстройкой над save, чтобы отрабатывать VersionConflict.
-       *
-       * @param inst0 Исходный инстанс, который необходимо обновить.
-       * @param retry Счетчик попыток.
-       * @param updateF Функция для апдейта. Может возвращать null для внезапного отказа от апдейта.
-       * @return Тоже самое, что и save().
-       *         Если updateF запретила апдейт (вернула null), то будет Future.successfull(inst0).
-       */
-      def tryUpdate(inst0: T1, retry: Int = 0)(updateF: T1 => T1): Future[T1] = {
-        // 2015.feb.20: Код переехал в EsModelUtil, а тут остались только wrapper для вызова этого кода.
-        val data0 = tryUpdateData(inst0)
-        val data2Fut = tryUpdateM[T1, TryUpdateData](model, data0, model.UPDATE_RETRIES_MAX) { data =>
-          val data1 = tryUpdateData(
-            updateF(data._saveable)
-          )
-          Future.successful(data1)
-        }
-        for (data2 <- data2Fut) yield {
-          data2._saveable
-        }
-      }
-
       /**
         * Пересохранение всех данных модели. По сути getAll + all.map(_.save). Нужно при ломании схемы.
         *
@@ -1154,25 +1270,62 @@ final class EsModel @Inject()(
       }
 
 
-      /**
-        * Существует ли указанный документ в текущем типе?
-        *
-        * @param id id документа.
-        * @return true/false
-        */
-      def isExist(id: String): Future[Boolean] = {
-        model
-          .prepareGet(id)
-          .setFetchSource(false)
-          .executeFut()
-          .map { _.isExists }
+      /** Реализация контейнера для вызова [[EsModelUtil]].tryUpdate() для es-моделей. */
+      class TryUpdateData(override val _saveable: T1) extends ITryUpdateData[T1, TryUpdateData] {
+        override def _instance(m: T1) = new TryUpdateData(m)
       }
+
+      /** Вместо TryUpdateData.apply(). */
+      def tryUpdateData(inst: T1) = {
+        new TryUpdateData(inst)
+      }
+
+      /**
+       * Попытаться обновить экземпляр модели с помощью указанной функции.
+       * Метод является надстройкой над save, чтобы отрабатывать VersionConflict.
+       *
+       * @param inst0 Исходный инстанс, который необходимо обновить.
+       * @param retry Счетчик попыток.
+       * @param updateF Функция для апдейта. Может возвращать null для внезапного отказа от апдейта.
+       * @return Тоже самое, что и save().
+       *         Если updateF запретила апдейт (вернула null), то будет Future.successfull(inst0).
+       */
+      def tryUpdate(inst0: T1, retry: Int = 0)(updateF: T1 => T1): Future[T1] = {
+        // 2015.feb.20: Код переехал в EsModelUtil, а тут остались только wrapper для вызова этого кода.
+        val data0 = tryUpdateData(inst0)
+        val data2Fut = tryUpdateM[T1, TryUpdateData](model, data0, model.UPDATE_RETRIES_MAX) { data =>
+          val data1 = tryUpdateData(
+            updateF(data._saveable)
+          )
+          Future.successful(data1)
+        }
+        for (data2 <- data2Fut) yield {
+          data2._saveable
+        }
+      }
+
 
       /** Вернуть id если он задан. Часто бывает, что idOpt, а не id. */
       def maybeGetById(idOpt: Option[String], options: GetOpts = model._getArgsDflt): Future[Option[T1]] = {
         FutureUtil.optFut2futOpt(idOpt) {
-          model.getById(_, options)
+          getById(_, options)
         }
+      }
+
+
+      /**
+        * Выбрать ряд из таблицы по id.
+        *
+        * @param id Ключ документа.
+        * @return Экземпляр сабжа, если такой существует.
+        */
+      def getById(id: String, options: GetOpts = model._getArgsDflt): Future[Option[T1]] = {
+        val rq = model.prepareGet(id)
+        for (sf <- options.sourceFiltering) {
+          rq.setFetchSource(sf.includes.toArray, sf.excludes.toArray)
+        }
+        rq.executeFut()
+          .map { model.deserializeGetRespFull }
       }
 
 
@@ -1323,7 +1476,7 @@ final class EsModel @Inject()(
 
 
       def resave(id: String): Future[Option[String]] = {
-        model.resaveBase( model.getById(id) )
+        model.resaveBase( getById(id) )
       }
 
 
@@ -1336,9 +1489,11 @@ final class EsModel @Inject()(
         * @tparam A Тип аккамулятора.
         * @return Итоговый аккамулятор функции.
         */
-      def walk[A](acc0: A, ids: Set[String])(f: (A, T1) => (A, Set[String])): Future[A] = {
+      def walk[A](acc0: A, ids: Set[String])(f: (A, T1) => (A, Set[String])): Future[A] =
         walkUsing(acc0, ids, multiGetSrc(_))(f)
-      }
+
+      def reget(inst0: T1): Future[Option[T1]] =
+        getById(inst0.id.get)
 
     }
 
@@ -1747,35 +1902,9 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
   override type T <: EsModelT
 
-  import mCommonDi._
-
-
-  final def prepareGet(id: String) = {
-    val req = esClient.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
-    val rk = getRoutingKey(id)
-    if (rk.isDefined)
-      req.setRouting(rk.get)
-    req
-  }
-
 
   /** Дефолтовое значение GetArgs, когда GET-опции не указаны. */
   def _getArgsDflt: GetOpts = GetOptsDflt
-
-  /**
-   * Выбрать ряд из таблицы по id.
-   *
-   * @param id Ключ документа.
-   * @return Экземпляр сабжа, если такой существует.
-   */
-  final def getById(id: String, options: GetOpts = _getArgsDflt): Future[Option[T]] = {
-    val rq = prepareGet(id)
-    for (sf <- options.sourceFiltering) {
-      rq.setFetchSource(sf.includes.toArray, sf.excludes.toArray)
-    }
-    rq.executeFut()
-      .map { deserializeGetRespFull }
-  }
 
 
   /** Дополнение логики удаления одного элемента, когда необходимо. */
@@ -1785,10 +1914,6 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   /** Дополнение логики удаления нескольких элементов, когда необходимо. */
   def _deleteByIds(ids: Iterable[String])(fut: Future[Option[BulkResponse]]): Future[Option[BulkResponse]] =
     fut
-
-  override final def reget(inst0: T): Future[Option[T]] = {
-    getById(inst0.id.get)
-  }
 
 
   def MAX_WALK_STEPS = 50
@@ -1801,8 +1926,8 @@ abstract class EsModelStatic extends EsModelStaticT
 
 /** Шаблон для динамических частей ES-моделей.
  * В минимальной редакции механизм десериализации полностью абстрактен. */
-trait EsModelT extends EsModelCommonT {
-}
+trait EsModelT extends EsModelCommonT
+// TODO Объеденить EsModelT и EsModelCommonT?
 
 /** Доп.API для инстансов ES-моделей с явной поддержкой версий. */
 trait EsModelVsnedT[T <: EsModelVsnedT[T]] extends EsModelCommonT {

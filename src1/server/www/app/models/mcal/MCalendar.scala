@@ -21,9 +21,9 @@ import scala.collection.Map
  */
 @Singleton
 class MCalendars @Inject() (
-  mCalTypesJvm            : MCalTypesJvm,
-  override val mCommonDi  : ICommonDi
-)
+                             mCalTypesJvm     : MCalTypesJvm,
+                             mCommonDi        : ICommonDi,
+                           )
   extends EsModelStatic
   with MacroLogsImpl
   with EsmV2Deserializer

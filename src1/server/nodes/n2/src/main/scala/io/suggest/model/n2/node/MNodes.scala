@@ -14,6 +14,7 @@ import io.suggest.es.util.SioEsUtil._
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.jd.MJdEdgeId
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.bulk.BulkResponse
@@ -45,8 +46,10 @@ import scala.concurrent.duration._
 
 @Singleton
 final class MNodes @Inject() (
-                               esModel: EsModel,
-                               override val mCommonDi: MEsModelDiVal
+                               esModel    : EsModel
+                             )(implicit
+                               ec         : ExecutionContext,
+                               sn         : SioNotifierStaticClientI,
                              )
   extends EsModelStatic
   with EsmV2Deserializer
@@ -56,7 +59,6 @@ final class MNodes @Inject() (
   with EsDynSearchStatic[MNodeSearch]
   with EsModelStaticCacheableT
 {
-  import mCommonDi._
 
   // cache
   override val EXPIRE = 60.seconds

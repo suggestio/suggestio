@@ -13,7 +13,7 @@ import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
-import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT}
+import models.adv.build.{Acc, TryUpdateBuilder}
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
 import util.adv.build.AdvBuilderFactory
@@ -34,13 +34,12 @@ import scala.concurrent.{ExecutionContext, Future}
 class AdvRcvrsUtil @Inject()(
                               esModel                 : EsModel,
                               mItems                  : MItems,
-                              override val mNodes     : MNodes,
+                              mNodes                  : MNodes,
                               advBuilderFactory       : AdvBuilderFactory,
                               n2NodesUtil             : N2NodesUtil,
                               mCommonDi               : ICommonDi
                             )
   extends MacroLogsImpl
-  with AdvMNodesTryUpdateBuilderT
 {
 
   import LOGGER._

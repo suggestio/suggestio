@@ -19,9 +19,7 @@ import scala.concurrent.Future
  * Description: Общий код для обычный и child-моделей.
  * Был вынесен из-за разделения в логике работы обычный и child-моделей.
  */
-trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT with IEsModelDi { outer =>
-
-  import mCommonDi._
+trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   override type T <: EsModelCommonT
 
@@ -69,9 +67,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT with IEsModel
   }
 
 
-  final def deserializeSearchHit(hit: SearchHit): T = {
+  final def deserializeSearchHit(hit: SearchHit): T =
     deserializeOne2(hit)
-  }
 
 
   final def deserializeGetRespFull(getResp: GetResponse): Option[T] = {
@@ -85,31 +82,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT with IEsModel
 
 
   def UPDATE_RETRIES_MAX: Int = EsModelUtil.UPDATE_RETRIES_MAX_DFLT
-
-
-  /**
-   * Перечитывание из хранилища указанного документа, используя реквизиты текущего документа.
-   * Нужно для parent-child случаев, когда одного _id уже мало.
-   *
-   * @param inst0 Исходный (устаревший) инстанс.
-   * @return тоже самое, что и getById()
-   */
-  def reget(inst0: T): Future[Option[T]]
-
-  // TODO Ужаснейший говнокод ниже: распиливание tryUpdate и последующая дедубликация породили ещё больший объем кода.
-  // Это из-за того, что исторически есть два типа T: в static и в инстансе модели.
-  // TODO Надо залить ITryUpdateData в EsModelCommonT или сделать что-то, чтобы не было так страшно здесь.
-
-  /** Абстрактный класс контейнера для вызова [[EsModelUtil]].tryUpdate(). */
-  abstract class TryUpdateDataAbstract[TU <: TryUpdateDataAbstract[TU]] extends ITryUpdateData[T, TU] {
-    protected def _instance(m: T): TU
-    /** Данные для сохранения потеряли актуальность, собрать новый аккамулятор. */
-    override def _reget: Future[TU] = {
-      for (opt <- reget(_saveable)) yield {
-        _instance(opt.get)
-      }
-    }
-  }
 
 
   def _save(m: T)(f: () => Future[String]): Future[String] =

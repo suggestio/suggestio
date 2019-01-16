@@ -247,7 +247,6 @@ abstract class MStatsAbstract
 @Singleton
 class MStats @Inject() (
   mStatIndexes            : MStatIndexes,
-  override val mCommonDi  : IEsModelDiVal
 )
   extends MStatsAbstract
 {
@@ -258,7 +257,6 @@ class MStats @Inject() (
 /** Инжектируемая временная статическая модель для нужд ротации stat-индексов. */
 class MStatsTmp @Inject() (
   @Assisted override val ES_INDEX_NAME  : String,
-  override val mCommonDi                : IEsModelDiVal
 )
   extends MStatsAbstract
 

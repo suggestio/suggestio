@@ -1,7 +1,7 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
-
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
@@ -24,6 +24,7 @@ import scala.concurrent.Future
  */
 
 class CanRecoverPw @Inject() (
+                               esModel                : EsModel,
                                mPersonIdentModel      : MPersonIdentModel,
                                aclUtil                : AclUtil,
                                identUtil              : IdentUtil,
@@ -37,6 +38,7 @@ class CanRecoverPw @Inject() (
 
   import mCommonDi._
   import mPersonIdentModel.api._
+  import esModel.api._
 
 
   /** Собрать ACL ActionBuilder проверки доступа на восстановление пароля.

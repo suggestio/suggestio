@@ -19,19 +19,16 @@ import scala.concurrent.Future
 
 @Singleton
 class MStatIndexes @Inject() (
-  override val mCommonDi  : IEsModelDiVal
-)
-  extends EsIndexStaticAlias
-  with EsIndexDynCreate
-  with EsIndexDynDelete
-  with MacroLogsImpl
+                               mCommonDi  : IEsModelDiVal
+                             )
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
   import LOGGER._
 
   /** Имя глобального алиаса. */
-  override val INDEX_ALIAS_NAME = "stat"
+  def INDEX_ALIAS_NAME = "stat"
 
   /**
     * Кол-во реплик для ES-индекса БД IPGeoBase.
@@ -60,7 +57,7 @@ class MStatIndexes @Inject() (
 
 
   /** Сгенерить настройки для создаваемого индекса. */
-  override def indexSettingsCreate: Settings = {
+  def indexSettingsCreate: Settings = {
     Settings.builder()
       // Индекс ipgeobase не обновляется после заливки, только раз в день полной перезаливкой. Поэтому refresh не нужен.
       .put( EsModelUtil.Settings.Index.REFRESH_INTERVAL,    INDEX_REFRESH_INTERVAL_SEC + "s")

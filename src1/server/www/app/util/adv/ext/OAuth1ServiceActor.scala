@@ -7,9 +7,9 @@ import java.util.concurrent.TimeoutException
 import akka.actor.Props
 import com.google.inject.assistedinject.Assisted
 import javax.inject.{Inject, Singleton}
-
 import controllers.routes
 import io.suggest.async.AsyncUtil
+import io.suggest.es.model.EsModel
 import io.suggest.fsm.FsmActor
 import io.suggest.primo.IToPublicString
 import io.suggest.sec.m.{MAsymKey, MAsymKeys}
@@ -60,6 +60,7 @@ trait OAuth1ServiceActorFactory
   */
 class OAuth1ServiceActor @Inject() (
                                      @Assisted override val args : IExtAdvServiceActorArgs,
+                                     esModel                     : EsModel,
                                      oa1TgActorFactory           : OAuth1TargetActorFactory,
                                      mCommonDi                   : ICommonDi,
                                      oa1SvcActorUtil             : OAuth1SvcActorUtil,
@@ -82,6 +83,7 @@ class OAuth1ServiceActor @Inject() (
   import LOGGER._
   import mCommonDi.ec
   import oa1SvcActorUtil._
+  import esModel.api._
 
   override type State_t = FsmState
 

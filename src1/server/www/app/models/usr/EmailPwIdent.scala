@@ -5,7 +5,6 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.util.JacksonParsing
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -21,9 +20,7 @@ import scala.collection.Map
 
 /** Статическая под-модель для хранения юзеров, живущих вне mozilla persona. */
 @Singleton
-class EmailPwIdents @Inject() (
-  override val mCommonDi: ICommonDi
-)
+class EmailPwIdents
   extends MPersonIdentSubmodelStatic
     with MacroLogsImpl
     with EsmV2Deserializer

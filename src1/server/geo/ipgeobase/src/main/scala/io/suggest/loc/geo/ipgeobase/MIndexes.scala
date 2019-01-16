@@ -14,13 +14,9 @@ import org.elasticsearch.common.settings.Settings
 
 @Singleton
 class MIndexes @Inject() (
-  override val mCommonDi: IEsModelDiVal
-)
-  extends EsIndexStaticAlias
-  with EsIndexDynCreate
-  with EsIndexDynDelete
-  with EsIndexOptimizeAfterBulk
-  with MacroLogsImpl
+                           mCommonDi : IEsModelDiVal,
+                         )
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -48,10 +44,10 @@ class MIndexes @Inject() (
 
   /** Константа с именем актуального алиаса ipgb-индекса.
     * val, потому что дёргается по нескольку раз даже в рамках ровно одного запроса. */
-  override val INDEX_ALIAS_NAME = "ipgeobase"
+  def INDEX_ALIAS_NAME = "ipgeobase"
 
   /** Сгенерить настройки для создаваемого индекса. */
-  override def indexSettingsCreate: Settings = {
+  def indexSettingsCreate: Settings = {
     Settings.builder()
       // Индекс ipgeobase не обновляется после заливки, только раз в день полной перезаливкой. Поэтому refresh не нужен.
       .put( EsModelUtil.Settings.Index.REFRESH_INTERVAL,   -1 )
@@ -61,7 +57,7 @@ class MIndexes @Inject() (
   }
 
   /** Сгенерить настройки для индекса. */
-  override def indexSettingsAfterBulk: Option[Settings] = {
+  def indexSettingsAfterBulk: Option[Settings] = {
     val settings = Settings.builder()
       // Индекс ipgeobase не обновляется после заливки, только раз в день полной перезаливкой. Поэтому refresh не нужен.
       .put("index.number_of_replicas", REPLICAS_COUNT)

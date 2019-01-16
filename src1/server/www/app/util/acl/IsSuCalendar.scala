@@ -1,5 +1,6 @@
 package util.acl
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
 import models.mcal.MCalendars
 import models.req.{MCalendarReq, MReq}
@@ -17,6 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Долгое время это счастье жило прямо в контроллере.
  */
 class IsSuCalendar @Inject()(
+                              esModel                 : EsModel,
                               aclUtil                 : AclUtil,
                               mCalendars              : MCalendars,
                               isSu                    : IsSu,
@@ -24,6 +26,8 @@ class IsSuCalendar @Inject()(
                               httpErrorHandler        : HttpErrorHandler,
                               implicit private val ec : ExecutionContext,
                             ) {
+
+  import esModel.api._
 
   /**
     * @param calId id календаря, вокруг которого идёт работа.

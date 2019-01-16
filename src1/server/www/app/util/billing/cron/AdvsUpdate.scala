@@ -6,10 +6,10 @@ import io.suggest.es.model.EsModelDi
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.streams.IStreamsUtilDi
 import io.suggest.util.logs.MacroLogsImpl
-import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT, MCtxOuter}
+import models.adv.build.{Acc, MCtxOuter, TryUpdateBuilder}
 import models.mproj.IMCommonDi
 import slick.sql.SqlAction
 import util.adv.build.AdvBuilderFactoryDi
@@ -47,7 +47,7 @@ abstract class AdvsUpdate
   with IMCommonDi
   with AdvBuilderFactoryDi
   with IMItems
-  with AdvMNodesTryUpdateBuilderT
+  with IMNodes
   with IStreamsUtilDi
   with EsModelDi
 {

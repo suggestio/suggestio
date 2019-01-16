@@ -52,14 +52,14 @@ class StatIndexUtil @Inject() (
 
     val okFut = for {
       // Создать новый индекс
-      _ <- mStatIndexes.createIndex(newInxName)
+      _ <- esModel.createIndex(newInxName, mStatIndexes.indexSettingsCreate)
 
       mStatsTmp = mStatsTmpFactory.create(newInxName)
       // Залить туда маппинг модели статистики
       _ <- mStatsTmp.putMapping()
 
       // Подготовка исходного индекса завершена, переставить index alias на новый индекс.
-      _ <- mStatIndexes.resetIndexAliasTo(newInxName)
+      _ <- esModel.resetAliasToIndex( newInxName, mStatIndexes.INDEX_ALIAS_NAME )
 
     } yield {
       LOGGER.info(s"$newInxName Done ok.")
@@ -68,7 +68,7 @@ class StatIndexUtil @Inject() (
 
     // При ошибках надо удалять новосозданный индекс.
     for (ex <- okFut.failed) {
-      val deleteFut = mStatIndexes.deleteIndex( newInxName )
+      val deleteFut = esModel.deleteIndex( newInxName )
       LOGGER.error(s"$logPrefix Failed to reNew to index. Deleting new index...", ex)
       deleteFut.onComplete { res =>
         LOGGER.info(s"$logPrefix Emergency delete new index completed. Result: $res")
@@ -86,7 +86,7 @@ class StatIndexUtil @Inject() (
   def currIndexInfo(): Future[Option[MStatInxInfo]] = {
     for {
       // Прочитать значение алиасов.
-      aliasedNames <- mStatIndexes.getAliasedIndexName()
+      aliasedNames <- esModel.getAliasedIndexName( mStatIndexes.INDEX_ALIAS_NAME )
 
       // определить текущее (последнее) имя индекса.
       currInxNameOpt = {
@@ -228,7 +228,7 @@ class StatIndexUtil @Inject() (
         Future.successful(None)
       } { oldInxName =>
         LOGGER.info(s"$logPrefix Index $oldInxName will be deleted right now...")
-        mStatIndexes.deleteIndex(oldInxName)
+        esModel.deleteIndex( oldInxName )
       }
 
     } yield {

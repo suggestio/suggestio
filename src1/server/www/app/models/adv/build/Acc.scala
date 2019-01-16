@@ -1,8 +1,9 @@
 package models.adv.build
 
+import io.suggest.es.model.ITryUpdateData
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.util.effect.RWT
-import io.suggest.model.n2.node.{IMNodes, MNode}
+import io.suggest.model.n2.node.MNode
 import slick.dbio.{DBIOAction, NoStream}
 
 import scala.concurrent.Future
@@ -26,19 +27,14 @@ case class Acc(
 }
 
 
-/** Трейт для поддержки TryUpdateBuilder'а под нужды Adv-подсистемы.
-  * Велосипед на костылях, надо будет этот ужас переписать. */
-trait AdvMNodesTryUpdateBuilderT extends IMNodes {
+/** Обёртка для [[Acc]] для передачи в EsModelUtil.tryUpdate(). */
+final case class TryUpdateBuilder(acc: Acc) extends ITryUpdateData[MNode, TryUpdateBuilder] {
 
-  /** Обёртка для [[Acc]] для передачи в EsModelUtil.tryUpdate(). */
-  case class TryUpdateBuilder(acc: Acc)
-    extends mNodes.TryUpdateDataAbstract[TryUpdateBuilder] {
-    override def _saveable = acc.mnode
+  override def _saveable = acc.mnode
 
-    override protected def _instance(m: MNode) = {
-      val acc2 = acc.withMnode(m)
-      TryUpdateBuilder( acc2 )
-    }
+  override def _instance(m: MNode) = {
+    val acc2 = acc.withMnode(m)
+    TryUpdateBuilder( acc2 )
   }
 
 }

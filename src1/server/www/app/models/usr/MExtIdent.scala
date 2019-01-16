@@ -8,7 +8,6 @@ import io.suggest.util.JacksonParsing.stringParser
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -25,7 +24,6 @@ import scala.concurrent.Future
 @Singleton
 class MExtIdents @Inject() (
                              esModel: EsModel,
-                             override val mCommonDi: ICommonDi
                            )
   extends MPersonIdentSubmodelStatic
     with MacroLogsImpl

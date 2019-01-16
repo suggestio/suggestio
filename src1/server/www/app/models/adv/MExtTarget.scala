@@ -15,7 +15,6 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 
 import scala.collection.Map
 
@@ -46,9 +45,7 @@ object MExtTargetFields {
 
 
 @Singleton
-class MExtTargets @Inject() (
-  override val mCommonDi: ICommonDi
-)
+class MExtTargets
   extends EsModelStatic
   with MacroLogsImpl
   with EsDynSearchStatic[IExtTargetSearchArgs]

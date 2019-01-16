@@ -3,8 +3,6 @@ package io.suggest.es.model
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.common.xcontent.{ToXContent, XContentFactory}
 
-import scala.concurrent.Future
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -85,14 +83,12 @@ object EsModelUtil {
 
 
 /** Интерфейс контейнера данных для вызова [[EsModelUtil]].tryUpdate(). */
-trait ITryUpdateData[X <: EsModelCommonT, TU <: ITryUpdateData[X, TU]] {
+trait ITryUpdateData[T <: EsModelCommonT, TU <: ITryUpdateData[T, TU]] {
+
+  def _instance(m: T): TU
 
   /** Экземпляр, пригодный для сохранения. */
-  def _saveable: X
-
-  /** Данные для сохранения вызвали конфликт и возможно потеряли актуальность,
-    * подготовить новые данные для сохранени. */
-  def _reget: Future[TU]
+  def _saveable: T
 
 }
 

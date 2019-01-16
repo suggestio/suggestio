@@ -97,9 +97,8 @@ abstract class MCitiesAbstract
   */
 @Singleton
 class MCities @Inject() (
-  mIndexes                : MIndexes,
-  override val mCommonDi  : IEsModelDiVal
-)
+                          mIndexes        : MIndexes,
+                        )
   extends MCitiesAbstract
 {
 
@@ -115,7 +114,6 @@ class MCities @Inject() (
   */
 class MCitiesTmp @Inject() (
   @Assisted override val ES_INDEX_NAME  : String,
-  override val mCommonDi                : IEsModelDiVal
 )
   extends MCitiesAbstract
 
