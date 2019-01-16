@@ -4,6 +4,7 @@ import javax.inject.Inject
 import io.suggest.model.n2.node.{MNode, MNodes}
 import models.mproj.ICommonDi
 import io.suggest.common.fut.FutureUtil.HellImplicits._
+import io.suggest.es.model.EsModel
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -27,6 +28,7 @@ import scala.concurrent.Future
   */
 
 class CanChangeNodeAvailability @Inject() (
+                                            esModel           : EsModel,
                                             mNodes            : MNodes,
                                             aclUtil           : AclUtil,
                                             isNodeAdmin       : IsNodeAdmin,
@@ -38,6 +40,7 @@ class CanChangeNodeAvailability @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Может ли админ узла влиять на availability указанного узла? */

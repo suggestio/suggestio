@@ -2,7 +2,7 @@ package util.showcase
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.ble.{BeaconUtil, MUidBeacon}
-import io.suggest.es.model.IMust
+import io.suggest.es.model.{EsModel, IMust}
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
 import io.suggest.geo.{MNodeGeoLevels, PointGs, PointGsJvm}
 import io.suggest.model.n2.edge.{MPredicate, MPredicates}
@@ -27,6 +27,7 @@ import scala.concurrent.Future
   */
 @Singleton
 class ScAdSearchUtil @Inject() (
+                                 esModel   : EsModel,
                                  mNodes    : MNodes,
                                  bleUtil   : BleUtil,
                                  mCommonDi : ICommonDi
@@ -35,6 +36,7 @@ class ScAdSearchUtil @Inject() (
 {
 
   import mCommonDi.ec
+  import esModel.api._
 
   /** Максимальное число результатов в ответе на запрос (макс. результатов на странице). */
   private def LIMIT_MAX           = 50

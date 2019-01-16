@@ -8,6 +8,7 @@ import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.scripts.IAggScripts
+import io.suggest.es.search.{DynSearchArgs, EsDynSearchStatic}
 import io.suggest.es.util.SioEsUtil
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.event.SioNotifierStaticClientI
@@ -28,7 +29,7 @@ import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.{XContentBuilder, XContentType}
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
-import org.elasticsearch.search.SearchHits
+import org.elasticsearch.search.{SearchHit, SearchHits}
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
 import org.elasticsearch.search.sort.SortBuilders
@@ -48,8 +49,8 @@ import scala.util.{Failure, Success}
 final class EsModel @Inject()(
                                esScrollPublisherFactory   : EsScrollPublisherFactory,
                                cache                      : AsyncCacheApi,
-                             )(
-                               implicit ec  : ExecutionContext,
+                             )(implicit
+                               ec           : ExecutionContext,
                                esClient     : Client,
                                mat          : Materializer,
                                sn           : SioNotifierStaticClientI,
@@ -60,6 +61,18 @@ final class EsModel @Inject()(
   private def resultsToMap[T <: OptId[String]](results: TraversableOnce[T]): Map[String, T] =
     OptId.els2idMap[String, T](results)
 
+  /** Список результатов в список id. */
+  def searchResp2idsList(searchResp: SearchResponse): ISearchResp[String] = {
+    val hitsArr = searchResp.getHits.getHits
+    new AbstractSearchResp[String] {
+      override def total: Long =
+        searchResp.getHits.getTotalHits
+      override def length: Int =
+        hitsArr.length
+      override def apply(idx: Int): String =
+        hitsArr(idx).getId
+    }
+  }
 
   // TODO Код ниже уровня моделей унести в classs EsIndexUtil.
   /**
@@ -386,6 +399,7 @@ final class EsModel @Inject()(
 
     /** Поддержка API для StaticMapping. */
     trait EsModelStaticMappingOpsT {
+
       val model: EsModelStaticMapping
 
       /** Отправить маппинг в elasticsearch. */
@@ -440,7 +454,42 @@ final class EsModel @Inject()(
 
       val model: EsModelCommonStaticT
 
-      def prepareScroll(keepAlive: TimeValue = model.SCROLL_KEEPALIVE_DFLT, srb: SearchRequestBuilder = model.prepareSearch()): SearchRequestBuilder = {
+      def prepareSearchViaClient(client: Client): SearchRequestBuilder = {
+        client
+          .prepareSearch(model.ES_INDEX_NAME)
+          .setTypes(model.ES_TYPE_NAME)
+      }
+
+      def prepareSearch(): SearchRequestBuilder =
+        prepareSearchViaClient(esClient)
+
+      def prepareDeleteBase(id: String) = {
+        val req = esClient.prepareDelete(model.ES_INDEX_NAME, model.ES_TYPE_NAME, id)
+        val rk = model.getRoutingKey(id)
+        if (rk.isDefined)
+          req.setRouting(rk.get)
+        req
+      }
+
+      def prepareCount(): SearchRequestBuilder = {
+        prepareSearch()
+          .setSize(0)
+      }
+
+      /**
+        * Примитив для рассчета кол-ва документов, удовлетворяющих указанному запросу.
+        *
+        * @param query Произвольный поисковый запрос.
+        * @return Кол-во найденных документов.
+        */
+      def countByQuery(query: QueryBuilder): Future[Long] = {
+        prepareCount()
+          .setQuery(query)
+          .executeFut()
+          .map { _.getHits.getTotalHits }
+      }
+
+      def prepareScroll(keepAlive: TimeValue = model.SCROLL_KEEPALIVE_DFLT, srb: SearchRequestBuilder = prepareSearch()): SearchRequestBuilder = {
         srb
           .setScroll(keepAlive)
           // Elasticsearch-2.1+: вместо search_type=SCAN желательно юзать сортировку по полю _doc.
@@ -469,9 +518,8 @@ final class EsModel @Inject()(
         *
         * @return Неотрицательное целое.
         */
-      def countAll(): Future[Long] = {
-        model.countByQuery( QueryBuilders.matchAllQuery() )
-      }
+      def countAll(): Future[Long] =
+        countByQuery( QueryBuilders.matchAllQuery() )
 
 
       /**
@@ -494,57 +542,6 @@ final class EsModel @Inject()(
               maxAccLen   = maxResults,
               keepAliveMs = model.SCROLL_KEEPALIVE_MS_DFLT
             )
-          }
-      }
-
-
-      /**
-       * Запустить пакетное копирование данных модели из одного ES-клиента в другой.
-       *
-       * @param fromClient Откуда брать данные?
-       * @param toClient Куда записывать данные?
-       * @param reqSize Размер реквеста. По умолчанию 50.
-       * @param keepAliveMs Время жизни scroll-курсора на стороне from-сервера.
-       * @return Фьючерс для синхронизации.
-       */
-      def copyContent(fromClient: Client, toClient: Client, reqSize: Int = 50, keepAliveMs: Long = model.SCROLL_KEEPALIVE_MS_DFLT): Future[CopyContentResult] = {
-        model
-          .prepareScroll( new TimeValue(keepAliveMs), srb = model.prepareSearchViaClient(fromClient))
-          .setSize(reqSize)
-          .executeFut()
-          .flatMap { searchResp =>
-            // для различания сообщений в логах, дополнительно генерим id текущей операции на базе первого скролла.
-            val logPrefix = s"copyContent(${searchResp.getScrollId.hashCode / 1000L}): "
-            foldSearchScroll(searchResp, CopyContentResult(0L, 0L), keepAliveMs = keepAliveMs, fromClient = fromClient) {
-              (acc0, hits) =>
-                LOGGER.trace(s"$logPrefix${hits.getHits.length} hits read from source")
-                // Нужно запустить bulk request, который зальёт все хиты в toClient
-                val iter = hits.iterator().asScala
-                if (iter.nonEmpty) {
-                  val bulk = toClient.prepareBulk()
-                  for (hit <- iter) {
-                    val el = model.deserializeSearchHit(hit)
-                    bulk.add( model.prepareIndexNoVsnUsingClient(el, toClient) )
-                  }
-                  for {
-                    bulkResult <- bulk.executeFut()
-                  } yield {
-                    if (bulkResult.hasFailures)
-                      LOGGER.error("copyContent(): Failed to write bulk into target:\n " + bulkResult.buildFailureMessage())
-                    val failedCount = bulkResult.iterator()
-                      .asScala
-                      .count(_.isFailed)
-                    val acc1 = acc0.copy(
-                      success = acc0.success + bulkResult.getItems.length - failedCount,
-                      failed  = acc0.failed + failedCount
-                    )
-                    LOGGER.trace(s"${logPrefix}bulk write finished. acc.success = ${acc1.success} acc.failed = ${acc1.failed}")
-                    acc1
-                  }
-                } else {
-                  Future.successful(acc0)
-                }
-            }
           }
       }
 
@@ -621,8 +618,7 @@ final class EsModel @Inject()(
         val aggName = "dcrc"
 
         for {
-          resp <- model
-            .prepareSearch()
+          resp <- prepareSearch()
             .setQuery( q )
             .setSize(0)
             .setFetchSource(false)
@@ -736,7 +732,7 @@ final class EsModel @Inject()(
       def runSearch(srb: SearchRequestBuilder): Future[Seq[T1]] = {
         srb
           .executeFut()
-          .map { model.searchResp2stream }
+          .map( searchResp2stream )
       }
 
       /**
@@ -1011,6 +1007,91 @@ final class EsModel @Inject()(
           }
       }
 
+
+      /**
+       * Запустить пакетное копирование данных модели из одного ES-клиента в другой.
+       *
+       * @param fromClient Откуда брать данные?
+       * @param toClient Куда записывать данные?
+       * @param reqSize Размер реквеста. По умолчанию 50.
+       * @param keepAliveMs Время жизни scroll-курсора на стороне from-сервера.
+       * @return Фьючерс для синхронизации.
+       */
+      def copyContent(fromClient: Client, toClient: Client, reqSize: Int = 50, keepAliveMs: Long = model.SCROLL_KEEPALIVE_MS_DFLT): Future[CopyContentResult] = {
+        model
+          .prepareScroll( new TimeValue(keepAliveMs), srb = model.prepareSearchViaClient(fromClient))
+          .setSize(reqSize)
+          .executeFut()
+          .flatMap { searchResp =>
+            // для различания сообщений в логах, дополнительно генерим id текущей операции на базе первого скролла.
+            val logPrefix = s"copyContent(${searchResp.getScrollId.hashCode / 1000L}): "
+            foldSearchScroll(searchResp, CopyContentResult(0L, 0L), keepAliveMs = keepAliveMs, fromClient = fromClient) {
+              (acc0, hits) =>
+                LOGGER.trace(s"$logPrefix${hits.getHits.length} hits read from source")
+                // Нужно запустить bulk request, который зальёт все хиты в toClient
+                val iter = hits.iterator().asScala
+                if (iter.nonEmpty) {
+                  val bulk = toClient.prepareBulk()
+                  for (hit <- iter) {
+                    val el = model.deserializeSearchHit(hit)
+                    bulk.add( prepareIndexNoVsnUsingClient(el, toClient) )
+                  }
+                  for {
+                    bulkResult <- bulk.executeFut()
+                  } yield {
+                    if (bulkResult.hasFailures)
+                      LOGGER.error("copyContent(): Failed to write bulk into target:\n " + bulkResult.buildFailureMessage())
+                    val failedCount = bulkResult.iterator()
+                      .asScala
+                      .count(_.isFailed)
+                    val acc1 = acc0.copy(
+                      success = acc0.success + bulkResult.getItems.length - failedCount,
+                      failed  = acc0.failed + failedCount
+                    )
+                    LOGGER.trace(s"${logPrefix}bulk write finished. acc.success = ${acc1.success} acc.failed = ${acc1.failed}")
+                    acc1
+                  }
+                } else {
+                  Future.successful(acc0)
+                }
+            }
+          }
+      }
+
+
+      /** Лениво распарсить выхлоп multi-GET. */
+      final def mgetResp2Stream(mgetResp: MultiGetResponse): Stream[T1] = {
+        mgetResp
+          .getResponses
+          .iterator
+          .flatMap { mgetItem =>
+            // Поиск может содержать элементы, которые были только что удалены. Нужно их отсеивать.
+            if (mgetItem.isFailed || !mgetItem.getResponse.isExists) {
+              Nil
+            } else {
+              model.deserializeOne2(mgetItem.getResponse) :: Nil
+            }
+          }
+          .toStream
+      }
+
+
+      /** Внутренний метод для укорачивания кода парсеров ES SearchResponse. */
+      def searchRespMap[A](searchResp: SearchResponse)(f: SearchHit => A): Iterator[A] = {
+        searchResp
+          .getHits
+          .iterator()
+          .asScala
+          .map(f)
+      }
+
+      // Stream! Нельзя менять тип. На ленивость завязана работа akka-stream Source, который имитируется поверх этого метода.
+      def searchResp2stream(searchResp: SearchResponse): Stream[T1] = {
+        searchRespMap(searchResp)( model.deserializeSearchHit )
+          // Безопасно ли тут делать ленивый Stream? Обычно да, но java-код elasticsearch с mutable внутри может в будущем посчитать иначе.
+          .toStream
+      }
+
     }
 
     implicit final class EsModelCommonStaticTypedOps[T1 <: EsModelCommonT]( override val model: EsModelCommonStaticT { type T = T1 } )
@@ -1022,6 +1103,23 @@ final class EsModel @Inject()(
 
       val model: EsModelStaticT { type T = T1 }
 
+      def prepareDelete(id: String) =
+        model.prepareDeleteBase(id)
+
+      /**
+        * Генератор delete-реквеста. Используется при bulk-request'ах.
+        *
+        * @param id adId
+        * @return Новый экземпляр DeleteRequestBuilder.
+        */
+      def deleteRequestBuilder(id: String): DeleteRequestBuilder = {
+        val req = prepareDelete(id)
+        val rk = model.getRoutingKey(id)
+        if (rk.isDefined)
+          req.setRouting(rk.get)
+        req
+      }
+
       /**
         * Удалить документ по id.
         *
@@ -1029,7 +1127,7 @@ final class EsModel @Inject()(
         * @return true, если документ найден и удалён. Если не найден, то false
         */
       def deleteById(id: String): Future[Boolean] = {
-        val fut = model.deleteRequestBuilder(id)
+        val fut = deleteRequestBuilder(id)
           .executeFut()
           .map { EsModelStaticT.delResp2isDeleted }
         model._deleteById(id)(fut)
@@ -1045,7 +1143,7 @@ final class EsModel @Inject()(
         } else {
           val bulk = esClient.prepareBulk()
           for (id <- ids) {
-            val delReq = model.prepareDelete(id)
+            val delReq = prepareDelete(id)
             bulk.add( delReq )
           }
           bulk
@@ -1424,6 +1522,208 @@ final class EsModel @Inject()(
 
     }
 
+
+    /** Поддержка dynSearch (v1) и search (v2). */
+    implicit final class EsDynSearchOps[T1 <: EsModelT, A <: DynSearchArgs]( val model: EsDynSearchStatic[A] { type T = T1 }) {
+
+      // TODO С prepareSearch() пока какой-то говнокод. args.prepareSearchRequest следовало бы вынести за пределы модели DynSearchArgs куда-то сюда.
+      /** Сборка билдера поискового запроса. */
+      def prepareSearch1(args: A): SearchRequestBuilder =
+        prepareSearch2(args, model.prepareSearch())
+      def prepareSearch2(args: A, srb0: SearchRequestBuilder): SearchRequestBuilder =
+        args.prepareSearchRequest(srb0)
+
+      /** Трейт для сборки DynSearchHelper, возвращающего Future-результат. */
+      // abstract class для оптимизации, но можно завернуть назад в трейт.
+      abstract class EsSearchFutHelper[R] extends IEsSearchHelper[A, R] {
+
+        /** Подготовка исходного реквеста к поиску. */
+        def prepareSearchRequest(args: A): SearchRequestBuilder =
+          model.prepareSearch1(args)
+
+        /** Парсинг и обработка сырого результата в некий результат. */
+        def mapSearchResp(searchResp: SearchResponse): Future[R]
+
+        override def run(args: A): Future[R] = {
+          // Запускаем собранный запрос.
+          val srb = prepareSearchRequest(args)
+
+          val fut = srb
+            .executeFut()
+            .flatMap( mapSearchResp )
+
+          // Логгируем всё вместе с es-индексом и типом, чтобы облегчить curl-отладку на основе залоггированного.
+          LOGGER.trace(s"dynSearch2.run($args): Will search on ${model.ES_INDEX_NAME}/${model.ES_TYPE_NAME}\n Compiled request = \n${srb.toString}")
+
+          fut
+        }
+      }
+
+      /** Если поисковый запрос подразумевает только получение id'шников, то использовать этот трейт. */
+      abstract class EsSearchIdsFutHelper[R] extends EsSearchFutHelper[R] {
+        override def prepareSearchRequest(args: A): SearchRequestBuilder = {
+          super.prepareSearchRequest(args)
+            .setFetchSource(false)
+            //.setNoFields()
+        }
+      }
+
+
+      // Реализации typeclass'ов:
+
+      /** search-маппер, просто возвращающий сырой ответ. */
+      implicit object RawSearchRespMapper extends EsSearchFutHelper[SearchResponse] {
+        /** Парсинг и обработка сырого результата в некий результат. */
+        override def mapSearchResp(searchResp: SearchResponse): Future[SearchResponse] =
+          Future.successful( searchResp )
+      }
+
+      /** typeclass: возвращает результаты в виде инстансом моделей. */
+      implicit object LazyStreamMapper extends EsSearchFutHelper[Stream[T1]] {
+        override def mapSearchResp(searchResp: SearchResponse): Future[Stream[T1]] = {
+          val result = model.searchResp2stream(searchResp)
+          Future.successful(result)
+        }
+      }
+
+      /** typeclass: Маппер ответа в id'шники ответов. */
+      implicit object IdsMapper extends EsSearchIdsFutHelper[ ISearchResp[String] ] {
+        override def mapSearchResp(searchResp: SearchResponse): Future[ISearchResp[String]] = {
+          val result = esModel.searchResp2idsList(searchResp)
+          Future.successful(result)
+        }
+      }
+
+      /** typeclass: подсчёт кол-ва результатов без самих результатов. */
+      implicit object CountMapper extends IEsSearchHelper[A, Long] {
+        override def run(args: A): Future[Long] =
+          model.countByQuery( args.toEsQuery )
+      }
+
+      /** typeclass для возврата максимум одного результата и в виде Option'а. */
+      implicit object OptionTMapper extends EsSearchFutHelper[Option[T1]] {
+        /** Парсинг и обработка сырого результата в некий результат. */
+        override def mapSearchResp(searchResp: SearchResponse): Future[Option[T1]] = {
+          val r = model.searchResp2stream(searchResp)
+            .headOption
+          Future.successful(r)
+        }
+      }
+
+      /** typeclass маппинга в карту по id. */
+      implicit object MapByIdMapper extends EsSearchFutHelper[Map[String, T1]] {
+        override def mapSearchResp(searchResp: SearchResponse): Future[Map[String, T1]] = {
+          val r = OptId.els2idMap[String, T1] {
+            model.searchRespMap(searchResp)( model.deserializeSearchHit )
+          }
+          Future.successful(r)
+        }
+      }
+
+      /** Вызываемая вручную сборка multigetter'а для найденных результатов.
+        * Это typeclass, передаваемый вручную в dynSearch2() при редкой необходимости такого действия.
+        */
+      object SeqRtMapper extends EsSearchIdsFutHelper[Seq[T1]] {
+        /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
+          * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
+          *
+          * @return Результат - что-то неопределённом порядке.
+          */
+        override def mapSearchResp(searchResp: SearchResponse): Future[Seq[T1]] = {
+          val searchHits = searchResp.getHits.getHits
+          if (searchHits.isEmpty) {
+            Future successful Nil
+          } else {
+            val mgetReq = esClient
+              .prepareMultiGet()
+              .setRealtime(true)
+            for (hit <- searchHits)
+              mgetReq.add(hit.getIndex, hit.getType, hit.getId)
+            mgetReq
+              .executeFut()
+              .map { model.mgetResp2Stream }
+          }
+        }
+      }
+
+
+      // DynSearch v2: Для всего (кроме Rt) используется ровно один метод с параметризованным типом результата.
+
+      /** Отрефакторенный вариант dynSearch, где логика, касающаяся возвращаемого типа, вынесена в helper typeclass.
+        *
+        * @param args Аргументы поиска.
+        * @param helper typeclass dyn-search хелпер'а. Занимается финальным допиливание search-реквеста и маппингом результатов.
+        * @tparam R Тип результата.
+        * @return Фьючерс с результатом типа R.
+        */
+      def search[R](args: A)(implicit helper: IEsSearchHelper[A, R]): Future[R] =
+        helper.run(args)
+
+
+      // DynSearch v1 API реализован поверх v2 API ( search[T]() ).
+
+      /**
+        * Поиск карточек в ТЦ по критериям.
+        *
+        * @return Список рекламных карточек, подходящих под требования.
+        */
+      def dynSearch(dsa: A): Future[Stream[T1]] =
+        search[Stream[T1]] (dsa)
+
+      /** Поиск с возвратом akka-streams.
+        * Source эмулируется поверх dynSearch, никакого scroll'а тут нет, т.к. scroll не умеет сортировку, скоринг, лимиты.
+        * Просто для удобства сделано или на.
+        */
+      def dynSearchSource(dsa: A): Source[T1, _] = {
+        Source.fromFutureSource {
+          dynSearch(dsa)
+            .map { Source.apply }
+        }
+      }
+
+      /**
+        * Поиск и сборка карты результатов в id в качестве ключа.
+        *
+        * @param dsa Поисковые критерии.
+        * @return Карта с найденными элементами в неопределённом порядке.
+        */
+      def dynSearchMap(dsa: A): Future[Map[String, T1]] =
+        search [Map[String,T1]] (dsa)
+
+      /**
+        * Разновидность dynSearch для максимум одного результата. Вместо коллекции возвращается Option[T].
+        *
+        * @param dsa Аргументы поиска.
+        * @return Фьючерс с Option[T] внутри.
+        */
+      def dynSearchOne(dsa: A): Future[Option[T1]] =
+        search [Option[T1]] (dsa)
+
+      /**
+        * Аналог dynSearch, но возвращаются только id документов.
+        *
+        * @param dsa Поисковый запрос.
+        * @return Список id, подходящих под запрос, в неопределённом порядке.
+        */
+      def dynSearchIds(dsa: A): Future[ISearchResp[String]] =
+        search [ISearchResp[String]] (dsa)
+
+      /**
+        * Посчитать кол-во рекламных карточек, подходящих под запрос.
+        *
+        * @param dsa Экземпляр, описывающий критерии поискового запроса.
+        * @return Фьючерс с кол-вом совпадений.
+        */
+      def dynCount(dsa: A): Future[Long] =
+        search[Long](dsa)
+
+      /** Поиск id, подходящих под запрос и последующий multiget. Используется для реалтаймого получения
+        * изменчивых результатов, например поиск сразу после сохранения. */
+      def dynSearchRt(dsa: A): Future[Seq[T1]] =
+        search(dsa)( SeqRtMapper )
+
+    }
+
   }
   val api = new Api
 
@@ -1450,16 +1750,13 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   import mCommonDi._
 
 
-  def prepareGet(id: String) = {
+  final def prepareGet(id: String) = {
     val req = esClient.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
     val rk = getRoutingKey(id)
     if (rk.isDefined)
       req.setRouting(rk.get)
     req
   }
-
-  final def prepareDelete(id: String) =
-    prepareDeleteBase(id)
 
 
   /** Дефолтовое значение GetArgs, когда GET-опции не указаны. */
@@ -1480,20 +1777,6 @@ trait EsModelStaticT extends EsModelCommonStaticT {
       .map { deserializeGetRespFull }
   }
 
-
-  /**
-   * Генератор delete-реквеста. Используется при bulk-request'ах.
-   *
-   * @param id adId
-   * @return Новый экземпляр DeleteRequestBuilder.
-   */
-  final def deleteRequestBuilder(id: String): DeleteRequestBuilder = {
-    val req = prepareDelete(id)
-    val rk = getRoutingKey(id)
-    if (rk.isDefined)
-      req.setRouting(rk.get)
-    req
-  }
 
   /** Дополнение логики удаления одного элемента, когда необходимо. */
   def _deleteById(id: String)(fut: Future[Boolean]): Future[Boolean] =
@@ -1529,4 +1812,12 @@ trait EsModelVsnedT[T <: EsModelVsnedT[T]] extends EsModelCommonT {
   // После самого первого сохранения выставляется вот эта вот версия:
   def withFirstVersion = withVersion( Some(1L) )
 
+}
+
+/**
+  * Самый абстрактный интерфейс для всех хелперов DynSearch.
+  * Вынести за пределы модели нельзя, т.к. трейт зависит от [A].
+  */
+trait IEsSearchHelper[A <: DynSearchArgs, R] {
+  def run(args: A): Future[R]
 }

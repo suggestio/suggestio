@@ -30,7 +30,7 @@ case class Acc(
   * Велосипед на костылях, надо будет этот ужас переписать. */
 trait AdvMNodesTryUpdateBuilderT extends IMNodes {
 
-  /** Обёртнка для [[Acc]] для передачи в EsModelUtil.tryUpdate(). */
+  /** Обёртка для [[Acc]] для передачи в EsModelUtil.tryUpdate(). */
   case class TryUpdateBuilder(acc: Acc)
     extends mNodes.TryUpdateDataAbstract[TryUpdateBuilder] {
     override def _saveable = acc.mnode

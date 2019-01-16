@@ -1,11 +1,10 @@
 package util.lk
 
 import javax.inject.Inject
-
 import javax.inject.Singleton
 import io.suggest.common.tags.TagFacesUtil
 import io.suggest.common.tags.search.{MTagFound, MTagsFound}
-import io.suggest.es.model.IEsModelDiVal
+import io.suggest.es.model.{EsModel, IEsModelDiVal}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
@@ -22,11 +21,13 @@ import scala.concurrent.Future
   */
 @Singleton
 class LkTagsSearchUtil @Inject() (
-  mNodes    : MNodes,
-  mCommonDi : IEsModelDiVal
-) {
+                                   esModel: EsModel,
+                                   mNodes    : MNodes,
+                                   mCommonDi : IEsModelDiVal
+                                 ) {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Дефолтовое значение limit, если не указано или некорректно. */

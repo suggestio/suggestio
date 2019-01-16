@@ -9,7 +9,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import scala.collection.Map
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -38,6 +38,54 @@ object MIpRange {
 
 }
 
+@Singleton
+class MIpRangesModel @Inject()(esModel      : EsModel)
+                              (implicit ec  : ExecutionContext)
+  extends MacroLogsImpl
+{
+
+  import esModel.api._
+  import MIpRange.Fields._
+  import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
+
+  object api {
+
+    implicit class MIpRangesOps( model: MIpRangesAbstract ) {
+
+      /** Поиск элементов модели по ip-адресу. */
+      def findForIp(ip: String): Future[Seq[MIpRange]] = {
+        val fn = IP_RANGE_FN
+        val q = QueryBuilders.boolQuery()
+          .must {
+            QueryBuilders.rangeQuery(fn)
+              .lte(ip)
+          }
+          .must {
+            QueryBuilders.rangeQuery(fn)
+              .gte(ip)
+          }
+        val resFut = model
+          .prepareSearch()
+          .setQuery(q)
+          .setSize(3)    // Скорее всего тут всегда максимум 1 результат.
+          .executeFut()
+          .map( model.searchResp2stream )
+
+        // Залоггировать асинхронный результат, если необходимо.
+        if (LOGGER.underlying.isTraceEnabled()) {
+          val startedAt = System.currentTimeMillis() - 5L
+          resFut.onComplete { tryRes =>
+            LOGGER.trace(s"findForId($ip): Result = $tryRes, took ~${System.currentTimeMillis - startedAt} ms.")
+          }
+        }
+
+        resFut
+      }
+
+    }
+  }
+
+}
 
 /**
   * Недореализация статической стороны модели.
@@ -65,38 +113,6 @@ abstract class MIpRangesAbstract
 
   import io.suggest.es.util.SioEsUtil._
   import MIpRange.Fields._
-  import mCommonDi._
-
-
-  /** Поиск элементов модели по ip-адресу. */
-  def findForIp(ip: String): Future[Seq[MIpRange]] = {
-    val fn = IP_RANGE_FN
-    val q = QueryBuilders.boolQuery()
-      .must {
-        QueryBuilders.rangeQuery(fn)
-          .lte(ip)
-      }
-      .must {
-        QueryBuilders.rangeQuery(fn)
-          .gte(ip)
-      }
-    val resFut = prepareSearch()
-      .setQuery(q)
-      .setSize(3)    // Скорее всего тут всегда максимум 1 результат.
-      .executeFut()
-      .map(searchResp2stream)
-
-    // Залоггировать асинхронный результат, если необходимо.
-    if (LOGGER.underlying.isTraceEnabled()) {
-      val startedAt = System.currentTimeMillis() - 5L
-      resFut.onComplete { tryRes =>
-        LOGGER.trace(s"findForId($ip): Result = $tryRes, took ~${System.currentTimeMillis - startedAt} ms.")
-      }
-    }
-
-    resFut
-  }
-
 
   override def generateMappingStaticFields: List[Field] = {
     List(
@@ -172,12 +188,15 @@ trait MIpRangesJmxMBean extends EsModelJMXMBeanI {
 }
 /** Реализация jmx mbean [[MIpRangesJmxMBean]]. */
 final class MIpRangesJmx @Inject() (
+                                     mIpRangesModel              : MIpRangesModel,
                                      override val companion      : MIpRanges,
                                      override val esModelJmxDi   : EsModelJmxDi,
                                    )
   extends EsModelJMXBaseImpl
   with MIpRangesJmxMBean
 {
+
+  import mIpRangesModel.api._
 
   override type X = MIpRange
 

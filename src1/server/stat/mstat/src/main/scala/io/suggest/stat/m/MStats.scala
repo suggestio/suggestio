@@ -94,6 +94,7 @@ final class MStatsModel @Inject()(
                                  )(implicit ec: ExecutionContext)
   extends MacroLogsImpl
 {
+
   import esModel.api._
   import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
   import MStat.Fields.TIMESTAMP_FN
@@ -103,9 +104,8 @@ final class MStatsModel @Inject()(
     implicit class MStatsAbstarctOpsExt(val model: MStatsAbstract) {
 
       /** Подсчёт кол-ва вхождений до указанной даты. */
-      def countBefore(dt: OffsetDateTime): Future[Long] = {
+      def countBefore(dt: OffsetDateTime): Future[Long] =
         model.countByQuery( MStatsAbstract.beforeDtQuery(dt) )
-      }
 
       /** Найти все вхождения до указанной даты. */
       def findBefore(dt: OffsetDateTime, maxResults: Int = model.MAX_RESULTS_DFLT): Future[Seq[MStat]] = {
@@ -120,7 +120,7 @@ final class MStatsModel @Inject()(
 
       /** Удалить все данные до указанной даты. */
       def deleteBefore(dt: OffsetDateTime): Future[Int] = {
-        LOGGER.trace(s"deleteBefore($dt): Statring...")
+        LOGGER.trace(s"deleteBefore($dt): Starting...")
         val scroller = model.startScroll(
           queryOpt          = Some( MStatsAbstract.beforeDtQuery(dt) ),
           resultsPerScroll  = model.BULK_DELETE_QUEUE_LEN / 2

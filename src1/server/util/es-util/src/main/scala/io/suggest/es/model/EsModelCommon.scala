@@ -5,14 +5,11 @@ import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.OptStrId
 import io.suggest.util.JacksonWrapper
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
-import org.elasticsearch.action.get.{GetResponse, MultiGetResponse}
-import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
-import org.elasticsearch.client.Client
+import org.elasticsearch.action.get.GetResponse
+import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.common.unit.TimeValue
-import org.elasticsearch.index.query.QueryBuilder
 import org.elasticsearch.search.SearchHit
 
-import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 /**
@@ -45,43 +42,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT with IEsModel
     */
   def getRoutingKey(idOrNull: String): Option[String] = None
 
-  // Короткие враппер для типичных операций в рамках статической модели.
-
-  final def prepareSearch(): SearchRequestBuilder =
-    prepareSearchViaClient(esClient)
-  final def prepareSearchViaClient(client: Client): SearchRequestBuilder = {
-    client
-      .prepareSearch(ES_INDEX_NAME)
-      .setTypes(ES_TYPE_NAME)
-  }
-
-  final def prepareCount(): SearchRequestBuilder = {
-    prepareSearch()
-      .setSize(0)
-  }
-
-  final def prepareDeleteBase(id: String) = {
-    val req = esClient.prepareDelete(ES_INDEX_NAME, ES_TYPE_NAME, id)
-    val rk = getRoutingKey(id)
-    if (rk.isDefined)
-      req.setRouting(rk.get)
-    req
-  }
   /** Кол-во item'ов в очереди на удаление. */
   def BULK_DELETE_QUEUE_LEN = 200
-
-  /**
-   * Примитив для рассчета кол-ва документов, удовлетворяющих указанному запросу.
-   *
-   * @param query Произвольный поисковый запрос.
-   * @return Кол-во найденных документов.
-   */
-  final def countByQuery(query: QueryBuilder): Future[Long] = {
-    prepareCount()
-      .setQuery(query)
-      .executeFut()
-      .map { _.getHits.getTotalHits }
-  }
 
 
   /**
@@ -107,57 +69,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT with IEsModel
   }
 
 
-  /** Внутренний метод для укорачивания кода парсеров ES SearchResponse. */
-  final def searchRespMap[A](searchResp: SearchResponse)(f: SearchHit => A): Iterator[A] = {
-    searchResp.getHits
-      .iterator()
-      .asScala
-      .map(f)
-  }
-
-  /** Список результатов с source внутри перегнать в распарсенный список. */
-  final def searchResp2iter(searchResp: SearchResponse): Iterator[T] = {
-    searchRespMap(searchResp)(deserializeSearchHit)
-  }
-  // Stream! Нельзя менять тип. На ленивость завязана работа akka-stream Source, который имитируется поверх этого метода.
-  final def searchResp2stream(searchResp: SearchResponse): Stream[T] = {
-    searchResp2iter(searchResp)
-      // Безопасно ли тут делать ленивый Stream? Обычно да, но java-код elasticsearch с mutable внутри может в будущем посчитать иначе.
-      .toStream
-  }
-
   final def deserializeSearchHit(hit: SearchHit): T = {
     deserializeOne2(hit)
-  }
-
-  /** Список результатов в список id. */
-  final def searchResp2idsList(searchResp: SearchResponse): ISearchResp[String] = {
-    val hitsArr = searchResp.getHits.getHits
-    new AbstractSearchResp[String] {
-      override def total: Long =
-        searchResp.getHits.getTotalHits
-      override def length: Int =
-        hitsArr.length
-      override def apply(idx: Int): String =
-        hitsArr(idx).getId
-    }
-  }
-
-
-  /** Лениво распарсить выхлоп multi-GET. */
-  final def mgetResp2Stream(mgetResp: MultiGetResponse): Stream[T] = {
-    mgetResp
-      .getResponses
-      .iterator
-      .flatMap { mgetItem =>
-        // Поиск может содержать элементы, которые были только что удалены. Нужно их отсеивать.
-        if (mgetItem.isFailed || !mgetItem.getResponse.isExists) {
-          Nil
-        } else {
-          deserializeOne2(mgetItem.getResponse) :: Nil
-        }
-      }
-      .toStream
   }
 
 
@@ -207,7 +120,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT with IEsModel
   def toJson(m: T): String
 
   /** Implicit API модели завёрнуто в этот класс, который можно экстендить. */
-  class Implicits {
+  object Implicits {
 
     /** Mock-адаптер для тестирования сериализации-десериализации моделей на базе play.json.
       * На вход он получает просто экземпляры классов моделей. */
@@ -246,9 +159,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT with IEsModel
     }
 
   }
-
-  // Вызываемый конструктор для класса Implicits. Должен быть перезаписан как val в итоге.
-  def Implicits = new Implicits
 
 }
 

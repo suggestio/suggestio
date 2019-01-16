@@ -7,6 +7,7 @@ import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import io.suggest.es.model.EsModel
 import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.MReq
@@ -24,6 +25,7 @@ import scala.concurrent.Future
  * подтверждения регистрации (создания первой ноды).
  */
 class CanConfirmIdpReg @Inject() (
+                                   esModel                  : EsModel,
                                    mPersonIdentModel        : MPersonIdentModel,
                                    aclUtil                  : AclUtil,
                                    identUtil                : IdentUtil,
@@ -38,6 +40,7 @@ class CanConfirmIdpReg @Inject() (
 
   import mCommonDi._
   import mPersonIdentModel.api._
+  import esModel.api._
 
 
   /** Код базовой реализации ActionBuilder'ов, проверяющих возможность подтверждения регистрации. */

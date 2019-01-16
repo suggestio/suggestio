@@ -3,6 +3,7 @@ package util.adv.geo
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.EsModel
 import io.suggest.geo.MGeoPoint
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
@@ -28,17 +29,19 @@ import scala.concurrent.Future
   */
 @Singleton
 class AdvGeoLocUtil @Inject() (
-  geoIpUtil         : GeoIpUtil,
-  mOrders           : MOrders,
-  mItems            : MItems,
-  mNodes            : MNodes,
-  mCommonDi         : ICommonDi
-)
+                                esModel           : EsModel,
+                                geoIpUtil         : GeoIpUtil,
+                                mOrders           : MOrders,
+                                mItems            : MItems,
+                                mNodes            : MNodes,
+                                mCommonDi         : ICommonDi
+                              )
   extends MacroLogsImpl
 {
 
   import mCommonDi._
   import slick.profile.api._
+  import esModel.api._
 
 
   /**

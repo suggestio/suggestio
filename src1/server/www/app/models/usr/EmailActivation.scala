@@ -32,8 +32,9 @@ import scala.concurrent.Future
   * Модель нужна для хранения ключей для проверки/активации почтовых ящиков. */
 @Singleton
 class EmailActivations @Inject() (
-  override val mCommonDi: ICommonDi
-)
+                                   esModel: EsModel,
+                                   override val mCommonDi: ICommonDi
+                                 )
   extends EsModelStaticIdentT
     with MacroLogsImpl
     with EsmV2Deserializer
@@ -70,12 +71,13 @@ class EmailActivations @Inject() (
 
   /** Найти элементы по ключу. */
   def findByKey(key: String): Future[Seq[EmailActivation]] = {
+    import esModel.api._
     val keyQuery = QueryBuilders.termQuery(KEY_ESFN, key)
     esClient.prepareSearch(ES_INDEX_NAME)
       .setTypes(ES_TYPE_NAME)
       .setQuery(keyQuery)
       .executeFut()
-      .map { searchResp2stream }
+      .map { this.searchResp2stream }
   }
 
 }

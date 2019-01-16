@@ -2,6 +2,7 @@ package util.ident
 
 import javax.inject.{Inject, Singleton}
 import controllers.routes
+import io.suggest.es.model.EsModel
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
@@ -21,6 +22,7 @@ import scala.concurrent.Future
  */
 @Singleton
 class IdentUtil @Inject() (
+                            esModel               : EsModel,
                             mPersonIdentModel     : MPersonIdentModel,
                             mNodes                : MNodes,
                             mSuperUsers           : MSuperUsers,
@@ -29,6 +31,7 @@ class IdentUtil @Inject() (
                           ) {
 
   import mCommonDi._
+  import esModel.api._
   import mPersonIdentModel.api._
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */

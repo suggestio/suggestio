@@ -16,10 +16,11 @@ import scala.concurrent.Future
   */
 @Singleton
 class IpgbUtil @Inject() (
-                           esModel     : EsModel,
-                           mCities     : MCities,
-                           mIpRanges   : MIpRanges,
-                           mCommonDi   : IEsModelDiVal
+                           esModel        : EsModel,
+                           mIpRangesModel : MIpRangesModel,
+                           mCities        : MCities,
+                           mIpRanges      : MIpRanges,
+                           mCommonDi      : IEsModelDiVal,
                          )
   extends IGeoFindIp
   with MacroLogsImpl
@@ -27,6 +28,7 @@ class IpgbUtil @Inject() (
 
   import mCommonDi._
   import esModel.api._
+  import mIpRangesModel.api._
 
 
   override type FindIpRes_t = MGeoFindIpResult

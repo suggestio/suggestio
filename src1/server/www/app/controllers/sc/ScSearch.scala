@@ -1,6 +1,7 @@
 package controllers.sc
 
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
+import io.suggest.es.model.EsModelDi
 import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
 import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.model.n2.node.{IMNodes, MNode}
@@ -32,9 +33,11 @@ trait ScSearch
   with IStatUtil
   with IMacroLogs
   with IAdvGeoRcvrsUtilDi
+  with EsModelDi
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Общая логика обработки tags-запросов выдачи. */

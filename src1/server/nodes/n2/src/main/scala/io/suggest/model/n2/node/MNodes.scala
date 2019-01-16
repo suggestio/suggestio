@@ -45,6 +45,7 @@ import scala.concurrent.duration._
 
 @Singleton
 final class MNodes @Inject() (
+                               esModel: EsModel,
                                override val mCommonDi: MEsModelDiVal
                              )
   extends EsModelStatic
@@ -152,8 +153,10 @@ final class MNodes @Inject() (
    * @return Карта, где ключ -- тип узла, а значение -- кол-во результатов в индексе.
    */
   def ntypeStats(dsa: MNodeSearch = null): Future[Map[MNodeType, Long]] = {
+    import esModel.api._
+
     val aggName = "ntypeAgg"
-    (if (dsa == null) prepareSearch() else prepareSearch(dsa))
+    (if (dsa == null) this.prepareSearch() else this.prepareSearch1(dsa))
       .addAggregation(
         AggregationBuilders.terms(aggName)
           .field( MNodeFields.Common.NODE_TYPE_FN )
