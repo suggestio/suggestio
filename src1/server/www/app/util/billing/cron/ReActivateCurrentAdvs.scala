@@ -37,6 +37,7 @@ class ReActivateCurrentAdvs @Inject() (
 
   import mCommonDi._
   import slick.profile.api._
+  import esModel.api._
 
 
   /** Ищем только карточки, у которых есть offline ads с dateStart < now. */

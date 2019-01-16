@@ -24,6 +24,7 @@ import scala.concurrent.Future
  */
 @Singleton
 class MExtIdents @Inject() (
+                             esModel: EsModel,
                              override val mCommonDi: ICommonDi
                            )
   extends MPersonIdentSubmodelStatic
@@ -60,8 +61,9 @@ class MExtIdents @Inject() (
    * @return Результат, если есть.
    */
   def getByUserIdProv(prov: ILoginProvider, userId: String): Future[Option[T]] = {
+    import esModel.api._
     val id = genId(prov, userId)
-    getById(id)
+    this.getById(id)
   }
 
   /** Кешируем почти готовый immutable json mapper тут. */

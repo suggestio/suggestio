@@ -2,7 +2,7 @@ package io.suggest.stat.saver
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.async.AsyncUtil
-import io.suggest.es.model.IEsModelDiVal
+import io.suggest.es.model.{EsModel, IEsModelDiVal}
 import io.suggest.stat.m.{MStat, MStats}
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
@@ -13,16 +13,18 @@ import scala.concurrent.Future
 /** BulkProcessor backend накапливает очередь и отправляет всё индексацию разом. */
 @Singleton
 class BulkProcessorSaveBackend @Inject() (
-  mStats                  : MStats,
-  asyncUtil               : AsyncUtil,
-  mCommonDi               : IEsModelDiVal
-)
+                                           esModel                 : EsModel,
+                                           mStats                  : MStats,
+                                           asyncUtil               : AsyncUtil,
+                                           mCommonDi               : IEsModelDiVal,
+                                         )
   extends StatSaverBackend
   with MacroLogsImpl
 {
 
   import mCommonDi._
   import LOGGER._
+  import esModel.api._
 
   /** Не хранить в очереди дольше указанного интервала (в секундах). */
   def FLUSH_INTERVAL_SECONDS: Long = {
@@ -62,7 +64,9 @@ class BulkProcessorSaveBackend @Inject() (
   override def save(stat: MStat): Future[_] = {
     // Подавляем блокировку синхронизации в bp через отдельный execution context с очередью задач.
     _asyncSafe {
-      val irb = mStats.prepareIndex(stat).request()
+      val irb = mStats
+        .prepareIndex(stat)
+        .request()
       bp.add(irb)
       None    // Не возвращать инстанс BP наружу, пусть лучше будет какой-нибудь мусор.
     }

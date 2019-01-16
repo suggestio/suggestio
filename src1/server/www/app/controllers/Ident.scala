@@ -12,7 +12,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.IReqHdr
-import models.usr.{EmailActivations, EmailPwIdents, MExtIdents, MPersonIdents}
+import models.usr._
 import util.acl._
 import util.adn.NodesUtil
 import util.captcha.CaptchaUtil
@@ -34,6 +34,7 @@ import views.html.ident.reg.email._regColumnTpl
 @Singleton
 class Ident @Inject() (
                         override val esModel              : EsModel,
+                        override val mPersonIdentModel    : MPersonIdentModel,
                         override val mNodes               : MNodes,
                         override val mailer               : IMailerWrapper,
                         override val identUtil            : IdentUtil,

@@ -9,7 +9,7 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import controllers.routes
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{BulkProcessorListener, EsModel}
 import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.jd.MJdEdgeId
 import io.suggest.model.n2.edge.MPredicates
@@ -387,7 +387,7 @@ class DynImgUtil @Inject() (
 
     // Создаём и запускаем BulkProcessor:
     val bp = mMedias.bulkProcessor(
-      listener = new mMedias.BulkProcessorListener( logPrefix + "BULK:" )
+      listener = new BulkProcessorListener( logPrefix + "BULK:" )
     )
 
     // Заготовить чтение элементов из elasticsearch:
@@ -519,7 +519,7 @@ class DynImgUtil @Inject() (
     }
 
     val bp = mNodes.bulkProcessor(
-      new mNodes.BulkProcessorListener(logPrefix)
+      new BulkProcessorListener(logPrefix)
     )
     val origImgFmt = MImgFmts.default
 

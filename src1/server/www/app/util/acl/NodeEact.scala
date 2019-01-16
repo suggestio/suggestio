@@ -7,7 +7,7 @@ import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.{MNodeEactReq, MReq}
-import models.usr.{EmailActivations, EmailPwIdents}
+import models.usr.{EmailActivations, EmailPwIdents, MPersonIdentModel}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
@@ -21,6 +21,7 @@ import scala.concurrent.Future
  */
 class NodeEact @Inject() (
                            esModel                : EsModel,
+                           mPersonIdentModel      : MPersonIdentModel,
                            mNodes                 : MNodes,
                            aclUtil                : AclUtil,
                            emailPwIdents          : EmailPwIdents,
@@ -34,6 +35,7 @@ class NodeEact @Inject() (
 
   import mCommonDi._
   import esModel.api._
+  import mPersonIdentModel.api._
 
 
   /** Сборка ActionBuider'ов, проверяющих запросы активации инвайта на узел.

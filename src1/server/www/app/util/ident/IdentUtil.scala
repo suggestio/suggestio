@@ -7,7 +7,7 @@ import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.mproj.ICommonDi
-import models.usr.{MExtIdents, MSuperUsers}
+import models.usr.{MExtIdents, MPersonIdentModel, MSuperUsers}
 import play.api.mvc._
 import japgolly.univeq._
 
@@ -21,13 +21,15 @@ import scala.concurrent.Future
  */
 @Singleton
 class IdentUtil @Inject() (
-  mNodes        : MNodes,
-  mSuperUsers   : MSuperUsers,
-  mExtIdents    : MExtIdents,
-  mCommonDi     : ICommonDi
-) {
+                            mPersonIdentModel     : MPersonIdentModel,
+                            mNodes                : MNodes,
+                            mSuperUsers           : MSuperUsers,
+                            mExtIdents            : MExtIdents,
+                            mCommonDi             : ICommonDi,
+                          ) {
 
   import mCommonDi._
+  import mPersonIdentModel.api._
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
   def getMarketRdrCallFor(personId: String): Future[Option[Call]] = {

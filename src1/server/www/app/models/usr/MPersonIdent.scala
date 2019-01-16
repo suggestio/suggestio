@@ -3,14 +3,14 @@ package models.usr
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.es.model.EsModelUtil._
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.{EsModelPlayJsonStaticT, EsModelStaticT, EsModelT}
+import io.suggest.es.model.{EsModel, EsModelPlayJsonStaticT, EsModelStaticT, EsModelT}
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json.{JsBoolean, JsString}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -220,30 +220,38 @@ object MPersonIdents {
 
 }
 
-trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT  {
+trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT
 
-  import mCommonDi._
+@Singleton
+class MPersonIdentModel @Inject()(
+                                    esModel: EsModel,
+                                 )(implicit ec: ExecutionContext) {
+  import esModel.api._
 
-  def getByEmail(email: String) = {
-    getById(email)
+  object api {
+    implicit class MPersonIdentOps[T1 <: MPersonIdent]( model: MPersonIdentSubmodelStatic { type T = T1 } ) {
+
+      def getByEmail(email: String): Future[Option[T1]] =
+        model.getById(email)
+
+      /**
+        * Найти иденты для указанного personId.
+        * @param personId id юзера.
+        * @return Список подходящих результатов в неопределённом порядке.
+        */
+      def findByPersonId(personId: String): Future[Seq[T1]] = {
+        model
+          .prepareSearch()
+          .setQuery( MPersonIdents.personIdQuery(personId) )
+          .executeFut()
+          .map { model.searchResp2stream }
+      }
+
+      def countByPersonId(personId: String): Future[Long] =
+        model.countByQuery( MPersonIdents.personIdQuery(personId) )
+
+    }
   }
-
-  /**
-   * Найти иденты для указанного personId.
-   * @param personId id юзера.
-   * @return Список подходящих результатов в неопределённом порядке.
-   */
-  def findByPersonId(personId: String): Future[Seq[T]] = {
-    prepareSearch()
-      .setQuery( MPersonIdents.personIdQuery(personId) )
-      .executeFut()
-      .map { searchResp2stream }
-  }
-
-  def countByPersonId(personId: String): Future[Long] = {
-    countByQuery( MPersonIdents.personIdQuery(personId) )
-  }
-
 }
 
 trait MPIWithEmail {

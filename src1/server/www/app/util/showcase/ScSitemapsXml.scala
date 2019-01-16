@@ -4,8 +4,8 @@ import java.time.LocalDate
 
 import akka.stream.scaladsl.Source
 import javax.inject.Inject
-
 import controllers.routes
+import io.suggest.es.model.EsModel
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
@@ -31,17 +31,19 @@ import util.seo.SiteMapXmlCtl
  * - Если изменилось вчера или ранее, то значение lastmod уведомит кравлер, что страница изменилась.
 */
 class ScSitemapsXml @Inject() (
-  mNodes                        : MNodes,
-  streamsUtil                   : StreamsUtil,
-  ctxUtil                       : ContextUtil,
-  mCommonDi                     : ICommonDi
-)
+                                esModel                       : EsModel,
+                                mNodes                        : MNodes,
+                                streamsUtil                   : StreamsUtil,
+                                ctxUtil                       : ContextUtil,
+                                mCommonDi                     : ICommonDi
+                              )
   extends SiteMapXmlCtl
   with MacroLogsImpl
 {
 
   import mNodes.Implicits._
   import streamsUtil.Implicits._
+  import esModel.api._
 
   /**
    * Асинхронно поточно генерировать данные о страницах выдачи, которые подлежат индексации.
@@ -85,7 +87,7 @@ class ScSitemapsXml @Inject() (
     val qsb = ScJsState.qsbStandalone
 
     mNodes
-      .source[MNode](adSearch)
+      .source[MNode]( adSearch.toEsQuery )
       .mapConcat { mad =>
         try {
           mad2sxu(mad, today, qsb)

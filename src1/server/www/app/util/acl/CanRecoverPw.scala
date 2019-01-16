@@ -24,6 +24,7 @@ import scala.concurrent.Future
  */
 
 class CanRecoverPw @Inject() (
+                               mPersonIdentModel      : MPersonIdentModel,
                                aclUtil                : AclUtil,
                                identUtil              : IdentUtil,
                                emailPwIdents          : EmailPwIdents,
@@ -35,6 +36,7 @@ class CanRecoverPw @Inject() (
 {
 
   import mCommonDi._
+  import mPersonIdentModel.api._
 
 
   /** Собрать ACL ActionBuilder проверки доступа на восстановление пароля.

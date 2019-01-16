@@ -2,7 +2,7 @@ package controllers.ident
 
 import controllers.SioController
 import models.req.IReq
-import models.usr.{EmailPwIdent, IEmailPwIdentsDi, IMPersonIdents}
+import models.usr.{EmailPwIdent, IEmailPwIdentsDi, IMPersonIdents, MPersonIdentModel}
 import play.api.data._
 import play.api.data.Forms._
 import util.acl._
@@ -72,6 +72,8 @@ trait ChangePwAction
 
   import mCommonDi._
   import esModel.api._
+  val mPersonIdentModel: MPersonIdentModel
+  import mPersonIdentModel.api._
 
   /** Если неясно куда надо редиректить юзера, то что делать? */
   def changePwOkRdrDflt(implicit request: IReq[AnyContent]): Future[Call] = {

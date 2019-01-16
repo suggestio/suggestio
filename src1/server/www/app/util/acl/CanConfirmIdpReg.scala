@@ -1,7 +1,6 @@
 package util.acl
 
 import javax.inject.Inject
-
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.MNodes
@@ -11,7 +10,7 @@ import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.MReq
-import models.usr.MExtIdents
+import models.usr.{MExtIdents, MPersonIdentModel}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import util.ident.IdentUtil
 
@@ -25,18 +24,20 @@ import scala.concurrent.Future
  * подтверждения регистрации (создания первой ноды).
  */
 class CanConfirmIdpReg @Inject() (
+                                   mPersonIdentModel        : MPersonIdentModel,
                                    aclUtil                  : AclUtil,
                                    identUtil                : IdentUtil,
                                    mNodes                   : MNodes,
                                    mExtIdents               : MExtIdents,
                                    isAuth                   : IsAuth,
                                    reqUtil                  : ReqUtil,
-                                   mCommonDi                : ICommonDi
+                                   mCommonDi                : ICommonDi,
                                  )
   extends MacroLogsImpl
 {
 
   import mCommonDi._
+  import mPersonIdentModel.api._
 
 
   /** Код базовой реализации ActionBuilder'ов, проверяющих возможность подтверждения регистрации. */

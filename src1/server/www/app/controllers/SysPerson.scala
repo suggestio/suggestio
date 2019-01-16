@@ -28,6 +28,7 @@ import scala.concurrent.Future
 // TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
 class SysPerson @Inject() (
                             esModel                   : EsModel,
+                            mPersonIdentModel         : MPersonIdentModel,
                             mPerson                   : MPerson,
                             mNodes                    : MNodes,
                             mSuperUsers               : MSuperUsers,
@@ -42,6 +43,7 @@ class SysPerson @Inject() (
 
   import mCommonDi._
   import esModel.api._
+  import mPersonIdentModel.api._
 
   /** Генерация экземпляра EmailActivation с бессмысленными данными. */
   private def dummyEa = EmailActivation(

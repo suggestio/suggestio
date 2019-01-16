@@ -20,7 +20,7 @@ import play.api.data._
 import util.FormUtil.{currencyM, doubleM, esIdM}
 import util.TplDataFormatUtil
 import MPrice.HellImplicits.AmountMonoid
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{BulkProcessorListener, EsModel}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.JMXBase
 import scalaz._
@@ -438,7 +438,7 @@ class TfDailyUtil @Inject()(
     LOGGER.warn(s"$logPrefix Starting")
 
     val bp = mNodes.bulkProcessor(
-      listener = new mNodes.BulkProcessorListener( logPrefix )
+      listener = new BulkProcessorListener( logPrefix )
     )
     val counter = new AtomicInteger(0)
 

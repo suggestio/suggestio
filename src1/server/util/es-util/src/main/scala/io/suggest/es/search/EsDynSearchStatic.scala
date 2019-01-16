@@ -39,7 +39,6 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
     * @tparam R Тип результата.
     * @return Фьючерс с результатом типа R.
     */
-  // TODO Может быть вынести [A] в implicit convertions, а тут выставить SearchRequestBuilder?
   final def search[R](args: A)(implicit helper: IEsSearchHelper[R]): Future[R] = {
     // Логика очень варьируется от типа возвращаемого значения, поэтому сразу передаём управление в helper.
     helper.run(args)
@@ -157,52 +156,51 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
     * Это typeclass, передаваемый вручную в dynSearch2() при редкой необходимости такого действия.
     */
   class SeqRtMapper extends EsSearchIdsFutHelper[Seq[T]] {
+    /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
+      * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
+      *
+      * @return Результат - что-то неопределённом порядке.
+      */
     override def mapSearchResp(searchResp: SearchResponse): Future[Seq[T]] = {
-      // TODO Когда старый поиск уйдёт в историю, можно будет заинлайнить здесь searchResp2RtMultiget().
-      searchResp2RtMultiget(searchResp)
+      val searchHits = searchResp.getHits.getHits
+      if (searchHits.isEmpty) {
+        Future successful Nil
+      } else {
+        val mgetReq = esClient
+          .prepareMultiGet()
+          .setRealtime(true)
+        for (hit <- searchHits)
+          mgetReq.add(hit.getIndex, hit.getType, hit.getId)
+        mgetReq
+          .executeFut()
+          .map { mgetResp2Stream }
+      }
     }
   }
-  final def seqRtMapper: EsSearchFutHelper[Seq[T]] = {
+  final def seqRtMapper: EsSearchFutHelper[Seq[T]] =
     new SeqRtMapper
-  }
 
 
   /** Дополнение implicit API модели новыми конвертациями и typeclass'ами. */
   class Implicits extends super.Implicits {
 
-    implicit def rawRespMapper: EsSearchFutHelper[SearchResponse] = {
+    implicit def rawRespMapper: EsSearchFutHelper[SearchResponse] =
       new RawSearchRespMapper
-    }
 
-    implicit def seqMapper: EsSearchFutHelper[Stream[T]] = {
+    implicit def seqMapper: EsSearchFutHelper[Stream[T]] =
       new LazyStreamMapper
-    }
 
-    implicit def idsMapper: EsSearchFutHelper[ISearchResp[String]] = {
+    implicit def idsMapper: EsSearchFutHelper[ISearchResp[String]] =
       new IdsMapper
-    }
 
-    implicit def countMapper: IEsSearchHelper[Long] = {
+    implicit def countMapper: IEsSearchHelper[Long] =
       new CountMapper
-    }
 
-    implicit def optionMapper: EsSearchFutHelper[Option[T]] = {
+    implicit def optionMapper: EsSearchFutHelper[Option[T]] =
       new OptionTMapper
-    }
 
-    implicit def mapByIdMapper: EsSearchFutHelper[Map[String, T]] = {
+    implicit def mapByIdMapper: EsSearchFutHelper[Map[String, T]] =
       new MapByIdMapper
-    }
-
-
-    /** Приведение инстанса DynSearchArgs к врапперам elastic4s.
-      *
-      * @param args Аргументы поиска dyn-search для текущей модели.
-      * @return Инстанс SearchDefinition, пригодный для огуливания в elastic4s.
-      */
-    implicit def dynSearchArgs2es4sDefinition(args: A): QueryBuilder = {
-      args.toEsQuery
-    }
 
   }
 
@@ -269,7 +267,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
    * @param dsa Экземпляр, описывающий критерии поискового запроса.
    * @return Фьючерс с кол-вом совпадений.
    */
-  def dynCount(dsa: A): Future[Long] = {
+  final def dynCount(dsa: A): Future[Long] = {
     search[Long](dsa)
   }
 

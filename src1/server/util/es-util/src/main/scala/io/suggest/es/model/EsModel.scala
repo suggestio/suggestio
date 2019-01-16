@@ -2,6 +2,7 @@ package io.suggest.es.model
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.common.empty.EmptyUtil
@@ -20,9 +21,11 @@ import org.elasticsearch.action.get.MultiGetResponse
 import org.elasticsearch.client.Client
 import play.api.cache.AsyncCacheApi
 import japgolly.univeq._
+import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.cluster.metadata.{IndexMetaData, MappingMetaData}
 import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.common.xcontent.{XContentBuilder, XContentType}
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.SearchHits
@@ -43,7 +46,8 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 final class EsModel @Inject()(
-                               cache        : AsyncCacheApi,
+                               esScrollPublisherFactory   : EsScrollPublisherFactory,
+                               cache                      : AsyncCacheApi,
                              )(
                                implicit ec  : ExecutionContext,
                                esClient     : Client,
@@ -415,6 +419,18 @@ final class EsModel @Inject()(
           .executeFut()
       }
 
+
+      import io.suggest.es.util.SioEsUtil.{jsonGenerator, IndexMapping}
+      def generateMapping: XContentBuilder = {
+        jsonGenerator { implicit b =>
+          // Собираем маппинг индекса.
+          IndexMapping(
+            typ           = model.ES_TYPE_NAME,
+            staticFields  = model.generateMappingStaticFields,
+            properties    = model.generateMappingProps
+          )
+        }
+      }
     }
     implicit final class EsModelStaticMappingOps( override val model: EsModelStaticMapping )
       extends EsModelStaticMappingOpsT
@@ -566,7 +582,7 @@ final class EsModel @Inject()(
         }
 
         // Собираем асинхронный bulk-процессор, т.к. элементов может быть ну очень много.
-        val bp = model.bulkProcessor(listener, model.BULK_DELETE_QUEUE_LEN)
+        val bp = bulkProcessor(listener, model.BULK_DELETE_QUEUE_LEN)
 
         // Интересуют только id документов
         val totalFut = scroller
@@ -627,6 +643,13 @@ final class EsModel @Inject()(
         }
       }
 
+
+      def bulkProcessor(listener: BulkProcessor.Listener, queueLen: Int = 100): BulkProcessor = {
+        BulkProcessor.builder(esClient, listener)
+          .setBulkActions( queueLen )
+          .build()
+      }
+
     }
 
     implicit final class EsModelCommonStaticUntypedOps(override val model: EsModelCommonStaticT)
@@ -638,6 +661,30 @@ final class EsModel @Inject()(
 
       val model: EsModelCommonStaticT { type T = T1 }
 
+      def prepareIndex(m: T1): IndexRequestBuilder = {
+        val irb = prepareIndexNoVsn(m)
+        if (m.versionOpt.isDefined)
+          irb.setVersion(m.versionOpt.get)
+        irb
+      }
+
+      def prepareIndexNoVsn(m: T1): IndexRequestBuilder = {
+        val irb = prepareIndexNoVsnUsingClient(m, esClient)
+        val rkOpt = model.getRoutingKey(m.idOrNull)
+        if (rkOpt.isDefined)
+          irb.setRouting(rkOpt.get)
+        irb
+      }
+
+      def prepareIndexNoVsnUsingClient(m: T1, client: Client): IndexRequestBuilder = {
+        val idOrNull = m.idOrNull
+        val json = model.toJson(m)
+        //LOGGER.trace(s"prepareIndexNoVsn($indexName/$typeName/$idOrNull): $json")
+        client
+          .prepareIndex(model.ES_INDEX_NAME, model.ES_TYPE_NAME, idOrNull)
+          .setSource(json, XContentType.JSON)
+      }
+
       /**
         * Сохранить экземпляр в хранилище ES.
         *
@@ -646,8 +693,7 @@ final class EsModel @Inject()(
         */
       def save(m: T1): Future[String] = {
         model._save(m) { () =>
-          model
-            .prepareIndex(m)
+          prepareIndex(m)
             .executeFut()
             .map { _.getId }
         }
@@ -732,7 +778,7 @@ final class EsModel @Inject()(
 
         val logPrefix = s"update(${System.currentTimeMillis}):"
 
-        val bpListener = new model.BulkProcessorListener(logPrefix)
+        val bpListener = new BulkProcessorListener(logPrefix)
         val bp = model.bulkProcessor(bpListener)
 
         // Создаём атомный счетчик, который будет инкрементится из разных потоков одновременно.
@@ -747,7 +793,7 @@ final class EsModel @Inject()(
                 LOGGER.trace(s"$logPrefix Skipped update of [${v.idOrNull}], f() returned null")
                 accFut
               case v1 =>
-                bp.add( model.prepareIndex(v1).request )
+                bp.add( prepareIndex(v1).request )
                 counter.incrementAndGet()
                 accFut
             }
@@ -885,6 +931,84 @@ final class EsModel @Inject()(
         for (data2 <- data2Fut) yield {
           data2._saveable
         }
+      }
+
+      /**
+        * Пересохранение всех данных модели. По сути getAll + all.map(_.save). Нужно при ломании схемы.
+        *
+        * @return
+        */
+      def resaveAll(): Future[Int] = {
+        val I = model.Implicits
+        import I._
+
+        val src = source[T1]( QueryBuilders.matchAllQuery() )
+
+        val logPrefix = s"resaveMany()#${System.currentTimeMillis()}:"
+        val listener = new BulkProcessorListener(logPrefix)
+        val bp = model.bulkProcessor(listener)
+
+        val counter = new AtomicInteger(0)
+
+        val sourceFut = src.runForeach { elT =>
+          try {
+            bp.add( prepareIndex(elT).request() )
+          } catch {
+            case ex: Throwable =>
+              LOGGER.error(s"$logPrefix Failing to add element#${elT.idOrNull} counter=${counter.get}", ex)
+          }
+          counter.addAndGet(1)
+        }
+
+        sourceFut
+          .recover { case ex =>
+            LOGGER.error(s"$logPrefix Failure occured during execution, counter=${counter.get()} elements.", ex)
+          }
+          .map { _ =>
+            LOGGER.info(s"$logPrefix finished, total processed ${counter.get()} elements.")
+            bp.close()
+            counter.get()
+          }
+      }
+
+
+      /** Поточно читаем выхлоп elasticsearch.
+        *
+        * @param searchQuery Поисковый запрос.
+        * @tparam To тип одного элемента.
+        * @return Source[T, NotUsed].
+        */
+      def source[To: IEsSourcingHelper](searchQuery: QueryBuilder, maxResults: Option[Long] = None): Source[To, NotUsed] = {
+        val helper = implicitly[IEsSourcingHelper[To]]
+        // Нужно помнить, что SearchDefinition -- это mutable-инстанс и всегда возвращает this.
+        val scrollArgs = MScrollArgs(
+          query           = searchQuery,
+          model           = model,
+          sourcingHelper  = helper,
+          keepAlive       = model.SCROLL_KEEPALIVE_DFLT,
+          maxResults      = maxResults,
+          resultsPerScroll = model.MAX_RESULTS_DFLT
+        )
+
+        // Собираем безлимитный publisher. Явно указываем maxElements для гарантированной защиты от ломания API es4s в будущем.
+        val pub = esScrollPublisherFactory.publisher(scrollArgs)
+
+        lazy val logPrefix = s"source()[${System.currentTimeMillis()}]:"
+        LOGGER.trace(s"$logPrefix Starting using $helper; searchDef = $searchQuery")
+
+        Source
+          .fromPublisher( pub )
+          .mapConcat { searchHit =>
+            // Логгируем любые ошибки, т.к. есть основания подозревать akka-streams в молчаливости.
+            // https://github.com/akka/akka/issues/19950
+            try {
+              helper.mapSearchHit(searchHit) :: Nil
+            } catch {
+              case ex: Throwable =>
+                LOGGER.error(s"$logPrefix Failed to helper.mapSearchHit() for hit#${searchHit.getId} = $searchHit", ex)
+                Nil
+            }
+          }
       }
 
     }
@@ -1325,8 +1449,14 @@ trait EsModelStaticT extends EsModelCommonStaticT {
 
   import mCommonDi._
 
-  final def prepareGet(id: String) =
-    prepareGetBase(id)
+
+  def prepareGet(id: String) = {
+    val req = esClient.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
+    val rk = getRoutingKey(id)
+    if (rk.isDefined)
+      req.setRouting(rk.get)
+    req
+  }
 
   final def prepareDelete(id: String) =
     prepareDeleteBase(id)

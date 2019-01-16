@@ -21,7 +21,7 @@ import models.mctx.Context
 import models.mlk.MNodeShowArgs
 import models.mproj.ICommonDi
 import models.req.{INodeReq, MReq}
-import models.usr.{EmailActivations, EmailPwIdent, EmailPwIdents, MPersonIdents}
+import models.usr._
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc.Result
@@ -48,6 +48,7 @@ import scala.concurrent.Future
 @Singleton
 class MarketLkAdn @Inject() (
                               override val esModel                : EsModel,
+                              override val mPersonIdentModel      : MPersonIdentModel,
                               nodesUtil                           : NodesUtil,
                               scUtil                              : ShowcaseUtil,
                               mNodes                              : MNodes,

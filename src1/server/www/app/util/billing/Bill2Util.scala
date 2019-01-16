@@ -27,7 +27,7 @@ import models.mproj.ICommonDi
 import models.adv.geo.cur.AdvGeoShapeInfo_t
 import slick.sql.SqlAction
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{BulkProcessorListener, EsModel}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.streams.StreamsUtil
@@ -1976,7 +1976,7 @@ class Bill2Util @Inject() (
     )
 
     val bp = mNodes.bulkProcessor(
-      new mNodes.BulkProcessorListener(logPrefix)
+      new BulkProcessorListener(logPrefix)
     )
     val totalCounter = new AtomicInteger(0)
     val repairCounter = new AtomicInteger(0)

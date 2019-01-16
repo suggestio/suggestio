@@ -1,21 +1,15 @@
 package io.suggest.es.model
 
-import java.util.concurrent.atomic.AtomicInteger
-
-import akka.NotUsed
-import akka.stream.scaladsl.Source
 import io.suggest.primo.TypeT
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.OptStrId
 import io.suggest.util.JacksonWrapper
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.action.get.{GetResponse, MultiGetResponse}
-import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
-import org.elasticsearch.common.xcontent.XContentType
-import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.index.query.QueryBuilder
 import org.elasticsearch.search.SearchHit
 
 import scala.collection.JavaConverters._
@@ -64,14 +58,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT with IEsModel
   final def prepareCount(): SearchRequestBuilder = {
     prepareSearch()
       .setSize(0)
-  }
-
-  final def prepareGetBase(id: String) = {
-    val req = esClient.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
-    val rk = getRoutingKey(id)
-    if (rk.isDefined)
-      req.setRouting(rk.get)
-    req
   }
 
   final def prepareDeleteBase(id: String) = {
@@ -148,37 +134,12 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT with IEsModel
   final def searchResp2idsList(searchResp: SearchResponse): ISearchResp[String] = {
     val hitsArr = searchResp.getHits.getHits
     new AbstractSearchResp[String] {
-      override def total: Long = {
+      override def total: Long =
         searchResp.getHits.getTotalHits
-      }
-      override def length: Int = {
+      override def length: Int =
         hitsArr.length
-      }
-      override def apply(idx: Int): String = {
+      override def apply(idx: Int): String =
         hitsArr(idx).getId
-      }
-    }
-  }
-
-
-  /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
-    * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
-    *
-    * @return Результат - что-то неопределённом порядке.
-    */
-  final def searchResp2RtMultiget(searchResp: SearchResponse): Future[Seq[T]] = {
-    val searchHits = searchResp.getHits.getHits
-    if (searchHits.isEmpty) {
-      Future successful Nil
-    } else {
-      val mgetReq = esClient.prepareMultiGet()
-        .setRealtime(true)
-      searchHits.foreach { hit =>
-        mgetReq.add(hit.getIndex, hit.getType, hit.getId)
-      }
-      mgetReq
-        .executeFut()
-        .map { mgetResp2Stream }
     }
   }
 
@@ -210,75 +171,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT with IEsModel
   }
 
 
-  abstract class BulkProcessorListenerBase extends BulkProcessor.Listener {
-
-    protected def _logPrefix: String
-
-    /** Перед отправкой каждого bulk-реквеста. */
-    override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
-      LOGGER.trace(s"${_logPrefix} Going to execute bulk req with ${request.numberOfActions()} actions.")
-    }
-
-    /** Данные успешно отправлены в индекс. */
-    override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit = {
-      LOGGER.trace(s"${_logPrefix} afterBulk OK, took ${response.getTook}ms${if (response.hasFailures) "\n " + response.buildFailureMessage() else ""}")
-    }
-
-    /** Ошибка индексации. */
-    override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit = {
-      LOGGER.error(s"${_logPrefix} Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
-    }
-
-  }
-  class BulkProcessorListener(override val _logPrefix: String) extends BulkProcessorListenerBase
-
-
-
-  final def bulkProcessor(listener: BulkProcessor.Listener, queueLen: Int = 100): BulkProcessor = {
-    BulkProcessor.builder(esClient, listener)
-      .setBulkActions( queueLen )
-      .build()
-  }
-
-  /**
-   * Пересохранение всех данных модели. По сути getAll + all.map(_.save). Нужно при ломании схемы.
-   *
-   * @return
-   */
-  final def resaveAll(): Future[Int] = {
-    val I = Implicits
-    import I._
-
-    val src = source[T]( QueryBuilders.matchAllQuery() )
-
-    val logPrefix = s"resaveMany()#${System.currentTimeMillis()}:"
-    val listener = new BulkProcessorListener(logPrefix)
-    val bp = bulkProcessor(listener)
-
-    val counter = new AtomicInteger(0)
-
-    val sourceFut = src.runForeach { elT =>
-      try {
-        bp.add( prepareIndex(elT).request() )
-      } catch {
-        case ex: Throwable =>
-          LOGGER.error(s"$logPrefix Failing to add element#${elT.idOrNull} counter=${counter.get}", ex)
-      }
-      counter.addAndGet(1)
-    }
-
-    sourceFut
-      .recover { case ex =>
-        LOGGER.error(s"$logPrefix Failure occured during execution, counter=${counter.get()} elements.", ex)
-      }
-      .map { _ =>
-        LOGGER.info(s"$logPrefix finished, total processed ${counter.get()} elements.")
-        bp.close()
-        counter.get()
-      }
-  }
-
-
   def UPDATE_RETRIES_MAX: Int = EsModelUtil.UPDATE_RETRIES_MAX_DFLT
 
 
@@ -307,78 +199,12 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT with IEsModel
   }
 
 
-  final def prepareIndexNoVsn(m: T): IndexRequestBuilder = {
-    val irb = prepareIndexNoVsnUsingClient(m, esClient)
-    val rkOpt = getRoutingKey(m.idOrNull)
-    if (rkOpt.isDefined)
-      irb.setRouting(rkOpt.get)
-    irb
-  }
-
-  final def prepareIndexNoVsnUsingClient(m: T, client: Client): IndexRequestBuilder = {
-    val idOrNull = m.idOrNull
-    val json = toJson(m)
-    //LOGGER.trace(s"prepareIndexNoVsn($indexName/$typeName/$idOrNull): $json")
-    client
-      .prepareIndex(ES_INDEX_NAME, ES_TYPE_NAME, idOrNull)
-      .setSource(json, XContentType.JSON)
-  }
-
-
-  final def prepareIndex(m: T): IndexRequestBuilder = {
-    val irb = prepareIndexNoVsn(m)
-    if (m.versionOpt.isDefined)
-      irb.setVersion(m.versionOpt.get)
-    irb
-  }
-
   def _save(m: T)(f: () => Future[String]): Future[String] =
     f()
 
 
   def toJsonPretty(m: T): String = toJson(m)
   def toJson(m: T): String
-
-
-  /** Поточно читаем выхлоп elasticsearch.
-    *
-    * @param searchQuery Поисковый запрос.
-    * @tparam To тип одного элемента.
-    * @return Source[T, NotUsed].
-    */
-  final def source[To: IEsSourcingHelper](searchQuery: QueryBuilder, maxResults: Option[Long] = None): Source[To, NotUsed] = {
-    val helper = implicitly[IEsSourcingHelper[To]]
-    // Нужно помнить, что SearchDefinition -- это mutable-инстанс и всегда возвращает this.
-    val scrollArgs = MScrollArgs(
-      query           = searchQuery,
-      model           = this,
-      sourcingHelper  = helper,
-      keepAlive       = SCROLL_KEEPALIVE_DFLT,
-      maxResults      = maxResults,
-      resultsPerScroll = MAX_RESULTS_DFLT
-    )
-
-    // Собираем безлимитный publisher. Явно указываем maxElements для гарантированной защиты от ломания API es4s в будущем.
-    val pub = esScrollPublisherFactory.publisher(scrollArgs)
-
-    lazy val logPrefix = s"source()[${System.currentTimeMillis()}]:"
-    LOGGER.trace(s"$logPrefix Starting using $helper; searchDef = $searchQuery")
-
-    Source
-      .fromPublisher( pub )
-      .mapConcat { searchHit =>
-        // Логгируем любые ошибки, т.к. есть основания подозревать akka-streams в молчаливости.
-        // https://github.com/akka/akka/issues/19950
-        try {
-          helper.mapSearchHit(searchHit) :: Nil
-        } catch {
-          case ex: Throwable =>
-            LOGGER.error(s"$logPrefix Failed to helper.mapSearchHit() for hit#${searchHit.getId} = $searchHit", ex)
-            Nil
-        }
-      }
-  }
-
 
   /** Implicit API модели завёрнуто в этот класс, который можно экстендить. */
   class Implicits {
@@ -437,4 +263,19 @@ trait EsModelCommonT extends OptStrId {
 
 }
 
+
+trait BulkProcessorListenerT extends BulkProcessor.Listener {
+  def _logPrefix: String
+
+  /** Перед отправкой каждого bulk-реквеста. */
+  override def beforeBulk(executionId: Long, request: BulkRequest): Unit =
+    LOGGER.trace(s"${_logPrefix} Going to execute bulk req with ${request.numberOfActions()} actions.")
+  /** Данные успешно отправлены в индекс. */
+  override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit =
+    LOGGER.trace(s"${_logPrefix} afterBulk OK, took ${response.getTook}ms${if (response.hasFailures) "\n " + response.buildFailureMessage() else ""}")
+  /** Ошибка индексации. */
+  override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit =
+    LOGGER.error(s"${_logPrefix} Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
+}
+class BulkProcessorListener(override val _logPrefix: String) extends BulkProcessorListenerT
 

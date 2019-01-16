@@ -44,6 +44,9 @@ trait EmailPwSubmit
   import mCommonDi._
   import esModel.api._
 
+  val mPersonIdentModel: MPersonIdentModel
+  import mPersonIdentModel.api._
+
   /** Форма логина по email и паролю. */
   def emailPwLoginFormM: EmailPwLoginForm_t = {
     Form(

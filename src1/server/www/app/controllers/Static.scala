@@ -9,6 +9,7 @@ import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
 import io.suggest.brotli.BrotliUtil
 import io.suggest.compress.{MCompressAlgo, MCompressAlgos}
 import io.suggest.ctx.{MCtxId, MCtxIds}
+import io.suggest.es.model.EsModel
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.primo.Var
 import io.suggest.sec.csp.CspViolationReport
@@ -45,6 +46,7 @@ import scala.concurrent.duration._
   */
 @Singleton
 class Static @Inject() (
+                         esModel                         : EsModel,
                          override val ignoreAuth         : IgnoreAuth,
                          override val corsUtil           : CorsUtil,
                          override val siteMapUtil        : SiteMapUtil,
@@ -75,6 +77,7 @@ class Static @Inject() (
   import mCommonDi._
   import cspUtil.Implicits._
   import streamsUtil.Implicits._
+  import esModel.api._
 
 
   /**
@@ -275,7 +278,10 @@ class Static @Inject() (
             .withNodeLocShapes(
               advGeoRcvrsUtil.nodesAdvGeoPropsSrc(
                 mNodes.source[MNode](
-                  advGeoRcvrsUtil.onMapRcvrsSearch(NODES_PER_CHUNK) ),
+                  advGeoRcvrsUtil
+                    .onMapRcvrsSearch(NODES_PER_CHUNK)
+                    .toEsQuery
+                ),
                 wcAsLogo = true
               )
             )
