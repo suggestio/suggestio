@@ -1,9 +1,10 @@
 package util.ai.mad
 
 import java.io.FileInputStream
-import javax.inject.Inject
 
+import javax.inject.Inject
 import io.suggest.ahc.util.HttpGetToFile
+import io.suggest.es.model.EsModel
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import models.ai._
@@ -21,14 +22,17 @@ import scala.concurrent.Future
  * Description: Утиль для обеспечения работоспособности автогенератора рекламных карточек.
  */
 class MadAiUtil @Inject() (
-  mNodes                  : MNodes,
-  httpGetToFile           : HttpGetToFile,
-  mCommonDi               : ICommonDi
-)
+                            esModel                 : EsModel,
+                            mNodes                  : MNodes,
+                            httpGetToFile           : HttpGetToFile,
+                            mCommonDi               : ICommonDi
+                          )
   extends MacroLogsImpl
 {
 
   import mCommonDi.ec
+  import esModel.api._
+
 
   /**
    * Привести HTTP-хидеры ответа к метаданным tika.

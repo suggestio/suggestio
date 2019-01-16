@@ -1,7 +1,7 @@
 package util.es
 
 import javax.inject.Inject
-import io.suggest.es.model.{CopyContentResult, EsModel, EsModelCommonStaticT, EsModelUtil}
+import io.suggest.es.model.{CopyContentResult, EsModel, EsModelCommonStaticT}
 import io.suggest.es.util.{EsClientUtil, SioEsUtil}
 import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
@@ -37,7 +37,6 @@ class SiowebEsModel @Inject() (
                                 emailActivations    : EmailActivations,
                                 mExtIdents          : MExtIdents,
                                 mAsymKeys           : MAsymKeys,
-                                esModelUtil         : EsModelUtil,
                                 mCommonDi           : ICommonDi
                               )
   extends MacroLogsImplLazy
@@ -70,7 +69,7 @@ class SiowebEsModel @Inject() (
   /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */
   def maybeErrorIfIncorrectModels() {
     if (configuration.getOptional[Boolean]("es.mapping.model.conflict.check.enabled").getOrElseTrue)
-      esModelUtil.errorIfIncorrectModels(ES_MODELS)
+      esModel.errorIfIncorrectModels(ES_MODELS)
   }
 
   /** Отправить маппинги всех моделей в хранилище. */
@@ -78,7 +77,7 @@ class SiowebEsModel @Inject() (
     val ignoreExist = configuration.getOptional[Boolean]("es.mapping.model.ignore_exist")
       .getOrElseFalse
     trace("putAllMappings(): ignoreExists = " + ignoreExist)
-    esModelUtil.putAllMappings(models, ignoreExist)
+    esModel.putAllMappings(models, ignoreExist)
   }
 
 
@@ -125,7 +124,7 @@ class SiowebEsModel @Inject() (
   def initializeEsModels(triedIndexUpdate: Boolean = false): Future[_] = {
     maybeErrorIfIncorrectModels()
     val esModels = ES_MODELS
-    val futInx = esModelUtil.ensureEsModelsIndices(esModels)
+    val futInx = esModel.ensureEsModelsIndices(esModels)
     val logPrefix = "initializeEsModels(): "
     futInx.onComplete {
       case Success(result) => debug(logPrefix + "ensure() -> " + result)

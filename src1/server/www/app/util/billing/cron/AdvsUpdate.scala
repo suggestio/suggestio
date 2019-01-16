@@ -2,7 +2,7 @@ package util.billing.cron
 
 import java.time.OffsetDateTime
 
-import io.suggest.es.model.{EsModelDi, EsModelUtil}
+import io.suggest.es.model.EsModelDi
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
@@ -182,7 +182,7 @@ abstract class AdvsUpdate
         val fut = for {
           acc0 <- acc0Fut
           // Это сложная операция: выстраивание набора изменений, наложение его на карточку, сохранение карточки, выстраивание экшенов SQL-транзакции:
-          tuData1 <- EsModelUtil.tryUpdate[MNode, TryUpdateBuilder]( mNodes, TryUpdateBuilder(acc0) ) { tuData =>
+          tuData1 <- esModel.tryUpdateM[MNode, TryUpdateBuilder]( mNodes, TryUpdateBuilder(acc0) ) { tuData =>
             tryUpdateAd(tuData, mitems)
           }
         } yield {

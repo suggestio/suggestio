@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.adn.edit.m.{MAdnEditForm, MAdnEditFormConf, MAdnEditFormInit}
-import io.suggest.es.model.MEsUuId
+import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.img.MImgFmts
 import io.suggest.init.routed.MJsInitTargets
@@ -35,6 +35,7 @@ import scala.concurrent.Future
   * Контроллер заменяет собой MarketLkAdnEdit, который нужен для
   */
 class LkAdnEdit @Inject() (
+                            esModel                   : EsModel,
                             isNodeAdmin               : IsNodeAdmin,
                             cspUtil                   : CspUtil,
                             n2VldUtil                 : N2VldUtil,
@@ -50,6 +51,7 @@ class LkAdnEdit @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /** Накатить какие-то дополнительные CSP-политики для работы редактора. */
   private def _applyCspToEditPage(res0: Result): Result = {

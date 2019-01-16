@@ -2,6 +2,7 @@ package controllers
 
 import java.time.OffsetDateTime
 
+import io.suggest.es.model.EsModel
 import io.suggest.geo._
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.{MNode, MNodes}
@@ -31,19 +32,19 @@ import scala.concurrent.Future
  * Расширение собственной геоинформации необходимо из-за [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
  */
 class SysAdnGeo @Inject() (
-  implicit private val osmClient    : OsmClient,
-  mNodes                            : MNodes,
-  isSuNode                          : IsSuNode,
-  override val mCommonDi            : ICommonDi
-)
+                            esModel                           : EsModel,
+                            mNodes                            : MNodes,
+                            isSuNode                          : IsSuNode,
+                            override val mCommonDi            : ICommonDi,
+                            implicit private val osmClient    : OsmClient,
+                          )
   extends SioControllerImpl
   with MacroLogsImplLazy
 {
 
-  // TODO Выпилить отсюда MAdnNodeGeo, использовать MNode.geo.shape
-
   import LOGGER._
   import mCommonDi._
+  import esModel.api._
 
   private def glevelKM = "glevel" -> nodeGeoLevelM
 

@@ -173,7 +173,7 @@ class SysAi @Inject() (
           // Запускаем асинхронные проверки полученных данных: проверяем, что все указанные карточки существуют:
           val fut = for {
             _ <- madAiUtil.dryRun(maimad)
-            savedId <- mAiMads.save(maimad)
+            _ <- mAiMads.save(maimad)
           } yield {
             Redirect( routes.SysAi.madIndex() )
               .flashing(FLASH.SUCCESS -> "Создано. Обновите страницу.")

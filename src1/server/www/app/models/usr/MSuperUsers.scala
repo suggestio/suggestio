@@ -1,7 +1,7 @@
 package models.usr
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.IEsModelDiVal
+import io.suggest.es.model.{EsModel, IEsModelDiVal}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
@@ -20,16 +20,18 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class MSuperUsers @Inject()(
-  emailPwIdents   : EmailPwIdents,
-  mNodes          : MNodes,
-  scryptUtil      : ScryptUtil,
-  mCommonDi       : IEsModelDiVal
-)
+                             esModel         : EsModel,
+                             emailPwIdents   : EmailPwIdents,
+                             mNodes          : MNodes,
+                             scryptUtil      : ScryptUtil,
+                             mCommonDi       : IEsModelDiVal
+                           )
   extends MacroLogsImpl
 {
 
   import LOGGER._
   import mCommonDi._
+  import esModel.api._
 
   /** Список емейлов админов suggest.io.
     * Раньше жил в конфигах, что вызывало больше неудобств, чем пользы. */

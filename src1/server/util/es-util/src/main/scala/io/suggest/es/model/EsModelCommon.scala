@@ -4,9 +4,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source
-import io.suggest.common.empty.EmptyUtil
-import io.suggest.common.fut.FutureUtil
-import io.suggest.es.scripts.IAggScripts
 import io.suggest.primo.TypeT
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.OptStrId
@@ -20,8 +17,6 @@ import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.XContentType
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.SearchHit
-import org.elasticsearch.search.aggregations.AggregationBuilders
-import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -73,14 +68,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   final def prepareGetBase(id: String) = {
     val req = esClient.prepareGet(ES_INDEX_NAME, ES_TYPE_NAME, id)
-    val rk = getRoutingKey(id)
-    if (rk.isDefined)
-      req.setRouting(rk.get)
-    req
-  }
-
-  final def prepareUpdateBase(id: String) = {
-    val req = esClient.prepareUpdate(ES_INDEX_NAME, ES_TYPE_NAME, id)
     val rk = getRoutingKey(id)
     if (rk.isDefined)
       req.setRouting(rk.get)
@@ -295,8 +282,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   def UPDATE_RETRIES_MAX: Int = EsModelUtil.UPDATE_RETRIES_MAX_DFLT
 
 
-
-
   /**
    * Перечитывание из хранилища указанного документа, используя реквизиты текущего документа.
    * Нужно для parent-child случаев, когда одного _id уже мало.
@@ -305,7 +290,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    * @return тоже самое, что и getById()
    */
   def reget(inst0: T): Future[Option[T]]
-
 
   // TODO Ужаснейший говнокод ниже: распиливание tryUpdate и последующая дедубликация породили ещё больший объем кода.
   // Это из-за того, что исторически есть два типа T: в static и в инстансе модели.
@@ -322,44 +306,15 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     }
   }
 
-  /** Реализация контейнера для вызова [[EsModelUtil]].tryUpdate() для es-моделей. */
-  class TryUpdateData(override val _saveable: T)
-    extends TryUpdateDataAbstract[TryUpdateData]
-  {
-    override protected def _instance(m: T) = new TryUpdateData(m)
+
+  final def prepareIndexNoVsn(m: T): IndexRequestBuilder = {
+    val irb = prepareIndexNoVsnUsingClient(m, esClient)
+    val rkOpt = getRoutingKey(m.idOrNull)
+    if (rkOpt.isDefined)
+      irb.setRouting(rkOpt.get)
+    irb
   }
 
-  /** Вместо TryUpdateData.apply(). */
-  final def tryUpdateData(inst: T) = {
-    new TryUpdateData(inst)
-  }
-
-  /**
-   * Попытаться обновить экземпляр модели с помощью указанной функции.
-   * Метод является надстройкой над save, чтобы отрабатывать VersionConflict.
-   *
-   * @param inst0 Исходный инстанс, который необходимо обновить.
-   * @param retry Счетчик попыток.
-   * @param updateF Функция для апдейта. Может возвращать null для внезапного отказа от апдейта.
-   * @return Тоже самое, что и save().
-   *         Если updateF запретила апдейт (вернула null), то будет Future.successfull(inst0).
-   */
-  final def tryUpdate(inst0: T, retry: Int = 0)(updateF: T => T): Future[T] = {
-    // 2015.feb.20: Код переехал в EsModelUtil, а тут остались только wrapper для вызова этого кода.
-    val data0 = tryUpdateData(inst0)
-    val data2Fut = EsModelUtil.tryUpdate[T, TryUpdateData](this, data0, UPDATE_RETRIES_MAX) { data =>
-      val data1 = tryUpdateData(
-        updateF(data._saveable)
-      )
-      Future.successful(data1)
-    }
-    for (data2 <- data2Fut) yield {
-      data2._saveable
-    }
-  }
-
-  def prepareIndexNoVsn(m: T): IndexRequestBuilder =
-    prepareIndexNoVsnUsingClient(m, esClient)
   final def prepareIndexNoVsnUsingClient(m: T, client: Client): IndexRequestBuilder = {
     val idOrNull = m.idOrNull
     val json = toJson(m)
@@ -377,50 +332,12 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     irb
   }
 
-  /**
-   * Сохранить экземпляр в хранилище ES.
-   *
-   * @return Фьючерс с новым/текущим id
-   *         VersionConflictException если транзакция в текущем состоянии невозможна.
-   */
-  def save(m: T): Future[String] = {
-    prepareIndex(m)
-      .executeFut()
-      .map { _.getId }
-  }
+  def _save(m: T)(f: () => Future[String]): Future[String] =
+    f()
+
 
   def toJsonPretty(m: T): String = toJson(m)
   def toJson(m: T): String
-
-  /** Общий код моделей, которые занимаются resave'ом. */
-  final def resaveBase( getFut: Future[Option[T]] ): Future[Option[String]] = {
-    getFut.flatMap { getResOpt =>
-      FutureUtil.optFut2futOpt(getResOpt) { e =>
-        save(e)
-          .map { EmptyUtil.someF }
-      }
-    }
-  }
-
-
-  /** Отрендерить экземпляр модели в JSON, обёрнутый в некоторое подобие метаданных ES (без _index и без _type). */
-  final def toEsJsonDoc(e: T): String = {
-    import StdFns._
-
-    var kvs = List[String] (s""" "$FIELD_SOURCE": ${toJson(e)}""")
-    if (e.versionOpt.isDefined)
-      kvs ::= s""" "$FIELD_VERSION": ${e.versionOpt.get}"""
-    if (e.id.isDefined)
-      kvs ::= s""" "$FIELD_ID": "${e.id.get}" """
-    kvs.mkString("{",  ",",  "}")
-  }
-
-  /** Отрендерить экземпляры моделей в JSON. */
-  final def toEsJsonDocs(e: TraversableOnce[T]): String = {
-    e.toIterator
-      .map { toEsJsonDoc }
-      .mkString("[",  ",\n",  "]")
-  }
 
 
   /** Поточно читаем выхлоп elasticsearch.
@@ -463,54 +380,39 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   }
 
 
-  /** typeclass для source() для простой десериализации ответов в обычные элементы модели. */
-  class ElSourcingHelper extends IEsSourcingHelper[T] {
-
-    override def mapSearchHit(from: SearchHit): T = {
-      deserializeSearchHit( from )
-    }
-
-    /** Подготовка search definition'а к будущему запросу. */
-    override def prepareSrb(srb: SearchRequestBuilder): SearchRequestBuilder = {
-      super.prepareSrb(srb)
-        .setFetchSource(true)
-    }
-
-    override def toString: String = {
-      s"${outer.getClass.getSimpleName}.${super.toString}"
-    }
-  }
-
-
   /** Implicit API модели завёрнуто в этот класс, который можно экстендить. */
   class Implicits {
 
     /** Mock-адаптер для тестирования сериализации-десериализации моделей на базе play.json.
       * На вход он получает просто экземпляры классов моделей. */
-    implicit def mockPlayDocRespEv = new IEsDoc[T] {
-      override def id(v: T): Option[String] = {
+    implicit def mockPlayDocRespEv: IEsDoc[T] = new IEsDoc[T] {
+      override def id(v: T): Option[String] =
         v.id
-      }
-      override def version(v: T): Option[Long] = {
+      override def version(v: T): Option[Long] =
         v.versionOpt
-      }
-      override def rawVersion(v: T): Long = {
+      override def rawVersion(v: T): Long =
         v.versionOpt.getOrElse(-1)
-      }
-      override def bodyAsScalaMap(v: T): collection.Map[String, AnyRef] = {
+      override def bodyAsScalaMap(v: T): collection.Map[String, AnyRef] =
         JacksonWrapper.convert[collection.Map[String, AnyRef]]( toJson(v) )
-      }
-      override def bodyAsString(v: T): String = {
+      override def bodyAsString(v: T): String =
         toJson(v)
-      }
-      override def idOrNull(v: T): String = {
+      override def idOrNull(v: T): String =
         v.idOrNull
-      }
     }
 
     /** stream-сорсинг для обычных случаев. */
     implicit def elSourcingHelper: IEsSourcingHelper[T] = {
-      new ElSourcingHelper
+      // typeclass для source() для простой десериализации ответов в обычные элементы модели.
+      new IEsSourcingHelper[T] {
+        override def mapSearchHit(from: SearchHit): T =
+          deserializeSearchHit( from )
+        override def prepareSrb(srb: SearchRequestBuilder): SearchRequestBuilder = {
+          super.prepareSrb(srb)
+            .setFetchSource(true)
+        }
+        override def toString: String =
+          s"${outer.getClass.getSimpleName}.${super.toString}"
+      }
     }
 
     override def toString: String = {
@@ -521,38 +423,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   // Вызываемый конструктор для класса Implicits. Должен быть перезаписан как val в итоге.
   def Implicits = new Implicits
-
-
-  /** Быстрый рассчёт контрольной суммы для всех найденных документов.
-    *
-    * @param q Query.
-    * @param sourceFields Полные названия полей документа, которые участвую в рассчёте хэша.
-    * @return Фьючерс с Int'ом внутри.
-    */
-  final def docsHashSum(scripts: IAggScripts, q: QueryBuilder = QueryBuilders.matchAllQuery()): Future[Int] = {
-    val aggName = "dcrc"
-
-    for {
-      resp <- prepareSearch()
-        .setQuery( q )
-        .setSize(0)
-        .setFetchSource(false)
-        .addAggregation(
-          AggregationBuilders
-            .scriptedMetric( aggName )
-            .initScript( scripts.initScript )
-            .mapScript( scripts.mapScript )
-            .combineScript( scripts.combineScript )
-            .reduceScript( scripts.reduceScript )
-        )
-        .executeFut()
-    } yield {
-      // Извлечь результат из ES-ответа:
-      val agg = resp.getAggregations.get[ScriptedMetric](aggName)
-      LOGGER.trace(s"docsHashSum(): r=${Option(agg).map(_.aggregation()).orNull} totalHits=${resp.getHits.totalHits}")
-      agg.aggregation().asInstanceOf[Integer].intValue()
-    }
-  }
 
 }
 

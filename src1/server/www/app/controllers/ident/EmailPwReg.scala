@@ -2,6 +2,7 @@ package controllers.ident
 
 import controllers.{CaptchaValidator, SioController, routes}
 import io.suggest.ctx.CtxData
+import io.suggest.es.model.EsModelDi
 import io.suggest.i18n.MsgCodes
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
@@ -77,9 +78,11 @@ trait EmailPwReg
   with IEmailPwIdentsDi
   with IEmailActivationsDi
   with IScryptUtilDi
+  with EsModelDi
 {
 
   import mCommonDi._
+  import esModel.api._
 
   val canConfirmEmailPwReg: CanConfirmEmailPwReg
 

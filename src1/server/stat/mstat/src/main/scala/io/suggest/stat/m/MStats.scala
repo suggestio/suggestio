@@ -308,6 +308,7 @@ trait MStatsJmxMBean extends EsModelJMXMBeanI {
 
 /** Реализация интерфейса [[MStatsJmxMBean]] JMX-модуля модели [[MStats]]. */
 final class MStatsJmx @Inject() (
+                                  esModel                     : EsModel,
                                   mStatsModel                 : MStatsModel,
                                   override val companion      : MStats,
                                   override val esModelJmxDi   : EsModelJmxDi,
@@ -315,6 +316,8 @@ final class MStatsJmx @Inject() (
   extends EsModelJMXBaseImpl
     with MStatsJmxMBean
 {
+
+  import esModel.api._
   import mStatsModel.api._
 
   override type X = MStat

@@ -1,7 +1,7 @@
 package models.usr
 
+import io.suggest.es.model.EsModel
 import javax.inject.Inject
-
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.meta.MPersonMeta
 import io.suggest.util.logs.MacroLogsImpl
@@ -19,16 +19,18 @@ import scala.concurrent.Future
  * Description: Реализация над-модели прослойки между suggest.io и secure-social.
  */
 class SsUserService @Inject() (
-  mNodes      : MNodes,
-  mExtIdents  : MExtIdents,
-  mCommonDi   : ICommonDi
-)
+                                esModel     : EsModel,
+                                mNodes      : MNodes,
+                                mExtIdents  : MExtIdents,
+                                mCommonDi   : ICommonDi
+                              )
   extends UserService[SsUser]
   with MacroLogsImpl
 {
 
   import mCommonDi._
   import LOGGER._
+  import esModel.api._
 
   /**
    * Finds a SocialUser that maches the specified id
@@ -84,7 +86,7 @@ class SsUserService @Inject() (
           userId    = profile.userId,
           email     = profile.email
         )
-        savedId <- mExtIdents.save(mei)
+        _ <- mExtIdents.save(mei)
       } yield {
         mei
       }

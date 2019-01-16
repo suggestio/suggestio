@@ -1,7 +1,7 @@
 package controllers.sysctl
 
 import controllers.{SioController, routes}
-import io.suggest.es.model.MEsUuId
+import io.suggest.es.model.{EsModelDi, MEsUuId}
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges}
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.util.logs.IMacroLogs
@@ -31,9 +31,11 @@ trait SysNodeEdges
   with IIsSuNodeDi
   with IMNodes
   with ISysMarketUtilDi
+  with EsModelDi
 {
 
   import mCommonDi._
+  import esModel.api._
 
   val isSuNodeEdge: IsSuNodeEdge
 

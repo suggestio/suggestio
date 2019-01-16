@@ -4,7 +4,7 @@ import java.time.OffsetDateTime
 
 import io.suggest.adn.MAdnRights
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.{EsModel, EsModelUtil}
+import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.search.Criteria
@@ -219,7 +219,7 @@ class AdvRcvrsUtil @Inject()(
 
       // Собрать оставшиеся online-итемы, перенакатить их всех на карточку.
       tuData2 <- {
-        val tuDataFut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(acc0) ) { tuData0 =>
+        val tuDataFut = esModel.tryUpdateM[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(acc0) ) { tuData0 =>
           val b1 = b0
             .withAcc( Future.successful(tuData0.acc) )
             .clearNode(full = rcvrIds.isEmpty)
@@ -253,7 +253,7 @@ class AdvRcvrsUtil @Inject()(
     }
     mNodes.foldLeftAsync(acc0 = 0, queryOpt = search.toEsQueryOpt) { (counterFut, mnode0) =>
       // Запустить пересчет ресиверов с сохранением.
-      val tub2Fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(Acc(mnode0)) ) { tub0 =>
+      val tub2Fut = esModel.tryUpdateM[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(Acc(mnode0)) ) { tub0 =>
         for {
           acc1 <- calculateReceiversFor(tub0.acc.mnode)
         } yield {
@@ -304,7 +304,7 @@ class AdvRcvrsUtil @Inject()(
     * @return
     */
   def resetReceiversFor(mad0: MNode): Future[MNode] = {
-    val fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(Acc(mad0)) ) { tub0 =>
+    val fut = esModel.tryUpdateM[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(Acc(mad0)) ) { tub0 =>
       for {
         acc2 <- calculateReceiversFor(tub0.acc.mnode)
       } yield {

@@ -3,7 +3,6 @@ package models.usr
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.es.util.SioEsUtil._
 import models.mext.ILoginProvider
-import org.elasticsearch.index.query.QueryBuilders
 import securesocial.core.IProfileDflt
 import io.suggest.util.JacksonParsing.stringParser
 import javax.inject.{Inject, Singleton}
@@ -53,9 +52,6 @@ class MExtIdents @Inject() (
       email       = m.get(EMAIL_ESFN).map(stringParser)
     )
   }
-
-  def userIdQuery(userId: String) = QueryBuilders.termQuery(USER_ID_ESFN, userId)
-  def providerIdFilter(prov: ILoginProvider) = QueryBuilders.termQuery(PROVIDER_ID_ESFN, prov.ssProvName)
 
   /**
    * Поиск документа по userId и провайдеру.

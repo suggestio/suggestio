@@ -87,17 +87,6 @@ abstract class MCitiesAbstract
     )
   }
 
-  /**
-    * Реалтаймовый поиск по полю cityId.
-    * На деле внутри используется getById(), что существенно ускоряет данный поиск.
-    *
-    * @param cityId целочисленный id городишки.
-    * @return Фьючерс с опциональным инстансом [[MCity]].
-    */
-  def getByCityId(cityId: CityId_t): Future[Option[MCity]] = {
-    val esId = MCity.cityId2esId(cityId)
-    getById(esId)
-  }
 
 }
 
@@ -166,8 +155,36 @@ trait MCitiesJmxMBean extends EsModelJMXMBeanI {
 
 }
 
+@Singleton
+class MCitiesModel @Inject()(
+                              esModel: EsModel
+                            ) {
+
+  import esModel.api._
+
+  object api {
+    implicit class MCitiesAbstractOpsExt( model: MCitiesAbstract ) {
+
+      /**
+        * Реалтаймовый поиск по полю cityId.
+        * На деле внутри используется getById(), что существенно ускоряет данный поиск.
+        *
+        * @param cityId целочисленный id городишки.
+        * @return Фьючерс с опциональным инстансом [[MCity]].
+        */
+      def getByCityId(cityId: CityId_t): Future[Option[MCity]] = {
+        val esId = MCity.cityId2esId(cityId)
+        model.getById(esId)
+      }
+
+    }
+  }
+
+}
+
 /** Реализация интерфейса jmx mbean'а [[MCitiesJmxMBean]]. */
 final class MCitiesJmx @Inject() (
+                                   mCitiesModel              : MCitiesModel,
                                    override val companion    : MCities,
                                    override val esModelJmxDi : EsModelJmxDi,
                                  )
@@ -175,10 +192,14 @@ final class MCitiesJmx @Inject() (
   with MCitiesJmxMBean
 {
 
+  import mCitiesModel.api._
+
   override type X = MCity
 
   override def getByCityId(cityId: CityId_t): String = {
-    val strFut = for (mCityOpt <- companion.getByCityId(cityId)) yield {
+    val strFut = for {
+      mCityOpt <- companion.getByCityId(cityId)
+    } yield {
       mCityOpt.toString
     }
     awaitString(strFut)

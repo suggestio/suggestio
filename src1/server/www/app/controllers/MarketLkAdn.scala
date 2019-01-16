@@ -3,6 +3,7 @@ package controllers
 import controllers.ident._
 import io.suggest.color.MColorData
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.n2.edge.search.Criteria
@@ -46,6 +47,7 @@ import scala.concurrent.Future
  */
 @Singleton
 class MarketLkAdn @Inject() (
+                              override val esModel                : EsModel,
                               nodesUtil                           : NodesUtil,
                               scUtil                              : ShowcaseUtil,
                               mNodes                              : MNodes,
@@ -73,6 +75,7 @@ class MarketLkAdn @Inject() (
   import mCommonDi._
   import slick.profile.api._
   import mItems.MItemsTable._
+  import esModel.api._
 
 
   /** Список личных кабинетов юзера. */

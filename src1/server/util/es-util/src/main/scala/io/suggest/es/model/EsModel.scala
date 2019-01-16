@@ -6,7 +6,10 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.scripts.IAggScripts
+import io.suggest.es.util.SioEsUtil
 import io.suggest.es.util.SioEsUtil._
+import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.primo.id.OptId
 import javax.inject.{Inject, Singleton}
 import org.elasticsearch.action.DocWriteResponse.Result
@@ -14,18 +17,23 @@ import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
 import org.elasticsearch.action.get.MultiGetRequest.Item
 import org.elasticsearch.action.get.MultiGetResponse
-import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.client.Client
 import play.api.cache.AsyncCacheApi
 import japgolly.univeq._
-import org.elasticsearch.action.search.SearchRequestBuilder
+import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
+import org.elasticsearch.cluster.metadata.{IndexMetaData, MappingMetaData}
 import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
+import org.elasticsearch.search.SearchHits
+import org.elasticsearch.search.aggregations.AggregationBuilders
+import org.elasticsearch.search.aggregations.metrics.scripted.ScriptedMetric
 import org.elasticsearch.search.sort.SortBuilders
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.reflect.ClassTag
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -33,16 +41,331 @@ import scala.reflect.ClassTag
  * Created: 16.10.15 18:32
  * Description: Файл содержит трейты для базовой сборки типичных ES-моделей, без parent-child и прочего.
  */
-
 @Singleton
 final class EsModel @Inject()(
-                               esIndexUtil  : EsIndexUtil,
                                cache        : AsyncCacheApi,
                              )(
                                implicit ec  : ExecutionContext,
                                esClient     : Client,
                                mat          : Materializer,
-                             ) {
+                               sn           : SioNotifierStaticClientI,
+                             ) { esModel =>
+
+
+  /** Сконвертить распарсенные результаты в карту. */
+  private def resultsToMap[T <: OptId[String]](results: TraversableOnce[T]): Map[String, T] =
+    OptId.els2idMap[String, T](results)
+
+
+  // TODO Код ниже уровня моделей унести в classs EsIndexUtil.
+  /**
+    * Убедиться, что индекс существует.
+    *
+    * @return Фьючерс для синхронизации работы. Если true, то новый индекс был создан.
+    *         Если индекс уже существует, то false.
+    */
+  def ensureIndex(indexName: String, shards: Int = 5, replicas: Int = 1): Future[Boolean] = {
+    for {
+      existsResp <- esClient.admin().indices()
+        .prepareExists(indexName)
+        .executeFut()
+
+      _ <- if (existsResp.isExists) {
+        Future.successful(false)
+      } else {
+        val indexSettings = SioEsUtil
+          .getIndexSettingsV2(shards=shards, replicas=replicas)
+        esClient.admin().indices()
+          .prepareCreate(indexName)
+          .setSettings(indexSettings)
+          .executeFut()
+          .map { _ => true }
+      }
+    } yield {
+      true
+    }
+  }
+
+
+  /**
+   * Собрать указанные значения id'шников в аккамулятор-множество.
+   *
+   * @param searchResp Экземпляр searchResponse.
+   * @param acc0 Начальный акк.
+   * @param keepAliveMs keepAlive для курсоров на стороне сервера ES в миллисекундах.
+   * @return Фьчерс с результирующим аккамулятором-множеством.
+   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/client/java-api/current/search.html#scrolling]]
+   */
+  def searchScrollResp2ids(searchResp: SearchResponse, maxAccLen: Int, firstReq: Boolean, currAccLen: Int = 0,
+                           acc0: List[String] = Nil, keepAliveMs: Long = 60000L): Future[List[String]] = {
+    val hits = searchResp.getHits.getHits
+    if (!firstReq && hits.isEmpty) {
+      Future successful acc0
+    } else {
+      val nextAccLen = currAccLen + hits.length
+      val canContinue = maxAccLen <= 0 || nextAccLen < maxAccLen
+      val nextScrollRespFut = if (canContinue) {
+        // Лимит длины акк-ра ещё не пробит. Запустить в фоне получение следующей порции результатов...
+        esClient
+          .prepareSearchScroll(searchResp.getScrollId)
+          .setScroll(new TimeValue(keepAliveMs))
+          .executeFut()
+      } else {
+        null
+      }
+      // Если акк заполнен, то надо запустить очистку курсора на стороне ES.
+      if (!canContinue) {
+        esClient
+          .prepareClearScroll()
+          .addScrollId( searchResp.getScrollId )
+          .executeFut()
+      }
+      // Синхронно залить результаты текущего реквеста в аккамулятор
+      val accNew = hits.foldLeft[List[String]] (acc0) { (acc1, hit) =>
+        hit.getId :: acc1
+      }
+      if (canContinue) {
+        // Асинхронно перейти на следующую итерацию, дождавшись новой порции результатов.
+        nextScrollRespFut flatMap { searchResp2 =>
+          searchScrollResp2ids(searchResp2, maxAccLen, firstReq = false, currAccLen = nextAccLen, acc0 = accNew, keepAliveMs = keepAliveMs)
+        }
+      } else {
+        // Пробит лимит аккамулятора по maxAccLen - вернуть акк не продолжая обход.
+        Future successful accNew
+      }
+    }
+  }
+
+
+  /**
+   * Узнать метаданные индекса.
+   *
+   * @param indexName Название индекса.
+   * @return Фьючерс с опциональными метаданными индекса.
+   */
+  def getIndexMeta(indexName: String): Future[Option[IndexMetaData]] = {
+    esClient.admin().cluster()
+      .prepareState()
+      .setIndices(indexName)
+      .executeFut()
+      .map { cs =>
+        val maybeResult = cs.getState
+          .getMetaData
+          .index(indexName)
+        Option(maybeResult)
+      }
+  }
+
+  /**
+   * Прочитать метаданные маппинга.
+   *
+   * @param indexName Название индекса.
+   * @param typeName Название типа.
+   * @return Фьючерс с опциональными метаданными маппинга.
+   */
+  def getIndexTypeMeta(indexName: String, typeName: String): Future[Option[MappingMetaData]] = {
+    getIndexMeta(indexName) map { imdOpt =>
+      imdOpt.flatMap { imd =>
+        Option(imd.mapping(typeName))
+      }
+    }
+  }
+
+  /**
+   * Существует ли указанный маппинг в хранилище? Используется, когда модель хочет проверить наличие маппинга
+   * внутри общего индекса.
+   *
+   * @param typeName Имя типа.
+   * @return Да/нет.
+   */
+  def isMappingExists(indexName: String, typeName: String): Future[Boolean] = {
+    for {
+      metaOpt <- getIndexTypeMeta(indexName, typeName = typeName)
+    } yield {
+      metaOpt.isDefined
+    }
+  }
+
+  /** Прочитать текст маппинга из хранилища. */
+  def getCurrentMapping(indexName: String, typeName: String): Future[Option[String]] = {
+    for {
+      metaOpt <- getIndexTypeMeta(indexName, typeName = typeName)
+    } yield {
+      for (meta <- metaOpt) yield
+        meta.source().string()
+    }
+  }
+
+
+  /** Сгенерить InternalError, если хотя бы две es-модели испрользуют одно и тоже хранилище для данных.
+    * В сообщении экзепшена будут перечислены конфликтующие модели. */
+  def errorIfIncorrectModels(allModels: Iterable[EsModelCommonStaticT]): Unit = {
+    // Запускаем проверку, что в моделях не используются одинаковые типы в одинаковых индексах.
+    def esModelId(esModel: EsModelCommonStaticT): String =
+      s"${esModel.ES_INDEX_NAME}/${esModel.ES_TYPE_NAME}"
+
+    val uniqModelsCnt = allModels.iterator
+      .map(esModelId)
+      .toSet
+      .size
+    if (uniqModelsCnt < allModels.size) {
+      // Найдены модели, которые испрользуют один и тот же индекс+тип. Нужно вычислить их и вернуть в экзепшене.
+      val errModelsStr = allModels
+        .map { m => esModelId(m) -> m.getClass.getName }
+        .groupBy(_._1)
+        .valuesIterator
+        .filter { _.size > 1 }
+        .map { _.mkString(", ") }
+        .mkString("\n")
+      throw new InternalError("Two or more es models using same index+type for data store:\n" + errModelsStr)
+    }
+  }
+
+
+  /** Отправить маппинги всех моделей в ES. */
+  def putAllMappings(models: Seq[EsModelCommonStaticT], ignoreExists: Boolean = false): Future[Boolean] = {
+    import api._
+
+    Future.traverse(models) { esModelStatic =>
+      val logPrefix = s"${esModelStatic.getClass.getSimpleName}.putMapping():"
+      val imeFut = if (ignoreExists) {
+        Future.successful(false)
+      } else {
+        esModelStatic.isMappingExists()
+      }
+      imeFut.flatMap {
+        case false =>
+          LOGGER.trace(s"$logPrefix Trying to push mapping for model...")
+          val fut = esModelStatic.putMapping()
+          fut.onComplete {
+            case Success(isOk)  =>
+              if (isOk) LOGGER.trace(s"$logPrefix -> OK" )
+              else LOGGER.warn(s"$logPrefix NOT ACK!!! Possibly out-of-sync.")
+            case Failure(ex)    =>
+              LOGGER.error(s"$logPrefix FAILed to put mapping to ${esModelStatic.ES_INDEX_NAME}/${esModelStatic.ES_TYPE_NAME}:\n-------------\n${esModelStatic.generateMapping.string()}\n-------------\n", ex)
+          }
+          fut
+
+        case true =>
+          LOGGER.trace(s"$logPrefix Mapping already exists in index. Skipping...")
+          Future successful true
+      }
+    }.map {
+      _.reduceLeft { _ && _ }
+    }
+  }
+
+
+  /** Пройтись по всем ES_MODELS и проверить, что всех ихние индексы существуют. */
+  def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT]): Future[_] = {
+    val indices = models.map { esModel =>
+      esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
+    }.toMap
+    Future.traverse(indices) {
+      case (inxName, (shards, replicas)) =>
+        esModel.ensureIndex(inxName, shards=shards, replicas=replicas)
+    }
+  }
+
+
+  /** Рекурсивная асинхронная сверстка скролл-поиска в ES.
+    * Перед вызовом функции надо выпонить начальный поисковый запрос, вызвав с setScroll() и,
+    * по возможности, включив SCAN.
+    *
+    * @param searchResp Результат выполненного поиского запроса с активным scroll'ом.
+    * @param acc0 Исходное значение аккамулятора.
+    * @param firstReq Флаг первого запроса. По умолчанию = true.
+    *                 В первом и последнем запросах не приходит никаких результатов, и их нужно различать.
+    * @param keepAliveMs Значение keep-alive для курсора на стороне ES.
+    * @param f fold-функция, генереящая на основе результатов поиска и старого аккамулятора новый аккамулятор типа A.
+    * @tparam A Тип аккамулятора.
+    * @return Данные по результатам операции, включающие кол-во удач и ошибок.
+    */
+  def foldSearchScroll[A](searchResp: SearchResponse, acc0: A, firstReq: Boolean = true,
+                          keepAliveMs: Long = EsModelUtil.SCROLL_KEEPALIVE_MS_DFLT, fromClient: Client = esClient)
+                         (f: (A, SearchHits) => Future[A]): Future[A] = {
+    val hits = searchResp.getHits
+    val scrollId = searchResp.getScrollId
+    lazy val logPrefix = s"foldSearchScroll($scrollId, 1st=$firstReq):"
+    if (!firstReq  &&  hits.getHits.isEmpty) {
+      LOGGER.trace(s"$logPrefix no more hits.")
+      Future.successful(acc0)
+    } else {
+      // Запустить в фоне получение следующей порции результатов
+      LOGGER.trace(s"$logPrefix has ${hits.getHits.length} hits, total = ${hits.getTotalHits}")
+      // Убеждаемся, что scroll выставлен. Имеет смысл проверять это только на первом запросе.
+      if (firstReq)
+        assert(scrollId != null && !scrollId.isEmpty, "Scrolling looks like disabled. Cannot continue.")
+      val nextScrollRespFut: Future[SearchResponse] = {
+        fromClient
+          .prepareSearchScroll(scrollId)
+          .setScroll(new TimeValue(keepAliveMs))
+          .executeFut()
+      }
+      // Синхронно залить результаты текущего реквеста в аккамулятор
+      val acc1Fut = f(acc0, hits)
+      // Асинхронно перейти на следующую итерацию, дождавшись новой порции результатов.
+      nextScrollRespFut.flatMap { searchResp2 =>
+        acc1Fut.flatMap { acc1 =>
+          foldSearchScroll(searchResp2, acc1, firstReq = false, keepAliveMs, fromClient)(f)
+        }
+      }
+    }
+  }
+
+
+  /**
+    * Обновление какого-то элемента с использованием es save и es optimistic locking.
+    * В отличии от оригинального [[EsModelStaticT]].tryUpdate(), здесь обновляемые данные не обязательно
+    * являются элементами той же модели, а являются контейнером для них..
+    *
+    * @param data0 Обновляемые данные.
+    * @param maxRetries Максимальное кол-во попыток [5].
+    * @param updateF Обновление
+    * @tparam D Тип обновляемых данных.
+    * @return Удачно-сохраненный экземпляр data: T.
+    */
+  def tryUpdateM[X <: EsModelCommonT, D <: ITryUpdateData[X, D]]
+                (companion: EsModelCommonStaticT { type T = X }, data0: D, maxRetries: Int = 5)
+                (updateF: D => Future[D]): Future[D] = {
+    import api._
+    lazy val logPrefix = s"tryUpdateM(${System.currentTimeMillis}):"
+
+    val data1Fut = updateF(data0)
+
+    if (data1Fut == null) {
+      LOGGER.debug(logPrefix + " updateF() returned `null`, leaving update")
+      Future.successful(data0)
+
+    } else {
+      data1Fut.flatMap { data1 =>
+        val m2 = data1._saveable
+        if (m2 == null) {
+          LOGGER.debug(logPrefix + " updateF() data with `null`-saveable, leaving update")
+          Future.successful(data1)
+        } else {
+          // TODO Спилить обращение к companion, принимать статическую модель в аргументах
+          companion
+            .save(m2)
+            .map { _ => data1 }
+            .recoverWith {
+              case exVsn: VersionConflictEngineException =>
+                if (maxRetries > 0) {
+                  val n1 = maxRetries - 1
+                  LOGGER.warn(s"$logPrefix Version conflict while tryUpdate(). Retry ($n1)...")
+                  data1._reget.flatMap { data2 =>
+                    tryUpdateM[X, D](companion, data2, n1)(updateF)
+                  }
+                } else {
+                  val ex2 = new RuntimeException(s"$logPrefix Too many save-update retries failed", exVsn)
+                  Future.failed(ex2)
+                }
+            }
+        }
+      }
+    }
+  }
+
 
   /** По аналогии со slick, тут собраны методы для es-моделей.
     *
@@ -70,7 +393,7 @@ final class EsModel @Inject()(
 
       /** Прочитать маппинг текущей ES-модели из ES. */
       def getCurrentMapping(): Future[Option[String]] = {
-        esIndexUtil.getCurrentMapping(
+        esModel.getCurrentMapping(
           indexName = model.ES_INDEX_NAME,
           typeName  = model.ES_TYPE_NAME
         )
@@ -79,7 +402,7 @@ final class EsModel @Inject()(
 
       // TODO Нужно проверять, что текущий маппинг не устарел, и обновлять его.
       def isMappingExists(): Future[Boolean] = {
-        esIndexUtil.isMappingExists(
+        esModel.isMappingExists(
           indexName = model.ES_INDEX_NAME,
           typeName  = model.ES_TYPE_NAME
         )
@@ -100,7 +423,7 @@ final class EsModel @Inject()(
         *
         * @return Список всех id в неопределённом порядке.
         */
-      final def getAllIds(maxResults: Int, maxPerStep: Int = model.MAX_RESULTS_DFLT): Future[List[String]] = {
+      def getAllIds(maxResults: Int, maxPerStep: Int = model.MAX_RESULTS_DFLT): Future[List[String]] = {
         model
           .prepareScroll()
           .setQuery( QueryBuilders.matchAllQuery() )
@@ -109,7 +432,7 @@ final class EsModel @Inject()(
           //.setNoFields()
           .executeFut()
           .flatMap { searchResp =>
-            esIndexUtil.searchScrollResp2ids(
+            esModel.searchScrollResp2ids(
               searchResp,
               firstReq    = true,
               maxAccLen   = maxResults,
@@ -136,7 +459,7 @@ final class EsModel @Inject()(
           .flatMap { searchResp =>
             // для различания сообщений в логах, дополнительно генерим id текущей операции на базе первого скролла.
             val logPrefix = s"copyContent(${searchResp.getScrollId.hashCode / 1000L}): "
-            EsModelUtil.foldSearchScroll(searchResp, CopyContentResult(0L, 0L), keepAliveMs = keepAliveMs) {
+            foldSearchScroll(searchResp, CopyContentResult(0L, 0L), keepAliveMs = keepAliveMs, fromClient = fromClient) {
               (acc0, hits) =>
                 LOGGER.trace(s"$logPrefix${hits.getHits.length} hits read from source")
                 // Нужно запустить bulk request, который зальёт все хиты в toClient
@@ -165,7 +488,7 @@ final class EsModel @Inject()(
                 } else {
                   Future.successful(acc0)
                 }
-            }(ec, fromClient) // implicit'ы передаём вручную, т.к. несколько es-клиентов
+            }
           }
       }
 
@@ -210,7 +533,7 @@ final class EsModel @Inject()(
           .setFetchSource(false)
           .executeFut()
           .flatMap { searchResp =>
-            EsModelUtil.foldSearchScroll(searchResp, acc0 = 0, firstReq = true, keepAliveMs = model.SCROLL_KEEPALIVE_MS_DFLT) {
+            foldSearchScroll(searchResp, acc0 = 0, firstReq = true, keepAliveMs = model.SCROLL_KEEPALIVE_MS_DFLT) {
               (acc01, hits) =>
                 for (hit <- hits.iterator().asScala) {
                   val req = esClient.prepareDelete(hit.getIndex, hit.getType, hit.getId)
@@ -231,9 +554,42 @@ final class EsModel @Inject()(
         }
       }
 
+
+      /** Быстрый рассчёт контрольной суммы для всех найденных документов.
+        *
+        * @param q Query.
+        * @param sourceFields Полные названия полей документа, которые участвую в рассчёте хэша.
+        * @return Фьючерс с Int'ом внутри.
+        */
+      def docsHashSum(scripts: IAggScripts, q: QueryBuilder = QueryBuilders.matchAllQuery()): Future[Int] = {
+        val aggName = "dcrc"
+
+        for {
+          resp <- model
+            .prepareSearch()
+            .setQuery( q )
+            .setSize(0)
+            .setFetchSource(false)
+            .addAggregation(
+              AggregationBuilders
+                .scriptedMetric( aggName )
+                .initScript( scripts.initScript )
+                .mapScript( scripts.mapScript )
+                .combineScript( scripts.combineScript )
+                .reduceScript( scripts.reduceScript )
+            )
+            .executeFut()
+        } yield {
+          // Извлечь результат из ES-ответа:
+          val agg = resp.getAggregations.get[ScriptedMetric](aggName)
+          LOGGER.trace(s"docsHashSum(): r=${Option(agg).map(_.aggregation()).orNull} totalHits=${resp.getHits.totalHits}")
+          agg.aggregation().asInstanceOf[Integer].intValue()
+        }
+      }
+
     }
 
-    implicit final class EsModelCommonStaticOps(override val model: EsModelCommonStaticT)
+    implicit final class EsModelCommonStaticUntypedOps(override val model: EsModelCommonStaticT)
       extends EsModelCommonStaticUntypedOpsT
 
 
@@ -241,6 +597,21 @@ final class EsModel @Inject()(
     trait EsModelCommonStaticTypedOpsT[T1 <: EsModelCommonT] {
 
       val model: EsModelCommonStaticT { type T = T1 }
+
+      /**
+        * Сохранить экземпляр в хранилище ES.
+        *
+        * @return Фьючерс с новым/текущим id
+        *         VersionConflictException если транзакция в текущем состоянии невозможна.
+        */
+      def save(m: T1): Future[String] = {
+        model._save(m) { () =>
+          model
+            .prepareIndex(m)
+            .executeFut()
+            .map { _.getId }
+        }
+      }
 
       /**
        * Метод для краткого запуска скроллинга над моделью.
@@ -364,7 +735,7 @@ final class EsModel @Inject()(
         scroller
           .executeFut()
           .flatMap { searchResp =>
-            EsModelUtil.foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
+            foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
               (acc01, hits) =>
                 val acc02 = hits
                   .iterator()
@@ -396,11 +767,11 @@ final class EsModel @Inject()(
       }
 
       def foldLeftAsync1[A](acc0: A, scroller: SearchRequestBuilder, keepAliveMs: Long = model.SCROLL_KEEPALIVE_MS_DFLT)
-                                 (f: (Future[A], T1) => Future[A]): Future[A] = {
+                           (f: (Future[A], T1) => Future[A]): Future[A] = {
         scroller
           .executeFut()
           .flatMap { searchResp =>
-            EsModelUtil.foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
+            foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
               (acc01, hits) =>
                 hits.iterator()
                   .asScala
@@ -408,6 +779,72 @@ final class EsModel @Inject()(
                   .foldLeft(Future.successful(acc01))( f )
             }
           }
+      }
+
+      /** Общий код моделей, которые занимаются resave'ом. */
+      def resaveBase( getFut: Future[Option[T1]] ): Future[Option[String]] = {
+        getFut.flatMap { getResOpt =>
+          FutureUtil.optFut2futOpt(getResOpt) { e =>
+            model.save(e)
+              .map { EmptyUtil.someF }
+          }
+        }
+      }
+
+      /** Отрендерить экземпляр модели в JSON, обёрнутый в некоторое подобие метаданных ES (без _index и без _type). */
+      def toEsJsonDoc(e: T1): String = {
+        import StdFns._
+
+        var kvs = List[String] (s""" "$FIELD_SOURCE": ${model.toJson(e)}""")
+        if (e.versionOpt.isDefined)
+          kvs ::= s""" "$FIELD_VERSION": ${e.versionOpt.get}"""
+        if (e.id.isDefined)
+          kvs ::= s""" "$FIELD_ID": "${e.id.get}" """
+        kvs.mkString("{",  ",",  "}")
+      }
+
+      /** Отрендерить экземпляры моделей в JSON. */
+      def toEsJsonDocs(e: TraversableOnce[T1]): String = {
+        e.toIterator
+          .map { toEsJsonDoc }
+          .mkString("[",  ",\n",  "]")
+      }
+
+
+      /** Реализация контейнера для вызова [[EsModelUtil]].tryUpdate() для es-моделей. */
+      class TryUpdateData(override val _saveable: T1)
+        extends model.TryUpdateDataAbstract[TryUpdateData]
+      {
+        override protected def _instance(m: T1) = new TryUpdateData(m)
+      }
+
+      /** Вместо TryUpdateData.apply(). */
+      def tryUpdateData(inst: T1) = {
+        new TryUpdateData(inst)
+      }
+
+      /**
+       * Попытаться обновить экземпляр модели с помощью указанной функции.
+       * Метод является надстройкой над save, чтобы отрабатывать VersionConflict.
+       *
+       * @param inst0 Исходный инстанс, который необходимо обновить.
+       * @param retry Счетчик попыток.
+       * @param updateF Функция для апдейта. Может возвращать null для внезапного отказа от апдейта.
+       * @return Тоже самое, что и save().
+       *         Если updateF запретила апдейт (вернула null), то будет Future.successfull(inst0).
+       */
+      def tryUpdate(inst0: T1, retry: Int = 0)(updateF: T1 => T1): Future[T1] = {
+        // 2015.feb.20: Код переехал в EsModelUtil, а тут остались только wrapper для вызова этого кода.
+        val data0 = tryUpdateData(inst0)
+        val data2Fut = tryUpdateM[T1, TryUpdateData](model, data0, model.UPDATE_RETRIES_MAX) { data =>
+          val data1 = tryUpdateData(
+            updateF(data._saveable)
+          )
+          Future.successful(data1)
+        }
+        for (data2 <- data2Fut) yield {
+          data2._saveable
+        }
       }
 
     }
@@ -420,6 +857,40 @@ final class EsModel @Inject()(
     trait EsModelStaticOpsT[T1 <: EsModelT] {
 
       val model: EsModelStaticT { type T = T1 }
+
+      /**
+        * Удалить документ по id.
+        *
+        * @param id id документа.
+        * @return true, если документ найден и удалён. Если не найден, то false
+        */
+      def deleteById(id: String): Future[Boolean] = {
+        val fut = model.deleteRequestBuilder(id)
+          .executeFut()
+          .map { EsModelStaticT.delResp2isDeleted }
+        model._deleteById(id)(fut)
+      }
+
+
+      /** Удаляем сразу много элементов.
+        * @return Обычно Some(BulkResponse), но если нет id'шников в запросе, то будет None.
+        */
+      def deleteByIds(ids: Iterable[String]): Future[Option[BulkResponse]] = {
+        val resFut = if (ids.isEmpty) {
+          Future.successful(None)
+        } else {
+          val bulk = esClient.prepareBulk()
+          for (id <- ids) {
+            val delReq = model.prepareDelete(id)
+            bulk.add( delReq )
+          }
+          bulk
+            .executeFut()
+            .map( EmptyUtil.someF )
+        }
+        model._deleteByIds(ids)(resFut)
+      }
+
 
       /**
         * Существует ли указанный документ в текущем типе?
@@ -469,6 +940,36 @@ final class EsModel @Inject()(
           .map { EsModelUtil.deserializeGetRespFullRawStr }
       }
 
+
+      /**
+       * Прочитать из базы все перечисленные id разом.
+       *
+       * @param ids id документов этой модели. Можно передавать как коллекцию, так и свеженький итератор оной.
+       * @param acc0 Начальный аккамулятор.
+       * @return Список результатов в порядке ответа.
+       */
+      def multiGet(ids: TraversableOnce[String], options: GetOpts = model._getArgsDflt): Future[Stream[T1]] = {
+        if (ids.isEmpty) {
+          Future.successful( Stream.empty )
+        } else {
+          multiGetRaw(ids, options)
+            .map( model.mgetResp2Stream )
+        }
+      }
+      def multiGetRaw(ids: TraversableOnce[String], options: GetOpts = model._getArgsDflt): Future[MultiGetResponse] = {
+        val req = esClient.prepareMultiGet()
+          .setRealtime(true)
+        val indexName = model.ES_INDEX_NAME
+        val typeName = model.ES_TYPE_NAME
+        for (id <- ids) {
+          val item = new Item(indexName, typeName, id)
+          for (sf <- options.sourceFiltering)
+            item.fetchSourceContext( sf.toFetchSourceCtx )
+          req.add(item)
+        }
+        req.executeFut()
+      }
+
       /**
         * Пакетно вернуть инстансы модели с указанными id'шниками, но в виде карты (id -> T).
         * Враппер над multiget, но ещё вызывает resultsToMap над результатами.
@@ -478,10 +979,9 @@ final class EsModel @Inject()(
         * @return Фьючерс с картой результатов.
         */
       def multiGetMap(ids: TraversableOnce[String], options: GetOpts = model._getArgsDflt): Future[Map[String, T1]] = {
-        model
-          .multiGet(ids, options = options)
+        multiGet(ids, options = options)
           // Конвертим список результатов в карту, где ключ -- это id. Если id нет, то выкидываем.
-          .map { model.resultsToMap }
+          .map { resultsToMap }
       }
 
 
@@ -495,7 +995,7 @@ final class EsModel @Inject()(
           LOGGER.trace(s"$logPrefix Will source $idsCount items: ${ids.mkString(", ")}")
 
           val srcFut = for {
-            resp <- model.multiGetRaw(ids, options = options)
+            resp <- multiGetRaw(ids, options = options)
           } yield {
             LOGGER.trace(s"$logPrefix Fetched ${resp.getResponses.length} of ${ids.size}")
             val items = resp.getResponses
@@ -692,7 +1192,7 @@ final class EsModel @Inject()(
 
       def multiGetMapCache(ids: Set[String])(implicit classTag: ClassTag[T1]): Future[Map[String, T1]] = {
         multiGetCache(ids)
-          .map { model.resultsToMap }
+          .map { resultsToMap }
       }
 
 
@@ -788,8 +1288,6 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   final def prepareGet(id: String) =
     prepareGetBase(id)
 
-  final def prepareUpdate(id: String) =
-    prepareUpdateBase(id)
   final def prepareDelete(id: String) =
     prepareDeleteBase(id)
 
@@ -813,42 +1311,6 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   }
 
 
-
-  /**
-   * Прочитать из базы все перечисленные id разом.
-   *
-   * @param ids id документов этой модели. Можно передавать как коллекцию, так и свеженький итератор оной.
-   * @param acc0 Начальный аккамулятор.
-   * @return Список результатов в порядке ответа.
-   */
-  final def multiGet(ids: TraversableOnce[String], options: GetOpts = _getArgsDflt): Future[Stream[T]] = {
-    if (ids.isEmpty) {
-      Future.successful( Stream.empty )
-    } else {
-      multiGetRaw(ids, options)
-        .map( mgetResp2Stream )
-    }
-  }
-  def multiGetRaw(ids: TraversableOnce[String], options: GetOpts = _getArgsDflt): Future[MultiGetResponse] = {
-    val req = esClient.prepareMultiGet()
-      .setRealtime(true)
-    for (id <- ids) {
-      val item = new Item(ES_INDEX_NAME, ES_TYPE_NAME, id)
-      for (sf <- options.sourceFiltering)
-        item.fetchSourceContext( sf.toFetchSourceCtx )
-      req.add(item)
-    }
-    req.executeFut()
-  }
-
-
-
-  /** Сконвертить распарсенные результаты в карту. */
-  final def resultsToMap(results: TraversableOnce[T]): Map[String, T] = {
-    OptId.els2idMap[String, T](results)
-  }
-
-
   /**
    * Генератор delete-реквеста. Используется при bulk-request'ах.
    *
@@ -863,55 +1325,20 @@ trait EsModelStaticT extends EsModelCommonStaticT {
     req
   }
 
-  /**
-   * Удалить документ по id.
-   *
-   * @param id id документа.
-   * @return true, если документ найден и удалён. Если не найден, то false
-   */
-  def deleteById(id: String): Future[Boolean] = {
-    deleteRequestBuilder(id)
-      .executeFut()
-      .map { EsModelStaticT.delResp2isDeleted }
-  }
+  /** Дополнение логики удаления одного элемента, когда необходимо. */
+  def _deleteById(id: String)(fut: Future[Boolean]): Future[Boolean] =
+    fut
 
-  /** Удаляем сразу много элементов.
-    * @return Обычно Some(BulkResponse), но если нет id'шников в запросе, то будет None.
-    */
-  def deleteByIds(ids: TraversableOnce[String]): Future[Option[BulkResponse]] = {
-    if (ids.isEmpty) {
-      Future.successful(null)
-    } else {
-      val bulk = esClient.prepareBulk()
-      for (id <- ids) {
-        bulk.add(
-          prepareDelete(id)
-        )
-      }
-      bulk
-        .executeFut()
-        .map( EmptyUtil.someF )
-    }
-  }
+  /** Дополнение логики удаления нескольких элементов, когда необходимо. */
+  def _deleteByIds(ids: Iterable[String])(fut: Future[Option[BulkResponse]]): Future[Option[BulkResponse]] =
+    fut
 
   override final def reget(inst0: T): Future[Option[T]] = {
     getById(inst0.id.get)
   }
 
-  /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
-  override def prepareIndexNoVsn(m: T): IndexRequestBuilder = {
-    val irb = super.prepareIndexNoVsn(m)
-
-    val rkOpt = getRoutingKey(m.idOrNull)
-    if (rkOpt.isDefined)
-      irb.setRouting(rkOpt.get)
-
-    irb
-  }
-
 
   def MAX_WALK_STEPS = 50
-
 
 }
 

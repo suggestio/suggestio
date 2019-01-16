@@ -3,6 +3,7 @@ package controllers.ident
 import controllers._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.CtxData
+import io.suggest.es.model.EsModelDi
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.sec.m.msession.Keys
 import io.suggest.sec.util.IScryptUtilDi
@@ -42,9 +43,11 @@ trait SendPwRecoverEmail
   with IEmailPwIdentsDi
   with IEmailActivationsDi
   with IBruteForceProtect
+  with EsModelDi
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /**
    * Отправка письма юзеру. Это статический метод, но он сильно завязан на внутренности sio-контроллеров,
@@ -129,9 +132,11 @@ trait PwRecover
   with EmailPwRegUtil
   with IEmailPwIdentsDi
   with IScryptUtilDi
+  with EsModelDi
 {
 
   import mCommonDi._
+  import esModel.api._
 
   val canRecoverPw: CanRecoverPw
 

@@ -1,5 +1,6 @@
 package io.suggest.stat.saver
 
+import io.suggest.es.model.EsModel
 import io.suggest.stat.m.{MStat, MStats}
 import org.elasticsearch.common.inject.Inject
 
@@ -7,10 +8,13 @@ import scala.concurrent.Future
 
 /** Plain backend вызывает save() для всех элементов очереди. */
 class PlainSaverBackend @Inject() (
-  mStats                      : MStats
-)
+                                    esModel                     : EsModel,
+                                    mStats                      : MStats
+                                  )
   extends StatSaverBackend
 {
+
+  import esModel.api._
 
   override def save(stat: MStat): Future[_] = {
     mStats.save(stat)

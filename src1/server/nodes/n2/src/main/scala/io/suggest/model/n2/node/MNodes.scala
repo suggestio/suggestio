@@ -188,14 +188,8 @@ final class MNodes @Inject() (
     )
   }
 
-  /**
-   * Удалить документ по id.
-   *
-   * @param id id документа.
-   * @return true, если документ найден и удалён. Если не найден, то false
-   */
-  override def deleteById(id: String): Future[Boolean] = {
-    val delFut = super.deleteById(id)
+  override def _deleteById(id: String)(fut: Future[Boolean]): Future[Boolean] = {
+    val delFut = super._deleteById(id)(fut)
     for (isDeleted <- delFut) {
       _afterDelete(id, isDeleted)
     }
@@ -207,16 +201,10 @@ final class MNodes @Inject() (
     sn.publish(evt)
   }
 
-
-  /** Удаляем сразу много элементов.
-    *
-    * @return Обычно Some(BulkResponse), но если нет id'шников в запросе, то будет None.
-    */
-  override def deleteByIds(ids: TraversableOnce[String]): Future[Option[BulkResponse]] = {
-    val idsColl = ids.toTraversable
-    val delFut = super.deleteByIds(idsColl)
-    for (_ <- delFut)
-      for (id <- idsColl)
+  override def _deleteByIds(ids: Iterable[String])(fut: Future[Option[BulkResponse]]): Future[Option[BulkResponse]] = {
+    val delFut = super._deleteByIds(ids)(fut)
+    for (delOpt <- delFut if delOpt.nonEmpty)
+      for (id <- ids)
         _afterDelete(id)
     delFut
   }
@@ -227,13 +215,12 @@ final class MNodes @Inject() (
    *
    * @return Фьючерс с новым/текущим id.
    */
-  override def save(m: T): Future[String] = {
+  override def _save(m: MNode)(f: () => Future[String]): Future[String] = {
     // Запретить сохранять узел без id, если его тип не подразумевает генерацию рандомных id.
     if (m.id.isEmpty && !m.common.ntype.randomIdAllowed) {
       throw new IllegalArgumentException(s"id == None, but node type [${m.common.ntype}] does NOT allow random ids.")
-
     } else {
-      val saveFut = super.save(m)
+      val saveFut = super._save(m)(f)
       saveFut.onSuccess { case adnId =>
         val mnode2 = m.copy(id = Option(adnId))
         val evt = MNodeSaved(mnode2, isCreated = m.id.isEmpty)

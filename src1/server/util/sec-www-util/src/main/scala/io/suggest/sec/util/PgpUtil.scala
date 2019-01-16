@@ -3,7 +3,7 @@ package io.suggest.sec.util
 import java.io.{InputStream, OutputStream}
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.IEsModelDiVal
+import io.suggest.es.model.{EsModel, IEsModelDiVal}
 import io.suggest.sec.m.{IAsymKey, MAsymKey, MAsymKeys}
 import io.suggest.util.logs.MacroLogsDyn
 import io.trbl.bcpg.{KeyFactory, KeyFactoryFactory, SecretKey}
@@ -29,13 +29,15 @@ import scala.concurrent.Future
  */
 @Singleton
 class PgpUtil @Inject() (
-  mAsymKeys   : MAsymKeys,
-  mCommonDi   : IEsModelDiVal
-)
+                          esModel     : EsModel,
+                          mAsymKeys   : MAsymKeys,
+                          mCommonDi   : IEsModelDiVal
+                        )
   extends MacroLogsDyn
 {
 
   import mCommonDi._
+  import esModel.api._
 
   maybeInit()
 

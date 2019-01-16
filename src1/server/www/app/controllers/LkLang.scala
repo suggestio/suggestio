@@ -2,6 +2,7 @@ package controllers
 
 import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.EsModel
 import io.suggest.i18n.I18nConst
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
@@ -26,17 +27,19 @@ import scala.concurrent.Future
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
 class LkLang @Inject() (
-  mNodes                          : MNodes,
-  maybeAuth                       : MaybeAuth,
-  jsMessagesUtil                  : JsMessagesUtil,
-  override val mCommonDi          : ICommonDi
-)
+                         esModel                         : EsModel,
+                         mNodes                          : MNodes,
+                         maybeAuth                       : MaybeAuth,
+                         jsMessagesUtil                  : JsMessagesUtil,
+                         override val mCommonDi          : ICommonDi
+                       )
   extends SioControllerImpl
   with MacroLogsImpl
 {
 
   import LOGGER._
   import mCommonDi._
+  import esModel.api._
 
   private def chooseLangFormM(currLang: Lang): Form[Lang] = {
     Form(

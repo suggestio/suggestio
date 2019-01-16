@@ -2,6 +2,7 @@ package util.ext
 
 import java.net.URL
 
+import io.suggest.es.model.EsModel
 import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.MNodeExtras
@@ -27,6 +28,7 @@ import scala.util.{Failure, Success}
   */
 @Singleton
 class ExtRscUtil @Inject()(
+                            esModel   : EsModel,
                             mNodes    : MNodes,
                             mCommonDi : ICommonDi
                           )
@@ -34,6 +36,7 @@ class ExtRscUtil @Inject()(
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /** Взять ссылки, вернуть узлы для ссылок.
     * Все операции пакетные для ускорения при множестве результатов.

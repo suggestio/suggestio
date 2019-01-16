@@ -2,6 +2,7 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.es.model.EsModel
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.csp.Csp
@@ -39,6 +40,7 @@ import scala.concurrent.Future
  */
 @Singleton
 class LkAdvExt @Inject() (
+                           esModel                         : EsModel,
                            canAdvAd                        : CanAdvAd,
                            mNodes                          : MNodes,
                            advExtWsActors                  : AdvExtWsActors,
@@ -57,6 +59,7 @@ class LkAdvExt @Inject() (
 
   import LOGGER._
   import mCommonDi._
+  import esModel.api._
 
 
   /** Сколько секунд с момента генерации ссылки можно попытаться запустить процесс работы, в секундах. */

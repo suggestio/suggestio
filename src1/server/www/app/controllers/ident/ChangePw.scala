@@ -12,6 +12,7 @@ import util.di.IIdentUtil
 
 import scala.concurrent.Future
 import FormUtil.{passwordM, passwordWithConfirmM}
+import io.suggest.es.model.EsModelDi
 import io.suggest.sec.util.IScryptUtilDi
 import io.suggest.util.logs.IMacroLogs
 import views.html.ident.changePasswordTpl
@@ -66,9 +67,11 @@ trait ChangePwAction
   with IMPersonIdents
   with IEmailPwIdentsDi
   with IScryptUtilDi
+  with EsModelDi
 {
 
   import mCommonDi._
+  import esModel.api._
 
   /** Если неясно куда надо редиректить юзера, то что делать? */
   def changePwOkRdrDflt(implicit request: IReq[AnyContent]): Future[Call] = {

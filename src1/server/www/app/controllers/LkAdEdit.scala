@@ -6,7 +6,7 @@ import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit}
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
-import io.suggest.es.model.MEsUuId
+import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.MJdAdData
 import io.suggest.model.n2.ad.MNodeAd
@@ -43,6 +43,7 @@ import scala.concurrent.Future
   */
 @Singleton
 class LkAdEdit @Inject() (
+                           esModel                                : EsModel,
                            canEditAd                              : CanEditAd,
                            canCreateOrEditAd                      : CanCreateOrEditAd,
                            isNodeAdmin                            : IsNodeAdmin,
@@ -62,6 +63,7 @@ class LkAdEdit @Inject() (
 {
 
   import mCommonDi._
+  import esModel.api._
 
   private lazy val _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDivisor(2)
 

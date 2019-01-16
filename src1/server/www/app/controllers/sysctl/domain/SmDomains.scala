@@ -1,6 +1,7 @@
 package controllers.sysctl.domain
 
 import controllers.{SioController, routes}
+import io.suggest.es.model.EsModelDi
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.util.logs.IMacroLogs
@@ -27,9 +28,11 @@ trait SmDomains
   with IIsSuNodeDi
   with ISysMarketUtilDi
   with IMNodes
+  with EsModelDi
 {
 
   import mCommonDi._
+  import esModel.api._
 
 
   /** Запрос страницы добавления домена к узлу. */
