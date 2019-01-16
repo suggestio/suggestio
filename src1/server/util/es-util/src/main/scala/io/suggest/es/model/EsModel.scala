@@ -380,6 +380,46 @@ final class EsModel @Inject()(
     */
   class Api {
 
+    /** Поддержка API для StaticMapping. */
+    trait EsModelStaticMappingOpsT {
+      val model: EsModelStaticMapping
+
+      /** Отправить маппинг в elasticsearch. */
+      def putMapping(): Future[Boolean] = {
+        lazy val logPrefix = s"putMapping[${System.currentTimeMillis()}]:"
+        val indexName = model.ES_INDEX_NAME
+        val typeName = model.ES_TYPE_NAME
+        LOGGER.trace(s"$logPrefix $indexName/$typeName")
+
+        val fut = esClient.admin().indices()
+          .preparePutMapping(indexName)
+          .setType(typeName)
+          .setSource(model.generateMapping)
+          .executeFut()
+          .map { _.isAcknowledged }
+
+        fut.onComplete {
+          case Success(res) => LOGGER.debug(s"$logPrefix Done, ack=$res")
+          case Failure(ex)  => LOGGER.error(s"$logPrefix Failed", ex)
+        }
+
+        fut
+      }
+
+      /** Рефреш всего индекса, в котором живёт эта модель. */
+      def refreshIndex(): Future[_] = {
+        val indexName = model.ES_INDEX_NAME
+        LOGGER.trace(s"refreshIndex(): Will refresh $indexName")
+        esClient.admin().indices()
+          .prepareRefresh(indexName)
+          .executeFut()
+      }
+
+    }
+    implicit final class EsModelStaticMappingOps( override val model: EsModelStaticMapping )
+      extends EsModelStaticMappingOpsT
+
+
     trait EsModelCommonStaticUntypedOpsT {
 
       val model: EsModelCommonStaticT

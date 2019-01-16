@@ -28,7 +28,7 @@ import scala.concurrent.Future
  * Description: Общий код для обычный и child-моделей.
  * Был вынесен из-за разделения в логике работы обычный и child-моделей.
  */
-trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
+trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT with IEsModelDi { outer =>
 
   import mCommonDi._
 

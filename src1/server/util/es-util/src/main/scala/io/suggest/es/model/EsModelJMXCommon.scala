@@ -93,7 +93,8 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
 
   override def putMapping(): String = {
     LOGGER.warn(s"putMapping()")
-    companion.putMapping()
+    companion
+      .putMapping()
       .map(_.toString)
       .recover { case ex: Throwable => _formatEx(s"putMapping()", "", ex) }
   }

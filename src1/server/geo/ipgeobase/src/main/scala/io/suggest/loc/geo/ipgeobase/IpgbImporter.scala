@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.async.AsyncUtil
-import io.suggest.es.model.{EsIndexUtil, IEsModelDiVal}
+import io.suggest.es.model.{EsIndexUtil, EsModel, IEsModelDiVal}
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import org.apache.commons.io.{FileUtils, FilenameUtils}
@@ -25,18 +25,20 @@ import scala.util.{Failure, Success}
   * Description: Система импорта/обновления индексов IP GeoBase.
   */
 class IpgbImporter @Inject() (
-  mIndexes            : MIndexes,
-  mCitiesTmpFactory   : MCitiesTmpFactory,
-  mIpRangesTmpFactory : MIpRangesTmpFactory,
-  httpGetToFile       : HttpGetToFile,
-  asyncUtil           : AsyncUtil,
-  mCommonDi           : IEsModelDiVal
-)
+                               esModel             : EsModel,
+                               mIndexes            : MIndexes,
+                               mCitiesTmpFactory   : MCitiesTmpFactory,
+                               mIpRangesTmpFactory : MIpRangesTmpFactory,
+                               httpGetToFile       : HttpGetToFile,
+                               asyncUtil           : AsyncUtil,
+                               mCommonDi           : IEsModelDiVal
+                             )
   extends MacroLogsImpl
 {
 
   import mCommonDi._
   import LOGGER._
+  import esModel.api._
 
   /** Ссылка для скачивания текущей базы. */
   private def ARCHIVE_DOWNLOAD_URL = configuration.getOptional[String]("ipgeobase.archive.url")

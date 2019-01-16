@@ -1,11 +1,7 @@
 package io.suggest.es.model
 
-import io.suggest.es.util.SioEsUtil._
-import io.suggest.util.logs.IMacroLogs
+import io.suggest.es.util.SioEsUtil.{jsonGenerator, DocField, Field, IndexMapping}
 import org.elasticsearch.common.xcontent.XContentBuilder
-
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -47,9 +43,7 @@ trait EsModelStaticMappingGenerators extends IGenEsMappingProps {
 
 
 /** Трейт содержит статические хелперы для работы с маппингами. */
-trait EsModelStaticMapping extends EsModelStaticMappingGenerators with IMacroLogs with IEsModelDi {
-
-  import mCommonDi._
+trait EsModelStaticMapping extends EsModelStaticMappingGenerators {
 
   def ES_INDEX_NAME   = EsModelUtil.DFLT_INDEX
   def ES_TYPE_NAME: String
@@ -57,36 +51,6 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with IMacroLog
   def REPLICAS_COUNT  = EsModelUtil.REPLICAS_COUNT_DFLT
 
   def generateMapping: XContentBuilder = generateMappingFor(ES_TYPE_NAME)
-
-  /** Отправить маппинг в elasticsearch. */
-  def putMapping(): Future[Boolean] = {
-    lazy val logPrefix = s"putMapping[${System.currentTimeMillis()}]:"
-    LOGGER.trace(s"$logPrefix $ES_INDEX_NAME/$ES_TYPE_NAME")
-
-    val fut = esClient.admin().indices()
-      .preparePutMapping(ES_INDEX_NAME)
-      .setType(ES_TYPE_NAME)
-      .setSource(generateMapping)
-      .executeFut()
-      .map { _.isAcknowledged }
-
-    fut.onComplete {
-      case Success(res) => LOGGER.debug(s"$logPrefix Done, ack=$res")
-      case Failure(ex)  => LOGGER.error(s"$logPrefix Failed", ex)
-    }
-
-    fut
-  }
-
-
-  /** Рефреш всего индекса, в котором живёт эта модель. */
-  def refreshIndex(): Future[_] = {
-    val indexName = ES_INDEX_NAME
-    LOGGER.trace(s"refreshIndex(): Will refresh $indexName")
-    esClient.admin().indices()
-      .prepareRefresh(indexName)
-      .executeFut()
-  }
 
 }
 

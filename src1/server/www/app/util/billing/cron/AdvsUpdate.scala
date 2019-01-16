@@ -101,7 +101,8 @@ abstract class AdvsUpdate
           LOGGER.info(s"$logPrefix Done, total processed: $countTotal")
         // Теги косячат при такой пакетной обработке. Надо паузу делать тут, рефреш индекса принудительный.
         // Иначе свежие теги НЕ находятся в индексе на последующих итерациях. TODO Актуально ли это ещё? Теги ребилдятся в отдельном потоке, вроде.
-        mNodes.refreshIndex()
+        mNodes
+          .refreshIndex()
           .recover { case ex: Throwable =>
             LOGGER.error(s"$logPrefix Can't refresh es-index", ex)
           }
