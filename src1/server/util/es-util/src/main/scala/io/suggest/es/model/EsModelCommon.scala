@@ -5,7 +5,6 @@ import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.OptStrId
 import io.suggest.util.JacksonWrapper
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
-import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.search.SearchHit
@@ -71,16 +70,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     deserializeOne2(hit)
 
 
-  final def deserializeGetRespFull(getResp: GetResponse): Option[T] = {
-    if (getResp.isExists) {
-      val result = deserializeOne2(getResp)
-      Some(result)
-    } else {
-      None
-    }
-  }
-
-
   def UPDATE_RETRIES_MAX: Int = EsModelUtil.UPDATE_RETRIES_MAX_DFLT
 
 
@@ -91,6 +80,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   def toJsonPretty(m: T): String = toJson(m)
   def toJson(m: T): String
 
+
+  // TODO Надо как-то унести это в EsModel implicits, не ясно только как: внутренний implicit-код сильно зависит от explicit-инстанса модели.
   /** Implicit API модели завёрнуто в этот класс, который можно экстендить. */
   object Implicits {
 
@@ -126,9 +117,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
       }
     }
 
-    override def toString: String = {
+    override def toString: String =
       s"${outer.getClass.getSimpleName}.${getClass.getSimpleName}"
-    }
 
   }
 

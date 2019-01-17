@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Keep, Sink, Source}
-import io.suggest.common.empty.EmptyUtil
+import io.suggest.common.empty.{EmptyUtil, OptionUtil}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.scripts.IAggScripts
 import io.suggest.es.search.{DynSearchArgs, EsDynSearchStatic}
@@ -18,7 +18,7 @@ import org.elasticsearch.action.DocWriteResponse.Result
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
 import org.elasticsearch.action.get.MultiGetRequest.Item
-import org.elasticsearch.action.get.MultiGetResponse
+import org.elasticsearch.action.get.{GetResponse, MultiGetResponse}
 import org.elasticsearch.client.Client
 import play.api.cache.AsyncCacheApi
 import japgolly.univeq._
@@ -309,9 +309,13 @@ final class EsModel @Inject()(
    * @return Фьючерс с опциональными метаданными маппинга.
    */
   def getIndexTypeMeta(indexName: String, typeName: String): Future[Option[MappingMetaData]] = {
-    getIndexMeta(indexName) map { imdOpt =>
-      imdOpt.flatMap { imd =>
-        Option(imd.mapping(typeName))
+    for (imdOpt <- getIndexMeta(indexName)) yield {
+      for {
+        imd <- imdOpt
+        mappingOrNull = imd.mapping(typeName)
+        r   <- Option( mappingOrNull )
+      } yield {
+        r
       }
     }
   }
@@ -1320,12 +1324,18 @@ final class EsModel @Inject()(
         * @return Экземпляр сабжа, если такой существует.
         */
       def getById(id: String, options: GetOpts = model._getArgsDflt): Future[Option[T1]] = {
-        val rq = model.prepareGet(id)
-        for (sf <- options.sourceFiltering) {
-          rq.setFetchSource(sf.includes.toArray, sf.excludes.toArray)
+        for {
+          getResp <- {
+            val rq = model.prepareGet(id)
+            for (sf <- options.sourceFiltering)
+              rq.setFetchSource(sf.includes.toArray, sf.excludes.toArray)
+            rq.executeFut()
+          }
+        } yield {
+          OptionUtil.maybe( getResp.isExists ) {
+            model.deserializeOne2(getResp)
+          }
         }
-        rq.executeFut()
-          .map { model.deserializeGetRespFull }
       }
 
 
@@ -1724,79 +1734,93 @@ final class EsModel @Inject()(
       }
 
 
-      // Реализации typeclass'ов:
+      // Реализации typeclass'ов поиска. Без object, т.к. в этих одноразовых implicit class'ах нет смысла что-то хранить/кэшировать.
 
       /** search-маппер, просто возвращающий сырой ответ. */
-      implicit object RawSearchRespMapper extends EsSearchFutHelper[SearchResponse] {
-        /** Парсинг и обработка сырого результата в некий результат. */
-        override def mapSearchResp(searchResp: SearchResponse): Future[SearchResponse] =
-          Future.successful( searchResp )
+      implicit def RawSearchRespMapper: EsSearchFutHelper[SearchResponse] = {
+        new EsSearchFutHelper[SearchResponse] {
+          /** Парсинг и обработка сырого результата в некий результат. */
+          override def mapSearchResp(searchResp: SearchResponse): Future[SearchResponse] =
+            Future.successful( searchResp )
+        }
       }
 
       /** typeclass: возвращает результаты в виде инстансом моделей. */
-      implicit object LazyStreamMapper extends EsSearchFutHelper[Stream[T1]] {
-        override def mapSearchResp(searchResp: SearchResponse): Future[Stream[T1]] = {
-          val result = model.searchResp2stream(searchResp)
-          Future.successful(result)
+      implicit def LazyStreamMapper: EsSearchFutHelper[Stream[T1]] = {
+        new EsSearchFutHelper[Stream[T1]] {
+          override def mapSearchResp(searchResp: SearchResponse): Future[Stream[T1]] = {
+            val result = model.searchResp2stream(searchResp)
+            Future.successful(result)
+          }
         }
       }
 
       /** typeclass: Маппер ответа в id'шники ответов. */
-      implicit object IdsMapper extends EsSearchIdsFutHelper[ ISearchResp[String] ] {
-        override def mapSearchResp(searchResp: SearchResponse): Future[ISearchResp[String]] = {
-          val result = esModel.searchResp2idsList(searchResp)
-          Future.successful(result)
+      implicit def IdsMapper: EsSearchIdsFutHelper[ISearchResp[String]] = {
+        new EsSearchIdsFutHelper[ISearchResp[String]] {
+          override def mapSearchResp(searchResp: SearchResponse): Future[ISearchResp[String]] = {
+            val result = esModel.searchResp2idsList(searchResp)
+            Future.successful(result)
+          }
         }
       }
 
       /** typeclass: подсчёт кол-ва результатов без самих результатов. */
-      implicit object CountMapper extends IEsSearchHelper[A, Long] {
-        override def run(args: A): Future[Long] =
-          model.countByQuery( args.toEsQuery )
+      implicit def CountMapper: IEsSearchHelper[A, Long] = {
+        new IEsSearchHelper[A, Long] {
+          override def run(args: A): Future[Long] =
+            model.countByQuery( args.toEsQuery )
+        }
       }
 
       /** typeclass для возврата максимум одного результата и в виде Option'а. */
-      implicit object OptionTMapper extends EsSearchFutHelper[Option[T1]] {
-        /** Парсинг и обработка сырого результата в некий результат. */
-        override def mapSearchResp(searchResp: SearchResponse): Future[Option[T1]] = {
-          val r = model.searchResp2stream(searchResp)
-            .headOption
-          Future.successful(r)
+      implicit def OptionTMapper: EsSearchFutHelper[Option[T1]] = {
+        new EsSearchFutHelper[Option[T1]] {
+          /** Парсинг и обработка сырого результата в некий результат. */
+          override def mapSearchResp(searchResp: SearchResponse): Future[Option[T1]] = {
+            val r = model.searchResp2stream(searchResp)
+              .headOption
+            Future.successful(r)
+          }
         }
       }
 
       /** typeclass маппинга в карту по id. */
-      implicit object MapByIdMapper extends EsSearchFutHelper[Map[String, T1]] {
-        override def mapSearchResp(searchResp: SearchResponse): Future[Map[String, T1]] = {
-          val r = OptId.els2idMap[String, T1] {
-            model.searchRespMap(searchResp)( model.deserializeSearchHit )
+      implicit def MapByIdMapper: EsSearchFutHelper[Map[String, T1]] = {
+        new EsSearchFutHelper[Map[String, T1]] {
+          override def mapSearchResp(searchResp: SearchResponse): Future[Map[String, T1]] = {
+            val r = OptId.els2idMap[String, T1] {
+              model.searchRespMap(searchResp)( model.deserializeSearchHit )
+            }
+            Future.successful(r)
           }
-          Future.successful(r)
         }
       }
 
       /** Вызываемая вручную сборка multigetter'а для найденных результатов.
         * Это typeclass, передаваемый вручную в dynSearch2() при редкой необходимости такого действия.
         */
-      object SeqRtMapper extends EsSearchIdsFutHelper[Seq[T1]] {
-        /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
-          * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
-          *
-          * @return Результат - что-то неопределённом порядке.
-          */
-        override def mapSearchResp(searchResp: SearchResponse): Future[Seq[T1]] = {
-          val searchHits = searchResp.getHits.getHits
-          if (searchHits.isEmpty) {
-            Future successful Nil
-          } else {
-            val mgetReq = esClient
-              .prepareMultiGet()
-              .setRealtime(true)
-            for (hit <- searchHits)
-              mgetReq.add(hit.getIndex, hit.getType, hit.getId)
-            mgetReq
-              .executeFut()
-              .map { model.mgetResp2Stream }
+      def SeqRtMapper: EsSearchIdsFutHelper[Seq[T1]] = {
+        new EsSearchIdsFutHelper[Seq[T1]] {
+          /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
+            * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
+            *
+            * @return Результат - что-то неопределённом порядке.
+            */
+          override def mapSearchResp(searchResp: SearchResponse): Future[Seq[T1]] = {
+            val searchHits = searchResp.getHits.getHits
+            if (searchHits.isEmpty) {
+              Future successful Nil
+            } else {
+              val mgetReq = esClient
+                .prepareMultiGet()
+                .setRealtime(true)
+              for (hit <- searchHits)
+                mgetReq.add(hit.getIndex, hit.getType, hit.getId)
+              mgetReq
+                .executeFut()
+                .map { model.mgetResp2Stream }
+            }
           }
         }
       }

@@ -12,21 +12,20 @@ import org.elasticsearch.search.SearchHit
 
 object IEsSourcingHelper {
 
-  implicit def idsHelper = new IdsSourcingHelper
+  /** Сборка сорсера только id'шников. */
+  implicit def idsHelper: IEsSourcingHelper[String] = {
+    new IEsSourcingHelper[String] {
 
-}
+      override def prepareSrb(srb: SearchRequestBuilder): SearchRequestBuilder = {
+        super.prepareSrb(srb)
+          .setFetchSource(false)
+      }
 
+      override def mapSearchHit(from: SearchHit): String = {
+        from.getId
+      }
 
-/** Интерфейс typeclass'а для десериализатора SearchHit ответов elasticsearch. */
-trait IEsHitMapper[To] {
-  def mapSearchHit(from: SearchHit): To
-}
-
-trait IEsSrbMutator {
-
-  /** Подготовка search definition'а к будущему запросу. */
-  def prepareSrb(srb: SearchRequestBuilder): SearchRequestBuilder = {
-    srb
+    }
   }
 
 }
@@ -34,7 +33,7 @@ trait IEsSrbMutator {
 
 /** Интерфейс SourcingHelper'а.
   * Такие typeclass'ы модифицируют поисковые запросы и их результаты. */
-trait IEsSourcingHelper[To] extends IEsHitMapper[To] with IEsSrbMutator {
+trait IEsSourcingHelper[To] extends IEsSrbMutator {
 
   override def toString: String = try {
     getClass.getSimpleName
@@ -42,19 +41,17 @@ trait IEsSourcingHelper[To] extends IEsHitMapper[To] with IEsSrbMutator {
     super.toString
   }
 
+  /** Десериализатор SearchHit ответов elasticsearch. */
+  def mapSearchHit(from: SearchHit): To
+
 }
 
 
-/** Сборка сорсера только id'шников. */
-class IdsSourcingHelper extends IEsSourcingHelper[String] {
+trait IEsSrbMutator {
 
-  override def prepareSrb(srb: SearchRequestBuilder): SearchRequestBuilder = {
-    super.prepareSrb(srb)
-      .setFetchSource(false)
-  }
-
-  override def mapSearchHit(from: SearchHit): String = {
-    from.getId
+  /** Подготовка search definition'а к будущему запросу. */
+  def prepareSrb(srb: SearchRequestBuilder): SearchRequestBuilder = {
+    srb
   }
 
 }
