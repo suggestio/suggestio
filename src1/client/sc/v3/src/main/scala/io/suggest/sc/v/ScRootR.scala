@@ -10,10 +10,12 @@ import io.suggest.css.CssR
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.MScRoot
+import io.suggest.sc.m.dia.first.MWzFirstS
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.MSearchPanelS
 import io.suggest.sc.styl.{GetScCssF, ScCss, ScCssStatic}
+import io.suggest.sc.v.dia.first.WzFirstR
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx.{IndexSwitchAskR, WelcomeR}
@@ -53,6 +55,7 @@ class ScRootR (
                 val geoLocR             : GeoLocR,
                 val indexSwitchAskR     : IndexSwitchAskR,
                 val goBackR             : GoBackR,
+                val wzFirstR            : WzFirstR,
                 getScCssF               : GetScCssF,
               ) {
 
@@ -92,6 +95,7 @@ class ScRootR (
                                     menuGeoLocC               : ReactConnectProxy[geoLocR.Props_t],
                                     indexSwitchAskC           : ReactConnectProxy[indexSwitchAskR.Props_t],
                                     goBackC                   : ReactConnectProxy[goBackR.Props_t],
+                                    firstRunWzC               : ReactConnectProxy[wzFirstR.Props_t],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -350,6 +354,10 @@ class ScRootR (
 
         // Всплывающая плашка для смены узла: TODO Запихнуть внутрь theme-provider?
         s.indexSwitchAskC { indexSwitchAskR.apply },
+
+        // Диалог первого запуска.
+        s.firstRunWzC { wzFirstR.apply },
+
       )
 
     }
@@ -511,7 +519,11 @@ class ScRootR (
           OptionUtil.maybeOpt( !mroot.index.isAnyPanelOpened ) {
             mroot.index.state.prevNodeOpt
           }
-        }( OptFastEq.Plain )
+        }( OptFastEq.Plain ),
+
+        firstRunWzC = propsProxy.connect { mroot =>
+          mroot.dialogs.first
+        }( OptFastEq.Wrapped( MWzFirstS.MWzFirstSEq ) ),
 
       )
     }

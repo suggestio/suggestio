@@ -474,7 +474,7 @@ class BleBeaconerAh[M](
 
 
     // Управление активностью BleBeaconer: вкл/выкл.
-    case m: BbOnOff =>
+    case m: BtOnOff =>
       val v0 = value
       // ! contains true вместо false, т.к. тут обычен случай Pot.empty.
       if (!v0.isEnabled.contains(true) && m.isEnabled) {

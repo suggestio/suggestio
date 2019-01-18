@@ -4,10 +4,7 @@ import java.io.ByteArrayInputStream
 
 import io.suggest.util.SioConstants._
 import io.suggest.util.logs.MacroLogsImpl
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
-import org.elasticsearch.action.support.master.AcknowledgedResponse
 import org.elasticsearch.action.{ActionListener, ActionRequestBuilder, ActionResponse}
-import org.elasticsearch.client.Client
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.TransportAddress
@@ -16,7 +13,7 @@ import org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
 import org.elasticsearch.index.mapper._
 import org.elasticsearch.transport.client.PreBuiltTransportClient
 
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{Future, Promise}
 
 // TODO Как показала практика, XContentBuilder слегка взрывоопасен и слишком изменяем. Следует тут задействовать
 //      статически-типизированный play.json для генерации json-маппингов.
@@ -72,119 +69,6 @@ object SioEsUtil extends MacroLogsImpl {
     *      That version number is a positive number between 1 and 2**63-1 (inclusive).
     */
   def DOC_VSN_0     = 1L
-
-  /**
-   * Создать параллельно пачку одинаковых индексов.
-    *
-    * @param indices Имена индексов.
-   * @param shardsPerIndex Шардинг
-   * @param replicasPerIndex Репликация
-   * @return Список результатов (список isAcknowledged()).
-   */
-  def createIndices(indices: Seq[String], shardsPerIndex: Int = 1, replicasPerIndex: Int = 1)
-                   (implicit client: Client, ec:ExecutionContext): Future[Seq[Boolean]] = {
-    Future.traverse(indices) {
-      createIndex(_, shardsPerIndex, replicasPerIndex)
-    }
-  }
-
-  /**
-    * Убедиться, что есть такой индекс
-    *
-    * @param indexName имя индекса
-    * @param shards кол-во шард. По дефолту = 1
-    * @param replicas кол-во реплик. По дефолту = 1
-    * @return true, если индекс принят.
-    */
-  def createIndex(indexName: String, shards: Int = 1, replicas: Int = 1)
-                 (implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
-    client.admin()
-      .indices()
-      .prepareCreate(indexName)
-      .setSettings(getNewIndexSettings(shards=shards, replicas=replicas))
-      .executeFut()
-      .map(_.isAcknowledged)
-  }
-
-
-  /**
-    * Отправить маппинг в индекс. Маппинги обычно генеряться в методах get*Mapping() этого модуля.
-    *
-    * @param indexName имя индекса, в который записать маппинг.
-    * @param typeName имя типа для маппинга.
-    * @param mapping маппинг.
-    * @return true, если маппинг принят кластером.
-    */
-  def putMapping(indexName: String, typeName: String, mapping: XContentBuilder)
-                (implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
-    client.admin()
-      .indices()
-      .preparePutMapping(indexName)
-      .setType(typeName)
-      .setSource(mapping)
-      .executeFut()
-      .map(_.isAcknowledged)
-  }
-
-  /**
-    * Асинхронное определение наличия указанного индекса/указанных индексов в кластере.
-    *
-    * @param indexNames список индексов
-    * @return true, если все перечисленные индексы существуют.
-    */
-  def isIndexExist(indexNames: String *)(implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
-    client.admin()
-      .indices()
-      .prepareExists(indexNames: _*)
-      .executeFut()
-      .map(_.isExists)
-  }
-
-  /**
-    * Существует ли указанный индекс/индексы? Синхронный блокирующий запрос.
-    *
-    * @param indexNames Имена индексов.
-    * @return true, если индексы с такими именами существуют.
-    */
-  @deprecated("Please use non-blocking isIndexExist()", "2013.07.05")
-  def isIndexExistSync(indexNames: String*)(implicit client: Client) : Boolean = {
-    client.admin()
-      .indices()
-      .exists( new IndicesExistsRequest(indexNames : _*) )
-      .actionGet()
-      .isExists
-  }
-
-
-  /**
-    * Закрыть индекс указанный
-    *
-    * @param indexName имя индекса.
-    */
-  def closeIndex(indexName: String)(implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
-    lazy val logPrefix = s"closeIndex($indexName): "
-    trace(logPrefix + "Starting close index ...")
-    client.admin()
-      .indices()
-      .prepareClose(indexName)
-      .executeFut()
-      .map { _.isAcknowledged }
-  }
-
-  /**
-    * Послать запрос на открытие индекса. Это загружает данные индекса в память соотвтествующих нод, если индекс был ранее закрыт.
-    *
-    * @param indexName Имя открываемого индекса.
-    * @return true, если всё нормально
-    */
-  def openIndex(indexName: String)(implicit client: Client, ec: ExecutionContext): Future[Boolean] = {
-    lazy val logPrefix = s"openIndex($indexName): "
-    trace(logPrefix + "Sending open request...")
-    client.admin().indices()
-      .prepareOpen(indexName)
-      .executeFut()
-      .map { _.isAcknowledged }
-  }
 
 
   // Кол-во попыток поиска свободного имени для будущего индекса.

@@ -3,6 +3,7 @@ package io.suggest.sc.m
 import diode.FastEq
 import io.suggest.geo.{MGeoLoc, MLocEnv}
 import io.suggest.sc.m.dev.MScDev
+import io.suggest.sc.m.dia.MScDialogs
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.sc3.MSc3Init
@@ -21,10 +22,11 @@ object MScRoot {
 
   implicit case object MScRootFastEq extends FastEq[MScRoot] {
     override def eqv(a: MScRoot, b: MScRoot): Boolean = {
-      (a.dev          ===* b.dev) &&
-        (a.index      ===* b.index) &&
-        (a.grid       ===* b.grid) &&
-        (a.internals  ===* b.internals)
+      (a.dev        ===* b.dev) &&
+      (a.index      ===* b.index) &&
+      (a.grid       ===* b.grid) &&
+      (a.internals  ===* b.internals) &&
+      (a.dialogs    ===* b.dialogs)
     }
   }
 
@@ -38,17 +40,27 @@ object MScRoot {
 }
 
 
+/** Корневой контейнер данных состояния выдачи.
+  *
+  * @param dev Оборудование.
+  * @param index Интерфейс.
+  * @param grid Плитка.
+  * @param internals Внутренности.
+  * @param dialogs Диалоги.
+  */
 case class MScRoot(
                     dev           : MScDev,
                     index         : MScIndex,
                     grid          : MGridS,
-                    internals     : MScInternals
+                    internals     : MScInternals,
+                    dialogs       : MScDialogs    = MScDialogs.empty,
                   ) {
 
   def withDev( dev: MScDev )                        = copy(dev = dev)
   def withIndex( index: MScIndex )                  = copy(index = index)
   def withInternals( internals: MScInternals )      = copy(internals = internals)
   def withGrid( grid: MGridS )                      = copy(grid = grid)
+  def withDialogs( dialogs: MScDialogs )            = copy(dialogs = dialogs)
 
   def userLocOpt: Option[MGeoLoc] = {
     index.search.geo.mapInit.userLoc

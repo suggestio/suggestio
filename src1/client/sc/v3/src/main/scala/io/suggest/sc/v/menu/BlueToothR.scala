@@ -2,7 +2,7 @@ package io.suggest.sc.v.menu
 
 import diode.data.Pot
 import diode.react.ModelProxy
-import io.suggest.ble.beaconer.m.BbOnOff
+import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.i18n.MsgCodes
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.ScalaComponent
@@ -26,7 +26,7 @@ class BlueToothR(
 
   private lazy val _onOffClickAction = {
     onOff: Boolean =>
-      BbOnOff( isEnabled = onOff, hard = true )
+      BtOnOff( isEnabled = onOff, hard = true )
   }
 
 

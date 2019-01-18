@@ -1019,3 +1019,10 @@ Go.back.to.0=Back into {0}
 Text.shadow=Text shadow
 Shadow.color=Shadow color
 
+0.uses.geoloc.to.find.ads={0} uses geolocation to find offers.
+0.uses.bt.to.find.ads.indoor={0} uses Bluetooth to find offers indoor.
+Allow.0=Allow {0}
+Later=Later
+You.can.enable.0.later.on.left.panel=You can re-activate {0} later via left menu panel.
+Settings.done.0.ready.for.using=Setting done. {0} ready for using.
+

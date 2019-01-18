@@ -23,7 +23,7 @@ sealed trait IBleBeaconAction extends DAction
   * @param hard Если true + !isEnabled, то состояние фиксируется в off с очисткой состояния.
   *             Включить назад можно будет только после hard+isEnabled
   */
-case class BbOnOff(isEnabled: Boolean,
+case class BtOnOff(isEnabled: Boolean,
                    hard: Boolean = false) extends IBleBeaconAction
 
 /** Экшен Результат подписки на события API. */

@@ -4,7 +4,7 @@ import diode.ModelRO
 import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.ble.beaconer.c.BleBeaconerAh
-import io.suggest.ble.beaconer.m.BbOnOff
+import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.event.WndEvents
 import io.suggest.dev.{JsScreenUtil, MPxRatios, MScreenInfo}
@@ -22,6 +22,7 @@ import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
+import io.suggest.sc.c.dia.WizardAh
 import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.inx.{IndexAh, IndexRah, WelcomeAh}
 import io.suggest.sc.c.search._
@@ -197,6 +198,9 @@ class Sc3Circuit(
 
   private val beaconerRW = devRW.zoomRW(_.beaconer) { _.withBeaconer(_) }
 
+  private val dialogsRW = zoomRW(_.dialogs)(_.withDialogs(_))
+
+
   private def _getLocEnv(mroot: MScRoot, currRcvrId: Option[_] = None): MLocEnv = {
     MLocEnv(
       geoLocOpt  = OptionUtil.maybeOpt(currRcvrId.isEmpty)( mroot.geoLocOpt ),
@@ -336,6 +340,11 @@ class Sc3Circuit(
     dispatcher  = this
   )
 
+  private val wizardAh = new WizardAh(
+    platformRO  = platformRW,
+    modelRW     = dialogsRW,
+  )
+
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( ScJsRoutes )
 
@@ -346,6 +355,9 @@ class Sc3Circuit(
 
     // В самый хвост списка добавить дефолтовый обработчик для редких событий и событий, которые можно дропать.
     acc ::= tailAh
+
+    // Диалоги обычно закрыты. Тоже - в хвост.
+    acc ::= wizardAh
 
     // Листенер инициализации роутера. Выкидывать его после окончания инициализации.
     //if ( !jsRouterRW.value.isReady ) {
@@ -450,7 +462,7 @@ class Sc3Circuit(
         if (plat.isBleAvail && plat.isReady) {
           //LOG.warn( "ok, dispatching ble on/off", msg = plat )
           Future {
-            val msg = BbOnOff( isEnabled = plat.isUsingNow)
+            val msg = BtOnOff( isEnabled = plat.isUsingNow)
             dispatch( msg )
           }
         }
@@ -571,5 +583,13 @@ class Sc3Circuit(
     }
 
   }
+
+  /*
+  // TODO Запуск мастера настройки первого запуска, если требуется.
+  Future {
+    InitFirstRunWz(true).toEffectPure >>
+      ShowFirstRunWz(true).toEffectPure
+  }
+  */
 
 }

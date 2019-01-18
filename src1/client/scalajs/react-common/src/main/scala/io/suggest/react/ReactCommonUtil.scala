@@ -17,12 +17,10 @@ import scala.language.{higherKinds, implicitConversions}
   */
 object ReactCommonUtil {
 
-  def stopPropagationCB(e: ReactEvent): Callback = {
+  def stopPropagationCB(e: ReactEvent): Callback =
     e.stopPropagationCB
-  }
-  def preventDefaultCB(e: ReactEvent): Callback = {
+  def preventDefaultCB(e: ReactEvent): Callback =
     e.preventDefaultCB
-  }
 
   def cbFun1ToF[Arg, Res](fun: Arg => CallbackTo[Res]): (Arg) => Res = {
     fun
@@ -41,9 +39,8 @@ object ReactCommonUtil {
     *
     * @see [[https://github.com/japgolly/scalajs-react/issues/210#issuecomment-149991727]]
     */
-  def cbFun1ToJsCb[Arg, Res](fun: Arg => CallbackTo[Res]): js.Function1[Arg, Res] = {
+  def cbFun1ToJsCb[Arg, Res](fun: Arg => CallbackTo[Res]): js.Function1[Arg, Res] =
     cbFun1ToF(fun)
-  }
 
   def cbFun2ToJsCb[Arg1, Arg2, Res](fun: (Arg1, Arg2) => CallbackTo[Res]): js.Function2[Arg1, Arg2, Res] = {
     { (arg1, arg2) =>
@@ -60,9 +57,9 @@ object ReactCommonUtil {
   }
 
 
-  val VdomNullElement: VdomElement = {
+  val VdomNullElement: VdomElement =
     VdomElement(null)
-  }
+
 
   /** Выборочный рендер TagMod'а на основе результата выполнения условия. При компиляции превращается в if/else. */
   @inline

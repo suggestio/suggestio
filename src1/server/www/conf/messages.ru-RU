@@ -1027,3 +1027,10 @@ Go.back.to.0=Назад в {0}
 Text.shadow=Тень текста
 Shadow.color=Цвет тени
 
+0.uses.geoloc.to.find.ads={0} использует геолокацию для нахождения предложений.
+0.uses.bt.to.find.ads.indoor={0} использует Bluetooth для обнаружения предложений внутри зданий и сооружений.
+Allow.0=Разрешить {0}
+Later=Позже
+You.can.enable.0.later.on.left.panel=Вы можете активировать {0} позже на левой панели меню.
+Settings.done.0.ready.for.using=Настройка завершена. {0} готов к началу работы.
+

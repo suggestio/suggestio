@@ -11,14 +11,14 @@ import io.suggest.es.scripts.IAggScripts
 import io.suggest.es.search.{DynSearchArgs, EsDynSearchStatic}
 import io.suggest.es.util.SioEsUtil
 import io.suggest.es.util.SioEsUtil._
-import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.primo.id.OptId
+import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import org.elasticsearch.action.DocWriteResponse.Result
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
 import org.elasticsearch.action.get.MultiGetRequest.Item
-import org.elasticsearch.action.get.{GetResponse, MultiGetResponse}
+import org.elasticsearch.action.get.MultiGetResponse
 import org.elasticsearch.client.Client
 import play.api.cache.AsyncCacheApi
 import japgolly.univeq._
@@ -55,8 +55,9 @@ final class EsModel @Inject()(
                                ec           : ExecutionContext,
                                esClient     : Client,
                                mat          : Materializer,
-                               sn           : SioNotifierStaticClientI,
-                             ) { esModel =>
+                             )
+  extends MacroLogsImpl
+{ esModel =>
 
 
   /** Сконвертить распарсенные результаты в карту. */
@@ -539,7 +540,7 @@ final class EsModel @Inject()(
 
       /** Отправить маппинг в elasticsearch. */
       def putMapping(): Future[Boolean] = {
-        lazy val logPrefix = s"putMapping[${System.currentTimeMillis()}]:"
+        lazy val logPrefix = s"$model.putMapping[${System.currentTimeMillis()}]:"
         val indexName = model.ES_INDEX_NAME
         val typeName = model.ES_TYPE_NAME
         LOGGER.trace(s"$logPrefix $indexName/$typeName")
@@ -552,7 +553,7 @@ final class EsModel @Inject()(
           .map { _.isAcknowledged }
 
         fut.onComplete {
-          case Success(res) => LOGGER.debug(s"$logPrefix Done, ack=$res")
+          case Success(res) => LOGGER.trace(s"$logPrefix Done, ack=$res")
           case Failure(ex)  => LOGGER.error(s"$logPrefix Failed", ex)
         }
 
@@ -562,15 +563,15 @@ final class EsModel @Inject()(
       /** Рефреш всего индекса, в котором живёт эта модель. */
       def refreshIndex(): Future[_] = {
         val indexName = model.ES_INDEX_NAME
-        LOGGER.trace(s"refreshIndex(): Will refresh $indexName")
+        LOGGER.trace(s"$model.refreshIndex(): Will refresh $indexName")
         esClient.admin().indices()
           .prepareRefresh(indexName)
           .executeFut()
       }
 
 
-      import io.suggest.es.util.SioEsUtil.{jsonGenerator, IndexMapping}
       def generateMapping: XContentBuilder = {
+        import io.suggest.es.util.SioEsUtil.{jsonGenerator, IndexMapping}
         jsonGenerator { implicit b =>
           // Собираем маппинг индекса.
           IndexMapping(
@@ -585,6 +586,9 @@ final class EsModel @Inject()(
       extends EsModelStaticMappingOpsT
 
 
+    /** Базовый доступ в модель без учёта типа элемента модели.
+      * Появилась, т.к. часть кода проекта работает со списками моделей, без определения type-T вообще.
+      */
     trait EsModelCommonStaticUntypedOpsT {
 
       val model: EsModelCommonStaticT

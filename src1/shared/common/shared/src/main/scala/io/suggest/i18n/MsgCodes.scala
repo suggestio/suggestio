@@ -330,4 +330,13 @@ object MsgCodes {
 
   val `No.ads.found.node.id` = "No.ads.found.node.id"
 
+  val `GPS` = "GPS"
+  val `0.uses.geoloc.to.find.ads` = "0.uses.geoloc.to.find.ads"
+  val `0.uses.bt.to.find.ads.indoor` = "0.uses.bt.to.find.ads.indoor"
+  val `Allow.0` = "Allow.0"
+  val `Later` = "Later"
+  val `You.can.enable.0.later.on.left.panel` = "You.can.enable.0.later.on.left.panel"
+  val `Next` = "Next"
+  val `Settings.done.0.ready.for.using` = "Settings.done.0.ready.for.using"
+
 }

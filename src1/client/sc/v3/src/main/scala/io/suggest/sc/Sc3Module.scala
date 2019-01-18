@@ -6,8 +6,10 @@ import io.suggest.sc.c.{IRespActionHandler, IRespHandler, IRespWithActionHandler
 import io.suggest.sc.c.grid.{GridFocusRespHandler, GridRespHandler}
 import io.suggest.sc.c.inx.{ConfUpdateRah, IndexRah}
 import io.suggest.sc.c.search.NodesSearchRespHandler
-import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
+import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v._
+import io.suggest.sc.v.dia.first.WzFirstR
+import io.suggest.sc.v.dia.{WzAskPermR, WzInfoR}
 import io.suggest.sc.v.grid._
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx._
@@ -87,6 +89,12 @@ class Sc3Module {
   lazy val unsafeScreenAreaOffsetR = wire[UnsafeScreenAreaOffsetR]
   lazy val slideMenuItemR = wire[SlideMenuItemR]
   lazy val geoLocR = wire[GeoLocR]
+
+
+  // wizard
+  lazy val wzAskFrameR = wire[WzAskPermR]
+  lazy val wzInfoFrameR = wire[WzInfoR]
+  lazy val wzStartR = wire[WzFirstR]
 
 
   // sc3 top level

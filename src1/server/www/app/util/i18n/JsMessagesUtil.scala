@@ -254,6 +254,14 @@ class JsMessagesUtil @Inject() (
       MC.`Cancel` ::
       MC.`Go.back` ::
       MC.`Go.back.to.0` ::
+      // wizard:
+      MC.`0.uses.geoloc.to.find.ads` ::
+      MC.`0.uses.bt.to.find.ads.indoor` ::
+      MC.`Allow.0` ::
+      MC.`Later` ::
+      MC.`You.can.enable.0.later.on.left.panel` ::
+      MC.`Next` ::
+      MC.`Settings.done.0.ready.for.using` ::
       Nil
   }
 
