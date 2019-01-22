@@ -1,12 +1,15 @@
 package io.suggest.sc.c.dia
 
-import diode.{ActionHandler, ActionResult, ModelRO, ModelRW}
+import diode._
 import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.dev.MPlatformS
+import io.suggest.msg.WarnMsgs
 import io.suggest.sc.m.GeoLocOnOff
 import io.suggest.sc.m.dia.first.{MWzFirstS, MWzFrames, MWzQuestions}
 import io.suggest.sc.m.dia.{InitFirstRunWz, MScDialogs, ShowFirstRunWz, YesNoWz}
-import io.suggest.spa.DoNothing
+import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.dom.DomQuick
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 
 /**
@@ -20,6 +23,7 @@ class WizardAh[M](
                    modelRW          : ModelRW[M, MScDialogs],
                  )
   extends ActionHandler( modelRW )
+  with Log
 {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
@@ -28,7 +32,7 @@ class WizardAh[M](
     case m: YesNoWz =>
       val v0 = value
       v0.first
-        .map { first0 =>
+        .fold(noChange) { first0 =>
           // Рендер завершённого состояния.
           def __finish = {
             val f2 = first0.copy(
@@ -94,15 +98,21 @@ class WizardAh[M](
               // Ответ не важен - прикрыть окно диалога.
               val f2 = first0.withVisible( false )
               val v2 = v0.withFirst( Some(f2) )
-              val lastFx = InitFirstRunWz(false).toEffectPure
+
+              // Удалить диалог из рендера после сокрытия.
+              val unRenderFx = Effect {
+                DomQuick
+                  .timeoutPromiseT(800)(InitFirstRunWz(false))
+                  .fut
+              }
+
               // TODO Какой-то эффект нужен для запуска выдачи?
-              val fx = DoNothing.toEffectPure >> lastFx
+
+              val fx = unRenderFx
               updated(v2, fx)
 
           }
         }
-        // Нет результата.
-        .getOrElse( noChange )
 
 
     // Управление фоновой инициализацией:
@@ -130,6 +140,7 @@ class WizardAh[M](
         updated(v2)
 
       } else {
+        LOG.log( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
       }
 
@@ -139,7 +150,10 @@ class WizardAh[M](
       val v0 = value
       v0.first
         .filter(_.visible !=* m.isShown )
-        .fold(noChange) { first0 =>
+        .fold {
+          LOG.log( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
+          noChange
+        } { first0 =>
           val first2 = first0.withVisible( m.isShown )
           val v2 = v0.withFirst( Some(first2) )
           updated( v2 )

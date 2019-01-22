@@ -1,10 +1,10 @@
 package io.suggest.sc.c.dev
 
-import _root_.cordova.CordovaConstants.{Events => CordovaEvents}
-import cordova.CordovaConstants
+import io.suggest.cordova.CordovaConstants.{Events => CordovaEvents}
 import diode.{ActionHandler, ActionResult, Dispatcher, ModelRW}
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.common.event.DomEvents
+import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.MPlatformS
 import io.suggest.sc.m.{PauseOrResume, SetPlatformReady}
 import io.suggest.sjs.common.log.Log

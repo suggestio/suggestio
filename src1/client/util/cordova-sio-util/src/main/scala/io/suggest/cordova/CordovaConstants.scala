@@ -1,4 +1,6 @@
-package cordova
+package io.suggest.cordova
+
+import cordova.Cordova
 
 import scala.scalajs.js
 

@@ -10,7 +10,6 @@ import io.suggest.css.CssR
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.MScRoot
-import io.suggest.sc.m.dia.first.MWzFirstS
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.MSearchPanelS
@@ -522,8 +521,13 @@ class ScRootR (
         }( OptFastEq.Plain ),
 
         firstRunWzC = propsProxy.connect { mroot =>
-          mroot.dialogs.first
-        }( OptFastEq.Wrapped( MWzFirstS.MWzFirstSEq ) ),
+          for (first <- mroot.dialogs.first) yield {
+            wzFirstR.PropsVal(
+              first      = first,
+              fullScreen = mroot.dev.screen.info.isDialogWndFullScreen
+            )
+          }
+        }( OptFastEq.Wrapped( wzFirstR.WzFirstRPropsValFastEq ) ),
 
       )
     }

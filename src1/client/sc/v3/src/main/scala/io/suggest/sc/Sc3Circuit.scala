@@ -584,12 +584,15 @@ class Sc3Circuit(
 
   }
 
-  /*
   // TODO Запуск мастера настройки первого запуска, если требуется.
+  import io.suggest.sc.m.dia._
   Future {
-    InitFirstRunWz(true).toEffectPure >>
-      ShowFirstRunWz(true).toEffectPure
+    dispatch(
+      InitFirstRunWz(true)
+    )
+    dispatch(
+      ShowFirstRunWz(true)
+    )
   }
-  */
 
 }

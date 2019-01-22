@@ -76,6 +76,8 @@
         <variable name="BLUETOOTH_USAGE_DESCRIPTION" value="Monitoring Bluetooth-Beacons" />
     </plugin>
     <plugin name="cordova-plugin-splashscreen" spec="~5.0.2" />
+    <preference name="cordova.plugins.diagnostic.modules" value="LOCATION BLUETOOTH" />
+    <plugin name="cordova.plugins.diagnostic" spec="^4.0.10" />
     <engine name="android" spec="^7.0.0" />
     <engine name="ios" spec="^4.5.4" />
 </widget>

@@ -262,6 +262,7 @@ class JsMessagesUtil @Inject() (
       MC.`You.can.enable.0.later.on.left.panel` ::
       MC.`Next` ::
       MC.`Settings.done.0.ready.for.using` ::
+      MC.`_to.Finish` ::
       Nil
   }
 

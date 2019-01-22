@@ -9,7 +9,6 @@ import io.suggest.sc.c.search.NodesSearchRespHandler
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sc.v._
 import io.suggest.sc.v.dia.first.WzFirstR
-import io.suggest.sc.v.dia.{WzAskPermR, WzInfoR}
 import io.suggest.sc.v.grid._
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx._
@@ -92,9 +91,7 @@ class Sc3Module {
 
 
   // wizard
-  lazy val wzAskFrameR = wire[WzAskPermR]
-  lazy val wzInfoFrameR = wire[WzInfoR]
-  lazy val wzStartR = wire[WzFirstR]
+  lazy val wzFirstR = wire[WzFirstR]
 
 
   // sc3 top level

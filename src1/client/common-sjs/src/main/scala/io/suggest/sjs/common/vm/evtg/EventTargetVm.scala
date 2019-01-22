@@ -19,24 +19,23 @@ object EventTargetVm {
 
   /** Интерфейс плагина для вешанья событий. */
   sealed trait IFacade {
-    def addEventListener[T <: Event](eventTarget: EventTarget, eventType: String, listener: js.Function1[T,_]): Unit
+    def addEventListener(eventTarget: EventTarget, eventType: String, listener: js.Function): Unit
   }
   /** Standard-compilant вешалка событий. */
   private class StdFacade extends IFacade {
-    override def addEventListener[T <: Event](eventTarget: EventTarget, eventType: String, listener: js.Function1[T, _]): Unit = {
-      eventTarget.addEventListener(eventType, listener)
-    }
+    override def addEventListener(eventTarget: EventTarget, eventType: String, listener: js.Function): Unit =
+      eventTarget.addEventListener(eventType, listener.asInstanceOf[js.Function1[_, _]])
   }
   /** Вешалка событий на старые IE. */
   private class IeFacade extends IFacade {
-    override def addEventListener[T <: Event](eventTarget: EventTarget, eventType: String, listener: js.Function1[T, _]): Unit = {
+    override def addEventListener(eventTarget: EventTarget, eventType: String, listener: js.Function): Unit = {
       val ae = AttachEventStub(eventTarget)
-      ae.attachEvent[T]("on" + eventType, listener)
+      ae.attachEvent("on" + eventType, listener)
     }
   }
 
   /** Проверка и её результат сохраняется тут. */
-  val FACADE: IFacade = {
+  private val FACADE: IFacade = {
     if (
       // ServiceWorker не имеет ни window, ни window.document в scope.
       !js.isUndefined(dom.window) &&
@@ -53,9 +52,10 @@ object EventTargetVm {
   /** AnyVal-экстеншены для EventTarget, чтобы не мутить новые vm-классы,
     * а просто юзать scala-синтаксис без лишнего гемора. */
   implicit class RichEventTarget(val underlying: EventTarget) extends AnyVal {
-    def addEventListener4s[T <: Event](eventType: String)(listener: (T) => _): Unit = {
+    def addEventListener4s[T <: Event](eventType: String)(listener: (T) => _): Unit =
       FACADE.addEventListener(underlying, eventType, listener)
-    }
+    def addEventListenerThis[This, T <: Event](eventType: String)(listener: (This, T) => _): Unit =
+      FACADE.addEventListener(underlying, eventType, listener: js.ThisFunction)
   }
 
 }
@@ -72,8 +72,8 @@ trait EventTargetVmT extends IVm {
    * @tparam T Тип события, передаваемого в listener.
    */
   def addEventListener[T <: Event](eventType: String)(listener: (T) => _): Unit = {
-    EventTargetVm.FACADE
-      .addEventListener(_underlying, eventType, listener)
+    import EventTargetVm._
+    _underlying.addEventListener4s(eventType)(listener)
   }
 
 }
@@ -95,7 +95,7 @@ object SafeEventTargetStub {
 /** IE-костыли для навешивания событий. */
 @js.native
 sealed trait AttachEventStub extends js.Object {
-  def attachEvent[T <: Event](eventType: String, listener: js.Function1[T,_]): Unit = js.native
+  def attachEvent(eventType: String, listener: js.Function): Unit = js.native
 }
 object AttachEventStub {
   def apply(e: EventTarget): AttachEventStub = {

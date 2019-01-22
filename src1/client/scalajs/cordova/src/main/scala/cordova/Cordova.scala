@@ -1,5 +1,7 @@
 package cordova
 
+import cordova.plugins.CordovaPlugins
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
 
@@ -14,5 +16,7 @@ import scala.scalajs.js.annotation.JSGlobal
 object Cordova extends js.Object {
 
   def require[T](id: String): T = js.native
+
+  val plugins: CordovaPlugins = js.native
 
 }

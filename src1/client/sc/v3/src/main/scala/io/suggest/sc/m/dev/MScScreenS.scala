@@ -18,7 +18,7 @@ object MScScreenS {
   implicit object MScScreenSFastEq extends FastEq[MScScreenS] {
     override def eqv(a: MScScreenS, b: MScScreenS): Boolean = {
       (a.info ===* b.info) &&
-        (a.rszTimer ===* b.rszTimer)
+      (a.rszTimer ===* b.rszTimer)
     }
   }
 

@@ -52,9 +52,8 @@ case class WindowVm(_underlying: Window = dom.window) extends WindowVmT {
 
 
 object WindowStub {
-  def apply(wnd: Window): WindowStub = {
+  def apply(wnd: Window): WindowStub =
     wnd.asInstanceOf[WindowStub]
-  }
 }
 @js.native
 sealed trait WindowStub extends js.Object {

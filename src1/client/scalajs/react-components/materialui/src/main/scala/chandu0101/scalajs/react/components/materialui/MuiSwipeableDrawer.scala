@@ -25,7 +25,7 @@ trait MuiSwipeableDrawerProps
   val disableSwipeToOpen: js.UndefOr[Boolean] = js.undefined
   val hysteresis: js.UndefOr[Double] = js.undefined
   val minFlingVelocity: js.UndefOr[Double] = js.undefined
-  val onClose: js.Function1[ReactEvent, Unit]
+  val onClose: js.UndefOr[js.Function1[ReactEvent, Unit]]
   val onOpen: js.Function1[ReactEvent, Unit]
   val swipeAreaWidth: js.UndefOr[Double] = js.undefined
 }

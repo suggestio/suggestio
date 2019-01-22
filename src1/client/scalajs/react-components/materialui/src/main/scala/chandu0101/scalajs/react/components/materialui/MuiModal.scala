@@ -39,6 +39,7 @@ trait MuiModalPropsBase extends MuiPropsBase {
   val onBackdropClick: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
   @JSName("onClose")
   val onClose2: js.UndefOr[js.Function2[ReactEvent, String, Unit]] = js.undefined
+  val onClose: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
   val onEscapeKeyDown: js.UndefOr[js.Function1[ReactKeyboardEvent, Unit]] = js.undefined
   val onRendered: js.UndefOr[js.Function0[Unit]] = js.undefined
   val open: Boolean

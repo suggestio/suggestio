@@ -16,7 +16,8 @@
         "cordova-plugin-compat": "^1.2.0",
         "cordova-plugin-geolocation": "^4.0.1",
         "cordova-plugin-splashscreen": "^5.0.2",
-        "cordova-plugin-whitelist": "^1.3.3"
+        "cordova-plugin-whitelist": "^1.3.3",
+        "cordova.plugins.diagnostic": "^4.0.10"
     },
     "cordova": {
         "plugins": {
@@ -25,7 +26,8 @@
             "cordova-plugin-ble-central": {
                 "BLUETOOTH_USAGE_DESCRIPTION": "Monitoring Bluetooth beacons"
             },
-            "cordova-plugin-splashscreen": {}
+            "cordova-plugin-splashscreen": {},
+            "cordova.plugins.diagnostic": {}
         },
         "platforms": [
             "android",

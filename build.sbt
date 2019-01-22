@@ -311,10 +311,15 @@ lazy val stat = project
 /** Scala.js API для самой cordova. */
 lazy val cordovaSjs = Project(id = "scalajs-cordova", base = file(DIR0 + "client/scalajs/cordova"))
 
-
 /** scala.js API для evothings/cordova-ble. */
 lazy val cordovaBleSjs = Project(id = "scalajs-cordova-ble", base = file(DIR0 + "client/ble/cordova-ble"))
 
+/** S.io sjs-утиль поверх нативной кордовы. */
+lazy val cordovaSioUtilSjs = {
+  val name = "cordova-sio-util"
+  Project(id = name, base = file(DIR0 + "client/util/" + name))
+    .dependsOn( commonSjs, cordovaSjs )
+}
 
 /** Scala.js фасады для доступа к web-bluetooth API. */
 //lazy val webBluetoothSjs = {
@@ -442,7 +447,7 @@ lazy val sc3Sjs = {
     .enablePlugins(WebScalaJS)
     // Поддержка BLE и Cordova не реализована. Надо извлечь из прошлой выдачи, которая была удалена 2018-04-03 после 7390c4e0af497795438e67b57e42c28281a100d2 из src1/client/sc/main
     .dependsOn(
-      scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSjs,
+      scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSioUtilSjs,
       mapsSjs, jdRenderSjs, reactSidebar, reactScroll,
       reactMaterialUiSjs
     )
@@ -604,7 +609,7 @@ lazy val sio2 = {
       scCommonSjs, sc3Sjs,
       scSwSjs, swToolBoxSjs,
       momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
-      cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
+      cordovaSjs, cordovaBleSjs, cordovaSioUtilSjs, bleBeaconerSjs,
       reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
       reactGridLayoutSjs, reactStoneCutterSjs, gridSjs, reactSidebar, reactScroll,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,

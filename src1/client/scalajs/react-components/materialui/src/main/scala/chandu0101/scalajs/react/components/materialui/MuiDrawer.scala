@@ -31,7 +31,6 @@ trait MuiDrawerPropsBase
   val variant: js.UndefOr[String] = js.undefined
 }
 trait MuiDrawerProps extends MuiDrawerPropsBase {
-  val onClose: js.UndefOr[js.Function1[ReactEvent, Unit]] = js.undefined
   val open: js.UndefOr[Boolean] = js.undefined
 }
 object MuiDrawerProps extends MuiPropsBaseStatic[MuiDrawerProps]

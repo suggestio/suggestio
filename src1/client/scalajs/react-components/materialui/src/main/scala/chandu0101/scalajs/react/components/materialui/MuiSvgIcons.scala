@@ -898,14 +898,14 @@ object MuiSvgIcons {
   object DeviceDevices extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/device/dvr", JSImport.Default)
   object DeviceDvr extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/gps-fixed", JSImport.Default)
-  object DeviceGpsFixed extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/gps-not-fixed", JSImport.Default)
-  object DeviceGpsNotFixed extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/gps-off", JSImport.Default)
-  object DeviceGpsOff extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/device/graphic-eq", JSImport.Default)
-  object DeviceGraphicEq extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/GpsFixed", JSImport.Default)
+  object GpsFixed extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/GpsNotFixed", JSImport.Default)
+  object GpsNotFixed extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/GpsOff", JSImport.Default)
+  object GpsOff extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/GraphicEq", JSImport.Default)
+  object GraphicEq extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/LocationDisabled", JSImport.Default)
   object LocationDisabled extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/LocationSearching", JSImport.Default)

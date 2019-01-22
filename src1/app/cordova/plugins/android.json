@@ -18,6 +18,9 @@
     },
     "cordova-plugin-splashscreen": {
       "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
+    },
+    "cordova.plugins.diagnostic": {
+      "PACKAGE_NAME": "io.suggest.app.cordova.sio2m"
     }
   },
   "dependent_plugins": {}

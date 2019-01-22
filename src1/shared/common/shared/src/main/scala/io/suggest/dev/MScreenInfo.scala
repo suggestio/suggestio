@@ -39,4 +39,9 @@ case class MScreenInfo(
       )
   }
 
+
+  /** Следует ли разворачивать диалоги на весь экран? */
+  def isDialogWndFullScreen: Boolean =
+    screen.width < 800
+
 }
