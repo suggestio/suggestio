@@ -1,6 +1,5 @@
 package io.suggest.sjs.common.vm.wnd
 
-import io.suggest.sjs.common.vm.evtg.EventTargetVmT
 import io.suggest.sjs.common.vm.wnd.compstyle.GetComputedStyleT
 import io.suggest.sjs.common.vm.wnd.dpr.DevPxRatioT
 import io.suggest.sjs.common.vm.wnd.nav.NavigatorVm
@@ -20,7 +19,6 @@ import scala.scalajs.js.UndefOr
 trait WindowVmT
   extends DevPxRatioT
   with GetComputedStyleT
-  with EventTargetVmT
 {
   override type T <: Window
 

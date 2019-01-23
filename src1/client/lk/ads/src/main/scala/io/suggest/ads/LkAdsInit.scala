@@ -7,9 +7,10 @@ import japgolly.scalajs.react.vdom.Implicits._
 import io.suggest.common.event.DomEvents
 import io.suggest.init.routed.InitRouter
 import io.suggest.sjs.common.view.VUtil
-import io.suggest.sjs.common.vm.wnd.WindowVm
 import org.scalajs.dom.UIEvent
 import org.scalajs.dom.raw.{HTMLDivElement, HTMLDocument}
+import io.suggest.sjs.common.vm.evtg.EventTargetVm._
+import org.scalajs.dom
 
 /**
   * Suggest.io
@@ -45,8 +46,9 @@ trait LkAdsInit extends InitRouter {
       .renderIntoDOM( VUtil.getElementByIdOrNull[HTMLDivElement]( LkAdsFormConst.FORM_CONT_ID ) )
 
     // Подписаться на события скроллинга. scroll-контейнер пока висит на уровне html-тега.
-    WindowVm()
-      .addEventListener( DomEvents.SCROLL ) { e: UIEvent =>
+    dom
+      .window
+      .addEventListener4s( DomEvents.SCROLL ) { e: UIEvent =>
         // Вроде есть какой-то нормальный метод определения scroll-контейнейра. Сейчас это documentElement.
         val scrollTop = e.target.asInstanceOf[HTMLDocument].documentElement.scrollTop
         val action = AdsScroll( scrollTop )

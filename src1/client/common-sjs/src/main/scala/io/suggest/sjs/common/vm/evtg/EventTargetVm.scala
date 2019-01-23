@@ -1,6 +1,5 @@
 package io.suggest.sjs.common.vm.evtg
 
-import io.suggest.sjs.common.vm.IVm
 import org.scalajs.dom
 import org.scalajs.dom.{Event, EventTarget}
 
@@ -18,14 +17,16 @@ import scala.scalajs.js.UndefOr
 object EventTargetVm {
 
   /** Интерфейс плагина для вешанья событий. */
-  sealed trait IFacade {
+  private sealed trait IFacade {
     def addEventListener(eventTarget: EventTarget, eventType: String, listener: js.Function): Unit
   }
+
   /** Standard-compilant вешалка событий. */
   private class StdFacade extends IFacade {
     override def addEventListener(eventTarget: EventTarget, eventType: String, listener: js.Function): Unit =
       eventTarget.addEventListener(eventType, listener.asInstanceOf[js.Function1[_, _]])
   }
+
   /** Вешалка событий на старые IE. */
   private class IeFacade extends IFacade {
     override def addEventListener(eventTarget: EventTarget, eventType: String, listener: js.Function): Unit = {
@@ -33,6 +34,7 @@ object EventTargetVm {
       ae.attachEvent("on" + eventType, listener)
     }
   }
+
 
   /** Проверка и её результат сохраняется тут. */
   private val FACADE: IFacade = {
@@ -60,23 +62,6 @@ object EventTargetVm {
 
 }
 
-
-trait EventTargetVmT extends IVm {
-
-  override type T <: EventTarget
-
-  /**
-   * Повесить событие на текущую цель.
-   * @param eventType Тип события.
-   * @param listener Функция-обработчик события.
-   * @tparam T Тип события, передаваемого в listener.
-   */
-  def addEventListener[T <: Event](eventType: String)(listener: (T) => _): Unit = {
-    import EventTargetVm._
-    _underlying.addEventListener4s(eventType)(listener)
-  }
-
-}
 
 
 /** Безопасный интерфейс для доступа к DOM-элементу в области вешанья событий. */

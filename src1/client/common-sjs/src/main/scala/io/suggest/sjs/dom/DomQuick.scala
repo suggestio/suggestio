@@ -3,7 +3,7 @@ package io.suggest.sjs.dom
 import io.suggest.sjs.common.model.TimeoutPromise
 import org.scalajs.dom
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Promise
 import scala.scalajs.js.Date
 
 /**
@@ -73,19 +73,5 @@ object DomQuick {
 
   /** Текущий год. */
   def currentYear = new Date().getFullYear()
-
-
-  import org.scalajs.dom.experimental.permissions._
-
-  /** Запрос пермишена через стандартное Permission API. */
-  def askPermission(pname: PermissionName): Future[PermissionStatus] = {
-    val descriptor = new PermissionDescriptor {
-      override val name = pname
-    }
-    dom.window.navigator
-      .permissions
-      .query( descriptor )
-      .toFuture
-  }
 
 }

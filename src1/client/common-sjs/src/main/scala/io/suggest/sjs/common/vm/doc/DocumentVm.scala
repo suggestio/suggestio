@@ -1,7 +1,6 @@
 package io.suggest.sjs.common.vm.doc
 
-import io.suggest.sjs.common.vm.Vm
-import io.suggest.sjs.common.vm.evtg.EventTargetVmT
+import io.suggest.sjs.common.vm.{IVm, Vm}
 import io.suggest.sjs.common.vm.head.HeadVm
 import org.scalajs.dom
 import org.scalajs.dom.{Document, Element}
@@ -33,7 +32,7 @@ object SafeDocumentApi {
 }
 
 
-case class DocumentVm(override val _underlying: HTMLDocument = dom.document) extends EventTargetVmT {
+case class DocumentVm(override val _underlying: HTMLDocument = dom.document) extends IVm {
 
   override type T = Document
 

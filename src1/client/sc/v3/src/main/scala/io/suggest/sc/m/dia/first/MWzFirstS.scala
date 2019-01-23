@@ -37,10 +37,12 @@ case class MWzFirstS(
                      visible     : Boolean      = false,
                      question    : MWzQuestion  = MWzQuestions.GeoLocPerm,
                      frame       : MWzFrame     = MWzFrames.AskPerm,
+                     pending     : Boolean      = false,
                    ) {
 
   def withVisible(visible: Boolean) = copy(visible = visible)
   def withQuestion(question: MWzQuestion) = copy(question = question)
   def withFrame(frame: MWzFrame) = copy(frame = frame)
+  def withPending(pending: Boolean) = copy(pending = pending)
 
 }

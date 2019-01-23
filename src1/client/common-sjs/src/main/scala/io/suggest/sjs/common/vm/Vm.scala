@@ -3,7 +3,6 @@ package io.suggest.sjs.common.vm
 import io.suggest.primo.{IUnderlying, TypeT}
 import io.suggest.sjs.common.vm.attr.AttrVmT
 import io.suggest.sjs.common.vm.css.CssClassT
-import io.suggest.sjs.common.vm.evtg.EventTargetVmT
 import io.suggest.sjs.common.vm.rm.SelfRemoveT
 import org.scalajs.dom.Node
 
@@ -45,8 +44,7 @@ trait IVm extends TypeT with IUnderlying {
 
 /** Базовый набор для тегов разных. */
 trait VmT
-  extends EventTargetVmT
-  with CssClassT
+  extends CssClassT
   with AttrVmT
   with SelfRemoveT
 

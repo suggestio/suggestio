@@ -126,11 +126,13 @@ class WizardAh[M](
           visible = false,
           // В зависимости от ситуации, открыть то или иное первое окно.
           // TODO Надо всегда выдавать одинаковое приветствие с нулевым окном, а потом уже специализироваться на конкретных разрешениях.
-          question = if (hasGeoLoc) MWzQuestions.GeoLocPerm
-          else if (hasBt) MWzQuestions.BlueToothPerm
-          else MWzQuestions.Finish,
-          frame = if (hasGeoLoc || hasBt) MWzFrames.AskPerm
-          else MWzFrames.Info,
+          question =
+            if (hasGeoLoc) MWzQuestions.GeoLocPerm
+            else if (hasBt) MWzQuestions.BlueToothPerm
+            else MWzQuestions.Finish,
+          frame =
+            if (hasGeoLoc || hasBt) MWzFrames.AskPerm
+            else MWzFrames.Info,
         )
         val v2 = v0.withFirst( Some(first) )
         updated(v2)

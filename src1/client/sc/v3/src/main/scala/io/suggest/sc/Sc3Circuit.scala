@@ -40,7 +40,7 @@ import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.OptFastEq.Wrapped
-import io.suggest.sjs.common.vm.wnd.WindowVm
+import io.suggest.sjs.common.vm.evtg.EventTargetVm._
 import io.suggest.sjs.dom.DomQuick
 import io.suggest.spa.OptFastEq
 import org.scalajs.dom
@@ -433,13 +433,12 @@ class Sc3Circuit(
     }
 
     // Подписаться на глобальные события window
-    val wnd = WindowVm()
     val listenF = { _: Event => dispatch(ScreenReset) }
     for {
       evtName <- WndEvents.RESIZE :: WndEvents.ORIENTATION_CHANGE :: Nil
     } {
       try {
-        wnd.addEventListener( evtName )( listenF )
+        dom.window.addEventListener4s( evtName )( listenF )
       } catch {
         case ex: Throwable =>
           LOG.error( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, ex, evtName )

@@ -1,6 +1,7 @@
 package cordova.plugins.diagnostic
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
 import scala.scalajs.js.|
 
 /**
@@ -49,7 +50,17 @@ trait CordovaPluginDiagnostic extends js.Object {
                                     iosMode: String = js.native,
                                   ): Unit = js.native
 
-  def registerLocationStateChangeHandler( callback: js.Function1[LocationMode_t, _] | Boolean ): Unit = js.native
+  /** On Android, this occurs when the Location Mode is changed.
+    * function is passed a single string parameter defined as a constant in [[LocationModes]].
+    *
+    * On iOS, this occurs when location authorization status is changed.
+    * This can be triggered either by the user's response to a location permission authorization dialog,
+    * by the user turning on/off Location Services, or by the user changing the Location authorization state specifically for your app.
+    * Function is passed a single string parameter indicating the new location authorisation status as a constant in [[PermissionStatuses]].
+    *
+    * @param callback
+    */
+  def registerLocationStateChangeHandler( callback: js.Function1[LocationMode_t | PermissionStatus_t, _] = js.native ): Unit = js.native
 
 
   // Bluetooth
@@ -63,9 +74,13 @@ trait CordovaPluginDiagnostic extends js.Object {
                         onError  : js.Function1[String, _]
                        ): Unit = js.native
 
-  def registerBluetoothStateChangeHandler( callback: js.Function1[BluetoothState_t, _] | Boolean ): Unit = js.native
+  def registerBluetoothStateChangeHandler( callback: js.Function1[BluetoothState_t, _] = js.native ): Unit = js.native
+
+  @JSName("locationMode")
+  val locationModeUndef: js.UndefOr[LocationModes] = js.native
 
 }
+
 object CordovaPluginDiagnostic {
   implicit class CpdOpsExt( val cpd: CordovaPluginDiagnostic ) extends AnyVal {
 
@@ -107,7 +122,7 @@ trait CordovaPluginDiagnosticAndroid extends js.Object {
 
   def isRequestingPermission(): Boolean = js.native
 
-  def registerPermissionRequestCompleteHandler( callback: js.Function1[js.Dictionary[PermissionStatus_t], _] | Boolean ): Boolean = js.native
+  def registerPermissionRequestCompleteHandler( callback: js.Function1[js.Dictionary[PermissionStatus_t], _] = js.native ): Boolean = js.native
 
   def isDataRoamingEnabled( onSuccess: js.Function1[Boolean, _],
                             onError  : js.Function1[String, _]
@@ -128,7 +143,7 @@ trait CordovaPluginDiagnosticAndroid extends js.Object {
 
   // Location
 
-  val locationMode: LocationMode_t = js.native
+  val locationMode: LocationModes = js.native
 
   def isGpsLocationAvailable( onSuccess: js.Function1[Boolean, _],
                               onError  : js.Function1[String, _]

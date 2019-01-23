@@ -8,8 +8,8 @@ import io.suggest.cordova.CordovaConstants
 import io.suggest.dev.MPlatformS
 import io.suggest.sc.m.{PauseOrResume, SetPlatformReady}
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.vm.doc.DocumentVm
 import japgolly.univeq._
+import io.suggest.sjs.common.vm.evtg.EventTargetVm._
 import org.scalajs.dom
 import org.scalajs.dom.Event
 
@@ -31,7 +31,7 @@ object PlatformAh {
     * @return Начальный инстанс MPlatformS.
     */
   def platformInit(dispatcher: Dispatcher): MPlatformS = {
-    val docVm = DocumentVm()
+    val doc = dom.document
 
     // Переменная, намекающая на видимость выдачи в текущий момент.
     // По идее, тут всегда true, т.к. инициализация идёт, когда выдача открыта на экране.
@@ -48,7 +48,7 @@ object PlatformAh {
       isBleAvail = isBleAvailCheck()
 
       // Подписка на событие готовности кордовы к работе с железом устройства.
-      docVm.addEventListener( CordovaEvents.DEVICE_READY ) { _: Event =>
+      doc.addEventListener4s( CordovaEvents.DEVICE_READY ) { _: Event =>
         // TODO Проверять содержимое Event'а? Вдруг, не ready, а ошибка какая-то.
         // для deviceready функция-листенер может вызваться немедленно. Сразу тут вписать значение в переменную.
         isReady = true
@@ -58,7 +58,7 @@ object PlatformAh {
 
       // Подписка на события видимости (открытости приложения на экране устройства).
       def __subscribeForCordovaVisibility(eventType: String, isScVisible: Boolean): Unit = {
-        docVm.addEventListener( eventType ) { _: Event =>
+        doc.addEventListener4s( eventType ) { _: Event =>
           dispatcher.dispatch( PauseOrResume(isScVisible = isScVisible) )
         }
       }
@@ -72,7 +72,7 @@ object PlatformAh {
     val isPlainBrowser = !isCordova
     if (isPlainBrowser) {
       // Уточнить значение видимости:
-      isUsingNow = !docVm._underlying.hidden
+      isUsingNow = !doc.hidden
       // Браузер всегда готов к труду и обороне:
       isReady = true
 
@@ -80,7 +80,7 @@ object PlatformAh {
       isBleAvail = false
 
       // Это браузер. Он готов сразу. Но надо подписаться на событие Visibility changed
-      docVm.addEventListener( DomEvents.VISIBILITY_CHANGE ) { _: Event =>
+      doc.addEventListener4s( DomEvents.VISIBILITY_CHANGE ) { _: Event =>
         dispatcher.dispatch(
           PauseOrResume(
             isScVisible = !dom.document.hidden

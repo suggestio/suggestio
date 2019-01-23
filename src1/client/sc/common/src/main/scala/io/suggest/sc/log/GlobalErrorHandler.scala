@@ -1,8 +1,9 @@
 package io.suggest.sc.log
 
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.vm.wnd.WindowVm
 import org.scalajs.dom.ErrorEvent
+import io.suggest.sjs.common.vm.evtg.EventTargetVm._
+import org.scalajs.dom
 
 /**
   * Suggest.io
@@ -14,7 +15,7 @@ object GlobalErrorHandler extends Log {
 
   def start(): Unit = {
     // TODO Надо бы capture вместо bubble, см. https://developer.mozilla.org/en-US/docs/Web/API/GlobalEventHandlers/onerror
-    WindowVm().addEventListener("error") { e: ErrorEvent =>
+    dom.window.addEventListener4s("error") { e: ErrorEvent =>
       val msg = e.filename + " (" + e.lineno + "," + e.colno + ") " + e.message
       LOG.error(msg = msg)
     }
