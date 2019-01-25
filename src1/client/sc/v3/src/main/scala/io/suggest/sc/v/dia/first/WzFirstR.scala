@@ -1,6 +1,6 @@
 package io.suggest.sc.v.dia.first
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonVariants, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogContentText, MuiDialogProps, MuiDialogTitle, MuiSvgIconProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonVariants, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogContentText, MuiDialogProps, MuiDialogTitle, MuiLinearProgress, MuiSvgIconProps}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
@@ -10,7 +10,7 @@ import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.dia.YesNoWz
-import io.suggest.sc.m.dia.first.{MWzFirstS, MWzFrames, MWzQuestions}
+import io.suggest.sc.m.dia.first.{MWzFirstS, MWzFrames, MWzPhases}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -70,10 +70,10 @@ class WzFirstR {
 
           // Строка заголовка окна диалога. Чтобы диалог не прыгал, рендерим заголовок всегда.
           {
-            val (icon, title) = props.first.question match {
-              case MWzQuestions.GeoLocPerm =>
+            val (icon, title) = props.first.phase match {
+              case MWzPhases.GeoLocPerm =>
                 Mui.SvgIcons.MyLocation -> Messages(MsgCodes.`Geolocation`)
-              case MWzQuestions.BlueToothPerm =>
+              case MWzPhases.BlueToothPerm =>
                 Mui.SvgIcons.BluetoothSearching -> MsgCodes.`Bluetooth`
               case _ =>
                 Mui.SvgIcons.DoneAll -> MsgCodes.`Suggest.io`
@@ -90,15 +90,21 @@ class WzFirstR {
 
           // Плашка с вопросом геолокации.
           MuiDialogContent()(
+
+            // Крутилка ожидания:
+            ReactCommonUtil.maybeNode( props.first.frame ==* MWzFrames.InProgress ) {
+              MuiLinearProgress()
+            },
+
             MuiDialogContentText()(
 
               // Сборка текста вопроса:
               props.first.frame match {
                 case MWzFrames.AskPerm =>
-                  val msgCodeOpt = props.first.question match {
-                    case MWzQuestions.GeoLocPerm =>
+                  val msgCodeOpt = props.first.phase match {
+                    case MWzPhases.GeoLocPerm =>
                       Some( MsgCodes.`0.uses.geoloc.to.find.ads` )
-                    case MWzQuestions.BlueToothPerm =>
+                    case MWzPhases.BlueToothPerm =>
                       Some( MsgCodes.`0.uses.bt.to.find.ads.indoor` )
                     case _ =>
                       None
@@ -109,20 +115,26 @@ class WzFirstR {
 
                 case MWzFrames.Info =>
                   (
-                    props.first.question match {
-                      case MWzQuestions.GeoLocPerm =>
+                    props.first.phase match {
+                      case MWzPhases.Starting =>
+                        Left( "" )
+                      case MWzPhases.GeoLocPerm =>
                         Right( MsgCodes.`GPS` )
-                      case MWzQuestions.BlueToothPerm =>
+                      case MWzPhases.BlueToothPerm =>
                         Right( MsgCodes.`Bluetooth` )
-                      case MWzQuestions.Finish =>
-                        Left( MsgCodes.`Settings.done.0.ready.for.using` )
+                      case MWzPhases.Finish =>
+                        val msg = Messages( MsgCodes.`Settings.done.0.ready.for.using`, MsgCodes.`Suggest.io` )
+                        Left( msg )
                     }
                   ).fold(
-                    msgCode =>
-                      Messages( msgCode, MsgCodes.`Suggest.io` ),
+                    identity[String],
                     compName =>
                       Messages( MsgCodes.`You.can.enable.0.later.on.left.panel`, compName )
                   )
+
+                // Прогресс-ожидание. Собрать крутилку.
+                case MWzFrames.InProgress =>
+                  Messages( MsgCodes.`Please.wait` )
               }
 
             ),
@@ -167,11 +179,24 @@ class WzFirstR {
                   }
                 } (
                   Messages(
-                    if (props.first.question ==* MWzQuestions.Finish) MsgCodes.`_to.Finish`
+                    if (props.first.phase ==* MWzPhases.Finish) MsgCodes.`_to.Finish`
                     else MsgCodes.`Next`
                   )
                 )
                 okBtn :: Nil
+
+              // Для режима ожидания - нужна кнопка отмены.
+              case MWzFrames.InProgress =>
+                val cancelBtn: VdomNode = MuiButton {
+                  new MuiButtonProps {
+                    override val color   = MuiColorTypes.secondary
+                    override val variant = MuiButtonVariants.text
+                    override val onClick = _laterClickCbF
+                  }
+                } (
+                  Messages( MsgCodes.`Cancel` )
+                )
+                cancelBtn :: Nil
 
             }
             MuiDialogActions()( btns: _* )

@@ -94,7 +94,7 @@ object PlatformAh {
       isReady     = isReady,
       isCordova   = isCordova,
       isUsingNow  = isUsingNow,
-      isBleAvail  = isBleAvail
+      hasBle  = isBleAvail
     )
   }
 
@@ -131,8 +131,8 @@ class PlatformAh[M](
 
         // Проверить, не изменились ли ещё какие-то платформенные флаги?
         val bleAvail2 = PlatformAh.isBleAvailCheck()
-        if (v2.isBleAvail !=* bleAvail2)
-          v2 = v2.withIsBleAvail( bleAvail2 )
+        if (v2.hasBle !=* bleAvail2)
+          v2 = v2.withHasBle( bleAvail2 )
 
         // TODO Проверять ble avail?
 

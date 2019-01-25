@@ -20,7 +20,7 @@ object MWzFrames extends Enum[MWzFrame] {
   /** Блокирующий фрейм ожидания реакции юзера или ОС (на какое-то действие).
     * Не называем "Pending", чтобы не путаться с pot.Pending().
     */
-  //case object InProgress extends MWzFrame
+  case object InProgress extends MWzFrame
 
 
   override def values = findValues

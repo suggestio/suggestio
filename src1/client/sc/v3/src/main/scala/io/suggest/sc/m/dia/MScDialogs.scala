@@ -2,7 +2,7 @@ package io.suggest.sc.m.dia
 
 import io.suggest.ueq.UnivEqUtil._
 import diode.FastEq
-import io.suggest.sc.m.dia.first.MWzFirstS
+import io.suggest.sc.m.dia.first.MWzFirstOuterS
 import japgolly.univeq.UnivEq
 
 /**
@@ -31,9 +31,9 @@ object MScDialogs {
   * @param first Диалог первого запуска, когда открыт.
   */
 case class MScDialogs(
-                       first: Option[MWzFirstS] = None
+                       first: Option[MWzFirstOuterS] = None
                      ) {
 
-  def withFirst(first: Option[MWzFirstS]) = copy(first = first)
+  def withFirst(first: Option[MWzFirstOuterS]) = copy(first = first)
 
 }

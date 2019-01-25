@@ -8,6 +8,12 @@ package io.suggest.conf
   */
 object ConfConst {
 
-  def SC_INIT_KEY = "sc.init"
+  def SC_PREFIX = "sc."
+
+  /** Инициализация конфига. */
+  def SC_INIT_KEY = SC_PREFIX + "init"
+
+  /** Первый запуск. */
+  def SC_FIRST_RUN = SC_PREFIX + "first.run"
 
 }

@@ -79,17 +79,27 @@ case class CdpGeoLocPermData( permStatus: PermissionStatus_t ) extends IPermissi
   override def isGranted: Boolean =
     permStatus ==* PermStatuses.GRANTED
 
-  override def isDenied: Boolean =
-    permStatus ==* PermStatuses.DENIED
+  override def isDenied: Boolean = {
+    (permStatus ==* PermStatuses.DENIED) ||
+    (PermStatuses.DENIED_ALWAYS contains permStatus) ||
+    (PermStatuses.RESTRICTED contains permStatus)
+  }
+
+  override def isPrompt: Boolean =
+    permStatus ==* PermStatuses.NOT_REQUESTED
 
   override def hasOnChangeApi: Boolean = true
 
-  override def onChange(f: Boolean => _): Unit = {
+  override def onChange(f: IPermissionState => _): Unit = {
     Cordova.plugins.diagnostic.registerLocationStateChangeHandler { locOrPermMode =>
-      (locOrPermMode.asInstanceOf[PermissionStatus_t] ==* PermStatuses.GRANTED) ||
-      AndroidLocationModes.exists { ls =>
-        !(locOrPermMode.asInstanceOf[LocationMode_t] ==* ls.LOCATION_OFF)
-      }
+      val pss = this.snapshot(
+        isGranted =
+          (locOrPermMode.asInstanceOf[PermissionStatus_t] ==* PermStatuses.GRANTED) ||
+          AndroidLocationModes.exists { ls =>
+            !(locOrPermMode.asInstanceOf[LocationMode_t] ==* ls.LOCATION_OFF)
+          }
+      )
+      f(pss)
     }
   }
 
@@ -114,12 +124,19 @@ case class CdpBlueToothData( btState: BluetoothState_t ) extends IPermissionStat
   override def isDenied: Boolean =
     BtStates.UNAUTHORIZED contains btState
 
+  override def isPrompt: Boolean =
+    btState ==* BtStates.UNKNOWN    // TODO Вероятно, тут должно быть всегда true?
+
   override def hasOnChangeApi: Boolean = true
 
-  override def onChange(f: Function[Boolean, _]): Unit = {
+  override def onChange(f: IPermissionState => _): Unit = {
     Cordova.plugins.diagnostic.registerBluetoothStateChangeHandler { btState =>
-      (btState ==* BtStates.POWERED_ON) ||
-      (BtStates.POWERING_ON contains btState)
+      val pss = this.snapshot(
+        isGranted =
+          (btState ==* BtStates.POWERED_ON) ||
+          (BtStates.POWERING_ON contains btState)
+      )
+      f(pss)
     }
   }
 

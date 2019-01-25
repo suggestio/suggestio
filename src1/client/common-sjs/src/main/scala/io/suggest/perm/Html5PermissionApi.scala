@@ -25,7 +25,7 @@ object Html5PermissionApi {
     * @param permName id пермишшена.
     * @return Фьючерс с результатом.
     */
-  def getGeoLocState(permName: PermissionName ): Future[Html5PermissionData] = {
+  private def getPermissionState(permName: PermissionName ): Future[Html5PermissionData] = {
     try {
       dom.window.navigator
         .permissions
@@ -43,6 +43,11 @@ object Html5PermissionApi {
   }
 
 
+  /** Доступ к геолокации разрешён? */
+  def getGeoLocPerm(): Future[Html5PermissionData] =
+    Html5PermissionApi.getPermissionState( PermissionName.geolocation )
+
+
   /** Дополнительное API для инстансов HTML5 PermissionState. */
   implicit class PermissionStatusExt( val pState: PermissionState ) extends AnyVal {
 
@@ -51,6 +56,9 @@ object Html5PermissionApi {
 
     def isDenied: Boolean =
       pState ==* PermissionState.denied
+
+    def isPrompt: Boolean =
+      pState ==* PermissionState.prompt
 
   }
 
@@ -75,27 +83,30 @@ case class Html5PermissionData(
   override def isDenied: Boolean =
     pStatus.state.isDenied
 
+  override def isPrompt: Boolean =
+    pStatus.state.isPrompt
+
   override def hasOnChangeApi = true
 
-  override def onChange(f: Boolean => _): Unit = {
+  override def onChange(f: IPermissionState => _): Unit = {
+    // 2018-01-25 Кусок кода *временно* оставлен как замена addEventListener, т.к. в файрфоксе 64-dev не работал ни один из кусков кода. TODO Удалить, когда всё прояснится-отладится.
+    /*
+    pStatus.onchange = ({
+      (thisStatus: PermissionStatus, _: Event) =>
+        println(thisStatus, 1)
+        f( this.snapshot(thisStatus.state.isGranted) )
+        println(thisStatus, 2)
+    }: js.ThisFunction1[PermissionStatus, Event, _])
+        .asInstanceOf[js.Function1[Event, _]]
+    */
     pStatus.addEventListenerThis( DomEvents.CHANGE ) {
       (thisStatus: PermissionStatus, _: Event) =>
-        f( thisStatus.state.isGranted )
+        f( this.snapshot(thisStatus.state.isGranted) )
     }
   }
 
   /** Выключить мониторинг изменения состояния. */
   override def onChangeReset(): Unit =
     pStatus.onchange = null
-
-}
-
-
-/** Реализация [[IPermissionApi]] для определения прав на геолокацию. */
-class Html5GeoLocPermissionApi extends IPermissionApi {
-
-  /** Доступ к геолокации разрешён? */
-  override def getPermissionState(): Future[Html5PermissionData] =
-    Html5PermissionApi.getGeoLocState( PermissionName.geolocation )
 
 }

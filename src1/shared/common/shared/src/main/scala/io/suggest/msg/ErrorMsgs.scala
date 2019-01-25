@@ -145,4 +145,10 @@ object ErrorMsgs extends MsgsStaticT {
 
   def CACHING_ERROR                    = E(88)
 
+  /** Ошибка вызова нативного API. */
+  def PERMISSION_API_FAILED            = E(89)
+
+  /** Логика работы неверна или завела в тупик. */
+  def PERMISSION_API_LOGIC_INVALID     = E(90)
+
 }

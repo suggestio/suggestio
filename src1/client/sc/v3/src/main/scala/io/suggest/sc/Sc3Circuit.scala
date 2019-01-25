@@ -343,6 +343,7 @@ class Sc3Circuit(
   private val wizardAh = new WizardAh(
     platformRO  = platformRW,
     modelRW     = dialogsRW,
+    dispatcher  = this,
   )
 
 
@@ -458,7 +459,7 @@ class Sc3Circuit(
     def __dispatchBleBeaconerOnOff(): Unit = {
       try {
         val plat = platformRW.value
-        if (plat.isBleAvail && plat.isReady) {
+        if (plat.hasBle && plat.isReady) {
           //LOG.warn( "ok, dispatching ble on/off", msg = plat )
           Future {
             val msg = BtOnOff( isEnabled = plat.isUsingNow)
@@ -588,9 +589,6 @@ class Sc3Circuit(
   Future {
     dispatch(
       InitFirstRunWz(true)
-    )
-    dispatch(
-      ShowFirstRunWz(true)
     )
   }
 

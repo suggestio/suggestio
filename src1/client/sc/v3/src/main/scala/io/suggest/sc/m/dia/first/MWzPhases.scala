@@ -9,16 +9,19 @@ import japgolly.univeq.UnivEq
   * Created: 17.01.19 12:53
   * Description: Модель страниц визарда.
   */
-object MWzQuestions extends Enum[MWzQuestion] {
+object MWzPhases extends Enum[MWzPhase] {
+
+  /** Запуск, без заголовка и прочего. */
+  case object Starting extends MWzPhase
 
   /** Описание запроса доступа к геолокации. */
-  case object GeoLocPerm extends MWzQuestion
+  case object GeoLocPerm extends MWzPhase
 
   /** Описание запроса доступа к bluetooth. */
-  case object BlueToothPerm extends MWzQuestion
+  case object BlueToothPerm extends MWzPhase
 
   /** Писулька с окончанием писанины и кнопкой завершения настройки. */
-  case object Finish extends MWzQuestion
+  case object Finish extends MWzPhase
 
 
   override def values = findValues
@@ -26,10 +29,10 @@ object MWzQuestions extends Enum[MWzQuestion] {
 }
 
 
-sealed abstract class MWzQuestion extends EnumEntry
+sealed abstract class MWzPhase extends EnumEntry
 
-object MWzQuestion {
+object MWzPhase {
 
-  implicit def univEq: UnivEq[MWzQuestion] = UnivEq.derive
+  implicit def univEq: UnivEq[MWzPhase] = UnivEq.derive
 
 }

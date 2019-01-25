@@ -15,7 +15,7 @@ object MWzFirstS {
   implicit object MWzFirstSEq extends FastEq[MWzFirstS] {
     override def eqv(a: MWzFirstS, b: MWzFirstS): Boolean = {
       (a.visible ==* b.visible) &&
-      (a.question ===* b.question) &&
+      (a.phase ===* b.phase) &&
       (a.frame ===* b.frame)
     }
   }
@@ -30,19 +30,17 @@ object MWzFirstS {
   *
   * @param visible Видим ли отрендеренный диалог на экране?
   *                Нужно для поддержки анимации.
-  * @param question Текущая тема вопроса.
+  * @param phase Текущая тема вопроса.
   * @param frame тип фрейма: вопрос или сообщение об отказе.
   */
 case class MWzFirstS(
-                     visible     : Boolean      = false,
-                     question    : MWzQuestion  = MWzQuestions.GeoLocPerm,
-                     frame       : MWzFrame     = MWzFrames.AskPerm,
-                     pending     : Boolean      = false,
+                      visible     : Boolean,
+                      phase       : MWzPhase,
+                      frame       : MWzFrame,
                    ) {
 
   def withVisible(visible: Boolean) = copy(visible = visible)
-  def withQuestion(question: MWzQuestion) = copy(question = question)
+  def withQuestion(question: MWzPhase) = copy(phase = question)
   def withFrame(frame: MWzFrame) = copy(frame = frame)
-  def withPending(pending: Boolean) = copy(pending = pending)
 
 }
