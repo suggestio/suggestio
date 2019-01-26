@@ -22,13 +22,9 @@ case class InitFirstRunWz( isRendered: Boolean ) extends IDiaAction
 case class YesNoWz( yesNo: Boolean ) extends IDiaAction
 
 
-// TODO Надо объеденить оба экшена.
-/** Экшен донесения состояния пермишшена. */
-case class PermissionState(tryPerm: Try[IPermissionState], phase: MWzPhase) extends IDiaAction
-
 /** Экшен результата реального запроса пермишшена у юзера.
   *
   * @param phase Фаза, в рамках которой был получен ответ.
   * @param res Ответ, если есть. None - таймаут.
   */
-case class WzPhasePermRes(phase: MWzPhase, res: Option[IPermissionState]) extends IDiaAction
+case class WzPhasePermRes(phase: MWzPhase, res: Try[IPermissionState]) extends IDiaAction

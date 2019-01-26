@@ -1,7 +1,7 @@
 package io.suggest.sc.c.dia
 
 import diode._
-import diode.data.{Pot, Ready}
+import diode.data.{Pending, Pot}
 import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MPlatformS
@@ -15,9 +15,11 @@ import io.suggest.sjs.dom.DomQuick
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.DoNothing
+import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 
-import scala.util.{Success, Try}
+import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 import scala.concurrent.duration._
 
 /**
@@ -41,6 +43,18 @@ class WizardAh[M](
   with Log
 { ah =>
 
+  /** Внутренняя модель для спецификации пермишшена.
+    *
+    * @param supported Есть ли поддержка на уровне платформы?
+    * @param phase id фазы.
+    * @param askPermF Функция запуска асихнронного получения данных по пермишшену.
+    */
+  private case class PermissionSpec(
+                                     supported          : Boolean,
+                                     phase              : MWzPhase,
+                                     askPermF           : () => Future[IPermissionState]
+                                   )
+
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Клик по кнопкам в диалоге.
@@ -54,18 +68,7 @@ class WizardAh[M](
           first0.view.frame match {
             case MWzFrames.AskPerm =>
               // Положительный ответ - запросить доступ в реальности.
-              val accessFxOpt = first0.view.phase match {
-                case MWzPhases.GeoLocPerm =>
-                  val fx = GeoLocOnOff( enabled = true, isHard = true )
-                    .toEffectPure
-                  Some(fx)
-                case MWzPhases.BlueToothPerm =>
-                  val fx = BtOnOff( isEnabled = true )
-                    .toEffectPure
-                  Some(fx)
-                case _ =>
-                  None
-              }
+              val accessFxOpt = _requestAccessFx( first0.view.phase )
 
               accessFxOpt.fold {
                 // Нет фонового запроса доступа - нечего ожидать. Хотя этой ситуации быть не должно.
@@ -86,7 +89,7 @@ class WizardAh[M](
                       val tryRes = Try(
                         permState.onChange { pss: IPermissionState =>
                           dispatcher.dispatch(
-                            WzPhasePermRes( first0.view.phase, Some(pss) )
+                            WzPhasePermRes( first0.view.phase, Success(pss) )
                           )
                         }
                       )
@@ -101,7 +104,7 @@ class WizardAh[M](
 
                   DomQuick
                     .timeoutPromiseT( inProgressTimeoutSec.seconds.toMillis )(
-                      WzPhasePermRes(first0.view.phase, None)
+                      WzPhasePermRes(first0.view.phase, Failure(new NoSuchElementException))
                     )
                     .fut
                 }
@@ -167,27 +170,37 @@ class WizardAh[M](
 
     // Сигнал результата нативного диалога проверки прав или таймаута.
     case m: WzPhasePermRes =>
-      //println( m )
       val v00 = value
       v00.first.fold(noChange) { first00 =>
         // Сохранить в состояние полученный снапшот с данными.
-        val first0 = m.res.fold(first00) { pss =>
-          first00.withPerms(
-            first00.perms
-              .updated( m.phase, Ready(pss) )
-          )
+        val first0: MWzFirstOuterS = m.res match {
+          // Нет смысла заливать таймаут в состояние.
+          case Failure(_: NoSuchElementException) =>
+            first00
+          case _ =>
+            val permState0 = first00.perms.getOrElse( m.phase, Pot.empty )
+            val permState2 = m.res.fold( permState0.fail, permState0.ready )
+            first00.withPerms(
+              first00.perms
+                .updated( m.phase, permState2 )
+            )
         }
 
         // Обновлённый инстанс полного состояния. Нужен НЕ во всех ветвях:
-        def v1 = v00.withFirst(Some(first0))
+        def v1: MScDialogs =
+          if (first0 ===* first00) v00
+          else v00.withFirst(Some(first0))
 
         // Надо понять, сейчас текущая фаза или какая-то другая уже. Всякое бывает.
         if (m.phase ==* first0.view.phase) {
+          val isGrantedOpt = m.res.toOption.map(_.isGranted)
+
           // Это текущая фаза.
           first0.view.frame match {
+
+            // Сейчас происходит ожидание ответа юзера в текущей фазе. Всё по плану. Но по плану ли ответ?
             case MWzFrames.InProgress =>
-              // Сейчас происходит ожидание ответа юзера в текущей фазе. Всё по плану. Но по плану ли ответ?
-              if (m.res contains false) {
+              if (isGrantedOpt contains false) {
                 // Юзер не разрешил. Вывести Info с сожалением.
                 val v2 = v00.withFirst( Some(
                   first0.withView(
@@ -202,24 +215,23 @@ class WizardAh[M](
               }
 
             // Ответ по timeout - игнорить за пределами InProgress
-            case _ if m.res.isEmpty =>
+            case _ if m.res.isFailure =>
               noChange
 
             // Ответ от юзера - является ценным.
             case MWzFrames.Info =>
-              if (m.res contains true) {
+              if (isGrantedOpt contains true) {
                 // Положительный ответ + Info => следующая фаза.
                 _wzGoToNextPhase( v1 )
-              } else if (m.res.nonEmpty) {
-                updatedSilent( v1 )
               } else {
-                // Таймаут + Info => игнор, т.к. сожаление уже на экране.
-                noChange
+                updatedSilent( v1 )
               }
 
-            // Ответ юзера во время вопроса текущей фазы. Чудеса, но бывает...
-            case MWzFrames.AskPerm =>
-              if (m.res contains true) {
+            // Ответ юзера наступил во время вопроса текущей фазы.
+            // Возможно, если разрешение было реально запрошено ещё какой-то подсистемой выдачи (за пределами этого диалога), косяк.
+            case ph @ MWzFrames.AskPerm =>
+              LOG.warn( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (ph, m) )
+              if (isGrantedOpt contains true) {
                 _wzGoToNextPhase( v1 )
               } else {
                 val v2 = v00.withFirst( Some(
@@ -233,10 +245,35 @@ class WizardAh[M](
 
           }
 
+        } else if (first0.view.phase ==* MWzPhases.Starting) {
+          // TODO Чтобы объеденить экшен с PermissionState, надо тут разрулить фазу Starting.
+          // Надо показать на экране текущий диалог в разном состоянии.
+          val hasPending = first0.perms.exists(_._2.isPending)
+          if (hasPending) {
+            // Есть ещё pending в задачах. Просто убедиться, что диалог ожидания виден, оставаясь в Starting/InProgress.
+            if (first0.view.visible) {
+              // Диалог уже отображается, и ещё остались pending-задачи. Просто обнов
+              updatedSilent(v1)
+            } else {
+              // Ещё есть pending-задачи, но диалог скрыт. Показать диалог на экране, оставаясь в Starting-фазе:
+              val v2 = v00.withFirst( Some(
+                first0.withView(
+                  first0.view.withVisible( true )
+                )
+              ))
+              updated(v2)
+            }
+
+          } else {
+            // Больше нет pending-задач. Переключиться на следующую фазу диалога.
+            _wzGoToNextPhase( v1 )
+          }
+
         } else {
-          // Пока разрешения разруливались, фаза уже изменилась. Не ясно, возможно ли такое на яву.
+          // Пока разрешения разруливались, фаза уже изменилась неизвестно куда. Не ясно, возможно ли такое на яву.
           // Пока просто молча пережёвываем.
-          noChange
+          LOG.warn( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (m, first0.view.phase) )
+          updatedSilent(v1)
         }
       }
 
@@ -260,44 +297,21 @@ class WizardAh[M](
         var fxsAcc = List.empty[Effect]
         var permPotsAcc = List.empty[(MWzPhase, Pot[IPermissionState])]
 
-        val platform = platformRO.value
-
-        // Если есть геолокация, то
-        val hasGeoLoc = platform.hasGeoLoc
-        val emptyPermPot = Pot.empty[IPermissionState]
-
-        // Если поддерживается геолокация, то дополнить эффект и состояние:
-        if (hasGeoLoc) {
-          val phase = MWzPhases.GeoLocPerm
+        // Пройтись по списку фаз, активировав проверки прав:
+        for {
+          phaseSpec <- _permPhasesSpecs()
+          if phaseSpec.supported
+        } {
           fxsAcc ::= Effect {
-            val fut0 = if (platform.isCordova) {
-              CordovaDiagonsticPermissionUtil.getGeoLocPerm()
-            } else {
-              Html5PermissionApi.getGeoLocPerm()
-            }
-            fut0.transform { tryPermState =>
-              val action = PermissionState( tryPermState, phase )
-              Success( action )
-            }
-          }
-          permPotsAcc ::= phase -> emptyPermPot.pending()
-        }
-
-        // Если поддерживается bluetooth, то заэффектить и обновить состояние.
-        val hasBt = platform.hasBle
-        if (hasBt) {
-          val phase = MWzPhases.BlueToothPerm
-          fxsAcc ::= Effect {
-            CordovaDiagonsticPermissionUtil
-              .getBlueToothState()
+            phaseSpec
+              .askPermF()
               .transform { tryPermState =>
-                val action = PermissionState( tryPermState, phase )
+                val action = WzPhasePermRes( phaseSpec.phase, tryPermState )
                 Success( action )
               }
           }
-          permPotsAcc ::= phase -> emptyPermPot.pending()
+          permPotsAcc ::= phaseSpec.phase -> Pending()
         }
-
 
         // Инициализировать состояние first-диалога.
         val first2 = MWzFirstOuterS(
@@ -320,51 +334,23 @@ class WizardAh[M](
         noChange
       }
 
+  }
 
-    // Пришёл результат считывания состояния какого-то пермишшена.
-    case m: PermissionState =>
-      val v0 = value
-      v0.first.fold {
-        LOG.log( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
-        noChange
-      } { first0 =>
-        // Если диалог уже отображается, то запихнуть результат в pot, чтобы контроллер обработал их последующем шаге.
-        first0
-          .perms
-          .get( m.phase )
-          .fold {
-            // Почему-то не ожидается данного ответа. По идее, такое не должно никогда происходить.
-            LOG.warn( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = (m, first0.view) )
-            noChange
 
-          } { permPot0 =>
-            // Залить результат чтения пермишшена в карту.
-            val perms2 = first0.perms
-              .updated( m.phase, m.tryPerm.fold(permPot0.fail, permPot0.ready) )
-
-            // Надо показать на экране текущий диалог в разном состоянии.
-            val hasPending = perms2.exists(_._2.isPending)
-            if (hasPending) {
-              // Есть ещё pending в задачах. Просто убедиться, что диалог ожидания виден, оставаясь в Starting/InProgress.
-              val first2 = first0.copy(
-                view =
-                  if (first0.view.visible) first0.view
-                  else first0.view.withVisible( true ),
-                perms = perms2
-              )
-              val v2 = v0.withFirst( Some(first2) )
-              updated(v2)
-
-            } else {
-              // Больше нет pending. Переключиться на следующую фазу диалога.
-              val v2 = v0.withFirst( Some(
-                first0.withPerms( perms2 )
-              ))
-              _wzGoToNextPhase( v2 )
-            }
-          }
-      }
-
+  /** Сборка эффекта реального запросить доступа в зависимости от фазы. */
+  private def _requestAccessFx(phase: MWzPhase): Option[Effect] = {
+    phase match {
+      case MWzPhases.GeoLocPerm =>
+        val fx = GeoLocOnOff( enabled = true, isHard = true )
+          .toEffectPure
+        Some(fx)
+      case MWzPhases.BlueToothPerm =>
+        val fx = BtOnOff( isEnabled = true )
+          .toEffectPure
+        Some(fx)
+      case _ =>
+        None
+    }
   }
 
 
@@ -496,6 +482,28 @@ class WizardAh[M](
           Try(perm.onChangeReset())
       DoNothing
     }
+  }
+
+
+  /** Сборка спецификация по фазам, которые требуют проверки прав доступа. */
+  private def _permPhasesSpecs(platform: MPlatformS = platformRO.value): Seq[PermissionSpec] = {
+    // Список спецификаций фаз с инструкциями, которые необходимо пройти для инициализации.
+
+    // Геолокация
+    PermissionSpec(
+      phase     = MWzPhases.GeoLocPerm,
+      supported = platform.hasGeoLoc,
+      askPermF  =
+        if (platform.isCordova) CordovaDiagonsticPermissionUtil.getGeoLocPerm
+        else Html5PermissionApi.getGeoLocPerm
+    ) #::
+    // Bluetooth
+    PermissionSpec(
+      phase     = MWzPhases.BlueToothPerm,
+      supported = platform.hasBle,
+      askPermF  = CordovaDiagonsticPermissionUtil.getBlueToothState
+    ) #::
+    Stream.empty[PermissionSpec]
   }
 
 }
