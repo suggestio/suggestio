@@ -235,7 +235,8 @@ case class MGeoPoint(
 
   /** (12.1234 65.5633) */
   def toHumanFriendlyString: String = {
-    def _fmt(coord: GeoCoord_t) = "%1.2f".format(coord)
+    def _fmt(coord: GeoCoord_t) =
+      "%1.2f".format(coord.toFloat)     // Напрямую format(BigDecimal) нельзя из-за странной ошибки.
     `(` + _fmt(lat) + SPACE + _fmt(lon) + `)`
   }
 
