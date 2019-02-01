@@ -3,6 +3,7 @@ package io.suggest.sc.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.routes.ScJsRoutes
+import io.suggest.sc.m.boot.MScBoot
 import io.suggest.sc.sc3.MSc3Conf
 import japgolly.univeq._
 
@@ -36,11 +37,13 @@ case class MScInternals(
                          conf          : MSc3Conf,
                          jsRouter      : Pot[ScJsRoutes.type]    = Pot.empty,
                          geoLockTimer  : Option[Int]             = None,
+                         boot          : MScBoot                 = MScBoot.default,
                        ) {
 
   def withConf(conf: MSc3Conf) = copy(conf = conf)
   def withJsRouter(jsRouter: Pot[ScJsRoutes.type])    = copy(jsRouter = jsRouter)
   def withGeoLockTimer(geoLockTimer: Option[Int])   = copy(geoLockTimer = geoLockTimer)
+  def withBoot(boot: MScBoot) = copy(boot = boot)
 
   override def toString: String = {
     import io.suggest.common.html.HtmlConstants._

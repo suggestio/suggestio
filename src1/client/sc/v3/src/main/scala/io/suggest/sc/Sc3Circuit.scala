@@ -6,28 +6,28 @@ import diode.react.ReactConnector
 import io.suggest.ble.beaconer.c.BleBeaconerAh
 import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.event.WndEvents
 import io.suggest.dev.{JsScreenUtil, MPxRatios, MScreenInfo}
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
-import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.maps.c.MapCommonAh
-import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
+import io.suggest.maps.m.MMapS
 import io.suggest.maps.u.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs, WarnMsgs}
 import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
+import io.suggest.sc.c.boot.BootAh
 import io.suggest.sc.c.dia.WizardAh
 import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.inx.{IndexAh, IndexRah, WelcomeAh}
 import io.suggest.sc.c.search._
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.m._
+import io.suggest.sc.m.boot.{Boot, MBootServiceIds}
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
@@ -43,8 +43,6 @@ import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
 import io.suggest.sjs.dom.DomQuick
 import io.suggest.spa.OptFastEq
-import org.scalajs.dom
-import org.scalajs.dom.Event
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -166,39 +164,41 @@ class Sc3Circuit(
 
 
   // Кэш zoom'ов модели:
-  private val rootRW = zoomRW(identity) { (_, new2) => new2 }
+  private[sc] val rootRW = zoomRW(identity) { (_, new2) => new2 }
 
-  private val internalsRW = zoomRW(_.internals) { _.withInternals(_) }
-  private val jsRouterRW = internalsRW.zoomRW(_.jsRouter) { _.withJsRouter(_) }
+  private[sc] val internalsRW = zoomRW(_.internals) { _.withInternals(_) }
+  private[sc] val jsRouterRW = internalsRW.zoomRW(_.jsRouter) { _.withJsRouter(_) }
 
-  private val indexRW = zoomRW(_.index) { _.withIndex(_) }
-  private val titleOptRO = indexRW.zoom( _.resp.toOption.flatMap(_.name) )( OptFastEq.Plain )
-  private val indexWelcomeRW = indexRW.zoomRW(_.welcome) { _.withWelcome(_) }
+  private[sc] val indexRW = zoomRW(_.index) { _.withIndex(_) }
+  private[sc] val titleOptRO = indexRW.zoom( _.resp.toOption.flatMap(_.name) )( OptFastEq.Plain )
+  private[sc] val indexWelcomeRW = indexRW.zoomRW(_.welcome) { _.withWelcome(_) }
 
   val scCssRO: ModelRO[ScCss] = indexRW.zoom(_.scCss)
 
-  private val searchRW = indexRW.zoomRW(_.search) { _.withSearch(_) }
-  private val geoTabRW = searchRW.zoomRW(_.geo) { _.withGeo(_) }
+  private[sc] val searchRW = indexRW.zoomRW(_.search) { _.withSearch(_) }
+  private[sc] val geoTabRW = searchRW.zoomRW(_.geo) { _.withGeo(_) }
 
-  private val mapInitRW = geoTabRW.zoomRW(_.mapInit) { _.withMapInit(_) }
-  private val mmapsRW = mapInitRW.zoomRW(_.state) { _.withState(_) }
-  private val searchTextRW = searchRW.zoomRW(_.text) { _.withText(_) }
-  private val geoTabDataRW = geoTabRW.zoomRW(_.data) { _.withData(_) }
-  private val mapDelayRW = geoTabDataRW.zoomRW(_.delay) { _.withDelay(_) }
+  private[sc] val mapInitRW = geoTabRW.zoomRW(_.mapInit) { _.withMapInit(_) }
+  private[sc] val mmapsRW = mapInitRW.zoomRW(_.state) { _.withState(_) }
+  private[sc] val searchTextRW = searchRW.zoomRW(_.text) { _.withText(_) }
+  private[sc] val geoTabDataRW = geoTabRW.zoomRW(_.data) { _.withData(_) }
+  private[sc] val mapDelayRW = geoTabDataRW.zoomRW(_.delay) { _.withDelay(_) }
 
-  private val gridRW = zoomRW(_.grid) { _.withGrid(_) }
+  private[sc] val gridRW = zoomRW(_.grid) { _.withGrid(_) }
 
-  private val devRW = zoomRW(_.dev) { _.withDev(_) }
-  private val scScreenRW = devRW.zoomRW(_.screen) { _.withScreen(_) }
-  private val scGeoLocRW = devRW.zoomRW(_.geoLoc) { _.withGeoLoc(_) }
+  private[sc] val devRW = zoomRW(_.dev) { _.withDev(_) }
+  private[sc] val scScreenRW = devRW.zoomRW(_.screen) { _.withScreen(_) }
+  private[sc] val scGeoLocRW = devRW.zoomRW(_.geoLoc) { _.withGeoLoc(_) }
 
-  private val confRO = internalsRW.zoom(_.conf)
+  private[sc] val confRO = internalsRW.zoom(_.conf)
 
-  private val platformRW = devRW.zoomRW(_.platform) { _.withPlatform(_) }
+  private[sc] val platformRW = devRW.zoomRW(_.platform) { _.withPlatform(_) }
 
-  private val beaconerRW = devRW.zoomRW(_.beaconer) { _.withBeaconer(_) }
+  private[sc] val beaconerRW = devRW.zoomRW(_.beaconer) { _.withBeaconer(_) }
 
-  private val dialogsRW = zoomRW(_.dialogs)(_.withDialogs(_))
+  private[sc] val dialogsRW = zoomRW(_.dialogs)(_.withDialogs(_))
+
+  private[sc] val bootRW = internalsRW.zoomRW(_.boot)(_.withBoot(_))
 
 
   private def _getLocEnv(mroot: MScRoot, currRcvrId: Option[_] = None): MLocEnv = {
@@ -346,10 +346,16 @@ class Sc3Circuit(
     dispatcher  = this,
   )
 
+  private val bootAh = new BootAh(
+    modelRW = bootRW,
+    circuit = this,
+  )
+
 
   private def advRcvrsMapApi = new AdvRcvrsMapApiHttpViaUrl( ScJsRoutes )
 
   override protected val actionHandler: HandlerFunction = {
+    // TODO На основе конкретного Action-интерфейса роутить сигнал сразу к нужному контроллеру.
     var acc = List.empty[HandlerFunction]
 
     // TODO Opt Здесь много вызовов model.value. Может быть эффективнее будет один раз прочитать всю модель, и сверять её разные поля по мере необходимости?
@@ -359,6 +365,9 @@ class Sc3Circuit(
 
     // Диалоги обычно закрыты. Тоже - в хвост.
     acc ::= wizardAh
+
+    // Контроллер загрузки
+    acc ::= bootAh
 
     // Листенер инициализации роутера. Выкидывать его после окончания инициализации.
     //if ( !jsRouterRW.value.isReady ) {
@@ -404,55 +413,11 @@ class Sc3Circuit(
   // Отработать инициализацию js-роутера в самом начале конструктора.
   // По факту, инициализация уже наверное запущена в main(), но тут ещё и подписка на события...
   {
-    Future {
-      dispatch( JsRouterInit )
-    }
-
-    val jsRouterReadyP = Promise[None.type]()
-    val unSubscribeJsRouterF = subscribe( jsRouterRW ) { jsRouterPotProxy =>
-      if (jsRouterPotProxy.value.nonEmpty) {
-        // Запустить инициализацию начального индекса выдачи.
-        try {
-          // Запустить получения гео-маркеров с сервера.
-          if (geoTabRW.value.data.rcvrsCache.isEmpty) {
-            Future {
-              dispatch( RcvrMarkersInit )
-            }
-          }
-          jsRouterReadyP.success( None )
-        } catch {
-          case ex: Throwable =>
-            jsRouterReadyP.failure(ex)
-        }
-      }
-    }
-    // Удалить listener роутера можно только вызвав функцию, которую возвращает subscribe().
-    jsRouterReadyP.future.onComplete { tryRes =>
-      unSubscribeJsRouterF()
-      for (ex <- tryRes.failed)
-        LOG.error(ErrorMsgs.JS_ROUTER_INIT_FAILED, ex = ex)
-    }
-
-    // Подписаться на глобальные события window
-    val listenF = { _: Event => dispatch(ScreenReset) }
-    for {
-      evtName <- WndEvents.RESIZE :: WndEvents.ORIENTATION_CHANGE :: Nil
-    } {
-      try {
-        dom.window.addEventListener4s( evtName )( listenF )
-      } catch {
-        case ex: Throwable =>
-          LOG.error( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, ex, evtName )
-      }
-    }
-
-
-    // Подписаться на обновление заголовка и обновлять заголовок.
-    // Т.к. document.head.title -- это голая строка, то делаем рендер строки прямо здесь.
-    subscribe( titleOptRO ) { titleOptRO =>
-      val title0 = MsgCodes.`Suggest.io`
-      val title1 = titleOptRO.value.fold(title0)(_ + " | " + title0)
-      dom.document.title = title1
+    // Немедленный запуск инициализации/загрузки
+    Try {
+      dispatch(
+        Boot( MBootServiceIds.RcvrsMap :: Nil )
+      )
     }
 
     //  Когда наступает platform ready и BLE доступен, надо попробовать активировать/выключить слушалку маячков BLE и разрешить геолокацию.
@@ -472,6 +437,7 @@ class Sc3Circuit(
       }
     }
 
+    // TODO Platform boot - унесено в BootAh.PlatformSvc
     val isPlatformReadyRO = platformRW.zoom(_.isReady)
     // Начинаем юзать платформу прямо в конструкторе circuit. Это может быть небезопасно, поэтому тут try-catch для всей этой логики.
     try {

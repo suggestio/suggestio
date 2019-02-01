@@ -147,11 +147,13 @@ object HandleScApiResp {
 }
 
 
+sealed trait IPlatformAction extends IScRootAction
+
 /** Изменилась видимость выдачи, нужно приостановить или возобновить работу выдачи. */
-case class PauseOrResume(isScVisible: Boolean) extends IScRootAction
+case class PauseOrResume(isScVisible: Boolean) extends IPlatformAction
 
 /** Сигнал готовности платформы к полноценной работе. */
-case object SetPlatformReady extends IScRootAction
+case object SetPlatformReady extends IPlatformAction
 
 
 case class UpdateUnsafeScreenOffsetBy(incDecBy: Int) extends IScRootAction
