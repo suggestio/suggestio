@@ -3,6 +3,7 @@ package io.suggest.dev
 import diode.FastEq
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -22,6 +23,11 @@ object MPlatformS {
   }
 
   @inline implicit def univEq: UnivEq[MPlatformS] = UnivEq.derive
+
+  val isUsingNow  = GenLens[MPlatformS](_.isUsingNow)
+  val isReady     = GenLens[MPlatformS](_.isReady)
+  val isCordova   = GenLens[MPlatformS](_.isCordova)
+  val hasBle      = GenLens[MPlatformS](_.hasBle)
 
 }
 

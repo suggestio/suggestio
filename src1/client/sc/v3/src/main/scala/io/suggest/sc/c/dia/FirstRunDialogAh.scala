@@ -57,12 +57,11 @@ class FirstRunDialogAh[M](
 
   // Хелперы во избежание множественного инлайнинга одного и того же.
   /** Быстрый доступ к v0.view.frame */
-  private def _viewFrameLens =
-    MWzFirstOuterS.view composeLens MWzFirstS.frame
-
-  /** Быстрый доступ к v0.view.visible */
-  private def _viewVisibleLens =
-    MWzFirstOuterS.view composeLens MWzFirstS.visible
+  private def _viewFrameLens(frame: MWzFrame) = {
+    MWzFirstOuterS.view
+      .composeLens( MWzFirstS.frame )
+      .set(frame)
+  }
 
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
@@ -121,7 +120,7 @@ class FirstRunDialogAh[M](
 
                 // Переключить view в состояние ожидания.
                 val v2 = Some(
-                  _viewFrameLens.set( MWzFrames.InProgress )(first0)
+                  _viewFrameLens( MWzFrames.InProgress )(first0)
                 )
 
                 val fxs = accessFx + inProgressTimeoutFx
@@ -131,7 +130,7 @@ class FirstRunDialogAh[M](
             // yes в info-окне означает retry, по идее.
             case MWzFrames.Info =>
               val v2 = Some(
-                _viewFrameLens.set( MWzFrames.AskPerm )(first0)
+                _viewFrameLens( MWzFrames.AskPerm )(first0)
               )
               updated( v2 )
 
@@ -149,13 +148,13 @@ class FirstRunDialogAh[M](
             // Осознанный отказ в размещении - перейти в Info-фрейм текущей фазы
             case MWzFrames.AskPerm =>
               val v2 = Some(
-                _viewFrameLens.set( MWzFrames.Info )(first0)
+                _viewFrameLens( MWzFrames.Info )(first0)
               )
               updated(v2)
             // false во время InProgress - отмена ожидания. Надо назад перебросить, на Ask-шаг.
             case MWzFrames.InProgress =>
               val v2 = Some(
-                _viewFrameLens.set( MWzFrames.AskPerm )(first0)
+                _viewFrameLens( MWzFrames.AskPerm )(first0)
               )
               // Отменить ожидание результата пермишена для текущей фазы:
               // TODO Унести управление onChange за пределы YesNo-сигнала.
@@ -200,7 +199,7 @@ class FirstRunDialogAh[M](
               if (isGrantedOpt contains false) {
                 // Юзер не разрешил. Вывести Info с сожалением.
                 val v2 = Some(
-                  _viewFrameLens.set( MWzFrames.Info )(first0)
+                  _viewFrameLens( MWzFrames.Info )(first0)
                 )
                 updated(v2)
               } else {
@@ -229,7 +228,7 @@ class FirstRunDialogAh[M](
                 _wzGoToNextPhase( v1 )
               } else {
                 val v2 = Some(
-                  _viewFrameLens.set( MWzFrames.Info )(first0)
+                  _viewFrameLens( MWzFrames.Info )(first0)
                 )
                 updated(v2)
               }
@@ -248,7 +247,9 @@ class FirstRunDialogAh[M](
             } else {
               // Ещё есть pending-задачи, но диалог скрыт. Показать диалог на экране, оставаясь в Starting-фазе:
               val v2 = Some(
-                _viewVisibleLens.set(true)(first0)
+                MWzFirstOuterS.view
+                  .composeLens( MWzFirstS.visible )
+                  .set(true)(first0)
               )
               updated(v2)
             }
@@ -453,7 +454,9 @@ class FirstRunDialogAh[M](
         }
         // Надо скрыть диалог анимированно:
         val d2 = Some(
-          _viewVisibleLens.set(false)(v0)
+          MWzFirstOuterS.view
+            .composeLens( MWzFirstS.visible )
+            .set(false)(v0)
         )
         val allFx = saveFx + unRenderFx
         updated( d2, allFx )

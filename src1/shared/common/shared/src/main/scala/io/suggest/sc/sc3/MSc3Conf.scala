@@ -7,6 +7,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.maps.nodes.MRcvrsMapUrlArgs
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -47,6 +48,9 @@ object MSc3Conf {
   @inline implicit def univEq: UnivEq[MSc3Conf] = UnivEq.derive
 
   def timestampSec() = System.currentTimeMillis() / 1000
+
+  val rcvrsMapUrl = GenLens[MSc3Conf](_.rcvrsMapUrl)
+  val clientUpdatedAt = GenLens[MSc3Conf](_.clientUpdatedAt)
 
 }
 

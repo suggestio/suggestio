@@ -26,10 +26,6 @@ class JsRouterInitAh[M <: AnyRef](
   extends ActionHandler( modelRW )
 {
 
-  private def _jsRouterPotLens =
-    MScInternals.jsRouter composeLens MJsRouterS.jsRouter
-
-
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Команда к запуску инициализации js-роутера.
@@ -48,7 +44,8 @@ class JsRouterInitAh[M <: AnyRef](
               Success(JsRouterStatus(tryRes))
             }
         }
-        val v2 = _jsRouterPotLens
+        val v2 = MScInternals.jsRouter
+          .composeLens(MJsRouterS.jsRouter)
           .modify(_.pending())(v0)
 
         // silent - потому что pending никого не интересует.
@@ -61,9 +58,11 @@ class JsRouterInitAh[M <: AnyRef](
       val v0 = value
 
       // Сохранить инфу по роутеру в состояние.
-      val v1 = _jsRouterPotLens.modify { jsRouterPot0 =>
-        m.payload.fold( jsRouterPot0.fail, jsRouterPot0.ready )
-      }(v0)
+      val v1 = MScInternals.jsRouter
+        .composeLens(MJsRouterS.jsRouter)
+        .modify { jsRouterPot0 =>
+          m.payload.fold( jsRouterPot0.fail, jsRouterPot0.ready )
+        }(v0)
 
       updated( v1 )
 

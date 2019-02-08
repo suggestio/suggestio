@@ -94,7 +94,7 @@ object PlatformAh {
       isReady     = isReady,
       isCordova   = isCordova,
       isUsingNow  = isUsingNow,
-      hasBle  = isBleAvail
+      hasBle      = isBleAvail
     )
   }
 
@@ -117,7 +117,8 @@ class PlatformAh[M](
       if (v0.isUsingNow ==* m.isScVisible) {
         noChange
       } else {
-        val v2 = v0.withIsUsingNow( m.isScVisible )
+        val v2 = MPlatformS.isUsingNow
+          .set(m.isScVisible)(v0)
         updated(v2)
       }
 
@@ -127,12 +128,15 @@ class PlatformAh[M](
       if (v0.isReady) {
         noChange
       } else {
-        var v2 = v0.withIsReady( true )
+        // Собираем модификатор значения v0 в несколько шагов. isReady надо выставлять всегда:
+        var lens = MPlatformS.isReady.set(true)
 
         // Проверить, не изменились ли ещё какие-то платформенные флаги?
         val bleAvail2 = PlatformAh.isBleAvailCheck()
-        if (v2.hasBle !=* bleAvail2)
-          v2 = v2.withHasBle( bleAvail2 )
+        if (v0.hasBle !=* bleAvail2)
+          lens = lens andThen MPlatformS.hasBle.set( bleAvail2 )
+
+        val v2 = lens(v0)
 
         // TODO Проверять ble avail?
 

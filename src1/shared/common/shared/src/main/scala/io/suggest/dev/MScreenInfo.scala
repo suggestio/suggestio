@@ -1,6 +1,7 @@
 package io.suggest.dev
 
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -16,6 +17,9 @@ import japgolly.univeq._
 object MScreenInfo {
 
   @inline implicit def univEq: UnivEq[MScreenInfo] = UnivEq.derive
+
+  val screen = GenLens[MScreenInfo](_.screen)
+  val unsafeOffsets = GenLens[MScreenInfo](_.unsafeOffsets)
 
 }
 

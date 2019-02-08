@@ -2,7 +2,7 @@ package io.suggest.sc.c.dev
 
 import diode._
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dev.JsScreenUtil
+import io.suggest.dev.{JsScreenUtil, MScreenInfo}
 import io.suggest.sc.m.dev.MScScreenS
 import io.suggest.sc.m.grid.GridReConf
 import io.suggest.sc.m.inx.ScCssReBuild
@@ -44,7 +44,7 @@ class ScreenAh[M](
             ScreenRszTimer
           }
         }
-        val v2 = v0.withRszTimer( Some( tp.timerId ) )
+        val v2 = MScScreenS.rszTimer.set( Some(tp.timerId) )(v0)
         updatedSilent(v2, fx)
 
       } { _ =>
@@ -65,7 +65,7 @@ class ScreenAh[M](
 
       val v0 = value
 
-      val v2 = value.copy(
+      val v2 = v0.copy(
         info = v0.info.copy(
           screen        = screen2,
           unsafeOffsets = uo2
@@ -113,11 +113,9 @@ class ScreenAh[M](
         bottomO = incDecF(uo0.bottomO)
       )
 
-      val v2 = v0.withInfo(
-        v0.info.withSafeArea(
-          uo2
-        )
-      )
+      val v2 = MScScreenS.info
+        .composeLens( MScreenInfo.unsafeOffsets )
+        .set(uo2)(v0)
 
       // По идее, ребилдить можно прямо тут, но zoom-модель не позволяет отсюда получить доступ к scCss.
       // Выполнить ребилд ScCss в фоне:

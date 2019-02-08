@@ -601,7 +601,7 @@ class IndexAh[M](
         val v1 = MScIndex.state
           .composeLens( MScIndexState.switchAsk )
           .set( None )( v0 )
-        
+
         if (v0.resp.isEmpty) {
           // Если нет открытого узла (выдача скрыта), то надо выбрать первый узел из списка.
           val fx = NodeRowClick(
