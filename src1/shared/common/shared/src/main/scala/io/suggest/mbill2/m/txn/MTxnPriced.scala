@@ -20,7 +20,7 @@ object MTxnPriced {
     (__ \ "p").format[MPrice]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MTxnPriced] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MTxnPriced] = UnivEq.derive
 
 }
 

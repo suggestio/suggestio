@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.geo.MGeoPoint
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 import scalaz.NonEmptyList
 
 /**
@@ -26,6 +27,10 @@ object MScIndexState {
   }
 
   @inline implicit def univEq: UnivEq[MScIndexState] = UnivEq.derive
+
+  val generation = GenLens[MScIndexState](_.generation)
+  val switchAsk  = GenLens[MScIndexState](_.switchAsk)
+  val views      = GenLens[MScIndexState](_.views)
 
 }
 

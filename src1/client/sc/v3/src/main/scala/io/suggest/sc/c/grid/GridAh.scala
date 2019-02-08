@@ -10,7 +10,7 @@ import io.suggest.grid.build.{GridBuilderUtil, MGridBuildArgs, MGridBuildResult}
 import io.suggest.grid.{GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdCssArgs
-import io.suggest.jd.render.v.JdCssFactory
+import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.MJdTagNames
 import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
@@ -27,6 +27,7 @@ import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.d2.IWidth
 import io.suggest.primo.id.OptId
 import io.suggest.sjs.common.log.Log
+import io.suggest.spa.DoNothing
 import japgolly.univeq._
 
 import scala.util.Success
@@ -116,7 +117,7 @@ object GridAh {
         )
       }
 
-      GridScrollDone
+      DoNothing
     }
   }
 
@@ -153,7 +154,7 @@ object GridAh {
 
 
 /** Поддержка resp-handler'а для карточек плитки без фокусировки. */
-class GridRespHandler( jdCssFactory: JdCssFactory )
+class GridRespHandler
   extends IRespWithActionHandler
   with Log
 {
@@ -275,7 +276,7 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
       OptionUtil.maybe(isScrollUp) {
         Effect.action {
           AnimateScroll.scrollToTop( GridScrollUtil.scrollOptions )
-          GridScrollDone
+          DoNothing
         }
       }
     }
@@ -291,7 +292,7 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
 
     val g2 = g0.copy(
       core = g0.core.copy(
-        jdCss       = jdCssFactory.mkJdCss( GridAh.jdCssArgs(ads2, g0.core.jdConf) ),
+        jdCss       = JdCss( GridAh.jdCssArgs(ads2, g0.core.jdConf) ),
         ads         = ads2,
         // Отребилдить плитку:
         gridBuild   = GridAh.rebuildGrid(ads2, g0.core.jdConf)
@@ -311,7 +312,7 @@ class GridRespHandler( jdCssFactory: JdCssFactory )
 
 
 /** Resp-handler для обработки ответа по фокусировке одной карточки. */
-class GridFocusRespHandler( jdCssFactory: JdCssFactory )
+class GridFocusRespHandler
   extends IRespWithActionHandler
   with Log
 {
@@ -391,7 +392,7 @@ class GridFocusRespHandler( jdCssFactory: JdCssFactory )
         val gridBuild2 = GridAh.rebuildGrid( adsPot2, g0.core.jdConf )
         val g2 = g0.withCore(
           g0.core.copy(
-            jdCss     = jdCssFactory.mkJdCss( GridAh.jdCssArgs(adsPot2, g0.core.jdConf) ),
+            jdCss     = JdCss( GridAh.jdCssArgs(adsPot2, g0.core.jdConf) ),
             ads       = adsPot2,
             gridBuild = gridBuild2
           )
@@ -416,7 +417,6 @@ class GridAh[M](
                  api             : IScUniApi,
                  scQsRO          : ModelRO[MScQs],
                  screenRO        : ModelRO[MScreen],
-                 jdCssFactory    : JdCssFactory,
                  modelRW         : ModelRW[M, MGridS]
                )
   extends ActionHandler(modelRW)
@@ -564,7 +564,7 @@ class GridAh[M](
             val v2 = v0.withCore(
               v0.core.copy(
                 ads       = ads2,
-                jdCss     = jdCssFactory.mkJdCss( GridAh.jdCssArgs(ads2, v0.core.jdConf) ),
+                jdCss     = JdCss( GridAh.jdCssArgs(ads2, v0.core.jdConf) ),
                 gridBuild = gridBuild2
               )
             )
@@ -599,7 +599,7 @@ class GridAh[M](
           jdConf2 = jdConf2
             .withSzMult( szMult2 )
           core1 = core1.withJdCss(
-            jdCssFactory.mkJdCss( GridAh.jdCssArgs(core1.ads, jdConf2) )
+            JdCss( GridAh.jdCssArgs(core1.ads, jdConf2) )
           )
         }
 
@@ -613,11 +613,6 @@ class GridAh[M](
         // TODO Возможно, что надо перекачать содержимое плитки с сервера, если всё слишком сильно переменилось. Нужен отложенный таймер для этого.
         updated(v2)
       }
-
-
-    // Сообщение об окончании авто-скроллинга. TODO Это ненужный костыль. Он существует просто потому что Effect должен возвращать хоть какой-то экшен.
-    case GridScrollDone =>
-      noChange
 
   }
 

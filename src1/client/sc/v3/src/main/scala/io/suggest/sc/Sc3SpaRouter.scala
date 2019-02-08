@@ -3,17 +3,19 @@ package io.suggest.sc
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo._
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.sc.m.RouteTo
+import io.suggest.sc.m.{MScReactCtx, RouteTo}
 import io.suggest.sc.v.ScRootR
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.spa.MGen
 import io.suggest.text.{UrlUtil2, UrlUtilJs}
-import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl}
+import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl, RouterCtl}
 import japgolly.scalajs.react.vdom.html_<^._
 import OptionUtil.BoolOptOps
+import diode.react.ReactConnectProxy
 import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
+import japgolly.scalajs.react.React
 
 import scala.scalajs.js.URIUtils
 import scala.util.Try
@@ -26,16 +28,18 @@ import scala.util.Try
   * В отличии от scalajs-spa-tutorial, этот роутер живёт за пределами [[Sc3Main]], чтобы не разводить кашу в коде.
   */
 class Sc3SpaRouter(
-                    sc3Circuit   : Sc3Circuit,
-                    scRootR      : ScRootR
+                    scReactCtxF  : () => React.Context[MScReactCtx],
+                    sc3CircuitF  : RouterCtl[Sc3Pages] => Sc3Circuit,
+                    scRootR      : () => ScRootR,
                   )
   extends Log
 {
 
   import io.suggest.sc.m.MScRoot.MScRootFastEq
+  import MScReactCtx.MScReactCtxFastEq
 
 
-  val (router, routerCtl) = {
+  val routerAndCtl: (Router[Sc3Pages], RouterCtl[Sc3Pages]) = {
     val baseUrlSuffix = "#!"
 
     /** Конфиг роутера второго поколения.
@@ -181,14 +185,7 @@ class Sc3SpaRouter(
         }
 
       // Кэшируем компонент ScRootR вне функций роутера, т.к. за ним следит только Sc3Circuit, а не роутер.
-      val scRootWrapped = sc3Circuit.wrap( identity(_) )( scRootR.apply )
-
-      val mainScreenRule = dynamicRouteCT[MainScreen](mainScreenDfltRoute) ~> dynRender { page =>
-        // Отправить распарсенные данные URL в circuit:
-        sc3Circuit.dispatch( RouteTo(page) )
-        // Вернуть исходный компонент. circuit сама перестроит её при необходимости:
-        scRootWrapped
-      }
+      val mainScreenRule = dynamicRouteCT[MainScreen](mainScreenDfltRoute) ~> dynRender( _renderScMainScreen )
 
       mainScreenRule
         .notFound {
@@ -196,12 +193,55 @@ class Sc3SpaRouter(
         }
     }
 
-    Router.componentAndCtl(
+    Router.componentAndCtl[Sc3Pages](
       // TODO Когда v3 выдача станет дефолтом, лучше будет использовать fromWindowOrigin() НАВЕРНОЕ.
       //BaseUrl.fromWindowOrigin / "#!",
       baseUrl = BaseUrl.until_# + baseUrlSuffix,
       cfg     = routerCfg
     )
   }
+  def router = routerAndCtl._1
+  def routerCtl = routerAndCtl._2
+
+
+  // ----- MAIN SCREEN ------
+
+  // Готовые инстансы вызываются только из функций роутера, поэтому их безопасно дёргать отсюда.
+  val sc3Circuit = sc3CircuitF( routerCtl )
+
+
+  /** Коннекшен с подпиской к sc3-цепи на изменения контекста. */
+  private val scReactCtxC: ReactConnectProxy[MScReactCtx] = {
+    sc3Circuit.connect { mroot =>
+      MScReactCtx( mroot.index.scCss, routerCtl )
+    }( MScReactCtxFastEq )
+  }
+
+  /** Отрендеренный компонент ScRootR с инициализированным глобальным react-контекстом выдачи.
+    * Лениво! чтобы запретить доступ к инстансам sc-контекста и ScRootR до завершения конструктора [[Sc3SpaRouter]],
+    * иначе будет зацикливание, т.к. шаблоны (react-компоненты) и роутер взаимно нуждаются в инстансах друг друга.
+    */
+  private lazy val _scRootWrapped = {
+    sc3Circuit.wrap( identity(_) ) { mrootProxy =>
+      val content = scRootR()( mrootProxy )
+      val scReactCtx = scReactCtxF()
+      scReactCtxC { ctxProxy =>
+        // Внутренняя react-подписка нижележащих компонентов на новый инстанс цепи.
+        scReactCtx.provide( ctxProxy.value )(
+          content
+        )
+      }
+    }
+  }
+
+  /** Функция рендера выдачи, чтобы явно разделить в конструкторе val router-конфига и остальные поля конструктора. */
+  private def _renderScMainScreen(page: MainScreen) = {
+    // Отправить распарсенные данные URL в circuit:
+    sc3Circuit.dispatch( RouteTo(page) )
+    // Вернуть исходный компонент. circuit сама перестроит её при необходимости:
+    _scRootWrapped
+  }
+
+  // ----- END MAIN SCREEN ------
 
 }

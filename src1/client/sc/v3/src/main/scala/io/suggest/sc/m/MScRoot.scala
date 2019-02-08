@@ -10,6 +10,7 @@ import io.suggest.sc.sc3.MSc3Init
 import io.suggest.sc.styl.MScCssArgs
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -36,6 +37,13 @@ object MScRoot {
   def scCssArgsFrom(scRoot: MScRoot): MScCssArgs = {
     MScCssArgs.from(scRoot.index.resp, scRoot.dev.screen.info)
   }
+
+  /** "Линзы" для упрощённого доступа к полям нижнего уровня. */
+  val dev       = GenLens[MScRoot](_.dev)
+  val index     = GenLens[MScRoot](_.index)
+  val grid      = GenLens[MScRoot](_.grid)
+  val internals = GenLens[MScRoot](_.internals)
+  val dialogs   = GenLens[MScRoot](_.dialogs)
 
 }
 

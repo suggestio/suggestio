@@ -12,16 +12,16 @@ import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.MMapInitState
-import io.suggest.sc.styl.GetScCssF
 import io.suggest.sjs.leaflet.event.DragEndEvent
 import io.suggest.sjs.leaflet.map.IWhenReadyArgs
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
 import react.leaflet.control.LocateControlR
 import react.leaflet.lmap.LMapR
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.css.ScalaCssUtil.Implicits._
+import io.suggest.sc.m.MScReactCtx
 
 /**
   * Suggest.io
@@ -33,7 +33,7 @@ import io.suggest.css.ScalaCssUtil.Implicits._
   * Содержит в себе компоненты для карты и всего остального.
   */
 class SearchMapR(
-                  getScCssF  : GetScCssF
+                  scReactCtxP    : React.Context[MScReactCtx],
                 ) {
 
   import MGeoMapPropsR.MGeoMapPropsRFastEq
@@ -101,11 +101,6 @@ class SearchMapR(
       // Рендер компонента leaflet-карты вне maybeEl чтобы избежать перерендеров.
       // Вынос этого компонента за пределы maybeEl() поднял производительность карты на порядок.
       lazy val mmapComp = {
-        val mapCSS = getScCssF().Search.Tabs.MapTab
-        val geoMapCssSome = Some(
-          (mapCSS.geomap :: props.searchCss.GeoMap.geomap :: Nil)
-            .toHtmlClass
-        )
         val _stopPropagationF = ReactCommonUtil.stopPropagationCB _
 
         <.div(
@@ -115,30 +110,39 @@ class SearchMapR(
           ^.onTouchCancel ==> _stopPropagationF,
 
           s.mmapC { mmapProxy =>
-            mmapProxy.wrap { mmap =>
-              MGeoMapPropsR(
-                center        = mmap.center,
-                zoom          = mmap.zoom,
-                locationFound = mmap.locationFound,
-                cssClass      = geoMapCssSome,
-                // Вручную следим за ресайзом, т.к. у Leaflet это плохо получается (если карта хоть иногда бывает ЗА экраном, его считалка размеров ломается).
-                //trackWndResize = someFalse,
-                whenReady     = _onMapReadyOptF,
-                //onDragStart   = _onMapDragStartOptF,
-                onDragEnd     = _onMapDragEndOptF,
+            scReactCtxP.consume { scReactCtx =>
+              // Код сборки css был унесён за пределы тела коннекшена до внедрения scCss-через-контекст.
+              // Нахождение этого кода здесь немного снижает производительность.
+              val mapCSS = scReactCtx.scCss.Search.Tabs.MapTab
+              val geoMapCssSome = Some(
+                (mapCSS.geomap :: props.searchCss.GeoMap.geomap :: Nil)
+                  .toHtmlClass
               )
-            } { geoMapPropsProxy =>
-              LMapR(
-                LGeoMapR
-                  .lmMapSProxy2lMapProps( geoMapPropsProxy )
-                  .noAttribution
-              )(
-                tileLayer,
-                locateControl,
-                userLoc,
-                rcvrsGeo,
-                loaderOpt
-              )
+              mmapProxy.wrap { mmap =>
+                MGeoMapPropsR(
+                  center        = mmap.center,
+                  zoom          = mmap.zoom,
+                  locationFound = mmap.locationFound,
+                  cssClass      = geoMapCssSome,
+                  // Вручную следим за ресайзом, т.к. у Leaflet это плохо получается (если карта хоть иногда бывает ЗА экраном, его считалка размеров ломается).
+                  //trackWndResize = someFalse,
+                  whenReady     = _onMapReadyOptF,
+                  //onDragStart   = _onMapDragStartOptF,
+                  onDragEnd     = _onMapDragEndOptF,
+                )
+              } { geoMapPropsProxy =>
+                LMapR(
+                  LGeoMapR
+                    .lmMapSProxy2lMapProps( geoMapPropsProxy )
+                    .noAttribution
+                )(
+                  tileLayer,
+                  locateControl,
+                  userLoc,
+                  rcvrsGeo,
+                  loaderOpt
+                )
+              }
             }
           }
         )

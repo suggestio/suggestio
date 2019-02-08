@@ -34,7 +34,7 @@ object MFirstRunStored extends Log {
       .inmap[MFirstRunStored]( apply, _.version )
   }
 
-  implicit def univEq: UnivEq[MFirstRunStored] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MFirstRunStored] = UnivEq.derive
 
 
   /** Ключ конфига для сохранения сериализованного инстанса. */

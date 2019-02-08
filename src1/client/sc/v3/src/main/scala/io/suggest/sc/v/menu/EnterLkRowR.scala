@@ -7,11 +7,12 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.proto.http.model.Route
 import io.suggest.routes.IJsRouter
-import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import io.suggest.sc.styl.ScCssStatic
+import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.sc.m.MScReactCtx
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import scalacss.ScalaCssReact._
@@ -23,7 +24,7 @@ import scalacss.ScalaCssReact._
   * Description: Компонент строки меню с ссылкой для логина в s.io.
   */
 class EnterLkRowR(
-                   getScCssF: GetScCssF
+                   scReactCtxP     : React.Context[MScReactCtx],
                  ) {
 
   type Props_t = Option[PropsVal]
@@ -39,8 +40,8 @@ class EnterLkRowR(
   implicit object EnterLkRowRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.isLoggedIn ==* b.isLoggedIn) &&
-        (a.isMyAdnNodeId ===* b.isMyAdnNodeId) &&
-        (a.scJsRouter eq b.scJsRouter)
+      (a.isMyAdnNodeId ===* b.isMyAdnNodeId) &&
+      (a.scJsRouter eq b.scJsRouter)
     }
   }
 
@@ -49,7 +50,6 @@ class EnterLkRowR(
 
     def render(propsProxy: Props): VdomElement = {
       propsProxy.value.whenDefinedEl { props =>
-        val scCss = getScCssF()
         val R = ScCssStatic.Menu.Rows
 
         val (hrefRoute, msgCode) = props.isMyAdnNodeId.fold [(Route, String)] {
@@ -75,26 +75,28 @@ class EnterLkRowR(
         }
 
         // Сборка ссылки для входа туда, куда наверное хочет попасть пользователь.
-        <.a(
-          R.rowLink,
-          ^.href := hrefRoute.url,
+        scReactCtxP.consume { scReactCtx =>
+          <.a(
+            R.rowLink,
+            ^.href := hrefRoute.url,
 
-          // Ссылка на вход или на личный кабинет
-          MuiListItem(
-            new MuiListItemProps {
-              override val disableGutters = true
-              override val button = true
-            }
-          )(
-            MuiListItemText()(
-              <.span(
-                R.rowContent,
-                scCss.fgColor,
-                Messages( msgCode )
+            // Ссылка на вход или на личный кабинет
+            MuiListItem(
+              new MuiListItemProps {
+                override val disableGutters = true
+                override val button = true
+              }
+            )(
+              MuiListItemText()(
+                <.span(
+                  R.rowContent,
+                  scReactCtx.scCss.fgColor,
+                  Messages( msgCode )
+                )
               )
             )
           )
-        )
+        }
 
       }
 

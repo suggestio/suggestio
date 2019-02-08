@@ -241,6 +241,11 @@ object Common {
       */
     val SW_TOOLBOX = "3.6.0"
 
+    /** Версия monocle.
+      * @see [[http://julien-truffaut.github.io/Monocle/]]
+      */
+    val MONOCLE = "1.+"
+
   }
 
 

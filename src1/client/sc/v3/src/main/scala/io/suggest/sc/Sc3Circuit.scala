@@ -11,7 +11,7 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdCssArgs
-import io.suggest.jd.render.v.JdCssFactory
+import io.suggest.jd.render.v.JdCss
 import io.suggest.maps.c.MapCommonAh
 import io.suggest.maps.m.MMapS
 import io.suggest.maps.u.AdvRcvrsMapApiHttpViaUrl
@@ -21,9 +21,10 @@ import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.c.dev.{GeoLocAh, PlatformAh, ScreenAh}
 import io.suggest.sc.c._
 import io.suggest.sc.c.boot.BootAh
-import io.suggest.sc.c.dia.WizardAh
-import io.suggest.sc.c.grid.GridAh
-import io.suggest.sc.c.inx.{IndexAh, IndexRah, WelcomeAh}
+import io.suggest.sc.c.dia.FirstRunDialogAh
+import io.suggest.sc.c.grid.{GridAh, GridFocusRespHandler, GridRespHandler}
+import io.suggest.sc.c.inx.{ConfUpdateRah, IndexAh, IndexRah, WelcomeAh}
+import io.suggest.sc.c.jsrr.JsRouterInitAh
 import io.suggest.sc.c.search._
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.m._
@@ -32,17 +33,16 @@ import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
 import io.suggest.sc.m.search.{MGeoTabS, MMapInitState, MScSearch, MSearchCssProps}
-import io.suggest.sc.sc3.{MScCommonQs, MScQs}
+import io.suggest.sc.sc3.{MScCommonQs, MScQs, Sc3Pages}
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.u.Sc3ConfUtil
-import io.suggest.sc.v.ScCssFactory
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.OptFastEq.Wrapped
-import io.suggest.sjs.common.vm.evtg.EventTargetVm._
 import io.suggest.sjs.dom.DomQuick
-import io.suggest.spa.OptFastEq
+import io.suggest.spa.{DoNothingActionProcessor, OptFastEq}
+import japgolly.scalajs.react.extra.router.RouterCtl
 
 import scala.concurrent.{Future, Promise}
 import scala.util.Try
@@ -54,13 +54,10 @@ import scala.util.Try
   * Description: Main circuit новой выдачи. Отрабатывает весь интерфейс выдачи v3.
   */
 class Sc3Circuit(
-                  scCssFactory              : ScCssFactory,
-                  jdCssFactory              : JdCssFactory,
+                  // Явные аргументы:
+                  routerCtl                 : RouterCtl[Sc3Pages],
+                  // Автоматические DI-аргументы:
                   api                       : ISc3Api,
-                  getRouterCtlF             : GetRouterCtlF,
-                  scRespHandlers            : Seq[IRespHandler],
-                  scRespActionHandlers      : Seq[IRespActionHandler],
-                  indexRah                  : IndexRah,
                 )
   extends CircuitLog[MScRoot]
   with ReactConnector[MScRoot]
@@ -78,11 +75,12 @@ class Sc3Circuit(
   import m.search.MScSearchText.MScSearchTextFastEq
   import MScRoot.MScRootFastEq
   import MMapInitState.MMapInitStateFastEq
+  import io.suggest.sc.m.dia.MScDialogs.MScDialogsFastEq
+  import io.suggest.sc.m.dia.first.MWzFirstOuterS.MWzFirstOuterSFastEq
 
   import MEsUuId.Implicits._
   import io.suggest.dev.MPlatformS.MPlatformSFastEq
   import io.suggest.ble.beaconer.m.MBeaconerS.MBeaconerSFastEq
-
 
   override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.SC_FSM_EVENT_FAILED
 
@@ -138,7 +136,7 @@ class Sc3Circuit(
             ))
           )
         ),
-        scCss = scCssFactory.mkScCss(
+        scCss = ScCss(
           MScCssArgs.from(scIndexResp, screenInfo)
         )
       ),
@@ -152,7 +150,7 @@ class Sc3Circuit(
         MGridS(
           core = MGridCoreS(
             jdConf = jdConf,
-            jdCss  = jdCssFactory.mkJdCss( MJdCssArgs(conf = jdConf) )
+            jdCss  = JdCss( MJdCssArgs(conf = jdConf) )
           )
         )
       },
@@ -197,14 +195,24 @@ class Sc3Circuit(
   private[sc] val beaconerRW = devRW.zoomRW(_.beaconer) { _.withBeaconer(_) }
 
   private[sc] val dialogsRW = zoomRW(_.dialogs)(_.withDialogs(_))
+  private[sc] val firstRunDialogRW = dialogsRW.zoomRW(_.first)(_.withFirst(_))
 
   private[sc] val bootRW = internalsRW.zoomRW(_.boot)(_.withBoot(_))
 
 
-  private def _getLocEnv(mroot: MScRoot, currRcvrId: Option[_] = None): MLocEnv = {
+  private[sc] def getLocEnv(mroot: MScRoot = rootRW.value, currRcvrId: Option[_] = None): MLocEnv = {
     MLocEnv(
       geoLocOpt  = OptionUtil.maybeOpt(currRcvrId.isEmpty)( mroot.geoLocOpt ),
       bleBeacons = mroot.locEnvBleBeacons
+    )
+  }
+
+
+  /** Функция для сборки контекста рендера sc-шаблонов. */
+  val scReactContextRO = zoom { mroot =>
+    MScReactCtx(
+      scCss     = mroot.index.scCss,
+      routerCtl = routerCtl,
     )
   }
 
@@ -234,7 +242,7 @@ class Sc3Circuit(
           else
             scr0
         },
-        locEnv = _getLocEnv(mroot, currRcvrId)
+        locEnv = getLocEnv(mroot, currRcvrId)
       ),
       search = MAdsSearchReq(
         rcvrId      = currRcvrId,
@@ -255,7 +263,7 @@ class Sc3Circuit(
   private def _searchQs(mroot: MScRoot): MScQs = {
     MScQs(
       common = MScCommonQs(
-        locEnv      = _getLocEnv(mroot),
+        locEnv      = getLocEnv(mroot),
         apiVsn      = mroot.internals.conf.apiVsn,
         searchNodes = Some( false ),
         screen      = Some( mroot.dev.screen.info.screen )
@@ -272,14 +280,35 @@ class Sc3Circuit(
   private val screenRO = screenInfoRO.zoom(_.screen)
 
 
-  // Кэш action-handler'ов
+  /** Списки обработчиков ответов ScUniApi с сервера и resp-action в этих ответах. */
+  val (respHandlers, respActionHandlers) = {
+    // Часть модулей является универсальной, поэтому шарим хвост списка между обоими списками:
+    val mixed = List[IRespWithActionHandler](
+      new GridRespHandler,
+      new GridFocusRespHandler,
+      new IndexRah,
+      new NodesSearchRespHandler( screenInfoRO ),
+    )
+
+    val rahs: List[IRespActionHandler] =
+      new ConfUpdateRah ::
+      mixed
+
+    val rhs: List[IRespHandler] =
+      mixed
+
+    (rhs, rahs)
+  }
+
+
+  // Колелкцияaction-handler'ов:
 
   // хвостовой контроллер -- в самом конце, когда остальные отказались обрабатывать сообщение.
   private val tailAh = new TailAh(
     modelRW               = rootRW,
-    routerCtlF            = getRouterCtlF,
-    scRespHandlers        = scRespHandlers,
-    scRespActionHandlers  = scRespActionHandlers,
+    routerCtl             = routerCtl,
+    scRespHandlers        = respHandlers,
+    scRespActionHandlers  = respActionHandlers,
   )
 
   private val geoTabAh = new GeoTabAh(
@@ -295,8 +324,6 @@ class Sc3Circuit(
     api     = api,
     modelRW = indexRW,
     rootRO  = rootRW,
-    scCssFactory = scCssFactory,
-    indexRah     = indexRah,
   )
 
   private val mapAhs = {
@@ -313,7 +340,6 @@ class Sc3Circuit(
     api           = api,
     scQsRO        = gridAdsQsRO,
     screenRO      = screenRO,
-    jdCssFactory  = jdCssFactory,
     modelRW       = gridRW
   )
 
@@ -340,9 +366,9 @@ class Sc3Circuit(
     dispatcher  = this
   )
 
-  private val wizardAh = new WizardAh(
+  private val firstRunDialogAh = new FirstRunDialogAh(
     platformRO  = platformRW,
-    modelRW     = dialogsRW,
+    modelRW     = firstRunDialogRW,
     dispatcher  = this,
   )
 
@@ -364,7 +390,7 @@ class Sc3Circuit(
     acc ::= tailAh
 
     // Диалоги обычно закрыты. Тоже - в хвост.
-    acc ::= wizardAh
+    acc ::= firstRunDialogAh
 
     // Контроллер загрузки
     acc ::= bootAh
@@ -408,6 +434,11 @@ class Sc3Circuit(
     // Собрать все контроллеры в пачку.
     composeHandlers( acc: _* )
   }
+
+
+  // Установить поддержку костыль-экшена DoNothing поверх основного actionHandler'а:
+  // TODO Opt Или лучше в конец action handler? Оно жило в конце TailAh.
+  addProcessor( DoNothingActionProcessor[MScRoot] )
 
 
   // Отработать инициализацию js-роутера в самом начале конструктора.
@@ -548,14 +579,6 @@ class Sc3Circuit(
       }
     }
 
-  }
-
-  // TODO Запуск мастера настройки первого запуска, если требуется.
-  import io.suggest.sc.m.dia._
-  Future {
-    dispatch(
-      InitFirstRunWz(true)
-    )
   }
 
 }

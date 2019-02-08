@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -23,6 +24,10 @@ object MScSearch {
   }
 
   @inline implicit def univEq: UnivEq[MScSearch] = UnivEq.derive
+
+  val geo   = GenLens[MScSearch](_.geo)
+  val panel = GenLens[MScSearch](_.panel)
+  val text  = GenLens[MScSearch](_.text)
 
 }
 

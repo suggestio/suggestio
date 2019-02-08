@@ -17,7 +17,7 @@ import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.{HandleScApiResp, MScRoot}
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
-import io.suggest.sc.styl.{GetScCssF, ScCss}
+import io.suggest.sc.styl.ScCss
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -319,7 +319,7 @@ class GeoTabAh[M](
 
 
 /** Обработка sc-resp-экшенов. */
-class NodesSearchRespHandler(getScCssF: GetScCssF)
+class NodesSearchRespHandler( screenInfoRO: ModelRO[MScreenInfo] )
   extends IRespWithActionHandler {
 
   private def _withGeo(ctx: MRhCtx, geo2: MGeoTabS): MScRoot = {
@@ -348,7 +348,7 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
       // При ошибках надо обновлять css, иначе ширина может быть неверной.
       css = GeoTabAh._mkSearchCss(
         req             = req2,
-        screenInfo      = getScCssF().args.screenInfo,
+        screenInfo      = screenInfoRO.value,
         searchCssOrNull = t0.css
       )
     )
@@ -424,7 +424,7 @@ class NodesSearchRespHandler(getScCssF: GetScCssF)
       found = mnf2,
       css = GeoTabAh._mkSearchCss(
         req             = req2,
-        screenInfo      = getScCssF().args.screenInfo,
+        screenInfo      = screenInfoRO.value,
         searchCssOrNull = g0.css
       )
     )

@@ -4,10 +4,10 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.m.MScReactCtx
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import scalacss.ScalaCssReact._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -18,7 +18,9 @@ import io.suggest.ueq.UnivEqUtil._
   * Created: 19.07.17 18:13
   * Description: Вывод названия узла в рамочке.
   */
-class NodeNameR( getScCssF: GetScCssF ) {
+class NodeNameR(
+                 scReactCtxP     : React.Context[MScReactCtx],
+               ) {
 
   case class PropsVal(
                        nodeName   : String,
@@ -40,21 +42,23 @@ class NodeNameR( getScCssF: GetScCssF ) {
     def render(propsOptProxy: Props): VdomElement = {
       propsOptProxy().whenDefinedEl { props =>
         // Отрендерить название текущего узла.
-        val styles = getScCssF().Header.Logo.Txt
-        val dotsStyles = styles.Dots
+        scReactCtxP.consume { scReactCtx =>
+          val styles = scReactCtx.scCss.Header.Logo.Txt
+          val dotsStyles = styles.Dots
 
-        val dot0 = <.span(
-          dotsStyles.dot,
-          ReactCommonUtil.maybe(props.styled)(dotsStyles.dotColor),
-        )
+          val dot0 = <.span(
+            dotsStyles.dot,
+            ReactCommonUtil.maybe(props.styled)(dotsStyles.dotColor),
+          )
 
-        <.span(
-          styles.logo,
-          ReactCommonUtil.maybe( props.styled )(styles.colored),
-          props.nodeName,
-          dot0( dotsStyles.left ),
-          dot0( dotsStyles.right ),
-        )
+          <.span(
+            styles.logo,
+            ReactCommonUtil.maybe( props.styled )(styles.colored),
+            props.nodeName,
+            dot0( dotsStyles.left ),
+            dot0( dotsStyles.right ),
+          )
+        }
       }
     }
 

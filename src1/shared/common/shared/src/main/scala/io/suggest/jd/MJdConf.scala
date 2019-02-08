@@ -23,7 +23,7 @@ object MJdConf {
     (__ \ "c").format[Int]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MJdConf] = UnivEq.force
+  @inline implicit def univEq: UnivEq[MJdConf] = UnivEq.force
 
 }
 

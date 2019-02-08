@@ -36,6 +36,6 @@ sealed trait Route extends js.Object {
 }
 
 object Route {
-  implicit def univEq: UnivEq[Route] = UnivEq.force
+  @inline implicit def univEq: UnivEq[Route] = UnivEq.force
 }
 

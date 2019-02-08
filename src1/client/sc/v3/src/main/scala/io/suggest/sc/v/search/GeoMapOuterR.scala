@@ -6,11 +6,11 @@ import io.suggest.common.empty.OptionUtil
 import scalacss.ScalaCssReact._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.react.ReactCommonUtil
-import io.suggest.sc.styl.GetScCssF
-import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, PropsChildren, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import OptionUtil.BoolOptOps
+import io.suggest.sc.m.MScReactCtx
 
 /**
   * Suggest.io
@@ -22,7 +22,7 @@ import OptionUtil.BoolOptOps
   * Если имена стилей не меняются, то можно юзать через wrap(). Иначе - connect()
   */
 class GeoMapOuterR(
-                    getScCssF  : GetScCssF
+                    scReactCtxP    : React.Context[MScReactCtx],
                   ) {
 
   case class PropsVal(
@@ -39,36 +39,38 @@ class GeoMapOuterR(
   class Backend($: BackendScope[Props, State]) {
 
     def render(searchCssProxy: Props, s: State, children: PropsChildren): VdomElement = {
-      val mapTabCSS = getScCssF().Search.Tabs.MapTab
-      val searchCss = searchCssProxy.value.searchCss
-
-      <.div(
-        mapTabCSS.outer,
+      scReactCtxP.consume { scReactCtx =>
+        val mapTabCSS = scReactCtx.scCss.Search.Tabs.MapTab
+        val searchCss = searchCssProxy.value.searchCss
 
         <.div(
-          mapTabCSS.wrapper,
+          mapTabCSS.outer,
 
           <.div(
-            mapTabCSS.inner,
+            mapTabCSS.wrapper,
 
-            // Наконец, непосредственный рендер карты:
-            children
-
-          )
-        ),
-
-        // Прицел для наведения. Пока не ясно, отображать его всегда или только когда карта перетаскивается.
-        s.showCrossHairSomeC { showCrossHairOrNone =>
-          ReactCommonUtil.maybeEl( showCrossHairOrNone.value.getOrElseFalse ) {
             <.div(
-              mapTabCSS.crosshair,
-              searchCss.GeoMap.crosshair,
-              HtmlConstants.PLUS
-            )
-          }
-        }
+              mapTabCSS.inner,
 
-      )
+              // Наконец, непосредственный рендер карты:
+              children
+
+            )
+          ),
+
+          // Прицел для наведения. Пока не ясно, отображать его всегда или только когда карта перетаскивается.
+          s.showCrossHairSomeC { showCrossHairOrNone =>
+            ReactCommonUtil.maybeEl( showCrossHairOrNone.value.getOrElseFalse ) {
+              <.div(
+                mapTabCSS.crosshair,
+                searchCss.GeoMap.crosshair,
+                HtmlConstants.PLUS
+              )
+            }
+          }
+
+        )
+      }
     }
 
   }

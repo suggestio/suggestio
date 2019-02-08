@@ -27,7 +27,7 @@ object ISetUnset {
       .inmap[ISetUnset[T]]( apply, _.toOption )
   }
 
-  implicit def univEq[T: UnivEq]: UnivEq[ISetUnset[T]] = UnivEq.force
+  @inline implicit def univEq[T: UnivEq]: UnivEq[ISetUnset[T]] = UnivEq.force
 
   /** Собрать из option'а. */
   def apply[T](vOpt: Option[T]): ISetUnset[T] = {

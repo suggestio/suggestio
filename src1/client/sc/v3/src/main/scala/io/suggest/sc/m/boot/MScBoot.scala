@@ -9,6 +9,7 @@ import io.suggest.ueq.UnivEqUtil._
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 30.01.19 14:33
   * Description: Модель данных состояния запуска/инициализации системы.
+  * Неявно-пустая модель, используется во время загрузки для разных задач загрузки.
   */
 object MScBoot {
 

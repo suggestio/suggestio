@@ -33,6 +33,6 @@ sealed abstract class MWzPhase extends EnumEntry
 
 object MWzPhase {
 
-  implicit def univEq: UnivEq[MWzPhase] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MWzPhase] = UnivEq.derive
 
 }

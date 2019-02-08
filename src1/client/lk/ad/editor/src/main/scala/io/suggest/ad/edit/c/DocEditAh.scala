@@ -16,7 +16,7 @@ import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.{JdConst, MJdEdge}
 import io.suggest.jd.render.m._
-import io.suggest.jd.render.v.JdCssFactory
+import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd._
@@ -49,7 +49,6 @@ import scalaz.{Tree, TreeLoc}
   */
 class DocEditAh[M](
                     modelRW           : ModelRW[M, MDocS],
-                    jdCssFactory      : JdCssFactory,
                     lkAdEditCss       : LkAdEditCss,
                     quillDeltaJsUtil  : QuillDeltaJsUtil
                   )
@@ -121,7 +120,7 @@ class DocEditAh[M](
         val v2 = v0.withJdArgs(
           v0.jdArgs
             .withJdCss(
-              jdCssFactory.mkJdCss(
+              JdCss(
                 MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
               )
             )
@@ -230,7 +229,7 @@ class DocEditAh[M](
         val jdArgs2 = v0.jdArgs.copy(
           template    = tpl2,
           edges       = edgesData3,
-          jdCss       = jdCssFactory.mkJdCss(
+          jdCss       = JdCss(
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
           )
         )
@@ -283,7 +282,7 @@ class DocEditAh[M](
           v0.jdArgs
             .withTemplate( tpl2 )
             .withJdCss(
-              jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
+              JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
             )
         )
         updated( v2 )
@@ -399,7 +398,7 @@ class DocEditAh[M](
               v2.jdArgs.copy(
                 template    = tpl2,
                 edges       = dataEdges2,
-                jdCss       = jdCssFactory.mkJdCss(
+                jdCss       = JdCss(
                   MJdCssArgs.singleCssArgs(tpl2, v2.jdArgs.conf)
                 )
               )
@@ -539,7 +538,7 @@ class DocEditAh[M](
         jdArgs = v0.jdArgs
           .withTemplate( template2 )
           .withJdCss(
-            jdCssFactory.mkJdCss(
+            JdCss(
               MJdCssArgs.singleCssArgs(template2, v0.jdArgs.conf)
             )
           )
@@ -577,7 +576,7 @@ class DocEditAh[M](
           .fold(tpl0) { _.toTree }
 
         if (tpl2.subForest.nonEmpty) {
-          val jdCss2 = jdCssFactory.mkJdCss(
+          val jdCss2 = JdCss(
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
           )
 
@@ -777,7 +776,7 @@ class DocEditAh[M](
       val v2 = v0.withJdArgs(
         v0.jdArgs.copy(
           template    = tpl2,
-          jdCss       = jdCssFactory.mkJdCss(
+          jdCss       = JdCss(
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
           ),
           renderArgs  = v0.jdArgs.renderArgs
@@ -905,7 +904,7 @@ class DocEditAh[M](
             val jdArgs2 = v0.jdArgs
               .withTemplate(tpl2)
               .withJdCss(
-                jdCssFactory.mkJdCss(
+                JdCss(
                   MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
                 )
               )
@@ -952,7 +951,7 @@ class DocEditAh[M](
         v0.jdArgs
           .withTemplate(tpl2)
           .withJdCss(
-            jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
+            JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
           )
       )
       updated(v2)
@@ -980,7 +979,7 @@ class DocEditAh[M](
             .withJdArgs(
               v0.jdArgs.copy(
                 template = tpl2,
-                jdCss = jdCssFactory.mkJdCss(
+                jdCss = JdCss(
                   MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
                 )
               )
@@ -1070,7 +1069,7 @@ class DocEditAh[M](
         v0.jdArgs
           .withTemplate( tpl2 )
           .withJdCss(
-            jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
+            JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
           )
       )
       updated( v2 )
@@ -1127,7 +1126,7 @@ class DocEditAh[M](
             v0.jdArgs
               .withTemplate(tpl2)
               .withJdCss(
-                jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
+                JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
               )
           )
           updated(v2)
@@ -1217,7 +1216,7 @@ class DocEditAh[M](
         jdArgs = v0.jdArgs.copy(
           template    = tpl2,
           edges       = edgesMap2,
-          jdCss       = jdCssFactory.mkJdCss(
+          jdCss       = JdCss(
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
           ),
           renderArgs  = v0.jdArgs.renderArgs.withSelPath(
@@ -1299,7 +1298,7 @@ class DocEditAh[M](
             renderArgs  = v0.jdArgs.renderArgs.withSelPath(
               selPath   = tpl2.nodeToPath( newStripTree.rootLabel )
             ),
-            jdCss       = jdCssFactory.mkJdCss(
+            jdCss       = JdCss(
               MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
             )
           )
@@ -1322,7 +1321,7 @@ class DocEditAh[M](
           v0.jdArgs
             .withConf( conf2 )
             .withJdCss(
-              jdCssFactory.mkJdCss(
+              JdCss(
                 MJdCssArgs.singleCssArgs(v0.jdArgs.template, conf2)
               )
             )

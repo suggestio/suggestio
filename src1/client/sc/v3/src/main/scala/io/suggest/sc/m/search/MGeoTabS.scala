@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -23,6 +24,11 @@ object MGeoTabS {
   }
 
   @inline implicit def univEq: UnivEq[MGeoTabS] = UnivEq.derive
+
+  val mapInit = GenLens[MGeoTabS](_.mapInit)
+  val css     = GenLens[MGeoTabS](_.css)
+  val found   = GenLens[MGeoTabS](_.found)
+  val data    = GenLens[MGeoTabS](_.data)
 
 }
 

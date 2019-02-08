@@ -40,7 +40,7 @@ object MMdrConf {
   }
 
 
-  implicit def univEq: UnivEq[MMdrConf] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMdrConf] = UnivEq.derive
 
 }
 

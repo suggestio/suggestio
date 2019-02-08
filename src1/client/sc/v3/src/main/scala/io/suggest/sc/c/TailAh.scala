@@ -4,23 +4,23 @@ import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.sc.{GetRouterCtlF, ScConstants}
+import io.suggest.sc.ScConstants
 import io.suggest.sc.m._
 import io.suggest.sc.m.grid._
 import io.suggest.sc.m.inx._
-import io.suggest.sc.m.search.NodeRowClick
+import io.suggest.sc.m.search.{MGeoTabS, MMapInitState, MScSearch, NodeRowClick}
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits.OptionListExtOps
 import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sjs.dom.DomQuick
-import io.suggest.spa.DoNothing
 import japgolly.univeq._
 import io.suggest.spa.DiodeUtil.Implicits._
-
-import scala.concurrent.Future
+import io.suggest.spa.DoNothing
+import japgolly.scalajs.react.extra.router.RouterCtl
 
 /**
   * Suggest.io
@@ -87,19 +87,19 @@ object TailAh {
     (v2, timeoutFx)
   }
 
+  private def _inxSearchGeoMapInitLens = {
+    MScIndex.search
+      .composeLens( MScSearch.geo)
+      .composeLens( MGeoTabS.mapInit )
+  }
 
+  /** Дедубликация кода сборки линз от MScIndex до mapInit. */
   private def withMapCenterInitReal(center: MGeoPoint, inx: MScIndex): MScIndex = {
-    inx.withSearch(
-      inx.search.withGeo(
-        inx.search.geo.withMapInit(
-          inx.search.geo.mapInit
-            .withState(
-              inx.search.geo.mapInit.state
-                .withCenterInitReal( center )
-            )
-        )
-      )
-    )
+    _inxSearchGeoMapInitLens
+      .composeLens( MMapInitState.state )
+      .modify {
+        _.withCenterInitReal( center )
+      }(inx)
   }
 
 
@@ -114,10 +114,10 @@ object TailAh {
 
 /** Непосредственный контроллер "последних" сообщений. */
 class TailAh[M](
+                 routerCtl                : RouterCtl[Sc3Pages],
                  modelRW                  : ModelRW[M, MScRoot],
                  scRespHandlers           : Seq[IRespHandler],
                  scRespActionHandlers     : Seq[IRespActionHandler],
-                 routerCtlF               : GetRouterCtlF
                )
   extends ActionHandler(modelRW)
   with Log
@@ -129,13 +129,13 @@ class TailAh[M](
     case ResetUrlRoute =>
       val m = TailAh.getMainScreenSnapShot( value )
       // Уведомить в фоне роутер, заодно разблокировав интерфейс.
-      Future {
-        routerCtlF()
+      val fx = Effect {
+        routerCtl
           .set( m )
-          .runNow()
+          .toFuture
+          .map(_ => DoNothing)
       }
-
-      noChange
+      effectOnly(fx)
 
 
     // js-роутер заливает в состояние данные из URL.
@@ -167,9 +167,8 @@ class TailAh[M](
       } {
         // generation не совпадает. Надо будет перезагрузить плитку.
         gridNeedsReload = true
-        inx = inx.withState(
-          inx.state.withGeneration( generation2 )
-        )
+        inx = (MScIndex.state composeLens MScIndexState.generation)
+          .set(generation2)(inx)
       }
 
       // Проверка поля searchOpened
@@ -276,16 +275,10 @@ class TailAh[M](
           // TODO Opt: iphone шлёт кучу одинаковых или похожих координат, раз в 1-2 секунды. Надо это фильтровать?
           .fold( noChange ) { geoLoc =>
             // Не двигать карту, сохранять координаты только в .userLoc
-            val v2 = v0.withIndex(
-              v0.index.withSearch(
-                v0.index.search.withGeo(
-                  v0.index.search.geo.withMapInit(
-                    v0.index.search.geo.mapInit
-                      .withUserLoc( Some(geoLoc) )
-                  )
-                )
-              )
-            )
+            val v2 = MScRoot.index
+              .composeLens( TailAh._inxSearchGeoMapInitLens )
+              .composeLens( MMapInitState.userLoc )
+              .set( Some(geoLoc) )(v0)
             ah.updateMaybeSilent( !v0.index.search.panel.opened )(v2)
           }
 
@@ -317,28 +310,22 @@ class TailAh[M](
           } { geoLoc =>
             // Есть какие-то координаты, но не факт, что ожидаемо точные.
             // Т.к. работает suppressor, то координаты можно всегда записывать в состояние, не боясь постороннего "шума".
-            val v1 = v0.withIndex(
-              v0.index.withSearch(
-                v0.index.search.withGeo(
-                  v0.index.search.geo.withMapInit {
-                    var mi2 = v0.index.search.geo.mapInit
-                      // Текущая позиция юзера - всегда обновляется.
-                      .withUserLoc( Some(geoLoc) )
-                    // Нельзя менять местоположение на карте, если это просто фоновое тестирование индекса.
-                    if (!m.scSwitch.exists(_.demandLocTest)) {
-                      // Нормальное ожидаемое определение местоположения. Переместить карту в текущую точку.
-                      mi2 = mi2.withState(
-                        v0.index.search.geo.mapInit.state
-                          .withCenterInitReal( geoLoc.point )
-                      )
-                    }
-                    mi2
-                  }
-                )
-              )
-            )
+            val v1 = MScRoot.index
+              .composeLens( TailAh._inxSearchGeoMapInitLens )
+              .modify { mi0 =>
+                // Текущая позиция юзера - всегда обновляется.
+                var mi2 = MMapInitState.userLoc
+                  .set( Some(geoLoc) )( mi0 )
+                // Нельзя менять местоположение на карте, если это просто фоновое тестирование индекса.
+                if (!m.scSwitch.exists(_.demandLocTest)) {
+                  // Нормальное ожидаемое определение местоположения. Переместить карту в текущую точку.
+                  mi2 = MMapInitState.state
+                    .modify(_.withCenterInitReal( geoLoc.point ))(mi2)
+                }
+                mi2
+              }(v0)
 
-            if (m.origOpt.exists(_.glType.highAccuracy)) {
+            if (m.origOpt.exists(_.glType.isHighAccuracy)) {
               // Пришли точные координаты. Завершаем ожидание.
               __finished(v1, isSuccess = true)
             } else {
@@ -455,10 +442,6 @@ class TailAh[M](
 
     // Если юзер активно тыкал пальцем по экрану, то таймер сокрытия мог сработать после окончания приветствия.
     case _: WcTimeOut =>
-      noChange
-
-    // Обработка всегда-игнорируемых событий, но которые зачем-то нужны.
-    case DoNothing =>
       noChange
 
   }

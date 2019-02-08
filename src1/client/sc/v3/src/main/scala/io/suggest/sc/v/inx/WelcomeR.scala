@@ -6,14 +6,15 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MWelcomeInfo
+import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.inx.{MWelcomeState, WcClick}
-import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
+import io.suggest.sc.styl.ScCssStatic
 import io.suggest.sc.v.hdr.NodeNameR
 import io.suggest.spa.OptFastEq.Plain
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
 import scalacss.ScalaCssReact._
 
 /**
@@ -23,8 +24,8 @@ import scalacss.ScalaCssReact._
   * Description: React-компонент экрана приветствия.
   */
 class WelcomeR(
-                nodeNameR: NodeNameR,
-                getScCssF: GetScCssF
+                nodeNameR       : NodeNameR,
+                scReactCtxP     : React.Context[MScReactCtx],
               ) {
 
   /** Props-модель данного компонента. */
@@ -56,72 +57,74 @@ class WelcomeR(
 
     def render(propsProxy: Props): VdomElement = {
       propsProxy().whenDefinedEl { p =>
-        val AnimCss = ScConstants.Welcome.Anim
-        val fadingOutNow = p.state.isHiding
+        scReactCtxP.consume { scReactCtx =>
+          val AnimCss = ScConstants.Welcome.Anim
+          val fadingOutNow = p.state.isHiding
 
-        val scCss = getScCssF()
-        val CSS = scCss.Welcome
+          val scCss = scReactCtx.scCss
+          val CSS = scCss.Welcome
 
-        <.div(
-          scCss.bgColor,
-          ScCssStatic.Welcome.welcome,
+          <.div(
+            scCss.bgColor,
+            ScCssStatic.Welcome.welcome,
 
-          ^.classSet1(
-            AnimCss.WILL_FADEOUT_CSS_CLASS,
-            AnimCss.TRANS_02_CSS_CLASS     -> fadingOutNow,
-            AnimCss.FADEOUT_CSS_CLASS      -> fadingOutNow
-          ),
+            ^.classSet1(
+              AnimCss.WILL_FADEOUT_CSS_CLASS,
+              AnimCss.TRANS_02_CSS_CLASS     -> fadingOutNow,
+              AnimCss.FADEOUT_CSS_CLASS      -> fadingOutNow
+            ),
 
-          ^.onClick --> _onClick,
+            ^.onClick --> _onClick,
 
-          // Рендер фонового изображения.
-          p.wcInfo.bgImage.whenDefined { bgImg =>
-            <.img(
-              // Подгонка фона wh под экран и центровка происходит в ScCss:
-              CSS.Bg.bgImg,
-              ^.src := bgImg.url
-            )
-          },
-
-          // Рендер логотипа или картинки переднего плана.
-          p.wcInfo.fgImage.whenDefined { fgImg =>
-            // Есть графический логотип, отрендерить его изображение:
-            TagMod(
-              <.span(
-                CSS.Fg.helper
-              ),
-
+            // Рендер фонового изображения.
+            p.wcInfo.bgImage.whenDefined { bgImg =>
               <.img(
-                // Центровка лого происходит в ScCss.
-                CSS.Fg.fgImg,
-                ^.src := fgImg.url
+                // Подгонка фона wh под экран и центровка происходит в ScCss:
+                CSS.Bg.bgImg,
+                ^.src := bgImg.url
               )
-            )
-          },
+            },
 
-          // Текстовый логотип-подпись, если доступно название узла.
-          p.nodeName.whenDefined { nodeName =>
-            <.div(
-              CSS.Fg.fgText,
-              // Выровнять по вертикали с учётом картинки переднего плана:
-              p.wcInfo
-                .fgImage
-                .flatMap(_.whPx)
-                .whenDefined { whPx =>
-                  ^.marginTop := (whPx.height / 2).px
-                },
-              // Отобразить текстовый логотип, такой же как и в заголовке:
-              propsProxy.wrap { _ =>
-                val nnProps = nodeNameR.PropsVal(
-                  nodeName = nodeName,
-                  styled   = true
+            // Рендер логотипа или картинки переднего плана.
+            p.wcInfo.fgImage.whenDefined { fgImg =>
+              // Есть графический логотип, отрендерить его изображение:
+              TagMod(
+                <.span(
+                  CSS.Fg.helper
+                ),
+
+                <.img(
+                  // Центровка лого происходит в ScCss.
+                  CSS.Fg.fgImg,
+                  ^.src := fgImg.url
                 )
-                Some(nnProps): nodeNameR.Props_t
-              }( nodeNameR.apply ),
-            )
-          }
+              )
+            },
 
-        )
+            // Текстовый логотип-подпись, если доступно название узла.
+            p.nodeName.whenDefined { nodeName =>
+              <.div(
+                CSS.Fg.fgText,
+                // Выровнять по вертикали с учётом картинки переднего плана:
+                p.wcInfo
+                  .fgImage
+                  .flatMap(_.whPx)
+                  .whenDefined { whPx =>
+                    ^.marginTop := (whPx.height / 2).px
+                  },
+                // Отобразить текстовый логотип, такой же как и в заголовке:
+                propsProxy.wrap { _ =>
+                  val nnProps = nodeNameR.PropsVal(
+                    nodeName = nodeName,
+                    styled   = true
+                  )
+                  Some(nnProps): nodeNameR.Props_t
+                }( nodeNameR.apply ),
+              )
+            }
+
+          )
+        }
       }
     }
 

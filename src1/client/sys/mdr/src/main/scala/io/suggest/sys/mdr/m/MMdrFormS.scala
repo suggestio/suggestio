@@ -19,7 +19,7 @@ object MMdrFormS {
     }
   }
 
-  implicit def univEq: UnivEq[MMdrFormS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MMdrFormS] = UnivEq.derive
 
 }
 

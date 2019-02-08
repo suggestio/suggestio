@@ -40,7 +40,11 @@ lazy val common = crossProject(JSPlatform, JVMPlatform)
       "org.scala-lang.modules" %%% "scala-parser-combinators" % Common.Vsn.SCALA_PARSER_COMBINATORS,
       // diode для FastEq в [common], а не только в js.
       "io.suzaku"    %%% "diode-core"  % Common.diodeVsn,
-      // Тесты, только [common] и не наследуются (наверное).
+      // monocle
+      "com.github.julien-truffaut" %%%  "monocle-core"  % Common.Vsn.MONOCLE,
+      "com.github.julien-truffaut" %%%  "monocle-macro" % Common.Vsn.MONOCLE,
+      "com.github.julien-truffaut" %%%  "monocle-law"   % Common.Vsn.MONOCLE % Test,
+      // Тесты **не*наследуется**, только на [common].
       "io.monix"     %%% "minitest"    % Common.minitestVsn  % Test
     )
   )

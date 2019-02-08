@@ -16,7 +16,7 @@ sealed trait IDiaAction extends ISc3Action
 
 
 /** Скрыто отрендерить диалог первого запуска, чтобы была анимация на первом шаге. */
-case class InitFirstRunWz( isRendered: Boolean ) extends IDiaAction
+case class InitFirstRunWz( showHide: Boolean ) extends IDiaAction
 
 /** Клик по кнопкам "да" или "нет". */
 case class YesNoWz( yesNo: Boolean ) extends IDiaAction

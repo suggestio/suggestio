@@ -1,6 +1,6 @@
 package io.suggest.spa
 
-import diode.{ActionType, Effect}
+import diode._
 import japgolly.univeq.UnivEq
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
@@ -19,7 +19,7 @@ trait DAction
 
 object DAction {
 
-  @inline implicit def univEq: UnivEq[DAction] = UnivEq.force
+  @inline implicit def univEq[T <: DAction]: UnivEq[T] = UnivEq.force
 
   /** Требуется ActionType[X] в scope, чтобы компилятор узрел экшен. */
   implicit object DActionType extends DActionType
@@ -42,3 +42,22 @@ trait DActionType extends ActionType[DAction]
 
 /** Унифицированный для всех NOP-экшен, который не должен нигде отрабатываться. */
 case object DoNothing extends DAction
+
+
+object DoNothingActionProcessor {
+
+  /** Сборка ActionProcessor'а, который перехватывает заведомо пустые экшены. */
+  def apply[M <: AnyRef]: ActionProcessor[M] = {
+    new ActionProcessor[M] {
+      override def process(dispatch: Dispatcher, action: Any, next: Any => ActionResult[M], currentModel: M): ActionResult[M] = {
+        action match {
+          case DoNothing | null =>
+            ActionResult.NoChange
+          case _ =>
+            next( action )
+        }
+      }
+    }
+  }
+
+}

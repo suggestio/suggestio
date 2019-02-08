@@ -185,7 +185,7 @@ object Sc3Main extends Log {
       } {
         Try {
           dom.window.addEventListener4s( evtName ) { _: Event =>
-            modules.sc3Circuit.dispatch( ScreenReset )
+            modules.sc3SpaRouter.sc3Circuit.dispatch( ScreenReset )
           }
         }
           .logFailure( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, evtName )
@@ -196,7 +196,7 @@ object Sc3Main extends Log {
     // Подписаться на обновление заголовка и обновлять заголовок.
     // Т.к. document.head.title -- это голая строка, то делаем рендер строки прямо здесь.
     Try {
-      modules.sc3Circuit.subscribe( modules.sc3Circuit.titleOptRO ) { titleOptRO =>
+      modules.sc3SpaRouter.sc3Circuit.subscribe( modules.sc3SpaRouter.sc3Circuit.titleOptRO ) { titleOptRO =>
         val title0 = MsgCodes.`Suggest.io`
         val title1 = titleOptRO.value.fold(title0)(_ + " | " + title0)
         dom.document.title = title1

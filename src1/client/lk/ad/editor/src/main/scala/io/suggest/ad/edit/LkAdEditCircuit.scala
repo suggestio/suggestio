@@ -7,7 +7,7 @@ import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
 import io.suggest.sjs.common.log.CircuitLog
 import play.api.libs.json.Json
 import io.suggest.ad.edit.c._
-import io.suggest.jd.render.v.JdCssFactory
+import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags._
 import io.suggest.ad.edit.m.layout.MLayoutS
 import io.suggest.ad.edit.m.vld.MJdVldAh
@@ -36,7 +36,6 @@ import io.suggest.scalaz.ZTreeUtil._
   * Description: Diode-circuit редактора рекламных карточек второго поколения.
   */
 class LkAdEditCircuit(
-                       jdCssFactory         : JdCssFactory,
                        docEditAhFactory     : (ModelRW[MAeRoot, MDocS]) => DocEditAh[MAeRoot],
                      )
   extends CircuitLog[MAeRoot]
@@ -60,7 +59,7 @@ class LkAdEditCircuit(
     *
     * final val, чтобы значение флага было на 100% известно ещё на стадии компиляции.
     */
-  final val DOC_VLD_ON_CLIENT: Boolean = scala.scalajs.LinkingInfo.developmentMode
+  private final def DOC_VLD_ON_CLIENT: Boolean = scala.scalajs.LinkingInfo.developmentMode
 
 
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.AD_EDIT_CIRCUIT_ERROR
@@ -88,7 +87,7 @@ class LkAdEditCircuit(
         val edges = mFormInit.adData.edgesMap
           .mapValues( MEdgeDataJs(_) )
         val jdCssArgs = MJdCssArgs.singleCssArgs( tpl, jdConf )
-        val jdCss = jdCssFactory.mkJdCss( jdCssArgs )
+        val jdCss = JdCss( jdCssArgs )
         MDocS(
           jdArgs = MJdArgs(
             template   = tpl,
@@ -188,7 +187,7 @@ class LkAdEditCircuit(
             setColorOpt( s0, mColorAh.colorOpt )
           }
           val tpl2 = strip2.toTree
-          val css2 = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf) )
+          val css2 = JdCss( MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf) )
 
           mdoc0
             .withJdArgs {
@@ -301,7 +300,7 @@ class LkAdEditCircuit(
           val (tpl2, css2) = if (isTplChanged) {
             // Изменился шаблон. Вернуть новый шаблон, пересобрать css
             val tpl1 = mPictureAh.view
-            val css1 = jdCssFactory.mkJdCss(
+            val css1 = JdCss(
               MJdCssArgs.singleCssArgs(tpl1, mdoc0.jdArgs.conf )
             )
             (tpl1, css1)

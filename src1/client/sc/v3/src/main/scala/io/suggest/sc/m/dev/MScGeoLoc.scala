@@ -2,13 +2,14 @@ package io.suggest.sc.m.dev
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.common.empty.EmptyProduct
+import io.suggest.common.empty.{EmptyProduct, OptionUtil}
 import io.suggest.geo.{GeoLocType, MGeoLoc}
 import io.suggest.sc.m.inx.MScSwitchCtx
 import io.suggest.sjs.dom.GeoLocWatchId_t
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import io.suggest.ueq.JsUnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -33,6 +34,10 @@ object MScGeoLoc {
 
   @inline implicit def univEq: UnivEq[MScGeoLoc] = UnivEq.derive
 
+  val watchers    = GenLens[MScGeoLoc](_.watchers)
+  val suppressor  = GenLens[MScGeoLoc](_.suppressor)
+  val switch      = GenLens[MScGeoLoc](_.switch)
+
 }
 
 
@@ -41,7 +46,6 @@ object MScGeoLoc {
   * @param watchers Наблюдение за геолокацией осуществяется подпиской на события.
   *                 Здесь инфа об активных подписках и данные для отписки.
   *                 Если пусто, то можно считать эту подсистему выключенной.
-
   */
 case class MScGeoLoc(
                       watchers        : Map[GeoLocType, MGeoLocWatcher]     = Map.empty,
@@ -52,6 +56,23 @@ case class MScGeoLoc(
   def withWatchers(watchers: Map[GeoLocType, MGeoLocWatcher]) = copy(watchers = watchers)
   def withSuppressor(suppressor: Option[Suppressor]) = copy(suppressor = suppressor)
   def withSwitch(switch: MGeoLocSwitchS) = copy(switch = switch)
+
+  /** Данные о текущем наиболее точном местоположении. */
+  lazy val currentLocation: Option[(GeoLocType, MGeoLoc)] = {
+    val elements = (
+      for {
+        (glType, watcher) <- watchers.iterator
+        gl <- watcher.lastPos.toOption
+      } yield {
+        glType -> gl
+      }
+    )
+      .toStream
+    // Вернуть наиболее точный из элементов.
+    OptionUtil.maybe( elements.nonEmpty ) {
+      elements.maxBy( _._1.precision )
+    }
+  }
 
 }
 

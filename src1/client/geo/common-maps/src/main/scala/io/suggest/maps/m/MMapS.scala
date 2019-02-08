@@ -5,6 +5,7 @@ import io.suggest.geo.MGeoPoint
 import io.suggest.maps.MMapProps
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -35,6 +36,11 @@ object MMapS {
       centerInit  = mapProps.center
     )
   }
+
+  val zoom          = GenLens[MMapS](_.zoom)
+  val centerInit    = GenLens[MMapS](_.centerInit)
+  val centerReal    = GenLens[MMapS](_.centerReal)
+  val locationFound = GenLens[MMapS](_.locationFound)
 
 }
 

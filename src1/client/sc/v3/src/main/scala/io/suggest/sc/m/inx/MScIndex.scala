@@ -9,6 +9,7 @@ import io.suggest.sc.styl.ScCss
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -20,16 +21,23 @@ object MScIndex {
 
   implicit object MScIndexFastEq extends FastEq[MScIndex] {
     override def eqv(a: MScIndex, b: MScIndex): Boolean = {
-      (a.state      ===* b.state) &&
-        (a.resp     ===* b.resp) &&
-        (a.welcome  ===* b.welcome) &&
-        (a.search   ===* b.search) &&
-        (a.scCss    ===* b.scCss) &&
-        (a.menu     ===* b.menu)
+      (a.state    ===* b.state) &&
+      (a.resp     ===* b.resp) &&
+      (a.welcome  ===* b.welcome) &&
+      (a.search   ===* b.search) &&
+      (a.scCss    ===* b.scCss) &&
+      (a.menu     ===* b.menu)
     }
   }
 
   @inline implicit def univEq: UnivEq[MScIndex] = UnivEq.derive
+
+  val state   = GenLens[MScIndex](_.state)
+  val resp    = GenLens[MScIndex](_.resp)
+  val welcome = GenLens[MScIndex](_.welcome)
+  val search  = GenLens[MScIndex](_.search)
+  val scCss   = GenLens[MScIndex](_.scCss)
+  val menu    = GenLens[MScIndex](_.menu)
 
 }
 
@@ -58,5 +66,9 @@ case class MScIndex(
   def isAnyPanelOpened: Boolean = {
     search.panel.opened || menu.opened
   }
+
+  /** Первый запуск? */
+  def isFirstRun: Boolean =
+    resp.isEmpty
 
 }

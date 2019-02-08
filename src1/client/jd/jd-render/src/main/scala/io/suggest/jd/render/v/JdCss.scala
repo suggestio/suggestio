@@ -552,15 +552,3 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   */
 
 }
-
-
-import com.softwaremill.macwire._
-
-/** DI-factory для сборки инстансов [[JdCss]]. */
-class JdCssFactory {
-
-  def mkJdCss( jdCssArgs: MJdCssArgs ): JdCss = {
-    wire[JdCss]
-  }
-
-}

@@ -7,7 +7,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ads.a.ILkAdsApi
 import io.suggest.ads.m._
 import io.suggest.jd.render.m.MJdCssArgs
-import io.suggest.jd.render.v.JdCssFactory
+import io.suggest.jd.render.v.JdCss
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
@@ -25,7 +25,6 @@ import scala.util.Success
 class NodeAdsAh[M](
                     api           : ILkAdsApi,
                     lkNodesApi    : ILkNodesApi,
-                    jdCssFactory  : JdCssFactory,
                     confRO        : ModelRO[MLkAdsConf],
                     modelRW       : ModelRW[M, MAdsS]
                   )
@@ -187,7 +186,7 @@ class NodeAdsAh[M](
           v0.copy(
             ads         = v0.ads.ready(ads2),
             hasMoreAds  = respAds.lengthCompare(LkAdsFormConst.GET_ADS_COUNT_PER_REQUEST) >= 0,
-            jdCss       = jdCssFactory.mkJdCss(
+            jdCss       = JdCss(
               MJdCssArgs(
                 templates = ads2.map(_.adResp.jdAdData.template),
                 conf      = confRO.value.jdConf

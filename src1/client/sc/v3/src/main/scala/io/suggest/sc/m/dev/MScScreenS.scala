@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.dev.MScreenInfo
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -23,6 +24,9 @@ object MScScreenS {
   }
 
   @inline implicit def univEq: UnivEq[MScScreenS] = UnivEq.derive
+
+  val info      = GenLens[MScScreenS](_.info)
+  val rszTimer  = GenLens[MScScreenS](_.rszTimer)
 
 }
 

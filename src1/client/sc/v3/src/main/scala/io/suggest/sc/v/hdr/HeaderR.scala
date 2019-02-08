@@ -2,7 +2,7 @@ package io.suggest.sc.v.hdr
 
 import diode.react.ModelProxy
 import io.suggest.react.ReactCommonUtil
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.m.MScReactCtx
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -16,7 +16,7 @@ import scalacss.ScalaCssReact._
   */
 
 class HeaderR(
-               getScCssF                  : GetScCssF,
+               scReactCtxP     : React.Context[MScReactCtx],
              ) {
 
   type Props_t = Some[Boolean]
@@ -28,12 +28,13 @@ class HeaderR(
 
     def render(propsProxy: Props, children: PropsChildren): VdomElement = {
       ReactCommonUtil.maybeEl(propsProxy.value.value) {
-        val scCss = getScCssF()
-        <.div(
-          scCss.Header.header,
+        scReactCtxP.consume { scReactCtx =>
+          <.div(
+            scReactCtx.scCss.Header.header,
 
-          children
-        )
+            children
+          )
+        }
       }
     }
 

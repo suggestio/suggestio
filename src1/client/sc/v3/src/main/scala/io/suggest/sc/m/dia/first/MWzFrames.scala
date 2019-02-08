@@ -32,6 +32,6 @@ sealed abstract class MWzFrame extends EnumEntry
 
 object MWzFrame {
 
-  implicit def univEq: UnivEq[MWzFrame] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MWzFrame] = UnivEq.derive
 
 }

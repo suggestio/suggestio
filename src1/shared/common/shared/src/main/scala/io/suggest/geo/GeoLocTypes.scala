@@ -18,7 +18,7 @@ object GeoLocTypes extends StringEnum[GeoLocType] {
   /** Неточная быстрая геолокация по вышкам. */
   case object Bss extends GeoLocType("b") {
     override def precision        = 20
-    override def highAccuracy     = false
+    override def isHighAccuracy     = false
     override def previous         = None
     override def suppressorTtlMs  = None
   }
@@ -26,7 +26,7 @@ object GeoLocTypes extends StringEnum[GeoLocType] {
   /** Точная медленная геолокация по спутникам. */
   case object Gps extends GeoLocType("g") {
     override def precision        = 50
-    override def highAccuracy     = true
+    override def isHighAccuracy     = true
     override def previous         = Some(Bss)
     /** Считаем для GPS необходимость отклика в течение 10 секунд максимум. */
     override def suppressorTtlMs  = Some(10000)
@@ -49,7 +49,7 @@ object GeoLocTypes extends StringEnum[GeoLocType] {
 sealed abstract class GeoLocType(override val value: String) extends StringEnumEntry {
 
   /** Значение для HTML5 GeoLocation API highAccuracy. */
-  def highAccuracy: Boolean
+  def isHighAccuracy: Boolean
 
   /** Порядок точности и сортировки одновременно. У GPS наибольшая географическая точность. */
   def precision: Int

@@ -5,15 +5,18 @@ import diode.data.Pot
 import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.html.HtmlConstants
 import io.suggest.maps.m.RcvrMarkersInit
-import io.suggest.msg.WarnMsgs
-import io.suggest.sc.Sc3Circuit
+import io.suggest.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.sc.{Sc3Circuit, ScConstants}
+import io.suggest.sc.c.dia.FirstRunDialogAh
+import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.boot._
 import io.suggest.sc.m.dia.InitFirstRunWz
+import io.suggest.sc.m.inx.{GetIndex, MScSwitchCtx}
 import io.suggest.sc.m.{GeoLocOnOff, JsRouterInit, MScRoot}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.dom.DomQuick
-import io.suggest.spa.DAction
+import io.suggest.spa.{DAction, DoNothing}
 import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.concurrent.{Future, Promise}
@@ -29,7 +32,6 @@ import japgolly.univeq._
   * Ранее, управление инициалиацией проходило прямо в Sc3Circuit,
   * но тот страшный код стал слишком сложным и немасштабируемым.
   */
-
 
 class BootAh[M](
                  modelRW    : ModelRW[M, MScBoot],
@@ -87,7 +89,7 @@ class BootAh[M](
       Effect {
         actions
           .iterator
-          .++( Iterator.single( BootStartCompleted(serviceId, Success(None)) ) )
+          .++( Iterator.single( _svcStartDoneAction(serviceId) ) )
           .map(_.toEffectPure)
           .mergeEffects
           .get
@@ -102,7 +104,10 @@ class BootAh[M](
       override def serviceId = MBootServiceIds.JsRouter
 
       override def startFx: Effect = {
-        val fx = Effect( _startWithPot( serviceId, circuit.jsRouterRW ) )
+        val fx = Effect {
+          val z = circuit.jsRouterRW.zoom(_.jsRouter)
+          _startWithPot( serviceId, z )
+        }
         circuit.dispatch( JsRouterInit )
         fx
       }
@@ -193,13 +198,19 @@ class BootAh[M](
     /** Сбор данных геолокации для первого запуска. */
     class GeoLocDataAccSvc extends IBootService {
       override def serviceId = MBootServiceIds.GeoLocDataAcc
-      override def startFx: Effect = {
-        // Довольно архаичный и неотъемлемый элемент запуска:
+
+      override def depends: List[MBootServiceId] = {
+        MBootServiceIds.Gps ::
+        MBootServiceIds.BlueToothBeaconing ::
+        Nil
+      }
+
+      /** Сложный эффект, определяющий дальнейшую цепочку действий инициализации. */
+      override def startFx = Effect {
+        // Довольно старый и базовый элемент каждого запуска:
         // задержка запуска для начального накопления данных геолокации.
-        //Effect {
-        //  ???
-        //}
         ???
+        Future.successful( DoNothing )
       }
     }
 
@@ -240,25 +251,10 @@ class BootAh[M](
           Nil
         }
 
-      // Для доступа к оборудования нужно platform-ready.
-      case MBootServiceIds.BlueToothBeaconing | MBootServiceIds.Gps =>
-        MBootServiceIds.Platform ::
-        Nil
-
-      // Для инициализации карты ресиверов, нужен инициализированный js-роутер.
-      case MBootServiceIds.RcvrsMap =>
-        MBootServiceIds.JsRouter ::
-        Nil
-
-      // Нначальное накопление капитала данных геолокации
-      case MBootServiceIds.GeoLocDataAcc =>
-        MBootServiceIds.Gps ::
-        MBootServiceIds.BlueToothBeaconing ::
-        Nil
 
       // У остальных целей инициализации - нет зависимостей.
       case _ =>
-        Nil
+        ???
 
     }
   }
@@ -444,6 +440,122 @@ class BootAh[M](
           }
         }
 
+
+    // Сигнал к запуску сбора данных геолокации, прав на геолокацию, и т.д.
+    case m @ BootLocDataWz =>
+      if ({
+        val i0 = circuit.indexRW.value
+        i0.state.inxGeoPoint.nonEmpty ||
+        i0.state.rcvrId.nonEmpty
+      }) {
+        // Уже есть какие-то данные о текущей локации - не нужно ждать геолокацию.
+        _svcStartDoneRes( MBootServiceIds.GeoLocDataAcc )
+
+      } else if (FirstRunDialogAh.isNeedWizardFlow()) {
+        // Нет уже заданных гео-данных, и требуется запуск мастера.
+        // Текущий эффект передаёт управление в WizardAh, мониторя завершение визарда.
+        val initFirstWzFx = InitFirstRunWz(true).toEffectPure
+        val afterInitFx = BootLocDataWzAfterInit.toEffectPure
+
+        effectOnly( initFirstWzFx >> afterInitFx )
+
+      } else {
+        // Не заданы
+        LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = m )
+        _svcStartDoneRes( MBootServiceIds.GeoLocDataAcc )
+      }
+
+
+    // После init-wz-вызова произвести анализ результатов выполненной деятельности.
+    case BootLocDataWzAfterInit =>
+      val startedAtMs = System.currentTimeMillis()
+      val firstRO = circuit.firstRunDialogRW
+      if (firstRO.value.isEmpty) {
+        // Почему-то не был запущен wizard, хотя должен был быть, т.к. isNeedWizardFlow() вернул true.
+        _afterWzClosed( startedAtMs )
+
+      } else {
+        // Есть какая-то деятельность в визарде. Подписаться
+        val fx = Effect {
+          val p = Promise[None.type]()
+          // Состояние wizard'а инициализировано, значит wizard запущен, дождаться завершения мастера.
+          val wizardWatcherUnSubscribeF = circuit.subscribe(firstRO) { diaFirstProxy =>
+            if (diaFirstProxy.value.isEmpty)
+              p.trySuccess(None)
+          }
+          p.future
+            .andThen { case _ =>
+              wizardWatcherUnSubscribeF()
+            }
+            .transform { _ =>
+              Success( BootLocDataWzAfterWz(startedAtMs) )
+            }
+        }
+        effectOnly(fx)
+      }
+
+
+    // После завершения визарда надо решить,
+    case m: BootLocDataWzAfterWz =>
+      _afterWzClosed( m.startedAtMs )
+
+  }
+
+
+  /** Мастер уже завершился или не запускался и не планирует. Быстро или медленно.
+    * Но суть исходная - заняться получением гео.данных, если их ещё нет.
+    */
+  private def _afterWzClosed(startedAtMs: Long): ActionResult[M] = {
+    // Тут несколько вариантов:
+    // - гео-данные уже накоплены
+    // - надо подождать геоданных сколько-то времени до накопления или таймаута.
+    // -
+    if (
+      circuit.scGeoLocRW.value.currentLocation.exists(_._1.isHighAccuracy)
+      // TODO Нужен расширенный probing доступности текущей локации.
+      // || circuit.beaconerRW.value.nearbyReport.nonEmpty
+    ) {
+      // Есть данные локации. Надо запросить с сервера индекс.
+      val indexFx = Effect.action {
+        val isFirstRun = circuit.indexRW.value.isFirstRun
+        GetIndex(
+          MScSwitchCtx(
+            demandLocTest = !isFirstRun,
+            indexQsArgs = MScIndexArgs(
+              retUserLoc  = isFirstRun,
+              geoIntoRcvr = true
+            )
+          )
+        )
+      }
+      /// TODO Завершаться? Или что теперь дальше делать?
+      ???
+
+    } else {
+      // TODO Если дефицит координат, но есть маячки, надо скрытно заслать пробный запрос на сервер, чтобы узнать, достаточна ли текущая геолокация.
+      //      Надо продумать скрытые запросы на сервер, для получения наиболее точных результатов.
+      ???
+    }
+    // Если слишком быстро, то наверное мастер не исполнялся, и нужно запустить таймер (до 7000мс).
+    val restTimeBeforeTimeoutMs = ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS - (System.currentTimeMillis() - startedAtMs)
+    // Стараться уложиться в лимит времени, чтобы юзер не ждал слишком долго.
+    val canWaitMore = restTimeBeforeTimeoutMs > 0
+
+
+
+    DomQuick
+      .timeoutPromise( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )
+      .fut
+    ???
+  }
+
+
+  private def _svcStartDoneAction(svc: MBootServiceId) =
+    BootStartCompleted( svc, Success(None) )
+  private def _svcStartDoneRes(svc: MBootServiceId) = {
+    val fx = _svcStartDoneAction( svc )
+      .toEffectPure
+    effectOnly(fx)
   }
 
 }

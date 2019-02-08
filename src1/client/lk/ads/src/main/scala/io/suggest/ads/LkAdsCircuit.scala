@@ -7,7 +7,7 @@ import io.suggest.ads.m.{GetMoreAds, MAdsS, MLkAdsRoot}
 import io.suggest.dev.MSzMults
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdCssArgs
-import io.suggest.jd.render.v.JdCssFactory
+import io.suggest.jd.render.v.JdCss
 import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.sjs.common.log.CircuitLog
@@ -20,9 +20,7 @@ import play.api.libs.json.Json
   * Created: 23.03.18 21:18
   * Description: Circuit react-формы управления карточками.
   */
-class LkAdsCircuit(
-                    jdCssFactory: JdCssFactory
-                  )
+class LkAdsCircuit
   extends CircuitLog[MLkAdsRoot]
   with ReactConnector[MLkAdsRoot]
 {
@@ -49,7 +47,7 @@ class LkAdsCircuit(
         jdConf  = jdConf
       ),
       ads = MAdsS(
-        jdCss = jdCssFactory.mkJdCss(
+        jdCss = JdCss(
           MJdCssArgs(conf = jdConf)
         )
       )
@@ -69,7 +67,6 @@ class LkAdsCircuit(
   val nodeAdsAh = new NodeAdsAh(
     api           = lkAdsApi,
     lkNodesApi    = lkNodesApi,
-    jdCssFactory  = jdCssFactory,
     confRO        = confRO,
     modelRW       = currNodeRW
   )

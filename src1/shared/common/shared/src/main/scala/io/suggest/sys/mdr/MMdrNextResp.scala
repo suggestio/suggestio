@@ -24,7 +24,7 @@ object MMdrNextResp {
     (__ \ "q").format[MMdrQueueReport]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MMdrNextResp] = {
+  @inline implicit def univEq: UnivEq[MMdrNextResp] = {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }

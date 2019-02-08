@@ -8,13 +8,14 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
-import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent, raw}
+import io.suggest.sc.styl.ScCssStatic
+import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent, raw}
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil
 import scalacss.ScalaCssReact._
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.react.ReactDiodeUtil.Implicits._
+import io.suggest.sc.m.MScReactCtx
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.spa.DAction
 import japgolly.univeq._
@@ -29,7 +30,7 @@ import scala.scalajs.js
   * Description: React-компонент пункта меню для управление геолокацией.
   */
 class SlideMenuItemR(
-                      getScCssF  : GetScCssF,
+                      scReactCtxP    : React.Context[MScReactCtx],
                     ) {
 
   /** Модель данных для рендера пункта меню со слайдером. */
@@ -69,7 +70,6 @@ class SlideMenuItemR(
       val propsPot = propsPotProxy.value
       propsPot.renderEl { props =>
         // Доступно API для bluetooth.
-        val scCss = getScCssF()
         val R = ScCssStatic.Menu.Rows
         val isClickDisabled = propsPot.isPending
 
@@ -92,13 +92,14 @@ class SlideMenuItemR(
               override val classes = cssClasses
             }
           } (
-
-            <.span(
-              R.rowContent,
-              scCss.fgColor,
-              if (props.useMessages) Messages( props.text )
-              else props.text
-            ),
+            scReactCtxP.consume { scReactCtx =>
+              <.span(
+                R.rowContent,
+                scReactCtx.scCss.fgColor,
+                if (props.useMessages) Messages( props.text )
+                else props.text
+              )
+            },
 
             <.span(
               ^.`class` := Css.Floatt.RIGHT,

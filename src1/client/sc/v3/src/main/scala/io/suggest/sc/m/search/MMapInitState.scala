@@ -8,6 +8,7 @@ import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -35,6 +36,12 @@ object MMapInitState {
   }
 
   @inline implicit def univEq: UnivEq[MMapInitState] = UnivEq.derive
+
+  val state     = GenLens[MMapInitState](_.state)
+  val ready     = GenLens[MMapInitState](_.ready)
+  val rcvrs     = GenLens[MMapInitState](_.rcvrs)
+  val loader    = GenLens[MMapInitState](_.loader)
+  val userLoc   = GenLens[MMapInitState](_.userLoc)
 
 }
 

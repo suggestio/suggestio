@@ -79,7 +79,7 @@ object QuickAdvIsoPeriod {
     Format[QuickAdvIsoPeriod](reads2, writes2)
   }
 
-  implicit def univEq: UnivEq[QuickAdvIsoPeriod] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[QuickAdvIsoPeriod] = UnivEq.derive
 
 }
 

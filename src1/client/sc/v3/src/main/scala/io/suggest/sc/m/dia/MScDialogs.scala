@@ -4,6 +4,7 @@ import io.suggest.ueq.UnivEqUtil._
 import diode.FastEq
 import io.suggest.sc.m.dia.first.MWzFirstOuterS
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -21,7 +22,9 @@ object MScDialogs {
     }
   }
 
-  implicit def univEq: UnivEq[MScDialogs] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScDialogs] = UnivEq.derive
+
+  val first = GenLens[MScDialogs](_.first)
 
 }
 
@@ -31,7 +34,7 @@ object MScDialogs {
   * @param first Диалог первого запуска, когда открыт.
   */
 case class MScDialogs(
-                       first: Option[MWzFirstOuterS] = None
+                       first      : Option[MWzFirstOuterS]      = None
                      ) {
 
   def withFirst(first: Option[MWzFirstOuterS]) = copy(first = first)

@@ -13,7 +13,7 @@ import scala.util.{Failure, Success, Try}
   */
 object IBootService {
 
-  implicit def univEq: UnivEq[IBootService] = UnivEq.force
+  @inline implicit def univEq: UnivEq[IBootService] = UnivEq.force
 
   implicit class BootServiceExtOps( val bs: IBootService ) extends AnyVal {
 

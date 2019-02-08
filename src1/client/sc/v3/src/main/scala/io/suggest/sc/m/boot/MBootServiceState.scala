@@ -13,7 +13,7 @@ import scala.util.Try
   */
 object MBootServiceState {
 
-  implicit def univEq: UnivEq[MBootServiceState] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MBootServiceState] = UnivEq.derive
 
 }
 

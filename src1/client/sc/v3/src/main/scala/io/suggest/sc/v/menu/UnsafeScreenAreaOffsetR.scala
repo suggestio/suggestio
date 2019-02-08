@@ -5,13 +5,13 @@ import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.dev.MTlbr
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sc.m.UpdateUnsafeScreenOffsetBy
-import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
+import io.suggest.sc.m.{MScReactCtx, UpdateUnsafeScreenOffsetBy}
+import io.suggest.sc.styl.ScCssStatic
 import scalacss.ScalaCssReact._
 
 /**
@@ -21,7 +21,7 @@ import scalacss.ScalaCssReact._
   * Description: Отладочный компонент для ручного выставления сдвига безопасной области экрана в пикселях.
   */
 class UnsafeScreenAreaOffsetR(
-                               getScCssF  : GetScCssF
+                               scReactCtxP    : React.Context[MScReactCtx],
                              ) {
 
   type Props_t = Option[MTlbr]
@@ -36,8 +36,6 @@ class UnsafeScreenAreaOffsetR(
       propsOptProxy.value.whenDefinedEl { mtlbr =>
         import HtmlConstants._
 
-        val scCss = getScCssF()
-
         // Ссылка на вход или на личный кабинет
         MuiListItem(
           new MuiListItemProps {
@@ -46,34 +44,36 @@ class UnsafeScreenAreaOffsetR(
           }
         )(
           MuiListItemText()(
-            <.span(
-              ScCssStatic.Menu.Rows.rowContent,
-              scCss.fgColor,
-
-              "Unsafe offset",
-
+            scReactCtxP.consume { scReactCtx =>
               <.span(
-                ^.`class` := Css.Floatt.RIGHT,
+                ScCssStatic.Menu.Rows.rowContent,
+                scReactCtx.scCss.fgColor,
 
-                // Уменьшение
-                <.a(
-                  ^.onClick --> _onIncDecClick(-1),
-                  LESSER,
-                  MINUS
-                ),
+                "Unsafe offset",
 
-                NBSP_STR,
+                <.span(
+                  ^.`class` := Css.Floatt.RIGHT,
 
-                // Увеличение
-                <.a(
-                  mtlbr.toString,
+                  // Уменьшение
+                  <.a(
+                    ^.onClick --> _onIncDecClick(-1),
+                    LESSER,
+                    MINUS
+                  ),
+
                   NBSP_STR,
-                  ^.onClick --> _onIncDecClick(1),
-                  PLUS,
-                  GREATER
+
+                  // Увеличение
+                  <.a(
+                    mtlbr.toString,
+                    NBSP_STR,
+                    ^.onClick --> _onIncDecClick(1),
+                    PLUS,
+                    GREATER
+                  )
                 )
               )
-            )
+            }
           )
         )
 

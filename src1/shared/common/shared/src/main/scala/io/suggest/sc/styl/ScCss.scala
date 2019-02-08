@@ -439,7 +439,7 @@ trait IScCssArgs {
   def wcFgWh            : Option[MSize2di]
 }
 object IScCssArgs {
-  implicit def univEq: UnivEq[IScCssArgs] = UnivEq.force
+  @inline implicit def univEq: UnivEq[IScCssArgs] = UnivEq.force
 }
 
 
@@ -624,8 +624,6 @@ case class ScCss( args: IScCssArgs )
 
   /** Панель поиска. */
   object Search {
-
-    def Z_INDEX = 11
 
     def PANEL_WIDTH_PX = 320
 

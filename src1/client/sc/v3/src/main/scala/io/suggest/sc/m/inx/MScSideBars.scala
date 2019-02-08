@@ -29,6 +29,6 @@ sealed abstract class MScSideBar extends EnumEntry
 
 object MScSideBar {
 
-  implicit def univEq: UnivEq[MScSideBar] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MScSideBar] = UnivEq.derive
 
 }

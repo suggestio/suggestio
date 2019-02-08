@@ -47,7 +47,7 @@ class GeoLocAh[M](
         .flatMap { wtype =>
           try {
             val posOpts = new PositionOptions {
-              override val enableHighAccuracy = wtype.highAccuracy
+              override val enableHighAccuracy = wtype.isHighAccuracy
               override val maximumAge         = maxAgeMs
             }
 
@@ -187,10 +187,12 @@ class GeoLocAh[M](
     // Активация/деактивация геолокации.
     case m: GeoLocOnOff =>
       val v0 = value
-      // Оформляем всю логику через option, чтобы не было паутины if:
+
+      // Сборка GlPubSignal, который обычно (но не всегда) нужен.
       def glPubErrFx = GlPubSignal( None, m.scSwitch.orElse(v0.switch.scSwitch) )
         .toEffectPure
 
+      // Оформляем всю логику через option, чтобы не было паутины if:
       Some(m.enabled)
         // Нельзя менять состояние off=>off или on=>on:
         .filterNot {

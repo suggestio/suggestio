@@ -13,7 +13,7 @@ import io.suggest.sc.m.MScRoot
 import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.MSearchPanelS
-import io.suggest.sc.styl.{GetScCssF, ScCss, ScCssStatic}
+import io.suggest.sc.styl.{ScCss, ScCssStatic}
 import io.suggest.sc.v.dia.first.WzFirstR
 import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
@@ -55,7 +55,6 @@ class ScRootR (
                 val indexSwitchAskR     : IndexSwitchAskR,
                 val goBackR             : GoBackR,
                 val wzFirstR            : WzFirstR,
-                getScCssF               : GetScCssF,
               ) {
 
   import io.suggest.sc.v.search.SearchCss.SearchCssFastEq
@@ -108,8 +107,6 @@ class ScRootR (
 
 
     def render(mrootProxy: Props, s: State): VdomElement = {
-      val scCss = getScCssF()
-
       // Сборка компонента заголовка выдачи:
       val hdr = {
         val hdrLogo       = s.hdrLogoOptC { logoR.apply }
@@ -182,8 +179,12 @@ class ScRootR (
         searchR(_)( searchBarChild )
       }
 
+      // Значение "initial" для css-свойст.
       val css_initial = scalacss.internal.Literal.Typed.initial.value
-      val sideBarZIndex = scCss.Search.Z_INDEX
+
+      // z-index-костыли для расположения нескольких панелей и остального контента.
+      // Жило оно одиноко в scCss, но пока унесено сюда после рефакторинга в DI/ScCss.
+      val sideBarZIndex = 11
 
       val searchSideBar = {
         val searchStyles = {
@@ -276,6 +277,7 @@ class ScRootR (
       }
 
       // Рендер стилей перед снаружи и перед остальной выдачей.
+      // НЕЛЬЗЯ использовать react-sc-контекст, т.к. он не обновляется следом за scCss, т.к. остальным компонентам это не требуется.
       val scCssComp = s.scCssArgsC { CssR.apply }
 
       // Рендер провайдера тем MateriaUI, который заполняет react context.
@@ -358,7 +360,6 @@ class ScRootR (
         s.firstRunWzC { wzFirstR.apply },
 
       )
-
     }
 
   }
@@ -398,7 +399,7 @@ class ScRootR (
 
         enterLkRowC = propsProxy.connect { props =>
           for {
-            scJsRouter <- props.internals.jsRouter.toOption
+            scJsRouter <- props.internals.jsRouter.jsRouter.toOption
           } yield {
             enterLkRowR.PropsVal(
               isLoggedIn      = props.internals.conf.isLoggedIn,
@@ -415,7 +416,7 @@ class ScRootR (
 
         editAdC = propsProxy.connect { props =>
           for {
-            scJsRouter      <- props.internals.jsRouter.toOption
+            scJsRouter      <- props.internals.jsRouter.jsRouter.toOption
             focusedAdOuter  <- props.grid.core.focusedAdOpt
             focusedData     <- focusedAdOuter.focused.toOption
             if focusedData.canEdit
@@ -454,7 +455,7 @@ class ScRootR (
         }( OptFastEq.Plain ),
 
         isRenderScC = propsProxy.connect { mroot =>
-          Some( mroot.index.resp.nonEmpty )
+          Some( !mroot.index.isFirstRun )
         }( OptFastEq.OptValueEq ),
 
         colorsC = propsProxy.connect { mroot =>

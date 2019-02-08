@@ -8,8 +8,9 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.grid.{GridConst, GridScrollUtil}
 import io.suggest.jd.render.v._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.grid.{GridScroll, MGridCoreS, MGridS, MScAdData}
-import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
+import io.suggest.sc.styl.ScCssStatic
 import io.suggest.spa.FastEqUtil
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
@@ -26,7 +27,7 @@ import scalacss.ScalaCssReact._
 class GridR(
              gridCoreR                  : GridCoreR,
              jdCssR                     : JdCssR,
-             getScCssF                  : GetScCssF
+             scReactCtxP                : React.Context[MScReactCtx],
            ) {
 
 
@@ -51,62 +52,64 @@ class GridR(
     }
 
     def render(s: State): VdomElement = {
-      val ScCss = getScCssF()
-      val GridCss = ScCss.Grid
-      val smFlex: TagMod = ScCssStatic.smFlex
-
-      <.div(
-        smFlex, GridCss.outer,
+      scReactCtxP.consume { scReactCtx =>
+        val ScCss = scReactCtx.scCss
+        val GridCss = ScCss.Grid
+        val smFlex: TagMod = ScCssStatic.smFlex
 
         <.div(
-          smFlex, GridCss.wrapper,
-          ^.id := GridScrollUtil.SCROLL_CONTAINER_ID,
-          ^.onScroll ==> onGridScroll,
+          smFlex, GridCss.outer,
 
           <.div(
-            GridCss.content,
+            smFlex, GridCss.wrapper,
+            ^.id := GridScrollUtil.SCROLL_CONTAINER_ID,
+            ^.onScroll ==> onGridScroll,
 
-            // Рендер style-тега.
-            s.jdCssC { jdCssR.apply },
+            <.div(
+              GridCss.content,
 
-            // Начинается [пере]сборка всей плитки
-            // TODO Функция сборки плитки неоптимальна и перегенеривается на каждый чих. Это вызывает лишние перерендеры контейнера плитки.
-            {
-              // Непосредственный рендер плитки, снаружи от рендера connect-зависимого контейнера плитки.
-              val gridCore = s.coreC { gridCoreR.apply }
+              // Рендер style-тега.
+              s.jdCssC { jdCssR.apply },
 
-              s.gridSzC { gridSzProxy =>
-                val gridSz = gridSzProxy.value
+              // Начинается [пере]сборка всей плитки
+              // TODO Функция сборки плитки неоптимальна и перегенеривается на каждый чих. Это вызывает лишние перерендеры контейнера плитки.
+              {
+                // Непосредственный рендер плитки, снаружи от рендера connect-зависимого контейнера плитки.
+                val gridCore = s.coreC { gridCoreR.apply }
 
-                <.div(
-                  ScCssStatic.Grid.container,
-                  GridCss.container,
-                  ^.width  := gridSz.width.px,
-                  ^.height := (gridSz.height + GridConst.CONTAINER_OFFSET_BOTTOM + GridConst.CONTAINER_OFFSET_TOP).px,
+                s.gridSzC { gridSzProxy =>
+                  val gridSz = gridSzProxy.value
 
-                  gridCore
-                )
-              }
-            },
+                  <.div(
+                    ScCssStatic.Grid.container,
+                    GridCss.container,
+                    ^.width  := gridSz.width.px,
+                    ^.height := (gridSz.height + GridConst.CONTAINER_OFFSET_BOTTOM + GridConst.CONTAINER_OFFSET_TOP).px,
 
-            // Крутилка подгрузки карточек.
-            s.loaderPotC { adsPotProxy =>
-              ReactCommonUtil.maybeEl( adsPotProxy.value.isPending ) {
-                MuiCircularProgress {
-                  val cssClasses = new MuiCircularProgressClasses {
-                    override val root = ScCss.Grid.loader.htmlClass
-                  }
-                  new MuiCircularProgressProps {
-                    override val color   = MuiColorTypes.secondary
-                    override val classes = cssClasses
+                    gridCore
+                  )
+                }
+              },
+
+              // Крутилка подгрузки карточек.
+              s.loaderPotC { adsPotProxy =>
+                ReactCommonUtil.maybeEl( adsPotProxy.value.isPending ) {
+                  MuiCircularProgress {
+                    val cssClasses = new MuiCircularProgressClasses {
+                      override val root = ScCss.Grid.loader.htmlClass
+                    }
+                    new MuiCircularProgressProps {
+                      override val color   = MuiColorTypes.secondary
+                      override val classes = cssClasses
+                    }
                   }
                 }
               }
-            }
 
+            )
           )
         )
-      )
+      }
     }
 
   }

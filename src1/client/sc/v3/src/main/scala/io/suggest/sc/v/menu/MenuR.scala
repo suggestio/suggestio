@@ -2,10 +2,11 @@ package io.suggest.sc.v.menu
 
 import diode.FastEq
 import diode.react.ModelProxy
+import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.menu.MMenuS
-import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
+import io.suggest.sc.styl.ScCssStatic
 import io.suggest.sc.v.hdr.LeftR
-import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, PropsChildren, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
@@ -19,7 +20,7 @@ import io.suggest.ueq.UnivEqUtil._
   */
 class MenuR(
              leftR          : LeftR,
-             getScCssF      : GetScCssF
+             scReactCtxP    : React.Context[MScReactCtx],
            ) {
 
   type Props = ModelProxy[PropsVal]
@@ -42,35 +43,36 @@ class MenuR(
 
   class Backend($: BackendScope[Props, Unit]) {
     def render(propsProxy: Props, children: PropsChildren): VdomElement = {
-      val scCss = getScCssF()
-      val menuCss = scCss.Menu
+      scReactCtxP.consume { scReactCtx =>
+        val menuCss = scReactCtx.scCss.Menu
 
-      <.div(
-        ScCssStatic.Root.panelCommon,
-        menuCss.panel,
-
-        // Фон панели.
         <.div(
-          ScCssStatic.Root.panelBg,
-          scCss.bgColor
-        ),
+          ScCssStatic.Root.panelCommon,
+          menuCss.panel,
 
-        // Контейнер для непосредственного контента панели.
-        <.div(
-          menuCss.content,
-
-          // Кнопка сокрытия панели влево
-          propsProxy.wrap(_ => None)( leftR.apply ),
-
-          // Менюшка
+          // Фон панели.
           <.div(
-            ScCssStatic.Menu.Rows.rowsContainer,
+            ScCssStatic.Root.panelBg,
+            scReactCtx.scCss.bgColor
+          ),
 
-            children
-          )  // .rowsContainer
-        )
+          // Контейнер для непосредственного контента панели.
+          <.div(
+            menuCss.content,
 
-      )    // .panel
+            // Кнопка сокрытия панели влево
+            propsProxy.wrap(_ => None)( leftR.apply ),
+
+            // Менюшка
+            <.div(
+              ScCssStatic.Menu.Rows.rowsContainer,
+
+              children
+            )  // .rowsContainer
+          )
+
+        )    // .panel
+      }
     }
   }
 

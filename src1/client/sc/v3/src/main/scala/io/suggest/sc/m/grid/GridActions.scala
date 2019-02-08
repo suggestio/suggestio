@@ -37,6 +37,3 @@ case class GridScroll(scrollTop: Double) extends IGridAction
   * Полезно для ранней реакции на изменение размеров экрана.
   */
 case object GridReConf extends IGridAction
-
-/** Выполнен скроллинг карточек. */
-case object GridScrollDone extends IGridAction

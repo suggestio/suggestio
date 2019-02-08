@@ -14,8 +14,8 @@ object MGridS {
 
   implicit object MGridSFastEq extends FastEq[MGridS] {
     override def eqv(a: MGridS, b: MGridS): Boolean = {
-      (a.core ===* b.core) &&
-        (a.hasMoreAds ==*  b.hasMoreAds)
+      (a.core       ===* b.core) &&
+      (a.hasMoreAds ==*  b.hasMoreAds)
     }
   }
 

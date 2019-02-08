@@ -2,16 +2,16 @@ package io.suggest.sc.v.menu
 
 import diode.FastEq
 import diode.react.ModelProxy
-import _root_.io.suggest.sc.GetRouterCtlF
 import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
-import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
+import io.suggest.sc.styl.ScCssStatic
 import io.suggest.ueq.UnivEqUtil._
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.sc3.Sc3Pages
 import scalacss.ScalaCssReact._
 
@@ -22,8 +22,7 @@ import scalacss.ScalaCssReact._
   * Description: Пункт "О проекте" в левом меню выдачи.
   */
 class AboutSioR(
-                 getScCssF  : GetScCssF,
-                 spaRouter  : GetRouterCtlF
+                 scReactCtxP     : React.Context[MScReactCtx],
                ) {
 
   type Props_t = Option[PropsVal]
@@ -42,32 +41,34 @@ class AboutSioR(
   class Backend($: BackendScope[Props, Unit]) {
     def render(propsValProxy: Props): VdomElement = {
       propsValProxy.value.whenDefinedEl { props =>
-        val scCss = getScCssF()
-        val R = ScCssStatic.Menu.Rows
+        scReactCtxP.consume { scReactCtx =>
+          val R = ScCssStatic.Menu.Rows
 
-        // Это типа ссылка <a>, но уже с выставленным href + go-событие.
-        spaRouter()
-          .link( Sc3Pages.MainScreen(
-            nodeId = Some( props.aboutNodeId )
-          ))(
-            R.rowLink,
-            ^.title := Messages( MsgCodes.`Suggest.io._transcription` ),
+          // Это типа ссылка <a>, но уже с выставленным href + go-событие.
+          scReactCtx
+            .routerCtl
+            .link( Sc3Pages.MainScreen(
+              nodeId = Some( props.aboutNodeId )
+            ))(
+              R.rowLink,
+              ^.title := Messages( MsgCodes.`Suggest.io._transcription` ),
 
-            MuiListItem(
-              new MuiListItemProps {
-                override val disableGutters = true
-                override val button = true
-              }
-            )(
-              MuiListItemText()(
-                <.span(
-                  R.rowContent,
-                  scCss.fgColor,
-                  Messages( MsgCodes.`Suggest.io.Project` ),
+              MuiListItem(
+                new MuiListItemProps {
+                  override val disableGutters = true
+                  override val button = true
+                }
+              )(
+                MuiListItemText()(
+                  <.span(
+                    R.rowContent,
+                    scReactCtx.scCss.fgColor,
+                    Messages( MsgCodes.`Suggest.io.Project` ),
+                  )
                 )
               )
             )
-          )
+        }
       }
     }
   }

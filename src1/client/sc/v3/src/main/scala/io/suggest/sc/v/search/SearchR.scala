@@ -3,11 +3,12 @@ package io.suggest.sc.v.search
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.{Css, CssR}
+import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.search._
-import io.suggest.sc.styl.{GetScCssF, ScCssStatic}
+import io.suggest.sc.styl.ScCssStatic
 import io.suggest.sc.v.hdr.RightR
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, PropsChildren, React, ScalaComponent}
 import scalacss.ScalaCssReact._
 
 /**
@@ -20,7 +21,7 @@ class SearchR(
                rightR             : RightR,
                geoMapOuterR       : GeoMapOuterR,
                searchMapR         : SearchMapR,
-               getScCssF          : GetScCssF,
+               scReactCtxP        : React.Context[MScReactCtx],
              ) {
 
   import searchMapR.SearchMapRPropsValFastEq
@@ -36,58 +37,60 @@ class SearchR(
   class Backend( $: BackendScope[Props, State] ) {
 
     def render(props: Props, s: State, children: PropsChildren): VdomElement = {
-      val scCss = getScCssF()
-      val SearchCSS = scCss.Search
+      scReactCtxP.consume { scReactCtx =>
+        val scCss = scReactCtx.scCss
+        val SearchCSS = scCss.Search
 
-      // Рендер вкладки карты:
-      val geoMap = props.wrap { props =>
-        searchMapR.PropsVal(
-          mapInit   = props.geo.mapInit,
-          searchCss = props.geo.css
+        // Рендер вкладки карты:
+        val geoMap = props.wrap { props =>
+          searchMapR.PropsVal(
+            mapInit   = props.geo.mapInit,
+            searchCss = props.geo.css
+          )
+        }( searchMapR.apply )
+
+        // Тело текущего таба.
+        val tabContentInner = <.div(
+          // Содержимое вкладки с картой.
+          ^.`class` := Css.Display.DISPLAY_BLOCK,
+          // Списочек найденных элементов над картой (унесён в ScRoot, т.к. зависит от разных top-level-доступных моделей)
+          children,
+          // Гео.карта:
+          geoMap
         )
-      }( searchMapR.apply )
 
-      // Тело текущего таба.
-      val tabContentInner = <.div(
-        // Содержимое вкладки с картой.
-        ^.`class` := Css.Display.DISPLAY_BLOCK,
-        // Списочек найденных элементов над картой (унесён в ScRoot, т.к. зависит от разных top-level-доступных моделей)
-        children,
-        // Гео.карта:
-        geoMap
-      )
-
-      <.div(
-        ScCssStatic.Root.panelCommon,
-        SearchCSS.panel,
-
-        // Рендер очень динамической search-only css'ки:
-        s.searchCssC { CssR.apply },
-
-        // Фон панели.
         <.div(
-          ScCssStatic.Root.panelBg,
-          scCss.bgColor
-        ),
+          ScCssStatic.Root.panelCommon,
+          SearchCSS.panel,
 
-        // Наполнение панели.
-        <.div(
-          scCss.Search.content,
+          // Рендер очень динамической search-only css'ки:
+          s.searchCssC { CssR.apply },
 
-          // Контент вкладки, наконец.
-          props.wrap { props =>
-            geoMapOuterR.PropsVal(
-              searchCss     = props.geo.css,
-              showCrossHair = true
-            )
-          } { cssProxy =>
-            geoMapOuterR(cssProxy)(
-              tabContentInner
-            )
-          }
+          // Фон панели.
+          <.div(
+            ScCssStatic.Root.panelBg,
+            scCss.bgColor
+          ),
 
+          // Наполнение панели.
+          <.div(
+            scCss.Search.content,
+
+            // Контент вкладки, наконец.
+            props.wrap { props =>
+              geoMapOuterR.PropsVal(
+                searchCss     = props.geo.css,
+                showCrossHair = true
+              )
+            } { cssProxy =>
+              geoMapOuterR(cssProxy)(
+                tabContentInner
+              )
+            }
+
+          )
         )
-      )
+      }
     }
 
   }

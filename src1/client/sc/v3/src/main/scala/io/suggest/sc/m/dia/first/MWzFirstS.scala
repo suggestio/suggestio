@@ -3,6 +3,7 @@ package io.suggest.sc.m.dia.first
 import diode.FastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -20,7 +21,11 @@ object MWzFirstS {
     }
   }
 
-  implicit def univEq: UnivEq[MWzFirstS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MWzFirstS] = UnivEq.derive
+
+  val visible   = GenLens[MWzFirstS](_.visible)
+  val phase     = GenLens[MWzFirstS](_.phase)
+  val frame     = GenLens[MWzFirstS](_.frame)
 
 }
 

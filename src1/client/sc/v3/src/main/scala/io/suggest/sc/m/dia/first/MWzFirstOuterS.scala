@@ -7,6 +7,7 @@ import io.suggest.perm.IPermissionState
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -24,7 +25,10 @@ object MWzFirstOuterS {
     }
   }
 
-  implicit def univEq: UnivEq[MWzFirstOuterS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MWzFirstOuterS] = UnivEq.derive
+
+  val view    = GenLens[MWzFirstOuterS](_.view)
+  val perms   = GenLens[MWzFirstOuterS](_.perms)
 
 }
 

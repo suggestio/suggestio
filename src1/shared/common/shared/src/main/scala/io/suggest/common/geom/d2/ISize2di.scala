@@ -47,7 +47,7 @@ object ISize2di {
     sz2d.width.toDouble / sz2d.height.toDouble
   }
 
-  implicit def univEq: UnivEq[ISize2di] = UnivEq.force
+  @inline implicit def univEq: UnivEq[ISize2di] = UnivEq.force
 
 }
 

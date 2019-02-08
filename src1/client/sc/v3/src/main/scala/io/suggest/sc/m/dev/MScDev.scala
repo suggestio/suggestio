@@ -4,7 +4,8 @@ import diode.FastEq
 import io.suggest.ble.beaconer.m.MBeaconerS
 import io.suggest.dev.MPlatformS
 import io.suggest.ueq.UnivEqUtil._
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -18,14 +19,20 @@ object MScDev {
 
   implicit object MScDevFastEq extends FastEq[MScDev] {
     override def eqv(a: MScDev, b: MScDev): Boolean = {
-      (a.screen ===* b.screen) &&
-        (a.platform ===* b.platform) &&
-        (a.geoLoc ===* b.geoLoc) &&
-        (a.beaconer ===* b.beaconer)
+      (a.screen   ===* b.screen) &&
+      (a.platform ===* b.platform) &&
+      (a.geoLoc   ===* b.geoLoc) &&
+      (a.beaconer ===* b.beaconer)
     }
   }
 
   @inline implicit def univEq: UnivEq[MScDev] = UnivEq.derive
+
+  // "Линзы" для упрощённого доступа к полям нижнего уровня.
+  val screen    = GenLens[MScDev]( _.screen )
+  val platform  = GenLens[MScDev]( _.platform )
+  val geoLoc    = GenLens[MScDev]( _.geoLoc )
+  val beaconer  = GenLens[MScDev]( _.beaconer )
 
 }
 

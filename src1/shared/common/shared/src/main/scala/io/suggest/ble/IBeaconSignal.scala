@@ -25,6 +25,6 @@ trait IBeaconSignal extends IDistantRadioSignal {
 
 object IBeaconSignal {
 
-  implicit def univEq: UnivEq[IBeaconSignal] = UnivEq.force
+  @inline implicit def univEq: UnivEq[IBeaconSignal] = UnivEq.force
 
 }

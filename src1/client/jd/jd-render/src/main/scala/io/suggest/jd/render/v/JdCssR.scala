@@ -12,13 +12,14 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: React-компонент для рендера JdCss в style-тэг.
   * 2018-08-02 CssR умеет это всё. Тут просто враппер, потому что есть проблема с компиляцией (см.комменты в CssR).
   */
-class JdCssR( jdCssFactory: JdCssFactory ) {
+class JdCssR {
 
   type Props_t = JdCss
   type Props = ModelProxy[Props_t]
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .render_P { CssR(_) }
     .build

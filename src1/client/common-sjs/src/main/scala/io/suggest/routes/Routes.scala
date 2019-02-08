@@ -2,6 +2,7 @@ package io.suggest.routes
 
 import io.suggest.js.JsRoutesConst.GLOBAL_NAME
 import io.suggest.proto.http.model.Route
+import japgolly.univeq.UnivEq
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
@@ -16,6 +17,9 @@ import scala.scalajs.js.annotation.JSGlobal
  * одновременно или всегда. В шаблоне, чей init-контроллер должен обращаться к какой-то роутере, должен присутствовать
  * вызов к сборке соответствующего javascriptRouter'а.
  */
+object IJsRouter {
+  @inline implicit def univEq[T <: IJsRouter]: UnivEq[T] = UnivEq.force
+}
 
 @js.native
 trait IJsRouter extends js.Object {
