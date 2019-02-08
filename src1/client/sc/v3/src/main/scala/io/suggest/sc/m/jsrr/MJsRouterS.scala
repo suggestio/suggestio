@@ -3,7 +3,7 @@ package io.suggest.sc.m.jsrr
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.routes.ScJsRoutes
-import io.suggest.sc.m.IScRootAction
+import io.suggest.sc.m.RouteTo
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import io.suggest.ueq.JsUnivEqUtil._
@@ -23,12 +23,12 @@ object MJsRouterS {
   implicit object MJsRouterSFastEq extends FastEq[MJsRouterS] {
     override def eqv(a: MJsRouterS, b: MJsRouterS): Boolean = {
       (a.jsRouter ===* b.jsRouter) &&
-      (a.actionsAccRev ===* b.actionsAccRev)
+      (a.delayedRouteTo ===* b.delayedRouteTo)
     }
   }
 
   val jsRouter = GenLens[MJsRouterS](_.jsRouter)
-  val actionsAccRev = GenLens[MJsRouterS](_.actionsAccRev)
+  val actionsAccRev = GenLens[MJsRouterS](_.delayedRouteTo)
 
 }
 
@@ -36,9 +36,9 @@ object MJsRouterS {
 /** Контейнер состояния js-роутера.
   *
   * @param jsRouter Состояние js-роутера.
-  * @param actionsAccRev Акк экшенов, которые нужно подождать до получения js-роутера.
+  * @param delayedRouteTo Акк экшенов, которые нужно подождать до получения js-роутера.
   */
 case class MJsRouterS(
                        jsRouter         : Pot[ScJsRoutes.type]    = Pot.empty,
-                       actionsAccRev    : List[IScRootAction]     = List.empty
+                       delayedRouteTo   : Option[RouteTo]         = None,
                      )

@@ -24,6 +24,7 @@ import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 import io.suggest.sc.c.grid.GridAh
 import io.suggest.sc.c.search.SearchAh
+import io.suggest.sc.m.menu.MMenuS
 import io.suggest.sc.v.search.SearchCss
 import japgolly.univeq._
 import scalaz.NonEmptyList
@@ -82,18 +83,17 @@ object IndexAh {
             !(i0.search.geo.mapInit.state.center ~= mgp)
           }
           .fold(s0) { mgp =>
-            s0.withGeo(
-              s0.geo.withMapInit(
-                s0.geo.mapInit.withState(
-                  s0.geo.mapInit.state.copy(
-                    centerInit = mgp,
-                    centerReal = None,
-                    // Увеличить зум, чтобы приблизить.
-                    zoom = 15
-                  )
+            MScSearch.geo
+              .composeLens(MGeoTabS.mapInit)
+              .composeLens(MMapInitState.state)
+              .modify {
+                _.copy(
+                  centerInit = mgp,
+                  centerReal = None,
+                  // Увеличить зум, чтобы приблизить.
+                  zoom = 15
                 )
-              )
-            )
+              }(s0)
           }
 
         // Если возвращена userGeoLoc с сервера, которая запрашивалась и до сих пор она нужна, то её выставить в состояние.
@@ -101,12 +101,10 @@ object IndexAh {
           _ <- inx.userGeoLoc
           if s0.geo.mapInit.userLoc.isEmpty
         } {
-          s0 = s0.withGeo(
-            s0.geo.withMapInit(
-              s0.geo.mapInit
-                .withUserLoc( inx.userGeoLoc )
-            )
-          )
+          s0 = MScSearch.geo
+            .composeLens(MGeoTabS.mapInit)
+            .composeLens(MMapInitState.userLoc)
+            .set( inx.userGeoLoc )(s0)
         }
 
         // Возможный сброс состояния тегов
@@ -114,9 +112,9 @@ object IndexAh {
 
         // Если заход в узел с карты, то надо скрыть search-панель.
         if (s0.panel.opened && inx.welcome.nonEmpty) {
-          s0 = s0.withPanel(
-            s0.panel.withOpened( false )
-          )
+          s0 = MScSearch.panel
+            .composeLens( MSearchPanelS.opened )
+            .set( false )(s0)
         }
 
         // Сбросить флаг mapInit.loader, если он выставлен.
@@ -169,15 +167,15 @@ object IndexAh {
 
       (tpFx, mWcS)
     }
-    i1 = i1.withWelcome( mWcSFutOpt.map(_._2) )
+    i1 = MScIndex.welcome
+      .set( mWcSFutOpt.map(_._2) )(i1)
 
     // Нужно отребилдить ScCss, но только если что-то реально изменилось.
     val scCssArgs2 = MScCssArgs.from(i1.resp, mscreen)
     if (scCssArgs2 != i1.scCss.args) {
       // Изменились аргументы. Пора отребилдить ScCss.
-      i1 = i1.withScCss(
-        ScCss( scCssArgs2 )
-      )
+      i1 = MScIndex.scCss
+        .set( ScCss( scCssArgs2 ) )(i1)
     }
 
     // Объединить эффекты плитки и приветствия воедино:
@@ -207,15 +205,15 @@ class IndexRah
   override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
     val i0 = ctx.value0.index
     LOG.error( ErrorMsgs.GET_NODE_INDEX_FAILED, ex, msg = ctx.m )
-    var i2 = i0.withResp(
-      i0.resp.fail(ex)
-    )
+    var i2 = MScIndex.resp
+      .modify(_.fail(ex))(i0)
+
     if (i2.search.geo.mapInit.loader.nonEmpty) {
-      i2 = i2.withSearch(
-        i2.search.resetMapLoader
-      )
+      i2 = MScIndex.search
+        .modify(_.resetMapLoader)(i2)
     }
-    ctx.value0.withIndex( i2 )
+    MScRoot.index
+      .set(i2)(ctx.value0)
   }
 
   override def isMyRespAction(raType: MScRespActionType, ctx: MRhCtx): Boolean = {
@@ -244,18 +242,17 @@ class IndexRah
 
       // Убрать возможный pending из resp:
       if (i1.resp.isPending) {
-        i1 = i1.withResp(
-          i1.resp
-            .ready( i1.resp.get )
-        )
+        i1 = MScIndex.resp
+          .modify(_.ready(i1.resp.get))(i1)
       }
       // Убрать крутилку-preloader с гео-карты:
       if (i1.search.geo.mapInit.loader.nonEmpty)
-        i1 = i1.withSearch( i1.search.resetMapLoader )
+        i1 = MScIndex.search
+          .modify(_.resetMapLoader)(i1)
       if (i1.state.switchAsk.nonEmpty) {
-        i1 = i1.withState(
-          i1.state.withSwitchAsk( None )
-        )
+        i1 = MScIndex.state
+          .composeLens( MScIndexState.switchAsk )
+          .set( None )( i1 )
       }
 
       val v2 = v0.withIndex( i1 )
@@ -287,12 +284,10 @@ class IndexRah
         },
       )
 
-      val v2 = v0.withIndex {
-        v0.index.withState(
-          v0.index.state
-            .withSwitchAsk( Some(switchAskState) )
-        )
-      }
+      val v2 = MScRoot.index
+        .composeLens( MScIndex.state )
+        .composeLens( MScIndexState.switchAsk )
+        .set( Some(switchAskState) )(v0)
 
       ActionResult.ModelUpdate(v2)
 
@@ -405,16 +400,15 @@ class IndexAh[M](
 
     // Выставить в состояние, что запущен поиск узлов, чтобы не было дублирующихся запросов от контроллера панели.
     if (isSearchNodes) {
-      v2 = v2.withSearch(
-        v2.search.withGeo(
-          v2.search.geo.withFound(
-            v2.search.geo.found.withReqWithArgs(
-              req = v2.search.geo.found.req.pending(ts),
-              reqSearchArgs = Some(searchArgs)
-            )
+      v2 = MScIndex.search
+        .composeLens( MScSearch.geo )
+        .composeLens( MGeoTabS.found )
+        .modify { found0 =>
+          found0.withReqWithArgs(
+            req = found0.req.pending(ts),
+            reqSearchArgs = Some(searchArgs)
           )
-        )
-      )
+        }(v2)
     }
 
     ah.updateMaybeSilentFx(silentUpdate)(v2, fx)
@@ -434,18 +428,16 @@ class IndexAh[M](
 
           } else {
             // Действительно изменилось состояние отображения панели:
-            var v2 = v0.withSearch(
-              v0.search.withPanel(
-                v0.search.panel
-                  .withOpened( m.open )
-              )
-            )
+            var v2 = MScIndex.search
+              .composeLens( MScSearch.panel )
+              .composeLens( MSearchPanelS.opened )
+              .set( m.open )(v0)
 
             // Не допускать открытости обеих панелей одновременно:
             if (m.open && v2.menu.opened) {
-              v2 = v2.withMenu(
-                v2.menu.withOpened(false)
-              )
+              v2 = MScIndex.menu
+                .composeLens( MMenuS.opened )
+                .set(false)(v2)
             }
 
             // Аккаумулятор сайд-эффектов.
@@ -474,12 +466,10 @@ class IndexAh[M](
 
             // Не допускать открытости обоих панелей одновременно.
             if (m.open && v2.search.panel.opened) {
-              v2 = v2.withSearch(
-                v2.search.withPanel(
-                  v2.search.panel
-                    .withOpened( false )
-                )
-              )
+              v2 = MScIndex.search
+                .composeLens( MScSearch.panel )
+                .composeLens( MSearchPanelS.opened )
+                .set(false)(v2)
             }
 
             updated( v2, fx )
@@ -541,15 +531,17 @@ class IndexAh[M](
       val scCssArgs = MScRoot.scCssArgsFrom( rootRO.value )
       if (v0.scCss.args != scCssArgs) {
         val scCss2 = ScCss( scCssArgs )
-        val searchCss2 = SearchCss( v0.search.geo.css.args.withScreenInfo(scCssArgs.screenInfo) )
-        val v2 = v0
-          .withScCss( scCss2 )
-          .withSearch(
-            v0.search.withGeo(
-              v0.search.geo
-                .withCss( searchCss2 )
-            )
-          )
+        val searchCss2 = SearchCss(
+          args = MSearchCssProps.screenInfo
+            .set(scCssArgs.screenInfo)(v0.search.geo.css.args)
+        )
+        val v2 = (
+          MScIndex.scCss.set( scCss2 ) andThen
+          MScIndex.search
+            .composeLens( MScSearch.geo )
+            .composeLens( MGeoTabS.css )
+            .set( searchCss2 )
+        )(v0)
         val rszMapFx = for (lmap <- v0.search.geo.data.lmap) yield SearchAh.mapResizeFx(lmap)
         ah.updatedMaybeEffect(v2, rszMapFx)
       } else {
@@ -568,16 +560,11 @@ class IndexAh[M](
         noChange
       } else {
         // Выставить новое состояние и запустить GetIndex.
-        val v1 = v0
-          .withSearch(
-            v0.search.withGeo(
-              v0.search.geo.withMapInit(
-                v0.search.geo.mapInit.withLoader(
-                  Some( v0.search.geo.mapInit.state.center )
-                )
-              )
-            )
-          )
+        val v1 = MScIndex.search
+          .composeLens( MScSearch.geo )
+          .composeLens( MGeoTabS.mapInit )
+          .composeLens( MMapInitState.loader )
+          .set( Some( v0.search.geo.mapInit.state.center ) )( v0 )
 
         val switchCtx = MScSwitchCtx(
           indexQsArgs = MScIndexArgs(
@@ -611,16 +598,21 @@ class IndexAh[M](
     case CancelIndexSwitch =>
       val v0 = value
       v0.state.switchAsk.fold(noChange) { switchS =>
-        val v1 = v0.withState(
-          v0.state.withSwitchAsk( None )
-        )
+        val v1 = MScIndex.state
+          .composeLens( MScIndexState.switchAsk )
+          .set( None )( v0 )
+        
         if (v0.resp.isEmpty) {
           // Если нет открытого узла (выдача скрыта), то надо выбрать первый узел из списка.
           val fx = NodeRowClick(
-            nodeId = switchS.nodesResp.nodes.head.props.idOrNameOrEmpty
+            nodeId = switchS.nodesResp.nodes
+              .head
+              .props
+              .idOrNameOrEmpty
           )
             .toEffectPure
           effectOnly(fx)
+
         } else {
           // Есть открытый узел. Просто скрыть диалог.
           updated( v1 )

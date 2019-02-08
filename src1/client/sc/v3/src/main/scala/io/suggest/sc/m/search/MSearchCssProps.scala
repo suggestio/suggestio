@@ -8,6 +8,7 @@ import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -20,11 +21,14 @@ object MSearchCssProps {
   implicit object MSearchCssPropsFastEq extends FastEq[MSearchCssProps] {
     override def eqv(a: MSearchCssProps, b: MSearchCssProps): Boolean = {
       (a.req ===* b.req) &&
-        (a.screenInfo ===* b.screenInfo)
+      (a.screenInfo ===* b.screenInfo)
     }
   }
 
   @inline implicit def univEq: UnivEq[MSearchCssProps] = UnivEq.derive
+
+  val req = GenLens[MSearchCssProps](_.req)
+  val screenInfo = GenLens[MSearchCssProps](_.screenInfo)
 
 }
 

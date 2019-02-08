@@ -110,8 +110,9 @@ class Sc3Module {
   // wizard
   lazy val wzFirstR = wire[WzFirstR]
 
-  lazy val scRootR = wire[ScRootR]
 
+  // sc3
+  lazy val scRootR = wire[ScRootR]
   lazy val sc3Api = wire[Sc3ApiXhrImpl]
   def sc3Circuit(routerCtl: RouterCtl[Sc3Pages]) = wire[Sc3Circuit]
 

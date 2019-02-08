@@ -59,11 +59,12 @@ class JsRouterInitAh[M <: AnyRef](
     // Сигнал готовности и проблеме инициализации роутера.
     case m: JsRouterStatus =>
       val v0 = value
+
       // Сохранить инфу по роутеру в состояние.
-      val v1 = _jsRouterPotLens
-        .modify { jsRouterPot0 =>
-          m.payload.fold( jsRouterPot0.fail, jsRouterPot0.ready )
-        }(v0)
+      val v1 = _jsRouterPotLens.modify { jsRouterPot0 =>
+        m.payload.fold( jsRouterPot0.fail, jsRouterPot0.ready )
+      }(v0)
+
       updated( v1 )
 
 

@@ -2,6 +2,7 @@ package io.suggest.sc.m.menu
 
 import diode.FastEq
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -20,6 +21,8 @@ object MMenuS {
   }
 
   @inline implicit def univEq: UnivEq[MMenuS] = UnivEq.derive
+
+  val opened = GenLens[MMenuS](_.opened)
 
 }
 

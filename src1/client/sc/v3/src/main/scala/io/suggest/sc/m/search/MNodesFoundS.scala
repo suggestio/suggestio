@@ -10,6 +10,7 @@ import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -37,6 +38,10 @@ object MNodesFoundS {
   }
 
   @inline implicit def univEq: UnivEq[MNodesFoundS] = UnivEq.derive
+
+  val req           = GenLens[MNodesFoundS](_.req)
+  val reqSearchArgs = GenLens[MNodesFoundS](_.reqSearchArgs)
+  val hasMore       = GenLens[MNodesFoundS](_.hasMore)
 
 }
 

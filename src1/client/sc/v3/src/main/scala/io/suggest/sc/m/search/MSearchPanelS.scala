@@ -3,6 +3,7 @@ package io.suggest.sc.m.search
 import diode.{FastEq, UseValueEq}
 import io.suggest.spa.FastEqUtil
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -20,6 +21,8 @@ object MSearchPanelS {
       .asInstanceOf[FastEq[MSearchPanelS]]
 
   @inline implicit def univEq: UnivEq[MSearchPanelS] = UnivEq.derive
+
+  val opened = GenLens[MSearchPanelS](_.opened)
 
 }
 

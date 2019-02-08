@@ -6,6 +6,7 @@ import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.i18n.MsgCodes
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.ScalaComponent
+import io.suggest.spa.FastEqUtil.PotFastEq
 
 /**
   * Suggest.io
@@ -43,7 +44,7 @@ class BlueToothR(
             onOffAction = _onOffClickAction
           )
         }
-      }( slideMenuItemR.apply )
+      }( slideMenuItemR.apply )(implicitly, PotFastEq(SlideItemRPropsValFastEq))
     }
     .build
 
