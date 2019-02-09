@@ -20,10 +20,10 @@ object MMapS {
   implicit object MMapSFastEq4Map extends FastEq[MMapS] {
     override def eqv(a: MMapS, b: MMapS): Boolean = {
       (a.zoom ==* b.zoom) &&
-        (a.centerInit ===* b.centerInit) &&
-        // Не реагировать на изменение реальной координаты, т.к. сюда идёт запись только из callback'ов карты.
-        //(a.centerReal ===* b.centerReal) &&
-        (a.locationFound ===* b.locationFound)
+      (a.centerInit ===* b.centerInit) &&
+      // Не реагировать на изменение реальной координаты, т.к. сюда идёт запись только из callback'ов карты.
+      //(a.centerReal ===* b.centerReal) &&
+      (a.locationFound ===* b.locationFound)
     }
   }
 
@@ -62,11 +62,7 @@ case class MMapS(
                   locationFound : Option[Boolean]     = None
                 ) {
 
-  def withZoom(zoom: Int) = copy(zoom = zoom)
-  def withCenterInit(centerInit: MGeoPoint) = copy(centerInit = centerInit)
-  def withCenterReal(centerReal: Option[MGeoPoint]) = copy(centerReal = centerReal)
   def withCenterInitReal(centerInit: MGeoPoint, centerReal: Option[MGeoPoint] = None) = copy(centerInit = centerInit, centerReal = centerReal)
-  def withLocationFound(lf: Option[Boolean]) = copy(locationFound = lf)
 
   def center: MGeoPoint = {
     centerReal

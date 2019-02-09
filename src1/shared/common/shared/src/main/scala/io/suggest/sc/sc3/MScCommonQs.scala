@@ -5,6 +5,7 @@ import io.suggest.dev.MScreen
 import io.suggest.geo.MLocEnv
 import io.suggest.sc.{MScApiVsn, MScApiVsns, ScConstants}
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -44,6 +45,11 @@ object MScCommonQs {
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MScCommonQs] = UnivEq.derive
+
+  val screen        = GenLens[MScCommonQs](_.screen)
+  val locEnv        = GenLens[MScCommonQs](_.locEnv)
+  val searchGridAds = GenLens[MScCommonQs](_.searchGridAds)
+  val searchNodes   = GenLens[MScCommonQs](_.searchNodes)
 
 }
 

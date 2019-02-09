@@ -3,6 +3,7 @@ package io.suggest.sc.m.grid
 import diode.FastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -21,6 +22,9 @@ object MGridS {
 
   @inline implicit def univEq: UnivEq[MGridS] = UnivEq.derive
 
+  val core = GenLens[MGridS](_.core)
+  val hasMoreAds = GenLens[MGridS](_.hasMoreAds)
+
 }
 
 
@@ -32,9 +36,4 @@ object MGridS {
 case class MGridS(
                    core         : MGridCoreS,
                    hasMoreAds   : Boolean               = true,
-                 ) {
-
-  def withCore(core: MGridCoreS) = copy(core = core)
-  def withHasMoreAds(hasMoreAds: Boolean) = copy(hasMoreAds = hasMoreAds)
-
-}
+                 )

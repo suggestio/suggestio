@@ -9,6 +9,7 @@ import io.suggest.jd.render.v.JdCss
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -66,6 +67,11 @@ object MGridCoreS {
       }
   }
 
+  val jdConf    = GenLens[MGridCoreS](_.jdConf)
+  val jdCss     = GenLens[MGridCoreS](_.jdCss)
+  val ads       = GenLens[MGridCoreS](_.ads)
+  val gridBuild = GenLens[MGridCoreS](_.gridBuild)
+
 }
 
 
@@ -84,11 +90,6 @@ case class MGridCoreS(
                      )
   extends EmptyProductPot
 {
-
-  def withJdConf(jdConf: MJdConf)                         = copy(jdConf = jdConf)
-  def withJdCss(jdCss: JdCss)                             = copy(jdCss = jdCss)
-  def withAds(ads: Pot[Vector[MScAdData]])                = copy(ads = ads)
-  def withGridBuild(gridBuild: MGridBuildResult)          = copy(gridBuild = gridBuild)
 
   /** Текущая открытая карточка, если есть. */
   lazy val focusedAdOpt: Option[MScAdData] = {

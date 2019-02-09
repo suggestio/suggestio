@@ -1,6 +1,8 @@
 package io.suggest.dev
 
+import diode.FastEq
 import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
 
 /**
@@ -15,6 +17,14 @@ import monocle.macros.GenLens
   * Сюда можно складывать разные кросс-платформенные модели, описывающие экран.
   */
 object MScreenInfo {
+
+  implicit object MScreenInfoFastEq extends FastEq[MScreenInfo] {
+    override def eqv(a: MScreenInfo, b: MScreenInfo): Boolean = {
+      (a.screen ===* b.screen) &&
+      (a.unsafeOffsets ===* b.unsafeOffsets)
+    }
+  }
+
 
   @inline implicit def univEq: UnivEq[MScreenInfo] = UnivEq.derive
 

@@ -1,5 +1,6 @@
 package io.suggest.sc.sc3
 
+import diode.FastEq
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.sc.MScApiVsn
 import japgolly.univeq._
@@ -8,6 +9,7 @@ import play.api.libs.functional.syntax._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.maps.nodes.MRcvrsMapUrlArgs
 import monocle.macros.GenLens
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -45,6 +47,13 @@ object MSc3Conf {
     )(apply, unlift(unapply))
   }
 
+  implicit object MSc3ConfFastEq extends FastEq[MSc3Conf] {
+    override def eqv(a: MSc3Conf, b: MSc3Conf): Boolean = {
+      (a.rcvrsMapUrl ===* b.rcvrsMapUrl) &&
+      (a.clientUpdatedAt ===* b.clientUpdatedAt)
+    }
+  }
+
   @inline implicit def univEq: UnivEq[MSc3Conf] = UnivEq.derive
 
   def timestampSec() = System.currentTimeMillis() / 1000
@@ -63,15 +72,11 @@ object MSc3Conf {
   */
 case class MSc3Conf(
                      isLoggedIn         : Boolean,
+                     // TODO aboutSioNodeId унести в Messages(), чтобы при смене языка этот id тоже менялся.
                      aboutSioNodeId     : String,
                      apiVsn             : MScApiVsn,
                      debug              : Boolean,
                      rcvrsMapUrl        : MRcvrsMapUrlArgs,
                      serverCreatedAt    : Long              = MSc3Conf.timestampSec(),
                      clientUpdatedAt    : Option[Long]      = None,
-                   ) {
-
-  def withRcvrsMapUrl(rcvrsMap: MRcvrsMapUrlArgs) = copy( rcvrsMapUrl = rcvrsMap )
-  def withClientUpdatedAt(clientUpdatedAt: Option[Long]) = copy(clientUpdatedAt = clientUpdatedAt)
-
-}
+                   )

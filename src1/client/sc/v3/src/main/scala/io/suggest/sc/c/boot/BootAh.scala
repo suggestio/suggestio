@@ -469,7 +469,7 @@ class BootAh[M](
     // После init-wz-вызова произвести анализ результатов выполненной деятельности.
     case BootLocDataWzAfterInit =>
       val startedAtMs = System.currentTimeMillis()
-      val firstRO = circuit.firstRunDialogRW
+      val firstRO = circuit.firstRunDiaRW
       if (firstRO.value.isEmpty) {
         // Почему-то не был запущен wizard, хотя должен был быть, т.к. isNeedWizardFlow() вернул true.
         _afterWzClosed( startedAtMs )

@@ -1,5 +1,6 @@
 package io.suggest.maps.nodes
 
+import diode.UseValueEq
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -37,3 +38,4 @@ object MRcvrsMapUrlArgs {
 case class MRcvrsMapUrlArgs(
                              hashSum    : Int
                            )
+  extends UseValueEq

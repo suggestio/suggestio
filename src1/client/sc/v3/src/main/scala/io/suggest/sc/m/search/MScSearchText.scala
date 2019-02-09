@@ -20,8 +20,8 @@ object MScSearchText {
   implicit object MScSearchTextFastEq extends FastEq[MScSearchText] {
     override def eqv(a: MScSearchText, b: MScSearchText): Boolean = {
       (a.query          ===* b.query) &&
-        (a.searchQuery    ===* b.searchQuery) &&
-        (a.searchTimerId  ===* b.searchTimerId)
+      (a.searchQuery    ===* b.searchQuery) &&
+      (a.searchTimerId  ===* b.searchTimerId)
     }
   }
 

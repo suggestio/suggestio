@@ -13,7 +13,11 @@ import japgolly.univeq._
   * Description: Diode action handler для экшенов очень общих воздействий на геокарту формы.
   * Экшены вызываются параллельно с остальными экшенами, т.к. эти common-экшены носят интерфейсный характер.
   */
-class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
+class MapCommonAh[M](
+                      mmapRW: ModelRW[M, MMapS]
+                    )
+  extends ActionHandler(mmapRW)
+{
 
   private def _setMapCenter(ismc: IGeoPointField, v0: MMapS = value) = {
     val mgp = ismc.geoPoint
@@ -45,7 +49,7 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
         noChange
       } else {
         // Обновляем через updateSilent, т.к. не нужны никакие side-эффекты.
-        val v2 = v0.withCenterReal( Some(mgp) )
+        val v2 = MMapS.centerReal.set( Some(mgp) )(v0)
         updatedSilent( v2 )
       }
 
@@ -55,7 +59,7 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
       if (ze.newZoom ==* v0.zoom) {
         noChange
       } else {
-        val v2 = v0.withZoom( ze.newZoom )
+        val v2 = MMapS.zoom.set(ze.newZoom)(v0)
         updatedSilent( v2 )
       }
 
@@ -67,7 +71,7 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
       if (value.locationFound.contains(true)) {
         noChange
       } else {
-        val v2 = v0.withLocationFound( Some(true) )
+        val v2 = MMapS.locationFound.set( Some(true) )(v0)
         _setMapCenter(hlf, v2)
       }
 

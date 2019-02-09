@@ -1,11 +1,13 @@
 package io.suggest.sc
 
-import diode.ModelRO
+import diode.{FastEq, ModelRO}
 import diode.data.Pot
 import diode.react.ReactConnector
 import io.suggest.ble.beaconer.c.BleBeaconerAh
 import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.empty.OptionUtil
+import io.suggest.dev.MScreen.MScreenFastEq
+import io.suggest.dev.MScreenInfo.MScreenInfoFastEq
 import io.suggest.dev.{JsScreenUtil, MPxRatios, MScreenInfo}
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MLocEnv
@@ -14,6 +16,7 @@ import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.JdCss
 import io.suggest.maps.c.MapCommonAh
 import io.suggest.maps.m.MMapS
+import io.suggest.maps.m.MMapS.MMapSFastEq4Map
 import io.suggest.maps.u.AdvRcvrsMapApiHttpViaUrl
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs, WarnMsgs}
 import io.suggest.routes.ScJsRoutes
@@ -28,20 +31,24 @@ import io.suggest.sc.c.jsrr.JsRouterInitAh
 import io.suggest.sc.c.search._
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.m._
+import io.suggest.sc.m.boot.MScBoot.MScBootFastEq
 import io.suggest.sc.m.boot.{Boot, MBootServiceIds}
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
+import io.suggest.sc.m.dia.MScDialogs
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
-import io.suggest.sc.m.search.{MGeoTabS, MMapInitState, MScSearch, MSearchCssProps}
-import io.suggest.sc.sc3.{MScCommonQs, MScQs, Sc3Pages}
+import io.suggest.sc.m.jsrr.MJsRouterS.MJsRouterSFastEq
+import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
+import io.suggest.sc.m.search._
+import io.suggest.sc.sc3.{MSc3Conf, MScCommonQs, MScQs, Sc3Pages}
 import io.suggest.sc.styl.{MScCssArgs, ScCss}
 import io.suggest.sc.u.Sc3ConfUtil
 import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.sjs.dom.DomQuick
 import io.suggest.spa.{DoNothingActionProcessor, OptFastEq}
+import io.suggest.spa.CircuitUtil._
 import japgolly.scalajs.react.extra.router.RouterCtl
 
 import scala.concurrent.{Future, Promise}
@@ -68,7 +75,7 @@ class Sc3Circuit(
   import MGridS.MGridSFastEq
   import MScDev.MScDevFastEq
   import MScScreenS.MScScreenSFastEq
-  import m.dev.MScGeoLoc.MScGeoFastEq
+  import m.dev.MScGeoLoc.MScGeoLocFastEq
   import m.inx.MWelcomeState.MWelcomeStateFastEq
 
   import MScSearch.MScSearchFastEq
@@ -160,44 +167,44 @@ class Sc3Circuit(
     )
   }
 
-
   // Кэш zoom'ов модели:
-  private[sc] val rootRW = zoomRW(identity) { (_, new2) => new2 }
+  private[sc] val rootRW          = zoomRW(identity) { (_, new2) => new2 } ( MScRootFastEq )
 
-  private[sc] val internalsRW = zoomRW(_.internals) { _.withInternals(_) }
-  private[sc] val jsRouterRW = internalsRW.zoomRW(_.jsRouter) { _.withJsRouter(_) }
+  private[sc] val internalsRW     = mkLensRootZoomRW(this, MScRoot.internals)( MScInternalsFastEq )
+  private[sc] val jsRouterRW      = mkLensZoomRW( internalsRW, MScInternals.jsRouter )( MJsRouterSFastEq )
 
-  private[sc] val indexRW = zoomRW(_.index) { _.withIndex(_) }
-  private[sc] val titleOptRO = indexRW.zoom( _.resp.toOption.flatMap(_.name) )( OptFastEq.Plain )
-  private[sc] val indexWelcomeRW = indexRW.zoomRW(_.welcome) { _.withWelcome(_) }
+  private[sc] val indexRW         = mkLensRootZoomRW(this, MScRoot.index)(MScIndexFastEq)
+  private[sc] val titleOptRO      = indexRW.zoom( _.resp.toOption.flatMap(_.name) )( OptFastEq.Plain )
+  private[sc] val indexWelcomeRW  = mkLensZoomRW(indexRW, MScIndex.welcome)( OptFastEq.Wrapped(MWelcomeStateFastEq) )
 
-  val scCssRO: ModelRO[ScCss] = indexRW.zoom(_.scCss)
+  val scCssRO: ModelRO[ScCss]     = mkLensZoomRO( indexRW, MScIndex.scCss )( FastEq.AnyRefEq )
 
-  private[sc] val searchRW = indexRW.zoomRW(_.search) { _.withSearch(_) }
-  private[sc] val geoTabRW = searchRW.zoomRW(_.geo) { _.withGeo(_) }
+  private[sc] val searchRW        = mkLensZoomRW(indexRW, MScIndex.search)( MScSearchFastEq )
+  private[sc] val geoTabRW        = mkLensZoomRW(searchRW, MScSearch.geo)( MGeoTabSFastEq )
 
-  private[sc] val mapInitRW = geoTabRW.zoomRW(_.mapInit) { _.withMapInit(_) }
-  private[sc] val mmapsRW = mapInitRW.zoomRW(_.state) { _.withState(_) }
-  private[sc] val searchTextRW = searchRW.zoomRW(_.text) { _.withText(_) }
-  private[sc] val geoTabDataRW = geoTabRW.zoomRW(_.data) { _.withData(_) }
-  private[sc] val mapDelayRW = geoTabDataRW.zoomRW(_.delay) { _.withDelay(_) }
+  private[sc] val mapInitRW       = mkLensZoomRW(geoTabRW, MGeoTabS.mapInit)( MMapInitStateFastEq )
+  private[sc] val mmapsRW         = mkLensZoomRW(mapInitRW, MMapInitState.state)( MMapSFastEq4Map )
+  private[sc] val searchTextRW    = mkLensZoomRW(searchRW, MScSearch.text)( MScSearchTextFastEq )
+  private[sc] val geoTabDataRW    = mkLensZoomRW(geoTabRW, MGeoTabS.data)( MGeoTabData.MGeoTabDataFastEq )
+  private[sc] val mapDelayRW      = mkLensZoomRW(geoTabDataRW, MGeoTabData.delay)( OptFastEq.Wrapped(MMapDelay.MMapDelayFastEq) )
 
-  private[sc] val gridRW = zoomRW(_.grid) { _.withGrid(_) }
+  private[sc] val gridRW          = mkLensRootZoomRW(this, MScRoot.grid)( MGridSFastEq )
 
-  private[sc] val devRW = zoomRW(_.dev) { _.withDev(_) }
-  private[sc] val scScreenRW = devRW.zoomRW(_.screen) { _.withScreen(_) }
-  private[sc] val scGeoLocRW = devRW.zoomRW(_.geoLoc) { _.withGeoLoc(_) }
+  private[sc] val devRW           = mkLensRootZoomRW(this, MScRoot.dev)( MScDevFastEq )
+  private[sc] val scScreenRW      = mkLensZoomRW(devRW, MScDev.screen)( MScScreenSFastEq )
+  private[sc] val scGeoLocRW      = mkLensZoomRW(devRW, MScDev.geoLoc)( MScGeoLocFastEq )
 
-  private[sc] val confRO = internalsRW.zoom(_.conf)
+  private[sc] val confRO          = mkLensZoomRO(internalsRW, MScInternals.conf)( MSc3Conf.MSc3ConfFastEq )
+  private[sc] val rcvrsMapUrlRO   = mkLensZoomRO(confRO, MSc3Conf.rcvrsMapUrl)( FastEq.AnyRefEq )
 
-  private[sc] val platformRW = devRW.zoomRW(_.platform) { _.withPlatform(_) }
+  private[sc] val platformRW      = mkLensZoomRW(devRW, MScDev.platform)( MPlatformSFastEq )
 
-  private[sc] val beaconerRW = devRW.zoomRW(_.beaconer) { _.withBeaconer(_) }
+  private[sc] val beaconerRW      = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
 
-  private[sc] val dialogsRW = zoomRW(_.dialogs)(_.withDialogs(_))
-  private[sc] val firstRunDialogRW = dialogsRW.zoomRW(_.first)(_.withFirst(_))
+  private[sc] val dialogsRW       = mkLensRootZoomRW(this, MScRoot.dialogs )( MScDialogsFastEq )
+  private[sc] val firstRunDiaRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( OptFastEq.Wrapped(MWzFirstOuterSFastEq) )
 
-  private[sc] val bootRW = internalsRW.zoomRW(_.boot)(_.withBoot(_))
+  private[sc] val bootRW          = mkLensZoomRW(internalsRW, MScInternals.boot)( MScBootFastEq )
 
 
   private[sc] def getLocEnv(mroot: MScRoot = rootRW.value, currRcvrId: Option[_] = None): MLocEnv = {
@@ -276,8 +283,8 @@ class Sc3Circuit(
   }
 
 
-  private val screenInfoRO = scScreenRW.zoom(_.info)
-  private val screenRO = screenInfoRO.zoom(_.screen)
+  private val screenInfoRO  = mkLensZoomRO(scScreenRW, MScScreenS.info)( MScreenInfoFastEq )
+  private val screenRO      = mkLensZoomRO(screenInfoRO, MScreenInfo.screen)( MScreenFastEq )
 
 
   /** Списки обработчиков ответов ScUniApi с сервера и resp-action в этих ответах. */
@@ -317,7 +324,7 @@ class Sc3Circuit(
     geoSearchQsRO   = geoSearchQsRO,
     rcvrsMapApi     = advRcvrsMapApi,
     screenInfoRO    = screenInfoRO,
-    rcvrMapArgsRO   = confRO.zoom(_.rcvrsMapUrl),
+    rcvrMapArgsRO   = rcvrsMapUrlRO,
   )
 
   private val indexAh = new IndexAh(
@@ -368,7 +375,7 @@ class Sc3Circuit(
 
   private val firstRunDialogAh = new FirstRunDialogAh(
     platformRO  = platformRW,
-    modelRW     = firstRunDialogRW,
+    modelRW     = firstRunDiaRW,
     dispatcher  = this,
   )
 

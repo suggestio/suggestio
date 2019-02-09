@@ -8,6 +8,7 @@ import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.MapsUnivEq._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -33,6 +34,11 @@ object MGeoTabData {
 
   @inline implicit def univEq: UnivEq[MGeoTabData] = UnivEq.derive
 
+  val rcvrsCache  = GenLens[MGeoTabData](_.rcvrsCache)
+  val delay       = GenLens[MGeoTabData](_.delay)
+  val lmap        = GenLens[MGeoTabData](_.lmap)
+  val selTagIds   = GenLens[MGeoTabData](_.selTagIds)
+
 }
 
 
@@ -52,9 +58,6 @@ case class MGeoTabData(
                         selTagIds       : Set[String]           = Set.empty,
                       ) {
 
-  def withRcvrsCache(rcvrsCache: Pot[MSearchRespInfo[MGeoNodesResp]]) = copy(rcvrsCache = rcvrsCache)
   def withDelay(delay: Option[MMapDelay]) = copy(delay = delay)
-  def withLmap(lmap: Option[LMap]) = copy(lmap = lmap)
-  def withSelTagIds(selTagIds: Set[String]) = copy(selTagIds = selTagIds)
 
 }

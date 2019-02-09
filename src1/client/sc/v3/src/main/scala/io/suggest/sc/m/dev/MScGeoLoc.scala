@@ -24,7 +24,7 @@ object MScGeoLoc {
   def empty = apply()
 
   /** Поддержка FastEq для инстансов [[MScGeoLoc]]. */
-  implicit object MScGeoFastEq extends FastEq[MScGeoLoc] {
+  implicit object MScGeoLocFastEq extends FastEq[MScGeoLoc] {
     override def eqv(a: MScGeoLoc, b: MScGeoLoc): Boolean = {
       (a.watchers   ===* b.watchers) &&
       (a.suppressor ===* b.suppressor) &&

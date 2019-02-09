@@ -1,7 +1,8 @@
 package io.suggest.sc.m.search
 
-import diode.UseValueEq
+import diode.{FastEq, UseValueEq}
 import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -10,6 +11,15 @@ import japgolly.univeq._
   * Description: Модель для подавления ложных перемещений карты.
   */
 object MMapDelay {
+
+  implicit object MMapDelayFastEq extends FastEq[MMapDelay] {
+    override def eqv(a: MMapDelay, b: MMapDelay): Boolean = {
+      (a.timerId ==* b.timerId) &&
+      (a.generation ==* b.generation) &&
+      (a.rcvrId ===* b.rcvrId) &&
+      (a.listenMove ==* b.listenMove)
+    }
+  }
 
   @inline implicit def univEq: UnivEq[MMapDelay] = UnivEq.derive
 

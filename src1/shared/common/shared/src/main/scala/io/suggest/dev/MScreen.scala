@@ -1,10 +1,13 @@
 package io.suggest.dev
 
+import diode.FastEq
 import io.suggest.common.geom.d2.ISize2di
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.text.parse.ParserUtil.Implicits._
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
  * Suggest.io
@@ -14,6 +17,14 @@ import io.suggest.text.parse.ParserUtil.Implicits._
  */
 
 object MScreen {
+
+  implicit object MScreenFastEq extends FastEq[MScreen] {
+    override def eqv(a: MScreen, b: MScreen): Boolean = {
+      (a.width ==* b.width) &&
+      (a.height ==* b.height) &&
+      (a.pxRatio ===* b.pxRatio)
+    }
+  }
 
   def maybeFromString(s: String): Either[String, MScreen] = {
     val p = new DevScreenParsersImpl
@@ -35,10 +46,7 @@ object MScreen {
     Math.round(pxRatioRaw * r).toDouble / r
   }
 
-  @inline implicit def univEq: UnivEq[MScreen] = {
-    import io.suggest.ueq.UnivEqUtil._
-    UnivEq.derive
-  }
+  @inline implicit def univEq: UnivEq[MScreen] = UnivEq.derive
 
   def default = MScreen(
     width   = 1024,

@@ -9,6 +9,7 @@ import io.suggest.primo.id.OptStrId
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 import scalaz.Tree
 
 /**
@@ -24,12 +25,16 @@ object MScAdData {
   implicit object MScAdDataFastEq extends FastEq[MScAdData] {
     override def eqv(a: MScAdData, b: MScAdData): Boolean = {
       (a.nodeId ===* b.nodeId) &&
-        (a.main ===* b.main) &&
-        (a.focused ===* b.focused)
+      (a.main ===* b.main) &&
+      (a.focused ===* b.focused)
     }
   }
 
   @inline implicit def univEq: UnivEq[MScAdData] = UnivEq.derive
+
+  val nodeId  = GenLens[MScAdData](_.nodeId)
+  val main    = GenLens[MScAdData](_.main)
+  val focused = GenLens[MScAdData](_.focused)
 
 }
 
@@ -49,8 +54,6 @@ case class MScAdData(
                     )
   extends OptStrId
 {
-
-  def withFocused(focused: Pot[MScFocAdData]) = copy(focused = focused)
 
   private def _flatGridTemplatesUsing(f: MBlkRenderData => Seq[Tree[JdTag]]) = {
     focused.fold [Seq[Tree[JdTag]]] {

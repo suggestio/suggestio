@@ -13,7 +13,7 @@ import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.grid.GridLoadAds
-import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}
+import io.suggest.sc.m.inx.{MScIndex, MScSideBars, SideBarOpenClose}
 import io.suggest.sc.m.{HandleScApiResp, MScRoot}
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
@@ -116,14 +116,14 @@ class GeoTabAh[M](
 
       } else {
         // Поисковый запрос действительно нужно организовать.
-        val req2 = (if (m.clear) Pot.empty else v0.found.req)
+        val req2 =
+          (if (m.clear) Pot.empty else v0.found.req)
           .pending()
+
         val req2p = req2.asInstanceOf[PendingBase]
 
         val runReqFx = Effect {
-          val args2 = args0.withSearch(
-            search = search2
-          )
+          val args2 = MScQs.search.set(search2)(args0)
           // Запустить запрос.
           api
             .pubApi( args2 )
@@ -153,16 +153,18 @@ class GeoTabAh[M](
             .pending( req2p.startTime )
         }
         // Обновить карту ресиверов в состоянии, если инстанс изменился:
-        val mapInit2 = if (rcvrs2 !===* v0.mapInit.rcvrs)
-          v0.mapInit.withRcvrs( rcvrs2 )
-        else
+        val mapInit2 = if (rcvrs2 !===* v0.mapInit.rcvrs) {
+          MMapInitState.rcvrs
+            .set( rcvrs2 )(v0.mapInit)
+        } else {
           v0.mapInit
+        }
 
         // Обновлённое состояние.
         val v2 = v0.copy(
           found   = found2,
           mapInit = mapInit2,
-          css = GeoTabAh._mkSearchCss(req2, screenInfoRO.value, v0.css)
+          css     = GeoTabAh._mkSearchCss(req2, screenInfoRO.value, v0.css)
         )
 
         updated(v2, runReqFx)
@@ -200,9 +202,10 @@ class GeoTabAh[M](
               if (isAlreadySelected) Set.empty // TODO Когда будет поддержка >1 тега, сделать: v0.data.selTagIds - m.nodeId
               else Set(nodeId) // TODO Пока поддерживается только 1 тег макс. Надо в будущем: v0.data.selTagIds + m.nodeId
 
-            val v2 = v0.withData(
-              v0.data.withSelTagIds( selTagIds2 )
-            )
+            val v2 = MGeoTabS.data
+              .composeLens( MGeoTabData.selTagIds )
+              .set( selTagIds2 )(v0)
+
             val gridLoadFx = GridLoadAds(clean = true, ignorePending = true).toEffectPure
             val closeSearchFx = SideBarOpenClose(MScSideBars.Search, open = false).toEffectPure
 
@@ -216,9 +219,9 @@ class GeoTabAh[M](
             if (v0.data.selTagIds.isEmpty) {
               effectOnly(fx)
             } else {
-              val v2 = v0.withData(
-                v0.data.withSelTagIds( Set.empty )
-              )
+              val v2 = MGeoTabS.data
+                .composeLens( MGeoTabData.selTagIds )
+                .set( Set.empty )(v0)
               updated(v2, fx)
             }
           }
@@ -248,10 +251,9 @@ class GeoTabAh[M](
       // Сбросить флаг инициализации карты, чтобы гео.карта тоже отрендерилась на экране.
       val v0 = value
       if (!v0.mapInit.ready) {
-        val v2 = v0.withMapInit(
-          v0.mapInit
-            .withReady(true)
-        )
+        val v2 = MGeoTabS.mapInit
+          .composeLens( MMapInitState.ready )
+          .set( true )(v0)
         updated( v2 )
 
       } else {
@@ -262,10 +264,9 @@ class GeoTabAh[M](
     // Перехват инстанса leaflet map и сохранение в состояние.
     case m: HandleMapReady =>
       val v0 = value
-      val v2 = v0.withData(
-        v0.data
-          .withLmap( Some(m.map) )
-      )
+      val v2 = MGeoTabS.data
+        .composeLens( MGeoTabData.lmap )
+        .set( Some(m.map) )(v0)
       updatedSilent( v2 )
 
 
@@ -276,9 +277,9 @@ class GeoTabAh[M](
         // Эффект скачивания карты с сервера:
         val fx = RcvrMarkersInitAh.startInitFx( rcvrMapArgsRO(), rcvrsMapApi )
         // silent, т.к. RcvrMarkersR работает с этим Pot как с Option, а больше это никого и не касается.
-        val v2 = v0.withData(
-          v0.data.withRcvrsCache( v0.data.rcvrsCache.pending() )
-        )
+        val v2 = MGeoTabS.data
+          .composeLens( MGeoTabData.rcvrsCache )
+          .modify(_.pending())(v0)
         updatedSilent( v2, fx )
 
       } else {
@@ -305,11 +306,13 @@ class GeoTabAh[M](
         }
       )
       val v2 = v0.copy(
-        data = v0.data.withRcvrsCache( rcvrsCache2 ),
+        data = MGeoTabData.rcvrsCache.set(rcvrsCache2)(v0.data),
         // И сразу залить в основное состояние карты ресиверов, если там нет иных данных.
-        mapInit = if (v0.mapInit.rcvrs.isEmpty)
-          v0.mapInit.withRcvrs( rcvrsCache2 )
-        else v0.mapInit
+        mapInit =
+          if (v0.mapInit.rcvrs.isEmpty)
+            MMapInitState.rcvrs.set( rcvrsCache2 )(v0.mapInit)
+          else
+            v0.mapInit
       )
       updated( v2 )
 
@@ -323,12 +326,10 @@ class NodesSearchRespHandler( screenInfoRO: ModelRO[MScreenInfo] )
   extends IRespWithActionHandler {
 
   private def _withGeo(ctx: MRhCtx, geo2: MGeoTabS): MScRoot = {
-    ctx.value0.withIndex(
-      ctx.value0.index.withSearch(
-        ctx.value0.index.search
-          .withGeo( geo2 )
-      )
-    )
+    MScRoot.index
+      .composeLens( MScIndex.search )
+      .composeLens( MScSearch.geo )
+      .set(geo2)(ctx.value0)
   }
 
 
@@ -389,14 +390,15 @@ class NodesSearchRespHandler( screenInfoRO: ModelRO[MScreenInfo] )
 
     // Собрать ресиверы в итог:
     val mapInit2 = textQuery.fold(g0.mapInit) { _ =>
-      val msri = MSearchRespInfo(
-        textQuery = textQuery,
-        resp      = nodes2
-      )
-      g0.mapInit.withRcvrs(
-        g0.mapInit.rcvrs
-          .ready( msri )
-      )
+      MMapInitState.rcvrs
+        .modify(
+          _.ready(
+            MSearchRespInfo(
+              textQuery = textQuery,
+              resp      = nodes2
+            )
+          )
+        )(g0.mapInit)
     }
 
     val req2 = if (nodes2.nodes.isEmpty && textQuery.isEmpty) {

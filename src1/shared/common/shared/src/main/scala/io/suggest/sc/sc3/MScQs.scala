@@ -4,6 +4,7 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 import io.suggest.sc.index.MScIndexArgs
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -36,6 +37,11 @@ object MScQs {
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MScQs] = UnivEq.derive
+
+  val common = GenLens[MScQs](_.common)
+  val search = GenLens[MScQs](_.search)
+  val index  = GenLens[MScQs](_.index)
+  val foc    = GenLens[MScQs](_.foc)
 
 }
 

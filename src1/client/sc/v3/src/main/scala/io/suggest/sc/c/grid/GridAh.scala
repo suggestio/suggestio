@@ -19,7 +19,7 @@ import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 import io.suggest.sc.c.{IRespWithActionHandler, MRhCtx}
 import io.suggest.sc.m.{HandleScApiResp, MScRoot, ResetUrlRoute}
 import io.suggest.sc.m.grid._
-import io.suggest.sc.sc3.{MSc3RespAction, MScQs, MScRespActionType, MScRespActionTypes}
+import io.suggest.sc.sc3._
 import io.suggest.sc.styl.ScCss
 import io.suggest.sc.u.api.IScUniApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -123,11 +123,9 @@ object GridAh {
 
 
   def saveAdIntoValue(index: Int, newAd: MScAdData, v0: MGridS): MGridS = {
-    v0.withCore(
-      v0.core.withAds(
-        saveAdIntoAds(index, newAd, v0)
-      )
-    )
+    MGridS.core
+      .composeLens( MGridCoreS.ads )
+      .set( saveAdIntoAds(index, newAd, v0) )(v0)
   }
 
   /** Залить в состояние обновлённый инстанс карточки. */
@@ -168,14 +166,10 @@ class GridRespHandler
   }
 
   override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
-    val g0 = ctx.value0.grid
-    val ads2 = g0.core.ads
-      .fail(ex)
-    val g2 = g0.withCore(
-      g0.core
-        .withAds( ads2 )
-    )
-    ctx.value0.withGrid( g2 )
+    MScRoot.grid
+      .composeLens(MGridS.core)
+      .composeLens( MGridCoreS.ads )
+      .modify( _.fail(ex) )( ctx.value0 )
   }
 
   override def isMyRespAction(raType: MScRespActionType, ctx: MRhCtx): Boolean = {
@@ -335,9 +329,8 @@ class GridFocusRespHandler
     GridAh
       .findAd(reason.nodeId, g0.core)
       .fold( ctx.value0 ) { case (ad0, index) =>
-        val ad1 = ad0.withFocused(
-          ad0.focused.fail(ex)
-        )
+        val ad1 = MScAdData.focused
+          .modify(_.fail(ex))(ad0)
         val g2 = GridAh.saveAdIntoValue(index, ad1, g0)
         ctx.value0.withGrid( g2 )
       }
@@ -360,15 +353,16 @@ class GridFocusRespHandler
       } { case (ad0, index) =>
         val focResp = ra.ads.get
         val focAd = focResp.ads.head
-        val ad1 = ad0.withFocused(
-          ad0.focused.ready(
-            MScFocAdData(
-              blkData = MBlkRenderData( focAd.jd ),
-              canEdit = focAd.canEdit.contains(true),
-              userFoc = true
+        val ad1 = MScAdData.focused
+          .modify(
+            _.ready(
+              MScFocAdData(
+                blkData = MBlkRenderData( focAd.jd ),
+                canEdit = focAd.canEdit contains true,
+                userFoc = true
+              )
             )
-          )
-        )
+          )(ad0)
 
         val adsPot2 = for (ads0 <- g0.core.ads) yield {
           ads0
@@ -380,7 +374,8 @@ class GridFocusRespHandler
                 ad1
               } else if (xad0.focused.nonEmpty) {
                 // Скрыть все уже открытык карточки.
-                xad0.withFocused( Pot.empty )
+                MScAdData.focused
+                  .set( Pot.empty )(xad0)
               } else {
                 // Нераскрытые карточки - пропустить без изменений.
                 xad0
@@ -390,18 +385,18 @@ class GridFocusRespHandler
         }
 
         val gridBuild2 = GridAh.rebuildGrid( adsPot2, g0.core.jdConf )
-        val g2 = g0.withCore(
-          g0.core.copy(
-            jdCss     = JdCss( GridAh.jdCssArgs(adsPot2, g0.core.jdConf) ),
+        val g2 = MGridS.core.modify( core0 =>
+          core0.copy(
+            jdCss     = JdCss( GridAh.jdCssArgs(adsPot2, core0.jdConf) ),
             ads       = adsPot2,
             gridBuild = gridBuild2
           )
-        )
+        )(g0)
         // Надо проскроллить выдачу на начало открытой карточки:
         val scrollFx = GridAh.scrollToAdFx( ad1, adsPot2, gridBuild2 )
         val resetRouteFx = ResetUrlRoute.toEffectPure
 
-        val v2 = ctx.value0.withGrid( g2 )
+        val v2 = MScRoot.grid.set(g2)( ctx.value0 )
         val fxOpt = Some(scrollFx + resetRouteFx)
         ActionResult(Some(v2), fxOpt)
       }
@@ -442,10 +437,9 @@ class GridAh[M](
         val fx = GridLoadAds(clean = false, ignorePending = true)
           .toEffectPure
         // Выставить pending в состояние, чтобы повторные события скролла игнорились.
-        val v2 = v0.withCore(
-          v0.core
-            .withAds( v0.core.ads.pending() )
-        )
+        val v2 = MGridS.core
+          .composeLens( MGridCoreS.ads )
+          .modify(_.pending())(v0)
         updatedSilent(v2, fx)
 
       } else {
@@ -478,9 +472,8 @@ class GridAh[M](
                 limit  = Some( GridAh.adsPerReqLimit ),
                 offset = Some(offset)
               ),
-            common = args0.common.copy(
-              searchGridAds = Some(false)
-            )
+            common = MScCommonQs.searchGridAds
+              .set( Some(false) )(args0.common)
           )
 
           // Запустить запрос с почищенными аргументами...
@@ -499,10 +492,9 @@ class GridAh[M](
           }
         }
 
-        val v2 = v0.withCore(
-          v0.core
-            .withAds( nextReqPot2 )
-        )
+        val v2 = MGridS.core
+          .composeLens( MGridCoreS.ads )
+          .set( nextReqPot2 )(v0)
         updated(v2, fx)
       }
 
@@ -543,7 +535,7 @@ class GridAh[M](
                 .transform { tryResp =>
                   val r = HandleScApiResp(
                     reqTimeStamp  = None,
-                    qs        = args1,
+                    qs            = args1,
                     tryResp       = tryResp,
                     reason        = m,
                   )
@@ -552,26 +544,27 @@ class GridAh[M](
             }
 
             // выставить текущей карточке, что она pending
-            val ad1 = ad0.withFocused( ad0.focused.pending() )
+            val ad1 = MScAdData.focused
+              .modify(_.pending())(ad0)
 
             val v2 = GridAh.saveAdIntoValue(index, ad1, v0)
             updated(v2, fx)
 
           } { _ =>
-            val ad1 = ad0.withFocused( Pot.empty )
-            val ads2 = GridAh.saveAdIntoAds(index, ad1, v0)
-            val gridBuild2 = GridAh.rebuildGrid(ads2, v0.core.jdConf)
-            val v2 = v0.withCore(
-              v0.core.copy(
+            val ad1         = MScAdData.focused.set( Pot.empty )(ad0)
+            val ads2        = GridAh.saveAdIntoAds(index, ad1, v0)
+            val gridBuild2  = GridAh.rebuildGrid(ads2, v0.core.jdConf)
+            val v2          = MGridS.core.modify { core0 =>
+              core0.copy(
                 ads       = ads2,
-                jdCss     = JdCss( GridAh.jdCssArgs(ads2, v0.core.jdConf) ),
+                jdCss     = JdCss( GridAh.jdCssArgs(ads2, core0.jdConf) ),
                 gridBuild = gridBuild2
               )
-            )
+            }(v0)
             // В фоне - запустить скроллинг к началу карточки.
-            val scrollFx = GridAh.scrollToAdFx( ad0, ads2, gridBuild2 )
-            val resetRouteFx = ResetUrlRoute.toEffectPure
-            val fxs = scrollFx + resetRouteFx
+            val scrollFx      = GridAh.scrollToAdFx( ad0, ads2, gridBuild2 )
+            val resetRouteFx  = ResetUrlRoute.toEffectPure
+            val fxs           = scrollFx + resetRouteFx
             updated(v2, fxs)
           }
         }
@@ -589,27 +582,25 @@ class GridAh[M](
 
       if (szMultMatches && jdConf0.gridColumnsCount ==* gridColsCount2) {
         noChange
-      } else {
-        var core1 = v0.core
-        var jdConf2 = jdConf0
-          .withGridColumnsCount( gridColsCount2 )
 
-        // Если изменился szMult, то перепилить css-стили карточек:
-        if (!szMultMatches) {
-          jdConf2 = jdConf2
-            .withSzMult( szMult2 )
-          core1 = core1.withJdCss(
-            JdCss( GridAh.jdCssArgs(core1.ads, jdConf2) )
-          )
+      } else {
+        val jdConf1 = {
+          var jdConfLens = MJdConf.gridColumnsCount.set( gridColsCount2 )
+          if (!szMultMatches)
+            jdConfLens = jdConfLens andThen MJdConf.szMult.set(szMult2)
+          jdConfLens( jdConf0 )
         }
 
-        val v2 = v0.withCore(
-          core1
-            .withJdConf( jdConf2 )
-            .withGridBuild(
-              GridAh.rebuildGrid(core1.ads, jdConf2)
-            )
-        )
+        var coreLens =
+          MGridCoreS.jdConf.set( jdConf1 ) andThen
+          MGridCoreS.gridBuild.set( GridAh.rebuildGrid(v0.core.ads, jdConf1) )
+        // Если изменился szMult, то перепилить css-стили карточек:
+        if (!szMultMatches)
+          coreLens = coreLens andThen
+            MGridCoreS.jdCss.set( JdCss( GridAh.jdCssArgs(v0.core.ads, jdConf1) ) )
+
+        val v2 = MGridS.core.modify(coreLens)(v0)
+
         // TODO Возможно, что надо перекачать содержимое плитки с сервера, если всё слишком сильно переменилось. Нужен отложенный таймер для этого.
         updated(v2)
       }

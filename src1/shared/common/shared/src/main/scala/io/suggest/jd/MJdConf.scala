@@ -3,6 +3,7 @@ package io.suggest.jd
 import io.suggest.ad.blk.{BlockPadding, BlockPaddings, BlockWidths, IBlockSize}
 import io.suggest.dev.MSzMult
 import japgolly.univeq._
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -25,6 +26,11 @@ object MJdConf {
 
   @inline implicit def univEq: UnivEq[MJdConf] = UnivEq.force
 
+  val isEdit            = GenLens[MJdConf](_.isEdit)
+  val szMult            = GenLens[MJdConf](_.szMult)
+  val blockPadding      = GenLens[MJdConf](_.blockPadding)
+  val gridColumnsCount  = GenLens[MJdConf](_.gridColumnsCount)
+
 }
 
 
@@ -46,10 +52,7 @@ case class MJdConf(
                     gridColumnsCount    : Int
                   ) {
 
-  def withIsEdit(isEdit: Boolean)           = copy(isEdit = isEdit)
   def withSzMult(szMult: MSzMult)           = copy(szMult = szMult)
-  def withBlockPadding(blockPadding: BlockPadding) = copy(blockPadding = blockPadding)
-  def withGridColumnsCount(gridColumnsCount: Int)  = copy(gridColumnsCount = gridColumnsCount)
 
   /** Рассчитать коэфф.масштабирования блоков плитки. */
   val blkSzMultOpt = IBlockSize.szMultPaddedOpt(szMult, blockPadding)
