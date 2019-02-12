@@ -215,15 +215,6 @@ class Sc3Circuit(
   }
 
 
-  /** Функция для сборки контекста рендера sc-шаблонов. */
-  val scReactContextRO = zoom { mroot =>
-    MScReactCtx(
-      scCss     = mroot.index.scCss,
-      routerCtl = routerCtl,
-    )
-  }
-
-
   /** Модель аргументов для поиска новых карточек в плитке. */
   private val gridAdsQsRO: ModelRO[MScQs] = zoom { mroot =>
     val inxState = mroot.index.state

@@ -447,9 +447,7 @@ object IScCssArgs {
   *
   * @param args Цвета и экран для оформления выдачи.
   */
-case class ScCss( args: IScCssArgs )
-  extends StyleSheet.Inline
-{
+case class ScCss( args: IScCssArgs ) extends StyleSheet.Inline {
 
   import dsl._
 
@@ -517,6 +515,7 @@ case class ScCss( args: IScCssArgs )
       }
 
     }
+
 
     /** Контейнер стилей элементов переднего плана экрана приветствия. */
     object Fg {

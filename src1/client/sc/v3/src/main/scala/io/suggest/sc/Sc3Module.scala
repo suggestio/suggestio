@@ -40,28 +40,21 @@ class Sc3Module {
   // Для явной разводки доступа к инстансам,
   // используются 0-arg функции, которые скрывают за собой lazy-инстансы.
   // Костыль для инжекции ленивого доступа к инстансу ScRootR.
-  private def _sc3CircuitF(routerCtl: RouterCtl[Sc3Pages]): Sc3Circuit = {
-    wire[Sc3Circuit]
-  }
+  private def _sc3CircuitF(routerCtl: RouterCtl[Sc3Pages]) = wire[Sc3Circuit]
+
   lazy val sc3SpaRouter: Sc3SpaRouter = {
     new Sc3SpaRouter(
-      scReactCtxF = () => scReactCtx,
-      sc3CircuitF = _sc3CircuitF,
-      scRootR     = () => scRootR,
+      scReactCtxContF = () => scReactCtx,
+      sc3CircuitF     = _sc3CircuitF,
+      scRootR         = () => scRootR,
     )
   }
 
   import sc3SpaRouter.routerCtl
 
   /** Сборка контейнера контекста, который будет распихан по sc-шаблонам. */
-  lazy val scReactCtx: React.Context[MScReactCtx] = {
-    React.createContext(
-      MScReactCtx(
-        scCss     = sc3SpaRouter.sc3Circuit.scCssRO.value,
-        routerCtl = routerCtl
-      )
-    )
-  }
+  lazy val scReactCtx: React.Context[MScReactCtx] =
+    React.createContext( sc3SpaRouter.mkScReactCtx )
 
 
   // header

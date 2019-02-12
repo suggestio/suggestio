@@ -37,7 +37,11 @@ object MScReactCtx {
   * @param routerCtl Контроллер роутера, пробрасываемый вниз по цепочке.
   */
 case class MScReactCtx(
-                        scCss         : ScCss,
+                        getScCss      : () => ScCss,
                         routerCtl     : RouterCtl[Sc3Pages],
                         // TODO Messages - или в другой контекст.
-                      )
+                      ) {
+
+  def scCss: ScCss = getScCss()
+
+}

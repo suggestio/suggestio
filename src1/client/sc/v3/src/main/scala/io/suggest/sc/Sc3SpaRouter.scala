@@ -12,7 +12,6 @@ import io.suggest.text.{UrlUtil2, UrlUtilJs}
 import japgolly.scalajs.react.extra.router.{BaseUrl, Path, Redirect, Router, RouterConfigDsl, RouterCtl}
 import japgolly.scalajs.react.vdom.html_<^._
 import OptionUtil.BoolOptOps
-import diode.react.ReactConnectProxy
 import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import japgolly.scalajs.react.React
@@ -28,16 +27,12 @@ import scala.util.Try
   * В отличии от scalajs-spa-tutorial, этот роутер живёт за пределами [[Sc3Main]], чтобы не разводить кашу в коде.
   */
 class Sc3SpaRouter(
-                    scReactCtxF  : () => React.Context[MScReactCtx],
-                    sc3CircuitF  : RouterCtl[Sc3Pages] => Sc3Circuit,
-                    scRootR      : () => ScRootR,
+                    scReactCtxContF   : () => React.Context[MScReactCtx],
+                    sc3CircuitF       : RouterCtl[Sc3Pages] => Sc3Circuit,
+                    scRootR           : () => ScRootR,
                   )
   extends Log
 {
-
-  import io.suggest.sc.m.MScRoot.MScRootFastEq
-  import MScReactCtx.MScReactCtxFastEq
-
 
   val routerAndCtl: (Router[Sc3Pages], RouterCtl[Sc3Pages]) = {
     val baseUrlSuffix = "#!"
@@ -209,29 +204,20 @@ class Sc3SpaRouter(
   // Готовые инстансы вызываются только из функций роутера, поэтому их безопасно дёргать отсюда.
   val sc3Circuit = sc3CircuitF( routerCtl )
 
-
-  /** Коннекшен с подпиской к sc3-цепи на изменения контекста. */
-  private val scReactCtxC: ReactConnectProxy[MScReactCtx] = {
-    sc3Circuit.connect { mroot =>
-      MScReactCtx( mroot.index.scCss, routerCtl )
-    }( MScReactCtxFastEq )
-  }
+  /** Сборка контекста. val по возможности, но может быть и def. */
+  val mkScReactCtx = MScReactCtx( sc3Circuit.scCssRO.apply, routerCtl )
 
   /** Отрендеренный компонент ScRootR с инициализированным глобальным react-контекстом выдачи.
     * Лениво! чтобы запретить доступ к инстансам sc-контекста и ScRootR до завершения конструктора [[Sc3SpaRouter]],
     * иначе будет зацикливание, т.к. шаблоны (react-компоненты) и роутер взаимно нуждаются в инстансах друг друга.
     */
   private lazy val _scRootWrapped = {
-    sc3Circuit.wrap( identity(_) ) { mrootProxy =>
-      val content = scRootR()( mrootProxy )
-      val scReactCtx = scReactCtxF()
-      scReactCtxC { ctxProxy =>
-        // Внутренняя react-подписка нижележащих компонентов на новый инстанс цепи.
-        scReactCtx.provide( ctxProxy.value )(
-          content
-        )
+    // Внутренняя react-подписка нижележащих компонентов на новый инстанс цепи.
+    scReactCtxContF().provide( mkScReactCtx )(
+      sc3Circuit.wrap( identity(_) ) {
+        scRootR().apply
       }
-    }
+    )
   }
 
   /** Функция рендера выдачи, чтобы явно разделить в конструкторе val router-конфига и остальные поля конструктора. */

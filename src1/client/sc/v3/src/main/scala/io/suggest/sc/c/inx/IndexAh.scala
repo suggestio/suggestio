@@ -203,17 +203,12 @@ class IndexRah
   }
 
   override def handleReqError(ex: Throwable, ctx: MRhCtx): MScRoot = {
-    val i0 = ctx.value0.index
     LOG.error( ErrorMsgs.GET_NODE_INDEX_FAILED, ex, msg = ctx.m )
-    var i2 = MScIndex.resp
-      .modify(_.fail(ex))(i0)
+    var actionsAccF = MScIndex.resp.modify( _.fail(ex) )
+    if (ctx.value0.index.search.geo.mapInit.loader.nonEmpty)
+      actionsAccF = actionsAccF andThen MScIndex.search.modify(_.resetMapLoader)
 
-    if (i2.search.geo.mapInit.loader.nonEmpty) {
-      i2 = MScIndex.search
-        .modify(_.resetMapLoader)(i2)
-    }
-    MScRoot.index
-      .set(i2)(ctx.value0)
+    MScRoot.index.modify( actionsAccF )(ctx.value0)
   }
 
   override def isMyRespAction(raType: MScRespActionType, ctx: MRhCtx): Boolean = {

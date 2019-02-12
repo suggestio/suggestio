@@ -51,7 +51,7 @@ class WelcomeR(
 
   class Backend( $: BackendScope[Props, Unit] ) {
 
-    private def _onClick: Callback =
+    private val _onClick: Callback =
       dispatchOnProxyScopeCB( $, WcClick )
 
 
