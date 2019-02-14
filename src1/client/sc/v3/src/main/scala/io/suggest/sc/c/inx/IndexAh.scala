@@ -250,7 +250,7 @@ class IndexRah
           .set( None )( i1 )
       }
 
-      val v2 = v0.withIndex( i1 )
+      val v2 = MScRoot.index.set(i1)(v0)
 
       // Запустить эффект обновления плитки, если плитка не пришла автоматом.
       val gridLoadFxOpt = OptionUtil.maybe(
@@ -296,7 +296,7 @@ class IndexRah
       )
       ActionResult(
         for (inx2 <- actRes1.newModelOpt) yield {
-          v0.withIndex(inx2)
+          MScRoot.index.set(inx2)(v0)
         },
         actRes1.effectOpt
       )
@@ -389,9 +389,7 @@ class IndexAh[M](
         }
     }
 
-    var v2 = v0.withResp(
-      v0.resp.pending(ts)
-    )
+    var v2 = MScIndex.resp.modify(_.pending(ts))(v0)
 
     // Выставить в состояние, что запущен поиск узлов, чтобы не было дублирующихся запросов от контроллера панели.
     if (isSearchNodes) {

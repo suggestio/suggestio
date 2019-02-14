@@ -1,8 +1,8 @@
 package io.suggest.sc.c
 
 import diode._
+import io.suggest.ble.beaconer.m.BtOnOff
 import io.suggest.common.empty.OptionUtil
-import io.suggest.geo.MGeoPoint
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.m._
@@ -15,6 +15,7 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits.OptionListExtOps
 import io.suggest.sc.index.MScIndexArgs
+import io.suggest.sc.m.jsrr.MJsRouterS
 import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sjs.dom.DomQuick
 import japgolly.univeq._
@@ -66,13 +67,22 @@ object TailAh {
   }
 
 
-  private def _removeTimer(v0: MScRoot): MScRoot = {
-    v0.withInternals(
-      v0.internals
-        .withGeoLockTimer( None )
-    )
+  private def _removeTimer(v0: MScRoot) = {
+    for (gltId <- v0.internals.geoLockTimer) yield {
+      val alterF = MScRoot.internals
+        .composeLens( MScInternals.geoLockTimer )
+        .set(None)
+      val fx = _clearTimerFx( gltId )
+      (alterF, fx)
+    }
   }
 
+  private def _clearTimerFx(timerId: Int): Effect = {
+    Effect.action {
+      DomQuick.clearTimeout( timerId )
+      DoNothing
+    }
+  }
 
   /** Сборка таймера геолокации.
     *
@@ -80,11 +90,17 @@ object TailAh {
     * @return Обновлённое состояние + эффект ожидания срабатывания таймера.
     *         Но таймер - уже запущен к этому моменту.
     */
-  def mkGeoLocTimer(switchCtx: MScSwitchCtx, v0: MScInternals): (MScInternals, Effect) = {
+  def mkGeoLocTimer(switchCtx: MScSwitchCtx, currTimerIdOpt: Option[Int]): (MScInternals => MScInternals, Effect) = {
     val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut(switchCtx) )
-    val v2 = v0.withGeoLockTimer( Some(tp.timerId) )
-    val timeoutFx = Effect( tp.fut )
-    (v2, timeoutFx)
+    val modifier = MScInternals.geoLockTimer
+      .set( Some( tp.timerId ) )
+
+    var timeoutFx: Effect = Effect( tp.fut )
+    for (currTimerId <- currTimerIdOpt) {
+      timeoutFx += _clearTimerFx(currTimerId)
+    }
+
+    (modifier, timeoutFx)
   }
 
   private def _inxSearchGeoMapInitLens = {
@@ -92,16 +108,6 @@ object TailAh {
       .composeLens( MScSearch.geo)
       .composeLens( MGeoTabS.mapInit )
   }
-
-  /** Дедубликация кода сборки линз от MScIndex до mapInit. */
-  private def withMapCenterInitReal(center: MGeoPoint, inx: MScIndex): MScIndex = {
-    _inxSearchGeoMapInitLens
-      .composeLens( MMapInitState.state )
-      .modify {
-        _.withCenterInitReal( center )
-      }(inx)
-  }
-
 
   /* Было: (geoIntoRcvr: Boolean, focusedAdId: Option[String] = None, retUserLoc: Boolean = false) */
   private def getIndexFx( switchCtx: MScSwitchCtx ): Effect = {
@@ -138,64 +144,104 @@ class TailAh[M](
       effectOnly(fx)
 
 
-    // js-роутер заливает в состояние данные из URL.
+    // SPA-роутер заливает в состояние данные из URL.
     case m: RouteTo =>
       val v0 = value
+
+      // Аккамулятор функций, обновляющих список модов, которые будут наложены на v0.
+      var modsAcc = List.empty[MScRoot => MScRoot]
+
+      // Возможно js-роутер ещё не готов, и нужно отложить полную обработку состояния:
+      val isJsRouterReady = v0.internals.jsRouter.jsRouter.isReady
+
+      // Надо ли повторно отрабатывать m после того, как js-роутер станет готов?
+      var jsRouterAwaitRoute = false
+
+      // Текущее значение MainScreen:
       val currMainScreen = TailAh.getMainScreenSnapShot(v0)
 
       // Считаем, что js-роутер уже готов. Если нет, то это сообщение должно было быть перехвачено в JsRouterInitAh.
-
-      var gridNeedsReload = false
-      val indexRespTotallyEmpty = v0.index.resp.isTotallyEmpty
-      var nodeIndexNeedsReload = indexRespTotallyEmpty
+      var isToReloadIndex = isJsRouterReady && v0.index.resp.isTotallyEmpty
       var needUpdateUi = false
 
-      var inx = v0.index
+      var isGeoLocRunning = v0.internals.geoLockTimer.nonEmpty
 
+      var isGridNeedsReload = false
+
+      // Аккамулятор результирующих эффектов:
       var fxsAcc = List.empty[Effect]
-
-      // Проверка id узла. Если отличается, то надо перезаписать.
-      if (m.mainScreen.nodeId !=* currMainScreen.nodeId) {
-        nodeIndexNeedsReload = true
-        needUpdateUi = true
-      }
 
       // Проверка поля generation
       for {
         generation2 <- m.mainScreen.generation
-        if !currMainScreen.generation.contains( generation2 )
+        if !(currMainScreen.generation contains generation2)
       } {
+        modsAcc ::= MScRoot.index
+          .composeLens(MScIndex.state)
+          .composeLens(MScIndexState.generation)
+          .set(generation2)
         // generation не совпадает. Надо будет перезагрузить плитку.
-        gridNeedsReload = true
-        inx = (MScIndex.state composeLens MScIndexState.generation)
-          .set(generation2)(inx)
+        if (isJsRouterReady) {
+          val adsPot = v0.grid.core.ads
+          if (adsPot.isPending || adsPot.exists(_.nonEmpty))
+            isGridNeedsReload = true
+        } else {
+          jsRouterAwaitRoute = true
+        }
       }
 
       // Проверка поля searchOpened
-      if (m.mainScreen.searchOpened !=* currMainScreen.searchOpened) {
-        // Вместо патчинга состояния имитируем клик: это чтобы возможные сайд-эффекты обычного клика тоже отработали.
+      if (m.mainScreen.searchOpened !=* currMainScreen.searchOpened)
         fxsAcc ::= SideBarOpenClose(MScSideBars.Search, m.mainScreen.searchOpened).toEffectPure
+
+      // Проверка id нового узла.
+      if (m.mainScreen.nodeId !=* currMainScreen.nodeId) {
+        if (isJsRouterReady) {
+          isToReloadIndex = true
+          needUpdateUi = true
+          // nodeId будет передан через экшен.
+        } else {
+          jsRouterAwaitRoute = true
+        }
       }
 
       // Смотрим координаты текущей точки.
-      for {
-        currGeoPoint <- m.mainScreen.locEnv
-        if !(currMainScreen.locEnv contains currGeoPoint)
-      } {
-        needUpdateUi = true
-        inx = TailAh.withMapCenterInitReal(currGeoPoint, inx)
+      if (
+        // Если состояние гео-точки хоть немного изменилось:
+        !(
+          (m.mainScreen.locEnv.isEmpty && currMainScreen.locEnv.isEmpty) ||
+          m.mainScreen.locEnv.exists { mgp2 =>
+            currMainScreen.locEnv.exists { mgp0 =>
+              mgp0 ~= mgp2
+            }
+          }
+        )
+      ) {
+        if (isJsRouterReady) {
+          needUpdateUi = true
+          for (nextGeoPoint <- m.mainScreen.locEnv) {
+            modsAcc ::= MScRoot.index
+              .composeLens( TailAh._inxSearchGeoMapInitLens )
+              .composeLens( MMapInitState.state )
+              .modify {
+                _.withCenterInitReal( nextGeoPoint )
+              }
+          }
+        } else {
+          jsRouterAwaitRoute = true
+        }
       }
 
       // Смотрим текущий выделенный тег
       for {
         tagNodeId <- m.mainScreen.tagNodeId
-        if !currMainScreen.tagNodeId.contains( tagNodeId )
+        if !(currMainScreen.tagNodeId contains tagNodeId)
       } {
         // Имитируем клик по тегу, да и всё.
-        fxsAcc ::= {
-          NodeRowClick( tagNodeId )
-            .toEffectPure
-        }
+        if (isJsRouterReady)
+          fxsAcc ::= NodeRowClick( tagNodeId ).toEffectPure
+        else
+          jsRouterAwaitRoute = true
       }
 
       // Сверить панель меню открыта или закрыта
@@ -205,62 +251,87 @@ class TailAh[M](
       // Сверить focused ad id:
       if (
         m.mainScreen.focusedAdId !=* currMainScreen.focusedAdId &&
-        !nodeIndexNeedsReload
+        !isToReloadIndex
       ) {
-        for {
-          focusedAdId <- m.mainScreen.focusedAdId
-            .orElse( currMainScreen.focusedAdId )
-        } {
-          fxsAcc ::= GridBlockClick(nodeId = focusedAdId).toEffectPure
+        if (isJsRouterReady) {
+          for {
+            focusedAdId <- m.mainScreen.focusedAdId orElse currMainScreen.focusedAdId
+          } {
+            fxsAcc ::= GridBlockClick(nodeId = focusedAdId).toEffectPure
+          }
+        } else {
+          jsRouterAwaitRoute = true
         }
       }
 
+      // Если нет гео-точки и нет nodeId, то требуется активировать геолокацию:
+      if (m.mainScreen.needGeoLoc) {
+        // Если геолокация ещё не запущена, то запустить:
+        if (v0.dev.platform.hasGeoLoc && !(v0.dev.geoLoc.switch.onOff contains true) && !isGeoLocRunning) {
+          fxsAcc ::= GeoLocOnOff(enabled = true, isHard = false).toEffectPure
+          isGeoLocRunning = true
+        }
+
+        // Если bluetooth не запущен - запустить в добавок к геолокации:
+        if (v0.dev.platform.hasBle && !(v0.dev.beaconer.isEnabled contains true))
+          fxsAcc ::= BtOnOff(isEnabled = true, hard = false).toEffectPure
+
+        // Если таймер геолокации не запущен, то запустить:
+        if (v0.internals.geoLockTimer.isEmpty) {
+          val switchCtx = MScSwitchCtx(
+            indexQsArgs = MScIndexArgs(
+              withWelcome = true,
+              geoIntoRcvr = true,
+              retUserLoc  = true,
+            )
+          )
+          val (viMod, fx) = TailAh.mkGeoLocTimer( switchCtx, v0.internals.geoLockTimer )
+          modsAcc ::= MScRoot.internals.modify(viMod)
+          fxsAcc ::= fx
+        }
+      }
+
+      // Запихнуть в состояние текущий экшен для запуска позднее, если требуется:
+      for {
+        awaitRouteOpt <- {
+          // Выставить роуту
+          if (jsRouterAwaitRoute)
+            Some(Some(m))
+          // Сбросить ранее выставленную роуту
+          else if (v0.internals.jsRouter.delayedRouteTo.nonEmpty)
+            Some(None)
+          // Ничего менять в состоянии delayed-роуты не надо
+          else None
+        }
+      } {
+        modsAcc ::= MScRoot.internals
+          .composeLens( MScInternals.jsRouter )
+          .composeLens( MJsRouterS.delayedRouteTo )
+          .set( awaitRouteOpt )
+      }
+
       // Обновлённое состояние, которое может быть и не обновлялось:
-      lazy val v2 = if (inx ===* v0.index) v0
-                    else v0.withIndex( inx )
+      val v2Opt = modsAcc.reduceOption(_ andThen _).map(_(v0))
 
       // Принять решение о перезагрузке выдачи, если необходимо.
-      if (v0.internals.geoLockTimer.nonEmpty) {
-        // Блокирование загрузки.
-        val fxOpt = fxsAcc.mergeEffects
-        ah.updatedSilentMaybeEffect(v2, fxOpt)
-
-      } else if (nodeIndexNeedsReload) {
+      if (isToReloadIndex && !isGeoLocRunning) {
         // Целиковая перезагрузка выдачи.
         val switchCtx = MScSwitchCtx(
           indexQsArgs = MScIndexArgs(
             geoIntoRcvr = false,
-            retUserLoc  = v2.index.search.geo.mapInit.userLoc.isEmpty,
+            retUserLoc  = v0.index.search.geo.mapInit.userLoc.isEmpty,
             withWelcome = true,
             nodeId      = m.mainScreen.nodeId,
           ),
           focusedAdId = m.mainScreen.focusedAdId,
         )
         fxsAcc ::= TailAh.getIndexFx( switchCtx )
-        val fx = fxsAcc.mergeEffects.get
-        ah.updateMaybeSilentFx(needUpdateUi)(v2, fx)
-
-      } else if (gridNeedsReload) {
+      } else if (isGridNeedsReload)  {
         // Узел не требует обновления, но требуется перезагрузка плитки.
         fxsAcc ::= GridLoadAds( clean = true, ignorePending = true ).toEffectPure
-        val fx = fxsAcc.mergeEffects.get
-        ah.updateMaybeSilentFx(needUpdateUi)(v2, fx)
-
-      } else if (needUpdateUi) {
-        // Изменения на уровне интерфейса.
-        val fxOpt = fxsAcc.mergeEffects
-        ah.updatedMaybeEffect( v2, fxOpt )
-
-      } else if (fxsAcc.nonEmpty) {
-        // Ничего не изменилось или только эффекты.
-        val fxOpt = fxsAcc.mergeEffects
-        ah.maybeEffectOnly( fxOpt )
-
-      } else {
-        // Роутер шлёт RouteTo на каждый чих, даже просто в ответ на выставление этой самой роуты.
-        // TODO надо как-то отучить роутер от этой привычки.
-        noChange
       }
+
+      ah.optionalResult(v2Opt, fxsAcc.mergeEffects, silent = needUpdateUi)
 
 
     // Сигнал наступления геолокации (или ошибки геолокации).
@@ -297,8 +368,11 @@ class TailAh[M](
           }
           val fxs = TailAh.getIndexFx( switchCtx )
           DomQuick.clearTimeout(geoLockTimerId)
-          val v22 = TailAh._removeTimer(v00)
-          updatedSilent(v22, fxs)
+          val (v22, fxs2) = TailAh._removeTimer(v00)
+            .fold( (v00, fxs) ) { case (alterF, ctFx) =>
+              alterF(v00) -> (fxs + ctFx)
+            }
+          updatedSilent(v22, fxs2)
         }
 
         m.origOpt
@@ -341,20 +415,26 @@ class TailAh[M](
       val v0 = value
       v0.internals.geoLockTimer.fold(noChange) { _ =>
         // Удалить из состояния таймер геолокации, запустить выдачу.
+        var fxsAcc = List.empty[Effect]
         val v2 = TailAh._removeTimer(v0)
+          .fold(v0) { case (alterF, ctFx) =>
+            fxsAcc ::= ctFx
+            alterF( v0 )
+          }
+
         // Если demandLocTest, то и остановиться на этой ошибке:
-        val fxOpt = OptionUtil.maybe( !m.switchCtx.demandLocTest ) {
-          TailAh.getIndexFx( m.switchCtx )
-        }
-        ah.updatedSilentMaybeEffect(v2, fxOpt)
+        if (!m.switchCtx.demandLocTest)
+          fxsAcc ::= TailAh.getIndexFx( m.switchCtx )
+
+        ah.updatedSilentMaybeEffect(v2, fxsAcc.mergeEffects)
       }
 
 
     // Рукопашный запуск таймера геолокации.
     case m: GeoLocTimerStart =>
       val v0 = value
-      val (vi2, fx) = TailAh.mkGeoLocTimer( m.switchCtx, v0.internals )
-      val v2 = v0.withInternals( vi2 )
+      val (viMod, fx) = TailAh.mkGeoLocTimer( m.switchCtx, v0.internals.geoLockTimer )
+      val v2 = MScRoot.internals.modify(viMod)(v0)
       updated(v2, fx)
 
 
@@ -376,10 +456,10 @@ class TailAh[M](
                           )
 
       // Надо сначала проверить timestamp, если он задан.
+      val rhPotOpt = respHandler.getPot(rhCtx0)
       val isActualResp = m.reqTimeStamp.fold(true) { reqTimeStamp =>
         // Найти среди pot'ов состояния соответствие timestamp'у.
-        respHandler
-          .getPot(rhCtx0)
+        rhPotOpt
           .exists(_ isPendingWithStartTime reqTimeStamp)
       }
 
@@ -388,7 +468,7 @@ class TailAh[M](
         .cond(
           isActualResp,
           left = {
-            LOG.log(WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m)
+            LOG.log(WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (respHandler.getClass.getSimpleName, rhPotOpt.flatMap(_.pendingOpt).map(_.startTime), m.reqTimeStamp) )
             noChange
           },
           right = None

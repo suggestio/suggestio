@@ -42,7 +42,7 @@ object MSc3IndexResp {
     (a.nodeId ==* b.nodeId) &&
     (a.geoPoint ==* b.geoPoint) &&
     (a.name ==* b.name) &&
-    (a.colors ==* b.colors)
+    (a.colors ==* b.colors) &&
     (a.logoOpt ==* b.logoOpt)
   }
 

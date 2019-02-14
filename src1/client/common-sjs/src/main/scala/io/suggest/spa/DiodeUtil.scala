@@ -97,24 +97,14 @@ object DiodeUtil {
       def updatedFrom( actResOpt: Option[ActionResult[T]]): ActionResult[M] =
         actResOpt.fold( ah.noChange )( updatedFrom )
 
-      def optionalResult(v2Opt: Option[T] = None, fxOpt: Option[Effect] = None): ActionResult[M] = {
+      def optionalResult(v2Opt: Option[T] = None, fxOpt: Option[Effect] = None, silent: Boolean = false): ActionResult[M] = {
         (v2Opt, fxOpt) match {
-          case (Some(v2), Some(fx)) => ah.updated(v2, fx)
-          case (Some(v2), None)     => ah.updated(v2)
+          case (Some(v2), Some(fx)) => if (silent) ah.updatedSilent(v2, fx) else ah.updated(v2, fx)
+          case (Some(v2), None)     => if (silent) ah.updatedSilent(v2) else ah.updated(v2)
           case (None, Some(fx))     => ah.effectOnly(fx)
           case (None, None)         => ah.noChange
         }
       }
-
-      def optionalSilentResult(v2Opt: Option[T] = None, fxOpt: Option[Effect] = None): ActionResult[M] = {
-        (v2Opt, fxOpt) match {
-          case (Some(v2), Some(fx)) => ah.updatedSilent(v2, fx)
-          case (Some(v2), None)     => ah.updatedSilent(v2)
-          case (None, Some(fx))     => ah.effectOnly(fx)
-          case (None, None)         => ah.noChange
-        }
-      }
-
 
       def maybeUpdated(v2Opt: Option[T]): ActionResult[M] =
         v2Opt.fold( ah.noChange )( ah.updated(_) )

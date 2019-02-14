@@ -28,7 +28,7 @@ object MJsRouterS {
   }
 
   val jsRouter = GenLens[MJsRouterS](_.jsRouter)
-  val actionsAccRev = GenLens[MJsRouterS](_.delayedRouteTo)
+  val delayedRouteTo = GenLens[MJsRouterS](_.delayedRouteTo)
 
 }
 
@@ -36,7 +36,8 @@ object MJsRouterS {
 /** Контейнер состояния js-роутера.
   *
   * @param jsRouter Состояние js-роутера.
-  * @param delayedRouteTo Акк экшенов, которые нужно подождать до получения js-роутера.
+  * @param delayedRouteTo Возможно, что RouteTo пришла до готовности js-роутера к обработке запросов,
+  *                       поэтому TailAh пришлось частично отложить экшен до готовности js-роутера.
   */
 case class MJsRouterS(
                        jsRouter         : Pot[ScJsRoutes.type]    = Pot.empty,

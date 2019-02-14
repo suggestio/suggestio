@@ -3,6 +3,7 @@ package io.suggest.sc.m.boot
 import diode.FastEq
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -25,6 +26,9 @@ object MScBoot {
 
   @inline implicit def univEq: UnivEq[MScBoot] = UnivEq.derive[MScBoot]
 
+  val services = GenLens[MScBoot](_.services)
+  val targets  = GenLens[MScBoot](_.targets)
+
 }
 
 
@@ -36,10 +40,5 @@ object MScBoot {
 case class MScBoot(
                     services          : Map[MBootServiceId, MBootServiceState]    = Map.empty,
                     targets           : Set[MBootServiceId]                       = Set.empty,
-                  ) {
-
-  def withServices( services: Map[MBootServiceId, MBootServiceState] ) = copy(services = services)
-  def withTargets( targets: Set[MBootServiceId] ) = copy(targets = targets)
-
-}
+                  )
 

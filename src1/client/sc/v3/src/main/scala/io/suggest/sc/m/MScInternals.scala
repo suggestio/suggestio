@@ -19,8 +19,8 @@ object MScInternals {
 
   implicit object MScInternalsFastEq extends FastEq[MScInternals] {
     override def eqv(a: MScInternals, b: MScInternals): Boolean = {
-      (a.jsRouter ===* b.jsRouter) &&
       (a.geoLockTimer ===* b.geoLockTimer) &&
+      (a.jsRouter ===* b.jsRouter) &&
       (a.boot ===* b.boot) &&
       (a.conf ===* b.conf)
     }
@@ -28,17 +28,17 @@ object MScInternals {
 
   @inline implicit def univEq: UnivEq[MScInternals] = UnivEq.force
 
-  val conf      = GenLens[MScInternals](_.conf)
-  val jsRouter  = GenLens[MScInternals](_.jsRouter)
-
-  val boot      = GenLens[MScInternals](_.boot)
+  val conf          = GenLens[MScInternals](_.conf)
+  val jsRouter      = GenLens[MScInternals](_.jsRouter)
+  val geoLockTimer  = GenLens[MScInternals](_.geoLockTimer)
+  val boot          = GenLens[MScInternals](_.boot)
 
 }
 
 
 /** Класс-контейнер модели внутренних состояний.
   *
-  * @param jsRouter Состояния js-роутера, который инициализируется асинхронно при загрузке выдачи.
+  * @param routing Состояния js-роутера, который инициализируется асинхронно при загрузке выдачи.
   * @param geoLockTimer Сейчас происходит ожидание геолокации, это блокирует переключение выдачи (TailAh)
   */
 case class MScInternals(
@@ -46,11 +46,4 @@ case class MScInternals(
                          jsRouter       : MJsRouterS          = MJsRouterS.empty,
                          geoLockTimer   : Option[Int]         = None,
                          boot           : MScBoot             = MScBoot.default,
-                       ) {
-
-  def withConf(conf: MSc3Conf) = copy(conf = conf)
-  def withJsRouter(jsRouter: MJsRouterS)    = copy(jsRouter = jsRouter)
-  def withGeoLockTimer(geoLockTimer: Option[Int])   = copy(geoLockTimer = geoLockTimer)
-  def withBoot(boot: MScBoot) = copy(boot = boot)
-
-}
+                       )

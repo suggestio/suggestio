@@ -10,6 +10,8 @@ import diode.{Circuit, FastEq, ModelRO, ModelRW}
   */
 object CircuitUtil {
 
+  // TODO Надо как-то заменить FastEq[T] на FastEq[_ <: T].
+
   /** Сборка ModelRW на основе родителькой модели и Lens поля.
     *
     * @param modelRW Исходная RW-модель.

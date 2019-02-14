@@ -401,9 +401,7 @@ class BootAh[M](
       val v0 = value
 
       // Нужно залить в состояние список запрошенных целей, которые ещё не запущены:
-      val v1 = v0.withTargets(
-        v0.targets ++ m.svcIds
-      )
+      val v1 = MScBoot.targets.modify(_ ++ m.svcIds)(v0)
       _processStartState( v1, m.svcIds )
 
 

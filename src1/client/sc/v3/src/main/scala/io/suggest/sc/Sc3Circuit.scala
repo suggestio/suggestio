@@ -37,7 +37,6 @@ import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.dia.MScDialogs
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
-import io.suggest.sc.m.jsrr.MJsRouterS.MJsRouterSFastEq
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
 import io.suggest.sc.sc3.{MSc3Conf, MScCommonQs, MScQs, Sc3Pages}
@@ -47,7 +46,7 @@ import io.suggest.sc.v.search.SearchCss
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom.DomQuick
-import io.suggest.spa.{DoNothingActionProcessor, OptFastEq}
+import io.suggest.spa.{DoNothingActionProcessor, FastEqUtil, OptFastEq}
 import io.suggest.spa.CircuitUtil._
 import japgolly.scalajs.react.extra.router.RouterCtl
 
@@ -108,20 +107,6 @@ class Sc3Circuit(
       unsafeOffsets = JsScreenUtil.getScreenUnsafeAreas(mscreen)
     )
 
-    /*
-    val screenInfo = {
-      // TODO задетектить unsafeOffsets
-      val some20 = Some(20)
-      MScreenInfo(
-        screen = mscreen,
-        unsafeOffsets = io.suggest.dev.MTlbr(
-          topO = some20,
-          leftO = some20
-        )
-      )
-    }
-    */
-
     val scIndexResp = Pot.empty[MSc3IndexResp]
 
     MScRoot(
@@ -171,7 +156,6 @@ class Sc3Circuit(
   private[sc] val rootRW          = zoomRW(identity) { (_, new2) => new2 } ( MScRootFastEq )
 
   private[sc] val internalsRW     = mkLensRootZoomRW(this, MScRoot.internals)( MScInternalsFastEq )
-  private[sc] val jsRouterRW      = mkLensZoomRW( internalsRW, MScInternals.jsRouter )( MJsRouterSFastEq )
 
   private[sc] val indexRW         = mkLensRootZoomRW(this, MScRoot.index)(MScIndexFastEq)
   private[sc] val titleOptRO      = indexRW.zoom( _.resp.toOption.flatMap(_.name) )( OptFastEq.Plain )
@@ -205,6 +189,7 @@ class Sc3Circuit(
   private[sc] val firstRunDiaRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( OptFastEq.Wrapped(MWzFirstOuterSFastEq) )
 
   private[sc] val bootRW          = mkLensZoomRW(internalsRW, MScInternals.boot)( MScBootFastEq )
+  private[sc] val jsRouterRW      = mkLensZoomRW(internalsRW, MScInternals.jsRouter )( FastEqUtil.AnyRefFastEq )
 
 
   private[sc] def getLocEnv(mroot: MScRoot = rootRW.value, currRcvrId: Option[_] = None): MLocEnv = {
@@ -397,7 +382,7 @@ class Sc3Circuit(
     //if ( !jsRouterRW.value.isReady ) {
       acc ::= new JsRouterInitAh(
         circuit = circuit,
-        modelRW = internalsRW
+        modelRW = jsRouterRW
       )
     //}
 
