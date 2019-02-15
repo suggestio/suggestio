@@ -36,6 +36,7 @@ import io.suggest.sc.m.boot.{Boot, MBootServiceIds}
 import io.suggest.sc.m.dev.{MScDev, MScScreenS}
 import io.suggest.sc.m.dia.MScDialogs
 import io.suggest.sc.m.grid.{GridLoadAds, MGridCoreS, MGridS}
+import io.suggest.sc.m.in.MScInternals
 import io.suggest.sc.m.inx.{MScIndex, MScSwitchCtx}
 import io.suggest.sc.m.search.MGeoTabS.MGeoTabSFastEq
 import io.suggest.sc.m.search._
@@ -70,7 +71,7 @@ class Sc3Circuit(
 { circuit =>
 
   import MScIndex.MScIndexFastEq
-  import m.MScInternals.MScInternalsFastEq
+  import m.in.MScInternals.MScInternalsFastEq
   import MGridS.MGridSFastEq
   import MScDev.MScDevFastEq
   import MScScreenS.MScScreenSFastEq
@@ -186,7 +187,7 @@ class Sc3Circuit(
   private[sc] val beaconerRW      = mkLensZoomRW(devRW, MScDev.beaconer)( MBeaconerSFastEq )
 
   private[sc] val dialogsRW       = mkLensRootZoomRW(this, MScRoot.dialogs )( MScDialogsFastEq )
-  private[sc] val firstRunDiaRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( OptFastEq.Wrapped(MWzFirstOuterSFastEq) )
+  private[sc] val firstRunDiaRW   = mkLensZoomRW(dialogsRW, MScDialogs.first)( MWzFirstOuterSFastEq )
 
   private[sc] val bootRW          = mkLensZoomRW(internalsRW, MScInternals.boot)( MScBootFastEq )
   private[sc] val jsRouterRW      = mkLensZoomRW(internalsRW, MScInternals.jsRouter )( FastEqUtil.AnyRefFastEq )
@@ -430,7 +431,7 @@ class Sc3Circuit(
     // Немедленный запуск инициализации/загрузки
     Try {
       dispatch(
-        Boot( MBootServiceIds.RcvrsMap :: Nil )
+        Boot( MBootServiceIds.RcvrsMap :: MBootServiceIds.GeoLocDataAcc :: Nil )
       )
     }
 

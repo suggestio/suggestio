@@ -15,7 +15,8 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.common.coll.Lists.Implicits.OptionListExtOps
 import io.suggest.sc.index.MScIndexArgs
-import io.suggest.sc.m.jsrr.MJsRouterS
+import io.suggest.sc.m.dia.InitFirstRunWz
+import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
 import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sjs.dom.DomQuick
 import japgolly.univeq._
@@ -62,15 +63,17 @@ object TailAh {
         adNodeId <- scAdData.nodeId
       } yield {
         adNodeId
-      }
+      },
+      firstRunOpen = v0.dialogs.first.view.nonEmpty,
     )
   }
 
 
   private def _removeTimer(v0: MScRoot) = {
-    for (gltId <- v0.internals.geoLockTimer) yield {
+    for (gltId <- v0.internals.info.geoLockTimer) yield {
       val alterF = MScRoot.internals
-        .composeLens( MScInternals.geoLockTimer )
+        .composeLens( MScInternals.info )
+        .composeLens( MInternalInfo.geoLockTimer )
         .set(None)
       val fx = _clearTimerFx( gltId )
       (alterF, fx)
@@ -92,7 +95,8 @@ object TailAh {
     */
   def mkGeoLocTimer(switchCtx: MScSwitchCtx, currTimerIdOpt: Option[Int]): (MScInternals => MScInternals, Effect) = {
     val tp = DomQuick.timeoutPromiseT( ScConstants.ScGeo.INIT_GEO_LOC_TIMEOUT_MS )( GeoLocTimeOut(switchCtx) )
-    val modifier = MScInternals.geoLockTimer
+    val modifier = MScInternals.info
+      .composeLens(MInternalInfo.geoLockTimer)
       .set( Some( tp.timerId ) )
 
     var timeoutFx: Effect = Effect( tp.fut )
@@ -115,6 +119,12 @@ object TailAh {
       .toEffectPure
   }
 
+  private def _currRoute = {
+    MScRoot.internals
+      .composeLens( MScInternals.info )
+      .composeLens( MInternalInfo.currRoute )
+  }
+
 }
 
 
@@ -133,7 +143,8 @@ class TailAh[M](
 
     // Заставить роутер собрать новую ссылку.
     case ResetUrlRoute =>
-      val m = TailAh.getMainScreenSnapShot( value )
+      val v0 = value
+      val m = TailAh.getMainScreenSnapShot( v0 )
       // Уведомить в фоне роутер, заодно разблокировав интерфейс.
       val fx = Effect {
         routerCtl
@@ -141,11 +152,21 @@ class TailAh[M](
           .toFuture
           .map(_ => DoNothing)
       }
-      effectOnly(fx)
+      val currRouteLens = TailAh._currRoute
+      val m0 = currRouteLens.get( v0 )
+      if ( m0 contains m ) {
+        // TODO Может вообще тут делать ничего не надо?
+        effectOnly(fx)
+      } else {
+        val v2 = currRouteLens.set( Some(m) )( v0 )
+        updatedSilent(v2, fx)
+      }
 
 
     // SPA-роутер заливает в состояние данные из URL.
     case m: RouteTo =>
+      //println(m)
+      // TODO Возможно, этот код управления должен жить прямо в роутере?
       val v0 = value
 
       // Аккамулятор функций, обновляющих список модов, которые будут наложены на v0.
@@ -161,15 +182,20 @@ class TailAh[M](
       val currMainScreen = TailAh.getMainScreenSnapShot(v0)
 
       // Считаем, что js-роутер уже готов. Если нет, то это сообщение должно было быть перехвачено в JsRouterInitAh.
-      var isToReloadIndex = isJsRouterReady && v0.index.resp.isTotallyEmpty
+      var isToReloadIndex = isJsRouterReady && v0.index.resp.isTotallyEmpty && v0.internals.boot.wzFirstDone.contains(true)
       var needUpdateUi = false
 
-      var isGeoLocRunning = v0.internals.geoLockTimer.nonEmpty
+      var isGeoLocRunning = v0.internals.info.geoLockTimer.nonEmpty
 
       var isGridNeedsReload = false
 
       // Аккамулятор результирующих эффектов:
       var fxsAcc = List.empty[Effect]
+
+      // Сохранить присланную роуту в состояние, если роута изменилась:
+      val currRouteLens = TailAh._currRoute
+      if ( !(currRouteLens.get(v0) contains m) )
+        modsAcc ::= currRouteLens.set( Some(m.mainScreen) )
 
       // Проверка поля generation
       for {
@@ -265,7 +291,8 @@ class TailAh[M](
       }
 
       // Если нет гео-точки и нет nodeId, то требуется активировать геолокацию:
-      if (m.mainScreen.needGeoLoc) {
+      if (m.mainScreen.needGeoLoc && !v0.index.isFirstRun) {
+        //println("TailAh.RouteTo: need GEO LOC")
         // Если геолокация ещё не запущена, то запустить:
         if (v0.dev.platform.hasGeoLoc && !(v0.dev.geoLoc.switch.onOff contains true) && !isGeoLocRunning) {
           fxsAcc ::= GeoLocOnOff(enabled = true, isHard = false).toEffectPure
@@ -277,15 +304,15 @@ class TailAh[M](
           fxsAcc ::= BtOnOff(isEnabled = true, hard = false).toEffectPure
 
         // Если таймер геолокации не запущен, то запустить:
-        if (v0.internals.geoLockTimer.isEmpty) {
+        if (v0.internals.info.geoLockTimer.isEmpty) {
           val switchCtx = MScSwitchCtx(
             indexQsArgs = MScIndexArgs(
               withWelcome = true,
               geoIntoRcvr = true,
-              retUserLoc  = true,
+              retUserLoc  = false,
             )
           )
-          val (viMod, fx) = TailAh.mkGeoLocTimer( switchCtx, v0.internals.geoLockTimer )
+          val (viMod, fx) = TailAh.mkGeoLocTimer( switchCtx, v0.internals.info.geoLockTimer )
           modsAcc ::= MScRoot.internals.modify(viMod)
           fxsAcc ::= fx
         }
@@ -310,11 +337,20 @@ class TailAh[M](
           .set( awaitRouteOpt )
       }
 
+      // Диалог first-run открыт?
+      if (currMainScreen.firstRunOpen !=* m.mainScreen.firstRunOpen) {
+        // Запустить экшен управления диалогом.
+        fxsAcc ::= Effect.action(
+          InitFirstRunWz( currMainScreen.firstRunOpen )
+        )
+      }
+
       // Обновлённое состояние, которое может быть и не обновлялось:
       val v2Opt = modsAcc.reduceOption(_ andThen _).map(_(v0))
 
       // Принять решение о перезагрузке выдачи, если необходимо.
       if (isToReloadIndex && !isGeoLocRunning) {
+        //println( "reload index" )
         // Целиковая перезагрузка выдачи.
         val switchCtx = MScSwitchCtx(
           indexQsArgs = MScIndexArgs(
@@ -339,7 +375,7 @@ class TailAh[M](
       val v0 = value
 
       // Сейчас ожидаем максимально точных координат?
-      v0.internals.geoLockTimer.fold {
+      v0.internals.info.geoLockTimer.fold {
         // Сейчас не ожидаются координаты. Просто сохранить координаты в состояние карты.
         m.origOpt
           .flatMap(_.locationOpt)
@@ -413,7 +449,7 @@ class TailAh[M](
     // Наступил таймаут ожидания геолокации. Нужно активировать инициализацию в имеющемся состоянии
     case m: GeoLocTimeOut =>
       val v0 = value
-      v0.internals.geoLockTimer.fold(noChange) { _ =>
+      v0.internals.info.geoLockTimer.fold(noChange) { _ =>
         // Удалить из состояния таймер геолокации, запустить выдачу.
         var fxsAcc = List.empty[Effect]
         val v2 = TailAh._removeTimer(v0)
@@ -433,7 +469,7 @@ class TailAh[M](
     // Рукопашный запуск таймера геолокации.
     case m: GeoLocTimerStart =>
       val v0 = value
-      val (viMod, fx) = TailAh.mkGeoLocTimer( m.switchCtx, v0.internals.geoLockTimer )
+      val (viMod, fx) = TailAh.mkGeoLocTimer( m.switchCtx, v0.internals.info.geoLockTimer )
       val v2 = MScRoot.internals.modify(viMod)(v0)
       updated(v2, fx)
 

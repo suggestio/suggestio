@@ -522,9 +522,9 @@ class ScRootR (
         }( OptFastEq.Plain ),
 
         firstRunWzC = propsProxy.connect { mroot =>
-          for (firstOuter <- mroot.dialogs.first) yield {
+          for (firstV <- mroot.dialogs.first.view) yield {
             wzFirstR.PropsVal(
-              first      = firstOuter.view,
+              first      = firstV,
               fullScreen = mroot.dev.screen.info.isDialogWndFullScreen
             )
           }

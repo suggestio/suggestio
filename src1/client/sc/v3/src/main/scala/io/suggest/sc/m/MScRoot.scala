@@ -5,6 +5,7 @@ import io.suggest.geo.{MGeoLoc, MLocEnv}
 import io.suggest.sc.m.dev.MScDev
 import io.suggest.sc.m.dia.MScDialogs
 import io.suggest.sc.m.grid.MGridS
+import io.suggest.sc.m.in.MScInternals
 import io.suggest.sc.m.inx.MScIndex
 import io.suggest.sc.sc3.MSc3Init
 import io.suggest.sc.styl.MScCssArgs

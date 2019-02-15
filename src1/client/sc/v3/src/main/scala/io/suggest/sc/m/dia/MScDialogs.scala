@@ -10,7 +10,8 @@ import monocle.macros.GenLens
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 18.01.19 12:14
-  * Description: Контейнер данных диалогов
+  * Description: Контейнер данных диалогов.
+  * Неявно-пустая модель.
   */
 object MScDialogs {
 
@@ -34,9 +35,9 @@ object MScDialogs {
   * @param first Диалог первого запуска, когда открыт.
   */
 case class MScDialogs(
-                       first      : Option[MWzFirstOuterS]      = None
+                       first      : MWzFirstOuterS      = MWzFirstOuterS.empty
                      ) {
 
-  def withFirst(first: Option[MWzFirstOuterS]) = copy(first = first)
+  def withFirst(first: MWzFirstOuterS) = copy(first = first)
 
 }

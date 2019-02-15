@@ -25,23 +25,8 @@ object MBootServiceIds extends Enum[MBootServiceId] {
   /** Инициализации карты ресиверов. */
   case object RcvrsMap extends MBootServiceId
 
-
-  /** Запуск геолокации. */
-  case object Gps extends MBootServiceId
-
-  /** Запуск bluetooth. */
-  case object BlueToothBeaconing extends MBootServiceId
-
-
-  /** Мастер первого запуска открыт, и юзер пока отвечает на вопросы. */
-  case object FirstRunWizard extends MBootServiceId
-
   /** Сбор данных детектирования геолокации. */
   case object GeoLocDataAcc extends MBootServiceId
-
-
-  /** Запущена выдача, управление передано в индекс выдачи. */
-  case object IndexGrid extends MBootServiceId
 
 
   override def values = findValues

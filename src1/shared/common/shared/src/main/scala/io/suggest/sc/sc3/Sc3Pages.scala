@@ -40,7 +40,8 @@ object Sc3Pages {
         (__ \ TAG_NODE_ID_FN).formatNullable[String] and
         (__ \ LOC_ENV_FN).formatNullable[MGeoPoint] and
         (__ \ GEO_SCR_OPENED_FN).formatNullable[Boolean].formatBooleanOrFalse and
-        (__ \ FOCUSED_AD_ID_FN).formatNullable[String]
+        (__ \ FOCUSED_AD_ID_FN).formatNullable[String] and
+        (__ \ FIRST_RUN_OPEN_FN).formatNullable[Boolean].formatBooleanOrFalse
       )(apply, unlift(unapply))
     }
 
@@ -55,6 +56,7 @@ object Sc3Pages {
                          locEnv         : Option[MGeoPoint]   = None,
                          menuOpened     : Boolean             = false,
                          focusedAdId    : Option[String]      = None,
+                         firstRunOpen   : Boolean             = false,
                        )
     extends Sc3Pages
   {

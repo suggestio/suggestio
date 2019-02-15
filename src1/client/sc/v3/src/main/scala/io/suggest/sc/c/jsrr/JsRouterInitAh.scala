@@ -2,7 +2,7 @@ package io.suggest.sc.c.jsrr
 
 import diode._
 import io.suggest.sc.m._
-import io.suggest.sc.m.jsrr.MJsRouterS
+import io.suggest.sc.m.in.MJsRouterS
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom.DomQuick

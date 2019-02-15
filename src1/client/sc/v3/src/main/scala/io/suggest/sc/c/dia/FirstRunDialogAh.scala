@@ -7,7 +7,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MPlatformS
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.perm.{CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
-import io.suggest.sc.m.GeoLocOnOff
+import io.suggest.sc.m.{GeoLocOnOff, ResetUrlRoute}
 import io.suggest.sc.m.dia.first._
 import io.suggest.sc.m.dia._
 import io.suggest.sjs.common.log.Log
@@ -36,7 +36,7 @@ import scala.concurrent.duration._
   */
 class FirstRunDialogAh[M](
                            platformRO       : ModelRO[MPlatformS],
-                           modelRW          : ModelRW[M, Option[MWzFirstOuterS]],
+                           modelRW          : ModelRW[M, MWzFirstOuterS],
                            dispatcher       : Dispatcher,
                          )
   extends ActionHandler( modelRW )
@@ -55,29 +55,27 @@ class FirstRunDialogAh[M](
                                      askPermF           : () => Future[IPermissionState]
                                    )
 
-  // Хелперы во избежание множественного инлайнинга одного и того же.
-  /** Быстрый доступ к v0.view.frame */
-  private def _viewFrameLens(frame: MWzFrame) = {
-    MWzFirstOuterS.view
-      .composeLens( MWzFirstS.frame )
-      .set(frame)
-  }
-
-
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Клик по кнопкам в диалоге.
     case m: YesNoWz =>
       //println( m )
-      val v0 = value
-      v0.fold(noChange) { first0 =>
+      val first0 = value
+      first0.view.fold(noChange) { view0 =>
+
+        // Быстрое выставление фрейма.
+        def _setFrame(frame: MWzFrame) = {
+          MWzFirstOuterS.view.set( Some(
+            MWzFirstS.frame.set(frame)(view0)
+          ))(first0)
+        }
 
         if (m.yesNo) {
           // Положительный ответ - запустить запрос разрешения.
-          first0.view.frame match {
+          view0.frame match {
             case MWzFrames.AskPerm =>
               // Положительный ответ - запросить доступ в реальности.
-              val accessFxOpt = _requestAccessFx( first0.view.phase )
+              val accessFxOpt = _requestAccessFx( view0.phase )
 
               accessFxOpt.fold {
                 // Нет фонового запроса доступа - нечего ожидать. Хотя этой ситуации быть не должно.
@@ -89,7 +87,7 @@ class FirstRunDialogAh[M](
                   // Если нет подписки, то InProgress + крутилку ожидания с коротким таймаутом в 1-2 секунды.
                   // Отказ юзера можно будет перехватить позже.
                   val inProgressTimeoutSec = first0.perms
-                    .get( first0.view.phase )
+                    .get( view0.phase )
                     .flatMap(_.toOption)
                     .filter(_.hasOnChangeApi)
                     .filter { permState =>
@@ -98,7 +96,7 @@ class FirstRunDialogAh[M](
                       val tryRes = Try(
                         permState.onChange { pss: IPermissionState =>
                           dispatcher.dispatch(
-                            WzPhasePermRes( first0.view.phase, Success(pss) )
+                            WzPhasePermRes( view0.phase, Success(pss) )
                           )
                         }
                       )
@@ -113,15 +111,13 @@ class FirstRunDialogAh[M](
 
                   DomQuick
                     .timeoutPromiseT( inProgressTimeoutSec.seconds.toMillis )(
-                      WzPhasePermRes(first0.view.phase, Failure(new NoSuchElementException))
+                      WzPhasePermRes(view0.phase, Failure(new NoSuchElementException))
                     )
                     .fut
                 }
 
                 // Переключить view в состояние ожидания.
-                val v2 = Some(
-                  _viewFrameLens( MWzFrames.InProgress )(first0)
-                )
+                val v2 = _setFrame( MWzFrames.InProgress )
 
                 val fxs = accessFx + inProgressTimeoutFx
                 updated( v2, fxs )
@@ -129,9 +125,7 @@ class FirstRunDialogAh[M](
 
             // yes в info-окне означает retry, по идее.
             case MWzFrames.Info =>
-              val v2 = Some(
-                _viewFrameLens( MWzFrames.AskPerm )(first0)
-              )
+              val v2 = _setFrame( MWzFrames.AskPerm )
               updated( v2 )
 
             // yes во время InProgress. Недопустимо, ожидание можно только отменить.
@@ -141,21 +135,17 @@ class FirstRunDialogAh[M](
           }
 
         } else {
-          first0.view.frame match {
+          view0.frame match {
             // Закрытие окошка с инфой - переход на след.фазу
             case MWzFrames.Info =>
               _wzGoToNextPhase( first0 )
             // Осознанный отказ в размещении - перейти в Info-фрейм текущей фазы
             case MWzFrames.AskPerm =>
-              val v2 = Some(
-                _viewFrameLens( MWzFrames.Info )(first0)
-              )
+              val v2 = _setFrame(MWzFrames.Info)
               updated(v2)
             // false во время InProgress - отмена ожидания. Надо назад перебросить, на Ask-шаг.
             case MWzFrames.InProgress =>
-              val v2 = Some(
-                _viewFrameLens( MWzFrames.AskPerm )(first0)
-              )
+              val v2 = _setFrame( MWzFrames.AskPerm )
               // Отменить ожидание результата пермишена для текущей фазы:
               // TODO Унести управление onChange за пределы YesNo-сигнала.
               val fx = _wzUnWatchPermChangesFx( first0 )
@@ -168,8 +158,9 @@ class FirstRunDialogAh[M](
 
     // Сигнал результата нативного диалога проверки прав или таймаута.
     case m: WzPhasePermRes =>
-      val v00 = value
-      v00.fold(noChange) { first00 =>
+      val first00 = value
+      first00.view.fold(noChange) { view00 =>
+
         // Сохранить в состояние полученный снапшот с данными.
         val first0: MWzFirstOuterS = m.res match {
           // Нет смысла заливать таймаут в состояние.
@@ -182,25 +173,31 @@ class FirstRunDialogAh[M](
               .modify( _.updated( m.phase, permState2 ) )(first00)
         }
 
+        def _setFrame(frame: MWzFrame) = {
+          MWzFirstOuterS.view.set( Some(
+            MWzFirstS.frame.set( MWzFrames.Info )(view00)
+          ))(first0)
+        }
+
         // Обновлённый инстанс полного состояния. Нужен НЕ во всех ветвях:
         def v1 =
           if (first0 ===* first00) first00
           else first0
 
         // Надо понять, сейчас текущая фаза или какая-то другая уже. Всякое бывает.
-        if (m.phase ==* first0.view.phase) {
+        if (m.phase ==* view00.phase) {
           val isGrantedOpt = m.res.toOption.map(_.isGranted)
 
           // Это текущая фаза.
-          first0.view.frame match {
+          view00.frame match {
 
             // Сейчас происходит ожидание ответа юзера в текущей фазе. Всё по плану. Но по плану ли ответ?
             case MWzFrames.InProgress =>
               if (isGrantedOpt contains false) {
                 // Юзер не разрешил. Вывести Info с сожалением.
-                val v2 = Some(
-                  _viewFrameLens( MWzFrames.Info )(first0)
-                )
+                val v2 = MWzFirstOuterS.view.set( Some(
+                  MWzFirstS.frame.set( MWzFrames.Info )(view00)
+                ))(first0)
                 updated(v2)
               } else {
                 // Положительный результат или отсутствие ответа. Просто перейти на следующую фазу:
@@ -217,7 +214,7 @@ class FirstRunDialogAh[M](
                 // Положительный ответ + Info => следующая фаза.
                 _wzGoToNextPhase( v1 )
               } else {
-                updatedSilent( Some(v1) )
+                updatedSilent( v1 )
               }
 
             // Ответ юзера наступил во время вопроса текущей фазы.
@@ -227,30 +224,26 @@ class FirstRunDialogAh[M](
               if (isGrantedOpt contains true) {
                 _wzGoToNextPhase( v1 )
               } else {
-                val v2 = Some(
-                  _viewFrameLens( MWzFrames.Info )(first0)
-                )
+                val v2 = _setFrame( MWzFrames.Info )
                 updated(v2)
               }
 
           }
 
-        } else if (first0.view.phase ==* MWzPhases.Starting) {
+        } else if (view00.phase ==* MWzPhases.Starting) {
           // TODO Чтобы объеденить экшен с PermissionState, надо тут разрулить фазу Starting.
           // Надо показать на экране текущий диалог в разном состоянии.
           val hasPending = first0.perms.exists(_._2.isPending)
           if (hasPending) {
             // Есть ещё pending в задачах. Просто убедиться, что диалог ожидания виден, оставаясь в Starting/InProgress.
-            if (first0.view.visible) {
+            if (view00.visible) {
               // Диалог уже отображается, и ещё остались pending-задачи. Просто обнов
-              updatedSilent( Some(v1) )
+              updatedSilent( v1 )
             } else {
               // Ещё есть pending-задачи, но диалог скрыт. Показать диалог на экране, оставаясь в Starting-фазе:
-              val v2 = Some(
-                MWzFirstOuterS.view
-                  .composeLens( MWzFirstS.visible )
-                  .set(true)(first0)
-              )
+              val v2 = MWzFirstOuterS.view.set(
+                Some( MWzFirstS.visible.set( true )(view00) )
+              )(first0)
               updated(v2)
             }
 
@@ -262,8 +255,8 @@ class FirstRunDialogAh[M](
         } else {
           // Пока разрешения разруливались, фаза уже изменилась неизвестно куда. Не ясно, возможно ли такое на яву.
           // Пока просто молча пережёвываем.
-          LOG.warn( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (m, first0.view.phase) )
-          updatedSilent( Some(v1) )
+          LOG.warn( ErrorMsgs.PERMISSION_API_LOGIC_INVALID, msg = (m, view00.phase) )
+          updatedSilent( v1 )
         }
       }
 
@@ -272,9 +265,10 @@ class FirstRunDialogAh[M](
     case m: InitFirstRunWz =>
       //println( m )
       val v0 = value
+      val fx = ResetUrlRoute.toEffectPure
       if (
         m.showHide &&
-        v0.isEmpty && (
+        v0.view.isEmpty && (
           // Если уже был запуск, то снова не надо.
           MFirstRunStored.get().fold(true) { stored =>
             stored.version < MFirstRunStored.Versions.CURRENT
@@ -284,7 +278,7 @@ class FirstRunDialogAh[M](
         )
       ) {
         // Акк для эффектов:
-        var fxsAcc = List.empty[Effect]
+        var fxsAcc: List[Effect] = fx :: Nil
         var permPotsAcc = List.empty[(MWzPhase, Pot[IPermissionState])]
 
         // Пройтись по списку фаз, активировав проверки прав:
@@ -305,22 +299,25 @@ class FirstRunDialogAh[M](
 
         // Инициализировать состояние first-диалога.
         val first2 = MWzFirstOuterS(
-          view = MWzFirstS(
+          view = Some(MWzFirstS(
             visible = false,
             phase = MWzPhases.Starting,
             frame = MWzFrames.InProgress,
-          ),
-          perms = permPotsAcc.toMap
+          )),
+          perms = permPotsAcc.toMap,
         )
-        val v2 = Some(first2)
-        ah.updatedMaybeEffect( v2, fxsAcc.mergeEffects )
+        ah.updatedMaybeEffect( first2, fxsAcc.mergeEffects )
 
-      } else if (!m.showHide && v0.isDefined) {
-        updated( None )
+      } else if (!m.showHide && v0.view.isDefined) {
+        val v2 = v0.copy(
+          view  = None,
+          perms = Map.empty,    // TODO По идее, perms уже не содержат полезных данных.
+        )
+        updated( v2, fx )
 
       } else {
         LOG.log( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
-        noChange
+        effectOnly( fx )
       }
 
   }
@@ -345,7 +342,8 @@ class FirstRunDialogAh[M](
 
   /** Перещёлкивание на следующую фазу диалога. */
   private def _wzGoToNextPhase(v0: MWzFirstOuterS): ActionResult[M] = {
-    val currPhase = v0.view.phase
+    val view0 = v0.view.get
+    val currPhase = view0.phase
     val allPhases = MWzPhases.values
 
     allPhases
@@ -361,34 +359,36 @@ class FirstRunDialogAh[M](
           permPot <- v0.perms.get( nextPhase )
 
           // Основная логика упакована сюда:
-          v9 <- {
+          v9 = {
             // По идее, тут или ready, или failed.
             if (permPot.nonEmpty) {
               // Есть значение - проанализировать значение.
               val perm = permPot.get
               if (perm.isPrompt) {
                 // Надо задать вопрос юзеру, т.к. доступ ещё не запрашивался.
-                val v2 = MWzFirstOuterS.view.modify {
-                  _.copy(
-                    phase = nextPhase,
-                    visible = true,
-                    frame = MWzFrames.AskPerm
+                MWzFirstOuterS.view.set {
+                  Some(
+                    view0.copy(
+                      phase = nextPhase,
+                      visible = true,
+                      frame = MWzFrames.AskPerm
+                    )
                   )
                 }(v0)
-                Some(v2)
               } else if (perm.isDenied) {
                 // Запрещён доступ. Значит юзеру можно выразить сожаление в инфо-окне.
-                val v2 = MWzFirstOuterS.view.modify {
-                  _.copy(
-                    phase   = nextPhase,
-                    visible = true,
-                    frame   = MWzFrames.Info
+                MWzFirstOuterS.view.set {
+                  Some(
+                    view0.copy(
+                      phase   = nextPhase,
+                      visible = true,
+                      frame   = MWzFrames.Info
+                    )
                   )
                 }(v0)
-                Some(v2)
               } else {
                 // granted или что-то неведомое - пропуск фазы.
-                None
+                v0
               }
 
             } else if (permPot.isFailed) {
@@ -399,27 +399,26 @@ class FirstRunDialogAh[M](
               LOG.log( ErrorMsgs.PERMISSION_API_FAILED, ex, nextPhase )
 
               // При ошибке - info-окно, чтобы там отрендерилась ошибка пермишена фазы?
-              OptionUtil.maybe( scalajs.LinkingInfo.developmentMode ) {
-                MWzFirstOuterS.view.modify {
-                  _.copy(
+              MWzFirstOuterS.view.set {
+                OptionUtil.maybe( scalajs.LinkingInfo.developmentMode ) {
+                  view0.copy(
                     phase   = nextPhase,
                     visible = true,
                     frame   = MWzFrames.Info
                   )
-                }(v0)
-              }
+                }
+              }(v0)
               // Можно пропускать фазу - наврядли end-юзер будет что-то дебажить.
 
             } else {
               // pending|empty - тут быть не должно, т.к. код вызывается после всех проверок.
               LOG.error( ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, msg = permPot )
-              None
+              v0
             }
           }
         } yield {
-          val d2 = Some(v9)
           // Следующая фаза одобрена:
-          updated(d2)
+          updated(v9)
         }
       }
       .buffered
@@ -453,11 +452,9 @@ class FirstRunDialogAh[M](
             .fut
         }
         // Надо скрыть диалог анимированно:
-        val d2 = Some(
-          MWzFirstOuterS.view
-            .composeLens( MWzFirstS.visible )
-            .set(false)(v0)
-        )
+        val d2 = MWzFirstOuterS.view.set(
+          Some( MWzFirstS.visible.set(false)( view0 ) )
+        )(v0)
         val allFx = saveFx + unRenderFx
         updated( d2, allFx )
       }
@@ -467,7 +464,10 @@ class FirstRunDialogAh[M](
   /** Сброс мониторинга изменений права доступа. */
   private def _wzUnWatchPermChangesFx(first0: MWzFirstOuterS): Effect = {
     Effect.action {
-      for (permPot <- first0.perms.get( first0.view.phase ))
+      for {
+        view0   <- first0.view
+        permPot <- first0.perms.get( view0.phase )
+      }
         for (perm <- permPot if perm.hasOnChangeApi)
           Try(perm.onChangeReset())
       DoNothing

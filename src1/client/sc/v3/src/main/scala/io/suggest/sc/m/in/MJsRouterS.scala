@@ -1,13 +1,13 @@
-package io.suggest.sc.m.jsrr
+package io.suggest.sc.m.in
 
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.routes.ScJsRoutes
 import io.suggest.sc.m.RouteTo
-import japgolly.univeq.UnivEq
-import monocle.macros.GenLens
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io

@@ -99,7 +99,7 @@ case class RouteTo( mainScreen: MainScreen ) extends IScRootAction
 case object ResetUrlRoute extends IScRootAction
 
 
-/** Наступление таймаута получения гео-координат. */
+/** Запуск таймера ожидания получения гео-координат. */
 case class GeoLocTimerStart( switchCtx: MScSwitchCtx ) extends ISc3Action
 
 /** Наступление таймаута получения гео-координат. */

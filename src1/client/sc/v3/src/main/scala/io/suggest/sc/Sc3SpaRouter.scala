@@ -89,7 +89,8 @@ class Sc3SpaRouter(
               locEnv = tokens.get( keys.LOC_ENV_FN )
                 .flatMap( MGeoPoint.fromString ),
               menuOpened = _boolOrFalseTok( keys.GEO_SCR_OPENED_FN ),
-              focusedAdId = tokens.get( keys.FOCUSED_AD_ID_FN )
+              focusedAdId = tokens.get( keys.FOCUSED_AD_ID_FN ),
+              firstRunOpen = _boolOrFalseTok( keys.FIRST_RUN_OPEN_FN ),
             )
           }
         } { mainScreen =>
@@ -137,6 +138,10 @@ class Sc3SpaRouter(
           // Отработать открытое меню.
           if (mainScreen.menuOpened)
             acc ::= keys.GEO_SCR_OPENED_FN -> mainScreen.menuOpened.toString
+
+          // Открыт диалог первого запуска?
+          if (mainScreen.firstRunOpen)
+            acc ::= keys.FIRST_RUN_OPEN_FN -> mainScreen.firstRunOpen.toString
 
           val queryString = UrlUtilJs.qsPairsToString(acc)
           Some( queryString )
