@@ -9,7 +9,7 @@ import io.suggest.sc.Sc3Circuit
 import io.suggest.sc.c.dia.FirstRunDialogAh
 import io.suggest.sc.m.boot._
 import io.suggest.sc.m.dia.InitFirstRunWz
-import io.suggest.sc.m.{JsRouterInit, MScRoot, ResetUrlRoute}
+import io.suggest.sc.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.dom.DomQuick
@@ -384,7 +384,6 @@ class BootAh[M](
 
     // Сигнал к запуску сбора данных геолокации, прав на геолокацию, и т.д.
     case m @ BootLocDataWz =>
-      val i0 = circuit.indexRW.value
       if (
         circuit.internalsRW.value.info.currRoute.exists { cr =>
           !cr.needGeoLoc
@@ -461,11 +460,19 @@ class BootAh[M](
 
     // Экшен, сигнализирующий о завершении запуска сервиса:
     val doneMyselfFx = _svcStartDoneAction( MBootServiceIds.GeoLocDataAcc ).toEffectPure
-    val reRoute = ResetUrlRoute.toEffectPure
+    val reRouteFx = circuit.internalsRW
+      .value
+      .info.currRoute
+      .filter { _ => !(started || runned) }
+      .fold[IScRootAction](ResetUrlRoute)(RouteTo.apply)
+      .toEffectPure
     val v0 = value
 
     val v2 = MScBoot.done.set( Some(true) )(v0)
-    val fx = doneMyselfFx + reRoute
+    // TODO Если диалог не открывался, но вызывался, то надо запустить геолокацию вручную.
+    //if (!runned && started) {
+    //}
+    val fx = doneMyselfFx >> reRouteFx
 
     updated(v2, fx)
   }

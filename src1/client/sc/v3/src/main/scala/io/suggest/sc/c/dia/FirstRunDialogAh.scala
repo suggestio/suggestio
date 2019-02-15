@@ -7,7 +7,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.MPlatformS
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.perm.{CordovaDiagonsticPermissionUtil, Html5PermissionApi, IPermissionState}
-import io.suggest.sc.m.{GeoLocOnOff, ResetUrlRoute}
+import io.suggest.sc.m.GeoLocOnOff
 import io.suggest.sc.m.dia.first._
 import io.suggest.sc.m.dia._
 import io.suggest.sjs.common.log.Log
@@ -265,7 +265,6 @@ class FirstRunDialogAh[M](
     case m: InitFirstRunWz =>
       //println( m )
       val v0 = value
-      val fx = ResetUrlRoute.toEffectPure
       if (
         m.showHide &&
         v0.view.isEmpty && (
@@ -278,7 +277,7 @@ class FirstRunDialogAh[M](
         )
       ) {
         // Акк для эффектов:
-        var fxsAcc: List[Effect] = fx :: Nil
+        var fxsAcc: List[Effect] = Nil
         var permPotsAcc = List.empty[(MWzPhase, Pot[IPermissionState])]
 
         // Пройтись по списку фаз, активировав проверки прав:
@@ -313,11 +312,11 @@ class FirstRunDialogAh[M](
           view  = None,
           perms = Map.empty,    // TODO По идее, perms уже не содержат полезных данных.
         )
-        updated( v2, fx )
+        updated( v2 )
 
       } else {
         LOG.log( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
-        effectOnly( fx )
+        noChange
       }
 
   }
