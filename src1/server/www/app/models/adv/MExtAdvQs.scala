@@ -32,7 +32,7 @@ object MExtAdvQs extends SecretKeyInit {
   def TARGET_IDS_DELIM = ","
 
   implicit def mExtAdvQsQsb(implicit
-                            longB    : QueryStringBindable[Long],
+                            longB   : QueryStringBindable[Long],
                             strB    : QueryStringBindable[String],
                             infosB  : QueryStringBindable[List[MExtTargetInfo]]
                            ): QueryStringBindable[MExtAdvQs] = {

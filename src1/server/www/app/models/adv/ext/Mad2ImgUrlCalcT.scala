@@ -1,6 +1,6 @@
 package models.adv.ext
 
-import io.suggest.common.geom.d2.INamedSize2di
+import io.suggest.common.geom.d2.{INamedSize2di, MSize2di}
 import io.suggest.model.n2.node.MNode
 import models.blk.OneAdQsArgs
 import models.blk.szMulted
@@ -49,10 +49,12 @@ trait Mad2ImgUrlCalcOuter extends IAdvUtilDi {
       //.filter { pmWidth => mad.blockMeta.wide || pmWidth.toFloat > mad.blockMeta.width * 1.15F }
       PicInfo(
         wide   = wideWidthOpt,
-        width  = wideWidthOpt.fold {
-          szMulted(bm.width, srv.szMult)
-        }(_.width),
-        height = szMulted(sz.height, szMultV),
+        wh = MSize2di(
+          width  = wideWidthOpt.fold {
+            szMulted(bm.width, srv.szMult)
+          }(_.width),
+          height = szMulted(sz.height, szMultV)
+        ),
         szMult = szMultV,
         stdSz  = sz
       )

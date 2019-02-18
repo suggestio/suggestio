@@ -10,7 +10,6 @@ import io.suggest.sc.sc3.MScQs
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.blk
 import models.blk._
-import models.im.make.MakeResult
 import models.mproj.ICommonDi
 import models.msc.TileArgs
 import util.adv.AdvUtil
@@ -110,30 +109,15 @@ class ShowcaseUtil @Inject() (
     }
 
     // Нужно получить данные для рендера широкой карточки.
-    for {
-      bgImgOpt <- focWideBgImgArgs(mad, szMult, deviceScreenOpt)
-    } yield {
-      blk.RenderArgs(
-        mad       = mad,
-        withEdit  = false,
-        szMult    = szMult,
-        bgImg     = bgImgOpt,
-        isFocused = true
-      )
-    }
-  }
-
-
-  /**
-   * Асинхронно собрать параметры для доступа к dyn-картинке. Необходимость асинхронности вызвана
-   * необходимостью получения данных о размерах исходной картинки.
-   * @param mad рекламная карточка или что-то совместимое с Imgs и IBlockMeta.
-   * @param szMult Требуемый мультипликатор размера картинки.
-   * @return None если нет фоновой картинки. Иначе Some() с данными рендера фоновой wide-картинки.
-   */
-  def focWideBgImgArgs(mad: MNode, szMult: SzMult_t, devScrOpt: Option[MScreen]): Future[Option[MakeResult]] = {
-    LOGGER.error(s"focWideBgImgArgs(${mad.idOrNull}) Not implemented for jd-ads")
-    Future.successful( None )
+    val brArgs = blk.RenderArgs(
+      mad       = mad,
+      withEdit  = false,
+      szMult    = szMult,
+      // Удалено bgImg при переезде на jdAds.
+      bgImg     = None,
+      isFocused = true
+    )
+    Future.successful( brArgs )
   }
 
 

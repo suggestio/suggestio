@@ -18,7 +18,8 @@ object FormMappingUtil {
     * @return Обязательный маппинг.
     */
   def optMapping2required[T](mapping: Mapping[Option[T]]): Mapping[T] = {
-    mapping.verifying("error.required", _.nonEmpty)
+    mapping
+      .verifying("error.required", _.isDefined)
       .transform[T](EmptyUtil.getF, EmptyUtil.someF)
   }
 

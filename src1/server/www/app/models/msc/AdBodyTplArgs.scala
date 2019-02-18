@@ -1,7 +1,6 @@
 package models.msc
 
 import io.suggest.model.n2.node.MNode
-import models.mbase.{IProducer, IProducerWrapper}
 import models.blk
 
 /**
@@ -10,31 +9,8 @@ import models.blk
  * Created: 11.06.15 16:25
  * Description: Контейнер аргументов, необходимых для рендера карточек выдачи.
  */
-
-trait IAdBodyTplArgs extends IProducer {
-
-  /** Аргументы рендера блока. */
-  def brArgs    : blk.IRenderArgs
-
-  /** Общее кол-во карточек в текущей выборке. */
-  def adsCount  : Int
-
-  /** Порядковый номер карточки в текущей выборке. */
-  def index     : Int
-
-  /** Является ли данная рекламная карточка размещенной сторонним продьюсером? */
-  def is3rdParty: Boolean
-
-}
-
-
-/** Дефолтовая реализация [[IAdBodyTplArgs]]. */
 case class AdBodyTplArgs(
-                          override val brArgs    : blk.IRenderArgs,
-                          override val producer  : MNode,
-                          override val adsCount  : Int,
-                          override val index     : Int,
-                          override val is3rdParty: Boolean
+                          brArgs        : blk.IRenderArgs,
+                          producer      : MNode,
                         )
-  extends IAdBodyTplArgs
 

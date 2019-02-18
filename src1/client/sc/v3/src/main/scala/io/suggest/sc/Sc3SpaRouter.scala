@@ -81,7 +81,7 @@ class Sc3SpaRouter(
             }
 
             MainScreen(
-              nodeId = tokens.get( keys.ADN_ID_FN ),
+              nodeId = tokens.get( keys.NODE_ID_FN ),
               searchOpened = _boolOrFalseTok( keys.CAT_SCR_OPENED_FN ),
               generation = tokens.get( keys.GENERATION_FN )
                 .flatMap( MGen.parse ),
@@ -113,7 +113,7 @@ class Sc3SpaRouter(
 
           // Отработать id текущего узла.
           for (nodeId <- mainScreen.nodeId)
-            acc ::= keys.ADN_ID_FN -> nodeId
+            acc ::= keys.NODE_ID_FN -> nodeId
 
           // TODO Использовать GeoLoc для маячков. Проблема в том, что функция-сериализатор JSON в QS _o2qs() лежит в js-роутере, а не здесь.
           //val locEnv: ILocEnv = mainScreen.???

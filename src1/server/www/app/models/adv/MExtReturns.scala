@@ -1,10 +1,11 @@
 package models.adv
 
 import controllers.routes
-import io.suggest.common.menum.EnumMaybeWithName
 import models.msc.ScJsState
 import play.api.data.Mapping
-import util.FormUtil
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumJvmUtil
+import io.suggest.playx.FormMappingUtil
 
 /**
  * Suggest.io
@@ -14,67 +15,58 @@ import util.FormUtil
  * Тут варианты настроек перехода на suggest.io.
  */
 
-object MExtReturns extends Enumeration with EnumMaybeWithName {
-
-  abstract protected[this] class Val(val strId: String)
-    extends super.Val(strId)
-  {
-    /**
-     * Сгенерить экземпляр билдера для дальнейшей сборки ссылки на возврат.
-     * @return Конкретная реализация [[ReturnToScBuilder]].
-     */
-    def builder(): ReturnToScBuilder
-
-    /** Код в conf/messages. */
-    def i18nCode: String = "adv.ext.ret." + strId
-  }
-
-
-  override type T = Val
-
+object MExtReturns extends StringEnum[MExtReturn] {
 
   /** Юзер должен возвращаться на выдачу размещающего. */
-  val ToShowCase: T = new Val("sc") {
+  case object ToShowCase extends MExtReturn("sc") {
     override def builder(): ReturnToScBuilder = {
       new RetToNode {}
     }
   }
 
   /** Юзер должен возвращаться на открытую рекламную карточку. */
-  val ToAd: T = new Val("ad") {
+  case object ToAd extends MExtReturn("ad") {
     override def builder(): ReturnToScBuilder = {
       new RetToNode with RetToFocusedAd {}
     }
   }
 
 
+  override def values = findValues
+
   def default = ToShowCase
 
   // Утиль для описания парсеров и мапперов для значений этой модели.
-  private def strIdLengths = values.iterator.map(_.strId.length)
+  private def strIdLengths = values.iterator.map(_.value.length)
   def strIdLenMin = strIdLengths.min
   def strIdLenMax = strIdLengths.max
 
 
   // Утиль для построения мапперов форм.
-  import play.api.data.Forms._
 
   /** Form mapping для опционального поля со значением [[MExtReturn]]. */
-  def optMapping: Mapping[Option[T]] = {
-    val m = text(minLength = strIdLenMin, maxLength = strIdLenMax * 3)
-    FormUtil.toStrOptM(m)
-      .transform [Option[T]] (_.flatMap(maybeWithName), _.map(_.strId))
-  }
+  def optMapping: Mapping[Option[MExtReturn]] =
+    EnumeratumJvmUtil.stringIdOptMapping( MExtReturns )
 
   /** Form mapping для обязательного поля со значением [[MExtReturn]]. */
-  def mapping: Mapping[T] = {
-    optMapping
-      .verifying("error.required", _.isDefined)
-      .transform[T] (_.get, Some.apply)
-  }
+  def mapping: Mapping[MExtReturn] =
+    FormMappingUtil.optMapping2required( optMapping )
 
 }
 
+
+sealed abstract class MExtReturn(override val value: String) extends StringEnumEntry {
+  /**
+    * Сгенерить экземпляр билдера для дальнейшей сборки ссылки на возврат.
+    * @return Конкретная реализация [[ReturnToScBuilder]].
+    */
+  def builder(): ReturnToScBuilder
+
+  /** Код в conf/messages. */
+  def i18nCode: String = "adv.ext.ret." + value
+
+
+}
 
 
 /** Абстрактный билдер для генерации ссылок возврата. */

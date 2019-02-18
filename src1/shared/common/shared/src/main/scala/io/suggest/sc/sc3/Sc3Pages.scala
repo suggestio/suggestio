@@ -34,7 +34,7 @@ object Sc3Pages {
       import io.suggest.common.empty.OptionUtil._
       import MGeoPoint.JsonFormatters.{PIPE_DELIM_STRING_READS, PIPE_DELIM_STRING_WRITES}
       (
-        (__ \ ADN_ID_FN).formatNullable[String] and
+        (__ \ NODE_ID_FN).formatNullable[String] and
         (__ \ CAT_SCR_OPENED_FN).formatNullable[Boolean].formatBooleanOrFalse and
         (__ \ GENERATION_FN).formatNullable[Long] and
         (__ \ TAG_NODE_ID_FN).formatNullable[String] and

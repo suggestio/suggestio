@@ -15,7 +15,7 @@ import play.api.libs.json._
 object GjFtProps {
 
   /** Поддержка JSON. По факту системе нужен только Writes. */
-  implicit val FORMAT: OFormat[GjFtProps] = (
+  implicit def FORMAT: OFormat[GjFtProps] = (
     (__ \ ITEM_ID_FN).format[Gid_t] and
     (__ \ HAS_APPROVED_FN).format[Boolean] and
     (__ \ CIRCLE_RADIUS_M_FN).formatNullable[Double]
@@ -33,7 +33,7 @@ object GjFtProps {
   * @param hasApproved Есть ли подтверждённые размещения, связанные с текущим шейпом?
   * */
 case class GjFtProps(
-  itemId          : Gid_t,
-  hasApproved     : Boolean,
-  crclRadiusM     : Option[Double]
-)
+                      itemId          : Gid_t,
+                      hasApproved     : Boolean,
+                      crclRadiusM     : Option[Double]
+                    )

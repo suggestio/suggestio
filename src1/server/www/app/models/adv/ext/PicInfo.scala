@@ -1,6 +1,6 @@
 package models.adv.ext
 
-import io.suggest.common.geom.d2.{INamedSize2di, ISize2di}
+import io.suggest.common.geom.d2.{INamedSize2di, MSize2di}
 import models.blk.{OneAdWideQsArgs, SzMult_t}
 
 /**
@@ -22,9 +22,7 @@ import models.blk.{OneAdWideQsArgs, SzMult_t}
   */
 case class PicInfo(
                     wide                  : Option[OneAdWideQsArgs],
-                    override val width    : Int,
-                    override val height   : Int,
+                    wh                    : MSize2di,
                     szMult                : SzMult_t,
                     stdSz                 : INamedSize2di
                   )
-  extends ISize2di

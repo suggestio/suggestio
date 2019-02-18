@@ -41,7 +41,7 @@ trait IOAuth1MkPostArgs {
     if (_geo.isDefined)
       sb.append("geo=").append(_geo.get).append(',')
     sb.append("node=").append(mnode.id.orNull).append(',')
-      .append("returnTo=").append(returnTo.strId).append(',')
+      .append("returnTo=").append(returnTo.value).append(',')
       .append("target=").append(target.id.orNull)
     val _atts = attachments
     if (_atts.nonEmpty)

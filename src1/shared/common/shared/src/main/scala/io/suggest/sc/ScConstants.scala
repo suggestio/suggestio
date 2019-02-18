@@ -197,7 +197,7 @@ object ScConstants {
     // какой-то неизвестной науке паталогии копипастинга идентификаторов из окошка джаббер-клиента в файл showcase2.coffee.
 
     // Обозначены через val, потому что эти константы используют очень активно или не используют вообще.
-    val ADN_ID_FN               = "m.id"
+    val NODE_ID_FN               = "m.id"
     val GENERATION_FN           = "a.gen"
 
     val CAT_SCR_OPENED_FN       = "s.open"

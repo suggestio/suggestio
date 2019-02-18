@@ -161,7 +161,7 @@ trait ScUniApi
 
     /** Запустить абстрактную логику на исполнение через её интерфейс. */
     private def _logicOpt2stateRespActionOptFut(logicOptFut: Future[Option[LogicCommonT with IRespActionFut]]): Future[Option[MSc3RespAction]] = {
-      val fut = for {
+      val fut: Future[Option[MSc3RespAction]] = for {
         logicOpt  <- logicOptFut
         logic     = logicOpt.get
         ra        <- _logic2stateRespActionFut( logic )
@@ -240,7 +240,7 @@ trait ScUniApi
       * Изначально - текущую версию rcvrsMap.json, например.
       */
     private def confUpdateRaOptFut: Future[Option[MSc3RespAction]] = {
-      val someRaOrNseeFut = for {
+      val someRaOrNseeFut: Future[Option[MSc3RespAction]] = for {
         // 2018-11-15 Только на index-ответы возвращать конфиг. Апдейты не часты, поэтому возвращать их на каждый чих не нужно.
         // В будущем можно чаще/реже возвращать всё это добро.
         indexLogicOpt <- indexLogicOptFut

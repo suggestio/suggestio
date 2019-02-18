@@ -48,7 +48,7 @@ object ScJsState extends MacroLogsImpl {
     new QueryStringBindableImpl[ScJsState] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScJsState]] = {
         for {
-          maybeAdnId            <- strOptB.bind (ADN_ID_FN,             params)
+          maybeAdnId            <- strOptB.bind (NODE_ID_FN,             params)
           maybeCatScreenOpened  <- boolOptB.bind(CAT_SCR_OPENED_FN,     params)
           maybeGeoScreenOpened  <- boolOptB.bind(GEO_SCR_OPENED_FN,     params)
           maybeGeneration       <- longOptB.bind(GENERATION_FN,         params)
@@ -74,7 +74,7 @@ object ScJsState extends MacroLogsImpl {
 
       override def unbind(key: String, value: ScJsState): String = {
         _mergeUnbinded1(
-          strOptB.unbind  (ADN_ID_FN,             value.adnId),
+          strOptB.unbind  (NODE_ID_FN,             value.adnId),
           boolOptB.unbind (CAT_SCR_OPENED_FN,     value.searchScrOpenedOpt),
           boolOptB.unbind (GEO_SCR_OPENED_FN,     value.navScrOpenedOpt),
           longOptB.unbind (GENERATION_FN,         value.generationOpt),

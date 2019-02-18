@@ -9,8 +9,6 @@ import play.api.data.Form
  */
 package object adv {
 
-  type MExtReturn       = MExtReturns.T
-
   /** Тип списка целей для обработки. */
   type ActorTargets_t   = List[MExtTargetInfoFull]
 

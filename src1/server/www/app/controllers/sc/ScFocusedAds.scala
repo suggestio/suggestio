@@ -62,20 +62,6 @@ trait ScFocusedAds
       scAdSearchUtil.qsArgs2nodeSearch(_qs)
     }
 
-    /** Поисковые критерии для подсчёта общего кол-ва результатов. */
-    def madsCountSearchFut = mAdsSearchFut
-
-    /** В countAds() можно отправлять и обычный adSearch: forceFirstIds там игнорируется. */
-    def madsCountFut: Future[Long] = {
-      if (_qs.hasAnySearchCriterias) {
-        madsCountSearchFut
-          .flatMap(mNodes.dynCount)
-      } else {
-        LOGGER.info(s"$logPrefix No ads search criteriase, count will be zeroed.")
-        Future.successful(0L)
-      }
-    }
-    def madsCountIntFut = madsCountFut.map(_.toInt)
 
     /**
       * 2014.jan.28: Если не найдены какие-то элементы, то сообщить об этом в логи.
@@ -189,16 +175,12 @@ trait ScFocusedAds
       // Форсируем распараллеливание асинхронных операций.
       val _mads4blkRenderFut  = mads4blkRenderFut
       val _producersMapFut    = mads2ProdsMapFut
-
-      val _firstAdIndexFut1 = firstAdIndexFut
       for {
-        madsCountInt    <- madsCountIntFut
         mads4blkRender  <- _mads4blkRenderFut
         producersMap    <- _producersMapFut
-        firstAdIndex    <- _firstAdIndexFut1
         res <- {
-          val (_, futs) = Lists.mapFoldLeft(mads4blkRender, acc0 = (firstAdIndex, blockHtmlRenderAcc0)) {
-            case (acc0 @ (index, brAcc0), brArgs) =>
+          val (_, futs) = Lists.mapFoldLeft(mads4blkRender, acc0 = blockHtmlRenderAcc0) {
+            case (acc0 @ brAcc0, brArgs) =>
               // Сразу инкрементим счетчик, т.к. если отсчитывать от offset, то будет ноль при первом вызове.
               val resOpt = for {
                 // Вычисляем id узла-продьюсера.
@@ -207,19 +189,15 @@ trait ScFocusedAds
                 producer    <- producersMap.get(producerId)
               } yield {
                 // Запустить рендер одного блока.
-                val index1 = index + 1
                 val args = AdBodyTplArgs(
                   brArgs      = brArgs,
                   producer    = producer,
-                  index       = index1,
-                  adsCount    = madsCountInt,
-                  is3rdParty  = !_qs.search.rcvrId.containsStr(producerId)
                 )
                 val (renderFut, brAcc1) = renderOneBlockAcc(args, brAcc0)
-                (index1, brAcc1) -> renderFut
+                brAcc1 -> renderFut
               }
               resOpt getOrElse {
-                LOGGER.warn(s"Unable to render ad[${brArgs.mad.idOrNull}] #$index, because producer node or info about it is missing.")
+                LOGGER.warn(s"Unable to render ad[${brArgs.mad.idOrNull}] because producer node or info about it is missing.")
                 acc0 -> null
               }
           }
@@ -232,8 +210,6 @@ trait ScFocusedAds
       }
     }
 
-
-    def firstAdIndexFut = _firstAdIndexFut
 
     /** Дописывать эти css-классы в стили и в рендер. */
     def withCssClasses = Seq("focused")
@@ -567,13 +543,6 @@ trait ScFocusedAds
         }
       }
 
-    }
-
-
-    def _firstAdIndexFut: Future[Int] = {
-      for (res <- adIdsLookupResFut) yield {
-        res.ids.headOption.fold(0)(_.index) //+ 1
-      }
     }
 
 

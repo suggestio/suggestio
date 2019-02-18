@@ -92,9 +92,9 @@ class TwitterHelper @Inject() (
         // Аргументы для рендера карточки и рендер.
         val pca = PhotoCardArgs(
           imgUrl = routes.Sc.onlyOneAdAsImage( calc.adRenderArgs ).url,
-          url    = Some(ctx.request.uri),
+          url    = Some( ctx.request.uri ),
           title  = mad1.guessDisplayName,
-          imgWh  = Some(calc.madRenderInfo)
+          imgWh  = Some( calc.madRenderInfo.wh )
         )
         pca.render()
       }

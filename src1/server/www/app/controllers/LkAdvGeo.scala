@@ -25,7 +25,6 @@ import io.suggest.pick.PickleSrvUtil._
 import io.suggest.primo.id.OptId
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.adv.geo.tag.MForAdTplArgs
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
@@ -40,6 +39,7 @@ import util.tags.TagsEditFormUtil
 import views.html.lk.adv.geo._
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.streams.StreamsUtil
+import models.adv.geo.MForAdTplArgs
 import util.adv.direct.AdvRcvrsUtil
 
 import scala.concurrent.Future

@@ -9,8 +9,7 @@ import io.suggest.sec.csp.Csp
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
-import models.adv.ext.{MAdvRunnerTplArgs, MForAdTplArgs}
-import models.adv.search.etg.ExtTargetSearchArgs
+import models.adv.ext.{MAdvRunnerTplArgs, MExtTargetSearchArgs, MForAdTplArgs}
 import models.mctx.Context
 import models.mext.MExtServices
 import models.mproj.ICommonDi
@@ -137,7 +136,7 @@ class LkAdvExt @Inject() (
   private def _forAdRender(adId: String, form: ExtAdvForm, rs: Status)
                           (implicit request: IAdProdReq[_]): Future[Result] = {
     val targetsFut: Future[Seq[MExtTarget]] = {
-      val args = ExtTargetSearchArgs(
+      val args = MExtTargetSearchArgs(
         adnId       = request.producer.id,
         sortByDate  = Some(SortOrder.ASC),
         limit       = 100

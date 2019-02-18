@@ -45,7 +45,7 @@ object MExtTargetInfo extends ExtTargetInfoParsers with MacroLogsDyn {
           .append('=')
           .append(value.targetId)
           .append(DELIMITER)
-          .append(value.returnTo.strId)
+          .append(value.returnTo.value)
           .toString()
       }
     }
@@ -73,7 +73,7 @@ trait ExtTargetInfoParsers extends JavaTokenParsers {
     val maxLen = MExtReturns.strIdLenMax
     val minLen = MExtReturns.strIdLenMin
     s"\\w{$minLen,$maxLen}".r ^^ {
-      raw => MExtReturns.withName(raw.trim)
+      raw => MExtReturns.withValue(raw.trim)
     }
   }
 

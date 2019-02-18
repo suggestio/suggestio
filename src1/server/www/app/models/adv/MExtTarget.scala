@@ -5,7 +5,6 @@ import java.time.OffsetDateTime
 import io.suggest.adv.ext.model.ctx.MExtTargetT
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.es.util.SioEsUtil._
-import models.adv.search.etg.IExtTargetSearchArgs
 import models.mext.{MExtService, MExtServices}
 import play.api.i18n.Messages
 import play.api.libs.json._
@@ -15,6 +14,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.util.logs.MacroLogsImpl
+import models.adv.ext.MExtTargetSearchArgs
 
 import scala.collection.Map
 
@@ -48,7 +48,7 @@ object MExtTargetFields {
 class MExtTargets
   extends EsModelStatic
   with MacroLogsImpl
-  with EsDynSearchStatic[IExtTargetSearchArgs]
+  with EsDynSearchStatic[MExtTargetSearchArgs]
   with EsmV2Deserializer
   with EsModelPlayJsonStaticT
 {
