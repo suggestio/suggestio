@@ -51,16 +51,14 @@ case class MPlatformS(
                        hasBle         : Boolean
                      ) {
 
-  def withIsUsingNow(isUsingNow: Boolean) = copy(isUsingNow = isUsingNow)
-  def withIsReady(isReady: Boolean) = copy(isReady = isReady)
-  def withIsCordova(isCordova: Boolean) = copy(isCordova = isCordova)
-  def withHasBle(hasBle: Boolean) = copy(hasBle = hasBle)
-
   /** Заглушка на случай возможной надобности в будущем. */
   def hasGeoLoc: Boolean = {
     WindowVm()
       .navigator
       .exists( _.geolocation.nonEmpty )
   }
+
+
+  def isBrowser = !isCordova
 
 }

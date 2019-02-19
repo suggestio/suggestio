@@ -400,6 +400,7 @@ class ScRootR (
         enterLkRowC = propsProxy.connect { props =>
           for {
             scJsRouter <- props.internals.jsRouter.jsRouter.toOption
+            if props.dev.platform.isBrowser
           } yield {
             enterLkRowR.PropsVal(
               isLoggedIn      = props.internals.conf.isLoggedIn,
