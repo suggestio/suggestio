@@ -2,6 +2,7 @@ package io.suggest.sc.ads
 
 import io.suggest.ad.search.AdSearchConstants._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -20,6 +21,10 @@ object MScFocusArgs {
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MScFocusArgs] = UnivEq.derive
+
+  val focIndexAllowed = GenLens[MScFocusArgs](_.focIndexAllowed)
+  val lookupMode      = GenLens[MScFocusArgs](_.lookupMode)
+  val lookupAdId      = GenLens[MScFocusArgs](_.lookupAdId)
 
 }
 

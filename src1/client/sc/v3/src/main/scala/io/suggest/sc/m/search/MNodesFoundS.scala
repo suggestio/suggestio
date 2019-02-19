@@ -4,9 +4,9 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.empty.NonEmpty
 import io.suggest.common.html.HtmlConstants
-import io.suggest.maps.nodes.{MGeoNodePropsShapes, MGeoNodesResp}
-import io.suggest.sc.ads.MAdsSearchReq
+import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.sc.index.MSc3IndexResp
+import io.suggest.sc.sc3.MScQs
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -56,15 +56,15 @@ object MNodesFoundS {
   */
 case class MNodesFoundS(
                          req           : Pot[MSearchRespInfo[MGeoNodesResp]]     = Pot.empty,
-                         reqSearchArgs : Option[MAdsSearchReq] = None,
+                         reqSearchArgs : Option[MScQs]         = None,
                          hasMore       : Boolean               = true,
                        )
   extends NonEmpty
 {
 
   def withReq(req: Pot[MSearchRespInfo[MGeoNodesResp]]) = copy(req = req)
-  def withReqSearchArgs(reqSearchArgs : Option[MAdsSearchReq]) = copy(reqSearchArgs = reqSearchArgs)
-  def withReqWithArgs(req: Pot[MSearchRespInfo[MGeoNodesResp]], reqSearchArgs : Option[MAdsSearchReq]) =
+  def withReqSearchArgs(reqSearchArgs : Option[MScQs]) = copy(reqSearchArgs = reqSearchArgs)
+  def withReqWithArgs(req: Pot[MSearchRespInfo[MGeoNodesResp]], reqSearchArgs : Option[MScQs]) =
     copy(req = req, reqSearchArgs = reqSearchArgs)
   def withHasMore(hasMore: Boolean) = copy(hasMore = hasMore)
 

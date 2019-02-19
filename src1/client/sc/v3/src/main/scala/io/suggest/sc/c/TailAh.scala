@@ -51,7 +51,7 @@ object TailAh {
       // Это улучшит кэширование, возможно улучшит приватность при обмене ссылками.
       locEnv        = OptionUtil.maybe {
         (currRcvrId.isEmpty || searchOpened || selTagIdOpt.nonEmpty) &&
-          v0.internals.boot.wzFirstDone.contains(true) &&
+          (v0.internals.boot.wzFirstDone contains[Boolean] true) &&
           v0.internals.info.geoLockTimer.isEmpty
       }(v0.index.search.geo.mapInit.state.center),
       generation    = Some( inxState.generation ),
@@ -169,7 +169,6 @@ class TailAh[M](
 
     // SPA-роутер заливает в состояние данные из URL.
     case m: RouteTo =>
-      //println(m)
       // TODO Возможно, этот код управления должен жить прямо в роутере?
       val v0 = value
 
@@ -177,7 +176,8 @@ class TailAh[M](
       var modsAcc = List.empty[MScRoot => MScRoot]
 
       // Возможно js-роутер ещё не готов, и нужно отложить полную обработку состояния:
-      val isJsRouterReady = v0.internals.jsRouter.jsRouter.isReady
+      val isFullyReady = v0.internals.jsRouter.jsRouter.isReady &&
+        (v0.internals.boot.wzFirstDone contains[Boolean] true)
 
       // Надо ли повторно отрабатывать m после того, как js-роутер станет готов?
       var jsRouterAwaitRoute = false
@@ -185,8 +185,8 @@ class TailAh[M](
       // Текущее значение MainScreen:
       val currMainScreen = TailAh.getMainScreenSnapShot(v0)
 
-      // Считаем, что js-роутер уже готов. Если нет, то это сообщение должно было быть перехвачено в JsRouterInitAh.
-      var isToReloadIndex = isJsRouterReady && v0.index.resp.isTotallyEmpty && v0.internals.boot.wzFirstDone.contains(true)
+      var isToReloadIndex = isFullyReady && v0.index.resp.isTotallyEmpty
+
       var needUpdateUi = false
 
       var isGeoLocRunning = v0.internals.info.geoLockTimer.nonEmpty
@@ -198,20 +198,20 @@ class TailAh[M](
 
       // Сохранить присланную роуту в состояние, если роута изменилась:
       val currRouteLens = TailAh._currRoute
-      if ( !(currRouteLens.get(v0) contains m) )
+      if ( !(currRouteLens.get(v0) contains[MainScreen] m.mainScreen) )
         modsAcc ::= currRouteLens.set( Some(m.mainScreen) )
 
       // Проверка поля generation
       for {
         generation2 <- m.mainScreen.generation
-        if !(currMainScreen.generation contains generation2)
+        if !(currMainScreen.generation contains[Long] generation2)
       } {
         modsAcc ::= MScRoot.index
           .composeLens(MScIndex.state)
           .composeLens(MScIndexState.generation)
           .set(generation2)
         // generation не совпадает. Надо будет перезагрузить плитку.
-        if (isJsRouterReady) {
+        if (isFullyReady) {
           val adsPot = v0.grid.core.ads
           if (adsPot.isPending || adsPot.exists(_.nonEmpty))
             isGridNeedsReload = true
@@ -226,7 +226,7 @@ class TailAh[M](
 
       // Проверка id нового узла.
       if (m.mainScreen.nodeId !=* currMainScreen.nodeId) {
-        if (isJsRouterReady) {
+        if (isFullyReady) {
           isToReloadIndex = true
           needUpdateUi = true
           // nodeId будет передан через экшен.
@@ -247,7 +247,7 @@ class TailAh[M](
           }
         )
       ) {
-        if (isJsRouterReady) {
+        if (isFullyReady) {
           needUpdateUi = true
           for (nextGeoPoint <- m.mainScreen.locEnv) {
             modsAcc ::= MScRoot.index
@@ -265,10 +265,10 @@ class TailAh[M](
       // Смотрим текущий выделенный тег
       for {
         tagNodeId <- m.mainScreen.tagNodeId
-        if !(currMainScreen.tagNodeId contains tagNodeId)
+        if !(currMainScreen.tagNodeId contains[String] tagNodeId)
       } {
         // Имитируем клик по тегу, да и всё.
-        if (isJsRouterReady)
+        if (isFullyReady)
           fxsAcc ::= NodeRowClick( tagNodeId ).toEffectPure
         else
           jsRouterAwaitRoute = true
@@ -283,7 +283,7 @@ class TailAh[M](
         m.mainScreen.focusedAdId !=* currMainScreen.focusedAdId &&
         !isToReloadIndex
       ) {
-        if (isJsRouterReady) {
+        if (isFullyReady) {
           for {
             focusedAdId <- m.mainScreen.focusedAdId orElse currMainScreen.focusedAdId
           } {
@@ -298,13 +298,13 @@ class TailAh[M](
       // (кроме случаев активности wzFirst-диалога: при запуске надо влезть до полного завершения boot-сервиса, но после закрытия диалога)
       if (m.mainScreen.needGeoLoc && v0.internals.boot.wzFirstDone.nonEmpty && v0.dialogs.first.view.isEmpty) {
         // Если геолокация ещё не запущена, то запустить:
-        if (v0.dev.platform.hasGeoLoc && !(v0.dev.geoLoc.switch.onOff contains true) && !isGeoLocRunning) {
+        if (v0.dev.platform.hasGeoLoc && !(v0.dev.geoLoc.switch.onOff contains[Boolean] true) && !isGeoLocRunning) {
           fxsAcc ::= GeoLocOnOff(enabled = true, isHard = false).toEffectPure
           isGeoLocRunning = true
         }
 
         // Если bluetooth не запущен - запустить в добавок к геолокации:
-        if (v0.dev.platform.hasBle && !(v0.dev.beaconer.isEnabled contains true))
+        if (v0.dev.platform.hasBle && !(v0.dev.beaconer.isEnabled contains[Boolean] true))
           fxsAcc ::= BtOnOff(isEnabled = true, hard = false).toEffectPure
 
         // Если таймер геолокации не запущен, то запустить:
@@ -344,9 +344,7 @@ class TailAh[M](
       // Диалог first-run открыт?
       if (currMainScreen.firstRunOpen !=* m.mainScreen.firstRunOpen) {
         // Запустить экшен управления диалогом.
-        fxsAcc ::= Effect.action(
-          InitFirstRunWz( currMainScreen.firstRunOpen )
-        )
+        fxsAcc ::= InitFirstRunWz( currMainScreen.firstRunOpen ).toEffectPure
       }
 
       // Обновлённое состояние, которое может быть и не обновлялось:

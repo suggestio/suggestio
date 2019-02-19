@@ -460,19 +460,17 @@ class BootAh[M](
 
     // Экшен, сигнализирующий о завершении запуска сервиса:
     val doneMyselfFx = _svcStartDoneAction( MBootServiceIds.GeoLocDataAcc ).toEffectPure
-    val reRouteFx = circuit.internalsRW
-      .value
-      .info.currRoute
+    val internals = circuit.internalsRW.value
+    val reRoute = internals.info.currRoute
       .filter { _ => !(started || runned) }
       .fold[IScRootAction](ResetUrlRoute)(RouteTo.apply)
-      .toEffectPure
     val v0 = value
 
     val v2 = MScBoot.done.set( Some(true) )(v0)
     // TODO Если диалог не открывался, но вызывался, то надо запустить геолокацию вручную.
     //if (!runned && started) {
     //}
-    val fx = doneMyselfFx >> reRouteFx
+    val fx = doneMyselfFx >> reRoute.toEffectPure
 
     updated(v2, fx)
   }

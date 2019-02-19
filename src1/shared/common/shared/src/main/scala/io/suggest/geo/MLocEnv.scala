@@ -4,6 +4,7 @@ import io.suggest.ble.MUidBeacon
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.loc.LocationConstants._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -37,6 +38,9 @@ object MLocEnv extends IEmpty {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }
+
+  val geoLocOpt   = GenLens[MLocEnv](_.geoLocOpt)
+  val bleBeacons  = GenLens[MLocEnv](_.bleBeacons)
 
 }
 

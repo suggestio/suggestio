@@ -109,8 +109,10 @@ class GeoTabAh[M](
         )
       }
 
+      val args2 = MScQs.search.set(search2)(args0)
+
       // Запустить поиск, если что-то изменилось.
-      if (v0.found.reqSearchArgs contains search2) {
+      if (v0.found.reqSearchArgs contains[MScQs] args2) {
         // Данные для запроса не отличаются от уже запрошенных. Поэтому игнорируем сигнал.
         noChange
 
@@ -123,7 +125,6 @@ class GeoTabAh[M](
         val req2p = req2.asInstanceOf[PendingBase]
 
         val runReqFx = Effect {
-          val args2 = MScQs.search.set(search2)(args0)
           // Запустить запрос.
           api
             .pubApi( args2 )
@@ -140,7 +141,7 @@ class GeoTabAh[M](
 
         val found2 = v0.found.withReqWithArgs(
           req = req2,
-          reqSearchArgs = Some(search2)
+          reqSearchArgs = Some(args2)
         )
 
         // В зависимости от состояния textQuery, есть два похожих варианта работы: поиск только тегов и поиск всех узлов по имени.

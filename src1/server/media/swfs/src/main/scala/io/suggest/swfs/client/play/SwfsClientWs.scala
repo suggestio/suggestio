@@ -79,7 +79,7 @@ class SwfsClientWs @Inject() (
         val dflt = "localhost:9333"
         LOGGER.warn("SeaweedFS masters are undefined/empty. Please define in config:\n  " +
           MASTERS_CK + " = [\"" + dflt + "\"]" )
-        List(dflt)
+        dflt :: Nil
       }
   }
 

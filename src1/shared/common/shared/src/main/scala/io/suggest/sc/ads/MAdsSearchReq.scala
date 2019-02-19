@@ -6,6 +6,7 @@ import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.model.MEsUuId
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -33,6 +34,8 @@ object MAdsSearchReq extends IEmpty {
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MAdsSearchReq] = UnivEq.derive
+
+  val rcvrId = GenLens[MAdsSearchReq](_.rcvrId)
 
 }
 

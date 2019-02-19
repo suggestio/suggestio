@@ -8,12 +8,13 @@ import io.suggest.sc.sc3._
 import util.acl.IMaybeAuth
 import japgolly.univeq._
 import io.suggest.es.model.MEsUuId.Implicits._
-import io.suggest.geo.MGeoLoc
+import io.suggest.geo.{MGeoLoc, MLocEnv}
 import io.suggest.model.n2.node.MNode
 import models.req.IReq
 import play.api.libs.json.Json
 import util.showcase.IScUtil
 import FutureUtil.Implicits._
+import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
 
 import scala.concurrent.Future
 
@@ -104,29 +105,33 @@ trait ScUniApi
           scIndexResp = ps.props
         } yield {
           val qs2 = qs.copy(
-            search = qs.search.copy(
-              rcvrId = scIndexResp.nodeId.toEsUuIdOpt
-            ),
-            common = qs.common.copy(
-              locEnv = qs.common.locEnv.copy(
-                // Когда задан узел - координаты не нужны.
-                geoLocOpt = OptionUtil.maybeOpt( scIndexResp.nodeId.isEmpty ) {
-                  // Узел не задан. Попытаться достать координаты.
-                  scIndexResp.geoPoint
-                    .map( MGeoLoc(_) )
-                    .orElse( qs.common.locEnv.geoLocOpt )
-                }
-              )
-            ),
+            search = MAdsSearchReq.rcvrId
+              .set(scIndexResp.nodeId.toEsUuIdOpt)(qs.search),
+            common = {
+              MScCommonQs.locEnv
+                .composeLens( MLocEnv.geoLocOpt )
+                .set {
+                  OptionUtil.maybeOpt( scIndexResp.nodeId.isEmpty ) {
+                    // Узел не задан. Попытаться достать координаты.
+                    scIndexResp.geoPoint
+                      .map( MGeoLoc(_) )
+                      .orElse( qs.common.locEnv.geoLocOpt )
+                  }
+                }( qs.common )
+            },
             // Надо ли сразу фокусировать кликнутую карточку после перехода в новый index?
             foc = for {
               foc0 <- qs.foc
-              if ScConstants.Focused.AUTO_FOCUS_AFTER_FOC_INDEX
+              if {
+                // Разрешить авто-фокус, если это запрос при запуске, т.е. в рамках пачки index+grid+foc:
+                (qs.common.searchGridAds contains true) ||
+                // Разрешать авто-фокус при любом переходе куда угодно (выключено по итогам разговоров):
+                ScConstants.Focused.AUTO_FOCUS_AFTER_FOC_INDEX
+              }
             } yield {
               // если требуется авто-фокусировка, то снять флаг focIndex на всякий случай (для возможной от бесконечных переходов). В норме - это ни на что не должно влиять.
-              foc0.copy(
-                focIndexAllowed = false
-              )
+              MScFocusArgs.focIndexAllowed
+                .set(false)(foc0)
             }
           )
           LOGGER.trace(s"$logPrefix Ads search after index qs2=$qs2")

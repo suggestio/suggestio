@@ -18,7 +18,7 @@ import scala.util.Success
   */
 class JsRouterInitAh[M <: AnyRef](
                                    circuit: Circuit[M],
-                                   modelRW: ModelRW[M, MJsRouterS]    // TODO Сделать MJsRouterS после удаления отсюда RouteTo.
+                                   modelRW: ModelRW[M, MJsRouterS]
                                  )
   extends ActionHandler( modelRW )
 { ah =>

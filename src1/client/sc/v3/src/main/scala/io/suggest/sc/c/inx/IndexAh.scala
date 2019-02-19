@@ -326,85 +326,91 @@ class IndexAh[M](
     */
   private def _getIndex(silentUpdate: Boolean, v0: MScIndex,
                         reason: IScIndexRespReason, switchCtx: MScSwitchCtx): ActionResult[M] = {
+    //println(s"getIndex\n $silentUpdate\n $v0\n $reason\n $switchCtx")
     val ts = System.currentTimeMillis()
     val root = rootRO.value
 
     val isSearchNodes = root.index.search.panel.opened
-    val searchArgs = MAdsSearchReq(
-      limit  = Some( GridAh.adsPerReqLimit ),
-      genOpt = Some( root.index.state.generation ),
-      offset = Some( 0 ),
-      textQuery = OptionUtil.maybeOpt(isSearchNodes) {
-        Option( root.index.search.text.query )
-          .filter(_.nonEmpty)
-      }
+
+    // Допускать доп.барахло в ответе (foc-карточк, список нод, список плитки и т.д.)? Да, кроме фоновой проверки геолокации.
+    val withStuff = !switchCtx.demandLocTest
+    val args = MScQs(
+      common = MScCommonQs(
+        apiVsn = root.internals.conf.apiVsn,
+        // Когда уже задан id-ресивера, не надо слать на сервер маячки и географию.
+        locEnv = {
+          // Слать на сервер координаты с карты или с gps, если идёт определение местоположения.
+          if (switchCtx.demandLocTest) root.locEnvUser
+          else if (switchCtx.forceGeoLoc.nonEmpty) MLocEnv(switchCtx.forceGeoLoc, root.locEnvBleBeacons)
+          else if (switchCtx.indexQsArgs.nodeId.isEmpty) root.locEnvMap
+          else MLocEnv.empty
+        },
+        screen = Some( root.dev.screen.info.screen ),
+        // Не надо плитку присылать, если demandLocTest: вопрос на экране не требует плитки.
+        searchGridAds = OptionUtil.maybeTrue( withStuff ),
+        // Сразу запросить поиск по узлам, если панель поиска открыта.
+        searchNodes = OptionUtil.maybeTrue( isSearchNodes && withStuff ),
+      ),
+      index = Some( switchCtx.indexQsArgs ),
+      // Фокусироваться надо при запуске. Для этого следует получать всё из reason, а не из состояния.
+      foc = for {
+        focAdId <- switchCtx.focusedAdId
+        if withStuff
+      } yield {
+        MScFocusArgs(
+          focIndexAllowed = true,
+          lookupMode      = None,
+          lookupAdId      = focAdId
+        )
+      },
+      search = MAdsSearchReq(
+        limit  = Some( GridAh.adsPerReqLimit ),
+        genOpt = Some( root.index.state.generation ),
+        offset = Some( 0 ),
+        textQuery = OptionUtil.maybeOpt(isSearchNodes) {
+          Option( root.index.search.text.query )
+            .filter(_.nonEmpty)
+        }
+      )
     )
 
-    val fx = Effect {
-      // Допускать доп.барахло в ответе (foc-карточк, список нод, список плитки и т.д.)? Да, кроме фоновой проверки геолокации.
-      val withStuff = !switchCtx.demandLocTest
-      val args = MScQs(
-        common = MScCommonQs(
-          apiVsn = root.internals.conf.apiVsn,
-          // Когда уже задан id-ресивера, не надо слать на сервер маячки и географию.
-          locEnv = {
-            // Слать на сервер координаты с карты или с gps, если идёт определение местоположения.
-            if (switchCtx.demandLocTest) root.locEnvUser
-            else if (switchCtx.forceGeoLoc.nonEmpty) MLocEnv(switchCtx.forceGeoLoc, root.locEnvBleBeacons)
-            else if (switchCtx.indexQsArgs.nodeId.isEmpty) root.locEnvMap
-            else MLocEnv.empty
-          },
-          screen = Some( root.dev.screen.info.screen ),
-          // Не надо плитку присылать, если demandLocTest: вопрос на экране не требует плитки.
-          searchGridAds = OptionUtil.maybeTrue( withStuff ),
-          // Сразу запросить поиск по узлам, если панель поиска открыта.
-          searchNodes = OptionUtil.maybeTrue( isSearchNodes && withStuff ),
-        ),
-        index = Some( switchCtx.indexQsArgs ),
-        // Фокусироваться надо при запуске. Для этого следует получать всё из reason, а не из состояния.
-        foc = for {
-          focAdId <- switchCtx.focusedAdId
-          if withStuff
-        } yield {
-          MScFocusArgs(
-            focIndexAllowed = true,
-            lookupMode      = None,
-            lookupAdId      = focAdId
-          )
-        },
-        search = searchArgs
-      )
+    // Продолжать, только если reqSearchArgs изменились:
+    if (v0.search.geo.found.reqSearchArgs contains[MScQs] args) {
+      // Дубликат запроса. Бывает при запуске, когда jsRouter и wzFirst сыплят одинаковые RouteTo().
+      noChange
 
-      api
-        .pubApi(args)
-        .transform { tryRes =>
-          val r2 = HandleScApiResp(
-            reqTimeStamp  = Some(ts),
-            qs            = args,
-            tryResp       = tryRes,
-            reason        = reason,
-            switchCtxOpt  = Some(switchCtx)
-          )
-          Success(r2)
-        }
-    }
+    } else {
+      // Надо делать запрос, обновив состояние:
+      val fx = Effect {
+        api
+          .pubApi(args)
+          .transform { tryRes =>
+            val r2 = HandleScApiResp(
+              reqTimeStamp  = Some(ts),
+              qs            = args,
+              tryResp       = tryRes,
+              reason        = reason,
+              switchCtxOpt  = Some(switchCtx)
+            )
+            Success(r2)
+          }
+      }
 
-    var v2 = MScIndex.resp.modify(_.pending(ts))(v0)
+      var valueModF = MScIndex.resp.modify(_.pending(ts))
 
-    // Выставить в состояние, что запущен поиск узлов, чтобы не было дублирующихся запросов от контроллера панели.
-    if (isSearchNodes) {
-      v2 = MScIndex.search
+      var nodesFoundModF = MNodesFoundS.reqSearchArgs.set( Some(args) )
+      // Выставить в состояние, что запущен поиск узлов, чтобы не было дублирующихся запросов от контроллера панели.
+      if (isSearchNodes)
+        nodesFoundModF = nodesFoundModF andThen MNodesFoundS.req.modify( _.pending(ts) )
+
+      valueModF = valueModF andThen MScIndex.search
         .composeLens( MScSearch.geo )
         .composeLens( MGeoTabS.found )
-        .modify { found0 =>
-          found0.withReqWithArgs(
-            req = found0.req.pending(ts),
-            reqSearchArgs = Some(searchArgs)
-          )
-        }(v2)
-    }
+        .modify(nodesFoundModF)
 
-    ah.updateMaybeSilentFx(silentUpdate)(v2, fx)
+      val v2 = valueModF(v0)
+      ah.updateMaybeSilentFx(silentUpdate)(v2, fx)
+    }
   }
 
 
@@ -474,6 +480,7 @@ class IndexAh[M](
 
     // Клик по кнопке перехода на другой узел.
     case m @ GoToPrevIndexView =>
+      println(m)
       val v0 = value
       v0.state.prevNodeOpt.fold(noChange) { prevNodeView =>
         // Контекст переключения.
@@ -568,6 +575,7 @@ class IndexAh[M](
           )
         )
 
+        println(m)
         _getIndex(
           silentUpdate  = false,
           v0            = v1,
