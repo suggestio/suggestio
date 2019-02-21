@@ -47,10 +47,10 @@
               @mai.sources.map { src =>
                 <a href="http://anonym.to/?@src.url" title="@src.url">URL</a>
                 <br/>
-                @src.contentHandlers.map { ch => @ch.name<br/> }
+                @src.contentHandlers.map { ch => @ch.value<br/> }
               }
             </td>
-            <td>@mai.renderers.map { rrr => @rrr.name<br/> }</td>
+            <td>@mai.renderers.map { rrr => @rrr.value<br/> }</td>
             <td>
               Шаблон: @mai.tplAdId<br/>
               Цели: @mai.targetAdIds.map { tai => <br/>@tai }

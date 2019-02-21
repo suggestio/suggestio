@@ -1,15 +1,14 @@
 package util.ext.tw
 
 import javax.inject.{Inject, Singleton}
-
 import controllers.routes
+import io.suggest.ext.svc.MExtServices
 import io.suggest.img.MImgFmts
 import io.suggest.model.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.ext.Mad2ImgUrlCalcOuter
 import models.mctx.{Context, ContextUtil}
 import models.IRenderable
-import models.mext.MExtServices
 import models.mext.tw.card.{PhotoCardArgs, TwImgSizes}
 import models.mproj.ICommonDi
 import play.api.libs.ws.WSClient
@@ -62,7 +61,7 @@ class TwitterHelper @Inject() (
   }
 
   /** Найти стандартный (в рамках сервиса) размер картинки. */
-  override def postImgSzWithName(n: String) = TwImgSizes.maybeWithName(n)
+  override def postImgSzWithName(n: String) = TwImgSizes.withValueOpt(n)
 
   override def advPostMaxSz(tgUrl: String) = TwImgSizes.Photo
 

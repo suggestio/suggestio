@@ -1,11 +1,12 @@
 package models.ai
 
-import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.model._
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import japgolly.univeq.UnivEq
 import org.xml.sax.helpers.DefaultHandler
 import util.ai.AiContentHandler
 import util.ai.sax.currency.cbrf.CbrfCurDayXmlSax
 import util.ai.sax.weather.gidromet.GidrometRssSax
+
 
 /**
  * Suggest.io
@@ -14,27 +15,37 @@ import util.ai.sax.weather.gidromet.GidrometRssSax
  * Description: Модель с доступными обработчиками контента.
  */
 
-object MAiMadContentHandlers extends EnumMaybeWithName {
-  protected sealed abstract class Val(val name: String) extends super.Val(name) {
-    /** Собрать новый инстанс sax-парсера. */
-    def newInstance(maim: MAiCtx): DefaultHandler with AiContentHandler
-  }
-
-  type MAiMadContentHandler = Val
-  override type T = MAiMadContentHandler
-
-
-  // Тут всякие доступные content-handler'ы. Имена менять нельзя.
+object MAiMadContentHandlers extends StringEnum[MAiMadContentHandler] {
 
   /** Sax/tika-парсер для rss-прогнозов росгидромета. */
-  val GidrometRss: MAiMadContentHandler = new Val("gidromet.rss") {
-    override def newInstance(maim: MAiCtx) = new GidrometRssSax(maim)
-  }
+  case object GidrometRss extends MAiMadContentHandler("gidromet.rss")
 
   /** SAX-парсер для выхлопов ЦБ РФ через XML API сайта. */
-  val CbrfXml: MAiMadContentHandler = new Val("cbrf.xml") {
-    override def newInstance(maim: MAiCtx) = new CbrfCurDayXmlSax
+  case object CbrfXml extends MAiMadContentHandler("cbrf.xml")
+
+  override def values = findValues
+
+}
+
+
+sealed abstract class MAiMadContentHandler(override val value: String) extends StringEnumEntry
+
+object MAiMadContentHandler {
+
+  implicit class MAiChOpsExt(val mch: MAiMadContentHandler) extends AnyVal {
+
+    /** Собрать новый инстанс sax-парсера. */
+    def newInstance(maim: MAiCtx): DefaultHandler with AiContentHandler = {
+      mch match {
+        case MAiMadContentHandlers.GidrometRss =>
+          new GidrometRssSax(maim)
+        case MAiMadContentHandlers.CbrfXml =>
+          new CbrfCurDayXmlSax
+      }
+    }
   }
+
+  @inline implicit def univEq: UnivEq[MAiMadContentHandler] = UnivEq.derive
 
 }
 

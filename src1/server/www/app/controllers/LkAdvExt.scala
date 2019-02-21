@@ -3,6 +3,7 @@ package controllers
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.EsModel
+import io.suggest.ext.svc.MExtServices
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.csp.Csp
@@ -11,7 +12,7 @@ import models.adv._
 import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
 import models.adv.ext.{MAdvRunnerTplArgs, MExtTargetSearchArgs, MForAdTplArgs}
 import models.mctx.Context
-import models.mext.MExtServices
+import models.mext.MExtServicesJvm
 import models.mproj.ICommonDi
 import models.req.{IAdProdReq, MReqNoBody}
 import org.elasticsearch.search.sort.SortOrder
@@ -69,9 +70,11 @@ class LkAdvExt @Inject() (
   private val _CSP_HDR_OPT: Option[(String, String)] = {
     cspUtil.mkCustomPolicyHdr { csp0 =>
       val allSrcsIter = for {
-        mExtService <- MExtServices.valuesT.iterator
-        domain      <- mExtService.cspSrcDomains
-        proto       <- mExtService.cspSrcProtos
+        mExtService <- MExtServices.values.iterator
+        if mExtService.hasAdvExt
+        advExt = MExtServicesJvm.forService( mExtService ).advExt
+        domain      <- advExt.cspSrcDomains
+        proto       <- advExt.cspSrcProtos
       } yield {
         proto + "://" + domain
       }

@@ -246,6 +246,29 @@ object Common {
       */
     val MONOCLE = "1.+"
 
+
+    /** Версии pac4j.
+      * @see [[https://github.com/pac4j/play-pac4j/wiki/Dependencies]]
+      * @see [[https://search.maven.org/search?q=a:play-pac4j_2.12]]
+      */
+    object Pac4j {
+
+      /** pac4j: версия play-pac4j.
+        */
+      val PLAY = "7.0.0"
+
+      /** Версия модулей pac4j. */
+      val MODULES = "3.4.0"
+
+      /** Версия shiro-core для Play Session Store.
+        * @see [[https://github.com/pac4j/play-pac4j/wiki/Security-configuration]]
+        * By default, the PlayCookieSessionStore internally uses a ShiroAesDataEncrypter to encrypt your data,
+        * which requires the shiro-core dependency to be **explicitly declared**.
+        * */
+      val APACHE_SHIRO = "1.+"
+
+    }
+
   }
 
 
@@ -295,7 +318,7 @@ object Common {
   def sjsDomVsn         = "0.9.6"
 
   /** Версия Apache commons-io. */
-  def apacheCommonsIoVsn = "2.4"
+  def apacheCommonsIoVsn = "2.6"
 
   /** Версия scalatest. */
   def scalaTestVsn       = "3.0.1"

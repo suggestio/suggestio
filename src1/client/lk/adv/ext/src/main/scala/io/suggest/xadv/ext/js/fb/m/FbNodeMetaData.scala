@@ -26,6 +26,6 @@ case class FbNodeMetaData(
   nodeTypeStr : Option[String]
 ) {
 
-  def nodeType = nodeTypeStr.flatMap(FbNodeTypes.maybeWithName)
+  def nodeType = nodeTypeStr.flatMap(FbNodeTypes.withValueOpt)
 
 }

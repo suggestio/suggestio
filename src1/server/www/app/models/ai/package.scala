@@ -8,12 +8,9 @@ package models
  */
 package object ai {
 
-  type MAiMadContentHandler   = MAiMadContentHandlers.MAiMadContentHandler
-
   type GeoDirection           = GeoDirections.GeoDirection
 
   type SkyState               = SkyStates.SkyState
   type Precipation            = Precipations.Precipation
 
-  type MAiRenderer            = MAiRenderers.MAiRenderer
 }

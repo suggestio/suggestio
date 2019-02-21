@@ -45,6 +45,16 @@ libraryDependencies ++= {
   // TODO DateTimePrettyPrinter -- последний компонент в проекте, который тянет joda-time:
   "joda-time"             %  "joda-time"            % "2.8.+",
 
+  // Pac4j нужна для интеграции с ЕСИА через OpenID Connect.
+  "org.pac4j" %% "play-pac4j" % Common.Vsn.Pac4j.PLAY,
+  "org.pac4j" % "pac4j-oidc" % Common.Vsn.Pac4j.MODULES,
+  // play-pac4jp для PlaySessionStore требуется явно указать эту зависимость:
+  // (см. https://github.com/pac4j/play-pac4j/wiki/Security-configuration внизу страницы:
+  // > PlayCookieSessionStore internally uses a ShiroAesDataEncrypter to encrypt your data,
+  // > which requires the shiro-core dependency to be explicitly declared.
+  // )
+  "org.apache.shiro" % "shiro-core" % Common.Vsn.Pac4j.APACHE_SHIRO,
+
   //"com.ning" % "async-http-client" % "1.9.+",   // 2.5 migration, ahc -> 2.0.x. Удалить, если не понадобится возвращать.
   "org.slf4j" % "log4j-over-slf4j" % Common.Vsn.SLF4J,
   "com.google.guava" % "guava" % "18.+",

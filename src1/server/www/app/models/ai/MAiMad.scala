@@ -74,7 +74,7 @@ class MAiMads
         .toSeq,
       tplAdId = stringParser(m(TPL_AD_ID_ESFN)),
       renderers = iteratorParser(m(RENDERERS_ESFN))
-        .map { s => MAiRenderers.withName(stringParser(s)) : MAiRenderer }
+        .map { s => MAiRenderers.withValue(stringParser(s)) : MAiRenderer }
         .toSeq,
       targetAdIds = strListParser(m(TARGET_AD_IDS_ESFN)),
       descr = m.get(DESCR_ESFN)
@@ -97,7 +97,7 @@ class MAiMads
       TIMEZONE_ESFN           -> JsString(tz.getId) ::
       acc
     if (renderers.nonEmpty)
-      acc1 ::= RENDERERS_ESFN -> JsArray(renderers.map(rr => JsString(rr.name)))
+      acc1 ::= RENDERERS_ESFN -> JsArray(renderers.map(rr => JsString(rr.value)))
     if (descr.isDefined)
       acc1 ::= DESCR_ESFN -> JsString(descr.get)
     acc1

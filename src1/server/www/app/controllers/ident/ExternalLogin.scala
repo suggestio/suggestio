@@ -4,6 +4,7 @@ import javax.inject.Inject
 import controllers.{SioController, routes}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModelDi
+import io.suggest.ext.svc.MExtServices
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
@@ -12,10 +13,13 @@ import io.suggest.sec.m.msession.{CustomTtl, Keys}
 import io.suggest.util.logs.{IMacroLogs, MacroLogsDyn}
 import models.ExtRegConfirmForm_t
 import models.mctx.ContextUtil
-import models.mext.{ILoginProvider, MExtServices}
+import models.mctx.p4j.{P4jWebContext, P4jWebContextFactory}
+import models.mext.{ILoginProvider, MExtServicesJvm}
 import models.mproj.ICommonDi
 import models.req.IReq
 import models.usr._
+import org.pac4j.core.engine.DefaultCallbackLogic
+import org.pac4j.core.config.{Config => P4jConfig}
 import play.api.cache.AsyncCacheApi
 import play.api.data.Form
 import play.api.libs.ws.{WSClient, WSRequest}
@@ -80,7 +84,10 @@ class ExternalLogin_ @Inject() (
         // Аккуратная инициализация доступных провайдеров и без дубликации кода.
         val provs = MExtServices.values
           .iterator
-          .flatMap { _.loginProvider }
+          .flatMap { service =>
+            val svcJvm = MExtServicesJvm.forService( service )
+            svcJvm.loginProvider
+          }
           .flatMap { prov =>
             val provSt = current.injector.instanceOf( prov.ssProviderClass )
             try {
@@ -142,8 +149,6 @@ trait ExternalLogin
   /** Доступ к DI-инстансу */
   val externalLogin: ExternalLogin_ = current.injector.instanceOf[ExternalLogin_]
 
-  import externalLogin.env
-
   /**
    * GET-запрос идентификации через внешнего провайдера.
    * @param provider провайдер идентификации.
@@ -164,7 +169,7 @@ trait ExternalLogin
   // которые по сути являются переусложнёнными stateful(!)-сессиями, которые придумал какой-то нехороший человек.
   protected def handleAuth1(provider: ILoginProvider, redirectTo: Option[String]) = maybeAuth().async { implicit request =>
     lazy val logPrefix = s"handleAuth1($provider):"
-    env.providers
+    externalLogin.env.providers
       .get(provider.ssProvName)
       .fold[Future[Result]] {
         errorHandler.onClientError(request, NOT_FOUND)
@@ -321,6 +326,47 @@ trait ExternalLogin
       )
     }
   }
+
+
+
+  //--------------------------------------------------------------------------------------------------//
+  //----------------------------------------- v2 ext login -------------------------------------------//
+  //--------------------------------------------------------------------------------------------------//
+
+  // TODO logic-кода здесь быть не должно, нужно допилить на базе собтсвенной интеграции с сервисами.
+  private lazy val callbackLogic = new DefaultCallbackLogic[Result, P4jWebContext]()
+  private val p4jWebContextFactory = current.injector.instanceOf[P4jWebContextFactory]
+  private val p4jConfig = current.injector.instanceOf[P4jConfig]
+
+
+  /** v2 ext login: через Pac4j.
+    * Контроллер дёргает pac4j, и отрабатывает итог используется.
+    */
+  def callback2(r: Option[String]) = maybeAuth().async { implicit request =>
+    val p4jCtx = p4jWebContextFactory.fromRequest()
+
+    // TODO Портировать handleAuth1
+    // p4jCtx,
+    // p4jConfig,
+    // defaultUrl = routes.Sc.geoSite().url,
+    ???
+  }
+
+  /**
+   * GET-запрос идентификации через pac4j.
+   * @param provider провайдер идентификации.
+   * @param r Обратный редирект.
+   * @return Redirect.
+   */
+  def extIdCbGet(r: Option[String]) = callback2(r)
+
+  /**
+   * POST-запрос идентификации через pac4j.
+   * @param provider Провайдер идентификации.
+   * @param r Редирект обратно.
+   * @return Redirect.
+   */
+  def extIdCbPost(r: Option[String]) = callback2(r)
 
 }
 

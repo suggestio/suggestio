@@ -1,6 +1,7 @@
 package util.adv.ext
 
 import java.io.ByteArrayOutputStream
+import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeoutException
 
@@ -8,6 +9,7 @@ import akka.actor.Props
 import com.google.inject.assistedinject.Assisted
 import javax.inject.{Inject, Singleton}
 import controllers.routes
+import io.suggest.adv.ext.model.ctx.MAskActions
 import io.suggest.async.AsyncUtil
 import io.suggest.es.model.EsModel
 import io.suggest.fsm.FsmActor
@@ -32,6 +34,7 @@ import play.shaded.oauth.oauth.signpost.exception.OAuthException
 import util.adv.ext.ut._
 import util.ext.ExtServicesUtil
 import util.jsa.JsWindowOpen
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -111,10 +114,10 @@ class OAuth1ServiceActor @Inject() (
   }
 
   /** Ключ для хранения секретов access_token'а, относящихся к юзеру. */
-  lazy val lsValueKey = s"adv.ext.svc.${args.service.strId}.access.${args.request.user.personIdOpt.getOrElse("__ANON__")}"
+  lazy val lsValueKey = s"adv.ext.svc.${args.service.value}.access.${args.request.user.personIdOpt.getOrElse("__ANON__")}"
 
   /** Имя js-попапа, в рамках которого происходит авторизация пользователя сервисом. */
-  private def domWndTargetName = "popup-authz-" + args.service.strId
+  private def domWndTargetName = "popup-authz-" + args.service.value
 
   /** Запуск актора. Выставить исходное состояние. */
   override def preStart(): Unit = {
@@ -160,7 +163,7 @@ class OAuth1ServiceActor @Inject() (
       value = value2
     )
     val mctx1 = args.mctx0.copy(
-      action = Some( MJsActions.StorageSet ),
+      action = Some( MAskActions.StorageSet ),
       custom = Some( Json.toJson(cctx) )
     )
     val jsCmd = StorageSetCmd(mctx1)
@@ -173,9 +176,9 @@ class OAuth1ServiceActor @Inject() (
     val json = Json.toJson(info).toString()
     // Зашифровать всё с помощью PGP.
     val baos = new ByteArrayOutputStream(1024)
-    pgpKeyFut map { pgpKey =>
+    for (pgpKey <- pgpKeyFut) yield {
       pgpUtil.encryptForSelf(
-        data = IOUtils.toInputStream(json),
+        data = IOUtils.toInputStream(json, StandardCharsets.UTF_8),
         key  = pgpKey,
         out  = baos
       )
@@ -202,7 +205,7 @@ class OAuth1ServiceActor @Inject() (
       super.afterBecome()
       val cctx = MStorageKvCtx(lsValueKey)
       val mctx1 = args.mctx0.copy(
-        action = Some( MJsActions.StorageGet ),
+        action = Some( MAskActions.StorageGet ),
         custom = Some( Json.toJson(cctx) )
       )
       val jsCmd = StorageGetCmd(
@@ -218,7 +221,7 @@ class OAuth1ServiceActor @Inject() (
 
     override def receiverPart: Receive = {
       // Пришел ответ от js с результатами чтения хранилища браузера. Нужно попытаться расшифровать его.
-      case ans: Answer if ans.ctx2.action.contains(MJsActions.StorageGet) =>
+      case ans: Answer if ans.ctx2.action.contains(MAskActions.StorageGet) =>
         // Остановить таймер таймаута.
         answerReceived = true
         timeoutTimer.cancel()
@@ -241,17 +244,16 @@ class OAuth1ServiceActor @Inject() (
       // Извлекаем возможное значение.
       val cctxOpt = ans.ctx2.custom
         .flatMap { jsv  =>  Json.fromJson[MStorageKvCtx](jsv).asOpt }
-        .filter  { _.key == lsValueKey }
+        .filter  { _.key ==* lsValueKey }
         .flatMap { _.value }
       val fut = cctxOpt match {
         case Some(input) =>
           for {
             mkey  <- lsCryptoKey
           } yield {
-            val input = cctxOpt.get
             val baos = new ByteArrayOutputStream(256)
             pgpUtil.decryptFromSelf(
-              data = IOUtils.toInputStream( input ),
+              data = IOUtils.toInputStream( input, StandardCharsets.UTF_8 ),
               key  = mkey,
               out  = baos
             )

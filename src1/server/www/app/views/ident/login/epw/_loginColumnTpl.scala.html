@@ -2,7 +2,10 @@
 
 @* Колонка с формой логина через email-pw и соц.сети. *@
 
-@import ctx._
+@import io.suggest.ext.svc.MExtServices
+@import models.mext.MExtServicesJvm
+@import ctx.messages
+
 
 <div class="auth-page_column">
 
@@ -15,7 +18,7 @@
 
 
   <div class="auth-page_social-btn-lst">
-    @mext.MExtServices.values.iterator.flatMap(_.loginProvider).map { idp =>
+    @for(svc <- MExtServices.values; svcJvm = MExtServicesJvm.forService(svc); idp <- svcJvm.loginProvider) {
       <a class="auth-page_social-btn __@idp.ssProvName" href="@routes.Ident.idViaProvider(idp)"></a>
     }
   </div>

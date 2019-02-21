@@ -1,5 +1,6 @@
 package io.suggest.common.geom.d2
 
+import enumeratum.values.StringEnumEntry
 import io.suggest.math.SimpleArithmetics
 import io.suggest.media.MediaConst
 import japgolly.univeq.UnivEq
@@ -150,14 +151,12 @@ final case class MSize2di(
 }
 
 
-/** Именованая версия [[ISize2di]]. Полезно для enum'ов.
+/** Интерфейс для именованной обёртки над [[MSize2di]]. Полезно для enum'ов.
   * Позволяет задать допустимый размер строковым алиасом. */
-trait INamedSize2di extends ISize2di {
+trait INamedSize2di extends StringEnumEntry {
 
-  /** Алиас (название) размера. */
-  def szAlias: String
+  def whPx: MSize2di
 
-  override def toString = "Sz2D(" + szAlias + ",w=" + width + ";h=" + height + ")"
 }
 
 

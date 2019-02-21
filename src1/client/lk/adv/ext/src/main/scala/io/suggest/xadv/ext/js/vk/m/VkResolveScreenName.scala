@@ -40,7 +40,7 @@ object VkResolveScreenNameResult extends FromJsonT {
     val d = raw.asInstanceOf[js.Dictionary[js.Any]] : WrappedDictionary[js.Any]
     val r = d("response").asInstanceOf[js.Dictionary[js.Any]]
     VkTargetInfo(
-      tgType = VkTargetTypes.withName( r("type").toString ),
+      tgType = VkTargetTypes.withValue( r("type").toString ),
       id     = r("object_id").asInstanceOf[Int],
       name   = None
     )

@@ -1,8 +1,7 @@
 package models.adv.js
 
-import models.adv.js.ctx.{MJsCtx, JsCtx_t}
-import play.api.libs.json.{Json, JsString}
-import Answer._
+import models.adv.js.ctx.MJsCtx
+import io.suggest.adv.ext.model.ctx.MAskActions
 
 /**
  * Suggest.io
@@ -22,6 +21,6 @@ case class EnsureReadyAsk(
   replyTo   : Option[String]
 ) extends IJsonActionCmd with IJsonActionCtxPatcher {
 
-  override def action = MJsActions.EnsureReady
+  override def action = MAskActions.EnsureReady
 
 }

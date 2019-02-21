@@ -3,13 +3,12 @@ package models.event
 import java.{util => ju}
 
 import io.suggest.common.empty.EmptyProduct
-import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.event.SioNotifier.{Classifier, Event}
+import io.suggest.ext.svc.MExtService
 import io.suggest.model.n2.node.MNode
 import io.suggest.util.JacksonParsing
 import models.adv.MExtTarget
 import models.blk
-import models.mext.MExtService
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -27,17 +26,11 @@ import play.api.libs.json._
  */
 
 
-object ArgNames extends Enumeration with EnumMaybeWithName {
+object ArgNames {
 
-  /** Класс элементов этой модели. */
-  protected[this] sealed class Val(val strId: String)
-    extends super.Val(strId)
-
-  override type T = Val
-
-  val AdnId          : T = new Val("a")
-  val AdvExtTarget   : T = new Val("b")
-  val AdId           : T = new Val("c")
+  def AdnId          = "a"
+  def AdvExtTarget   = "b"
+  def AdId           = "c"
   //val PersonId     : T = new Val("")
 
 }
@@ -54,9 +47,9 @@ object IArgsInfo {
   import ArgNames._
 
   implicit def writes: Writes[IArgsInfo] = (
-    (__ \ AdnId.strId).writeNullable[String] and
-    (__ \ AdvExtTarget.strId).write[Seq[String]] and
-    (__ \ AdId.strId).writeNullable[String]
+    (__ \ AdnId).writeNullable[String] and
+    (__ \ AdvExtTarget).write[Seq[String]] and
+    (__ \ AdId).writeNullable[String]
   ){ s => (s.adnIdOpt, s.advExtTgIds, s.adIdOpt) }
 
 }
@@ -88,9 +81,9 @@ object ArgsInfo {
   import ArgNames._
 
   implicit val reads: Reads[ArgsInfo] = (
-    (__ \ AdnId.strId).readNullable[String] and
-    (__ \ AdvExtTarget.strId).read[Seq[String]] and
-    (__ \ AdId.strId).readNullable[String]
+    (__ \ AdnId).readNullable[String] and
+    (__ \ AdvExtTarget).read[Seq[String]] and
+    (__ \ AdId).readNullable[String]
   )(apply _)
 
   /** Исторически, для десериализации используется jackson. Тут костыли для десериализации из java Map. */
@@ -100,13 +93,13 @@ object ArgsInfo {
         EmptyArgsInfo
       } else {
         val f = ArgsInfo(
-          adnIdOpt      = Option(jm get AdnId.strId).map(JacksonParsing.stringParser),
-          advExtTgIds = Option(jm get AdvExtTarget.strId)
+          adnIdOpt      = Option(jm get AdnId).map(JacksonParsing.stringParser),
+          advExtTgIds = Option(jm get AdvExtTarget)
             .iterator
             .flatMap(JacksonParsing.iteratorParser)
             .map(JacksonParsing.stringParser)
             .toSeq,
-          adIdOpt       = Option(jm get AdId.strId).map(JacksonParsing.stringParser)
+          adIdOpt       = Option(jm get AdId).map(JacksonParsing.stringParser)
         )
         // На случай появления мусора в карте...
         if (f.isEmpty)
@@ -122,9 +115,9 @@ object ArgsInfo {
 
   /** Поля аргументов тоже индексируются. В первую очередь, чтобы их можно было легко и быстро удалять. */
   def generateMappingProps: List[DocField] = List(
-    FieldKeyword(AdnId.strId, index = true, include_in_all = false),
-    FieldKeyword(AdvExtTarget.strId, index = true, include_in_all = false),
-    FieldKeyword(AdId.strId, index = true, include_in_all = false)
+    FieldKeyword(AdnId, index = true, include_in_all = false),
+    FieldKeyword(AdvExtTarget, index = true, include_in_all = false),
+    FieldKeyword(AdId, index = true, include_in_all = false)
   )
 
 }

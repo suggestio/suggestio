@@ -1,6 +1,7 @@
 package controllers
 
 import java.io.{ByteArrayInputStream, StringWriter}
+import java.nio.charset.StandardCharsets
 
 import javax.inject.Inject
 import de.jollyday.util.XMLUtil
@@ -130,7 +131,7 @@ class SysCalendar @Inject() (
             case stream =>
               try {
                 val sw = new StringWriter()
-                IOUtils.copy(stream, sw)
+                IOUtils.copy(stream, sw, StandardCharsets.UTF_8)
                 val data = sw.toString
                 val stub = MCalendar(
                   name      = "",

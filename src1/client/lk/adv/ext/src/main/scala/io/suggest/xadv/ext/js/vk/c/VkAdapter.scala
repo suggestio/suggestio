@@ -2,7 +2,8 @@ package io.suggest.xadv.ext.js.vk.c
 
 import java.net.URI
 
-import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
+import io.suggest.common.ws.proto.MAnswerStatuses
+import io.suggest.ext.svc.MExtServices
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.c.adp.AsyncInitAdp
@@ -95,7 +96,7 @@ class VkAdapter extends AsyncInitAdp {
 
       } else {
         // Should never happen. Нет карточек для размещения.
-        Future failed AdapterFatalError(MServices.VKONTAKTE, "All mctx.mads looks lost.")
+        Future failed AdapterFatalError(MExtServices.VKONTAKTE, "All mctx.mads looks lost.")
       }
     }
   }

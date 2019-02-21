@@ -36,7 +36,7 @@ object AiSource {
           contentHandlers = Option( jmap.get(CONTENT_HANDLERS_ESFN) )
             .map { rawChs =>
               JacksonParsing.iteratorParser(rawChs)
-                .map { rawChId => MAiMadContentHandlers.withName(JacksonParsing.stringParser(rawChId)): MAiMadContentHandler }
+                .map { rawChId => MAiMadContentHandlers.withValue(JacksonParsing.stringParser(rawChId)): MAiMadContentHandler }
                 .toSeq
             }
             .getOrElse(Seq.empty)

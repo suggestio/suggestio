@@ -20,7 +20,7 @@ case class FbLoginArgs(
   override def toJson: Dictionary[Any] = {
     val d = Dictionary[Any]()
     if (scopes.nonEmpty)
-      d.update("scope", FbPermissions.permsToString(scopes))
+      d.update("scope", FbPermission.permsToString(scopes))
     if (returnScopes.nonEmpty)
       d.update("return_scopes", returnScopes.get)
     if (authType.nonEmpty)
@@ -45,7 +45,7 @@ object FbLoginResult {
     val d = resp: WrappedDictionary[js.Any]
     FbLoginResult(
       status = d.get("status")
-        .flatMap { v => FbLoginStatuses.maybeWithName(v.toString) }
+        .flatMap { v => FbLoginStatuses.withValueOpt(v.toString) }
         .get,
       authResp = d.get("authResponse")
         .map(FbAuthResponse.fromJson)

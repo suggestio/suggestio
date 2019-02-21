@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.fb.m
 
-import io.suggest.common.menum.LightEnumeration
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import japgolly.univeq.UnivEq
 
 /**
  * Suggest.io
@@ -8,52 +9,45 @@ import io.suggest.common.menum.LightEnumeration
  * Created: 27.03.15 13:56
  * Description: Модель допустимых статусов залогиненности юзера в рамках facebook.
  */
-object FbLoginStatuses extends LightEnumeration {
-
-  /** Интерфейс экземпляров модели. */
-  protected trait ValT extends super.ValT {
-    val fbStatus: String
-    override def toString = fbStatus
-
-    /** Залогинен ли юзер в фейсбуке? */
-    def isFbLoggedIn: Boolean
-
-    /** Заапрувил ли текущее приложение по отношению к своему аккаунту? (без учета спец.прав) */
-    def isAppConnected: Boolean
-  }
-
-  /** Экземпляры модели. */
-  protected abstract sealed class Val(val fbStatus: String) extends ValT
-
-  override type T = Val
-
+object FbLoginStatuses extends StringEnum[FbLoginStatus] {
 
   /** Юзер залогинен в фейсбуке и подключил приложение к своему аккаунту (без учета прав). */
-  val Connected: T = new Val("connected") {
+  case object Connected extends FbLoginStatus("connected") {
     override def isFbLoggedIn = true
     override def isAppConnected = true
   }
 
   /** Юзер отклонил приложение, но он залогинен в фейсбуке. */
-  val NotAuthorized: T = new Val("not_authorized") {
+  case object NotAuthorized extends FbLoginStatus("not_authorized") {
     override def isFbLoggedIn = true
     override def isAppConnected = false
   }
 
   /** Юзер не залогинен в фейсбуке. */
-  val Unknown: T = new Val("unknown") {
+  case object Unknown extends FbLoginStatus("unknown") {
     override def isFbLoggedIn = false
     override def isAppConnected = false
   }
 
 
-  override def maybeWithName(n: String): Option[T] = {
-    n match {
-      case Connected.fbStatus       => Some(Connected)
-      case NotAuthorized.fbStatus   => Some(NotAuthorized)
-      case Unknown.fbStatus         => Some(Unknown)
-      case _                        => None
-    }
-  }
+  override def values = findValues
 
+}
+
+
+sealed abstract class FbLoginStatus(override val value: String) extends StringEnumEntry {
+  @inline final def fbStatus = value
+
+  override final def toString = value
+
+  /** Залогинен ли юзер в фейсбуке? */
+  def isFbLoggedIn: Boolean
+
+  /** Заапрувил ли текущее приложение по отношению к своему аккаунту? (без учета спец.прав) */
+  def isAppConnected: Boolean
+}
+
+
+object FbLoginStatus {
+  @inline implicit def univEq: UnivEq[FbLoginStatus] = UnivEq.derive
 }

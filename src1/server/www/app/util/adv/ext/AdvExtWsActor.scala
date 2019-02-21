@@ -5,13 +5,15 @@ import _root_.util.ws.{SubscribeToWsDispatcher, WsDispatcherActors}
 import akka.actor.{Actor, ActorRef, Props, SupervisorStrategy}
 import javax.inject.Inject
 import com.google.inject.assistedinject.Assisted
+import io.suggest.adv.ext.model.ctx.MAskActions
+import io.suggest.common.ws.proto.MAnswerStatuses
 import io.suggest.fsm.FsmActor
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.js._
 import models.adv.js.ctx.MJsCtx
 import models.event.{MEventTmp, MEventTypes, RenderArgs}
-import models.mws.AnswerStatuses
+import models.mext.MExtServicesJvm
 import play.api.inject.Injector
 import play.api.libs.json._
 
@@ -152,7 +154,7 @@ case class AdvExtWsActor @Inject()(
       super.afterBecome()
       // Отправить в ws запрос базовой инициализации системы.
       val mctx0 = MJsCtx(
-        action = Some(MJsActions.Init)
+        action = Some(MAskActions.Init)
       )
       val ask = InitAsk(mctx0)
       sendJsCommand(ask)
@@ -163,7 +165,7 @@ case class AdvExtWsActor @Inject()(
         val ans = jso.as[Answer]
         val nextState: FsmState = ans.ctx2.status match {
           // js подтвердил успешную инициализацию.
-          case Some(AnswerStatuses.Success) =>
+          case Some(MAnswerStatuses.Success) =>
             trace("Global js init ok. Going to targets.")
             new WaitForTargetsState(ans.ctx2)
 
@@ -217,23 +219,27 @@ case class AdvExtWsActor @Inject()(
           throw new IllegalStateException("No targets found in storage, but it should.")
 
         } else {
-          trace(s"$name waiting finished. Found ${targets.size} targets.")
+          LOGGER.trace(s"$name waiting finished. Found ${targets.size} targets.")
           val mctx1 = mctx0.copy(status = None, action = None)
           val tgsGrouped = targets.groupBy(_.target.service)
 
           // Сгруппировать таргеты по сервисам, запустить service-акторов, которые занимаются инициализацией клиентов сервисов.
-          for ((_service, _srvTgs) <- tgsGrouped) {
-            trace(s"Starting service ${_service} actor with ${_srvTgs.size} targets...")
+          for {
+            (mService, srvTgs) <- tgsGrouped
+            if mService.hasAdvExt
+            serviceJvm = MExtServicesJvm.forService( mService )
+          } {
+            LOGGER.trace(s"Starting service ${mService} actor with ${srvTgs.size} targets...")
 
-            val ctag = _service.extAdvServiceActorFactoryCt
+            val ctag = serviceJvm.advExt.extAdvServiceActorFactoryCt
             // Кешировать инстансы полученных guice factories не требуется, т.к. каждый сервис дергаётся лишь один раз.
-            trace(s"Service factory for ${_service} is $ctag")
+            LOGGER.trace(s"Service factory for ${mService} is $ctag")
             val factory = injector.instanceOf( ctag )
 
             // Подготовить аргументы актора для текущего сервиса.
             val actorArgs = new IExtAdvServiceActorArgs with IExtAdvArgsWrapperT {
-              override def service            = _service
-              override def targets            = _srvTgs
+              override def service            = mService
+              override def targets            = srvTgs
               override def _eaArgsUnderlying  = eactx
               override def wsMediatorRef      = self
               override def mctx0              = mctx1

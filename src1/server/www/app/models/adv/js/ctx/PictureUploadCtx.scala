@@ -1,8 +1,7 @@
 package models.adv.js.ctx
 
-import io.suggest.adv.ext.model.ctx.MPicUploadModesT
+import io.suggest.adv.ext.model.ctx.{MPictureUploadMode, MPictureUploadModes}
 import io.suggest.adv.ext.model.ctx.PicUploadCtx._
-import io.suggest.common.menum.{EnumJsonReadsT, EnumMaybeWithName}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -19,9 +18,9 @@ object PictureUploadCtx {
   /** mapper из JSON. */
   implicit def reads = new Reads[PictureUploadCtx] {
     override def reads(json: JsValue): JsResult[PictureUploadCtx] = {
-      import PictureUploadModes._
+      import MPictureUploadModes._
       (json \ MODE_FN)
-        .validate[PictureUploadMode]
+        .validate[MPictureUploadMode]
         .flatMap {
           case S2s => json.validate[S2sPictureUpload]
         }
@@ -36,7 +35,7 @@ object PictureUploadCtx {
           S2sPictureUpload.writes.writes(s2s)
         case _ =>
           JsObject(Seq(
-            MODE_FN -> JsString(o.mode.jsName)
+            MODE_FN -> JsString(o.mode.value)
           ))
       }
     }
@@ -48,7 +47,7 @@ object PictureUploadCtx {
 
 /** Трейт для данных по режиму upload'а. */
 sealed trait PictureUploadCtx {
-  def mode: PictureUploadMode
+  def mode: MPictureUploadMode
 }
 
 
@@ -63,7 +62,7 @@ object S2sPictureUpload {
   implicit def writes = new Writes[S2sPictureUpload] {
     override def writes(o: S2sPictureUpload): JsValue = {
       JsObject(Seq(
-        MODE_FN       -> JsString(o.mode.jsName),
+        MODE_FN       -> JsString(o.mode.value),
         URL_FN        -> JsString(o.url),
         PART_NAME_FN  -> JsString(o.partName)
       ))
@@ -74,27 +73,5 @@ object S2sPictureUpload {
 
 /** Модель данных по s2s upload. */
 case class S2sPictureUpload(url: String, partName: String) extends PictureUploadCtx {
-  override def mode = PictureUploadModes.S2s
-}
-
-
-/** Значения режимов аплоада картинок. */
-// TODO Выпилить эту модель наверное надо?
-object PictureUploadModes extends EnumMaybeWithName with EnumJsonReadsT with MPicUploadModesT {
-
-  /** Экземпляр modes-модели. */
-  protected[this] class Val(val jsName: String)
-    extends super.Val(jsName) with ValT
-
-  override type T = Val
-
-  /** Сервер s.io должен отправить http-запрос на сервер сервиса. */
-  val S2s: T = new Val(MODE_S2S)
-
-  /** JSON unmapper */
-  implicit def writes: Writes[T] = {
-    __.write[String]
-      .contramap(_.jsName)
-  }
-
+  override def mode = MPictureUploadModes.S2s
 }

@@ -3,11 +3,11 @@ package util.ext
 import java.net.URL
 
 import io.suggest.common.geom.d2.INamedSize2di
+import io.suggest.ext.svc.MExtService
 import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.model.n2.node.MNode
 import io.suggest.text.util.UrlUtil
 import models.blk.{OneAdWideQsArgs, SzMult_t, szMulted}
-import models.mext.MExtService
 import models.mproj.IMCommonDi
 import models.IRenderable
 import util.adv.IAdvUtilDi
@@ -33,7 +33,7 @@ trait IExtServiceHelper
 
   /** id приложения на стороне сервиса. */
   lazy val APP_ID_OPT: Option[String] = {
-    configuration.getOptional[String](s"ext.adv.${mExtService.strId}.api.id")
+    configuration.getOptional[String](s"ext.adv.${mExtService.value}.api.id")
   }
 
   /** Тестирование хоста на принадлежность к текущему сервису. */
@@ -77,7 +77,7 @@ trait IExtServiceHelper
     if (isAdvExtWide(mad)) {
       val sz = advPostMaxSz(tgUrl)
       val v = OneAdWideQsArgs(
-        width = szMulted(sz.width, szMult)
+        width = szMulted(sz.whPx.width, szMult)
       )
       Some(v)
     } else {

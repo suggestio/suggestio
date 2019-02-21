@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.fb.m
 
-import io.suggest.common.menum.LightEnumeration
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import japgolly.univeq.UnivEq
 
 /**
  * Suggest.io
@@ -10,40 +11,36 @@ import io.suggest.common.menum.LightEnumeration
  * Модель состояний выставленных у юзера пермишенов.
  * Изначально было только два варианта: заапрувлено и отказано, т.е. как бы булево.
  */
-object FbPermissionStatuses extends LightEnumeration {
-
-  /** Интерфейс экземпляра модели. */
-  protected trait ValT extends super.ValT {
-    /** Строка по мнению фейсбука. */
-    val fbName: String
-
-    override def toString = fbName
-
-    /** Дан ли допуск к указанному разрешению? */
-    def isGranted: Boolean
-  }
-
-  /** Абстрактный экземпляр модели. */
-  protected abstract sealed class Val(val fbName: String) extends ValT
-
-  override type T = Val
+object FbPermissionStatuses extends StringEnum[FbPermissionStatus] {
 
   /** Юзер заапрувил разрешение. */
-  val Granted: T = new Val("granted") {
+  case object Granted extends FbPermissionStatus("granted") {
     override def isGranted = true
   }
 
   /** Юзер вручную отключил разрешение. */
-  val Declined: T = new Val("declined") {
+  case object Declined extends FbPermissionStatus("declined") {
     override def isGranted = false
   }
 
-  override def maybeWithName(n: String): Option[T] = {
-    n match {
-      case Granted.fbName   => Some(Granted)
-      case Declined.fbName  => Some(Declined)
-      case _                => None   // TODO Логгировать неизвестные значения, желательно прямо на сервере.
-    }
-  }
+  override def values = findValues
+
+}
+
+
+sealed abstract class FbPermissionStatus(override val value: String) extends StringEnumEntry {
+
+  /** Дан ли допуск к указанному разрешению? */
+  def isGranted: Boolean
+
+  /** Строка по мнению фейсбука. */
+  @inline final def fbName = value
+
+  override final def toString = fbName
+
+}
+
+object FbPermissionStatus {
+  @inline implicit def univEq: UnivEq[FbPermissionStatus] = UnivEq.derive
 }
 

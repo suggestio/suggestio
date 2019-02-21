@@ -1,7 +1,7 @@
 package models.mext.tw.card
 
+import io.suggest.ext.svc.MExtServices
 import models.IRenderable
-import models.mext.MExtServices
 
 /**
  * Suggest.io

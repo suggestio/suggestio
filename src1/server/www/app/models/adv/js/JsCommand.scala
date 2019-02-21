@@ -1,12 +1,12 @@
 package models.adv.js
 
-import io.suggest.adv.ext.model.MCommandTypesT
+import io.suggest.adv.ext.model.{MJsCmdType, MJsCmdTypes}
 import io.suggest.adv.ext.model.JsCommand._
-import io.suggest.adv.ext.model.ctx.MAskActionsT
-import io.suggest.common.menum.EnumJsonReadsT
+import io.suggest.adv.ext.model.ctx.MAskAction
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import models.adv.js.ctx.MJsCtx
 import play.api.libs.json._
+
 
 /**
  * Suggest.io
@@ -89,7 +89,7 @@ trait IJsonActionCtxPatcher extends IJsonActionCmd {
   /** Исходный контекст. */
   def mctx0: MJsCtx
   /** Текущий экшен. */
-  def action: MJsAction
+  def action: MAskAction
   override def mctx: MJsCtx = {
     val _act = action
     if (!(mctx0.action contains _act)) {
@@ -111,16 +111,12 @@ case class StorageSetCmd(mctx: MJsCtx) extends IJsonActionCmd {
 case class StorageGetCmd(mctx: MJsCtx, replyTo: Option[String]) extends IJsonActionCmd
 
 
+sealed abstract class CmdSendMode extends enumeratum.EnumEntry
+
 /** Допустимые режимы отправки js-кода в ws. */
-object CmdSendModes extends Enumeration {
-  type T = Value
-  val Async, Queued = Value : T
+object CmdSendModes extends enumeratum.Enum[CmdSendMode] {
+  case object Async extends CmdSendMode
+  case object Queued extends CmdSendMode
+
+  override def values = findValues
 }
-
-
-/** Реализация модели типов команд, отправляемых клиенту по ws. */
-object MJsCmdTypes extends MCommandTypesT
-
-/** Реализация модели json-экшенов. */
-object MJsActions extends MAskActionsT with EnumJsonReadsT
-

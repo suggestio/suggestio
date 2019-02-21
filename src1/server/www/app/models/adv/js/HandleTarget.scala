@@ -1,8 +1,7 @@
 package models.adv.js
 
 import models.adv.js.ctx.MJsCtx
-import play.api.libs.json.{JsString, Json}
-import Answer._
+import io.suggest.adv.ext.model.ctx.MAskActions
 
 /**
  * Suggest.io
@@ -17,6 +16,6 @@ case class HandleTargetAsk(
 ) extends IJsonActionCmd with IJsonActionCtxPatcher {
 
   override def sendMode = CmdSendModes.Async
-  override def action = MJsActions.HandleTarget
+  override def action = MAskActions.HandleTarget
 
 }

@@ -64,7 +64,7 @@ class QuillCss extends StyleSheet.Standalone {
 
 
   // Отрендерить стили для MFonts.
-  for (mfont <- MFonts.valuesT) {
+  for (mfont <- MFonts.values) {
 
     val xFontFamilyName = mfont.cssFontFamily
 

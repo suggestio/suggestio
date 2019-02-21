@@ -78,7 +78,7 @@ class SysAi @Inject() (
               val tokens = tokRe.split(line).toList
               val url = tokens.head
               val chs = tokens.tail.map { chId =>
-                MAiMadContentHandlers.withName(chId) : MAiMadContentHandler
+                MAiMadContentHandlers.withValue(chId) : MAiMadContentHandler
               }
               AiSource(url, chs)
             }
@@ -90,7 +90,7 @@ class SysAi @Inject() (
             sb.append(source.url)
               .append(' ')
             source.contentHandlers.foreach { ch =>
-              sb.append(ch.name)
+              sb.append(ch.value)
                 .append(' ')
             }
             sb.append('\n')
@@ -104,7 +104,7 @@ class SysAi @Inject() (
   private def renderersM(delimRe: Regex): Mapping[Seq[MAiRenderer]] = {
     nonEmptyText(minLength = 2, maxLength = 128)
       .transform [Seq[Option[MAiRenderer]]] (
-        { raw => delimRe.split(raw).iterator.map(MAiRenderers.maybeWithName).toSeq },
+        { raw => delimRe.split(raw).iterator.map(MAiRenderers.withValueOpt).toSeq },
         { _.flatten.mkString(MERGE_DELIM) }
       )
       .verifying("error.invalid", { _.forall(_.isDefined) })

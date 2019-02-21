@@ -1,7 +1,5 @@
 package util
 
-import java.time.ZoneId
-
 import models.mctx.Context
 import org.joda.time.format.{DateTimeFormatter, DateTimeFormatterBuilder, PeriodFormatter, PeriodFormatterBuilder}
 import org.joda.time._

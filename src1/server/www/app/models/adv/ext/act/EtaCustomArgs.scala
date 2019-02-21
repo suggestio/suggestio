@@ -45,7 +45,7 @@ trait EtaCustomArgsBase
       val mri = madRenderInfo
       val url = ctxUtil.SC_URL_PREFIX + routes.Sc.onlyOneAdAsImage(adRenderArgs).url
       MPictureCtx(
-        size   = Some(mri.stdSz.szAlias),
+        size   = Some(mri.stdSz.value),
         sioUrl = Some(url)
       )
     }

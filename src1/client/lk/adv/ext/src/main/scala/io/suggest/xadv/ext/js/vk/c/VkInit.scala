@@ -1,9 +1,9 @@
 package io.suggest.xadv.ext.js.vk.c
 
-import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
+import io.suggest.common.ws.proto.MAnswerStatuses
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.c.adp.LazyPermsInit
-import io.suggest.xadv.ext.js.runner.m.{MJsCtxT, IMExtTarget}
+import io.suggest.xadv.ext.js.runner.m.{IMExtTarget, MJsCtxT}
 import io.suggest.xadv.ext.js.vk.c.hi.Vk
 import io.suggest.xadv.ext.js.vk.m._
 import org.scalajs.dom
@@ -49,7 +49,7 @@ class VkInit(implicit val actx: IActionContext) extends LazyPermsInit {
 
   /** Запросить у юзера новые пермишшены для приложения. */
   override def requestNewPerms(perms: Set[Perm_t]): Future[Seq[Perm_t]] = {
-    val bitmask = VkPerms.toBitMask(perms)
+    val bitmask = VkPerm.toBitMask(perms)
     Vk.Auth.login(bitmask)
       .filter { _.isDefined }
       .map { _ => perms.toSeq }   // TODO Надо наверное избегать лишних конверсий?
@@ -83,7 +83,7 @@ class VkInit(implicit val actx: IActionContext) extends LazyPermsInit {
   /** Залогинить юзера и подключить приложение к аккаунту юзера. */
   override def loginWithOutPerms(): Future[LoginRes_t] = {
     // Тут сразу запрашиваем пермишшены, хоть этого и не требуется.
-    val bitmask = VkPerms.toBitMask(PERMS)
+    val bitmask = VkPerm.toBitMask(PERMS)
     Vk.Auth.login(bitmask)
   }
 

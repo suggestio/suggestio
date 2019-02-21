@@ -1,11 +1,10 @@
 package models.adv.ext.act
 
+import io.suggest.ext.svc.{MExtService, MExtServiceInfo}
 import io.suggest.text.util.UrlUtil
 import io.suggest.util.logs.IMacroLogs
 import models.adv._
-import models.adv.ext.MExtServiceInfo
 import models.mctx.IContextUtilDi
-import models.mext.MExtService
 import util.ext.IExtServicesUtilDi
 import util.n2u.IN2NodesUtilDi
 
@@ -31,11 +30,12 @@ trait ExtActorEnv
   def service: MExtService
 
   /** Инстанс хелпера сервиса. */
-  lazy val serviceHelper = extServicesUtil.helperFor(service).get
+  lazy val serviceHelper =
+    extServicesUtil.helperFor( service ).get
 
   def serviceInfo: MExtServiceInfo = {
     MExtServiceInfo(
-      name  = service.strId,
+      service  = service,
       appId = serviceHelper.APP_ID_OPT
     )
   }

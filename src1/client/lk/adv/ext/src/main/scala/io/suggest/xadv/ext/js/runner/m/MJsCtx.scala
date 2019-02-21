@@ -1,9 +1,14 @@
 package io.suggest.xadv.ext.js.runner.m
 
-import io.suggest.adv.ext.model.ctx.MJsCtxFieldsT
-import io.suggest.sjs.common.model.{IToJsonDict, FromStringT}
+import io.suggest.adv.ext.model.ctx.{MAskAction, MAskActions, MJsCtxFieldsT}
+import io.suggest.common.ws.proto.MAnswerStatus
+import io.suggest.ext.svc.{MExtServiceInfo, MExtServices}
+import io.suggest.sjs.common.model.{FromStringT, IToJsonDict}
+import io.suggest.xplay.json.PlayJsonSjsUtil
+import play.api.libs.json.Json
 
-import scala.scalajs.js.{WrappedDictionary, Dictionary, Any, Array}
+import scala.scalajs.js
+import scala.scalajs.js.{Any, Array, Dictionary, WrappedDictionary}
 import scala.scalajs.js.JSConverters._
 
 /**
@@ -20,18 +25,26 @@ object MJsCtx extends MJsCtxFieldsT with FromStringT {
   override def fromJson(dyn: Any): MJsCtx = {
     val d = dyn.asInstanceOf[Dictionary[Any]] : WrappedDictionary[Any]
     MJsCtx(
-      action = MAskActions.withName( d.get(ACTION_FN).get.toString ),
+      action = MAskActions.withValue( d.get(ACTION_FN).get.toString ),
       mads = d.get(ADS_FN)
         .map {
           _.asInstanceOf[Array[Any]]
             .toSeq
             .map(MAdCtx.fromJson)
         }
-        .getOrElse(Seq.empty),
+        .getOrElse(Nil),
       target = d.get(TARGET_FN)
         .map(MExtTarget.fromJson),
       service = d.get(SERVICE_FN)
-        .map(MServiceInfo.fromJson),
+        .map { raw =>
+          // Тут заинлайнен код вместо play-json-сериализатора, т.к. обратный конвертер js.Dynamic=>play-json писать очень лень.
+          // После наведения порядка в adv.ext этот класс должен стать просто субъектом для play-json целиком.
+          val d = raw.asInstanceOf[js.Dictionary[String]] : WrappedDictionary[String]
+          MExtServiceInfo(
+            service = MExtServices.withValue( d( MExtServiceInfo.Fields.NAME_FN) ),
+            appId   = d.get(MExtServiceInfo.Fields.APP_ID_FN)
+          )
+        },
       domains = d.get(DOMAIN_FN)
         .map { _.asInstanceOf[Array[String]].toSeq }
         .getOrElse(Nil),
@@ -60,7 +73,7 @@ trait MJsCtxT extends IToJsonDict {
   def mads    : Seq[MAdCtx]
 
   /** Текущий сервис и инфа по нему. */
-  def service : Option[MServiceInfo]
+  def service : Option[MExtServiceInfo]
 
   /** Домены, которых касается запрос. */
   def domains : Seq[String]
@@ -81,12 +94,12 @@ trait MJsCtxT extends IToJsonDict {
 
   override final def toJson: Dictionary[Any] = {
     val d = Dictionary[Any] (
-      ACTION_FN   -> action.strId
+      ACTION_FN   -> action.value
     )
 
     val _service = service
-    if (_service.nonEmpty)
-      d.update(SERVICE_FN, _service.get.toJson)
+    for (svc <- _service)
+      d.update(SERVICE_FN, PlayJsonSjsUtil.toNativeJsonObj( Json.toJsObject(svc) ) )
 
     val _mads = mads
     if (_mads.nonEmpty) {
@@ -104,7 +117,7 @@ trait MJsCtxT extends IToJsonDict {
 
     val _status = status
     if (_status.nonEmpty)
-      d.update(STATUS_FN, _status.get.jsStr)
+      d.update(STATUS_FN, _status.get.value)
 
     val _error = error
     if (_error.nonEmpty)
@@ -159,16 +172,16 @@ trait MJsCtxWrapperT extends MJsCtxT {
 
 /** Дефолтовая реализация контекста. */
 case class MJsCtx(
-  action      : MAskAction,
-  mads        : Seq[MAdCtx],
-  service     : Option[MServiceInfo],
-  domains     : Seq[String],
-  target      : Option[IMExtTarget],
-  custom      : Option[Any],
-  // Необязательные параметры -- только для исходящего контекста, на входе не парсим.
-  status      : Option[MAnswerStatus] = None,
-  error       : Option[MErrorInfoT] = None,
-  svcTargets  : Seq[IMExtTarget] = Nil
+                   action      : MAskAction,
+                   mads        : Seq[MAdCtx],
+                   service     : Option[MExtServiceInfo],
+                   domains     : Seq[String],
+                   target      : Option[IMExtTarget],
+                   custom      : Option[Any],
+                   // Необязательные параметры -- только для исходящего контекста, на входе не парсим.
+                   status      : Option[MAnswerStatus] = None,
+                   error       : Option[MErrorInfoT] = None,
+                   svcTargets  : Seq[IMExtTarget] = Nil
 ) extends MJsCtxT
 
 

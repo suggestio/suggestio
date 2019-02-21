@@ -1,6 +1,9 @@
 package io.suggest.stat.m
 
-import io.suggest.common.menum.{EnumJsonReadsValT, EnumMaybeWithName, StrIdValT}
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumUtil
+import japgolly.univeq.UnivEq
+import play.api.libs.json.Format
 
 /**
   * Suggest.io
@@ -8,67 +11,75 @@ import io.suggest.common.menum.{EnumJsonReadsValT, EnumMaybeWithName, StrIdValT}
   * Created: 21.09.16 17:49
   * Description: Типы экшенов, затрагиваемых статистикой.
   */
-object MActionTypes extends EnumMaybeWithName with EnumJsonReadsValT with StrIdValT {
-
-  /** Класс для всех экземпляров сий модели. */
-  protected case class Val(override val strId: String)
-    extends super.Val(strId)
-    with ValT
-
-
-  override type T = Val
+object MActionTypes extends StringEnum[MActionType] {
 
   /** Экшен логгирования данных текущего юзера. */
-  val Person              = Val("юзер")
+  case object Person extends MActionType("юзер")
 
   /** Обращение к /sc/site */
-  val ScSite              = Val("выдача: сайт")
+  case object ScSite extends MActionType("выдача: сайт")
 
   /** Для логгирования значения pov_adn_id. */
-  val PovNode             = Val("точка зрения узла")
+  case object PovNode extends MActionType("точка зрения узла")
 
   /** Обращение к /sc/index вывело на узел-ресивер. */
-  val ScIndexRcvr         = Val("выдача ресивера")
+  case object ScIndexRcvr extends MActionType("выдача ресивера")
 
   /** /sc/index не нашел ресивера, но подобрал или сочинил узел с подходящим к ситуации оформлением. */
-  val ScIndexCovering     = Val("выдача с оформлением от узла")
+  case object ScIndexCovering extends MActionType("выдача с оформлением от узла")
 
   /** /sc/error/occurred/in/showcase Сабмит диагностики на клиенте. */
-  val ScRemoteDiag        = Val("выдача: диагностика на клиенте")
+  case object ScRemoteDiag extends MActionType("выдача: диагностика на клиенте")
 
-  val ScRcvrAds           = Val("выдача: карточки ресивера")
+  case object ScRcvrAds extends MActionType("выдача: карточки ресивера")
 
-  val ScProdAds           = Val("выдача: карточки продьюсера")
+  case object ScProdAds extends MActionType("выдача: карточки продьюсера")
 
-  val ScAdsTile           = Val("выдача: плитка")
+  case object ScAdsTile extends MActionType("выдача: плитка")
 
-  val SearchLimit         = Val("поиск: лимит")
+  case object SearchLimit extends MActionType("поиск: лимит")
 
-  val SearchOffset        = Val("поиск: сдвиг")
+  case object SearchOffset extends MActionType("поиск: сдвиг")
 
-  val ScAdsFocused        = Val("выдача: focused-карточки")
+  case object ScAdsFocused extends MActionType("выдача: focused-карточки")
 
-  val ScAdsFocusingOnAd   = Val("выдача: фокусировка на карточке")
+  case object ScAdsFocusingOnAd extends MActionType("выдача: фокусировка на карточке")
 
   /** Маячок BLE слышен где-то рядом на расстоянии, указанном в сантиметрах в count. */
-  val BleBeaconNear       = Val("BLE-маячок, см")
+  case object BleBeaconNear extends MActionType("BLE-маячок, см")
 
-  val ScTags              = Val("выдача: теги")
+  case object ScTags extends MActionType("выдача: теги")
 
 
-  val PayCheck            = Val("pay: check")
+  case object PayCheck extends MActionType("pay: check")
 
-  val PayBadReq           = Val("pay: bad req")
+  case object PayBadReq extends MActionType("pay: bad req")
 
-  val PayBadOrder         = Val("pay: bad order")
+  case object PayBadOrder extends MActionType("pay: bad order")
 
   /** Почему-то объем оплаченных средств расходится с оплачиваемым заказом. */
-  val PayBadBalance       = Val("pay: bad balance")
+  case object PayBadBalance extends MActionType("pay: bad balance")
 
-  val UnexpectedCookies   = Val("cookies: unexpected")
+  case object UnexpectedCookies extends MActionType("cookies: unexpected")
 
-  val Success             = Val("успех")
+  case object Success extends MActionType("успех")
 
-  val Violation           = Val("нарушение")
+  case object Violation extends MActionType("нарушение")
+
+
+  override def values = findValues
+
+}
+
+
+sealed abstract class MActionType(override val value: String) extends StringEnumEntry
+
+
+object MActionType {
+
+  implicit def mActionTypeFormat: Format[MActionType] =
+    EnumeratumUtil.valueEnumEntryFormat( MActionTypes )
+
+  @inline implicit def univEq: UnivEq[MActionType] = UnivEq.derive
 
 }

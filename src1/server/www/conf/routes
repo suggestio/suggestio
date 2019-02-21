@@ -335,6 +335,8 @@ GET  /id/via/:provider			        @controllers.Ident.idViaProvider(provider: mext
 POST /id/via/:provider                  @controllers.Ident.idViaProviderByPost(provider: mext.ILoginProvider, r: Option[String] ?= None)
 GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm
 POST /id/reg/ext/confirm                @controllers.Ident.idpConfirmSubmit
+GET  /id/ext/cb                         @controllers.Ident.extIdCbGet(r: Option[String] ?= None)
+POST /id/ext/cb                         @controllers.Ident.extIdCbPost(r: Option[String] ?= None)
 
 ## compat
 GET  /app/session/keepalive             @controllers.Static.keepAliveSession
@@ -342,11 +344,6 @@ GET  /app/session/keepalive             @controllers.Static.keepAliveSession
 GET  /privacy                           @controllers.Static.privacyPolicy
 GET  /st/popup/check                    @controllers.Static.popupCheckContent
 POST /_/csp/report                      @controllers.Static.handleCspReport
-
-## yeoman-play
-#GET     /ui         com.tuplejump.playYeoman.Yeoman.index
-#->	     /ui/	     yeoman.Routes
-#GET     /           com.tuplejump.playYeoman.Yeoman.redirectRoot(base="/ui/")
 
 ## Редкие обращения к ассетам напрямую. На момент перемещения вниз, это использовалось только в одном редком месте в коде.
 GET  /assets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       @controllers.Static.assetsSudo(path="/public", file: Asset)

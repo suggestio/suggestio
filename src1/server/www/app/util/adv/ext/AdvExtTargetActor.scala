@@ -4,9 +4,9 @@ import java.io.File
 
 import com.google.inject.assistedinject.Assisted
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.ahc.upload.{IMpUploadArgs, UploadRefusedException}
 import io.suggest.common.geom.d2.INamedSize2di
+import io.suggest.common.ws.proto.MAnswerStatuses
 import io.suggest.fsm.FsmActor
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
@@ -16,7 +16,6 @@ import models.adv.js._
 import models.adv.js.ctx._
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
-import models.mws.AnswerStatuses
 import play.api.Configuration
 import play.api.libs.ws.{WSClient, WSResponse}
 import util.adr.AdRenderUtil
@@ -166,19 +165,19 @@ class AdvExtTargetActor @Inject()(
       case ans: Answer if ans.ctx2.status.nonEmpty =>
         ans.ctx2.status.get match {
           // Публикация удалась. Актор должен обрадовать юзера и тихо завершить работу.
-          case AnswerStatuses.Success =>
+          case MAnswerStatuses.Success =>
             trace("Success received from js. Finishing...")
             renderSuccess()
             harakiri()
 
           // Непоправимая ошибка на стороне js. Актор должен огорчить юзера, и возможно ещё что-то сделать.
-          case AnswerStatuses.Error =>
+          case MAnswerStatuses.Error =>
             warn("Error received from JS: " + ans.ctx2.error)
             _renderError(ans)
             harakiri()
 
           // JS'у недостаточно данных в контексте для создания публикации.
-          case AnswerStatuses.FillContext =>
+          case MAnswerStatuses.FillContext =>
             if (fillCtxTry >= MAX_FILL_CTX_TRIES) {
               error("Too many fill ctx tries. Stopping. Last answer was:\n  " + ans)
               _renderError(ans)

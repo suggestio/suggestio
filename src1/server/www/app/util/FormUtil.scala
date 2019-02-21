@@ -5,22 +5,17 @@ import java.time.{LocalDate, ZoneId}
 
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.bill.{MCurrencies, MCurrency}
-import io.suggest.color.MColorData
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.common.geom.d2.{ISize2di, MSize2di}
-import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
 import io.suggest.dt.DateTimeUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo._
 import io.suggest.model.n2.edge.{MPredicate, MPredicates}
 import io.suggest.text.parse.dt.DateParseUtil
 import io.suggest.text.util.UrlUtil
-import io.suggest.util.UuidUtil
 import models.{AdnShownType, AdnShownTypes}
 import models.blk.SzMult_t
 import org.apache.commons.text.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
-import org.postgresql.util.PGInterval
 import play.api.data.Forms._
 import play.api.data.Mapping
 import play.api.i18n.Lang
@@ -34,41 +29,25 @@ import util.HtmlSanitizer._
  */
 object FormUtil {
 
-  val strIdentityF = {s:String => s}
-  val strTrimF = {s: String => s.trim }
+  def strIdentityF = {s:String => s}
+  def strTrimF = {s: String => s.trim }
   def stripHtml(s: String) = stripAllPolicy.sanitize(s)
-  val strTrimSanitizeF = {s:String =>
+  def strTrimSanitizeF = { s:String =>
     // TODO Исключить двойные пробелы
     stripHtml(s).trim
   }
-  val strTrimBrOnlyF = {s: String =>
-    // TODO прогонять через HtmlCompressor
-    brOnlyPolicy.sanitize(s).trim
-  }
-  val strTrimSanitizeLowerF = strTrimSanitizeF andThen { _.toLowerCase }
-  val strFmtTrimF = {s: String =>
+
+  def strTrimSanitizeLowerF = strTrimSanitizeF andThen { _.toLowerCase }
+  def strFmtTrimF = {s: String =>
     // TODO прогонять через HtmlCompressor
     textFmtPolicy.sanitize(s).trim
   }
 
-  val strUnescapeF = {s: String => StringEscapeUtils.unescapeHtml4(s) }
+  def strUnescapeF = {s: String => StringEscapeUtils.unescapeHtml4(s) }
 
   /** sanitizer вызывает html escape для амперсандов, ковычек и т.д. Если это не нужно, то следует вызывать unescape ещё. */
-  val strTrimSanitizeUnescapeF = strTrimSanitizeF andThen strUnescapeF
+  def strTrimSanitizeUnescapeF = strTrimSanitizeF andThen strUnescapeF
 
-  private val crLfRe = "\r\n".r
-  private val lfCrRe = "\n\r".r
-  private val lfRe = "\n".r
-  private val brReplacement = "<br/>"
-  val replaceEOLwithBR = {s: String =>
-    var r1 = crLfRe.replaceAllIn(s, brReplacement)
-    r1 = lfCrRe.replaceAllIn(r1, brReplacement)
-    lfRe.replaceAllIn(r1, brReplacement)
-  }
-  private val brTagRe = "(?i)<br\\s*/?\\s*>".r
-  val replaceBRwithEOL = {s: String =>
-    brTagRe.replaceAllIn(s, "\r\n")
-  }
 
   /** Функция, которая превращает Some("") в None. */
   def emptyStrOptToNone(s: Option[String]) = {
@@ -82,7 +61,7 @@ object FormUtil {
         true
       }
     } catch {
-      case ex: Exception => false
+      case _: Exception => false
     }
   }
 
@@ -118,33 +97,12 @@ object FormUtil {
       .verifying("error.invalid.id", MEsUuId.isEsIdValid(_))
   }
 
-  def ID_LEN_MIN = 19
-  def ID_LEN_MAX_ANY = 50
-  def ID_LEN_MAX_UUID = 30
+  private def ID_LEN_MIN = 19
+  private def ID_LEN_MAX_UUID = 30
 
   /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
   def esIdM = _esIdM( nonEmptyText(minLength=ID_LEN_MIN, maxLength=ID_LEN_MAX_UUID) )
 
-  /** Маппинг для id узла, включая всякие маячки. */
-  // TODO Проверять по шаблонам ID: обычные es base64, ibeacon hex (46 ascii байт, удалить?), eddystone (~33 байта).
-  def esAnyNodeIdM = _esIdM( nonEmptyText(minLength=ID_LEN_MIN, maxLength=ID_LEN_MAX_ANY) )
-    .verifying("error.invalid.id", MEsUuId.isEsIdValid(_))
-
-  /** Тоже самое, что и esIdM, но пытается декодировать UUID из id.
-    * id, сгенеренные es, тут не прокатят! */
-  def esIdUuidM = esIdM.verifying("error.invalid.uuid", UuidUtil.isUuidStrValid(_))
-
-  /** Маппинг для номера этажа в ТЦ. */
-  def floorM = nonEmptyText(maxLength = 4)
-    .transform(strTrimSanitizeUnescapeF, strIdentityF)
-  def floorOptM = optional(floorM)
-    .transform [Option[String]] (emptyStrOptToNone, identity)
-
-  /** Маппинг для секции в ТЦ. */
-  def sectionM = nonEmptyText(maxLength = 6)
-    .transform(strTrimSanitizeUnescapeF, strIdentityF)
-  def sectionOptM = optional(sectionM)
-    .transform [Option[String]] (emptyStrOptToNone, identity)
 
   /** Парсим текст, введённый в поле с паролем. */
   def passwordM = nonEmptyText
@@ -199,26 +157,6 @@ object FormUtil {
     { Distance.unapply }
   }
 
-  /** Опциональная дистанция, заданная значением и единицами измерения. Используется вместо optional([[distanceM]])
-    * т.к. units задаются select'ом, т.е. всегда присутсвуют. Что порождает ошибки при биндинге. */
-  def distanceOptM: Mapping[Option[Distance]] = {
-    mapping(
-      "value" -> optional(doubleM),
-      "units" -> optional(distanceUnitsM)
-    )
-    {(valueOpt, unitsOpt) =>
-      valueOpt.flatMap { distance =>
-        unitsOpt.map { units =>
-          Distance(distance, units)
-        }
-      }
-    }
-    {distanceOpt =>
-      val valueOpt = distanceOpt.map(_.distance)
-      val unitsOpt = distanceOpt.map(_.units)
-      Some((valueOpt, unitsOpt))
-    }
-  }
 
   /** Маппинг для географического круга, задаваемого географическим центром и радиусом. */
   def circleM: Mapping[CircleGs] = {
@@ -239,13 +177,9 @@ object FormUtil {
        strOptGetOrElseEmpty
      )
   }
-  def toSomeStrM(x: Mapping[String], trimmer: String => String = strTrimSanitizeUnescapeF): Mapping[Option[String]] = {
-    toStrOptM(x, trimmer)
-     .verifying("error.required", _.isDefined)
-  }
 
 
-  val nameM: Mapping[String] = {
+  def nameM: Mapping[String] = {
     val n = NodeEditConstants.Name
     val minLen = n.LEN_MIN
     val maxLen = n.LEN_MAX
@@ -254,25 +188,6 @@ object FormUtil {
       .verifying("error.too.short", _.length >= minLen)
   }
 
-  def nameOptM = optional(nameM)
-
-
-  /** Маппер для поля, содержащего код цвета. */
-  private def colorCheckRE = "(?i)[a-f0-9]{6}".r
-  def colorM = nonEmptyText(minLength = 6, maxLength = 6)
-    .verifying("error.color.invalid", colorCheckRE.pattern.matcher(_).matches)
-  def colorOptM = optional(colorM)
-    .transform [Option[String]] (emptyStrOptToNone, identity)
-  def colorSomeM = toSomeStrM(colorM)
-
-  private def _color2dataOptM(m0: Mapping[Option[String]]): Mapping[Option[MColorData]] = {
-    m0.transform [Option[MColorData]] (
-      _.map(code => MColorData(code = code)),
-      _.map(_.code)
-    )
-  }
-  def colorDataOptM  = _color2dataOptM(colorOptM)
-  def colorDataSomeM = _color2dataOptM(colorSomeM)
 
   def publishedTextM = text(maxLength = 2048)
     .transform(strFmtTrimF, strIdentityF)
@@ -283,13 +198,11 @@ object FormUtil {
     .transform(strTrimSanitizeUnescapeF, strIdentityF)
   def townOptM = optional(townM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
-  def townSomeM = toSomeStrM(townM)
 
   def addressM = nonEmptyText(minLength = 6, maxLength = 128)
     .transform(strTrimSanitizeUnescapeF, strIdentityF)
   def addressOptM = optional(addressM)
     .transform [Option[String]] (emptyStrOptToNone, identity)
-  def addressSomeM = toSomeStrM(addressM)
 
 
   // TODO Нужен нормальный валидатор телефонов.
@@ -299,49 +212,25 @@ object FormUtil {
     .transform [Option[String]] (emptyStrOptToNone, identity)
   //def phoneSomeM = toSomeStrM(phoneM)
 
-  /** Маппер для человеческого траффика, заданного числом. */
-  def humanTrafficAvgM = number(min = 10)
 
   def text2048M: Mapping[String] = {
     text(maxLength = 2048)
       .transform(strTrimSanitizeF, strIdentityF)
   }
-  def audienceDescrM = text2048M
 
-  // Трансформеры для optional-списков.
-  def optList2ListF[T] = { optList: Option[List[T]] => optList getOrElse Nil }
-  def list2OptListF[T] = { l:List[T] =>  if (l.isEmpty) None else Some(l) }
 
   /** Маппер form-поля URL в строку URL */
   def urlNormalizeSafe(s: String): String = {
     try {
       UrlUtil.normalize(s)
     } catch {
-      case ex: Exception => ""
+      case _: Exception => ""
     }
   }
   def urlStrM = nonEmptyText(minLength = 8)
     .transform[String](strTrimF andThen urlNormalizeSafe, UrlUtil.humanizeUrl)
     .verifying("mappers.url.invalid_url", isValidUrl(_))
   def urlStrOptM = optional(urlStrM)
-
-  /** Толерантный к проблемам маппинг ссылки. */
-  def urlStrOptTolerantM: Mapping[Option[String]] = {
-    optional(text)
-      // TODO Как-то хреново отрабатывается тут ссылка. Если нет "http://" вначале, что всё, катастрофа и None.
-      .transform[Option[String]] (
-        {sOpt =>
-          sOpt.flatMap { s =>
-            val st = strTrimSanitizeF(s)
-            if (isValidUrl(st))
-              Some(st)
-            else
-              None
-          }
-        },
-        identity
-      )
-  }
 
   /** Маппер опционального form-поля с ссылкой в java.net.URL. */
   def urlOptM: Mapping[Option[URL]] = {
@@ -378,18 +267,13 @@ object FormUtil {
     .transform[Float](_.replace(',', '.').toFloat, _.toString)
 
   // Маппер для полноценных double значений для floating point чисел в различных представлениях.
-  def doubleRe = """-?(\d+([.,]\d*)?|\d*[.,]\d+)([eE][+-]?\d+)?[fFdD]?""".r
+  private def doubleRe = """-?(\d+([.,]\d*)?|\d*[.,]\d+)([eE][+-]?\d+)?[fFdD]?""".r
   def doubleM = nonEmptyText(maxLength = 32)
     .verifying("float.invalid", doubleRe.pattern.matcher(_).matches())
     .transform[Double](
       { _.replace(',', '.').toDouble},
       { _.toString }
     )
-  def bigDecimalM: Mapping[BigDecimal] = {
-    doubleM.transform[BigDecimal](
-      BigDecimal(_), _.doubleValue()
-    )
-  }
 
   /** Form mapping для LocalDate. */
   def localDateM = text(maxLength = 32)
@@ -420,13 +304,6 @@ object FormUtil {
       )
       .verifying("error.required", _.isDefined)
       .transform [MNodeGeoLevel] (_.get, Some.apply)
-  }
-
-  // До web21:8e3432fbf693 включительно здесь жили маппинги цены.
-
-
-  def pgIntervalPretty(pgi: PGInterval) = {
-    pgi.toString.replaceAll("0([.,]0+)?\\s+[a-z]+", "").trim
   }
 
   def currencyOptM: Mapping[Option[MCurrency]] = {
@@ -483,27 +360,6 @@ object FormUtil {
     )
     { MGeoPoint.fromDouble }
     { MGeoPoint.unapplyDouble }
-  }
-
-  /** Опциональный маппер для lat-lon координат. */
-  def geoPointOptM: Mapping[Option[MGeoPoint]] = {
-    optional(geoPointM)
-  }
-
-
-  /** Маппер размеров, заданные через width и height. Например, размеры картинки. */
-  def whSizeM: Mapping[ISize2di] = {
-    val sideM = number(min = 10, max = 2048)
-    mapping(
-      "height" -> sideM,
-      "width"  -> sideM
-    )
-    {(height, width) =>
-      MSize2di(height = height, width = width)  : ISize2di
-    }
-    {mim =>
-      Some((mim.height, mim.height))
-    }
   }
 
 
@@ -563,11 +419,6 @@ object FormUtil {
       .verifying("e.sz.mult.too.high", _ <= 10F)
   }
 
-  def szMultOptM: Mapping[Option[SzMult_t]] = {
-    optional(floatM)
-  }
-
-
   /** Опциональный маппинг предиката. */
   def predicateOptM: Mapping[Option[MPredicate]] = {
     optional(
@@ -585,68 +436,6 @@ object FormUtil {
     predicateOptM
       .verifying("error.required", _.nonEmpty)
       .transform [MPredicate] ( EmptyUtil.getF, EmptyUtil.someF )
-  }
-
-
-  /** Базовый трейт для сборки более конкретных трейтов-аддонов form-маппингов к моделям scala.Enumeration. */
-  sealed trait EnumFormMapping extends EnumValue2Val {
-
-    /** Черновой маппинг узнавания экземпляра модели. */
-    protected def mappingOptDirty: Mapping[Option[T]]
-
-    /** Обязательный form mapping. */
-    def mapping: Mapping[T] = {
-      mappingOptDirty
-        .verifying("error.required", _.isDefined)
-        .transform(_.get, Some.apply)
-    }
-
-    /** Опциональный form mapping. */
-    def mappingOpt: Mapping[Option[T]] = {
-      optional(mappingOptDirty)
-        .transform(_.flatten, Some.apply)
-    }
-  }
-
-  /** Быстрое добавление типовых Form mapping'ов в scala.Enumeration-модели.
-    * Экземпляры модели-реализации должны иметь перезаписанный toString(), возвращающий id экземлпяра.
-    * Либо, можно перезаписать strIdOf(). */
-  trait StrEnumFormMappings extends EnumMaybeWithName with EnumFormMapping {
-
-    /** Извлечение строкового id из экземпляра модели. */
-    protected def strIdOf(v: T): String = v.toString
-
-    protected def _idMinLen: Int = 0
-    protected def _idMaxLen: Int = 32
-
-    protected def mappingOptDirty: Mapping[Option[T]] = {
-      text(minLength = _idMinLen, maxLength = _idMaxLen)
-        .transform [Option[T]] (
-          strTrimSanitizeF andThen maybeWithName,
-          _.fold("")(strIdOf)
-        )
-    }
-
-  }
-
-  /** Быстрое добавления form mapping в scala.Enumeration-модели, использующих целочисленную адресацию. */
-  trait IdEnumFormMappings extends EnumFormMapping with EnumMaybeWithId {
-
-    /** Извлечение целочисленного идентификатора экземпляра модели. */
-    protected def intIdOf(v: T): Int = v.id
-
-    protected def _idMin = 0
-    protected def _idMax = Int.MaxValue
-
-    override protected def mappingOptDirty: Mapping[Option[T]] = {
-      number(min = _idMin, max = _idMax)
-        .transform [Option[T]] (maybeWithId, _.fold(Int.MinValue)(intIdOf))
-    }
-
-    def idMapping: Mapping[Int] = {
-      mapping
-        .transform[Int](_.id, apply)
-    }
   }
 
 }

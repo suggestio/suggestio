@@ -4,8 +4,8 @@ import java.net.URL
 
 import javax.inject.Inject
 import io.suggest.adv.ext.view.RunnerPage
+import io.suggest.ext.svc.MExtService
 import models.adv._
-import models.mext.MExtService
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil.{esIdM, nameM, toStrOptM, urlM}
@@ -19,8 +19,8 @@ import util.ext.{ExtServicesUtil, IExtServiceHelper}
   * Утиль для поддержки форм внешнего размещения.
   */
 class AdvExtFormUtil @Inject()(
-  extServicesUtil: ExtServicesUtil
-) {
+                                extServicesUtil : ExtServicesUtil
+                              ) {
 
   /** id div'а в который надо рендерить события размещения. */
   // Сделать его deprecated?
@@ -44,8 +44,8 @@ class AdvExtFormUtil @Inject()(
           val url1 = srv.normalizeTargetUrl(url)
           (url1, srv.mExtService)
         },
-        {case (url, srv) =>
-          (new URL(url), extServicesUtil.helperFor(srv))
+        {case (url, svc) =>
+          (new URL(url), extServicesUtil.helperFor(svc))
         }
       )
   }

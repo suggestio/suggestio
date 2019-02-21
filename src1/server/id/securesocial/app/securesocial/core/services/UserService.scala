@@ -17,7 +17,7 @@
 package securesocial.core.services
 
 import scala.concurrent.Future
-import securesocial.core.{IProfile, PasswordInfo}
+import securesocial.core.{Profile, PasswordInfo}
 
 trait UserService[U] {
 
@@ -28,7 +28,7 @@ trait UserService[U] {
    * @param userId the user id
    * @return an optional profile
    */
-  def find(providerId: String, userId: String): Future[Option[IProfile]]
+  def find(providerId: String, userId: String): Future[Option[Profile]]
 
   /**
    * Saves a profile.  This method gets called when a user logs in, registers or changes his password.
@@ -37,7 +37,7 @@ trait UserService[U] {
    * @param profile the user profile
    * @param mode a mode that tells you why the save method was called
    */
-  def save(profile: IProfile, mode: SaveMode): Future[U]
+  def save(profile: Profile, mode: SaveMode): Future[U]
 
   /**
    * Returns an optional PasswordInfo instance for a given user

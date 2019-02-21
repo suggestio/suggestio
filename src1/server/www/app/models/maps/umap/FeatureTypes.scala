@@ -1,21 +1,34 @@
 package models.maps.umap
 
-import io.suggest.common.menum.{EnumJsonReadsValT, EnumMaybeWithName}
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumUtil
+import japgolly.univeq.UnivEq
+import play.api.libs.json.Format
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 25.03.16 15:16
-  * Description:
   */
-object FeatureTypes extends EnumMaybeWithName with EnumJsonReadsValT {
+object FeatureTypes extends StringEnum[FeatureType] {
 
-  protected [this] class Val(val name: String) extends super.Val(name)
+  case object Feature extends FeatureType("Feature")
 
-  override type T = Val
+  case object FeatureCollection extends FeatureType("FeatureCollection")
 
-  val Feature: T = new Val("Feature")
 
-  val FeatureCollection: T = new Val("FeatureCollection")
+  override def values = findValues
+
+}
+
+
+sealed abstract class FeatureType(override val value: String) extends StringEnumEntry
+
+object FeatureType {
+
+  implicit def featureTypeFormat: Format[FeatureType] =
+    EnumeratumUtil.valueEnumEntryFormat( FeatureTypes )
+
+  @inline implicit def univEq: UnivEq[FeatureType] = UnivEq.derive
 
 }

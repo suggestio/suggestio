@@ -9,6 +9,7 @@ import io.suggest.adn.MAdnRights
 import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
+import io.suggest.ext.svc.MExtServices
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
@@ -19,10 +20,10 @@ import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import models.AdnShownTypes
-import models.adv.MExtTargets
+import models.adv.{MExtTarget, MExtTargets}
 import models.im.MImgT
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
-import models.mext.MExtServices
+import models.mext.MExtServicesJvm
 import models.mproj.ICommonDi
 import models.mwc.MWelcomeRenderArgs
 import models.usr.MPersonIdents
@@ -147,6 +148,8 @@ final class NodesUtil @Inject() (
     )
   }
 
+
+  // TODO Убрать отсюда поддержку adv-ext, вынести в соотв.утиль.
   /**
     * Создать дефолтовые таргеты для размещения в соц.сетях.
     *
@@ -154,10 +157,20 @@ final class NodesUtil @Inject() (
     * @return Фьючерс для синхронизации.
     */
   def createExtDfltTargets(adnId: String)(implicit messages: Messages): Future[_] = {
-    val tgtsIter = MExtServices.values
-      .iterator
-      .flatMap { svc => mExtTargets.dfltTarget(svc, adnId) }
-    Future.traverse(tgtsIter)(mExtTargets.save)
+    val targetsIter = for {
+      svc <- MExtServices.values.iterator
+      if svc.hasAdvExt
+      svcJvm = MExtServicesJvm.forService( svc )
+      url <- svcJvm.advExt.dfltTargetUrl
+    } yield {
+      MExtTarget(
+        url     = url,
+        adnId   = adnId,
+        service = svc,
+        name    = Some( messages(svc.iAtServiceI18N) )
+      )
+    }
+    Future.traverse(targetsIter)(mExtTargets.save)
   }
 
   /**

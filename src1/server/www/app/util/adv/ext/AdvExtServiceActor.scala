@@ -3,6 +3,8 @@ package util.adv.ext
 import akka.actor.Props
 import javax.inject.Inject
 import com.google.inject.assistedinject.Assisted
+import io.suggest.adv.ext.model.ctx.MAskActions
+import io.suggest.common.ws.proto.MAnswerStatuses
 import io.suggest.fsm.FsmActor
 import io.suggest.text.util.UrlUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -10,7 +12,6 @@ import models.adv._
 import models.adv.ext.act.ExtServiceActorEnv
 import models.adv.js._
 import models.mctx.ContextUtil
-import models.mws.AnswerStatuses
 import util.adv.ext.ut.{ISendCommand, MediatorSendCommand, ReplyTo, SvcActorJsRenderUtil}
 import util.ext.ExtServicesUtil
 
@@ -40,7 +41,7 @@ trait AdvExtServiceActorLogic
       super.afterBecome()
       // Отправить запрос на подготовку к работе.
       val mctx0 = args.mctx0.copy(
-        action = Some(MJsActions.EnsureReady),
+        action = Some(MAskActions.EnsureReady),
         domain = args.targets
           .iterator
           .map { tg => UrlUtil.url2dkey(tg.target.url) }
@@ -68,7 +69,7 @@ trait AdvExtServiceActorLogic
       case ans: Answer if ans.ctx2.status.nonEmpty =>
         ans.ctx2.status.get match {
           // Клиент успешно завершил инициализацию. Нужно собрать акторов и отправить их ws-медиатору.
-          case AnswerStatuses.Success =>
+          case MAnswerStatuses.Success =>
             LOGGER.trace("Successful answer received from client, preparing tg-actors...")
             handleSuccessAnswer(ans)
 

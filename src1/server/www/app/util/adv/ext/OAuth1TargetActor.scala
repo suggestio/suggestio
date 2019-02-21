@@ -5,6 +5,7 @@ import java.io.File
 import javax.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import io.suggest.ahc.upload.IMpUploadArgs
+import io.suggest.ext.svc.MExtService
 import io.suggest.fsm.FsmActor
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.util.logs.MacroLogsImpl

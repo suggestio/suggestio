@@ -23,7 +23,7 @@ import play.api.mvc.Call
 import util.adv.AdvUtil
 import util.cdn.CdnUtil
 import util.i18n.JsMessagesUtil
-import util.img.{DynImgUtil, GalleryUtil}
+import util.img.DynImgUtil
 import util.jsa.init.ITargets
 import util.n2u.N2NodesUtil
 import util.support.SupportUtil

@@ -3,7 +3,6 @@ package io.suggest.xadv.ext.js.fb.m
 import java.net.URI
 
 import io.suggest.sjs.common.model.{IToJsonDict, FromJsonT}
-import io.suggest.xadv.ext.js.runner.m.{IMExtTargetWrapper, IMExtTarget}
 
 import scala.scalajs.js.{WrappedDictionary, Any, Dictionary}
 
@@ -75,7 +74,7 @@ object FbTarget extends FromJsonT {
       nodeId    = d(NODE_ID_FN).toString,
       nodeType  = d.get(NODE_TYPE_FN)
         .map(_.toString)
-        .flatMap(FbNodeTypes.maybeWithName)
+        .flatMap(FbNodeTypes.withValueOpt)
     )
   }
 

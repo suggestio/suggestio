@@ -65,9 +65,6 @@ object PicUploadCtx {
   def URL_FN          = "url"
   def PART_NAME_FN    = "partName"
 
-  // TODO Запилить отдельный enum
-  def MODE_S2S        = "s2s"
-
 }
 
 object MErrorInfo {

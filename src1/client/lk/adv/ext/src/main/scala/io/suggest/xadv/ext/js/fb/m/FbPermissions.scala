@@ -1,10 +1,13 @@
 package io.suggest.xadv.ext.js.fb.m
 
-import io.suggest.common.menum.LightEnumeration
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumUtil
 import io.suggest.sjs.common.model.{IToJson, MaybeFromJsonT}
+import japgolly.univeq.UnivEq
+import play.api.libs.json.Format
 
 import scala.scalajs.js.JSConverters._
-import scala.scalajs.js.{Array, Any}
+import scala.scalajs.js.{Any, Array}
 
 /**
  * Suggest.io
@@ -14,82 +17,36 @@ import scala.scalajs.js.{Array, Any}
  * @see [[https://developers.facebook.com/docs/facebook-login/permissions/v2.3]]
  */
 
-object FbPermissions extends LightEnumeration with MaybeFromJsonT {
-
-  protected trait ValT extends super.ValT with IToJson {
-    /** Идентификатор разрешения по мнению фейсбука. */
-    val fbName: String
-    override def toString = fbName
-    override def toJson: Any = fbName
-  }
-
-  /** Экземпляр модели. */
-  protected sealed class Val(val fbName: String) extends ValT {
-
-    override def equals(obj: scala.Any): Boolean = {
-      super.equals(obj) || {
-        obj match {
-          case v: Val   => v.fbName == fbName
-          case _        => false
-        }
-      }
-    }
-
-  }
-
-  override type T = Val
-
+object FbPermissions extends StringEnum[FbPermission] with MaybeFromJsonT {
 
   /** Разрешение на публикацию в профиле юзера и от имени юзера. */
-  val PublishActions: T         = new Val("publish_actions")
+  case object PublishActions extends FbPermission("publish_actions")
 
   /** Разрешение на публикацию постов на страницах. */
-  val PublishPages: T           = new Val("publish_pages")
+  case object PublishPages extends FbPermission("publish_pages")
 
   /** Разрешение на получение access_token'ов к страницам для создания публикаций от имени этих страниц
     * и других действий со страницами. */
-  val ManagePages: T            = new Val("manage_pages")
+  case object ManagePages extends FbPermission("manage_pages")
 
   /** Профиль текущего юзера. Автоматический пермишен. */
-  lazy val PublicProfile: T     = new Val("public_profile")
+  case object PublicProfile extends FbPermission("public_profile")
 
   /** Доступ к фоткам и альбомам юзера. */
-  lazy val UserPhotos: T        = new Val("user_photos")
+  case object UserPhotos extends FbPermission("user_photos")
 
 
-  override def maybeWithName(n: String): Option[T] = {
-    n match {
-      case PublishActions.fbName => Some(PublishActions)
-      case PublishPages.fbName   => Some(PublishPages)
-      case ManagePages.fbName    => Some(ManagePages)
-      case PublicProfile.fbName  => Some(PublicProfile)
-      case UserPhotos.fbName     => Some(UserPhotos)
-      case _                     => None    // TODO Логгировать неизвесные пермишены. Желательно, прямо на сервере.
-    }
-  }
+  override def values = findValues
 
-  /** Десериализовать один пермишшен из json. Антипод для [[ValT]].toJson(). */
-  override def maybeFromJson(raw: Any): Option[T] = {
-    maybeWithName(raw.toString)
-  }
 
-  /** Facebook принимает списки пермишшенов строкой через запятую.
-    * Этот метод компилит список пермишшенов в строку. */
-  def permsToString(perms: TraversableOnce[T]): String = {
-    perms.toIterator
-      .map(_.fbName)
-      .mkString(",")
-  }
-
-  /** Сериализация списка пермишшенов в JSON. */
-  def permsToJson(perms: TraversableOnce[T]): Array[Any] = {
-    perms.toIterator
-      .map { _.toJson }
-      .toJSArray
+  override type T = FbPermission
+  /** Десериализовать один пермишшен из json. Антипод для [[FbPermission]].toJson(). */
+  override def maybeFromJson(raw: Any): Option[FbPermission] = {
+    withValueOpt(raw.toString)
   }
 
   /** Десериализация списка прав из json. */
-  def permsFromJson(raw: Any): Seq[T] = {
+  def permsFromJson(raw: Any): Seq[FbPermission] = {
     raw.asInstanceOf[Array[Any]]
       .iterator
       .flatMap(maybeFromJson)
@@ -97,6 +54,39 @@ object FbPermissions extends LightEnumeration with MaybeFromJsonT {
   }
 
 
-  def wantPublishPerms = Seq(PublishActions, PublishPages, ManagePages)
+  def wantPublishPerms: List[FbPermission] =
+    PublishActions :: PublishPages :: ManagePages :: Nil
+
+}
+
+
+sealed abstract class FbPermission(override val value: String) extends StringEnumEntry with IToJson {
+  /** Идентификатор разрешения по мнению фейсбука. */
+  @inline final def fbName: String = value
+  override def toString = fbName
+  override def toJson: Any = fbName
+}
+
+object FbPermission {
+
+  /** Facebook принимает списки пермишшенов строкой через запятую.
+    * Этот метод компилит список пермишшенов в строку. */
+  def permsToString(perms: TraversableOnce[FbPermission]): String = {
+    perms.toIterator
+      .map(_.fbName)
+      .mkString(",")
+  }
+
+  /** Сериализация списка пермишшенов в JSON. */
+  def permsToJson(perms: TraversableOnce[FbPermission]): Array[Any] = {
+    perms.toIterator
+      .map { _.toJson }
+      .toJSArray
+  }
+
+  implicit def fbPermissionFormat: Format[FbPermission] =
+    EnumeratumUtil.valueEnumEntryFormat( FbPermissions )
+
+  @inline implicit def univEq: UnivEq[FbPermission] = UnivEq.derive
 
 }

@@ -143,8 +143,7 @@ class QuillDeltaJsUtil extends Log {
       src         = _string2s( attrs.src ),
       font        = for (fontCssClassSu <- _string2s( attrs.font )) yield {
         for (fontCssClass <- fontCssClassSu) yield {
-          // TODO legacy-enum, нельзя тут юзать withName(), т.к. у них разные множества ключей. Перейти на withCssClass(), когда MFonts будет Enumeratum-моделью.
-          MFonts.maybeWithName( fontCssClass ).get
+          MFonts.withCssClass( fontCssClass )
         }
       },
       size = for (sizeStrSU <- _string2s( attrs.size )) yield {

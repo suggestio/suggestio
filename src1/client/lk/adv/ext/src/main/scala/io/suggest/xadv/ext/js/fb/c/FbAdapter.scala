@@ -1,13 +1,16 @@
 package io.suggest.xadv.ext.js.fb.c
 
-import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
+import io.suggest.adv.ext.model.im.FbImgSizes
+import io.suggest.common.ws.proto.MAnswerStatuses
 import io.suggest.xadv.ext.js.fb.c.hi.Fb
 import io.suggest.xadv.ext.js.fb.m._
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.c.adp.AsyncInitAdp
 import io.suggest.xadv.ext.js.runner.m.ex._
 import io.suggest.xadv.ext.js.runner.m._
+import japgolly.univeq._
 import org.scalajs.dom
+
 import scala.concurrent.Future
 
 /**
@@ -121,10 +124,10 @@ class FbAdapter extends AsyncInitAdp {
       .headOption
       .flatMap(_.picture)
       .flatMap(_.sizeId)
-      .flatMap(FbWallImgSizes.maybeWithName)
+      .flatMap(FbImgSizes.withValueOpt)
     val nt = fbTg.nodeType
     val fbWallImgSizeOpt = nt.map(_.wallImgSz)
-    if (picSzOpt.isEmpty || fbWallImgSizeOpt.exists(_.szAlias == picSzOpt.get.szAlias) ) {
+    if (picSzOpt.isEmpty || fbWallImgSizeOpt.exists(_.value ==* picSzOpt.get.value) ) {
       dom.console.info("Current img size %s is OK for fb node type %s", picSzOpt.toString, nt.toString)
       // Сервер прислал инфу по картинке в правильном формате
       Right(None)
@@ -147,7 +150,7 @@ class FbAdapter extends AsyncInitAdp {
             // TODO Когда неск.карточек, то им нужно ведь разные размеры выставлять.
             mad.copy(
               picture = Some( MAdPictureCtx(
-                sizeId = fbWallImgSizeOpt.map(_.szAlias)
+                sizeId = fbWallImgSizeOpt.map(_.value)
               ))
             )
           }
@@ -174,12 +177,12 @@ class FbAdapter extends AsyncInitAdp {
   /** Второй шаг -- это шаг публикации. */
   protected def step2(mctx0: FbJsCtx)(implicit actx: IActionContext): Future[MJsCtxT] = {
     val fbCtx = mctx0.fbCtx
-    // Второй шаг: получение доп.данных по цели для публикации, если необходимо.
-    mkTgInfo(mctx0.target.get, fbCtx) flatMap { tgInfo =>
+    for {
+      // Второй шаг: получение доп.данных по цели для публикации, если необходимо.
+      tgInfo <- mkTgInfo(mctx0.target.get, fbCtx)
       // Третий шаг - запуск публикации поста.
-      publishPost(mctx0, tgInfo)
-
-    } map { res =>
+      _ <- publishPost(mctx0, tgInfo)
+    } yield {
       // Если всё ок, вернут результат.
       mctx0.jsCtxUnderlying.copy(
         status = Some(MAnswerStatuses.Success)

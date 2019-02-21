@@ -1,6 +1,6 @@
 package io.suggest.common.menum
 
-import io.suggest.primo.{IStrId, TypeT}
+import io.suggest.primo.TypeT
 
 import scala.collection.immutable.SortedSet
 
@@ -41,43 +41,3 @@ trait EnumMaybeWithName extends EnumValue2Val with IMaybeWithName {
 
 }
 
-
-trait EnumMaybeWithId extends EnumValue2Val {
-
-  def maybeWithId(id: Int): Option[T] = {
-    values
-      .iterator
-      .map(value2val)
-      .find(_.id == id)
-  }
-
-}
-
-
-trait IVeryLightEnumeration extends TypeT {
-  protected trait ValT
-  override type T <: ValT
-}
-/** Enumeration'ы НЕ привязанные к scala-коллекциям, исповедуют совместимый с оригиналом интерфейс. */
-trait ILightEnumeration
-  extends IVeryLightEnumeration
-  with IMaybeWithName
-
-/** Дефолтовая реализация ILightEnumeration. */
-trait LightEnumeration extends ILightEnumeration {
-  def withName(n: String): T = {
-    maybeWithName(n).get
-  }
-}
-
-
-/** Интерфейс поля ValT.strId для [[IVeryLightEnumeration]]. */
-trait StrIdValT extends IVeryLightEnumeration {
-
-  protected trait ValT extends super.ValT with IStrId {
-    override def toString: String = strId
-  }
-
-  override type T <: ValT
-
-}

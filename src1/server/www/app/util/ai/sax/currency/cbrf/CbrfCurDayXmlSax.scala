@@ -2,7 +2,6 @@ package util.ai.sax.currency.cbrf
 
 import io.suggest.text.sax.StackFsmSax
 import io.suggest.util.logs.MacroLogsImplLazy
-import models.ai.AiParsers.AiParser
 import models.ai._
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler

@@ -7,7 +7,7 @@ import io.suggest.model.n2.node.meta.MPersonMeta
 import io.suggest.util.logs.MacroLogsImpl
 import models.mext.ILoginProvider
 import models.mproj.ICommonDi
-import securesocial.core.{IProfile, PasswordInfo}
+import securesocial.core.{Profile, PasswordInfo}
 import securesocial.core.services.{SaveMode, UserService}
 
 import scala.concurrent.Future
@@ -32,6 +32,13 @@ class SsUserService @Inject() (
   import LOGGER._
   import esModel.api._
 
+
+  def _findExtIdent(providerId: String, userId: String): Future[Option[MExtIdent]] = {
+    val prov = ILoginProvider.maybeWithName(providerId).get
+    mExtIdents.getByUserIdProv(prov, userId)
+  }
+
+
   /**
    * Finds a SocialUser that maches the specified id
    * Видимо, это поиск по id юзера в рамках внешнего сервиса.
@@ -39,9 +46,19 @@ class SsUserService @Inject() (
    * @param userId the user id
    * @return an optional profile
    */
-  override def find(providerId: String, userId: String): Future[Option[MExtIdent]] = {
-    val prov = ILoginProvider.maybeWithName(providerId).get
-    mExtIdents.getByUserIdProv(prov, userId)
+  override def find(providerId: String, userId: String): Future[Option[Profile]] = {
+    for {
+      mExtIdentOpt <- _findExtIdent(providerId, userId)
+    } yield {
+      for (mExtIdent <- mExtIdentOpt) yield {
+        Profile(
+          providerId  = mExtIdent.provider.ssProvName,
+          userId      = mExtIdent.userId,
+          email       = mExtIdent.email,
+          authMethod  = mExtIdent.provider.ssAuthMethod,
+        )
+      }
+    }
   }
 
 
@@ -64,7 +81,7 @@ class SsUserService @Inject() (
    * @param profile the user profile
    * @param mode a mode that tells you why the save method was called
    */
-  override def save(profile: IProfile, mode: SaveMode): Future[SsUser] = {
+  override def save(profile: Profile, mode: SaveMode): Future[SsUser] = {
     trace(s"save($profile, $mode): Starting...")
     // TODO Скорее всего этот метод никогда не вызвается, т.к. его логика заинлайнилась в ExternalLogin.handleAuth1().
     if (mode is SaveMode.SignUp) {
@@ -94,8 +111,8 @@ class SsUserService @Inject() (
     } else if (mode is SaveMode.LoggedIn) {
       // Юзер уже был, как бы.
       // TODO повторно обращаемся к find! Нужно пропатчить secureSocial, чтобы передавала some-результат find() внутри mode.LoggedIn()
-      find(profile.providerId, profile.userId)
-        .map { _.get }
+      _findExtIdent(profile.providerId, profile.userId)
+        .map( _.get )
 
     } else {
       // Смена пароля или что-то другое, чего не должно происходить через securesocial

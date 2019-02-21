@@ -3,7 +3,6 @@ package models.usr
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.es.util.SioEsUtil._
 import models.mext.ILoginProvider
-import securesocial.core.IProfileDflt
 import io.suggest.util.JacksonParsing.stringParser
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
@@ -113,11 +112,11 @@ case class MExtIdent(
   personId            : String,
   provider            : ILoginProvider,
   userId              : String,
-  override val email  : Option[String] = None,
+  email               : Option[String] = None,
   versionOpt          : Option[Long] = None
 )
   extends MPersonIdent
-  with IProfileDflt
+  //with IProfileDflt
 {
 
   /** Ключём модели является userId. */
@@ -131,9 +130,6 @@ case class MExtIdent(
   override def writeVerifyInfo = false
   override def isVerified = true
 
-  /** Реализация IProfile. */
-  override def providerId = provider.ssProvName
-  override def authMethod = provider.ssAuthMethod
 }
 
 

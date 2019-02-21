@@ -167,7 +167,7 @@ trait OAuth1Provider extends IdentityProvider with LoggerImpl {
     }
   }
 
-  def fillProfile(info: OAuth1Info): Future[IProfile]
+  def fillProfile(info: OAuth1Info): Future[Profile]
 }
 
 object OAuth1Provider {

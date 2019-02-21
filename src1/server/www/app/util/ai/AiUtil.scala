@@ -1,7 +1,6 @@
 package util.ai
 
-import models.ai.AiParsers.AiParser
-import models.ai.ContentHandlerResult
+import models.ai.{AiParser, ContentHandlerResult}
 
 /**
  * Suggest.io

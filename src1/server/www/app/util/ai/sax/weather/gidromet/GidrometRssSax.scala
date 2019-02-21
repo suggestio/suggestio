@@ -7,7 +7,6 @@ import io.suggest.text.an.{NormTokensOutAnStream, ReplaceMischarsAnalyzer, YmStr
 import io.suggest.text.parse.dt.DateParseUtil
 import io.suggest.text.sax.StackFsmSax
 import io.suggest.util.logs.MacroLogsImplLazy
-import models.ai.AiParsers.AiParser
 import models.ai._
 import org.apache.lucene.analysis.core.LowerCaseFilter
 import org.apache.lucene.analysis.snowball.SnowballFilter

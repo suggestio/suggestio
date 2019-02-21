@@ -19,9 +19,9 @@ object FbPermissionState extends MaybeFromJsonT {
     val d = raw.asInstanceOf[Dictionary[Any]] : WrappedDictionary[Any]
     for {
       permRaw     <- d.get("permission").map(_.toString)
-      perm        <- FbPermissions.maybeWithName(permRaw)
+      perm        <- FbPermissions.withValueOpt(permRaw)
       statusRaw   <- d.get("status").map(_.toString)
-      status      <- FbPermissionStatuses.maybeWithName(statusRaw)
+      status      <- FbPermissionStatuses.withValueOpt(statusRaw)
     } yield {
       FbPermissionState(
         permission = perm,

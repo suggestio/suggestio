@@ -1,5 +1,7 @@
 package io.suggest.xadv.ext.js.runner.m
 
+import io.suggest.adv.ext.model.ctx.MAskActions
+import io.suggest.ext.svc.{MExtServiceInfo, MExtServices}
 import minitest._
 
 
@@ -34,7 +36,7 @@ object MJsCtxSpec extends SimpleTestSuite {
     val ctx0 = MJsCtx(
       action = MAskActions.EnsureReady,
       mads = Seq(mad),
-      service = Some( MServiceInfo(MServices.VKONTAKTE, appId = Some("12312332")) ),
+      service = Some( MExtServiceInfo(MExtServices.VKONTAKTE, appId = Some("12312332")) ),
       domains = Seq("vk.com"),
       target = Some(MExtTarget(
         id          = "someid",

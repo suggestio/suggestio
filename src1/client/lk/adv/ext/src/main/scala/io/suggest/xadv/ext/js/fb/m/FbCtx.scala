@@ -55,7 +55,7 @@ case class FbCtx(
   override def toJson: Dictionary[Any] = {
     val d = Dictionary[Any]()
     if (hasPerms.nonEmpty)
-      d.update(HAS_PERMS_FN, FbPermissions.permsToJson(hasPerms) )
+      d.update(HAS_PERMS_FN, FbPermission.permsToJson(hasPerms) )
     if (step.isDefined)
       d.update(STEP_FN, step.get)
     d

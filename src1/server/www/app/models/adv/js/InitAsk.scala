@@ -1,5 +1,6 @@
 package models.adv.js
 
+import io.suggest.adv.ext.model.ctx.MAskActions
 import models.adv.js.ctx.MJsCtx
 
 /**
@@ -14,7 +15,7 @@ case class InitAsk(mctx0: MJsCtx) extends IJsonActionCmd with IJsonActionCtxPatc
   override def replyTo = None
 
   /** Действие, которое должно быть в контексте. */
-  override def action = MJsActions.Init
+  override def action = MAskActions.Init
 
   /** Режим отправки значения не имеет, поэтому и на всякий тут Async. */
   override def sendMode = CmdSendModes.Async

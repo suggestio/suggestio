@@ -37,8 +37,8 @@ trait Mad2ImgUrlCalcOuter extends IAdvUtilDi {
       val sz = adRenderMaxSz
       val bm = advUtil.getAdvMainBlockMeta(mad).get
       val whSzM = Math.min(
-        sz.height.toFloat / bm.height.toFloat,
-        sz.width.toFloat  / bm.width.toFloat
+        sz.whPx.height.toFloat / bm.height.toFloat,
+        sz.whPx.width.toFloat  / bm.width.toFloat
       )
       // Нужно домножить на минимально необходимый размер для сервиса.
       // TODO Проквантовать полученный szMult?
@@ -53,7 +53,7 @@ trait Mad2ImgUrlCalcOuter extends IAdvUtilDi {
           width  = wideWidthOpt.fold {
             szMulted(bm.width, srv.szMult)
           }(_.width),
-          height = szMulted(sz.height, szMultV)
+          height = szMulted(sz.whPx.height, szMultV)
         ),
         szMult = szMultV,
         stdSz  = sz

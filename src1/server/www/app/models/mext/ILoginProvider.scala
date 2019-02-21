@@ -1,5 +1,6 @@
 package models.mext
 
+import io.suggest.ext.svc.MExtServices
 import io.suggest.model.play.psb.PathBindableImpl
 import play.api.libs.json._
 import play.api.mvc.PathBindable
@@ -19,9 +20,11 @@ import scala.reflect.ClassTag
 object ILoginProvider {
 
   def valuesIter: Iterator[ILoginProvider] = {
-    MExtServices.values
-      .iterator
-      .flatMap { _.loginProvider }
+    for {
+      svc <- MExtServices.values.iterator
+      svcJvm = MExtServicesJvm.forService( svc )
+      idp <- svcJvm.loginProvider
+    } yield idp
   }
 
   /** Обратиться к модели [[MExtServices]] и узнать там провайдера по имени. */
@@ -36,10 +39,8 @@ object ILoginProvider {
     new PathBindableImpl[ILoginProvider] {
       override def bind(key: String, value: String): Either[String, ILoginProvider] = {
         strB.bind(key, value).right.flatMap { provId =>
-          maybeWithName(provId) match {
-            case Some(prov) => Right(prov)
-            case None       => Left("e.id.unknown.provider")
-          }
+          maybeWithName(provId)
+            .toRight( "e.id.unknown.provider" )
         }
       }
 
@@ -50,7 +51,7 @@ object ILoginProvider {
   }
 
   /** JSON deserializer. */
-  implicit val reads: Reads[ILoginProvider] = {
+  implicit def reads: Reads[ILoginProvider] = {
     implicitly[Reads[String]]
       // TODO заменить это на какой-нибудь flatMap().
       .map { maybeWithName }

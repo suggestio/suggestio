@@ -1,13 +1,13 @@
 package util.ext.vk
 
 import java.net.URL
-import javax.inject.{Inject, Singleton}
 
+import io.suggest.adv.ext.model.im.VkImgSizes
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.INamedSize2di
+import io.suggest.ext.svc.MExtServices
 import io.suggest.img.MImgFmts
 import io.suggest.util.logs.MacroLogsImpl
-import models.mext.MExtServices
-import models.mext.vk.VkImgSizes
 import models.mproj.ICommonDi
 import play.api.libs.ws.WSClient
 import util.adv.AdvUtil
@@ -57,7 +57,7 @@ class VkontakteHelper @Inject()(
 
   /** Найти стандартный (в рамках сервиса) размер картинки. */
   override def postImgSzWithName(n: String): Option[INamedSize2di] = {
-    VkImgSizes.maybeWithName(n)
+    VkImgSizes.withValueOpt(n)
   }
 
   override def maybeMpUpload = Some(this)

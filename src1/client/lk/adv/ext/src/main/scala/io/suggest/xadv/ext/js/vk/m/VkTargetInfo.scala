@@ -1,7 +1,7 @@
 package io.suggest.xadv.ext.js.vk.m
 
-import io.suggest.common.menum.LightEnumeration
-import io.suggest.sjs.common.model.{IToJsonDict, FromJsonT}
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.sjs.common.model.{FromJsonT, IToJsonDict}
 
 import scala.scalajs.js.{Any, Dictionary}
 
@@ -24,7 +24,7 @@ object VkTargetInfo extends FromJsonT {
     val d = raw.asInstanceOf[Dictionary[Any]]
     VkTargetInfo(
       id      = d(ID_FN).asInstanceOf[Int],
-      tgType  = VkTargetTypes.withName( d(TG_TYPE_FN).toString ),
+      tgType  = VkTargetTypes.withValue( d(TG_TYPE_FN).toString ),
       name    = d.get(TG_NAME_FN).map(_.toString)
     )
   }
@@ -54,51 +54,36 @@ case class VkTargetInfo(id: UserId_t, tgType: VkTargetType, name: Option[String]
  * Типы объектов по мнению вконтакта. Типы резолвятся через VK API utils.resolveScreenName.
  * @see [[https://vk.com/dev/utils.resolveScreenName]]
  */
-object VkTargetTypes extends LightEnumeration {
-  sealed protected trait ValT extends super.ValT {
-    def vkName: String
-    def isUser: Boolean = false
-    def isGroup: Boolean = !isUser
-  }
-
-  /**
-   * Экземпляр модели.
-   * @param vkName Название в терминах вконтакта.
-   */
-  protected sealed class Val(val vkName: String) extends ValT {
-    override def toString = vkName
-  }
-
-
-  override type T = Val
+object VkTargetTypes extends StringEnum[VkTargetType] {
 
   /** Страница обычного юзера. */
-  val User    = new Val("user") {
+  case object User extends VkTargetType("user") {
     override def isUser = true
   }
 
   /** Страница группы. */
-  val Group   = new Val("group")
+  case object Group extends VkTargetType("group")
 
   /** Страница приложения. */
-  val App     = new Val("application") {
+  case object App extends VkTargetType("application") {
     override def isGroup = false
   }
 
   /** Просто страница, отображается в группах. */
-  val Page    = new Val("page")
+  case object Page extends VkTargetType("page")
 
   /** Некие события. */
-  val Event   = new Val("event")
+  case object Event extends VkTargetType("event")
 
-  override def maybeWithName(n: String): Option[T] = {
-    n match {
-      case Group.vkName  => Some(Group)
-      case User.vkName   => Some(User)
-      case App.vkName    => Some(App)
-      case Page.vkName   => Some(Page)
-      case Event.vkName  => Some(Event)
-      case _             => None
-    }
-  }
+
+  override def values = findValues
+
+}
+
+sealed abstract class VkTargetType(override val value: String) extends StringEnumEntry {
+  /** Название в терминах вконтакта. */
+  @inline final def vkName: String = value
+  def isUser: Boolean = false
+  def isGroup: Boolean = !isUser
+  override final def toString = vkName
 }

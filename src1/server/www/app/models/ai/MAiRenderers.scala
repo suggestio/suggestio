@@ -1,6 +1,6 @@
 package models.ai
 
-import io.suggest.common.menum.EnumMaybeWithName
+import enumeratum.values.{StringEnum, StringEnumEntry}
 import util.ai.mad.render.{MadAiRenderedT, ScalaStiRenderer}
 
 import scala.reflect.ClassTag
@@ -12,19 +12,18 @@ import scala.reflect.ClassTag
  * Description: Модель доступных рендереров динамических рекламных карточек.
  */
 
-object MAiRenderers extends EnumMaybeWithName {
-
-  /** Экземпляр модели. */
-  protected sealed abstract class Val(val name: String) extends super.Val(name) {
-    def getRendererClass: ClassTag[_ <: MadAiRenderedT]
-  }
-
-  type MAiRenderer = Val
-  override type T = MAiRenderer
+object MAiRenderers extends StringEnum[MAiRenderer] {
 
   /** Вызов рендера шаблонов scalasti. */
-  val ScalaSti: MAiRenderer = new Val("scalasti") {
+  case object ScalaSti extends MAiRenderer("scalasti") {
     override def getRendererClass = ClassTag( classOf[ScalaStiRenderer] )
   }
 
+  override def values = findValues
+
+}
+
+
+sealed abstract class MAiRenderer(override val value: String) extends StringEnumEntry {
+  def getRendererClass: ClassTag[_ <: MadAiRenderedT]
 }

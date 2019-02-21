@@ -141,20 +141,17 @@ trait ScSite
           .withPredicateIter( MPredicates.Receiver )
           .nonEmpty  //.exists(_.info.sls.nonEmpty)
         renders <- {
-          val futs = for (svcHelper <- extServicesUtil.HELPERS) yield {
+          val futs = for ((_, svcHelper) <- extServicesUtil.HELPERS) yield {
             for (renderables <- svcHelper.adMetaTagsRender(mad)) yield {
               for (renderable <- renderables) yield {
                 renderable.render()(ctx)
               }
             }
           }
-          Future.sequence(futs)
+          Future.sequence( futs.toList )
         }
       } yield {
-        renders
-          .iterator
-          .flatten
-          .toList
+        renders.flatten
       }
       // Отработать случи отсутствия карточки или другие нежелательные варианты.
       fut.recover { case ex: Throwable =>

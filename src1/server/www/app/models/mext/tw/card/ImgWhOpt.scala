@@ -24,10 +24,6 @@ trait ImgWhOptWrapper extends ImgWhOpt with ICardArgsWrapper {
 }
 
 
-trait ImgWhOptDflt extends ImgWhOpt {
-  override def imgWh: Option[ISize2di] = None
-}
-
 
 
 

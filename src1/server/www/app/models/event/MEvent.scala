@@ -99,7 +99,7 @@ class MEvents
     MEvent(
       etype       = m.get(EVT_TYPE_ESFN)
         .map( JacksonParsing.stringParser )
-        .flatMap(MEventTypes.maybeWithName)
+        .flatMap(MEventTypes.withValueOpt)
         .get,
       ownerId     = m.get(OWNER_ID_ESFN)
         .map( JacksonParsing.stringParser )
@@ -144,7 +144,7 @@ class MEvents
     import m._
 
     var acc: FieldsJsonAcc = List(
-      EVT_TYPE_ESFN     -> JsString(etype.strId),
+      EVT_TYPE_ESFN     -> JsString(etype.value),
       OWNER_ID_ESFN     -> JsString(ownerId),
       DATE_CREATED_ESFN -> JacksonParsing.date2JsStr(dateCreated)
     )

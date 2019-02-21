@@ -1,7 +1,8 @@
 package models.mext.fb
 
-import io.suggest.adv.ext.model.im.FbWallImgSizesScalaEnumT
-import models.mext.IJsActorExtService
+import io.suggest.ext.svc.MExtServices
+import io.suggest.proto.http.HttpConst
+import models.mext.{IAdvExtService, IExtService, IJsActorExtService}
 import util.ext.fb.FacebookHelper
 
 import scala.reflect.ClassTag
@@ -12,29 +13,28 @@ import scala.reflect.ClassTag
  * Created: 10.04.15 19:21
  * Description: Абстрактная реализация facebook-сервиса.
  */
-trait FacebookService
-  extends IJsActorExtService
+class FacebookService
+  extends IExtService
+  with IJsActorExtService
   with FbLoginProvider
+  with IAdvExtService
 {
-
-  override def helperCt = ClassTag(classOf[FacebookHelper])
-
-  /** URL главной страницы сервиса. */
-  override def mainPageUrl: String = "https://facebook.com/"
-
-  override def nameI18N = "Facebook"
 
   /** Поддержка логина через facebook. */
   override def loginProvider = Some(this)
 
-  override def dfltTargetUrl = Some(mainPageUrl + "me")
+  override def advExt = this
+
+  override def helperCt = ClassTag(classOf[FacebookHelper])
+
+  override def dfltTargetUrl = Some( MExtServices.FACEBOOK.mainPageUrl + "me" )
 
   override def cspSrcDomains: Iterable[String] = {
     "facebook.com"   ::     // Не используется, но на всякий случай.
     "*.facebook.com" ::     // Почти все запросы к мордокниге улетают в эти домены.
-      "*.fbcdn.net"  ::      // Не нужно, но на всякий случай.
-      "*.facebook.net" ::   // .net нужен на самом шаге инициализации fb.js API в adv-ext.
-      Nil
+    "*.fbcdn.net"  ::       // Не нужно, но на всякий случай.
+    "*.facebook.net" ::     // .net нужен на самом шаге инициализации fb.js API в adv-ext.
+    Nil
   }
 
   /** CSP: Список поддерживаемых протоколов для обычных запросов. */
@@ -42,9 +42,7 @@ trait FacebookService
     // В dev-режиме:
     // The page’s settings observed the loading of a resource at
     // http://staticxx.facebook.com/connect/xd_arbiter/r/JtmcTFxyLye.js?version=42
-    "http" :: super.cspSrcProtos
+    HttpConst.Proto.HTTP :: super.cspSrcProtos
   }
-}
 
-/** Реализация модели размеров картинок фейсбука. */
-object FbImgSizes extends FbWallImgSizesScalaEnumT
+}

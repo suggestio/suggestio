@@ -128,11 +128,12 @@ trait OAuth2Provider extends IdentityProvider with ApiSupport with LoggerImpl {
             logger.debug(s"[securesocial] user loggedin using provider $id = $user")
             AuthenticationResult.Authenticated(user)
           }
-          result recover {
+          result.recover {
             case e =>
               logger.error("[securesocial] error authenticating user", e)
               throw e
           }
+
         case None =>
           // There's no code in the request, this is the first step in the oauth flow
           val state = UUID.randomUUID().toString
@@ -154,13 +155,16 @@ trait OAuth2Provider extends IdentityProvider with ApiSupport with LoggerImpl {
                 params.map(p => URLEncoder.encode(p._1, "UTF-8") + "=" + URLEncoder.encode(p._2, "UTF-8")).mkString("?", "&", "")
               logger.debug("[securesocial] authorizationUrl = %s".format(settings.authorizationUrl))
               logger.debug("[securesocial] redirecting to: [%s]".format(url))
-              AuthenticationResult.NavigationFlow(Results.Redirect(url).withSession(request.session + (IdentityProvider.SessionId -> sessionId)))
+              AuthenticationResult.NavigationFlow(
+                Results.Redirect(url)
+                  .withSession(request.session + (IdentityProvider.SessionId -> sessionId))
+              )
           }
       }
     }
   }
 
-  def fillProfile(info: OAuth2Info): Future[IProfile]
+  def fillProfile(info: OAuth2Info): Future[Profile]
 
   /**
    * Defines the request format for api authentication requests

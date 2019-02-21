@@ -1,7 +1,8 @@
 package util.ext
 
+import io.suggest.ext.svc.{MExtService, MExtServices}
 import javax.inject.{Inject, Singleton}
-import models.mext.{IExtService, MExtServices}
+import models.mext.MExtServicesJvm
 import models.mproj.ICommonDi
 
 /**
@@ -12,24 +13,29 @@ import models.mproj.ICommonDi
   */
 @Singleton
 class ExtServicesUtil @Inject() (
-  mCommonDi     : ICommonDi
-) {
+                                  mCommonDi       : ICommonDi
+                                ) {
+
+
+  private def _buildHelpers(services: MExtService*): Iterator[(MExtService, IExtServiceHelper)] = {
+    for {
+      msvc <- services.iterator
+      if msvc.hasAdvExt
+    } yield {
+      val msvcJvm = MExtServicesJvm.forService( msvc )
+      val helper = mCommonDi.current
+        .injector
+        .instanceOf( msvcJvm.advExt.helperCt )
+      msvc -> helper
+    }
+  }
 
   /** Все доступные сервис-хелперы, объявленные в модели сервисов.
     *
     * Для лени, можно сделать lazy val + List, либо val + Stream.
     * Для отладки или минимизации ресурсов/логики лучше всего val + List.
     */
-  val HELPERS: Seq[IExtServiceHelper] = {
-    MExtServices.valuesT
-      .iterator
-      .map { msvc =>
-        mCommonDi.current
-          .injector
-          .instanceOf( msvc.helperCt )
-      }
-      .toList
-  }
+  def HELPERS = _buildHelpers( MExtServices.values: _* )
 
 
   /**
@@ -38,11 +44,19 @@ class ExtServicesUtil @Inject() (
    * @return Сервис, если такой есть.
    */
   def findForHost(host: String): Option[IExtServiceHelper] = {
-    HELPERS.find( _.isForHost(host) )
+    (for {
+      (_, helper) <- HELPERS
+      if helper.isForHost(host)
+    } yield helper)
+      .buffered
+      .headOption
   }
 
-  def helperFor(mExtService: IExtService): Option[IExtServiceHelper] = {
-    HELPERS.find(_.mExtService == mExtService)
+  def helperFor(mExtService: MExtService): Option[IExtServiceHelper] = {
+    _buildHelpers( mExtService )
+      .buffered
+      .headOption
+      .map(_._2)
   }
 
 }

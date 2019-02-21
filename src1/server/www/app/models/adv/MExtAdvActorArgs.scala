@@ -1,9 +1,9 @@
 package models.adv
 
-import akka.actor.{Props, ActorRef}
+import akka.actor.{ActorRef, Props}
+import io.suggest.ext.svc.MExtService
 import models.adv.js.ctx.MJsCtx
 import models.mctx.Context
-import models.mext.MExtService
 import models.req.IAdProdReq
 import play.api.libs.oauth.RequestToken
 

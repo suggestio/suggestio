@@ -1,15 +1,14 @@
 package io.suggest.xadv.ext.js.runner.c
 
-import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
+import io.suggest.common.ws.proto.MAnswerStatuses
 import io.suggest.sjs.common.view.CommonPage
 import io.suggest.xadv.ext.js.runner.m._
 import io.suggest.xadv.ext.js.runner.vm.WsUrl
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-
 import org.scalajs.dom
 import org.scalajs.dom.{MessageEvent, WebSocket, console}
-import scala.concurrent.Future
 
+import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 import scala.util.{Failure, Success}
@@ -50,7 +49,7 @@ trait WsKeeper {
     // Форсируем асинхронное исполнение, чтобы можно было унифицировать обработку ошибок.
     // Десериализация полученной команды:
     val cmdFut = Future {
-      MJsCommand.fromString(msg.data.toString)
+      IJsCmd.fromString(msg.data.toString)
     }
     // Логгинг результата десериализации
     cmdFut onComplete {

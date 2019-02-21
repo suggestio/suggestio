@@ -1,7 +1,7 @@
 package models.mext
 
 import akka.actor.Actor
-import io.suggest.primo.IStrId
+import io.suggest.proto.http.HttpConst
 import util.adv.ext.{AdvExtServiceActorFactory, IApplyServiceActor}
 import util.ext.IExtServiceHelper
 
@@ -14,37 +14,16 @@ import scala.reflect.ClassTag
  * Description: Интерфейс одного экземпляра мега-модели внешних сервисов.
  */
 
-trait IExtService extends IStrId {
+trait IExtService {
 
-  /** URL главной страницы сервиса. */
-  def mainPageUrl: String
-
-  /** Отображамое имя, заданное через код в messages. */
-  def nameI18N: String
-
-  /** Дефолтовая цель размещения, если есть. При создании узлов дефолтовые цели создаются автоматом. */
-  def dfltTargetUrl: Option[String]
-
-  /** Код локализованного предложения "Я в фейсбук" */
-  def iAtServiceI18N: String = "adv.ext.i.at." + strId
-
-  /** Class tag для доступа к классу необходимой factory, собирающей service-акторы. */
-  def extAdvServiceActorFactoryCt: ClassTag[IApplyServiceActor[Actor]]
-
-  /** Человекочитабельный юзернейм (id страницы) suggest.io на стороне сервиса. */
-  def myUserName: Option[String] = None
-
-  /** Класс хелпера этого сервиса для получения его через DI. В этот класс уехала вся логика из модели. */
-  def helperCt: ClassTag[IExtServiceHelper]
-
-  /** CSP: Список разрешённых доменов-источников (или масок доменов). Вставляется в разные CSP *-src. */
-  def cspSrcDomains: Iterable[String]
-
-  /** CSP: Список поддерживаемых протоколов для обычных запросов. */
-  def cspSrcProtos = "https" :: Nil
-
-  /** CSP: Список поддерживаемых протоколов для коннекта из js. */
-  //def cspConnectProtos = "wss" :: Nil   // wss:// на всякий случай. Изначально он нигде не фигурировал.
+  /** Вернуть AdvExt API сервиса или exception, если API не доступно.
+    * По-хорошему, здесь должен быть Option, но нормально отрефакторить - пока иные приоритеты.
+    *
+    * @see MExtService.hasAdvExt для проверки доступности этого опционального API.
+    * @throws UnsupportedOperationException если данный сервис не поддерживает данное API.
+    */
+  def advExt: IAdvExtService =
+    throw new UnsupportedOperationException(s"Service ${getClass.getSimpleName} does not support AdvExt")
 
 
   /**
@@ -57,6 +36,33 @@ trait IExtService extends IStrId {
 }
 
 
-trait IJsActorExtService extends IExtService {
+trait IJsActorExtService extends IAdvExtService {
   override def extAdvServiceActorFactoryCt = ClassTag( classOf[AdvExtServiceActorFactory] )
+}
+
+
+/** Интерфейс для сервиса внешнего размещения.
+  * Изначально было прямо внутри [[IExtService]], но после необходимости подключения гос.услуг,
+  * поддержка внешнего размещения стало опциональным, и вынесено на отдельный интерфейс.
+  */
+trait IAdvExtService {
+
+  /** Дефолтовая цель размещения, если есть. При создании узлов дефолтовые цели создаются автоматом. */
+  def dfltTargetUrl: Option[String]
+
+  /** Class tag для доступа к классу необходимой factory, собирающей service-акторы. */
+  def extAdvServiceActorFactoryCt: ClassTag[IApplyServiceActor[Actor]]
+
+  /** Класс хелпера этого сервиса для получения его через DI. В этот класс уехала вся логика из модели. */
+  def helperCt: ClassTag[IExtServiceHelper]
+
+  /** CSP: Список разрешённых доменов-источников (или масок доменов). Вставляется в разные CSP *-src. */
+  def cspSrcDomains: Iterable[String]
+
+  /** CSP: Список поддерживаемых протоколов для обычных запросов. */
+  def cspSrcProtos = HttpConst.Proto.HTTPS :: Nil
+
+  /** CSP: Список поддерживаемых протоколов для коннекта из js. */
+  //def cspConnectProtos = "wss" :: Nil   // wss:// на всякий случай. Изначально он нигде не фигурировал.
+
 }

@@ -16,59 +16,6 @@
  */
 package securesocial.core
 
-/**
- * A minimal user profile
- */
-trait IProfileBase {
-  def providerId: String
-  def userId: String
-}
-trait IProfileBaseWrap extends IProfileBase {
-  def _underlying: IProfileBase
-  override def providerId = _underlying.providerId
-  override def userId     = _underlying.userId
-}
-
-/**
- * A generic profile
- */
-trait IProfile extends IProfileBase {
-  def firstName     : Option[String]
-  def lastName      : Option[String]
-  def fullName      : Option[String]
-  def email         : Option[String]
-  def avatarUrl     : Option[String]
-  def authMethod    : AuthenticationMethod
-  def oAuth1Info    : Option[OAuth1Info]
-  def oAuth2Info    : Option[OAuth2Info]
-  def passwordInfo  : Option[PasswordInfo]
-}
-
-trait IProfileWrap extends IProfile with IProfileBaseWrap {
-  override def _underlying: IProfile
-
-  override def firstName    = _underlying.firstName
-  override def lastName     = _underlying.lastName
-  override def fullName     = _underlying.fullName
-  override def oAuth1Info   = _underlying.oAuth1Info
-  override def oAuth2Info   = _underlying.oAuth2Info
-  override def avatarUrl    = _underlying.avatarUrl
-  override def passwordInfo = _underlying.passwordInfo
-  override def authMethod   = _underlying.authMethod
-  override def email        = _underlying.email
-}
-
-trait IProfileDflt extends IProfile {
-  override def firstName    : Option[String]        = None
-  override def lastName     : Option[String]        = None
-  override def fullName     : Option[String]        = None
-  override def email        : Option[String]        = None
-  override def avatarUrl    : Option[String]        = None
-  override def oAuth2Info   : Option[OAuth2Info]    = None
-  override def oAuth1Info   : Option[OAuth1Info]    = None
-  override def passwordInfo : Option[PasswordInfo]  = None
-}
-
 
 /**
  * An implementation of the GenericProfile
@@ -85,7 +32,7 @@ case class Profile(
   oAuth1Info    : Option[OAuth1Info]    = None,
   oAuth2Info    : Option[OAuth2Info]    = None,
   passwordInfo  : Option[PasswordInfo]  = None
-) extends IProfile
+)
 
 /**
  * The OAuth 1 details

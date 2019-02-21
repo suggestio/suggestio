@@ -153,7 +153,7 @@ class SysPerson @Inject() (
       val epwIdentsFut = emailPwIdents.findByPersonId(personId)
         .map { _.sortBy(_.email) }
       val extIdentsFut = mExtIdents.findByPersonId(personId)
-        .map { _.sortBy { ei => ei.providerId + "." + ei.userId } }
+        .map { _.sortBy { ei => ei.provider.ssProvName + "." + ei.userId } }
 
       // Определить имя юзера, если возможно.
       val personNameOptFut = mPerson.findUsernameCached(personId)

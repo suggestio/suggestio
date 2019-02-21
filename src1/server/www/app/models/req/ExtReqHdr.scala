@@ -3,6 +3,7 @@ package models.req
 import java.net.InetAddress
 
 import io.suggest.compress.{MCompressAlgo, MCompressAlgos}
+import io.suggest.proto.http.HttpConst
 import io.suggest.util.logs.MacroLogsImpl
 import models.msc.ScJsState
 import play.api.http.HeaderNames
@@ -90,13 +91,14 @@ trait ExtReqHdr extends RequestHeader {
       .fold (secure) { protos =>
         firstForwarded(protos)
           .toLowerCase()
-          .startsWith( "https" )
+          .startsWith( HttpConst.Proto.HTTPS  )
       }
   }
 
   /** Что используется для связи? http или https. */
   lazy val myProto: String = {
-    if (isTransferSecure) "https" else "http"
+    val P = HttpConst.Proto
+    if (isTransferSecure) P.HTTPS else P.HTTP
   }
 
   /**
@@ -169,6 +171,7 @@ trait ExtReqHdr extends RequestHeader {
       }
       .getOrElse {
         LOGGER.warn("host: unable to detect host for http request " + this)
+        // TODO Тут константа, которая должна быть унесена куда-то...
         "suggest.io"
       }
   }

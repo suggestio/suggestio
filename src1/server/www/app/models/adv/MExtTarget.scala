@@ -5,14 +5,13 @@ import java.time.OffsetDateTime
 import io.suggest.adv.ext.model.ctx.MExtTargetT
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.es.util.SioEsUtil._
-import models.mext.{MExtService, MExtServices}
-import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.util.JacksonParsing
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
+import io.suggest.ext.svc.{MExtService, MExtServices}
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.ext.MExtTargetSearchArgs
 
@@ -85,7 +84,7 @@ class MExtTargets
       id          = id,
       versionOpt  = version,
       url         = JacksonParsing.stringParser(m(URL_ESFN)),
-      service     = MExtServices.withName( JacksonParsing.stringParser(m(SERVICE_ID_ESFN)) ),
+      service     = MExtServices.withValue( JacksonParsing.stringParser(m(SERVICE_ID_ESFN)) ),
       adnId       = JacksonParsing.stringParser(m(ADN_ID_ESFN)),
       name        = m.get(NAME_ESFN)
         .map( JacksonParsing.stringParser ),
@@ -112,29 +111,9 @@ class MExtTargets
   }
 
 
-  /**
-   * Создавать ли экземпляр этой модели для новых узлов?
-   *
-   * @param svc Сервис.
-   * @param adnId id узла.
-   * @param messages язык. Для связи с Messages().
-   * @return Some с экземпляром [[MExtTarget]].
-   *         None, если по дефолту таргет создавать не надо.
-   */
-  def dfltTarget(svc: MExtService, adnId: String)(implicit messages: Messages): Option[MExtTarget] = {
-    svc.dfltTargetUrl.map { url =>
-      MExtTarget(
-        url     = url,
-        adnId   = adnId,
-        service = svc,
-        name    = Some( messages(svc.iAtServiceI18N) )
-      )
-    }
-  }
-
   override def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc = {
     import m._
-    SERVICE_ID_ESFN   -> JsString(service.strId) ::
+    SERVICE_ID_ESFN   -> JsString(service.value) ::
     ADN_ID_ESFN       -> JsString(adnId) ::
     DATE_CREATED_ESFN -> JacksonParsing.date2JsStr(dateCreated) ::
     toJsTargetPlayJsonFields

@@ -1,13 +1,12 @@
 package util.ext.fb
 
+import io.suggest.adv.ext.model.im.FbImgSizes
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.common.geom.d2.INamedSize2di
+import io.suggest.ext.svc.MExtServices
 import io.suggest.img.MImgFmts
 import io.suggest.model.n2.node.MNode
 import models.blk.SzMult_t
-import models.mext.MExtServices
-import models.mext.fb.FbImgSizes
 import models.mproj.ICommonDi
 import util.adv.AdvUtil
 import util.ext.IExtServiceHelper
@@ -41,7 +40,7 @@ class FacebookHelper @Inject() (
 
   /** Найти стандартный (в рамках сервиса) размер картинки. */
   override def postImgSzWithName(n: String): Option[INamedSize2di] = {
-    FbImgSizes.maybeWithName(n)
+    FbImgSizes.withValueOpt(n)
   }
 
   /** В фейсбук если не постить горизонтально, то будет фотография на пасспорт вместо иллюстрации. */

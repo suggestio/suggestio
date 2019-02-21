@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.vk.m
 
-import io.suggest.common.menum.LightEnumeration
+import enumeratum.{Enum, EnumEntry}
+import japgolly.univeq._
 
 /**
  * Suggest.io
@@ -8,62 +9,48 @@ import io.suggest.common.menum.LightEnumeration
  * Created: 02.04.15 16:14
  * Description: Модель пермишшенов вконтакта.
  */
-object VkPerms extends LightEnumeration {
-
-  /** Интерфейс экземпляра модели. */
-  sealed protected trait ValT extends super.ValT {
-    def name: String
-    override def toString = name
-    def toInt: Int
-
-    override def equals(obj: scala.Any): Boolean = {
-      super.equals(obj) || {
-        obj match {
-          case v: ValT  => v.toInt == this.toInt
-          case _        => false
-        }
-      }
-    }
-  }
-
-  override type T = ValT
+object VkPerms extends Enum[VkPerm] {
 
   /** Доступ к стене. */
-  val Wall = new ValT {
+  case object Wall extends VkPerm {
     override def name = "wall"
     override def toInt = 8192
   }
 
   /** Фотоальбомы и фотки. */
-  val Photos = new ValT {
+  case object Photos extends VkPerm {
     override def name = "photos"
     override def toInt = 4
   }
 
-  def values: Seq[T] = Seq(Wall, Photos)
 
-  override def maybeWithName(n: String): Option[T] = {
-    if (Wall.name == n) {
-      Some(Wall)
-    } else if (Photos.name == n) {
-      Some(Photos)
-    } else {
-      None
-    }
-  }
+  override def values = findValues
 
-  def toBitMask(perms: TraversableOnce[T]): Int = {
-    perms.foldLeft(0)(_ + _.toInt)
-  }
-  def toBitMask(perms: T*): Int = {
-    toBitMask(perms)
-  }
-
-  def fromBitMask(mask: Int): Seq[T] = {
+  def fromBitMask(mask: Int): Seq[VkPerm] = {
     values.filter { perm =>
       val c = perm.toInt
       (mask & c) == c
     }
+  }
+
+}
+
+sealed abstract class VkPerm extends EnumEntry {
+
+  def name: String
+  def toInt: Int
+
+  override final def toString = name
+
+}
+
+
+object VkPerm {
+
+  @inline implicit def univEq: UnivEq[VkPerm] = UnivEq.derive
+
+  def toBitMask(perms: TraversableOnce[VkPerm]): Int = {
+    perms.foldLeft(0)(_ + _.toInt)
   }
 
 }

@@ -7,13 +7,9 @@ package io.suggest.xadv.ext.js.vk
  */
 package object m {
 
-  type VkTargetType = VkTargetTypes.T
-
   /** Тип для хранения и передачи значения vk id. Это целое число, которое *в теории* может быть больше чем 2,4 млрд.
    * Long нельзя (хромает десериализация), String нельзя (гемора многовато).
    * Можно Double, если Int не хватит. */
   type UserId_t     = Int
-
-  type VkPerm       = VkPerms.T
 
 }

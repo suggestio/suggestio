@@ -50,7 +50,7 @@ case class FbAuthResponse(
       case Some(gsRaw) =>
         gsRaw.split(",")
           .iterator
-          .flatMap { FbPermissions.maybeWithName }
+          .flatMap { FbPermissions.withValueOpt }
           .toSeq
 
       case None =>
