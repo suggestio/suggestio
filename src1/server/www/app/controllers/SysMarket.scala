@@ -123,7 +123,7 @@ class SysMarket @Inject() (
       // Собрать es-запрос согласно запросу, описанному в URL.
       val msearch = new MNodeSearchDfltImpl {
         override def nodeTypes = args.ntypeOpt.toSeq
-        override def shownTypeIds = args.stiOpt.toSeq.map(_.name)
+        override def shownTypeIds = args.stiOpt.toSeq.map(_.value)
         override def limit = args.limit
         override def offset = args.offset
         override def withNameSort = Some( SortOrder.ASC )

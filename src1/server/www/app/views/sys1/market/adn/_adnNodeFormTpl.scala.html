@@ -3,10 +3,12 @@
 @* Форма для создания/редактирования узла рекламной сети.
    При верстке шаблона следует помнить, что mcompany.id может быть None. *@
 
+@import madn.AdnShownTypes
 @import helper._
 @import ctx._
 @import util.FC.tdFc
 @import io.suggest.adn.MAdnRights
+@import io.suggest.model.n2.node.MNodeTypes
 
 @form( CSRF(call) ) {
 

@@ -1,5 +1,4 @@
 import controllers.routes
-import io.suggest.model.n2
 import models.usr.EmailPwConfirmInfo
 import play.api.data.Form
 
@@ -11,8 +10,6 @@ import play.api.data.Form
  */
 
 package object models {
-
-  type AdnShownType         = AdnShownTypes.T
 
   type NodeRightPanelLink   = NodeRightPanelLinks.T
   type BillingRightPanelLink= BillingRightPanelLinks.T
@@ -43,15 +40,8 @@ package object models {
 
   type ContractForm_t       = Form[io.suggest.mbill2.m.contract.MContract]
 
-  type MNode                = n2.node.MNode
+  type MNode                = io.suggest.model.n2.node.MNode
 
-  type MNodeType            = n2.node.MNodeType
-  val  MNodeTypes           = n2.node.MNodeTypes
-
-  type MEdge                = n2.edge.MEdge
-  val  MEdge                = n2.edge.MEdge
-
-  type MPredicate           = n2.edge.MPredicate
-  val  MPredicates          = n2.edge.MPredicates
+  type MEdge                = io.suggest.model.n2.edge.MEdge
 
 }

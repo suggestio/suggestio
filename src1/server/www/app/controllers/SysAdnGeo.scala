@@ -8,7 +8,7 @@ import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImplLazy
 import javax.inject.Inject
-import models.AdnShownTypes
+import models.madn.AdnShownTypes
 import models.mgeo.MGsPtr
 import models.mproj.ICommonDi
 import models.msys._

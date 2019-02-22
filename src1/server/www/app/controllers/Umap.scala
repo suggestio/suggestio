@@ -13,7 +13,7 @@ import io.suggest.model.n2.edge.search.{Criteria, GsCriteria}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.logs.MacroLogsImpl
-import models.AdnShownTypes
+import models.madn.AdnShownTypes
 import models.maps.umap._
 import models.mproj.ICommonDi
 import models.req.{IReq, IReqHdr}

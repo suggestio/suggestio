@@ -3,12 +3,11 @@ package controllers.ident
 import controllers.SioController
 import io.suggest.es.model.EsModelDi
 import io.suggest.id.IdentConst
-import io.suggest.model.n2.node.IMNodes
+import io.suggest.model.n2.node.{IMNodes, MNodeTypes}
 import io.suggest.sec.m.msession.{Keys, LongTtl, ShortTtl, Ttl}
 import io.suggest.sec.util.IScryptUtilDi
 import io.suggest.util.logs.IMacroLogs
 import models.req.IReq
-import models.MNodeTypes
 import models.usr._
 import play.api.data._
 import play.api.data.Forms._

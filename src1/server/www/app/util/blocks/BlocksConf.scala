@@ -1,6 +1,5 @@
 package util.blocks
 
-import io.suggest.common.menum.EnumValue2Val
 import models.blk
 import models.mctx.Context
 import play.twirl.api.{Html, Template2}
@@ -18,7 +17,6 @@ import views.html.blocks._
 
 object BlocksConf
   extends Enumeration
-  with EnumValue2Val
 {
 
   /** Всё описание блока идёт через наследование Val и её интерфейса [[ValT]] при необходимости. */
@@ -26,7 +24,7 @@ object BlocksConf
     extends super.Val(id)
     with CommonBlock2T
 
-  override type T = Val
+  type T = Val
 
 
   // Начало значений

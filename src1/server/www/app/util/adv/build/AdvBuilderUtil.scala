@@ -6,10 +6,9 @@ import io.suggest.geo.{MGeoPoint, MNodeGeoLevels}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.model.n2.edge.{MEdge, MEdgeGeoShape, MEdgeInfo, MNodeEdges}
+import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
-import models.MPredicate
 import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
 import util.adv.geo.tag.GeoTagsUtil

@@ -12,8 +12,8 @@ import io.suggest.geo._
 import io.suggest.model.n2.edge.{MPredicate, MPredicates}
 import io.suggest.text.parse.dt.DateParseUtil
 import io.suggest.text.util.UrlUtil
-import models.{AdnShownType, AdnShownTypes}
 import models.blk.SzMult_t
+import models.madn.{AdnShownType, AdnShownTypes}
 import org.apache.commons.text.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.Forms._
@@ -132,13 +132,13 @@ object FormUtil {
       nonEmptyText(maxLength = 10)
     )
       .transform[Option[AdnShownType]](
-        _.flatMap( AdnShownTypes.maybeWithName ),
+        _.flatMap( AdnShownTypes.withValueOpt ),
         _.map(_.toString)
       )
   }
   def adnShownTypeIdOptM: Mapping[Option[String]] = {
     adnShownTypeOptM
-      .transform[Option[String]](_.map(_.toString), _.flatMap(AdnShownTypes.maybeWithName))
+      .transform[Option[String]](_.map(_.toString), _.flatMap(AdnShownTypes.withValueOpt))
   }
 
   /** Единицы расстояния. */

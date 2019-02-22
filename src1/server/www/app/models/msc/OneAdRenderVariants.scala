@@ -1,13 +1,9 @@
 package models.msc
 
-import controllers.routes
-import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.model.play.psb.PathBindableImpl
-import io.suggest.model.play.qsb.QueryStringBindableImpl
-import models.blk.OneAdQsArgs
-import play.api.mvc.{Call, PathBindable, QueryStringBindable}
-
-import scala.language.implicitConversions
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.EnumeratumJvmUtil
+import japgolly.univeq.UnivEq
+import play.api.mvc.{PathBindable, QueryStringBindable}
 
 /**
  * Suggest.io
@@ -15,88 +11,46 @@ import scala.language.implicitConversions
  * Created: 21.04.15 17:30
  * Description: controller-модель с вариантами рендера одиночной карточки.
  */
-object OneAdRenderVariants extends Enumeration with EnumMaybeWithName {
-
-  /**
-   * Экземпляр модели.
-   * @param strId Ключ экземпляра модели.
-   */
-  abstract protected class Val(val strId: String) extends super.Val(strId) {
-
-    /** routes-вызов для рендера. */
-    def routesCall(qsArgs: OneAdQsArgs): Call
-
-    /** Рендерим в картинку? */
-    def isToImage: Boolean
-
-    /** Описавающий код i18n. */
-    def nameI18n: String
-  }
-
-  override type T = Val
-
+object OneAdRenderVariants extends StringEnum[OneAdRenderVariant] {
 
   /** Планируется рендер в HTML. */
-  val ToHtml: T = new Val("h") {
-    override def routesCall(qsArgs: OneAdQsArgs): Call = {
-      routes.Sc.onlyOneAd(qsArgs)
-    }
-
+  case object ToHtml extends OneAdRenderVariant("h") {
     override def isToImage = false
     override def nameI18n = "HTML"
   }
 
   /** Планируется рендер в картинку. */
-  val ToImage: T = new Val("i") {
-    override def routesCall(qsArgs: OneAdQsArgs): Call = {
-      routes.Sc.onlyOneAdAsImage(qsArgs)
-    }
-
+  case object ToImage extends OneAdRenderVariant("i") {
     override def isToImage = true
     override def nameI18n = "Image"
   }
 
+  override def values = findValues
 
-  /** Общий код qsb- и pb- мапперов. Вызывается через Either.right.flatMap(). */
-  private def binder(varStr: String): Either[String, T] = {
-    maybeWithName(varStr) match {
-      case Some(v) => Right(v)
-      case None    => Left("Unknown rendering variant: " + varStr)
-    }
-  }
+}
 
-  /** routes qsb для модели. */
-  implicit def oneAdRenderVariantQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
-    new QueryStringBindableImpl[T] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
-        for {
-          maybeVarianStr <- strB.bind(key, params)
-        } yield {
-          maybeVarianStr
-            .right
-            .flatMap { binder }
-        }
-      }
 
-      override def unbind(key: String, value: T): String = {
-        strB.unbind(key, value.strId)
-      }
-    }
-  }
+/** Экземпляр модели.
+  * @param value Ключ экземпляра модели.
+  */
+sealed abstract class OneAdRenderVariant(override val value: String) extends StringEnumEntry {
 
-  /** path binder для маппинга кусков пути URL. */
-  implicit def pb(implicit strB: PathBindable[String]): PathBindable[T] = {
-    new PathBindableImpl[T] {
-      override def bind(key: String, value: String): Either[String, T] = {
-        strB.bind(key, value)
-          .right
-          .flatMap { binder }
-      }
+  /** Рендерим в картинку? */
+  def isToImage: Boolean
 
-      override def unbind(key: String, value: T): String = {
-        strB.unbind(key, value.strId)
-      }
-    }
-  }
+  /** Описавающий код i18n. */
+  def nameI18n: String
+
+}
+
+object OneAdRenderVariant {
+
+  @inline implicit def univEq: UnivEq[OneAdRenderVariant] = UnivEq.derive
+
+  implicit def oarvQsb: QueryStringBindable[OneAdRenderVariant] =
+    EnumeratumJvmUtil.valueEnumQsb( OneAdRenderVariants )
+
+  implicit def oarvPb: PathBindable[OneAdRenderVariant] =
+    EnumeratumJvmUtil.valueEnumPb( OneAdRenderVariants )
 
 }

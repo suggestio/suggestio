@@ -2,10 +2,10 @@ package controllers.sysctl.invite
 
 import controllers.SioController
 import io.suggest.model.n2.node.MNode
+import models.madn.AdnShownTypes
 import models.mctx.Context
 import models.req.IReqHdr
 import models.usr.EmailActivation
-import models.AdnShownTypes
 import util.mail.IMailerWrapperDi
 import views.html.lk.adn.invite.emailNodeOwnerInviteTpl
 
@@ -25,7 +25,7 @@ trait SmSendEmailInvite
 
     val ast = adnNode.extras.adn
       .flatMap( _.shownTypeIdOpt )
-      .flatMap( AdnShownTypes.maybeWithName )
+      .flatMap( AdnShownTypes.withValueOpt )
       .getOrElse( AdnShownTypes.default )
 
     msg.setSubject("Suggest.io | " +

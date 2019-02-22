@@ -2,10 +2,11 @@ package io.suggest.enum2
 
 import enumeratum.{Enum, EnumEntry}
 import enumeratum.values._
+import io.suggest.model.play.psb.PathBindableImpl
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.data.Mapping
 import play.api.data.Forms._
-import play.api.mvc.QueryStringBindable
+import play.api.mvc.{PathBindable, QueryStringBindable}
 
 /**
   * Suggest.io
@@ -150,6 +151,40 @@ object EnumeratumJvmUtil {
 
       override def unbind(key: String, value: VEE): String = {
         vQsb.unbind(key, vee2v(value))
+      }
+    }
+  }
+
+
+  def valueEnumPb[K, VEE <: ValueEnumEntry[K]](m: => ValueEnum[K, VEE])
+                                              (implicit kPb: PathBindable[K]): PathBindable[VEE] = {
+    _anyEnumPb[K, VEE]( m.withValueOpt, _.value )
+  }
+
+  /** Сборка play router PathBindable.
+    *
+    * @param withValueOpt Поиск значения по ключу.
+    * @param vee2k Извлечение ключа из значения.
+    * @param kPb PathBindable ключа.
+    * @tparam K Тип ключа.
+    * @tparam VEE Тип (класс) инстансов значения модели.
+    * @return PathBindable значения.
+    */
+  private def _anyEnumPb[K, VEE](withValueOpt: K => Option[VEE], vee2k: VEE => K)
+                                (implicit kPb: PathBindable[K]): PathBindable[VEE] = {
+    new PathBindableImpl[VEE] {
+      override def bind(key: String, value: String): Either[String, VEE] = {
+        kPb.bind(key, value)
+          .right
+          .flatMap { k =>
+            withValueOpt(k)
+              .toRight("Undefined value")
+          }
+      }
+
+      override def unbind(key: String, value: VEE): String = {
+        val k = vee2k(value)
+        kPb.unbind(key, k)
       }
     }
   }

@@ -19,10 +19,9 @@ import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
-import models.AdnShownTypes
 import models.adv.{MExtTarget, MExtTargets}
 import models.im.MImgT
-import models.madn.{MNodeRegSuccess, NodeDfltColors}
+import models.madn.{AdnShownTypes, MNodeRegSuccess, NodeDfltColors}
 import models.mext.MExtServicesJvm
 import models.mproj.ICommonDi
 import models.mwc.MWelcomeRenderArgs
@@ -123,7 +122,7 @@ final class NodesUtil @Inject() (
         adn =  Some(MAdnExtra(
           rights          = Set(MAdnRights.PRODUCER, MAdnRights.RECEIVER),
           isUser          = true,
-          shownTypeIdOpt  = Some(AdnShownTypes.SHOP.name),
+          shownTypeIdOpt  = Some(AdnShownTypes.SHOP.value),
           testNode        = false,
         ))
       ),

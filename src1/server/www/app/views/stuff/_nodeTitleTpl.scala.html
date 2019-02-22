@@ -2,6 +2,8 @@
 
 @* Рисование куска head.title, составляющего внутри себя данные о рекламном узле. *@
 
+@import madn.AdnShownTypes
+
 @nodeOpt.map { mnode =>
   @mnode.meta.basic.name
   @if( mnode.meta.address.town && AdnShownTypes.node2val(mnode).showWithTown ) {

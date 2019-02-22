@@ -1,7 +1,8 @@
 package models.msys
 
+import io.suggest.model.n2.node.MNodeType
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import models.{AdnShownType, MNodeType}
+import models.madn.AdnShownType
 import play.api.mvc.QueryStringBindable
 
 /**

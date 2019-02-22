@@ -1,11 +1,11 @@
 package util.acl
 
 import io.suggest.es.model.EsModel
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models._
 import models.mproj.ICommonDi
 import models.req.{MAdProdReq, MReq}
 import play.api.mvc._

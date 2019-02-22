@@ -5,11 +5,11 @@ import io.suggest.img.{MImgFmtJvm, MImgFmts}
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.util.logs.IMacroLogs
 import models.blk.{OneAdQsArgs, OneAdWideQsArgs}
-import models.msc.OneAdRenderVariant
+import models.msc.{OneAdRenderVariant, OneAdRenderVariants}
 import models.msys.MShowOneAdFormTplArgs
 import models.req.IAdReq
 import play.api.data.{Form, Mapping}
-import play.api.mvc.Result
+import play.api.mvc.{Call, Result}
 import util.acl.IIsSuMad
 import util.n2u.IN2NodesUtilDi
 import util.FormUtil
@@ -113,6 +113,7 @@ trait SysAdRender
     }
   }
 
+
   /**
    * Сабмит формы запроса рендера карточки.
    *
@@ -128,9 +129,26 @@ trait SysAdRender
           _showOneAdFormRender(formWithErrors, rvar, NotAcceptable)
         },
         {oneAdQsArgs =>
-          Redirect( rvar.routesCall(oneAdQsArgs) )
+          val call = _oneAdRenderCall(rvar, oneAdQsArgs)
+          Redirect( call )
         }
       )
+    }
+  }
+
+
+  /** Сборка ссылки требуемый на рендер карточки.
+    *
+    * @param rvar Вариант рендера.
+    * @param qsArgs Парамерты рендера.
+    * @return Инстанс Call.
+    */
+  private def _oneAdRenderCall(rvar: OneAdRenderVariant, qsArgs: OneAdQsArgs): Call = {
+    rvar match {
+      case OneAdRenderVariants.ToHtml =>
+        routes.Sc.onlyOneAd( qsArgs )
+      case OneAdRenderVariants.ToImage =>
+        routes.Sc.onlyOneAdAsImage( qsArgs )
     }
   }
 
