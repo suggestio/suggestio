@@ -1,7 +1,6 @@
 package models.mext.vk
 
 import models.mext.ILoginProvider
-import securesocial.core.AuthenticationMethod
 import securesocial.core.providers.{VkProvider, VkProviders}
 
 import scala.reflect.ClassTag
@@ -13,9 +12,6 @@ import scala.reflect.ClassTag
  * Description: Реализация интеграции vk и secure-social.
  */
 trait VkLoginProvider extends ILoginProvider {
-
-  /** Метод аутентификации SecureSocial. */
-  override def ssAuthMethod = AuthenticationMethod.OAuth2
 
   /** Имя провайдера по мнению SecureSocial. */
   override def ssProvName = VkProvider.Vk

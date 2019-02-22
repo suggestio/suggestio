@@ -25,7 +25,7 @@ class FacebookHelper @Inject() (
   extends IExtServiceHelper
 {
 
-  override def mExtService = MExtServices.FACEBOOK
+  override def mExtService = MExtServices.FaceBook
 
   override def isForHost(host: String): Boolean = {
     "(?i)(www\\.)?facebook\\.(com|net)$".r

@@ -2,6 +2,7 @@ package models.mext
 
 import io.suggest.ext.svc.{MExtService, MExtServices}
 import models.mext.fb.FacebookService
+import models.mext.gu.GosUslugiService
 import models.mext.tw.TwitterService
 import models.mext.vk.VkService
 
@@ -15,9 +16,10 @@ object MExtServicesJvm {
 
   def forService(svc: MExtService): IExtService = {
     svc match {
-      case MExtServices.VKONTAKTE => new VkService
-      case MExtServices.FACEBOOK  => new FacebookService
-      case MExtServices.TWITTER   => new TwitterService
+      case MExtServices.VKontakte => new VkService
+      case MExtServices.FaceBook  => new FacebookService
+      case MExtServices.Twitter   => new TwitterService
+      case MExtServices.GosUslugi => new GosUslugiService
     }
   }
 

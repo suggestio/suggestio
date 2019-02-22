@@ -18,6 +18,7 @@ package securesocial.core
 
 import _root_.java.util.UUID
 
+import io.suggest.auth._
 import javax.inject.Inject
 import play.api.libs.oauth._
 import play.api.mvc.{AnyContent, Request}
@@ -167,14 +168,14 @@ trait OAuth1Provider extends IdentityProvider with LoggerImpl {
     }
   }
 
-  def fillProfile(info: OAuth1Info): Future[Profile]
+  def fillProfile(info: OAuth1Info): Future[UserProfile]
 }
 
 object OAuth1Provider {
-  val CacheKey = "cacheKey"
-  val RequestTokenUrl = "requestTokenUrl"
-  val AccessTokenUrl = "accessTokenUrl"
-  val AuthorizationUrl = "authorizationUrl"
-  val ConsumerKey = "consumerKey"
-  val ConsumerSecret = "consumerSecret"
+  def CacheKey = "cacheKey"
+  def RequestTokenUrl = "requestTokenUrl"
+  def AccessTokenUrl = "accessTokenUrl"
+  def AuthorizationUrl = "authorizationUrl"
+  def ConsumerKey = "consumerKey"
+  def ConsumerSecret = "consumerSecret"
 }

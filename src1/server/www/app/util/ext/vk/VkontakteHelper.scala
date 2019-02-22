@@ -30,7 +30,7 @@ class VkontakteHelper @Inject()(
   with MacroLogsImpl
 {
 
-  override def mExtService = MExtServices.VKONTAKTE
+  override def mExtService = MExtServices.VKontakte
 
   override def checkImgUploadUrl(url: String): Boolean = {
     val v = try {

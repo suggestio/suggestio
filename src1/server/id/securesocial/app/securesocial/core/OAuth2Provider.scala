@@ -20,6 +20,7 @@ import _root_.java.net.URLEncoder
 import _root_.java.util.UUID
 
 import com.typesafe.config.ConfigObject
+import io.suggest.auth._
 import javax.inject.Inject
 import play.api.Configuration
 import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
@@ -97,7 +98,8 @@ trait OAuth2Provider extends IdentityProvider with ApiSupport with LoggerImpl {
   def authenticate()(implicit request: Request[AnyContent]): Future[AuthenticationResult] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val maybeError = request.queryString.get(OAuth2Constants.Error).flatMap(_.headOption).map {
-      case OAuth2Constants.AccessDenied => Future.successful(AuthenticationResult.AccessDenied())
+      case OAuth2Constants.AccessDenied =>
+        Future.successful(AuthenticationResult.AccessDenied())
       case error =>
         Future.failed {
           logger.error(s"[securesocial] error '$error' returned by the authorization server. Provider is $id")
@@ -139,7 +141,7 @@ trait OAuth2Provider extends IdentityProvider with ApiSupport with LoggerImpl {
           val state = UUID.randomUUID().toString
           val sessionId = request.session.get(IdentityProvider.SessionId).getOrElse(UUID.randomUUID().toString)
           cacheService.set(sessionId, state, 300).map {
-            unit =>
+            _ =>
               var params = List(
                 (OAuth2Constants.ClientId, settings.clientId),
                 (OAuth2Constants.RedirectUri, routesService.authenticationUrl(id)),
@@ -164,7 +166,7 @@ trait OAuth2Provider extends IdentityProvider with ApiSupport with LoggerImpl {
     }
   }
 
-  def fillProfile(info: OAuth2Info): Future[Profile]
+  def fillProfile(info: OAuth2Info): Future[UserProfile]
 
   /**
    * Defines the request format for api authentication requests
@@ -268,29 +270,29 @@ class OAuth2SettingsUtil @Inject() (
 }
 
 object OAuth2Settings {
-  val AuthorizationUrl = "authorizationUrl"
-  val AccessTokenUrl = "accessTokenUrl"
-  val AuthorizationUrlParams = "authorizationUrlParams"
-  val AccessTokenUrlParams = "accessTokenUrlParams"
-  val ClientId = "clientId"
-  val ClientSecret = "clientSecret"
-  val Scope = "scope"
+  def AuthorizationUrl = "authorizationUrl"
+  def AccessTokenUrl = "accessTokenUrl"
+  def AuthorizationUrlParams = "authorizationUrlParams"
+  def AccessTokenUrlParams = "accessTokenUrlParams"
+  def ClientId = "clientId"
+  def ClientSecret = "clientSecret"
+  def Scope = "scope"
 }
 
 object OAuth2Constants {
-  val ClientId = "client_id"
-  val ClientSecret = "client_secret"
-  val RedirectUri = "redirect_uri"
-  val Scope = "scope"
-  val ResponseType = "response_type"
-  val State = "state"
-  val GrantType = "grant_type"
-  val AuthorizationCode = "authorization_code"
-  val AccessToken = "access_token"
-  val Error = "error"
-  val Code = "code"
-  val TokenType = "token_type"
-  val ExpiresIn = "expires_in"
-  val RefreshToken = "refresh_token"
+  def ClientId = "client_id"
+  def ClientSecret = "client_secret"
+  def RedirectUri = "redirect_uri"
+  def Scope = "scope"
+  def ResponseType = "response_type"
+  def State = "state"
+  def GrantType = "grant_type"
+  def AuthorizationCode = "authorization_code"
+  def AccessToken = "access_token"
+  def Error = "error"
+  def Code = "code"
+  def TokenType = "token_type"
+  def ExpiresIn = "expires_in"
+  def RefreshToken = "refresh_token"
   val AccessDenied = "access_denied"
 }

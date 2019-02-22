@@ -13,12 +13,12 @@ import play.api.data._
 import play.api.data.Forms._
 import util.acl._
 import play.api.mvc._
-import util.di.IIdentUtil
 import util.xplay.SetLangCookieUtil
 import views.html.ident.login.epw._
 
 import scala.concurrent.Future
 import util.FormUtil.passwordM
+import util.ident.IIdentUtil
 
 /**
  * Suggest.io

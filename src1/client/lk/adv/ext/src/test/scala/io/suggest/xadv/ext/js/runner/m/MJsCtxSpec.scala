@@ -36,7 +36,7 @@ object MJsCtxSpec extends SimpleTestSuite {
     val ctx0 = MJsCtx(
       action = MAskActions.EnsureReady,
       mads = Seq(mad),
-      service = Some( MExtServiceInfo(MExtServices.VKONTAKTE, appId = Some("12312332")) ),
+      service = Some( MExtServiceInfo(MExtServices.VKontakte, appId = Some("12312332")) ),
       domains = Seq("vk.com"),
       target = Some(MExtTarget(
         id          = "someid",

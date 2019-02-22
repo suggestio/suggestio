@@ -24,6 +24,6 @@ package securesocial.core
 
 object SecureSocial {
 
-  val OriginalUrlKey = "original-url"
+  def OriginalUrlKey = "original-url"
 
 }

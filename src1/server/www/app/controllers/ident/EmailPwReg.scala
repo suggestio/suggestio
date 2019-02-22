@@ -25,7 +25,7 @@ import util.mail.IMailerWrapperDi
 import util.FormUtil
 import util.acl._
 import util.adn.INodesUtil
-import util.di.IIdentUtil
+import util.ident.IIdentUtil
 import views.html.ident.reg.regSuccessTpl
 import views.html.ident.reg.email._
 

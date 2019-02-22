@@ -24,39 +24,23 @@ trait SetLangCookieUtil
   import mCommonDi._
   import esModel.api._
 
-  /** Выставить lang.cookie. */
-  def setLangCookie1(resFut: Future[Result], personId: String): Future[Result] = {
-    setLangCookie2(
-      resFut,
-      mNodes
-        .getByIdCache(personId)
-        .withNodeType(MNodeTypes.Person)
-    )
-  }
-
   def setLangCookie2(resFut: Future[Result], mpersonOptFut: Future[Option[MNode]]): Future[Result] = {
     mpersonOptFut.flatMap { mpersonOpt =>
-      setLangCookie3(resFut, mpersonOpt)
+      getLangFrom( mpersonOpt ).fold(resFut) { lang =>
+        for (res0 <- resFut) yield
+          res0.withLang(lang)(mCommonDi.messagesApi)
+      }
+    }
+  }
+  def setLangCookie(res: Result, langOpt: Option[Lang]): Result = {
+    langOpt.fold(res) { lang =>
+      res.withLang(lang)(mCommonDi.messagesApi)
     }
   }
 
-  def setLangCookie3(resFut: Future[Result], mpersonOpt: Option[MNode]): Future[Result] = {
-    val langOpt = mpersonOpt.map(_.meta.basic.lang)
-    setLangCookie4(resFut, langOpt)
-  }
-
-  def setLangCookie4(resFut: Future[Result], langCodeOpt: Option[String]): Future[Result] = {
-    val langOpt = langCodeOpt.flatMap(Lang.get)
-    setLangCookie5(resFut, langOpt)
-  }
-
-  def setLangCookie5(resFut: Future[Result], langOpt: Option[Lang]): Future[Result] = {
-    langOpt match {
-      case Some(lang) =>
-        resFut.map { _.withLang(lang)(mCommonDi.messagesApi) }
-      case None =>
-        resFut
-    }
+  def getLangFrom(mpersonOpt: Option[MNode]): Option[Lang] = {
+    val langCodeOpt = mpersonOpt.map(_.meta.basic.lang)
+    langCodeOpt.flatMap(Lang.get)
   }
 
 }

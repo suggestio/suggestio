@@ -28,7 +28,7 @@ trait ICardArgs extends ICardArgsBase with IRenderable {
   def title: Option[String]
 
   /** Юзернейм приложения на твиттере. По идее он всегда одинаковый. */
-  def site: Option[String] = MExtServices.TWITTER.myUserName
+  def site: Option[String] = MExtServices.Twitter.myUserName
 
   // TODO Нужно как-то зафиксировать тип cardType.
   /* Рендер шаблона. */

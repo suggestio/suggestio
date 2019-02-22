@@ -16,8 +16,6 @@ trait RuntimeEnvironment[U] {
   def cacheService: CacheService
 
   def providers: Map[String, IdentityProvider]
-
-  def userService: UserService[U]
 }
 
 class RuntimeEnvironments @Inject() (

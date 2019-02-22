@@ -1,7 +1,6 @@
 package models.mext.fb
 
 import models.mext.ILoginProvider
-import securesocial.core.AuthenticationMethod
 import securesocial.core.providers.{FacebookProvider, FacebookProviders}
 
 import scala.reflect.ClassTag
@@ -13,9 +12,6 @@ import scala.reflect.ClassTag
  * Description: Интеграция facebook и securesocial.
  */
 trait FbLoginProvider extends ILoginProvider {
-
-  /** Метод аутентификации SecureSocial. */
-  override def ssAuthMethod = AuthenticationMethod.OAuth2
 
   /** Имя провайдера по мнению SecureSocial. */
   override def ssProvName = FacebookProvider.Facebook

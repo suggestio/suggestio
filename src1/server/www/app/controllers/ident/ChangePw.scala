@@ -8,13 +8,13 @@ import play.api.data.Forms._
 import util.acl._
 import util._
 import play.api.mvc._
-import util.di.IIdentUtil
 
 import scala.concurrent.Future
 import FormUtil.{passwordM, passwordWithConfirmM}
 import io.suggest.es.model.EsModelDi
 import io.suggest.sec.util.IScryptUtilDi
 import io.suggest.util.logs.IMacroLogs
+import util.ident.IIdentUtil
 import views.html.ident.changePasswordTpl
 
 /**

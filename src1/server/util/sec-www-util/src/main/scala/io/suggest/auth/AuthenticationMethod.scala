@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package securesocial.core
+package io.suggest.auth
 
 /**
  * A class representing an authentication method
@@ -33,9 +33,9 @@ case class AuthenticationMethod(method: String) {
  * Authentication methods used by the identity providers
  */
 object AuthenticationMethod {
-  val OAuth1 = AuthenticationMethod("oauth1")
-  val OAuth2 = AuthenticationMethod("oauth2")
-  val OpenId = AuthenticationMethod("openId")
-  val UserPassword = AuthenticationMethod("userPassword")
+  def OAuth1 = AuthenticationMethod("oauth1")
+  def OAuth2 = AuthenticationMethod("oauth2")
+  def OpenId = AuthenticationMethod("openId")
+  def UserPassword = AuthenticationMethod("userPassword")
 }
 

@@ -480,6 +480,7 @@ lazy val jdRenderSjs = {
 lazy val securesocial = project
   .in( file(DIR0 + "server/id/securesocial") )
   .enablePlugins(PlayScala, SbtWeb)
+  .dependsOn( secWwwUtil )
 
 /** Модели, связывающие географию, es и sio. */
 lazy val mgeo = project
@@ -497,7 +498,7 @@ lazy val commonWww = {
 lazy val secWwwUtil = {
   val id = "sec-www-util"
   Project(id = id, base = file(DIR0 + "server/util/" + id))
-    .dependsOn(util, esUtil, logsMacro, securesocial)
+    .dependsOn(util, esUtil, logsMacro)
 }
 
 /** Утиль для взаимодействия с антивирусами. */

@@ -1,5 +1,6 @@
 package securesocial.core.providers
 
+import io.suggest.auth.{AuthenticationException, OAuth2Info, UserProfile}
 import javax.inject.Inject
 import play.api.libs.json.JsObject
 import securesocial.core._
@@ -20,17 +21,17 @@ class VkProviders @Inject() (
 }
 
 object VkProvider {
-  val Vk = "vk"
+  def Vk = "vk"
 
-  val GetProfilesApi = "https://api.vk.com/method/getProfiles?fields=uid,first_name,last_name,photo&access_token="
-  val Response = "response"
-  val Id = "uid"
-  val FirstName = "first_name"
-  val LastName = "last_name"
-  val Photo = "photo"
-  val Error = "error"
-  val ErrorCode = "error_code"
-  val ErrorMessage = "error_msg"
+  def GetProfilesApi = "https://api.vk.com/method/getProfiles?fields=uid,first_name,last_name,photo&access_token="
+  def Response = "response"
+  def Id = "uid"
+  def FirstName = "first_name"
+  def LastName = "last_name"
+  def Photo = "photo"
+  def Error = "error"
+  def ErrorCode = "error_code"
+  def ErrorMessage = "error_msg"
 
 }
 
@@ -43,7 +44,7 @@ case class VkProvider(routesService: RoutesService,
 
   override def id = VkProvider.Vk
 
-  def fillProfile(info: OAuth2Info): Future[Profile] = {
+  def fillProfile(info: OAuth2Info): Future[UserProfile] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val accessToken = info.accessToken
     client.retrieveProfile(GetProfilesApi + accessToken).map { json =>
@@ -61,7 +62,7 @@ case class VkProvider(routesService: RoutesService,
           val firstName = (me \ FirstName).asOpt[String]
           val lastName = (me \ LastName).asOpt[String]
           val avatarUrl = (me \ Photo).asOpt[String]
-          Profile(id, userId, firstName, lastName, None, None, avatarUrl, authMethod, oAuth2Info = Some(info))
+          UserProfile(id, userId, firstName, lastName, None, None, avatarUrl, authMethod, oAuth2Info = Some(info))
       }
     } recover {
       case e: AuthenticationException => throw e

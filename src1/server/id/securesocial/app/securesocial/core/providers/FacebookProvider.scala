@@ -16,6 +16,7 @@
  */
 package securesocial.core.providers
 
+import io.suggest.auth.{AuthenticationException, OAuth2Info, UserProfile}
 import javax.inject.Inject
 import play.api.libs.json.JsObject
 import play.api.libs.ws.WSResponse
@@ -40,22 +41,21 @@ class FacebookProviders @Inject() (
 }
 
 object FacebookProvider  {
-  val Facebook = "facebook"
-
-  val MeApi = "https://graph.facebook.com/me?fields=name,first_name,last_name,picture.type(large),email&return_ssl_resources=1&access_token="
-  val Error = "error"
-  val Message = "message"
-  val Type = "type"
-  val Id = "id"
-  val FirstName = "first_name"
-  val LastName = "last_name"
-  val Name = "name"
-  val Picture = "picture"
-  val Email = "email"
+  def Facebook = "facebook"
+  def MeApi = "https://graph.facebook.com/me?fields=name,first_name,last_name,picture.type(large),email&return_ssl_resources=1&access_token="
+  def Error = "error"
+  def Message = "message"
+  def Type = "type"
+  def Id = "id"
+  def FirstName = "first_name"
+  def LastName = "last_name"
+  def Name = "name"
+  def Picture = "picture"
+  def Email = "email"
   val AccessToken = "access_token"
   val Expires = "expires"
-  val Data = "data"
-  val Url = "url"
+  def Data = "data"
+  def Url = "url"
 
 }
 
@@ -79,7 +79,7 @@ case class FacebookProvider(routesService: RoutesService,
     }
   }
 
-  def fillProfile(info: OAuth2Info): Future[Profile] = {
+  def fillProfile(info: OAuth2Info): Future[UserProfile] = {
     import scala.concurrent.ExecutionContext.Implicits.global
     val accessToken = info.accessToken
     client.retrieveProfile(MeApi + accessToken).map { me =>
@@ -100,7 +100,7 @@ case class FacebookProvider(routesService: RoutesService,
           val picture = me \ Picture
           val avatarUrl = (picture \ Data \ Url).asOpt[String]
           val email = (me \ Email).asOpt[String]
-          Profile(id, userId, firstName, lastName, name, email, avatarUrl, authMethod, oAuth2Info = Some(info))
+          UserProfile(id, userId, firstName, lastName, name, email, avatarUrl, authMethod, oAuth2Info = Some(info))
       }
     } recover {
       case e: AuthenticationException => throw e

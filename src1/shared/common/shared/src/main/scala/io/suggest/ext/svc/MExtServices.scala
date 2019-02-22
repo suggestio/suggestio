@@ -2,6 +2,7 @@ package io.suggest.ext.svc
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
+import io.suggest.i18n.MsgCodes
 import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
 
@@ -13,26 +14,38 @@ import play.api.libs.json.Format
  */
 object MExtServices extends StringEnum[MExtService] {
 
-  case object VKONTAKTE extends MExtService("vk") {
+  case object VKontakte extends MExtService("vk") {
     override def mainPageUrl = "https://vk.com/"
     override def nameI18N = "VKontakte"
     override def hasAdvExt = true
   }
 
 
-  case object FACEBOOK extends MExtService("fb") {
+  case object FaceBook extends MExtService("fb") {
     override def mainPageUrl = "https://facebook.com/"
     override def nameI18N = "Facebook"
     override def hasAdvExt = true
   }
 
 
-  case object TWITTER extends MExtService("tw") {
+  case object Twitter extends MExtService("tw") {
     /** Ссылка на главную твиттера, и на собственный акк, если юзер залогинен. */
     override def mainPageUrl = "https://twitter.com/"
     override def nameI18N = "Twitter"
     override def hasAdvExt = true
     override def myUserName = Some("@suggest_io")
+  }
+
+
+  /** Единая система идентификация и авторизации.
+    * Она глубоко интегрирована в гос.услуги, поэтому интегрируемся с гос.услугами.
+    */
+  case object GosUslugi extends MExtService("gu") {
+    /** URL главной страницы сервиса. */
+    override def mainPageUrl = "https://gosuslugi.ru/"
+    override def nameI18N = MsgCodes.`GovServices.ESIA`
+    /** Никакого размещения рекламы на гос.услугах нет. */
+    override def hasAdvExt = false
   }
 
 
@@ -52,7 +65,7 @@ sealed abstract class MExtService(override val value: String) extends StringEnum
 
   /** Код локализованного предложения "Я в_этом_сервисе" */
   def iAtServiceI18N: String =
-    "adv.ext.i.at." + value
+    "I.at." + value
 
   /** Человекочитабельный юзернейм (id страницы) suggest.io на стороне сервиса. */
   def myUserName: Option[String] = None

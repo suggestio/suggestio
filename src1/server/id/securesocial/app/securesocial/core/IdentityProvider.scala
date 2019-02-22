@@ -16,8 +16,9 @@
  */
 package securesocial.core
 
+import io.suggest.auth.{AuthenticationMethod, AuthenticationResult}
 import javax.inject.Inject
-import play.api.mvc.{AnyContent, Request, Result}
+import play.api.mvc.{AnyContent, Request}
 import play.api.Configuration
 import securesocial.util.LazyLoggerImpl
 
@@ -74,7 +75,7 @@ class IdentityProviders @Inject() (configuration: Configuration) {
 
 object IdentityProvider extends LazyLoggerImpl {
 
-  val SessionId = "sid"
+  def SessionId = "sid"
 
   def throwMissingPropertiesException(id: String) {
     val msg = s"[securesocial] Missing properties for provider '$id'. Verify your configuration file is properly set."
@@ -82,36 +83,6 @@ object IdentityProvider extends LazyLoggerImpl {
     throw new RuntimeException(msg)
   }
 }
-
-/**
- * An object that represents the different results of the authentication flow
- */
-sealed trait AuthenticationResult
-
-object AuthenticationResult {
-  /**
-   * A user denied access to their account while authenticating with an external provider (eg: Twitter)
-   */
-  case class AccessDenied() extends AuthenticationResult
-
-  /**
-   * An intermetiate result during the authentication flow (maybe a redirection to the external provider page)
-   */
-  case class NavigationFlow(result: Result) extends AuthenticationResult
-
-  /**
-   * Returned when the user was succesfully authenticated
-   * @param profile the authenticated user profile
-   */
-  case class Authenticated(profile: Profile) extends AuthenticationResult
-
-  /**
-   * Returned when the authentication process failed for some reason.
-   * @param error a description of the error
-   */
-  case class Failed(error: String) extends AuthenticationResult
-}
-
 /**
  * This traits enables providers to be used by the LoginApi controller.
  *

@@ -15,7 +15,6 @@ import play.api.data._
 import play.api.mvc.Result
 import play.twirl.api.Html
 import util.acl._
-import util.di.IIdentUtil
 import util.mail.IMailerWrapperDi
 import util.xplay.SetLangCookieUtil
 import views.html.helper.CSRF
@@ -25,6 +24,7 @@ import views.html.ident.recover._
 import scala.concurrent.Future
 import models._
 import util.FormUtil.passwordWithConfirmM
+import util.ident.IIdentUtil
 
 /**
  * Suggest.io

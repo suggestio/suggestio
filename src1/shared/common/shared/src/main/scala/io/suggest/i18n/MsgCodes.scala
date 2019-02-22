@@ -340,4 +340,6 @@ object MsgCodes {
   val `Settings.done.0.ready.for.using` = "Settings.done.0.ready.for.using"
   val `_to.Finish` = "_to.Finish"
 
+  val `GovServices.ESIA` = "GovServices.ESIA"
+
 }

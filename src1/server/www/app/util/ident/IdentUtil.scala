@@ -111,3 +111,8 @@ class IdentUtil @Inject() (
 
   // TODO Нужен метод "инсталляции" нового юзера.
 }
+
+
+trait IIdentUtil {
+  def identUtil: IdentUtil
+}

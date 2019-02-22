@@ -1,47 +1,34 @@
 package controllers.ident
 
-import javax.inject.Inject
 import controllers.{SioController, routes}
+import io.suggest.auth.{AuthenticationException, AuthenticationResult}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModelDi
-import io.suggest.ext.svc.MExtServices
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
-import io.suggest.playx.ExternalCall
 import io.suggest.sec.m.msession.{CustomTtl, Keys}
-import io.suggest.util.logs.{IMacroLogs, MacroLogsDyn}
+import io.suggest.util.logs.IMacroLogs
 import models.ExtRegConfirmForm_t
-import models.mctx.ContextUtil
 import models.mctx.p4j.{P4jWebContext, P4jWebContextFactory}
-import models.mext.{ILoginProvider, MExtServicesJvm}
-import models.mproj.ICommonDi
+import models.mext.ILoginProvider
 import models.req.IReq
 import models.usr._
 import org.pac4j.core.engine.DefaultCallbackLogic
 import org.pac4j.core.config.{Config => P4jConfig}
-import play.api.cache.AsyncCacheApi
 import play.api.data.Form
-import play.api.libs.ws.{WSClient, WSRequest}
 import play.api.mvc._
 import play.twirl.api.Html
-import securesocial.controllers.ProviderControllerHelper._
-import securesocial.core.RuntimeEnvironments
-import securesocial.core._
-import securesocial.core.services.{CacheService, HttpService, RoutesService}
 import util.acl._
 import util.adn.INodesUtil
-import util.di.IIdentUtil
-import util.ident.IdentUtil
 import util.xplay.SetLangCookieUtil
 import util.FormUtil
+import util.ident.IIdentUtil
+import util.ident.ss.SecureSocialLoginAdp
 import views.html.ident.reg._
 import views.html.ident.reg.ext._
 
-import scala.collection.immutable.ListMap
 import scala.concurrent.Future
-import scala.concurrent.duration._
-import scala.reflect.ClassTag
 
 /**
  * Suggest.io
@@ -49,87 +36,6 @@ import scala.reflect.ClassTag
  * Created: 30.01.15 17:16
  * Description: Поддержка логина через соц.сети или иные внешние сервисы.
  */
-
-class ExternalLogin_ @Inject() (
-                                 routesSvc                       : SsRoutesService,
-                                 ssUserService                   : SsUserService,
-                                 ssHttpService                   : SsHttpService,
-                                 ssCacheService                  : SsCacheService,
-                                 ssRuntimeEnvironments           : RuntimeEnvironments,
-                                 override val identUtil          : IdentUtil,
-                                 mCommonDi                       : ICommonDi
-                               )
-  extends MacroLogsDyn
-  with IIdentUtil
-{
-
-  import mCommonDi._
-
-  /** Фильтровать присылаемый ttl. */
-  val MAX_SESSION_TTL_SECONDS = {
-    configuration.getOptional[Int]("login.ext.session.ttl.max.minutes")
-      .getOrElse(86400)
-      .minutes
-      .toSeconds
-  }
-
-  /** secure-social настраивается через этот Enviroment. */
-  implicit val env: RuntimeEnvironment[SsUser] = {
-    new ssRuntimeEnvironments.Default[SsUser] {
-      override def cacheService = ssCacheService
-      override def httpService = ssHttpService
-      override lazy val routes = routesSvc
-      override def userService = ssUserService
-      override lazy val providers: ListMap[String, IdentityProvider] = {
-        // Аккуратная инициализация доступных провайдеров и без дубликации кода.
-        val provs = MExtServices.values
-          .iterator
-          .flatMap { service =>
-            val svcJvm = MExtServicesJvm.forService( service )
-            svcJvm.loginProvider
-          }
-          .flatMap { prov =>
-            val provSt = current.injector.instanceOf( prov.ssProviderClass )
-            try {
-              provSt(routes, cacheService, httpService) :: Nil
-            } catch {
-              case ex: Throwable =>
-                LOGGER.warn("Cannot initialize " + provSt.getClass.getSimpleName, ex)
-                Nil
-            }
-          }
-          .map(include)
-          .toSeq
-        ListMap(provs : _*)
-      }
-    }
-  }
-
-  /**
-   * Извлечь из сессии исходную ссылку для редиректа.
-   * Если ссылки нет, то отправить в ident-контроллер.
-   * @param ses Сессия.
-   * @param personId id залогиненного юзера.
-   * @return Ссылка в виде строки.
-   */
-  def toUrl2(ses: Session, personId: String): Future[String] = {
-    FutureUtil.opt2future( ses.get(Keys.OrigUrl.value) ) {
-      identUtil.redirectCallUserSomewhere(personId)
-        .map(_.url)
-    }
-  }
-
-
-  /** Маппинг формы подтверждения регистрации через id-провайдера. */
-  def extRegConfirmFormM: ExtRegConfirmForm_t = {
-    Form(
-      "nodeName" -> FormUtil.nameM
-    )
-  }
-
-}
-
-
 trait ExternalLogin
   extends SioController
   with IMacroLogs
@@ -139,6 +45,7 @@ trait ExternalLogin
   with IMaybeAuth
   with IMExtIdentsDi
   with EsModelDi
+  with IIdentUtil
 {
 
   import mCommonDi._
@@ -147,7 +54,7 @@ trait ExternalLogin
   val canConfirmIdpReg: CanConfirmIdpReg
 
   /** Доступ к DI-инстансу */
-  val externalLogin: ExternalLogin_ = current.injector.instanceOf[ExternalLogin_]
+  val secureSocialLogin: SecureSocialLoginAdp = current.injector.instanceOf[SecureSocialLoginAdp]
 
   /**
    * GET-запрос идентификации через внешнего провайдера.
@@ -169,16 +76,15 @@ trait ExternalLogin
   // которые по сути являются переусложнёнными stateful(!)-сессиями, которые придумал какой-то нехороший человек.
   protected def handleAuth1(provider: ILoginProvider, redirectTo: Option[String]) = maybeAuth().async { implicit request =>
     lazy val logPrefix = s"handleAuth1($provider):"
-    externalLogin.env.providers
+    secureSocialLogin.env.providers
       .get(provider.ssProvName)
       .fold[Future[Result]] {
         errorHandler.onClientError(request, NOT_FOUND)
       } { idProv =>
         idProv.authenticate().flatMap {
           case _: AuthenticationResult.AccessDenied =>
-            val res = Redirect( routes.Ident.mySioStartPage() )
-              .flashing(FLASH.ERROR -> "securesocial.login.accessDenied")
-            res
+            Redirect( routes.Ident.mySioStartPage() )
+              .flashing(FLASH.ERROR -> "login.accessDenied")
 
           case failed: AuthenticationResult.Failed =>
             LOGGER.error(s"$logPrefix authentication failed, reason: ${failed.error}")
@@ -219,24 +125,25 @@ trait ExternalLogin
                     )
                   )
                   val mpersonSaveFut = mNodes.save(mperson0)
-                  val meiFut = mpersonSaveFut.flatMap { personId =>
-                    // Сохранить данные идентификации через соц.сеть.
-                    val mei = MExtIdent(
+                  val meiFut = for {
+                    personId <- mpersonSaveFut
+                    mei = MExtIdent(
                       personId  = personId,
                       provider  = provider,
                       userId    = profile.userId,
                       email     = profile.email
                     )
-                    val save2Fut = mExtIdents.save(mei)
-                    LOGGER.debug(s"$logPrefix Registered new user $personId from ext.login service, remote user_id = ${profile.userId}")
-                    save2Fut.map { _ => mei }
-                  }
-                  val mpersonFut = mpersonSaveFut.map { personId =>
-                    mperson0.copy(id = Some(personId))
-                  }
+                    save2Fut = mExtIdents.save(mei)
+                    _ <- {
+                      LOGGER.debug(s"$logPrefix Registered new user $personId from ext.login service, remote user_id = ${profile.userId}")
+                      save2Fut
+                    }
+                  } yield mei
+
                   for {
+                    personId  <- mpersonSaveFut
+                    mperson = mperson0.copy(id = Some(personId))
                     mei       <- meiFut
-                    mperson   <- mpersonFut
                   } yield {
                     (mei, Some(mperson))
                   }
@@ -247,36 +154,46 @@ trait ExternalLogin
                   Future.successful( ident -> None )
               }
 
-              saveFut.flatMap { case (ident, newMpersonOpt) =>
-                // Можно перенести внутрь match всю эту логику. Т.к. она очень предсказуема. Но это наверное ещё добавит сложности кода.
-                val mpersonOptFut = newMpersonOpt match {
-                  case None =>
-                    mNodes
-                      .getByIdCache(ident.personId)
-                      .withNodeType(MNodeTypes.Person)
-                  case some =>
-                    Future.successful( some )
+              // После сохранения - приступать к сборке ответа.
+              for {
+                (ident, newMpersonOpt) <- saveFut
+
+                mpersonOptFut = FutureUtil.opt2futureOpt( newMpersonOpt ) {
+                  mNodes
+                    .getByIdCache(ident.personId)
+                    .withNodeType(MNodeTypes.Person)
                 }
-                val isNew = newMpersonOpt.isDefined
-                val rdrFut: Future[Result] = if (isNew) {
+
+                rdrFut: Future[Result] = if ( newMpersonOpt.isDefined ) {
                   Redirect(routes.Ident.idpConfirm())
                 } else {
-                  val rdrUrlFut = externalLogin.toUrl2(request.session, ident.personId)
-                  rdrUrlFut map { url =>
+                  val rdrUrlFut = toUrl2(request.session, ident.personId)
+                  for (url <- rdrUrlFut) yield
                     Redirect(url)
-                  }
                 }
+
                 // Сборка новой сессии: чистка исходника, добавление новых ключей, относящихся к идентификации.
-                var addToSessionAcc: List[(String, String)] = List(Keys.PersonId.value -> ident.personId)
-                addToSessionAcc = authenticated.profile.oAuth2Info
-                  .flatMap { _.expiresIn }
-                  .filter { _ <= externalLogin.MAX_SESSION_TTL_SECONDS }
-                  .map { ein => CustomTtl(ein.toLong).addToSessionAcc(addToSessionAcc) }
-                  .getOrElse { addToSessionAcc }
-                val session1 = addToSessionAcc.foldLeft(cleanupSession(request.session))(_ + _)
-                val resFut = rdrFut
-                  .map { _.withSession(session1) }
-                setLangCookie2(resFut, mpersonOptFut)
+                session1 = {
+                  val addToSession0 = (Keys.PersonId.value -> ident.personId) :: Nil
+                  (for {
+                    oa2Info   <- authenticated.profile.oAuth2Info
+                    expiresIn <- oa2Info.expiresIn
+                    if expiresIn <= secureSocialLogin.MAX_SESSION_TTL_SECONDS
+                  } yield {
+                    CustomTtl(expiresIn.toLong)
+                      .addToSessionAcc(addToSession0)
+                  })
+                    .getOrElse( addToSession0 )
+                    .foldLeft( secureSocialLogin.clearSession(request.session))(_ + _)
+                }
+
+                // Выставить в сессию юзера и локаль:
+                rdr <- rdrFut
+                rdr2 = rdr.withSession(session1)
+                mpersonOpt <- mpersonOptFut
+                langOpt = getLangFrom( mpersonOpt )
+              } yield {
+                setLangCookie( rdr2, langOpt )
               }
             }
 
@@ -284,11 +201,32 @@ trait ExternalLogin
           case e =>
             LOGGER.error("Unable to log user in. An exception was thrown", e)
             Redirect(routes.Ident.mySioStartPage())
-              .flashing(FLASH.ERROR -> "securesocial.login.errorLoggingIn")
+              .flashing(FLASH.ERROR -> "login.errorLoggingIn")
         }
       }
   }
 
+
+  /**
+   * Извлечь из сессии исходную ссылку для редиректа.
+   * Если ссылки нет, то отправить в ident-контроллер.
+   * @param ses Сессия.
+   * @param personId id залогиненного юзера.
+   * @return Ссылка в виде строки.
+   */
+  private def toUrl2(ses: Session, personId: String): Future[String] = {
+    FutureUtil.opt2future( ses.get(Keys.OrigUrl.value) ) {
+      identUtil.redirectCallUserSomewhere(personId)
+        .map(_.url)
+    }
+  }
+
+  /** Маппинг формы подтверждения регистрации через id-провайдера. */
+  private def extRegConfirmFormM: ExtRegConfirmForm_t = {
+    Form(
+      "nodeName" -> FormUtil.nameM
+    )
+  }
 
   /**
    * Юзер, залогинившийся через провайдера, хочет создать ноду.
@@ -296,8 +234,7 @@ trait ExternalLogin
    */
   def idpConfirm = csrf.AddToken {
     canConfirmIdpReg() { implicit request =>
-      val form = externalLogin.extRegConfirmFormM
-      Ok( _idpConfirm(form) )
+      Ok( _idpConfirm( extRegConfirmFormM ) )
     }
   }
 
@@ -309,7 +246,7 @@ trait ExternalLogin
   /** Сабмит формы подтверждения регистрации через внешнего провайдера идентификации. */
   def idpConfirmSubmit = csrf.Check {
     canConfirmIdpReg().async { implicit request =>
-      externalLogin.extRegConfirmFormM.bindFromRequest().fold(
+      extRegConfirmFormM.bindFromRequest().fold(
         {formWithErrors =>
           LOGGER.debug("idpConfirmSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
           NotAcceptable( _idpConfirm(formWithErrors) )
@@ -370,49 +307,4 @@ trait ExternalLogin
 
 }
 
-
-class SsRoutesService @Inject() (ctxUtil: ContextUtil) extends RoutesService {
-
-  private def absoluteUrl(call: Call)(implicit req: RequestHeader): String = {
-    if(call.isInstanceOf[ExternalCall])
-      call.url
-    else
-      ctxUtil.LK_URL_PREFIX + call.url
-  }
-
-  override def authenticationUrl(providerId: String, redirectTo: Option[String])
-                                (implicit req: RequestHeader): String = {
-    val prov = ILoginProvider.maybeWithName(providerId).get
-    val relUrl = routes.Ident.idViaProvider(prov, redirectTo)
-    absoluteUrl( relUrl )
-  }
-
-  override def loginPageUrl(implicit req: RequestHeader): String = {
-    val call = routes.Ident.emailPwLoginForm()
-    absoluteUrl( call )
-  }
-
-}
-
-
-class SsHttpService @Inject() (ws: WSClient) extends HttpService {
-  override def url(url: String): WSRequest = ws.url(url)
-}
-
-
-class SsCacheService @Inject() (cacheApi: AsyncCacheApi) extends CacheService {
-
-  override def set[T](key: String, value: T, ttlInSeconds: Int): Future[_] = {
-    cacheApi.set(key, value, expiration = ttlInSeconds.seconds)
-  }
-
-  override def getAs[T](key: String)(implicit ct: ClassTag[T]): Future[Option[T]] = {
-    cacheApi.get[T](key)
-  }
-
-  override def remove(key: String): Future[_] = {
-    cacheApi.remove(key)
-  }
-
-}
 

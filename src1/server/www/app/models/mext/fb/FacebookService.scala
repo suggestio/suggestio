@@ -27,7 +27,7 @@ class FacebookService
 
   override def helperCt = ClassTag(classOf[FacebookHelper])
 
-  override def dfltTargetUrl = Some( MExtServices.FACEBOOK.mainPageUrl + "me" )
+  override def dfltTargetUrl = Some( MExtServices.FaceBook.mainPageUrl + "me" )
 
   override def cspSrcDomains: Iterable[String] = {
     "facebook.com"   ::     // Не используется, но на всякий случай.

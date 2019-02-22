@@ -26,7 +26,7 @@ class VkService
   /** Поддержка логина через вконтакт. */
   override def loginProvider = Some(this)
 
-  override def dfltTargetUrl = Some( MExtServices.VKONTAKTE.mainPageUrl )
+  override def dfltTargetUrl = Some( MExtServices.VKontakte.mainPageUrl )
 
   override def cspSrcDomains: Iterable[String] = {
     "vk.com" ::

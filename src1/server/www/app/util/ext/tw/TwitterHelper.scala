@@ -41,7 +41,7 @@ class TwitterHelper @Inject() (
 {
   that =>
 
-  override def mExtService = MExtServices.TWITTER
+  override def mExtService = MExtServices.Twitter
 
   // TODO Нужно нормальную длину узнать. Там какой-то гемор с ссылками, что даже 100 символов - многовато.
   override def LEAD_TEXT_LEN      = 90

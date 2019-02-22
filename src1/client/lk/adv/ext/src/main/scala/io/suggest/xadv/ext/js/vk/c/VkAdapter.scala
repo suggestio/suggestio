@@ -96,7 +96,7 @@ class VkAdapter extends AsyncInitAdp {
 
       } else {
         // Should never happen. Нет карточек для размещения.
-        Future failed AdapterFatalError(MExtServices.VKONTAKTE, "All mctx.mads looks lost.")
+        Future failed AdapterFatalError(MExtServices.VKontakte, "All mctx.mads looks lost.")
       }
     }
   }

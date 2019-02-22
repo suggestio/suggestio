@@ -14,13 +14,12 @@
  * limitations under the License.
  *
  */
-package securesocial.core
-
+package io.suggest.auth
 
 /**
  * An implementation of the GenericProfile
  */
-case class Profile(
+case class UserProfile(
   providerId    : String,
   userId        : String,
   firstName     : Option[String]        = None,
@@ -31,7 +30,6 @@ case class Profile(
   authMethod    : AuthenticationMethod,
   oAuth1Info    : Option[OAuth1Info]    = None,
   oAuth2Info    : Option[OAuth2Info]    = None,
-  passwordInfo  : Option[PasswordInfo]  = None
 )
 
 /**
@@ -53,11 +51,3 @@ case class OAuth1Info(token: String, secret: String)
 case class OAuth2Info(accessToken: String, tokenType: Option[String] = None,
   expiresIn: Option[Int] = None, refreshToken: Option[String] = None)
 
-/**
- * The password details
- *
- * @param hasher the id of the hasher used to hash this password
- * @param password the hashed password
- * @param salt the optional salt used when hashing
- */
-case class PasswordInfo(hasher: String, password: String, salt: Option[String] = None)

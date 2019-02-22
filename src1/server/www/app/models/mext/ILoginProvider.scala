@@ -4,7 +4,6 @@ import io.suggest.ext.svc.MExtServices
 import io.suggest.model.play.psb.PathBindableImpl
 import play.api.libs.json._
 import play.api.mvc.PathBindable
-import securesocial.core.AuthenticationMethod
 import securesocial.core.providers.ProviderCompanion
 
 import scala.language.implicitConversions
@@ -64,9 +63,6 @@ object ILoginProvider {
 
 /** Интерфейс для sign-in. */
 trait ILoginProvider {
-
-  /** Метод аутентификации SecureSocial. */
-  def ssAuthMethod  : AuthenticationMethod
 
   /** SecureSocial provider companion. */
   def ssProviderClass: ClassTag[_ <: ProviderCompanion]

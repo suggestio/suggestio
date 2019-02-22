@@ -20,7 +20,7 @@ class TwitterService
 
   override def advExt = this
 
-  override def dfltTargetUrl = Some( MExtServices.TWITTER.mainPageUrl )
+  override def dfltTargetUrl = Some( MExtServices.Twitter.mainPageUrl )
 
   override def helperCt = ClassTag( classOf[TwitterHelper] )
 
