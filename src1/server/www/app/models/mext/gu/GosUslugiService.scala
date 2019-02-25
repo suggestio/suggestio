@@ -10,6 +10,6 @@ import models.mext.{IExtService, ILoginProvider}
   */
 class GosUslugiService extends IExtService {
 
-  override def loginProvider: Option[ILoginProvider] = ???
+  override def loginProvider: Option[ILoginProvider] = None // TODO
 
 }
