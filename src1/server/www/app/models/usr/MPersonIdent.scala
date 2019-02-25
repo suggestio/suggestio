@@ -224,7 +224,7 @@ trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT
 
 @Singleton
 class MPersonIdentModel @Inject()(
-                                    esModel: EsModel,
+                                   esModel: EsModel,
                                  )(implicit ec: ExecutionContext) {
   import esModel.api._
 

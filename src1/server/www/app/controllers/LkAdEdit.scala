@@ -9,7 +9,6 @@ import io.suggest.ctx.CtxData
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.jd.MJdAdData
-import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.doc.MNodeDoc
@@ -283,8 +282,6 @@ class LkAdEdit @Inject() (
                       }
                     } { mad00 =>
                       LOGGER.trace(s"$logPrefix Will update existing ad: ${mad00.idOrNull}")
-                      if (mad00.ad.nonEmpty)
-                        LOGGER.info(s"$logPrefix Erasing old ad format data: ${mad00.ad}")
                       if (mad00.extras.doc.isEmpty)
                         LOGGER.info(s"$logPrefix Initialized new jd-template, previous ad template was empty.")
 
@@ -301,8 +298,6 @@ class LkAdEdit @Inject() (
                               MNodeEdges.edgesToMap1( edgesCleanIter ++ edgesAcc0 )
                             }
                           ),
-                          // Удалить данные старой карточки.
-                          ad = MNodeAd.empty,
                           // Залить новый шаблон:
                           extras = mad.extras.withDoc {
                             Some(

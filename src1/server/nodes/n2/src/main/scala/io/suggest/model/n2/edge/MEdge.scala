@@ -59,6 +59,9 @@ object MEdge extends IGenEsMappingProps {
       // Гео-точки
       def INFO_GEO_POINTS_FN                    = _fullFn( F.GEO_POINT_FN )
 
+      // Внешние сервисы.
+      def INFO_EXT_SERVICE_FN                   = _fullFn( F.EXT_SERVICE_FN )
+
     }
 
 
@@ -104,10 +107,10 @@ object MEdge extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     // Все поля эджей должны быть include_in_all = false, ибо это сугубо техническая вещь.
-    def fsNa(id: String) = FieldKeyword(id, index = true, include_in_all = false)
+    def _fieldKw(id: String) = FieldKeyword(id, index = true, include_in_all = false)
     List(
-      fsNa(PREDICATE_FN),
-      fsNa(NODE_ID_FN),
+      _fieldKw(PREDICATE_FN),
+      _fieldKw(NODE_ID_FN),
       // orderId -- not_analyzed, используется в т.ч. для хранения статистики использования геотегов, как это не странно...
       FieldNumber(ORDER_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
       FieldObject(INFO_FN, enabled = true, properties = MEdgeInfo.generateMappingProps),

@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra
 
-import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
 import io.suggest.model.n2.extra.doc.{MNodeDoc, MNodeDocJvm}
@@ -98,7 +98,7 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
     (__ \ Fields.Beacon.BEACON_FN).formatNullable[MBeaconExtra] and
     (__ \ Fields.Domain.DOMAIN_FN).formatNullable[Seq[MDomainExtra]]
       .inmap [Seq[MDomainExtra]] (
-        _.getOrElse(Nil),
+        EmptyUtil.opt2ImplEmptyF(Nil),
         { domains => if (domains.isEmpty) None else Some(domains) }
       ) and
     (__ \ Fields.MNDoc.MNDOC_FN).formatNullable[MNodeDoc] and
@@ -114,12 +114,12 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
   }
   override def generateMappingProps: List[DocField] = {
     List(
-      _obj(Fields.Adn.ADN_FN,       MAdnExtra),
-      _obj(Fields.Beacon.BEACON_FN, MBeaconExtra),
+      _obj(Fields.Adn.ADN_FN,                 MAdnExtra),
+      _obj(Fields.Beacon.BEACON_FN,           MBeaconExtra),
       FieldNestedObject(Fields.Domain.DOMAIN_FN, enabled = true, properties = MDomainExtra.generateMappingProps),
-      _obj(Fields.MNDoc.MNDOC_FN,   MNodeDocJvm),
-      _obj(Fields.VideoExt.VIDEO_EXT_FN,  MVideoExtInfoEs),
-      _obj(Fields.Resource.RESOURCE_FN,   MRscExtra)
+      _obj(Fields.MNDoc.MNDOC_FN,             MNodeDocJvm),
+      _obj(Fields.VideoExt.VIDEO_EXT_FN,      MVideoExtInfoEs),
+      _obj(Fields.Resource.RESOURCE_FN,       MRscExtra),
     )
   }
 

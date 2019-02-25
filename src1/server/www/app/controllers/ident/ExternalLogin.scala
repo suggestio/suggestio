@@ -54,7 +54,8 @@ trait ExternalLogin
   val canConfirmIdpReg: CanConfirmIdpReg
 
   /** Доступ к DI-инстансу */
-  val secureSocialLogin: SecureSocialLoginAdp = current.injector.instanceOf[SecureSocialLoginAdp]
+  val secureSocialLogin = current.injector.instanceOf[SecureSocialLoginAdp]
+  val canLoginVia = current.injector.instanceOf[CanLoginVia]
 
   /**
    * GET-запрос идентификации через внешнего провайдера.
@@ -74,136 +75,131 @@ trait ExternalLogin
 
   // Код handleAuth() спасён из умирающего securesocial c целью отпиливания от грёбаных authentificator'ов,
   // которые по сути являются переусложнёнными stateful(!)-сессиями, которые придумал какой-то нехороший человек.
-  protected def handleAuth1(provider: ILoginProvider, redirectTo: Option[String]) = maybeAuth().async { implicit request =>
+  // TODO Сделать MExtService в аргументах вместо провайдера. Вычистить код логин-провайдера от qsb/pb-мусора.
+  protected def handleAuth1(provider: ILoginProvider, redirectTo: Option[String]) = canLoginVia(???).async { implicit request =>
     lazy val logPrefix = s"handleAuth1($provider):"
-    secureSocialLogin.env.providers
-      .get(provider.ssProvName)
-      .fold[Future[Result]] {
-        errorHandler.onClientError(request, NOT_FOUND)
-      } { idProv =>
-        idProv.authenticate().flatMap {
-          case _: AuthenticationResult.AccessDenied =>
-            Redirect( routes.Ident.mySioStartPage() )
-              .flashing(FLASH.ERROR -> "login.accessDenied")
+    request.apiAdp.authenticate(???).flatMap {
+      case _: AuthenticationResult.AccessDenied =>
+        Redirect( routes.Ident.mySioStartPage() )
+          .flashing(FLASH.ERROR -> "login.accessDenied")
 
-          case failed: AuthenticationResult.Failed =>
-            LOGGER.error(s"$logPrefix authentication failed, reason: ${failed.error}")
-            throw AuthenticationException()
+      case failed: AuthenticationResult.Failed =>
+        LOGGER.error(s"$logPrefix authentication failed, reason: ${failed.error}")
+        throw AuthenticationException()
 
-          case flow: AuthenticationResult.NavigationFlow => Future.successful {
-            val r0 = flow.result
-            redirectTo.fold( r0 ) { url =>
-              r0.addingToSession(Keys.OrigUrl.value -> url)
-            }
-          }
-
-          case authenticated: AuthenticationResult.Authenticated =>
-            // TODO Отрабатывать случаи, когда юзер уже залогинен под другим person_id.
-            val profile = authenticated.profile
-            mExtIdents.getByUserIdProv(provider, profile.userId).flatMap { maybeExisting =>
-              // Сохраняем, если требуется. В результате приходит также новосохранный person MNode.
-              val saveFut: Future[(MExtIdent, Option[MNode])] = maybeExisting match {
-                case None =>
-                  val mperson0 = MNode(
-                    common = MNodeCommon(
-                      ntype       = MNodeTypes.Person,
-                      isDependent = false
-                    ),
-                    meta = MMeta(
-                      basic = MBasicMeta(
-                        nameOpt   = profile.fullName,
-                        techName  = Some(profile.providerId + ":" + profile.userId),
-                        langs     = request.messages.lang.code :: Nil
-                      ),
-                      person  = MPersonMeta(
-                        nameFirst   = profile.firstName,
-                        nameLast    = profile.lastName,
-                        extAvaUrls  = profile.avatarUrl.toList,
-                        emails      = profile.email.toList
-                      )
-                      // Ссылку на страничку юзера в соц.сети можно генерить на ходу через ident'ы и костыли самописные.
-                    )
-                  )
-                  val mpersonSaveFut = mNodes.save(mperson0)
-                  val meiFut = for {
-                    personId <- mpersonSaveFut
-                    mei = MExtIdent(
-                      personId  = personId,
-                      provider  = provider,
-                      userId    = profile.userId,
-                      email     = profile.email
-                    )
-                    save2Fut = mExtIdents.save(mei)
-                    _ <- {
-                      LOGGER.debug(s"$logPrefix Registered new user $personId from ext.login service, remote user_id = ${profile.userId}")
-                      save2Fut
-                    }
-                  } yield mei
-
-                  for {
-                    personId  <- mpersonSaveFut
-                    mperson = mperson0.copy(id = Some(personId))
-                    mei       <- meiFut
-                  } yield {
-                    (mei, Some(mperson))
-                  }
-
-                // Регистрация юзера не требуется. Возвращаем то, что есть в наличии.
-                case Some(ident) =>
-                  LOGGER.trace(s"$logPrefix Existing user[${ident.personId}] logged-in from ${profile.userId}")
-                  Future.successful( ident -> None )
-              }
-
-              // После сохранения - приступать к сборке ответа.
-              for {
-                (ident, newMpersonOpt) <- saveFut
-
-                mpersonOptFut = FutureUtil.opt2futureOpt( newMpersonOpt ) {
-                  mNodes
-                    .getByIdCache(ident.personId)
-                    .withNodeType(MNodeTypes.Person)
-                }
-
-                rdrFut: Future[Result] = if ( newMpersonOpt.isDefined ) {
-                  Redirect(routes.Ident.idpConfirm())
-                } else {
-                  val rdrUrlFut = toUrl2(request.session, ident.personId)
-                  for (url <- rdrUrlFut) yield
-                    Redirect(url)
-                }
-
-                // Сборка новой сессии: чистка исходника, добавление новых ключей, относящихся к идентификации.
-                session1 = {
-                  val addToSession0 = (Keys.PersonId.value -> ident.personId) :: Nil
-                  (for {
-                    oa2Info   <- authenticated.profile.oAuth2Info
-                    expiresIn <- oa2Info.expiresIn
-                    if expiresIn <= secureSocialLogin.MAX_SESSION_TTL_SECONDS
-                  } yield {
-                    CustomTtl(expiresIn.toLong)
-                      .addToSessionAcc(addToSession0)
-                  })
-                    .getOrElse( addToSession0 )
-                    .foldLeft( secureSocialLogin.clearSession(request.session))(_ + _)
-                }
-
-                // Выставить в сессию юзера и локаль:
-                rdr <- rdrFut
-                rdr2 = rdr.withSession(session1)
-                mpersonOpt <- mpersonOptFut
-                langOpt = getLangFrom( mpersonOpt )
-              } yield {
-                setLangCookie( rdr2, langOpt )
-              }
-            }
-
-        }.recover {
-          case e =>
-            LOGGER.error("Unable to log user in. An exception was thrown", e)
-            Redirect(routes.Ident.mySioStartPage())
-              .flashing(FLASH.ERROR -> "login.errorLoggingIn")
+      case flow: AuthenticationResult.NavigationFlow => Future.successful {
+        val r0 = flow.result
+        redirectTo.fold( r0 ) { url =>
+          r0.addingToSession(Keys.OrigUrl.value -> url)
         }
       }
+
+      case authenticated: AuthenticationResult.Authenticated =>
+        // TODO Отрабатывать случаи, когда юзер уже залогинен под другим person_id.
+        val profile = authenticated.profile
+        mExtIdents.getByUserIdProv(provider, profile.userId).flatMap { maybeExisting =>
+          // Сохраняем, если требуется. В результате приходит также новосохранный person MNode.
+          val saveFut: Future[(MExtIdent, Option[MNode])] = maybeExisting match {
+            case None =>
+              val mperson0 = MNode(
+                common = MNodeCommon(
+                  ntype       = MNodeTypes.Person,
+                  isDependent = false
+                ),
+                meta = MMeta(
+                  basic = MBasicMeta(
+                    nameOpt   = profile.fullName,
+                    techName  = Some(profile.providerId + ":" + profile.userId),
+                    langs     = request.messages.lang.code :: Nil
+                  ),
+                  person  = MPersonMeta(
+                    nameFirst   = profile.firstName,
+                    nameLast    = profile.lastName,
+                    extAvaUrls  = profile.avatarUrl.toList,
+                    emails      = profile.email.toList
+                  )
+                  // Ссылку на страничку юзера в соц.сети можно генерить на ходу через ident'ы и костыли самописные.
+                )
+              )
+              val mpersonSaveFut = mNodes.save(mperson0)
+              val meiFut = for {
+                personId <- mpersonSaveFut
+                mei = MExtIdent(
+                  personId  = personId,
+                  provider  = provider,
+                  userId    = profile.userId,
+                  email     = profile.email
+                )
+                save2Fut = mExtIdents.save(mei)
+                _ <- {
+                  LOGGER.debug(s"$logPrefix Registered new user $personId from ext.login service, remote user_id = ${profile.userId}")
+                  save2Fut
+                }
+              } yield mei
+
+              for {
+                personId  <- mpersonSaveFut
+                mperson = mperson0.copy(id = Some(personId))
+                mei       <- meiFut
+              } yield {
+                (mei, Some(mperson))
+              }
+
+            // Регистрация юзера не требуется. Возвращаем то, что есть в наличии.
+            case Some(ident) =>
+              LOGGER.trace(s"$logPrefix Existing user[${ident.personId}] logged-in from ${profile.userId}")
+              Future.successful( ident -> None )
+          }
+
+          // После сохранения - приступать к сборке ответа.
+          for {
+            (ident, newMpersonOpt) <- saveFut
+
+            mpersonOptFut = FutureUtil.opt2futureOpt( newMpersonOpt ) {
+              mNodes
+                .getByIdCache(ident.personId)
+                .withNodeType(MNodeTypes.Person)
+            }
+
+            rdrFut: Future[Result] = if ( newMpersonOpt.isDefined ) {
+              Redirect(routes.Ident.idpConfirm())
+            } else {
+              val rdrUrlFut = toUrl2(request.session, ident.personId)
+              for (url <- rdrUrlFut) yield
+                Redirect(url)
+            }
+
+            // Сборка новой сессии: чистка исходника, добавление новых ключей, относящихся к идентификации.
+            session1 = {
+              val addToSession0 = (Keys.PersonId.value -> ident.personId) :: Nil
+              (for {
+                oa2Info   <- authenticated.profile.oAuth2Info
+                expiresIn <- oa2Info.expiresIn
+                if expiresIn <= request.apiAdp.MAX_SESSION_TTL_SECONDS
+              } yield {
+                CustomTtl(expiresIn.toLong)
+                  .addToSessionAcc(addToSession0)
+              })
+                .getOrElse( addToSession0 )
+                .foldLeft( request.apiAdp.clearSession(request.session))(_ + _)
+            }
+
+            // Выставить в сессию юзера и локаль:
+            rdr <- rdrFut
+            rdr2 = rdr.withSession(session1)
+            mpersonOpt <- mpersonOptFut
+            langOpt = getLangFrom( mpersonOpt )
+          } yield {
+            setLangCookie( rdr2, langOpt )
+          }
+        }
+
+    }.recover {
+      case e =>
+        LOGGER.error("Unable to log user in. An exception was thrown", e)
+        Redirect(routes.Ident.mySioStartPage())
+          .flashing(FLASH.ERROR -> "login.errorLoggingIn")
+    }
   }
 
 

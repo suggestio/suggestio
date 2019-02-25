@@ -1,10 +1,11 @@
 package models.mext
 
-import io.suggest.ext.svc.MExtServices
+import io.suggest.ext.svc.{MExtService, MExtServices}
 import io.suggest.model.play.psb.PathBindableImpl
 import play.api.libs.json._
 import play.api.mvc.PathBindable
 import securesocial.core.providers.ProviderCompanion
+import japgolly.univeq._
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
@@ -18,18 +19,21 @@ import scala.reflect.ClassTag
  */
 object ILoginProvider {
 
-  def valuesIter: Iterator[ILoginProvider] = {
+  def valuesIter: Iterator[(MExtService, ILoginProvider)] = {
     for {
       svc <- MExtServices.values.iterator
       svcJvm = MExtServicesJvm.forService( svc )
       idp <- svcJvm.loginProvider
-    } yield idp
+    } yield {
+      svc -> idp
+    }
   }
 
   /** Обратиться к модели [[MExtServices]] и узнать там провайдера по имени. */
   def maybeWithName(n: String): Option[ILoginProvider] = {
     valuesIter
-      .find { _.ssProvName == n }
+      .map(_._2)
+      .find { _.ssProvName ==* n }
   }
 
 

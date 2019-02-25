@@ -17,6 +17,7 @@ import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.jd.MJdEdgeId
 import io.suggest.util.logs.MacroLogsImpl
+import monocle.macros.GenLens
 import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
@@ -76,11 +77,6 @@ final class MNodes @Inject() (
 
   override def generateMappingStaticFields: List[Field] = {
     List(
-      /*FieldAll(
-        enabled = true,
-        analyzer        = SioConstants.ENGRAM_AN_1,
-        search_analyzer = SioConstants.DFLT_AN
-      ),*/
       FieldSource(enabled = true)
     )
   }
@@ -99,23 +95,18 @@ final class MNodes @Inject() (
         opt2ImplMEmptyF( MNodeEdges ),
         implEmpty2OptF
     ) and
-    (__ \ Fields.Ad.AD_FN).formatNullable[MNodeAd]
-      .inmap [MNodeAd] (
-        opt2ImplMEmptyF( MNodeAd ),
-        implEmpty2OptF
-      ) and
     (__ \ Fields.Billing.BILLING_FN).formatNullable[MNodeBilling]
       .inmap [MNodeBilling] (
         opt2ImplMEmptyF( MNodeBilling ),
         implEmpty2OptF
       )
   )(
-    {(common, meta, extras, edges, ad, billing) =>
-      MNode(common, meta, extras, edges, ad, billing)
+    {(common, meta, extras, edges, billing) =>
+      MNode(common, meta, extras, edges, billing = billing)
     },
     {mnode =>
       import mnode._
-      (common, meta, extras, edges, ad, billing)
+      (common, meta, extras, edges, billing)
     }
   )
 
@@ -244,6 +235,7 @@ case class MNode(
   meta                        : MMeta           = MMeta(),
   extras                      : MNodeExtras     = MNodeExtras.empty,
   edges                       : MNodeEdges      = MNodeEdges.empty,
+  // TODO ad - Удалить: это остатки старого рендера, который зависит от непортированных на jd-ads кусков кода в www (рендер, MAdAi, etc)
   ad                          : MNodeAd         = MNodeAd.empty,
   billing                     : MNodeBilling    = MNodeBilling.empty,
   override val id             : Option[String]  = None,
@@ -324,6 +316,7 @@ case class MNode(
 }
 
 object MNode {
+
   implicit class MNodeOptFutOps(val mnodeOptFut: Future[Option[MNode]]) extends AnyVal {
 
     /** Отфильтровать узел по типу. Создано для замены MNodesCache.getByIdType(). */
@@ -336,6 +329,15 @@ object MNode {
     }
 
   }
+
+
+  val common  = GenLens[MNode](_.common)
+  val meta    = GenLens[MNode](_.meta)
+  val extras  = GenLens[MNode](_.extras)
+  val edges   = GenLens[MNode](_.edges)
+  val billing = GenLens[MNode](_.billing)
+  val id      = GenLens[MNode](_.id)
+
 }
 
 

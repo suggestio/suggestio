@@ -4,6 +4,7 @@ import java.time.OffsetDateTime
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.es.model.IGenEsMappingProps
+import io.suggest.ext.svc.MExtService
 import io.suggest.geo.{GeoPoint, MGeoPoint, MNodeGeoLevel}
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.model.PrefixedFn
@@ -37,6 +38,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     val GEO_SHAPES_FN     = "gss"
     val TAGS_FN           = "tags"
     val GEO_POINT_FN      = "gpt"
+    val EXT_SERVICE_FN    = "xs"
 
     /** Поле тегов внутри является multi-field. Это нужно для аггрегации, например. */
     object Tags extends PrefixedFn {
@@ -89,7 +91,8 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         .inmap [Seq[MGeoPoint]] (
           EmptyUtil.opt2ImplEmptyF( Nil ),
           { gps => if (gps.nonEmpty) Some(gps) else None }
-        )
+        ) and
+      (__ \ EXT_SERVICE_FN).formatNullable[MExtService]
     )(apply, unlift(unapply))
   }
 
@@ -151,7 +154,16 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
       // Пока не очень ясно, какие именно настройки индексации поля здесь необходимы.
       // Изначальное назначение: экспорт на карту узлов выдачи, чтобы в кружках с цифрами отображались.
       // Окружности и прочее фигурное добро для этого элементарного действа не подходят ни разу.
-      FieldGeoPoint( GEO_POINT_FN )
+      FieldGeoPoint( GEO_POINT_FN ),
+
+      // Маркер связи с внешним сервисом, интегрированным с s.io.
+      // Появился с переездом идентов в n2.
+      FieldKeyword(
+        id              = EXT_SERVICE_FN,
+        index           = true,
+        include_in_all  = false,
+      )
+
     )
   }
 
@@ -170,6 +182,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   * @param geoShapes Список геошейпов, которые связаны с данным эджем.
   * Изначально было Seq, но из-за частой пошаговой пересборки этого лучше подходит List.
   * @param geoPoints Некие опорные геокоординаты, если есть.
+  * @param extService id внешнего сервиса, с которым ангажированна данная связь.
   */
 final case class MEdgeInfo(
                             dateNi       : Option[OffsetDateTime]  = None,
@@ -177,7 +190,8 @@ final case class MEdgeInfo(
                             flag         : Option[Boolean]         = None,
                             tags         : Set[String]             = Set.empty,
                             geoShapes    : List[MEdgeGeoShape]     = Nil,
-                            geoPoints    : Seq[MGeoPoint]          = Nil
+                            geoPoints    : Seq[MGeoPoint]          = Nil,
+                            extService   : Option[MExtService]     = None,
                           )
   extends EmptyProduct
 {
@@ -213,16 +227,21 @@ final case class MEdgeInfo(
     val _geoShapes = geoShapes
     if (_geoShapes.nonEmpty) {
       sb.append(_geoShapes.size)
-        .append("gss,")
+        .append("gss")
     }
 
     val _geoPoints = geoPoints
     if (_geoPoints.nonEmpty) {
-      sb.append("geoPoints={")
+      sb.append(",geoPoints={")
       for (gp <- _geoPoints) {
         sb.append( GeoPoint.toEsStr(gp) )
       }
       sb.append('}')
+    }
+
+    for (extService <- this.extService) {
+      sb.append(",extSvc=")
+        .append(extService)
     }
 
     sb.toString()

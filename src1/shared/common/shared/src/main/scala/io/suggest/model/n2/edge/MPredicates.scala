@@ -176,7 +176,40 @@ object MPredicates extends StringEnum[MPredicate] {
   }
 
 
-  override val values = TreeEnumEntry.deepFindValue( findValues )
+  /** Иденты (данные идентификации) однажды переехали сюда.
+    * Эдж идента:
+    * - nodeId -> email | id | phone | etc
+    * - info.commenNi -> password | act_code
+    * - info.flag -> проверенный ли идент?
+    * - info.extService -> указатель на внешний сервис (MExtServices).
+    *
+    * Иденты переезжают в условиях перехода на гос.услуги, т.е. comment/flag-поля малопопулярны.
+    */
+  case object Ident extends MPredicate("q") {
+
+    /** Адрес электронной почты. Если !flag, то commentNi содержит код активации почтового адреса. */
+    case object Email extends MPredicate("qe") with _Child
+
+    /** Номер телефона. Если !flag, то commentNi содержит смс-код активации номера. */
+    case object Phone extends MPredicate("qp") with _Child
+
+    /** Произвольный идентификатор (имя пользователя, постоянный id юзера на внешнем сервисе). */
+    case object Id extends MPredicate("qi") with _Child
+
+    /** Пароли хранятся отдельным эджем, чтобы была поддержка более гибких парольных систем
+      * (память старого пароля, напоминание, подсказки, дата создания пароля, пароль для любого из (email,телефон,имя) и т.д.).
+      * С другой стороны, переезд на гос.услуги намекает, что это всё не особо нужно, но кто знает...
+      */
+    case object Password extends MPredicate("qw") with _Child
+
+    override def children: List[MPredicate] =
+      Email :: Phone :: Id :: Password :: Nil
+
+  }
+
+
+  /** Используется только в конструкторе, в тестах, в редкой sys edgeForm. */
+  override def values = TreeEnumEntry.deepFindValue( findValues )
 
 }
 

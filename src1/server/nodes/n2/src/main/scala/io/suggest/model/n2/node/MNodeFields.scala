@@ -99,6 +99,9 @@ object MNodeFields {
     // Гео-точки
     def E_OUT_INFO_GEO_POINTS_FN                  = _fullFn( Out.OUT_INFO_GEO_POINTS_FN )
 
+    // Внешние сервисы
+    def E_OUT_INFO_EXT_SERVICE_FN                 = _fullFn( Out.OUT_INFO_EXT_SERVICE_FN )
+
   }
 
 

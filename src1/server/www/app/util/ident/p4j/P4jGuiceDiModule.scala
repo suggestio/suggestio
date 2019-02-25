@@ -111,7 +111,7 @@ class P4jDiModule extends Module with MacroLogsImpl {
       p4jOidcConf.setClientId( clientId )
       p4jOidcConf.setSecret( clientSecret )
 
-      val p4jOidcClient = new OidcClient[OidcProfile,OidcConfiguration]( p4jOidcConf )
+      val p4jOidcClient = new OidcClient[OidcProfile, OidcConfiguration]( p4jOidcConf )
       // В примерах кодах здесь вызывается p4jOidcClient.addAuthorizationGenerator(), который делает profile.addRole("ROLE_ADMIN")
 
       clientsAcc ::= p4jOidcClient

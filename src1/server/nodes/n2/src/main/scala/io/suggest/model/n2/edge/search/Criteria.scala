@@ -2,6 +2,7 @@ package io.suggest.model.n2.edge.search
 
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.es.model.{IMust, Must_t}
+import io.suggest.ext.svc.MExtService
 import io.suggest.geo.MGeoPoint
 import io.suggest.model.n2.edge.MPredicate
 
@@ -22,6 +23,7 @@ import io.suggest.model.n2.edge.MPredicate
   * @param nodeIdsMatchAll Каким образом трактовать nodeIds, если их >= 2?
   *                        true значит объединять запрошенные nodeId через AND.
   *                        false - OR.
+  * @param extService Искомые внешние сервисы.
   */
 final case class Criteria(
                            nodeIds           : Seq[String]          = Nil,
@@ -32,6 +34,7 @@ final case class Criteria(
                            gsIntersect       : Option[IGsCriteria]  = None,
                            nodeIdsMatchAll   : Boolean              = false,
                            geoDistanceSort   : Option[MGeoPoint]    = None,
+                           extService        : Seq[MExtService]     = Nil,
                          )
   extends EmptyProduct
   with IMust

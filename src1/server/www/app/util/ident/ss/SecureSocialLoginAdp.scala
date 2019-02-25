@@ -1,12 +1,14 @@
 package util.ident.ss
 
 import controllers.routes
-import io.suggest.ext.svc.MExtServices
+import io.suggest.auth.AuthenticationResult
+import io.suggest.ext.svc.{MExtService, MExtServices}
 import io.suggest.playx.ExternalCall
 import io.suggest.util.logs.MacroLogsDyn
 import javax.inject.{Inject, Singleton}
 import models.mctx.ContextUtil
 import models.mext.{ILoginProvider, MExtServicesJvm}
+import models.req.MLoginViaReq
 import models.usr._
 import play.api.Configuration
 import play.api.cache.AsyncCacheApi
@@ -15,7 +17,7 @@ import play.api.libs.ws.{WSClient, WSRequest}
 import play.api.mvc._
 import securesocial.core._
 import securesocial.core.services.{CacheService, HttpService, RoutesService}
-import util.ident.IdentUtil
+import util.ident.{IExtLoginAdp, IdentUtil}
 import securesocial.controllers.{ProviderControllerHelper => SsHelper}
 
 import scala.collection.immutable.ListMap
@@ -31,24 +33,22 @@ import scala.reflect.ClassTag
   */
 @Singleton
 class SecureSocialLoginAdp @Inject()(
-                                      ssRuntimeEnvironments           : RuntimeEnvironments,
                                       identUtil                       : IdentUtil,
                                       configuration                   : Configuration,
                                       injector                        : Injector,
                                       implicit private val ec         : ExecutionContext,
                                     )
   extends MacroLogsDyn
+  with IExtLoginAdp
 {
 
   /** Фильтровать присылаемый ttl. */
-  lazy val MAX_SESSION_TTL_SECONDS = {
-    configuration.getOptional[Int]("login.ext.session.ttl.max.minutes")
-      .fold(3.day)(_.minutes)
-      .toSeconds
-  }
+  override def MAX_SESSION_TTL_SECONDS = 3.days.toSeconds
 
   /** secure-social настраивается через этот Enviroment. */
-  def env: RuntimeEnvironment[SsUser] = {
+  lazy val env: RuntimeEnvironment[SsUser] = {
+    // Только ленивая инжекция, т.к. securesocial уходит в прошлое, и это всё не актуально.
+    val ssRuntimeEnvironments = injector.instanceOf[RuntimeEnvironments]
     new ssRuntimeEnvironments.Default[SsUser] {
       override lazy val cacheService = injector.instanceOf[SsCacheService]
       override lazy val httpService = injector.instanceOf[SsHttpService]
@@ -85,8 +85,19 @@ class SecureSocialLoginAdp @Inject()(
     }
   }
 
-  def clearSession(s: Session): Session =
+  override def clearSession(s: Session): Session =
     SsHelper.cleanupSession( s )
+
+  override def authenticate(service: MExtService)(implicit req: MLoginViaReq[AnyContent]): Future[AuthenticationResult] = {
+    env.providers
+      .get( req.loginProvider.ssProvName )
+      .fold[Future[AuthenticationResult]] {
+        LOGGER.error(s"authenticate($service): No login provider exists")
+        Future.failed( new NoSuchElementException )
+      } { idProv =>
+        idProv.authenticate()
+      }
+  }
 
 }
 

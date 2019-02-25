@@ -116,7 +116,6 @@ case class MExtIdent(
   versionOpt          : Option[Long] = None
 )
   extends MPersonIdent
-  //with IProfileDflt
 {
 
   /** Ключём модели является userId. */

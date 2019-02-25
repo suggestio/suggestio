@@ -30,6 +30,7 @@ object OutEdges extends MacroLogsImpl {
       oe <- crs.toIterator
       // Сборка nested queries.
       q <- {
+        // TODO Opt Тут куча вложенных bool-query, а можно сделать одну bool-query. Это это будет проще и красивее.
         // Сюда будет аккамулироваться финальный поисковый запрос:
         var _qOpt: Option[QueryBuilder] = None
 
@@ -235,6 +236,23 @@ object OutEdges extends MacroLogsImpl {
             .boost(5f)
           if (withQname)
             fq.queryName(s"f-score-q: $fn $geoPointStr scale=$scale overInner?${_qOpt.nonEmpty}")
+          _qOpt = Some(fq)
+        }
+
+        // Отработать фильтрацию по внешним сервисам:
+        if (oe.extService.nonEmpty) {
+          val fn = MNodeFields.Edges.E_OUT_INFO_EXT_SERVICE_FN
+          val extServicesIds = oe.extService.iterator.map(_.value).toSeq
+          val extServicesQb = QueryBuilders.termsQuery(fn, extServicesIds: _*)
+          if (withQname)
+            extServicesQb.queryName( s"f-ext-services" )
+          val fq =_qOpt.fold [QueryBuilder] {
+            extServicesQb
+          } { qOpt0 =>
+            QueryBuilders.boolQuery()
+              .must( qOpt0 )
+              .filter( extServicesQb )
+          }
           _qOpt = Some(fq)
         }
 

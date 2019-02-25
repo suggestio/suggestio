@@ -62,8 +62,11 @@ class CanConfirmIdpReg @Inject() (
           // Запустить подсчет имеющихся у юзера магазинов
           val msearch = new MNodeSearchDfltImpl {
             override def outEdges = {
-              val cr = Criteria(Seq(personId), Seq(MPredicates.OwnedBy))
-              Seq(cr)
+              val cr = Criteria(
+                predicates  = MPredicates.OwnedBy :: Nil,
+                nodeIds     = personId :: Nil,
+              )
+              cr :: Nil
             }
             override def limit = 5
           }
@@ -109,9 +112,7 @@ class CanConfirmIdpReg @Inject() (
   }
 
 
-  private val Impl: ActionBuilder[MReq, AnyContent] = new ImplC
-
-  @inline
-  final def apply() = Impl
+  final def apply(): ActionBuilder[MReq, AnyContent] =
+    new ImplC
 
 }

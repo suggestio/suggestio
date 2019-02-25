@@ -12,7 +12,6 @@ import models.adv.MExtTargets
 import models.ai.MAiMads
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
-import models.usr.{EmailActivations, EmailPwIdents, MExtIdents}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 
@@ -33,9 +32,6 @@ class SiowebEsModel @Inject() (
                                 mCalendars          : MCalendars,
                                 mExtTargets         : MExtTargets,
                                 mAiMads             : MAiMads,
-                                emailPwIdents       : EmailPwIdents,
-                                emailActivations    : EmailActivations,
-                                mExtIdents          : MExtIdents,
                                 mAsymKeys           : MAsymKeys,
                                 mCommonDi           : ICommonDi
                               )
@@ -57,7 +53,6 @@ class SiowebEsModel @Inject() (
    */
   def ES_MODELS = Seq[EsModelCommonStaticT](
     mNodes,
-    emailPwIdents, emailActivations, mExtIdents,
     mCalendars,
     mAiMads,
     mExtTargets,

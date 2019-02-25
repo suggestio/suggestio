@@ -1,10 +1,8 @@
 package io.suggest.model.n2.node
 
-import io.suggest.ad.blk.BlockMeta
 import io.suggest.adn.MAdnRights
 import io.suggest.geo.{CircleGs, MGeoPoint, MNodeGeoLevels}
 import io.suggest.model.MockedEsSn
-import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -80,9 +78,6 @@ class MNodeSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
                 )
               )
             }
-          ),
-          ad = MNodeAd(
-            blockMeta = Some(BlockMeta.DEFAULT)
           )
         )
       }

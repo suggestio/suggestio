@@ -2,6 +2,7 @@ package io.suggest.adn
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
+import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
 
 /**
@@ -12,9 +13,10 @@ import play.api.libs.json.Format
   */
 object MAdnRight {
 
-  implicit val MADN_RIGHT_FORMAT: Format[MAdnRight] = {
+  implicit val MADN_RIGHT_FORMAT: Format[MAdnRight] =
     EnumeratumUtil.valueEnumEntryFormat( MAdnRights )
-  }
+
+  @inline implicit def univEq: UnivEq[MAdnRight] = UnivEq.derive
 
 }
 

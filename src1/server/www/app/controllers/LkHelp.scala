@@ -15,7 +15,6 @@ import util.acl._
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
 import util.support.SupportUtil
-import util.FormUtil
 import views.html.lk.support._
 import views.txt.lk.support.emailSupportRequestedTpl
 

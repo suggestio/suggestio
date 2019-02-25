@@ -5,6 +5,7 @@ import io.suggest.model.PrefixedFn
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MNodeGeoLevel
 import io.suggest.util.logs.MacroLogsImpl
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -56,6 +57,9 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty with MacroLogsImpl {
 
       // Гео-точки
       def OUT_INFO_GEO_POINTS_FN        = _fullFn( Info.INFO_GEO_POINTS_FN )
+
+      // Внешние сервисы
+      def OUT_INFO_EXT_SERVICE_FN       = _fullFn( Info.INFO_EXT_SERVICE_FN )
 
     }
 
@@ -163,6 +167,8 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty with MacroLogsImpl {
     }
 
   }
+
+  val out = GenLens[MNodeEdges](_.out)
 
 }
 

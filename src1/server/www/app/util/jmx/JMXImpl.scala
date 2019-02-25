@@ -22,6 +22,7 @@ import util.adv.geo.AdvGeoRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.billing.{Bill2UtilJmx, BillDebugUtilJmx, TfDailyUtilJmx}
 import util.billing.cron.ReActivateCurrentAdvsJmx
+import util.compat.PersonIdentUpgradeJmx
 import util.es.SiowebEsModelJmx
 import util.img.DynImgUtilJmx
 
@@ -59,6 +60,7 @@ case class JMXImpl @Inject() (
                                billDebugUtilJmx              : BillDebugUtilJmx,
                                bill2UtilJmx                  : Bill2UtilJmx,
                                tfDailyUtilJmx                : TfDailyUtilJmx,
+                               personIdentUpgradeJmx         : PersonIdentUpgradeJmx,
                                lifecycle                     : ApplicationLifecycle,
                                implicit private val ec       : ExecutionContext,
                              )
