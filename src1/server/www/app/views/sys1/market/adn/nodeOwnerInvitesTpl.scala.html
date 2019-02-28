@@ -1,4 +1,4 @@
-@(mnode: MNode, imf: Form[_], eActs: Seq[usr.EmailActivation])(implicit ctx: Context)
+@(mnode: MNode, imf: Form[_])(implicit ctx: Context)
 
 @* Форма для создания инвайта на управление узлом рекламной сети. *@
 
@@ -30,18 +30,6 @@
         <strong class="color-strong">@personIdsIter.mkString("  ")</strong>
       }
     }
-  }
-
-  @lkBlock("Текущие отправленные инвайты") {
-
-    @if(!eActs.isEmpty) {
-      <ul>@eActs.map { eAct =>
-        <li>@eAct.email</li>
-      }</ul>
-    } else {
-      Инвайтов не найдено. Они или никогда не отсылались, либо были использованы получателями, либо уже истекли.
-    }
-
   }
 
   @lkBlock("Новый инвайт") {

@@ -7,6 +7,7 @@ import models.adv.ext.act.ActorPathQs
 import models.blk.OneAdQsArgs
 import models.im.MImgT
 import models.mup.MUploadTargetQs
+import models.usr.MEmailRecoverQs
 import play.api.inject.ApplicationLifecycle
 
 import scala.concurrent.Future
@@ -36,7 +37,8 @@ class SecretModelsInit @Inject() (
       ActorPathQs,
       OneAdQsArgs,
       MImgT,
-      MUploadTargetQs
+      MUploadTargetQs,
+      MEmailRecoverQs,
     )
   }
 

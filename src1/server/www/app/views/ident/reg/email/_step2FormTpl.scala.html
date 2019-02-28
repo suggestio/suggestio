@@ -1,4 +1,4 @@
-@(iea: usr.IEaEmailId, s2f: EmailPwConfirmForm_t)(implicit ctx: Context)
+@(qs: models.usr.MEmailRecoverQs, s2f: EmailPwConfirmForm_t)(implicit ctx: Context)
 
 @* Шаблон для формы ВТОРОГО ШАГА регистрации по email password.
    Юзер вводит пароль и прочую минимальную инфу, необходимую для завершения реги. *@
@@ -7,7 +7,7 @@
 @import ctx._
 @import util.FC.authFc
 
-@form(CSRF( routes.Ident.emailConfirmSubmit(iea) )) {
+@form(CSRF( routes.Ident.emailConfirmSubmit(qs) )) {
 
   @* Выводить ошибку неправильного ввода пароля. *@
   @s2f("pw").errors.map { fe =>

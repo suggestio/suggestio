@@ -399,6 +399,8 @@ I.at.fb=Мой Facebook
 I.at.tw=Мой Твиттер
 I.at.gu=Я на ГосУслугах
 
+GovServices.ESIA=Гос.услуги (ЕСИА)
+
 error.service.unknown=Этот сайт не поддерживается.
 error.required.at.least.one.adv.service=Необходимо выбрать хотя бы один сервис из списка.
 e.js.script.load.failed=Не удалось загрузить {0}. Возник таймаут соединения ({1} мс).
@@ -749,7 +751,11 @@ edge.predicate.s=jd-контент
 edge.predicate.st=Текстовый контент
 edge.predicate.si=Картинка-контент
 edge.predicate.sv=Видео-контент
-
+edge.predicate.q=Идент
+edge.predicate.qe=Электронная почта
+edge.predicate.qp=Номер телефона
+edge.predicate.qi=Идентификатор
+edge.predicate.qw=Пароль
 
 Your.name=Ваше имя
 First.name=Имя

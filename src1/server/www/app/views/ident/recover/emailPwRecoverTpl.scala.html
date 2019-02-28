@@ -1,10 +1,11 @@
-@(eAct: usr.EmailActivation)(implicit ctx: Context)
+@(qs: usr.MEmailRecoverQs)(implicit ctx: Context)
 
 @* html-письмо восстановления пароля. Отправляется юзеру, когда тот просит восстановить пароль. *@
 @import ctx.messages
 @import ctx.api.ctxUtil
 @import views.html.email._
 @import io.suggest.i18n.MsgCodes
+@import models.usr.MEmailRecoverQs
 
 @emailBaseTpl(
   title = messages("Password.recovery.in", messages(MsgCodes.`Suggest.io`))
@@ -13,21 +14,25 @@
   @_rowTpl("padding: 20px 0; border-bottom: 1px dashed #878787;") {
     @messages("Sys.rcvd.pw.recover.request", messages(MsgCodes.`Suggest.io`) )
     <br/>
-    <strong>@eAct.email</strong>
+    <strong>@qs.email</strong>
   }
 
-  @_rowTpl("padding: 20px 0 10px;") {
-    @Html(messages(
-      "To.recover.password.use.this.link",
-      s"""<a style="color: #7b89a4;" href="${ctxUtil.LK_URL_PREFIX}${routes.Ident.recoverPwReturn(eAct.id.get)}">""",
-      "</a>"
-    ))
-  }
 
-  @_rowTpl("padding: 10px 0 20px; border-bottom: 1px dashed #878787;") {
-    @messages("If.link.not.open.cp.link.to.browser")
-    <br/>
-    <span style="color: #7b89a4;">@ctxUtil.LK_URL_PREFIX@routes.Ident.recoverPwReturn(eAct.id.get)</span>
+  @defining( routes.Ident.recoverPwReturn(qs).url ) { returnRelUrl =>
+
+    @_rowTpl("padding: 20px 0 10px;") {
+      @Html(messages(
+        "To.recover.password.use.this.link",
+        s"""<a style="color: #7b89a4;" href="${ctxUtil.LK_URL_PREFIX}$returnRelUrl">""",
+        "</a>"
+      ))
+    }
+
+    @_rowTpl("padding: 10px 0 20px; border-bottom: 1px dashed #878787;") {
+      @messages("If.link.not.open.cp.link.to.browser")
+      <br/>
+      <span style="color: #7b89a4;">@ctxUtil.LK_URL_PREFIX@returnRelUrl</span>
+    }
   }
 
 }

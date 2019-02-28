@@ -3,7 +3,6 @@ package controllers
 import javax.inject.{Inject, Singleton}
 import controllers.sysctl._
 import controllers.sysctl.domain.SmDomains
-import controllers.sysctl.invite.SmSendEmailInvite
 import io.suggest.adn.MAdnRights
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.{EsModel, MEsUuId}
@@ -22,8 +21,8 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.msys._
-import models.req.{INodeReq, IReq, MNodeReq}
-import models.usr.{EmailActivation, EmailActivations, MPerson}
+import models.req.{INodeReq, IReq, IReqHdr, MNodeReq}
+import models.usr.MEmailRecoverQs
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data._
 import play.api.i18n.Messages
@@ -45,7 +44,7 @@ import views.html.sys1.market.adn._
 
 import scala.concurrent.Future
 import japgolly.univeq._
-import models.madn.NodeDfltColors
+import models.madn.{AdnShownTypes, NodeDfltColors}
 import util.ident.IdentUtil
 
 /**
@@ -61,11 +60,9 @@ class SysMarket @Inject() (
                             lkAdUtil                        : LkAdUtil,
                             advRcvrsUtil                    : AdvRcvrsUtil,
                             override val sysMarketUtil      : SysMarketUtil,
-                            override val mailer             : IMailerWrapper,
+                            mailer                          : IMailerWrapper,
                             override val n2NodesUtil        : N2NodesUtil,
                             override val sysAdRenderUtil    : SysAdRenderUtil,
-                            emailActivations                : EmailActivations,
-                            mPerson                         : MPerson,
                             mItems                          : MItems,
                             override val advUtil            : AdvUtil,
                             override val isSuNodeEdge       : IsSuNodeEdge,
@@ -81,7 +78,6 @@ class SysMarket @Inject() (
   extends SioControllerImpl
   with MacroLogsImpl
   with SysNodeInstall
-  with SmSendEmailInvite
   with SysAdRender
   with SmDomains
   with SysNodeEdges
@@ -230,33 +226,34 @@ class SysMarket @Inject() (
           }
       }
 
+      val mnodesMapFut = mNodes.multiGetMapCache {
+        mnode.edges
+          .iterator
+          .flatMap(_.nodeIds)
+          .toSet
+      }
+
       // Узнаём исходящие ребра.
-      val outEdgesFut: Future[Seq[MNodeEdgeInfo]] = {
-        val mnodesMapFut = mNodes.multiGetMapCache {
-          mnode.edges
+      val outEdgesFut: Future[Seq[MNodeEdgeInfo]] = for {
+        nmap <- mnodesMapFut
+      } yield {
+        val iter = for {
+          (medge, index) <- mnode.edges.iterator.zipWithIndex
+        } yield {
+          val mnEiths = medge.nodeIds
             .iterator
-            .flatMap(_.nodeIds)
-            .toSet
+            .map { nodeId =>
+              nmap.get(nodeId)
+                .toRight(nodeId)
+            }
+            .toSeq
+          MNodeEdgeInfo(
+            medge       = medge,
+            mnodeEiths  = mnEiths,
+            edgeId      = Some(index)
+          )
         }
-        for (nmap <- mnodesMapFut) yield {
-          val iter = for {
-            (medge, index) <- mnode.edges.iterator.zipWithIndex
-          } yield {
-            val mnEiths = medge.nodeIds
-              .iterator
-              .map { nodeId =>
-                nmap.get(nodeId)
-                  .toRight(nodeId)
-              }
-              .toSeq
-            MNodeEdgeInfo(
-              medge       = medge,
-              mnodeEiths  = mnEiths,
-              edgeId      = Some(index)
-            )
-          }
-          _prepareEdgeInfos(iter)
-        }
+        _prepareEdgeInfos(iter)
       }
 
       // Узнаём входящие ребра
@@ -287,20 +284,18 @@ class SysMarket @Inject() (
         }
       }
 
-      // Определить имена юзеров-владельцев. TODO Удалить, ибо во многом дублирует логику outEdges.
-      val personNamesFut = {
-        val ownerIds = mnode.edges
-          .withPredicateIterIds( MPredicates.OwnedBy )
-        Future.traverse( ownerIds ) { personId =>
-          for {
-            nameOpt <- mPerson.findUsernameCached(personId)
-          } yield {
-            val name = nameOpt.getOrElse(personId)
-            personId -> name
-          }
-        }.map {
-          _.toMap
+      // Определить имена юзеров-владельцев.
+      val personNamesFut = for (nmap <- mnodesMapFut) yield {
+        val iter = for {
+          nodeId <- mnode.edges
+            .withPredicateIterIds( MPredicates.OwnedBy )
+            .toSet[String]
+            .iterator
+          mnode <- nmap.get( nodeId ).iterator
+        } yield {
+          nodeId -> mnode.guessDisplayNameOrIdOrQuestions
         }
+        iter.toMap
       }
 
       // Сгенерить асинхронный результат.
@@ -543,11 +538,8 @@ class SysMarket @Inject() (
   }
 
   private def _nodeOwnerInviteFormSubmit(form: Form[String], rs: Status)(implicit request: MNodeReq[_]): Future[Result] = {
-    val eActsFut = emailActivations.findByKey( request.mnode.id.get )
-    for (eActs <- eActsFut) yield {
-      val html = nodeOwnerInvitesTpl(request.mnode, nodeOwnerInviteFormM, eActs)
-      rs(html)
-    }
+    val html = nodeOwnerInvitesTpl(request.mnode, nodeOwnerInviteFormM)
+    rs(html)
   }
 
   /** Сабмит формы создания инвайта на управление ТЦ. */
@@ -560,19 +552,43 @@ class SysMarket @Inject() (
           _nodeOwnerInviteFormSubmit(formWithErrors, NotAcceptable)
         },
         {email1 =>
-          val eAct = EmailActivation(email=email1, key = adnId)
-          for (eActId <- emailActivations.save(eAct)) yield {
-            val eact2 = eAct.copy(
-              id = Some(eActId)
-            )
-            sendEmailInvite(eact2, mnode)
-            // Письмо отправлено, вернуть админа назад в магазин
-            Redirect(routes.SysMarket.showAdnNode(adnId))
-              .flashing(FLASH.SUCCESS -> ("Письмо с приглашением отправлено на " + email1))
-          }
+          val qs = MEmailRecoverQs(
+            email   = email1,
+            nodeId  = request.mnode.id,
+          )
+          sendEmailInvite(mnode, qs)
+          // Письмо отправлено, вернуть админа назад в магазин
+          Redirect(routes.SysMarket.showAdnNode(adnId))
+            .flashing(FLASH.SUCCESS -> ("Письмо с приглашением отправлено на " + email1))
         }
       )
     }
+  }
+
+
+  /** Выслать письмо активации. */
+  def sendEmailInvite(mnode: MNode, qs: MEmailRecoverQs)(implicit request: IReqHdr): Unit = {
+    // Собираем и отправляем письмо адресату
+    val msg = mailer.instance
+    implicit val ctx = implicitly[Context]
+
+    val ast = mnode.extras.adn
+      .flatMap( _.shownTypeIdOpt )
+      .flatMap( AdnShownTypes.withValueOpt )
+      .getOrElse( AdnShownTypes.default )
+
+    msg.setSubject(
+      MsgCodes.`Suggest.io` + " | " +
+      ctx.messages("Your") + " " +
+      ctx.messages(ast.singular)
+    )
+    msg.setRecipients(qs.email)
+    msg.setHtml {
+      htmlCompressUtil.html4email {
+        emailNodeOwnerInviteTpl(mnode, qs)(ctx)
+      }
+    }
+    msg.send()
   }
 
 
@@ -582,8 +598,11 @@ class SysMarket @Inject() (
   /** Отобразить html/txt email-сообщение активации без отправки куда-либо чего-либо. Нужно для отладки. */
   def showEmailInviteMsg(adnId: String) = isSuNode(adnId) { implicit request =>
     import request.mnode
-    val eAct = EmailActivation("test@test.com", id = Some("asdQE123_"))
-    Ok( emailNodeOwnerInviteTpl(mnode, eAct) )
+    val mockQs = MEmailRecoverQs(
+      email = "test@test.com",
+      nodeId = Some("asdQE123_")
+    )
+    Ok( emailNodeOwnerInviteTpl(mnode, mockQs) )
   }
 
 
@@ -796,8 +815,11 @@ class SysMarket @Inject() (
 
   /** Отрендериить тела email-сообщений инвайта передачи прав на ТЦ. */
   def showNodeOwnerEmailInvite(adnId: String) = isSuNode(adnId) { implicit request =>
-    val eAct = EmailActivation("asdasd@kde.org", key=adnId, id = Some("123123asdasd_-123"))
-    Ok( emailNodeOwnerInviteTpl(request.mnode, eAct) )
+    val qs = MEmailRecoverQs(
+      email = "asdasd@suggest.io",
+      nodeId = Some("123123asdasd_-123")
+    )
+    Ok( emailNodeOwnerInviteTpl(request.mnode, qs) )
   }
 
 

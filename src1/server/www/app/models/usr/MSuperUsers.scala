@@ -1,16 +1,21 @@
 package models.usr
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.{EsModel, IEsModelDiVal}
+import io.suggest.es.model.EsModel
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.sec.util.ScryptUtil
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
+import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import play.api.Configuration
+import play.api.inject.Injector
 
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -20,18 +25,10 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class MSuperUsers @Inject()(
-                             esModel         : EsModel,
-                             emailPwIdents   : EmailPwIdents,
-                             mNodes          : MNodes,
-                             scryptUtil      : ScryptUtil,
-                             mCommonDi       : IEsModelDiVal
+                             injector        : Injector,
                            )
   extends MacroLogsImpl
 {
-
-  import LOGGER._
-  import mCommonDi._
-  import esModel.api._
 
   /** Список емейлов админов suggest.io.
     * Раньше жил в конфигах, что вызывало больше неудобств, чем пользы. */
@@ -55,10 +52,11 @@ class MSuperUsers @Inject()(
     // Это также нужно было при миграции с MPerson на MNode, чтобы не произошло повторного создания новых
     // юзеров в MNode, при наличии уже существующих в MPerson.
     val ck = "start.ensure.superusers"
-    val createIfMissing = configuration.getOptional[Boolean](ck).getOrElseFalse
+    // TODO 2019-02-28 После переезда на n2-idents надо активировать это назад.
+    val createIfMissing = false //injector.instanceOf[Configuration].getOptional[Boolean](ck).getOrElseFalse
     val fut = resetSuperuserIds(createIfMissing)
     if (!createIfMissing)
-      debug("Does not ensuring superusers in permanent models: " + ck + " != true")
+      LOGGER.debug("Does not ensuring superusers in permanent models: " + ck + " != true")
     fut
   }
 
@@ -77,63 +75,107 @@ class MSuperUsers @Inject()(
     * Для этого надо убедится, что все админские MPersonIdent'ы
     * существуют. Затем, сохранить в глобальную переменную в MPerson этот списочек. */
   def resetSuperuserIds(createIfMissing: Boolean): Future[_] = {
+    val mNodes = injector.instanceOf[MNodes]
+    val scryptUtil = injector.instanceOf[ScryptUtil]
+    val esModel = injector.instanceOf[EsModel]
+    implicit val ec = injector.instanceOf[ExecutionContext]
+
+    import esModel.api._
+
     val logPrefix = s"resetSuperuserIds(create=$createIfMissing): "
-    val se = SU_EMAILS
-    debug(s"${logPrefix}Let's do it. There are ${se.size} superuser emails: [${se.mkString(", ")}]")
-    Future.traverse(se) { email =>
-      emailPwIdents.getById(email) flatMap {
-        // Суперюзер ещё не сделан, _id неизвестен. Создать person MNode и MPersonIden для текущего email.
-        case None =>
-          val logPrefix1 = s"$logPrefix[$email] "
-          if (createIfMissing) {
-            info(logPrefix1 + "Installing new sio superuser...")
-            val mperson0 = MNode(
-              common = MNodeCommon(
-                ntype = MNodeTypes.Person,
-                isDependent = false
-              ),
-              meta = MMeta(
-                basic = MBasicMeta(
-                  nameOpt = Some(email),
-                  langs   = List("ru")
-                )
-              )
+    val suEmails = SU_EMAILS
+    LOGGER.debug(s"${logPrefix}Let's do it. There are ${suEmails.size} superuser emails: [${suEmails.mkString(", ")}]")
+
+    val resFut = for {
+
+      // Найти текущие узлы, ассоциированные с указанными мыльниками:
+      userNodes <- mNodes.dynSearch {
+        new MNodeSearchDfltImpl {
+          override val nodeTypes = MNodeTypes.Person :: Nil
+          override val outEdges: Seq[Criteria] = {
+            val cr = Criteria(
+              predicates        = MPredicates.Ident.Email :: Nil,
+              nodeIds           = suEmails,
+              nodeIdsMatchAll   = false,
             )
+            cr :: Nil
+          }
+        }
+      }
 
-            for {
-              personId <- mNodes.save(mperson0)
-              mpiId <- {
-                val epw = EmailPwIdent(
-                  email       = email,
-                  personId    = personId,
-                  pwHash      = scryptUtil.mkHash(email),
-                  isVerified  = true
+      // Интересуют только отсутствующие юзеры. Уже существующие трогать не требуется.
+      email2nodeMap = {
+        val iter = for {
+          userNode <- userNodes.iterator
+          email    <- userNode.edges.withPredicateIterIds( MPredicates.Ident.Email )
+        } yield {
+          email -> userNode
+        }
+        iter.toMap
+      }
+
+      createdPersonIdOpts <- Future.traverse {
+        suEmails.filterNot( email2nodeMap.contains )
+      } { email =>
+        if (createIfMissing) {
+          LOGGER.trace(s"$logPrefix Installing new superuser for $email ...")
+          val mperson0 = MNode(
+            common = MNodeCommon(
+              ntype = MNodeTypes.Person,
+              isDependent = false
+            ),
+            meta = MMeta(
+              basic = MBasicMeta(
+                nameOpt = Some(email),
+                langs   = "ru" :: Nil,
+              )
+            ),
+            edges = MNodeEdges(
+              out = {
+                val emailIdentEdge = MEdge(
+                  predicate = MPredicates.Ident.Email,
+                  nodeIds   = Set(email),
+                  info = MEdgeInfo(
+                    flag = Some(true)
+                  )
                 )
-                emailPwIdents.save(epw)
+                val pwIdentEdge = MEdge(
+                  predicate = MPredicates.Ident.Password,
+                  info = MEdgeInfo(
+                    textNi = Some( scryptUtil.mkHash(email + System.currentTimeMillis().millis.toHours.toLong) ),
+                    // На будущее - флаг необходимости смены пароля, чтобы напомнить юзеру.
+                    flag = Some(false)
+                  )
+                )
+                emailIdentEdge :: pwIdentEdge :: Nil
               }
-            } yield {
-              info(s"$logPrefix1 New superuser installed as $personId. mpi=$mpiId")
-              Some(personId)
-            }
+            )
+          )
 
-          } else {
-            warn(logPrefix1 + "Skipping installing missing superuser, because !createIfMissing.")
-            Future.successful(None)
+          for {
+            personId <- mNodes.save(mperson0)
+          } yield {
+            LOGGER.info(s"$logPrefix New superuser installed as $personId for $email")
+            Some( personId )
           }
 
-        // Суперюзер уже существует. Просто возвращаем его id.
-        case Some(mpi) =>
-          Future.successful(Some(mpi.personId))
+        } else {
+          LOGGER.warn(s"logPrefix Skipping installing missing superuser [$email], because !createIfMissing.")
+          Future.successful(None)
+        }
       }
-    }.andThen {
-      case Success(suPersonIdOpts) =>
-        val suPersonIds = suPersonIdOpts.flatten
-        SU_IDS = suPersonIds.toSet
-        info(s"$logPrefix SU person ids := ${suPersonIds.mkString(", ")}")
 
-      case Failure(ex) =>
-        error(logPrefix + "Failed to install superusers", ex)
+    } yield {
+      val createdPersonIds = createdPersonIdOpts.iterator.flatten.toSet
+      val existingPersonIds = email2nodeMap.valuesIterator.flatMap(_.id).toSet
+      LOGGER.trace(s"$logPrefix successfully installed ${createdPersonIds.size} superUsers: ${createdPersonIds.mkString(", ")}\n previosly existed personIds = ${existingPersonIds.mkString(", ")}")
+      SU_IDS = createdPersonIds ++ existingPersonIds
     }
+
+    for (ex <- resFut.failed)
+      LOGGER.error(s"$logPrefix Failure", ex)
+
+    resFut
   }
 
 }

@@ -1,7 +1,5 @@
 package models.req
 
-import io.suggest.primo.TypeT
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -14,47 +12,33 @@ import io.suggest.primo.TypeT
  *    }
  * }}}
  */
-object MUserInits extends TypeT {
-
-  sealed trait ValT {
-    /** Исполнить одну команду инициализации. */
-    def initUser(user: ISioUser): Unit
-  }
-
-  sealed trait ValTDummy extends ValT {
-    override def initUser(user: ISioUser): Unit = {}
-  }
-
-  override type T = ValT
-
+object MUserInits {
 
   /** Запуск чтения баланса юзера. */
-  sealed trait BalanceT extends ValTDummy {
+  object Balance extends MUserInit {
     override def initUser(user: ISioUser): Unit = {
-      super.initUser(user)
       user.balancesFut
     }
   }
-  object Balance extends BalanceT
 
   /** Запуск чтения контракта юзера. */
-  object Contract extends ValT {
+  object Contract extends MUserInit {
     override def initUser(user: ISioUser): Unit = user.mContractOptFut
   }
 
   /** Запуск чтения MNode юзера. */
-  object PersonNode extends ValT {
+  object PersonNode extends MUserInit {
     override def initUser(user: ISioUser): Unit = user.personNodeOptFut
   }
 
   /** Запуск чтения id контракта. */
-  object ContractId extends ValT {
+  object ContractId extends MUserInit {
     override def initUser(user: ISioUser): Unit = user.contractIdOptFut
   }
 
   /** Инициализация обыденного личного кабинета: баланс, счетчик новых событий, возможно ещё что-то.
     * @see [[models.req.ISioUserT.lkCtxDataFut]] */
-  object Lk extends ValT {
+  object Lk extends MUserInit {
     override def initUser(user: ISioUser): Unit = {
       user.lkCtxDataFut
     }
@@ -62,10 +46,17 @@ object MUserInits extends TypeT {
 
 
   /** Накатить список команд инициализации на экземпляр [[ISioUser]]. */
-  def initUser(user: ISioUser, cmds: TraversableOnce[ValT]): Unit = {
+  def initUser(user: ISioUser, cmds: TraversableOnce[MUserInit]): Unit = {
     for (cmd <- cmds) {
       cmd.initUser(user)
     }
   }
 
 }
+
+
+sealed trait MUserInit {
+  /** Исполнить одну команду инициализации. */
+  def initUser(user: ISioUser): Unit
+}
+

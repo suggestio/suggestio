@@ -25,7 +25,6 @@ import models.madn.{AdnShownTypes, MNodeRegSuccess, NodeDfltColors}
 import models.mext.MExtServicesJvm
 import models.mproj.ICommonDi
 import models.mwc.MWelcomeRenderArgs
-import models.usr.MPersonIdents
 import play.api.i18n.{Lang, Langs, Messages}
 import play.api.mvc.Call
 import util.img.DynImgUtil
@@ -47,7 +46,6 @@ final class NodesUtil @Inject() (
                                   esModel                 : EsModel,
                                   mNodes                  : MNodes,
                                   mExtTargets             : MExtTargets,
-                                  mPersonIdents           : MPersonIdents,
                                   dynImgUtil              : DynImgUtil,
                                   mCommonDi               : ICommonDi
                                 )
@@ -394,11 +392,11 @@ final class NodesUtil @Inject() (
       val nodeNameOpt = personNodeOpt.flatMap(_.guessDisplayName)
       FutureUtil.opt2futureOpt( nodeNameOpt ) {
         val userEmailsFut = userEmailsFutOpt.getOrElse {
-          personNodeOpt
-            .flatMap(_.id)
-            .fold( Future.successful(List.empty: Seq[String]) ) { personId =>
-              mPersonIdents.findEmails( personId )
-            }
+          val r = personNodeOpt
+            .iterator
+            .flatMap(_.edges.withPredicateIterIds( MPredicates.Ident.Email ))
+            .toSeq
+          Future.successful(r)
         }
         for (usrEmails <- userEmailsFut) yield {
           usrEmails.headOption

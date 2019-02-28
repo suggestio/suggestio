@@ -142,8 +142,8 @@ GET  /demopay/yaka/fail                 @controllers.pay.PayYaka.demoFailUnknown
 POST /demopay/yaka/fail                 @controllers.pay.PayYaka.demoFailPostQs(qs: mpay.yaka.MYakaReturnQs)
 
 ## Принятие приглашения на управления узлом.
-GET  /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
-POST /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
+GET  /lk/node/invite                    @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm( e: usr.MEmailRecoverQs )
+POST /lk/node/invite                    @controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit( e: usr.MEmailRecoverQs )
 
 ## Обращение в тех.поддерку зареганного клиента sio-market.
 GET  /lk/h/support/at/:nodeId           @controllers.LkHelp.supportFormNode(nodeId, r: Option[String] ?= None)
@@ -281,8 +281,7 @@ GET  /sys/person                         @controllers.SysPerson.index
 GET  /sys/person/reg/email/show          @controllers.SysPerson.showRegEmail
 GET  /sys/person/recover/email/show      @controllers.SysPerson.showRecoverEmail
 GET  /sys/person/show/:personId          @controllers.SysPerson.showPerson(personId)
-GET  /sys/person/epws                    @controllers.SysPerson.allEpws(offset: Int ?= 0)
-GET  /sys/person/extids                  @controllers.SysPerson.allExtIdents(offset: Int ?= 0)
+GET  /sys/person/idents                  @controllers.SysPerson.allIdents(offset: Int ?= 0)
 
 
 ## sys/billing v2 -- Весь новый биллинг разом в этом контроллере.
@@ -319,8 +318,8 @@ GET  /id/logout                         @controllers.Ident.logout
 GET  /id/epw/recover                    @controllers.Ident.recoverPwForm
 POST /id/epw/recover                    @controllers.Ident.recoverPwFormSubmit
 GET  /id/epw/recover/sent               @controllers.Ident.recoverPwAccepted(email: String)
-GET  /id/epw/resetpw/:eActId            @controllers.Ident.recoverPwReturn(eActId)
-POST /id/epw/resetpw/:eActId            @controllers.Ident.pwResetSubmit(eActId)
+GET  /id/epw/resetpw                    @controllers.Ident.recoverPwReturn(e: models.usr.MEmailRecoverQs)
+POST /id/epw/resetpw                    @controllers.Ident.pwResetSubmit(e: models.usr.MEmailRecoverQs)
 ## ident: Сменить пароль
 GET  /id/epw/chpw                       @controllers.Ident.changePassword
 POST /id/epw/chpw                       @controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
@@ -328,11 +327,11 @@ GET  /id/rdr/me/somewhere               @controllers.Ident.rdrUserSomewhere
 ## ident: рега по email и паролю
 GET  /id/epw/reg                        @controllers.Ident.emailReg
 POST /id/epw/reg                        @controllers.Ident.emailRegSubmit
-GET  /id/epw/reg/return                 @controllers.Ident.emailReturn(e: usr.IEaEmailId)
-POST /id/epw/reg/return                 @controllers.Ident.emailConfirmSubmit(e: usr.IEaEmailId)
+GET  /id/epw/reg/return                 @controllers.Ident.emailReturn(e: models.usr.MEmailRecoverQs)
+POST /id/epw/reg/return                 @controllers.Ident.emailConfirmSubmit(e: models.usr.MEmailRecoverQs)
 ## ident: вход через внешнего провайдера
-GET  /id/via/:provider			        @controllers.Ident.idViaProvider(provider: mext.ILoginProvider, r: Option[String] ?= None)
-POST /id/via/:provider                  @controllers.Ident.idViaProviderByPost(provider: mext.ILoginProvider, r: Option[String] ?= None)
+GET  /id/via/:extService                @controllers.Ident.idViaProvider(extService: io.suggest.ext.svc.MExtService, r: Option[String] ?= None)
+POST /id/via/:extService                @controllers.Ident.idViaProviderByPost(extService: io.suggest.ext.svc.MExtService, r: Option[String] ?= None)
 GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm
 POST /id/reg/ext/confirm                @controllers.Ident.idpConfirmSubmit
 GET  /id/ext/cb                         @controllers.Ident.extIdCbGet(r: Option[String] ?= None)

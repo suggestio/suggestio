@@ -1,54 +1,62 @@
-@(extIdents: Seq[usr.MExtIdent], showPersonId: Boolean, personNames: Map[String, String] = Map.empty)(implicit ctx: Context)
+@(idents: Seq[io.suggest.model.n2.edge.MEdge])(implicit ctx: Context)
 
 @* Рендер таблицы со списком ext-идентов.  *@
 
 @import sys1.stuff.ntable._
 @import ctx.messages
+@import views.html.stuff._yesNoTpl
 
-<h1>Идентификации через внешние сервисы (@extIdents.size)</h1>
+<h1>Иденты (@idents.size)</h1>
 
-@if( extIdents.isEmpty ) {
-  <div>Нет внешних идентов.</div>
+@if( idents.isEmpty ) {
+  <div>Нет идентов.</div>
 
 } else {
 @defining("M") { sz =>
   @_ntable() {
+    @_th(sz, title = Some("Тип идента")) {
+      @messages("Type")
+    }
     @_th(sz, title = Some("Провайдер идентификации, т.е. какой-то сервис (сайт) в интернете, поддерживаемый suggest.io.")) {
       @messages("Provider")
     }
     @_th(sz, title = Some("ID пользователя на стороне провайдера идентификации.") ) {
       user_id
     }
-    @_th(sz, title = Some("Email-адрес, если доступен.")) {
-      email
-    }
-    @if(showPersonId) {
-      @_th(sz, title = Some("Уникальный id пользователя suggest.io")) {
-        person_id
-      }
+    @_th(sz, title = Some("Верифицирован?")) {
+      verified
     }
 
   } {
 
-    @extIdents.map { ei =>
+    @for( ei <- idents) {
       @_tr() {
         @_td(sz) {
-          @ei.provider
+          @messages( ei.predicate.singular )
         }
         @_td(sz) {
-          @ei.userId
+          @for(extService <- ei.info.extService) {
+            @messages( extService.nameI18N )
+          }
         }
         @_td(sz) {
-          @ei.email.map(_emailTpl(_))
+          @for(id <- ei.nodeIds) {
+            @id
+            <br/>
+          }
         }
-        @if(showPersonId) {
-          @_td(sz) {
-            @_personLinkTpl(ei.personId, personNames)
+        @_td(sz) {
+          @for(flag <- ei.info.flag) {
+            @_yesNoTpl( flag )
           }
         }
       }
     }
+
   }
 
 } @* defining sz *@
 } @* if extIdents nonEmpty *@
+
+
+

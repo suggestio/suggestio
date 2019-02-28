@@ -254,13 +254,13 @@ class SysMarketUtil extends MacroLogsDyn {
     )
     { (commentNiOpt, flagOpt, tags) =>
       MEdgeInfo(
-        commentNi   = commentNiOpt,
+        textNi   = commentNiOpt,
         flag        = flagOpt,
         tags        = tags
       )
     }
     { ei =>
-      Some((ei.commentNi, ei.flag, ei.tags))
+      Some((ei.textNi, ei.flag, ei.tags))
     }
   }
 
@@ -297,7 +297,7 @@ class SysMarketUtil extends MacroLogsDyn {
       info      = {
         val i = e.info
         mEdge0.info.copy(
-          commentNi   = i.commentNi,
+          textNi   = i.textNi,
           flag        = i.flag,
           tags        = i.tags
         )

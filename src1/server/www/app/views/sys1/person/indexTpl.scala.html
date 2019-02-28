@@ -1,4 +1,4 @@
-@(personsCnt: Long, epwIdsCnt: Long, extIdsCnt: Long, suCnt: Int)(implicit ctx: Context)
+@(personsCnt: Long, identsCnt: Long, suCnt: Int)(implicit ctx: Context)
 
 @* Заглавная страница раздела про юзеров s.io. *@
 
@@ -15,14 +15,9 @@
     @_ptableRowTpl("Пользователей") {
       @personsCnt юзеров
     }
-    @_ptableRowTpl("Email+pw иденты") {
-      <a href="@routes.SysPerson.allEpws()">
-        @epwIdsCnt идентов
-      </a>
-    }
-    @_ptableRowTpl("Внешние иденты") {
-      <a href="@routes.SysPerson.allExtIdents()">
-        @extIdsCnt идентов
+    @_ptableRowTpl("Иденты") {
+      <a href="@routes.SysPerson.allIdents()">
+        @identsCnt узлов содержат иденты
       </a>
     }
     @_ptableRowTpl("Суперпользователи") {

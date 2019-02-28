@@ -8,7 +8,9 @@ import io.suggest.ext.svc.MExtService
 import io.suggest.geo.{GeoPoint, MGeoPoint, MNodeGeoLevel}
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.model.PrefixedFn
+import io.suggest.text.StringUtil
 import io.suggest.util.SioConstants
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -167,6 +169,14 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     )
   }
 
+  val dateNi = GenLens[MEdgeInfo](_.dateNi)
+  val textNi = GenLens[MEdgeInfo](_.textNi)
+  val flag = GenLens[MEdgeInfo](_.flag)
+  val tags = GenLens[MEdgeInfo](_.tags)
+  val geoShapes = GenLens[MEdgeInfo](_.geoShapes)
+  val geoPoints = GenLens[MEdgeInfo](_.geoPoints)
+  val extService = GenLens[MEdgeInfo](_.extService)
+
 }
 
 
@@ -175,7 +185,9 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   *
   * @param dynImgArgs При указании на картинку бывает нужно указать исходный кроп или что-то ещё.
   * @param dateNi Неиднексируемая дата.
-  * @param commentNi Неиндексируемый комментарий.
+  * @param textNi Неиндексируемый текст при эдже.
+  *                  Используется для хэша пароля в Password-эджах с 2019-02-28.
+  *                  Изначально использовался как произвольный служебный комментарий от/для админа.
   * @param flag Индексируемое значение некоторого флага.
   * @param tags Названия тегов, которые индексируются для полноценного поиска по тегам.
   *             2018-07-24 Сюда же падает индексируемые названия узла на карте.
@@ -186,7 +198,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   */
 final case class MEdgeInfo(
                             dateNi       : Option[OffsetDateTime]  = None,
-                            commentNi    : Option[String]          = None,
+                            textNi       : Option[String]          = None,
                             flag         : Option[Boolean]         = None,
                             tags         : Set[String]             = Set.empty,
                             geoShapes    : List[MEdgeGeoShape]     = Nil,
@@ -209,11 +221,14 @@ final case class MEdgeInfo(
         .append(' ')
     }
 
-    for (comment <- commentNi) {
-      sb.append("commentNi=")
-        .append(comment)
+    for (comment <- textNi) {
+      sb.append("textNi=")
+        .append( StringUtil.strLimitLen(comment, 10) )
         .append(' ')
     }
+
+    for (flag1 <- flag)
+      sb.append(flag1)
 
     val _tags = tags
     if (_tags.nonEmpty) {

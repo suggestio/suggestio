@@ -28,12 +28,8 @@ import scala.concurrent.Future
 // TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
 class SysPerson @Inject() (
                             esModel                   : EsModel,
-                            mPersonIdentModel         : MPersonIdentModel,
-                            mPerson                   : MPerson,
                             mNodes                    : MNodes,
                             mSuperUsers               : MSuperUsers,
-                            emailPwIdents             : EmailPwIdents,
-                            mExtIdents                : MExtIdents,
                             isSu                      : IsSu,
                             isSuPerson                : IsSuPerson,
                             override val mCommonDi    : ICommonDi
@@ -43,13 +39,10 @@ class SysPerson @Inject() (
 
   import mCommonDi._
   import esModel.api._
-  import mPersonIdentModel.api._
 
   /** Генерация экземпляра EmailActivation с бессмысленными данными. */
-  private def dummyEa = EmailActivation(
-    email = "admin@suggest.io",
-    key   = "keyKeyKeyKeyKey",
-    id    = Some("IdIdIdIdId888")
+  private def dummyEa = MEmailRecoverQs(
+    email = "admin@suggest.io"
   )
 
   def index = csrf.AddToken {
@@ -61,18 +54,26 @@ class SysPerson @Inject() (
         }
         mNodes.dynCount(psearch)
       }
-      val epwIdsCntFut = emailPwIdents.countAll()
-      val extIdsCntFut = mExtIdents.countAll()
+
+      val identsCntFut = mNodes.dynCount(
+        new MNodeSearchDfltImpl {
+          override def outEdges: Seq[Criteria] = {
+            val cr = Criteria(
+              predicates = MPredicates.Ident :: Nil
+            )
+            cr :: Nil
+          }
+        }
+      )
+
       val suCnt        = mSuperUsers.SU_EMAILS.size
       for {
         personsCnt <- personsCntFut
-        epwIdsCnt  <- epwIdsCntFut
-        extIdsCnt  <- extIdsCntFut
+        identsCnt  <- identsCntFut
       } yield {
         Ok(indexTpl(
           personsCnt = personsCnt,
-          epwIdsCnt  = epwIdsCnt,
-          extIdsCnt  = extIdsCnt,
+          identsCnt  = identsCnt,
           suCnt      = suCnt
         ))
       }
@@ -96,36 +97,35 @@ class SysPerson @Inject() (
   }
 
 
-  /** Отрендерить страницу, которая будет содержать таблицу со всеми email+pw идентами. */
-  def allEpws(offset: Int) = csrf.AddToken {
-    isSu().async { implicit request =>
-      val limit = 20
-      val epwsFut = emailPwIdents.getAll(limit, offset = offset)
-      for {
-        epws <- epwsFut
-      } yield {
-        Ok(epwsListTpl(
-          epws        = epws,
-          limit       = limit,
-          currOffset  = offset
-        ))
-      }
-    }
-  }
-
-
   /** Отрендерить страницу с листингом внешних идентов. */
-  def allExtIdents(offset: Int) = csrf.AddToken {
+  def allIdents(theOffset: Int) = csrf.AddToken {
     isSu().async { implicit request =>
-      val limit = 20
-      val extIdentsFut = mExtIdents.getAll(limit, offset = offset)
+      val theLimit = 5
+      val msearch = new MNodeSearchDfltImpl {
+        override def limit = theLimit
+        override def offset = theOffset
+        override def outEdges: Seq[Criteria] = {
+          val cr = Criteria(
+            predicates = MPredicates.Ident :: Nil
+          )
+          cr :: Nil
+        }
+      }
       for {
-        extIdents <- extIdentsFut
+        nodesFound <- mNodes.dynSearch( msearch )
       } yield {
-        Ok(extIdentsListTpl(
-          extIdents   = extIdents,
-          limit       = limit,
-          currOffset  = offset
+        val nodesIdented = for {
+          mnode <- nodesFound.iterator
+        } yield {
+          val idents = mnode.edges
+            .withPredicateIter( MPredicates.Ident )
+            .toStream
+          mnode -> idents
+        }
+        Ok(IdentsListTpl(
+          idents      = nodesIdented.toSeq,
+          limit       = theLimit,
+          currOffset  = theOffset
         ))
       }
     }
@@ -141,47 +141,28 @@ class SysPerson @Inject() (
     isSuPerson(personId).async { implicit request =>
       // Сразу запускаем поиск узлов: он самый тяжелый тут.
       val msearch = new MNodeSearchDfltImpl {
-        override def outEdges  = {
-          Seq(
-            Criteria(Seq(personId), Seq(MPredicates.OwnedBy))
+        override val outEdges = {
+          val cr = Criteria(
+            nodeIds    = personId :: Nil,
+            predicates = MPredicates.OwnedBy :: Nil,
           )
+          cr :: Nil
         }
-        override def withNameSort = Some(SortOrder.ASC)
+        override val withNameSort = Some(SortOrder.ASC)
       }
       val nodesFut = mNodes.dynSearch( msearch )
-      // Запускаем поиски ident'ов. Сортируем результаты.
-      val epwIdentsFut = emailPwIdents.findByPersonId(personId)
-        .map { _.sortBy(_.email) }
-      val extIdentsFut = mExtIdents.findByPersonId(personId)
-        .map { _.sortBy { ei => ei.provider.ssProvName + "." + ei.userId } }
-
-      // Определить имя юзера, если возможно.
-      val personNameOptFut = mPerson.findUsernameCached(personId)
-      // Карта имен юзеров, передается в шаблоны.
-      val personNamesFut = personNameOptFut
-        .map { _.map(personId -> _).toMap }
 
       // Отображаемое на текущей странице имя юзера
-      val personNameFut = personNameOptFut
-        .map { _.getOrElse(personId) }
+      val personName = request.mperson.guessDisplayNameOrIdOrQuestions
+
+      val idents = request.mperson.edges
+        .withPredicateIter( MPredicates.Ident )
+        .toStream
 
       implicit val ctx = implicitly[Context]
 
-      // Рендер epw-идентов
-      val epwIdentsHtmlFut = for {
-        epws        <- epwIdentsFut
-        personNames <- personNamesFut
-      } yield {
-        _epwIdentsTpl(epws, showPersonId = false, personNames = personNames)(ctx)
-      }
-
-      // Рендер ext-ident'ов
-      val extIdentsHtmlFut = for {
-        extIdents   <- extIdentsFut
-        personNames <- personNamesFut
-      } yield {
-        _extIdentsTpl(extIdents, showPersonId = false, personNames = personNames)(ctx)
-      }
+      // Рендер идентов:
+      val identsHtml = _IdentsTpl( idents )(ctx)
 
       val nodesHtmlFut = for {
         mnodes    <- nodesFut
@@ -196,11 +177,8 @@ class SysPerson @Inject() (
       // Рендерим конечный шаблон.
       for {
         nodesHtml     <- nodesHtmlFut
-        extIdentsHtml <- extIdentsHtmlFut
-        epwIdentsHtml <- epwIdentsHtmlFut
-        personName    <- personNameFut
       } yield {
-        val contents = Seq(epwIdentsHtml, extIdentsHtml, nodesHtml)
+        val contents = identsHtml :: nodesHtml :: Nil
         Ok( showPersonTpl(request.mperson, personName, contents)(ctx) )
       }
     }

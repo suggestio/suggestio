@@ -25,11 +25,12 @@ case class UserProfile(
   firstName     : Option[String]        = None,
   lastName      : Option[String]        = None,
   fullName      : Option[String]        = None,
-  email         : Option[String]        = None,
+  emails        : Iterable[String]      = Nil,
   avatarUrl     : Option[String]        = None,
   authMethod    : AuthenticationMethod,
   oAuth1Info    : Option[OAuth1Info]    = None,
   oAuth2Info    : Option[OAuth2Info]    = None,
+  phones        : Iterable[String]      = Nil,
 )
 
 /**

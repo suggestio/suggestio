@@ -7,7 +7,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.edge.{MEdge, MPredicates}
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -20,7 +20,7 @@ import models.UsrCreateNodeForm_t
 import models.mctx.Context
 import models.mlk.MNodeShowArgs
 import models.mproj.ICommonDi
-import models.req.{INodeReq, MReq}
+import models.req.{INodeReq, IReq}
 import models.usr._
 import play.api.data.Form
 import play.api.data.Forms._
@@ -48,21 +48,17 @@ import scala.concurrent.Future
 @Singleton
 class MarketLkAdn @Inject() (
                               override val esModel                : EsModel,
-                              override val mPersonIdentModel      : MPersonIdentModel,
                               nodesUtil                           : NodesUtil,
                               scUtil                              : ShowcaseUtil,
-                              mNodes                              : MNodes,
+                              override val mNodes                 : MNodes,
                               override val identUtil              : IdentUtil,
-                              override val emailPwIdents          : EmailPwIdents,
-                              override val mPersonIdents          : MPersonIdents,
-                              emailActivations                    : EmailActivations,
                               logoUtil                            : LogoUtil,
                               mItems                              : MItems,
                               galleryUtil                         : GalleryUtil,
                               isAuth                              : IsAuth,
                               isNodeAdmin                         : IsNodeAdmin,
                               isAdnNodeAdminOptOrAuth             : IsAdnNodeAdminOptOrAuth,
-                              nodeEact                            : NodeEact,
+                              canUseNodeInvite                    : CanUseNodeInvite,
                               dynImgUtil                          : DynImgUtil,
                               override val scryptUtil             : ScryptUtil,
                               override val mCommonDi              : ICommonDi
@@ -218,44 +214,42 @@ class MarketLkAdn @Inject() (
     "password" -> optional(passwordWithConfirmM)
   ))
 
-  private def eactNotFound(reason: String, mreq: MReq[_]): Future[Result] = {
+  private def eactNotFound(reason: String, mreq: IReq[_]): Future[Result] = {
     implicit val request = mreq
     NotFound( inviteInvalidTpl(reason) )
   }
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
-  def nodeOwnerInviteAcceptForm(adnId: String, eActId: String) = csrf.AddToken {
-    nodeEact(adnId, eActId)(eactNotFound) { implicit request =>
-      Ok(invite.inviteAcceptFormTpl(request.mnode, request.eact, nodeOwnerInviteAcceptM, withOfferText = true))
+  def nodeOwnerInviteAcceptForm(qs: MEmailRecoverQs) = csrf.AddToken {
+    canUseNodeInvite(qs)(eactNotFound) { implicit request =>
+      val html = invite.inviteAcceptFormTpl(request.mnode, qs, nodeOwnerInviteAcceptM, withOfferText = true)
+      Ok(html)
     }
   }
 
   /** Сабмит формы подтверждения инвайта на управление ТЦ. */
-  def nodeOwnerInviteAcceptFormSubmit(adnId: String, eActId: String) = csrf.Check {
-    nodeEact(adnId, eActId)(eactNotFound).async { implicit request =>
-      import request.{eact, mnode}
+  def nodeOwnerInviteAcceptFormSubmit(qs: MEmailRecoverQs) = csrf.Check {
+    canUseNodeInvite(qs)(eactNotFound).async { implicit request =>
       // Если юзер залогинен, то форму биндить не надо
       val formBinded = nodeOwnerInviteAcceptM.bindFromRequest()
-      lazy val logPrefix = s"nodeOwnerInviteAcceptFormSubmit($adnId, act=$eActId): "
+      lazy val logPrefix = s"nodeOwnerInviteAcceptFormSubmit(${qs.nodeId.orNull} ${qs.email}): "
       formBinded.fold(
         {formWithErrors =>
           debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
-          NotAcceptable(invite.inviteAcceptFormTpl(mnode, eact, formWithErrors, withOfferText = false))
+          NotAcceptable(invite.inviteAcceptFormTpl(request.mnode, qs, formWithErrors, withOfferText = false))
 
-        }, { case (_, passwordOpt) =>
+        },
+        {case (_, passwordOpt) =>
           val isAuth = request.user.isAuth
           if (passwordOpt.isEmpty && !isAuth) {
             debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=$isAuth")
             val form1 = formBinded
               .withError("password.pw1", "error.required")
               .withError("password.pw2", "error.required")
-            NotAcceptable(invite.inviteAcceptFormTpl(mnode, eact, form1, withOfferText = false))
+            NotAcceptable(invite.inviteAcceptFormTpl(request.mnode, qs, form1, withOfferText = false))
 
           } else {
-            // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
             for {
-              _ <- emailActivations.deleteById(eActId)
-
               personIdOpt <- {
                 if (!isAuth) {
                   val mperson0 = MNode(
@@ -265,25 +259,37 @@ class MarketLkAdn @Inject() (
                     ),
                     meta = MMeta(
                       basic = MBasicMeta(
-                        nameOpt = Some(eact.email),
+                        nameOpt = Some( qs.email ),
                         langs = request.messages.lang.code :: Nil
                       ),
                       person = MPersonMeta(
-                        emails = eact.email :: Nil
+                        emails = qs.email :: Nil
                       )
+                    ),
+                    edges = MNodeEdges(
+                      out = {
+                        val emailIdent = MEdge(
+                          predicate = MPredicates.Ident.Email,
+                          nodeIds   = Set(qs.email),
+                          info = MEdgeInfo(
+                            flag = Some(true)
+                          )
+                        )
+                        val pwIdent = MEdge(
+                          predicate = MPredicates.Ident.Password,
+                          info = MEdgeInfo(
+                            textNi = Some( scryptUtil.mkHash(passwordOpt.get) )
+                          )
+                        )
+                        val edges = emailIdent :: pwIdent :: Nil
+                        MNodeEdges.edgesToMap1( edges )
+                      }
                     )
                   )
 
                   // Сохранение данных.
                   for {
                     personId <- mNodes.save(mperson0)
-                    epwIdent = EmailPwIdent(
-                      email       = eact.email,
-                      personId    = personId,
-                      pwHash      = scryptUtil.mkHash(passwordOpt.get),
-                      isVerified  = true
-                    )
-                    _ <- emailPwIdents.save(epwIdent)
                   } yield {
                     Some(personId)
                   }
@@ -296,7 +302,8 @@ class MarketLkAdn @Inject() (
 
               _ <- {
                 val nodeOwnedByPersonId = {
-                  mnode.edges
+                  request.mnode
+                    .edges
                     .withPredicateIter( MPredicates.OwnedBy )
                     .exists(_.nodeIds.contains(personId))
                 }
@@ -305,12 +312,10 @@ class MarketLkAdn @Inject() (
                     predicate = MPredicates.OwnedBy,
                     nodeIds   = Set(personId)
                   )
-                  mNodes.tryUpdate(mnode) { mnode0 =>
-                    mnode0.copy(
-                      edges = mnode0.edges.copy(
-                        out = mnode0.edges.out ++ Seq(ownEdge)
-                      )
-                    )
+                  mNodes.tryUpdate(request.mnode) {
+                    MNode.edges
+                      .composeLens( MNodeEdges.out )
+                      .modify(_ :+ ownEdge)
                   }
                 } else {
                   Future.successful(Unit)
@@ -318,7 +323,7 @@ class MarketLkAdn @Inject() (
               }
 
             } yield {
-              Redirect(routes.LkAds.adsPage(adnId :: Nil))
+              Redirect(routes.LkAds.adsPage(request.mnode.id.get :: Nil))
                 .flashing(FLASH.SUCCESS -> "Signup.finished")
                 .withSession(Keys.PersonId.value -> personId)
             }

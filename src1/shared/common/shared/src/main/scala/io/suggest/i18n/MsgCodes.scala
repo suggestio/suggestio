@@ -342,4 +342,11 @@ object MsgCodes {
 
   val `GovServices.ESIA` = "GovServices.ESIA"
 
+  /** Привести булёво значение к Yes или No.
+    * И это потом можно в messages() передавать, для локализации ответа. */
+  def yesNo(isYes: Boolean): String = {
+    if (isYes) MsgCodes.`Yes`
+    else MsgCodes.`No`
+  }
+
 }

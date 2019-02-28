@@ -170,7 +170,7 @@ class PersonIdentUpgrade @Inject() (
               val pwEdge = MEdge(
                 predicate = MPredicates.Ident.Password,
                 info = MEdgeInfo(
-                  commentNi = Some(epwIdent.pwHash)
+                  textNi = Some(epwIdent.pwHash)
                 )
               )
 

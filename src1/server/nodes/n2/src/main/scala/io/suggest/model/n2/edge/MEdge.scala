@@ -5,6 +5,7 @@ import io.suggest.model.PrefixedFn
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MNodeGeoLevel
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -117,6 +118,13 @@ object MEdge extends IGenEsMappingProps {
       FieldObject(DOC_FN, enabled = true, properties = MEdgeDocJvm.generateMappingProps)
     )
   }
+
+
+  val predicate = GenLens[MEdge](_.predicate)
+  val nodeIds   = GenLens[MEdge](_.nodeIds)
+  val order     = GenLens[MEdge](_.order)
+  val info      = GenLens[MEdge](_.info)
+  val doc       = GenLens[MEdge](_.doc)
 
 }
 

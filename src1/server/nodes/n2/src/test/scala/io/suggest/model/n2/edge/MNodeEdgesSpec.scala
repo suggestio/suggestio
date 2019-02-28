@@ -37,7 +37,7 @@ class MNodeEdgesSpec extends FlatSpec with PlayJsonTestUtil {
         predicate = MPredicates.NodeLocation,
         info = MEdgeInfo(
           dateNi = Some( OffsetDateTime.now().minusDays(1) ),
-          commentNi = Some("asdas asd as a#$!#@$ds'ad''''!"),
+          textNi = Some("asdas asd as a#$!#@$ds'ad''''!"),
           flag = Some(true),
           tags    = Set("asd", "bbb"),
           geoShapes = List(

@@ -1,10 +1,12 @@
 package models.mext
 
+import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.ext.svc.{MExtService, MExtServices}
 import models.mext.fb.FacebookService
 import models.mext.gu.GosUslugiService
 import models.mext.tw.TwitterService
 import models.mext.vk.VkService
+import play.api.mvc.{PathBindable, QueryStringBindable}
 
 /**
  * Suggest.io
@@ -22,6 +24,13 @@ object MExtServicesJvm {
       case MExtServices.GosUslugi => new GosUslugiService
     }
   }
+
+
+  implicit def extServicePb: PathBindable[MExtService] =
+    EnumeratumJvmUtil.valueEnumPb( MExtServices )
+
+  implicit def extServiceQsb: QueryStringBindable[MExtService] =
+    EnumeratumJvmUtil.valueEnumQsb( MExtServices )
 
 }
 

@@ -21,13 +21,14 @@ import models.mctx.Context
 import models.mdr.{MMdrNotifyCtx, MMdrNotifyMeta}
 import models.mproj.ICommonDi
 import models.req.ISioUser
-import models.usr.{MPersonIdents, MSuperUsers}
+import models.usr.MSuperUsers
 import util.acl.IsNodeAdmin
 import util.adn.NodesUtil
 import util.billing.Bill2Util
 import util.mail.IMailerWrapper
 import views.html.sys1.mdr._mdrNeededEmailTpl
 import OptionUtil.BoolOptOps
+import akka.stream.scaladsl.{Keep, Sink}
 import io.suggest.i18n.MsgCodes
 import io.suggest.primo.id.OptId
 import play.api.i18n.Lang
@@ -48,7 +49,6 @@ class MdrUtil @Inject() (
                           val mItems        : MItems,
                           mNodes            : MNodes,
                           bill2Util         : Bill2Util,
-                          mPersonIdents     : MPersonIdents,
                           streamsUtil       : StreamsUtil,
                           nodesUtil         : NodesUtil,
                           mSuperUsers       : MSuperUsers,
@@ -231,7 +231,32 @@ class MdrUtil @Inject() (
         personsMap = OptId.els2idMap[String, MNode]( walkAcc2.personsAcc )
 
         // Запустить в фоне сборку email'ы юзеров, которые требуется обработать.
-        personEmailsFut = mPersonIdents.findPersonsEmails( personsMap.keySet.toSeq )
+        personId2EmailsMapFut = {
+          mNodes
+            .dynSearchSource {
+              new MNodeSearchDfltImpl {
+                override val withIds = personsMap.keySet.toSeq
+                override val nodeTypes = MNodeTypes.Person :: Nil
+                override val outEdges: Seq[Criteria] = {
+                  val cr = Criteria(
+                    predicates = MPredicates.Ident.Email :: Nil
+                  )
+                  cr :: Nil
+                }
+              }
+            }
+            .map { mnode =>
+              val personId = mnode.id.get
+              val emails = mnode.edges
+                .withPredicateIter( MPredicates.Ident.Email )
+                .flatMap(_.nodeIds)
+                .toSet
+              personId -> emails
+            }
+            .toMat( Sink.collection[(String, Set[String]), Map[String, Set[String]]] )( Keep.right )
+            .run()
+        }
+
 
         // Пакетно готовим messages под языки найденных юзеров.
         langCode2MessagesMap = {
@@ -250,7 +275,7 @@ class MdrUtil @Inject() (
           iter.toMap
         }
 
-        personId2emailsMap <- personEmailsFut
+        personId2EmailsMap <- personId2EmailsMapFut
 
         // Есть почта, пора рендерить шаблоны email-уведомлений для юзеров
         // Надо сгенерить ссылку на модерацию, для этого надо определить на каком узле рендерить.
@@ -273,7 +298,7 @@ class MdrUtil @Inject() (
         }
 
         // Рендер и отправка email-сообщений
-        _ <- Future.traverse(personId2emailsMap) { case (personId, emails) =>
+        _ <- Future.traverse(personId2EmailsMap) { case (personId, emails) =>
           val personNodeOpt = personsMap.get( personId )
 
           // Разобраться с языком для рендера контекста.
@@ -326,7 +351,7 @@ class MdrUtil @Inject() (
         }
 
       } yield {
-        LOGGER.debug(s"$logPrefix Done, processed ${personId2emailsMap.size} persons with ${personId2emailsMap.valuesIterator.flatten.size} emails.")
+        LOGGER.debug(s"$logPrefix Done, processed ${personId2EmailsMap.size} persons with ${personId2EmailsMap.valuesIterator.flatten.size} emails.")
       }
     } else {
       Future.successful( None )
@@ -363,7 +388,7 @@ class MdrUtil @Inject() (
   def mdrEdgeInfo(reasonOpt: Option[String]): MEdgeInfo = {
     MEdgeInfo(
       dateNi    = someNow,
-      commentNi = reasonOpt,
+      textNi = reasonOpt,
       flag      = Some(reasonOpt.isEmpty)
     )
   }

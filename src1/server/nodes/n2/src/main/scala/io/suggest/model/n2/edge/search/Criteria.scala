@@ -34,7 +34,7 @@ final case class Criteria(
                            gsIntersect       : Option[IGsCriteria]  = None,
                            nodeIdsMatchAll   : Boolean              = false,
                            geoDistanceSort   : Option[MGeoPoint]    = None,
-                           extService        : Seq[MExtService]     = Nil,
+                           extService        : Option[Seq[MExtService]] = None,
                          )
   extends EmptyProduct
   with IMust

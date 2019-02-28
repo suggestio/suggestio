@@ -7,7 +7,7 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.MPrice
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.i18n.{I18nConst, MsgCodes}
+import io.suggest.i18n.MsgCodes
 import io.suggest.lk.nodes.MLknConf
 import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.r.menu.{NodeMenuBtnR, NodeMenuR}
@@ -395,7 +395,7 @@ class NodeR(
                           }
                         ),
                         <.span(),
-                        Messages( I18nConst.yesNo(isEnabledValue) )
+                        Messages( MsgCodes.yesNo(isEnabledValue) )
                       ),
 
                       // Рендер данные по реквестов обновления флага isEnabled.
@@ -584,7 +584,7 @@ class NodeR(
                         ^.onChange ==> onShowOpenedClick(rcvrKey)
                       ),
                       <.span(),
-                      Messages( I18nConst.yesNo( isShowOpened ) )
+                      Messages( MsgCodes.yesNo( isShowOpened ) )
                     )
                   }
                 )

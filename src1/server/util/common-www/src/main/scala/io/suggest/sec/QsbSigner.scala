@@ -37,6 +37,8 @@ class QsbSigner(secretKey: String, signKeyName: String)
 
   import LOGGER._
 
+  if (secretKey == null)
+    throw new IllegalStateException(getClass.getSimpleName + " not initialized: missing secret key")
 
   /** Итератор по карте параметров, который возвращает только подписанные параметры. */
   def onlyParamsForKey(key: String, params: Map[String, Seq[String]]): Iterator[(String, Seq[String])] = {

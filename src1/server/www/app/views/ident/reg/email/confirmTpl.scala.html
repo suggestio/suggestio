@@ -1,4 +1,4 @@
-@(ea: usr.EmailActivation, s2f: EmailPwConfirmForm_t)(implicit ctx: Context)
+@(qs: usr.MEmailRecoverQs, s2f: EmailPwConfirmForm_t)(implicit ctx: Context)
 
 @* Страница с колонкой-формой подтверждения реги по email-pw *@
 
@@ -7,5 +7,7 @@
 
 @mySioStartTpl(
   title   = messages("Sign.up"),
-  columns = Seq(_confirmColTpl(ea, s2f))
+  columns = Seq(
+    _confirmColTpl(qs, s2f)
+  )
 )

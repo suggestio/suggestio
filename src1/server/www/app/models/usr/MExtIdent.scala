@@ -85,11 +85,6 @@ class MExtIdents @Inject() (
 
 }
 
-/** Интерфейс для полей с DI-инстансами [[MExtIdents]]. */
-trait IMExtIdentsDi {
-  def mExtIdents: MExtIdents
-}
-
 
 object MExtIdent {
 

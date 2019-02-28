@@ -12,6 +12,7 @@ import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.order.MOrders
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.stat.m.{MAction, MActionTypes}
 import io.suggest.util.logs.MacroLogsImpl
@@ -21,7 +22,7 @@ import models.mdr.MMdrNotifyMeta
 import models.mpay.yaka._
 import models.mproj.ICommonDi
 import models.req.{INodeOrderReq, IReq, IReqHdr}
-import models.usr.{MPersonIdents, MSuperUsers}
+import models.usr.MSuperUsers
 import play.api.i18n.Messages
 import play.api.mvc._
 import play.twirl.api.Xml
@@ -72,7 +73,6 @@ class PayYaka @Inject() (
                           bill2Util                : Bill2Util,
                           secHeadersFilterUtil     : SecHeadersFilterUtil,
                           mailerWrapper            : IMailerWrapper,
-                          mPersonIdents            : MPersonIdents,
                           nodesUtil                : NodesUtil,
                           mSuperUsers              : MSuperUsers,
                           mdrUtil                  : MdrUtil,
@@ -162,14 +162,17 @@ class PayYaka @Inject() (
         yakaUtil.assertPricesForPay(payPrices0)
       }
 
-      val personId = request.user.personIdOpt.get
-
       // Попытаться определить email клиента.
       val userEmailOptFut = for {
-        // TODO Opt Надо бы искать максимум 1 элемент.
-        epws <- mPersonIdents.findEmails(personId)
+        personNodeOpt <- request.user.personNodeOptFut
       } yield {
-        epws.headOption
+        val iter = for {
+          personNode  <- personNodeOpt.iterator
+          email       <- personNode.edges.withPredicateIterIds( MPredicates.Ident.Email )
+        } yield {
+          email
+        }
+        iter.buffered.headOption
       }
 
       // Подготовить контекст рендера страницы личного кабинета.
@@ -454,7 +457,14 @@ class PayYaka @Inject() (
             val statMas0Fut = _statActions0(yReq, usrNodeOptFut)
 
             // В фоне узнать все email'ы юзера-плательщика.
-            val userEmailsFut = mPersonIdents.findEmails( yReq.personId )
+            val userEmailsFut = for {
+              usrNodeOpt <- usrNodeOptFut
+            } yield {
+              usrNodeOpt
+                .iterator
+                .flatMap(_.edges.withPredicateIterIds( MPredicates.Ident.Email ))
+                .toSeq
+            }
 
             val payFut: Future[(List[MAction], Xml)] = for {
               // Дождаться данных по узлу юзера.

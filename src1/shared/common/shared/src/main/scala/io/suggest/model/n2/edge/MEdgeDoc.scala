@@ -1,6 +1,7 @@
 package io.suggest.model.n2.edge
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -39,6 +40,10 @@ object MEdgeDoc extends IEmpty {
         { texts => if (texts.isEmpty) None else Some(texts) }
       )
   )(apply, unlift(unapply))
+
+
+  val uid = GenLens[MEdgeDoc](_.uid)
+  val text = GenLens[MEdgeDoc](_.text)
 
 }
 

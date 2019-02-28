@@ -1,15 +1,23 @@
 package util.acl
 
 import io.suggest.es.model.EsModel
+import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.req.{IReq, MRecoverPwReq, MReq, MUserInit}
+import models.req._
 import models.usr._
 import play.api.mvc._
 import util.ident.IdentUtil
+import japgolly.univeq._
+import play.api.http.HttpVerbs
 
+import scala.concurrent.duration._
 import scala.concurrent.Future
 
 /**
@@ -25,11 +33,9 @@ import scala.concurrent.Future
 
 class CanRecoverPw @Inject() (
                                esModel                : EsModel,
-                               mPersonIdentModel      : MPersonIdentModel,
+                               mNodes                 : MNodes,
                                aclUtil                : AclUtil,
                                identUtil              : IdentUtil,
-                               emailPwIdents          : EmailPwIdents,
-                               emailActivations       : EmailActivations,
                                reqUtil                : ReqUtil,
                                mCommonDi              : ICommonDi
                              )
@@ -37,7 +43,6 @@ class CanRecoverPw @Inject() (
 {
 
   import mCommonDi._
-  import mPersonIdentModel.api._
   import esModel.api._
 
 
@@ -46,87 +51,90 @@ class CanRecoverPw @Inject() (
     * @param eActId id активатора.
     * @param keyNotFoundF Не найден ключ для восстановления.
     */
-  def apply(eActId: String, userInits1: MUserInit*)
-           (keyNotFoundF: IReq[_] => Future[Result]): ActionBuilder[MRecoverPwReq, AnyContent] = {
+  def apply(qs: MEmailRecoverQs, userInits1: MUserInit*)
+           (keyNotFoundF: IReq[_] => Future[Result]): ActionBuilder[MNodeReq, AnyContent] = {
 
-    new reqUtil.SioActionBuilderImpl[MRecoverPwReq] with InitUserCmds {
+    new reqUtil.SioActionBuilderImpl[MNodeReq] with InitUserCmds {
 
       override def userInits = userInits1
 
-      override def invokeBlock[A](request: Request[A], block: (MRecoverPwReq[A]) => Future[Result]): Future[Result] = {
+      override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)
-        lazy val logPrefix = s"CanRecoverPw($eActId)#${user.personIdOpt.orNull}:"
+        lazy val logPrefix = s"${qs.email}#${user.personIdOpt.orNull}:"
 
-        val eaOptFut = emailActivations.getById(eActId)
-
-        def runF(eAct: EmailActivation, epw: EmailPwIdent): Future[Result] = {
-          val req1 = MRecoverPwReq(epw, eAct, request, user)
+        def runF(mnode: MNode): Future[Result] = {
+          val req1 = MNodeReq(mnode, request, user)
           block(req1)
         }
 
         def _reqErr = MReq(request, user)
 
-        eaOptFut.flatMap {
+        val nowSec = MEmailRecoverQs.getNowSec()
+        val qsAgeSec = nowSec - qs.nowSec
 
-          // Юзер обращается по корректной активационной записи.
-          case Some(eAct) =>
-            val epwIdentFut = emailPwIdents.getById(eAct.email)
-            maybeInitUser(user)
-
-            epwIdentFut.flatMap {
-              case Some(epw) if epw.personId == eAct.key =>
-                // Можно отрендерить блок
-                LOGGER.debug(s"$logPrefix ok, epw id = ${epw.idOrNull}")
-                runF(eAct, epw)
-
-              // should never occur: Почему-то нет парольной записи для активатора.
-              // Такое возможно, если юзер взял ключ инвайта в маркет и вставил его в качестве ключа восстановления пароля.
-              case None =>
-                LOGGER.error(s"$logPrefix eAct exists, but emailPw is NOT! Hacker? eAct = $eAct")
-                keyNotFoundF( _reqErr )
-            }
-
-
-          // Суперюзер (верстальщик например) должен иметь доступ без шаманства.
-          case result if user.isSuper =>
-            val personId = user.personIdOpt.get
-            LOGGER.trace(s"$logPrefix Superuser mocking activation...")
-            val epwOptFut = emailPwIdents.findByPersonId(personId)
-
-            maybeInitUser(user)
-
-            val epwFut = epwOptFut
-              .map(_.head)
-              .recover {
-                // should never occur
-                case ex: NoSuchElementException =>
-                  LOGGER.warn(s"$logPrefix Oops, superuser access for unknown epw! $personId Mocking...", ex)
-                  EmailPwIdent("mock@suggest.io", personId = personId, pwHash = "", isVerified = true)
+        if (qsAgeSec > 0L && qsAgeSec <= 6.hours.toSeconds && qs.nodeId.isEmpty) {
+          val searchPersonsFut = mNodes.dynSearch {
+            new MNodeSearchDfltImpl {
+              override val nodeTypes = MNodeTypes.Person :: Nil
+              override val outEdges: Seq[Criteria] = {
+                val cr = Criteria(
+                  predicates  = MPredicates.Ident.Email :: Nil,
+                  nodeIds     = qs.email :: Nil,
+                )
+                cr :: Nil
               }
-            val ea = result.getOrElse {
-              LOGGER.debug(s"$logPrefix Superuser requested form with invalid/inexisting activation: $result")
-              EmailActivation("mocked@suggest.io", key = "keykeykeykeykey", id = Some("idididididididid"))
+              // Макс. 2 юзера, чтобы определить неопределённую ситуацию.
+              override def limit = 2
             }
+          }
+          maybeInitUser( user )
 
-            for {
-              epw  <- epwFut
-              resp <- runF(ea, epw)
-            } yield {
-              resp.flashing("error" -> "Using mocked activation.")
+          searchPersonsFut.flatMap { mNodesFound =>
+            if (mNodesFound.isEmpty) {
+              // Нет найденных юзеров, почему-то.
+              if (request.method ==* HttpVerbs.GET && user.isSuper) {
+                // Это суперюзер рендерит шаблон письма. Mock'нуть узел:
+                LOGGER.info(s"Mocked node for action ${request.uri}")
+                val mockedMnode = MNode(
+                  common = MNodeCommon(
+                    ntype = MNodeTypes.Person,
+                    isDependent = false
+                  ),
+                  edges = MNodeEdges(
+                    out = MNodeEdges.edgesToMap(
+                      MEdge(
+                        predicate = MPredicates.Ident.Email,
+                        nodeIds   = Set( qs.email )
+                      )
+                    )
+                  ),
+                  // Защита от ошибочного сохранения узла в СУБД:
+                  versionOpt = Some(-1L),
+                  id = Some("")
+                )
+                runF( mockedMnode )
+
+              } else {
+                LOGGER.warn(s"$logPrefix No users found for email=${qs.email}, but password recovery via email requested.")
+                keyNotFoundF( _reqErr )
+              }
+
+            } else if (mNodesFound.lengthCompare(1) > 0) {
+              // Почему-то найдено сразу два (или более) юзера. Это ненормальная ситуация, её быть не должно.
+              throw new IllegalStateException(s"$logPrefix Too many users found: ${mNodesFound.iterator.flatMap(_.id).mkString(", ")}")
+
+            } else {
+              // Есть юзер, подходящий под описанный запрос.
+              val personNode = mNodesFound.head
+              LOGGER.trace(s"$logPrefix Password recovery action for user#${personNode.idOrNull}")
+              runF(personNode)
             }
+          }
 
-
-          // Остальные случаи -- мимо кассы
-          case other =>
-            user.personIdOpt.fold {
-              // Юзер неизвестен и ключ неизвестен. Возможно, перебор ключей какой-то?
-              LOGGER.warn(s"$logPrefix Unknown eAct key: $other")
-              keyNotFoundF( _reqErr )
-            } { personId =>
-              // Вероятно, юзер повторно перешел по ссылке из письма.
-              identUtil.redirectUserSomewhere(personId)
-            }
-
+        } else {
+          val req1 = _reqErr
+          LOGGER.warn(s"$logPrefix [SEC] Recover max-age invalid: diffSec=$qsAgeSec, user#${user.personIdOpt.orNull} remote=${req1.remoteClientAddress}")
+          keyNotFoundF( req1 )
         }
       }
 

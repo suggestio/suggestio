@@ -240,21 +240,24 @@ object OutEdges extends MacroLogsImpl {
         }
 
         // Отработать фильтрацию по внешним сервисам:
-        if (oe.extService.nonEmpty) {
+        for ( extServices <- oe.extService ) {
           val fn = MNodeFields.Edges.E_OUT_INFO_EXT_SERVICE_FN
-          val extServicesIds = oe.extService.iterator.map(_.value).toSeq
-          val extServicesQb = QueryBuilders.termsQuery(fn, extServicesIds: _*)
+          val qb9 = if (oe.extService.nonEmpty) {
+            val extServicesIds = extServices.iterator.map(_.value).toSeq
+            QueryBuilders.termsQuery(fn, extServicesIds: _*)
+          } else {
+            QueryBuilders.existsQuery(fn)
+          }
           if (withQname)
-            extServicesQb.queryName( s"f-ext-services" )
-          val fq =_qOpt.fold [QueryBuilder] {
-            extServicesQb
-          } { qOpt0 =>
+            qb9.queryName( s"f-ext-services[${extServices.length}]" )
+          val fq =_qOpt.fold [QueryBuilder](qb9) { qOpt0 =>
             QueryBuilders.boolQuery()
               .must( qOpt0 )
-              .filter( extServicesQb )
+              .filter( qb9 )
           }
           _qOpt = Some(fq)
         }
+
 
         if (_qOpt.isEmpty)
           LOGGER.warn("edge.NestedSearch: suppressed empty bool query for " + oe)

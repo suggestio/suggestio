@@ -2,16 +2,18 @@ package controllers.ident
 
 import controllers.SioController
 import models.req.IReq
-import models.usr.{EmailPwIdent, IEmailPwIdentsDi, IMPersonIdents, MPersonIdentModel}
 import play.api.data._
 import play.api.data.Forms._
 import util.acl._
 import util._
 import play.api.mvc._
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import FormUtil.{passwordM, passwordWithConfirmM}
 import io.suggest.es.model.EsModelDi
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
+import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.sec.util.IScryptUtilDi
 import io.suggest.util.logs.IMacroLogs
 import util.ident.IIdentUtil
@@ -64,16 +66,13 @@ trait ChangePwAction
   extends SioController
   with IMacroLogs
   with IIdentUtil
-  with IMPersonIdents
-  with IEmailPwIdentsDi
   with IScryptUtilDi
   with EsModelDi
+  with IMNodes
 {
 
   import mCommonDi._
   import esModel.api._
-  val mPersonIdentModel: MPersonIdentModel
-  import mPersonIdentModel.api._
 
   /** Если неясно куда надо редиректить юзера, то что делать? */
   def changePwOkRdrDflt(implicit request: IReq[AnyContent]): Future[Call] = {
@@ -92,62 +91,58 @@ trait ChangePwAction
         onError(formWithErrors)
       },
       {case (oldPw, newPw) =>
-        // Нужно проверить старый пароль, если юзер есть в базе.
-        val savedIds: Future[Seq[String]] = emailPwIdents.findByPersonId(personId).flatMap { epws =>
-          if (epws.isEmpty) {
-            // Юзер меняет пароль, но залогинен через внешние сервисы. Нужно вычислить email и создать EmailPwIdent.
-            mPersonIdents.findEmails(personId) flatMap { emails =>
-              if (emails.isEmpty) {
-                LOGGER.warn("Unknown user session: " + personId)
-                Future.successful( Seq.empty[String] )
-              } else {
-                Future.traverse(emails) { email =>
-                  val epw = EmailPwIdent(
-                    email       = email,
-                    personId    = personId,
-                    pwHash      = scryptUtil.mkHash(newPw),
-                    isVerified  = true
-                  )
-                  val fut = emailPwIdents.save(epw)
-                  for (epwId <- fut) {
-                    LOGGER.info(s"${logPrefix}Created new epw-ident $epwId for non-pw email $email")
-                  }
-                  fut
-                }
-              }
-            }
+        // 2018-02-27 Менять пароль может только юзер, уже имеющий логин. Остальные - идут на госуслуги.
+        val resOkFut = for {
+          personNode0 <- request.user.personNodeFut
 
-          } else {
-            // Юзер меняет пароль, но у него уже есть EmailPw-логины на s.io.
-            val result = epws
-              .find { pwIdent =>
-                scryptUtil.checkHash(oldPw, hash = pwIdent.pwHash)
-              }
-              .map { epw =>
-                epw.copy(
-                  pwHash = scryptUtil.mkHash(newPw)
-                )
-              }
-            result match {
-              case Some(epw) =>
-                for (epwId <- emailPwIdents.save(epw)) yield {
-                  List(epwId)
-                }
-              case None =>
-                LOGGER.warn(logPrefix + "No idents with email found for user " + personId)
-                Future.successful( List.empty[String] )
+          p = MPredicates.Ident
+
+          epwPreds = p.Email :: p.Password :: Nil
+
+          identEdges = personNode0.edges.withPredicateIter( epwPreds: _* )
+            .toList
+
+          // Проверить наличие email-идента для логина, и парольного идента для сверки пароля.
+          if identEdges.exists(_.predicate ==* p.Email) &&
+             identEdges.exists { e =>
+               (e.predicate ==* p.Password) &&
+               e.info.textNi.exists( scryptUtil.checkHash(oldPw, _) )
+             }
+
+          // Сохранить новый пароль в эдж:
+          identEdges2 = for (e <- identEdges) yield {
+            if (e.predicate ==* p.Password) {
+              MEdge.info
+                .composeLens( MEdgeInfo.textNi )
+                .set( Some(scryptUtil.mkHash(newPw)) )(e)
+            } else {
+              e
             }
           }
+
+          // Залить обновлённые эджи в узел юзера:
+          _ <- mNodes.tryUpdate(personNode0) { mnode0 =>
+            MNode.edges.modify { edges0 =>
+              MNodeEdges.out.set(
+                MNodeEdges.edgesToMap1(
+                  edges0
+                    .withoutPredicateIter( epwPreds: _* )
+                    .++( identEdges2 )
+                )
+              )(edges0)
+            }(mnode0)
+          }
+
+          rdr <- RdrBackOrFut(r)(changePwOkRdrDflt)
+
+        } yield {
+          rdr.flashing(FLASH.SUCCESS -> "New.password.saved")
         }
 
-        savedIds flatMap {
-          case nil if nil.isEmpty =>
-            val formWithErrors = changePasswordFormM.withGlobalError("error.password.invalid")
-            onError(formWithErrors)
-
-          case ids =>
-            RdrBackOrFut(r)(changePwOkRdrDflt)
-              .map { _.flashing(FLASH.SUCCESS -> "New.password.saved") }
+        resOkFut.recoverWith { case ex: Throwable =>
+          LOGGER.warn(s"$logPrefix Failed to update password for user#${request.user.personIdOpt.orNull}", ex)
+          val formWithErrors = changePasswordFormM.withGlobalError("error.password.invalid")
+          onError(formWithErrors)
         }
       }
     )

@@ -83,17 +83,4 @@ object IdentityProvider extends LazyLoggerImpl {
     throw new RuntimeException(msg)
   }
 }
-/**
- * This traits enables providers to be used by the LoginApi controller.
- *
- * @see LoginApi
- */
-trait ApiSupport {
-  /**
-   * Authenticates a user
-   * @param request
-   * @return
-   */
-  def authenticateForApi(implicit request: Request[AnyContent]): Future[AuthenticationResult]
-}
 

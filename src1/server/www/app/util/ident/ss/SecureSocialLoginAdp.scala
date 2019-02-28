@@ -19,6 +19,7 @@ import securesocial.core._
 import securesocial.core.services.{CacheService, HttpService, RoutesService}
 import util.ident.{IExtLoginAdp, IdentUtil}
 import securesocial.controllers.{ProviderControllerHelper => SsHelper}
+import japgolly.univeq._
 
 import scala.collection.immutable.ListMap
 import scala.concurrent.duration._
@@ -113,8 +114,12 @@ class SsRoutesService @Inject() (ctxUtil: ContextUtil) extends RoutesService {
 
   override def authenticationUrl(providerId: String, redirectTo: Option[String])
                                 (implicit req: RequestHeader): String = {
-    val prov = ILoginProvider.maybeWithName(providerId).get
-    val relUrl = routes.Ident.idViaProvider(prov, redirectTo)
+    val svc = ILoginProvider
+      .valuesIter
+      .find { _._2.ssProvName ==* providerId }
+      .map(_._1)
+      .get
+    val relUrl = routes.Ident.idViaProvider(svc, redirectTo)
     absoluteUrl( relUrl )
   }
 

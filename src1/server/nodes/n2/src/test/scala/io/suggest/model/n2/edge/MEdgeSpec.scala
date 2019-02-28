@@ -29,7 +29,7 @@ class MEdgeSpec extends FlatSpec with PlayJsonTestUtil {
         nodeIds   = Set("avf90fk43a90fk34af34f"),
         order     = Some(5),
         info      = MEdgeInfo(
-          commentNi = Some("ASDASDASD")
+          textNi = Some("ASDASDASD")
         )
       )
     }

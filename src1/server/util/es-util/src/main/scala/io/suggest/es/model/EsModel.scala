@@ -1905,6 +1905,11 @@ final class EsModel @Inject()(
       def dynSearchRt(dsa: A): Future[Seq[T1]] =
         search(dsa)( SeqRtMapper )
 
+      /** API забронировано для exists-запроса в будущем. */
+      def dynExists(dsa: A): Future[Boolean] =
+        dynCount(dsa)
+          .map(_ > 0L)
+
     }
 
   }

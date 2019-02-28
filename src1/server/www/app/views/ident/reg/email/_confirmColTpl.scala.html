@@ -1,4 +1,4 @@
-@(ea: usr.EmailActivation, s2f: EmailPwConfirmForm_t)(implicit ctx: Context)
+@(qs: usr.MEmailRecoverQs, s2f: EmailPwConfirmForm_t)(implicit ctx: Context)
 
 @* Колонка с формой завершения регистрации по email и паролю. *@
 
@@ -10,10 +10,10 @@
 
   @* Рисуем email пользователя как-то. *@
   <label class="auth-page_input ">
-    <input type="text" disabled="true" value="@ea.email" />
+    <input type="text" disabled="true" value="@qs.email" />
   </label>
 
   @* Рисуем форму завершения реги. *@
-  @_step2FormTpl(ea, s2f)
+  @_step2FormTpl(qs, s2f)
 
 </div>

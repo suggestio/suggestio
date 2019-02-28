@@ -1,15 +1,19 @@
 package controllers.ident
 
 import controllers._
-import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModelDi
+import io.suggest.i18n.MsgCodes
 import io.suggest.init.routed.MJsInitTargets
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
+import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.sec.m.msession.Keys
 import io.suggest.sec.util.IScryptUtilDi
 import io.suggest.util.logs.IMacroLogs
 import models.mctx.Context
-import models.req.{IRecoverPwReq, IReq}
+import models.req.IReq
 import models.usr._
 import play.api.data._
 import play.api.mvc.Result
@@ -20,6 +24,7 @@ import util.xplay.SetLangCookieUtil
 import views.html.helper.CSRF
 import views.html.ident.mySioStartTpl
 import views.html.ident.recover._
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import models._
@@ -39,10 +44,8 @@ trait SendPwRecoverEmail
   extends SioController
   with IMailerWrapperDi
   with IMacroLogs
-  with IMPersonIdents
-  with IEmailPwIdentsDi
-  with IEmailActivationsDi
   with IBruteForceProtect
+  with IMNodes
   with EsModelDi
 {
 
@@ -60,48 +63,34 @@ trait SendPwRecoverEmail
 
     val fut = for {
       // Надо найти юзера в базах PersonIdent, и если есть, то отправить письмецо.
-      idents <- mPersonIdents.findIdentsByEmail(email1)
-      if idents.nonEmpty
-
-      epwIdent <- {
-        val epwOpt0 = idents
-          .foldLeft[List[EmailPwIdent]](Nil) {
-            case (acc, epw: EmailPwIdent) => epw :: acc
-            case (acc, _) => acc
+      hasIdentNodes <- mNodes.dynExists {
+        new MNodeSearchDfltImpl {
+          override val nodeTypes = MNodeTypes.Person :: Nil
+          override val outEdges: Seq[Criteria] = {
+            val cr = Criteria(
+              predicates = MPredicates.Ident.Email :: Nil,
+              nodeIds    = email1 :: Nil
+            )
+            cr :: Nil
           }
-          .headOption
-
-        FutureUtil.opt2future(epwOpt0) {
-          val personId = idents.map(_.personId).head
-          LOGGER.info(s"$logPrefix No ident exists, initializing new one for person[$personId]")
-          val epw = EmailPwIdent(
-            email       = email1,
-            personId    = personId,
-            pwHash      = "",
-            isVerified  = false
-          )
-          for (_ <- emailPwIdents.save(epw)) yield {
-            epw
-          }
+          // Наврядли будет больше одного ответа. (Не должно бы быть, по логике).
+          override def limit = 10
         }
       }
 
-      eact = EmailActivation(email = email1, key = epwIdent.personId)
-      eaId <- emailActivations.save(eact)
+      if hasIdentNodes
 
     } yield {
 
-      val eact2 = eact.copy(
-        id = Some(eaId)
-      )
       // Можно отправлять письмецо на ящик.
       val msg = mailer.instance
       msg.setRecipients(email1)
       val ctx = implicitly[Context]
-      msg.setSubject("Suggest.io | " + ctx.messages("Password.recovery"))
+      msg.setSubject( ctx.messages("Password.recovery") + " | " + MsgCodes.`Suggest.io` )
+      val qs = MEmailRecoverQs( email1 )
       msg.setHtml {
         htmlCompressUtil.html4email {
-          emailPwRecoverTpl(eact2)(ctx)
+          emailPwRecoverTpl(qs)(ctx)
         }
       }
       msg.send()
@@ -130,7 +119,6 @@ trait PwRecover
   with IIdentUtil
   with IMaybeAuth
   with EmailPwRegUtil
-  with IEmailPwIdentsDi
   with IScryptUtilDi
   with EsModelDi
 {
@@ -212,54 +200,90 @@ trait PwRecover
   /** Форма сброса пароля. */
   private def pwResetFormM: PwResetForm_t = Form(passwordWithConfirmM)
 
-  protected def _pwReset(form: PwResetForm_t)(implicit request: IRecoverPwReq[_]): Html = {
+  protected def _pwReset(form: PwResetForm_t, qs: MEmailRecoverQs)(implicit request: IReq[_]): Html = {
     val ctx = implicitly[Context]
-    val colHtml = _pwResetColTpl(form, request.eact)(ctx)
+    val colHtml = _pwResetColTpl(form, qs)(ctx)
     _outer(colHtml)(ctx)
   }
 
 
   /** Юзер перешел по ссылке восстановления пароля из письма. Ему нужна форма ввода нового пароля. */
-  def recoverPwReturn(eActId: String) = csrf.AddToken {
-    canRecoverPw(eActId)(_recoverKeyNotFound) { implicit request =>
-      Ok(_pwReset(pwResetFormM))
+  def recoverPwReturn(qs: MEmailRecoverQs) = csrf.AddToken {
+    canRecoverPw(qs)(_recoverKeyNotFound) { implicit request =>
+      Ok(_pwReset(pwResetFormM, qs))
     }
   }
 
 
   /** Юзер сабмиттит форму с новым паролем. Нужно его залогинить, сохранить новый пароль в базу,
     * удалить запись из EmailActivation и отредиректить куда-нибудь. */
-  def pwResetSubmit(eActId: String) = csrf.Check {
+  def pwResetSubmit(qs: MEmailRecoverQs) = csrf.Check {
     bruteForceProtect {
-      canRecoverPw(eActId, U.PersonNode)(_recoverKeyNotFound).async { implicit request =>
+      canRecoverPw(qs, U.PersonNode)(_recoverKeyNotFound).async { implicit request =>
         pwResetFormM.bindFromRequest().fold(
           {formWithErrors =>
-            LOGGER.debug(s"pwResetSubmit($eActId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-            NotAcceptable(_pwReset(formWithErrors))
+            LOGGER.debug(s"pwResetSubmit(${qs.email}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+            NotAcceptable(_pwReset(formWithErrors, qs))
           },
           {newPw =>
             val pwHash2 = scryptUtil.mkHash(newPw)
-            val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
+
+            val updatedNodeFut = mNodes.tryUpdate( request.mnode ) { mnode0 =>
+              MNode.edges
+                .composeLens( MNodeEdges.out )
+                .modify { edges0 =>
+                  val edges1 = edges0
+                    .iterator
+                    .flatMap { e0 =>
+                      if (
+                        (e0.predicate ==* MPredicates.Ident.Email) &&
+                          (e0.nodeIds contains qs.email) &&
+                          !e0.info.flag.contains(true)
+                      ) {
+                        // Надо выставить флаг, что почта выверена:
+                        val e2 = MEdge.info
+                          .composeLens( MEdgeInfo.flag )
+                          .set( Some(true) )( e0 )
+                        e2 :: Nil
+                      } else if (e0.predicate ==* MPredicates.Ident.Password) {
+                        Nil
+                      } else {
+                        e0 :: Nil
+                      }
+                    }
+                    .toStream
+
+                  // Добавить парольный эдж:
+                  val pwEdge = MEdge(
+                    predicate = MPredicates.Ident.Password,
+                    info = MEdgeInfo(
+                      textNi = Some(pwHash2)
+                    )
+                  )
+                  val edges2 = pwEdge #:: edges1
+
+                  MNodeEdges.edgesToMap1( edges2 )
+
+                }( mnode0 )
+            }
+
             for {
               // Сохранение новых данных по паролю
-              _         <- emailPwIdents.save(epw2)
+              _         <- updatedNodeFut
 
-              // Запуск удаления eact
-              updateFut = emailActivations.deleteById(eActId)
+              personId = request.mnode.id.get
 
               // Подготовить редирект
-              rdr       <- identUtil.redirectUserSomewhere(epw2.personId)
+              rdr       <- identUtil.redirectUserSomewhere( personId )
 
               // Генерить ответ как только появляется возможность.
               res1      <- {
                 val res0 = rdr
-                  .addingToSession(Keys.PersonId.value -> epw2.personId)
+                  .addingToSession(Keys.PersonId.value -> personId)
                   .flashing(FLASH.SUCCESS -> "New.password.saved")
                 setLangCookie2(res0, request.user.personNodeOptFut)
               }
 
-              // Дожидаться успешного завершения асинхронных операций
-              _         <- updateFut
             } yield {
               res1
             }

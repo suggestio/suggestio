@@ -4,6 +4,8 @@ import controllers.{SioController, routes}
 import io.suggest.auth.{AuthenticationException, AuthenticationResult}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModelDi
+import io.suggest.ext.svc.MExtService
+import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
@@ -11,7 +13,6 @@ import io.suggest.sec.m.msession.{CustomTtl, Keys}
 import io.suggest.util.logs.IMacroLogs
 import models.ExtRegConfirmForm_t
 import models.mctx.p4j.{P4jWebContext, P4jWebContextFactory}
-import models.mext.ILoginProvider
 import models.req.IReq
 import models.usr._
 import org.pac4j.core.engine.DefaultCallbackLogic
@@ -43,15 +44,16 @@ trait ExternalLogin
   with INodesUtil
   with IMNodes
   with IMaybeAuth
-  with IMExtIdentsDi
   with EsModelDi
   with IIdentUtil
 {
 
+  val mPersonIdentModel: MPersonIdentModel
+  val canConfirmIdpReg: CanConfirmIdpReg
+
   import mCommonDi._
   import esModel.api._
-
-  val canConfirmIdpReg: CanConfirmIdpReg
+  import mPersonIdentModel.api._
 
   /** Доступ к DI-инстансу */
   val secureSocialLogin = current.injector.instanceOf[SecureSocialLoginAdp]
@@ -59,26 +61,24 @@ trait ExternalLogin
 
   /**
    * GET-запрос идентификации через внешнего провайдера.
-   * @param provider провайдер идентификации.
    * @param r Обратный редирект.
    * @return Redirect.
    */
-  def idViaProvider(provider: ILoginProvider, r: Option[String]) = handleAuth1(provider, r)
+  def idViaProvider(extService: MExtService, r: Option[String]) = handleAuth1(extService, r)
 
   /**
    * POST-запрос идентификации через внешнего провайдера.
-   * @param provider Провайдер идентификации.
    * @param r Редирект обратно.
    * @return Redirect.
    */
-  def idViaProviderByPost(provider: ILoginProvider, r: Option[String]) = handleAuth1(provider, r)
+  def idViaProviderByPost(extService: MExtService, r: Option[String]) = handleAuth1(extService, r)
 
   // Код handleAuth() спасён из умирающего securesocial c целью отпиливания от грёбаных authentificator'ов,
   // которые по сути являются переусложнёнными stateful(!)-сессиями, которые придумал какой-то нехороший человек.
   // TODO Сделать MExtService в аргументах вместо провайдера. Вычистить код логин-провайдера от qsb/pb-мусора.
-  protected def handleAuth1(provider: ILoginProvider, redirectTo: Option[String]) = canLoginVia(???).async { implicit request =>
-    lazy val logPrefix = s"handleAuth1($provider):"
-    request.apiAdp.authenticate(???).flatMap {
+  protected def handleAuth1(extService: MExtService, redirectTo: Option[String]) = canLoginVia(extService).async { implicit request =>
+    lazy val logPrefix = s"handleAuth1($extService):"
+    request.apiAdp.authenticate(extService).flatMap {
       case _: AuthenticationResult.AccessDenied =>
         Redirect( routes.Ident.mySioStartPage() )
           .flashing(FLASH.ERROR -> "login.accessDenied")
@@ -97,10 +97,16 @@ trait ExternalLogin
       case authenticated: AuthenticationResult.Authenticated =>
         // TODO Отрабатывать случаи, когда юзер уже залогинен под другим person_id.
         val profile = authenticated.profile
-        mExtIdents.getByUserIdProv(provider, profile.userId).flatMap { maybeExisting =>
-          // Сохраняем, если требуется. В результате приходит также новосохранный person MNode.
-          val saveFut: Future[(MExtIdent, Option[MNode])] = maybeExisting match {
-            case None =>
+
+        for {
+          // Поиск уже известного юзера:
+          knownUserOpt <- mNodes.getByUserIdProv( extService, profile.userId )
+
+          // Обработка результата поиска существующего юзера.
+          mperson2 <- {
+            knownUserOpt.fold {
+              // Юзер отсутствует. Создать нового юзера:
+              // TODO Для сохранения перс.данных показать вопрос.
               val mperson0 = MNode(
                 common = MNodeCommon(
                   ntype       = MNodeTypes.Person,
@@ -116,82 +122,87 @@ trait ExternalLogin
                     nameFirst   = profile.firstName,
                     nameLast    = profile.lastName,
                     extAvaUrls  = profile.avatarUrl.toList,
-                    emails      = profile.email.toList
+                    emails      = profile.emails.toList
                   )
                   // Ссылку на страничку юзера в соц.сети можно генерить на ходу через ident'ы и костыли самописные.
+                ),
+                edges = MNodeEdges(
+                  out = {
+                    val extIdentEdge = MEdge(
+                      predicate = MPredicates.Ident.Id,
+                      nodeIds   = Set( profile.userId ),
+                      info      = MEdgeInfo(
+                        extService = Some( extService )
+                      )
+                    )
+                    var identEdgesAcc: List[MEdge] = extIdentEdge :: Nil
+
+                    def _maybeAddTrustedIdents(pred: MPredicate, keys: Iterable[String]) = {
+                      if (keys.nonEmpty) {
+                        identEdgesAcc ::= MEdge(
+                          predicate = pred,
+                          nodeIds   = keys.toSet,
+                          info = MEdgeInfo(
+                            flag = Some(true)
+                          )
+                        )
+                      }
+                    }
+
+                    _maybeAddTrustedIdents( MPredicates.Ident.Email, profile.emails )
+                    _maybeAddTrustedIdents( MPredicates.Ident.Phone, profile.phones )
+
+                    MNodeEdges.edgesToMap1( identEdgesAcc )
+                  }
                 )
               )
-              val mpersonSaveFut = mNodes.save(mperson0)
-              val meiFut = for {
-                personId <- mpersonSaveFut
-                mei = MExtIdent(
-                  personId  = personId,
-                  provider  = provider,
-                  userId    = profile.userId,
-                  email     = profile.email
-                )
-                save2Fut = mExtIdents.save(mei)
-                _ <- {
-                  LOGGER.debug(s"$logPrefix Registered new user $personId from ext.login service, remote user_id = ${profile.userId}")
-                  save2Fut
-                }
-              } yield mei
-
               for {
-                personId  <- mpersonSaveFut
-                mperson = mperson0.copy(id = Some(personId))
-                mei       <- meiFut
+                personId <- mNodes.save(mperson0)
               } yield {
-                (mei, Some(mperson))
+                LOGGER.debug(s"$logPrefix Registered new user#${personId} via service#${extService}:\n $profile")
+                MNode.id.set( Some(personId) )(mperson0)
               }
 
-            // Регистрация юзера не требуется. Возвращаем то, что есть в наличии.
-            case Some(ident) =>
-              LOGGER.trace(s"$logPrefix Existing user[${ident.personId}] logged-in from ${profile.userId}")
-              Future.successful( ident -> None )
+            } { knownPerson0 =>
+              // Юзер с таким id уже найден.
+              // TODO Дополнить ident'ы какой-либо новой инфой, подчистив старую (новая почта, новый номер телефона)?
+              // Например, если изменился телефон/email, то старый ident за-false-ить или удалить, новый - добавить, если есть.
+              Future.successful( knownPerson0 )
+            }
           }
 
-          // После сохранения - приступать к сборке ответа.
-          for {
-            (ident, newMpersonOpt) <- saveFut
+          personId = mperson2.id.get
 
-            mpersonOptFut = FutureUtil.opt2futureOpt( newMpersonOpt ) {
-              mNodes
-                .getByIdCache(ident.personId)
-                .withNodeType(MNodeTypes.Person)
-            }
-
-            rdrFut: Future[Result] = if ( newMpersonOpt.isDefined ) {
-              Redirect(routes.Ident.idpConfirm())
-            } else {
-              val rdrUrlFut = toUrl2(request.session, ident.personId)
-              for (url <- rdrUrlFut) yield
-                Redirect(url)
-            }
-
-            // Сборка новой сессии: чистка исходника, добавление новых ключей, относящихся к идентификации.
-            session1 = {
-              val addToSession0 = (Keys.PersonId.value -> ident.personId) :: Nil
-              (for {
-                oa2Info   <- authenticated.profile.oAuth2Info
-                expiresIn <- oa2Info.expiresIn
-                if expiresIn <= request.apiAdp.MAX_SESSION_TTL_SECONDS
-              } yield {
-                CustomTtl(expiresIn.toLong)
-                  .addToSessionAcc(addToSession0)
-              })
-                .getOrElse( addToSession0 )
-                .foldLeft( request.apiAdp.clearSession(request.session))(_ + _)
-            }
-
-            // Выставить в сессию юзера и локаль:
-            rdr <- rdrFut
-            rdr2 = rdr.withSession(session1)
-            mpersonOpt <- mpersonOptFut
-            langOpt = getLangFrom( mpersonOpt )
-          } yield {
-            setLangCookie( rdr2, langOpt )
+          // TODO Нужно редиректить юзера на подтверждение сохранения перс.данных, и только после этого сохранять.
+          rdrFut: Future[Result] = if ( knownUserOpt.isDefined ) {
+            Redirect(routes.Ident.idpConfirm())
+          } else {
+            val rdrUrlFut = toUrl2(request.session, personId)
+            for (url <- rdrUrlFut) yield
+              Redirect(url)
           }
+
+          // Сборка новой сессии: чистка исходника, добавление новых ключей, относящихся к идентификации.
+          session1 = {
+            val addToSession0 = (Keys.PersonId.value -> personId) :: Nil
+            (for {
+              oa2Info   <- authenticated.profile.oAuth2Info
+              expiresIn <- oa2Info.expiresIn
+              if expiresIn <= request.apiAdp.MAX_SESSION_TTL_SECONDS
+            } yield {
+              CustomTtl(expiresIn.toLong)
+                .addToSessionAcc(addToSession0)
+            })
+              .getOrElse( addToSession0 )
+              .foldLeft( request.apiAdp.clearSession(request.session))(_ + _)
+          }
+
+          // Выставить в сессию юзера и локаль:
+          rdr <- rdrFut
+          rdr2 = rdr.withSession(session1)
+          langOpt = getLangFrom( Some(mperson2) )
+        } yield {
+          setLangCookie( rdr2, langOpt )
         }
 
     }.recover {

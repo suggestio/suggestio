@@ -1,13 +1,12 @@
 package controllers
 
+import io.suggest.model.n2.edge.MPredicates
 import javax.inject.Inject
-
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mhelp.MLkSupportRequest
 import models.mproj.ICommonDi
 import models.req.{INodeReq, IReq, IReqHdr}
-import models.usr.MPersonIdents
 import play.api.data.Forms._
 import play.api.data._
 import play.api.mvc.{ActionBuilder, AnyContent, Result}
@@ -27,15 +26,15 @@ import scala.concurrent.Future
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
 class LkHelp @Inject()(
-                                  mailer                          : IMailerWrapper,
-                                  identUtil                       : IdentUtil,
-                                  mPersonIdents                   : MPersonIdents,
-                                  supportUtil                     : SupportUtil,
-                                  bruteForceProtect               : BruteForceProtect,
-                                  isAuth                          : IsAuth,
-                                  isNodeAdmin                     : IsNodeAdmin,
-                                  override val mCommonDi          : ICommonDi
-)
+                        mNodes                          : MNodes,
+                        mailer                          : IMailerWrapper,
+                        identUtil                       : IdentUtil,
+                        supportUtil                     : SupportUtil,
+                        bruteForceProtect               : BruteForceProtect,
+                        isAuth                          : IsAuth,
+                        isNodeAdmin                     : IsNodeAdmin,
+                        override val mCommonDi          : ICommonDi
+                      )
   extends SioControllerImpl
   with MacroLogsImplLazy
 {
@@ -68,7 +67,7 @@ class LkHelp @Inject()(
     * @return 200 Ок и страница с формой.
    */
   def supportFormNode(adnId: String, r: Option[String]) = csrf.AddToken {
-    isNodeAdmin(adnId, U.Lk).async { implicit request =>
+    isNodeAdmin(adnId, U.PersonNode, U.Lk).async { implicit request =>
       val mnodeOpt = Some(request.mnode)
       _supportForm(mnodeOpt, r)
     }
@@ -86,15 +85,21 @@ class LkHelp @Inject()(
     }
   }
 
+  private def getEmails(nodeOptFut: Future[Option[MNode]]): Future[Iterable[String]] = {
+    for {
+      personNodeOpt <- nodeOptFut
+    } yield {
+      personNodeOpt
+        .iterator
+        .flatMap(_.edges.withPredicateIterIds( MPredicates.Ident.Email ))
+        .toSeq
+    }
+  }
+
   private def _supportForm(nodeOpt: Option[MNode], r: Option[String])(implicit request: IReq[_]): Future[Result] = {
     // Взять дефолтовое значение email'а по сессии
-    val emailsDfltFut = request.user
-      .personIdOpt
-      .fold [Future[Seq[String]]] {
-        Future.successful( Nil )
-      } { personId =>
-        mPersonIdents.findEmails(personId)
-      }
+    val emailsDfltFut = getEmails( request.user.personNodeOptFut )
+
     emailsDfltFut.flatMap { emailsDflt =>
       val emailDflt = emailsDflt.headOption.getOrElse("")
       val lsr = MLkSupportRequest(name = None, replyEmail = emailDflt, msg = "")
@@ -141,7 +146,7 @@ class LkHelp @Inject()(
 
       {lsr =>
         val personId = request.user.personIdOpt.get
-        val userEmailsFut = mPersonIdents.findEmails(personId)
+        val userEmailsFut = getEmails( request.user.personNodeOptFut )
         trace(logPrefix + "Processing from ip=" + request.remoteClientAddress)
 
         val msg = mailer.instance

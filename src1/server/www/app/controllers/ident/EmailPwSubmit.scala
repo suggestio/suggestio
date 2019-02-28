@@ -3,6 +3,9 @@ package controllers.ident
 import controllers.SioController
 import io.suggest.es.model.EsModelDi
 import io.suggest.id.IdentConst
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, MNodeTypes}
 import io.suggest.sec.m.msession.{Keys, LongTtl, ShortTtl, Ttl}
 import io.suggest.sec.util.IScryptUtilDi
@@ -27,7 +30,7 @@ import util.ident.IIdentUtil
  * Description: Поддержка сабмита формы логина по email и паролю.
  */
 
-trait EmailPwSubmit
+trait EmailPwLogin
   extends SioController
   with IMacroLogs
   with IBruteForceProtect
@@ -35,7 +38,6 @@ trait EmailPwSubmit
   with IIsAnonAcl
   with IIdentUtil
   with IMNodes
-  with IEmailPwIdentsDi
   with IScryptUtilDi
   with EsModelDi
 {
@@ -65,17 +67,44 @@ trait EmailPwSubmit
   /** Маппинг формы epw-логина с забиванием дефолтовых значений. */
   def emailPwLoginFormStubM(implicit request: RequestHeader): Future[EmailPwLoginForm_t] = {
     // Пытаемся извлечь email из сессии.
+    // Подразумевается, что в истёкшей сессии может быть personId. Не ясно, актуально ли это ещё (конфилкт с SessionExpire?).
     val emailFut: Future[String] = request.session.get(Keys.PersonId.value) match {
       case Some(personId) =>
-        for (epwIdents <- emailPwIdents.findByPersonId(personId)) yield {
-          epwIdents.headOption.fold("")(_.email)
+        for {
+          nodeOpt <- mNodes.dynSearchOne {
+            new MNodeSearchDfltImpl {
+              override val withIds = personId :: Nil
+              override def limit = 1
+              override val nodeTypes = MNodeTypes.Person :: Nil
+              override val outEdges: Seq[Criteria] = {
+                val cr = Criteria(
+                  predicates = MPredicates.Ident.Email :: Nil
+                )
+                cr :: Nil
+              }
+            }
+          }
+        } yield {
+          val emailsIter = for {
+            mnode <- nodeOpt.iterator
+            medge <- mnode.edges.withPredicateIter( MPredicates.Ident.Email )
+            email <- medge.nodeIds
+            if email.nonEmpty
+          } yield {
+            email
+          }
+          emailsIter
+            .buffered
+            .headOption
+            .getOrElse("")
         }
+
       case None =>
         Future.successful("")
     }
     val ttl = Ttl(request.session)
-    emailFut map { email1 =>
-      emailPwLoginFormM fill EpwLoginFormBind(email1, "", ttl)
+    for (email1 <- emailFut) yield {
+      emailPwLoginFormM.fill( EpwLoginFormBind(email1, "", ttl) )
     }
   }
 
@@ -83,8 +112,6 @@ trait EmailPwSubmit
   def emailSubmitOkCall(personId: String)(implicit request: IReq[_]): Future[Call] = {
     identUtil.redirectCallUserSomewhere(personId)
   }
-
-  def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])(implicit request: IReq[_]): Future[Result]
 
   /** Самбит формы логина по email и паролю. */
   def emailPwLoginFormSubmit(r: Option[String]) = csrf.Check {
@@ -97,47 +124,48 @@ trait EmailPwSubmit
             emailSubmitError(formWithErrors, r)
           },
           {binded =>
-            emailPwIdents.getByEmail(binded.email).flatMap { epwOpt =>
-              if (epwOpt.exists(pwIdent => scryptUtil.checkHash(binded.password, pwIdent.pwHash))) {
-                // Логин удался.
-                val personId = epwOpt.get.personId
-                val mpersonOptFut = mNodes
-                  .getByIdCache(personId)
-                  .withNodeType(MNodeTypes.Person)
+            // Унести этот код в API, т.к. поиском юзера по email-паролю так же занимается и другой модуль.
+            mNodes
+              .findUsersByEmailWithPw( binded.email )
+              .flatMap { nodesFound =>
+                lazy val logPrefix = s"epwLoginFormSubmit(${binded.email}):"
 
-                val rdrFut = RdrBackOrFut(r) { emailSubmitOkCall(personId) }
-                var addToSession: List[(String, String)] = List(
-                  Keys.PersonId.value -> personId
-                )
-                // Реализация длинной сессии при наличии флага rememberMe.
-                addToSession = binded.ttl.addToSessionAcc(addToSession)
-                val rdrFut2 = rdrFut.map { rdr =>
-                  rdr.addingToSession(addToSession : _*)
-                }
-                // Выставить язык, сохраненный ранее в MPerson
-                setLangCookie2(rdrFut2, mpersonOptFut)
+                nodesFound
+                  .onlyWithPassword( binded.password )
+                  .headOption
+                  .fold {
+                    LOGGER.debug(s"$logPrefix Password does not match for users##[${nodesFound.iterator.flatMap(_.id).mkString(", ")}]")
+                    val binded1 = binded.copy(password = "")
+                    val lf = formBinded
+                      .fill(binded1)
+                      .withGlobalError("error.unknown.email_pw")
+                    emailSubmitError(lf, r)
+                  } { mnode =>
+                    val personId = mnode.id.get
+                    LOGGER.info(s"$logPrefix Password match ok, user#$personId")
+                    val mpersonOptFut = mNodes
+                      .getByIdCache(personId)
+                      .withNodeType(MNodeTypes.Person)
 
-              } else {
-                val binded1 = binded.copy(password = "")
-                val lf = formBinded
-                  .fill(binded1)
-                  .withGlobalError("error.unknown.email_pw")
-                emailSubmitError(lf, r)
+                    val rdrFut = RdrBackOrFut(r) { emailSubmitOkCall(personId) }
+                    var addToSession: List[(String, String)] = List(
+                      Keys.PersonId.value -> personId
+                    )
+                    // Реализация длинной сессии при наличии флага rememberMe.
+                    addToSession = binded.ttl.addToSessionAcc(addToSession)
+                    val rdrFut2 = rdrFut.map { rdr =>
+                      rdr.addingToSession(addToSession : _*)
+                    }
+                    // Выставить язык, сохраненный ранее в MPerson
+                    setLangCookie2(rdrFut2, mpersonOptFut)
+                  }
               }
-            }
           }
         )
       }
     }
   }
 
-}
-
-
-/** Экшены для Ident-контроллера. */
-trait EmailPwLogin extends EmailPwSubmit {
-
-  import mCommonDi._
 
   /** Рендер страницы с возможностью логина по email и паролю. */
   def emailPwLoginForm(r: Option[String]) = csrf.AddToken {
@@ -162,8 +190,8 @@ trait EmailPwLogin extends EmailPwSubmit {
     Ok( loginTpl(lf, r) )
   }
 
-  override def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])
-                               (implicit request: IReq[_]): Future[Result] = {
+  def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])
+                      (implicit request: IReq[_]): Future[Result] = {
     epwLoginPage(lf, r)
   }
 

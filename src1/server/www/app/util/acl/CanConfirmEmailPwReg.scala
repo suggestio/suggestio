@@ -1,16 +1,23 @@
 package util.acl
 
+import controllers.routes
 import io.suggest.es.model.EsModel
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import javax.inject.Inject
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.req.{IReq, MEmailActivationReq, MReq}
-import models.usr.{EmailActivations, IEaEmailId}
-import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
+import models.req.IReq
+import models.usr.MEmailRecoverQs
+import play.api.mvc._
 import util.ident.IdentUtil
+import japgolly.univeq._
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -18,22 +25,11 @@ import scala.concurrent.Future
  * Created: 28.01.15 19:34
  * Description: ActionBuilder для доступа к экшенам активации email.
  */
-object CanConfirmEmailPwReg {
-
-  /** Значение key для искомого EmailActivation. */
-  def EPW_ACT_KEY = "epwAct"
-
-}
-
-
-import util.acl.CanConfirmEmailPwReg._
-
-
 class CanConfirmEmailPwReg @Inject()(
                                       aclUtil                 : AclUtil,
                                       identUtil               : IdentUtil,
-                                      emailActivations        : EmailActivations,
                                       isAuth                  : IsAuth,
+                                      mNodes                  : MNodes,
                                       reqUtil                 : ReqUtil,
                                       esModel                 : EsModel,
                                       mCommonDi               : ICommonDi
@@ -50,30 +46,55 @@ class CanConfirmEmailPwReg @Inject()(
     * @param eaNotFoundF Что делать, когда нет искомой email activation.
     * @return
     */
-  def apply(eaInfo: IEaEmailId)(eaNotFoundF: IReq[_] => Future[Result]): ActionBuilder[MEmailActivationReq, AnyContent] = {
-    new reqUtil.SioActionBuilderImpl[MEmailActivationReq] {
+  def apply(qs: MEmailRecoverQs)(eaNotFoundF: IReq[_] => Future[Result]): ActionBuilder[IReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[IReq] {
 
-      override def invokeBlock[A](request0: Request[A], block: (MEmailActivationReq[A]) => Future[Result]): Future[Result] = {
-        val eaFut = emailActivations.maybeGetById(eaInfo.id)
+      override def invokeBlock[A](request0: Request[A], block: (IReq[A]) => Future[Result]): Future[Result] = {
+        lazy val logPrefix = s"(${qs.email}):"
 
-        val request = aclUtil.reqFromRequest( request0 )
-        val user = aclUtil.userFromRequest(request)
+        val req1 = aclUtil.reqFromRequest(request0)
 
-        eaFut.flatMap {
-          // Всё срослось.
-          case Some(ea) if ea.email == eaInfo.email && ea.key == EPW_ACT_KEY =>
-            val req1 = MEmailActivationReq(ea, request, user)
-            block(req1)
+        val nowDiff = MEmailRecoverQs.getNowSec() - qs.nowSec
+        if (nowDiff <= 0L || nowDiff > 2.hours.toSeconds || qs.nodeId.nonEmpty) {
+          LOGGER.debug(s"$logPrefix [SEC] Too old. nowDiff=$nowDiff sec, user#${req1.user.personIdOpt.orNull} remote=${req1.remoteClientAddress}")
+          eaNotFoundF( req1 )
 
-          // Активация не подходит. Может юзер повторно проходит по ссылке из письма? Но это не важно, по сути.
-          case None =>
-            LOGGER.debug(s"Client requested activation for $eaInfo , but it doesn't exists. Redirecting...")
-            eaNotFoundF( MReq(request, user) )
+        } else if (req1.user.isAuth) {
+          // Для упрощения - нельзя активировать учётку, будучи уже залогиненным.
+          LOGGER.debug(s"$logPrefix User already logged in, rdr.")
+          val res = Results.Redirect( routes.Ident.rdrUserSomewhere() )
+          Future.successful(res)
 
-          // [xakep] Внезапно, кто-то пытается пропихнуть левую активацию из какого-то другого места.
-          case Some(ea) =>
-            LOGGER.warn(s"Client ip[${request.remoteClientAddress}] User#${user.personIdOpt.orNull} tried to use foreign activation key:\n  eaInfo = $eaInfo\n  ea = $ea")
-            isAuth.onUnauth(request)
+        } else {
+          // Вызываем index refresh() перед поиском, чтобы снизить риск параллельной регистрации. TODO Свести риск к нулю.
+          mNodes
+            .refreshIndex()
+            .flatMap { _ =>
+              // Свежая инфа по паролю, ищем юзера...
+              val msearch = new MNodeSearchDfltImpl {
+                override def limit = 1
+                override val nodeTypes = MNodeTypes.Person :: Nil
+                override val outEdges: Seq[Criteria] = {
+                  val cr = Criteria(
+                    predicates = MPredicates.Ident.Email :: Nil,
+                    nodeIds    = qs.email :: Nil,
+                  )
+                  cr :: Nil
+                }
+              }
+              mNodes.dynSearchIds( msearch )
+            }
+            .flatMap { nodeIds =>
+              if (nodeIds.isEmpty) {
+                LOGGER.trace(s"$logPrefix OK, email ident is free")
+                block(req1)
+              } else {
+                // Уже есть хотя бы один узел с данным мыльником в ident'е.
+                LOGGER.warn(s"$logPrefix One (or more) nodes for email ident already exists: ##[${nodeIds.mkString(", ")}]")
+                eaNotFoundF( req1 )
+              }
+            }
+
         }
       }
 

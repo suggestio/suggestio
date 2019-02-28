@@ -64,12 +64,6 @@ class EmailPwIdents
 }
 
 
-/** Интерфейс для поле с DI-инстансами [[EmailPwIdents]]. */
-trait IEmailPwIdentsDi {
-  def emailPwIdents: EmailPwIdents
-}
-
-
 /**
  * Идентификация по email и паролю.
  *
@@ -85,7 +79,6 @@ final case class EmailPwIdent(
   isVerified: Boolean
 )
   extends MPersonIdent
-    with MPIWithEmail
 {
   override def id: Option[String] = Some(email)
   override def key: String = email

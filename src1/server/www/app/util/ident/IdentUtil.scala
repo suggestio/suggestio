@@ -8,7 +8,7 @@ import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.mproj.ICommonDi
-import models.usr.{MExtIdents, MPersonIdentModel, MSuperUsers}
+import models.usr.MSuperUsers
 import play.api.mvc._
 import japgolly.univeq._
 
@@ -23,16 +23,13 @@ import scala.concurrent.Future
 @Singleton
 class IdentUtil @Inject() (
                             esModel               : EsModel,
-                            mPersonIdentModel     : MPersonIdentModel,
                             mNodes                : MNodes,
                             mSuperUsers           : MSuperUsers,
-                            mExtIdents            : MExtIdents,
                             mCommonDi             : ICommonDi,
                           ) {
 
   import mCommonDi._
   import esModel.api._
-  import mPersonIdentModel.api._
 
   /** При логине юзера по email-pw мы определяем его присутствие в маркете, и редиректим в ЛК магазина или в ЛК ТЦ. */
   def getMarketRdrCallFor(personId: String): Future[Option[Call]] = {
@@ -90,9 +87,21 @@ class IdentUtil @Inject() (
       case None =>
         // TODO Отправить на форму регистрации, если логин через внешнего id прова.
         for {
-          n <- mExtIdents.countByPersonId(personId)
+          n <- mNodes.dynExists {
+            new MNodeSearchDfltImpl {
+              override def limit = 1
+              override val withIds = personId :: Nil
+              override val outEdges: Seq[Criteria] = {
+                val cr = Criteria(
+                  predicates = MPredicates.Ident.Id :: Nil,
+                  extService = Some(Nil),
+                )
+                cr :: Nil
+              }
+            }
+          }
         } yield {
-          if (n > 0L) {
+          if (n) {
             // Есть идентификации через соц.сети. Вероятно, юзер не закончил регистрацию.
             routes.Ident.idpConfirm()
           } else {

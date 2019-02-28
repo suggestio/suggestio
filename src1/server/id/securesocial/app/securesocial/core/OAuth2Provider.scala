@@ -23,7 +23,7 @@ import com.typesafe.config.ConfigObject
 import io.suggest.auth._
 import javax.inject.Inject
 import play.api.Configuration
-import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
+import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.WSResponse
 import play.api.mvc._
 import securesocial.core.services.{CacheService, HttpService, RoutesService}
@@ -65,7 +65,7 @@ object OAuth2Client {
 /**
  * Base class for all OAuth2 providers
  */
-trait OAuth2Provider extends IdentityProvider with ApiSupport with LoggerImpl {
+trait OAuth2Provider extends IdentityProvider with LoggerImpl {
 
   def routesService: RoutesService
   def client: OAuth2Client
@@ -190,34 +190,6 @@ trait OAuth2Provider extends IdentityProvider with ApiSupport with LoggerImpl {
    */
   def malformedJson = Json.obj("error" -> "Malformed json").toString()
 
-  def authenticateForApi(implicit request: Request[AnyContent]): Future[AuthenticationResult] = {
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val maybeCredentials = request.body.asJson flatMap {
-      _.validate[LoginJson] match {
-        case ok: JsSuccess[LoginJson] =>
-          Some(ok.get)
-        case error: JsError =>
-          logger.error(s"[securesocial] error parsing json: $error\n ${request.body}")
-          None
-      }
-    }
-
-    maybeCredentials.map { credentials =>
-      fillProfile(credentials.info).map { profile =>
-        if (profile.email.isDefined && profile.email.get == credentials.email.toLowerCase) {
-          AuthenticationResult.Authenticated(profile)
-        } else {
-          AuthenticationResult.Failed("wrong credentials")
-        }
-      } recover {
-        case e: Throwable =>
-          logger.error(s"[securesocial] error authenticating user via api", e)
-          throw e
-      }
-    } getOrElse {
-      Future.successful(AuthenticationResult.Failed(malformedJson))
-    }
-  }
 }
 
 /**

@@ -1,5 +1,5 @@
 @(b: Boolean)(implicit ctx: Context)
 
-@import io.suggest.i18n.I18nConst
+@import io.suggest.i18n.MsgCodes
 
-@ctx.messages( I18nConst.yesNo(b) )
+@ctx.messages( MsgCodes.yesNo(b) )

@@ -1,4 +1,4 @@
-@(ea: usr.EmailActivation)(implicit ctx: Context)
+@(qs: usr.MEmailRecoverQs)(implicit ctx: Context)
 
 @* Письмо регистрации со ссылкой для активации. *@
 
@@ -11,7 +11,7 @@
   @_rowTpl("padding: 20px 0 10px;") {
     @Html(messages(
       "Follow.this.link.to.complete.epw.reg",
-      s"""<a style="color: #7b89a4;" href="${ctxUtil.LK_URL_PREFIX}${routes.Ident.emailReturn(ea)}">""",
+      s"""<a style="color: #7b89a4;" href="${ctxUtil.LK_URL_PREFIX}${routes.Ident.emailReturn(qs)}">""",
       "</a>"
     ))
   }
@@ -20,7 +20,7 @@
     @messages("If.link.not.open.cp.link.to.browser")
     <br/>
     <span style="color: #7b89a4;">
-      @ctxUtil.LK_URL_PREFIX@routes.Ident.emailReturn(ea)
+      @ctxUtil.LK_URL_PREFIX@routes.Ident.emailReturn(qs)
     </span>
   }
 

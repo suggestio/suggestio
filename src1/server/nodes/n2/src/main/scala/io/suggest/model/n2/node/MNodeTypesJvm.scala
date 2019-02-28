@@ -1,8 +1,11 @@
 package io.suggest.model.n2.node
 
-import io.suggest.common.empty.EmptyUtil
+import io.suggest.common.empty.{EmptyUtil, OptionUtil}
+import io.suggest.common.html.HtmlConstants
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
+import japgolly.univeq._
 
 /**
  * Suggest.io
@@ -20,17 +23,45 @@ object MNodeTypesJvm {
   /** Подборка отображаемого названия узла на основе указанного типа узла. */
   def guessNodeDisplayName(ntype: MNodeType, mnode: MNode): Option[String] = {
     ntype match {
+
       // Для юзера: можно поковыряться в email'ах.
       case MNodeTypes.Person =>
         mnode.meta.person
           .emails.headOption
           .orElse {
             import mnode.meta.person._
-            if (nameFirst.nonEmpty || nameLast.nonEmpty) {
-              val nameFull = nameFirst.fold("")(_ + " ") + nameLast.getOrElse("")
-              Some(nameFull)
-            } else {
-              None
+            OptionUtil.maybe( nameFirst.nonEmpty || nameLast.nonEmpty ) {
+              nameFirst.fold("")(_ + HtmlConstants.SPACE) + nameLast.getOrElse("")
+            }
+          }
+          // Переезд идентов внутрь узлов позволяет использовать иденты вместо имени.
+          .orElse {
+            val I = MPredicates.Ident
+            val iter0 = mnode.edges
+              .withPredicateIter( I.Email, I.Phone, I.Id )
+              .flatMap { medge =>
+                for {
+                  key <- medge.nodeIds
+                  if key.nonEmpty
+                } yield {
+                  (key, medge.predicate, medge.info.extService)
+                }
+              }
+            OptionUtil.maybe( iter0.nonEmpty ) {
+              val (key, pred, extServiceOpt) = iter0.minBy {
+                case (_, pred, _) =>
+                  pred match {
+                    case I.Email => 1
+                    case I.Phone => 2
+                    case I.Id    => 3
+                    case _       => 4
+                  }
+              }
+              extServiceOpt
+                .filter(_ => pred !=* I.Id)
+                .fold(key) { extSvc =>
+                  extSvc.value + HtmlConstants.MINUS + key
+                }
             }
           }
 
@@ -55,12 +86,9 @@ object MNodeTypesJvm {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MNodeType]] = {
         for (strIdEith <- strB.bind(key, params)) yield {
           strIdEith.right.flatMap { strId =>
-            MNodeTypes.withValueOpt(strId)
-              .fold [Either[String, MNodeType]] {
-                Left("node.type.invalid")
-              } { ntype =>
-                Right(ntype)
-              }
+            MNodeTypes
+              .withValueOpt(strId)
+              .toRight( "node.type.invalid" )
           }
         }
       }

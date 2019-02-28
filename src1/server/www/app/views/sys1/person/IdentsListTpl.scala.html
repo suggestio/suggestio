@@ -1,0 +1,30 @@
+@(idents: Seq[(MNode, Seq[io.suggest.model.n2.edge.MEdge])], limit: Int, currOffset: Int)(implicit ctx: Context)
+
+@* Страница со списком внешних идентов.
+   TODO Нужно прикрутить нормальное именование отображаемых пользователей. *@
+
+@import parts._
+@import sys1.stuff.pager._
+
+@sysPersonBase("Иденты") {
+
+  @for( (mnode, nodeIdents) <- idents; nodeId <- mnode.id ) {
+    <br/>
+    <p>
+      <a href="@routes.SysMarket.showAdnNode(nodeId)">
+        @mnode.guessDisplayNameOrIdOrQuestions
+      </a>
+    </p>
+    @_IdentsTpl( nodeIdents )
+  }
+
+  <br/><br/>
+
+  @_simple3pTpl(
+    count  = idents.size,
+    limit  = limit,
+    offset = currOffset,
+    urlF   = routes.SysPerson.allIdents(_)
+  )
+
+}

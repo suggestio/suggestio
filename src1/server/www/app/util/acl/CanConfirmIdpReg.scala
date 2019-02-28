@@ -3,7 +3,7 @@ package util.acl
 import javax.inject.Inject
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
@@ -11,7 +11,6 @@ import io.suggest.es.model.EsModel
 import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.MReq
-import models.usr.{MExtIdents, MPersonIdentModel}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import util.ident.IdentUtil
 
@@ -26,11 +25,9 @@ import scala.concurrent.Future
  */
 class CanConfirmIdpReg @Inject() (
                                    esModel                  : EsModel,
-                                   mPersonIdentModel        : MPersonIdentModel,
                                    aclUtil                  : AclUtil,
                                    identUtil                : IdentUtil,
                                    mNodes                   : MNodes,
-                                   mExtIdents               : MExtIdents,
                                    isAuth                   : IsAuth,
                                    reqUtil                  : ReqUtil,
                                    mCommonDi                : ICommonDi,
@@ -39,7 +36,6 @@ class CanConfirmIdpReg @Inject() (
 {
 
   import mCommonDi._
-  import mPersonIdentModel.api._
   import esModel.api._
 
 
@@ -72,8 +68,20 @@ class CanConfirmIdpReg @Inject() (
           }
           val pcntFut = mNodes.dynCount(msearch)
           // Запустить поиск имеющихся внешних идентов
-          val hasExtIdentFut = mExtIdents.countByPersonId(personId)
-            .map(_ > 0L)
+          val hasExtIdentFut = mNodes.dynExists {
+            new MNodeSearchDfltImpl {
+              override val withIds = personId :: Nil
+              override val nodeTypes = MNodeTypes.Person :: Nil
+              override val outEdges: Seq[Criteria] = {
+                val cr = Criteria(
+                  predicates = MPredicates.Ident.Id :: Nil,
+                  extService = Some(Nil)
+                )
+                cr :: Nil
+              }
+              override def limit = 1
+            }
+          }
           // Дождаться результата поиска узлов.
           pcntFut.flatMap { pcnt =>
             if (pcnt > 0L) {
