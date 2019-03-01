@@ -1,8 +1,9 @@
 package io.suggest.es.model
 
 import io.suggest.util.logs.MacroLogsImplLazy
-import io.suggest.util.{JMXBase, JacksonWrapper}
+import io.suggest.util.{JmxBase, JacksonWrapper}
 import javax.inject.{Inject, Singleton}
+import japgolly.univeq._
 
 import scala.concurrent.ExecutionContext
 
@@ -48,26 +49,33 @@ trait EsModelJMXMBeanCommonI {
   def getAllIds(maxResults: Int): String
   def getAll(maxResults: Int): String
 
+  /** Удаление всех элементов.
+    *
+    * @param sure Уверен?
+    * @return Данные об удалённом.
+    */
+  def truncate(sure: String): String
+
   /** Подсчитать кол-во элементов. */
   def countAll(): String
 }
 
 
 
-trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with MacroLogsImplLazy {
+trait EsModelCommonJMXBase extends JmxBase with EsModelJMXMBeanCommonI with MacroLogsImplLazy {
 
   // DI:
   def companion: EsModelCommonStaticT { type T = X }
   val esModelJmxDi: EsModelJmxDi
-  override implicit def ec = esModelJmxDi.ec
 
+  import esModelJmxDi.ec
   import esModelJmxDi.esModel.api._
+  import JmxBase._
 
   type X <: EsModelCommonT
 
-  override def jmxName = "io.suggest:type=elasticsearch,name=" + getClass.getSimpleName.replace("Jmx", "")
-
   // Контексты, зависимые от конкретного проекта.
+  override def _jmxType = "elasticsearch"
 
   /** Ругнутся в логи и вернуть строку для возврата клиенту. */
   protected def _formatEx(logPrefix: String, data: String, ex: Throwable): String = {
@@ -88,21 +96,26 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
 
   override def isMappingExists: Boolean = {
     LOGGER.trace(s"isMappingExists()")
-    companion.isMappingExists()
+    val fut = companion.isMappingExists()
+    awaitFuture( fut )
   }
 
   override def putMapping(): String = {
     LOGGER.warn(s"putMapping()")
-    companion
+    val fut = companion
       .putMapping()
       .map(_.toString)
       .recover { case ex: Throwable => _formatEx(s"putMapping()", "", ex) }
+    awaitFuture( fut )
   }
 
   override def generateMapping(): String = {
-    LOGGER.debug("generateMapping()")
-    val mappingText = companion.generateMapping.string()
-    JacksonWrapper.prettify(mappingText)
+    val logPrefix = "generateMapping()"
+    LOGGER.debug(s"$logPrefix called")
+    JmxBase.tryCatch { () =>
+      val mappingText = companion.generateMapping.string()
+      JacksonWrapper.prettify(mappingText)
+    }
   }
 
   override def readCurrentMapping(): String = {
@@ -136,14 +149,29 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
     awaitString(fut)
   }
 
-  override def esTypeName: String = companion.ES_TYPE_NAME
-  override def esIndexName: String = companion.ES_INDEX_NAME
+  override def esTypeName = companion.ES_TYPE_NAME
+  override def esIndexName = companion.ES_INDEX_NAME
 
   override def countAll(): String = {
     LOGGER.debug(s"countAll()")
     val fut = companion.countAll()
       .map { _.toString }
     awaitString(fut)
+  }
+
+  /** Удаление всех элементов.
+    *
+    * @param sure Уверен?
+    * @return Данные об удалённом.
+    */
+  override def truncate(sure: String): String = {
+    LOGGER.warn(s"truncate($sure) called. Will delete all elemets...")
+    val fut = for {
+      totalDeleted <- companion.truncate( sure ==* "YES!!!" )
+    } yield {
+      s"Total ${totalDeleted} docs erased."
+    }
+    awaitString( fut )
   }
 
 }

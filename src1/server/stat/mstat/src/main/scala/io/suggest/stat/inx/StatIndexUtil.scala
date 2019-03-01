@@ -7,8 +7,8 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.{EsIndexUtil, EsModel, IEsModelDiVal}
 import io.suggest.stat.m.{MStatIndexes, MStatInxInfo, MStatsModel, MStatsTmpFactory}
-import io.suggest.util.JMXBase
-import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
+import io.suggest.util.JmxBase
+import io.suggest.util.logs.MacroLogsImpl
 import org.threeten.extra.Interval
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -256,14 +256,15 @@ sealed trait StatIndexUtilJmxMBean {
 
 final class StatIndexUtilJmx @Inject() (
                                          statIndexUtil            : StatIndexUtil,
-                                         implicit val ec          : ExecutionContext
+                                         implicit private val ec  : ExecutionContext,
                                        )
-  extends JMXBase
+  extends JmxBase
   with StatIndexUtilJmxMBean
-  with MacroLogsImplLazy
 {
 
-  override def jmxName = "io.suggest:type=stat,name=" + getClass.getSimpleName.replace("Jmx", "")
+  import io.suggest.util.JmxBase._
+
+  override def _jmxType = Types.STAT
 
   private def _usingToStringFut(f: () => Future[AnyRef]): String = {
     val fut = for {

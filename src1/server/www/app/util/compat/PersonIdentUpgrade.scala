@@ -8,8 +8,8 @@ import io.suggest.es.model.{BulkProcessorListener, EsModel}
 import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.util.JMXBase
-import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
+import io.suggest.util.JmxBase
+import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.Inject
 import models.mext.ILoginProvider
 import models.usr._
@@ -218,14 +218,14 @@ trait PersonIdentUpgradeJmxMBean {
 
 final class PersonIdentUpgradeJmx @Inject() (
                                               injector                    : Injector,
-                                              override implicit val ec    : ExecutionContext,
+                                              implicit private val ec     : ExecutionContext,
                                             )
-  extends JMXBase
+  extends JmxBase
   with PersonIdentUpgradeJmxMBean
-  with MacroLogsImplLazy
 {
+  import JmxBase._
 
-  override def jmxName = "io.suggest:type=compat,name=" + classOf[PersonIdentUpgrade].getSimpleName
+  override def _jmxType = Types.COMPAT
 
   override def doIt(): String = {
     val upgrader = injector.instanceOf[PersonIdentUpgrade]

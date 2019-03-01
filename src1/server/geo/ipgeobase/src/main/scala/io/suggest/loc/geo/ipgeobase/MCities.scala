@@ -190,7 +190,9 @@ final class MCitiesJmx @Inject() (
   with MCitiesJmxMBean
 {
 
+  import esModelJmxDi.ec
   import mCitiesModel.api._
+  import io.suggest.util.JmxBase._
 
   override type X = MCity
 

@@ -8,7 +8,7 @@ import javax.inject.Inject
 import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.async.AsyncUtil
 import io.suggest.es.model.{EsIndexUtil, EsModel, IEsModelDiVal}
-import io.suggest.util.JMXBase
+import io.suggest.util.JmxBase
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
@@ -352,14 +352,15 @@ trait IpgbImporterJmxMBean {
 
 final class IpgbImporterJmx @Inject()(
                                        injector                 : Injector,
-                                       override implicit val ec : ExecutionContext
+                                       implicit private val ec  : ExecutionContext,
                                      )
-  extends JMXBase
+  extends JmxBase
   with IpgbImporterJmxMBean
   with MacroLogsDyn
 {
+  import JmxBase._
 
-  override def jmxName = "io.suggest:type=ipgeobase,name=" + classOf[IpgbImporter].getSimpleName
+  override def _jmxType = Types.IPGEOBASE
 
   private def ipgbInjector = injector.instanceOf[IpgbImporter]
 

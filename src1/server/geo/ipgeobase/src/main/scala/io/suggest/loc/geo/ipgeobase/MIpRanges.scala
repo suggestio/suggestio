@@ -194,7 +194,9 @@ final class MIpRangesJmx @Inject() (
   with MIpRangesJmxMBean
 {
 
+  import esModelJmxDi.ec
   import mIpRangesModel.api._
+  import io.suggest.util.JmxBase._
 
   override type X = MIpRange
 

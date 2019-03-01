@@ -6,7 +6,7 @@ import io.suggest.es.util.{EsClientUtil, SioEsUtil}
 import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.m.MAsymKeys
-import io.suggest.util.JMXBase
+import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.adv.MExtTargets
 import models.ai.MAiMads
@@ -15,7 +15,6 @@ import models.mproj.ICommonDi
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
@@ -160,17 +159,14 @@ final class SiowebEsModelJmx @Inject() (
                                          siowebEsModel           : SiowebEsModel,
                                          implicit val ec         : ExecutionContext
                                        )
-  extends JMXBase
+  extends JmxBase
   with SiowebEsModelJmxMBean
   with MacroLogsImplLazy
 {
 
-  import LOGGER._
+  import JmxBase._
 
-  override def jmxName = "io.suggest:type=elasticsearch,name=" + getClass.getSimpleName.replace("Jmx", "")
-
-  /** Импорт может затянуться, несмотря на все ускорения. Увеличиваем таймаут до получения результата. */
-  override def futureTimeout = 5.minutes
+  override def _jmxType = Types.ELASTICSEARCH
 
   override def importModelFromRemote(modelStr: String, remotes: String): String = {
     val modelStr1 = modelStr.trim
@@ -179,7 +175,7 @@ final class SiowebEsModelJmx @Inject() (
       .get
     val fut = _importModelsFromRemote(remotes, Seq(model))
     for (ex <- fut.failed) {
-      error(s"importModelsFromRemote($modelStr, $remotes): Failed", ex)
+      LOGGER.error(s"importModelsFromRemote($modelStr, $remotes): Failed", ex)
     }
     awaitString(fut)
   }
@@ -187,7 +183,7 @@ final class SiowebEsModelJmx @Inject() (
   override def importModelsFromRemote(remotes: String): String = {
     val fut = _importModelsFromRemote(remotes, siowebEsModel.ES_MODELS)
     for (ex <- fut.failed) {
-      error(s"importModelsFromRemote($remotes): Failed", ex)
+      LOGGER.error(s"importModelsFromRemote($remotes): Failed", ex)
     }
     awaitString(fut)
   }

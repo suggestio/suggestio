@@ -16,7 +16,7 @@ import io.suggest.mbill2.m.order.MOrders
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect.{RWT, WT}
 import io.suggest.pick.PickleUtil
-import io.suggest.util.{CompressUtilJvm, JMXBase}
+import io.suggest.util.{CompressUtilJvm, JmxBase}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import play.api.db.slick.DatabaseConfigProvider
@@ -362,15 +362,16 @@ trait BillDebugUtilJmxMBean {
 class BillDebugUtilJmx @Inject() (
                                    billDebugUtil                      : BillDebugUtil,
                                    override val _slickConfigProvider  : DatabaseConfigProvider,
-                                   override implicit val ec           : ExecutionContext,
+                                   implicit private val ec            : ExecutionContext,
                                  )
-  extends JMXBase
+  extends JmxBase
   with BillDebugUtilJmxMBean
   with ISlickDbConfig
   with MacroLogsImpl
 {
+  import io.suggest.util.JmxBase._
 
-  override def jmxName = "io.suggest:type=bill,name=" + getClass.getSimpleName.replace("Jmx", "")
+  override def _jmxType = Types.BILL
 
   override def getPriceDebug(id: Gid_t): String = {
     lazy val logPrefix = s"getPriceDebug($id)"

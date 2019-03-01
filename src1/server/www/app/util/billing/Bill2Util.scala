@@ -31,7 +31,7 @@ import io.suggest.es.model.{BulkProcessorListener, EsModel}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.streams.StreamsUtil
-import io.suggest.util.JMXBase
+import io.suggest.util.JmxBase
 import japgolly.univeq._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -2058,14 +2058,16 @@ trait Bill2UtilJmxMBean {
 
 class Bill2UtilJmx @Inject()(
                               bill2Util                           : Bill2Util,
-                              override implicit val ec            : ExecutionContext,
+                              implicit private val ec             : ExecutionContext,
                             )
-  extends JMXBase
+  extends JmxBase
   with Bill2UtilJmxMBean
   with MacroLogsDyn
 {
 
-  override def jmxName = "io.suggest:type=bill,name=" + getClass.getSimpleName.replace("Jmx", "")
+  import io.suggest.util.JmxBase._
+
+  override def _jmxType = Types.BILL
 
   override def fsckNodesContracts(): String = {
     val logPrefix = s"fsckNodesContracts()#${System.currentTimeMillis()}:"

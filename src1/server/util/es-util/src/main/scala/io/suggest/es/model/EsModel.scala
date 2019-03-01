@@ -807,6 +807,35 @@ final class EsModel @Inject()(
           .build()
       }
 
+      /**
+       * Метод для краткого запуска скроллинга над моделью.
+       *
+       * @param queryOpt Поисковый запрос, по которому скроллим. Если None, то будет matchAll().
+       * @param resultsPerScroll Кол-во результатов за каждую итерацию скролла.
+       * @param keepAliveMs TTL scroll-курсора на стороне ES.
+       * @return Фьючерс, подлежащий дальнейшей обработке.
+       */
+      def startScroll(queryOpt: Option[QueryBuilder] = None, resultsPerScroll: Int = model.SCROLL_SIZE_DFLT,
+                            keepAliveMs: Long = model.SCROLL_KEEPALIVE_MS_DFLT): SearchRequestBuilder = {
+        val query = queryOpt.getOrElse {
+          QueryBuilders.matchAllQuery()
+        }
+        val req = model
+          .prepareScroll(new TimeValue(keepAliveMs))
+          .setQuery(query)
+          .setSize(resultsPerScroll)
+          .setFetchSource(true)
+        LOGGER.trace(s"startScroll($queryOpt, rps=$resultsPerScroll, kaMs=$keepAliveMs): query = $query")
+        req
+      }
+
+
+      /** Удалить всё документы из модели. */
+      def truncate(areYouSure: Boolean = false): Future[Int] = {
+        assert(areYouSure, "Are you sure? No.")
+        deleteByQuery( startScroll() )
+      }
+
     }
 
     implicit final class EsModelCommonStaticUntypedOps(override val model: EsModelCommonStaticT)
@@ -856,27 +885,6 @@ final class EsModel @Inject()(
         }
       }
 
-      /**
-       * Метод для краткого запуска скроллинга над моделью.
-       *
-       * @param queryOpt Поисковый запрос, по которому скроллим. Если None, то будет matchAll().
-       * @param resultsPerScroll Кол-во результатов за каждую итерацию скролла.
-       * @param keepAliveMs TTL scroll-курсора на стороне ES.
-       * @return Фьючерс, подлежащий дальнейшей обработке.
-       */
-      def startScroll(queryOpt: Option[QueryBuilder] = None, resultsPerScroll: Int = model.SCROLL_SIZE_DFLT,
-                            keepAliveMs: Long = model.SCROLL_KEEPALIVE_MS_DFLT): SearchRequestBuilder = {
-        val query = queryOpt.getOrElse {
-          QueryBuilders.matchAllQuery()
-        }
-        val req = model
-          .prepareScroll(new TimeValue(keepAliveMs))
-          .setQuery(query)
-          .setSize(resultsPerScroll)
-          .setFetchSource(true)
-        LOGGER.trace(s"startScroll($queryOpt, rps=$resultsPerScroll, kaMs=$keepAliveMs): query = $query")
-        req
-      }
 
 
       /** Генератор реквеста для генерации запроса для getAll(). */

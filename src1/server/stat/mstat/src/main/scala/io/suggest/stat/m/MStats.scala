@@ -315,12 +315,12 @@ final class MStatsJmx @Inject() (
     with MStatsJmxMBean
 {
 
+  import esModelJmxDi.ec
   import esModel.api._
   import mStatsModel.api._
+  import io.suggest.util.JmxBase._
 
   override type X = MStat
-
-  import LOGGER._
 
   protected def dtParse(dtStr: String): OffsetDateTime = {
     val sdf = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss")
@@ -330,7 +330,7 @@ final class MStatsJmx @Inject() (
   }
 
   override def deleteBefore(dtStr: String): String = {
-    warn(s"deleteBefore($dtStr)")
+    LOGGER.warn(s"deleteBefore($dtStr)")
     // Нужно распарсить дату-время из указанных админом.
     try {
       val dt = dtParse(dtStr)
@@ -340,13 +340,13 @@ final class MStatsJmx @Inject() (
       awaitString(fut)
     } catch {
       case ex: Throwable =>
-        error("Unable to parse user-typed date-time: " + dtStr, ex)
+        LOGGER.error("Unable to parse user-typed date-time: " + dtStr, ex)
         "Failure: user-typed timestamp: " + dtStr + " :: " + ex.getClass.getName + ": " + ex.getMessage
     }
   }
 
   override def countBefore(dtStr: String): String = {
-    trace(s"countBefore($dtStr)")
+    LOGGER.trace(s"countBefore($dtStr)")
     try {
       val dt = dtParse(dtStr)
       val fut = for (count <- companion.countBefore(dt)) yield {
@@ -356,13 +356,13 @@ final class MStatsJmx @Inject() (
 
     } catch {
       case ex: Throwable =>
-        error("Unable to count items for user-typed dt-str: " + dtStr, ex)
+        LOGGER.error("Unable to count items for user-typed dt-str: " + dtStr, ex)
         "Failure: user-typed timestamp: " + dtStr + " :: " + ex.getClass.getName + ": " + ex.getMessage
     }
   }
 
   override def findBefore(dtStr: String, maxResults: Int): String = {
-    trace(s"findBefore($dtStr, $maxResults)")
+    LOGGER.trace(s"findBefore($dtStr, $maxResults)")
     try {
       val dt = dtParse(dtStr)
       val fut = for (results <- companion.findBefore(dt, maxResults)) yield {
@@ -373,7 +373,7 @@ final class MStatsJmx @Inject() (
 
     } catch {
       case ex: Throwable =>
-        error(s"Failed to findBefore($dtStr, $maxResults)", ex)
+        LOGGER.error(s"Failed to findBefore($dtStr, $maxResults)", ex)
         s"FAIL: findBefore($dtStr, $maxResults) ${ex.getClass.getSimpleName} : ${ex.getMessage}"
     }
   }

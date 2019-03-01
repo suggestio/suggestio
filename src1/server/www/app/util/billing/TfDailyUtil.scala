@@ -22,7 +22,7 @@ import util.TplDataFormatUtil
 import MPrice.HellImplicits.AmountMonoid
 import io.suggest.es.model.{BulkProcessorListener, EsModel}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.util.JMXBase
+import io.suggest.util.JmxBase
 import scalaz._
 import scalaz.syntax.apply._
 import scalaz.std.option._
@@ -485,15 +485,16 @@ trait TfDailyUtilJmxMBean {
 }
 
 final class TfDailyUtilJmx @Inject()(
-                                      tfDailyUtil: TfDailyUtil,
-                                      override implicit val ec: ExecutionContext
+                                      tfDailyUtil               : TfDailyUtil,
+                                      implicit private val ec   : ExecutionContext,
                                     )
-  extends JMXBase
+  extends JmxBase
   with TfDailyUtilJmxMBean
   with MacroLogsDyn
 {
+  import JmxBase._
 
-  override def jmxName = "io.suggest:type=bill,name=" + classOf[TfDailyUtil].getSimpleName
+  override def _jmxType = Types.BILL
 
   override def resetAllTfDailyComissions(): String = {
     val resFut = for {

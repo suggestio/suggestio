@@ -52,8 +52,7 @@ class MSuperUsers @Inject()(
     // Это также нужно было при миграции с MPerson на MNode, чтобы не произошло повторного создания новых
     // юзеров в MNode, при наличии уже существующих в MPerson.
     val ck = "start.ensure.superusers"
-    // TODO 2019-02-28 После переезда на n2-idents надо активировать это назад.
-    val createIfMissing = false //injector.instanceOf[Configuration].getOptional[Boolean](ck).getOrElseFalse
+    val createIfMissing = injector.instanceOf[Configuration].getOptional[Boolean](ck).getOrElseFalse
     val fut = resetSuperuserIds(createIfMissing)
     if (!createIfMissing)
       LOGGER.debug("Does not ensuring superusers in permanent models: " + ck + " != true")

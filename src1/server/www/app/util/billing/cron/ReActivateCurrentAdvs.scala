@@ -7,8 +7,7 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.streams.StreamsUtil
-import io.suggest.util.JMXBase
-import io.suggest.util.logs.MacroLogsDyn
+import io.suggest.util.JmxBase
 import models.mproj.ICommonDi
 import play.api.inject.Injector
 import util.adv.build.{AdvBuilderFactory, AdvBuilderUtil}
@@ -101,15 +100,15 @@ trait ReActivateCurrentAdvsJmxMBean {
 
 /** Реализация [[ReActivateCurrentAdvsJmxMBean]]. */
 class ReActivateCurrentAdvsJmx @Inject() (
-                                           injector: Injector,
-                                           override implicit val ec: ExecutionContext
+                                           injector                   : Injector,
+                                           implicit private val ec    : ExecutionContext,
                                          )
-  extends JMXBase
+  extends JmxBase
   with ReActivateCurrentAdvsJmxMBean
-  with MacroLogsDyn
 {
+  import io.suggest.util.JmxBase._
 
-  override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
+  override def _jmxType = Types.UTIL
 
   private def reActivateCurrentAdvs = injector.instanceOf[ReActivateCurrentAdvs]
 

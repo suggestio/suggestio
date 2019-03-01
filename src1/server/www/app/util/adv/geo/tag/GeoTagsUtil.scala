@@ -16,8 +16,8 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.OptId
 import io.suggest.streams.StreamsUtil
-import io.suggest.util.JMXBase
-import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
+import io.suggest.util.JmxBase
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.MCtxOuter
 import io.suggest.enum2.EnumeratumUtil.ValueEnumEntriesOps
 import io.suggest.es.model.EsModel
@@ -564,20 +564,20 @@ trait GeoTagsUtilJmxMBean {
 
 }
 
-class GeoTagsUtilJmx @Inject() (
-                                 esModel                   : EsModel,
-                                 geoTagsUtil               : GeoTagsUtil,
-                                 mNodes                    : MNodes,
-                                 override implicit val ec  : ExecutionContext
-                               )
-  extends JMXBase
+final class GeoTagsUtilJmx @Inject() (
+                                       esModel                   : EsModel,
+                                       geoTagsUtil               : GeoTagsUtil,
+                                       mNodes                    : MNodes,
+                                       implicit private val ec   : ExecutionContext
+                                     )
+  extends JmxBase
   with GeoTagsUtilJmxMBean
-  with MacroLogsImplLazy
 {
 
+  import JmxBase._
   import esModel.api._
 
-  override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
+  override def _jmxType = Types.UTIL
 
   override def deleteAllTagNodes(): String = {
     val fut = for (countDeleted <- geoTagsUtil.deleteAllTagNodes()) yield {

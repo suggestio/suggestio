@@ -14,7 +14,7 @@ import io.suggest.loc.geo.ipgeobase.{IpgbImporterJmx, MCitiesJmx, MIpRangesJmx}
 import io.suggest.sec.util.SCryptUtilJmx
 import io.suggest.stat.inx.StatIndexUtilJmx
 import io.suggest.stat.m.MStatsJmx
-import io.suggest.util.{JMXBase, JMXHelpers}
+import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.inject.ApplicationLifecycle
 import util.adv.direct.AdvRcvrsUtilJmx
@@ -35,7 +35,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: JMX MBean'ы нужно заливать в энтерпрайз. Тут добавка к Global, чтобы тот мог включать/выключать jmx.
  */
 
-case class JMXImpl @Inject() (
+case class JmxImpl @Inject()(
                                mMediasJmx                    : MMediasJmx,
                                siowebEsModelJmx              : SiowebEsModelJmx,
                                advRcvrsUtilJmx               : AdvRcvrsUtilJmx,
@@ -73,7 +73,7 @@ case class JMXImpl @Inject() (
   private def JMX_MODELS = {
     productIterator
       .flatMap {
-        case jmx: JMXBase => jmx :: Nil
+        case jmx: JmxBase => jmx :: Nil
         case _            => Nil
       }
       .toSeq
@@ -97,7 +97,7 @@ case class JMXImpl @Inject() (
     for (jmxMB <- JMX_MODELS) {
       val name = jmxMB.jmxName
       try {
-        srv.registerMBean(jmxMB, JMXHelpers.string2objectName(name) )
+        srv.registerMBean(jmxMB, JmxBase.string2objectName(name) )
       } catch {
         case _: javax.management.InstanceAlreadyExistsException =>
           warn("Instance already registered: " + jmxMB)
@@ -113,7 +113,7 @@ case class JMXImpl @Inject() (
     for (jmxMB <- JMX_MODELS) {
       val name = jmxMB.jmxName
       try {
-        srv.unregisterMBean( JMXHelpers.string2objectName(name) )
+        srv.unregisterMBean( JmxBase.string2objectName(name) )
       } catch {
         case _: javax.management.InstanceNotFoundException =>
           warn("JMX instance not registered: " + jmxMB)

@@ -20,7 +20,7 @@ import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MSc3IndexResp
-import io.suggest.util.JMXBase
+import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.MImgMakeArgs
 import models.im._
@@ -560,16 +560,17 @@ trait AdvGeoRcvrsUtilJmxMBean {
 }
 
 /** Реализация JMX для [[AdvGeoRcvrsUtil]]. */
-class AdvGeoRcvrsUtilJmx @Inject() (
-                                     advGeoRcvrsUtil: AdvGeoRcvrsUtil,
-                                     override implicit val ec: ExecutionContext
-                                   )
-  extends JMXBase
+final class AdvGeoRcvrsUtilJmx @Inject() (
+                                           advGeoRcvrsUtil: AdvGeoRcvrsUtil,
+                                           implicit val ec: ExecutionContext
+                                         )
+  extends JmxBase
   with AdvGeoRcvrsUtilJmxMBean
-  with MacroLogsImpl
 {
 
-  override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
+  import io.suggest.util.JmxBase._
+
+  override def _jmxType = Types.UTIL
 
   override def updateAllGeoLocEdges(): String = {
     val fut = for {

@@ -11,8 +11,8 @@ import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.util.JMXBase
-import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
+import io.suggest.util.JmxBase
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv.build.{Acc, TryUpdateBuilder}
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
@@ -379,15 +379,17 @@ final class AdvRcvrsUtilJmx @Inject()(
                                        esModel                      : EsModel,
                                        advRcvrsUtil                 : AdvRcvrsUtil,
                                        mNodes                       : MNodes,
-                                       override implicit val ec     : ExecutionContext
+                                       implicit private val ec      : ExecutionContext
                                      )
   extends AdvRcvrsUtilJmxMBean
-  with JMXBase
-  with MacroLogsImplLazy
+  with JmxBase
 {
-  import esModel.api._
 
-  override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
+  import esModel.api._
+  import io.suggest.util.JmxBase._
+
+
+  override def _jmxType = Types.UTIL
 
   override def resetAllReceivers(): String = {
     val countFut = advRcvrsUtil.resetAllReceivers()

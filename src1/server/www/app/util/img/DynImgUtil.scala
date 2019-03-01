@@ -20,8 +20,8 @@ import io.suggest.model.n2.media.storage.IMediaStorages
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.url.MHostInfo
-import io.suggest.util.JMXBase
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.JmxBase
+import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.im._
 import models.mproj.ICommonDi
 import org.im4java.core.{ConvertCmd, IMOperation}
@@ -676,15 +676,15 @@ trait DynImgUtilJmxMBean {
 /** Реализация поддержки JMX для [[DynImgUtil]]. */
 final class DynImgUtilJmx @Inject() (
                                       dynImgUtil                : DynImgUtil,
-                                      override implicit val ec  : ExecutionContext
+                                      implicit private val ec   : ExecutionContext,
                                     )
-  extends JMXBase
+  extends JmxBase
   with DynImgUtilJmxMBean
-  with MacroLogsImpl
+  with MacroLogsDyn
 {
+  import JmxBase._
 
-  override def jmxName: String = "io.suggest:type=img,name=" + classOf[DynImgUtil].getSimpleName
-  override def futureTimeout = 5.minutes
+  override def _jmxType = Types.IMG
 
   override def deleteAllDerivatives(deleteEvenStorageMissing: Boolean): String = {
     val logPrefix = s"deleteAllDerivatives():"

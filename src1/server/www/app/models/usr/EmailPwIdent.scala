@@ -43,9 +43,7 @@ class EmailPwIdents
   }
 
 
-  override protected def esDocReads(meta: IEsDocMeta): Reads[EmailPwIdent] = {
-    FORMAT
-  }
+  override protected def esDocReads(meta: IEsDocMeta) = FORMAT
   override def esDocWrites: Writes[EmailPwIdent] = FORMAT
 
 

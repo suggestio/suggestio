@@ -66,7 +66,9 @@ trait EsModelJMXMBeanI extends EsModelJMXMBeanCommonI {
 
 trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
+  import esModelJmxDi.ec
   import esModelJmxDi.esModel.api._
+  import io.suggest.util.JmxBase._
 
   override type X <: EsModelT
 
@@ -84,7 +86,8 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
   override def deleteById(id: String): Boolean = {
     val id1 = id.trim
     LOGGER.warn(s"deleteById($id1)")
-    companion.deleteById(id1)
+    val fut = companion.deleteById(id1)
+    awaitFuture( fut )
   }
 
   override def getById(id: String): String = {
@@ -125,7 +128,8 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
     try {
       val br = new BytesArray( data )
       val dataMap = SourceLookup.sourceAsMap(br)
-      _saveOne(idOpt, dataMap)
+      val fut = _saveOne(idOpt, dataMap)
+      awaitFuture( fut )
     } catch {
       case ex: Throwable =>
         _formatEx(s"$logPrefix: ", data, ex)
