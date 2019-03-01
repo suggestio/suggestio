@@ -1,6 +1,6 @@
 package models.mext.vk
 
-import models.mext.ILoginProvider
+import models.mext.ISsLoginProvider
 import securesocial.core.providers.{VkProvider, VkProviders}
 
 import scala.reflect.ClassTag
@@ -11,7 +11,7 @@ import scala.reflect.ClassTag
  * Created: 15.04.15 18:36
  * Description: Реализация интеграции vk и secure-social.
  */
-trait VkLoginProvider extends ILoginProvider {
+trait VkLoginProvider extends ISsLoginProvider {
 
   /** Имя провайдера по мнению SecureSocial. */
   override def ssProvName = VkProvider.Vk

@@ -24,7 +24,7 @@ class VkService
   override def helperCt = ClassTag(classOf[VkontakteHelper])
 
   /** Поддержка логина через вконтакт. */
-  override def loginProvider = Some(this)
+  override def ssLoginProvider = Some(this)
 
   override def dfltTargetUrl = Some( MExtServices.VKontakte.mainPageUrl )
 

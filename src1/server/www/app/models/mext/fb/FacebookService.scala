@@ -21,7 +21,7 @@ class FacebookService
 {
 
   /** Поддержка логина через facebook. */
-  override def loginProvider = Some(this)
+  override def ssLoginProvider = Some(this)
 
   override def advExt = this
 

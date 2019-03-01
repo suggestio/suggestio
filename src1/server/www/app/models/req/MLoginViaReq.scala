@@ -1,6 +1,6 @@
 package models.req
 
-import models.mext.ILoginProvider
+import models.mext.IExtService
 import play.api.mvc.Request
 import util.ident.IExtLoginAdp
 
@@ -12,7 +12,7 @@ import util.ident.IExtLoginAdp
   */
 case class MLoginViaReq[A](
                             apiAdp                  : IExtLoginAdp,
-                            loginProvider           : ILoginProvider,
+                            svcJvm                  : IExtService,
                             override val request    : Request[A],
                             override val user       : ISioUser,
                           )

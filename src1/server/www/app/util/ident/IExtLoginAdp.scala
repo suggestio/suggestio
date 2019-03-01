@@ -1,7 +1,6 @@
 package util.ident
 
 import io.suggest.auth.AuthenticationResult
-import io.suggest.ext.svc.MExtService
 import models.req.MLoginViaReq
 import play.api.mvc.{AnyContent, Session}
 
@@ -26,7 +25,7 @@ trait IExtLoginAdp {
     * @return Фьючерс с результатом.
     *         Если совсем неправильный вызов, то будет ошибка внутри Future.
     */
-  def authenticate(service: MExtService)(implicit req: MLoginViaReq[AnyContent]): Future[AuthenticationResult]
+  def authenticateFromRequest()(implicit req: MLoginViaReq[AnyContent]): Future[AuthenticationResult]
 
   def MAX_SESSION_TTL_SECONDS: Long
 

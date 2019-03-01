@@ -31,7 +31,11 @@ trait IExtService {
     *
     * @return Some() если логин на suggest.io возможен через указанный сервис.
     */
-  def loginProvider: Option[ILoginProvider] = None
+  def ssLoginProvider: Option[ISsLoginProvider] = None
+
+  /** css-класс для отображаемой кнопки логина. */
+  def loginBtnCssClass: Option[String] =
+    ssLoginProvider.map(_.ssProvName)
 
 }
 

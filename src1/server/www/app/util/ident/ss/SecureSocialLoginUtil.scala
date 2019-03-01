@@ -7,7 +7,7 @@ import io.suggest.playx.ExternalCall
 import io.suggest.util.logs.MacroLogsDyn
 import javax.inject.{Inject, Singleton}
 import models.mctx.ContextUtil
-import models.mext.{ILoginProvider, MExtServicesJvm}
+import models.mext.MExtServicesJvm
 import models.req.MLoginViaReq
 import play.api.Configuration
 import play.api.cache.AsyncCacheApi
@@ -32,18 +32,14 @@ import scala.reflect.ClassTag
   * Description: Утиль для логина .
   */
 @Singleton
-class SecureSocialLoginAdp @Inject()(
-                                      identUtil                       : IdentUtil,
-                                      configuration                   : Configuration,
-                                      injector                        : Injector,
-                                      implicit private val ec         : ExecutionContext,
-                                    )
+class SecureSocialLoginUtil @Inject()(
+                                       identUtil                       : IdentUtil,
+                                       configuration                   : Configuration,
+                                       injector                        : Injector,
+                                       implicit private val ec         : ExecutionContext,
+                                     )
   extends MacroLogsDyn
-  with IExtLoginAdp
 {
-
-  /** Фильтровать присылаемый ttl. */
-  override def MAX_SESSION_TTL_SECONDS = 3.days.toSeconds
 
   /** secure-social настраивается через этот Enviroment. */
   lazy val env: RuntimeEnvironment = {
@@ -61,7 +57,7 @@ class SecureSocialLoginAdp @Inject()(
             prov <- {
               MExtServicesJvm
                 .forService( service )
-                .loginProvider
+                .ssLoginProvider
                 .iterator
             }
             idp <- {
@@ -85,18 +81,27 @@ class SecureSocialLoginAdp @Inject()(
     }
   }
 
-  override def clearSession(s: Session): Session =
-    SsHelper.cleanupSession( s )
 
-  override def authenticate(service: MExtService)(implicit req: MLoginViaReq[AnyContent]): Future[AuthenticationResult] = {
-    env.providers
-      .get( req.loginProvider.ssProvName )
-      .fold[Future[AuthenticationResult]] {
-        LOGGER.error(s"authenticate($service): No login provider exists")
+  case class loginAdpFor( extService: MExtService ) extends IExtLoginAdp {
+
+    /** Фильтровать присылаемый ttl. */
+    override def MAX_SESSION_TTL_SECONDS = 3.days.toSeconds
+
+    override def clearSession(s: Session): Session =
+      SsHelper.cleanupSession( s )
+
+    override def authenticateFromRequest()(implicit req: MLoginViaReq[AnyContent]): Future[AuthenticationResult] = {
+      (for {
+        ssLoginProv <- req.svcJvm.ssLoginProvider
+        ssIdProv <- env.providers.get( ssLoginProv.ssProvName )
+      } yield {
+        ssIdProv.authenticate()
+      }).getOrElse {
+        LOGGER.error(s"authenticateFromRequest($extService): No login provider exists")
         Future.failed( new NoSuchElementException )
-      } { idProv =>
-        idProv.authenticate()
       }
+    }
+
   }
 
 }
@@ -113,11 +118,15 @@ class SsRoutesService @Inject() (ctxUtil: ContextUtil) extends RoutesService {
 
   override def authenticationUrl(providerId: String, redirectTo: Option[String])
                                 (implicit req: RequestHeader): String = {
-    val svc = ILoginProvider
-      .valuesIter
-      .find { _._2.ssProvName ==* providerId }
-      .map(_._1)
-      .get
+    val svc = (for {
+      svc <- MExtServices.values.iterator
+      svcJvm = MExtServicesJvm.forService( svc )
+      idp <- svcJvm.ssLoginProvider
+      if idp.ssProvName ==* providerId
+    } yield {
+      svc
+    })
+      .next()
     val relUrl = routes.Ident.idViaProvider(svc, redirectTo)
     absoluteUrl( relUrl )
   }

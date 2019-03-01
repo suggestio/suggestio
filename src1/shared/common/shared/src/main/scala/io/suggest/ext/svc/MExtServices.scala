@@ -18,6 +18,8 @@ object MExtServices extends StringEnum[MExtService] {
     override def mainPageUrl = "https://vk.com/"
     override def nameI18N = "VKontakte"
     override def hasAdvExt = true
+    /** Пока оставлен, но не ясно зачем. */
+    override def hasLogin = true
   }
 
 
@@ -25,6 +27,8 @@ object MExtServices extends StringEnum[MExtService] {
     override def mainPageUrl = "https://facebook.com/"
     override def nameI18N = "Facebook"
     override def hasAdvExt = true
+    /** Куча ботов из помойки. Но логин всё же пока возможен через securesocial, и раньше работал. */
+    override def hasLogin = true
   }
 
 
@@ -33,7 +37,9 @@ object MExtServices extends StringEnum[MExtService] {
     override def mainPageUrl = "https://twitter.com/"
     override def nameI18N = "Twitter"
     override def hasAdvExt = true
+    /** Через эту помойку логинится когда-то раньше было возможно, но очень непродолжительное время. */
     override def myUserName = Some("@suggest_io")
+    override def hasLogin = false
   }
 
 
@@ -46,6 +52,8 @@ object MExtServices extends StringEnum[MExtService] {
     override def nameI18N = MsgCodes.`GovServices.ESIA`
     /** Никакого размещения рекламы на гос.услугах нет. */
     override def hasAdvExt = false
+    /** С 2019 года основной способ входа на сайт.*/
+    override def hasLogin = false     // TODO запилить и выставить true
   }
 
 
@@ -72,6 +80,9 @@ sealed abstract class MExtService(override val value: String) extends StringEnum
 
   /** Доступна ли функция внешнего размещения карточки? Никогда не возвращает exception. */
   def hasAdvExt: Boolean
+
+  /** Доступен ли логин в s.io через данный сервис? OAuth/OpenID/etc. */
+  def hasLogin: Boolean
 
 }
 

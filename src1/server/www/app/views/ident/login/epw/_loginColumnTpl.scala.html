@@ -18,8 +18,8 @@
 
 
   <div class="auth-page_social-btn-lst">
-    @for(svc <- MExtServices.values; svcJvm = MExtServicesJvm.forService(svc); idp <- svcJvm.loginProvider) {
-      <a class="auth-page_social-btn __@idp.ssProvName" href="@routes.Ident.idViaProvider(svc)"></a>
+    @for(svc <- MExtServices.values if svc.hasLogin; svcJvm = MExtServicesJvm.forService(svc); btnClass <- svcJvm.loginBtnCssClass) {
+      <a class="auth-page_social-btn __@btnClass" href="@routes.Ident.idViaProvider(svc)"></a>
     }
   </div>
 

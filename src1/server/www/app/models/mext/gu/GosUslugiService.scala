@@ -1,6 +1,6 @@
 package models.mext.gu
 
-import models.mext.{IExtService, ILoginProvider}
+import models.mext.IExtService
 
 /**
   * Suggest.io
@@ -9,7 +9,5 @@ import models.mext.{IExtService, ILoginProvider}
   * Description: JVM-часть модели для нужд гос.услуг.
   */
 class GosUslugiService extends IExtService {
-
-  override def loginProvider: Option[ILoginProvider] = None // TODO
 
 }

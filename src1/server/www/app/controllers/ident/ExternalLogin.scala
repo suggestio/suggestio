@@ -24,7 +24,7 @@ import util.adn.INodesUtil
 import util.xplay.SetLangCookieUtil
 import util.FormUtil
 import util.ident.IIdentUtil
-import util.ident.ss.SecureSocialLoginAdp
+import util.ident.ss.SecureSocialLoginUtil
 import views.html.ident.reg._
 import views.html.ident.reg.ext._
 
@@ -55,7 +55,7 @@ trait ExternalLogin
   import mPersonIdentModel.api._
 
   /** Доступ к DI-инстансу */
-  val secureSocialLogin = current.injector.instanceOf[SecureSocialLoginAdp]
+  val secureSocialLogin = current.injector.instanceOf[SecureSocialLoginUtil]
   val canLoginVia = current.injector.instanceOf[CanLoginVia]
 
   /**
@@ -77,7 +77,8 @@ trait ExternalLogin
   // TODO Сделать MExtService в аргументах вместо провайдера. Вычистить код логин-провайдера от qsb/pb-мусора.
   protected def handleAuth1(extService: MExtService, redirectTo: Option[String]) = canLoginVia(extService).async { implicit request =>
     lazy val logPrefix = s"handleAuth1($extService):"
-    request.apiAdp.authenticate(extService).flatMap {
+    request.apiAdp.authenticateFromRequest().flatMap {
+
       case _: AuthenticationResult.AccessDenied =>
         Redirect( routes.Ident.mySioStartPage() )
           .flashing(FLASH.ERROR -> "login.accessDenied")
