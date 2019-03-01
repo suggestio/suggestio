@@ -9,7 +9,7 @@ import scala.collection.immutable.ListMap
 /**
  * A runtime environment where the services needed are available
  */
-trait RuntimeEnvironment[U] {
+trait RuntimeEnvironment {
   def routes: RoutesService
 
   def httpService: HttpService
@@ -27,7 +27,7 @@ class RuntimeEnvironments @Inject() (
    * A default runtime environment.  All built in services are included.
    * You can start your app with with by only adding a userService to handle users.
    */
-  abstract class Default[U] extends RuntimeEnvironment[U] {
+  abstract class Default extends RuntimeEnvironment {
 
     protected def include(p: IdentityProvider) = p.id -> p
     protected def oauth1ClientFor(provider: String) = new OAuth1Client.Default(serviceInfoHelpers.forProvider(provider), httpService)

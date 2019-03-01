@@ -1,17 +1,13 @@
 package models.usr
 
-import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import io.suggest.es.model.EsModelUtil._
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
-import io.suggest.es.util.SioEsUtil._
 import io.suggest.ext.svc.MExtService
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.util.ScryptUtil
-import play.api.libs.json.{JsBoolean, JsString}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -24,68 +20,6 @@ import scala.concurrent.{ExecutionContext, Future}
  * В suggest.io исторически была только persona, которая жила прямо в MPerson.
  * Все PersonIdent имеют общий формат, однако хранятся в разных типах в рамках одного индекса.
  */
-
-/** Трейт, который реализуют все экземпляры идентов. */
-trait MPersonIdent extends EsModelT {
-
-  /** id юзера в системе. */
-  def personId: String
-
-  /** Некий индексируемый ключ, по которому должен идти поиск/фильтрация.
-    * В случае email-pw -- это юзернейм, т.е. email.
-    * В случае соц.сетей -- это внетренний userId соц.сети. */
-  def key: String
-
-  /** Какое-то дополнительное НЕиндексируемое значение. В случае username+pw тут хеш пароля. */
-  def value: Option[String]
-
-  /** Проверенный ident? */
-  def isVerified: Boolean
-
-  /** Определяется реализацией: надо ли записывать в хранилище значение isVerified. */
-  def writeVerifyInfo: Boolean
-
-}
-
-
-trait EsModelStaticIdentT extends EsModelStaticT with EsModelPlayJsonStaticT {
-  override type T <: MPersonIdent
-
-  /** Сериализация json-экземпляра. */
-  override def writeJsonFields(m: T, acc: FieldsJsonAcc): FieldsJsonAcc = {
-    import m._
-    var acc1: FieldsJsonAcc = PERSON_ID_ESFN -> JsString(personId) ::
-      KEY_ESFN -> JsString(key) ::
-      acc
-    if (value.isDefined)
-      acc1 ::= VALUE_ESFN -> JsString(value.get)
-    if (writeVerifyInfo)
-      acc1 ::= IS_VERIFIED_ESFN -> JsBoolean(isVerified)
-    acc1
-  }
-
-
-  def generateMappingStaticFields: List[Field] = {
-    List(
-      FieldSource(enabled = true),
-      FieldAll(enabled = false)
-    )
-  }
-
-
-  def generateMappingProps: List[DocField] = {
-    List(
-      FieldKeyword(PERSON_ID_ESFN, index = true, include_in_all = false),
-      FieldKeyword(KEY_ESFN, index = true, include_in_all = true),
-      FieldText(VALUE_ESFN, index = false, include_in_all = false),
-      FieldBoolean(IS_VERIFIED_ESFN, index = true, include_in_all = false)
-    )
-  }
-
-}
-
-
-trait MPersonIdentSubmodelStatic extends EsModelStaticIdentT
 
 @Singleton
 class MPersonIdentModel @Inject()(

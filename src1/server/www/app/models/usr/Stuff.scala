@@ -14,3 +14,10 @@ case class EpwLoginFormBind(
   password    : String,
   ttl         : Ttl
 )
+
+
+/** Binding формы подтверждения регистрации по email возвращает эти данные. */
+case class EmailPwConfirmInfo(
+  adnName   : String,
+  password  : String
+)

@@ -7,7 +7,6 @@ import models.adv.MExtTargetsJmx
 import models.ai.MAiMadJmx
 import models.event.MEventsJmx
 import models.mcal.MCalendarJmx
-import models.usr.{EmailActivationsJmx, EmailPwIdentsJmx, MExtIdentJmx}
 import java.lang.management.ManagementFactory
 
 import io.suggest.loc.geo.ipgeobase.{IpgbImporterJmx, MCitiesJmx, MIpRangesJmx}
@@ -22,7 +21,6 @@ import util.adv.geo.AdvGeoRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.billing.{Bill2UtilJmx, BillDebugUtilJmx, TfDailyUtilJmx}
 import util.billing.cron.ReActivateCurrentAdvsJmx
-import util.compat.PersonIdentUpgradeJmx
 import util.es.SiowebEsModelJmx
 import util.img.DynImgUtilJmx
 
@@ -45,9 +43,6 @@ case class JmxImpl @Inject()(
                                mExtTargetsJmx                : MExtTargetsJmx,
                                mEventsJmx                    : MEventsJmx,
                                mAiMadJmx                     : MAiMadJmx,
-                               emailPwIdentsJmx              : EmailPwIdentsJmx,
-                               emailActivationsJmx           : EmailActivationsJmx,
-                               mExtIdentJmx                  : MExtIdentJmx,
                                mIpRangesJmx                  : MIpRangesJmx,
                                mCitiesJmx                    : MCitiesJmx,
                                mStatsJmx                     : MStatsJmx,
@@ -60,7 +55,6 @@ case class JmxImpl @Inject()(
                                billDebugUtilJmx              : BillDebugUtilJmx,
                                bill2UtilJmx                  : Bill2UtilJmx,
                                tfDailyUtilJmx                : TfDailyUtilJmx,
-                               personIdentUpgradeJmx         : PersonIdentUpgradeJmx,
                                lifecycle                     : ApplicationLifecycle,
                                implicit private val ec       : ExecutionContext,
                              )

@@ -27,7 +27,6 @@ import views.html.ident.recover._
 import japgolly.univeq._
 
 import scala.concurrent.Future
-import models._
 import util.FormUtil.passwordWithConfirmM
 import util.ident.IIdentUtil
 

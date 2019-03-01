@@ -11,7 +11,6 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.sec.m.msession.{CustomTtl, Keys}
 import io.suggest.util.logs.IMacroLogs
-import models.ExtRegConfirmForm_t
 import models.mctx.p4j.{P4jWebContext, P4jWebContextFactory}
 import models.req.IReq
 import models.usr._

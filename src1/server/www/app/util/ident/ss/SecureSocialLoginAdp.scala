@@ -9,7 +9,6 @@ import javax.inject.{Inject, Singleton}
 import models.mctx.ContextUtil
 import models.mext.{ILoginProvider, MExtServicesJvm}
 import models.req.MLoginViaReq
-import models.usr._
 import play.api.Configuration
 import play.api.cache.AsyncCacheApi
 import play.api.inject.Injector
@@ -47,10 +46,10 @@ class SecureSocialLoginAdp @Inject()(
   override def MAX_SESSION_TTL_SECONDS = 3.days.toSeconds
 
   /** secure-social настраивается через этот Enviroment. */
-  lazy val env: RuntimeEnvironment[SsUser] = {
+  lazy val env: RuntimeEnvironment = {
     // Только ленивая инжекция, т.к. securesocial уходит в прошлое, и это всё не актуально.
     val ssRuntimeEnvironments = injector.instanceOf[RuntimeEnvironments]
-    new ssRuntimeEnvironments.Default[SsUser] {
+    new ssRuntimeEnvironments.Default {
       override lazy val cacheService = injector.instanceOf[SsCacheService]
       override lazy val httpService = injector.instanceOf[SsHttpService]
       override lazy val routes = injector.instanceOf[SsRoutesService]

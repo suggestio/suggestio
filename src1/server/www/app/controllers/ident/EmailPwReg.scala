@@ -14,7 +14,6 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.sec.m.msession.Keys
 import io.suggest.sec.util.IScryptUtilDi
 import io.suggest.util.logs.IMacroLogs
-import models.{EmailPwConfirmForm_t, EmailPwRegReqForm_t, usr}
 import models.mctx.Context
 import models.req.IReq
 import models.usr._
@@ -151,7 +150,7 @@ trait EmailPwReg
             .flatMap {
               // Нет такого email. Отправить письмо активации.
               case false =>
-                val qs = usr.MEmailRecoverQs(
+                val qs = MEmailRecoverQs(
                   email = email1
                 )
                 for {
