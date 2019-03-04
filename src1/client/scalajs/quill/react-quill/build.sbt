@@ -9,7 +9,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "scalajs-react-quill"
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
@@ -17,7 +17,7 @@ version := "0.0.0-SNAPSHOT"
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG        %%% "scalajs-react-common"  % "0.0.0-SNAPSHOT"
+  Common.ORG        %%% "scalajs-react-common"  % "0.0.0"
   //"io.monix"      %%% "minitest" % Common.minitestVsn % "test"
 )
 

@@ -4,7 +4,7 @@ Common.settingsOrgJS
 
 name := "sc-sw-sjs"
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 enablePlugins(ScalaJSBundlerPlugin)
 

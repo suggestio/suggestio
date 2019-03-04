@@ -4,11 +4,11 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "lk-adv-ext-sjs"
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 libraryDependencies ++= Seq(
   "be.doeraene"   %%% "scalajs-jquery"  % Common.sjsJqueryVsn,
-  Common.ORG      %%% "common-sjs"      % "0.0.0-SNAPSHOT",
+  Common.ORG      %%% "common-sjs"      % "0.0.0",
   //"com.lihaoyi"   %%% "upickle"       % "0.2.+",
   "io.monix"      %%% "minitest"            % Common.minitestVsn  % Test
 )

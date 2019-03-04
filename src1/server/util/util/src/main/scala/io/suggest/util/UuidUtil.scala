@@ -2,6 +2,7 @@ package io.suggest.util
 
 import java.io.{DataInputStream, ByteArrayInputStream, DataOutputStream, ByteArrayOutputStream}
 import java.util.UUID
+// TODO Удалить внешний кодек, надо использовать только java.util.Base64.
 import org.apache.commons.codec.binary.Base64
 
 /**

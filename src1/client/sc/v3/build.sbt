@@ -2,7 +2,7 @@ Common.settingsOrgJS
 
 name := "sc3-sjs"
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 enablePlugins(ScalaJSBundlerPlugin)
 

@@ -7,7 +7,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "moment-sio-sjs"
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
@@ -15,7 +15,7 @@ testFrameworks += new TestFramework("minitest.runner.Framework")
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG      %%% "common-sjs"      % "0.0.0-SNAPSHOT",
+  Common.ORG      %%% "common-sjs"      % "0.0.0",
   Common.ORG      %%% "scalajs-moment"  % Common.Vsn.momentJs,
   "io.monix"      %%% "minitest"        % Common.minitestVsn  % Test
 )

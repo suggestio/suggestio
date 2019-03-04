@@ -4,7 +4,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "scalajs-quill-delta"
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 

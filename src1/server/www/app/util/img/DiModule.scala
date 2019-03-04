@@ -16,15 +16,15 @@ class DiModule extends Module {
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = {
     Seq(
       // Регистрируем релаизации IMaker'ов под разными именами.
-      bind( classOf[IImgMaker] )
+      bind[IImgMaker]
         .qualifiedWith( "blk" )
         .to( classOf[BlkImgMaker] ),
 
-      bind( classOf[IImgMaker] )
+      bind[IImgMaker]
         .qualifiedWith( "scWide" )
         .to( classOf[ScWideMaker] ),
 
-      bind( classOf[IImgMaker] )
+      bind[IImgMaker]
         .qualifiedWith( "strictWide" )
         .to( classOf[StrictWideMaker] )
     )

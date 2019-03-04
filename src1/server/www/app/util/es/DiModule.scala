@@ -15,8 +15,7 @@ class DiModule extends Module {
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = {
     Seq(
       // Инжектить SiowebEsUtil опережая события, чтобы тот мог инициализировать ES Client.
-      bind( classOf[Client] )
-        .toProvider( classOf[TransportEsClient]),
+      bind[Client].toProvider[TransportEsClient],
 
       // Инициализировать модели надо заранее.
       bind[SiowebEsModel]

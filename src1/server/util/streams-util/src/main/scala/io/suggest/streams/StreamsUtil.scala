@@ -95,8 +95,11 @@ class StreamsUtil @Inject() (
         */
       def toSetFut: Future[Set[T]] = {
         src
-          .toMat( Sink.collection[T, Set[T]] )( Keep.right )
+          // TODO akka-2.5.21: раскомментить сборку Set[T], убрать Sink.seq + map(_.toSet). -- https://github.com/akka/akka/issues/26305
+          //.toMat( Sink.collection[T, Set[T]] )( Keep.right )
+          .toMat( Sink.seq )( Keep.right )
           .run()
+          .map(_.toSet)
       }
 
     }
@@ -235,9 +238,9 @@ class StreamsUtil @Inject() (
     // Собираем многоразовый синк, который будет наиболее эффективным путём собирать финальную ByteString.
     // Используется mutable ByteString builder, который инициализируется с фактическим началом потока, поэтому тут lazyInit().
     Sink
-      .lazyInit[ByteString, Future[ByteString]](
+      .lazyInitAsync[ByteString, Future[ByteString]](
         // При поступлении первых данных, инициализировать builder и собрать фактический sink:
-        sinkFactory = { _ =>
+        sinkFactory = { () =>
           val b = ByteString.newBuilder
           // Закидываем все данные в общий builder:
           val realSink = Sink.foreach { b.append }
@@ -247,13 +250,12 @@ class StreamsUtil @Inject() (
               }
             }
           Future.successful( realSink )
-        },
-        // Нет данных? Не проблема, вернуть пустой ByteString:
-        fallback = { () =>
-          Future.successful( ByteString.empty )
         }
       )
-      .mapMaterializedValue(_.flatten)
+      .mapMaterializedValue(
+        _.map(_.getOrElse( Future.successful( ByteString.empty ) ))
+         .flatten
+      )
   }
 
 

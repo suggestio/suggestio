@@ -174,9 +174,12 @@ class LkAds @Inject() (
         }
         .maybeTraceCount(this)(count => s"$logPrefix Bill agg $count item-infos for ${madIds.length} mads.")
         .toMat(
-          Sink.collection[(String, MAdItemStatuses), Map[String, MAdItemStatuses]]
+          //Sink.collection[(String, MAdItemStatuses), Map[String, MAdItemStatuses]]
+          // TODO akka-2.5.21 Раскомментить назад, убрать .map(_.toMap)
+          Sink.seq
         )(Keep.right)
         .run()
+        .map(_.toMap)
     }
 
     implicit val ctx = getContext2

@@ -504,7 +504,10 @@ class LkAdvGeo @Inject() (
       // Sink, материализующий множество rcvrId из потока MItem:
       val items2rcvrIdsSink = Flow[MItem]
         .mapConcat( _.rcvrIdOpt.toList )
-        .toMat( Sink.collection[String, Set[String]] )( Keep.right )
+        // TODO akka-2.5.21: https://github.com/akka/akka/issues/26305
+        //.toMat( Sink.collection[String, Set[String]] )( Keep.right )
+        .toMat( Sink.seq )(Keep.right)
+        .mapMaterializedValue(_.map(_.toSet))
 
       implicit val ctx = implicitly[Context]
 
@@ -538,7 +541,10 @@ class LkAdvGeo @Inject() (
               }
               kvsIter.toList
             }
-            .toMat( Sink.collection[(String, MRangeYmdOpt), Map[String, MRangeYmdOpt]] )(Keep.right)
+            // TODO akka-2.5.21: https://github.com/akka/akka/issues/26305
+            //.toMat( Sink.collection[(String, MRangeYmdOpt), Map[String, MRangeYmdOpt]] )(Keep.right)
+            .toMat(Sink.seq)( Keep.right )
+            .mapMaterializedValue( _.map(_.toMap) )
         }( Keep.both )
         // И запустить этот велосипед на исполнение, сгенерив пачку фьючерсов:
         .run

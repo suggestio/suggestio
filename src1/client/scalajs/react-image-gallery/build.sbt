@@ -12,7 +12,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "scalajs-react-image-gallery"
 
-version := s"${VSN}-SNAPSHOT"
+version := VSN
 
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
@@ -20,7 +20,7 @@ version := s"${VSN}-SNAPSHOT"
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG        %%% "scalajs-react-common"  % "0.0.0-SNAPSHOT"
+  Common.ORG        %%% "scalajs-react-common"  % "0.0.0"
   //"io.monix"      %%% "minitest" % Common.minitestVsn % "test"
 )
 

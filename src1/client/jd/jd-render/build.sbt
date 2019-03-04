@@ -11,7 +11,7 @@ scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
 
-  Common.ORG                     %%% "lk-common-sjs"    % "0.0.0-SNAPSHOT",
+  Common.ORG                     %%% "lk-common-sjs"    % "0.0.0",
   
   "com.softwaremill.macwire"     %%  "macros"           % Common.Vsn.MACWIRE % "provided",
 

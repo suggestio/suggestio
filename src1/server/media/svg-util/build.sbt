@@ -2,7 +2,7 @@ Common.settingsOrg
 
 name := "svg-util"
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 libraryDependencies ++= {
   val baticVsn = Common.Vsn.APACHE_BATIK

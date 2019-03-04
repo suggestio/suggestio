@@ -6,15 +6,15 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "lk-adn-map-sjs"
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 // Show more comments when using dubious features
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG          %%% "lk-adv-common-sjs"   % "0.0.0-SNAPSHOT",
-  Common.ORG          %%% "lk-dt-period-sjs"    % "0.0.0-SNAPSHOT",
-  Common.ORG          %%% "maps-sjs"            % "0.0.0-SNAPSHOT",
+  Common.ORG          %%% "lk-adv-common-sjs"   % "0.0.0",
+  Common.ORG          %%% "lk-dt-period-sjs"    % "0.0.0",
+  Common.ORG          %%% "maps-sjs"            % "0.0.0",
   "org.scala-js"      %%% "scalajs-dom"         % Common.sjsDomVsn
 )
 

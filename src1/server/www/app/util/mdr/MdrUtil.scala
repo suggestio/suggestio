@@ -253,8 +253,11 @@ class MdrUtil @Inject() (
                 .toSet
               personId -> emails
             }
-            .toMat( Sink.collection[(String, Set[String]), Map[String, Set[String]]] )( Keep.right )
+            // TODO akka-2.5.21: раскомментить сборку коллекции, убрать Sink.seq + map(_.toSet). -- https://github.com/akka/akka/issues/26305
+            //.toMat( Sink.collection[(String, Set[String]), Map[String, Set[String]]] )( Keep.right )
+            .toMat( Sink.seq )( Keep.right )
             .run()
+            .map(_.toMap)
         }
 
 

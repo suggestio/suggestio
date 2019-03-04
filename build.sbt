@@ -19,8 +19,10 @@ lazy val common = crossProject(JSPlatform, JVMPlatform)
   .crossType( CrossType.Full )
   .in( file(DIR0 + "shared/common") )
   .settings(
+    // TODO Надо избавляться от SNAPSHOT в коде.
+    updateOptions := updateOptions.value.withLatestSnapshots(false),
     Common.settingsOrg,
-    version := "0.0.0-SNAPSHOT",
+    version := "0.0.0",
     testFrameworks += new TestFramework("minitest.runner.Framework"),
     libraryDependencies ++= Seq(
       // Универсальные зависимости для клиента и сервера. Наследуются во ВСЕ компоненты проекта.
@@ -64,7 +66,8 @@ lazy val commonJS = common.js
     libraryDependencies ++= Seq(
       // java.time-поддержка на клиенте:
       "io.github.cquiroz" %%% "scala-java-time" % "2.+"
-    )
+    ),
+    useYarn := true
   )
 
 
@@ -578,7 +581,7 @@ lazy val www = project
       val llcCss = (nodeModules / "leaflet.locatecontrol" / "dist") * "*.min.css"
       val lDist = nodeModules / "leaflet" / "dist"
       val lCss = lDist * "*.css"
-      val lImages = (lDist / "images").***
+      val lImages = (lDist / "images").allPaths
       // Из-за использования этого через webpack externals: // TODO Надо ли это, если переезд на prunecluster?
       val lJs = lDist * "leaflet.js"
       llcCss +++ lCss +++ lImages +++ lJs
@@ -590,7 +593,7 @@ lazy val www = project
     // quill
     npmAssets ++= NpmAssets.ofProject(reactQuillSjs) { nodeModules =>
       val rootPath = nodeModules / "quill"
-      val assets = (rootPath / "assets").***
+      val assets = (rootPath / "assets").allPaths
       val distCss = (rootPath / "dist") * "*.css"
       assets +++ distCss
     }.value,

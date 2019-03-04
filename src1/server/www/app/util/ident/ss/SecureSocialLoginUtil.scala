@@ -9,7 +9,6 @@ import javax.inject.{Inject, Singleton}
 import models.mctx.ContextUtil
 import models.mext.MExtServicesJvm
 import models.req.MLoginViaReq
-import play.api.Configuration
 import play.api.cache.AsyncCacheApi
 import play.api.inject.Injector
 import play.api.libs.ws.{WSClient, WSRequest}
@@ -34,7 +33,6 @@ import scala.reflect.ClassTag
 @Singleton
 class SecureSocialLoginUtil @Inject()(
                                        identUtil                       : IdentUtil,
-                                       configuration                   : Configuration,
                                        injector                        : Injector,
                                        implicit private val ec         : ExecutionContext,
                                      )

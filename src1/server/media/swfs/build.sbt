@@ -2,7 +2,7 @@ Common.settingsOrg
 
 name := "swfs"
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 resolvers ++= Seq(
   "typesafe-releases"       at Common.Repo.TYPESAFE_RELEASES_URL,
@@ -15,7 +15,7 @@ libraryDependencies ++= {
   Seq(
     "com.google.inject" % "guice" % Common.Vsn.GUICE,
 
-    Common.ORG          %% "util" % "2.0.1-SNAPSHOT" changing()
+    Common.ORG          %% "util" % "2.0.1"
       exclude("org.jruby", "jruby-complete")
       exclude("org.slf4j", "slf4j-log4j12")
       exclude("log4j", "log4j")

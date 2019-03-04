@@ -4,7 +4,7 @@ name := "cordova-sio-util-sjs"
 
 enablePlugins(ScalaJSBundlerPlugin)
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 //libraryDependencies ++= Seq(
   // Тестирование...

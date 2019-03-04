@@ -38,9 +38,9 @@ object Common {
     val PLAY_SLICK   = "3.0.+"
 
     /** Версия play-json. Он выведен из под основного проекта. */
-    val PLAY_JSON_VSN = "2.6.+"
+    val PLAY_JSON_VSN = "2.7.+"
 
-    val PLAY_GEOJSON = "1.5.+"
+    val PLAY_GEOJSON = "1.5.0"
 
 
     /** Версия elasticsearch. */
@@ -97,7 +97,7 @@ object Common {
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
       */
     // TODO обновится на основную ветку. когда добавят/замёржат fontFamily(String)
-    val SCALACSS = "0.5.6-SNAPSHOT"
+    val SCALACSS = "0.5.6.20190304"
 
     /** Улучшенное жестко-типизированное сравнение.
       * @see [[https://github.com/japgolly/univeq#scalaz]]
@@ -269,6 +269,9 @@ object Common {
 
     }
 
+    /** @see [[https://mvnrepository.com/artifact/commons-codec/commons-codec]] */
+    val APACHE_COMMONS_CODEC = "1.12"
+
   }
 
 
@@ -276,9 +279,9 @@ object Common {
     organization := ORG,
     // Выключение сборки документации
     sources in (Compile, doc) := Seq.empty,
-    publishArtifact in (Compile, packageDoc) := false,
+    publishArtifact in (Compile, packageDoc) := false
     // Ускорение резолва зависимостей путём запрета их резолва без явной необходимости.
-    offline := true
+    //, offline := true
   )
 
   /** Очень общие сеттинги для jvm-проектов. */
@@ -294,7 +297,7 @@ object Common {
   )
 
   /** Версия play. */
-  val playVsn         = "2.6.20"
+  val playVsn         = "2.7.0"
 
 
   /** Версия bouncy castle. */

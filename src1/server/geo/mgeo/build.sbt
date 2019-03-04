@@ -4,7 +4,7 @@ Common.settingsOrg
 
 name := "mgeo"
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 

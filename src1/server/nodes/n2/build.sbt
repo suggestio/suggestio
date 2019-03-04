@@ -2,7 +2,7 @@ Common.settingsOrg
 
 name := "n2"
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 resolvers ++= {
   import Common.Repo._
@@ -16,12 +16,12 @@ resolvers ++= {
 
 libraryDependencies ++= {
   Seq(
-    Common.ORG          %% "util" % "2.0.1-SNAPSHOT" changing()
+    Common.ORG          %% "util" % "2.0.1"
       exclude("org.jruby", "jruby-complete")
       exclude("org.slf4j", "slf4j-log4j12")
       exclude("log4j", "log4j")
       exclude("org.slf4j", "log4j-over-slf4j"),
-    Common.ORG          %% "swfs" % "0.0.0-SNAPSHOT"
+    Common.ORG          %% "swfs" % "0.0.0"
       exclude("org.jruby", "jruby-complete")
       exclude("org.slf4j", "slf4j-log4j12")
       exclude("log4j",     "log4j")

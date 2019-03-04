@@ -4,11 +4,11 @@ name := "common-sjs"
 
 enablePlugins(ScalaJSBundlerPlugin)
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 libraryDependencies ++= Seq(
   "org.scala-js"        %%% "scalajs-dom"         % Common.sjsDomVsn,
-  //Common.ORG            %%% "commonJS"            % "0.0.0-SNAPSHOT",
+  //Common.ORG            %%% "commonJS"            % "0.0.0",
   
   // Некоторые небольшие скрипты для личного кабинета зависят от jquery. А тут живёт jq-утиль для них.
   // В будущем можно будет избавиться от них и удалить jquery из проекта.

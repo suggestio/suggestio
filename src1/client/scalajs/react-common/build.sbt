@@ -6,13 +6,13 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "scalajs-react-common"
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 // Show more comments when using dubious features
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-    Common.ORG      %%% "common-sjs"                  % "0.0.0-SNAPSHOT",
+    Common.ORG      %%% "common-sjs"                  % "0.0.0",
     "com.github.japgolly.scalajs-react" %%% "core"    % Common.reactSjsVsn,
     // Reusability:
     "com.github.japgolly.scalajs-react" %%% "extra"   % Common.reactSjsVsn,

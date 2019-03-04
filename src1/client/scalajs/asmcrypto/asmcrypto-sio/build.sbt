@@ -4,7 +4,7 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "asmcrypto-sio"
 
-version := "0.0.0-SNAPSHOT"
+version := "0.0.0"
 
 // Show more comments when using dubious features
 scalacOptions += "-feature"

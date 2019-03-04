@@ -12,7 +12,7 @@ Common.settingsOrg
 
 name := "www"
 
-version := "1.0-SNAPSHOT"
+version := "1.0"
 
 JsEngineKeys.engineType := JsEngineKeys.EngineType.Node
 
@@ -35,7 +35,7 @@ libraryDependencies ++= {
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.7.1",  // https://github.com/mohiva/play-html-compressor
   // io.suggest stuff
-  Common.ORG %% "util" % "2.0.1-SNAPSHOT" changing()
+  Common.ORG %% "util" % "2.0.1"
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
@@ -111,14 +111,16 @@ resolvers ~= {
 resolvers ++= {
   import Common.Repo._
   Seq(
-    "typesafe-releases"       at TYPESAFE_RELEASES_URL,
+    //"typesafe-releases"       at TYPESAFE_RELEASES_URL,
     "sonatype-oss-releases"   at SONATYPE_OSS_RELEASES_URL,
     "sonatype-oss-snapshots"  at SONATYPE_OSS_SNAPSHOTS_URL,
     // kaptcha:
     "sonatype-groups-forge"   at SONATYPE_GROUPS_FORGE_URL,
     "apache-releases"         at APACHE_RELEASES_URL,
     // brotli
-    "bintray-nitram509-jbrotli" at s"${ARTIFACTORY_URL}bintray-nitram509-jbrotli"
+    "bintray-nitram509-jbrotli" at s"${ARTIFACTORY_URL}bintray-nitram509-jbrotli",
+    // Для решения проблемы с oauth2-odic-sdk:
+    "typesafe-releases"       at "http://central.maven.org/maven2"
     //"jcenter"                 at JCENTER_URL
   )
 }

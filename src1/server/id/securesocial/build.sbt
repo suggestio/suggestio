@@ -2,7 +2,7 @@ Common.settingsOrg
 
 name := "securesocial"
 
-version := "3.4.0sio-SNAPSHOT"
+version := "3.4.0sio"
 
 
 //generateRefReverseRouter := false

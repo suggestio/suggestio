@@ -7,13 +7,13 @@ enablePlugins(ScalaJSBundlerPlugin)
 
 name := "scalajs-leaflet"
 
-version := "0.1s-SNAPSHOT"
+version := "0.1s"
 
 // Show more comments when using dubious features
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG      %%% "common-sjs"       % "0.0.0-SNAPSHOT",
+  Common.ORG      %%% "common-sjs"       % "0.0.0",
   "org.scala-js"  %%% "scalajs-dom"      % Common.sjsDomVsn,
   "io.monix"      %%% "minitest"         % Common.minitestVsn % Test
 )

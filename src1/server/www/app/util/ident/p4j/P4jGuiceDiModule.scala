@@ -125,7 +125,7 @@ class P4jDiModule extends Module with MacroLogsImpl {
     val p4jConfig = new P4jConfig( clients )
     // setActionAdapter() - здесь пропускаем: все Result'ы отрабатываются на усмотрение контроллера.
 
-    bind( classOf[P4jConfig] ) toInstance p4jConfig
+    bind[P4jConfig] toInstance p4jConfig
   }
 
 }
