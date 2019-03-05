@@ -23,3 +23,4 @@ npmDependencies in Compile ++= Seq(
   "sw-toolbox" -> version.value
 )
 
+useYarn := true

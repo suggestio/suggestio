@@ -27,3 +27,4 @@ npmDependencies in Compile := Nil
 
 scalaJSUseMainModuleInitializer := true
 
+useYarn := true

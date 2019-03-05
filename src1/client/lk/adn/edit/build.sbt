@@ -16,3 +16,4 @@ libraryDependencies ++= Seq(
   "org.scala-js"                 %%% "scalajs-dom"         % Common.sjsDomVsn
 )
 
+useYarn := true

@@ -22,20 +22,20 @@ object Common {
   object Vsn {
 
     /** Версия moment.js. */
-    def momentJs = "2.17.1"
+    def momentJs = "2.24.0"
 
-    val GUICE = "4.1.+"
+    val GUICE = "4.2.+"
 
     /** Версия typesafe slick. */
-    val SLICK        = "3.2.+"
+    val SLICK        = "3.3.+"
 
     /** Версия slick-pg.
       * @see [[https://github.com/tminglei/slick-pg#install]]
       */
-    val SLICK_PG     = "0.16.+"
+    val SLICK_PG     = "0.17.+"
 
     /** Версия play-slick прослойки. */
-    val PLAY_SLICK   = "3.0.+"
+    val PLAY_SLICK   = "4.0.+"
 
     /** Версия play-json. Он выведен из под основного проекта. */
     val PLAY_JSON_VSN = "2.7.+"
@@ -71,25 +71,18 @@ object Common {
 
     val REACT_IMAGE_GALLERY = "0.8.7"
 
-    /** Версия play-ws, который уехал за пределы play начиная с play-2.6.0.
-      * @see [[https://playframework.com/documentation/2.6.x/WSMigration26]]
-      *      [[https://github.com/playframework/play-ws]]
-      */
-    val PLAY_WS = "1.0.0"
-
     /** Версия scalaz.
       * Изначально добавлена в проект, чтобы наконец выкинуть вечно-кривую валидацию через wix/accord.
       *
       * https://github.com/scalaz/scalaz#getting-scalaz
       */
-    val SCALAZ = "7.2.14"
+    val SCALAZ = "7.2.+"
 
     /** Версия scalaCSS. Изначально появилась в sc-v3 для замены около-динамических стилей,
       * геморройно подгружаемых с сервера.
       *
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
       */
-    // TODO обновится на основную ветку. когда добавят/замёржат fontFamily(String)
     val SCALACSS = "0.5.6.20190304"
 
     /** Улучшенное жестко-типизированное сравнение.
@@ -111,17 +104,7 @@ object Common {
       *
       * @see [[https://github.com/adamw/macwire#installation-using-with-sbt]]
      */
-    val MACWIRE = "2.3.0"
-
-    /** @see [[https://www.npmjs.com/package/react-tinymce]] */
-    val REACT_TINYMCE = "0.6.0"
-
-    /** react-tinymce неявно зависит от tinymce, который должен бы быть в global scope.
-      *
-      * @see [[https://github.com/instructure-react/react-tinymce#dependency]]
-      */
-    val TINYMCE = "4.2"
-
+    val MACWIRE = "2.3.+"
 
     /** Версия wysiwyg-редактора quill, который будем пытаться использовать заместо tinymce.
       * @see [[https://github.com/quilljs/quill]]
@@ -168,8 +151,7 @@ object Common {
     /** Версия scala-parser-combinators.
       * @see [[https://github.com/scala/scala-parser-combinators]]
       */
-    val SCALA_PARSER_COMBINATORS = "1.0.5"
-    // TODO Когда выйдет 1.0.7, выставить динамическую версию. sjs-релиз 1.0.6 неисправен. https://github.com/scala/scala-parser-combinators/issues/119
+    val SCALA_PARSER_COMBINATORS = "1.+"
 
     /** Версия react-grid-layout.
       * @see [[https://github.com/strml/react-grid-layout]]
@@ -207,7 +189,7 @@ object Common {
     /** Версия akka-contrib-extra. Вероятно, будет нужна для реактивного i/o из шелла.
       * @see [[https://github.com/typesafehub/akka-contrib-extra]]
       */
-    val AKKA_CONTRIB_EXTRA = "4.1.3"
+    val AKKA_CONTRIB_EXTRA = "4.+"
 
     /** Версия jBrotli-биндингов.
       * @see [[https://github.com/MeteoGroup/jbrotli]]
@@ -223,11 +205,6 @@ object Common {
       * @see [[https://github.com/zurfyx/eddystone-web-bluetooth]]
       */
     val EDDYSTONE_WEB_BLUETOOTH_JS = "1.0.1"
-
-    /** Версия компонент.
-      * @see [[https://github.com/chandu0101/scalajs-react-components]]
-      */
-    val SJS_REACT_COMPONENTS = "1.2.3-SNAPSHOT"
 
     /** ServiceWorker toolbox.
       * @see [[https://www.npmjs.com/package/sw-toolbox]]

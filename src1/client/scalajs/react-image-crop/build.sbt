@@ -23,3 +23,4 @@ npmDependencies in Compile ++= Seq(
   "react-image-crop" -> version.value
 )
 
+useYarn := true

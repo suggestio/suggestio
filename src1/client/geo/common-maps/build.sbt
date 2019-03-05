@@ -11,3 +11,4 @@ libraryDependencies ++= Seq(
   Common.ORG          %%% "scalajs-leaflet"     % "0.1s"
 )
 
+useYarn := true

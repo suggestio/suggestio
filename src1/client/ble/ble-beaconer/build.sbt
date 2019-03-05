@@ -15,3 +15,4 @@ libraryDependencies ++= Seq(
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
+useYarn := true

@@ -23,3 +23,4 @@ npmDependencies in Compile ++= Seq(
   "react-stonecutter" -> version.value
 )
 
+useYarn := true

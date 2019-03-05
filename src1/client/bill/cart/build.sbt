@@ -14,3 +14,4 @@ libraryDependencies ++= Seq(
   //"com.github.japgolly.scalacss" %%% "ext-react"        % Common.Vsn.SCALACSS
 )
 
+useYarn := true

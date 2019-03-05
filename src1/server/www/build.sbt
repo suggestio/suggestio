@@ -23,7 +23,7 @@ libraryDependencies ++= {
  Seq(
   //jdbc exclude("com.h2database", "h2"),
   guice,
-  ehcache,
+  caffeine,
   "com.typesafe.play" %% "play-json" % Common.Vsn.PLAY_JSON_VSN,
 
   ws exclude("commons-logging", "commons-logging"),
@@ -61,7 +61,7 @@ libraryDependencies ++= {
   // Календарь праздников
   "de.jollyday" % "jollyday" % "0.5.+",
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
-  "org.postgresql" % "postgresql" % "42.2.2",
+  "org.postgresql" % "postgresql" % "42.+",
   // geo
   //"org.locationtech.spatial4j" % "spatial4j" % Common.Vsn.SPATIAL4J,
   //"com.vividsolutions" % "jts-core" % Common.Vsn.JTS,
@@ -73,7 +73,7 @@ libraryDependencies ++= {
 
   // Для будущей работы с файлами добавлено вот это:
   "com.github.pathikrit" %% "better-files"       % Common.Vsn.BETTER_FILES,
-  "com.typesafe.akka"    %% "akka-contrib-extra" % Common.Vsn.AKKA_CONTRIB_EXTRA,
+  //"com.typesafe.akka"    %% "akka-contrib-extra" % Common.Vsn.AKKA_CONTRIB_EXTRA,
   
   // Валидация: по идее это должно быть на уровне common, но scala-2.12 пока не пашет, оно тут:
   //"com.wix"      %% "accord-core"     % Common.wixAccordVsn,

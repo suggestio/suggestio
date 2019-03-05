@@ -26,7 +26,7 @@ trait MuiDrawerPropsBase
   val elevation: js.UndefOr[Int] = js.undefined
   val ModalProps: js.UndefOr[MuiModalProps] = js.undefined
   val PaperProps: js.UndefOr[MuiPaperProps] = js.undefined
-  val SlideProps: js.UndefOr[MuiSlideProps] = js.undefined
+  val SlideProps: js.UndefOr[js.Object] = js.undefined
   val transitionDuration: js.UndefOr[Double | MuiTransitionDuration] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
 }
@@ -73,32 +73,4 @@ trait MuiDrawerClasses extends js.Object {
   val paperAnchorDockedRight: js.UndefOr[String] = js.undefined
   val paperAnchorDockedBottom: js.UndefOr[String] = js.undefined
   val modal: js.UndefOr[String] = js.undefined
-}
-
-
-@js.native
-trait MuiDrawerM extends js.Object {
-  def close(reason: String): Unit = js.native
-
-  def disableSwipeHandling(): Unit = js.native
-
-  def enableSwipeHandling(): Unit = js.native
-
-  def getMaxTranslateX(): Int = js.native
-
-  def getStyles(): CssProperties = js.native
-
-  def getTranslateMultiplier(): Int = js.native
-
-  def getTranslateX(currentX: Int): Int = js.native
-
-  def getTranslatedWidth(): Double = js.native
-
-  def open(reason: String): Unit = js.native
-
-  def removeBodyTouchListeners(): Unit = js.native
-
-  def setPosition(position: Int): Unit = js.native
-
-  def shouldShow(): Boolean = js.native
 }

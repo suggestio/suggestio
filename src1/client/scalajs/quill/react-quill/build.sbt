@@ -27,3 +27,4 @@ npmDependencies in Compile ++= Seq(
 
 //requiresDOM in Test := true
 
+useYarn := true

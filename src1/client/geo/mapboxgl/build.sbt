@@ -19,4 +19,4 @@ libraryDependencies ++= Seq(
 // TODO jsDependencies: unresolved dependency: org.webjars.npm#geojson-vt, ...
 //"org.webjars.npm" % "mapbox-gl" % "0.16.0" / "0.16.0/dist/mapbox-gl.js",
 
-
+useYarn := true

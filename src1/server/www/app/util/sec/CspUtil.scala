@@ -81,6 +81,8 @@ class CspUtil @Inject() (
           reportUri = Some( routes.Static.handleCspReport().url ),
           //frameSrc = VIDEO_SRCS,    // frameSrc is depreacted.
           childSrc = IFRAMES_SRCS,
+          // default-src не распространяется на form-action:
+          formAction = commonSources,
           // TODO На всякий случай, флешеапплеты разрешить только с youtube/video (или вообще запретить?).
           //objectSrc = Set( Csp.Sources.NONE )
           //workerSrc = commonSources,

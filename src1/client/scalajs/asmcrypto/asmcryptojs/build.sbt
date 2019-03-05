@@ -19,3 +19,4 @@ npmDependencies in Compile ++= Seq(
   "asmcrypto.js"   -> Common.Vsn.ASM_CRYPTO_JS
 )
 
+useYarn := true

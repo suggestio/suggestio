@@ -19,3 +19,4 @@ npmDependencies in Compile ++= Seq(
   "quill"   -> Common.Vsn.QUILL
 )
 
+useYarn := true

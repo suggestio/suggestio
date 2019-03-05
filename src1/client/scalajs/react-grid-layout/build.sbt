@@ -23,3 +23,4 @@ npmDependencies in Compile ++= Seq(
   "react-grid-layout" -> version.value
 )
 
+useYarn := true

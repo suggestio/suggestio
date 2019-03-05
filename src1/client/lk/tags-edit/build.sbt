@@ -14,3 +14,4 @@ libraryDependencies ++= Seq(
     Common.ORG      %%% "lk-common-sjs"           % "0.0.0"
 )
 
+useYarn := true

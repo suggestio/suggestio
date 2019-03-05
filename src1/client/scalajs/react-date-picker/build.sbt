@@ -24,3 +24,4 @@ npmDependencies in Compile ++= Seq(
   "react-datepicker" -> version.value
 )
 
+useYarn := true

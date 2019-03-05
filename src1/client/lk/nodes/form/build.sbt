@@ -18,3 +18,4 @@ libraryDependencies ++= Seq(
   "com.softwaremill.macwire" %% "macros"            % Common.Vsn.MACWIRE % "provided"
 )
 
+useYarn := true

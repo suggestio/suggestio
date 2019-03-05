@@ -35,20 +35,6 @@ trait MuiListItemProps extends MuiPropsBase {
 object MuiListItemProps extends MuiPropsBaseStatic[MuiListItemProps]
 
 
-@js.native
-trait MuiListItemM extends js.Object {
-  def applyFocusState(focusState: MuiFocusedState): Unit /*One of none, focused, keyboardfocused*/ = js.native
-
-  def createDisabledElement(styles: CssProperties, contentChildren: Array[CtorType.ChildArg], additionalProps: js.Any): Unit = js.native
-
-  def createLabelElement(styles: CssProperties, contentChildren: Array[CtorType.ChildArg], additionalProps: js.Any): Unit = js.native
-
-  def createTextElement(styles: CssProperties, data: js.Any, key: String): Unit = js.native
-
-  def pushElement(children: Array[CtorType.ChildArg], element: js.Any, baseStyles: CssProperties, additionalProps: js.Any): Unit = js.native
-}
-
-
 trait MuiListItemClasses extends js.Object {
   val root: js.UndefOr[String] = js.undefined
   val container: js.UndefOr[String] = js.undefined

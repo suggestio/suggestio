@@ -23,3 +23,4 @@ npmDependencies in Compile ++= Seq(
   "react-color" -> version.value
 )
 
+useYarn := true

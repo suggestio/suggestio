@@ -13,3 +13,4 @@ version := "0.0.0"
 
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
+useYarn := true

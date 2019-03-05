@@ -16,3 +16,4 @@ libraryDependencies ++= Seq(
 
 //jsEnv in Test := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv
 
+useYarn := true

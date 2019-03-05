@@ -24,7 +24,7 @@ trait MuiSvgIconProps extends js.Object {
   val hoverColor: js.UndefOr[MuiColor] = js.undefined
   val onMouseEnter: js.UndefOr[ReactMouseEventFromHtml => Unit] = js.undefined
   val onMouseLeave: js.UndefOr[ReactMouseEventFromHtml => Unit] = js.undefined
-  val style: js.UndefOr[CssProperties] = js.undefined
+  val style: js.UndefOr[js.Any] = js.undefined
   val viewBox: js.UndefOr[String] = js.undefined
   val className: js.UndefOr[String] = js.undefined
 }

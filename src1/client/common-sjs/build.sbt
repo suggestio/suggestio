@@ -29,3 +29,4 @@ jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
+useYarn := true

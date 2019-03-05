@@ -23,3 +23,4 @@ npmDependencies in Compile ++= Seq(
   "react-sidebar" -> version.value
 )
 
+useYarn := true

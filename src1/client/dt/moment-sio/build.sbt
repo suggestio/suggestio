@@ -22,3 +22,4 @@ libraryDependencies ++= Seq(
 
 //requiresDOM in Test := true
 
+useYarn := true

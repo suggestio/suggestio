@@ -23,3 +23,4 @@ npmDependencies in Compile ++= Seq(
   "react-sanfona" -> version.value
 )
 
+useYarn := true

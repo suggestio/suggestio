@@ -15,3 +15,4 @@ libraryDependencies ++= Seq(
   "io.monix"                     %%% "minitest"         % Common.minitestVsn % Test
 )
 
+useYarn := true

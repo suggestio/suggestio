@@ -32,3 +32,4 @@ npmDependencies in Compile ++= Seq(
   //"string-replace-loader" -> Common.Vsn.STRING_REPLACE_LOADER_JS
 //)
 
+useYarn := true

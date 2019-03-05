@@ -33,11 +33,3 @@ trait MuiCircularProgressClasses extends js.Object {
   val static: js.UndefOr[String] = js.undefined
   // TODO ... https://material-ui.com/api/circular-progress/#css-api
 }
-
-
-@js.native
-trait MuiCircularProgressM extends js.Object {
-  def rotateWrapper(wrapper: Wrapper): Unit = js.native
-
-  def scalePath(path: CircularProgressPath): Unit = js.native
-}

@@ -17,3 +17,4 @@ testFrameworks += new TestFramework("minitest.runner.Framework")
 
 // TODO требуется DOM в тестах.
 
+useYarn := true

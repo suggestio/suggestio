@@ -23,3 +23,4 @@ npmDependencies in Compile ++= Seq(
   "react-scroll" -> version.value
 )
 
+useYarn := true

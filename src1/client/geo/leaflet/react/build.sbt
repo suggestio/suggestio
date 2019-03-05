@@ -23,3 +23,4 @@ npmDependencies in Compile ++= Seq(
   "react-leaflet" -> Common.Vsn.REACT_LEAFLET
 )
 
+useYarn := true

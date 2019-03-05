@@ -21,3 +21,4 @@ npmDevDependencies in Compile ++= Seq(
   "exports-loader" -> Common.Vsn.EXPORTS_LOADER_JS
 )
 
+useYarn := true

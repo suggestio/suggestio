@@ -15,3 +15,4 @@ scalacOptions += "-feature"
 
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
+useYarn := true

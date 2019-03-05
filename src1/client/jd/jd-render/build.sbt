@@ -19,3 +19,4 @@ libraryDependencies ++= Seq(
 
 )
 
+useYarn := true

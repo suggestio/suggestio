@@ -24,3 +24,4 @@ npmDependencies in Compile ++= Seq(
   "react-dom" -> Common.reactJsVsn
 )
 
+useYarn := true

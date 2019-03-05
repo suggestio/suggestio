@@ -22,3 +22,4 @@ libraryDependencies ++= Seq(
     "com.github.japgolly.scalajs-react" %%% "extra"       % Common.reactSjsVsn
 )
 
+useYarn := true

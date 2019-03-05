@@ -23,3 +23,4 @@ npmDependencies in Compile ++= Seq(
   "react-resizable" -> version.value
 )
 
+useYarn := true

@@ -6,3 +6,4 @@ version := "0.0.0"
 
 enablePlugins(ScalaJSBundlerPlugin)
 
+useYarn := true
