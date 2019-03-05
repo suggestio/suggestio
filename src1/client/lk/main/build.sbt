@@ -39,3 +39,5 @@ npmDependencies in Compile ++= Seq(
 
 scalaJSUseMainModuleInitializer := true
 
+useYarn := true
+

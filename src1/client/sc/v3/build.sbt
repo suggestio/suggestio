@@ -42,3 +42,5 @@ emitSourceMaps := false
 
 scalaJSUseMainModuleInitializer := true
 
+useYarn := true
+

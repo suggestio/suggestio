@@ -66,8 +66,7 @@ lazy val commonJS = common.js
     libraryDependencies ++= Seq(
       // java.time-поддержка на клиенте:
       "io.github.cquiroz" %%% "scala-java-time" % "2.+"
-    ),
-    useYarn := true
+    )
   )
 
 
