@@ -3,8 +3,9 @@ package io.suggest.sys.mdr.v
 import chandu0101.scalajs.react.components.materialui.{MuiDrawer, MuiDrawerAnchors, MuiDrawerProps, MuiDrawerVariants, MuiToolBar}
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.jd.render.v.{JdCss, JdCssR}
-import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.css.CssR
+import io.suggest.jd.render.v.{JdCss, JdCssR, JdCssStatic}
+import io.suggest.model.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import io.suggest.sys.mdr.m.MSysMdrRootS
 import io.suggest.sys.mdr.v.dia.MdrDiaRefuseR
@@ -29,6 +30,7 @@ class SysMdrFormR(
                    val mdrToolBarR        : MdrToolBarR,
                    val mdrForceAllNodesR  : MdrForceAllNodesR,
                    jdCssR                 : JdCssR,
+                   jdCssStatic            : JdCssStatic,
                  ) {
 
   type Props_t = MSysMdrRootS
@@ -48,11 +50,12 @@ class SysMdrFormR(
 
   class Backend( $: BackendScope[Props, State] ) {
 
-    def render(s: State): VdomElement = {
+    def render(p: Props, s: State): VdomElement = {
       // Панель управления модерации.
       <.div(
 
-        // Рендер css карточки:
+        // Рендер jd css карточки:
+        p.wrap(_ => jdCssStatic)( CssR.apply ),
         s.jdCssC { jdCssR.apply },
 
         // Тулбар, без AppBar, т.к. он неуместен и делает неконтрастный фон.
@@ -104,7 +107,7 @@ class SysMdrFormR(
               mdrSidePanelR.PropsVal(
                 nodeId                  = req.nodeId,
                 ntypeOpt = req.ad
-                  .map(_ => MNodeTypes.Ad)
+                  .map[MNodeType](_ => MNodeTypes.Ad)
                   .orElse {
                     req.nodesMap
                       .get(req.nodeId)
@@ -167,7 +170,7 @@ class SysMdrFormR(
             nodeIdOpt = nodeInfoOpt.map(_.nodeId),
             ntypeOpt = nodeInfoOpt
               .flatMap(_.ad)
-              .map(_ => MNodeTypes.Ad)
+              .map[MNodeType](_ => MNodeTypes.Ad)
               .orElse {
                 for {
                   nodeInfo <- nodeInfoOpt

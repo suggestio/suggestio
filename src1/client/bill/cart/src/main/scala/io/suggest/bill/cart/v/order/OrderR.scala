@@ -7,10 +7,9 @@ import io.suggest.bill.cart.v.itm.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR, I
 import io.suggest.bill.cart.v.txn.TxnsR
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
-import io.suggest.jd.render.v.{JdCss, JdCssR}
+import io.suggest.jd.render.v.{JdCss, JdCssR, JdCssStatic}
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.spa.OptFastEq
-import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -25,6 +24,7 @@ import japgolly.univeq._
 class OrderR(
               cartCss                : OrderCss,
               jdCssR                 : JdCssR,
+              jdCssStatic            : JdCssStatic,
               val itemRowR           : ItemRowR,
               val itemsTableBodyR    : ItemsTableBodyR,
               val itemsTableHeadR    : ItemsTableHeadR,
@@ -33,12 +33,6 @@ class OrderR(
               val orderInfoR         : OrderInfoR,
               val txnsR              : TxnsR,
             ) {
-
-  import JdCss.JdCssFastEq
-  import goToPayBtnR.GoToPayBtnRPropsValFastEq
-  import itemsTableBodyR.ItemsTableBodyRPropsValFastEq
-  import itemsTableHeadR.ItemsTableHeadRPropsValFastEq
-  import itemsToolBarR.ItemsToolBarRPropsValFastEq
 
 
   type Props_t = MCartRootS
@@ -65,6 +59,9 @@ class OrderR(
 
         // Статические стили плитки.
         propsProxy.wrap(_ => cartCss)( CssR.apply ),
+
+        // Статические jd-стили:
+        propsProxy.wrap(_ => jdCssStatic)( CssR.apply ),
 
         // Рендер стилей отображаемых карточек.
         s.jdCssC { jdCssR.apply },
@@ -104,7 +101,7 @@ class OrderR(
     .initialStateFromProps { propsProxy =>
       State(
 
-        jdCssC = propsProxy.connect( _.order.jdCss )(JdCssFastEq),
+        jdCssC = propsProxy.connect( _.order.jdCss )( JdCss.JdCssFastEq ),
 
         orderHeadC = propsProxy.connect { props =>
           itemsTableHeadR.PropsVal(
@@ -117,7 +114,7 @@ class OrderR(
             isPendingReq = props.order.orderContents.isPending,
             isItemsEditable = props.order.orderContents.exists(_.isItemsEditable)
           )
-        },
+        }( itemsTableHeadR.ItemsTableHeadRPropsValFastEq ),
 
         orderBodyC = propsProxy.connect { props =>
           itemsTableBodyR.PropsVal(
@@ -125,7 +122,7 @@ class OrderR(
             selectedIds   = props.order.itemsSelected,
             jdCss         = props.order.jdCss
           )
-        },
+        }( itemsTableBodyR.ItemsTableBodyRPropsValFastEq ),
 
         toolBarPropsC = propsProxy.connect { props =>
           // Нужно отображать тулбар только если ордер-корзина
@@ -141,7 +138,7 @@ class OrderR(
               isPendingReq  = ocPot.isPending
             )
           }
-        },
+        }( OptFastEq.Wrapped( itemsToolBarR.ItemsToolBarRPropsValFastEq ) ),
 
         goToPayPropsC = propsProxy.connect { props =>
           // TODO Разрешить сабмит без nodeId. Зависимость от nodeId - на уровне ЛК, хотя можно и без неё.
@@ -157,7 +154,7 @@ class OrderR(
               disabled = props.order.orderContents.isPending
             )
           }
-        },
+        }( OptFastEq.Wrapped( goToPayBtnR.GoToPayBtnRPropsValFastEq ) ),
 
         orderOptC = propsProxy.connect { mroot =>
           for {

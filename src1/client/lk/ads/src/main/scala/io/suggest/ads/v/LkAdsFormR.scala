@@ -5,9 +5,9 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ads.LkAdsFormConst
 import io.suggest.ads.m.{MAdProps, MLkAdsRoot}
 import io.suggest.common.html.HtmlConstants
-import io.suggest.css.Css
+import io.suggest.css.{Css, CssR}
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.render.v.{JdCss, JdCssR}
+import io.suggest.jd.render.v.{JdCss, JdCssR, JdCssStatic}
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
@@ -30,10 +30,9 @@ import play.api.libs.json.Json
   */
 class LkAdsFormR(
                   val adItemR     : AdItemR,
-                  jdCssR          : JdCssR
+                  jdCssR          : JdCssR,
+                  jdCssStatic     : JdCssStatic,
                 ) {
-
-  import JdCss.JdCssFastEq
 
   type Props = ModelProxy[MLkAdsRoot]
 
@@ -50,6 +49,7 @@ class LkAdsFormR(
       <.div(
         ^.`class` := Css.Lk.Page.VIEWPORT,
 
+        p.wrap(_ => jdCssStatic)( CssR.apply ),
         s.jdCssC { jdCssR.apply },
 
         <.article(
@@ -159,7 +159,7 @@ class LkAdsFormR(
   val component = ScalaComponent.builder[Props]("LkAdsForm")
     .initialStateFromProps { propsProxy =>
       State(
-        jdCssC        = propsProxy.connect(_.ads.jdCss),
+        jdCssC        = propsProxy.connect(_.ads.jdCss)( JdCss.JdCssFastEq ),
         nodeAdsC      = propsProxy.connect(_.ads.ads),
         parentNodeIdC = propsProxy.connect(_.conf.nodeKey.last)
       )

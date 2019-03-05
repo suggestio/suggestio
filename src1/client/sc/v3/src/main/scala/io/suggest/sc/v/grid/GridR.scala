@@ -6,13 +6,11 @@ import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.grid.{GridConst, GridScrollUtil}
-import io.suggest.jd.render.v._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.MScReactCtx
-import io.suggest.sc.m.grid.{GridScroll, MGridCoreS, MGridS, MScAdData}
+import io.suggest.sc.m.grid.{GridScroll, MGridS, MScAdData}
 import io.suggest.sc.styl.ScCssStatic
 import io.suggest.spa.FastEqUtil
-import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -25,8 +23,6 @@ import scalacss.ScalaCssReact._
   * Description: React-компонент плитки карточек.
   */
 class GridR(
-             gridCoreR                  : GridCoreR,
-             jdCssR                     : JdCssR,
              scReactCtxP                : React.Context[MScReactCtx],
            ) {
 
@@ -37,8 +33,6 @@ class GridR(
 
   /** Модель состояния компонента. */
   protected[this] case class State(
-                                    jdCssC              : ReactConnectProxy[JdCss],
-                                    coreC               : ReactConnectProxy[MGridCoreS],
                                     gridSzC             : ReactConnectProxy[MSize2di],
                                     loaderPotC          : ReactConnectProxy[Pot[Vector[MScAdData]]],
                                   )
@@ -51,7 +45,7 @@ class GridR(
       ReactDiodeUtil.dispatchOnProxyScopeCB($, GridScroll(scrollTop))
     }
 
-    def render(s: State): VdomElement = {
+    def render(p: Props, s: State, children: PropsChildren): VdomElement = {
       scReactCtxP.consume { scReactCtx =>
         val ScCss = scReactCtx.scCss
         val GridCss = ScCss.Grid
@@ -68,25 +62,21 @@ class GridR(
             <.div(
               GridCss.content,
 
-              // Рендер style-тега.
-              s.jdCssC { jdCssR.apply },
-
               // Начинается [пере]сборка всей плитки
               // TODO Функция сборки плитки неоптимальна и перегенеривается на каждый чих. Это вызывает лишние перерендеры контейнера плитки.
               {
-                // Непосредственный рендер плитки, снаружи от рендера connect-зависимого контейнера плитки.
-                val gridCore = s.coreC { gridCoreR.apply }
-
+                val stylesTm = TagMod(
+                  ScCssStatic.Grid.container,
+                  GridCss.container,
+                )
                 s.gridSzC { gridSzProxy =>
                   val gridSz = gridSzProxy.value
-
                   <.div(
-                    ScCssStatic.Grid.container,
-                    GridCss.container,
+                    stylesTm,
                     ^.width  := gridSz.width.px,
                     ^.height := (gridSz.height + GridConst.CONTAINER_OFFSET_BOTTOM + GridConst.CONTAINER_OFFSET_TOP).px,
 
-                    gridCore
+                    children,
                   )
                 }
               },
@@ -120,14 +110,6 @@ class GridR(
     .initialStateFromProps { propsProxy =>
       // Наконец, сборка самого состояния.
       State(
-        jdCssC = propsProxy.connect { props =>
-          props.core.jdCss
-        }( JdCss.JdCssFastEq ),
-
-        coreC = propsProxy.connect { props =>
-          props.core
-        }( MGridCoreS.MGridCoreSFastEq ),
-
         gridSzC = propsProxy.connect { props =>
           props.core.gridBuild.gridWh
         }( FastEq.ValueEq ),
@@ -138,9 +120,9 @@ class GridR(
 
       )
     }
-    .renderBackend[Backend]
+    .renderBackendWithChildren[Backend]
     .build
 
-  def apply(props: Props) = component(props)
+  def apply(props: Props)(children: VdomNode*) = component(props)(children: _*)
 
 }

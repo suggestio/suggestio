@@ -42,12 +42,22 @@ object JdCss {
   @inline implicit def univEq: UnivEq[JdCss] = UnivEq.derive
 
 
-  def valueEnumEntryDomainNameF[T] = {
+  private def valueEnumEntryDomainNameF[T] = {
     (vee: ValueEnumEntry[T], _: Int) =>
       vee.value
   }
 
 }
+
+
+/** Статические стили JdCss, которые не изменяются во время работы. */
+class JdCssStatic extends StyleSheet.Inline {
+
+  import dsl._
+
+
+}
+
 
 case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
@@ -173,7 +183,9 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           .filter { jdt =>
             // Интересуют только стрипы c bgImg, но без wide
             val p1 = jdt.props1
-            p1.bm.nonEmpty && (jdt.name ==* MJdTagNames.STRIP) && p1.bgImg.nonEmpty
+            p1.bm.nonEmpty &&
+              (jdt.name ==* MJdTagNames.STRIP) &&
+              p1.bgImg.nonEmpty
           }
           .toIndexedSeq
       )

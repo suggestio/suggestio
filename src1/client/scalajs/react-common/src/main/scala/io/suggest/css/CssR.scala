@@ -33,6 +33,6 @@ object CssR {
 
   def apply(cssProxy: Props) = component( cssProxy )
   // TODO Нужно сделать val, и тогда можно будет удалить в JdCssR.
-  //val apply: ReactConnectProps[Props_t] = _apply  // Не компилится
+  //val apply: ReactConnectProps[_ <: StyleSheet.Base] = _apply  // Не компилится
 
 }

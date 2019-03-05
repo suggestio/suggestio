@@ -29,4 +29,6 @@ class JdRenderModule {
 
   lazy val jdGridUtil = wire[JdGridUtil]
 
+  lazy val jdCssStatic = wire[JdCssStatic]
+
 }
