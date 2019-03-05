@@ -2,10 +2,11 @@ Common.settingsOrg
 
 name := "common-slick-driver"
 
-version := Common.Vsn.Sio.COMMON_SLICK_DRIVER
+version := "1.2.0"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
+/*
 resolvers ++= {
   import Common.Repo._
   Seq(
@@ -13,7 +14,7 @@ resolvers ++= {
     "sonatype-oss-releases" at SONATYPE_OSS_RELEASES_URL
   )
 }
-
+*/
 
 libraryDependencies ++= {
   Seq(

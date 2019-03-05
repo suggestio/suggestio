@@ -20,7 +20,6 @@ libraryDependencies ++= {
     "com.google.inject"     %  "guice"                % Common.Vsn.GUICE,
     "org.threeten"          % "threeten-extra"        % Common.Vsn.THREETEN_EXTRA,
     //Common.ORG              %% "commonJVM"            % "0.0.0",
-    Common.ORG              %% "common-slick-driver"  % Common.Vsn.Sio.COMMON_SLICK_DRIVER,
     // slick повторно инклюдится здесь, т.к. что-то свежая версия не цеплялась через common-slick-driver
     "com.typesafe.slick"    %% "slick"                % Common.Vsn.SLICK,
     Common.ORG              %% "util"                 % "2.0.1"

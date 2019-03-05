@@ -300,7 +300,7 @@ lazy val srvTestUtil = {
 /** Модели биллинга второго поколения. */
 lazy val mbill2 = project
   .in( file(DIR0 + "server/bill/mbill2") )
-  .dependsOn(logsMacro, commonJVM, util, mgeo)
+  .dependsOn(logsMacro, commonJVM, util, mgeo, commonSlickDriver)
 
 /** Утиль и модели для поддержки интеграции с БД ipgeobase. */
 lazy val ipgeobase = {

@@ -68,13 +68,6 @@ object Common {
     val JTS = "1.14.0"
     val SPATIAL4J = "0.6"
 
-    object Sio {
-
-      /** Версия драйвера common-slick-driver.
-        * Он идёт как бинарная зависимость, поэтому зависимые подпроекты. */
-      val COMMON_SLICK_DRIVER = "1.2.0-SNAPSHOT"
-
-    }
 
     val REACT_IMAGE_GALLERY = "0.8.7"
 
