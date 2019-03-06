@@ -113,4 +113,9 @@ case class MGridCoreS(
   def adsGridBlocksIter: Iterator[IGbBlockPayload] =
     MGridCoreS.ads2gridBlocks( ads.iterator.flatten )
 
+
+  /** Кэширование значение isPending для коннекшена в GridR. */
+  lazy val adsIsPendingSome: Some[Boolean] =
+    Some( ads.isPending )
+
 }

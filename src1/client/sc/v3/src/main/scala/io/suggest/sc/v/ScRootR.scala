@@ -7,16 +7,15 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.{MColorData, MColors}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
-import io.suggest.jd.render.v.{JdCss, JdCssR, JdCssStatic}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.MScRoot
-import io.suggest.sc.m.grid.{MGridCoreS, MGridS}
+import io.suggest.sc.m.grid.MGridS
 import io.suggest.sc.m.inx._
 import io.suggest.sc.m.search.MSearchPanelS
 import io.suggest.sc.styl.{ScCss, ScCssStatic}
 import io.suggest.sc.v.dia.first.WzFirstR
-import io.suggest.sc.v.grid.{GridCoreR, GridR}
+import io.suggest.sc.v.grid.GridR
 import io.suggest.sc.v.hdr._
 import io.suggest.sc.v.inx.{IndexSwitchAskR, WelcomeR}
 import io.suggest.sc.v.menu._
@@ -35,9 +34,6 @@ import scalacss.ScalaCssReact._
   */
 class ScRootR (
                 val gridR               : GridR,
-                val gridCoreR           : GridCoreR,
-                jdCssStatic             : JdCssStatic,
-                jdCssR                  : JdCssR,
                 searchR                 : SearchR,
                 val sTextR              : STextR,
                 val headerR             : HeaderR,
@@ -75,9 +71,6 @@ class ScRootR (
 
   protected[this] case class State(
                                     scCssArgsC                : ReactConnectProxy[ScCss],
-                                    gridC                     : ReactConnectProxy[gridR.Props_t],
-                                    gridCoreC                 : ReactConnectProxy[gridCoreR.Props_t],
-                                    jdCssC                    : ReactConnectProxy[JdCss],
                                     hdrPropsC                 : ReactConnectProxy[headerR.Props_t],
                                     wcPropsOptC               : ReactConnectProxy[Option[welcomeR.PropsVal]],
                                     enterLkRowC               : ReactConnectProxy[Option[enterLkRowR.PropsVal]],
@@ -151,20 +144,7 @@ class ScRootR (
         hdr,
 
         // Рендер плитки карточек узла:
-        {
-          val jdCssStatic1 = mrootProxy.wrap(_ => jdCssStatic)( CssR.apply )
-          val jdCss1 = s.jdCssC { jdCssR.apply }
-          // Непосредственный рендер плитки, снаружи от рендера connect-зависимого контейнера плитки.
-          val gridCore = s.gridCoreC { gridCoreR.apply }
-
-          s.gridC {
-            gridR(_)(
-              jdCssStatic1,
-              jdCss1,
-              gridCore,
-            )
-          }
-        }
+        mrootProxy.wrap(_.grid)(gridR.apply)( implicitly, MGridS.MGridSFastEq ),
       )
 
       // Наполнение контейнера поиска узлов:
@@ -389,10 +369,6 @@ class ScRootR (
     .initialStateFromProps { propsProxy =>
       State(
         scCssArgsC  = propsProxy.connect(_.index.scCss),
-
-        gridC = propsProxy.connect( _.grid )( MGridS.MGridSFastEq ),
-        gridCoreC = propsProxy.connect( _.grid.core )( MGridCoreS.MGridCoreSFastEq ),
-        jdCssC = propsProxy.connect(_.grid.core.jdCss)( JdCss.JdCssFastEq ),
 
         hdrPropsC = propsProxy.connect { props =>
           Some( props.index.resp.nonEmpty )

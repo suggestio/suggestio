@@ -2,13 +2,14 @@ package io.suggest.sc.v.grid
 
 import chandu0101.scalajs.react.components.materialui.{MuiCircularProgress, MuiCircularProgressClasses, MuiCircularProgressProps, MuiColorTypes}
 import diode.FastEq
-import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.css.CssR
 import io.suggest.grid.{GridConst, GridScrollUtil}
+import io.suggest.jd.render.v.{JdCss, JdCssR, JdCssStatic}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.MScReactCtx
-import io.suggest.sc.m.grid.{GridScroll, MGridS, MScAdData}
+import io.suggest.sc.m.grid.{GridScroll, MGridCoreS, MGridS}
 import io.suggest.sc.styl.ScCssStatic
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react._
@@ -23,6 +24,9 @@ import scalacss.ScalaCssReact._
   * Description: React-компонент плитки карточек.
   */
 class GridR(
+             jdCssR                     : JdCssR,
+             jdCssStatic                : JdCssStatic,
+             val gridCoreR              : GridCoreR,
              scReactCtxP                : React.Context[MScReactCtx],
            ) {
 
@@ -33,8 +37,10 @@ class GridR(
 
   /** Модель состояния компонента. */
   protected[this] case class State(
+                                    jdCssC              : ReactConnectProxy[JdCss],
                                     gridSzC             : ReactConnectProxy[MSize2di],
-                                    loaderPotC          : ReactConnectProxy[Pot[Vector[MScAdData]]],
+                                    gridCoreC           : ReactConnectProxy[gridCoreR.Props_t],
+                                    loaderPotC          : ReactConnectProxy[Some[Boolean]],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -45,11 +51,19 @@ class GridR(
       ReactDiodeUtil.dispatchOnProxyScopeCB($, GridScroll(scrollTop))
     }
 
-    def render(p: Props, s: State, children: PropsChildren): VdomElement = {
+    def render(p: Props, s: State): VdomElement = {
+      // Рендер jd-css:
+      val jdCssStatic1 = p.wrap(_ => jdCssStatic)( CssR.apply )
+      val jdCss1 = s.jdCssC { jdCssR.apply }
+
+      // Непосредственный рендер плитки - коннекшен в отдельный компонент, снаружи от рендера connect-зависимого контейнера плитки.
+      val gridCore = s.gridCoreC { gridCoreR.apply }
+
+      val smFlex = ScCssStatic.smFlex: TagMod
+
       scReactCtxP.consume { scReactCtx =>
         val ScCss = scReactCtx.scCss
         val GridCss = ScCss.Grid
-        val smFlex: TagMod = ScCssStatic.smFlex
 
         <.div(
           smFlex, GridCss.outer,
@@ -76,14 +90,16 @@ class GridR(
                     ^.width  := gridSz.width.px,
                     ^.height := (gridSz.height + GridConst.CONTAINER_OFFSET_BOTTOM + GridConst.CONTAINER_OFFSET_TOP).px,
 
-                    children,
+                    jdCssStatic1,
+                    jdCss1,
+                    gridCore,
                   )
                 }
               },
 
               // Крутилка подгрузки карточек.
-              s.loaderPotC { adsPotProxy =>
-                ReactCommonUtil.maybeEl( adsPotProxy.value.isPending ) {
+              s.loaderPotC { adsPotPendingSomeProxy =>
+                ReactCommonUtil.maybeEl( adsPotPendingSomeProxy.value.value ) {
                   MuiCircularProgress {
                     val cssClasses = new MuiCircularProgressClasses {
                       override val root = ScCss.Grid.loader.htmlClass
@@ -110,19 +126,23 @@ class GridR(
     .initialStateFromProps { propsProxy =>
       // Наконец, сборка самого состояния.
       State(
+        jdCssC = propsProxy.connect(_.core.jdCss)( JdCss.JdCssFastEq ),
+
         gridSzC = propsProxy.connect { props =>
           props.core.gridBuild.gridWh
         }( FastEq.ValueEq ),
 
+        gridCoreC = propsProxy.connect(_.core)( MGridCoreS.MGridCoreSFastEq ),
+
         loaderPotC = propsProxy.connect { props =>
-          props.core.ads
-        }( FastEqUtil.PotIsPendingFastEq ),
+          props.core.adsIsPendingSome
+        }( FastEqUtil.RefValFastEq ),
 
       )
     }
-    .renderBackendWithChildren[Backend]
+    .renderBackend[Backend]
     .build
 
-  def apply(props: Props)(children: VdomNode*) = component(props)(children: _*)
+  def apply(props: Props) = component(props)
 
 }
