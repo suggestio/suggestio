@@ -14,7 +14,7 @@ import io.suggest.css.{Css, CssR}
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.dev.MSzMults
 import io.suggest.jd.render.m.MJdArgs
-import io.suggest.jd.render.v.{JdCss, JdCssR, JdCssStatic, JdR}
+import io.suggest.jd.render.v.{JdCss, JdCssStatic, JdR}
 import io.suggest.quill.v.{QuillCss, QuillEditorR}
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.file.up.MFileUploadS
@@ -41,7 +41,6 @@ import scalacss.ScalaCssReact._
   * Description: React-компонент всей формы react-редактора карточек.
   */
 class LkAdEditFormR(
-                     jdCssR                     : JdCssR,
                      jdCssStatic                : JdCssStatic,
                      jdR                        : JdR,
                      addR                       : AddR,
@@ -155,7 +154,7 @@ class LkAdEditFormR(
 
         // Рендер jd-css
         p.wrap(_ => jdCssStatic)(CssR.apply),
-        s.jdCssArgsC { jdCssR.apply },
+        s.jdCssArgsC { CssR.apply },
 
         <.div(
           LCSS.outerCont,

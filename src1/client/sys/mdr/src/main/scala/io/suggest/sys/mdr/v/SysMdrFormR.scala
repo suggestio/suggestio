@@ -4,7 +4,7 @@ import chandu0101.scalajs.react.components.materialui.{MuiDrawer, MuiDrawerAncho
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.CssR
-import io.suggest.jd.render.v.{JdCss, JdCssR, JdCssStatic}
+import io.suggest.jd.render.v.{JdCss, JdCssStatic}
 import io.suggest.model.n2.node.{MNodeType, MNodeTypes}
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import io.suggest.sys.mdr.m.MSysMdrRootS
@@ -29,7 +29,6 @@ class SysMdrFormR(
                    val mdrDiaRefuseR      : MdrDiaRefuseR,
                    val mdrToolBarR        : MdrToolBarR,
                    val mdrForceAllNodesR  : MdrForceAllNodesR,
-                   jdCssR                 : JdCssR,
                    jdCssStatic            : JdCssStatic,
                  ) {
 
@@ -56,7 +55,7 @@ class SysMdrFormR(
 
         // Рендер jd css карточки:
         p.wrap(_ => jdCssStatic)( CssR.apply ),
-        s.jdCssC { jdCssR.apply },
+        s.jdCssC { CssR.apply },
 
         // Тулбар, без AppBar, т.к. он неуместен и делает неконтрастный фон.
         MuiToolBar()(

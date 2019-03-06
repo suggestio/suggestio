@@ -42,7 +42,7 @@ object JdCss {
   @inline implicit def univEq: UnivEq[JdCss] = UnivEq.derive
 
 
-  private def valueEnumEntryDomainNameF[T] = {
+  private[v] def valueEnumEntryDomainNameF[T] = {
     (vee: ValueEnumEntry[T], _: Int) =>
       vee.value
   }
@@ -90,14 +90,52 @@ class JdCssStatic extends StyleSheet.Inline {
     zIndex(5)
   )
 
+
+  // Для строк и групп строк стили более точечные.
+  // -------------------------------------------------------------------------------
+  // text-align
+
+  /** styleF допустимых выравниваний текста. */
+  val textAlignsStyleF = {
+    styleF(
+      new Domain.OverSeq( MTextAligns.values )
+    )(
+      { align =>
+        val taAttr = textAlign
+        val av = align match {
+          case MTextAligns.Left    => taAttr.left
+          case MTextAligns.Center  => taAttr.center
+          case MTextAligns.Right   => taAttr.right
+          case MTextAligns.Justify => taAttr.justify
+        }
+        styleS(
+          av
+        )
+      },
+      JdCss.valueEnumEntryDomainNameF
+    )
+  }
+
+  // -------------------------------------------------------------------------------
+  // text indents.
+
+  /** Стили сдвигов выравниваний. */
+  val indentStyleF = {
+    // quill допускает сдвиги от 1 до 8 включительно.
+    styleF.int(1 to 9) { indentLevel =>
+      styleS(
+        paddingLeft( (indentLevel * 3).em )
+      )
+    }
+  }
+
+
 }
 
 
 case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   import dsl._
-
-  //val szMultD = jdCssArgs.conf.szMult.toDouble
 
   val blkSzMultD = jdCssArgs.conf.blkSzMult.toDouble
 
@@ -144,9 +182,16 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     )
   }
 
+  /** Внутри wide-блока находится контейнер контентов (это strip). Ширина wide-стрипа задаётся здесь: */
+  private lazy val wideBlockWidthPx = jdCssArgs.conf.gridWidthPx * 0.70
+
   /** Стили контейнеров полосок, описываемых через props1.BlockMeta. */
   val bmStyleF = {
-    val pc50 = 50.%%.value
+    // Для wide - ширина и длина одинаковые.
+    lazy val (wideLeftAv, wideWidthAv) = {
+      val wLeftPx  = (jdCssArgs.conf.gridWidthPx * 0.15).px
+      (left(wLeftPx), width(wideBlockWidthPx.px))
+    }
 
     styleF(
       new Domain.OverSeq(
@@ -160,20 +205,24 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       // Стиль размеров блока-полосы.
       for (bm <- strip.props1.bm) {
         val szMulted = bmStyleWh(bm)
-        accS ::= width ( szMulted.width.px )
         accS ::= height( szMulted.height.px )
 
         // Выравнивание блока внутри внешнего контейнера:
         if (bm.wide && !jdCssArgs.conf.isEdit) {
           // Если wide, то надо отцентровать блок внутри wide-контейнера.
           // Формула по X банальна: с середины внешнего контейнера вычесть середину smBlock и /2.
+          /*
           import io.suggest.common.html.HtmlConstants._
-          val calcFormula = pc50 + SPACE + MINUS + SPACE + (szMulted.width / 2).px.value
-          val calcAV: ToStyle = {
+          accS ::= {
+            val calcFormula = pc50 + SPACE + MINUS + SPACE + (szMulted.width / 2).px.value
             left.attr := Css.Calc( calcFormula )
           }
-          accS ::= calcAV
+          */
+          accS ::= wideLeftAv
+          accS ::= wideWidthAv
+
         } else {
+          accS ::= width( szMulted.width.px )
           accS ::= left(0.px)
         }
       }
@@ -214,7 +263,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
 
   /** Стили контейнера блока с широким фоном. */
-  val bmWideStyleF =
+  val wideContStyleF =
     styleF(
       new Domain.OverSeq(
         _allJdTagsIter
@@ -273,21 +322,46 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // AbsPos
 
   /** Стили для элементов, отпозиционированных абсолютно. */
-  val absPosStyleF =
+  val absPosStyleF = {
     styleF(
-      new Domain.OverSeq(
-        _allJdTagsIter
-          .filter(_.props1.topLeft.nonEmpty)
-          .toIndexedSeq
-      )
-    ) { jdt =>
+      new Domain.OverSeq({
+        val iter = for {
+          // topTree может быть как DOCUMENT, так и STRIP.
+          topJdTree <- jdCssArgs.templates.iterator
+          topJdt = topJdTree.rootLabel
+          // Собираем только стрипы:
+          stripTree <- topJdt.name match {
+            case MJdTagNames.STRIP => topJdTree :: Nil
+            case MJdTagNames.DOCUMENT => topJdTree.subForest
+            case _ => Nil
+          }
+          strip = stripTree.rootLabel
+          if (strip.name ==* MJdTagNames.STRIP)
+          jdTagTree <- stripTree.subForest
+          jdt = jdTagTree.rootLabel
+          if (jdt.name ==* MJdTagNames.QD_CONTENT) &&
+             jdt.props1.topLeft.nonEmpty
+        } yield {
+          val jdt = jdTagTree.rootLabel
+          (strip, jdt)
+        }
+        iter.toIndexedSeq
+      })
+    ) { case (parentJdt, jdt) =>
+      // 2019-03-06 Для позиционирования внутри wide-блока используется поправка по горизонтали, чтобы "растянуть" контент.
       jdt.props1.topLeft.whenDefinedStyleS { topLeft =>
+        // Внутри wide-контейнера надо растянуть контент по горизонтали. Для этого домножаем left на отношение parent-ширины к ширине фактической.
+        var leftMult = blkSzMultD
+        for (bm <- parentJdt.props1.bm if bm.wide) {
+          leftMult = leftMult * ( wideBlockWidthPx / (bm.width * blkSzMultD) ) * 1.2
+        }
         styleS(
           top( (topLeft.y * blkSzMultD).px ),
-          left( (topLeft.x * blkSzMultD).px )
+          left( (topLeft.x * leftMult).px )
         )
       }
     }
+  }
 
 
   /** Стили ширин для элементов, у которых задана принудительная ширина. */
@@ -390,50 +464,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       // Вернуть скомпонованный стиль.
       styleS(
         acc: _*
-      )
-    }
-  }
-
-
-  // -------------------------------------------------------------------------------
-  // -------------------------------------------------------------------------------
-  // Для строк и групп строк стили более точечные.
-
-  // TODO Opt Унести стили ниже в статические, рендерящиеся однократно. Их рендер не зависит ни от чего, они рендерятся всегда одинаково.
-
-  // -------------------------------------------------------------------------------
-  // text-align
-
-  /** styleF допустимых выравниваний текста. */
-  val textAlignsStyleF =
-    styleF(
-      new Domain.OverSeq( MTextAligns.values )
-    )(
-      { align =>
-        val taAttr = textAlign
-        val av = align match {
-          case MTextAligns.Left    => taAttr.left
-          case MTextAligns.Center  => taAttr.center
-          case MTextAligns.Right   => taAttr.right
-          case MTextAligns.Justify => taAttr.justify
-        }
-        styleS(
-          av
-        )
-      },
-      JdCss.valueEnumEntryDomainNameF
-    )
-
-
-  // -------------------------------------------------------------------------------
-  // text indents.
-
-  /** Стили сдвигов выравниваний. */
-  val indentStyleF = {
-    // quill допускает сдвиги от 1 до 8 включительно.
-    styleF.int(1 to 9) { indentLevel =>
-      styleS(
-        paddingLeft( (indentLevel * 3).em )
       )
     }
   }

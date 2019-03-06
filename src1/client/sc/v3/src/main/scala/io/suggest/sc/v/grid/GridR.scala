@@ -6,7 +6,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.css.CssR
 import io.suggest.grid.{GridConst, GridScrollUtil}
-import io.suggest.jd.render.v.{JdCss, JdCssR, JdCssStatic}
+import io.suggest.jd.render.v.{JdCss, JdCssStatic}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.grid.{GridScroll, MGridCoreS, MGridS}
@@ -24,7 +24,6 @@ import scalacss.ScalaCssReact._
   * Description: React-компонент плитки карточек.
   */
 class GridR(
-             jdCssR                     : JdCssR,
              jdCssStatic                : JdCssStatic,
              val gridCoreR              : GridCoreR,
              scReactCtxP                : React.Context[MScReactCtx],
@@ -54,7 +53,7 @@ class GridR(
     def render(p: Props, s: State): VdomElement = {
       // Рендер jd-css:
       val jdCssStatic1 = p.wrap(_ => jdCssStatic)( CssR.apply )
-      val jdCss1 = s.jdCssC { jdCssR.apply }
+      val jdCss1 = s.jdCssC { CssR.apply }
 
       // Непосредственный рендер плитки - коннекшен в отдельный компонент, снаружи от рендера connect-зависимого контейнера плитки.
       val gridCore = s.gridCoreC { gridCoreR.apply }

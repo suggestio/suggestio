@@ -7,7 +7,7 @@ import io.suggest.bill.cart.v.itm.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR, I
 import io.suggest.bill.cart.v.txn.TxnsR
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
-import io.suggest.jd.render.v.{JdCss, JdCssR, JdCssStatic}
+import io.suggest.jd.render.v.{JdCss, JdCssStatic}
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react._
@@ -23,11 +23,10 @@ import japgolly.univeq._
   */
 class OrderR(
               cartCss                : OrderCss,
-              jdCssR                 : JdCssR,
               jdCssStatic            : JdCssStatic,
               val itemRowR           : ItemRowR,
-              val itemsTableBodyR    : ItemsTableBodyR,
               val itemsTableHeadR    : ItemsTableHeadR,
+              val itemsTableBodyR    : ItemsTableBodyR,
               val itemsToolBarR      : ItemsToolBarR,
               val goToPayBtnR        : GoToPayBtnR,
               val orderInfoR         : OrderInfoR,
@@ -64,7 +63,7 @@ class OrderR(
         propsProxy.wrap(_ => jdCssStatic)( CssR.apply ),
 
         // Рендер стилей отображаемых карточек.
-        s.jdCssC { jdCssR.apply },
+        s.jdCssC { CssR.apply },
 
         // Панелька-тулбар
         s.toolBarPropsC { itemsToolBarR.apply },

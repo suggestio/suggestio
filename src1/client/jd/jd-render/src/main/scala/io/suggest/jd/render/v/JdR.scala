@@ -167,9 +167,6 @@ class JdR(
 
       val isWide = s.props1.bm.map(_.wide).getOrElseFalse
 
-      // Оптимизация, т.к. wide-стиль используется в нескольких местах сразу.
-      lazy val wideWhBg = C.bmWideStyleF(s): TagMod
-
       val bgColor = _bgColorOpt(s, jdArgs)
 
       val groupOutlineTm = jdArgs.renderArgs
@@ -271,7 +268,7 @@ class JdR(
           groupOutlineTm,
           hideNonMainStrip,
           bgColor,
-          wideWhBg,
+          C.wideContStyleF(s),
           maybeSelAV,
           ^.`class` := Css.flat( Css.Overflow.HIDDEN, Css.Position.RELATIVE ),
           bgImgTm.when(isWide),
@@ -335,7 +332,7 @@ class JdR(
       * @param qdTagTree Тег с кодированными данными Quill delta.
       * @return Элемент vdom.
       */
-    def renderQd(qdTagTree: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): TagOf[html.Div]  = {
+    def renderQd(qdTagTree: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): TagOf[html.Div] = {
       val qdTag = qdTagTree.rootLabel
       val isCurrentSelected = jdArgs.selJdt.treeLocOpt containsLabel qdTag
       val tagMods = {
@@ -369,10 +366,13 @@ class JdR(
         // Поддержка перетаскивания
         jdCssStatic.absPosStyleAll,
 
-        ReactCommonUtil.maybe(jdArgs.conf.isEdit && !jdArgs.selJdt.treeLocOpt.containsLabel(parent)) {
+        ReactCommonUtil.maybe(
+          jdArgs.conf.isEdit &&
+          !jdArgs.selJdt.treeLocOpt.containsLabel(parent)
+        ) {
           _draggableUsing(qdTag, jdArgs) { qdTagDragStart(qdTag) }
         },
-        jdArgs.jdCss.absPosStyleF(qdTag),
+        jdArgs.jdCss.absPosStyleF(parent -> qdTag),
 
         // CSS-класс принудительной ширины, если задан.
         ReactCommonUtil.maybe( qdTag.props1.widthPx.nonEmpty ) {

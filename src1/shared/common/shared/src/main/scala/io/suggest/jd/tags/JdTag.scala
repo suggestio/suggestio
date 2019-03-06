@@ -253,8 +253,6 @@ final case class JdTag(
   with IEqualsEq
 {
 
-  def withJdTagName(jdTagName: MJdTagName)        = copy(name = jdTagName)
-
   def withProps1(props1: MJdtProps1)              = copy(props1 = props1)
   /** Для удобства написания тестов, props1 можно обновлять функцией. */
   def updateProps1(f: MJdtProps1 => MJdtProps1)   = withProps1(f(props1))
