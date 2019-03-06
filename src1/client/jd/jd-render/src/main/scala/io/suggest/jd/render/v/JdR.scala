@@ -41,6 +41,7 @@ import scalaz.Tree
   */
 
 class JdR(
+           jdCssStatic        : JdCssStatic,
            imgRenderUtilJs    : ImgRenderUtilJs,
            jdGridUtil         : JdGridUtil
          )
@@ -107,14 +108,18 @@ class JdR(
       */
     private def _maybeSelected(dt: JdTag, jdArgs: MJdArgs): TagMod = {
       // Если происходит перетаскивание, то нужно избавляться от рамок: так удобнее.
-      ReactCommonUtil.maybe(jdArgs.renderArgs.dnd.jdt.isEmpty && jdArgs.selJdt.treeLocOpt.containsLabel(dt)) {
-        jdArgs.jdCss.selectedTag
+      ReactCommonUtil.maybe(
+        jdArgs.renderArgs.dnd.jdt.isEmpty &&
+        jdArgs.selJdt.treeLocOpt.containsLabel(dt)
+      ) {
+        jdCssStatic.selectedTag
       }
     }
 
     /** Ротация элемента. */
     private def _maybeRotate(jdt: JdTag, jdArgs: MJdArgs): TagMod = {
-      jdt.props1.rotateDeg.whenDefined { jdArgs.jdCss.rotateF.apply }
+      jdt.props1.rotateDeg
+        .whenDefined { jdArgs.jdCss.rotateF.apply }
     }
 
     private def _clickableOnEdit(jdt: JdTag, jdArgs: MJdArgs): TagMod = {
@@ -234,7 +239,7 @@ class JdR(
         C.bmStyleF( s ),
 
         if (isWide) {
-          jdArgs.jdCss.wideBlockStyle
+          jdCssStatic.wideBlockStyle
         } else {
           TagMod(
             hideNonMainStrip,
@@ -335,6 +340,7 @@ class JdR(
       val isCurrentSelected = jdArgs.selJdt.treeLocOpt containsLabel qdTag
       val tagMods = {
         val qdRrr = new QdRrrHtml(
+          jdCssStatic = jdCssStatic,
           jdArgs      = jdArgs,
           qdTag       = qdTagTree,
           // Для редактора: следует рендерить img-теги, подслушивая у них wh:
@@ -361,7 +367,7 @@ class JdR(
         _clickableOnEdit(qdTag, jdArgs),
 
         // Поддержка перетаскивания
-        jdArgs.jdCss.absPosStyleAll,
+        jdCssStatic.absPosStyleAll,
 
         ReactCommonUtil.maybe(jdArgs.conf.isEdit && !jdArgs.selJdt.treeLocOpt.containsLabel(parent)) {
           _draggableUsing(qdTag, jdArgs) { qdTagDragStart(qdTag) }
@@ -384,7 +390,7 @@ class JdR(
             // Текущий тег выделен. Значит, пусть будет move-указатель
             TagMod(
               ^.`class` := Css.flat( Css.Overflow.HIDDEN, Css.Cursor.MOVE ),
-              jdArgs.jdCss.horizResizable,
+              jdCssStatic.horizResizable,
               // TODO onResize -> ...
               ^.onMouseUp ==> onQdTagResize(qdTag)
             )

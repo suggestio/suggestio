@@ -41,6 +41,7 @@ import scalaz.Tree
   *                    Используется в редакторе для навешивания дополнительных листенеров.
   */
 class QdRrrHtml(
+                 jdCssStatic  : JdCssStatic,
                  jdArgs       : MJdArgs,
                  qdTag        : Tree[JdTag],
                  imgEdgeMods  : Option[MEdgeDataJs => TagMod] = None,
@@ -224,7 +225,7 @@ class QdRrrHtml(
           ^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Position.RELATIVE),
           finalTm,
           <.div(
-            jdArgs.jdCss.horizResizable,
+            jdCssStatic.horizResizable,
             ^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, false, event) },
             ^.height := maskHeightPx.px,
             jdArgs.jdCss.embedAttrStyleF( attrsEmbed ),
@@ -266,7 +267,7 @@ class QdRrrHtml(
           whStyl,
           resizableCb.whenDefined { resizableF =>
             TagMod(
-              jdArgs.jdCss.hvResizable,
+              jdCssStatic.hvResizable,
               ^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, true, event) }
             )
           }

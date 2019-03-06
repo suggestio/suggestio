@@ -56,6 +56,40 @@ class JdCssStatic extends StyleSheet.Inline {
   import dsl._
 
 
+  /** Текущий выбранный тег выделяется на картинке. */
+  val selectedTag = {
+    style(
+      outline.dashed,
+      zIndex(10)
+    )
+  }
+
+
+  /** Поддержка горизонтального ресайза. */
+  val horizResizable = style(
+    // TODO Хотелось с &.hover(...), но в хроме полный ахтунг и погибель
+    resize.horizontal,
+  )
+
+  val hvResizable = style(
+    resize.both
+  )
+
+  val wideBlockStyle = {
+    val zeroPx = 0.px
+    style(
+      // TODO Переместить top в smBlock?
+      top(zeroPx)
+      //left(zeroPx)
+    )
+  }
+
+  /** Общий стиль для всех AbsPos-тегов. */
+  val absPosStyleAll = style(
+    position.absolute,
+    zIndex(5)
+  )
+
 }
 
 
@@ -89,24 +123,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     color.black
   )
 
-  /** Текущий выбранный тег выделяется на картинке. */
-  val selectedTag = {
-    style(
-      outline.dashed,
-      zIndex(10)
-    )
-  }
-
-
-  /** Поддержка горизонтального ресайза. */
-  val horizResizable = style(
-    // TODO Хотелось с &.hover(...), но в хроме полный ахтунг и погибель
-    resize.horizontal,
-  )
-
-  val hvResizable = style(
-    resize.both
-  )
 
   private def _allJdTagsIter: Iterator[JdTag] = {
     jdCssArgs
@@ -115,14 +131,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       .flatMap( _.flatten )
   }
 
-  val wideBlockStyle = {
-    val zeroPx = 0.px
-    style(
-      // TODO Переместить top в smBlock?
-      top(zeroPx)
-      //left(zeroPx)
-    )
-  }
 
   // -------------------------------------------------------------------------------
   // Strip
@@ -264,12 +272,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // -------------------------------------------------------------------------------
   // AbsPos
 
-  /** Общий стиль для всех AbsPos-тегов. */
-  val absPosStyleAll = style(
-    position.absolute,
-    zIndex(5)
-  )
-
   /** Стили для элементов, отпозиционированных абсолютно. */
   val absPosStyleF =
     styleF(
@@ -312,11 +314,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     _allJdTagsIter
       .flatMap(_.qdProps)
   }
-
-  /** В личном кабинете - css-класс "block". В выдаче - "display-block". Доколе этот бардак будет? */
-  private val displayBlockMx = mixin(
-    display.block
-  )
 
   /** Тени текста. */
   val contentShadowF = {
@@ -385,7 +382,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         acc ::= _fontSizeAttr( (fontSizePx.value * blkSzMultD).px )
 
         if (fontSizePx.forceRenderBlockHtml5)
-          acc ::= displayBlockMx
+          acc ::= display.block
       }
 
       // Фикс межстрочки для мелкого текста и HTML5. Можно это не рендерить для шрифтов, которые крупнее 18px
