@@ -183,15 +183,18 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   }
 
   /** Внутри wide-блока находится контейнер контентов (это strip). Ширина wide-стрипа задаётся здесь: */
-  private lazy val wideBlockWidthPx = jdCssArgs.conf.gridWidthPx * 0.70
+  //private lazy val wideBlockWidthPx = jdCssArgs.conf.gridWidthPx * 0.70
 
   /** Стили контейнеров полосок, описываемых через props1.BlockMeta. */
   val bmStyleF = {
+    lazy val pc50 = 50.%%.value
     // Для wide - ширина и длина одинаковые.
+    /*
     lazy val (wideLeftAv, wideWidthAv) = {
       val wLeftPx  = (jdCssArgs.conf.gridWidthPx * 0.15).px
       (left(wLeftPx), width(wideBlockWidthPx.px))
     }
+    */
 
     styleF(
       new Domain.OverSeq(
@@ -206,23 +209,22 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       for (bm <- strip.props1.bm) {
         val szMulted = bmStyleWh(bm)
         accS ::= height( szMulted.height.px )
+        accS ::= width ( szMulted.width.px  )
 
         // Выравнивание блока внутри внешнего контейнера:
         if (bm.wide && !jdCssArgs.conf.isEdit) {
           // Если wide, то надо отцентровать блок внутри wide-контейнера.
           // Формула по X банальна: с середины внешнего контейнера вычесть середину smBlock и /2.
-          /*
           import io.suggest.common.html.HtmlConstants._
           accS ::= {
             val calcFormula = pc50 + SPACE + MINUS + SPACE + (szMulted.width / 2).px.value
             left.attr := Css.Calc( calcFormula )
           }
-          */
-          accS ::= wideLeftAv
-          accS ::= wideWidthAv
+
+          //accS ::= wideLeftAv
+          //accS ::= wideWidthAv
 
         } else {
-          accS ::= width( szMulted.width.px )
           accS ::= left(0.px)
         }
       }
@@ -352,9 +354,10 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       jdt.props1.topLeft.whenDefinedStyleS { topLeft =>
         // Внутри wide-контейнера надо растянуть контент по горизонтали. Для этого домножаем left на отношение parent-ширины к ширине фактической.
         var leftMult = blkSzMultD
-        for (bm <- parentJdt.props1.bm if bm.wide) {
-          leftMult = leftMult * ( wideBlockWidthPx / (bm.width * blkSzMultD) ) * 1.2
-        }
+        // TODO Перепилить алгоритм растяжения, чтобы растягивал пропорционально всё, ужимая по вертикали.
+        //for (bm <- parentJdt.props1.bm if bm.wide) {
+        //  leftMult = leftMult * ( wideBlockWidthPx / (bm.width * blkSzMultD) ) * 1.2
+        //}
         styleS(
           top( (topLeft.y * blkSzMultD).px ),
           left( (topLeft.x * leftMult).px )
