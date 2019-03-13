@@ -16,7 +16,7 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.OptId
 import io.suggest.sc.ads.MAdsSearchReq
 import io.suggest.sc.sc3.{MScCommonQs, MScQs}
-import io.suggest.sec.m.msession.Keys
+import io.suggest.session.MSessionKeys
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mproj.ICommonDi
@@ -965,7 +965,7 @@ class SysMarket @Inject() (
         call <- identUtil.redirectCallUserSomewhere( nodeId )
       } yield {
         Redirect( call )
-          .withSession(Keys.PersonId.value -> nodeId)
+          .withSession(MSessionKeys.PersonId.value -> nodeId)
       }
     }
   }

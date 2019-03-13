@@ -9,13 +9,10 @@ import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
-import io.suggest.sec.m.msession.{CustomTtl, Keys}
+import io.suggest.session.{CustomTtl, MSessionKeys}
 import io.suggest.util.logs.IMacroLogs
-import models.mctx.p4j.{P4jWebContext, P4jWebContextFactory}
 import models.req.IReq
 import models.usr._
-import org.pac4j.core.engine.DefaultCallbackLogic
-import org.pac4j.core.config.{Config => P4jConfig}
 import play.api.data.Form
 import play.api.mvc._
 import play.twirl.api.Html
@@ -24,7 +21,6 @@ import util.adn.INodesUtil
 import util.xplay.SetLangCookieUtil
 import util.FormUtil
 import util.ident.IIdentUtil
-import util.ident.ss.SecureSocialLoginUtil
 import views.html.ident.reg._
 import views.html.ident.reg.ext._
 
@@ -55,7 +51,6 @@ trait ExternalLogin
   import mPersonIdentModel.api._
 
   /** Доступ к DI-инстансу */
-  val secureSocialLogin = current.injector.instanceOf[SecureSocialLoginUtil]
   val canLoginVia = current.injector.instanceOf[CanLoginVia]
 
   /**
@@ -90,7 +85,7 @@ trait ExternalLogin
       case flow: AuthenticationResult.NavigationFlow => Future.successful {
         val r0 = flow.result
         redirectTo.fold( r0 ) { url =>
-          r0.addingToSession(Keys.OrigUrl.value -> url)
+          r0.addingToSession(MSessionKeys.ExtLoginData.value -> url)
         }
       }
 
@@ -184,7 +179,7 @@ trait ExternalLogin
 
           // Сборка новой сессии: чистка исходника, добавление новых ключей, относящихся к идентификации.
           session1 = {
-            val addToSession0 = (Keys.PersonId.value -> personId) :: Nil
+            val addToSession0 = (MSessionKeys.PersonId.value -> personId) :: Nil
             (for {
               oa2Info   <- authenticated.profile.oAuth2Info
               expiresIn <- oa2Info.expiresIn
@@ -222,7 +217,7 @@ trait ExternalLogin
    * @return Ссылка в виде строки.
    */
   private def toUrl2(ses: Session, personId: String): Future[String] = {
-    FutureUtil.opt2future( ses.get(Keys.OrigUrl.value) ) {
+    FutureUtil.opt2future( ses.get(MSessionKeys.ExtLoginData.value) ) {
       identUtil.redirectCallUserSomewhere(personId)
         .map(_.url)
     }
@@ -270,47 +265,6 @@ trait ExternalLogin
       )
     }
   }
-
-
-
-  //--------------------------------------------------------------------------------------------------//
-  //----------------------------------------- v2 ext login -------------------------------------------//
-  //--------------------------------------------------------------------------------------------------//
-
-  // TODO logic-кода здесь быть не должно, нужно допилить на базе собтсвенной интеграции с сервисами.
-  private lazy val callbackLogic = new DefaultCallbackLogic[Result, P4jWebContext]()
-  private val p4jWebContextFactory = current.injector.instanceOf[P4jWebContextFactory]
-  private val p4jConfig = current.injector.instanceOf[P4jConfig]
-
-
-  /** v2 ext login: через Pac4j.
-    * Контроллер дёргает pac4j, и отрабатывает итог используется.
-    */
-  def callback2(r: Option[String]) = maybeAuth().async { implicit request =>
-    val p4jCtx = p4jWebContextFactory.fromRequest()
-
-    // TODO Портировать handleAuth1
-    // p4jCtx,
-    // p4jConfig,
-    // defaultUrl = routes.Sc.geoSite().url,
-    ???
-  }
-
-  /**
-   * GET-запрос идентификации через pac4j.
-   * @param provider провайдер идентификации.
-   * @param r Обратный редирект.
-   * @return Redirect.
-   */
-  def extIdCbGet(r: Option[String]) = callback2(r)
-
-  /**
-   * POST-запрос идентификации через pac4j.
-   * @param provider Провайдер идентификации.
-   * @param r Редирект обратно.
-   * @return Redirect.
-   */
-  def extIdCbPost(r: Option[String]) = callback2(r)
 
 }
 

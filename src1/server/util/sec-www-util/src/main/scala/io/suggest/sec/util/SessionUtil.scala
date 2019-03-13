@@ -1,7 +1,7 @@
 package io.suggest.sec.util
 
 import javax.inject.Singleton
-import io.suggest.sec.m.msession.{Keys, LoginTimestamp}
+import io.suggest.session.{LoginTimestamp, MSessionKeys}
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.mvc.{RequestHeader, Session}
 
@@ -33,7 +33,7 @@ class SessionUtil extends MacroLogsImpl {
    */
   def getPersonId(session: Session): Option[String] = {
     session
-      .get(Keys.PersonId.value)
+      .get(MSessionKeys.PersonId.value)
       // Если выставлен timestamp, то проверить валидность защищенного session ttl.
       // НЕЛЬЗЯ удалять отсюда проверку, т.к. в фильтрах (play Filter) и при Action Composition нет возможности
       // нормально перезаписывать сессию реквеста: там lazy val, который перевычисляется заново при каждом последующем Request wrap.

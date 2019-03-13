@@ -1,4 +1,4 @@
-package io.suggest.sec.m.msession
+package io.suggest.session
 
 import io.suggest.util.logs.MacroLogsDyn
 import play.api.mvc.Session
@@ -15,7 +15,7 @@ import scala.concurrent.duration._
 object Ttl extends MacroLogsDyn {
 
   def apply(session: Session): Ttl = {
-    apply(session.get(Keys.RememberMe.value))
+    apply(session.get(MSessionKeys.RememberMe.value))
   }
   def apply(s: Option[String]): Ttl = {
     if (s.isDefined) apply(s.get) else ShortTtl
@@ -49,7 +49,7 @@ sealed trait Ttl {
   def sessionValue: Option[String]
   def addToSessionAcc(acc0: List[(String, String)]): List[(String, String)] = {
     sessionValue match {
-      case Some(v) => Keys.RememberMe.value -> v :: acc0
+      case Some(v) => MSessionKeys.RememberMe.value -> v :: acc0
       case None    => acc0
     }
   }

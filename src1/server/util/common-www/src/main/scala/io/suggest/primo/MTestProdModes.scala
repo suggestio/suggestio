@@ -1,6 +1,7 @@
-package models.mpay
+package io.suggest.primo
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -11,17 +12,13 @@ import enumeratum.values.{StringEnum, StringEnumEntry}
   * У других -- наверное тоже.
   */
 
-object MPayModes extends StringEnum[MPayMode] {
+object MTestProdModes extends StringEnum[MTestProdMode] {
 
   /** Нормальный режим: продакшен, реальная работа с реальными деньгами. */
-  case object Production extends MPayMode("prod") {
-    override def isProd   = true
-  }
+  case object Production extends MTestProdMode("prod")
 
   /** Тестовый (доменстрационный) режим работы. Виртуальные деньги. */
-  case object Testing extends MPayMode("test") {
-    override def isProd   = false
-  }
+  case object Testing extends MTestProdMode("test")
 
 
   override def values = findValues
@@ -30,14 +27,14 @@ object MPayModes extends StringEnum[MPayMode] {
 
 
 /** Класс модели режимо pay-конфигураций. */
-sealed abstract class MPayMode(override val value: String) extends StringEnumEntry {
+sealed abstract class MTestProdMode(override val value: String) extends StringEnumEntry {
 
-  /*** Это продакшен режим работы? */
-  def isProd: Boolean
+  override final def toString = value
 
-  /** Это тестовый режим работы платёжки? */
-  def isTest: Boolean = !isProd
+}
 
-  override final def toString: String = value
+object MTestProdMode {
+
+  @inline implicit def univEq: UnivEq[MTestProdMode] = UnivEq.derive
 
 }

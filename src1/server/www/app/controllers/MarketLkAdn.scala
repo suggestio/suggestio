@@ -12,8 +12,8 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.sec.m.msession.Keys
 import io.suggest.sec.util.ScryptUtil
+import io.suggest.session.MSessionKeys
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.mctx.Context
@@ -324,7 +324,7 @@ class MarketLkAdn @Inject() (
             } yield {
               Redirect(routes.LkAds.adsPage(request.mnode.id.get :: Nil))
                 .flashing(FLASH.SUCCESS -> "Signup.finished")
-                .withSession(Keys.PersonId.value -> personId)
+                .withSession(MSessionKeys.PersonId.value -> personId)
             }
           }
         }

@@ -4,8 +4,9 @@ import io.suggest.jd.tags.JdTag
 import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
-
 import scalaz.Tree
+
+import scala.util.matching.Regex
 
 /**
   * Suggest.io
@@ -17,7 +18,7 @@ import scalaz.Tree
 object QdJsUtil {
 
   /** Паттерн полной строки, которая считается пустой. */
-  private val EMPTY_TEXT_PATTERN_RE = "\\s*".r.pattern
+  def EMPTY_TEXT_PATTERN_RE = "\\s*".r
 
   /** Является ли qd-дельта пустой?
     * Метод анализирует .ops на предмет присутствия хоть какого-то видимого текста.
@@ -29,23 +30,24 @@ object QdJsUtil {
     // Обычно, пустая дельта выглядит так: {"ops":[{"insert":"\n"}]}
     // Но мы будем анализировать весь список: допускаем целый список инзертов с итоговым пустым текстом.
     qdTree.qdOpsIter.isEmpty || {
+      val emptyTextRE = EMPTY_TEXT_PATTERN_RE
       qdTree
         .deepEdgesUidsIter
         .flatMap { edgesMap.get }
         // Допускаем, что любая пустая дельта может состоять из прозрачного мусора.
-        .forall( isEdgeDataEmpty )
+        .forall( isEdgeDataEmpty(_, emptyTextRE) )
     }
   }
 
   /** Считать ли указанный data-эдж пустым?
     * @return Да, если полезной информации в нём не обнаружено.
     */
-  def isEdgeDataEmpty(e: MEdgeDataJs): Boolean = {
+  def isEdgeDataEmpty(e: MEdgeDataJs, emptyTextRE: Regex = EMPTY_TEXT_PATTERN_RE): Boolean = {
     e.fileJs.isEmpty &&
       e.jdEdge.url.isEmpty &&
       e.jdEdge.fileSrv.isEmpty && {
         e.jdEdge.text
-         .fold(true){ EMPTY_TEXT_PATTERN_RE.matcher(_).matches() }
+         .fold(true){ emptyTextRE.pattern.matcher(_).matches() }
       }
   }
 

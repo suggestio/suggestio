@@ -1,6 +1,7 @@
 package models.mpay.yaka
 
-import models.mpay.MPayMode
+import io.suggest.primo.{MTestProdMode, MTestProdModes}
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -21,10 +22,10 @@ trait IYakaProfile {
   def shopId: Long
 
   /** Режим работы платежной системы, соответствующий этой конфигурации. */
-  def mode: MPayMode
+  def mode: MTestProdMode
 
   /** Является ли эта конфигурация демо-конфигурацией? */
-  def isDemo = mode.isTest
+  def isDemo = mode ==* MTestProdModes.Testing
 
   /** id витрины. */
   def scId: Long

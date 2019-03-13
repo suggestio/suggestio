@@ -4,14 +4,13 @@ import models.mpay.yaka._
 import play.api.data._
 import Forms._
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.bill._
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.IEsModelDiVal
 import io.suggest.pay.{IMPaySystem, MPaySystems}
+import io.suggest.primo.{MTestProdMode, MTestProdModes}
 import io.suggest.text.util.TextHashUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mpay.{MPayMode, MPayModes}
 import org.apache.commons.codec.digest.DigestUtils
 import play.api.Configuration
 import util.{FormUtil, TplDataFormatUtil}
@@ -44,7 +43,7 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
   /** Реализация IYakaConf. */
   private case class YakaProfile(
                                   override val scId         : Long,
-                                  override val mode         : MPayMode,
+                                  override val mode         : MTestProdMode,
                                   override val md5Password  : Option[String]
                                 )
     extends IYakaProfile
@@ -71,14 +70,14 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
 
 
   /** Доступные для работы конфигурации яндекс-кассы. */
-  val PROFILES: Map[MPayMode, IYakaProfile] = {
+  val PROFILES: Map[MTestProdMode, IYakaProfile] = {
     val iter = for {
       confSeq <- configuration.getOptional[Seq[Configuration]](CONF_PREFIX + "profiles").iterator
       conf    <- confSeq
       scId    <- conf.getOptional[Long]("scid")
       modeId  <- conf.getOptional[String]("mode")
     } yield {
-      val mode = MPayModes.withValue(modeId)
+      val mode = MTestProdModes.withValue(modeId)
       val yProf = YakaProfile(
         scId = scId,
         mode = mode,
@@ -98,7 +97,7 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
     *         true, если доступа к продакшену ещё пока не выдано яндекс-кассой или не описано в конфиге.
     */
   lazy val DEMO_ALLOWED_FOR_ALL: Boolean = {
-    val r = !PROFILES.contains( MPayModes.Production )
+    val r = !PROFILES.contains( MTestProdModes.Production )
 
     if (r)
       LOGGER.warn("!!!DEMO ALLOWED FOR ALL!!! Looks like, prod profile does not exists.")
@@ -107,9 +106,9 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
   }
 
 
-  def PRODUCTION_OPT  = PROFILES.get( MPayModes.Production )
-  def PRODUCTION      = PROFILES( MPayModes.Production )
-  def DEMO            = PROFILES( MPayModes.Testing )
+  def PRODUCTION_OPT  = PROFILES.get( MTestProdModes.Production )
+  def PRODUCTION      = PROFILES( MTestProdModes.Production )
+  def DEMO            = PROFILES( MTestProdModes.Testing )
 
 
   object ErrorCodes {

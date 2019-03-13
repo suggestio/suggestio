@@ -344,7 +344,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           if (jdt.name ==* MJdTagNames.QD_CONTENT) &&
              jdt.props1.topLeft.nonEmpty
         } yield {
-          val jdt = jdTagTree.rootLabel
           (strip, jdt)
         }
         iter.toIndexedSeq

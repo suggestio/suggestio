@@ -1,4 +1,4 @@
-package io.suggest.sec.m.msession
+package io.suggest.session
 
 import io.suggest.util.logs.MacroLogsDyn
 import play.api.mvc.Session
@@ -33,7 +33,7 @@ object LoginTimestamp extends MacroLogsDyn {
 
 
   def fromSession(session: Session): Option[LoginTimestamp] = {
-    val stkOpt = session.get( Keys.Timestamp.value )
+    val stkOpt = session.get( MSessionKeys.Timestamp.value )
     fromSession1(stkOpt, session)
   }
 
@@ -49,7 +49,7 @@ object LoginTimestamp extends MacroLogsDyn {
 
 }
 
-import LoginTimestamp._
+import io.suggest.session.LoginTimestamp._
 
 case class LoginTimestamp(tstamp: Long, ttl: Ttl) {
 
@@ -58,7 +58,7 @@ case class LoginTimestamp(tstamp: Long, ttl: Ttl) {
   }
 
   def toSessionKeys: List[(String, String)] = {
-    val acc = List(Keys.Timestamp.value -> tstamp.toString)
+    val acc = List(MSessionKeys.Timestamp.value -> tstamp.toString)
     ttl.addToSessionAcc(acc)
   }
 

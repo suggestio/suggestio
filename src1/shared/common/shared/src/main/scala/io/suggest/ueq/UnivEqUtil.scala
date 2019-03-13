@@ -70,4 +70,6 @@ object UnivEqUtil {
   // scalaz
   @inline implicit def nelUe[T: UnivEq]   : UnivEq[NonEmptyList[T]] = UnivEq.force
 
+  @inline implicit def uuidUe             : UnivEq[java.util.UUID]  = UnivEq.force
+
 }

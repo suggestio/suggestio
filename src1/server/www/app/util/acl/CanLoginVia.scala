@@ -11,6 +11,7 @@ import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import play.api.http.Status
 import play.api.inject.Injector
 import util.ident.IExtLoginAdp
+import util.ident.esia.EsiaLoginUtil
 import util.ident.ss.SecureSocialLoginUtil
 
 import scala.concurrent.Future
@@ -32,6 +33,7 @@ class CanLoginVia @Inject()(
 {
 
   private lazy val ssLoginUtil = injector.instanceOf[SecureSocialLoginUtil]
+  private lazy val esiaLoginUtil = injector.instanceOf[EsiaLoginUtil]
 
 
   /** Сборка action-builder, фильтрующий экшены логина через внешний сервис. */
@@ -44,13 +46,11 @@ class CanLoginVia @Inject()(
         lazy val logPrefix = s"${mreq.remoteClientAddress} ${mreq.user.personIdOpt.fold("")(" u#" + _)}:"
 
         if (extService.hasLogin) {
-          // Можно логинится через указанный сервис.
-          // TODO Выбирать адаптер динамически на основе провайдера.
+          // Можно логинится через указанный сервис. Организовать адаптер:
           val loginAdp: IExtLoginAdp = extService match {
-            // openid-connect login
+            // ESIA login.
             case MExtServices.GosUslugi =>
-              // TODO Реализовать адаптер логина для госуслуг.
-              ???
+              esiaLoginUtil
 
             // securesocial-логин для вк, фб, твиттера и прочего старья
             case _ =>

@@ -29,13 +29,12 @@ object ProviderControllerHelper extends LoggerImpl {
    */
   def cleanupSession(s: Session): Session = {
     val filteredKeys = Set(
-      SecureSocial.OriginalUrlKey,
       IdentityProvider.SessionId,
       OAuth1Provider.CacheKey
     )
     s.copy(
       data = s.data.filterKeys { k =>
-        !filteredKeys.contains(k)
+        !(filteredKeys contains k)
       }
     )
   }

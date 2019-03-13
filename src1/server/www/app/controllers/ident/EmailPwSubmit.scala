@@ -7,8 +7,8 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, MNodeTypes}
-import io.suggest.sec.m.msession.{Keys, LongTtl, ShortTtl, Ttl}
 import io.suggest.sec.util.IScryptUtilDi
+import io.suggest.session.{LongTtl, MSessionKeys, ShortTtl, Ttl}
 import io.suggest.util.logs.IMacroLogs
 import models.req.IReq
 import models.usr._
@@ -68,7 +68,7 @@ trait EmailPwLogin
   def emailPwLoginFormStubM(implicit request: RequestHeader): Future[EmailPwLoginForm_t] = {
     // Пытаемся извлечь email из сессии.
     // Подразумевается, что в истёкшей сессии может быть personId. Не ясно, актуально ли это ещё (конфилкт с SessionExpire?).
-    val emailFut: Future[String] = request.session.get(Keys.PersonId.value) match {
+    val emailFut: Future[String] = request.session.get(MSessionKeys.PersonId.value) match {
       case Some(personId) =>
         for {
           nodeOpt <- mNodes.dynSearchOne {
@@ -149,7 +149,7 @@ trait EmailPwLogin
 
                     val rdrFut = RdrBackOrFut(r) { emailSubmitOkCall(personId) }
                     var addToSession: List[(String, String)] = List(
-                      Keys.PersonId.value -> personId
+                      MSessionKeys.PersonId.value -> personId
                     )
                     // Реализация длинной сессии при наличии флага rememberMe.
                     addToSession = binded.ttl.addToSessionAcc(addToSession)

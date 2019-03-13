@@ -35,7 +35,6 @@ case class AuthenticationMethod(method: String) {
 object AuthenticationMethod {
   def OAuth1 = AuthenticationMethod("oauth1")
   def OAuth2 = AuthenticationMethod("oauth2")
-  def OpenId = AuthenticationMethod("openId")
   def UserPassword = AuthenticationMethod("userPassword")
 }
 

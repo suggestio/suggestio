@@ -6,8 +6,8 @@ import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModel
 import io.suggest.init.routed.{MJsInitTarget, MJsInitTargets}
 import io.suggest.model.n2.node.MNodes
-import io.suggest.sec.m.msession.Keys
 import io.suggest.sec.util.ScryptUtil
+import io.suggest.session.MSessionKeys
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mproj.ICommonDi
@@ -69,7 +69,7 @@ class Ident @Inject() (
   // TODO Добавить CSRF
   def logout = Action { implicit request =>
     Redirect(models.MAIN_PAGE_CALL)
-      .removingFromSession(Keys.PersonId.value, Keys.Timestamp.value)
+      .removingFromSession(MSessionKeys.PersonId.value, MSessionKeys.Timestamp.value)
   }
 
 

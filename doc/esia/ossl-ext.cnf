@@ -1,0 +1,8 @@
+## GosUslugi ESIA cert generation.
+## https://ru.stackoverflow.com/a/469364
+[ esia_ca ]
+keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment, dataEncipherment
+extendedKeyUsage = emailProtection, clientAuth
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer
+

@@ -1,9 +1,8 @@
 package io.suggest.sec
 
 import javax.inject.{Inject, Singleton}
-
-import io.suggest.sec.m.msession.Keys._
-import io.suggest.sec.m.msession.{Keys, LoginTimestamp}
+import io.suggest.session.MSessionKeys._
+import io.suggest.session.{LoginTimestamp, MSessionKeys}
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.mvc._
 
@@ -43,7 +42,7 @@ class ExpireSessionUtil @Inject() (
 
   /** Ключи в session, которые нужно удалять при любой проблеме с TTL. */
   val filteredKeySet = {
-    Keys.onlyLoginIter
+    MSessionKeys.onlyLoginIter
       .map(_.value)
       .toSet
   }

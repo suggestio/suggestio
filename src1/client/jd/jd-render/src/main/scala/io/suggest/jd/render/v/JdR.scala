@@ -523,7 +523,7 @@ class JdR(
         val clientX = e.clientX
 
         // Всё остальное (вне event) заносим в callback-функцию, чтобы максимально обленивить вычисления и дальнейшие действия.
-        dispatchOnProxyScopeCBf($) { jdArgsProxy =>
+        dispatchOnProxyScopeCBf($) { jdArgsProxy: Props =>
           // Узнать разницу между коодинатами мыши и левым верхним углом. Десериализовать из dataTransfer.
           val offsetXy = try {
             Json
@@ -630,7 +630,8 @@ class JdR(
   } // Backend
 
 
-  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     // В состоянии храним последний инстанс MJdArgs. Это поможет подавлять паразитные перерендеры.
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
@@ -675,7 +676,8 @@ class JdR(
 
   /** Опциональный компонент, который просто является костылём-надстройкой на JdR.component. */
   // TODO Нужен ли? По факту -- не используется.
-  val optional = ScalaComponent.builder[ModelProxy[Option[MJdArgs]]]("JdOpt")
+  val optional = ScalaComponent
+    .builder[ModelProxy[Option[MJdArgs]]]("JdOpt")
     .stateless
     .render_P { jdArgsOptProxy =>
       jdArgsOptProxy.value.whenDefinedEl { jdArgs =>

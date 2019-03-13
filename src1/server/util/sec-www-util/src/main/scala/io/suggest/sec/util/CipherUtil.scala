@@ -1,13 +1,13 @@
 package io.suggest.sec.util
 
-import java.security.{MessageDigest, SecureRandom, Security}
+import java.security.{MessageDigest, SecureRandom}
+
 import javax.crypto.Cipher
 import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
-
-import javax.inject.Singleton
+import javax.inject.{Inject, Singleton}
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.lang3.ArrayUtils
-import org.bouncycastle.jce.provider.BouncyCastleProvider
+import play.api.inject.Injector
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -15,38 +15,30 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
  * Description: Утиль для доступа к удобным фунцкиям шифрования.
  */
 @Singleton
-class CipherUtil {
+final class CipherUtil @Inject() (
+                                   injector   : Injector,
+                                 ) {
 
-  // Constructor
-  ensureBcJce()
+  object Cipherer {
 
+    // PKCS7Padding есть только в BouncyCastle, поэтому нужно дергать функцию регистрации JCE-провайдера
+    // BC при старте системы или тестов, поэтому требуется bc-prov.
+    injector.instanceOf[SecInitUtil]
 
-  // API
+    def CIPHER_SPEC     = "aes/cbc/pkcs7padding"
+    def SECRET_KEY_ALGO = "AES"
 
-  /** PKCS7Padding есть только в BouncyCastle, поэтому нужно дергать функцию регистрации JCE-провайдера
-    * BC при старте системы или тестов. */
-  def ensureBcJce() {
-    Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) match {
-      case null => Security.addProvider(new BouncyCastleProvider)
-      case _ => // do nothing
+    def getCipherInstance = {
+      Cipher.getInstance(CIPHER_SPEC)
     }
+
+    def generateSecretKey(byteLen: Int = 32, rnd: SecureRandom = new SecureRandom()): Array[Byte] = {
+      val arr = Array.fill[Byte](byteLen)(0)
+      rnd.nextBytes(arr)
+      arr
+    }
+
   }
-
-
-  def generateSecretKey(byteLen: Int = 32, rnd: SecureRandom = new SecureRandom()): Array[Byte] = {
-    val arr = Array.fill[Byte](byteLen)(0)
-    rnd.nextBytes(arr)
-    arr
-  }
-
-
-  def CIPHER_SPEC     = "aes/cbc/pkcs7padding"
-  def SECRET_KEY_ALGO = "AES"
-
-  def getCipherInstance = {
-    Cipher.getInstance(CIPHER_SPEC)
-  }
-
   /** Поддержка шифрования и дешифрования для указанных IV и ключа. */
   case class Cipherer(
     /** При использовании CBC нужен IV, который выводится из разного барахла, в т.ч. из статических рандомных байт. */
@@ -70,8 +62,8 @@ class CipherUtil {
 
     def encryptPrintable(data2enc: Array[Byte], ivMaterial: Array[Byte]): String = {
       try {
-        val cipher = getCipherInstance
-        val secretKey = new SecretKeySpec(SECRET_KEY, SECRET_KEY_ALGO)
+        val cipher = Cipherer.getCipherInstance
+        val secretKey = new SecretKeySpec(SECRET_KEY, Cipherer.SECRET_KEY_ALGO)
         val iv1 = mixWithIvDflt(ivMaterial)
         val ivSpec = new IvParameterSpec(iv1)
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec)
@@ -83,10 +75,10 @@ class CipherUtil {
       }
     }
 
-    def decryptPrintable(str2dec: String, ivMaterial: Array[Byte] = Array.empty): String = {
+    def decryptPrintable(str2dec: String, ivMaterial: Array[Byte]): String = {
       try {
-        val cipher = getCipherInstance
-        val secretKey = new SecretKeySpec(SECRET_KEY, SECRET_KEY_ALGO)
+        val cipher = Cipherer.getCipherInstance
+        val secretKey = new SecretKeySpec(SECRET_KEY, Cipherer.SECRET_KEY_ALGO)
         val iv1 = mixWithIvDflt(ivMaterial)
         val ivSpec = new IvParameterSpec(iv1)
         cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec)

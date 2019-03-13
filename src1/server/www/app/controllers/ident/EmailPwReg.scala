@@ -11,8 +11,8 @@ import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.sec.m.msession.Keys
 import io.suggest.sec.util.IScryptUtilDi
+import io.suggest.session.MSessionKeys
 import io.suggest.util.logs.IMacroLogs
 import models.mctx.Context
 import models.req.IReq
@@ -262,7 +262,7 @@ trait EmailPwReg
           } yield {
             val args = nodesUtil.nodeRegSuccessArgs(mnode)
             Ok( regSuccessTpl(args)(ctx) )
-              .addingToSession(Keys.PersonId.value -> personId)
+              .addingToSession(MSessionKeys.PersonId.value -> personId)
               .withLang(lang)
           }
         } // Form.fold right

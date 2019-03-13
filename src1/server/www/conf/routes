@@ -334,8 +334,6 @@ GET  /id/via/:extService                @controllers.Ident.idViaProvider(extServ
 POST /id/via/:extService                @controllers.Ident.idViaProviderByPost(extService: io.suggest.ext.svc.MExtService, r: Option[String] ?= None)
 GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm
 POST /id/reg/ext/confirm                @controllers.Ident.idpConfirmSubmit
-GET  /id/ext/cb                         @controllers.Ident.extIdCbGet(r: Option[String] ?= None)
-POST /id/ext/cb                         @controllers.Ident.extIdCbPost(r: Option[String] ?= None)
 
 ## compat
 GET  /app/session/keepalive             @controllers.Static.keepAliveSession

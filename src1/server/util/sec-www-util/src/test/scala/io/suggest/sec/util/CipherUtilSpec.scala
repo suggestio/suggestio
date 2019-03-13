@@ -1,6 +1,7 @@
 package io.suggest.sec.util
 
 import org.scalatestplus.play._
+import play.api.inject.NewInstanceInjector
 
 /**
  * Suggest.io
@@ -10,11 +11,11 @@ import org.scalatestplus.play._
  */
 class CipherUtilSpec extends PlaySpec {
 
-  private lazy val cipherUtil = new CipherUtil
+  private lazy val cipherUtil = new CipherUtil( NewInstanceInjector )
 
   private def newCu = cipherUtil.Cipherer(
-    IV_MATERIAL_DFLT = cipherUtil.generateSecretKey(32),
-    SECRET_KEY       = cipherUtil.generateSecretKey(32)
+    IV_MATERIAL_DFLT = cipherUtil.Cipherer.generateSecretKey(32),
+    SECRET_KEY       = cipherUtil.Cipherer.generateSecretKey(32)
   )
 
   private def _mkTest(str: String): Unit = {
