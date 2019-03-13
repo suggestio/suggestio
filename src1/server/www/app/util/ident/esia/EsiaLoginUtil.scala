@@ -2,7 +2,7 @@ package util.ident.esia
 
 import java.nio.charset.StandardCharsets
 import java.security.cert.X509Certificate
-import java.security.{PrivateKey, PublicKey, Signature}
+import java.security.{PrivateKey, PublicKey, Security, Signature}
 import java.time.{Instant, OffsetDateTime, ZoneId}
 import java.util.{Base64, UUID}
 
@@ -283,7 +283,10 @@ final class EsiaLoginUtil @Inject()(
             },
             {resp =>
               // Всё ок, токен на руках. Но надо извлечь subject id.
-              getClaimsFromToken( resp.idToken.orElse(resp.accessToken).get, qsArgs ).fold(
+              val tokenStr = resp.idToken
+                .orElse(resp.accessToken)
+                .get
+              getClaimsFromToken( tokenStr, qsArgs ).fold(
                 {tokenEx =>
                   LOGGER.error(s"$logPrefix Failed to decode ESIA JWT-token", tokenEx)
                   AuthenticationResult.Failed( tokenEx.getMessage )
@@ -346,7 +349,11 @@ final class EsiaLoginUtil @Inject()(
     // TODO Перейти на ГОСТ 34.10-2012 (или -2001)
     val sigAlgo = "SHA256WithRSA"
     val myPrivKey = mKeyStore.getKey[PrivateKey]( KEYSTORE_ALIAS ).get
-    val signature = Signature.getInstance( sigAlgo, BouncyCastleProvider.PROVIDER_NAME )
+
+    // Кэшируем крипто-провайдера для небольшого ускорения работы.
+    val bcProv = Security.getProvider( BouncyCastleProvider.PROVIDER_NAME )
+
+    val signature = Signature.getInstance( sigAlgo, bcProv )
     signature.initSign( myPrivKey )
     signature.update( signedDataStr.getBytes(StandardCharsets.UTF_8) )
 
@@ -356,10 +363,10 @@ final class EsiaLoginUtil @Inject()(
     val certs = new JcaCertStore( (cert :: Nil).asJavaCollection )
 
     val cmsSigner = new JcaContentSignerBuilder( sigAlgo )  // TODO В оригинале здесь было "with" с маленькой буквы: SHA256withRSA
-      .setProvider( BouncyCastleProvider.PROVIDER_NAME )
+      .setProvider( bcProv )
       .build( myPrivKey )
     val digestCalc = new JcaDigestCalculatorProviderBuilder()
-      .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+      .setProvider( bcProv )
       .build()
     val sigInfoGenerator = new JcaSignerInfoGeneratorBuilder(digestCalc)
       .build(cmsSigner, cert)
@@ -411,7 +418,6 @@ final class EsiaLoginUtil @Inject()(
           )
         )
         .setAllowedClockSkewSeconds( 60 )
-        // TODO Взять ключ из shibboleth.
         .parseClaimsJws( token )
 
       val claims = jwt.getBody
@@ -427,30 +433,30 @@ final class EsiaLoginUtil @Inject()(
       // TODO Надо решить, ограничивать ли пользователей по is_tru? И если да, то на каком этапе? В начале пока можно забить.
 
       // Приложение В.6.4 требует проверять маркер идентификации:
+      // 1. Проверка идентификатора (мнемоники) ЕСИА, содержащейся в маркере идентификации.
+      val issuer = claims.getIssuer
       ErrorConstants.assertArg(
-        {
-          // 1. Проверка идентификатора (мнемоники) ЕСИА, содержащейся в маркере идентификации.
-          val issuer = claims.getIssuer
-          // TODO Учитывать test/prod
-          val issuerMatches = issuer matches "^https?://esia.gosuslugi.ru/$"
-          if (!issuerMatches) LOGGER.error(s"$logPrefix Token issuer mismatch: unexpected '$issuer'")
-          issuerMatches
-        } && {
-          // 2. Проверка идентификатора (мнемоники) системы-клиента, т.е. именно система-клиент должна быть указана в качестве адресата маркера идентификации.
-          val claimedAudience = claims.getAudience
-          val r = (claimedAudience ==* conf.clientId)
-          if (!r) LOGGER.error(s"$logPrefix Audience clientId mismatch:\n claimed = $claimedAudience\n expected = ${conf.clientId}")
-          r
-        } && {
-          // 4. Текущее время должно быть не позднее, чем время прекращения срока действия маркера идентификации.
-          val notBefore = claims.getNotBefore
-          val notBeforeInstant = notBefore.toInstant
-          val nowInstant = Instant.now()
-          val r = !(nowInstant isAfter notBeforeInstant)
-          if (!r) LOGGER.error(s"$logPrefix notBefore claim is outdated:\n NotBefore = $notBefore ($notBeforeInstant)\n now = $nowInstant")
-          r
-        }
-        // 3. Проверка подписи маркера идентификации (с использованием указанного в маркере алгоритма).
+        // TODO Учитывать test/prod
+        issuer matches "^https?://esia.gosuslugi.ru/$",
+        s"$logPrefix Token issuer mismatch: unexpected '$issuer'"
+      )
+
+      // 2. Проверка идентификатора (мнемоники) системы-клиента, т.е. именно система-клиент должна быть указана в качестве адресата маркера идентификации.
+      val claimedAudience = claims.getAudience
+      ErrorConstants.assertArg(
+        claimedAudience ==* conf.clientId,
+        s"$logPrefix Audience clientId mismatch:\n claimed = $claimedAudience\n expected = ${conf.clientId}"
+      )
+
+      // 3. Проверка подписи маркера идентификации (с использованием указанного в маркере алгоритма).
+
+      // 4. Текущее время должно быть не позднее, чем время прекращения срока действия маркера идентификации.
+      val notBefore = claims.getNotBefore
+      val notBeforeInstant = notBefore.toInstant
+      val nowInstant = Instant.now()
+      ErrorConstants.assertArg(
+        !(nowInstant isAfter notBeforeInstant),
+        s"$logPrefix notBefore claim is outdated:\n NotBefore = $notBefore ($notBeforeInstant)\n now = $nowInstant"
       )
 
       claims

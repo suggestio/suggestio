@@ -63,9 +63,11 @@ object ErrorConstants {
 
 
   /** Аналог scala.assert(), но без ELIDEABLE и без Error. */
-  def assertArg(assertion: Boolean): Unit = {
+  def assertArg(assertion: Boolean): Unit =
+    assertArg(assertion: Boolean, "Assertion failed")
+  def assertArg(assertion: Boolean, errMsg: => String): Unit = {
     if (!assertion)
-      throw AssertArgException
+      throw AssertArgException( errMsg )
   }
 
   object Words {
@@ -81,4 +83,4 @@ object ErrorConstants {
 }
 
 /** Exception, выстреливаемый из assertArg(). */
-case object AssertArgException extends IllegalArgumentException
+case class AssertArgException(override val getMessage: String) extends IllegalArgumentException
