@@ -8,24 +8,23 @@ import java.time.LocalDate
  * Created: 21.11.14 16:29
  * Description: Элемент URL, представляющий данные по одной, подлежащей кравлингу.
  */
-trait SiteMapUrlT {
-  def loc         : String
-  def lastMod     : Option[LocalDate]
-  def changeFreq  : Option[ChangeFreq]
-  def priority    : Option[Float]
-}
-
 case class SiteMapUrl(
   loc         : String,
   lastMod     : Option[LocalDate] = None,
   changeFreq  : Option[ChangeFreq] = None,
   priority    : Option[Float] = None
-) extends SiteMapUrlT
+)
 
+
+import enumeratum.{Enum, EnumEntry}
 
 /** Изменяемость страниц. */
-object ChangeFreqs extends Enumeration {
-  type ChangeFreq = Value
-  val hourly, daily, weekly = Value
-  //lazy val always, monthly, yearly, never = Value
+object ChangeFreqs extends Enum[ChangeFreq] {
+  case object hourly extends ChangeFreq
+  case object daily extends ChangeFreq
+  case object weekly extends ChangeFreq
+  //... always, monthly, yearly, never
+
+  override def values = findValues
 }
+sealed abstract class ChangeFreq extends EnumEntry

@@ -1,13 +1,12 @@
 package util.xplay
 
 import javax.inject.Inject
-
 import io.suggest.sec.ExpireSessionFilter
 import play.api.http.HttpFilters
 import play.api.mvc.EssentialFilter
 import play.filters.gzip.GzipFilter
-import util.HtmlCompressFilter
 import util.cdn.{CorsFilter, DumpXffHeaders}
+import util.tpl.HtmlCompressFilter
 
 /**
   * Suggest.io

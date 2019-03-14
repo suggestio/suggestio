@@ -1,7 +1,7 @@
 package util.tags
 
 import javax.inject.Singleton
-import models.mtag.{MTagsAddFormBinded, MTagBinded, TagsEditForm_t}
+import models.mtag.{MTagsAddFormBinded, MTagBinded}
 import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
 import util.FormUtil
@@ -99,9 +99,8 @@ class TagsEditFormUtil {
     { MTagsAddFormBinded.unapply }
   }
 
-  def addTagsForm: TagsEditForm_t = {
+  def addTagsForm: Form[MTagsAddFormBinded] =
     Form(addTagsFormM)
-  }
 
 }
 

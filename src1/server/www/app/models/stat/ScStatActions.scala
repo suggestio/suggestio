@@ -1,5 +1,8 @@
 package models.stat
 
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import japgolly.univeq.UnivEq
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -7,44 +10,30 @@ package models.stat
  * Description: Статистические данные по showcase для сохранения в MAdStat.
  */
 
-object ScStatActions extends Enumeration {
-
-  /**
-   * Экземпляр этой модели.
-   * @param strId Строковой id.
-   * @param billable Допускается для биллинга?
-   */
-  protected class Val(val strId: String, val billable: Boolean) extends super.Val(strId) {
-    def i18nCode = "ad.stat.action." + strId
-  }
-
-
-  type ScStatAction = Val
-
+object ScStatActions extends StringEnum[ScStatAction] {
 
   /** Просмотр плитки выдачи. */
-  val Tiles: ScStatAction  = new Val("v", billable = true)
+  case object Tiles extends ScStatAction("v")
 
   /** Юзер открывает карточку, вызывая focusedAds() на сервере. */
-  val Opened: ScStatAction = new Val("c", billable = true)
+  case object Opened extends ScStatAction("c")
 
   /** Запрос к "сайту" выдачи, т.е. к странице, с которой начинается рендер выдачи. */
-  val Site: ScStatAction  = new Val("s", billable = false)
+  case object Site extends ScStatAction("s")
 
   /** Запрос к showcase/index, т.е. к верстке выдачи узла какого-то например. */
-  val Index: ScStatAction = new Val("i", billable = false)
+  case object Index extends ScStatAction("i")
 
   /** Запрос списка нод от клиента. */
-  val Nodes: ScStatAction = new Val("n", billable = false)
+  case object Nodes extends ScStatAction("n")
 
 
-  implicit def value2val(x: Value): ScStatAction = x.asInstanceOf[ScStatAction]
+  override def values = findValues
 
   def onlyBillableIter: Iterator[ScStatAction] = {
     values
       .iterator
       .filter(_.billable)
-      .map(value2val)
   }
 
   def onlyBillable: Set[ScStatAction] = {
@@ -53,3 +42,29 @@ object ScStatActions extends Enumeration {
 
 }
 
+
+/**
+  * Экземпляр этой модели.
+  * @param strId Строковой id.
+  */
+sealed abstract class ScStatAction(override val value: String) extends StringEnumEntry {
+  /** @param billable Допускается для биллинга? */
+  def i18nCode = "ad.stat.action." + value
+}
+
+object ScStatAction {
+
+  @inline implicit def univEq: UnivEq[ScStatAction] = UnivEq.derive
+
+  implicit class ScStatActionOpsExt( val ssa: ScStatAction ) extends AnyVal {
+
+    def billable: Boolean = {
+      ssa match {
+        case ScStatActions.Tiles | ScStatActions.Opened => true
+        case _ => false
+      }
+    }
+
+  }
+
+}

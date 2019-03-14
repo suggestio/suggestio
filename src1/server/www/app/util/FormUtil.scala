@@ -19,7 +19,7 @@ import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.Forms._
 import play.api.data.Mapping
 import play.api.i18n.Lang
-import util.HtmlSanitizer._
+import util.tpl.HtmlSanitizer
 
 /**
  * Suggest.io
@@ -31,7 +31,7 @@ object FormUtil {
 
   def strIdentityF = {s:String => s}
   def strTrimF = {s: String => s.trim }
-  def stripHtml(s: String) = stripAllPolicy.sanitize(s)
+  def stripHtml(s: String) = HtmlSanitizer.stripAllPolicy.sanitize(s)
   def strTrimSanitizeF = { s:String =>
     // TODO Исключить двойные пробелы
     stripHtml(s).trim
@@ -40,7 +40,7 @@ object FormUtil {
   def strTrimSanitizeLowerF = strTrimSanitizeF andThen { _.toLowerCase }
   def strFmtTrimF = {s: String =>
     // TODO прогонять через HtmlCompressor
-    textFmtPolicy.sanitize(s).trim
+    HtmlSanitizer.textFmtPolicy.sanitize(s).trim
   }
 
   def strUnescapeF = {s: String => StringEscapeUtils.unescapeHtml4(s) }

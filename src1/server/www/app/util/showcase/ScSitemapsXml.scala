@@ -12,7 +12,7 @@ import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
+import models.crawl.{ChangeFreqs, SiteMapUrl}
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
 import models.msc.ScJsState
@@ -51,7 +51,7 @@ class ScSitemapsXml @Inject() (
    * Кравлер может ждать ответа долго, а xml может быть толстая, поэтому у нас упор на легковесность
    * и поточность, а не на скорость исполнения.
    */
-  override def siteMapXmlSrc(): Source[SiteMapUrlT, _] = {
+  override def siteMapXmlSrc(): Source[SiteMapUrl, _] = {
     val adSearch = new MNodeSearchDfltImpl {
 
       override def isEnabled = Some(true)

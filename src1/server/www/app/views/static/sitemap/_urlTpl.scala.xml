@@ -1,4 +1,4 @@
-@(sxu: crawl.SiteMapUrlT)
+@(sxu: crawl.SiteMapUrl)
 
 @import util.TplDataFormatUtil.w3cDate
 

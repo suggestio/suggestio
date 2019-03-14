@@ -2,7 +2,6 @@ package models.mproj
 
 import akka.stream.Materializer
 import javax.inject.{Inject, Singleton}
-
 import com.google.inject.ImplementedBy
 import controllers.{ErrorHandler, IErrorHandler}
 import io.suggest.event.SioNotifierStaticClientI
@@ -16,7 +15,7 @@ import play.api.i18n.{Langs, MessagesApi}
 import io.suggest.di.{ICacheApi, ISlickDbConfig}
 import io.suggest.es.model.{EsScrollPublisherFactory, IEsModelDiVal}
 import io.suggest.sec.util.Csrf
-import util.HtmlCompressUtil
+import util.tpl.HtmlCompressUtil
 
 import scala.concurrent.ExecutionContext
 

@@ -2,7 +2,7 @@ package util.seo
 
 import akka.stream.scaladsl.Source
 import javax.inject.Inject
-import models.crawl.SiteMapUrlT
+import models.crawl.SiteMapUrl
 import util.showcase.ScSitemapsXml
 
 /**
@@ -27,7 +27,7 @@ case class SiteMapUtil @Inject() (
       .toList
   }
 
-  def sitemapUrlsSrc(): Source[SiteMapUrlT, _] = {
+  def sitemapUrlsSrc(): Source[SiteMapUrl, _] = {
     val srcDescs = SITEMAP_SOURCES
     if (srcDescs.isEmpty) {
       Source.empty
@@ -48,7 +48,7 @@ case class SiteMapUtil @Inject() (
 trait SiteMapXmlCtl {
 
   /** Асинхронно поточно генерировать данные о страницах, подлежащих индексации. */
-  def siteMapXmlSrc(): Source[SiteMapUrlT, _]
+  def siteMapXmlSrc(): Source[SiteMapUrl, _]
 
 }
 
