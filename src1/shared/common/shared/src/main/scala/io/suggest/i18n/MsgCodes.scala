@@ -349,4 +349,7 @@ object MsgCodes {
     else MsgCodes.`No`
   }
 
+  val `Password` = "Password"
+  val `Login.using.password` = "Login.using.password"
+
 }

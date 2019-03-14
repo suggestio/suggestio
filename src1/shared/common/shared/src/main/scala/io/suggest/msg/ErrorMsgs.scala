@@ -151,4 +151,7 @@ object ErrorMsgs extends MsgsStaticT {
   /** Логика работы неверна или завела в тупик. */
   def PERMISSION_API_LOGIC_INVALID     = E(90)
 
+  /** Косяк в форме логина. */
+  def LOGIN_FORM_ERROR                 = E(91)
+
 }

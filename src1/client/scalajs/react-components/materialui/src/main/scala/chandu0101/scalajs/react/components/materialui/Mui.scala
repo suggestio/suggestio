@@ -94,8 +94,8 @@ object Mui {
   @js.native @JSImport("@material-ui/core/Switch", JSImport.Default) object Switch extends js.Any
 
   @js.native @JSImport("@material-ui/core/SnackbarContent", JSImport.Default) object SnackbarContent extends js.Any
-  @js.native @JSImport("@material-ui/core/Tabs", JSImport.Default) object Tabs         extends js.Any
-  @js.native @JSImport("@material-ui/core/Tabs/Tab", JSImport.Default) object Tab      extends js.Any
+  @js.native @JSImport("@material-ui/core/Tabs", JSImport.Default) object Tabs extends js.Any
+  @js.native @JSImport("@material-ui/core/Tab", JSImport.Default) object Tab extends js.Any
 
   @js.native @JSImport("@material-ui/core/Table", JSImport.Default) object Table extends js.Any
   @js.native @JSImport("@material-ui/core/TableBody", JSImport.Default) object TableBody extends js.Any

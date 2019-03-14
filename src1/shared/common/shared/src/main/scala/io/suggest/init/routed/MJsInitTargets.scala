@@ -49,6 +49,9 @@ object MJsInitTargets extends StringEnum[MJsInitTarget] {
   /** Цель формы модерации размещений в sys. */
   case object SysMdrForm extends MJsInitTarget("u")
 
+  /** Цель инициализации формы логина. */
+  case object LoginForm extends MJsInitTarget("v")
+
 
   override def values = findValues
 

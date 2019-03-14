@@ -167,6 +167,12 @@ lazy val lkCommonSjs = {
     .dependsOn(commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs, reactImageCropSjs, asmCryptoSioSjs)
 }
 
+/** Форма логина sjs. */
+lazy val loginFormSjs = {
+  Project(id = "login-form-sjs", base = file(DIR0 + "client/lk/login/form") )
+    .dependsOn( commonSjs, commonReactSjs, reactMaterialUiSjs )
+}
+
 /** Компоненты для покупательской корзины suggest.io. */
 lazy val cartSjs = {
   Project(id = "cart-sjs", base = file(DIR0 + "client/bill/cart"))
@@ -623,9 +629,9 @@ lazy val sio2 = {
       lkAdEditorSjs, lkAdnEditSjs,
       streamsUtil, brotliUtil,
       asmCryptoJsSjs, asmCryptoSioSjs,
+      sysMdrSjs, loginFormSjs,
       util, esUtil, textUtil, swfs, n2, securesocial,
       ipgeobase, stat,
-      sysMdrSjs,
       mgeo, commonWww, nodesWww,
       mbill2, payWww, cartSjs,
       secWwwUtil, secAvUtil, svgUtil,
