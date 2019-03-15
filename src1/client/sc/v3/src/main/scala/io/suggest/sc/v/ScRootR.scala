@@ -7,6 +7,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.color.{MColorData, MColors}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
+import io.suggest.i18n.MCommonReactCtx
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.{ReactCommonUtil, StyleProps}
 import io.suggest.sc.m.MScRoot
@@ -23,7 +24,7 @@ import io.suggest.sc.v.search.{NodesFoundR, NodesSearchContR, STextR, SearchR}
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
 import scalacss.ScalaCssReact._
 
 /**
@@ -55,6 +56,7 @@ class ScRootR (
                 val indexSwitchAskR     : IndexSwitchAskR,
                 val goBackR             : GoBackR,
                 val wzFirstR            : WzFirstR,
+                commonReactCtx          : React.Context[MCommonReactCtx],
               ) {
 
   import io.suggest.sc.v.search.SearchCss.SearchCssFastEq
@@ -93,6 +95,7 @@ class ScRootR (
                                     indexSwitchAskC           : ReactConnectProxy[indexSwitchAskR.Props_t],
                                     goBackC                   : ReactConnectProxy[goBackR.Props_t],
                                     firstRunWzC               : ReactConnectProxy[wzFirstR.Props_t],
+                                    commonReactCtxC           : ReactConnectProxy[MCommonReactCtx],
                                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -343,7 +346,7 @@ class ScRootR (
       )
 
       // Финальный компонент: нельзя рендерить выдачу, если нет хотя бы минимальных данных для индекса.
-      <.div(
+      val sc = <.div(
         // css, который рендерится только один раз:
         mrootProxy.wrap(_ => ScCssStatic)( CssR.apply )(implicitly, FastEq.AnyRefEq),
 
@@ -359,6 +362,12 @@ class ScRootR (
         s.firstRunWzC { wzFirstR.apply },
 
       )
+
+      // Зарегистрировать commonReact-контекст, чтобы подцепить динамический messages:
+      s.commonReactCtxC { commonReactCtxProxy =>
+        commonReactCtx.provide( commonReactCtxProxy.value )( sc )
+      }
+
     }
 
   }
@@ -527,6 +536,8 @@ class ScRootR (
             )
           }
         }( OptFastEq.Wrapped( wzFirstR.WzFirstRPropsValFastEq ) ),
+
+        commonReactCtxC = propsProxy.connect( _.internals.info.commonReactCtx )( FastEq.AnyRefEq ),
 
       )
     }

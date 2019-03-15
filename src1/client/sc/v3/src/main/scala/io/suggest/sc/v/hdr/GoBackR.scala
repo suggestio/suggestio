@@ -7,8 +7,7 @@ import io.suggest.sc.m.inx.{GoToPrevIndexView, MIndexView}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import ReactCommonUtil.Implicits._
-import io.suggest.i18n.MsgCodes
-import io.suggest.msg.Messages
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.sc.styl.ScCssStatic
 
 /**
@@ -17,7 +16,9 @@ import io.suggest.sc.styl.ScCssStatic
   * Created: 10.07.17 16:56
   * Description: Компонент кнопки, указывающей вправо (или "вперёд").
   */
-class GoBackR {
+class GoBackR(
+               commonReactCtxProv     : React.Context[MCommonReactCtx],
+             ) {
 
   type Props_t = Option[MIndexView]
   type Props = ModelProxy[Props_t]
@@ -33,13 +34,15 @@ class GoBackR {
     def render(propsProxy: Props): VdomElement = {
       propsProxy.value.whenDefinedEl { miv =>
         MuiToolTip {
-          val titleStr = miv.name.fold {
-            Messages( MsgCodes.`Go.back` )
-          } { prevNodeName =>
-            Messages( MsgCodes.`Go.back.to.0`, prevNodeName )
+          val titleText = commonReactCtxProv.consume { crCtx =>
+            miv.name.fold {
+              crCtx.messages( MsgCodes.`Go.back` )
+            } { prevNodeName =>
+              crCtx.messages( MsgCodes.`Go.back.to.0`, prevNodeName )
+            }
           }
           new MuiToolTipProps {
-            override val title: raw.React.Node = titleStr
+            override val title = titleText.rawNode
           }
         } (
           MuiIconButton {

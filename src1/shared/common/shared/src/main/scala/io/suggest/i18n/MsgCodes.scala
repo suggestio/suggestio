@@ -351,5 +351,6 @@ object MsgCodes {
 
   val `Password` = "Password"
   val `Login.using.password` = "Login.using.password"
+  val `Login` = "Login"
 
 }

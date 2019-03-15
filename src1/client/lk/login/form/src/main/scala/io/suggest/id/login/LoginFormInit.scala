@@ -5,6 +5,8 @@ import io.suggest.id.login.m.LoginShowHide
 import io.suggest.init.routed.InitRouter
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
+import io.suggest.ReactCommonModule
+import io.suggest.i18n.MCommonReactCtx
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 
@@ -35,9 +37,13 @@ trait LoginFormInit extends InitRouter {
     val contDiv = VUtil.newDiv()
 
     // Отрендерить форму в контейнер:
-    modules.circuit
-      .wrap( identity(_) )( modules.loginFormR.apply )
-      .renderIntoDOM( contDiv )
+    // TODO Тут очень статический контекст, делающий невозможным переключать язык /id.
+    // Когда будет механизм переключения языка, надо законнектить через circuit.connect().
+    val loginForm = ReactCommonModule.commonReactCtx.provide( MCommonReactCtx.default )(
+      modules.circuit
+        .wrap( identity(_) )( modules.loginFormR.apply )
+    )
+    loginForm.renderIntoDOM( contDiv )
 
     DocumentVm()
       .body

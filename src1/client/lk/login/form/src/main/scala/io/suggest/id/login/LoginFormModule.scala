@@ -11,6 +11,9 @@ import io.suggest.id.login.v.{EpwFormR, LoginFormR}
   */
 class LoginFormModule {
 
+  import io.suggest.ReactCommonModule._
+
+
   lazy val loginFormR = wire[LoginFormR]
   lazy val epwFormR = wire[EpwFormR]
 

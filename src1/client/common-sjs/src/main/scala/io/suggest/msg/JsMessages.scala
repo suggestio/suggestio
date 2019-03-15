@@ -1,6 +1,7 @@
 package io.suggest.msg
 
 import io.suggest.i18n.{I18nConst, IMessage, MessagesF_t}
+import japgolly.univeq.UnivEq
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
@@ -42,10 +43,8 @@ sealed trait IJsMessagesSingleLang extends js.Object {
 object JsMessagesSingleLangNative extends IJsMessagesSingleLang
 
 
-/** Основной доступ к локализациям в рамках одного языка.
-  * Легко импортировать, легко заюзать.
-  */
-object Messages {
+/** Класс Messages для возможности переключения языков в будущем. (надо бы через JSON) */
+sealed trait Messages {
 
   /** Локализовать инстанс IMessage. */
   def apply(fe: IMessage): String = {
@@ -60,10 +59,26 @@ object Messages {
   def apply1(message: String, args: Seq[Any]): String = {
     // Шаманство с аргументами из-за конфликта между Any, AnyRef и js.Any.
     val argsJs = args.asInstanceOf[Seq[js.Any]]
-    JsMessagesSingleLangNative(message, argsJs: _*)
+    _applyJs(message, argsJs)
   }
+
+  /** Нативный запрос к JSON-словарю или JS-API. */
+  protected def _applyJs(message: String, argsJs: Seq[js.Any]): String
 
   /** Вернуть инстанс MessagesF_t, который можно передавать в т.ч. кросс-платформенный код. */
   def f: MessagesF_t = apply1
+
+}
+
+
+/** Основной статический доступ к локализациям в рамках одного языка.
+  * Легко импортировать, легко заюзать.
+  */
+object Messages extends Messages {
+
+  @inline implicit def univEq: UnivEq[Messages] = UnivEq.force
+
+  override protected def _applyJs(message: String, argsJs: Seq[js.Any]): String =
+    JsMessagesSingleLangNative( message, argsJs: _* )
 
 }

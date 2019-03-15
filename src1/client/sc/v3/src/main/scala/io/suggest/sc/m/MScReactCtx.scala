@@ -30,7 +30,7 @@ object MScReactCtx {
 }
 
 
-/**
+/** Контейнер данных sc-контекста react.
   *
   * @see [[https://reactjs.org/docs/context.html]]
   * @param scCss ScCss.

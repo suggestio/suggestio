@@ -3,8 +3,7 @@ package io.suggest.sc.v.menu
 import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.i18n.MsgCodes
-import io.suggest.msg.Messages
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.sc.styl.ScCssStatic
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
@@ -22,7 +21,8 @@ import scalacss.ScalaCssReact._
   * Description: Кнопка редактирования текущей открытой карточки.
   */
 class EditAdR(
-               scReactCtxP     : React.Context[MScReactCtx],
+               scReactCtxP            : React.Context[MScReactCtx],
+               commonReactCtxProv     : React.Context[MCommonReactCtx],
              ) {
 
   type Props_t = Option[PropsVal]
@@ -63,7 +63,9 @@ class EditAdR(
                 <.span(
                   R.rowContent,
                   scReactCtx.scCss.fgColor,
-                  Messages( MsgCodes.`Edit` )
+                  commonReactCtxProv.consume { crCtx =>
+                    crCtx.messages( MsgCodes.`Edit` )
+                  }
                 )
               )
             )

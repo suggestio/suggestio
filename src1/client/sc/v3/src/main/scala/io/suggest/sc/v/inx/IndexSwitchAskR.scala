@@ -3,13 +3,12 @@ package io.suggest.sc.v.inx
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiColorTypes, MuiSnackBar, MuiSnackBarAnchorOrigin, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps, MuiSnackBarProps, MuiSvgIconProps}
 import diode.react.ModelProxy
 import io.suggest.css.CssR
-import io.suggest.i18n.MsgCodes
-import io.suggest.msg.Messages
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{CancelIndexSwitch, MInxSwitchAskS}
 import io.suggest.sc.styl.ScCssStatic
 import io.suggest.sc.v.search.{NodesFoundR, SearchCss}
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
 /**
@@ -19,7 +18,8 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: wrap-React-компонент всплывающего вопроса о переключении выдачи в новую локацию.
   */
 class IndexSwitchAskR(
-                       nodesFoundR  : NodesFoundR,
+                       nodesFoundR          : NodesFoundR,
+                       commonReactCtxProv   : React.Context[MCommonReactCtx],
                      ) {
 
   type Props_t = Option[MInxSwitchAskS]
@@ -59,7 +59,10 @@ class IndexSwitchAskR(
           // Содержимое левой части сообщения:
           val _message: VdomNode = <.div(
             ^.`class` := scCss.content.htmlClass,
-            Messages( MsgCodes.`Location.changed` ),
+
+            commonReactCtxProv.consume { crCtx =>
+              crCtx.messages( MsgCodes.`Location.changed` )
+            },
 
             // Кнопка сокрытия уведомления:
             MuiButton.component {
@@ -75,7 +78,9 @@ class IndexSwitchAskR(
               }
             } (
               Mui.SvgIcons.CancelOutlined(btnIconProps)(),
-              Messages( MsgCodes.`Cancel` )
+              commonReactCtxProv.consume { crCtx =>
+                crCtx.messages( MsgCodes.`Cancel` )
+              }
             ),
 
             <.br,

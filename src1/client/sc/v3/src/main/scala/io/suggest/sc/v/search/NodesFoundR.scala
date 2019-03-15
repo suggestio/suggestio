@@ -6,7 +6,7 @@ import diode.data.Pot
 import diode.react.ReactPot._
 import diode.react.ModelProxy
 import io.suggest.geo.MGeoPoint
-import io.suggest.i18n.MsgCodes
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -28,7 +28,8 @@ import io.suggest.css.ScalaCssUtil.Implicits._
   * Description: React-компонент, отвечающий за рендер списка найденных узлов: тегов и гео-размещенных узлов.
   */
 class NodesFoundR(
-                   nodeFoundR       : NodeFoundR,
+                   nodeFoundR             : NodeFoundR,
+                   commonReactCtxProv     : React.Context[MCommonReactCtx],
                  ) {
 
   import NodesFoundR._
@@ -77,10 +78,12 @@ class NodesFoundR(
               // Надо, чтобы юзер понимал, что запрос поиска отработан.
               MuiListItem()(
                 MuiListItemText()(
-                  nodesRi.textQuery.fold {
-                    Messages( MsgCodes.`No.tags.here` )
-                  } { query =>
-                    Messages( MsgCodes.`No.tags.found.for.1.query`, query )
+                  commonReactCtxProv.consume { crCtx =>
+                    nodesRi.textQuery.fold {
+                      crCtx.messages( MsgCodes.`No.tags.here` )
+                    } { query =>
+                      crCtx.messages( MsgCodes.`No.tags.found.for.1.query`, query )
+                    }
                   }
                 )
               )
@@ -132,7 +135,9 @@ class NodesFoundR(
               )(
                 MuiListItem(emptyProps)(
                   MuiListItemText()(
-                    Messages( MsgCodes.`Something.gone.wrong` )
+                    commonReactCtxProv.consume { crCtx =>
+                      crCtx.messages( MsgCodes.`Something.gone.wrong` )
+                    }
                   ),
                   MuiListItemIcon()(
                     Mui.SvgIcons.ErrorOutline()()

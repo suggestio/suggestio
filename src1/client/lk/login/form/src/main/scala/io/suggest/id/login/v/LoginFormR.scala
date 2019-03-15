@@ -3,12 +3,11 @@ package io.suggest.id.login.v
 import chandu0101.scalajs.react.components.materialui.{MuiDialog, MuiDialogProps, MuiPaper, MuiPaperProps, MuiTab, MuiTabProps, MuiTabs, MuiTabsProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.i18n.MsgCodes
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m._
-import io.suggest.msg.Messages
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.FastEqUtil
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ReactEventFromHtml, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactEventFromHtml, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
@@ -21,7 +20,8 @@ import scala.scalajs.js.annotation.JSName
   * Description: Корневой компонент формы логина.
   */
 class LoginFormR(
-                  epwFormR          : EpwFormR,
+                  epwFormR              : EpwFormR,
+                  commonReactCtxProv    : React.Context[MCommonReactCtx],
                 ) {
 
   type Props_t = MLoginRootS
@@ -48,28 +48,31 @@ class LoginFormR(
 
     def render(p: Props, s: State): VdomElement = {
       // Содержимое таба с логином и паролем:
-      val epw = p.wrap(_.epw)(epwFormR.apply)( implicitly, MEpwLoginS.MEpwLoginSFastEq )
+      val epw = p.wrap(_.epw)( epwFormR.apply )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
 
       // Содержимое табов:
-      val tabsContents = s.currTabC { currTabProxy =>
-        <.div(
+      val tabsContents = <.div(
+        s.currTabC { currTabProxy =>
           // TODO Запилить react-swipeable-views, как в примерах MuiTabs.
           currTabProxy.value match {
             case MLoginTabs.Epw => epw
           }
-        )
-      }
+        }
+      )
 
       // кнопка таба EmailPw-логина:
-      val epwTabBtn = MuiTab(
+      val epwTabBtn = MuiTab {
+        // Получить messages через контекст:
+        val labelText = commonReactCtxProv.consume { crCtx =>
+          crCtx.messages( MsgCodes.`Login.using.password` )
+        }
         new MuiTabProps {
           override val value = js.defined( MLoginTabs.Epw.value )
           override val label = js.defined {
-            Messages( MsgCodes.`Login.using.password` )
-              .rawNode
+            labelText.rawNode
           }
         }
-      )
+      }
 
       // Список табов:
       val tabs = MuiPaper(

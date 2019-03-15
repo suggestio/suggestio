@@ -25,9 +25,10 @@ object MEpwLoginS {
 
   @inline implicit def univEq: UnivEq[MEpwLoginS] = UnivEq.derive
 
-  val name      = GenLens[MEpwLoginS](_.name)
-  val password  = GenLens[MEpwLoginS](_.password)
-  val loginReq  = GenLens[MEpwLoginS](_.loginReq)
+  val name              = GenLens[MEpwLoginS](_.name)
+  val password          = GenLens[MEpwLoginS](_.password)
+  val loginReq          = GenLens[MEpwLoginS](_.loginReq)
+  val loginBtnEnabled   = GenLens[MEpwLoginS](_.loginBtnEnabled)
 
 }
 
@@ -36,9 +37,17 @@ object MEpwLoginS {
   *
   * @param name Имя пользователя (email).
   * @param password Пароль пользователя.
+  * @param loginReq Состояние запроса логина.
+  * @param loginBtnEnabled Активна ли кнопка логина?
   */
 case class MEpwLoginS(
-                       name          : String       = "",
-                       password      : String       = "",
-                       loginReq      : Pot[None.type]       = Pot.empty,
-                     )
+                       name                 : String                = "",
+                       password             : String                = "",
+                       loginReq             : Pot[None.type]        = Pot.empty,
+                       loginBtnEnabled      : Boolean               = false,
+                     ) {
+
+  /** Состояние кнопки логина для хранения внутри коннекшена. */
+  lazy val loginBtnEnabledSome = Some(loginBtnEnabled)
+
+}

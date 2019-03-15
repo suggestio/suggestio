@@ -20,7 +20,7 @@
       <div class="node-list">
         @if(mnodes.nonEmpty) {
           @defining( currNode.flatMap(_.id) ) { currAdnId =>
-          @mnodes.map { mnode =>
+          @for( mnode <- mnodes ) {
             <div class="node-list_i">
               @* Текущему магазину добавлять класс __current. *@
               <a class="node-list_i-link @if(currAdnId == mnode.id){__current}"

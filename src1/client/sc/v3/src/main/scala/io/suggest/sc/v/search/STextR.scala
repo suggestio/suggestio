@@ -4,7 +4,7 @@ import chandu0101.scalajs.react.components.materialui.{Mui, MuiFormControl, MuiF
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.i18n.MsgCodes
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -12,7 +12,7 @@ import io.suggest.sc.m.search.{MScSearchText, SearchTextChanged}
 import io.suggest.sc.styl.ScCssStatic
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ReactEventFromInput, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactEventFromInput, ScalaComponent}
 import org.scalajs.dom.raw.HTMLInputElement
 import scalacss.ScalaCssReact._
 
@@ -26,7 +26,9 @@ import scala.scalajs.js.|
   * Description: React-компонент поиского поля.
   * Скорее всего, его можно использовать через .wrap() вместо .connect.
   */
-class STextR {
+class STextR(
+              commonReactCtxProv     : React.Context[MCommonReactCtx],
+            ) {
 
   type Props_t = MScSearchText
   type Props = ModelProxy[Props_t]
@@ -83,21 +85,24 @@ class STextR {
             override val classes = formCtlCss
           }
         )(
-          MuiInput {
-            //val inputCss = new MuiInputClasses {
-            //  override val root = TextBarCSS.inputRoot.htmlClass
-            //}
-            new MuiInputProps {
-              //override val classes = inputCss
-              override val `type` = HtmlConstants.Input.text
-              override val onChange = _onInputJsF
-              override val placeholder = Messages( MsgCodes.`Search.start.typing` )
-              override val value = js.defined( p.query )
-              override val margin = if (p.query.length > 15) MuiInputPropsMargins.dense else MuiInputPropsMargins.none
-              // clear-кнопка:
-              //override val endAdornment = clearBtnUndef
-              override val inputRef: js.UndefOr[js.Function1[HTMLInputElement, _] | js.Object] =
-                js.defined( _htmlInputRefHandlerJsF )
+          commonReactCtxProv.consume { crCtx =>
+            MuiInput {
+              //val inputCss = new MuiInputClasses {
+              //  override val root = TextBarCSS.inputRoot.htmlClass
+              //}
+
+              new MuiInputProps {
+                //override val classes = inputCss
+                override val `type` = HtmlConstants.Input.text
+                override val onChange = _onInputJsF
+                override val placeholder = crCtx.messages( MsgCodes.`Search.start.typing` )
+                override val value = js.defined( p.query )
+                override val margin = if (p.query.length > 15) MuiInputPropsMargins.dense else MuiInputPropsMargins.none
+                // clear-кнопка:
+                //override val endAdornment = clearBtnUndef
+                override val inputRef: js.UndefOr[js.Function1[HTMLInputElement, _] | js.Object] =
+                  js.defined( _htmlInputRefHandlerJsF )
+              }
             }
           },
 

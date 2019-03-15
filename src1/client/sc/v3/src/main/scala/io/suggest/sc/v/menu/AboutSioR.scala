@@ -3,8 +3,7 @@ package io.suggest.sc.v.menu
 import diode.FastEq
 import diode.react.ModelProxy
 import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
-import io.suggest.i18n.MsgCodes
-import io.suggest.msg.Messages
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.sc.styl.ScCssStatic
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
@@ -22,7 +21,8 @@ import scalacss.ScalaCssReact._
   * Description: Пункт "О проекте" в левом меню выдачи.
   */
 class AboutSioR(
-                 scReactCtxP     : React.Context[MScReactCtx],
+                 scReactCtxP            : React.Context[MScReactCtx],
+                 commonReactCtxProv     : React.Context[MCommonReactCtx],
                ) {
 
   type Props_t = Option[PropsVal]
@@ -45,13 +45,16 @@ class AboutSioR(
           val R = ScCssStatic.Menu.Rows
 
           // Это типа ссылка <a>, но уже с выставленным href + go-событие.
-          scReactCtx
+          val linkVdom = scReactCtx
             .routerCtl
             .link( Sc3Pages.MainScreen(
               nodeId = Some( props.aboutNodeId )
-            ))(
+            ))
+
+          commonReactCtxProv.consume { crCtx =>
+            linkVdom(
               R.rowLink,
-              ^.title := Messages( MsgCodes.`Suggest.io._transcription` ),
+              ^.title := crCtx.messages( MsgCodes.`Suggest.io._transcription` ),
 
               MuiListItem(
                 new MuiListItemProps {
@@ -63,11 +66,13 @@ class AboutSioR(
                   <.span(
                     R.rowContent,
                     scReactCtx.scCss.fgColor,
-                    Messages( MsgCodes.`Suggest.io.Project` ),
+                    crCtx.messages( MsgCodes.`Suggest.io.Project` ),
                   )
                 )
               )
             )
+          }
+
         }
       }
     }

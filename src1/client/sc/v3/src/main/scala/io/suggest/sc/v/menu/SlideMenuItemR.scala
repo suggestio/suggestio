@@ -6,8 +6,7 @@ import diode.data.Pot
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.i18n.MsgCodes
-import io.suggest.msg.Messages
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.sc.styl.ScCssStatic
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent, raw}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -30,7 +29,8 @@ import scala.scalajs.js
   * Description: React-компонент пункта меню для управление геолокацией.
   */
 class SlideMenuItemR(
-                      scReactCtxP    : React.Context[MScReactCtx],
+                      scReactCtxP             : React.Context[MScReactCtx],
+                      commonReactCtxProv      : React.Context[MCommonReactCtx],
                     ) {
 
   /** Модель данных для рендера пункта меню со слайдером. */
@@ -84,67 +84,69 @@ class SlideMenuItemR(
             override val onClick = _onClickF
           }
         } (
-          MuiListItemText {
-            val cssClasses = new MuiListItemTextClasses {
-              override val root = R.rowText.htmlClass
-            }
-            new MuiListItemTextProps {
-              override val classes = cssClasses
-            }
-          } (
-            scReactCtxP.consume { scReactCtx =>
-              <.span(
-                R.rowContent,
-                scReactCtx.scCss.fgColor,
-                if (props.useMessages) Messages( props.text )
-                else props.text
-              )
-            },
-
-            <.span(
-              ^.`class` := Css.Floatt.RIGHT,
-
-              // Рендер инфы о ошибке:
-              propsPot.exceptionOption.whenDefined { ex =>
-                val msg = Messages( MsgCodes.`Error` ) +
-                  HtmlConstants.COLON +
-                  HtmlConstants.SPACE +
-                  ex.getMessage
-
-                MuiToolTip {
-                  new MuiToolTipProps {
-                    override val title: raw.React.Node = msg
-                  }
-                }(
-                  Mui.SvgIcons.Warning()()
+          commonReactCtxProv.consume { crCtx =>
+            MuiListItemText {
+              val cssClasses = new MuiListItemTextClasses {
+                override val root = R.rowText.htmlClass
+              }
+              new MuiListItemTextProps {
+                override val classes = cssClasses
+              }
+            } (
+              scReactCtxP.consume { scReactCtx =>
+                <.span(
+                  R.rowContent,
+                  scReactCtx.scCss.fgColor,
+                  if (props.useMessages) crCtx.messages( props.text )
+                  else props.text
                 )
               },
 
-              // Рендер самого переключателя:
-              MuiToolTip {
-                new MuiToolTipProps {
-                  override val title: raw.React.Node = Messages( MsgCodes.onOff(props.isEnabled) )
-                }
-              }(
-                MuiSwitch {
-                  val _isChecked =
-                    if (isClickDisabled) !props.isEnabled
-                    else props.isEnabled
-                  val cssClasses = new MuiSwitchClasses {
-                    override val root = R.switch.htmlClass
-                    override val switchBase = R.switchBase.htmlClass
+              <.span(
+                ^.`class` := Css.Floatt.RIGHT,
+
+                // Рендер инфы о ошибке:
+                propsPot.exceptionOption.whenDefined { ex =>
+                  val msg = crCtx.messages( MsgCodes.`Error` ) +
+                    HtmlConstants.COLON +
+                    HtmlConstants.SPACE +
+                    ex.getMessage
+
+                  MuiToolTip {
+                    new MuiToolTipProps {
+                      override val title: raw.React.Node = msg
+                    }
+                  }(
+                    Mui.SvgIcons.Warning()()
+                  )
+                },
+
+                // Рендер самого переключателя:
+                MuiToolTip {
+                  new MuiToolTipProps {
+                    override val title: raw.React.Node = crCtx.messages( MsgCodes.onOff(props.isEnabled) )
                   }
-                  new MuiSwitchProps {
-                    override val disabled = isClickDisabled
-                    override val checked  = js.defined( _isChecked )
-                    override val classes  = cssClasses
+                }(
+                  MuiSwitch {
+                    val _isChecked =
+                      if (isClickDisabled) !props.isEnabled
+                      else props.isEnabled
+                    val cssClasses = new MuiSwitchClasses {
+                      override val root = R.switch.htmlClass
+                      override val switchBase = R.switchBase.htmlClass
+                    }
+                    new MuiSwitchProps {
+                      override val disabled = isClickDisabled
+                      override val checked  = js.defined( _isChecked )
+                      override val classes  = cssClasses
+                    }
                   }
-                }
+                )
+
               )
 
             )
-
-          )
+          }
         )
 
       }

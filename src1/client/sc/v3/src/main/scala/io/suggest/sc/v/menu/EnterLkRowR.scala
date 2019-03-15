@@ -3,8 +3,7 @@ package io.suggest.sc.v.menu
 import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.i18n.MsgCodes
-import io.suggest.msg.Messages
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.proto.http.model.Route
 import io.suggest.routes.IJsRouter
 import io.suggest.sc.styl.ScCssStatic
@@ -24,7 +23,8 @@ import scalacss.ScalaCssReact._
   * Description: Компонент строки меню с ссылкой для логина в s.io.
   */
 class EnterLkRowR(
-                   scReactCtxP     : React.Context[MScReactCtx],
+                   scReactCtxP            : React.Context[MScReactCtx],
+                   commonReactCtxProv     : React.Context[MCommonReactCtx],
                  ) {
 
   type Props_t = Option[PropsVal]
@@ -91,7 +91,9 @@ class EnterLkRowR(
                 <.span(
                   R.rowContent,
                   scReactCtx.scCss.fgColor,
-                  Messages( msgCode )
+                  commonReactCtxProv.consume { crCtx =>
+                    crCtx.messages( msgCode )
+                  }
                 )
               )
             )

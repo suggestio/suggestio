@@ -10,7 +10,7 @@ import scalacss.ScalaCssReact._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.sc.m.search.NodeRowClick
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ScalaComponent, raw}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent, raw}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
@@ -24,6 +24,7 @@ import io.suggest.sc.styl.ScCssStatic
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
 import io.suggest.css.ScalaCssUtil.Implicits._
+import io.suggest.i18n.MCommonReactCtx
 
 import scala.scalajs.js
 
@@ -33,7 +34,9 @@ import scala.scalajs.js
   * Created: 30.08.18 12:29
   * Description: React-компонент для рендера одного ряда в списке найденных рядов.
   */
-class NodeFoundR {
+class NodeFoundR(
+                  commonReactCtxProv     : React.Context[MCommonReactCtx],
+                ) {
 
   /** Контейнер пропертисов компонента.
     *
@@ -182,8 +185,10 @@ class NodeFoundR {
 
           val text2ndOpt = distanceMOpt
             .map { distanceM =>
-              val distanceFmt = DistanceUtil.formatDistanceM(distanceM)(Messages.f)
-              (HtmlConstants.`~` + distanceFmt): raw.React.Node
+              commonReactCtxProv.consume { crCtx =>
+                val distanceFmt = DistanceUtil.formatDistanceM(distanceM)(crCtx.messages.f)
+                (HtmlConstants.`~` + distanceFmt): raw.React.Node
+              }.rawNode
             }
           MuiListItemText(
             new MuiListItemTextProps {

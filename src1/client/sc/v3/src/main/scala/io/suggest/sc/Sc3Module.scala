@@ -26,6 +26,7 @@ class Sc3Module {
   lazy val jdRenderModule = wire[JdRenderModule]
 
   import jdRenderModule._
+  import io.suggest.ReactCommonModule._
 
 
   // Костыли для js-роутера.
