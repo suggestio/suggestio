@@ -1,0 +1,14 @@
+@()(implicit ctx: Context)
+
+@* Страница с react-формой логина. *@
+
+@import ctx.messages
+
+@lk.lkBase(
+  title     = messages( "Login.page.title" ),
+  nodeOpt   = None,
+  showSwitchNodeBtn = false,
+) {
+  @* Рендерить контейнер не надо - для диалога он создаётся автоматом. *@
+  @ctx.data.jsInitTargets
+}

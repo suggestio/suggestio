@@ -42,6 +42,8 @@ object Mui {
   @js.native @JSImport("@material-ui/core/FontIcon", JSImport.Default) object FontIcon extends js.Any
   @js.native @JSImport("@material-ui/core/FormControl", JSImport.Default) object FormControl extends js.Any
   @js.native @JSImport("@material-ui/core/FormControlLabel", JSImport.Default) object FormControlLabel extends js.Any
+  @js.native @JSImport("@material-ui/core/FormGroup", JSImport.Default) object FormGroup extends js.Any
+
   @js.native @JSImport("@material-ui/core/GridList", JSImport.Default) object GridList extends js.Any
   @js.native @JSImport("@material-ui/core/GridList/GridTile", JSImport.Default) object GridTile
       extends js.Any

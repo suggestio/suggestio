@@ -5,7 +5,6 @@ import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{MScSearchText, SearchTextChanged}

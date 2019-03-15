@@ -4,6 +4,7 @@ import io.suggest.ad.edit.LkAdEditInit
 import io.suggest.adn.edit.LkAdnEditInit
 import io.suggest.ads.LkAdsInit
 import io.suggest.bill.cart.CartPageInit
+import io.suggest.id.login.LoginFormInit
 import io.suggest.lk.adn.map.LkAdnMapFormInitRouter
 import io.suggest.lk.adv.geo.AdvGeoFormInitRouter
 import io.suggest.lk.flash.FlashInitRouter
@@ -30,7 +31,8 @@ object LkMain extends Log {
   /** Запуск скрипта на исполнение. Нужно произвести направленную инициализацию. */
   def main(args: Array[String]): Unit = {
     try {
-      Leaflet.noConflict()
+      if (!js.isUndefined(Leaflet))
+        Leaflet.noConflict()
     } catch {
       case _: Throwable =>
     }
@@ -51,6 +53,7 @@ object LkMain extends Log {
 /** Stackable-реализация routed init. */
 class LkInitRouter
   extends Log
+  with LoginFormInit
   with LkAdEditInit
   with AdvGeoFormInitRouter
   with LkAdsInit

@@ -71,7 +71,6 @@ object HtmlConstants {
 
 
   object Input {
-
     val input = "input"
     val checkbox = "checkbox"
     val select = "select"
@@ -80,8 +79,9 @@ object HtmlConstants {
     val submit = "submit"
     val file = "file"
     val range = "range"
-
+    val password = "password"
   }
+
 
   object Target {
     val blank = "_blank"

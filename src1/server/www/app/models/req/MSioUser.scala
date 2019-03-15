@@ -9,7 +9,6 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.CtxData
 import io.suggest.di.ISlickDbConfig
 import io.suggest.es.model.EsModel
-import io.suggest.init.routed.MJsInitTarget
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
@@ -75,9 +74,6 @@ sealed trait ISioUser {
    */
   def balancesFut: Future[Seq[MBalance]]
 
-  /** Дополнительные цели js-инициализации по мнению ActionBuilder'а. */
-  def jsiTgs: List[MJsInitTarget]
-
   /** Частый экземпяр CtxData для нужд ЛК. */
   def lkCtxDataFut: Future[CtxData]
 
@@ -102,7 +98,6 @@ class MSioUserEmpty extends ISioUser {
   override def isSuper              = false
   override def contractIdOptFut     = _futOptOk[Gid_t]
   override def isAuth               = false
-  override def jsiTgs               = Nil
   override def balancesFut         = Future.successful(Nil)
   override def personNodeFut: Future[MNode] = {
     Future.failed( new NoSuchElementException("personIdOpt is empty") )
@@ -261,8 +256,7 @@ trait MSioUserLazyFactory {
     * @param personIdOpt id текущего юзера, если есть.
     * @param jsiTgs js init targets, выставленные ActionBuilder'ом, если есть.
     */
-  def apply(personIdOpt: Option[String],
-            jsiTgs: List[MJsInitTarget]): MSioUserLazy
+  def apply(personIdOpt: Option[String]): MSioUserLazy
 }
 
 /** Контейнер со статическими моделями для инстансов [[MSioUserLazy]]. */
@@ -294,7 +288,6 @@ class MsuStatic @Inject()(
   */
 case class MSioUserLazy @Inject() (
                                     @Assisted override val personIdOpt  : Option[String],
-                                    @Assisted override val jsiTgs       : List[MJsInitTarget],
                                     override val msuStatics             : MsuStatic
 )
   extends ISioUserT
@@ -310,9 +303,9 @@ case class MSioUserLazy @Inject() (
   override lazy val lkMdrCountOptFut  = super.lkMdrCountOptFut
   override lazy val cartItemsCountOptFut = super.cartItemsCountOptFut
 
-  override def toString: String = {
-    s"U(${personIdOpt.getOrElse("")}${jsiTgs.mkString(";[", ",", "]")})"
-  }
+  override def toString =
+    s"U(${personIdOpt.getOrElse("")})"
+
 }
 
 
@@ -337,14 +330,13 @@ class MSioUsers @Inject() (
     * @param jsiTgs Список целей js-инициализации [Nil].
     * @return Инстанс какой-то реализации [[ISioUser]].
     */
-  def apply(personIdOpt: Option[String], jsiTgs: List[MJsInitTarget] = Nil): ISioUser = {
+  def apply(personIdOpt: Option[String]): ISioUser = {
     // Частые анонимные запросы можно огулять одним общим инстансом ISioUser.
-    if (personIdOpt.isEmpty && jsiTgs.isEmpty) {
+    if (personIdOpt.isEmpty) {
       empty
     } else {
       factory(
         personIdOpt = personIdOpt,
-        jsiTgs      = jsiTgs
       )
     }
   }

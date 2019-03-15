@@ -27,3 +27,6 @@ case class EpwSetPassword(password: String) extends ILoginFormAction
 /** Кнопка запуска логина. */
 case object EpwDoLogin extends ILoginFormAction
 
+
+/** Выставление галочки "Чужой компьютер?" */
+case class SetForeignPc( isForeign: Boolean ) extends ILoginFormAction

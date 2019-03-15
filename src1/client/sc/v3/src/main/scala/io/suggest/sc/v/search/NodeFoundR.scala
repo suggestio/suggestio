@@ -5,7 +5,6 @@ import diode.react.ModelProxy
 import io.suggest.geo.{DistanceUtil, ILPolygonGs, MGeoPoint}
 import io.suggest.maps.nodes.MGeoNodePropsShapes
 import io.suggest.maps.u.MapsUtil
-import io.suggest.msg.Messages
 import scalacss.ScalaCssReact._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.ueq.UnivEqUtil._

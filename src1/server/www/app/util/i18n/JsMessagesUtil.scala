@@ -410,6 +410,17 @@ class JsMessagesUtil @Inject() (
   }
 
 
+  private def LOGIN_FORM_MSGS: TraversableOnce[String] = {
+    MC.`Login.page.title` ::
+    MC.`Login` ::
+    MC.`Login.using.password` ::
+    MC.`Username` ::
+    MC.`Password` ::
+    MC.`Not.my.pc` ::
+    Nil
+  }
+
+
   /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
   val (lkJsMsgsFactory, hash): (JsMessages, Int) = {
     val msgs = Iterator(
@@ -431,7 +442,8 @@ class JsMessagesUtil @Inject() (
       LK_ADS_MSGS,
       LK_ADN_EDIT_MSGS,
       BILL_CART_MSGS,
-      SYS_MDR_MSGS
+      SYS_MDR_MSGS,
+      LOGIN_FORM_MSGS,
     )
       .flatten
       .toSet

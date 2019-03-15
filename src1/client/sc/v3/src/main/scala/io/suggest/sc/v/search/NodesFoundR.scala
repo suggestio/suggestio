@@ -7,7 +7,6 @@ import diode.react.ReactPot._
 import diode.react.ModelProxy
 import io.suggest.geo.MGeoPoint
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.m.search.{DoNodesSearch, MSearchRespInfo}

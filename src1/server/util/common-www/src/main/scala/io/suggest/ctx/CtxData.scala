@@ -32,10 +32,12 @@ case class CtxData(
    * @param jsInitTarget2 Списки новых целей js-инициализации.
    * @return this, либо обновлённый экземпляр.
    */
-  def withJsInitTargetsAll(jsInitTarget2: List[MJsInitTarget]*): CtxData = {
+  def appendJsInitTargetsAll(jsInitTarget2: List[MJsInitTarget]*): CtxData = {
     if (jsInitTarget2.exists(_.nonEmpty)) {
-      copy(
-        jsInitTargets = jsInitTarget2.iterator.flatten.toList
+      withJsInitTargets(
+        jsInitTargets =
+          (jsInitTargets.iterator ++ jsInitTarget2.iterator.flatten)
+            .toList
       )
     } else {
       this

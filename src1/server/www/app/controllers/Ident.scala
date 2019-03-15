@@ -21,6 +21,7 @@ import util.mail.IMailerWrapper
 import views.html.ident._
 import views.html.ident.login.epw._loginColumnTpl
 import views.html.ident.reg.email._regColumnTpl
+import views.html.lk.login._
 
 /**
  * Suggest.io
@@ -69,7 +70,10 @@ class Ident @Inject() (
   // TODO Добавить CSRF
   def logout = Action { implicit request =>
     Redirect(models.MAIN_PAGE_CALL)
-      .removingFromSession(MSessionKeys.PersonId.value, MSessionKeys.Timestamp.value)
+      .removingFromSession(
+        MSessionKeys.PersonId.value,
+        MSessionKeys.Timestamp.value
+      )
   }
 
 
@@ -106,6 +110,25 @@ class Ident @Inject() (
     * Страницы ident-контроллера нуждаются в доп.центровке колонок по вертикали. */
   override def jsiTgs(req: IReqHdr): List[MJsInitTarget] = {
     MJsInitTargets.IdentVCenterContent :: super.jsiTgs(req)
+  }
+
+
+
+  // -----------------------------------------------------------------------------------
+  // - Login v2 ------------------------------------------------------------------------
+  // -----------------------------------------------------------------------------------
+
+  /** Страница с отдельной формой логина по имени-паролю.
+    *
+    * @return Страница с логином.
+    */
+  def loginFormPage(r: Option[String]) = csrf.AddToken {
+    isAnon().async { implicit request =>
+      implicit val ctxData = CtxData(
+        jsInitTargets = MJsInitTargets.LoginForm :: Nil
+      )
+      Ok( LkLoginTpl() )
+    }
   }
 
 }

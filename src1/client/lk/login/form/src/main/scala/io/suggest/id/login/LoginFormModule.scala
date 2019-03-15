@@ -1,7 +1,7 @@
 package io.suggest.id.login
 
 import com.softwaremill.macwire._
-import io.suggest.id.login.v.{EpwFormR, LoginFormR}
+import io.suggest.id.login.v.{EpwFormR, ForeignPcCheckBoxR, LoginFormR}
 
 /**
   * Suggest.io
@@ -16,6 +16,7 @@ class LoginFormModule {
 
   lazy val loginFormR = wire[LoginFormR]
   lazy val epwFormR = wire[EpwFormR]
+  lazy val foreignPcCheckBoxR = wire[ForeignPcCheckBoxR]
 
   lazy val circuit = wire[LoginFormCircuit]
 

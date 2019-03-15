@@ -230,6 +230,7 @@ object MsgCodes {
   val `No.tags.here` = "No.tags.here"
   val `No.tags.found.for.1.query` = "No.tags.found.for.1.query"
 
+  // TODO "Вход" надо переименовать во что-то более очевидное.
   val `Login.page.title` = "Login.page.title"
   val `Login.to.sio` = "Login.to.sio"
   val `Go.to.node.ads` = "Go.to.node.ads"
@@ -352,5 +353,7 @@ object MsgCodes {
   val `Password` = "Password"
   val `Login.using.password` = "Login.using.password"
   val `Login` = "Login"
+  val `Username` = "Username"
+  val `Not.my.pc` = "Not.my.pc"
 
 }

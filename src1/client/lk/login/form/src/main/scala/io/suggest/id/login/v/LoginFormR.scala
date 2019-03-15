@@ -1,8 +1,9 @@
 package io.suggest.id.login.v
 
-import chandu0101.scalajs.react.components.materialui.{MuiDialog, MuiDialogProps, MuiPaper, MuiPaperProps, MuiTab, MuiTabProps, MuiTabs, MuiTabsProps}
+import chandu0101.scalajs.react.components.materialui.{MuiDialog, MuiDialogContent, MuiDialogProps, MuiDialogTitle, MuiPaper, MuiPaperProps, MuiTab, MuiTabProps, MuiTabs, MuiTabsProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.html.HtmlConstants.{SPACE, PIPE}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -21,6 +22,7 @@ import scala.scalajs.js.annotation.JSName
   */
 class LoginFormR(
                   epwFormR              : EpwFormR,
+                  foreignPcCheckBoxR    : ForeignPcCheckBoxR,
                   commonReactCtxProv    : React.Context[MCommonReactCtx],
                 ) {
 
@@ -30,6 +32,7 @@ class LoginFormR(
   case class State(
                     visibleSomeC          : ReactConnectProxy[Some[Boolean]],
                     currTabC              : ReactConnectProxy[MLoginTab],
+                    foreignPcSomeC        : ReactConnectProxy[Some[Boolean]],
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -47,8 +50,11 @@ class LoginFormR(
 
 
     def render(p: Props, s: State): VdomElement = {
-      // Содержимое таба с логином и паролем:
-      val epw = p.wrap(_.epw)( epwFormR.apply )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
+      // Галочка "Чужой компьютер" расшарена между вкладками:
+      val foreignPcCb = p.wrap(_.overall.isForeignPcSome)( foreignPcCheckBoxR.apply )(implicitly, FastEqUtil.RefValFastEq)
+
+      // Содержимое вкладки входа по логину и паролю:
+      val epw = p.wrap(_.epw)( epwFormR(_)(foreignPcCb) )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
 
       // Содержимое табов:
       val tabsContents = <.div(
@@ -93,16 +99,30 @@ class LoginFormR(
         }
       )
 
+      // Заголовок диалога
+      val dialogTitle = MuiDialogTitle()(
+        commonReactCtxProv.consume { crCtx =>
+          crCtx.messages( MsgCodes.`Login.page.title` )
+        }
+      )
+
+      // Наполнение диалога.
+      val dialogContent = MuiDialogContent()(
+        tabsContents,
+        tabs,
+      )
+
       // Весь диалог формы логина:
       s.visibleSomeC { visibleSomeProxy =>
         MuiDialog(
           new MuiDialogProps {
             override val open = visibleSomeProxy.value.value
             override val onClose = _onLoginCloseCbF
+            override val disableBackdropClick = true
           }
         )(
-          tabsContents,
-          tabs,
+          dialogTitle,
+          dialogContent
         )
       }
     }
@@ -113,8 +133,9 @@ class LoginFormR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { rootProxy =>
       State(
-        visibleSomeC = rootProxy.connect( _.overall.isVisibleSome )( FastEqUtil.RefValFastEq ),
-        currTabC     = rootProxy.connect( _.overall.loginTab )( FastEq.AnyRefEq ),
+        visibleSomeC        = rootProxy.connect( _.overall.isVisibleSome )( FastEqUtil.RefValFastEq ),
+        currTabC            = rootProxy.connect( _.overall.loginTab )( FastEq.AnyRefEq ),
+        foreignPcSomeC      = rootProxy.connect( _.overall.isForeignPcSome )( FastEqUtil.RefValFastEq ),
       )
     }
     .renderBackend[Backend]
