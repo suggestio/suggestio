@@ -1,7 +1,8 @@
 package io.suggest.id.login
 
 import com.softwaremill.macwire._
-import io.suggest.id.login.v.{EpwFormR, ForeignPcCheckBoxR, LoginFormR}
+import io.suggest.id.login.v.{EpwFormR, ForeignPcCheckBoxR, LoginFormCss, LoginFormR}
+import japgolly.scalajs.react.React
 
 /**
   * Suggest.io
@@ -13,11 +14,12 @@ class LoginFormModule {
 
   import io.suggest.ReactCommonModule._
 
-
   lazy val loginFormR = wire[LoginFormR]
   lazy val epwFormR = wire[EpwFormR]
   lazy val foreignPcCheckBoxR = wire[ForeignPcCheckBoxR]
 
   lazy val circuit = wire[LoginFormCircuit]
+
+  lazy val loginFormRCtx: React.Context[LoginFormCss] = React.createContext( circuit.overallRW.value.formCss )
 
 }

@@ -26,8 +26,8 @@ class LoginFormCircuit
   }
 
 
-  private val epwRW      = mkLensRootZoomRW(this, MLoginRootS.epw)
-  private val overallRW  = mkLensRootZoomRW(this, MLoginRootS.overall)
+  private[login] val epwRW      = mkLensRootZoomRW(this, MLoginRootS.epw)
+  private[login] val overallRW  = mkLensRootZoomRW(this, MLoginRootS.overall)
 
 
   private val formAh = new FormAh(

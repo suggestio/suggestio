@@ -1,6 +1,6 @@
 package io.suggest.id.login.v
 
-import chandu0101.scalajs.react.components.materialui.{MuiCheckBox, MuiCheckBoxProps, MuiFormControlLabel, MuiFormControlLabelProps}
+import chandu0101.scalajs.react.components.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps, MuiFormControlLabel, MuiFormControlLabelProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m.SetForeignPc
@@ -11,6 +11,7 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.FastEqUtil
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -21,6 +22,7 @@ import scala.scalajs.js.annotation.JSName
   */
 class ForeignPcCheckBoxR(
                           commonReactCtx      : React.Context[MCommonReactCtx],
+                          loginFormCssCtx     : React.Context[LoginFormCss],
                         ) {
 
   type Props_t  = Some[Boolean]
@@ -41,13 +43,19 @@ class ForeignPcCheckBoxR(
     def render(s: State): VdomElement = {
       MuiFormControlLabel {
         val checkBox = s.checkedSomeC { checkedSomeProxy =>
-          MuiCheckBox(
-            new MuiCheckBoxProps {
-              @JSName("onChange")
-              override val onChange2 = _onForeignPcChangeCbF
-              override val checked = js.defined( checkedSomeProxy.value.value )
+          loginFormCssCtx.consume { loginFormCss =>
+            val cbCss = new MuiCheckBoxClasses {
+              override val root = loginFormCss.epwFormControl.htmlClass
             }
-          )
+            MuiCheckBox(
+              new MuiCheckBoxProps {
+                @JSName("onChange")
+                override val onChange2 = _onForeignPcChangeCbF
+                override val checked = js.defined( checkedSomeProxy.value.value )
+                override val classes = cbCss
+              }
+            )
+          }
         }
 
         val labelText = commonReactCtx.consume { crCtx =>

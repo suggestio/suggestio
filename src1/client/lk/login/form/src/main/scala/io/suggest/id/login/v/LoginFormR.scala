@@ -1,9 +1,9 @@
 package io.suggest.id.login.v
 
-import chandu0101.scalajs.react.components.materialui.{MuiDialog, MuiDialogContent, MuiDialogProps, MuiDialogTitle, MuiPaper, MuiPaperProps, MuiTab, MuiTabProps, MuiTabs, MuiTabsProps}
+import chandu0101.scalajs.react.components.materialui.{MuiDialog, MuiDialogClasses, MuiDialogContent, MuiDialogProps, MuiDialogTitle, MuiPaper, MuiPaperProps, MuiTab, MuiTabProps, MuiTabs, MuiTabsProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.html.HtmlConstants.{SPACE, PIPE}
+import io.suggest.css.CssR
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -24,6 +24,7 @@ class LoginFormR(
                   epwFormR              : EpwFormR,
                   foreignPcCheckBoxR    : ForeignPcCheckBoxR,
                   commonReactCtxProv    : React.Context[MCommonReactCtx],
+                  loginFormCssCtx       : React.Context[LoginFormCss],
                 ) {
 
   type Props_t = MLoginRootS
@@ -33,6 +34,7 @@ class LoginFormR(
                     visibleSomeC          : ReactConnectProxy[Some[Boolean]],
                     currTabC              : ReactConnectProxy[MLoginTab],
                     foreignPcSomeC        : ReactConnectProxy[Some[Boolean]],
+                    loginFormCssC         : ReactConnectProxy[LoginFormCss],
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -113,16 +115,35 @@ class LoginFormR(
       )
 
       // Весь диалог формы логина:
-      s.visibleSomeC { visibleSomeProxy =>
-        MuiDialog(
-          new MuiDialogProps {
-            override val open = visibleSomeProxy.value.value
-            override val onClose = _onLoginCloseCbF
-            override val disableBackdropClick = true
+      val allForm = s.visibleSomeC { visibleSomeProxy =>
+        loginFormCssCtx.consume { loginFormCss =>
+          val diaCss = new MuiDialogClasses {
+            override val root = loginFormCss.dialogCont.htmlClass
           }
-        )(
-          dialogTitle,
-          dialogContent
+          MuiDialog(
+            new MuiDialogProps {
+              override val open = visibleSomeProxy.value.value
+              override val onClose = _onLoginCloseCbF
+              // TODO disable* -- true на одинокой форме. false/undefined для формы, встраиваемой в выдачу.
+              override val disableBackdropClick = true
+              override val disableEscapeKeyDown = true
+              override val classes = diaCss
+            }
+          )(
+            dialogTitle,
+            dialogContent
+          )
+        }
+      }
+
+      // Добавить внутренний контекст для CSS.
+      s.loginFormCssC { loginFormCssProxy =>
+        <.div(
+          CssR( loginFormCssProxy ),
+
+          loginFormCssCtx.provide( loginFormCssProxy.value )(
+            allForm
+          )
         )
       }
     }
@@ -136,6 +157,7 @@ class LoginFormR(
         visibleSomeC        = rootProxy.connect( _.overall.isVisibleSome )( FastEqUtil.RefValFastEq ),
         currTabC            = rootProxy.connect( _.overall.loginTab )( FastEq.AnyRefEq ),
         foreignPcSomeC      = rootProxy.connect( _.overall.isForeignPcSome )( FastEqUtil.RefValFastEq ),
+        loginFormCssC       = rootProxy.connect( _.overall.formCss )( FastEq.AnyRefEq ),
       )
     }
     .renderBackend[Backend]

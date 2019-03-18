@@ -1,6 +1,7 @@
 package io.suggest.id.login.m
 
 import diode.FastEq
+import io.suggest.id.login.v.LoginFormCss
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
@@ -17,7 +18,8 @@ object MLoginFormOverallS {
     override def eqv(a: MLoginFormOverallS, b: MLoginFormOverallS): Boolean = {
       (a.loginTab ===* b.loginTab) &&
       (a.isVisible ==* b.isVisible) &&
-      (a.isForeignPc ==* b.isForeignPc)
+      (a.isForeignPc ==* b.isForeignPc) &&
+      (a.formCss ===* b.formCss)
     }
   }
 
@@ -26,6 +28,7 @@ object MLoginFormOverallS {
   val loginTab    = GenLens[MLoginFormOverallS](_.loginTab)
   val isVisible   = GenLens[MLoginFormOverallS](_.isVisible)
   val isForeignPc = GenLens[MLoginFormOverallS](_.isForeignPc)
+  val formCss     = GenLens[MLoginFormOverallS](_.formCss)
 
 }
 
@@ -34,6 +37,7 @@ case class MLoginFormOverallS(
                                loginTab         : MLoginTab         = MLoginTabs.default,
                                isVisible        : Boolean           = false,
                                isForeignPc      : Boolean           = false,
+                               formCss          : LoginFormCss      = LoginFormCss(),
                              ) {
 
   /** Для React-duode connection требуется AnyRef. */
