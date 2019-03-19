@@ -22,13 +22,6 @@ case class LoginFormCss() extends StyleSheet.Inline {
 
   import dsl._
 
-  /** Стиль контейнера диалога. */
-  val dialogCont = {
-    style(
-      maxWidth( 500.px )
-    )
-  }
-
   /** Стиль текстового поля для ввода имени или пароля. */
   val epwFormControl = {
     style(

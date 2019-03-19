@@ -4,10 +4,13 @@ import javax.inject.{Inject, Singleton}
 import controllers.ident._
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModel
+import io.suggest.i18n.MsgCodes
+import io.suggest.id.MEpwLoginReq
 import io.suggest.init.routed.{MJsInitTarget, MJsInitTargets}
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.util.ScryptUtil
-import io.suggest.session.MSessionKeys
+import io.suggest.session.{LongTtl, MSessionKeys, ShortTtl, Ttl}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mproj.ICommonDi
@@ -22,6 +25,8 @@ import views.html.ident._
 import views.html.ident.login.epw._loginColumnTpl
 import views.html.ident.reg.email._regColumnTpl
 import views.html.lk.login._
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -96,7 +101,7 @@ class Ident @Inject() (
       // TODO Затолкать это в отдельный шаблон!
       val ctx = implicitly[Context]
       val formFut = emailPwLoginFormStubM
-      val title = ctx.messages("Login.page.title")
+      val title = ctx.messages( MsgCodes.`Login.page.title` )
       val rc = _regColumnTpl(emailRegFormM, captchaShown = false)(ctx)
       for (lf <- formFut) yield {
         val lc = _loginColumnTpl(lf, r)(ctx)
@@ -117,6 +122,9 @@ class Ident @Inject() (
   // -----------------------------------------------------------------------------------
   // - Login v2 ------------------------------------------------------------------------
   // -----------------------------------------------------------------------------------
+  import esModel.api._
+  import mPersonIdentModel.api._
+
 
   /** Страница с отдельной формой логина по имени-паролю.
     *
@@ -128,6 +136,92 @@ class Ident @Inject() (
         jsInitTargets = MJsInitTargets.LoginForm :: Nil
       )
       Ok( LkLoginTpl() )
+    }
+  }
+
+
+  /** Сабмит react-формы логина по имени-паролю.
+    * В теле запроса содержится JSON с данными
+    *
+    * @param r опциональный редирект.
+    * @return 200 OK + JSON с данными для дальнейшенго редиректа.
+    */
+  def epw2Submit(r: Option[String]) = csrf.Check {
+    bruteForceProtect {
+      isAnon().async( parse.json[MEpwLoginReq] ) { implicit request =>
+
+        // Поискать в БД юзера с таким именем и паролем.
+        lazy val logPrefix = s"epwSubmit()#${System.currentTimeMillis()}"
+        LOGGER.trace(s"$logPrefix Login request from ${request.remoteClientAddress}: name'${request.body.name}' pw#${request.body.password.hashCode} foreign?${request.body.isForeignPc}")
+
+        for {
+          // Запуск поиска юзеров, имеющих указанное имя пользователя.
+          personsFound <- mNodes.findUsersByEmailWithPw( request.body.name )
+
+          res <- {
+            // Проверить пароль, вернуть ответ.
+            if (personsFound.isEmpty) {
+              // Не найдена ни одного юзера с таким именем.
+              LOGGER.debug(s"$logPrefix User'${request.body.name}' not found")
+              Future.successful( NotFound )
+
+            } else if (personsFound.lengthCompare(1) > 0) {
+              // Сразу несколько юзеров. Это может быть какая-то ошибка или уязвимость.
+              val ex = new IllegalStateException(s"$logPrefix Many nodes with same username: internal data-defect or vulnerability. Giving up.")
+              Future.failed( ex )
+
+            } else {
+              // Один юзер с таким именем.
+              val mperson = personsFound.head
+              LOGGER.trace(s"$logPrefix Found user#${mperson.idOrNull} name'${request.body.name}'")
+
+              if (
+                mperson.edges
+                  .withPredicateIter( MPredicates.Ident.Password )
+                  .flatMap( _.info.textNi )
+                  .exists { pwHash =>
+                    scryptUtil.checkHash( request.body.password, pwHash )
+                  }
+              ) {
+                // Пароль подходит - залогинить юзера.
+                val personId = mperson.id.get
+                LOGGER.debug(s"$logPrefix Epw login ok, person#$personId from ${request.remoteClientAddress}")
+
+                val rdrPathFut = SioController.getRdrUrl(r) { emailSubmitOkCall(personId) }
+                // Реализация длинной сессии при наличии флага rememberMe.
+                val ttl: Ttl =
+                  if (request.body.isForeignPc) ShortTtl
+                  else LongTtl
+
+                val addToSession = ttl.addToSessionAcc(
+                  (MSessionKeys.PersonId.value -> personId) ::
+                  Nil
+                )
+
+                // Выставить язык, сохраненный ранее в MPerson
+                val langOpt = getLangFrom( Some(mperson) )
+                for (rdrPath <- rdrPathFut) yield {
+                  var rdr2 = Ok(rdrPath)
+                    .addingToSession( addToSession : _* )
+                  for (lang <- langOpt)
+                    rdr2 = rdr2.withLang( lang )( mCommonDi.messagesApi )
+                  rdr2
+                }
+
+              } else {
+                // Пароль не совпадает.
+                LOGGER.debug(s"$logPrefix Password does not match.")
+                Future.successful( NotFound )
+              }
+
+            }
+          }
+
+        } yield {
+          res
+        }
+
+      }
     }
   }
 

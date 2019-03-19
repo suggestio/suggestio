@@ -1,10 +1,10 @@
-package io.suggest.id.login.m
+package io.suggest.id.login.m.epw
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
-import japgolly.univeq.UnivEq
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
 import monocle.macros.GenLens
 
 /**
@@ -19,7 +19,8 @@ object MEpwLoginS {
     override def eqv(a: MEpwLoginS, b: MEpwLoginS): Boolean = {
       (a.name ===* b.name) &&
       (a.password ===* b.password) &&
-      (a.loginReq ===* b.loginReq)
+      (a.loginReq ===* b.loginReq) &&
+      (a.loginBtnEnabled ==* b.loginBtnEnabled)
     }
   }
 
@@ -43,7 +44,7 @@ object MEpwLoginS {
 case class MEpwLoginS(
                        name                 : String                = "",
                        password             : String                = "",
-                       loginReq             : Pot[None.type]        = Pot.empty,
+                       loginReq             : Pot[String]           = Pot.empty,
                        loginBtnEnabled      : Boolean               = false,
                      ) {
 

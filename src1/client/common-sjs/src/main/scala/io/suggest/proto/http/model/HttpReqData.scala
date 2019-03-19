@@ -41,6 +41,10 @@ object HttpReqData {
     HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_OCTET_STREAM
   )
 
+  def headersJsonSend = Map(
+    HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON
+  )
+
   /** Хидеры, обозначающие что отсылается json и ожидается json в ответ. */
   def headersJsonSendAccept = _headersSendAccept(MimeConst.APPLICATION_JSON)
 

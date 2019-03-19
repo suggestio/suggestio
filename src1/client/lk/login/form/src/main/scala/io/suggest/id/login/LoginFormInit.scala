@@ -21,7 +21,6 @@ import scala.concurrent.Future
 trait LoginFormInit extends InitRouter {
 
   override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
-    println("route init: " + itg)
     if (itg ==* MJsInitTargets.LoginForm) {
       _initLoginForm()
     } else {
@@ -32,7 +31,6 @@ trait LoginFormInit extends InitRouter {
 
   /** Выполнение инициализации формы логина. */
   private def _initLoginForm(): Unit = {
-    println("login")
     val modules = new LoginFormModule
 
     // Форма - это диалог. рендерить её можно в body куда угодно. Поэтому создаём div в конце body.
@@ -54,9 +52,7 @@ trait LoginFormInit extends InitRouter {
     // Показать диалог через посыл соотв.экшена.
     Future {
       modules.circuit.dispatch( LoginShowHide(true) )
-      println("login show = true")
     }
-    println("login done")
   }
 
 }

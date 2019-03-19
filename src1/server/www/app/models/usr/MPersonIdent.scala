@@ -64,7 +64,9 @@ class MPersonIdentModel @Inject()(
         mNodes.dynSearch {
           new MNodeSearchDfltImpl {
             // По идее, тут не более одного.
-            override def limit = 10
+            override def limit = 2
+            override val testNode = Some(false)
+            override val isEnabled = Some(true)
             override val nodeTypes = MNodeTypes.Person :: Nil
             override val outEdges: Seq[Criteria] = {
               val must = IMust.MUST

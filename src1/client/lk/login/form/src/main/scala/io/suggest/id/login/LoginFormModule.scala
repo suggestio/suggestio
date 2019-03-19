@@ -1,7 +1,8 @@
 package io.suggest.id.login
 
 import com.softwaremill.macwire._
-import io.suggest.id.login.v.{EpwFormR, ForeignPcCheckBoxR, LoginFormCss, LoginFormR}
+import io.suggest.id.login.v.epw.EpwFormR
+import io.suggest.id.login.v.{ForeignPcCheckBoxR, LoginFormCss, LoginFormR}
 import japgolly.scalajs.react.React
 
 /**

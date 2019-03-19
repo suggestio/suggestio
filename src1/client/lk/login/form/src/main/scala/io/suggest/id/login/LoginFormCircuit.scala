@@ -1,12 +1,13 @@
 package io.suggest.id.login
 
 import diode.react.ReactConnector
-import io.suggest.id.login.c.EpwAh
-import io.suggest.id.login.c.FormAh
+import io.suggest.id.MEpwLoginReq
+import io.suggest.id.login.c.{EpwAh, FormAh, ILoginApi, LoginApiHttp}
 import io.suggest.id.login.m.MLoginRootS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.CircuitUtil._
+import io.suggest.spa.DoNothingActionProcessor
 
 /**
   * Suggest.io
@@ -29,15 +30,27 @@ class LoginFormCircuit
   private[login] val epwRW      = mkLensRootZoomRW(this, MLoginRootS.epw)
   private[login] val overallRW  = mkLensRootZoomRW(this, MLoginRootS.overall)
 
+  /** Доступ к JSON-модели данных логина. */
+  private val epwLoginReqRO = zoom { mroot =>
+    MEpwLoginReq(
+      name          = mroot.epw.name,
+      password      = mroot.epw.password,
+      isForeignPc   = mroot.overall.isForeignPc
+    )
+  }
+
+
+  val loginApi: ILoginApi = new LoginApiHttp
 
   private val formAh = new FormAh(
     modelRW = overallRW,
   )
 
   private val epwAh = new EpwAh(
-    modelRW = epwRW,
+    modelRW     = epwRW,
+    loginReqRO  = epwLoginReqRO,
+    loginApi    = loginApi,
   )
-
 
   override protected val actionHandler: HandlerFunction = {
     composeHandlers(
@@ -45,5 +58,7 @@ class LoginFormCircuit
       formAh
     )
   }
+
+  addProcessor( DoNothingActionProcessor[MLoginRootS] )
 
 }

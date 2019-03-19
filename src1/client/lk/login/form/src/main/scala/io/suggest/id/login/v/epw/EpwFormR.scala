@@ -1,4 +1,4 @@
-package io.suggest.id.login.v
+package io.suggest.id.login.v.epw
 
 import chandu0101.scalajs.react.components.materialui.{MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiPaper, MuiTextField, MuiTextFieldProps}
 import diode.FastEq
@@ -6,10 +6,12 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m._
+import io.suggest.id.login.m.epw.MEpwLoginS
+import io.suggest.id.login.v.LoginFormCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.FastEqUtil
-import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, React, ReactEvent, ReactEventFromInput, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, React, ReactEvent, ReactEventFromInput, ScalaComponent}
 
 import scala.scalajs.js
 
@@ -146,7 +148,6 @@ class EpwFormR(
                           override val variant  = MuiButtonVariants.contained
                           override val onClick  = _onLoginBtnClickCbF
                           override val disabled = !loginBtnEnabledSomeProxy.value.value
-                          override val `type`   = HtmlConstants.Input.submit
                           override val fullWidth = true
                           override val classes  = btnCss
                         }

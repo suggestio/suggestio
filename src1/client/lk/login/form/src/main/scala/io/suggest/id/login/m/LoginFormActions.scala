@@ -2,6 +2,8 @@ package io.suggest.id.login.m
 
 import io.suggest.spa.DAction
 
+import scala.util.Try
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -24,8 +26,11 @@ case class EpwSetName(name: String) extends ILoginFormAction
 /** Ввод пароля. */
 case class EpwSetPassword(password: String) extends ILoginFormAction
 
-/** Кнопка запуска логина. */
+/** Сигнал от кнопки запуска логина. */
 case object EpwDoLogin extends ILoginFormAction
+
+/** Результат запроса логина. */
+case class EpwLoginResp( timestampMs: Long, tryRes: Try[String] ) extends ILoginFormAction
 
 
 /** Выставление галочки "Чужой компьютер?" */

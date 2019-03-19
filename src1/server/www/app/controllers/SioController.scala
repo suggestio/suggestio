@@ -7,7 +7,7 @@ import play.api.i18n.{I18nSupport, Lang, Messages}
 import play.api.mvc._
 import util.jsa.init.CtlJsInitT
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import play.api.data.Form
 import play.api.mvc.Result
 
@@ -20,6 +20,15 @@ import io.suggest.flash.FlashConstants
  * Created: 11.10.13 11:43
  * Description: Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller.
  */
+object SioController {
+
+  def getRdrUrl(rdrPath: Option[String])(dflt: => Future[Call])(implicit ec: ExecutionContext): Future[String] = {
+    rdrPath
+      .filter(_ startsWith "/")
+      .fold { dflt.map(_.url) }  { Future.successful }
+  }
+
+}
 
 trait SioController
   extends InjectedController
@@ -59,10 +68,11 @@ trait SioController
   }
 
   def RdrBackOrFut(rdrPath: Option[String])(dflt: => Future[Call]): Future[Result] = {
-    rdrPath
-      .filter(_ startsWith "/")
-      .fold { dflt.map(_.url) }  { Future.successful }
-      .map { r => Redirect(r) }
+    for {
+      r <- SioController.getRdrUrl(rdrPath)(dflt)
+    } yield {
+      Redirect(r)
+    }
   }
 
 

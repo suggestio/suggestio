@@ -334,8 +334,9 @@ GET  /id/via/:extService                @controllers.Ident.idViaProvider(extServ
 POST /id/via/:extService                @controllers.Ident.idViaProviderByPost(extService: io.suggest.ext.svc.MExtService, r: Option[String] ?= None)
 GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm
 POST /id/reg/ext/confirm                @controllers.Ident.idpConfirmSubmit
-## ident v2: react
+## ident v2: react-форма логина.
 GET  /id2                               @controllers.Ident.loginFormPage(r: Option[String] ?= None)
+POST /id2/epw/login                     @controllers.Ident.epw2Submit(r: Option[String] ?= None)
 
 ## compat
 GET  /app/session/keepalive             @controllers.Static.keepAliveSession

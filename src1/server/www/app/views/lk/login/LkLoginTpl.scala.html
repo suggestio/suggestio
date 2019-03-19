@@ -3,12 +3,23 @@
 @* Страница с react-формой логина. *@
 
 @import ctx.messages
+@import views.html.stuff.jsTpl2HtmlTpl
+@import views.js.stuff.jsRevRouterTpl
 
 @lk.lkBase(
   title     = messages( "Login.page.title" ),
   nodeOpt   = None,
   showSwitchNodeBtn = false,
 ) {
+
   @* Рендерить контейнер не надо - для диалога он создаётся автоматом. *@
   @ctx.data.jsInitTargets
+
+  @* JS-роутер. *@
+  @jsTpl2HtmlTpl( withScriptTag = true )(
+    jsRevRouterTpl( csrfAll = true, cdn = true )(
+      routes.javascript.Ident.epw2Submit,
+    )
+  )
+
 }
