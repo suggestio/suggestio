@@ -342,6 +342,7 @@ object MsgCodes {
   val `_to.Finish` = "_to.Finish"
 
   val `GovServices.ESIA` = "GovServices.ESIA"
+  val `ESIA._unabbrevated` = "ESIA._unabbrevated"
 
   /** Привести булёво значение к Yes или No.
     * И это потом можно в messages() передавать, для локализации ответа. */

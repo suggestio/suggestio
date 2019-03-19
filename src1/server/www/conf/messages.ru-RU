@@ -400,6 +400,7 @@ I.at.tw=Мой Твиттер
 I.at.gu=Я на ГосУслугах
 
 GovServices.ESIA=Гос.услуги (ЕСИА)
+ESIA._unabbrevated=Единая система идентификации и аутентификации
 
 error.service.unknown=Этот сайт не поддерживается.
 error.required.at.least.one.adv.service=Необходимо выбрать хотя бы один сервис из списка.

@@ -6,12 +6,12 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m._
-import io.suggest.id.login.m.epw.MEpwLoginS
+import io.suggest.id.login.m.epw.{MEpwLoginS, MEpwTextFieldS}
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, React, ReactEvent, ReactEventFromInput, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactEventFromInput, ScalaComponent}
 
 import scala.scalajs.js
 
@@ -22,6 +22,8 @@ import scala.scalajs.js
   * Description: Форма входа по имени и паролю.
   */
 class EpwFormR(
+                foreignPcCheckBoxR          : ForeignPcCheckBoxR,
+                loginProgressR              : LoginProgressR,
                 commonReactCtxProv          : React.Context[MCommonReactCtx],
                 loginFormCssCtx             : React.Context[LoginFormCss],
               ) {
@@ -31,16 +33,18 @@ class EpwFormR(
 
 
   case class State(
-                    nameC                   : ReactConnectProxy[String],
-                    passwordC               : ReactConnectProxy[String],
+                    nameC                   : ReactConnectProxy[MEpwTextFieldS],
+                    passwordC               : ReactConnectProxy[MEpwTextFieldS],
                     loginBtnEnabledSomeC    : ReactConnectProxy[Some[Boolean]],
+                    loginReqPendingSomeC    : ReactConnectProxy[Some[Boolean]],
                   )
 
 
   /** Рендер одного input field'а для имени или пароля. */
-  private def _inputTextField(valueC: ReactConnectProxy[String], msgCode: String, inputName: String,
+  private def _inputTextField(fieldStateC: ReactConnectProxy[MEpwTextFieldS], msgCode: String, inputName: String,
                               onChangeCbF: js.Function1[ReactEventFromInput, Unit], isPassword: Boolean): VdomElement = {
-    valueC { valueProxy =>
+    fieldStateC { fieldStateProxy =>
+      val fieldState = fieldStateProxy.value
       loginFormCssCtx.consume { loginFormCss =>
         val mfcCss = new MuiFormControlClasses {
           override val root = loginFormCss.epwFormControl.htmlClass
@@ -49,19 +53,19 @@ class EpwFormR(
           MuiTextField(
             new MuiTextFieldProps {
               override val value = js.defined {
-                valueProxy.value
+                fieldState.value
               }
-              override val onChange = onChangeCbF
-              override val placeholder = crCtx.messages( msgCode )
-              override val name = inputName
               override val `type` = {
                 if (isPassword) HtmlConstants.Input.password
                 else HtmlConstants.Input.text
               }
-              override val required = true
-              override val autoFocus = !isPassword
-              override val fullWidth = true
-              override val classes = mfcCss
+              override val name         = inputName
+              override val onChange     = onChangeCbF
+              override val placeholder  = crCtx.messages( msgCode )
+              override val required     = true
+              override val autoFocus    = !isPassword
+              override val fullWidth    = true
+              override val classes      = mfcCss
             }
           )
         }
@@ -105,63 +109,63 @@ class EpwFormR(
     }
 
 
-    def render(s: State, children: PropsChildren): VdomElement = {
+    def render(propsProxy: Props, s: State): VdomElement = {
       MuiPaper()(
 
         // Поддержка локализации:
-        <.div(
+        <.form(
+          ^.onSubmit --> _onFormSubmit,
 
-          <.form(
-            ^.onSubmit --> _onFormSubmit,
-
-            MuiFormControl(
-              new MuiFormControlProps {
-                override val component = js.defined( <.fieldset.name )
+          MuiFormControl(
+            new MuiFormControlProps {
+              override val component = js.defined( <.fieldset.name )
+            }
+          )(
+            MuiFormGroup(
+              new MuiFormGroupProps {
+                override val row = true
               }
             )(
-              MuiFormGroup(
-                new MuiFormGroupProps {
-                  override val row = true
+              // Поле имени пользователя:
+              _inputTextField( s.nameC, MsgCodes.`Username`, "email", _onNameChangeCbF, isPassword = false ),
+
+              // Поле ввода пароля:
+              _inputTextField( s.passwordC, MsgCodes.`Password`, HtmlConstants.Input.password, _onPasswordChangeCbF, isPassword = true ),
+
+              // Галочка "Чужой компьютер".
+              propsProxy.wrap(_.isForeignPcSome)( foreignPcCheckBoxR.apply )(implicitly, FastEqUtil.RefValFastEq),
+
+              // Линейка ожидания:
+              s.loginReqPendingSomeC { loginProgressR.component.apply },
+
+              // Кнопка "Войти", аналог сабмита формы.
+              {
+                val loginText = commonReactCtxProv.consume { crCtx =>
+                  crCtx.messages( MsgCodes.`Login` )
                 }
-              )(
-                // Поле имени пользователя:
-                _inputTextField( s.nameC, MsgCodes.`Username`, "email", _onNameChangeCbF, isPassword = false ),
-
-                // Поле ввода пароля:
-                _inputTextField( s.passwordC, MsgCodes.`Password`, HtmlConstants.Input.password, _onPasswordChangeCbF, isPassword = true ),
-
-                children,
-
-                // Кнопка "Войти", аналог сабмита формы.
-                {
-                  val loginText = commonReactCtxProv.consume { crCtx =>
-                    crCtx.messages( MsgCodes.`Login` )
-                  }
-                  s.loginBtnEnabledSomeC { loginBtnEnabledSomeProxy =>
-                    loginFormCssCtx.consume { loginFormCss =>
-                      val btnCss = new MuiButtonClasses {
-                        override val root = loginFormCss.epwFormControl.htmlClass
-                      }
-                      MuiButton(
-                        new MuiButtonProps {
-                          override val size     = MuiButtonSizes.large
-                          override val variant  = MuiButtonVariants.contained
-                          override val onClick  = _onLoginBtnClickCbF
-                          override val disabled = !loginBtnEnabledSomeProxy.value.value
-                          override val fullWidth = true
-                          override val classes  = btnCss
-                        }
-                      )(
-                        loginText
-                      )
+                s.loginBtnEnabledSomeC { loginBtnEnabledSomeProxy =>
+                  loginFormCssCtx.consume { loginFormCss =>
+                    val btnCss = new MuiButtonClasses {
+                      override val root = loginFormCss.epwFormControl.htmlClass
                     }
+                    MuiButton(
+                      new MuiButtonProps {
+                        override val size     = MuiButtonSizes.large
+                        override val variant  = MuiButtonVariants.contained
+                        override val onClick  = _onLoginBtnClickCbF
+                        override val disabled = !loginBtnEnabledSomeProxy.value.value
+                        override val fullWidth = true
+                        override val classes  = btnCss
+                      }
+                    )(
+                      loginText
+                    )
                   }
-                },
+                }
+              },
 
-              )
             )
-
-          ),
+          )
 
         ),
 
@@ -177,11 +181,12 @@ class EpwFormR(
         nameC                 = propsProxy.connect(_.name)( FastEq.AnyRefEq ),
         passwordC             = propsProxy.connect(_.password)( FastEq.AnyRefEq ),
         loginBtnEnabledSomeC  = propsProxy.connect(_.loginBtnEnabledSome)( FastEqUtil.RefValFastEq ),
+        loginReqPendingSomeC  = propsProxy.connect(_.isShowPendingSome)( FastEqUtil.RefValFastEq ),
       )
     }
-    .renderBackendWithChildren[Backend]
+    .renderBackend[Backend]
     .build
 
-  def apply(props: Props)(children: VdomNode*) = component( props )(children: _*)
+  def apply(props: Props) = component( props )
 
 }

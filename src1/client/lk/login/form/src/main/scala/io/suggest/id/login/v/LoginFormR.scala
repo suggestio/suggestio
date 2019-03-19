@@ -24,7 +24,6 @@ import scala.scalajs.js.annotation.JSName
   */
 class LoginFormR(
                   epwFormR              : EpwFormR,
-                  foreignPcCheckBoxR    : ForeignPcCheckBoxR,
                   commonReactCtxProv    : React.Context[MCommonReactCtx],
                   loginFormCssCtx       : React.Context[LoginFormCss],
                 ) {
@@ -36,7 +35,6 @@ class LoginFormR(
   case class State(
                     visibleSomeC          : ReactConnectProxy[Some[Boolean]],
                     currTabC              : ReactConnectProxy[MLoginTab],
-                    foreignPcSomeC        : ReactConnectProxy[Some[Boolean]],
                     loginFormCssC         : ReactConnectProxy[LoginFormCss],
                   )
 
@@ -56,11 +54,10 @@ class LoginFormR(
 
 
     def render(p: Props, s: State): VdomElement = {
-      // Галочка "Чужой компьютер" расшарена между вкладками:
-      val foreignPcCb = p.wrap(_.overall.isForeignPcSome)( foreignPcCheckBoxR.apply )(implicitly, FastEqUtil.RefValFastEq)
 
       // Содержимое вкладки входа по логину и паролю:
-      val epw = p.wrap(_.epw)( epwFormR(_)(foreignPcCb) )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
+      // TODO Сделать lazy val, т.е. epw-форма носит служебный характер.
+      val epw = p.wrap(_.epw)( epwFormR.apply )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
 
       // Содержимое табов:
       val tabsContents = <.div(
@@ -158,7 +155,6 @@ class LoginFormR(
       State(
         visibleSomeC        = rootProxy.connect( _.overall.isVisibleSome )( FastEqUtil.RefValFastEq ),
         currTabC            = rootProxy.connect( _.overall.loginTab )( FastEq.AnyRefEq ),
-        foreignPcSomeC      = rootProxy.connect( _.overall.isForeignPcSome )( FastEqUtil.RefValFastEq ),
         loginFormCssC       = rootProxy.connect( _.overall.formCss )( FastEq.AnyRefEq ),
       )
     }

@@ -16,6 +16,7 @@ libraryDependencies ++= Seq(
     "com.github.japgolly.scalajs-react" %%% "core"    % Common.reactSjsVsn,
     // Reusability:
     "com.github.japgolly.scalajs-react" %%% "extra"   % Common.reactSjsVsn,
+    "com.github.japgolly.scalacss" %%% "ext-react"    % Common.Vsn.SCALACSS,
     "io.suzaku"     %%% "diode-react"                 % Common.diodeReactVsn
 )
 

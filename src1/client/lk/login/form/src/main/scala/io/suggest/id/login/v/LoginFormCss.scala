@@ -31,4 +31,13 @@ case class LoginFormCss() extends StyleSheet.Inline {
     )
   }
 
+
+  /** Параметры анимированного прогресса ожидания. */
+  val progressBar = {
+    style(
+      width( 100.%% ),
+      height( 2.px ),
+    )
+  }
+
 }

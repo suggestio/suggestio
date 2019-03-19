@@ -129,6 +129,8 @@ sealed trait IdentCtlRoutes extends js.Object {
 
   def epw2Submit(r: js.UndefOr[String] = js.undefined): Route = js.native
 
+  def idViaProvider(extServiceId: String, r: js.UndefOr[String] = js.undefined): Route = js.native
+
 }
 
 

@@ -19,6 +19,7 @@ object MEpwLoginS {
     override def eqv(a: MEpwLoginS, b: MEpwLoginS): Boolean = {
       (a.name ===* b.name) &&
       (a.password ===* b.password) &&
+      (a.isForeignPc ==* b.isForeignPc) &&
       (a.loginReq ===* b.loginReq) &&
       (a.loginBtnEnabled ==* b.loginBtnEnabled)
     }
@@ -28,6 +29,7 @@ object MEpwLoginS {
 
   val name              = GenLens[MEpwLoginS](_.name)
   val password          = GenLens[MEpwLoginS](_.password)
+  val isForeignPc       = GenLens[MEpwLoginS](_.isForeignPc)
   val loginReq          = GenLens[MEpwLoginS](_.loginReq)
   val loginBtnEnabled   = GenLens[MEpwLoginS](_.loginBtnEnabled)
 
@@ -42,13 +44,20 @@ object MEpwLoginS {
   * @param loginBtnEnabled Активна ли кнопка логина?
   */
 case class MEpwLoginS(
-                       name                 : String                = "",
-                       password             : String                = "",
+                       name                 : MEpwTextFieldS        = MEpwTextFieldS.empty,
+                       password             : MEpwTextFieldS        = MEpwTextFieldS.empty,
+                       isForeignPc          : Boolean               = false,
                        loginReq             : Pot[String]           = Pot.empty,
                        loginBtnEnabled      : Boolean               = false,
                      ) {
 
   /** Состояние кнопки логина для хранения внутри коннекшена. */
   lazy val loginBtnEnabledSome = Some(loginBtnEnabled)
+
+  /** Когда надо отображать на экране прогресс-бар ожидания? */
+  lazy val isShowPendingSome = Some( loginReq.isPending )
+
+  /** Для React-duode connection требуется AnyRef. */
+  lazy val isForeignPcSome = Some( isForeignPc )
 
 }

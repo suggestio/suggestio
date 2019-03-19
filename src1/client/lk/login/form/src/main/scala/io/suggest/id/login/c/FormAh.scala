@@ -1,7 +1,7 @@
 package io.suggest.id.login.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.id.login.m.{LoginShowHide, MLoginFormOverallS, SetForeignPc, SwitсhLoginTab}
+import io.suggest.id.login.m.{LoginShowHide, MLoginFormOverallS, EpwSetForeignPc, SwitсhLoginTab}
 import japgolly.univeq._
 
 /**
@@ -35,16 +35,6 @@ class FormAh[M](
       } else {
         val v2 = MLoginFormOverallS.loginTab.set( m.tab )(v0)
         updated(v2)
-      }
-
-
-    case m: SetForeignPc =>
-      val v0 = value
-      if (v0.isForeignPc ==* m.isForeign) {
-        noChange
-      } else {
-        val v2 = MLoginFormOverallS.isForeignPc.set( m.isForeign )( v0 )
-        updated( v2 )
       }
 
   }

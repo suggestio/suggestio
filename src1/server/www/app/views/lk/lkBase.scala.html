@@ -13,6 +13,7 @@
 @import helper._
 @import io.suggest.popup.PopupConstants
 @import io.suggest.i18n.MsgCodes
+@import models.msc.ScJsState
 
 <!DOCTYPE html>
 <html>
@@ -36,24 +37,25 @@
 @defining( nodeOpt.flatMap(_.id) ) { nodeIdOpt =>
 
   <header class="header">
-    <a class="header_logo-link" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">
+    <a class="header_logo-link" href="@routes.MarketLkAdn.lkList(fromNode = nodeIdOpt)">
       <img class="header_logo-image" src='@cdn.asset("images/market/new-design/logo_retina.png")' alt="logo" width="53" height="51"/>
     </a>
 
     <div class="header_cnt">
 
-      @nodeOpt.fold {
-        <img class="header_logo-text" src='@cdn.asset("images/market/index/logo_retina.png")' width="101" height="26"/>
-      } { mnode =>
-        <span class="header_logo-text">
-          @mnode.meta.basic.nameOpt.orElse(mnode.id)
-          @* Рендерить флаг тестового (внутреннего) узла. *@
-          @if( mnode.extras.adn.exists(_.testNode) ) {
-            <strong>⚗</strong>
-          }
-        </span>
-        @* TODO Виджет корзины со счётчиком. *@
-      }
+      <a href="@routes.Sc.geoSite( nodeIdOpt.fold( ScJsState.veryEmpty )(nodeId => ScJsState(adnId = nodeIdOpt)) )">
+        @nodeOpt.fold {
+          <img class="header_logo-text" src='@cdn.asset("images/market/index/logo_retina.png")' width="101" height="26"/>
+        } { mnode =>
+          <span class="header_logo-text">
+            @mnode.meta.basic.nameOpt.orElse( nodeIdOpt )
+            @* Рендерить флаг тестового (внутреннего) узла. *@
+            @if( mnode.extras.adn.exists(_.testNode) ) {
+              <strong>⚗</strong>
+            }
+          </span>
+        }
+      </a>
 
       @for(nodeId <- nodeIdOpt) {
         <a class="header_cart __bill-cart __act" title="@ctx.messages( MsgCodes.`Cart` )" href="@routes.LkBill2.orderPage(nodeId)">
@@ -79,7 +81,7 @@
 
     @if(showSwitchNodeBtn && ctx.user.isAuth) {
       <a class="btn __size-M __major header_change-node"
-         href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">
+         href="@routes.MarketLkAdn.lkList(fromNode = nodeIdOpt)">
         @messages( MsgCodes.`Switch.node` )
       </a>
     }

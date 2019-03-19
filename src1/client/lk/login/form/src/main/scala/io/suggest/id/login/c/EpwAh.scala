@@ -3,7 +3,7 @@ package io.suggest.id.login.c
 import diode._
 import io.suggest.id.MEpwLoginReq
 import io.suggest.id.login.m._
-import io.suggest.id.login.m.epw.MEpwLoginS
+import io.suggest.id.login.m.epw.{MEpwLoginS, MEpwTextFieldS}
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -40,7 +40,6 @@ object EpwAh {
 class EpwAh[M](
                 loginApi        : ILoginApi,
                 modelRW         : ModelRW[M, MEpwLoginS],
-                loginReqRO      : ModelRO[MEpwLoginReq],
               )
   extends ActionHandler( modelRW )
   with Log
@@ -51,15 +50,17 @@ class EpwAh[M](
     // Ввод имени пользователя.
     case m: EpwSetName =>
       val v0 = value
-      if (v0.name ==* m.name) {
+      if (v0.name.value ==* m.name) {
         noChange
       } else {
         val v2 = EpwAh.epwLoginReqBtnActive(
           isActiveNow   = v0.loginBtnEnabled,
           name          = m.name,
-          password      = v0.password,
+          password      = v0.password.value,
           isPendingNow  = v0.loginReq.isPending,
-          changesAcc    = MEpwLoginS.name.set(m.name),
+          changesAcc    = MEpwLoginS.name
+            .composeLens(MEpwTextFieldS.value)
+            .set(m.name),
         )(v0)
         updated(v2)
       }
@@ -68,17 +69,30 @@ class EpwAh[M](
     // Ввод пароля.
     case m: EpwSetPassword =>
       val v0 = value
-      if (v0.password ==* m.password) {
+      if (v0.password.value ==* m.password) {
         noChange
       } else {
         val v2 = EpwAh.epwLoginReqBtnActive(
           isActiveNow   = v0.loginBtnEnabled,
-          name          = v0.name,
+          name          = v0.name.value,
           password      = m.password,
           isPendingNow  = v0.loginReq.isPending,
-          changesAcc    = MEpwLoginS.password.set(m.password),
+          changesAcc    = MEpwLoginS.password
+            .composeLens(MEpwTextFieldS.value)
+            .set(m.password),
         )(v0)
         updated(v2)
+      }
+
+
+    // Управление галочкой "Чужой компьютер"
+    case m: EpwSetForeignPc =>
+      val v0 = value
+      if (v0.isForeignPc ==* m.isForeign) {
+        noChange
+      } else {
+        val v2 = MEpwLoginS.isForeignPc.set( m.isForeign )( v0 )
+        updated( v2 )
       }
 
 
@@ -95,7 +109,13 @@ class EpwAh[M](
 
         val reqFx = Effect {
           loginApi
-            .epw2Submit( loginReqRO.value )
+            .epw2Submit {
+              MEpwLoginReq(
+                name          = v0.name.value,
+                password      = v0.password.value,
+                isForeignPc   = v0.isForeignPc
+              )
+            }
             .transform { tryRes =>
               Success( EpwLoginResp(tstamp, tryRes) )
             }

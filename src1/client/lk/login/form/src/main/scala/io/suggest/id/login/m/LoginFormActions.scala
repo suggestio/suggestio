@@ -1,5 +1,6 @@
 package io.suggest.id.login.m
 
+import io.suggest.ext.svc.MExtService
 import io.suggest.spa.DAction
 
 import scala.util.Try
@@ -34,4 +35,8 @@ case class EpwLoginResp( timestampMs: Long, tryRes: Try[String] ) extends ILogin
 
 
 /** Выставление галочки "Чужой компьютер?" */
-case class SetForeignPc( isForeign: Boolean ) extends ILoginFormAction
+case class EpwSetForeignPc(isForeign: Boolean ) extends ILoginFormAction
+
+
+/** Логин через внешний сервис. */
+case class ExtLoginVia(service: MExtService ) extends ILoginFormAction

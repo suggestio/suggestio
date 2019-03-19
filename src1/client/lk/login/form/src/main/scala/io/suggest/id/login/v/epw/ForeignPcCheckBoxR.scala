@@ -1,17 +1,17 @@
-package io.suggest.id.login.v
+package io.suggest.id.login.v.epw
 
 import chandu0101.scalajs.react.components.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps, MuiFormControlLabel, MuiFormControlLabelProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.id.login.m.SetForeignPc
+import io.suggest.id.login.m.EpwSetForeignPc
+import io.suggest.id.login.v.LoginFormCss
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.component.Scala.BackendScope
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, React, ReactEventFromInput, ScalaComponent}
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.spa.FastEqUtil
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 import scala.scalajs.js.annotation.JSName
 
 /**
@@ -36,7 +36,7 @@ class ForeignPcCheckBoxR(
   class Backend($: BackendScope[Props, State]) {
 
     private def _onForeignPcChange( event: ReactEventFromInput, checked: Boolean ): Callback =
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, SetForeignPc(checked) )
+      ReactDiodeUtil.dispatchOnProxyScopeCB( $, EpwSetForeignPc(checked) )
     private val _onForeignPcChangeCbF = ReactCommonUtil.cbFun2ToJsCb( _onForeignPcChange )
 
 

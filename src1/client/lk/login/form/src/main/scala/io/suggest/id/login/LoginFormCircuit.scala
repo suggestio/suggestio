@@ -1,7 +1,6 @@
 package io.suggest.id.login
 
 import diode.react.ReactConnector
-import io.suggest.id.MEpwLoginReq
 import io.suggest.id.login.c.{EpwAh, FormAh, ILoginApi, LoginApiHttp}
 import io.suggest.id.login.m.MLoginRootS
 import io.suggest.msg.ErrorMsgs
@@ -30,15 +29,6 @@ class LoginFormCircuit
   private[login] val epwRW      = mkLensRootZoomRW(this, MLoginRootS.epw)
   private[login] val overallRW  = mkLensRootZoomRW(this, MLoginRootS.overall)
 
-  /** Доступ к JSON-модели данных логина. */
-  private val epwLoginReqRO = zoom { mroot =>
-    MEpwLoginReq(
-      name          = mroot.epw.name,
-      password      = mroot.epw.password,
-      isForeignPc   = mroot.overall.isForeignPc
-    )
-  }
-
 
   val loginApi: ILoginApi = new LoginApiHttp
 
@@ -48,7 +38,6 @@ class LoginFormCircuit
 
   private val epwAh = new EpwAh(
     modelRW     = epwRW,
-    loginReqRO  = epwLoginReqRO,
     loginApi    = loginApi,
   )
 
