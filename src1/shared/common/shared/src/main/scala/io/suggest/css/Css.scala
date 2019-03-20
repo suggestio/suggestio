@@ -561,4 +561,12 @@ object Css {
 
   }
 
+
+  object GosUslugi {
+    private def _PREFIX = "gosuslugi-"
+
+    def LOGO = _PREFIX + "logo"
+    def ESIA_TITLE  = _PREFIX + "esia_title"
+  }
+
 }

@@ -40,3 +40,4 @@ case class EpwSetForeignPc(isForeign: Boolean ) extends ILoginFormAction
 
 /** Логин через внешний сервис. */
 case class ExtLoginVia(service: MExtService ) extends ILoginFormAction
+case class ExtLoginViaTimeout(tstamp: Long) extends ILoginFormAction

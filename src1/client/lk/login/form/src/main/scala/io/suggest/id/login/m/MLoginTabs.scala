@@ -1,6 +1,7 @@
 package io.suggest.id.login.m
 
 import enumeratum.values.{IntEnum, IntEnumEntry}
+import io.suggest.i18n.MsgCodes
 import japgolly.univeq.UnivEq
 
 /**
@@ -11,11 +12,17 @@ import japgolly.univeq.UnivEq
   */
 object MLoginTabs extends IntEnum[MLoginTab] {
 
+  /** Таб с логином через внешние сервисы. */
+  case object Ext extends MLoginTab( 0 ) {
+    override def msgCode = MsgCodes.`Login`
+  }
+
   /** Таб со страницей ввода имени-пароля. */
-  case object Epw extends MLoginTab(1)
+  case object Epw extends MLoginTab(1) {
+    override def msgCode = MsgCodes.`Login.using.password`
+  }
 
 
-  // TODO Госуслуги!
   def default: MLoginTab = Epw
 
   override def values = findValues
@@ -23,7 +30,9 @@ object MLoginTabs extends IntEnum[MLoginTab] {
 }
 
 
-sealed abstract class MLoginTab(override val value: Int) extends IntEnumEntry
+sealed abstract class MLoginTab(override val value: Int) extends IntEnumEntry {
+  def msgCode: String
+}
 
 object MLoginTab {
 

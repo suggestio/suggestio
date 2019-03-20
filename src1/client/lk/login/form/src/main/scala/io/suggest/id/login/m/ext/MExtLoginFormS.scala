@@ -5,6 +5,7 @@ import diode.data.Pot
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -21,6 +22,8 @@ object MExtLoginFormS {
   }
 
   @inline implicit def univEq: UnivEq[MExtLoginFormS] = UnivEq.derive
+
+  val loginUrlReq = GenLens[MExtLoginFormS](_.loginUrlReq)
 
 }
 

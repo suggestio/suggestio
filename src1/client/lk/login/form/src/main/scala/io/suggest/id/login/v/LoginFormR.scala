@@ -7,7 +7,9 @@ import io.suggest.css.CssR
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m._
 import io.suggest.id.login.m.epw.MEpwLoginS
+import io.suggest.id.login.m.ext.MExtLoginFormS
 import io.suggest.id.login.v.epw.EpwFormR
+import io.suggest.id.login.v.ext.ExtFormR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactEventFromHtml, ScalaComponent}
@@ -24,6 +26,7 @@ import scala.scalajs.js.annotation.JSName
   */
 class LoginFormR(
                   epwFormR              : EpwFormR,
+                  extFormR              : ExtFormR,
                   commonReactCtxProv    : React.Context[MCommonReactCtx],
                   loginFormCssCtx       : React.Context[LoginFormCss],
                 ) {
@@ -37,6 +40,22 @@ class LoginFormR(
                     currTabC              : ReactConnectProxy[MLoginTab],
                     loginFormCssC         : ReactConnectProxy[LoginFormCss],
                   )
+
+
+  private def _tabBtn( tab: MLoginTab ): VdomElement = {
+    MuiTab {
+      // Получить messages через контекст:
+      val labelText = commonReactCtxProv.consume { crCtx =>
+        crCtx.messages( tab.msgCode )
+      }
+      new MuiTabProps {
+        override val value = js.defined( tab.value )
+        override val label = js.defined {
+          labelText.rawNode
+        }
+      }
+    }
+  }
 
 
   class Backend($: BackendScope[Props, State]) {
@@ -54,34 +73,26 @@ class LoginFormR(
 
 
     def render(p: Props, s: State): VdomElement = {
+      // Форма логина через внешние сервисы.
+      val extLogin = p.wrap(_.ext)( extFormR.apply )( implicitly, MExtLoginFormS.MExtLoginFormSFastEq )
 
       // Содержимое вкладки входа по логину и паролю:
-      // TODO Сделать lazy val, т.е. epw-форма носит служебный характер.
-      val epw = p.wrap(_.epw)( epwFormR.apply )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
+      lazy val epwLogin = p.wrap(_.epw)( epwFormR.apply )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
 
       // Содержимое табов:
       val tabsContents = <.div(
         s.currTabC { currTabProxy =>
           // TODO Запилить react-swipeable-views, как в примерах MuiTabs.
           currTabProxy.value match {
-            case MLoginTabs.Epw => epw
+            case MLoginTabs.Ext => extLogin
+            case MLoginTabs.Epw => epwLogin
           }
         }
       )
 
       // кнопка таба EmailPw-логина:
-      val epwTabBtn = MuiTab {
-        // Получить messages через контекст:
-        val labelText = commonReactCtxProv.consume { crCtx =>
-          crCtx.messages( MsgCodes.`Login.using.password` )
-        }
-        new MuiTabProps {
-          override val value = js.defined( MLoginTabs.Epw.value )
-          override val label = js.defined {
-            labelText.rawNode
-          }
-        }
-      }
+      val epwTabBtn =  _tabBtn( MLoginTabs.Epw )
+      val extTabBtn = _tabBtn( MLoginTabs.Ext )
 
       // Список табов:
       val tabs = MuiPaper(
@@ -97,6 +108,7 @@ class LoginFormR(
               override val onTabChanged = _onTabChangedCbF
             }
           )(
+            extTabBtn,
             epwTabBtn,
           )
         }

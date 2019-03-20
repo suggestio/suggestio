@@ -4,6 +4,7 @@ import chandu0101.scalajs.react.components.materialui.{MuiLinearProgress, MuiLin
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.id.login.v.LoginFormCss
+import io.suggest.sjs.common.empty.JsOptionUtil
 import japgolly.scalajs.react.{React, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
@@ -38,8 +39,9 @@ class LoginProgressR(
             new MuiLinearProgressProps {
               override val variant = {
                 if (isPending) MuiProgressVariants.indeterminate
-                else MuiProgressVariants.static
+                else MuiProgressVariants.determinate
               }
+              override val value = JsOptionUtil.maybeDefined( !isPending )(0)
             }
           )
         )

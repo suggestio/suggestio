@@ -2,6 +2,7 @@ package io.suggest.id.login.v.ext
 
 import chandu0101.scalajs.react.components.materialui.{MuiButtonBase, MuiButtonBaseProps, MuiPaper}
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.css.Css
 import io.suggest.ext.svc.{MExtService, MExtServices}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m.{ExtLoginVia, LoginProgressR}
@@ -43,13 +44,19 @@ class ExtFormR(
 
         // Кнопка на логин через ЕСИА:
         {
-          val btnTitle = commonReactCtxProv.consume { crCtx =>
-            crCtx.messages( MsgCodes.`ESIA._unabbrevated` )
-          }
+          val btnIcon = <.div(
+            ^.`class` := Css.GosUslugi.LOGO,
+          )
+          val btnTitle = <.div(
+            ^.`class` := Css.GosUslugi.ESIA_TITLE,
+            commonReactCtxProv.consume { crCtx =>
+              crCtx.messages( MsgCodes.`ESIA._unabbrevated` )
+            },
+          )
           s.loginUrlReqPendingSomeC { loginUrlReqPendingSomeProxy =>
             val isDisabled = loginUrlReqPendingSomeProxy.value.value
             <.span(
-              // Кнопка
+              // Кнопка для логина
               MuiButtonBase(
                 new MuiButtonBaseProps {
                   override val focusRipple  = !isDisabled
@@ -58,12 +65,12 @@ class ExtFormR(
                   override val disableRipple = true
                 }
               )(
+                btnIcon,
                 btnTitle,
-                // TODO Госуслуги.svg
               ),
 
               // Прогрессбар ожидания:
-              loginProgressR( loginUrlReqPendingSomeProxy )
+              loginProgressR( loginUrlReqPendingSomeProxy ),
             )
           }
         },

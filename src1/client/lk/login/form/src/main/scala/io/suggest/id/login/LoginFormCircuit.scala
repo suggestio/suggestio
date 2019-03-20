@@ -1,7 +1,7 @@
 package io.suggest.id.login
 
 import diode.react.ReactConnector
-import io.suggest.id.login.c.{EpwAh, FormAh, ILoginApi, LoginApiHttp}
+import io.suggest.id.login.c._
 import io.suggest.id.login.m.MLoginRootS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
@@ -26,6 +26,7 @@ class LoginFormCircuit
   }
 
 
+  private[login] val extRW      = mkLensRootZoomRW(this, MLoginRootS.ext)
   private[login] val epwRW      = mkLensRootZoomRW(this, MLoginRootS.epw)
   private[login] val overallRW  = mkLensRootZoomRW(this, MLoginRootS.overall)
 
@@ -36,6 +37,10 @@ class LoginFormCircuit
     modelRW = overallRW,
   )
 
+  private val extAh = new ExtAh(
+    modelRW     = extRW
+  )
+
   private val epwAh = new EpwAh(
     modelRW     = epwRW,
     loginApi    = loginApi,
@@ -43,6 +48,7 @@ class LoginFormCircuit
 
   override protected val actionHandler: HandlerFunction = {
     composeHandlers(
+      extAh,
       epwAh,
       formAh
     )
