@@ -11,7 +11,7 @@
   routes.javascript.Sc.handleScError,
   routes.javascript.Static.advRcvrsMapJson,
 
-  routes.javascript.Ident.mySioStartPage,
+  routes.javascript.Ident.loginFormPage,
   routes.javascript.Ident.rdrUserSomewhere,
   routes.javascript.LkAds.adsPage,
   routes.javascript.LkAdEdit.editAd

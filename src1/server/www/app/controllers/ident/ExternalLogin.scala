@@ -75,7 +75,7 @@ trait ExternalLogin
     request.apiAdp.authenticateFromRequest().flatMap {
 
       case _: AuthenticationResult.AccessDenied =>
-        Redirect( routes.Ident.mySioStartPage() )
+        Redirect( routes.Ident.loginFormPage() )
           .flashing(FLASH.ERROR -> "login.accessDenied")
 
       case failed: AuthenticationResult.Failed =>
@@ -203,7 +203,7 @@ trait ExternalLogin
     }.recover {
       case e =>
         LOGGER.error("Unable to log user in. An exception was thrown", e)
-        Redirect(routes.Ident.mySioStartPage())
+        Redirect( routes.Ident.loginFormPage() )
           .flashing(FLASH.ERROR -> "login.errorLoggingIn")
     }
   }

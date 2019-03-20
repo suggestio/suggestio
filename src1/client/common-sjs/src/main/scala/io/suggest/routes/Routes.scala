@@ -123,6 +123,8 @@ sealed trait AssetsCtlRoutes extends js.Object {
 @js.native
 sealed trait IdentCtlRoutes extends js.Object {
 
+  def loginFormPage(r: js.UndefOr[String] = js.undefined): Route = js.native
+
   def mySioStartPage(): Route = js.native
 
   def rdrUserSomewhere(): Route = js.native

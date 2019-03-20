@@ -2,7 +2,7 @@ package io.suggest.id.login
 
 import com.softwaremill.macwire._
 import io.suggest.id.login.m.LoginProgressR
-import io.suggest.id.login.v.epw.{EpwFormR, ForeignPcCheckBoxR}
+import io.suggest.id.login.v.epw.{EpwFormR, EpwTextFieldR, ForeignPcCheckBoxR}
 import io.suggest.id.login.v.ext.ExtFormR
 import io.suggest.id.login.v.{LoginFormCss, LoginFormR}
 import japgolly.scalajs.react.React
@@ -21,6 +21,7 @@ class LoginFormModule {
 
   lazy val epwFormR = wire[EpwFormR]
   lazy val foreignPcCheckBoxR = wire[ForeignPcCheckBoxR]
+  lazy val epwTextFieldR = wire[EpwTextFieldR]
 
   lazy val extFormR = wire[ExtFormR]
 

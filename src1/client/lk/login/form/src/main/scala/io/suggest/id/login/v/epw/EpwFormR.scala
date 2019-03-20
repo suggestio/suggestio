@@ -1,17 +1,16 @@
 package io.suggest.id.login.v.epw
 
-import chandu0101.scalajs.react.components.materialui.{MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiFormControl, MuiFormControlClasses, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiPaper, MuiTextField, MuiTextFieldProps}
-import diode.FastEq
+import chandu0101.scalajs.react.components.materialui.{MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiPaper}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m._
-import io.suggest.id.login.m.epw.{MEpwLoginS, MEpwTextFieldS}
+import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactEventFromInput, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 
 import scala.scalajs.js
 
@@ -22,6 +21,7 @@ import scala.scalajs.js
   * Description: Форма входа по имени и паролю.
   */
 class EpwFormR(
+                epwTextFieldR               : EpwTextFieldR,
                 foreignPcCheckBoxR          : ForeignPcCheckBoxR,
                 loginProgressR              : LoginProgressR,
                 commonReactCtxProv          : React.Context[MCommonReactCtx],
@@ -33,62 +33,12 @@ class EpwFormR(
 
 
   case class State(
-                    nameC                   : ReactConnectProxy[MEpwTextFieldS],
-                    passwordC               : ReactConnectProxy[MEpwTextFieldS],
                     loginBtnEnabledSomeC    : ReactConnectProxy[Some[Boolean]],
                     loginReqPendingSomeC    : ReactConnectProxy[Some[Boolean]],
                   )
 
 
-  /** Рендер одного input field'а для имени или пароля. */
-  private def _inputTextField(fieldStateC: ReactConnectProxy[MEpwTextFieldS], msgCode: String, inputName: String,
-                              onChangeCbF: js.Function1[ReactEventFromInput, Unit], isPassword: Boolean): VdomElement = {
-    fieldStateC { fieldStateProxy =>
-      val fieldState = fieldStateProxy.value
-      loginFormCssCtx.consume { loginFormCss =>
-        val mfcCss = new MuiFormControlClasses {
-          override val root = loginFormCss.epwFormControl.htmlClass
-        }
-        commonReactCtxProv.consume { crCtx =>
-          MuiTextField(
-            new MuiTextFieldProps {
-              override val value = js.defined {
-                fieldState.value
-              }
-              override val `type` = {
-                if (isPassword) HtmlConstants.Input.password
-                else HtmlConstants.Input.text
-              }
-              override val name         = inputName
-              override val onChange     = onChangeCbF
-              override val placeholder  = crCtx.messages( msgCode )
-              override val required     = true
-              override val autoFocus    = !isPassword
-              override val fullWidth    = true
-              override val classes      = mfcCss
-            }
-          )
-        }
-      }
-    }
-  }
-
-
   class Backend($: BackendScope[Props, State]) {
-
-    private def _onNameChange(event: ReactEventFromInput): Callback = {
-      val name2 = event.target.value
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, EpwSetName(name2) )
-    }
-    private val _onNameChangeCbF = ReactCommonUtil.cbFun1ToJsCb( _onNameChange )
-
-
-    private def _onPasswordChange(event: ReactEventFromInput): Callback = {
-      val password2 = event.target.value
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, EpwSetPassword(password2) )
-    }
-    private val _onPasswordChangeCbF = ReactCommonUtil.cbFun1ToJsCb( _onPasswordChange )
-
 
     private def _onLoginBtnClick(event: ReactEvent): Callback =
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, EpwDoLogin )
@@ -127,10 +77,28 @@ class EpwFormR(
               }
             )(
               // Поле имени пользователя:
-              _inputTextField( s.nameC, MsgCodes.`Username`, "email", _onNameChangeCbF, isPassword = false ),
+              propsProxy.wrap { props =>
+                epwTextFieldR.PropsVal(
+                  state       = props.name,
+                  hasError    = props.loginReq.isFailed,
+                  mkAction    = EpwSetName,
+                  isPassword  = false,
+                  inputName   = "email",
+                  msgCode     = MsgCodes.`Username`
+                )
+              }( epwTextFieldR.apply )( implicitly, epwTextFieldR.EpwTextFieldPropsValFastEq ),
 
               // Поле ввода пароля:
-              _inputTextField( s.passwordC, MsgCodes.`Password`, HtmlConstants.Input.password, _onPasswordChangeCbF, isPassword = true ),
+              propsProxy.wrap { props =>
+                epwTextFieldR.PropsVal(
+                  state       = props.password,
+                  hasError    = props.loginReq.isFailed,
+                  mkAction    = EpwSetPassword,
+                  isPassword  = true,
+                  inputName   = HtmlConstants.Input.password,
+                  msgCode     = MsgCodes.`Password`
+                )
+              }( epwTextFieldR.apply )( implicitly, epwTextFieldR.EpwTextFieldPropsValFastEq ),
 
               // Галочка "Чужой компьютер".
               propsProxy.wrap(_.isForeignPcSome)( foreignPcCheckBoxR.apply )(implicitly, FastEqUtil.RefValFastEq),
@@ -178,8 +146,6 @@ class EpwFormR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        nameC                 = propsProxy.connect(_.name)( FastEq.AnyRefEq ),
-        passwordC             = propsProxy.connect(_.password)( FastEq.AnyRefEq ),
         loginBtnEnabledSomeC  = propsProxy.connect(_.loginBtnEnabledSome)( FastEqUtil.RefValFastEq ),
         loginReqPendingSomeC  = propsProxy.connect(_.isShowPendingSome)( FastEqUtil.RefValFastEq ),
       )

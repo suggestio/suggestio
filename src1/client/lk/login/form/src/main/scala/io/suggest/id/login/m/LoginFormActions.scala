@@ -1,7 +1,9 @@
 package io.suggest.id.login.m
 
 import io.suggest.ext.svc.MExtService
+import io.suggest.primo.IApply1
 import io.suggest.spa.DAction
+import japgolly.univeq.UnivEq
 
 import scala.util.Try
 
@@ -21,11 +23,26 @@ case class LoginShowHide( isShow: Boolean ) extends ILoginFormAction
 case class SwitсhLoginTab( tab: MLoginTab ) extends ILoginFormAction
 
 
+object IEpwSetValueStatic {
+  @inline implicit def univEq: UnivEq[IEpwSetValueStatic] = UnivEq.derive
+}
+sealed trait IEpwSetValueStatic extends IApply1 {
+  override type ApplyArg_t = String
+  override type T <: ILoginFormAction
+}
+
 /** Ввод имени. */
 case class EpwSetName(name: String) extends ILoginFormAction
+case object EpwSetName extends IEpwSetValueStatic {
+  override type T = EpwSetName
+}
 
 /** Ввод пароля. */
 case class EpwSetPassword(password: String) extends ILoginFormAction
+case object EpwSetPassword extends IEpwSetValueStatic {
+  override type T = EpwSetPassword
+}
+
 
 /** Сигнал от кнопки запуска логина. */
 case object EpwDoLogin extends ILoginFormAction

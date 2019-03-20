@@ -80,15 +80,13 @@ class LoginFormR(
       lazy val epwLogin = p.wrap(_.epw)( epwFormR.apply )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
 
       // Содержимое табов:
-      val tabsContents = <.div(
-        s.currTabC { currTabProxy =>
-          // TODO Запилить react-swipeable-views, как в примерах MuiTabs.
-          currTabProxy.value match {
-            case MLoginTabs.Ext => extLogin
-            case MLoginTabs.Epw => epwLogin
-          }
+      val tabsContents = s.currTabC { currTabProxy =>
+        // TODO Запилить react-swipeable-views, как в примерах MuiTabs.
+        currTabProxy.value match {
+          case MLoginTabs.Ext => extLogin
+          case MLoginTabs.Epw => epwLogin
         }
-      )
+      }
 
       // кнопка таба EmailPw-логина:
       val epwTabBtn =  _tabBtn( MLoginTabs.Epw )

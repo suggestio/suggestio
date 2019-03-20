@@ -310,7 +310,7 @@ POST /sys/debug/dynimg/jdedges/reset     @controllers.SysDebug.resetImgsToOrig
 POST /sys/debug/dynimg/derivatives/del   @controllers.SysDebug.deleteAllDynImgDerivatives
 
 ## ident: логины/логауты
-GET  /id                                @controllers.Ident.mySioStartPage(r: Option[String] ?= None)
+GET  /id0                               @controllers.Ident.mySioStartPage(r: Option[String] ?= None)
 GET  /id/epw/login                      @controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
 POST /id/epw/login                      @controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
 GET  /id/logout                         @controllers.Ident.logout
@@ -335,7 +335,7 @@ POST /id/via/:extService                @controllers.Ident.idViaProviderByPost(e
 GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm
 POST /id/reg/ext/confirm                @controllers.Ident.idpConfirmSubmit
 ## ident v2: react-форма логина.
-GET  /id2                               @controllers.Ident.loginFormPage(r: Option[String] ?= None)
+GET  /id                                @controllers.Ident.loginFormPage(r: Option[String] ?= None)
 POST /id2/epw/login                     @controllers.Ident.epw2Submit(r: Option[String] ?= None)
 
 ## compat

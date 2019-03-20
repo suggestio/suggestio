@@ -60,8 +60,8 @@ class EnterLkRowR(
             (r, txt)
 
           } else {
-            // Ссылка на вход в s.io
-            val r = props.scJsRouter.controllers.Ident.mySioStartPage()
+            // Ссылка на вход в s.io.
+            val r = props.scJsRouter.controllers.Ident.loginFormPage()
             val txt = MsgCodes.`Login.page.title`
             (r, txt)
           }
