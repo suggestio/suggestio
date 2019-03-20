@@ -18,7 +18,8 @@ object MLoginFormOverallS {
     override def eqv(a: MLoginFormOverallS, b: MLoginFormOverallS): Boolean = {
       (a.loginTab ===* b.loginTab) &&
       (a.isVisible ==* b.isVisible) &&
-      (a.formCss ===* b.formCss)
+      (a.formCss ===* b.formCss) &&
+      (a.returnUrl ===* b.returnUrl)
     }
   }
 
@@ -27,6 +28,7 @@ object MLoginFormOverallS {
   val loginTab    = GenLens[MLoginFormOverallS](_.loginTab)
   val isVisible   = GenLens[MLoginFormOverallS](_.isVisible)
   val formCss     = GenLens[MLoginFormOverallS](_.formCss)
+  val returnUrl   = GenLens[MLoginFormOverallS](_.returnUrl)
 
 }
 
@@ -35,6 +37,7 @@ case class MLoginFormOverallS(
                                loginTab         : MLoginTab         = MLoginTabs.default,
                                isVisible        : Boolean           = false,
                                formCss          : LoginFormCss      = LoginFormCss(),
+                               returnUrl        : Option[String]    = None,
                              ) {
 
   /** Для React-duode connection требуется AnyRef. */

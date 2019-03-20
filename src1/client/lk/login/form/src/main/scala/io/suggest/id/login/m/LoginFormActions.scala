@@ -4,6 +4,7 @@ import io.suggest.ext.svc.MExtService
 import io.suggest.primo.IApply1
 import io.suggest.spa.DAction
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 import scala.util.Try
 
@@ -58,3 +59,28 @@ case class EpwSetForeignPc(isForeign: Boolean ) extends ILoginFormAction
 /** Логин через внешний сервис. */
 case class ExtLoginVia(service: MExtService ) extends ILoginFormAction
 case class ExtLoginViaTimeout(tstamp: Long) extends ILoginFormAction
+
+
+/** Экшен, связанный с роутером. */
+sealed trait ILoginFormPages extends ILoginFormAction
+/** Статическая поддержка SPArouter-экшенов. */
+object ILoginFormPages {
+
+  /** Класс-контейнер данных URL текущей формы.
+    *
+    * @param currTab Текущий открытый таб.
+    * @param returnUrl Значение "?r=..." в ссылке.
+    */
+  final case class NormalLogin(
+                                currTab       : MLoginTab       = MLoginTabs.default,
+                                returnUrl     : Option[String]  = None,
+                              )
+    extends ILoginFormPages
+  object NormalLogin {
+    val currTab = GenLens[NormalLogin](_.currTab)
+    val returnUrl = GenLens[NormalLogin](_.returnUrl)
+  }
+
+  @inline implicit def univEq: UnivEq[ILoginFormPages] = UnivEq.derive
+
+}

@@ -1,11 +1,12 @@
 package io.suggest.id.login
 
 import com.softwaremill.macwire._
-import io.suggest.id.login.m.LoginProgressR
+import io.suggest.id.login.m.{ILoginFormPages, LoginProgressR}
 import io.suggest.id.login.v.epw.{EpwFormR, EpwTextFieldR, ForeignPcCheckBoxR}
 import io.suggest.id.login.v.ext.ExtFormR
-import io.suggest.id.login.v.{LoginFormCss, LoginFormR}
+import io.suggest.id.login.v.{LoginFormCss, LoginFormR, LoginFormSpaRouter}
 import japgolly.scalajs.react.React
+import japgolly.scalajs.react.extra.router.RouterCtl
 
 /**
   * Suggest.io
@@ -17,7 +18,8 @@ class LoginFormModule {
 
   import io.suggest.ReactCommonModule._
 
-  lazy val loginFormR = wire[LoginFormR]
+  def loginFormRF =
+    () => wire[LoginFormR]
 
   lazy val epwFormR = wire[EpwFormR]
   lazy val foreignPcCheckBoxR = wire[ForeignPcCheckBoxR]
@@ -26,8 +28,13 @@ class LoginFormModule {
   lazy val extFormR = wire[ExtFormR]
 
   lazy val loginProgressR = wire[LoginProgressR]
-  lazy val circuit = wire[LoginFormCircuit]
 
-  lazy val loginFormRCtx: React.Context[LoginFormCss] = React.createContext( circuit.overallRW.value.formCss )
+  def loginFormCircuitF =
+    (routerCtl: RouterCtl[ILoginFormPages]) => wire[LoginFormCircuit]
+
+  lazy val loginFormSpaRouter = wire[LoginFormSpaRouter]
+
+  lazy val loginFormRCtx: React.Context[LoginFormCss] =
+    React.createContext( loginFormSpaRouter.circuit.overallRW.value.formCss )
 
 }

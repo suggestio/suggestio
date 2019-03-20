@@ -5,8 +5,6 @@ import io.suggest.id.login.m.LoginShowHide
 import io.suggest.init.routed.InitRouter
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
-import io.suggest.ReactCommonModule
-import io.suggest.i18n.MCommonReactCtx
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 
@@ -39,11 +37,9 @@ trait LoginFormInit extends InitRouter {
     // Отрендерить форму в контейнер:
     // TODO Тут очень статический контекст, делающий невозможным переключать язык /id.
     // Когда будет механизм переключения языка, надо законнектить через circuit.connect().
-    val loginForm = ReactCommonModule.commonReactCtx.provide( MCommonReactCtx.default )(
-      modules.circuit
-        .wrap( identity(_) )( modules.loginFormR.apply )
-    )
-    loginForm.renderIntoDOM( contDiv )
+    modules.loginFormSpaRouter
+      .router()
+      .renderIntoDOM( contDiv )
 
     DocumentVm()
       .body
@@ -51,7 +47,7 @@ trait LoginFormInit extends InitRouter {
 
     // Показать диалог через посыл соотв.экшена.
     Future {
-      modules.circuit.dispatch( LoginShowHide(true) )
+      modules.loginFormSpaRouter.circuit.dispatch( LoginShowHide(true) )
     }
   }
 

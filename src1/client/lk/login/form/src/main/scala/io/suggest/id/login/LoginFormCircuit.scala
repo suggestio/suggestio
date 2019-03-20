@@ -2,11 +2,12 @@ package io.suggest.id.login
 
 import diode.react.ReactConnector
 import io.suggest.id.login.c._
-import io.suggest.id.login.m.MLoginRootS
+import io.suggest.id.login.m.{ILoginFormPages, MLoginRootS}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.CircuitUtil._
 import io.suggest.spa.DoNothingActionProcessor
+import japgolly.scalajs.react.extra.router.RouterCtl
 
 /**
   * Suggest.io
@@ -14,7 +15,9 @@ import io.suggest.spa.DoNothingActionProcessor
   * Created: 14.03.19 15:14
   * Description: Цепочка для формы логина.
   */
-class LoginFormCircuit
+class LoginFormCircuit(
+                        routerCtl: RouterCtl[ILoginFormPages]
+                      )
   extends CircuitLog[MLoginRootS]
   with ReactConnector[MLoginRootS]
 {
@@ -29,21 +32,25 @@ class LoginFormCircuit
   private[login] val extRW      = mkLensRootZoomRW(this, MLoginRootS.ext)
   private[login] val epwRW      = mkLensRootZoomRW(this, MLoginRootS.epw)
   private[login] val overallRW  = mkLensRootZoomRW(this, MLoginRootS.overall)
+  private[login] val returnUrlRO = overallRW.zoom(_.returnUrl)
 
 
   val loginApi: ILoginApi = new LoginApiHttp
 
   private val formAh = new FormAh(
-    modelRW = overallRW,
+    modelRW   = overallRW,
+    routerCtl = routerCtl,
   )
 
   private val extAh = new ExtAh(
-    modelRW     = extRW
+    modelRW     = extRW,
+    returnUrlRO = returnUrlRO,
   )
 
   private val epwAh = new EpwAh(
     modelRW     = epwRW,
     loginApi    = loginApi,
+    returnUrlRO = returnUrlRO,
   )
 
   override protected val actionHandler: HandlerFunction = {

@@ -1,7 +1,10 @@
 package io.suggest.id.login.c
 
-import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.id.login.m.{LoginShowHide, MLoginFormOverallS, EpwSetForeignPc, SwitсhLoginTab}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import io.suggest.id.login.m.{ILoginFormPages, LoginShowHide, MLoginFormOverallS, SwitсhLoginTab}
+import io.suggest.spa.DoNothing
+import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.univeq._
 
 /**
@@ -11,12 +14,31 @@ import japgolly.univeq._
   * Description: Контроллер формы логина в целом, т.е. крупными мазками.
   */
 class FormAh[M](
-                 modelRW: ModelRW[M, MLoginFormOverallS]
+                 modelRW      : ModelRW[M, MLoginFormOverallS],
+                 routerCtl    : RouterCtl[ILoginFormPages],
                )
   extends ActionHandler(modelRW)
 {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+
+    case m: ILoginFormPages.NormalLogin =>
+      val v0 = value
+      var updatesAcc = List.empty[MLoginFormOverallS => MLoginFormOverallS]
+
+      if (v0.loginTab !=* m.currTab)
+        updatesAcc ::= MLoginFormOverallS.loginTab.set( m.currTab )
+
+      if (v0.returnUrl !=* m.returnUrl)
+        updatesAcc ::= MLoginFormOverallS.returnUrl.set( m.returnUrl )
+
+      updatesAcc
+        .reduceOption(_ andThen _)
+        .fold(noChange) { updateF =>
+          val v2 = updateF( v0 )
+          updated(v2)
+        }
+
 
     case m: LoginShowHide =>
       val v0 = value
@@ -33,8 +55,14 @@ class FormAh[M](
       if (v0.loginTab ==* m.tab) {
         noChange
       } else {
+        val updateRouterFx = Effect.action {
+          routerCtl
+            .set( ILoginFormPages.NormalLogin(m.tab, v0.returnUrl) )
+            .runNow()
+          DoNothing
+        }
         val v2 = MLoginFormOverallS.loginTab.set( m.tab )(v0)
-        updated(v2)
+        updated(v2, updateRouterFx)
       }
 
   }

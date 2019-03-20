@@ -40,6 +40,7 @@ object EpwAh {
 class EpwAh[M](
                 loginApi        : ILoginApi,
                 modelRW         : ModelRW[M, MEpwLoginS],
+                returnUrlRO    : ModelRO[Option[String]],
               )
   extends ActionHandler( modelRW )
   with Log
@@ -109,13 +110,14 @@ class EpwAh[M](
 
         val reqFx = Effect {
           loginApi
-            .epw2Submit {
+            .epw2Submit(
               MEpwLoginReq(
                 name          = v0.name.value,
                 password      = v0.password.value,
                 isForeignPc   = v0.isForeignPc
-              )
-            }
+              ),
+              r = returnUrlRO.value
+            )
             .transform { tryRes =>
               Success( EpwLoginResp(tstamp, tryRes) )
             }

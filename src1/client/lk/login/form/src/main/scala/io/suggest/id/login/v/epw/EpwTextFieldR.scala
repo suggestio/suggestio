@@ -15,7 +15,6 @@ import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEventFromInpu
 import japgolly.univeq._
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -31,7 +30,7 @@ class EpwTextFieldR(
 
   case class PropsVal(
                        state        : MEpwTextFieldS,
-                       hasError      : Boolean,
+                       hasError     : Boolean,
                        mkAction     : IEpwSetValueStatic,
                        isPassword   : Boolean,
                        inputName    : String,
@@ -39,12 +38,12 @@ class EpwTextFieldR(
                      )
   implicit object EpwTextFieldPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.state ===* b.state) &&
-      (a.hasError ==* b.hasError) &&
-      (a.mkAction ===* b.mkAction) &&
+      (a.state     ===* b.state) &&
+      (a.hasError   ==* b.hasError) &&
+      (a.mkAction  ===* b.mkAction) &&
       (a.isPassword ==* b.isPassword) &&
       (a.inputName ===* b.inputName) &&
-      (a.msgCode ===* b.msgCode)
+      (a.msgCode   ===* b.msgCode)
     }
   }
 
@@ -66,7 +65,7 @@ class EpwTextFieldR(
     }
     private val _onFieldChangeCbF = ReactCommonUtil.cbFun1ToJsCb( _onFieldChange )
 
-    def render(propsProxy: Props, s: State): VdomElement = {
+    def render(s: State): VdomElement = {
       loginFormCssCtx.consume { loginFormCss =>
         val mfcCss = new MuiFormControlClasses {
           override val root = loginFormCss.epwFormControl.htmlClass
