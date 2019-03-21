@@ -1,5 +1,6 @@
 package io.suggest.bill.cart.c
 
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.bill.cart.MCartConf
 import io.suggest.bill.cart.m.{GetOrderContent, LoadCurrentOrder}

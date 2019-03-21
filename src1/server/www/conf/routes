@@ -335,7 +335,7 @@ POST /id/via/:extService                @controllers.Ident.idViaProviderByPost(e
 GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm
 POST /id/reg/ext/confirm                @controllers.Ident.idpConfirmSubmit
 ## ident v2: react-форма логина.
-GET  /id                                @controllers.Ident.loginFormPage(r: Option[String] ?= None)
+GET  /id                                @controllers.Ident.loginFormPage(e: io.suggest.id.login.ILoginFormPages ?= io.suggest.id.login.ILoginFormPages.Login.default)
 POST /id2/epw/login                     @controllers.Ident.epw2Submit(r: Option[String] ?= None)
 
 ## compat

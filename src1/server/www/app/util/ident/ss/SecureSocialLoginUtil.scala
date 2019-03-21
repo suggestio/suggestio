@@ -129,11 +129,6 @@ class SsRoutesService @Inject() (ctxUtil: ContextUtil) extends RoutesService {
     absoluteUrl( relUrl )
   }
 
-  override def loginPageUrl(implicit req: RequestHeader): String = {
-    val call = routes.Ident.emailPwLoginForm()
-    absoluteUrl( call )
-  }
-
 }
 
 

@@ -5,6 +5,7 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.CssR
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.id.login.{MLoginTab, MLoginTabs}
 import io.suggest.id.login.m._
 import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.m.ext.MExtLoginFormS

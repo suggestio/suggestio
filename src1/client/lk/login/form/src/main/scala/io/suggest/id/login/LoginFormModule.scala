@@ -1,7 +1,7 @@
 package io.suggest.id.login
 
 import com.softwaremill.macwire._
-import io.suggest.id.login.m.{ILoginFormPages, LoginProgressR}
+import io.suggest.id.login.m.LoginProgressR
 import io.suggest.id.login.v.epw.{EpwFormR, EpwTextFieldR, ForeignPcCheckBoxR}
 import io.suggest.id.login.v.ext.ExtFormR
 import io.suggest.id.login.v.{LoginFormCss, LoginFormR, LoginFormSpaRouter}

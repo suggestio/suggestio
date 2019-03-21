@@ -1,7 +1,6 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-
 import models.req.MReq
 import play.api.mvc._
 
@@ -10,6 +9,7 @@ import controllers.routes
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.id.IdentConst
+import io.suggest.id.login.{ILoginFormPages, MLoginTab, MLoginTabs}
 import io.suggest.req.ReqUtil
 import play.api.http.{HeaderNames, MimeTypes}
 
@@ -34,8 +34,16 @@ final class IsAuth @Inject() (
     * @param request
     * @return ответ с редиректом или ошибкой.
     */
-  def onUnauth(request: RequestHeader): Future[Result] = {
+  def onUnauth(request: RequestHeader): Future[Result] =
+    onUnauth(request, MLoginTabs.default)
+  def onUnauth(request: RequestHeader, loginTab: MLoginTab): Future[Result] = {
     val rOpt = Some(request.uri)
+    val rdrCall = routes.Ident.loginFormPage(
+      ILoginFormPages.Login(
+        currTab   = loginTab,
+        returnUrl = rOpt
+      )
+    )
 
     // Ожидает ли клиент в ответе увидеть HTML-форму? Нужно для защиты от совсем бессмыленного отвечания на запрос.
     val acceptOpt = request.headers.get( HeaderNames.ACCEPT )
@@ -43,13 +51,12 @@ final class IsAuth @Inject() (
       v.contains("*/*") || v.contains( MimeTypes.HTML )
     }
 
-    val url = routes.Ident.emailPwLoginForm(r = rOpt)
     if (clientAcceptsHtmlForm) {
-      Results.Redirect( url )
+      Results.Redirect( rdrCall )
     } else {
       LOGGER.trace(s"onUnauth($request): 401, because Accept: $acceptOpt")
       Results.Unauthorized
-        .withHeaders( IdentConst.HTTP_HDR_SUDDEN_AUTH_FORM_RESP -> url.url )
+        .withHeaders( IdentConst.HTTP_HDR_SUDDEN_AUTH_FORM_RESP -> rdrCall.url )
     }
   }
 

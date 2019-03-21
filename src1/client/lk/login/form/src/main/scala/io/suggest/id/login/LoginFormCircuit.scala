@@ -2,7 +2,7 @@ package io.suggest.id.login
 
 import diode.react.ReactConnector
 import io.suggest.id.login.c._
-import io.suggest.id.login.m.{ILoginFormPages, MLoginRootS}
+import io.suggest.id.login.m.MLoginRootS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.CircuitUtil._

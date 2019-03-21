@@ -25,6 +25,4 @@ trait RoutesService {
 
   def authenticationUrl(provider: String, redirectTo: Option[String] = None)(implicit req: RequestHeader): String
 
-  def loginPageUrl(implicit req: RequestHeader): String
-
 }

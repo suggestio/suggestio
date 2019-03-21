@@ -746,7 +746,7 @@ class PayYaka @Inject() (
   def failUnknown = maybeAuth().async { implicit request =>
     LOGGER.warn(s"failUnknown(): Unknown error, user[${request.user.personIdOpt}] ip=${request.remoteClientAddress} qs: ${request.rawQueryString}")
     val callFut = request.user.personIdOpt.fold [Future[Call]] {
-      Future.successful( controllers.routes.Ident.emailPwLoginForm() )
+      Future.successful( controllers.routes.Ident.loginFormPage() )
     } { personId =>
       // hold-ордер не ищем, т.к. повисший ордер крайне маловероятен в данной ситуации.
       identUtil.redirectCallUserSomewhere(personId)

@@ -2,7 +2,8 @@ package io.suggest.spa
 
 import diode._
 import japgolly.univeq.UnivEq
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+
+import scala.concurrent.ExecutionContext
 
 /**
   * Suggest.io
@@ -30,7 +31,7 @@ object DAction {
     /** Ускоренное заворачивание в Effect.action() с отбрасыванием ленивости исполнения.
       * Когда нет сайд-эффектов, нет тяжелых действия или сложных манипуляций, этого достаточно.
       */
-    def toEffectPure: Effect =
+    def toEffectPure(implicit ec: ExecutionContext): Effect =
       Effect.action(act)
 
   }

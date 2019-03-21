@@ -1,7 +1,7 @@
 package util.acl
 
+import io.suggest.id.login.MLoginTabs
 import javax.inject.{Inject, Singleton}
-
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{IReqHdr, ISioUser, MReq}
@@ -32,7 +32,7 @@ final class IsSu @Inject() (
 
   def supOnUnauthFut(req: IReqHdr): Future[Result] = {
     logBlockedAccess(req)
-    isAuth.onUnauth(req)
+    isAuth.onUnauth(req, MLoginTabs.Epw)
   }
 
 

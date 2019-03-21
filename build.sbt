@@ -628,6 +628,7 @@ lazy val sio2 = {
       reactGridLayoutSjs, reactStoneCutterSjs, gridSjs, reactSidebar, reactScroll,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
       lkAdEditorSjs, lkAdnEditSjs,
+      lkAdsSjs, lkTagsEditSjs, lkAdnMapSjs, lkAdvExtSjs, lkNodesFormSjs, lkCommonSjs,
       streamsUtil, brotliUtil,
       asmCryptoJsSjs, asmCryptoSioSjs,
       sysMdrSjs, loginFormSjs,

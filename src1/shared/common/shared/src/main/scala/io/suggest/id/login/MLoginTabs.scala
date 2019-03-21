@@ -1,4 +1,4 @@
-package io.suggest.id.login.m
+package io.suggest.id.login
 
 import enumeratum.values.{IntEnum, IntEnumEntry}
 import io.suggest.i18n.MsgCodes

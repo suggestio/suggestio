@@ -5,7 +5,7 @@ import controllers.ident._
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.MsgCodes
-import io.suggest.id.MEpwLoginReq
+import io.suggest.id.login.{ILoginFormPages, MEpwLoginReq}
 import io.suggest.init.routed.{MJsInitTarget, MJsInitTargets}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNodes
@@ -127,10 +127,10 @@ class Ident @Inject() (
 
 
   /** Страница с отдельной формой логина по имени-паролю.
-    *
+    * @param lfp Парсится на стороне сервера.
     * @return Страница с логином.
     */
-  def loginFormPage(r: Option[String]) = csrf.AddToken {
+  def loginFormPage(lfp: ILoginFormPages) = csrf.AddToken {
     isAnon().async { implicit request =>
       implicit val ctxData = CtxData(
         jsInitTargets = MJsInitTargets.LoginForm :: Nil
@@ -201,6 +201,7 @@ class Ident @Inject() (
                 // Выставить язык, сохраненный ранее в MPerson
                 val langOpt = getLangFrom( Some(mperson) )
                 for (rdrPath <- rdrPathFut) yield {
+                  LOGGER.trace(s"$logPrefix rdrPath=>$rdrPath r=${r.orNull} lang=${langOpt.orNull}")
                   var rdr2 = Ok(rdrPath)
                     .addingToSession( addToSession : _* )
                   for (lang <- langOpt)

@@ -2,7 +2,8 @@ package io.suggest.id.login.c
 
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
-import io.suggest.id.login.m.{ILoginFormPages, LoginShowHide, MLoginFormOverallS, SwitсhLoginTab}
+import io.suggest.id.login.ILoginFormPages
+import io.suggest.id.login.m.{LoginShowHide, MLoginFormOverallS, SwitсhLoginTab}
 import io.suggest.spa.DoNothing
 import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.univeq._
@@ -22,7 +23,7 @@ class FormAh[M](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
-    case m: ILoginFormPages.NormalLogin =>
+    case m: ILoginFormPages.Login =>
       val v0 = value
       var updatesAcc = List.empty[MLoginFormOverallS => MLoginFormOverallS]
 
@@ -57,7 +58,7 @@ class FormAh[M](
       } else {
         val updateRouterFx = Effect.action {
           routerCtl
-            .set( ILoginFormPages.NormalLogin(m.tab, v0.returnUrl) )
+            .set( ILoginFormPages.Login(m.tab, v0.returnUrl) )
             .runNow()
           DoNothing
         }

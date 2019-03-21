@@ -2,13 +2,13 @@ package io.suggest.id.login.v
 
 import io.suggest.ReactCommonModule
 import io.suggest.i18n.MCommonReactCtx
-import io.suggest.id.login.LoginFormCircuit
-import io.suggest.id.login.m.{ILoginFormPages, MLoginRootS, MLoginTabs}
-import io.suggest.routes.routes
+import io.suggest.id.login.{ILoginFormPages, LoginFormCircuit, MLoginTabs}
+import io.suggest.id.login.m.MLoginRootS
 import japgolly.univeq._
 import japgolly.scalajs.react.extra.router.{BaseUrl, Redirect, Router, RouterConfigDsl, RouterCtl}
 import japgolly.scalajs.react.vdom.html_<^._
 
+import scala.scalajs.js.URIUtils
 import scala.util.Try
 
 /**
@@ -26,24 +26,24 @@ class LoginFormSpaRouter(
 
   /** Сборка инстансов SPA-роутера и контроллер роутера. */
   val routerAndCtl: (Router[ILoginFormPages], RouterCtl[ILoginFormPages]) = {
+    val qMark = "?"
+
     val routerCfg = RouterConfigDsl[ILoginFormPages].buildConfig { dsl =>
       import dsl._
+      import ILoginFormPages.Login.Fields._
 
-      val currTabK = "t"
-      val returnUrlK = "r"
-
-      val loginFormRoute = ("?" ~ string(".+"))
+      val loginFormRoute = (qMark ~ string(".+"))
         .pmap { qsStr =>
           val eqSign = '='
-          var updatesAcc = List.empty[ILoginFormPages.NormalLogin => ILoginFormPages.NormalLogin]
+          var updatesAcc = List.empty[ILoginFormPages.Login => ILoginFormPages.Login]
           for {
             qsKv <- qsStr.split('&')
             if qsKv.nonEmpty
             (k, v) <- {
               val pos = qsKv.indexOf(eqSign)
               if (pos > 0) {
-                val k1 = qsKv.substring(0, pos)
-                val v1 = qsKv.substring(pos + 1)
+                val k1 = URIUtils.decodeURIComponent( qsKv.substring(0, pos) )
+                val v1 = URIUtils.decodeURIComponent( qsKv.substring(pos + 1) )
                 (k1, v1) :: Nil
               } else {
                 Nil
@@ -51,45 +51,47 @@ class LoginFormSpaRouter(
             }
             if k.nonEmpty && v.nonEmpty
           } {
-            if (k ==* currTabK) {
+            // Убрать первый префикс названия параметра.
+            val k2 = k.replaceFirst("^[^.]+\\.", "")
+            if (k2 ==* CURR_TAB_FN) {
               for {
                 tabId <- Try(v.toInt).toOption
                 tab   <- MLoginTabs.withValueOpt( tabId )
               } {
-                updatesAcc ::= ILoginFormPages.NormalLogin.currTab.set( tab )
+                updatesAcc ::= ILoginFormPages.Login.currTab.set( tab )
               }
-            } else if (k ==* returnUrlK) {
-              updatesAcc ::= ILoginFormPages.NormalLogin.returnUrl.set( Some(v) )
+            } else if (k2 ==* RETURN_URL_FN) {
+              updatesAcc ::= ILoginFormPages.Login.returnUrl.set( Some(v) )
             }
           }
 
           for {
             updateF <- updatesAcc.reduceOption(_ andThen _)
           } yield {
-            updateF( ILoginFormPages.NormalLogin() )
+            updateF( ILoginFormPages.Login.default )
           }
         } { nl =>
           val eqSign = "="
-          var url = currTabK + eqSign + nl.currTab.value
+          var url = CURR_TAB_FN + eqSign + nl.currTab.value
           for (returnUrl <- nl.returnUrl)
-            url = url + "&" + returnUrlK + eqSign + returnUrl
+            url = url + "&" + RETURN_URL_FN + eqSign + returnUrl
           url
         }
         .option
         .withDefault {
-          ILoginFormPages.NormalLogin()
+          ILoginFormPages.Login.default
         }
 
       val loginFormRule = dynamicRouteCT( loginFormRoute ) ~> dynRender( _renderNormalLogin )
 
       loginFormRule
-        .notFound { r =>
-          redirectToPage( ILoginFormPages.NormalLogin() )( Redirect.Replace )
+        .notFound { _ =>
+          redirectToPage( ILoginFormPages.Login.default )( Redirect.Replace )
         }
     }
 
     Router.componentAndCtl[ILoginFormPages](
-      baseUrl = BaseUrl.until( "?" ),
+      baseUrl = BaseUrl.until( stopAt = qMark ),
       cfg     = routerCfg
     )
   }
@@ -109,7 +111,7 @@ class LoginFormSpaRouter(
     )
   }
 
-  private def _renderNormalLogin(nl: ILoginFormPages.NormalLogin): VdomElement = {
+  private def _renderNormalLogin(nl: ILoginFormPages.Login): VdomElement = {
     // Уведомить о смене вкладки.
     circuit.dispatch( nl )
 

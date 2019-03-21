@@ -1,6 +1,7 @@
 package io.suggest.id.login.m
 
 import diode.FastEq
+import io.suggest.id.login.{MLoginTab, MLoginTabs}
 import io.suggest.id.login.v.LoginFormCss
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._

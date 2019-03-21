@@ -153,7 +153,8 @@ routesImport ++= Seq(
   "io.suggest.sc.sc3.MScQsJvm._",
   "io.suggest.model.play.qsb.QsbSeq",
   "io.suggest.sys.mdr.MdrSearchArgsJvm._",
-  "models.mext.MExtServicesJvm._"
+  "models.mext.MExtServicesJvm._",
+  "io.suggest.id.login.LoginFormPagesJvm._"
 )
 
 deduplicators += { s: Seq[File] => s.headOption }

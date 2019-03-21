@@ -1,7 +1,7 @@
 package io.suggest.id.login.c
 
 import diode._
-import io.suggest.id.MEpwLoginReq
+import io.suggest.id.login.MEpwLoginReq
 import io.suggest.id.login.m._
 import io.suggest.id.login.m.epw.{MEpwLoginS, MEpwTextFieldS}
 import io.suggest.msg.WarnMsgs
