@@ -41,6 +41,7 @@ trait ExternalLogin
   with IMaybeAuth
   with EsModelDi
   with IIdentUtil
+  with IIgnoreAuth
 {
 
   val mPersonIdentModel: MPersonIdentModel
@@ -264,6 +265,15 @@ trait ExternalLogin
         }
       )
     }
+  }
+
+
+  /** Поддержка push-уведомления со стороны внешнего сервиса. */
+  def extServicePushPost(extService: MExtService) = _extServicePushGet(extService)
+  def extServicePushGet(extService: MExtService) = _extServicePushGet(extService)
+  private def _extServicePushGet(extService: MExtService) = ignoreAuth() { implicit request =>
+    LOGGER.error(s"extServicePush(${extService}): Not implemented.\n HTTP ${request.method} ${request.host} ${request.uri}\n ${request.body}")
+    NotImplemented("Not implemented yet, sorry!")
   }
 
 }

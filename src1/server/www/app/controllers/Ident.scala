@@ -54,6 +54,7 @@ class Ident @Inject() (
                         override val canRecoverPw         : CanRecoverPw,
                         override val isAnon               : IsAnon,
                         override val isAuth               : IsAuth,
+                        override val ignoreAuth           : IgnoreAuth,
                         override val mCommonDi            : ICommonDi
                       )
   extends SioControllerImpl

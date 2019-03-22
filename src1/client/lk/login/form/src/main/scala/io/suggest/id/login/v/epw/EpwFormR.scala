@@ -7,6 +7,7 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m._
 import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.v.LoginFormCss
+import io.suggest.id.login.v.stuff.CheckBoxR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.vdom.html_<^._
@@ -22,7 +23,7 @@ import scala.scalajs.js
   */
 class EpwFormR(
                 epwTextFieldR               : EpwTextFieldR,
-                foreignPcCheckBoxR          : ForeignPcCheckBoxR,
+                checkBoxR                   : CheckBoxR,
                 loginProgressR              : LoginProgressR,
                 commonReactCtxProv          : React.Context[MCommonReactCtx],
                 loginFormCssCtx             : React.Context[LoginFormCss],
@@ -101,7 +102,13 @@ class EpwFormR(
               }( epwTextFieldR.apply )( implicitly, epwTextFieldR.EpwTextFieldPropsValFastEq ),
 
               // Галочка "Чужой компьютер".
-              propsProxy.wrap(_.isForeignPcSome)( foreignPcCheckBoxR.apply )(implicitly, FastEqUtil.RefValFastEq),
+              propsProxy.wrap { p =>
+                checkBoxR.PropsVal(
+                  checked   = p.isForeignPc,
+                  msgCode   = MsgCodes.`Not.my.pc`,
+                  onChange  = EpwSetForeignPc,
+                )
+              }( checkBoxR.apply )(implicitly, checkBoxR.CheckBoxRFastEq),
 
               // Линейка ожидания:
               s.loginReqPendingSomeC { loginProgressR.component.apply },

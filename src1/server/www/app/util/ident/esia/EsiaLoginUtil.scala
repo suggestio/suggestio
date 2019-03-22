@@ -83,11 +83,15 @@ final class EsiaLoginUtil @Inject()(
         r
       }
 
-      clientId <- {
+      clientId = {
         val k = "client.id"
-        val r = esiaConf.getOptional[String]( k )
-        if (r.isEmpty) LOGGER.warn(s"ESIA $ROOT_KEY.$k missing in config - no client ID.")
-        r
+        esiaConf
+          .getOptional[String]( k )
+          .getOrElse {
+            val r2 = "SUGGESTIO"
+            LOGGER.trace(s"ESIA $ROOT_KEY.$k missing in config - will use $r2")
+            r2
+          }
       }
 
       modeConfigKey = "mode"
@@ -141,14 +145,15 @@ final class EsiaLoginUtil @Inject()(
     */
   override def authenticateFromRequest()(implicit req: MLoginViaReq[AnyContent]): Future[AuthenticationResult] = {
     // Если пришёл пустой GET, то надо отредиректить юзера в ЕСИА, собрав подписанную ссылку
-    if (req.rawQueryString.isEmpty) {
-      // Сюда перебросило юзера, чтобы отредиректить его в ЕСИА
-      val res = rdrUserToEsia()
-      Future.successful( res )
-
-    } else {
-      authFromReqWithData()
-    }
+    implicitly[QueryStringBindable[MEsiaAuthReturnQs]]
+      .bind("", req.target.queryMap)
+      .fold [Future[AuthenticationResult]] {
+        // Сюда перебросило юзера, чтобы отредиректить его в ЕСИА
+        val res = rdrUserToEsia()
+        Future.successful( res )
+      } { bindedE =>
+        authFromReqWithData( bindedE )
+      }
   }
 
   def redirectUrl: String =
@@ -157,12 +162,14 @@ final class EsiaLoginUtil @Inject()(
   /** Высылка юзера в направлении ЕСИА. */
   def rdrUserToEsia()(implicit req: MLoginViaReq[AnyContent]): AuthenticationResult.NavigationFlow = {
     val conf = CONFIG.get
+
     val qsArgs4sign = MEsiaSignContent(
       clientId  = conf.clientId,
       timestamp = _now,
       state     = UUID.randomUUID(),
       scope     = Scopes.OPENID,
     )
+    LOGGER.trace(s"rdrUserToEsia(): Will rdr ${req.remoteClientAddress} to ESIA, state=${qsArgs4sign.state}")
 
     val qsArgs = MEsiaStep1Qs(
       signContent  = qsArgs4sign,
@@ -190,30 +197,64 @@ final class EsiaLoginUtil @Inject()(
 
   /** Возврат юзера из ЕСИА.
     * Надо узнать, чего юзер нам принёс. */
-  def authFromReqWithData()(implicit req: MLoginViaReq[AnyContent]): Future[AuthenticationResult] = {
+  def authFromReqWithData(returnQsE: Either[String, MEsiaAuthReturnQs])(implicit req: MLoginViaReq[AnyContent]): Future[AuthenticationResult] = {
     lazy val logPrefix = s"authFromReqWithData()#${req.remoteClientAddress}#${System.currentTimeMillis()}:"
 
     // Внучную попытаться забиндить query-string
     val bindedOpt = for {
+
+      returnQs <- {
+        val r = returnQsE.toOption
+        r.fold {
+          LOGGER.warn(s"$logPrefix return-=qs binding error: $r\n original req = ${req.method} ${req.uri}")
+        } { returnQs =>
+          LOGGER.trace(s"$logPrefix Successfully binded return-qs: $returnQs")
+        }
+        r
+      }
+
       // Убедится, что тут у нас юзер ожидаемый, а не подставной, и он осознанно проходит процедуру логина:
-      stateStr0 <- req.session.get( MSessionKeys.ExtLoginData.value )
-
-      // Забиндить qs:
-      bindedE   <- implicitly[QueryStringBindable[MEsiaAuthReturnQs]].bind("", req.target.queryMap)
-      binded    <- bindedE.toOption
-
+      stateInSessionStr <- {
+        val sk = MSessionKeys.ExtLoginData
+        val r = req.session.get( sk.value )
+        r.fold {
+          LOGGER.warn(s"$logPrefix Missing session key $sk")
+        } { sv =>
+          LOGGER.trace(s"$logPrefix Found session data: $sk = $sv")
+        }
+        r
+      }
       // Методичка требует сверять исходный state и полученный:
-      state0    = UUID.fromString( stateStr0 )
-      stateRet  <- binded.state
-      if state0 ==* stateRet
+      stateInSession <- {
+        val r = Try( UUID.fromString( stateInSessionStr ) )
+        for (ex <- r.failed)
+          LOGGER.error(s"$logPrefix Failed to bind '$stateInSessionStr' as UUID", ex)
+        r.toOption
+      }
+
+      stateInQs  <- {
+        val r = returnQs.state
+        if (r.isEmpty)
+          LOGGER.warn(s"$logPrefix Binded return-qs missing state. Expected = $stateInSession")
+        r
+      }
+
+      if {
+        val r = stateInSession ==* stateInQs
+        if (!r)
+          LOGGER.warn(s"$logPrefix State value mismatch session[$stateInSession] != qs[$stateInQs]")
+        r
+      }
 
     } yield {
       // Что-то забиндилось, надо разобраться что именно:
-      binded
+      returnQs
         .error
         .fold[Future[AuthenticationResult]] {
           // Нет ошибок - разобраться с авторизационным кодом.
-          val authCode = binded.code.get
+          if (returnQs.code.isEmpty)
+            LOGGER.error(s"$logPrefix Missing bind auth-code in qs: ${req.method} ${req.uri}.")
+          val authCode = returnQs.code.get
           handleReturnedAuthCode( authCode )
 
         } { errorCode =>

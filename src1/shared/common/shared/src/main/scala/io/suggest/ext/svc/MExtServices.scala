@@ -52,8 +52,8 @@ object MExtServices extends StringEnum[MExtService] {
     override def nameI18N = MsgCodes.`GovServices.ESIA`
     /** Никакого размещения рекламы на гос.услугах нет. */
     override def hasAdvExt = false
-    /** С 2019 года основной способ входа на сайт.*/
-    override def hasLogin = false     // TODO запилить и выставить true
+    /** С марта-апреля 2019 года -- основной способ входа на сайт для обычных юзеров. */
+    override def hasLogin = true
   }
 
 

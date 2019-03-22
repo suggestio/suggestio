@@ -40,7 +40,7 @@ object EpwAh {
 class EpwAh[M](
                 loginApi        : ILoginApi,
                 modelRW         : ModelRW[M, MEpwLoginS],
-                returnUrlRO    : ModelRO[Option[String]],
+                returnUrlRO     : ModelRO[Option[String]],
               )
   extends ActionHandler( modelRW )
   with Log

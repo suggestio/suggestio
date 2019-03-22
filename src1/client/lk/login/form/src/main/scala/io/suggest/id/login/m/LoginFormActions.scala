@@ -52,8 +52,20 @@ case object EpwDoLogin extends ILoginFormAction
 case class EpwLoginResp( timestampMs: Long, tryRes: Try[String] ) extends ILoginFormAction
 
 
+/** Трейт, описывающий компаньоны для экшенов, которые управляют состоянием чек-бокса. */
+sealed trait ICheckBoxActionStatic extends IApply1 {
+  override type ApplyArg_t = Boolean
+  override type T <: ILoginFormAction
+}
+object ICheckBoxActionStatic {
+  @inline implicit def univEq: UnivEq[ICheckBoxActionStatic] = UnivEq.derive
+}
+
 /** Выставление галочки "Чужой компьютер?" */
 case class EpwSetForeignPc(isForeign: Boolean ) extends ILoginFormAction
+case object EpwSetForeignPc extends ICheckBoxActionStatic {
+  override type T = EpwSetForeignPc
+}
 
 
 /** Логин через внешний сервис. */

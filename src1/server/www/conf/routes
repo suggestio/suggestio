@@ -309,6 +309,12 @@ POST /sys/debug/adv/rcvrs/reset          @controllers.SysDebug.resetAllRcvrs
 POST /sys/debug/dynimg/jdedges/reset     @controllers.SysDebug.resetImgsToOrig
 POST /sys/debug/dynimg/derivatives/del   @controllers.SysDebug.deleteAllDynImgDerivatives
 
+## ident v2: react-форма логина.
+GET  /id                                @controllers.Ident.loginFormPage(e: io.suggest.id.login.ILoginFormPages ?= io.suggest.id.login.ILoginFormPages.Login.default)
+POST /id2/epw/login                     @controllers.Ident.epw2Submit(r: Option[String] ?= None)
+GET  /id/push/:extService               @controllers.Ident.extServicePushGet(extService: io.suggest.ext.svc.MExtService)
+POST /id/push/:extService               @controllers.Ident.extServicePushPost(extService: io.suggest.ext.svc.MExtService)
+## Далее - нужно подчистить, удалив старую форму логина первого поколения.
 ## ident: логины/логауты
 GET  /id0                               @controllers.Ident.mySioStartPage(r: Option[String] ?= None)
 GET  /id/epw/login                      @controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
@@ -334,9 +340,6 @@ GET  /id/via/:extService                @controllers.Ident.idViaProvider(extServ
 POST /id/via/:extService                @controllers.Ident.idViaProviderByPost(extService: io.suggest.ext.svc.MExtService, r: Option[String] ?= None)
 GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm
 POST /id/reg/ext/confirm                @controllers.Ident.idpConfirmSubmit
-## ident v2: react-форма логина.
-GET  /id                                @controllers.Ident.loginFormPage(e: io.suggest.id.login.ILoginFormPages ?= io.suggest.id.login.ILoginFormPages.Login.default)
-POST /id2/epw/login                     @controllers.Ident.epw2Submit(r: Option[String] ?= None)
 
 ## compat
 GET  /app/session/keepalive             @controllers.Static.keepAliveSession
