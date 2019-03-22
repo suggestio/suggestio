@@ -18,16 +18,16 @@ object MRegFinishS {
 
   implicit object MRegFinishSFastEq extends FastEq[MRegFinishS] {
     override def eqv(a: MRegFinishS, b: MRegFinishS): Boolean = {
-      (a.tosAccepted ==* b.tosAccepted) &&
-      (a.pdnAccepted ==* b.pdnAccepted) &&
+      (a.tos ===* b.tos) &&
+      (a.pdn ===* b.pdn) &&
       (a.acceptReq ===* b.acceptReq)
     }
   }
 
-  implicit def univEq: UnivEq[MRegFinishS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MRegFinishS] = UnivEq.derive
 
-  val tosAccepted = GenLens[MRegFinishS]( _.tosAccepted )
-  val pdnAccepted = GenLens[MRegFinishS]( _.pdnAccepted )
+  val tos         = GenLens[MRegFinishS]( _.tos )
+  val pdn         = GenLens[MRegFinishS]( _.pdn )
   val acceptReq   = GenLens[MRegFinishS]( _.acceptReq )
 
 }
@@ -35,12 +35,12 @@ object MRegFinishS {
 
 /** Контейнер данных состояния окончания регистрации.
   *
-  * @param tosAccepted Принял ли юзер условия соглашения сервиса?
-  * @param pdnAccepted Принял ли юзер условия персональных данных?
+  * @param tos Принял ли юзер условия соглашения сервиса?
+  * @param pdn Принял ли юзер условия персональных данных?
   * @param acceptReq Реквест к серверу с подтверждением регистации.
   */
 case class MRegFinishS(
-                        tosAccepted         : Boolean         = false,
-                        pdnAccepted         : Boolean         = false,
-                        acceptReq           : Pot[String]     = Pot.empty,
+                        tos                 : MAcceptCheckBoxS          = MAcceptCheckBoxS.default,
+                        pdn                 : MAcceptCheckBoxS          = MAcceptCheckBoxS.default,
+                        acceptReq           : Pot[String]               = Pot.empty,
                       )

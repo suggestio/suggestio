@@ -18,9 +18,11 @@
   @* JS-роутер. *@
   @jsTpl2HtmlTpl( withScriptTag = true )(
     jsRevRouterTpl( csrfAll = true, cdn = true )(
-      routes.javascript.Ident.epw2Submit,
+      routes.javascript.Ident.epw2LoginSubmit,
       routes.javascript.Ident.idViaProvider,
       routes.javascript.Ident.loginFormPage,
+      routes.javascript.Img.getCaptchaImg,
+      routes.javascript.Ident.epw2RegSubmit,
     )
   )
 

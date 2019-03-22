@@ -1,7 +1,7 @@
 package controllers.cstatic
 
 import akka.stream.scaladsl.Source
-import controllers.SioController
+import controllers.ISioControllerApi
 import io.suggest.util.logs.MacroLogsImpl
 import play.twirl.api.Xml
 import util.acl.IIgnoreAuth
@@ -14,8 +14,9 @@ import views.xml.static.sitemap._
  * Created: 17.12.15 11:45
  * Description: Трейт для контроллера для поддержки экшена с раздачей sitemap'ов.
  */
-trait SiteMapsXml extends SioController with IIgnoreAuth with MacroLogsImpl {
+trait SiteMapsXml extends ISioControllerApi with IIgnoreAuth with MacroLogsImpl {
 
+  import sioControllerApi._
   import mCommonDi._
 
 

@@ -1,7 +1,7 @@
 package controllers.cstatic
 
 import util.cdn.ICorsUtilDi
-import controllers.SioController
+import controllers.ISioControllerApi
 import play.api.http.HeaderNames
 
 /**
@@ -11,10 +11,11 @@ import play.api.http.HeaderNames
  * Description: Трейт для контроллера для поддержки экшена, отвечающего на Cors Preflight.
  */
 trait CorsPreflight
-  extends SioController
+  extends ISioControllerApi
   with ICorsUtilDi
 {
 
+  import sioControllerApi._
   import mCommonDi.errorHandler
 
   /**

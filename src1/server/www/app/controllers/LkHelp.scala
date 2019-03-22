@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.model.n2.edge.MPredicates
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mhelp.MLkSupportRequest
@@ -25,6 +25,7 @@ import scala.concurrent.Future
  * Created: 04.08.14 14:39
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
+@Singleton
 class LkHelp @Inject()(
                         mNodes                          : MNodes,
                         mailer                          : IMailerWrapper,
@@ -33,12 +34,13 @@ class LkHelp @Inject()(
                         bruteForceProtect               : BruteForceProtect,
                         isAuth                          : IsAuth,
                         isNodeAdmin                     : IsNodeAdmin,
-                        override val mCommonDi          : ICommonDi
+                        sioControllerApi                : SioControllerApi,
+                        mCommonDi                       : ICommonDi,
                       )
-  extends SioControllerImpl
-  with MacroLogsImplLazy
+  extends MacroLogsImplLazy
 {
 
+  import sioControllerApi._
   import LOGGER._
   import mCommonDi._
 

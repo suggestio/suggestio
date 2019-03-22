@@ -66,10 +66,10 @@ class Sc @Inject() (
                      override val extServicesUtil    : ExtServicesUtil,
                      override val esModel            : EsModel,
                      assets                          : Assets,
+                     override val sioControllerApi   : SioControllerApi,
                      override val mCommonDi          : ICommonDi
                    )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
   with ScSite
   with ScIndex
   with ScAdsTile

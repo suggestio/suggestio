@@ -23,7 +23,7 @@ case class LoginFormCss() extends StyleSheet.Inline {
   import dsl._
 
   /** Стиль текстового поля для ввода имени или пароля. */
-  val epwFormControl = {
+  val formControl = {
     style(
       margin( 10.px, 20.px ),
       //marginRight( px20 ),

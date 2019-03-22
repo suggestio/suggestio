@@ -1,12 +1,12 @@
-package io.suggest.id.login.m
+package io.suggest.id.login.v.stuff
 
 import chandu0101.scalajs.react.components.materialui.{MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants}
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.sjs.common.empty.JsOptionUtil
-import japgolly.scalajs.react.{React, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{React, ScalaComponent}
 import scalacss.ScalaCssReact._
 
 /**

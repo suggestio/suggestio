@@ -28,6 +28,7 @@ import japgolly.univeq._
 
 import scala.concurrent.Future
 import util.FormUtil.passwordWithConfirmM
+import util.captcha.ICaptchaUtilDi
 import util.ident.IIdentUtil
 
 /**
@@ -40,7 +41,7 @@ import util.ident.IIdentUtil
 
 /** Хелпер контроллеров, занимающийся отправкой почты для восстановления пароля. */
 trait SendPwRecoverEmail
-  extends SioController
+  extends ISioControllerApi
   with IMailerWrapperDi
   with IMacroLogs
   with IBruteForceProtect
@@ -48,6 +49,7 @@ trait SendPwRecoverEmail
   with EsModelDi
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import esModel.api._
 
@@ -85,7 +87,7 @@ trait SendPwRecoverEmail
       val msg = mailer.instance
       msg.setRecipients(email1)
       val ctx = implicitly[Context]
-      msg.setSubject( ctx.messages("Password.recovery") + " | " + MsgCodes.`Suggest.io` )
+      msg.setSubject( ctx.messages(MsgCodes.`Password.recovery`) + " | " + MsgCodes.`Suggest.io` )
       val qs = MEmailRecoverQs( email1 )
       msg.setHtml {
         htmlCompressUtil.html4email {
@@ -111,7 +113,7 @@ trait SendPwRecoverEmail
 trait PwRecover
   extends SendPwRecoverEmail
   with IMacroLogs
-  with CaptchaValidator
+  with ICaptchaUtilDi
   with IBruteForceProtect
   with SetLangCookieUtil
   with IIsAnonAcl
@@ -122,6 +124,7 @@ trait PwRecover
   with EsModelDi
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import esModel.api._
 
@@ -166,7 +169,7 @@ trait PwRecover
   def recoverPwFormSubmit = csrf.Check {
     bruteForceProtect {
       isAnon().async { implicit request =>
-        val formBinded = checkCaptcha(recoverPwFormM.bindFromRequest())
+        val formBinded = captchaUtil.checkCaptcha(recoverPwFormM.bindFromRequest())
         formBinded.fold(
           {formWithErrors =>
             LOGGER.debug("recoverPwFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
@@ -175,7 +178,7 @@ trait PwRecover
           {email1 =>
             sendRecoverMail(email1) map { _ =>
               // отрендерить юзеру результат, что всё ок, независимо от успеха поиска.
-              rmCaptcha(formBinded){
+              captchaUtil.rmCaptcha(formBinded) {
                 Redirect( CSRF(routes.Ident.recoverPwAccepted(email1)) )
               }
             }

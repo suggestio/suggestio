@@ -20,6 +20,7 @@ trait ScPwaManifest
   extends ScController
   with IMaybeAuth
 {
+  import sioControllerApi._
 
   /** Экшен раздачи json-манифеста с описаловом вёб-приложения.
     *

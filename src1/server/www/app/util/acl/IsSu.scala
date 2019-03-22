@@ -32,7 +32,7 @@ final class IsSu @Inject() (
 
   def supOnUnauthFut(req: IReqHdr): Future[Result] = {
     logBlockedAccess(req)
-    isAuth.onUnauth(req, MLoginTabs.Epw)
+    isAuth.onUnauth(req, MLoginTabs.EpwLogin)
   }
 
 

@@ -357,4 +357,12 @@ object MsgCodes {
   val `Username` = "Username"
   val `Not.my.pc` = "Not.my.pc"
 
+  val `I.accept.terms.of.service` = "I.accept.terms.of.service"
+  val `I.allow.personal.data.processing` = "I.allow.personal.data.processing"
+  val `Your.email.addr` = "Your.email.addr"
+
+  val `Input.text.from.picture` = "Input.text.from.picture"
+  val `Sign.up` = "Sign.up"
+  val `Password.recovery` = "Password.recovery"
+
 }

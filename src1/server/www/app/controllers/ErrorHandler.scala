@@ -23,16 +23,16 @@ import scala.concurrent._
  * @see [[https://www.playframework.com/documentation/2.4.x/ScalaErrorHandling#Extending-the-default-error-handler]]
  */
 @Singleton
-class ErrorHandler @Inject() (
-  env                             : Environment,
-  config                          : Configuration,
-  sourceMapper                    : OptionalSourceMapper,
-  router                          : Provider[Router],
-  contextFactory                  : Context2Factory,
-  aclUtil                         : AclUtil,
-  override val messagesApi        : MessagesApi,
-  implicit private val ec         : ExecutionContext,
-)
+final class ErrorHandler @Inject() (
+                                     env                             : Environment,
+                                     config                          : Configuration,
+                                     sourceMapper                    : OptionalSourceMapper,
+                                     router                          : Provider[Router],
+                                     contextFactory                  : Context2Factory,
+                                     aclUtil                         : AclUtil,
+                                     override val messagesApi        : MessagesApi,
+                                     implicit private val ec         : ExecutionContext,
+                                   )
   extends DefaultHttpErrorHandler(env, config, sourceMapper, router)
   with I18nSupport
   with ITargetsEmpty

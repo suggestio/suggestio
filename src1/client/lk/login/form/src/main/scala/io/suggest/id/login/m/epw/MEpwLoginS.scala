@@ -2,6 +2,7 @@ package io.suggest.id.login.m.epw
 
 import diode.FastEq
 import diode.data.Pot
+import io.suggest.lk.m.MTextFieldS
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -44,15 +45,12 @@ object MEpwLoginS {
   * @param loginBtnEnabled Активна ли кнопка логина?
   */
 case class MEpwLoginS(
-                       name                 : MEpwTextFieldS        = MEpwTextFieldS.empty,
-                       password             : MEpwTextFieldS        = MEpwTextFieldS.empty,
+                       name                 : MTextFieldS        = MTextFieldS.empty,
+                       password             : MTextFieldS        = MTextFieldS.empty,
                        isForeignPc          : Boolean               = false,
                        loginReq             : Pot[String]           = Pot.empty,
                        loginBtnEnabled      : Boolean               = false,
                      ) {
-
-  /** Состояние кнопки логина для хранения внутри коннекшена. */
-  lazy val loginBtnEnabledSome = Some(loginBtnEnabled)
 
   /** Когда надо отображать на экране прогресс-бар ожидания? */
   lazy val isShowPendingSome = Some( loginReq.isPending )

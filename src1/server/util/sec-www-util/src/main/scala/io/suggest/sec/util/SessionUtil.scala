@@ -1,7 +1,7 @@
 package io.suggest.sec.util
 
 import javax.inject.Singleton
-import io.suggest.session.{LoginTimestamp, MSessionKeys}
+import io.suggest.session.MSessionKeys
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.mvc.{RequestHeader, Session}
 
@@ -34,19 +34,8 @@ class SessionUtil extends MacroLogsImpl {
   def getPersonId(session: Session): Option[String] = {
     session
       .get(MSessionKeys.PersonId.value)
-      // Если выставлен timestamp, то проверить валидность защищенного session ttl.
-      // НЕЛЬЗЯ удалять отсюда проверку, т.к. в фильтрах (play Filter) и при Action Composition нет возможности
-      // нормально перезаписывать сессию реквеста: там lazy val, который перевычисляется заново при каждом последующем Request wrap.
-      .filter { personId =>
-        val tstampOpt = LoginTimestamp.fromSession(session)
-        val result = tstampOpt
-          .exists {
-            _.isTimestampValid()
-          }
-        if (!result)
-          LOGGER.trace(s"getFromSession(): Session expired for user $personId. tstampRaw = $tstampOpt")
-        result
-      }
+    // До между play ~2.4 и 2.7.0 тут был код фильтрации сессии юзера по TTL.
+    // Сейчас проверка снова переехала в фильтр ExpireSession, где она по логике и должна жить.
   }
 
 }

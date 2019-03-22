@@ -1,6 +1,6 @@
 package controllers.ident
 
-import controllers.{SioController, routes}
+import controllers.{ISioControllerApi, routes}
 import io.suggest.auth.{AuthenticationException, AuthenticationResult}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModelDi
@@ -33,7 +33,7 @@ import scala.concurrent.Future
  * Description: Поддержка логина через соц.сети или иные внешние сервисы.
  */
 trait ExternalLogin
-  extends SioController
+  extends ISioControllerApi
   with IMacroLogs
   with SetLangCookieUtil
   with INodesUtil
@@ -47,7 +47,8 @@ trait ExternalLogin
   val mPersonIdentModel: MPersonIdentModel
   val canConfirmIdpReg: CanConfirmIdpReg
 
-  import mCommonDi._
+  import sioControllerApi._
+  import mCommonDi.{ec, current, csrf}
   import esModel.api._
   import mPersonIdentModel.api._
 

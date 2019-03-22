@@ -61,6 +61,7 @@ trait ScSite
   with EsModelDi
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import esModel.api._
 

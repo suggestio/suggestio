@@ -12,7 +12,7 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.sec.util.ScryptUtil
+import io.suggest.sec.util.{Csrf, ScryptUtil}
 import io.suggest.session.MSessionKeys
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
@@ -36,7 +36,7 @@ import views.html.lk.adn.invite.inviteInvalidTpl
 import views.html.lk.usr._
 import views.html.lk.{lkList => lkListTpl}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -60,15 +60,18 @@ class MarketLkAdn @Inject() (
                               canUseNodeInvite                    : CanUseNodeInvite,
                               dynImgUtil                          : DynImgUtil,
                               override val scryptUtil             : ScryptUtil,
-                              override val mCommonDi              : ICommonDi
+                              override val sioControllerApi       : SioControllerApi,
+                              mCommonDi                           : ICommonDi,
+                              csrf                                : Csrf,
+                              implicit private val ec             : ExecutionContext,
                             )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
   with ChangePwAction
 {
 
+  import sioControllerApi._
   import LOGGER._
-  import mCommonDi._
+  import mCommonDi.slick
   import slick.profile.api._
   import mItems.MItemsTable._
   import esModel.api._

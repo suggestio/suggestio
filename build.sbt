@@ -164,13 +164,14 @@ lazy val commonSlickDriver = {
 lazy val lkCommonSjs = {
   val name = "lk-common-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/common"))
-    .dependsOn(commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs, reactImageCropSjs, asmCryptoSioSjs)
+    .dependsOn(commonSjs, commonReactSjs, reactImageGallerySjs, reactColorSjs,
+               reactImageCropSjs, asmCryptoSioSjs, reactMaterialUiSjs)
 }
 
 /** Форма логина sjs. */
 lazy val loginFormSjs = {
   Project(id = "login-form-sjs", base = file(DIR0 + "client/lk/login/form") )
-    .dependsOn( commonSjs, commonReactSjs, reactMaterialUiSjs )
+    .dependsOn( commonSjs, lkCommonSjs, commonReactSjs, reactMaterialUiSjs )
 }
 
 /** Компоненты для покупательской корзины suggest.io. */

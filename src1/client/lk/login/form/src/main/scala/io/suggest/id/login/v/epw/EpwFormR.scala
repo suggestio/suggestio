@@ -1,17 +1,16 @@
 package io.suggest.id.login.v.epw
 
-import chandu0101.scalajs.react.components.materialui.{MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiPaper}
+import chandu0101.scalajs.react.components.materialui.{MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiPaper}
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.id.IdentConst
 import io.suggest.id.login.m._
 import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.v.LoginFormCss
-import io.suggest.id.login.v.stuff.CheckBoxR
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.id.login.v.stuff.{ButtonR, CheckBoxR, LoginProgressR}
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
 
 import scala.scalajs.js
 
@@ -24,6 +23,7 @@ import scala.scalajs.js
 class EpwFormR(
                 epwTextFieldR               : EpwTextFieldR,
                 checkBoxR                   : CheckBoxR,
+                buttonR                     : ButtonR,
                 loginProgressR              : LoginProgressR,
                 commonReactCtxProv          : React.Context[MCommonReactCtx],
                 loginFormCssCtx             : React.Context[LoginFormCss],
@@ -34,17 +34,11 @@ class EpwFormR(
 
 
   case class State(
-                    loginBtnEnabledSomeC    : ReactConnectProxy[Some[Boolean]],
                     loginReqPendingSomeC    : ReactConnectProxy[Some[Boolean]],
                   )
 
 
   class Backend($: BackendScope[Props, State]) {
-
-    private def _onLoginBtnClick(event: ReactEvent): Callback =
-      ReactDiodeUtil.dispatchOnProxyScopeCB( $, EpwDoLogin )
-    private val _onLoginBtnClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onLoginBtnClick )
-
 
     /** Реакция на попытку сабмита формы мимо основной кнопки.
       * Возможно, enter с клавиатуры или ещё как-то.
@@ -84,7 +78,7 @@ class EpwFormR(
                   hasError    = props.loginReq.isFailed,
                   mkAction    = EpwSetName,
                   isPassword  = false,
-                  inputName   = "email",
+                  inputName   = IdentConst.Login.NAME_FN,
                   msgCode     = MsgCodes.`Username`
                 )
               }( epwTextFieldR.apply )( implicitly, epwTextFieldR.EpwTextFieldPropsValFastEq ),
@@ -96,7 +90,7 @@ class EpwFormR(
                   hasError    = props.loginReq.isFailed,
                   mkAction    = EpwSetPassword,
                   isPassword  = true,
-                  inputName   = HtmlConstants.Input.password,
+                  inputName   = IdentConst.Login.PASSWORD_FN,
                   msgCode     = MsgCodes.`Password`
                 )
               }( epwTextFieldR.apply )( implicitly, epwTextFieldR.EpwTextFieldPropsValFastEq ),
@@ -114,30 +108,13 @@ class EpwFormR(
               s.loginReqPendingSomeC { loginProgressR.component.apply },
 
               // Кнопка "Войти", аналог сабмита формы.
-              {
-                val loginText = commonReactCtxProv.consume { crCtx =>
-                  crCtx.messages( MsgCodes.`Login` )
-                }
-                s.loginBtnEnabledSomeC { loginBtnEnabledSomeProxy =>
-                  loginFormCssCtx.consume { loginFormCss =>
-                    val btnCss = new MuiButtonClasses {
-                      override val root = loginFormCss.epwFormControl.htmlClass
-                    }
-                    MuiButton(
-                      new MuiButtonProps {
-                        override val size     = MuiButtonSizes.large
-                        override val variant  = MuiButtonVariants.contained
-                        override val onClick  = _onLoginBtnClickCbF
-                        override val disabled = !loginBtnEnabledSomeProxy.value.value
-                        override val fullWidth = true
-                        override val classes  = btnCss
-                      }
-                    )(
-                      loginText
-                    )
-                  }
-                }
-              },
+              propsProxy.wrap { p =>
+                buttonR.PropsVal(
+                  disabled = !p.loginBtnEnabled,
+                  onClick  = EpwDoLogin,
+                  msgCode  = MsgCodes.`Login`,
+                )
+              }( buttonR.apply )(implicitly, buttonR.ButtonRPropsValFastEq),
 
             )
           )
@@ -153,7 +130,6 @@ class EpwFormR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        loginBtnEnabledSomeC  = propsProxy.connect(_.loginBtnEnabledSome)( FastEqUtil.RefValFastEq ),
         loginReqPendingSomeC  = propsProxy.connect(_.isShowPendingSome)( FastEqUtil.RefValFastEq ),
       )
     }

@@ -66,14 +66,15 @@ class Static @Inject() (
                          canOpenWsChannel                : CanOpenWsChannel,
                          wsChannelActors                 : WsChannelActors,
                          assets                          : Assets,
-                         override val mCommonDi          : ICommonDi
+                         override val sioControllerApi   : SioControllerApi,
+                         mCommonDi                       : ICommonDi
                        )
-  extends SioControllerImpl
-  with RobotsTxt
+  extends RobotsTxt
   with SiteMapsXml
   with CorsPreflight
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import cspUtil.Implicits._
   import streamsUtil.Implicits._

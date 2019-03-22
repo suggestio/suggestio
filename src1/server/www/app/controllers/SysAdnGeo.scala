@@ -7,7 +7,7 @@ import io.suggest.geo._
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImplLazy
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import models.madn.AdnShownTypes
 import models.mgeo.MGsPtr
 import models.mproj.ICommonDi
@@ -31,17 +31,19 @@ import scala.concurrent.Future
  * 2014.09.10: Расширение функционала через редактирование собственной геоинформации узла.
  * Расширение собственной геоинформации необходимо из-за [[https://github.com/elasticsearch/elasticsearch/issues/7663]].
  */
+@Singleton
 class SysAdnGeo @Inject() (
                             esModel                           : EsModel,
                             mNodes                            : MNodes,
                             isSuNode                          : IsSuNode,
-                            override val mCommonDi            : ICommonDi,
+                            sioControllerApi                  : SioControllerApi,
+                            mCommonDi                         : ICommonDi,
                             implicit private val osmClient    : OsmClient,
                           )
-  extends SioControllerImpl
-  with MacroLogsImplLazy
+  extends MacroLogsImplLazy
 {
 
+  import sioControllerApi._
   import LOGGER._
   import mCommonDi._
   import esModel.api._

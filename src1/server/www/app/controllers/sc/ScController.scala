@@ -1,8 +1,9 @@
 package controllers.sc
 
-import controllers.SioController
+import controllers.ISioControllerApi
 import io.suggest.sc.sc3.MSc3RespAction
 import models.mctx.Context
+import models.mproj.IMCommonDi
 import models.req.IReq
 import util.cdn.ICdnUtilDi
 import util.di.ILogoUtilDi
@@ -17,12 +18,14 @@ import scala.concurrent.Future
  * Description: Всякая базисная утиль для сборки Sc-контроллера.
  */
 trait ScController
-  extends SioController
+  extends IMCommonDi
+  with ISioControllerApi
   with ICdnUtilDi
   with ILogoUtilDi
   with IStatUtil
 {
 
+  import sioControllerApi._
   import mCommonDi.ec
 
   /** Быстренькое добавление поля lazy val ctx в код sc-логики. */

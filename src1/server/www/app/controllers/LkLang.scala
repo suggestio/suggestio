@@ -1,13 +1,13 @@
 package controllers
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.I18nConst
 import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
-import models.mproj.ICommonDi
 import play.api.data.Form
 import play.api.i18n.{Lang, Messages}
 import play.api.mvc.Result
@@ -16,8 +16,9 @@ import util.acl.MaybeAuth
 import util.i18n.JsMessagesUtil
 import views.html.lk.lang._
 import japgolly.univeq._
+import play.api.http.HttpErrorHandler
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -26,19 +27,22 @@ import scala.concurrent.Future
  * Description: Контроллер управления языками системы.
  * Относится к ЛК, т.к. форма переключения языков сверстана именно там.
  */
+@Singleton
 class LkLang @Inject() (
                          esModel                         : EsModel,
                          mNodes                          : MNodes,
                          maybeAuth                       : MaybeAuth,
                          jsMessagesUtil                  : JsMessagesUtil,
-                         override val mCommonDi          : ICommonDi
+                         sioControllerApi                : SioControllerApi,
+                         errorHandler                    : HttpErrorHandler,
+                         csrf                            : Csrf,
+                         implicit private val ec         : ExecutionContext,
                        )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import LOGGER._
-  import mCommonDi._
   import esModel.api._
 
   private def chooseLangFormM(currLang: Lang): Form[Lang] = {

@@ -64,12 +64,13 @@ class LkNodes @Inject() (
                           mNodes                    : MNodes,
                           canChangeNodeAvailability : CanChangeNodeAvailability,
                           bruteForceProtect         : BruteForceProtect,
-                          override val mCommonDi    : ICommonDi
+                          sioControllerApi          : SioControllerApi,
+                          mCommonDi                 : ICommonDi
                         )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import esModel.api._
 

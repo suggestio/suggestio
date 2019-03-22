@@ -9,8 +9,10 @@ import io.suggest.id.login.{MLoginTab, MLoginTabs}
 import io.suggest.id.login.m._
 import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.m.ext.MExtLoginFormS
+import io.suggest.id.login.m.reg.MEpwRegS
 import io.suggest.id.login.v.epw.EpwFormR
 import io.suggest.id.login.v.ext.ExtFormR
+import io.suggest.id.login.v.reg.EpwRegR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactEventFromHtml, ScalaComponent}
@@ -28,6 +30,7 @@ import scala.scalajs.js.annotation.JSName
 class LoginFormR(
                   epwFormR              : EpwFormR,
                   extFormR              : ExtFormR,
+                  epwRegR               : EpwRegR,
                   commonReactCtxProv    : React.Context[MCommonReactCtx],
                   loginFormCssCtx       : React.Context[LoginFormCss],
                 ) {
@@ -75,23 +78,28 @@ class LoginFormR(
 
     def render(p: Props, s: State): VdomElement = {
       // Форма логина через внешние сервисы.
-      val extLogin = p.wrap(_.ext)( extFormR.apply )( implicitly, MExtLoginFormS.MExtLoginFormSFastEq )
+      lazy val extLogin = p.wrap(_.ext)( extFormR.apply )( implicitly, MExtLoginFormS.MExtLoginFormSFastEq )
 
       // Содержимое вкладки входа по логину и паролю:
       lazy val epwLogin = p.wrap(_.epw)( epwFormR.apply )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
+
+      // Вкладка регистрации по email и паролю.
+      lazy val epwReg = p.wrap(_.epwReg)( epwRegR.apply )( implicitly, MEpwRegS.MEpwRegSFastEq )
 
       // Содержимое табов:
       val tabsContents = s.currTabC { currTabProxy =>
         // TODO Запилить react-swipeable-views, как в примерах MuiTabs.
         currTabProxy.value match {
-          case MLoginTabs.Ext => extLogin
-          case MLoginTabs.Epw => epwLogin
+          case MLoginTabs.EpwLogin  => epwLogin
+          case MLoginTabs.EpwReg    => epwReg
+          case MLoginTabs.Ext       => extLogin
         }
       }
 
       // кнопка таба EmailPw-логина:
-      val epwTabBtn =  _tabBtn( MLoginTabs.Epw )
-      val extTabBtn = _tabBtn( MLoginTabs.Ext )
+      val epwLoginTabBtn  = _tabBtn( MLoginTabs.EpwLogin )
+      //val extTabBtn       = _tabBtn( MLoginTabs.Ext )
+      val epwRegTabBtn    = _tabBtn( MLoginTabs.EpwReg )
 
       // Список табов:
       val tabs = MuiPaper(
@@ -107,8 +115,9 @@ class LoginFormR(
               override val onTabChanged = _onTabChangedCbF
             }
           )(
-            extTabBtn,
-            epwTabBtn,
+            //extTabBtn,
+            epwLoginTabBtn,
+            epwRegTabBtn,
           )
         }
       )

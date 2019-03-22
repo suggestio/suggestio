@@ -2,6 +2,7 @@ package io.suggest.lk
 
 import com.softwaremill.macwire._
 import io.suggest.lk.r._
+import io.suggest.lk.r.captcha.CaptchaFormR
 import io.suggest.lk.r.color._
 import io.suggest.lk.r.img.{CropBtnR, CropPopupR, ImgEditBtnR, ImgRenderUtilJs}
 
@@ -10,7 +11,9 @@ import io.suggest.lk.r.img.{CropBtnR, CropPopupR, ImgEditBtnR, ImgRenderUtilJs}
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 05.04.18 21:47
   */
-class LkCommonModule {
+object LkCommonModule {
+
+  import io.suggest.ReactCommonModule._
 
   lazy val colorPickerR = wire[ColorPickerR]
 
@@ -39,5 +42,8 @@ class LkCommonModule {
 
 
   lazy val saveR = wire[SaveR]
+
+
+  lazy val captchaFormR = wire[CaptchaFormR]
 
 }

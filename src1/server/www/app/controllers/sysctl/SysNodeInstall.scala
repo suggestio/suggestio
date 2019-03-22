@@ -1,6 +1,6 @@
 package controllers.sysctl
 
-import controllers.{SioController, routes}
+import controllers.{ISioControllerApi, routes}
 import io.suggest.es.model.EsModelDi
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.util.logs.IMacroLogs
@@ -23,7 +23,7 @@ import scala.concurrent.Future
  * Description: Аддон для поддержки ручной установки узлов и данных для них на существующие узлы.
  */
 trait SysNodeInstall
-  extends SioController
+  extends ISioControllerApi
   with IMacroLogs
   with INodesUtil
   with IIsSuNodeDi
@@ -32,7 +32,8 @@ trait SysNodeInstall
   with IMNodes
 {
 
-  import mCommonDi._
+  import sioControllerApi._
+  import mCommonDi.{ec, csrf, langs}
   import esModel.api._
 
 

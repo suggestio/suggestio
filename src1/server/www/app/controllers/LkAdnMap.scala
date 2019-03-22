@@ -54,12 +54,13 @@ class LkAdnMap @Inject() (
                            cspUtil                       : CspUtil,
                            isNodeAdmin                   : IsNodeAdmin,
                            cdnUtil                       : CdnUtil,
-                           override val mCommonDi        : ICommonDi
+                           sioControllerApi              : SioControllerApi,
+                           mCommonDi                     : ICommonDi,
                          )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import LOGGER._
   import mCommonDi._
 

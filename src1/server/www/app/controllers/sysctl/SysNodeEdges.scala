@@ -1,6 +1,6 @@
 package controllers.sysctl
 
-import controllers.{SioController, routes}
+import controllers.{ISioControllerApi, routes}
 import io.suggest.es.model.{EsModelDi, MEsUuId}
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges}
 import io.suggest.model.n2.node.IMNodes
@@ -26,7 +26,7 @@ import scala.concurrent.Future
   * Порядок эджей нарушается до неузнаваемости при каждом
   */
 trait SysNodeEdges
-  extends SioController
+  extends ISioControllerApi
   with IMacroLogs
   with IIsSuNodeDi
   with IMNodes
@@ -34,7 +34,8 @@ trait SysNodeEdges
   with EsModelDi
 {
 
-  import mCommonDi._
+  import sioControllerApi._
+  import mCommonDi.{ec, csrf}
   import esModel.api._
 
   val isSuNodeEdge: IsSuNodeEdge

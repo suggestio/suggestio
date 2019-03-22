@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.es.model.EsModel
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
@@ -26,17 +26,18 @@ import scala.concurrent.Future
  * Description: sys-контроллер для доступа к юзерам.
  */
 // TODO Замержить куски контроллера в отображение узла N2. Сейчас этот контроллер рисует неактуальные данные.
+@Singleton
 class SysPerson @Inject() (
                             esModel                   : EsModel,
                             mNodes                    : MNodes,
                             mSuperUsers               : MSuperUsers,
                             isSu                      : IsSu,
                             isSuPerson                : IsSuPerson,
-                            override val mCommonDi    : ICommonDi
-                          )
-  extends SioControllerImpl
-{
+                            sioControllerApi          : SioControllerApi,
+                            mCommonDi                 : ICommonDi,
+                          ) {
 
+  import sioControllerApi._
   import mCommonDi._
   import esModel.api._
 

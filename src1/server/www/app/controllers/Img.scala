@@ -2,16 +2,19 @@ package controllers
 
 import java.time.{Instant, ZonedDateTime}
 
+import io.suggest.captcha.{MCaptchaCookiePath, MCaptchaCookiePaths}
 import io.suggest.dt.DateTimeUtil
 import io.suggest.file.MimeUtilJvm
 import io.suggest.model.n2.media.storage.IMediaStorages
+import io.suggest.playx.CacheApiUtil
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.im._
 import models.mproj.ICommonDi
 import play.api.http.HttpEntity
 import play.api.mvc._
-import util.acl.CanDynImg
+import util.acl.{CanDynImg, MaybeAuth}
+import util.captcha.CaptchaUtil
 import util.img.DynImgUtil
 
 import scala.concurrent.Future
@@ -27,25 +30,29 @@ import scala.util.Try
  */
 @Singleton
 class Img @Inject() (
+                      captchaUtil                     : CaptchaUtil,
+                      cacheApiUtil                    : CacheApiUtil,
                       mLocalImgs                      : MLocalImgs,
                       dynImgUtil                      : DynImgUtil,
                       canDynImg                       : CanDynImg,
                       iMediaStorages                  : IMediaStorages,
-                      override val mCommonDi          : ICommonDi
+                      maybeAuth                       : MaybeAuth,
+                      sioCtlApi                       : SioControllerApi,
+                      mCommonDi                       : ICommonDi,
                     )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioCtlApi._
   import mCommonDi._
 
-  def isNotModifiedSinceCached(modelTstampMs: Instant, ifModifiedSince: String): Boolean = {
+  private def isNotModifiedSinceCached(modelTstampMs: Instant, ifModifiedSince: String): Boolean = {
     DateTimeUtil.parseRfcDate(ifModifiedSince)
       .exists { dt => !modelTstampMs.isAfter(dt.toInstant) }
   }
 
   /** rfc date не содержит миллисекунд. Нужно округлять таймштамп, чтобы был 000 в конце. */
-  def withoutMs(timestampMs: Long): Instant = {
+  private def withoutMs(timestampMs: Long): Instant = {
     Instant.ofEpochSecond(timestampMs / 1000)
   }
 
@@ -184,6 +191,50 @@ class Img @Inject() (
     }
   }
 
+
+  /**
+    * Вернуть картинку капчи.
+    * Такую картинку будет проще ввести на мобильном устройстве.
+    * Для защиты от hot-link'а и создания паразитной нагрузки/трафика - используется CSRF и кэш.
+    *
+    * @param captchaId id капчи.
+    * @return image/png
+    */
+  def getCaptchaImg(captchaId: String, mCookiePath: MCaptchaCookiePath) = csrf.Check {
+    maybeAuth().async { implicit request =>
+      lazy val logPrefix = s"getCaptcha($captchaId)#${System.currentTimeMillis()}:"
+      LOGGER.trace(s"$logPrefix for ${request.remoteClientAddress}/u#${request.user.personIdOpt.orNull}")
+      for {
+
+        // Рендер одной картинки создаёт некоторую нагрузку, поэтому для защиты от DoS-атаки через перегрузку сервера, используем кэш рендера:
+        (ctext, imgBytes) <- cacheApiUtil.getOrElseFut("captcha.img", expiration = 3.seconds) {
+          // Пусть будут только цифры. На телефоне удобнее цифры набирать, а остальным -- равные права.
+          val ctext1 = captchaUtil.createCaptchaDigits
+          LOGGER.trace(s"$logPrefix ctext=$ctext1")
+          val imgBytes1 = captchaUtil.createCaptchaImg( ctext1 )
+          val res = (ctext1, imgBytes1)
+          Future.successful( res )
+        }
+
+      } yield {
+        // Путь до кукиса:
+        val cookiePath = mCookiePath match {
+          case MCaptchaCookiePaths.EpwReg =>
+            routes.Ident.epw2RegSubmit( captchaId ).url
+        }
+        Ok( imgBytes )
+          .as("image/" + captchaUtil.CAPTCHA_FMT_LC)
+          .withHeaders(
+            EXPIRES       -> "0",
+            PRAGMA        -> "no-cache",
+            CACHE_CONTROL -> "no-store, no-cache, must-revalidate"
+          )
+          .withCookies(
+            captchaUtil.mkCookie(captchaId, ctext, cookiePath)
+          )
+      }
+    }
+  }
 
 }
 

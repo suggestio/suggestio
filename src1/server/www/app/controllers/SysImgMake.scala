@@ -3,9 +3,11 @@ package controllers
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockMetaJvm, BlockWidths}
 import io.suggest.dev.MScreenJvm
 import io.suggest.util.logs.IMacroLogs
+import javax.inject.Singleton
 import models.im.{CompressMode, MImgT}
 import models.im.make.{MImgMakeArgs, MImgMaker, MImgMakers, SysForm_t}
 import models.mctx.Context
+import models.mproj.IMCommonDi
 import play.api.data.{Form, Mapping}
 import play.api.mvc.Result
 import util.FormUtil
@@ -21,6 +23,7 @@ import scala.concurrent.Future
  * Created: 21.04.15 22:50
  * Description: Аддон для SysImg-контроллера, добавляющий экшены для отладки make-движков.
  */
+@Singleton
 class SysImgMakeUtil {
 
   import play.api.data.Forms._
@@ -58,12 +61,14 @@ class SysImgMakeUtil {
 
 
 trait SysImgMake
-  extends SioController
+  extends ISioControllerApi
   with IMacroLogs
   with IIsSu
   with IDynImgUtil
+  with IMCommonDi
 {
 
+  import sioControllerApi._
   import mCommonDi._
 
   def sysImgMakeUtil : SysImgMakeUtil

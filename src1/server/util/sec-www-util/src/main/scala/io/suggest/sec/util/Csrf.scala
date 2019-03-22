@@ -17,10 +17,10 @@ import scala.language.higherKinds
 
 @Singleton
 class Csrf @Inject() (
-                      csrfAddToken            : CSRFAddToken,
-                      csrfCheck               : CSRFCheck,
-                      dab                     : DefaultActionBuilder,
-                      implicit private val ec : ExecutionContext
+                       csrfAddToken            : CSRFAddToken,
+                       csrfCheck               : CSRFCheck,
+                       defaultActionBuilder    : DefaultActionBuilder,
+                       implicit private val ec : ExecutionContext
                      ) {
 
 
@@ -53,7 +53,7 @@ class Csrf @Inject() (
     * Но это было давно, может быть уже неактуально?
     */
   private def ForceNoClientCache[A](action: Action[A]): Action[A] = {
-    dab.async(action.parser) { request =>
+    defaultActionBuilder.async(action.parser) { request =>
       withNoCacheFut( action(request) )
     }
   }

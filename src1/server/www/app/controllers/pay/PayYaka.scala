@@ -2,7 +2,7 @@ package controllers.pay
 
 import javax.inject.Singleton
 import javax.inject.Inject
-import controllers.SioControllerImpl
+import controllers.SioControllerApi
 import io.suggest.bill.MCurrencies
 import io.suggest.common.coll.Lists
 import io.suggest.common.empty.OptionUtil
@@ -77,12 +77,13 @@ class PayYaka @Inject() (
                           mSuperUsers              : MSuperUsers,
                           mdrUtil                  : MdrUtil,
                           identUtil                : IdentUtil,
-                          override val mCommonDi   : ICommonDi
+                          sioControllerApi         : SioControllerApi,
+                          mCommonDi                : ICommonDi
                         )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi.{ec, slick, csrf, errorHandler}
   import esModel.api._
 

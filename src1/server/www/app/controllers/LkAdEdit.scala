@@ -55,12 +55,13 @@ class LkAdEdit @Inject() (
                            mNodes                                 : MNodes,
                            mdrUtil                                : MdrUtil,
                            extRscUtil                             : ExtRscUtil,
-                           override val mCommonDi                 : ICommonDi
+                           sioControllerApi                       : SioControllerApi,
+                           mCommonDi                              : ICommonDi,
                          )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import esModel.api._
 

@@ -126,3 +126,16 @@ case class SetImgWh(edgeUid: EdgeUid_t, wh: MSize2di) extends ILkCommonAction
 
 /** Экшен сохранения документа. */
 case object Save extends ILkCommonAction
+
+
+/** Запустить инициализации капчи. */
+case object CaptchaInit extends ILkCommonAction
+case object CaptchaHide extends ILkCommonAction
+
+/** Происходит ввода значения капчи.
+  * @param captchaId id вводимой капчи, для разруливания изменения капчи во время ввода, или ситуации, где много капч отрендерено.
+  * @param typed Введенное пользоватем значение.
+  */
+case class CaptchaTyped(captchaId: String, typed: String) extends ILkCommonAction
+/** Потеря фокуса в поле ввода капчи. */
+case object CaptchaInputBlur extends ILkCommonAction

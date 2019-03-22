@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.es.model.EsModel
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.ai._
 import models.mproj.ICommonDi
@@ -22,18 +22,20 @@ import scala.util.matching.Regex
  * Description: Управление системами автоматической генерации контента.
  * На момент создания здесь система заполнения карточек, живущая в MadAiUtil и её модель.
  */
+@Singleton
 class SysAi @Inject() (
                         esModel                         : EsModel,
                         madAiUtil                       : MadAiUtil,
                         mAiMads                         : MAiMads,
                         isSuAiMad                       : IsSuAiMad,
                         isSu                            : IsSu,
-                        override val mCommonDi          : ICommonDi
+                        sioControllerApi                : SioControllerApi,
+                        mCommonDi                       : ICommonDi,
                       )
-  extends SioControllerImpl
-  with MacroLogsImplLazy
+  extends MacroLogsImplLazy
 {
 
+  import sioControllerApi._
   import LOGGER._
   import mCommonDi._
   import esModel.api._

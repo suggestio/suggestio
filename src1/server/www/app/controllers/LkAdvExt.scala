@@ -51,12 +51,13 @@ class LkAdvExt @Inject() (
                            cspUtil                         : CspUtil,
                            aclUtil                         : AclUtil,
                            canAccessExtTarget              : CanAccessExtTarget,
-                           override val mCommonDi          : ICommonDi
+                           sioControllerApi                : SioControllerApi,
+                           mCommonDi                       : ICommonDi
 )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import LOGGER._
   import mCommonDi._
   import esModel.api._

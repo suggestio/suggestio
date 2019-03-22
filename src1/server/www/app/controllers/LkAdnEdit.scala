@@ -9,7 +9,7 @@ import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import models.mctx.Context
 import models.mproj.ICommonDi
 import play.api.libs.json.Json
@@ -34,6 +34,7 @@ import scala.concurrent.Future
   * Description: Контроллер для react-формы редактирования метаданных ADN-узла.
   * Контроллер заменяет собой MarketLkAdnEdit, который нужен для
   */
+@Singleton
 class LkAdnEdit @Inject() (
                             esModel                   : EsModel,
                             isNodeAdmin               : IsNodeAdmin,
@@ -44,12 +45,13 @@ class LkAdnEdit @Inject() (
                             bruteForceProtect         : BruteForceProtect,
                             upload                    : Upload,
                             cdnUtil                   : CdnUtil,
-                            override val mCommonDi    : ICommonDi
+                            sioControllerApi          : SioControllerApi,
+                            mCommonDi                 : ICommonDi,
                           )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import esModel.api._
 

@@ -1,6 +1,5 @@
 package controllers.sc
 
-import controllers.SioController
 import io.suggest.common.css.OnlyOneAdTopLeft
 import io.suggest.util.logs.IMacroLogs
 import models.blk.{OneAdQsArgs, RenderArgs, szMulted}
@@ -17,7 +16,7 @@ import views.html.sc._adTpl
  * Description: Аддон для контроллера, который занимается раздаванием ровно одной карточки.
  */
 trait ScOnlyOneAd
-  extends SioController
+  extends ScController
   with IMacroLogs
   with IAdRenderUtilDi
   with IAdvUtilDi
@@ -26,6 +25,7 @@ trait ScOnlyOneAd
   protected val getAnyAd: GetAnyAd
 
 
+  import sioControllerApi._
   import mCommonDi._
 
   /**

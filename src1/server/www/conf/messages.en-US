@@ -190,7 +190,7 @@ ngls.to=Towns
 
 bf.text.example=Text {0}
 
-Input.text.from.picture=Input text from the picture
+Input.text.from.picture=Type text from picture
 error.captcha=Invalid human-check code
 
 blocks.field.isWide=Display wide?
@@ -1038,4 +1038,7 @@ _to.Finish=Finish
 Login.using.password=By password
 Username=Username
 Not.my.pc=Not my computer
+
+I.accept.terms.of.service=I'm accepting terms of service
+I.allow.personal.data.processing=I'm allowing my personal data storing and processing
 

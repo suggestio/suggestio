@@ -45,7 +45,9 @@ object MSessionKey {
     /** Относится ли сессионный ключ к Login-набору? */
     def isLogin: Boolean = {
       msk match {
-        case MSessionKeys.ExtLoginData => false
+        // remember-me кэшируется между логинами.
+        case MSessionKeys.ExtLoginData | MSessionKeys.RememberMe =>
+          false
         case _ => true
       }
     }

@@ -210,7 +210,8 @@ class JsMessagesUtil @Inject() (
 
   private def LK_COMMON: TraversableOnce[String] = {
     MC.`Something.gone.wrong` ::
-      Nil
+    MC.`Input.text.from.picture`  ::
+    Nil
   }
 
   private def ITEM_TYPES: List[String] = {
@@ -418,6 +419,11 @@ class JsMessagesUtil @Inject() (
     MC.`Password` ::
     MC.`Not.my.pc` ::
     MC.`ESIA._unabbrevated` ::
+    MC.`I.accept.terms.of.service` ::
+    MC.`I.allow.personal.data.processing` ::
+    MC.`_to.Finish` ::
+    MC.`Your.email.addr` ::
+    MC.`Sign.up` ::
     Nil
   }
 

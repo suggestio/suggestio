@@ -193,7 +193,7 @@ ngls.to=Города
 
 bf.text.example=Текст {0}
 
-Input.text.from.picture=Введите текст, изображенный на картинке
+Input.text.from.picture=Введите текст с картинки
 error.captcha=Неверный код проверки.
 
 blocks.field.isWide=Использовать широкоформатное отображение?
@@ -1046,4 +1046,7 @@ _to.Finish=Завершить
 Login.using.password=По паролю
 Username=Имя пользователя
 Not.my.pc=Чужой компьютер?
+
+I.accept.terms.of.service=Я принимаю условия использования сервиса
+I.allow.personal.data.processing=Я разрешаю хранение и обработку моих персональных данных
 

@@ -72,3 +72,32 @@ case object EpwSetForeignPc extends ICheckBoxActionStatic {
 case class ExtLoginVia(service: MExtService ) extends ILoginFormAction
 case class ExtLoginViaTimeout(tstamp: Long) extends ILoginFormAction
 
+
+/** Рега: Управления галочкой согласия с условиями сервиса. */
+case class RegTosSetAccepted( isAccepted: Boolean ) extends ILoginFormAction
+case object RegTosSetAccepted extends ICheckBoxActionStatic {
+  override type T = RegTosSetAccepted
+}
+
+/** Рега: Управление галочкой разрешения на обработку перс.данных. */
+case class RegPdnSetAccepted( isAccepted: Boolean ) extends ILoginFormAction
+case object RegPdnSetAccepted extends ICheckBoxActionStatic {
+  override type T = RegPdnSetAccepted
+}
+
+case object RegAccept extends ILoginFormAction
+
+
+/** Редактирование поля email при регистрации. */
+case class RegEmailEdit( email: String ) extends ILoginFormAction
+case object RegEmailEdit extends IEpwSetValueStatic {
+  override type T = RegEmailEdit
+}
+
+case object RegEmailBlur extends ILoginFormAction
+
+
+/** Клик по кнопке запуска регистрации. */
+case object EpwRegSubmit extends ILoginFormAction
+/** Ответ от результата сабмита формы регистрации по паролю. */
+case class EpwRegSubmitResp(tstamp: Long, resp: Try[_]) extends ILoginFormAction

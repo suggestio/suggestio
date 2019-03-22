@@ -30,9 +30,8 @@ class LkAdEditModule {
 
   val quillSioModule = wire[QuillSioModule]
 
-  val lkCommonModule = wire[LkCommonModule]
 
-  import lkCommonModule._
+  import io.suggest.lk.LkCommonModule._
   import jdRenderModule._
   import quillSioModule._
 

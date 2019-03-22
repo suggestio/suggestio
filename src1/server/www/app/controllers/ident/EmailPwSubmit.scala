@@ -1,6 +1,6 @@
 package controllers.ident
 
-import controllers.SioController
+import controllers.ISioControllerApi
 import io.suggest.es.model.EsModelDi
 import io.suggest.id.IdentConst
 import io.suggest.model.n2.edge.MPredicates
@@ -31,7 +31,7 @@ import util.ident.IIdentUtil
  */
 
 trait EmailPwLogin
-  extends SioController
+  extends ISioControllerApi
   with IMacroLogs
   with IBruteForceProtect
   with SetLangCookieUtil
@@ -42,6 +42,7 @@ trait EmailPwLogin
   with EsModelDi
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import esModel.api._
 

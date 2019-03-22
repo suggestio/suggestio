@@ -74,12 +74,13 @@ class LkBill2 @Inject() (
                           mdrUtil                     : MdrUtil,
                           bill2Util                   : Bill2Util,
                           mOrders                     : MOrders,
-                          override val mCommonDi      : ICommonDi
+                          sioControllerApi            : SioControllerApi,
+                          mCommonDi                   : ICommonDi,
                         )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import esModel.api._
 

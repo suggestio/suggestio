@@ -1,6 +1,6 @@
 package controllers.sysctl.domain
 
-import controllers.{SioController, routes}
+import controllers.{ISioControllerApi, routes}
 import io.suggest.es.model.EsModelDi
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import io.suggest.model.n2.node.{IMNodes, MNode}
@@ -23,7 +23,7 @@ import scala.concurrent.Future
   * Description: Аддон для [[controllers.SysMarket]] для экшенов управления списком связанных доменов узла.
   */
 trait SmDomains
-  extends SioController
+  extends ISioControllerApi
   with IMacroLogs
   with IIsSuNodeDi
   with ISysMarketUtilDi
@@ -31,7 +31,8 @@ trait SmDomains
   with EsModelDi
 {
 
-  import mCommonDi._
+  import sioControllerApi._
+  import mCommonDi.{csrf, ec, errorHandler}
   import esModel.api._
 
 

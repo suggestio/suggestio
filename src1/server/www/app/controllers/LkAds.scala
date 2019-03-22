@@ -15,7 +15,7 @@ import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.streams.StreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import models.mctx.Context
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
@@ -32,6 +32,7 @@ import views.html.lk.ads._
   * Description: Менеджер карточек в личном кабинете.
   * React-замена MarketLkAdn.showNodeAds() и связанным экшенам.
   */
+@Singleton
 class LkAds @Inject() (
                         esModel                 : EsModel,
                         isNodeAdmin             : IsNodeAdmin,
@@ -39,12 +40,13 @@ class LkAds @Inject() (
                         mNodes                  : MNodes,
                         streamsUtil             : StreamsUtil,
                         mItems                  : MItems,
-                        override val mCommonDi  : ICommonDi
+                        sioControllerApi        : SioControllerApi,
+                        mCommonDi               : ICommonDi,
                       )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import streamsUtil.Implicits._
   import slick.profile.api._

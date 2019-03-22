@@ -38,6 +38,7 @@ trait ScJsRouter
   with IMacroLogs
 {
 
+  import sioControllerApi._
   import mCommonDi._
 
 

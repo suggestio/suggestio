@@ -63,7 +63,7 @@ class Upload @Inject()(
                         ignoreAuth                : IgnoreAuth,
                         cdnUtil                   : CdnUtil,
                         fileUtil                  : FileUtil,
-                        val iMediaStorages        : IMediaStorages,
+                        iMediaStorages            : IMediaStorages,
                         mNodes                    : MNodes,
                         mImgs3                    : MImgs3,
                         mLocalImgs                : MLocalImgs,
@@ -72,12 +72,13 @@ class Upload @Inject()(
                         uploadCtxFactory          : IUploadCtxFactory,
                         mainColorDetector         : MainColorDetector,
                         wsDispatcherActors        : WsDispatcherActors,
-                        override val mCommonDi    : ICommonDi
+                        sioControllerApi          : SioControllerApi,
+                        mCommonDi                 : ICommonDi,
                       )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi.{ec, errorHandler}
   import esModel.api._
 

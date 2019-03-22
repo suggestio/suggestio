@@ -1,6 +1,7 @@
 package io.suggest.id.login.c
 
 import io.suggest.id.login.MEpwLoginReq
+import io.suggest.id.reg.MEpwRegReq
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
@@ -28,18 +29,27 @@ trait ILoginApi {
     * @param r Обратный (возвращаемый) редирект при положительном исходе.
     * @return Фьючерс с результатом.
     */
-  def epw2Submit(loginReq: MEpwLoginReq, r: Option[String] = None): Future[String]
+  def epw2LoginSubmit(loginReq: MEpwLoginReq, r: Option[String] = None): Future[String]
+
+
+  /** Сабмит формы регистрации на сервер.
+    *
+    * @param captchaId id капчи.
+    * @param form Данные формы, введённые юзером.
+    * @return Фьючерс с ответом сервер.
+    */
+  def epw2RegSubmit(captchaId: String, form: MEpwRegReq): Future[_]
 
 }
 
 
 class LoginApiHttp extends ILoginApi {
 
-  override def epw2Submit(loginReq: MEpwLoginReq, r: Option[String] = None): Future[String] = {
+  override def epw2LoginSubmit(loginReq: MEpwLoginReq, r: Option[String] = None): Future[String] = {
     // Собрать и запустить запрос:
     val respHolder = HttpClient.execute(
       HttpReq.routed(
-        route = routes.controllers.Ident.epw2Submit( r.toUndef ),
+        route = routes.controllers.Ident.epw2LoginSubmit( r.toUndef ),
         data  = HttpReqData(
           headers = {
             val H = HttpConst.Headers
@@ -62,6 +72,34 @@ class LoginApiHttp extends ILoginApi {
       rdrUrl <- resp.text()
     } yield {
       rdrUrl
+    }
+  }
+
+
+  override def epw2RegSubmit(captchaId: String, form: MEpwRegReq): Future[_] = {
+    val respHolder = HttpClient.execute(
+      HttpReq.routed(
+        route = routes.controllers.Ident.epw2RegSubmit( captchaId ),
+        data = HttpReqData(
+          headers = {
+            val H = HttpConst.Headers
+            Map(
+              H.CONTENT_TYPE -> MimeConst.APPLICATION_JSON,
+            )
+          },
+          body = Json
+            .toJson( form )
+            .toString(),
+          timeoutMs = Some( 10.seconds.toMillis.toInt )
+        )
+      )
+    )
+    // И распарсить ответ:
+    for {
+      resp <- respHolder.respFut
+      if (resp.status / 100) ==* 2
+    } yield {
+      None
     }
   }
 

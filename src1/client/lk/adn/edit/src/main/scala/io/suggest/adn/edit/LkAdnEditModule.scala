@@ -2,7 +2,6 @@ package io.suggest.adn.edit
 
 import com.softwaremill.macwire._
 import io.suggest.adn.edit.v._
-import io.suggest.lk.LkCommonModule
 
 /**
   * Suggest.io
@@ -12,8 +11,7 @@ import io.suggest.lk.LkCommonModule
   */
 class LkAdnEditModule {
 
-  val lkCommonModule = wire[LkCommonModule]
-  import lkCommonModule._
+  import io.suggest.lk.LkCommonModule._
 
   lazy val lkAdnEditCircuit = wire[LkAdnEditCircuit]
 

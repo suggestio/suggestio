@@ -1,6 +1,6 @@
 package controllers.ident
 
-import controllers.{CaptchaValidator, SioController, routes}
+import controllers.{ISioControllerApi, routes}
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModelDi
 import io.suggest.i18n.MsgCodes
@@ -66,9 +66,9 @@ trait EmailPwRegUtil extends ICaptchaUtilDi {
 
 
 trait EmailPwReg
-  extends SioController
+  extends ISioControllerApi
   with IMacroLogs
-  with CaptchaValidator
+  with ICaptchaUtilDi
   with SendPwRecoverEmail
   with IMailerWrapperDi
   with IIsAnonAcl
@@ -80,7 +80,8 @@ trait EmailPwReg
   with EsModelDi
 {
 
-  import mCommonDi._
+  import sioControllerApi._
+  import mCommonDi.{ec, htmlCompressUtil, csrf}
   import esModel.api._
 
   val canConfirmEmailPwReg: CanConfirmEmailPwReg
@@ -88,7 +89,7 @@ trait EmailPwReg
   def sendEmailAct(qs: MEmailRecoverQs)(implicit ctx: Context): Future[_] = {
     val msg = mailer.instance
     msg.setRecipients(qs.email)
-    msg.setSubject("Suggest.io | " + ctx.messages("reg.emailpw.email.subj"))
+    msg.setSubject( MsgCodes.`Suggest.io` + " | " + ctx.messages("reg.emailpw.email.subj"))
     msg.setHtml {
       htmlCompressUtil.html4email {
         emailRegMsgTpl(qs)(ctx)
@@ -125,7 +126,7 @@ trait EmailPwReg
     */
   def emailRegSubmit = csrf.Check {
     isAnon().async { implicit request =>
-      val form1 = checkCaptcha( emailRegFormM.bindFromRequest() )
+      val form1 = captchaUtil.checkCaptcha( emailRegFormM.bindFromRequest() )
       form1.fold(
         {formWithErrors =>
           LOGGER.debug("emailRegSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))

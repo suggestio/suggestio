@@ -50,12 +50,13 @@ class SysMdr @Inject() (
                          canMdrResolute           : CanMdrResolute,
                          nodesUtil                : NodesUtil,
                          isAuth                   : IsAuth,
-                         override val mCommonDi   : ICommonDi,
+                         sioControllerApi         : SioControllerApi,
+                         mCommonDi                : ICommonDi,
                        )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import slick.profile.api._
   import esModel.api._

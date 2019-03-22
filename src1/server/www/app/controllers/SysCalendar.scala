@@ -3,7 +3,7 @@ package controllers
 import java.io.{ByteArrayInputStream, StringWriter}
 import java.nio.charset.StandardCharsets
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import de.jollyday.util.XMLUtil
 import de.jollyday.{HolidayCalendar, HolidayManager}
 import io.suggest.cal.m.MCalTypes
@@ -31,6 +31,7 @@ import scala.concurrent.Future
  *
  * @see [[http://jollyday.sourceforge.net/index.html]]
  */
+@Singleton
 class SysCalendar @Inject() (
                               esModel                     : EsModel,
                               mCalendars                  : MCalendars,
@@ -38,12 +39,13 @@ class SysCalendar @Inject() (
                               isSu                        : IsSu,
                               mCalTypesJvm                : MCalTypesJvm,
                               calendarAccessAny           : CalendarAccessAny,
-                              override val mCommonDi      : ICommonDi
+                              sioControllerApi            : SioControllerApi,
+                              mCommonDi                   : ICommonDi,
                             )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import LOGGER._
   import mCommonDi._
   import esModel.api._

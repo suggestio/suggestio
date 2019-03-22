@@ -4,6 +4,7 @@ import io.suggest.es.model.EsModelDi
 import io.suggest.img.{MImgFmtJvm, MImgFmts}
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.util.logs.IMacroLogs
+import javax.inject.Singleton
 import models.blk.{OneAdQsArgs, OneAdWideQsArgs}
 import models.msc.{OneAdRenderVariant, OneAdRenderVariants}
 import models.msys.MShowOneAdFormTplArgs
@@ -24,6 +25,7 @@ import scala.concurrent.Future
  * Created: 21.04.15 15:50
  * Description: sys-раздел для отладки рендера карточек в картинки или html.
  */
+@Singleton
 class SysAdRenderUtil {
 
   import play.api.data.Forms._
@@ -53,7 +55,7 @@ class SysAdRenderUtil {
 // TODO Замёржить в SysMarket
 /** Аддон для sys-контроллера для добавления экшенов, связанных с рендером карточки. */
 trait SysAdRender
-  extends SioController
+  extends ISioControllerApi
   with IMacroLogs
   with IIsSuMad
   with IN2NodesUtilDi
@@ -62,6 +64,7 @@ trait SysAdRender
   with IMNodes
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import esModel.api._
 

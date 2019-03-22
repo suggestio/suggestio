@@ -7,6 +7,7 @@
 @import util.FC.authFc
 @import io.suggest.err.ErrorConstants._
 @import io.suggest.captcha.CaptchaConstants._
+@import io.suggest.captcha.MCaptchaCookiePaths
 
 
 @defining( routes.Ident.emailRegSubmit() ) { submitCall =>
@@ -29,7 +30,7 @@
       @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6)) ) { captchaId =>
         <input id="captchaId" type="hidden" name="@CAPTCHA_ID_FN" value="@captchaId"/>
         <img class="captcha_img" id="captchaImageRegistrationForm" alt=""
-             @defining( routes.Captcha.getDigitalCaptcha(captchaId, submitCall.url) ) { call =>
+             @defining( routes.Img.getCaptchaImg(captchaId, MCaptchaCookiePaths.EpwReg) ) { call =>
                @if(!captchaShown) {@ATTR_HIDDEN_SRC="@call"}
                src="@if(captchaShown){@call}"
              }

@@ -38,6 +38,7 @@ trait ScUniApi
   with IScUtil
 {
 
+  import sioControllerApi._
   import mCommonDi.ec
 
 

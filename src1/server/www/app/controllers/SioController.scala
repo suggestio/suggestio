@@ -1,7 +1,7 @@
 package controllers
 
 import models.mctx.ContextT
-import models.mproj.IMCommonDi
+import models.mproj.{ICommonDi, IMCommonDi}
 import models.req.MUserInits
 import play.api.i18n.{I18nSupport, Lang, Messages}
 import play.api.mvc._
@@ -13,6 +13,7 @@ import play.api.mvc.Result
 
 import scala.language.implicitConversions
 import io.suggest.flash.FlashConstants
+import javax.inject.{Inject, Singleton}
 
 /**
  * Suggest.io
@@ -25,12 +26,21 @@ object SioController {
   def getRdrUrl(rdrPath: Option[String])(dflt: => Future[Call])(implicit ec: ExecutionContext): Future[String] = {
     rdrPath
       .filter(_ startsWith "/")
-      .fold { dflt.map(_.url) }  { Future.successful }
+      .fold { dflt.map(_.url) } { Future.successful }
   }
 
 }
 
-trait SioController
+
+/** Статическое расшаренное API для HTTP-контроллера play.
+  *
+  * Стандартные контроллеры хранят кучу инстансов Status и прочего,
+  * якобы для какого-то повышения производительности в синтетических тестах.
+  */
+@Singleton
+final class SioControllerApi @Inject()(
+                                        override val mCommonDi: ICommonDi
+                                      )
   extends InjectedController
   with ContextT
   with I18nSupport
@@ -40,20 +50,22 @@ trait SioController
 
   import mCommonDi._
 
-  implicit protected def simpleResult2async(sr: Result): Future[Result] = {
+  implicit def simpleResult2async(sr: Result): Future[Result] = {
     Future.successful(sr)
   }
 
-  def U = MUserInits
+  val U = MUserInits
 
   /** Быстрый доступ к константам flash-статусов. */
-  def FLASH = FlashConstants.Statuses
+  val FLASH = FlashConstants.Statuses
 
   /** Построчное красивое форматирование ошибок формы для вывода в логи/консоль. */
   def formatFormErrors(formWithErrors: Form[_]): String = {
     formWithErrors.errors
       .iterator
-      .map { e => "  " + e.key + " -> " + e.message }
+      .map { e =>
+        s"  ${e.key} -> ${e.message}"
+      }
       .mkString("\n")
   }
 
@@ -76,7 +88,7 @@ trait SioController
   }
 
 
-  // TODO Opt Надо, чтобы был Value class, но extends AnyVal нельзя делать внутри trait/class.
+  /** Доп.API для Result'ов. */
   implicit class ResultExtOps(val r: Result) {
 
     def cacheControl(seconds: Int): Result = {
@@ -119,6 +131,7 @@ trait SioController
 
 }
 
-/** Абстрактная реализация контроллера с дедубликации скомпиленного кода между контроллерами. */
-abstract class SioControllerImpl extends SioController
 
+trait ISioControllerApi {
+  val sioControllerApi: SioControllerApi
+}

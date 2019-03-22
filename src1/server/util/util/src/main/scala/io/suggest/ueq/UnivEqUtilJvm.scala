@@ -2,6 +2,7 @@ package io.suggest.ueq
 
 import akka.actor.ActorRef
 import japgolly.univeq.UnivEq
+import play.api.data.validation.ValidationResult
 
 /**
   * Suggest.io
@@ -12,5 +13,9 @@ import japgolly.univeq.UnivEq
 object UnivEqUtilJvm {
 
   @inline implicit def actorRefUe       : UnivEq[ActorRef]        = UnivEq.force
+
+  @inline implicit def playSessionUe    : UnivEq[play.api.mvc.Session] = UnivEq.force
+
+  @inline implicit def playValidationResult: UnivEq[ValidationResult] = UnivEq.force
 
 }

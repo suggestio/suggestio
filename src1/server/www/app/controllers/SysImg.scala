@@ -1,8 +1,8 @@
 package controllers
 
 import java.net.{MalformedURLException, URL}
-import javax.inject.Inject
 
+import javax.inject.{Inject, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.im.{MAnyImgs, MImg3, MImgT, MImgs3}
@@ -21,19 +21,21 @@ import views.html.sys1.img._
  * Изначально была потребность быстро получать оригиналы картинок и получать прочую информацию по хранимым
  * изображениям.
  */
+@Singleton
 class SysImg @Inject() (
-  mImgs3                          : MImgs3,
-  override val sysImgMakeUtil     : SysImgMakeUtil,
-  mImgs                           : MAnyImgs,
-  override val isSu               : IsSu,
-  override val dynImgUtil         : DynImgUtil,
-  override val mCommonDi          : ICommonDi
-)
-  extends SioControllerImpl
-  with MacroLogsImpl
+                         mImgs3                          : MImgs3,
+                         override val sysImgMakeUtil     : SysImgMakeUtil,
+                         mImgs                           : MAnyImgs,
+                         override val isSu               : IsSu,
+                         override val dynImgUtil         : DynImgUtil,
+                         override val sioControllerApi   : SioControllerApi,
+                         override val mCommonDi          : ICommonDi
+                       )
+  extends MacroLogsImpl
   with SysImgMake
 {
 
+  import sioControllerApi._
   import LOGGER._
   import mCommonDi._
 

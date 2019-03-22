@@ -1,5 +1,7 @@
 package io.suggest.id
 
+import io.suggest.common.html.HtmlConstants
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -9,5 +11,11 @@ package io.suggest.id
 object IdentConst {
 
   def HTTP_HDR_SUDDEN_AUTH_FORM_RESP = "X-Sio-Auth-Page"
+
+
+  object Login {
+    val NAME_FN       = "email"
+    val PASSWORD_FN   = HtmlConstants.Input.password  // "password"
+  }
 
 }

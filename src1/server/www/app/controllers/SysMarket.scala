@@ -73,18 +73,19 @@ class SysMarket @Inject() (
                             scAdSearchUtil                  : ScAdSearchUtil,
                             identUtil                       : IdentUtil,
                             override val mNodes             : MNodes,
-                            override val mCommonDi          : ICommonDi
+                            override val sioControllerApi   : SioControllerApi,
+                            mCommonDi                       : ICommonDi,
                           )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
   with SysNodeInstall
   with SysAdRender
   with SmDomains
   with SysNodeEdges
 {
 
+  import sioControllerApi._
   import LOGGER._
-  import mCommonDi._
+  import mCommonDi.{csrf, ec, errorHandler, htmlCompressUtil, slick}
   import sysMarketUtil._
   import esModel.api._
 

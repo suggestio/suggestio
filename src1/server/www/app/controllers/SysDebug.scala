@@ -1,6 +1,6 @@
 package controllers
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import models.mproj.ICommonDi
 import util.acl.IsSu
 import util.adv.direct.AdvRcvrsUtil
@@ -13,15 +13,16 @@ import views.html.sys1.debug._
  * Created: 18.06.15 16:16
  * Description: Sys-контроллер для отладки.
  */
+@Singleton
 class SysDebug @Inject() (
                            advRcvrsUtil                  : AdvRcvrsUtil,
                            dynImgUtil                    : DynImgUtil,
                            isSu                          : IsSu,
-                           override val mCommonDi        : ICommonDi
-)
-  extends SioControllerImpl
-{
+                           sioControllerApi              : SioControllerApi,
+                           mCommonDi                     : ICommonDi,
+) {
 
+  import sioControllerApi._
   import mCommonDi._
 
   /** Экшен для отображения индексной страницы. */

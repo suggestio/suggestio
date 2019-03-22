@@ -107,6 +107,9 @@ sealed trait ImgCtlRoutes extends js.Object {
   /** Форма-окошко для кропа. */
   def imgCropForm(imgId: String, width: Int, height: Int): Route = js.native
 
+  /** Запрос картинки-капчи. */
+  def getCaptchaImg(captchaId: String, cookiePath: String): Route = js.native
+
 }
 
 
@@ -129,7 +132,9 @@ sealed trait IdentCtlRoutes extends js.Object {
 
   def rdrUserSomewhere(): Route = js.native
 
-  def epw2Submit(r: js.UndefOr[String] = js.undefined): Route = js.native
+  def epw2LoginSubmit(r: js.UndefOr[String] = js.undefined): Route = js.native
+
+  def epw2RegSubmit(captchaId: String): Route = js.native
 
   def idViaProvider(extServiceId: String, r: js.UndefOr[String] = js.undefined): Route = js.native
 

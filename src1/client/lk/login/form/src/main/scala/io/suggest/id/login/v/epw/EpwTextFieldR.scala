@@ -6,12 +6,14 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.id.login.m._
-import io.suggest.id.login.m.epw.MEpwTextFieldS
 import io.suggest.id.login.v.LoginFormCss
+import io.suggest.lk.m.MTextFieldS
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.sjs.common.empty.JsOptionUtil
+import io.suggest.spa.DAction
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEventFromInput, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEventFromInput, ReactFocusEvent, ScalaComponent}
 import japgolly.univeq._
 
 import scala.scalajs.js
@@ -29,12 +31,13 @@ class EpwTextFieldR(
 
 
   case class PropsVal(
-                       state        : MEpwTextFieldS,
+                       state        : MTextFieldS,
                        hasError     : Boolean,
                        mkAction     : IEpwSetValueStatic,
                        isPassword   : Boolean,
                        inputName    : String,
                        msgCode      : String,
+                       onBlur       : Option[DAction] = None,
                      )
   implicit object EpwTextFieldPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
@@ -43,7 +46,8 @@ class EpwTextFieldR(
       (a.mkAction  ===* b.mkAction) &&
       (a.isPassword ==* b.isPassword) &&
       (a.inputName ===* b.inputName) &&
-      (a.msgCode   ===* b.msgCode)
+      (a.msgCode   ===* b.msgCode) &&
+      (a.onBlur    ===* b.onBlur)
     }
   }
 
@@ -59,20 +63,31 @@ class EpwTextFieldR(
 
     private def _onFieldChange(event: ReactEventFromInput): Callback = {
       val value2 = event.target.value
-      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { props: Props =>
-        props.value.mkAction( value2 )
+      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { propsProxy: Props =>
+        propsProxy.value.mkAction( value2 )
       }
     }
     private val _onFieldChangeCbF = ReactCommonUtil.cbFun1ToJsCb( _onFieldChange )
 
+
+    private def _onFieldBlur(event: ReactFocusEvent): Callback = {
+      $.props >>= { p: Props =>
+        p.value.onBlur
+          .fold( Callback.empty )( p.dispatchCB )
+      }
+    }
+    private lazy val _onFieldBlurCbF = ReactCommonUtil.cbFun1ToJsCb( _onFieldBlur )
+
+
     def render(s: State): VdomElement = {
       loginFormCssCtx.consume { loginFormCss =>
         val mfcCss = new MuiFormControlClasses {
-          override val root = loginFormCss.epwFormControl.htmlClass
+          override val root = loginFormCss.formControl.htmlClass
         }
         commonReactCtxProv.consume { crCtx =>
           s.propsValC { propsProxy =>
             val p = propsProxy.value
+            val _onBlurUndef = JsOptionUtil.maybeDefined( p.onBlur.nonEmpty )( _onFieldBlurCbF )
             MuiTextField(
               new MuiTextFieldProps {
                 override val value = js.defined {
@@ -89,7 +104,8 @@ class EpwTextFieldR(
                 override val autoFocus    = !p.isPassword
                 override val fullWidth    = true
                 override val classes      = mfcCss
-                override val error        = p.hasError
+                override val error        = p.hasError || !p.state.isValid
+                override val onBlur       = _onBlurUndef
               }
             )
           }

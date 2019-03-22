@@ -3,10 +3,13 @@ package io.suggest.sec
 import javax.inject.{Inject, Singleton}
 import io.suggest.session.MSessionKeys._
 import io.suggest.session.{LoginTimestamp, MSessionKeys}
+import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.UnivEqUtilJvm._
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.mvc._
+import play.api.mvc.request.{Cell, RequestAttrKey}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 import scala.language.higherKinds
 
 /**
@@ -25,6 +28,8 @@ import scala.language.higherKinds
   * Можно использовать так:
   * - Прописать один глобальный play-фильтр [[ExpireSessionFilter]] и забыть про эту подсистему.
   * - Без фильтра: везде втыкать action, как было раньше с трейтом.
+  *
+  * 2019-03-28: Реф
   */
 
 
@@ -55,14 +60,81 @@ class ExpireSessionUtil @Inject() (
     )
   }
 
-  def hasLoginData(session: Session): Boolean = {
-    session.data
-      .keysIterator
-      .exists { filteredKeySet.contains }
+
+  /** Подготовить сессию в исходном реквесте, собрав обновлённый реквест.
+    *
+    * @param rh0 Заголовки исходного реквеста.
+    * @return Завёрнутый request header, O(1).
+    */
+  def prepareRequestHeader(rh0: RequestHeader): RequestHeader =
+    _prepareReq( rh0 )
+
+  def prepareRequest[A](request0: Request[A]): Request[A] =
+    _prepareReq( request0 )
+
+
+  /** Общий код prepare-части обработки исходного HTTP-запроса.
+    *
+    * @param rh0 Исходный реквест.
+    * @param addAttrF Функция вызова addAttr(), возвращающая T.
+    * @tparam T Тип реквеста.
+    * @return Обновлённый или исходный реквест.
+    */
+  private def _prepareReq[T <: RequestHeader](rh0: T): T = {
+    // Подменяем исходный RequestHeader.session с помощью Request wrapper'а.
+    val session0 = rh0.session
+    val session2 = prepareRequestSession( session0 )
+    if (session0 ===* session2) {
+      rh0.addAttr(RequestAttrKey.Session, Cell(session2))
+        .asInstanceOf[T]
+    } else {
+      rh0
+    }
   }
 
-  // Тут был код, патчащий исходный реквест. Но как оказалось, нельзя пропатчить сессию в реквесте: там lazy val.
-  // Поэтому проверка TTL вернулась в SessionUtil.
+
+  /** Анализ сессии и чистка от старья.
+    *
+    * @param session0 Исходная сессия.
+    * @return Почищенная или исходная сессия.
+    */
+  private def prepareRequestSession(session0: Session): Session = {
+    def logPrefix = s"prepareRequestSession(${session0.hashCode()})[${System.currentTimeMillis()}]:"
+
+    val tstampOpt = LoginTimestamp.fromSession(session0)
+
+    if (tstampOpt.isEmpty) {
+      // Нет никакого timestamp'а в сессии. Убедиться, что в передаваемой в экшен сессии нет login-данных.
+      // С учётом малых объемов данных, это быстрая read-only проверка:
+      if ( session0.data.keysIterator.exists( filteredKeySet.contains ) ) {
+        // Внезапно, в сессии без TTL обнаружились какие-то важные данные. Пока просто ругаться в логи.
+        val session2 = clearSessionLoginData(session0)
+        LOGGER.error(s"$logPrefix Session without TTL contains login data! Re-cleared session data:\n old session = ${session0.data}\n new session = $session2")
+        session2
+      } else {
+        // Ничего страшного внутри сессии не обнаружено. Просто возвращаем исходную сессию:
+        session0
+      }
+
+    } else {
+      // Если в сессии есть истёкший TTL, то нужно вернуть почищенную сессию.
+      // Есть timestamp сессии. Разобраться, что с ним надо делать...
+      val hasValidTs = tstampOpt.exists { ts =>
+        val currTstamp = LoginTimestamp.currentTstamp()
+        // Отфильтровать устаревшие timestamp'ы.
+        ts.isTimestampValid(currTstamp)
+      }
+
+      if (hasValidTs) {
+        // Таймштамп актуален и сейчас. Просто вернуть исходную сессию:
+        session0
+      } else {
+        // Таймштамп истёк -- стереть из сессии таймштамп и username, вернуть обновлённую сессию.
+        LOGGER.trace(s"$logPrefix Clearing expired session for person ${session0.get(PersonId.value)}")
+        clearSessionLoginData(session0)
+      }
+    }
+  }
 
 
   /** Статическая обработка результата работы экшенов на предмет сессии.
@@ -73,38 +145,22 @@ class ExpireSessionUtil @Inject() (
     */
   def processResult(request: RequestHeader, result: Result): Result = {
     val session0 = result.session(request)
-    val tstampOpt = LoginTimestamp.fromSession(session0)
-
-    // Отработать отсутствие таймштампа в сессии.
-    if (tstampOpt.isEmpty) {
-
-      if ( session0.data.contains(PersonId.value) ) {
-        // Сессия была только что выставлена в контроллере. Там же и ttl выставлен.
-        val session1 = session0 + (Timestamp.value -> LoginTimestamp.currentTstamp().toString)
-        result.withSession(session1)
-
-      } else {
-        // Не заниматься ковырянием сессии, если юзер не залогинен.
-        result
-      }
-
-    } else {
-
-      // Есть timestamp сессии. Разобраться, что с ним надо делать...
-      val currTstamp = LoginTimestamp.currentTstamp()
-      val newTsOpt = tstampOpt
-        // Отфильтровать устаревшие timestamp'ы.
-        .filter { _.isTimestampValid(currTstamp) }
-
-      newTsOpt.fold {
-        // Таймштамп истёк -- стереть из сессии таймштамп и username.
-        LOGGER.trace("invokeBlock(): Erasing expired session for person " + session0.get(PersonId.value))
-        val session1 = clearSessionLoginData(session0)
-        result.withSession( session1 )
+    LoginTimestamp
+      .fromSession(session0)
+      .fold {
+        if (session0.data contains PersonId.value) {
+          // Сессия была только что выставлена в контроллере. Там же и ttl выставлен.
+          val session1 = session0 + (Timestamp.value -> LoginTimestamp.currentTstamp().toString)
+          result.withSession(session1)
+        } else {
+          // Не заниматься ковырянием сессии, если юзер не залогинен.
+          result
+        }
 
       } { ts =>
         // Уже есть таймштамп, значит пора залить новый (текущий) таймштамп в сессию.
         // Не требуется пересобирать сессию, если она недостаточно устарела. Это снизит нагрузку на сервер при использовании session-фильтров.
+        val currTstamp = LoginTimestamp.currentTstamp()
         if ( Math.abs(currTstamp - ts.tstamp) <= GUESS_SESSION_AS_FRESH_SECONDS ) {
           // Не трогаем сессию. Она ещё недостаточно устарела.
           result
@@ -115,15 +171,6 @@ class ExpireSessionUtil @Inject() (
           result.withSession(session1)
         }
       }
-    }
-  }
-
-
-  /** Дедубликация кода запуска экшена на исполнение. */
-  private[sec] def _applyAction[R <: RequestHeader](request: R)(f: R => Future[Result]): Future[Result] = {
-    for (result <- f(request)) yield {
-      processResult(request, result)
-    }
   }
 
 }
@@ -135,14 +182,16 @@ class ExpireSessionUtil @Inject() (
   */
 @Singleton
 class ExpireSessionAction @Inject() (
-                                      dab                        : DefaultActionBuilder,
-                                      expireSessionUtil          : ExpireSessionUtil
+                                      defaultActionBuilder       : DefaultActionBuilder,
+                                      expireSessionUtil          : ExpireSessionUtil,
+                                      implicit private val ec    : ExecutionContext,
                                     ) {
 
-  /** Завернуть экшен. */
   def apply[A](action: Action[A]): Action[A] = {
-    dab.async(action.parser) { request =>
-      expireSessionUtil._applyAction(request)(action.apply)
+    defaultActionBuilder.async( action.parser ) { request0 =>
+      val request2 = expireSessionUtil.prepareRequest( request0 )
+      for (result <- action(request2)) yield
+        expireSessionUtil.processResult(request2, result)
     }
   }
 
@@ -157,12 +206,11 @@ class ExpireSessionFilter @Inject() (
   extends EssentialFilter
 {
 
-
   override def apply(next: EssentialAction): EssentialAction = {
-    EssentialAction { rh =>
-      for (resp0 <- next(rh)) yield {
-        expireSessionUtil.processResult(rh, resp0)
-      }
+    EssentialAction { rh0 =>
+      val rh2 = expireSessionUtil.prepareRequestHeader( rh0 )
+      for (resp0 <- next(rh2)) yield
+        expireSessionUtil.processResult(rh2, resp0)
     }
   }
 

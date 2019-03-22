@@ -1,6 +1,5 @@
 package controllers.sc
 
-import controllers.SioController
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents, MDiag}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
@@ -21,7 +20,7 @@ import util.stat.IStatUtil
  * Клиенты могут слать всякую хрень.
  */
 trait ScRemoteError
-  extends SioController
+  extends ScController
   with MacroLogsImpl
   with IBruteForceProtect
   with IMaybeAuth
@@ -29,6 +28,7 @@ trait ScRemoteError
   with IStatUtil
 {
 
+  import sioControllerApi._
   import mCommonDi._
 
   //private val _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDeadline(1)

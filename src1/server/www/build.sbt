@@ -50,7 +50,11 @@ libraryDependencies ++= {
   "com.google.guava" % "guava" % "18.+",
   // Календарь праздников
   "de.jollyday" % "jollyday" % "0.5.+",
+  
+  // Капчевание:
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
+  //"com.nappin" %% "play-recaptcha" % "2.4sio",
+
   "org.postgresql" % "postgresql" % "42.+",
   // geo
   //"org.locationtech.spatial4j" % "spatial4j" % Common.Vsn.SPATIAL4J,
@@ -124,7 +128,6 @@ routesImport ++= Seq(
   "models.im.ImOp._",
   "io.suggest.es.model.MEsUuId",
   "io.suggest.mbill2.m.gid.Gid_t",
-  "io.suggest.mbill2.m.item.typ.MItemType",
 
   "io.suggest.adv.rcvr.RcvrKey",
   "io.suggest.n2.RcvrKeyUtil.Implicits._",
@@ -154,7 +157,8 @@ routesImport ++= Seq(
   "io.suggest.model.play.qsb.QsbSeq",
   "io.suggest.sys.mdr.MdrSearchArgsJvm._",
   "models.mext.MExtServicesJvm._",
-  "io.suggest.id.login.LoginFormPagesJvm._"
+  "io.suggest.id.login.LoginFormPagesJvm._",
+  "io.suggest.captcha.MCaptchaJvm._"
 )
 
 deduplicators += { s: Seq[File] => s.headOption }

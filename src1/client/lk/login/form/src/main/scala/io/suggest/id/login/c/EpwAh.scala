@@ -3,7 +3,8 @@ package io.suggest.id.login.c
 import diode._
 import io.suggest.id.login.MEpwLoginReq
 import io.suggest.id.login.m._
-import io.suggest.id.login.m.epw.{MEpwLoginS, MEpwTextFieldS}
+import io.suggest.id.login.m.epw.MEpwLoginS
+import io.suggest.lk.m.MTextFieldS
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -60,7 +61,7 @@ class EpwAh[M](
           password      = v0.password.value,
           isPendingNow  = v0.loginReq.isPending,
           changesAcc    = MEpwLoginS.name
-            .composeLens(MEpwTextFieldS.value)
+            .composeLens(MTextFieldS.value)
             .set(m.name),
         )(v0)
         updated(v2)
@@ -79,7 +80,7 @@ class EpwAh[M](
           password      = m.password,
           isPendingNow  = v0.loginReq.isPending,
           changesAcc    = MEpwLoginS.password
-            .composeLens(MEpwTextFieldS.value)
+            .composeLens(MTextFieldS.value)
             .set(m.password),
         )(v0)
         updated(v2)
@@ -110,7 +111,7 @@ class EpwAh[M](
 
         val reqFx = Effect {
           loginApi
-            .epw2Submit(
+            .epw2LoginSubmit(
               MEpwLoginReq(
                 name          = v0.name.value,
                 password      = v0.password.value,

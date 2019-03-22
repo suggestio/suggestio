@@ -158,8 +158,7 @@ POST /lang                              @controllers.LkLang.selectLangSubmit(r: 
 GET  /lang/:lang/:hash/messages.js      @controllers.LkLang.lkMessagesJs(lang: String, hash: Int)
 
 ## Генераторы капч
-GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptcha(captchaId, cp: String)
-GET  /captcha/digital/:captchaId        @controllers.Captcha.getDigitalCaptcha(captchaId, cp: String)
+GET  /captcha/get/:captchaId            @controllers.Img.getCaptchaImg(captchaId, cp: io.suggest.captcha.MCaptchaCookiePath)
 
 ## Upload controller
 ## TODO Запилить поддержку подписанных JSON-моделей в jsRoutes. Название параметра "c" пока захардкожено на клиенте в UploadApi.
@@ -311,7 +310,10 @@ POST /sys/debug/dynimg/derivatives/del   @controllers.SysDebug.deleteAllDynImgDe
 
 ## ident v2: react-форма логина.
 GET  /id                                @controllers.Ident.loginFormPage(e: io.suggest.id.login.ILoginFormPages ?= io.suggest.id.login.ILoginFormPages.Login.default)
-POST /id2/epw/login                     @controllers.Ident.epw2Submit(r: Option[String] ?= None)
+POST /id2/epw/login                     @controllers.Ident.epw2LoginSubmit(r: Option[String] ?= None)
+## Рега по паролю. Оптимизация: затолкать id капчи в ссылку, прописав его в cookie path.
+POST /id2/epw/reg/:captchaId            @controllers.Ident.epw2RegSubmit(captchaId: String)
+## Ident v1
 GET  /id/push/:extService               @controllers.Ident.extServicePushGet(extService: io.suggest.ext.svc.MExtService)
 POST /id/push/:extService               @controllers.Ident.extServicePushPost(extService: io.suggest.ext.svc.MExtService)
 ## Далее - нужно подчистить, удалив старую форму логина первого поколения.

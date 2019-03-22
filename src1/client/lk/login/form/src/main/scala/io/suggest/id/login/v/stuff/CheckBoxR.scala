@@ -64,7 +64,7 @@ class CheckBoxR(
         val checkBox = s.checkedSomeC { checkedSomeProxy =>
           loginFormCssCtx.consume { loginFormCss =>
             val cbCss = new MuiCheckBoxClasses {
-              override val root = loginFormCss.epwFormControl.htmlClass
+              override val root = loginFormCss.formControl.htmlClass
             }
             MuiCheckBox(
               new MuiCheckBoxProps {

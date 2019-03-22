@@ -1,6 +1,6 @@
 package controllers.ident
 
-import controllers.SioController
+import controllers.ISioControllerApi
 import models.req.IReq
 import play.api.data._
 import play.api.data.Forms._
@@ -45,6 +45,7 @@ trait ChangePw
   extends ChangePwAction
   with IIsAuth
 {
+  import sioControllerApi._
 
   /** Страница с формой смены пароля. */
   def changePassword = isAuth() { implicit request =>
@@ -63,7 +64,7 @@ trait ChangePw
 /** Контексто-зависимое тело экшена, которое реализует смену пароля у пользователя.
   * Реализации должны оборачивать логику экшена в экшен, выставляя обработчики для ошибок и успехов. */
 trait ChangePwAction
-  extends SioController
+  extends ISioControllerApi
   with IMacroLogs
   with IIdentUtil
   with IScryptUtilDi
@@ -71,6 +72,7 @@ trait ChangePwAction
   with IMNodes
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import esModel.api._
 

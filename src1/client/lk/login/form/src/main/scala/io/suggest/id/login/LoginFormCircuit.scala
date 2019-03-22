@@ -3,6 +3,8 @@ package io.suggest.id.login
 import diode.react.ReactConnector
 import io.suggest.id.login.c._
 import io.suggest.id.login.m.MLoginRootS
+import io.suggest.id.login.m.reg.MEpwRegS
+import io.suggest.lk.c.CaptchaAh
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.CircuitUtil._
@@ -33,6 +35,8 @@ class LoginFormCircuit(
   private[login] val epwRW      = mkLensRootZoomRW(this, MLoginRootS.epw)
   private[login] val overallRW  = mkLensRootZoomRW(this, MLoginRootS.overall)
   private[login] val returnUrlRO = overallRW.zoom(_.returnUrl)
+  private[login] val epwRegRW   = mkLensRootZoomRW(this, MLoginRootS.epwReg)
+  private[login] val captchaRW  = mkLensZoomRW( epwRegRW, MEpwRegS.captcha )
 
 
   val loginApi: ILoginApi = new LoginApiHttp
@@ -53,11 +57,22 @@ class LoginFormCircuit(
     returnUrlRO = returnUrlRO,
   )
 
+  private val epwRegAh = new EpwRegAh(
+    modelRW     = epwRegRW,
+    loginApi    = loginApi,
+  )
+
+  private val captchaAh = new CaptchaAh(
+    modelRW     = captchaRW,
+  )
+
   override protected val actionHandler: HandlerFunction = {
     composeHandlers(
-      extAh,
+      formAh,
       epwAh,
-      formAh
+      epwRegAh,
+      extAh,
+      captchaAh,
     )
   }
 

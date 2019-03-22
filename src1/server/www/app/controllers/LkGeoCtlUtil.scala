@@ -39,12 +39,13 @@ protected class LkGeoCtlUtil @Inject() (
                                          canAccessItem           : CanAccessItem,
                                          advGeoFormUtil          : AdvGeoFormUtil,
                                          advGeoBillUtil          : AdvGeoBillUtil,
-                                         override val mCommonDi  : MCommonDi
+                                         sioControllerApi        : SioControllerApi,
+                                         mCommonDi               : MCommonDi,
                                        )
-  extends SioControllerImpl
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
+  import sioControllerApi._
   import mCommonDi._
   import streamsUtil.Implicits._
   import slick.profile.api._

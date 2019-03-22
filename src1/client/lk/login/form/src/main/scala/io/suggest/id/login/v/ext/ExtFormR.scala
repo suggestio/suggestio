@@ -5,8 +5,9 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.Css
 import io.suggest.ext.svc.{MExtService, MExtServices}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.id.login.m.{ExtLoginVia, LoginProgressR}
+import io.suggest.id.login.m.ExtLoginVia
 import io.suggest.id.login.m.ext.MExtLoginFormS
+import io.suggest.id.login.v.stuff.LoginProgressR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
