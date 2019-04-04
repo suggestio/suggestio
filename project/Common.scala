@@ -277,13 +277,13 @@ object Common {
    *  Версия react.js, используемая в проекте. 
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactJsVsn         = "16.5.1"
+  val reactJsVsn         = "16.7.0"
 
   /** 
    *  Версия scalajs-react, используемая в проекте.
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactSjsVsn        = "1.3.1" // И контроллировать суффикс diodeReactVsn ниже!
+  val reactSjsVsn        = "1.4.1" // И контроллировать суффикс diodeReactVsn ниже!
 
   /** 
    *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.

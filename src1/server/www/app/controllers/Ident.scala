@@ -287,24 +287,24 @@ class Ident @Inject() (
           // Тут есть несколько вариантов: юзер не существует, юзер уже существует.
           _ <- {
             implicit val ctx = implicitly[Context]
-            val msg = mailer.instance
-            msg.setRecipients( email1 )
-            msg.setSubject {
-              val prefixMsgCode =
-                if (isReg) "reg.emailpw.email.subj"
-                else MsgCodes.`Password.recovery`
-              ctx.messages(prefixMsgCode) + " | " + MsgCodes.`Suggest.io`
-            }
-            val tplQs = MEmailRecoverQs(email1)
-
-            val tpl =
-              if (isReg) emailRegMsgTpl
-              else emailPwRecoverTpl
-            val html = tpl.render(tplQs, ctx)
-            msg.setHtml(
-              htmlCompressUtil.html4email( html )
-            )
-            msg.send()
+            mailer
+              .instance
+              .setRecipients( email1 )
+              .setSubject {
+                val prefixMsgCode =
+                  if (isReg) "reg.emailpw.email.subj"
+                  else MsgCodes.`Password.recovery`
+                s"${ctx.messages(prefixMsgCode)} | ${MsgCodes.`Suggest.io`}"
+              }
+              .setHtml {
+                val tplQs = MEmailRecoverQs(email1)
+                val tpl =
+                  if (isReg) emailRegMsgTpl
+                  else emailPwRecoverTpl
+                val html = tpl.render(tplQs, ctx)
+                htmlCompressUtil.html4email( html )
+              }
+              .send()
           }
 
         } yield {

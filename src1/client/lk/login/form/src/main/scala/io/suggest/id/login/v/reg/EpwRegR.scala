@@ -40,7 +40,7 @@ class EpwRegR(
 
   class Backend( $: BackendScope[Props, State] ) {
 
-    private def _onFormSubmit: Callback =
+    private val _onFormSubmit: Callback =
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, EpwRegSubmit )
 
     def render(p: Props, s: State): VdomElement = {

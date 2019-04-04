@@ -5,6 +5,7 @@ import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
 import diode.react.ReactPot._
+import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
 import io.suggest.jd.render.v.{JdCss, JdR}
@@ -78,9 +79,8 @@ class NodeRenderR(
                     Messages( MsgCodes.`Nothing.to.moderate` ),
                   ),
                   <.span(
-                    Mui.SvgIcons.WbSunny()()(
-                      ^.float.right,
-                    )
+                    ^.`class` := Css.Floatt.RIGHT,
+                    Mui.SvgIcons.WbSunny()(),
                   ),
                   <.br,
                   MuiTypoGraphy(

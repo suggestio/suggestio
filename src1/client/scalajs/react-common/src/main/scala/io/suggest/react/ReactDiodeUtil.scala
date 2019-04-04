@@ -3,8 +3,7 @@ package io.suggest.react
 import diode._
 import diode.data.Pot
 import diode.react.ModelProxy
-import japgolly.scalajs.react.{BackendScope, Callback, Children, ScalaComponent, UpdateSnapshot}
-import japgolly.scalajs.react.extra.Reusability
+import japgolly.scalajs.react.{BackendScope, Callback, Children, Reusability, ScalaComponent, UpdateSnapshot}
 import japgolly.scalajs.react.vdom.VdomElement
 
 /**

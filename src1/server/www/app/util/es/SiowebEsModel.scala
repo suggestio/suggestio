@@ -38,7 +38,6 @@ class SiowebEsModel @Inject() (
 {
 
   import mCommonDi._
-  import LOGGER._
   import esModel.api._
 
   // Constructor
@@ -70,7 +69,7 @@ class SiowebEsModel @Inject() (
   def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS): Future[Boolean] = {
     val ignoreExist = configuration.getOptional[Boolean]("es.mapping.model.ignore_exist")
       .getOrElseFalse
-    trace("putAllMappings(): ignoreExists = " + ignoreExist)
+    LOGGER.trace("putAllMappings(): ignoreExists = " + ignoreExist)
     esModel.putAllMappings(models, ignoreExist)
   }
 
@@ -80,12 +79,12 @@ class SiowebEsModel @Inject() (
   def importModelsFromRemote(addrs: Seq[TransportAddress], esModels: Seq[EsModelCommonStaticT] = ES_MODELS): Future[CopyContentResult] = {
     val logPrefix = "importModelsFromRemote():"
     val esModelsCount = esModels.size
-    trace(s"$logPrefix starting for $esModelsCount models: ${esModels.map(_.getClass.getSimpleName).mkString(", ")}")
+    LOGGER.trace(s"$logPrefix starting for $esModelsCount models: ${esModels.map(_.getClass.getSimpleName).mkString(", ")}")
     val fromClient = try {
       SioEsUtil.newTransportClient(addrs, clusterName = None)
     } catch {
       case ex: Throwable =>
-        error(s"Failed to create transport client: addrs=$addrs", ex)
+        LOGGER.error(s"Failed to create transport client: addrs=$addrs", ex)
         throw ex
     }
     val toClient = mCommonDi.esClient
@@ -93,9 +92,9 @@ class SiowebEsModel @Inject() (
       val copyResultFut = esM.copyContent(fromClient, toClient)
       copyResultFut.onComplete {
         case Success(result) =>
-          info(s"$logPrefix Copy finished for model ${esM.getClass.getSimpleName}. Total success=${result.success} failed=${result.failed}")
+          LOGGER.info(s"$logPrefix Copy finished for model ${esM.getClass.getSimpleName}. Total success=${result.success} failed=${result.failed}")
         case Failure(ex) =>
-          error(s"$logPrefix Copy failed for model ${esM.getClass.getSimpleName}", ex)
+          LOGGER.error(s"$logPrefix Copy failed for model ${esM.getClass.getSimpleName}", ex)
       }
       copyResultFut
     }
@@ -105,7 +104,7 @@ class SiowebEsModel @Inject() (
         failed  = results.iterator.map(_.failed).sum
       )
       import result._
-      info(s"$logPrefix Copy of all $esModelsCount es-models finished. Total=${success + failed} success=$success failed=$failed")
+      LOGGER.info(s"$logPrefix Copy of all $esModelsCount es-models finished. Total=${success + failed} success=$success failed=$failed")
       result
     }
   }
@@ -121,15 +120,15 @@ class SiowebEsModel @Inject() (
     val futInx = esModel.ensureEsModelsIndices(esModels)
     val logPrefix = "initializeEsModels(): "
     futInx.onComplete {
-      case Success(result) => debug(logPrefix + "ensure() -> " + result)
-      case Failure(ex)     => error(logPrefix + "ensureIndex() failed", ex)
+      case Success(result) => LOGGER.debug(s"$logPrefix ensure() -> $result")
+      case Failure(ex)     => LOGGER.error(s"$logPrefix ensureIndex() failed", ex)
     }
     val futMappings = futInx.flatMap { _ =>
       putAllMappings(esModels)
     }
     futMappings.onComplete {
-      case Success(_)  => info(logPrefix + "Finishied successfully.")
-      case Failure(ex) => error(logPrefix + "Failure", ex)
+      case Success(_)  => LOGGER.info(s"$logPrefix Finishied successfully.")
+      case Failure(ex) => LOGGER.error(s"$logPrefix Failure", ex)
     }
     // Это код обновления на следующую версию. Его можно держать и после обновления.
     /*
