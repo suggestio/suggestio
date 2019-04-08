@@ -1,5 +1,7 @@
 package controllers
 
+import java.util.UUID
+
 import javax.inject.{Inject, Singleton}
 import controllers.ident._
 import io.suggest.ctx.CtxData
@@ -263,6 +265,7 @@ class Ident @Inject() (
 
         // Проверить, что там с почтовым адресом?
         for {
+
           // Поиск юзеров с таким вот email:
           userAlreadyExists <- mNodes.dynExists {
             new MNodeSearchDfltImpl {
@@ -278,13 +281,16 @@ class Ident @Inject() (
             }
           }
 
+          // Разобраться, есть ли уже юзеры с таким email?
+          // Тут есть несколько вариантов: юзер не существует, юзер уже существует.
           isReg = {
             LOGGER.trace(s"$logPrefix userAlreadyExists?$userAlreadyExists email=$email1")
             !userAlreadyExists
           }
 
-          // Разобраться, есть ли уже юзеры с таким email?
-          // Тут есть несколько вариантов: юзер не существует, юзер уже существует.
+          // Рандомная строка, выполняющая роль nonce + привязка письма к сессии текущего юзера.
+          randomUuid = UUID.randomUUID()
+
           _ <- {
             implicit val ctx = implicitly[Context]
             mailer
@@ -297,7 +303,12 @@ class Ident @Inject() (
                 s"${ctx.messages(prefixMsgCode)} | ${MsgCodes.`Suggest.io`}"
               }
               .setHtml {
-                val tplQs = MEmailRecoverQs(email1)
+                val tplQs = MEmailRecoverQs(
+                  email         = email1,
+                  // Привязать сессию текущего юзера к письму:
+                  nonce         = randomUuid,
+                  checkSession  = true,
+                )
                 val tpl =
                   if (isReg) emailRegMsgTpl
                   else emailPwRecoverTpl
@@ -309,10 +320,24 @@ class Ident @Inject() (
 
         } yield {
           LOGGER.debug(s"$logPrefix Sent message to $email1 isReg?$isReg")
+          // TODO Залить id в текущую сессию для привязки сессии к письму?
           NoContent
+            .addingToSession(
+              MSessionKeys.ExtLoginData.value -> randomUuid.toString
+            )
         }
       }
     }
+  }
+
+
+  /** Возврат из регистрации или восстановления пароля.
+    *
+    * @param qs Данные регистрации или восстановления пароля.
+    * @return Экшен, рендерящий react-форму окончания регистрации.
+    */
+  def epwReturn(qs: MEmailRecoverQs) = csrf.Check {
+    ???
   }
 
 }

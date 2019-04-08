@@ -13,6 +13,7 @@ import io.suggest.es.util.SioEsUtil
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import javax.inject.{Inject, Singleton}
 import org.elasticsearch.action.DocWriteResponse.Result
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
@@ -23,8 +24,10 @@ import org.elasticsearch.client.Client
 import play.api.cache.AsyncCacheApi
 import japgolly.univeq._
 import org.elasticsearch.ResourceNotFoundException
+import org.elasticsearch.action.DocWriteRequest
 import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
+import org.elasticsearch.action.support.WriteRequest.RefreshPolicy
 import org.elasticsearch.cluster.metadata.{IndexMetaData, MappingMetaData}
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.unit.TimeValue
@@ -877,9 +880,18 @@ final class EsModel @Inject()(
         * @return Фьючерс с новым/текущим id
         *         VersionConflictException если транзакция в текущем состоянии невозможна.
         */
-      def save(m: T1): Future[String] = {
+      def save(m: T1): Future[String] =
+        save(m, EsSaveOpts.empty)
+      def save(m: T1, opts: EsSaveOpts): Future[String] = {
         model._save(m) { () =>
-          prepareIndex(m)
+          val reqB = prepareIndex(m)
+
+          for (refreshPolicy <- opts.refreshPolicy)
+            reqB.setRefreshPolicy( refreshPolicy )
+          for (opType <- opts.opType)
+            reqB.setOpType( opType )
+
+          reqB
             .executeFut()
             .map { _.getId }
         }
@@ -1517,6 +1529,73 @@ final class EsModel @Inject()(
       def reget(inst0: T1): Future[Option[T1]] =
         getById(inst0.id.get)
 
+
+      /** Сохранение нового инстанса с проверкой уникальности по указанной функции.
+        * Т.к. ES не предоставляет транзакции, то можно эмулировать через некрасивую цепочку:
+        * count + save + refresh + count.
+        * Конечно, это можно явно обойти через проброс операций в bulkRequest/bulkProcessor,
+        * но это уже на совести программиста.
+        *
+        * @param countQuery Функция подсчёта кол-ва элементов с требованием уникальности.
+        * @param newInstance Сохраняемый инстанс, в котором содержаться данные, требующие уникальности.
+        * @return Фьючерс с сохранённым id.
+        *         Фьючерс с [[EsUniqCondBrokenException]], если требование уникальности было нарушено.
+        */
+      def saveUniq(countQuery: QueryBuilder)(newInstance: T1): Future[String] = {
+        lazy val logPrefix = s"$model.saveUniq()${newInstance.id.fold("")("#" + _)}#${System.currentTimeMillis()}:"
+
+        for {
+          // Предварительный рефреш отсутствует для снижения нагрузки.
+          // подсчёт текущего кол-ва элементов, удовлетворяющих условию уникальности:
+          countExisting <- model.countByQuery( countQuery )
+          if countExisting ==* 0L
+
+          // Сохраняем.
+          savedId <- model.save( newInstance, EsSaveOpts(
+            // Вместо ручного рефреша - дожидаемся общего рефреша по таймеру, чтобы нельзя было искусственно/случайно cпровоцировать refresh-флуд:
+            refreshPolicy = Some( RefreshPolicy.WAIT_UNTIL ),
+          ))
+
+          // И снова подсчёт текущего кол-ва элементов, удовлетворяющих условию уникальности:
+          countExisting2 <- {
+            val fut = model.countByQuery( countQuery )
+            LOGGER.debug(s"$logPrefix Saved #$savedId . Re-checking uniq.condition...")
+            fut
+          }
+
+          _ <- {
+            if (countExisting2 ==* 1L) {
+              Future.successful( None )
+
+            } else {
+              val deleteByIdFut = deleteById( savedId )
+
+              if (countExisting2 >= 2L)
+                LOGGER.debug(s"$logPrefix Found $countExisting2 existing docs, treated as uniq. Will erase previosly saved doc#$savedId")
+              else
+                // Функция подсчёта вернула 0 или меньше - это ошибка в подсчёте:
+                LOGGER.error(s"$logPrefix uniq-cond is invalid: returned invalid value $countExisting2 after saving #$savedId. Will erase it...")
+
+              deleteByIdFut.transform { tryIsDeleted =>
+                val msg = s"$logPrefix #$savedId breaks uniq condition and was deleted?${tryIsDeleted getOrElse false}"
+                LOGGER.warn(msg)
+                val ex = EsUniqCondBrokenException(
+                  model         = model,
+                  savedIdOpt    = Some(savedId),
+                  isDeletedOpt  = tryIsDeleted.toOption,
+                  exOpt         = tryIsDeleted.failed.toOption,
+                )
+                Failure(ex)
+              }
+            }
+          }
+
+        } yield {
+          LOGGER.trace(s"$logPrefix Success. Saved as #$savedId")
+          savedId
+        }
+      }
+
     }
 
     implicit final class EsModelStaticOps[T1 <: EsModelT] ( override val model: EsModelStaticT { type T = T1 } )
@@ -1986,4 +2065,37 @@ trait EsModelVsnedT[T <: EsModelVsnedT[T]] extends EsModelCommonT {
   */
 trait IEsSearchHelper[A <: DynSearchArgs, R] {
   def run(args: A): Future[R]
+}
+
+
+/** Модель ошибки нарушения уникальности. */
+final case class EsUniqCondBrokenException(
+                                            model        : EsModelCommonStaticT,
+                                            savedIdOpt   : Option[String],
+                                            isDeletedOpt : Option[Boolean],
+                                            exOpt        : Option[Throwable],
+                                          )
+  extends RuntimeException
+{
+
+  override def getMessage: String =
+    s"$model${savedIdOpt.fold("")("#" + _ + " ")}breaks uniq condition and was deleted?${isDeletedOpt.getOrElseFalse}"
+
+  override def getCause: Throwable =
+    exOpt getOrElse super.getCause
+
+}
+
+
+/** Модель необязательных опций для save()-метода.
+  *
+  * @param refreshPolicy Политика рефреша шард после сохранения.
+  * @param opType Тип операции записи документа.
+  */
+case class EsSaveOpts(
+                       refreshPolicy    : Option[RefreshPolicy]             = None,
+                       opType           : Option[DocWriteRequest.OpType]    = None,
+                     )
+case object EsSaveOpts {
+  val empty = apply()
 }

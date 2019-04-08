@@ -38,9 +38,8 @@ object ReactDiodeUtil {
   /** Sjs-react поддержка для связывания FastEq и Reusability классов. */
   implicit class FastEqExtOps[A](val feq: FastEq[A]) extends AnyVal {
 
-    def reusability: Reusability[A] = {
-      Reusability[A] { feq.eqv }
-    }
+    def reusability: Reusability[A] =
+      Reusability[A]( feq.eqv )
 
   }
 
