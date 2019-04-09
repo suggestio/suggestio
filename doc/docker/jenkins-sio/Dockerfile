@@ -1,5 +1,8 @@
 ## https://wiki.archlinux.org/index.php/Jenkins
 ## https://github.com/jenkinsci/docker/blob/master/Dockerfile
+##
+## Start:
+## docker run -p 8080:8080 -p 50000:50000 sio/jenkins-sio
 
 FROM sio/os-base-www
 MAINTAINER Konstantin Nikiforov konstantin.nikiforov@cbca.ru
@@ -23,7 +26,7 @@ RUN mkdir -p $JENKINS_HOME \
   && groupadd -g ${gid} ${group} \
   && useradd -d "$JENKINS_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user}
 
-RUN pacman -Sy --noconfirm jenkins git npm nodejs yarn sbt curl
+RUN sudo -u $PACWRAP $PACWRAP -Sy --noconfirm jenkins git npm nodejs yarn sbt tini
 
 # Jenkins home directory is a volume, so configuration and build history
 # can be persisted and survive image upgrades
@@ -33,17 +36,6 @@ VOLUME $JENKINS_HOME
 # to set on a fresh new installation. Use it to bundle additional plugins
 # or config file with your custom jenkins Docker image.
 RUN mkdir -p /usr/share/jenkins/ref/init.groovy.d
-
-# Use tini as subreaper in Docker container to adopt zombie processes
-## TODO AUR yaourt -S tini
-ARG TINI_VERSION=v0.18.0
-COPY tini_pub.gpg ${JENKINS_HOME}/tini_pub.gpg
-RUN curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -o /sbin/tini \
-  && curl -fsSL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -o /sbin/tini.asc \
-  && gpg --no-tty --import ${JENKINS_HOME}/tini_pub.gpg \
-  && gpg --verify /sbin/tini.asc \
-  && rm -rf /sbin/tini.asc /root/.gnupg \
-  && chmod +x /sbin/tini
 
 # jenkins version being bundled in this docker image
 ARG JENKINS_VERSION
