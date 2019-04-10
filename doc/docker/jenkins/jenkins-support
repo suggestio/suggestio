@@ -33,7 +33,7 @@ get_plugin_version() {
     echo "$version"
 }
 
-# Copy files from /usr/share/jenkins/ref into $JENKINS_HOME
+# Copy files from /usr/share/java/jenkins/ref into $JENKINS_HOME
 # So the initial JENKINS-HOME is set with expected content.
 # Don't override, as this is just a reference setup, and use from UI
 # can then change this, upgrade plugins, etc.

@@ -79,7 +79,7 @@ else
     fi
 fi
 
-REF=/usr/share/jenkins/ref/plugins
+REF=/usr/share/java/jenkins/ref/plugins
 mkdir -p $REF
 COUNT_PLUGINS_INSTALLED=0
 while read -r spec || [ -n "$spec" ]; do
