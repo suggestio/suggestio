@@ -2,7 +2,8 @@
 ## https://github.com/jenkinsci/docker/blob/master/Dockerfile
 ##
 ## Start:
-## docker run -p 8080:8080 -p 50000:50000 sio/jenkins-sio
+## docker volume create jenkins_home
+## docker run -p 8080:8080 -p 50000:50000 -v jenkins_home:/var/lib/jenkins sio/jenkins-sio
 
 FROM sio/os-base-www
 MAINTAINER Konstantin Nikiforov konstantin.nikiforov@cbca.ru
