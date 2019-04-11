@@ -5,7 +5,7 @@
 ## docker volume create jenkins_home
 ## docker run -p 8080:8080 -p 50000:50000 -v jenkins_home:/var/lib/jenkins sio/jenkins-sio
 
-FROM sio/os-base-www
+FROM docker.suggest.io:5000/sio/os-base-www
 MAINTAINER Konstantin Nikiforov konstantin.nikiforov@cbca.ru
 
 ARG user=jenkins
@@ -25,7 +25,7 @@ ENV JENKINS_HOME=$JENKINS_HOME \
 RUN mkdir -p $JENKINS_HOME && \
   chown ${uid}:${gid} $JENKINS_HOME && \
   groupadd -g ${gid} ${group} && \
-  useradd -d "$JENKINS_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user}
+  useradd --system -d "$JENKINS_HOME" -u ${uid} -g ${gid} -m -s /bin/bash ${user}
 
 RUN $PACMAN -Sy --noconfirm jenkins git npm nodejs yarn sbt
 

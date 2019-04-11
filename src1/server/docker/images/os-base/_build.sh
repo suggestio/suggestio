@@ -1,1 +1,1 @@
-docker build -t sio/os-base:latest .
+docker build -t docker.suggest.io:5000/sio/os-base:latest .

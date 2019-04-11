@@ -1,1 +1,1 @@
-docker build -t sio/jenkins-sio:latest .
+docker build -t docker.suggest.io:5000/sio/jenkins-sio:latest .
