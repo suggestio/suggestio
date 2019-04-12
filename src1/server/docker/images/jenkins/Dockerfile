@@ -6,7 +6,7 @@
 ## docker run -p 8080:8080 -p 50000:50000 -v jenkins_home:/var/lib/jenkins sio/jenkins-sio
 
 FROM docker.suggest.io:5000/sio/os-base-www
-MAINTAINER Konstantin Nikiforov konstantin.nikiforov@cbca.ru
+LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ARG user=jenkins
 ARG group=jenkins

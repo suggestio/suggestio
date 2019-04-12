@@ -1,5 +1,7 @@
+## Образ контейнера для сборки sioweb из sbt.
+
 FROM docker.suggest.io:5000/sio/os-base-www
-MAINTAINER Konstantin Nikiforov konstantin.nikiforov@cbca.ru
+LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## remove all useless stuff
 RUN sio-finalize-container.sh

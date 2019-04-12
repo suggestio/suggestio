@@ -5,7 +5,7 @@
 ##   docker run -p 3310:3310 -v sio-clamav:/var/lib/clamav sio/clamav
 
 FROM docker.suggest.io:5000/sio/os-base
-MAINTAINER Konstantin Nikiforov konstantin.nikiforov@cbca.ru
+LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## В контейнере недоступен systemd-sysusers, поэтому создать юзера внучную:
 ARG user=elasticsearch

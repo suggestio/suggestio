@@ -3,7 +3,7 @@
 ## Всё остальное должно быть реализовано на уровне volume/master-докерфайлов.
 
 FROM docker.suggest.io:5000/sio/os-base
-MAINTAINER Konstantin Nikiforov konstantin.nikiforov@cbca.ru
+LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## В контейнере недоступен systemd-sysusers, поэтому создать юзера внучную:
 ARG user=docker-registry

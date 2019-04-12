@@ -1,7 +1,7 @@
 ## Базовый образ для образов, работающих с sioweb, в т.ч. jenkins и т.д.
 
 FROM docker.suggest.io:5000/sio/os-base
-MAINTAINER Konstantin Nikiforov konstantin.nikiforov@cbca.ru
+LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## Установить всю необходимую утиль
 RUN $PACMAN --noconfirm -Sy imagemagick unzip jre8-openjdk-headless wkhtmltopdf xorg-server-xvfb \

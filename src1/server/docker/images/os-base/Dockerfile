@@ -1,5 +1,7 @@
+## Базовый образ для сборке всех остальных обычных контейнеров.
+
 FROM archlinux/base
-MAINTAINER Konstantin Nikiforov konstantin.nikiforov@cbca.ru
+LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 RUN : \
   ## Install locales
