@@ -3,6 +3,7 @@ package io.suggest.swfs.client.play
 import javax.inject.{Inject, Singleton}
 import com.google.inject.ImplementedBy
 import io.suggest.di.IWsClient
+import io.suggest.env.DockerEnv
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import play.api.Configuration
@@ -72,14 +73,21 @@ class SwfsClientWs @Inject() (
    * @return ["localhost:9333", "127.5.5.5:9334"]
    */
   val MASTERS: List[String] = {
-    conf.getOptional[Seq[String]](MASTERS_CK)
-      .filter(_.nonEmpty)
-      .map { _.toList }
-      .getOrElse {
-        val dflt = "localhost:9333"
-        LOGGER.warn("SeaweedFS masters are undefined/empty. Please define in config:\n  " +
-          MASTERS_CK + " = [\"" + dflt + "\"]" )
-        dflt :: Nil
+    DockerEnv
+      .getLinkHostPort( "SWFS_MASTER", port = 9333, proto = "TCP" )
+      .fold {
+        conf.getOptional[Seq[String]](MASTERS_CK)
+          .filter(_.nonEmpty)
+          .map { _.toList }
+          .getOrElse {
+            val dflt = "localhost:9333"
+            LOGGER.warn("SeaweedFS masters are undefined/empty. Please define in config:\n  " +
+              MASTERS_CK + " = [\"" + dflt + "\"]" )
+            dflt :: Nil
+          }
+      } { case (host, port) =>
+        LOGGER.info(s"Docker env: Master => $host:$port")
+        s"$host:$port" :: Nil
       }
   }
 

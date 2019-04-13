@@ -215,13 +215,12 @@ includeFilter in filter := {
 
 
 // https://www.scala-sbt.org/sbt-native-packager/formats/docker.html
-// Docker args. Ports: http, ssl, TODO set stable ports in elasticsearch.yml
 dockerExposedPorts := Seq(9000)
 
 // Используем модифицированный дистр.
 dockerBaseImage := "docker.suggest.io:5000/sio/os-base-www"
 
-packageName in Docker := "sio/www"
+packageName in Docker := "docker.suggest.io:5000/sio/www"
 
 version in Docker := "latest"
 
@@ -230,6 +229,8 @@ defaultLinuxInstallLocation in Docker := "/opt/sio"
 
 // TODO Сделать одну главную папку на всё монтируемое. Там же и конфиг, и long-tmp
 dockerExposedVolumes += "/opt/sio/picture"
+
+dockerUpdateLatest := true
 
 
 // Есть ассеты, которые нет смысла сжимать. Правда, они в /public, но на всякий случай сделаем.

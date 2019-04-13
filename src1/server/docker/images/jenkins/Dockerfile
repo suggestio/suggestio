@@ -3,7 +3,7 @@
 ##
 ## Start:
 ## docker volume create jenkins_home
-## docker run -p 8080:8080 -p 50000:50000 -v jenkins_home:/var/lib/jenkins sio/jenkins-sio
+## docker run -p 8090:8090 -p 50000:50000 -v jenkins_home:/var/lib/jenkins sio/jenkins-sio
 
 FROM docker.suggest.io:5000/sio/os-base-www
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
@@ -12,7 +12,8 @@ ARG user=jenkins
 ARG group=jenkins
 ARG uid=32463
 ARG gid=$uid
-ARG http_port=8080
+ARG http_port=8090
+## TODO Забить этот же порт в /etc/conf.d/jenkins
 ARG agent_port=50000
 ARG JENKINS_HOME=/var/lib/jenkins
 

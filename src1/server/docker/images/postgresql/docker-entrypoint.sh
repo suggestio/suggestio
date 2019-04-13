@@ -106,11 +106,6 @@ if [ "$1" = 'postgres' ]; then
 	    echo "Waiting master for initial recovery..."
 	    sleep 1s
 	done
-
-	#cat >> ${PGDATA}/postgresql.conf <<-EOF
-	#	listen_addresses = '*'
-	#	EOF
-
 	
       fi
 

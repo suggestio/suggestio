@@ -2,13 +2,14 @@ package io.suggest.es.util
 
 import java.net.InetSocketAddress
 
+import io.suggest.env.DockerEnv
 import javax.inject.{Inject, Provider, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.client.Client
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.transport.InetSocketTransportAddress
 import play.api.Configuration
-import play.api.inject.ApplicationLifecycle
+import play.api.inject.{ApplicationLifecycle, Injector}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -51,10 +52,9 @@ trait EsClientT
   */
 @Singleton
 class TransportEsClient @Inject() (
-  configuration   : Configuration,
-  lifecycle       : ApplicationLifecycle,
-  implicit val ec : ExecutionContext
-)
+                                    injector        : Injector,
+                                    implicit val ec : ExecutionContext
+                                  )
   extends EsClientT
   with MacroLogsImpl
 {
@@ -66,25 +66,35 @@ class TransportEsClient @Inject() (
 
     // Закинуть имя кластера из оригинального конфига.
     // TODO Переименовать параметры sio-конфига во что-то, начинающееся с es.client.
+    val configuration = injector.instanceOf[Configuration]
     val clusterNameOpt = configuration.getOptional[String]("cluster.name")
     LOGGER.debug(s"$logPrefix Cluster name: ${clusterNameOpt.orNull}")
 
     // Законнектить свеженький клиент согласно адресам из конфига, если они там указаны.
-    val addrs = configuration
-      .getOptional[Seq[String]]("es.client.transport.addrs")
-      .fold [Iterator[InetSocketAddress]] {
-        val local = new InetSocketAddress(
-          "localhost",
-          EsClientUtil.TRANSPORT_PORT_DFTL
-        )
-        Iterator.single(local)
-      } { addrsStrs =>
-        addrsStrs
-          .iterator
-          .filter(_.nonEmpty)
-          .map { addrStr =>
-            EsClientUtil.parseHostPortStr(addrStr)
+
+    val addrs = DockerEnv
+      .getLinkHostPort( "ELASTICSEARCH", port = EsClientUtil.TRANSPORT_PORT_DFTL )
+      .fold {
+        configuration
+          .getOptional[Seq[String]]("es.client.transport.addrs")
+          .fold [Iterator[InetSocketAddress]] {
+            val local = new InetSocketAddress(
+              "localhost",
+              EsClientUtil.TRANSPORT_PORT_DFTL
+            )
+            Iterator.single(local)
+          } { addrsStrs =>
+            addrsStrs
+              .iterator
+              .filter(_.nonEmpty)
+              .map { addrStr =>
+                EsClientUtil.parseHostPortStr(addrStr)
+              }
           }
+      } { case (linkAddr, linkPort) =>
+        LOGGER.info(s"$logPrefix Docker env found: $linkAddr:$linkPort, ignoring other configuration.")
+        val sockAddr = new InetSocketAddress(linkAddr, linkPort)
+        Iterator.single( sockAddr )
       }
       .map( new InetSocketTransportAddress(_) )
       // TODO ES-6.0+: .map( new TransportAddress(_) )
@@ -104,7 +114,7 @@ class TransportEsClient @Inject() (
   _installClient()
 
   // При завершении работы надо зарубить клиент.
-  lifecycle.addStopHook { () =>
+  injector.instanceOf[ApplicationLifecycle].addStopHook { () =>
     Future {
       try {
         for ( c <- Option(_trClient) ) {

@@ -37,8 +37,8 @@ RUN sio-finalize-container.sh
 
 ARG HOMEDIR=/var/lib/elasticsearch
 
-EXPOSE 9200/tcp
-EXPOSE 9300/tcp
+EXPOSE 9200/tcp \
+       9300/tcp
 
 ## Создать необходимые для работы директории:
 RUN for dir in /var/log/elasticsearch $HOMEDIR /run/elasticsearch; do \
