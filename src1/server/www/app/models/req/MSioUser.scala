@@ -16,7 +16,6 @@ import io.suggest.mbill2.m.item.MItems
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.usr.MSuperUsers
-import org.elasticsearch.client.Client
 import play.api.db.slick.DatabaseConfigProvider
 import util.adn.NodesUtil
 import util.billing.Bill2Util
@@ -274,7 +273,6 @@ class MsuStatic @Inject()(
                            val esModel                   : EsModel,
                            override val _slickConfigProvider : DatabaseConfigProvider,
                            implicit val ec               : ExecutionContext,
-                           implicit val esClient         : Client
 )
   extends ISlickDbConfig
 

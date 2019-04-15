@@ -2,7 +2,7 @@ package util.es
 
 import javax.inject.Inject
 import io.suggest.es.model.{CopyContentResult, EsModel, EsModelCommonStaticT}
-import io.suggest.es.util.{EsClientUtil, SioEsUtil}
+import io.suggest.es.util.{EsClientUtil, IEsClient, SioEsUtil}
 import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.m.MAsymKeys
@@ -14,6 +14,7 @@ import models.mcal.MCalendars
 import models.mproj.ICommonDi
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import play.api.Configuration
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -32,12 +33,13 @@ class SiowebEsModel @Inject() (
                                 mExtTargets         : MExtTargets,
                                 mAiMads             : MAiMads,
                                 mAsymKeys           : MAsymKeys,
-                                mCommonDi           : ICommonDi
+                                configuration             : Configuration,
+                                implicit private val ec   : ExecutionContext,
+                                esClientP                 : IEsClient,
                               )
   extends MacroLogsImplLazy
 {
 
-  import mCommonDi._
   import esModel.api._
 
   // Constructor
@@ -87,7 +89,7 @@ class SiowebEsModel @Inject() (
         LOGGER.error(s"Failed to create transport client: addrs=$addrs", ex)
         throw ex
     }
-    val toClient = mCommonDi.esClient
+    val toClient = esClientP.esClient
     val resultFut = Future.traverse(esModels) { esM =>
       val copyResultFut = esM.copyContent(fromClient, toClient)
       copyResultFut.onComplete {

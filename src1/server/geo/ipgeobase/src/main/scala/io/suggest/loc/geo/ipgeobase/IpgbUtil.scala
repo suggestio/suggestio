@@ -1,11 +1,11 @@
 package io.suggest.loc.geo.ipgeobase
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.{EsModel, IEsModelDiVal}
+import io.suggest.es.model.EsModel
 import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult, MGeoPoint}
 import io.suggest.util.logs.MacroLogsImpl
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -20,13 +20,13 @@ class IpgbUtil @Inject() (
                            mIpRangesModel : MIpRangesModel,
                            mCities        : MCities,
                            mIpRanges      : MIpRanges,
-                           mCommonDi      : IEsModelDiVal,
+                           implicit private val ec: ExecutionContext,
+
                          )
   extends IGeoFindIp
   with MacroLogsImpl
 {
 
-  import mCommonDi._
   import esModel.api._
   import mIpRangesModel.api._
 

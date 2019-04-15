@@ -4,14 +4,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import io.suggest.common.tags.TagFacesUtil
 import io.suggest.common.tags.search.{MTagFound, MTagsFound}
-import io.suggest.es.model.{EsModel, IEsModelDiVal}
+import io.suggest.es.model.EsModel
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import models.mlk.MLkTagsSearchQs
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -21,12 +21,11 @@ import scala.concurrent.Future
   */
 @Singleton
 class LkTagsSearchUtil @Inject() (
-                                   esModel: EsModel,
-                                   mNodes    : MNodes,
-                                   mCommonDi : IEsModelDiVal
+                                   esModel                    : EsModel,
+                                   mNodes                     : MNodes,
+                                   implicit private val ec    : ExecutionContext,
                                  ) {
 
-  import mCommonDi._
   import esModel.api._
 
 

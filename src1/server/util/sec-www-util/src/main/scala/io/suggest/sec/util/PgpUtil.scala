@@ -3,13 +3,14 @@ package io.suggest.sec.util
 import java.io.{InputStream, OutputStream}
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.{EsModel, IEsModelDiVal}
+import io.suggest.es.model.EsModel
 import io.suggest.sec.m.{IAsymKey, MAsymKey, MAsymKeys}
 import io.suggest.util.logs.MacroLogsDyn
 import io.trbl.bcpg.{KeyFactory, KeyFactoryFactory, SecretKey}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import play.api.Configuration
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -29,14 +30,14 @@ import scala.concurrent.Future
  */
 @Singleton
 class PgpUtil @Inject() (
-                          esModel     : EsModel,
-                          mAsymKeys   : MAsymKeys,
-                          mCommonDi   : IEsModelDiVal
+                          esModel                 : EsModel,
+                          mAsymKeys               : MAsymKeys,
+                          configuration           : Configuration,
+                          implicit private val ec : ExecutionContext,
                         )
   extends MacroLogsDyn
 {
 
-  import mCommonDi._
   import esModel.api._
 
   maybeInit()

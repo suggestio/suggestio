@@ -3,6 +3,7 @@ package util.ext
 import java.net.URL
 
 import io.suggest.es.model.EsModel
+import io.suggest.es.util.IEsClient
 import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.MNodeExtras
@@ -14,9 +15,8 @@ import io.suggest.text.util.UrlUtil
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.vid.ext.{MVideoExtInfo, VideoExtUrlParsers}
 import javax.inject.{Inject, Singleton}
-import models.mproj.ICommonDi
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 /**
@@ -30,12 +30,13 @@ import scala.util.{Failure, Success}
 class ExtRscUtil @Inject()(
                             esModel   : EsModel,
                             mNodes    : MNodes,
-                            mCommonDi : ICommonDi
+                            implicit private val ec: ExecutionContext,
+                            esClientP: IEsClient,
                           )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
+  import esClientP.esClient
   import esModel.api._
 
   /** Взять ссылки, вернуть узлы для ссылок.

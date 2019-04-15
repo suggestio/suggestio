@@ -9,8 +9,10 @@ ARG group=$user
 ARG uid=765
 ARG gid=$uid
 
+ARG HOMEDIR=/var/lib/postgres
+
 RUN groupadd -g ${gid} ${group} && \
-  useradd --system -d /dev/null --no-create-home -u ${uid} -g ${gid} -s /bin/false ${user}
+  useradd -d $HOMEDIR --no-create-home -u ${uid} -g ${gid} -s /bin/false ${user}
 
 ## Установка и настройка clamav:
 RUN $PACMAN --noconfirm -Sy postgresql postgresql-old-upgrade && \
@@ -20,8 +22,6 @@ RUN $PACMAN --noconfirm -Sy postgresql postgresql-old-upgrade && \
 RUN $PACMAN --noconfirm -S iputils
 
 RUN sio-finalize-container.sh
-
-ARG HOMEDIR=/var/lib/postgres
 
 
 EXPOSE 5432/tcp

@@ -7,11 +7,13 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.async.AsyncUtil
-import io.suggest.es.model.{EsIndexUtil, EsModel, IEsModelDiVal}
+import io.suggest.es.model.{EsIndexUtil, EsModel}
+import io.suggest.es.util.IEsClient
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
+import play.api.Configuration
 import play.api.inject.Injector
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,12 +33,14 @@ class IpgbImporter @Inject() (
                                mIpRangesTmpFactory : MIpRangesTmpFactory,
                                httpGetToFile       : HttpGetToFile,
                                asyncUtil           : AsyncUtil,
-                               mCommonDi           : IEsModelDiVal
+                               configuration       : Configuration,
+                               esClientP           : IEsClient,
+                               implicit private val ec: ExecutionContext,
                              )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
+  import esClientP.esClient
   import LOGGER._
   import esModel.api._
 

@@ -1,11 +1,9 @@
 package io.suggest.stat.saver
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.IEsModelDiVal
 import io.suggest.util.logs.MacroLogsDyn
-import play.api.inject.ApplicationLifecycle
-
-import scala.reflect.ClassTag
+import play.api.Configuration
+import play.api.inject.{ApplicationLifecycle, Injector}
 
 /**
  * Suggest.io
@@ -20,32 +18,27 @@ import scala.reflect.ClassTag
  */
 @Singleton
 class PlayStatSaver @Inject() (
-  lifecycle               : ApplicationLifecycle,
-  mCommonDi               : IEsModelDiVal
-)
+                                injector      : Injector,
+                              )
   extends MacroLogsDyn
 {
 
-  import mCommonDi._
-
-  lifecycle.addStopHook { () =>
+  injector.instanceOf[ApplicationLifecycle].addStopHook { () =>
     BACKEND.close()
   }
 
-  private def _inject[T <: StatSaverBackend : ClassTag]: T = {
-    current.injector.instanceOf[T]
-  }
-
-  private def _bulk  = _inject[BulkProcessorSaveBackend]
-  private def _plain = _inject[PlainSaverBackend]
-  private def _dummy = _inject[DummySaverBackend]
+  private def _bulk  = injector.instanceOf[BulkProcessorSaveBackend]
+  private def _plain = injector.instanceOf[PlainSaverBackend]
+  private def _dummy = injector.instanceOf[DummySaverBackend]
 
   private def defaultBackend: StatSaverBackend = _bulk
 
   /** Используемый backend для сохранения статистики. */
   val BACKEND: StatSaverBackend = {
     val ck = "sc.stat.saver.type"
-    configuration.getOptional[String](ck)
+    injector
+      .instanceOf[Configuration]
+      .getOptional[String](ck)
       .fold [StatSaverBackend] (defaultBackend) { raw =>
         raw.trim.toLowerCase match {
           case "plain" | ""     =>

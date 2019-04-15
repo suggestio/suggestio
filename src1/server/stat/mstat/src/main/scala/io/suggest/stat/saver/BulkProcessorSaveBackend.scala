@@ -2,13 +2,14 @@ package io.suggest.stat.saver
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.async.AsyncUtil
-import io.suggest.es.model.{EsModel, IEsModelDiVal}
+import io.suggest.es.model.EsModel
+import io.suggest.es.util.IEsClient
 import io.suggest.stat.m.{MStat, MStats}
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.common.unit.{ByteSizeValue, TimeValue}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /** BulkProcessor backend накапливает очередь и отправляет всё индексацию разом. */
 @Singleton
@@ -16,14 +17,14 @@ class BulkProcessorSaveBackend @Inject() (
                                            esModel                 : EsModel,
                                            mStats                  : MStats,
                                            asyncUtil               : AsyncUtil,
-                                           mCommonDi               : IEsModelDiVal,
+                                           esClientP               : IEsClient,
+                                           implicit private val ec : ExecutionContext,
                                          )
   extends StatSaverBackend
   with MacroLogsImpl
 {
 
-  import mCommonDi._
-  import LOGGER._
+  import esClientP.esClient
   import esModel.api._
 
   /** Не хранить в очереди дольше указанного интервала (в секундах). */
@@ -43,13 +44,13 @@ class BulkProcessorSaveBackend @Inject() (
     val logPrefix = "statSaver:"
     val br = BulkProcessor.builder(esClient, new BulkProcessor.Listener {
       override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
-        trace(s"$logPrefix [$executionId] Will bulk save stats with ${request.numberOfActions} actions")
+        LOGGER.trace(s"$logPrefix [$executionId] Will bulk save stats with ${request.numberOfActions} actions")
       }
 
       override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit = {}
 
       override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit = {
-        error(s"$logPrefix [$executionId] error occured while bulk-saving ${request.numberOfActions} actions", failure)
+        LOGGER.error(s"$logPrefix [$executionId] error occured while bulk-saving ${request.numberOfActions} actions", failure)
       }
     })
     br.setFlushInterval( TimeValue.timeValueSeconds(FLUSH_INTERVAL_SECONDS) )

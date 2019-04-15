@@ -5,7 +5,7 @@ import java.time.Instant
 import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
-import io.suggest.es.model.{EsIndexUtil, EsModel, IEsModelDiVal}
+import io.suggest.es.model.{EsIndexUtil, EsModel}
 import io.suggest.stat.m.{MStatIndexes, MStatInxInfo, MStatsModel, MStatsTmpFactory}
 import io.suggest.util.JmxBase
 import io.suggest.util.logs.MacroLogsImpl
@@ -25,12 +25,11 @@ class StatIndexUtil @Inject() (
                                 mStatsModel       : MStatsModel,
                                 mStatIndexes      : MStatIndexes,
                                 mStatsTmpFactory  : MStatsTmpFactory,
-                                mCommonDi         : IEsModelDiVal
+                                implicit private val ec   : ExecutionContext,
                               )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
   import esModel.api._
   import mStatsModel.api._
 

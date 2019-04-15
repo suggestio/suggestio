@@ -9,7 +9,7 @@ import io.suggest.common.empty.{EmptyUtil, OptionUtil}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.scripts.IAggScripts
 import io.suggest.es.search.{DynSearchArgs, EsDynSearchStatic}
-import io.suggest.es.util.SioEsUtil
+import io.suggest.es.util.{IEsClient, SioEsUtil}
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
@@ -56,12 +56,13 @@ final class EsModel @Inject()(
                                cache                      : AsyncCacheApi,
                              )(implicit
                                ec           : ExecutionContext,
-                               esClient     : Client,
+                               esClientP    : IEsClient,
                                mat          : Materializer,
                              )
   extends MacroLogsImpl
 { esModel =>
 
+  import esClientP.esClient
 
   /** Сконвертить распарсенные результаты в карту. */
   private def resultsToMap[T <: OptId[String]](results: TraversableOnce[T]): Map[String, T] =

@@ -7,7 +7,6 @@ import controllers.{ErrorHandler, IErrorHandler}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.CacheApiUtil
 import models.mctx.Context2Factory
-import org.elasticsearch.client.Client
 import play.api.Application
 import play.api.cache.AsyncCacheApi
 import play.api.db.slick.DatabaseConfigProvider
@@ -44,7 +43,6 @@ trait ICommonDi
   // выставляем implicit, т.к. до-DI'шные websocket'ы требуют implicit application in scope.
   // TODO После перевода вёб-сокетов на akka streams, удалить implicit у current.
   override implicit val current       : Application
-  override implicit val esClient      : Client
   override val errorHandler           : ErrorHandler
   override implicit val ec            : ExecutionContext
   override val cache                  : AsyncCacheApi
@@ -69,7 +67,6 @@ final class MCommonDi @Inject() (
                                   override implicit val current       : Application,
                                   override implicit val mat           : Materializer,
                                   override implicit val ec            : ExecutionContext,
-                                  override implicit val esClient      : Client,
                                   override implicit val sn            : SioNotifierStaticClientI
                                 )
   extends ICommonDi

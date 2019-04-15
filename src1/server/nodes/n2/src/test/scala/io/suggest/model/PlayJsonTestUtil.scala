@@ -4,10 +4,10 @@ import io.suggest.primo.TypeT
 import org.scalatest.Matchers._
 import _root_.play.api.libs.json._
 import io.suggest.event.{MockedSioNotifierStaticClient, SioNotifierStaticClientI}
-import org.elasticsearch.client.Client
 import _root_.play.api.{Application, Mode}
 import _root_.play.api.inject.bind
 import _root_.play.api.inject.guice.GuiceApplicationBuilder
+import io.suggest.es.util.{IEsClient, IEsClientMock}
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 
 /**
@@ -34,10 +34,10 @@ trait MockedEsSn { this: GuiceOneAppPerSuite =>
     new GuiceApplicationBuilder()
       .in( Mode.Test )
       .bindings(
-        bind[Client]
-          .to( classOf[MockedEsClient] ),
+        bind[IEsClient]
+          .to[IEsClientMock],
         bind[SioNotifierStaticClientI]
-          .to( classOf[MockedSioNotifierStaticClient] )
+          .to[MockedSioNotifierStaticClient],
       )
       .build()
   }

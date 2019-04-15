@@ -1,11 +1,10 @@
 package io.suggest.es.model
 
 import javax.inject.Inject
-
 import akka.actor.{Actor, ActorSystem, PoisonPill, Props, Stash}
 import com.google.inject.assistedinject.Assisted
+import io.suggest.es.util.IEsClient
 import org.elasticsearch.ElasticsearchException
-import org.elasticsearch.client.Client
 import org.elasticsearch.search.SearchHit
 import org.reactivestreams.{Publisher, Subscriber, Subscription}
 import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
@@ -101,7 +100,7 @@ class EsPublishActor @Inject() (
                                  @Assisted scrollArgs  : IScrollArgs,
                                  @Assisted s           : Subscriber[_ >: SearchHit],
                                  esModel               : EsModel,
-                                 esClient              : Client
+                                 esClientP             : IEsClient,
                                )
   extends Actor
   with Stash
@@ -109,6 +108,7 @@ class EsPublishActor @Inject() (
 
   import context.dispatcher
   import esModel.api._
+  import esClientP.esClient
 
   private var scrollIdOpt: Option[String] = None
   private var processed: Long = 0

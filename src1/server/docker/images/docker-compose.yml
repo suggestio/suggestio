@@ -66,8 +66,8 @@ services:
       REPLICATE_FROM: 'pg_master'
     expose:
      - 5432
-    links:
-     - pg_master
+    depends_on:
+    - pg_master
 
   clamav:
     image: docker.suggest.io:5000/sio/clamav
@@ -101,15 +101,9 @@ services:
   www:
     image: docker.suggest.io:5000/sio/www
     restart: always
+    command: "-Des.client.transport.addrs=elasticsearch:9300 -Dswfs.masters=swfs_master:9333 -Dslick.dbs.default.db.hostport=pg_master:5432,pg_slave:5432"
     ports:
       - 9000:9000
-    links:
-      - swfs_master
-      - swfs_volume
-      - elasticsearch
-      - clamav
-      - pg_master
-      - pg_slave
     depends_on:
       - swfs_master
       - swfs_volume

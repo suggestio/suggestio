@@ -2,13 +2,10 @@ package util.ad
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
-import io.suggest.ad.blk.ent.{EntFont, TextEnt}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.err.ErrorConstants
 import io.suggest.file.up.MFile4UpProps
-import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
 import io.suggest.img.MImgFmts
 import io.suggest.jd._
 import io.suggest.jd.tags._
@@ -16,18 +13,11 @@ import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
-import io.suggest.model.n2.media.MMedia
-import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.scalaz.StringValidationNel
-import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.text.StringUtil.StringCollUtil
 import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
-import models.im.MImg3
 import models.mctx.Context
-import play.api.data.Forms._
-import play.api.data._
-import util.FormUtil._
 
 import scala.concurrent.Future
 import scalaz.{Tree, Validation, ValidationNel}

@@ -4,6 +4,8 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.common.settings.Settings
+import play.api.{Configuration, Environment, Mode}
+import play.api.inject.Injector
 
 /**
   * Suggest.io
@@ -14,12 +16,11 @@ import org.elasticsearch.common.settings.Settings
 
 @Singleton
 class MIndexes @Inject() (
-                           mCommonDi : IEsModelDiVal,
+                           injector   : Injector,
                          )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
   import LOGGER._
 
 
@@ -30,16 +31,19 @@ class MIndexes @Inject() (
     * Не val, т.е. часто оно надо только на dev-компе. В остальных случаях просто будет память занимать.
     */
   def REPLICAS_COUNT: Int = {
-    configuration.getOptional[Int]("loc.geo.ipgeobase.index.replicas_count").getOrElse {
-      val _isProd = mCommonDi.isProd
-      val r = if (_isProd) {
-        2   // Когда писался этот код, было три ноды. Т.е. одна primary шарда + две реплики.
-      } else {
-        0   // Нет дела до реплик на тестовой или dev-базе.
+    injector
+      .instanceOf[Configuration]
+      .getOptional[Int]("loc.geo.ipgeobase.index.replicas_count")
+      .getOrElse {
+        val _isProd = injector.instanceOf[Environment].mode == Mode.Prod
+        val r = if (_isProd) {
+          2   // Когда писался этот код, было три ноды. Т.е. одна primary шарда + две реплики.
+        } else {
+          0   // Нет дела до реплик на тестовой или dev-базе.
+        }
+        debug(s"REPLICAS_COUNT = $r, isProd = ${_isProd}")
+        r
       }
-      debug(s"REPLICAS_COUNT = $r, isProd = ${_isProd}")
-      r
-    }
   }
 
   /** Константа с именем актуального алиаса ipgb-индекса.

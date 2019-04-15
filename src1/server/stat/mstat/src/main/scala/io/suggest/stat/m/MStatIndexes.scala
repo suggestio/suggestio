@@ -2,12 +2,15 @@ package io.suggest.stat.m
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
+import io.suggest.es.util.IEsClient
 import org.elasticsearch.common.settings.Settings
 import io.suggest.es.util.SioEsUtil.EsActionBuilderOpsExt
 import io.suggest.util.logs.MacroLogsImpl
+import play.api.{Configuration, Environment, Mode}
+import play.api.inject.Injector
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -19,13 +22,14 @@ import scala.concurrent.Future
 
 @Singleton
 class MStatIndexes @Inject() (
-                               mCommonDi  : IEsModelDiVal
+                               injector                 : Injector,
+                               esClientP                : IEsClient,
+                               implicit private val ec  : ExecutionContext,
                              )
   extends MacroLogsImpl
 {
 
-  import mCommonDi._
-  import LOGGER._
+  import esClientP.esClient
 
   /** Имя глобального алиаса. */
   def INDEX_ALIAS_NAME = "stat"
@@ -37,16 +41,19 @@ class MStatIndexes @Inject() (
     * Не val, т.е. часто оно надо только на dev-компе. В остальных случаях просто будет память занимать.
     */
   def REPLICAS_COUNT: Int = {
-    configuration.getOptional[Int]("stat.index.replicas_count").getOrElse {
-      val _isProd = mCommonDi.isProd
-      val r = if (_isProd) {
-        1   // Когда писался этот код, было три ноды. Т.е. одна primary шарда + две реплики.
-      } else {
-        0   // Нет дела до реплик на тестовой или dev-базе.
+    injector
+      .instanceOf[Configuration]
+      .getOptional[Int]("stat.index.replicas_count")
+      .getOrElse {
+        val _isProd = injector.instanceOf[Environment].mode == Mode.Prod
+        val r = if (_isProd) {
+          1   // Когда писался этот код, было три ноды. Т.е. одна primary шарда + две реплики.
+        } else {
+          0   // Нет дела до реплик на тестовой или dev-базе.
+        }
+        LOGGER.debug(s"REPLICAS_COUNT = $r, isProd = ${_isProd}")
+        r
       }
-      debug(s"REPLICAS_COUNT = $r, isProd = ${_isProd}")
-      r
-    }
   }
 
   /** Кол-во шард в ново-создаваемых индексах. */
@@ -84,7 +91,7 @@ class MStatIndexes @Inject() (
           val allInxNames = as.keysIt()
             .asScala
             .toSeq
-          trace(s"findStatIndices(): All stat indices: ${allInxNames.mkString(", ")}")
+          LOGGER.trace(s"findStatIndices(): All stat indices: ${allInxNames.mkString(", ")}")
           allInxNames
         }
       }

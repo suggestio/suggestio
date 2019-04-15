@@ -2,7 +2,7 @@ package io.suggest.es.util
 
 import java.net.InetSocketAddress
 
-import io.suggest.env.DockerEnv
+import com.google.inject.ImplementedBy
 import javax.inject.{Inject, Provider, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.client.Client
@@ -10,6 +10,7 @@ import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.transport.InetSocketTransportAddress
 import play.api.Configuration
 import play.api.inject.{ApplicationLifecycle, Injector}
+import io.suggest.conf.PlayConfigUtil._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -34,12 +35,18 @@ object EsClientUtil {
 
 }
 
-trait EsClientT
+/** Интерфейс для di-поля с es-клиентом. */
+@ImplementedBy( classOf[TransportEsClient] )
+trait IEsClient {
 
-  extends IEsClient
-  with Provider[Client]
-{
-  override def get(): Client = esClient
+  /** Инстанс стандартного elasticsearch java client'а. */
+  implicit def esClient: Client
+
+}
+
+/** Затычка для тестов при отсутствии клиента. */
+class IEsClientMock extends IEsClient {
+  override implicit def esClient = throw new UnsupportedOperationException
 }
 
 
@@ -51,15 +58,23 @@ trait EsClientT
   * Это снизит объёмы паразитной болтовни в кластере.
   */
 @Singleton
-class TransportEsClient @Inject() (
-                                    injector        : Injector,
-                                    implicit val ec : ExecutionContext
-                                  )
-  extends EsClientT
+final class TransportEsClient @Inject() (
+                                          injector        : Injector,
+                                          implicit val ec : ExecutionContext
+                                        )
+  extends IEsClient
+  with Provider[Client]
   with MacroLogsImpl
 {
 
   private var _trClient: TransportClient = _
+  override implicit def esClient: Client = _trClient
+  override def get(): Client = {
+    if (_trClient == null)
+      throw new NoSuchElementException("No es-client available/configured")
+    else
+      _trClient
+  }
 
   def _installClient(): TransportClient = {
     lazy val logPrefix = s"_installClient(${System.currentTimeMillis}):"
@@ -67,34 +82,26 @@ class TransportEsClient @Inject() (
     // Закинуть имя кластера из оригинального конфига.
     // TODO Переименовать параметры sio-конфига во что-то, начинающееся с es.client.
     val configuration = injector.instanceOf[Configuration]
-    val clusterNameOpt = configuration.getOptional[String]("cluster.name")
+    val clusterNameOpt = configuration.getOptional[String]("es.cluster.name")
     LOGGER.debug(s"$logPrefix Cluster name: ${clusterNameOpt.orNull}")
 
     // Законнектить свеженький клиент согласно адресам из конфига, если они там указаны.
 
-    val addrs = DockerEnv
-      .getLinkHostPort( "ELASTICSEARCH", port = EsClientUtil.TRANSPORT_PORT_DFTL )
-      .fold {
-        configuration
-          .getOptional[Seq[String]]("es.client.transport.addrs")
-          .fold [Iterator[InetSocketAddress]] {
-            val local = new InetSocketAddress(
-              "localhost",
-              EsClientUtil.TRANSPORT_PORT_DFTL
-            )
-            Iterator.single(local)
-          } { addrsStrs =>
-            addrsStrs
-              .iterator
-              .filter(_.nonEmpty)
-              .map { addrStr =>
-                EsClientUtil.parseHostPortStr(addrStr)
-              }
+    val addrs = configuration
+      .getOptionalSeq[String]("es.client.transport.addrs")
+      .fold [Iterator[InetSocketAddress]] {
+        val local = new InetSocketAddress(
+          "localhost",
+          EsClientUtil.TRANSPORT_PORT_DFTL
+        )
+        Iterator.single(local)
+      } { addrsStrs =>
+        addrsStrs
+          .iterator
+          .filter(_.nonEmpty)
+          .map { addrStr =>
+            EsClientUtil.parseHostPortStr(addrStr)
           }
-      } { case (linkAddr, linkPort) =>
-        LOGGER.info(s"$logPrefix Docker env found: $linkAddr:$linkPort, ignoring other configuration.")
-        val sockAddr = new InetSocketAddress(linkAddr, linkPort)
-        Iterator.single( sockAddr )
       }
       .map( new InetSocketTransportAddress(_) )
       // TODO ES-6.0+: .map( new TransportAddress(_) )
@@ -105,8 +112,6 @@ class TransportEsClient @Inject() (
     _trClient = SioEsUtil.newTransportClient(addrs, clusterNameOpt)
     _trClient
   }
-
-  override implicit def esClient: Client = _trClient
 
 
   // Constructor: немедленная инициализация es-клиента.

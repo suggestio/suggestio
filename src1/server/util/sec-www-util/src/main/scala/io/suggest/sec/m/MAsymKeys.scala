@@ -1,6 +1,6 @@
 package io.suggest.sec.m
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.Singleton
 import io.suggest.es.model._
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.util.JacksonParsing
@@ -21,9 +21,7 @@ import scala.collection.Map
  * Потом эту модель можно аккуратненько расширить пользовательской поддержкой.
  */
 @Singleton
-class MAsymKeys @Inject() (
-                            mCommonDi: IEsModelDiVal
-                          )
+class MAsymKeys
   extends EsModelStatic
   with MacroLogsImpl
   with EsmV2Deserializer

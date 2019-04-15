@@ -101,6 +101,9 @@ if [ "$1" = 'postgres' ]; then
 	    echo "Waiting for master to ping..."
 	    sleep 1s
 	done
+	## Пароли через env плохо пробрасываются в pg_basebackup, поэтому используем .pgpass 
+	echo "${REPLICATE_FROM}:5432:replication:${POSTGRES_USER}:${POSTGRES_PASSWORD}" | sudo -H -u postgres bash -c 'tee $HOME/.pgpass && chmod 0600 $HOME/.pgpass;' > /dev/null
+
 	until sudo -u postgres pg_basebackup -h ${REPLICATE_FROM} -D ${PGDATA} -U ${POSTGRES_USER} -v -P -w
 	do
 	    echo "Waiting master for initial recovery..."

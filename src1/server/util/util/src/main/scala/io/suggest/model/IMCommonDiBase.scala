@@ -20,9 +20,3 @@ trait ICommonDiValBase
 {
   implicit val mat                 : Materializer
 }
-
-
-/** Базовый интерфейс для поля с DI-инстансом реализации [[ICommonDiValBase]]. */
-trait IMCommonDiBase {
-  val mCommonDi: ICommonDiValBase
-}

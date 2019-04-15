@@ -6,7 +6,6 @@ import Forms._
 import javax.inject.{Inject, Singleton}
 import io.suggest.bill._
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.es.model.IEsModelDiVal
 import io.suggest.pay.{IMPaySystem, MPaySystems}
 import io.suggest.primo.{MTestProdMode, MTestProdModes}
 import io.suggest.text.util.TextHashUtil
@@ -15,6 +14,7 @@ import org.apache.commons.codec.digest.DigestUtils
 import play.api.Configuration
 import util.{FormUtil, TplDataFormatUtil}
 import play.api.http.HttpVerbs
+import play.api.inject.Injector
 
 /**
   * Suggest.io
@@ -23,12 +23,12 @@ import play.api.http.HttpVerbs
   * Description: Разная утиль для взаимодействия с яндекс-кассой, чтобы не перегружать контроллер лишним кодом.
   */
 @Singleton
-class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
+class YakaUtil @Inject() (
+                           injector: Injector
+                         )
   extends MacroLogsImpl
   with IMPaySystem
 {
-
-  import mCommonDi.configuration
 
   /** id магазина в системе яндекс-кассы.
     * По идее, всегда одинков, т.к. это номер единственного аккаунта по БД яндекса.
@@ -72,7 +72,9 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
   /** Доступные для работы конфигурации яндекс-кассы. */
   val PROFILES: Map[MTestProdMode, IYakaProfile] = {
     val iter = for {
-      confSeq <- configuration.getOptional[Seq[Configuration]](CONF_PREFIX + "profiles").iterator
+      confSeq <- injector.instanceOf[Configuration]
+        .getOptional[Seq[Configuration]](CONF_PREFIX + "profiles")
+        .iterator
       conf    <- confSeq
       scId    <- conf.getOptional[Long]("scid")
       modeId  <- conf.getOptional[String]("mode")
