@@ -20,15 +20,18 @@ ENV PACMAN="pacman --assume-installed=systemd"
 RUN $PACMAN --noconfirm -Sy --needed git sudo make fakeroot automake autoconf gcc file pkgconf which
 
 ## Некоторые пакеты (mini, pikaur и т.д.) надо собирать. Поэтому нужен отдельный юзер с отдельной папкой.
-ARG BUILD_HOME="/var/sio-builder-home"
 ARG BUILD_UID=54362
 ARG BUILD_GID=$BUILD_UID
 ## pacwrap - название pacman wrapper'а, который вызывается для сборки из AUR вместо pacman:
 ARG PACWRAP_ORIG="yaourt"
-ENV PACWRAP="y"
-## BUILD_USER - имя юзера, под которым идёт сборка.
+ARG PACWRAP="y"
 ARG BUILD_USER=$PACWRAP
-ARG BUILD_GROUP=$BUILD_USER
+
+## BUILD_USER - имя юзера, под которым идёт сборка.
+ENV PACWRAP=$PACWRAP \
+    BUILD_USER=$BUILD_USER \
+    BUILD_GROUP=$BUILD_USER \
+    BUILD_HOME="/var/sio-builder-home"
 
 RUN mkdir -p $BUILD_HOME && \
   chown $BUILD_UID:$BUILD_GID $BUILD_HOME && \
@@ -62,8 +65,8 @@ RUN cd $BUILD_HOME && \
 RUN pacman -Rdd --noconfirm systemd
 
 ## Установить tini и systemctl из AUR для сборки правильных контейнеров и прочее счастье:
-RUN sudo -u $BUILD_USER $PACWRAP -S --noconfirm tini docker-systemctl-replacement-git python
-  
+RUN sudo -u $BUILD_USER $PACWRAP -Sy --noconfirm tini docker-systemctl-replacement-git python
+
 RUN : \
   ## Тестируем tini:
   tini --version && \

@@ -4,7 +4,7 @@
 ##   docker volume create sio-clamav
 ##   docker run -p 3310:3310 -v sio-clamav:/var/lib/clamav sio/clamav
 
-FROM docker.suggest.io:5000/sio/os-base
+FROM docker.suggest.io:5000/sio/os-base-jre
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## В контейнере недоступен systemd-sysusers, поэтому создать юзера внучную:
@@ -15,8 +15,6 @@ ARG gid=$uid
 
 RUN groupadd -g ${gid} ${group} && \
   useradd --system -d /dev/null --no-create-home -u ${uid} -g ${gid} -s /bin/false ${user}
-
-RUN $PACMAN -S --noconfirm --needed jre8-openjdk-headless
 
 ARG elasticsearch=elasticsearch5
 

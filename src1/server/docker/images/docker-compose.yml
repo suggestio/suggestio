@@ -88,15 +88,22 @@ services:
       - 9200
       - 9300
 
+  artifactory:
+    image: docker.suggest.io:5000/sio/artifactory
+    restart: always
+    ports:
+    - 8081:8081
+
   jenkins:
     image: docker.suggest.io:5000/sio/jenkins
     restart: always
     ports:
-      - 8090:8090
+    - 8090:8090
     expose:
-      - 50000
-    links:
-      - docker_registry
+    - 50000
+    depends_on:
+    - docker_registry
+    - artifactory
 
   www:
     image: docker.suggest.io:5000/sio/www
