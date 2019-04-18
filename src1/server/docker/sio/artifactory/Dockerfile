@@ -14,7 +14,7 @@ ENV ARTIFACTORY_HOME=/var/lib/artifactory
 RUN groupadd -g ${gid} ${group} && \
   useradd --system -d ${ARTIFACTORY_HOME} --no-create-home -u ${uid} -g ${gid} -s /bin/nologin ${user}
 
-RUN pacman -S --noconfirm --needed net-tools
+RUN pacman -S --noconfirm --needed --asdeps net-tools
 
 ## Берём PKGBUILD прямо с github, т.к. в AUR как-то сыровато и слишком завязано на rwx-доступ в /opt/artifactory.
 RUN echo "Packaging artifactory using PKGBUILD from dNhax/artifactory-oss ..." >&2 && \

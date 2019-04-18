@@ -1,0 +1,27 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../docker-compose.yml
+    kompose.version: 1.18.0 (HEAD)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: swfs-master
+  name: swfs-master
+spec:
+  replicas: 1
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        io.kompose.service: swfs-master
+    spec:
+      containers:
+      - args:
+        - master
+        image: docker.suggest.io:5000/sio/seaweedfs
+        name: swfs-master
+        resources: {}
+      restartPolicy: Always
+status: {}

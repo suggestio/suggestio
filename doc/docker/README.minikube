@@ -1,0 +1,7 @@
+1. Для начального запуска нужен приватный docker-registry.
+
+Нужно пробросить --insecure-registry в $HOME/.minikube/machines/minikube/config.json:
+Добавить хост:порт в 'HostOptions' > 'EngineOptions' > 'InsecureRegistry'.
+Либо при создании minikube VM сразу указать --insecure-registry.
+https://github.com/kubernetes/minikube/issues/604#issuecomment-309296149
+
