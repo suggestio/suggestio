@@ -14,7 +14,7 @@ ENV ARTIFACTORY_HOME=/var/lib/artifactory
 RUN groupadd -g ${gid} ${group} && \
   useradd --system -d ${ARTIFACTORY_HOME} --no-create-home -u ${uid} -g ${gid} -s /bin/nologin ${user}
 
-RUN pacman -S --noconfirm --needed --asdeps net-tools
+RUN $PACMAN -S --noconfirm --needed --asdeps net-tools
 
 ## Берём PKGBUILD прямо с github, т.к. в AUR как-то сыровато и слишком завязано на rwx-доступ в /opt/artifactory.
 RUN echo "Packaging artifactory using PKGBUILD from dNhax/artifactory-oss ..." >&2 && \
@@ -26,6 +26,9 @@ RUN echo "Packaging artifactory using PKGBUILD from dNhax/artifactory-oss ..." >
    $PACMAN --noconfirm -U artifactory-oss-*.pkg.tar* && \
    cd $BUILD_HOME && \
    rm -rf $package
+
+## Для запуска скрипта artifactory нужен gawk:
+RUN pacman -D --asexplicit gawk
 
 RUN sio-finalize-container.sh
 

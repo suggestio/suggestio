@@ -21,6 +21,8 @@ RUN $PACMAN --noconfirm -Sy postgresql postgresql-old-upgrade && \
 ## В docker-entrypoint.sh используется команда ping для инициализации slave:
 RUN $PACMAN --noconfirm -S iputils
 
+RUN pacman -D --asexplicit sudo
+
 RUN sio-finalize-container.sh
 
 

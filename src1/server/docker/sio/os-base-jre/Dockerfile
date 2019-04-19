@@ -4,4 +4,4 @@ FROM docker.suggest.io:5000/sio/os-base
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## Установить всю необходимую утиль
-RUN $PACMAN --noconfirm -Sy jre8-openjdk-headless
+RUN $PACMAN --noconfirm -Sy --needed jre8-openjdk-headless
