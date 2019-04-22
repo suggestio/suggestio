@@ -1,6 +1,11 @@
 #!/bin/bash
 
-pacman -Sy --needed vim mc
+pacman -Sy --needed vim mc net-tools
+
+cat > /etc/profile.d/editor.sh << EOF
+export EDITOR=vim
+EOF
+## TODO vimrc -> /etc/vimrc
 
 echo ru_RU.UTF-8 UTF-8 >> /etc/locale.gen
 locale-gen

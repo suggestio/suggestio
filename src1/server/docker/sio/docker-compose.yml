@@ -95,6 +95,12 @@ services:
       - 9200
       - 9300
 
+  kibana:
+    image: docker.suggest.io:5000/sio/kibana
+    restart: 'on-failure'
+    ports:
+    - 5601:5601
+
   artifactory:
     image: docker.suggest.io:5000/sio/artifactory
     restart: 'on-failure'

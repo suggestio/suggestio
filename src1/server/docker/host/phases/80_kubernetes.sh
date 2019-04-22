@@ -23,6 +23,14 @@ sudo -u $BUILD_USER makepkg --noconfirm -sifrc
 cd $BUILD_HOME
 rm -rf $PACKAGE
 
+systemctl enable kubelet.service
+systemctl start kubelet.service
+
+## TODO /etc/kubernetes/kubelet: удалить/закомментить/обнулить строку с --api-servers
+## TODO /etc/kubernetes/kubelet: KUBELET_ARGS="--cgroup-driver=system"
+## TODO /etc/kubernetes/kubelet - настроить по смыслу с учётом ip-адреса хоста и https://wiki.archlinux.org/index.php/Kubernetes#Using_kubeadm
+
 echo "***"
-echo "*** Now, run 'kubeadm init', and READ the log output." >&2
+echo "*** Now, run 'kubeadm', and follow instructions." >&2
 echo "***"
+
