@@ -1,7 +1,7 @@
 ## Контейнер kibana.
 ## docker build --build-arg ELASTICSEARCH_URL=http://elasticsearch:9200
 
-FROM docker.suggest.io:5000/sio/os-base-nodejs
+FROM docker-registry.suggest.io/sio/os-base-nodejs
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## В контейнере недоступен systemd-sysusers, поэтому создать юзера внучную:

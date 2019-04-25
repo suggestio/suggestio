@@ -12,7 +12,7 @@ spec:
       value: postgres
     - name: POSTGRES-USER
       value: postgres
-    image: docker.suggest.io:5000/sio/postgresql
+    image: docker-registry.suggest.io/sio/postgresql
     name: pg-master
     resources: {}
   restartPolicy: OnFailure

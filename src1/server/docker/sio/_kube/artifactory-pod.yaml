@@ -7,7 +7,7 @@ metadata:
   name: artifactory
 spec:
   containers:
-  - image: docker.suggest.io:5000/sio/artifactory
+  - image: docker-registry.suggest.io/sio/artifactory
     name: artifactory
     ports:
     - containerPort: 8081

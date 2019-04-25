@@ -21,7 +21,7 @@ spec:
       - args:
         - filer
         - -master=swfs-master:9333
-        image: docker.suggest.io:5000/sio/seaweedfs
+        image: docker-registry.suggest.io/sio/seaweedfs
         name: swfs-filer
         resources: {}
         tty: true

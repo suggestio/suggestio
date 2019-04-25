@@ -25,7 +25,7 @@ spec:
           value: '*/3 * * * * *'
         - name: WEED-MASTER
           value: swfs-master:9333
-        image: docker.suggest.io:5000/sio/seaweedfs
+        image: docker-registry.suggest.io/sio/seaweedfs
         name: swfs-cronjob
         resources: {}
       restartPolicy: Always

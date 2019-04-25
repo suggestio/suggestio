@@ -1,6 +1,6 @@
 ## Базовый образ для образов, работающих с sioweb, в т.ч. jenkins и т.д.
 
-FROM docker.suggest.io:5000/sio/os-base
+FROM docker-registry.suggest.io/sio/os-base
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## Установить всю необходимую утиль

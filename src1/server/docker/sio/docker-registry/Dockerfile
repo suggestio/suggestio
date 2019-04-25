@@ -2,7 +2,7 @@
 ## Собирает seaweedfs из исходников, создаёт домашнюю директорию и объявляет volume.
 ## Всё остальное должно быть реализовано на уровне volume/master-докерфайлов.
 
-FROM docker.suggest.io:5000/sio/os-base-go
+FROM docker-registry.suggest.io/sio/os-base-go
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## В контейнере недоступен systemd-sysusers, поэтому создать юзера внучную:

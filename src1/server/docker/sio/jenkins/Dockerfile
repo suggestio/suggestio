@@ -5,20 +5,17 @@
 ## docker volume create jenkins_home
 ## docker run -p 8090:8090 -p 50000:50000 -v jenkins_home:/var/lib/jenkins sio/jenkins-sio
 
-FROM docker.suggest.io:5000/sio/os-base-www
+FROM docker-registry.suggest.io/sio/os-base-www
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ARG user=jenkins
 ARG group=jenkins
 ARG uid=32463
 ARG gid=$uid
-ARG http_port=8090
+ARG http_port=8080
 ## TODO Забить этот же порт в /etc/conf.d/jenkins
 ARG agent_port=50000
 ARG JENKINS_HOME=/var/lib/jenkins
-
-ENV JENKINS_HOME=$JENKINS_HOME \
-    JENKINS_SLAVE_AGENT_PORT=${agent_port}
 
 # Jenkins is run with user `jenkins`, uid = 1000
 # If you bind mount a volume from the host or a data container,
@@ -39,22 +36,26 @@ VOLUME $JENKINS_HOME
 # or config file with your custom jenkins Docker image.
 RUN mkdir -p /usr/share/java/jenkins/ref/init.groovy.d
 
+RUN chown -R ${user} "$JENKINS_HOME" /usr/share/java/jenkins/ref
+
+RUN sio-finalize-container.sh
+
 # jenkins version being bundled in this docker image
 ARG JENKINS_VERSION
 ENV JENKINS_VERSION=${JENKINS_VERSION:-2.121.1} \
     JENKINS_UC=https://updates.jenkins.io \
     JENKINS_UC_EXPERIMENTAL=https://updates.jenkins.io/experimental \
     JENKINS_INCREMENTALS_REPO_MIRROR=https://repo.jenkins-ci.org/incrementals \
-    COPY_REFERENCE_FILE_LOG=$JENKINS_HOME/copy_reference_file.log
-RUN chown -R ${user} "$JENKINS_HOME" /usr/share/java/jenkins/ref
+    JENKINS_HOME=$JENKINS_HOME \
+    COPY_REFERENCE_FILE_LOG=$JENKINS_HOME/copy_reference_file.log \
+    JENKINS_PORT=${http_port} \
+    JENKINS_SLAVE_AGENT_PORT=${agent_port}
 
 # for main web interface:
 EXPOSE ${http_port}/tcp
 
 # will be used by attached slave agents:
 EXPOSE ${agent_port}/tcp
-
-RUN sio-finalize-container.sh
 
 USER ${user}
 

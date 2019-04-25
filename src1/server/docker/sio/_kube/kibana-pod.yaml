@@ -3,14 +3,14 @@ kind: Pod
 metadata:
   creationTimestamp: null
   labels:
-    io.kompose.service: jenkins
-  name: jenkins
+    io.kompose.service: kibana
+  name: kibana
 spec:
   containers:
-  - image: docker-registry.suggest.io/sio/jenkins
-    name: jenkins
+  - image: docker-registry.suggest.io/sio/kibana
+    name: kibana
     ports:
-    - containerPort: 8090
+    - containerPort: 5601
     resources: {}
   restartPolicy: OnFailure
 status: {}

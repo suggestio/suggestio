@@ -14,7 +14,7 @@ spec:
       value: postgres
     - name: REPLICATE-FROM
       value: pg-master
-    image: docker.suggest.io:5000/sio/postgresql
+    image: docker-registry.suggest.io/sio/postgresql
     name: pg-slave
     resources: {}
   restartPolicy: OnFailure

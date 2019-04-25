@@ -1,1 +1,1 @@
-docker build -t docker.suggest.io:5000/sio/artifactory:latest .
+docker build -t docker-registry.suggest.io/sio/artifactory:latest .

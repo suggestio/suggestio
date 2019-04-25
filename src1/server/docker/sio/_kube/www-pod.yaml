@@ -11,7 +11,7 @@ spec:
     - -Des.client.transport.addrs=elasticsearch:9300
     - -Dswfs.masters=swfs-master:9333
     - -Dslick.dbs.default.db.hostport=pg-master:5432,pg-slave:5432
-    image: docker.suggest.io:5000/sio/www
+    image: docker-registry.suggest.io/sio/www
     name: www
     ports:
     - containerPort: 9000

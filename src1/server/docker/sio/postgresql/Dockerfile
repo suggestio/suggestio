@@ -1,6 +1,6 @@
 ## postgresql-контейнер для кластера.
 
-FROM docker.suggest.io:5000/sio/os-base
+FROM docker-registry.suggest.io/sio/os-base
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## В контейнере недоступен systemd-sysusers, поэтому создать юзера внучную:

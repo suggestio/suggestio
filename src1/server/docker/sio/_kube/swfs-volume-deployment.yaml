@@ -23,7 +23,7 @@ spec:
         - -max=15
         - -mserver=swfs-master:9333
         - -port=8081
-        image: docker.suggest.io:5000/sio/seaweedfs
+        image: docker-registry.suggest.io/sio/seaweedfs
         name: swfs-volume
         resources: {}
       restartPolicy: Always
