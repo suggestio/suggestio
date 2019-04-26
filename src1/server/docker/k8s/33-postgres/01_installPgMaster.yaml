@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pg-master-pod
+  labels:
+    "io.suggest.svc.type": "postgresql"
+spec:
+  containers:
+  - name: pg-master-cont
+    image: docker-registry.suggest.io/sio/postgresql:latest
+    ports:
+    - containerPort: 5432
+    volumeMounts:
+    - mountPath: /var/lib/postgres
+      name: var-lib-postgres
+    env:
+    - name: POSTGRES-PASSWORD
+      value: postgres
+    - name: POSTGRES-USER
+      value: postgres
+
+  imagePullSecrets:
+  - name: regcred
+  volumes:
+  - name: var-lib-postgres
+    emptyDir: {}

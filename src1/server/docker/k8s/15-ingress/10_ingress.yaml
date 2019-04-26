@@ -1,0 +1,15 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: docker-registry.suggest.io
+    http:
+      paths:
+      - backend:
+          serviceName: registry-svc
+          servicePort: 5000
+

@@ -18,7 +18,7 @@ ENV PACMAN="pacman --assume-installed=systemd"
 ## Скачать индексы репозиториев для установки пакетов на последующих шагах.
 ## Нельзя объявлять base-devel, т.к. это потянет за собой systemd
 ## Подразумевается, что sed уже установлен, а curl если и не установлен, то подтянется перед git.
-RUN $PACMAN --noconfirm -Sy --needed --asdeps git sudo make fakeroot automake autoconf gcc file pkgconf which
+RUN $PACMAN --noconfirm -Syu --needed --asdeps git sudo make fakeroot automake autoconf gcc file pkgconf which
 
 ## /bin/kill лежит тут:
 RUN pacman -D --asexplicit util-linux

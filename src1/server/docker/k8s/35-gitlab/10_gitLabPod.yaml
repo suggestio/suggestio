@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gitlab-pod
+  labels:
+    "io.suggest.svc.type": "gitlab"
+spec:
+  containers:
+  - name: gitlab-cont
+    image: docker-registry.suggest.io/sio/gitlab:latest
+    ports:
+    - containerPort: 8080
+    volumeMounts:
+    - mountPath: /var/lib/gitlab
+      name: var-lib-gitlab
+  imagePullSecrets:
+  - name: regcred
+  volumes:
+  - name: var-lib-gitlab
+    emptyDir: {}

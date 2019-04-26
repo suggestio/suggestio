@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jenkins-pod
+  labels:
+    "io.suggest.svc.type": "jenkins"
+spec:
+  containers:
+  - name: jenkins-cont01
+    image: docker-registry.suggest.io/sio/jenkins:latest
+    ports:
+    - containerPort: 8080
+    - containerPort: 50000
+    volumeMounts:
+    - mountPath: /var/lib/jenkins
+      name: var-lib-jenkins
+  imagePullSecrets:
+  - name: regcred
+  volumes:
+  - name: var-lib-jenkins
+    emptyDir: {}
