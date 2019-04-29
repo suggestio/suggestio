@@ -6,7 +6,7 @@ metadata:
     "io.suggest.svc.type": "docker-registry"
 spec:
   containers:
-  - name: docker-registry-cont20190425
+  - name: docker-registry-cont
     image: docker-registry.suggest.io/sio/docker-registry
     imagePullPolicy: IfNotPresent
     ports:

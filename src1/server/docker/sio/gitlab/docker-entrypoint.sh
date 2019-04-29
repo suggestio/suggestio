@@ -54,8 +54,15 @@ redis:
   namespace: resque:gitlab
 EOF
 
+## Если /var/lib/gitlab пустая, то это первое монтирование. Надо закинуть туда содержимое $gitlab_initial_backup_tar_gz.
+if [ -z "$(ls -A ${gitlab_home})" ]; then
+  echo "${gitlab_home}/ appears empty. First vol.mount. Re-initialize dir.content..."
+  tar -C "${gitlab_home}" -xvpf "${gitlab_initial_backup_tar_gz}"
+fi
+
 ## redis уже сконфигурирован в докере.
-## Нужно запилить секретные строки, которые должны выживать между обновлениями контейнера.
+
+## Нужно запилить секретные seed'ы, которые должны выживать между обновлениями контейнера.
 for secretFile in "gitlab/secret" "gitlab-shell/secret"; do
     volSecretFilePath="${gitlab_home}/_secrets/$secretFile"
     tgSecretFilePath="/etc/webapps/$secretFile"
@@ -95,11 +102,12 @@ _check() {
 }
 
 
-if [ "$1" = "gitlab" ]; then
+if [ "x$1" = "x" ]; then
+  systemctl start redis.service
   ## Стандартный запуск. Попытаться обновить БД, и запустить.
   _upgradeDb
   _printEnv
-  exec systemctl default
+  exec systemctl --init default
 
 else
   ## Исполнение произвольных команд:

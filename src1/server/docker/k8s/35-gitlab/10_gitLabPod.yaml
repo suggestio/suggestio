@@ -13,8 +13,21 @@ spec:
     volumeMounts:
     - mountPath: /var/lib/gitlab
       name: var-lib-gitlab
+    - mountPath: /var/lib/redis
+      name: var-lib-redis
+    env:
+    - name: PG_HOST
+      value: postgresql-svc
+    - name: PG_PASSWORD
+      value: gitlab
+    - name: PG_USERNAME
+      value: gitlab
+    - name: PG_DATABASE
+      value: gitlab
   imagePullSecrets:
   - name: regcred
   volumes:
+  - name: var-lib-redis
+    emptyDir: {}
   - name: var-lib-gitlab
     emptyDir: {}

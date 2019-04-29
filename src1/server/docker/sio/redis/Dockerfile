@@ -19,7 +19,7 @@ RUN groupadd -g ${redis_gid} ${redis_group} && \
 RUN for dir in ${redis_home} /run/redis; do \
       mkdir -p $dir && \
       chown $redis_user:${redis_group} $dir && \
-      chmod 700 $dir; \
+      chmod 755 $dir; \
     done
 
 VOLUME ${redis_home}
@@ -34,6 +34,10 @@ RUN $PACMAN --noconfirm -Sy --needed redis
 COPY redis.conf /etc/redis.conf
 
 RUN systemctl enable redis
+
+ENV redis_user=${redis_user} \
+    redis_group=${redis_group} \
+    redis_port=${redis_port}
 
 CMD ["/sbin/systemctl", "default"]
 

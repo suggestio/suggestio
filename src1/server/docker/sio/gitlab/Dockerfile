@@ -21,7 +21,7 @@ LABEL maintainer="konstantin.nikiforov@cbca.ru"
 ARG gitlab_home="/var/lib/gitlab"
 ARG gitlab_user="gitlab"
 ARG gitlab_group=$gitlab_user
-ARG gitlab_uid=682
+ARG gitlab_uid=105
 ARG gitlab_gid=${gitlab_uid}
 ## TODO Вписывать порт в redis.conf, но для этого надо entrypoint-скрипт. Сейчас лень.
 ARG gitlab_port=8080
@@ -47,12 +47,26 @@ RUN for dir in ${gitlab_home} /run/gitlab /var/log/gitlab; do \
 RUN chmod 750 ${gitlab_home} && \
     chmod 770 /var/log/gitlab
 
-VOLUME ${gitlab_home}
+RUN $PACMAN --noconfirm -Sy --needed gitlab postgresql-libs tar
 
-## redis - внутри этого же контейнера, т.к. слишком мал для отдельного контейнера.
-RUN $PACMAN --noconfirm -Sy --needed gitlab
+## Для распаковки /var/lib/gitlab из gitlab_initial_backup_tar_gz требуется, чтобы tar был в контейнере.
+RUN pacman -D --asexplicit tar
+
+ENV gitlab_initial_backup_tar_gz=/var/lib/gitlab-initial.tar.gz
+
+## Надо эвакуировать содержимое gitlab_home, т.к. директории там создаются прямо из пакета.
+## Содержимое будет распаковано в entrypoint, если директория ${gitlab_home} пустая.
+RUN tar -czpf ${gitlab_initial_backup_tar_gz} ${gitlab_home}
+
+## зависит от libaudit, нужно вызывать ДО sio-finalize-container.sh
+RUN gpasswd -a ${gitlab_user} ${redis_group}
+
+## Система должна раздавать asset'ы. GitLab считает, что это должен делать nginx, а у нас будет без таких оптимизаций, по-старинке:
+RUN sed -r "s/(config.public_file_server.enabled *= *).*/\1true/" -i /usr/share/webapps/gitlab/config/environments/production.rb
 
 RUN sio-finalize-container.sh
+
+VOLUME ${gitlab_home}
 
 EXPOSE ${gitlab_port}
 
@@ -65,8 +79,10 @@ RUN RESQUE_CONF="/etc/webapps/gitlab/resque.yml" && \
 COPY docker-entrypoint.sh /sbin/docker-entrypoint.sh
 
 ## TODO Redis, postgresql, настройка gitlab, запуск
-RUN systemctl enable gitlab.target && \
-    systemctl enable gitlab-gitaly.service
+RUN systemctl enable gitlab-gitaly.service && \
+    systemctl enable gitlab-unicorn.service && \
+    systemctl enable gitlab-workhorse.service && \
+    systemctl enable gitlab-sidekiq.service
 
 ENTRYPOINT ["/sbin/docker-entrypoint.sh"]
 

@@ -17,8 +17,7 @@ spec:
     - name: POSTGRES-PASSWORD
       value: postgres
     - name: POSTGRES-USER
-      value: postgres
-
+      value: postgres    
   imagePullSecrets:
   - name: regcred
   volumes:
