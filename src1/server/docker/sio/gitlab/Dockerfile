@@ -1,4 +1,3 @@
-
 # Configure your /etc/webapps/gitlab/gitlab.yml
 # Set up your redis to run on /var/run/redis/redis.sock or configure gitlab to use redis TCP
 # Put a secret bytestring to /etc/webapps/gitlab/secret
@@ -70,6 +69,9 @@ VOLUME ${gitlab_home}
 
 EXPOSE ${gitlab_port}
 
+## ssh-порт для доступа в 
+EXPOSE 22
+
 RUN RESQUE_CONF="/etc/webapps/gitlab/resque.yml" && \
     echo > $RESQUE_CONF && \
     for mode in "development" "test" "production"; do \
@@ -81,12 +83,16 @@ RUN sed -r "s/^(listen\s+\")([0-9]+[.:]?){5}\"/\10.0.0.0:${gitlab_port}\"/" -i /
 
 COPY docker-entrypoint.sh /sbin/docker-entrypoint.sh
 
-## TODO Redis, postgresql, настройка gitlab, запуск
-RUN systemctl enable gitlab-gitaly.service && \
-    systemctl enable gitlab-unicorn.service && \
-    systemctl enable gitlab-workhorse.service && \
-    systemctl enable gitlab-sidekiq.service
+## Пометить все необходимые сервисы для запуска:
+RUN for svc in gitlab-gitaly gitlab-unicorn gitlab-workhorse gitlab-sidekiq sshd; do \
+      systemctl enable $svc.service; \
+    done
 
 ENTRYPOINT ["/sbin/docker-entrypoint.sh"]
 
 COPY smtp_settings.rb /usr/share/webapps/gitlab/config/initializers/smtp_settings.rb
+
+## Для запуска sshd нужен конфиг.
+COPY --chown=root:root sshd_config /etc/ssh/sshd_config
+COPY moduli /etc/ssh/
+

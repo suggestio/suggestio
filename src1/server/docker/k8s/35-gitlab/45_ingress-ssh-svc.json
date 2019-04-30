@@ -1,0 +1,40 @@
+{
+  "kind": "Service",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "ingress-nginx",
+    "namespace": "ingress-nginx"
+  },
+  "spec": {
+    "ports": [
+      {
+        "name": "http",
+        "protocol": "TCP",
+        "port": 80,
+        "targetPort": 80,
+        "nodePort": 30610
+      },
+      {
+        "name": "https",
+        "protocol": "TCP",
+        "port": 443,
+        "targetPort": 443,
+        "nodePort": 30349
+      },
+      {
+	"name": "gitlab-ssh-22",
+	"port": 222,
+        "targetPort": 222,
+	"protocol": "TCP"
+      }
+    ],
+    "selector": {
+      "app.kubernetes.io/name": "ingress-nginx",
+      "app.kubernetes.io/part-of": "ingress-nginx"
+    },
+    "type": "NodePort",
+    "externalIPs": [
+      "192.168.100.100"
+    ]
+  }
+}

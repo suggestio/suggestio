@@ -10,4 +10,8 @@ spec:
   - protocol: TCP
     port: 8080
     targetPort: 8080
-
+    name: webui
+  - protocol: TCP
+    port: 22
+    targetPort: 22
+    name: ssh

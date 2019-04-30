@@ -54,6 +54,34 @@ redis:
   namespace: resque:gitlab
 EOF
 
+## TODO Проброс параметров следует позаимствовать из https://github.com/sameersbn/docker-gitlab assets/runtime/functions
+## Там происходит подстановка множества переменных окружения в конфиги по шаблонам.
+
+
+## Организовать хостнейм для gitlab в конфиге:
+if [ "x$GITLAB_HOST" = "x" ]; then
+    GITLAB_HOST="source.suggest.io"
+fi
+HOST_RE="\s*host:\s*"
+sed -r "0,/$HOST_RE.*/s/^($HOST_RE).*/\1${GITLAB_HOST}/" -i /etc/webapps/gitlab/gitlab.yml
+
+## Пробросить trusted proxies:
+if [ "x$GITLAB_TRUSTED_PROXIES" = "x" ]; then
+  GITLAB_TRUSTED_PROXIES="10.0.0.0/8"
+fi
+TRUSTED_PROXIES_RE="trusted_proxies:"
+sed -r "0,/^\s*$TRUSTED_PROXIES_RE/s/^(\s*)($TRUSTED_PROXIES_RE)/\1\2\n\1- $GITLAB_TRUSTED_PROXIES" -i /etc/webapps/gitlab/gitlab.yml
+
+
+## Если наружу торчит не-22-порт для ssh, то надо об этом сообщить.
+if [ "x$GITLAB_SSH_PORT" = "x" ]; then
+  ## Пока сразу выбрасываем наружу tcp:222, на будущее надо перейти на дефолтовый порт.
+  GITLAB_SSH_PORT=222
+fi
+SSH_PORT_RE="ssh_port:"
+sed -r "0,/$SSH_PORT_RE/s/(\s*)(#\s*)?($SSH_PORT_RE).*/\1\3 $GITLAB_SSH_PORT/" -i /etc/webapps/gitlab/gitlab.yml
+
+
 ## Общий код вызова rake target.
 _rakeCmd() {
   su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; bundle-2.5 exec rake $1 RAILS_ENV=production"
@@ -65,15 +93,34 @@ _initDb() {
   _rakeCmd "gitlab:setup"
 }
 
+
 ## Если /var/lib/gitlab пустая, то это первое монтирование. Надо закинуть туда содержимое $gitlab_initial_backup_tar_gz.
 if [ -z "$(ls -A ${gitlab_home})" ]; then
   echo "${gitlab_home}/ appears empty. First vol.mount. Re-initialize dir.content..."
   tar -C "${gitlab_home}"/.. -xvpf "${gitlab_initial_backup_tar_gz}"
-  ## setup new database:
+  ## Развернуть схему БД:
   systemctl start redis.service
   systemctl start gitlab-gitaly.service
   _initDb
 fi
+
+
+## Разобраться с ssh-ключами:
+SSH_VAR_D="/var/lib/gitlab/ssh"
+if [ -z "$(ls -A ${SSH_VAR_D})" ]; then
+  echo "generating new ssh keys..."
+  ssh-keygen -A
+  ## Скопировать ssh-ключи сервера в /var/lib/gitlab/ssh
+  mkdir -p $SSH_VAR_D
+  chown root:root $SSH_VAR_D
+  chmod 700 $SSH_VAR_D
+  cp /etc/ssh/ssh_host_*_key* $SSH_VAR_D/
+else
+  ## Восстановить предыдущие ssh-ключи сервера из /var/lib/gitlab/ssh в /etc/ssh
+  echo "restoring ssh keys..."
+  cp $SSH_VAR_D/* /etc/ssh/
+fi
+
 
 ## redis уже сконфигурирован в докере.
 

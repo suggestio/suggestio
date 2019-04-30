@@ -10,6 +10,7 @@ spec:
     image: docker-registry.suggest.io/sio/gitlab:latest
     ports:
     - containerPort: 8080
+    - containerPort: 22
     volumeMounts:
     - mountPath: /var/lib/gitlab
       name: var-lib-gitlab
