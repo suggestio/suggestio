@@ -26,7 +26,7 @@ ARG gitlab_gid=${gitlab_uid}
 ## TODO Вписывать порт в redis.conf, но для этого надо entrypoint-скрипт. Сейчас лень.
 ARG gitlab_port=8080
 
-ENV HOMEDIR=${gitlab_home} \
+ENV gitlab_home=${gitlab_home} \
     gitlab_user=${gitlab_user} \
     gitlab_group=${gitlab_group}
 
@@ -56,7 +56,7 @@ ENV gitlab_initial_backup_tar_gz=/var/lib/gitlab-initial.tar.gz
 
 ## Надо эвакуировать содержимое gitlab_home, т.к. директории там создаются прямо из пакета.
 ## Содержимое будет распаковано в entrypoint, если директория ${gitlab_home} пустая.
-RUN tar -czpf ${gitlab_initial_backup_tar_gz} ${gitlab_home}
+RUN cd ${gitlab_home} && tar -czpf ${gitlab_initial_backup_tar_gz} .
 
 ## зависит от libaudit, нужно вызывать ДО sio-finalize-container.sh
 RUN gpasswd -a ${gitlab_user} ${redis_group}
@@ -76,6 +76,9 @@ RUN RESQUE_CONF="/etc/webapps/gitlab/resque.yml" && \
       echo "$mode: unix:/run/redis/redis.sock" >> $RESQUE_CONF; \
     done
 
+## Выставить, чтобы соединения принимались с любого интерфейса, а не только с локалхоста:
+RUN sed -r "s/^(listen\s+\")([0-9]+[.:]?){5}\"/\10.0.0.0:${gitlab_port}\"/" -i /etc/webapps/gitlab/unicorn.rb
+
 COPY docker-entrypoint.sh /sbin/docker-entrypoint.sh
 
 ## TODO Redis, postgresql, настройка gitlab, запуск
@@ -86,3 +89,4 @@ RUN systemctl enable gitlab-gitaly.service && \
 
 ENTRYPOINT ["/sbin/docker-entrypoint.sh"]
 
+COPY smtp_settings.rb /usr/share/webapps/gitlab/config/initializers/smtp_settings.rb

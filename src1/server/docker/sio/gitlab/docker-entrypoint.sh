@@ -54,10 +54,25 @@ redis:
   namespace: resque:gitlab
 EOF
 
+## Общий код вызова rake target.
+_rakeCmd() {
+  su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; bundle-2.5 exec rake $1 RAILS_ENV=production"
+  return $?
+}
+
+_initDb() {
+  echo "Initializing new DB..."
+  _rakeCmd "gitlab:setup"
+}
+
 ## Если /var/lib/gitlab пустая, то это первое монтирование. Надо закинуть туда содержимое $gitlab_initial_backup_tar_gz.
 if [ -z "$(ls -A ${gitlab_home})" ]; then
   echo "${gitlab_home}/ appears empty. First vol.mount. Re-initialize dir.content..."
-  tar -C "${gitlab_home}" -xvpf "${gitlab_initial_backup_tar_gz}"
+  tar -C "${gitlab_home}"/.. -xvpf "${gitlab_initial_backup_tar_gz}"
+  ## setup new database:
+  systemctl start redis.service
+  systemctl start gitlab-gitaly.service
+  _initDb
 fi
 
 ## redis уже сконфигурирован в докере.
@@ -80,34 +95,28 @@ for secretFile in "gitlab/secret" "gitlab-shell/secret"; do
 done
 
 
-_initDb() {
-  echo "Initializing new DB..."
-  su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; bundle-2.5 exec rake gitlab:setup RAILS_ENV=production"
-  return $?
-}
-
-_upgradeDb() {
-  echo "Upgrading db..."
-  su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; bundle-2.5 exec rake db:migrate RAILS_ENV=production"
-  return $?
-}
-
-_printEnv() {
-  su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; bundle-2.5 exec rake gitlab:check RAILS_ENV=production"
-}
-
-_check() {
-  su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; bundle-2.5 exec rake gitlab:env:info RAILS_ENV=production"
-  return $?
-}
-
-
+## Обработка $1 - в зависимости от значения аргумента (или отсутствия значения) произвести действие.
 if [ "x$1" = "x" ]; then
-  systemctl start redis.service
   ## Стандартный запуск. Попытаться обновить БД, и запустить.
-  _upgradeDb
-  _printEnv
+  ## redis запускаем с опережением, иначе gitlab не может запуститься из-за race condition.
+  systemctl start redis.service
   exec systemctl --init default
+
+elif [ "x$1" = "xinit" ]; then
+  _initDb
+
+elif [ "x$1" = "xmigrate" ]; then
+  echo "Upgrading db..."
+  _rakeCmd "db:migrate"
+
+elif [ "x$1" = "xcheck" ]; then
+  echo "Check..."
+  _rakeCmd "gitlab:check"
+
+elif [ "x$1" = "xinfo" ]; then
+  echo "Info..."
+  _rakeCmd "gitlab:env:info"
+  return $?
 
 else
   ## Исполнение произвольных команд:
