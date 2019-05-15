@@ -84,48 +84,59 @@ sed -r "0,/$SSH_PORT_RE/s/(\s*)(#\s*)?($SSH_PORT_RE).*/\1\3 $GITLAB_SSH_PORT/" -
 
 ## Общий код вызова rake target.
 _rakeCmd() {
-  su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; bundle-2.5 exec rake $1 RAILS_ENV=production"
+  su - gitlab -s /bin/sh -c "cd '/usr/share/webapps/gitlab'; bundle-2.5 exec rake $1 RAILS_ENV=production" 
   return $?
 }
 
 _initDb() {
-  echo "Initializing new DB..."
   _rakeCmd "gitlab:setup"
 }
 
 
-## Если /var/lib/gitlab пустая, то это первое монтирование. Надо закинуть туда содержимое $gitlab_initial_backup_tar_gz.
-if [ -z "$(ls -A ${gitlab_home})" ]; then
+_fatal() {
+  echo "FATAL: $1" >&2
+  sleep 300
+  exit 1
+}
+
+## Для инициализации требуется stdin, ввод ответа (ответов) на вопросы, и осознанное решение. 
+## Поэтому инициализация - вручную.
+_doInit() {
   echo "${gitlab_home}/ appears empty. First vol.mount. Re-initialize dir.content..."
-  tar -C "${gitlab_home}"/.. -xvpf "${gitlab_initial_backup_tar_gz}"
+  tar -C "${gitlab_home}" -xvpf "${gitlab_initial_backup_tar_gz}" || _fatal "Cannot unpack ${gitlab_initial_backup_tar_gz} into ${gitlab_home} ! Waiting for admin from ssh..."
+
   ## Развернуть схему БД:
-  systemctl start redis.service
-  systemctl start gitlab-gitaly.service
+  echo "1. starting redis..."
+  systemctl start redis.service || _fatal "CANNOT START redis. WAITING ssh FROM ADMIN..."
+
+  echo "2. starting gitaly..."
+  systemctl start gitlab-gitaly.service || echo "Hope, gitaly really started. Currently, it is unclear for systemctl." # _fatal "CANNOT START gitlab-gitaly. WAITING ssh FROM ADMIN..."
+
+  echo "3. will init db..."
   _initDb
-fi
+}
 
 
 ## Разобраться с ssh-ключами:
-SSH_VAR_D="/var/lib/gitlab/ssh"
-if [ -z "$(ls -A ${SSH_VAR_D})" ]; then
-  echo "generating new ssh keys..."
-  ssh-keygen -A
-  ## Скопировать ssh-ключи сервера в /var/lib/gitlab/ssh
-  mkdir -p $SSH_VAR_D
-  chown root:root $SSH_VAR_D
-  chmod 700 $SSH_VAR_D
-  cp /etc/ssh/ssh_host_*_key* $SSH_VAR_D/
-else
-  ## Восстановить предыдущие ssh-ключи сервера из /var/lib/gitlab/ssh в /etc/ssh
-  echo "restoring ssh keys..."
-  cp $SSH_VAR_D/* /etc/ssh/
-fi
+_beforeStart() {
+  SSH_VAR_D="/var/lib/gitlab/ssh"
+  if [ -z "$(ls -A ${SSH_VAR_D})" ]; then
+    echo "generating new ssh keys..."
+    ssh-keygen -A
+    ## Скопировать ssh-ключи сервера в /var/lib/gitlab/ssh
+    mkdir -p $SSH_VAR_D
+    chown root:root $SSH_VAR_D
+    chmod 700 $SSH_VAR_D
+    cp /etc/ssh/ssh_host_*_key* $SSH_VAR_D/
+  else
+    ## Восстановить предыдущие ssh-ключи сервера из /var/lib/gitlab/ssh в /etc/ssh
+    echo "restoring ssh keys..."
+    cp $SSH_VAR_D/* /etc/ssh/
+  fi
+  ## redis уже сконфигурирован в докере.
 
-
-## redis уже сконфигурирован в докере.
-
-## Нужно запилить секретные seed'ы, которые должны выживать между обновлениями контейнера.
-for secretFile in "gitlab/secret" "gitlab-shell/secret"; do
+  ## Нужно запилить секретные seed'ы, которые должны выживать между обновлениями контейнера.
+  for secretFile in "gitlab/secret" "gitlab-shell/secret"; do
     volSecretFilePath="${gitlab_home}/_secrets/$secretFile"
     tgSecretFilePath="/etc/webapps/$secretFile"
     if [ ! -s volSecretFilePath ]; then
@@ -139,18 +150,22 @@ for secretFile in "gitlab/secret" "gitlab-shell/secret"; do
     cp "$volSecretFilePath" "$tgSecretFilePath"
     chown root:${gitlab_group} "$tgSecretFilePath"
     chmod 640 "$tgSecretFilePath"
-done
+  done
+}
 
 
 ## Обработка $1 - в зависимости от значения аргумента (или отсутствия значения) произвести действие.
 if [ "x$1" = "x" ]; then
-  ## Стандартный запуск. Попытаться обновить БД, и запустить.
-  ## redis запускаем с опережением, иначе gitlab не может запуститься из-за race condition.
-  systemctl start redis.service
-  exec systemctl --init default
-
-elif [ "x$1" = "xinit" ]; then
-  _initDb
+  ## Если /var/lib/gitlab пустая, то это первое монтирование. Надо закинуть туда содержимое $gitlab_initial_backup_tar_gz.
+  if [ -z "$(ls -A ${gitlab_home})" ]; then
+    _fatal "Login here via ssh and use '$0 init' to initialize all, OR '$0 initdb' for only DB init."
+  else
+    ## Стандартный запуск:
+    _beforeStart
+    ## redis запускаем с опережением, иначе gitlab не может запуститься из-за race condition.
+    systemctl start redis.service
+    exec systemctl --init default
+  fi
 
 elif [ "x$1" = "xmigrate" ]; then
   echo "Upgrading db..."
@@ -164,6 +179,14 @@ elif [ "x$1" = "xinfo" ]; then
   echo "Info..."
   _rakeCmd "gitlab:env:info"
   return $?
+
+elif [ "x$1" = "xinit" ]; then
+  echo "Full init..."
+  _doInit
+  
+elif [ "x$1" = "xinitdb" ]; then
+  echo "Init DB..."
+  _initDb
 
 else
   ## Исполнение произвольных команд:

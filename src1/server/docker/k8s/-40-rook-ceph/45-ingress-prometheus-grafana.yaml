@@ -25,4 +25,22 @@ spec:
       - backend:
           serviceName: gitlab-svc
           servicePort: 8080
+  - host: prometheus.suggest.io
+    http:
+      paths:
+      - backend:
+          serviceName: prometheus-server
+          servicePort: 80
+  - host: alerter.prometheus.suggest.io
+    http:
+      paths:
+      - backend:
+          serviceName: prometheus-alertmanager
+          servicePort: 80
+  - host: grafana.suggest.io
+    http:
+      paths:
+      - backend:
+          serviceName: grafana
+          servicePort: 80
 

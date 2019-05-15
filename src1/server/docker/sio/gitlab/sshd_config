@@ -24,8 +24,8 @@ HostKey /etc/ssh/ssh_host_ed25519_key
 RekeyLimit 1G
 
 # Logging
-#SyslogFacility AUTH
-#LogLevel INFO
+SyslogFacility AUTH
+LogLevel DEBUG
 
 # Authentication:
 
@@ -42,9 +42,6 @@ PubkeyAuthentication yes
 AuthorizedKeysFile	%h/.ssh/authorized_keys
 
 #AuthorizedPrincipalsFile none
-
-AuthorizedKeysCommand /usr/share/webapps/gitlab-shell/bin/gitlab-shell-authorized-keys-check
-AuthorizedKeysCommandUser gitlab
 
 # For this to work you will also need host keys in /etc/ssh/ssh_known_hosts
 #HostbasedAuthentication no
@@ -105,6 +102,12 @@ Banner none
 
 # override default of no subsystems
 Subsystem	sftp	/usr/lib/ssh/sftp-server
+KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group18-sha512,diffie-hellman-group16-sha512
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+FingerprintHash sha256
+MaxStartups 10:50:20
+
+AllowUsers gitlab
 
 # Example of overriding settings on a per-user basis
 #Match User anoncvs
@@ -113,10 +116,10 @@ Subsystem	sftp	/usr/lib/ssh/sftp-server
 #	PermitTTY no
 #	ForceCommand cvs server
 
-KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group18-sha512,diffie-hellman-group16-sha512
-MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
-FingerprintHash sha256
-MaxStartups 10:50:20
+AuthorizedKeysCommand /usr/share/webapps/gitlab-shell/bin/gitlab-shell-authorized-keys-check gitlab %u %k
+AuthorizedKeysCommandUser gitlab
 
-AllowUsers gitlab
+Match User gitlab
+	AuthorizedPrincipalsCommandUser root
+	AuthorizedPrincipalsCommand /usr/share/webapps/gitlab-shell/bin/gitlab-shell-authorized-principals-check %i sshUsers
 

@@ -5,7 +5,7 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    "io.suggest.svc.type": "gitlab"
+    app: gitlab
   ports:
   - protocol: TCP
     port: 8080

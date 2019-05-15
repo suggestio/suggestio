@@ -1,25 +1,40 @@
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: pg-master-pod
+  name: pg-master-deploy
   labels:
-    "io.suggest.svc.type": "postgresql"
+    app: postgresql
+    app2: postgresql-master
 spec:
-  containers:
-  - name: pg-master-cont
-    image: docker-registry.suggest.io/sio/postgresql:latest
-    ports:
-    - containerPort: 5432
-    volumeMounts:
-    - mountPath: /var/lib/postgres
-      name: var-lib-postgres
-    env:
-    - name: POSTGRES-PASSWORD
-      value: postgres
-    - name: POSTGRES-USER
-      value: postgres    
-  imagePullSecrets:
-  - name: regcred
-  volumes:
-  - name: var-lib-postgres
-    emptyDir: {}
+  replicas: 1
+  selector:
+    matchLabels:
+      app2: postgresql-master
+  template:
+    metadata:
+      labels:
+        app: postgresql
+        app2: postgresql-master
+    spec:
+      nodeSelector:
+        io.suggest.postgresql.master.here: "true"
+      containers:
+      - name: pg-master-cont
+        image: docker-registry.suggest.io/sio/postgresql:latest
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - mountPath: /var/lib/postgres
+          name: var-lib-postgres
+        env:
+        - name: POSTGRES-PASSWORD
+          value: postgres
+        - name: POSTGRES-USER
+          value: postgres
+      imagePullSecrets:
+      - name: regcred
+      volumes:
+      - name: var-lib-postgres
+        hostPath:
+          path: /var/lib/containers/postgresql
+          type: DirectoryOrCreate

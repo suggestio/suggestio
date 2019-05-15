@@ -5,7 +5,7 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    "io.suggest.svc.type": "docker-registry"
+    app: docker-registry
   ports:
   - protocol: TCP
     port: 5000

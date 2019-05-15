@@ -1,3 +1,5 @@
+## Проброс ssh через 222 порт tcp - ingress.
+##
 apiVersion: v1
 kind: ConfigMap
 metadata:

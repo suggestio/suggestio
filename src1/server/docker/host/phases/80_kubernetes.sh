@@ -2,7 +2,9 @@
 
 set -e
 
-pacman -S --needed --noconfirm docker ethtool ebtables socat cni-plugins
+## xfsprogs - для rook-ceph
+## python - для ansible
+pacman -S --needed --noconfirm docker ethtool ebtables socat cni-plugins xfsprogs python
 
 ## Пробросить cni-плагины, иначе будет:
 ## ... from network weave-net/weave: failed to find plugin "portmap" in path [/opt/cni/bin]

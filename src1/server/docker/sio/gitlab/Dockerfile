@@ -65,6 +65,7 @@ RUN sed -r "s/(config.public_file_server.enabled *= *).*/\1true/" -i /usr/share/
 
 RUN sio-finalize-container.sh
 
+
 VOLUME ${gitlab_home}
 
 EXPOSE ${gitlab_port}
@@ -81,14 +82,12 @@ RUN RESQUE_CONF="/etc/webapps/gitlab/resque.yml" && \
 ## Выставить, чтобы соединения принимались с любого интерфейса, а не только с локалхоста:
 RUN sed -r "s/^(listen\s+\")([0-9]+[.:]?){5}\"/\10.0.0.0:${gitlab_port}\"/" -i /etc/webapps/gitlab/unicorn.rb
 
-COPY docker-entrypoint.sh /sbin/docker-entrypoint.sh
+RUN sed -r "s@/home/git@/var/lib/gitlab@g" -i /etc/webapps/gitlab/gitlab.yml
 
 ## Пометить все необходимые сервисы для запуска:
 RUN for svc in gitlab-gitaly gitlab-unicorn gitlab-workhorse gitlab-sidekiq sshd; do \
       systemctl enable $svc.service; \
     done
-
-ENTRYPOINT ["/sbin/docker-entrypoint.sh"]
 
 COPY smtp_settings.rb /usr/share/webapps/gitlab/config/initializers/smtp_settings.rb
 
@@ -96,3 +95,6 @@ COPY smtp_settings.rb /usr/share/webapps/gitlab/config/initializers/smtp_setting
 COPY --chown=root:root sshd_config /etc/ssh/sshd_config
 COPY moduli /etc/ssh/
 
+ENTRYPOINT ["/sbin/docker-entrypoint.sh"]
+
+COPY docker-entrypoint.sh /sbin/docker-entrypoint.sh
