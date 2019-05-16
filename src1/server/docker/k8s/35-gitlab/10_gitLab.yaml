@@ -3,7 +3,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gitlab-deploy
+  name: gitlab
   labels:
     app: gitlab
 spec:
@@ -20,7 +20,7 @@ spec:
         io.suggest.gitlab.here: "true"
       containers:
       - name: gitlab-cont
-        image: docker-registry.suggest.io/sio/gitlab
+        image: docker-registry.suggest.io/sio/gitlab:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

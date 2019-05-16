@@ -1,5 +1,7 @@
 ## БД redis
-FROM docker-registry.suggest.io/sio/os-base
+## Используется os-base-www, ибо gitlab-ci вместо jenkins.
+## Так-то можно и os-base использовать, в этом Dockerfile он не нужен.
+FROM docker-registry.suggest.io/sio/os-base-www
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ARG redis_home="/var/lib/redis"

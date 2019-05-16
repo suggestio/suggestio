@@ -51,26 +51,39 @@ RUN $PACMAN --noconfirm -Sy --needed gitlab postgresql-libs tar
 ## Для распаковки /var/lib/gitlab из gitlab_initial_backup_tar_gz требуется, чтобы tar был в контейнере.
 RUN pacman -D --asexplicit tar
 
-ENV gitlab_initial_backup_tar_gz=/var/lib/gitlab-initial.tar.gz
-
-## Надо эвакуировать содержимое gitlab_home, т.к. директории там создаются прямо из пакета.
-## Содержимое будет распаковано в entrypoint, если директория ${gitlab_home} пустая.
-RUN cd ${gitlab_home} && tar -czpf ${gitlab_initial_backup_tar_gz} .
-
 ## зависит от libaudit, нужно вызывать ДО sio-finalize-container.sh
 RUN gpasswd -a ${gitlab_user} ${redis_group}
+
+RUN sio-finalize-container.sh
 
 ## Система должна раздавать asset'ы. GitLab считает, что это должен делать nginx, а у нас будет без таких оптимизаций, по-старинке:
 RUN sed -r "s/(config.public_file_server.enabled *= *).*/\1true/" -i /usr/share/webapps/gitlab/config/environments/production.rb
 
-RUN sio-finalize-container.sh
+ENV gitlab_initial_backup_tar_gz=/var/lib/gitlab-initial.tar.gz
 
+## Надо эвакуировать содержимое gitlab_home, т.к. директории там создаются прямо из пакета.
+## Содержимое будет распаковано в entrypoint, если директория ${gitlab_home} пустая.
+RUN cd ${gitlab_home} && \
+    ## Содержимое файлов конфигов могут изменяться самим gitlab:
+    mv /etc/webapps/gitlab config && \
+    ln -s ${gitlab_home}/config /etc/webapps/gitlab && \
+    ## Аналогично поступить с gitlab-shell конфигами:
+    mv /etc/webapps/gitlab-shell config-shell && \
+    ln -s ${gitlab_home}/config-shell /etc/webapps/gitlab-shell && \
+    ## Для rails dbconsole требуются некоторые костыли:
+    ln -s /usr/share/webapps/gitlab/lib lib
 
-VOLUME ${gitlab_home}
+## Выставить, чтобы соединения принимались с любого интерфейса, а не только с локалхоста:
+RUN sed -r "s/^(listen\s+\")([0-9]+[.:]?){5}\"/\10.0.0.0:${gitlab_port}\"/" -i /etc/webapps/gitlab/unicorn.rb
+
+RUN sed -r "s@/home/git@/var/lib/gitlab@g" -i /etc/webapps/gitlab/gitlab.yml
+
+RUN cd ${gitlab_home} && \
+    tar -czpf ${gitlab_initial_backup_tar_gz} .
 
 EXPOSE ${gitlab_port}
 
-## ssh-порт для доступа в 
+## ssh-порт для доступа через git:
 EXPOSE 22
 
 RUN RESQUE_CONF="/etc/webapps/gitlab/resque.yml" && \
@@ -79,10 +92,7 @@ RUN RESQUE_CONF="/etc/webapps/gitlab/resque.yml" && \
       echo "$mode: unix:/run/redis/redis.sock" >> $RESQUE_CONF; \
     done
 
-## Выставить, чтобы соединения принимались с любого интерфейса, а не только с локалхоста:
-RUN sed -r "s/^(listen\s+\")([0-9]+[.:]?){5}\"/\10.0.0.0:${gitlab_port}\"/" -i /etc/webapps/gitlab/unicorn.rb
-
-RUN sed -r "s@/home/git@/var/lib/gitlab@g" -i /etc/webapps/gitlab/gitlab.yml
+VOLUME ${gitlab_home}
 
 ## Пометить все необходимые сервисы для запуска:
 RUN for svc in gitlab-gitaly gitlab-unicorn gitlab-workhorse gitlab-sidekiq sshd; do \
@@ -98,3 +108,4 @@ COPY moduli /etc/ssh/
 ENTRYPOINT ["/sbin/docker-entrypoint.sh"]
 
 COPY docker-entrypoint.sh /sbin/docker-entrypoint.sh
+

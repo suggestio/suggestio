@@ -1,0 +1,7 @@
+stage www:
+  stage: build
+  before_script:
+  - sbt clean
+  script:
+  - sbt 'project www' stage
+

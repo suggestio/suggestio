@@ -1,4 +1,4 @@
-## Базовый образ для образов, работающих с sioweb, в т.ч. jenkins и т.д.
+## Базовый образ для образов, работающих с sioweb, в т.ч. jenkins, gitlab-ci и т.д.
 
 FROM docker-registry.suggest.io/sio/os-base-jre
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
