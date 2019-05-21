@@ -15,3 +15,7 @@ spec:
     port: 22
     targetPort: 22
     name: ssh
+  - protocol: TCP
+    port: 8282
+    targetPort: 8282
+    name: workhorse

@@ -74,9 +74,10 @@ RUN cd ${gitlab_home} && \
     ln -s /usr/share/webapps/gitlab/lib lib
 
 ## Выставить, чтобы соединения принимались с любого интерфейса, а не только с локалхоста:
-RUN sed -r "s/^(listen\s+\")([0-9]+[.:]?){5}\"/\10.0.0.0:${gitlab_port}\"/" -i /etc/webapps/gitlab/unicorn.rb
-
-RUN sed -r "s@/home/git@/var/lib/gitlab@g" -i /etc/webapps/gitlab/gitlab.yml
+RUN sed -r "s/^(listen\s+\")([0-9]+[.:]?){5}\"/\10.0.0.0:${gitlab_port}\"/" -i /etc/webapps/gitlab/unicorn.rb && \
+    sed -r "s@/home/git@/var/lib/gitlab@g" -i /etc/webapps/gitlab/gitlab.yml && \
+    ## Правильно запускать workhorse, чтобы он раздавал по http необходимый контент:
+    sed -r 's@^(ExecStart=).*$@\1/usr/bin/gitlab-workhorse -listenUmask 0 -listenNetwork tcp -listenAddr 0.0.0.0:8282 -secretPath /etc/webapps/gitlab/gitlab_workhorse_secret -authBackend http://localhost:8080 -authSocket /var/lib/gitlab/sockets/gitlab.socket -documentRoot /usr/share/webapps/gitlab/public@' -i /usr/lib/systemd/system/gitlab-workhorse.service
 
 RUN cd ${gitlab_home} && \
     tar -czpf ${gitlab_initial_backup_tar_gz} .

@@ -5,6 +5,7 @@ metadata:
   name: ingress-default
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
+    #nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   rules:
   - host: docker-registry.suggest.io
@@ -18,11 +19,5 @@ spec:
       paths:
       - backend:
           serviceName: jenkins-svc
-          servicePort: 8080
-  - host: source.suggest.io
-    http:
-      paths:
-      - backend:
-          serviceName: gitlab-svc
           servicePort: 8080
 

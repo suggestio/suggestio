@@ -1,7 +1,13 @@
-stage www:
+image: docker-registry.suggest.io/sio/os-www:latest
+
+stages:
+  - build
+  - deploy
+
+build-www-docker:
   stage: build
   before_script:
   - sbt clean
   script:
-  - sbt 'project www' stage
+  - sbt 'project www' docker:publishLocal
 
