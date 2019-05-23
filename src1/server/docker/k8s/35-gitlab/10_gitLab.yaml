@@ -1,4 +1,7 @@
-## Если первый запуска на пустом энтерпрайзе, то система будет ждать юзера по ssh для запуска `$0 init` или `$0 initdb` .
+## gitlab + docker-registry
+## Т.к. gitlab требует доступ в недра /var/lib/docker-registry, контейнеры живут в
+## одном pod'е.
+## 
 ##
 apiVersion: apps/v1
 kind: Deployment
@@ -19,8 +22,9 @@ spec:
       nodeSelector:
         io.suggest.gitlab.here: "true"
       containers:
+      ## gitlab web
       - name: gitlab-cont
-        image: docker-registry.suggest.io/sio/gitlab:latest
+        image: docker-registry.suggest.io:5000/sio/gitlab:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
@@ -30,6 +34,12 @@ spec:
           name: var-lib-gitlab
         - mountPath: /var/lib/redis
           name: var-lib-redis
+        - mountPath: /var/lib/docker-registry
+          name: var-lib-docker-registry
+        - name: docker-registry-creds
+          mountPath: /etc/docker-registry/registry.key
+          subPath: registry.key
+          readOnly: true
         env:
         - name: PG_HOST
           value: postgresql-svc
@@ -39,6 +49,26 @@ spec:
           value: gitlab
         - name: PG_DATABASE
           value: gitlab
+      ## docker-registry
+      - name: docker-registry-cont
+        image: docker-registry.suggest.io:5000/sio/docker-registry
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: var-lib-docker-registry
+          mountPath: /var/lib/docker-registry
+        - name: docker-registry-creds
+          mountPath: /etc/docker-registry/registry.crt
+          subPath: registry.crt
+          readOnly: true
+        env:
+        - name: REGISTRY_HTTP_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: docker-registry-creds
+              key: http-secret
+      ## pod params
       imagePullSecrets:
       - name: regcred
       volumes:
@@ -50,4 +80,11 @@ spec:
         hostPath:
           path: /var/lib/containers/gitlab/gitlab
           type: DirectoryOrCreate
+      - name: var-lib-docker-registry
+        hostPath:
+          path: /var/lib/containers/docker-registry
+          type: DirectoryOrCreate
+      - name: docker-registry-creds
+        secret:
+          secretName: docker-registry-creds
 

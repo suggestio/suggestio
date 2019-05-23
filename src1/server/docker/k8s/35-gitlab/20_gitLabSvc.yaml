@@ -7,15 +7,20 @@ spec:
   selector:
     app: gitlab
   ports:
-  - protocol: TCP
+  - name: webui
+    protocol: TCP
     port: 8080
     targetPort: 8080
-    name: webui
-  - protocol: TCP
+  - name: ssh
+    protocol: TCP
     port: 22
     targetPort: 22
-    name: ssh
-  - protocol: TCP
+  - name: workhorse
+    protocol: TCP
     port: 8282
     targetPort: 8282
-    name: workhorse
+  - name: docker-registry
+    protocol: TCP
+    port: 5000
+    targetPort: 5000
+

@@ -1,0 +1,25 @@
+---
+version: 0.1
+log:
+  fields:
+    service: registry
+storage:
+  cache:
+    blobdescriptor: inmemory
+  filesystem:
+    rootdirectory: /var/lib/docker-registry
+http:
+  addr: :5000
+  headers:
+    X-Content-Type-Options: [nosniff]
+auth:
+  token:
+    realm: http://source.suggest.io/jwt/auth
+    service: container_registry
+    issuer: gitlab-issuer
+    rootcertbundle: /etc/docker-registry/registry.crt
+health:
+  storagedriver:
+    enabled: true
+    interval: 10s
+    threshold: 3

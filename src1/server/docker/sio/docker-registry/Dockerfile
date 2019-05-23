@@ -1,6 +1,8 @@
 ## Базовый образ для seaweedfs-контейнеров (master, volume, ...).
 ## Собирает seaweedfs из исходников, создаёт домашнюю директорию и объявляет volume.
 ## Всё остальное должно быть реализовано на уровне volume/master-докерфайлов.
+##
+## Обязательный env REGISTRY_HTTP_SECRET - пробрасывается через kubernetes secrets.
 
 FROM docker-registry.suggest.io/sio/os-base-go
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
@@ -26,9 +28,8 @@ EXPOSE 5000
 RUN sio-finalize-container.sh
 
 ## TODO Добавить юзера для доступа:
-COPY "docker-registry.htpasswd" "/etc/docker-registry/.htpasswd"
-
-ENV REGISTRY_HTTP_SECRET="zoofai9Ohchi5nei9eex"
+#COPY "docker-registry.htpasswd" "/etc/docker-registry/.htpasswd"
+COPY config.yml /etc/docker-registry/config.yml
 
 RUN systemctl enable docker-registry
 
