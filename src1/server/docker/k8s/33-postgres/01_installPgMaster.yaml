@@ -20,7 +20,7 @@ spec:
         io.suggest.postgresql.master.here: "true"
       containers:
       - name: pg-master-cont
-        image: docker-registry.suggest.io/sio/postgresql:latest
+        image: docker-registry.suggest.io/sio/sio2/postgresql:latest
         ports:
         - containerPort: 5432
         volumeMounts:

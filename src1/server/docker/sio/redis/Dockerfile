@@ -1,5 +1,5 @@
 ## БД redis
-FROM docker-registry.suggest.io/sio/os-base
+FROM docker-registry.suggest.io/sio/sio2/os-base
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ARG redis_home="/var/lib/redis"

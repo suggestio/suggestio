@@ -18,7 +18,7 @@ spec:
         io.suggest.jenkins.here: "true"
       containers:
       - name: jenkins-cont01
-        image: docker-registry.suggest.io/sio/jenkins:latest
+        image: docker-registry.suggest.io/sio/sio2/jenkins:latest
         ports:
         - containerPort: 8080
         - containerPort: 50000

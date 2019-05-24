@@ -1,1 +1,1 @@
-docker build -t docker-registry.suggest.io/sio/kibana:latest .
+docker build -t docker-registry.suggest.io/sio/sio2/kibana:latest .

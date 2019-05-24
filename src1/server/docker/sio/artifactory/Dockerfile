@@ -1,6 +1,6 @@
 ## artifactory для sio jenkins.
 
-FROM docker-registry.suggest.io/sio/os-base-jre
+FROM docker-registry.suggest.io/sio/sio2/os-base-jre
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ## В контейнере недоступен systemd-sysusers, поэтому создать юзера внучную:

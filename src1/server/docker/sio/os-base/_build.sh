@@ -1,1 +1,1 @@
-docker build -t docker-registry.suggest.io/sio/os-base:latest .
+docker build -t docker-registry.suggest.io/sio/sio2/os-base:latest .

@@ -1,4 +1,4 @@
-image: docker-registry.suggest.io/sio/os-www:latest
+image: docker-registry.suggest.io/sio/sio2/os-www:latest
 
 stages:
   - build

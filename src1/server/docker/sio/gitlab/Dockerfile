@@ -14,7 +14,7 @@
 #    python2-docutils: reStructuredText markup language support
 #    smtp-server: mail server in order to receive mail notifications
 
-FROM docker-registry.suggest.io/sio/redis
+FROM docker-registry.suggest.io/sio/sio2/redis
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ARG gitlab_home="/var/lib/gitlab"
@@ -78,8 +78,8 @@ RUN sed -r "s/^(listen\s+\")([0-9]+[.:]?){5}\"/\10.0.0.0:${gitlab_port}\"/" -i /
     sed -r "s@/home/git@/var/lib/gitlab@g" -i /etc/webapps/gitlab/gitlab.yml && \
     ## Правильно запускать workhorse, чтобы он раздавал по http необходимый контент:
     sed -r 's@^(ExecStart=).*$@\1/usr/bin/gitlab-workhorse -listenUmask 0 -listenNetwork tcp -listenAddr 0.0.0.0:8282 -secretPath /etc/webapps/gitlab/gitlab_workhorse_secret -authBackend http://localhost:8080 -authSocket /var/lib/gitlab/sockets/gitlab.socket -documentRoot /usr/share/webapps/gitlab/public@g' -i /usr/lib/systemd/system/gitlab-workhorse.service && \
-    ## Подключить docker-registry из текущего pod'а.
-    sed -r 's@^(\s+)(registry:)$@\1\2\n\1\1enabled: true\n\1\1host: docker-registry.suggest.io\n\1\1port: 80\n\1\1api_url: http://localhost:5000/\n\1\1key: /etc/docker-registry/registry.key\n\1\1path: /var/lib/docker-registry\n\1\1issuer: gitlab-issuer\n@g' -i /etc/webapps/gitlab/gitlab.yml
+    ## Подключить docker-registry из текущего pod'а. port закомменчен, иначе он не приписывается во все ссылки.
+    sed -r 's@^(\s+)(registry:)$@\1\2\n\1\1enabled: true\n\1\1host: docker-registry.suggest.io\n\1\1#port: 80\n\1\1api_url: http://localhost:5000/\n\1\1key: /etc/docker-registry/registry.key\n\1\1path: /var/lib/docker-registry\n\1\1issuer: gitlab-issuer\n@g' -i /etc/webapps/gitlab/gitlab.yml
     ## TODO Теперь gitlab.yml и остальные живут в volume. И как эти команды накладывать на хранимый конфиг, кроме как вручную?
 
 RUN cd ${gitlab_home} && \

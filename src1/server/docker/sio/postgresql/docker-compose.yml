@@ -3,7 +3,7 @@ version: '2'
 services:
   pg-master:
     build: '.'
-    image: 'docker-registry.suggest.io/sio/postgresql'
+    image: 'docker-registry.suggest.io/sio/sio2/postgresql'
     restart: 'always'
     environment:
       POSTGRES_USER: 'postgres'
@@ -15,7 +15,7 @@ services:
 
   pg-slave:
     build: '.'
-    image: 'docker-registry.suggest.io/sio/postgresql'
+    image: 'docker-registry.suggest.io/sio/sio2/postgresql'
     restart: 'always'
     environment:
       POSTGRES_USER: 'postgres'

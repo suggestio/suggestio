@@ -11,7 +11,7 @@ services:
 
   ## seaweedfs
   swfs-master:
-    image: docker-registry.suggest.io/sio/seaweedfs
+    image: docker-registry.suggest.io/sio/sio2/seaweedfs
     #ports:
     #- 9333:9333
     #- 19333:19333
@@ -20,7 +20,7 @@ services:
     - 19333
     command: "master"
   swfs-volume:
-    image: docker-registry.suggest.io/sio/seaweedfs
+    image: docker-registry.suggest.io/sio/sio2/seaweedfs
     #ports:
     #- 8080:8080
     #- 18080:18080
@@ -31,7 +31,7 @@ services:
     #depends-on:
     #- swfs-master
   swfs-filer:
-    image: docker-registry.suggest.io/sio/seaweedfs
+    image: docker-registry.suggest.io/sio/sio2/seaweedfs
     #ports:
     #- 8888:8888
     #- 18888:18888
@@ -45,7 +45,7 @@ services:
     #- swfs-master
     #- swfs-volume
   swfs-cronjob:
-    image: docker-registry.suggest.io/sio/seaweedfs
+    image: docker-registry.suggest.io/sio/sio2/seaweedfs
     command: 'cronjob'
     environment:
       # Run re-replication every N minutes
@@ -57,7 +57,7 @@ services:
   
   ## postgresql
   pg-master:
-    image: 'docker-registry.suggest.io/sio/postgresql'
+    image: 'docker-registry.suggest.io/sio/sio2/postgresql'
     restart: 'on-failure'
     environment:
       POSTGRES-USER: 'postgres'
@@ -65,7 +65,7 @@ services:
     expose:
      - 5432
   pg-slave:
-    image: 'docker-registry.suggest.io/sio/postgresql'
+    image: 'docker-registry.suggest.io/sio/sio2/postgresql'
     restart: 'on-failure'
     environment:
       POSTGRES-USER: 'postgres'
@@ -77,38 +77,38 @@ services:
     #- pg-master
 
   clamav:
-    image: docker-registry.suggest.io/sio/clamav
+    image: docker-registry.suggest.io/sio/sio2/clamav
     restart: 'on-failure'
     expose:
       - 3310
   
   docker-registry:
-    image: docker-registry.suggest.io/sio/docker-registry
+    image: docker-registry.suggest.io/sio/sio2/docker-registry
     restart: 'on-failure'
     ports:
     - 5000:5000
 
   elasticsearch:
-    image: docker-registry.suggest.io/sio/elasticsearch
+    image: docker-registry.suggest.io/sio/sio2/elasticsearch
     restart: 'on-failure'
     expose:
       - 9200
       - 9300
 
   kibana:
-    image: docker-registry.suggest.io/sio/kibana
+    image: docker-registry.suggest.io/sio/sio2/kibana
     restart: 'on-failure'
     ports:
     - 5601:5601
 
   artifactory:
-    image: docker-registry.suggest.io/sio/artifactory
+    image: docker-registry.suggest.io/sio/sio2/artifactory
     restart: 'on-failure'
     ports:
     - 8081:8081
 
   jenkins:
-    image: docker-registry.suggest.io/sio/jenkins
+    image: docker-registry.suggest.io/sio/sio2/jenkins
     restart: 'on-failure'
     ports:
     - 8090:8090
@@ -119,7 +119,7 @@ services:
     #- artifactory
 
   www:
-    image: docker-registry.suggest.io/sio/www
+    image: docker-registry.suggest.io/sio/sio2/www
     restart: 'on-failure'
     command: "-Des.client.transport.addrs=elasticsearch:9300 -Dswfs.masters=swfs-master:9333 -Dslick.dbs.default.db.hostport=pg-master:5432,pg-slave:5432"
     ports:

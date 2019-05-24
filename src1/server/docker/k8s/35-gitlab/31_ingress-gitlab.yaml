@@ -11,7 +11,7 @@ spec:
   - host: source.suggest.io
     http:
       paths:
-      - path: /suggestio/sio2.git
+      - path: /sio/sio2.git
         #'[-/\w.]+\.git/'
         backend:
           serviceName: gitlab-svc

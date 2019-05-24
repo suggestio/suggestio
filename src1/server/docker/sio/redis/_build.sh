@@ -1,1 +1,1 @@
-docker build -t docker-registry.suggest.io:5000/sio/redis:latest .
+docker build -t docker-registry.suggest.io/sio/sio2/redis:latest .

@@ -1,1 +1,1 @@
-docker build -t docker-registry.suggest.io/sio/jenkins:latest .
+docker build -t docker-registry.suggest.io/sio/sio2/jenkins:latest .

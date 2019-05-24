@@ -1,1 +1,1 @@
-docker build -t docker-registry.suggest.io/sio/clamav:latest .
+docker build -t docker-registry.suggest.io/sio/sio2/clamav:latest .

@@ -24,7 +24,7 @@ spec:
       containers:
       ## gitlab web
       - name: gitlab-cont
-        image: docker-registry.suggest.io:5000/sio/gitlab:latest
+        image: docker-registry.suggest.io:5000/sio/sio2/gitlab:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
@@ -36,6 +36,7 @@ spec:
           name: var-lib-redis
         - mountPath: /var/lib/docker-registry
           name: var-lib-docker-registry
+          readOnly: true
         - name: docker-registry-creds
           mountPath: /etc/docker-registry/registry.key
           subPath: registry.key
@@ -51,7 +52,7 @@ spec:
           value: gitlab
       ## docker-registry
       - name: docker-registry-cont
-        image: docker-registry.suggest.io:5000/sio/docker-registry
+        image: docker-registry.suggest.io:5000/sio/sio2/docker-registry
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000

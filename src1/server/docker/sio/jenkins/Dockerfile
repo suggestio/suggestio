@@ -5,7 +5,7 @@
 ## docker volume create jenkins_home
 ## docker run -p 8090:8090 -p 50000:50000 -v jenkins_home:/var/lib/jenkins sio/jenkins-sio
 
-FROM docker-registry.suggest.io/sio/os-base-www
+FROM docker-registry.suggest.io/sio/sio2/os-base-www
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
 
 ARG user=jenkins
