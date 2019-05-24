@@ -1,0 +1,93 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: artifactory
+  labels:
+    app: artifactory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: artifactory
+  template:
+    metadata:
+      labels:
+        app: artifactory
+    spec:
+      nodeSelector:
+        io.suggest.gitlab.here: "true"
+      containers:
+      - name: artifactory
+        image: docker-registry.suggest.io/sio/sio2/artifactory:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8081
+        volumeMounts:
+        - name: a-data
+          mountPath: /usr/share/webapps/artifactory/data
+        - name: a-access
+          mountPath: /usr/share/webapps/artifactory/access
+        - name: a-backup
+          mountPath: /usr/share/webapps/artifactory/backup
+        - name: a-replicator
+          mountPath: /usr/share/webapps/artifactory/replicator
+        - name: a-support
+          mountPath: /usr/share/webapps/artifactory/support
+      imagePullSecrets:
+      - name: regcred
+      volumes:
+      - name: a-data
+        hostPath:
+          path: /var/lib/containers/artifactory/data
+          type: DirectoryOrCreate
+      - name: a-access
+        hostPath:
+          path: /var/lib/containers/artifactory/access
+          type: DirectoryOrCreate
+      - name: a-backup
+        hostPath:
+          path: /var/lib/containers/artifactory/backup
+          type: DirectoryOrCreate
+      - name: a-replicator
+        hostPath:
+          path: /var/lib/containers/artifactory/replicator
+          type: DirectoryOrCreate
+      - name: a-support
+        hostPath:
+          path: /var/lib/containers/artifactory/support
+          type: DirectoryOrCreate
+      # TODO надо разобраться с /etc/webapps/artifactory. Там мешанина из статических файлов и рантайма, наподобии etc от гитлаба.
+      #- name: a-etc-security
+      #  hostPath:
+      #    path: /var/lib/containers/artifactory/etc/security
+      #
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: artifactory
+spec:
+  type: ClusterIP
+  selector:
+    app: artifactory
+  ports:
+  - name: artifactory
+    protocol: TCP
+    port: 8081
+    targetPort: 8081
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-artifactory
+spec:
+  rules:
+  ## TODO ci -> ???
+  - host: ci.suggest.io
+    http:
+      paths:
+      - backend:
+          serviceName: artifactory
+          servicePort: artifactory
+

@@ -1,8 +1,7 @@
 ## gitlab + docker-registry
 ## Т.к. gitlab требует доступ в недра /var/lib/docker-registry, контейнеры живут в
 ## одном pod'е.
-## 
-##
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -52,7 +51,7 @@ spec:
           value: gitlab
       ## docker-registry
       - name: docker-registry-cont
-        image: docker-registry.suggest.io:5000/sio/sio2/docker-registry
+        image: docker-registry.suggest.io:5000/sio/sio2/docker-registry:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
@@ -88,4 +87,56 @@ spec:
       - name: docker-registry-creds
         secret:
           secretName: docker-registry-creds
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitlab-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: gitlab
+  ports:
+  - name: webui
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+  - name: ssh
+    protocol: TCP
+    port: 22
+    targetPort: 22
+  - name: workhorse
+    protocol: TCP
+    port: 8282
+    targetPort: 8282
+  - name: docker-registry
+    protocol: TCP
+    port: 5000
+    targetPort: 5000
+---
+## Ингрес для проброса gitlab-а.
+## Костыли с 8282 связаны с необходимостью доступа из runner'а, а доп.HTTP-хидеры внезапно оказались не нужны.
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-gitlab
+spec:
+  rules:
+  - host: source.suggest.io
+    http:
+      paths:
+      - path: /sio/sio2.git
+        #'[-/\w.]+\.git/'
+        backend:
+          serviceName: gitlab-svc
+          servicePort: workhorse
+      - backend:
+          serviceName: gitlab-svc
+          servicePort: webui
+  - host: docker-registry.suggest.io
+    http:
+      paths:
+      - backend:
+          serviceName: gitlab-svc
+          servicePort: docker-registry
 
