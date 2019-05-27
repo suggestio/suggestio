@@ -65,23 +65,18 @@ data:
     cat >> /home/gitlab-runner/.gitlab-runner/config.toml <<EOF
           [[runners.kubernetes.volumes.host_path]]
             name = "docker"
-            path = "/var/run/docker.sock"
+            host_path = "/var/run/docker.sock"
             mount_path = "/var/run/docker.sock"
             read_only = false
           [[runners.kubernetes.volumes.host_path]]
             name = "ivy2-cache"
-            path = "/var/lib/containers/ivy2-cache"
+            host_path = "/var/lib/containers/ivy2-cache"
             mount_path = "/root/.ivy2/cache"
             read_only = false
           [[runners.kubernetes.volumes.host_path]]
             name = "sbt-zinc"
-            path = "/var/lib/containers/sbt-zinc"
-            mount_path = "/root/.sbt/1.0/zinc"
-            read_only = false
-          [[runners.kubernetes.volumes.host_path]]
-            name = "sbt-target"
-            path = "/var/lib/containers/sbt-target"
-            mount_path = "/root/.sbt/1.0/target"
+            host_path = "/var/lib/containers/sbt-home"
+            mount_path = "/root/.sbt"
             read_only = false
     EOF
     

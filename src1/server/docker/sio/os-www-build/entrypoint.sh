@@ -3,14 +3,17 @@
 ## Подготовка к запуску контейнера сборки s.io.
 ## Нужно заполнить конфиги ivy2 и sbt, чтобы всё хорошо собиралось.
 
+set -x
+
 cd $HOME
 
 SBT_VERSION_ABI=1.0
 
-mkdir -p .ivy2 .sbt/${SBT_VERSION_ABI}
+mkdir -p /$HOME/.ivy2 /$HOME/.sbt/${SBT_VERSION_ABI}
 
 ## Заполнить конфиг для локального кэширования артефактов из artifactory:
-cat > .ivy2/.credentials <<EOF
+echo ".ivy2/.credentials..."
+cat > /$HOME/.ivy2/.credentials <<EOF
 realm=$K8S_SECRET_IVY2_REALM
 host=$K8S_SECRET_IVY2_HOST
 user=$K8S_SECRET_IVY2_USER
@@ -18,7 +21,8 @@ password=$K8S_SECRET_IVY2_PASSWORD
 EOF
 
 ## Подготовить конфиг sbt, чтобы активнее работал с локальной artifactory:
-cat > .sbt/${SBT_VERSION_ABI}/global.sbt <<EOF
+echo "global.sbt..."
+cat > $HOME/.sbt/${SBT_VERSION_ABI}/global.sbt <<EOF
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 val ARTIFACTORY_URL = "http://${K8S_SECRET_IVY2_HOST}/artifactory"
@@ -37,7 +41,6 @@ resolvers ++= Seq(
   corpRepoResolver
 )
 EOF
-
 
 ## Продолжить выполнение исходных операций:
 exec $@

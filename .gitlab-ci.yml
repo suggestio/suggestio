@@ -4,10 +4,12 @@ stages:
   - build
   - deploy
 
+before_script:
+  - /sbin/entrypoint.sh
+  - sbt clean
+
 build-www-docker:
   stage: build
-  before_script:
-  - sbt clean
   script:
   - sbt 'project www' docker:publishLocal
 
