@@ -46,10 +46,10 @@ RUN for dir in ${gitlab_home} /run/gitlab /var/log/gitlab; do \
 RUN chmod 750 ${gitlab_home} && \
     chmod 770 /var/log/gitlab
 
-RUN $PACMAN --noconfirm -Sy --needed gitlab postgresql-libs tar
+RUN $PACMAN --noconfirm -Sy --needed gitlab postgresql-libs tar gzip
 
 ## Для распаковки /var/lib/gitlab из gitlab_initial_backup_tar_gz требуется, чтобы tar был в контейнере.
-RUN pacman -D --asexplicit tar
+RUN pacman -D --asexplicit tar gzip
 
 ## зависит от libaudit, нужно вызывать ДО sio-finalize-container.sh
 RUN gpasswd -a ${gitlab_user} ${redis_group}

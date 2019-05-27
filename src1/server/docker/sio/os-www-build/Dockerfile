@@ -1,4 +1,5 @@
 ## Образ контейнера для сборки sioweb с sbt.
+## Следует монтировать ~/.ivy2/cache хотя бы как hostPath.
 
 FROM docker-registry.suggest.io/sio/sio2/os-base-www
 LABEL maintainer="konstantin.nikiforov@cbca.ru"
@@ -9,11 +10,9 @@ RUN $PACMAN -Sy --noconfirm --needed npm nodejs yarn sbt
 ## remove all useless stuff
 RUN sio-finalize-container.sh
 
-## Надо выкачать начальные зависимости sbt:
-##
-# Getting org.scala-sbt sbt 1.2.7  (this may take some time)...
-#downloading https://repo1.maven.org/maven2/org/scala-sbt/sbt/1.2.7/sbt-1.2.7.jar ...
-#	[SUCCESSFUL ] org.scala-sbt#sbt;1.2.7!sbt.jar (49ms)
-# ...
-#RUN cd /tmp && sbt exit
+RUN mkdir -p /root/.ivy2/cache /root/.sbt/1.0
+
+COPY "entrypoint.sh" "/sbin/entrypoint.sh"
+
+ENTRYPOINT ["/sbin/entrypoint.sh"]
 

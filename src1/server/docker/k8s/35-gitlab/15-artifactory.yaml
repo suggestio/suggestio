@@ -19,11 +19,13 @@ spec:
         io.suggest.gitlab.here: "true"
       containers:
       - name: artifactory
-        image: docker-registry.suggest.io/sio/sio2/artifactory:latest
+        image: docker-registry.suggest.io/sio/sio2/artifactory
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8081
         volumeMounts:
+        - name: a-etc
+          mountPath: /etc/webapps/artifactory
         - name: a-data
           mountPath: /usr/share/webapps/artifactory/data
         - name: a-access
@@ -37,6 +39,10 @@ spec:
       imagePullSecrets:
       - name: regcred
       volumes:
+      - name: a-etc
+        hostPath:
+          path: /var/lib/containers/artifactory/etc
+          type: DirectoryOrCreate
       - name: a-data
         hostPath:
           path: /var/lib/containers/artifactory/data
@@ -57,11 +63,6 @@ spec:
         hostPath:
           path: /var/lib/containers/artifactory/support
           type: DirectoryOrCreate
-      # TODO надо разобраться с /etc/webapps/artifactory. Там мешанина из статических файлов и рантайма, наподобии etc от гитлаба.
-      #- name: a-etc-security
-      #  hostPath:
-      #    path: /var/lib/containers/artifactory/etc/security
-      #
 ---
 apiVersion: v1
 kind: Service
@@ -90,4 +91,4 @@ spec:
       - backend:
           serviceName: artifactory
           servicePort: artifactory
-
+---

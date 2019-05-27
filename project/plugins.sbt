@@ -8,8 +8,8 @@
 credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 
 resolvers ++= Seq(
-  "typesafe-releases"            at "http://ivy2-internal.cbca.ru/artifactory/typesafe-releases",
-  "bintray-nitram509-jbrotli"    at "http://ivy2-internal.cbca.ru/artifactory/bintray-nitram509-jbrotli"
+  "typesafe-releases"            at "http://ci.suggest.io/artifactory/typesafe-releases",
+  "bintray-nitram509-jbrotli"    at "http://ci.suggest.io/artifactory/bintray-nitram509-jbrotli"
 )
 
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.0")
