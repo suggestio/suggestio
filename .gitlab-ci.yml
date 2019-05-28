@@ -1,14 +1,15 @@
-image: docker-registry.suggest.io/sio/sio2/os-www-build:20190528-5
+image: docker-registry.suggest.io/sio/sio2/os-www-build:20190528-6
 
 stages:
   - build
-  - deploy
+  #- deploy
 
 before_script:
   - /sbin/entrypoint.sh
   - sbt clean
 
-build-www-docker:
+
+www-build-docker-image:
   stage: build
   script:
   - sbt 'project www' docker:publishLocal
