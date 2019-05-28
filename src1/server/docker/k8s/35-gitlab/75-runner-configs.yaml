@@ -78,6 +78,11 @@ data:
             host_path = "/var/lib/containers/sbt-home"
             mount_path = "/root/.sbt"
             read_only = false
+          [[runners.kubernetes.volumes.host_path]]
+            name = "npm"
+            host_path = "/var/lib/containers/npm-cache"
+            mount_path = "/root/.npm"
+            read_only = false
     EOF
     
     # Start the runner

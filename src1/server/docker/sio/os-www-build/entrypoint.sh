@@ -42,6 +42,13 @@ resolvers ++= Seq(
 )
 EOF
 
+## Выставить кол-во RAM в sbtopts.
+SBT_OPTS="/etc/sbt/sbtopts"
+echo > $SBT_OPTS
+if [ ! -z "$SBT_MEM" ]; then
+  echo "-mem $SBT_MEM" > "$SBT_OPTS"
+fi
+
 ## Продолжить выполнение исходных операций:
 exec $@ || exit 0
 
