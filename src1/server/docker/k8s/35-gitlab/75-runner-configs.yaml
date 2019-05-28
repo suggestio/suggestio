@@ -20,7 +20,7 @@ data:
       exit 1
     fi
   config.toml: |
-    concurrent = 4
+    concurrent = 1
     check_interval = 3
     log_level = "info"
     listen_address = '[::]:9252'
