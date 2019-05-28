@@ -1,1 +1,1 @@
-docker build -t docker-registry.suggest.io/sio/sio2/os-www-build:20190528-1 .
+docker build -t docker-registry.suggest.io/sio/sio2/os-www-build:20190528-3 .

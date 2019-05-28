@@ -42,7 +42,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.2")
 //addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2s49-SNAPSHOT")
 addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.1.0")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.27")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.28")
 
 //addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 addSbtPlugin("com.github.praneethpuligundla" % "sbt-filter" % "1.0.2")

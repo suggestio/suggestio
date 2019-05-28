@@ -44,10 +44,10 @@ EOF
 
 ## Выставить кол-во RAM в sbtopts.
 SBT_OPTS="/etc/sbt/sbtopts"
-echo > $SBT_OPTS
-if [ ! -z "$SBT_MEM" ]; then
-  echo "-mem $SBT_MEM" > "$SBT_OPTS"
+if [ -z "$K8S_SECRET_SBT_MEM" ]; then
+  K8S_SECRET_SBT_MEM=3072
 fi
+echo "-mem $K8S_SECRET_SBT_MEM" > "$SBT_OPTS"
 
 ## Продолжить выполнение исходных операций:
 exec $@ || exit 0
