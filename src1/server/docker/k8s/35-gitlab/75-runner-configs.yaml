@@ -83,6 +83,9 @@ data:
             host_path = "/var/lib/containers/npm-cache"
             mount_path = "/root/.npm"
             read_only = false
+
+        [runners.kubernetes.node_selector]
+          "io.suggest.sio2.build.here" = "true"
     EOF
     
     # Start the runner
