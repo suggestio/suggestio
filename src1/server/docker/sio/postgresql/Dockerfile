@@ -18,8 +18,8 @@ RUN groupadd -g ${gid} ${group} && \
 RUN $PACMAN --noconfirm -Sy postgresql postgresql-old-upgrade && \
   systemctl enable postgresql.service
 
-## В docker-entrypoint.sh используется команда ping для инициализации slave:
-RUN $PACMAN --noconfirm -S iputils
+## В docker-entrypoint.sh используется команда telnet для паузы перед запуском slave:
+RUN $PACMAN --noconfirm -S inetutils
 
 RUN pacman -D --asexplicit sudo
 

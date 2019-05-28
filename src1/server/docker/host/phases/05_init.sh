@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pacman -Sy --needed vim mc net-tools
+pacman -Syu --needed --noconfirm vim mc net-tools
 
 cat > /etc/profile.d/editor.sh << EOF
 export EDITOR=vim

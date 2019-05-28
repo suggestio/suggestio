@@ -3,17 +3,17 @@
 ## Подготовка к запуску контейнера сборки s.io.
 ## Нужно заполнить конфиги ivy2 и sbt, чтобы всё хорошо собиралось.
 
-set -x
+set -e
 
 cd $HOME
 
 SBT_VERSION_ABI=1.0
 
-mkdir -p /$HOME/.ivy2 /$HOME/.sbt/${SBT_VERSION_ABI}
+mkdir -p $HOME/.ivy2 $HOME/.sbt/${SBT_VERSION_ABI}
 
 ## Заполнить конфиг для локального кэширования артефактов из artifactory:
 echo ".ivy2/.credentials..."
-cat > /$HOME/.ivy2/.credentials <<EOF
+cat > $HOME/.ivy2/.credentials <<EOF
 realm=$K8S_SECRET_IVY2_REALM
 host=$K8S_SECRET_IVY2_HOST
 user=$K8S_SECRET_IVY2_USER
@@ -43,5 +43,5 @@ resolvers ++= Seq(
 EOF
 
 ## Продолжить выполнение исходных операций:
-exec $@
+exec $@ || exit 0
 

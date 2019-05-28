@@ -52,6 +52,7 @@ object RcvrKey {
     (v1 |@| v2) { (_,_) => rcvrKey }
   }
 
-  @inline implicit def univEq: UnivEq[RcvrKey] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[RcvrKey] = UnivEq.force
+  // 2019-05-28: Было UnivEq.derive, но IllegalArgumentException: requirement failed: scala.collection.immutable.::[_] is not a subtype of io.suggest.adv.rcvr.RcvrKey
 
 }

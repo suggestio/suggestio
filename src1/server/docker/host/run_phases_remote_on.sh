@@ -12,7 +12,7 @@ test $1 || {
     exit 1
 }
 
-#scp -r ./phases $1:sio2kubHost/
+#scp -r ./phases $1:sio2kubHost/phases
 
 ssh $1 'for file in $(find ~/sio2kubHost/phases/ -type f -name "*_*.sh"); do bash $file; done;'
 

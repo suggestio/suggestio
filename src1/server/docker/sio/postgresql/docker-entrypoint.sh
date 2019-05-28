@@ -96,7 +96,7 @@ if [ "$1" = 'postgres' ]; then
 	echo "Initializing SLAVE..."
         ## Это реплика - она должна дождаться доступности мастер-сервера и скачать сбэкапить с него начальную БД.
 	## По мотивам https://github.com/DanielDent/docker-postgres-replication/blob/master/docker-entrypoint.sh#L36
-	until ping -c 1 -W 1 ${REPLICATE_FROM}
+	until echo | telnet ${REPLICATE_FROM} 5432 >/dev/null
 	do
 	    echo "Waiting for master to ping..."
 	    sleep 1s
