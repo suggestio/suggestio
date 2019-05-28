@@ -218,9 +218,9 @@ includeFilter in filter := {
 dockerExposedPorts := Seq(9000)
 
 // Используем модифицированный дистр.
-dockerBaseImage := "docker.suggest.io:5000/sio/os-base-www"
+dockerBaseImage := "docker-registry.suggest.io/sio/sio2/os-base-www:latest"
 
-packageName in Docker := "docker.suggest.io:5000/sio/www"
+packageName in Docker := "docker-registry.suggest.io/sio/sio2/www"
 
 version in Docker := "latest"
 
