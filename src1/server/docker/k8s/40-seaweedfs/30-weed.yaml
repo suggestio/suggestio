@@ -1,0 +1,88 @@
+## 2019.05.29 Это должен быть StatefulSet, но пока не тестировано ничего.
+## Решено, что пока оставить виртуалки, а kubernetes допиливать после. Сейчас это уже слишком долго.
+## Сборка через ci поднята на базе gitlab и уже почти работает, этого пока достаточно.
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: weed-server
+  labels:
+    app: weed
+    app2: weed-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app2: weed-server
+  template:
+    metadata:
+      labels:
+        app: weed
+        app2: weed-server
+        weed-master: "true"
+        weed-volume: "true"
+    spec:
+      nodeSelector:
+        io.suggest.weed.server.here: "true"
+      containers:
+      - name: weed-server
+        image: docker-registry.suggest.io/sio/sio2/seaweedfs:latest
+        command: ["server"]
+        ports:
+        - name: volume-grpc
+          containerPort: 18080
+        - name: volume-http
+          containerPort: 8080
+        - name: master-grpc
+          containerPort: 19333
+        - name: master-http
+          containerPort: 9333
+        volumeMounts:
+        - mountPath: /data
+          name: v-weed
+      imagePullSecrets:
+      - name: regcred
+  volumeClaimTemplates:
+  - metadata:
+      name: v-weed
+    spec: 
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "local-storage"
+      resources:
+        requests:
+          storage: 3Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weed-master
+spec:
+  type: ClusterIP
+  selector:
+    app: weed
+    weed-master: "true"
+  ports:
+  - name: master-http
+    protocol: TCP
+    port: 9333
+  - name: master-grpc
+    protocol: TCP
+    port: 19333
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: weed-volume
+spec:
+  type: ClusterIP
+  selector:
+    app: weed
+    weed-volume: "true"
+  ports:
+  - name: volume-http
+    protocol: TCP
+    port: 8080
+  - name: volume-grpc
+    protocol: TCP
+    port: 18080
+---

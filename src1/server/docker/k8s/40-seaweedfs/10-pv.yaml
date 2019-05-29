@@ -1,0 +1,14 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: host-pv
+  labels:
+    type: local
+spec:
+  storageClassName: local-storage
+  capacity:
+    storage: 21Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/var/lib/containers/_pv"

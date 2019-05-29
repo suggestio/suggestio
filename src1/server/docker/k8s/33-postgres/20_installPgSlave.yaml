@@ -1,10 +1,10 @@
+## TODO убран label app: postgresql, т.к. gitlab лезет в реплику с rw-sql.
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pg-slave-deploy
   labels:
-    app: postgresql
     app2: postgresql-slave
 spec:
   replicas: 1
@@ -14,7 +14,6 @@ spec:
   template:
     metadata:
       labels:
-        app: postgresql
         app2: postgresql-slave
     spec:
       nodeSelector:

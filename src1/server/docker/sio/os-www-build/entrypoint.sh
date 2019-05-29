@@ -42,12 +42,33 @@ resolvers ++= Seq(
 )
 EOF
 
+_fatal() {
+  echo "$1\n Waiting for admin for debugging..." >&2
+  sleep 600
+  exit 1
+}
+
 ## Выставить кол-во RAM в sbtopts.
 SBT_OPTS="/etc/sbt/sbtopts"
-if [ -z "$K8S_SECRET_SBT_MEM" ]; then
+if [ -z $K8S_SECRET_SBT_MEM ]; then
   K8S_SECRET_SBT_MEM=4096
 fi
 echo "-mem $K8S_SECRET_SBT_MEM" > "$SBT_OPTS"
+
+## взять файлы из /root/.ssh-mount и скопировать в .ssh с правильными правами.
+## .ssh-mount монтируется как read-only и с неправильными правами, поэтому вручную копипастим всё куда надо.
+## Иначе ssh отказывается работать: unprotected private key.
+SSH_MOUNT_DIR="/root/.ssh-mount"
+SSH_DIR="/root/.ssh"
+if [ -d $SSH_MOUNT_DIR ]; then
+  mkdir -p $SSH_DIR &&
+  cp $SSH_MOUNT_DIR/* $SSH_DIR/ &&
+  chmod 0700 $SSH_DIR &&
+  chmod 600 $SSH_DIR/* ||
+    _fatal "Cannot copy secret keys from $SSH_MOUNT_DIR into $SSH_DIR ."
+else
+  _fatal "$SSH_MOUNT_DIR missing! deploy will not be possible." >&2
+fi
 
 ## Продолжить выполнение исходных операций:
 exec $@ || exit 0

@@ -63,11 +63,11 @@ data:
 
     ## custom mounts for faster scala compiling:
     cat >> /home/gitlab-runner/.gitlab-runner/config.toml <<EOF
-          [[runners.kubernetes.volumes.host_path]]
-            name = "docker"
-            host_path = "/var/run/docker.sock"
-            mount_path = "/var/run/docker.sock"
-            read_only = false
+          #[[runners.kubernetes.volumes.host_path]]
+          #  name = "docker"
+          #  host_path = "/var/run/docker.sock"
+          #  mount_path = "/var/run/docker.sock"
+          #  read_only = false
           [[runners.kubernetes.volumes.host_path]]
             name = "ivy2-cache"
             host_path = "/var/lib/containers/ivy2-cache"
@@ -83,6 +83,10 @@ data:
             host_path = "/var/lib/containers/npm-cache"
             mount_path = "/root/.npm"
             read_only = false
+          [[runners.kubernetes.volumes.secret]]
+            name = "deploy-ssh-keys"
+            mount_path = "/root/.ssh-mount"
+            read_only = true
 
         [runners.kubernetes.node_selector]
           "io.suggest.sio2.build.here" = "true"
