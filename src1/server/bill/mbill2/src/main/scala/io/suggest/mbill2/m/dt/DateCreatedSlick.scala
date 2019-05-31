@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.dt
 
-import java.time.OffsetDateTime
+import java.time.{Instant, OffsetDateTime}
 
 import io.suggest.slick.profile.pg.IPgProfile
 
@@ -17,9 +17,14 @@ trait DateCreatedSlick extends IPgProfile {
 
   def DATE_CREATED_FN = "date_created"
 
-  /** Добавить колонку dateCreated. */
+  /** Добавить колонку date_created. */
   trait DateCreated { that: Table[_] =>
     def dateCreated = column[OffsetDateTime](DATE_CREATED_FN)
+  }
+
+  /** Обязательная колонка date_created в instant-виде, без tz. */
+  trait DateCreatedInstantColumn { that: Table[_] =>
+    def dateCreated = column[Instant](DATE_CREATED_FN)
   }
 
 }

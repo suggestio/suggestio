@@ -2,13 +2,18 @@ package models.sms
 
 import java.time.OffsetDateTime
 
+import monocle.macros.GenLens
+
 import scala.concurrent.duration.FiniteDuration
 
-/**
-  * Suggest.io
-  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 30.05.19 18:09
-  * Description: Модель описания одной смски.
+
+object MSms {
+
+  val isTest = GenLens[MSms](_.isTest)
+
+}
+
+/** Модель описания одной смски.
   *
   * @param text Текст смс-сообщения.
   * @param numbers Номера получателей.

@@ -147,7 +147,6 @@ class OAuth1ServiceActor @Inject() (
    * @param ex Исключение. Как правило, это экземпляр OAuthException.
    */
   protected def renderInitFailed(ex: Throwable): Unit = {
-
     serviceInitFailedRender(
       errors = Seq(ErrorInfo(
         msg = "e.adv.ext.api.init",
