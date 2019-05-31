@@ -65,10 +65,11 @@ class EpwRegAh[M](
 
 
     // Клик по кнопке регистрации.
-    case EpwRegSubmit =>
+    case m @ EpwRegSubmit =>
       val v0 = value
 
       if (v0.submitReq.isPending) {
+        LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = m )
         noChange
 
       } else {
@@ -94,7 +95,6 @@ class EpwRegAh[M](
     case m: EpwRegSubmitResp =>
       val v0 = value
       if (v0.submitReq isPendingWithStartTime m.tstamp) {
-        println("OOOK!")
         val v2 = MEpwRegS.submitReq
           .modify( _.ready("") )(v0)
         updated(v2)

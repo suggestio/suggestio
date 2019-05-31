@@ -69,7 +69,4 @@ case class MCaptchaS(
   lazy val isShownSome: Some[Boolean] =
     Some( isShown )
 
-  lazy val reloadPendingSome: Some[Boolean] =
-    Some( reloading.isPending )
-
 }

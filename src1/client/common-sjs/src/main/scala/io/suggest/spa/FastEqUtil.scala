@@ -102,4 +102,15 @@ object FastEqUtil {
     }
   }
 
+
+  /** FastEq для Tuple2. */
+  implicit def Tuple2FastEq[T1: FastEq, T2: FastEq]: FastEq[(T1, T2)] = {
+    new FastEq[(T1, T2)] {
+      override def eqv(a: (T1, T2), b: (T1, T2)): Boolean = {
+        implicitly[FastEq[T1]].eqv( a._1, b._1 ) &&
+        implicitly[FastEq[T2]].eqv( a._2, b._2 )
+      }
+    }
+  }
+
 }

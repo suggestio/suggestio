@@ -79,9 +79,10 @@ data:
             mount_path = "/root/.sbt"
             read_only = false
           [[runners.kubernetes.volumes.host_path]]
-            name = "npm"
-            host_path = "/var/lib/containers/npm-cache"
-            mount_path = "/root/.npm"
+            name = "yarn-cache"
+            host_path = "/var/lib/containers/yarn-cache"
+            ## root -> /usr/local/share/.cache/yarn,  user -> ~/.cache/yarn
+            mount_path = "/usr/local/share/.cache/yarn"
             read_only = false
           [[runners.kubernetes.volumes.secret]]
             name = "deploy-ssh-keys"

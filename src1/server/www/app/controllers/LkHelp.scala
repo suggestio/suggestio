@@ -32,6 +32,7 @@ class LkHelp @Inject()(
                         identUtil                       : IdentUtil,
                         supportUtil                     : SupportUtil,
                         bruteForceProtect               : BruteForceProtect,
+                        maybeAuth                       : MaybeAuth,
                         isAuth                          : IsAuth,
                         isNodeAdmin                     : IsNodeAdmin,
                         sioControllerApi                : SioControllerApi,
@@ -183,7 +184,7 @@ class LkHelp @Inject()(
     * @return Страница с инфой о компании.
     */
   def companyAbout(onNodeId: Option[String]) = csrf.AddToken {
-    val actionBuilder = onNodeId.fold[ActionBuilder[IReq, AnyContent]]( isAuth() )( isNodeAdmin(_) )
+    val actionBuilder = onNodeId.fold[ActionBuilder[IReq, AnyContent]]( maybeAuth() )( isNodeAdmin(_) )
     actionBuilder { implicit request =>
       val mnodeOpt = request match {
         case nreq: INodeReq[_] =>

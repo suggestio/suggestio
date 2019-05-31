@@ -44,4 +44,8 @@ case class MEpwRegS(
                      email            : MTextFieldS         = MTextFieldS.empty,
                      captcha          : MCaptchaS           = MCaptchaS.defaultCaptcha,
                      submitReq        : Pot[String]         = Pot.empty,
-                   )
+                   ) {
+
+  lazy val isSubmitReqPendingSome: Some[Boolean] = Some( submitReq.isPending )
+
+}

@@ -12,6 +12,9 @@ resolvers ++= Seq(
   "bintray-nitram509-jbrotli"    at "http://ci.suggest.io/artifactory/bintray-nitram509-jbrotli"
 )
 
+// Для ускорения update на куче subprojects.
+addSbtPlugin("nz.co.bottech" % "sbt-cached-updates" % "1.0.+")
+
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.6.0")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-coffeescript" % "1.0.2")
@@ -34,7 +37,7 @@ addSbtPlugin("org.github.ngbinh" % "sbt-simple-url-update" % "1.0.4")
 
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.0")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.2")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.2")
 
@@ -53,3 +56,4 @@ addSbtPlugin("com.github.praneethpuligundla" % "sbt-filter" % "1.0.2")
 addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.14.0")
 
 addCompilerPlugin("org.scalamacros" %% "paradise" % "2.1.0" cross CrossVersion.full)
+

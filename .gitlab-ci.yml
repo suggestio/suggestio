@@ -11,9 +11,11 @@ stages:
 ## Полная сборка www-релиза:
 www-stage:
   stage: build
+  # TODO cache:
+  #- project/target
+  #- project/project
   before_script:
   - /sbin/entrypoint.sh
-  - sbt clean
   script:
   - sbt 'project www' stage
   - src1/server/docker/scripts/deploy-www-stage-to-nodes.sh  src1/server/www  sio2/sioweb21  sio2.suggest.io sio3.suggest.io sio5.suggest.io

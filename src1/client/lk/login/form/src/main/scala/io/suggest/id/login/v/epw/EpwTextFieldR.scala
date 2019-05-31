@@ -38,10 +38,12 @@ class EpwTextFieldR(
                        inputName    : String,
                        msgCode      : String,
                        onBlur       : Option[DAction] = None,
+                       disabled     : Boolean,
                      )
   implicit object EpwTextFieldPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.state     ===* b.state) &&
+      (a.disabled   ==* b.disabled) &&
       (a.hasError   ==* b.hasError) &&
       (a.mkAction  ===* b.mkAction) &&
       (a.isPassword ==* b.isPassword) &&
@@ -106,6 +108,7 @@ class EpwTextFieldR(
                 override val classes      = mfcCss
                 override val error        = p.hasError || !p.state.isValid
                 override val onBlur       = _onBlurUndef
+                override val disabled     = p.disabled
               }
             )
           }

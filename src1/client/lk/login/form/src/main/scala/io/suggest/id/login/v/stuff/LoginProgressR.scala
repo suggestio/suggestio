@@ -13,7 +13,7 @@ import scalacss.ScalaCssReact._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.03.19 22:29
-  * Description: Компонент прогрессбара ожидания.
+  * Description: connect-компонент прогрессбара ожидания.
   */
 class LoginProgressR(
                       loginFormCssCtx             : React.Context[LoginFormCss],
@@ -26,24 +26,25 @@ class LoginProgressR(
     .builder[Props]( getClass.getSimpleName )
     .render_P { propsProxy =>
       val isPending = propsProxy.value.value
+      val classesSet = ^.classSet(
+        Css.Display.VISIBLE   -> isPending,
+        Css.Display.INVISIBLE -> !isPending,
+      )
+      val progress = MuiLinearProgress(
+        new MuiLinearProgressProps {
+          override val variant = {
+            if (isPending) MuiProgressVariants.indeterminate
+            else MuiProgressVariants.determinate
+          }
+          override val value = JsOptionUtil.maybeDefined( !isPending )(0)
+        }
+      )
       loginFormCssCtx.consume { loginFormCss =>
         <.div(
           // Сокрытие или отображение крутилки ожидания.
           loginFormCss.progressBar,
-          ^.classSet(
-            Css.Display.VISIBLE   -> isPending,
-            Css.Display.INVISIBLE -> !isPending,
-          ),
-
-          MuiLinearProgress(
-            new MuiLinearProgressProps {
-              override val variant = {
-                if (isPending) MuiProgressVariants.indeterminate
-                else MuiProgressVariants.determinate
-              }
-              override val value = JsOptionUtil.maybeDefined( !isPending )(0)
-            }
-          )
+          classesSet,
+          progress
         )
       }
     }

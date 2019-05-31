@@ -79,7 +79,8 @@ class EpwFormR(
                   mkAction    = EpwSetName,
                   isPassword  = false,
                   inputName   = IdentConst.Login.NAME_FN,
-                  msgCode     = MsgCodes.`Username`
+                  msgCode     = MsgCodes.`Username`,
+                  disabled    = props.loginReq.isPending,
                 )
               }( epwTextFieldR.apply )( implicitly, epwTextFieldR.EpwTextFieldPropsValFastEq ),
 
@@ -91,7 +92,8 @@ class EpwFormR(
                   mkAction    = EpwSetPassword,
                   isPassword  = true,
                   inputName   = IdentConst.Login.PASSWORD_FN,
-                  msgCode     = MsgCodes.`Password`
+                  msgCode     = MsgCodes.`Password`,
+                  disabled    = props.loginReq.isPending,
                 )
               }( epwTextFieldR.apply )( implicitly, epwTextFieldR.EpwTextFieldPropsValFastEq ),
 
