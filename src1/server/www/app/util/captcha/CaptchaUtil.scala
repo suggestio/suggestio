@@ -157,7 +157,7 @@ class CaptchaUtil @Inject() (
 
 
   /** Генерация текста цифровой капчи (n цифр от 0 до 9). */
-  def createCaptchaDigits: String = {
+  def createCaptchaDigits(): String = {
     val rnd = new Random()
     val l = DIGITS_CAPTCHA_LEN
     val sb = new StringBuilder(l)

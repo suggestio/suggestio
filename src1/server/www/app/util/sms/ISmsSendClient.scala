@@ -1,6 +1,6 @@
 package util.sms
 
-import models.sms.{ISmsSendResult, MSms}
+import models.sms.{ISmsSendResult, MSmsSend}
 
 import scala.concurrent.Future
 
@@ -20,6 +20,6 @@ trait ISmsSendClient {
     *
     * @return Фьючерс с результатом отправки.
     */
-  def smsSend(sms: MSms): Future[ISmsSendResult]
+  def smsSend(sms: MSmsSend): Future[Seq[ISmsSendResult]]
 
 }

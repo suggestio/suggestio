@@ -34,7 +34,7 @@ object MLocEnvJvm {
           } yield {
             MLocEnv(
               geoLocOpt   = geoLocOpt,
-              bleBeacons  = beacons
+              bleBeacons  = beacons.items
             )
           }
         }
@@ -44,7 +44,7 @@ object MLocEnvJvm {
         val k = key1F(key)
         _mergeUnbinded1(
           geoLocOptB.unbind (k(GEO_LOC_FN),     value.geoLocOpt),
-          beaconsB.unbind   (k(BLE_BEACONS_FN), value.bleBeacons)
+          beaconsB.unbind   (k(BLE_BEACONS_FN), QsbSeq(value.bleBeacons) )
         )
       }
     }

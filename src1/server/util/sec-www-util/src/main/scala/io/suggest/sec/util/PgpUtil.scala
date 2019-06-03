@@ -8,9 +8,11 @@ import io.suggest.sec.m.{IAsymKey, MAsymKey, MAsymKeys}
 import io.suggest.util.logs.MacroLogsDyn
 import io.trbl.bcpg.{KeyFactory, KeyFactoryFactory, SecretKey}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.playx.CacheApiUtil
 import play.api.Configuration
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -32,6 +34,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class PgpUtil @Inject() (
                           esModel                 : EsModel,
                           mAsymKeys               : MAsymKeys,
+                          cacheApiUtil            : CacheApiUtil,
                           configuration           : Configuration,
                           implicit private val ec : ExecutionContext,
                         )
@@ -59,6 +62,21 @@ class PgpUtil @Inject() (
     * Изначально был только этот единствнный ключ в модели, и использовался для хранения пользовательских
     * данных в localStorage. */
   def LOCAL_STOR_KEY_ID = "lsk1"
+
+  def getLocalStorKey(): Future[MAsymKey] = {
+    val keyId = LOCAL_STOR_KEY_ID
+    cacheApiUtil.getOrElseFut( s"$keyId.${getClass.getSimpleName}", expiration = 10.seconds ) {
+      val fut = mAsymKeys.getById(keyId)
+        .map(_.get)
+      fut.failed.foreach {
+        case _: NoSuchElementException =>
+          LOGGER.warn("Server normal PGP key not yet created! I cannot store access tokens!")
+        case ex =>
+          LOGGER.error(s"Cannot read server PGP key: $keyId", ex)
+      }
+      fut
+    }
+  }
 
   /** Генерация нового ключа защиты данных. */
   def genNewNormalKey(): MAsymKey = {
@@ -128,8 +146,9 @@ class PgpUtil @Inject() (
     * @param out Выходной поток для записи ASCII-armored шифротекста.
     */
   def encrypt(data: InputStream, secKey: SecretKey, forPubKey: String, out: OutputStream): Unit = {
-    val transform = secKey.signEncryptFor(forPubKey)
-    transform.run(getPw, data, out)
+    secKey
+      .signEncryptFor(forPubKey)
+      .run(getPw, data, out)
   }
 
 
@@ -156,6 +175,24 @@ class PgpUtil @Inject() (
   def decrypt(data: InputStream, secKey: SecretKey, signPubKey: String, out: OutputStream): Unit = {
     val transform = secKey.decryptVerifyFrom(signPubKey)
     transform.run(getPw, data, out)
+  }
+
+
+  /** Чтобы засунуть pgp-выхлоп, например, в http-заголовок, лучше сделать его просто однородной строкой.
+    * @param cipherText Выхлоп encrypt()
+    * @return base64-строка.
+    */
+  def minifyPgpMessage(cipherText: String): String = {
+    // Удалить заголовки The -----BEGIN PGP MESSAGE----- и -----END PGP MESSAGE-----, переносы строк и прочие пустоты.
+    cipherText.replaceAll("(\\s+|-----(BEGIN|END) PGP MESSAGE-----)", "")
+  }
+
+  /** Деминификация pgp-сообщения путём добавления обрамляющих заголовков. */
+  def unminifyPgpMessage(minified: String): String = {
+    // Обязательными являются только заголовки.
+    "-----BEGIN PGP MESSAGE-----\n" +
+    minified +
+    "\n-----END PGP MESSAGE-----\n"
   }
 
 }

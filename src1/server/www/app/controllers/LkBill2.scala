@@ -809,14 +809,14 @@ class LkBill2 @Inject() (
       for {
         // Выполнить удаление item'ов
         deletedCount <- slick.db.run {
-          mItems.deleteById( itemIds: _* )
+          mItems.deleteById( itemIds.items: _* )
         }
 
         // Получить обновлённые данные ордера-корзины:
         orderContents <- _getOrderContents( None )
 
       } yield {
-        LOGGER.trace(s"cartDeleteItems(${itemIds.mkString(", ")}): Deleted $deletedCount items.")
+        LOGGER.trace(s"cartDeleteItems(${itemIds.items.mkString(", ")}): Deleted $deletedCount items.")
         Ok( Json.toJson(orderContents) )
       }
     }

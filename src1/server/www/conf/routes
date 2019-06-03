@@ -159,6 +159,7 @@ GET  /lang/:lang/:hash/messages.js      @controllers.LkLang.lkMessagesJs(lang: S
 
 ## Генераторы капч
 GET  /captcha/get/:captchaId            @controllers.Img.getCaptchaImg(captchaId, cp: io.suggest.captcha.MCaptchaCookiePath)
+GET  /captcha/img                       @controllers.Img.getCaptchaImg2()
 
 ## Upload controller
 ## TODO Запилить поддержку подписанных JSON-моделей в jsRoutes. Название параметра "c" пока захардкожено на клиенте в UploadApi.

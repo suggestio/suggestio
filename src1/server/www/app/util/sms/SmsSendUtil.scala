@@ -1,8 +1,8 @@
 package util.sms
 
 import io.suggest.util.logs.MacroLogsImpl
-import javax.inject.Inject
-import models.sms.{ISmsSendResult, MSms}
+import javax.inject.{Inject, Singleton}
+import models.sms.{ISmsSendResult, MSmsSend}
 import play.api.Configuration
 import play.api.inject.Injector
 import util.sms.smsru.SmsRuClient
@@ -19,6 +19,7 @@ import japgolly.univeq._
   * Created: 31.05.19 15:08
   * Description: Фасад для отправки смс.
   */
+@Singleton
 class SmsSendUtil @Inject()(
                              injector                   : Injector,
                              implicit private val ec    : ExecutionContext,
@@ -40,10 +41,10 @@ class SmsSendUtil @Inject()(
     .getOrElseFalse
 
 
-  def _firstAvailClient(): Future[ISmsSendClient] = {
+  private def _firstAvailClient(): Future[ISmsSendClient] = {
     _firstAvailClient( SMS_CLIENT_CLASSES )
   }
-  def _firstAvailClient(rest: List[ClassTag[_ <: ISmsSendClient]]): Future[ISmsSendClient] = {
+  private def _firstAvailClient(rest: List[ClassTag[_ <: ISmsSendClient]]): Future[ISmsSendClient] = {
     rest match {
       case hd :: tl =>
         lazy val logPrefix = s"_firstAvailClient($hd):"
@@ -74,11 +75,11 @@ class SmsSendUtil @Inject()(
     * @param sms Исходная отправляемая смс.
     * @return
     */
-  def _prepareSmsForSend(sms: MSms): MSms = {
-    var updatesAcc = List.empty[MSms => MSms]
+  private def _prepareSmsForSend(sms: MSmsSend): MSmsSend = {
+    var updatesAcc = List.empty[MSmsSend => MSmsSend]
 
-    if (MSms.isTest.get(sms) !=* TEST_MODE)
-      updatesAcc ::= MSms.isTest.set( TEST_MODE )
+    if (MSmsSend.isTest.get(sms) !=* TEST_MODE)
+      updatesAcc ::= MSmsSend.isTest.set( TEST_MODE )
 
     if (updatesAcc.isEmpty) sms
     else updatesAcc.reduce(_ andThen _)(sms)
@@ -90,7 +91,7 @@ class SmsSendUtil @Inject()(
     * @param sms Отправляемая смс.
     * @return Фьючерс с результатом отправки.
     */
-  def smsSend(sms: MSms): Future[ISmsSendResult] = {
+  def smsSend(sms: MSmsSend): Future[Seq[ISmsSendResult]] = {
     val firstAvailClientFut = _firstAvailClient()
     val sms2 = _prepareSmsForSend( sms )
     for {

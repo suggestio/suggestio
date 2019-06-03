@@ -23,4 +23,7 @@ object CaptchaConstants {
   /** Чтобы браузер юзер не грузил капчу раньше времени, ссылка на капчу сохраняется в data-src. */
   def ATTR_HIDDEN_SRC = "data-src"
 
+  /** Название http-заголовка с секретом капчи. */
+  def CAPTCHA_SECRET_HTTP_HDR_NAME = "X-Sio-Captcha"
+
 }

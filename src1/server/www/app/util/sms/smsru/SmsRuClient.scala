@@ -1,18 +1,18 @@
 package util.sms.smsru
 
 import io.suggest.util.logs.MacroLogsImpl
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 import models.sms.smsRu.MSmsRuResult
-import models.sms.{ISmsSendResult, MSms}
+import models.sms.{ISmsSendResult, MSmsSend}
 import play.api.Configuration
 import play.api.inject.Injector
 import play.api.libs.ws.WSClient
 import play.api.mvc.QueryStringBindable
-import play.mvc.Http.HttpVerbs
 import util.sms.ISmsSendClient
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -20,11 +20,12 @@ import scala.concurrent.{ExecutionContext, Future}
   * Created: 30.05.19 18:00
   * Description: Реализация клиента отправки сообщений для sms.ru.
   */
-class SmsRuClient @Inject() (
-                              injector                  : Injector,
-                              wsClient                  : WSClient,
-                              implicit private val ec   : ExecutionContext,
-                            )
+@Singleton
+final class SmsRuClient @Inject() (
+                                    injector                  : Injector,
+                                    wsClient                  : WSClient,
+                                    implicit private val ec   : ExecutionContext,
+                                  )
   extends ISmsSendClient
   with MacroLogsImpl
 {
@@ -40,37 +41,82 @@ class SmsRuClient @Inject() (
   }
 
   /** Ссылка для запроса отправки смс. */
-  private def SEND_URL_PREFIX = "https://sms.ru/sms/send?"
+  def SEND_URL_PREFIX = "https://sms.ru/sms/send?"
+
+  /** sms.ru требует слать не более 100 смс за один запрос. */
+  def MAX_SMS_PER_REQUEST = 100
+
 
   override def isReady(): Future[Boolean] =
     Future.successful( APP_ID.nonEmpty )
 
 
   /** Отправить смс на указанный номер (номера). */
-  override def smsSend(sms: MSms): Future[ISmsSendResult] = {
+  override def smsSend(sms: MSmsSend): Future[Seq[ISmsSendResult]] = {
     lazy val logPrefix = s"smsSend()#${System.currentTimeMillis()}:"
 
     // key выставляем в null, чтобы явно была ошибка при обращении к ключу с потолка.
-    val url = SEND_URL_PREFIX + implicitly[QueryStringBindable[MSms]].unbind( null, sms )
-    val method = HttpVerbs.POST
-    LOGGER.trace(s"$logPrefix Sending sms[${sms.text.length} chars] to ${sms.numbers.size} numbers: ${sms.numbers.mkString(", ")}\n HTTP $method $url")
+    val url = SEND_URL_PREFIX + implicitly[QueryStringBindable[MSmsSend]].unbind( null, sms )
+    LOGGER.debug(s"$logPrefix Sending ${sms.msgs.size} sms-messages to numbers: ${sms.msgs.iterator.map(_._1).mkString(", ")}\n POST $url")
 
-    for {
-      wsResult <- injector
-        .instanceOf[WSClient]
-        .url( url )
-        .withMethod( method )
-        .withRequestTimeout( 10.seconds )
-        .execute()
-    } yield {
-      wsResult
-        .json
-        .validate[MSmsRuResult]
-        // Не распарсилось. Не ясно, отправлено ли хоть что-нибудь. Считаем это ошибкой в софте.
-        .recoverTotal { error =>
-          throw new RuntimeException( s"$logPrefix Failed to parse resp JSON:\n src = ${wsResult.body}\n $error" )
+    // Подготовить данные для реквестов, разбив поток по максимум 100 штук.
+    Future.traverse {
+      (for {
+        (phone, messages) <- sms.msgs.iterator
+        if messages.nonEmpty
+        phoneNorm = normalizePhoneNumber(phone)
+        oneMsg <- messages
+      } yield {
+        val phoneKey = "to[" + phoneNorm + "]"
+        phoneKey -> oneMsg
+      })
+        .sliding(MAX_SMS_PER_REQUEST, MAX_SMS_PER_REQUEST)
+        .map { smsForReq =>
+          smsForReq
+            .groupBy(_._1)
+            .mapValues(_.map(_._2))
         }
+        .toStream
+    } { formData =>
+      // Запустить запрос к sms.ru
+      val reqId = System.currentTimeMillis()
+      LOGGER.trace(s"$logPrefix Starting request#$reqId for ${formData.size} numbers for ${formData.valuesIterator.flatten.size} sms.")
+      for {
+        wsResult <- injector
+          .instanceOf[WSClient]
+          .url( url )
+          .withRequestTimeout( 10.seconds )
+          .post( formData )
+      } yield {
+        LOGGER.debug(s"$logPrefix Done req#$reqId status=${wsResult.status} ${wsResult.statusText}")
+        if (wsResult.status !=* 200)
+          LOGGER.trace(s" ${wsResult.body}")
+        wsResult
+          .json
+          .validate[MSmsRuResult]
+          // Не распарсилось. Не ясно, отправлено ли хоть что-нибудь. Считаем это ошибкой в софте.
+          .recoverTotal { error =>
+            throw new RuntimeException( s"$logPrefix Failed to parse resp JSON:\n src = ${wsResult.body}\n $error" )
+          }
+      }
     }
+  }
+
+
+  /** Нормализация номера телефона под нужды sms.ru.
+    * Требуется получить номер из цифр, без + в начале.
+    *
+    * @param phone Исходный номер телефона.
+    * @return Подчищенный номер телефона.
+    */
+  def normalizePhoneNumber(phone: String): String = {
+    // Нужно только цифры, и ничего кроме. И в начале - код страны.
+    phone
+      .trim
+      // Удалить все не-цифры:
+      .replaceAll("[^0-9]", "")
+      // Если код страны "8", то заменить на 7.
+      .replaceFirst("^8(\\d{10})$", "7$1")
   }
 
 }

@@ -121,16 +121,7 @@ object QsbSeq extends MacroLogsImplLazy {
   }
 
 
-  // Для избавления кода реальных моделей от лишнего словоблудия, скрываем все работы с QsbSeq за implicit'ами.
-  import scala.language.implicitConversions
 
-  implicit def seq2qsbSeq[T](items: Seq[T]): QsbSeq[T] = {
-    apply(items)
-  }
-
-  implicit def qsbSeq2seq[T](qsbSeq: QsbSeq[T]): Seq[T] = {
-    qsbSeq.items
-  }
 
 }
 

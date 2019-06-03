@@ -1,17 +1,23 @@
 package controllers
 
+import java.io.ByteArrayOutputStream
+import java.nio.charset.StandardCharsets
 import java.time.{Instant, ZonedDateTime}
+import java.util.UUID
 
-import io.suggest.captcha.{MCaptchaCookiePath, MCaptchaCookiePaths}
+import io.suggest.captcha.{CaptchaConstants, MCaptchaCookiePath, MCaptchaCookiePaths}
 import io.suggest.dt.DateTimeUtil
 import io.suggest.file.MimeUtilJvm
 import io.suggest.model.n2.media.storage.IMediaStorages
 import io.suggest.playx.CacheApiUtil
+import io.suggest.sec.util.PgpUtil
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.im._
 import models.mproj.ICommonDi
+import org.apache.commons.io.IOUtils
 import play.api.http.HttpEntity
+import play.api.libs.json.Json
 import play.api.mvc._
 import util.acl.{CanDynImg, MaybeAuth}
 import util.captcha.CaptchaUtil
@@ -37,6 +43,7 @@ class Img @Inject() (
                       canDynImg                       : CanDynImg,
                       iMediaStorages                  : IMediaStorages,
                       maybeAuth                       : MaybeAuth,
+                      pgpUtil                         : PgpUtil,
                       sioCtlApi                       : SioControllerApi,
                       mCommonDi                       : ICommonDi,
                     )
@@ -209,7 +216,7 @@ class Img @Inject() (
         // Рендер одной картинки создаёт некоторую нагрузку, поэтому для защиты от DoS-атаки через перегрузку сервера, используем кэш рендера:
         (ctext, imgBytes) <- cacheApiUtil.getOrElseFut("captcha.img", expiration = 3.seconds) {
           // Пусть будут только цифры. На телефоне удобнее цифры набирать, а остальным -- равные права.
-          val ctext1 = captchaUtil.createCaptchaDigits
+          val ctext1 = captchaUtil.createCaptchaDigits()
           LOGGER.trace(s"$logPrefix ctext=$ctext1")
           val imgBytes1 = captchaUtil.createCaptchaImg( ctext1 )
           val res = (ctext1, imgBytes1)
@@ -231,6 +238,79 @@ class Img @Inject() (
           )
           .withCookies(
             captchaUtil.mkCookie(captchaId, ctext, cookiePath)
+          )
+      }
+    }
+  }
+
+
+  /** Старый getCaptchaImg уязвим для повторного использования cookie из-за stateless-сессий,
+    * а зашифрованный ответ на капчи - недостаточно хорошо защищён в долгосрочной перспективе.
+    * + Имеет велосипед с cookie и cookiePath.
+    *
+    * Поэтому решено, что надо сделать по уму:
+    * - PGP-сообщение вместо шифрования
+    * - Кастомный хидер вместо cookie, для передачи pgp-шифротекста. Явный сабмит шифра капчи на сервер.
+    * - Для одноразовости капч используется sql-табличка one_time_tokens, куда попадают уже использованные капчи.
+    * - Для id капч используется UUID, который и заносится в sql-таблице.
+    *
+    * @return Картинка + http-хидеры с id и ответом на капчу.
+    */
+  def getCaptchaImg2() = csrf.Check {
+    maybeAuth().async { implicit request =>
+      val captchaUid = UUID.randomUUID()
+      val logPrefix = s"getCaptchaImg2()#${System.currentTimeMillis()}:"
+      LOGGER.trace(s"$logPrefix for ${request.remoteClientAddress}, personId#${request.user.personIdOpt.orNull}")
+
+      // Кэш для защиты от перегрузки слишкой активной генерацией капч: ограничить макс.кол-во параллельных капч.
+      val captchaFut = cacheApiUtil.getOrElseFut(s"${captchaUid.getLeastSignificantBits % 8}.captcha.img", expiration = 2.seconds) {
+        val ctext1 = captchaUtil.createCaptchaDigits()
+        val imgBytes1 = captchaUtil.createCaptchaImg( ctext1 )
+        val res = (ctext1, imgBytes1)
+        Future.successful( res )
+      }
+
+      // Получить собственный секретный ключ:
+      val pgpKeyFut = pgpUtil.getLocalStorKey()
+
+      // Шифруем правильный ответ на капчу:
+      val captchaSecretPgpMinFut = for {
+        (ctext, _) <- captchaFut
+        captchaSecret = MCaptchaSecret(
+          captchaUid = captchaUid,
+          captchaText = ctext,
+        )
+        json = Json.toJson(captchaSecret).toString()
+        pgpKey <- pgpKeyFut
+      } yield {
+        // Зашифровать всё с помощью PGP.
+        val baos = new ByteArrayOutputStream(1024)
+        val cipherText = try {
+          pgpUtil.encryptForSelf(
+            data = IOUtils.toInputStream(json, StandardCharsets.UTF_8),
+            key  = pgpKey,
+            out  = baos
+          )
+          new String(baos.toByteArray)
+        } finally {
+          baos.close()
+        }
+        // Можно убрать заголовок, финальную часть, переносы строк:
+        pgpUtil.minifyPgpMessage( cipherText )
+      }
+
+      // Отправить http-ответ юзеру, запихнув pgp-шифр в заголовок ответа:
+      for {
+        captchaSecretPgpMin      <- captchaSecretPgpMinFut
+        (_, captchaImgBytes)  <- captchaFut
+      } yield {
+        Ok( captchaImgBytes )
+          .as("image/" + captchaUtil.CAPTCHA_FMT_LC)
+          .withHeaders(
+            EXPIRES       -> "0",
+            PRAGMA        -> "no-cache",
+            CACHE_CONTROL -> "no-store, no-cache, must-revalidate",
+            CaptchaConstants.CAPTCHA_SECRET_HTTP_HDR_NAME -> captchaSecretPgpMin
           )
       }
     }

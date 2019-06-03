@@ -2,7 +2,7 @@ package models.sms.smsRu
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import models.sms.MSms
+import models.sms.MSmsSend
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -33,21 +33,22 @@ object MSmsRuApi {
                        strOptB    : QueryStringBindable[Option[String]],
                        longB      : QueryStringBindable[Long],
                        longOptB   : QueryStringBindable[Option[Long]],
-                      ): QueryStringBindable[MSms] = {
-    new QueryStringBindableImpl[MSms] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MSms]] =
+                      ): QueryStringBindable[MSmsSend] = {
+    new QueryStringBindableImpl[MSmsSend] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MSmsSend]] =
         throw new UnsupportedOperationException("Not planned to implement")
 
-      override def unbind(key: String, sms: MSms): String = {
+      override def unbind(key: String, sms: MSmsSend): String = {
         _mergeUnbinded1(
-          strB.unbind       ( Qs.to,          sms.numbers.mkString(",") ),
-          strB.unbind       ( Qs.msg,         sms.text ),
+          // TODO msgs
+          //strB.unbind       ( Qs.to,          sms.numbers.mkString(",") ),
+          //strB.unbind       ( Qs.msg,         sms.text ),
           longB.unbind      ( Qs.json,        1 ),
           strOptB.unbind    ( Qs.from,        sms.from ),
           longOptB.unbind   ( Qs.time,        sms.timeAt.map(_.toEpochSecond) ),
           longOptB.unbind   ( Qs.ttl,         sms.ttl.map(_.toMinutes) ),
           longOptB.unbind   ( Qs.translit,    OptionUtil.maybe(sms.translit)(1L) ),
-          longOptB.unbind   ( Qs.test,        OptionUtil.maybe(sms.translit)(1L) ),
+          longOptB.unbind   ( Qs.test,        OptionUtil.maybe(sms.isTest)(1L) ),
         )
       }
     }

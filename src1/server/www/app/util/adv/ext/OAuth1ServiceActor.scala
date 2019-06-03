@@ -14,7 +14,7 @@ import io.suggest.async.AsyncUtil
 import io.suggest.es.model.EsModel
 import io.suggest.fsm.FsmActor
 import io.suggest.primo.IToPublicString
-import io.suggest.sec.m.{MAsymKey, MAsymKeys}
+import io.suggest.sec.m.MAsymKeys
 import io.suggest.sec.util.PgpUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
@@ -100,18 +100,7 @@ class OAuth1ServiceActor @Inject() (
   private val oa1client = oa1Support.client
 
   /** Ключ шифрования-дешифрования для хранения данных в localStorage. */
-  lazy val lsCryptoKey: Future[MAsymKey] = {
-    val keyId = pgpUtil.LOCAL_STOR_KEY_ID
-    val fut = mAsymKeys.getById(keyId)
-      .map(_.get)
-    fut.failed.foreach {
-      case _: NoSuchElementException =>
-        warn("Server normal PGP key not yet created! I cannot store access tokens!")
-      case ex =>
-        error("Cannot read server PGP key: " + keyId, ex)
-    }
-    fut
-  }
+  lazy val lsCryptoKeyFut = pgpUtil.getLocalStorKey()
 
   /** Ключ для хранения секретов access_token'а, относящихся к юзеру. */
   lazy val lsValueKey = s"adv.ext.svc.${args.service.value}.access.${args.request.user.personIdOpt.getOrElse("__ANON__")}"
@@ -171,11 +160,11 @@ class OAuth1ServiceActor @Inject() (
 
   /** Сериализовать, зашифровать, подписать и сохранить в DOM.localStorage экземпляр LS-модели токенов. */
   protected def saveOa1Info(info: LsOAuth1Info): Future[_] = {
-    val pgpKeyFut = lsCryptoKey
+    val pgpKeyFut = lsCryptoKeyFut
     val json = Json.toJson(info).toString()
     // Зашифровать всё с помощью PGP.
-    val baos = new ByteArrayOutputStream(1024)
     for (pgpKey <- pgpKeyFut) yield {
+      val baos = new ByteArrayOutputStream(1024)
       pgpUtil.encryptForSelf(
         data = IOUtils.toInputStream(json, StandardCharsets.UTF_8),
         key  = pgpKey,
@@ -215,7 +204,7 @@ class OAuth1ServiceActor @Inject() (
       // Нужен timeout на случай проблем. Запустить его сейчас.
       timeoutTimer
       // Прогревка: запустить получение ключа дешифровки из модели ключей. Он понадобится в последующих состояниях.
-      lsCryptoKey
+      lsCryptoKeyFut
     }
 
     override def receiverPart: Receive = {
@@ -248,7 +237,7 @@ class OAuth1ServiceActor @Inject() (
       val fut = cctxOpt match {
         case Some(input) =>
           for {
-            mkey  <- lsCryptoKey
+            mkey  <- lsCryptoKeyFut
           } yield {
             val baos = new ByteArrayOutputStream(256)
             pgpUtil.decryptFromSelf(

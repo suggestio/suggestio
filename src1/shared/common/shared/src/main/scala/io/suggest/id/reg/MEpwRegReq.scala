@@ -26,7 +26,7 @@ object MEpwRegReq {
 /** Кросс-платформенная модель запроса регистрации по паролю.
   *
   * @param email Адрес email.
-  * @param captchaId id капчи.
+  * #param captchaId id капчи.
   * @param captchaTyped Введённая пользователем капча.
   */
 case class MEpwRegReq(
