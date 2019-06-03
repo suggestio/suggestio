@@ -66,12 +66,10 @@ class SmsRuClient @Inject() (
       wsResult
         .json
         .validate[MSmsRuResult]
-        .fold(
-          // Не распарсилось. Не ясно, отправлено ли хоть что-нибудь. Считаем это ошибкой в софте.
-          errors =>
-            throw new RuntimeException( s"$logPrefix Failed to parse resp JSON:\n src = ${wsResult.body}\n ${errors.mkString(",\n ")}" ),
-          identity
-        )
+        // Не распарсилось. Не ясно, отправлено ли хоть что-нибудь. Считаем это ошибкой в софте.
+        .recoverTotal { error =>
+          throw new RuntimeException( s"$logPrefix Failed to parse resp JSON:\n src = ${wsResult.body}\n $error" )
+        }
     }
   }
 

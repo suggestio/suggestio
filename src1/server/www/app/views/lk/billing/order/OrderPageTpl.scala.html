@@ -15,7 +15,7 @@
 @billingBaseTpl(
   title       = orderIdOpt.fold( messages(MsgCodes.`Cart`) )( messages(MsgCodes.`Order.N`, _) ),
   mnode       = mnode,
-  rightCurrEl = Some( BillingRightPanelLinks.RPL_CART ),
+  rightCurrEl = Some( mlk.BillingRightPanelLinks.RPL_CART ),
   rightAfter  = Some( _rightPriceContTpl()() )
 ) {
 

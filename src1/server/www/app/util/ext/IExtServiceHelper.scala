@@ -8,8 +8,7 @@ import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.model.n2.node.MNode
 import io.suggest.text.util.UrlUtil
 import models.blk.{OneAdWideQsArgs, SzMult_t, szMulted}
-import models.mproj.IMCommonDi
-import models.IRenderable
+import models.mproj.{IMCommonDi, IRenderable}
 import util.adv.IAdvUtilDi
 
 import scala.concurrent.Future

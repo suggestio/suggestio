@@ -8,9 +8,8 @@ import io.suggest.model.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.ext.Mad2ImgUrlCalcOuter
 import models.mctx.{Context, ContextUtil}
-import models.IRenderable
 import models.mext.tw.card.{PhotoCardArgs, TwImgSizes}
-import models.mproj.ICommonDi
+import models.mproj.{ICommonDi, IRenderable}
 import play.api.libs.ws.WSClient
 import play.twirl.api.Html
 import util.adv.AdvUtil

@@ -8,11 +8,6 @@
 
 package object models {
 
-  type NodeRightPanelLink   = NodeRightPanelLinks.T
-  type BillingRightPanelLink= BillingRightPanelLinks.T
-  type LkLeftPanelLink      = LkLeftPanelLinks.T
-
-
   /** Вызов на главную страницу. */
   def MAIN_PAGE_CALL        = controllers.routes.Sc.geoSite()
 

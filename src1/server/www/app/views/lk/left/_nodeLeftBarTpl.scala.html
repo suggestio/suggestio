@@ -1,10 +1,10 @@
-@(nodeIdOpt: Option[String], leftCurrEl: Option[LkLeftPanelLink])(implicit ctx: Context)
+@(nodeIdOpt: Option[String], leftCurrEl: Option[mlk.LkLeftPanelLink])(implicit ctx: Context)
 
 @* Реализация левой панели для ноды. *@
 
 @import io.suggest.i18n.MsgCodes
 @import ctx.messages
-@import LkLeftPanelLinks._
+@import mlk.LkLeftPanelLinks._
 @import util.tpl.CssFormat._
 
 @__topItems = {

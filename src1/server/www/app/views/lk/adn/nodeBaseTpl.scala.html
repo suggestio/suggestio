@@ -1,12 +1,13 @@
-@(title: String, mnode: MNode, rightCurrEl: NodeRightPanelLink, popupContent:Option[Html] = None,
+@(title: String, mnode: MNode, rightCurrEl: mlk.NodeRightPanelLink, popupContent:Option[Html] = None,
   rightBarAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Какой-то базовый шаблон узла в личном кабинете. *@
 
 @import ctx._
-@import NodeRightPanelLinks._
 @import lk.right._
 @import util.tpl.CssFormat._
+@import models.mlk._
+@import NodeRightPanelLinks._
 
 
 @* Билдим содержимое правой панели. *@
