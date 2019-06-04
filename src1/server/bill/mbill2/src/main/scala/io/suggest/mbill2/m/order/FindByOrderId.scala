@@ -9,7 +9,7 @@ import io.suggest.mbill2.m.gid.{GidSlick, Gid_t}
   * Created: 03.02.16 21:40
   * Description: Поддержка упрощенной сборки экшена выборки по колонке order_id.
   */
-trait FindByOrderId extends ModelContainer { that: OrderIdSlick with GidSlick =>
+trait FindByOrderId extends OrderIdSlick with GidSlick {
 
   import profile.api._
 

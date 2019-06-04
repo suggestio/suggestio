@@ -3,7 +3,7 @@ package io.suggest.proto.http.client.adp.xhr
 import io.suggest.proto.http.client.adp.HttpClientAdp
 import io.suggest.proto.http.model._
 import org.scalajs.dom
-import org.scalajs.dom.XMLHttpRequest
+import org.scalajs.dom.{Blob, XMLHttpRequest}
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
@@ -98,5 +98,7 @@ case class XhrHttpResp( xhr: XMLHttpRequest ) extends HttpResp {
     Future.successful( xhr.responseText )
   override def arrayBuffer() =
     Future.successful( xhr.response.asInstanceOf[ArrayBuffer] )
+  override def blob() =
+    Future.successful( xhr.response.asInstanceOf[Blob] )
 }
 

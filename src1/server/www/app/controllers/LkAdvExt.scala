@@ -68,7 +68,7 @@ class LkAdvExt @Inject() (
 
 
   /** CSP-заголовок, разрешающий работу системы внешнего размещения карточек. */
-  private val _CSP_HDR_OPT: Option[(String, String)] = {
+  private def _CSP_HDR_OPT: Option[(String, String)] = {
     cspUtil.mkCustomPolicyHdr { csp0 =>
       val allSrcsIter = for {
         mExtService <- MExtServices.values.iterator

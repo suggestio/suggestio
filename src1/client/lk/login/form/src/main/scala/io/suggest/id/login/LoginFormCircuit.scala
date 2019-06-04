@@ -4,7 +4,7 @@ import diode.react.ReactConnector
 import io.suggest.id.login.c._
 import io.suggest.id.login.m.MLoginRootS
 import io.suggest.id.login.m.reg.MEpwRegS
-import io.suggest.lk.c.CaptchaAh
+import io.suggest.lk.c.{CaptchaAh, CaptchaApiHttp, ICaptchaApi}
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.CircuitUtil._
@@ -40,6 +40,7 @@ class LoginFormCircuit(
 
 
   val loginApi: ILoginApi = new LoginApiHttp
+  val captchaApi: ICaptchaApi = new CaptchaApiHttp
 
   private val formAh = new FormAh(
     modelRW   = overallRW,
@@ -64,6 +65,7 @@ class LoginFormCircuit(
 
   private val captchaAh = new CaptchaAh(
     modelRW     = captchaRW,
+    api         = captchaApi,
   )
 
   override protected val actionHandler: HandlerFunction = {

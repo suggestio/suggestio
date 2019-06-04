@@ -7,6 +7,7 @@ import io.suggest.proto.http.HttpConst
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom.DomQuick
 import japgolly.univeq._
+import org.scalajs.dom.Blob
 import play.api.libs.json.{Json, Reads}
 
 import scala.concurrent.Future
@@ -45,8 +46,11 @@ trait HttpResp {
   /** Извлечение текста. */
   def text(): Future[String]
 
-  /** Извлечь в виде ArrayBuffer. */
+  /** Извлечь тело ответа в виде ArrayBuffer. */
   def arrayBuffer(): Future[ArrayBuffer]
+
+  /** Извлечь тело ответа в виде блоба. */
+  def blob(): Future[Blob]
 
 }
 
@@ -79,7 +83,6 @@ object HttpResp {
       * Фильтровать результат по http-статусу ответа сервера.
       *
       * @param httpStatuses Допустимые http-статусы.
-      * @param xhrFut Выполненяемый XHR, собранный в send().
       * @return Future, где success наступает только при указанных статусах.
       *         [[HttpFailedException]] когда статус ответа не подпадает под критерий.
       */
@@ -117,7 +120,6 @@ object HttpResp {
       * Декодировать будущий ответ сервера в инстанс какой-то модели с помощью boopickle и десериализатора,
       * переданного в implicit typeclass'е.
       *
-      * @param respFut Фьючерс с ответом сервера.
       * @tparam T Тип отрабатываемой модели.
       * @return Фьючерс с десериализованным инстансом произвольной модели.
       */

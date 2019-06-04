@@ -34,11 +34,10 @@ trait ILoginApi {
 
   /** Сабмит формы регистрации на сервер.
     *
-    * @param captchaId id капчи.
     * @param form Данные формы, введённые юзером.
     * @return Фьючерс с ответом сервер.
     */
-  def epw2RegSubmit(captchaId: String, form: MEpwRegReq): Future[_]
+  def epw2RegSubmit(form: MEpwRegReq): Future[_]
 
 }
 
@@ -76,10 +75,10 @@ class LoginApiHttp extends ILoginApi {
   }
 
 
-  override def epw2RegSubmit(captchaId: String, form: MEpwRegReq): Future[_] = {
+  override def epw2RegSubmit(form: MEpwRegReq): Future[_] = {
     val respHolder = HttpClient.execute(
       HttpReq.routed(
-        route = routes.controllers.Ident.epw2RegSubmit( captchaId ),
+        route = routes.controllers.Ident.epw2RegSubmit(),
         data = HttpReqData(
           headers = {
             val H = HttpConst.Headers

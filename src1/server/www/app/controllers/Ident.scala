@@ -1,5 +1,8 @@
 package controllers
 
+import java.io.ByteArrayOutputStream
+import java.nio.charset.StandardCharsets
+import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
@@ -14,7 +17,8 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.sec.util.ScryptUtil
+import io.suggest.sec.csp.Csp
+import io.suggest.sec.util.{PgpUtil, ScryptUtil}
 import io.suggest.session.{LongTtl, MSessionKeys, ShortTtl, Ttl}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
@@ -32,9 +36,14 @@ import views.html.ident.login.epw._loginColumnTpl
 import views.html.ident.reg.email.{_regColumnTpl, emailRegMsgTpl}
 import views.html.lk.login._
 import japgolly.univeq._
+import models.im.MCaptchaSecret
+import org.apache.commons.io.IOUtils
+import play.api.libs.json.Json
+import util.sec.CspUtil
 import views.html.ident.recover.emailPwRecoverTpl
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -59,6 +68,8 @@ class Ident @Inject() (
                         override val scryptUtil           : ScryptUtil,
                         override val maybeAuth            : MaybeAuth,
                         override val canConfirmIdpReg     : CanConfirmIdpReg,
+                        pgpUtil                           : PgpUtil,
+                        cspUtil                           : CspUtil,
                         override val canRecoverPw         : CanRecoverPw,
                         override val isAnon               : IsAnon,
                         override val isAuth               : IsAuth,
@@ -128,6 +139,12 @@ class Ident @Inject() (
   import mPersonIdentModel.api._
 
 
+  /** CSP-заголовок, разрешающий работу системы внешнего размещения карточек. */
+  private def CSP_HDR_OPT: Option[(String, String)] = {
+    cspUtil
+      .mkCustomPolicyHdr( _.addImgSrc( Csp.Sources.BLOB ) )
+  }
+
   /** Страница с отдельной формой логина по имени-паролю.
     * @param lfp Парсится на стороне сервера.
     * @return Страница с логином.
@@ -137,7 +154,9 @@ class Ident @Inject() (
       implicit val ctxData = CtxData(
         jsInitTargets = MJsInitTargets.LoginForm :: Nil
       )
-      Ok( LkLoginTpl() )
+      cspUtil.applyCspHdrOpt( CSP_HDR_OPT ) {
+        Ok( LkLoginTpl() )
+      }
     }
   }
 
@@ -234,91 +253,205 @@ class Ident @Inject() (
     *
     * @return 200 OK + JSON, или ошибка.
     */
-  def epw2RegSubmit(captchaId: String) = csrf.Check {
-    isAnon().async( parse.json[MEpwRegReq] ) { implicit request =>
-      lazy val logPrefix = s"epw2RegSubmit($captchaId):"
-      LOGGER.trace(s"$logPrefix email=${request.body.email} capTyped=${request.body.captchaTyped}")
+  def epw2RegSubmit = csrf.Check {
+    val ownSecretKeyFut = pgpUtil.getLocalStorKey()
+    val now = Instant.now()
+    lazy val logPrefix = s"epw2RegSubmit()#${now.toEpochMilli}:"
 
-      if( !captchaUtil.checkCaptcha2(captchaId, request.body.captchaTyped) ) {
-        LOGGER.debug(s"$logPrefix Captcha does NOT match")
-        NotAcceptable("captcha.invalid")
+    isAnon().async {
+      parse
+        .json[MEpwRegReq]
+        // Начать с синхронной валидации данных:
+        .validate { epwReg =>
+          // Проверить валидность email:
+          Either.cond(
+            test = {
+              val vldRes = Constraints.emailAddress.apply( epwReg.email )
+              val r = vldRes !=* Valid
+              if (r) LOGGER.warn(s"$logPrefix Invalid email address:\n email = ${epwReg.email}\n vld res = $vldRes")
+              r
+            },
+            right = epwReg,
+            left  = NotAcceptable("email.invalid")
+          )
+          // Поверхностно проверить валидность поля капчи (почистить, проверить длину):
+          .filterOrElse(
+            {epwReg2 =>
+              epwReg2.captchaTyped.length ==* captchaUtil.DIGITS_CAPTCHA_LEN
+            },
+            {
+              LOGGER.warn(s"$logPrefix Captcha len invalid: ${epwReg.captchaTyped} expected=${captchaUtil.DIGITS_CAPTCHA_LEN} irl=${epwReg.captchaTyped.length}")
+              NotAcceptable("captcha.invalid")
+            }
+          )
+        }
+        // Отработать проверку капчи:
+        // - проверить соответствие присланной капчи с pgp-шифротекстом.
+        // - проверить токен по базе, и сохранить в БД использованный токен.
+        .validateM { epwReg =>
+          val pgpSecret = pgpUtil.unminifyPgpMessage( epwReg.captchaSecret )
+          for {
+            // Получить pgp-ключ на руки:
+            ownSecretKey <- ownSecretKeyFut
 
-      } else if ({
-        val vldRes = Constraints.emailAddress.apply(request.body.email)
-        val r = vldRes !=* Valid
-        if (r) LOGGER.warn(s"$logPrefix Invalid email address:\n email = ${request.body.email}\n vld res = $vldRes")
-        r
-      }) {
-        NotAcceptable("email.invalid")
-
-      } else {
-        val email1 = request.body.email
-          .trim
-          .toLowerCase()
-
-        // Проверить, что там с почтовым адресом?
-        for {
-
-          // Поиск юзеров с таким вот email:
-          userAlreadyExists <- mNodes.dynExists {
-            new MNodeSearchDfltImpl {
-              override val nodeTypes = MNodeTypes.Person :: Nil
-              override def limit = 2
-              override val outEdges: Seq[Criteria] = {
-                val cr = Criteria(
-                  nodeIds     = email1 :: Nil,
-                  predicates  = MPredicates.Ident.Email :: Nil,
+            // Быстрые синхронные проверки секрета капчи:
+            captchaSecretEith = {
+              val baos = new ByteArrayOutputStream( 512 )
+              val captchaSecretJsonE = try {
+                pgpUtil.decryptFromSelf(
+                  data = IOUtils.toInputStream( pgpSecret, StandardCharsets.UTF_8 ),
+                  key  = ownSecretKey,
+                  out  = baos,
                 )
-                cr :: Nil
+                Right( new String( baos.toByteArray ) )
+              } catch {
+                case ex: Throwable =>
+                  // Не удалось расшифровать pgp-сообщение.
+                  LOGGER.warn(s"$logPrefix Unable to parse pgp secret:\n $pgpSecret", ex)
+                  Left( BadRequest("Invalid request body") )
+              } finally {
+                baos.close()
               }
+
+              captchaSecretJsonE
+                // Расшифровать присланный шифротекст капчи.
+                .right.flatMap { captchaSecretJson =>
+                  Json
+                    .parse( captchaSecretJson )
+                    .validate[MCaptchaSecret]
+                    .asEither
+                    .left.map { jsonParseErrors =>
+                      // Should never happen: непарсится расшифрованный текст
+                      LOGGER.error(s"$logPrefix Failed to parse decrypted JSON:\n $captchaSecretJson\n ${jsonParseErrors.mkString("\n ")}")
+                      InternalServerError
+                    }
+                }
+                // Сверить TTL секрета капчи:
+                .filterOrElse(
+                  {captchaSecret =>
+                    val dateEnd = captchaUtil.captchaTtl( captchaSecret.dateCreated )
+                    val r = dateEnd isAfter now
+                    if (!r) LOGGER.warn(s"$logPrefix Expired captcha#${captchaSecret.captchaUid}, dateEnd=${dateEnd.atOffset(ZoneOffset.UTC)} now=${now.atOffset(ZoneOffset.UTC)}")
+                    r
+                  },
+                  NotAcceptable( "captcha.invalid" )
+                )
+                // Проверить соответствие введённой капчи и реальной.
+                .filterOrElse(
+                  {captchaSecret =>
+                    // Оставить только символы
+                    val captchaTypedNorm = epwReg.captchaTyped
+                      .replaceAll("\\s+", "")
+                    // По идее, в капче только цифры, но вдруг это изменится - сравниваем через equalsIgnoreCase
+                    val r = captchaSecret.captchaText equalsIgnoreCase captchaTypedNorm
+                    if (r) LOGGER.trace(s"Captcha matched ok = $captchaTypedNorm")
+                    else   LOGGER.warn(s"Captcha mismatch, typed=${captchaTypedNorm} expected=${captchaSecret.captchaText}")
+                    r
+                  },
+                  NotAcceptable("captcha.invalid")
+                )
+            }
+
+            // Капча проверена, но возможно, что она уже бывшая в употреблении. Надо провалидировать id капчи по базе токенов.
+            isOk <- captchaSecretEith.fold(
+              {_ =>
+                Future.successful(captchaSecretEith)
+              },
+              {capthaSecret =>
+                slick.db.run {
+                  captchaUtil
+                    .ensureCaptchaOtt( capthaSecret )
+                }
+                  .transform {
+                    case Failure(ex) =>
+                      LOGGER.warn(s"$logPrefix Captcha too old", ex)
+                      Success( Left( ExpectationFailed("captcha.expired") ) )
+                    case Success(_) =>
+                      LOGGER.trace(s"$logPrefix Captcha marked as USED")
+                      Success( captchaSecretEith )
+                  }
+              }
+            )
+
+          } yield {
+            LOGGER.trace(s"$logPrefix Captcha checks done.")
+            isOk.right.map { captchaSecret =>
+              (epwReg, captchaSecret)
             }
           }
-
-          // Разобраться, есть ли уже юзеры с таким email?
-          // Тут есть несколько вариантов: юзер не существует, юзер уже существует.
-          isReg = {
-            LOGGER.trace(s"$logPrefix userAlreadyExists?$userAlreadyExists email=$email1")
-            !userAlreadyExists
-          }
-
-          // Рандомная строка, выполняющая роль nonce + привязка письма к сессии текущего юзера.
-          randomUuid = UUID.randomUUID()
-
-          _ <- {
-            implicit val ctx = implicitly[Context]
-            mailer
-              .instance
-              .setRecipients( email1 )
-              .setSubject {
-                val prefixMsgCode =
-                  if (isReg) "reg.emailpw.email.subj"
-                  else MsgCodes.`Password.recovery`
-                s"${ctx.messages(prefixMsgCode)} | ${MsgCodes.`Suggest.io`}"
-              }
-              .setHtml {
-                val tplQs = MEmailRecoverQs(
-                  email         = email1,
-                  // Привязать сессию текущего юзера к письму:
-                  nonce         = randomUuid,
-                  checkSession  = true,
-                )
-                val tpl =
-                  if (isReg) emailRegMsgTpl
-                  else emailPwRecoverTpl
-                val html = tpl.render(tplQs, ctx)
-                htmlCompressUtil.html4email( html )
-              }
-              .send()
-          }
-
-        } yield {
-          LOGGER.debug(s"$logPrefix Sent message to $email1 isReg?$isReg")
-          // TODO Залить id в текущую сессию для привязки сессии к письму?
-          NoContent
-            .addingToSession(
-              MSessionKeys.ExtLoginData.value -> randomUuid.toString
-            )
         }
+
+    } { implicit request =>
+      val (epwReg, captchaSecret) = request.body
+      LOGGER.trace(s"$logPrefix email=${epwReg.email} capTyped=${epwReg.captchaTyped}")
+
+      // Проверки выполнены.
+      val email1 = epwReg.email
+        .trim
+        .toLowerCase()
+
+      // Проверить, что там с почтовым адресом?
+      for {
+
+        // Поиск юзеров с таким вот email:
+        userAlreadyExists <- mNodes.dynExists {
+          new MNodeSearchDfltImpl {
+            override val nodeTypes = MNodeTypes.Person :: Nil
+            override def limit = 2
+            override val outEdges: Seq[Criteria] = {
+              val cr = Criteria(
+                nodeIds     = email1 :: Nil,
+                predicates  = MPredicates.Ident.Email :: Nil,
+              )
+              cr :: Nil
+            }
+          }
+        }
+
+        // Разобраться, есть ли уже юзеры с таким email?
+        // Тут есть несколько вариантов: юзер не существует, юзер уже существует.
+        isReg = {
+          LOGGER.trace(s"$logPrefix userAlreadyExists?$userAlreadyExists email=$email1")
+          !userAlreadyExists
+        }
+
+        // Рандомная строка, выполняющая роль nonce + привязка письма к сессии текущего юзера.
+        randomUuid = UUID.randomUUID()
+
+        _ <- {
+          implicit val ctx = implicitly[Context]
+          mailer
+            .instance
+            .setRecipients( email1 )
+            .setSubject {
+              val prefixMsgCode =
+                if (isReg) "reg.emailpw.email.subj"
+                else MsgCodes.`Password.recovery`
+              s"${ctx.messages(prefixMsgCode)} | ${MsgCodes.`Suggest.io`}"
+            }
+            .setHtml {
+              val tplQs = MEmailRecoverQs(
+                email         = email1,
+                // Привязать сессию текущего юзера к письму:
+                nonce         = randomUuid,
+                checkSession  = true,
+              )
+              val tpl =
+                if (isReg) emailRegMsgTpl
+                else emailPwRecoverTpl
+              val html = tpl.render(tplQs, ctx)
+              htmlCompressUtil.html4email( html )
+            }
+            .send()
+        }
+
+      } yield {
+        LOGGER.debug(s"$logPrefix Sent message to $email1 isReg?$isReg")
+        // TODO Залить id в текущую сессию для привязки сессии к письму?
+        NoContent
+          .addingToSession(
+            MSessionKeys.ExtLoginData.value -> randomUuid.toString
+          )
       }
     }
   }

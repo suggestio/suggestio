@@ -1,6 +1,7 @@
 package io.suggest.mbill2.m.contract
 
-import io.suggest.mbill2.m.gid.{GidModelContainer, Gid_t}
+import io.suggest.mbill2.m.common.ModelContainer
+import io.suggest.mbill2.m.gid.GidSlick
 
 /**
  * Suggest.io
@@ -8,24 +9,24 @@ import io.suggest.mbill2.m.gid.{GidModelContainer, Gid_t}
  * Created: 17.12.15 16:38
  * Description: Трейт для поиска по id контракта.
  */
-trait FindByContractId extends ContractIdSlick with GidModelContainer {
+trait FindByContractId extends ContractIdSlick with GidSlick with ModelContainer {
 
   import profile.api._
 
   override type Table_t <: Table[El_t] with GidColumn with ContractIdColumn
 
 
-  def findByContractIdSql(contractId: Gid_t) = {
+  def findByContractIdSql(contractId: Id_t) = {
     query
       .filter(_.contractId === contractId)
   }
 
-  def findByContractId(contractId: Gid_t) = {
+  def findByContractId(contractId: Id_t) = {
     findByContractIdSql(contractId)
       .result
   }
 
-  def countByContractId(contractId: Gid_t): DBIOAction[Int, NoStream, Effect.Read] = {
+  def countByContractId(contractId: Id_t): DBIOAction[Int, NoStream, Effect.Read] = {
     findByContractIdSql(contractId)
       .size
       .result

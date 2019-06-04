@@ -3,7 +3,6 @@ package io.suggest.lk.m.captcha
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.lk.m.MTextFieldS
-import io.suggest.text.StringUtil
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
@@ -21,52 +20,33 @@ object MCaptchaS {
 
   implicit object MCaptchaSFastEq extends FastEq[MCaptchaS] {
     override def eqv(a: MCaptchaS, b: MCaptchaS): Boolean = {
-      (a.typed     ===* b.typed) &&
-      (a.reloading ===* b.reloading) &&
-      (a.captchaId ===* b.captchaId)
+      (a.typed    ===* b.typed) &&
+      (a.req      ===* b.req)
     }
   }
 
   @inline implicit def univEq: UnivEq[MCaptchaS] = UnivEq.derive
 
-  val captchaId   = GenLens[MCaptchaS]( _.captchaId )
-  val typed       = GenLens[MCaptchaS]( _.typed )
-  val reloading   = GenLens[MCaptchaS]( _.reloading )
-
-  implicit class MCaptchaSExtOps( val cap: MCaptchaS ) extends AnyVal {
-    def reset(captchaId: Option[String]): MCaptchaS = {
-      cap.copy(
-        captchaId = captchaId,
-        typed = MTextFieldS.empty
-      )
-    }
-  }
-
-  def mkCaptchaId(): String =
-    StringUtil.randomId( 5 )
-
-  def defaultCaptcha = MCaptchaS( captchaId = Some(mkCaptchaId()) )
+  val typed           = GenLens[MCaptchaS]( _.typed )
+  val req             = GenLens[MCaptchaS]( _.req )
 
   def isTypedCapchaValid(typedCaptcha: String): Boolean = {
-    typedCaptcha.nonEmpty && typedCaptcha.length < 20
+    typedCaptcha.nonEmpty && typedCaptcha.length < 10
   }
+
 }
 
 
 /** Контейнер данных js-капчи.
   *
-  * @param captchaId Ссылка на картинку с капчей.
+  * @param req Данные полученной с сервера капчи.
   * @param typed Введённый текст с картинки.
   */
 case class MCaptchaS(
-                      captchaId   : Option[String]  = None,
-                      typed       : MTextFieldS     = MTextFieldS.empty,
-                      reloading   : Pot[None.type]  = Pot.empty,
+                      typed           : MTextFieldS         = MTextFieldS.empty,
+                      req             : Pot[MCaptchaData]   = Pot.empty,
                     ) {
 
-  def isShown: Boolean =
-    captchaId.nonEmpty
-  lazy val isShownSome: Some[Boolean] =
-    Some( isShown )
+  lazy val captchaImgUrlOpt = req.toOption.map(_.blobUrl)
 
 }

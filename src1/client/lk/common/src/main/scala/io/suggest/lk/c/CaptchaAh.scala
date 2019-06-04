@@ -1,9 +1,15 @@
 package io.suggest.lk.c
 
-import diode.{ActionHandler, ActionResult, ModelRW}
+import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.lk.m._
 import io.suggest.lk.m.captcha.MCaptchaS
+import io.suggest.msg.WarnMsgs
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.Log
+import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.univeq._
+
+import scala.util.Success
 
 /**
   * Suggest.io
@@ -13,9 +19,11 @@ import japgolly.univeq._
   */
 
 class CaptchaAh[M](
+                    api           : ICaptchaApi,
                     modelRW       : ModelRW[M, MCaptchaS],
                   )
   extends ActionHandler( modelRW )
+  with Log
 {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
@@ -24,20 +32,35 @@ class CaptchaAh[M](
     case CaptchaInit =>
       val v0 = value
 
-      val captchaId = MCaptchaS.mkCaptchaId()
+      val tstampMs = System.currentTimeMillis()
 
-      val v2 = v0.reset( Some(captchaId) )
-      updated(v2)
+      val fx = Effect {
+        api
+          .getCaptcha()
+          .transform { tryResp =>
+            Success( CaptchaInitRes( tryResp, tstampMs ) )
+          }
+      }
+
+      val v2 = MCaptchaS.req
+        .modify( _.pending( tstampMs ) )(v0)
+
+      updated(v2, fx)
 
 
-    // Скрыть капчу, если она отображается.
-    case CaptchaHide =>
+    // Пришёл результат запроса капчи с сервера.
+    case m: CaptchaInitRes =>
       val v0 = value
-      if (v0.captchaId.isEmpty) {
+      if (!(v0.req isPendingWithStartTime m.timeStampMs)) {
+        // Ответ пришёл, но не тот, который был запущен:
+        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
+
       } else {
-        val v2 = v0.reset( None )
-        updated( v2 )
+        val v2 = MCaptchaS.req.modify { req0 =>
+          m.tryResp.fold( req0.fail, req0.ready )
+        }(v0)
+        updated(v2)
       }
 
 
@@ -45,10 +68,10 @@ class CaptchaAh[M](
     case m: CaptchaTyped =>
       val v0 = value
 
-      if (v0.typed.value ==* m.captchaId) {
+      if (v0.typed.value ==* m.typed) {
         // Текст капчи не изменился.
         noChange
-      } else if (v0.captchaId contains m.captchaId) {
+      } else {
         var updAccF = MTextFieldS.value.set( m.typed )
         if (!v0.typed.isValid && MCaptchaS.isTypedCapchaValid(v0.typed.value))
           updAccF = updAccF andThen MTextFieldS.isValid.set(true)
@@ -57,9 +80,6 @@ class CaptchaAh[M](
           .modify( updAccF )(v0)
 
         updated(v2)
-      } else {
-        // Почему-то id капчи не совпадает. Вероятно, капча изменилась во время ввода или что-то ещё.
-        noChange
       }
 
 

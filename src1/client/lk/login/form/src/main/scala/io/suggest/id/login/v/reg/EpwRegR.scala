@@ -2,7 +2,6 @@ package io.suggest.id.login.v.reg
 
 import chandu0101.scalajs.react.components.materialui.{MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiPaper}
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.captcha.MCaptchaCookiePaths
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.m.{EpwRegSubmit, RegEmailBlur, RegEmailEdit}
@@ -82,7 +81,6 @@ class EpwRegR(
             val captcha = p.wrap { props =>
               captchaFormR.PropsVal(
                 captcha     = props.captcha,
-                cookiePath  = MCaptchaCookiePaths.EpwReg,
                 disabled    = props.submitReq.isPending,
               )
             }( captchaFormR.apply )(implicitly, captchaFormR.CaptchaFormRPropsValFastEq)

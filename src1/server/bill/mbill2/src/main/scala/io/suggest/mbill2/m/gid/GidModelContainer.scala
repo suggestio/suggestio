@@ -12,8 +12,6 @@ trait GidModelContainer extends ModelContainer with GidSlick {
 
   import profile.api._
 
-  override type Id_t = Gid_t
-
   override type Table_t <: Table[El_t] with GidColumn
 
 }

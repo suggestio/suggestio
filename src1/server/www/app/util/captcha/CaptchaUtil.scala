@@ -1,17 +1,21 @@
 package util.captcha
 
 import java.io.ByteArrayOutputStream
+import java.time.{Instant, ZoneOffset}
 import java.util.Properties
 
 import akka.util.ByteString
 import com.google.code.kaptcha.Producer
 import com.google.code.kaptcha.impl.DefaultKaptcha
 import com.google.code.kaptcha.util.Config
+import io.suggest.mbill2.m.ott.{MOneTimeToken, MOneTimeTokens}
+import io.suggest.mbill2.util.effect
 import javax.inject.{Inject, Singleton}
 import io.suggest.sec.util.CipherUtil
 import io.suggest.text.util.TextUtil
 import io.suggest.util.logs.MacroLogsImpl
 import javax.imageio.ImageIO
+import models.im.MCaptchaSecret
 import models.mproj.ICommonDi
 import play.api.data.Form
 import play.api.http.HeaderNames
@@ -42,16 +46,18 @@ object CaptchaUtil {
 
 /** Инжектируемая часть капча-утили. */
 @Singleton
-class CaptchaUtil @Inject() (
-  protected val cipherUtil    : CipherUtil,
-  mCommonDi                   : ICommonDi
-)
+final class CaptchaUtil @Inject() (
+                                    mOneTimeTokens              : MOneTimeTokens,
+                                    protected val cipherUtil    : CipherUtil,
+                                    val mCommonDi               : ICommonDi,
+                                  )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.configuration
+  import mCommonDi.{configuration, ec}
 
-  def CAPTCHA_FMT_LC = "png"
+  def CAPTCHA_IMG_FMT_LC = "png"
+  def CAPTCHA_IMG_MIME = "image/" + CAPTCHA_IMG_FMT_LC
 
   /** Кол-во цифр в цифровой капче (длина строки капчи). */
   def DIGITS_CAPTCHA_LEN = 5
@@ -76,6 +82,7 @@ class CaptchaUtil @Inject() (
     SECRET_KEY = Array[Byte](-22, 52, -78, -47, -46, 44, -3, 116, -8, -2, -96, -98, 48, 102, -117, -43,
       -59, -23, 75, 59, -101, 21, -26, 51, -102, -76, 22, 43, -94, -43, 111, 51)
   )
+
 
   def cookieName(captchaId: String) = "cha." + captchaId
 
@@ -196,10 +203,58 @@ class CaptchaUtil @Inject() (
     val img = getCaptchaProducer()
       .createImage(ctext)
     val baos = new ByteArrayOutputStream(8192)
-    if ( !ImageIO.write(img, CAPTCHA_FMT_LC, baos) )
-      throw new IllegalStateException("ImageIO writer returned false. No writer for captcha image or format " + CAPTCHA_FMT_LC)
+    if ( !ImageIO.write(img, CAPTCHA_IMG_FMT_LC, baos) )
+      throw new IllegalStateException("ImageIO writer returned false. No writer for captcha image or format " + CAPTCHA_IMG_FMT_LC)
     ByteString.fromArrayUnsafe( baos.toByteArray )
   }
+
+
+  import mCommonDi.slick.profile.api._
+
+  /** Выставить id капчи в базе, как уже использованную капчу.
+    *
+    * @param captchaSecret id капчи.
+    * @return Результат обработки.
+    */
+  def ensureCaptchaOtt(captchaSecret: MCaptchaSecret): DBIOAction[_, NoStream, effect.RWT] = {
+    lazy val logPrefix = s"ensureCaptchaOtt(${captchaSecret.captchaUid}):"
+    val dbAction = for {
+      // Поискать в базе токен с текущем id капчи.
+      ottExist <- mOneTimeTokens
+        .query
+        .filter { ott =>
+          ott.id === captchaSecret.captchaUid
+        }
+        .take(1)
+        .result
+        .headOption
+
+      // Если токен уже присутствует в ott, то значит повторное использование уже использованной капчи.
+      if {
+        for (ott0 <- ottExist)
+          LOGGER.warn(s"$logPrefix Token already exists in db since ${ott0.dateCreated.atOffset(ZoneOffset.UTC)}")
+        ottExist.isEmpty
+      }
+
+      // Инзертить новый токен в бд
+      ott <- {
+        val ott = MOneTimeToken(
+          tokenId     = captchaSecret.captchaUid,
+          dateCreated = captchaSecret.dateCreated,
+          dateEnd     = captchaTtl( captchaSecret.dateCreated ) ,
+        )
+        mOneTimeTokens.insertOne( ott )
+      }
+
+    } yield {
+      LOGGER.trace(s"$logPrefix Saved token")
+      ott
+    }
+    dbAction.transactionally
+  }
+
+  def captchaTtl(dateCreated: Instant): Instant =
+    dateCreated plusSeconds COOKIE_MAXAGE_SECONDS
 
 }
 

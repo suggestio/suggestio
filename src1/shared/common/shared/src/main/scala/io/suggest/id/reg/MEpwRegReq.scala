@@ -14,8 +14,8 @@ object MEpwRegReq {
 
   implicit def epwRegReqFormat: OFormat[MEpwRegReq] = (
     (__ \ "e").format[String] and
-    //(__ \ "i").format[String] and
-    (__ \ "c").format[String]
+    (__ \ "c").format[String] and
+    (__ \ "s").format[String]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MEpwRegReq] = UnivEq.derive
@@ -26,11 +26,11 @@ object MEpwRegReq {
 /** Кросс-платформенная модель запроса регистрации по паролю.
   *
   * @param email Адрес email.
-  * #param captchaId id капчи.
   * @param captchaTyped Введённая пользователем капча.
+  * @param captchaSecret Секретный шифротекст капчи.
   */
 case class MEpwRegReq(
-                       email        : String,
-                       //captchaId    : String,  id капчи - прямо в ссылке для оптимизации кукисов.
-                       captchaTyped : String,
+                       email            : String,
+                       captchaTyped     : String,
+                       captchaSecret    : String,
                      )

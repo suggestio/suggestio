@@ -227,10 +227,10 @@ class Img @Inject() (
         // Путь до кукиса:
         val cookiePath = mCookiePath match {
           case MCaptchaCookiePaths.EpwReg =>
-            routes.Ident.epw2RegSubmit( captchaId ).url
+            routes.Ident.epw2RegSubmit().url
         }
         Ok( imgBytes )
-          .as("image/" + captchaUtil.CAPTCHA_FMT_LC)
+          .as( captchaUtil.CAPTCHA_IMG_MIME )
           .withHeaders(
             EXPIRES       -> "0",
             PRAGMA        -> "no-cache",
@@ -256,7 +256,7 @@ class Img @Inject() (
     *
     * @return Картинка + http-хидеры с id и ответом на капчу.
     */
-  def getCaptchaImg2() = csrf.Check {
+  def getCaptcha = csrf.Check {
     maybeAuth().async { implicit request =>
       val captchaUid = UUID.randomUUID()
       val logPrefix = s"getCaptchaImg2()#${System.currentTimeMillis()}:"
@@ -277,7 +277,7 @@ class Img @Inject() (
       val captchaSecretPgpMinFut = for {
         (ctext, _) <- captchaFut
         captchaSecret = MCaptchaSecret(
-          captchaUid = captchaUid,
+          captchaUid  = captchaUid,
           captchaText = ctext,
         )
         json = Json.toJson(captchaSecret).toString()
@@ -293,6 +293,7 @@ class Img @Inject() (
           )
           new String(baos.toByteArray)
         } finally {
+          // Это не нужно, но пусть будет, на случай, если в светлом далёком будущем это вдруг изменится.
           baos.close()
         }
         // Можно убрать заголовок, финальную часть, переносы строк:
@@ -301,11 +302,11 @@ class Img @Inject() (
 
       // Отправить http-ответ юзеру, запихнув pgp-шифр в заголовок ответа:
       for {
+        (_, captchaImgBytes)     <- captchaFut
         captchaSecretPgpMin      <- captchaSecretPgpMinFut
-        (_, captchaImgBytes)  <- captchaFut
       } yield {
         Ok( captchaImgBytes )
-          .as("image/" + captchaUtil.CAPTCHA_FMT_LC)
+          .as( captchaUtil.CAPTCHA_IMG_MIME )
           .withHeaders(
             EXPIRES       -> "0",
             PRAGMA        -> "no-cache",

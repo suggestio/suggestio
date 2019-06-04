@@ -4,10 +4,11 @@ import java.time.Instant
 import java.util.UUID
 
 import io.suggest.common.m.sql.ITableName
-import io.suggest.mbill2.m.common.ModelContainer
+import io.suggest.mbill2.m.common.{InsertManyReturning, InsertUuidOneReturning, ModelContainer}
 import io.suggest.mbill2.m.dt.{DateCreatedSlick, DateEndSlick}
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import javax.inject.{Inject, Singleton}
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -25,10 +26,14 @@ class MOneTimeTokens @Inject() (
   with TokenIdSlick
   with ITableName
   with ModelContainer
+  with InsertUuidOneReturning
+  with InsertManyReturning
 {
 
   import profile.api._
 
+  override protected def _withId(el: MOneTimeToken, id: UUID): MOneTimeToken =
+    MOneTimeToken.tokenId.set(id)(el)
 
   override type Id_t    = UUID
   override type Table_t = MOneTimeTokensTable
@@ -45,7 +50,7 @@ class MOneTimeTokens @Inject() (
     with DateEndInstantColumn
   {
     override def * = {
-      (tokenId, dateCreated, dateEnd) <> (
+      (id, dateCreated, dateEnd) <> (
         (MOneTimeToken.apply _).tupled, MOneTimeToken.unapply
       )
     }
@@ -60,10 +65,13 @@ class MOneTimeTokens @Inject() (
   *
   * @param tokenId рандомный id токена.
   * @param dateCreated Дата создания токена.
-  * @param deleteAfter Дата удаления токена из БД.
+  * @param dateEnd Дата удаления токена из БД.
   */
 case class MOneTimeToken(
                           tokenId       : UUID,
-                          dateCreated   : Instant,
-                          deleteAfter   : Instant,
+                          dateCreated   : Instant = Instant.now(),
+                          dateEnd       : Instant,
                         )
+object MOneTimeToken {
+  val tokenId = GenLens[MOneTimeToken](_.tokenId)
+}

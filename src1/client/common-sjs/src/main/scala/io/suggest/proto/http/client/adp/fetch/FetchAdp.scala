@@ -127,7 +127,7 @@ trait FetchApiStub extends js.Object {
 
 /** Реализация [[HttpRespHolder]] над Fetch API.
  *
-  * @param fetchRespFut Фьючерс ответа.
+  * @param respFut Фьючерс ответа.
   */
 class FetchHttpRespHolder(
                            abortCtlUnd          : js.UndefOr[AbortController],
@@ -162,4 +162,5 @@ case class FetchHttpResp(
   override def bodyUsed = resp.bodyUsed
   override def text() = resp.text().toFuture
   override def arrayBuffer() = resp.arrayBuffer().toFuture
+  override def blob() = resp.blob().toFuture
 }

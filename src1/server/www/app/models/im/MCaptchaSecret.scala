@@ -1,5 +1,6 @@
 package models.im
 
+import java.time.Instant
 import java.util.UUID
 
 import japgolly.univeq.UnivEq
@@ -17,7 +18,8 @@ object MCaptchaSecret {
 
   implicit def captchaSecretFormat: OFormat[MCaptchaSecret] = (
     (__ \ "i").format[UUID] and
-    (__ \ "t").format[String]
+    (__ \ "t").format[String] and
+    (__ \ "c").format[Instant]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MCaptchaSecret] = UnivEq.derive
@@ -25,6 +27,7 @@ object MCaptchaSecret {
 }
 
 case class MCaptchaSecret(
-                           captchaUid   : UUID,
-                           captchaText  : String,
+                           captchaUid       : UUID,
+                           captchaText      : String,
+                           dateCreated      : Instant = Instant.now(),
                          )

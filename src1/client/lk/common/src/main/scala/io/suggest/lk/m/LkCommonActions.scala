@@ -7,6 +7,7 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.crypto.hash.MHash
 import io.suggest.file.up.MUploadResp
+import io.suggest.lk.m.captcha.MCaptchaData
 import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.spa.DAction
@@ -130,12 +131,14 @@ case object Save extends ILkCommonAction
 
 /** Запустить инициализации капчи. */
 case object CaptchaInit extends ILkCommonAction
+/** Возвращается результат (пере-)инициализации капчи. */
+case class CaptchaInitRes(tryResp: Try[MCaptchaData], timeStampMs: Long) extends ILkCommonAction
+
 case object CaptchaHide extends ILkCommonAction
 
 /** Происходит ввода значения капчи.
-  * @param captchaId id вводимой капчи, для разруливания изменения капчи во время ввода, или ситуации, где много капч отрендерено.
   * @param typed Введенное пользоватем значение.
   */
-case class CaptchaTyped(captchaId: String, typed: String) extends ILkCommonAction
+case class CaptchaTyped(typed: String) extends ILkCommonAction
 /** Потеря фокуса в поле ввода капчи. */
 case object CaptchaInputBlur extends ILkCommonAction

@@ -42,7 +42,7 @@ object MEpwRegS {
 case class MEpwRegS(
                      // TODO Номер телефона и sms-код.
                      email            : MTextFieldS         = MTextFieldS.empty,
-                     captcha          : MCaptchaS           = MCaptchaS.defaultCaptcha,
+                     captcha          : MCaptchaS           = MCaptchaS.empty,
                      submitReq        : Pot[String]         = Pot.empty,
                    ) {
 

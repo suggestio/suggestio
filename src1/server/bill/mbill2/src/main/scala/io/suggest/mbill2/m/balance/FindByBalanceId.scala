@@ -1,6 +1,7 @@
 package io.suggest.mbill2.m.balance
 
-import io.suggest.mbill2.m.gid.{GidModelContainer, Gid_t}
+import io.suggest.mbill2.m.common.ModelContainer
+import io.suggest.mbill2.m.gid.{GidSlick, Gid_t}
 
 /**
  * Suggest.io
@@ -8,7 +9,7 @@ import io.suggest.mbill2.m.gid.{GidModelContainer, Gid_t}
  * Created: 17.12.15 16:38
  * Description: Трейт для поиска по id контракта.
  */
-trait FindByBalanceId extends BalanceIdSlick with GidModelContainer {
+trait FindByBalanceId extends BalanceIdSlick with ModelContainer with GidSlick {
 
   import profile.api._
 

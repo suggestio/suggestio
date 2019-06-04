@@ -77,10 +77,11 @@ class EpwRegAh[M](
         val fx = Effect {
           val formData = MEpwRegReq(
             email         = v0.email.value,
-            captchaTyped  = v0.captcha.typed.value
+            captchaTyped  = v0.captcha.typed.value,
+            captchaSecret = v0.captcha.req.get.secret,
           )
           loginApi
-            .epw2RegSubmit( v0.captcha.captchaId.get, formData )
+            .epw2RegSubmit( formData )
             .transform { tryResp =>
               Success( EpwRegSubmitResp( timeStampMs, tryResp ) )
             }

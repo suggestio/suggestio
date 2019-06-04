@@ -94,17 +94,9 @@ class MAsymKeys
 
 
 case class MAsymKey(
-  pubKey        : String,
-  secKey        : Option[String],
-  id            : Option[String],
-  versionOpt    : Option[Long] = None
-)
+                     pubKey        : String,
+                     secKey        : Option[String],
+                     id            : Option[String],
+                     versionOpt    : Option[Long]    = None
+                   )
   extends EsModelT
-    with IAsymKey
-
-
-/** Интерфейс для экземпляра-контейнера ассиметричного ключа. */
-trait IAsymKey {
-  def pubKey: String
-  def secKey: Option[String]
-}

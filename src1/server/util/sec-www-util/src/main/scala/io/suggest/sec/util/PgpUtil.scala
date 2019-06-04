@@ -4,7 +4,7 @@ import java.io.{InputStream, OutputStream}
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.EsModel
-import io.suggest.sec.m.{IAsymKey, MAsymKey, MAsymKeys}
+import io.suggest.sec.m.{MAsymKey, MAsymKeys}
 import io.suggest.util.logs.MacroLogsDyn
 import io.trbl.bcpg.{KeyFactory, KeyFactoryFactory, SecretKey}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -132,7 +132,7 @@ class PgpUtil @Inject() (
     * @param key Используемый ASCII-PGP-ключ зашифровки и будущей расшифровки.
     * @param out Куда производить запись?
     */
-  def encryptForSelf(data: InputStream, key: IAsymKey, out: OutputStream): Unit = {
+  def encryptForSelf(data: InputStream, key: MAsymKey, out: OutputStream): Unit = {
     val sc = KF.parseSecretKey(key.secKey.get)
     encrypt(data, sc, key.pubKey, out)
   }
@@ -159,7 +159,7 @@ class PgpUtil @Inject() (
     * @param key Экземпляр ключа.
     * @param out Выходной поток данных.
     */
-  def decryptFromSelf(data: InputStream, key: IAsymKey, out: OutputStream): Unit = {
+  def decryptFromSelf(data: InputStream, key: MAsymKey, out: OutputStream): Unit = {
     val sc = KF.parseSecretKey(key.secKey.get)
     decrypt(data, sc, key.pubKey, out)
   }
@@ -178,21 +178,34 @@ class PgpUtil @Inject() (
   }
 
 
+  /** Стандартные термы pgp. */
+  private object Pgp {
+    def DELIM       = "-----"
+    def BEGIN       = "BEGIN"
+    def END         = "END"
+    def PGP_MESSAGE = "PGP MESSAGE"
+  }
+
+
   /** Чтобы засунуть pgp-выхлоп, например, в http-заголовок, лучше сделать его просто однородной строкой.
     * @param cipherText Выхлоп encrypt()
     * @return base64-строка.
     */
   def minifyPgpMessage(cipherText: String): String = {
     // Удалить заголовки The -----BEGIN PGP MESSAGE----- и -----END PGP MESSAGE-----, переносы строк и прочие пустоты.
-    cipherText.replaceAll("(\\s+|-----(BEGIN|END) PGP MESSAGE-----)", "")
+    cipherText
+      .replaceAll(s"${Pgp.DELIM}(${Pgp.BEGIN}|${Pgp.END}) ${Pgp.PGP_MESSAGE}${Pgp.DELIM}", "")
+      // Отдельно вычёсываем переносы строк и возможные пробелы, чтобы не пересекалось с предыдущим регэкспом.
+      .replaceAll("\\s+", "")
+      // TODO Под -BEGIN PGP MESSAGE- иногда бывает строка с каким-то мусором вида "SomeName: GnuPG 2.14.1324-egdsadf" Вычищать?
   }
 
   /** Деминификация pgp-сообщения путём добавления обрамляющих заголовков. */
   def unminifyPgpMessage(minified: String): String = {
     // Обязательными являются только заголовки.
-    "-----BEGIN PGP MESSAGE-----\n" +
+    s"${Pgp.DELIM}${Pgp.BEGIN} ${Pgp.PGP_MESSAGE}${Pgp.DELIM}\n" +
     minified +
-    "\n-----END PGP MESSAGE-----\n"
+    s"\n${Pgp.DELIM}${Pgp.END} ${Pgp.PGP_MESSAGE}${Pgp.DELIM}\n"
   }
 
 }

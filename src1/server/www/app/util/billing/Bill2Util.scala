@@ -54,7 +54,7 @@ class Bill2Util @Inject() (
                             esModel                         : EsModel,
                             bill2Conf                       : Bill2Conf,
                             mOrders                         : MOrders,
-                            mContracts                      : MContracts,
+                            val mContracts                  : MContracts,
                             mItems                          : MItems,
                             mBalances                       : MBalances,
                             mTxns                           : MTxns,

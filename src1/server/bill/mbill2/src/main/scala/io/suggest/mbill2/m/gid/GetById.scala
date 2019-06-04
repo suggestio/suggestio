@@ -1,5 +1,6 @@
 package io.suggest.mbill2.m.gid
 
+import io.suggest.mbill2.m.common.ModelContainer
 import slick.sql.SqlAction
 
 /**
@@ -8,7 +9,7 @@ import slick.sql.SqlAction
  * Created: 04.12.15 22:19
  * Description: Добавить метод чтения по id.
  */
-trait GetById extends GidModelContainer {
+trait GetById extends ModelContainer with GidSlick {
 
   import profile.api._
 
