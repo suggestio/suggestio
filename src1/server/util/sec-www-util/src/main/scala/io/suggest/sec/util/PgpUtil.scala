@@ -194,7 +194,7 @@ class PgpUtil @Inject() (
   def minifyPgpMessage(cipherText: String): String = {
     // Удалить заголовки The -----BEGIN PGP MESSAGE----- и -----END PGP MESSAGE-----, переносы строк и прочие пустоты.
     cipherText
-      .replaceAll(s"${Pgp.DELIM}(${Pgp.BEGIN}|${Pgp.END}) ${Pgp.PGP_MESSAGE}${Pgp.DELIM}", "")
+      .replaceAll(s"${Pgp.DELIM}(${Pgp.BEGIN}|${Pgp.END}) ${Pgp.PGP_MESSAGE}${Pgp.DELIM}(\\s+Version:[-a-zA-Z\\d .]+\n)?", "")
       // Отдельно вычёсываем переносы строк и возможные пробелы, чтобы не пересекалось с предыдущим регэкспом.
       .replaceAll("\\s+", "")
       // TODO Под -BEGIN PGP MESSAGE- иногда бывает строка с каким-то мусором вида "SomeName: GnuPG 2.14.1324-egdsadf" Вычищать?
@@ -203,7 +203,7 @@ class PgpUtil @Inject() (
   /** Деминификация pgp-сообщения путём добавления обрамляющих заголовков. */
   def unminifyPgpMessage(minified: String): String = {
     // Обязательными являются только заголовки.
-    s"${Pgp.DELIM}${Pgp.BEGIN} ${Pgp.PGP_MESSAGE}${Pgp.DELIM}\n" +
+    s"${Pgp.DELIM}${Pgp.BEGIN} ${Pgp.PGP_MESSAGE}${Pgp.DELIM}\n\n" +
     minified +
     s"\n${Pgp.DELIM}${Pgp.END} ${Pgp.PGP_MESSAGE}${Pgp.DELIM}\n"
   }

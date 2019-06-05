@@ -10,7 +10,7 @@ CREATE TABLE sio2.one_time_token
 TABLESPACE pg_default;
 
 ALTER TABLE sio2.one_time_token
-    OWNER to postgres;
+    OWNER to sio2;
 COMMENT ON TABLE sio2.one_time_token
     IS 'модель одноразовых токенов (типа uuid)';
 COMMENT ON COLUMN sio2.one_time_token.date_end

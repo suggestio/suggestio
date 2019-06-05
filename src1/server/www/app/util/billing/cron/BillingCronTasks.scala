@@ -2,11 +2,12 @@ package util.billing.cron
 
 import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
-import models.mcron.{ICronTask, MCronTask}
+import models.mcron.MCronTask
 import models.mproj.ICommonDi
 import util.billing.Bill2Util
 import util.cron.ICronTasksProvider
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.mbill2.m.ott.MOneTimeTokens
 
 import scala.concurrent.duration._
 
@@ -21,6 +22,7 @@ class BillingCronTasks @Inject()(
                                   aoaFac                  : ActivateOfflineAdvsFactory,
                                   deaFac                  : DisableExpiredAdvsFactory,
                                   bill2Util               : Bill2Util,
+                                  mOneTimeTokens          : MOneTimeTokens,
                                   mCommonDi               : ICommonDi
                                 )
   extends ICronTasksProvider
@@ -45,7 +47,7 @@ class BillingCronTasks @Inject()(
 
 
   /** Сборщик спеки периодических задач биллинга. */
-  override def cronTasks(): TraversableOnce[ICronTask] = {
+  override def cronTasks(): TraversableOnce[MCronTask] = {
     val enabled = CRON_BILLING_CHECK_ENABLED
     info("enabled = " + enabled)
     if (enabled) {
@@ -78,7 +80,28 @@ class BillingCronTasks @Inject()(
           LOGGER.error("Failed to findReleaseStalledHoldOrders()", ex)
         }
       }
-      List(depubExpired, advOfflineAdvs, unStallHoldedOrders)
+
+      // Удаление старых одноразовых токенов, которые живут в биллинге.
+      val ottDeleteOld = MCronTask(
+        startDelay = 1 minute,
+        every = 5 minutes,
+        displayName = "deleteOldOtt"
+      ) {
+        for {
+          countDeleted <- slick.db.run {
+            mOneTimeTokens.deleteOld()
+          }
+        } yield {
+          if (countDeleted > 0)
+            LOGGER.debug(s"Deleted $countDeleted otts.")
+        }
+      }
+
+      depubExpired ::
+        advOfflineAdvs ::
+        unStallHoldedOrders ::
+        ottDeleteOld ::
+        Nil
 
     } else {
       Nil

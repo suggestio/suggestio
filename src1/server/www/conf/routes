@@ -313,7 +313,7 @@ POST /sys/debug/dynimg/derivatives/del   @controllers.SysDebug.deleteAllDynImgDe
 GET  /id                                @controllers.Ident.loginFormPage(e: io.suggest.id.login.ILoginFormPages ?= io.suggest.id.login.ILoginFormPages.Login.default)
 POST /id2/epw/login                     @controllers.Ident.epw2LoginSubmit(r: Option[String] ?= None)
 ## Рега по паролю. Оптимизация: затолкать id капчи в ссылку, прописав его в cookie path.
-POST /id2/epw/reg                       @controllers.Ident.epw2RegSubmit
+POST /id2/epw/reg                       @controllers.Ident.epw2RegSubmit()
 ## Ident v1
 GET  /id/push/:extService               @controllers.Ident.extServicePushGet(extService: io.suggest.ext.svc.MExtService)
 POST /id/push/:extService               @controllers.Ident.extServicePushPost(extService: io.suggest.ext.svc.MExtService)

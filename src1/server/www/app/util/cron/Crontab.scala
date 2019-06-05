@@ -3,7 +3,7 @@ package util.cron
 import akka.actor.{Cancellable, Scheduler}
 import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImplLazy
-import models.mcron.ICronTask
+import models.mcron.MCronTask
 import models.mproj.ICommonDi
 import play.api.inject.ApplicationLifecycle
 import util.billing.cron.BillingCronTasks
@@ -132,11 +132,11 @@ class Crontab @Inject() (
 trait ICronTasksProvider {
 
   /** Список задач, которые надо вызывать по таймеру. */
-  def cronTasks(): TraversableOnce[ICronTask]
+  def cronTasks(): TraversableOnce[MCronTask]
 }
 
 
 /** При использование stackable trait и abstract override имеет смысл подмешивать этот трейт с дефолтовой пустой реализацией. */
 trait CronTasksProviderEmpty extends ICronTasksProvider {
-  override def cronTasks(): TraversableOnce[ICronTask] = Nil
+  override def cronTasks(): TraversableOnce[MCronTask] = Nil
 }

@@ -7,6 +7,7 @@ import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
+import org.scalajs.dom.raw.URL
 import japgolly.univeq._
 
 import scala.util.Success
@@ -33,7 +34,6 @@ class CaptchaAh[M](
       val v0 = value
 
       val tstampMs = System.currentTimeMillis()
-
       val fx = Effect {
         api
           .getCaptcha()
@@ -44,7 +44,6 @@ class CaptchaAh[M](
 
       val v2 = MCaptchaS.req
         .modify( _.pending( tstampMs ) )(v0)
-
       updated(v2, fx)
 
 
@@ -57,9 +56,22 @@ class CaptchaAh[M](
         noChange
 
       } else {
-        val v2 = MCaptchaS.req.modify { req0 =>
+        var changesAccF = MCaptchaS.req.modify { req0 =>
           m.tryResp.fold( req0.fail, req0.ready )
-        }(v0)
+        }
+
+        // Если успешный ответ, то надо заменить blob-ссылку на картинку.
+        for (res <- m.tryResp) {
+          // Есть новая картинка капчи - пора очистить старую ссылку:
+          for (oldUrl <- v0.captchaImgUrlOpt)
+            URL.revokeObjectURL( oldUrl )
+          // Залить новую ссылку в состояние
+          val blobUrl2 = URL.createObjectURL( res.imgData )
+          changesAccF = changesAccF andThen MCaptchaS.captchaImgUrlOpt.set( Some(blobUrl2) )
+        }
+
+        // Обновить состояние:
+        val v2 = changesAccF(v0)
         updated(v2)
       }
 

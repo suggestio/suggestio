@@ -6,7 +6,7 @@ import javax.inject.Inject
 import io.suggest.async.AsyncUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.MLocalImgs
-import models.mcron.{ICronTask, MCronTask}
+import models.mcron.MCronTask
 import models.mproj.ICommonDi
 import util.cron.ICronTasksProvider
 
@@ -46,7 +46,7 @@ class PeriodicallyDeleteEmptyDirs @Inject() (
 
 
   /** Список задач, которые надо вызывать по таймеру. */
-  override def cronTasks(): TraversableOnce[ICronTask] = {
+  override def cronTasks(): TraversableOnce[MCronTask] = {
     if (DELETE_EMPTY_DIRS_ENABLED) {
       val ct2 = MCronTask(startDelay = DELETE_EMPTY_DIRS_START_DELAY, every = DELETE_EMPTY_DIRS_EVERY, displayName = EDD_CONF_PREFIX) {
         for (ex <- findAndDeleteEmptyDirsAsync().failed)

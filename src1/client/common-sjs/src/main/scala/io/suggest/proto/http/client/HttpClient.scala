@@ -88,14 +88,7 @@ object HttpClient extends Log {
   }
 
 
-  /**
-    * Отправка асинхронного запроса силами голого js.
-    *
-    * @param method HTTP-метод.
-    * @param url Ссылка.
-    * @param timeoutMsOpt Таймаут запроса в миллисекундах, если необходимо.
-    * @return Фьючерс с результатом.
-    */
+  /** Вернуть реальное API для отправки http-запросов. */
   val execute: HttpClientAdp = {
     Stream.cons[HttpClientAdp](
       FetchAdp,

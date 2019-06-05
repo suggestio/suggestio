@@ -1,7 +1,7 @@
 package util.captcha
 
 import java.io.ByteArrayOutputStream
-import java.time.{Instant, ZoneOffset}
+import java.time.{Instant, ZoneId, ZoneOffset}
 import java.util.Properties
 
 import akka.util.ByteString
@@ -168,9 +168,8 @@ final class CaptchaUtil @Inject() (
     val rnd = new Random()
     val l = DIGITS_CAPTCHA_LEN
     val sb = new StringBuilder(l)
-    for(_ <- 1 to l) {
+    for(_ <- 1 to l)
       sb append rnd.nextInt(10)
-    }
     sb.toString()
   }
 
@@ -239,15 +238,16 @@ final class CaptchaUtil @Inject() (
       // Инзертить новый токен в бд
       ott <- {
         val ott = MOneTimeToken(
-          tokenId     = captchaSecret.captchaUid,
+          id          = captchaSecret.captchaUid,
           dateCreated = captchaSecret.dateCreated,
           dateEnd     = captchaTtl( captchaSecret.dateCreated ) ,
         )
+        LOGGER.trace(s"$logPrefix Saving OTT: $ott\n dateEnd = ${ott.dateEnd.atZone(ZoneId.systemDefault())}")
         mOneTimeTokens.insertOne( ott )
       }
 
     } yield {
-      LOGGER.trace(s"$logPrefix Saved token")
+      LOGGER.trace(s"$logPrefix Saved token ok.")
       ott
     }
     dbAction.transactionally

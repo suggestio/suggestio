@@ -253,7 +253,7 @@ class Ident @Inject() (
     *
     * @return 200 OK + JSON, или ошибка.
     */
-  def epw2RegSubmit = csrf.Check {
+  def epw2RegSubmit() = csrf.Check {
     val ownSecretKeyFut = pgpUtil.getLocalStorKey()
     val now = Instant.now()
     lazy val logPrefix = s"epw2RegSubmit()#${now.toEpochMilli}:"
@@ -267,8 +267,8 @@ class Ident @Inject() (
           Either.cond(
             test = {
               val vldRes = Constraints.emailAddress.apply( epwReg.email )
-              val r = vldRes !=* Valid
-              if (r) LOGGER.warn(s"$logPrefix Invalid email address:\n email = ${epwReg.email}\n vld res = $vldRes")
+              val r = vldRes ==* Valid
+              if (!r) LOGGER.warn(s"$logPrefix Invalid email address:\n email = ${epwReg.email}\n vld res = $vldRes")
               r
             },
             right = epwReg,
@@ -364,7 +364,8 @@ class Ident @Inject() (
                 }
                   .transform {
                     case Failure(ex) =>
-                      LOGGER.warn(s"$logPrefix Captcha too old", ex)
+                      LOGGER.warn(s"$logPrefix Captcha already used")
+                      LOGGER.trace("captcha verify error:", ex)
                       Success( Left( ExpectationFailed("captcha.expired") ) )
                     case Success(_) =>
                       LOGGER.trace(s"$logPrefix Captcha marked as USED")
@@ -375,9 +376,8 @@ class Ident @Inject() (
 
           } yield {
             LOGGER.trace(s"$logPrefix Captcha checks done.")
-            isOk.right.map { captchaSecret =>
+            for (captchaSecret <- isOk.right) yield
               (epwReg, captchaSecret)
-            }
           }
         }
 

@@ -33,7 +33,7 @@ class MOneTimeTokens @Inject() (
   import profile.api._
 
   override protected def _withId(el: MOneTimeToken, id: UUID): MOneTimeToken =
-    MOneTimeToken.tokenId.set(id)(el)
+    MOneTimeToken.id.set(id)(el)
 
   override type Id_t    = UUID
   override type Table_t = MOneTimeTokensTable
@@ -58,20 +58,33 @@ class MOneTimeTokens @Inject() (
 
   override val query = TableQuery[MOneTimeTokensTable]
 
+  /** Найти и удалить старые неактуальные токены.
+    *
+    * @return DB-экшен, возвращающий кол-во удалённых рядов.
+    */
+  def deleteOld(): DBIOAction[Int, NoStream, Effect.Write] = {
+    val now = Instant.now()
+    query
+      .filter { ott =>
+        ott.dateEnd <= now
+      }
+      .delete
+  }
+
 }
 
 
 /** Класс описания одного токена одноразового.
   *
-  * @param tokenId рандомный id токена.
+  * @param id рандомный id токена.
   * @param dateCreated Дата создания токена.
   * @param dateEnd Дата удаления токена из БД.
   */
 case class MOneTimeToken(
-                          tokenId       : UUID,
+                          id            : UUID,
                           dateCreated   : Instant = Instant.now(),
                           dateEnd       : Instant,
                         )
 object MOneTimeToken {
-  val tokenId = GenLens[MOneTimeToken](_.tokenId)
+  val id = GenLens[MOneTimeToken](_.id)
 }

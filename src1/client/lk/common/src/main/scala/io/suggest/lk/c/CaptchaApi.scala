@@ -8,7 +8,6 @@ import io.suggest.proto.http.client.cache.{MHttpCacheInfo, MHttpCachingPolicies}
 import io.suggest.proto.http.model.{HttpReq, HttpReqData, HttpRespTypes}
 import io.suggest.routes.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import org.scalajs.dom.raw.URL
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -61,7 +60,6 @@ class CaptchaApiHttp extends ICaptchaApi {
     } yield {
       MCaptchaData(
         imgData = blob,
-        blobUrl = URL.createObjectURL( blob ),
         secret  = resp.getHeader( CaptchaConstants.CAPTCHA_SECRET_HTTP_HDR_NAME ).get
       )
     }

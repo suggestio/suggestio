@@ -1,15 +1,21 @@
 package io.suggest.id.login
 
+import diode.FastEq
 import diode.react.ReactConnector
 import io.suggest.id.login.c._
 import io.suggest.id.login.m.MLoginRootS
 import io.suggest.id.login.m.reg.MEpwRegS
 import io.suggest.lk.c.{CaptchaAh, CaptchaApiHttp, ICaptchaApi}
+import io.suggest.lk.m.CaptchaInit
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.CircuitUtil._
 import io.suggest.spa.DoNothingActionProcessor
 import japgolly.scalajs.react.extra.router.RouterCtl
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import japgolly.univeq._
+
+import scala.concurrent.{Future, Promise}
 
 /**
   * Suggest.io
@@ -79,5 +85,20 @@ class LoginFormCircuit(
   }
 
   addProcessor( DoNothingActionProcessor[MLoginRootS] )
+
+  // При переключении на таб регистрации, надо инициализировать капчу первый раз:
+  {
+    val p = Promise[None.type]()
+    val unSubscribeF = subscribe( overallRW.zoom(_.loginTab)(FastEq.AnyRefEq) ) { loginTabProxy =>
+      if (loginTabProxy.value ==* MLoginTabs.EpwReg) {
+        val cReq = epwRegRW.value.captcha.req
+        if (cReq.isEmpty && !cReq.isPending) {
+          Future( dispatch(CaptchaInit) )
+          p.success( None )
+        }
+      }
+    }
+    p.future.onComplete(_ => unSubscribeF())
+  }
 
 }

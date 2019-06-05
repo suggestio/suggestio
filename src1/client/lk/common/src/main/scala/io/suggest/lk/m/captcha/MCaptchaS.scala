@@ -21,14 +21,16 @@ object MCaptchaS {
   implicit object MCaptchaSFastEq extends FastEq[MCaptchaS] {
     override def eqv(a: MCaptchaS, b: MCaptchaS): Boolean = {
       (a.typed    ===* b.typed) &&
-      (a.req      ===* b.req)
+      (a.req      ===* b.req) &&
+      (a.captchaImgUrlOpt ===* b.captchaImgUrlOpt)
     }
   }
 
   @inline implicit def univEq: UnivEq[MCaptchaS] = UnivEq.derive
 
-  val typed           = GenLens[MCaptchaS]( _.typed )
-  val req             = GenLens[MCaptchaS]( _.req )
+  val typed               = GenLens[MCaptchaS]( _.typed )
+  val req                 = GenLens[MCaptchaS]( _.req )
+  val captchaImgUrlOpt    = GenLens[MCaptchaS]( _.captchaImgUrlOpt )
 
   def isTypedCapchaValid(typedCaptcha: String): Boolean = {
     typedCaptcha.nonEmpty && typedCaptcha.length < 10
@@ -41,12 +43,10 @@ object MCaptchaS {
   *
   * @param req Данные полученной с сервера капчи.
   * @param typed Введённый текст с картинки.
+  * @param captchaImgUrlOpt Блобо-ссылка на картинку капчи.
   */
 case class MCaptchaS(
-                      typed           : MTextFieldS         = MTextFieldS.empty,
-                      req             : Pot[MCaptchaData]   = Pot.empty,
-                    ) {
-
-  lazy val captchaImgUrlOpt = req.toOption.map(_.blobUrl)
-
-}
+                      typed               : MTextFieldS           = MTextFieldS.empty,
+                      req                 : Pot[MCaptchaData]     = Pot.empty,
+                      captchaImgUrlOpt    : Option[String]        = None,
+                    )

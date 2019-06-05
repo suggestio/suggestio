@@ -7,7 +7,7 @@ import io.suggest.async.AsyncUtil
 import io.suggest.img.MImgFmts
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.{MDynImgId, MImgs3, MLocalImg, MLocalImgs}
-import models.mcron.{ICronTask, MCronTask}
+import models.mcron.MCronTask
 import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
 import util.cron.ICronTasksProvider
@@ -51,7 +51,7 @@ class PeriodicallyDeleteNotExistingInPermanent @Inject() (
 
 
   /** Список задач, которые надо вызывать по таймеру. */
-  override def cronTasks(): TraversableOnce[ICronTask] = {
+  override def cronTasks(): TraversableOnce[MCronTask] = {
     if (DNEIP_ENABLED) {
       val task = MCronTask(startDelay = DNEIP_START_DELAY, every = DNEIP_EVERY, displayName = DNEIP_CONF_PREFIX) {
         for (ex <- dneipFindAndDeleteAsync().failed)

@@ -18,7 +18,6 @@ object MCaptchaData {
   implicit object MCaptchaDataFastEq extends FastEq[MCaptchaData] {
     override def eqv(a: MCaptchaData, b: MCaptchaData): Boolean = {
       (a.imgData ===* b.imgData) &&
-      (a.blobUrl ===* b.blobUrl) &&
       (a.secret  ===* b.secret)
     }
   }
@@ -30,11 +29,9 @@ object MCaptchaData {
 /** Контейнер данных картинки капчи.
   *
   * @param imgData Байты картинки капчи, полученной с сервера.
-  * @param blobUrl Блобо-ссылка для img-тега.
   * @param secret Секрет капчи, присланный сервером.
   */
 case class MCaptchaData(
                          imgData    : Blob,
-                         blobUrl    : String,
                          secret     : String,
                        )
