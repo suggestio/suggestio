@@ -36,20 +36,22 @@ class EpwTextFieldR(
                        mkAction     : IEpwSetValueStatic,
                        isPassword   : Boolean,
                        inputName    : String,
-                       msgCode      : String,
+                       label        : String,
+                       placeHolder  : String,
                        onBlur       : Option[DAction] = None,
                        disabled     : Boolean,
                      )
   implicit object EpwTextFieldPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.state     ===* b.state) &&
-      (a.disabled   ==* b.disabled) &&
-      (a.hasError   ==* b.hasError) &&
-      (a.mkAction  ===* b.mkAction) &&
-      (a.isPassword ==* b.isPassword) &&
-      (a.inputName ===* b.inputName) &&
-      (a.msgCode   ===* b.msgCode) &&
-      (a.onBlur    ===* b.onBlur)
+      (a.state          ===* b.state) &&
+      (a.disabled        ==* b.disabled) &&
+      (a.hasError        ==* b.hasError) &&
+      (a.mkAction       ===* b.mkAction) &&
+      (a.isPassword      ==* b.isPassword) &&
+      (a.inputName      ===* b.inputName) &&
+      (a.label          ===* b.label) &&
+      (a.placeHolder    ===* b.placeHolder) &&
+      (a.onBlur         ===* b.onBlur)
     }
   }
 
@@ -101,7 +103,8 @@ class EpwTextFieldR(
                 }
                 override val name         = p.inputName
                 override val onChange     = _onFieldChangeCbF
-                override val placeholder  = crCtx.messages( p.msgCode )
+                override val label        = crCtx.messages( p.label )
+                override val placeholder  = crCtx.messages( p.placeHolder )
                 override val required     = true
                 override val autoFocus    = !p.isPassword
                 override val fullWidth    = true

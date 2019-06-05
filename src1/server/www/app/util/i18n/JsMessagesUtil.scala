@@ -424,6 +424,10 @@ class JsMessagesUtil @Inject() (
     MC.`_to.Finish` ::
     MC.`Your.email.addr` ::
     MC.`Sign.up` ::
+    MC.`Email.example` ::
+    MC.`Phone.number.example` ::
+    MC.`Mobile.phone.number` ::
+    MC.`Phone.or.email` ::
     Nil
   }
 

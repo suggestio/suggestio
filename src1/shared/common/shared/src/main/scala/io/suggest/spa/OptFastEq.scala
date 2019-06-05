@@ -1,6 +1,7 @@
 package io.suggest.spa
 
 import diode.FastEq
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -46,6 +47,15 @@ object OptFastEq {
       override def _eqv(a: T, b: T): Boolean = {
         feq.eqv(a, b)
       }
+    }
+  }
+
+
+  /** Сравнивать референсно, либо только результат x.isEmpty() . */
+  def IsEmptyEq[T]: FastEq[Option[T]] = new FastEq[Option[T]] {
+    override def eqv(a: Option[T], b: Option[T]): Boolean = {
+      (a eq b) ||
+      (a.isEmpty ==* b.isEmpty)
     }
   }
 

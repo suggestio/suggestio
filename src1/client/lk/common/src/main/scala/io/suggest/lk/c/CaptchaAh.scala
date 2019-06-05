@@ -21,7 +21,7 @@ import scala.util.Success
 
 class CaptchaAh[M](
                     api           : ICaptchaApi,
-                    modelRW       : ModelRW[M, MCaptchaS],
+                    modelRW       : ModelRW[M, Option[MCaptchaS]],
                   )
   extends ActionHandler( modelRW )
   with Log
@@ -42,88 +42,100 @@ class CaptchaAh[M](
           }
       }
 
+      val v1 = v0.getOrElse( MCaptchaS.empty )
       val v2 = MCaptchaS.req
-        .modify( _.pending( tstampMs ) )(v0)
-      updated(v2, fx)
+        .modify( _.pending( tstampMs ) )(v1)
+      updated(Some(v2), fx)
 
 
     // Пришёл результат запроса капчи с сервера.
     case m: CaptchaInitRes =>
-      val v0 = value
-      if (!(v0.req isPendingWithStartTime m.timeStampMs)) {
-        // Ответ пришёл, но не тот, который был запущен:
-        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+      value.fold {
+        LOG.warn( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
 
-      } else {
-        var changesAccF = MCaptchaS.req.modify { req0 =>
-          m.tryResp.fold( req0.fail, req0.ready )
-        }
+      } { v0 =>
+        if (!(v0.req isPendingWithStartTime m.timeStampMs)) {
+          // Ответ пришёл, но не тот, который был запущен:
+          LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+          noChange
 
-        // Если успешный ответ, то надо заменить blob-ссылку на картинку.
-        for (res <- m.tryResp) {
-          // Есть новая картинка капчи - пора очистить старую ссылку:
-          for (oldUrl <- v0.captchaImgUrlOpt)
-            URL.revokeObjectURL( oldUrl )
-          // Залить новую ссылку в состояние
-          val blobUrl2 = URL.createObjectURL( res.imgData )
-          changesAccF = changesAccF andThen MCaptchaS.captchaImgUrlOpt.set( Some(blobUrl2) )
-        }
+        } else {
+          var changesAccF = MCaptchaS.req.modify { req0 =>
+            m.tryResp.fold( req0.fail, req0.ready )
+          }
 
-        // Обновить состояние:
-        val v2 = changesAccF(v0)
-        updated(v2)
+          // Если успешный ответ, то надо заменить blob-ссылку на картинку.
+          for (res <- m.tryResp) {
+            // Есть новая картинка капчи - пора очистить старую ссылку:
+            for (oldUrl <- v0.captchaImgUrlOpt)
+              URL.revokeObjectURL( oldUrl )
+            // Залить новую ссылку в состояние
+            val blobUrl2 = URL.createObjectURL( res.imgData )
+            changesAccF = changesAccF andThen MCaptchaS.captchaImgUrlOpt.set( Some(blobUrl2) )
+          }
+
+          // Обновить состояние:
+          val v2 = changesAccF(v0)
+          updated( Some(v2) )
+        }
       }
 
 
     // Ввод значения капчи.
     case m: CaptchaTyped =>
-      val v0 = value
-
-      if (v0.typed.value ==* m.typed) {
-        // Текст капчи не изменился.
+      value.fold {
+        LOG.warn( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = m )
         noChange
-      } else {
-        var updAccF = MTextFieldS.value.set( m.typed )
-        if (!v0.typed.isValid && MCaptchaS.isTypedCapchaValid(v0.typed.value))
-          updAccF = updAccF andThen MTextFieldS.isValid.set(true)
+      } { v0 =>
+        if (v0.typed.value ==* m.typed) {
+          // Текст капчи не изменился.
+          noChange
+        } else {
+          var updAccF = MTextFieldS.value.set( m.typed )
+          if (!v0.typed.isValid && MCaptchaS.isTypedCapchaValid(v0.typed.value))
+            updAccF = updAccF andThen MTextFieldS.isValid.set(true)
 
-        val v2 = MCaptchaS.typed
-          .modify( updAccF )(v0)
+          val v2 = MCaptchaS.typed
+            .modify( updAccF )(v0)
 
-        updated(v2)
+          updated( Some(v2) )
+        }
       }
 
 
     // Сигнал разфокусировки инпута капчи.
-    case CaptchaInputBlur =>
+    case m @ CaptchaInputBlur =>
       // Проверить, есть ли валидный текст на капче.
-      val v0 = value
+      value.fold {
+        LOG.warn( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = m)
+        noChange
+      } { v0 =>
+        var inputChangesAccF = List.empty[MTextFieldS => MTextFieldS]
 
-      var inputChangesAccF = List.empty[MTextFieldS => MTextFieldS]
-
-      // Поверхностная проверка введённого текста капчи.
-      if (
-        v0.typed.isValid &&
-        !MCaptchaS.isTypedCapchaValid(v0.typed.value)
-      ) {
-        // Капча стала невалидной.
-        inputChangesAccF ::= MTextFieldS.isValid.set( false )
-      }
-
-      // Тримминг начала и хвоста капчи.
-      if (v0.typed.value.nonEmpty) {
-        val trimmedTyped = v0.typed.value.trim
-        if ( trimmedTyped !=* v0.typed.value )
-          inputChangesAccF ::= MTextFieldS.value.set( trimmedTyped )
-      }
-
-      inputChangesAccF
-        .reduceOption(_ andThen _)
-        .fold(noChange) { updateF =>
-          val v2 = MCaptchaS.typed.modify( updateF )(v0)
-          updated(v2)
+        // Поверхностная проверка введённого текста капчи.
+        if (
+          v0.typed.isValid &&
+          !MCaptchaS.isTypedCapchaValid(v0.typed.value)
+        ) {
+          // Капча стала невалидной.
+          inputChangesAccF ::= MTextFieldS.isValid.set( false )
         }
+
+        // Тримминг начала и хвоста капчи.
+        if (v0.typed.value.nonEmpty) {
+          val trimmedTyped = v0.typed.value.trim
+          if ( trimmedTyped !=* v0.typed.value )
+            inputChangesAccF ::= MTextFieldS.value.set( trimmedTyped )
+        }
+
+        inputChangesAccF
+          .reduceOption(_ andThen _)
+          .fold(noChange) { updateF =>
+            val v2 = MCaptchaS.typed.modify( updateF )(v0)
+            updated( Some(v2) )
+          }
+      }
 
   }
 

@@ -4,7 +4,7 @@ import chandu0101.scalajs.react.components.materialui.{MuiFormControl, MuiFormCo
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
-import io.suggest.id.login.m.{EpwRegSubmit, RegEmailBlur, RegEmailEdit}
+import io.suggest.id.login.m.{EpwRegSubmit, RegEmailBlur, RegEmailEdit, RegPhoneBlur, RegPhoneEdit}
 import io.suggest.id.login.m.reg.MEpwRegS
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.v.epw.EpwTextFieldR
@@ -68,8 +68,28 @@ class EpwRegR(
                 mkAction    = RegEmailEdit,
                 isPassword  = false,
                 inputName   = IdentConst.Login.NAME_FN,
-                msgCode     = MsgCodes.`Your.email.addr`,
+                label       = MsgCodes.`Your.email.addr`,
                 onBlur      = regEmailBlurSome,
+                disabled    = props.submitReq.isPending,
+                placeHolder = MsgCodes.`Email.example`,
+              )
+            }(epwTextFieldR.apply)(implicitly, epwTextFieldR.EpwTextFieldPropsValFastEq)
+          },
+
+
+          // Поле ввода номера телефона:
+          {
+            val regPhoneBlurSome = Some( RegPhoneBlur )
+            p.wrap { props =>
+              epwTextFieldR.PropsVal(
+                state       = props.phone,
+                hasError    = false,
+                mkAction    = RegPhoneEdit,
+                isPassword  = false,
+                inputName   = IdentConst.Login.PHONE_FN,
+                label       = MsgCodes.`Mobile.phone.number`,
+                placeHolder = MsgCodes.`Phone.number.example`,
+                onBlur      = regPhoneBlurSome,
                 disabled    = props.submitReq.isPending,
               )
             }(epwTextFieldR.apply)(implicitly, epwTextFieldR.EpwTextFieldPropsValFastEq)
@@ -101,9 +121,10 @@ class EpwRegR(
             buttonR.PropsVal(
               disabled =
                 props.submitReq.isPending ||
-                !props.captcha.typed.isValid ||
+                props.captcha.exists { c =>
+                  !c.typed.isValid || c.typed.value.isEmpty
+                } ||
                 !props.email.isValid ||
-                props.captcha.typed.value.isEmpty ||
                 props.email.value.isEmpty,
               onClick  = EpwRegSubmit,
               msgCode  = MsgCodes.`Sign.up`,

@@ -93,8 +93,15 @@ case class RegEmailEdit( email: String ) extends ILoginFormAction
 case object RegEmailEdit extends IEpwSetValueStatic {
   override type T = RegEmailEdit
 }
-
 case object RegEmailBlur extends ILoginFormAction
+
+
+/** Редактирование поля номера телефона. */
+case class RegPhoneEdit( phone: String ) extends ILoginFormAction
+case object RegPhoneEdit extends IEpwSetValueStatic {
+  override type T = RegPhoneEdit
+}
+case object RegPhoneBlur extends ILoginFormAction
 
 
 /** Клик по кнопке запуска регистрации. */

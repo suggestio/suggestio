@@ -365,4 +365,9 @@ object MsgCodes {
   val `Sign.up` = "Sign.up"
   val `Password.recovery` = "Password.recovery"
 
+  val `Email.example` = "Email.example"
+  val `Phone.number.example` = "Phone.number.example"
+  val `Phone.or.email` = "Phone.or.email"
+  val `Mobile.phone.number` = "Mobile.phone.number"
+
 }

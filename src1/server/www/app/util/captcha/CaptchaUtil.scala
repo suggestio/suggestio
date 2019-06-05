@@ -240,7 +240,7 @@ final class CaptchaUtil @Inject() (
         val ott = MOneTimeToken(
           id          = captchaSecret.captchaUid,
           dateCreated = captchaSecret.dateCreated,
-          dateEnd     = captchaTtl( captchaSecret.dateCreated ) ,
+          dateEnd     = captchaTtl( captchaSecret.dateCreated ),
         )
         LOGGER.trace(s"$logPrefix Saving OTT: $ott\n dateEnd = ${ott.dateEnd.atZone(ZoneId.systemDefault())}")
         mOneTimeTokens.insertOne( ott )

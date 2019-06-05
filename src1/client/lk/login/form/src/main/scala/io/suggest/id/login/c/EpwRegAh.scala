@@ -2,7 +2,7 @@ package io.suggest.id.login.c
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.spa.DiodeUtil.Implicits._
-import io.suggest.id.login.m.{EpwRegSubmit, EpwRegSubmitResp, RegEmailBlur, RegEmailEdit}
+import io.suggest.id.login.m.{EpwRegSubmit, EpwRegSubmitResp, RegEmailBlur, RegEmailEdit, RegPhoneBlur, RegPhoneEdit}
 import io.suggest.id.login.m.reg.MEpwRegS
 import io.suggest.id.reg.MEpwRegReq
 import io.suggest.lk.m.MTextFieldS
@@ -64,6 +64,34 @@ class EpwRegAh[M](
       }
 
 
+    // Редактирования номера телефона.
+    case m: RegPhoneEdit =>
+      val v0 = value
+      if (v0.phone.value ==* m.phone) {
+        noChange
+
+      } else {
+        var fieldUpdatesAccF = MTextFieldS.value.set( m.phone )
+        // Если isValid уже false, то повторить валидацию.
+        if ( !v0.phone.isValid && Validators.isPhoneValid(m.phone) )
+          fieldUpdatesAccF = fieldUpdatesAccF andThen MTextFieldS.isValid.set( true )
+
+        val v2 = MEpwRegS.phone.modify( fieldUpdatesAccF )(v0)
+        updated(v2)
+      }
+
+    case RegPhoneBlur =>
+      val v0 = value
+      if (v0.phone.isValid && !Validators.isPhoneValid(v0.phone.value)) {
+        val v2 = MEpwRegS.phone
+          .composeLens( MTextFieldS.isValid )
+          .set( false )(v0)
+        updated(v2)
+      } else {
+        noChange
+      }
+
+
     // Клик по кнопке регистрации.
     case m @ EpwRegSubmit =>
       val v0 = value
@@ -73,22 +101,28 @@ class EpwRegAh[M](
         noChange
 
       } else {
-        val timeStampMs = System.currentTimeMillis()
-        val fx = Effect {
-          val formData = MEpwRegReq(
-            email         = v0.email.value,
-            captchaTyped  = v0.captcha.typed.value,
-            captchaSecret = v0.captcha.req.get.secret,
-          )
-          loginApi
-            .epw2RegSubmit( formData )
-            .transform { tryResp =>
-              Success( EpwRegSubmitResp( timeStampMs, tryResp ) )
-            }
+        v0.captcha.fold {
+          // TODO Если нет капчи, значит есть какое-то другое поле (смс-код, галочки, и т.д.)
+          ???
+
+        } { captcha =>
+          val timeStampMs = System.currentTimeMillis()
+          val fx = Effect {
+            val formData = MEpwRegReq(
+              email         = v0.email.value,
+              captchaTyped  = captcha.typed.value,
+              captchaSecret = captcha.req.get.secret,
+            )
+            loginApi
+              .epw2RegSubmit( formData )
+              .transform { tryResp =>
+                Success( EpwRegSubmitResp( timeStampMs, tryResp ) )
+              }
+          }
+          val v2 = MEpwRegS.submitReq
+            .modify( _.pending(timeStampMs) )(v0)
+          updated(v2, fx)
         }
-        val v2 = MEpwRegS.submitReq
-          .modify( _.pending(timeStampMs) )(v0)
-        updated(v2, fx)
       }
 
 

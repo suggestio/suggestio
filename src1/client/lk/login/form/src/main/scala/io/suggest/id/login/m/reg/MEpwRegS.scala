@@ -21,7 +21,8 @@ object MEpwRegS {
     override def eqv(a: MEpwRegS, b: MEpwRegS): Boolean = {
       (a.email        ===* b.email) &&
       (a.captcha      ===* b.captcha) &&
-      (a.submitReq    ===* b.submitReq)
+      (a.submitReq    ===* b.submitReq) &&
+      (a.phone        ===* b.phone)
     }
   }
 
@@ -30,6 +31,7 @@ object MEpwRegS {
   val email       = GenLens[MEpwRegS]( _.email )
   val captcha     = GenLens[MEpwRegS]( _.captcha )
   val submitReq   = GenLens[MEpwRegS]( _.submitReq )
+  val phone       = GenLens[MEpwRegS]( _.phone )
 
 }
 
@@ -38,11 +40,13 @@ object MEpwRegS {
   *
   * @param email Адрес электронной почты.
   * @param captcha Состояние капчи: инициализированна, введена, ошибка - всё через Pot.
+  * @param phone Поле ввода номера телефона.
   */
 case class MEpwRegS(
-                     // TODO Номер телефона и sms-код.
                      email            : MTextFieldS         = MTextFieldS.empty,
-                     captcha          : MCaptchaS           = MCaptchaS.empty,
+                     phone            : MTextFieldS         = MTextFieldS.empty,
+                     captcha          : Option[MCaptchaS]   = None,
+                     // TODO Сюда добавить ввод смс-кода опциональный, и добавить состояние для формы галочек соглашений.
                      submitReq        : Pot[String]         = Pot.empty,
                    ) {
 

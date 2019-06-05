@@ -1,6 +1,6 @@
 package io.suggest.lk.r.captcha
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiInputValue_t, MuiTextField, MuiTextFieldProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiInputValue_t, MuiLinearProgress, MuiTextField, MuiTextFieldProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
@@ -28,12 +28,12 @@ class CaptchaFormR(
                   ) {
 
   case class PropsVal(
-                       captcha      : MCaptchaS,
+                       captcha      : Option[MCaptchaS],
                        disabled     : Boolean = false,
                      ) {
 
     lazy val reloadPendingSome: Some[Boolean] =
-      Some( disabled || captcha.req.isPending )
+      Some( disabled || captcha.exists(_.req.isPending) )
 
   }
 
@@ -44,12 +44,24 @@ class CaptchaFormR(
     }
   }
 
+  case class TypedProps(
+                         typedOpt: Option[MTextFieldS],
+                         disabled: Boolean,
+                       )
+  implicit object TypedPropsFastEq extends FastEq[TypedProps] {
+    val typedOptFeq = OptFastEq.Wrapped(MTextFieldS.MEpwTextFieldSFastEq)
+    override def eqv(a: TypedProps, b: TypedProps): Boolean = {
+      typedOptFeq.eqv(a.typedOpt, b.typedOpt) &&
+      a.disabled ==* b.disabled
+    }
+  }
 
   type Props_t = PropsVal
   type Props = ModelProxy[Props_t]
 
   case class State(
-                    captchaTypedC             : ReactConnectProxy[(MTextFieldS, Boolean)],
+                    isShownC                  : ReactConnectProxy[Option[MCaptchaS]],
+                    captchaTypedC             : ReactConnectProxy[TypedProps],
                     captchaImgUrlC            : ReactConnectProxy[Option[String]],
                     reloadPendingSomeC        : ReactConnectProxy[Some[Boolean]],
                   )
@@ -80,7 +92,9 @@ class CaptchaFormR(
       val img = s.captchaImgUrlC { imgArgsProxy =>
         imgArgsProxy
           .value
-          .whenDefinedEl { captchaUrl =>
+          .fold[VdomElement] {
+            MuiLinearProgress()
+          } { captchaUrl =>
             <.img(
               ^.src := captchaUrl
             )
@@ -91,20 +105,22 @@ class CaptchaFormR(
       val input = commonReactCtxProv.consume { commonReactCtx =>
         val placeHolderText = commonReactCtx.messages( MsgCodes.`Input.text.from.picture` )
         s.captchaTypedC { captchaProxy =>
-          val (captchaTypedS, isDisabled) = captchaProxy.value
-          MuiTextField(
-            new MuiTextFieldProps {
-              override val onChange = _onTypedChangeCbF
-              override val value = js.defined {
-                captchaTypedS.value: MuiInputValue_t
+          val tp = captchaProxy.value
+          tp.typedOpt.whenDefinedEl { captchaTypedS =>
+            MuiTextField(
+              new MuiTextFieldProps {
+                override val onChange = _onTypedChangeCbF
+                override val value = js.defined {
+                  captchaTypedS.value: MuiInputValue_t
+                }
+                override val placeholder  = placeHolderText
+                override val `type`       = HtmlConstants.Input.text
+                override val error        = !captchaTypedS.isValid
+                override val onBlur       = _onInputBlurCbF
+                override val disabled     = tp.disabled
               }
-              override val placeholder  = placeHolderText
-              override val `type`       = HtmlConstants.Input.text
-              override val error        = !captchaTypedS.isValid
-              override val onBlur       = _onInputBlurCbF
-              override val disabled     = isDisabled
-            }
-          )
+            )
+          }
         }
       }
 
@@ -124,12 +140,15 @@ class CaptchaFormR(
       }
 
       // Рендер общего контейнера:
-      <.div(
-        img,
-        input,
-        reloadBtn,
-      )
-
+      s.isShownC { isShownProxy =>
+        isShownProxy.value.whenDefinedEl { _ =>
+          <.div(
+            img,
+            input,
+            reloadBtn,
+          )
+        }
+      }
     }
 
   }
@@ -139,11 +158,15 @@ class CaptchaFormR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
+        isShownC = propsProxy.connect(_.captcha)( OptFastEq.IsEmptyEq ),
         captchaTypedC         = propsProxy.connect { props =>
-          props.captcha.typed -> props.disabled
-        }( FastEqUtil.Tuple2FastEq(MTextFieldS.MEpwTextFieldSFastEq, FastEq.ValueEq) ),
+          TypedProps(
+            typedOpt = for (c <- props.captcha) yield c.typed,
+            disabled = props.disabled,
+          )
+        }( TypedPropsFastEq ),
 
-        captchaImgUrlC        = propsProxy.connect(_.captcha.captchaImgUrlOpt)( OptFastEq.Plain ),
+        captchaImgUrlC        = propsProxy.connect(_.captcha.flatMap(_.captchaImgUrlOpt))( OptFastEq.Plain ),
 
         reloadPendingSomeC    = propsProxy.connect( _.reloadPendingSome )( FastEqUtil.RefValFastEq )
       )

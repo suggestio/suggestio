@@ -1050,3 +1050,7 @@ Not.my.pc=Чужой компьютер?
 I.accept.terms.of.service=Я принимаю условия использования сервиса
 I.allow.personal.data.processing=Я разрешаю хранение и обработку моих персональных данных
 
+Email.example=name@email.ru
+Phone.number.example=+7 123 435 5433
+Phone.or.email=Телефон или email
+Mobile.phone.number=Номер мобильного

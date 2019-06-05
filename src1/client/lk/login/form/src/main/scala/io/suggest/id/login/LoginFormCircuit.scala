@@ -10,7 +10,7 @@ import io.suggest.lk.m.CaptchaInit
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.CircuitUtil._
-import io.suggest.spa.DoNothingActionProcessor
+import io.suggest.spa.{DoNothingActionProcessor, OptFastEq}
 import japgolly.scalajs.react.extra.router.RouterCtl
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
@@ -42,7 +42,7 @@ class LoginFormCircuit(
   private[login] val overallRW  = mkLensRootZoomRW(this, MLoginRootS.overall)
   private[login] val returnUrlRO = overallRW.zoom(_.returnUrl)
   private[login] val epwRegRW   = mkLensRootZoomRW(this, MLoginRootS.epwReg)
-  private[login] val captchaRW  = mkLensZoomRW( epwRegRW, MEpwRegS.captcha )
+  private[login] val captchaRW  = mkLensZoomRW( epwRegRW, MEpwRegS.captcha )( OptFastEq.Wrapped )
 
 
   val loginApi: ILoginApi = new LoginApiHttp
@@ -91,8 +91,9 @@ class LoginFormCircuit(
     val p = Promise[None.type]()
     val unSubscribeF = subscribe( overallRW.zoom(_.loginTab)(FastEq.AnyRefEq) ) { loginTabProxy =>
       if (loginTabProxy.value ==* MLoginTabs.EpwReg) {
-        val cReq = epwRegRW.value.captcha.req
-        if (cReq.isEmpty && !cReq.isPending) {
+        val isCaptchaNeedInit = epwRegRW.value.captcha
+          .fold(true) { c => c.req.isEmpty && !c.req.isPending }
+        if (isCaptchaNeedInit) {
           Future( dispatch(CaptchaInit) )
           p.success( None )
         }

@@ -16,6 +16,7 @@ object IdentConst {
   object Login {
     val NAME_FN       = "email"
     val PASSWORD_FN   = HtmlConstants.Input.password  // "password"
+    val PHONE_FN      = "phone"
   }
 
 }
