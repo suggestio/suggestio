@@ -16,7 +16,7 @@ object MuiFormGroup {
 
   val component = JsComponent[MuiFormGroupProps, Children.Varargs, Null]( Mui.FormGroup )
 
-  def apply(props: MuiFormGroupProps)(children: VdomNode*) = component(props)(children: _*)
+  def apply(props: MuiFormGroupProps = MuiFormGroupProps.empty)(children: VdomNode*) = component(props)(children: _*)
 
 }
 

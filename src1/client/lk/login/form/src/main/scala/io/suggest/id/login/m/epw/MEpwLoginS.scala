@@ -2,7 +2,7 @@ package io.suggest.id.login.m.epw
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.lk.m.MTextFieldS
+import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._

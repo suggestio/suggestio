@@ -7,7 +7,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.id.login.m._
 import io.suggest.id.login.v.LoginFormCss
-import io.suggest.lk.m.MTextFieldS
+import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.spa.DAction
@@ -39,7 +39,7 @@ class EpwTextFieldR(
                        label        : String,
                        placeHolder  : String,
                        onBlur       : Option[DAction] = None,
-                       disabled     : Boolean,
+                       disabled     : Boolean = false,
                      )
   implicit object EpwTextFieldPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {

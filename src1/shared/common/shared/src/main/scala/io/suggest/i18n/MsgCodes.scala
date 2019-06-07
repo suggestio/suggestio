@@ -369,5 +369,6 @@ object MsgCodes {
   val `Phone.number.example` = "Phone.number.example"
   val `Phone.or.email` = "Phone.or.email"
   val `Mobile.phone.number` = "Mobile.phone.number"
+  val `Code.from.sms` = "Code.from.sms"
 
 }

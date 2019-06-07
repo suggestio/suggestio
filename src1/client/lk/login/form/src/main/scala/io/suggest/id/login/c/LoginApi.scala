@@ -1,7 +1,7 @@
 package io.suggest.id.login.c
 
 import io.suggest.id.login.MEpwLoginReq
-import io.suggest.id.reg.MEpwRegReq
+import io.suggest.id.reg.{MEpwRegCaptchaReq, MEpwRegCaptchaResp}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
@@ -37,7 +37,7 @@ trait ILoginApi {
     * @param form Данные формы, введённые юзером.
     * @return Фьючерс с ответом сервер.
     */
-  def epw2RegSubmit(form: MEpwRegReq): Future[_]
+  def epw2RegSubmit(form: MEpwRegCaptchaReq): Future[MEpwRegCaptchaResp]
 
 }
 
@@ -75,8 +75,8 @@ class LoginApiHttp extends ILoginApi {
   }
 
 
-  override def epw2RegSubmit(form: MEpwRegReq): Future[_] = {
-    val respHolder = HttpClient.execute(
+  override def epw2RegSubmit(form: MEpwRegCaptchaReq): Future[MEpwRegCaptchaResp] = {
+    HttpClient.execute(
       HttpReq.routed(
         route = routes.controllers.Ident.epw2RegSubmit(),
         data = HttpReqData(
@@ -93,13 +93,9 @@ class LoginApiHttp extends ILoginApi {
         )
       )
     )
-    // И распарсить ответ:
-    for {
-      resp <- respHolder.respFut
-      if (resp.status / 100) ==* 2
-    } yield {
-      None
-    }
+      .respFut
+      // И распарсить ответ:
+      .unJson[MEpwRegCaptchaResp]
   }
 
 }

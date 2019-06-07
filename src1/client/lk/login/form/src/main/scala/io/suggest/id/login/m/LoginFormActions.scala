@@ -2,6 +2,8 @@ package io.suggest.id.login.m
 
 import io.suggest.ext.svc.MExtService
 import io.suggest.id.login.MLoginTab
+import io.suggest.id.login.m.reg.MRegStep
+import io.suggest.id.reg.MEpwRegCaptchaResp
 import io.suggest.primo.IApply1
 import io.suggest.spa.DAction
 import japgolly.univeq.UnivEq
@@ -104,7 +106,9 @@ case object RegPhoneEdit extends IEpwSetValueStatic {
 case object RegPhoneBlur extends ILoginFormAction
 
 
-/** Клик по кнопке запуска регистрации. */
-case object EpwRegSubmit extends ILoginFormAction
 /** Ответ от результата сабмита формы регистрации по паролю. */
-case class EpwRegSubmitResp(tstamp: Long, resp: Try[_]) extends ILoginFormAction
+case class EpwRegCaptchaSubmitResp(tstamp: Long, resp: Try[MEpwRegCaptchaResp]) extends ILoginFormAction
+
+
+/** Нажимание кнопки "Далее" в форме регистрации. */
+case object RegNextClick extends ILoginFormAction

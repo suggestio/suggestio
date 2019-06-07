@@ -5,6 +5,7 @@ import io.suggest.lk.r._
 import io.suggest.lk.r.captcha.CaptchaFormR
 import io.suggest.lk.r.color._
 import io.suggest.lk.r.img.{CropBtnR, CropPopupR, ImgEditBtnR, ImgRenderUtilJs}
+import io.suggest.lk.r.sms.SmsCodeFormR
 
 /**
   * Suggest.io
@@ -45,5 +46,7 @@ object LkCommonModule {
 
 
   lazy val captchaFormR = wire[CaptchaFormR]
+
+  lazy val smsCodeFormR = wire[SmsCodeFormR]
 
 }

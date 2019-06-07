@@ -2,7 +2,7 @@ package io.suggest.lk.m.captcha
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.lk.m.MTextFieldS
+import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
@@ -21,7 +21,7 @@ object MCaptchaS {
   implicit object MCaptchaSFastEq extends FastEq[MCaptchaS] {
     override def eqv(a: MCaptchaS, b: MCaptchaS): Boolean = {
       (a.typed    ===* b.typed) &&
-      (a.req      ===* b.req) &&
+      (a.contentReq      ===* b.contentReq) &&
       (a.captchaImgUrlOpt ===* b.captchaImgUrlOpt)
     }
   }
@@ -29,7 +29,7 @@ object MCaptchaS {
   @inline implicit def univEq: UnivEq[MCaptchaS] = UnivEq.derive
 
   val typed               = GenLens[MCaptchaS]( _.typed )
-  val req                 = GenLens[MCaptchaS]( _.req )
+  val req                 = GenLens[MCaptchaS]( _.contentReq )
   val captchaImgUrlOpt    = GenLens[MCaptchaS]( _.captchaImgUrlOpt )
 
   def isTypedCapchaValid(typedCaptcha: String): Boolean = {
@@ -41,12 +41,12 @@ object MCaptchaS {
 
 /** Контейнер данных js-капчи.
   *
-  * @param req Данные полученной с сервера капчи.
+  * @param contentReq Данные полученной с сервера капчи.
   * @param typed Введённый текст с картинки.
   * @param captchaImgUrlOpt Блобо-ссылка на картинку капчи.
   */
 case class MCaptchaS(
                       typed               : MTextFieldS           = MTextFieldS.empty,
-                      req                 : Pot[MCaptchaData]     = Pot.empty,
+                      contentReq          : Pot[MCaptchaData]     = Pot.empty,
                       captchaImgUrlOpt    : Option[String]        = None,
                     )

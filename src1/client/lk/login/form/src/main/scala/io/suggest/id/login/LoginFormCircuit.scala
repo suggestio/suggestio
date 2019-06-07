@@ -1,12 +1,17 @@
 package io.suggest.id.login
 
-import diode.FastEq
 import diode.react.ReactConnector
 import io.suggest.id.login.c._
-import io.suggest.id.login.m.MLoginRootS
-import io.suggest.id.login.m.reg.MEpwRegS
+import io.suggest.id.login.c.reg.{Reg0CredsAh, Reg3CheckBoxesAh, RegAh}
+import io.suggest.id.login.m.epw.MEpwLoginS
+import io.suggest.id.login.m.ext.MExtLoginFormS
+import io.suggest.id.login.m.{MLoginFormOverallS, MLoginRootS}
+import io.suggest.id.login.m.reg.MRegS
+import io.suggest.id.login.m.reg.step0.MReg0Creds
+import io.suggest.id.login.m.reg.step1.MReg1Captcha
+import io.suggest.id.login.m.reg.step3.MReg3CheckBoxes
 import io.suggest.lk.c.{CaptchaAh, CaptchaApiHttp, ICaptchaApi}
-import io.suggest.lk.m.CaptchaInit
+import io.suggest.lk.m.captcha.MCaptchaS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.CircuitUtil._
@@ -15,7 +20,6 @@ import japgolly.scalajs.react.extra.router.RouterCtl
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 
-import scala.concurrent.{Future, Promise}
 
 /**
   * Suggest.io
@@ -37,12 +41,17 @@ class LoginFormCircuit(
   }
 
 
-  private[login] val extRW      = mkLensRootZoomRW(this, MLoginRootS.ext)
-  private[login] val epwRW      = mkLensRootZoomRW(this, MLoginRootS.epw)
-  private[login] val overallRW  = mkLensRootZoomRW(this, MLoginRootS.overall)
-  private[login] val returnUrlRO = overallRW.zoom(_.returnUrl)
-  private[login] val epwRegRW   = mkLensRootZoomRW(this, MLoginRootS.epwReg)
-  private[login] val captchaRW  = mkLensZoomRW( epwRegRW, MEpwRegS.captcha )( OptFastEq.Wrapped )
+  private[login] val extRW          = mkLensRootZoomRW(this, MLoginRootS.ext)( MExtLoginFormS.MExtLoginFormSFastEq )
+  private[login] val epwRW          = mkLensRootZoomRW(this, MLoginRootS.epw)( MEpwLoginS.MEpwLoginSFastEq )
+  private[login] val overallRW      = mkLensRootZoomRW(this, MLoginRootS.overall)( MLoginFormOverallS.MLoginFormOverallSFastEq )
+  private[login] val returnUrlRO    = overallRW.zoom(_.returnUrl)
+  private[login] val regRW          = mkLensRootZoomRW(this, MLoginRootS.reg)( MRegS.MEpwRegSFastEq )
+  private[login] val reg0CredsRW    = mkLensZoomRW( regRW, MRegS.s0Creds )( MReg0Creds.MReg0CredsFastEq )
+
+  private[login] val reg1CaptchaRW  = mkLensZoomRW( regRW, MRegS.s1Captcha )( MReg1Captcha.MReg1CaptchaFastEq )
+  private[login] val captchaOptRW   = mkLensZoomRW( reg1CaptchaRW, MReg1Captcha.captcha )( OptFastEq.Wrapped(MCaptchaS.MCaptchaSFastEq) )
+
+  private[login] val reg3CheckBoxesRW = mkLensZoomRW(regRW, MRegS.s3CheckBoxes)( MReg3CheckBoxes.MReg3CheckBoxesFastEq )
 
 
   val loginApi: ILoginApi = new LoginApiHttp
@@ -64,21 +73,30 @@ class LoginFormCircuit(
     returnUrlRO = returnUrlRO,
   )
 
-  private val epwRegAh = new EpwRegAh(
-    modelRW     = epwRegRW,
-    loginApi    = loginApi,
+  private val captchaAh = new CaptchaAh(
+    modelRW     = captchaOptRW,
+    api         = captchaApi,
   )
 
-  private val captchaAh = new CaptchaAh(
-    modelRW     = captchaRW,
-    api         = captchaApi,
+
+  private val regAh = new RegAh(
+    modelRW  = regRW,
+    loginApi = loginApi,
+  )
+
+  private val reg0CredsAh = new Reg0CredsAh(
+    modelRW = reg0CredsRW,
+  )
+
+  private val reg3CheckBoxesAh = new Reg3CheckBoxesAh(
+    modelRW = reg3CheckBoxesRW
   )
 
   override protected val actionHandler: HandlerFunction = {
     composeHandlers(
       formAh,
       epwAh,
-      epwRegAh,
+      regAh, reg0CredsAh, reg3CheckBoxesAh,
       extAh,
       captchaAh,
     )
@@ -87,12 +105,13 @@ class LoginFormCircuit(
   addProcessor( DoNothingActionProcessor[MLoginRootS] )
 
   // При переключении на таб регистрации, надо инициализировать капчу первый раз:
+  /*
   {
     val p = Promise[None.type]()
     val unSubscribeF = subscribe( overallRW.zoom(_.loginTab)(FastEq.AnyRefEq) ) { loginTabProxy =>
       if (loginTabProxy.value ==* MLoginTabs.EpwReg) {
-        val isCaptchaNeedInit = epwRegRW.value.captcha
-          .fold(true) { c => c.req.isEmpty && !c.req.isPending }
+        val isCaptchaNeedInit = reg1Captcha.value.captcha
+          .fold(true) { c => c.contentReq.isEmpty && !c.contentReq.isPending }
         if (isCaptchaNeedInit) {
           Future( dispatch(CaptchaInit) )
           p.success( None )
@@ -101,5 +120,6 @@ class LoginFormCircuit(
     }
     p.future.onComplete(_ => unSubscribeF())
   }
+  */
 
 }

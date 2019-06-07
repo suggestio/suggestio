@@ -142,3 +142,11 @@ case object CaptchaHide extends ILkCommonAction
 case class CaptchaTyped(typed: String) extends ILkCommonAction
 /** Потеря фокуса в поле ввода капчи. */
 case object CaptchaInputBlur extends ILkCommonAction
+
+
+/** Редактирование поля смс-кода. */
+case class SmsCodeSet( smsCode: String ) extends ILkCommonAction
+/** Кнопка "переслать смс-код". */
+case object SmsCodeReSend extends ILkCommonAction
+/** Расфокусировка поля смс-кода. */
+case object SmsCodeBlur extends ILkCommonAction

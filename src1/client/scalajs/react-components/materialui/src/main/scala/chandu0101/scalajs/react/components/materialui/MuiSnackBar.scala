@@ -65,6 +65,9 @@ trait MuiTransitionDuration extends js.Object {
   val enter: js.UndefOr[Double] = js.undefined
   val exit: js.UndefOr[Double] = js.undefined
 }
+object MuiTransitionDuration {
+  def auto = "auto"
+}
 
 
 /** JSON css classes for [[MuiSnackBarProps.classes]]. */

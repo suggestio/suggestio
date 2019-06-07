@@ -3,7 +3,7 @@ package io.suggest.id.login
 import com.softwaremill.macwire._
 import io.suggest.id.login.v.epw.{EpwFormR, EpwTextFieldR}
 import io.suggest.id.login.v.ext.ExtFormR
-import io.suggest.id.login.v.reg.{EpwRegR, RegFinishR}
+import io.suggest.id.login.v.reg.{Reg0CredsR, Reg1CaptchaR, Reg2SmsCodeR, RegFinishR, RegR}
 import io.suggest.id.login.v.stuff.{ButtonR, CheckBoxR, LoginProgressR}
 import io.suggest.id.login.v.{LoginFormCss, LoginFormR, LoginFormSpaRouter}
 import japgolly.scalajs.react.React
@@ -25,7 +25,10 @@ class LoginFormModule {
 
   lazy val epwFormR = wire[EpwFormR]
   lazy val epwTextFieldR = wire[EpwTextFieldR]
-  lazy val epwRegR = wire[EpwRegR]
+  lazy val regR = wire[RegR]
+  lazy val reg0CredsR = wire[Reg0CredsR]
+  lazy val reg1CaptchaR = wire[Reg1CaptchaR]
+  lazy val reg2SmsCodeR = wire[Reg2SmsCodeR]
 
   lazy val extFormR = wire[ExtFormR]
 

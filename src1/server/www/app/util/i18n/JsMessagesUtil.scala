@@ -428,6 +428,8 @@ class JsMessagesUtil @Inject() (
     MC.`Phone.number.example` ::
     MC.`Mobile.phone.number` ::
     MC.`Phone.or.email` ::
+    MC.`Code.from.sms` ::
+    MC.`Next` ::
     Nil
   }
 

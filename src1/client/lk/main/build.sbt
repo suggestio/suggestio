@@ -41,3 +41,5 @@ scalaJSUseMainModuleInitializer := true
 
 useYarn := true
 
+// ECMA2015: Надо разобраться с window.L и плагинами, зависящими от global.L
+//scalaJSLinkerConfig ~= { _.withESFeatures(_.withUseECMAScript2015(true)) }

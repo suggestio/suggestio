@@ -47,10 +47,8 @@ object MuiButtonSizes {
 
 object MuiButtonVariants {
   val text = "text"
-  val flat = "flat"
   val outlined = "outlined"
   val contained = "contained"
-  val raised = "raised"
-  val fab = "fab"
+  @deprecated("Use Fab variant=extended", "mui-4.x")
   val extendedFab = "extendedFab"
 }

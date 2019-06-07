@@ -1046,3 +1046,5 @@ Email.example=name@email.com
 Phone.number.example=+123 456 890 1234
 Phone.or.email=Phone or email
 Mobile.phone.number=Mobile phone number
+Code.from.sms=Code from SMS
+

@@ -13,10 +13,10 @@ import io.suggest.bill.MPrice
 trait ISmsSendResult {
   /** Выполнен ли запрос успешно? */
   def isOk           : Boolean
-  /** Текст ошибки. */
-  def statusText     : Option[String]
   /** Данные по отправленным смс. */
   def smsInfo        : Map[String, ISmsSendStatus]
+  /** Текст ошибки. */
+  def statusText     : Option[String]
   /** Остаточный баланс, если возвращается сервисом. */
   def restBalance    : Option[MPrice]
   /** id реквеста отправки смс, если есть. */
@@ -33,3 +33,20 @@ trait ISmsSendStatus {
   /** id отправленной смс. */
   def smsId         : Option[String]
 }
+
+
+case class MSmsSendStatus(
+                           override val isOk       : Boolean,
+                           override val statusText : Option[String]     = None,
+                           override val smsId      : Option[String]     = None,
+                         )
+  extends ISmsSendStatus
+
+case class MSmsSendResult(
+                           override val isOk        : Boolean,
+                           override val smsInfo     : Map[String, ISmsSendStatus],
+                           override val statusText  : Option[String]    = None,
+                           override val restBalance : Option[MPrice]    = None,
+                           override val requestId   : Option[String]    = None,
+                         )
+  extends ISmsSendResult

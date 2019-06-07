@@ -1054,3 +1054,5 @@ Email.example=name@email.ru
 Phone.number.example=+7 123 435 5433
 Phone.or.email=Телефон или email
 Mobile.phone.number=Номер мобильного
+Code.from.sms=Код из смс-сообщений
+

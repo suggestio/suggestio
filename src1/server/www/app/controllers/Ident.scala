@@ -11,7 +11,7 @@ import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.login.{ILoginFormPages, MEpwLoginReq}
-import io.suggest.id.reg.MEpwRegReq
+import io.suggest.id.reg.MEpwRegCaptchaReq
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
@@ -260,7 +260,7 @@ class Ident @Inject() (
 
     isAnon().async {
       parse
-        .json[MEpwRegReq]
+        .json[MEpwRegCaptchaReq]
         // Начать с синхронной валидации данных:
         .validate { epwReg =>
           // Проверить валидность email:

@@ -83,15 +83,15 @@ object Mui {
   @js.native @JSImport("@material-ui/core/Slider", JSImport.Default) object Slider       extends js.Any
   @js.native @JSImport("@material-ui/core/Subheader", JSImport.Default) object Subheader extends js.Any
   @js.native @JSImport("@material-ui/core/SvgIcon", JSImport.Default) object SvgIcon     extends js.Any
-  @js.native @JSImport("@material-ui/core/Stepper/Step", JSImport.Default) object Step   extends js.Any
-  @js.native @JSImport("@material-ui/core/Stepper/StepButton", JSImport.Default) object StepButton
-      extends js.Any
-  @js.native @JSImport("@material-ui/core/Stepper/StepContent", JSImport.Default) object StepContent
-      extends js.Any
-  @js.native @JSImport("@material-ui/core/Stepper/StepLabel", JSImport.Default) object StepLabel
-      extends js.Any
-  @js.native @JSImport("@material-ui/core/Stepper/Stepper", JSImport.Default) object Stepper
-      extends js.Any
+
+  @js.native @JSImport("@material-ui/core/Step", JSImport.Default) object Step extends js.Any
+  @js.native @JSImport("@material-ui/core/StepIcon", JSImport.Default) object StepIcon extends js.Any
+  @js.native @JSImport("@material-ui/core/StepConnector", JSImport.Default) object StepConnector extends js.Any
+  @js.native @JSImport("@material-ui/core/StepButton", JSImport.Default) object StepButton extends js.Any
+  @js.native @JSImport("@material-ui/core/StepContent", JSImport.Default) object StepContent extends js.Any
+  @js.native @JSImport("@material-ui/core/StepLabel", JSImport.Default) object StepLabel extends js.Any
+  @js.native @JSImport("@material-ui/core/Stepper", JSImport.Default) object Stepper extends js.Any
+
   @js.native @JSImport("@material-ui/core/Snackbar", JSImport.Default) object Snackbar extends js.Any
   @js.native @JSImport("@material-ui/core/Switch", JSImport.Default) object Switch extends js.Any
 

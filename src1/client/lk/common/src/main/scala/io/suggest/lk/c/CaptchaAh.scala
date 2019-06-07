@@ -3,6 +3,7 @@ package io.suggest.lk.c
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.lk.m._
 import io.suggest.lk.m.captcha.MCaptchaS
+import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -55,7 +56,7 @@ class CaptchaAh[M](
         noChange
 
       } { v0 =>
-        if (!(v0.req isPendingWithStartTime m.timeStampMs)) {
+        if (!(v0.contentReq isPendingWithStartTime m.timeStampMs)) {
           // Ответ пришёл, но не тот, который был запущен:
           LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
           noChange

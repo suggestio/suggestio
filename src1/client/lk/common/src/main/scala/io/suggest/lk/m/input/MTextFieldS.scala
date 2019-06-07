@@ -1,4 +1,4 @@
-package io.suggest.lk.m
+package io.suggest.lk.m.input
 
 import diode.FastEq
 import io.suggest.ueq.UnivEqUtil._
@@ -38,4 +38,10 @@ object MTextFieldS {
 case class MTextFieldS(
                         value        : String         = "",
                         isValid      : Boolean        = true,
-                      )
+                      ) {
+
+  def isValidNonEmpty: Boolean =
+    isValid && value.nonEmpty
+
+}
+

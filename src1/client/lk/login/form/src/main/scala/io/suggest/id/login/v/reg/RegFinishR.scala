@@ -3,11 +3,12 @@ package io.suggest.id.login.v.reg
 import chandu0101.scalajs.react.components.materialui.MuiPaper
 import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
-import io.suggest.id.login.m.{RegAccept, RegPdnSetAccepted, RegTosSetAccepted}
-import io.suggest.id.login.m.reg.MRegFinishS
-import io.suggest.id.login.v.stuff.{ButtonR, CheckBoxR}
+import io.suggest.id.login.m.reg.step3.MReg3CheckBoxes
+import io.suggest.id.login.m.{RegPdnSetAccepted, RegTosSetAccepted}
+import io.suggest.id.login.v.stuff.CheckBoxR
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.react.ReactCommonUtil.Implicits._
 
 /**
   * Suggest.io
@@ -17,49 +18,41 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Юзер прошёл гос.услуги, и в первый раз вернулся в suggest.io.
   */
 class RegFinishR(
-                  buttonR         : ButtonR,
                   checkBoxR       : CheckBoxR,
                 ) {
 
-  type Props_t = MRegFinishS
+  type Props_t = MReg3CheckBoxes
   type Props = ModelProxy[Props_t]
 
 
   class Backend( $: BackendScope[Props, Unit] ) {
 
     def render(p: Props): VdomElement = {
-      MuiPaper()(
+      p.value.checkBoxes.whenDefinedEl { checkBoxes =>
+        MuiPaper()(
 
-        // TODO Текст соглашения в виде jd-рендера.
+          // TODO Текст соглашения в виде jd-рендера.
 
-        // Галочка согласия с офертой suggest.io:
-        p.wrap { props =>
-          checkBoxR.PropsVal(
-            checked   = props.tos.isChecked,
-            msgCode   = MsgCodes.`I.accept.terms.of.service`,
-            onChange  = RegTosSetAccepted,
-          )
-        }(checkBoxR.apply)(implicitly, checkBoxR.CheckBoxRFastEq),
+          // Галочка согласия с офертой suggest.io:
+          p.wrap { _ =>
+            checkBoxR.PropsVal(
+              checked   = checkBoxes.tos.isChecked,
+              msgCode   = MsgCodes.`I.accept.terms.of.service`,
+              onChange  = RegTosSetAccepted,
+            )
+          }(checkBoxR.apply)(implicitly, checkBoxR.CheckBoxRFastEq),
 
-        // Галочка разрешения на обработку ПДн:
-        p.wrap { props =>
-          checkBoxR.PropsVal(
-            checked   = props.pdn.isChecked,
-            msgCode   = MsgCodes.`I.allow.personal.data.processing`,
-            onChange  = RegPdnSetAccepted,
-          )
-        }(checkBoxR.apply)(implicitly, checkBoxR.CheckBoxRFastEq),
+          // Галочка разрешения на обработку ПДн:
+          p.wrap { _ =>
+            checkBoxR.PropsVal(
+              checked   = checkBoxes.pdn.isChecked,
+              msgCode   = MsgCodes.`I.allow.personal.data.processing`,
+              onChange  = RegPdnSetAccepted,
+            )
+          }(checkBoxR.apply)(implicitly, checkBoxR.CheckBoxRFastEq),
 
-        // И кнопка завершения регистрации:
-        p.wrap { props =>
-          buttonR.PropsVal(
-            disabled = !(props.pdn.isChecked && props.tos.isChecked),
-            onClick  = RegAccept,
-            msgCode  = MsgCodes.`_to.Finish`,
-          )
-        }( buttonR.apply )(implicitly, buttonR.ButtonRPropsValFastEq),
-
-      )
+        )
+      }
     }
 
   }
