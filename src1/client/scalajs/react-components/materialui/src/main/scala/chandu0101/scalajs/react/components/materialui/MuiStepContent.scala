@@ -16,7 +16,6 @@ object MuiStepContent {
 
   val component = JsComponent[MuiStepContentProps, Children.Varargs, Null]( Mui.StepContent )
 
-  /** @param children In most cases will simply be a string containing a title for the label. */
   def apply(props: MuiStepContentProps = MuiStepContentProps.empty)(children: VdomNode*) = component(props)(children: _*)
 
 }

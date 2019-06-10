@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.reg
 
-import chandu0101.scalajs.react.components.materialui.{MuiFormGroup, MuiFormGroupProps, MuiStepContent}
+import chandu0101.scalajs.react.components.materialui.{MuiFormGroup, MuiFormGroupProps}
 import diode.react.ModelProxy
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.v.LoginFormCss
@@ -25,34 +25,32 @@ class Reg1CaptchaR(
 
   class Backend($: BackendScope[Props, Unit]) {
     def render(p: Props): VdomElement = {
-      MuiStepContent()(
-        MuiFormGroup(
-          new MuiFormGroupProps {
-            override val row = true
-          }
-        )(
+      MuiFormGroup(
+        new MuiFormGroupProps {
+          override val row = true
+        }
+      )(
 
-          // Капча - пока простая и уже рабочая собственная капча, для ускорения разработки.
-          // Правда, в эпоху нейросетей она не защищает ни от чего кроме наиболее примитивных угроз.
-          {
-            val captcha = p.wrap { props =>
-              for (captcha <- props.captcha) yield {
-                CaptchaFormR.PropsVal(
-                  captcha     = captcha,
-                  disabled    = props.submitReq.isPending,
-                )
-              }
-            }( captchaFormR.apply )(implicitly, OptFastEq.Wrapped(CaptchaFormR.CaptchaFormRPropsValFastEq))
-
-            loginFormCssCtx.consume { loginFormCss =>
-              <.div(
-                loginFormCss.formControl,
-                captcha
+        // Капча - пока простая и уже рабочая собственная капча, для ускорения разработки.
+        // Правда, в эпоху нейросетей она не защищает ни от чего кроме наиболее примитивных угроз.
+        {
+          val captcha = p.wrap { props =>
+            for (captcha <- props.captcha) yield {
+              CaptchaFormR.PropsVal(
+                captcha     = captcha,
+                disabled    = props.submitReq.isPending,
               )
             }
-          },
+          }( captchaFormR.apply )(implicitly, OptFastEq.Wrapped(CaptchaFormR.CaptchaFormRPropsValFastEq))
 
-        )
+          loginFormCssCtx.consume { loginFormCss =>
+            <.div(
+              loginFormCss.formControl,
+              captcha
+            )
+          }
+        },
+
       )
     }
   }

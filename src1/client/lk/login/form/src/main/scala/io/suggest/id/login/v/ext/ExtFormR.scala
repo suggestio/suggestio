@@ -1,7 +1,9 @@
 package io.suggest.id.login.v.ext
 
 import chandu0101.scalajs.react.components.materialui.{MuiButtonBase, MuiButtonBaseProps, MuiPaper}
+import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.css.Css
 import io.suggest.ext.svc.{MExtService, MExtServices}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
@@ -9,7 +11,6 @@ import io.suggest.id.login.m.ExtLoginVia
 import io.suggest.id.login.m.ext.MExtLoginFormS
 import io.suggest.id.login.v.stuff.LoginProgressR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -85,7 +86,9 @@ class ExtFormR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        loginUrlReqPendingSomeC = propsProxy.connect( _.loginUrlReqPendingSome )( FastEqUtil.RefValFastEq ),
+        loginUrlReqPendingSomeC = propsProxy.connect { props =>
+          OptionUtil.SomeBool( props.loginUrlReq.isPending )
+        }( FastEq.AnyRefEq ),
       )
     }
     .renderBackend[Backend]

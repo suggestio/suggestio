@@ -19,7 +19,7 @@ object MLoginTabs extends IntEnum[MLoginTab] {
 
   /** Таб со страницей ввода имени-пароля. */
   case object EpwLogin extends MLoginTab(1) {
-    override def msgCode = MsgCodes.`Login.using.password`
+    override def msgCode = MsgCodes.`Login.page.title`
   }
 
   /** Таб с регистрацией по email-паролю. */

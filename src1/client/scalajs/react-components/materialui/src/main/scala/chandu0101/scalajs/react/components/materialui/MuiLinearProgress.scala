@@ -34,12 +34,6 @@ trait MuiLinearProgressClasses extends js.Object {
 }
 
 
-@js.native
-trait MuiLinearProgressM extends js.Object {
-  def barUpdate(id: String, step: Integer, barElement: String, stepValues: Array[Array[Int]], timeToNextStep: Long): Unit = js.native
-}
-
-
 /** Допустимые значения для [[MuiLinearProgressProps]].variant. */
 object MuiProgressVariants {
   val determinate = "determinate"

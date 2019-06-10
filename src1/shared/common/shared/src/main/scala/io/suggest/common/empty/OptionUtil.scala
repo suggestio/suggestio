@@ -121,4 +121,18 @@ object OptionUtil {
 
   }
 
+
+  /** Жесткие инстансы Some(true) и Some(false) нужны на клиенте, для diode Circuit.connect(), которая требует AnyRef. */
+  object SomeBool {
+
+    lazy val someTrue  = Some(true)
+    lazy val someFalse = Some(false)
+
+    def apply(bool: Boolean): Some[Boolean] = {
+      if (bool) someTrue
+      else someFalse
+    }
+
+  }
+
 }

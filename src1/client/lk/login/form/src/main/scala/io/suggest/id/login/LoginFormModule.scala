@@ -43,7 +43,7 @@ class LoginFormModule {
 
   lazy val loginFormSpaRouter = wire[LoginFormSpaRouter]
 
-  lazy val loginFormRCtx: React.Context[LoginFormCss] =
+  lazy val loginFormCssCtx: React.Context[LoginFormCss] =
     React.createContext( loginFormSpaRouter.circuit.overallRW.value.formCss )
 
 }

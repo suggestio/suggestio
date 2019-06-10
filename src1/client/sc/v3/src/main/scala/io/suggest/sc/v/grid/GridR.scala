@@ -3,6 +3,7 @@ package io.suggest.sc.v.grid
 import chandu0101.scalajs.react.components.materialui.{MuiCircularProgress, MuiCircularProgressClasses, MuiCircularProgressProps, MuiColorTypes}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.css.CssR
 import io.suggest.grid.{GridConst, GridScrollUtil}
@@ -11,7 +12,6 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.m.grid.{GridScroll, MGridCoreS, MGridS}
 import io.suggest.sc.styl.ScCssStatic
-import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -134,8 +134,8 @@ class GridR(
         gridCoreC = propsProxy.connect(_.core)( MGridCoreS.MGridCoreSFastEq ),
 
         loaderPotC = propsProxy.connect { props =>
-          props.core.adsIsPendingSome
-        }( FastEqUtil.RefValFastEq ),
+          OptionUtil.SomeBool( props.core.ads.isPending )
+        }( FastEq.AnyRefEq ),
 
       )
     }

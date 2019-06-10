@@ -37,6 +37,15 @@ object MRegS {
   val s2SmsCode       = GenLens[MRegS](_.s2SmsCode)
   val s3CheckBoxes    = GenLens[MRegS](_.s3CheckBoxes)
 
+  def stepLens(step: MRegStep) /*: monocle.Lens[MRegS, _ <: ICanSubmit]*/ = {
+    step match {
+      case MRegSteps.S0Creds        => s0Creds
+      case MRegSteps.S1Captcha      => s1Captcha
+      case MRegSteps.S2SmsCode      => s2SmsCode
+      case MRegSteps.S3CheckBoxes   => s3CheckBoxes
+    }
+  }
+
 }
 
 
@@ -54,26 +63,7 @@ case class MRegS(
                   s1Captcha      : MReg1Captcha        = MReg1Captcha.empty,
                   s2SmsCode      : MReg2SmsCode        = MReg2SmsCode.empty,
                   s3CheckBoxes   : MReg3CheckBoxes     = MReg3CheckBoxes.empty,
-                )
-//extends ICanSubmit
-{
-  /*
-    lazy val disableStep0: Boolean = {
-      s1Captcha.exists(_.submitReq.isPending) ||
-      s2SmsCode.nonEmpty ||
-      s3CheckBoxes.nonEmpty
-    }
-
-
-    /** Активна ли кнопка сабмита. */
-    override lazy val canSubmit: Boolean = {
-      s0Creds.canSubmit &&
-      (s1Captcha :: s2SmsCode :: s3CheckBoxes :: Nil)
-        .iterator
-        .forall( _.fold(true)(_.canSubmit) )
-    }
-
-  */
+                ) {
 
   def hasSubmitReqPending: Boolean = {
     s1Captcha.submitReq.isPending ||
@@ -81,7 +71,9 @@ case class MRegS(
     s3CheckBoxes.submitReq.isPending
   }
 
-  lazy val hasSubmitReqPendingSome = Some( hasSubmitReqPending )
+
+  def stepState: ICanSubmit =
+    MRegS.stepLens(step).get(this)
 
 }
 

@@ -3,6 +3,7 @@ package io.suggest.sc.v.search
 import diode.FastEq
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.maps.m._
 import io.suggest.maps.nodes.MGeoNodesResp
@@ -18,7 +19,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
 import react.leaflet.control.LocateControlR
 import react.leaflet.lmap.LMapR
-import io.suggest.spa.{FastEqUtil, OptFastEq}
+import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.sc.m.MScReactCtx
@@ -179,7 +180,9 @@ class SearchMapR(
               props.mapInit.state.locationFound.isEmpty
             }
         },
-        isInitSomeC = mapInitProxy.connect(_.mapInit.someReady)( FastEqUtil.RefValFastEq )
+        isInitSomeC = mapInitProxy.connect { props =>
+          OptionUtil.SomeBool( props.mapInit.ready )
+        }( FastEq.AnyRefEq )
       )
     }
     .renderBackend[Backend]

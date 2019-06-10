@@ -34,8 +34,4 @@ object MExtLoginFormS {
   */
 case class MExtLoginFormS(
                            loginUrlReq          : Pot[String]           = Pot.empty,
-                         ) {
-
-  lazy val loginUrlReqPendingSome = Some( loginUrlReq.isPending )
-
-}
+                         )

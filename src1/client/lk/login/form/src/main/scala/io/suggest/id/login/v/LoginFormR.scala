@@ -3,6 +3,7 @@ package io.suggest.id.login.v
 import chandu0101.scalajs.react.components.materialui.{MuiDialog, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiPaper, MuiPaperProps, MuiTab, MuiTabProps, MuiTabs, MuiTabsProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.{MLoginTab, MLoginTabs}
@@ -14,7 +15,6 @@ import io.suggest.id.login.v.epw.EpwFormR
 import io.suggest.id.login.v.ext.ExtFormR
 import io.suggest.id.login.v.reg.RegR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactEventFromHtml, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -102,37 +102,31 @@ class LoginFormR(
       val epwRegTabBtn    = _tabBtn( MLoginTabs.EpwReg )
 
       // Список табов:
-      val tabs = MuiPaper(
-        new MuiPaperProps {
-          override val square = true
-        }
-      )(
-        s.currTabC { currTabProxy =>
-          MuiTabs(
-            new MuiTabsProps {
-              override val value = js.defined( currTabProxy.value.value )
-              @JSName("onChange")
-              override val onTabChanged = _onTabChangedCbF
-            }
-          )(
-            //extTabBtn,
-            epwLoginTabBtn,
-            epwRegTabBtn,
-          )
-        }
-      )
+      val tabs = s.currTabC { currTabProxy =>
+        MuiTabs(
+          new MuiTabsProps {
+            override val value = js.defined( currTabProxy.value.value )
+            @JSName("onChange")
+            override val onTabChanged = _onTabChangedCbF
+          }
+        )(
+          //extTabBtn,
+          epwLoginTabBtn,
+          epwRegTabBtn,
+        )
+      }
 
       // Заголовок диалога
       val dialogTitle = MuiDialogTitle()(
-        commonReactCtxProv.consume { crCtx =>
-          crCtx.messages( MsgCodes.`Login.page.title` )
-        }
+        tabs,
+        //commonReactCtxProv.consume { crCtx =>
+          //crCtx.messages( MsgCodes.`Login.page.title` )
+        //}
       )
 
       // Наполнение диалога.
       val dialogContent = MuiDialogContent()(
         tabsContents,
-        tabs,
       )
 
       // Весь диалог формы логина:
@@ -173,7 +167,9 @@ class LoginFormR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { rootProxy =>
       State(
-        visibleSomeC        = rootProxy.connect( _.overall.isVisibleSome )( FastEqUtil.RefValFastEq ),
+        visibleSomeC        = rootProxy.connect { props =>
+          OptionUtil.SomeBool( props.overall.isVisible )
+        }( FastEq.AnyRefEq ),
         currTabC            = rootProxy.connect( _.overall.loginTab )( FastEq.AnyRefEq ),
         loginFormCssC       = rootProxy.connect( _.overall.formCss )( FastEq.AnyRefEq ),
       )

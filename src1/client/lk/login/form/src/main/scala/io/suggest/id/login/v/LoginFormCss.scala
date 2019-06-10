@@ -40,4 +40,11 @@ case class LoginFormCss() extends StyleSheet.Inline {
     )
   }
 
+
+  /** Стили для переключателя регистрации. */
+  val regStepper = style(
+    position.relative,
+    background := none,
+  )
+
 }

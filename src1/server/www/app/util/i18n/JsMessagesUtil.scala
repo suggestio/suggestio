@@ -430,6 +430,7 @@ class JsMessagesUtil @Inject() (
     MC.`Phone.or.email` ::
     MC.`Code.from.sms` ::
     MC.`Next` ::
+    MC.`Back` ::
     Nil
   }
 

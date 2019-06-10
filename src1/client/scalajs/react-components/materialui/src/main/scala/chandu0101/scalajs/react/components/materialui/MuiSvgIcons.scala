@@ -1179,14 +1179,14 @@ object MuiSvgIcons {
   object HardwareHeadsetMic extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/hardware/headset", JSImport.Default)
   object HardwareHeadset extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/hardware/keyboard-arrow-down", JSImport.Default)
-  object HardwareKeyboardArrowDown extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/hardware/keyboard-arrow-left", JSImport.Default)
-  object HardwareKeyboardArrowLeft extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/hardware/keyboard-arrow-right", JSImport.Default)
-  object HardwareKeyboardArrowRight extends MuiSvgIcon
-  @js.native @JSImport("@material-ui/icons/hardware/keyboard-arrow-up", JSImport.Default)
-  object HardwareKeyboardArrowUp extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/KeyboardArrowDown", JSImport.Default)
+  object KeyboardArrowDown extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/KeyboardArrowLeft", JSImport.Default)
+  object KeyboardArrowLeft extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/KeyboardArrowRight", JSImport.Default)
+  object KeyboardArrowRight extends MuiSvgIcon
+  @js.native @JSImport("@material-ui/icons/KeyboardArrowUp", JSImport.Default)
+  object KeyboardArrowUp extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/hardware/keyboard-backspace", JSImport.Default)
   object HardwareKeyboardBackspace extends MuiSvgIcon
   @js.native @JSImport("@material-ui/icons/hardware/keyboard-capslock", JSImport.Default)

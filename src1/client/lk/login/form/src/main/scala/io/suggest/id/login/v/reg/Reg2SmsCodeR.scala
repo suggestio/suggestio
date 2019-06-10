@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.reg
 
-import chandu0101.scalajs.react.components.materialui.{MuiFormGroup, MuiFormGroupProps, MuiStep, MuiStepContent, MuiStepLabel}
+import chandu0101.scalajs.react.components.materialui.{MuiFormGroup, MuiFormGroupProps}
 import diode.react.ModelProxy
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
 import io.suggest.lk.r.sms.SmsCodeFormR
@@ -24,22 +24,20 @@ class Reg2SmsCodeR(
   class Backend($: BackendScope[Props, Unit]) {
 
     def render(p: Props): VdomElement = {
-      MuiStepContent()(
-        MuiFormGroup(new MuiFormGroupProps {
+      MuiFormGroup(
+        new MuiFormGroupProps {
           override val row = true
-        })(
-
-          // Поле для вввода смс-кода:
-          p.wrap { props =>
-            for (smsCode <- props.smsCode) yield {
-              smsCodeFormR.PropsVal(
-                smsCode   = smsCode,
-                disabled  = props.submitReq.isPending,
-              )
-            }
-          }( smsCodeFormR.component.apply )(implicitly, OptFastEq.Wrapped(smsCodeFormR.SmsCodeFormRPropsValFastEq)),
-
-        )
+        }
+      )(
+        // Поле для вввода смс-кода:
+        p.wrap { props =>
+          for (smsCode <- props.smsCode) yield {
+            smsCodeFormR.PropsVal(
+              smsCode   = smsCode,
+              disabled  = props.submitReq.isPending,
+            )
+          }
+        }( smsCodeFormR.component.apply )(implicitly, OptFastEq.Wrapped(smsCodeFormR.SmsCodeFormRPropsValFastEq)),
       )
     }
 

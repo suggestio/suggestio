@@ -3,6 +3,7 @@ package io.suggest.id.login.v.stuff
 import chandu0101.scalajs.react.components.materialui.{MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.id.login.m.ILoginFormAction
 import io.suggest.id.login.v.LoginFormCss
@@ -92,8 +93,8 @@ class ButtonR(
     .initialStateFromProps { propsProxy =>
       State(
         disabledSomeC = propsProxy.connect { props =>
-          Some( props.disabled )
-        }( FastEq.ValueEq ),
+          OptionUtil.SomeBool( props.disabled )
+        }( FastEq.AnyRefEq ),
         msgCodeS = propsProxy.connect(_.msgCode)( FastEq.AnyRefEq ),
       )
     }

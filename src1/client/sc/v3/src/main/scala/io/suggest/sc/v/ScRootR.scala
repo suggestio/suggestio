@@ -444,8 +444,8 @@ class ScRootR (
         },
 
         menuOpenedSomeC = propsProxy.connect { props =>
-          Some( props.index.menu.opened )
-        }( OptFastEq.OptValueEq ),
+          OptionUtil.SomeBool( props.index.menu.opened )
+        }( FastEq.AnyRefEq ),
 
         searchSideBarC = propsProxy.connect { props =>
           props.index.search.panel
@@ -462,8 +462,8 @@ class ScRootR (
         }( OptFastEq.Plain ),
 
         isRenderScC = propsProxy.connect { mroot =>
-          Some( !mroot.index.isFirstRun )
-        }( OptFastEq.OptValueEq ),
+          OptionUtil.SomeBool( !mroot.index.isFirstRun )
+        }( FastEq.AnyRefEq ),
 
         colorsC = propsProxy.connect { mroot =>
           mroot.index.resp

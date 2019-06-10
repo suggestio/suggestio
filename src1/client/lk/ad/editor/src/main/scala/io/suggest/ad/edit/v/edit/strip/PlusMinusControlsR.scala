@@ -5,12 +5,14 @@ import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.ad.edit.m.BlockSizeBtnClick
 import io.suggest.ad.edit.v.LkAdEditCss
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.{MHand, MHands}
 import io.suggest.msg.Messages
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.ueq.UnivEqUtil._
 import scalacss.ScalaCssReact._
 import scalacss.internal.StyleA
 
@@ -35,10 +37,10 @@ class PlusMinusControlsR(
                      )
   implicit object PlusMinusControlsPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.labelMsgCode eq b.labelMsgCode) &&
-        (a.contCss eq b.contCss) &&
-        (a.model eq b.model) &&
-        (a.current eq b.current)
+      (a.labelMsgCode ===* b.labelMsgCode) &&
+      (a.contCss eq b.contCss) &&
+      (a.model eq b.model) &&
+      (a.current eq b.current)
     }
   }
 
@@ -114,8 +116,8 @@ class PlusMinusControlsR(
     .initialStateFromProps { propsProxy =>
       def __enabledC(isEnabledF: PropsVal => Boolean): ReactConnectProxy[Some[Boolean]] = {
         propsProxy.connect { propsOpt =>
-          Some( propsOpt.exists( isEnabledF ) )
-        }
+          OptionUtil.SomeBool( propsOpt.exists( isEnabledF ) )
+        }( FastEq.AnyRefEq )
       }
       State(
         leftEnabledC = __enabledC { props =>

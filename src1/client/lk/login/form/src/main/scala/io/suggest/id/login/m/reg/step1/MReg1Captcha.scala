@@ -58,6 +58,15 @@ case class MReg1Captcha(
     }
   }
 
+  /** Требуется ли инициализировать капчу путём отсылки сигнала CaptchaInit? */
+  def isCaptchaNeedsInit: Boolean = {
+    captcha.exists { c =>
+      c.captchaImgUrlOpt.isEmpty &&
+      c.contentReq.isEmpty &&
+      !c.contentReq.isPending
+    }
+  }
+
   override final def dataOpt = captcha
 
 }

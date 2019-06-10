@@ -3,6 +3,7 @@ package io.suggest.id.login.v.stuff
 import chandu0101.scalajs.react.components.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps, MuiFormControlLabel, MuiFormControlLabelProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.MCommonReactCtx
 import io.suggest.id.login.m.ICheckBoxActionStatic
 import io.suggest.id.login.v.LoginFormCss
@@ -98,8 +99,8 @@ class CheckBoxR(
     .initialStateFromProps { propsProxy =>
       State(
         checkedSomeC = propsProxy.connect { p =>
-          Some(p.checked)
-        } ( FastEq.ValueEq ),
+          OptionUtil.SomeBool( p.checked )
+        }( FastEq.AnyRefEq ),
         msgCodeC     = propsProxy.connect(_.msgCode)( FastEq.AnyRefEq )
       )
     }

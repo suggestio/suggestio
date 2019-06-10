@@ -338,6 +338,7 @@ object MsgCodes {
   val `Later` = "Later"
   val `You.can.enable.0.later.on.left.panel` = "You.can.enable.0.later.on.left.panel"
   val `Next` = "Next"
+  val `Back` = "Back"
   val `Settings.done.0.ready.for.using` = "Settings.done.0.ready.for.using"
   val `_to.Finish` = "_to.Finish"
 

@@ -91,6 +91,7 @@ object Mui {
   @js.native @JSImport("@material-ui/core/StepContent", JSImport.Default) object StepContent extends js.Any
   @js.native @JSImport("@material-ui/core/StepLabel", JSImport.Default) object StepLabel extends js.Any
   @js.native @JSImport("@material-ui/core/Stepper", JSImport.Default) object Stepper extends js.Any
+  @js.native @JSImport("@material-ui/core/MobileStepper", JSImport.Default) object MobileStepper extends js.Any
 
   @js.native @JSImport("@material-ui/core/Snackbar", JSImport.Default) object Snackbar extends js.Any
   @js.native @JSImport("@material-ui/core/Switch", JSImport.Default) object Switch extends js.Any

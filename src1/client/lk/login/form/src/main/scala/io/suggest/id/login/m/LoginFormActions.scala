@@ -112,3 +112,4 @@ case class EpwRegCaptchaSubmitResp(tstamp: Long, resp: Try[MEpwRegCaptchaResp]) 
 
 /** Нажимание кнопки "Далее" в форме регистрации. */
 case object RegNextClick extends ILoginFormAction
+case object RegBackClick extends ILoginFormAction

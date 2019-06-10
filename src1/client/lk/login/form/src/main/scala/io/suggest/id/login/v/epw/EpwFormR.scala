@@ -1,14 +1,15 @@
 package io.suggest.id.login.v.epw
 
 import chandu0101.scalajs.react.components.materialui.{MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiPaper}
+import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.IdentConst
 import io.suggest.id.login.m._
 import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.v.stuff.{ButtonR, CheckBoxR, LoginProgressR}
-import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
 
@@ -134,7 +135,9 @@ class EpwFormR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        loginReqPendingSomeC  = propsProxy.connect(_.isShowPendingSome)( FastEqUtil.RefValFastEq ),
+        loginReqPendingSomeC = propsProxy.connect { props =>
+          OptionUtil.SomeBool( props.loginReq.isPending )
+        }( FastEq.AnyRefEq ),
       )
     }
     .renderBackend[Backend]
