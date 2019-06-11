@@ -1,6 +1,7 @@
 package io.suggest.id.token
 
 import java.time.Instant
+import java.util.UUID
 
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
@@ -19,7 +20,7 @@ object MIdToken {
     (__ \ "t").format[MIdTokenType] and
     (__ \ "i").format[MIdTokenInfo] and
     (__ \ "p").format[JsValue] and
-    (__ \ "s").formatNullable[String] and
+    (__ \ "o").format[UUID] and
     (__ \ "c").format[Instant]
   )(apply, unlift(unapply))
 
@@ -28,10 +29,18 @@ object MIdToken {
 }
 
 
+/** Контейнер данных id-токена для одноразового шага идентификации.
+  *
+  * @param typ Тип токена, описывающий назначение.
+  * @param info Месседжи и прочие совершенные действия идентификации.
+  * @param payload Произвольные данные, идущие вместе с токеном.
+  * @param ott Одноразовый уникальный идентификатор, чтобы пометить в базе токен как использованный.
+  * @param created Дата генерации токена.
+  */
 case class MIdToken(
                      typ          : MIdTokenType,
                      info         : MIdTokenInfo,
                      payload      : JsValue,
-                     sessionId    : Option[String]  = None,
+                     ott          : UUID            = UUID.randomUUID(),
                      created      : Instant         = Instant.now(),
                    )

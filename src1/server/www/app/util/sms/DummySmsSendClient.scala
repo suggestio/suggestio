@@ -31,10 +31,6 @@ class DummySmsSendClient @Inject()(
     .getOptional[Boolean]( "sms.dummy.enabled" )
     .getOrElseFalse
 
-  /** Правильный смс-код. */
-  lazy val RESP_CODE = configuration
-    .getOptional[Boolean]( "sms.dummy.code" )
-    .get
 
   override def isReady(): Future[Boolean] =
     Future.successful( IS_AVAILABLE )

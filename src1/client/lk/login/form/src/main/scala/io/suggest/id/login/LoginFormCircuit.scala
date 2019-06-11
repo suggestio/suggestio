@@ -9,9 +9,11 @@ import io.suggest.id.login.m.{MLoginFormOverallS, MLoginRootS}
 import io.suggest.id.login.m.reg.MRegS
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
+import io.suggest.id.login.m.reg.step2.MReg2SmsCode
 import io.suggest.id.login.m.reg.step3.MReg3CheckBoxes
-import io.suggest.lk.c.{CaptchaAh, CaptchaApiHttp, ICaptchaApi}
+import io.suggest.lk.c.{CaptchaAh, CaptchaApiHttp, ICaptchaApi, SmsCodeFormAh}
 import io.suggest.lk.m.captcha.MCaptchaS
+import io.suggest.lk.m.sms.MSmsCodeS
 import io.suggest.msg.ErrorMsgs
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.spa.CircuitUtil._
@@ -50,6 +52,9 @@ class LoginFormCircuit(
 
   private[login] val reg1CaptchaRW  = mkLensZoomRW( regRW, MRegS.s1Captcha )( MReg1Captcha.MReg1CaptchaFastEq )
   private[login] val captchaOptRW   = mkLensZoomRW( reg1CaptchaRW, MReg1Captcha.captcha )( OptFastEq.Wrapped(MCaptchaS.MCaptchaSFastEq) )
+
+  private[login] val reg2SmsCodeRW  = mkLensZoomRW( regRW, MRegS.s2SmsCode )( MReg2SmsCode.MReg2SmsCodeFastEq )
+  private[login] val smsCodeFormRW  = mkLensZoomRW( reg2SmsCodeRW, MReg2SmsCode.smsCode )( OptFastEq.Wrapped(MSmsCodeS.MSmsCodeSFastEq) )
 
   private[login] val reg3CheckBoxesRW = mkLensZoomRW(regRW, MRegS.s3CheckBoxes)( MReg3CheckBoxes.MReg3CheckBoxesFastEq )
 
@@ -92,6 +97,10 @@ class LoginFormCircuit(
     modelRW = reg3CheckBoxesRW
   )
 
+  private val smsCodeFormAh = new SmsCodeFormAh(
+    modelRW = smsCodeFormRW
+  )
+
   override protected val actionHandler: HandlerFunction = {
     composeHandlers(
       formAh,
@@ -99,6 +108,7 @@ class LoginFormCircuit(
       regAh, reg0CredsAh, reg3CheckBoxesAh,
       extAh,
       captchaAh,
+      smsCodeFormAh,
     )
   }
 
