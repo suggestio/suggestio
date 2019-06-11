@@ -45,7 +45,7 @@ class SmsCodeFormR(
 
 
   case class State(
-                    isShownC        : ReactConnectProxy[Option[MSmsCodeS]],
+                    isShownC        : ReactConnectProxy[Option[PropsVal]],
                     codeInputC      : ReactConnectProxy[Option[MTextFieldExtS]],
                   )
 
@@ -112,7 +112,7 @@ class SmsCodeFormR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsOptProxy =>
       State(
-        isShownC = propsOptProxy.connect(_.map(_.smsCode))( OptFastEq.IsEmptyEq ),
+        isShownC = propsOptProxy.connect(identity)( OptFastEq.IsEmptyEq ),
 
         codeInputC = propsOptProxy.connect { propsOpt =>
           for (props <- propsOpt) yield {

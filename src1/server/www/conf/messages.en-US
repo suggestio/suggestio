@@ -1036,7 +1036,6 @@ You.can.enable.0.later.on.left.panel=You can re-activate {0} later via left menu
 Settings.done.0.ready.for.using=Setting done. {0} ready for using.
 _to.Finish=Finish
 
-Login.using.password=By password
 Username=Username
 Not.my.pc=Not my computer
 
@@ -1047,5 +1046,6 @@ Email.example=name@email.com
 Phone.number.example=+123 456 890 1234
 Phone.or.email=Phone or email
 Mobile.phone.number=Mobile phone number
-Code.from.sms=Code from SMS
+Code.from.sms=Code from SMS:
 
+Registration.code=Sign-up code: {0}

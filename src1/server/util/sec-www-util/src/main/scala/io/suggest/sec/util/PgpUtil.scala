@@ -1,6 +1,7 @@
 package io.suggest.sec.util
 
-import java.io.{InputStream, OutputStream}
+import java.io.{ByteArrayOutputStream, InputStream, OutputStream}
+import java.nio.charset.StandardCharsets
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.EsModel
@@ -9,6 +10,7 @@ import io.suggest.util.logs.MacroLogsDyn
 import io.trbl.bcpg.{KeyFactory, KeyFactoryFactory, SecretKey}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.playx.CacheApiUtil
+import org.apache.commons.io.IOUtils
 import play.api.Configuration
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -112,15 +114,31 @@ class PgpUtil @Inject() (
   /** Запустить инициализацию необходимых ключей. */
   def init(): Future[_] = {
     val fut = mAsymKeys.getById(LOCAL_STOR_KEY_ID)
-      .filter { _.isDefined }
+      .map( _.get )
       .recoverWith { case _: NoSuchElementException =>
         val k = genNewNormalKey()
-        mAsymKeys.save(k)
+        for (id <- mAsymKeys.save(k)) yield
+          k.copy(id = Some(id))
       }
     for (ex <- fut.failed) {
       LOGGER.error("Failed to initialize server's PGP key", ex)
     }
-    fut
+
+    // "Разогреть" в фоне bcpg, чтобы не было возможных пауз при первом реальном вызове.
+    for (secretKey <- fut) yield {
+      val baos = new ByteArrayOutputStream(10)
+      try {
+        encryptForSelf(
+          data = IOUtils.toInputStream("test test test", StandardCharsets.UTF_8),
+          key  = secretKey,
+          out  = baos
+        )
+      } finally {
+        // Это не нужно, но пусть будет, на случай, если в светлом далёком будущем это вдруг изменится.
+        baos.close()
+      }
+      secretKey
+    }
   }
 
 

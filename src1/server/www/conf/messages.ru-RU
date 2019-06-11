@@ -1044,7 +1044,6 @@ You.can.enable.0.later.on.left.panel=Вы можете активировать 
 Settings.done.0.ready.for.using=Настройка завершена. {0} готов к началу работы.
 _to.Finish=Завершить
 
-Login.using.password=По паролю
 Username=Имя пользователя
 Not.my.pc=Чужой компьютер?
 
@@ -1055,5 +1054,7 @@ Email.example=name@email.ru
 Phone.number.example=+7 123 435 5433
 Phone.or.email=Телефон или email
 Mobile.phone.number=Номер мобильного
-Code.from.sms=Код из смс-сообщений
+Code.from.sms=Код из смс-сообщения
+
+Registration.code=Код регистрации: {0}
 

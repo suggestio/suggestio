@@ -414,7 +414,6 @@ class JsMessagesUtil @Inject() (
   private def LOGIN_FORM_MSGS: TraversableOnce[String] = {
     MC.`Login.page.title` ::
     MC.`Login` ::
-    MC.`Login.using.password` ::
     MC.`Username` ::
     MC.`Password` ::
     MC.`Not.my.pc` ::

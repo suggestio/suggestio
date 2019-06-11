@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -22,6 +23,8 @@ object MSmsCodeS {
   }
 
   @inline implicit def univEq: UnivEq[MSmsCodeS] = UnivEq.derive
+
+  val typed = GenLens[MSmsCodeS](_.typed)
 
 }
 

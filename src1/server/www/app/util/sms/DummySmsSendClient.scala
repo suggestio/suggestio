@@ -5,6 +5,7 @@ import javax.inject.Inject
 import models.sms.{ISmsSendResult, MSmsSend, MSmsSendResult, MSmsSendStatus}
 import play.api.Configuration
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.util.logs.MacroLogsImpl
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.concurrent.duration._
@@ -22,6 +23,7 @@ class DummySmsSendClient @Inject()(
                                     implicit private val ec   : ExecutionContext,
                                   )
   extends ISmsSendClient
+  with MacroLogsImpl
 {
 
   /** Активен ли клиент? */
@@ -41,6 +43,7 @@ class DummySmsSendClient @Inject()(
     val p = Promise[Seq[ISmsSendResult]]()
 
     actorSystem.scheduler.scheduleOnce( 500 milliseconds ) {
+      LOGGER.info(s"smsSend(): FAKE sent sms to\n ${sms.msgs.mapValues(_.mkString(" | ")).mkString("\n ")}")
       val r = MSmsSendResult(
         isOk        = true,
         statusText  = None,

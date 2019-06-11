@@ -2,8 +2,7 @@ package controllers
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
-import java.time.{Instant, ZoneOffset}
-import java.util.UUID
+import java.time.Instant
 
 import javax.inject.{Inject, Singleton}
 import controllers.ident._
@@ -11,15 +10,15 @@ import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.login.{ILoginFormPages, MEpwLoginReq}
-import io.suggest.id.reg.MEpwRegCaptchaReq
+import io.suggest.id.reg.{MRegCaptchaReq, MRegTokenResp}
+import io.suggest.id.token.{MIdMessage, MIdMessageData, MIdToken, MIdTokenInfo, MIdTokenTypes}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.{MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.csp.Csp
 import io.suggest.sec.util.{PgpUtil, ScryptUtil}
 import io.suggest.session.{LongTtl, MSessionKeys, ShortTtl, Ttl}
+import io.suggest.text.Validators
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.mproj.ICommonDi
@@ -34,16 +33,18 @@ import io.suggest.ueq.UnivEqUtilJvm._
 import views.html.ident._
 import views.html.ident.login.epw._loginColumnTpl
 import views.html.ident.reg.email.{_regColumnTpl, emailRegMsgTpl}
+import views.html.ident.recover.emailPwRecoverTpl
 import views.html.lk.login._
 import japgolly.univeq._
 import models.im.MCaptchaSecret
+import models.sms.MSmsSend
 import org.apache.commons.io.IOUtils
 import play.api.libs.json.Json
 import util.sec.CspUtil
-import views.html.ident.recover.emailPwRecoverTpl
+import util.sms.SmsSendUtil
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.concurrent.duration._
 
 /**
  * Suggest.io
@@ -70,6 +71,7 @@ class Ident @Inject() (
                         override val canConfirmIdpReg     : CanConfirmIdpReg,
                         pgpUtil                           : PgpUtil,
                         cspUtil                           : CspUtil,
+                        smsSendUtil                       : SmsSendUtil,
                         override val canRecoverPw         : CanRecoverPw,
                         override val isAnon               : IsAnon,
                         override val isAuth               : IsAuth,
@@ -87,6 +89,10 @@ class Ident @Inject() (
 
   import mCommonDi._
   import sioControllerApi._
+
+  /** Длина смс-кодов (кол-во цифр). */
+  def SMS_CODE_LEN = 5
+
 
   /**
    * Юзер разлогинивается. Выпилить из сессии данные о его логине.
@@ -254,145 +260,144 @@ class Ident @Inject() (
     * @return 200 OK + JSON, или ошибка.
     */
   def epw2RegSubmit() = csrf.Check {
-    val ownSecretKeyFut = pgpUtil.getLocalStorKey()
     val now = Instant.now()
     lazy val logPrefix = s"epw2RegSubmit()#${now.toEpochMilli}:"
 
-    isAnon().async {
+    isAnon().async[(MRegCaptchaReq, MCaptchaSecret)] {
       parse
-        .json[MEpwRegCaptchaReq]
+        .json[MRegCaptchaReq]
         // Начать с синхронной валидации данных:
         .validate { epwReg =>
           // Проверить валидность email:
+          val vldRes = Constraints.emailAddress.apply( epwReg.creds0.email )
           Either.cond(
-            test = {
-              val vldRes = Constraints.emailAddress.apply( epwReg.email )
-              val r = vldRes ==* Valid
-              if (!r) LOGGER.warn(s"$logPrefix Invalid email address:\n email = ${epwReg.email}\n vld res = $vldRes")
-              r
-            },
+            test = vldRes ==* Valid,
             right = epwReg,
-            left  = NotAcceptable("email.invalid")
+            left = {
+              LOGGER.warn(s"$logPrefix Invalid email address:\n email = ${epwReg.creds0.email}\n vld res = $vldRes")
+              NotAcceptable("email.invalid")
+            }
           )
-          // Поверхностно проверить валидность поля капчи (почистить, проверить длину):
+          // Проверить валидность номера телефона.
           .filterOrElse(
-            {epwReg2 =>
-              epwReg2.captchaTyped.length ==* captchaUtil.DIGITS_CAPTCHA_LEN
+            {epwReg =>
+              Validators.isPhoneValid( epwReg.creds0.phone )
             },
             {
-              LOGGER.warn(s"$logPrefix Captcha len invalid: ${epwReg.captchaTyped} expected=${captchaUtil.DIGITS_CAPTCHA_LEN} irl=${epwReg.captchaTyped.length}")
-              NotAcceptable("captcha.invalid")
+              LOGGER.warn(s"$logPrefix Invalid phone number: ${epwReg.creds0.phone}")
+              NotAcceptable("phone.invalid")
             }
           )
         }
         // Отработать проверку капчи:
-        // - проверить соответствие присланной капчи с pgp-шифротекстом.
-        // - проверить токен по базе, и сохранить в БД использованный токен.
         .validateM { epwReg =>
-          val pgpSecret = pgpUtil.unminifyPgpMessage( epwReg.captchaSecret )
           for {
-            // Получить pgp-ключ на руки:
-            ownSecretKey <- ownSecretKeyFut
-
-            // Быстрые синхронные проверки секрета капчи:
-            captchaSecretEith = {
-              val baos = new ByteArrayOutputStream( 512 )
-              val captchaSecretJsonE = try {
-                pgpUtil.decryptFromSelf(
-                  data = IOUtils.toInputStream( pgpSecret, StandardCharsets.UTF_8 ),
-                  key  = ownSecretKey,
-                  out  = baos,
-                )
-                Right( new String( baos.toByteArray ) )
-              } catch {
-                case ex: Throwable =>
-                  // Не удалось расшифровать pgp-сообщение.
-                  LOGGER.warn(s"$logPrefix Unable to parse pgp secret:\n $pgpSecret", ex)
-                  Left( BadRequest("Invalid request body") )
-              } finally {
-                baos.close()
-              }
-
-              captchaSecretJsonE
-                // Расшифровать присланный шифротекст капчи.
-                .right.flatMap { captchaSecretJson =>
-                  Json
-                    .parse( captchaSecretJson )
-                    .validate[MCaptchaSecret]
-                    .asEither
-                    .left.map { jsonParseErrors =>
-                      // Should never happen: непарсится расшифрованный текст
-                      LOGGER.error(s"$logPrefix Failed to parse decrypted JSON:\n $captchaSecretJson\n ${jsonParseErrors.mkString("\n ")}")
-                      InternalServerError
-                    }
-                }
-                // Сверить TTL секрета капчи:
-                .filterOrElse(
-                  {captchaSecret =>
-                    val dateEnd = captchaUtil.captchaTtl( captchaSecret.dateCreated )
-                    val r = dateEnd isAfter now
-                    if (!r) LOGGER.warn(s"$logPrefix Expired captcha#${captchaSecret.captchaUid}, dateEnd=${dateEnd.atOffset(ZoneOffset.UTC)} now=${now.atOffset(ZoneOffset.UTC)}")
-                    r
-                  },
-                  NotAcceptable( "captcha.invalid" )
-                )
-                // Проверить соответствие введённой капчи и реальной.
-                .filterOrElse(
-                  {captchaSecret =>
-                    // Оставить только символы
-                    val captchaTypedNorm = epwReg.captchaTyped
-                      .replaceAll("\\s+", "")
-                    // По идее, в капче только цифры, но вдруг это изменится - сравниваем через equalsIgnoreCase
-                    val r = captchaSecret.captchaText equalsIgnoreCase captchaTypedNorm
-                    if (r) LOGGER.trace(s"Captcha matched ok = $captchaTypedNorm")
-                    else   LOGGER.warn(s"Captcha mismatch, typed=${captchaTypedNorm} expected=${captchaSecret.captchaText}")
-                    r
-                  },
-                  NotAcceptable("captcha.invalid")
-                )
-            }
-
-            // Капча проверена, но возможно, что она уже бывшая в употреблении. Надо провалидировать id капчи по базе токенов.
-            isOk <- captchaSecretEith.fold(
-              {_ =>
-                Future.successful(captchaSecretEith)
-              },
-              {capthaSecret =>
-                slick.db.run {
-                  captchaUtil
-                    .ensureCaptchaOtt( capthaSecret )
-                }
-                  .transform {
-                    case Failure(ex) =>
-                      LOGGER.warn(s"$logPrefix Captcha already used")
-                      LOGGER.trace("captcha verify error:", ex)
-                      Success( Left( ExpectationFailed("captcha.expired") ) )
-                    case Success(_) =>
-                      LOGGER.trace(s"$logPrefix Captcha marked as USED")
-                      Success( captchaSecretEith )
-                  }
-              }
-            )
-
+            // TODO Сайд-эффект: транзакция с блокировкой одноразового токена текущей капчи.
+            vldRes <- captchaUtil.validateAndMarkAsUsed( epwReg.captcha )
           } yield {
-            LOGGER.trace(s"$logPrefix Captcha checks done.")
-            for (captchaSecret <- isOk.right) yield
-              (epwReg, captchaSecret)
+            vldRes
+              .left.map { NotAcceptable(_) }
+              .right.map { captchaSecret =>
+                (epwReg, captchaSecret)
+              }
           }
         }
 
     } { implicit request =>
-      val (epwReg, captchaSecret) = request.body
-      LOGGER.trace(s"$logPrefix email=${epwReg.email} capTyped=${epwReg.captchaTyped}")
+      val (mreg, _) = request.body
+      LOGGER.trace(s"$logPrefix email=${mreg.creds0.email} capTyped=${mreg.captcha.typed}")
 
-      // Проверки выполнены.
-      val email1 = epwReg.email
-        .trim
-        .toLowerCase()
+      // Проверки выполнены. Причесать исходные данные:
+      val creds02 = mreg.creds0.copy(
+        email = mreg.creds0
+          .email
+          .trim
+          .toLowerCase(),
+        // TODO Задействовать libphonenumber или что-то этакое.
+        phone = mreg.creds0.phone.trim,
+      )
 
-      // Проверить, что там с почтовым адресом?
+      // Отправить смс с кодом проверки.
+      val smsCode = captchaUtil.createCaptchaDigits(5)
+
+      implicit val ctx = implicitly[Context]
+
+      val smsSendResFut = smsSendUtil.smsSend(
+        MSmsSend(
+          msgs = Map(
+            creds02.phone -> (ctx.messages( MsgCodes.`Registration.code`, smsCode ) :: Nil)
+          ),
+          ttl       = Some( 10.minutes ),
+          translit  = false,
+        )
+      )
+      val pgpKeyFut = pgpUtil.getLocalStorKey()
+
+      val idTokPayload = Json.toJson( creds02 )
+
+      // TODO Проверка капчи выполнена - вернуть токен для дальнейшей валидации смс-кода.
       for {
+        smsSendRes <- smsSendResFut
 
+        idToken = {
+          for (r <- smsSendRes.iterator; balance <- r.restBalance)
+            LOGGER.info(s"$logPrefix New balance => $balance ${r.requestId.getOrElse("")}")
+
+          MIdToken(
+            typ       = MIdTokenTypes.PhoneCheck,
+            info      = MIdTokenInfo(
+              idMsgs = (for {
+                r <- smsSendRes.iterator
+                (smsRuPhoneNumber, sentStatus) <- r.smsInfo.headOption
+                //if sentStatus.isOk  // Плевать на ошибку, возможно какой-то спам-фильтр сработал или что-то ещё.
+              } yield {
+                if (!sentStatus.isOk)
+                  LOGGER.warn(s"$logPrefix Looks like, sms to $smsRuPhoneNumber was NOT sent.")
+                MIdMessage(
+                  rcptType = MPredicates.Ident.Phone,
+                  rcpt     = Set( creds02.phone, smsRuPhoneNumber ),
+                  messages = MIdMessageData(
+                    sentAt = Instant.now(),
+                    msgId  = sentStatus.smsId,
+                    checkCode = smsCode
+                  ) :: Nil
+                )
+              })
+                .toList
+            ),
+            payload   = idTokPayload,
+          )
+        }
+
+        idTokenJsonStr = Json.toJson( idToken ).toString()
+
+        // Надо зашифровать id-токен, чтобы передать на руки юзеру для дальнейших шагов регистрации
+        pgpKey <- pgpKeyFut
+
+      } yield {
+        // Зашифровать всё с помощью PGP.
+        val baos = new ByteArrayOutputStream(1024)
+        val cipherText = try {
+          pgpUtil.encryptForSelf(
+            data = IOUtils.toInputStream(idTokenJsonStr, StandardCharsets.UTF_8),
+            key  = pgpKey,
+            out  = baos
+          )
+          new String(baos.toByteArray)
+        } finally {
+          // Это не нужно, но пусть будет, на случай, если в светлом далёком будущем это вдруг изменится.
+          baos.close()
+        }
+
+        val resp = MRegTokenResp(
+          token = pgpUtil.minifyPgpMessage( cipherText )
+        )
+
+        Ok( Json.toJson(resp) )
+      }
+
+      /*for {
+        // Проверить, что там с почтовым адресом?
         // Поиск юзеров с таким вот email:
         userAlreadyExists <- mNodes.dynExists {
           new MNodeSearchDfltImpl {
@@ -448,11 +453,12 @@ class Ident @Inject() (
       } yield {
         LOGGER.debug(s"$logPrefix Sent message to $email1 isReg?$isReg")
         // TODO Залить id в текущую сессию для привязки сессии к письму?
+
         NoContent
           .addingToSession(
             MSessionKeys.ExtLoginData.value -> randomUuid.toString
           )
-      }
+      }*/
     }
   }
 

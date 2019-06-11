@@ -2,9 +2,9 @@ package util.sms.smsru
 
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
-import models.sms.smsRu.MSmsRuResult
+import models.sms.smsRu.{MSmsRuResult, MSmsRuSendQs}
 import models.sms.{ISmsSendResult, MSmsSend}
-import play.api.Configuration
+import play.api.{ConfigLoader, Configuration}
 import play.api.inject.Injector
 import play.api.libs.ws.WSClient
 import play.api.mvc.QueryStringBindable
@@ -30,14 +30,16 @@ final class SmsRuClient @Inject() (
   with MacroLogsImpl
 {
 
-  import models.sms.smsRu.MSmsRuApi._
-
+  private def CONF_PREFIX = "sms.smsru"
 
   /** id зарегистрированного приложения на sms.ru. */
-  lazy val APP_ID: Option[String] = {
-    injector
-      .instanceOf[Configuration]
-      .getOptional[String]( "sms.smsru.app.id" )
+  private lazy val (appId, fromDflt): (Option[String], Option[String]) = {
+    val confOpt       = injector.instanceOf[Configuration].getOptional[Configuration]( CONF_PREFIX )
+    def __get[A: ConfigLoader](subPath: String): Option[A] =
+      confOpt.flatMap( _.getOptional[A](subPath) )
+    val appIdOpt      = __get[String]("app.id")
+    val fromDfltOpt   = __get[String]("from")
+    (appIdOpt, fromDfltOpt)
   }
 
   /** Ссылка для запроса отправки смс. */
@@ -48,7 +50,7 @@ final class SmsRuClient @Inject() (
 
 
   override def isReady(): Future[Boolean] =
-    Future.successful( APP_ID.nonEmpty )
+    Future.successful( appId.nonEmpty )
 
 
   /** Отправить смс на указанный номер (номера). */
@@ -56,8 +58,11 @@ final class SmsRuClient @Inject() (
     lazy val logPrefix = s"smsSend()#${System.currentTimeMillis()}:"
 
     // key выставляем в null, чтобы явно была ошибка при обращении к ключу с потолка.
-    val url = SEND_URL_PREFIX + implicitly[QueryStringBindable[MSmsSend]].unbind( null, sms )
+    val sms2 = MSmsRuSendQs.from( sms, fromDflt )
+    val url = SEND_URL_PREFIX + implicitly[QueryStringBindable[MSmsRuSendQs]].unbind( null, sms2 )
     LOGGER.debug(s"$logPrefix Sending ${sms.msgs.size} sms-messages to numbers: ${sms.msgs.iterator.map(_._1).mkString(", ")}\n POST $url")
+
+    val wsClient = injector.instanceOf[WSClient]
 
     // Подготовить данные для реквестов, разбив поток по максимум 100 штук.
     Future.traverse {
@@ -82,8 +87,7 @@ final class SmsRuClient @Inject() (
       val reqId = System.currentTimeMillis()
       LOGGER.trace(s"$logPrefix Starting request#$reqId for ${formData.size} numbers for ${formData.valuesIterator.flatten.size} sms.")
       for {
-        wsResult <- injector
-          .instanceOf[WSClient]
+        wsResult <- wsClient
           .url( url )
           .withRequestTimeout( 10.seconds )
           .post( formData )

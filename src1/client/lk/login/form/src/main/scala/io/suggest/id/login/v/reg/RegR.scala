@@ -13,7 +13,7 @@ import io.suggest.id.login.m.reg.{MRegS, MRegStep, MRegSteps}
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.v.stuff.{ButtonR, LoginProgressR}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent, raw}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._

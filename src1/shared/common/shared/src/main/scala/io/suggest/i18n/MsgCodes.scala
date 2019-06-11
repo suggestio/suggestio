@@ -353,7 +353,6 @@ object MsgCodes {
   }
 
   val `Password` = "Password"
-  val `Login.using.password` = "Login.using.password"
   val `Login` = "Login"
   val `Username` = "Username"
   val `Not.my.pc` = "Not.my.pc"
@@ -371,5 +370,7 @@ object MsgCodes {
   val `Phone.or.email` = "Phone.or.email"
   val `Mobile.phone.number` = "Mobile.phone.number"
   val `Code.from.sms` = "Code.from.sms"
+
+  val `Registration.code` = "Registration.code"
 
 }

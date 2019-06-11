@@ -43,7 +43,6 @@ class Img @Inject() (
                       canDynImg                       : CanDynImg,
                       iMediaStorages                  : IMediaStorages,
                       maybeAuth                       : MaybeAuth,
-                      pgpUtil                         : PgpUtil,
                       sioCtlApi                       : SioControllerApi,
                       mCommonDi                       : ICommonDi,
                     )
@@ -258,46 +257,16 @@ class Img @Inject() (
     */
   def getCaptcha = csrf.Check {
     maybeAuth().async { implicit request =>
-      val captchaUid = UUID.randomUUID()
+      val captchaUid = captchaUtil.mkCaptchaUid()
       val logPrefix = s"getCaptchaImg2()#${System.currentTimeMillis()}:"
       LOGGER.trace(s"$logPrefix for ${request.remoteClientAddress}, personId#${request.user.personIdOpt.orNull}")
 
       // Кэш для защиты от перегрузки слишкой активной генерацией капч: ограничить макс.кол-во параллельных капч.
-      val captchaFut = cacheApiUtil.getOrElseFut(s"${captchaUid.getLeastSignificantBits % 8}.captcha.img", expiration = 2.seconds) {
-        val ctext1 = captchaUtil.createCaptchaDigits()
-        val imgBytes1 = captchaUtil.createCaptchaImg( ctext1 )
-        val res = (ctext1, imgBytes1)
-        Future.successful( res )
-      }
-
-      // Получить собственный секретный ключ:
-      val pgpKeyFut = pgpUtil.getLocalStorKey()
+      val captchaFut = captchaUtil.mkCaptcha( captchaUid )
 
       // Шифруем правильный ответ на капчу:
-      val captchaSecretPgpMinFut = for {
-        (ctext, _) <- captchaFut
-        captchaSecret = MCaptchaSecret(
-          captchaUid  = captchaUid,
-          captchaText = ctext,
-        )
-        json = Json.toJson(captchaSecret).toString()
-        pgpKey <- pgpKeyFut
-      } yield {
-        // Зашифровать всё с помощью PGP.
-        val baos = new ByteArrayOutputStream(1024)
-        val cipherText = try {
-          pgpUtil.encryptForSelf(
-            data = IOUtils.toInputStream(json, StandardCharsets.UTF_8),
-            key  = pgpKey,
-            out  = baos
-          )
-          new String(baos.toByteArray)
-        } finally {
-          // Это не нужно, но пусть будет, на случай, если в светлом далёком будущем это вдруг изменится.
-          baos.close()
-        }
-        // Можно убрать заголовок, финальную часть, переносы строк:
-        pgpUtil.minifyPgpMessage( cipherText )
+      val captchaSecretPgpMinFut = captchaFut.flatMap { case (ctext, _) =>
+        captchaUtil.encodeCaptchaSecret( captchaUid, captchaText = ctext )
       }
 
       // Отправить http-ответ юзеру, запихнув pgp-шифр в заголовок ответа:
@@ -311,7 +280,7 @@ class Img @Inject() (
             EXPIRES       -> "0",
             PRAGMA        -> "no-cache",
             CACHE_CONTROL -> "no-store, no-cache, must-revalidate",
-            CaptchaConstants.CAPTCHA_SECRET_HTTP_HDR_NAME -> captchaSecretPgpMin
+            CaptchaConstants.CAPTCHA_SECRET_HTTP_HDR_NAME -> captchaSecretPgpMin,
           )
       }
     }

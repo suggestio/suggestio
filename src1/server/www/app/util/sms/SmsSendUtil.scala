@@ -30,6 +30,7 @@ class SmsSendUtil @Inject()(
   /** Список классов смс-клиентов для разных сервисов. */
   lazy val SMS_CLIENT_CLASSES = {
     List[ClassTag[_ <: ISmsSendClient]](
+      ClassTag( classOf[DummySmsSendClient] ),
       ClassTag( classOf[SmsRuClient] )
     )
   }

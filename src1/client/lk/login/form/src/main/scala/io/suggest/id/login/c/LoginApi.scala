@@ -1,7 +1,7 @@
 package io.suggest.id.login.c
 
 import io.suggest.id.login.MEpwLoginReq
-import io.suggest.id.reg.{MEpwRegCaptchaReq, MEpwRegCaptchaResp}
+import io.suggest.id.reg.{MRegCaptchaReq, MRegTokenResp}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
@@ -37,7 +37,7 @@ trait ILoginApi {
     * @param form Данные формы, введённые юзером.
     * @return Фьючерс с ответом сервер.
     */
-  def epw2RegSubmit(form: MEpwRegCaptchaReq): Future[MEpwRegCaptchaResp]
+  def epw2RegSubmit(form: MRegCaptchaReq): Future[MRegTokenResp]
 
 }
 
@@ -75,7 +75,7 @@ class LoginApiHttp extends ILoginApi {
   }
 
 
-  override def epw2RegSubmit(form: MEpwRegCaptchaReq): Future[MEpwRegCaptchaResp] = {
+  override def epw2RegSubmit(form: MRegCaptchaReq): Future[MRegTokenResp] = {
     HttpClient.execute(
       HttpReq.routed(
         route = routes.controllers.Ident.epw2RegSubmit(),
@@ -95,7 +95,7 @@ class LoginApiHttp extends ILoginApi {
     )
       .respFut
       // И распарсить ответ:
-      .unJson[MEpwRegCaptchaResp]
+      .unJson[MRegTokenResp]
   }
 
 }

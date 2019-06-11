@@ -7,6 +7,7 @@ import io.suggest.lk.m.sms.MSmsCodeS
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -26,6 +27,9 @@ object MReg2SmsCode {
   }
 
   @inline implicit def univEq: UnivEq[MReg2SmsCode] = UnivEq.derive
+
+  val smsCode   = GenLens[MReg2SmsCode](_.smsCode)
+  val submitReq = GenLens[MReg2SmsCode](_.submitReq)
 
 }
 

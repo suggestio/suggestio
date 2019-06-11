@@ -1,29 +1,38 @@
 package util.captcha
 
 import java.io.ByteArrayOutputStream
+import java.nio.charset.StandardCharsets
 import java.time.{Instant, ZoneId, ZoneOffset}
-import java.util.Properties
+import java.util.{Properties, UUID}
 
 import akka.util.ByteString
 import com.google.code.kaptcha.Producer
 import com.google.code.kaptcha.impl.DefaultKaptcha
 import com.google.code.kaptcha.util.Config
+import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.mbill2.m.ott.{MOneTimeToken, MOneTimeTokens}
 import io.suggest.mbill2.util.effect
+import io.suggest.playx.CacheApiUtil
 import javax.inject.{Inject, Singleton}
-import io.suggest.sec.util.CipherUtil
+import io.suggest.sec.util.{CipherUtil, PgpUtil}
 import io.suggest.text.util.TextUtil
 import io.suggest.util.logs.MacroLogsImpl
 import javax.imageio.ImageIO
 import models.im.MCaptchaSecret
 import models.mproj.ICommonDi
+import org.apache.commons.io.IOUtils
 import play.api.data.Form
 import play.api.http.HeaderNames
 import play.api.mvc._
 import play.api.data.Forms._
+import play.api.libs.json.Json
 import util.FormUtil._
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
-import scala.util.Random
+import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.util.{Failure, Random, Success}
 
 /**
  * Suggest.io
@@ -48,13 +57,15 @@ object CaptchaUtil {
 @Singleton
 final class CaptchaUtil @Inject() (
                                     mOneTimeTokens              : MOneTimeTokens,
+                                    cacheApiUtil                : CacheApiUtil,
+                                    pgpUtil                     : PgpUtil,
                                     protected val cipherUtil    : CipherUtil,
                                     val mCommonDi               : ICommonDi,
                                   )
   extends MacroLogsImpl
 {
 
-  import mCommonDi.{configuration, ec}
+  import mCommonDi.{ec, slick}
 
   def CAPTCHA_IMG_FMT_LC = "png"
   def CAPTCHA_IMG_MIME = "image/" + CAPTCHA_IMG_FMT_LC
@@ -62,9 +73,8 @@ final class CaptchaUtil @Inject() (
   /** Кол-во цифр в цифровой капче (длина строки капчи). */
   def DIGITS_CAPTCHA_LEN = 5
 
-  val COOKIE_MAXAGE_SECONDS = configuration.getOptional[Int]("captcha.cookie.maxAge.seconds").getOrElse(1800)
-  val COOKIE_FLAG_SECURE = configuration.getOptional[Boolean]("captcha.cookie.secure")
-    .getOrElse( mCommonDi.current.injector.instanceOf[SessionCookieBaker].secure )
+  def COOKIE_MAXAGE_SECONDS = 1800
+  lazy val COOKIE_FLAG_SECURE = mCommonDi.current.injector.instanceOf[SessionCookieBaker].secure
 
   /** Маппер формы для hidden поля, содержащего id капчи. */
   def captchaIdM = nonEmptyText(maxLength = 16)
@@ -110,8 +120,6 @@ final class CaptchaUtil @Inject() (
     }
   }
 
-  def checkCaptcha2(captchaId: String, captchaTyped: String)(implicit request: RequestHeader): Boolean =
-    checkCaptcha2(captchaId -> captchaTyped)( ICaptchaGetter.PlainKvGetter, request )
   def checkCaptcha2[T](t: T)(implicit capGet: ICaptchaGetter[T], request: RequestHeader): Boolean = {
     val okFormOpt = for {
       captchaId       <- capGet.getCaptchaId(t)
@@ -164,9 +172,8 @@ final class CaptchaUtil @Inject() (
 
 
   /** Генерация текста цифровой капчи (n цифр от 0 до 9). */
-  def createCaptchaDigits(): String = {
+  def createCaptchaDigits(l: Int = DIGITS_CAPTCHA_LEN): String = {
     val rnd = new Random()
-    val l = DIGITS_CAPTCHA_LEN
     val sb = new StringBuilder(l)
     for(_ <- 1 to l)
       sb append rnd.nextInt(10)
@@ -255,6 +262,181 @@ final class CaptchaUtil @Inject() (
 
   def captchaTtl(dateCreated: Instant): Instant =
     dateCreated plusSeconds COOKIE_MAXAGE_SECONDS
+
+
+  /** Генерация id капчи. */
+  def mkCaptchaUid() = UUID.randomUUID()
+
+  /** Генерация новой капчи для uid.
+    *
+    * @param captchaUid id капчи.
+    * @return Ответ на капчу и png-картинка капчи.
+    */
+  def mkCaptcha(captchaUid: UUID): Future[(String, ByteString)] = {
+    cacheApiUtil.getOrElseFut(s"${captchaUid.getLeastSignificantBits % 8}.captcha.img", expiration = 2.seconds) {
+      val ctext1 = createCaptchaDigits()
+      val imgBytes1 = createCaptchaImg( ctext1 )
+      val res = (ctext1, imgBytes1)
+      Future.successful( res )
+    }
+  }
+
+
+  /** Собрать секрет капчи.
+    *
+    * @param captchaUid id капчи.
+    * @param captchaText Текст капчи.
+    * @return Фьючерс с секретом капчи.
+    */
+  def encodeCaptchaSecret(captchaUid: UUID, captchaText: String): Future[String] = {
+    // Получить собственный секретный ключ:
+    val pgpKeyFut = pgpUtil.getLocalStorKey()
+
+    val captchaSecret = MCaptchaSecret(
+      captchaUid  = captchaUid,
+      captchaText = captchaText,
+    )
+    val json = Json.toJson(captchaSecret).toString()
+
+    // Шифруем правильный ответ на капчу:
+    for (pgpKey <- pgpKeyFut) yield {
+      // Зашифровать всё с помощью PGP.
+      val baos = new ByteArrayOutputStream(1024)
+      val cipherText = try {
+        pgpUtil.encryptForSelf(
+          data = IOUtils.toInputStream(json, StandardCharsets.UTF_8),
+          key  = pgpKey,
+          out  = baos
+        )
+        new String(baos.toByteArray)
+      } finally {
+        // Это не нужно, но пусть будет, на случай, если в светлом далёком будущем это вдруг изменится.
+        baos.close()
+      }
+      // Можно убрать заголовок, финальную часть, переносы строк:
+      pgpUtil.minifyPgpMessage( cipherText )
+    }
+  }
+
+
+  def _captchaInvalidMsg = "captcha.invalid"
+
+  /** Валидация капчи на основе секрета
+    * - проверить соответствие присланной капчи с pgp-шифротекстом.
+    * - проверить токен по базе, и сохранить в БД использованный токен.
+    *
+    * @param captcha Данные капчи, присланные с клиента.
+    * @return Фьючерс с результатом валидации:
+    *         Left() - Код ошибки.
+    *         Right() - Выверенный секрет.
+    */
+  def validateAndMarkAsUsed(captcha: MCaptchaCheckReq): Future[Either[String, MCaptchaSecret]] = {
+    val now = Instant.now()
+    lazy val logPrefix = s"epw2RegSubmit()#${now.toEpochMilli}:"
+
+    if (captcha.typed.length !=* DIGITS_CAPTCHA_LEN) {
+      LOGGER.warn(s"$logPrefix Captcha len invalid: ${captcha.typed} expected=$DIGITS_CAPTCHA_LEN irl=${captcha.typed.length}")
+      Future.successful( Left(_captchaInvalidMsg) )
+
+    } else {
+      val ownSecretKeyFut = pgpUtil.getLocalStorKey()
+      val pgpSecret = pgpUtil.unminifyPgpMessage( captcha.secret )
+
+      for {
+
+        // Получить pgp-ключ на руки:
+        ownSecretKey <- ownSecretKeyFut
+
+        // Быстрые синхронные проверки секрета капчи:
+        captchaSecretEith = {
+          val baos = new ByteArrayOutputStream( 512 )
+          val captchaSecretJsonE = try {
+            pgpUtil.decryptFromSelf(
+              data = IOUtils.toInputStream( pgpSecret, StandardCharsets.UTF_8 ),
+              key  = ownSecretKey,
+              out  = baos,
+            )
+            Right( new String( baos.toByteArray ) )
+          } catch {
+            case ex: Throwable =>
+              // Не удалось расшифровать pgp-сообщение.
+              LOGGER.warn(s"$logPrefix Unable to parse pgp secret:\n $pgpSecret", ex)
+              Left( "Invalid request body" )
+          } finally {
+            baos.close()
+          }
+
+          captchaSecretJsonE
+            // Расшифровать присланный шифротекст капчи.
+            .right.flatMap { captchaSecretJson =>
+              Json
+                .parse( captchaSecretJson )
+                .validate[MCaptchaSecret]
+                .asEither
+                .left.map { jsonParseErrors =>
+                  // Should never happen: непарсится расшифрованный текст
+                  throw new IllegalArgumentException( s"$logPrefix Failed to parse decrypted JSON:\n $captchaSecretJson\n ${jsonParseErrors.mkString("\n ")}" )
+                }
+            }
+            // Сверить TTL секрета капчи:
+            .filterOrElse(
+              {captchaSecret =>
+                val dateEnd = captchaTtl( captchaSecret.dateCreated )
+                val r = dateEnd isAfter now
+                if (!r) LOGGER.warn(s"$logPrefix Expired captcha#${captchaSecret.captchaUid}, dateEnd=${dateEnd.atOffset(ZoneOffset.UTC)} now=${now.atOffset(ZoneOffset.UTC)}")
+                r
+              },
+              _captchaInvalidMsg
+            )
+            // Проверить соответствие введённой капчи и реальной.
+            .filterOrElse(
+              {captchaSecret =>
+                // Оставить только символы
+                val captchaTypedNorm = captcha.typed
+                  .replaceAll("\\s+", "")
+                // По идее, в капче только цифры, но вдруг это изменится - сравниваем через equalsIgnoreCase
+                val r = captchaSecret.captchaText equalsIgnoreCase captchaTypedNorm
+                if (r) LOGGER.trace(s"Captcha matched ok = $captchaTypedNorm")
+                else   LOGGER.warn(s"Captcha mismatch, typed=${captchaTypedNorm} expected=${captchaSecret.captchaText}")
+                r
+              },
+              _captchaInvalidMsg
+            )
+        }
+
+        // Капча проверена, но возможно, что она уже бывшая в употреблении. Надо провалидировать id капчи по базе токенов.
+        isOk <- captchaSecretEith.fold(
+          {_ =>
+            Future.successful(captchaSecretEith)
+          },
+          {capthaSecret =>
+            slick.db.run {
+              ensureCaptchaOtt( capthaSecret )
+            }
+              .transform {
+                case Failure(ex) =>
+                  LOGGER.warn(s"$logPrefix Captcha already used")
+                  LOGGER.trace("captcha verify error:", ex)
+                  Success( Left( "captcha.expired" ) )
+                case Success(_) =>
+                  LOGGER.trace(s"$logPrefix Captcha marked as USED")
+                  Success( captchaSecretEith )
+              }
+          }
+        )
+
+      } yield {
+        LOGGER.trace(s"$logPrefix Captcha checks done, result =\n $isOk")
+        isOk
+      }
+    }
+  }
+
+
+  // "Разогреть" подсистему генерации капчи, чтобы не было пауз при первом реальном вызове.
+  Future {
+    createCaptchaImg( createCaptchaDigits() )
+  }
 
 }
 

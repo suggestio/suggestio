@@ -1,15 +1,18 @@
 package io.suggest.id.login.c.reg
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.common.empty.OptionUtil
 import io.suggest.id.login.c.ILoginApi
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
-import io.suggest.id.login.m.{EpwRegCaptchaSubmitResp, RegBackClick, RegNextClick}
+import io.suggest.id.login.m.reg.step2.MReg2SmsCode
+import io.suggest.id.login.m.{RegBackClick, RegCaptchaSubmitResp, RegNextClick}
 import io.suggest.id.login.m.reg.{MRegS, MRegSteps}
-import io.suggest.id.reg.MEpwRegCaptchaReq
+import io.suggest.id.reg.{MRegCaptchaReq, MRegCreds0}
 import io.suggest.lk.m.CaptchaInit
 import io.suggest.lk.m.captcha.MCaptchaS
 import io.suggest.lk.m.input.MTextFieldS
+import io.suggest.lk.m.sms.MSmsCodeS
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
@@ -74,16 +77,20 @@ class RegAh[M](
             // Отработка состояния подформы капчи: отправить капчу-email-телефон на сервер.
             val timeStampMs = System.currentTimeMillis()
             val fx = Effect {
-              val formData = MEpwRegCaptchaReq(
-                email         = v0.s0Creds.email.value,
-                phone         = v0.s0Creds.phone.value,
-                captchaTyped  = captcha.typed.value,
-                captchaSecret = captcha.contentReq.get.secret,
+              val formData = MRegCaptchaReq(
+                creds0 = MRegCreds0(
+                  email = v0.s0Creds.email.value,
+                  phone = v0.s0Creds.phone.value,
+                ),
+                captcha = MCaptchaCheckReq(
+                  secret = captcha.contentReq.get.secret,
+                  typed  = captcha.typed.value
+                ),
               )
               loginApi
                 .epw2RegSubmit( formData )
                 .transform { tryResp =>
-                  Success( EpwRegCaptchaSubmitResp( timeStampMs, tryResp ) )
+                  Success( RegCaptchaSubmitResp( timeStampMs, tryResp ) )
                 }
             }
 
@@ -138,7 +145,7 @@ class RegAh[M](
 
 
     // Результат запроса регистрации.
-    case m: EpwRegCaptchaSubmitResp =>
+    case m: RegCaptchaSubmitResp =>
       val v0 = value
       if (v0.s1Captcha.submitReq isPendingWithStartTime m.tstamp) {
 
@@ -149,7 +156,7 @@ class RegAh[M](
             MRegS.s1Captcha.modify {
               MReg1Captcha.submitReq.modify( _.fail(ex) ) andThen
               MReg1Captcha.captcha
-                .composeTraversal(Traversal.fromTraverse[Option, MCaptchaS])
+                .composeTraversal( Traversal.fromTraverse[Option, MCaptchaS] )
                 .composeLens( MCaptchaS.typed )
                 .composeLens( MTextFieldS.isValid )
                 .set(false)
@@ -160,7 +167,10 @@ class RegAh[M](
             MRegS.s1Captcha
               .composeLens( MReg1Captcha.submitReq )
               .modify( _.ready(okResp) ) andThen
-            MRegS.step.set( MRegSteps.S2SmsCode )
+            MRegS.step.set( MRegSteps.S2SmsCode ) andThen
+            MRegS.s2SmsCode
+              .composeLens(MReg2SmsCode.smsCode)
+              .set( Some(MSmsCodeS.empty) )
           }
         )(v0)
 

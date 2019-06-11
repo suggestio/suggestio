@@ -1,6 +1,6 @@
 package models.sms
 
-import java.time.OffsetDateTime
+import java.time.Instant
 
 import monocle.macros.GenLens
 
@@ -24,7 +24,7 @@ object MSmsSend {
   */
 case class MSmsSend(
                      msgs     : Map[String, Seq[String]],
-                     timeAt   : Option[OffsetDateTime]  = None,
+                     timeAt   : Option[Instant]         = None,
                      from     : Option[String]          = None,
                      ttl      : Option[FiniteDuration]  = None,
                      translit : Boolean                 = false,
