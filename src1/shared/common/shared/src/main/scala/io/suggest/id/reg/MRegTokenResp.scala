@@ -28,5 +28,5 @@ object MRegTokenResp {
   *              или повторной отправкой смс-кода.
   */
 case class MRegTokenResp(
-                               token  : String,
-                             )
+                          token   : String,
+                        )

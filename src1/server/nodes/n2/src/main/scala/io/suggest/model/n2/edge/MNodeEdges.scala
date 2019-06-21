@@ -88,7 +88,8 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty with MacroLogsImpl {
               try {
                 jsObj.validate[MEdge].fold(
                   {err =>
-                    LOGGER.warn(s"Not parsed edge: error = $err\n $jsObj")
+                    // Бывает, что эджи содержат удалённые deprecated-предикаты. Они просто дропаются.
+                    LOGGER.debug(s"Not parsed edge:\n error = $err\n $jsObj")
                     Nil
                   },
                   {medge =>

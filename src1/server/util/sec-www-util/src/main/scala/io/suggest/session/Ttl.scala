@@ -48,9 +48,8 @@ sealed trait Ttl {
 
   def sessionValue: Option[String]
   def addToSessionAcc(acc0: List[(String, String)]): List[(String, String)] = {
-    sessionValue match {
-      case Some(v) => MSessionKeys.RememberMe.value -> v :: acc0
-      case None    => acc0
+    sessionValue.fold(acc0) { v =>
+      (MSessionKeys.RememberMe.value -> v) :: acc0
     }
   }
 

@@ -42,4 +42,17 @@ object Validators {
       .matches()
   }
 
+
+  /** Проверка валидности формата смс-кода, введённого юзером.
+    *
+    * @param smsCode Код из смс-сообщения.
+    * @return true, если строка похожа на смс-код.
+    */
+  def isSmsCodeValid(smsCode: String): Boolean = {
+    "^[0-9]{4,16}$".r
+      .pattern
+      .matcher(smsCode)
+      .matches()
+  }
+
 }

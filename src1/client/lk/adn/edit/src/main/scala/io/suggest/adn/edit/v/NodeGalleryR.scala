@@ -8,7 +8,6 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.frk.{MFormResourceKey, MFrkTypes}
 import io.suggest.lk.r.UploadStatusR
 import io.suggest.lk.r.img.{ImgEditBtnPropsVal, ImgEditBtnR}
-import io.suggest.model.n2.edge.MPredicates
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -49,7 +48,6 @@ class NodeGalleryR(
   }
 
 
-  val galPredSome = Some( MPredicates.GalleryItem )
   val imgsRowContCss = List( Css.Floatt.LEFT )
 
   /** Пропертисы кнопки добавления элемента сейчас являются константой. */

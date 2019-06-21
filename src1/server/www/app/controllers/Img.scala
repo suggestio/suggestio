@@ -19,7 +19,7 @@ import org.apache.commons.io.IOUtils
 import play.api.http.HttpEntity
 import play.api.libs.json.Json
 import play.api.mvc._
-import util.acl.{CanDynImg, MaybeAuth}
+import util.acl.{BruteForceProtect, CanDynImg, MaybeAuth}
 import util.captcha.CaptchaUtil
 import util.img.DynImgUtil
 
@@ -44,6 +44,7 @@ class Img @Inject() (
                       iMediaStorages                  : IMediaStorages,
                       maybeAuth                       : MaybeAuth,
                       sioCtlApi                       : SioControllerApi,
+                      bruteForceProtect               : BruteForceProtect,
                       mCommonDi                       : ICommonDi,
                     )
   extends MacroLogsImpl
@@ -256,7 +257,7 @@ class Img @Inject() (
     * @return Картинка + http-хидеры с id и ответом на капчу.
     */
   def getCaptcha = csrf.Check {
-    maybeAuth().async { implicit request =>
+    val _theAction = maybeAuth().async { implicit request =>
       val captchaUid = captchaUtil.mkCaptchaUid()
       val logPrefix = s"getCaptchaImg2()#${System.currentTimeMillis()}:"
       LOGGER.trace(s"$logPrefix for ${request.remoteClientAddress}, personId#${request.user.personIdOpt.orNull}")
@@ -284,6 +285,8 @@ class Img @Inject() (
           )
       }
     }
+
+    bruteForceProtect( _theAction )
   }
 
 }

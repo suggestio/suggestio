@@ -15,6 +15,7 @@ import io.suggest.mbill2.util.effect
 import io.suggest.playx.CacheApiUtil
 import javax.inject.{Inject, Singleton}
 import io.suggest.sec.util.{CipherUtil, PgpUtil}
+import io.suggest.streams.JioStreamsUtil
 import io.suggest.text.util.TextUtil
 import io.suggest.util.logs.MacroLogsImpl
 import javax.imageio.ImageIO
@@ -222,7 +223,7 @@ final class CaptchaUtil @Inject() (
     * @param captchaSecret id капчи.
     * @return Результат обработки.
     */
-  def ensureCaptchaOtt(captchaSecret: MCaptchaSecret): DBIOAction[_, NoStream, effect.RWT] = {
+  def ensureCaptchaOtt(captchaSecret: MCaptchaSecret): DBIOAction[MOneTimeToken, NoStream, effect.RWT] = {
     lazy val logPrefix = s"ensureCaptchaOtt(${captchaSecret.captchaUid}):"
     val dbAction = for {
       // Поискать в базе токен с текущем id капчи.
@@ -301,18 +302,7 @@ final class CaptchaUtil @Inject() (
     // Шифруем правильный ответ на капчу:
     for (pgpKey <- pgpKeyFut) yield {
       // Зашифровать всё с помощью PGP.
-      val baos = new ByteArrayOutputStream(1024)
-      val cipherText = try {
-        pgpUtil.encryptForSelf(
-          data = IOUtils.toInputStream(json, StandardCharsets.UTF_8),
-          key  = pgpKey,
-          out  = baos
-        )
-        new String(baos.toByteArray)
-      } finally {
-        // Это не нужно, но пусть будет, на случай, если в светлом далёком будущем это вдруг изменится.
-        baos.close()
-      }
+      val cipherText = JioStreamsUtil.stringIo[String]( json, 1024 )( pgpUtil.encryptForSelf(_, pgpKey, _) )
       // Можно убрать заголовок, финальную часть, переносы строк:
       pgpUtil.minifyPgpMessage( cipherText )
     }
@@ -330,7 +320,7 @@ final class CaptchaUtil @Inject() (
     *         Left() - Код ошибки.
     *         Right() - Выверенный секрет.
     */
-  def validateAndMarkAsUsed(captcha: MCaptchaCheckReq): Future[Either[String, MCaptchaSecret]] = {
+  def validateAndMarkAsUsed(captcha: MCaptchaCheckReq): Future[Either[String, (MCaptchaSecret, MOneTimeToken)]] = {
     val now = Instant.now()
     lazy val logPrefix = s"epw2RegSubmit()#${now.toEpochMilli}:"
 
@@ -369,6 +359,7 @@ final class CaptchaUtil @Inject() (
           captchaSecretJsonE
             // Расшифровать присланный шифротекст капчи.
             .right.flatMap { captchaSecretJson =>
+              LOGGER.info(s"$logPrefix Captcha secret = $captchaSecretJson")
               Json
                 .parse( captchaSecretJson )
                 .validate[MCaptchaSecret]
@@ -406,8 +397,8 @@ final class CaptchaUtil @Inject() (
 
         // Капча проверена, но возможно, что она уже бывшая в употреблении. Надо провалидировать id капчи по базе токенов.
         isOk <- captchaSecretEith.fold(
-          {_ =>
-            Future.successful(captchaSecretEith)
+          {emsg =>
+            Future.successful( Left(emsg) )
           },
           {capthaSecret =>
             slick.db.run {
@@ -418,9 +409,10 @@ final class CaptchaUtil @Inject() (
                   LOGGER.warn(s"$logPrefix Captcha already used")
                   LOGGER.trace("captcha verify error:", ex)
                   Success( Left( "captcha.expired" ) )
-                case Success(_) =>
+                case Success(mott) =>
                   LOGGER.trace(s"$logPrefix Captcha marked as USED")
-                  Success( captchaSecretEith )
+                  val r2 = Right( capthaSecret -> mott )
+                  Success( r2 )
               }
           }
         )

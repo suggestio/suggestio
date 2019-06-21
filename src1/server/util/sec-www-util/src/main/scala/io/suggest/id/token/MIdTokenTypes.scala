@@ -14,7 +14,7 @@ import play.api.libs.json.Format
 object MIdTokenTypes extends StringEnum[MIdTokenType] {
 
   /** Токен проверки смс-кодом. */
-  case object PhoneCheck extends MIdTokenType("p")
+  case object IdentVerify extends MIdTokenType("p")
 
   override val values = findValues
 

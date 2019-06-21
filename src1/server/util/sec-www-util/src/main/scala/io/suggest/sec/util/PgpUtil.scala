@@ -1,7 +1,6 @@
 package io.suggest.sec.util
 
 import java.io.{ByteArrayOutputStream, InputStream, OutputStream}
-import java.nio.charset.StandardCharsets
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.EsModel
@@ -10,7 +9,7 @@ import io.suggest.util.logs.MacroLogsDyn
 import io.trbl.bcpg.{KeyFactory, KeyFactoryFactory, SecretKey}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.playx.CacheApiUtil
-import org.apache.commons.io.IOUtils
+import io.suggest.streams.JioStreamsUtil
 import play.api.Configuration
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -126,20 +125,11 @@ class PgpUtil @Inject() (
 
     // "Разогреть" в фоне bcpg, чтобы не было возможных пауз при первом реальном вызове.
     for (secretKey <- fut) yield {
-      val baos = new ByteArrayOutputStream(10)
-      try {
-        encryptForSelf(
-          data = IOUtils.toInputStream("test test test", StandardCharsets.UTF_8),
-          key  = secretKey,
-          out  = baos
-        )
-      } finally {
-        // Это не нужно, но пусть будет, на случай, если в светлом далёком будущем это вдруг изменится.
-        baos.close()
-      }
+      JioStreamsUtil.stringIo[ByteArrayOutputStream]("test", 512)( encryptForSelf(_, secretKey, _) )
       secretKey
     }
   }
+
 
 
   /**

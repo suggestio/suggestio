@@ -1,25 +1,28 @@
 package controllers
 
-import java.io.ByteArrayOutputStream
-import java.nio.charset.StandardCharsets
 import java.time.Instant
+import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
 import controllers.ident._
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.MsgCodes
+import io.suggest.id.IdentConst
 import io.suggest.id.login.{ILoginFormPages, MEpwLoginReq}
-import io.suggest.id.reg.{MRegCaptchaReq, MRegTokenResp}
-import io.suggest.id.token.{MIdMessage, MIdMessageData, MIdToken, MIdTokenInfo, MIdTokenTypes}
+import io.suggest.id.reg.{MCodeFormData, MCodeFormReq, MRegCaptchaReq, MRegTokenResp}
+import io.suggest.id.token.{MIdMsg, MIdToken, MIdTokenConstaints, MIdTokenDates, MIdTokenTypes}
 import io.suggest.init.routed.MJsInitTargets
+import io.suggest.mbill2.m.ott.MOneTimeTokens
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.csp.Csp
 import io.suggest.sec.util.{PgpUtil, ScryptUtil}
 import io.suggest.session.{LongTtl, MSessionKeys, ShortTtl, Ttl}
+import io.suggest.streams.JioStreamsUtil
 import io.suggest.text.Validators
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.ueq.UnivEqUtil._
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.usr._
@@ -27,7 +30,7 @@ import play.api.data.validation.{Constraints, Valid}
 import util.acl._
 import util.adn.NodesUtil
 import util.captcha.CaptchaUtil
-import util.ident.IdentUtil
+import util.ident.{IdTokenUtil, IdentUtil}
 import util.mail.IMailerWrapper
 import io.suggest.ueq.UnivEqUtilJvm._
 import views.html.ident._
@@ -37,14 +40,16 @@ import views.html.ident.recover.emailPwRecoverTpl
 import views.html.lk.login._
 import japgolly.univeq._
 import models.im.MCaptchaSecret
-import models.sms.MSmsSend
-import org.apache.commons.io.IOUtils
+import models.sms.{ISmsSendResult, MSmsSend}
 import play.api.libs.json.Json
+import play.api.mvc.Result
 import util.sec.CspUtil
 import util.sms.SmsSendUtil
 
+import scala.collection.immutable.ListMap
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.{Success, Try}
 
 /**
  * Suggest.io
@@ -72,6 +77,8 @@ class Ident @Inject() (
                         pgpUtil                           : PgpUtil,
                         cspUtil                           : CspUtil,
                         smsSendUtil                       : SmsSendUtil,
+                        mOneTimeTokens                    : MOneTimeTokens,
+                        idTokenUtil                       : IdTokenUtil,
                         override val canRecoverPw         : CanRecoverPw,
                         override val isAnon               : IsAnon,
                         override val isAuth               : IsAuth,
@@ -89,6 +96,7 @@ class Ident @Inject() (
 
   import mCommonDi._
   import sioControllerApi._
+  import slick.profile.api._
 
   /** Длина смс-кодов (кол-во цифр). */
   def SMS_CODE_LEN = 5
@@ -254,7 +262,52 @@ class Ident @Inject() (
   }
 
 
-  /** Экшен сабмита react-формы регистрации по паролю.
+  private def _genSmsCode() = captchaUtil.createCaptchaDigits(5)
+
+
+  /** Отправка смс с кодом проверки. */
+  private def _sendIdCodeSms(phoneNumber: String, smsCode: String, ctx: Context) = {
+    smsSendUtil.smsSend(
+      MSmsSend(
+        msgs = Map(
+          phoneNumber -> (ctx.messages( MsgCodes.`Registration.code`, smsCode ) :: Nil)
+        ),
+        ttl       = Some( 10.minutes ),
+        translit  = false,
+      )
+    )
+  }
+
+  /** Конвертация отправленных смс'ок в id-msgs. */
+  private def _sendSmsRes2IdMsgs(phoneNumber: String, smsCode: String, now: Instant, smsSendRes: Seq[ISmsSendResult]) = {
+    (for {
+      r <- smsSendRes.iterator
+      (smsRuPhoneNumber, sentStatus) <- r.smsInfo.headOption
+      //if sentStatus.isOk  // Плевать на ошибку, возможно какой-то спам-фильтр сработал или что-то ещё.
+    } yield {
+      if (!sentStatus.isOk)
+        LOGGER.warn(s"_sendSmsRes2IdMsgs($phoneNumber): Looks like, sms to $smsRuPhoneNumber was NOT sent.")
+      MIdMsg(
+        rcptType  = MPredicates.Ident.Phone,
+        rcpt      = Set( phoneNumber, smsRuPhoneNumber ),
+        sentAt    = now,
+        msgId     = sentStatus.smsId,
+        checkCode = smsCode,
+      )
+    })
+      .toList
+  }
+
+
+  private def _tokenResp(token: String) = {
+    val respBody = MRegTokenResp(
+      token = token
+    )
+    Ok( Json.toJson(respBody) )
+  }
+
+
+  /** Экшен сабмита react-формы регистрации по паролю: шаг капчи.
     * В теле - JSON.
     *
     * @return 200 OK + JSON, или ошибка.
@@ -263,10 +316,10 @@ class Ident @Inject() (
     val now = Instant.now()
     lazy val logPrefix = s"epw2RegSubmit()#${now.toEpochMilli}:"
 
-    isAnon().async[(MRegCaptchaReq, MCaptchaSecret)] {
+    val _theAction = isAnon().async {
       parse
         .json[MRegCaptchaReq]
-        // Начать с синхронной валидации данных:
+        // Начать с синхронной валидации присланных данных. Делаем это прямо тут, хотя по логике оно должно жить в теле экшена.
         .validate { epwReg =>
           // Проверить валидность email:
           val vldRes = Constraints.emailAddress.apply( epwReg.creds0.email )
@@ -289,111 +342,98 @@ class Ident @Inject() (
             }
           )
         }
-        // Отработать проверку капчи:
-        .validateM { epwReg =>
-          for {
-            // TODO Сайд-эффект: транзакция с блокировкой одноразового токена текущей капчи.
-            vldRes <- captchaUtil.validateAndMarkAsUsed( epwReg.captcha )
-          } yield {
-            vldRes
-              .left.map { NotAcceptable(_) }
-              .right.map { captchaSecret =>
-                (epwReg, captchaSecret)
-              }
-          }
-        }
-
     } { implicit request =>
-      val (mreg, _) = request.body
-      LOGGER.trace(s"$logPrefix email=${mreg.creds0.email} capTyped=${mreg.captcha.typed}")
+      LOGGER.trace(s"$logPrefix email=${request.body.creds0.email} capTyped=${request.body.captcha.typed}")
 
-      // Проверки выполнены. Причесать исходные данные:
-      val creds02 = mreg.creds0.copy(
-        email = mreg.creds0
-          .email
-          .trim
-          .toLowerCase(),
-        // TODO Задействовать libphonenumber или что-то этакое.
-        phone = mreg.creds0.phone.trim,
-      )
+      implicit lazy val ctx = implicitly[Context]
 
-      // Отправить смс с кодом проверки.
-      val smsCode = captchaUtil.createCaptchaDigits(5)
-
-      implicit val ctx = implicitly[Context]
-
-      val smsSendResFut = smsSendUtil.smsSend(
-        MSmsSend(
-          msgs = Map(
-            creds02.phone -> (ctx.messages( MsgCodes.`Registration.code`, smsCode ) :: Nil)
-          ),
-          ttl       = Some( 10.minutes ),
-          translit  = false,
-        )
-      )
-      val pgpKeyFut = pgpUtil.getLocalStorKey()
-
-      val idTokPayload = Json.toJson( creds02 )
-
-      // TODO Проверка капчи выполнена - вернуть токен для дальнейшей валидации смс-кода.
       for {
+        // Проверить капчу, сразу отметив её в базе, как использованную:
+        captchaVldRes <- captchaUtil.validateAndMarkAsUsed( request.body.captcha )
+
+        pgpKeyFut = pgpUtil.getLocalStorKey()
+
+        // Убедится, что капча проверена успешно:
+        (_, mott0) = captchaVldRes
+          .left.map { emsg =>
+            throw new IllegalArgumentException(emsg)
+          }
+          .right.get
+
+        creds02 = request.body.creds0.copy(
+          email = request.body.creds0
+            .email
+            .trim
+            .toLowerCase(),
+          // TODO Задействовать libphonenumber или что-то этакое.
+          phone = request.body.creds0.phone.trim,
+        )
+
+        // Отправить смс с кодом проверки.
+        smsCode = _genSmsCode()
+
+        // Запуск отправки смс-кода в фоне.
+        smsSendResFut = _sendIdCodeSms(
+          phoneNumber = creds02.phone,
+          smsCode     = smsCode,
+          ctx         = ctx
+        )
+
+        idTokPayload = Json.toJson( creds02 )
+
         smsSendRes <- smsSendResFut
 
         idToken = {
-          for (r <- smsSendRes.iterator; balance <- r.restBalance)
-            LOGGER.info(s"$logPrefix New balance => $balance ${r.requestId.getOrElse("")}")
-
           MIdToken(
-            typ       = MIdTokenTypes.PhoneCheck,
-            info      = MIdTokenInfo(
-              idMsgs = (for {
-                r <- smsSendRes.iterator
-                (smsRuPhoneNumber, sentStatus) <- r.smsInfo.headOption
-                //if sentStatus.isOk  // Плевать на ошибку, возможно какой-то спам-фильтр сработал или что-то ещё.
-              } yield {
-                if (!sentStatus.isOk)
-                  LOGGER.warn(s"$logPrefix Looks like, sms to $smsRuPhoneNumber was NOT sent.")
-                MIdMessage(
-                  rcptType = MPredicates.Ident.Phone,
-                  rcpt     = Set( creds02.phone, smsRuPhoneNumber ),
-                  messages = MIdMessageData(
-                    sentAt = Instant.now(),
-                    msgId  = sentStatus.smsId,
-                    checkCode = smsCode
-                  ) :: Nil
-                )
-              })
-                .toList
+            typ    = MIdTokenTypes.IdentVerify,
+            idMsgs = _sendSmsRes2IdMsgs(
+              phoneNumber = creds02.phone,
+              smsCode     = smsCode,
+              now         = now,
+              smsSendRes  = smsSendRes,
             ),
             payload   = idTokPayload,
+            // Токен только для анонимуса.
+            constraints = MIdTokenConstaints(
+              personIdsC = Some( Set.empty ),
+              // TODO sessionId задать здесь, чтобы привязать токен к сессии.
+            ),
+            dates = MIdTokenDates(
+              ttlSeconds = IdentConst.Reg.ID_TOKEN_VALIDITY_SECONDS,
+            )
           )
         }
 
         idTokenJsonStr = Json.toJson( idToken ).toString()
 
+        // Обновление токен
+        mott2 = mott0.copy(
+          dateEnd = now plusSeconds IdentConst.Reg.ID_TOKEN_VALIDITY_SECONDS,
+          info    = Some(idTokenJsonStr),
+        )
+
+        // 2019.06.20 Из-за переусложнения схемы токена, решено просто сохранять его в ott.info, а при проверке смс-кода оттуда же брать и там же обновлять.
+        // На клиенте, после прохождения капчи, держать только "указатель" на токен - защищённый/зашифрованный id-токена в базе.
+        _ <- slick.db.run {
+          val dbAction = for {
+            countUpdated <- mOneTimeTokens.updateExisting( mott2 )
+            if countUpdated ==* 1
+          } yield {
+            None
+          }
+          dbAction.transactionally
+        }
+
         // Надо зашифровать id-токен, чтобы передать на руки юзеру для дальнейших шагов регистрации
         pgpKey <- pgpKeyFut
 
       } yield {
-        // Зашифровать всё с помощью PGP.
-        val baos = new ByteArrayOutputStream(1024)
-        val cipherText = try {
-          pgpUtil.encryptForSelf(
-            data = IOUtils.toInputStream(idTokenJsonStr, StandardCharsets.UTF_8),
-            key  = pgpKey,
-            out  = baos
-          )
-          new String(baos.toByteArray)
-        } finally {
-          // Это не нужно, но пусть будет, на случай, если в светлом далёком будущем это вдруг изменится.
-          baos.close()
-        }
+        // Зашифровать и подписать id сохранённого токена:
+        val cipherText = JioStreamsUtil.stringIo[String]( idToken.ott.toString, 512 )( pgpUtil.encryptForSelf(_, pgpKey, _) )
 
-        val resp = MRegTokenResp(
+        _tokenResp(
           token = pgpUtil.minifyPgpMessage( cipherText )
         )
-
-        Ok( Json.toJson(resp) )
       }
 
       /*for {
@@ -460,16 +500,243 @@ class Ident @Inject() (
           )
       }*/
     }
+
+    bruteForceProtect( _theAction )
   }
 
 
-  /** Возврат из регистрации или восстановления пароля.
+  /** Экшен проверки смс-кода, получает токен с выверенной капчей и запросом смс-кода,
+    * возвращает токен с проверенным кодом или ошибку.
     *
-    * @param qs Данные регистрации или восстановления пароля.
-    * @return Экшен, рендерящий react-форму окончания регистрации.
+    * @return JSON с токеном проверки.
     */
-  def epwReturn(qs: MEmailRecoverQs) = csrf.Check {
-    ???
+  def smsCodeCheck() = csrf.Check {
+    val now = Instant.now()
+    lazy val logPrefix = s"smsCodeCheck()#${now.toEpochMilli}:"
+    lazy val pgpKeyFut = pgpUtil.getLocalStorKey()
+
+    val _theAction = isAnon().async {
+      parse
+        .json[MCodeFormReq]
+        .validate { smsReq =>
+          Either.cond(
+            test  = smsReq.formData match {
+              case MCodeFormData(Some(smsCode), false) =>
+                Validators.isSmsCodeValid( smsCode )
+              case MCodeFormData(None, true) =>
+                true
+              case _ =>
+                false
+            },
+            right = smsReq,
+            left  = {
+              LOGGER.debug(s"$logPrefix Invalid smsCode format: ${smsReq.formData}")
+              NotAcceptable("sms.code.invalid")
+            }
+          )
+        }
+        // И расшифровать присланные данные токена:
+        .validateM { smsReq =>
+          val fut0 = for (pgpKey <- pgpKeyFut) yield {
+            val ottIdStr = JioStreamsUtil.stringIo[String]( smsReq.token )( pgpUtil.decryptFromSelf(_, pgpKey, _) )
+            val ottId = UUID.fromString( ottIdStr )
+            LOGGER.debug(s"$logPrefix Found token ID#$ottId")
+            (smsReq, ottId)
+          }
+          fut0.transform { tryRes =>
+            val resE = tryRes
+              .toEither
+              .left.map { ex =>
+                LOGGER.error(s"$logPrefix Unabled to decrypt/parse token", ex)
+                NotAcceptable("invalid")
+              }
+            Success( resE )
+          }
+        }
+    } { implicit request =>
+      // Проверить токен по базе.
+      val (smsReq, ottId) = request.body
+
+      implicit lazy val ctx = implicitly[Context]
+
+      // TODO Наверное, надо организовать DB-транзакцию, в которой и проводить все проверки с обновлением токена.
+      val dbActionTxn = for {
+        // Достать токен по id из базы биллиннга:
+        mottOpt0 <- mOneTimeTokens.getById( ottId ).forUpdate
+        mott0 = mottOpt0.get
+        if !(mott0.dateEnd isBefore now)
+
+        idTokenCipherText = mott0.info.get
+
+        // Ключ уже получен на стадии BodyParser'а, поэтому паузы тут особо не будет.
+        pgpKey <- DBIO.from( pgpKeyFut )
+
+        // Расшифровать id-токен
+        idToken0 = {
+          val idTokenStr = JioStreamsUtil.stringIo[String]( idTokenCipherText, 1024 )( pgpUtil.decryptFromSelf(_, pgpKey, _) )
+          Json
+            .parse(idTokenStr)
+            .as[MIdToken]
+        }
+
+        // Убедиться, что тип токена соответствует ожиданиям ident-токена.
+        if (idToken0.typ ==* MIdTokenTypes.IdentVerify) &&
+           !(idToken0.dates.bestBefore isBefore now) &&
+           idTokenUtil.isConstaintsMeetRequest(idToken0) &&
+           // капча должна быть уже выверена:
+           idToken0.idMsgs.exists { idMsg =>
+             (idMsg.rcptType ==* MPredicates.JdContent.Image) &&
+             idMsg.validated.nonEmpty
+           }
+
+        // Собрать данные по отправленным смс-кам из токена.
+        smsRcptType = MPredicates.Ident.Phone
+        smsMsgs = idToken0.idMsgs
+          .filter(_.rcptType ==* smsRcptType)
+
+        if {
+          val r = smsMsgs.nonEmpty
+          if (!r) LOGGER.error(s"$logPrefix IdToken does NOT contain sms-messages.")
+          r
+        }
+
+        // Запретить дальнейшую обработку, если было слишком много ошибок.
+        if {
+          val tooManyErrors = !smsMsgs.exists( _.errorsCount > 10 )
+          if (tooManyErrors) LOGGER.warn(s"$logPrefix Suppressed bruteforce: too many errors were:\n ${smsMsgs.mkString(",\n ")}")
+          !tooManyErrors
+        }
+
+        // Дальше кусок непосредственно перемалывания смс-формы.
+        // Найти текущее состояние проверяемого смс-кода :
+        httpResp <- {
+          val someNow = Some(now)
+          val frFut: Future[(MIdToken => MIdToken, Result)] = smsReq.formData match {
+
+            // Юзер ввёл код и отправил его на проверку.
+            case MCodeFormData(Some(codeTyped), _) =>
+              val fr = smsMsgs
+                .find(_.checkCode ==* codeTyped)
+                .fold [(MIdToken => MIdToken, Result)] {
+                  // Не совпал код из смс. Выставить ошибку в id-token для смс.
+                  LOGGER.debug(s"$logPrefix Invalid sms-code typed by user: $codeTyped expected, but should be ${smsMsgs.iterator.map(_.checkCode).mkString(", ")}")
+                  val f = MIdToken.idMsgs.modify { idMsgs0 =>
+                    for (msg0 <- idMsgs0) yield {
+                      msg0.rcptType match {
+                        case MPredicates.Ident.Phone if msg0.validated.isEmpty =>
+                          MIdMsg.errorsCount
+                            .modify(_ + 1)( msg0 )
+                        case _ => msg0
+                      }
+                    }
+                  }
+                  val r = NotAcceptable("error.invalid")
+                  (f, r)
+                } { smsFound =>
+                  // Смс-код совпал с ожидаемым. Обновить id-токен, вернуть положительный ответ.
+                  LOGGER.debug(s"$logPrefix SMS code '$codeTyped' matched ok: $smsFound")
+                  val f = MIdToken.idMsgs.modify { idMsgs0 =>
+                    for (msg0 <- idMsgs0) yield {
+                      if (msg0 ===* smsFound) {
+                        // Это смс было выверено, код совпал. Обновить состояние.
+                        MIdMsg.validated.set( Some(now) )(msg0)
+                      } else msg0
+                    }
+                  }
+                  val r = _tokenResp(
+                    token = smsReq.token
+                  )
+                  (f, r)
+                }
+
+              Future.successful(fr)
+
+            // Команда к повторной отправке смс.
+            case MCodeFormData(_, true) =>
+              if (smsMsgs.length >= 3)
+                throw new IllegalArgumentException("error.too.many")
+              // Надо узнать, достаточно ли времени прошло с момента прошлой отсылки смс.
+              val lastSmsMsg = smsMsgs.maxBy(_.sentAt)
+              val canReSendAt = lastSmsMsg.sentAt plusSeconds IdentConst.Reg.SMS_CAN_RE_SEND_AFTER_SECONDS
+              if ( canReSendAt isBefore now )
+                throw new IllegalArgumentException("error.too.fast")
+
+              // Можно переслать смску.
+              val smsCode = smsMsgs
+                .iterator
+                .map(_.checkCode)
+                .buffered
+                .headOption
+                .getOrElse( _genSmsCode() )
+
+              val phoneNumber = smsMsgs
+                .iterator
+                .flatMap(_.rcpt)
+                .next()
+
+              // Запуск повторной отправки смс.
+              for {
+                sendRes <- _sendIdCodeSms(
+                  phoneNumber = phoneNumber,
+                  smsCode     = smsCode,
+                  ctx         = ctx
+                )
+              } yield {
+                // Нужно собрать обновлённый токен на основе результатов отправки:
+                val newIdMsgs = _sendSmsRes2IdMsgs(
+                  phoneNumber = phoneNumber,
+                  smsCode     = smsCode,
+                  now         = now,
+                  smsSendRes  = sendRes,
+                )
+                val f = MIdToken.idMsgs.modify( newIdMsgs ++ _)
+                val r = _tokenResp( smsReq.token )
+                (f, r)
+              }
+
+            case other =>
+              // Should never happen: непровалидированные данные попали в обработку.
+              throw new IllegalStateException(s"$logPrefix Invalid sms-req data, should be already filtered out in BodyParser: $other")
+          }
+
+          // накатить изменения и вернуть результат работы
+          for {
+            (idTokenMod, result) <- DBIO.from( frFut )
+
+            // Собрать обновлённый токен: увеличить счётчик смс-ошибок, обновить дату последней модификации.
+            idToken2 = (
+              idTokenMod andThen
+              MIdToken.dates
+                .composeLens( MIdTokenDates.modified )
+                .set( someNow )
+            )( idToken0 )
+
+            // Сохранить в базу обновлённый токен.
+            countUpdated <- mOneTimeTokens.updateExisting {
+              mott0.copy(
+                dateEnd = now plusSeconds IdentConst.Reg.ID_TOKEN_VALIDITY_SECONDS,
+                info    = Some( Json.toJson(idToken2).toString() )
+              )
+            }
+            if countUpdated ==* 1
+          } yield {
+            result
+          }
+        }
+
+      } yield {
+        httpResp
+      }
+
+      slick.db
+        .run( dbActionTxn.transactionally )
+        .recover { case ex: Throwable =>
+          LOGGER.error(s"$logPrefix Failed to check/validate sms-code.", ex)
+          NotAcceptable("error.invalid")
+        }
+    }
+
+    bruteForceProtect( _theAction )
   }
 
 }

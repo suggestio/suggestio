@@ -109,6 +109,9 @@ case object RegPhoneBlur extends ILoginFormAction
 /** Ответ от результата сабмита формы регистрации по паролю. */
 case class RegCaptchaSubmitResp(tstamp: Long, resp: Try[MRegTokenResp]) extends ILoginFormAction
 
+/** Ответ по поводу проверки смс-кода. */
+case class RegSmsCheckResp(tstamp: Long, tryResp: Try[MRegTokenResp]) extends ILoginFormAction
+
 
 /** Нажимание кнопки "Далее" в форме регистрации. */
 case object RegNextClick extends ILoginFormAction

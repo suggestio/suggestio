@@ -1,5 +1,6 @@
 package io.suggest.routes
 
+import io.suggest.id.reg.MCodeFormReq
 import io.suggest.js.JsRoutesConst.GLOBAL_NAME
 import io.suggest.proto.http.model.Route
 import japgolly.univeq.UnivEq
@@ -137,6 +138,8 @@ sealed trait IdentCtlRoutes extends js.Object {
   def epw2RegSubmit(): Route = js.native
 
   def idViaProvider(extServiceId: String, r: js.UndefOr[String] = js.undefined): Route = js.native
+
+  def smsCodeCheck(): Route = js.native
 
 }
 

@@ -32,42 +32,6 @@ object MPredicates extends StringEnum[MPredicate] {
   case object CreatedBy extends MPredicate("d")
 
 
-  /** Указание на картинку-логотип узла-учреждения.  */
-  @deprecated("Use JdContent.Image instead", "2018-04-20")
-  case object Logo extends MPredicate("e")
-
-
-  /** Ребро указывает на родительский узел в географическом смысле.
-    * Не обязательно это прямой гео-родитель. */
-  @deprecated("Delete it after MNode.resaveMany()", "2018-08-31")
-  case object GeoParent extends MPredicate("f") {
-
-    /** Предикат прямого гео-родителя. */
-    @deprecated("Delete it after MNode.resaveMany()", "2018-08-31")
-    case object Direct extends MPredicate("g") with _Child
-
-    override def children: List[MPredicate] = {
-      Direct :: super.children
-    }
-
-  }
-
-
-  /** Предикат, указывающий на логотип карточки приветствия.
-    *
-    * Изначально предикат назывался NodeWelcomeAdIs и хранил в себе id карточки приветствия в MWelcomeAd.
-    * После ветки root:mad-to-n2 предикат стал использоваться для указания на логотип приветствия.
-    * а неудавшаяся модель карточки приветствия окончательно отмерла.
-    */
-  @deprecated("Use JdContent.Image instead", "2018-04-20")
-  case object WcFgImg extends MPredicate("h")
-
-
-  /** Предикат, направляемый в сторону картинки или иного объекта, являющегося предметом галлереи. */
-  @deprecated("Use JdContent.Image instead", "2018-04-20")
-  case object GalleryItem extends MPredicate("i")
-
-
   /** Предикат на юзера, выполнившего модерацию текущего узла.
     * Такой эдж модерации должен содержать инфу о результате модерации. */
   case object ModeratedBy extends MPredicate("j")
@@ -111,11 +75,6 @@ object MPredicates extends StringEnum[MPredicate] {
     }
 
   }
-
-
-  /** Фоновый объект по отношению к текущему объекту. */
-  @deprecated("Not used, used for old ads. Remove it after AdnJdEdgesMigration.", "2018-04-20")
-  case object Bg extends MPredicate("m")
 
 
   /**
@@ -249,7 +208,7 @@ object MPredicate {
         val p = implicitly[Writes[MPredicate]]
         val preds = mpred
           .meAndParentsIterator
-          .map { p.writes }
+          .map( p.writes )
           .toSeq
         JsArray( preds )
       }

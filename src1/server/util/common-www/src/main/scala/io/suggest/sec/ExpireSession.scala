@@ -28,8 +28,6 @@ import scala.language.higherKinds
   * Можно использовать так:
   * - Прописать один глобальный play-фильтр [[ExpireSessionFilter]] и забыть про эту подсистему.
   * - Без фильтра: везде втыкать action, как было раньше с трейтом.
-  *
-  * 2019-03-28: Реф
   */
 
 
@@ -46,18 +44,11 @@ class ExpireSessionUtil @Inject() (
   def GUESS_SESSION_AS_FRESH_SECONDS = 30
 
   /** Ключи в session, которые нужно удалять при любой проблеме с TTL. */
-  val filteredKeySet = {
-    MSessionKeys.onlyLoginIter
+  def CLEAR_SESSION_FILTER_KEYS: Seq[String] = {
+    MSessionKeys
+      .onlyLoginIter
       .map(_.value)
-      .toSet
-  }
-
-  def clearSessionLoginData(session0: Session): Session = {
-    session0.copy(
-      data = session0
-        .data
-        .filterKeys { k => !filteredKeySet.contains(k) }
-    )
+      .toSeq
   }
 
 
@@ -76,7 +67,6 @@ class ExpireSessionUtil @Inject() (
   /** Общий код prepare-части обработки исходного HTTP-запроса.
     *
     * @param rh0 Исходный реквест.
-    * @param addAttrF Функция вызова addAttr(), возвращающая T.
     * @tparam T Тип реквеста.
     * @return Обновлённый или исходный реквест.
     */
@@ -106,9 +96,10 @@ class ExpireSessionUtil @Inject() (
     if (tstampOpt.isEmpty) {
       // Нет никакого timestamp'а в сессии. Убедиться, что в передаваемой в экшен сессии нет login-данных.
       // С учётом малых объемов данных, это быстрая read-only проверка:
-      if ( session0.data.keysIterator.exists( filteredKeySet.contains ) ) {
+      val clearSessionKeys = CLEAR_SESSION_FILTER_KEYS
+      if ( session0.data.keysIterator.exists( clearSessionKeys.contains ) ) {
         // Внезапно, в сессии без TTL обнаружились какие-то важные данные. Пока просто ругаться в логи.
-        val session2 = clearSessionLoginData(session0)
+        val session2 = session0 -- clearSessionKeys
         LOGGER.error(s"$logPrefix Session without TTL contains login data! Re-cleared session data:\n old session = ${session0.data}\n new session = $session2")
         session2
       } else {
@@ -131,7 +122,7 @@ class ExpireSessionUtil @Inject() (
       } else {
         // Таймштамп истёк -- стереть из сессии таймштамп и username, вернуть обновлённую сессию.
         LOGGER.trace(s"$logPrefix Clearing expired session for person ${session0.get(PersonId.value)}")
-        clearSessionLoginData(session0)
+        session0 -- CLEAR_SESSION_FILTER_KEYS
       }
     }
   }
@@ -166,8 +157,8 @@ class ExpireSessionUtil @Inject() (
           result
         } else {
           // Выставить новый timestamp, пересобрав/переподписав сессию:
-          val session1 = ts.withTstamp(currTstamp)
-            .addToSession(session0)
+          var sessionKeys = ts.withTstamp(currTstamp).toSessionKeys
+          val session1 = session0 ++ sessionKeys
           result.withSession(session1)
         }
       }

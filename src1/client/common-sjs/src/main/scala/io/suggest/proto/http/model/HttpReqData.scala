@@ -33,7 +33,8 @@ object HttpReqData {
     HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_JSON
   )
 
-  def headersBinarySendAccept = _headersSendAccept( MimeConst.APPLICATION_OCTET_STREAM )
+  def headersBinarySendAccept =
+    headersSendAccept( MimeConst.APPLICATION_OCTET_STREAM )
   def headersBinarySend = Map(
     HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_OCTET_STREAM
   )
@@ -46,13 +47,15 @@ object HttpReqData {
   )
 
   /** Хидеры, обозначающие что отсылается json и ожидается json в ответ. */
-  def headersJsonSendAccept = _headersSendAccept(MimeConst.APPLICATION_JSON)
-
-  private def _headersSendAccept(mime: String) = {
+  def headersJsonSendAccept: Map[String, String] =
+    headersSendAccept(MimeConst.APPLICATION_JSON)
+  def headersSendAccept(mime: String): Map[String, String] =
+    headersSendAccept(mime, mime)
+  def headersSendAccept(sendMime: String, acceptMime: String): Map[String, String] = {
     val H = HttpConst.Headers
     Map(
-      H.ACCEPT       -> mime,
-      H.CONTENT_TYPE -> mime
+      H.CONTENT_TYPE -> sendMime,
+      H.ACCEPT       -> acceptMime,
     )
   }
 
@@ -66,7 +69,7 @@ object HttpReqData {
   * @param body Тело реквеста, если требуется.
   *             Используется формат Ajax.InputData, который напрямую совместим с Ajax().
   * @param timeoutMs Таймаут. К данным реквеста не относится, но он тут, т.к. в XHR он задаётся до execute().
-  * @param responseType Тип возвращаемого ответа.
+  * @param respType Тип возвращаемого ответа (для XHR).
   * @param cache Параметры кэширования.
   */
 case class HttpReqData(

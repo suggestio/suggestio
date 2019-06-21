@@ -6,9 +6,9 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.id.login.c.ILoginApi
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
-import io.suggest.id.login.m.{RegBackClick, RegCaptchaSubmitResp, RegNextClick}
+import io.suggest.id.login.m.{RegBackClick, RegCaptchaSubmitResp, RegNextClick, RegSmsCheckResp}
 import io.suggest.id.login.m.reg.{MRegS, MRegSteps}
-import io.suggest.id.reg.{MRegCaptchaReq, MRegCreds0}
+import io.suggest.id.reg.{MCodeFormData, MCodeFormReq, MRegCaptchaReq, MRegCreds0}
 import io.suggest.lk.m.CaptchaInit
 import io.suggest.lk.m.captcha.MCaptchaS
 import io.suggest.lk.m.input.MTextFieldS
@@ -84,7 +84,7 @@ class RegAh[M](
                 ),
                 captcha = MCaptchaCheckReq(
                   secret = captcha.contentReq.get.secret,
-                  typed  = captcha.typed.value
+                  typed  = captcha.typed.value,
                 ),
               )
               loginApi
@@ -114,9 +114,25 @@ class RegAh[M](
             updated(v2)
 
           } else if (v0.s2SmsCode.canSubmit) {
-            val smsCode = v0.s2SmsCode.smsCode.get
-            // TODO
-            ???
+            val tstampMs = System.currentTimeMillis()
+            val fx = Effect {
+              val data = MCodeFormReq(
+                token   = v0.s1Captcha.submitReq.get.token,
+                formData = MCodeFormData(
+                  code = Some( v0.s2SmsCode.smsCode.get.typed.value ),
+                ),
+              )
+              loginApi
+                .smsCodeCheck(data)
+                .transform { tryResp =>
+                  Success( RegSmsCheckResp(tstampMs, tryResp) )
+                }
+            }
+
+            val v2 = MRegS.s2SmsCode
+              .composeLens( MReg2SmsCode.submitReq )
+              .modify( _.pending(tstampMs) )(v0)
+            updated(v2, fx)
 
           } else {
             LOG.warn( WarnMsgs.VALIDATION_FAILED, msg = (m, v0.s2SmsCode) )

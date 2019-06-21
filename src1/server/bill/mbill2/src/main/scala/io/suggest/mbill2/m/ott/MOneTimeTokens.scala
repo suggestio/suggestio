@@ -6,9 +6,12 @@ import java.util.UUID
 import io.suggest.common.m.sql.ITableName
 import io.suggest.mbill2.m.common.{InsertManyReturning, InsertUuidOneReturning, ModelContainer}
 import io.suggest.mbill2.m.dt.{DateCreatedSlick, DateEndSlick}
+import io.suggest.mbill2.m.gid.GetByUuid
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
+import japgolly.univeq.UnivEq
 import javax.inject.{Inject, Singleton}
 import monocle.macros.GenLens
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -28,6 +31,7 @@ class MOneTimeTokens @Inject() (
   with ModelContainer
   with InsertUuidOneReturning
   with InsertManyReturning
+  with GetByUuid
 {
 
   import profile.api._
@@ -49,8 +53,10 @@ class MOneTimeTokens @Inject() (
     with DateCreatedInstantColumn
     with DateEndInstantColumn
   {
+    def info = column[Option[String]]("info")
+
     override def * = {
-      (id, dateCreated, dateEnd) <> (
+      (id, dateCreated, dateEnd, info) <> (
         (MOneTimeToken.apply _).tupled, MOneTimeToken.unapply
       )
     }
@@ -71,6 +77,23 @@ class MOneTimeTokens @Inject() (
       .delete
   }
 
+
+  /** Обновление одного токена.
+    *
+    * @param ott Обновлённый токен.
+    * @return Экшен, возвращающий кол-во обновлённых рядов (0 или 1).
+    */
+  def updateExisting(ott: MOneTimeToken): DBIOAction[Int, NoStream, Effect.Write] = {
+    query
+      .filter { o =>
+        o.id === ott.id
+      }
+      .map { o =>
+        (o.dateEnd, o.info)
+      }
+      .update((ott.dateEnd, ott.info))
+  }
+
 }
 
 
@@ -79,12 +102,20 @@ class MOneTimeTokens @Inject() (
   * @param id рандомный id токена.
   * @param dateCreated Дата создания токена.
   * @param dateEnd Дата удаления токена из БД.
+  * @param info Опциональные произвольные данные.
   */
 case class MOneTimeToken(
                           id            : UUID,
-                          dateCreated   : Instant = Instant.now(),
+                          dateCreated   : Instant         = Instant.now(),
                           dateEnd       : Instant,
+                          info          : Option[String]  = None,
                         )
 object MOneTimeToken {
-  val id = GenLens[MOneTimeToken](_.id)
+
+  val id        = GenLens[MOneTimeToken](_.id)
+  val dateEnd   = GenLens[MOneTimeToken](_.dateEnd)
+  val info      = GenLens[MOneTimeToken](_.info)
+
+  @inline implicit def univEq: UnivEq[MOneTimeToken] = UnivEq.derive
+
 }

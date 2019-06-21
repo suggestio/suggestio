@@ -1,7 +1,5 @@
 package util.adv.ext
 
-import java.io.ByteArrayOutputStream
-import java.nio.charset.StandardCharsets
 import java.time.OffsetDateTime
 import java.util.concurrent.TimeoutException
 
@@ -16,6 +14,7 @@ import io.suggest.fsm.FsmActor
 import io.suggest.primo.IToPublicString
 import io.suggest.sec.m.MAsymKeys
 import io.suggest.sec.util.PgpUtil
+import io.suggest.streams.JioStreamsUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, ExtServiceActorEnv, OAuthVerifier}
@@ -26,7 +25,6 @@ import models.jsm.DomWindowSpecs
 import models.ls.LsOAuth1Info
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
-import org.apache.commons.io.IOUtils
 import play.api.libs.json.Json
 import play.api.libs.oauth.RequestToken
 import play.api.libs.ws.WSClient
@@ -63,7 +61,7 @@ trait OAuth1ServiceActorFactory
   */
 class OAuth1ServiceActor @Inject() (
                                      @Assisted override val args : IExtAdvServiceActorArgs,
-                                     esModel                     : EsModel,
+                                     //esModel                   : EsModel,
                                      oa1TgActorFactory           : OAuth1TargetActorFactory,
                                      mCommonDi                   : ICommonDi,
                                      oa1SvcActorUtil             : OAuth1SvcActorUtil,
@@ -86,7 +84,6 @@ class OAuth1ServiceActor @Inject() (
   import LOGGER._
   import mCommonDi.ec
   import oa1SvcActorUtil._
-  import esModel.api._
 
   override type State_t = FsmState
 
@@ -164,13 +161,8 @@ class OAuth1ServiceActor @Inject() (
     val json = Json.toJson(info).toString()
     // Зашифровать всё с помощью PGP.
     for (pgpKey <- pgpKeyFut) yield {
-      val baos = new ByteArrayOutputStream(1024)
-      pgpUtil.encryptForSelf(
-        data = IOUtils.toInputStream(json, StandardCharsets.UTF_8),
-        key  = pgpKey,
-        out  = baos
-      )
-      sendStorageSetCmd( Some(new String(baos.toByteArray)) )
+      val cipherText = JioStreamsUtil.stringIo[String]( json, 1024 )( pgpUtil.encryptForSelf(_, pgpKey, _) )
+      sendStorageSetCmd( Some(cipherText) )
     }
   }
 
@@ -239,13 +231,9 @@ class OAuth1ServiceActor @Inject() (
           for {
             mkey  <- lsCryptoKeyFut
           } yield {
-            val baos = new ByteArrayOutputStream(256)
-            pgpUtil.decryptFromSelf(
-              data = IOUtils.toInputStream( input, StandardCharsets.UTF_8 ),
-              key  = mkey,
-              out  = baos
-            )
-            Json.parse( baos.toByteArray )
+            val jsonBytes = JioStreamsUtil.stringIo[Array[Byte]]( input, 256 )( pgpUtil.decryptFromSelf(_, mkey, _) )
+            // Тут можно было бы использовать PipedInputStream, но это blocking-вариант, а данных очень немного, чтобы мутить параллельный i/o.
+            Json.parse( jsonBytes )
               .asOpt[LsOAuth1Info]
               // Убедится, что токен был выдан именно текущему юзеру.
               .filter { info =>

@@ -16,9 +16,8 @@ object LoginTimestamp extends MacroLogsDyn {
   def TSAMP_SUBSTRACT = 1402927907242L
 
   /** Сгенерить текущий timestamp. */
-  def currentTstamp(): Long = {
+  def currentTstamp(): Long =
     (System.currentTimeMillis() - TSAMP_SUBSTRACT) / 1000L
-  }
 
 
   def parseTstamp(tstampStr: String): Option[Long] = {
@@ -49,6 +48,7 @@ object LoginTimestamp extends MacroLogsDyn {
 
 }
 
+
 import io.suggest.session.LoginTimestamp._
 
 case class LoginTimestamp(tstamp: Long, ttl: Ttl) {
@@ -58,14 +58,8 @@ case class LoginTimestamp(tstamp: Long, ttl: Ttl) {
   }
 
   def toSessionKeys: List[(String, String)] = {
-    val acc = List(MSessionKeys.Timestamp.value -> tstamp.toString)
+    val acc = (MSessionKeys.Timestamp.value -> tstamp.toString) :: Nil
     ttl.addToSessionAcc(acc)
-  }
-
-  def addToSession(session0: Session): Session = {
-    session0.copy(
-      data = session0.data ++ toSessionKeys
-    )
   }
 
   /**
@@ -76,7 +70,7 @@ case class LoginTimestamp(tstamp: Long, ttl: Ttl) {
   def withTstamp(tstamp1: Long): LoginTimestamp = {
     val diff = tstamp1 - this.tstamp
     val ttl1 = if (diff > 0L) {
-      ttl.minusTtl(diff.toInt)
+      ttl minusTtl diff.toInt
     } else {
       if (diff < 0L)
         LOGGER.warn(s"Negative timestamp update! diff=$diff ($tstamp -> $tstamp1). Check sio servers datetime!")

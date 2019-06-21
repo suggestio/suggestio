@@ -1,5 +1,7 @@
 package io.suggest.mbill2.m.gid
 
+import java.util.UUID
+
 import io.suggest.mbill2.m.common.ModelContainer
 import slick.sql.SqlAction
 
@@ -18,6 +20,21 @@ trait GetById extends ModelContainer with GidSlick {
    * @param id id ряда.
    * @return Slick-экшен получения ряда.
    */
+  def getById(id: Id_t): SqlAction[Option[El_t], NoStream, Effect.Read] = {
+    query
+      .filter(_.id === id)
+      .result
+      .headOption
+  }
+
+}
+
+
+trait GetByUuid extends ModelContainer with IdSlick {
+  import profile.api._
+
+  override type Id_t = UUID
+
   def getById(id: Id_t): SqlAction[Option[El_t], NoStream, Effect.Read] = {
     query
       .filter(_.id === id)
