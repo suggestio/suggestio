@@ -1,7 +1,6 @@
 package io.suggest.id.token
 
 import java.time.Instant
-import java.util.UUID
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.model.n2.edge.MPredicate
@@ -21,6 +20,7 @@ object MIdMsg {
 
   implicit def mIdMsgJson: OFormat[MIdMsg] = (
     (__ \ "t").format[MPredicate] and
+    (__ \ "c").format[String] and
     (__ \ "r").formatNullable[Set[String]]
       .inmap[Set[String]](
         EmptyUtil.opt2ImplEmptyF(Set.empty),
@@ -28,9 +28,7 @@ object MIdMsg {
       ) and
     (__ \ "a").format[Instant] and
     (__ \ "i").formatNullable[String] and
-    (__ \ "c").format[String] and
     (__ \ "v").formatNullable[Instant] and
-    (__ \ "t").format[UUID] and
     (__ \ "e").format[Int]
   )(apply, unlift(unapply))
 
@@ -48,15 +46,13 @@ object MIdMsg {
   * @param msgId id отправленного сообщения, если есть.
   * @param checkCode Секретный код проверки.
   * @param validated Уже проверено? Если да, то когда.
-  * @param ott id OneTimeToken'а, который является validated-меткой, хранимой на стороне сервера.
   */
 case class MIdMsg(
                    rcptType    : MPredicate,
-                   rcpt        : Set[String],
-                   sentAt      : Instant,
-                   msgId       : Option[String],
                    checkCode   : String,
+                   rcpt        : Set[String]        = Set.empty,
+                   sentAt      : Instant            = Instant.now(),
+                   msgId       : Option[String]     = None,
                    validated   : Option[Instant]    = None,
-                   ott         : UUID               = UUID.randomUUID(),
                    errorsCount : Int                = 0,
                  )

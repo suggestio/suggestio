@@ -1,15 +1,16 @@
 package io.suggest.id.login.c
 
+import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.id.login.MEpwLoginReq
-import io.suggest.id.reg.{MRegCaptchaReq, MCodeFormReq, MRegTokenResp}
+import io.suggest.id.reg.{MCodeFormReq, MRegCreds0, MRegTokenResp}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.proto.http.model.{HttpReq, HttpReqData}
+import io.suggest.proto.http.model.{HttpReq, HttpReqData, Route}
 import io.suggest.routes.routes
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, Writes}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -30,13 +31,19 @@ trait ILoginApi {
     */
   def epw2LoginSubmit(loginReq: MEpwLoginReq, r: Option[String] = None): Future[String]
 
+  /** Сабмит реквизитов первого шага.
+    *
+    * @param creds0 Реквизиты регистрации 0-шага.
+    * @return Токен для получения капчи.
+    */
+  def regStep0Submit(creds0: MRegCreds0): Future[MRegTokenResp]
 
   /** Сабмит формы регистрации на сервер.
     *
     * @param form Данные формы, введённые юзером.
     * @return Фьючерс с ответом сервер.
     */
-  def epw2RegSubmit(form: MRegCaptchaReq): Future[MRegTokenResp]
+  def epw2RegSubmit(form: MCaptchaCheckReq): Future[MRegTokenResp]
 
   /** Сабмит проверки смс-кода.
     *
@@ -81,14 +88,21 @@ class LoginApiHttp extends ILoginApi {
   }
 
 
-  override def epw2RegSubmit(form: MRegCaptchaReq): Future[MRegTokenResp] = {
+  /** Общий код для сабмитов за tokenReq с сервера.
+    *
+    * @param data Данные тела запроса.
+    * @param route Роута.
+    * @tparam A Тип тела запроса.
+    * @return Фьючерс с token resp.
+    */
+  private def _tokenReq[A: Writes](data: A, route: Route): Future[MRegTokenResp] = {
     HttpClient.execute(
       HttpReq.routed(
-        route = routes.controllers.Ident.epw2RegSubmit(),
+        route = route,
         data = HttpReqData(
           headers = HttpReqData.headersJsonSendAccept,
           body = Json
-            .toJson( form )
+            .toJson( data )
             .toString(),
           timeoutMs = _timeoutMsSome
         )
@@ -99,22 +113,13 @@ class LoginApiHttp extends ILoginApi {
       .unJson[MRegTokenResp]
   }
 
+  override def regStep0Submit(creds0: MRegCreds0): Future[MRegTokenResp] =
+    _tokenReq( creds0, routes.controllers.Ident.regStep0Submit() )
 
-  override def smsCodeCheck(req: MCodeFormReq): Future[MRegTokenResp] = {
-    HttpClient.execute(
-      HttpReq.routed(
-        route = routes.controllers.Ident.smsCodeCheck(),
-        data = HttpReqData(
-          headers = HttpReqData.headersJsonSendAccept,
-          body = Json
-            .toJson( req )
-            .toString(),
-          timeoutMs = _timeoutMsSome,
-        )
-      )
-    )
-      .respFut
-      .unJson[MRegTokenResp]
-  }
+  override def epw2RegSubmit(form: MCaptchaCheckReq): Future[MRegTokenResp] =
+    _tokenReq( form, routes.controllers.Ident.epw2RegSubmit() )
+
+  override def smsCodeCheck(req: MCodeFormReq): Future[MRegTokenResp] =
+    _tokenReq( req, routes.controllers.Ident.smsCodeCheck() )
 
 }

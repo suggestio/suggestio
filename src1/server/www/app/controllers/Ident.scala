@@ -1,16 +1,17 @@
 package controllers
 
-import java.time.Instant
+import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
 import javax.inject.{Inject, Singleton}
 import controllers.ident._
+import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.{ILoginFormPages, MEpwLoginReq}
-import io.suggest.id.reg.{MCodeFormData, MCodeFormReq, MRegCaptchaReq, MRegTokenResp}
+import io.suggest.id.reg.{MCodeFormData, MCodeFormReq, MRegCreds0, MRegTokenResp}
 import io.suggest.id.token.{MIdMsg, MIdToken, MIdTokenConstaints, MIdTokenDates, MIdTokenTypes}
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.mbill2.m.ott.MOneTimeTokens
@@ -39,17 +40,15 @@ import views.html.ident.reg.email.{_regColumnTpl, emailRegMsgTpl}
 import views.html.ident.recover.emailPwRecoverTpl
 import views.html.lk.login._
 import japgolly.univeq._
-import models.im.MCaptchaSecret
 import models.sms.{ISmsSendResult, MSmsSend}
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import util.sec.CspUtil
 import util.sms.SmsSendUtil
 
-import scala.collection.immutable.ListMap
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Success, Try}
+import scala.util.Success
 
 /**
  * Suggest.io
@@ -278,6 +277,7 @@ class Ident @Inject() (
     )
   }
 
+
   /** Конвертация отправленных смс'ок в id-msgs. */
   private def _sendSmsRes2IdMsgs(phoneNumber: String, smsCode: String, now: Instant, smsSendRes: Seq[ISmsSendResult]) = {
     (for {
@@ -307,6 +307,76 @@ class Ident @Inject() (
   }
 
 
+  /** Сабмит данных нулевого шага для перехода к капче.
+    * Реквизиты регистрации заворачиваются в токен, шифруются и отправляются клиенту.
+    *
+    * @return Ответ в виде токена, с помощью которого можно организовать шаг капчи.
+    */
+  def regStep0Submit = csrf.Check {
+    bruteForceProtect {
+      val now = Instant.now()
+      lazy val logPrefix = s"epw2RegSubmit()#${now.toEpochMilli}:"
+      isAnon().async {
+        parse
+          .json[MRegCreds0]
+          // Начать с синхронной валидации присланных данных. Делаем это прямо тут, хотя по логике оно должно жить в теле экшена.
+          .validate { creds0 =>
+            // Проверить валидность email:
+            val vldRes = Constraints.emailAddress.apply( creds0.email )
+            Either.cond(
+              test  = vldRes ==* Valid,
+              right = creds0,
+              left  = {
+                LOGGER.warn(s"$logPrefix Invalid email address:\n email = ${creds0.email}\n vld res = $vldRes")
+                NotAcceptable("email.invalid")
+              }
+            )
+            // Проверить валидность номера телефона.
+            .filterOrElse(
+              {creds1 =>
+                Validators.isPhoneValid( creds1.phone )
+              },
+              {
+                LOGGER.warn(s"$logPrefix Invalid phone number: ${creds0.phone}")
+                NotAcceptable("phone.invalid")
+              }
+            )
+          }
+      } { implicit request =>
+        // Сгенерить токен с данными регистрации. С помощью этого токена можно будет запросить капчу.
+        val idToken = MIdToken(
+          typ     = MIdTokenTypes.IdentVerify,
+          idMsgs  = Nil,
+          dates   = MIdTokenDates(
+            ttlSeconds = 15,
+          ),
+          payload = Json.toJson {
+            request.body.copy(
+              email = request.body.email
+                .trim
+                .toLowerCase(),
+              // TODO Задействовать libphonenumber или что-то этакое.
+              phone = request.body.phone.trim,
+            )
+            request.body
+          },
+          constraints = MIdTokenConstaints(
+            personIdsC = Some( request.user.personIdOpt.toSet ),
+          ),
+        )
+        val idTokenCipheredFut = idTokenUtil.encrypt( idToken )
+        LOGGER.trace(s"$logPrefix Ad-hoc idToken#${idToken.ottId} created=${idToken.dates.created.atOffset(ZoneOffset.UTC)}\n $idToken")
+
+        for {
+          tokenEncrypted <- idTokenCipheredFut
+        } yield {
+          _tokenResp( tokenEncrypted )
+        }
+      }
+    }
+  }
+
+
   /** Экшен сабмита react-формы регистрации по паролю: шаг капчи.
     * В теле - JSON.
     *
@@ -318,58 +388,29 @@ class Ident @Inject() (
 
     val _theAction = isAnon().async {
       parse
-        .json[MRegCaptchaReq]
-        // Начать с синхронной валидации присланных данных. Делаем это прямо тут, хотя по логике оно должно жить в теле экшена.
-        .validate { epwReg =>
-          // Проверить валидность email:
-          val vldRes = Constraints.emailAddress.apply( epwReg.creds0.email )
-          Either.cond(
-            test = vldRes ==* Valid,
-            right = epwReg,
-            left = {
-              LOGGER.warn(s"$logPrefix Invalid email address:\n email = ${epwReg.creds0.email}\n vld res = $vldRes")
-              NotAcceptable("email.invalid")
-            }
-          )
-          // Проверить валидность номера телефона.
-          .filterOrElse(
-            {epwReg =>
-              Validators.isPhoneValid( epwReg.creds0.phone )
-            },
-            {
-              LOGGER.warn(s"$logPrefix Invalid phone number: ${epwReg.creds0.phone}")
-              NotAcceptable("phone.invalid")
-            }
-          )
-        }
+        .json[MCaptchaCheckReq]
     } { implicit request =>
-      LOGGER.trace(s"$logPrefix email=${request.body.creds0.email} capTyped=${request.body.captcha.typed}")
+      LOGGER.trace(s"$logPrefix capTyped=${request.body.typed}")
 
       implicit lazy val ctx = implicitly[Context]
 
       for {
         // Проверить капчу, сразу отметив её в базе, как использованную:
-        captchaVldRes <- captchaUtil.validateAndMarkAsUsed( request.body.captcha )
+        captchaVldRes <- captchaUtil.validateAndMarkAsUsed( request.body )
 
         pgpKeyFut = pgpUtil.getLocalStorKey()
 
         // Убедится, что капча проверена успешно:
-        (_, mott0) = captchaVldRes
+        (idToken0, mott0) = captchaVldRes
           .left.map { emsg =>
             throw new IllegalArgumentException(emsg)
           }
           .right.get
 
-        creds02 = request.body.creds0.copy(
-          email = request.body.creds0
-            .email
-            .trim
-            .toLowerCase(),
-          // TODO Задействовать libphonenumber или что-то этакое.
-          phone = request.body.creds0.phone.trim,
-        )
+        // Распарсить введённые юзером реквизиты регистрации.
+        creds02 = idToken0.payload.as[MRegCreds0]
 
-        // Отправить смс с кодом проверки.
+        // Подготовиться к отправки смс с кодом проверки.
         smsCode = _genSmsCode()
 
         // Запуск отправки смс-кода в фоне.
@@ -379,32 +420,27 @@ class Ident @Inject() (
           ctx         = ctx
         )
 
-        idTokPayload = Json.toJson( creds02 )
-
         smsSendRes <- smsSendResFut
 
-        idToken = {
-          MIdToken(
-            typ    = MIdTokenTypes.IdentVerify,
-            idMsgs = _sendSmsRes2IdMsgs(
-              phoneNumber = creds02.phone,
-              smsCode     = smsCode,
-              now         = now,
-              smsSendRes  = smsSendRes,
-            ),
-            payload   = idTokPayload,
-            // Токен только для анонимуса.
-            constraints = MIdTokenConstaints(
-              personIdsC = Some( Set.empty ),
-              // TODO sessionId задать здесь, чтобы привязать токен к сессии.
-            ),
-            dates = MIdTokenDates(
-              ttlSeconds = IdentConst.Reg.ID_TOKEN_VALIDITY_SECONDS,
-            )
-          )
-        }
+        smsIdMsgs = _sendSmsRes2IdMsgs(
+          phoneNumber = creds02.phone,
+          smsCode     = smsCode,
+          now         = now,
+          smsSendRes  = smsSendRes,
+        )
 
-        idTokenJsonStr = Json.toJson( idToken ).toString()
+        // Сборка инстанса id-токена.
+        idToken2 = (
+          MIdToken.idMsgs.modify(smsIdMsgs ++ _) andThen
+          MIdToken.dates.modify { dates0 =>
+            dates0.copy(
+              ttlSeconds = 10.minutes.toSeconds.toInt,
+              modified   = Some( now ),
+            )
+          }
+        )(idToken0)
+
+        idTokenJsonStr = Json.toJson( idToken2 ).toString()
 
         // Обновление токен
         mott2 = mott0.copy(
@@ -429,7 +465,7 @@ class Ident @Inject() (
 
       } yield {
         // Зашифровать и подписать id сохранённого токена:
-        val cipherText = JioStreamsUtil.stringIo[String]( idToken.ott.toString, 512 )( pgpUtil.encryptForSelf(_, pgpKey, _) )
+        val cipherText = JioStreamsUtil.stringIo[String]( idToken2.ottId.toString, 512 )( pgpUtil.encryptForSelf(_, pgpKey, _) )
 
         _tokenResp(
           token = pgpUtil.minifyPgpMessage( cipherText )
@@ -538,9 +574,10 @@ class Ident @Inject() (
         // И расшифровать присланные данные токена:
         .validateM { smsReq =>
           val fut0 = for (pgpKey <- pgpKeyFut) yield {
-            val ottIdStr = JioStreamsUtil.stringIo[String]( smsReq.token )( pgpUtil.decryptFromSelf(_, pgpKey, _) )
+            val pgpMsg = pgpUtil.unminifyPgpMessage( smsReq.token )
+            val ottIdStr = JioStreamsUtil.stringIo[String]( pgpMsg, outputSizeInit = 256 )( pgpUtil.decryptFromSelf(_, pgpKey, _) )
             val ottId = UUID.fromString( ottIdStr )
-            LOGGER.debug(s"$logPrefix Found token ID#$ottId")
+            LOGGER.trace(s"$logPrefix Found tokenId#$ottId in request")
             (smsReq, ottId)
           }
           fut0.transform { tryRes =>
@@ -563,31 +600,44 @@ class Ident @Inject() (
       val dbActionTxn = for {
         // Достать токен по id из базы биллиннга:
         mottOpt0 <- mOneTimeTokens.getById( ottId ).forUpdate
+        if {
+          val r = mottOpt0.nonEmpty
+          if (!r) LOGGER.warn(s"$logPrefix Cannot find token#$ottId in db.")
+          r
+        }
         mott0 = mottOpt0.get
-        if !(mott0.dateEnd isBefore now)
-
-        idTokenCipherText = mott0.info.get
-
-        // Ключ уже получен на стадии BodyParser'а, поэтому паузы тут особо не будет.
-        pgpKey <- DBIO.from( pgpKeyFut )
-
-        // Расшифровать id-токен
-        idToken0 = {
-          val idTokenStr = JioStreamsUtil.stringIo[String]( idTokenCipherText, 1024 )( pgpUtil.decryptFromSelf(_, pgpKey, _) )
-          Json
-            .parse(idTokenStr)
-            .as[MIdToken]
+        if {
+          val r = !(mott0.dateEnd isBefore now)
+          if (!r) LOGGER.warn(s"$logPrefix Token#${ottId} exists, but it is expired: ${mott0.dateEnd} isAfter now=$now\n info=${mott0.info.orNull}")
+          r
         }
 
+        idTokenStr = mott0.info.get
+
+        // Расшифровать id-токен
+        idToken0 = Json
+          .parse( idTokenStr )
+          .as[MIdToken]
+
         // Убедиться, что тип токена соответствует ожиданиям ident-токена.
-        if (idToken0.typ ==* MIdTokenTypes.IdentVerify) &&
-           !(idToken0.dates.bestBefore isBefore now) &&
-           idTokenUtil.isConstaintsMeetRequest(idToken0) &&
-           // капча должна быть уже выверена:
-           idToken0.idMsgs.exists { idMsg =>
-             (idMsg.rcptType ==* MPredicates.JdContent.Image) &&
-             idMsg.validated.nonEmpty
-           }
+        if {
+          val expected = MIdTokenTypes.IdentVerify
+          val r = (idToken0.typ ==* expected)
+          if (!r) LOGGER.warn(s"$logPrefix Invalid token type#${idToken0.typ}, but $expected expected.")
+          r
+        } && {
+          val r = idTokenUtil.isConstaintsMeetRequest( idToken0 )
+          if (!r) LOGGER.warn(s"$logPrefix IdToken stored is unrelated to current request session.")
+          r
+        } && {
+          // капча должна быть уже выверена:
+          val r = idToken0.idMsgs.exists { idMsg =>
+            (idMsg.rcptType ==* MPredicates.JdContent.Image) &&
+            idMsg.validated.nonEmpty
+          }
+          if (!r) LOGGER.warn(s"$logPrefix Captcha IdMsg not exist or invalid.\n ${idToken0.idMsgs.mkString(",\n ")}")
+          r
+        }
 
         // Собрать данные по отправленным смс-кам из токена.
         smsRcptType = MPredicates.Ident.Phone
@@ -602,7 +652,7 @@ class Ident @Inject() (
 
         // Запретить дальнейшую обработку, если было слишком много ошибок.
         if {
-          val tooManyErrors = !smsMsgs.exists( _.errorsCount > 10 )
+          val tooManyErrors = smsMsgs.exists( _.errorsCount > 10 )
           if (tooManyErrors) LOGGER.warn(s"$logPrefix Suppressed bruteforce: too many errors were:\n ${smsMsgs.mkString(",\n ")}")
           !tooManyErrors
         }

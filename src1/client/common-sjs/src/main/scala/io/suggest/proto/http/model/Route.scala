@@ -8,7 +8,7 @@ import scala.scalajs.js
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 27.04.15 15:28
- * Description: Интерфейс одной роуты. Возвращается любым экшеном js-роутера.
+ * Description: Интерфейс одной play-роуты. Возвращается любым экшеном js-роутера.
  */
 
 @js.native

@@ -1,26 +1,21 @@
 package controllers
 
-import java.io.ByteArrayOutputStream
-import java.nio.charset.StandardCharsets
 import java.time.{Instant, ZonedDateTime}
-import java.util.UUID
 
 import io.suggest.captcha.{CaptchaConstants, MCaptchaCookiePath, MCaptchaCookiePaths}
 import io.suggest.dt.DateTimeUtil
 import io.suggest.file.MimeUtilJvm
 import io.suggest.model.n2.media.storage.IMediaStorages
 import io.suggest.playx.CacheApiUtil
-import io.suggest.sec.util.PgpUtil
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.im._
 import models.mproj.ICommonDi
-import org.apache.commons.io.IOUtils
 import play.api.http.HttpEntity
-import play.api.libs.json.Json
 import play.api.mvc._
-import util.acl.{BruteForceProtect, CanDynImg, MaybeAuth}
+import util.acl.{BruteForceProtect, CanDynImg, IsIdTokenValid, MaybeAuth}
 import util.captcha.CaptchaUtil
+import util.ident.IdTokenUtil
 import util.img.DynImgUtil
 
 import scala.concurrent.Future
@@ -43,6 +38,8 @@ class Img @Inject() (
                       canDynImg                       : CanDynImg,
                       iMediaStorages                  : IMediaStorages,
                       maybeAuth                       : MaybeAuth,
+                      idTokenUtil                     : IdTokenUtil,
+                      isIdTokenValid                  : IsIdTokenValid,
                       sioCtlApi                       : SioControllerApi,
                       bruteForceProtect               : BruteForceProtect,
                       mCommonDi                       : ICommonDi,
@@ -209,7 +206,7 @@ class Img @Inject() (
     */
   def getCaptchaImg(captchaId: String, mCookiePath: MCaptchaCookiePath) = csrf.Check {
     maybeAuth().async { implicit request =>
-      lazy val logPrefix = s"getCaptcha($captchaId)#${System.currentTimeMillis()}:"
+      lazy val logPrefix = s"getCaptchaImg($captchaId)#${System.currentTimeMillis()}:"
       LOGGER.trace(s"$logPrefix for ${request.remoteClientAddress}/u#${request.user.personIdOpt.orNull}")
       for {
 
@@ -256,37 +253,37 @@ class Img @Inject() (
     *
     * @return Картинка + http-хидеры с id и ответом на капчу.
     */
-  def getCaptcha = csrf.Check {
-    val _theAction = maybeAuth().async { implicit request =>
-      val captchaUid = captchaUtil.mkCaptchaUid()
-      val logPrefix = s"getCaptchaImg2()#${System.currentTimeMillis()}:"
-      LOGGER.trace(s"$logPrefix for ${request.remoteClientAddress}, personId#${request.user.personIdOpt.orNull}")
+  def getCaptcha(idTokenCiphered: String) = csrf.Check {
+    bruteForceProtect {
+      isIdTokenValid(idTokenCiphered)(isIdTokenValid.isFreshToken).async { implicit request =>
+        val logPrefix = s"getCaptchaImg2()#${System.currentTimeMillis()}:"
+        LOGGER.trace(s"$logPrefix for ${request.remoteClientAddress}, personId#${request.user.personIdOpt.orNull}")
 
-      // Кэш для защиты от перегрузки слишкой активной генерацией капч: ограничить макс.кол-во параллельных капч.
-      val captchaFut = captchaUtil.mkCaptcha( captchaUid )
+        // Кэш для защиты от перегрузки слишкой активной генерацией капч: ограничить макс.кол-во параллельных капч.
+        val captchaFut = captchaUtil.mkCaptcha( request.idToken.ottId )
 
-      // Шифруем правильный ответ на капчу:
-      val captchaSecretPgpMinFut = captchaFut.flatMap { case (ctext, _) =>
-        captchaUtil.encodeCaptchaSecret( captchaUid, captchaText = ctext )
-      }
+        // Шифруем правильный ответ на капчу:
+        val captchaSecretPgpMinFut = captchaFut.flatMap { case (ctext, _) =>
+          val idToken2 = captchaUtil.storeCaptchaSecret( captchaText = ctext, request.idToken )
+          idTokenUtil.encrypt( idToken2 )
+        }
 
-      // Отправить http-ответ юзеру, запихнув pgp-шифр в заголовок ответа:
-      for {
-        (_, captchaImgBytes)     <- captchaFut
-        captchaSecretPgpMin      <- captchaSecretPgpMinFut
-      } yield {
-        Ok( captchaImgBytes )
-          .as( captchaUtil.CAPTCHA_IMG_MIME )
-          .withHeaders(
-            EXPIRES       -> "0",
-            PRAGMA        -> "no-cache",
-            CACHE_CONTROL -> "no-store, no-cache, must-revalidate",
-            CaptchaConstants.CAPTCHA_SECRET_HTTP_HDR_NAME -> captchaSecretPgpMin,
-          )
+        // Отправить http-ответ юзеру, запихнув pgp-шифр в заголовок ответа:
+        for {
+          (_, captchaImgBytes)     <- captchaFut
+          captchaSecretPgpMin      <- captchaSecretPgpMinFut
+        } yield {
+          Ok( captchaImgBytes )
+            .as( captchaUtil.CAPTCHA_IMG_MIME )
+            .withHeaders(
+              EXPIRES       -> "0",
+              PRAGMA        -> "no-cache",
+              CACHE_CONTROL -> "no-store, no-cache, must-revalidate",
+              CaptchaConstants.CAPTCHA_SECRET_HTTP_HDR_NAME -> captchaSecretPgpMin,
+            )
+        }
       }
     }
-
-    bruteForceProtect( _theAction )
   }
 
 }

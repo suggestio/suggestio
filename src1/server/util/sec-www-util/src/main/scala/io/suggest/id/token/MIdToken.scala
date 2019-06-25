@@ -46,7 +46,7 @@ object MIdToken {
   * @param idMsgs Месседжи идентификации: проверка капчи, смс проверки телефонного номера.
   *               Новые - добавляются в начало.
   * @param payload Произвольные данные, идущие вместе с токеном.
-  * @param ott Одноразовый уникальный идентификатор, чтобы пометить в базе токен как использованный.
+  * @param ottId Одноразовый уникальный идентификатор, чтобы пометить в базе токен как использованный.
   * @param dates Даты генерации токена и время жизни токена.
   * @param constraints Ограничения на использование токена.
   */
@@ -56,6 +56,6 @@ case class MIdToken(
                      dates        : MIdTokenDates,
                      payload      : JsValue               = JsNull,
                      constraints  : MIdTokenConstaints    = MIdTokenConstaints.empty,
-                     ott          : UUID                  = UUID.randomUUID(),
+                     ottId        : UUID                  = UUID.randomUUID(),
                    )
 

@@ -1,7 +1,6 @@
 package util.captcha
 
 import java.io.ByteArrayOutputStream
-import java.nio.charset.StandardCharsets
 import java.time.{Instant, ZoneId, ZoneOffset}
 import java.util.{Properties, UUID}
 
@@ -10,18 +9,17 @@ import com.google.code.kaptcha.Producer
 import com.google.code.kaptcha.impl.DefaultKaptcha
 import com.google.code.kaptcha.util.Config
 import io.suggest.captcha.MCaptchaCheckReq
+import io.suggest.id.token.{MIdMsg, MIdToken}
 import io.suggest.mbill2.m.ott.{MOneTimeToken, MOneTimeTokens}
 import io.suggest.mbill2.util.effect
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.playx.CacheApiUtil
 import javax.inject.{Inject, Singleton}
 import io.suggest.sec.util.{CipherUtil, PgpUtil}
-import io.suggest.streams.JioStreamsUtil
 import io.suggest.text.util.TextUtil
 import io.suggest.util.logs.MacroLogsImpl
 import javax.imageio.ImageIO
-import models.im.MCaptchaSecret
 import models.mproj.ICommonDi
-import org.apache.commons.io.IOUtils
 import play.api.data.Form
 import play.api.http.HeaderNames
 import play.api.mvc._
@@ -30,6 +28,8 @@ import play.api.libs.json.Json
 import util.FormUtil._
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import models.req.IReqHdr
+import util.ident.IdTokenUtil
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -60,6 +60,7 @@ final class CaptchaUtil @Inject() (
                                     mOneTimeTokens              : MOneTimeTokens,
                                     cacheApiUtil                : CacheApiUtil,
                                     pgpUtil                     : PgpUtil,
+                                    idTokenUtil                 : IdTokenUtil,
                                     protected val cipherUtil    : CipherUtil,
                                     val mCommonDi               : ICommonDi,
                                   )
@@ -220,19 +221,20 @@ final class CaptchaUtil @Inject() (
 
   /** Выставить id капчи в базе, как уже использованную капчу.
     *
-    * @param captchaSecret id капчи.
+    * @param idToken id-токен капчи.
     * @return Результат обработки.
     */
-  def ensureCaptchaOtt(captchaSecret: MCaptchaSecret): DBIOAction[MOneTimeToken, NoStream, effect.RWT] = {
-    lazy val logPrefix = s"ensureCaptchaOtt(${captchaSecret.captchaUid}):"
+  def ensureCaptchaOtt(idToken: MIdToken, idMsg: MIdMsg, now: Instant = Instant.now()): DBIOAction[(MIdToken, MOneTimeToken), NoStream, effect.RWT] = {
+    lazy val logPrefix = s"ensureCaptchaOtt(${idToken.ottId}):"
     val dbAction = for {
       // Поискать в базе токен с текущем id капчи.
       ottExist <- mOneTimeTokens
         .query
         .filter { ott =>
-          ott.id === captchaSecret.captchaUid
+          ott.id === idToken.ottId
         }
         .take(1)
+        .forUpdate
         .result
         .headOption
 
@@ -243,12 +245,29 @@ final class CaptchaUtil @Inject() (
         ottExist.isEmpty
       }
 
+      // Обновлённый idMsg:
+      idMsg2 = MIdMsg.validated.set( Some(now) )(idMsg)
+
+      // Обновлённый токен:
+      idToken2 = (
+        MIdToken.idMsgs.modify { idMsgs0 =>
+          idMsg2 :: idMsgs0.filterNot(_.rcptType ==* MPredicates.JdContent.Image)
+        } andThen
+        MIdToken.dates.modify { dates0 =>
+          dates0.copy(
+            ttlSeconds = 5.minutes.toSeconds.toInt,
+            modified   = Some( now ),
+          )
+        }
+      )(idToken)
+
       // Инзертить новый токен в бд
       ott <- {
         val ott = MOneTimeToken(
-          id          = captchaSecret.captchaUid,
-          dateCreated = captchaSecret.dateCreated,
-          dateEnd     = captchaTtl( captchaSecret.dateCreated ),
+          id          = idToken2.ottId,
+          dateCreated = idToken2.dates.modifiedOrCreated,
+          dateEnd     = idToken2.dates.bestBefore,
+          info        = Some( Json.toJson(idToken2).toString() ),
         )
         LOGGER.trace(s"$logPrefix Saving OTT: $ott\n dateEnd = ${ott.dateEnd.atZone(ZoneId.systemDefault())}")
         mOneTimeTokens.insertOne( ott )
@@ -256,10 +275,11 @@ final class CaptchaUtil @Inject() (
 
     } yield {
       LOGGER.trace(s"$logPrefix Saved token ok.")
-      ott
+      idToken2 -> ott
     }
     dbAction.transactionally
   }
+
 
   def captchaTtl(dateCreated: Instant): Instant =
     dateCreated plusSeconds COOKIE_MAXAGE_SECONDS
@@ -285,27 +305,23 @@ final class CaptchaUtil @Inject() (
 
   /** Собрать секрет капчи.
     *
-    * @param captchaUid id капчи.
     * @param captchaText Текст капчи.
     * @return Фьючерс с секретом капчи.
     */
-  def encodeCaptchaSecret(captchaUid: UUID, captchaText: String): Future[String] = {
-    // Получить собственный секретный ключ:
-    val pgpKeyFut = pgpUtil.getLocalStorKey()
-
-    val captchaSecret = MCaptchaSecret(
-      captchaUid  = captchaUid,
-      captchaText = captchaText,
+  def storeCaptchaSecret(captchaText: String, idToken: MIdToken): MIdToken = {
+    val captchaSecret = MIdMsg(
+      rcptType  = MPredicates.JdContent.Image,
+      checkCode = captchaText,
     )
-    val json = Json.toJson(captchaSecret).toString()
-
-    // Шифруем правильный ответ на капчу:
-    for (pgpKey <- pgpKeyFut) yield {
-      // Зашифровать всё с помощью PGP.
-      val cipherText = JioStreamsUtil.stringIo[String]( json, 1024 )( pgpUtil.encryptForSelf(_, pgpKey, _) )
-      // Можно убрать заголовок, финальную часть, переносы строк:
-      pgpUtil.minifyPgpMessage( cipherText )
-    }
+    (
+      MIdToken.idMsgs.modify(captchaSecret :: _) andThen
+      MIdToken.dates.modify { dates0 =>
+        dates0.copy(
+          ttlSeconds = 10.minutes.toSeconds.toInt,
+          modified   = Some( Instant.now() )
+        )
+      }
+    )(idToken)
   }
 
 
@@ -320,7 +336,7 @@ final class CaptchaUtil @Inject() (
     *         Left() - Код ошибки.
     *         Right() - Выверенный секрет.
     */
-  def validateAndMarkAsUsed(captcha: MCaptchaCheckReq): Future[Either[String, (MCaptchaSecret, MOneTimeToken)]] = {
+  def validateAndMarkAsUsed(captcha: MCaptchaCheckReq)(implicit request: IReqHdr): Future[Either[String, (MIdToken, MOneTimeToken)]] = {
     val now = Instant.now()
     lazy val logPrefix = s"epw2RegSubmit()#${now.toEpochMilli}:"
 
@@ -329,90 +345,72 @@ final class CaptchaUtil @Inject() (
       Future.successful( Left(_captchaInvalidMsg) )
 
     } else {
-      val ownSecretKeyFut = pgpUtil.getLocalStorKey()
-      val pgpSecret = pgpUtil.unminifyPgpMessage( captcha.secret )
-
       for {
 
-        // Получить pgp-ключ на руки:
-        ownSecretKey <- ownSecretKeyFut
-
         // Быстрые синхронные проверки секрета капчи:
-        captchaSecretEith = {
-          val baos = new ByteArrayOutputStream( 512 )
-          val captchaSecretJsonE = try {
-            pgpUtil.decryptFromSelf(
-              data = IOUtils.toInputStream( pgpSecret, StandardCharsets.UTF_8 ),
-              key  = ownSecretKey,
-              out  = baos,
-            )
-            Right( new String( baos.toByteArray ) )
-          } catch {
-            case ex: Throwable =>
-              // Не удалось расшифровать pgp-сообщение.
-              LOGGER.warn(s"$logPrefix Unable to parse pgp secret:\n $pgpSecret", ex)
-              Left( "Invalid request body" )
-          } finally {
-            baos.close()
-          }
-
-          captchaSecretJsonE
-            // Расшифровать присланный шифротекст капчи.
-            .right.flatMap { captchaSecretJson =>
-              LOGGER.info(s"$logPrefix Captcha secret = $captchaSecretJson")
-              Json
-                .parse( captchaSecretJson )
-                .validate[MCaptchaSecret]
-                .asEither
-                .left.map { jsonParseErrors =>
-                  // Should never happen: непарсится расшифрованный текст
-                  throw new IllegalArgumentException( s"$logPrefix Failed to parse decrypted JSON:\n $captchaSecretJson\n ${jsonParseErrors.mkString("\n ")}" )
-                }
+        captchaDecodeRes <- {
+          idTokenUtil
+            .decrypt( captcha.secret )
+            .transform { tryRes =>
+              Success( tryRes.toEither )
             }
-            // Сверить TTL секрета капчи:
-            .filterOrElse(
-              {captchaSecret =>
-                val dateEnd = captchaTtl( captchaSecret.dateCreated )
-                val r = dateEnd isAfter now
-                if (!r) LOGGER.warn(s"$logPrefix Expired captcha#${captchaSecret.captchaUid}, dateEnd=${dateEnd.atOffset(ZoneOffset.UTC)} now=${now.atOffset(ZoneOffset.UTC)}")
-                r
-              },
-              _captchaInvalidMsg
-            )
-            // Проверить соответствие введённой капчи и реальной.
-            .filterOrElse(
-              {captchaSecret =>
-                // Оставить только символы
-                val captchaTypedNorm = captcha.typed
-                  .replaceAll("\\s+", "")
-                // По идее, в капче только цифры, но вдруг это изменится - сравниваем через equalsIgnoreCase
-                val r = captchaSecret.captchaText equalsIgnoreCase captchaTypedNorm
-                if (r) LOGGER.trace(s"Captcha matched ok = $captchaTypedNorm")
-                else   LOGGER.warn(s"Captcha mismatch, typed=${captchaTypedNorm} expected=${captchaSecret.captchaText}")
-                r
-              },
-              _captchaInvalidMsg
-            )
         }
 
+        idTokenE = captchaDecodeRes
+          .left.map { ex =>
+            // Не удалось расшифровать pgp-сообщение.
+            LOGGER.warn(s"$logPrefix Unable to parse captcha idToken", ex)
+            "Invalid request body"
+          }
+          .filterOrElse(
+            {idToken =>
+              val r = idTokenUtil.isConstaintsMeetRequest( idToken, now )
+              if (!r) LOGGER.warn(s"$logPrefix Expired or unrelated idToken#${idToken.ottId}")
+              r
+            },
+            _captchaInvalidMsg
+          )
+          .right.map { idToken =>
+            val captchaIdMsg = idToken.idMsgs
+              .find(_.rcptType ==* MPredicates.JdContent.Image)
+              .get
+            (idToken, captchaIdMsg)
+          }
+          // Проверить соответствие введённой капчи и реальной.
+          .filterOrElse(
+            { case (_, captchaIdMsg) =>
+              // Оставить только символы
+              val captchaTypedNorm = captcha.typed
+                .replaceAll("\\s+", "")
+
+              // По идее, в капче только цифры, но вдруг это изменится - сравниваем через equalsIgnoreCase
+              val r = captchaIdMsg.checkCode equalsIgnoreCase captchaTypedNorm
+
+              if (r) LOGGER.trace(s"Captcha matched ok = $captchaTypedNorm")
+              else   LOGGER.warn(s"Captcha mismatch, typed=${captchaTypedNorm} expected=${captchaIdMsg.checkCode}")
+
+              r
+            },
+            _captchaInvalidMsg
+          )
+
         // Капча проверена, но возможно, что она уже бывшая в употреблении. Надо провалидировать id капчи по базе токенов.
-        isOk <- captchaSecretEith.fold(
+        isOk <- idTokenE.fold(
           {emsg =>
             Future.successful( Left(emsg) )
           },
-          {capthaSecret =>
+          {case (idToken, idMsg) =>
             slick.db.run {
-              ensureCaptchaOtt( capthaSecret )
+              ensureCaptchaOtt( idToken, idMsg, now )
             }
               .transform {
                 case Failure(ex) =>
                   LOGGER.warn(s"$logPrefix Captcha already used")
                   LOGGER.trace("captcha verify error:", ex)
                   Success( Left( "captcha.expired" ) )
-                case Success(mott) =>
-                  LOGGER.trace(s"$logPrefix Captcha marked as USED")
-                  val r2 = Right( capthaSecret -> mott )
-                  Success( r2 )
+                case Success(r2 @ (_, mott)) =>
+                  LOGGER.trace(s"$logPrefix Captcha marked as USED. mott#${mott.id}")
+                  Success( Right(r2) )
               }
           }
         )

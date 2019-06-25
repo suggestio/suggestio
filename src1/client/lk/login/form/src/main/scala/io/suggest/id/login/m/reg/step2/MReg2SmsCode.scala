@@ -3,6 +3,7 @@ package io.suggest.id.login.m.reg.step2
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.id.login.m.reg.{ICanSubmit, IDataOpt}
+import io.suggest.id.reg.MRegTokenResp
 import io.suggest.lk.m.sms.MSmsCodeS
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
@@ -35,9 +36,9 @@ object MReg2SmsCode {
 
 
 case class MReg2SmsCode(
-                         smsCode      : Option[MSmsCodeS]   = None,
+                         smsCode      : Option[MSmsCodeS]     = None,
                          // Пересылка смс-кода - это наверное использовать поле с предыдущего шага.
-                         submitReq    : Pot[AnyRef]         = Pot.empty,
+                         submitReq    : Pot[MRegTokenResp]    = Pot.empty,
                        )
   extends ICanSubmit
   with IDataOpt[MSmsCodeS]

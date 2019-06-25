@@ -4,11 +4,12 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.common.empty.OptionUtil
 import io.suggest.id.login.c.ILoginApi
+import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
-import io.suggest.id.login.m.{RegBackClick, RegCaptchaSubmitResp, RegNextClick, RegSmsCheckResp}
+import io.suggest.id.login.m.{RegBackClick, RegCaptchaSubmitResp, RegCredsSubmitResp, RegNextClick, RegSmsCheckResp}
 import io.suggest.id.login.m.reg.{MRegS, MRegSteps}
-import io.suggest.id.reg.{MCodeFormData, MCodeFormReq, MRegCaptchaReq, MRegCreds0}
+import io.suggest.id.reg.{MCodeFormData, MCodeFormReq, MRegCreds0}
 import io.suggest.lk.m.CaptchaInit
 import io.suggest.lk.m.captcha.MCaptchaS
 import io.suggest.lk.m.input.MTextFieldS
@@ -37,6 +38,25 @@ class RegAh[M](
   with Log
 { ah =>
 
+
+  /** Переход на страницу капчи.
+    *
+    * @param v0 Состояние модели.
+    * @return ActionResult.
+    */
+  private def _toS2Captcha(v0: MRegS, updFs: List[MRegS => MRegS] = List.empty): ActionResult[M] = {
+    var updFsAcc = MRegS.step.set( MRegSteps.S1Captcha ) :: updFs
+    if (v0.s1Captcha.captcha.isEmpty)
+      updFsAcc ::= MRegS.s1Captcha
+        .composeLens(MReg1Captcha.captcha)
+        .set( Some(MCaptchaS.empty) )
+    val v2 = updFsAcc.reduce(_ andThen _)(v0)
+    // Надо проинициализировать форму капчи, если она ещё не готова:
+    val fxOpt = OptionUtil.maybe( v2.s1Captcha.isCaptchaNeedsInit )( CaptchaInit.toEffectPure )
+    ah.updatedMaybeEffect(v2, fxOpt)
+  }
+
+
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Клик по кнопке "Далее".
@@ -47,16 +67,32 @@ class RegAh[M](
         // Текущая страница - ввод реквизитов
         case MRegSteps.S0Creds =>
           // Проверить, всё ли правильно на странице ввода реквизитов
-          if (v0.s0Creds.canSubmit) {
-            var updF = MRegS.step.set( MRegSteps.S1Captcha )
-            if (v0.s1Captcha.captcha.isEmpty)
-              updF = updF andThen MRegS.s1Captcha
-                .composeLens(MReg1Captcha.captcha)
-                .set( Some(MCaptchaS.empty) )
-            val v2 = updF(v0)
-            // Надо проинициализировать форму капчи, если она ещё не готова:
-            val fxOpt = OptionUtil.maybe( v2.s1Captcha.isCaptchaNeedsInit )( CaptchaInit.toEffectPure )
-            ah.updatedMaybeEffect(v2, fxOpt)
+          if (v0.s0Creds.submitReq.isPending) {
+            LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.s0Creds.submitReq) )
+            noChange
+          } else if (v0.s0Creds.submitReq.isReady) {
+            // Реквест уже выполнен. Такое возможно, если юзер вернулся назад, и, не изменяя реквизиты, сразу вернулся вперёд.
+            _toS2Captcha( v0 )
+
+          } else if (v0.s0Creds.canSubmit) {
+            // Отправить на сервер запрос за получением токена для данных реквизитов.
+            val timeStampMs = System.currentTimeMillis()
+            val fx = Effect {
+              val reqBody = MRegCreds0(
+                email = v0.s0Creds.email.value,
+                phone = v0.s0Creds.phone.value,
+              )
+              loginApi
+                .regStep0Submit( reqBody )
+                .transform { tryResp =>
+                  Success( RegCredsSubmitResp(timeStampMs, tryResp) )
+                }
+            }
+            val v2 = MRegS.s0Creds
+              .composeLens( MReg0Creds.submitReq )
+              .modify( _.pending(timeStampMs) )( v0 )
+
+            updated(v2, fx)
 
           } else {
             LOG.warn( WarnMsgs.VALIDATION_FAILED, msg = (m, v0.s0Creds) )
@@ -77,15 +113,9 @@ class RegAh[M](
             // Отработка состояния подформы капчи: отправить капчу-email-телефон на сервер.
             val timeStampMs = System.currentTimeMillis()
             val fx = Effect {
-              val formData = MRegCaptchaReq(
-                creds0 = MRegCreds0(
-                  email = v0.s0Creds.email.value,
-                  phone = v0.s0Creds.phone.value,
-                ),
-                captcha = MCaptchaCheckReq(
-                  secret = captcha.contentReq.get.secret,
-                  typed  = captcha.typed.value,
-                ),
+              val formData = MCaptchaCheckReq(
+                secret = captcha.contentReq.get.secret,
+                typed  = captcha.typed.value,
               )
               loginApi
                 .epw2RegSubmit( formData )
@@ -117,7 +147,7 @@ class RegAh[M](
             val tstampMs = System.currentTimeMillis()
             val fx = Effect {
               val data = MCodeFormReq(
-                token   = v0.s1Captcha.submitReq.get.token,
+                token    = v0.s1Captcha.submitReq.get.token,
                 formData = MCodeFormData(
                   code = Some( v0.s2SmsCode.smsCode.get.typed.value ),
                 ),
@@ -145,6 +175,31 @@ class RegAh[M](
           ???
 
       }
+
+
+    // Результат запроса на сервер с реквизитами регистрации.
+    case m: RegCredsSubmitResp =>
+      val v0 = value
+      if (!(v0.s0Creds.submitReq isPendingWithStartTime m.tstamp)) {
+        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        noChange
+
+      } else {
+        // Пора залить результат в состоянии.
+        var updF = MRegS.s0Creds
+          .composeLens( MReg0Creds.submitReq )
+          .modify { req0 =>
+            m.resp.fold( req0.fail, req0.ready )
+          }
+
+        if (m.resp.isSuccess) {
+          _toS2Captcha( v0, updF :: Nil )
+        } else {
+          val v2 = updF(v0)
+          updated(v2)
+        }
+      }
+
 
     // Реакция на клик по кнопке "назад" в форме регистрации.
     case m @ RegBackClick =>
@@ -196,6 +251,31 @@ class RegAh[M](
       } else {
         LOG.warn( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
+      }
+
+
+    // Результат запроса проверки смс-кода.
+    case m: RegSmsCheckResp =>
+      val v0 = value
+
+      if (!(v0.s2SmsCode.submitReq isPendingWithStartTime m.tstamp)) {
+        LOG.warn( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (m, v0.s2SmsCode.submitReq) )
+        noChange
+
+      } else {
+        var updAccF = MRegS.s2SmsCode
+          .composeLens( MReg2SmsCode.submitReq )
+          .modify { req0 =>
+            m.tryResp.fold( req0.fail, req0.ready )
+          }
+
+        for (_ <- m.tryResp) {
+          updAccF = updAccF andThen
+            MRegS.step.set( MRegSteps.S3CheckBoxes )
+        }
+
+        val v2 = updAccF( v0 )
+        updated(v2)
       }
 
   }

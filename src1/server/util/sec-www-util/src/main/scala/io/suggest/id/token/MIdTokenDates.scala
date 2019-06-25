@@ -33,6 +33,7 @@ object MIdTokenDates {
   * @param ttlSeconds Время жизни токена в секундах с момента создания.
   * @param created Дата-время создания токена.
   * @param modified Дата последнего изменения токена.
+  *                 Используется вместо created, чтобы автоматом двигать вперёд по времени токен.
   */
 case class MIdTokenDates(
                           ttlSeconds        : Int,
@@ -40,8 +41,11 @@ case class MIdTokenDates(
                           modified          : Option[Instant]   = None,
                         ) {
 
+  def modifiedOrCreated: Instant =
+    modified getOrElse created
+
   /** До каких пор валиден данный токен. */
   def bestBefore: Instant =
-    created plusSeconds ttlSeconds
+    modifiedOrCreated plusSeconds ttlSeconds
 
 }

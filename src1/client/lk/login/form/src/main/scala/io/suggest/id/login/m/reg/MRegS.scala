@@ -66,6 +66,7 @@ case class MRegS(
                 ) {
 
   def hasSubmitReqPending: Boolean = {
+    s0Creds.submitReq.isPending ||
     s1Captcha.submitReq.isPending ||
     s2SmsCode.submitReq.isPending ||
     s3CheckBoxes.submitReq.isPending

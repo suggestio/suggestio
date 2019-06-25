@@ -1,6 +1,5 @@
 package io.suggest.routes
 
-import io.suggest.id.reg.MCodeFormReq
 import io.suggest.js.JsRoutesConst.GLOBAL_NAME
 import io.suggest.proto.http.model.Route
 import japgolly.univeq.UnivEq
@@ -105,11 +104,8 @@ sealed trait StaticCtlRoutes extends js.Object {
 @js.native
 sealed trait ImgCtlRoutes extends js.Object {
 
-  /** Форма-окошко для кропа. */
-  def imgCropForm(imgId: String, width: Int, height: Int): Route = js.native
-
   /** Запрос картинки-капчи. */
-  def getCaptcha(): Route = js.native
+  def getCaptcha(token: String): Route = js.native
 
 }
 
@@ -136,6 +132,8 @@ sealed trait IdentCtlRoutes extends js.Object {
   def epw2LoginSubmit(r: js.UndefOr[String] = js.undefined): Route = js.native
 
   def epw2RegSubmit(): Route = js.native
+
+  def regStep0Submit(): Route = js.native
 
   def idViaProvider(extServiceId: String, r: js.UndefOr[String] = js.undefined): Route = js.native
 

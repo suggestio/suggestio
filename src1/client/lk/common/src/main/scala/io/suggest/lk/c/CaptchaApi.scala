@@ -24,19 +24,19 @@ trait ICaptchaApi {
     *
     * @return Фьючерс с данными капчи.
     */
-  def getCaptcha(): Future[MCaptchaData]
+  def getCaptcha(token: String): Future[MCaptchaData]
 
 }
 
 /** Реализация CaptchaApi поверх http. */
 class CaptchaApiHttp extends ICaptchaApi {
 
-  override def getCaptcha(): Future[MCaptchaData] = {
+  override def getCaptcha(token: String): Future[MCaptchaData] = {
     for {
       // Запуск http-запрос за картинкой
       resp <- HttpClient.execute(
         HttpReq.routed(
-          route = routes.controllers.Img.getCaptcha(),
+          route = routes.controllers.Img.getCaptcha(token),
           data  = HttpReqData(
             headers = {
               val C = HttpConst.Headers

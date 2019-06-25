@@ -93,7 +93,7 @@ class BillingCronTasks @Inject()(
           }
         } yield {
           if (countDeleted > 0)
-            LOGGER.debug(s"Deleted $countDeleted otts.")
+            LOGGER.trace(s"Deleted $countDeleted otts.")
         }
       }
 

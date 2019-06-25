@@ -1,6 +1,6 @@
 package io.suggest.lk.c
 
-import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
 import io.suggest.lk.m._
 import io.suggest.lk.m.captcha.MCaptchaS
 import io.suggest.lk.m.input.MTextFieldS
@@ -22,6 +22,7 @@ import scala.util.Success
 
 class CaptchaAh[M](
                     api           : ICaptchaApi,
+                    idTokenRO     : ModelRO[String],
                     modelRW       : ModelRW[M, Option[MCaptchaS]],
                   )
   extends ActionHandler( modelRW )
@@ -37,7 +38,7 @@ class CaptchaAh[M](
       val tstampMs = System.currentTimeMillis()
       val fx = Effect {
         api
-          .getCaptcha()
+          .getCaptcha( idTokenRO.value )
           .transform { tryResp =>
             Success( CaptchaInitRes( tryResp, tstampMs ) )
           }

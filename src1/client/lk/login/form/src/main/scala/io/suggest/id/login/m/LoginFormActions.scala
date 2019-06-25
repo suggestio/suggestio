@@ -106,6 +106,9 @@ case object RegPhoneEdit extends IEpwSetValueStatic {
 case object RegPhoneBlur extends ILoginFormAction
 
 
+/** Результат сабмита реквизитов регистрации. */
+case class RegCredsSubmitResp(tstamp: Long, resp: Try[MRegTokenResp]) extends ILoginFormAction
+
 /** Ответ от результата сабмита формы регистрации по паролю. */
 case class RegCaptchaSubmitResp(tstamp: Long, resp: Try[MRegTokenResp]) extends ILoginFormAction
 

@@ -81,6 +81,7 @@ class LoginFormCircuit(
   private val captchaAh = new CaptchaAh(
     modelRW     = captchaOptRW,
     api         = captchaApi,
+    idTokenRO   = reg0CredsRW.zoom( _.submitReq.get.token ),
   )
 
 
