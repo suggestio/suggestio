@@ -1,5 +1,6 @@
 package util.sms.smsru
 
+import io.suggest.text.Validators
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.sms.smsRu.{MSmsRuResult, MSmsRuSendQs}
@@ -69,7 +70,7 @@ final class SmsRuClient @Inject() (
       (for {
         (phone, messages) <- sms.msgs.iterator
         if messages.nonEmpty
-        phoneNorm = normalizePhoneNumber(phone)
+        phoneNorm = Validators.normalizePhoneNumber( phone )
         oneMsg <- messages
       } yield {
         val phoneKey = "to[" + phoneNorm + "]"
@@ -104,23 +105,6 @@ final class SmsRuClient @Inject() (
           }
       }
     }
-  }
-
-
-  /** Нормализация номера телефона под нужды sms.ru.
-    * Требуется получить номер из цифр, без + в начале.
-    *
-    * @param phone Исходный номер телефона.
-    * @return Подчищенный номер телефона.
-    */
-  def normalizePhoneNumber(phone: String): String = {
-    // Нужно только цифры, и ничего кроме. И в начале - код страны.
-    phone
-      .trim
-      // Удалить все не-цифры:
-      .replaceAll("[^0-9]", "")
-      // Если код страны "8", то заменить на 7.
-      .replaceFirst("^8(\\d{10})$", "7$1")
   }
 
 }

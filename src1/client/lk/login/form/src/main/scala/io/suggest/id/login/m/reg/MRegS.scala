@@ -88,7 +88,3 @@ object ICanSubmit {
     def disableSubmit = !ics.canSubmit
   }
 }
-
-trait IDataOpt[A] {
-  def dataOpt: Option[A]
-}

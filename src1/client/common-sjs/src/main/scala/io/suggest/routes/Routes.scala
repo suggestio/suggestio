@@ -139,6 +139,8 @@ sealed trait IdentCtlRoutes extends js.Object {
 
   def smsCodeCheck(): Route = js.native
 
+  def regFinalSubmit(): Route = js.native
+
 }
 
 

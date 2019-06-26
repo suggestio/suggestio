@@ -62,8 +62,8 @@ class CheckBoxR(
 
     def render(s: State): VdomElement = {
       MuiFormControlLabel {
-        val checkBox = s.checkedSomeC { checkedSomeProxy =>
-          loginFormCssCtx.consume { loginFormCss =>
+        val checkBox = loginFormCssCtx.consume { loginFormCss =>
+          s.checkedSomeC { checkedSomeProxy =>
             val cbCss = new MuiCheckBoxClasses {
               override val root = loginFormCss.formControl.htmlClass
             }
@@ -86,7 +86,7 @@ class CheckBoxR(
 
         new MuiFormControlLabelProps {
           override val control = checkBox.rawElement
-          override val label = labelText.rawNode
+          override val label   = labelText.rawNode
         }
       }
     }

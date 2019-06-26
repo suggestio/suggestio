@@ -2,7 +2,6 @@ package io.suggest.id.login.m
 
 import io.suggest.ext.svc.MExtService
 import io.suggest.id.login.MLoginTab
-import io.suggest.id.login.m.reg.MRegStep
 import io.suggest.id.reg.MRegTokenResp
 import io.suggest.primo.IApply1
 import io.suggest.spa.DAction
@@ -106,6 +105,7 @@ case object RegPhoneEdit extends IEpwSetValueStatic {
 case object RegPhoneBlur extends ILoginFormAction
 
 
+// TODO Унифицировать все Resp-сигналы с помощью step-аргумента.
 /** Результат сабмита реквизитов регистрации. */
 case class RegCredsSubmitResp(tstamp: Long, resp: Try[MRegTokenResp]) extends ILoginFormAction
 
@@ -114,6 +114,9 @@ case class RegCaptchaSubmitResp(tstamp: Long, resp: Try[MRegTokenResp]) extends 
 
 /** Ответ по поводу проверки смс-кода. */
 case class RegSmsCheckResp(tstamp: Long, tryResp: Try[MRegTokenResp]) extends ILoginFormAction
+
+/** Результат сабмита финальной формы регистрации. */
+case class RegFinalSubmitResp(tstamp: Long, tryResp: Try[MRegTokenResp]) extends ILoginFormAction
 
 
 /** Нажимание кнопки "Далее" в форме регистрации. */

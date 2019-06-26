@@ -2,7 +2,7 @@ package io.suggest.id.login.m.reg.step3
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.id.login.m.reg.{ICanSubmit, IDataOpt}
+import io.suggest.id.login.m.reg.ICanSubmit
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -40,19 +40,17 @@ object MReg3CheckBoxes {
   * @param submitReq Реквест сабмита этого шага на сервер.
   */
 case class MReg3CheckBoxes(
-                                checkBoxes          : Option[MRegCheckBoxes]  = None,
-                                submitReq           : Pot[AnyRef]             = Pot.empty,
-                              )
+                            checkBoxes          : MRegCheckBoxes          = MRegCheckBoxes.empty,
+                            submitReq           : Pot[AnyRef]             = Pot.empty,
+                          )
   extends ICanSubmit
-  with IDataOpt[MRegCheckBoxes]
 {
 
   override def canSubmit: Boolean = {
-    checkBoxes.exists(_.canSubmit)
+    //checkBoxes.exists(_.canSubmit)
+    checkBoxes.canSubmit &&
     !submitReq.isPending
   }
-
-  override def dataOpt = checkBoxes
 
 }
 

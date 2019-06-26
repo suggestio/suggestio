@@ -7,7 +7,8 @@ import io.suggest.id.login.c.ILoginApi
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
-import io.suggest.id.login.m.{RegBackClick, RegCaptchaSubmitResp, RegCredsSubmitResp, RegNextClick, RegSmsCheckResp}
+import io.suggest.id.login.m.reg.step3.MReg3CheckBoxes
+import io.suggest.id.login.m.{RegBackClick, RegCaptchaSubmitResp, RegCredsSubmitResp, RegFinalSubmitResp, RegNextClick, RegSmsCheckResp}
 import io.suggest.id.login.m.reg.{MRegS, MRegSteps}
 import io.suggest.id.reg.{MCodeFormData, MCodeFormReq, MRegCreds0}
 import io.suggest.lk.m.CaptchaInit
@@ -172,7 +173,39 @@ class RegAh[M](
 
         // Далее на последней странице галочек.
         case MRegSteps.S3CheckBoxes =>
-          ???
+          if (v0.s3CheckBoxes.submitReq.isReady) {
+            // Уже ответ получен - перейти по полученной ссылке.
+            ???
+
+          } else if (v0.s3CheckBoxes.submitReq.isPending) {
+            // Реквест уже запущен. Вероятно, повторный сигнал сабмита по ошибке пришёл.
+            LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (v0.step, v0.s3CheckBoxes.submitReq) )
+            noChange
+
+          } else {
+            // Надо отправить на сервер подтверждение выбранных галочек.
+            for (checkBoxS <- v0.s3CheckBoxes.checkBoxes.checkBoxes)
+              require( checkBoxS.isChecked )
+            val tstampMs = System.currentTimeMillis()
+            val fx = Effect {
+              val data = MCodeFormReq(
+                token    = v0.s2SmsCode.submitReq.get.token,
+                formData = MCodeFormData(
+                  code = Some( ??? ),   // TODO Поле ввода пароля
+                ),
+              )
+              loginApi
+                .regFinalSubmit( data )
+                .transform { tryResp =>
+                  Success( RegFinalSubmitResp(tstampMs, tryResp) )
+                }
+            }
+
+            val v2 = MRegS.s3CheckBoxes
+              .composeLens( MReg3CheckBoxes.submitReq )
+              .modify( _.pending(tstampMs) )(v0)
+            updated(v2, fx)
+          }
 
       }
 

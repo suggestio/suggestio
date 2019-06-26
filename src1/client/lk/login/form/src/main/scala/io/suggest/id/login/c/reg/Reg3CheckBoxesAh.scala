@@ -19,34 +19,34 @@ class Reg3CheckBoxesAh[M](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
+    // Сигнал от галочкой правил пользования сервисом.
     case m: RegTosSetAccepted =>
       val v0 = value
-      val cbs0 = v0.checkBoxes.get
+      val cbs0 = v0.checkBoxes
       if (cbs0.tos.isChecked ==* m.isAccepted) {
         noChange
 
       } else {
-        val cbs2 = MRegCheckBoxes.tos
+        val v2 = MReg3CheckBoxes.checkBoxes
+          .composeLens( MRegCheckBoxes.tos )
           .composeLens( MRegCheckBoxS.isChecked )
-          .set(m.isAccepted)( cbs0 )
-        val v2 = MReg3CheckBoxes.checkBoxes.set( Some(cbs2) )(v0)
+          .set(m.isAccepted)(v0)
         updated( v2 )
       }
 
 
+    // Сигнал от галочки согласия на обработку персональных данных.
     case m: RegPdnSetAccepted =>
       val v0 = value
-      val cbs0 = v0.checkBoxes.get
 
-      if (cbs0.pdn.isChecked ==* m.isAccepted) {
+      if (v0.checkBoxes.pdn.isChecked ==* m.isAccepted) {
         noChange
 
       } else {
-        val cbs2 = MRegCheckBoxes.pdn
-          .composeLens( MRegCheckBoxS.isChecked )
-          .set( m.isAccepted )(cbs0)
         val v2 = MReg3CheckBoxes.checkBoxes
-          .set( Some(cbs2) )(v0)
+          .composeLens( MRegCheckBoxes.pdn )
+          .composeLens( MRegCheckBoxS.isChecked )
+          .set( m.isAccepted )(v0)
         updated( v2 )
       }
 

@@ -52,6 +52,13 @@ trait ILoginApi {
     */
   def smsCodeCheck(req: MCodeFormReq): Future[MRegTokenResp]
 
+  /** Сабмит галочек и нового пароля.
+    *
+    * @param req Реквест с указанным паролем.
+    * @return Ответ по регистрации.
+    */
+  def regFinalSubmit(req: MCodeFormReq): Future[MRegTokenResp]
+
 }
 
 
@@ -121,5 +128,8 @@ class LoginApiHttp extends ILoginApi {
 
   override def smsCodeCheck(req: MCodeFormReq): Future[MRegTokenResp] =
     _tokenReq( req, routes.controllers.Ident.smsCodeCheck() )
+
+  override def regFinalSubmit(req: MCodeFormReq): Future[MRegTokenResp] =
+    _tokenReq( req, routes.controllers.Ident.regFinalSubmit() )
 
 }

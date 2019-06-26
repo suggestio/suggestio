@@ -2,7 +2,7 @@ package io.suggest.id.login.m.reg.step1
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.id.login.m.reg.{ICanSubmit, IDataOpt}
+import io.suggest.id.login.m.reg.ICanSubmit
 import io.suggest.id.reg.MRegTokenResp
 import io.suggest.lk.m.captcha.MCaptchaS
 import io.suggest.ueq.JsUnivEqUtil._
@@ -47,7 +47,6 @@ case class MReg1Captcha(
                          submitReq        : Pot[MRegTokenResp]    = Pot.empty,
                        )
   extends ICanSubmit
-  with IDataOpt[MCaptchaS]
 {
 
   override def canSubmit: Boolean = {
@@ -66,7 +65,5 @@ case class MReg1Captcha(
       !c.contentReq.isPending
     }
   }
-
-  override final def dataOpt = captcha
 
 }

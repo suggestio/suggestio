@@ -14,9 +14,13 @@ import io.suggest.id.login.{ILoginFormPages, MEpwLoginReq}
 import io.suggest.id.reg.{MCodeFormData, MCodeFormReq, MRegCreds0, MRegTokenResp}
 import io.suggest.id.token.{MIdMsg, MIdToken, MIdTokenConstaints, MIdTokenDates, MIdTokenTypes}
 import io.suggest.init.routed.MJsInitTargets
-import io.suggest.mbill2.m.ott.MOneTimeTokens
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.MNodes
+import io.suggest.mbill2.m.ott.{MOneTimeToken, MOneTimeTokens}
+import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicate, MPredicates}
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.sec.csp.Csp
 import io.suggest.sec.util.{PgpUtil, ScryptUtil}
 import io.suggest.session.{LongTtl, MSessionKeys, ShortTtl, Ttl}
@@ -40,6 +44,7 @@ import views.html.ident.reg.email.{_regColumnTpl, emailRegMsgTpl}
 import views.html.ident.recover.emailPwRecoverTpl
 import views.html.lk.login._
 import japgolly.univeq._
+import models.req.IReqHdr
 import models.sms.{ISmsSendResult, MSmsSend}
 import play.api.libs.json.Json
 import play.api.mvc.Result
@@ -352,11 +357,9 @@ class Ident @Inject() (
           ),
           payload = Json.toJson {
             request.body.copy(
-              email = request.body.email
-                .trim
-                .toLowerCase(),
+              email = Validators.normalizeEmail( request.body.email ),
               // TODO Задействовать libphonenumber или что-то этакое.
-              phone = request.body.phone.trim,
+              phone = Validators.normalizePhoneNumber( request.body.phone ),
             )
             request.body
           },
@@ -541,117 +544,127 @@ class Ident @Inject() (
   }
 
 
+  /** Парсер для MCodeForm. Используется при вводе смс-кода и при вводе пароля. */
+  private def _parseCodeFormReq = {
+    val pgpKeyFut = pgpUtil.getLocalStorKey()
+    lazy val logPrefix = s"_parseIdTokenPtr#${System.currentTimeMillis()}:"
+    parse
+      .json[MCodeFormReq]
+      .validate { smsReq =>
+        Either.cond(
+          test  = smsReq.formData match {
+            case MCodeFormData(Some(smsCode), false) =>
+              Validators.isSmsCodeValid( smsCode )
+            case MCodeFormData(None, true) =>
+              true
+            case _ =>
+              false
+          },
+          right = smsReq,
+          left  = {
+            LOGGER.debug(s"$logPrefix Invalid smsCode format: ${smsReq.formData}")
+            NotAcceptable("sms.code.invalid")
+          }
+        )
+      }
+      // И расшифровать присланные данные токена:
+      .validateM { smsReq =>
+        val fut0 = for (pgpKey <- pgpKeyFut) yield {
+          val pgpMsg = pgpUtil.unminifyPgpMessage( smsReq.token )
+          val ottIdStr = JioStreamsUtil.stringIo[String]( pgpMsg, outputSizeInit = 256 )( pgpUtil.decryptFromSelf(_, pgpKey, _) )
+          val ottId = UUID.fromString( ottIdStr )
+          LOGGER.trace(s"$logPrefix Found tokenId#$ottId in request")
+          (smsReq, ottId)
+        }
+        fut0.transform { tryRes =>
+          val resE = tryRes
+            .toEither
+            .left.map { ex =>
+              LOGGER.error(s"$logPrefix Unabled to decrypt/parse token", ex)
+              NotAcceptable("invalid")
+            }
+          Success( resE )
+        }
+      }
+  }
+
+
+  /** На основе указателя ottId, получить из БД и распарсить idToken (выставив forUpdate).
+    *
+    * @param ottId id токена.
+    * @param now текущее время запроса.
+    * @param req Текущий http-реквест.
+    * @return Прочитанные токены.
+    */
+  private def _idTokenPtrCaptchaOk(ottId: UUID, now: Instant)(implicit req: IReqHdr): DBIOAction[(MOneTimeToken, MIdToken), NoStream, Effect.Read] = {
+    lazy val logPrefix = s"_idTokenPtrCaptchaOk()#${now.toEpochMilli}:"
+    for {
+      // Достать токен по id из базы биллиннга:
+      mottOpt0 <- mOneTimeTokens.getById( ottId ).forUpdate
+      if {
+        val r = mottOpt0.nonEmpty
+        if (!r) LOGGER.warn(s"$logPrefix Cannot find token#$ottId in db.")
+        r
+      }
+      mott0 = mottOpt0.get
+
+      // Расшифровать id-токен
+      idToken0 = Json
+        .parse( mott0.info.get )
+        .as[MIdToken]
+
+      // Убедиться, что тип токена соответствует ожиданиям ident-токена.
+      if {
+        val expected = MIdTokenTypes.IdentVerify
+        val r = (idToken0.typ ==* expected)
+        if (!r) LOGGER.warn(s"$logPrefix Invalid token type#${idToken0.typ}, but $expected expected.")
+        r
+      } && {
+        val r = idTokenUtil.isConstaintsMeetRequest( idToken0, now )
+        if (!r) LOGGER.warn(s"$logPrefix IdToken stored is unrelated to current request session.")
+        r
+      } && {
+        // капча должна быть уже выверена:
+        val r = idToken0.idMsgs.exists { idMsg =>
+          (idMsg.rcptType ==* MPredicates.JdContent.Image) &&
+          idMsg.validated.nonEmpty
+        }
+        if (!r) LOGGER.warn(s"$logPrefix Captcha IdMsg not exist or invalid.\n ${idToken0.idMsgs.mkString(",\n ")}")
+        r
+      }
+    } yield {
+      (mott0, idToken0)
+    }
+  }
+
+
   /** Экшен проверки смс-кода, получает токен с выверенной капчей и запросом смс-кода,
     * возвращает токен с проверенным кодом или ошибку.
     *
     * @return JSON с токеном проверки.
     */
   def smsCodeCheck() = csrf.Check {
-    val now = Instant.now()
-    lazy val logPrefix = s"smsCodeCheck()#${now.toEpochMilli}:"
-    lazy val pgpKeyFut = pgpUtil.getLocalStorKey()
-
-    val _theAction = isAnon().async {
-      parse
-        .json[MCodeFormReq]
-        .validate { smsReq =>
-          Either.cond(
-            test  = smsReq.formData match {
-              case MCodeFormData(Some(smsCode), false) =>
-                Validators.isSmsCodeValid( smsCode )
-              case MCodeFormData(None, true) =>
-                true
-              case _ =>
-                false
-            },
-            right = smsReq,
-            left  = {
-              LOGGER.debug(s"$logPrefix Invalid smsCode format: ${smsReq.formData}")
-              NotAcceptable("sms.code.invalid")
-            }
-          )
-        }
-        // И расшифровать присланные данные токена:
-        .validateM { smsReq =>
-          val fut0 = for (pgpKey <- pgpKeyFut) yield {
-            val pgpMsg = pgpUtil.unminifyPgpMessage( smsReq.token )
-            val ottIdStr = JioStreamsUtil.stringIo[String]( pgpMsg, outputSizeInit = 256 )( pgpUtil.decryptFromSelf(_, pgpKey, _) )
-            val ottId = UUID.fromString( ottIdStr )
-            LOGGER.trace(s"$logPrefix Found tokenId#$ottId in request")
-            (smsReq, ottId)
-          }
-          fut0.transform { tryRes =>
-            val resE = tryRes
-              .toEither
-              .left.map { ex =>
-                LOGGER.error(s"$logPrefix Unabled to decrypt/parse token", ex)
-                NotAcceptable("invalid")
-              }
-            Success( resE )
-          }
-        }
-    } { implicit request =>
+    val _theAction = isAnon().async(_parseCodeFormReq) { implicit request =>
+      val now = Instant.now()
+      lazy val logPrefix = s"smsCodeCheck()#${now.toEpochMilli}:"
       // Проверить токен по базе.
       val (smsReq, ottId) = request.body
-
-      implicit lazy val ctx = implicitly[Context]
 
       // TODO Наверное, надо организовать DB-транзакцию, в которой и проводить все проверки с обновлением токена.
       val dbActionTxn = for {
         // Достать токен по id из базы биллиннга:
-        mottOpt0 <- mOneTimeTokens.getById( ottId ).forUpdate
-        if {
-          val r = mottOpt0.nonEmpty
-          if (!r) LOGGER.warn(s"$logPrefix Cannot find token#$ottId in db.")
-          r
-        }
-        mott0 = mottOpt0.get
-        if {
-          val r = !(mott0.dateEnd isBefore now)
-          if (!r) LOGGER.warn(s"$logPrefix Token#${ottId} exists, but it is expired: ${mott0.dateEnd} isAfter now=$now\n info=${mott0.info.orNull}")
-          r
-        }
-
-        idTokenStr = mott0.info.get
-
-        // Расшифровать id-токен
-        idToken0 = Json
-          .parse( idTokenStr )
-          .as[MIdToken]
-
-        // Убедиться, что тип токена соответствует ожиданиям ident-токена.
-        if {
-          val expected = MIdTokenTypes.IdentVerify
-          val r = (idToken0.typ ==* expected)
-          if (!r) LOGGER.warn(s"$logPrefix Invalid token type#${idToken0.typ}, but $expected expected.")
-          r
-        } && {
-          val r = idTokenUtil.isConstaintsMeetRequest( idToken0 )
-          if (!r) LOGGER.warn(s"$logPrefix IdToken stored is unrelated to current request session.")
-          r
-        } && {
-          // капча должна быть уже выверена:
-          val r = idToken0.idMsgs.exists { idMsg =>
-            (idMsg.rcptType ==* MPredicates.JdContent.Image) &&
-            idMsg.validated.nonEmpty
-          }
-          if (!r) LOGGER.warn(s"$logPrefix Captcha IdMsg not exist or invalid.\n ${idToken0.idMsgs.mkString(",\n ")}")
-          r
-        }
+        (mott0, idToken0) <- _idTokenPtrCaptchaOk( ottId, now )
 
         // Собрать данные по отправленным смс-кам из токена.
-        smsRcptType = MPredicates.Ident.Phone
         smsMsgs = idToken0.idMsgs
-          .filter(_.rcptType ==* smsRcptType)
+          .filter(_.rcptType ==* MPredicates.Ident.Phone)
 
         if {
           val r = smsMsgs.nonEmpty
           if (!r) LOGGER.error(s"$logPrefix IdToken does NOT contain sms-messages.")
           r
-        }
-
-        // Запретить дальнейшую обработку, если было слишком много ошибок.
-        if {
+        } && {
+          // Запретить дальнейшую обработку, если было слишком много ошибок.
           val tooManyErrors = smsMsgs.exists( _.errorsCount > 10 )
           if (tooManyErrors) LOGGER.warn(s"$logPrefix Suppressed bruteforce: too many errors were:\n ${smsMsgs.mkString(",\n ")}")
           !tooManyErrors
@@ -729,7 +742,7 @@ class Ident @Inject() (
                 sendRes <- _sendIdCodeSms(
                   phoneNumber = phoneNumber,
                   smsCode     = smsCode,
-                  ctx         = ctx
+                  ctx         = implicitly[Context]
                 )
               } yield {
                 // Нужно собрать обновлённый токен на основе результатов отправки:
@@ -787,6 +800,256 @@ class Ident @Inject() (
     }
 
     bruteForceProtect( _theAction )
+  }
+
+
+  /** Финал регистрации: юзер подтвердил галочки, юзер ввёл пароль.
+    *
+    * @return Экшен, возвращающий редирект.
+    */
+  def regFinalSubmit = csrf.Check {
+    bruteForceProtect {
+      isAnon().async( _parseCodeFormReq ) { implicit request =>
+        val now = Instant.now()
+        val (cfReq, ottId) = request.body
+        val password = cfReq.formData.code.get
+        lazy val logPrefix = s"regFinalSubmit($ottId)#${now.toEpochMilli}:"
+
+        val dbAction = for {
+          // Достать токен по id из базы биллиннга:
+          (mott0, idToken0) <- _idTokenPtrCaptchaOk( ottId, now )
+
+          idPreds = (MPredicates.Ident.Phone :: MPredicates.JdContent.Image :: Nil) : List[MPredicate]
+
+          // Убедится, что смс и капча успешно выверены.
+          if {
+            idPreds.forall { mpred =>
+              idToken0.idMsgs.exists { idMsg =>
+                val r = (idMsg.rcptType ==* mpred) && idMsg.validated.nonEmpty
+                if (r) LOGGER.trace(s"$logPrefix Found validated $idMsg")
+                r
+              }
+            }
+          }
+
+          personIdRcptType = MPredicates.Ident.Id
+
+          if {
+            // И ещё нет токена сохранённого пароля.
+            !idToken0.idMsgs.exists { idMsg =>
+              val r = idMsg.rcptType ==* personIdRcptType
+              if (r) LOGGER.trace(s"$logPrefix Password idMsg already exist. Token already used: $idMsg")
+              r
+            }
+          }
+
+          // Достать реквизиты юзера с нулевого шага:
+          regCreds = idToken0.payload.as[MRegCreds0]
+
+          // Нормализованный номер телефона - это один из ключей узла.
+          phoneNumberNorm = Validators.normalizePhoneNumber( regCreds.phone )
+
+          // Поискать уже существующего юзера в узлах:
+          existingPersonNodeOpt <- DBIO.from {
+            for {
+              existingPersonNodes <- mNodes.dynSearch {
+                new MNodeSearchDfltImpl {
+                  override def nodeTypes = MNodeTypes.Person :: Nil
+                  override def outEdges: Seq[Criteria] = {
+                    val cr = Criteria(
+                      nodeIds    = phoneNumberNorm :: Nil,
+                      predicates = MPredicates.Ident.Phone :: Nil,
+                    )
+                    cr :: Nil
+                  }
+                  // Надо падать на ситуации, когда есть несколько узлов с одним номером телефона.
+                  override def limit = 2
+                }
+              }
+            } yield {
+              // если для одного номера телефона - несколько номеров, то ситуация неопределена.
+              if (existingPersonNodes.lengthCompare(1) > 0) {
+                LOGGER.error(s"$logPrefix Two or more existing nodes[${existingPersonNodes.iterator.flatMap(_.id).mkString(",")}] found for phoneIdent[$phoneNumberNorm]. Should never happend. Please resolve db consistency by hands.")
+                // TODO node-merge Надо запустить авто-объединение узлов и обновление зависимых узлов.
+                throw new IllegalStateException("DB consistency in doubt: duplicate phone number. Please check.")
+              } else {
+                existingPersonNodes.headOption
+              }
+            }
+          }
+
+          emailNorm = Validators.normalizeEmail( regCreds.email )
+
+          // Узел юзера. Может быть, он уже существует.
+          personNodeSaved <- {
+            // Эдж пароля:
+            val passwordEdge = MEdge(
+              predicate = MPredicates.Ident.Password,
+              info = MEdgeInfo(
+                textNi = Some( scryptUtil.mkHash( password ) ),
+              )
+            )
+            val emailEdge = MEdge(
+              predicate = MPredicates.Ident.Email,
+              nodeIds = Set( emailNorm ),
+              info = MEdgeInfo(
+                flag = Some(false),
+              )
+            )
+            existingPersonNodeOpt.fold [DBIOAction[MNode, NoStream, Effect]] {
+              // Как и ожидалось, такого юзера нет в базе. Собираем нового юзера:
+              LOGGER.debug(s"$logPrefix For phone[$phoneNumberNorm] no user exists. Creating new...")
+              // Собрать узел для нового юзера.
+              val mperson0 = MNode(
+                common = MNodeCommon(
+                  ntype       = MNodeTypes.Person,
+                  isDependent = false,
+                  isEnabled   = true,
+                ),
+                meta = MMeta(
+                  basic = MBasicMeta(
+                    nameOpt = Some(
+                      idToken0.idMsgs
+                        .iterator
+                        .filter { m =>
+                          idPreds contains[MPredicate] m.rcptType
+                        }
+                        .flatMap(_.rcpt)
+                        .mkString(" | ")
+                    )
+                  )
+                ),
+                edges = MNodeEdges(
+                  out = MNodeEdges.edgesToMap(
+                    passwordEdge,
+                    // Номер телефона.
+                    MEdge(
+                      predicate = MPredicates.Ident.Phone,
+                      nodeIds   = Set( phoneNumberNorm ),
+                      info = MEdgeInfo(
+                        flag = Some(true),
+                      )
+                    ),
+                    // Электронная почта.
+                    emailEdge,
+                  )
+                ),
+              )
+              // Создать узел для юзера:
+              for {
+                savedId <- DBIO.from {
+                  mNodes.save( mperson0 )
+                }
+              } yield {
+                MNode.id
+                  .set( Some(savedId) )(mperson0)
+              }
+
+            } { personNode0 =>
+              // Уже существует узел. Организовать сброс пароля.
+              val nodeId = personNode0.id.get
+              val mnode1 = MNode.edges
+                .composeLens(MNodeEdges.out)
+                .modify { edges0 =>
+                  // Убрать гарантировано ненужные эджи:
+                  val edges1 = edges0
+                    .iterator
+                    .filter { e0 =>
+                      e0.predicate match {
+                        // Эджи пароля удаляем безусловно
+                        case MPredicates.Ident.Password =>
+                          LOGGER.trace(s"$logPrefix Drop edge Password $e0 of node#$nodeId\n $e0")
+                          false
+                        // Эджи почты: неподтвердённые - удалить.
+                        case MPredicates.Ident.Email if !e0.info.flag.contains(true) =>
+                          LOGGER.trace(s"$logPrefix Drop edge Email#${e0.nodeIds.mkString(",")} with flag=false on node#$nodeId\n $e0")
+                          false
+                        // Остальные эджи - пускай живут.
+                        case _ => true
+                      }
+                    }
+                    .toStream
+                  // Отработать email-эдж. Если он уже есть для текущей почты, то оставить как есть. Иначе - создать новый, неподтверждённый эдж.
+                  val edges2 = edges1
+                    .find { e =>
+                      (e.predicate ==* MPredicates.Ident.Email) &&
+                      (e.nodeIds contains emailNorm)
+                    }
+                    .fold {
+                      // Создать email-эдж
+                      LOGGER.trace(s"$logPrefix Inserting Email-edge#$emailNorm on node#$nodeId\n $emailEdge")
+                      emailEdge #:: edges1
+                    } { emailExistsEdge =>
+                      LOGGER.trace(s"$logPrefix Keep edge Email#$emailNorm as-is on node#$nodeId\n $emailExistsEdge")
+                      edges1
+                    }
+
+                  MNodeEdges.edgesToMap1( passwordEdge #:: edges2 )
+                }( personNode0 )
+
+              DBIO.from {
+                for (_ <- mNodes.save( mnode1 ))
+                yield mnode1
+              }
+            }
+          }
+
+          personId = personNodeSaved.id.get
+
+          // Всё ок. Финализировать idToken:
+          idToken2 = {
+            LOGGER.info(s"$logPrefix Created new person node#$personId for $regCreds")
+            (
+              MIdToken.idMsgs.modify { idMsgs0 =>
+                MIdMsg(
+                  rcptType  = personIdRcptType,
+                  checkCode = "",
+                  validated = Some(now),
+                  rcpt      = Set( personId ),
+                ) :: idMsgs0
+              } andThen
+              MIdToken.dates
+                .composeLens( MIdTokenDates.modified )
+                .set( Some(now) )
+            )(idToken0)
+          }
+
+          // Собрать и сохранить обновлённый ott-токен в базу:
+          mott2 = mott0.copy(
+            dateEnd = now plusSeconds 30.minutes.toSeconds,
+            info    = Some( Json.toJson(idToken2).toString() ),
+          )
+
+          countUpdated <- mOneTimeTokens.updateExisting( mott2 )
+          if {
+            val r = countUpdated ==* 1
+            if (!r) {
+              LOGGER.error(s"$logPrefix Failed to update ott#${mott2.id}, countUpdated=${countUpdated}")
+              mNodes
+                .deleteById( personId )
+                .onComplete { tryRes =>
+                  LOGGER.info(s"$logPrefix Deleted user#$personId due to previous errors.\n r = $tryRes")
+                }
+            }
+            r
+          }
+
+        } yield {
+          LOGGER.debug(s"$logPrefix Updated ott#${mott2.id} with finalized id-token.")
+          (personId, regCreds)
+        }
+
+        // Запустить транзацию обновления состояния хранимого токена и создания узла юзера.
+        val userRegFut = slick.db.run {
+          dbAction.transactionally
+        }
+
+        // TODO Отправить email, если в email-эдже flag=false для текущего email.
+        // TODO Создать узел-магазин начальный. Возможно, с начальными карточками.
+        // TODO Залогинить юзера, вернуть адрес для редиректа
+        ???
+      }
+    }
   }
 
 }

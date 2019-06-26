@@ -3,7 +3,7 @@ package io.suggest.id.login
 import com.softwaremill.macwire._
 import io.suggest.id.login.v.epw.{EpwFormR, EpwTextFieldR}
 import io.suggest.id.login.v.ext.ExtFormR
-import io.suggest.id.login.v.reg.{Reg0CredsR, Reg1CaptchaR, Reg2SmsCodeR, RegFinishR, RegR}
+import io.suggest.id.login.v.reg.{Reg0CredsR, Reg1CaptchaR, Reg2SmsCodeR, Reg3CheckBoxesR, RegR}
 import io.suggest.id.login.v.stuff.{ButtonR, CheckBoxR, LoginProgressR}
 import io.suggest.id.login.v.{LoginFormCss, LoginFormR, LoginFormSpaRouter}
 import japgolly.scalajs.react.React
@@ -29,14 +29,13 @@ class LoginFormModule {
   lazy val reg0CredsR = wire[Reg0CredsR]
   lazy val reg1CaptchaR = wire[Reg1CaptchaR]
   lazy val reg2SmsCodeR = wire[Reg2SmsCodeR]
+  lazy val reg3CheckBoxesR = wire[Reg3CheckBoxesR]
 
   lazy val extFormR = wire[ExtFormR]
 
   lazy val checkBoxR = wire[CheckBoxR]
   lazy val loginProgressR = wire[LoginProgressR]
   lazy val buttonR = wire[ButtonR]
-
-  lazy val regFinishR = wire[RegFinishR]
 
   def loginFormCircuitF =
     (routerCtl: RouterCtl[ILoginFormPages]) => wire[LoginFormCircuit]

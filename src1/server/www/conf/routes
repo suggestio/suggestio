@@ -316,6 +316,7 @@ POST /id2/epw/login                     @controllers.Ident.epw2LoginSubmit(r: Op
 POST /id2/reg/s0                        @controllers.Ident.regStep0Submit
 POST /id2/reg/s1                        @controllers.Ident.epw2RegSubmit()
 POST /id2/reg/s2                        @controllers.Ident.smsCodeCheck
+POST /id2/reg/s3                        @controllers.Ident.regFinalSubmit
 ## Ident v1
 GET  /id/push/:extService               @controllers.Ident.extServicePushGet(extService: io.suggest.ext.svc.MExtService)
 POST /id/push/:extService               @controllers.Ident.extServicePushPost(extService: io.suggest.ext.svc.MExtService)

@@ -29,6 +29,23 @@ object Validators {
   }
 
 
+  def normalizeEmail(email: String): String = {
+    email
+      .trim
+      .toLowerCase()
+  }
+
+  def normalizePhoneNumber(phone: String): String = {
+    // Нужно только цифры, и ничего кроме. И в начале - код страны.
+    phone
+      .trim
+      // Удалить все не-цифры:
+      .replaceAll("[^0-9]", "")
+      // Если код страны "8", то заменить на 7.
+      .replaceFirst("^8(\\d{10})$", "7$1")
+  }
+
+
   /** Валидация номера телефона.
     *
     * @param phone Введённый номер телефона.

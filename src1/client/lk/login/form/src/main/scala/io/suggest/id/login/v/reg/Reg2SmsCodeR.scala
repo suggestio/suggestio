@@ -29,7 +29,7 @@ class Reg2SmsCodeR(
           override val row = true
         }
       )(
-        // Поле для вввода смс-кода:
+        // Поле для ввода смс-кода:
         p.wrap { props =>
           for (smsCode <- props.smsCode) yield {
             smsCodeFormR.PropsVal(

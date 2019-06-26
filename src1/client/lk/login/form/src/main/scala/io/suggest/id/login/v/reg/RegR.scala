@@ -8,6 +8,7 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
+import io.suggest.id.login.m.reg.step3.MReg3CheckBoxes
 import io.suggest.id.login.m.{RegBackClick, RegNextClick}
 import io.suggest.id.login.m.reg.{MRegS, MRegStep, MRegSteps}
 import io.suggest.id.login.v.LoginFormCss
@@ -30,6 +31,7 @@ class RegR(
             reg0CredsR         : Reg0CredsR,
             reg1CaptchaR       : Reg1CaptchaR,
             reg2SmsCodeR       : Reg2SmsCodeR,
+            reg3CheckBoxesR    : Reg3CheckBoxesR,
             buttonR            : ButtonR,
             loginProgressR     : LoginProgressR,
             commonReactCtxProv : React.Context[MCommonReactCtx],
@@ -71,7 +73,7 @@ class RegR(
       lazy val stepSmsCode = p.wrap(_.s2SmsCode)(reg2SmsCodeR.component.apply)(implicitly, MReg2SmsCode.MReg2SmsCodeFastEq)
 
       // Шаг галочек соглашений и окончания регистрации
-      //val stepCheckBoxes = ???
+      lazy val stepCheckBoxes = p.wrap(_.s3CheckBoxes)(reg3CheckBoxesR.component.apply)(implicitly, MReg3CheckBoxes.MReg3CheckBoxesFastEq)
 
       // Сообщения текстовые зависят от common-контекста.
       val backMsg = commonReactCtxProv.consume { commonReactCtx =>
@@ -137,7 +139,7 @@ class RegR(
                   case MRegSteps.S0Creds      => step0Creds
                   case MRegSteps.S1Captcha    => stepCaptcha
                   case MRegSteps.S2SmsCode    => stepSmsCode
-                  case MRegSteps.S3CheckBoxes => ???
+                  case MRegSteps.S3CheckBoxes => stepCheckBoxes
                 },
 
                 MuiMobileStepper.component(
@@ -158,19 +160,17 @@ class RegR(
         )
       )
 
-      //MuiPaper()(
-        s.isSubmitPendingSomeC { isFormDisabledSomeProxy =>
-          <.form(
-            ReactCommonUtil.maybe( isFormDisabledSomeProxy.value.value ) {
-              TagMod(
-                ^.onSubmit --> _onNextClick,
-                ^.disabled  := true,
-              )
-            },
-            formContent
-          )
-        }
-      //)
+      s.isSubmitPendingSomeC { isFormDisabledSomeProxy =>
+        <.form(
+          ReactCommonUtil.maybe( isFormDisabledSomeProxy.value.value ) {
+            TagMod(
+              ^.onSubmit --> _onNextClick,
+              ^.disabled  := true,
+            )
+          },
+          formContent
+        )
+      }
 
     }
 
