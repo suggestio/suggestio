@@ -6,6 +6,7 @@ import java.util.UUID
 import javax.inject.{Inject, Singleton}
 import controllers.ident._
 import io.suggest.captcha.MCaptchaCheckReq
+import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.EsModel
 import io.suggest.i18n.MsgCodes
@@ -357,6 +358,7 @@ class Ident @Inject() (
           ),
           payload = Json.toJson {
             request.body.copy(
+              // Нормализованные обязательно.
               email = Validators.normalizeEmail( request.body.email ),
               // TODO Задействовать libphonenumber или что-то этакое.
               phone = Validators.normalizePhoneNumber( request.body.phone ),
@@ -474,70 +476,6 @@ class Ident @Inject() (
           token = pgpUtil.minifyPgpMessage( cipherText )
         )
       }
-
-      /*for {
-        // Проверить, что там с почтовым адресом?
-        // Поиск юзеров с таким вот email:
-        userAlreadyExists <- mNodes.dynExists {
-          new MNodeSearchDfltImpl {
-            override val nodeTypes = MNodeTypes.Person :: Nil
-            override def limit = 2
-            override val outEdges: Seq[Criteria] = {
-              val cr = Criteria(
-                nodeIds     = email1 :: Nil,
-                predicates  = MPredicates.Ident.Email :: Nil,
-              )
-              cr :: Nil
-            }
-          }
-        }
-
-        // Разобраться, есть ли уже юзеры с таким email?
-        // Тут есть несколько вариантов: юзер не существует, юзер уже существует.
-        isReg = {
-          LOGGER.trace(s"$logPrefix userAlreadyExists?$userAlreadyExists email=$email1")
-          !userAlreadyExists
-        }
-
-        // Рандомная строка, выполняющая роль nonce + привязка письма к сессии текущего юзера.
-        randomUuid = UUID.randomUUID()
-
-        _ <- {
-          implicit val ctx = implicitly[Context]
-          mailer
-            .instance
-            .setRecipients( email1 )
-            .setSubject {
-              val prefixMsgCode =
-                if (isReg) "reg.emailpw.email.subj"
-                else MsgCodes.`Password.recovery`
-              s"${ctx.messages(prefixMsgCode)} | ${MsgCodes.`Suggest.io`}"
-            }
-            .setHtml {
-              val tplQs = MEmailRecoverQs(
-                email         = email1,
-                // Привязать сессию текущего юзера к письму:
-                nonce         = randomUuid,
-                checkSession  = true,
-              )
-              val tpl =
-                if (isReg) emailRegMsgTpl
-                else emailPwRecoverTpl
-              val html = tpl.render(tplQs, ctx)
-              htmlCompressUtil.html4email( html )
-            }
-            .send()
-        }
-
-      } yield {
-        LOGGER.debug(s"$logPrefix Sent message to $email1 isReg?$isReg")
-        // TODO Залить id в текущую сессию для привязки сессии к письму?
-
-        NoContent
-          .addingToSession(
-            MSessionKeys.ExtLoginData.value -> randomUuid.toString
-          )
-      }*/
     }
 
     bruteForceProtect( _theAction )
@@ -545,7 +483,7 @@ class Ident @Inject() (
 
 
   /** Парсер для MCodeForm. Используется при вводе смс-кода и при вводе пароля. */
-  private def _parseCodeFormReq = {
+  private def _parseCodeFormReq(isCodeValid: String => Boolean) = {
     val pgpKeyFut = pgpUtil.getLocalStorKey()
     lazy val logPrefix = s"_parseIdTokenPtr#${System.currentTimeMillis()}:"
     parse
@@ -554,7 +492,7 @@ class Ident @Inject() (
         Either.cond(
           test  = smsReq.formData match {
             case MCodeFormData(Some(smsCode), false) =>
-              Validators.isSmsCodeValid( smsCode )
+              isCodeValid( smsCode )
             case MCodeFormData(None, true) =>
               true
             case _ =>
@@ -644,7 +582,9 @@ class Ident @Inject() (
     * @return JSON с токеном проверки.
     */
   def smsCodeCheck() = csrf.Check {
-    val _theAction = isAnon().async(_parseCodeFormReq) { implicit request =>
+    val _theAction = isAnon().async {
+      _parseCodeFormReq(Validators.isSmsCodeValid)
+    } { implicit request =>
       val now = Instant.now()
       lazy val logPrefix = s"smsCodeCheck()#${now.toEpochMilli}:"
       // Проверить токен по базе.
@@ -809,11 +749,14 @@ class Ident @Inject() (
     */
   def regFinalSubmit = csrf.Check {
     bruteForceProtect {
-      isAnon().async( _parseCodeFormReq ) { implicit request =>
+      isAnon().async {
+        _parseCodeFormReq( Validators.isPasswordValid )
+      } { implicit request =>
         val now = Instant.now()
         val (cfReq, ottId) = request.body
         val password = cfReq.formData.code.get
         lazy val logPrefix = s"regFinalSubmit($ottId)#${now.toEpochMilli}:"
+        implicit lazy val ctx = implicitly[Context]
 
         val dbAction = for {
           // Достать токен по id из базы биллиннга:
@@ -846,9 +789,6 @@ class Ident @Inject() (
           // Достать реквизиты юзера с нулевого шага:
           regCreds = idToken0.payload.as[MRegCreds0]
 
-          // Нормализованный номер телефона - это один из ключей узла.
-          phoneNumberNorm = Validators.normalizePhoneNumber( regCreds.phone )
-
           // Поискать уже существующего юзера в узлах:
           existingPersonNodeOpt <- DBIO.from {
             for {
@@ -857,7 +797,7 @@ class Ident @Inject() (
                   override def nodeTypes = MNodeTypes.Person :: Nil
                   override def outEdges: Seq[Criteria] = {
                     val cr = Criteria(
-                      nodeIds    = phoneNumberNorm :: Nil,
+                      nodeIds    = regCreds.phone :: Nil,
                       predicates = MPredicates.Ident.Phone :: Nil,
                     )
                     cr :: Nil
@@ -869,7 +809,7 @@ class Ident @Inject() (
             } yield {
               // если для одного номера телефона - несколько номеров, то ситуация неопределена.
               if (existingPersonNodes.lengthCompare(1) > 0) {
-                LOGGER.error(s"$logPrefix Two or more existing nodes[${existingPersonNodes.iterator.flatMap(_.id).mkString(",")}] found for phoneIdent[$phoneNumberNorm]. Should never happend. Please resolve db consistency by hands.")
+                LOGGER.error(s"$logPrefix Two or more existing nodes[${existingPersonNodes.iterator.flatMap(_.id).mkString(",")}] found for phoneIdent[${regCreds.phone}]. Should never happend. Please resolve db consistency by hands.")
                 // TODO node-merge Надо запустить авто-объединение узлов и обновление зависимых узлов.
                 throw new IllegalStateException("DB consistency in doubt: duplicate phone number. Please check.")
               } else {
@@ -877,8 +817,6 @@ class Ident @Inject() (
               }
             }
           }
-
-          emailNorm = Validators.normalizeEmail( regCreds.email )
 
           // Узел юзера. Может быть, он уже существует.
           personNodeSaved <- {
@@ -891,14 +829,14 @@ class Ident @Inject() (
             )
             val emailEdge = MEdge(
               predicate = MPredicates.Ident.Email,
-              nodeIds = Set( emailNorm ),
+              nodeIds = Set( regCreds.email ),
               info = MEdgeInfo(
                 flag = Some(false),
               )
             )
             existingPersonNodeOpt.fold [DBIOAction[MNode, NoStream, Effect]] {
               // Как и ожидалось, такого юзера нет в базе. Собираем нового юзера:
-              LOGGER.debug(s"$logPrefix For phone[$phoneNumberNorm] no user exists. Creating new...")
+              LOGGER.debug(s"$logPrefix For phone[${regCreds.phone}] no user exists. Creating new...")
               // Собрать узел для нового юзера.
               val mperson0 = MNode(
                 common = MNodeCommon(
@@ -908,7 +846,7 @@ class Ident @Inject() (
                 ),
                 meta = MMeta(
                   basic = MBasicMeta(
-                    nameOpt = Some(
+                    techName = Some(
                       idToken0.idMsgs
                         .iterator
                         .filter { m =>
@@ -925,7 +863,7 @@ class Ident @Inject() (
                     // Номер телефона.
                     MEdge(
                       predicate = MPredicates.Ident.Phone,
-                      nodeIds   = Set( phoneNumberNorm ),
+                      nodeIds   = Set( regCreds.phone ),
                       info = MEdgeInfo(
                         flag = Some(true),
                       )
@@ -941,6 +879,7 @@ class Ident @Inject() (
                   mNodes.save( mperson0 )
                 }
               } yield {
+                LOGGER.info(s"$logPrefix Created new user#$savedId for cred[$regCreds]")
                 MNode.id
                   .set( Some(savedId) )(mperson0)
               }
@@ -948,6 +887,7 @@ class Ident @Inject() (
             } { personNode0 =>
               // Уже существует узел. Организовать сброс пароля.
               val nodeId = personNode0.id.get
+              LOGGER.info(s"$logPrefix Found already existing user#$nodeId for phone[${regCreds.phone}]")
               val mnode1 = MNode.edges
                 .composeLens(MNodeEdges.out)
                 .modify { edges0 =>
@@ -973,14 +913,14 @@ class Ident @Inject() (
                   val edges2 = edges1
                     .find { e =>
                       (e.predicate ==* MPredicates.Ident.Email) &&
-                      (e.nodeIds contains emailNorm)
+                      (e.nodeIds contains regCreds.email)
                     }
                     .fold {
                       // Создать email-эдж
-                      LOGGER.trace(s"$logPrefix Inserting Email-edge#$emailNorm on node#$nodeId\n $emailEdge")
+                      LOGGER.trace(s"$logPrefix Inserting Email-edge#${regCreds.email} on node#$nodeId\n $emailEdge")
                       emailEdge #:: edges1
                     } { emailExistsEdge =>
-                      LOGGER.trace(s"$logPrefix Keep edge Email#$emailNorm as-is on node#$nodeId\n $emailExistsEdge")
+                      LOGGER.trace(s"$logPrefix Keep edge Email#${regCreds.email} as-is on node#$nodeId\n $emailExistsEdge")
                       edges1
                     }
 
@@ -989,7 +929,7 @@ class Ident @Inject() (
 
               DBIO.from {
                 for (_ <- mNodes.save( mnode1 ))
-                yield mnode1
+                yield MNode.versionOpt.modify { vOpt => Some(vOpt.fold(1L)(_ + 1L)) }(mnode1)
               }
             }
           }
@@ -998,7 +938,7 @@ class Ident @Inject() (
 
           // Всё ок. Финализировать idToken:
           idToken2 = {
-            LOGGER.info(s"$logPrefix Created new person node#$personId for $regCreds")
+            LOGGER.trace(s"$logPrefix personId#$personId for $regCreds")
             (
               MIdToken.idMsgs.modify { idMsgs0 =>
                 MIdMsg(
@@ -1036,18 +976,132 @@ class Ident @Inject() (
 
         } yield {
           LOGGER.debug(s"$logPrefix Updated ott#${mott2.id} with finalized id-token.")
-          (personId, regCreds)
+          (personNodeSaved, regCreds, existingPersonNodeOpt.nonEmpty)
         }
 
         // Запустить транзацию обновления состояния хранимого токена и создания узла юзера.
-        val userRegFut = slick.db.run {
-          dbAction.transactionally
-        }
+        for {
+          // Запустить транзакцию по базе с созданием узла.
+          (personNode, regCreds, isUserPreviouslyExisted) <- slick.db.run {
+            dbAction.transactionally
+          }
+          personId = personNode.id.get
 
-        // TODO Отправить email, если в email-эдже flag=false для текущего email.
-        // TODO Создать узел-магазин начальный. Возможно, с начальными карточками.
-        // TODO Залогинить юзера, вернуть адрес для редиректа
-        ???
+          // Рега? или восстановление забытого пароля?
+          isReg = {
+            LOGGER.trace(s"$logPrefix userAlreadyExists?$isUserPreviouslyExisted email=${regCreds.email}")
+            !isUserPreviouslyExisted
+          }
+
+          // Отправить email, если в email-эдже flag=false для текущего email.
+          sendEmailActMsgFut = if (
+            personNode.edges
+              .withNodePred(regCreds.email, MPredicates.Ident.Email)
+              .exists(_.info.flag contains true)
+          ) {
+            // email уже провалидирован в узле - email отправлять не требуется.
+            LOGGER.trace(s"$logPrefix Email[${regCreds.email}] already validated for node#$personId, skipping email-activation msg.")
+            Future.successful( None )
+
+          } else {
+            LOGGER.debug(s"$logPrefix Sending email-activation msg[${regCreds.email}] for node#$personId ...")
+            mailer
+              .instance
+              .setRecipients( regCreds.email )
+              .setSubject {
+                val prefixMsgCode =
+                  if (isReg) "reg.emailpw.email.subj"
+                  else MsgCodes.`Password.recovery`
+                s"${ctx.messages(prefixMsgCode)} | ${MsgCodes.`Suggest.io`}"
+              }
+              .setHtml {
+                val tplQs = MEmailRecoverQs(
+                  email         = regCreds.email,
+                  // Привязать сессию текущего юзера к письму:
+                  //nonce         = randomUuid,
+                  checkSession  = true,
+                )
+                val tpl =
+                  if (isReg) emailRegMsgTpl
+                  else emailPwRecoverTpl
+                val html = tpl.render(tplQs, ctx)
+                htmlCompressUtil.html4email( html )
+              }
+              .send()
+              .recover { case ex: Throwable =>
+                // Подавить ошибку, т.к. телефон всё равно уже провалидирован.
+                LOGGER.error(s"$logPrefix Unable to send email to ${regCreds.email}", ex)
+                // TODO Удалить email из узла? Или вообще туда почту не сохранять?
+                None
+              }
+          }
+
+          // Поискать adn-узлы в подчинении у юзера.
+          userAdnNodesIds <- if (isReg) {
+            LOGGER.trace(s"$logPrefix Fresh-registered user does not have adn-nodes attached. Will create new ADN-node.")
+            Future.successful( List.empty[String] )
+          } else {
+            mNodes.dynSearchIds {
+              new MNodeSearchDfltImpl {
+                override val nodeTypes = MNodeTypes.AdnNode :: Nil
+                override val outEdges: Seq[Criteria] = {
+                  val cr = Criteria(
+                    nodeIds = personId :: Nil,
+                    predicates = MPredicates.OwnedBy :: Nil
+                  )
+                  cr :: Nil
+                }
+                // Не важно, сколько точно узлов. Надо понять лишь: 0, 1 или более, чтобы сформулировать правильный редирект.
+                override def limit = 2
+              }
+            }
+          }
+
+          // Создать узел-магазин начальный, если у юзера нет узлов
+          adnNodeCreatedOpt <- if (userAdnNodesIds.isEmpty) {
+            for {
+              adnNode <- nodesUtil.createUserNode(
+                name      = ctx.messages( MsgCodes.`My.node` ),
+                personId  = personId,
+              )
+            } yield {
+              LOGGER.info(s"$logPrefix Created ADN-node#${adnNode.id.get} for user#$personId")
+              Some(adnNode)
+            }
+          } else {
+            LOGGER.debug(s"$logPrefix Will NOT create new ADN nodes for user#$personId, because user already have ADN-nodes##[${userAdnNodesIds.mkString(", ")},...]")
+            Future.successful( None )
+          }
+          adnNodeCreatedIdOpt = adnNodeCreatedOpt.flatMap(_.id)
+
+          // TODO Хз, надо ли дожидаться отправки email здесь... Пока дожидаемся для отладки и субъективного контроля работоспособности.
+          _ <- sendEmailActMsgFut
+
+        } yield {
+          // Залогинить юзера, вернуть адрес для редирект
+          LOGGER.info(s"$logPrefix Successfully registered/restored user#$personId with adn-node#${adnNodeCreatedIdOpt.orNull}.")
+
+          // Надо сформировать ссылку для редиректа юзера на основе его ADN-узла (узлов).
+          val rdrTo = adnNodeCreatedIdOpt
+            .orElse {
+              OptionUtil.maybe( userAdnNodesIds.lengthCompare(1) ==* 0 ) {
+                userAdnNodesIds.head
+              }
+            }
+            .map { toNodeId =>
+              // Редирект на единственный узел (созданный или существующий).
+              routes.LkAds.adsPage(toNodeId :: Nil)
+            }
+            .getOrElse {
+              // 2 или более узлов. Отправить юзера в lkList. (Или даже 0, внезапно: восстановление пароля без ранее созданного узла).
+              routes.MarketLkAdn.lkList()
+            }
+
+          _tokenResp( rdrTo.url )
+            .addingToSession(
+              MSessionKeys.PersonId.value -> personId,
+            )
+        }
       }
     }
   }

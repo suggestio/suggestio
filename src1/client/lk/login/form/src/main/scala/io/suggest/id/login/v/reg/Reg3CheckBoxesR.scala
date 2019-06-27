@@ -30,10 +30,11 @@ class Reg3CheckBoxesR(
           override val row = true
         }
       )(
+
         // Галочка согласия с офертой suggest.io:
         p.wrap { props =>
           checkBoxR.PropsVal(
-            checked   = props.checkBoxes.tos.isChecked,
+            checked   = props.tos.isChecked,
             msgCode   = MsgCodes.`I.accept.terms.of.service`,
             onChange  = RegTosSetAccepted,
           )
@@ -42,7 +43,7 @@ class Reg3CheckBoxesR(
         // Галочка разрешения на обработку ПДн:
         p.wrap { props =>
           checkBoxR.PropsVal(
-            checked   = props.checkBoxes.pdn.isChecked,
+            checked   = props.pdn.isChecked,
             msgCode   = MsgCodes.`I.allow.personal.data.processing`,
             onChange  = RegPdnSetAccepted,
           )

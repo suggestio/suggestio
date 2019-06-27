@@ -430,6 +430,12 @@ class JsMessagesUtil @Inject() (
     MC.`Code.from.sms` ::
     MC.`Next` ::
     MC.`Back` ::
+    MC.`Sms.code.sent.to.your.phone.number.0` ::
+    MC.`Type.password` ::
+    MC.`Retype.password` ::
+    MC.`Type.current.password` ::
+    MC.`Type.new.password` ::
+    MC.`Confirm.new.password` ::
     Nil
   }
 

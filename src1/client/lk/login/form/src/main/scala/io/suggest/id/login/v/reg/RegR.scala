@@ -7,7 +7,6 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
-import io.suggest.id.login.m.reg.step2.MReg2SmsCode
 import io.suggest.id.login.m.reg.step3.MReg3CheckBoxes
 import io.suggest.id.login.m.{RegBackClick, RegNextClick}
 import io.suggest.id.login.m.reg.{MRegS, MRegStep, MRegSteps}
@@ -32,6 +31,7 @@ class RegR(
             reg1CaptchaR       : Reg1CaptchaR,
             reg2SmsCodeR       : Reg2SmsCodeR,
             reg3CheckBoxesR    : Reg3CheckBoxesR,
+            reg4SetPasswordR   : Reg4SetPasswordR,
             buttonR            : ButtonR,
             loginProgressR     : LoginProgressR,
             commonReactCtxProv : React.Context[MCommonReactCtx],
@@ -47,6 +47,7 @@ class RegR(
                     activeStepC             : ReactConnectProxy[MRegStep],
                     backBtnDisabledC        : ReactConnectProxy[Some[Boolean]],
                     nextBtnDisabledC        : ReactConnectProxy[Some[Boolean]],
+                    isLastStepSomeC         : ReactConnectProxy[Some[Boolean]],
                   )
 
 
@@ -70,17 +71,29 @@ class RegR(
       lazy val stepCaptcha = p.wrap(_.s1Captcha)(reg1CaptchaR.component.apply)(implicitly, MReg1Captcha.MReg1CaptchaFastEq)
 
       // Шаг ввода смс-кода.
-      lazy val stepSmsCode = p.wrap(_.s2SmsCode)(reg2SmsCodeR.component.apply)(implicitly, MReg2SmsCode.MReg2SmsCodeFastEq)
+      lazy val stepSmsCode = reg2SmsCodeR.component( p )
 
       // Шаг галочек соглашений и окончания регистрации
       lazy val stepCheckBoxes = p.wrap(_.s3CheckBoxes)(reg3CheckBoxesR.component.apply)(implicitly, MReg3CheckBoxes.MReg3CheckBoxesFastEq)
 
-      // Сообщения текстовые зависят от common-контекста.
+      // финальный шаг выставления пароля.
+      lazy val stepSetPassword = reg4SetPasswordR.component( p )
+
+      // Сообщение кнопки "Назад".
       val backMsg = commonReactCtxProv.consume { commonReactCtx =>
         commonReactCtx.messages( MsgCodes.`Back` )
       }
+
+      // Сообщение кнопки "Вперёд". На последнем шаге надо "Завершить".
       val nextMsg = commonReactCtxProv.consume { commonReactCtx =>
-        commonReactCtx.messages( MsgCodes.`Next` )
+        s.isLastStepSomeC { isLastStepSomeProxy =>
+          val msgCode =
+            if (isLastStepSomeProxy.value.value) MsgCodes.`_to.Finish`
+            else MsgCodes.`Next`
+          <.span(
+            commonReactCtx.messages( msgCode )
+          )
+        }
       }
 
       val backBtn = s.backBtnDisabledC { disabledSomeProxy =>
@@ -136,10 +149,11 @@ class RegR(
 
               <.div(
                 _activeStep match {
-                  case MRegSteps.S0Creds      => step0Creds
-                  case MRegSteps.S1Captcha    => stepCaptcha
-                  case MRegSteps.S2SmsCode    => stepSmsCode
-                  case MRegSteps.S3CheckBoxes => stepCheckBoxes
+                  case MRegSteps.S0Creds        => step0Creds
+                  case MRegSteps.S1Captcha      => stepCaptcha
+                  case MRegSteps.S2SmsCode      => stepSmsCode
+                  case MRegSteps.S3CheckBoxes   => stepCheckBoxes
+                  case MRegSteps.S4SetPassword  => stepSetPassword
                 },
 
                 MuiMobileStepper.component(
@@ -181,17 +195,29 @@ class RegR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
+
         isSubmitPendingSomeC = propsProxy.connect { props =>
           OptionUtil.SomeBool( props.hasSubmitReqPending )
         }( FastEq.AnyRefEq ),
+
         activeStepC = propsProxy.connect(_.step)( FastEq.AnyRefEq ),
+
         backBtnDisabledC = propsProxy.connect { props =>
           // Кнопка "Назад" выключена на нулевом шаге.
           OptionUtil.SomeBool( props.step.value <= 0 )
         }( FastEq.AnyRefEq ),
+
         nextBtnDisabledC = propsProxy.connect { props =>
           // Кнопка "Далее" выключена, если на текущем шаге нет готовности данных.
           OptionUtil.SomeBool( !props.stepState.canSubmit )
+        }( FastEq.AnyRefEq ),
+
+        // Это последний шаг?
+        isLastStepSomeC = {
+          val lastStep = MRegSteps.values.last
+          propsProxy.connect { props =>
+            OptionUtil.SomeBool( props.step ==* lastStep )
+          }( FastEq.AnyRefEq )
         }
       )
     }

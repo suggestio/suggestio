@@ -186,10 +186,12 @@ final class NodesUtil @Inject() (
       nodeId        <- mNodes.save(inst)
       // TODO Нужно инсталлить jd-карточки, а не этот старый хлам
       //madsCreateFut = installDfltMads(nodeId)
-      _             <- createExtDfltTargets(nodeId)
+      // TODO Выключено, т.к. adv-ext не пашет, и надо его перепиливать капитально.
+      //_             <- createExtDfltTargets(nodeId)
       //_             <- madsCreateFut
     } yield {
-      inst.copy(id = Some(nodeId))
+      MNode.id
+        .set( Some(nodeId) )(inst)
     }
   }
 
@@ -205,18 +207,18 @@ final class NodesUtil @Inject() (
       .flatMap { prodIds =>
         val _limit = Math.max(50, count * 2)
         val dsa0 = new MNodeSearchDfltImpl {
-          override def nodeTypes = Seq( MNodeTypes.Ad )
-          override def outEdges: Seq[Criteria] = {
+          override val nodeTypes = MNodeTypes.Ad :: Nil
+          override val outEdges: Seq[Criteria] = {
             val cr = Criteria(
               nodeIds     = prodIds,
-              predicates  = Seq( MPredicates.OwnedBy )
+              predicates  = MPredicates.OwnedBy :: Nil
             )
-            Seq(cr)
+            cr :: Nil
           }
           override def limit  = _limit
           override def offset = 0
         }
-        mNodes.dynSearchIds(dsa0)
+        mNodes.dynSearchIds( dsa0 )
       }
 
       // Случайно выбрать из списка id карточек только указанное кол-во карточек.

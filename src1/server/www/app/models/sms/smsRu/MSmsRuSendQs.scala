@@ -29,6 +29,7 @@ object MSmsRuSendQs {
     def translit    = "translit"
     def test        = "test"
     def partnerId   = "partner_id"
+    def apiId       = "api_id"
   }
 
 
@@ -50,6 +51,7 @@ object MSmsRuSendQs {
           longOptB.unbind   ( F.ttl,         sms.ttl.map(_.toMinutes) ),
           longOptB.unbind   ( F.translit,    OptionUtil.maybe(sms.translit)(1L) ),
           longOptB.unbind   ( F.test,        OptionUtil.maybe(sms.isTest)(1L) ),
+          strB.unbind       ( F.apiId,       sms.apiId ),
         )
       }
     }
@@ -61,13 +63,14 @@ object MSmsRuSendQs {
     * @param m Данные смс для отсылки.
     * @return Инстанс [[MSmsRuSendQs]].
     */
-  def from(m: MSmsSend, fromDflt: Option[String]): MSmsRuSendQs = {
+  def from(m: MSmsSend, apiId: String, fromDflt: Option[String]): MSmsRuSendQs = {
     MSmsRuSendQs(
       from      = m.from orElse fromDflt,
       timeAt    = m.timeAt,
       ttl       = m.ttl,
       translit  = m.translit,
       isTest    = m.isTest,
+      apiId     = apiId,
     )
   }
 
@@ -80,4 +83,5 @@ case class MSmsRuSendQs(
                          ttl        : Option[FiniteDuration],
                          translit   : Boolean,
                          isTest     : Boolean,
+                         apiId     : String,
                        )

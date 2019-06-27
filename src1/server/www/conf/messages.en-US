@@ -1049,3 +1049,6 @@ Mobile.phone.number=Mobile phone number
 Code.from.sms=Code from SMS:
 
 Registration.code=Sign-up code: {0}
+Sms.code.sent.to.your.phone.number.0=SMS-message with registration code was sent to your phone number {0}.
+
+My.node=Мой узел

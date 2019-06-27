@@ -25,25 +25,11 @@ case class LoginShowHide( isShow: Boolean ) extends ILoginFormAction
 case class SwitсhLoginTab( tab: MLoginTab ) extends ILoginFormAction
 
 
-object IEpwSetValueStatic {
-  @inline implicit def univEq: UnivEq[IEpwSetValueStatic] = UnivEq.derive
-}
-sealed trait IEpwSetValueStatic extends IApply1 {
-  override type ApplyArg_t = String
-  override type T <: ILoginFormAction
-}
-
 /** Ввод имени. */
 case class EpwSetName(name: String) extends ILoginFormAction
-case object EpwSetName extends IEpwSetValueStatic {
-  override type T = EpwSetName
-}
 
 /** Ввод пароля. */
 case class EpwSetPassword(password: String) extends ILoginFormAction
-case object EpwSetPassword extends IEpwSetValueStatic {
-  override type T = EpwSetPassword
-}
 
 
 /** Сигнал от кнопки запуска логина. */
@@ -91,17 +77,13 @@ case object RegAccept extends ILoginFormAction
 
 /** Редактирование поля email при регистрации. */
 case class RegEmailEdit( email: String ) extends ILoginFormAction
-case object RegEmailEdit extends IEpwSetValueStatic {
-  override type T = RegEmailEdit
-}
+
 case object RegEmailBlur extends ILoginFormAction
 
 
 /** Редактирование поля номера телефона. */
 case class RegPhoneEdit( phone: String ) extends ILoginFormAction
-case object RegPhoneEdit extends IEpwSetValueStatic {
-  override type T = RegPhoneEdit
-}
+
 case object RegPhoneBlur extends ILoginFormAction
 
 
@@ -122,3 +104,9 @@ case class RegFinalSubmitResp(tstamp: Long, tryResp: Try[MRegTokenResp]) extends
 /** Нажимание кнопки "Далее" в форме регистрации. */
 case object RegNextClick extends ILoginFormAction
 case object RegBackClick extends ILoginFormAction
+
+
+/** Редактирование поля номера телефона. */
+case class SetPasswordEdit(value: String, isRetype: Boolean ) extends ILoginFormAction
+/** Расфокусировка одного из полей выставления пароля. */
+case object SetPasswordBlur extends ILoginFormAction

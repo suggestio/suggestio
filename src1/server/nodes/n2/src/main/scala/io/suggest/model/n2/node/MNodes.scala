@@ -337,6 +337,7 @@ object MNode {
   val edges   = GenLens[MNode](_.edges)
   val billing = GenLens[MNode](_.billing)
   val id      = GenLens[MNode](_.id)
+  val versionOpt = GenLens[MNode](_.versionOpt)
 
 }
 

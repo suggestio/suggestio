@@ -7,7 +7,7 @@ import io.suggest.id.login.c.ILoginApi
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
-import io.suggest.id.login.m.reg.step3.MReg3CheckBoxes
+import io.suggest.id.login.m.reg.step4.MReg4SetPassword
 import io.suggest.id.login.m.{RegBackClick, RegCaptchaSubmitResp, RegCredsSubmitResp, RegFinalSubmitResp, RegNextClick, RegSmsCheckResp}
 import io.suggest.id.login.m.reg.{MRegS, MRegSteps}
 import io.suggest.id.reg.{MCodeFormData, MCodeFormReq, MRegCreds0}
@@ -20,6 +20,8 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.dom.DomQuick
+import io.suggest.spa.DoNothing
 import monocle.Traversal
 import scalaz.std.option._
 
@@ -140,6 +142,7 @@ class RegAh[M](
         case MRegSteps.S2SmsCode =>
           if (v0.s2SmsCode.submitReq.isReady) {
             // Уже проверенный смс-код.
+            // TODO Если юзер уже существует на сервере, то переходить сразу на шаг выставления пароля.
             val v2 = MRegS.step
               .set( MRegSteps.S3CheckBoxes )(v0)
             updated(v2)
@@ -171,27 +174,32 @@ class RegAh[M](
           }
 
 
-        // Далее на последней странице галочек.
+        // Далее - страница галочек.
         case MRegSteps.S3CheckBoxes =>
-          if (v0.s3CheckBoxes.submitReq.isReady) {
-            // Уже ответ получен - перейти по полученной ссылке.
-            ???
-
-          } else if (v0.s3CheckBoxes.submitReq.isPending) {
+          if (!v0.s3CheckBoxes.canSubmit) {
             // Реквест уже запущен. Вероятно, повторный сигнал сабмита по ошибке пришёл.
-            LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (v0.step, v0.s3CheckBoxes.submitReq) )
+            LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (v0.step, v0.s3CheckBoxes) )
             noChange
-
           } else {
-            // Надо отправить на сервер подтверждение выбранных галочек.
-            for (checkBoxS <- v0.s3CheckBoxes.checkBoxes.checkBoxes)
-              require( checkBoxS.isChecked )
+            // Просто перейти на следующий шаг.
+            val v2 = MRegS.step.set( MRegSteps.S4SetPassword )(v0)
+            updated(v2)
+          }
+
+
+        // Выставление пароля.
+        case MRegSteps.S4SetPassword =>
+          // Надо отправить на сервер подтверждение выбранных галочек.
+          if (!v0.s4SetPassword.canSubmit) {
+            LOG.log( WarnMsgs.VALIDATION_FAILED, msg = (v0.step, v0.s4SetPassword) )
+            noChange
+          } else {
             val tstampMs = System.currentTimeMillis()
             val fx = Effect {
               val data = MCodeFormReq(
                 token    = v0.s2SmsCode.submitReq.get.token,
                 formData = MCodeFormData(
-                  code = Some( ??? ),   // TODO Поле ввода пароля
+                  code = Some( v0.s4SetPassword.password1.value ),
                 ),
               )
               loginApi
@@ -201,8 +209,8 @@ class RegAh[M](
                 }
             }
 
-            val v2 = MRegS.s3CheckBoxes
-              .composeLens( MReg3CheckBoxes.submitReq )
+            val v2 = MRegS.s4SetPassword
+              .composeLens( MReg4SetPassword.submitReq )
               .modify( _.pending(tstampMs) )(v0)
             updated(v2, fx)
           }
@@ -309,6 +317,32 @@ class RegAh[M](
 
         val v2 = updAccF( v0 )
         updated(v2)
+      }
+
+
+    // Результат запроса окончания регистрации.
+    case m: RegFinalSubmitResp =>
+      val v0 = value
+      if (!(v0.s4SetPassword.submitReq isPendingWithStartTime m.tstamp)) {
+        LOG.warn( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (m, v0.s4SetPassword.submitReq) )
+        noChange
+
+      } else {
+        // Обработать ответ сервера.
+        val v2 = MRegS.s4SetPassword
+          .composeLens( MReg4SetPassword.submitReq )
+          .modify { req => m.tryResp.fold(req.fail, req.ready) }(v0)
+
+        // Запустить эффект редиректа по принятой ссылке при положительном ответе сервера:
+        val fxOpt = for (okResp <- m.tryResp.toOption) yield {
+          Effect.action {
+            DomQuick.goToLocation( okResp.token )
+            DoNothing
+          }
+        }
+
+        ah.updatedMaybeEffect(v2, fxOpt)
+
       }
 
   }

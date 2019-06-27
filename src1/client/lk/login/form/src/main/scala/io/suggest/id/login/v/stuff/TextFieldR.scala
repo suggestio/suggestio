@@ -1,19 +1,18 @@
-package io.suggest.id.login.v.epw
+package io.suggest.id.login.v.stuff
 
 import chandu0101.scalajs.react.components.materialui.{MuiFormControlClasses, MuiTextField, MuiTextFieldProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MCommonReactCtx
-import io.suggest.id.login.m._
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.lk.m.input.MTextFieldS
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sjs.common.empty.JsOptionUtil
+import io.suggest.react.ReactCommonUtil
 import io.suggest.spa.DAction
+import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEventFromInput, ReactFocusEvent, ScalaComponent}
+import japgolly.scalajs.react._
 import japgolly.univeq._
 
 import scala.scalajs.js
@@ -24,34 +23,36 @@ import scala.scalajs.js
   * Created: 20.03.19 14:20
   * Description: Компонент для текстового поля имени или пароля.
   */
-class EpwTextFieldR(
-                     commonReactCtxProv          : React.Context[MCommonReactCtx],
-                     loginFormCssCtx             : React.Context[LoginFormCss],
-                   ) {
+class TextFieldR(
+                  commonReactCtxProv          : React.Context[MCommonReactCtx],
+                  loginFormCssCtx             : React.Context[LoginFormCss],
+                ) {
 
 
   case class PropsVal(
                        state        : MTextFieldS,
                        hasError     : Boolean,
-                       mkAction     : IEpwSetValueStatic,
+                       mkAction     : Option[String => DAction],
                        isPassword   : Boolean,
                        inputName    : String,
                        label        : String,
                        placeHolder  : String,
                        onBlur       : Option[DAction] = None,
                        disabled     : Boolean = false,
+                       required     : Boolean = true,
                      )
   implicit object EpwTextFieldPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.state          ===* b.state) &&
       (a.disabled        ==* b.disabled) &&
       (a.hasError        ==* b.hasError) &&
-      (a.mkAction       ===* b.mkAction) &&
+      (a.mkAction         eq b.mkAction) &&
       (a.isPassword      ==* b.isPassword) &&
       (a.inputName      ===* b.inputName) &&
       (a.label          ===* b.label) &&
       (a.placeHolder    ===* b.placeHolder) &&
-      (a.onBlur         ===* b.onBlur)
+      (a.onBlur         ===* b.onBlur) &&
+      (a.required        ==* b.required)
     }
   }
 
@@ -67,11 +68,12 @@ class EpwTextFieldR(
 
     private def _onFieldChange(event: ReactEventFromInput): Callback = {
       val value2 = event.target.value
-      ReactDiodeUtil.dispatchOnProxyScopeCBf($) { propsProxy: Props =>
-        propsProxy.value.mkAction( value2 )
+      $.props >>= { p: Props =>
+        p.value.mkAction
+          .fold [Callback]( Callback.empty ) { f => p.dispatchCB(f(value2)) }
       }
     }
-    private val _onFieldChangeCbF = ReactCommonUtil.cbFun1ToJsCb( _onFieldChange )
+    private lazy val _onFieldChangeCbF = ReactCommonUtil.cbFun1ToJsCb( _onFieldChange )
 
 
     private def _onFieldBlur(event: ReactFocusEvent): Callback = {
@@ -91,7 +93,8 @@ class EpwTextFieldR(
         commonReactCtxProv.consume { crCtx =>
           s.propsValC { propsProxy =>
             val p = propsProxy.value
-            val _onBlurUndef = JsOptionUtil.maybeDefined( p.onBlur.nonEmpty )( _onFieldBlurCbF )
+            val _onBlurUndef   = JsOptionUtil.maybeDefined( p.onBlur.nonEmpty )( _onFieldBlurCbF )
+            val _onChangeUndef = JsOptionUtil.maybeDefined( p.mkAction.nonEmpty )( _onFieldChangeCbF )
             MuiTextField(
               new MuiTextFieldProps {
                 override val value = js.defined {
@@ -102,10 +105,10 @@ class EpwTextFieldR(
                   else HtmlConstants.Input.text
                 }
                 override val name         = p.inputName
-                override val onChange     = _onFieldChangeCbF
+                override val onChange     = _onChangeUndef
                 override val label        = crCtx.messages( p.label )
                 override val placeholder  = crCtx.messages( p.placeHolder )
-                override val required     = true
+                override val required     = p.required
                 override val autoFocus    = !p.isPassword
                 override val fullWidth    = true
                 override val classes      = mfcCss

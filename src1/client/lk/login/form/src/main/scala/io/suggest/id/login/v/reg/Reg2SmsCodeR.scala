@@ -1,11 +1,12 @@
 package io.suggest.id.login.v.reg
 
-import chandu0101.scalajs.react.components.materialui.{MuiFormGroup, MuiFormGroupProps}
-import diode.react.ModelProxy
-import io.suggest.id.login.m.reg.step2.MReg2SmsCode
+import chandu0101.scalajs.react.components.materialui.{MuiFormGroup, MuiFormGroupProps, MuiFormLabel}
+import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.id.login.m.reg.MRegS
 import io.suggest.lk.r.sms.SmsCodeFormR
-import io.suggest.spa.OptFastEq
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import io.suggest.spa.{FastEqUtil, OptFastEq}
+import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
 /**
@@ -15,29 +16,48 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: Компонент формы ввода смс-кода.
   */
 class Reg2SmsCodeR(
-                    smsCodeFormR       : SmsCodeFormR,
+                    smsCodeFormR        : SmsCodeFormR,
+                    commonReactCtxP     : React.Context[MCommonReactCtx],
                   ) {
 
-  type Props = ModelProxy[MReg2SmsCode]
+  type Props = ModelProxy[MRegS]
 
 
-  class Backend($: BackendScope[Props, Unit]) {
+  case class State(
+                    phoneNumberC      : ReactConnectProxy[String],
+                  )
 
-    def render(p: Props): VdomElement = {
+
+  class Backend($: BackendScope[Props, State]) {
+
+    def render(p: Props, s: State): VdomElement = {
       MuiFormGroup(
         new MuiFormGroupProps {
           override val row = true
         }
       )(
+
+        // Вывести сообщение, что отправлено смс на ранее указанный номер.
+        MuiFormLabel()(
+          commonReactCtxP.consume { commonCtx =>
+            s.phoneNumberC { phoneNumberProxy =>
+              <.span(
+                commonCtx.messages( MsgCodes.`Sms.code.sent.to.your.phone.number.0`, phoneNumberProxy.value )
+              )
+            }
+          }
+        ),
+
         // Поле для ввода смс-кода:
         p.wrap { props =>
-          for (smsCode <- props.smsCode) yield {
+          for (smsCode <- props.s2SmsCode.smsCode) yield {
             smsCodeFormR.PropsVal(
               smsCode   = smsCode,
-              disabled  = props.submitReq.isPending,
+              disabled  = props.s2SmsCode.submitReq.isPending,
             )
           }
         }( smsCodeFormR.component.apply )(implicitly, OptFastEq.Wrapped(smsCodeFormR.SmsCodeFormRPropsValFastEq)),
+
       )
     }
 
@@ -46,6 +66,11 @@ class Reg2SmsCodeR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
+    .initialStateFromProps { propsProxy =>
+      State(
+        phoneNumberC = propsProxy.connect(_.s0Creds.phone.value)( FastEqUtil.RefValFastEq ),
+      )
+    }
     .renderBackend[Backend]
     .build
 

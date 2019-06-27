@@ -5,6 +5,7 @@ import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
 import io.suggest.id.login.m.reg.step3.MReg3CheckBoxes
+import io.suggest.id.login.m.reg.step4.MReg4SetPassword
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -25,7 +26,8 @@ object MRegS {
       (a.s0Creds         ===* b.s0Creds) &&
       (a.s1Captcha       ===* b.s1Captcha) &&
       (a.s2SmsCode       ===* b.s2SmsCode) &&
-      (a.s3CheckBoxes    ===* b.s3CheckBoxes)
+      (a.s3CheckBoxes    ===* b.s3CheckBoxes) &&
+      (a.s4SetPassword   ===* b.s4SetPassword)
     }
   }
 
@@ -36,6 +38,7 @@ object MRegS {
   val s1Captcha       = GenLens[MRegS](_.s1Captcha)
   val s2SmsCode       = GenLens[MRegS](_.s2SmsCode)
   val s3CheckBoxes    = GenLens[MRegS](_.s3CheckBoxes)
+  val s4SetPassword   = GenLens[MRegS](_.s4SetPassword)
 
   def stepLens(step: MRegStep) /*: monocle.Lens[MRegS, _ <: ICanSubmit]*/ = {
     step match {
@@ -43,6 +46,7 @@ object MRegS {
       case MRegSteps.S1Captcha      => s1Captcha
       case MRegSteps.S2SmsCode      => s2SmsCode
       case MRegSteps.S3CheckBoxes   => s3CheckBoxes
+      case MRegSteps.S4SetPassword  => s4SetPassword
     }
   }
 
@@ -63,13 +67,14 @@ case class MRegS(
                   s1Captcha      : MReg1Captcha        = MReg1Captcha.empty,
                   s2SmsCode      : MReg2SmsCode        = MReg2SmsCode.empty,
                   s3CheckBoxes   : MReg3CheckBoxes     = MReg3CheckBoxes.empty,
+                  s4SetPassword  : MReg4SetPassword    = MReg4SetPassword.empty,
                 ) {
 
   def hasSubmitReqPending: Boolean = {
     s0Creds.submitReq.isPending ||
     s1Captcha.submitReq.isPending ||
     s2SmsCode.submitReq.isPending ||
-    s3CheckBoxes.submitReq.isPending
+    s4SetPassword.submitReq.isPending
   }
 
 

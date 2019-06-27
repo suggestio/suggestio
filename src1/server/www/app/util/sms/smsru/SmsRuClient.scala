@@ -34,7 +34,7 @@ final class SmsRuClient @Inject() (
   private def CONF_PREFIX = "sms.smsru"
 
   /** id зарегистрированного приложения на sms.ru. */
-  private lazy val (appId, fromDflt): (Option[String], Option[String]) = {
+  private lazy val (appIdOpt, fromDflt): (Option[String], Option[String]) = {
     val confOpt       = injector.instanceOf[Configuration].getOptional[Configuration]( CONF_PREFIX )
     def __get[A: ConfigLoader](subPath: String): Option[A] =
       confOpt.flatMap( _.getOptional[A](subPath) )
@@ -51,15 +51,17 @@ final class SmsRuClient @Inject() (
 
 
   override def isReady(): Future[Boolean] =
-    Future.successful( appId.nonEmpty )
+    Future.successful( appIdOpt.nonEmpty )
 
 
   /** Отправить смс на указанный номер (номера). */
   override def smsSend(sms: MSmsSend): Future[Seq[ISmsSendResult]] = {
+    val apiId = appIdOpt.get
+
     lazy val logPrefix = s"smsSend()#${System.currentTimeMillis()}:"
 
     // key выставляем в null, чтобы явно была ошибка при обращении к ключу с потолка.
-    val sms2 = MSmsRuSendQs.from( sms, fromDflt )
+    val sms2 = MSmsRuSendQs.from( sms, apiId, fromDflt )
     val url = SEND_URL_PREFIX + implicitly[QueryStringBindable[MSmsRuSendQs]].unbind( null, sms2 )
     LOGGER.debug(s"$logPrefix Sending ${sms.msgs.size} sms-messages to numbers: ${sms.msgs.iterator.map(_._1).mkString(", ")}\n POST $url")
 

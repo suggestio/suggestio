@@ -6,7 +6,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.{RegEmailBlur, RegEmailEdit, RegPhoneBlur, RegPhoneEdit}
-import io.suggest.id.login.v.epw.EpwTextFieldR
+import io.suggest.id.login.v.stuff.TextFieldR
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 
@@ -17,7 +17,7 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
   * Description: Страница регистрации с вводом необходимых реквизитов.
   */
 class Reg0CredsR(
-                  epwTextFieldR      : EpwTextFieldR,
+                  textFieldR      : TextFieldR,
                 ) {
 
   type Props = ModelProxy[MReg0Creds]
@@ -35,17 +35,17 @@ class Reg0CredsR(
         {
           val regEmailBlurSome = Some( RegEmailBlur )
           p.wrap { props =>
-            epwTextFieldR.PropsVal(
+            textFieldR.PropsVal(
               state       = props.email,
               hasError    = false,
-              mkAction    = RegEmailEdit,
+              mkAction    = Some( RegEmailEdit.apply ),
               isPassword  = false,
               inputName   = IdentConst.Login.NAME_FN,
               label       = MsgCodes.`Your.email.addr`,
               onBlur      = regEmailBlurSome,
               placeHolder = MsgCodes.`Email.example`,
             )
-          }(epwTextFieldR.apply)(implicitly, epwTextFieldR.EpwTextFieldPropsValFastEq)
+          }(textFieldR.apply)(implicitly, textFieldR.EpwTextFieldPropsValFastEq)
         },
 
 
@@ -53,17 +53,17 @@ class Reg0CredsR(
         {
           val regPhoneBlurSome = Some( RegPhoneBlur )
           p.wrap { props =>
-            epwTextFieldR.PropsVal(
+            textFieldR.PropsVal(
               state       = props.phone,
               hasError    = false,
-              mkAction    = RegPhoneEdit,
+              mkAction    = Some( RegPhoneEdit.apply ),
               isPassword  = false,
               inputName   = IdentConst.Login.PHONE_FN,
               label       = MsgCodes.`Mobile.phone.number`,
               placeHolder = MsgCodes.`Phone.number.example`,
               onBlur      = regPhoneBlurSome,
             )
-          }(epwTextFieldR.apply)(implicitly, epwTextFieldR.EpwTextFieldPropsValFastEq)
+          }(textFieldR.apply)(implicitly, textFieldR.EpwTextFieldPropsValFastEq)
         },
       )
     }

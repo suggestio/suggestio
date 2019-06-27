@@ -9,7 +9,7 @@ import io.suggest.id.IdentConst
 import io.suggest.id.login.m._
 import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.v.LoginFormCss
-import io.suggest.id.login.v.stuff.{ButtonR, CheckBoxR, LoginProgressR}
+import io.suggest.id.login.v.stuff.{ButtonR, CheckBoxR, LoginProgressR, TextFieldR}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
 
@@ -22,7 +22,7 @@ import scala.scalajs.js
   * Description: Форма входа по имени и паролю.
   */
 class EpwFormR(
-                epwTextFieldR               : EpwTextFieldR,
+                textFieldR                  : TextFieldR,
                 checkBoxR                   : CheckBoxR,
                 buttonR                     : ButtonR,
                 loginProgressR              : LoginProgressR,
@@ -74,31 +74,31 @@ class EpwFormR(
             )(
               // Поле имени пользователя:
               propsProxy.wrap { props =>
-                epwTextFieldR.PropsVal(
+                textFieldR.PropsVal(
                   state       = props.name,
                   hasError    = props.loginReq.isFailed,
-                  mkAction    = EpwSetName,
+                  mkAction    = Some( EpwSetName.apply ),
                   isPassword  = false,
                   inputName   = IdentConst.Login.NAME_FN,
                   label       = MsgCodes.`Phone.or.email`,
                   placeHolder = MsgCodes.`Phone.number.example`,
                   disabled    = props.loginReq.isPending,
                 )
-              }( epwTextFieldR.apply )( implicitly, epwTextFieldR.EpwTextFieldPropsValFastEq ),
+              }( textFieldR.apply )( implicitly, textFieldR.EpwTextFieldPropsValFastEq ),
 
               // Поле ввода пароля:
               propsProxy.wrap { props =>
-                epwTextFieldR.PropsVal(
+                textFieldR.PropsVal(
                   state       = props.password,
                   hasError    = props.loginReq.isFailed,
-                  mkAction    = EpwSetPassword,
+                  mkAction    = Some( EpwSetPassword.apply ),
                   isPassword  = true,
                   inputName   = IdentConst.Login.PASSWORD_FN,
                   label       = MsgCodes.`Password`,
                   disabled    = props.loginReq.isPending,
                   placeHolder = "",
                 )
-              }( epwTextFieldR.apply )( implicitly, epwTextFieldR.EpwTextFieldPropsValFastEq ),
+              }( textFieldR.apply )( implicitly, textFieldR.EpwTextFieldPropsValFastEq ),
 
               // Галочка "Чужой компьютер".
               propsProxy.wrap { p =>

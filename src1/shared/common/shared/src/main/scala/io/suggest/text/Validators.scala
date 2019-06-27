@@ -72,4 +72,9 @@ object Validators {
       .matches()
   }
 
+
+  def isPasswordValid(password: String): Boolean = {
+    password.length > 7
+  }
+
 }

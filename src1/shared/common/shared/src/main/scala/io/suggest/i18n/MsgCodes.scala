@@ -372,5 +372,14 @@ object MsgCodes {
   val `Code.from.sms` = "Code.from.sms"
 
   val `Registration.code` = "Registration.code"
+  val `Sms.code.sent.to.your.phone.number.0` = "Sms.code.sent.to.your.phone.number.0"
+
+  val `Type.password` = "Type.password"
+  val `Retype.password` = "Retype.password"
+  val `Type.current.password` = "Type.current.password"
+  val `Type.new.password` = "Type.new.password"
+  val `Confirm.new.password` = "Confirm.new.password"
+
+  val `My.node` = "My.node"
 
 }
