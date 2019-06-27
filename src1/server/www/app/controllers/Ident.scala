@@ -8,7 +8,7 @@ import controllers.ident._
 import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
-import io.suggest.es.model.EsModel
+import io.suggest.es.model.{EsModel, IMust}
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.{ILoginFormPages, MEpwLoginReq}
@@ -196,7 +196,7 @@ class Ident @Inject() (
 
         for {
           // Запуск поиска юзеров, имеющих указанное имя пользователя.
-          personsFound <- mNodes.findUsersByEmailWithPw( request.body.name )
+          personsFound <- mNodes.findUsersByEmailPhoneWithPw( request.body.name )
 
           res <- {
             // Проверить пароль, вернуть ответ.

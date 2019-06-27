@@ -61,7 +61,9 @@ class SmsSendUtil @Inject()(
         }
         // Текущий клиент не работает, перейти к следующему клиенту:
         fut0.recoverWith { case ex =>
-          LOGGER.warn( s"$logPrefix Client $hd not ready or failed", ex )
+          def logMsg = s"$logPrefix Client $hd not ready or failed"
+          if (ex.isInstanceOf[NoSuchElementException]) LOGGER.trace( logMsg )
+          else LOGGER.warn( logMsg, ex )
           _firstAvailClient( tl )
         }
 

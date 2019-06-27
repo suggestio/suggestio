@@ -127,7 +127,7 @@ trait EmailPwLogin
           {binded =>
             // Унести этот код в API, т.к. поиском юзера по email-паролю так же занимается и другой модуль.
             mNodes
-              .findUsersByEmailWithPw( binded.email )
+              .findUsersByEmailPhoneWithPw( binded.email )
               .flatMap { nodesFound =>
                 lazy val logPrefix = s"epwLoginFormSubmit(${binded.email}):"
 

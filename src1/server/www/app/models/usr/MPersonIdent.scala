@@ -8,6 +8,7 @@ import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.util.ScryptUtil
+import io.suggest.text.Validators
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -57,10 +58,10 @@ class MPersonIdentModel @Inject()(
 
       /** Поиск юзеров с указанным мыльником, которые может логинится по паролю.
         *
-        * @param email Выверенный нормализованный адрес электронной почты.
+        * @param emailOrPhone Выверенный нормализованный адрес электронной почты.
         * @return Фьючерс с узлами, подходящими под запрос.
         */
-      def findUsersByEmailWithPw(email: String): Future[Stream[MNode]] = {
+      def findUsersByEmailPhoneWithPw(emailOrPhone: String): Future[Stream[MNode]] = {
         mNodes.dynSearch {
           new MNodeSearchDfltImpl {
             // По идее, тут не более одного.
@@ -72,8 +73,11 @@ class MPersonIdentModel @Inject()(
               val must = IMust.MUST
               // Есть проверенный email:
               val emailCr = Criteria(
-                predicates  = MPredicates.Ident.Email :: Nil,
-                nodeIds     = email :: Nil,
+                predicates  = MPredicates.Ident.Email :: MPredicates.Ident.Phone :: Nil,
+                nodeIds     = Set(
+                  Validators.normalizeEmail(emailOrPhone),
+                  Validators.normalizePhoneNumber(emailOrPhone)
+                ).toSeq,
                 flag        = Some(true),
                 must        = must
               )
