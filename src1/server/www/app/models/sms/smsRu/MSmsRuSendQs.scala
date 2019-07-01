@@ -83,5 +83,5 @@ case class MSmsRuSendQs(
                          ttl        : Option[FiniteDuration],
                          translit   : Boolean,
                          isTest     : Boolean,
-                         apiId     : String,
+                         apiId      : String,
                        )

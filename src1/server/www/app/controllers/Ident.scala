@@ -8,7 +8,7 @@ import controllers.ident._
 import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
-import io.suggest.es.model.{EsModel, IMust}
+import io.suggest.es.model.EsModel
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.{ILoginFormPages, MEpwLoginReq}
@@ -21,7 +21,7 @@ import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicate, MPred
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.sec.csp.Csp
 import io.suggest.sec.util.{PgpUtil, ScryptUtil}
 import io.suggest.session.{LongTtl, MSessionKeys, ShortTtl, Ttl}
@@ -762,7 +762,10 @@ class Ident @Inject() (
           // Достать токен по id из базы биллиннга:
           (mott0, idToken0) <- _idTokenPtrCaptchaOk( ottId, now )
 
-          idPreds = (MPredicates.Ident.Phone :: MPredicates.JdContent.Image :: Nil) : List[MPredicate]
+          idPreds: List[MPredicate] =
+            MPredicates.Ident.Phone ::
+            MPredicates.JdContent.Image ::
+            Nil
 
           // Убедится, что смс и капча успешно выверены.
           if {

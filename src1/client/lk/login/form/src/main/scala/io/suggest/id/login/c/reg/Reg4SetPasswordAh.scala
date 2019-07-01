@@ -66,7 +66,7 @@ class Reg4SetPasswordAh[M](
           .set(isValid)
       })
         .reduceOption( _ andThen _ )
-        .fold( noChange) { updF =>
+        .fold(noChange) { updF =>
           val v2 = updF(v0)
           updated(v2)
         }

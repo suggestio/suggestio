@@ -68,7 +68,7 @@ class SmsSendUtil @Inject()(
         }
 
       case Nil =>
-        throw new NoSuchElementException("No ready sms-clients available")
+        throw new IllegalStateException("No ready sms-clients available")
     }
   }
 
@@ -97,6 +97,7 @@ class SmsSendUtil @Inject()(
   def smsSend(sms: MSmsSend): Future[Seq[ISmsSendResult]] = {
     val firstAvailClientFut = _firstAvailClient()
     val sms2 = _prepareSmsForSend( sms )
+    LOGGER.trace(s"smsSend(): test?${sms.isTest} translit?${sms.translit}${sms.from.fold("")(" from=" + _)}${sms.ttl.fold("")(" ttl=" + _)}${sms.timeAt.fold("")(" timeAt=" + _)}\n ${sms.msgs.mapValues(_.mkString(" | ")).mkString(",\n ")}")
     for {
       smsClient   <- firstAvailClientFut
       res         <- smsClient.smsSend( sms2 )

@@ -32,7 +32,7 @@ object Common {
     /** Версия slick-pg.
       * @see [[https://github.com/tminglei/slick-pg#install]]
       */
-    val SLICK_PG     = "0.17.+"
+    val SLICK_PG     = "0.18.+"
 
     /** Версия play-slick прослойки. */
     val PLAY_SLICK   = "4.0.+"
@@ -283,7 +283,7 @@ object Common {
    *  Версия scalajs-react, используемая в проекте.
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactSjsVsn        = "1.4.1" // И контроллировать суффикс diodeReactVsn ниже!
+  val reactSjsVsn        = "1.4.2" // И контроллировать суффикс diodeReactVsn ниже!
 
   /** 
    *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.
@@ -304,13 +304,13 @@ object Common {
   /** Версия diode.
     * @see [[https://github.com/ochrons/diode/]]
     */
-  val diodeVsn = "1.1.4"
-  val diodeReactVsn = diodeVsn + ".131"
+  val diodeVsn = "1.1.5"
+  val diodeReactVsn = diodeVsn + ".142"
 
   /** Версия сериализатора boopickle. 
     * @see [[https://github.com/ochrons/boopickle]]
     */
-  val boopickleVsn = "1.2.6"
+  val boopickleVsn = "1.+"
 
   /** Версия enumeratum, версия нарисована прямо в заголовке на maven badge.
     * @see [[https://github.com/lloydmeta/enumeratum#enumeratum------]]

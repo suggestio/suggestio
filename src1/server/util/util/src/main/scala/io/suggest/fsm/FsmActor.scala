@@ -18,7 +18,7 @@ trait FsmActor extends Actor with IMacroLogs with AbstractFsm {
    * @param nextState Новое состояние.
    */
   override protected def become(nextState: State_t): Unit = {
-    LOGGER.trace(s"become(): fsm mode switch ${_state} -> $nextState")
+    LOGGER.trace(s"become(): fsm mode switch ${_state.toString} -> $nextState")
     super.become(nextState)
   }
 
