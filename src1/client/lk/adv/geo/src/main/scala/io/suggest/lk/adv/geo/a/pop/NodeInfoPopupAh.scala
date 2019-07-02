@@ -9,6 +9,7 @@ import io.suggest.lk.m.ILkCommonPopupCloseAction
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
+import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.util.Success
 
@@ -60,10 +61,7 @@ class NodeInfoPopupAh[M](
       if (m.rcvrKey == v0.rcvrKey) {
         // Обновить состояние.
         val v2 = v0.withReq(
-          m.tryRes.fold(
-            v0.req.fail,
-            v0.req.ready
-          )
+          v0.req.withTry( m.tryRes )
         )
         updated( Some(v2) )
 

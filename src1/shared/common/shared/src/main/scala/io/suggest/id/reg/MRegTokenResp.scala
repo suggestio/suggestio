@@ -12,10 +12,10 @@ import play.api.libs.functional.syntax._
   */
 object MRegTokenResp {
 
-  implicit def mEpwRegCaptchaRespFormat: OFormat[MRegTokenResp] = {
-    (__ \ "t").format[String]
-      .inmap[MRegTokenResp]( apply, _.token )
-  }
+  implicit def mEpwRegCaptchaRespFormat: OFormat[MRegTokenResp] = (
+    (__ \ "t").format[String] and
+    (__ \ "f").formatNullable[Boolean]
+  )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MRegTokenResp] = UnivEq.derive
 
@@ -29,4 +29,5 @@ object MRegTokenResp {
   */
 case class MRegTokenResp(
                           token   : String,
+                          flag    : Option[Boolean] = None,
                         )

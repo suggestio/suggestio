@@ -1047,7 +1047,8 @@ _to.Finish=Завершить
 Username=Имя пользователя
 Not.my.pc=Чужой компьютер?
 
-I.accept.terms.of.service=Я принимаю условия использования сервиса
+I.accept=Я принимаю
+terms.of.service=условия использования сервиса
 I.allow.personal.data.processing=Я разрешаю хранение и обработку моих персональных данных
 
 Email.example=name@email.ru

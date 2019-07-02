@@ -6,6 +6,7 @@ import io.suggest.geo.json.GjFeature
 import io.suggest.lk.adn.map.m.{CurrGeoAdvsInit, SetCurrGeoAdvs}
 import io.suggest.lk.adn.map.u.ILkAdnMapApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.scalajs.js
 import scala.util.Success
@@ -44,10 +45,7 @@ class CurrentGeoAh[M](
     // Сигнал с результатом запроса к серверу за текущими размещениями узла.
     case scga: SetCurrGeoAdvs =>
       // Надо бы отфильтровать null'ы, т.к. сервер генерит chunked с "особенностями" из-за проблем с овладеванием akka-streams Source.
-      val v2 = scga.tryResp.fold(
-        value.fail,
-        value.ready
-      )
+      val v2 = value.withTry( scga.tryResp )
       updated(v2)
 
   }

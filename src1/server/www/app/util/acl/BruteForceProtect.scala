@@ -6,6 +6,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.req.{BfpArgs, IReq}
 import play.api.mvc._
 import io.suggest.req.ReqUtil
+import io.suggest.text.StringUtil
 import play.api.cache.AsyncCacheApi
 import play.api.http.{HttpErrorHandler, Status}
 
@@ -46,7 +47,7 @@ final class BruteForceProtect @Inject() (
   private def _apply[A](args: BfpArgs, request0: Request[A])(f: IReq[A] => Future[Result]): Future[Result] = {
     val mreq = aclUtil.reqFromRequest(request0)
     val remoteClientAddr = mreq.remoteClientAddress
-    def logPrefix = s"bruteForceProtect($remoteClientAddr): ${mreq.method} ${mreq.uri} ::"
+    def logPrefix = s"bruteForceProtect($remoteClientAddr): ${mreq.method} ${StringUtil.strLimitLen(mreq.uri, 30)} ::"
 
     // Для противодействию брутфорсу добавляем асинхронную задержку выполнения проверки по методике https://stackoverflow.com/a/17284760
     val ck = args.cachePrefix + remoteClientAddr

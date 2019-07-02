@@ -4,7 +4,7 @@ import com.softwaremill.macwire._
 import io.suggest.id.login.v.epw.EpwFormR
 import io.suggest.id.login.v.ext.ExtFormR
 import io.suggest.id.login.v.reg.{Reg0CredsR, Reg1CaptchaR, Reg2SmsCodeR, Reg3CheckBoxesR, Reg4SetPasswordR, RegR}
-import io.suggest.id.login.v.stuff.{ButtonR, CheckBoxR, LoginProgressR, TextFieldR}
+import io.suggest.id.login.v.stuff.{CheckBoxR, LoginProgressR, TextFieldR}
 import io.suggest.id.login.v.{LoginFormCss, LoginFormR, LoginFormSpaRouter}
 import japgolly.scalajs.react.React
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -36,7 +36,6 @@ class LoginFormModule {
 
   lazy val checkBoxR = wire[CheckBoxR]
   lazy val loginProgressR = wire[LoginProgressR]
-  lazy val buttonR = wire[ButtonR]
 
   def loginFormCircuitF =
     (routerCtl: RouterCtl[ILoginFormPages]) => wire[LoginFormCircuit]

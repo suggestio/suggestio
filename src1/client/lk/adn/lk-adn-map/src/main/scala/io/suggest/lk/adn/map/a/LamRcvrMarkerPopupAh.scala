@@ -6,10 +6,11 @@ import io.suggest.adv.rcvr.MRcvrPopupS
 import io.suggest.lk.adn.map.m.MLamRcvrs
 import io.suggest.lk.adn.map.u.ILkAdnMapApi
 import io.suggest.lk.m.NodeInfoPopupClose
-import io.suggest.maps.m.{HandleMapPopupClose, HandleRcvrPopupTryResp, OpenMapRcvr}
+import io.suggest.maps.m.{HandleRcvrPopupTryResp, OpenMapRcvr}
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
+import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.util.Success
 
@@ -57,10 +58,7 @@ class LamRcvrMarkerPopupAh[M](
     case m: HandleRcvrPopupTryResp =>
       val v0 = value
       if ( v0.popupState.map(_.nodeId).contains( m.rrp.nodeId ) ) {
-        val popResp2 = m.resp.fold(
-          v0.popupResp.fail,
-          v0.popupResp.ready
-        )
+        val popResp2 = v0.popupResp.withTry( m.resp )
         val v2 = v0.withPopup(
           resp = popResp2,
           state = v0.popupState

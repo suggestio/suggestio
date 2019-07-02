@@ -47,7 +47,7 @@ class RegAh[M](
     * @param v0 Состояние модели.
     * @return ActionResult.
     */
-  private def _toS2Captcha(v0: MRegS, updFs: List[MRegS => MRegS] = List.empty): ActionResult[M] = {
+  private def _toS1Captcha(v0: MRegS, updFs: List[MRegS => MRegS] = List.empty): ActionResult[M] = {
     var updFsAcc = MRegS.step.set( MRegSteps.S1Captcha ) :: updFs
     if (v0.s1Captcha.captcha.isEmpty)
       updFsAcc ::= MRegS.s1Captcha
@@ -57,6 +57,23 @@ class RegAh[M](
     // Надо проинициализировать форму капчи, если она ещё не готова:
     val fxOpt = OptionUtil.maybe( v2.s1Captcha.isCaptchaNeedsInit )( CaptchaInit.toEffectPure )
     ah.updatedMaybeEffect(v2, fxOpt)
+  }
+
+
+  private def _toS2SmsCode(v0: MRegS): ActionResult[M] = {
+    // Капча уже принята.
+    val v2 = MRegS.step
+      .set( MRegSteps.S2SmsCode )(v0)
+    updated(v2)
+  }
+
+
+  private def _toS3CheckBoxes(v0: MRegS): ActionResult[M] = {
+    val nextStep =
+      if (v0.s3CheckBoxes.canSubmit) MRegSteps.S4SetPassword
+      else MRegSteps.S3CheckBoxes
+    val v2 = MRegS.step.set( nextStep )(v0)
+    updated(v2)
   }
 
 
@@ -73,9 +90,16 @@ class RegAh[M](
           if (v0.s0Creds.submitReq.isPending) {
             LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.s0Creds.submitReq) )
             noChange
+
+          } else if (v0.s2SmsCode.submitReq.isReady) {
+            _toS3CheckBoxes(v0)
+
+          } else if (v0.s1Captcha.submitReq.isReady) {
+            _toS2SmsCode(v0)
+
           } else if (v0.s0Creds.submitReq.isReady) {
             // Реквест уже выполнен. Такое возможно, если юзер вернулся назад, и, не изменяя реквизиты, сразу вернулся вперёд.
-            _toS2Captcha( v0 )
+            _toS1Captcha( v0 )
 
           } else if (v0.s0Creds.canSubmit) {
             // Отправить на сервер запрос за получением токена для данных реквизитов.
@@ -105,11 +129,11 @@ class RegAh[M](
 
         // Кнопка далее на странице капчи - надо запустить запрос капчи, наверное.
         case MRegSteps.S1Captcha =>
-          if (v0.s1Captcha.submitReq.isReady) {
-            // Капча уже принята.
-            val v2 = MRegS.step
-              .set( MRegSteps.S2SmsCode )(v0)
-            updated(v2)
+          if (v0.s2SmsCode.submitReq.isReady) {
+            _toS3CheckBoxes(v0)
+
+          } else if (v0.s1Captcha.submitReq.isReady) {
+            _toS2SmsCode(v0)
 
           } else if (v0.s1Captcha.canSubmit) {
             val captcha = v0.s1Captcha.captcha.get
@@ -141,11 +165,8 @@ class RegAh[M](
         // "Далее" нажато на странице ввода смс-кода
         case MRegSteps.S2SmsCode =>
           if (v0.s2SmsCode.submitReq.isReady) {
-            // Уже проверенный смс-код.
-            // TODO Если юзер уже существует на сервере, то переходить сразу на шаг выставления пароля.
-            val v2 = MRegS.step
-              .set( MRegSteps.S3CheckBoxes )(v0)
-            updated(v2)
+            // TODO Если юзер уже существует на сервере, то переходить сразу на шаг выставления пароля, даже если галочки не выставлены.
+            _toS3CheckBoxes(v0)
 
           } else if (v0.s2SmsCode.canSubmit) {
             val tstampMs = System.currentTimeMillis()
@@ -229,12 +250,10 @@ class RegAh[M](
         // Пора залить результат в состоянии.
         var updF = MRegS.s0Creds
           .composeLens( MReg0Creds.submitReq )
-          .modify { req0 =>
-            m.resp.fold( req0.fail, req0.ready )
-          }
+          .modify( _.withTry(m.resp) )
 
         if (m.resp.isSuccess) {
-          _toS2Captcha( v0, updF :: Nil )
+          _toS1Captcha( v0, updF :: Nil )
         } else {
           val v2 = updF(v0)
           updated(v2)
@@ -250,8 +269,10 @@ class RegAh[M](
         case MRegSteps.S0Creds =>
           LOG.log(WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = (m, v0.step))
           noChange
+        // Переход сразу на первый шаг, где вводятся реквизиты, т.к. возвращаться на выверенную капчу
+        // или выверенный смс-код смысла нет, равно как и на форму уже принятых галочек (?).
         case _ =>
-          val step2 = MRegSteps.withValue( v0.step.value - 1 )
+          val step2 = MRegSteps.S0Creds
           val v2 = MRegS.step.set( step2 )( v0 )
           updated(v2)
       }
@@ -306,9 +327,7 @@ class RegAh[M](
       } else {
         var updAccF = MRegS.s2SmsCode
           .composeLens( MReg2SmsCode.submitReq )
-          .modify { req0 =>
-            m.tryResp.fold( req0.fail, req0.ready )
-          }
+          .modify( _.withTry(m.tryResp) )
 
         for (_ <- m.tryResp) {
           updAccF = updAccF andThen
@@ -331,7 +350,7 @@ class RegAh[M](
         // Обработать ответ сервера.
         val v2 = MRegS.s4SetPassword
           .composeLens( MReg4SetPassword.submitReq )
-          .modify { req => m.tryResp.fold(req.fail, req.ready) }(v0)
+          .modify( _.withTry(m.tryResp) )(v0)
 
         // Запустить эффект редиректа по принятой ссылке при положительном ответе сервера:
         val fxOpt = for (okResp <- m.tryResp.toOption) yield {

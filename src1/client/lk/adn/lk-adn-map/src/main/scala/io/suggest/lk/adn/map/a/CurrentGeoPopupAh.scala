@@ -8,6 +8,7 @@ import io.suggest.maps.m.{HandleMapPopupClose, MExistGeoPopupS, OpenAdvGeoExistP
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
+import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.util.Success
 
@@ -52,10 +53,7 @@ class CurrentGeoPopupAh[M](
       // TODO Opt contains хватило бы eq сравнения вместо ==.
       if (v0.state.contains(m.open)) {
         // Это ожидаемый результат запроса. Залить его в состояние...
-        val content2 = m.tryResp.fold(
-          v0.content.fail,
-          v0.content.ready
-        )
+        val content2 = v0.content.withTry( m.tryResp )
         val v2 = v0.withContent( content2 )
         updated(v2)
 

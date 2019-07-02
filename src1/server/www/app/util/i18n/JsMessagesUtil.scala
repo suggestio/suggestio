@@ -418,7 +418,8 @@ class JsMessagesUtil @Inject() (
     MC.`Password` ::
     MC.`Not.my.pc` ::
     MC.`ESIA._unabbrevated` ::
-    MC.`I.accept.terms.of.service` ::
+    MC.`I.accept` ::
+    MC.`terms.of.service` ::
     MC.`I.allow.personal.data.processing` ::
     MC.`_to.Finish` ::
     MC.`Your.email.addr` ::

@@ -42,20 +42,28 @@ object MReg4SetPassword {
   *
   * @param password1 Поле ввода пароля.
   * @param password2 Поле повторения пароля.
+  * @param showPwMisMatch Отображать ли юзеру неСовпадение двух паролей?
   * @param submitReq Pot финального сабмита.
   */
 case class MReg4SetPassword(
                              password1        : MTextFieldS             = MTextFieldS.empty,
                              password2        : MTextFieldS             = MTextFieldS.empty,
+                             showPwMisMatch   : Boolean                 = false,
                              submitReq        : Pot[MRegTokenResp]      = Pot.empty,
                            )
   extends ICanSubmit
 {
 
+  def isPasswordsMatch: Boolean =
+    password1.value ==* password2.value
+
+  lazy val isPasswordMismatchShown: Boolean =
+    showPwMisMatch && !isPasswordsMatch
+
   override def canSubmit: Boolean = {
     !submitReq.isPending &&
     (password1 :: password2 :: Nil).forall(_.isValid) &&
-    (password1.value ==* password2.value) &&
+    isPasswordsMatch &&
     password1.value.nonEmpty
   }
 

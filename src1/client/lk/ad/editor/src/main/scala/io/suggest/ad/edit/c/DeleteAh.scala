@@ -6,6 +6,7 @@ import io.suggest.ad.edit.srv.ILkAdEditApi
 import io.suggest.lk.m.{DeleteConfirmPopupCancel, DeleteConfirmPopupOk, MDeleteConfirmPopupS}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.dom.DomQuick
+import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.util.Success
 
@@ -70,10 +71,7 @@ class DeleteAh[M](
       val v0 = value.get
 
       val v2 = v0.withRequest(
-        m.tryResp.fold(
-          v0.request.fail,
-          v0.request.ready
-        )
+        v0.request.withTry( m.tryResp )
       )
 
       if (v2.request.isReady)

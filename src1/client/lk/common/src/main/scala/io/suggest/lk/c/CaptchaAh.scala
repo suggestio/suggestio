@@ -63,9 +63,7 @@ class CaptchaAh[M](
           noChange
 
         } else {
-          var changesAccF = MCaptchaS.req.modify { req0 =>
-            m.tryResp.fold( req0.fail, req0.ready )
-          }
+          var changesAccF = MCaptchaS.req.modify( _.withTry(m.tryResp) )
 
           // Если успешный ответ, то надо заменить blob-ссылку на картинку.
           for (res <- m.tryResp) {

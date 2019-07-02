@@ -52,7 +52,7 @@ class Reg4SetPasswordR(
         propsProxy.wrap { p =>
           textFieldR.PropsVal(
             state       = p.s4SetPassword.password1,
-            hasError    = false,
+            hasError    = p.s4SetPassword.showPwMisMatch,
             mkAction    = Some( SetPasswordEdit(_: String, isRetype = false) ),
             isPassword  = true,
             inputName   = IdentConst.Login.PASSWORD_FN,    // По идее, вообще необязательно. По идее - "password"
@@ -67,7 +67,7 @@ class Reg4SetPasswordR(
         propsProxy.wrap { p =>
           textFieldR.PropsVal(
             state       = p.s4SetPassword.password2,
-            hasError    = false,
+            hasError    = p.s4SetPassword.showPwMisMatch,
             mkAction    = Some( SetPasswordEdit(_: String, isRetype = true) ),
             isPassword  = true,
             inputName   = "",

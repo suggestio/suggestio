@@ -1,10 +1,9 @@
 package io.suggest.id.login.v.stuff
 
-import chandu0101.scalajs.react.components.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps, MuiFormControlLabel, MuiFormControlLabelProps}
+import chandu0101.scalajs.react.components.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.i18n.MCommonReactCtx
 import io.suggest.id.login.m.ICheckBoxActionStatic
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -24,19 +23,16 @@ import scala.scalajs.js.annotation.JSName
   * Description: wrap() react-компонент галочки для формы логина/регистрации.
   */
 class CheckBoxR(
-                 commonReactCtx      : React.Context[MCommonReactCtx],
                  loginFormCssCtx     : React.Context[LoginFormCss],
                ) {
 
   case class PropsVal(
                        checked    : Boolean,
-                       msgCode    : String,
                        onChange   : ICheckBoxActionStatic,
                      )
   implicit object CheckBoxRFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.checked ==* b.checked) &&
-      (a.msgCode ===* b.msgCode) &&
       (a.onChange ===* b.onChange)
     }
   }
@@ -47,7 +43,6 @@ class CheckBoxR(
 
   case class State(
                     checkedSomeC    : ReactConnectProxy[Some[Boolean]],
-                    msgCodeC        : ReactConnectProxy[String],
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -60,33 +55,20 @@ class CheckBoxR(
     private val _onForeignPcChangeCbF = ReactCommonUtil.cbFun2ToJsCb( _onForeignPcChange )
 
 
-    def render(s: State): VdomElement = {
-      MuiFormControlLabel {
-        val checkBox = loginFormCssCtx.consume { loginFormCss =>
-          s.checkedSomeC { checkedSomeProxy =>
-            val cbCss = new MuiCheckBoxClasses {
-              override val root = loginFormCss.formControl.htmlClass
+    def render(p: Props, s: State): VdomElement = {
+      loginFormCssCtx.consume { loginFormCss =>
+        s.checkedSomeC { checkedSomeProxy =>
+          val cbCss = new MuiCheckBoxClasses {
+            override val root = loginFormCss.formControl.htmlClass
+          }
+          MuiCheckBox(
+            new MuiCheckBoxProps {
+              @JSName("onChange")
+              override val onChange2 = _onForeignPcChangeCbF
+              override val checked = js.defined( checkedSomeProxy.value.value )
+              override val classes = cbCss
             }
-            MuiCheckBox(
-              new MuiCheckBoxProps {
-                @JSName("onChange")
-                override val onChange2 = _onForeignPcChangeCbF
-                override val checked = js.defined( checkedSomeProxy.value.value )
-                override val classes = cbCss
-              }
-            )
-          }
-        }
-
-        val labelText = s.msgCodeC { msgCodeProxy =>
-          commonReactCtx.consume { crCtx =>
-            crCtx.messages( msgCodeProxy.value )
-          }
-        }
-
-        new MuiFormControlLabelProps {
-          override val control = checkBox.rawElement
-          override val label   = labelText.rawNode
+          )
         }
       }
     }
@@ -101,7 +83,6 @@ class CheckBoxR(
         checkedSomeC = propsProxy.connect { p =>
           OptionUtil.SomeBool( p.checked )
         }( FastEq.AnyRefEq ),
-        msgCodeC     = propsProxy.connect(_.msgCode)( FastEq.AnyRefEq )
       )
     }
     .renderBackend[Backend]

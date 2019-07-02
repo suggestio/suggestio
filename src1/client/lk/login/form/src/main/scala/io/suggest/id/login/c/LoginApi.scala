@@ -7,6 +7,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.HttpClient
+import io.suggest.proto.http.client.cache.MHttpCacheInfo
 import io.suggest.proto.http.model.{HttpReq, HttpReqData, Route}
 import io.suggest.routes.routes
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._

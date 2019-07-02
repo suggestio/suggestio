@@ -1,12 +1,15 @@
 package io.suggest.id.login.v.reg
 
-import chandu0101.scalajs.react.components.materialui.{MuiFormGroup, MuiFormGroupProps}
+import chandu0101.scalajs.react.components.materialui.{MuiFormControlLabel, MuiFormControlLabelProps, MuiFormGroup, MuiFormGroupProps}
 import diode.react.ModelProxy
-import io.suggest.i18n.MsgCodes
+import io.suggest.common.html.HtmlConstants
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m.{RegPdnSetAccepted, RegTosSetAccepted}
 import io.suggest.id.login.m.reg.step3.MReg3CheckBoxes
 import io.suggest.id.login.v.stuff.CheckBoxR
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import io.suggest.react.ReactCommonUtil
+import io.suggest.routes.routes
+import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
 /**
@@ -16,7 +19,8 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: Шаг финальных галочек и окончания регистрации.
   */
 class Reg3CheckBoxesR(
-                       checkBoxR: CheckBoxR
+                       checkBoxR           : CheckBoxR,
+                       commonReactCtx      : React.Context[MCommonReactCtx],
                      ) {
 
   type Props = ModelProxy[MReg3CheckBoxes]
@@ -25,6 +29,7 @@ class Reg3CheckBoxesR(
   class Backend( $: BackendScope[Props, Unit] ) {
 
     def render(p: Props): VdomElement = {
+
       MuiFormGroup(
         new MuiFormGroupProps {
           override val row = true
@@ -32,22 +37,47 @@ class Reg3CheckBoxesR(
       )(
 
         // Галочка согласия с офертой suggest.io:
-        p.wrap { props =>
-          checkBoxR.PropsVal(
-            checked   = props.tos.isChecked,
-            msgCode   = MsgCodes.`I.accept.terms.of.service`,
-            onChange  = RegTosSetAccepted,
-          )
-        }(checkBoxR.apply)(implicitly, checkBoxR.CheckBoxRFastEq),
+        MuiFormControlLabel {
+          val acceptTosText = commonReactCtx.consume { crCtx =>
+            <.span(
+              crCtx.messages( MsgCodes.`I.accept` ),
+              HtmlConstants.SPACE,
+              <.a(
+                ^.href := routes.controllers.Static.privacyPolicy().url,
+                ^.target.blank,
+                ^.onClick ==> ReactCommonUtil.stopPropagationCB,
+                crCtx.messages( MsgCodes.`terms.of.service` ),
+              )
+            )
+          }
+          val cbx = p.wrap { props =>
+            checkBoxR.PropsVal(
+              checked   = props.tos.isChecked,
+              onChange  = RegTosSetAccepted,
+            )
+          }(checkBoxR.apply)(implicitly, checkBoxR.CheckBoxRFastEq)
+          new MuiFormControlLabelProps {
+            override val control = cbx.rawElement
+            override val label   = acceptTosText.rawNode
+          }
+        },
 
         // Галочка разрешения на обработку ПДн:
-        p.wrap { props =>
-          checkBoxR.PropsVal(
-            checked   = props.pdn.isChecked,
-            msgCode   = MsgCodes.`I.allow.personal.data.processing`,
-            onChange  = RegPdnSetAccepted,
-          )
-        }(checkBoxR.apply)(implicitly, checkBoxR.CheckBoxRFastEq),
+        MuiFormControlLabel {
+          val pdnText = commonReactCtx.consume { crCtx =>
+            crCtx.messages( MsgCodes.`I.allow.personal.data.processing` )
+          }
+          val cbx = p.wrap { props =>
+            checkBoxR.PropsVal(
+              checked   = props.pdn.isChecked,
+              onChange  = RegPdnSetAccepted,
+            )
+          }(checkBoxR.apply)(implicitly, checkBoxR.CheckBoxRFastEq)
+          new MuiFormControlLabelProps {
+            override val control = cbx.rawElement
+            override val label   = pdnText.rawNode
+          }
+        },
 
       )
     }

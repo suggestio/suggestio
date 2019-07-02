@@ -6,6 +6,7 @@ import io.suggest.geo.json.GjFeature
 import io.suggest.lk.adv.geo.m.{CurrGeoAdvsInit, SetCurrGeoAdvs}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.scalajs.js
 import scala.util.Success
@@ -38,7 +39,7 @@ class GeoAdvExistInitAh[M](
     // Получен ответ сервера на тему текущих размещений.
     case m: SetCurrGeoAdvs =>
       val v0 = value
-      val v2 = m.tryResp.fold( v0.fail, v0.ready )
+      val v2 = v0.withTry( m.tryResp )
       updated( v2 )
 
   }

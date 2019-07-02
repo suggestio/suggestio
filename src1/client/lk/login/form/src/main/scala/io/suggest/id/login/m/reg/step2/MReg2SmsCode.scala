@@ -2,6 +2,7 @@ package io.suggest.id.login.m.reg.step2
 
 import diode.FastEq
 import diode.data.Pot
+import io.suggest.common.empty.EmptyProductPot
 import io.suggest.id.login.m.reg.ICanSubmit
 import io.suggest.id.reg.MRegTokenResp
 import io.suggest.lk.m.sms.MSmsCodeS
@@ -41,6 +42,7 @@ case class MReg2SmsCode(
                          submitReq    : Pot[MRegTokenResp]    = Pot.empty,
                        )
   extends ICanSubmit
+  with EmptyProductPot
 {
 
   override def canSubmit: Boolean = {

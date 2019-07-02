@@ -305,12 +305,16 @@ class Ident @Inject() (
   }
 
 
-  private def _tokenResp(token: String) = {
-    val respBody = MRegTokenResp(
-      token = token
-    )
+  private def _tokenResp(respBody: MRegTokenResp): Result = {
     Ok( Json.toJson(respBody) )
+      .withHeaders(
+        EXPIRES       -> "0",
+        PRAGMA        -> "no-cache",
+        CACHE_CONTROL -> "no-store, no-cache, must-revalidate",
+      )
   }
+  private def _tokenResp(token: String): Result =
+    _tokenResp( MRegTokenResp(token) )
 
 
   /** Сабмит данных нулевого шага для перехода к капче.
@@ -692,7 +696,7 @@ class Ident @Inject() (
                   now         = now,
                   smsSendRes  = sendRes,
                 )
-                val f = MIdToken.idMsgs.modify( newIdMsgs ++ _)
+                val f = MIdToken.idMsgs.modify( newIdMsgs ++ _ )
                 val r = _tokenResp( smsReq.token )
                 (f, r)
               }

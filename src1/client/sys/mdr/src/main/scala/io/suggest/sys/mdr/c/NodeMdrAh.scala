@@ -301,10 +301,7 @@ class NodeMdrAh[M](
       val v0 = value
       if (v0.node.info isPendingWithStartTime m.timestampMs) {
         // Это ожидаемый ответ сервера. Обработать его:
-        val infoReq2 = m.tryResp.fold(
-          v0.node.info.fail,
-          v0.node.info.ready
-        )
+        val infoReq2 = v0.node.info.withTry( m.tryResp )
         val jdCss2 = NodeRenderR.mkJdCss( Some(v0.node.jdCss) )(
           infoReq2
             .iterator

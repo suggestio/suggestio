@@ -357,7 +357,9 @@ object MsgCodes {
   val `Username` = "Username"
   val `Not.my.pc` = "Not.my.pc"
 
-  val `I.accept.terms.of.service` = "I.accept.terms.of.service"
+  val `I.accept` = "I.accept"
+  val `terms.of.service` = "terms.of.service"
+
   val `I.allow.personal.data.processing` = "I.allow.personal.data.processing"
   val `Your.email.addr` = "Your.email.addr"
 

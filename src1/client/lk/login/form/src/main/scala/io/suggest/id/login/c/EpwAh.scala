@@ -138,10 +138,7 @@ class EpwAh[M](
       val v0 = value
       if (v0.loginReq isPendingWithStartTime m.timestampMs) {
         // Пришёл ожидаемый ответ. Разобрать:
-        val loginReq2 = m.tryRes.fold(
-          v0.loginReq.fail,
-          v0.loginReq.ready
-        )
+        val loginReq2 = v0.loginReq.withTry( m.tryRes )
         // Если пришла ссылка и ок, то надо эффект редиректа организовать.
         val fxOpt = for (rdrUrl <- loginReq2.toOption) yield Effect.action {
           DomQuick.goToLocation( rdrUrl )

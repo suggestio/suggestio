@@ -77,6 +77,7 @@ object HtmlConstants {
     val text = "text"
     val radio = "radio"
     val submit = "submit"
+    val button = "button"
     val file = "file"
     val range = "range"
     val password = "password"

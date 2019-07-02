@@ -1,9 +1,10 @@
 package io.suggest.id.login.v.reg
 
 import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiMobileStepper, MuiMobileStepperClasses, MuiMobileStepperProps, MuiMobileStepperVariants}
-import diode.FastEq
+import diode.{FastEq, UseValueEq}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
@@ -11,8 +12,9 @@ import io.suggest.id.login.m.reg.step3.MReg3CheckBoxes
 import io.suggest.id.login.m.{RegBackClick, RegNextClick}
 import io.suggest.id.login.m.reg.{MRegS, MRegStep, MRegSteps}
 import io.suggest.id.login.v.LoginFormCss
-import io.suggest.id.login.v.stuff.{ButtonR, LoginProgressR}
+import io.suggest.id.login.v.stuff.LoginProgressR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.sjs.common.empty.JsOptionUtil
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.ueq.UnivEqUtil._
@@ -32,7 +34,6 @@ class RegR(
             reg2SmsCodeR       : Reg2SmsCodeR,
             reg3CheckBoxesR    : Reg3CheckBoxesR,
             reg4SetPasswordR   : Reg4SetPasswordR,
-            buttonR            : ButtonR,
             loginProgressR     : LoginProgressR,
             commonReactCtxProv : React.Context[MCommonReactCtx],
             loginFormCssCtxP   : React.Context[LoginFormCss],
@@ -42,11 +43,23 @@ class RegR(
   type Props = ModelProxy[Props_t]
 
 
+  /** Пропертисы для коннекшена next-кнопки.
+    *
+    * @param disabled выключена?
+    * @param isFinal последний шаг?
+    */
+  case class MNextBtnProps(
+                           disabled   : Boolean,
+                           isFinal    : Boolean,
+                         )
+    extends UseValueEq
+
+
   case class State(
                     isSubmitPendingSomeC    : ReactConnectProxy[Some[Boolean]],
                     activeStepC             : ReactConnectProxy[MRegStep],
                     backBtnDisabledC        : ReactConnectProxy[Some[Boolean]],
-                    nextBtnDisabledC        : ReactConnectProxy[Some[Boolean]],
+                    nextBtnPropsC           : ReactConnectProxy[MNextBtnProps],
                     isLastStepSomeC         : ReactConnectProxy[Some[Boolean]],
                   )
 
@@ -56,6 +69,9 @@ class RegR(
     private val _onNextClick: Callback =
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, RegNextClick )
     private val _onNextClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent => _onNextClick }
+
+    private def _onFormSubmit(e: ReactEvent): Callback =
+      ReactCommonUtil.preventDefaultCB(e) >> _onNextClick
 
     private val _onBackClick: Callback =
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, RegBackClick )
@@ -83,19 +99,6 @@ class RegR(
       val backMsg = commonReactCtxProv.consume { commonReactCtx =>
         commonReactCtx.messages( MsgCodes.`Back` )
       }
-
-      // Сообщение кнопки "Вперёд". На последнем шаге надо "Завершить".
-      val nextMsg = commonReactCtxProv.consume { commonReactCtx =>
-        s.isLastStepSomeC { isLastStepSomeProxy =>
-          val msgCode =
-            if (isLastStepSomeProxy.value.value) MsgCodes.`_to.Finish`
-            else MsgCodes.`Next`
-          <.span(
-            commonReactCtx.messages( msgCode )
-          )
-        }
-      }
-
       val backBtn = s.backBtnDisabledC { disabledSomeProxy =>
         MuiButton(
           new MuiButtonProps {
@@ -109,16 +112,39 @@ class RegR(
         )
       }
 
-      val nextBtn = s.nextBtnDisabledC { disabledSomeProxy =>
-        MuiButton(
+      // Сообщение кнопки "Вперёд". На последнем шаге надо "Завершить".
+      val nextMsg = commonReactCtxProv.consume { commonReactCtx =>
+        s.isLastStepSomeC { isLastStepSomeProxy =>
+          val msgCode =
+            if (isLastStepSomeProxy.value.value) MsgCodes.`_to.Finish`
+            else MsgCodes.`Next`
+          <.span(
+            commonReactCtx.messages( msgCode )
+          )
+        }
+      }
+      val nextBtn = s.nextBtnPropsC { nextBtnPropsProxy =>
+        val nextBtnProps = nextBtnPropsProxy.value
+        // Здесь кнопка имеет двойственность: "Далее" либо "Завершить". Вторая делает сабмит формы, который перехватывается.
+        // Это нужно, чтобы подсказать браузеру состояние сабмита пароля для запоминания пароля в менеджере паролей.
+        val isNotFinal = !nextBtnProps.isFinal
+        val _onClickUnd = JsOptionUtil.maybeDefined(isNotFinal)(_onNextClickCbF)
+        val _type =
+          if (nextBtnProps.isFinal) HtmlConstants.Input.submit
+          else HtmlConstants.Input.button
+
+        MuiButton {
           new MuiButtonProps {
             override val size     = MuiButtonSizes.small
-            override val disabled = disabledSomeProxy.value.value
-            override val onClick  = _onNextClickCbF
+            override val disabled = nextBtnProps.disabled
+            override val onClick  = _onClickUnd
+            override val `type`   = _type
           }
-        )(
+        } (
           nextMsg,
-          Mui.SvgIcons.KeyboardArrowRight()(),
+          ReactCommonUtil.maybeNode( isNotFinal )(
+            Mui.SvgIcons.KeyboardArrowRight()()
+          )
         )
       }
 
@@ -174,15 +200,16 @@ class RegR(
         )
       )
 
-      s.isSubmitPendingSomeC { isFormDisabledSomeProxy =>
+      s.isSubmitPendingSomeC { isSubmitPendingSomeProxy =>
+        val isBusy = isSubmitPendingSomeProxy.value.value
         <.form(
-          ReactCommonUtil.maybe( isFormDisabledSomeProxy.value.value ) {
-            TagMod(
-              ^.onSubmit --> _onNextClick,
-              ^.disabled  := true,
-            )
-          },
-          formContent
+          // Сабмит формы идентичен NextClick, возможен на любом шаге.
+          if (isBusy)
+            ^.disabled  := true
+          else
+            ^.onSubmit ==> _onFormSubmit,
+
+          formContent,
         )
       }
 
@@ -194,6 +221,8 @@ class RegR(
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
+      val lastStep = MRegSteps.values.last
+
       State(
 
         isSubmitPendingSomeC = propsProxy.connect { props =>
@@ -207,10 +236,16 @@ class RegR(
           OptionUtil.SomeBool( props.step.value <= 0 )
         }( FastEq.AnyRefEq ),
 
-        nextBtnDisabledC = propsProxy.connect { props =>
-          // Кнопка "Далее" выключена, если на текущем шаге нет готовности данных.
-          OptionUtil.SomeBool( !props.stepState.canSubmit )
-        }( FastEq.AnyRefEq ),
+        nextBtnPropsC = {
+          propsProxy.connect { props =>
+            MNextBtnProps(
+              // Кнопка "Далее" выключена, если на текущем шаге нет готовности данных.
+              disabled = !props.stepState.canSubmit,
+              // Кнопка "Завершить" на последнем шаге.
+              isFinal  = props.step ==* lastStep,
+            )
+          }( FastEq.ValueEq )
+        },
 
         // Это последний шаг?
         isLastStepSomeC = {

@@ -1,17 +1,19 @@
 package io.suggest.id.login.v.epw
 
-import chandu0101.scalajs.react.components.materialui.{MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiPaper}
+import chandu0101.scalajs.react.components.materialui.{MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiFormControl, MuiFormControlLabel, MuiFormControlLabelProps, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiPaper}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.IdentConst
 import io.suggest.id.login.m._
 import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.v.LoginFormCss
-import io.suggest.id.login.v.stuff.{ButtonR, CheckBoxR, LoginProgressR, TextFieldR}
+import io.suggest.id.login.v.stuff.{CheckBoxR, LoginProgressR, TextFieldR}
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 
 import scala.scalajs.js
 
@@ -24,7 +26,6 @@ import scala.scalajs.js
 class EpwFormR(
                 textFieldR                  : TextFieldR,
                 checkBoxR                   : CheckBoxR,
-                buttonR                     : ButtonR,
                 loginProgressR              : LoginProgressR,
                 commonReactCtxProv          : React.Context[MCommonReactCtx],
                 loginFormCssCtx             : React.Context[LoginFormCss],
@@ -36,6 +37,7 @@ class EpwFormR(
 
   case class State(
                     loginReqPendingSomeC    : ReactConnectProxy[Some[Boolean]],
+                    loginBtnDisabledSomeC   : ReactConnectProxy[Some[Boolean]],
                   )
 
 
@@ -44,14 +46,9 @@ class EpwFormR(
     /** Реакция на попытку сабмита формы мимо основной кнопки.
       * Возможно, enter с клавиатуры или ещё как-то.
       */
-    private val _onFormSubmit: Callback = {
-      $.props >>= { propsProxy: Props =>
-        if (propsProxy.value.loginBtnEnabled) {
-          propsProxy.dispatchCB( EpwDoLogin )
-        } else {
-          Callback.empty
-        }
-      }
+    private def _onFormSubmit(e: ReactEvent): Callback = {
+      ReactCommonUtil.preventDefaultCB(e) >>
+        ReactDiodeUtil.dispatchOnProxyScopeCB($, EpwDoLogin)
     }
 
 
@@ -60,7 +57,7 @@ class EpwFormR(
 
         // Поддержка локализации:
         <.form(
-          ^.onSubmit --> _onFormSubmit,
+          ^.onSubmit ==> _onFormSubmit,
 
           MuiFormControl(
             new MuiFormControlProps {
@@ -101,25 +98,50 @@ class EpwFormR(
               }( textFieldR.apply )( implicitly, textFieldR.EpwTextFieldPropsValFastEq ),
 
               // Галочка "Чужой компьютер".
-              propsProxy.wrap { p =>
-                checkBoxR.PropsVal(
-                  checked   = p.isForeignPc,
-                  msgCode   = MsgCodes.`Not.my.pc`,
-                  onChange  = EpwSetForeignPc,
-                )
-              }( checkBoxR.apply )(implicitly, checkBoxR.CheckBoxRFastEq),
+              MuiFormControlLabel {
+                val labelText = commonReactCtxProv.consume { crCtx =>
+                  crCtx.messages( MsgCodes.`Not.my.pc` )
+                }
+                val cbx = propsProxy.wrap { p =>
+                  checkBoxR.PropsVal(
+                    checked   = p.isForeignPc,
+                    onChange  = EpwSetForeignPc,
+                  )
+                }( checkBoxR.apply )(implicitly, checkBoxR.CheckBoxRFastEq)
+                new MuiFormControlLabelProps {
+                  override val control = cbx.rawElement
+                  override val label   = labelText.rawNode
+                }
+              },
 
               // Линейка ожидания:
               s.loginReqPendingSomeC { loginProgressR.component.apply },
 
               // Кнопка "Войти", аналог сабмита формы.
-              propsProxy.wrap { p =>
-                buttonR.PropsVal(
-                  disabled = !p.loginBtnEnabled,
-                  onClick  = EpwDoLogin,
-                  msgCode  = MsgCodes.`Login`,
-                )
-              }( buttonR.apply )(implicitly, buttonR.ButtonRPropsValFastEq),
+              {
+                val loginBtnText = commonReactCtxProv.consume { crCtx =>
+                  crCtx.messages( MsgCodes.`Login` )
+                }
+                loginFormCssCtx.consume { loginFormCss =>
+                  val btnCss = new MuiButtonClasses {
+                    override val root = loginFormCss.formControl.htmlClass
+                  }
+                  s.loginBtnDisabledSomeC { loginBtnDisabledSomeProxy =>
+                    MuiButton(
+                      new MuiButtonProps {
+                        override val size       = MuiButtonSizes.large
+                        override val variant    = MuiButtonVariants.contained
+                        override val disabled   = loginBtnDisabledSomeProxy.value.value
+                        override val fullWidth  = true
+                        override val classes    = btnCss
+                        override val `type`     = HtmlConstants.Input.submit
+                      }
+                    )(
+                      loginBtnText
+                    )
+                  }
+                }
+              },
 
             )
           )
@@ -135,9 +157,15 @@ class EpwFormR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
+
         loginReqPendingSomeC = propsProxy.connect { props =>
           OptionUtil.SomeBool( props.loginReq.isPending )
         }( FastEq.AnyRefEq ),
+
+        loginBtnDisabledSomeC = propsProxy.connect { props =>
+          OptionUtil.SomeBool( !props.loginBtnEnabled )
+        },
+
       )
     }
     .renderBackend[Backend]

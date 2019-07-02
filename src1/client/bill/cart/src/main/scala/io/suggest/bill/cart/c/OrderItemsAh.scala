@@ -107,10 +107,7 @@ class OrderItemsAh[M](
     case m: HandleOrderContentResp =>
       val v0 = value
       if (v0.orderContents isPendingWithStartTime m.timestampMs) {
-        val req2 = m.tryResp.fold(
-          v0.orderContents.fail,
-          v0.orderContents.ready
-        )
+        val req2 = v0.orderContents.withTry( m.tryResp )
 
         val v2 = v0.copy(
           orderContents = req2,

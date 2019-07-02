@@ -7,6 +7,8 @@ import io.suggest.err.ErrorConstants
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 
+import scala.util.Try
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -67,14 +69,16 @@ object DiodeUtil {
         }
       }
 
-      def isPendingWithStartTime(startTime: Long): Boolean = {
+      def isPendingWithStartTime(startTime: Long): Boolean =
         pendingOpt.exists(_.startTime ==* startTime)
-      }
 
       /** Вообще пустой Pot без намёков на наполнение в ближайшем времени. */
-      def isTotallyEmpty: Boolean = {
+      def isTotallyEmpty: Boolean =
         pot.isEmpty && !pot.isPending
-      }
+
+      /** Свёрстка Try[T] поверх Pot[T]. */
+      def withTry(tryRes: Try[T]): Pot[T] =
+        tryRes.fold( pot.fail, pot.ready )
 
     }
 

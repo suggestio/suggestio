@@ -168,7 +168,7 @@ class FirstRunDialogAh[M](
             first00
           case _ =>
             val permState0 = first00.perms.getOrElse( m.phase, Pot.empty )
-            val permState2 = m.res.fold( permState0.fail, permState0.ready )
+            val permState2 = permState0.withTry( m.res )
             MWzFirstOuterS.perms
               .modify( _.updated( m.phase, permState2 ) )(first00)
         }

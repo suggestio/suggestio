@@ -53,9 +53,7 @@ class JsRouterInitAh[M <: AnyRef](
     case m: JsRouterStatus =>
       val v0 = value
 
-      var stateMods = MJsRouterS.jsRouter.modify { jsRouterPot0 =>
-        m.payload.fold( jsRouterPot0.fail, jsRouterPot0.ready )
-      }
+      var stateMods = MJsRouterS.jsRouter.modify( _.withTry(m.payload) )
       var fxsAcc = List.empty[Effect]
 
       // Если задана SPA-роута, и js-роутер готов, повторно вызвать SPA-роуту:

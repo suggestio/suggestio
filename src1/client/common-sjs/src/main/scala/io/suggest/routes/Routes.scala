@@ -97,6 +97,8 @@ sealed trait StaticCtlRoutes extends js.Object {
     */
   def advRcvrsMapJson(hashSum: js.UndefOr[Int]): Route = js.native
 
+  def privacyPolicy(): Route = js.native
+
 }
 
 
