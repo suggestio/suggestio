@@ -27,6 +27,7 @@ trait MuiSvgIconProps extends js.Object {
   val style: js.UndefOr[js.Any] = js.undefined
   val viewBox: js.UndefOr[String] = js.undefined
   val className: js.UndefOr[String] = js.undefined
+  val htmlColor: js.UndefOr[String] = js.undefined
 }
 
 @js.native

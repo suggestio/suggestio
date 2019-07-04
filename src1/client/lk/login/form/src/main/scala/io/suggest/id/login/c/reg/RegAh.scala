@@ -342,6 +342,7 @@ class RegAh[M](
     // Результат запроса окончания регистрации.
     case m: RegFinalSubmitResp =>
       val v0 = value
+
       if (!(v0.s4SetPassword.submitReq isPendingWithStartTime m.tstamp)) {
         LOG.warn( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = (m, v0.s4SetPassword.submitReq) )
         noChange
@@ -361,7 +362,6 @@ class RegAh[M](
         }
 
         ah.updatedMaybeEffect(v2, fxOpt)
-
       }
 
   }

@@ -21,11 +21,13 @@ object MuiTableCell {
 trait MuiTableCellProps extends MuiPropsBase {
   val classes: js.UndefOr[MuiTableCellClasses] = js.undefined
   val component: js.UndefOr[String | js.Function | js.Object] = js.undefined
-  val numeric: js.UndefOr[Boolean] = js.undefined
   val padding: js.UndefOr[String] = js.undefined
+  val size: js.UndefOr[String] = js.undefined
   val scope: js.UndefOr[String] = js.undefined
   val sortDirection: js.UndefOr[MuiTableCellSort.Sort_t] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
+  /** @see [[MuiTypoGraphyAligns]]. */
+  val align: js.UndefOr[String] = js.undefined
 }
 object MuiTableCellProps extends MuiPropsBaseStatic[MuiTableCellProps]
 

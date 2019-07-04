@@ -49,6 +49,4 @@ object MuiButtonVariants {
   val text = "text"
   val outlined = "outlined"
   val contained = "contained"
-  @deprecated("Use Fab variant=extended", "mui-4.x")
-  val extendedFab = "extendedFab"
 }

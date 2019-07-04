@@ -39,6 +39,7 @@ object Mui {
       extends js.Any
   @js.native @JSImport("@material-ui/core/FloatingActionButton", JSImport.Default) object FloatingActionButton
       extends js.Any
+  @js.native @JSImport("@material-ui/core/Fab", JSImport.Default) object Fab extends js.Any
   @js.native @JSImport("@material-ui/core/FontIcon", JSImport.Default) object FontIcon extends js.Any
   @js.native @JSImport("@material-ui/core/FormLabel", JSImport.Default) object FormLabel extends js.Any
   @js.native @JSImport("@material-ui/core/FormControl", JSImport.Default) object FormControl extends js.Any

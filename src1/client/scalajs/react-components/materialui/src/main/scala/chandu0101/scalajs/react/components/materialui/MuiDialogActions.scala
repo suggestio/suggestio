@@ -25,7 +25,7 @@ trait MuiDialogActionsProps
   extends MuiPropsBase
   with MuiPropsBaseClasses[MuiDialogActionsClasses]
 {
-  val disableActionSpacing: js.UndefOr[Boolean] = js.undefined
+  val disableSpacing: js.UndefOr[Boolean] = js.undefined
 }
 object MuiDialogActionsProps extends MuiPropsBaseStatic[MuiDialogActionsProps]
 
@@ -34,5 +34,5 @@ object MuiDialogActionsProps extends MuiPropsBaseStatic[MuiDialogActionsProps]
 trait MuiDialogActionsClasses
   extends MuiClassesBase
 {
-  val action: js.UndefOr[Boolean] = js.undefined
+  val spacing: js.UndefOr[Boolean] = js.undefined
 }

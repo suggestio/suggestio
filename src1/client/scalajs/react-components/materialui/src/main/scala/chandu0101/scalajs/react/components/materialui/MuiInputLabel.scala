@@ -21,13 +21,14 @@ object MuiInputLabel {
 }
 
 
-trait MuiInputLabelProps extends MuiPropsBase {
-  val classes: js.UndefOr[MuiInputLabelClasses] = js.undefined
+trait MuiInputLabelProps
+  extends MuiPropsBase
+  with MuiPropsBaseClasses[MuiInputLabelClasses]
+{
   val disableAnimation: js.UndefOr[Boolean] = js.undefined
   val disabled: js.UndefOr[Boolean] = js.undefined
   val error: js.UndefOr[Boolean] = js.undefined
   val focused: js.UndefOr[Boolean] = js.undefined
-  val FormLabelClasses: js.UndefOr[js.Object] = js.undefined
   val margin: js.UndefOr[String] = js.undefined
   val required: js.UndefOr[Boolean] = js.undefined
   val shrink: js.UndefOr[Boolean] = js.undefined
@@ -35,8 +36,7 @@ trait MuiInputLabelProps extends MuiPropsBase {
 object MuiInputLabelProps extends MuiPropsBaseStatic[MuiInputLabelProps]
 
 
-trait MuiInputLabelClasses extends js.Object {
-  val root: js.UndefOr[String] = js.undefined
+trait MuiInputLabelClasses extends MuiFormLabelClasses {
   val formControl: js.UndefOr[String] = js.undefined
   val marginDense: js.UndefOr[String] = js.undefined
   val shrink: js.UndefOr[String] = js.undefined

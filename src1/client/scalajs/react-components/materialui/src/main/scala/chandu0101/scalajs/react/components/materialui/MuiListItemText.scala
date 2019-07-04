@@ -21,8 +21,10 @@ object MuiListItemText {
 }
 
 
-trait MuiListItemTextProps extends js.Object {
-  val classes: js.UndefOr[MuiListItemTextClasses] = js.undefined
+trait MuiListItemTextProps
+  extends MuiPropsBase
+  with MuiPropsBaseClasses[MuiListItemTextClasses]
+{
   val disableTypography: js.UndefOr[Boolean] = js.undefined
   val inset: js.UndefOr[Boolean] = js.undefined
   val primary: js.UndefOr[React.Node] = js.undefined

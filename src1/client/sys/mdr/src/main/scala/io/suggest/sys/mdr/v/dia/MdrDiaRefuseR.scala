@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v.dia
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonVariants, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiLinearProgress, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiFab, MuiFabProps, MuiFabVariants, MuiLinearProgress, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
@@ -125,9 +125,9 @@ class MdrDiaRefuseR {
         MuiDialogActions()(
 
           // Кнопка отмены. Активная всегда, чтобы на зависших запросах можно было тоже закрыть окно.
-          MuiButton(
-            new MuiButtonProps {
-              override val variant = MuiButtonVariants.extendedFab
+          MuiFab(
+            new MuiFabProps {
+              override val variant = MuiFabVariants.extended
               override val color = MuiColorTypes.secondary
               override val onClick = _onCancelClickF
             }
@@ -137,9 +137,9 @@ class MdrDiaRefuseR {
           ),
 
           // Кнопка подтверждения отказа в размещении.
-          MuiButton(
-            new MuiButtonProps {
-              override val variant = MuiButtonVariants.extendedFab
+          MuiFab(
+            new MuiFabProps {
+              override val variant = MuiFabVariants.extended
               override val color = MuiColorTypes.primary
               override val onClick = _onRefuseClickF
               override val disabled = inputsDisabled

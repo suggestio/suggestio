@@ -1,6 +1,6 @@
 package io.suggest.bill.cart.v.order
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonVariants, MuiColorTypes}
+import chandu0101.scalajs.react.components.materialui.{Mui, MuiColorTypes, MuiFab, MuiFabClasses, MuiFabProps, MuiFabVariants}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
@@ -47,13 +47,13 @@ class GoToPayBtnR(
           ^.action := route.url,
           ^.method := route.method,
 
-          MuiButton {
-            val css = new MuiButtonClasses {
+          MuiFab {
+            val css = new MuiFabClasses {
               override val root = orderCss.PayBtn.root.htmlClass
             }
-            new MuiButtonProps {
+            new MuiFabProps {
               override val classes    = css
-              override val variant    = MuiButtonVariants.extendedFab
+              override val variant    = MuiFabVariants.extended
               override val `type`     = HtmlConstants.Input.submit
               override val color      = MuiColorTypes.secondary
               override val disabled   = props.disabled

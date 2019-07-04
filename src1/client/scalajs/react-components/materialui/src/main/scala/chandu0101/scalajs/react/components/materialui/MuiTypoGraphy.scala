@@ -28,7 +28,8 @@ trait MuiTypoGraphyProps
   val align: js.UndefOr[String] = js.undefined
   val color: js.UndefOr[String] = js.undefined
   val gutterBottom: js.UndefOr[Boolean] = js.undefined
-  val headlineMapping: js.UndefOr[MuiTypoGraphyHeadlineMapping] = js.undefined
+  val dispaly: js.UndefOr[String] = js.undefined
+  val variantMapping: js.UndefOr[MuiTypoGraphyVariantMapping] = js.undefined
   val noWrap: js.UndefOr[Boolean] = js.undefined
   val paragraph: js.UndefOr[Boolean] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
@@ -36,7 +37,7 @@ trait MuiTypoGraphyProps
 object MuiTypoGraphyProps extends MuiPropsBaseStatic[MuiTypoGraphyProps]
 
 
-/** Общие поля для [[MuiTypoGraphyProps]] и [[MuiTypoGraphyProps.headlineMapping]]. */
+/** Общие поля для [[MuiTypoGraphyProps]] и [[MuiTypoGraphyProps.variantMapping]]. */
 sealed trait MuiTypoGraphyMappings extends js.Object {
   val h1: js.UndefOr[String] = js.undefined
   val h2: js.UndefOr[String] = js.undefined
@@ -96,8 +97,8 @@ object MuiTypoGraphyColors {
 }
 
 
-/** js object for [[MuiTypoGraphyProps.headlineMapping]]. */
-trait MuiTypoGraphyHeadlineMapping
+/** js object for [[MuiTypoGraphyProps.variantMapping]]. */
+trait MuiTypoGraphyVariantMapping
   extends MuiTypoGraphyMappings
 
 
