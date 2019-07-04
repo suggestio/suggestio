@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.stuff
 
-import chandu0101.scalajs.react.components.materialui.{MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants}
+import com.materialui.{MuiLinearProgress, MuiLinearProgressProps, MuiProgressVariants}
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.id.login.v.LoginFormCss

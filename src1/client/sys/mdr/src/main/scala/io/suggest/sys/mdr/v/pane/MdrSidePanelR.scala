@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v.pane
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiDivider, MuiLinearProgress, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiToolTip, MuiToolTipProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiDivider, MuiLinearProgress, MuiList, MuiListItem, MuiListItemIcon, MuiListItemText, MuiToolTip, MuiToolTipProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy

@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.stuff
 
-import chandu0101.scalajs.react.components.materialui.{MuiFormControlClasses, MuiTextField, MuiTextFieldProps}
+import com.materialui.{MuiFormControlClasses, MuiTextField, MuiTextFieldProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants

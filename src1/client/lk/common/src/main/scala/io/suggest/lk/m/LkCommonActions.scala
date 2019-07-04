@@ -146,7 +146,5 @@ case object CaptchaInputBlur extends ILkCommonAction
 
 /** Редактирование поля смс-кода. */
 case class SmsCodeSet( smsCode: String ) extends ILkCommonAction
-/** Кнопка "переслать смс-код". */
-case object SmsCodeReSend extends ILkCommonAction
 /** Расфокусировка поля смс-кода. */
 case object SmsCodeBlur extends ILkCommonAction

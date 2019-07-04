@@ -1,6 +1,7 @@
 package io.suggest.id.login.v.reg
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiMobileStepper, MuiMobileStepperClasses, MuiMobileStepperProps, MuiMobileStepperVariants}
+import com.materialui
+import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiMobileStepper, MuiMobileStepperClasses, MuiMobileStepperProps, MuiMobileStepperVariants}
 import diode.{FastEq, UseValueEq}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -133,7 +134,7 @@ class RegR(
           if (nextBtnProps.isFinal) HtmlConstants.Input.submit
           else HtmlConstants.Input.button
 
-        MuiButton {
+        materialui.MuiButton {
           new MuiButtonProps {
             override val size     = MuiButtonSizes.small
             override val disabled = nextBtnProps.disabled

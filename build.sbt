@@ -476,7 +476,7 @@ lazy val scSwSjs = {
 
 /** Экспорт material-ui core+icons с поправками для новой версии. */
 lazy val reactMaterialUiSjs = {
-  Project(id = "scalajs-react-components-materialui", base = file(DIR0 + "client/scalajs/react-components/materialui"))
+  Project(id = "scalajs-react-materialui", base = file(DIR0 + "client/scalajs/react-materialui"))
     .dependsOn( commonReactSjs )
 }
 

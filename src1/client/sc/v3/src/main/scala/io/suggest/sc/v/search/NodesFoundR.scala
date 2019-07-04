@@ -1,6 +1,6 @@
 package io.suggest.sc.v.search
 
-import chandu0101.scalajs.react.components.materialui._
+import com.materialui.{Mui, MuiCircularProgress, MuiCircularProgressProps, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps, MuiList, MuiListClasses, MuiListItem, MuiListItemIcon, MuiListItemProps, MuiListItemText, MuiListProps, MuiProgressVariants, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ReactPot._
@@ -177,8 +177,8 @@ object NodesFoundR {
 
   /** Контейнер данных для рендера компонента.
     *
-    * @param found Данные найденных тегов/узлов.
-    * @param withDistanceTo Рендерить расстояние до указанной локации. Инстанс mapInit.userLoc.
+    * @param req Данные найденных тегов/узлов.
+    * @param withDistanceToNull Рендерить расстояние до указанной локации. Инстанс mapInit.userLoc.
     */
   case class PropsVal(
                        req                  : Pot[MSearchRespInfo[MGeoNodesResp]],

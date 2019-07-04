@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.ext
 
-import chandu0101.scalajs.react.components.materialui.{MuiButtonBase, MuiButtonBaseProps, MuiPaper}
+import com.materialui.{MuiButtonBase, MuiButtonBaseProps, MuiPaper}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil

@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v.toolbar
 
-import chandu0101.scalajs.react.components.materialui.{MuiChip, MuiChipProps, MuiChipVariants}
+import com.materialui.{MuiChip, MuiChipProps, MuiChipVariants}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants._

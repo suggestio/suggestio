@@ -1,6 +1,7 @@
 package io.suggest.bill.cart.v.txn
 
-import chandu0101.scalajs.react.components.materialui.{MuiTable, MuiTableBody, MuiTableCell, MuiTableCellProps, MuiTableHead, MuiTableRow, MuiTableRowProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui
+import com.materialui.{MuiTable, MuiTableBody, MuiTableCell, MuiTableCellProps, MuiTableHead, MuiTableRow, MuiTableRowProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dt.CommonDateTimeUtil
@@ -77,7 +78,7 @@ class TxnsR {
               // Нет транзакций.
               ReactCommonUtil.maybeNode( mtxns.isEmpty ) {
                 MuiTableRow()(
-                  MuiTableCell(
+                  materialui.MuiTableCell(
                     new MuiTableCellProps {
                       val colSpan = 4
                     }

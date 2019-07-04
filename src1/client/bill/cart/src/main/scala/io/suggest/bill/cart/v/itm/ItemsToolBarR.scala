@@ -1,6 +1,5 @@
 package io.suggest.bill.cart.v.itm
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiToolBar, MuiToolBarClasses, MuiToolBarProps, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.bill.cart.m.CartDeleteBtnClick
@@ -15,6 +14,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
 import ReactCommonUtil.Implicits._
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiToolBar, MuiToolBarClasses, MuiToolBarProps, MuiToolTip, MuiToolTipPlacements, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 
 /**
   * Suggest.io

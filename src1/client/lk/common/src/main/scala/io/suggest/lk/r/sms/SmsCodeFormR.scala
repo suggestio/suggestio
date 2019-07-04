@@ -1,11 +1,11 @@
 package io.suggest.lk.r.sms
 
-import chandu0101.scalajs.react.components.materialui.{MuiInputValue_t, MuiTextField, MuiTextFieldProps}
+import com.materialui.{MuiInputValue_t, MuiTextField, MuiTextFieldProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
-import io.suggest.lk.m.{SmsCodeBlur, SmsCodeReSend, SmsCodeSet}
+import io.suggest.lk.m.{SmsCodeBlur, SmsCodeSet}
 import io.suggest.lk.m.input.MTextFieldExtS
 import io.suggest.lk.m.sms.MSmsCodeS
 import io.suggest.spa.OptFastEq
@@ -57,11 +57,11 @@ class SmsCodeFormR(
     }
     private val _onSmsCodeTypingCbF = ReactCommonUtil.cbFun1ToJsCb( _onSmsCodeTyping )
 
-
+    /*
     private def _onReSendSmsClick(e: ReactEvent): Callback =
       ReactDiodeUtil.dispatchOnProxyScopeCB($, SmsCodeReSend)
     private val _onReSendSmsClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onReSendSmsClick )
-
+    */
 
     private def _onInputBlur(e: ReactFocusEvent): Callback =
       ReactDiodeUtil.dispatchOnProxyScopeCB($, SmsCodeBlur)

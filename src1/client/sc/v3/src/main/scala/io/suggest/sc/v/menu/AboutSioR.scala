@@ -2,7 +2,7 @@ package io.suggest.sc.v.menu
 
 import diode.FastEq
 import diode.react.ModelProxy
-import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
+import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.sc.styl.ScCssStatic
 import io.suggest.ueq.UnivEqUtil._

@@ -1,6 +1,6 @@
 package io.suggest.bill.cart.v.order
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiColorTypes, MuiFab, MuiFabClasses, MuiFabProps, MuiFabVariants}
+import com.materialui.{Mui, MuiColorTypes, MuiFab, MuiFabClasses, MuiFabProps, MuiFabVariants}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants

@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.stuff
 
-import chandu0101.scalajs.react.components.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps}
+import com.materialui.{MuiCheckBox, MuiCheckBoxClasses, MuiCheckBoxProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil

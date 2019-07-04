@@ -1,6 +1,6 @@
 package io.suggest.sc.v.menu
 
-import chandu0101.scalajs.react.components.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
+import com.materialui.{MuiListItem, MuiListItemProps, MuiListItemText}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}

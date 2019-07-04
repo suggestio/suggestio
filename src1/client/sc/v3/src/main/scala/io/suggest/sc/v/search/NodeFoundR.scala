@@ -13,9 +13,9 @@ import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaC
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemIconClasses, MuiListItemIconProps, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconProps}
 import io.suggest.common.empty.OptionUtil
 import ReactCommonUtil.Implicits._
+import com.materialui.{Mui, MuiListItem, MuiListItemClasses, MuiListItemIcon, MuiListItemIconClasses, MuiListItemIconProps, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSvgIconProps}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.proto.http.client.HttpClient
 import io.suggest.model.n2.node.MNodeTypes

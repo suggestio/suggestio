@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v.main
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiColorTypes, MuiIconButton, MuiIconButtonProps, MuiSnackBarContent, MuiSnackBarContentProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiColorTypes, MuiIconButton, MuiIconButtonProps, MuiSnackBarContent, MuiSnackBarContentProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy

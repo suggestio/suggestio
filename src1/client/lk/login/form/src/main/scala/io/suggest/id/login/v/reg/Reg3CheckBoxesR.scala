@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.reg
 
-import chandu0101.scalajs.react.components.materialui.{MuiFormControlLabel, MuiFormControlLabelProps, MuiFormGroup, MuiFormGroupProps}
+import com.materialui.{MuiFormControlLabel, MuiFormControlLabelProps, MuiFormGroup, MuiFormGroupProps}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}

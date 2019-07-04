@@ -1,12 +1,12 @@
 package io.suggest.sc.v.hdr
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiToolTip, MuiToolTipProps}
 import diode.react.ModelProxy
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{GoToPrevIndexView, MIndexView}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import ReactCommonUtil.Implicits._
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonClasses, MuiIconButtonProps, MuiToolTip, MuiToolTipProps}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.sc.styl.ScCssStatic
 

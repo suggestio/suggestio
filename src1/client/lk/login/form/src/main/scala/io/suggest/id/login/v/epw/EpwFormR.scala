@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.epw
 
-import chandu0101.scalajs.react.components.materialui.{MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiFormControl, MuiFormControlLabel, MuiFormControlLabelProps, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiPaper}
+import com.materialui.{MuiButton, MuiButtonClasses, MuiButtonProps, MuiButtonSizes, MuiButtonVariants, MuiFormControl, MuiFormControlLabel, MuiFormControlLabelProps, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiPaper}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil

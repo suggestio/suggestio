@@ -1,6 +1,6 @@
 package io.suggest.ad.edit.v.edit.content
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiSvgIcon, MuiToolTip, MuiToolTipProps}
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiSvgIcon, MuiToolTip, MuiToolTipProps}
 import diode.{FastEq, UseValueEq}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants

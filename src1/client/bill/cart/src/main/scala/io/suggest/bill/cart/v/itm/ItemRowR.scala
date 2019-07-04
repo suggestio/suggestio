@@ -1,6 +1,6 @@
 package io.suggest.bill.cart.v.itm
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiSvgIcon, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiToolTip, MuiToolTipProps}
+import com.materialui.{Mui, MuiAvatar, MuiCheckBox, MuiCheckBoxProps, MuiChip, MuiChipProps, MuiSvgIcon, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.bill.cart.m.CartSelectItem

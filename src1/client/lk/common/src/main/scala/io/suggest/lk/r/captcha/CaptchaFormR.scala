@@ -1,6 +1,6 @@
 package io.suggest.lk.r.captcha
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiInputValue_t, MuiLinearProgress, MuiTextField, MuiTextFieldProps}
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiInputValue_t, MuiLinearProgress, MuiTextField, MuiTextFieldProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants

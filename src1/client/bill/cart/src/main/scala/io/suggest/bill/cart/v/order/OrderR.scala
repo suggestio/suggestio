@@ -1,6 +1,6 @@
 package io.suggest.bill.cart.v.order
 
-import chandu0101.scalajs.react.components.materialui.MuiTable
+import com.materialui.MuiTable
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.cart.m.MCartRootS
 import io.suggest.bill.cart.v.itm.{ItemRowR, ItemsTableBodyR, ItemsTableHeadR, ItemsToolBarR}

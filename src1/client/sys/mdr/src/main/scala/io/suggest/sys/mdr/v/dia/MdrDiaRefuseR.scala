@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v.dia
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiFab, MuiFabProps, MuiFabVariants, MuiLinearProgress, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
+import com.materialui.{Mui, MuiColorTypes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiFab, MuiFabProps, MuiFabVariants, MuiLinearProgress, MuiTextField, MuiTextFieldProps, MuiTypoGraphy, MuiTypoGraphyProps}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy

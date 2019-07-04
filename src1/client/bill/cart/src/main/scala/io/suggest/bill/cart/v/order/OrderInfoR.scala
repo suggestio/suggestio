@@ -1,6 +1,7 @@
 package io.suggest.bill.cart.v.order
 
-import chandu0101.scalajs.react.components.materialui.{MuiCard, MuiCardContent, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui
+import com.materialui.{MuiCard, MuiCardContent, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
@@ -45,7 +46,7 @@ class OrderInfoR {
             ),
 
             // Статус заказа с датой выставления статуса.
-            MuiTypoGraphy(
+            materialui.MuiTypoGraphy(
               new MuiTypoGraphyProps {
                 override val variant = MuiTypoGraphyVariants.caption
               }

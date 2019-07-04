@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v.toolbar
 
-import chandu0101.scalajs.react.components.materialui.{MuiFormControlLabel, MuiFormControlLabelProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
+import com.materialui.{MuiFormControlLabel, MuiFormControlLabelProps, MuiSwitch, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes

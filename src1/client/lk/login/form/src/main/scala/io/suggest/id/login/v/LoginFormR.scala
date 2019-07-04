@@ -1,6 +1,6 @@
 package io.suggest.id.login.v
 
-import chandu0101.scalajs.react.components.materialui.{MuiDialog, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiPaper, MuiPaperProps, MuiTab, MuiTabProps, MuiTabs, MuiTabsProps}
+import com.materialui.{MuiDialog, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiTab, MuiTabProps, MuiTabs, MuiTabsProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil

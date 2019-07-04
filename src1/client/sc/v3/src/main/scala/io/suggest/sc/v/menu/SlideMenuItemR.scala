@@ -1,6 +1,7 @@
 package io.suggest.sc.v.menu
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiListItem, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSwitch, MuiSwitchClasses, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
+import com.materialui
+import com.materialui.{Mui, MuiListItem, MuiListItemProps, MuiListItemText, MuiListItemTextClasses, MuiListItemTextProps, MuiSwitch, MuiSwitchClasses, MuiSwitchProps, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
@@ -122,7 +123,7 @@ class SlideMenuItemR(
                 },
 
                 // Рендер самого переключателя:
-                MuiToolTip {
+                materialui.MuiToolTip {
                   new MuiToolTipProps {
                     override val title: raw.React.Node = crCtx.messages( MsgCodes.onOff(props.isEnabled) )
                   }

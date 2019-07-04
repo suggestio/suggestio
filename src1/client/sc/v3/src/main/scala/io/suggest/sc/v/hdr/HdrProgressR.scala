@@ -1,6 +1,6 @@
 package io.suggest.sc.v.hdr
 
-import chandu0101.scalajs.react.components.materialui.{MuiColorTypes, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps}
+import com.materialui.{MuiColorTypes, MuiLinearProgress, MuiLinearProgressClasses, MuiLinearProgressProps}
 import diode.react.ModelProxy
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.m.MScReactCtx

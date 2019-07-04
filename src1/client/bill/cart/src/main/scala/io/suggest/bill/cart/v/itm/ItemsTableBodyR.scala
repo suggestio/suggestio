@@ -1,6 +1,6 @@
 package io.suggest.bill.cart.v.itm
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTableRowProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiLinearProgress, MuiTableBody, MuiTableCell, MuiTableCellClasses, MuiTableCellProps, MuiTableRow, MuiTableRowProps, MuiToolTip, MuiToolTipProps, MuiTypoGraphy, MuiTypoGraphyProps, MuiTypoGraphyVariants}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
@@ -38,11 +38,6 @@ class ItemsTableBodyR(
                        val itemRowR           : ItemRowR,
                      ) {
 
-  /** Модель пропертисов компонента.
-    *
-    * @param items item'ы в ордере.
-    * @param rcvrs Карта узлов для рендера названий ресиверов и остального.
-    */
   case class PropsVal(
                        orderContents  : Pot[MOrderContent],
                        selectedIds    : Set[Gid_t],

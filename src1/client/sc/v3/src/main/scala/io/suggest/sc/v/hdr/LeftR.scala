@@ -1,6 +1,6 @@
 package io.suggest.sc.v.hdr
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps}
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps}
 import diode.react.ModelProxy
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.m.inx.{MScSideBars, SideBarOpenClose}

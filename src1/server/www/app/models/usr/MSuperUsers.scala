@@ -96,6 +96,7 @@ class MSuperUsers @Inject()(
               predicates        = MPredicates.Ident.Email :: Nil,
               nodeIds           = suEmails,
               nodeIdsMatchAll   = false,
+              flag              = Some(true),
             )
             cr :: Nil
           }

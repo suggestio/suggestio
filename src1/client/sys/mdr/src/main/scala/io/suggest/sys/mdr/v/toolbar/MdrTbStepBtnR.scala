@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr.v.toolbar
 
-import chandu0101.scalajs.react.components.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiSvgIcon, MuiToolTip, MuiToolTipProps}
+import com.materialui.{Mui, MuiIconButton, MuiIconButtonProps, MuiSvgIcon, MuiToolTip, MuiToolTipProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.i18n.MsgCodes
