@@ -1,6 +1,7 @@
 package io.suggest.id.login.m
 
 import diode.FastEq
+import io.suggest.id.login.m.pwch.MPwNew
 import io.suggest.id.login.{MLoginTab, MLoginTabs}
 import io.suggest.id.login.v.LoginFormCss
 import japgolly.univeq._
@@ -20,7 +21,8 @@ object MLoginFormOverallS {
       (a.loginTab ===* b.loginTab) &&
       (a.isVisible ==* b.isVisible) &&
       (a.formCss ===* b.formCss) &&
-      (a.returnUrl ===* b.returnUrl)
+      (a.returnUrl ===* b.returnUrl) &&
+      (a.pwNew ===* b.pwNew)
     }
   }
 
@@ -30,6 +32,7 @@ object MLoginFormOverallS {
   val isVisible   = GenLens[MLoginFormOverallS](_.isVisible)
   val formCss     = GenLens[MLoginFormOverallS](_.formCss)
   val returnUrl   = GenLens[MLoginFormOverallS](_.returnUrl)
+  val pwNew       = GenLens[MLoginFormOverallS](_.pwNew)
 
 }
 
@@ -39,6 +42,8 @@ case class MLoginFormOverallS(
                                isVisible        : Boolean           = false,
                                formCss          : LoginFormCss      = LoginFormCss(),
                                returnUrl        : Option[String]    = None,
+                               // Пошаренное состояние для пошаренного компонента ввода-подтверждения пароля.
+                               pwNew            : MPwNew            = MPwNew.empty,
                              ) {
 
   /** Для React-duode connection требуется AnyRef. */

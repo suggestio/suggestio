@@ -10,8 +10,8 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step3.MReg3CheckBoxes
-import io.suggest.id.login.m.{RegBackClick, RegNextClick}
-import io.suggest.id.login.m.reg.{MRegS, MRegStep, MRegSteps}
+import io.suggest.id.login.m.{MLoginRootS, RegBackClick, RegNextClick}
+import io.suggest.id.login.m.reg.{MRegStep, MRegSteps}
 import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.v.stuff.LoginProgressR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
@@ -40,7 +40,7 @@ class RegR(
             loginFormCssCtxP   : React.Context[LoginFormCss],
           ) {
 
-  type Props_t = MRegS
+  type Props_t = MLoginRootS
   type Props = ModelProxy[Props_t]
 
 
@@ -79,7 +79,9 @@ class RegR(
     private val _onBackClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent => _onBackClick }
 
 
-    def render(p: Props, s: State): VdomElement = {
+    def render(pRoot: Props, s: State): VdomElement = {
+
+      val p = pRoot.zoom(_.reg)
 
       // Шаг ввода начальных реквизитов:
       lazy val step0Creds  = p.wrap(_.s0Creds  )(reg0CredsR.component.apply  )(implicitly, MReg0Creds.MReg0CredsFastEq)
@@ -94,7 +96,7 @@ class RegR(
       lazy val stepCheckBoxes = p.wrap(_.s3CheckBoxes)(reg3CheckBoxesR.component.apply)(implicitly, MReg3CheckBoxes.MReg3CheckBoxesFastEq)
 
       // финальный шаг выставления пароля.
-      lazy val stepSetPassword = reg4SetPasswordR.component( p )
+      lazy val stepSetPassword = reg4SetPasswordR.component( pRoot )
 
       // Сообщение кнопки "Назад".
       val backMsg = commonReactCtxProv.consume { commonReactCtx =>
@@ -221,7 +223,9 @@ class RegR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .initialStateFromProps { propsProxy =>
+    .initialStateFromProps { mrootProxy =>
+      val propsProxy = mrootProxy.zoom(_.reg)
+
       val lastStep = MRegSteps.values.last
 
       State(
@@ -238,12 +242,23 @@ class RegR(
         }( FastEq.AnyRefEq ),
 
         nextBtnPropsC = {
-          propsProxy.connect { props =>
+          mrootProxy.connect { mroot =>
+            val r = mroot.reg
             MNextBtnProps(
               // Кнопка "Далее" выключена, если на текущем шаге нет готовности данных.
-              disabled = !props.stepState.canSubmit,
+              disabled = {
+                val canSubmit = r.step match {
+                  case MRegSteps.S0Creds       => r.s0Creds.canSubmit
+                  case MRegSteps.S1Captcha     => r.s1Captcha.canSubmit
+                  case MRegSteps.S2SmsCode     => r.s2SmsCode.canSubmit
+                  case MRegSteps.S3CheckBoxes  => r.s3CheckBoxes.canSubmit
+                  case MRegSteps.S4SetPassword =>
+                    mroot.overall.pwNew.canSubmit && r.s4SetPassword.canSubmit
+                }
+                !canSubmit
+              },
               // Кнопка "Завершить" на последнем шаге.
-              isFinal  = props.step ==* lastStep,
+              isFinal  = r.step ==* lastStep,
             )
           }( FastEq.ValueEq )
         },

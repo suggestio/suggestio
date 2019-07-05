@@ -1,9 +1,10 @@
 package io.suggest.id.login.c.reg
 
-import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
 import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.common.empty.OptionUtil
 import io.suggest.id.login.c.ILoginApi
+import io.suggest.id.login.m.pwch.MPwNew
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
@@ -35,6 +36,7 @@ import scala.util.Success
   */
 class RegAh[M](
                 modelRW         : ModelRW[M, MRegS],
+                pwNewRO         : ModelRO[MPwNew],
                 loginApi        : ILoginApi,
               )
   extends ActionHandler( modelRW )
@@ -214,7 +216,8 @@ class RegAh[M](
         // Выставление пароля.
         case MRegSteps.S4SetPassword =>
           // Надо отправить на сервер подтверждение выбранных галочек.
-          if (!v0.s4SetPassword.canSubmit) {
+          val pwNew = pwNewRO.value
+          if (!pwNew.canSubmit || !v0.s4SetPassword.canSubmit) {
             LOG.log( WarnMsgs.VALIDATION_FAILED, msg = (v0.step, v0.s4SetPassword) )
             noChange
           } else {
@@ -223,7 +226,7 @@ class RegAh[M](
               val data = MCodeFormReq(
                 token    = v0.s2SmsCode.submitReq.get.token,
                 formData = MCodeFormData(
-                  code = Some( v0.s4SetPassword.pwNew.password1.value ),
+                  code = Some( pwNew.password1.value ),
                 ),
               )
               loginApi

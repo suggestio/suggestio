@@ -20,13 +20,11 @@ object MPwChangeS {
   implicit object MPwChangeSFastEq extends FastEq[MPwChangeS] {
     override def eqv(a: MPwChangeS, b: MPwChangeS): Boolean = {
       (a.pwOld ===* b.pwOld) &&
-      (a.pwNew ===* b.pwNew) &&
       (a.submitReq ===* b.submitReq)
     }
   }
 
   val oldPw       = GenLens[MPwChangeS](_.pwOld)
-  val newPw       = GenLens[MPwChangeS](_.pwNew)
   val submitReq   = GenLens[MPwChangeS](_.submitReq)
 
   @inline implicit def univEq: UnivEq[MPwChangeS] = UnivEq.derive
@@ -36,7 +34,5 @@ object MPwChangeS {
 
 case class MPwChangeS(
                        pwOld        : MTextFieldS             = MTextFieldS.empty,
-                       pwNew        : MPwNew                  = MPwNew.empty,
                        submitReq    : Pot[MRegTokenResp]      = Pot.empty,
                      )
-  extends IPwNewSubmit

@@ -50,6 +50,8 @@ class LoginFormCircuit(
   private[login] val epwRW          = mkLensRootZoomRW(this, MLoginRootS.epw)( MEpwLoginS.MEpwLoginSFastEq )
   private[login] val overallRW      = mkLensRootZoomRW(this, MLoginRootS.overall)( MLoginFormOverallS.MLoginFormOverallSFastEq )
   private[login] val returnUrlRO    = overallRW.zoom(_.returnUrl)
+  private[login] val pwNewRW        = mkLensZoomRW( overallRW, MLoginFormOverallS.pwNew )( MPwNew.MPwNewFastEq )
+
   private[login] val regRW          = mkLensRootZoomRW(this, MLoginRootS.reg)( MRegS.MEpwRegSFastEq )
   private[login] val reg0CredsRW    = mkLensZoomRW( regRW, MRegS.s0Creds )( MReg0Creds.MReg0CredsFastEq )
 
@@ -59,9 +61,8 @@ class LoginFormCircuit(
   private[login] val reg2SmsCodeRW  = mkLensZoomRW( regRW, MRegS.s2SmsCode )( MReg2SmsCode.MReg2SmsCodeFastEq )
   private[login] val smsCodeFormRW  = mkLensZoomRW( reg2SmsCodeRW, MReg2SmsCode.smsCode )( OptFastEq.Wrapped(MSmsCodeS.MSmsCodeSFastEq) )
 
-  private[login] val reg3CheckBoxesRW = mkLensZoomRW(regRW, MRegS.s3CheckBoxes)( MReg3CheckBoxes.MReg3CheckBoxesFastEq )
-  private[login] val reg4SetPasswordRW = mkLensZoomRW(regRW, MRegS.s4SetPassword)( MReg4SetPassword.MReg4SetPasswordFastEq )
-  private[login] val reg4pwNewRW = mkLensZoomRW(reg4SetPasswordRW, MReg4SetPassword.pwNew)( MPwNew.MPwNewFastEq )
+  private[login] val reg3CheckBoxesRW   = mkLensZoomRW(regRW, MRegS.s3CheckBoxes)( MReg3CheckBoxes.MReg3CheckBoxesFastEq )
+  private[login] val reg4SetPasswordRW  = mkLensZoomRW(regRW, MRegS.s4SetPassword)( MReg4SetPassword.MReg4SetPasswordFastEq )
 
 
   val loginApi: ILoginApi = new LoginApiHttp
@@ -93,6 +94,7 @@ class LoginFormCircuit(
   private val regAh = new RegAh(
     modelRW  = regRW,
     loginApi = loginApi,
+    pwNewRO  = pwNewRW,
   )
 
   private val reg0CredsAh = new Reg0CredsAh(
@@ -105,7 +107,7 @@ class LoginFormCircuit(
   )
 
   private val setNewPwAh = new SetNewPwAh(
-    modelRW = reg4pwNewRW
+    modelRW = pwNewRW,
   )
 
   private val smsCodeFormAh = new SmsCodeFormAh(

@@ -3,6 +3,7 @@ package io.suggest.id.login.m
 import diode.FastEq
 import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.m.ext.MExtLoginFormS
+import io.suggest.id.login.m.pwch.MPwChangeS
 import io.suggest.id.login.m.reg.MRegS
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
@@ -21,7 +22,8 @@ object MLoginRootS {
       (a.epw ===* b.epw) &&
       (a.ext ===* b.ext) &&
       (a.overall ===* b.overall) &&
-      (a.reg ===* b.reg)
+      (a.reg ===* b.reg) &&
+      (a.pwCh ===* b.pwCh)
     }
   }
 
@@ -31,6 +33,7 @@ object MLoginRootS {
   val ext           = GenLens[MLoginRootS]( _.ext )
   val overall       = GenLens[MLoginRootS]( _.overall )
   val reg           = GenLens[MLoginRootS]( _.reg )
+  val pwCh          = GenLens[MLoginRootS]( _.pwCh )
 
 }
 
@@ -46,4 +49,5 @@ case class MLoginRootS(
                         ext         : MExtLoginFormS        = MExtLoginFormS(),
                         overall     : MLoginFormOverallS    = MLoginFormOverallS(),
                         reg         : MRegS                 = MRegS(),
+                        pwCh        : MPwChangeS            = MPwChangeS(),
                       )

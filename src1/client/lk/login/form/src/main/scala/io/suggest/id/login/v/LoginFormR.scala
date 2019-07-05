@@ -5,14 +5,14 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.css.CssR
-import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
+import io.suggest.i18n.MCommonReactCtx
 import io.suggest.id.login.{MLoginTab, MLoginTabs}
 import io.suggest.id.login.m._
 import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.m.ext.MExtLoginFormS
-import io.suggest.id.login.m.reg.MRegS
 import io.suggest.id.login.v.epw.EpwFormR
 import io.suggest.id.login.v.ext.ExtFormR
+import io.suggest.id.login.v.pwch.PwChangeR
 import io.suggest.id.login.v.reg.RegR
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ReactEventFromHtml, ScalaComponent}
@@ -30,7 +30,8 @@ import scala.scalajs.js.annotation.JSName
 class LoginFormR(
                   epwFormR              : EpwFormR,
                   extFormR              : ExtFormR,
-                  epwRegR               : RegR,
+                  regR                  : RegR,
+                  pwChangeR             : PwChangeR,
                   commonReactCtxProv    : React.Context[MCommonReactCtx],
                   loginFormCssCtx       : React.Context[LoginFormCss],
                 ) {
@@ -84,22 +85,27 @@ class LoginFormR(
       lazy val epwLogin = p.wrap(_.epw)( epwFormR.apply )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
 
       // Вкладка регистрации по email и паролю.
-      lazy val epwReg = p.wrap(_.reg)( epwRegR.apply )( implicitly, MRegS.MEpwRegSFastEq )
+      lazy val epwReg = regR(p)
+
+      // Вкладка смены пароля.
+      lazy val pwChange = pwChangeR.component(p)
+
 
       // Содержимое табов:
       val tabsContents = s.currTabC { currTabProxy =>
         // TODO Запилить react-swipeable-views, как в примерах MuiTabs.
         currTabProxy.value match {
-          case MLoginTabs.EpwLogin  => epwLogin
-          case MLoginTabs.Reg    => epwReg
-          case MLoginTabs.Ext       => extLogin
+          case MLoginTabs.EpwLogin          => epwLogin
+          case MLoginTabs.Reg               => epwReg
+          case MLoginTabs.Ext               => extLogin
+          case MLoginTabs.PasswordChange    => pwChange
         }
       }
 
       // кнопка таба EmailPw-логина:
-      val epwLoginTabBtn  = _tabBtn( MLoginTabs.EpwLogin )
+      val loginTabBtn  = _tabBtn( MLoginTabs.EpwLogin )
       //val extTabBtn       = _tabBtn( MLoginTabs.Ext )
-      val epwRegTabBtn    = _tabBtn( MLoginTabs.Reg )
+      val regTabBtn    = _tabBtn( MLoginTabs.Reg )
 
       // Список табов:
       val tabs = s.currTabC { currTabProxy =>
@@ -111,8 +117,9 @@ class LoginFormR(
           }
         )(
           //extTabBtn,
-          epwLoginTabBtn,
-          epwRegTabBtn,
+          loginTabBtn,
+          regTabBtn,
+          // TODO pwChange
         )
       }
 

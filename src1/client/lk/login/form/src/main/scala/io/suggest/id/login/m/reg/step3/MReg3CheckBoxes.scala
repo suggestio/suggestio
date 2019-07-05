@@ -1,7 +1,6 @@
 package io.suggest.id.login.m.reg.step3
 
 import diode.FastEq
-import io.suggest.id.login.m.reg.ICanSubmit
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -39,14 +38,12 @@ object MReg3CheckBoxes {
 case class MReg3CheckBoxes(
                             tos                 : MRegCheckBoxS           = MRegCheckBoxS.empty,
                             pdn                 : MRegCheckBoxS           = MRegCheckBoxS.empty,
-                          )
-  extends ICanSubmit
-{
+                          ) {
 
   def checkBoxes: List[MRegCheckBoxS] =
     tos :: pdn :: Nil
 
-  override def canSubmit: Boolean = {
+  def canSubmit: Boolean = {
     (tos :: pdn :: Nil)
       .forall(_.isChecked)
   }

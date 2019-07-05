@@ -2,7 +2,6 @@ package io.suggest.id.login.m.reg.step0
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.id.login.m.reg.ICanSubmit
 import io.suggest.id.reg.MRegTokenResp
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.ueq.UnivEqUtil._
@@ -46,14 +45,11 @@ case class MReg0Creds(
                       phone            : MTextFieldS         = MTextFieldS.empty,
                       pwRecoverMsg     : Boolean             = false,
                       submitReq        : Pot[MRegTokenResp]  = Pot.empty,
-                    )
-  extends ICanSubmit
-{
+                    ) {
 
-  override def canSubmit: Boolean = {
-    (email :: phone :: Nil)
-      .forall( _.isValidNonEmpty ) &&
-      !submitReq.isPending
+  def canSubmit: Boolean = {
+    (email :: phone :: Nil).forall( _.isValidNonEmpty ) &&
+    !submitReq.isPending
   }
 
 }

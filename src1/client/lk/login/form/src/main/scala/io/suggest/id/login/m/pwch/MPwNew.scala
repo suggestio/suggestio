@@ -1,20 +1,17 @@
 package io.suggest.id.login.m.pwch
 
 import diode.FastEq
-import diode.data.Pot
-import io.suggest.id.login.m.reg.ICanSubmit
 import io.suggest.lk.m.input.MTextFieldS
 import monocle.macros.GenLens
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 05.07.19 19:25
-  * Description: Подформа выставления нового пароля.
-  * Общая для формы смена пароля и для последнего шага регистрации.
+  * Description: Состояние подформы выставления нового пароля.
+  * Общая модель для формы смена пароля и для последнего шага регистрации.
   */
 object MPwNew {
 
@@ -44,9 +41,7 @@ case class MPwNew(
                    password1            : MTextFieldS             = MTextFieldS.empty,
                    password2            : MTextFieldS             = MTextFieldS.empty,
                    showPwMisMatch       : Boolean                 = false,
-                 )
-  extends ICanSubmit
-{
+                 ) {
 
   def isPasswordsMatch: Boolean =
     password1.value ==* password2.value
@@ -54,25 +49,10 @@ case class MPwNew(
   lazy val isPasswordMismatchShown: Boolean =
     showPwMisMatch && !isPasswordsMatch
 
-  override def canSubmit: Boolean = {
+  def canSubmit: Boolean = {
     (password1 :: password2 :: Nil).forall(_.isValid) &&
     isPasswordsMatch &&
     password1.value.nonEmpty
-  }
-
-}
-
-
-trait IPwNewSubmit {
-  val pwNew: MPwNew
-  val submitReq: Pot[_]
-}
-object IPwNewSubmit {
-  implicit object IPwNewSubmitFastEq extends FastEq[IPwNewSubmit] {
-    override def eqv(a: IPwNewSubmit, b: IPwNewSubmit): Boolean = {
-      (a.pwNew ===* b.pwNew) &&
-      (a.submitReq ===* b.submitReq)
-    }
   }
 
 }

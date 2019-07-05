@@ -40,16 +40,6 @@ object MRegS {
   val s3CheckBoxes    = GenLens[MRegS](_.s3CheckBoxes)
   val s4SetPassword   = GenLens[MRegS](_.s4SetPassword)
 
-  def stepLens(step: MRegStep) /*: monocle.Lens[MRegS, _ <: ICanSubmit]*/ = {
-    step match {
-      case MRegSteps.S0Creds        => s0Creds
-      case MRegSteps.S1Captcha      => s1Captcha
-      case MRegSteps.S2SmsCode      => s2SmsCode
-      case MRegSteps.S3CheckBoxes   => s3CheckBoxes
-      case MRegSteps.S4SetPassword  => s4SetPassword
-    }
-  }
-
 }
 
 
@@ -77,19 +67,4 @@ case class MRegS(
     s4SetPassword.submitReq.isPending
   }
 
-
-  def stepState: ICanSubmit =
-    MRegS.stepLens(step).get(this)
-
-}
-
-
-/** Интерфейс для метода canSubmit(). */
-trait ICanSubmit {
-  def canSubmit: Boolean
-}
-object ICanSubmit {
-  implicit class IcsExtOps(val ics: ICanSubmit) extends AnyVal {
-    def disableSubmit = !ics.canSubmit
-  }
 }

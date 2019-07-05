@@ -3,7 +3,7 @@ package io.suggest.id.login
 import com.softwaremill.macwire._
 import io.suggest.id.login.v.epw.EpwFormR
 import io.suggest.id.login.v.ext.ExtFormR
-import io.suggest.id.login.v.pwch.PwNewR
+import io.suggest.id.login.v.pwch.{PwChangeR, PwNewR}
 import io.suggest.id.login.v.reg.{Reg0CredsR, Reg1CaptchaR, Reg2SmsCodeR, Reg3CheckBoxesR, Reg4SetPasswordR, RegR}
 import io.suggest.id.login.v.stuff.{CheckBoxR, LoginProgressR, TextFieldR}
 import io.suggest.id.login.v.{LoginFormCss, LoginFormR, LoginFormSpaRouter}
@@ -39,6 +39,7 @@ class LoginFormModule {
   lazy val loginProgressR = wire[LoginProgressR]
 
   lazy val pwNewR = wire[PwNewR]
+  lazy val pwChangeR = wire[PwChangeR]
 
   def loginFormCircuitF =
     (routerCtl: RouterCtl[ILoginFormPages]) => wire[LoginFormCircuit]
