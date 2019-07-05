@@ -18,13 +18,7 @@ object MuiTypoGraphy {
 
 }
 
-
-/** Props for [[MuiTypoGraphy]]. */
-trait MuiTypoGraphyProps
-  extends MuiPropsBase
-  with MuiPropsBaseClasses[MuiTypoGraphyClasses]
-  with MuiPropsBaseComponent
-{
+trait MuiTypoGraphyPropsBase extends MuiPropsBase {
   val align: js.UndefOr[String] = js.undefined
   val color: js.UndefOr[String] = js.undefined
   val gutterBottom: js.UndefOr[Boolean] = js.undefined
@@ -34,6 +28,12 @@ trait MuiTypoGraphyProps
   val paragraph: js.UndefOr[Boolean] = js.undefined
   val variant: js.UndefOr[String] = js.undefined
 }
+
+/** Props for [[MuiTypoGraphy]]. */
+trait MuiTypoGraphyProps
+  extends MuiTypoGraphyPropsBase
+  with MuiPropsBaseClasses[MuiTypoGraphyClasses]
+  with MuiPropsBaseComponent
 object MuiTypoGraphyProps extends MuiPropsBaseStatic[MuiTypoGraphyProps]
 
 

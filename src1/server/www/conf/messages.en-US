@@ -605,7 +605,7 @@ Login.page.title=Login
 Login=Sign in
 Login.to.sio=Login to suggest.io
 Remember.me=Remember me
-Forgot.password=Forgot{0} password?
+Forgot.password=Forgot password?
 Recover.password=Recover password?
 Password.recovery=Password recovery
 Recovery.key.expired=Recovery key expired
@@ -1053,3 +1053,5 @@ Registration.code=Sign-up code: {0}
 Sms.code.sent.to.your.phone.number.0=SMS-message with registration code was sent to your phone number {0}.
 
 My.node=Мой узел
+Type.previous.signup.data.to.start.password.recovery=Type your signup data to reset forgotten password.
+

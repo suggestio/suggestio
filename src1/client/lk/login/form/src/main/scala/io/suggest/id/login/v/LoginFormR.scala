@@ -91,7 +91,7 @@ class LoginFormR(
         // TODO Запилить react-swipeable-views, как в примерах MuiTabs.
         currTabProxy.value match {
           case MLoginTabs.EpwLogin  => epwLogin
-          case MLoginTabs.EpwReg    => epwReg
+          case MLoginTabs.Reg    => epwReg
           case MLoginTabs.Ext       => extLogin
         }
       }
@@ -99,7 +99,7 @@ class LoginFormR(
       // кнопка таба EmailPw-логина:
       val epwLoginTabBtn  = _tabBtn( MLoginTabs.EpwLogin )
       //val extTabBtn       = _tabBtn( MLoginTabs.Ext )
-      val epwRegTabBtn    = _tabBtn( MLoginTabs.EpwReg )
+      val epwRegTabBtn    = _tabBtn( MLoginTabs.Reg )
 
       // Список табов:
       val tabs = s.currTabC { currTabProxy =>

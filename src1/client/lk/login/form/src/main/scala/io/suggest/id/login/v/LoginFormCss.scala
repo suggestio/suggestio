@@ -27,7 +27,7 @@ case class LoginFormCss() extends StyleSheet.Inline {
     style(
       margin( 10.px, 20.px ),
       //marginRight( px20 ),
-      maxWidth( 300.px ),
+      //maxWidth( 300.px ),   // 4.x - не нужно, видимо.
     )
   }
 
@@ -45,6 +45,11 @@ case class LoginFormCss() extends StyleSheet.Inline {
   val regStepper = style(
     position.relative,
     background := none,
+  )
+
+
+  val forgotPassword = style(
+    marginLeft( 20.px )
   )
 
 }

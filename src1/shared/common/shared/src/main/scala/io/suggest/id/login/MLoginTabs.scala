@@ -23,7 +23,7 @@ object MLoginTabs extends IntEnum[MLoginTab] {
   }
 
   /** Таб с регистрацией по email-паролю. */
-  case object EpwReg extends MLoginTab(2) {
+  case object Reg extends MLoginTab(2) {
     override def msgCode = MsgCodes.`Sign.up`
   }
 

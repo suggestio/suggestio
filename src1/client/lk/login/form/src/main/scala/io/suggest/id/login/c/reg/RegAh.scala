@@ -115,9 +115,12 @@ class RegAh[M](
                   Success( RegCredsSubmitResp(timeStampMs, tryResp) )
                 }
             }
-            val v2 = MRegS.s0Creds
-              .composeLens( MReg0Creds.submitReq )
-              .modify( _.pending(timeStampMs) )( v0 )
+            var updF =  MReg0Creds.submitReq
+              .modify( _.pending(timeStampMs) )
+            if (v0.s0Creds.pwRecoverMsg)
+              updF = updF andThen MReg0Creds.pwRecoverMsg.set(false)
+
+            val v2 = MRegS.s0Creds.modify(updF)( v0 )
 
             updated(v2, fx)
 

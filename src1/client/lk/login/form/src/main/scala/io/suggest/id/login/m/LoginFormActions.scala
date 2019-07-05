@@ -110,3 +110,6 @@ case object RegBackClick extends ILoginFormAction
 case class SetPasswordEdit(value: String, isRetype: Boolean ) extends ILoginFormAction
 /** Расфокусировка одного из полей выставления пароля. */
 case object SetPasswordBlur extends ILoginFormAction
+
+/** Включение-выключение режима сброса пароля. */
+case class PwReset(enable: Boolean) extends ILoginFormAction

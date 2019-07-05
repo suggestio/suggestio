@@ -383,5 +383,7 @@ object MsgCodes {
   val `Confirm.new.password` = "Confirm.new.password"
 
   val `My.node` = "My.node"
+  val `Type.previous.signup.data.to.start.password.recovery` = "Type.previous.signup.data.to.start.password.recovery"
+  val `Forgot.password` = "Forgot.password"
 
 }

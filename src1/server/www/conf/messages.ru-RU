@@ -611,7 +611,7 @@ Login.page.title=Вход
 Login=Войти
 Login.to.sio=Вход в Suggest.io
 Remember.me=Запомнить меня
-Forgot.password=Забыли{0} пароль?
+Forgot.password=Забыли пароль?
 Recover.password=Восстановить пароль?
 Password.recovery=Восстановление пароля
 Recovery.key.expired=Ключ восстановления истёк
@@ -1061,3 +1061,5 @@ Registration.code=Код регистрации: {0}
 Sms.code.sent.to.your.phone.number.0=На указанный вами номер телефона {0} отправлено смс-сообщение с кодом подтверждения регистрации.
 
 My.node=Мой узел
+Type.previous.signup.data.to.start.password.recovery=Для сброса пароля, введите данные, указанные при регистрации ранее.
+

@@ -29,7 +29,6 @@ class Reg3CheckBoxesR(
   class Backend( $: BackendScope[Props, Unit] ) {
 
     def render(p: Props): VdomElement = {
-
       MuiFormGroup(
         new MuiFormGroupProps {
           override val row = true

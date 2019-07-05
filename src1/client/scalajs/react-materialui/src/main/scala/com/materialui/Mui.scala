@@ -58,6 +58,7 @@ object Mui {
 
   @js.native @JSImport("@material-ui/core/LinearProgress", JSImport.Default) object LinearProgress extends js.Any
 
+  @js.native @JSImport("@material-ui/core/Link", JSImport.Default) object Link extends js.Any
   @js.native @JSImport("@material-ui/core/List", JSImport.Default) object List extends js.Any
   @js.native @JSImport("@material-ui/core/ListItem", JSImport.Default) object ListItem extends js.Any
   @js.native @JSImport("@material-ui/core/ListItemSecondaryAction", JSImport.Default) object ListItemSecondaryAction extends js.Any

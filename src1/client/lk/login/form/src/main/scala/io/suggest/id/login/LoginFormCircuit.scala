@@ -93,7 +93,8 @@ class LoginFormCircuit(
   )
 
   private val reg0CredsAh = new Reg0CredsAh(
-    modelRW = regRW,
+    modelRW   = regRW,
+    routerCtl = routerCtl,
   )
 
   private val reg3CheckBoxesAh = new Reg3CheckBoxesAh(

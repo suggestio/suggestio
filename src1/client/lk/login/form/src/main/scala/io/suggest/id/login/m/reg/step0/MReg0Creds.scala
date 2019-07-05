@@ -7,7 +7,7 @@ import io.suggest.id.reg.MRegTokenResp
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import monocle.macros.GenLens
 
 /**
@@ -25,14 +25,16 @@ object MReg0Creds {
       (a ===* b) || (
         (a.email        ===* b.email) &&
         (a.phone        ===* b.phone) &&
+        (a.pwRecoverMsg  ==* b.pwRecoverMsg) &&
         (a.submitReq    ===* b.submitReq)
       )
     }
   }
 
-  val email       = GenLens[MReg0Creds]( _.email )
-  val phone       = GenLens[MReg0Creds]( _.phone )
-  val submitReq   = GenLens[MReg0Creds]( _.submitReq )
+  val email           = GenLens[MReg0Creds]( _.email )
+  val phone           = GenLens[MReg0Creds]( _.phone )
+  val pwRecoverMsg    = GenLens[MReg0Creds]( _.pwRecoverMsg )
+  val submitReq       = GenLens[MReg0Creds]( _.submitReq )
 
   @inline implicit def univEq: UnivEq[MReg0Creds] = UnivEq.derive
 
@@ -42,6 +44,7 @@ object MReg0Creds {
 case class MReg0Creds(
                       email            : MTextFieldS         = MTextFieldS.empty,
                       phone            : MTextFieldS         = MTextFieldS.empty,
+                      pwRecoverMsg     : Boolean             = false,
                       submitReq        : Pot[MRegTokenResp]  = Pot.empty,
                     )
   extends ICanSubmit

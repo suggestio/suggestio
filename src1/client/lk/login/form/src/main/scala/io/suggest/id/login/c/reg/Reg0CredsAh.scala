@@ -1,7 +1,11 @@
 package io.suggest.id.login.c.reg
 
 import diode.data.Pot
-import diode.{ActionHandler, ActionResult, ModelRW}
+import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.common.empty.OptionUtil
+import io.suggest.spa.DiodeUtil.Implicits._
+import io.suggest.id.login.{ILoginFormPages, MLoginTabs}
 import io.suggest.id.login.m._
 import io.suggest.id.login.m.reg.MRegS
 import io.suggest.id.login.m.reg.step0.MReg0Creds
@@ -9,7 +13,9 @@ import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.sjs.common.log.Log
+import io.suggest.spa.DoNothing
 import io.suggest.text.Validators
+import japgolly.scalajs.react.extra.router.RouterCtl
 import japgolly.univeq._
 import monocle.PLens
 
@@ -21,10 +27,11 @@ import monocle.PLens
   */
 class Reg0CredsAh[M](
                       modelRW        : ModelRW[M, MRegS],
+                      routerCtl      : RouterCtl[ILoginFormPages],
                     )
   extends ActionHandler( modelRW )
   with Log
-{
+{ ah =>
 
 
   private def _edit(plens: PLens[MRegS,MRegS, MTextFieldS,MTextFieldS], valueEdited: String,
@@ -99,6 +106,29 @@ class Reg0CredsAh[M](
 
     case RegPhoneBlur =>
       _blur( _phoneLens, Validators.isPasswordValid )
+
+
+    // Управление восстановлением пароля.
+    case m: PwReset =>
+      val v0 = value
+      if (m.enable ==* v0.s0Creds.pwRecoverMsg) {
+        noChange
+
+      } else {
+        val updF = MRegS.s0Creds
+          .composeLens( MReg0Creds.pwRecoverMsg )
+          .set( m.enable )
+
+        val fxOpt = OptionUtil.maybe( m.enable ) {
+          Effect.action {
+            routerCtl.set( ILoginFormPages.Login( MLoginTabs.Reg ) ).runNow()
+            DoNothing
+          }
+        }
+
+        val v2 = updF( v0 )
+        ah.updatedMaybeEffect( v2, fxOpt )
+      }
 
   }
 

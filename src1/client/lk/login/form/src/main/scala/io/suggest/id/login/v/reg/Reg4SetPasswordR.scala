@@ -1,5 +1,6 @@
 package io.suggest.id.login.v.reg
 
+import com.materialui.{MuiFormGroup, MuiFormGroupProps}
 import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
@@ -28,8 +29,11 @@ class Reg4SetPasswordR(
     def render(propsProxy: Props): VdomElement = {
       val setPasswordBlurSome = Some( SetPasswordBlur )
 
-      <.div(
-
+      MuiFormGroup(
+        new MuiFormGroupProps {
+          override val row = true
+        }
+      )(
         // Имя пользователя (неизменяемое). Возможно, поможет для сохранения пароля в список паролей браузера.
         propsProxy.wrap { p =>
           textFieldR.PropsVal(

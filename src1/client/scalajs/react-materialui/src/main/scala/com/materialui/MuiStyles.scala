@@ -94,4 +94,9 @@ object MuiColorTypes {
   val secondary = "secondary"
   val inherit = "inherit"
   val default = "default"
+
+  // MuiLink:
+  val error = "error"
+  val textPrimary = "textPrimary"
+  val textSecondary = "textSecondary"
 }

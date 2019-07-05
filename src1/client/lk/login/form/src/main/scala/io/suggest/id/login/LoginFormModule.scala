@@ -44,5 +44,7 @@ class LoginFormModule {
 
   lazy val loginFormCssCtx: React.Context[LoginFormCss] =
     React.createContext( loginFormSpaRouter.circuit.overallRW.value.formCss )
+  lazy val routerCtlRctx: React.Context[RouterCtl[ILoginFormPages]] =
+    React.createContext( loginFormSpaRouter.routerCtl )
 
 }
