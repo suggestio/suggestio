@@ -223,7 +223,7 @@ class RegAh[M](
               val data = MCodeFormReq(
                 token    = v0.s2SmsCode.submitReq.get.token,
                 formData = MCodeFormData(
-                  code = Some( v0.s4SetPassword.password1.value ),
+                  code = Some( v0.s4SetPassword.pwNew.password1.value ),
                 ),
               )
               loginApi

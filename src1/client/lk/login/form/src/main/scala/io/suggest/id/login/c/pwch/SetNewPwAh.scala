@@ -1,8 +1,8 @@
-package io.suggest.id.login.c.reg
+package io.suggest.id.login.c.pwch
 
 import diode.{ActionHandler, ActionResult, ModelRW}
+import io.suggest.id.login.m.pwch.MPwNew
 import io.suggest.id.login.m.{SetPasswordBlur, SetPasswordEdit}
-import io.suggest.id.login.m.reg.step4.MReg4SetPassword
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.text.Validators
 import japgolly.univeq._
@@ -13,15 +13,15 @@ import japgolly.univeq._
   * Created: 27.06.19 18:35
   * Description: Контроллер для страницы установки пароля для юзера.
   */
-class Reg4SetPasswordAh[M](
-                            modelRW: ModelRW[M, MReg4SetPassword],
-                          )
+class SetNewPwAh[M](
+                     modelRW: ModelRW[M, MPwNew],
+                   )
   extends ActionHandler( modelRW )
 {
 
   private def _pwLensFor( isRetype: Boolean ) = {
-    if (isRetype) MReg4SetPassword.password2
-    else MReg4SetPassword.password1
+    if (isRetype) MPwNew.password2
+    else MPwNew.password1
   }
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
@@ -56,7 +56,7 @@ class Reg4SetPasswordAh[M](
 
       // Провалидировать оба password-поля:
       (for {
-        lens <- (MReg4SetPassword.password1 #:: MReg4SetPassword.password2 #:: Stream.empty)
+        lens <- (MPwNew.password1 #:: MPwNew.password2 #:: Stream.empty)
         pw0 = lens.get(v0)
         isValid = Validators.isPasswordValid( pw0.value )
         if isValid !=* pw0.isValid

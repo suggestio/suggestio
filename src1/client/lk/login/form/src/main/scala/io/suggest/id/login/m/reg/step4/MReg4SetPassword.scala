@@ -2,9 +2,9 @@ package io.suggest.id.login.m.reg.step4
 
 import diode.FastEq
 import diode.data.Pot
+import io.suggest.id.login.m.pwch.{IPwNewSubmit, MPwNew}
 import io.suggest.id.login.m.reg.ICanSubmit
 import io.suggest.id.reg.MRegTokenResp
-import io.suggest.lk.m.input.MTextFieldS
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import io.suggest.ueq.UnivEqUtil._
@@ -23,14 +23,12 @@ object MReg4SetPassword {
 
   implicit object MReg4SetPasswordFastEq extends FastEq[MReg4SetPassword] {
     override def eqv(a: MReg4SetPassword, b: MReg4SetPassword): Boolean = {
-      (a.password1 ===* b.password1) &&
-      (a.password2 ===* b.password2) &&
+      (a.pwNew ===* b.pwNew) &&
       (a.submitReq ===* b.submitReq)
     }
   }
 
-  val password1 = GenLens[MReg4SetPassword](_.password1)
-  val password2 = GenLens[MReg4SetPassword](_.password2)
+  val pwNew = GenLens[MReg4SetPassword](_.pwNew)
   val submitReq = GenLens[MReg4SetPassword](_.submitReq)
 
   @inline implicit def univEq: UnivEq[MReg4SetPassword] = UnivEq.derive
@@ -38,33 +36,22 @@ object MReg4SetPassword {
 }
 
 
-/** Выставление пароля.
+/** Состояние выставления первого пароля для нового юзера.
   *
-  * @param password1 Поле ввода пароля.
-  * @param password2 Поле повторения пароля.
-  * @param showPwMisMatch Отображать ли юзеру неСовпадение двух паролей?
+  * @param pwNew Состояние инпутов нового пароля.
   * @param submitReq Pot финального сабмита.
   */
 case class MReg4SetPassword(
-                             password1        : MTextFieldS             = MTextFieldS.empty,
-                             password2        : MTextFieldS             = MTextFieldS.empty,
-                             showPwMisMatch   : Boolean                 = false,
+                             pwNew            : MPwNew                  = MPwNew.empty,
                              submitReq        : Pot[MRegTokenResp]      = Pot.empty,
                            )
   extends ICanSubmit
+  with IPwNewSubmit
 {
 
-  def isPasswordsMatch: Boolean =
-    password1.value ==* password2.value
-
-  lazy val isPasswordMismatchShown: Boolean =
-    showPwMisMatch && !isPasswordsMatch
-
   override def canSubmit: Boolean = {
-    !submitReq.isPending &&
-    (password1 :: password2 :: Nil).forall(_.isValid) &&
-    isPasswordsMatch &&
-    password1.value.nonEmpty
+    pwNew.canSubmit &&
+    !submitReq.isPending
   }
 
 }

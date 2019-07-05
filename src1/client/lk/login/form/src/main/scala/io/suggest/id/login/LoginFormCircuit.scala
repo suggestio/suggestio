@@ -2,9 +2,11 @@ package io.suggest.id.login
 
 import diode.react.ReactConnector
 import io.suggest.id.login.c._
-import io.suggest.id.login.c.reg.{Reg0CredsAh, Reg3CheckBoxesAh, Reg4SetPasswordAh, RegAh}
+import io.suggest.id.login.c.pwch.SetNewPwAh
+import io.suggest.id.login.c.reg.{Reg0CredsAh, Reg3CheckBoxesAh, RegAh}
 import io.suggest.id.login.m.epw.MEpwLoginS
 import io.suggest.id.login.m.ext.MExtLoginFormS
+import io.suggest.id.login.m.pwch.MPwNew
 import io.suggest.id.login.m.{MLoginFormOverallS, MLoginRootS}
 import io.suggest.id.login.m.reg.MRegS
 import io.suggest.id.login.m.reg.step0.MReg0Creds
@@ -59,6 +61,7 @@ class LoginFormCircuit(
 
   private[login] val reg3CheckBoxesRW = mkLensZoomRW(regRW, MRegS.s3CheckBoxes)( MReg3CheckBoxes.MReg3CheckBoxesFastEq )
   private[login] val reg4SetPasswordRW = mkLensZoomRW(regRW, MRegS.s4SetPassword)( MReg4SetPassword.MReg4SetPasswordFastEq )
+  private[login] val reg4pwNewRW = mkLensZoomRW(reg4SetPasswordRW, MReg4SetPassword.pwNew)( MPwNew.MPwNewFastEq )
 
 
   val loginApi: ILoginApi = new LoginApiHttp
@@ -101,8 +104,8 @@ class LoginFormCircuit(
     modelRW = reg3CheckBoxesRW
   )
 
-  private val reg4SetPasswordAh = new Reg4SetPasswordAh(
-    modelRW = reg4SetPasswordRW
+  private val setNewPwAh = new SetNewPwAh(
+    modelRW = reg4pwNewRW
   )
 
   private val smsCodeFormAh = new SmsCodeFormAh(
@@ -113,7 +116,7 @@ class LoginFormCircuit(
     composeHandlers(
       formAh,
       epwAh,
-      regAh, reg0CredsAh, reg3CheckBoxesAh, reg4SetPasswordAh,
+      regAh, reg0CredsAh, reg3CheckBoxesAh, setNewPwAh,
       extAh,
       captchaAh,
       smsCodeFormAh,
