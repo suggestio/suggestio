@@ -78,8 +78,8 @@ class MarketLkAdn @Inject() (
 
 
   /** Список личных кабинетов юзера. */
-  def lkList(fromAdnId: Option[String]) = csrf.AddToken {
-    isAdnNodeAdminOptOrAuth(fromAdnId, U.Lk).async { implicit request =>
+  def lkList(fromNodeId: Option[String]) = csrf.AddToken {
+    isAdnNodeAdminOptOrAuth(fromNodeId, U.Lk).async { implicit request =>
       val personId = request.user.personIdOpt.get
 
       val mnodesFut = mNodes.dynSearch(

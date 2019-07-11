@@ -61,6 +61,7 @@ class LkAdvExt @Inject() (
   import LOGGER._
   import mCommonDi._
   import esModel.api._
+  import cspUtil.Implicits._
 
 
   /** Сколько секунд с момента генерации ссылки можно попытаться запустить процесс работы, в секундах. */
@@ -238,9 +239,8 @@ class LkAdvExt @Inject() (
             )
 
             // Запилить CSP-заголовок с сильно-расширенной политикой безопасности.
-            cspUtil.applyCspHdrOpt( _CSP_HDR_OPT ) {
-              Ok( advRunnerTpl(rargs)(ctx) )
-            }
+            Ok( advRunnerTpl(rargs)(ctx) )
+              .withCspHeader( _CSP_HDR_OPT )
           }
         }
       }

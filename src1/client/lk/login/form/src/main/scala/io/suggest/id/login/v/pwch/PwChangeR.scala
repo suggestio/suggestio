@@ -1,12 +1,20 @@
 package io.suggest.id.login.v.pwch
 
-import com.materialui.{MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps}
-import diode.react.ModelProxy
-import io.suggest.i18n.MsgCodes
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps}
+import diode.FastEq
+import diode.data.Pot
+import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.empty.OptionUtil
+import io.suggest.common.html.HtmlConstants
+import io.suggest.css.CssR
+import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.IdentConst
-import io.suggest.id.login.m.MLoginRootS
-import io.suggest.id.login.v.stuff.TextFieldR
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import io.suggest.id.login.m.pwch.MPwChangeRootS
+import io.suggest.id.login.m.{PasswordBlur, RegNextClick, SetPassword}
+import io.suggest.id.login.v.LoginFormCss
+import io.suggest.id.login.v.stuff.{LoginProgressR, TextFieldR}
+import io.suggest.react.ReactDiodeUtil
+import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
@@ -18,18 +26,49 @@ import scala.scalajs.js
   * Description: Компонент с формой смены пароля.
   */
 class PwChangeR (
-                  textFieldR  : TextFieldR,
-                  pwNewR      : PwNewR,
+                  textFieldR            : TextFieldR,
+                  pwNewR                : PwNewR,
+                  loginProgressR        : LoginProgressR,
+                  commonReactCtxProv    : React.Context[MCommonReactCtx],
+                  loginFormCssCtx       : React.Context[LoginFormCss],
                 ) {
 
   // Зависим от корневой модели, чтобы иметь доступ к пошаренному инстансу pwNew.
-  type Props_t = MLoginRootS
+  type Props_t = MPwChangeRootS
   type Props = ModelProxy[Props_t]
 
-  class Backend($: BackendScope[Props, Unit]) {
 
-    def render(p: Props): VdomElement = {
-      <.form(
+  case class State(
+                    loginFormCssC           : ReactConnectProxy[LoginFormCss],
+                    isSubmitPendingSomeC    : ReactConnectProxy[Some[Boolean]],
+                    submitEnabledSomeC      : ReactConnectProxy[Some[Boolean]],
+                  )
+
+
+  class Backend($: BackendScope[Props, State]) {
+
+    /*
+    private def _onCancelClick(e: ReactEvent): Callback =
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, RegBackClick)
+    private val _onCancelClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onCancelClick )
+    */
+
+    private val _onSaveClick: Callback = //(e: ReactEvent): Callback =
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, RegNextClick)
+    //private val _onSaveClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onSaveClick )
+
+
+    def render(p: Props, s: State): VdomElement = {
+
+      // Заголовок диалога
+      val dialogTitle = MuiDialogTitle()(
+        commonReactCtxProv.consume { crCtx =>
+          crCtx.messages( MsgCodes.`Password.change` )
+        }
+      )
+
+      // Наполнение диалога.
+      val dialogContent = MuiDialogContent()(
 
         MuiFormControl(
           new MuiFormControlProps {
@@ -43,34 +82,117 @@ class PwChangeR (
             }
           )(
 
-            p.wrap { mroot =>
-              textFieldR.PropsVal(
-                state       = mroot.pwCh.pwOld,
-                hasError    = false,
-                mkAction    = None, // TODO
-                isPassword  = true,
-                inputName   = IdentConst.Login.PASSWORD_FN,
-                label       = MsgCodes.`Type.current.password`,
-                placeHolder = "",
-                onBlur      = None, // TODO,
-                disabled    = mroot.pwCh.submitReq.isPending,
-              )
-            }(textFieldR.apply)(implicitly, textFieldR.EpwTextFieldPropsValFastEq),
+            {
+              val onBlurSome = Some( PasswordBlur )
+              val mkActionSome = Some( SetPassword.apply _ )
+              val placeHolder = ""
+              p.wrap { mroot =>
+                textFieldR.PropsVal(
+                  state       = mroot.form.pwOld,
+                  hasError    = false,
+                  mkAction    = mkActionSome,
+                  isPassword  = true,
+                  inputName   = IdentConst.Login.PASSWORD_FN,
+                  label       = MsgCodes.`Type.current.password`,
+                  placeHolder = placeHolder,
+                  onBlur      = onBlurSome,
+                  disabled    = mroot.form.submitReq.isPending,
+                )
+              }(textFieldR.apply)(implicitly, textFieldR.EpwTextFieldPropsValFastEq)
+            },
 
           ),
 
+          // Поля для ввода и подтверждения нового пароля.
           p.wrap { mroot =>
             pwNewR.PropsVal(
-              pwNew       = mroot.overall.pwNew,
-              reqPending  = mroot.pwCh.submitReq.isPending,
+              pwNew       = mroot.form.pwNew,
+              reqPending  = mroot.form.submitReq.isPending,
+              isNew       = true,
             )
           }(pwNewR.component.apply)(implicitly, pwNewR.PwNewRPropsValFastEq),
 
-          // TODO Кнопка сабмита.
+          // Прогресс-бар ожидания...
+          s.isSubmitPendingSomeC { loginProgressR.component.apply },
+
+          // Рендер ошибки сохранения нового пароля.
+
 
         )
-
       )
+
+      val dialogActions = MuiDialogActions()(
+        // Кнопка отмены:
+        /*{
+          // Сообщение кнопки "Отмена".
+          val cancelMsg = commonReactCtxProv.consume { commonReactCtx =>
+            commonReactCtx.messages( MsgCodes.`Cancel` )
+          }
+          s.isSubmitPendingSomeC { isSubmitPendingSomeProxy =>
+            MuiButton(
+              new MuiButtonProps {
+                override val size     = MuiButtonSizes.small
+                override val onClick  = _onCancelClickCbF
+                override val `type`   = HtmlConstants.Input.button
+                override val disabled = isSubmitPendingSomeProxy.value.value
+              }
+            )(
+              cancelMsg,
+            )
+          }
+        },*/
+
+        // Кнопка сохранения нового пароля.
+        {
+          val saveMsg = commonReactCtxProv.consume { commonReactCtx =>
+            commonReactCtx.messages( MsgCodes.`Save` )
+          }
+          s.submitEnabledSomeC { submitEnableSomeProxy =>
+            MuiButton(
+              new MuiButtonProps {
+                override val size     = MuiButtonSizes.small
+                override val `type`   = HtmlConstants.Input.submit
+                override val disabled = !submitEnableSomeProxy.value.value
+              }
+            )(
+              saveMsg,
+            )
+          }
+        },
+      )
+
+      val dia = MuiDialog(
+        new MuiDialogProps {
+          override val maxWidth = js.defined {
+            MuiDialogMaxWidths.xs
+          }
+          override val open = true
+          //override val onClose = _onCancelClickCbF
+          // TODO disable* -- true на одинокой форме. false/undefined для формы, встраиваемой в выдачу.
+          override val disableBackdropClick = true
+          override val disableEscapeKeyDown = true
+        }
+      )(
+        dialogTitle,
+
+        // Перехват сабмита в форме.
+        <.form(
+          ^.onSubmit --> _onSaveClick,
+          dialogContent,
+          dialogActions,
+        ),
+      )
+
+      // Добавить внутренний контекст для CSS.
+      s.loginFormCssC { loginFormCssProxy =>
+        <.div(
+          CssR( loginFormCssProxy ),
+
+          loginFormCssCtx.provide( loginFormCssProxy.value )(
+            dia
+          )
+        )
+      }
     }
 
   }
@@ -78,7 +200,21 @@ class PwChangeR (
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .stateless
+    .initialStateFromProps { propsProxy =>
+      State(
+
+        loginFormCssC = propsProxy.connect(_.formCss)( FastEq.AnyRefEq ),
+
+        isSubmitPendingSomeC = propsProxy.connect { mroot =>
+          OptionUtil.SomeBool( mroot.form.submitReq.isPending )
+        }( FastEq.AnyRefEq ),
+
+        submitEnabledSomeC = propsProxy.connect { mroot =>
+          OptionUtil.SomeBool( mroot.form.canSubmit )
+        },
+
+      )
+    }
     .renderBackend[Backend]
     .build
 

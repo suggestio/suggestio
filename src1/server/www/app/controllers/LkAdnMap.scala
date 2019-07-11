@@ -63,6 +63,7 @@ class LkAdnMap @Inject() (
   import sioControllerApi._
   import LOGGER._
   import mCommonDi._
+  import cspUtil.Implicits._
 
   /** Body-parser, декодирующий бинарь из запроса в инстанс MLamForm. */
   private def formPostBP = reqUtil.picklingBodyParser[MLamForm]
@@ -160,10 +161,8 @@ class LkAdnMap @Inject() (
         val html = AdnMapTpl(rargs)(ctx)
 
         // Навесить скорректированный CSP-заголовок на HTTP-ответ.
-        cspUtil.applyCspHdrOpt( cspUtil.CustomPolicies.PageWithOsmLeaflet ) {
-          Ok(html)
-        }
-
+        Ok(html)
+          .withCspHeader( cspUtil.CustomPolicies.PageWithOsmLeaflet )
       }
     }
   }

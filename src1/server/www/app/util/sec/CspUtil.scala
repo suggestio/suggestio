@@ -9,6 +9,8 @@ import models.mctx.ContextUtil
 import play.api.Configuration
 import play.api.mvc.Result
 import util.cdn.CdnUtil
+import play.api.libs.json._
+
 
 /**
   * Suggest.io
@@ -109,17 +111,13 @@ class CspUtil @Inject() (
       }
   }
 
-  /** Накатить опциональный отрендеренный CSP-заголовок на HTTP-ответ. */
-  def applyCspHdrOpt(hdrOpt: Option[(String, String)])(result: Result): Result = {
-    hdrOpt.fold(result)( result.withHeaders(_) )
-  }
 
 
   /** Готовые кастомные CSP-политики. */
   object CustomPolicies {
 
     /** CSP-заголовок сайта выдачи. Выдача нуждается в доступе к tile'ам карты. */
-    val PageWithMapboxGl = mkCustomPolicyHdr { p0 =>
+    def PageWithMapboxGl = mkCustomPolicyHdr { p0 =>
       val mbHost = "https://*.mapbox.com"
       val blob = Csp.Sources.BLOB
 
@@ -131,13 +129,13 @@ class CspUtil @Inject() (
     }
 
     /** Страницы, которые содержат Leaflet-карту, живут по этой политике: */
-    val PageWithOsmLeaflet = mkCustomPolicyHdr( _.allowOsmLeaflet )
+    def PageWithOsmLeaflet = mkCustomPolicyHdr( _.allowOsmLeaflet )
 
     /** Страницы содержат Umap-карту на базе Leaflet. */
-    val Umap = mkCustomPolicyHdr( _.allowUmap )
+    def Umap = mkCustomPolicyHdr( _.allowUmap )
 
     /** Редактор карточек активно работает с "blob:", а quill-editor - ещё и с "data:" . */
-    val AdEdit = mkCustomPolicyHdr { p0 =>
+    def AdEdit = mkCustomPolicyHdr { p0 =>
       val DATA = Csp.Sources.DATA
       p0.addImgSrc( Csp.Sources.BLOB, DATA )
         // Хз зачем, но добавление картинок в quill без этого ругается в логи (хотя и работает).
@@ -146,33 +144,28 @@ class CspUtil @Inject() (
         .addChildSrc( DATA )
     }
 
-    val AdnEdit = mkCustomPolicyHdr { p0 =>
+    def AdnEdit = mkCustomPolicyHdr { p0 =>
       p0.addImgSrc( Csp.Sources.BLOB )
     }
 
   }
 
 
-  import play.api.libs.json._
-  import play.api.libs.functional.syntax._
-
-
-  /** Поддержка JSON-парсинга для тела отчёта о нарушении CSP. */
-  val REPORT_BODY_READS: Reads[CspViolationReport] = (
-    (__ \ "document-uri").read[String] and
-    (__ \ "referrer").readNullable[String] and
-    (__ \ "blocked-uri").readNullable[String] and
-    (__ \ "violated-directive").read[String] and
-    (__ \ "original-policy").read[String]
-  )( CspViolationReport.apply _ )
-
 
   /** Контейнер неявных вещей и относящихся к ним. */
   object Implicits {
 
     /** Поддержка JSON-парсинга полного JSON-отчёта CSP. */
-    implicit val WRAP_REPORT_READS: Reads[CspViolationReport] = {
-      (__ \ "csp-report").read( REPORT_BODY_READS )
+    implicit def WRAP_REPORT_READS: Reads[CspViolationReport] = {
+      (__ \ "csp-report").read[CspViolationReport]
+    }
+
+
+    implicit class ResultCspExt( result: Result ) {
+
+      def withCspHeader(cspHeaderOpt: Option[(String, String)]): Result =
+        cspHeaderOpt.fold(result)( result.withHeaders(_) )
+
     }
 
   }
@@ -182,5 +175,5 @@ class CspUtil @Inject() (
 
 /** Интерфейс поля с DI-инстансом [[CspUtil]]. */
 trait ICspUtilDi {
-  def cspUtil: CspUtil
+  val cspUtil: CspUtil
 }

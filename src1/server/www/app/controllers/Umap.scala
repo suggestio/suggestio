@@ -50,6 +50,7 @@ class Umap @Inject() (
   import sioControllerApi._
   import mCommonDi._
   import esModel.api._
+  import cspUtil.Implicits._
 
   /** Разрешено ли редактирование глобальной карты всех узлов? */
   val GLOBAL_MAP_EDIT_ALLOWED: Boolean = {
@@ -59,7 +60,8 @@ class Umap @Inject() (
   }
 
   private def _withUmapCsp(result: Result): Result = {
-    cspUtil.applyCspHdrOpt( cspUtil.CustomPolicies.Umap )(result)
+    result
+      .withCspHeader( cspUtil.CustomPolicies.Umap )
   }
 
   /** Рендер статической карты для всех узлов, которая запросит и отобразит географию узлов. */

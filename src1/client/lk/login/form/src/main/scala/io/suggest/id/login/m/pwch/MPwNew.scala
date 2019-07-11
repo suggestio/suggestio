@@ -55,4 +55,9 @@ case class MPwNew(
     password1.value.nonEmpty
   }
 
+  def passwordValue: String = {
+    require( isPasswordsMatch )
+    password1.value
+  }
+
 }

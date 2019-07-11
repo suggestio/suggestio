@@ -64,6 +64,7 @@ trait ScSite
   import sioControllerApi._
   import mCommonDi._
   import esModel.api._
+  import cspUtil.Implicits._
 
   /** Изначальное значение флага отладки js-выдачи управляется флагом в конфиге. */
   private lazy val SC_JS_DEBUG = configuration.getOptional[Boolean]("sc.js.debug").getOrElseFalse
@@ -214,10 +215,9 @@ trait ScSite
     def resultFut: Future[Result] = {
       for (rargs <- renderArgsFut) yield {
         val render = siteTpl(rargs)(ctx)
-        cspUtil.applyCspHdrOpt( customCspPolicyOpt ) {
-          Ok(render)
-            .cacheControl( 600 )
-        }
+        Ok(render)
+          .cacheControl( 600 )
+          .withCspHeader( customCspPolicyOpt )
       }
     }
 

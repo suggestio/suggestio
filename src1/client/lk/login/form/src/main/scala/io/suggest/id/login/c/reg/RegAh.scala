@@ -3,7 +3,7 @@ package io.suggest.id.login.c.reg
 import diode.{ActionHandler, ActionResult, Effect, ModelRO, ModelRW}
 import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.common.empty.OptionUtil
-import io.suggest.id.login.c.ILoginApi
+import io.suggest.id.login.c.IIdentApi
 import io.suggest.id.login.m.pwch.MPwNew
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
@@ -37,7 +37,7 @@ import scala.util.Success
 class RegAh[M](
                 modelRW         : ModelRW[M, MRegS],
                 pwNewRO         : ModelRO[MPwNew],
-                loginApi        : ILoginApi,
+                loginApi        : IIdentApi,
               )
   extends ActionHandler( modelRW )
   with Log
@@ -226,7 +226,7 @@ class RegAh[M](
               val data = MCodeFormReq(
                 token    = v0.s2SmsCode.submitReq.get.token,
                 formData = MCodeFormData(
-                  code = Some( pwNew.password1.value ),
+                  code = Some( pwNew.passwordValue ),
                 ),
               )
               loginApi

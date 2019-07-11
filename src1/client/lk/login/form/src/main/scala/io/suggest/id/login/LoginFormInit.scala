@@ -21,6 +21,8 @@ trait LoginFormInit extends InitRouter {
   override protected def routeInitTarget(itg: MJsInitTarget): Unit = {
     if (itg ==* MJsInitTargets.LoginForm) {
       _initLoginForm()
+    } else if (itg ==* MJsInitTargets.PwChange) {
+      _initPwChangeForm()
     } else {
       super.routeInitTarget(itg)
     }
@@ -34,9 +36,7 @@ trait LoginFormInit extends InitRouter {
     // Форма - это диалог. рендерить её можно в body куда угодно. Поэтому создаём div в конце body.
     val contDiv = VUtil.newDiv()
 
-    // Отрендерить форму в контейнер:
-    // TODO Тут очень статический контекст, делающий невозможным переключать язык /id.
-    // Когда будет механизм переключения языка, надо законнектить через circuit.connect().
+    // Отрендерить форму в контейнер
     modules.loginFormSpaRouter
       .router()
       .renderIntoDOM( contDiv )
@@ -49,6 +49,24 @@ trait LoginFormInit extends InitRouter {
     Future {
       modules.loginFormSpaRouter.circuit.dispatch( LoginShowHide(true) )
     }
+  }
+
+
+  /** Инициализация формы смены пароля. */
+  private def _initPwChangeForm(): Unit = {
+    val modules = new LoginFormModule
+
+    // Форма - это диалог. рендерить её можно в body куда угодно. Поэтому создаём div в конце body.
+    val contDiv = VUtil.newDiv()
+
+    // Отрендерить форму в контейнер
+    modules.pwChangeCircuit
+      .wrap( modules.pwChangeCircuit.rootRO )( modules.pwChangeR.component.apply )
+      .renderIntoDOM( contDiv )
+
+    DocumentVm()
+      .body
+      .appendChild( contDiv )
   }
 
 }

@@ -2,6 +2,7 @@ package io.suggest.ctx
 
 import io.suggest.init.routed.MJsInitTarget
 import io.suggest.mbill2.m.balance.MBalance
+import monocle.macros.GenLens
 
 /**
  * Suggest.io
@@ -51,5 +52,7 @@ object CtxData {
 
   /** Часто-используемый пустой инстанс [[CtxData]]. */
   val empty = apply()
+
+  val jsInitTargets = GenLens[CtxData](_.jsInitTargets)
 
 }

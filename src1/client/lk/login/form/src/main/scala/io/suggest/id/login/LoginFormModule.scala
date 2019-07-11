@@ -51,4 +51,7 @@ class LoginFormModule {
   lazy val routerCtlRctx: React.Context[RouterCtl[ILoginFormPages]] =
     React.createContext( loginFormSpaRouter.routerCtl )
 
+
+  lazy val pwChangeCircuit = wire[PwChangeCircuit]
+
 }

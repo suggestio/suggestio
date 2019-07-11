@@ -52,6 +52,9 @@ object MJsInitTargets extends StringEnum[MJsInitTarget] {
   /** Цель инициализации формы логина. */
   case object LoginForm extends MJsInitTarget("v")
 
+  /** Цель инициализации формы смены пароля. */
+  case object PwChange extends MJsInitTarget("w")
+
 
   override def values = findValues
 

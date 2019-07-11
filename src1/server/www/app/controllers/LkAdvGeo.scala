@@ -83,6 +83,7 @@ class LkAdvGeo @Inject() (
   import mCommonDi._
   import streamsUtil.Implicits._
   import slick.profile.api._
+  import cspUtil.Implicits._
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */
@@ -232,9 +233,8 @@ class LkAdvGeo @Inject() (
         val html = AdvGeoForAdTpl(rargs)(ctx)
 
         // Навесить скорректированный CSP-заголовок на HTTP-ответ, т.к. форма нуждается в доступе к картам OSM.
-        cspUtil.applyCspHdrOpt( cspUtil.CustomPolicies.PageWithOsmLeaflet ) {
-          rs(html)
-        }
+        rs(html)
+          .withCspHeader( cspUtil.CustomPolicies.PageWithOsmLeaflet )
       }
     }
 

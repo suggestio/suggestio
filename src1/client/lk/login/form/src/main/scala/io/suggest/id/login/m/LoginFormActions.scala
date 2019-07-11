@@ -29,7 +29,9 @@ case class SwitсhLoginTab( tab: MLoginTab ) extends ILoginFormAction
 case class EpwSetName(name: String) extends ILoginFormAction
 
 /** Ввод пароля. */
-case class EpwSetPassword(password: String) extends ILoginFormAction
+case class SetPassword(password: String) extends ILoginFormAction
+
+case object PasswordBlur extends ILoginFormAction
 
 
 /** Сигнал от кнопки запуска логина. */
@@ -109,7 +111,12 @@ case object RegBackClick extends ILoginFormAction
 /** Редактирование поля номера телефона. */
 case class SetPasswordEdit(value: String, isRetype: Boolean ) extends ILoginFormAction
 /** Расфокусировка одного из полей выставления пароля. */
-case object SetPasswordBlur extends ILoginFormAction
+case object NewPasswordBlur extends ILoginFormAction
 
 /** Включение-выключение режима сброса пароля. */
 case class PwReset(enable: Boolean) extends ILoginFormAction
+
+
+/** Результат запроса смены пароля. */
+case class PwChangeSubmitRes(timestampMs: Long, tryRes: Try[None.type]) extends ILoginFormAction
+

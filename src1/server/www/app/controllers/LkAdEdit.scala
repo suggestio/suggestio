@@ -64,12 +64,13 @@ class LkAdEdit @Inject() (
   import sioControllerApi._
   import mCommonDi._
   import esModel.api._
+  import cspUtil.Implicits._
 
   private lazy val _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDivisor(2)
 
   /** Накатить какие-то дополнительные CSP-политики для работы редактора. */
   private def _applyCspToEditPage(res0: Result): Result = {
-    cspUtil.applyCspHdrOpt( cspUtil.CustomPolicies.AdEdit )(res0)
+    res0.withCspHeader( cspUtil.CustomPolicies.AdEdit )
   }
 
 

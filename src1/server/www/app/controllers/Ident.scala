@@ -8,10 +8,12 @@ import controllers.ident._
 import io.suggest.captcha.MCaptchaCheckReq
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
-import io.suggest.es.model.EsModel
+import io.suggest.err.MCheckException
+import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.{ILoginFormPages, MEpwLoginReq}
+import io.suggest.id.pwch.MPwChangeForm
 import io.suggest.id.reg.{MCodeFormData, MCodeFormReq, MRegCreds0, MRegTokenResp}
 import io.suggest.id.token.{MIdMsg, MIdToken, MIdTokenConstaints, MIdTokenDates, MIdTokenTypes}
 import io.suggest.init.routed.MJsInitTargets
@@ -84,6 +86,7 @@ class Ident @Inject() (
                         smsSendUtil                       : SmsSendUtil,
                         mOneTimeTokens                    : MOneTimeTokens,
                         idTokenUtil                       : IdTokenUtil,
+                        isAdnNodeAdminOptOrAuth           : IsAdnNodeAdminOptOrAuth,
                         override val canRecoverPw         : CanRecoverPw,
                         override val isAnon               : IsAnon,
                         override val isAuth               : IsAuth,
@@ -102,6 +105,7 @@ class Ident @Inject() (
   import mCommonDi._
   import sioControllerApi._
   import slick.profile.api._
+  import cspUtil.Implicits._
 
   /** Длина смс-кодов (кол-во цифр). */
   def SMS_CODE_LEN = 5
@@ -173,9 +177,8 @@ class Ident @Inject() (
       implicit val ctxData = CtxData(
         jsInitTargets = MJsInitTargets.LoginForm :: Nil
       )
-      cspUtil.applyCspHdrOpt( CSP_HDR_OPT ) {
-        Ok( LkLoginTpl() )
-      }
+      Ok( LkLoginTpl() )
+        .withCspHeader( CSP_HDR_OPT )
     }
   }
 
@@ -396,8 +399,7 @@ class Ident @Inject() (
     lazy val logPrefix = s"epw2RegSubmit()#${now.toEpochMilli}:"
 
     val _theAction = isAnon().async {
-      parse
-        .json[MCaptchaCheckReq]
+      parse.json[MCaptchaCheckReq]
     } { implicit request =>
       LOGGER.trace(s"$logPrefix capTyped=${request.body.typed}")
 
@@ -1108,6 +1110,140 @@ class Ident @Inject() (
             .addingToSession(
               MSessionKeys.PersonId.value -> personId,
             )
+        }
+      }
+    }
+  }
+
+
+  // Смена пароля v2 через react-форму.
+
+  /** Экшен формы смены пароля для залогиненного юзера.
+    *
+    * @param onNodeIdOptU id узла, если задан.
+    * @return Экшен, возвращающий html-страницу с react-формой смены пароля.
+    */
+  def pwChangeForm(onNodeIdOptU: Option[MEsUuId]) = csrf.AddToken {
+    val onNodeIdOpt = onNodeIdOptU.toStringOpt
+    isAdnNodeAdminOptOrAuth( onNodeIdOpt, U.Lk ).async { implicit request =>
+      // Закинуть данные инициализации в корневой шаблон:
+      for {
+        ctxData0 <- request.user.lkCtxDataFut
+      } yield {
+        implicit val ctxData1 = CtxData.jsInitTargets
+          .modify( MJsInitTargets.PwChange :: _ )(ctxData0)
+        implicit val ctx = implicitly[Context]
+
+        Ok( LkPwChangeTpl( request.mnodeOpt )(ctx) )
+      }
+    }
+  }
+
+
+  /** На будущее, если необходимо явно перехэшировать пароль, который вроде бы не изменился. */
+  private def _isForceReHashPassword(e: MEdge): Boolean = {
+    // Если изменится формат пароля с исходного scrypt на что-либо ещё, то тут можно организовать проверку.
+    false
+  }
+
+
+  /** Сабмит формы изменения пароля.
+    *
+    * @return 200, когда всё ок.
+    */
+  def pwChangeSubmit = csrf.Check {
+    bruteForceProtect {
+      isAuth().async(
+        parse
+          .json[MPwChangeForm]
+          // Убедиться, что присланы корректные пароли.
+          .validate { form0 =>
+            Either.cond(
+              test  = Validators.isPasswordValid( form0.pwNew ),
+              left  = NotAcceptable("password.invalid"),
+              right = form0
+            )
+          }
+      ) { implicit request =>
+        lazy val logPrefix = s"pwChangeSubmit(u#${request.user.personIdOpt.orNull})#${System.currentTimeMillis()}:"
+
+        // 2018-02-27 Менять пароль может только юзер, уже имеющий логин. Остальные - идут на госуслуги.
+        val resOkFut = for {
+          personNode0 <- request.user.personNodeFut
+
+          p = MPredicates.Ident
+
+          pwEdges = personNode0.edges
+            .withPredicateIter( p.Password )
+            .toList
+
+          oldPwEdgeOpt = pwEdges.find { e =>
+            e.info.textNi
+              .exists( scryptUtil.checkHash(request.body.pwOld, _) )
+          }
+
+          if {
+            val r = oldPwEdgeOpt.nonEmpty
+            if (!r) {
+              LOGGER.warn(s"$logPrefix Current password does not match to pw.typed by user.")
+              throw new MCheckException("password.not.match", fields = Set())
+            }
+            r
+          }
+
+          oldPwEdge = oldPwEdgeOpt.get
+
+          // Залить обновлённые эджи в узел юзера:
+          _ <- {
+            if (
+              (request.body.pwOld ==* request.body.pwNew) ||
+              _isForceReHashPassword(oldPwEdge)
+            ) {
+              // Пароль не изменился - ничего пересохранять и надо.
+              LOGGER.info(s"$logPrefix Password not changed - keeping node as-is.")
+              Future.successful( personNode0 )
+            } else {
+              LOGGER.trace(s"$logPrefix Found matching password-edge, will update:\n $oldPwEdge")
+              val pwNewHashSome = Some( scryptUtil.mkHash( request.body.pwNew ) )
+
+              val pwEdgeModF = MEdge.info
+                .composeLens( MEdgeInfo.textNi )
+                .set( pwNewHashSome )
+
+              val mnodeModF = MNode.edges
+                .composeLens( MNodeEdges.out )
+                .modify { edges0 =>
+                  for (e <- edges0) yield {
+                    // Заменяем пароль в эдже старого пароля.
+                    // TODO Возможно, надо сохранять эдж старого пароля с flag=false, а при логине по старому паролю сообщать, что использованный старый пароль был ранее изменён?
+                    // Сравниваем по == вместо eq, на случай теоретического конфликта версий в tryUpdate()
+                    if (e ==* oldPwEdge) pwEdgeModF(e)
+                    else e
+                  }
+                }
+
+              mNodes.tryUpdate(personNode0)( mnodeModF )
+            }
+          }
+
+        } yield {
+          // Вернуть ответ о том, что всё ок.
+          LOGGER.info(s"$logPrefix User successfully changed password.")
+          NoContent
+        }
+
+        resOkFut.recoverWith {
+          case ex: Throwable =>
+            ex match {
+              case mce: MCheckException =>
+                NotAcceptable( Json.toJson(mce) )
+              case _ =>
+                val msg = s"$logPrefix Failed to update password for user#${request.user.personIdOpt.orNull}"
+                if (ex.isInstanceOf[NoSuchElementException]) LOGGER.warn(msg)
+                else LOGGER.error(msg, ex)
+
+                ExpectationFailed
+            }
         }
       }
     }

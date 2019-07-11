@@ -1,0 +1,36 @@
+@(onNodeOpt: Option[MNode])(implicit ctx: Context)
+
+@* Страница с react-формой логина. *@
+
+@import ctx.messages
+@import views.html.stuff.jsTpl2HtmlTpl
+@import views.js.stuff.jsRevRouterTpl
+@import io.suggest.i18n.MsgCodes
+
+
+@* Тело страницы отдельно, т.к. над-шаблон зависит от onNodeOpt. *@
+@formBody = {
+
+  @* JS-роутер. *@
+  @jsTpl2HtmlTpl( withScriptTag = true )(
+    jsRevRouterTpl( csrfAll = true, cdn = true )(
+      routes.javascript.Ident.pwChangeSubmit,
+    )
+  )
+
+}
+
+
+@defining( messages( MsgCodes.`Password.change` ) ) { title =>
+  @onNodeOpt.fold {
+    @lk.lkBase(
+      title       = title,
+    )(formBody)
+  } { onNode =>
+    @lk.adn.nodeBaseTpl(
+      title       = title,
+      mnode       = onNode,
+      rightCurrEl = mlk.NodeRightPanelLinks.RPL_USER_EDIT,
+    )(formBody)
+  }
+}

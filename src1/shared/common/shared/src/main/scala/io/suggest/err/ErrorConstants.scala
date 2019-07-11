@@ -1,6 +1,10 @@
 package io.suggest.err
 
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.html.HtmlConstants.`.`
+import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
  * Suggest.io
@@ -67,7 +71,7 @@ object ErrorConstants {
     assertArg(assertion: Boolean, "Assertion failed")
   def assertArg(assertion: Boolean, errMsg: => String): Unit = {
     if (!assertion)
-      throw AssertArgException( errMsg )
+      throw MCheckException( errMsg )
   }
 
   object Words {
@@ -82,5 +86,25 @@ object ErrorConstants {
 
 }
 
+
 /** Exception, выстреливаемый из assertArg(). */
-case class AssertArgException(override val getMessage: String) extends IllegalArgumentException
+case class MCheckException(
+                            override val getMessage  : String,
+                            fields                   : Set[String]         = Set.empty,
+                          )
+  extends IllegalArgumentException
+object MCheckException {
+
+  /** Поддержка JSON. */
+  implicit def checkExceptionJson: OFormat[MCheckException] = (
+    (__ \ "m").format[String] and
+    (__ \ "f").formatNullable[Set[String]]
+      .inmap[Set[String]](
+        EmptyUtil.opt2ImplEmpty1F( Set.empty ),
+        { xs => if (xs.isEmpty) None else Some(xs) }
+      )
+  )(apply, unlift(unapply))
+
+  @inline implicit def univEq: UnivEq[MCheckException] = UnivEq.derive
+
+}

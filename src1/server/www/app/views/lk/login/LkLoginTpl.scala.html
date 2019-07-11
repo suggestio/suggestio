@@ -5,15 +5,13 @@
 @import ctx.messages
 @import views.html.stuff.jsTpl2HtmlTpl
 @import views.js.stuff.jsRevRouterTpl
+@import io.suggest.i18n.MsgCodes
 
 @lk.lkBase(
-  title     = messages( "Login.page.title" ),
+  title     = messages( MsgCodes.`Login.page.title` ),
   nodeOpt   = None,
   showSwitchNodeBtn = false,
 ) {
-
-  @* Рендерить контейнер не надо - для диалога он создаётся автоматом. *@
-  @ctx.data.jsInitTargets
 
   @* JS-роутер. *@
   @jsTpl2HtmlTpl( withScriptTag = true )(

@@ -3,6 +3,8 @@ package io.suggest.sec.csp
 import io.suggest.common.empty.{EmptyProduct, OptionUtil}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.proto.http.HttpConst
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -318,3 +320,15 @@ case class CspViolationReport(
                                violatedDirective  : String,
                                originalPolicy     : String
                              )
+object CspViolationReport {
+
+  /** Поддержка JSON-парсинга для тела отчёта о нарушении CSP. */
+  implicit def REPORT_BODY_READS: Reads[CspViolationReport] = (
+    (__ \ "document-uri").read[String] and
+    (__ \ "referrer").readNullable[String] and
+    (__ \ "blocked-uri").readNullable[String] and
+    (__ \ "violated-directive").read[String] and
+    (__ \ "original-policy").read[String]
+  )( CspViolationReport.apply _ )
+
+}

@@ -143,6 +143,8 @@ sealed trait IdentCtlRoutes extends js.Object {
 
   def regFinalSubmit(): Route = js.native
 
+  def pwChangeSubmit(): Route = js.native
+
 }
 
 

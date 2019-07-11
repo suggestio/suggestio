@@ -101,7 +101,8 @@ trait ChangePwAction
 
           epwPreds = p.Email :: p.Password :: Nil
 
-          identEdges = personNode0.edges.withPredicateIter( epwPreds: _* )
+          identEdges = personNode0.edges
+            .withPredicateIter( epwPreds: _* )
             .toList
 
           // Проверить наличие email-идента для логина, и парольного идента для сверки пароля.

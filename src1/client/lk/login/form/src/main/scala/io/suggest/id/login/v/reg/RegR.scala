@@ -1,6 +1,5 @@
 package io.suggest.id.login.v.reg
 
-import com.materialui
 import com.materialui.{Mui, MuiButton, MuiButtonProps, MuiButtonSizes, MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiMobileStepper, MuiMobileStepperClasses, MuiMobileStepperProps, MuiMobileStepperVariants}
 import diode.{FastEq, UseValueEq}
 import diode.react.{ModelProxy, ReactConnectProxy}
@@ -136,7 +135,7 @@ class RegR(
           if (nextBtnProps.isFinal) HtmlConstants.Input.submit
           else HtmlConstants.Input.button
 
-        materialui.MuiButton {
+        MuiButton {
           new MuiButtonProps {
             override val size     = MuiButtonSizes.small
             override val disabled = nextBtnProps.disabled

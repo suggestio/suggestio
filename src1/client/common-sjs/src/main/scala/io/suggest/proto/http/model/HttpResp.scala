@@ -55,13 +55,33 @@ trait HttpResp {
 }
 
 
+/** Извлекатель инстанса Future[HttpResp] из произвольных исходных данных. */
+sealed trait IHttpRespHelper[A] {
+  def httpRespFut(httpResp: A): Future[HttpResp]
+}
+object IHttpRespHelper {
+
+  implicit object HttpRespFutHelper extends IHttpRespHelper[Future[HttpResp]] {
+    override def httpRespFut(httpRespFut: Future[HttpResp]): Future[HttpResp] =
+      httpRespFut
+  }
+
+  implicit object HttpRespHelper extends IHttpRespHelper[HttpResp] {
+    override def httpRespFut(httpResp: HttpResp): Future[HttpResp] =
+      Future.successful( httpResp )
+  }
+
+}
+
+
 object HttpResp {
 
-  implicit class HttpRespFutOpsExt( val httpRespFut: Future[HttpResp] ) extends AnyVal {
+  /** API для HttpResp и Future[HttpResp]. */
+  implicit class HttpRespFutOpsExt[A](val a: A)(implicit ev: IHttpRespHelper[A]) {
 
     /** Фильтрация по статусу с помощью функции. */
     def successIfStatusF(isOkF: Int => Boolean): Future[HttpResp] = {
-      httpRespFut.transformWith {
+      ev.httpRespFut(a).transformWith {
         case Success(resp) =>
           if ( isOkF(resp.status) ) {
             Future.successful(resp)
@@ -98,7 +118,7 @@ object HttpResp {
 
     def responseTextFut: Future[String] = {
       for {
-        resp      <- httpRespFut
+        resp      <- ev.httpRespFut(a)
         if !resp.bodyUsed
         jsonText  <- resp.text()
       } yield {
@@ -125,7 +145,7 @@ object HttpResp {
       */
     def unBooPickle[T: Pickler]: Future[T] = {
       for {
-        resp <- httpRespFut
+        resp <- ev.httpRespFut(a)
         if !resp.bodyUsed
         ab <- resp.arrayBuffer
       } yield {
@@ -147,7 +167,7 @@ object HttpResp {
 
     /** Перезагружать страницу, если сервер ответил, что юзер неавторизован. */
     def reloadIfUnauthorized(): Future[HttpResp] = {
-      httpRespFut.transformWith {
+      ev.httpRespFut(a).transformWith {
         // Прослушать как-будто-бы-положительные XHR-ответы, чтобы выявлять редиректы из-за отсутствия сессии.
         case Success(resp) =>
           if (
@@ -174,6 +194,21 @@ object HttpResp {
           }
           Future.failed(ex)
       }
+    }
+
+
+    /** Завернуть ответ как ошибочный.
+      *
+      * @param httpReq Данные исходного реквеста.
+      * @tparam T Тип результирующего Future.
+      * @return Future[T] с ошибкой внутри.
+      */
+    def toHttpFailedException[T](httpReq: HttpReq): Future[T] = {
+      ev.httpRespFut(a)
+        .flatMap { httpResp =>
+          val ex = new HttpFailedException( Some(httpResp), url = httpReq.url, method = httpReq.method )
+          Future.failed[T]( ex )
+        }
     }
 
   }

@@ -37,7 +37,7 @@ class Bill2Conf @Inject() (
       .getOptional[String](ck)
       .getOrElse {
         val r = "-vr-hrgNRd6noyQ3_teu_A"
-        LOGGER.debug("CBCA node id defaulted to " + r)
+        LOGGER.trace("CBCA node id defaulted to " + r)
         r
       }
 

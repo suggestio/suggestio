@@ -65,7 +65,7 @@ class LoginFormCircuit(
   private[login] val reg4SetPasswordRW  = mkLensZoomRW(regRW, MRegS.s4SetPassword)( MReg4SetPassword.MReg4SetPasswordFastEq )
 
 
-  val loginApi: ILoginApi = new LoginApiHttp
+  val loginApi: IIdentApi = new IdentApiHttp
   val captchaApi: ICaptchaApi = new CaptchaApiHttp
 
   private val formAh = new FormAh(
@@ -78,7 +78,7 @@ class LoginFormCircuit(
     returnUrlRO = returnUrlRO,
   )
 
-  private val epwAh = new EpwAh(
+  private val pwLoginAh = new PwLoginAh(
     modelRW     = epwRW,
     loginApi    = loginApi,
     returnUrlRO = returnUrlRO,
@@ -117,7 +117,7 @@ class LoginFormCircuit(
   override protected val actionHandler: HandlerFunction = {
     composeHandlers(
       formAh,
-      epwAh,
+      pwLoginAh,
       regAh, reg0CredsAh, reg3CheckBoxesAh, setNewPwAh,
       extAh,
       captchaAh,
@@ -126,23 +126,5 @@ class LoginFormCircuit(
   }
 
   addProcessor( DoNothingActionProcessor[MLoginRootS] )
-
-  // При переключении на таб регистрации, надо инициализировать капчу первый раз:
-  /*
-  {
-    val p = Promise[None.type]()
-    val unSubscribeF = subscribe( overallRW.zoom(_.loginTab)(FastEq.AnyRefEq) ) { loginTabProxy =>
-      if (loginTabProxy.value ==* MLoginTabs.EpwReg) {
-        val isCaptchaNeedInit = reg1Captcha.value.captcha
-          .fold(true) { c => c.contentReq.isEmpty && !c.contentReq.isPending }
-        if (isCaptchaNeedInit) {
-          Future( dispatch(CaptchaInit) )
-          p.success( None )
-        }
-      }
-    }
-    p.future.onComplete(_ => unSubscribeF())
-  }
-  */
 
 }

@@ -82,23 +82,19 @@ class LoginFormR(
       lazy val extLogin = p.wrap(_.ext)( extFormR.apply )( implicitly, MExtLoginFormS.MExtLoginFormSFastEq )
 
       // Содержимое вкладки входа по логину и паролю:
-      lazy val epwLogin = p.wrap(_.epw)( epwFormR.apply )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
+      lazy val pwLogin = p.wrap(_.epw)( epwFormR.apply )( implicitly, MEpwLoginS.MEpwLoginSFastEq )
 
       // Вкладка регистрации по email и паролю.
-      lazy val epwReg = regR(p)
-
-      // Вкладка смены пароля.
-      lazy val pwChange = pwChangeR.component(p)
+      lazy val reg = regR(p)
 
 
       // Содержимое табов:
       val tabsContents = s.currTabC { currTabProxy =>
         // TODO Запилить react-swipeable-views, как в примерах MuiTabs.
         currTabProxy.value match {
-          case MLoginTabs.EpwLogin          => epwLogin
-          case MLoginTabs.Reg               => epwReg
+          case MLoginTabs.EpwLogin          => pwLogin
+          case MLoginTabs.Reg               => reg
           case MLoginTabs.Ext               => extLogin
-          case MLoginTabs.PasswordChange    => pwChange
         }
       }
 
@@ -107,28 +103,22 @@ class LoginFormR(
       //val extTabBtn       = _tabBtn( MLoginTabs.Ext )
       val regTabBtn    = _tabBtn( MLoginTabs.Reg )
 
-      // Список табов:
-      val tabs = s.currTabC { currTabProxy =>
-        MuiTabs(
-          new MuiTabsProps {
-            override val value = js.defined( currTabProxy.value.value )
-            @JSName("onChange")
-            override val onTabChanged = _onTabChangedCbF
-          }
-        )(
-          //extTabBtn,
-          loginTabBtn,
-          regTabBtn,
-          // TODO pwChange
-        )
-      }
-
       // Заголовок диалога
       val dialogTitle = MuiDialogTitle()(
-        tabs,
-        //commonReactCtxProv.consume { crCtx =>
-          //crCtx.messages( MsgCodes.`Login.page.title` )
-        //}
+        // Список табов:
+        s.currTabC { currTabProxy =>
+          MuiTabs(
+            new MuiTabsProps {
+              override val value = js.defined( currTabProxy.value.value )
+              @JSName("onChange")
+              override val onTabChanged = _onTabChangedCbF
+            }
+          )(
+            //extTabBtn,
+            loginTabBtn,
+            regTabBtn,
+          )
+        },
       )
 
       // Наполнение диалога.

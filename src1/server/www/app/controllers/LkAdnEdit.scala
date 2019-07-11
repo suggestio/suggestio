@@ -54,11 +54,12 @@ class LkAdnEdit @Inject() (
   import sioControllerApi._
   import mCommonDi._
   import esModel.api._
+  import cspUtil.Implicits._
+
 
   /** Накатить какие-то дополнительные CSP-политики для работы редактора. */
-  private def _applyCspToEditPage(res0: Result): Result = {
-    cspUtil.applyCspHdrOpt( cspUtil.CustomPolicies.AdEdit )(res0)
-  }
+  private def _applyCspToEditPage(res0: Result): Result =
+    res0.withCspHeader( cspUtil.CustomPolicies.AdEdit )
 
 
   /** Экшен, возвращающий html-страницу с формой редактирования узла.

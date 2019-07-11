@@ -10,9 +10,11 @@ import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.model.PrefixedFn
 import io.suggest.text.StringUtil
 import io.suggest.util.SioConstants
+import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
  * Suggest.io
@@ -177,13 +179,14 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   val geoPoints = GenLens[MEdgeInfo](_.geoPoints)
   val extService = GenLens[MEdgeInfo](_.extService)
 
+  @inline implicit def univEq: UnivEq[MEdgeInfo] = UnivEq.derive
+
 }
 
 
 
 /** Класс экземпляров модели MEdgeInfo.
   *
-  * @param dynImgArgs При указании на картинку бывает нужно указать исходный кроп или что-то ещё.
   * @param dateNi Неиднексируемая дата.
   * @param textNi Неиндексируемый текст при эдже.
   *                  Используется для хэша пароля в Password-эджах с 2019-02-28.

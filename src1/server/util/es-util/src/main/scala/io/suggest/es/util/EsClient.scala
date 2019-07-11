@@ -77,13 +77,12 @@ final class TransportEsClient @Inject() (
   }
 
   def _installClient(): TransportClient = {
-    lazy val logPrefix = s"_installClient(${System.currentTimeMillis}):"
+    def logPrefix = s"_installClient():"
 
     // Закинуть имя кластера из оригинального конфига.
     // TODO Переименовать параметры sio-конфига во что-то, начинающееся с es.client.
     val configuration = injector.instanceOf[Configuration]
     val clusterNameOpt = configuration.getOptional[String]("es.cluster.name")
-    LOGGER.debug(s"$logPrefix Cluster name: ${clusterNameOpt.orNull}")
 
     // Законнектить свеженький клиент согласно адресам из конфига, если они там указаны.
 
@@ -107,7 +106,7 @@ final class TransportEsClient @Inject() (
       // TODO ES-6.0+: .map( new TransportAddress(_) )
       .toSeq
 
-    LOGGER.debug(s"$logPrefix Transport addrs: ${addrs.mkString(", ")}")
+    LOGGER.trace(s"$logPrefix Cluster name: ${clusterNameOpt.orNull}\n Transport addrs: ${addrs.mkString(", ")}")
 
     _trClient = SioEsUtil.newTransportClient(addrs, clusterNameOpt)
     _trClient

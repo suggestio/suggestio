@@ -11,7 +11,6 @@ import io.suggest.util.logs.MacroLogsImplLazy
 import models.adv.MExtTargets
 import models.ai.MAiMads
 import models.mcal.MCalendars
-import models.mproj.ICommonDi
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import play.api.Configuration
@@ -57,8 +56,7 @@ class SiowebEsModel @Inject() (
     mAiMads,
     mExtTargets,
     mAsymKeys,
-    mMedias
-    //mStats // Модель живёт в скользящих индексах, но это наверное безопасно...
+    mMedias,
   )
 
   /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */
@@ -122,7 +120,7 @@ class SiowebEsModel @Inject() (
     val futInx = esModel.ensureEsModelsIndices(esModels)
     val logPrefix = "initializeEsModels(): "
     futInx.onComplete {
-      case Success(result) => LOGGER.debug(s"$logPrefix ensure() -> $result")
+      case Success(result) => LOGGER.trace(s"$logPrefix ensure() -> $result")
       case Failure(ex)     => LOGGER.error(s"$logPrefix ensureIndex() failed", ex)
     }
     val futMappings = futInx.flatMap { _ =>

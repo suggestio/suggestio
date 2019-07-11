@@ -5,6 +5,7 @@ import io.suggest.model.PrefixedFn
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MNodeGeoLevel
+import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -125,6 +126,9 @@ object MEdge extends IGenEsMappingProps {
   val order     = GenLens[MEdge](_.order)
   val info      = GenLens[MEdge](_.info)
   val doc       = GenLens[MEdge](_.doc)
+
+
+  @inline implicit def univEq: UnivEq[MEdge] = UnivEq.derive
 
 }
 

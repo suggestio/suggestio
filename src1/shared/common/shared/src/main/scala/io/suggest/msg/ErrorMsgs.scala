@@ -154,4 +154,7 @@ object ErrorMsgs extends MsgsStaticT {
   /** Косяк в форме логина. */
   def LOGIN_FORM_ERROR                 = E(91)
 
+  /** Ошибка в форме смены пароля. */
+  def PW_CHANGE_FORM_ERROR             = E(92)
+
 }

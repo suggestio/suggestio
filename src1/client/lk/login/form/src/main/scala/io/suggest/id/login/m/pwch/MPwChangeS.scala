@@ -2,7 +2,6 @@ package io.suggest.id.login.m.pwch
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.id.reg.MRegTokenResp
 import io.suggest.lk.m.input.MTextFieldS
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -17,22 +16,41 @@ import monocle.macros.GenLens
   */
 object MPwChangeS {
 
+  def empty = apply()
+
   implicit object MPwChangeSFastEq extends FastEq[MPwChangeS] {
     override def eqv(a: MPwChangeS, b: MPwChangeS): Boolean = {
       (a.pwOld ===* b.pwOld) &&
+      (a.pwNew ===* b.pwNew) &&
       (a.submitReq ===* b.submitReq)
     }
   }
 
-  val oldPw       = GenLens[MPwChangeS](_.pwOld)
+  val pwOld       = GenLens[MPwChangeS](_.pwOld)
+  val pwNew       = GenLens[MPwChangeS](_.pwNew)
   val submitReq   = GenLens[MPwChangeS](_.submitReq)
 
-  @inline implicit def univEq: UnivEq[MPwChangeS] = UnivEq.derive
+  @inline implicit def univEq: UnivEq[MPwChangeS] = UnivEq.force
 
 }
 
 
+/** Состояние элементов формы смены пароля.
+  *
+  * @param pwOld Старый пароль.
+  * @param pwNew Новый пароль и его подтверждение.
+  * @param submitReq Состояние сабмита формы на сервер.
+  */
 case class MPwChangeS(
                        pwOld        : MTextFieldS             = MTextFieldS.empty,
-                       submitReq    : Pot[MRegTokenResp]      = Pot.empty,
-                     )
+                       pwNew        : MPwNew                  = MPwNew.empty,
+                       submitReq    : Pot[None.type]          = Pot.empty,
+                     ) {
+
+  def canSubmit: Boolean = {
+    !submitReq.isPending &&
+    pwNew.canSubmit &&
+    pwOld.isValidNonEmpty
+  }
+
+}

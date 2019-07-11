@@ -310,6 +310,9 @@ POST /sys/debug/dynimg/jdedges/reset     @controllers.SysDebug.resetImgsToOrig
 POST /sys/debug/dynimg/derivatives/del   @controllers.SysDebug.deleteAllDynImgDerivatives
 
 ## ident v2: react-форма логина.
+## Password change v2
+GET  /id/pwch                           @controllers.Ident.pwChangeForm(onNode: Option[MEsUuId] ?= None)
+POST /id/pwch                           @controllers.Ident.pwChangeSubmit
 GET  /id                                @controllers.Ident.loginFormPage(e: io.suggest.id.login.ILoginFormPages ?= io.suggest.id.login.ILoginFormPages.Login.default)
 POST /id2/epw/login                     @controllers.Ident.epw2LoginSubmit(r: Option[String] ?= None)
 ## Рега по паролю. Оптимизация: затолкать id капчи в ссылку, прописав его в cookie path.

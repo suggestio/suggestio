@@ -5,7 +5,6 @@ import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.m.MLoginRootS
-import io.suggest.id.login.m.pwch.MPwNew
 import io.suggest.id.login.v.pwch.PwNewR
 import io.suggest.id.login.v.stuff.TextFieldR
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -36,6 +35,7 @@ class Reg4SetPasswordR(
             override val row = true
           }
         )(
+          
           // Имя пользователя (неизменяемое). Возможно, поможет для сохранения пароля в список паролей браузера.
           propsProxy.wrap { p =>
             textFieldR.PropsVal(
@@ -54,11 +54,11 @@ class Reg4SetPasswordR(
 
         ),
 
-        // TODO Разделитель нужен сюда
         propsProxy.wrap { mroot =>
           pwNewR.PropsVal(
             pwNew       = mroot.overall.pwNew,
             reqPending  = mroot.reg.s4SetPassword.submitReq.isPending,
+            isNew       = false,
           )
         }(pwNewR.component.apply)(implicitly, pwNewR.PwNewRPropsValFastEq),
 

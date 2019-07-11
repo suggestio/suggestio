@@ -8,6 +8,8 @@ import io.suggest.geo.{IGeoShape, MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.geo.IGeoShape.JsonFormats.allStoragesEsFormat
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq.UnivEq
 
 import scala.util.Random
 
@@ -142,6 +144,9 @@ object MEdgeGeoShape extends IGenEsMappingProps {
   }
 
   def SHAPE_ID_START = 1
+
+
+  @inline implicit def univEq: UnivEq[MEdgeGeoShape] = UnivEq.derive
 
 }
 

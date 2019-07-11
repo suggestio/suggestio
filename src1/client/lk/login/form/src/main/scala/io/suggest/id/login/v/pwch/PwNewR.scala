@@ -6,7 +6,7 @@ import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.m.pwch.MPwNew
-import io.suggest.id.login.m.{SetPasswordBlur, SetPasswordEdit}
+import io.suggest.id.login.m.{NewPasswordBlur, SetPasswordEdit}
 import io.suggest.id.login.v.stuff.TextFieldR
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -23,14 +23,21 @@ class PwNewR (
                textFieldR      : TextFieldR,
              ) {
 
+  /**
+    * @param isNew Ввод нового пароля?
+    *              false - ввод первого пароля на регистрации.
+    *              true - смена пароля на новый.
+    */
   case class PropsVal(
                        pwNew      : MPwNew,
                        reqPending : Boolean,
+                       isNew      : Boolean,
                      )
   implicit object PwNewRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.pwNew ===* b.pwNew) &&
-      (a.reqPending ==* b.reqPending)
+      (a.reqPending ==* b.reqPending) &&
+      (a.isNew ==* b.isNew)
     }
   }
 
@@ -42,7 +49,7 @@ class PwNewR (
   class Backend($: BackendScope[Props, Unit]) {
 
     def render(propsProxy: Props): VdomElement = {
-      val setPasswordBlurSome = Some( SetPasswordBlur )
+      val setPasswordBlurSome = Some( NewPasswordBlur )
 
       MuiFormGroup(
         new MuiFormGroupProps {
@@ -58,7 +65,9 @@ class PwNewR (
             mkAction    = Some( SetPasswordEdit(_: String, isRetype = false) ),
             isPassword  = true,
             inputName   = IdentConst.Login.PASSWORD_FN,    // По идее, вообще необязательно. По идее - "password"
-            label       = MsgCodes.`Type.password`,
+            label       =
+              if (p.isNew) MsgCodes.`Type.new.password`
+              else MsgCodes.`Type.password`,
             placeHolder = "",
             onBlur      = setPasswordBlurSome,
             disabled    = p.reqPending,
@@ -73,7 +82,9 @@ class PwNewR (
             mkAction    = Some( SetPasswordEdit(_: String, isRetype = true) ),
             isPassword  = true,
             inputName   = "",
-            label       = MsgCodes.`Retype.password`,
+            label       =
+              if (p.isNew) MsgCodes.`Confirm.new.password`
+              else MsgCodes.`Retype.password`,
             placeHolder = "",
             onBlur      = setPasswordBlurSome,
             disabled    = p.reqPending,

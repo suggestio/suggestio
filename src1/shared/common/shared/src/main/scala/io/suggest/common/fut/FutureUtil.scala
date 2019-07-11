@@ -107,6 +107,14 @@ object FutureUtil {
 
     }
 
+
+    implicit class ThrowableFutureOpsExt[Ex <: Throwable]( val fut: Future[Ex] ) extends AnyVal {
+
+      def toFutureFailed[T](implicit ec: ExecutionContext): Future[T] =
+        fut.flatMap( Future.failed )
+
+    }
+
   }
 
 }

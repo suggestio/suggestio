@@ -2,7 +2,7 @@ package io.suggest.id.login.c.pwch
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.id.login.m.pwch.MPwNew
-import io.suggest.id.login.m.{SetPasswordBlur, SetPasswordEdit}
+import io.suggest.id.login.m.{NewPasswordBlur, SetPasswordEdit}
 import io.suggest.lk.m.input.MTextFieldS
 import io.suggest.text.Validators
 import japgolly.univeq._
@@ -51,7 +51,7 @@ class SetNewPwAh[M](
       }
 
 
-    case SetPasswordBlur =>
+    case NewPasswordBlur =>
       val v0 = value
 
       // Провалидировать оба password-поля:

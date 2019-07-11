@@ -1,17 +1,20 @@
 package io.suggest.id.login.c
 
 import io.suggest.captcha.MCaptchaCheckReq
+import io.suggest.err.MCheckException
 import io.suggest.id.login.MEpwLoginReq
+import io.suggest.id.pwch.MPwChangeForm
 import io.suggest.id.reg.{MCodeFormReq, MRegCreds0, MRegTokenResp}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.pick.MimeConst
 import io.suggest.proto.http.HttpConst
 import io.suggest.proto.http.client.HttpClient
-import io.suggest.proto.http.client.cache.MHttpCacheInfo
 import io.suggest.proto.http.model.{HttpReq, HttpReqData, Route}
 import io.suggest.routes.routes
 import io.suggest.sjs.common.empty.JsOptionUtil.Implicits._
+import io.suggest.common.fut.FutureUtil.Implicits._
 import play.api.libs.json.{Json, Writes}
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -22,7 +25,7 @@ import scala.concurrent.duration._
   * Created: 19.03.19 13:02
   * Description: API доступа к серверу.
   */
-trait ILoginApi {
+trait IIdentApi {
 
   /** Сабмит формы логина-пароля.
     *
@@ -60,10 +63,18 @@ trait ILoginApi {
     */
   def regFinalSubmit(req: MCodeFormReq): Future[MRegTokenResp]
 
+
+  /** Сабмит формы смена пароля.
+    *
+    * @param form Данные формы смены пароля.
+    * @return Фьючерс, когда всё ок.
+    */
+  def pwChangeSubmit(form: MPwChangeForm): Future[None.type]
+
 }
 
 
-class LoginApiHttp extends ILoginApi {
+class IdentApiHttp extends IIdentApi {
 
   private def _timeoutMsSome = Some( 10.seconds.toMillis.toInt )
 
@@ -132,5 +143,35 @@ class LoginApiHttp extends ILoginApi {
 
   override def regFinalSubmit(req: MCodeFormReq): Future[MRegTokenResp] =
     _tokenReq( req, routes.controllers.Ident.regFinalSubmit() )
+
+
+  override def pwChangeSubmit(form: MPwChangeForm): Future[None.type] = {
+    val httpReq = HttpReq.routed(
+      route = routes.controllers.Ident.pwChangeSubmit(),
+      data  = HttpReqData(
+        headers = HttpReqData.headersJsonSendAccept,
+        body = Json
+          .toJson( form )
+          .toString(),
+        timeoutMs = _timeoutMsSome,
+      )
+    )
+    HttpClient
+      .execute( httpReq )
+      .respFut
+      .flatMap { httpResp =>
+        // Разобрать ответ сервера: пароль сохранён | ошибка клиента | ошибка сервера
+        if (httpResp.status ==* HttpConst.Status.NO_CONTENT) {
+          Future.successful( None )
+        } else if (httpResp.status ==* HttpConst.Status.NOT_ACCEPTABLE) {
+          httpResp
+            .unJson[MCheckException]
+            .toFutureFailed
+        } else {
+          httpResp
+            .toHttpFailedException( httpReq )
+        }
+      }
+  }
 
 }

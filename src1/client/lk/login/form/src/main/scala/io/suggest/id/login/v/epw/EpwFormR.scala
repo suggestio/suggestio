@@ -18,7 +18,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -78,32 +77,38 @@ class EpwFormR(
             }
           )(
             // Поле имени пользователя:
-            propsProxy.wrap { props =>
-              textFieldR.PropsVal(
-                state       = props.name,
-                hasError    = props.loginReq.isFailed,
-                mkAction    = Some( EpwSetName.apply ),
-                isPassword  = false,
-                inputName   = IdentConst.Login.NAME_FN,
-                label       = MsgCodes.`Phone.or.email`,
-                placeHolder = MsgCodes.`Phone.number.example`,
-                disabled    = props.loginReq.isPending,
-              )
-            }( textFieldR.apply )( implicitly, textFieldR.EpwTextFieldPropsValFastEq ),
+            {
+              val mkActionSome = Some( EpwSetName.apply _ )
+              propsProxy.wrap { props =>
+                textFieldR.PropsVal(
+                  state       = props.name,
+                  hasError    = props.loginReq.isFailed,
+                  mkAction    = mkActionSome,
+                  isPassword  = false,
+                  inputName   = IdentConst.Login.NAME_FN,
+                  label       = MsgCodes.`Phone.or.email`,
+                  placeHolder = MsgCodes.`Phone.number.example`,
+                  disabled    = props.loginReq.isPending,
+                )
+              }( textFieldR.apply )( implicitly, textFieldR.EpwTextFieldPropsValFastEq )
+            },
 
             // Поле ввода пароля:
-            propsProxy.wrap { props =>
-              textFieldR.PropsVal(
-                state       = props.password,
-                hasError    = props.loginReq.isFailed,
-                mkAction    = Some( EpwSetPassword.apply ),
-                isPassword  = true,
-                inputName   = IdentConst.Login.PASSWORD_FN,
-                label       = MsgCodes.`Password`,
-                disabled    = props.loginReq.isPending,
-                placeHolder = "",
-              )
-            }( textFieldR.apply )( implicitly, textFieldR.EpwTextFieldPropsValFastEq ),
+            {
+              val mkActionSome = Some( SetPassword.apply _ )
+              propsProxy.wrap { props =>
+                textFieldR.PropsVal(
+                  state       = props.password,
+                  hasError    = props.loginReq.isFailed,
+                  mkAction    = mkActionSome,
+                  isPassword  = true,
+                  inputName   = IdentConst.Login.PASSWORD_FN,
+                  label       = MsgCodes.`Password`,
+                  disabled    = props.loginReq.isPending,
+                  placeHolder = "",
+                )
+              }( textFieldR.apply )( implicitly, textFieldR.EpwTextFieldPropsValFastEq )
+            },
 
             // Галочка "Чужой компьютер".
             MuiFormControlLabel {
@@ -172,8 +177,8 @@ class EpwFormR(
               }
             },
 
-          )
-        )
+          ),
+        ),
 
       )
     }

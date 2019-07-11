@@ -21,7 +21,7 @@ import scala.util.Success
   * Created: 14.03.19 16:13
   * Description: EmailPw-контроллер.
   */
-object EpwAh {
+object PwLoginAh {
 
   /** Проверка и обновление значения btnActive. */
   private def epwLoginReqBtnActive(isActiveNow: Boolean, name: String, password: String, isPendingNow: Boolean,
@@ -38,11 +38,13 @@ object EpwAh {
   }
 
 }
-class EpwAh[M](
-                loginApi        : ILoginApi,
-                modelRW         : ModelRW[M, MEpwLoginS],
-                returnUrlRO     : ModelRO[Option[String]],
-              )
+
+
+class PwLoginAh[M](
+                    loginApi        : IIdentApi,
+                    modelRW         : ModelRW[M, MEpwLoginS],
+                    returnUrlRO     : ModelRO[Option[String]],
+                  )
   extends ActionHandler( modelRW )
   with Log
 { ah =>
@@ -55,7 +57,7 @@ class EpwAh[M](
       if (v0.name.value ==* m.name) {
         noChange
       } else {
-        val v2 = EpwAh.epwLoginReqBtnActive(
+        val v2 = PwLoginAh.epwLoginReqBtnActive(
           isActiveNow   = v0.loginBtnEnabled,
           name          = m.name,
           password      = v0.password.value,
@@ -69,12 +71,12 @@ class EpwAh[M](
 
 
     // Ввод пароля.
-    case m: EpwSetPassword =>
+    case m: SetPassword =>
       val v0 = value
       if (v0.password.value ==* m.password) {
         noChange
       } else {
-        val v2 = EpwAh.epwLoginReqBtnActive(
+        val v2 = PwLoginAh.epwLoginReqBtnActive(
           isActiveNow   = v0.loginBtnEnabled,
           name          = v0.name.value,
           password      = m.password,

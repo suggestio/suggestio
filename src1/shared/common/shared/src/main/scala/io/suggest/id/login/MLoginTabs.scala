@@ -27,9 +27,9 @@ object MLoginTabs extends IntEnum[MLoginTab] {
     override def msgCode = MsgCodes.`Sign.up`
   }
 
-  case object PasswordChange extends MLoginTab(3) {
-    override def msgCode = MsgCodes.`Password.change`
-  }
+  //case object PasswordChange extends MLoginTab(3) {
+  //  override def msgCode = MsgCodes.`Password.change`
+  //}
 
   def default: MLoginTab = EpwLogin
 

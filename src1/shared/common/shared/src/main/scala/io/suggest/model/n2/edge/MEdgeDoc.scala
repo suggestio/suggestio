@@ -1,9 +1,11 @@
 package io.suggest.model.n2.edge
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -44,6 +46,8 @@ object MEdgeDoc extends IEmpty {
 
   val uid = GenLens[MEdgeDoc](_.uid)
   val text = GenLens[MEdgeDoc](_.text)
+
+  @inline implicit def univEq: UnivEq[MEdgeDoc] = UnivEq.derive
 
 }
 
