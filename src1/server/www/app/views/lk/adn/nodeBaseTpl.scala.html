@@ -29,7 +29,7 @@
 
       @_navItemTpl(
         title = messages("Password.change"),
-        href  = Some( routes.MarketLkAdn.userProfileEdit(nodeId, r = ctx.r) ),
+        href  = Some( routes.Ident.pwChangeForm( Some(nodeId) ) ),
         css   = classesAct(rightCurrEl == RPL_USER_EDIT, "__change-pass")
       )()
 

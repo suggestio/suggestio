@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.pwch
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogClasses, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps}
 import diode.FastEq
 import diode.data.Pot
 import diode.react.ReactPot._
@@ -16,7 +16,7 @@ import io.suggest.id.login.v.LoginFormCss
 import io.suggest.id.login.v.stuff.{ErrorSnackR, LoginProgressR, TextFieldR}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.spa.DiodeUtil.Implicits._
-import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent, ReactEvent}
+import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
@@ -187,27 +187,33 @@ class PwChangeR (
         },
       )
 
-      val dia = MuiDialog(
-        new MuiDialogProps {
-          override val maxWidth = js.defined {
-            MuiDialogMaxWidths.xs
-          }
-          override val open = true
-          //override val onClose = _onCancelClickCbF
-          // TODO disable* -- true на одинокой форме. false/undefined для формы, встраиваемой в выдачу.
-          override val disableBackdropClick = true
-          override val disableEscapeKeyDown = true
+      val dia = loginFormCssCtx.consume { lfCss =>
+        val diaCss = new MuiDialogClasses {
+          override val root = lfCss.lkDiaRoot.htmlClass
         }
-      )(
-        dialogTitle,
+        MuiDialog(
+          new MuiDialogProps {
+            override val maxWidth = js.defined {
+              MuiDialogMaxWidths.xs
+            }
+            override val open = true
+            //override val onClose = _onCancelClickCbF
+            // TODO disable* -- true на одинокой форме. false/undefined для формы, встраиваемой в выдачу.
+            override val disableBackdropClick = true
+            override val disableEscapeKeyDown = true
+            override val classes = diaCss
+          }
+        )(
+          dialogTitle,
 
-        // Перехват сабмита в форме.
-        <.form(
-          ^.onSubmit ==> _onSaveClick,
-          dialogContent,
-          dialogActions,
-        ),
-      )
+          // Перехват сабмита в форме.
+          <.form(
+            ^.onSubmit ==> _onSaveClick,
+            dialogContent,
+            dialogActions,
+          ),
+        )
+      }
 
       // Добавить внутренний контекст для CSS.
       s.loginFormCssC { loginFormCssProxy =>

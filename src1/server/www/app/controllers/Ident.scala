@@ -41,10 +41,7 @@ import util.captcha.CaptchaUtil
 import util.ident.{IdTokenUtil, IdentUtil}
 import util.mail.IMailerWrapper
 import io.suggest.ueq.UnivEqUtilJvm._
-import views.html.ident._
-import views.html.ident.login.epw._loginColumnTpl
-import views.html.ident.reg.email.{_regColumnTpl, emailRegMsgTpl}
-import views.html.ident.recover.emailPwRecoverTpl
+import views.html.ident.reg.email.emailRegMsgTpl
 import views.html.lk.login._
 import japgolly.univeq._
 import models.req.IReqHdr
@@ -72,13 +69,13 @@ class Ident @Inject() (
                         override val esModel              : EsModel,
                         override val mPersonIdentModel    : MPersonIdentModel,
                         override val mNodes               : MNodes,
-                        override val mailer               : IMailerWrapper,
+                        mailer                            : IMailerWrapper,
                         override val identUtil            : IdentUtil,
                         override val nodesUtil            : NodesUtil,
-                        override val captchaUtil          : CaptchaUtil,
-                        override val canConfirmEmailPwReg : CanConfirmEmailPwReg,
-                        override val bruteForceProtect    : BruteForceProtect,
-                        override val scryptUtil           : ScryptUtil,
+                        captchaUtil                       : CaptchaUtil,
+                        canConfirmEmailPwReg              : CanConfirmEmailPwReg,
+                        bruteForceProtect                 : BruteForceProtect,
+                        scryptUtil                        : ScryptUtil,
                         override val maybeAuth            : MaybeAuth,
                         override val canConfirmIdpReg     : CanConfirmIdpReg,
                         pgpUtil                           : PgpUtil,
@@ -87,18 +84,13 @@ class Ident @Inject() (
                         mOneTimeTokens                    : MOneTimeTokens,
                         idTokenUtil                       : IdTokenUtil,
                         isAdnNodeAdminOptOrAuth           : IsAdnNodeAdminOptOrAuth,
-                        override val canRecoverPw         : CanRecoverPw,
-                        override val isAnon               : IsAnon,
-                        override val isAuth               : IsAuth,
+                        isAnon                            : IsAnon,
+                        isAuth                            : IsAuth,
                         override val ignoreAuth           : IgnoreAuth,
                         override val sioControllerApi     : SioControllerApi,
                         override val mCommonDi            : ICommonDi
                       )
   extends MacroLogsImpl
-  with EmailPwLogin
-  with ChangePw
-  with PwRecover
-  with EmailPwReg
   with ExternalLogin
 {
 
@@ -115,42 +107,21 @@ class Ident @Inject() (
    * Юзер разлогинивается. Выпилить из сессии данные о его логине.
    * @return Редирект на главную, ибо анонимусу идти больше некуда.
    */
-  // TODO Добавить CSRF
-  def logout = Action { implicit request =>
-    Redirect(models.MAIN_PAGE_CALL)
-      .removingFromSession(
-        MSessionKeys.PersonId.value,
-        MSessionKeys.Timestamp.value
-      )
+  def logout = csrf.Check {
+    // TODO Добавить поддержку помечания истёкших сессий через ottID внутри сессии.
+    Action { implicit request =>
+      Redirect(models.MAIN_PAGE_CALL)
+        .removingFromSession(
+          MSessionKeys.PersonId.value,
+          MSessionKeys.Timestamp.value
+        )
+    }
   }
 
 
   /** Отредиректить юзера куда-нибудь. */
   def rdrUserSomewhere = isAuth().async { implicit request =>
     identUtil.redirectUserSomewhere(request.user.personIdOpt.get)
-  }
-
-  /**
-   * Стартовая страница my.suggest.io. Здесь лежит предложение логина/регистрации и возможно что-то ещё.
-   * @param r Возврат после логина куда?
-   * @return 200 Ok для анонимуса.
-   *         Иначе редирект в личный кабинет.
-   */
-  def mySioStartPage(r: Option[String]) = csrf.AddToken {
-    isAnon().async { implicit request =>
-      implicit val ctxData = CtxData(
-        jsInitTargets = MJsInitTargets.CaptchaForm :: MJsInitTargets.HiddenCaptcha :: Nil
-      )
-      // TODO Затолкать это в отдельный шаблон!
-      val ctx = implicitly[Context]
-      val formFut = emailPwLoginFormStubM
-      val title = ctx.messages( MsgCodes.`Login.page.title` )
-      val rc = _regColumnTpl(emailRegFormM, captchaShown = false)(ctx)
-      for (lf <- formFut) yield {
-        val lc = _loginColumnTpl(lf, r)(ctx)
-        Ok( mySioStartTpl(title, Seq(lc, rc))(ctx) )
-      }
-    }
   }
 
 
@@ -230,7 +201,9 @@ class Ident @Inject() (
                 val personId = mperson.id.get
                 LOGGER.debug(s"$logPrefix Epw login ok, person#$personId from ${request.remoteClientAddress}")
 
-                val rdrPathFut = SioController.getRdrUrl(r) { emailSubmitOkCall(personId) }
+                val rdrPathFut = SioController.getRdrUrl(r) {
+                  identUtil.redirectCallUserSomewhere(personId)
+                }
                 // Реализация длинной сессии при наличии флага rememberMe.
                 val ttl: Ttl =
                   if (request.body.isForeignPc) ShortTtl
@@ -1026,14 +999,11 @@ class Ident @Inject() (
               .setHtml {
                 val tplQs = MEmailRecoverQs(
                   email         = regCreds.email,
-                  // Привязать сессию текущего юзера к письму:
-                  //nonce         = randomUuid,
                   checkSession  = true,
+                  // id узла юзера
+                  nodeId        = personNode.id,
                 )
-                val tpl =
-                  if (isReg) emailRegMsgTpl
-                  else emailPwRecoverTpl
-                val html = tpl.render(tplQs, ctx)
+                val html = emailRegMsgTpl(tplQs)(ctx)
                 htmlCompressUtil.html4email( html )
               }
               .send()
@@ -1259,6 +1229,87 @@ class Ident @Inject() (
                 ExpectationFailed
             }
         }
+      }
+    }
+  }
+
+
+  /** Юзер возвращается по ссылке из письма. Отрендерить страницу завершения регистрации. */
+  def emailReturn(qs: MEmailRecoverQs) = {
+    canConfirmEmailPwReg(qs).async { implicit request =>
+      // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.
+      // TODO Выставить email как подтверждённый, сохранить ott(qs.nonce) и отредиректить юзера куда-нибудь с flashing()
+
+      val now = Instant.now()
+      lazy val logPrefix = s"emailReturn(${qs.email})#${now.toEpochMilli}:"
+      LOGGER.trace(s"$logPrefix $qs")
+
+      val saveFut = slick.db.run {
+        val dbAction = for {
+          mott <- mOneTimeTokens.insertOne {
+            MOneTimeToken(
+              id          = qs.nonce,
+              dateCreated = now,
+              dateEnd     = now plusSeconds canConfirmEmailPwReg.MAX_AGE.toSeconds
+            )
+          }
+
+          // Всё заинзертилось - обновляем узел в рамках текущей транзакции.
+          _ <- DBIO.from {
+            mNodes.tryUpdate(request.mnode) {
+              // Найти email-эдж и выставить flag=true
+              MNode.edges
+                .composeLens( MNodeEdges.out )
+                .modify { edges0 =>
+                  // Найти существующий email-эдж, если он есть (а это не обязательно)
+                  var hasChangedEdge = false
+                  val edges2 = for (e <- edges0.toStream) yield {
+                    if (
+                      (e.predicate ==* MPredicates.Ident.Email) &&
+                      (e.nodeIds contains qs.email) &&
+                      !(e.info.flag contains true)
+                    ) {
+                      hasChangedEdge = true
+                      (MEdge.info composeLens MEdgeInfo.flag set Some(true))(e)
+                    } else {
+                      e
+                    }
+                  }
+                  if (!hasChangedEdge) {
+                    LOGGER.trace(s"$logPrefix Will add new email[${qs.email}] edge to node#${qs.nodeId.orNull}")
+                    val ee = MEdge(
+                      predicate = MPredicates.Ident.Email,
+                      nodeIds = Set( qs.email ),
+                      info = MEdgeInfo(
+                        flag = Some(true),
+                      )
+                    )
+                    ee #:: edges2
+                  } else {
+                    edges2
+                  }
+                }
+            }
+          }
+
+
+        } yield {
+          LOGGER.debug(s"$logPrefix Created ott#${mott.id}, updated node#${request.mnode.idOrNull}")
+          mott
+        }
+        dbAction.transactionally
+      }
+
+      for {
+        _ <- saveFut
+
+        res0 <- request.user.personIdOpt.fold [Future[Result]] {
+          // Юзер текуший не залогинен - отредиректить его на логин-форму.
+          Future.successful( Redirect(routes.Ident.loginFormPage()) )
+        }( identUtil.redirectUserSomewhere )
+      } yield {
+        res0
+          .flashing( FLASH.SUCCESS -> MsgCodes.`Changes.saved` )
       }
     }
   }

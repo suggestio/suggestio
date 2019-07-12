@@ -1,6 +1,5 @@
 package controllers
 
-import controllers.ident._
 import io.suggest.color.MColorData
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
@@ -19,7 +18,7 @@ import javax.inject.{Inject, Singleton}
 import models.mctx.Context
 import models.mlk.MNodeShowArgs
 import models.mproj.ICommonDi
-import models.req.{INodeReq, IReq}
+import models.req.IReq
 import models.usr._
 import play.api.data.Form
 import play.api.data.Forms._
@@ -28,15 +27,13 @@ import util.FormUtil
 import util.FormUtil._
 import util.acl._
 import util.adn.NodesUtil
-import util.ident.IdentUtil
 import util.img.{DynImgUtil, GalleryUtil, LogoUtil}
 import util.showcase.ShowcaseUtil
 import views.html.lk.adn._
 import views.html.lk.adn.invite.inviteInvalidTpl
-import views.html.lk.usr._
 import views.html.lk.{lkList => lkListTpl}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -46,11 +43,10 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class MarketLkAdn @Inject() (
-                              override val esModel                : EsModel,
+                              esModel                             : EsModel,
                               nodesUtil                           : NodesUtil,
                               scUtil                              : ShowcaseUtil,
-                              override val mNodes                 : MNodes,
-                              override val identUtil              : IdentUtil,
+                              mNodes                              : MNodes,
                               logoUtil                            : LogoUtil,
                               mItems                              : MItems,
                               galleryUtil                         : GalleryUtil,
@@ -59,19 +55,17 @@ class MarketLkAdn @Inject() (
                               isAdnNodeAdminOptOrAuth             : IsAdnNodeAdminOptOrAuth,
                               canUseNodeInvite                    : CanUseNodeInvite,
                               dynImgUtil                          : DynImgUtil,
-                              override val scryptUtil             : ScryptUtil,
-                              override val sioControllerApi       : SioControllerApi,
+                              scryptUtil                          : ScryptUtil,
+                              sioControllerApi                    : SioControllerApi,
                               mCommonDi                           : ICommonDi,
                               csrf                                : Csrf,
-                              implicit private val ec             : ExecutionContext,
                             )
   extends MacroLogsImpl
-  with ChangePwAction
 {
 
   import sioControllerApi._
   import LOGGER._
-  import mCommonDi.slick
+  import mCommonDi.{slick, ec}
   import slick.profile.api._
   import mItems.MItemsTable._
   import esModel.api._
@@ -332,35 +326,6 @@ class MarketLkAdn @Inject() (
           }
         }
       )
-    }
-  }
-
-
-  /** Рендер страницы редактирования профиля пользователя в рамках ЛК узла. */
-  def userProfileEdit(adnId: String, r: Option[String]) = csrf.AddToken {
-    isNodeAdmin(adnId, U.Lk).async { implicit request =>
-      _userProfileEdit(ChangePw.changePasswordFormM, r, Ok)
-    }
-  }
-
-  private def _userProfileEdit(form: Form[(String, String)], r: Option[String], rs: Status)
-                              (implicit request: INodeReq[_]): Future[Result] = {
-    request.user.lkCtxDataFut.map { implicit ctxData =>
-      val html = userProfileEditTpl(
-        mnode = request.mnode,
-        pf    = form,
-        r     = r
-      )
-      rs(html)
-    }
-  }
-
-  /** Сабмит формы смены пароля. */
-  def changePasswordSubmit(adnId: String, r: Option[String]) = csrf.Check {
-    isNodeAdmin(adnId).async { implicit request =>
-      _changePasswordSubmit(r) { formWithErrors =>
-        _userProfileEdit(formWithErrors, r, NotAcceptable)
-      }
     }
   }
 

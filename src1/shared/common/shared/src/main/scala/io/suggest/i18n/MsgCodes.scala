@@ -390,4 +390,7 @@ object MsgCodes {
   val `Invalid.password` = "Invalid.password"
   val `Inacceptable.password.format` = "Inacceptable.password.format"
 
+  val `Changes.saved` = "Changes.saved"
+  val `New.shop.created.fill.info` = "New.shop.created.fill.info"
+
 }

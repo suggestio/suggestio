@@ -21,7 +21,7 @@ import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.{MExtTarget, MExtTargets}
 import models.im.MImgT
-import models.madn.{AdnShownTypes, MNodeRegSuccess, NodeDfltColors}
+import models.madn.{AdnShownTypes, NodeDfltColors}
 import models.mext.MExtServicesJvm
 import models.mproj.ICommonDi
 import models.mwc.MWelcomeRenderArgs
@@ -70,15 +70,6 @@ final class NodesUtil @Inject() (
   /** Куда отправлять юзера, когда тот создал новый узел? */
   def userNodeCreatedRedirect(adnId: String): Call = {
     routes.LkAdnEdit.editNodePage( adnId )
-  }
-
-  /** Для рендера шаблона regSuccessTpl требуется собрать аргументы для рендера. */
-  def nodeRegSuccessArgs(mnode: MNode): MNodeRegSuccess = {
-    MNodeRegSuccess(
-      mnode,
-      userNodeCreatedRedirect( mnode.id.get ),
-      NODE_CREATED_SUCCESS_RDR_AFTER
-    )
   }
 
 

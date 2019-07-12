@@ -5,24 +5,20 @@ import io.suggest.auth.{AuthenticationException, AuthenticationResult}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModelDi
 import io.suggest.ext.svc.MExtService
+import io.suggest.i18n.MsgCodes
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.session.{CustomTtl, MSessionKeys}
 import io.suggest.util.logs.IMacroLogs
-import models.req.IReq
+import models.mctx.Context
 import models.usr._
-import play.api.data.Form
 import play.api.mvc._
-import play.twirl.api.Html
 import util.acl._
 import util.adn.INodesUtil
 import util.xplay.SetLangCookieUtil
-import util.FormUtil
 import util.ident.IIdentUtil
-import views.html.ident.reg._
-import views.html.ident.reg.ext._
 
 import scala.concurrent.Future
 
@@ -48,7 +44,7 @@ trait ExternalLogin
   val canConfirmIdpReg: CanConfirmIdpReg
 
   import sioControllerApi._
-  import mCommonDi.{ec, current, csrf}
+  import mCommonDi.{ec, current}
   import esModel.api._
   import mPersonIdentModel.api._
 
@@ -225,46 +221,26 @@ trait ExternalLogin
     }
   }
 
-  /** Маппинг формы подтверждения регистрации через id-провайдера. */
-  private def extRegConfirmFormM: ExtRegConfirmForm_t = {
-    Form(
-      "nodeName" -> FormUtil.nameM
-    )
-  }
 
   /**
    * Юзер, залогинившийся через провайдера, хочет создать ноду.
    * @return Страницу с колонкой подтверждения реги.
    */
-  def idpConfirm = csrf.AddToken {
-    canConfirmIdpReg() { implicit request =>
-      Ok( _idpConfirm( extRegConfirmFormM ) )
-    }
-  }
-
-  /** Общий код рендера idpConfig вынесен сюда. */
-  protected def _idpConfirm(form: ExtRegConfirmForm_t)(implicit request: IReq[_]): Html = {
-    confirmTpl(form)
-  }
-
-  /** Сабмит формы подтверждения регистрации через внешнего провайдера идентификации. */
-  def idpConfirmSubmit = csrf.Check {
+  def idpConfirm = {
     canConfirmIdpReg().async { implicit request =>
-      extRegConfirmFormM.bindFromRequest().fold(
-        {formWithErrors =>
-          LOGGER.debug("idpConfirmSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
-          NotAcceptable( _idpConfirm(formWithErrors) )
-        },
-        {nodeName =>
-          // Развернуть узел для юзера, отобразить страницу успехоты.
-          for {
-            mnode <- nodesUtil.createUserNode(name = nodeName, personId = request.user.personIdOpt.get)
-          } yield {
-            val args = nodesUtil.nodeRegSuccessArgs( mnode )
-            Ok( regSuccessTpl(args) )
-          }
-        }
-      )
+      // Развернуть узел для юзера, отобразить страницу успехоты.
+      implicit val ctx = implicitly[Context]
+      // TODO Здесь нужно создать шаг галочек: перс.данные, соглашение. Можно пропихнуть id-токен в lk-login-форму, чтобы только галочки отобразились.
+      for {
+        mnode <- nodesUtil.createUserNode(
+          name     = ctx.messages( MsgCodes.`My.node` ),
+          personId = request.user.personIdOpt.get
+        )
+      } yield {
+        // Отредиректить на созданный узел юзера.
+        Redirect( routes.LkAdnEdit.editNodePage( mnode.id.get ) )
+          .flashing( FLASH.SUCCESS -> MsgCodes.`New.shop.created.fill.info` )
+      }
     }
   }
 
@@ -278,5 +254,3 @@ trait ExternalLogin
   }
 
 }
-
-

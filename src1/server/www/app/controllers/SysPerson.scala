@@ -11,7 +11,6 @@ import models.mproj.ICommonDi
 import models.usr._
 import org.elasticsearch.search.sort.SortOrder
 import util.acl.{IsSu, IsSuPerson}
-import views.html.ident.recover.emailPwRecoverTpl
 import views.html.ident.reg.email.emailRegMsgTpl
 import views.html.sys1.market.adn._adnNodesListTpl
 import views.html.sys1.person._
@@ -86,14 +85,6 @@ class SysPerson @Inject() (
   def showRegEmail = csrf.AddToken {
     isSu() { implicit request =>
       Ok(emailRegMsgTpl(dummyEa))
-    }
-  }
-
-
-  /** Отрендерить email-сообщение восстановления пароля. */
-  def showRecoverEmail = csrf.AddToken {
-    isSu() { implicit request =>
-      Ok(emailPwRecoverTpl(dummyEa))
     }
   }
 

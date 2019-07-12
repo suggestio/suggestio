@@ -38,7 +38,7 @@ final class ErrorHandler @Inject() (
   with ITargetsEmpty
 {
 
-  private def getContext2(implicit rrh: IReqHdr): Context = {
+  def getContext2(implicit rrh: IReqHdr): Context = {
     contextFactory.create(rrh, implicitly, CtxData.empty)
   }
 

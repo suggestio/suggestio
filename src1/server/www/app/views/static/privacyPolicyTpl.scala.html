@@ -7,7 +7,10 @@
   <link rel="stylesheet" type="text/css" href='@cdn.asset("stylesheets/market/lk_new-design/lk.css")'/>
 }
 
-@content = {
+@market.marketBase(
+  title = "Политика конфиденциальности",
+  headAfter = Some(headAfter)
+) {
 
   <div class="body __responsive index-page_cnt">
 
@@ -190,9 +193,3 @@
   </div>
 
 }
-
-
-@market.marketBase(
-  title = "Политика конфиденциальности",
-  headAfter = Some(headAfter)
-)(content)

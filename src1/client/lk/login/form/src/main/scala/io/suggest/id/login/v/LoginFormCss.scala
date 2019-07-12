@@ -58,4 +58,9 @@ case class LoginFormCss() extends StyleSheet.Inline {
     backgroundColor.green
   )
 
+
+  val lkDiaRoot = style(
+    zIndex( 130 ).important,
+  )
+
 }

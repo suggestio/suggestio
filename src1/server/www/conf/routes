@@ -56,10 +56,6 @@ POST /lk/node/edit2/page/:nodeId        @controllers.LkAdnEdit.save(nodeId: MEsU
 GET  /lk/mads/form/*nodeKey             @controllers.LkAds.adsPage(nodeKey: RcvrKey)
 GET  /lk/mads/get/*nodeKey              @controllers.LkAds.getAds(nodeKey: RcvrKey, offset: Int, newAdId: Option[String] ?= None)
 
-## Редактирования профиля юзера из личного кабинета узла.
-GET  /lk/own/edit/:adnId                @controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
-POST /lk/own/pwchange/:adnId            @controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
-
 ## Размещение рекламы на внешних сервисах
 GET  /lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTarget(adnId)
 POST /lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTargetSubmit(adnId)
@@ -279,7 +275,6 @@ POST /sys/adn/inst/mads/:adnId           @controllers.SysMarket.installDfltMadsS
 ## sys/person
 GET  /sys/person                         @controllers.SysPerson.index
 GET  /sys/person/reg/email/show          @controllers.SysPerson.showRegEmail
-GET  /sys/person/recover/email/show      @controllers.SysPerson.showRecoverEmail
 GET  /sys/person/show/:personId          @controllers.SysPerson.showPerson(personId)
 GET  /sys/person/idents                  @controllers.SysPerson.allIdents(offset: Int ?= 0)
 
@@ -311,44 +306,25 @@ POST /sys/debug/dynimg/derivatives/del   @controllers.SysDebug.deleteAllDynImgDe
 
 ## ident v2: react-форма логина.
 ## Password change v2
+GET  /id                                @controllers.Ident.loginFormPage(e: io.suggest.id.login.ILoginFormPages ?= io.suggest.id.login.ILoginFormPages.Login.default)
+POST /id/login                     @controllers.Ident.epw2LoginSubmit(r: Option[String] ?= None)
+## Рега по паролю. Оптимизация: затолкать id капчи в ссылку, прописав его в cookie path.
+POST /id/reg/s0                         @controllers.Ident.regStep0Submit
+POST /id/reg/s1                         @controllers.Ident.epw2RegSubmit()
+POST /id/reg/s2                         @controllers.Ident.smsCodeCheck
+POST /id/reg/s3                         @controllers.Ident.regFinalSubmit
 GET  /id/pwch                           @controllers.Ident.pwChangeForm(onNode: Option[MEsUuId] ?= None)
 POST /id/pwch                           @controllers.Ident.pwChangeSubmit
-GET  /id                                @controllers.Ident.loginFormPage(e: io.suggest.id.login.ILoginFormPages ?= io.suggest.id.login.ILoginFormPages.Login.default)
-POST /id2/epw/login                     @controllers.Ident.epw2LoginSubmit(r: Option[String] ?= None)
-## Рега по паролю. Оптимизация: затолкать id капчи в ссылку, прописав его в cookie path.
-POST /id2/reg/s0                        @controllers.Ident.regStep0Submit
-POST /id2/reg/s1                        @controllers.Ident.epw2RegSubmit()
-POST /id2/reg/s2                        @controllers.Ident.smsCodeCheck
-POST /id2/reg/s3                        @controllers.Ident.regFinalSubmit
-## Ident v1
-GET  /id/push/:extService               @controllers.Ident.extServicePushGet(extService: io.suggest.ext.svc.MExtService)
-POST /id/push/:extService               @controllers.Ident.extServicePushPost(extService: io.suggest.ext.svc.MExtService)
-## Далее - нужно подчистить, удалив старую форму логина первого поколения.
-## ident: логины/логауты
-GET  /id0                               @controllers.Ident.mySioStartPage(r: Option[String] ?= None)
-GET  /id/epw/login                      @controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
-POST /id/epw/login                      @controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
 GET  /id/logout                         @controllers.Ident.logout
-## ident: Восстановление пароля.
-GET  /id/epw/recover                    @controllers.Ident.recoverPwForm
-POST /id/epw/recover                    @controllers.Ident.recoverPwFormSubmit
-GET  /id/epw/recover/sent               @controllers.Ident.recoverPwAccepted(email: String)
-GET  /id/epw/resetpw                    @controllers.Ident.recoverPwReturn(e: models.usr.MEmailRecoverQs)
-POST /id/epw/resetpw                    @controllers.Ident.pwResetSubmit(e: models.usr.MEmailRecoverQs)
-## ident: Сменить пароль
-GET  /id/epw/chpw                       @controllers.Ident.changePassword
-POST /id/epw/chpw                       @controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
-GET  /id/rdr/me/somewhere               @controllers.Ident.rdrUserSomewhere
-## ident: рега по email и паролю
-GET  /id/epw/reg                        @controllers.Ident.emailReg
-POST /id/epw/reg                        @controllers.Ident.emailRegSubmit
 GET  /id/epw/reg/return                 @controllers.Ident.emailReturn(e: models.usr.MEmailRecoverQs)
-POST /id/epw/reg/return                 @controllers.Ident.emailConfirmSubmit(e: models.usr.MEmailRecoverQs)
+## ident: редирект куда-нибудь
+GET  /id/rdr/me/somewhere               @controllers.Ident.rdrUserSomewhere
 ## ident: вход через внешнего провайдера
+GET  /id/push/:extService               @controllers.Ident.extServicePushGet(extService: io.suggest.ext.svc.MExtService)
 GET  /id/via/:extService                @controllers.Ident.idViaProvider(extService: io.suggest.ext.svc.MExtService, r: Option[String] ?= None)
 POST /id/via/:extService                @controllers.Ident.idViaProviderByPost(extService: io.suggest.ext.svc.MExtService, r: Option[String] ?= None)
+POST /id/push/:extService               @controllers.Ident.extServicePushPost(extService: io.suggest.ext.svc.MExtService)
 GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm
-POST /id/reg/ext/confirm                @controllers.Ident.idpConfirmSubmit
 
 ## compat
 GET  /app/session/keepalive             @controllers.Static.keepAliveSession

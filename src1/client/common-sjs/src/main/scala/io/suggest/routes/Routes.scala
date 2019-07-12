@@ -127,8 +127,6 @@ sealed trait IdentCtlRoutes extends js.Object {
 
   def loginFormPage(args: js.Object = js.native): Route = js.native
 
-  def mySioStartPage(): Route = js.native
-
   def rdrUserSomewhere(): Route = js.native
 
   def epw2LoginSubmit(r: js.UndefOr[String] = js.undefined): Route = js.native
