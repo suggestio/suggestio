@@ -1,6 +1,6 @@
 package io.suggest.spa
 
-import diode.data.{PendingBase, Pot}
+import diode.data.{FailedBase, PendingBase, Pot}
 import diode._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.err.ErrorConstants
@@ -79,6 +79,16 @@ object DiodeUtil {
       /** Свёрстка Try[T] поверх Pot[T]. */
       def withTry(tryRes: Try[T]): Pot[T] =
         tryRes.fold( pot.fail, pot.ready )
+
+      /** zero-instance доступ к exception без использования Option.
+        * @return null, если нет exception.
+        */
+      def exceptionOrNull: Throwable = {
+        pot match {
+          case failed: FailedBase => failed.exception
+          case _                  => null
+        }
+      }
 
     }
 

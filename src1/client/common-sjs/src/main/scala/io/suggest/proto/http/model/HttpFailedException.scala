@@ -1,6 +1,7 @@
 package io.suggest.proto.http.model
 
 import io.suggest.common.html.HtmlConstants.SPACE
+import io.suggest.text.StringUtil
 
 /**
  * Suggest.io
@@ -13,18 +14,24 @@ case class HttpFailedException(
                                resp   : Option[HttpResp] = None,
                                url    : String = null,
                                method : String = null,
-                               override val getCause: Throwable = null
+                               override val getCause: Throwable = null,
+                               errMessage: String = null,
                              )
   extends RuntimeException {
 
   override def getMessage: String = {
-    val urlStr = Option(url)
-      .getOrElse("")
-    val methodStr = Option(method).getOrElse("")
+    if (errMessage != null) {
+      errMessage
+    } else {
+      val urlStr = Option( url )
+        .fold("")( StringUtil.strLimitLen(_, 25) )
 
-    methodStr + SPACE +
-    urlStr + SPACE +
-    resp.fold("")(_.status + SPACE)
+      val methodStr = Option(method) getOrElse ""
+
+      resp.fold("")(r => r.status + SPACE) +
+        methodStr + SPACE +
+        urlStr
+    }
   }
 
   override final def toString = getMessage

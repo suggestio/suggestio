@@ -46,7 +46,7 @@ case class MPwNew(
   def isPasswordsMatch: Boolean =
     password1.value ==* password2.value
 
-  lazy val isPasswordMismatchShown: Boolean =
+  lazy val isPasswordsErrorShown: Boolean =
     showPwMisMatch && !isPasswordsMatch
 
   def canSubmit: Boolean = {

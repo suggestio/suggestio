@@ -5,7 +5,7 @@ import io.suggest.id.login.v.epw.EpwFormR
 import io.suggest.id.login.v.ext.ExtFormR
 import io.suggest.id.login.v.pwch.{PwChangeR, PwNewR}
 import io.suggest.id.login.v.reg.{Reg0CredsR, Reg1CaptchaR, Reg2SmsCodeR, Reg3CheckBoxesR, Reg4SetPasswordR, RegR}
-import io.suggest.id.login.v.stuff.{CheckBoxR, LoginProgressR, TextFieldR}
+import io.suggest.id.login.v.stuff.{CheckBoxR, ErrorSnackR, LoginProgressR, TextFieldR}
 import io.suggest.id.login.v.{LoginFormCss, LoginFormR, LoginFormSpaRouter}
 import japgolly.scalajs.react.React
 import japgolly.scalajs.react.extra.router.RouterCtl
@@ -24,6 +24,7 @@ class LoginFormModule {
   def loginFormRF =
     () => wire[LoginFormR]
 
+  lazy val errorSnackR = wire[ErrorSnackR]
   lazy val epwFormR = wire[EpwFormR]
   lazy val textFieldR = wire[TextFieldR]
   lazy val regR = wire[RegR]

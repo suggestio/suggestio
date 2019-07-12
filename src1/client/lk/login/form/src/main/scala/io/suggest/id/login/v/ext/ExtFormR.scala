@@ -72,7 +72,7 @@ class ExtFormR(
               ),
 
               // Прогрессбар ожидания:
-              loginProgressR( loginUrlReqPendingSomeProxy ),
+              loginProgressR.component( loginUrlReqPendingSomeProxy ),
             )
           }
         },

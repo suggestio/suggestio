@@ -1,10 +1,13 @@
 package io.suggest.id.login.v.reg
 
 import com.materialui.{MuiFormGroup, MuiFormGroupProps}
-import diode.react.ModelProxy
+import diode.FastEq
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.v.LoginFormCss
+import io.suggest.id.login.v.stuff.ErrorSnackR
 import io.suggest.lk.r.captcha.CaptchaFormR
+import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -18,13 +21,18 @@ import scalacss.ScalaCssReact._
   */
 class Reg1CaptchaR(
                     captchaFormR       : CaptchaFormR,
+                    errorSnackR        : ErrorSnackR,
                     loginFormCssCtx    : React.Context[LoginFormCss],
                   ) {
 
+  case class State(
+                    submitReqExC : ReactConnectProxy[Throwable],
+                  )
+
   type Props = ModelProxy[MReg1Captcha]
 
-  class Backend($: BackendScope[Props, Unit]) {
-    def render(p: Props): VdomElement = {
+  class Backend($: BackendScope[Props, State]) {
+    def render(p: Props, s: State): VdomElement = {
       MuiFormGroup(
         new MuiFormGroupProps {
           override val row = true
@@ -51,6 +59,8 @@ class Reg1CaptchaR(
           }
         },
 
+        s.submitReqExC { errorSnackR.component.apply },
+
       )
     }
   }
@@ -58,6 +68,11 @@ class Reg1CaptchaR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
+    .initialStateFromProps { propsProxy =>
+      State(
+        submitReqExC = propsProxy.connect( _.submitReq.exceptionOrNull )( FastEq.AnyRefEq ),
+      )
+    }
     .renderBackend[Backend]
     .build
 

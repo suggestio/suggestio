@@ -52,4 +52,10 @@ case class LoginFormCss() extends StyleSheet.Inline {
     marginLeft( 20.px )
   )
 
+
+  /** Цвет фона для успешных сообщений. */
+  val bgColorSuccess = style(
+    backgroundColor.green
+  )
+
 }

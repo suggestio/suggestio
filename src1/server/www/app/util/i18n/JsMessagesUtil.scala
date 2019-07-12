@@ -440,6 +440,8 @@ class JsMessagesUtil @Inject() (
     MC.`Type.previous.signup.data.to.start.password.recovery` ::
     MC.`Forgot.password` ::
     MC.`Password.change` ::
+    MC.`New.password.saved` ::
+    MC.`Inacceptable.password.format` ::
     Nil
   }
 

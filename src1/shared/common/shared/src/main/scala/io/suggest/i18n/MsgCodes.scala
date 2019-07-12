@@ -386,5 +386,8 @@ object MsgCodes {
   val `Type.previous.signup.data.to.start.password.recovery` = "Type.previous.signup.data.to.start.password.recovery"
   val `Forgot.password` = "Forgot.password"
   val `Password.change` = "Password.change"
+  val `New.password.saved` = "New.password.saved"
+  val `Invalid.password` = "Invalid.password"
+  val `Inacceptable.password.format` = "Inacceptable.password.format"
 
 }

@@ -1,13 +1,16 @@
 package io.suggest.id.login.v.reg
 
 import com.materialui.{MuiFormGroup, MuiFormGroupProps, MuiFormLabel}
+import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.login.m.reg.MRegS
+import io.suggest.id.login.v.stuff.ErrorSnackR
 import io.suggest.lk.r.sms.SmsCodeFormR
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react.{BackendScope, React, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.spa.DiodeUtil.Implicits._
 
 /**
   * Suggest.io
@@ -17,14 +20,15 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class Reg2SmsCodeR(
                     smsCodeFormR        : SmsCodeFormR,
+                    errorSnackR         : ErrorSnackR,
                     commonReactCtxP     : React.Context[MCommonReactCtx],
                   ) {
 
   type Props = ModelProxy[MRegS]
 
-
   case class State(
                     phoneNumberC      : ReactConnectProxy[String],
+                    submitReqExC      : ReactConnectProxy[Throwable],
                   )
 
 
@@ -58,6 +62,9 @@ class Reg2SmsCodeR(
           }
         }( smsCodeFormR.component.apply )(implicitly, OptFastEq.Wrapped(smsCodeFormR.SmsCodeFormRPropsValFastEq)),
 
+        // Рендер ошибки запроса
+        s.submitReqExC { errorSnackR.component.apply },
+
       )
     }
 
@@ -69,6 +76,7 @@ class Reg2SmsCodeR(
     .initialStateFromProps { propsProxy =>
       State(
         phoneNumberC = propsProxy.connect(_.s0Creds.phone.value)( FastEqUtil.RefValFastEq ),
+        submitReqExC = propsProxy.connect(_.s2SmsCode.submitReq.exceptionOrNull)( FastEq.AnyRefEq ),
       )
     }
     .renderBackend[Backend]

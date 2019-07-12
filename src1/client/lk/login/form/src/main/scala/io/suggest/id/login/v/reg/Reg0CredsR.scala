@@ -1,6 +1,6 @@
 package io.suggest.id.login.v.reg
 
-import com.materialui.{Mui, MuiColorTypes, MuiFormGroup, MuiFormGroupProps, MuiIconButton, MuiIconButtonProps, MuiSnackBar, MuiSnackBarContent, MuiSnackBarContentProps, MuiSnackBarProps}
+import com.materialui.{Mui, MuiColorTypes, MuiFormGroup, MuiFormGroupProps, MuiIconButton, MuiIconButtonProps, MuiSnackBarContent, MuiSnackBarContentProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
@@ -8,8 +8,9 @@ import io.suggest.i18n.{MCommonReactCtx, MsgCodes}
 import io.suggest.id.IdentConst
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.{PwReset, RegEmailBlur, RegEmailEdit, RegPhoneBlur, RegPhoneEdit}
-import io.suggest.id.login.v.stuff.TextFieldR
+import io.suggest.id.login.v.stuff.{ErrorSnackR, TextFieldR}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.spa.DiodeUtil.Implicits._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaComponent}
 
@@ -21,6 +22,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, React, ReactEvent, ScalaC
   */
 class Reg0CredsR(
                   textFieldR      : TextFieldR,
+                  errorSnackR     : ErrorSnackR,
                   commonReactCtxP : React.Context[MCommonReactCtx],
                 ) {
 
@@ -28,7 +30,8 @@ class Reg0CredsR(
 
 
   case class State(
-                    pwRecoverMsgShownSome       : ReactConnectProxy[Some[Boolean]],
+                    pwRecoverMsgShownSomeC      : ReactConnectProxy[Some[Boolean]],
+                    submitReqExC                : ReactConnectProxy[Throwable],
                   )
 
   class Backend( $: BackendScope[Props, State] ) {
@@ -48,31 +51,27 @@ class Reg0CredsR(
 
         // Подсказка о восстановлении пароля через регистрацию.
         {
-          val _msg = commonReactCtxP.consume { crCtx =>
-            crCtx.messages( MsgCodes.`Type.previous.signup.data.to.start.password.recovery` )
-          }
-          val _close = MuiIconButton(
-            new MuiIconButtonProps {
-              override val color = MuiColorTypes.inherit
-              override val onClick = _onClosePwResetMsgClickCbF
+          lazy val msgSnack = {
+            val _msg = commonReactCtxP.consume { crCtx =>
+              crCtx.messages( MsgCodes.`Type.previous.signup.data.to.start.password.recovery` )
             }
-          )(
-            Mui.SvgIcons.Close()()
-          )
-          val msgSnack = MuiSnackBarContent(
-            new MuiSnackBarContentProps {
-              override val action  = _close.rawNode
-              override val message = _msg.rawNode
-            }
-          )
-          s.pwRecoverMsgShownSome { pwRecoverMsgShownSomeProxy =>
-            MuiSnackBar(
-              new MuiSnackBarProps {
-                override val open = pwRecoverMsgShownSomeProxy.value.value
+            val _close = MuiIconButton(
+              new MuiIconButtonProps {
+                override val color = MuiColorTypes.inherit
+                override val onClick = _onClosePwResetMsgClickCbF
               }
             )(
-              msgSnack
+              Mui.SvgIcons.Close()()
             )
+            MuiSnackBarContent(
+              new MuiSnackBarContentProps {
+                override val action  = _close.rawNode
+                override val message = _msg.rawNode
+              }
+            )
+          }
+          s.pwRecoverMsgShownSomeC { pwRecoverMsgShownSomeProxy =>
+            ReactCommonUtil.maybeEl( pwRecoverMsgShownSomeProxy.value.value )( msgSnack )
           }
         },
 
@@ -112,6 +111,10 @@ class Reg0CredsR(
             )
           }(textFieldR.apply)(implicitly, textFieldR.EpwTextFieldPropsValFastEq)
         },
+
+        // Рендер ошибки запроса токена нулевого шага:
+        s.submitReqExC { errorSnackR.component.apply },
+
       )
     }
 
@@ -123,9 +126,11 @@ class Reg0CredsR(
     .initialStateFromProps { propsProxy =>
       State(
 
-        pwRecoverMsgShownSome = propsProxy.connect { props =>
+        pwRecoverMsgShownSomeC = propsProxy.connect { props =>
           OptionUtil.SomeBool( props.pwRecoverMsg )
         }( FastEq.AnyRefEq ),
+
+        submitReqExC = propsProxy.connect( _.submitReq.exceptionOrNull )( FastEq.AnyRefEq ),
 
       )
     }

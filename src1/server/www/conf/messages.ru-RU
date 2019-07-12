@@ -120,6 +120,8 @@ Confirm.new.password=Подтвердите новый пароль
 Confirm.password=Подтвердите пароль
 New.password=Новый пароль
 New.password.saved=Новый пароль сохранен.
+Invalid.password=Неправильный пароль
+Inacceptable.password.format=Недопустимый формат пароля
 
 Color=Цвет
 Colors=Цвета

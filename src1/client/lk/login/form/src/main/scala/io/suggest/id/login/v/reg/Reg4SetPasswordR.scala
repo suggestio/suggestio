@@ -1,14 +1,16 @@
 package io.suggest.id.login.v.reg
 
 import com.materialui.{MuiFormGroup, MuiFormGroupProps}
-import diode.react.ModelProxy
+import diode.FastEq
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.i18n.MsgCodes
 import io.suggest.id.IdentConst
 import io.suggest.id.login.m.MLoginRootS
 import io.suggest.id.login.v.pwch.PwNewR
-import io.suggest.id.login.v.stuff.TextFieldR
+import io.suggest.id.login.v.stuff.{ErrorSnackR, TextFieldR}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.spa.DiodeUtil.Implicits._
 
 /**
   * Suggest.io
@@ -18,16 +20,20 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class Reg4SetPasswordR(
                         pwNewR          : PwNewR,
+                        errorSnackR     : ErrorSnackR,
                         textFieldR      : TextFieldR,
                       ) {
 
   type Props_t = MLoginRootS
   type Props = ModelProxy[Props_t]
 
+  case class State(
+                    submitReqExC      : ReactConnectProxy[Throwable],
+                  )
 
-  class Backend($: BackendScope[Props, Unit]) {
+  class Backend($: BackendScope[Props, State]) {
 
-    def render(propsProxy: Props): VdomElement = {
+    def render(propsProxy: Props, s: State): VdomElement = {
       <.div(
 
         MuiFormGroup(
@@ -62,6 +68,8 @@ class Reg4SetPasswordR(
           )
         }(pwNewR.component.apply)(implicitly, pwNewR.PwNewRPropsValFastEq),
 
+        s.submitReqExC { errorSnackR.component.apply },
+
       )
     }
 
@@ -70,7 +78,11 @@ class Reg4SetPasswordR(
 
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
-    .stateless
+    .initialStateFromProps { propsProxy =>
+      State(
+        submitReqExC = propsProxy.connect(_.reg.s4SetPassword.submitReq.exceptionOrNull)( FastEq.AnyRefEq ),
+      )
+    }
     .renderBackend[Backend]
     .build
 

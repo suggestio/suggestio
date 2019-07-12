@@ -12,9 +12,14 @@ import play.api.libs.functional.syntax._
   */
 object MPwChangeForm {
 
+  object Fields {
+    val PW_OLD_FN = "o"
+    val PW_NEW_FN = "n"
+  }
+
   implicit def mPwChangeFormJson: OFormat[MPwChangeForm] = (
-    (__ \ "o").format[String] and
-    (__ \ "n").format[String]
+    (__ \ Fields.PW_OLD_FN).format[String] and
+    (__ \ Fields.PW_NEW_FN).format[String]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MPwChangeForm] = UnivEq.derive

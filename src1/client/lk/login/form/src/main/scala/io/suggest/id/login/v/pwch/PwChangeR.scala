@@ -1,8 +1,9 @@
 package io.suggest.id.login.v.pwch
 
-import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps}
+import com.materialui.{MuiButton, MuiButtonProps, MuiButtonSizes, MuiDialog, MuiDialogActions, MuiDialogContent, MuiDialogMaxWidths, MuiDialogProps, MuiDialogTitle, MuiFormControl, MuiFormControlProps, MuiFormGroup, MuiFormGroupProps, MuiSnackBarContent, MuiSnackBarContentClasses, MuiSnackBarContentProps}
 import diode.FastEq
 import diode.data.Pot
+import diode.react.ReactPot._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
@@ -12,9 +13,10 @@ import io.suggest.id.IdentConst
 import io.suggest.id.login.m.pwch.MPwChangeRootS
 import io.suggest.id.login.m.{PasswordBlur, RegNextClick, SetPassword}
 import io.suggest.id.login.v.LoginFormCss
-import io.suggest.id.login.v.stuff.{LoginProgressR, TextFieldR}
-import io.suggest.react.ReactDiodeUtil
-import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent}
+import io.suggest.id.login.v.stuff.{ErrorSnackR, LoginProgressR, TextFieldR}
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.spa.DiodeUtil.Implicits._
+import japgolly.scalajs.react.{BackendScope, Callback, React, ScalaComponent, ReactEvent}
 import japgolly.scalajs.react.vdom.html_<^._
 
 import scala.scalajs.js
@@ -29,6 +31,7 @@ class PwChangeR (
                   textFieldR            : TextFieldR,
                   pwNewR                : PwNewR,
                   loginProgressR        : LoginProgressR,
+                  errorSnackR           : ErrorSnackR,
                   commonReactCtxProv    : React.Context[MCommonReactCtx],
                   loginFormCssCtx       : React.Context[LoginFormCss],
                 ) {
@@ -40,23 +43,17 @@ class PwChangeR (
 
   case class State(
                     loginFormCssC           : ReactConnectProxy[LoginFormCss],
-                    isSubmitPendingSomeC    : ReactConnectProxy[Some[Boolean]],
                     submitEnabledSomeC      : ReactConnectProxy[Some[Boolean]],
+                    submitReqC              : ReactConnectProxy[Pot[None.type]],
                   )
 
 
   class Backend($: BackendScope[Props, State]) {
 
-    /*
-    private def _onCancelClick(e: ReactEvent): Callback =
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, RegBackClick)
-    private val _onCancelClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onCancelClick )
-    */
-
-    private val _onSaveClick: Callback = //(e: ReactEvent): Callback =
-      ReactDiodeUtil.dispatchOnProxyScopeCB($, RegNextClick)
-    //private val _onSaveClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onSaveClick )
-
+    private def _onSaveClick(e: ReactEvent): Callback = {
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, RegNextClick) >>
+      ReactCommonUtil.preventDefaultCB(e)
+    }
 
     def render(p: Props, s: State): VdomElement = {
 
@@ -112,11 +109,40 @@ class PwChangeR (
             )
           }(pwNewR.component.apply)(implicitly, pwNewR.PwNewRPropsValFastEq),
 
-          // Прогресс-бар ожидания...
-          s.isSubmitPendingSomeC { loginProgressR.component.apply },
+          {
+            lazy val successMsg = commonReactCtxProv.consume { crCtx =>
+              crCtx.messages( MsgCodes.`New.password.saved` )
+            }
+            // Рендер сообщения о том, что новый пароль успешно сохранён.
+            loginFormCssCtx.consume { lfCssCtx =>
+              s.submitReqC { submitReqProxy =>
+                val submitReq = submitReqProxy.value
+                <.div(
 
-          // Рендер ошибки сохранения нового пароля.
+                  // Прогресс-бар ожидания...
+                  submitReqProxy.wrap { sr => OptionUtil.SomeBool(sr.isPending) }( loginProgressR.component.apply )(implicitly, FastEq.AnyRefEq),
 
+                  // Сохранение удалось.
+                  submitReq.renderReady { _ =>
+                    val cssClasses = new MuiSnackBarContentClasses {
+                      override val root = lfCssCtx.bgColorSuccess.htmlClass
+                    }
+                    MuiSnackBarContent {
+                      new MuiSnackBarContentProps {
+                        override val classes = cssClasses
+                        override val message = successMsg.rawNode
+                      }
+                    }
+                  },
+
+                  // Рендер ошибки сохранения:
+                  submitReqProxy.wrap(_.exceptionOrNull)( errorSnackR.component.apply )(implicitly, FastEq.AnyRefEq),
+
+                )
+              }
+            }
+
+          },
 
         )
       )
@@ -177,7 +203,7 @@ class PwChangeR (
 
         // Перехват сабмита в форме.
         <.form(
-          ^.onSubmit --> _onSaveClick,
+          ^.onSubmit ==> _onSaveClick,
           dialogContent,
           dialogActions,
         ),
@@ -205,13 +231,11 @@ class PwChangeR (
 
         loginFormCssC = propsProxy.connect(_.formCss)( FastEq.AnyRefEq ),
 
-        isSubmitPendingSomeC = propsProxy.connect { mroot =>
-          OptionUtil.SomeBool( mroot.form.submitReq.isPending )
-        }( FastEq.AnyRefEq ),
-
         submitEnabledSomeC = propsProxy.connect { mroot =>
           OptionUtil.SomeBool( mroot.form.canSubmit )
         },
+
+        submitReqC = propsProxy.connect(_.form.submitReq)( FastEq.AnyRefEq ),
 
       )
     }

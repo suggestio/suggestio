@@ -50,6 +50,4 @@ class LoginProgressR(
     }
     .build
 
-  def apply( isShownSomeProxy: Props ) = component( isShownSomeProxy )
-
 }

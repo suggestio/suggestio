@@ -5,6 +5,7 @@ import io.suggest.common.html.HtmlConstants.`.`
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
  * Suggest.io
@@ -88,21 +89,28 @@ object ErrorConstants {
 
 
 /** Exception, выстреливаемый из assertArg(). */
-case class MCheckException(
-                            override val getMessage  : String,
-                            fields                   : Set[String]         = Set.empty,
-                          )
+final case class MCheckException(
+                                  override val getMessage  : String,
+                                  fields                   : Seq[String]         = Nil,
+                                  localizedMessage         : Option[String]      = None,
+                                )
   extends IllegalArgumentException
+{
+  override def getLocalizedMessage: String =
+    localizedMessage getOrElse super.getLocalizedMessage
+}
+
 object MCheckException {
 
   /** Поддержка JSON. */
   implicit def checkExceptionJson: OFormat[MCheckException] = (
     (__ \ "m").format[String] and
-    (__ \ "f").formatNullable[Set[String]]
-      .inmap[Set[String]](
-        EmptyUtil.opt2ImplEmpty1F( Set.empty ),
+    (__ \ "f").formatNullable[Seq[String]]
+      .inmap[Seq[String]](
+        EmptyUtil.opt2ImplEmpty1F( Nil ),
         { xs => if (xs.isEmpty) None else Some(xs) }
-      )
+      ) and
+    (__ \ "l").formatNullable[String]
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MCheckException] = UnivEq.derive

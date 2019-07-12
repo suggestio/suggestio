@@ -1,6 +1,7 @@
 package io.suggest.id.login.c.pwch
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import io.suggest.err.MCheckException
 import io.suggest.id.login.c.IIdentApi
 import io.suggest.id.login.m.{PwChangeSubmitRes, RegNextClick}
 import io.suggest.id.login.m.pwch.{MPwChangeS, MPwNew}
@@ -70,19 +71,31 @@ class PwChangeAh[M](
         noChange
 
       } else {
-        val submitReq2 = v0.submitReq.withTry( m.tryRes )
-
-        val v2 = if (submitReq2.isFailed) {
-          // Просто отрендерить ошибку
-          MPwChangeS.submitReq
-            .modify( _.withTry(m.tryRes) )(v0)
-        } else {
-          v0.copy(
-            pwOld     = MTextFieldS.empty,
-            pwNew     = MPwNew.empty,
-            submitReq = submitReq2,
-          )
-        }
+        val v2 = m.tryRes.fold(
+          {ex =>
+            var updAccF = MPwChangeS.submitReq.modify( _.withTry(m.tryRes) )
+            ex match {
+              case mce: MCheckException =>
+                // Отрендерить экзепшен
+                if (mce.fields contains[String] MPwChangeForm.Fields.PW_OLD_FN)
+                  updAccF = updAccF andThen (MPwChangeS.pwOld composeLens MTextFieldS.isValid set false)
+                if (mce.fields contains[String] MPwChangeForm.Fields.PW_NEW_FN) {
+                  val isValidSetF = MTextFieldS.isValid set false
+                  updAccF = updAccF andThen
+                    (MPwChangeS.pwNew modify (MPwNew.password1.modify(isValidSetF) andThen MPwNew.password2.modify(isValidSetF)))
+                }
+              case _ =>
+            }
+            updAccF( v0 )
+          },
+          {_ =>
+            v0.copy(
+              pwOld     = MTextFieldS.empty,
+              pwNew     = MPwNew.empty,
+              submitReq = v0.submitReq.withTry( m.tryRes ),
+            )
+          }
+        )
 
         // Отредиректить юзера куда-нибудь? Или просто сделать "пароль изменён".
         updated( v2 )

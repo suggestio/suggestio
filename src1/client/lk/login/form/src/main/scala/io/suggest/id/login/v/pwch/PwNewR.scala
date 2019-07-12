@@ -61,7 +61,7 @@ class PwNewR (
         propsProxy.wrap { p =>
           textFieldR.PropsVal(
             state       = p.pwNew.password1,
-            hasError    = p.pwNew.isPasswordMismatchShown,
+            hasError    = p.pwNew.isPasswordsErrorShown,
             mkAction    = Some( SetPasswordEdit(_: String, isRetype = false) ),
             isPassword  = true,
             inputName   = IdentConst.Login.PASSWORD_FN,    // По идее, вообще необязательно. По идее - "password"
@@ -78,7 +78,7 @@ class PwNewR (
         propsProxy.wrap { p =>
           textFieldR.PropsVal(
             state       = p.pwNew.password2,
-            hasError    = p.pwNew.isPasswordMismatchShown,
+            hasError    = p.pwNew.isPasswordsErrorShown,
             mkAction    = Some( SetPasswordEdit(_: String, isRetype = true) ),
             isPassword  = true,
             inputName   = "",

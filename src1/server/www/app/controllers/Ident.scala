@@ -1160,12 +1160,21 @@ class Ident @Inject() (
           .validate { form0 =>
             Either.cond(
               test  = Validators.isPasswordValid( form0.pwNew ),
-              left  = NotAcceptable("password.invalid"),
+              left  = {
+                val msgCode = MsgCodes.`Inacceptable.password.format`
+                val ex = MCheckException(
+                  msgCode,
+                  fields = MPwChangeForm.Fields.PW_NEW_FN :: Nil,
+                )
+                NotAcceptable( Json.toJson(ex) )
+              },
               right = form0
             )
           }
       ) { implicit request =>
         lazy val logPrefix = s"pwChangeSubmit(u#${request.user.personIdOpt.orNull})#${System.currentTimeMillis()}:"
+
+        implicit lazy val ctx = implicitly[Context]
 
         // 2018-02-27 Менять пароль может только юзер, уже имеющий логин. Остальные - идут на госуслуги.
         val resOkFut = for {
@@ -1186,7 +1195,12 @@ class Ident @Inject() (
             val r = oldPwEdgeOpt.nonEmpty
             if (!r) {
               LOGGER.warn(s"$logPrefix Current password does not match to pw.typed by user.")
-              throw new MCheckException("password.not.match", fields = Set())
+              val msgCode = MsgCodes.`Invalid.password`
+              throw new MCheckException(
+                getMessage       = msgCode,
+                fields           = MPwChangeForm.Fields.PW_OLD_FN :: Nil,
+                localizedMessage = Some( ctx.messages(msgCode) )
+              )
             }
             r
           }

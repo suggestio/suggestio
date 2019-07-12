@@ -120,6 +120,8 @@ Confirm.new.password=Confirm new password
 Confirm.password=Confirm password
 New.password=New password
 New.password.saved=New password saved.
+Invalid.password=Invalid password
+Inacceptable.password.format=Impossible password format
 
 Color=Color
 Colors=Colors

@@ -1,6 +1,7 @@
 package io.suggest.id.login.m.reg
 
 import diode.FastEq
+import diode.data.Pot
 import io.suggest.id.login.m.reg.step0.MReg0Creds
 import io.suggest.id.login.m.reg.step1.MReg1Captcha
 import io.suggest.id.login.m.reg.step2.MReg2SmsCode
@@ -60,11 +61,15 @@ case class MRegS(
                   s4SetPassword  : MReg4SetPassword    = MReg4SetPassword.empty,
                 ) {
 
-  def hasSubmitReqPending: Boolean = {
-    s0Creds.submitReq.isPending ||
-    s1Captcha.submitReq.isPending ||
-    s2SmsCode.submitReq.isPending ||
-    s4SetPassword.submitReq.isPending
+  def allSubmitReqs: List[Pot[_]] = {
+    s0Creds.submitReq ::
+    s1Captcha.submitReq ::
+    s2SmsCode.submitReq ::
+    s4SetPassword.submitReq ::
+    Nil
   }
+
+  def hasSubmitReqPending: Boolean =
+    allSubmitReqs.exists(_.isPending)
 
 }

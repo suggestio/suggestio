@@ -54,8 +54,13 @@ class SetNewPwAh[M](
     case NewPasswordBlur =>
       val v0 = value
 
-      // Провалидировать оба password-поля:
-      (for {
+      // Если password mismatch, то подсветить несовпадение паролей.
+      val updAccF0 = if (!v0.showPwMisMatch && !v0.isPasswordsMatch)
+        MPwNew.showPwMisMatch.set(true) #:: Stream.empty
+      else
+        Stream.empty
+
+      val validUpdFs = for {
         lens <- (MPwNew.password1 #:: MPwNew.password2 #:: Stream.empty)
         pw0 = lens.get(v0)
         isValid = Validators.isPasswordValid( pw0.value )
@@ -64,7 +69,10 @@ class SetNewPwAh[M](
         lens
           .composeLens(MTextFieldS.isValid)
           .set(isValid)
-      })
+      }
+
+      // Провалидировать оба password-поля:
+      (validUpdFs #::: updAccF0)
         .reduceOption( _ andThen _ )
         .fold(noChange) { updF =>
           val v2 = updF(v0)

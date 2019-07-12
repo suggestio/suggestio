@@ -82,14 +82,11 @@ class MdrUtil @Inject() (
     val confKey = "mdr.notify.emails"
     val res = configuration.getOptional[Seq[String]](confKey)
       .filter(_.nonEmpty)
-      .fold {
+      .getOrElse {
         LOGGER.info(s"$confKey is undefined. Using all superusers as moderators.")
         current.injector
           .instanceOf[MSuperUsers]
           .SU_EMAILS
-      } { notifyEmails =>
-        LOGGER.trace(s"Successfully aquired moderators emails from $confKey")
-        notifyEmails
       }
     LOGGER.info(s"Moderators are: ${res.mkString(", ")}")
     res
