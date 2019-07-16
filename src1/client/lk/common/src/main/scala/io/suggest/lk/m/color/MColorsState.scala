@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.color.{MColorData, MHistogram}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -35,6 +36,10 @@ object MColorsState {
       cps = cps.slice(0, PRESETS_LEN_MAX)
     cps
   }
+
+  val colorPresets  = GenLens[MColorsState](_.colorPresets)
+  val histograms    = GenLens[MColorsState](_.histograms)
+  val picker        = GenLens[MColorsState](_.picker)
 
 }
 

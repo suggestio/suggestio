@@ -3,6 +3,7 @@ package io.suggest.ad.edit.m.layout
 import diode.FastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -24,6 +25,9 @@ object MLayoutS {
     }
   }
 
+  val rightPanelTop = GenLens[MLayoutS](_.rightPanelTop)
+  val rightPanelY   = GenLens[MLayoutS](_.rightPanelY)
+
 }
 
 
@@ -34,8 +38,4 @@ object MLayoutS {
 case class MLayoutS(
                      rightPanelTop  : Int              = 90,
                      rightPanelY    : Option[Int]      = None
-                   ) {
-
-  def withRightPanelY(rightPanelY: Option[Int]) = copy(rightPanelY = rightPanelY)
-
-}
+                   )

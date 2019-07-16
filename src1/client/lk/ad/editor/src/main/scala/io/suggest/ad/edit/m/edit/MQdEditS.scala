@@ -5,6 +5,7 @@ import diode.FastEq
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.QuillUnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -23,6 +24,9 @@ object MQdEditS {
   }
 
   @inline implicit def univEq: UnivEq[MQdEditS] = UnivEq.derive
+
+  val initDelta = GenLens[MQdEditS](_.initDelta)
+  val realDelta = GenLens[MQdEditS](_.realDelta)
 
 }
 

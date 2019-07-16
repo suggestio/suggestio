@@ -7,6 +7,7 @@ import io.suggest.img.MImgFmt
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.scalaz.ScalazUtil
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.syntax.apply._
@@ -21,7 +22,7 @@ import scalaz.{Validation, ValidationNel}
 object MJdEdgeId {
 
   /** Поддержка play-json. */
-  implicit val mJdEdgePtrFormat: OFormat[MJdEdgeId] = {
+  implicit def mJdEdgePtrFormat: OFormat[MJdEdgeId] = {
     val oldJdEdgeIdReads = (__ \ "i").read[EdgeUid_t]
 
     val jdEdgeFmt0: OFormat[MJdEdgeId] = (
@@ -92,14 +93,18 @@ object MJdEdgeId {
     )(apply _)
   }
 
+  val edgeUid       = GenLens[MJdEdgeId](_.edgeUid)
+  val outImgFormat  = GenLens[MJdEdgeId](_.outImgFormat)
+  val crop          = GenLens[MJdEdgeId](_.crop)
+
 }
 
 
 /** Класс модели данных по картинке и её модификациям.
   *
   * @param edgeUid Данные доступа к эджу изображения.
-  * @param dynFormat Выходной формат рендера картинки.
-  *                  Скопипасчен как обязательный, хотя может быть лучше его опциональным сделать? Вопрос...
+  * @param outImgFormat Выходной формат рендера картинки.
+  *                     Скопипасчен как обязательный, хотя может быть лучше его опциональным сделать? Вопрос...
   * @param crop Кроп текущего изображения, если есть.
   */
 case class MJdEdgeId(

@@ -6,9 +6,9 @@ import io.suggest.err.ErrorConstants
 import io.suggest.math.MathConst
 import io.suggest.scalaz.ScalazUtil
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-
 import scalaz.{Validation, ValidationNel}
 import scalaz.syntax.apply._
 
@@ -83,6 +83,11 @@ object MColorData {
     _validateHexCode(mcd.code)
       .map { MColorData(_) }
   }
+
+  val code    = GenLens[MColorData](_.code)
+  val rgb     = GenLens[MColorData](_.rgb)
+  val freqPc  = GenLens[MColorData](_.freqPc)
+  val count   = GenLens[MColorData](_.count)
 
 }
 

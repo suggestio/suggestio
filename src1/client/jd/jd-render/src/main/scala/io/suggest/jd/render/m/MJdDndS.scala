@@ -5,6 +5,7 @@ import io.suggest.common.empty.EmptyProduct
 import io.suggest.scalaz.NodePath_t
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -24,6 +25,8 @@ object MJdDndS {
   }
 
   @inline implicit def univEq: UnivEq[MJdDndS] = UnivEq.derive
+
+  val jdt = GenLens[MJdDndS](_.jdt)
 
 }
 

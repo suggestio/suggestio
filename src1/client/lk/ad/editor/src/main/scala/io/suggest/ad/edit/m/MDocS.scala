@@ -8,6 +8,7 @@ import io.suggest.jd.render.m.MJdArgs
 import io.suggest.lk.m.color.MColorsState
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -30,6 +31,12 @@ object MDocS {
 
   @inline implicit def univEq: UnivEq[MDocS] = UnivEq.derive
 
+  val jdArgs = GenLens[MDocS](_.jdArgs)
+  val qdEdit = GenLens[MDocS](_.qdEdit)
+  val stripEd = GenLens[MDocS](_.stripEd)
+  val slideBlocks = GenLens[MDocS](_.slideBlocks)
+  val colorsState = GenLens[MDocS](_.colorsState)
+
 }
 
 
@@ -51,16 +58,10 @@ case class MDocS(
                   colorsState   : MColorsState                  = MColorsState.empty
                 ) {
 
-  def withJdArgs(jdArgs: MJdArgs) = copy(jdArgs = jdArgs)
-
   def withQdEdit(qdEdit: Option[MQdEditS]) = copy(qdEdit = qdEdit)
   def withOutQdEdit = if (qdEdit.nonEmpty) withQdEdit(None) else this
 
   def withStripEd(stripEd: Option[MStripEdS]) = copy(stripEd = stripEd)
   def withOutStripEd = if (stripEd.nonEmpty) withStripEd(None) else this
-
-  def withColorsState(colorsState: MColorsState) = copy(colorsState = colorsState)
-
-  def withSlideBlocks(slideBlocks: MSlideBlocks) = copy(slideBlocks = slideBlocks)
 
 }

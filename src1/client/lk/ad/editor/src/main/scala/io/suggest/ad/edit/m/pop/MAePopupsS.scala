@@ -6,6 +6,7 @@ import io.suggest.lk.m.img.MPictureCropPopup
 import io.suggest.lk.m.{MDeleteConfirmPopupS, MErrorPopupS}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -28,6 +29,10 @@ object MAePopupsS {
 
   @inline implicit def univEq: UnivEq[MAePopupsS] = UnivEq.derive
 
+  val error = GenLens[MAePopupsS](_.error)
+  val pictureCrop = GenLens[MAePopupsS](_.pictureCrop)
+  val deleteConfirm = GenLens[MAePopupsS](_.deleteConfirm)
+
 }
 
 
@@ -43,10 +48,3 @@ case class MAePopupsS(
                        deleteConfirm  : Option[MDeleteConfirmPopupS]  = None
                      )
   extends EmptyProduct
-{
-
-  def withErrors(errors: Option[MErrorPopupS]) = copy(error = error)
-  def withPictureCrop(pictureCrop: Option[MPictureCropPopup]) = copy(pictureCrop = pictureCrop)
-  def withDeleteConfirm(deleteConfirm: Option[MDeleteConfirmPopupS]) = copy(deleteConfirm = deleteConfirm)
-
-}

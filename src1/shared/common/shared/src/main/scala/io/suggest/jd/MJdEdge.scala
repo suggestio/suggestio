@@ -8,6 +8,7 @@ import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.text.UrlUtil2
 import japgolly.univeq._
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import scalaz.Validation
@@ -106,6 +107,12 @@ object MJdEdge {
       Validation.failureNel( ErrorConstants.EMSG_CODE_PREFIX + `JD` + `PRED` + `.` + ErrorConstants.Words.EXPECTED )
     }
   }
+
+  val predicate = GenLens[MJdEdge](_.predicate)
+  val id        = GenLens[MJdEdge](_.id)
+  val text      = GenLens[MJdEdge](_.text)
+  val url       = GenLens[MJdEdge](_.url)
+  val fileSrv   = GenLens[MJdEdge](_.fileSrv)
 
 }
 

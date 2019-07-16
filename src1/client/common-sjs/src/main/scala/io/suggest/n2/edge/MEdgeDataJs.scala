@@ -8,6 +8,7 @@ import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.primo.id.IId
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -59,6 +60,9 @@ object MEdgeDataJs {
         implicitly[FastEq[MEdgeDataJs]].eqv(a._2, b._2)
     }
   }
+
+  val jdEdge = GenLens[MEdgeDataJs](_.jdEdge)
+  val fileJs = GenLens[MEdgeDataJs](_.fileJs)
 
 }
 

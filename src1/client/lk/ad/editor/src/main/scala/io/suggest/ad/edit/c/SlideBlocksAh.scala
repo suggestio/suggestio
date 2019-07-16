@@ -22,7 +22,7 @@ class SlideBlocksAh[M](modelRW: ModelRW[M, MSlideBlocks]) extends ActionHandler(
       } else {
         Some( m.key )
       }
-      val v2 = v0.withExpanded( expanded2 )
+      val v2 = MSlideBlocks.expanded.set(expanded2)(v0)
       updated(v2)
 
   }

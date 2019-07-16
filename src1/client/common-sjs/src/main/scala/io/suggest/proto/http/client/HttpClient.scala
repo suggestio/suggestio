@@ -25,7 +25,7 @@ object HttpClient extends Log {
       .filterNot(js.isUndefined)
       .flatMap( l => Option(l.protocol) )
       .filter { p =>
-        !js.isUndefined(p)  &&  p.nonEmpty  &&  p != "null"
+        !js.isUndefined(p)  &&  p.nonEmpty  &&  p != String.valueOf( null.asInstanceOf[Object] )
       }
       .map(_.toLowerCase())
   }
@@ -57,11 +57,8 @@ object HttpClient extends Log {
     */
   val mkAbsUrlIfPreferred: String => String = if (HttpClient.PREFER_ABS_URLS) {
     // Фунция на случай, когда требуется причёсывать ссылки:
-    val httpProto = HttpConst.Proto.HTTP
-    val isSecure = true
-
     url0: String =>
-      UrlUtil2.mkAbsUrl( protoPrefix = httpProto, secure = isSecure, relUrl = url0 )
+      UrlUtil2.mkAbsUrl( protoPrefix = HttpConst.Proto.HTTP, secure = true, relUrl = url0 )
 
   } else {
     // Причёсывать ссылки не требуется. Просто используем исходные ссылки.

@@ -9,7 +9,8 @@ import play.api.libs.json.Json
 import io.suggest.ad.edit.c._
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags._
-import io.suggest.ad.edit.m.layout.MLayoutS
+import io.suggest.ad.edit.m.layout.{MLayoutS, MSlideBlocks}
+import io.suggest.ad.edit.m.pop.MAePopupsS
 import io.suggest.ad.edit.m.vld.MJdVldAh
 import io.suggest.ad.edit.srv.LkAdEditApiHttp
 import io.suggest.color.MColorData
@@ -22,12 +23,14 @@ import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
 import org.scalajs.dom
 import io.suggest.lk.c.{ColorPickAh, PictureAh}
-import io.suggest.lk.m.color
+import io.suggest.lk.m.{MDeleteConfirmPopupS, color}
 import io.suggest.lk.m.color.{MColorPick, MColorsState}
 import io.suggest.lk.m.img.MPictureAh
 import io.suggest.msg.ErrorMsgs
 import scalaz.{Tree, TreeLoc}
 import io.suggest.scalaz.ZTreeUtil._
+import io.suggest.spa.CircuitUtil._
+import io.suggest.ws.pool.m.MWsPoolS
 
 /**
   * Suggest.io
@@ -44,11 +47,6 @@ class LkAdEditCircuit(
 
   import MPictureAh.MPictureAhFastEq
   import MAeRoot.MAeRootFastEq
-  import MDocS.MDocSFastEq
-  import io.suggest.ws.pool.m.MWsPoolS.MWsPoolSFastEq
-  import MLayoutS.MLayoutSFastEq
-  import io.suggest.ad.edit.m.pop.MAePopupsS.MAePopupsSFastEq
-  import io.suggest.ad.edit.m.layout.MSlideBlocks.MSlideBlocksFastEq
 
 
   /** Флаг использования валидации на клиенте.
@@ -121,7 +119,7 @@ class LkAdEditCircuit(
 
   private val rootRW = zoomRW(identity(_)) { (_, mroot2) => mroot2 }
   /** Используется извне, в init например. */
-  val rootRO: ModelRO[MAeRoot] = rootRW
+  def rootRO: ModelRO[MAeRoot] = rootRW
 
   private val confRO = zoom(_.conf)
 
@@ -132,19 +130,19 @@ class LkAdEditCircuit(
   private val ctxIdRO = confRO.zoom(_.ctxId)
   private val wsChannelApi = new WsChannelApiHttp(ctxIdRO)
 
-  private val mDocSRw = zoomRW(_.doc) { _.withDoc(_) }
+  private val mDocSRw = mkLensRootZoomRW(this, MAeRoot.doc)( MDocS.MDocSFastEq )
 
   private val docAh = docEditAhFactory( mDocSRw )
 
-  private val wsPoolRW = zoomRW(_.wsPool) { _.withWsPool(_) }
+  private val wsPoolRW = mkLensRootZoomRW(this, MAeRoot.wsPool)( MWsPoolS.MWsPoolSFastEq )
 
-  private val layoutRW = zoomRW(_.layout) { _.withLayout(_) }
+  private val layoutRW = mkLensRootZoomRW(this, MAeRoot.layout)( MLayoutS.MLayoutSFastEq )
 
-  private val popupsRW = zoomRW(_.popups) { _.withPopups(_) }
+  private val popupsRW = mkLensRootZoomRW(this, MAeRoot.popups)( MAePopupsS.MAePopupsSFastEq )
 
-  private val deleteConfirmPopupRW = popupsRW.zoomRW(_.deleteConfirm) { _.withDeleteConfirm(_) }
+  private val deleteConfirmPopupRW = mkLensZoomRW(popupsRW, MAePopupsS.deleteConfirm)( OptFastEq.Wrapped(MDeleteConfirmPopupS.MDeleteConfirmPopupSFastEq) )
 
-  private val slideBlocksRW = mDocSRw.zoomRW(_.slideBlocks) { _.withSlideBlocks(_) }
+  private val slideBlocksRW = mkLensZoomRW(mDocSRw, MDocS.slideBlocks)( MSlideBlocks.MSlideBlocksFastEq )
 
   /** Класс для сборки зумма для color-picker'а. */
   private abstract class ZoomToBgColorPick {
@@ -159,10 +157,9 @@ class LkAdEditCircuit(
     }
 
     def setColorOpt(jdTag: JdTag, colorOpt2: Option[MColorData]): JdTag = {
-      jdTag.withProps1(
-        jdTag.props1
-          .withBgColor( colorOpt2 )
-      )
+      JdTag.props1
+        .composeLens( MJdtProps1.bgColor )
+        .set( colorOpt2 )( jdTag )
     }
 
     /** @return ZoomRW до Option[MColorPick]. */
@@ -189,15 +186,13 @@ class LkAdEditCircuit(
           val tpl2 = strip2.toTree
           val css2 = JdCss( MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf) )
 
-          mdoc0
-            .withJdArgs {
-              mdoc0.jdArgs
-                .withTemplate( tpl2 )
-                .withJdCss( css2 )
-            }
-            .withColorsState(
-              mColorAh.colorsState
-            )
+          (
+            MDocS.jdArgs.modify(
+              MJdArgs.template.set( tpl2 ) andThen
+              MJdArgs.jdCss.set( css2 )
+            ) andThen
+            MDocS.colorsState.set( mColorAh.colorsState )
+          )(mdoc0)
         }
         // Чисто теоретически возможна какая-то нештатная ситуация, но мы подавляем её в пользу исходного состояния circuit.
         mdoc2Opt.getOrElse {
@@ -294,28 +289,27 @@ class LkAdEditCircuit(
     val isTplChanged = tpl0 !===* mPictureAh.view
 
     val mdoc1 = if (isTplChanged || (mPictureAh.edges !===* mdoc0.jdArgs.edges)) {
-      mdoc0
-        .withJdArgs {
-          // Разобраться, изменился ли шаблон в реальности:
-          val (tpl2, css2) = if (isTplChanged) {
-            // Изменился шаблон. Вернуть новый шаблон, пересобрать css
-            val tpl1 = mPictureAh.view
-            val css1 = JdCss(
-              MJdCssArgs.singleCssArgs(tpl1, mdoc0.jdArgs.conf )
-            )
-            (tpl1, css1)
-          } else {
-            // Не изменился шаблон, вернуть исходник
-            (tpl0, mdoc0.jdArgs.jdCss)
-          }
-
-          // Залить всё в итоговое состояние пачкой:
-          mdoc0.jdArgs.copy(
-            template    = tpl2,
-            edges       = mPictureAh.edges,
-            jdCss       = css2
+      MDocS.jdArgs.set {
+        // Разобраться, изменился ли шаблон в реальности:
+        val (tpl2, css2) = if (isTplChanged) {
+          // Изменился шаблон. Вернуть новый шаблон, пересобрать css
+          val tpl1 = mPictureAh.view
+          val css1 = JdCss(
+            MJdCssArgs.singleCssArgs(tpl1, mdoc0.jdArgs.conf )
           )
+          (tpl1, css1)
+        } else {
+          // Не изменился шаблон, вернуть исходник
+          (tpl0, mdoc0.jdArgs.jdCss)
         }
+
+        // Залить всё в итоговое состояние пачкой:
+        mdoc0.jdArgs.copy(
+          template    = tpl2,
+          edges       = mPictureAh.edges,
+          jdCss       = css2
+        )
+      }(mdoc0)
     } else {
       // Нет изменений в документе, пропускаем всё молча.
       mdoc0
@@ -326,11 +320,9 @@ class LkAdEditCircuit(
       // Карта гистограмм не изменилась, пропускаем мимо ушей.
       mdoc1
     } else {
-      mdoc1.withColorsState(
-        mdoc1.colorsState.withHistograms(
-          mPictureAh.histograms
-        )
-      )
+      MDocS.colorsState
+        .composeLens( MColorsState.histograms )
+        .set( mPictureAh.histograms )( mdoc1 )
     }
 
     mroot0.copy(

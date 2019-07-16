@@ -2,6 +2,7 @@ package io.suggest.ad.edit.m.edit.strip
 
 import diode.FastEq
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -20,6 +21,9 @@ object MStripEdS {
 
   @inline implicit def univEq: UnivEq[MStripEdS] = UnivEq.derive
 
+  val isLastStrip = GenLens[MStripEdS](_.isLastStrip)
+  val confirmingDelete = GenLens[MStripEdS](_.confirmingDelete)
+
 }
 
 
@@ -31,8 +35,3 @@ case class MStripEdS(
                       isLastStrip                 : Boolean,
                       confirmingDelete            : Boolean           = false
                     )
-{
-
-  def withConfirmDelete(confirmDelete: Boolean) = copy(confirmingDelete = confirmDelete)
-
-}

@@ -3,7 +3,7 @@ package io.suggest.ad.edit.c
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.edit.m._
 import io.suggest.css.Css
-import io.suggest.jd.render.m.IJdAction
+import io.suggest.jd.render.m.{IJdAction, MJdArgs, MJdRenderArgs}
 import io.suggest.jd.tags.MJdTagNames
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.lk.c.ColorPickAh
@@ -73,17 +73,15 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
   }
 
   private def _maybeSetNewTrasform(tmOpt: Option[TagMod], v0: MDocS): ActionResult[M] = {
-    val ra0 = v0.jdArgs.renderArgs
+    val lens = MDocS.jdArgs
+      .composeLens( MJdArgs.renderArgs )
+      .composeLens( MJdRenderArgs.selJdtBgImgMod )
     // Проверить, изменилось ли хоть что-нибудь:
-    if (ra0.selJdtBgImgMod ==* tmOpt) {   // TODO есть сомнения в том, что данное сравнение работает вообще.
+    if (lens.get(v0) ==* tmOpt) {   // TODO есть сомнения в том, что данное сравнение работает вообще.
       noChange
     } else {
       // Сохранить новые настройки трансформации в состояние.
-      val v2 = v0.withJdArgs(
-        v0.jdArgs.withRenderArgs(
-          ra0.withSelJdtBgImgMod( tmOpt )
-        )
-      )
+      val v2 = lens.set( tmOpt )(v0)
       updated(v2)
     }
   }

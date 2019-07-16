@@ -6,6 +6,7 @@ import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.jd.MJdEdgeId
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -37,6 +38,15 @@ object MJdtProps1 extends IEmpty {
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MJdtProps1] = UnivEq.derive
+
+  val bgColor     = GenLens[MJdtProps1](_.bgColor)
+  val bgImg       = GenLens[MJdtProps1](_.bgImg)
+  val bm          = GenLens[MJdtProps1](_.bm)
+  val topLeft     = GenLens[MJdtProps1](_.topLeft)
+  val isMain      = GenLens[MJdtProps1](_.isMain)
+  val widthPx     = GenLens[MJdtProps1](_.widthPx)
+  val rotateDeg   = GenLens[MJdtProps1](_.rotateDeg)
+  val textShadow  = GenLens[MJdtProps1](_.textShadow)
 
 }
 

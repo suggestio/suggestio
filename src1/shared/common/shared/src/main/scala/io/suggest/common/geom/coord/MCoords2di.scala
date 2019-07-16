@@ -3,6 +3,7 @@ package io.suggest.common.geom.coord
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.math.SimpleArithmetics
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -37,6 +38,10 @@ object MCoords2di {
       )
     }
   }
+
+
+  val x = GenLens[MCoords2di](_.x)
+  val y = GenLens[MCoords2di](_.y)
 
 }
 

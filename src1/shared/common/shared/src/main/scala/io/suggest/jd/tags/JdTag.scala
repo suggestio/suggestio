@@ -10,6 +10,7 @@ import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil}
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import japgolly.univeq._
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.{Show, Tree, TreeLoc}
@@ -231,6 +232,11 @@ object JdTag {
       edgesMap    = edgesMap
     )
   }
+
+
+  val name = GenLens[JdTag](_.name)
+  val props1 = GenLens[JdTag](_.props1)
+  val qdProps = GenLens[JdTag](_.qdProps)
 
 }
 

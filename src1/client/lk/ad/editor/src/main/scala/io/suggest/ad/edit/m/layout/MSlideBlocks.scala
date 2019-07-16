@@ -3,6 +3,7 @@ package io.suggest.ad.edit.m.layout
 import diode.FastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -22,6 +23,8 @@ object MSlideBlocks {
 
   @inline implicit def univEq: UnivEq[MSlideBlocks] = UnivEq.derive
 
+  val expanded = GenLens[MSlideBlocks](_.expanded)
+
 }
 
 
@@ -32,8 +35,4 @@ object MSlideBlocks {
   */
 case class MSlideBlocks(
                          expanded: Option[String] = None
-                       ) {
-
-  def withExpanded(expanded: Option[String]) = copy(expanded = expanded)
-
-}
+                       )

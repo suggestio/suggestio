@@ -3,12 +3,14 @@ package io.suggest.ad.edit.c
 import diode._
 import diode.data.PendingBase
 import io.suggest.ad.edit.m._
+import io.suggest.ad.edit.m.save.MSaveS
 import io.suggest.ad.edit.srv.ILkAdEditApi
 import io.suggest.lk.m.Save
 import io.suggest.msg.WarnMsgs
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
+import io.suggest.spa.DiodeUtil.Implicits._
 
 import scala.util.Success
 
@@ -55,11 +57,7 @@ class SaveAh[M](
           }
         }
 
-        val v2 = v0
-          .withSave(
-            v0.save
-              .withSaveReq( pot2 )
-          )
+        val v2 = _save_saveReq_LENS.set( pot2 )( v0 )
 
         updated(v2, fx)
       }
@@ -68,29 +66,23 @@ class SaveAh[M](
     // Сигнал завершения запроса сохранения.
     case m: SaveAdResp =>
       val v0 = value
-      val saveReq0 = v0.save.saveReq
+      val lens = _save_saveReq_LENS
 
-      if (saveReq0.isPending && saveReq0.asInstanceOf[PendingBase].startTime ==* m.timestamp) {
+      if ( lens.exist(_ isPendingWithStartTime m.timestamp)(v0) ) {
         // Это ожидаемый запрос. Анализируем ответ:
         m.tryResp.fold(
           // Ошибка выполнения запроса.
           {ex =>
-            val v2 = v0.withSave(
-              v0.save
-                .withSaveReq(
-                  saveReq0.fail(ex)
-                )
-            )
+            val v2 = lens.modify( _.fail(ex) )(v0)
             updated(v2)
           },
           // Запрос сохранения исполнен. Залить новые данные в текущую форму.
           {formReInit =>
-            val v2 = v0
-              .withConf( formReInit.conf )
-              .withSave(
-                v0.save
-                  .withSaveReq( v0.save.saveReq.ready(formReInit) )
-              )
+            val v2 = (
+              MAeRoot.conf.set( formReInit.conf ) andThen
+              lens.modify(_.ready(formReInit))
+            )(v0)
+
             // TODO Запилить withDoc(), пере-заливающий данные эджей и шаблона в jdArgs.
 
             updated(v2)
@@ -105,5 +97,10 @@ class SaveAh[M](
       }
 
   }
+
+
+  private def _save_saveReq_LENS =
+    MAeRoot.save
+      .composeLens( MSaveS.saveReq )
 
 }

@@ -70,7 +70,7 @@
 
   @for(siteUrl <- meta.business.siteUrl) {
     @_ptableRowTpl( "Сайт:") {
-      <a class="blue-link" href="http://anonym.to/?@siteUrl" target="_blank" title="@humanizeUrl(siteUrl)">
+      <a class="blue-link" href="@siteUrl" target="_blank" title="@humanizeUrl(siteUrl)">
         @humanizeUrlAggressive(siteUrl)
       </a>
     }

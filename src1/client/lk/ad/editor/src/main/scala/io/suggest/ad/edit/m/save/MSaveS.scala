@@ -6,6 +6,7 @@ import io.suggest.ad.edit.m.MAdEditFormInit
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -29,6 +30,8 @@ object MSaveS {
 
   @inline implicit def univEq: UnivEq[MSaveS] = UnivEq.derive
 
+  val saveReq = GenLens[MSaveS](_.saveReq)
+
 }
 
 
@@ -38,8 +41,4 @@ object MSaveS {
   */
 case class MSaveS(
                    saveReq    : Pot[MAdEditFormInit]    = Pot.empty
-                 ) {
-
-  def withSaveReq(saveReq: Pot[MAdEditFormInit]) = copy(saveReq = saveReq)
-
-}
+                 )

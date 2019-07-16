@@ -3,6 +3,7 @@ package io.suggest.ws.pool.m
 import diode.FastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -22,6 +23,8 @@ object MWsPoolS {
   }
 
   @inline implicit def univEq: UnivEq[MWsPoolS] = UnivEq.derive
+
+  val conns = GenLens[MWsPoolS](_.conns)
 
 }
 

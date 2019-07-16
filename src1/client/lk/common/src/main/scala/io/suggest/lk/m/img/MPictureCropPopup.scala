@@ -7,6 +7,7 @@ import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import io.suggest.ueq.ReactImageCropUnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -26,6 +27,11 @@ object MPictureCropPopup {
   }
 
   @inline implicit def univEq: UnivEq[MPictureCropPopup] = UnivEq.derive
+
+  val origCrop      = GenLens[MPictureCropPopup](_.origCrop)
+  val imgEdgeUid    = GenLens[MPictureCropPopup](_.imgEdgeUid)
+  val percentCrop   = GenLens[MPictureCropPopup](_.percentCrop)
+  val pixelCrop     = GenLens[MPictureCropPopup](_.pixelCrop)
 
 }
 

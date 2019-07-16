@@ -2,6 +2,7 @@ package io.suggest.jd.tags
 
 import io.suggest.color.{IColorPickerMarker, MColorData}
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -28,6 +29,11 @@ object MJdShadow {
   object ColorMarkers {
     case object TextShadow extends IColorPickerMarker
   }
+
+  val hOffset = GenLens[MJdShadow](_.hOffset)
+  val vOffset = GenLens[MJdShadow](_.vOffset)
+  val color   = GenLens[MJdShadow](_.color)
+  val blur    = GenLens[MJdShadow](_.blur)
 
 }
 

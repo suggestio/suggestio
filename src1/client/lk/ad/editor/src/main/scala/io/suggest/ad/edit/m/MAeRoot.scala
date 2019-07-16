@@ -9,6 +9,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ws.pool.m.MWsPoolS
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -30,6 +31,13 @@ object MAeRoot {
   }
 
   @inline implicit def univEq: UnivEq[MAeRoot] = UnivEq.derive
+
+  val conf    = GenLens[MAeRoot](_.conf)
+  val doc     = GenLens[MAeRoot](_.doc)
+  val layout  = GenLens[MAeRoot](_.layout)
+  val popups  = GenLens[MAeRoot](_.popups)
+  val wsPool  = GenLens[MAeRoot](_.wsPool)
+  val save    = GenLens[MAeRoot](_.save)
 
 }
 
@@ -72,12 +80,5 @@ case class MAeRoot(
       nodeId = None
     )
   }
-
-  def withConf(conf: MAdEditFormConf)         = copy(conf = conf)
-  def withDoc(doc: MDocS)                     = copy(doc = doc)
-  def withLayout(layout: MLayoutS)            = copy(layout = layout)
-  def withPopups(popups: MAePopupsS)          = copy(popups = popups)
-  def withWsPool(wsPool: MWsPoolS)            = copy(wsPool = wsPool)
-  def withSave(save: MSaveS)                  = copy(save = save)
 
 }

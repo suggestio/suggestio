@@ -5,6 +5,7 @@ import diode.data.Pot
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -21,6 +22,8 @@ object MDeleteConfirmPopupS {
   }
 
   @inline implicit def univEq: UnivEq[MDeleteConfirmPopupS] = UnivEq.force
+
+  val request = GenLens[MDeleteConfirmPopupS](_.request)
 
 }
 

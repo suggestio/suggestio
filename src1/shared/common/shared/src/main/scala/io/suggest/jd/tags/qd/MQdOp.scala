@@ -2,6 +2,7 @@ package io.suggest.jd.tags.qd
 
 import io.suggest.jd.MJdEdgeId
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -27,6 +28,13 @@ object MQdOp {
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MQdOp] = UnivEq.derive
+
+  val opType      = GenLens[MQdOp](_.opType)
+  val edgeInfo    = GenLens[MQdOp](_.edgeInfo)
+  val index       = GenLens[MQdOp](_.index)
+  val attrsText   = GenLens[MQdOp](_.attrsText)
+  val attrsLine   = GenLens[MQdOp](_.attrsLine)
+  val attrsEmbed  = GenLens[MQdOp](_.attrsEmbed)
 
 }
 

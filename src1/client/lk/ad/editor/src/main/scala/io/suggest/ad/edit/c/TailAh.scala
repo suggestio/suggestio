@@ -22,18 +22,15 @@ class TailAh[M](modelRW: ModelRW[M, MAeRoot]) extends ActionHandler(modelRW) {
     // Клик по кнопке закрытия попапа ошибки.
     case ErrorPopupCloseClick =>
       val v0 = value
-      val v2 = v0.withPopups(
-        v0.popups
-          .withErrors( None )
-      )
+      val v2 = MAeRoot.popups
+        .composeLens(MAePopupsS.error)
+        .set(None)(v0)
       updated( v2 )
 
     // Закрытие всех попапов.
     case CloseAllPopups =>
       val v0 = value
-      val v2 = v0.withPopups(
-        MAePopupsS.empty
-      )
+      val v2 = MAeRoot.popups.set( MAePopupsS.empty )(v0)
       updated( v2 )
 
   }

@@ -9,6 +9,7 @@ import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import io.suggest.scalaz.ZTreeUtil._
+import monocle.macros.GenLens
 import scalaz.{Tree, TreeLoc}
 
 /**
@@ -32,6 +33,12 @@ object MJdArgs {
   }
 
   @inline implicit def univEq: UnivEq[MJdArgs] = UnivEq.derive
+
+  val template = GenLens[MJdArgs](_.template)
+  val edges = GenLens[MJdArgs](_.edges)
+  val jdCss = GenLens[MJdArgs](_.jdCss)
+  val conf  = GenLens[MJdArgs](_.conf)
+  val renderArgs = GenLens[MJdArgs](_.renderArgs)
 
 }
 

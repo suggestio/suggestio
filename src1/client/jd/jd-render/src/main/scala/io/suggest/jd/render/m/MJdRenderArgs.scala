@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.TagMod
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.ReactUnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -31,6 +32,12 @@ object MJdRenderArgs {
   }
 
   @inline implicit def univEq: UnivEq[MJdRenderArgs] = UnivEq.derive
+
+  val selPath = GenLens[MJdRenderArgs](_.selPath)
+  val selJdtBgImgMod = GenLens[MJdRenderArgs](_.selJdtBgImgMod)
+  val hideNonMainStrips = GenLens[MJdRenderArgs](_.hideNonMainStrips)
+  val groupOutLined = GenLens[MJdRenderArgs](_.groupOutLined)
+  val dnd = GenLens[MJdRenderArgs](_.dnd)
 
 }
 

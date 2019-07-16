@@ -70,9 +70,8 @@ class DeleteAh[M](
       // Отредиректить юзера прочь из формы.
       val v0 = value.get
 
-      val v2 = v0.withRequest(
-        v0.request.withTry( m.tryResp )
-      )
+      val v2 = MDeleteConfirmPopupS.request
+        .modify( _.withTry(m.tryResp) )(v0)
 
       if (v2.request.isReady)
         DomQuick.goToLocation( m.tryResp.get )

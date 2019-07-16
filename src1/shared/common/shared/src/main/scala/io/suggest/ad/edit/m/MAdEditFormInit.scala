@@ -2,6 +2,7 @@ package io.suggest.ad.edit.m
 
 import io.suggest.ad.blk.BlockPadding
 import io.suggest.jd.MJdAdData
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -24,6 +25,10 @@ object MAdEditFormInit {
     (__ \ Fields.AD_DATA_FN).format[MJdAdData] and
     (__ \ Fields.BLOCK_PADDING).format[BlockPadding]
   )(apply, unlift(unapply))
+
+  val conf = GenLens[MAdEditFormInit](_.conf)
+  val adData = GenLens[MAdEditFormInit](_.adData)
+  val blockPadding = GenLens[MAdEditFormInit](_.blockPadding)
 
 }
 

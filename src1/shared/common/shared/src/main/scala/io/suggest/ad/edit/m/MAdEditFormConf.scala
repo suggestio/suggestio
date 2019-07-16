@@ -39,7 +39,7 @@ object MAdEditFormConf {
 case class MAdEditFormConf(
                             producerId  : String,
                             adId        : Option[String],
-                            ctxId    : String
+                            ctxId       : String
                           )
   extends ICtxIdStrOpt
 {

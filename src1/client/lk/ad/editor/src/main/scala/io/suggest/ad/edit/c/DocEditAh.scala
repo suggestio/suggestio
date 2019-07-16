@@ -5,16 +5,16 @@ import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.edit.MQdEditS
+import io.suggest.ad.edit.m.layout.MSlideBlocks
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.color.MColorData
 import io.suggest.common.MHands
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.html.HtmlConstants
-import io.suggest.err.ErrorConstants
 import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.{JdConst, MJdEdge}
+import io.suggest.jd.{JdConst, MJdConf, MJdEdge}
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.JdTag.Implicits._
@@ -29,7 +29,7 @@ import io.suggest.pick.Base64JsUtil
 import io.suggest.primo.SetVal
 import io.suggest.quill.m.TextChanged
 import io.suggest.quill.u.QuillDeltaJsUtil
-import io.suggest.spa.DiodeUtil.Implicits.EffectsOps
+import io.suggest.spa.DiodeUtil.Implicits._
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ueq.QuillUnivEqUtil._
@@ -37,9 +37,11 @@ import japgolly.univeq._
 import org.scalajs.dom.raw.URL
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.ueq.UnivEqUtil._
+import monocle.Traversal
 
 import scala.util.Random
 import scalaz.{Tree, TreeLoc}
+import scalaz.std.option._
 
 /**
   * Suggest.io
@@ -54,7 +56,7 @@ class DocEditAh[M](
                   )
   extends ActionHandler( modelRW )
   with Log
-{
+{ ah =>
 
   private def _qdUpdateWidth(qdSubTreeLoc0: TreeLoc[JdTag], edgeUid: EdgeUid_t, width: Int,
                              heightPxOpt: Option[Int] = None, needUpdateF: Option[Int => Boolean] = None): TreeLoc[JdTag] = {
@@ -108,24 +110,21 @@ class DocEditAh[M](
     def shadowUpdated(v0: MDocS)(f: Option[MJdShadow] => Option[MJdShadow]): ActionResult[M] = {
       treeLocOpt.fold(noChange) { treeLoc =>
         val tpl2 = treeLoc
-          .modifyLabel { jdt0 =>
-            jdt0.withProps1(
-              jdt0.props1.withTextShadow {
-                f( jdt0.props1.textShadow )
-              }
-            )
+          .modifyLabel {
+            JdTag.props1
+              .composeLens( MJdtProps1.textShadow )
+              .modify(f)
           }
           .toTree
 
-        val v2 = v0.withJdArgs(
-          v0.jdArgs
-            .withJdCss(
-              JdCss(
-                MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
-              )
+        val v2 = MDocS.jdArgs.modify(
+          MJdArgs.jdCss.set(
+            JdCss(
+              MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
             )
-            .withTemplate( tpl2 )
-        )
+          ) andThen
+          MJdArgs.template.set( tpl2 )
+        )( v0 )
 
         updated(v2)
       }
@@ -235,16 +234,13 @@ class DocEditAh[M](
         )
 
         // Залить все данные в новое состояние.
-        val v2 = v0
-          .withJdArgs(
-            jdArgs = jdArgs2
-          )
-          // Не обновляем init-дельту при редактировании, заменяем только актуальный инстанс.
-          .withQdEdit(
-            for (qdEdit <- v0.qdEdit) yield {
+        val v2 = (
+          MDocS.jdArgs.set( jdArgs2 ) andThen
+          MDocS.qdEdit.modify { qdEditOpt0 =>
+            for (qdEdit <- qdEditOpt0) yield {
               if (dataEdgesForUpload.isEmpty) {
                 // Перерендер не требуется, тихо сохранить текущую дельту в состояние.
-                qdEdit.withRealDelta( Some(m.fullDelta) )
+                MQdEditS.realDelta.set( Some(m.fullDelta) )(qdEdit)
               } else {
                 // Если был новый embed, то надо перерендерить редактор новой дельтой, т.к. наверняка изменились размеры чего-либо.
                 qdEdit.withInitRealDelta(
@@ -252,10 +248,11 @@ class DocEditAh[M](
                 )
               }
             }
-          )
+          }
+        )(v0)
 
         // Объединить все эффекты, если они есть.
-        uploadFxOpt.fold( updated(v2) ) { updated(v2, _) }
+        ah.updatedMaybeEffect(v2, uploadFxOpt)
       }
 
 
@@ -272,22 +269,23 @@ class DocEditAh[M](
       } yield {
         val tpl2 = selJdtLoc0
           .modifyLabel { jdt00 =>
-            jdt00.withProps1(
-              jdt00.props1
-                .withRotateDeg( m.degrees )
-            )
+            JdTag.props1
+              .composeLens( MJdtProps1.rotateDeg )
+              .set( m.degrees )( jdt00 )
           }
           .toTree
-        val v2 = v0.withJdArgs(
-          v0.jdArgs
-            .withTemplate( tpl2 )
-            .withJdCss(
-              JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
-            )
-        )
+
+        val v2 = MDocS.jdArgs.modify(
+          MJdArgs.template.set( tpl2 ) andThen
+          MJdArgs.jdCss.set(
+            JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
+          )
+        )( v0 )
+
         updated( v2 )
       }
-      updatedOpt.getOrElse(noChange)
+
+      updatedOpt getOrElse noChange
 
 
     // Клик по элементу карточки.
@@ -307,13 +305,11 @@ class DocEditAh[M](
           .findByLabel( m.jdTag )
           .get
         val newSelJdt = newSelJdtTreeLoc.toNodePath
-        var v2 = v0.withJdArgs(
-          v0.jdArgs
-            .withRenderArgs(
-              v0.jdArgs.renderArgs
-                .withSelPath( Some(newSelJdt) )
-            )
-        )
+
+        var v2 = MDocS.jdArgs
+          .composeLens( MJdArgs.renderArgs )
+          .composeLens( MJdRenderArgs.selPath )
+          .set( Some(newSelJdt) )(v0)
 
         // Если это QdTag, то отработать состояние quill-delta:
         v2 = if (m.jdTag.name ==* MJdTagNames.QD_CONTENT) {
@@ -324,18 +320,18 @@ class DocEditAh[M](
             edges = v2.jdArgs.edges
           )
           //println( "selJdt\n" + JSON.stringify(delta2) )
-          v2
-            .withQdEdit(
+          (
+            MDocS.qdEdit.set(
               Some(
                 MQdEditS(
                   initDelta = delta2
                 )
               )
-            )
-            .withSlideBlocks(
-              v2.slideBlocks
-                .withExpanded( Some(SlideBlockKeys.CONTENT) )
-            )
+            ) andThen
+              MDocS.slideBlocks
+                .composeLens( MSlideBlocks.expanded )
+                .set( Some(SlideBlockKeys.CONTENT) )
+          )(v2)
 
         } else {
           // Очистить состояние от дельты.
@@ -346,7 +342,7 @@ class DocEditAh[M](
         m.jdTag.name match {
           // Переключение на новый стрип. Инициализировать состояние stripEd:
           case n @ MJdTagNames.STRIP =>
-            v2 = v2.withStripEd(
+            v2 = MDocS.stripEd.set(
               Some(MStripEdS(
                 isLastStrip = {
                   val hasManyStrips = v2.jdArgs.template
@@ -357,14 +353,13 @@ class DocEditAh[M](
                   !hasManyStrips
                 }
               ))
-            )
+            )(v2)
 
             // Если тип текущего тега изменился, то сбросить текущий slide-блок.
             if ( !oldTagName.contains(n) ) {
-              v2 = v2.withSlideBlocks(
-                v2.slideBlocks
-                  .withExpanded( Some(SlideBlockKeys.BLOCK_BG) )
-              )
+              v2 = MDocS.slideBlocks
+                .composeLens( MSlideBlocks.expanded )
+                .set( Some(SlideBlockKeys.BLOCK_BG) )(v2)
             }
 
           // Это не strip, обнулить состояние stripEd, если оно существует:
@@ -393,16 +388,15 @@ class DocEditAh[M](
             }
           // Очистить эджи от лишнего контента
           val dataEdges2 = JdTag.purgeUnusedEdges(tpl2, dataEdges0)
-          v2 = v2
-            .withJdArgs(
-              v2.jdArgs.copy(
-                template    = tpl2,
-                edges       = dataEdges2,
-                jdCss       = JdCss(
-                  MJdCssArgs.singleCssArgs(tpl2, v2.jdArgs.conf)
-                )
+          v2 = MDocS.jdArgs.set(
+            v2.jdArgs.copy(
+              template    = tpl2,
+              edges       = dataEdges2,
+              jdCss       = JdCss(
+                MJdCssArgs.singleCssArgs(tpl2, v2.jdArgs.conf)
               )
             )
+          )(v2)
         }
 
         // Обновить список color-preset'ов.
@@ -417,10 +411,9 @@ class DocEditAh[M](
         if (bgColorsAppend.nonEmpty) {
           val presets2 = bgColorsAppend.foldLeft(v2.colorsState.colorPresets) { MColorsState.prependPresets }
           // то закинуть его цвет фона в color-презеты.
-          v2 = v2.withColorsState(
-            v2.colorsState
-              .withColorPresets( presets2 )
-          )
+          v2 = MDocS.colorsState
+            .composeLens( MColorsState.colorPresets )
+            .set( presets2 )(v2)
         }
 
         updated( v2 )
@@ -467,10 +460,9 @@ class DocEditAh[M](
       } { case (dataEdge2, blobUrl) =>
         val dataEdgesMap1 = dataEdgesMap0.updated(dataEdge2.id, dataEdge2)
         val dataEdgesMap2 = JdTag.purgeUnusedEdges(v0.jdArgs.template, dataEdgesMap1)
-        val v2 = v0
-          .withJdArgs(
-            v0.jdArgs.withEdges(dataEdgesMap2)
-          )
+        val v2 = MDocS.jdArgs
+          .composeLens( MJdArgs.edges )
+          .set( dataEdgesMap2 )(v0)
 
         // Запустить эффект хэширования и дальнейшей закачки файла на сервер.
         val hashFx = FileHashStart(dataEdge2.id, blobUrl).toEffectPure
@@ -486,11 +478,9 @@ class DocEditAh[M](
       if ( edges0.size ==* edges2.size ) {
         noChange
       } else {
-        val v2 = v0.withJdArgs(
-          v0.jdArgs.withEdges(
-            edges2
-          )
-        )
+        val v2 = MDocS.jdArgs
+          .composeLens( MJdArgs.edges )
+          .set( edges2 )(v0)
         updated(v2)
       }
 
@@ -502,47 +492,43 @@ class DocEditAh[M](
       val stripTreeLoc0 = v0.jdArgs.selJdt.treeLocOpt.get
       val strip0 = stripTreeLoc0.getLabel
 
-      val bm0 = strip0.props1.bm.get
-      val bm2 = m.model match {
-        case bhs @ BlockHeights =>
-          val sz0 = bm0.h
-          val szOpt2 = m.direction match {
-            case MHands.Left  => bhs.previousOf( sz0 )
-            case MHands.Right => bhs.nextOf( sz0 )
-          }
-          val sz2 = szOpt2.get
-          bm0.withHeight( sz2 )
+      val strip2 = JdTag.props1
+        .composeLens( MJdtProps1.bm )
+        .modify { bmOpt0 =>
+          val bm0 = bmOpt0.get
+          val bm2 = (m.model match {
+            case bhs @ BlockHeights =>
+              val sz0 = bm0.h
+              val szOpt2 = m.direction match {
+                case MHands.Left  => bhs.previousOf( sz0 )
+                case MHands.Right => bhs.nextOf( sz0 )
+              }
+              val sz2 = szOpt2.get
+              BlockMeta.h.set( sz2 )
 
-        case bws @ BlockWidths =>
-          val sz0 = bm0.w
-          val szOpt2 = m.direction match {
-            case MHands.Left  => bws.previousOf( sz0 )
-            case MHands.Right => bws.nextOf( sz0 )
-          }
-          val sz2 = szOpt2.get
-          bm0.withWidth( sz2 )
-      }
-
-      val strip2 = strip0.withProps1(
-        strip0.props1.withBm(
-          Some( bm2 )
-        )
-      )
+            case bws @ BlockWidths =>
+              val sz0 = bm0.w
+              val szOpt2 = m.direction match {
+                case MHands.Left  => bws.previousOf( sz0 )
+                case MHands.Right => bws.nextOf( sz0 )
+              }
+              val sz2 = szOpt2.get
+              BlockMeta.w.set( sz2 )
+          })(bm0)
+          Some(bm2)
+        }(strip0)
 
       val template2 = stripTreeLoc0
         .setLabel(strip2)
         .toTree
 
       // Обновить и дерево, и currentTag новым инстансом.
-      val v2 = v0.withJdArgs(
-        jdArgs = v0.jdArgs
-          .withTemplate( template2 )
-          .withJdCss(
-            JdCss(
-              MJdCssArgs.singleCssArgs(template2, v0.jdArgs.conf)
-            )
-          )
-      )
+      val v2 = MDocS.jdArgs.modify(
+        MJdArgs.template.set( template2 ) andThen
+        MJdArgs.jdCss.set( JdCss(
+          MJdCssArgs.singleCssArgs(template2, v0.jdArgs.conf)
+        ))
+      )(v0)
 
       updated( v2 )
 
@@ -558,9 +544,9 @@ class DocEditAh[M](
           // Кнопка первого шага удаления уже была нажата: игнорим дубликат неактуального события
           noChange
         } else {
-          val v2 = v0.withStripEd(
-            Some( stripEdS0.withConfirmDelete( true ) )
-          )
+          val v2 = MDocS.stripEd.set(
+            Some( MStripEdS.confirmingDelete.set(true)(stripEdS0) )
+          )(v0)
           updated(v2)
         }
 
@@ -584,9 +570,7 @@ class DocEditAh[M](
             jdArgs = v0.jdArgs.copy(
               template    = tpl2,
               jdCss       = jdCss2,
-              renderArgs  = v0.jdArgs.renderArgs.withSelPath(
-                selPath   = None
-              )
+              renderArgs  = MJdRenderArgs.selPath.set(None)( v0.jdArgs.renderArgs ),
             ),
             stripEd = None,
             // qdEdit: Вроде бы это сюда не относится вообще. Сбросим заодно и текстовый редактор:
@@ -608,9 +592,9 @@ class DocEditAh[M](
       val stripEdS0 = v0.stripEd.get
       if (stripEdS0.confirmingDelete) {
         // Юзер отменяет удаление
-        val v2 = v0.withStripEd(
-          Some( stripEdS0.withConfirmDelete(false) )
-        )
+        val v2 = MDocS.stripEd.set(
+          Some( MStripEdS.confirmingDelete.set(false)(stripEdS0) )
+        )(v0)
         updated(v2)
       } else {
         // Какой-то левый экшен пришёл. Возможно, просто дублирующийся.
@@ -621,20 +605,13 @@ class DocEditAh[M](
     // Началось перетаскивание какого-то jd-тега из текущего документа.
     case m: JdTagDragStart =>
       val v0 = value
-      val dnd0 = v0.jdArgs.renderArgs.dnd
       val dnd0Jdt = v0.jdArgs.draggingTagLoc
       if (dnd0Jdt.toLabelOpt contains m.jdTag) {
         noChange
       } else {
-        val v2 = v0.withJdArgs(
-          v0.jdArgs.withRenderArgs(
-            v0.jdArgs.renderArgs.withDnd(
-              dnd0.withJdt(
-                jdt = v0.jdArgs.template.nodeToPath(m.jdTag)
-              )
-            )
-          )
-        )
+        val v2 = _jdArgs_renderArgs_dnd_jdt_LENS
+          .set( v0.jdArgs.template.nodeToPath(m.jdTag) )(v0)
+
         // Если запускается перетаскивание тега, который не является текущим, то надо "выбрать" таскаемый тег.
         if ( v0.jdArgs.selJdt.treeLocOpt.toLabelOpt contains m.jdTag ) {
           // Текущий тег перетаскивается, всё ок.
@@ -651,17 +628,8 @@ class DocEditAh[M](
     // dragend. Нередко, он не наступает вообще. Т.е. код тут ненадёжен и срабатывает редко, почему-то.
     case _: JdTagDragEnd =>
       val v0 = value
-      val dnd0 = v0.jdArgs.renderArgs.dnd
-      dnd0.jdt.fold(noChange) { _ =>
-        val v2 = v0.withJdArgs(
-          v0.jdArgs.withRenderArgs(
-            v0.jdArgs.renderArgs.withDnd(
-              dnd0.withJdt(
-                jdt = None
-              )
-            )
-          )
-        )
+      v0.jdArgs.renderArgs.dnd.jdt.fold(noChange) { _ =>
+        val v2 = _jdArgs_renderArgs_dnd_jdt_LENS.set( None )(v0)
         updated( v2 )
       }
 
@@ -742,11 +710,9 @@ class DocEditAh[M](
 
       val jdtLabel2 = {
         val dndJdt0 = dndJdtLoc0.getLabel
-        dndJdt0
-          .withProps1(
-            dndJdt0.props1
-              .withTopLeft( Some(clXy2) )
-          )
+        JdTag.props1
+          .composeLens( MJdtProps1.topLeft )
+          .set( Some(clXy2) )(dndJdt0)
       }
 
       val loc2 = if (isSameStrip) {
@@ -773,19 +739,18 @@ class DocEditAh[M](
       val tpl2 = loc2.toTree
 
       // Пересобрать данные для рендера.
-      val v2 = v0.withJdArgs(
-        v0.jdArgs.copy(
+      val v2 = MDocS.jdArgs.modify { jdArgs0 =>
+        jdArgs0.copy(
           template    = tpl2,
           jdCss       = JdCss(
-            MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
+            MJdCssArgs.singleCssArgs(tpl2, jdArgs0.conf)
           ),
-          renderArgs  = v0.jdArgs.renderArgs
-            .withSelPath(
-              tpl2.nodeToPath( loc2.getLabel )
-            )
-            .withDnd( MJdDndS.empty )
+          renderArgs  = (
+            MJdRenderArgs.selPath.set( tpl2.nodeToPath( loc2.getLabel ) ) andThen
+            MJdRenderArgs.dnd.set( MJdDndS.empty )
+          )(jdArgs0.renderArgs)
         )
-      )
+      }(v0)
 
       updated(v2)
 
@@ -820,16 +785,16 @@ class DocEditAh[M](
 
         val tpl2 = droppedStripLoc2.toTree
         // Залить обновлённый список стрипов в исходный документ
-        val v2 = v0.withJdArgs(
-          v0.jdArgs
-            .withTemplate( tpl2 )
-            .withRenderArgs(
-              v0.jdArgs.renderArgs.copy(
-                selPath = tpl2.nodeToPath( droppedStripLabel ),
-                dnd     = MJdDndS.empty
-              )
+        val v2 = MDocS.jdArgs.modify(
+          MJdArgs.template.set( tpl2 ) andThen
+          MJdArgs.renderArgs.modify(
+            _.copy(
+              selPath = tpl2.nodeToPath( droppedStripLabel ),
+              dnd     = MJdDndS.empty,
             )
-        )
+          )
+        )(v0)
+
         updated(v2)
       }
 
@@ -874,6 +839,9 @@ class DocEditAh[M](
               }
             val topColorMcdOpt = Some(topColorMcd)
 
+            lazy val p1_bgColor_LENS = JdTag.props1
+              .composeLens( MJdtProps1.bgColor )
+
             val tpl2 = v0.jdArgs.template
               .map { el1 =>
                 el1
@@ -882,34 +850,31 @@ class DocEditAh[M](
                   .find(edgeUids4mod.contains)
                   .fold(el1) { _ =>
                     el1.qdProps.fold {
-                      el1.withProps1(
-                        el1.props1
-                          .withBgColor( topColorMcdOpt )
-                      )
+                      p1_bgColor_LENS
+                        .set( topColorMcdOpt )(el1)
                     } { qdProps0 =>
-                      el1.withQdProps( Some(
-                        qdProps0.withAttrsText( Some(
+                      JdTag.qdProps.set( Some(
+                        MQdOp.attrsText.set( Some(
                           qdProps0.attrsText
                             .getOrElse( MQdAttrsText.empty )
                             .withBackground(
                               topColorMcdOpt.map {SetVal.apply }
                             )
-                        ))
-                      ))
+                        ))(qdProps0)
+                      ))(el1)
                     }
                   }
               }
 
             // Сохранить новые темплейт в состояние.
-            val jdArgs2 = v0.jdArgs
-              .withTemplate(tpl2)
-              .withJdCss(
-                JdCss(
-                  MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
-                )
-              )
+            val jdArgs2 = (
+              MJdArgs.template.set(tpl2) andThen
+              MJdArgs.jdCss.set(JdCss(
+                MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
+              ))
+            )( v0.jdArgs )
 
-            var v2 = v0.withJdArgs( jdArgs2 )
+            var v2 = MDocS.jdArgs.set( jdArgs2 )(v0)
 
             // Надо заставить перерендерить quill, если он изменился и открыт сейчас:
             for {
@@ -920,11 +885,11 @@ class DocEditAh[M](
               qdTag0      <- v0.jdArgs.selJdt.treeOpt
               if qdTag0 !=* qdTag2
             } {
-              v2 = v0.withQdEdit(
-                Some(qdEdit0.withInitRealDelta(
+              v2 = MDocS.qdEdit.set( Some(
+                qdEdit0.withInitRealDelta(
                   initDelta = quillDeltaJsUtil.qdTag2delta( qdTag2, v2.jdArgs.edges )
-                ))
-              )
+                )
+              ))(v0)
             }
 
             updated( v2 )
@@ -939,21 +904,21 @@ class DocEditAh[M](
         .selJdt.treeLocOpt
         .get
         .modifyLabel { jdTag0 =>
-          assert( jdTag0.name ==* MJdTagNames.QD_CONTENT )
+          require( jdTag0.name ==* MJdTagNames.QD_CONTENT )
           // Сохранить новую ширину в состояние текущего тега:
-          jdTag0.withProps1(
-            jdTag0.props1
-              .withWidthPx( Some(m.widthPx) )
-          )
+          JdTag.props1
+            .composeLens( MJdtProps1.widthPx )
+            .set( Some(m.widthPx) )( jdTag0 )
         }
         .toTree
-      val v2 = v0.withJdArgs(
-        v0.jdArgs
-          .withTemplate(tpl2)
-          .withJdCss(
-            JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
-          )
-      )
+
+      val v2 = MDocS.jdArgs.modify(
+        MJdArgs.template.set( tpl2 ) andThen
+        MJdArgs.jdCss.set(
+          JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
+        )
+      )(v0)
+
       updated(v2)
 
 
@@ -975,22 +940,25 @@ class DocEditAh[M](
             .get
             .setTree(qdSubTree2)
             .toTree
-          val v2 = v0
-            .withJdArgs(
-              v0.jdArgs.copy(
+
+          val v2 = (
+            MDocS.jdArgs.modify { jdArgs0 =>
+              jdArgs0.copy(
                 template = tpl2,
                 jdCss = JdCss(
-                  MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
-                )
+                  MJdCssArgs.singleCssArgs(tpl2, jdArgs0.conf)
+                ),
               )
-            )
-            .withQdEdit(
-              v0.qdEdit.map { qdEdit0 =>
+            } andThen
+            MDocS.qdEdit.modify { qdEditOpt0 =>
+              for (qdEdit0 <- qdEditOpt0) yield {
                 qdEdit0.withInitRealDelta(
                   initDelta = quillDeltaJsUtil.qdTag2delta( qdSubTreeLoc2.root.tree, v0.jdArgs.edges )
                 )
               }
-            )
+            }
+          )(v0)
+
           updated( v2 )
         }
 
@@ -1034,17 +1002,16 @@ class DocEditAh[M](
 
       Option(loc2OrNull).fold(noChange) { loc2 =>
         val tpl2 = loc2.toTree
-        val v2 = v0.withJdArgs(
-          v0.jdArgs
-            .withTemplate( tpl2 )
-            // Надо пересчитать path до перемещённого тега.
-            .withRenderArgs(
-              v0.jdArgs.renderArgs.withSelPath(
-                tpl2.nodeToPath( loc0.getLabel )
-              )
-            )
-            // css можно не обновлять, т.к. там просто поменяется порядок стилей без видимых изменений.
-        )
+
+        val v2 = MDocS.jdArgs.modify(
+          MJdArgs.template.set(tpl2) andThen
+          // Надо пересчитать path до перемещённого тега.
+          MJdArgs.renderArgs
+            .composeLens( MJdRenderArgs.selPath )
+            .set( tpl2.nodeToPath( loc0.getLabel ) )
+          // css можно не обновлять, т.к. там просто поменяется порядок стилей без видимых изменений.
+        )(v0)
+
         updated(v2)
       }
 
@@ -1052,26 +1019,27 @@ class DocEditAh[M](
     // Замена состояния галочки широкого рендера текущего стрипа новым значением
     case m: StripStretchAcross =>
       val v0 = value
+
       val tpl2 = v0.jdArgs
         .selJdt.treeLocOpt
         .get
         .modifyLabel { strip0 =>
-          assert(strip0.name ==* MJdTagNames.STRIP)
-          val bm0 = strip0.props1.bm.get
-          strip0.withProps1(
-            strip0.props1.withBm(
-              Some( bm0.withWide( m.isWide ) )
-            )
-          )
+          require(strip0.name ==* MJdTagNames.STRIP)
+          JdTag.props1
+            .composeLens( MJdtProps1.bm )
+            .composeTraversal( Traversal.fromTraverse[Option, BlockMeta] )
+            .composeLens( BlockMeta.wide )
+            .set( m.isWide )(strip0)
         }
         .toTree
-      val v2 = v0.withJdArgs(
-        v0.jdArgs
-          .withTemplate( tpl2 )
-          .withJdCss(
-            JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
-          )
-      )
+
+      val v2 = MDocS.jdArgs.modify(
+        MJdArgs.template.set( tpl2 ) andThen
+        MJdArgs.jdCss.set(
+          JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
+        )
+      )(v0)
+
       updated( v2 )
 
 
@@ -1080,13 +1048,13 @@ class DocEditAh[M](
       val v0 = value
 
       // Фунция для ленивого обновления стрипа новым значением.
+      val p1_isMain_LENS = JdTag.props1
+        .composeLens( MJdtProps1.isMain )
+
       def __updateLocLabel(label: JdTag, newValue: Option[Boolean]): JdTag = {
-        if (label.props1.isMain !=* newValue) {
-          label.withProps1(
-            label.props1.withIsMain(
-              isMain = newValue
-            )
-          )
+        if ( p1_isMain_LENS.get(label) !=* newValue) {
+          p1_isMain_LENS
+            .set( newValue )( label )
         } else {
           label
         }
@@ -1109,10 +1077,12 @@ class DocEditAh[M](
             root = tpl0.rootLabel,
             forest = for (stripTree <- v0.jdArgs.template.subForest) yield {
               val lbl = stripTree.rootLabel
-              ErrorConstants.assertArg( lbl.name ==* MJdTagNames.STRIP )
+              require( lbl.name ==* MJdTagNames.STRIP )
               val label2 = __updateLocLabel(
                 label     = lbl,
-                newValue  = if (lbl ===* currStrip) currTagNewMainValue else otherStripsNewMainValue
+                newValue  =
+                  if (lbl ===* currStrip) currTagNewMainValue
+                  else otherStripsNewMainValue
               )
               // Собрать узел стрипа:
               Tree.Node(
@@ -1122,13 +1092,15 @@ class DocEditAh[M](
             }
           )
 
-          val v2 = v0.withJdArgs(
-            v0.jdArgs
-              .withTemplate(tpl2)
-              .withJdCss(
-                JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
+          val v2 = MDocS.jdArgs.modify { jdArgs0 =>
+            (
+              MJdArgs.template.set(tpl2) andThen
+              MJdArgs.jdCss.set(
+                JdCss(MJdCssArgs.singleCssArgs(tpl2, jdArgs0.conf))
               )
-          )
+            )(jdArgs0)
+          }( v0 )
+
           updated(v2)
         }
 
@@ -1140,12 +1112,11 @@ class DocEditAh[M](
       if (v0.jdArgs.renderArgs.hideNonMainStrips ==* hideNonMainStrips2) {
         noChange
       } else {
-        val v2 = v0.withJdArgs(
-          v0.jdArgs.withRenderArgs(
-            v0.jdArgs.renderArgs
-              .withHideNonMainStrips( hideNonMainStrips2 )
-          )
-        )
+        val v2 = MDocS.jdArgs
+          .composeLens( MJdArgs.renderArgs )
+          .composeLens( MJdRenderArgs.hideNonMainStrips )
+          .set( hideNonMainStrips2 )(v0)
+
         updated(v2)
       }
 
@@ -1219,9 +1190,9 @@ class DocEditAh[M](
           jdCss       = JdCss(
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
           ),
-          renderArgs  = v0.jdArgs.renderArgs.withSelPath(
-            selPath   = tpl2.nodeToPath( qdtTree.rootLabel )
-          )
+          renderArgs  = MJdRenderArgs.selPath.set(
+            tpl2.nodeToPath( qdtTree.rootLabel )
+          )(v0.jdArgs.renderArgs),
         ),
         qdEdit = Some {
           val qdelta = quillDeltaJsUtil.qdTag2delta(
@@ -1233,8 +1204,7 @@ class DocEditAh[M](
           )
         },
         stripEd = None,
-        slideBlocks = v0.slideBlocks
-          .withExpanded( Some(SlideBlockKeys.CONTENT) )
+        slideBlocks = MSlideBlocks.expanded.set( Some(SlideBlockKeys.CONTENT) )(v0.slideBlocks),
       )
       updated(v2)
 
@@ -1291,41 +1261,42 @@ class DocEditAh[M](
 
       val tpl2 = newStripLoc.toTree
 
-      val v2 = v0
-        .withJdArgs(
-          v0.jdArgs.copy(
+      val v2 = (
+        MDocS.jdArgs.modify { jdArgs0 =>
+          jdArgs0.copy(
             template    = tpl2,
-            renderArgs  = v0.jdArgs.renderArgs.withSelPath(
-              selPath   = tpl2.nodeToPath( newStripTree.rootLabel )
-            ),
+            renderArgs  = MJdRenderArgs.selPath
+              .set( tpl2.nodeToPath( newStripTree.rootLabel ) )(jdArgs0.renderArgs),
             jdCss       = JdCss(
-              MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
+              MJdCssArgs.singleCssArgs(tpl2, jdArgs0.conf)
             )
           )
-        )
-        .withSlideBlocks(
-          v0.slideBlocks
-            .withExpanded( Some(SlideBlockKeys.BLOCK) )
-        )
-      updated(v2)
+        } andThen
+        MDocS.slideBlocks
+          .composeLens( MSlideBlocks.expanded )
+          .set( Some(SlideBlockKeys.BLOCK) )
+      )(v0)
 
+      updated(v2)
 
 
     // Выставить новый масштаб для рендера карточи.
     case m: SetScale =>
       val v0 = value
-      val conf2 = v0.jdArgs.conf
-        .withSzMult( m.szMult )
-      val v2 = v0
-        .withJdArgs(
-          v0.jdArgs
-            .withConf( conf2 )
-            .withJdCss(
-              JdCss(
-                MJdCssArgs.singleCssArgs(v0.jdArgs.template, conf2)
-              )
+      val conf2 = MJdConf.szMult
+        .set(m.szMult)( v0.jdArgs.conf )
+
+      val v2 = MDocS.jdArgs.modify { jdArgs0 =>
+        (
+          MJdArgs.conf.set( conf2 ) andThen
+          MJdArgs.jdCss.set(
+            JdCss(
+              MJdCssArgs.singleCssArgs( jdArgs0.template, conf2 )
             )
-        )
+          )
+        )(jdArgs0)
+      }(v0)
+
       updated(v2)
 
 
@@ -1387,5 +1358,12 @@ class DocEditAh[M](
 
   }
 
+
+  private def _jdArgs_renderArgs_dnd_jdt_LENS = {
+    MDocS.jdArgs
+      .composeLens( MJdArgs.renderArgs )
+      .composeLens( MJdRenderArgs.dnd )
+      .composeLens( MJdDndS.jdt )
+  }
 
 }

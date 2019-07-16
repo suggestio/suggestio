@@ -8,6 +8,7 @@ import io.suggest.file.up.MFileUploadS
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import org.scalajs.dom.Blob
 
 /**
@@ -35,6 +36,13 @@ object MJsFileInfo {
   }
 
   @inline implicit def univEq: UnivEq[MJsFileInfo] = UnivEq.derive
+
+  val blob      = GenLens[MJsFileInfo](_.blob)
+  val blobUrl   = GenLens[MJsFileInfo](_.blobUrl)
+  val fileName  = GenLens[MJsFileInfo](_.fileName)
+  val hashesHex = GenLens[MJsFileInfo](_.hashesHex)
+  val whPx      = GenLens[MJsFileInfo](_.whPx)
+  val upload    = GenLens[MJsFileInfo](_.whPx)
 
 }
 

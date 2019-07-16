@@ -49,9 +49,9 @@ class RegR(
     * @param isFinal последний шаг?
     */
   case class MNextBtnProps(
-                           disabled   : Boolean,
-                           isFinal    : Boolean,
-                         )
+                            disabled   : Boolean,
+                            isFinal    : Boolean,
+                          )
     extends UseValueEq
 
 
@@ -73,9 +73,9 @@ class RegR(
     private def _onFormSubmit(e: ReactEvent): Callback =
       ReactCommonUtil.preventDefaultCB(e) >> _onNextClick
 
-    private val _onBackClick: Callback =
+    private def _onBackClick(e: ReactEvent): Callback =
       ReactDiodeUtil.dispatchOnProxyScopeCB( $, RegBackClick )
-    private val _onBackClickCbF = ReactCommonUtil.cbFun1ToJsCb { _: ReactEvent => _onBackClick }
+    private val _onBackClickCbF = ReactCommonUtil.cbFun1ToJsCb( _onBackClick )
 
 
     def render(pRoot: Props, s: State): VdomElement = {
@@ -223,19 +223,19 @@ class RegR(
   val component = ScalaComponent
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { mrootProxy =>
-      val propsProxy = mrootProxy.zoom(_.reg)
+      val regProxy = mrootProxy.zoom(_.reg)
 
       val lastStep = MRegSteps.values.last
 
       State(
 
-        isSubmitPendingSomeC = propsProxy.connect { props =>
+        isSubmitPendingSomeC = regProxy.connect { props =>
           OptionUtil.SomeBool( props.hasSubmitReqPending )
         }( FastEq.AnyRefEq ),
 
-        activeStepC = propsProxy.connect(_.step)( FastEq.AnyRefEq ),
+        activeStepC = regProxy.connect(_.step)( FastEq.AnyRefEq ),
 
-        backBtnDisabledC = propsProxy.connect { props =>
+        backBtnDisabledC = regProxy.connect { props =>
           // Кнопка "Назад" выключена на нулевом шаге.
           OptionUtil.SomeBool( props.step.value <= 0 )
         }( FastEq.AnyRefEq ),
@@ -265,7 +265,7 @@ class RegR(
         // Это последний шаг?
         isLastStepSomeC = {
           val lastStep = MRegSteps.values.last
-          propsProxy.connect { props =>
+          regProxy.connect { props =>
             OptionUtil.SomeBool( props.step ==* lastStep )
           }( FastEq.AnyRefEq )
         }

@@ -5,6 +5,7 @@ import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.primo.id.{IId, OptId}
 import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.Tree
@@ -38,6 +39,10 @@ object MJdAdData {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }
+
+  val template = GenLens[MJdAdData](_.template)
+  val edges    = GenLens[MJdAdData](_.edges)
+  val nodeId   = GenLens[MJdAdData](_.nodeId)
 
 }
 

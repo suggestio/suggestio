@@ -2,9 +2,9 @@ package io.suggest.ad.blk
 
 import io.suggest.common.geom.d2.ISize2di
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-
 import scalaz.{Validation, ValidationNel}
 
 
@@ -36,6 +36,10 @@ object BlockMeta {
 
 
   def MINIMAL = BlockMeta( BlockWidths.min, BlockHeights.min )
+
+  val w = GenLens[BlockMeta](_.w)
+  val h = GenLens[BlockMeta](_.h)
+  val wide = GenLens[BlockMeta](_.wide)
 
 }
 
