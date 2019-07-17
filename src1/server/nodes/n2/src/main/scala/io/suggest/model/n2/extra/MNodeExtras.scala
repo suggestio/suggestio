@@ -7,6 +7,7 @@ import io.suggest.model.n2.extra.doc.{MNodeDoc, MNodeDocJvm}
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import io.suggest.model.n2.extra.rsc.MRscExtra
 import io.suggest.vid.ext.{MVideoExtInfo, MVideoExtInfoEs}
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{OFormat, _}
 
@@ -122,6 +123,14 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
       _obj(Fields.Resource.RESOURCE_FN,       MRscExtra),
     )
   }
+
+
+  val adn       = GenLens[MNodeExtras](_.adn)
+  val beacon    = GenLens[MNodeExtras](_.beacon)
+  val domains   = GenLens[MNodeExtras](_.domains)
+  val doc       = GenLens[MNodeExtras](_.doc)
+  val extVideo  = GenLens[MNodeExtras](_.extVideo)
+  val resource  = GenLens[MNodeExtras](_.resource)
 
 }
 

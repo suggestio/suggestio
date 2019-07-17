@@ -75,8 +75,6 @@ case class MQdAttrsEmbed(
   with IEqualsEq
 {
 
-  def withWidth(width: Option[ISetUnset[Int]])      = copy(width = width)
-  def withHeight(height: Option[ISetUnset[Int]])    = copy(height = height)
   def withWidthHeight(width: Option[ISetUnset[Int]], height: Option[ISetUnset[Int]]) = copy(width = width, height = height)
 
   def size2dOpt: Option[MSize2di] = {

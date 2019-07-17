@@ -4,7 +4,7 @@ import io.suggest.jd.tags.JdTag
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
-
+import monocle.macros.GenLens
 import scalaz.Tree
 
 /**
@@ -36,6 +36,9 @@ object MNodeDoc {
       .inmap[MNodeDoc](apply, _.template)
   }
 
+
+  val template = GenLens[MNodeDoc](_.template)
+
 }
 
 
@@ -47,8 +50,4 @@ object MNodeDoc {
   */
 case class MNodeDoc(
                      template: Tree[JdTag]
-                   ) {
-
-  def withTemplate(template: Tree[JdTag]) = copy(template = template)
-
-}
+                   )

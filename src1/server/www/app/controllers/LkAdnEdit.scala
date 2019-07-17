@@ -7,7 +7,8 @@ import io.suggest.img.MImgFmts
 import io.suggest.init.routed.MJsInitTargets
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge._
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import javax.inject.{Inject, Singleton}
 import models.mctx.Context
@@ -24,6 +25,8 @@ import util.n2u.N2VldUtil
 import util.sec.CspUtil
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import models.req.MNodeReq
+import monocle.Traversal
+import scalaz.std.option._
 
 import scala.concurrent.Future
 
@@ -274,20 +277,21 @@ class LkAdnEdit @Inject() (
                   }
 
                   // Запуск обновления.
-                  val saveFut = mNodes.tryUpdate(request.mnode) { mnode0 =>
-                    mnode0.copy(
-                      edges = mnode0.edges
-                        // Стираем все jd-эджи. На момент описания результат был эквивалентен
+                  val saveFut = mNodes.tryUpdate( request.mnode )(
+                    MNode.edges.modify { edges0 =>
+                      // Стираем все jd-эджи. На момент описания результат был эквивалентен
+                      edges0
                         .withoutPredicate( MPredicates.JdContent )
-                        .withEdges( addNodeEdges ),
-                      extras = mnode0.extras.withAdn(Some(
-                        mnode0.extras.adn.get
-                          .withResView( form.resView )
-                      )),
-                      meta = mnode0.meta
-                        .withPublic( form.meta )
-                    )
-                  }
+                        .withEdges( addNodeEdges )
+                    } andThen
+                    MNode.extras
+                      .composeLens( MNodeExtras.adn )
+                      .composeTraversal( Traversal.fromTraverse[Option, MAdnExtra] )
+                      .composeLens( MAdnExtra.resView )
+                      .set( form.resView ) andThen
+                    MNode.meta
+                      .modify( _.withPublic(form.meta) )
+                  )
 
                   // Параллельно собрать json-ответ с провалидированной формой: для этого нужно пересобрать новые эджи.
                   // Тут всё ок, но в эджах нет достаточных данных в url или fileSrv. Это отрабатываетя на клиенте.

@@ -80,26 +80,24 @@ class DocEditAh[M](
         widthPxOpt.isEmpty || (needUpdateF.isEmpty || widthPxOpt.exists(needUpdateF.get))
       }
       .fold(qdSubTreeLoc0) { imgOpLoc0 =>
-        imgOpLoc0.modifyLabel { imgOp0 =>
-          val label2 = imgOp0.withQdProps(
-            imgOp0.qdProps.map { qdOp =>
-              qdOp.withAttrsEmbed {
-                val widthSuOpt  = Some( SetVal(width) )
-                val heightSuOpt = heightPxOpt.map(SetVal.apply)
-                // обычно attrs embed пуст для новой картинки/видео. Но quill может сам изменить размер сразу.
-                val ae2 = qdOp.attrsEmbed.fold {
-                  MQdAttrsEmbed( width = widthSuOpt, height = heightSuOpt )
-                } { attrsEmbed =>
-                  attrsEmbed.withWidthHeight(
-                    width  = widthSuOpt,
-                    height = heightSuOpt
-                  )
-                }
-                Some(ae2)
+        imgOpLoc0.modifyLabel {
+          JdTag.qdProps
+            .composeTraversal( Traversal.fromTraverse[Option, MQdOp] )
+            .composeLens( MQdOp.attrsEmbed )
+            .modify { attrsEmbedOpt0 =>
+              val widthSuOpt  = Some( SetVal(width) )
+              val heightSuOpt = heightPxOpt.map(SetVal.apply)
+              // обычно attrs embed пуст для новой картинки/видео. Но quill может сам изменить размер сразу.
+              val ae2 = attrsEmbedOpt0.fold {
+                MQdAttrsEmbed( width = widthSuOpt, height = heightSuOpt )
+              } { attrsEmbed =>
+                attrsEmbed.withWidthHeight(
+                  width  = widthSuOpt,
+                  height = heightSuOpt
+                )
               }
+              Some(ae2)
             }
-          )
-          label2
         }
       }
   }
@@ -342,18 +340,17 @@ class DocEditAh[M](
         m.jdTag.name match {
           // Переключение на новый стрип. Инициализировать состояние stripEd:
           case n @ MJdTagNames.STRIP =>
-            v2 = MDocS.stripEd.set(
-              Some(MStripEdS(
-                isLastStrip = {
-                  val hasManyStrips = v2.jdArgs.template
-                    .deepOfTypeIter( n )
-                    // Оптимизация: НЕ проходим весь strip-итератор, а считаем только первые два стрипа.
-                    .slice(0, 2)
-                    .size > 1
-                  !hasManyStrips
-                }
-              ))
-            )(v2)
+            val s2 = MStripEdS(
+              isLastStrip = {
+                val hasManyStrips = v2.jdArgs.template
+                  .deepOfTypeIter( n )
+                  // Оптимизация: НЕ проходим весь strip-итератор, а считаем только первые два стрипа.
+                  .slice(0, 2)
+                  .size > 1
+                !hasManyStrips
+              }
+            )
+            v2 = MDocS.stripEd.set( Some(s2) )(v2)
 
             // Если тип текущего тега изменился, то сбросить текущий slide-блок.
             if ( !oldTagName.contains(n) ) {
@@ -544,9 +541,10 @@ class DocEditAh[M](
           // Кнопка первого шага удаления уже была нажата: игнорим дубликат неактуального события
           noChange
         } else {
-          val v2 = MDocS.stripEd.set(
-            Some( MStripEdS.confirmingDelete.set(true)(stripEdS0) )
-          )(v0)
+          val v2 = MDocS.stripEd
+            .composeTraversal( Traversal.fromTraverse[Option, MStripEdS] )
+            .composeLens( MStripEdS.confirmingDelete )
+            .set(true)(v0)
           updated(v2)
         }
 
@@ -592,9 +590,8 @@ class DocEditAh[M](
       val stripEdS0 = v0.stripEd.get
       if (stripEdS0.confirmingDelete) {
         // Юзер отменяет удаление
-        val v2 = MDocS.stripEd.set(
-          Some( MStripEdS.confirmingDelete.set(false)(stripEdS0) )
-        )(v0)
+        val s2 = MStripEdS.confirmingDelete.set(false)(stripEdS0)
+        val v2 = MDocS.stripEd.set( Some(s2) )(v0)
         updated(v2)
       } else {
         // Какой-то левый экшен пришёл. Возможно, просто дублирующийся.
@@ -1092,14 +1089,12 @@ class DocEditAh[M](
             }
           )
 
-          val v2 = MDocS.jdArgs.modify { jdArgs0 =>
-            (
-              MJdArgs.template.set(tpl2) andThen
-              MJdArgs.jdCss.set(
-                JdCss(MJdCssArgs.singleCssArgs(tpl2, jdArgs0.conf))
-              )
-            )(jdArgs0)
-          }( v0 )
+          val v2 = MDocS.jdArgs.modify(
+            MJdArgs.template.set(tpl2) andThen
+            MJdArgs.jdCss.set(
+              JdCss(MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf))
+            )
+          )( v0 )
 
           updated(v2)
         }
@@ -1286,16 +1281,12 @@ class DocEditAh[M](
       val conf2 = MJdConf.szMult
         .set(m.szMult)( v0.jdArgs.conf )
 
-      val v2 = MDocS.jdArgs.modify { jdArgs0 =>
-        (
-          MJdArgs.conf.set( conf2 ) andThen
-          MJdArgs.jdCss.set(
-            JdCss(
-              MJdCssArgs.singleCssArgs( jdArgs0.template, conf2 )
-            )
-          )
-        )(jdArgs0)
-      }(v0)
+      val v2 = MDocS.jdArgs.modify(
+        MJdArgs.conf.set( conf2 ) andThen
+        MJdArgs.jdCss.set(
+          JdCss( MJdCssArgs.singleCssArgs( v0.jdArgs.template, conf2 ) )
+        )
+      )(v0)
 
       updated(v2)
 

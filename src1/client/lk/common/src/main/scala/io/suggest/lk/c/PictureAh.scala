@@ -353,7 +353,7 @@ class PictureAh[V, M](
               .withEdges( v0.edges + (edge0.id -> edge2) )
               // Распахнуть попап с ошибкой закачки файла:
               .withErrorPopup( Some(
-                errPopup0.withException( Some(ex) )
+                MErrorPopupS.exception.set( Some(ex) )(errPopup0)
               ))
             updated(v2)
           },
@@ -805,9 +805,7 @@ class PictureAh[V, M](
 
   private def _errorPopupWithMessages(errorPopupOpt0: Option[MErrorPopupS], messages: TraversableOnce[MMessage]): Some[MErrorPopupS] = {
     val ep0 = errorPopupOpt0.getOrElse( MErrorPopupS.empty )
-    val ep2 = ep0.withMessages(
-      ep0.messages ++ messages
-    )
+    val ep2 = MErrorPopupS.messages.modify(_ ++ messages)(ep0)
     Some(ep2)
   }
 

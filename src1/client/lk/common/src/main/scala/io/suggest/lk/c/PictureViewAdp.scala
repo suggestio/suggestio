@@ -3,11 +3,14 @@ package io.suggest.lk.c
 import io.suggest.common.html.HtmlConstants
 import io.suggest.err.ErrorConstants
 import io.suggest.jd.MJdEdgeId
-import io.suggest.jd.tags.{JdTag, MJdTagNames}
+import io.suggest.jd.tags.qd.MQdOp
+import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
 import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.model.n2.edge.EdgeUid_t
 import scalaz.Tree
+import scalaz.std.option._
 import japgolly.univeq._
+import monocle.Traversal
 
 /**
   * Suggest.io
@@ -104,16 +107,13 @@ object IPictureViewAdp {
         .setLabel {
           jdt.name match {
             case MJdTagNames.QD_OP =>
-              jdt.withQdProps(
-                jdt.qdProps.map { qdProps =>
-                  qdProps
-                    .withEdgeInfo( newValue )
-                }
-              )
+              JdTag.qdProps
+                .composeTraversal( Traversal.fromTraverse[Option, MQdOp] )
+                .composeLens( MQdOp.edgeInfo )
+                .set( newValue )(jdt)
             case MJdTagNames.STRIP =>
-              jdt.withProps1(
-                jdt.props1.withBgImg( newValue )
-              )
+              _jdtag_p1_bgImg_LENS
+                .set( newValue )(jdt)
             case jdtName =>
               throw new UnsupportedOperationException(resKey + HtmlConstants.SPACE + newValue + HtmlConstants.SPACE + jdtName)
           }
@@ -123,18 +123,22 @@ object IPictureViewAdp {
 
     override def forgetEdge(view: Tree[JdTag], edgeUid: EdgeUid_t): Tree[JdTag] = {
       // Аккуратно отмаппить все теги: если bgImg содержит edgeUid, то обнулить bgImg.
+      val lens = _jdtag_p1_bgImg_LENS
       for (jdt0 <- view) yield {
-        if (jdt0.props1.bgImg.exists(_.edgeUid ==* edgeUid)) {
-          jdt0.withProps1(
-            jdt0.props1
-              .withBgImg( None )
-          )
+        if ( lens.get(jdt0).exists(_.edgeUid ==* edgeUid) ) {
+          lens.set(None)(jdt0)
         } else {
           jdt0
         }
       }
     }
 
+  }
+
+
+  private def _jdtag_p1_bgImg_LENS = {
+    JdTag.props1
+      .composeLens( MJdtProps1.bgImg )
   }
 
 }

@@ -30,8 +30,4 @@ object MDeleteConfirmPopupS {
 
 case class MDeleteConfirmPopupS(
                                  request: Pot[AnyRef] = Pot.empty
-                               ) {
-
-  def withRequest(req2: Pot[AnyRef]) = copy(request = req2)
-
-}
+                               )

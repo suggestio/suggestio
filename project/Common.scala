@@ -161,7 +161,7 @@ object Common {
     /** Версия react-stonecutter для организации плитки.
       * @see [[https://github.com/dantrain/react-stonecutter]]
       */
-    val REACT_STONECUTTER = "0.3.9"
+    val REACT_STONECUTTER = "0.3.10"
 
     /** Версия аккордеона react-sanfona.
       * @see [[https://github.com/daviferreira/react-sanfona]]

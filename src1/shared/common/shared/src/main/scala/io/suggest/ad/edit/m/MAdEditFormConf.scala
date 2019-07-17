@@ -2,6 +2,7 @@ package io.suggest.ad.edit.m
 
 import io.suggest.ctx.ICtxIdStrOpt
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -26,6 +27,8 @@ object MAdEditFormConf {
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MAdEditFormConf] = UnivEq.derive
+
+  val ctxId = GenLens[MAdEditFormConf](_.ctxId)
 
 }
 

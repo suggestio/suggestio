@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.i18n.MMessage
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -19,7 +20,7 @@ object MErrorPopupS {
   implicit object MErrorPopupSFastEq extends FastEq[MErrorPopupS] {
     override def eqv(a: MErrorPopupS, b: MErrorPopupS): Boolean = {
       (a.messages ===* b.messages) &&
-        (a.exception ===* b.exception)
+      (a.exception ===* b.exception)
     }
   }
 
@@ -33,6 +34,9 @@ object MErrorPopupS {
     }
   }
 
+  val messages  = GenLens[MErrorPopupS](_.messages)
+  val exception = GenLens[MErrorPopupS](_.exception)
+
 }
 
 
@@ -44,9 +48,4 @@ object MErrorPopupS {
 case class MErrorPopupS(
                          messages     : List[MMessage]      = Nil,
                          exception    : Option[Throwable]   = None
-                       ) {
-
-  def withMessages(errorMsgs: List[MMessage])       = copy(messages = errorMsgs)
-  def withException(exception: Option[Throwable])   = copy(exception = exception)
-
-}
+                       )

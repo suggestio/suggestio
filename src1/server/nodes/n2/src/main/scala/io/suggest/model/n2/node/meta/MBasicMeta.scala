@@ -4,6 +4,7 @@ import java.time.OffsetDateTime
 
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -71,6 +72,9 @@ object MBasicMeta extends IGenEsMappingProps {
       FieldKeyword(LANGS_ESFN, index = true, include_in_all = false)
     )
   }
+
+  val nameOpt = GenLens[MBasicMeta](_.nameOpt)
+  val techName = GenLens[MBasicMeta](_.techName)
 
 }
 

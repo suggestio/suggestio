@@ -127,7 +127,7 @@ class LkAdEditCircuit(
 
   private val adEditApi = new LkAdEditApiHttp( confRO, uploadApi )
 
-  private val ctxIdRO = confRO.zoom(_.ctxId)
+  private val ctxIdRO = mkLensZoomRO(confRO, MAdEditFormConf.ctxId)
   private val wsChannelApi = new WsChannelApiHttp(ctxIdRO)
 
   private val mDocSRw = mkLensRootZoomRW(this, MAeRoot.doc)( MDocS.MDocSFastEq )

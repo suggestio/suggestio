@@ -12,8 +12,12 @@ import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.es.model.{BulkProcessorListener, EsModel}
 import io.suggest.img.{MImgFmt, MImgFmts}
 import io.suggest.jd.MJdEdgeId
+import io.suggest.jd.tags.qd.MQdOp
+import io.suggest.jd.tags.{JdTag, MJdtProps1}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
+import io.suggest.model.n2.extra.doc.MNodeDoc
 import io.suggest.model.n2.media.{MMedia, MMedias}
 import io.suggest.model.n2.media.search.MMediaSearchDfltImpl
 import io.suggest.model.n2.media.storage.IMediaStorages
@@ -28,6 +32,8 @@ import org.im4java.core.{ConvertCmd, IMOperation}
 import play.api.mvc.Call
 import util.cdn.CdnUtil
 import japgolly.univeq._
+import monocle.Traversal
+import scalaz.std.option._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -525,6 +531,22 @@ class DynImgUtil @Inject() (
 
     val countProcessed = new AtomicInteger(0)
 
+    val mnode_extras_doc_template_LENS = MNode.extras
+      .composeLens( MNodeExtras.doc )
+      .composeTraversal( Traversal.fromTraverse[Option, MNodeDoc] )
+      .composeLens( MNodeDoc.template )
+
+    val jdt_p1_bgImg_LENS = JdTag.props1
+      .composeLens( MJdtProps1.bgImg )
+
+    val jdt_qdProps_edgeInfo_LENS = JdTag.qdProps
+      .composeTraversal( Traversal.fromTraverse[Option, MQdOp] )
+      .composeLens( MQdOp.edgeInfo )
+    val mnode_extras_adn_resView_LENS = MNode.extras
+      .composeLens( MNodeExtras.adn )
+      .composeTraversal( Traversal.fromTraverse[Option, MAdnExtra] )
+      .composeLens( MAdnExtra.resView )
+
     mNodes
       .source[MNode]( msearch.toEsQuery )
       .mapAsyncUnordered(nodesPerTime) { mnode =>
@@ -588,60 +610,39 @@ class DynImgUtil @Inject() (
 
           val mnode2: MNode = mnode.common.ntype match {
             case MNodeTypes.Ad =>
-              mnode.withExtras(
-                mnode.extras.withDoc(
-                  for (doc <- mnode.extras.doc) yield {
-                    doc.withTemplate(
-                      for (jdTag0 <- doc.template) yield {
-                        // обновить bgImg
-                        var jdTag2 = jdTag0
-                        for (_ <- jdTag2.props1.bgImg) {
-                          jdTag2 = jdTag2.withProps1(
-                            jdTag2.props1.withBgImg(
-                              _upgradeJdIdOpt( jdTag2.props1.bgImg )
-                            )
-                          )
-                        }
-                        // обновить qd edgeid
-                        for {
-                          qdProps <- jdTag2.qdProps
-                          _       <- qdProps.edgeInfo
-                        } {
-                          jdTag2 = jdTag2.withQdProps(
-                            Some(qdProps.withEdgeInfo(
-                              _upgradeJdIdOpt( qdProps.edgeInfo )
-                            ))
-                          )
-                        }
+              mnode_extras_doc_template_LENS
+                .modify { template0 =>
+                  for (jdTag0 <- template0) yield {
+                    // обновить bgImg
+                    var jdTag2 = jdTag0
 
-                        // Вернуть обновлённый тег
-                        jdTag2
-                      }
-                    )
+                    if ( jdt_p1_bgImg_LENS.get(jdTag2).nonEmpty )
+                      jdTag2 = jdt_p1_bgImg_LENS.modify( _upgradeJdIdOpt )(jdTag2)
+
+                    // обновить qd edgeid
+                    if (jdt_qdProps_edgeInfo_LENS.exist( _.nonEmpty )(jdTag2) )
+                      jdTag2 = jdt_qdProps_edgeInfo_LENS.modify( _upgradeJdIdOpt )(jdTag2)
+
+                    // Вернуть обновлённый тег
+                    jdTag2
                   }
-                )
-              )
+                }(mnode)
 
             case MNodeTypes.AdnNode =>
-              mnode.withExtras(
-                mnode.extras.withAdn(
-                  for (adn <- mnode.extras.adn) yield {
-                    val rv = adn.resView
-                    adn.withResView(
-                      rv.copy(
-                        logo = _upgradeJdIdOpt(rv.logo),
-                        wcFg = _upgradeJdIdOpt(rv.wcFg),
-                        galImgs = rv.galImgs
-                          .flatMap { galImg => _upgradeJdIdOpt(Some(galImg)) }
-                      )
-                    )
-                  }
-                )
-              )
+
+              mnode_extras_adn_resView_LENS
+                .modify { rv =>
+                  rv.copy(
+                    logo = _upgradeJdIdOpt(rv.logo),
+                    wcFg = _upgradeJdIdOpt(rv.wcFg),
+                    galImgs = rv.galImgs
+                      .flatMap { galImg => _upgradeJdIdOpt(Some(galImg)) }
+                  )
+                }(mnode)
 
             // Should never happen
-            case _ =>
-              ???
+            case unsupportedNtype =>
+              throw new UnsupportedOperationException(s"$logPrefix Not supported node[${mnode.idOrNull}] type: $unsupportedNtype\n | Node info = ${mnode.guessDisplayNameOrIdOrQuestions}")
           }
 
           bp.add( mNodes.prepareIndex(mnode2).request() )

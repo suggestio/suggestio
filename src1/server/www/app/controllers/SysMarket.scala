@@ -11,6 +11,7 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.Criteria
+import io.suggest.model.n2.node.meta.MMeta
 import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.OptId
@@ -430,12 +431,12 @@ class SysMarket @Inject() (
                   meta = if (isAdnNode && mnode0.meta.colors.adnColors.exists(_.isEmpty)) {
                     val colors2 = NodeDfltColors.getOneRandom().adnColors
                     LOGGER.trace(s"$logPrefix Resetting colors for created adn node: $colors2")
-                    mnode0.meta
-                      .withColors( colors2 )
+                    MMeta.colors.set( colors2 )(mnode0.meta)
                   } else {
                     mnode0.meta
                   }
                 )
+
                 nodeId <- mNodes.save(mnode1)
 
               } yield {

@@ -33,18 +33,19 @@ class DeleteNodeAh[M](
     // Сигнал подтверждения удаления узла.
     case DeleteConfirmPopupOk =>
       val v0 = value.get
-      val v2 = v0.withRequest(
-        v0.request.pending()
-      )
+      val v2 = MDeleteConfirmPopupS.request
+        .modify( _.pending() )(v0)
 
       // Запустить удаление узла на сервере.
       val fx = Effect {
         val rcvrKey = currNodeRO().get
         val nodeId = rcvrKey.last
-        api.deleteNode( nodeId ).transform { tryRes =>
-          val r = NodeDeleteResp(rcvrKey, tryRes)
-          Success(r)
-        }
+        api
+          .deleteNode( nodeId )
+          .transform { tryRes =>
+            val r = NodeDeleteResp(rcvrKey, tryRes)
+            Success(r)
+          }
       }
 
       updated(Some(v2), fx)

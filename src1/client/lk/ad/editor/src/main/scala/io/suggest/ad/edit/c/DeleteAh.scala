@@ -41,7 +41,7 @@ class DeleteAh[M](
     // Юзер подтвердил удаление рекламной карточки.
     case DeleteConfirmPopupOk =>
       val v0 = value.get
-      val v2 = Some( v0.withRequest( v0.request.pending() ) )
+      val v2 = Some( MDeleteConfirmPopupS.request.modify(_.pending())(v0) )
 
       val adId = confRO.value.adId.get
       val fx = Effect {

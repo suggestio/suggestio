@@ -9,6 +9,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
  * Suggest.io
@@ -73,6 +74,8 @@ object MAdnExtra extends IGenEsMappingProps {
 
   @inline implicit def univEq: UnivEq[MAdnExtra] = UnivEq.derive
 
+  val resView = GenLens[MAdnExtra](_.resView)
+
 }
 
 
@@ -92,8 +95,6 @@ case class MAdnExtra(
                       shownTypeIdOpt        : Option[String]            = None,
                       testNode              : Boolean                   = false,
                     ) {
-
-  def withResView(resView: MAdnResView) = copy(resView = resView)
 
   def isProducer: Boolean = rights.contains( MAdnRights.PRODUCER )
   def isReceiver: Boolean = rights.contains( MAdnRights.RECEIVER )

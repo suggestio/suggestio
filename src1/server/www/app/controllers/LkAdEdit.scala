@@ -288,31 +288,30 @@ class LkAdEdit @Inject() (
                         LOGGER.info(s"$logPrefix Initialized new jd-template, previous ad template was empty.")
 
                       // Сохраняемая карточка уже существует: перезаписать в ней некоторые эджи.
-                      mNodes.tryUpdate(mad00) { mad =>
-                        mad.copy(
-                          // Залить новые эджи:
-                          edges = mad.edges.copy(
-                            out = {
+                      val filteredPreds = Set[MPredicate]( MPredicates.JdContent, MPredicates.ModeratedBy )
+                      mNodes.tryUpdate(mad00)(
+                        MNode.edges
+                          .composeLens( MNodeEdges.out )
+                          .modify { edges0 =>
+                            MNodeEdges.edgesToMap1(
                               // Убрать все существующие jd-content-эджи. ТODO Bg-предикат: удалить старый предикат фона (старый формат market ad).
-                              val edgesCleanIter = mad.edges
-                                .withoutPredicateIter( MPredicates.JdContent, MPredicates.ModeratedBy )
-                              // Добавить новые jd-эджи.
-                              MNodeEdges.edgesToMap1( edgesCleanIter ++ edgesAcc0 )
-                            }
-                          ),
-                          // Залить новый шаблон:
-                          extras = mad.extras.withDoc {
-                            Some(
-                              mad.extras.doc
-                                .fold(MNodeDoc(template = tpl2)) { _.withTemplate(tpl2) }
+                              edges0.filterNot { medge =>
+                                filteredPreds contains medge.predicate
+                              } ++ edgesAcc0
                             )
-                          },
-                          meta = mad.meta.withBasic {
-                            mad.meta.basic
-                              .withTechName( nodeTechNameOpt )
-                          }
-                        )
-                      }
+                          } andThen
+                        // Залить новый шаблон:
+                        MNode.extras
+                          .composeLens( MNodeExtras.doc )
+                          .modify { mdoc0 =>
+                            val mdoc2 = mdoc0.fold( MNodeDoc(template = tpl2) )( MNodeDoc.template.set(tpl2) )
+                            Some( mdoc2 )
+                          } andThen
+                        MNode.meta
+                          .composeLens( MMeta.basic )
+                          .composeLens( MBasicMeta.techName )
+                          .set( nodeTechNameOpt )
+                      )
                     }
                   }
 

@@ -6,6 +6,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
+import monocle.macros.GenLens
 
 /**
  * Suggest.io
@@ -110,22 +111,26 @@ object MMeta extends IGenEsMappingProps {
       acc0
   }
 
+  val basic     = GenLens[MMeta](_.basic)
+  val person    = GenLens[MMeta](_.person)
+  val address   = GenLens[MMeta](_.address)
+  val business  = GenLens[MMeta](_.business)
+  val colors    = GenLens[MMeta](_.colors)
+
 }
 
 
 /** Дичайшая убер-модель метаданных, например. */
 case class MMeta(
-  basic         : MBasicMeta      = MBasicMeta(),
-  person        : MPersonMeta     = MPersonMeta.empty,
-  address       : MAddress        = MAddress.empty,
-  business      : MBusinessInfo   = MBusinessInfo.empty,
-  colors        : MColors         = MColors.empty
-) {
+                  basic         : MBasicMeta      = MBasicMeta(),
+                  person        : MPersonMeta     = MPersonMeta.empty,
+                  address       : MAddress        = MAddress.empty,
+                  business      : MBusinessInfo   = MBusinessInfo.empty,
+                  colors        : MColors         = MColors.empty
+                ) {
 
   /** Вернуть инстанс модели [[MMetaPub]] на основе данной модели. */
   def public = MMetaPub(basic.name, address, business, colors)
-
-  def withBasic(basic: MBasicMeta) = copy(basic = basic)
 
   /** Залить данные из MMetaPub в эту модель. */
   def withPublic(metaPub: MMetaPub): MMeta = {
@@ -138,7 +143,5 @@ case class MMeta(
       colors   = metaPub.colors
     )
   }
-
-  def withColors(colors: MColors) = copy(colors = colors)
 
 }
