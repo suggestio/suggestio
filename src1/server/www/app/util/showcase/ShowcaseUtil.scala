@@ -11,11 +11,11 @@ import io.suggest.util.logs.MacroLogsImplLazy
 import models.blk
 import models.blk._
 import models.mproj.ICommonDi
-import models.msc.TileArgs
 import util.adv.AdvUtil
 import util.n2u.N2NodesUtil
 import io.suggest.common.empty.OptionUtil.Implicits._
 import io.suggest.es.model.EsModel
+import io.suggest.jd.MJdConf
 import util.adn.NodesUtil
 
 import scala.concurrent.Future
@@ -142,20 +142,22 @@ class ShowcaseUtil @Inject() (
   val GRID_COLS_CONF = MGridCalcConf.EVEN_GRID
 
 
-  def getTileArgs(dscrOpt: Option[MScreen]): TileArgs = {
+  def getTileArgs(dscrOpt: Option[MScreen]): MJdConf = {
     dscrOpt.fold {
-      LOGGER.warn("getTileArgs(): Screen missing")
-      TileArgs(
-        szMult    = MIN_SZ_MULT,
-        colsCount = GRID_COLS_CONF.maxColumns
+      LOGGER.trace("getTileArgs(): Screen missing")
+      MJdConf(
+        szMult            = MSzMults.GRID_MIN_SZMULT,
+        gridColumnsCount  = GRID_COLS_CONF.maxColumns,
+        isEdit            = false
       )
     } { getTileArgs }
   }
-  def getTileArgs(dscr: MScreen): TileArgs = {
+  def getTileArgs(dscr: MScreen): MJdConf = {
     val colsCount = GridCalc.getColumnsCount(dscr, GRID_COLS_CONF)
-    TileArgs(
-      szMult      = GridCalc.getSzMult4tilesScr(colsCount, dscr, GRID_COLS_CONF).toFloat,
-      colsCount   = colsCount
+    MJdConf(
+      szMult              = GridCalc.getSzMult4tilesScr(colsCount, dscr, GRID_COLS_CONF),
+      gridColumnsCount    = colsCount,
+      isEdit              = false,
     )
   }
 

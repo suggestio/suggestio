@@ -1,8 +1,9 @@
 package io.suggest.grid
 
-import io.suggest.ad.blk.{BlockPaddings, BlockWidth, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockPaddings, BlockWidth, BlockWidths}
 import io.suggest.common.geom.d2.IWidth
 import io.suggest.dev.{MSzMult, MSzMults}
+import japgolly.univeq._
 
 import scala.annotation.tailrec
 
@@ -70,6 +71,38 @@ object GridCalc {
       }
     }
     detectSzMult( MSzMults.GRID_TILE_MULTS )
+  }
+
+
+  /** Определение szMult для wide-рендера одного блока.
+    *
+    * @param bm Метаданные исходного блока.
+    * @param gridColumnsCount Конфиг рендера плитки.
+    * @return Избранный szMult.
+    *         None, если szMult изменять нет необходимости.
+    */
+  def wideSzMult(bm: BlockMeta, gridColumnsCount: Int): Option[MSzMult] = {
+    val szMultOrNull = bm.h match {
+      // Малый блок можно увеличивать в 1,2,3,4 раза:
+      case BlockHeights.H140 =>
+        val szMultI = gridColumnsCount / bm.w.relSz
+        val szMultI2 = Math.min(4, szMultI)
+        MSzMult.fromInt( szMultI2 )
+      // Обычный блок-300 можно в 1 и 2 раза только:
+      case BlockHeights.H300 =>
+        val szMultI = gridColumnsCount / bm.w.relSz
+        val szMultI2 = Math.min(2, szMultI)
+        MSzMult.fromInt( szMultI2 )
+      // Остальное - без растяжки.
+      case BlockHeights.H460 =>
+        val szMultI = gridColumnsCount.toDouble / bm.w.relSz.toDouble
+        if (szMultI >= 1.5) MSzMults.`1.5`
+        else null
+      // Макс.блок - слишком жирен, чтобы ужирнять ещё:
+      case _ =>
+        null
+    }
+    Option( szMultOrNull )
   }
 
 }

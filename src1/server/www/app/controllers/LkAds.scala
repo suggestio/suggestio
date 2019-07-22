@@ -6,6 +6,7 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModel
 import io.suggest.init.routed.MJsInitTargets
+import io.suggest.jd.MJdConf
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.{MAdItemStatuses, MItems}
 import io.suggest.model.n2.edge.MPredicates
@@ -176,12 +177,9 @@ class LkAds @Inject() (
         }
         .maybeTraceCount(this)(count => s"$logPrefix Bill agg $count item-infos for ${madIds.length} mads.")
         .toMat(
-          //Sink.collection[(String, MAdItemStatuses), Map[String, MAdItemStatuses]]
-          // TODO akka-2.5.21 Раскомментить назад, убрать .map(_.toMap)
-          Sink.seq
+          Sink.collection[(String, MAdItemStatuses), Map[String, MAdItemStatuses]]
         )(Keep.right)
         .run()
-        .map(_.toMap)
     }
 
     implicit val ctx = getContext2
@@ -203,6 +201,9 @@ class LkAds @Inject() (
       }
     }
 
+    // Рендер карточек очень обычный и простой.
+    val jdConf = MJdConf.simpleMinimal
+
     // Рендерим карточки в потоке:
     val adsRenderedSrc = allAdsSrc
       // Параллельно рендерим запрошенные карточки:
@@ -219,7 +220,7 @@ class LkAds @Inject() (
             nodeEdges     = edges2,
             tpl           = mainNonWideTpl,
             // Тут по идее надо четверть или половину, но с учётом плотности пикселей можно округлить до 1.0. Это и нагрузку снизит.
-            szMult        = 1.0f,
+            jdConf        = jdConf,
             allowWide     = false,
             forceAbsUrls  = false
           )(ctx)

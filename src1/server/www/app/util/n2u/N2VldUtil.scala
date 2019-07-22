@@ -112,7 +112,7 @@ class N2VldUtil @Inject()(
       mmedia <- imgsMediasMap.get( dynImgId.mediaId )
       imgFormat <- mmedia.file.imgFormatOpt
     } yield {
-      val dynImgId2 = dynImgId.withDynFormat( imgFormat )
+      val dynImgId2 = MDynImgId.dynFormat.set(imgFormat)( dynImgId )
       val mimg = MImg3( dynImgId2 )
       edgeUid -> mimg
     }

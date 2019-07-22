@@ -10,7 +10,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
 import io.suggest.jd.render.v.{JdCss, JdR}
 import io.suggest.jd.tags.JdTag
-import io.suggest.jd.{MJdAdData, MJdConf}
+import io.suggest.jd.MJdAdData
 import io.suggest.msg.Messages
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.routes.routes
@@ -154,11 +154,7 @@ class NodeRenderR(
 object NodeRenderR {
 
   /** jdConf всегда один: */
-  val JD_CONF = MJdConf(
-    isEdit = false,
-    szMult = SysMdrConst.SZ_MULT,
-    gridColumnsCount = 2
-  )
+  val JD_CONF = SysMdrConst.JD_CONF
 
   /** Ленивая сборка jdCss на основе шаблонов. */
   def mkJdCss(jdCss0Opt: Option[JdCss] = None)(tpl: Tree[JdTag]*): JdCss = {

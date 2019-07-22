@@ -171,7 +171,7 @@ class JdR(
 
       val groupOutlineTm = jdArgs.renderArgs
         .groupOutLined
-        .fold( TagMod.empty ) { mcd =>
+        .whenDefined { mcd =>
           TagMod(
             C.blockGroupOutline,
             ^.outlineColor := mcd.hexCode
@@ -189,21 +189,23 @@ class JdR(
           ^.src := bgImgSrc,
 
           // Запретить таскать изображение, чтобы не мешать перетаскиванию strip'ов
-          ReactCommonUtil.maybe(jdArgs.conf.isEdit) {
+          ReactCommonUtil.maybe( jdArgs.conf.isEdit ) {
             ^.draggable := false
           },
 
-          // Размеры и позиционирование фоновой картинки в блоке (эмуляция кропа):
-          imgRenderUtilJs.htmlImgCropEmuAttrsOpt(
-            cropOpt     = bgImgData.crop,
-            outerWhOpt  = s.props1.bm,
-            origWhOpt   = edge.origWh,
-            szMult      = jdArgs.conf.szMult
-          ).getOrElse {
-            // Просто заполнение всего блока картинкой. Т.к. фактический размер картинки отличается от размера блока
-            // на px ratio, надо подогнать картинку по размерам:
-            C.stripBgStyleF(s)
-          },
+          imgRenderUtilJs
+            // Размеры и позиционирование фоновой картинки в блоке (эмуляция кропа):
+            .htmlImgCropEmuAttrsOpt(
+              cropOpt     = bgImgData.crop,
+              outerWhOpt  = s.props1.bm,
+              origWhOpt   = edge.origWh,
+              szMult      = jdArgs.conf.szMult
+            )
+            .getOrElse {
+              // Просто заполнение всего блока картинкой. Т.к. фактический размер картинки отличается от размера блока
+              // на px ratio, надо подогнать картинку по размерам:
+              C.stripBgStyleF(s)
+            },
 
           // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
           _notifyImgWhOnEdit(edge, jdArgs),
@@ -224,7 +226,10 @@ class JdR(
 
       // Скрывать не-main-стрипы, если этого требует рендер.
       // Это касается только стрипов, у которых нет isMain = Some(true)
-      val hideNonMainStrip = ReactCommonUtil.maybe(jdArgs.renderArgs.hideNonMainStrips && !s.props1.isMain.getOrElseFalse) {
+      val hideNonMainStrip = ReactCommonUtil.maybe(
+        jdArgs.renderArgs.hideNonMainStrips &&
+        !s.props1.isMain.getOrElseFalse
+      ) {
         // Данный стип надо приглушить с помощью указанных css-стилей.
         ^.visibility.hidden
       }

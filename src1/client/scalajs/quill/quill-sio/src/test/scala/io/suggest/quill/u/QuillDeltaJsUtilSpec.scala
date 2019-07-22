@@ -5,7 +5,6 @@ import com.softwaremill.macwire._
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.jd.MJdEdge
 import io.suggest.jd.tags.JdTag
-import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.quill.QuillSioModule

@@ -1964,12 +1964,9 @@ class Bill2Util @Inject() (
     }
       .toSource
       .toMat(
-        // TODO akka-2.5.21: раскомментить сборку Set[T], убрать Sink.seq + map(_.toSet). -- https://github.com/akka/akka/issues/26305
-        //Sink.collection[Gid_t, Set[Gid_t]]
-        Sink.seq
+        Sink.collection[Gid_t, Set[Gid_t]]
       )(Keep.right)
       .run()
-      .map(_.toSet)
 
     // Не ясно, даёт ли вынос source() за пределы for ускорение. По идее - нет.
     val src0 = mNodes.source[MNode](

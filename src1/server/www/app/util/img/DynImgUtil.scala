@@ -113,7 +113,7 @@ class DynImgUtil @Inject() (
     cdnUtil.forMediaCall1(
       call          = call,
       mediaHostsMap = mediaHostsMap,
-      mediaIds      = mimg.dynImgId.mediaIdWithOriginalMediaId
+      mediaIds      = mimg.dynImgId.mediaIdAndOrigMediaId
     )
   }
 
@@ -124,7 +124,7 @@ class DynImgUtil @Inject() (
         .toIterator
         .flatMap { mimg =>
           mimg.dynImgId
-            .mediaIdWithOriginalMediaId
+            .mediaIdAndOrigMediaId
         }
         .toIterable
     }
@@ -458,7 +458,7 @@ class DynImgUtil @Inject() (
           // Если getWhFromOps() позволяет, то попытаться скопировать WH с оригинала.
           if (other.isEmpty) {
             LOGGER.trace(s"$logPrefix Ok to use orig.img#${dynImgId.rowKeyStr} as fallback. Will fetch both orig. and derivative MMedias...")
-            dynImgId.mediaIdWithOriginalMediaId
+            dynImgId.mediaIdAndOrigMediaId
           } else {
             LOGGER.trace(s"$logPrefix Cannot copy wh from orig, because it differs. Try to fetch only derivative MMedia...")
             dynImgId.mediaId :: Nil

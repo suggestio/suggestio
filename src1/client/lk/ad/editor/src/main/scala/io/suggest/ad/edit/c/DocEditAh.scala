@@ -17,7 +17,6 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.jd.{JdConst, MJdConf, MJdEdge}
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.JdCss
-import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd._
 import io.suggest.lk.m.color.MColorsState
@@ -198,7 +197,9 @@ class DocEditAh[M](
           .map [Effect] { case (dataUrl, _) =>
             // Это новая картинка. Организовать перегонку в blob.
             Effect {
-              val fut = for (blob <- Base64JsUtil.b64Url2Blob(dataUrl)) yield {
+              val fut = for {
+                blob <- Base64JsUtil.b64Url2Blob(dataUrl)
+              } yield {
                 B64toBlobDone(dataUrl, blob)
               }
               for (ex <- fut.failed)
@@ -369,7 +370,7 @@ class DocEditAh[M](
           jdtTree <- v0.jdArgs.selJdt.treeOpt
           jdt = jdtTree.rootLabel
           dataEdges0 = v0.jdArgs.edges
-          if jdt.name ==* MJdTagNames.QD_CONTENT &&
+          if (jdt.name ==* MJdTagNames.QD_CONTENT) &&
             QdJsUtil.isEmpty(jdtTree, dataEdges0) &&
             v2.jdArgs.template.contains(jdt)
         } {

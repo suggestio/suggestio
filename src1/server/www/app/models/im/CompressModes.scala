@@ -30,6 +30,11 @@ case object CompressModes extends StringEnum[CompressMode] {
 
   override val values = findValues
 
+  def maybeFg(isFg: Boolean): CompressMode = {
+    if (isFg) Fg
+    else Bg
+  }
+
 }
 
 

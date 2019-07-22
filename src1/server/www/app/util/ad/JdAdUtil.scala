@@ -1,15 +1,16 @@
 package util.ad
 
 import javax.inject.{Inject, Named, Singleton}
-import io.suggest.ad.blk.BlockWidths
+import io.suggest.ad.blk.{BlockMeta, BlockWidths}
 import io.suggest.color.MHistogram
-import io.suggest.common.geom.d2.MSize2di
+import io.suggest.common.empty.OptionUtil
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.es.model.EsModel
 import io.suggest.file.MSrvFileInfo
+import io.suggest.grid.GridCalc
 import io.suggest.img.MImgFmts
-import io.suggest.jd.{MJdAdData, MJdEdge, MJdEdgeId}
-import io.suggest.jd.tags.{JdTag, MJdTagNames}
-import io.suggest.jd.tags.JdTag.Implicits._
+import io.suggest.jd.{MJdAdData, MJdConf, MJdEdge, MJdEdgeId}
+import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
 import io.suggest.model.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.media.{MFileMetaHash, MMedia, MMedias}
 import io.suggest.model.n2.node.{MNode, MNodes}
@@ -23,7 +24,9 @@ import play.api.mvc.Call
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, IImgMaker}
 import models.blk.SzMult_t
+import monocle.Traversal
 import util.showcase.ScWideMaker
+import scalaz.std.option._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scalaz.Tree
@@ -120,7 +123,7 @@ class JdAdUtil @Inject()(
   private def mkDistMediaUrl(call: Call, dynImgId: MDynImgId, mediaHosts: Map[String, Seq[MHostInfo]], forceAbsUrls: Boolean)
                             (implicit ctx: Context): String = {
     cdnUtil.maybeAbsUrl( forceAbsUrls )(
-      cdnUtil.forMediaCall1(call, mediaHosts, dynImgId.mediaIdWithOriginalMediaId)
+      cdnUtil.forMediaCall1(call, mediaHosts, dynImgId.mediaIdAndOrigMediaId)
     )
   }
 
@@ -139,7 +142,7 @@ class JdAdUtil @Inject()(
                            mediasMap      : Map[String, MMedia],
                            mediaNodes     : Map[String, MNode],
                            mediaHosts     : Map[String, Seq[MHostInfo]]
-                         )(implicit ctx: Context): Seq[MJdEdge] = {
+                         )(implicit ctx: Context): List[MJdEdge] = {
     lazy val logPrefix = s"mkImgJdEdgesForEdit[${System.currentTimeMillis()}]:"
 
     // Получены медиа-файлы на руки.
@@ -170,7 +173,7 @@ class JdAdUtil @Inject()(
           sizeB     = Some( mmedia.file.sizeB ),
           mimeType  = Some( mmedia.file.mime ),
           hashesHex = MFileMetaHash.toHashesHex( mmedia.file.hashesHex ),
-          colors    = for (_ <- mmedia.picture.colors.headOption) yield {
+          colors    = OptionUtil.maybe( mmedia.picture.colors.nonEmpty ) {
             MHistogram( mmedia.picture.colors )
           },
           name = mediaNodes.get( nodeId )
@@ -182,7 +185,8 @@ class JdAdUtil @Inject()(
       LOGGER.trace(s"$logPrefix Img edge compiled: $jdEdge")
       jdEdge
     }
-    iter.toSeq
+    // Явный неленивый рендер эджей в текущем потоке, поэтому toList.
+    iter.toList
   }
 
 
@@ -192,7 +196,7 @@ class JdAdUtil @Inject()(
     * @param videoNodes Выхлоп prepareMediaNodes().
     * @return Список jd-эджей.
     */
-  def mkJdVideoEdges(videoEdges: Seq[MEdge], videoNodes: Map[String, MNode]): Seq[MJdEdge] = {
+  def mkJdVideoEdges(videoEdges: Seq[MEdge], videoNodes: Map[String, MNode]): List[MJdEdge] = {
     val iter = for {
       medge       <- videoEdges.iterator
       edgeUid     <- medge.doc.uid.iterator
@@ -215,7 +219,8 @@ class JdAdUtil @Inject()(
         url       = Some( extUrl )
       )
     }
-    iter.toSeq
+    // Явная подготовка без ленивости, т.к. эджей обычно мало, и всё это в отдельном потоке генерится.
+    iter.toList
   }
 
 
@@ -224,7 +229,7 @@ class JdAdUtil @Inject()(
     * @param edges Эджи рекламной карточки.
     * @return Список jd-эджей.
     */
-  def mkTextEdges(edges: MNodeEdges): Seq[MJdEdge] = {
+  def mkTextEdges(edges: MNodeEdges): List[MJdEdge] = {
     val textPred = MPredicates.JdContent.Text
     val textJdEdgesIter = for {
       textEdge <- edges
@@ -238,20 +243,8 @@ class JdAdUtil @Inject()(
         text      = Some(text)
       )
     }
-    textJdEdgesIter.toSeq
-  }
-
-
-  /** Конкатенация всех наборов jd-эджей воедино.
-    *
-    * @param edges jd-эджи из функций mkJd*Edges().
-    * @return Коллекция со всеми jd-эджами.
-    */
-  def mergeJdEdges[T <: MJdEdge](edges: Seq[T]*): Seq[T] = {
-    edges
-      .iterator
-      .flatten
-      .toSeq
+    // Для явной генерации всех эджей в текущем потоке, параллельно с остальными (img, video, ...) эджами.
+    textJdEdgesIter.toList
   }
 
 
@@ -264,16 +257,27 @@ class JdAdUtil @Inject()(
       .getMainBlockOrFirst
   }
 
+  /** traversal от JdTag до bm.isWide-флага. */
+  private def _jdt_p1_bm_wide_LENS = {
+    JdTag.props1
+      .composeLens( MJdtProps1.bm )
+      .composeTraversal( Traversal.fromTraverse[Option, BlockMeta] )
+      .composeLens( BlockMeta.wide )
+  }
+
+  /** Выставление нового значения флага wide для всех блоков, имеющих иное значение флага.
+    * Обычно используется для подавление true-значений для случаев, когда wide-рендер невозможен.
+    *
+    * @param blkTpl Шаблон блока или документа.
+    * @param wide2 Новое значение isWide.
+    *              Обычно false, чтобы рендерить строго плитку вместо обычного варианта.
+    * @return Обновлённое дерево документа.
+    */
   def setBlkWide(blkTpl: Tree[JdTag], wide2: Boolean): Tree[JdTag] = {
-    blkTpl.map { jdt =>
-      if (jdt.name ==* MJdTagNames.STRIP && jdt.props1.bm.exists(_.wide !=* wide2)) {
-        jdt.withProps1(
-          jdt.props1.withBm(
-            jdt.props1.bm.map { bm =>
-              bm.withWide( wide2 )
-            }
-          )
-        )
+    val lens = _jdt_p1_bm_wide_LENS
+    for (jdt <- blkTpl) yield {
+      if (jdt.name ==* MJdTagNames.STRIP && lens.exist(_ !=* wide2)(jdt)) {
+        lens.set(wide2)(jdt)
       } else {
         jdt
       }
@@ -283,8 +287,8 @@ class JdAdUtil @Inject()(
 
   /** Выделение img-эджей из общего списка эджей рекламной карточки.
     *
-    * @param edges Эджи рекламной карточки.
-    * @return Итератор, пригодный для использования в пакетом imgs-рендере,
+    * @param nodeEdges Эджи рекламной карточки.
+    * @return Эджи, пригодные для использования в пакетном imgs-рендере,
     *         например в renderAdDocImgs().
     */
   def collectImgEdges(nodeEdges: MNodeEdges, uids2jdEdgeId: Map[EdgeUid_t, MJdEdgeId]): Seq[(MEdge, MImg3)] = {
@@ -318,6 +322,7 @@ class JdAdUtil @Inject()(
   }
 
 
+
   /** Настраиваемая логика рендера карточки. */
   trait JdAdDataMakerBase extends Product {
 
@@ -333,12 +338,7 @@ class JdAdUtil @Inject()(
     // Собираем картинки, используемые в карточке.
     // Следует помнить, что в jd-карточках модификация картинки задаётся в теге. Эджи всегда указывают на оригинал.
     lazy val origImgsEdges = {
-      val uid2jdEdgeId = tpl
-        .flatten
-        .iterator
-        .flatMap(_.edgeUids)
-        .map(eid => eid.edgeUid -> eid)
-        .toMap
+      val uid2jdEdgeId = tpl.edgesUidsMap
       val ie = collectImgEdges( nodeEdges, uid2jdEdgeId )
       LOGGER.trace(s"$logPrefix Found ${ie.size} img.edges: ${ie.iterator.map(_._2.dynImgId.fileName).mkString(", ")}")
       ie
@@ -372,7 +372,7 @@ class JdAdUtil @Inject()(
 
     // Скомпилить jd-эджи картинок.
     // TODO Нужно lazy val тут. Можно сделать через def + lazy val.
-    def imgJdEdgesFut: Future[Seq[MJdEdge]]
+    def imgJdEdgesFut: Future[List[MJdEdge]]
 
     def mediasForMediaHostsFut: Future[Iterable[MMedia]] = {
       origImgMediasMapFut.map(_.values)
@@ -399,14 +399,17 @@ class JdAdUtil @Inject()(
     def textJdEdges = mkTextEdges( nodeEdges )
 
     // Объеденить все эджи.
-    def edEdgesFut = {
+    def edEdgesFut: Future[Seq[MJdEdge]] = {
+      val _imgJdEdgesFut = imgJdEdgesFut
       val _videoJdEdgesFut = videoJdEdgesFut
+      val _textJdEdges = textJdEdges
       for {
-        imgJdEdges    <- imgJdEdgesFut
         videoJdEdges  <- _videoJdEdgesFut
+        // Промежуточное объединение c video-эджами. text-эджи справа, так быстрее: text-эджей всегда много, а video-эджей - единицы.
+        textAndVideoJdEdges = videoJdEdges reverse_::: _textJdEdges
+        imgJdEdges    <- _imgJdEdgesFut
       } yield {
-        val _textJdEdges = textJdEdges
-        val r = mergeJdEdges( _textJdEdges, imgJdEdges, videoJdEdges )
+        val r = imgJdEdges reverse_::: textAndVideoJdEdges
         LOGGER.trace(s"$logPrefix Compiled ${r.size} jd edges: text=${_textJdEdges.size} img=${imgJdEdges.size} video=${videoJdEdges.size}")
         r
       }
@@ -461,7 +464,7 @@ class JdAdUtil @Inject()(
 
       override def imgEdgesNeedNodes = origImgsEdges
 
-      override def imgJdEdgesFut: Future[Seq[MJdEdge]] = {
+      override def imgJdEdgesFut: Future[List[MJdEdge]] = {
         val _mediaHostsMapFut = mediaHostsMapFut
         val _mediaNodesMapFut = mediaNodesMapFut
         for {
@@ -483,6 +486,7 @@ class JdAdUtil @Inject()(
 
     /** Рендер карточек для выдачи.
       *
+      * @param jdConf Параметры рендера плитки.
       * @param tpl Шаблон для рендера.
       *            Обычно -- неполный шаблон, а только главный блок.
       * @param nodeEdges Эджи рекламной карточки.
@@ -494,10 +498,11 @@ class JdAdUtil @Inject()(
     case class show(override val nodeId     : Option[String],
                     override val nodeEdges  : MNodeEdges,
                     override val tpl        : Tree[JdTag],
-                    szMult                  : SzMult_t,
+                    jdConf                  : MJdConf,
                     allowWide               : Boolean,
-                    forceAbsUrls            : Boolean
-                   )(implicit ctx: Context) extends JdAdDataMakerBase {
+                    forceAbsUrls            : Boolean,
+                   )(implicit ctx: Context)
+      extends JdAdDataMakerBase {
 
       /** Для выдачи не требуется  */
       override def imgEdgesNeedNodes = Nil
@@ -528,7 +533,7 @@ class JdAdUtil @Inject()(
       }
 
       /** Для выдачи требуются готовые картинки, подогнанные под экран устройства клиента. */
-      override def imgJdEdgesFut: Future[Seq[MJdEdge]] = {
+      override def imgJdEdgesFut: Future[List[MJdEdge]] = {
         val _imgsRenderedFut  = renderAdDocImgsFut
         val _mediaHostsMapFut = mediaHostsMapFut
         // TODO Сделать, чтобы mkDistMediaUrl-балансировка работала не по эджам, а только по mmedia.storage.
@@ -557,17 +562,25 @@ class JdAdUtil @Inject()(
               ))
             )
           }
-          iter.toSeq
+          // Для явной подготовки данных строго в текущем потоке, используем toList вместо toStream/toVector.
+          iter.toList
         }
       }
+
 
       override def finalTpl: Tree[JdTag] = {
         val tpl0 = super.finalTpl
         // Удалить все crop'ы из растровых картинок, у которых задан кроп. Все растровые картинки должны бы быть уже подогнаны под карточку.
+        val _jdt_p1_bgImg_LENS = JdTag.props1
+          .composeLens( MJdtProps1.bgImg )
+        val _jdt_p1_bgImg_crop_LENS = _jdt_p1_bgImg_LENS
+          .composeTraversal( Traversal.fromTraverse[Option, MJdEdgeId] )
+          .composeLens( MJdEdgeId.crop )
+
         for (jdTag <- tpl0) yield {
           val jdTagOpt2 = for {
             // Интересуют только теги с фоновой картинкой
-            bgImg <- jdTag.props1.bgImg
+            bgImg <- _jdt_p1_bgImg_LENS.get(jdTag)
             if bgImg.crop.nonEmpty
             // Для которых известен эдж
             edgeAndImg <- imgsEdgesMap.get( bgImg.edgeUid )
@@ -575,18 +588,14 @@ class JdAdUtil @Inject()(
             if edgeAndImg._2.dynImgId.dynFormat.isRaster
           } yield {
             // Пересобрать тег без crop'а в bgImg:
-            jdTag.withProps1(
-              jdTag.props1.withBgImg(
-                Some(
-                  bgImg.withCrop(None)
-                )
-              )
-            )
+            _jdt_p1_bgImg_crop_LENS
+              .set( None )( jdTag )
           }
           // Если ничего не пересобрано, значит текущий тег не требуется обновлять. Вернуть исходный jd-тег:
           jdTagOpt2.getOrElse( jdTag )
         }
       }
+
 
       /** Рендер картинок в строго необходимом размере.
         * Это подходит для выдачи, но НЕ для редактора, который оперирует оригиналами.
@@ -638,13 +647,19 @@ class JdAdUtil @Inject()(
 
           // Продолжить обход списка эджей, создав фьючерс результата
           results <- Future.sequence {
-            val wideNorms = BlockWidths.min.value :: BlockWidths.max.value :: wideImgMaker.WIDE_WIDTHS_PX.tail
+            val wideNorms =
+              BlockWidths.min.value ::
+              BlockWidths.max.value ::
+              wideImgMaker.WIDE_WIDTHS_PX.tail
 
             val iter = for {
               eit <- edgedImgTags.iterator
               isQd = eit.jdTag.name ==* MJdTagNames.QD_OP
 
-              tgImgSzOpt = if (isQd) {
+              // 2019.07.22 wide может влиять на размер картинки: узкие решения масштабируются по вертикали.
+              isWide = allowWide && eit.jdTag.props1.bm.exists(_.wide)
+
+              tgImgSz: ISize2di <- if (isQd) {
                 lazy val logPrefix2 = s"$logPrefix#qd#E${eit.medge.doc.uid.orNull}#${eit.mimg.dynImgId.rowKeyStr}:"
                 for {
                   mmediaOrig  <- embedOrigImgsMap.get( eit.mimg.dynImgId.original.mediaId )
@@ -694,27 +709,44 @@ class JdAdUtil @Inject()(
                   targetImgSzPx
                 }
               } else {
-                val wh = eit.jdTag.props1.bm
-                LOGGER.trace(s"$logPrefix Using block meta as img.wh: $wh")
-                wh
-              }
+                val bmOpt = eit.jdTag.props1.bm
 
-              tgImgSz <- {
-                LOGGER.trace(s"$logPrefix img-edge#${eit.medge.doc.uid.orNull} qd?$isQd sz=>${tgImgSzOpt.orNull}")
-                tgImgSzOpt
+                val wideImgSz = for {
+                  bm <- bmOpt
+                  if isWide && false    // TODO Пока выключено, т.к. не запилена поддержка расширения wide-карточки на клиенте.
+                  szMult2 <- GridCalc.wideSzMult( bm, jdConf.gridColumnsCount )
+                } yield {
+                  // Надо посчитать новый вертикальный размер для wide-блока.
+                  val heightPx2 = (bm.height * szMult2.toDouble).toInt
+                  LOGGER.trace(s"$logPrefix Found wideSzMult $szMult, target img height: ${bm.height}px => ${heightPx2}px")
+                  MSize2di(
+                    // width нет смысла вычислять, т.к. wideMaker игнорирует target width.
+                    width  = 0,
+                    height = heightPx2
+                  )
+                }
+
+                wideImgSz.orElse {
+                  LOGGER.trace(s"$logPrefix Using block meta as img.wh: ${bmOpt.orNull}")
+                  bmOpt
+                }
               }
 
             } yield {
+              LOGGER.trace(s"$logPrefix img-edge#${eit.medge.doc.uid.orNull} qd?$isQd sz=>$tgImgSz")
+
               // Если есть кроп у текущей картинки, то запихнуть его в dynImgOps
-              val mimg2 = eit.jdTag.props1
-                .bgImg.fold(eit.mimg) { imgJdId =>
-                  eit.mimg.withDynImgId {
-                    val dynId = eit.mimg.dynImgId
+              val mimg2 = eit.jdTag.props1.bgImg
+                .fold(eit.mimg) { bgImgJdId =>
+                  MImg3.dynImgId.modify { dynId =>
                     dynId.copy(
-                      dynFormat = imgJdId.outImgFormat.getOrElse( dynId.dynFormat ),
-                      dynImgOps = imgJdId.crop.map(AbsCropOp.apply).toList
+                      dynFormat = bgImgJdId.outImgFormat
+                        .getOrElse( dynId.dynFormat ),
+                      dynImgOps = bgImgJdId.crop
+                        .map(AbsCropOp.apply)
+                        .toList
                     )
-                  }
+                  }( eit.mimg )
                 }
 
               val makeArgs = MImgMakeArgs(
@@ -722,13 +754,11 @@ class JdAdUtil @Inject()(
                 targetSz      = tgImgSz,
                 szMult        = szMult,
                 devScreenOpt  = ctx.deviceScreenOpt,
-                compressMode  = Some(
-                  if (isQd) CompressModes.Fg else CompressModes.Bg
-                )
+                compressMode  = Some( CompressModes.maybeFg(isQd) ),
               )
 
               // Выбираем img maker исходя из конфигурации рендера.
-              val maker = if (allowWide && eit.jdTag.props1.bm.exists(_.wide)) {
+              val maker = if (isWide) {
                 wideImgMaker
               } else {
                 blkImgMaker
@@ -763,17 +793,16 @@ class JdAdUtil @Inject()(
     * @return Облегчённый контейнер эджей узла.
     */
   def filterEdgesForTpl(tpl: Tree[JdTag], edges: MNodeEdges): MNodeEdges = {
-    import JdTag.Implicits._
     val tplEdgeUids = tpl.deepEdgesUidsIter.toSet
     if (tplEdgeUids.isEmpty) {
       edges
     } else {
-      edges.copy(
-        out = edges.out.filter { medge =>
+      MNodeEdges.out.modify { out0 =>
+        out0.filter { medge =>
           medge.doc.uid
             .exists( tplEdgeUids.contains )
         }
-      )
+      }( edges )
     }
   }
 

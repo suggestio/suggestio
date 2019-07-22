@@ -10,6 +10,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.i18n.MsgCodes
 import io.suggest.init.routed.MJsInitTargets
+import io.suggest.jd.MJdConf
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses, MOrders}
@@ -619,6 +620,7 @@ class LkBill2 @Inject() (
         }
 
       // Начинаем рендерить
+      jdConf = MJdConf.simpleMinimal
       adDatas <- Future.traverse( adNodesMap.values ) { mad =>
         // Для ускорения рендера - каждую карточку отправляем сразу в фон:
         Future {
@@ -634,7 +636,7 @@ class LkBill2 @Inject() (
               nodeEdges     = edges2,
               tpl           = mainNonWideTpl,
               // Тут по идее надо четверть или половину, но с учётом плотности пикселей можно округлить до 1.0. Это и нагрузку снизит.
-              szMult        = 1.0f,
+              jdConf        = jdConf,
               allowWide     = false,
               forceAbsUrls  = false
             )(ctx)

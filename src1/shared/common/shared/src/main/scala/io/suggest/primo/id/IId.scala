@@ -52,6 +52,7 @@ trait IdUtil[IId_t[_]] {
     *         Если id был пуст, то элемент будет отсутствовать в карте.
     */
   def els2idMap[Id_t, T <: IId_t[Id_t]](els: TraversableOnce[T]): Map[Id_t, T] = {
+    // TODO Надо сделать, чтобы Id_t определялось автоматом.
     if (els.isEmpty)
       Map.empty
     else

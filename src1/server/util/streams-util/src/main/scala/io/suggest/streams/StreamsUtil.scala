@@ -95,11 +95,8 @@ class StreamsUtil @Inject() (
         */
       def toSetFut: Future[Set[T]] = {
         src
-          // TODO akka-2.5.21: раскомментить сборку Set[T], убрать Sink.seq + map(_.toSet). -- https://github.com/akka/akka/issues/26305
-          //.toMat( Sink.collection[T, Set[T]] )( Keep.right )
-          .toMat( Sink.seq )( Keep.right )
+          .toMat( Sink.collection[T, Set[T]] )( Keep.right )
           .run()
-          .map(_.toSet)
       }
 
     }

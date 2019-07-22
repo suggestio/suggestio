@@ -1,6 +1,6 @@
 package io.suggest.sys.mdr
 
-import io.suggest.dev.MSzMults
+import io.suggest.jd.MJdConf
 
 /**
   * Suggest.io
@@ -13,6 +13,6 @@ object SysMdrConst {
   /** id контейнера react-формы. */
   def FORM_ID = "smf"
 
-  def SZ_MULT = MSzMults.`1.0`
+  def JD_CONF = MJdConf.simpleMinimal
 
 }

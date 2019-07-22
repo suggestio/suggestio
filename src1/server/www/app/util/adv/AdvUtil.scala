@@ -59,7 +59,6 @@ class AdvUtil @Inject() (
       // v1-карточка.
       mad.ad.blockMeta
     } { doc =>
-      import io.suggest.jd.tags.JdTag.Implicits._
       doc.template
         .getMainBlockOrFirst
         .rootLabel

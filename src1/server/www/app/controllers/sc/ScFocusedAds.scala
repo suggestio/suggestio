@@ -3,7 +3,6 @@ package controllers.sc
 import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.coll.Lists
 import io.suggest.common.css.FocusedTopLeft
-import io.suggest.dev.MSzMult
 import io.suggest.es.model.EsModelDi
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{IMNodes, MNode}
@@ -587,14 +586,18 @@ trait ScFocusedAds
             nodeId        = mad.id,
             nodeEdges     = edges2,
             tpl           = tpl,
-            szMult        = tileArgs.szMult,
+            jdConf        = tileArgs,
             allowWide     = true,
             forceAbsUrls  = _qs.common.apiVsn.forceAbsUrls
           )(ctx)
           .execute()
 
         // Проверить права на редактирование у текущего юзера.
-        val isEditAllowed = canEditAd.isUserCanEditAd(_request.user, mad = args.brArgs.mad, producer = args.producer)
+        val isEditAllowed = canEditAd.isUserCanEditAd(
+          user  = _request.user,
+          mad   = args.brArgs.mad,
+          producer = args.producer,
+        )
 
         for (jd <- jdFut) yield {
           MSc3AdData(
@@ -610,8 +613,6 @@ trait ScFocusedAds
     /** Сборка RespAction ответа сервера. */
     def respActionFut: Future[MSc3RespAction] = {
       val _renderedAdsFut = renderedAdsFut
-      // Собрать ответ на запрос, когда всё будет подготовлено
-      val szMult = MSzMult.fromDouble( tileArgs.szMult )
 
       for {
         renderedAds <- _renderedAdsFut
@@ -620,7 +621,7 @@ trait ScFocusedAds
           acType = MScRespActionTypes.AdsFoc,
           ads = Some(MSc3AdsResp(
             ads     = renderedAds,
-            szMult  = szMult
+            szMult  = tileArgs.szMult,
           ))
         )
       }

@@ -22,6 +22,7 @@ import models.mproj.ICommonDi
 import util.img.ImgFileNameParsersImpl
 import util.up.FileUtil
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -328,8 +329,12 @@ class MImgs3 @Inject() (
   /** Получить ширину и длину картинки. */
   override def getImageWH(mimg: MImgT): Future[Option[ISize2di]] = {
     // Фетчим паралельно из обеих моделей. Кто первая, от той и принимаем данные.
-    val mimg2Fut = permMetaCached(mimg)
-      .filter(_.isDefined)
+    val mimg2Fut = for {
+      metaOpt <- permMetaCached(mimg)
+      meta = metaOpt.get
+    } yield {
+      Some( meta.sz )
+    }
 
     val localInst = mimg.toLocalInstance
     lazy val logPrefix = s"getImageWh(${mimg.dynImgId.fileName}): "
@@ -434,9 +439,9 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
     // TODO Безопасно ли? По идее да, но лучше потестить или использовать какие-то данные из иных мест.
     val mimg0 = apply( mmedia.id.get )
     if (mimg0.dynImgId.dynFormat !=* dynFmt) {
-      mimg0.withDynImgId(
-        mimg0.dynImgId.withDynFormat( dynFmt )
-      )
+      MImg3.dynImgId
+        .composeLens( MDynImgId.dynFormat )
+        .set( dynFmt )(mimg0)
     } else {
       mimg0
     }
@@ -444,10 +449,14 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
 
   override def fromImg(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg3 = {
     val dynImgId0 = img.dynImgId
-    val dynImgId2 = dynOps2.fold(dynImgId0) { dynImgId0.withDynImgOps }
+    val dynImgId2 = dynOps2.fold(dynImgId0) { MDynImgId.dynImgOps.set(_)(dynImgId0) }
 
     MImg3( dynImgId2 )
   }
+
+
+  val dynImgId      = GenLens[MImg3](_.dynImgId)
+  val userFileName  = GenLens[MImg3](_.userFileName)
 
 }
 
@@ -474,11 +483,9 @@ case class MImg3(
   override def toWrappedImg = this
 
   override def withDynOps(dynImgOps2: Seq[ImOp]): MImg3 = {
-    withDynImgId(
-      dynImgId.withDynImgOps(
-        dynImgOps2
-      )
-    )
+    MImg3.dynImgId
+      .composeLens( MDynImgId.dynImgOps )
+      .set( dynImgOps2 )(this)
   }
 
   def withDynImgId(dynImgId: MDynImgId) = copy(dynImgId = dynImgId)

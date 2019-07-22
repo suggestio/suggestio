@@ -1,7 +1,7 @@
 package io.suggest.jd
 
 import io.suggest.ad.blk.{BlockPadding, BlockPaddings, BlockWidths, IBlockSize}
-import io.suggest.dev.MSzMult
+import io.suggest.dev.{MSzMult, MSzMults}
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.json._
@@ -30,6 +30,13 @@ object MJdConf {
   val szMult            = GenLens[MJdConf](_.szMult)
   val blockPadding      = GenLens[MJdConf](_.blockPadding)
   val gridColumnsCount  = GenLens[MJdConf](_.gridColumnsCount)
+
+  /** Для рендера всяких списков карточек и прочего, обычно используется минимальный рендер. */
+  def simpleMinimal = apply(
+    isEdit            = false,
+    szMult            = MSzMults.`1.0`,
+    gridColumnsCount  = 2,
+  )
 
 }
 

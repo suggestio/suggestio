@@ -12,7 +12,6 @@ import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.MJdTagNames
-import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
@@ -193,7 +192,7 @@ class GridRespHandler
     val reusableAdsMap: Map[String, MScAdData] = {
       if (isCleanLoad  &&  (isSilentOpt contains true)  &&  gridResp.ads.nonEmpty  &&  g0.core.ads.nonEmpty) {
         // Есть условия для сборки карты текущих карточек:
-        OptId.els2idMap[String, MScAdData](
+        OptId.els2idMap(
           g0.core.ads
             .iterator
             .flatten

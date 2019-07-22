@@ -34,10 +34,10 @@
 
     @for(meta <- metaOpt) {
       @_ptableRowTpl("meta.width") {
-        @meta.width
+        @meta.sz.width
       }
       @_ptableRowTpl("meta.height") {
-        @meta.height
+        @meta.sz.height
       }
       @_ptableRowTpl("dateCreated") {
         @_prettyDate(meta.dateCreated, withSpan = true)

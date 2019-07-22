@@ -5,7 +5,6 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.tags.JdTag
-import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}

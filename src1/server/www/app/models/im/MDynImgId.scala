@@ -10,6 +10,7 @@ import io.suggest.img.MImgFmt
 import io.suggest.jd.MJdEdgeId
 import io.suggest.model.n2.edge.MEdge
 import io.suggest.util.UuidUtil
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -87,18 +88,16 @@ final case class MDynImgId(
 
   /** Хранилка инстанса оригинала.
     * Для защиты от хранения ненужных ссылок на this, тут связка из метода и lazy val. */
-  private lazy val _originalHolder = withDynImgOps(Nil)
+  private lazy val _originalHolder = MDynImgId.dynImgOps.set(Nil)(this)
   def original: MDynImgId = {
-    if (hasImgOps)
-      _originalHolder
-    else
-      this
+    if (hasImgOps) _originalHolder
+    else this
   }
   def maybeOriginal: Option[MDynImgId] = {
     OptionUtil.maybe(hasImgOps)(_originalHolder)
   }
 
-  def mediaIdWithOriginalMediaId: Seq[String] = {
+  def mediaIdAndOrigMediaId: Seq[String] = {
     Stream.cons(
       mediaId,
       maybeOriginal.fold(Stream.empty[String]) { d =>
@@ -107,17 +106,15 @@ final case class MDynImgId(
     )
   }
 
-  def withDynImgOps(dynImgOps: Seq[ImOp] = Nil) = copy(dynImgOps = dynImgOps)
-  def withDynFormat(dynFormat: MImgFmt)         = copy(dynFormat = dynFormat)
 
   /** Добавить операции в конец списка операций. */
   def addDynImgOps(addDynImgOps: Seq[ImOp]): MDynImgId = {
     if (addDynImgOps.isEmpty) {
       this
-    } else if (dynImgOps.isEmpty) {
-      withDynImgOps( addDynImgOps )
     } else {
-      withDynImgOps( dynImgOps ++ addDynImgOps )
+      val ops2 = if (dynImgOps.isEmpty) addDynImgOps
+                 else dynImgOps ++ addDynImgOps
+      MDynImgId.dynImgOps.set(ops2)(this)
     }
   }
 
@@ -218,5 +215,11 @@ object MDynImgId {
       }
     )
   }
+
+
+  val rowKeyStr = GenLens[MDynImgId](_.rowKeyStr)
+  val dynFormat = GenLens[MDynImgId](_.dynFormat)
+  val dynImgOps = GenLens[MDynImgId](_.dynImgOps)
+  val compressAlgo = GenLens[MDynImgId](_.compressAlgo)
 
 }

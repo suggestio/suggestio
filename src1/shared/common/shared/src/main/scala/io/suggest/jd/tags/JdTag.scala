@@ -9,6 +9,7 @@ import io.suggest.jd.tags.qd.{MQdOp, MQdOpTypes}
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil}
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.primo.id.IId
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
@@ -108,105 +109,110 @@ object JdTag {
   }
 
 
-  /** Неявная утиль для тегов. */
-  object Implicits {
 
-    /** Дополнительные методы для Option[IDocTag]. */
-    implicit class DocTagOptExt(val opt: Option[JdTag]) extends AnyVal {
+  /** Дополнительные методы для Option[IDocTag]. */
+  implicit class DocTagOptExt(val opt: Option[JdTag]) extends AnyVal {
 
-      /** Быстрая фильтрация Option'а по типу.  */
-      def filterByType(jdtName: MJdTagName): Option[JdTag] = {
-        opt.filter(_.name ==* jdtName)
-      }
-
-    }
-
-    /** Утиль для поддержки z.Tree с jd-тегами. */
-    implicit class IDocTagZTreeOps(private val tree: Tree[JdTag]) extends AnyVal {
-
-      import io.suggest.scalaz.ZTreeUtil._
-
-      def qdOpsIter: Iterator[MQdOp] = {
-        tree.flatten
-          .tail
-          .iterator
-          .flatMap(_.qdProps)
-      }
-
-      def deepEdgesUidsIter: Iterator[EdgeUid_t] = {
-        val jdt = tree.rootLabel
-        val iter1 = tree
-          .qdOpsIter
-          .flatMap(_.edgeInfo)
-        val iter2 = jdt.props1.bgImg
-          .iterator
-        val iter12 = (iter1 ++ iter2)
-          .map(_.edgeUid)
-        val iterChs = tree.subForest
-          .iterator
-          .flatMap(_.deepEdgesUidsIter)
-        iter12 ++ iterChs
-      }
-
-
-      def deepChildrenOfTypeIter(jdtName: MJdTagName): Iterator[JdTag] = {
-        tree
-          .deepChildren
-          .iterator
-          .filter( _.name ==* jdtName )
-      }
-
-      def deepOfTypeIter(jdtName: MJdTagName): Iterator[JdTag] = {
-        def chIter = deepChildrenOfTypeIter(jdtName)
-        val jdt = tree.rootLabel
-        if (jdt.name ==* jdtName) {
-          Iterator.single(jdt) ++ chIter
-        } else {
-          chIter
-        }
-      }
-
-      /** Вернуть главый блок, либо первый блок. */
-      def getMainBlock: Option[Tree[JdTag]] = {
-        tree.subForest
-          .find( _.rootLabel.props1.isMain.getOrElseFalse )
-      }
-
-      /** Вернуть главый блок, либо первый блок. */
-      def getMainBlockOrFirst: Tree[JdTag] = {
-        getMainBlock.getOrElse {
-          tree.subForest.head
-        }
-      }
-
-    }
-
-
-    /** Дополнительная утиль для TreeLoc[IDocTag]. */
-    implicit class IDocTagZTreeLocOps(private val treeLoc: TreeLoc[JdTag]) extends AnyVal {
-
-      // TODO Унести в ScalazUtil
-      def findUp(f: TreeLoc[JdTag] => Boolean): Option[TreeLoc[JdTag]] = {
-        if ( f(treeLoc) ) {
-          Some(treeLoc)
-        } else {
-          treeLoc
-            .parent
-            .flatMap( _.findUp(f) )
-        }
-      }
-
-      def findUpByType(typ: MJdTagName): Option[TreeLoc[JdTag]] = {
-        findUp( treeLocByTypeFilterF(typ) )
-      }
-
-      def findByType(typ: MJdTagName): Option[TreeLoc[JdTag]] = {
-        treeLoc.find( treeLocByTypeFilterF(typ) )
-      }
-
+    /** Быстрая фильтрация Option'а по типу.  */
+    def filterByType(jdtName: MJdTagName): Option[JdTag] = {
+      opt.filter(_.name ==* jdtName)
     }
 
   }
+
+  /** Утиль для поддержки z.Tree с jd-тегами. */
+  implicit class JdTagTreeOps(private val tree: Tree[JdTag]) extends AnyVal {
+
+    import io.suggest.scalaz.ZTreeUtil._
+
+    def qdOpsIter: Iterator[MQdOp] = {
+      tree.flatten
+        .tail
+        .iterator
+        .flatMap(_.qdProps)
+    }
+
+    def deepEdgesUidsIter: Iterator[EdgeUid_t] = {
+      val jdt = tree.rootLabel
+      val iter1 = tree
+        .qdOpsIter
+        .flatMap(_.edgeInfo)
+      val iter2 = jdt.props1.bgImg
+        .iterator
+      val iter12 = (iter1 ++ iter2)
+        .map(_.edgeUid)
+      val iterChs = tree.subForest
+        .iterator
+        .flatMap(_.deepEdgesUidsIter)
+      iter12 ++ iterChs
+    }
+
+
+    def deepChildrenOfTypeIter(jdtName: MJdTagName): Iterator[JdTag] = {
+      tree
+        .deepChildren
+        .iterator
+        .filter( _.name ==* jdtName )
+    }
+
+    def deepOfTypeIter(jdtName: MJdTagName): Iterator[JdTag] = {
+      def chIter = deepChildrenOfTypeIter(jdtName)
+      val jdt = tree.rootLabel
+      if (jdt.name ==* jdtName) {
+        Iterator.single(jdt) ++ chIter
+      } else {
+        chIter
+      }
+    }
+
+    /** Вернуть главый блок, либо первый блок. */
+    def getMainBlock: Option[Tree[JdTag]] = {
+      tree.subForest
+        .find( _.rootLabel.props1.isMain.getOrElseFalse )
+    }
+
+    /** Вернуть главый блок, либо первый блок. */
+    def getMainBlockOrFirst: Tree[JdTag] = {
+      getMainBlock.getOrElse {
+        tree.subForest.head
+      }
+    }
+
+    def edgesUidsMap: Map[EdgeUid_t, MJdEdgeId] = {
+      IId.els2idMap[EdgeUid_t, MJdEdgeId](
+        tree.flatten
+          .iterator
+          .flatMap(_.edgeUids)
+      )
+    }
+
+  }
+
+
+  /** Дополнительная утиль для TreeLoc[IDocTag]. */
+  implicit class JdTagTreeLocOps(private val treeLoc: TreeLoc[JdTag]) extends AnyVal {
+
+    // TODO Унести в ScalazUtil
+    def findUp(f: TreeLoc[JdTag] => Boolean): Option[TreeLoc[JdTag]] = {
+      if ( f(treeLoc) ) {
+        Some(treeLoc)
+      } else {
+        treeLoc
+          .parent
+          .flatMap( _.findUp(f) )
+      }
+    }
+
+    def findUpByType(typ: MJdTagName): Option[TreeLoc[JdTag]] = {
+      findUp( treeLocByTypeFilterF(typ) )
+    }
+
+    def findByType(typ: MJdTagName): Option[TreeLoc[JdTag]] = {
+      treeLoc.find( treeLocByTypeFilterF(typ) )
+    }
+
+  }
+
 
   def treeLocByTypeFilterF(typ: MJdTagName) = {
     loc: TreeLoc[JdTag] =>
@@ -226,7 +232,6 @@ object JdTag {
     * @return Прочищенная карта эджей.
     */
   def purgeUnusedEdges[E](tpl: Tree[JdTag], edgesMap: Map[EdgeUid_t, E]): Map[EdgeUid_t, E] = {
-    import Implicits._
     EdgesUtil.purgeUnusedEdgesFromMap(
       usedEdgeIds = tpl.deepEdgesUidsIter.toSet,
       edgesMap    = edgesMap

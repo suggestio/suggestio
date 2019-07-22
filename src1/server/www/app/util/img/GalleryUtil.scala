@@ -106,7 +106,7 @@ class GalleryUtil @Inject() (
     cdnUtil.forMediaCall1(
       call          = dynLkBigCall(galleryImg),
       mediaHostsMap = mediaHostsMap,
-      mediaIds      = galleryImg.dynImgId.mediaIdWithOriginalMediaId
+      mediaIds      = galleryImg.dynImgId.mediaIdAndOrigMediaId
     )
   }
 

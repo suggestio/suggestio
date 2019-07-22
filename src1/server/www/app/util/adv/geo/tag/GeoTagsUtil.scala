@@ -295,9 +295,7 @@ class GeoTagsUtil @Inject() (
           shape   = s
         )
       }
-      // TODO akka-2.5.21: раскомментить сборку Set[T], убрать Sink.seq + map(_.toSet). -- https://github.com/akka/akka/issues/26305
-      //.toMat( Sink.collection[MEdgeGeoShape, List[MEdgeGeoShape]] )(Keep.both)
-      .toMat( Sink.seq[MEdgeGeoShape].mapMaterializedValue(_.map(_.toList)) )( Keep.both )
+      .toMat( Sink.collection[MEdgeGeoShape, List[MEdgeGeoShape]] )(Keep.both)
       .run()
 
     // Запуск сбора id ресиверов для direct-тегов
@@ -312,9 +310,7 @@ class GeoTagsUtil @Inject() (
       }
       .toSource
       .mapConcat(_.toList)
-      // TODO akka-2.5.21: раскомментить сборку Set[T], убрать Sink.seq + map(_.toSet). -- https://github.com/akka/akka/issues/26305
-      //.toMat( Sink.collection[String, Set[String]] )(Keep.right)
-      .toMat( Sink.seq[String].mapMaterializedValue(_.map(_.toSet)) )( Keep.right )
+      .toMat( Sink.collection[String, Set[String]] )(Keep.right)
       .run()
 
     for {

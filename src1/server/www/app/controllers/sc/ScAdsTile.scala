@@ -4,7 +4,6 @@ import _root_.util.blocks.IBlkImgMakerDI
 import _root_.util.showcase.{IScAdSearchUtilDi, IScUtil}
 import _root_.util.stat.IStatUtil
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dev.MSzMult
 import io.suggest.es.model.{EsModelDi, MEsUuId}
 import io.suggest.es.search.MRandomSortData
 import io.suggest.model.n2.edge.MPredicates
@@ -69,7 +68,7 @@ trait ScAdsTile
         mad           = mad,
         withEdit      = false,
         bgImg         = bgImg,
-        szMult        = szMult,
+        szMult        = szMult.toFloat,
         inlineStyles  = false,
         apiVsn        = _qs.common.apiVsn,
         indexOpt      = indexOpt,
@@ -303,7 +302,7 @@ trait ScAdsTile
             nodeId        = brArgs.mad.id,
             nodeEdges     = edges2,
             tpl           = tpl2,
-            szMult        = tileArgs.szMult,
+            jdConf        = tileArgs,
             allowWide     = isDisplayOpened,
             forceAbsUrls  = _qs.common.apiVsn.forceAbsUrls
           )(ctx)
@@ -333,7 +332,6 @@ trait ScAdsTile
 
     override def respActionFut: Future[MSc3RespAction] = {
       val _madsRenderFut = madsRenderedFut
-      val szMult = MSzMult.fromDouble( tileArgs.szMult )
 
       // Завернуть index-экшен в стандартный scv3-контейнер:
       for {
@@ -343,7 +341,7 @@ trait ScAdsTile
           acType = MScRespActionTypes.AdsTile,
           ads = Some(MSc3AdsResp(
             ads     = madsRendered,
-            szMult  = szMult
+            szMult  = tileArgs.szMult
           ))
         )
       }

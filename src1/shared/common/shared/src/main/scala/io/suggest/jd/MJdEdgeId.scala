@@ -5,6 +5,7 @@ import io.suggest.err.ErrorConstants
 import io.suggest.img.crop.MCrop
 import io.suggest.img.MImgFmt
 import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.primo.id.IId
 import io.suggest.scalaz.ScalazUtil
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
@@ -107,14 +108,18 @@ object MJdEdgeId {
   *                     Скопипасчен как обязательный, хотя может быть лучше его опциональным сделать? Вопрос...
   * @param crop Кроп текущего изображения, если есть.
   */
-case class MJdEdgeId(
-                       edgeUid       : EdgeUid_t,
-                       outImgFormat  : Option[MImgFmt]   = None,
-                       crop          : Option[MCrop]     = None,
-                     ) {
+final case class MJdEdgeId(
+                            edgeUid       : EdgeUid_t,
+                            outImgFormat  : Option[MImgFmt]   = None,
+                            crop          : Option[MCrop]     = None,
+                          )
+  extends IId[EdgeUid_t]
+{
 
   def withImgEdge(imgEdge: EdgeUid_t) = copy(edgeUid = imgEdge)
   def withOutImgFormat(outImgFormat: Option[MImgFmt])  = copy(outImgFormat = outImgFormat)
   def withCrop(crop: Option[MCrop])   = copy(crop = crop)
+
+  override def id = edgeUid
 
 }

@@ -15,7 +15,6 @@ import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}
 import io.suggest.sjs.common.log.Log
 import io.suggest.text.MTextAligns
 import japgolly.univeq._
-import JdTag.Implicits._
 import io.suggest.msg.ErrorMsgs
 
 import scala.scalajs.js

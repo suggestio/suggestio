@@ -319,7 +319,7 @@ class SysMdr @Inject() (
             nodeId        = mad.id,
             nodeEdges     = edges2,
             tpl           = tpl,
-            szMult        = SysMdrConst.SZ_MULT.toFloat,
+            jdConf        = SysMdrConst.JD_CONF,
             allowWide     = true,
             forceAbsUrls  = false
           )(ctx)

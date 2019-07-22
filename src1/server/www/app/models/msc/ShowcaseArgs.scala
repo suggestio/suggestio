@@ -1,7 +1,5 @@
 package models.msc
 
-import models.blk.SzMult_t
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -14,7 +12,3 @@ trait SyncRenderInfoDflt {
   def syncRender: Boolean = jsStateOpt.isDefined
   def jsStateOpt: Option[ScJsState] = None
 }
-
-
-/** Настройки рендера плитки на клиенте. */
-case class TileArgs(szMult: SzMult_t, colsCount: Int)

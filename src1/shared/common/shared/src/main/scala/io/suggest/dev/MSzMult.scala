@@ -33,6 +33,9 @@ object MSzMult {
     apply( pct )
   }
 
+  def fromInt(szMult: Int): MSzMult =
+    apply( szMult * SZ_MULT_MOD )
+
 
   implicit object MSzMultSimpleArithmeticHelper extends SimpleArithmetics[MSzMult, Int] {
     override def applyMathOp(v: MSzMult)(op: Int => Int): MSzMult = {
@@ -50,7 +53,7 @@ object MSzMult {
   * @param multBody Размер в целочисленных долях от исходного.
   *                 Изначально, тут были проценты.
   */
-case class MSzMult(multBody: Int) {
+case class MSzMult private[dev] (multBody: Int) {
 
   def toIntPct = Math.round(toDouble * PERCENTS_COUNT)
 
@@ -89,6 +92,9 @@ object MSzMults {
 
   /** Утроенный размер. */
   def `3.0`   = MSzMult(MSzMult.SZ_MULT_MOD * 3)
+
+  /** Учетверённый размер (для узких wide-блоков). */
+  def `4.0`   = MSzMult(MSzMult.SZ_MULT_MOD * 4)
 
   /** Соотношение плитки для экранов с шириной 640csspx:
     * они требуют немного уменьшить карточку и это нижний предельный случай.
