@@ -54,26 +54,23 @@ class LkAdEdFormUtil @Inject() (
     // Потом надо будет просто искать карточки на определённом узле, и возвращать их документ
     // и эджи (эджи - прорендерив через ctx.messages). Карточки сгенерить через новый редактор (который ещё не написан).
 
-    val w1 = BlockWidths.default
-    val h1 = BlockHeights.default
-
     val tplTree = Tree.Node(
       root = JdTag.document,
       forest = Stream(
         // Уровень стрипов. Рендерим три стрипа.
 
         // Strip#1 содержит намёк на то, что это верхний блок.
-        Tree.Leaf(
-          root = JdTag.strip(
+        Tree.Leaf {
+          JdTag.strip(
             bm = BlockMeta(
-              w = w1,
-              h = h1
+              w = BlockWidths.default,
+              h = BlockHeights.default,
             ),
             bgColor = Some(MColorData(
               code = "060d45"
             ))
           )
-        )
+        }
 
       )
     )

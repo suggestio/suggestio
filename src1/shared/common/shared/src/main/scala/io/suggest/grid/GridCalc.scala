@@ -3,7 +3,10 @@ package io.suggest.grid
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockPaddings, BlockWidth, BlockWidths}
 import io.suggest.common.geom.d2.IWidth
 import io.suggest.dev.{MSzMult, MSzMults}
+import io.suggest.jd.MJdConf
+import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import japgolly.univeq._
+import scalaz.Tree
 
 import scala.annotation.tailrec
 
@@ -103,6 +106,29 @@ object GridCalc {
         null
     }
     Option( szMultOrNull )
+  }
+
+
+  /** Сборка карты MSzMults для списка шаблонов блоков.
+    *
+    * @param tpls Список шаблонов блоков.
+    * @param jdConf Конфиг рендера плитки.
+    * @return Карта szMults по тегам.
+    */
+  def wideSzMults(tpls: TraversableOnce[Tree[JdTag]], jdConf: MJdConf): Map[JdTag, MSzMult] = {
+    (for {
+      tpl         <- tpls.toIterator
+      tplJdt = tpl.rootLabel
+      // Посчитать wideSzMult блока, если wide
+      if tplJdt.name ==* MJdTagNames.STRIP
+      bm          <- tplJdt.props1.bm.iterator
+      if bm.wide
+      wideSzMult  <- GridCalc.wideSzMult( bm, jdConf.gridColumnsCount ).iterator
+      jdt         <- tpl.flatten
+    } yield {
+      jdt -> wideSzMult
+    })
+      .toMap
   }
 
 }

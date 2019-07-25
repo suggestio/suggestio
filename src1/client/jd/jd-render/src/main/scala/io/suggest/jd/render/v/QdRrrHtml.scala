@@ -4,7 +4,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.jd.render.m.MJdArgs
-import io.suggest.jd.tags.JdTag
+import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
@@ -15,9 +15,10 @@ import japgolly.scalajs.react.{Callback, ReactMouseEventFromHtml}
 import japgolly.scalajs.react.vdom.{HtmlTagOf, TagMod, VdomElement}
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.Element
-
 import scalacss.ScalaCssReact._
+
 import scala.annotation.tailrec
+import japgolly.univeq._
 import scalaz.Tree
 
 /**
@@ -67,10 +68,14 @@ class QdRrrHtml(
   /** Набор delta-операций, подлежащих проработке.
     * В конце работы должен остаться Nil.
     */
-  private var _restOps: List[MQdOp] = {
-    qdTag
-      .qdOpsIter
-      .toList
+  private var _restOps: Stream[(JdTag, MQdOp)] = {
+    for {
+      jdt <- qdTag.flatten
+      if jdt.name ==* MJdTagNames.QD_OP
+      qdOp <- jdt.qdProps
+    } yield {
+      jdt -> qdOp
+    }
   }
 
   /** Аттрибут href для ссылки, чтобы не было паразитных переходов в редакторе. */
@@ -86,7 +91,7 @@ class QdRrrHtml(
   private def _doRender(counters: QdRrrOpKeyCounters = QdRrrOpKeyCounters()): VdomElement = {
     _restOps match {
       // Есть операция для обработки.
-      case qdOp :: restOpsTail =>
+      case qdOp #:: restOpsTail =>
         _restOps = restOpsTail
         // Надо обработать текущую операцию: поискать \n в тексте.
         // Если это текст, то текст может быть с \n или без \n.
@@ -98,7 +103,7 @@ class QdRrrHtml(
 
 
       // Больше не осталось операций для проработки
-      case Nil =>
+      case _ =>
         // Если delta-синтаксис валиден, то currLineOpsAcc должен быть пустым благодаря финализирующей \n.
         if (_currLineAccRev.nonEmpty) {
           //throw new IllegalStateException("CR/LF error: " + qdTag)
@@ -114,7 +119,8 @@ class QdRrrHtml(
 
 
   /** Прорендерить текущую операцию, распихав изменения по аккамуляторам. */
-  private def _renderOp(qdOp: MQdOp, counters: QdRrrOpKeyCounters): Option[QdRrrOpKeyCounters] = {
+  private def _renderOp(jdtQdOp: (JdTag, MQdOp), counters: QdRrrOpKeyCounters): Option[QdRrrOpKeyCounters] = {
+    val qdOp = jdtQdOp._2
     val counters2Opt = qdOp.opType match {
       case MQdOpTypes.Insert =>
         for {
@@ -127,11 +133,11 @@ class QdRrrHtml(
           e.jdEdge.predicate match {
             case MPredicates.JdContent.Text =>
               // Рендер текста. Нужно отработать аттрибуты рендера текста.
-              _insertText( e.jdEdge.text.get, qdOp, othersCnt )
+              _insertText( e.jdEdge.text.get, jdtQdOp, othersCnt )
               othersCnt += 1
             // Рендер картинки.
             case MPredicates.JdContent.Image =>
-              _insertImage( e, qdOp, imagesCnt )
+              _insertImage( e, jdtQdOp, imagesCnt )
               imagesCnt += 1
 
             // Рендер видео (или иного фрейма).
@@ -160,7 +166,7 @@ class QdRrrHtml(
 
 
   /** Вставка картинки-изображения. */
-  private def _insertImage(e: MEdgeDataJs, qdOp: MQdOp, i: Int): Unit = {
+  private def _insertImage(e: MEdgeDataJs, jdtQdOp: (JdTag, MQdOp), i: Int): Unit = {
     val resOpt = for {
       // Определяем img.src. Quill не понимает blob-ссылки, только data или http.
       imgSrc <- e.imgSrcOpt
@@ -168,9 +174,11 @@ class QdRrrHtml(
       // Аккамулируем аттрибуты для рендера img-тега.
       var imgArgsAcc = List.empty[TagMod]
 
+      val (jdt, qdOp) = jdtQdOp
+
       // width/height экранного представления картинки задаётся в CSS:
       for (embedAttrs <- qdOp.attrsEmbed)
-        imgArgsAcc ::= jdArgs.jdCss.embedAttrStyleF( embedAttrs )
+        imgArgsAcc ::= jdArgs.jdRuntime.jdCss.embedAttrStyleF( embedAttrs )
 
       // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
       if (jdArgs.conf.isEdit)
@@ -180,7 +188,7 @@ class QdRrrHtml(
       for (f <- imgEdgeMods)
         imgArgsAcc ::= f( e )
 
-      val keyTm = ^.key := s"I$i"
+      val keyTm = ^.key := i
 
       // Наконец, отработать src (в самое начало списка -- просто на всякий случай).
       imgArgsAcc =
@@ -189,7 +197,7 @@ class QdRrrHtml(
         imgArgsAcc
 
       for (attrsText <- qdOp.attrsText if attrsText.isCssStyled)
-        imgArgsAcc ::= jdArgs.jdCss.textStyleF( attrsText )
+        imgArgsAcc ::= jdArgs.jdRuntime.jdCss.textStyleF( jdt )
 
       var finalTm: TagMod = <.img(
         imgArgsAcc: _*
@@ -227,7 +235,7 @@ class QdRrrHtml(
             jdCssStatic.horizResizable,
             ^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, false, event) },
             ^.height := maskHeightPx.px,
-            jdArgs.jdCss.embedAttrStyleF( attrsEmbed ),
+            jdArgs.jdRuntime.jdCss.embedAttrStyleF( attrsEmbed ),
             ^.`class` := Css.flat(Css.Overflow.HIDDEN, Css.Position.ABSOLUTE)
           )
         )
@@ -246,8 +254,8 @@ class QdRrrHtml(
     val resOpt = for {
       src <- e.jdEdge.url
     } yield {
-      val whStyl = qdOp.attrsEmbed.fold( jdArgs.jdCss.videoStyle ) { attrsEmbed =>
-        jdArgs.jdCss.embedAttrStyleF( attrsEmbed )
+      val whStyl = qdOp.attrsEmbed.fold( jdArgs.jdRuntime.jdCss.videoStyle ) { attrsEmbed =>
+        jdArgs.jdRuntime.jdCss.embedAttrStyleF( attrsEmbed )
       }
       val keyV = "V" + i
       val iframe = <.iframe(
@@ -292,14 +300,14 @@ class QdRrrHtml(
 
 
   /** Рендер insert-op с текстом. */
-  private def _insertText(text: String, qdOp: MQdOp, i: Int): Unit = {
+  private def _insertText(text: String, jdtQdOp: (JdTag, MQdOp), i: Int): Unit = {
     if (text matches "[\n]+") {
       // Специальный случай: тег завершения строки с возможной стилистикой всей прошедшей строки.
       for (j <- 1 to text.length)
-        _handleEol( qdOp.attrsLine, Some(i), Some(j) )
+        _handleEol( jdtQdOp._2.attrsLine, Some(i), Some(j) )
     } else {
       // Это обычный текст. Но он может содержать в себе \n-символы в неограниченном количестве.
-      _insertPlainTextWithNls(text, qdOp, i)
+      _insertPlainTextWithNls(text, jdtQdOp, i)
     }
   }
 
@@ -330,7 +338,7 @@ class QdRrrHtml(
     * Символы \n очень важны в quill-выхлопе, нельзя их терять или рубить неаккуратно.
     */
   /** Отработать просто текст с возможными \n внутри. */
-  private def _insertPlainTextWithNls(text: String, qdOp: MQdOp, i: Int): Unit = {
+  private def _insertPlainTextWithNls(text: String, jdtQdOp: (JdTag, MQdOp), i: Int): Unit = {
     val nlCh = HtmlConstants.NEWLINE_UNIX
     if (text contains nlCh) {
       // Внутри строки есть символы \n. Обычно, такое возможно при отсуствии какого-либо форматирования.
@@ -346,8 +354,8 @@ class QdRrrHtml(
         // Quill всегда добавляет в конец последней операции \n из каких-то благих намерений.
         // Его нужно правильно отрабатывать, т.е. срезать.
         val isNotLastSplit = j < lastSplitIndex
-        if (isNotLastSplit || split.nonEmpty || qdOp.attrsLine.nonEmpty)
-          _insertVeryPlainText(split, qdOp, s"$i.$j")
+        if (isNotLastSplit || split.nonEmpty || jdtQdOp._2.attrsLine.nonEmpty)
+          _insertVeryPlainText(split, jdtQdOp, s"$i.$j")
 
         if (isNotLastSplit)
           _handleEol()
@@ -355,18 +363,20 @@ class QdRrrHtml(
 
     } else {
       // Текст без переносов строк.
-      _insertVeryPlainText(text, qdOp, i.toString)
+      _insertVeryPlainText(text, jdtQdOp, i.toString)
     }
   }
 
 
-  private def _insertVeryPlainText(text0: String, qdOp: MQdOp, keyPrefix: String): Unit = {
+  private def _insertVeryPlainText(text0: String, jdtQdOp: (JdTag, MQdOp), keyPrefix: String): Unit = {
     // Для максимальной скорости работы и некоторого удобства, тут много переменных.
     var acc: TagMod = if ( text0.isEmpty ) {
       _emptyLineContent1( keyPrefix )
     } else {
       text0
     }
+
+    val (jdt, qdOp) = jdtQdOp
 
     // Обвешать текст заданной аттрибутикой
     for {
@@ -376,7 +386,7 @@ class QdRrrHtml(
       // Отрендерить цвет текста и цвет фона, одним style.
       // Стилизуем текст только через самый внутренний тег оформления текста, управляя этим через переменную.
       var textStyleOpt = OptionUtil.maybe[TagMod]( attrs.isCssStyled ) {
-        jdArgs.jdCss.textStyleF( attrs )
+        jdArgs.jdRuntime.jdCss.textStyleF( jdt )
       }
 
       val keyTm = ^.key := keyPrefix

@@ -41,9 +41,7 @@ class ItemRowR(
   /** Пропертисы для рендера одного ряда.
     *
     * @param mitem Что рендерим.
-    * @param jdArgs Данные для рендера превьюшки: шаблон, эджи, параметры.
     * @param isItemEditable Можно ли управлять item'ом?
-    * @param jdRowSpan Для колонки с превьюшкой карточки - сколько рядов можно оккупировать?
     */
   case class PropsVal(
                        mitem          : MItem,

@@ -1,7 +1,6 @@
 package io.suggest.ad.blk
 
 import enumeratum.values.{IntEnum, IntEnumEntry}
-import io.suggest.dev.MSzMult
 
 /**
   * Suggest.io
@@ -44,33 +43,6 @@ trait IBlockSizes[T <: IBlockSize] extends IntEnum[T] with Product {
 
 }
 
-
-/** Статическая утиль для поддержки подсистемы размеров блока. */
-object IBlockSize {
-
-  /** Модифицировать szMult путём пересчёта на указанный padding.
-    * Так можно аккуратно растянуть блоки плитки, чтобы занять пространство между ними.
-    *
-    * @param szMult Исходный мультипликатор размера для плитки с BlockPaddings.base.
-    * @param padding Выставленный padding плитки.
-    * @return Обновлённый мультипликатор размера для применения внутри блока.
-    *         None, если обновления не требуется.
-    */
-  def szMultPaddedOpt(szMult: MSzMult, padding: BlockPadding): Option[MSzMult] = {
-    for {
-      diffToBasePx <- BlockPaddings.diffToBasePx( padding )
-    } yield {
-      // Базовый размер -- всегда один и тот же.
-      // TODO Отвязаться от width к более абстрактным константам.
-      val baseBlockSzMin = BlockWidths.min.value
-      // Увеличенный размер минимального блока:
-      val newBlockSzMin = baseBlockSzMin + diffToBasePx
-      val szMultD = szMult.toDouble * newBlockSzMin / baseBlockSzMin
-      MSzMult.fromDouble( szMultD )
-    }
-  }
-
-}
 
 /** Трейт-маркер какого-то стабильного размера блока. */
 trait IBlockSize

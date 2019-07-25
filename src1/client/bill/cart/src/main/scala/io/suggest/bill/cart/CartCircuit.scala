@@ -34,7 +34,7 @@ object CartCircuit {
     MCartRootS(
       conf = minit.conf,
       order = MOrderItemsS(
-        jdCss = ItemRowPreviewR.mkJdCss()
+        jdRuntime = ItemRowPreviewR.mkJdRuntime()
       )
     )
   }

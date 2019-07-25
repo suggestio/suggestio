@@ -2,7 +2,7 @@ package io.suggest.ads.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.jd.render.v.JdCss
+import io.suggest.jd.render.m.MJdRuntime
 import japgolly.univeq._
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
@@ -17,9 +17,9 @@ object MAdsS {
 
   implicit object MAdsSFastEq extends FastEq[MAdsS] {
     override def eqv(a: MAdsS, b: MAdsS): Boolean = {
-      (a.jdCss ===* b.jdCss) &&
-        (a.ads ===* b.ads) &&
-        (a.hasMoreAds ==* b.hasMoreAds)
+      (a.jdRuntime ===* b.jdRuntime) &&
+      (a.ads ===* b.ads) &&
+      (a.hasMoreAds ==* b.hasMoreAds)
     }
   }
 
@@ -31,12 +31,12 @@ object MAdsS {
 /** Контейнер данных по текущему узлу, на котором открыта форм.
   */
 case class MAdsS(
-                  jdCss      : JdCss,
+                  jdRuntime  : MJdRuntime,
                   ads        : Pot[Vector[MAdProps]]  = Pot.empty,
                   hasMoreAds : Boolean                = true
                 ) {
 
-  def withJdCss(jdCss: JdCss)                     = copy(jdCss = jdCss)
+  def withJdRuntime(jdRuntime: MJdRuntime)        = copy(jdRuntime = jdRuntime)
   def withAds(ads: Pot[Vector[MAdProps]])         = copy(ads = ads)
   def withHasMoreAds(hasMoreAds: Boolean)         = copy(hasMoreAds = hasMoreAds)
 

@@ -98,11 +98,11 @@ class GridCoreR(
             mgridProxy.wrap { _ =>
               // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
               MJdArgs(
-                template = tpl2,
-                edges    = edges,
-                jdCss    = mgrid.jdCss,
-                conf     = mgrid.jdConf,
-                renderArgs = jdRenderArgs
+                template    = tpl2,
+                edges       = edges,
+                jdRuntime   = mgrid.jdRuntime,
+                conf        = mgrid.jdConf,
+                renderArgs  = jdRenderArgs,
               )
             } ( jdR.apply )
           )

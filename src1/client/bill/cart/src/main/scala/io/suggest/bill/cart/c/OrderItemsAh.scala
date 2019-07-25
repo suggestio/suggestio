@@ -52,7 +52,7 @@ class OrderItemsAh[M](
           v0.itemsSelected -- itemIdSet
         }
       }
-      val v2 = v0.withItemsSelected( selItemIds2 )
+      val v2 = MOrderItemsS.itemsSelected.set(selItemIds2)(v0)
       updated( v2 )
 
 
@@ -74,9 +74,7 @@ class OrderItemsAh[M](
               Success( action )
             }
         }
-        val v2 = v0.withOrderContents(
-          orderContents = req2
-        )
+        val v2 = MOrderItemsS.orderContents.set( req2 )(v0)
         updated( v2, fx )
       }
 
@@ -97,9 +95,7 @@ class OrderItemsAh[M](
               Success( action )
             }
         }
-        val v2 = v0.withOrderContents(
-          orderContents = req2
-        )
+        val v2 = MOrderItemsS.orderContents.set(req2)(v0)
         updated( v2, fx )
       }
 
@@ -111,7 +107,7 @@ class OrderItemsAh[M](
 
         val v2 = v0.copy(
           orderContents = req2,
-          jdCss = ItemRowPreviewR.mkJdCss(
+          jdRuntime = ItemRowPreviewR.mkJdRuntime(
             req2.iterator
               .flatMap(_.adsJdDatas)
               .map(_.template)

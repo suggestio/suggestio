@@ -98,7 +98,7 @@ class SysMdrFormR(
     .initialStateFromProps { mrootProxy =>
       State(
 
-        jdCssC = mrootProxy.connect(_.node.jdCss)( JdCss.JdCssFastEq ),
+        jdCssC = mrootProxy.connect(_.node.jdRuntime.jdCss)( JdCss.JdCssFastEq ),
 
         nodeInfoC = mrootProxy.connect { mroot =>
           for (nextResp <- mroot.node.info) yield {
@@ -128,7 +128,7 @@ class SysMdrFormR(
             for (req <- nextResp.nodeOpt) yield {
               nodeRenderR.PropsVal(
                 adData      = req.ad,
-                jdCss       = mroot.node.jdCss,
+                jdRuntime   = mroot.node.jdRuntime,
                 adnNodeOpt  = req.mdrNodeOpt,
                 isSu        = mroot.conf.isSu
               )

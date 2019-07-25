@@ -2,7 +2,6 @@ package io.suggest.jd.render.m
 
 import diode.FastEq
 import io.suggest.jd.{MJdConf, MJdEdgeId}
-import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
@@ -23,22 +22,22 @@ object MJdArgs {
   /** Поддержка FastEq для инстансов [[MJdArgs]]. */
   implicit object MJdArgsFastEq extends FastEq[MJdArgs] {
     override def eqv(a: MJdArgs, b: MJdArgs): Boolean = {
-      (a.template       ===* b.template) &&
-        (a.edges        ===* b.edges) &&
-        (a.jdCss        ===* b.jdCss) &&
-        (a.conf         ===* b.conf) &&
-        // Бывает, что инстансы генерятся на лету. Поэтому сравниваем глубинно:
-        ((a.renderArgs ===* b.renderArgs) || MJdRenderArgs.MJdRenderArgsFastEq.eqv(a.renderArgs, b.renderArgs))
+      (a.template     ===* b.template) &&
+      (a.edges        ===* b.edges) &&
+      (a.jdRuntime    ===* b.jdRuntime) &&
+      (a.conf         ===* b.conf) &&
+      // Бывает, что инстансы генерятся на лету. Поэтому сравниваем глубинно:
+      ((a.renderArgs ===* b.renderArgs) || MJdRenderArgs.MJdRenderArgsFastEq.eqv(a.renderArgs, b.renderArgs))
     }
   }
 
   @inline implicit def univEq: UnivEq[MJdArgs] = UnivEq.derive
 
-  val template = GenLens[MJdArgs](_.template)
-  val edges = GenLens[MJdArgs](_.edges)
-  val jdCss = GenLens[MJdArgs](_.jdCss)
-  val conf  = GenLens[MJdArgs](_.conf)
-  val renderArgs = GenLens[MJdArgs](_.renderArgs)
+  val template    = GenLens[MJdArgs](_.template)
+  val edges       = GenLens[MJdArgs](_.edges)
+  val jdRuntime   = GenLens[MJdArgs](_.jdRuntime)
+  val conf        = GenLens[MJdArgs](_.conf)
+  val renderArgs  = GenLens[MJdArgs](_.renderArgs)
 
 }
 
@@ -48,23 +47,17 @@ object MJdArgs {
   * @param template Шаблон для рендера.
   * @param edges Карта данных по эджам, с сервера.
   * @param renderArgs Контейнер параметров для рендера конкретно этого шаблона.
-  * @param jdCss css для рендера.
+  * @param jdRuntime Рантаймовые данные для рендера (css и прочее).
   * @param conf Общий конфиг рендеринга.
   */
 case class MJdArgs(
                     template     : Tree[JdTag],
                     edges        : Map[EdgeUid_t, MEdgeDataJs],
-                    jdCss        : JdCss,
+                    jdRuntime    : MJdRuntime,
                     conf         : MJdConf,
                     renderArgs   : MJdRenderArgs        = MJdRenderArgs.empty,
                     // TODO поля ниже довольно специфичны, надо унести их в renderArgs.
                   ) {
-
-  def withTemplate(template: Tree[JdTag])           = copy(template = template)
-  def withEdges(edges: Map[EdgeUid_t, MEdgeDataJs]) = copy(edges = edges)
-  def withRenderArgs(renderArgs: MJdRenderArgs)     = copy(renderArgs = renderArgs)
-  def withJdCss(jdCss: JdCss)                       = copy(jdCss = jdCss)
-  def withConf(conf: MJdConf)                       = copy(conf = conf)
 
   /** Быстрый доступ и кэш данных по текущему выбранному тегу. */
   object selJdt {

@@ -31,6 +31,7 @@ import org.scalajs.dom.{Element, html}
 import org.scalajs.dom.raw.CSSStyleDeclaration
 import play.api.libs.json.Json
 import scalacss.ScalaCssReact._
+import scalacss.internal.LengthUnit
 import scalaz.Tree
 
 /**
@@ -119,7 +120,7 @@ class JdR(
     /** Ротация элемента. */
     private def _maybeRotate(jdt: JdTag, jdArgs: MJdArgs): TagMod = {
       jdt.props1.rotateDeg
-        .whenDefined { jdArgs.jdCss.rotateF.apply }
+        .whenDefined { jdArgs.jdRuntime.jdCss.rotateF.apply }
     }
 
     private def _clickableOnEdit(jdt: JdTag, jdArgs: MJdArgs): TagMod = {
@@ -161,7 +162,7 @@ class JdR(
     /** Рендер strip, т.е. одной "полосы" контента. */
     def renderStrip(stripTree: Tree[JdTag], i: Int, jdArgs: MJdArgs): TagOf[html.Div] = {
       val s = stripTree.rootLabel
-      val C = jdArgs.jdCss
+      val C = jdArgs.jdRuntime.jdCss
       val isSelected = jdArgs.selJdt.treeLocOpt.containsLabel(s)
       val isEditSelected = isSelected && jdArgs.conf.isEdit
 
@@ -306,14 +307,19 @@ class JdR(
           jdGridUtil.mkCssGridArgs(
             gbRes = GridBuilderUtil.buildGrid {
               MGridBuildArgs(
-                itemsExtDatas = jdGridUtil
-                  .jdTrees2bms(jd.subForest)
-                  .map { bm =>
-                    MGbBlock( None, bm )
-                  }
-                  .toList,
+                itemsExtDatas = (for {
+                  (jdtTree, i) <- jd.subForest.zipWithIndex
+                  jdt = jdtTree.rootLabel
+                  if jdt.props1.bm.nonEmpty
+                } yield {
+                  Tree.Leaf(
+                    MGbBlock( None, Some(jdt), orderN = Some(i) )
+                  )
+                })
+                  .toStream,
                 jdConf = jdArgs.conf,
-                offY = 0
+                offY = 0,
+                jdtWideSzMults = jdArgs.jdRuntime.jdtWideSzMults,
               )
             },
             conf = jdArgs.conf,
@@ -328,7 +334,7 @@ class JdR(
 
     private def _bgColorOpt(jdTag: JdTag, jdArgs: MJdArgs): TagMod = {
       jdTag.props1.bgColor.whenDefined { mcd =>
-        jdArgs.jdCss.bgColorOptStyleF( mcd.hexCode )
+        jdArgs.jdRuntime.jdCss.bgColorOptStyleF( mcd.hexCode )
       }
     }
 
@@ -377,16 +383,16 @@ class JdR(
         ) {
           _draggableUsing(qdTag, jdArgs) { qdTagDragStart(qdTag) }
         },
-        jdArgs.jdCss.absPosStyleF(parent -> qdTag),
+        jdArgs.jdRuntime.jdCss.absPosStyleF(qdTag),
 
         // CSS-класс принудительной ширины, если задан.
         ReactCommonUtil.maybe( qdTag.props1.widthPx.nonEmpty ) {
-          jdArgs.jdCss.forcedWidthStyleF(qdTag)
+          jdArgs.jdRuntime.jdCss.forcedWidthStyleF(qdTag)
         },
 
         // Стиль для теней
         ReactCommonUtil.maybe( qdTag.props1.textShadow.nonEmpty ) {
-          jdArgs.jdCss.contentShadowF( qdTag )
+          jdArgs.jdRuntime.jdCss.contentShadowF( qdTag )
         },
 
         // Рендерить особые указатели мыши в режиме редактирования.
@@ -592,7 +598,7 @@ class JdR(
         if e.button ==* 0
         style         <- Option(target.style)
         sizePxStyl    <- Option(f(style))
-        pxIdx = sizePxStyl.indexOf("px")
+        pxIdx = sizePxStyl.indexOf( LengthUnit.px.value )
         if pxIdx > 0
       } yield {
         sizePxStyl
@@ -619,7 +625,6 @@ class JdR(
       _parseWidth(e).fold(Callback.empty) { widthPx =>
         // stopPropagation() нужен, чтобы сигнал не продублировался в onQdTagResize()
         val heightPxOpt = OptionUtil.maybe(withHeight)(_parseHeight(e).get)
-        println(widthPx, withHeight, e.target.style.height, heightPxOpt)
         ReactCommonUtil.stopPropagationCB(e) >>
           dispatchOnProxyScopeCB( $, QdEmbedResize( widthPx, qdOp, edgeDataJs.jdEdge.id, heightPx = heightPxOpt ) )
       }
@@ -654,20 +659,19 @@ class JdR(
       .iterator
       .zipWithIndex
       .map { case (jdStripTree, i) =>
-        jdArgsProxy.wrap { jdArgs0 =>
-          jdArgs0
-            .withTemplate(jdStripTree)
-            .withRenderArgs(
-              jdArgs0.renderArgs.withSelPath {
-                jdArgs0.renderArgs.selPath.flatMap {
-                  case h :: t =>
-                    OptionUtil.maybe(h ==* i)(t)
-                  case Nil =>
-                    // should never happen
-                    None
-                }
+        jdArgsProxy.wrap {
+          MJdArgs.template.set( jdStripTree ) andThen
+          MJdArgs.renderArgs
+            .composeLens(MJdRenderArgs.selPath)
+            .modify {
+              _.flatMap {
+                case h :: t =>
+                  OptionUtil.maybe(h ==* i)(t)
+                case Nil =>
+                  // should never happen
+                  None
               }
-            )
+            }
         } { jdArgs2Proxy =>
           <.div(
             ^.key := i.toString,

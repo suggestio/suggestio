@@ -1,6 +1,6 @@
 package io.suggest.jd
 
-import io.suggest.ad.blk.{BlockPadding, BlockPaddings, BlockWidths, IBlockSize}
+import io.suggest.ad.blk.{BlockPadding, BlockPaddings, BlockWidths}
 import io.suggest.dev.{MSzMult, MSzMults}
 import japgolly.univeq._
 import monocle.macros.GenLens
@@ -58,12 +58,6 @@ case class MJdConf(
                     // TODO Это не уместно тут? Лучше убрать. JdR в редакторе зависит, т.к. рендерит плитку пока так.
                     gridColumnsCount    : Int
                   ) {
-
-  def withSzMult(szMult: MSzMult)           = copy(szMult = szMult)
-
-  /** Рассчитать коэфф.масштабирования блоков плитки. */
-  val blkSzMultOpt = IBlockSize.szMultPaddedOpt(szMult, blockPadding)
-  def blkSzMult = blkSzMultOpt.getOrElse( szMult )
 
   /** Фактическая ширина внутреннего контейнера плитки в пикселях. */
   lazy val gridWidthPx = {

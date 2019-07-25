@@ -100,7 +100,7 @@ class OrderR(
     .initialStateFromProps { propsProxy =>
       State(
 
-        jdCssC = propsProxy.connect( _.order.jdCss )( JdCss.JdCssFastEq ),
+        jdCssC = propsProxy.connect( _.order.jdRuntime.jdCss )( JdCss.JdCssFastEq ),
 
         orderHeadC = propsProxy.connect { props =>
           itemsTableHeadR.PropsVal(
@@ -119,7 +119,7 @@ class OrderR(
           itemsTableBodyR.PropsVal(
             orderContents = props.order.orderContents,
             selectedIds   = props.order.itemsSelected,
-            jdCss         = props.order.jdCss
+            jdRuntime     = props.order.jdRuntime,
           )
         }( itemsTableBodyR.ItemsTableBodyRPropsValFastEq ),
 

@@ -43,6 +43,31 @@ object MCoords2di {
   val x = GenLens[MCoords2di](_.x)
   val y = GenLens[MCoords2di](_.y)
 
+
+  implicit class CoordsExt( val c2d: MCoords2di ) extends AnyVal {
+
+    // Алиасы координат для различных случаев.
+    @inline def line = c2d.y
+    @inline def column = c2d.x
+
+    @inline def top = c2d.y
+    @inline def left = c2d.x
+
+
+    def toDouble: MCoords2dD = {
+      MCoords2dD(
+        x = c2d.x.toDouble,
+        y = c2d.y.toDouble
+      )
+    }
+
+    def toSize = MSize2di(width = c2d.x, height = c2d.y)
+
+    /** Поменять X и Y местами. Бывает надо для сортировки с приоритетом на Y. */
+    def swap = c2d.copy(x = c2d.y, y = c2d.x)
+
+  }
+
 }
 
 
@@ -52,30 +77,6 @@ object MCoords2di {
   * @param y Вертикальная координата.
   */
 case class MCoords2di(
-                      x: Int,
-                      y: Int
-                    ) {
-
-  def toDouble: MCoords2dD = {
-    MCoords2dD(
-      x = x.toDouble,
-      y = y.toDouble
-    )
-  }
-
-  def withX(x: Int) = copy(x = x)
-  def withY(y: Int) = copy(y = y)
-
-  def toSize = MSize2di(width = x, height = y)
-
-  /** Поменять X и Y местами. Бывает надо для сортировки с приоритетом на Y. */
-  def swap = copy(x = y, y = x)
-
-  // Алиасы координат для различных случаев.
-  @inline def line = y
-  @inline def column = x
-
-  @inline def top = y
-  @inline def left = x
-
-}
+                       x: Int,
+                       y: Int
+                     )

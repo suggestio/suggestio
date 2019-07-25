@@ -302,7 +302,7 @@ class NodeMdrAh[M](
       if (v0.node.info isPendingWithStartTime m.timestampMs) {
         // Это ожидаемый ответ сервера. Обработать его:
         val infoReq2 = v0.node.info.withTry( m.tryResp )
-        val jdCss2 = NodeRenderR.mkJdCss( Some(v0.node.jdCss) )(
+        val jdRuntime2 = NodeRenderR.mkJdRuntime( Some(v0.node.jdRuntime) )(
           infoReq2
             .iterator
             .flatMap(_.nodeOpt)
@@ -312,9 +312,9 @@ class NodeMdrAh[M](
         )
         val v2 = v0.withNode(
           v0.node.copy(
-            info    = infoReq2,
-            jdCss   = jdCss2,
-            mdrPots = Map.empty,
+            info        = infoReq2,
+            jdRuntime   = jdRuntime2,
+            mdrPots     = Map.empty,
             nodeOffset = {
               // Если успешный ответ содержит список ошибок узлов, то значит сервер перешагнул какие-то узлы автоматом. Надо тут их тоже прошагать с помощью offset:
               val errOffset = m.tryResp

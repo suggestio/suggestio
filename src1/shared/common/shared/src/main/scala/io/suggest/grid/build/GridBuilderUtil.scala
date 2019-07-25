@@ -7,6 +7,9 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.msg.ErrorMsgs
+import monocle.macros.GenLens
+import japgolly.univeq._
+import scalaz.Tree
 
 import scala.annotation.tailrec
 
@@ -45,12 +48,25 @@ object GridBuilderUtil {
     * @return Результат сборки.
     */
   def buildGrid(args: MGridBuildArgs): MGridBuildResult = {
+    // TODO XXX args.jdtWideSzMults содежит данные, которые надо тут задействовать для рассчёта wide height:
+    // MColumnState перевести на список пиксельных промежутков с указателем на оккупирующие промежутки теги.
+
     // Чисто самоконтроль, потом можно выкинуть.
     if (args.jdConf.gridColumnsCount < BlockWidths.max.relSz)
       throw new IllegalArgumentException( ErrorMsgs.GRID_CONFIGURATION_INVALID + HtmlConstants.SPACE + args.jdConf +
         HtmlConstants.SPACE + args.jdConf.gridColumnsCount )
 
     val szMultD = args.jdConf.szMult.toDouble
+
+    val cellWidthPx  = Math.round(BlockWidths.min.value * szMultD).toInt // props.columnWidth
+    val cellHeightPx = BlockHeights.min.value * szMultD
+
+    val paddingMultedPx = Math.round(args.jdConf.blockPadding.fullBetweenBlocksPx * szMultD).toInt
+    val cellPaddingWidthPx  = paddingMultedPx // _orZero( props.gutterWidth )
+    val cellPaddingHeightPx = paddingMultedPx // _orZero( props.gutterHeight )
+
+    val paddedCellHeightPx = cellHeightPx + cellPaddingHeightPx
+    val paddedCellWidthPx  = cellWidthPx  + cellPaddingWidthPx
 
     // Глобальный счётчик шагов рекурсии. Нужен как для поддержания порядка item'ов, так и для защиты от бесконечной рекурсии.
     var stepCounter = 0
@@ -78,16 +94,16 @@ object GridBuilderUtil {
         // Это может быть как просто блок, так и под-группа блоков.
         if ( xy.column >= currLvl.ctx.colsCount ) {
           // Конец текущей строки -- перейти на следующую строку:
-          val currLvl2 = currLvl.stepToNextLine
+          val currLvl2 = MGbLevelState.stepToNextLine( currLvl )
           _stepper(
-            s0.withCurrLevel( currLvl2 )
+            MGbStepState.replaceCurrLevel(currLvl2)(s0)
           )
 
         } else if ( currLvl.ctx.getHeightUsed( xy.column) > xy.line) {
           // Текущая ячейка уже занята. Требуется переход на следующую ячейку.
-          val currLvl2 = currLvl.stepToNextCell
+          val currLvl2 = MGbLevelState.stepToNextCell( currLvl )
           _stepper(
-            s0.withCurrLevel( currLvl2 )
+            MGbStepState.replaceCurrLevel(currLvl2)(s0)
           )
 
         } else if (currLvl.reDoItems.nonEmpty) {
@@ -96,31 +112,32 @@ object GridBuilderUtil {
           // Для повторного позиционирования создаём новый уровень и вертикальную проекцию.
           // Это поможет спозиционировать блок только по вертикали, не трогая горизонтальную координату.
           // Это сдвиг вниз, он удобен при конфликте с широкой карточкой за место на экране.
-          val mgiProps = MGbBlock(
-            nodeId  = None,   // TODO Тут непонятно, откуда взять данные для nodeId. Но надо ли?
-            bm      = reDoItm.bm,
-            orderN  = Some( reDoItm.orderN )
-          ) :: Nil
+          val gb2 = Tree.Leaf {
+            val gb0 = reDoItm.gbBlock
+            if (gb0.orderN contains reDoItm.orderN)
+              reDoItm.gbBlock
+            else
+              MGbBlock.orderN.set( Some(reDoItm.orderN) )( gb0 )
+          }
+
           // Используем rootLvl для сборки под-контекста, т.к. reDoItm.topLeft задано в абсолютных (root) координатах.
           val subLvl = MGbLevelState(
             ctx       = rootLvl.ctx.verticalSubGrid( reDoItm.topLeft ),
-            restItems = mgiProps
+            restItems = gb2 #:: Stream.empty,
           )
           // Обновить пока-текущий уровень, выкинув пройденный redo-элемент:
-          val currLvl2 = currLvl.copy(
-            reDoItems = currLvl.reDoItems.tail
-          )
-          val s2 = s0.withLevels(
-            subLvl :: currLvl2 :: s0.levels.tail
-          )
+          val currLvl2 = MGbLevelState.reDoItems.modify(_.tail)(currLvl)
+          val s2 = MGbStepState.levels.modify { levels0 =>
+            subLvl :: currLvl2 :: levels0.tail
+          }(s0)
           _stepper( s2 )
 
         } else if (currLvl.restItems.nonEmpty) {
           currLvl.restItems.head match {
 
             // Это block-meta. Позиционируем ровно один (текущий) блок:
-            case itemExt: MGbBlock =>
-              val bm = itemExt.bm
+            case Tree.Leaf(itemExt) =>
+              val bm = itemExt.bmOpt.get
               val currWide = MWideLine( currLvl.ctx.lineToAbs(xy.line), bm.h )
 
               if (
@@ -132,9 +149,9 @@ object GridBuilderUtil {
                   //(bm.wide   && rootLvl.currLineCol.column > 0)
               ) {
                 // Здесь нет места для текущего блока.
-                val currLvl2 = currLvl.stepToNextLine
+                val currLvl2 = MGbLevelState.stepToNextLine( currLvl )
                 _stepper(
-                  s0.withCurrLevel( currLvl2 )
+                  MGbStepState.replaceCurrLevel(currLvl2)(s0)
                 )
 
               } else {
@@ -151,7 +168,7 @@ object GridBuilderUtil {
 
                 val currLvl2 = currLvl.copy(
                   restItems   = currLvl.restItems.tail,
-                  currLineCol = xy.withX( endColumnIndex )
+                  currLineCol = MCoords2di.x.set(endColumnIndex)(xy),
                 )
                 val xyAbs = currLvl.ctx.colLineToAbs( xy )
 
@@ -182,7 +199,8 @@ object GridBuilderUtil {
                   orderN        = orderN,
                   topLeft       = xyAbs,
                   bm            = bm,
-                  forceCenterX  = wideBgWidthOpt
+                  forceCenterX  = wideBgWidthOpt,
+                  gbBlock       = itemExt,
                 )
 
                 // Если wide, то надо извлечь из results-аккамулятора элементы, конфликтующие по высоте с данным wide-блоком и запихать их в reDo-аккамулятор.
@@ -198,9 +216,7 @@ object GridBuilderUtil {
                   // Есть конфликтующие item'ы. Надо закинуть их в reDoItems на родительском уровне.
                   val parentLvlOpt = s0.levels.tail.headOption
                   val modLvl0 = parentLvlOpt.getOrElse(currLvl2)
-                  val modLvl2 = modLvl0.withReDoItems {
-                    conflicting reverse_::: modLvl0.reDoItems
-                  }
+                  val modLvl2 = MGbLevelState.reDoItems.modify(conflicting reverse_::: _)( modLvl0 )
 
                   // В связи с извлечением некоторых item'ов снизу, надо откатить значения в колонках.
                   val rootLvl1 = rootLvl
@@ -250,7 +266,7 @@ object GridBuilderUtil {
                     ctx = rootLvl.ctx,
                     currLineCol = rootLvl.currLineCol
                   )
-                  s1.withLevels( currLvl3 :: s1.levels.tail )
+                  MGbStepState.replaceCurrLevel( currLvl3 )(s1)
                 } else {
                   s1
                 }
@@ -260,8 +276,7 @@ object GridBuilderUtil {
               }
 
             // ПодСписок блоков, значит это открытая focused-карточка. Позиционируем эти блоки вертикально:
-            case itemExt: MGbSubItems =>
-              val subItems = itemExt.subItems
+            case Tree.Node(_, subItems)  =>
 
               // Создаём виртуальный контекст рекурсивного рендера плитки, и погружаемся в новый уровень рендера.
               // Это нужно, чтобы раскрыть одну карточку вниз, а не слева-направо.
@@ -270,12 +285,10 @@ object GridBuilderUtil {
                 restItems = subItems
               )
               // Выкидываем текущий пройденный элемент с текущего уровня.
-              val currLvl2 = currLvl.copy(
-                restItems = currLvl.restItems.tail
-              )
-              val s2 = s0.withLevels(
-                nextLvl :: currLvl2 :: s0.levels.tail
-              )
+              val currLvl2 = MGbLevelState.restItems.modify(_.tail)(currLvl)
+              val s2 = MGbStepState.levels.modify { levels0 =>
+                nextLvl :: currLvl2 :: levels0.tail
+              }(s0)
 
               _stepper( s2 )
           }
@@ -283,9 +296,7 @@ object GridBuilderUtil {
 
         } else {
           // Нет на текущем уровне ничего, что следует делать. Подняться уровнем выше.
-          val s2 = s0.withLevels(
-            s0.levels.tail
-          )
+          val s2 = MGbStepState.levels.modify(_.tail)(s0)
           _stepper( s2 )
         }
       }
@@ -316,8 +327,8 @@ object GridBuilderUtil {
       }
 
       override def setHeightUsed(ci: Int, heightUsed: Int): Unit = {
-        val mcs2 = colsInfo(ci)
-          .withHeightUsed( heightUsed )
+        val mcs2 = MColumnState.heightUsed
+          .set(heightUsed)( colsInfo(ci) )
         colsInfo(ci) = mcs2
       }
 
@@ -334,17 +345,6 @@ object GridBuilderUtil {
         ) :: Nil
       )
     )
-
-    val blkSzMultD   = args.jdConf.blkSzMult.toDouble
-    val cellWidthPx  = Math.round(BlockWidths.min.value * blkSzMultD).toInt // props.columnWidth
-    val cellHeightPx = BlockHeights.min.value * blkSzMultD
-
-    val paddingMultedPx = Math.round(args.jdConf.blockPadding.fullBetweenBlocksPx * szMultD).toInt
-    val cellPaddingWidthPx  = paddingMultedPx // _orZero( props.gutterWidth )
-    val cellPaddingHeightPx = paddingMultedPx // _orZero( props.gutterHeight )
-
-    val paddedCellHeightPx = cellHeightPx + cellPaddingHeightPx
-    val paddedCellWidthPx  = cellWidthPx  + cellPaddingWidthPx
 
     // Рассчёт финальных габаритов плитки: высота.
     val maxCellHeight = RootCtx.colsInfo
@@ -467,8 +467,8 @@ trait IGridBuildCtx { outer =>
 
       override def toString: String = {
         outer.toString +
-          "+" + line2 +
-          "+" + column2
+          HtmlConstants.PLUS + line2 +
+          HtmlConstants.PLUS + column2
       }
 
       override final def isRoot = false
@@ -498,14 +498,40 @@ case class MGbStepState(
     wides.exists( mwl.overlaps )
   }
 
-  def withLevels(levels: List[MGbLevelState])             = copy(levels = levels)
-  def withCurrLevel(level: MGbLevelState)                 = withLevels( level :: levels.tail )
-  def withResultsAccRev(resultsAccRev: List[MGbItemRes])  = copy(resultsAccRev = resultsAccRev)
-  def withWides(wides: List[MWideLine])                   = copy(wides = wides)
 
+}
+object MGbStepState { outer =>
+  val levels = GenLens[MGbStepState](_.levels)
+
+  def replaceCurrLevel(level: MGbLevelState) =
+    levels.modify { lvs0 => level :: lvs0.tail }
 }
 
 
+object MGbLevelState {
+
+  val restItems   = GenLens[MGbLevelState](_.restItems)
+  val currLineCol = GenLens[MGbLevelState](_.currLineCol)
+  val reDoItems   = GenLens[MGbLevelState](_.reDoItems)
+
+  /** step() переходит на следующую строку. Нужно внести изменения в состояние. */
+  val stepToNextLine = currLineCol.modify { clc0 =>
+    clc0.copy(
+      x = 0,
+      y = clc0.y + 1
+    )
+  }
+
+  /**
+    * step() не может подобрать подходящий блок в текущей строке и хочет просто шагнуть в следующую ячейку,
+    * оставив пустоту за собой.
+    * Этот метод вносит одношаговые изменения в состояние.
+    */
+  val stepToNextCell = currLineCol
+    .composeLens(MCoords2di.x)
+    .modify(_ + 1)
+
+}
 /**
   * @param restItems Прямой список данных для обработки. Т.е. и блоки, и коллекции блоков.
   * @param currLineCol Текущая координата в контексте текущей плитки. Т.е. она может быть неабсолютной.
@@ -513,13 +539,10 @@ case class MGbStepState(
   */
 case class MGbLevelState(
                           ctx         : IGridBuildCtx,
-                          restItems   : List[IGbBlockPayload],
+                          restItems   : Stream[Tree[MGbBlock]],
                           currLineCol : MCoords2di              = MCoords2di(0, 0),
                           reDoItems   : List[MGbItemRes]        = Nil,
                         ) {
-
-  def withCurrLineCol(currLineCol: MCoords2di)    = copy(currLineCol = currLineCol)
-  def withReDoItems(reDoItems: List[MGbItemRes])  = copy(reDoItems = reDoItems)
 
 
   /** Детектирование текущей максимальной ширины в сетке в текущей строке. */
@@ -537,28 +560,6 @@ case class MGbLevelState(
     __detect( currLineCol.column )
   }
 
-  /**
-    * step() не может подобрать подходящий блок в текущей строке и хочет просто шагнуть в следующую ячейку,
-    * оставив пустоту за собой.
-    * Этот метод вносит одношаговые изменения в состояние.
-    */
-  def stepToNextCell = {
-    withCurrLineCol(
-      currLineCol
-        .withX( currLineCol.x + 1 )
-    )
-  }
-
-  /** step() переходит на следующую строку. Нужно внести изменения в состояние. */
-  def stepToNextLine = {
-    withCurrLineCol(
-      currLineCol.copy(
-        x = 0,
-        y = currLineCol.y + 1
-      )
-    )
-  }
-
 }
 
 
@@ -574,6 +575,7 @@ case class MGbItemRes(
                        topLeft          : MCoords2di,
                        bm               : BlockMeta,
                        forceCenterX     : Option[Double]   = None,
+                       gbBlock          : MGbBlock,
                      ) {
 
   lazy val toWideLine = MWideLine(topLeft.y, bm.h)

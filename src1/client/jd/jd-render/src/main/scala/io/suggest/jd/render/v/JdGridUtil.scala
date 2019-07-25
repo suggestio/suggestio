@@ -1,13 +1,11 @@
 package io.suggest.jd.render.v
 
 import com.github.dantrain.react.stonecutter.{CssGridProps, EnterExitStyle, GridComponent_t}
-import io.suggest.ad.blk.{BlockMeta, BlockWidths}
+import io.suggest.ad.blk.BlockWidths
 import io.suggest.grid.build.{GridBuilderJs, MGridBuildResult}
 import io.suggest.jd.MJdConf
-import io.suggest.jd.tags.JdTag
 
 import scala.scalajs.js
-import scalaz.Tree
 
 /**
   * Suggest.io
@@ -18,14 +16,6 @@ import scalaz.Tree
 class JdGridUtil(
                   gridBuilder: GridBuilderJs
                 ) {
-
-  def jdTrees2bms(jdTrees: TraversableOnce[Tree[JdTag]]): Iterator[BlockMeta] = {
-    jds2bms( jdTrees.toIterator.map(_.rootLabel) )
-  }
-  def jds2bms(jdTrees: TraversableOnce[JdTag]): Iterator[BlockMeta] = {
-    jdTrees.toIterator
-      .flatMap(_.props1.bm)
-  }
 
   /** Сборка пропертисов для запуска рендера CSSGrid.
     *
@@ -47,15 +37,13 @@ class JdGridUtil(
     // Рассчёт расстояния между разными блоками.
     val cellPaddingPx = Math.round(conf.blockPadding.fullBetweenBlocksPx * szMultD).toInt
 
-    val blkSzMultD = conf.blkSzMult.toDouble
-
     val ees = EnterExitStyle.fromTop
 
     new CssGridProps {
       override val duration     = 600
       override val component    = tagName
       override val columns      = conf.gridColumnsCount
-      override val columnWidth  = Math.round(BlockWidths.min.value * blkSzMultD).toInt
+      override val columnWidth  = Math.round(BlockWidths.min.value * szMultD).toInt
       // Плитка и без этого gutter'а работает. Просто выставлено на всякий случай.
       override val gutterWidth  = cellPaddingPx
       override val gutterHeight = cellPaddingPx

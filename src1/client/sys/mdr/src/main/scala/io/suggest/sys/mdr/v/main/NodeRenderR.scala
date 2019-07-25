@@ -7,8 +7,8 @@ import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
-import io.suggest.jd.render.v.{JdCss, JdR}
+import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
+import io.suggest.jd.render.v.JdR
 import io.suggest.jd.tags.JdTag
 import io.suggest.jd.MJdAdData
 import io.suggest.msg.Messages
@@ -17,6 +17,7 @@ import io.suggest.routes.routes
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sys.mdr.SysMdrConst
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.scalaz.ZTreeUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
@@ -34,14 +35,14 @@ class NodeRenderR(
 
   case class PropsVal(
                        adData       : Option[MJdAdData],
-                       jdCss        : JdCss,
+                       jdRuntime    : MJdRuntime,
                        adnNodeOpt   : Option[MSc3IndexResp],
                        isSu         : Boolean,
                      )
   implicit object NodeRenderRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.adData ===* b.adData) &&
-      (a.jdCss  ===* b.jdCss) &&
+      (a.jdRuntime ===* b.jdRuntime) &&
       (a.adnNodeOpt ===* b.adnNodeOpt) &&
       (a.isSu ==* b.isSu)
     }
@@ -105,8 +106,8 @@ class NodeRenderR(
                     template  = adData.template,
                     edges     = adData.edgesMap
                       .mapValues( MEdgeDataJs(_) ),
-                    jdCss     = props.jdCss,
-                    conf      = props.jdCss.jdCssArgs.conf
+                    jdRuntime = props.jdRuntime,
+                    conf      = props.jdRuntime.jdCss.jdCssArgs.conf
                   )
                 } { jdR.apply }
               },
@@ -157,16 +158,15 @@ object NodeRenderR {
   val JD_CONF = SysMdrConst.JD_CONF
 
   /** Ленивая сборка jdCss на основе шаблонов. */
-  def mkJdCss(jdCss0Opt: Option[JdCss] = None)(tpl: Tree[JdTag]*): JdCss = {
-    val args2 = MJdCssArgs(tpl, JD_CONF)
-    jdCss0Opt
+  def mkJdRuntime(jdRuntimeOpt0: Option[MJdRuntime] = None)(tpls: Tree[JdTag]*): MJdRuntime = {
+    jdRuntimeOpt0
       // Не пересобирать JdCss, если args не изменились.
-      .filter { jdCss0 =>
-        MJdCssArgs.MJdCssArgsFastEq.eqv(args2, jdCss0.jdCssArgs)
+      .filter { jdRuntime0 =>
+        (tpls ===* jdRuntime0.jdCss.jdCssArgs.templates)
       }
       .getOrElse {
-        // Пересборка JdCss.
-        JdCss( args2 )
+        // Пересборка, т.к. шаблоны изменились.
+        MJdRuntime.make(tpls, JD_CONF)
       }
   }
 

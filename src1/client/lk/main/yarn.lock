@@ -3561,10 +3561,10 @@ react-scroll@1.7.9:
     lodash.throttle "^4.1.1"
     prop-types "^15.5.8"
 
-react-stonecutter@0.3.9:
-  version "0.3.9"
-  resolved "https://registry.yarnpkg.com/react-stonecutter/-/react-stonecutter-0.3.9.tgz#013648f2da649993aed7464721cf93e0c56d7f1d"
-  integrity sha512-NKcWT057gYAnUH51XOs6iLV//rlgmjKKds66UMt6bdZLDIQZiZvNOP2LRIXY+WR2UX619pU76azrWAbblomzzQ==
+react-stonecutter@0.3.10:
+  version "0.3.10"
+  resolved "https://registry.yarnpkg.com/react-stonecutter/-/react-stonecutter-0.3.10.tgz#44157cbce93a311c72103e7bf98deed80a06f0ca"
+  integrity sha512-baxIDPp10TLjGDY/SkQe2m01BrKiK/jZPQ932cicnP6li73UTrA/zN/9Qio8GUpQ+wMOvXkDg1UkTrcjjz7r7w==
   dependencies:
     enquire.js "^2.1.1"
     imagesloaded "^4.1.3"

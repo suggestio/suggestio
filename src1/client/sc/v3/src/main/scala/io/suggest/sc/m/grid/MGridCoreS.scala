@@ -3,9 +3,9 @@ package io.suggest.sc.m.grid
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.common.empty.EmptyProductPot
-import io.suggest.grid.build.{IGbBlockPayload, MGbSubItems, MGridBuildResult}
+import io.suggest.grid.build.MGridBuildResult
 import io.suggest.jd.MJdConf
-import io.suggest.jd.render.v.JdCss
+import io.suggest.jd.render.m.MJdRuntime
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -25,50 +25,18 @@ object MGridCoreS {
   /** Поддержка FastEq для [[MGridCoreSFastEq]]. */
   implicit object MGridCoreSFastEq extends FastEq[MGridCoreS] {
     override def eqv(a: MGridCoreS, b: MGridCoreS): Boolean = {
-      (a.jdConf       ==*  b.jdConf) &&
-        (a.jdCss      ===* b.jdCss) &&
-        (a.ads        ===* b.ads) &&
-        (a.gridBuild  ===* b.gridBuild)
+      (a.jdConf     ==*  b.jdConf) &&
+      (a.jdRuntime  ===* b.jdRuntime) &&
+      (a.ads        ===* b.ads) &&
+      (a.gridBuild  ===* b.gridBuild)
     }
   }
 
   @inline implicit def univEq: UnivEq[MGridCoreS] = UnivEq.derive
 
 
-  /** Приведение списка карточек к блокам для обсчёта плитки.
-    *
-    * @param ads Рекламные карточки.
-    * @return Список блоков и под-блоков.
-    */
-  def ads2gridBlocks(ads: TraversableOnce[MScAdData]): Iterator[IGbBlockPayload] = {
-    ads
-      .toIterator
-      .map { scAdData =>
-        scAdData.focused.fold [IGbBlockPayload] {
-          // Несфокусированная карточка. Вернуть bm единственного стрипа.
-          val brd = scAdData.main
-          MBlkRenderData.blockRenderData2GbPayload( scAdData.nodeId, brd.template, brd )
-        } { foc =>
-          // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
-          val focBlk = foc.blkData
-          MGbSubItems(
-            nodeId = scAdData.nodeId,
-            // Пройтись по блокам из focused-контейнера...
-            subItems = focBlk
-              .template
-              .subForest
-              .iterator
-              .map { subTpl =>
-                MBlkRenderData.blockRenderData2GbPayload( scAdData.nodeId, subTpl, focBlk )
-              }
-              .toList
-          )
-        }
-      }
-  }
-
   val jdConf    = GenLens[MGridCoreS](_.jdConf)
-  val jdCss     = GenLens[MGridCoreS](_.jdCss)
+  val jdRuntime = GenLens[MGridCoreS](_.jdRuntime)
   val ads       = GenLens[MGridCoreS](_.ads)
   val gridBuild = GenLens[MGridCoreS](_.gridBuild)
 
@@ -79,12 +47,11 @@ object MGridCoreS {
   *
   * @param ads Содержимое плитки.
   *            Pot реквеста к серверу за новыми карточками для плитки.
-  * @param gridSz Реально-занимаемый размер плитки. Вычисляется во время раскладывания карточек.
   * @param gridBuild Результат сборки плитки в контроллере.
   */
 case class MGridCoreS(
                        jdConf         : MJdConf,
-                       jdCss          : JdCss,
+                       jdRuntime      : MJdRuntime,
                        ads            : Pot[Vector[MScAdData]]        = Pot.empty,
                        gridBuild      : MGridBuildResult              = MGridBuildResult.empty,
                      )
@@ -109,13 +76,5 @@ case class MGridCoreS(
   /** Происходит ли сейчас загрузка какой-либо карточки или карточек? */
   def adsHasPending: Boolean =
     ads.isPending || _adsHasPending
-
-  def adsGridBlocksIter: Iterator[IGbBlockPayload] =
-    MGridCoreS.ads2gridBlocks( ads.iterator.flatten )
-
-
-  /** Кэширование значение isPending для коннекшена в GridR. */
-  lazy val adsIsPendingSome: Some[Boolean] =
-    Some( ads.isPending )
 
 }

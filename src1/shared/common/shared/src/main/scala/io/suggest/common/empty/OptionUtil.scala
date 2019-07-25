@@ -28,22 +28,19 @@ object OptionUtil {
   }
 
   /** Вернуть Some(true) или None. */
-  def maybeTrue(isSome: Boolean) = maybe(isSome)(isSome)
+  def maybeTrue(isSome: Boolean): Option[Boolean] =
+    maybeOpt(isSome)(SomeBool.someTrue)
 
 
   @inline
   def maybeOpt[T](isSome: Boolean)(optF: => Option[T]): Option[T] = {
-    if (isSome)
-      optF
-    else
-      None
+    if (isSome) optF
+    else None
   }
 
   def maybeFut[T](isSome: Boolean)(someF: => Future[Option[T]]): Future[Option[T]] = {
-    if (isSome)
-      someF
-    else
-      Future.successful(None)
+    if (isSome) someF
+    else Future.successful(None)
   }
 
 

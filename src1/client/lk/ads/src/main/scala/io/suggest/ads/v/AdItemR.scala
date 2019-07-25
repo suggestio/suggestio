@@ -8,8 +8,8 @@ import io.suggest.ads.m.{MAdProps, SetAdShownAtParent}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.jd.MJdConf
-import io.suggest.jd.render.m.MJdArgs
-import io.suggest.jd.render.v.{JdCss, JdR}
+import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
+import io.suggest.jd.render.v.JdR
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -34,19 +34,17 @@ class AdItemR(
                jdR: JdR
              ) {
 
-  import MJdArgs.MJdArgsFastEq
-
   case class PropsVal(
                        ad           : MAdProps,
                        firstInLine  : Boolean,
-                       jdCss        : JdCss,
-                       jdConf       : MJdConf
+                       jdRuntime    : MJdRuntime,
+                       jdConf       : MJdConf,
                      )
   implicit object MLkAdItemRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.ad ===* b.ad) &&
         (a.firstInLine ==* b.firstInLine) &&
-        (a.jdCss ===* b.jdCss) &&
+        (a.jdRuntime ===* b.jdRuntime) &&
         (a.jdConf ===* b.jdConf)
     }
   }
@@ -96,10 +94,10 @@ class AdItemR(
                 template  = jdData.template,
                 edges     = jdData.edgesMap
                   .mapValues( MEdgeDataJs(_) ),
-                jdCss     = props.jdCss,
-                conf      = props.jdConf
+                jdRuntime = props.jdRuntime,
+                conf      = props.jdConf,
               )
-            }(jdR.apply)
+            }(jdR.apply)(implicitly, MJdArgs.MJdArgsFastEq),
           ),
 
           // Если блок по высоте великоват, то нарисовать линию отреза:

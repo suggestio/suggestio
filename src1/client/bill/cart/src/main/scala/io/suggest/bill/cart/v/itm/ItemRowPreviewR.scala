@@ -2,8 +2,7 @@ package io.suggest.bill.cart.v.itm
 
 import io.suggest.dev.MSzMults
 import io.suggest.jd.MJdConf
-import io.suggest.jd.render.m.MJdCssArgs
-import io.suggest.jd.render.v.JdCss
+import io.suggest.jd.render.m.MJdRuntime
 import io.suggest.jd.tags.JdTag
 import scalaz.Tree
 
@@ -24,7 +23,7 @@ object ItemRowPreviewR {
   )
 
   /** Сборка пустого стиля для jd-рендера. */
-  def mkJdCss(templates: Seq[Tree[JdTag]] = Nil): JdCss =
-    JdCss( MJdCssArgs(templates, JD_CONF, quirks = false) )
+  def mkJdRuntime(templates: Seq[Tree[JdTag]] = Nil): MJdRuntime =
+    MJdRuntime.make( templates, JD_CONF, quirks = false )
 
 }

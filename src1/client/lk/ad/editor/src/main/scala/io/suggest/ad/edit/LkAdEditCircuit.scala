@@ -3,11 +3,10 @@ package io.suggest.ad.edit
 import diode.{ModelRO, ModelRW}
 import diode.react.ReactConnector
 import io.suggest.ad.edit.m._
-import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
+import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
 import io.suggest.sjs.common.log.CircuitLog
 import play.api.libs.json.Json
 import io.suggest.ad.edit.c._
-import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags._
 import io.suggest.ad.edit.m.layout.{MLayoutS, MSlideBlocks}
 import io.suggest.ad.edit.m.pop.MAePopupsS
@@ -84,14 +83,15 @@ class LkAdEditCircuit(
         val tpl = mFormInit.adData.template
         val edges = mFormInit.adData.edgesMap
           .mapValues( MEdgeDataJs(_) )
-        val jdCssArgs = MJdCssArgs.singleCssArgs( tpl, jdConf )
-        val jdCss = JdCss( jdCssArgs )
         MDocS(
           jdArgs = MJdArgs(
             template   = tpl,
             edges      = edges,
-            jdCss      = jdCss,
-            conf       = jdConf
+            conf       = jdConf,
+            jdRuntime  = MJdRuntime.make(
+              tpls   = tpl :: Nil,
+              jdConf = jdConf,
+            )
           ),
           // Залить гистограммы в общий словарь гистограмм, т.к. именно оттуда идёт рендер.
           colorsState = MColorsState(
@@ -184,12 +184,11 @@ class LkAdEditCircuit(
             setColorOpt( s0, mColorAh.colorOpt )
           }
           val tpl2 = strip2.toTree
-          val css2 = JdCss( MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf) )
 
           (
             MDocS.jdArgs.modify(
               MJdArgs.template.set( tpl2 ) andThen
-              MJdArgs.jdCss.set( css2 )
+              MJdArgs.jdRuntime.set( MJdRuntime.make(tpl2 :: Nil, mdoc0.jdArgs.conf) )
             ) andThen
             MDocS.colorsState.set( mColorAh.colorsState )
           )(mdoc0)
@@ -291,23 +290,21 @@ class LkAdEditCircuit(
     val mdoc1 = if (isTplChanged || (mPictureAh.edges !===* mdoc0.jdArgs.edges)) {
       MDocS.jdArgs.set {
         // Разобраться, изменился ли шаблон в реальности:
-        val (tpl2, css2) = if (isTplChanged) {
+        val (tpl2, jdRuntime2) = if (isTplChanged) {
           // Изменился шаблон. Вернуть новый шаблон, пересобрать css
           val tpl1 = mPictureAh.view
-          val css1 = JdCss(
-            MJdCssArgs.singleCssArgs(tpl1, mdoc0.jdArgs.conf )
-          )
-          (tpl1, css1)
+          val jdRuntime1 = MJdRuntime.make(tpl1 :: Nil, mdoc0.jdArgs.conf)
+          (tpl1, jdRuntime1)
         } else {
           // Не изменился шаблон, вернуть исходник
-          (tpl0, mdoc0.jdArgs.jdCss)
+          (tpl0, mdoc0.jdArgs.jdRuntime)
         }
 
         // Залить всё в итоговое состояние пачкой:
         mdoc0.jdArgs.copy(
           template    = tpl2,
           edges       = mPictureAh.edges,
-          jdCss       = css2
+          jdRuntime   = jdRuntime2
         )
       }(mdoc0)
     } else {

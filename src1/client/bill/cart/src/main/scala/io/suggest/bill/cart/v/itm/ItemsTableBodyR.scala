@@ -11,8 +11,8 @@ import io.suggest.bill.cart.MOrderContent
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.render.m.MJdArgs
-import io.suggest.jd.render.v.{JdCss, JdR}
+import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
+import io.suggest.jd.render.v.JdR
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.msg.{JsFormatUtil, Messages}
 import io.suggest.n2.edge.MEdgeDataJs
@@ -41,13 +41,13 @@ class ItemsTableBodyR(
   case class PropsVal(
                        orderContents  : Pot[MOrderContent],
                        selectedIds    : Set[Gid_t],
-                       jdCss          : JdCss,
+                       jdRuntime      : MJdRuntime,
                      )
   implicit object ItemsTableBodyRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.orderContents      ===* b.orderContents) &&
-        (a.selectedIds      ===* b.selectedIds) &&
-        (a.jdCss            ===* b.jdCss)
+      (a.selectedIds        ===* b.selectedIds) &&
+      (a.jdRuntime          ===* b.jdRuntime)
     }
   }
 
@@ -158,8 +158,8 @@ class ItemsTableBodyR(
                         edges = jdAdData.edgesMap
                           // TODO Opt Инстанс карты с js-эджами следует собирать не тут, а в контроллере и хранить в состоянии.
                           .mapValues(MEdgeDataJs(_)),
-                        jdCss = props.jdCss,
-                        conf  = props.jdCss.jdCssArgs.conf
+                        jdRuntime = props.jdRuntime,
+                        conf  = props.jdRuntime.jdCss.jdCssArgs.conf
                       )
                     }( jdR.apply )
                   }

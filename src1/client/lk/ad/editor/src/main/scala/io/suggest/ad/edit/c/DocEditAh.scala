@@ -16,7 +16,6 @@ import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.{JdConst, MJdConf, MJdEdge}
 import io.suggest.jd.render.m._
-import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd._
 import io.suggest.lk.m.color.MColorsState
@@ -115,10 +114,8 @@ class DocEditAh[M](
           .toTree
 
         val v2 = MDocS.jdArgs.modify(
-          MJdArgs.jdCss.set(
-            JdCss(
-              MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
-            )
+          MJdArgs.jdRuntime.set(
+            _mkJdRuntime(tpl2, v0)
           ) andThen
           MJdArgs.template.set( tpl2 )
         )( v0 )
@@ -128,6 +125,17 @@ class DocEditAh[M](
     }
 
   }
+
+
+  private def _mkJdRuntime(tpl: Tree[JdTag], jdConf: MJdConf): MJdRuntime =
+    MJdRuntime.make(
+      tpls   = tpl :: Nil,
+      jdConf = jdConf,
+    )
+  private def _mkJdRuntime(tpl: Tree[JdTag], jdArgs: MJdArgs): MJdRuntime =
+    _mkJdRuntime(tpl, jdArgs.conf)
+  private def _mkJdRuntime(tpl: Tree[JdTag], mdoc: MDocS): MJdRuntime =
+    _mkJdRuntime(tpl, mdoc.jdArgs)
 
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
@@ -227,9 +235,7 @@ class DocEditAh[M](
         val jdArgs2 = v0.jdArgs.copy(
           template    = tpl2,
           edges       = edgesData3,
-          jdCss       = JdCss(
-            MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
-          )
+          jdRuntime   = _mkJdRuntime(tpl2, v0),
         )
 
         // Залить все данные в новое состояние.
@@ -276,8 +282,8 @@ class DocEditAh[M](
 
         val v2 = MDocS.jdArgs.modify(
           MJdArgs.template.set( tpl2 ) andThen
-          MJdArgs.jdCss.set(
-            JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
+          MJdArgs.jdRuntime.set(
+            _mkJdRuntime(tpl2, v0)
           )
         )( v0 )
 
@@ -390,9 +396,7 @@ class DocEditAh[M](
             v2.jdArgs.copy(
               template    = tpl2,
               edges       = dataEdges2,
-              jdCss       = JdCss(
-                MJdCssArgs.singleCssArgs(tpl2, v2.jdArgs.conf)
-              )
+              jdRuntime   = _mkJdRuntime(tpl2, v2)
             )
           )(v2)
         }
@@ -523,9 +527,7 @@ class DocEditAh[M](
       // Обновить и дерево, и currentTag новым инстансом.
       val v2 = MDocS.jdArgs.modify(
         MJdArgs.template.set( template2 ) andThen
-        MJdArgs.jdCss.set( JdCss(
-          MJdCssArgs.singleCssArgs(template2, v0.jdArgs.conf)
-        ))
+        MJdArgs.jdRuntime.set( _mkJdRuntime(template2, v0) )
       )(v0)
 
       updated( v2 )
@@ -561,14 +563,10 @@ class DocEditAh[M](
           .fold(tpl0) { _.toTree }
 
         if (tpl2.subForest.nonEmpty) {
-          val jdCss2 = JdCss(
-            MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
-          )
-
           val v2 = v0.copy(
             jdArgs = v0.jdArgs.copy(
               template    = tpl2,
-              jdCss       = jdCss2,
+              jdRuntime   = _mkJdRuntime(tpl2, v0),
               renderArgs  = MJdRenderArgs.selPath.set(None)( v0.jdArgs.renderArgs ),
             ),
             stripEd = None,
@@ -698,7 +696,7 @@ class DocEditAh[M](
             .sum
           val y2 = clXy0.y + yModSign * yDiff
           //println(s"mod Y: ${clXy0.y} by $yDiff => $y2")
-          clXy0.withY( y2 )
+          MCoords2di.y.set(y2)( clXy0 )
         } else {
           // Странно: нет пройденных стрипов, хотя они должны бы быть
           LOG.warn( msg = s"$clXy0 [$fromStrip => ${m.strip})" )
@@ -740,9 +738,7 @@ class DocEditAh[M](
       val v2 = MDocS.jdArgs.modify { jdArgs0 =>
         jdArgs0.copy(
           template    = tpl2,
-          jdCss       = JdCss(
-            MJdCssArgs.singleCssArgs(tpl2, jdArgs0.conf)
-          ),
+          jdRuntime   = _mkJdRuntime(tpl2, jdArgs0),
           renderArgs  = (
             MJdRenderArgs.selPath.set( tpl2.nodeToPath( loc2.getLabel ) ) andThen
             MJdRenderArgs.dnd.set( MJdDndS.empty )
@@ -867,9 +863,7 @@ class DocEditAh[M](
             // Сохранить новые темплейт в состояние.
             val jdArgs2 = (
               MJdArgs.template.set(tpl2) andThen
-              MJdArgs.jdCss.set(JdCss(
-                MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
-              ))
+              MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v0.jdArgs) )
             )( v0.jdArgs )
 
             var v2 = MDocS.jdArgs.set( jdArgs2 )(v0)
@@ -912,9 +906,7 @@ class DocEditAh[M](
 
       val v2 = MDocS.jdArgs.modify(
         MJdArgs.template.set( tpl2 ) andThen
-        MJdArgs.jdCss.set(
-          JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
-        )
+        MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v0) )
       )(v0)
 
       updated(v2)
@@ -940,14 +932,10 @@ class DocEditAh[M](
             .toTree
 
           val v2 = (
-            MDocS.jdArgs.modify { jdArgs0 =>
-              jdArgs0.copy(
-                template = tpl2,
-                jdCss = JdCss(
-                  MJdCssArgs.singleCssArgs(tpl2, jdArgs0.conf)
-                ),
-              )
-            } andThen
+            MDocS.jdArgs.modify(
+              MJdArgs.template.set(tpl2) andThen
+              MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v0.jdArgs.conf) )
+            ) andThen
             MDocS.qdEdit.modify { qdEditOpt0 =>
               for (qdEdit0 <- qdEditOpt0) yield {
                 qdEdit0.withInitRealDelta(
@@ -1033,9 +1021,7 @@ class DocEditAh[M](
 
       val v2 = MDocS.jdArgs.modify(
         MJdArgs.template.set( tpl2 ) andThen
-        MJdArgs.jdCss.set(
-          JdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
-        )
+        MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v0) )
       )(v0)
 
       updated( v2 )
@@ -1092,9 +1078,7 @@ class DocEditAh[M](
 
           val v2 = MDocS.jdArgs.modify(
             MJdArgs.template.set(tpl2) andThen
-            MJdArgs.jdCss.set(
-              JdCss(MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf))
-            )
+            MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v0) )
           )( v0 )
 
           updated(v2)
@@ -1133,12 +1117,6 @@ class DocEditAh[M](
         }
         .get
 
-      val rnd = new Random()
-      val bm0 = intoStripLoc.getLabel.props1.bm.get //OrElse( BlockMeta.DEFAULT )
-      val coordsRnd = MCoords2di(
-        x = rnd.nextInt( bm0.w.value/3 ) + 10,
-        y = rnd.nextInt( (bm0.h.value * 0.75).toInt ) + (bm0.h.value * 0.12).toInt
-      )
 
       val textL10ed = Messages( MsgCodes.`Example.text` )
 
@@ -1167,7 +1145,17 @@ class DocEditAh[M](
         }
 
       val qdtTree = Tree.Node(
-        root = JdTag.qd(coordsRnd),
+        root = {
+          val bm0 = intoStripLoc.getLabel.props1.bm.get
+          val rnd = new Random()
+          val coordsRnd = MCoords2di(
+            x = rnd.nextInt( bm0.w.value/3 ) + 10,
+            y = rnd.nextInt( (bm0.h.value * 0.75).toInt ) + (bm0.h.value * 0.12).toInt
+          )
+          JdTag.qd(
+            topLeft = coordsRnd,
+          )
+        },
         forest = Stream(
           Tree.Leaf(
             JdTag.edgeQdOp( edgeUid )
@@ -1183,9 +1171,7 @@ class DocEditAh[M](
         jdArgs = v0.jdArgs.copy(
           template    = tpl2,
           edges       = edgesMap2,
-          jdCss       = JdCss(
-            MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
-          ),
+          jdRuntime   = _mkJdRuntime(tpl2, v0),
           renderArgs  = MJdRenderArgs.selPath.set(
             tpl2.nodeToPath( qdtTree.rootLabel )
           )(v0.jdArgs.renderArgs),
@@ -1263,9 +1249,7 @@ class DocEditAh[M](
             template    = tpl2,
             renderArgs  = MJdRenderArgs.selPath
               .set( tpl2.nodeToPath( newStripTree.rootLabel ) )(jdArgs0.renderArgs),
-            jdCss       = JdCss(
-              MJdCssArgs.singleCssArgs(tpl2, jdArgs0.conf)
-            )
+            jdRuntime   = _mkJdRuntime(tpl2, jdArgs0),
           )
         } andThen
         MDocS.slideBlocks
@@ -1284,9 +1268,7 @@ class DocEditAh[M](
 
       val v2 = MDocS.jdArgs.modify(
         MJdArgs.conf.set( conf2 ) andThen
-        MJdArgs.jdCss.set(
-          JdCss( MJdCssArgs.singleCssArgs( v0.jdArgs.template, conf2 ) )
-        )
+        MJdArgs.jdRuntime.set( _mkJdRuntime(v0.jdArgs.template, conf2) )
       )(v0)
 
       updated(v2)

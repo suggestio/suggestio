@@ -9,6 +9,7 @@ import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, Sho
 import io.suggest.ad.edit.v.edit._
 import io.suggest.ad.edit.v.edit.content.{ContentEditCssR, ContentLayersR}
 import io.suggest.color.IColorPickerMarker
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.css.{Css, CssR}
 import io.suggest.css.ScalaCssDefaults._
@@ -68,11 +69,9 @@ class LkAdEditFormR(
                      val textShadowR            : TextShadowR,
                    ) {
 
-  import MJdArgs.MJdArgsFastEq
   import scaleR.ScaleRPropsValFastEq
   import MFileUploadS.MFileUploadSFastEq
   import colorsSuggestR.ColorsSuggestPropsValFastEq
-  import saveR.SaveRPropsValFastEq
   import useAsMainR.UseAdMainPropsValFastEq
   import deleteBtnR.DeleteBtnRPropsValFastEq
   import plusMinusControlsR.PlusMinusControlsPropsValFastEq
@@ -81,7 +80,6 @@ class LkAdEditFormR(
   import colorCheckBoxR.ColorCheckBoxPropsValFastEq
   import io.suggest.lk.r.img.ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq
   import rotateR.RotateRPropsValFastEq
-  import slideBlockR.SlideBlockPropsValFastEq
   import quillEditorR.QuillEditorPropsValFastEq
   import contentEditCssR.ContentEditCssRPropsValFastEq
 
@@ -340,13 +338,9 @@ class LkAdEditFormR(
       }
 
       State(
-        jdPreviewArgsC = p.connect { mroot =>
-          mroot.doc.jdArgs
-        },
+        jdPreviewArgsC = p.connect(_.doc.jdArgs)( MJdArgs.MJdArgsFastEq ),
 
-        jdCssArgsC = p.connect { mroot =>
-          mroot.doc.jdArgs.jdCss
-        },
+        jdCssArgsC = p.connect(_.doc.jdArgs.jdRuntime.jdCss)( JdCss.JdCssFastEq ),
 
         scalePropsOptC = {
           val variants = MSzMults.forAdEditor
@@ -367,7 +361,7 @@ class LkAdEditFormR(
           saveR.PropsVal(
             currentReq = mroot.save.saveReq
           )
-        },
+        }(saveR.SaveRPropsValFastEq),
 
         useAsMainStripPropsOptC = p.connect { mroot =>
           for {
@@ -436,7 +430,7 @@ class LkAdEditFormR(
                   key = Some(k)
                 )
               }
-            }( OptFastEq.Wrapped )
+            }( OptFastEq.Wrapped( slideBlockR.SlideBlockPropsValFastEq ) )
           },
           blockBg = {
             val title = Messages( MsgCodes.`Background` )
@@ -451,7 +445,7 @@ class LkAdEditFormR(
                   key       = Some(k)
                 )
               }
-            }( OptFastEq.Wrapped )
+            }( OptFastEq.Wrapped( slideBlockR.SlideBlockPropsValFastEq ) )
           },
           content = {
             val title = Messages( MsgCodes.`Content` )
@@ -466,7 +460,7 @@ class LkAdEditFormR(
                   key      = Some(k)
                 )
               }
-            }( OptFastEq.Wrapped )
+            }( OptFastEq.Wrapped( slideBlockR.SlideBlockPropsValFastEq ) )
           },
           create = {
             val k = SlideBlockKeys.ADD
@@ -478,8 +472,8 @@ class LkAdEditFormR(
                   expanded  = mroot.doc.slideBlocks.expanded.contains(k),
                   key       = Some(k)
                 )
-              )
-            }
+              ): Option[slideBlockR.PropsVal]
+            }( OptFastEq.Wrapped( slideBlockR.SlideBlockPropsValFastEq ) )
           }
         ),
 
@@ -506,7 +500,7 @@ class LkAdEditFormR(
                   color         = bgColor,
                   colorPresets  = mroot.doc.colorsState.colorPresets,
                   cssClass      = cssClassOpt,
-                  topLeftPx     = Some( pickerS.shownAt.withY(topY) )
+                  topLeftPx     = Some( MCoords2di.y.set(topY)(pickerS.shownAt) )
                 )
               }
             }

@@ -2,9 +2,13 @@ package io.suggest.grid.build
 
 import io.suggest.ad.blk.BlockMeta
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.common.geom.d2.MSize2di
+import io.suggest.dev.MSzMult
 import io.suggest.jd.MJdConf
+import io.suggest.jd.tags.JdTag
 import japgolly.univeq._
+import monocle.macros.GenLens
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -19,74 +23,51 @@ import japgolly.univeq._
   * @param itemsExtDatas Данные по item'мам рассчитываемой плитки.
   * @param jdConf Конфигурация рендера.
   * @param offY Сдвиг по Y.
+  * @param jdtWideSzMults Данные по доп.ресайзу wide-блоков.
   */
 case class MGridBuildArgs(
-                           itemsExtDatas : List[IGbBlockPayload],
+                           itemsExtDatas : Stream[Tree[MGbBlock]],
                            jdConf        : MJdConf,
-                           offY          : Int
+                           offY          : Int,
+                           jdtWideSzMults: Map[JdTag, MSzMult],
                          )
 
-
-/** Интерфейс для контейнеров с вариантами элементов плитки. */
-sealed trait IGbBlockPayload {
-  def nodeId: Option[String]
-  def isBlock: Boolean
-  def isSubBlocks: Boolean = !isBlock
-  def fold[T](blockF: MGbBlock => T, subBlocksF: MGbSubItems => T): T
-  def flatten: List[IGbBlockPayload]
-
-  def headOption: Option[IGbBlockPayload]
-  def headOptionBlock: Option[MGbBlock]
-  def headIsWide: Boolean = headOptionBlock.exists(_.bm.wide)
-
-  /** Вернуть параметры первого блока. */
-  def firstBlockMeta: BlockMeta = {
-    fold(_.bm, _.subItems.head.firstBlockMeta)
-  }
-
-}
 
 /** Контейнер для одного блока.
   * wide-блоки могут передать здесь инфу о фоновой картинке.
   *
-  * @param bm Описание одного блока.
   * @param wideBgSz Размер широкой фоновой картинки.
   * @param orderN внутренний порядковый номер, заполняется и используется внутри [[GridBuilderUtil]].
   */
 case class MGbBlock(
-                     override val nodeId           : Option[String],
-                     bm                            : BlockMeta,
-                     wideBgSz                      : Option[ISize2di]  = None,
-                     private[build] val orderN     : Option[Int]       = None,
+                     nodeId                        : Option[String],
+                     jdtOpt                        : Option[JdTag],
+                     wideBgSz                      : Option[MSize2di]  = None,
+                     orderN                        : Option[Int]       = None,
                    )
-  extends IGbBlockPayload {
+object MGbBlock {
 
-  override def isBlock = true
-  override def flatten = this :: Nil
-  override def headOption = headOptionBlock
-  override def headOptionBlock = Some(this)
+  @inline implicit def univEq: UnivEq[MGbBlock] = UnivEq.derive
 
-  override def fold[T](blockF: MGbBlock => T, subBlocksF: MGbSubItems => T): T = {
-    blockF(this)
+  val orderN = GenLens[MGbBlock](_.orderN)
+
+
+  implicit class MGbBlockExt( val gbBlock: MGbBlock ) extends AnyVal {
+
+    /** Описание размеров текущего блока, если это Tree.Leaf. */
+    def bmOpt: Option[BlockMeta] =
+      gbBlock.jdtOpt.flatMap(_.props1.bm)
+    //override def headOptionBlock = Some(this)
+
   }
 
-}
 
-/** Контейнер для под-блоков. */
-case class MGbSubItems(
-                        override val nodeId       : Option[String],
-                        subItems                  : List[IGbBlockPayload]
-                      )
-  extends IGbBlockPayload {
-
-
-  override def headOptionBlock = headOption.flatMap(_.headOptionBlock)
-  override def headOption = subItems.headOption
-  override def isBlock = false
-  override def flatten = subItems
-
-  override def fold[T](blockF: MGbBlock => T, subBlocksF: MGbSubItems => T): T = {
-    subBlocksF(this)
+  implicit class GbBlockTreeExtOps( val gbTree: Tree[MGbBlock] ) extends AnyVal {
+    def headIsWide: Boolean = {
+      gbTree
+        .flatten
+        .exists(_.bmOpt.exists(_.wide))
+    }
   }
 
 }

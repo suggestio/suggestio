@@ -125,7 +125,7 @@ class GridR(
     .initialStateFromProps { propsProxy =>
       // Наконец, сборка самого состояния.
       State(
-        jdCssC = propsProxy.connect(_.core.jdCss)( JdCss.JdCssFastEq ),
+        jdCssC = propsProxy.connect(_.core.jdRuntime.jdCss)( JdCss.JdCssFastEq ),
 
         gridSzC = propsProxy.connect { props =>
           props.core.gridBuild.gridWh

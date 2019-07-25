@@ -4,11 +4,11 @@ import diode.FastEq
 import enumeratum.values.ValueEnumEntry
 import io.suggest.ad.blk.BlockPaddings
 import io.suggest.color.MColorData
-import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.css.ScalaCssUtil.Implicits._
+import io.suggest.dev.MSzMult
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.JdConst
 import io.suggest.jd.render.m.MJdCssArgs
@@ -133,16 +133,27 @@ class JdCssStatic extends StyleSheet.Inline {
 }
 
 
-case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
+final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   import dsl._
 
-  val blkSzMultD = jdCssArgs.conf.blkSzMult.toDouble
+
+  /** Общий мультипликатор размера всех элементов. */
+  private val szMultD = jdCssArgs.conf.szMult.toDouble
+
+  /** Мультипликация стороны на указанные пиксели. */
+  private def _szMulted(sizePx: Int, addSzMultOpt: Option[MSzMult] = None): Int = {
+    val szMultFinal = addSzMultOpt.fold(szMultD) { addSzMult1 =>
+      addSzMult1.toDouble * szMultD
+    }
+    Math.round( sizePx * szMultFinal ).toInt
+  }
+
 
   /** Стиль выделения группы блоков. */
   val blockGroupOutline = style(
     outlineStyle.solid,
-    outlineWidth( szMultedSide( BlockPaddings.default.outlinePx ).px )
+    outlineWidth( _szMulted( BlockPaddings.default.outlinePx ).px )
   )
 
   // TODO Вынести статические стили в object ScCss?
@@ -153,11 +164,12 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
     // Без absolute, невлезающие элементы (текст/контент) будут вылезать за пределы границы div'а.
     // TODO Возможно, position.relative (или др.) сможет это пофиксить. Заодно можно будет удалить props-флаг quirks.
-    if (jdCssArgs.quirks) position.absolute else position.relative,
+    if (jdCssArgs.quirks) position.absolute
+    else position.relative,
 
     // Дефолтовые настройки шрифтов внутри блока:
     fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
-    fontSize( (MFontSizes.default.value * blkSzMultD).px ),
+    fontSize( _szMulted(MFontSizes.default.value).px ),
     color.black
   )
 
@@ -173,21 +185,11 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // -------------------------------------------------------------------------------
   // Strip
 
-  def szMultedSide(sizePx: Int) = Math.round(sizePx * blkSzMultD).toInt
-
-  def bmStyleWh(bm: ISize2di): MSize2di = {
-    MSize2di(
-      width  = szMultedSide(bm.width),
-      height = szMultedSide(bm.height)
-    )
-  }
-
   /** Внутри wide-блока находится контейнер контентов (это strip). Ширина wide-стрипа задаётся здесь: */
   //private lazy val wideBlockWidthPx = jdCssArgs.conf.gridWidthPx * 0.70
 
   /** Стили контейнеров полосок, описываемых через props1.BlockMeta. */
   val bmStyleF = {
-    lazy val pc50 = 50.%%.value
     // Для wide - ширина и длина одинаковые.
     /*
     lazy val (wideLeftAv, wideWidthAv) = {
@@ -195,6 +197,8 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       (left(wLeftPx), width(wideBlockWidthPx.px))
     }
     */
+    val pc50 = 50.%%.value
+    val left0px = left( 0.px )
 
     styleF(
       new Domain.OverSeq(
@@ -207,9 +211,16 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
       // Стиль размеров блока-полосы.
       for (bm <- strip.props1.bm) {
-        val szMulted = bmStyleWh(bm)
-        accS ::= height( szMulted.height.px )
-        accS ::= width ( szMulted.width.px  )
+        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( strip )
+
+        val widthPx = _szMulted( bm.width, wideSzMultOpt )
+        accS ::= height( _szMulted( bm.height, wideSzMultOpt ).px )
+        accS ::= width ( widthPx.px )
+
+        // Перезаписать дефолтовый размер шрифта в wide-блоке с доп.мультипликатором размера
+        for (_ <- wideSzMultOpt) {
+          accS ::= fontSize( _szMulted(MFontSizes.default.value, wideSzMultOpt).px )
+        }
 
         // Выравнивание блока внутри внешнего контейнера:
         if (bm.wide && !jdCssArgs.conf.isEdit) {
@@ -217,7 +228,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           // Формула по X банальна: с середины внешнего контейнера вычесть середину smBlock и /2.
           import io.suggest.common.html.HtmlConstants._
           accS ::= {
-            val calcFormula = pc50 + SPACE + MINUS + SPACE + (szMulted.width / 2).px.value
+            val calcFormula = pc50 + SPACE + MINUS + SPACE + (widthPx / 2).px.value
             left.attr := Css.Calc( calcFormula )
           }
 
@@ -225,7 +236,8 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           //accS ::= wideWidthAv
 
         } else {
-          accS ::= left(0.px)
+          // TODO Opt сделать единый стиль для left:0px, а здесь просто Style.empty делать?
+          accS ::= left0px
         }
       }
 
@@ -250,14 +262,15 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       )
     ) { strip =>
       strip.props1.bm.whenDefinedStyleS { bm =>
+        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( strip )
         styleS(
           // Записываем одну из двух сторон картинки.
           if (bm.wide) {
             // wide-картинки можно прессовать только по высоте блока
-            height( szMultedSide(bm.height).px )
+            height( _szMulted( bm.height, wideSzMultOpt ).px )
           } else {
             // Избегаем расплющивания картинок, пусть лучше обрезка будет. Здесь только width.
-            width( szMultedSide(bm.width).px )
+            width( _szMulted( bm.width, wideSzMultOpt ).px )
           }
         )
       }
@@ -276,12 +289,13 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       var accS: List[ToStyle] = Nil
       // Уточнить размеры wide-блока:
       for (bm <- strip.props1.bm) {
-        accS ::= (height( szMultedSide(bm.height).px ): ToStyle)
+        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( strip )
+        accS ::= (height( _szMulted(bm.height, wideSzMultOpt).px ): ToStyle)
 
         // Даже если есть фоновая картинка, но всё равно надо, чтобы ширина экрана была занята.
         accS ::= minWidth(
           if (jdCssArgs.conf.isEdit)
-            szMultedSide(bm.width).px
+            _szMulted(bm.width, wideSzMultOpt).px
           else
             jdCssArgs.conf.gridWidthPx.px
         )
@@ -344,22 +358,18 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           if (jdt.name ==* MJdTagNames.QD_CONTENT) &&
              jdt.props1.topLeft.nonEmpty
         } yield {
-          (strip, jdt)
+          jdt
         }
         iter.toIndexedSeq
       })
-    ) { case (parentJdt, jdt) =>
+    ) { jdt =>
       // 2019-03-06 Для позиционирования внутри wide-блока используется поправка по горизонтали, чтобы "растянуть" контент.
       jdt.props1.topLeft.whenDefinedStyleS { topLeft =>
+        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
         // Внутри wide-контейнера надо растянуть контент по горизонтали. Для этого домножаем left на отношение parent-ширины к ширине фактической.
-        var leftMult = blkSzMultD
-        // TODO Перепилить алгоритм растяжения, чтобы растягивал пропорционально всё, ужимая по вертикали.
-        //for (bm <- parentJdt.props1.bm if bm.wide) {
-        //  leftMult = leftMult * ( wideBlockWidthPx / (bm.width * blkSzMultD) ) * 1.2
-        //}
         styleS(
-          top( (topLeft.y * blkSzMultD).px ),
-          left( (topLeft.x * leftMult).px )
+          top( _szMulted(topLeft.y, wideSzMultOpt).px ),
+          left( _szMulted(topLeft.x, wideSzMultOpt).px ),
         )
       }
     }
@@ -376,8 +386,9 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       )
     ) { jdt =>
       jdt.props1.widthPx.whenDefinedStyleS { widthPx =>
+        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
         styleS(
-          width( szMultedSide(widthPx).px )
+          width( _szMulted(widthPx, wideSzMultOpt).px )
         )
       }
     }
@@ -393,7 +404,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   /** Тени текста. */
   val contentShadowF = {
-    val szMult = jdCssArgs.conf.szMult.toDouble
     styleF(
       new Domain.OverSeq(
         _allJdTagsIter
@@ -407,8 +417,9 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         acc ::= mcd.hexCode
       for (blur <- shadow.blur)
         acc ::= (blur.toDouble / JdConst.Shadow.TextShadow.BLUR_FRAC).px.value
-      acc ::= (shadow.vOffset * szMult).px.value
-      acc ::= (shadow.hOffset * szMult).px.value
+      val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
+      acc ::= _szMulted(shadow.vOffset, wideSzMultOpt).px.value
+      acc ::= _szMulted(shadow.hOffset, wideSzMultOpt).px.value
       styleS(
         textShadow := acc.mkString( HtmlConstants.SPACE )
       )
@@ -426,12 +437,17 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
     styleF(
       new Domain.OverSeq(
-        _qdOpsIter
-          .flatMap(_.attrsText.iterator)
-          .filter(_.isCssStyled)
+        _allJdTagsIter.filter { jdt =>
+          jdt.qdProps.exists { qdOp =>
+            qdOp.attrsText
+              .exists(_.isCssStyled)
+          }
+        }
           .toIndexedSeq
       )
-    ) { attrsText =>
+    ) { jdt =>
+      val attrsText = jdt.qdProps.get.attrsText.get
+
       var acc = List.empty[ToStyle]
 
       // Отрендерить аттрибут одного цвета.
@@ -452,21 +468,22 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
       // Если задан font-size, то нужно отрендерить его вместе с сопутствующими аттрибутами.
       for (fontSizeSU <- attrsText.size; fontSizePx <- fontSizeSU) {
-        // Рендер размера шрифта
-        acc ::= _lineHeightAttr( (fontSizePx.lineHeight * blkSzMultD).px )
-        // Отрендерить размер шрифта
-        acc ::= _fontSizeAttr( (fontSizePx.value * blkSzMultD).px )
+        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
 
+        // Рендер размера шрифта
+        acc ::= _lineHeightAttr( _szMulted(fontSizePx.lineHeight, wideSzMultOpt).px )
+        // Отрендерить размер шрифта
+        acc ::= _fontSizeAttr( _szMulted(fontSizePx.value, wideSzMultOpt).px )
+
+        // Фикс межстрочки для мелкого текста и HTML5. Можно это не рендерить для шрифтов, которые крупнее 18px
         if (fontSizePx.forceRenderBlockHtml5)
           acc ::= display.block
       }
 
-      // Фикс межстрочки для мелкого текста и HTML5. Можно это не рендерить для шрифтов, которые крупнее 18px
+      //!!! При добавлении поддержки сюда новых аттрибутов attrsText, надо не забывать про набивку .isCssStyled .
 
       // Вернуть скомпонованный стиль.
-      styleS(
-        acc: _*
-      )
+      styleS( acc: _* )
     }
   }
 
@@ -486,9 +503,9 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       var acc = List.empty[ToStyle]
 
       for (heightSU <- embedAttrs.height; heightPx <- heightSU)
-        acc ::= height( Math.round(heightPx * blkSzMultD).px )
+        acc ::= height( _szMulted(heightPx).px )
       for (widthSU <- embedAttrs.width; widthPx <- widthSU)
-        acc ::= width( Math.round(widthPx * blkSzMultD).px )
+        acc ::= width( _szMulted(widthPx).px )
 
       styleS(
         acc: _*
@@ -518,8 +535,8 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   val videoStyle = {
     val whDflt = HtmlConstants.Iframes.whCsspxDflt
     style(
-      width ( Math.round(whDflt.width  * blkSzMultD).px ),
-      height( Math.round(whDflt.height * blkSzMultD).px )
+      width ( _szMulted(whDflt.width).px ),
+      height( _szMulted(whDflt.height).px )
     )
   }
 

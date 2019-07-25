@@ -6,12 +6,11 @@ import diode.data.{PendingBase, Pot, Ready}
 import io.suggest.ad.blk.BlockPaddings
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MScreen, MSzMult}
-import io.suggest.grid.build.{GridBuilderUtil, MGridBuildArgs, MGridBuildResult}
+import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBuildResult}
 import io.suggest.grid.{GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
 import io.suggest.jd.MJdConf
-import io.suggest.jd.render.m.MJdCssArgs
-import io.suggest.jd.render.v.JdCss
-import io.suggest.jd.tags.MJdTagNames
+import io.suggest.jd.render.m.MJdRuntime
+import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.sc.ads.{MAdsSearchReq, MScFocusArgs}
@@ -28,6 +27,7 @@ import io.suggest.primo.id.OptId
 import io.suggest.sjs.common.log.Log
 import io.suggest.spa.DoNothing
 import japgolly.univeq._
+import scalaz.Tree
 
 import scala.util.Success
 
@@ -62,29 +62,89 @@ object GridAh {
   }
 
 
+  /** Приведение списка карточек к блокам для обсчёта плитки.
+    *
+    * @param ads Рекламные карточки.
+    * @return Список блоков и под-блоков.
+    */
+  def ads2gridBlocks(ads: TraversableOnce[MScAdData]): Stream[Tree[MGbBlock]] = {
+    ads
+      .toIterator
+      .map { scAdData =>
+        scAdData.focused.fold [Tree[MGbBlock]] {
+          // Несфокусированная карточка. Вернуть bm единственного стрипа.
+          val brd = scAdData.main
+          blockRenderData2GbPayload( scAdData.nodeId, brd.template, brd )
+        } { foc =>
+          // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
+          val focBlk = foc.blkData
+          Tree.Node(
+            root = MGbBlock(
+              nodeId = scAdData.nodeId,
+              jdtOpt = None,
+            ),
+            forest = focBlk
+              .template
+              .subForest
+              .iterator
+              .map { subTpl =>
+                blockRenderData2GbPayload( scAdData.nodeId, subTpl, focBlk )
+              }
+              .toStream
+          )
+        }
+      }
+      .toStream
+  }
+
+
+  /** Конвертация одной карточки в один блок для рендера в плитке. */
+  def blockRenderData2GbPayload(nodeId: Option[String], stripTpl: Tree[JdTag], brd: MBlkRenderData): Tree[MGbBlock] = {
+    // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
+    Tree.Leaf {
+      val stripJdt = stripTpl.rootLabel
+      val bm = stripJdt
+        .props1
+        .bm.get
+
+      val wideBgBlk = for {
+        _       <- OptionUtil.maybeTrue( bm.wide )
+        bg      <- stripJdt.props1.bgImg
+        // 2018-01-23: Для wide-фона нужен отдельный блок, т.к. фон позиционируется отдельно от wide-block-контента.
+        // TODO Нужна поддержка wide-фона без картинки.
+        bgEdge  <- brd.edges.get( bg.edgeUid )
+        imgWh   <- bgEdge.origWh
+      } yield {
+        imgWh
+      }
+
+      MGbBlock( nodeId, Some(stripJdt), wideBgBlk )
+    }
+  }
+
+
   /** Выполнение ребилда плитки. */
-  def rebuildGrid(ads: Pot[Seq[MScAdData]], jdConf: MJdConf): MGridBuildResult = {
+  def rebuildGrid(ads: Pot[Seq[MScAdData]], jdConf: MJdConf, jdRuntime: MJdRuntime): MGridBuildResult = {
     GridBuilderUtil.buildGrid(
       MGridBuildArgs(
-        itemsExtDatas = MGridCoreS
-          .ads2gridBlocks( ads.iterator.flatten )
-          .toList,
+        itemsExtDatas = ads2gridBlocks( ads.iterator.flatten ),
         jdConf        = jdConf,
-        offY          = GridConst.CONTAINER_OFFSET_TOP
+        offY          = GridConst.CONTAINER_OFFSET_TOP,
+        jdtWideSzMults = jdRuntime.jdtWideSzMults,
       )
     )
   }
 
 
   /** Сборка аргументов для рендера JdCss. */
-  def jdCssArgs(ads: Pot[Seq[MScAdData]], jdConf: MJdConf): MJdCssArgs = {
-    MJdCssArgs(
-      templates = ads
+  def mkJdRuntime(ads: Pot[Seq[MScAdData]], jdConf: MJdConf): MJdRuntime = {
+    MJdRuntime.make(
+      tpls = ads
         .iterator
         .flatten
         .flatMap(_.flatGridTemplates)
         .toSeq,
-      conf = jdConf
+      jdConf = jdConf,
     )
   }
 
@@ -283,12 +343,13 @@ class GridRespHandler
       g0.core.ads.ready( scAds2 )
     }
 
+    val jdRuntime2 = GridAh.mkJdRuntime(ads2, g0.core.jdConf)
     val g2 = g0.copy(
       core = g0.core.copy(
-        jdCss       = JdCss( GridAh.jdCssArgs(ads2, g0.core.jdConf) ),
+        jdRuntime   = jdRuntime2,
         ads         = ads2,
         // Отребилдить плитку:
-        gridBuild   = GridAh.rebuildGrid(ads2, g0.core.jdConf)
+        gridBuild   = GridAh.rebuildGrid(ads2, g0.core.jdConf, jdRuntime2)
       ),
       hasMoreAds  = ctx.m.qs.search.limit.fold(true) { limit =>
         gridResp.ads.lengthCompare(limit) >= 0
@@ -383,10 +444,11 @@ class GridFocusRespHandler
             .toVector
         }
 
-        val gridBuild2 = GridAh.rebuildGrid( adsPot2, g0.core.jdConf )
-        val g2 = MGridS.core.modify( core0 =>
-          core0.copy(
-            jdCss     = JdCss( GridAh.jdCssArgs(adsPot2, core0.jdConf) ),
+        val jdRuntime2 = GridAh.mkJdRuntime( adsPot2, g0.core.jdConf )
+        val gridBuild2 = GridAh.rebuildGrid( adsPot2, g0.core.jdConf, jdRuntime2 )
+        val g2 = MGridS.core.modify(
+          _.copy(
+            jdRuntime = jdRuntime2,
             ads       = adsPot2,
             gridBuild = gridBuild2
           )
@@ -552,11 +614,12 @@ class GridAh[M](
           } { _ =>
             val ad1         = MScAdData.focused.set( Pot.empty )(ad0)
             val ads2        = GridAh.saveAdIntoAds(index, ad1, v0)
-            val gridBuild2  = GridAh.rebuildGrid(ads2, v0.core.jdConf)
+            val jdRuntime2  = GridAh.mkJdRuntime(ads2, v0.core.jdConf)
+            val gridBuild2  = GridAh.rebuildGrid(ads2, v0.core.jdConf, jdRuntime2)
             val v2          = MGridS.core.modify { core0 =>
               core0.copy(
                 ads       = ads2,
-                jdCss     = JdCss( GridAh.jdCssArgs(ads2, core0.jdConf) ),
+                jdRuntime = jdRuntime2,
                 gridBuild = gridBuild2
               )
             }(v0)
@@ -590,13 +653,21 @@ class GridAh[M](
           jdConfLens( jdConf0 )
         }
 
-        var coreLens =
+        val jdRuntime2 =
+          if (szMultMatches) v0.core.jdRuntime
+          else GridAh.mkJdRuntime(v0.core.ads, jdConf1)
+
+        var coreLens = (
           MGridCoreS.jdConf.set( jdConf1 ) andThen
-          MGridCoreS.gridBuild.set( GridAh.rebuildGrid(v0.core.ads, jdConf1) )
+          MGridCoreS.gridBuild.set( GridAh.rebuildGrid(v0.core.ads, jdConf1, jdRuntime2) )
+        )
+
         // Если изменился szMult, то перепилить css-стили карточек:
         if (!szMultMatches)
-          coreLens = coreLens andThen
-            MGridCoreS.jdCss.set( JdCss( GridAh.jdCssArgs(v0.core.ads, jdConf1) ) )
+          coreLens = (
+            coreLens andThen
+            MGridCoreS.jdRuntime.set( jdRuntime2 )
+          )
 
         val v2 = MGridS.core.modify(coreLens)(v0)
 

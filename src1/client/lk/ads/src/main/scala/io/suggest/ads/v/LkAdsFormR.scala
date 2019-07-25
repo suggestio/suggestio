@@ -95,7 +95,7 @@ class LkAdsFormR(
                       adItemR.PropsVal(
                         ad          = adProps,
                         firstInLine = i1mod4eq0,
-                        jdCss       = mroot.ads.jdCss,
+                        jdRuntime   = mroot.ads.jdRuntime,
                         jdConf      = mroot.conf.jdConf
                       )
                     } { adItemR.component.withKey(iStr)(_) }
@@ -155,10 +155,10 @@ class LkAdsFormR(
   }
 
 
-  val component = ScalaComponent.builder[Props]("LkAdsForm")
+  val component = ScalaComponent.builder[Props]( getClass.getSimpleName )
     .initialStateFromProps { propsProxy =>
       State(
-        jdCssC        = propsProxy.connect(_.ads.jdCss)( JdCss.JdCssFastEq ),
+        jdCssC        = propsProxy.connect(_.ads.jdRuntime.jdCss)( JdCss.JdCssFastEq ),
         nodeAdsC      = propsProxy.connect(_.ads.ads),
         parentNodeIdC = propsProxy.connect(_.conf.nodeKey.last)
       )

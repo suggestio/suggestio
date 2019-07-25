@@ -5,6 +5,7 @@ import io.suggest.ad.blk.{BlockMeta, BlockWidths}
 import io.suggest.color.MHistogram
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.es.model.EsModel
 import io.suggest.file.MSrvFileInfo
 import io.suggest.grid.GridCalc
@@ -23,7 +24,6 @@ import models.mctx.Context
 import play.api.mvc.Call
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, IImgMaker}
-import models.blk.SzMult_t
 import monocle.Traversal
 import util.showcase.ScWideMaker
 import scalaz.std.option._
@@ -484,6 +484,7 @@ class JdAdUtil @Inject()(
 
     }
 
+
     /** Рендер карточек для выдачи.
       *
       * @param jdConf Параметры рендера плитки.
@@ -604,14 +605,20 @@ class JdAdUtil @Inject()(
         // TODO Всё становится жирным и разъезжается, если использовать запрошенный szMult.
         // Где-то на верхних уровнях szMult неправильно рассчитывается, повторяя внутри себя devPixelRatio.
         // Надо вспомнить изначальное значение szMult, либо переосмыслить его, что есть источник проблемы. Либо запретить здесь учитывать screen pxRatio.
-        val szMult: SzMult_t = 1.0f
+        val szMult = MSzMults.`1.0`
 
         // Сразу запустить в фоне получение MMedia для оригиналов картинок:
         val _origImgsMediasMapFut = origImgMediasMapFut
 
         lazy val logPrefix = s"renderAdDocImgs#${System.currentTimeMillis()}:"
 
-        case class EdgeImgTag(medge: MEdge, mimg: MImg3, jdTag: JdTag)
+        case class EdgeImgTag(
+                               medge        : MEdge,
+                               mimg         : MImg3,
+                               jdTag        : JdTag,
+                               isWide       : Boolean,
+                               wideSzMult   : Option[MSzMult],
+                             )
 
         // Собрать в многоразовую коллекцию все данные по img-эджам и связанным с ними тегам:
         val edgedImgTags = {
@@ -627,7 +634,16 @@ class JdAdUtil @Inject()(
                   .exists(_.edgeUid ==* edgeUid)
               }
           } yield {
-            EdgeImgTag(medge, mimg, jdLoc.getLabel)
+            val jdTag = jdLoc.getLabel
+            val bmOpt = jdTag.props1.bm
+            // 2019.07.22 wide может влиять на размер картинки: узкие решения масштабируются по вертикали.
+            val isWide = allowWide && bmOpt.exists(_.wide)
+            val wideSzMult = OptionUtil.maybeOpt( isWide ) {
+              bmOpt.flatMap { bm =>
+                GridCalc.wideSzMult( bm, jdConf.gridColumnsCount )
+              }
+            }
+            EdgeImgTag( medge, mimg, jdTag, isWide, wideSzMult )
           }
           iter.toList
         }
@@ -655,9 +671,6 @@ class JdAdUtil @Inject()(
             val iter = for {
               eit <- edgedImgTags.iterator
               isQd = eit.jdTag.name ==* MJdTagNames.QD_OP
-
-              // 2019.07.22 wide может влиять на размер картинки: узкие решения масштабируются по вертикали.
-              isWide = allowWide && eit.jdTag.props1.bm.exists(_.wide)
 
               tgImgSz: ISize2di <- if (isQd) {
                 lazy val logPrefix2 = s"$logPrefix#qd#E${eit.medge.doc.uid.orNull}#${eit.mimg.dynImgId.rowKeyStr}:"
@@ -711,13 +724,12 @@ class JdAdUtil @Inject()(
               } else {
                 val bmOpt = eit.jdTag.props1.bm
 
-                val wideImgSz = for {
+                val wideTgSz = for {
                   bm <- bmOpt
-                  if isWide && false    // TODO Пока выключено, т.к. не запилена поддержка расширения wide-карточки на клиенте.
-                  szMult2 <- GridCalc.wideSzMult( bm, jdConf.gridColumnsCount )
+                  wideSzMult <- eit.wideSzMult
                 } yield {
                   // Надо посчитать новый вертикальный размер для wide-блока.
-                  val heightPx2 = (bm.height * szMult2.toDouble).toInt
+                  val heightPx2 = (bm.height * wideSzMult.toDouble).toInt
                   LOGGER.trace(s"$logPrefix Found wideSzMult $szMult, target img height: ${bm.height}px => ${heightPx2}px")
                   MSize2di(
                     // width нет смысла вычислять, т.к. wideMaker игнорирует target width.
@@ -725,8 +737,8 @@ class JdAdUtil @Inject()(
                     height = heightPx2
                   )
                 }
-
-                wideImgSz.orElse {
+                // Если нет wide-мультипликатора, то оставить исходный размер блока.
+                wideTgSz.orElse[ISize2di] {
                   LOGGER.trace(s"$logPrefix Using block meta as img.wh: ${bmOpt.orNull}")
                   bmOpt
                 }
@@ -752,13 +764,16 @@ class JdAdUtil @Inject()(
               val makeArgs = MImgMakeArgs(
                 img           = mimg2,
                 targetSz      = tgImgSz,
-                szMult        = szMult,
+                szMult        = eit.wideSzMult
+                  .filter(_ => isQd)
+                  .getOrElse( szMult )
+                  .toFloat,
                 devScreenOpt  = ctx.deviceScreenOpt,
                 compressMode  = Some( CompressModes.maybeFg(isQd) ),
               )
 
               // Выбираем img maker исходя из конфигурации рендера.
-              val maker = if (isWide) {
+              val maker = if ( eit.isWide ) {
                 wideImgMaker
               } else {
                 blkImgMaker
@@ -772,7 +787,7 @@ class JdAdUtil @Inject()(
               }
             }
 
-            iter.toList
+            iter.toSeq
           }
 
         } yield {
