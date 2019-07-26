@@ -97,20 +97,18 @@ class JdCssStatic extends StyleSheet.Inline {
 
   /** styleF допустимых выравниваний текста. */
   val textAlignsStyleF = {
+    val taAttr = textAlign
     styleF(
       new Domain.OverSeq( MTextAligns.values )
     )(
       { align =>
-        val taAttr = textAlign
         val av = align match {
           case MTextAligns.Left    => taAttr.left
           case MTextAligns.Center  => taAttr.center
           case MTextAligns.Right   => taAttr.right
           case MTextAligns.Justify => taAttr.justify
         }
-        styleS(
-          av
-        )
+        styleS( av )
       },
       JdCss.valueEnumEntryDomainNameF
     )
@@ -138,16 +136,8 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   import dsl._
 
 
-  /** Общий мультипликатор размера всех элементов. */
-  private val szMultD = jdCssArgs.conf.szMult.toDouble
-
   /** Мультипликация стороны на указанные пиксели. */
-  private def _szMulted(sizePx: Int, addSzMultOpt: Option[MSzMult] = None): Int = {
-    val szMultFinal = addSzMultOpt.fold(szMultD) { addSzMult1 =>
-      addSzMult1.toDouble * szMultD
-    }
-    Math.round( sizePx * szMultFinal ).toInt
-  }
+  private val _szMulted = MSzMult.szMultedF( jdCssArgs.conf.szMult )
 
 
   /** Стиль выделения группы блоков. */

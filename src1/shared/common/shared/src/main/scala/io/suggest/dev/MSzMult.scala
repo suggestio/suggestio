@@ -1,5 +1,6 @@
 package io.suggest.dev
 
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.math.SimpleArithmetics
 import japgolly.univeq.UnivEq
@@ -43,6 +44,53 @@ object MSzMult {
         multPc = op( v.multBody )
       )
     }
+  }
+
+
+  /** Метод для перемножения размеров и [[MSzMult]], как обязательных, так и опциональных.
+    * Используется так:
+    * val f = szMultedF( szMult0 )
+    * ...
+    * val width = f( 100 ).px
+    * ...
+    * val szMult2Opt =
+    * val height = f( 100, )
+    */
+  case class szMultedF(szMultsBase: MSzMult*) {
+
+    val szMultBaseOpt = OptionUtil.maybe(szMultsBase.nonEmpty) {
+      szMultsBase
+        .mapToDoubleIter
+        .reduceMults
+    }
+
+    def apply(sizePx: Int, addSzMults: Option[MSzMult]*): Int = {
+      val multedSzPxD = sizePx * (addSzMults.iterator.flatten.mapToDoubleIter ++ szMultBaseOpt.iterator).reduceMults
+
+      Math.round(multedSzPxD).toInt
+    }
+
+  }
+
+  implicit class SzMultsDOpsExt( val szMults: TraversableOnce[Double] ) extends AnyVal {
+    def reduceMults: Double =
+      szMults.reduce(_ * _)
+  }
+  implicit class SzMultsOpsExt( val szMults: TraversableOnce[MSzMult] ) extends AnyVal {
+    def mapToDoubleIter = {
+      szMults
+        .toIterator
+        .map(_.toDouble)
+    }
+
+    def reduceToDouble: Double = {
+      szMults
+        .mapToDoubleIter
+        .reduceMults
+    }
+
+    def reduceToDoubleOption: Option[Double] =
+      OptionUtil.maybe( szMults.nonEmpty )( reduceToDouble )
   }
 
 }

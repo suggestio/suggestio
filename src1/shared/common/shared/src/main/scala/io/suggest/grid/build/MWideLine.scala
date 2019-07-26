@@ -1,6 +1,5 @@
 package io.suggest.grid.build
 
-import io.suggest.ad.blk.BlockHeight
 import japgolly.univeq._
 
 /**
@@ -18,22 +17,18 @@ import japgolly.univeq._
 /** Инфа об одной или нескольких строках, занятых под широкие карточки.
   *
   * @param startLine Номер строки, с которого можно начинать резервирование строк под wide-карточку.
-  * @param height Высота (кол-во занятых строк плитки).
+  * @param heightPx Высота (кол-во занятых пикселей высоты).
   */
 case class MWideLine(
                       startLine : Int,
-                      height    : BlockHeight
+                      heightPx  : Int,
                     ) {
 
   /** Индекс последней занимаемой строки. */
   def lastLine = nextLine - 1
 
   /** Номер строки, которая идёт следующей после этого wide-резерва. */
-  def nextLine = startLine + height.relSz
-
-  def withStartLine(startLine: Int) = copy(startLine = startLine)
-
-  def range = startLine until nextLine
+  def nextLine = startLine + heightPx
 
   /** Узнать, пересекается ли этот отрезок с указанным.
     *

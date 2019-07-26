@@ -13,12 +13,42 @@ object MColumnState {
 
   @inline implicit def univEq: UnivEq[MColumnState] = UnivEq.derive
 
-  val heightUsed = GenLens[MColumnState](_.heightUsed)
+  val occupiedRev = GenLens[MColumnState](_.occupiedRev)
 
 }
 
-case class MColumnState(
-                         heightUsed   : Int     = 0
-                       )
 
+/** Состояние заполненности одной колонки.
+  *
+  * @param occupiedRev Сколько занято в колонке.
+  */
+case class MColumnState(
+                         occupiedRev     : List[MPxInterval]     = Nil,
+                       ) {
+
+  def heightUsed: Int = {
+    occupiedRev
+      .headOption
+      .fold(0) { ivl => ivl.startPx + ivl.sizePx }
+  }
+
+}
+
+
+/** Пиксельный интервал.
+  *
+  * @param startPx Начало промежутка.
+  * @param sizePx Размер промежутка.
+  * @param block Данные по блоку
+  */
+case class MPxInterval(
+                        startPx  : Int,
+                        sizePx   : Int,
+                        block    : MGbBlock,
+                      )
+object MPxInterval {
+
+  @inline implicit def univEq: UnivEq[MPxInterval] = UnivEq.derive
+
+}
 

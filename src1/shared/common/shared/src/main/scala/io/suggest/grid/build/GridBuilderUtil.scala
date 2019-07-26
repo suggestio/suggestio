@@ -1,14 +1,16 @@
 package io.suggest.grid.build
 
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
+import io.suggest.ad.blk.{BlockMeta, BlockWidths}
 import io.suggest.common.coll.Lists
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
+import io.suggest.dev.MSzMult
 import io.suggest.msg.ErrorMsgs
 import monocle.macros.GenLens
 import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 import scalaz.Tree
 
 import scala.annotation.tailrec
@@ -56,16 +58,17 @@ object GridBuilderUtil {
       throw new IllegalArgumentException( ErrorMsgs.GRID_CONFIGURATION_INVALID + HtmlConstants.SPACE + args.jdConf +
         HtmlConstants.SPACE + args.jdConf.gridColumnsCount )
 
-    val szMultD = args.jdConf.szMult.toDouble
+    val szMultedF = MSzMult.szMultedF( args.jdConf.szMult )
+    val szMultD = szMultedF.szMultBaseOpt.get
 
-    val cellWidthPx  = Math.round(BlockWidths.min.value * szMultD).toInt // props.columnWidth
-    val cellHeightPx = BlockHeights.min.value * szMultD
+    val cellWidthPx  = szMultedF( BlockWidths.min.value )
+    //val cellHeightPx = szMultedF( BlockHeights.min.value )
 
-    val paddingMultedPx = Math.round(args.jdConf.blockPadding.fullBetweenBlocksPx * szMultD).toInt
+    val paddingMultedPx = szMultedF( args.jdConf.blockPadding.fullBetweenBlocksPx )
     val cellPaddingWidthPx  = paddingMultedPx // _orZero( props.gutterWidth )
-    val cellPaddingHeightPx = paddingMultedPx // _orZero( props.gutterHeight )
+    //val cellPaddingHeightPx = paddingMultedPx // _orZero( props.gutterHeight )
 
-    val paddedCellHeightPx = cellHeightPx + cellPaddingHeightPx
+    //val paddedCellHeightPx = cellHeightPx + cellPaddingHeightPx
     val paddedCellWidthPx  = cellWidthPx  + cellPaddingWidthPx
 
     // Глобальный счётчик шагов рекурсии. Нужен как для поддержания порядка item'ов, так и для защиты от бесконечной рекурсии.
@@ -94,7 +97,8 @@ object GridBuilderUtil {
         // Это может быть как просто блок, так и под-группа блоков.
         if ( xy.column >= currLvl.ctx.colsCount ) {
           // Конец текущей строки -- перейти на следующую строку:
-          val currLvl2 = MGbLevelState.stepToNextLine( currLvl )
+          val nextLinePx = currLvl.ctx.minHeightUsedAfterLine( xy.line ) + paddingMultedPx
+          val currLvl2 = MGbLevelState.stepToNextLine(nextLinePx)( currLvl )
           _stepper(
             MGbStepState.replaceCurrLevel(currLvl2)(s0)
           )
@@ -138,18 +142,24 @@ object GridBuilderUtil {
             // Это block-meta. Позиционируем ровно один (текущий) блок:
             case Tree.Leaf(itemExt) =>
               val bm = itemExt.bmOpt.get
-              val currWide = MWideLine( currLvl.ctx.lineToAbs(xy.line), bm.h )
+              val wideSzMultOpt = itemExt.jdtOpt.flatMap( args.jdtWideSzMults.get )
+              val blockHeightPx = szMultedF( bm.h.value, wideSzMultOpt )
+              val currWide = MWideLine(
+                startLine = currLvl.ctx.lineToAbs( xy.line ),
+                heightPx  = blockHeightPx,
+              )
 
               if (
                 // Текущий неширокий блок как-то пересекается (по высоте) с широкой карточкой?
                 s0.isWideOverlaps(currWide) ||
                   // Ширина текущего блока влезает в текущую строку?
-                  (!bm.wide  && bm.w.relSz > currLvl._getMaxCellWidthCurrLine()) // ||
+                  (!bm.wide  && bm.w.relSz > currLvl.getMaxCellWidthCurrLine()) // ||
                   // Широкий блок подразумевает пустую строку для себя: это не надо, т.к. используется reDo-акк. TODO А может тоже надо?
                   //(bm.wide   && rootLvl.currLineCol.column > 0)
               ) {
                 // Здесь нет места для текущего блока.
-                val currLvl2 = MGbLevelState.stepToNextLine( currLvl )
+                val nextLinePx = currLvl.ctx.minHeightUsedAfterLine( xy.line ) + paddingMultedPx
+                val currLvl2 = MGbLevelState.stepToNextLine(nextLinePx)( currLvl )
                 _stepper(
                   MGbStepState.replaceCurrLevel(currLvl2)(s0)
                 )
@@ -157,13 +167,16 @@ object GridBuilderUtil {
               } else {
                 // Здесь влезет блок текущей ширины и высоты.
                 // Отработать wide-карточку: разместить её в аккамуляторе wide-строк.
-
-                val itemCellHeight = bm.h.relSz
-                // Обновить состояние: проинкрементить col/line курсоры:
                 val endColumnIndex = xy.column + bm.w.relSz
-                val heightUsed = xy.line + itemCellHeight
+                val pxIvl2 = MPxInterval(
+                  startPx = currLvl.ctx.lineToAbs( xy.line ),
+                  sizePx  = blockHeightPx,
+                  block   = itemExt,
+                )
+                // Обновить состояние: проинкрементить col/line курсоры:
+                val updateColumnStateF = MColumnState.occupiedRev.modify( pxIvl2 :: _ )
                 for ( ci <- xy.column until endColumnIndex ) {
-                  currLvl.ctx.setHeightUsed( ci, heightUsed )
+                  currLvl.ctx.updateHeightUsed( ci )(updateColumnStateF)
                 }
 
                 val currLvl2 = currLvl.copy(
@@ -184,7 +197,7 @@ object GridBuilderUtil {
                     // Есть размер фона. Надо совместить горизонтальную середины плитки и изображения.
                     // Поправочный szMult вычисляется через отношение высот картинки и самого блока. В норме должен быть == 1. Из проблем: он пережевывает и скрывает ошибки.
                     // TODO Im Кажется, будто поправка img2blkSzMult не нужна на новых версиях ImageMagick (7.0.7+), но нужна на старых (6.8.9).
-                    val img2blkSzMult = szMultD * bm.height / wideBgSz.height.toDouble
+                    val img2blkSzMult = blockHeightPx / wideBgSz.height.toDouble
                     wideBgSz.width * img2blkSzMult
                   }
                   .orElse {
@@ -201,6 +214,7 @@ object GridBuilderUtil {
                   bm            = bm,
                   forceCenterX  = wideBgWidthOpt,
                   gbBlock       = itemExt,
+                  wide          = currWide,
                 )
 
                 // Если wide, то надо извлечь из results-аккамулятора элементы, конфликтующие по высоте с данным wide-блоком и запихать их в reDo-аккамулятор.
@@ -209,23 +223,28 @@ object GridBuilderUtil {
                   mwlAbs <- mwlAbsOpt
                   // Оттранслировать его в абсолютные координаты.
                   (conflicting, ok) = s0.resultsAccRev.partition { res =>
-                    res.toWideLine overlaps mwlAbs
+                    res.wide overlaps mwlAbs
                   }
                   if conflicting.nonEmpty
                 } yield {
                   // Есть конфликтующие item'ы. Надо закинуть их в reDoItems на родительском уровне.
                   val parentLvlOpt = s0.levels.tail.headOption
-                  val modLvl0 = parentLvlOpt.getOrElse(currLvl2)
-                  val modLvl2 = MGbLevelState.reDoItems.modify(conflicting reverse_::: _)( modLvl0 )
+                  val modLvl0 = parentLvlOpt getOrElse currLvl2
+                  val modLvl2 = MGbLevelState.reDoItems
+                    .modify(conflicting reverse_::: _)( modLvl0 )
 
                   // В связи с извлечением некоторых item'ов снизу, надо откатить значения в колонках.
                   val rootLvl1 = rootLvl
                   for {
                     e  <- conflicting
+                    updateLens = MColumnState.occupiedRev.modify { mcs0 =>
+                      mcs0.filter { pxIvl =>
+                        pxIvl.block !===* e.gbBlock
+                      }
+                    }
                     ci <- e.topLeft.left until (e.topLeft.left + e.bm.w.relSz)
                   } {
-                    val h0 = rootLvl1.ctx.getHeightUsed(ci)
-                    rootLvl1.ctx.setHeightUsed(ci, h0 - e.bm.h.relSz)
+                    rootLvl1.ctx.updateHeightUsed(ci)( updateLens )
                   }
 
                   // Обновить состояние билдера:
@@ -326,11 +345,8 @@ object GridBuilderUtil {
         colsInfo(ci).heightUsed
       }
 
-      override def setHeightUsed(ci: Int, heightUsed: Int): Unit = {
-        val mcs2 = MColumnState.heightUsed
-          .set(heightUsed)( colsInfo(ci) )
-        colsInfo(ci) = mcs2
-      }
+      override def updateHeightUsed(ci: Int)(updateF: MColumnState => MColumnState): Unit =
+        colsInfo(ci) = updateF(colsInfo(ci))
 
       override def isRoot = true
     }
@@ -351,7 +367,6 @@ object GridBuilderUtil {
       .iterator
       .map(_.heightUsed)
       .max
-    val gridHeightPx = Math.round(maxCellHeight * paddedCellHeightPx).toInt + args.offY
 
     // Ширина всей плитки:
     val gridWidthPx = {
@@ -362,7 +377,7 @@ object GridBuilderUtil {
 
     val gridWh = MSize2di(
       width   = gridWidthPx,
-      height  = gridHeightPx
+      height  = maxCellHeight + args.offY,
     )
 
     // Скомпилировать финальные координаты.
@@ -384,7 +399,7 @@ object GridBuilderUtil {
             // Отцентровать используя указанный сдвиг относительно центра плитки.
             ((gridWidthPx - widthOrigPx) * szMultD / 2).toInt // ((gridWidthPx * szMultD / 2).toInt + centerOffsetX) / 2
           },
-          y = Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
+          y = res.topLeft.y + args.offY, //Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
         )
       }
       // НЕ ЛЕНИВАЯ коллекция, но это скорее дань традициям. Раньше на toStream/toSeq всё ломалось, т.к. переменные обновлялись прямо внутри итератора. Сейчас уже наверное можно и toStream делать.
@@ -417,11 +432,25 @@ trait IGridBuildCtx { outer =>
   /** Прочитать состояние уже использованной высоты для указанной колонки. */
   def getHeightUsed(ci: Int): Int
 
-  /** Обновить состояние использованной высоты у указанной колонки. */
-  def setHeightUsed(ci: Int, heightUsed: Int): Unit
+  /** Обновить состояние использованной высоты у указанной колонки.
+    *
+    * @param columnIndexRel Относительный индекс колонки в контексте данной проекции.
+    * @param updateF Обновление АБСОЛЮТНЫХ данных по проекции.
+    */
+  def updateHeightUsed(columnIndexRel: Int)(updateF: MColumnState => MColumnState): Unit
 
   def isRoot: Boolean
 
+  /** Поиск следующей пустой строки после указанной. */
+  def minHeightUsedAfterLine(linePx: Int): Int = {
+    val iter = (0 until colsCount)
+      .iterator
+      .map( getHeightUsed )
+      .filter(_ > linePx)
+
+    if (iter.isEmpty) linePx
+    else iter.min
+  }
 
   /** Сборка нового под-контекста для рендера под-плитки.
     * Используется для вертикального рендера раскрытых карточек, чтобы выстраивать плитку внутри некоторых сжатых границ.
@@ -459,10 +488,9 @@ trait IGridBuildCtx { outer =>
         Math.max(0, hostHeightUsed - line2)
       }
 
-      override def setHeightUsed(ci: Int, heightUsed: Int): Unit = {
-        val hostHeightUsed = heightUsed + line2
+      override def updateHeightUsed(ci: Int)(updateF: MColumnState => MColumnState): Unit = {
         val hostCi = columnToAbs( ci )
-        outer.setHeightUsed( hostCi, hostHeightUsed )
+        outer.updateHeightUsed( hostCi)( updateF )
       }
 
       override def toString: String = {
@@ -515,11 +543,13 @@ object MGbLevelState {
   val reDoItems   = GenLens[MGbLevelState](_.reDoItems)
 
   /** step() переходит на следующую строку. Нужно внести изменения в состояние. */
-  val stepToNextLine = currLineCol.modify { clc0 =>
-    clc0.copy(
-      x = 0,
-      y = clc0.y + 1
-    )
+  def stepToNextLine(nextLinePx: Int) = {
+    currLineCol.modify { clc0 =>
+      clc0.copy(
+        x = 0,
+        y = nextLinePx,
+      )
+    }
   }
 
   /**
@@ -535,6 +565,8 @@ object MGbLevelState {
 /**
   * @param restItems Прямой список данных для обработки. Т.е. и блоки, и коллекции блоков.
   * @param currLineCol Текущая координата в контексте текущей плитки. Т.е. она может быть неабсолютной.
+  *                    Y (строка) - в пикселях, начиная с 26 июля 2019 (до этого - был тоже в ячейках стандартного размера).
+  *                    X (колонка) - номер текущей колонки.
   * @param reDoItems Аккамулятор элементов, которые требуется заново отпозиционировать.
   */
 case class MGbLevelState(
@@ -546,7 +578,7 @@ case class MGbLevelState(
 
 
   /** Детектирование текущей максимальной ширины в сетке в текущей строке. */
-  def _getMaxCellWidthCurrLine(): Int = {
+  def getMaxCellWidthCurrLine(): Int = {
     // TODO Следует выкинуть var, занеся её в args, например.
     var mw = 1
     @tailrec def __detect(i: Int): Int = {
@@ -576,8 +608,5 @@ case class MGbItemRes(
                        bm               : BlockMeta,
                        forceCenterX     : Option[Double]   = None,
                        gbBlock          : MGbBlock,
-                     ) {
-
-  lazy val toWideLine = MWideLine(topLeft.y, bm.h)
-
-}
+                       wide             : MWideLine,
+                     )

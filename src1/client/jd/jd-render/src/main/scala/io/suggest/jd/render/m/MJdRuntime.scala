@@ -14,8 +14,8 @@ import scalaz.Tree
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 25.07.19 18:54
-  * Description: Модель рантаймовых данных, которые перегенериваются
-  * при изменении плитки на базе шаблонов, jd-конфига и т.д.
+  * Description: Модель рантаймовых данных, которые целиком пакетно перегенеривается
+  * при изменении плитки (шаблонов, jd-конфига и т.д.).
   */
 object MJdRuntime {
 
