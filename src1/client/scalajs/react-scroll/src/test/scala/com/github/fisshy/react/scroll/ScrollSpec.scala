@@ -25,7 +25,7 @@ object ScrollSpec extends SimpleTestSuite {
           "link1"
         ),
 
-        Button(
+        Button.component(
           new LinkProps {
             override val to = "cont2"
           }

@@ -48,18 +48,18 @@ object IGeoShape {
     */
   object JsonFormats {
 
+    val allStoragesEsFormatter = MGsJsonFormatter(
+      gsFieldNames   = IGsFieldNames.Es,
+      gsTypeFormat   = GsType.GS_TYPE_FORMAT,
+      geoPointFormat = MGeoPoint.JsonFormatters.ARRAY_OR_ES_OBJECT
+    )
+
     /** Самая главная и самая обычная форматировалка любых GeoShape'ов.
       * Заточенна под Elasticsearch, но ДОЛЖНА использоваться во всех хранилищах.
       * Когда не ясно, какой форматтер использовать, надо использовать этот.
       */
-    implicit lazy val allStoragesEsFormat: OFormat[IGeoShape] = {
-      MGsJsonFormatter(
-        gsFieldNames   = IGsFieldNames.Es,
-        gsTypeFormat   = GsType.GS_TYPE_FORMAT,
-        geoPointFormat = MGeoPoint.JsonFormatters.ARRAY_OR_ES_OBJECT
-      )
-        .geoShape
-    }
+    implicit def allStoragesEsFormat: OFormat[IGeoShape] =
+      allStoragesEsFormatter.geoShape
 
     /** GeoJSON-only-форматтер.
       *

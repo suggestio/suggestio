@@ -2,7 +2,6 @@ package io.suggest.model.n2.node.meta
 
 import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
-import MBusinessInfoEs.MBUSINESS_INFO_FORMAT
 
 /**
  * Suggest.io
@@ -24,7 +23,7 @@ class MBusinessInfoSpec extends FlatSpec with PlayJsonTestUtil {
       MBusinessInfo(
         siteUrl         = Some("http://isuggest.ru/index.html"),
         audienceDescr   = Some("Очень vip публика ходит тут.\n\n\r\tВот<>!@#@!#\n."),
-        humanTraffic = Some(2000),
+        humanTraffic    = Some("2000"),
         info            = Some("Some info -_-ar3\nsdrgse5g \r\t fsg435 \n")
       )
     }

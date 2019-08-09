@@ -10,7 +10,6 @@ import io.suggest.bill.price.dsl._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dt.CommonDateTimeUtil
 import io.suggest.es.model.EsModel
-import io.suggest.geo.CircleGsJvm
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
@@ -206,9 +205,7 @@ class AdvGeoBillUtil @Inject() (
         term2
           .findWithReasonType( MReasonTypes.GeoArea )
           .flatMap { geoSubTerm =>
-            val gsOpt = abc.res
-              .radCircle
-              .map { CircleGsJvm.apply }
+            val gsOpt = abc.res.radCircle
 
             LOGGER.trace(s"$logPrefix2 It is Geo term, circle = ${abc.res.radCircle.orNull}, gs => ${gsOpt.orNull}")
             geoSubTerm

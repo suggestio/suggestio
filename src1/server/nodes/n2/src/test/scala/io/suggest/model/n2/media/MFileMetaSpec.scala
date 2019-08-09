@@ -1,5 +1,6 @@
 package io.suggest.model.n2.media
 
+import io.suggest.crypto.hash.MHashes
 import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 
@@ -18,7 +19,7 @@ class MFileMetaSpec extends FlatSpec with PlayJsonTestUtil {
       mime  = "application/json",
       sizeB = 132421,
       isOriginal = true,
-      sha1  = None
+      hashesHex = Nil,
     )
   }
 
@@ -29,7 +30,13 @@ class MFileMetaSpec extends FlatSpec with PlayJsonTestUtil {
   it should "handle full-filled model" in {
     jsonTest {
       minV.copy(
-        sha1 = Some("asdioja4i8fa34fa43wf")
+        hashesHex = Seq(
+          MFileMetaHash(
+            hType     = MHashes.Sha1,
+            hexValue  = "asdioja4i8fa34fa43wf",
+            flags     = Set.empty,
+          )
+        )
       )
     }
   }

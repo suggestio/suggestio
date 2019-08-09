@@ -4,7 +4,7 @@ import javax.inject.Singleton
 import javax.inject.Inject
 import controllers.SioControllerApi
 import io.suggest.bill.MCurrencies
-import io.suggest.common.coll.Lists
+import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.i18n.MsgCodes
@@ -669,11 +669,8 @@ class PayYaka @Inject() (
       textNi  = yReq.toString :: Nil
     )
     val s2 = new statUtil.Stat2 {
-      override def statActions = {
-        Lists.prependOpt(sa0Opt) {
-          maPc :: statsMas
-        }
-      }
+      override def statActions =
+        sa0Opt :?: maPc :: statsMas
       override def userSaOpt = userSaOpt1
       override def ctx = ctx1
     }

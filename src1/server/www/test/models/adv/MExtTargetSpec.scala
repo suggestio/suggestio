@@ -1,7 +1,7 @@
 package models.adv
 
 import functional.OneAppPerSuiteNoGlobalStart
-import models.mext.MExtServices
+import io.suggest.ext.svc.MExtServices
 import org.scalatestplus.play._
 
 /**
@@ -20,7 +20,7 @@ class MExtTargetSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
     "handle fully-filled model" in {
       val mes = MExtTarget(
         url         = "https://vk.com/null",
-        service     = MExtServices.VKONTAKTE,
+        service     = MExtServices.VKontakte,
         adnId       = "235434553aASDGg",
         id          = Some("asdasdasdasdasd"),
         versionOpt  = Some(123L)
@@ -32,7 +32,7 @@ class MExtTargetSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
     "handle minimally-filled model" in {
       val mes = MExtTarget(
         url     = "https://facebook.com/me",
-        service = MExtServices.FACEBOOK,
+        service = MExtServices.FaceBook,
         adnId   = "asdasdjauiwdjaw1234234"
       )
 

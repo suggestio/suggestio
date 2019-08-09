@@ -2,7 +2,7 @@ package io.suggest.geo
 
 import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
-import GeoShapeJvm.GEO_SHAPE_FORMAT
+import io.suggest.geo.IGeoShape.JsonFormats.allStoragesEsFormat
 
 /**
  * Suggest.io
@@ -14,10 +14,14 @@ class GeoShapeSpec extends FlatSpec with PlayJsonTestUtil {
 
   override type T = IGeoShape
 
+  implicit private def fmt =
+
   "play-json" should "handle point shape" in {
-    jsonTest( PointGs(
-      MGeoPoint(lat = 10, lon = 20)
-    ) )
+    jsonTest(
+      PointGs(
+        MGeoPoint(lat = 10, lon = 20)
+      )
+    )
   }
 
   it should "handle polygon shape" in {

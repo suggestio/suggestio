@@ -2,6 +2,7 @@ package io.suggest.swfs.client.play
 
 import java.io.File
 
+import akka.stream.Materializer
 import akka.stream.scaladsl.Keep
 import io.suggest.streams.StreamsUtil
 import io.suggest.swfs.client.proto.delete.DeleteRequest
@@ -40,6 +41,7 @@ class SwfsClientWsSpec extends PlaySpec with GuiceOneAppPerSuite {
   private lazy val cl = app.injector.instanceOf[SwfsClientWs]
   private lazy val streamsUtil = app.injector.instanceOf[StreamsUtil]
   implicit private lazy val ec = app.injector.instanceOf[ExecutionContext]
+  implicit private lazy val mat = app.injector.instanceOf[Materializer]
 
 
   "SeaWeedFS client" when {

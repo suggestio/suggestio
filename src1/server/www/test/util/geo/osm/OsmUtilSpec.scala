@@ -29,7 +29,7 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with WithInp
       bms.head.obj.id  mustBe  ri.firstBorderMemberId
       bms.last.obj.id  mustBe  ri.lastBorderMemberId
       val gs = res.toGeoShape
-      Json.toJson( gs )   // Не должно быть экзепшена
+      Json.toJson( gs )( IGeoShape.JsonFormats.allStoragesEsFormat )   // Не должно быть экзепшена
       if (ri.allMemberIds.nonEmpty) {
         // Пройтись по всему списку member'ов
         for(i <- rel.members.indices) {

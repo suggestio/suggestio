@@ -322,7 +322,7 @@ object Common {
   /** Версия minitest, используемого для простых кросс-платформенных тестов.
     * @see [[https://github.com/monix/minitest]]
     */
-  val minitestVsn  = "1.+"
+  val minitestVsn  = "2.5.+"
 
 
   object Repo {

@@ -1,5 +1,6 @@
 package io.suggest.model.n2.bill.tariff.daily
 
+import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 
@@ -17,7 +18,7 @@ class MDayClauseSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MDayClause(
         name   = "days",
-        amount = 11.44
+        amount = MPrice.realAmountToAmount( 11.44, MCurrencies.RUB ),
       )
     }
   }
@@ -26,7 +27,7 @@ class MDayClauseSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MDayClause(
         name    = "weekday",
-        amount  = 12.22,
+        amount  = MPrice.realAmountToAmount( 12.22, MCurrencies.RUB ),
         calId   = Some("asdasd-3-423_ewqdwqe3fwfew")
       )
     }

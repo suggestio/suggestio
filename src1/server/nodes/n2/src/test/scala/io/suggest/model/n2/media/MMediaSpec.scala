@@ -30,7 +30,7 @@ class MMediaSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
         mime  = "application/jpeg",
         sizeB = 234525,
         isOriginal = true,
-        sha1  = None
+        hashesHex = Nil,
       ),
       id = None,
       storage = SwfsStorage(

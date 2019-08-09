@@ -2,7 +2,7 @@ package io.suggest.geo
 
 import org.scalatest.Matchers._
 import org.scalatest._
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
 /**
  * Suggest.io
@@ -13,7 +13,9 @@ import play.api.libs.json.Json
 class LineStringGsSpec extends MultiPoingGeoShapeTest {
 
   override type T = LineStringGs
-  override def companion = LineStringGsJvm
+
+  override implicit def jsonFormat: OFormat[LineStringGs] =
+    IGeoShape.JsonFormats.allStoragesEsFormatter.lineString
 
   override protected def JSON_EXAMPLE: String = {
     """
@@ -42,7 +44,8 @@ trait MultiPoingGeoShapeTest extends FlatSpec with CoordLineRnd {
   
   type T <: IGeoShapeQuerable
 
-  def companion: MultiPointShapeStatic { type Shape_t = T }
+  //def companion: MultiPointShapeStatic { type Shape_t = T }
+  implicit def jsonFormat: OFormat[T]
 
 
   protected def JSON_EXAMPLE: String
@@ -50,7 +53,7 @@ trait MultiPoingGeoShapeTest extends FlatSpec with CoordLineRnd {
 
   "play.json DATA_FORMAT" should "parse documented example" in {
     val jsr = Json.parse(JSON_EXAMPLE)
-      .validate(companion.DATA_FORMAT)
+      .validate[T]
     assert( jsr.isSuccess, jsr )
     val mpgs = jsr.get
     mpgs shouldBe JSON_EXAMPLE_PARSED

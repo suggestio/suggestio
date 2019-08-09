@@ -12,6 +12,9 @@ import play.api.libs.json.Json
   */
 class EnvelopeGsSpec extends FlatSpec {
 
+  private def fmt =
+    IGeoShape.JsonFormats.allStoragesEsFormatter.envelope
+
   "play.json DATA_FORMAT" should "parse data from documented ES example" in {
     val jsonStr =
       """
@@ -20,8 +23,7 @@ class EnvelopeGsSpec extends FlatSpec {
         |  "coordinates" : [[-77.03653, 38.897676], [-67.03653, 48.897676]]
         |}
       """.stripMargin
-    val jsr = Json.parse(jsonStr)
-      .validate(EnvelopeGsJvm.DATA_FORMAT)
+    val jsr = Json.parse(jsonStr).validate(fmt)
     assert(jsr.isSuccess, jsr)
     val pgs = jsr.get
     pgs shouldBe EnvelopeGs(
@@ -35,7 +37,6 @@ class EnvelopeGsSpec extends FlatSpec {
       topLeft     = MGeoPoint(lon = -77.03653, lat = 38.897676),
       bottomRight = MGeoPoint(lon = -67.03653, lat = 48.897676)
     )
-    val fmt = EnvelopeGsJvm.DATA_FORMAT
     val jsr = Json.toJson(gs)(fmt)
       .validate(fmt)
     jsr.isSuccess shouldBe true

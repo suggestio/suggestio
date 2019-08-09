@@ -30,17 +30,32 @@ case class MWideLine(
   /** Номер строки, которая идёт следующей после этого wide-резерва. */
   def nextLine = startLine + heightPx
 
-  /** Узнать, пересекается ли этот отрезок с указанным.
-    *
-    * @see [[https://stackoverflow.com/a/3269471]]
-    */
-  def overlaps(other: MWideLine): Boolean = {
-    startLine <= other.lastLine &&
-      other.startLine <= lastLine
-  }
-
 }
 object MWideLine {
+
   @inline implicit def univEq: UnivEq[MWideLine] = UnivEq.derive
+
+
+  implicit class WideOpsExt(val wide: MWideLine ) extends AnyVal {
+
+    /** Узнать, пересекается ли этот отрезок с указанным.
+      *
+      * @see [[https://stackoverflow.com/a/3269471]]
+      */
+    def overlaps(other: MWideLine): Boolean = {
+      wide.startLine <= other.lastLine &&
+      other.startLine <= wide.lastLine
+    }
+
+  }
+
+
+  implicit class WidesCollOpsExt(val wides: TraversableOnce[MWideLine] ) extends AnyVal {
+
+    def overlaps(mwl: MWideLine): Boolean =
+      wides.exists( mwl.overlaps )
+
+  }
+
 }
 

@@ -8,7 +8,7 @@ import io.suggest.bill.price.dsl._
 import io.suggest.bill.MGetPriceResp
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dt.CommonDateTimeUtil
-import io.suggest.geo.{CircleGs, CircleGsJvm}
+import io.suggest.geo.CircleGs
 import io.suggest.mbill2.m.dbg.MDebugs
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -142,9 +142,7 @@ class LkAdnMapBillUtil @Inject() (
               dateEndOpt    = dtEndOpt,
               // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
               rcvrIdOpt     = None,
-              geoShape      = Some(
-                CircleGsJvm( formRes.mapCursor )
-              )
+              geoShape      = Some( formRes.mapCursor ),
             )
           }
           .map { itm =>

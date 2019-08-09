@@ -1,4 +1,5 @@
 package io.suggest.geo
+import play.api.libs.json.OFormat
 
 /**
  * Suggest.io
@@ -9,7 +10,9 @@ package io.suggest.geo
 class MultiPointGsSpec extends MultiPoingGeoShapeTest {
 
   override type T = MultiPointGs
-  override def companion = MultiPointGsJvm
+
+  override implicit def jsonFormat: OFormat[MultiPointGs] =
+    IGeoShape.JsonFormats.allStoragesEsFormatter.multiPoint
 
   override protected def JSON_EXAMPLE: String = {
     """

@@ -13,9 +13,7 @@ import scala.scalajs.js.annotation.JSImport
   */
 object Button {
 
-  val component = JsComponent[LinkProps, Children.None, js.Object]( ButtonJs )
-
-  def apply(linkProps: LinkProps) = component(linkProps)
+  val component = JsComponent[LinkProps, Children.Varargs, js.Object]( ButtonJs )
 
 }
 

@@ -77,18 +77,17 @@ object GridAh {
           blockRenderData2GbPayload( scAdData.nodeId, brd.template, brd )
         } { foc =>
           // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
-          val focBlk = foc.blkData
           Tree.Node(
             root = MGbBlock(
               nodeId = scAdData.nodeId,
               jdtOpt = None,
             ),
-            forest = focBlk
+            forest = foc.blkData
               .template
               .subForest
               .iterator
               .map { subTpl =>
-                blockRenderData2GbPayload( scAdData.nodeId, subTpl, focBlk )
+                blockRenderData2GbPayload( scAdData.nodeId, subTpl, foc.blkData )
               }
               .toStream
           )
@@ -103,11 +102,9 @@ object GridAh {
     // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
     Tree.Leaf {
       val stripJdt = stripTpl.rootLabel
-      val bm = stripJdt
-        .props1
-        .bm.get
 
       val wideBgBlk = for {
+        bm      <- stripJdt.props1.bm
         _       <- OptionUtil.maybeTrue( bm.wide )
         bg      <- stripJdt.props1.bgImg
         // 2018-01-23: Для wide-фона нужен отдельный блок, т.к. фон позиционируется отдельно от wide-block-контента.

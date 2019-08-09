@@ -82,7 +82,7 @@ class ImgFileNameParsersSpec
         StripOp,
         ImInterlaces.Plane,
         ImSamplingFactors.Sf1x1,
-        QualityOp(80.0)
+        QualityOp(80)
       )
     }
 

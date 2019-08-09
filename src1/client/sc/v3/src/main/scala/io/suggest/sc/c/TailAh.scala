@@ -13,7 +13,7 @@ import io.suggest.sc.sc3.Sc3Pages.MainScreen
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.common.coll.Lists.Implicits.OptionListExtOps
+import io.suggest.common.coll.Lists.Implicits._
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.m.dia.InitFirstRunWz
 import io.suggest.sc.m.in.{MInternalInfo, MJsRouterS, MScInternals}
@@ -539,7 +539,7 @@ class TailAh[M](
               } { actRes =>
                 acc0.copy(
                   v1        = actRes.newModelOpt getOrElse acc0.v1,
-                  fxAccRev  = actRes.effectOpt prependTo acc0.fxAccRev
+                  fxAccRev  = actRes.effectOpt :?: acc0.fxAccRev,
                 )
               }
           }

@@ -25,7 +25,7 @@ class CircleGsSpec extends FlatSpec with CoordRnd {
         |}
       """.stripMargin
     val jsv = Json.parse(jsonStr)
-    val res = jsv.validate(CircleGsJvm.DATA_FORMAT)
+    val res = jsv.validate( IGeoShape.JsonFormats.allStoragesEsFormatter.circle )
     assert( res.isSuccess, res )
     val cgs = res.get
     cgs shouldBe CircleGs(

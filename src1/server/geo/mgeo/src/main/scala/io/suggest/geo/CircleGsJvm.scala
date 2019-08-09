@@ -14,13 +14,6 @@ object CircleGsJvm extends GsStaticJvmQuerable {
 
   override type Shape_t = CircleGs
 
-  def apply(geoCircle: CircleGs): CircleGs = {
-    CircleGs(
-      center  = geoCircle.center,
-      radiusM = geoCircle.radiusM
-    )
-  }
-
   /** Вернуть инстанс круга из инстанса гео-шейпа.
     *
     * @param gs Какой-то [[GeoShapeJvm]].

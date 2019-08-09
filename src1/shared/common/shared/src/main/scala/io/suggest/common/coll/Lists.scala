@@ -395,6 +395,9 @@ object Lists {
         __doSpan(Nil, source)
       }
 
+      def :?: (x: Option[T]): List[T] =
+        x.fold(source)(_ :: source)
+
     }
 
 
@@ -407,14 +410,6 @@ object Lists {
 
     }
 
-
-    implicit class OptionListExtOps[T](val source: Option[T]) extends AnyVal {
-
-      def prependTo(list: List[T]): List[T] = {
-        prependOpt(source)(list)
-      }
-
-    }
 
   }
 

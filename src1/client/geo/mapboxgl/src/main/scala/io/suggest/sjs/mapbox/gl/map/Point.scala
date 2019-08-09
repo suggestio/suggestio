@@ -16,7 +16,6 @@ object Point extends FromDict {
 }
 
 @js.native
-@JSName("mapboxgl.Point")
 sealed trait Point extends js.Object {
 
   var x: Int = js.native

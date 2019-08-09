@@ -23,7 +23,8 @@ class PointGsSpec extends FlatSpec {
         |  "coordinates" : [-77.03653, 38.897676]
         |}
       """.stripMargin
-    val jsr = Json.parse(jsonStr).validate(PointGsJvm.DATA_FORMAT)
+    val jsr = Json.parse(jsonStr)
+      .validate( IGeoShape.JsonFormats.allStoragesEsFormatter.point )
     assert(jsr.isSuccess, jsr)
     val pgs = jsr.get
     pgs shouldBe PointGs( MGeoPoint(lon = -77.03653, lat = 38.897676) )
