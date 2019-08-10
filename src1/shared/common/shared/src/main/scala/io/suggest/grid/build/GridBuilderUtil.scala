@@ -118,7 +118,7 @@ object GridBuilderUtil {
         } else if (currLvl.reDoItems.nonEmpty) {
           // Есть хотя бы один item, требующий повторного позиционирования.
           val reDoItm = currLvl.reDoItems.head
-          println(s"reDo item re-position: ${reDoItm.gbBlock.nodeId.orNull}")
+          //println(s"reDo item re-position: ${reDoItm.gbBlock.nodeId.orNull}")
           // Для повторного позиционирования создаём новый уровень и вертикальную проекцию.
           // Это поможет спозиционировать блок только по вертикали, не трогая горизонтальную координату.
           // Это сдвиг вниз, он удобен при конфликте с широкой карточкой за место на экране.
