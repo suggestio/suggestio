@@ -111,7 +111,10 @@ class MLocalImgs @Inject() (
   def identify(mimg: MLocalImg) = {
     Future {
       val file = fileOf(mimg)
-      origImageUtil.identify(mimg.dynImgId.dynFormat.imFormat + ":" + file.getAbsolutePath)
+      if (file.exists())
+        origImageUtil.identify(mimg.dynImgId.dynFormat.imFormat + ":" + file.getAbsolutePath)
+      else
+        throw new NoSuchElementException("identify(): File is missing: " + file)
     }(asyncUtil.singleThreadCpuContext)
   }
 

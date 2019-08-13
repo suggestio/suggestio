@@ -76,7 +76,14 @@ object MCoords2di {
   * @param x Горизонтальная координата.
   * @param y Вертикальная координата.
   */
-case class MCoords2di(
-                       x: Int,
-                       y: Int
-                     )
+final case class MCoords2di(
+                             x: Int,
+                             y: Int
+                           ) {
+
+  override def toString: String = {
+    import io.suggest.common.html.HtmlConstants._
+    `(` + x + SPACE + y + `)`
+  }
+
+}

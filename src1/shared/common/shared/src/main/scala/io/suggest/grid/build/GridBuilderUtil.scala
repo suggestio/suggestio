@@ -73,8 +73,6 @@ object GridBuilderUtil {
     val cellPaddingWidthPx  = paddingMultedPx // _orZero( props.gutterWidth )
     //val cellPaddingHeightPx = paddingMultedPx // _orZero( props.gutterHeight )
 
-    //val paddedCellHeightPx = cellHeightPx + cellPaddingHeightPx
-    val paddedCellWidthPx  = cellWidthPx  + cellPaddingWidthPx
 
     // Глобальный счётчик шагов рекурсии. Нужен как для поддержания порядка item'ов, так и для защиты от бесконечной рекурсии.
     var stepCounter = 0
@@ -83,7 +81,7 @@ object GridBuilderUtil {
     @tailrec
     def _stepper(s0: MGbStepState): MGbStepState = {
       // Защита от бесконечной рекурсии:
-      if (stepCounter > 2000)
+      if (stepCounter > 5000)
         throw new IllegalStateException( ErrorMsgs.ENDLESS_LOOP_MAYBE )
 
       stepCounter += 1
@@ -104,6 +102,7 @@ object GridBuilderUtil {
           // Конец текущей строки -- перейти на следующую строку:
           val nextLinePx = currLvl.ctx.minHeightUsedAfterLine( xy.line ) + paddingMultedPx
           val currLvl2 = MGbLevelState.stepToNextLine(nextLinePx)( currLvl )
+          //println(s"step to next line: ${xy.line} => $nextLinePx - column overflow")
           _stepper(
             MGbStepState.replaceCurrLevel(currLvl2)(s0)
           )
@@ -149,24 +148,34 @@ object GridBuilderUtil {
               val wideSzMultOpt = itemExt.jdtOpt
                 .flatMap( args.jdtWideSzMults.get )
               val blockHeightPx = szMultedF( bm.h.value, wideSzMultOpt )
+              val topPxAbs = currLvl.ctx.lineToAbs( xy.line )
               val currWide = MWideLine(
-                startLine = currLvl.ctx.lineToAbs( xy.line ),
+                topPx     = topPxAbs,
                 heightPx  = blockHeightPx,
               )
 
               if (
                 // Текущий неширокий блок как-то пересекается (по высоте) с широкой карточкой?
                 (s0.wides overlaps currWide) ||
-                // Ширина текущего блока влезает в текущую строку?
-                (!bm.wide && (bm.w.relSz > currLvl.getMaxCellWidthCurrLineCol())) ||
                 // Широкий блок подразумевает пустую строку для себя, в т.ч. на самом ВЕРХНЕМ уровне.
-                (bm.wide && !(rootLvl.ctx.getMaxCellWidth(currWide.startLine) >= rootLvl.ctx.colsCount))
+                (if (bm.wide) rootLvl.ctx.getMaxCellWidth(topPxAbs) < rootLvl.ctx.colsCount
+                 // !wide: Ширина текущего блока влезает в текущую строку?
+                 else bm.w.relSz > currLvl.getMaxCellWidthCurrLineCol() )
               ) {
-                //println(s"step to next line, $xy, overlaps?${s0.wides overlaps currWide} wideLine=${currWide.startLine} root.maxWidthCL=${rootLvl.getMaxCellWidth(currWide.startLine, 0)} root.colsCount=${rootLvl.ctx.colsCount}")
                 // Здесь нет места для текущего блока.
-                val currLvlUpdF = MGbLevelState.stepToNextLine(
-                  nextLinePx = currLvl.ctx.minHeightUsedAfterLine( xy.line ) + paddingMultedPx
-                )
+                // Для wide-блока надо считать место с помощью root-уровня.
+                val (searchLvl, searchTopPx) =
+                  if (bm.wide) rootLvl -> currWide.topPx
+                  else currLvl -> xy.line
+
+                // Рассчитать следующую строку для перехода. Для wide-блока рассчёт идёт на root-уровне, поэтому требуется обратный маппинг координату назад в проекцию текущего уровня.
+                var nextLinePx = searchLvl.ctx.minHeightUsedAfterLine( searchTopPx )
+                if (searchLvl.ctx.isRoot && !currLvl.ctx.isRoot)
+                  nextLinePx = currLvl.ctx.absLineToRel( nextLinePx )
+                nextLinePx += paddingMultedPx
+
+                //println(s"step to next line, $xy => $nextLinePx, overlaps?${s0.wides overlaps currWide} wideLine=${currWide.topPx} root.maxWidthCL=${rootLvl.ctx.getMaxCellWidth(currWide.topPx, 0)} root.colsCount=${rootLvl.ctx.colsCount}")
+                val currLvlUpdF = MGbLevelState.stepToNextLine( nextLinePx )
                 _stepper(
                   MGbStepState.replaceCurrLevel( currLvlUpdF(currLvl) )(s0)
                 )
@@ -176,8 +185,8 @@ object GridBuilderUtil {
                 // Отработать wide-карточку: разместить её в аккамуляторе wide-строк.
                 val endColumnIndex = xy.column + bm.w.relSz
                 val pxIvl2 = MPxInterval(
-                  startPx = currWide.startLine,  ///currLvl.ctx.lineToAbs( xy.line ),
-                  sizePx  = blockHeightPx,
+                  startPx = topPxAbs,
+                  sizePx  = blockHeightPx /*+ paddingMultedPx */,
                   block   = itemExt,
                 )
                 // Обновить состояние: проинкрементить col/line курсоры:
@@ -220,6 +229,7 @@ object GridBuilderUtil {
                   gbBlock       = itemExt,
                   wide          = currWide,
                 )
+                //println(s"RES: Node#${itemExt.nodeId.orNull} topLeft=" + xyAbs + " orderN=" + orderN + " bm=" + bm + (if(bm.wide) " WIDE" else ""))
 
                 val mwlAbsOpt = OptionUtil.maybe(bm.wide)( currWide )
 
@@ -253,6 +263,7 @@ object GridBuilderUtil {
                   // conflicting.nonEmpty не проверяем, т.к. conflictingNodeIds.nonEmpty выше - эквивалентен по сути
 
                 } yield {
+                  //println("conflicting = " + conflictingNodeIds)
                   // Есть конфликтующие item'ы. Надо закинуть их в reDoItems на родительском уровне.
                   val parentLvlOpt = s0.levels.tail.headOption
                   val modLvl0 = parentLvlOpt getOrElse currLvl2
@@ -300,16 +311,23 @@ object GridBuilderUtil {
                 // а в обычном порядке по ширине всей плитки. Для этого можно объеденить два последних уровня, но лучше
                 // подменить контекст на текущем уровне на root, чтобы не нарушать порядок рендера.
                 val s2 = if (
-                  bm.wide && !currLvl2.ctx.isRoot &&
+                  bm.wide &&
+                  !currLvl2.ctx.isRoot &&
                   // Нельзя делать сброс, если последующий элемент тоже wide. Это решает только последний из первых wide-элементов.
                   !currLvl2.restItems.headOption.exists(_.headIsWide) &&
                   // 2018-01-30 Запретить этот сброс, если остался только один элемент: один болтающийся элемент выглядит не очень.
-                  currLvl2.restItems.lengthCompare(1) > 0
+                  (currLvl2.restItems.lengthCompare(1) > 0)
                 ) {
                   //println( itemExt, currLvl2.restItems.headOption, !currLvl2.restItems.headOption.exists(_.headIsWide) )
                   val currLvl3 = s1.levels.head.copy(
                     ctx = rootLvl.ctx,
-                    currLineCol = rootLvl.currLineCol
+                    // Надо, чтобы оставшиеся блоки рендерились строго ПОСЛЕ wide-блока.
+                    // Если не подправить curr.line, то возможно, что мелкий блок отрендерится в пустоте перед широким блоком.
+                    // Поэтому надо подправить currLineCol с учётом высоты вставленного wide-блока.
+                    currLineCol = rootLvl.currLineCol.copy(
+                      x = 0,
+                      y = currWide.bottomPx + paddingMultedPx,
+                    ),
                   )
                   MGbStepState.replaceCurrLevel( currLvl3 )(s1)
                 } else {
@@ -323,8 +341,9 @@ object GridBuilderUtil {
             case Tree.Node(_, subItems)  =>
               // Создаём виртуальный контекст рекурсивного рендера плитки, и погружаемся в новый уровень рендера.
               // Это нужно, чтобы раскрыть одну карточку вниз, а не слева-направо.
+              val lineCol2 = MCoords2di.y.modify(_ + paddingMultedPx + paddingMultedPx)( currLvl.currLineCol )
               val nextLvl = MGbLevelState(
-                ctx = currLvl.ctx.verticalSubGrid( currLvl.currLineCol ),
+                ctx = currLvl.ctx.verticalSubGrid( lineCol2 ),
                 restItems = subItems
               )
               // Выкидываем текущий пройденный элемент с текущего уровня.
@@ -339,6 +358,7 @@ object GridBuilderUtil {
         } else {
           // Нет на текущем уровне ничего, что следует делать. Подняться уровнем выше.
           val s2 = MGbStepState.levels.modify(_.tail)(s0)
+          //println(s"level up. ${s0.levels.head} => ${s2.levels.headOption.orNull}")
           _stepper( s2 )
         }
       }
@@ -359,6 +379,8 @@ object GridBuilderUtil {
 
       override def columnToAbs(ci: Int) = ci
       override def lineToAbs(cl: Int) = cl
+      override def absLineToRel(clAbs: Int) = clAbs
+
       override def colLineToAbs(xy: MCoords2di) = xy
 
       override def colsCount = args.jdConf.gridColumnsCount
@@ -390,6 +412,9 @@ object GridBuilderUtil {
       .iterator
       .map(_.heightUsed)
       .max
+
+    //val paddedCellHeightPx = cellHeightPx + cellPaddingHeightPx
+    val paddedCellWidthPx  = cellWidthPx  + cellPaddingWidthPx
 
     // Ширина всей плитки:
     val gridWidthPx = {
@@ -451,6 +476,7 @@ trait IGridBuildCtx { outer =>
 
   def columnToAbs(ci: Int): Int
   def lineToAbs(cl: Int): Int
+  def absLineToRel(clAbs: Int): Int
 
   /** Прочитать состояние уже использованной высоты для указанной колонки. */
   def getHeightUsed(ci: Int): Int
@@ -470,9 +496,10 @@ trait IGridBuildCtx { outer =>
       .iterator
       .map( getHeightUsed )
       .filter(_ > linePx)
-
-    if (iter.isEmpty) linePx
+    val r = if (iter.isEmpty) linePx
     else iter.min
+    //println(s"mhu(after=$linePx) => $r")
+    r
   }
 
   /** Детектирование текущей максимальной ширины в сетке в текущей строке. */
@@ -505,6 +532,7 @@ trait IGridBuildCtx { outer =>
       Math.min( outer.colsCount - cellWidth, outerLineCol.column )
     )
     val line2 = outerLineCol.line
+    //println("vertical subGrid = " + outerLineCol)
 
     new IGridBuildCtx {
       override def colsCount: Int = cellWidth
@@ -521,10 +549,11 @@ trait IGridBuildCtx { outer =>
         ci + column2
 
       override def lineToAbs(cl: Int) = cl + line2
+      override def absLineToRel(clAbs: Int) = clAbs - line2
 
       override def getHeightUsed(ci: Int) = {
         val hostHeightUsed = outer.getHeightUsed( columnToAbs(ci) )
-        Math.max(0, hostHeightUsed - line2)
+        Math.max(0, absLineToRel(hostHeightUsed) )
       }
 
       override def updateHeightUsed(ci: Int)(updateF: MColumnState => MColumnState): Unit = {

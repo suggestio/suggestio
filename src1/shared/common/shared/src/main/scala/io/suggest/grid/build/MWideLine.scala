@@ -16,19 +16,19 @@ import japgolly.univeq._
 
 /** Инфа об одной или нескольких строках, занятых под широкие карточки.
   *
-  * @param startLine Номер строки, с которого можно начинать резервирование строк под wide-карточку.
+  * @param topPx Вертикальная координата начала строки, с которого можно начинать резервирование высоты под wide-карточку.
   * @param heightPx Высота (кол-во занятых пикселей высоты).
   */
 case class MWideLine(
-                      startLine : Int,
+                      topPx     : Int,
                       heightPx  : Int,
                     ) {
 
   /** Индекс последней занимаемой строки. */
-  def lastLine = nextLine - 1
+  def bottomPx = nextPxAfter - 1
 
   /** Номер строки, которая идёт следующей после этого wide-резерва. */
-  def nextLine = startLine + heightPx
+  def nextPxAfter = topPx + heightPx
 
 }
 object MWideLine {
@@ -43,8 +43,8 @@ object MWideLine {
       * @see [[https://stackoverflow.com/a/3269471]]
       */
     def overlaps(other: MWideLine): Boolean = {
-      wide.startLine <= other.lastLine &&
-      other.startLine <= wide.lastLine
+      wide.topPx <= other.bottomPx &&
+      other.topPx <= wide.bottomPx
     }
 
   }

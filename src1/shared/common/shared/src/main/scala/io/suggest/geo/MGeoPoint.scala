@@ -29,9 +29,9 @@ object MGeoPoint {
     */
   object FracScale {
     /** Обычная (высокая) точность. */
-    val DEFAULT = 5
+    def DEFAULT = 5
     /** Точность условно-близких точек. */
-    val NEAR = DEFAULT - 1
+    def NEAR = DEFAULT - 1
   }
 
 
