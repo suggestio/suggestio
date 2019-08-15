@@ -204,7 +204,7 @@ object JdTag {
     }
 
     def findUpByType(typ: MJdTagName): Option[TreeLoc[JdTag]] = {
-      findUp( treeLocByTypeFilterF(typ) )
+      treeLoc.findUp( treeLocByTypeFilterF(typ) )
     }
 
     def findByType(typ: MJdTagName): Option[TreeLoc[JdTag]] = {

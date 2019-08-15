@@ -30,7 +30,7 @@ object BlockMetaJvm extends IGenEsMappingProps {
     List(
       _fint( BlockMeta.HEIGHT_ESFN),
       _fint( BlockMeta.WIDTH_ESFN),
-      FieldBoolean( BlockMeta.WIDE_ESFN, index = true, include_in_all = false)
+      FieldBoolean( BlockMeta.WIDE_ESFN, index = true, include_in_all = false),
     )
   }
 
@@ -57,23 +57,24 @@ object BlockMetaJvm extends IGenEsMappingProps {
       def WIDTH_FN     = "a"
       def HEIGHT_FN    = "b"
       def IS_WIDE_FN   = "d"
+      def HEIGHT_GROW_FN = "e"
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, BlockMeta]] = {
         val k = key1F(key)
         for {
-          bWidthEith    <- blockWidthB.bind  (k(WIDTH_FN), params)
-          bHeightEith   <- blockHeightB.bind (k(HEIGHT_FN), params)
-          maybeIsWide   <- boolB.bind        (k(IS_WIDE_FN), params)
+          bWidthE     <- blockWidthB.bind  (k(WIDTH_FN), params)
+          bHeightE    <- blockHeightB.bind (k(HEIGHT_FN), params)
+          isWideE     <- boolB.bind        (k(IS_WIDE_FN), params)
         } yield {
           for {
-            width   <- bWidthEith.right
-            height  <- bHeightEith.right
-            isWide  <- maybeIsWide.right
+            width         <- bWidthE.right
+            height        <- bHeightE.right
+            isWide        <- isWideE.right
           } yield {
             BlockMeta(
-              w       = width,
-              h       = height,
-              wide    = isWide
+              w           = width,
+              h           = height,
+              wide        = isWide,
             )
           }
         }
@@ -84,7 +85,7 @@ object BlockMetaJvm extends IGenEsMappingProps {
         _mergeUnbinded1(
           blockWidthB.unbind  ( k(WIDTH_FN),     value.w),
           blockHeightB.unbind ( k(HEIGHT_FN),    value.h),
-          boolB.unbind        ( k(IS_WIDE_FN),   value.wide)
+          boolB.unbind        ( k(IS_WIDE_FN),   value.wide),
         )
       }
     }
@@ -106,7 +107,7 @@ object BlockMetaJvm extends IGenEsMappingProps {
     mapping(
       "width"   -> blockWidthMapping,
       "height"  -> blockHeightMapping,
-      "wide"    -> boolean
+      "wide"    -> boolean,
     )
     { BlockMeta.apply }
     { BlockMeta.unapply }

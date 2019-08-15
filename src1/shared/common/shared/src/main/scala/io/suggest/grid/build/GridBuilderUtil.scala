@@ -134,9 +134,10 @@ object GridBuilderUtil {
           )
           // Обновить пока-текущий уровень, выкинув пройденный redo-элемент:
           val currLvl2 = MGbLevelState.reDoItems.modify(_.tail)(currLvl)
-          val s2 = MGbStepState.levels.modify { levels0 =>
-            subLvl :: currLvl2 :: levels0.tail
-          }(s0)
+          val s2 = MGbStepState.levels
+            .modify { levels0 =>
+              subLvl :: currLvl2 :: levels0.tail
+            }(s0)
           _stepper( s2 )
 
         } else if (currLvl.restItems.nonEmpty) {
@@ -147,7 +148,7 @@ object GridBuilderUtil {
               val bm = itemExt.bmOpt.get
               val wideSzMultOpt = itemExt.jdtOpt
                 .flatMap( args.jdtWideSzMults.get )
-              val blockHeightPx = szMultedF( bm.h.value, wideSzMultOpt )
+              val blockHeightPx = szMultedF( bm.height, wideSzMultOpt )
               val topPxAbs = currLvl.ctx.lineToAbs( xy.line )
               val currWide = MWideLine(
                 topPx     = topPxAbs,
@@ -186,7 +187,7 @@ object GridBuilderUtil {
                 val endColumnIndex = xy.column + bm.w.relSz
                 val pxIvl2 = MPxInterval(
                   startPx = topPxAbs,
-                  sizePx  = blockHeightPx /*+ paddingMultedPx */,
+                  sizePx  = blockHeightPx,
                   block   = itemExt,
                 )
                 // Обновить состояние: проинкрементить col/line курсоры:
@@ -271,7 +272,6 @@ object GridBuilderUtil {
                     .modify(conflicting reverse_::: _)( modLvl0 )
 
                   // В связи с извлечением некоторых item'ов снизу, надо откатить значения в колонках.
-                  val rootLvl1 = rootLvl
                   for {
                     e  <- conflicting
                     updateLens = MColumnState.occupiedRev.modify { mcs0 =>
@@ -281,7 +281,7 @@ object GridBuilderUtil {
                     }
                     ci <- e.topLeft.left until (e.topLeft.left + e.bm.w.relSz)
                   } {
-                    rootLvl1.ctx.updateHeightUsed(ci)( updateLens )
+                    rootLvl.ctx.updateHeightUsed(ci)( updateLens )
                   }
 
                   // Обновить состояние билдера:

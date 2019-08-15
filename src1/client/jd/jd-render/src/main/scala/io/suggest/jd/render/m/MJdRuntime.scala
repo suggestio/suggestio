@@ -22,8 +22,7 @@ object MJdRuntime {
   implicit object MJdRuntimeFastEq extends FastEq[MJdRuntime] {
     override def eqv(a: MJdRuntime, b: MJdRuntime): Boolean = {
       (a.jdCss ===* b.jdCss) &&
-      (a.jdtWideSzMults ===* b.jdtWideSzMults) &&
-      (a.quirks ==* b.quirks)
+      (a.jdtWideSzMults ===* b.jdtWideSzMults)
     }
   }
 
@@ -38,7 +37,6 @@ object MJdRuntime {
   def make(
             tpls    : Seq[Tree[JdTag]],
             jdConf  : MJdConf,
-            quirks  : Boolean = true,
           ): MJdRuntime = {
     val jdtWideSzMults = GridCalc.wideSzMults(tpls, jdConf)
     MJdRuntime(
@@ -65,5 +63,4 @@ object MJdRuntime {
 case class MJdRuntime(
                        jdCss            : JdCss,
                        jdtWideSzMults   : Map[JdTag, MSzMult],
-                       quirks           : Boolean               = true,
                      )

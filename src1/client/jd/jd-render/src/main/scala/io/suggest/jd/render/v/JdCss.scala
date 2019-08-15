@@ -272,7 +272,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     styleF(
       new Domain.OverSeq(
         _allJdTagsIter
-          .filter(_.props1.bm.exists(_.wide))
+          .filter(_.props1.bm.wide)
           .toIndexedSeq
       )
     ) { strip =>
@@ -481,27 +481,28 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // -------------------------------------------------------------------------------
   // text indents.
 
-  val embedAttrStyleF =
+  val embedAttrStyleF = {
     styleF(
       new Domain.OverSeq(
-        _qdOpsIter
-          .flatMap( _.attrsEmbed )
-          .filter( _.nonEmpty )
+        _allJdTagsIter
+          .filter(_.qdProps.exists(_.attrsEmbed.exists(_.nonEmpty)))
           .toIndexedSeq
       )
-    ) { embedAttrs =>
+    ) { jdt =>
+      val embedAttrs = jdt.qdProps.get.attrsEmbed.get
       var acc = List.empty[ToStyle]
+      val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
 
       for (heightSU <- embedAttrs.height; heightPx <- heightSU)
-        acc ::= height( _szMulted(heightPx).px )
+        acc ::= height( _szMulted(heightPx, wideSzMultOpt).px )
       for (widthSU <- embedAttrs.width; widthPx <- widthSU)
-        acc ::= width( _szMulted(widthPx).px )
+        acc ::= width( _szMulted(widthPx, wideSzMultOpt).px )
 
       styleS(
         acc: _*
       )
     }
-
+  }
 
   val rotateF =
     styleF.apply(

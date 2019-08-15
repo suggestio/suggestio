@@ -346,22 +346,7 @@ class JdR(
     def renderQd(qdTagTree: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): TagOf[html.Div] = {
       val qdTag = qdTagTree.rootLabel
       val isCurrentSelected = jdArgs.selJdt.treeLocOpt containsLabel qdTag
-      val tagMods = {
-        val qdRrr = new QdRrrHtml(
-          jdCssStatic = jdCssStatic,
-          jdArgs      = jdArgs,
-          qdTag       = qdTagTree,
-          // Для редактора: следует рендерить img-теги, подслушивая у них wh:
-          imgEdgeMods = OptionUtil.maybe( jdArgs.conf.isEdit ) {
-            _notifyImgWhOnEdit(_, jdArgs)
-          },
-          // Выбранный qd-тег можно ресайзить:
-          resizableCb = OptionUtil.maybe(isCurrentSelected) {
-            onQdEmbedResize(_, _, _)(_)
-          }
-        )
-        qdRrr.render()
-      }
+
       <.div(
         ^.key := i.toString,
 
@@ -412,7 +397,21 @@ class JdR(
           }
         },
 
-        tagMods
+        // Рендер qd-контента в html.
+        QdRrrHtml(
+          jdCssStatic = jdCssStatic,
+          jdArgs      = jdArgs,
+          qdTag       = qdTagTree,
+          // Для редактора: следует рендерить img-теги, подслушивая у них wh:
+          imgEdgeMods = OptionUtil.maybe( jdArgs.conf.isEdit ) {
+            _notifyImgWhOnEdit(_, jdArgs)
+          },
+          // Выбранный qd-тег можно ресайзить:
+          resizableCb = OptionUtil.maybe(isCurrentSelected) {
+            onQdEmbedResize(_, _, _)(_)
+          }
+        )
+          .render()
       )
     }
 

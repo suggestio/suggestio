@@ -1,7 +1,7 @@
 package controllers
 
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockMetaJvm, BlockWidths}
-import io.suggest.dev.MScreenJvm
+import io.suggest.dev.{MScreenJvm, MSzMults}
 import io.suggest.util.logs.IMacroLogs
 import javax.inject.Singleton
 import models.im.{CompressMode, MImgT}
@@ -88,9 +88,9 @@ trait SysImgMake
         MImgMakeArgs(
           img = img,
           targetSz = bmDflt.getOrElse {
-            BlockMeta.DEFAULT.withWide(true)
+            BlockMeta.wide.set(true)( BlockMeta.DEFAULT )
           },
-          szMult = 1.0F,
+          szMult = MSzMults.`1.0`.toFloat,
           devScreenOpt = ctx.deviceScreenOpt
         )
       ))

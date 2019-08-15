@@ -6,6 +6,7 @@ import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import scalaz.{Validation, ValidationNel}
+import io.suggest.common.empty.OptionUtil.BoolOptJsonFormatOps
 
 
 /** Модель метаданных по блоку рекламной карточки. */
@@ -19,10 +20,10 @@ object BlockMeta {
   def DEFAULT = BlockMeta( h = BlockHeights.default, w = BlockWidths.default )
 
   /** Поддержка JSON. */
-  implicit val FORMAT: OFormat[BlockMeta] = (
+  implicit def blockMetaJson: OFormat[BlockMeta] = (
     (__ \ WIDTH_ESFN).format[BlockWidth] and
     (__ \ HEIGHT_ESFN).format[BlockHeight] and
-    (__ \ WIDE_ESFN).format[Boolean]
+    (__ \ WIDE_ESFN).formatNullable[Boolean].formatBooleanOrFalse
   )(apply, unlift(unapply))
 
 
@@ -41,6 +42,11 @@ object BlockMeta {
   val h = GenLens[BlockMeta](_.h)
   val wide = GenLens[BlockMeta](_.wide)
 
+
+  implicit class BmOptExt(val bmOpt: Option[BlockMeta]) extends AnyVal {
+    def wide: Boolean = bmOpt.exists(_.wide)
+  }
+
 }
 
 
@@ -50,25 +56,12 @@ object BlockMeta {
 case class BlockMeta(
                       w         : BlockWidth,
                       h         : BlockHeight,
-                      wide      : Boolean = false
+                      wide      : Boolean       = false,
                     )
   extends ISize2di
 {
 
-  def withWidth(w: BlockWidth)   = copy(w = w)
-  def withHeight(h: BlockHeight) = copy(h = h)
-  def withWide(wide: Boolean)    = copy(wide = wide)
-
   override def width = w.value
   override def height = h.value
-
-  /*
-  def rePadded(blockPadding: BlockPadding): MSize2di = {
-    MSize2di(
-      width  = IBlockSize.rePadSizePx(w, blockPadding),
-      height = IBlockSize.rePadSizePx(h, blockPadding)
-    )
-  }
-  */
 
 }

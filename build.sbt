@@ -234,6 +234,13 @@ lazy val reactStoneCutterSjs = {
     .dependsOn( commonReactSjs )
 }
 
+/** Scala.js-фасад для react-measure. */
+lazy val reactMeasureSjs = {
+  val name = "react-measure"
+  Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
+    .dependsOn( commonReactSjs )
+}
+
 /** Scala.js facade for react-resizable. */
 lazy val reactResizableSjs = {
   val name = "react-resizable"
@@ -483,7 +490,7 @@ lazy val reactMaterialUiSjs = {
 /** json document react renderer */
 lazy val jdRenderSjs = {
   Project(id = "jd-render-sjs", base = file(DIR0 + "client/jd/jd-render"))
-    .dependsOn( lkCommonSjs, reactStoneCutterSjs, gridSjs )
+    .dependsOn( lkCommonSjs, reactStoneCutterSjs, gridSjs, reactMeasureSjs )
 }
 
 /** Внутренний форк securesocial. */
@@ -626,7 +633,7 @@ lazy val sio2 = {
       momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, cordovaSioUtilSjs, bleBeaconerSjs,
       reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
-      reactGridLayoutSjs, reactStoneCutterSjs, gridSjs, reactSidebar, reactScroll,
+      reactGridLayoutSjs, reactStoneCutterSjs, gridSjs, reactSidebar, reactScroll, reactMeasureSjs,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
       lkAdEditorSjs, lkAdnEditSjs,
       lkAdsSjs, lkTagsEditSjs, lkAdnMapSjs, lkAdvExtSjs, lkNodesFormSjs, lkCommonSjs,

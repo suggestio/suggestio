@@ -24,6 +24,6 @@ object ItemRowPreviewR {
 
   /** Сборка пустого стиля для jd-рендера. */
   def mkJdRuntime(templates: Seq[Tree[JdTag]] = Nil): MJdRuntime =
-    MJdRuntime.make( templates, JD_CONF, quirks = false )
+    MJdRuntime.make( templates, JD_CONF )
 
 }

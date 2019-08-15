@@ -40,15 +40,16 @@ import scalaz.Tree
   * @param imgEdgeMods Опциональная функция, возвращающая TagMod при рендере картинок.
   *                    Используется в редакторе для навешивания дополнительных листенеров.
   */
-class QdRrrHtml(
-                 jdCssStatic  : JdCssStatic,
-                 jdArgs       : MJdArgs,
-                 qdTag        : Tree[JdTag],
-                 imgEdgeMods  : Option[MEdgeDataJs => TagMod] = None,
-                 resizableCb  : Option[(MQdOp, MEdgeDataJs, Boolean, ReactMouseEventFromHtml) => Callback]
-               ) {
+case class QdRrrHtml(
+                      jdCssStatic  : JdCssStatic,
+                      jdArgs       : MJdArgs,
+                      qdTag        : Tree[JdTag],
+                      imgEdgeMods  : Option[MEdgeDataJs => TagMod] = None,
+                      resizableCb  : Option[(MQdOp, MEdgeDataJs, Boolean, ReactMouseEventFromHtml) => Callback],
+                    ) {
 
   import QdRrrHtml.LOG
+
 
 
   /** Аккамулятор сегментов рендера текущей строки.
@@ -142,7 +143,7 @@ class QdRrrHtml(
 
             // Рендер видео (или иного фрейма).
             case MPredicates.JdContent.Frame =>
-              _insertFrame( e, qdOp, framesCnt )
+              _insertFrame( e, jdtQdOp, framesCnt )
               framesCnt += 1
 
             case other =>
@@ -177,8 +178,11 @@ class QdRrrHtml(
       val (jdt, qdOp) = jdtQdOp
 
       // width/height экранного представления картинки задаётся в CSS:
-      for (embedAttrs <- qdOp.attrsEmbed)
-        imgArgsAcc ::= jdArgs.jdRuntime.jdCss.embedAttrStyleF( embedAttrs )
+      // Контейнер ресайза также требует этот стиль, поэтому кэшируем стиль в переменной:
+      val embedStyleOpt = for (ae <- qdOp.attrsEmbed if ae.nonEmpty) yield {
+        jdArgs.jdRuntime.jdCss.embedAttrStyleF( jdt )
+      }
+      embedStyleOpt.foreach( imgArgsAcc ::= _ )
 
       // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
       if (jdArgs.conf.isEdit)
@@ -218,6 +222,7 @@ class QdRrrHtml(
         resizableF      <- resizableCb
         origWh          <- e.origWh
         attrsEmbed      <- qdOp.attrsEmbed
+        embedStyle      <- embedStyleOpt
       } {
         // TODO Надо бы сделать маску поверх картинки через div здесь. Это решит проблемы в хроме. Для этого надо провести высоту картинки, не сохраняя её в аттрибутах.
         // Вычислить визуальную ширину в css-пикселях. Она нужна для рассчёта отображаемой ВЫСОТЫ покрывающей маски.
@@ -235,7 +240,7 @@ class QdRrrHtml(
             jdCssStatic.horizResizable,
             ^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, false, event) },
             ^.height := maskHeightPx.px,
-            jdArgs.jdRuntime.jdCss.embedAttrStyleF( attrsEmbed ),
+            embedStyle,
             ^.`class` := Css.flat(Css.Overflow.HIDDEN, Css.Position.ABSOLUTE)
           )
         )
@@ -250,13 +255,16 @@ class QdRrrHtml(
 
 
   /** Рендер video. */
-  private def _insertFrame(e: MEdgeDataJs, qdOp: MQdOp, i: Int): Unit = {
+  private def _insertFrame(e: MEdgeDataJs, jdtQdOp: (JdTag, MQdOp), i: Int): Unit = {
     val resOpt = for {
       src <- e.jdEdge.url
     } yield {
-      val whStyl = qdOp.attrsEmbed.fold( jdArgs.jdRuntime.jdCss.videoStyle ) { attrsEmbed =>
-        jdArgs.jdRuntime.jdCss.embedAttrStyleF( attrsEmbed )
-      }
+      val (jdTag, qdOp) = jdtQdOp
+      val whStyl = qdOp.attrsEmbed
+        .filter(_.nonEmpty)
+        .fold( jdArgs.jdRuntime.jdCss.videoStyle ) { _ =>
+          jdArgs.jdRuntime.jdCss.embedAttrStyleF( jdTag )
+        }
       val keyV = "V" + i
       val iframe = <.iframe(
         ^.src := src,
@@ -621,7 +629,6 @@ class QdRrrHtml(
       )
     }
   }
-
 
 
   private def __attrSuOptFlatten[T](attrsSuOpt: Option[ISetUnset[T]]): Option[T] = {
