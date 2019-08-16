@@ -193,7 +193,7 @@ class ShowcaseUtil @Inject() (
     }
 
     // для не-wide карточек также возможно отображение в двойном размере.
-    val szMultIter1: Iterator[SzMult_t] = if (bm.wide) {
+    val szMultIter1: Iterator[SzMult_t] = if (bm.expandMode.nonEmpty) {
       szMultIter0
     } else {
       Iterator.single(FOCUSED_SZ_MULT) ++ szMultIter0

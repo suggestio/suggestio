@@ -88,7 +88,7 @@ trait IExtServiceHelper
   def isAdvExtWide(mad: MNode): Boolean = {
     advUtil
       .getAdvMainBlockMeta(mad)
-      .wide
+      .hasExpandMode
   }
 
   /** Формат рендера в картинку загружаемой карточки. */

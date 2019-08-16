@@ -105,7 +105,8 @@ object GridAh {
 
       val wideBgBlk = for {
         bm      <- stripJdt.props1.bm
-        _       <- OptionUtil.maybeTrue( bm.wide )
+        if bm.expandMode.nonEmpty
+        //_       <- OptionUtil.maybeTrue( bm.wide )
         bg      <- stripJdt.props1.bgImg
         // 2018-01-23: Для wide-фона нужен отдельный блок, т.к. фон позиционируется отдельно от wide-block-контента.
         // TODO Нужна поддержка wide-фона без картинки.

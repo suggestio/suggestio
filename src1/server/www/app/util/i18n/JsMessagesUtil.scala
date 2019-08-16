@@ -1,5 +1,6 @@
 package util.i18n
 
+import io.suggest.ad.blk.MBlockExpandModes
 import javax.inject.{Inject, Singleton}
 import io.suggest.bill.MCurrencies
 import io.suggest.bill.price.dsl.MReasonTypes
@@ -308,7 +309,9 @@ class JsMessagesUtil @Inject() (
       MC.`Text.shadow` ::
       MC.`Color` ::
       MC.`Shadow.color` ::
-      Nil
+      MC.`Expand` ::
+      MC.`Dont.expand` ::
+      MBlockExpandModes.values.iterator.map(_.msgCode).toList
   }
 
 

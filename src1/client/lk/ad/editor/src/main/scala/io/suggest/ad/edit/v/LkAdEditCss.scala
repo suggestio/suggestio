@@ -50,6 +50,14 @@ class LkAdEditCss
     val increase = _classNameStyle( "__increase" )
     val decrease = _classNameStyle( "__decrease" )
 
+    val marginLeft0 = style(
+      marginLeft( 0.px ).important
+    )
+
+    val marginRight40 = style(
+      marginRight( 40.px ).important
+    )
+
   }
 
 

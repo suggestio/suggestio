@@ -116,7 +116,7 @@ class TextFieldR(
                 override val onBlur       = _onBlurUndef
                 override val disabled     = p.disabled
               }
-            )
+            )()
           }
         }
       }

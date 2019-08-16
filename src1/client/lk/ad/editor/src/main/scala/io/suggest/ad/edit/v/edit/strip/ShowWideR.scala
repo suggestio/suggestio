@@ -1,18 +1,25 @@
 package io.suggest.ad.edit.v.edit.strip
 
-import diode.FastEq
+import com.materialui.{MuiFormControl, MuiFormControlLabel, MuiFormControlLabelClasses, MuiFormControlLabelProps, MuiInputLabel, MuiInputLabelProps, MuiInputValue_t, MuiLabelPlacements, MuiSelectProps, MuiTextField, MuiTextFieldProps}
 import diode.react.{ModelProxy, ReactConnectProps}
-import io.suggest.ad.edit.m.StripStretchAcross
-import io.suggest.common.html.HtmlConstants
-import io.suggest.css.Css
+import io.suggest.ad.blk.{MBlockExpandMode, MBlockExpandModes}
+import io.suggest.ad.edit.m.BlockExpand
+import io.suggest.ad.edit.v.LkAdEditCss
+import io.suggest.common.empty.OptionUtil
+import io.suggest.common.html.HtmlConstants.NBSP_STR
 import io.suggest.i18n.MsgCodes
 import io.suggest.msg.Messages
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent}
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import japgolly.scalajs.react.raw.React
+import japgolly.scalajs.react.raw.React.Node
+import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent, ReactEventFromInput, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
+
+import scala.scalajs.js
+import scala.scalajs.js.{UndefOr, |}
 
 /**
   * Suggest.io
@@ -20,62 +27,79 @@ import japgolly.univeq._
   * Created: 02.11.17 10:57
   * Description: React-компонента галочки широкоформатного отображения.
   */
-class ShowWideR {
+class ShowWideR(
+                 lkAdEditCss        : LkAdEditCss,
+               ) {
 
-  /** Модель пропертисов данного компонента.
-    *
-    * @param checked Текущее состояние галочки широкого отображения.
-    */
-  case class PropsVal(
-                       checked: Boolean
-                     )
-  implicit object ShowWideRPropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      a.checked ==* b.checked
-    }
-  }
-
-
-  type Props_t = Option[PropsVal]
+  type Props_t = Option[MBlockExpandMode]
   type Props = ModelProxy[Props_t]
 
   class Backend($: BackendScope[Props, Unit]) {
 
+    private val emptyOptionValue = ""
+
     /** Реакция на изменение состояния галочки широкоформатного отображения. */
-    private def _onCheckedChange(e: ReactEventFromInput): Callback = {
-      val isChecked = e.target.checked
-      dispatchOnProxyScopeCB($, StripStretchAcross(isChecked))
+    private def _onClick(e: ReactEventFromInput): Callback = {
+      val v = e.target.value
+      val mbemOpt = OptionUtil.maybeOpt( v !=* emptyOptionValue ) {
+        MBlockExpandModes.withValueOpt( v )
+      }
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, BlockExpand(mbemOpt))
     }
+    private val _onClickJsCbF = ReactCommonUtil.cbFun1ToJsCb( _onClick )
+
 
     def render(propsOptProxy: Props): VdomElement = {
-      propsOptProxy.value.whenDefinedEl { props =>
-        <.div(
-          <.label(
-            ^.`class` := Css.CLICKABLE,
+      val propsOpt = propsOptProxy.value
+      val currSelectValue =
+        propsOpt.fold(emptyOptionValue)( _.value ): MuiInputValue_t
 
-            <.input(
-              ^.`type`    := HtmlConstants.Input.checkbox,
-              ^.checked   := props.checked,
-              ^.onChange ==> _onCheckedChange
-            ),
-
-            <.span(
-              ^.`class` := Css.Input.STYLED_CHECKBOX
-            ),
-
-            <.span(
-              ^.`class` := Css.flat(Css.Input.CHECKBOX_TITLE, Css.Buttons.MAJOR),
-              Messages( MsgCodes.`Stretch.across` )
-            )
-          )
-        )
+      val _selectProps = new MuiSelectProps {
+        override val native = true
       }
+
+      val select = MuiTextField(
+        new MuiTextFieldProps {
+          override val select = true
+          override val SelectProps = _selectProps
+          override val value = js.defined( currSelectValue )
+          override val onChange = _onClickJsCbF
+        }
+      )(
+        <.option(
+          ^.value := emptyOptionValue,
+          Messages( MsgCodes.`Dont.expand` ),
+        ),
+        MBlockExpandModes.values.toVdomArray { mbem =>
+          <.option(
+            ^.key := mbem.value,
+            ^.value := mbem.value,
+            Messages( mbem.msgCode ),
+          )
+        },
+
+      )
+
+      MuiFormControlLabel {
+        val cssClasses = new MuiFormControlLabelClasses {
+          override val root = lkAdEditCss.WhControls.marginLeft0.htmlClass
+          override val label = lkAdEditCss.WhControls.marginRight40.htmlClass
+        }
+        new MuiFormControlLabelProps {
+          override val control        = select.rawElement
+          override val label          = Messages( MsgCodes.`Expand` ).rawNode
+          override val labelPlacement = MuiLabelPlacements.start
+          override val classes        = cssClasses
+        }
+      }
+
     }
 
   }
 
 
-  val component = ScalaComponent.builder[Props]("ShowWide")
+  val component = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .stateless
     .renderBackend[Backend]
     .build

@@ -2,7 +2,7 @@ package io.suggest.ad.edit.v
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths, MBlockExpandMode}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.{MAeRoot, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
@@ -28,7 +28,7 @@ import io.suggest.lk.r.color.{ColorCheckBoxR, ColorPickerR, ColorsSuggestR}
 import io.suggest.lk.r.img.{CropBtnR, ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.spa.OptFastEq
+import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
@@ -76,7 +76,6 @@ class LkAdEditFormR(
   import deleteBtnR.DeleteBtnRPropsValFastEq
   import plusMinusControlsR.PlusMinusControlsPropsValFastEq
   import MStripEdS.MStripEdSFastEq
-  import showWideR.ShowWideRPropsValFastEq
   import colorCheckBoxR.ColorCheckBoxPropsValFastEq
   import io.suggest.lk.r.img.ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq
   import rotateR.RotateRPropsValFastEq
@@ -101,7 +100,7 @@ class LkAdEditFormR(
                               heightPropsOptC                 : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
                               widthPropsOptC                  : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
                               stripEdSOptC                    : ReactConnectProxy[Option[MStripEdS]],
-                              showWidePropsOptC               : ReactConnectProxy[Option[showWideR.PropsVal]],
+                              blockExpandModeOptC             : ReactConnectProxy[Option[MBlockExpandMode]],
                               slideBlocks                     : SlideBlocksState,
                               colors                          : ColorsState,
                               quillEdOptC                     : ReactConnectProxy[Option[quillEditorR.PropsVal]],
@@ -182,13 +181,21 @@ class LkAdEditFormR(
             val slideBlockBodyDiv = <.div(
               // Кнопки управление шириной и высотой блока.
               <.div(
+                // Галочка широкого рендера фона.
                 lkAdEditCss.WhControls.outer,
+
                 s.heightPropsOptC { plusMinusControlsR.apply },
-                s.widthPropsOptC { plusMinusControlsR.apply }
+                s.widthPropsOptC { plusMinusControlsR.apply },
+                <.br,
               ),
+
+              <.br,
+              s.blockExpandModeOptC { showWideR.apply },
+              <.br, <.br, <.br,
 
               // Управление main-блоками.
               s.useAsMainStripPropsOptC { useAsMainR.apply },
+              <.br,
 
               // Кнопка удаления текущего блока.
               s.stripEdSOptC { deleteStripBtnR.apply }
@@ -217,10 +224,6 @@ class LkAdEditFormR(
               // Отрендерить данные процесса загрузки:
               s.upStateOptC { uploadStatusR.apply },
 
-              <.br,
-
-              // Галочка широкого рендера фона.
-              s.showWidePropsOptC { showWideR.apply }
             )
             val blockBgSlide = s.slideBlocks.blockBg { propsOpt =>
               slideBlockR(propsOpt)( blockBgBodyDiv )
@@ -305,17 +308,18 @@ class LkAdEditFormR(
     .initialStateFromProps { p =>
 
       // Фунция с дедублицированным кодом сборки коннекшена до пропертисов plus-minus control'ов (для стрипов).
-      def __mkStripBmC[T: FastEq](f: BlockMeta => T) = {
+      def __mkStripBmC[T](f: BlockMeta => Option[T])(implicit tFeq: FastEq[T]) = {
         p.connect { mroot =>
           for {
             selJdtTreeLoc <- mroot.doc.jdArgs.selJdt.treeLocOpt
             selJdt = selJdtTreeLoc.getLabel
             if selJdt.name ==* MJdTagNames.STRIP
             bm     <- selJdt.props1.bm
+            t      <- f(bm)
           } yield {
-            f(bm)
+            t
           }
-        }( OptFastEq.Wrapped )
+        }( OptFastEq.Wrapped(tFeq) )
       }
 
       val MSG_BG_COLOR = Messages( MsgCodes.`Bg.color` )
@@ -390,31 +394,29 @@ class LkAdEditFormR(
         }( OptFastEq.Wrapped ),
 
         heightPropsOptC = __mkStripBmC { bm =>
-          plusMinusControlsR.PropsVal(
+          val r = plusMinusControlsR.PropsVal(
             labelMsgCode  = MsgCodes.`Height`,
             contCss       = lkAdEditCss.WhControls.contHeight,
             model         = BlockHeights,
             current       = bm.h
           )
+          Some(r)
         },
         widthPropsOptC = __mkStripBmC { bm =>
-          plusMinusControlsR.PropsVal(
+          val r = plusMinusControlsR.PropsVal(
             labelMsgCode  = MsgCodes.`Width`,
             contCss       = lkAdEditCss.WhControls.contWidth,
             model         = BlockWidths,
             current       = bm.w
           )
+          Some(r)
         },
 
         stripEdSOptC = p.connect { mroot =>
           mroot.doc.stripEd
         }( OptFastEq.Wrapped ),
 
-        showWidePropsOptC = __mkStripBmC { bm =>
-          showWideR.PropsVal(
-            checked = bm.wide
-          )
-        },
+        blockExpandModeOptC = __mkStripBmC ( _.expandMode )(FastEqUtil.AnyRefFastEq),
 
         slideBlocks = SlideBlocksState(
           block = {

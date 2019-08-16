@@ -393,4 +393,7 @@ object MsgCodes {
   val `Changes.saved` = "Changes.saved"
   val `New.shop.created.fill.info` = "New.shop.created.fill.info"
 
+  val `Expand` = "Expand"
+  val `Dont.expand` = "Dont.expand"
+
 }

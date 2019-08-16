@@ -27,54 +27,53 @@ object BlockMetaJvm extends IGenEsMappingProps {
   }
 
   def generateMappingProps: List[DocField] = {
+    val F = BlockMeta.Fields
     List(
-      _fint( BlockMeta.HEIGHT_ESFN),
-      _fint( BlockMeta.WIDTH_ESFN),
-      FieldBoolean( BlockMeta.WIDE_ESFN, index = true, include_in_all = false),
+      _fint( F.HEIGHT),
+      _fint( F.WIDTH),
+      FieldKeyword( F.EXPAND_MODE, index = true, include_in_all = false ),
     )
   }
 
 
   /** Поддержка QSB для модели BlockWidths. */
-  implicit def blockWidthQsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[BlockWidth] = {
+  implicit def blockWidthQsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[BlockWidth] =
     EnumeratumJvmUtil.valueEnumQsb( BlockWidths )
-  }
-
 
   /** Поддержка QSB для модели BlockHeights. */
-  implicit def blockHeightQsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[BlockHeight] = {
+  implicit def blockHeightQsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[BlockHeight] =
     EnumeratumJvmUtil.valueEnumQsb( BlockHeights )
-  }
+
+  implicit def blockExpandModeQsb(implicit stringB: QueryStringBindable[String]): QueryStringBindable[MBlockExpandMode] =
+    EnumeratumJvmUtil.valueEnumQsb( MBlockExpandModes )
 
 
   /** Поддержка сериализации/десериализации в URL query string. */
   implicit def blockMetaQsb(implicit
                             blockWidthB   : QueryStringBindable[BlockWidth],
                             blockHeightB  : QueryStringBindable[BlockHeight],
-                            boolB         : QueryStringBindable[Boolean]
+                            expandModeB   : QueryStringBindable[Option[MBlockExpandMode]],
                            ): QueryStringBindable[BlockMeta] = {
     new QueryStringBindableImpl[BlockMeta] {
       def WIDTH_FN     = "a"
       def HEIGHT_FN    = "b"
-      def IS_WIDE_FN   = "d"
-      def HEIGHT_GROW_FN = "e"
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, BlockMeta]] = {
         val k = key1F(key)
         for {
           bWidthE     <- blockWidthB.bind  (k(WIDTH_FN), params)
           bHeightE    <- blockHeightB.bind (k(HEIGHT_FN), params)
-          isWideE     <- boolB.bind        (k(IS_WIDE_FN), params)
+          expandModeE <- expandModeB.bind  (k( BlockMeta.Fields.EXPAND_MODE ), params)
         } yield {
           for {
             width         <- bWidthE.right
             height        <- bHeightE.right
-            isWide        <- isWideE.right
+            expandMode    <- expandModeE.right
           } yield {
             BlockMeta(
               w           = width,
               h           = height,
-              wide        = isWide,
+              expandMode  = expandMode,
             )
           }
         }
@@ -85,7 +84,7 @@ object BlockMetaJvm extends IGenEsMappingProps {
         _mergeUnbinded1(
           blockWidthB.unbind  ( k(WIDTH_FN),     value.w),
           blockHeightB.unbind ( k(HEIGHT_FN),    value.h),
-          boolB.unbind        ( k(IS_WIDE_FN),   value.wide),
+          expandModeB.unbind  ( k( BlockMeta.Fields.EXPAND_MODE ), value.expandMode ),
         )
       }
     }
@@ -101,13 +100,16 @@ object BlockMetaJvm extends IGenEsMappingProps {
       EnumeratumJvmUtil.intIdOptMapping( BlockWidths ) )
   }
 
+  def expandModeMapping: Mapping[Option[MBlockExpandMode]] =
+    EnumeratumJvmUtil.stringIdOptMapping( MBlockExpandModes )
+
   /** Маппинг для интерфейса IBlockMeta. */
   def formMapping: Mapping[BlockMeta] = {
     import play.api.data.Forms._
     mapping(
       "width"   -> blockWidthMapping,
       "height"  -> blockHeightMapping,
-      "wide"    -> boolean,
+      "expandMode" -> expandModeMapping,
     )
     { BlockMeta.apply }
     { BlockMeta.unapply }

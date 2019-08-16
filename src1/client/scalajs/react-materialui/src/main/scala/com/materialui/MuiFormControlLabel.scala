@@ -46,3 +46,10 @@ trait MuiFormControlLabelClasses extends MuiClassesBase {
   val disabled: js.UndefOr[String] = js.undefined
   val label: js.UndefOr[String] = js.undefined
 }
+
+object MuiLabelPlacements {
+  val start = "start"
+  val end = "end"
+  val top = "top"
+  val bottom = "bottom"
+}

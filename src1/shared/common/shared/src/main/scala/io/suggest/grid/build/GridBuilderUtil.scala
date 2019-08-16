@@ -159,14 +159,14 @@ object GridBuilderUtil {
                 // Текущий неширокий блок как-то пересекается (по высоте) с широкой карточкой?
                 (s0.wides overlaps currWide) ||
                 // Широкий блок подразумевает пустую строку для себя, в т.ч. на самом ВЕРХНЕМ уровне.
-                (if (bm.wide) rootLvl.ctx.getMaxCellWidth(topPxAbs) < rootLvl.ctx.colsCount
+                (if (bm.expandMode.nonEmpty) rootLvl.ctx.getMaxCellWidth(topPxAbs) < rootLvl.ctx.colsCount
                  // !wide: Ширина текущего блока влезает в текущую строку?
                  else bm.w.relSz > currLvl.getMaxCellWidthCurrLineCol() )
               ) {
                 // Здесь нет места для текущего блока.
                 // Для wide-блока надо считать место с помощью root-уровня.
                 val (searchLvl, searchTopPx) =
-                  if (bm.wide) rootLvl -> currWide.topPx
+                  if (bm.expandMode.nonEmpty) rootLvl -> currWide.topPx
                   else currLvl -> xy.line
 
                 // Рассчитать следующую строку для перехода. Для wide-блока рассчёт идёт на root-уровне, поэтому требуется обратный маппинг координату назад в проекцию текущего уровня.
@@ -215,7 +215,7 @@ object GridBuilderUtil {
                     wideBgSz.width * img2blkSzMult
                   }
                   .orElse {
-                    OptionUtil.maybe( bm.wide && !args.jdConf.isEdit ) {
+                    OptionUtil.maybe( bm.expandMode.nonEmpty && !args.jdConf.isEdit ) {
                       // wide-блок без фоновой картинки. Взять ширину такого блока из jdConf:
                       args.jdConf.plainWideBlockWidthPx
                     }
@@ -232,7 +232,7 @@ object GridBuilderUtil {
                 )
                 //println(s"RES: Node#${itemExt.nodeId.orNull} topLeft=" + xyAbs + " orderN=" + orderN + " bm=" + bm + (if(bm.wide) " WIDE" else ""))
 
-                val mwlAbsOpt = OptionUtil.maybe(bm.wide)( currWide )
+                val mwlAbsOpt = for (_ <- bm.expandMode) yield currWide
 
                 // Если wide, то надо извлечь из results-аккамулятора элементы, конфликтующие по высоте с данным wide-блоком и запихать их в reDo-аккамулятор.
                 val s1DeConflictedOpt = for {
@@ -311,7 +311,7 @@ object GridBuilderUtil {
                 // а в обычном порядке по ширине всей плитки. Для этого можно объеденить два последних уровня, но лучше
                 // подменить контекст на текущем уровне на root, чтобы не нарушать порядок рендера.
                 val s2 = if (
-                  bm.wide &&
+                  bm.expandMode.nonEmpty &&
                   !currLvl2.ctx.isRoot &&
                   // Нельзя делать сброс, если последующий элемент тоже wide. Это решает только последний из первых wide-элементов.
                   !currLvl2.restItems.headOption.exists(_.headIsWide) &&

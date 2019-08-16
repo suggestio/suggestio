@@ -1,16 +1,18 @@
 package com.materialui
 
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.VdomNode
+
 import scala.scalajs.js
 import scala.scalajs.js.`|`
 
 
 object MuiTextField {
 
-  val component = JsComponent[MuiTextFieldProps, Children.None, Null](Mui.TextField)
+  val component = JsComponent[MuiTextFieldProps, Children.Varargs, Null](Mui.TextField)
 
-  def apply(props: MuiTextFieldProps = MuiTextFieldProps.empty) =
-    component(props)
+  def apply(props: MuiTextFieldProps = MuiTextFieldProps.empty)(children: VdomNode*) =
+    component(props)(children: _*)
 
 }
 
@@ -33,11 +35,17 @@ trait MuiTextFieldProps extends MuiFormControlProps {
   val rows: js.UndefOr[String | Int] = js.undefined
   val rowsMax: js.UndefOr[String | Int] = js.undefined
   val select: js.UndefOr[Boolean] = js.undefined
-  val SelectProps: js.UndefOr[js.Object] = js.undefined
+  val SelectProps: js.UndefOr[MuiSelectProps] = js.undefined
   val `type`: js.UndefOr[String] = js.undefined
   val value: js.UndefOr[MuiInputValue_t | js.Array[MuiInputValue_t]] = js.undefined
 }
 object MuiTextFieldProps extends MuiPropsBaseStatic[MuiTextFieldProps]
+
+
+trait MuiSelectProps extends js.Object {
+  val native: js.UndefOr[Boolean] = js.undefined
+  val MenuProps: js.UndefOr[js.Object] = js.undefined
+}
 
 
 @js.native

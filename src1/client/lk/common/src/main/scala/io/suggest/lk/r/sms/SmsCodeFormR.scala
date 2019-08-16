@@ -87,7 +87,7 @@ class SmsCodeFormR(
                 override val onBlur       = _onInputBlurCbF
                 override val disabled     = v.disabled
               }
-            )
+            )()
           }
         }
       }

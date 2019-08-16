@@ -166,7 +166,7 @@ class JdR(
       val isSelected = jdArgs.selJdt.treeLocOpt.containsLabel(s)
       val isEditSelected = isSelected && jdArgs.conf.isEdit
 
-      val isWide = s.props1.bm.map(_.wide).getOrElseFalse
+      val isWide = s.props1.bm.hasExpandMode
 
       val bgColor = _bgColorOpt(s, jdArgs)
 

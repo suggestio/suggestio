@@ -1,11 +1,10 @@
 package io.suggest.jd.tags
 
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths, MBlockExpandModes}
 import io.suggest.common.geom.coord.MCoords2di
 import minitest._
 import play.api.libs.json.{Json, OFormat}
 import io.suggest.scalaz.ZTreeUtil._
-
 import scalaz.{Show, Tree}
 
 /**
@@ -36,8 +35,8 @@ object JdTagSpec extends SimpleTestSuite {
     )
   }
 
-  private val bm300x140 = BlockMeta(BlockWidths.NORMAL, BlockHeights.H140, wide = false)
-  private val bm300x300 = BlockMeta(BlockWidths.NORMAL, BlockHeights.H300, wide = true)
+  private val bm300x140 = BlockMeta(BlockWidths.NORMAL, BlockHeights.H140, expandMode = None)
+  private val bm300x300 = BlockMeta(BlockWidths.NORMAL, BlockHeights.H300, expandMode = Some( MBlockExpandModes.Wide ))
 
 
   private def coord1 = MCoords2di(10, 20)

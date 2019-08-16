@@ -1,7 +1,7 @@
 package util.ad
 
 import javax.inject.{Inject, Named, Singleton}
-import io.suggest.ad.blk.{BlockMeta, BlockWidths}
+import io.suggest.ad.blk.{BlockMeta, BlockWidths, MBlockExpandMode}
 import io.suggest.color.MHistogram
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
@@ -262,22 +262,23 @@ class JdAdUtil @Inject()(
     JdTag.props1
       .composeLens( MJdtProps1.bm )
       .composeTraversal( Traversal.fromTraverse[Option, BlockMeta] )
-      .composeLens( BlockMeta.wide )
+      .composeLens( BlockMeta.expandMode )
+      //.composeTraversal( Traversal.fromTraverse[Option, MBlockExpandMode] )
   }
 
   /** Выставление нового значения флага wide для всех блоков, имеющих иное значение флага.
     * Обычно используется для подавление true-значений для случаев, когда wide-рендер невозможен.
     *
     * @param blkTpl Шаблон блока или документа.
-    * @param wide2 Новое значение isWide.
+    * @param expandMode2 Новое значение expandMode.
     *              Обычно false, чтобы рендерить строго плитку вместо обычного варианта.
     * @return Обновлённое дерево документа.
     */
-  def setBlkWide(blkTpl: Tree[JdTag], wide2: Boolean): Tree[JdTag] = {
+  def resetBlkWide(blkTpl: Tree[JdTag], expandMode2: Option[MBlockExpandMode] = None): Tree[JdTag] = {
     val lens = _jdt_p1_bm_wide_LENS
     for (jdt <- blkTpl) yield {
-      if (jdt.name ==* MJdTagNames.STRIP && lens.exist(_ !=* wide2)(jdt)) {
-        lens.set(wide2)(jdt)
+      if (jdt.name ==* MJdTagNames.STRIP && lens.exist(_ !=* expandMode2)(jdt)) {
+        lens.set(expandMode2)(jdt)
       } else {
         jdt
       }
@@ -638,8 +639,8 @@ class JdAdUtil @Inject()(
             val jdTag = jdLoc.getLabel
             val bmOpt = jdTag.props1.bm
             // 2019.07.22 wide может влиять на размер картинки: узкие решения масштабируются по вертикали.
-            val isWide = allowWide && bmOpt.wide
-            val wideSzMult = OptionUtil.maybeOpt( isWide || (allowWide && jdLoc.parents.exists(_._2.props1.bm.wide)) ) {
+            val isWide = allowWide && bmOpt.hasExpandMode
+            val wideSzMult = OptionUtil.maybeOpt( isWide || (allowWide && jdLoc.parents.exists(_._2.props1.bm.hasExpandMode)) ) {
               bmOpt.flatMap { bm =>
                 val r = GridCalc.wideSzMult( bm, jdConf.gridColumnsCount )
                 LOGGER.warn(s"$logPrefix ${medge.nodeIds.mkString(",")} : WIDE szMult=$r")

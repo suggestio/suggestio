@@ -93,7 +93,7 @@ class CaptchaFormR(
                 override val onBlur       = _onInputBlurCbF
                 override val disabled     = captchaS.disabled
               }
-            )
+            )()
           }
         }
       }

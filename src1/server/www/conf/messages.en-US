@@ -1057,3 +1057,7 @@ Sms.code.sent.to.your.phone.number.0=SMS-message with registration code was sent
 My.node=Мой узел
 Type.previous.signup.data.to.start.password.recovery=Type your signup data to reset forgotten password.
 
+_Block.expand.w=Background horizontally
+_Block.expand.f=Full
+Expand=Expand
+Dont.expand=Don't expand

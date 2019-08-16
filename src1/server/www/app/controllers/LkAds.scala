@@ -211,7 +211,7 @@ class LkAds @Inject() (
         LOGGER.trace(s"$logPrefix Will render ${mad.idOrNull}")
         val mainTpl = jdAdUtil.getMainBlockTpl( mad )
         // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
-        val mainNonWideTpl = jdAdUtil.setBlkWide(mainTpl, wide2 = false)
+        val mainNonWideTpl = jdAdUtil.resetBlkWide( mainTpl )
         val edges2 = jdAdUtil.filterEdgesForTpl(mainNonWideTpl, mad.edges)
 
         val jdAdDataFut = jdAdUtil.mkJdAdDataFor

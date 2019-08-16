@@ -292,7 +292,7 @@ trait ScAdsTile
         } else {
           val tpl1 = jdAdUtil.getMainBlockTpl( brArgs.mad )
           // Убрать wide-флаг в main strip'е, иначе будет плитка со строкой-дыркой.
-          jdAdUtil.setBlkWide(tpl1, wide2 = false)
+          jdAdUtil.resetBlkWide( tpl1 )
         }
 
         // Собираем необходимые эджи и упаковываем в переносимый контейнер:

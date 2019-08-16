@@ -1,6 +1,6 @@
 package io.suggest.jd
 
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths, MBlockExpandModes}
 import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.i18n.MsgCodes
@@ -8,7 +8,6 @@ import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.math.SimpleArithmetics._
 import minitest._
-
 import scalaz.Tree
 
 /**
@@ -45,7 +44,7 @@ object JdDocValidationSpec extends SimpleTestSuite {
             bm = BlockMeta(
               w = w1,
               h = h1,
-              wide = true
+              expandMode = Some( MBlockExpandModes.Wide ),
             ),
             bgColor = Some(MColorData(
               code = "060d45"
@@ -66,7 +65,7 @@ object JdDocValidationSpec extends SimpleTestSuite {
             bm = BlockMeta(
               w = w1,
               h = BlockHeights.H140,
-              wide = true
+              expandMode = Some( MBlockExpandModes.Wide ),
             ),
             bgColor = Some(MColorData(
               code = "bcf014"
@@ -84,7 +83,7 @@ object JdDocValidationSpec extends SimpleTestSuite {
             bm = BlockMeta(
               w = w1,
               h = BlockHeights.H460,
-              wide = true
+              expandMode = Some( MBlockExpandModes.Wide ),
             ),
             bgColor = Some(MColorData(
               code = "111111"

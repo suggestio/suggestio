@@ -1003,28 +1003,37 @@ class DocEditAh[M](
 
 
     // Замена состояния галочки широкого рендера текущего стрипа новым значением
-    case m: StripStretchAcross =>
+    case m: BlockExpand =>
       val v0 = value
 
-      val tpl2 = v0.jdArgs
+      val jdt_p1_bm_expandOpt_LENS = JdTag.props1
+        .composeLens( MJdtProps1.bm )
+        .composeTraversal( Traversal.fromTraverse[Option, BlockMeta] )
+        .composeLens( BlockMeta.expandMode )
+      val jdtLoc0 = v0.jdArgs
         .selJdt.treeLocOpt
         .get
-        .modifyLabel { strip0 =>
-          require(strip0.name ==* MJdTagNames.STRIP)
-          JdTag.props1
-            .composeLens( MJdtProps1.bm )
-            .composeTraversal( Traversal.fromTraverse[Option, BlockMeta] )
-            .composeLens( BlockMeta.wide )
-            .set( m.isWide )(strip0)
-        }
-        .toTree
 
-      val v2 = MDocS.jdArgs.modify(
-        MJdArgs.template.set( tpl2 ) andThen
-        MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v0) )
-      )(v0)
+      val jdt0 = jdtLoc0.getLabel
+      require(jdt0.name ==* MJdTagNames.STRIP)
 
-      updated( v2 )
+      if ( jdt_p1_bm_expandOpt_LENS.exist(_ ==* m.expandMode)(jdt0) ) {
+        noChange
+
+      } else {
+        val tpl2 = jdtLoc0
+          .modifyLabel { strip0 =>
+            (jdt_p1_bm_expandOpt_LENS set m.expandMode)(strip0)
+          }
+          .toTree
+
+        val v2 = MDocS.jdArgs.modify(
+          MJdArgs.template.set( tpl2 ) andThen
+          MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v0) )
+        )(v0)
+
+        updated( v2 )
+      }
 
 
     // Изменение галочки управления main-флагом текущего блока.

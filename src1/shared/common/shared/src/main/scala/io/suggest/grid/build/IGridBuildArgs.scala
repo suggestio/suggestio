@@ -66,7 +66,7 @@ object MGbBlock {
     def headIsWide: Boolean = {
       gbTree
         .flatten
-        .exists(_.bmOpt.wide)
+        .exists(_.bmOpt.hasExpandMode)
     }
   }
 

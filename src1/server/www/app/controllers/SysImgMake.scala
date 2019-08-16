@@ -1,6 +1,6 @@
 package controllers
 
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockMetaJvm, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockMetaJvm, BlockWidths, MBlockExpandModes}
 import io.suggest.dev.{MScreenJvm, MSzMults}
 import io.suggest.util.logs.IMacroLogs
 import javax.inject.Singleton
@@ -88,7 +88,7 @@ trait SysImgMake
         MImgMakeArgs(
           img = img,
           targetSz = bmDflt.getOrElse {
-            BlockMeta.wide.set(true)( BlockMeta.DEFAULT )
+            BlockMeta.expandMode.set(Some(MBlockExpandModes.Wide))( BlockMeta.DEFAULT )
           },
           szMult = MSzMults.`1.0`.toFloat,
           devScreenOpt = ctx.deviceScreenOpt

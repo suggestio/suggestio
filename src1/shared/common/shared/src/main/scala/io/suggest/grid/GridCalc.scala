@@ -1,6 +1,6 @@
 package io.suggest.grid
 
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockPaddings, BlockWidth, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockPaddings, BlockWidth, BlockWidths, MBlockExpandModes}
 import io.suggest.common.geom.d2.IWidth
 import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.jd.MJdConf
@@ -85,27 +85,32 @@ object GridCalc {
     *         None, если szMult изменять нет необходимости.
     */
   def wideSzMult(bm: BlockMeta, gridColumnsCount: Int): Option[MSzMult] = {
-    val szMultOrNull = bm.h match {
-      // Малый блок можно увеличивать в 1,2,3,4 раза:
-      case BlockHeights.H140 =>
-        val szMultI = gridColumnsCount / bm.w.relSz
-        val szMultI2 = Math.min(4, szMultI)
-        MSzMult.fromInt( szMultI2 )
-      // Обычный блок-300 можно в 1 и 2 раза только:
-      case BlockHeights.H300 =>
-        val szMultI = gridColumnsCount / bm.w.relSz
-        val szMultI2 = Math.min(2, szMultI)
-        MSzMult.fromInt( szMultI2 )
-      // Остальное - без растяжки.
-      case BlockHeights.H460 =>
-        val szMultI = gridColumnsCount.toDouble / bm.w.relSz.toDouble
-        if (szMultI >= 1.5) MSzMults.`1.5`
-        else null
-      // Макс.блок - слишком жирен, чтобы ужирнять ещё:
-      case _ =>
-        null
-    }
-    Option( szMultOrNull )
+    bm.expandMode
+      .filter(_ ==* MBlockExpandModes.Full)
+      .flatMap { _ =>
+        Option {
+          bm.h match {
+            // Малый блок можно увеличивать в 1,2,3,4 раза:
+            case BlockHeights.H140 =>
+              val szMultI = gridColumnsCount / bm.w.relSz
+              val szMultI2 = Math.min(4, szMultI)
+              MSzMult.fromInt( szMultI2 )
+            // Обычный блок-300 можно в 1 и 2 раза только:
+            case BlockHeights.H300 =>
+              val szMultI = gridColumnsCount / bm.w.relSz
+              val szMultI2 = Math.min(2, szMultI)
+              MSzMult.fromInt( szMultI2 )
+            // Остальное - без растяжки.
+            case BlockHeights.H460 =>
+              val szMultI = gridColumnsCount.toDouble / bm.w.relSz.toDouble
+              if (szMultI >= 1.5) MSzMults.`1.5`
+              else null
+            // Макс.блок - слишком жирен, чтобы ужирнять ещё:
+            case _ =>
+              null
+          }
+        }
+      }
   }
 
 
@@ -122,7 +127,8 @@ object GridCalc {
       // Посчитать wideSzMult блока, если wide
       if tplJdt.name ==* MJdTagNames.STRIP
       bm          <- tplJdt.props1.bm.iterator
-      if bm.wide
+      expandMode  <- bm.expandMode.iterator
+      if expandMode ==* MBlockExpandModes.Full
       wideSzMult  <- GridCalc.wideSzMult( bm, jdConf.gridColumnsCount ).iterator
       jdt         <- tpl.flatten
     } yield {

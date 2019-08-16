@@ -1,6 +1,6 @@
 package io.suggest.ad.edit.m
 
-import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
+import io.suggest.ad.blk.{IBlockSize, IBlockSizes, MBlockExpandMode}
 import io.suggest.common.MHand
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.MSzMult
@@ -78,8 +78,8 @@ case class JdVldResult( vldRes: StringValidationNel[Tree[JdTag]] ) extends ILkEd
 case class SaveAdResp(timestamp: Long, tryResp: Try[MAdEditFormInit]) extends ILkEditAction
 
 
-/** Выставление галочки широкоформатного рендера блока. */
-case class StripStretchAcross(isWide: Boolean) extends ILkEditAction
+/** Выставление режима широкоформатного рендера блока. */
+case class BlockExpand( expandMode: Option[MBlockExpandMode] ) extends ILkEditAction
 
 
 /** Сигнал изменения флага текущего стрипа. */

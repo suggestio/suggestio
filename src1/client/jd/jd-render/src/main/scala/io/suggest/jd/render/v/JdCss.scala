@@ -213,7 +213,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         }
 
         // Выравнивание блока внутри внешнего контейнера:
-        if (bm.wide && !jdCssArgs.conf.isEdit) {
+        if (bm.expandMode.nonEmpty && !jdCssArgs.conf.isEdit) {
           // Если wide, то надо отцентровать блок внутри wide-контейнера.
           // Формула по X банальна: с середины внешнего контейнера вычесть середину smBlock и /2.
           import io.suggest.common.html.HtmlConstants._
@@ -255,7 +255,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( strip )
         styleS(
           // Записываем одну из двух сторон картинки.
-          if (bm.wide) {
+          if (bm.expandMode.nonEmpty) {
             // wide-картинки можно прессовать только по высоте блока
             height( _szMulted( bm.height, wideSzMultOpt ).px )
           } else {
@@ -272,7 +272,7 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     styleF(
       new Domain.OverSeq(
         _allJdTagsIter
-          .filter(_.props1.bm.wide)
+          .filter(_.props1.bm.hasExpandMode)
           .toIndexedSeq
       )
     ) { strip =>

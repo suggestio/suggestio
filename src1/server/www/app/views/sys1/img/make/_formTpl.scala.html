@@ -4,9 +4,10 @@
 
 @import helper._
 @import ctx._
-@import io.suggest.ad.blk.{BlockHeights, BlockWidths}
+@import io.suggest.ad.blk.{BlockHeights, BlockWidths, MBlockExpandModes}
 @import io.suggest.enum2.EnumeratumUtil.toSelectOptions
 @import io.suggest.dev.MPxRatios
+@import io.suggest.i18n.MsgCodes
 
 @form( CSRF(submitCall) ) {
 
@@ -38,10 +39,12 @@
     '_label -> "Широкоэкранное отображение?"
   )
 
-  @checkbox(
-    mf("args.blockMeta.heightGrow"),
-    '_label -> "Растягивать по вертикали?"
+  @select(
+    mf("args.blockMeta.expandMode"),
+    options = ("" -> messages(MsgCodes.`Dont.expand`)) :: MBlockExpandModes.values.iterator.map(mbem => mbem.value -> messages(mbem.msgCode)).toList,
+    '_label -> "Растягивать"
   )
+
   <br/>
 
 

@@ -1065,3 +1065,7 @@ Sms.code.sent.to.your.phone.number.0=На указанный вами номер
 My.node=Мой узел
 Type.previous.signup.data.to.start.password.recovery=Для сброса пароля, введите данные, указанные при регистрации ранее.
 
+_Block.expand.w=Фон горизонтально
+_Block.expand.f=Полностью
+Expand=Растягивать
+Dont.expand=Не растягивать

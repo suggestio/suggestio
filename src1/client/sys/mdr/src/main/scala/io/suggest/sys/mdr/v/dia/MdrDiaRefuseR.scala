@@ -96,7 +96,7 @@ class MdrDiaRefuseR {
               override val disabled = inputsDisabled
               override val fullWidth = true
             }
-          ),
+          )(),
 
           // При ожидании запроса - рендерить прогресс-бар:
           props.dismissReq.renderPending { _ =>
