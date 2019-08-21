@@ -1,6 +1,5 @@
 package com.github.souporserious.react.measure
 
-import japgolly.scalajs.react.Ref
 import minitest._
 
 import scala.scalajs.js

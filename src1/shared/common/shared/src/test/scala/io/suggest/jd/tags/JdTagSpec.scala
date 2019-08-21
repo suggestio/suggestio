@@ -94,6 +94,7 @@ object JdTagSpec extends SimpleTestSuite {
 
 
   test("JSON: 3-level document tree with inner children") {
+    val jdTag_p1_topLeft = JdTag.props1 composeLens MJdtProps1.topLeft
     val doc = Tree.Node(
       JdTag.document,
       Stream(
@@ -102,10 +103,8 @@ object JdTagSpec extends SimpleTestSuite {
           Stream(
             JdTag.edgeQdTree(2, coord1)
               .loc
-              .modifyLabel { jdt =>
-                jdt.withProps1(
-                  jdt.props1.withTopLeft( Some(MCoords2di(10, 20)) )
-                )
+              .modifyLabel {
+                jdTag_p1_topLeft set Some(MCoords2di(10, 20))
               }
               .toTree,
             //_picture(555),
@@ -117,10 +116,8 @@ object JdTagSpec extends SimpleTestSuite {
           Stream(
             JdTag.edgeQdTree(5, coord3)
               .loc
-              .modifyLabel { jdt =>
-                jdt.withProps1(
-                  jdt.props1.withTopLeft( Some(MCoords2di(45, 40)) )
-                )
+              .modifyLabel {
+                jdTag_p1_topLeft set Some(MCoords2di(45, 40))
               }
               .toTree,
             JdTag.edgeQdTree(2, coord1)

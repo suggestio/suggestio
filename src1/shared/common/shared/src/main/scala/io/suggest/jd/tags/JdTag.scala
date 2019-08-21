@@ -264,12 +264,6 @@ final case class JdTag(
   with IEqualsEq
 {
 
-  def withProps1(props1: MJdtProps1)              = copy(props1 = props1)
-  /** Для удобства написания тестов, props1 можно обновлять функцией. */
-  def updateProps1(f: MJdtProps1 => MJdtProps1)   = withProps1(f(props1))
-
-  def withQdProps(qdProps: Option[MQdOp])         = copy(qdProps = qdProps)
-
   def edgeUids: Iterable[MJdEdgeId] = {
     props1.bgImg ++
       qdProps.flatMap(_.edgeInfo)

@@ -1,6 +1,7 @@
 package io.suggest.grid
 
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockPaddings, BlockWidth, BlockWidths, MBlockExpandModes}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.d2.IWidth
 import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.jd.MJdConf
@@ -85,32 +86,32 @@ object GridCalc {
     *         None, если szMult изменять нет необходимости.
     */
   def wideSzMult(bm: BlockMeta, gridColumnsCount: Int): Option[MSzMult] = {
-    bm.expandMode
-      .filter(_ ==* MBlockExpandModes.Full)
-      .flatMap { _ =>
-        Option {
-          bm.h match {
-            // Малый блок можно увеличивать в 1,2,3,4 раза:
-            case BlockHeights.H140 =>
-              val szMultI = gridColumnsCount / bm.w.relSz
-              val szMultI2 = Math.min(4, szMultI)
-              MSzMult.fromInt( szMultI2 )
-            // Обычный блок-300 можно в 1 и 2 раза только:
-            case BlockHeights.H300 =>
-              val szMultI = gridColumnsCount / bm.w.relSz
-              val szMultI2 = Math.min(2, szMultI)
-              MSzMult.fromInt( szMultI2 )
-            // Остальное - без растяжки.
-            case BlockHeights.H460 =>
-              val szMultI = gridColumnsCount.toDouble / bm.w.relSz.toDouble
-              if (szMultI >= 1.5) MSzMults.`1.5`
-              else null
-            // Макс.блок - слишком жирен, чтобы ужирнять ещё:
-            case _ =>
-              null
-          }
+    // Мультипликатор размера рендера нужен только для full-expand.
+    // Обычный wide-режим просто растягивает только фон силами ScWideMaker, и дополнительный szMult не нужен.
+    OptionUtil.maybeOpt( bm.expandMode contains MBlockExpandModes.Full ) {
+      Option {
+        bm.h match {
+          // Малый блок можно увеличивать в 1,2,3,4 раза:
+          case BlockHeights.H140 =>
+            val szMultI = gridColumnsCount / bm.w.relSz
+            val szMultI2 = Math.min(4, szMultI)
+            MSzMult.fromInt( szMultI2 )
+          // Обычный блок-300 можно в 1 и 2 раза только:
+          case BlockHeights.H300 =>
+            val szMultI = gridColumnsCount / bm.w.relSz
+            val szMultI2 = Math.min(2, szMultI)
+            MSzMult.fromInt( szMultI2 )
+          // Остальное - без растяжки.
+          case BlockHeights.H460 =>
+            val szMultI = gridColumnsCount.toDouble / bm.w.relSz.toDouble
+            if (szMultI >= 1.5) MSzMults.`1.5`
+            else null
+          // Макс.блок - слишком жирен, чтобы ужирнять ещё:
+          case _ =>
+            null
         }
       }
+    }
   }
 
 

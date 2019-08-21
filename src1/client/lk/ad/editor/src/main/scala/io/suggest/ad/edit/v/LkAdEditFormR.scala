@@ -134,7 +134,7 @@ class LkAdEditFormR(
     def render(p: Props, s: State): VdomElement = {
       val LCSS = lkAdEditCss.Layout
 
-      <.div(
+      val contentDiv = <.div(
         ^.`class` := Css.Overflow.HIDDEN,
 
         // TODO Opt спиливать onClick, когда по состоянию нет ни одного открытого modal'а, например открытого color-picker'а.
@@ -299,6 +299,9 @@ class LkAdEditFormR(
 
         )
       )
+
+      contentDiv
+
     }
 
   }

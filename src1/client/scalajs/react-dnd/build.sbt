@@ -1,13 +1,10 @@
 Common.settingsOrgJS
 
-// Turn this project into a Scala.js project by importing these settings
-//enablePlugins(ScalaJSPlugin)
-
 enablePlugins(ScalaJSBundlerPlugin)
 
-name := "scalajs-react-measure"
+name := "scalajs-react-dnd"
 
-version := Common.Vsn.REACT_MEASURE
+version := Common.Vsn.REACT_DND
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
@@ -15,12 +12,17 @@ testFrameworks += new TestFramework("minitest.runner.Framework")
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG      %%% "scalajs-react-common" % "0.0.0",
   "io.monix"      %%% "minitest" % Common.minitestVsn % Test
 )
 
 npmDependencies in Compile ++= Seq(
-  "react-measure"  -> version.value,
+  "react-dnd-cjs"                 -> version.value,
+  "react-dnd-html5-backend-cjs"   -> version.value,
+  "react-dnd-touch-backend-cjs"   -> version.value,
+)
+
+npmDependencies in Test ++= Seq(
+  "react-dnd-test-backend-cjs"    -> version.value,
 )
 
 useYarn := true

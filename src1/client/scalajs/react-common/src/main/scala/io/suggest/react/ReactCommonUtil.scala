@@ -91,7 +91,7 @@ object ReactCommonUtil {
   object Implicits {
 
     /** Дополнительное API для react-рендера Option'ов. */
-    implicit class VdomElOptionExt[O[_], A](val o: O[A])(implicit O: OptionLike[O]) extends AnyRef {
+    implicit class VdomElOptionExt[O[_], A](val o: O[A])(implicit O: OptionLike[O]) {
 
       /**
        * Рендер Option[A] в VdomElement.
@@ -110,7 +110,7 @@ object ReactCommonUtil {
 
 
     /** Дополнительное API для react-рендера TagMod'ов. */
-    implicit class VdomTagModExt(val tm: TagMod) extends AnyRef {
+    implicit class VdomTagModExt(val tm: TagMod) extends AnyVal {
 
       /** Форсированное приведение TagMod'а к vdom-элементу.
         * Если текущий TagMod уже является vdom-элементом, то его и вернуть.
@@ -131,7 +131,7 @@ object ReactCommonUtil {
 
 
     /** Доп.утиль для строк в контексте рендера оных в реакте. */
-    implicit class ReactStringsExtOps(val str: String) extends AnyRef {
+    implicit class ReactStringsExtOps(val str: String) extends AnyVal {
 
       /** Изредка бывает, что нужно заменить пробелы в строке на NBSP.
         * Например, когда рендером MPrice занимается сервер из-за нереализованности этого на клиенте.
@@ -159,7 +159,7 @@ object ReactCommonUtil {
     * @param hocs HOC-функции, привидённые к scala-функциям (для удобства отработки нестандартных ситуаций).
     * @return Новый root-компонент.
     */
-  def applyHocs(component: js.Object)(hocs: (js.Object) => js.Object*): js.Object = {
+  def applyHocs(component: js.Object)(hocs: Function1[js.Object, js.Object]*): js.Object = {
     hocs
       .foldLeft(component) { (comp0, hocF) =>
         hocF(comp0)

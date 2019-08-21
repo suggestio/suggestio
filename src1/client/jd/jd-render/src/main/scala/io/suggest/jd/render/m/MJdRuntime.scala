@@ -1,6 +1,7 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MSzMult
 import io.suggest.grid.GridCalc
 import io.suggest.jd.MJdConf
@@ -8,6 +9,7 @@ import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.JdTag
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 import scalaz.Tree
 
 /**
@@ -51,6 +53,8 @@ object MJdRuntime {
 
   @inline implicit def univEq: UnivEq[MJdRuntime] = UnivEq.derive
 
+  val qdBlockLess = GenLens[MJdRuntime](_.qdBlockLess)
+
 }
 
 
@@ -59,8 +63,11 @@ object MJdRuntime {
   * @param jdCss Отрендеренный css.
   * @param jdtWideSzMults Ассоц.массив информации wideSzMult'ов по jd-тегам.
   *                       Появился для возможности увеличения wide-блоков без влияния на остальную плитку.
+  * @param qdBlockLess Состояния безблоковых qd-тегов с динамическими размерами в плитке.
+  *                    Оно заполняется асинхронно через callback'и из react-measure и др.
   */
 case class MJdRuntime(
                        jdCss            : JdCss,
                        jdtWideSzMults   : Map[JdTag, MSzMult],
+                       qdBlockLess      : Map[JdTag, MSize2di]    = Map.empty,
                      )

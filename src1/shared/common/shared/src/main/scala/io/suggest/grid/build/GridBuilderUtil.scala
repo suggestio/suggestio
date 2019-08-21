@@ -396,8 +396,7 @@ object GridBuilderUtil {
       override def isRoot = true
     }
 
-
-    // Начальное состояние цикла.
+    // Запуск step-цикла. Обновляет переменные в root-контекст, поэтому НЕ ленивый.
     val s9 = _stepper(
       MGbStepState(
         levels = MGbLevelState(
@@ -414,6 +413,8 @@ object GridBuilderUtil {
       .max
 
     //val paddedCellHeightPx = cellHeightPx + cellPaddingHeightPx
+    // TODO Тут проблема: если padding != 20, то эта примитивная формула рассчёта средней ширины ячейки ошибается, т.к. нет такой ширины:
+    // внутри блока неЕдиничной ширины всегда есть постоянный padding=20.
     val paddedCellWidthPx  = cellWidthPx  + cellPaddingWidthPx
 
     // Ширина всей плитки:
@@ -450,7 +451,6 @@ object GridBuilderUtil {
           y = res.topLeft.y + args.offY, //Math.round(res.topLeft.y * paddedCellHeightPx).toInt + args.offY
         )
       }
-      // НЕ ЛЕНИВАЯ коллекция, но это скорее дань традициям. Раньше на toStream/toSeq всё ломалось, т.к. переменные обновлялись прямо внутри итератора. Сейчас уже наверное можно и toStream делать.
       .toList
 
     MGridBuildResult(
@@ -490,89 +490,97 @@ trait IGridBuildCtx { outer =>
 
   def isRoot: Boolean
 
-  /** Поиск следующей пустой строки после указанной. */
-  def minHeightUsedAfterLine(linePx: Int): Int = {
-    val iter = (0 until colsCount)
-      .iterator
-      .map( getHeightUsed )
-      .filter(_ > linePx)
-    val r = if (iter.isEmpty) linePx
-    else iter.min
-    //println(s"mhu(after=$linePx) => $r")
-    r
-  }
-
-  /** Детектирование текущей максимальной ширины в сетке в текущей строке. */
-  def getMaxCellWidth(afterLine: Int, afterColumn: Int = 0): Int = {
-    // TODO Следует выкинуть var, занеся её в args, например.
-    var mw = 1
-    @tailrec def __detect(i: Int): Int = {
-      if (i < colsCount && getHeightUsed(i) <= afterLine ) {
-        mw += 1
-        __detect(i + 1)
-      } else {
-        mw - 1
-      }
-    }
-    __detect( afterColumn )
-  }
-
-
-  /** Сборка нового под-контекста для рендера под-плитки.
-    * Используется для вертикального рендера раскрытых карточек, чтобы выстраивать плитку внутри некоторых сжатых границ.
-    *
-    * @param outerLineCol cell-координата верхнего левого угла портала.
-    * @return Новый контекст [[IGridBuildCtx]].
-    */
-  def verticalSubGrid(outerLineCol: MCoords2di): IGridBuildCtx = {
-    val cellWidth = BlockWidths.max.relSz
-    // Бывает, что запрашиваемая плитка вылезает за пределамы исходной.
-    // Исправляем это прямо здесь.
-    val column2 = Math.max(0,
-      Math.min( outer.colsCount - cellWidth, outerLineCol.column )
-    )
-    val line2 = outerLineCol.line
-    //println("vertical subGrid = " + outerLineCol)
-
-    new IGridBuildCtx {
-      override def colsCount: Int = cellWidth
-      // Использовать subItems.max width?
-
-      override def colLineToAbs(xy: MCoords2di): MCoords2di = {
-        xy.copy(
-          x = columnToAbs( xy.x ),
-          y = lineToAbs( xy.y )
-        )
-      }
-
-      override def columnToAbs(ci: Int) =
-        ci + column2
-
-      override def lineToAbs(cl: Int) = cl + line2
-      override def absLineToRel(clAbs: Int) = clAbs - line2
-
-      override def getHeightUsed(ci: Int) = {
-        val hostHeightUsed = outer.getHeightUsed( columnToAbs(ci) )
-        Math.max(0, absLineToRel(hostHeightUsed) )
-      }
-
-      override def updateHeightUsed(ci: Int)(updateF: MColumnState => MColumnState): Unit = {
-        val hostCi = columnToAbs( ci )
-        outer.updateHeightUsed( hostCi)( updateF )
-      }
-
-      override def toString: String = {
-        outer.toString +
-          HtmlConstants.PLUS + line2 +
-          HtmlConstants.PLUS + column2
-      }
-
-      override final def isRoot = false
-
-    }
-  }
-
   override def toString = getClass.getSimpleName
+}
+object IGridBuildCtx {
+  implicit class GridBuildCtxApi( val ctx: IGridBuildCtx ) extends AnyVal {
+
+    /** Поиск следующей пустой строки после указанной. */
+    def minHeightUsedAfterLine(linePx: Int): Int = {
+      val iter = (0 until ctx.colsCount)
+        .iterator
+        .map( ctx.getHeightUsed )
+        .filter(_ > linePx)
+      val r = if (iter.isEmpty) linePx
+      else iter.min
+      //println(s"mhu(after=$linePx) => $r")
+      r
+    }
+
+    /** Детектирование текущей максимальной ширины в сетке в текущей строке. */
+    def getMaxCellWidth(afterLine: Int, afterColumn: Int = 0): Int = {
+      // TODO Следует выкинуть var, занеся её в args, например.
+      var mw = 1
+      @tailrec def __detect(i: Int): Int = {
+        if (i < ctx.colsCount && ctx.getHeightUsed(i) <= afterLine ) {
+          mw += 1
+          __detect(i + 1)
+        } else {
+          mw - 1
+        }
+      }
+      __detect( afterColumn )
+    }
+
+
+    /** Сборка нового под-контекста для рендера под-плитки.
+      * Используется для вертикального рендера раскрытых карточек, чтобы выстраивать плитку внутри некоторых сжатых границ.
+      *
+      * @param outerLineCol cell-координата верхнего левого угла портала.
+      * @return Новый контекст [[IGridBuildCtx]].
+      */
+    def verticalSubGrid(outerLineCol: MCoords2di): IGridBuildCtx = {
+      val cellWidth = BlockWidths.max.relSz
+      // Бывает, что запрашиваемая плитка вылезает за пределамы исходной.
+      // Исправляем это прямо здесь.
+      val column2 = Math.max(0,
+        Math.min( ctx.colsCount - cellWidth, outerLineCol.column )
+      )
+      val line2 = outerLineCol.line
+      //println("vertical subGrid = " + outerLineCol)
+
+      new IGridBuildCtx {
+        override def colsCount = cellWidth
+        // Использовать subItems.max width?
+
+        override def colLineToAbs(xy: MCoords2di): MCoords2di = {
+          xy.copy(
+            x = columnToAbs( xy.x ),
+            y = lineToAbs( xy.y )
+          )
+        }
+
+        override def columnToAbs(ci: Int) =
+          ci + column2
+
+        override def lineToAbs(cl: Int) =
+          cl + line2
+
+        override def absLineToRel(clAbs: Int) =
+          clAbs - line2
+
+        override def getHeightUsed(ci: Int) = {
+          val hostHeightUsed = ctx.getHeightUsed( columnToAbs(ci) )
+          Math.max(0, absLineToRel(hostHeightUsed) )
+        }
+
+        override def updateHeightUsed(ci: Int)(updateF: MColumnState => MColumnState): Unit = {
+          val hostCi = columnToAbs( ci )
+          ctx.updateHeightUsed( hostCi )( updateF )
+        }
+
+        override def toString: String = {
+          ctx.toString +
+            HtmlConstants.PLUS + line2 +
+            HtmlConstants.PLUS + column2
+        }
+
+        override final def isRoot = false
+
+      }
+    }
+
+  }
 }
 
 

@@ -12,8 +12,6 @@ object GridConst {
   def CELL300_COLUMNS_MAX = 4
   def CELL140_COLUMNS_MAX = CELL300_COLUMNS_MAX * 2
 
-  def PADDING_CSSPX = 20
-
   /** Сдвиг контейнера плитки по вертикали.
     * Состоит из высоты заголовка + 20 px. szMult не влияет. */
   def CONTAINER_OFFSET_TOP = 70

@@ -1,5 +1,6 @@
 package io.suggest.jd.render.m
 
+import com.github.souporserious.react.measure.Bounds
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.jd.tags.JdTag
 import io.suggest.jd.tags.qd.MQdOp
@@ -60,3 +61,6 @@ case class CurrContentResize(widthPx: Int) extends IJdAction
 
 /** Сигнал о ресайзе какого-то embed'а внутри текущего qd-тега. */
 case class QdEmbedResize(widthPx: Int, qdOp: MQdOp, edgeUid: EdgeUid_t, heightPx: Option[Int] = None) extends IJdAction
+
+/** Сигнал о выполнении измерения размеров qd-контента. */
+case class QdBoundsMeasured(jdTag: JdTag, bounds: Bounds) extends IJdAction

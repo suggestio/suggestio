@@ -3,7 +3,8 @@ package io.suggest.file.up
 import io.suggest.crypto.hash.HashesHex.MHASHES_HEX_FORMAT_TRASPORT
 import io.suggest.crypto.hash.{HashesHex, MHash}
 import io.suggest.pick.MimeConst
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -23,7 +24,7 @@ object MFile4UpProps {
   }
 
   /** Поддержка play-json. */
-  implicit val MUP_FILE_PROPS_FORMAT: OFormat[MFile4UpProps] = {
+  implicit def MUP_FILE_PROPS_FORMAT: OFormat[MFile4UpProps] = {
     val F = Fields
     (
       (__ \ F.SIZE_B_FN).format[Long] and

@@ -90,7 +90,7 @@ object Common {
     /** Улучшенное жестко-типизированное сравнение.
       * @see [[https://github.com/japgolly/univeq#scalaz]]
       */
-    val UNIVEQ = "1.+"
+    val UNIVEQ = "1.1.+"
 
     /** Apache commons lang3
       * @see [[https://commons.apache.org/proper/commons-lang/]]
@@ -220,6 +220,11 @@ object Common {
 
     /** @see [[https://mvnrepository.com/artifact/commons-codec/commons-codec]] */
     val APACHE_COMMONS_CODEC = "1.12"
+
+    val REACT_MEASURE = "2.3.0"
+
+    /** @see [[https://www.npmjs.com/package/react-dnd]]. */
+    val REACT_DND = "9.3.9"
 
   }
 

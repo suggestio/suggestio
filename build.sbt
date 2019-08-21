@@ -82,10 +82,20 @@ lazy val commonSjs = {
     .dependsOn(commonJS)
 }
 
+/** Для доступа к react test-utils, используется такая шпилька в конфигурации:
+  * Testing - https://github.com/japgolly/scalajs-react/blob/master/doc/TESTING.md#setup
+  */
+lazy val libDepsReactTest = {
+  libraryDependencies ++= Seq(
+    "com.github.japgolly.scalajs-react" %%% "test" % Common.reactSjsVsn % Test
+  )
+}
+
 /** Расшаренная утиль для интеграции с react.js через scalajs-react. */
 lazy val commonReactSjs = {
   Project(id = "scalajs-react-common", base = file(DIR0 + "client/scalajs/react-common"))
     .dependsOn(commonSjs)
+    .settings( libDepsReactTest )   // Чисто чтобы понимать, что эта конфигурация работает
 }
 
 /** Sjs-фасад для JSON-формата Quill Delta. */
@@ -132,7 +142,7 @@ lazy val lkAdvExtSjs = {
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
-    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, asmCryptoSioSjs, reactMaterialUiSjs )
+    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, asmCryptoSioSjs, reactMaterialUiSjs, reactDndSjs )
 }
 
 /** Трейты для поддержки простых логов. */
@@ -246,6 +256,14 @@ lazy val reactResizableSjs = {
   val name = "react-resizable"
   Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
     .dependsOn( commonReactSjs )
+}
+
+/** React drag-n-drop фасады scala-js. */
+lazy val reactDndSjs = {
+  val name = "react-dnd"
+  Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
+    .dependsOn( commonReactSjs )
+    .settings( libDepsReactTest )
 }
 
 /** Scala.js-фасад для компонентов в react-sanfona. */
@@ -633,7 +651,8 @@ lazy val sio2 = {
       momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, cordovaSioUtilSjs, bleBeaconerSjs,
       reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
-      reactGridLayoutSjs, reactStoneCutterSjs, gridSjs, reactSidebar, reactScroll, reactMeasureSjs,
+      reactGridLayoutSjs, reactStoneCutterSjs, gridSjs,
+      reactSidebar, reactScroll, reactMeasureSjs, reactDndSjs,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
       lkAdEditorSjs, lkAdnEditSjs,
       lkAdsSjs, lkTagsEditSjs, lkAdnMapSjs, lkAdvExtSjs, lkNodesFormSjs, lkCommonSjs,

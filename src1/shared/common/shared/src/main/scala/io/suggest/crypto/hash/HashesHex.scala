@@ -1,7 +1,7 @@
 package io.suggest.crypto.hash
 
 import io.suggest.scalaz.ScalazUtil
-import play.api.libs.functional.syntax._
+import io.suggest.ueq.UnivEqUtil._
 import play.api.libs.json._
 import japgolly.univeq._
 
@@ -17,7 +17,7 @@ object HashesHex {
     * Поддержка play-json для таблицы хэшей, передаваемой через сеть.
     * Максимально компактный формат, но он НЕ подходит для индексирования в ES.
     */
-  implicit val MHASHES_HEX_FORMAT_TRASPORT: OFormat[HashesHex] = {
+  implicit def MHASHES_HEX_FORMAT_TRASPORT: OFormat[HashesHex] = {
     val r = Reads.mapReads[MHash, String] { k =>
       MHashes
         .withValueOpt(k)

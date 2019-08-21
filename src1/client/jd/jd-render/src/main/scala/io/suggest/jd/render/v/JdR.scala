@@ -1,6 +1,7 @@
 package io.suggest.jd.render.v
 
 import com.github.dantrain.react.stonecutter._
+import com.github.souporserious.react.measure.{Bounds, Measure}
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
@@ -55,27 +56,8 @@ class JdR(
   type Props = ModelProxy[Props_t]
 
 
-  /** Движок рендера для сборки под разные ситуации. Можно вынести за пределы компонента. */
-  trait JdRenderer {
-
-    protected def jdTagClick(jdt: JdTag)(e: ReactMouseEvent): Callback
-
-    protected def qdTagDragStart(jdt: JdTag)(e: ReactDragEvent): Callback
-
-    protected def stripDragStart(jdt: JdTag)(e: ReactDragEvent): Callback
-
-    protected def jdTagDragEnd(jdt: JdTag)(e: ReactDragEvent): Callback
-
-    protected def jdStripDragOver(e: ReactDragEvent): Callback
-
-    protected def onDropToStrip(s: JdTag)(e: ReactDragEvent): Callback
-
-    protected def onNewImageLoaded(edgeUid: EdgeUid_t)(e: ReactEvent): Callback
-
-    protected def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml): Callback
-
-    protected def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs, withHeight: Boolean)(e: ReactMouseEventFromHtml): Callback
-
+  /** Рендерер дерева jd-тегов. */
+  class Backend($: BackendScope[Props, Props_t]) {
 
     /** Отрендерить дочерние элементы тега обычным методом.
       *
@@ -343,11 +325,11 @@ class JdR(
       * @param qdTagTree Тег с кодированными данными Quill delta.
       * @return Элемент vdom.
       */
-    def renderQd(qdTagTree: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): TagOf[html.Div] = {
+    def renderQd(qdTagTree: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): VdomElement = {
       val qdTag = qdTagTree.rootLabel
       val isCurrentSelected = jdArgs.selJdt.treeLocOpt containsLabel qdTag
 
-      <.div(
+      val contentDiv = <.div(
         ^.key := i.toString,
 
         // Опциональный цвет фона
@@ -413,6 +395,17 @@ class JdR(
         )
           .render()
       )
+
+      // Если рендер ВНЕ блока, то нужно незаметно измерить высоту блока.
+      if (parent.name ==* MJdTagNames.STRIP) {
+        // Рендер внутри блока, просто пропускаем контент на выход
+        contentDiv
+      } else {
+        // Рендер вне блока. Высоту надо измерять,
+        Measure.bounds( blocklessQdContentBoundsMeasuredJdCb(qdTag, _) ) { ref =>
+          contentDiv.withRef(ref)
+        }
+      }
     }
 
 
@@ -428,7 +421,7 @@ class JdR(
       * Запуск рендеринга произвольных тегов.
       */
     // TODO parent может быть необязательным. Но это сейчас не востребовано, поэтому он обязательный
-    def renderTag(idt: Tree[JdTag], jdArgs: MJdArgs, i: Int = 0, parent: JdTag = null): TagOf[html.Div] = {
+    def renderTag(idt: Tree[JdTag], jdArgs: MJdArgs, i: Int = 0, parent: JdTag = null): VdomElement = {
       import MJdTagNames._
       idt.rootLabel.name match {
         case QD_CONTENT                => renderQd( idt, i, jdArgs, parent )
@@ -438,24 +431,11 @@ class JdR(
       }
     }
 
-    def renderJdArgs(jdArgs: MJdArgs): TagOf[html.Div] = {
-      renderTag(
-        idt     = jdArgs.template,
-        jdArgs  = jdArgs,
-        parent  = jdArgs.template.rootLabel
-      )
-    }
-
-  }
-
-
-  /** Рендерер дерева jd-тегов. */
-  protected class Backend($: BackendScope[Props, Props_t]) extends JdRenderer {
 
     // Callbacks
 
     /** Реакция на клик по отрендеренному тегу. */
-    override protected def jdTagClick(jdt: JdTag)(e: ReactMouseEvent): Callback = {
+    private def jdTagClick(jdt: JdTag)(e: ReactMouseEvent): Callback = {
       // Если не сделать stopPropagation, то наружный strip перехватит клик
       e.stopPropagationCB >>
         dispatchOnProxyScopeCB($, JdTagSelect(jdt) )
@@ -465,7 +445,7 @@ class JdR(
     /** Начало таскания qd-тега.
       * Бывают сложности с рассчётом координат. Особенно, если используется плитка.
       */
-    override protected def qdTagDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
+    private def qdTagDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
       // Обязательно надо в setData() что-то передать.
       val mimes = MimeConst.Sio
 
@@ -501,26 +481,26 @@ class JdR(
     }
 
     /** Начинается перетаскивание целого стрипа. */
-    override protected def stripDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
+    private def stripDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
       // Надо выставить в событие, что на руках у нас целый стрип.
       val mimes = MimeConst.Sio
       e.dataTransfer.setData( mimes.DATA_CONTENT_TYPE, mimes.DataContentTypes.STRIP )
       dispatchOnProxyScopeCB($, JdTagDragStart(jdt) )
     }
 
-    override protected def jdTagDragEnd(jdt: JdTag)(e: ReactDragEvent): Callback = {
+    private def jdTagDragEnd(jdt: JdTag)(e: ReactDragEvent): Callback = {
       dispatchOnProxyScopeCB($, JdTagDragEnd(jdt) )
     }
 
 
-    override protected def jdStripDragOver(e: ReactDragEvent): Callback = {
+    private def jdStripDragOver(e: ReactDragEvent): Callback = {
       // В b9710f2 здесь была проверка cookie через getData, но webkit/chrome не поддерживают доступ в getData во время dragOver. Ппппппц.
       e.preventDefaultCB
     }
 
 
     /** Что-то было сброшено на указанный стрип. */
-    override protected def onDropToStrip(s: JdTag)(e: ReactDragEvent): Callback = {
+    private def onDropToStrip(s: JdTag)(e: ReactDragEvent): Callback = {
       val mimes = MimeConst.Sio
 
       e.preventDefault()
@@ -584,7 +564,7 @@ class JdR(
 
 
     /** Callback о завершении загрузки в память картинки, у которой неизвестны какие-то рантаймовые параметры. */
-    override protected def onNewImageLoaded(edgeUid: EdgeUid_t)(e: ReactEvent): Callback = {
+    private def onNewImageLoaded(edgeUid: EdgeUid_t)(e: ReactEvent): Callback = {
       imgRenderUtilJs.notifyImageLoaded($, edgeUid, e)
     }
 
@@ -605,22 +585,20 @@ class JdR(
           .toInt
       }
     }
-    private def _parseWidth(e: ReactMouseEventFromHtml): Option[Int] = {
+    private def _parseWidth(e: ReactMouseEventFromHtml): Option[Int] =
       _parseStylePx(e)(_.width)
-    }
-    private def _parseHeight(e: ReactMouseEventFromHtml): Option[Int] = {
+    private def _parseHeight(e: ReactMouseEventFromHtml): Option[Int] =
       _parseStylePx(e)(_.height)
-    }
 
     /** Самописная поддержка ресайза контента только силами браузера. */
-    override protected def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml): Callback = {
+    private def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml): Callback = {
       _parseWidth(e).fold(Callback.empty) { widthPx =>
         dispatchOnProxyScopeCB( $, CurrContentResize( widthPx ) )
       }
     }
 
 
-    override protected def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs, withHeight: Boolean)(e: ReactMouseEventFromHtml): Callback = {
+    private def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs, withHeight: Boolean)(e: ReactMouseEventFromHtml): Callback = {
       _parseWidth(e).fold(Callback.empty) { widthPx =>
         // stopPropagation() нужен, чтобы сигнал не продублировался в onQdTagResize()
         val heightPxOpt = OptionUtil.maybe(withHeight)(_parseHeight(e).get)
@@ -629,11 +607,20 @@ class JdR(
       }
     }
 
+    /** Реакция на получение информации о размерах внеблокового qd-контента. */
+    private def blocklessQdContentBoundsMeasuredJdCb(qdTag: JdTag, b: Bounds): Callback =
+      dispatchOnProxyScopeCB( $, QdBoundsMeasured(qdTag, b) )
+
+
     /** Рендер компонента. */
-    def render(s: Props_t): VdomElement = {
+    def render(state: Props_t): VdomElement = {
       // Тут была попытка завернуть всё в коннекшен для явной защиты от перерендеров при неизменных MJdArgs.
       // Итог: фейл. Нарушается актуальность JdCss, перерендеры остаются.
-      renderJdArgs(s)
+      renderTag(
+        idt     = state.template,
+        jdArgs  = state,
+        parent  = state.template.rootLabel
+      )
     }
 
   } // Backend
@@ -650,74 +637,5 @@ class JdR(
 
   private def _apply(jdArgsProxy: Props) = component( jdArgsProxy )
   val apply: ReactConnectProps[Props_t] = _apply
-
-
-  def renderSeparated(jdArgsProxy: Props): Iterator[VdomElement] = {
-    jdArgsProxy.value.template
-      .subForest
-      .iterator
-      .zipWithIndex
-      .map { case (jdStripTree, i) =>
-        jdArgsProxy.wrap {
-          MJdArgs.template.set( jdStripTree ) andThen
-          MJdArgs.renderArgs
-            .composeLens(MJdRenderArgs.selPath)
-            .modify {
-              _.flatMap {
-                case h :: t =>
-                  OptionUtil.maybe(h ==* i)(t)
-                case Nil =>
-                  // should never happen
-                  None
-              }
-            }
-        } { jdArgs2Proxy =>
-          <.div(
-            ^.key := i.toString,
-            jdR.apply(jdArgs2Proxy)
-          )
-        }
-      }
-  }
-
-
-
-  /** Опциональный компонент, который просто является костылём-надстройкой на JdR.component. */
-  // TODO Нужен ли? По факту -- не используется.
-  val optional = ScalaComponent
-    .builder[ModelProxy[Option[MJdArgs]]]("JdOpt")
-    .stateless
-    .render_P { jdArgsOptProxy =>
-      jdArgsOptProxy.value.whenDefinedEl { jdArgs =>
-        jdArgsOptProxy.wrap(_ => jdArgs) { component.apply }
-      }
-    }
-    .build
-
-
-  /** Рендерер HTML всырую.
-    * При использовании плитки react-stonecutter возникла проблема с child-монтированием:
-    * нет анимации внутри child-компонетов.
-    */
-  object InlineRender extends JdRenderer {
-
-    override protected def jdTagClick(jdt: JdTag)(e: ReactMouseEvent) = Callback.empty
-
-    override protected def qdTagDragStart(jdt: JdTag)(e: ReactDragEvent) = Callback.empty
-
-    override protected def stripDragStart(jdt: JdTag)(e: ReactDragEvent) = Callback.empty
-
-    override protected def jdTagDragEnd(jdt: JdTag)(e: ReactDragEvent) = Callback.empty
-
-    override protected def jdStripDragOver(e: ReactDragEvent) = Callback.empty
-
-    override protected def onDropToStrip(s: JdTag)(e: ReactDragEvent) = Callback.empty
-
-    override protected def onNewImageLoaded(edgeUid: EdgeUid_t)(e: ReactEvent) = Callback.empty
-
-    override protected def onQdTagResize(qdTag: JdTag)(e: ReactMouseEventFromHtml) = Callback.empty
-
-    override protected def onQdEmbedResize(qdOp: MQdOp, edgeDataJs: MEdgeDataJs, withHeight: Boolean)(e: ReactMouseEventFromHtml) = Callback.empty
-  }
 
 }

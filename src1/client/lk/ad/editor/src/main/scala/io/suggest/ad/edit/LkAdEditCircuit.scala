@@ -27,9 +27,11 @@ import io.suggest.lk.m.color.{MColorPick, MColorsState}
 import io.suggest.lk.m.img.MPictureAh
 import io.suggest.msg.ErrorMsgs
 import scalaz.{Tree, TreeLoc}
+import scalaz.std.option._
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.spa.CircuitUtil._
 import io.suggest.ws.pool.m.MWsPoolS
+import monocle.Traversal
 
 /**
   * Suggest.io
@@ -218,21 +220,20 @@ class LkAdEditCircuit(
   /** Цвет тени RW. */
   private val shadowColorRW = {
     val zoomer = new ZoomToBgColorPick {
+      lazy val jdt_p1_textShadow_color_TRAV = JdTag.props1
+        .composeLens( MJdtProps1.textShadow )
+        .composeTraversal( Traversal.fromTraverse[Option, MJdShadow] )
+        .composeLens( MJdShadow.color )
+
       override def getColorOpt(jdTag: JdTag): Option[MColorData] = {
-        jdTag.props1.textShadow
-          .flatMap(_.color)
+        jdt_p1_textShadow_color_TRAV
+          .headOption( jdTag )
+          .flatten
       }
 
       override def setColorOpt(jdTag: JdTag, colorOpt2: Option[MColorData]): JdTag = {
-        jdTag.withProps1(
-          jdTag.props1.withTextShadow(
-            for (shad0 <- jdTag.props1.textShadow) yield {
-              shad0.withColor( colorOpt2 )
-            }
-          )
-        )
+        jdt_p1_textShadow_color_TRAV.set( colorOpt2 )(jdTag)
       }
-
     }
     zoomer.getZoom
   }

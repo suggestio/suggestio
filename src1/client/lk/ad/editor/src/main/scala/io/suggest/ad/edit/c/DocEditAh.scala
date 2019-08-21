@@ -11,6 +11,7 @@ import io.suggest.color.MColorData
 import io.suggest.common.MHands
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.MsgCodes
@@ -265,7 +266,7 @@ class DocEditAh[M](
     case m: RotateSet =>
       val v0 = value
 
-      val updatedOpt = for {
+      (for {
         selJdtLoc0 <- v0.jdArgs.selJdt.treeLocOpt
         jdt0 = selJdtLoc0.getLabel
         if (jdt0.props1.rotateDeg !=* m.degrees) &&
@@ -288,9 +289,68 @@ class DocEditAh[M](
         )( v0 )
 
         updated( v2 )
-      }
+      })
+       .getOrElse( noChange )
 
-      updatedOpt getOrElse noChange
+
+    // Сообщение о завершении измерения высоты внеблокового qd-контента.
+    case m: QdBoundsMeasured =>
+      // Нужно найти тег в MJdRuntime и решить, что же делать дальше.
+      val v0 = value
+
+      val boundsSz2 = MSize2di(
+        width  = m.bounds.width.toInt,
+        height = m.bounds.height.toInt,
+      )
+
+      val doc_jd_runtime_qdBlockLess_LENS = MDocS.jdArgs
+        .composeLens( MJdArgs.jdRuntime )
+        .composeLens( MJdRuntime.qdBlockLess )
+
+      val qdBl0 = doc_jd_runtime_qdBlockLess_LENS.get( v0 )
+
+      // Найти все безблоковые qd-теги в текущем документе:
+      lazy val blockLessQds = v0.jdArgs.template
+        .subForest
+        .map(_.rootLabel)
+        .filter(_.name ==* MJdTagNames.QD_CONTENT)
+
+      // Т.к. react-measure склонна присылать bounds дважды (согласно докам), то сначала смотрим уже записанные данные.
+      val boundsOpt0 = qdBl0.get( m.jdTag )
+      if (boundsOpt0 contains[MSize2di] boundsSz2) {
+        // Повторный сигнал размера, и этот размер не изменился. Игнорируем.
+        noChange
+
+      } else if (
+        // Убедившись, что тег существует в текущем документе, пересохранить полученные размеры.
+        boundsOpt0.nonEmpty ||
+        (blockLessQds contains m.jdTag)
+      ) {
+        val qdBl2 = qdBl0 + (m.jdTag -> boundsSz2)
+        val v2 = doc_jd_runtime_qdBlockLess_LENS.set( qdBl2 )(v0)
+
+        // Нужно понять, остались ли ещё внеблоковые qd-теги, от которых ожидаются размеры.
+        val hasMoreBlQdsAwaiting = blockLessQds
+          .iterator
+          .filter( _ !=* m.jdTag )
+          .exists { jdt =>
+            // Остались ли ещё внеблоковые qd-контент-теги, от которых надо дождаться размеров?
+            // Остались, если есть тег (кроме текущего), которые отсутствует в jdRuntime.qdBlockLess
+            (jdt !=* m.jdTag) &&
+            !(qdBl0 contains jdt)
+          }
+
+        if (hasMoreBlQdsAwaiting)
+          // Пере-рендер плитки не требуется, т.к. в очереди есть ещё qd-bounds-экшены, помимо этого.
+          updatedSilent( v2 )
+        else
+          // Больше не надо дожидаться экшенов от других qd-тегов, запускаем новый рендер плитки:
+          updated( v2 )
+
+      } else {
+        // Сигнал от неизвестного тега. Вероятно, был пере-рендер, а сообщение с bounds просто застряло в очереди на обработку с прошлого рендера.
+        noChange
+      }
 
 
     // Клик по элементу карточки.

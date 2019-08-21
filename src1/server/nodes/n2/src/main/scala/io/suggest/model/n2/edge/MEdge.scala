@@ -5,7 +5,8 @@ import io.suggest.model.PrefixedFn
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MNodeGeoLevel
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

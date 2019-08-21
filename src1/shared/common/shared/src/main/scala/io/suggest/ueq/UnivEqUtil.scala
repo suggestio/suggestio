@@ -48,6 +48,7 @@ object UnivEqUtil {
 
 
   @inline implicit def seqUe[T: UnivEq]         : UnivEq[Seq[T]]          = UnivEq.force
+  @inline implicit def setUe[T: UnivEq]         : UnivEq[Set[T]]          = UnivEq.force
   @inline implicit def indexedSeqUe[T: UnivEq]  : UnivEq[IndexedSeq[T]]   = UnivEq.force
   @inline implicit def iterableUe[T: UnivEq]    : UnivEq[Iterable[T]]     = UnivEq.force
 
