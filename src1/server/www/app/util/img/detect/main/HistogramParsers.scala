@@ -47,14 +47,17 @@ class HistogramParsers extends JavaTokenParsers {
     "#" ~> colorHexP <~ alphaP
   }
 
-  /** Запись цвета в srgb. Следует помнить, что для RGB(0,0,0) im возвращает строку "black". */
-  def SRGB_REC_P: Parser[MRgb] = "s?rgba?\\(".r ~> RGB_P <~ ")"
+  /** Запись цвета в srgb.
+    * Следует помнить, что для RGB(0,0,0) im возвращает строку "black".
+    * А бывает, что колонка выглядит так: cielab(47.5563%,81.6541%,21.5152%)
+    * */
+  //def SRGB_REC_P: Parser[MRgb] = "s?rgba?\\(".r ~> RGB_P <~ ")"
 
   /** "gray", "gray(255)", "white", etc. */
-  def COLOR_NAME_P: Parser[String] = "(?i)[_a-z ]+[(0-9)]*".r
+  //def COLOR_NAME_P: Parser[String] = "(?i)[_a-z ]+[(0-9)]*".r
 
   def LINE_PARSER: Parser[MColorData] = {
-    val p = (FREQ_P <~ ":") ~ RGB_TUPLE_P ~ HEX_COLOR_P <~ (SRGB_REC_P | COLOR_NAME_P)
+    val p = (FREQ_P <~ ":") ~ RGB_TUPLE_P ~ HEX_COLOR_P <~ ".*".r //(SRGB_REC_P | COLOR_NAME_P | )
     p ^^ {
       case freq ~ rgb ~ hexColor =>
         MColorData(

@@ -33,7 +33,6 @@ class FilesDropZoneR {
     .builder[ImgEditBtnDropFiles](getClass.getSimpleName + "In" )
     .stateless
     .render_PC { (props, children) =>
-      println( children )
       props.dropConnectF.applyVdomEl(
         <.div(
           ^.className := Css.Overflow.HIDDEN,
