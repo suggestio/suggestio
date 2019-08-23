@@ -15,10 +15,12 @@ import io.suggest.msg.Messages
 import io.suggest.n2.edge.MEdgeDataJs
 import MEdgeDataJs.MEdgeDataJsTupleFastEq
 import io.suggest.dev.{MSzMult, MSzMults}
+import io.suggest.lk.r.FilesDropZoneR
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
 import io.suggest.sjs.common.model.dom.DomListSeq
+import io.suggest.spa.DAction
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react._
@@ -32,7 +34,8 @@ import org.scalajs.dom
   * Description: Кнопка редактора какой-то картинки: картинку можно загрузить, убрать, кропнуть и т.д.
   */
 class ImgEditBtnR(
-                   imgRenderUtilJs: ImgRenderUtilJs
+                   filesDropZoneR   : FilesDropZoneR,
+                   imgRenderUtilJs  : ImgRenderUtilJs
                  ) {
 
 
@@ -81,7 +84,7 @@ class ImgEditBtnR(
       val propsVal = propsValProxy.value
 
       <.div(
-        ^.`class` := Css.flat1( C.IMAGE :: propsVal.size :: propsVal.css ),
+        ^.`class` := Css.flat1( C.IMAGE :: propsVal.size :: Css.Overflow.HIDDEN :: propsVal.css ),
 
         propsVal.bgColor.whenDefined { bgColor =>
           ^.backgroundColor := bgColor.hexCode
@@ -159,13 +162,35 @@ class ImgEditBtnR(
   }
 
 
-  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
+  /** Компонент без поддержки Drag-Drop файлов. */
+  val componentPlain = ScalaComponent
+    .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
     .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(ImgEditBtnRPropsValFastEq) )
     .build
 
-  def _apply(propsValProxy: Props) = component( propsValProxy )
+  /** Компонент с поддержкой Drag-Drop файлов извне. Требует DndContext снаружи. */
+  val componentDrop = ScalaComponent
+    .builder[Props]( getClass.getSimpleName + "Dnd" )
+    .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
+    .render_P { props =>
+      filesDropZoneR.component {
+        // Сборка функции доступа к FRK
+        props.zoom { p =>
+          filesDropZoneR.PropsVal(
+            mkActionF  = PictureFileChanged(_: Seq[dom.File], p.resKey): DAction,
+            cssClasses = p.css,
+          )
+        }( filesDropZoneR.FilesDropZoneRFastEq )
+      }(
+        componentPlain(props)
+      )
+    }
+    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(ImgEditBtnRPropsValFastEq) )
+    .build
+
+  def _apply(propsValProxy: Props) = componentDrop( propsValProxy )
   val apply: ReactConnectProps[Props_t] = _apply
 
 }

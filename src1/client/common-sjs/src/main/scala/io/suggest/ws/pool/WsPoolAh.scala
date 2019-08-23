@@ -15,7 +15,7 @@ import org.scalajs.dom.raw.WebSocket
 import org.scalajs.dom.{CloseEvent, ErrorEvent, Event, MessageEvent}
 import play.api.libs.json.Json
 
-import scala.util.Success
+import scala.util.{Success, Try}
 
 /**
   * Suggest.io
@@ -141,8 +141,9 @@ class WsPoolAh[M](
               }
               // Подписываемся на события ошибок сокета.
               ws.addEventListener4s(DomEvents.ERROR) { e: ErrorEvent =>
-                LOG.error(ErrorMsgs.CONNECTION_ERROR, msg = (e.filename, e.lineno, e.colno, e.message))
-                dispatcher(WsError(key, e.message))
+                // Undefined behaviour detected ... undefined is not an instance of j.l.String
+                LOG.error(ErrorMsgs.CONNECTION_ERROR, msg = Try((e.filename, e.lineno, e.colno, e.message)))
+                dispatcher(WsError(key, Try(e.message).getOrElse("") ))
               }
 
               // Сохранить готовый сокет в состояние.

@@ -2,6 +2,7 @@ package io.suggest.lk.r
 
 import com.github.react.dnd.{DropTarget, DropTargetF, DropTargetMonitor, DropTargetSpec}
 import com.github.react.dnd.backend.html5.{IItemFile, NativeTypes}
+import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -12,6 +13,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom
 import scalacss.internal.Literal
+import io.suggest.ueq.UnivEqUtil._
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -24,9 +26,20 @@ import scala.scalajs.js
   */
 class FilesDropZoneR {
 
-  type Props_t = Seq[dom.File] => DAction
-  type Props = ModelProxy[Props_t]
+  case class PropsVal(
+                       mkActionF      : Seq[dom.File] => DAction,
+                       cssClasses     : List[String]                = Nil,
+                     )
+  object FilesDropZoneRFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      (a.mkActionF eq b.mkActionF) &&
+      (a.cssClasses ===* b.cssClasses)
+    }
+  }
 
+
+  type Props_t = PropsVal
+  type Props = ModelProxy[Props_t]
 
   /** Обёртка для дропа файла перетаскиванием. */
   private val dropWrapComponent = ScalaComponent
@@ -35,13 +48,11 @@ class FilesDropZoneR {
     .render_PC { (props, children) =>
       props.dropConnectF.applyVdomEl(
         <.div(
-          ^.className := Css.Overflow.HIDDEN,
+          ^.`class` := Css.flat1( Css.Overflow.HIDDEN :: (props.cssClasses getOrElse Nil) ),
           ReactCommonUtil.maybe( props.isOver ) {
             ^.outline := Literal.Typed.dashed.value
           },
           children
-          //component( props.proxy )
-          // TODO
         )
       )
     }
@@ -53,11 +64,11 @@ class FilesDropZoneR {
 
     private def _onFilesDropped(files: Seq[dom.File]): Callback = {
       dispatchOnProxyScopeCBf($) { props: Props =>
-        props.value( files )
+        props.value.mkActionF( files )
       }
     }
 
-    def render(propsChildren: PropsChildren): VdomElement = {
+    def render(propsProxy: Props, propsChildren: PropsChildren): VdomElement = {
       val onDropF: js.Function3[js.Object, DropTargetMonitor, js.Any, js.UndefOr[js.Object]] = {
         (props, monitor, comp) =>
           val itemFile = monitor.getItem().asInstanceOf[IItemFile]
@@ -67,6 +78,9 @@ class FilesDropZoneR {
           }
           js.undefined
       }
+
+      val props = propsProxy.value
+
       val dropTargetRawComp = DropTarget(
         itemType = NativeTypes.FILE,
         spec = new DropTargetSpec {
@@ -78,6 +92,7 @@ class FilesDropZoneR {
             override val isOver       = monitor.isOver()
             override val dropConnectF = connector.dropTarget()
             override val children     = propsChildren.raw
+            override val cssClasses   = props.cssClasses
           }
         }
       )( dropWrapComponentJs.raw )
@@ -86,6 +101,7 @@ class FilesDropZoneR {
 
       dropTargetComp( new ImgEditBtnDropFiles {
         override val isOver = false
+        override val cssClasses = props.cssClasses
       })
     }
 
@@ -105,4 +121,5 @@ trait ImgEditBtnDropFiles extends js.Object {
   val isOver         : Boolean
   val dropConnectF   : js.UndefOr[DropTargetF] = js.undefined
   val children       : js.UndefOr[raw.PropsChildren] = js.undefined
+  val cssClasses     : js.UndefOr[List[String]] = js.undefined
 }

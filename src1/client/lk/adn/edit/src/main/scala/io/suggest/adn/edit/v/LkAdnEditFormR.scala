@@ -1,5 +1,7 @@
 package io.suggest.adn.edit.v
 
+import com.github.react.dnd.backend.html5.Html5Backend
+import com.github.react.dnd.{DndProvider, DndProviderProps, IDndBackend}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.adn.edit.m._
@@ -134,7 +136,7 @@ class LkAdnEditFormR(
 
       val paddingS = Css.Lk.Paddings.S
 
-      <.div(
+      val content = <.div(
         ^.onClick --> onDocumentClick,
 
         // Отрендерить доп.стили
@@ -228,6 +230,12 @@ class LkAdnEditFormR(
         s.colorPickerC { colorPickerR.apply }
 
       )
+
+      DndProvider.component(
+        new DndProviderProps {
+          override val backend = Html5Backend
+        }
+      )(content)
     }
 
   }
