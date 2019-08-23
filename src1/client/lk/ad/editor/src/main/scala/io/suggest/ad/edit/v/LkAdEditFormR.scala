@@ -1,5 +1,7 @@
 package io.suggest.ad.edit.v
 
+import com.github.react.dnd.backend.html5.Html5Backend
+import com.github.react.dnd.{DndProvider, DndProviderProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths, MBlockExpandMode}
@@ -21,18 +23,19 @@ import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.{MJdShadow, MJdTagName, MJdTagNames}
-import io.suggest.lk.m.{CropOpen, DocBodyClick}
+import io.suggest.lk.m.{CropOpen, DocBodyClick, PictureFileChanged}
 import io.suggest.lk.m.frk.MFormResourceKey
-import io.suggest.lk.r.{LkCss, SaveR, SlideBlockR, UploadStatusR}
+import io.suggest.lk.r.{FilesDropZoneR, LkCss, SaveR, SlideBlockR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorCheckBoxR, ColorPickerR, ColorsSuggestR}
 import io.suggest.lk.r.img.{CropBtnR, ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.spa.{FastEqUtil, OptFastEq}
+import io.suggest.spa.{DAction, FastEqUtil, OptFastEq}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.univeq._
+import org.scalajs.dom
 import scalacss.ScalaCssReact._
 
 /**
@@ -51,6 +54,7 @@ class LkAdEditFormR(
                      val scaleR                 : ScaleR,
                      uploadStatusR              : UploadStatusR,
                      val imgEditBtnR            : ImgEditBtnR,
+                     val filesDropZoneR         : FilesDropZoneR,
                      val colorsSuggestR         : ColorsSuggestR,
                      val cropBtnR               : CropBtnR,
                      val saveR                  : SaveR,
@@ -90,6 +94,7 @@ class LkAdEditFormR(
                               jdCssArgsC                      : ReactConnectProxy[JdCss],
                               scalePropsOptC                  : ReactConnectProxy[Option[scaleR.PropsVal]],
                               imgEditBtnPropsC                : ReactConnectProxy[imgEditBtnR.Props_t],
+                              bgDataFrkC                      : ReactConnectProxy[MFormResourceKey],
                               upStateOptC                     : ReactConnectProxy[Option[MFileUploadS]],
                               colSuggPropsOptC                : ReactConnectProxy[Option[colorsSuggestR.PropsVal]],
                               cropBtnPropsOptC                : ReactConnectProxy[cropBtnR.Props_t],
@@ -215,8 +220,16 @@ class LkAdEditFormR(
               // Рендер цветов текущей картинки
               s.colSuggPropsOptC { colorsSuggestR.apply },
 
-              // Рендерить картинку и управление ей:
-              s.imgEditBtnPropsC { imgEditBtnR.apply },
+              // Рендерить картинку и управление ей, обернув в поддержку таскания файлов:
+              {
+                val dropZoneInner = s.imgEditBtnPropsC { imgEditBtnR.apply }
+                s.bgDataFrkC { bgDataFrkProxy =>
+                  val funProxy = bgDataFrkProxy.zoom { frk =>
+                    PictureFileChanged(_: Seq[dom.File], frk): DAction
+                  }( FastEq.AnyRefEq )
+                  filesDropZoneR.component( funProxy )( dropZoneInner )
+                }
+              },
 
               // Кнопка запуска кропа для картинки:
               s.cropBtnPropsOptC { cropBtnR.apply },
@@ -300,7 +313,14 @@ class LkAdEditFormR(
         )
       )
 
-      contentDiv
+      // Провайдер поддержки drag-drop:
+      DndProvider.component(
+        new DndProviderProps {
+          override val backend = Html5Backend
+        }
+      )(
+        contentDiv
+      )
 
     }
 
@@ -544,13 +564,12 @@ class LkAdEditFormR(
             val bgEdgeOpt = mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
             ImgEditBtnPropsVal(
               edge   = bgEdgeOpt,
-              resKey = MFormResourceKey(
-                edgeUid  = bgEdgeOpt.map(_._1.edgeUid),
-                nodePath = mroot.doc.jdArgs.renderArgs.selPath
-              )
+              resKey = mroot.doc.jdArgs.selJdt.bgEdgeDataFrk,
             )
           }
         },
+
+        bgDataFrkC = p.connect { _.doc.jdArgs.selJdt.bgEdgeDataFrk }( MFormResourceKey.MFormImgKeyFastEq ),
 
         upStateOptC = p.connect { mroot =>
           mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
@@ -581,11 +600,7 @@ class LkAdEditFormR(
               .treeLocOpt
               .flatMap(_.getLabel.props1.bm)
           } yield {
-            val frk = MFormResourceKey(
-              edgeUid  = Some( bgEdge._1.edgeUid ),
-              nodePath = mroot.doc.jdArgs.renderArgs.selPath
-            )
-            CropOpen( frk, cropContSz )
+            CropOpen( mroot.doc.jdArgs.selJdt.bgEdgeDataFrk, cropContSz )
           }
         }( OptFastEq.Wrapped ),
 

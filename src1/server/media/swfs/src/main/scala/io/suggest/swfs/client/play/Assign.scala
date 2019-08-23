@@ -37,9 +37,14 @@ trait Assign extends ISwfsClientWs with OneMasterRequest { that =>
       override def _handleResp(url: String, fut: Future[WSResponse]): Future[AssignResponse] = {
         fut.filter { resp =>
           val respBody = resp.body
-          LOGGER.trace(s"$logPrefix ${_method} $url replied HTTP ${resp.status} ${resp.statusText}, took = ${System.currentTimeMillis() - startMs}\n $respBody")
           // Почему-то при ошибках возвращается 200 Ok с пустым телом ответа.
-          _isStatusValid( resp.status ) && !respBody.isEmpty
+          val r = _isStatusValid( resp.status ) && !respBody.isEmpty
+
+          def logMsg = s"$logPrefix took ${System.currentTimeMillis() - startMs}ms\n ${_method} $url => ${resp.status} ${resp.statusText}\n $respBody"
+          if (r) LOGGER.trace(logMsg)
+          else LOGGER.error(logMsg)
+
+          r
         }
         .map { resp =>
           val jsvr = resp.json.validate[Res_t]

@@ -9,8 +9,8 @@ import scala.scalajs.js
   */
 @js.native
 sealed trait CommonMonitor extends js.Object {
-  def getItemType(): ItemType_t = js.native
-  def getItem(): js.Object = js.native
+  def getItemType(): DropAccept_t = js.native
+  def getItem(): IItem = js.native
 
   /** Client offset of the pointer at the time when the current drag operation has started.
     * @return null if no item is being dragged. */

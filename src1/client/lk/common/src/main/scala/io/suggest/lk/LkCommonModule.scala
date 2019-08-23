@@ -49,4 +49,6 @@ object LkCommonModule {
 
   lazy val smsCodeFormR = wire[SmsCodeFormR]
 
+  lazy val filesDropZoneR = wire[FilesDropZoneR]
+
 }

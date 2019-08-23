@@ -1,6 +1,7 @@
 package com.github.react.dnd.backend.html5
 
-import com.github.react.dnd.{DropAccept_t, IDndBackend}
+import com.github.react.dnd.{DropAccept_t, IDndBackend, IItem}
+import org.scalajs.dom.File
 import org.scalajs.dom.html.Image
 
 import scala.scalajs.js
@@ -45,4 +46,33 @@ object NativeTypes extends js.Object {
   /** - getItem().text, the text that has been dropped. */
   val TEXT: DropAccept_t = js.native
 
+}
+
+trait IItemFile extends IItem {
+  val files: js.Array[File]
+  val items: DataTransferItemList
+}
+
+trait IItemUrl extends IItem {
+  val urls: js.Array[String]
+}
+
+trait IItemText extends IItem {
+  val text: String
+}
+
+
+@js.native
+trait DataTransferItem extends js.Object {
+  val kind: String = js.native
+  val `type`: String = js.native
+}
+
+@js.native
+trait DataTransferItemList extends js.Object {
+  def add(data: String, `type`: String): DataTransferItem = js.native
+  def add(file: File): DataTransferItemList = js.native
+  def remove(index: Int): Unit = js.native
+  def clear(): Unit = js.native
+  def DataTransferItem(index: Int): js.UndefOr[DataTransferItem]
 }

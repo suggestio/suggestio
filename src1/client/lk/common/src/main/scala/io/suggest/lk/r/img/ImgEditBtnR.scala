@@ -20,9 +20,8 @@ import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCBf
 import io.suggest.sjs.common.model.dom.DomListSeq
 import io.suggest.ueq.UnivEqUtil._
-import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromInput, ScalaComponent, ReactEvent}
+import japgolly.scalajs.react._
 import japgolly.univeq._
 import org.scalajs.dom
 
@@ -76,7 +75,6 @@ class ImgEditBtnR(
         }
       }
     }
-
 
     def render(propsValProxy: Props): VdomElement = {
       val C = Css.Lk.Image
@@ -193,5 +191,4 @@ object ImgEditBtnPropsVal {
     }
   }
 }
-
 

@@ -21,8 +21,7 @@ object ReactDndSpec extends SimpleTestSuite {
     assert( useDragJs != null )
   }
 
-  // TODO Не пашет: JavaScriptException: ReferenceError: document is not defined
-  // Надо разобраться с ReactTestUtils - react-dom. http://react-dnd.github.io/react-dnd/docs/testing
+  // TODO Не пашет, т.к. use*() - это react-hooks, и надо вызывать их только в контексте анон.функции рендера.
   /*
   test("useDrag must be usable in vdom") {
     val comp = ScalaComponent

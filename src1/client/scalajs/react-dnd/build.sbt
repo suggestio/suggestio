@@ -1,3 +1,5 @@
+import org.scalajs.sbtplugin.ScalaJSPluginInternal.scalaJSRequestsDOM
+
 Common.settingsOrgJS
 
 enablePlugins(ScalaJSBundlerPlugin)
@@ -26,3 +28,6 @@ npmDependencies in Test ++= Seq(
 )
 
 useYarn := true
+
+requireJsDomEnv in Test := true
+

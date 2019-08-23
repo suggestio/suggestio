@@ -26,17 +26,20 @@ case class UseDragRes(
                      )
 
 trait DragSpec extends js.Object {
-  val item: DragsSpecItem
+  val item: IItem
   val previewOptions: js.UndefOr[js.Object] = js.undefined
   val options: js.UndefOr[DragDropSpecOptions] = js.undefined
   /** Fired when a drag operation begins. */
   val begin: js.UndefOr[js.Function1[DragSourceMonitor, Unit]] = js.undefined
-  val end: js.UndefOr[js.Function2[DragsSpecItem, DragSourceMonitor, Unit]] = js.undefined
+  val end: js.UndefOr[js.Function2[IItem, DragSourceMonitor, Unit]] = js.undefined
+  val canDrag: js.UndefOr[js.Function1[DragSourceMonitor, Boolean]] = js.undefined
+  val isDragging: js.UndefOr[js.Function1[DragSourceMonitor, Boolean]] = js.undefined
+  val collect: js.UndefOr[js.Function2[DragSourceMonitor, js.Object, js.Object]] = js.undefined
 }
 
 
-trait DragsSpecItem extends js.Object {
-  val `type`: ItemType_t
+trait IItem extends js.Object {
+  val `type`: DropAccept_t
 }
 
 trait DragDropSpecOptions extends js.Object {

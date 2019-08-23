@@ -17,9 +17,11 @@ object useDragLayerJs extends js.Function1[DragLayerSpec, js.Object] {
 
 
 trait DragLayerSpec extends js.Object {
+
   /**
     * The collecting function. It should return a plain object of the props to return for injection into your component.
     * It receives two parameters, monitor and props.
     */
-  val collect: js.Function2[DragLayerMonitor, js.Object, js.Object]
+  def collect(monitor: DragLayerMonitor, props: js.Object): js.Object
+
 }
