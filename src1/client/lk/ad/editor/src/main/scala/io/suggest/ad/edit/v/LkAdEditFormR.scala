@@ -23,17 +23,17 @@ import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.{MJdShadow, MJdTagName, MJdTagNames}
-import io.suggest.lk.m.{CropOpen, DocBodyClick}
-import io.suggest.lk.m.frk.MFormResourceKey
-import io.suggest.lk.r.{FilesDropZoneR, LkCss, SaveR, SlideBlockR, UploadStatusR}
+import io.suggest.lk.m.{CropOpen, DocBodyClick, PictureFileChanged}
+import io.suggest.lk.r.{LkCss, SaveR, SlideBlockR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorCheckBoxR, ColorPickerR, ColorsSuggestR}
 import io.suggest.lk.r.img.{CropBtnR, ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.msg.Messages
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil
+import io.suggest.sjs.common.model.dom.DomListSeq
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react._
 import japgolly.univeq._
 import scalacss.ScalaCssReact._
 
@@ -52,7 +52,7 @@ class LkAdEditFormR(
                      quillCssFactory            : => QuillCss,
                      val scaleR                 : ScaleR,
                      uploadStatusR              : UploadStatusR,
-                     val imgEditBtnR            : ImgEditBtnR,
+                     imgEditBtnR                : ImgEditBtnR,
                      val colorsSuggestR         : ColorsSuggestR,
                      val cropBtnR               : CropBtnR,
                      val saveR                  : SaveR,
@@ -71,19 +71,6 @@ class LkAdEditFormR(
                      val textShadowR            : TextShadowR,
                    ) {
 
-  import scaleR.ScaleRPropsValFastEq
-  import MFileUploadS.MFileUploadSFastEq
-  import colorsSuggestR.ColorsSuggestPropsValFastEq
-  import useAsMainR.UseAdMainPropsValFastEq
-  import deleteBtnR.DeleteBtnRPropsValFastEq
-  import plusMinusControlsR.PlusMinusControlsPropsValFastEq
-  import MStripEdS.MStripEdSFastEq
-  import colorCheckBoxR.ColorCheckBoxPropsValFastEq
-  import io.suggest.lk.r.img.ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq
-  import rotateR.RotateRPropsValFastEq
-  import quillEditorR.QuillEditorPropsValFastEq
-  import contentEditCssR.ContentEditCssRPropsValFastEq
-
   type Props = ModelProxy[MAeRoot]
 
   /** Состояние компонента содержит model-коннекшены для подчинённых компонентов. */
@@ -91,7 +78,6 @@ class LkAdEditFormR(
                               jdPreviewArgsC                  : ReactConnectProxy[MJdArgs],
                               jdCssArgsC                      : ReactConnectProxy[JdCss],
                               scalePropsOptC                  : ReactConnectProxy[Option[scaleR.PropsVal]],
-                              imgEditBtnPropsC                : ReactConnectProxy[imgEditBtnR.Props_t],
                               upStateOptC                     : ReactConnectProxy[Option[MFileUploadS]],
                               colSuggPropsOptC                : ReactConnectProxy[Option[colorsSuggestR.PropsVal]],
                               cropBtnPropsOptC                : ReactConnectProxy[cropBtnR.Props_t],
@@ -130,8 +116,7 @@ class LkAdEditFormR(
 
     /** Любой клик где-то в форме. Нужно для вычисления кликов за пределами каких-либо элементов. */
     private def _onBodyClick: Callback =
-      dispatchOnProxyScopeCB($, DocBodyClick)
-
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, DocBodyClick)
 
     def render(p: Props, s: State): VdomElement = {
       val LCSS = lkAdEditCss.Layout
@@ -148,11 +133,11 @@ class LkAdEditFormR(
         ),
 
         // Отрендерить стили редактора:
-        p.wrap(_ => lkCss)(CssR.apply),
-        p.wrap(_ => lkAdEditCss)(CssR.apply),
+        p.wrap(_ => lkCss)(CssR.apply)(implicitly, FastEq.AnyRefEq),
+        p.wrap(_ => lkAdEditCss)(CssR.apply)(implicitly, FastEq.AnyRefEq),
 
         // Рендер jd-css
-        p.wrap(_ => jdCssStatic)(CssR.apply),
+        p.wrap(_ => jdCssStatic)(CssR.apply)(implicitly, FastEq.AnyRefEq),
         s.jdCssArgsC { CssR.apply },
 
         <.div(
@@ -210,6 +195,7 @@ class LkAdEditFormR(
             // Настройка фона блока.
             val blockBgBodyDiv = <.div(
               ^.`class` := Css.Overflow.HIDDEN,
+              //^.onDrop ==> _onBlockBgDrop,
 
               // Выбор цвета фона блока.
               s.colors.stripBgCbOptC { colorCheckBoxR.apply },
@@ -217,8 +203,14 @@ class LkAdEditFormR(
               // Рендер цветов текущей картинки
               s.colSuggPropsOptC { colorsSuggestR.apply },
 
-              // Рендерить картинку и управление ей, обернув в поддержку таскания файлов:
-              s.imgEditBtnPropsC { imgEditBtnR.apply },
+              // Рендерить картинку и управление ей, обернув в поддержку таскания файлов:s
+              p.wrap { mroot =>
+                val bgEdgeOpt = mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
+                ImgEditBtnPropsVal(
+                  edge   = bgEdgeOpt,
+                  resKey = mroot.doc.jdArgs.selJdt.bgEdgeDataFrk,
+                )
+              }(imgEditBtnR.apply)(implicitly, ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq ),
 
               // Кнопка запуска кропа для картинки:
               s.cropBtnPropsOptC { cropBtnR.apply },
@@ -350,7 +342,7 @@ class LkAdEditFormR(
               marker        = jdtNameSome
             )
           }
-        }( OptFastEq.Wrapped )
+        }( OptFastEq.Wrapped(colorCheckBoxR.ColorCheckBoxPropsValFastEq) )
       }
 
       State(
@@ -366,7 +358,7 @@ class LkAdEditFormR(
               variants = variants
             )
             Some(propsVal): Option[scaleR.PropsVal]
-          }( OptFastEq.Wrapped )
+          }( OptFastEq.Wrapped(scaleR.ScaleRPropsValFastEq) )
         },
 
         rightYOptC = p.connect { mroot =>
@@ -393,7 +385,7 @@ class LkAdEditFormR(
                 .exists( _.rootLabel.props1.isMain.getOrElseFalse )
             )
           }
-        }( OptFastEq.Wrapped ),
+        }( OptFastEq.Wrapped(useAsMainR.UseAdMainPropsValFastEq) ),
 
         deletePropsOptC = p.connect { mroot =>
           for {
@@ -403,7 +395,7 @@ class LkAdEditFormR(
               deleteConfirm = mroot.popups.deleteConfirm
             )
           }
-        }( OptFastEq.Wrapped ),
+        }( OptFastEq.Wrapped(deleteBtnR.DeleteBtnRPropsValFastEq) ),
 
         heightPropsOptC = __mkStripBmC { bm =>
           val r = plusMinusControlsR.PropsVal(
@@ -413,7 +405,8 @@ class LkAdEditFormR(
             current       = bm.h
           )
           Some(r)
-        },
+        }( plusMinusControlsR.PlusMinusControlsPropsValFastEq ),
+
         widthPropsOptC = __mkStripBmC { bm =>
           val r = plusMinusControlsR.PropsVal(
             labelMsgCode  = MsgCodes.`Width`,
@@ -422,11 +415,11 @@ class LkAdEditFormR(
             current       = bm.w
           )
           Some(r)
-        },
+        }( plusMinusControlsR.PlusMinusControlsPropsValFastEq ),
 
         stripEdSOptC = p.connect { mroot =>
           mroot.doc.stripEd
-        }( OptFastEq.Wrapped ),
+        }( OptFastEq.Wrapped(MStripEdS.MStripEdSFastEq) ),
 
         blockExpandModeOptC = __mkStripBmC ( _.expandMode )(FastEqUtil.AnyRefFastEq),
 
@@ -517,7 +510,7 @@ class LkAdEditFormR(
                   topLeftPx     = Some( MCoords2di.y.set(topY)(pickerS.shownAt) )
                 )
               }
-            }
+            }( OptFastEq.Wrapped(colorPickerR.ColorPickerPropsValFastEq) )
           },
 
           stripBgCbOptC   = __mkBgColorCbC( MJdTagNames.STRIP ),
@@ -534,7 +527,7 @@ class LkAdEditFormR(
               realDelta = qdS.realDelta
             )
           }
-        }( OptFastEq.Wrapped ),
+        }( OptFastEq.Wrapped(quillEditorR.QuillEditorPropsValFastEq) ),
 
         rotateOptC = p.connect { mroot =>
           for {
@@ -546,23 +539,13 @@ class LkAdEditFormR(
               value = selJdt.props1.rotateDeg
             )
           }
-        }( OptFastEq.Wrapped ),
-
-        imgEditBtnPropsC = {
-          p.connect { mroot =>
-            val bgEdgeOpt = mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
-            ImgEditBtnPropsVal(
-              edge   = bgEdgeOpt,
-              resKey = mroot.doc.jdArgs.selJdt.bgEdgeDataFrk,
-            )
-          }
-        },
+        }( OptFastEq.Wrapped(rotateR.RotateRPropsValFastEq) ),
 
         upStateOptC = p.connect { mroot =>
           mroot.doc.jdArgs.selJdt.bgEdgeDataOpt
             .flatMap(_._2.fileJs)
             .flatMap(_.upload)
-        }(OptFastEq.Wrapped),
+        }( OptFastEq.Wrapped( MFileUploadS.MFileUploadSFastEq ) ),
 
         colSuggPropsOptC = p.connect { mroot =>
           for {
@@ -575,7 +558,7 @@ class LkAdEditFormR(
               colors       = hist.sorted
             )
           }
-        }( OptFastEq.Wrapped ),
+        }( OptFastEq.Wrapped(colorsSuggestR.ColorsSuggestPropsValFastEq) ),
 
         cropBtnPropsOptC = p.connect { mroot =>
           for {
@@ -589,7 +572,7 @@ class LkAdEditFormR(
           } yield {
             CropOpen( mroot.doc.jdArgs.selJdt.bgEdgeDataFrk, cropContSz )
           }
-        }( OptFastEq.Wrapped ),
+        }( OptFastEq.Wrapped(CropOpen.CropOpenFastEq) ),
 
         contentEditCssC = p.connect { mroot =>
           contentEditCssR.PropsVal(
@@ -610,7 +593,7 @@ class LkAdEditFormR(
               }
             }
           )
-        },
+        }(contentEditCssR.ContentEditCssRPropsValFastEq),
 
         contentLayersC = p.connect { mroot =>
           val jdArgs = mroot.doc.jdArgs

@@ -1,7 +1,7 @@
 package io.suggest.adn.edit.v
 
 import com.github.react.dnd.backend.html5.Html5Backend
-import com.github.react.dnd.{DndProvider, DndProviderProps, IDndBackend}
+import com.github.react.dnd.{DndProvider, DndProviderProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.adn.edit.m._
@@ -36,25 +36,18 @@ class LkAdnEditFormR(
                       val oneRowR         : OneRowR,
                       val colorPickerR    : ColorPickerR,
                       val colorBtnR       : ColorBtnR,
-                      val imgEditBtnR     : ImgEditBtnR,
+                      imgEditBtnR     : ImgEditBtnR,
                       val uploadStatusR   : UploadStatusR,
                       val nodeGalleryR    : NodeGalleryR,
                       lkAdEditCss         : LkAdnEditCss,
                       wcFgContR           : WcFgContR,
                     ) {
 
-  import oneRowR.OneRowRValueValFastEq
-  import colorBtnR.ColorBtnRPropsValFastEq
-  import colorPickerR.ColorPickerPropsValFastEq
-  import MFileUploadS.MFileUploadSFastEq
-  import io.suggest.lk.r.img.ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq
-
   type Props = ModelProxy[MLkAdnEditRoot]
 
 
   /** Состояние картинок. */
   case class ImgState(
-                       editBtnC         : ReactConnectProxy[imgEditBtnR.Props_t],
                        uploadStatusC    : ReactConnectProxy[uploadStatusR.Props_t]
                      )
 
@@ -118,17 +111,6 @@ class LkAdnEditFormR(
     }
 
 
-    private def _renderImgEdit(is: ImgState) = {
-      <.div(
-        // Кнопка редактировния картинки
-        is.editBtnC { imgEditBtnR.apply },
-
-        // Данные по загрузке картинки
-        is.uploadStatusC { uploadStatusR.apply }
-      )
-    }
-
-
     def render(propsProxy: Props, s: State): VdomElement = {
       val delimHr = <.hr(
         ^.`class` := Css.flat( Css.Lk.HrDelim.DELIMITER, Css.Lk.HrDelim.LIGHT )
@@ -147,7 +129,17 @@ class LkAdnEditFormR(
         <.div(
           lkAdEditCss.logoBar,
 
-          _renderImgEdit( s.logo )
+          propsProxy.wrap { props =>
+            val cssSizeL = Css.Size.L
+            ImgEditBtnPropsVal(
+              edge     = __getImgEdgeOpt(props)(MAdnResView.logoF),
+              resKey   = props.node.logoFrk,
+              bgColor = props.node.meta.colors.bg,
+              size    = cssSizeL
+            )
+          }( imgEditBtnR.apply )(implicitly, ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq ),
+
+          s.logo.uploadStatusC { uploadStatusR.apply },
         ),
 
         <.div(
@@ -185,8 +177,15 @@ class LkAdnEditFormR(
           // Экран приветствия
           wcFgContR(
 
+            propsProxy.wrap { props =>
+              ImgEditBtnPropsVal(
+                edge = __getImgEdgeOpt(props)( MAdnResView.wcFgF ),
+                resKey = props.node.wcFgFrk,
+              )
+            }( imgEditBtnR.apply )(implicitly, ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq ),
+
             // Картинка приветствия
-            _renderImgEdit( s.wcFg )
+            s.wcFg.uploadStatusC { uploadStatusR.apply }
 
           ),
 
@@ -241,9 +240,27 @@ class LkAdnEditFormR(
   }
 
 
-  val component = ScalaComponent.builder[Props](getClass.getSimpleName)
+  private def __getImgEdgeOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[(MJdEdgeId, MEdgeDataJs)] = {
+    for {
+      ei <- f(mroot.node.resView)
+      edge <- mroot.node.edges.get( ei.edgeUid )
+    } yield {
+      (ei, edge)
+    }
+  }
+
+  private def __getImgUploadOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[MFileUploadS] = {
+    __getImgEdgeOpt(mroot)(f)
+      .flatMap(_._2.fileJs)
+      .flatMap(_.upload)
+  }
+
+
+  val component = ScalaComponent
+    .builder[Props](getClass.getSimpleName)
     .initialStateFromProps { propsProxy =>
       // Сборка коннекшена до цвета:
+      val colorBtnROptFastEq = OptFastEq.Wrapped( colorBtnR.ColorBtnRPropsValFastEq )
       def __getColorBtnC(colorType: MColorType with IColorPickerMarker): ReactConnectProxy[colorBtnR.Props_t] = {
         val colorTypeSome = Some(colorType)
         lazy val mcdDflt = MColorData( colorType.scDefaultHex )
@@ -256,26 +273,13 @@ class LkAdnEditFormR(
             marker    = colorTypeSome
           )
           Some( propsVal ): colorBtnR.Props_t
-        }( OptFastEq.Wrapped )
+        }( colorBtnROptFastEq )
       }
 
       val emptyStr = ""
       def emptyStrF: String = emptyStr
 
-      def __getImgEdgeOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[(MJdEdgeId, MEdgeDataJs)] = {
-        for {
-          ei <- f(mroot.node.resView)
-          edge <- mroot.node.edges.get( ei.edgeUid )
-        } yield {
-          (ei, edge)
-        }
-      }
-
-      def __getImgUploadOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[MFileUploadS] = {
-        __getImgEdgeOpt(mroot)(f)
-          .flatMap(_._2.fileJs)
-          .flatMap(_.upload)
-      }
+      val uploadStatusOptFastEq = OptFastEq.Wrapped( MFileUploadS.MFileUploadSFastEq )
 
       State(
         nameC = propsProxy.connect { props =>
@@ -283,43 +287,43 @@ class LkAdnEditFormR(
             value = props.node.meta.name,
             error = props.node.errors.name
           )
-        }( OneRowRValueValFastEq ),
+        }( oneRowR.OneRowRValueValFastEq ),
         townC = propsProxy.connect { props =>
           oneRowR.ValueVal(
             value = props.node.meta.address.town.getOrElse(emptyStrF),
             error = props.node.errors.town
           )
-        }( OneRowRValueValFastEq ),
+        }( oneRowR.OneRowRValueValFastEq ),
         addressC = propsProxy.connect { props =>
           oneRowR.ValueVal(
             value = props.node.meta.address.address.getOrElse(emptyStrF),
             error = props.node.errors.address
           )
-        }( OneRowRValueValFastEq ),
+        }( oneRowR.OneRowRValueValFastEq ),
         siteUrlC = propsProxy.connect { props =>
           oneRowR.ValueVal(
             value = props.node.meta.business.siteUrl.getOrElse(emptyStrF),
             error = props.node.errors.siteUrl
           )
-        }( OneRowRValueValFastEq ),
+        }( oneRowR.OneRowRValueValFastEq ),
         infoAboutC = propsProxy.connect { props =>
           oneRowR.ValueVal(
             value = props.node.meta.business.info.getOrElse(emptyStrF),
             error = props.node.errors.info
           )
-        }( OneRowRValueValFastEq ),
+        }( oneRowR.OneRowRValueValFastEq ),
         humanTrafficC = propsProxy.connect { props =>
           oneRowR.ValueVal(
             value = props.node.meta.business.humanTraffic.getOrElse(emptyStrF),
             error = props.node.errors.humanTraffic
           )
-        }( OneRowRValueValFastEq ),
+        }( oneRowR.OneRowRValueValFastEq ),
         audienceDescrC = propsProxy.connect { props =>
           oneRowR.ValueVal(
             value = props.node.meta.business.audienceDescr.getOrElse(emptyStrF),
             error = props.node.errors.audienceDescr
           )
-        }( OneRowRValueValFastEq ),
+        }( oneRowR.OneRowRValueValFastEq ),
 
         bgColorC = __getColorBtnC( MColorTypes.Bg ),
         fgColorC = __getColorBtnC( MColorTypes.Fg ),
@@ -344,50 +348,23 @@ class LkAdnEditFormR(
               cssClass      = Some( lkAdEditCss.colorPicker.htmlClass )
             )
           }
-        }( OptFastEq.Wrapped ),
+        }( OptFastEq.Wrapped(colorPickerR.ColorPickerPropsValFastEq) ),
 
         logo = {
           val logoF = MAdnResView.logoF
           ImgState(
-            editBtnC = {
-              val cssSizeL = Css.Size.L
-              val frkTypeSome = Some( MFrkTypes.Logo )
-              propsProxy.connect { props =>
-                ImgEditBtnPropsVal(
-                  edge     = __getImgEdgeOpt(props)(logoF),
-                  resKey  = MFormResourceKey(
-                    edgeUid  = props.node.resView.logo.map(_.edgeUid),
-                    frkType  = frkTypeSome
-                  ),
-                  bgColor = props.node.meta.colors.bg,
-                  size    = cssSizeL
-                )
-              }
-            },
             uploadStatusC = propsProxy.connect { props =>
               __getImgUploadOpt(props)(logoF)
-            }( OptFastEq.Wrapped )
+            }( uploadStatusOptFastEq )
           )
         },
 
         wcFg = {
           val wcFgF = MAdnResView.wcFgF
           ImgState(
-            editBtnC = {
-              val frkTypeSome = Some( MFrkTypes.WcFg )
-              propsProxy.connect { props =>
-                ImgEditBtnPropsVal(
-                  edge = __getImgEdgeOpt(props)(wcFgF),
-                  resKey = MFormResourceKey(
-                    edgeUid  = props.node.resView.wcFg.map(_.edgeUid),
-                    frkType  = frkTypeSome
-                  )
-                )
-              }
-            },
             uploadStatusC = propsProxy.connect { props =>
               __getImgUploadOpt(props)(wcFgF)
-            }( OptFastEq.Wrapped )
+            }( uploadStatusOptFastEq )
           )
         },
 
@@ -407,7 +384,7 @@ class LkAdnEditFormR(
                   editBtn = ImgEditBtnPropsVal(
                     edge   = Some( (galImg, edge) ),
                     resKey = MFormResourceKey(
-                      frkType  = nodeGalleryR.formResKeyTypeSome,
+                      frkType  = MFrkTypes.somes.GalImgSome,
                       edgeUid  = Some( galImg.edgeUid )
                     ),
                     bgColor = None,

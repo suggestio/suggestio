@@ -22,7 +22,11 @@ import scala.scalajs.js
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 23.08.2019 12:01
-  * Description: Компонент-обёртка для
+  * Description: Компонент-обёртка для сброса файлов через drag-n-drop.
+  * Из-за особенностей legacy-компонентов react-dnd, тут два вложенных компонента с react-dnd-прослойкой:
+  * - наружный scala-интерфейс с json props.
+  * - react-dnd HOC, обёртывающий нижележащий компонент.
+  * - внутренний рендер на основе props наружного интерфейса.
   */
 class FilesDropZoneR {
 
@@ -30,7 +34,7 @@ class FilesDropZoneR {
                        mkActionF      : Seq[dom.File] => DAction,
                        cssClasses     : List[String]                = Nil,
                      )
-  object FilesDropZoneRFastEq extends FastEq[PropsVal] {
+  implicit object FilesDropZoneRFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.mkActionF eq b.mkActionF) &&
       (a.cssClasses ===* b.cssClasses)
@@ -43,7 +47,7 @@ class FilesDropZoneR {
 
   /** Обёртка для дропа файла перетаскиванием. */
   private val dropWrapComponent = ScalaComponent
-    .builder[ImgEditBtnDropFiles](getClass.getSimpleName + "In" )
+    .builder[ImgEditBtnDropFiles]( getClass.getSimpleName + "In" )
     .stateless
     .render_PC { (props, children) =>
       props.dropConnectF.applyVdomEl(

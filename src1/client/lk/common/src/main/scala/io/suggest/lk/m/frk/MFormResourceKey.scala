@@ -20,8 +20,8 @@ object MFormResourceKey {
   implicit object MFormImgKeyFastEq extends FastEq[MFormResourceKey] {
     override def eqv(a: MFormResourceKey, b: MFormResourceKey): Boolean = {
       (a.frkType ===* b.frkType) &&
-        (a.edgeUid ==* b.edgeUid) &&
-        (a.nodePath ===* b.nodePath)
+      (a.edgeUid ==* b.edgeUid) &&
+      (a.nodePath ===* b.nodePath)
     }
   }
 

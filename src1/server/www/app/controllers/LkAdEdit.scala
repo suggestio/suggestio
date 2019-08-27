@@ -288,16 +288,15 @@ class LkAdEdit @Inject() (
                         LOGGER.info(s"$logPrefix Initialized new jd-template, previous ad template was empty.")
 
                       // Сохраняемая карточка уже существует: перезаписать в ней некоторые эджи.
-                      val filteredPreds = Set[MPredicate]( MPredicates.JdContent, MPredicates.ModeratedBy )
+                      val filteredPreds = MPredicates.JdContent :: MPredicates.ModeratedBy :: Nil
                       mNodes.tryUpdate(mad00)(
                         MNode.edges
-                          .composeLens( MNodeEdges.out )
                           .modify { edges0 =>
-                            MNodeEdges.edgesToMap1(
-                              // Убрать все существующие jd-content-эджи. ТODO Bg-предикат: удалить старый предикат фона (старый формат market ad).
-                              edges0.filterNot { medge =>
-                                filteredPreds contains medge.predicate
-                              } ++ edgesAcc0
+                            MNodeEdges(
+                              MNodeEdges.edgesToMap1(
+                                // Убрать все существующие jd-content-эджи.
+                                edges0.withoutPredicateIter(filteredPreds: _*) ++ edgesAcc0
+                              )
                             )
                           } andThen
                         // Залить новый шаблон:

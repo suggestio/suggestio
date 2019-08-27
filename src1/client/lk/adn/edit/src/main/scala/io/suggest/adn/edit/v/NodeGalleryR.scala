@@ -4,6 +4,7 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
+import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.frk.{MFormResourceKey, MFrkTypes}
 import io.suggest.lk.r.UploadStatusR
@@ -14,6 +15,7 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.spa.FastEqUtil.CollFastEq
+import io.suggest.spa.OptFastEq
 
 /**
   * Suggest.io
@@ -29,8 +31,6 @@ class NodeGalleryR(
   import io.suggest.spa.OptFastEq.Wrapped
   import io.suggest.file.up.MFileUploadS.MFileUploadSFastEq
   import io.suggest.lk.r.img.ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq
-
-  lazy val formResKeyTypeSome = Some( MFrkTypes.GalImg )
 
   type Props_t = Seq[PropsValEl]
   type Props = ModelProxy[Props_t]
@@ -54,7 +54,7 @@ class NodeGalleryR(
   private val _addBtnProps = ImgEditBtnPropsVal(
     edge = None,
     resKey = MFormResourceKey(
-      frkType = formResKeyTypeSome
+      frkType = MFrkTypes.somes.GalImgSome
     ),
     css = imgsRowContCss
   )
@@ -63,7 +63,9 @@ class NodeGalleryR(
 
     def render(propsProxy: Props): VdomElement = {
       val galImgs = propsProxy.value
+      lazy val uploadStatusOptFeq = OptFastEq.Wrapped(MFileUploadS.MFileUploadSFastEq)
 
+      println("NodeGallery render()")
       <.div(
         ^.`class` := Css.PropTable.TABLE,
 
@@ -86,8 +88,9 @@ class NodeGalleryR(
           } yield {
             <.div(
               ^.key := i.toString,
-              propsProxy.wrap(_ => galImgS.editBtn)( imgEditBtnR.apply ),
-              propsProxy.wrap(_ => galImgS.uploadStatus)( uploadStatusR.apply )
+              // TODO Используется componentPlain вместо Drop, т.к. какие-то проблемы с рендером и внутренними коннекшенами.
+              propsProxy.wrap(_ => galImgS.editBtn)( imgEditBtnR.componentPlain.apply )(implicitly, ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq),
+              propsProxy.wrap(_ => galImgS.uploadStatus)( uploadStatusR.apply )(implicitly, uploadStatusOptFeq),
             )
           }).toVdomArray
         )

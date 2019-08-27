@@ -1,7 +1,7 @@
 package io.suggest.lk.r.img
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProps}
+import diode.react.{ModelProxy, ReactConnectProps, ReactConnectProxy}
 import io.suggest.color.MColorData
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.common.html.HtmlConstants
@@ -10,7 +10,6 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEdgeId
 import io.suggest.lk.m.{CropOpen, PictureFileChanged}
 import io.suggest.lk.m.frk.MFormResourceKey
-import io.suggest.lk.r.img.ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq
 import io.suggest.msg.Messages
 import io.suggest.n2.edge.MEdgeDataJs
 import MEdgeDataJs.MEdgeDataJsTupleFastEq
@@ -34,8 +33,8 @@ import org.scalajs.dom
   * Description: Кнопка редактора какой-то картинки: картинку можно загрузить, убрать, кропнуть и т.д.
   */
 class ImgEditBtnR(
-                   filesDropZoneR   : FilesDropZoneR,
-                   imgRenderUtilJs  : ImgRenderUtilJs
+                   val filesDropZoneR   : FilesDropZoneR,
+                   imgRenderUtilJs      : ImgRenderUtilJs
                  ) {
 
 
@@ -82,6 +81,7 @@ class ImgEditBtnR(
     def render(propsValProxy: Props): VdomElement = {
       val C = Css.Lk.Image
       val propsVal = propsValProxy.value
+      println("IEB render(): " + propsVal.resKey)
 
       <.div(
         ^.`class` := Css.flat1( C.IMAGE :: propsVal.size :: Css.Overflow.HIDDEN :: propsVal.css ),
@@ -97,7 +97,7 @@ class ImgEditBtnR(
             <.input(
               ^.`type`    := HtmlConstants.Input.file,
               ^.`class`   := upCss.ADD_FILE_INPUT,
-              ^.onChange ==> _onFileChange
+              ^.onChange ==> _onFileChange,
             ),
 
             <.a(
@@ -167,27 +167,40 @@ class ImgEditBtnR(
     .builder[Props]( getClass.getSimpleName )
     .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
     .renderBackend[Backend]
-    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(ImgEditBtnRPropsValFastEq) )
+    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate( ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq ) )
     .build
+
+
+  sealed case class StateDrop(
+                               plainC: ReactConnectProxy[Props_t],
+                               fileDropC: ReactConnectProxy[Props_t],
+                             )
 
   /** Компонент с поддержкой Drag-Drop файлов извне. Требует DndContext снаружи. */
   val componentDrop = ScalaComponent
     .builder[Props]( getClass.getSimpleName + "Dnd" )
-    .initialStateFromProps( ReactDiodeUtil.modelProxyValueF )
-    .render_P { props =>
-      filesDropZoneR.component {
-        // Сборка функции доступа к FRK
-        props.zoom { p =>
-          filesDropZoneR.PropsVal(
-            mkActionF  = PictureFileChanged(_: Seq[dom.File], p.resKey): DAction,
-            cssClasses = p.css,
-          )
-        }( filesDropZoneR.FilesDropZoneRFastEq )
-      }(
-        componentPlain(props)
+    .initialStateFromProps { propsProxy =>
+      println("dnd initState()")
+      StateDrop(
+        plainC    = propsProxy.connect(identity)( ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq ),
+        fileDropC = propsProxy.connect(identity)( ImgEditBtnPropsVal.ImgEditBtnRPropsVal4DropZoneFastEq ),
       )
     }
-    .configure( ReactDiodeUtil.statePropsValShouldComponentUpdate(ImgEditBtnRPropsValFastEq) )
+    .render_S { s =>
+      println("dnd RENDER()")
+      val inner = s.plainC( componentPlain.apply )
+      s.fileDropC { propsProxy =>
+        propsProxy.wrap { props =>
+          filesDropZoneR.PropsVal(
+            // Сборка функции доступа к FRK. Т.к. инстанс всегда разный,
+            // FastEq проверяет только связанные с рендером стабильные данные, а сама модель props собирается здесь.
+            mkActionF  = PictureFileChanged(_: Seq[dom.File], props.resKey): DAction,
+            cssClasses = props.css,
+          )
+        }( filesDropZoneR.component(_)(inner) )(implicitly, filesDropZoneR.FilesDropZoneRFastEq)
+      }
+    }
+    // Сравниваем только p.resKey и p.css:
     .build
 
   def _apply(propsValProxy: Props) = componentDrop( propsValProxy )
@@ -199,21 +212,30 @@ class ImgEditBtnR(
 case class ImgEditBtnPropsVal(
                                edge             : Option[(MJdEdgeId, MEdgeDataJs)],
                                resKey           : MFormResourceKey,
-                               bgColor          : Option[MColorData] = None,
-                               css              : List[String] = Nil,
-                               size             : String = Css.Size.M,
-                               cropOnClick      : Option[ISize2di] = None
+                               bgColor          : Option[MColorData]  = None,
+                               css              : List[String]        = Nil,
+                               size             : String              = Css.Size.M,
+                               cropOnClick      : Option[ISize2di]    = None
                              )
 object ImgEditBtnPropsVal {
+
   implicit object ImgEditBtnRPropsValFastEq extends FastEq[ImgEditBtnPropsVal] {
     override def eqv(a: ImgEditBtnPropsVal, b: ImgEditBtnPropsVal): Boolean = {
       implicitly[FastEq[Option[(MJdEdgeId, MEdgeDataJs)]]].eqv(a.edge, b.edge) &&
-        (a.resKey ==* b.resKey) &&
-        (a.bgColor ===* b.bgColor) &&
-        (a.css ===* b.css) &&
-        (a.size ==* b.size) &&
-        (a.cropOnClick ===* b.cropOnClick)
+      ImgEditBtnRPropsVal4DropZoneFastEq.eqv(a, b) &&
+      (a.bgColor ===* b.bgColor) &&
+      (a.size ==* b.size) &&
+      (a.cropOnClick ===* b.cropOnClick)
     }
   }
+
+  /** Для componentDrop достаточно упрощённого сравнивания только некоторых полей. */
+  object ImgEditBtnRPropsVal4DropZoneFastEq extends FastEq[ImgEditBtnPropsVal] {
+    override def eqv(a: ImgEditBtnPropsVal, b: ImgEditBtnPropsVal): Boolean = {
+      MFormResourceKey.MFormImgKeyFastEq.eqv(a.resKey, b.resKey) &&
+      (a.css ===* b.css)
+    }
+  }
+
 }
 

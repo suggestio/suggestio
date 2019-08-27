@@ -27,7 +27,6 @@ object MLkAdnEditRoot {
 
 /** Класс-контейнер состояния формы редактирования ADN-узла.
   *
-  * @param conf Базовая конфигурация формы.
   * @param node Состояния редактора ADN-узла.
   */
 case class MLkAdnEditRoot(

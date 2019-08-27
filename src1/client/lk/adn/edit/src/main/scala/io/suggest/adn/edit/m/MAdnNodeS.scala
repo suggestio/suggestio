@@ -1,7 +1,7 @@
 package io.suggest.adn.edit.m
 
 import diode.FastEq
-import io.suggest.color.MColorData
+import io.suggest.lk.m.frk.{MFormResourceKey, MFrkTypes}
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.model.n2.node.meta.MMetaPub
 import io.suggest.n2.edge.MEdgeDataJs
@@ -54,6 +54,18 @@ case class MAdnNodeS(
         .map(_.jdEdge.withUrl())
         .toSeq,
       resView = resView
+    )
+  }
+
+  lazy val logoFrk = MFormResourceKey(
+    edgeUid  = resView.logo.map(_.edgeUid),
+    frkType  = MFrkTypes.somes.LogoSome,
+  )
+
+  lazy val wcFgFrk = {
+    MFormResourceKey(
+      edgeUid  = resView.wcFg.map(_.edgeUid),
+      frkType  = MFrkTypes.somes.WcFgSome,
     )
   }
 

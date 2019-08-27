@@ -3,7 +3,7 @@ package io.suggest.adn.edit.v
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adn.edit.m.MLkAdnEditRoot
 import io.suggest.lk.m.MErrorPopupS
-import io.suggest.lk.m.frk.MFormResourceKey
+import io.suggest.lk.m.frk.{MFormResourceKey, MFrkTypes}
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.lk.r.ErrorPopupR
 import io.suggest.lk.r.img.CropPopupR
@@ -79,7 +79,7 @@ class LkAdnEditPopupsR(
                 popCssClass = popupCss,
                 resKey      = MFormResourceKey(
                   edgeUid   = Some( edge.jdEdge.id ),
-                  frkType   = galleryR.formResKeyTypeSome
+                  frkType   = MFrkTypes.somes.GalImgSome,
                 ),
                 withDelete  = true
               )

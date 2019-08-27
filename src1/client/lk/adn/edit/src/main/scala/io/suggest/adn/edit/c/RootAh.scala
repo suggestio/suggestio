@@ -3,7 +3,7 @@ package io.suggest.adn.edit.c
 import diode._
 import io.suggest.adn.edit.api.ILkAdnEditApi
 import io.suggest.adn.edit.m.{MAdnEditErrors, MAdnEditPopups, MLkAdnEditRoot, SaveResp}
-import io.suggest.lk.m.{CloseAllPopups, HandleNewHistogramInstalled, Save}
+import io.suggest.lk.m.{CloseAllPopups, DocBodyClick, HandleNewHistogramInstalled, Save}
 import io.suggest.msg.WarnMsgs
 import io.suggest.primo.id.IId
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -101,6 +101,10 @@ class RootAh[M](
         MAdnEditPopups.empty
       )
       updated( v2 )
+
+    // DocBodyClick используется для сокрытия color picker'а
+    case DocBodyClick =>
+      noChange
 
   }
 

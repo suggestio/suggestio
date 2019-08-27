@@ -23,6 +23,12 @@ object MFrkTypes extends Enum[MFrkType] {
 
   override def values = findValues
 
+
+  object somes {
+    lazy val LogoSome = Some( Logo )
+    lazy val WcFgSome = Some( WcFg )
+    lazy val GalImgSome = Some( MFrkTypes.GalImg )
+  }
 }
 
 
