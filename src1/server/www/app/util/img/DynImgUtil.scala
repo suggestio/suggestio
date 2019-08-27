@@ -598,7 +598,7 @@ class DynImgUtil @Inject() (
               jdMediaId   <- mediaId2edgeUid.get( jdId.edgeUid )
               mmedia      <- mmediasMap.get( jdMediaId )
             } yield {
-              val jdId2 = jdId.withOutImgFormat( mmedia.file.imgFormatOpt )
+              val jdId2 = MJdEdgeId.outImgFormat.set( mmedia.file.imgFormatOpt )(jdId)
               LOGGER.debug(s"$logPrefix2 UPGRADED edge: $jdId2")
               jdId2
             }

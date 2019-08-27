@@ -7,6 +7,7 @@ import io.suggest.model.n2.node.meta.MMetaPub
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -26,6 +27,11 @@ object MAdnNodeS {
   }
 
   @inline implicit def univEq: UnivEq[MAdnNodeS] = UnivEq.derive
+
+  val meta = GenLens[MAdnNodeS](_.meta)
+  val edges = GenLens[MAdnNodeS](_.edges)
+  val resView = GenLens[MAdnNodeS](_.resView)
+  val errors = GenLens[MAdnNodeS](_.errors)
 
 }
 

@@ -15,8 +15,7 @@ import scalaz.syntax.apply._
 import scalaz.std.stream._
 import scalaz.std.iterable._
 import japgolly.univeq._
-
-import scala.collection.TraversableOnce
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -51,10 +50,6 @@ object MAdnResView extends IEmpty {
     UnivEq.derive
   }
 
-  def logoF = { rv: MAdnResView => rv.logo }
-  def wcFgF = { rv: MAdnResView => rv.wcFg }
-  def galImgsF = { rv: MAdnResView => rv.galImgs }
-
 
   /** Валидация инстанса [[MAdnResView]] с помощью карты эджей. */
   def validate(rv: MAdnResView, edgesMap: Map[EdgeUid_t, MJdEdgeVldInfo]): StringValidationNel[MAdnResView] = {
@@ -81,6 +76,10 @@ object MAdnResView extends IEmpty {
     )(apply _)
   }
 
+  val logo = GenLens[MAdnResView](_.logo)
+  val wcFg = GenLens[MAdnResView](_.wcFg)
+  val galImgs = GenLens[MAdnResView](_.galImgs)
+
 }
 
 
@@ -94,26 +93,17 @@ case class MAdnResView(
                         logo      : Option[MJdEdgeId]     = None,
                         wcFg      : Option[MJdEdgeId]     = None,
                         galImgs   : Seq[MJdEdgeId]        = Nil,
+                        // При добавлении новых полей с эджами: НЕ ЗАБЫВАТЬ про edgeUids ниже.
                       )
   extends EmptyProduct
 {
 
-  def withLogo(logo: Option[MJdEdgeId]) = copy(logo = logo)
-  def withWcFg(wcFg: Option[MJdEdgeId]) = copy(wcFg = wcFg)
-  def withGalImgs(galImgs: Seq[MJdEdgeId]) = copy(galImgs = galImgs)
-
-
-  def edgeUids: Iterator[MJdEdgeId] = {
-    productIterator
-      .flatMap {
-        case opt: Option[_] => opt.iterator
-        case tr: TraversableOnce[_] => tr
-        case x => x :: Nil
-      }
-      .flatMap {
-        case id: MJdEdgeId => id :: Nil
-        case _ => Nil
-      }
+  def edgeUids: Stream[MJdEdgeId] = {
+    (logo.iterator #::
+     wcFg.iterator #::
+     galImgs.iterator #::
+     Stream.empty)
+      .flatten
   }
 
 }

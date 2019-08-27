@@ -25,6 +25,7 @@ import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.spa.OptFastEq
 import io.suggest.spa.FastEqUtil
+import monocle.Lens
 
 /**
   * Suggest.io
@@ -132,7 +133,7 @@ class LkAdnEditFormR(
           propsProxy.wrap { props =>
             val cssSizeL = Css.Size.L
             ImgEditBtnPropsVal(
-              edge     = __getImgEdgeOpt(props)(MAdnResView.logoF),
+              edge     = __getImgEdgeOpt(props)(MAdnResView.logo),
               resKey   = props.node.logoFrk,
               bgColor = props.node.meta.colors.bg,
               size    = cssSizeL
@@ -179,7 +180,7 @@ class LkAdnEditFormR(
 
             propsProxy.wrap { props =>
               ImgEditBtnPropsVal(
-                edge = __getImgEdgeOpt(props)( MAdnResView.wcFgF ),
+                edge = __getImgEdgeOpt(props)( MAdnResView.wcFg ),
                 resKey = props.node.wcFgFrk,
               )
             }( imgEditBtnR.apply )(implicitly, ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq ),
@@ -240,17 +241,17 @@ class LkAdnEditFormR(
   }
 
 
-  private def __getImgEdgeOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[(MJdEdgeId, MEdgeDataJs)] = {
+  private def __getImgEdgeOpt(mroot: MLkAdnEditRoot)(lens: Lens[MAdnResView, Option[MJdEdgeId]]): Option[(MJdEdgeId, MEdgeDataJs)] = {
     for {
-      ei <- f(mroot.node.resView)
+      ei <- lens.get(mroot.node.resView)
       edge <- mroot.node.edges.get( ei.edgeUid )
     } yield {
       (ei, edge)
     }
   }
 
-  private def __getImgUploadOpt(mroot: MLkAdnEditRoot)(f: MAdnResView => Option[MJdEdgeId]): Option[MFileUploadS] = {
-    __getImgEdgeOpt(mroot)(f)
+  private def __getImgUploadOpt(mroot: MLkAdnEditRoot)(lens: Lens[MAdnResView, Option[MJdEdgeId]]): Option[MFileUploadS] = {
+    __getImgEdgeOpt(mroot)(lens)
       .flatMap(_._2.fileJs)
       .flatMap(_.upload)
   }
@@ -350,23 +351,18 @@ class LkAdnEditFormR(
           }
         }( OptFastEq.Wrapped(colorPickerR.ColorPickerPropsValFastEq) ),
 
-        logo = {
-          val logoF = MAdnResView.logoF
-          ImgState(
-            uploadStatusC = propsProxy.connect { props =>
-              __getImgUploadOpt(props)(logoF)
-            }( uploadStatusOptFastEq )
-          )
-        },
+        logo = ImgState(
+          uploadStatusC = propsProxy.connect { props =>
+            __getImgUploadOpt(props)(MAdnResView.logo)
+          }( uploadStatusOptFastEq )
+        )
+        ,
 
-        wcFg = {
-          val wcFgF = MAdnResView.wcFgF
-          ImgState(
-            uploadStatusC = propsProxy.connect { props =>
-              __getImgUploadOpt(props)(wcFgF)
-            }( uploadStatusOptFastEq )
-          )
-        },
+        wcFg = ImgState(
+          uploadStatusC = propsProxy.connect { props =>
+            __getImgUploadOpt(props)(MAdnResView.wcFg)
+          }( uploadStatusOptFastEq )
+        ),
 
         galImgs = {
           val cropOnClickSome = Some( NodeEditConstants.Gallery.WH_PX )

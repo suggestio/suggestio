@@ -116,10 +116,6 @@ final case class MJdEdgeId(
   extends IId[EdgeUid_t]
 {
 
-  def withImgEdge(imgEdge: EdgeUid_t) = copy(edgeUid = imgEdge)
-  def withOutImgFormat(outImgFormat: Option[MImgFmt])  = copy(outImgFormat = outImgFormat)
-  def withCrop(crop: Option[MCrop])   = copy(crop = crop)
-
   override def id = edgeUid
 
 }

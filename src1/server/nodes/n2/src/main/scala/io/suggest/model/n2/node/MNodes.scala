@@ -1,5 +1,6 @@
 package io.suggest.model.n2.node
 
+import io.suggest.adn.edit.m
 import io.suggest.adn.edit.m.MAdnResView
 import javax.inject.{Inject, Singleton}
 import io.suggest.model.n2.ad.MNodeAd
@@ -17,12 +18,14 @@ import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.jd.MJdEdgeId
 import io.suggest.util.logs.MacroLogsImpl
+import monocle.Traversal
 import monocle.macros.GenLens
 import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import scalaz.std.option._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
@@ -301,13 +304,21 @@ case class MNode(
       }
 
       /** Эдж картинки-логотипа adn-узла. */
-      lazy val logo = _jdIdWithEdge(MAdnResView.logoF(_)).headOption
+      lazy val logo = _jdIdWithEdge(
+        (MAdnResView.logo composeTraversal Traversal.fromTraverse[Option, MJdEdgeId])
+          .getAll
+      ).headOption
 
       /** Эдж картинки приветствия adn-узла. */
-      lazy val wcFg = _jdIdWithEdge(MAdnResView.wcFgF(_)).headOption
+      lazy val wcFg = _jdIdWithEdge(
+        (MAdnResView.wcFg composeTraversal Traversal.fromTraverse[Option, MJdEdgeId])
+          .getAll
+      ).headOption
 
       /** Списочек галеры картинок adn-узла. */
-      lazy val galImgs = _jdIdWithEdge(MAdnResView.galImgsF)
+      lazy val galImgs = _jdIdWithEdge(
+        MAdnResView.galImgs.get
+      )
 
     }
 

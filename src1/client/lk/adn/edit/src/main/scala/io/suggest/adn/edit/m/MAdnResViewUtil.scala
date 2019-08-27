@@ -32,36 +32,39 @@ object MAdnResViewUtil extends Log {
       }
     }
 
-    override def updated(view: MAdnResView, resKey: MFormResourceKey)(newValue: Option[MJdEdgeId]): MAdnResView = {
+
+    /** Обновить указатель на картинку, вернув обновлённый V. */
+    override def updated(view: MAdnResView, resKey: MFormResourceKey)(newValue: Option[MJdEdgeId]): MAdnResView =
+      updateF(resKey)(newValue)(view)
+
+    def updateF(resKey: MFormResourceKey)(newValue: Option[MJdEdgeId]): MAdnResView => MAdnResView = {
       // Найти в view присланный инстанс jdEdgeId и обновить.
       resKey.frkType.get match {
         // Апдейт галереи.
         case MFrkTypes.Logo =>
-          view.withLogo( newValue )
+          MAdnResView.logo.set( newValue )
         case MFrkTypes.WcFg =>
-          view.withWcFg( newValue )
+          MAdnResView.wcFg.set( newValue )
         case MFrkTypes.GalImg =>
           // Нужно найти по id эджа, если он задан.
           resKey.edgeUid.fold {
             // Нет id. Добавить в начало галеры
-            newValue.fold {
+            newValue.fold[MAdnResView => MAdnResView] {
               // Нет добавляемой картинки. Ошибочная ситуация какая-то.
-              view
+              identity
             } { addEdgeId =>
-              view.withGalImgs(
-                addEdgeId +: view.galImgs
-              )
+              MAdnResView.galImgs.modify(addEdgeId +: _)
             }
           } { existingEdgeUid =>
-            view.withGalImgs(
-              view.galImgs.flatMap { galImg =>
+            MAdnResView.galImgs.modify { galImgs0 =>
+              galImgs0.flatMap { galImg =>
                 if (galImg.edgeUid ==* existingEdgeUid) {
                   newValue
                 } else {
                   galImg :: Nil
                 }
               }
-            )
+            }
           }
       }
     }

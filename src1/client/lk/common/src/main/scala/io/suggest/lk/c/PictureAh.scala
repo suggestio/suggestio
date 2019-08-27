@@ -694,8 +694,7 @@ class PictureAh[V, M](
 
       val view2 = picViewContAdp.updated(v0.view, m.resKey) {
         Some {
-          bgImg0
-            .withCrop( Some( pixelCrop ) )
+          MJdEdgeId.crop.set( Some(pixelCrop) )(bgImg0)
         }
       }
 
@@ -724,9 +723,7 @@ class PictureAh[V, M](
           // Восстановить исходный кроп sel-тега в состоянии.
           v1.withView(
             picViewContAdp.updateWith(v1.view, m.resKey) { imgEdgeIdOpt =>
-              for (imgEdgeId <- imgEdgeIdOpt) yield {
-                imgEdgeId.withCrop( cropPopup.origCrop )
-              }
+              imgEdgeIdOpt.map( MJdEdgeId.crop set cropPopup.origCrop )
             }
           )
         }
@@ -775,7 +772,7 @@ class PictureAh[V, M](
       // Не обновлять ничего, если ничего не изменилось.
       if !bgImg.crop.contains( mcrop2 )
     } yield {
-      bgImg.withCrop( Some(mcrop2) )
+      MJdEdgeId.crop.set( Some(mcrop2) )( bgImg )
     }
 
     imgEdgeId2.fold(v0) { _ =>
