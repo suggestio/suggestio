@@ -81,7 +81,6 @@ class ImgEditBtnR(
     def render(propsValProxy: Props): VdomElement = {
       val C = Css.Lk.Image
       val propsVal = propsValProxy.value
-      println("IEB render(): " + propsVal.resKey)
 
       <.div(
         ^.`class` := Css.flat1( C.IMAGE :: propsVal.size :: Css.Overflow.HIDDEN :: propsVal.css ),
@@ -180,14 +179,12 @@ class ImgEditBtnR(
   val componentDrop = ScalaComponent
     .builder[Props]( getClass.getSimpleName + "Dnd" )
     .initialStateFromProps { propsProxy =>
-      println("dnd initState()")
       StateDrop(
         plainC    = propsProxy.connect(identity)( ImgEditBtnPropsVal.ImgEditBtnRPropsValFastEq ),
         fileDropC = propsProxy.connect(identity)( ImgEditBtnPropsVal.ImgEditBtnRPropsVal4DropZoneFastEq ),
       )
     }
     .render_S { s =>
-      println("dnd RENDER()")
       val inner = s.plainC( componentPlain.apply )
       s.fileDropC { propsProxy =>
         propsProxy.wrap { props =>

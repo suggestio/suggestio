@@ -223,10 +223,15 @@ class DocEditAh[M](
           .foldLeft(qdSubTree2.loc) { case (qdLoc, (_, edgeData)) =>
             // Новая картинка. Найти и уменьшить её ширину в шаблоне.
             val edgeUid = edgeData.jdEdge.id
-            _qdUpdateWidth(qdLoc, edgeUid, width = maxEmbedWidth, heightPxOpt = None, needUpdateF = Some {
-              widthPx =>
+            _qdUpdateWidth(
+              qdLoc,
+              edgeUid = edgeUid,
+              width = maxEmbedWidth,
+              heightPxOpt = None,
+              needUpdateF = Some { widthPx =>
                 widthPx > maxEmbedWidth || widthPx <= 0
-            })
+              }
+            )
           }
           .toTree
 

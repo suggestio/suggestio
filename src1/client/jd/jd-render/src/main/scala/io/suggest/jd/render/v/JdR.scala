@@ -145,8 +145,7 @@ class JdR(
     def renderStrip(stripTree: Tree[JdTag], i: Int, jdArgs: MJdArgs): TagOf[html.Div] = {
       val s = stripTree.rootLabel
       val C = jdArgs.jdRuntime.jdCss
-      val isSelected = jdArgs.selJdt.treeLocOpt.containsLabel(s)
-      val isEditSelected = isSelected && jdArgs.conf.isEdit
+      val isSelected = jdArgs.selJdt.treeLocOpt containsLabel s
 
       val isWide = s.props1.bm.hasExpandMode
 
@@ -235,7 +234,7 @@ class JdR(
         },
 
         // Если текущий стрип выделен, то его можно таскать.
-        ReactCommonUtil.maybe( isEditSelected ) {
+        ReactCommonUtil.maybe( isSelected && jdArgs.conf.isEdit ) {
           TagMod(
             _draggableUsing(s, jdArgs)(stripDragStart(s)),
             ^.`class` := Css.Cursor.GRAB
@@ -346,7 +345,7 @@ class JdR(
 
         ReactCommonUtil.maybe(
           jdArgs.conf.isEdit &&
-          !jdArgs.selJdt.treeLocOpt.containsLabel(parent)
+          !(jdArgs.selJdt.treeLocOpt containsLabel parent)
         ) {
           _draggableUsing(qdTag, jdArgs) { qdTagDragStart(qdTag) }
         },
@@ -503,11 +502,10 @@ class JdR(
     private def onDropToStrip(s: JdTag)(e: ReactDragEvent): Callback = {
       val mimes = MimeConst.Sio
 
-      e.preventDefault()
       val dataType = e.dataTransfer.getData( mimes.DATA_CONTENT_TYPE )
       val clientY = e.clientY
 
-      if ( dataType ==* mimes.DataContentTypes.CONTENT_ELEMENT ) {
+      val cb: Callback = if ( dataType ==* mimes.DataContentTypes.CONTENT_ELEMENT ) {
         // Перенос контента.
         val coordsJsonStr = e.dataTransfer.getData( mimes.COORD_2D_JSON )
         val clientX = e.clientX
@@ -560,6 +558,9 @@ class JdR(
         LOG.log( WarnMsgs.DND_DROP_UNSUPPORTED, msg = e.dataTransfer.types.mkString(",") )
         Callback.empty
       }
+
+      // тут нельзя stopPropagation - всё ломается.
+      e.preventDefaultCB >> cb
     }
 
 
