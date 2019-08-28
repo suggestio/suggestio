@@ -58,12 +58,4 @@ case class MJdRenderArgs(
                           hideNonMainStrips   : Boolean                     = false,
                           groupOutLined       : Option[MColorData]          = None,
                           dnd                 : MJdDndS                     = MJdDndS.empty
-                        ) {
-
-  def withSelPath(selPath: Option[NodePath_t])                  = copy(selPath = selPath)
-  def withSelJdtBgImgMod(selJdtBgImgMod: Option[TagMod])        = copy(selJdtBgImgMod = selJdtBgImgMod)
-  def withHideNonMainStrips(hideNonMainStrips: Boolean)         = copy(hideNonMainStrips = hideNonMainStrips)
-  def withGroupOutLined(groupOutLined: Option[MColorData])      = copy(groupOutLined = groupOutLined)
-  def withDnd(dnd: MJdDndS = MJdDndS.empty)                     = copy(dnd = dnd)
-
-}
+                        )

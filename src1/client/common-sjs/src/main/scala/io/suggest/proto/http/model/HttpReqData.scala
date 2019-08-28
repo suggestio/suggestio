@@ -80,15 +80,6 @@ case class HttpReqData(
                         cache         : MHttpCacheInfo        = MHttpCacheInfo.default,
                       ) {
 
-  def withHeaders(headers: Map[String, String]) = copy(headers = headers)
-  def addHeaders(hdrs: (String, String)*) = {
-    if (hdrs.isEmpty) this
-    else withHeaders(headers ++ hdrs)
-  }
-
-  def withBody(body: Ajax.InputData) = copy(body = body)
-  def withTimeout(timeoutMs: Option[Int]) = copy(timeoutMs = timeoutMs)
-
   def timeoutMsOr0 = timeoutMs getOrElse 0
 
   /** Whether or not cross-site Access-Control requests should be made using credentials such as cookies,

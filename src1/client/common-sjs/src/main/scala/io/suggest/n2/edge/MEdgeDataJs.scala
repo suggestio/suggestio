@@ -81,9 +81,6 @@ case class MEdgeDataJs(
 
   override final def id = jdEdge.id
 
-  def withJdEdge(mJdEditEdge  : MJdEdge)          = copy(jdEdge = jdEdge)
-  def withFileJs(fileJs       : Option[MJsFileInfo])  = copy(fileJs = fileJs)
-
 
   private def _imgSrcOrDflt(dflt: => Option[String]) = {
     fileJs

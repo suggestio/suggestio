@@ -22,10 +22,14 @@ trait IHashCodeLazyVal extends Product {
 
   /**
     * Реализация хеширования инстанса, когда операций сравнения на повтоных вызовах сведено к O(1).
-    * Это надо для быстрого рендера, который зависит от Map[IDocTag,_] (внутри scalaCSS Domain).
+    * Это надо для быстрого рендера, который зависит от Map[TheKey,_] (внутри scalaCSS Domain).
     */
   override final lazy val hashCode = ScalaRunTime._hashCode(this)
 
+}
+
+trait IHashCodeVal extends Product {
+  override final val hashCode = ScalaRunTime._hashCode(this)
 }
 
 

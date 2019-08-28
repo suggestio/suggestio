@@ -43,8 +43,4 @@ case class HttpReq(
                     method     : String,
                     url        : String,
                     data       : HttpReqData = HttpReqData.empty,
-                  ) {
-
-  def withDetails(details: HttpReqData) = copy(data = details)
-
-}
+                  )

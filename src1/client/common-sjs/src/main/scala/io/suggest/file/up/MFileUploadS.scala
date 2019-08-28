@@ -6,6 +6,7 @@ import org.scalajs.dom.raw.XMLHttpRequest
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -29,6 +30,10 @@ object MFileUploadS {
 
   @inline implicit def univEq: UnivEq[MFileUploadS] = UnivEq.derive
 
+  val xhr = GenLens[MFileUploadS](_.xhr)
+  val prepareReq = GenLens[MFileUploadS](_.prepareReq)
+  //val uploadReq = GenLens[MFileUploadS](_.uploadReq)
+
 }
 
 
@@ -45,12 +50,5 @@ case class MFileUploadS(
                          prepareReq   : Pot[MUploadResp]           = Pot.empty,
                          uploadReq    : Pot[MUploadResp]           = Pot.empty,
                          progress     : Option[Int]                = None
-                       ) {
-
-  def withXhr(xhr: Option[XMLHttpRequest])          = copy(xhr = xhr)
-  def withPrepareReq(prepareReq: Pot[MUploadResp])  = copy(prepareReq = prepareReq)
-  def withUploadReq(uploadReq: Pot[MUploadResp])    = copy(uploadReq = uploadReq)
-  def withProgress(progress: Option[Int])           = copy(progress = progress)
-
-}
+                       )
 

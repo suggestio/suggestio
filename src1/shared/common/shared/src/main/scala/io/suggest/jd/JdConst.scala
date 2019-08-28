@@ -17,10 +17,10 @@ object JdConst {
 
 
   /** Макс. кол-во qd-операций в одном "контенте". */
-  final def MAX_QD_OPS_COUNT = 70
+  final def MAX_QD_OPS_COUNT = 200
 
 
-  final def MAX_TEXT_LEN = 1024
+  final def MAX_TEXT_LEN = 4096
 
   /** Максимально-допустимое вращение jd-элемента. */
   final def ROTATE_MAX_ABS = 180

@@ -44,8 +44,4 @@ case class MJdDndS(
                     jdt             : Option[NodePath_t]  = None
                   )
   extends EmptyProduct
-{
 
-  def withJdt( jdt: Option[NodePath_t] )              = copy(jdt = jdt)
-
-}

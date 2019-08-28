@@ -37,6 +37,21 @@ object MDocS {
   val slideBlocks = GenLens[MDocS](_.slideBlocks)
   val colorsState = GenLens[MDocS](_.colorsState)
 
+
+  implicit class MDocExt( val doc: MDocS ) extends AnyVal {
+
+    def withOutQdEdit: MDocS = {
+      if (doc.qdEdit.isEmpty) doc
+      else qdEdit.set(None)(doc)
+    }
+
+    def withOutStripEd: MDocS = {
+      if (doc.stripEd.isEmpty) doc
+      else stripEd.set(None)(doc)
+    }
+
+  }
+
 }
 
 
@@ -56,12 +71,4 @@ case class MDocS(
                   stripEd       : Option[MStripEdS]             = None,
                   slideBlocks   : MSlideBlocks                  = MSlideBlocks.empty,
                   colorsState   : MColorsState                  = MColorsState.empty
-                ) {
-
-  def withQdEdit(qdEdit: Option[MQdEditS]) = copy(qdEdit = qdEdit)
-  def withOutQdEdit = if (qdEdit.nonEmpty) withQdEdit(None) else this
-
-  def withStripEd(stripEd: Option[MStripEdS]) = copy(stripEd = stripEd)
-  def withOutStripEd = if (stripEd.nonEmpty) withStripEd(None) else this
-
-}
+                )

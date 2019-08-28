@@ -28,6 +28,14 @@ object MQdEditS {
   val initDelta = GenLens[MQdEditS](_.initDelta)
   val realDelta = GenLens[MQdEditS](_.realDelta)
 
+
+  implicit class QdEditExt( val qdEditS: MQdEditS ) extends AnyVal {
+
+    def withInitRealDelta(initDelta: Delta, realDelta: Option[Delta] = None): MQdEditS =
+      qdEditS.copy(initDelta = initDelta, realDelta = realDelta)
+
+  }
+
 }
 
 
@@ -44,23 +52,3 @@ case class MQdEditS(
                      initDelta                  : Delta,
                      realDelta                  : Option[Delta]     = None,
                    )
-{
-
-  def withInitRealDelta(initDelta: Delta, realDelta: Option[Delta] = None) = copy(initDelta = initDelta, realDelta = realDelta)
-  def withInitDelta(initDelta: Delta)                     = copy(initDelta = initDelta)
-  def withRealDelta(realDelta: Option[Delta])             = copy(realDelta = realDelta)
-
-
-  /** Залить realDelta в init, чтобы принудительно освежить состояние.
-    * Удобно, если надо перерендерить редактор.
-    */
-  def refresh: MQdEditS = {
-    realDelta.fold(this) { delta2 =>
-      copy(
-        initDelta = delta2,
-        realDelta = None
-      )
-    }
-  }
-
-}

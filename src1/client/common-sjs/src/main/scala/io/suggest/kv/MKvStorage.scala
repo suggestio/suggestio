@@ -32,8 +32,6 @@ object MKvStorage extends Log {
 
 
   /** Сохранение в базу.
-    *
-    * @param mconf
     */
   def save(mkv: MKvStorage): Unit = {
     storage.setItem(mkv.key, mkv.value)
@@ -79,8 +77,4 @@ object MKvStorage extends Log {
 case class MKvStorage(
                        key    : String,
                        value  : String,
-                     ) {
-
-  def withValue(value: String) = copy(value = value)
-
-}
+                     )

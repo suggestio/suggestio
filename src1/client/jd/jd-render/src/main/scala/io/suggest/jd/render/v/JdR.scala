@@ -273,11 +273,6 @@ class JdR(
     }
 
 
-    /** Выполнить рендер текущего документа, переданного в jdArgs. */
-    def renderDocument(i: Int = 0, jdArgs: MJdArgs): TagOf[html.Div] = {
-      renderDocument( jdArgs.template, i, jdArgs )
-    }
-
     /** Рендер указанного документа. */
     def renderDocument(jd: Tree[JdTag], i: Int, jdArgs: MJdArgs): TagOf[html.Div]  = {
       <.div(

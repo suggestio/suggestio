@@ -42,7 +42,7 @@ object MJsFileInfo {
   val fileName  = GenLens[MJsFileInfo](_.fileName)
   val hashesHex = GenLens[MJsFileInfo](_.hashesHex)
   val whPx      = GenLens[MJsFileInfo](_.whPx)
-  val upload    = GenLens[MJsFileInfo](_.whPx)
+  val upload    = GenLens[MJsFileInfo](_.upload)
 
 }
 
@@ -65,13 +65,3 @@ case class MJsFileInfo(
                         upload            : Option[MFileUploadS]    = None
                       )
   extends EmptyProduct
-{
-
-  def withBlob(blob: Blob)                                = copy(blob = blob)
-  def withBlobUrl(blobUrl: Option[String])                = copy(blobUrl = blobUrl)
-  def withFileName(fileName: Option[String])              = copy(fileName = fileName)
-  def withHashesHex(hashesHex: HashesHex)                 = copy(hashesHex = hashesHex)
-  def withWhPx(whPx: Option[MSize2di])                    = copy(whPx = whPx)
-  def withUpload(upload: Option[MFileUploadS])            = copy(upload = upload)
-
-}

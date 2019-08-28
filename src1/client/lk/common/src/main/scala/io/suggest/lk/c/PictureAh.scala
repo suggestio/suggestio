@@ -28,7 +28,9 @@ import io.suggest.ws.MWsMsgTypes
 import io.suggest.ws.pool.m.{MWsConnTg, WsChannelMsg, WsEnsureConn}
 import io.suggest.ww._
 import japgolly.univeq._
+import monocle.Traversal
 import org.scalajs.dom.raw.URL
+import scalaz.std.option._
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -267,7 +269,8 @@ class PictureAh[V, M](
             } { edge0 =>
               // Дедубликация кода обновления текущего эджа:
               def __v2F(fileJs9: MJsFileInfo): MPictureAh[V] = {
-                val edge2 = edge0.withFileJs( Some( fileJs9 ) )
+                val edge2 = MEdgeDataJs.fileJs
+                  .set( Some(fileJs9) )(edge0)
                 v0.withEdges(
                   v0.edges.updated( edge0.id, edge2 )
                 )
@@ -276,8 +279,7 @@ class PictureAh[V, M](
               val fileJs0 = edge0.fileJs.get
               val hashesHex2: HashesHex = fileJs0.hashesHex + (m.hash -> hashHex)
 
-              val fileJs1 = fileJs0
-                .withHashesHex( hashesHex2 )
+              val fileJs1 = MJsFileInfo.hashesHex.set(hashesHex2)( fileJs0 )
 
               // Попытаться провалидировать хеши так же, как это сделает сервер.
               // Это поможет определить достаточность собранной карты хешей для запуска аплоада.
@@ -311,14 +313,14 @@ class PictureAh[V, M](
                         }
                     }
 
-                    val fileJs2 = fileJs1.withUpload {
-                      val upState0 = fileJs0.upload.getOrElse( MFileUploadS.empty )
-                      Some( upState0
-                        .withPrepareReq(
-                          upState0.prepareReq.pending()
-                        )
-                      )
-                    }
+                    val fileJs2 = MJsFileInfo.upload.modify { upState0 =>
+                      val upState2 = MFileUploadS.prepareReq
+                        .modify(_.pending())
+                        .apply {
+                          upState0 getOrElse MFileUploadS.empty
+                        }
+                      Some( upState2 )
+                    }(fileJs0)
 
                     val v2 = __v2F(fileJs2)
                     updated(v2, fx)
@@ -342,12 +344,11 @@ class PictureAh[V, M](
         m.tryRes.fold(
           // Ошибка выполнения запроса к серверу. Залить её в состояние для текущего файла.
           {ex =>
-            val fileJsOpt2 = _fileJsWithUpload(edge0.fileJs) { upload0 =>
-              upload0
-                .withXhr(None)
-                .withPrepareReq( upload0.prepareReq.fail(ex) )
+            val fileJsOpt2 = _fileJsWithUpload(edge0.fileJs) {
+              MFileUploadS.xhr.set(None) andThen
+              MFileUploadS.prepareReq.modify( _.fail(ex) )
             }
-            val edge2 = edge0.withFileJs( fileJsOpt2 )
+            val edge2 = MEdgeDataJs.fileJs.set(fileJsOpt2)(edge0)
             val errPopup0 = v0.errorPopup.getOrElse( MErrorPopupS.empty )
             val v2 = v0
               .withEdges( v0.edges + (edge0.id -> edge2) )
@@ -387,7 +388,8 @@ class PictureAh[V, M](
                       uploadReq   = upload0.uploadReq.pending()
                     )
                   }
-                  val edge2 = edge0.withFileJs( fileJsOpt2 )
+                  val edge2 = MEdgeDataJs.fileJs
+                    .set(fileJsOpt2)(edge0)
                   val v2 = v0
                     .withEdges( v0.edges + (edge0.id -> edge2) )
                   updated(v2, uploadFx)
@@ -399,12 +401,9 @@ class PictureAh[V, M](
                   // Файл уже залит на сервер. Это нормально. Залить данные по файлу в состояние:
                   val edge2 = edge0.copy(
                     jdEdge = _srvFileIntoJdEdge( fe, edge0.jdEdge ),
-                    fileJs = _fileJsWithUpload(edge0.fileJs) { upload0 =>
-                      upload0
-                        .withXhr(None)
-                        .withPrepareReq(
-                          upload0.prepareReq.ready(resp)
-                        )
+                    fileJs = _fileJsWithUpload(edge0.fileJs) {
+                      MFileUploadS.xhr.set( None ) andThen
+                      MFileUploadS.prepareReq.modify( _.ready(resp) )
                     }
                   )
                   val v1 = v0.withEdges(
@@ -450,7 +449,7 @@ class PictureAh[V, M](
         m.tryRes.fold(
           // Ошибка выполнения upload'а.
           {ex =>
-            val edge2 = edge0.withFileJs(
+            val edge2 = MEdgeDataJs.fileJs.set(
               _fileJsWithUpload(edge0.fileJs) { upload0 =>
                 upload0.copy(
                   xhr       = None,
@@ -458,7 +457,8 @@ class PictureAh[V, M](
                   progress  = None
                 )
               }
-            )
+            )( edge0 )
+
             val v2 = v0.withEdges(
               v0.edges.updated(edge2.id, edge2)
             )
@@ -549,12 +549,12 @@ class PictureAh[V, M](
       // Сохранить в состояние ширину и длину.
       val v0 = value
       val e0 = v0.edges(m.edgeUid)
-      val f0 = e0.fileJs.get
-      val e2 = e0.withFileJs(
-        Some(f0.withWhPx(
-          Some(m.wh)
-        ))
-      )
+
+      val e2 = MEdgeDataJs.fileJs
+        .composeTraversal( Traversal.fromTraverse[Option, MJsFileInfo] )
+        .composeLens( MJsFileInfo.whPx )
+        .set( Some(m.wh) )(e0)
+
       val v2 = v0.withEdges(
         v0.edges.updated(m.edgeUid, e2)
       )
@@ -808,12 +808,11 @@ class PictureAh[V, M](
 
 
   private def _fileJsWithUpload(fileJsOpt0: Option[MJsFileInfo])(f: MFileUploadS => MFileUploadS): Option[MJsFileInfo] = {
-    for (fileJs0 <- fileJsOpt0) yield {
-      fileJs0.withUpload(
-        fileJs0.upload
-          .map(f)
-      )
-    }
+    fileJsOpt0.map(
+      MJsFileInfo.upload
+        .composeTraversal( Traversal.fromTraverse[Option, MFileUploadS] )
+        .modify(f)
+    )
   }
 
 

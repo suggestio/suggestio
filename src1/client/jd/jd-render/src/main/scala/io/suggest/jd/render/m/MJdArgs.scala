@@ -66,7 +66,8 @@ case class MJdArgs(
     /** Вернуть tree loc текущего тега.
       * O(N). кэшируем результат тут. */
     lazy val treeLocOpt: Option[TreeLoc[JdTag]] = {
-      renderArgs.selPath.flatMap { template.pathToNode }
+      renderArgs.selPath
+        .flatMap { template.pathToNode }
     }
 
     /** Вернуть поддерево текущего тега.

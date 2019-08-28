@@ -506,17 +506,18 @@ class DocEditAh[M](
         // Сохранить инфу по блобу.
         val fileJs2 = dataEdge0.fileJs.fold {
           MJsFileInfo(
-            blob = m.blob,
+            blob    = m.blob,
             blobUrl = blobUrlOpt
           )
-        } { fileJs0 =>
+        } {
           // Ссылка изменилась на blob, но нельзя трогать delta: quill не поддерживает blob-ссылки.
-          fileJs0
-            .withBlob( m.blob )
-            .withBlobUrl( blobUrlOpt )
+          MJsFileInfo.blob.set( m.blob ) andThen
+          MJsFileInfo.blobUrl.set( blobUrlOpt )
         }
-        val dataEdge1 = dataEdge0
-          .withFileJs( Some(fileJs2) )
+
+        val dataEdge1 = MEdgeDataJs.fileJs
+          .set( Some(fileJs2) )(dataEdge0)
+
         (dataEdge1, blobUrl)
       }
 
@@ -682,7 +683,6 @@ class DocEditAh[M](
           val fx = JdTagSelect(m.jdTag).toEffectPure
           updated( v2, fx )
         }
-
       }
 
 
@@ -744,17 +744,18 @@ class DocEditAh[M](
         // TODO Отработать ситуацию, когда хотя бы один из index'ов == -1
         val fromStripIndex = strips.indexOf(fromStrip)
         val toStripIndex = strips.indexOf(m.strip)
-        val (topStrip, bottomStrip, yModSign) = if (fromStripIndex <= toStripIndex) {
-          (fromStrip, m.strip, -1)
-        } else {
-          (m.strip, fromStrip, +1)
-        }
+
+        val (topStrip, bottomStrip, yModSign) =
+          if (fromStripIndex <= toStripIndex) (fromStrip, m.strip, -1)
+          else (m.strip, fromStrip, +1)
+
         // Собрать все стрипы от [текущего до целевого), просуммировать высоту блоков, вычесть из Y
         val iter = tpl0
           .deepOfTypeIter( MJdTagNames.STRIP )
           .dropWhile(_ !=* topStrip)
           .takeWhile(_ !=* bottomStrip)
           .flatMap(_.props1.bm)
+
         if (iter.nonEmpty) {
           val yDiff = iter
             .map { _.h.value }
