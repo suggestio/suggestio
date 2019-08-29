@@ -96,6 +96,18 @@ object ReactDiodeUtil {
 
     }
 
+
+    implicit class ModelProxyExt[A]( val model: ModelProxy[A] ) extends AnyVal {
+
+      /** Сброс значения от зуммера на указанное значение. */
+      def resetZoom[B <: AnyRef](v: B): ModelProxy[B] = {
+        model.copy(
+          modelReader = new RootModelRW(v)
+        )
+      }
+
+    }
+
   }
 
 }

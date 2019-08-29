@@ -29,7 +29,6 @@ import io.suggest.lk.r.color.{ColorCheckBoxR, ColorPickerR, ColorsSuggestR}
 import io.suggest.lk.r.img.{CropBtnR, ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.msg.Messages
 import io.suggest.react.ReactDiodeUtil
-import io.suggest.sjs.common.model.dom.DomListSeq
 import io.suggest.spa.{FastEqUtil, OptFastEq}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -111,6 +110,7 @@ class LkAdEditFormR(
                           contentBgCbOptC   : ReactConnectProxy[Option[colorCheckBoxR.PropsVal]]
                         )
 
+  private val jdR2 = new jdR.JdRrrEdit {}
 
   protected class Backend($: BackendScope[Props, State]) {
 
@@ -154,7 +154,7 @@ class LkAdEditFormR(
               LCSS.previewInnerCont,
 
               // Тело превьюшки в виде плитки.
-              s.jdPreviewArgsC { jdR.apply },
+              s.jdPreviewArgsC { jdR2.anyTagComp.apply },
 
               <.div(
                 ^.`class` := Css.CLEAR

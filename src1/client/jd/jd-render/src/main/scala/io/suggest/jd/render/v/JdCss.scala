@@ -13,7 +13,6 @@ import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.JdConst
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
-import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.primo.ISetUnset
 import io.suggest.text.MTextAligns
 import japgolly.univeq._
@@ -386,11 +385,6 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   // -------------------------------------------------------------------------------
   // fonts
-
-  private def _qdOpsIter: Iterator[MQdOp] = {
-    _allJdTagsIter
-      .flatMap(_.qdProps)
-  }
 
   /** Тени текста. */
   val contentShadowF = {

@@ -1201,7 +1201,7 @@ class DocEditAh[M](
         .valuesIterator
         .find { e =>
           e.jdEdge.predicate ==* textPred &&
-            e.jdEdge.text.contains( textL10ed )
+          (e.jdEdge.text contains textL10ed)
         }
         .fold [(Map[EdgeUid_t, MEdgeDataJs], Int)] {
           // Нет примера текста в эджах: добавить его туда.

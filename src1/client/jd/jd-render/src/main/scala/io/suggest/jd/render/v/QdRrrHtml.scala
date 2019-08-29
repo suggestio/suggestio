@@ -45,7 +45,7 @@ case class QdRrrHtml(
                       jdArgs       : MJdArgs,
                       qdTag        : Tree[JdTag],
                       imgEdgeMods  : Option[MEdgeDataJs => TagMod] = None,
-                      resizableCb  : Option[(MQdOp, MEdgeDataJs, Boolean, ReactMouseEventFromHtml) => Callback],
+                      resizableCb  : Option[(MQdOp, MEdgeDataJs, Boolean, ReactMouseEventFromHtml) => Callback] = None,
                     ) {
 
   import QdRrrHtml.LOG

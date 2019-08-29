@@ -73,7 +73,7 @@ class ImgEditBtnR(
     private def _onImgLoaded(e: ReactEvent): Callback = {
       $.props >>= { props: Props =>
         props.value.edge.fold(Callback.empty) { edge =>
-          imgRenderUtilJs.notifyImageLoaded($, edge._1.edgeUid, e)
+          imgRenderUtilJs.notifyImageLoaded($, edge._1.edgeUid)(e)
         }
       }
     }
