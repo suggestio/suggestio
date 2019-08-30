@@ -9,11 +9,11 @@ import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEdgeId
 import io.suggest.lk.m.{CropOpen, PictureFileChanged}
-import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.msg.Messages
 import io.suggest.n2.edge.MEdgeDataJs
 import MEdgeDataJs.MEdgeDataJsTupleFastEq
 import io.suggest.dev.{MSzMult, MSzMults}
+import io.suggest.form.MFormResourceKey
 import io.suggest.lk.r.FilesDropZoneR
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}

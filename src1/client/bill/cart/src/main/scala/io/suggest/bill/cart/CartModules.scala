@@ -14,8 +14,7 @@ import io.suggest.jd.render.JdRenderModule
   */
 class CartModules {
 
-  val jdRenderModule = wire[JdRenderModule]
-  import jdRenderModule._
+  import JdRenderModule._
 
   lazy val cartPageCircuit = wire[CartPageCircuit]
 

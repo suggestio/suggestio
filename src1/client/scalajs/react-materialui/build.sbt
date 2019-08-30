@@ -14,11 +14,6 @@ version := "4.1.3"
 // Show more comments when using dubious features
 scalacOptions += "-feature"
 
-libraryDependencies ++= Seq(
-  Common.ORG      %%% "scalajs-react-common" % "0.0.0",
-  //"io.monix"      %%% "minitest" % Common.minitestVsn % Test
-)
-
 npmDependencies in Compile ++= Seq(
   "@material-ui/core"  -> version.value,
   "@material-ui/icons" -> "4.2.1"

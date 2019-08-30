@@ -22,6 +22,7 @@ import io.suggest.quill.v.{QuillCss, QuillEditorR}
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
+import io.suggest.jd.edit.JdEditR
 import io.suggest.jd.tags.{MJdShadow, MJdTagName, MJdTagNames}
 import io.suggest.lk.m.{CropOpen, DocBodyClick, PictureFileChanged}
 import io.suggest.lk.r.{LkCss, SaveR, SlideBlockR, UploadStatusR}
@@ -44,7 +45,7 @@ import scalacss.ScalaCssReact._
   */
 class LkAdEditFormR(
                      jdCssStatic                : JdCssStatic,
-                     jdR                        : JdR,
+                     jdEditR                    : JdEditR,
                      addR                       : AddR,
                      lkAdEditCss                : LkAdEditCss,
                      lkCss                      : LkCss,
@@ -110,7 +111,6 @@ class LkAdEditFormR(
                           contentBgCbOptC   : ReactConnectProxy[Option[colorCheckBoxR.PropsVal]]
                         )
 
-  private val jdR2 = new jdR.JdRrrEdit {}
 
   protected class Backend($: BackendScope[Props, State]) {
 
@@ -154,7 +154,7 @@ class LkAdEditFormR(
               LCSS.previewInnerCont,
 
               // Тело превьюшки в виде плитки.
-              s.jdPreviewArgsC { jdR2.anyTagComp.apply },
+              s.jdPreviewArgsC { jdEditR.JdRrrEdit.anyTagComp.apply },
 
               <.div(
                 ^.`class` := Css.CLEAR

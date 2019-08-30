@@ -13,10 +13,10 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.file.up.MFileUploadS
+import io.suggest.form.{MFormResourceKey, MFrkTypes}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEdgeId
 import io.suggest.lk.m.DocBodyClick
-import io.suggest.lk.m.frk.{MFormResourceKey, MFrkTypes}
 import io.suggest.lk.r.{PropTableR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorBtnR, ColorPickerR}
 import io.suggest.lk.r.img.{ImgEditBtnPropsVal, ImgEditBtnR}

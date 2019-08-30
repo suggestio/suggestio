@@ -1,7 +1,6 @@
 package io.suggest.sys.mdr
 
 import com.softwaremill.macwire._
-import io.suggest.jd.render.JdRenderModule
 import io.suggest.sys.mdr.v._
 import io.suggest.sys.mdr.v.dia.MdrDiaRefuseR
 import io.suggest.sys.mdr.v.main.{MdrErrorsR, NodeRenderR}
@@ -16,8 +15,7 @@ import io.suggest.sys.mdr.v.toolbar._
   */
 class SysMdrModules {
 
-  val jdModules = wire[JdRenderModule]
-  import jdModules._
+  import io.suggest.jd.render.JdRenderModule._
 
   lazy val nodeRenderR = wire[NodeRenderR]
   lazy val mdrSidePanelR = wire[MdrSidePanelR]

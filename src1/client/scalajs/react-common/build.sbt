@@ -12,7 +12,6 @@ version := "0.0.0"
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-    Common.ORG      %%% "common-sjs"                  % "0.0.0",
     "com.github.japgolly.scalajs-react" %%% "core"    % Common.reactSjsVsn,
     // Reusability:
     "com.github.japgolly.scalajs-react" %%% "extra"   % Common.reactSjsVsn,

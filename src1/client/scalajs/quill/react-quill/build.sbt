@@ -16,11 +16,6 @@ version := "0.0.0"
 // Show more comments when using dubious features
 scalacOptions += "-feature"
 
-libraryDependencies ++= Seq(
-  Common.ORG        %%% "scalajs-react-common"  % "0.0.0"
-  //"io.monix"      %%% "minitest" % Common.minitestVsn % "test"
-)
-
 npmDependencies in Compile ++= Seq(
   "react-quill"   -> Common.Vsn.REACT_QUILL
 )

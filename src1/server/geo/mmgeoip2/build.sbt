@@ -24,9 +24,7 @@ libraryDependencies ++= {
       exclude("org.jruby", "jruby-complete")
       exclude("org.slf4j", "slf4j-log4j12")
       exclude("log4j", "log4j")
-      exclude("org.slf4j", "log4j-over-slf4j"),
-    Common.ORG              %% "logs-macro"           % "0.0.0"
-    //"org.scalatest"       %% "scalatest"            % Common.scalaTestVsn % "test"
+      exclude("org.slf4j", "log4j-over-slf4j")
   )
 }
 

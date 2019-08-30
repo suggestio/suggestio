@@ -15,7 +15,6 @@ testFrameworks += new TestFramework("minitest.runner.Framework")
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG      %%% "scalajs-react-common"  % "0.0.0",
   "io.monix"      %%% "minitest" % Common.minitestVsn % Test
   // moment
 )

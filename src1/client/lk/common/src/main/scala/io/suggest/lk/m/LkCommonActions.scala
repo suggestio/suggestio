@@ -4,11 +4,11 @@ import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import diode.FastEq
 import io.suggest.color.{IColorPickerMarker, MColorData}
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.hash.MHash
 import io.suggest.file.up.MUploadResp
+import io.suggest.form.MFormResourceKey
 import io.suggest.lk.m.captcha.MCaptchaData
-import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.spa.DAction
 import io.suggest.url.MHostUrl
@@ -120,9 +120,6 @@ case class HandleNewHistogramInstalled(nodeId: String) extends ILkCommonAction
 
 /** Команда принудительной прочистки эджей, не исходит от юзера, а является продуктом работы других контроллеров. */
 case object PurgeUnusedEdges extends ILkCommonAction
-
-/** Уведомить систему о ширине и длине загруженной картинки. */
-case class SetImgWh(edgeUid: EdgeUid_t, wh: MSize2di) extends ILkCommonAction
 
 
 /** Экшен сохранения документа. */

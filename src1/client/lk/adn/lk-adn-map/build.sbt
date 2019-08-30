@@ -12,9 +12,6 @@ version := "0.0.0"
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG          %%% "lk-adv-common-sjs"   % "0.0.0",
-  Common.ORG          %%% "lk-dt-period-sjs"    % "0.0.0",
-  Common.ORG          %%% "maps-sjs"            % "0.0.0",
   "org.scala-js"      %%% "scalajs-dom"         % Common.sjsDomVsn
 )
 

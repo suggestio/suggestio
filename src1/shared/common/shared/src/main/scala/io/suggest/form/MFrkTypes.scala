@@ -1,4 +1,4 @@
-package io.suggest.lk.m.frk
+package io.suggest.form
 
 import enumeratum.{Enum, EnumEntry}
 import japgolly.univeq.UnivEq

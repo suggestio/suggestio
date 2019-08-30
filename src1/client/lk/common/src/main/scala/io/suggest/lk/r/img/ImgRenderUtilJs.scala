@@ -5,7 +5,6 @@ import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.dev.MSzMult
 import io.suggest.err.ErrorConstants
 import io.suggest.img.crop.MCrop
-import io.suggest.lk.m.SetImgWh
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.msg.ErrorMsgs
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent}
@@ -14,6 +13,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.html
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.log.Log
+import io.suggest.spa.DAction
 
 /**
   * Suggest.io
@@ -94,3 +94,7 @@ class ImgRenderUtilJs extends Log {
   }
 
 }
+
+/** Уведомить систему о ширине и длине загруженной картинки. */
+case class SetImgWh(edgeUid: EdgeUid_t, wh: MSize2di) extends DAction
+

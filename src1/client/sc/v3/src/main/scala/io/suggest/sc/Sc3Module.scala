@@ -1,7 +1,6 @@
 package io.suggest.sc
 
 import com.softwaremill.macwire._
-import io.suggest.jd.render.JdRenderModule
 import io.suggest.sc.m.MScReactCtx
 import io.suggest.sc.sc3.Sc3Pages
 import io.suggest.sc.v._
@@ -23,9 +22,7 @@ import japgolly.scalajs.react.extra.router.RouterCtl
   */
 class Sc3Module {
 
-  lazy val jdRenderModule = wire[JdRenderModule]
-
-  import jdRenderModule._
+  import io.suggest.jd.render.JdRenderModule._
   import io.suggest.ReactCommonModule._
 
 

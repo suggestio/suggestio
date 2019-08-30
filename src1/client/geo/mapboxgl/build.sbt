@@ -12,7 +12,6 @@ version := "0.0.0"
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-    Common.ORG      %%% "common-sjs"       % "0.0.0",
     "org.scala-js"  %%% "scalajs-dom"      % Common.sjsDomVsn
 )
 

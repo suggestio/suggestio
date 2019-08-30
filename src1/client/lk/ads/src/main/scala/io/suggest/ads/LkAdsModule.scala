@@ -2,7 +2,6 @@ package io.suggest.ads
 
 import com.softwaremill.macwire._
 import io.suggest.ads.v.{LkAdsFormR, AdItemR}
-import io.suggest.jd.render.JdRenderModule
 
 /**
   * Suggest.io
@@ -12,8 +11,7 @@ import io.suggest.jd.render.JdRenderModule
   */
 class LkAdsModule {
 
-  val jdRenderModule = wire[JdRenderModule]
-  import jdRenderModule._
+  import io.suggest.jd.render.JdRenderModule._
 
   lazy val lkAdsFormR = wire[LkAdsFormR]
 

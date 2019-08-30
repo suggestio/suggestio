@@ -13,7 +13,6 @@ version := "0.1s"
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG      %%% "common-sjs"       % "0.0.0",
   "org.scala-js"  %%% "scalajs-dom"      % Common.sjsDomVsn,
   "io.monix"      %%% "minitest"         % Common.minitestVsn % Test
 )

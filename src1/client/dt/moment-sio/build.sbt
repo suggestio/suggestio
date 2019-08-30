@@ -15,7 +15,6 @@ testFrameworks += new TestFramework("minitest.runner.Framework")
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG      %%% "common-sjs"      % "0.0.0",
   Common.ORG      %%% "scalajs-moment"  % Common.Vsn.momentJs,
   "io.monix"      %%% "minitest"        % Common.minitestVsn  % Test
 )

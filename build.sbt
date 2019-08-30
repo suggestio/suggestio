@@ -142,7 +142,7 @@ lazy val lkAdvExtSjs = {
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
-    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, asmCryptoSioSjs, reactMaterialUiSjs )
+    .dependsOn( lkCommonSjs, quillSioSjs, jdEditSjs, asmCryptoSioSjs, reactMaterialUiSjs )
 }
 
 /** Трейты для поддержки простых логов. */
@@ -292,7 +292,7 @@ lazy val reactScroll = {
 lazy val gridSjs = {
   val name = "grid"
   Project(id = name + "-sjs", base = file(s"${DIR0}client/jd/grid"))
-    .dependsOn(lkCommonSjs, reactStoneCutterSjs, reactScroll)
+    .dependsOn(commonSjs, reactStoneCutterSjs, reactScroll)
 }
 
 /** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */
@@ -417,9 +417,8 @@ lazy val mapBoxGlSjs = {
 /** Утиль для поддержки географических карт. */
 lazy val mapsSjs = {
   val name = "maps-sjs"
-  // TODO depOn(): lkCommonSjs просто из-за зависимости от diode-react, по факту достаточно commonSjs. Перещёлкнуть, когда и sc-sjs будет реагировать.
   Project(id = name, base = file(DIR0 + "client/geo/common-maps"))
-    .dependsOn(lkCommonSjs, leafletSjs, commonReactSjs, leafletReactSjs)
+    .dependsOn(commonSjs, leafletSjs, commonReactSjs, leafletReactSjs)
 }
 
 /** Sjs-модуль редактора тегов. */
@@ -508,7 +507,13 @@ lazy val reactMaterialUiSjs = {
 /** json document react renderer */
 lazy val jdRenderSjs = {
   Project(id = "jd-render-sjs", base = file(DIR0 + "client/jd/jd-render"))
-    .dependsOn( lkCommonSjs, reactStoneCutterSjs, gridSjs, reactMeasureSjs )
+    .dependsOn( commonSjs, reactStoneCutterSjs, gridSjs, reactMeasureSjs )
+}
+
+/** Поддержка редактирования jd с кучей доп.зависимостей ЛК. */
+lazy val jdEditSjs = {
+  Project(id = "jd-edit-sjs", base = file(DIR0 + "client/jd/jd-edit"))
+    .dependsOn( lkCommonSjs, jdRenderSjs )
 }
 
 /** Внутренний форк securesocial. */

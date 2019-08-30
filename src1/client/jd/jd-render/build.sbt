@@ -10,13 +10,8 @@ version := "0.0.0-SNAPSHOT"
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-
-  Common.ORG                     %%% "lk-common-sjs"    % "0.0.0",
-  
   "com.softwaremill.macwire"     %%  "macros"           % Common.Vsn.MACWIRE % "provided",
-
   "com.github.japgolly.scalacss" %%% "ext-react"        % Common.Vsn.SCALACSS
-
 )
 
 useYarn := true

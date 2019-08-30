@@ -1,7 +1,7 @@
 package io.suggest.adn.edit.m
 
 import diode.FastEq
-import io.suggest.lk.m.frk.{MFormResourceKey, MFrkTypes}
+import io.suggest.form.{MFormResourceKey, MFrkTypes}
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.model.n2.node.meta.MMetaPub
 import io.suggest.n2.edge.MEdgeDataJs

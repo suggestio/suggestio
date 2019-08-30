@@ -10,12 +10,11 @@ import io.suggest.jd.render.v._
   * Created: 25.08.17 18:47
   * Description: Compile-time DI для модуля jd-render.
   */
-class JdRenderModule {
+object JdRenderModule {
 
   // deps
   val gridSjsModule = wire[GridModule]
   import gridSjsModule._
-  import io.suggest.lk.LkCommonModule._
 
 
   // impl

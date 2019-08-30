@@ -5,8 +5,8 @@ import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.file.up.MFileUploadS
+import io.suggest.form.{MFormResourceKey, MFrkTypes}
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.m.frk.{MFormResourceKey, MFrkTypes}
 import io.suggest.lk.r.UploadStatusR
 import io.suggest.lk.r.img.{ImgEditBtnPropsVal, ImgEditBtnR}
 import io.suggest.msg.Messages

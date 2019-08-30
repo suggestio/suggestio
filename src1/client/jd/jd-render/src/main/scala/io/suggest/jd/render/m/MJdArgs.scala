@@ -1,9 +1,9 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
+import io.suggest.form.MFormResourceKey
 import io.suggest.jd.{MJdConf, MJdEdgeId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
-import io.suggest.lk.m.frk.MFormResourceKey
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.ueq.UnivEqUtil._

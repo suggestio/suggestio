@@ -9,11 +9,8 @@ import io.suggest.ad.edit.v.edit.content.{ContentEditCssR, ContentLayerBtnR, Con
 import io.suggest.ad.edit.v.edit.strip._
 import io.suggest.ad.edit.v.pop.LaePopupsR
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
-import io.suggest.jd.render.JdRenderModule
-import io.suggest.lk.LkCommonModule
-import io.suggest.lk.m.color.MColorPick
+import io.suggest.jd.edit.JdEditModule
 import io.suggest.lk.r.SlideBlockR
-import io.suggest.lk.r.color.ColorCheckBoxR
 import io.suggest.quill.QuillSioModule
 
 /**
@@ -26,14 +23,14 @@ class LkAdEditModule {
 
   final type M = MAeRoot
 
-  val jdRenderModule = wire[JdRenderModule]
-
+  import io.suggest.jd.render.JdRenderModule._
+  val jdEditModule = wire[JdEditModule]
   val quillSioModule = wire[QuillSioModule]
 
 
   import io.suggest.lk.LkCommonModule._
-  import jdRenderModule._
   import quillSioModule._
+  import jdEditModule._
 
   // srv deps
 

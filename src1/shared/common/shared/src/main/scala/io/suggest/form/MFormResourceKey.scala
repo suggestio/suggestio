@@ -1,4 +1,4 @@
-package io.suggest.lk.m.frk
+package io.suggest.form
 
 import diode.FastEq
 import io.suggest.model.n2.edge.EdgeUid_t
@@ -32,8 +32,7 @@ object MFormResourceKey {
 
 /** Контейнер данных с ключевой инфой по ресурсу.
   *
-  * @param pred Предикат.
-  * @param jdEdgeId jd id эджа, привязанного к данному элементу
+  * @param frkType Ключ-категория.
   * @param edgeUid id эджа, когда известен есть.
   * @param nodePath Путь дa узла в jd-дереве, если есть.
   */

@@ -19,15 +19,13 @@ libraryDependencies ++= {
   Seq(
     "com.google.inject"     %  "guice"                % Common.Vsn.GUICE,
     "org.threeten"          % "threeten-extra"        % Common.Vsn.THREETEN_EXTRA,
-    //Common.ORG              %% "commonJVM"            % "0.0.0",
     // slick повторно инклюдится здесь, т.к. что-то свежая версия не цеплялась через common-slick-driver
     "com.typesafe.slick"    %% "slick"                % Common.Vsn.SLICK,
     Common.ORG              %% "util"                 % "2.0.1"
       exclude("org.jruby", "jruby-complete")
       exclude("org.slf4j", "slf4j-log4j12")
       exclude("log4j", "log4j")
-      exclude("org.slf4j", "log4j-over-slf4j"),
-    Common.ORG              %% "logs-macro"           % "0.0.0"
+      exclude("org.slf4j", "log4j-over-slf4j")
     //"org.scalatest"       %% "scalatest"            % Common.scalaTestVsn % "test"
   )
 }
