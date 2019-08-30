@@ -2,6 +2,7 @@ package io.suggest.sc.m.grid
 
 import diode.FastEq
 import diode.data.Pot
+import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
@@ -49,13 +50,13 @@ object MScAdData {
   */
 case class MScAdData(
                       nodeId      : Option[String],
-                      main        : MBlkRenderData,
+                      main        : MJdDataJs,
                       focused     : Pot[MScFocAdData] = Pot.empty
                     )
   extends OptStrId
 {
 
-  private def _flatGridTemplatesUsing(f: MBlkRenderData => Seq[Tree[JdTag]]) = {
+  private def _flatGridTemplatesUsing(f: MJdDataJs => Seq[Tree[JdTag]]) = {
     focused.fold [Seq[Tree[JdTag]]] {
       main.template :: Nil
     }(foc => f(foc.blkData))
@@ -69,16 +70,8 @@ case class MScAdData(
     _flatGridTemplatesUsing(_.template.subForest)
   }
 
-  /** Вернуть последовательность шаблонов с приоритетом на indexed seq.
-    *
-    * @return List с одним элементом, либо IndexedSeq со списком item'ов.
-    */
-  def flatGridTemplatesIndexed: Seq[Tree[JdTag]] = {
-    _flatGridTemplatesUsing(_.tplSubForestIndexed)
-  }
 
-
-  /** Вернтуь карту эджей для плоской плитки.
+  /** Вернуть карту эджей для плоской плитки.
     *
     * @return Карта эджей.
     */

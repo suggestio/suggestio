@@ -3,6 +3,7 @@ package io.suggest.sys.mdr.m
 import diode.FastEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -22,6 +23,8 @@ object MMdrDialogs {
 
   @inline implicit def univEq: UnivEq[MMdrDialogs] = UnivEq.derive
 
+  val refuse = GenLens[MMdrDialogs](_.refuse)
+
 }
 
 
@@ -31,8 +34,4 @@ object MMdrDialogs {
   */
 case class MMdrDialogs(
                         refuse: MMdrRefuseDialogS = MMdrRefuseDialogS.empty
-                      ) {
-
-  def withRefuse(refuse: MMdrRefuseDialogS) = copy(refuse = refuse)
-
-}
+                      )

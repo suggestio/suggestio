@@ -52,6 +52,7 @@ object MJdArgs {
   * @param conf Общий конфиг рендеринга.
   */
 case class MJdArgs(
+                  // TODO MJdDataJs - сюда, вместо template+edges.
                     template     : Tree[JdTag],
                     edges        : Map[EdgeUid_t, MEdgeDataJs],
                     jdRuntime    : MJdRuntime,

@@ -104,12 +104,13 @@ class SysMdrFormR(
           for (nextResp <- mroot.node.info) yield {
             for (req <- nextResp.nodeOpt) yield {
               mdrSidePanelR.PropsVal(
-                nodeId                  = req.nodeId,
+                nodeId                  = req.info.nodeId,
                 ntypeOpt = req.ad
                   .map[MNodeType](_ => MNodeTypes.Ad)
                   .orElse {
-                    req.nodesMap
-                      .get(req.nodeId)
+                    req
+                      .nodesMap
+                      .get(req.info.nodeId)
                       .map(_.ntype)
                   },
                 nodesMap                = req.nodesMap,
@@ -139,10 +140,10 @@ class SysMdrFormR(
         mdrErrorsC = mrootProxy.connect { mroot =>
           for {
             req <- mroot.node.info.toOption
-            if req.errorNodeIds.nonEmpty
+            if req.resp.errorNodeIds.nonEmpty
           } yield {
             mdrErrorsR.PropsVal(
-              errorNodeIds  = req.errorNodeIds,
+              errorNodeIds  = req.resp.errorNodeIds,
               isSu          = mroot.conf.isSu,
               fixNodesPots  = mroot.node.fixNodePots
             )
@@ -166,20 +167,20 @@ class SysMdrFormR(
           mdrToolBarR.PropsVal(
             nodePending = mroot.node.info.isPending,
             nodeOffset = mroot.node.nodeOffset,
-            nodeIdOpt = nodeInfoOpt.map(_.nodeId),
+            nodeIdOpt = nodeInfoOpt.map(_.info.nodeId),
             ntypeOpt = nodeInfoOpt
               .flatMap(_.ad)
               .map[MNodeType](_ => MNodeTypes.Ad)
               .orElse {
                 for {
                   nodeInfo <- nodeInfoOpt
-                  adnNode  <- nodeInfo.nodesMap.get( nodeInfo.nodeId )
+                  adnNode  <- nodeInfo.nodesMap.get( nodeInfo.info.nodeId )
                 } yield {
                   adnNode.ntype
                 }
               },
-            queueReportOpt = nextRespOpt.map(_.mdrQueue),
-            errorsCount = nextRespOpt.fold(0)(_.errorNodeIds.size)
+            queueReportOpt = nextRespOpt.map(_.resp.mdrQueue),
+            errorsCount = nextRespOpt.fold(0)(_.resp.errorNodeIds.size)
           )
         }( mdrToolBarR.MdrControlPanelRPropsValFastEq ),
 

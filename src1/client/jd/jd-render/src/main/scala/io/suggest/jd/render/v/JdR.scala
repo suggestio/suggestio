@@ -54,6 +54,8 @@ class JdR(
       }
 
       def _renderQdContentTag(state: MJdRrrProps): TagOf[html.Div] = {
+        import state.jdArgs.jdRuntime.jdCss
+
         val qdTag = state.subTree.rootLabel
 
         <.div(
@@ -68,16 +70,16 @@ class JdR(
           // Поддержка перетаскивания
           jdCssStatic.absPosStyleAll,
 
-          state.jdArgs.jdRuntime.jdCss.absPosStyleF(qdTag),
+          jdCss.absPosStyleF(qdTag),
 
           // CSS-класс принудительной ширины, если задан.
           ReactCommonUtil.maybe( qdTag.props1.widthPx.nonEmpty ) {
-            state.jdArgs.jdRuntime.jdCss.forcedWidthStyleF(qdTag)
+            jdCss.forcedWidthStyleF(qdTag)
           },
 
           // Стиль для теней
           ReactCommonUtil.maybe( qdTag.props1.textShadow.nonEmpty ) {
-            state.jdArgs.jdRuntime.jdCss.contentShadowF( qdTag )
+            jdCss.contentShadowF( qdTag )
           },
 
           // Рендер qd-контента в html.

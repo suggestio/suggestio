@@ -36,7 +36,7 @@ class OrderItemsAh[M](
         if (m.checked) {
           v0.orderContents
             .iterator
-            .flatMap(_.items)
+            .flatMap(_.content.items)
             .flatMap(_.id)
             .toSet
         } else {
@@ -84,6 +84,7 @@ class OrderItemsAh[M](
       val v0 = value
       if ( v0.orderContents.isPending ) {
         noChange
+
       } else {
         val req2 = v0.orderContents.pending()
         val timestampMs = req2.asInstanceOf[PendingBase].startTime
@@ -99,24 +100,29 @@ class OrderItemsAh[M](
         updated( v2, fx )
       }
 
+
     // Обработка ответа по данным на текущий ордер.
     case m: HandleOrderContentResp =>
       val v0 = value
       if (v0.orderContents isPendingWithStartTime m.timestampMs) {
-        val req2 = v0.orderContents.withTry( m.tryResp )
+        val req2 = v0.orderContents
+          .withTry( m.tryResp.map(MOrderContentJs.apply) )
 
         val v2 = v0.copy(
           orderContents = req2,
           jdRuntime = ItemRowPreviewR.mkJdRuntime(
             req2.iterator
-              .flatMap(_.adsJdDatas)
+              .flatMap(_.content.adsJdDatas)
               .map(_.template)
               .toSeq
           ),
           // Сброс (перефильтровать?) выделенных элементов, т.к. список item'ов изменился.
-          itemsSelected = if (req2.isFailed) v0.itemsSelected else Set.empty
+          itemsSelected =
+            if (req2.isFailed) v0.itemsSelected
+            else Set.empty,
         )
         updated( v2 )
+
       } else {
         LOG.warn( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange

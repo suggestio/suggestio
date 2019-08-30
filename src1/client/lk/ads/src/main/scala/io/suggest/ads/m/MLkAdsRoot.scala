@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.ads.MLkAdsConf
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -16,11 +17,14 @@ object MLkAdsRoot {
   implicit object MLkAdsRootFastEq extends FastEq[MLkAdsRoot] {
     override def eqv(a: MLkAdsRoot, b: MLkAdsRoot): Boolean = {
       (a.ads ===* b.ads) &&
-        (a.conf ===* b.conf)
+      (a.conf ===* b.conf)
     }
   }
 
   @inline implicit def univEq: UnivEq[MLkAdsRoot] = UnivEq.derive
+
+  val conf = GenLens[MLkAdsRoot](_.conf)
+  val ads = GenLens[MLkAdsRoot](_.ads)
 
 }
 
@@ -32,8 +36,4 @@ object MLkAdsRoot {
 case class MLkAdsRoot(
                        conf         : MLkAdsConf,
                        ads          : MAdsS
-                     ) {
-
-  def withCurrNode(ads: MAdsS) = copy(ads = ads)
-
-}
+                     )

@@ -3,10 +3,12 @@ package io.suggest.ads.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.ads.MLkAdsOneAdResp
+import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.lk.nodes.MLknNode
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.JsUnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -19,11 +21,13 @@ object MAdProps {
   implicit object MAdPropsFastEq extends FastEq[MAdProps] {
     override def eqv(a: MAdProps, b: MAdProps): Boolean = {
       (a.adResp ===* b.adResp) &&
-        (a.shownAtParentReq ===* b.shownAtParentReq)
+      (a.shownAtParentReq ===* b.shownAtParentReq)
     }
   }
 
   @inline implicit def univEq: UnivEq[MAdProps] = UnivEq.derive
+
+  val shownAtParentReq = GenLens[MAdProps](_.shownAtParentReq)
 
 }
 
@@ -38,6 +42,6 @@ case class MAdProps(
                      shownAtParentReq   : Pot[MLknNode] = Pot.empty
                    ) {
 
-  def withShownAtParentReq(shownAtParentReq: Pot[MLknNode])   = copy(shownAtParentReq = shownAtParentReq)
+  val jdDataJs = MJdDataJs( adResp.jdAdData )
 
 }

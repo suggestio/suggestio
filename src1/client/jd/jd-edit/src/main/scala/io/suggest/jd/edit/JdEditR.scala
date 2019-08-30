@@ -36,7 +36,7 @@ import scalacss.internal.LengthUnit
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 30.08.2019 10:40
-  * Description:
+  * Description: Компонент для редактирования jd-карточек.
   */
 class JdEditR(
                val jdR            : JdR,
@@ -46,84 +46,83 @@ class JdEditR(
   extends Log
 {
 
+  /**
+    * Является ли указанный тег текущим выделенным?
+    * Если да, то присвоить ему соотв.стиль для выделения визуально.
+    */
+  private def _maybeSelected(dt: JdTag, jdArgs: MJdArgs): TagMod = {
+    // Если происходит перетаскивание, то нужно избавляться от рамок: так удобнее.
+    ReactCommonUtil.maybe(
+      jdArgs.renderArgs.dnd.jdt.isEmpty &&
+      (jdArgs.selJdt.treeLocOpt containsLabel dt)
+    ) {
+      jdCssStatic.selectedTag
+    }
+  }
+
+
+  private def _parseStylePx(e: ReactMouseEventFromHtml)(f: CSSStyleDeclaration => String): Option[Int] = {
+    for {
+      // Используем currentTarget, т.к. хром возвращает события откуда попало, а не из точки аттача.
+      // TODO Если за пределами блока отпускание мыши, то и это не помогает.
+      target        <- Option(e.currentTarget)
+      if e.button ==* 0
+      style         <- Option(target.style)
+      sizePxStyl    <- Option(f(style))
+      pxIdx = sizePxStyl.indexOf( LengthUnit.px.value )
+      if pxIdx > 0
+    } yield {
+      sizePxStyl
+        .substring(0, pxIdx)
+        .toInt
+    }
+  }
+  private def _parseWidth(e: ReactMouseEventFromHtml): Option[Int] =
+    _parseStylePx(e)(_.width)
+  private def _parseHeight(e: ReactMouseEventFromHtml): Option[Int] =
+    _parseStylePx(e)(_.height)
+
+
+  /** Повесить onload для картинки, считывающий ей wh.
+    * Нужно, чтобы редактор мог узнать wh оригинала изображения. */
+  private def _notifyImgWhOnEdit[P <: ModelProxy[_], S]($: BackendScope[P,S], e: MEdgeDataJs, jdArgs: MJdArgs): TagMod = {
+    // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
+    ReactCommonUtil.maybe( jdArgs.conf.isEdit && e.fileJs.exists(_.whPx.isEmpty) ) {
+      ^.onLoad ==> onNewImageLoaded($, e.id)
+    }
+  }
+  /** Callback о завершении загрузки в память картинки, у которой неизвестны какие-то рантаймовые параметры. */
+  private def onNewImageLoaded[P <: ModelProxy[_], S]($: BackendScope[P,S], edgeUid: EdgeUid_t)(e: ReactEvent): Callback = {
+    imgRenderUtilJs.notifyImageLoaded($, edgeUid)(e)
+  }
+
+  /** Реакция на клик по отрендеренному тегу. */
+  private def jdTagClick[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag)(e: ReactMouseEvent): Callback = {
+    // Если не сделать stopPropagation, то наружный strip перехватит клик
+    e.stopPropagationCB >>
+      dispatchOnProxyScopeCB($, JdTagSelect(jdt) )
+  }
+  private def _clickableOnEdit[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag, jdArgs: MJdArgs): TagMod = {
+    // В режиме редактирования -- надо слать инфу по кликам на стрипах
+    ReactCommonUtil.maybe(jdArgs.conf.isEdit) {
+      ^.onClick ==> jdTagClick($, jdt)
+    }
+  }
+
+  private def _draggableUsing[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag, jdArgs: MJdArgs)(onDragStartF: ReactDragEvent => Callback): TagMod = {
+    TagMod(
+      ^.draggable := true,
+      ^.onDragStart ==> onDragStartF,
+      ^.onDragEnd   ==> jdTagDragEnd($, jdt)
+    )
+  }
+  private def jdTagDragEnd[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag)(e: ReactDragEvent): Callback = {
+    dispatchOnProxyScopeCB($, JdTagDragEnd(jdt) )
+  }
+
 
   /** Аддоны для обычной рендерилки, которые добавляют возможности редактирования карточки. */
   trait JdRrrEdit extends jdR.JdRrr {
-
-    /**
-      * Является ли указанный тег текущим выделенным?
-      * Если да, то присвоить ему соотв.стиль для выделения визуально.
-      */
-    private def _maybeSelected(dt: JdTag, jdArgs: MJdArgs): TagMod = {
-      // Если происходит перетаскивание, то нужно избавляться от рамок: так удобнее.
-      ReactCommonUtil.maybe(
-        jdArgs.renderArgs.dnd.jdt.isEmpty &&
-          (jdArgs.selJdt.treeLocOpt containsLabel dt)
-      ) {
-        jdCssStatic.selectedTag
-      }
-    }
-
-
-    private def _parseStylePx(e: ReactMouseEventFromHtml)(f: CSSStyleDeclaration => String): Option[Int] = {
-      for {
-        // Используем currentTarget, т.к. хром возвращает события откуда попало, а не из точки аттача.
-        // TODO Если за пределами блока отпускание мыши, то и это не помогает.
-        target        <- Option(e.currentTarget)
-        if e.button ==* 0
-        style         <- Option(target.style)
-        sizePxStyl    <- Option(f(style))
-        pxIdx = sizePxStyl.indexOf( LengthUnit.px.value )
-        if pxIdx > 0
-      } yield {
-        sizePxStyl
-          .substring(0, pxIdx)
-          .toInt
-      }
-    }
-    private def _parseWidth(e: ReactMouseEventFromHtml): Option[Int] =
-      _parseStylePx(e)(_.width)
-    private def _parseHeight(e: ReactMouseEventFromHtml): Option[Int] =
-      _parseStylePx(e)(_.height)
-
-
-    /** Повесить onload для картинки, считывающий ей wh.
-      * Нужно, чтобы редактор мог узнать wh оригинала изображения. */
-    private def _notifyImgWhOnEdit[P <: ModelProxy[_], S]($: BackendScope[P,S], e: MEdgeDataJs, jdArgs: MJdArgs): TagMod = {
-      // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
-      ReactCommonUtil.maybe( jdArgs.conf.isEdit && e.fileJs.exists(_.whPx.isEmpty) ) {
-        ^.onLoad ==> onNewImageLoaded($, e.id)
-      }
-    }
-    /** Callback о завершении загрузки в память картинки, у которой неизвестны какие-то рантаймовые параметры. */
-    private def onNewImageLoaded[P <: ModelProxy[_], S]($: BackendScope[P,S], edgeUid: EdgeUid_t)(e: ReactEvent): Callback = {
-      imgRenderUtilJs.notifyImageLoaded($, edgeUid)(e)
-    }
-
-    /** Реакция на клик по отрендеренному тегу. */
-    private def jdTagClick[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag)(e: ReactMouseEvent): Callback = {
-      // Если не сделать stopPropagation, то наружный strip перехватит клик
-      e.stopPropagationCB >>
-        dispatchOnProxyScopeCB($, JdTagSelect(jdt) )
-    }
-    private def _clickableOnEdit[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag, jdArgs: MJdArgs): TagMod = {
-      // В режиме редактирования -- надо слать инфу по кликам на стрипах
-      ReactCommonUtil.maybe(jdArgs.conf.isEdit) {
-        ^.onClick ==> jdTagClick($, jdt)
-      }
-    }
-
-    private def _draggableUsing[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag, jdArgs: MJdArgs)(onDragStartF: ReactDragEvent => Callback): TagMod = {
-      TagMod(
-        ^.draggable := true,
-        ^.onDragStart ==> onDragStartF,
-        ^.onDragEnd   ==> jdTagDragEnd($, jdt)
-      )
-    }
-    private def jdTagDragEnd[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag)(e: ReactDragEvent): Callback = {
-      dispatchOnProxyScopeCB($, JdTagDragEnd(jdt) )
-    }
-
 
     class QdContentB($: BackendScope[ModelProxy[MJdRrrProps], MJdRrrProps]) extends super.QdContentB($) {
 
@@ -394,6 +393,7 @@ class JdEditR(
 
   }
 
+  /** Дефолтовая реализация [[JdRrrEdit]]. */
   object JdRrrEdit extends JdRrrEdit
 
 }

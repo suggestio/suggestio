@@ -10,7 +10,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.file.MSrvFileInfo
 import io.suggest.grid.GridCalc
 import io.suggest.img.MImgFmts
-import io.suggest.jd.{MJdAdData, MJdConf, MJdEdge, MJdEdgeId}
+import io.suggest.jd.{MJdData, MJdConf, MJdEdge, MJdEdgeId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
 import io.suggest.model.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.media.{MFileMetaHash, MMedia, MMedias}
@@ -422,13 +422,13 @@ class JdAdUtil @Inject()(
       *
       * @return Фьючерс с отрендеренными данными карточки.
       */
-    def execute(): Future[MJdAdData] = {
+    def execute(): Future[MJdData] = {
       val _edEdgesFut = edEdgesFut
       val _finalTpl = finalTpl
       for {
         edEdges <- _edEdgesFut
       } yield {
-        MJdAdData(
+        MJdData(
           template  = _finalTpl,
           edges     = edEdges,
           nodeId    = nodeId

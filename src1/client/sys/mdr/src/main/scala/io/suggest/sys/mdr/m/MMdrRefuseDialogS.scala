@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.sys.mdr.MMdrActionInfo
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -24,6 +25,9 @@ object MMdrRefuseDialogS {
 
   @inline implicit def univEq: UnivEq[MMdrRefuseDialogS] = UnivEq.derive
 
+  val reason = GenLens[MMdrRefuseDialogS](_.reason)
+  val actionInfo = GenLens[MMdrRefuseDialogS](_.actionInfo)
+
 }
 
 
@@ -39,6 +43,5 @@ case class MMdrRefuseDialogS(
                             ) {
 
   def withActionInfo(actionInfo: Option[MMdrActionInfo]) = copy(actionInfo = actionInfo)
-  def withReason(reason: String) = copy(reason = reason)
 
 }

@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.sys.mdr.MMdrConf
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -25,6 +26,11 @@ object MSysMdrRootS {
 
   @inline implicit def univEq: UnivEq[MSysMdrRootS] = UnivEq.derive
 
+  val node    = GenLens[MSysMdrRootS](_.node)
+  val dialogs = GenLens[MSysMdrRootS](_.dialogs)
+  val form    = GenLens[MSysMdrRootS](_.form)
+  val conf    = GenLens[MSysMdrRootS](_.conf)
+
 }
 
 
@@ -38,10 +44,4 @@ case class MSysMdrRootS(
                          dialogs      : MMdrDialogs       = MMdrDialogs.empty,
                          form         : MMdrFormS         = MMdrFormS.empty,
                          conf         : MMdrConf,
-                       ) {
-
-  def withDialogs( dialogs: MMdrDialogs ) = copy(dialogs = dialogs)
-  def withNode(node: MMdrNodeS) = copy(node = node)
-  def withForm(form: MMdrFormS) = copy(form = form)
-
-}
+                       )

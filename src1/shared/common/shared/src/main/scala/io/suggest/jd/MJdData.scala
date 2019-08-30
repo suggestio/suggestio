@@ -1,10 +1,9 @@
 package io.suggest.jd
 
 import io.suggest.jd.tags.JdTag
-import io.suggest.model.n2.edge.EdgeUid_t
-import io.suggest.primo.id.{IId, OptId}
+import io.suggest.primo.id.OptId
 import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -17,7 +16,7 @@ import scalaz.Tree
   * Description: Модель данных рекламной карточки для рендера её на клиенте.
   * Также используется редактором карточек в обратном направлении для сабмита карточки.
   */
-object MJdAdData {
+object MJdData {
 
   object Fields {
     val TEMPATE_FN = "t"
@@ -26,7 +25,7 @@ object MJdAdData {
   }
 
   /** Поддержка play-json. */
-  implicit def MAD_EDIT_FORM_FORMAT: OFormat[MJdAdData] = (
+  implicit def jdDataJson: OFormat[MJdData] = (
     (__ \ Fields.TEMPATE_FN).format[Tree[JdTag]] and
     // Массив эджей без Nullable, т.к. это очень маловероятная ситуация слишком пустой карточки.
     (__ \ Fields.EDGES_FN).format[Iterable[MJdEdge]] and
@@ -34,15 +33,15 @@ object MJdAdData {
   )(apply, unlift(unapply))
 
 
-  @inline implicit def univEq: UnivEq[MJdAdData] = {
+  @inline implicit def univEq: UnivEq[MJdData] = {
     import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }
 
-  val template = GenLens[MJdAdData](_.template)
-  val edges    = GenLens[MJdAdData](_.edges)
-  val nodeId   = GenLens[MJdAdData](_.nodeId)
+  val template = GenLens[MJdData](_.template)
+  val edges    = GenLens[MJdData](_.edges)
+  val nodeId   = GenLens[MJdData](_.nodeId)
 
 }
 
@@ -54,17 +53,14 @@ object MJdAdData {
   * @param template Шаблон документа.
   * @param edges Эджи с данными для рендера документа.
   */
-case class MJdAdData(
-                      template    : Tree[JdTag],
-                      edges       : Iterable[MJdEdge],
-                      nodeId      : Option[String]
-                    )
+final case class MJdData(
+                          template    : Tree[JdTag],
+                          edges       : Iterable[MJdEdge],
+                          nodeId      : Option[String]
+                        )
   extends OptId[String]
 {
 
-  override final def id = nodeId
-
-  /** Кэшируемая карта эджей. */
-  lazy val edgesMap = IId.els2idMap[EdgeUid_t, MJdEdge]( edges )
+  override def id = nodeId
 
 }

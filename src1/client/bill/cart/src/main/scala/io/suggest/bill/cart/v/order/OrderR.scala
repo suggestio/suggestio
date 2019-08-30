@@ -106,9 +106,10 @@ class OrderR(
           itemsTableHeadR.PropsVal(
             hasCheckedItems   = props.order.itemsSelected.nonEmpty,
             hasUnCheckedItems = props.order.orderContents.nonEmpty &&
-              props.order.orderContents.exists { oc =>
-                oc.items.nonEmpty &&
-                  (oc.items.lengthCompare( props.order.itemsSelected.size ) > 0)
+              props.order.orderContents.exists { ocJs =>
+                val items = ocJs.content.items
+                items.nonEmpty &&
+                (items.lengthCompare( props.order.itemsSelected.size ) > 0)
               },
             isPendingReq = props.order.orderContents.isPending,
             isItemsEditable = props.order.orderContents.exists(_.isItemsEditable)
@@ -127,9 +128,10 @@ class OrderR(
           // Нужно отображать тулбар только если ордер-корзина
           val ocPot = props.order.orderContents
           OptionUtil.maybe {
-            ocPot.exists { oc =>
+            ocPot.exists { ocJs =>
+              val oc = ocJs.content
               oc.items.nonEmpty &&
-                oc.order.exists(_.status ==* MOrderStatuses.Draft)
+              oc.order.exists(_.status ==* MOrderStatuses.Draft)
             }
           } {
             itemsToolBarR.PropsVal(
@@ -143,9 +145,10 @@ class OrderR(
           // TODO Разрешить сабмит без nodeId. Зависимость от nodeId - на уровне ЛК, хотя можно и без неё.
           for {
             onNodeId <- props.conf.onNodeId
-            if props.order.orderContents.exists { ord =>
-              ord.items.nonEmpty &&
-                ord.order.exists(_.status ==* MOrderStatuses.Draft)
+            if props.order.orderContents.exists { ocJs =>
+              val oc = ocJs.content
+              oc.items.nonEmpty &&
+              oc.order.exists(_.status ==* MOrderStatuses.Draft)
             }
           } yield {
             goToPayBtnR.PropsVal(
@@ -157,8 +160,8 @@ class OrderR(
 
         orderOptC = propsProxy.connect { mroot =>
           for {
-            oc <- mroot.order.orderContents.toOption
-            morder <- oc.order
+            ocJs <- mroot.order.orderContents.toOption
+            morder <- ocJs.content.order
             if morder.status !=* MOrderStatuses.Draft
           } yield {
             morder
@@ -167,7 +170,8 @@ class OrderR(
 
         txnsPricedOptC = propsProxy.connect { mroot =>
           for {
-            oc <- mroot.order.orderContents.toOption
+            ocJs <- mroot.order.orderContents.toOption
+            oc = ocJs.content
             if oc.order.exists(_.status !=* MOrderStatuses.Draft)
           } yield {
             oc.txns

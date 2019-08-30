@@ -31,7 +31,6 @@ object MGridS {
 /** Общее состояние плитки: данные в
   *
   * @param core Отображаемые данные плитки для рендера.
-  * @param gridSz Рассчитанный размер плитки, когда известен.
   */
 case class MGridS(
                    core         : MGridCoreS,

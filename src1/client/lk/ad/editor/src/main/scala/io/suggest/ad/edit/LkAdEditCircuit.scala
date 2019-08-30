@@ -3,7 +3,7 @@ package io.suggest.ad.edit
 import diode.{ModelRO, ModelRW}
 import diode.react.ReactConnector
 import io.suggest.ad.edit.m._
-import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
+import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRuntime}
 import io.suggest.sjs.common.log.CircuitLog
 import play.api.libs.json.Json
 import io.suggest.ad.edit.c._
@@ -13,7 +13,6 @@ import io.suggest.ad.edit.m.pop.MAePopupsS
 import io.suggest.ad.edit.m.vld.MJdVldAh
 import io.suggest.ad.edit.srv.LkAdEditApiHttp
 import io.suggest.color.MColorData
-import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.up.UploadApiHttp
 import io.suggest.dev.MSzMults
 import io.suggest.jd.MJdConf
@@ -72,6 +71,8 @@ class LkAdEditCircuit(
       .parse( jsonStr )
       .as[MAdEditFormInit]
 
+    val jdDataJs = MJdDataJs( mFormInit.adData )
+
     MAeRoot(
       conf = mFormInit.conf,
 
@@ -82,16 +83,13 @@ class LkAdEditCircuit(
           blockPadding      = mFormInit.blockPadding,
           gridColumnsCount  = 2
         )
-        val tpl = mFormInit.adData.template
-        val edges = mFormInit.adData.edgesMap
-          .mapValues( MEdgeDataJs(_) )
         MDocS(
           jdArgs = MJdArgs(
-            template   = tpl,
-            edges      = edges,
+            template   = jdDataJs.template,
+            edges      = jdDataJs.edges,
             conf       = jdConf,
             jdRuntime  = MJdRuntime.make(
-              tpls   = tpl :: Nil,
+              tpls   = jdDataJs.template :: Nil,
               jdConf = jdConf,
             )
           ),
@@ -99,7 +97,7 @@ class LkAdEditCircuit(
           colorsState = MColorsState(
             histograms = {
               val iter = for {
-                jdEdge    <- mFormInit.adData.edgesMap.valuesIterator
+                jdEdge    <- mFormInit.adData.edges.iterator
                 srvFile   <- jdEdge.fileSrv
                 colorHist <- srvFile.colors
               } yield {

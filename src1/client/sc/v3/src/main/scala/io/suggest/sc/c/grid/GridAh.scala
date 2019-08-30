@@ -9,7 +9,7 @@ import io.suggest.dev.{MScreen, MSzMult}
 import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBuildResult}
 import io.suggest.grid.{GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
 import io.suggest.jd.MJdConf
-import io.suggest.jd.render.m.MJdRuntime
+import io.suggest.jd.render.m.{MJdDataJs, MJdRuntime}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
@@ -98,7 +98,7 @@ object GridAh {
 
 
   /** Конвертация одной карточки в один блок для рендера в плитке. */
-  def blockRenderData2GbPayload(nodeId: Option[String], stripTpl: Tree[JdTag], brd: MBlkRenderData): Tree[MGbBlock] = {
+  def blockRenderData2GbPayload(nodeId: Option[String], stripTpl: Tree[JdTag], brd: MJdDataJs): Tree[MGbBlock] = {
     // Несфокусированная карточка. Вернуть blockMeta с единственного стрипа.
     Tree.Leaf {
       val stripJdt = stripTpl.rootLabel
@@ -153,8 +153,8 @@ object GridAh {
                   ): Effect = {
     // Карточка уже открыта, её надо свернуть назад в main-блок.
     // Нужно узнать координату в плитке карточке
-    val nodeIdOpt = toAd.nodeId
     Effect.action {
+      val nodeIdOpt = toAd.nodeId
       val yCoordsIter = gbRes.coords
         .iterator
         .zip( ads.iterator.flatten )
@@ -248,7 +248,12 @@ class GridRespHandler
 
     // Если silent, то надо попытаться повторно пере-использовать уже имеющиеся карточки.
     val reusableAdsMap: Map[String, MScAdData] = {
-      if (isCleanLoad  &&  (isSilentOpt contains true)  &&  gridResp.ads.nonEmpty  &&  g0.core.ads.nonEmpty) {
+      if (
+        isCleanLoad &&
+        (isSilentOpt contains true) &&
+        gridResp.ads.nonEmpty &&
+        g0.core.ads.nonEmpty
+      ) {
         // Есть условия для сборки карты текущих карточек:
         OptId.els2idMap(
           g0.core.ads
@@ -278,26 +283,26 @@ class GridRespHandler
             // Главное - их сразу пропихивать и в focused, и в обычные блоки.
             val tpl = sc3AdData.jd.template
             val isFocused = tpl.rootLabel.name ==* MJdTagNames.DOCUMENT
-            val jsEdgesMap = sc3AdData.jd
-              .edgesMap
-              .mapValues( MEdgeDataJs(_) )
+            val jsEdgesMap = MEdgeDataJs.jdEdges2EdgesDataMap( sc3AdData.jd.edges )
 
             MScAdData(
               nodeId    = sc3AdData.jd.nodeId,
-              main      = MBlkRenderData(
+              main      = MJdDataJs(
                 template = {
                   // Найти главный блок в шаблоне focused-карточки документа.
                   if (isFocused) tpl.getMainBlockOrFirst
                   else tpl
                 },
-                edges   = jsEdgesMap
+                edges   = jsEdgesMap,
+                nodeId  = sc3AdData.jd.nodeId,
               ),
               focused = if (isFocused) {
                 // Сервер прислал focused-карточку.
                 val v = MScFocAdData(
-                  MBlkRenderData(
+                  MJdDataJs(
                     template  = tpl,
-                    edges     = jsEdgesMap
+                    edges     = jsEdgesMap,
+                    nodeId    = sc3AdData.jd.nodeId,
                   ),
                   canEdit = sc3AdData.canEdit.getOrElseFalse,
                   userFoc = false
@@ -336,7 +341,8 @@ class GridRespHandler
       g0.core.ads.ready( newScAds )
 
     } else {
-      val scAds2 = g0.core.ads.toOption.fold(newScAds)(_ ++ newScAds)
+      val scAds2 = g0.core.ads.toOption
+        .fold(newScAds)(_ ++ newScAds)
       // ready - обязателен, иначе останется pending и висячий без дела GridLoaderR.
       g0.core.ads.ready( scAds2 )
     }
@@ -353,7 +359,6 @@ class GridRespHandler
         gridResp.ads.lengthCompare(limit) >= 0
       }
     )
-
 
     // И вернуть новый акк:
     val v2 = ctx.value0.withGrid(g2)
@@ -415,7 +420,7 @@ class GridFocusRespHandler
           .modify(
             _.ready(
               MScFocAdData(
-                blkData = MBlkRenderData( focAd.jd ),
+                blkData = MJdDataJs( focAd.jd ),
                 canEdit = focAd.canEdit contains true,
                 userFoc = true
               )

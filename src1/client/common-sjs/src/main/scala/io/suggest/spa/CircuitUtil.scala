@@ -71,7 +71,6 @@ object CircuitUtil {
     * @param modelRO Read-Only-модель Parent=>Child.
     * @param lens Линза.
     * @param feq FastEq Child-модели.
-    * @tparam Root_t Тип корневой модели circuit.
     * @tparam Parent_t Тип модели внутри root-модели.
     * @tparam Child_t Тип дочерней модели отновительно Parent-модели.
     * @return Инстанс ModelRO Parent=>Child.
@@ -79,6 +78,11 @@ object CircuitUtil {
   def mkLensZoomRO[Parent_t, Child_t](modelRO: ModelRO[Parent_t], lens: monocle.Lens[Parent_t, Child_t] )
                                      (implicit feq: FastEq[_ >: Child_t]): ModelRO[Child_t] = {
     modelRO.zoom( lens.get )(feq)
+  }
+
+  def mkLensRootZoomRO[Root_t <: AnyRef, Child_t]( circuit: Circuit[Root_t], lens: monocle.Lens[Root_t, Child_t] )
+                                                 ( implicit feq: FastEq[Child_t] ): ModelRO[Child_t] = {
+    circuit.zoom( lens.get )(feq)
   }
 
 }

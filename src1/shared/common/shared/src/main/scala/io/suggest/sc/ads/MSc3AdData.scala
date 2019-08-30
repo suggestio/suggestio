@@ -1,6 +1,6 @@
 package io.suggest.sc.ads
 
-import io.suggest.jd.MJdAdData
+import io.suggest.jd.MJdData
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -16,7 +16,7 @@ object MSc3AdData {
 
   /** Поддержка play-json. */
   implicit def MSC3_AD_DATA: OFormat[MSc3AdData] = (
-    (__ \ "j").format[MJdAdData] and
+    (__ \ "j").format[MJdData] and
     (__ \ "e").formatNullable[Boolean]
   )(apply, unlift(unapply))
 
@@ -31,6 +31,6 @@ object MSc3AdData {
   * @param canEdit Есть ли право на редактирование карточки у юзера?
   */
 case class MSc3AdData(
-                       jd       : MJdAdData,
+                       jd       : MJdData,
                        canEdit  : Option[Boolean] = None
                      )

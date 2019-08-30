@@ -2,6 +2,7 @@ package io.suggest.sys.mdr
 
 import io.suggest.common.empty.EmptyUtil
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -29,6 +30,8 @@ object MMdrNextResp {
     UnivEq.derive
   }
 
+  val nodeOpt = GenLens[MMdrNextResp](_.nodeOpt)
+
 }
 
 
@@ -36,8 +39,4 @@ case class MMdrNextResp(
                          nodeOpt              : Option[MNodeMdrInfo],
                          errorNodeIds         : Iterable[String],
                          mdrQueue             : MMdrQueueReport,
-                       ) {
-
-  def withNodeOpt(nodeOpt: Option[MNodeMdrInfo]) = copy(nodeOpt = nodeOpt)
-
-}
+                       )

@@ -3,11 +3,10 @@ package io.suggest.bill.cart
 import diode.FastEq
 import io.suggest.bill.MPrice
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.jd.MJdAdData
+import io.suggest.jd.MJdData
 import io.suggest.mbill2.m.item.MItem
-import io.suggest.mbill2.m.order.{MOrder, MOrderStatuses}
+import io.suggest.mbill2.m.order.MOrder
 import io.suggest.mbill2.m.txn.MTxnPriced
-import io.suggest.primo.id.OptId
 import io.suggest.sc.index.MSc3IndexResp
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
@@ -28,7 +27,9 @@ object MOrderContent {
       (a.order ===* b.order) &&
       (a.items ===* b.items) &&
       (a.txns  ===* b.txns) &&
-      (a.adnNodes ===* b.adnNodes)
+      (a.adnNodes ===* b.adnNodes) &&
+      (a.adsJdDatas ===* b.adsJdDatas) &&
+      (a.orderPrices ===* b.orderPrices)
     }
   }
 
@@ -51,8 +52,8 @@ object MOrderContent {
           EmptyUtil.opt2ImplEmpty1F( Nil ),
           { rcvrs => if (rcvrs.isEmpty) None else Some(rcvrs) }
         ) and
-      (__ \ "j").formatNullable[Iterable[MJdAdData]]
-        .inmap[Iterable[MJdAdData]](
+      (__ \ "j").formatNullable[Iterable[MJdData]]
+        .inmap[Iterable[MJdData]](
           EmptyUtil.opt2ImplEmpty1F( Nil ),
           { jds => if (jds.isEmpty) None else Some(jds) }
         ) and
@@ -74,7 +75,7 @@ object MOrderContent {
   * @param order Данные ордера.
   * @param items Содержимое ордера.
   * @param txns Денежные транзакции по ордеру.
-  * @param orderPrice Полная стоимость заказа.
+  * @param orderPrices Стоимость заказа.
   * @param adnNodes ADN-узлы из item.nodeId, item.rcvrId и проч.
   */
 case class MOrderContent(
@@ -82,25 +83,6 @@ case class MOrderContent(
                           items       : Seq[MItem],
                           txns        : Seq[MTxnPriced],
                           adnNodes    : Iterable[MSc3IndexResp],
-                          adsJdDatas  : Iterable[MJdAdData],
+                          adsJdDatas  : Iterable[MJdData],
                           orderPrices : Iterable[MPrice]
-                        ) {
-
-  /** Сборка инстанса карты ресиверов. Происходит на клиенте, когда наступает необходимость. */
-  lazy val adnNodesMap: Map[String, MSc3IndexResp] =
-    OptId.els2idMap[String, MSc3IndexResp]( adnNodes )
-
-  /** Сборка карты отрендеренных карточек. */
-  lazy val adId2jdDataMap: Map[String, MJdAdData] =
-    OptId.els2idMap[String, MJdAdData]( adsJdDatas )
-
-  /** Карта item'ов, сгруппированных по id карточки. */
-  lazy val adId2itemsMap: Map[String, Seq[MItem]] =
-    items.groupBy( _.nodeId )
-
-
-  /** Рендерить ли чекбокс для управления item'ами? */
-  lazy val isItemsEditable: Boolean =
-    order.isEmpty || order.exists( _.status ==* MOrderStatuses.Draft )
-
-}
+                        )

@@ -25,14 +25,6 @@ import monocle.macros.GenLens
   */
 object MEdgeDataJs {
 
-  def edgesDataMap2jdEdgesMap(deMap: Map[EdgeUid_t, MEdgeDataJs]): Map[EdgeUid_t, MJdEdge] = {
-    deMap.mapValues { _.jdEdge }
-  }
-
-  def jdEdgesMap2EdgesDataMap(jdesMap: Map[EdgeUid_t, MJdEdge]): Map[EdgeUid_t, MEdgeDataJs] = {
-    jdesMap.mapValues { MEdgeDataJs(_) }
-  }
-
   def jdEdges2EdgesDataMap(jdEdges: TraversableOnce[MJdEdge]): Map[EdgeUid_t, MEdgeDataJs] = {
     IId.els2idMap(
       jdEdges
@@ -40,7 +32,6 @@ object MEdgeDataJs {
         .map( MEdgeDataJs(_) )
     )
   }
-
 
   /** Поддержка FastEq для инстансов [[MEdgeDataJs]]. */
   // TODO Не ясно, нужно ли оно, ведь инстансы живут в Map'е. Запилено на автомате.

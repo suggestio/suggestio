@@ -7,6 +7,7 @@ import io.suggest.sys.mdr.{MMdrActionInfo, MMdrNextResp}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -28,6 +29,11 @@ object MMdrNodeS {
 
   @inline implicit def univEq: UnivEq[MMdrNodeS] = UnivEq.derive
 
+
+  val info = GenLens[MMdrNodeS](_.info)
+  val mdrPots = GenLens[MMdrNodeS](_.mdrPots)
+  val fixNodePots = GenLens[MMdrNodeS](_.fixNodePots)
+
 }
 
 /** Состояние модерации текущего узла.
@@ -43,16 +49,13 @@ object MMdrNodeS {
   */
 case class MMdrNodeS(
                       jdRuntime       : MJdRuntime,
-                      info            : Pot[MMdrNextResp]                     = Pot.empty,
+                      info            : Pot[MMdrNextRespJs]                   = Pot.empty,
                       mdrPots         : Map[MMdrActionInfo, Pot[None.type]]   = Map.empty,
                       fixNodePots     : Map[String, Pot[None.type]]           = Map.empty,
                       nodeOffset      : Int                                   = 0,
                     ) {
 
-  def withJdRuntime(jdRuntime: MJdRuntime) = copy(jdRuntime = jdRuntime)
-  def withInfo( info: Pot[MMdrNextResp] ) = copy(info = info)
   def withMdrPots( mdrPots: Map[MMdrActionInfo, Pot[None.type]] ) = copy(mdrPots = mdrPots)
-  def withNodeOffset(nodeOffset: Int) = copy(nodeOffset = nodeOffset)
   def withFixNodePots( fixNodePots: Map[String, Pot[None.type]] ) = copy(fixNodePots = fixNodePots)
 
 }

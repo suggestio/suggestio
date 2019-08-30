@@ -98,7 +98,7 @@ class LkAdsFormR(
                         jdRuntime   = mroot.ads.jdRuntime,
                         jdConf      = mroot.conf.jdConf
                       )
-                    } { adItemR.component.withKey(iStr)(_) }
+                    } { adItemR.component.withKey(iStr)(_) }(implicitly, adItemR.MLkAdItemRPropsValFastEq)
                     
                     var vdoms = List[VdomElement](adItem)
                     // Добавить перенос строки сетки после каждого четвертого элемента строки:

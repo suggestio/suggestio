@@ -2,7 +2,7 @@ package io.suggest.ads.c
 
 import diode._
 import diode.data.Pot
-import io.suggest.ads.{LkAdsFormConst, MLkAdsConf}
+import io.suggest.ads.{LkAdsFormConst, MLkAdsConf, MLkAdsOneAdResp}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ads.a.ILkAdsApi
 import io.suggest.ads.m._
@@ -73,41 +73,39 @@ class NodeAdsAh[M](
       }
 
       val v0 = value
-      val v2 = v0.withAds(
-        ads = for (ads <- v0.ads) yield {
+      val v2 = MAdsS.ads.modify( adsPot0 =>
+        for (ads <- adsPot0) yield {
           for (adProps0 <- ads) yield {
             if (adProps0.adResp.jdAdData.nodeId contains m.adId) {
-              adProps0.withShownAtParentReq(
-                adProps0.shownAtParentReq.pending(ts)
-              )
+              MAdProps.shownAtParentReq
+                .modify(_.pending(ts))(adProps0)
             } else {
               adProps0
             }
           }
         }
-      )
+      )(v0)
 
       updated(v2, fx)
 
 
     // Завершение запроса к серверу за апдейтом галочки размещения на родительском узле.
     case m: SetAdShownAtParentResp =>
-      val v0 = value
-      val v2 = v0.withAds(
-        ads = for (ads <- v0.ads) yield {
+      val v2 = MAdsS.ads.modify( adsPot0 =>
+        for (ads <- adsPot0) yield {
           for (adProps0 <- ads) yield {
             if (adProps0.adResp.jdAdData.nodeId contains m.reason.adId) {
               if (adProps0.shownAtParentReq isPendingWithStartTime m.timestampMs) {
                 m.tryResp.fold(
                   {ex =>
-                    adProps0.withShownAtParentReq(
-                      adProps0.shownAtParentReq.fail(ex)
-                    )
+                    MAdProps.shownAtParentReq
+                      .modify(_.fail(ex))(adProps0)
                   },
                   {mLknNode2 =>
                     adProps0.copy(
-                      adResp            = adProps0.adResp.withShownAtParent( mLknNode2.hasAdv.getOrElse(m.reason.isShown) ),
-                      shownAtParentReq  = Pot.empty
+                      adResp = MLkAdsOneAdResp.shownAtParent
+                        .set( mLknNode2.hasAdv getOrElse m.reason.isShown )( adProps0.adResp ),
+                      shownAtParentReq = Pot.empty
                     )
                   }
                 )
@@ -121,7 +119,8 @@ class NodeAdsAh[M](
             }
           }
         }
-      )
+      )(value)
+
       updated(v2)
 
 
@@ -155,9 +154,7 @@ class NodeAdsAh[M](
         }
 
         // Выставить pending в состояние:
-        val v2 = v0.withAds(
-          v0.ads.pending()
-        )
+        val v2 = MAdsS.ads.modify(_.pending())(v0)
         updated(v2, fx)
       }
 
@@ -169,9 +166,8 @@ class NodeAdsAh[M](
       // Залить ответ сервера в состояние:
       val v2 = m.tryResp.fold(
         {ex =>
-          v0.withAds(
-            v0.ads.fail(ex)
-          )
+          MAdsS.ads
+            .modify(_.fail(ex))(v0)
         },
         {respAds =>
           val adsPropsResp = respAds.iterator

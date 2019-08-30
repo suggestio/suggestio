@@ -2,6 +2,7 @@ package io.suggest.sys.mdr.m
 
 import diode.FastEq
 import japgolly.univeq._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -21,6 +22,8 @@ object MMdrFormS {
 
   @inline implicit def univEq: UnivEq[MMdrFormS] = UnivEq.derive
 
+  val forceAllRcvrs = GenLens[MMdrFormS](_.forceAllRcrvs)
+
 }
 
 
@@ -32,8 +35,4 @@ object MMdrFormS {
   */
 case class MMdrFormS(
                       forceAllRcrvs     : Boolean         = true
-                    ) {
-
-  def withForceAllRcvrs(forceAllRcrvs: Boolean) = copy(forceAllRcrvs = forceAllRcrvs)
-
-}
+                    )

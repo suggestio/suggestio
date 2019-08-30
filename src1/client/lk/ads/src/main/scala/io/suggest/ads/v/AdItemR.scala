@@ -10,7 +10,6 @@ import io.suggest.css.Css
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
 import io.suggest.jd.render.v.JdR
-import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.i18n.MsgCodes
@@ -43,9 +42,9 @@ class AdItemR(
   implicit object MLkAdItemRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.ad ===* b.ad) &&
-        (a.firstInLine ==* b.firstInLine) &&
-        (a.jdRuntime ===* b.jdRuntime) &&
-        (a.jdConf ===* b.jdConf)
+      (a.firstInLine ==* b.firstInLine) &&
+      (a.jdRuntime ===* b.jdRuntime) &&
+      (a.jdConf ===* b.jdConf)
     }
   }
 
@@ -89,11 +88,10 @@ class AdItemR(
           <.div(
             // Рендер карточки:
             propsProxy.wrap { props =>
-              val jdData = props.ad.adResp.jdAdData
+              val jdData = props.ad.jdDataJs
               MJdArgs(
                 template  = jdData.template,
-                edges     = jdData.edgesMap
-                  .mapValues( MEdgeDataJs(_) ),
+                edges     = jdData.edges,
                 jdRuntime = props.jdRuntime,
                 conf      = props.jdConf,
               )

@@ -2,7 +2,6 @@ package io.suggest.bill.cart.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.bill.cart.MOrderContent
 import io.suggest.jd.render.m.MJdRuntime
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.ueq.JsUnivEqUtil._
@@ -39,7 +38,7 @@ object MOrderItemsS {
   * @param orderContents Содержимое ордера.
   */
 case class MOrderItemsS(
-                         orderContents    : Pot[MOrderContent]    = Pot.empty,
+                         orderContents    : Pot[MOrderContentJs]  = Pot.empty,
                          itemsSelected    : Set[Gid_t]            = Set.empty,
                          jdRuntime        : MJdRuntime,
                        )

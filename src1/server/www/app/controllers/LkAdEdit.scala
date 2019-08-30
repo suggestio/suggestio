@@ -8,7 +8,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
-import io.suggest.jd.MJdAdData
+import io.suggest.jd.MJdData
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.doc.MNodeDoc
@@ -139,7 +139,7 @@ class LkAdEdit @Inject() (
     */
   def saveAdSubmit(adIdOptU: Option[MEsUuId], producerIdU: Option[MEsUuId]) = bruteForceProtect(_BFP_ARGS) {
     csrf.Check {
-      canCreateOrEditAd(adIdOptU, producerIdOpt = producerIdU).async( parse.json[MJdAdData] ) { implicit request =>
+      canCreateOrEditAd(adIdOptU, producerIdOpt = producerIdU).async( parse.json[MJdData] ) { implicit request =>
         // Взять форму из реквеста, провалидировать
         lazy val logPrefix = s"saveAdSubmit(${request.madOpt.fold("pro")(_ => "a")}d#${adIdOptU.orElse(producerIdU).orNull}):"
 
@@ -328,7 +328,7 @@ class LkAdEdit @Inject() (
                         adId        = mad2.id,
                         ctxId       = ctx.ctxIdStr
                       ),
-                      adData = MJdAdData(
+                      adData = MJdData(
                         template  = tpl2,
                         edges     = edges2,
                         nodeId    = None

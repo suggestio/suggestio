@@ -10,8 +10,9 @@ import io.suggest.jd.render.m.MJdRuntime
 import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
 import io.suggest.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.sjs.common.log.CircuitLog
-import io.suggest.spa.StateInp
+import io.suggest.spa.{FastEqUtil, StateInp}
 import play.api.libs.json.Json
+import io.suggest.spa.CircuitUtil._
 
 /**
   * Suggest.io
@@ -23,8 +24,6 @@ class LkAdsCircuit
   extends CircuitLog[MLkAdsRoot]
   with ReactConnector[MLkAdsRoot]
 {
-
-  import MAdsS.MAdsSFastEq
 
   override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.LK_ADS_FORM_FAILED
 
@@ -52,8 +51,8 @@ class LkAdsCircuit
   }
 
   // Модели
-  val currNodeRW = zoomRW(_.ads) { _.withCurrNode(_) }
-  val confRO = zoom(_.conf)
+  val currNodeRW = mkLensRootZoomRW(this, MLkAdsRoot.ads)(MAdsS.MAdsSFastEq)
+  val confRO = mkLensRootZoomRO(this, MLkAdsRoot.conf)( FastEqUtil.AnyRefFastEq )
 
 
   // Контроллеры

@@ -1,9 +1,10 @@
 package io.suggest.ads
 
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.jd.MJdAdData
+import io.suggest.jd.MJdData
 import io.suggest.mbill2.m.item.status.MItemStatus
 import japgolly.univeq.UnivEq
+import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -24,7 +25,7 @@ object MLkAdsOneAdResp {
         EmptyUtil.opt2ImplEmpty1F(Set.empty),
         { statuses => if (statuses.isEmpty) None else Some(statuses) }
       ) and
-    (__ \ "j").format[MJdAdData] and
+    (__ \ "j").format[MJdData] and
     (__ \ "p").format[Boolean]
   )(apply, unlift(unapply))
 
@@ -33,6 +34,8 @@ object MLkAdsOneAdResp {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }
+
+  val shownAtParent = GenLens[MLkAdsOneAdResp](_.shownAtParent)
 
 }
 
@@ -45,11 +48,7 @@ object MLkAdsOneAdResp {
   */
 case class MLkAdsOneAdResp(
                             advStatuses   : Set[MItemStatus],
-                            jdAdData      : MJdAdData,
+                            jdAdData      : MJdData,
                             shownAtParent : Boolean
-                          ) {
-
-  def withShownAtParent(shownAtParent: Boolean)     = copy(shownAtParent = shownAtParent)
-
-}
+                          )
 

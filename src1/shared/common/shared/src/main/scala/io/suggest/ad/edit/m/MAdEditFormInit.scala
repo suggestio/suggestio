@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.m
 
 import io.suggest.ad.blk.BlockPadding
-import io.suggest.jd.MJdAdData
+import io.suggest.jd.MJdData
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -22,7 +22,7 @@ object MAdEditFormInit {
 
   implicit val MAD_EDIT_FORM_INIT_FORMAT: OFormat[MAdEditFormInit] = (
     (__ \ Fields.CONF_FN).format[MAdEditFormConf] and
-    (__ \ Fields.AD_DATA_FN).format[MJdAdData] and
+    (__ \ Fields.AD_DATA_FN).format[MJdData] and
     (__ \ Fields.BLOCK_PADDING).format[BlockPadding]
   )(apply, unlift(unapply))
 
@@ -41,6 +41,6 @@ object MAdEditFormInit {
   */
 case class MAdEditFormInit(
                             conf          : MAdEditFormConf,
-                            adData        : MJdAdData,
+                            adData        : MJdData,
                             blockPadding  : BlockPadding
                           )

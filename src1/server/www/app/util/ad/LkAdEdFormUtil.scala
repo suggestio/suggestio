@@ -12,6 +12,7 @@ import io.suggest.jd.tags._
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.primo.id.IId
 import io.suggest.scalaz.StringValidationNel
 import io.suggest.text.StringUtil.StringCollUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -47,7 +48,7 @@ class LkAdEdFormUtil @Inject() (
   // v2 react form
 
   /** Срендерить и вернуть дефолтовый документ пустой карточки для текущего языка. */
-  def defaultEmptyDocument(implicit ctx: Context): Future[MJdAdData] = {
+  def defaultEmptyDocument(implicit ctx: Context): Future[MJdData] = {
     // TODO Брать готовую карточку из какого-то узла и пробегаться по эджам с использованием messages.
 
     // Тут просто очень временный документ.
@@ -75,7 +76,7 @@ class LkAdEdFormUtil @Inject() (
       )
     )
 
-    val r = MJdAdData(
+    val r = MJdData(
       template = tplTree,
       edges    = Nil,
       nodeId   = None
@@ -111,11 +112,12 @@ class LkAdEdFormUtil @Inject() (
     * @return Фьючерс с результатом валидации.
     *         exception обозначает ошибку валидации.
     */
-  def earlyValidateEdges(form: MJdAdData): StringValidationNel[List[MJdEdge]] = {
+  def earlyValidateEdges(form: MJdData): StringValidationNel[List[MJdEdge]] = {
     val nodeIdVld = Validation.liftNel(form.nodeId)(_.nonEmpty, "e.nodeid." + ErrorConstants.Words.UNEXPECTED)
 
     // Прочистить начальную карту эджей от возможного мусора (которого там быть и не должно, по идее).
-    val edges1 = JdTag.purgeUnusedEdges( form.template, form.edgesMap )
+    val edgesMap = IId.els2idMap[EdgeUid_t, MJdEdge]( form.edges )
+    val edges1 = JdTag.purgeUnusedEdges( form.template, edgesMap )
 
     // Ранняя валидация корректности присланных эджей:
     val edgesVlds = n2VldUtil.earlyValidateEdges( edges1.values )

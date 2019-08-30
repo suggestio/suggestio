@@ -5,9 +5,8 @@ import diode.FastEq
 import diode.data.Pot
 import diode.react.ModelProxy
 import diode.react.ReactPot._
-import io.suggest.bill.cart.m.LoadCurrentOrder
+import io.suggest.bill.cart.m.{LoadCurrentOrder, MOrderContentJs}
 import io.suggest.bill.cart.v.order.OrderCss
-import io.suggest.bill.cart.MOrderContent
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
@@ -15,7 +14,6 @@ import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
 import io.suggest.jd.render.v.JdR
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.msg.{JsFormatUtil, Messages}
-import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
@@ -39,7 +37,7 @@ class ItemsTableBodyR(
                      ) {
 
   case class PropsVal(
-                       orderContents  : Pot[MOrderContent],
+                       orderContents  : Pot[MOrderContentJs],
                        selectedIds    : Set[Gid_t],
                        jdRuntime      : MJdRuntime,
                      )
@@ -131,7 +129,8 @@ class ItemsTableBodyR(
         },
 
         // Рендерить ряды, навешивая key на каждый.
-        props.orderContents.render { orderContent =>
+        props.orderContents.render { orderContentJs =>
+          val orderContent = orderContentJs.content
           if ( orderContent.items.isEmpty ) {
             // Пустая корзина.
             fullRowCell(
@@ -142,22 +141,20 @@ class ItemsTableBodyR(
             // Есть что рендерить: рендерим элементы.
             var iter = for {
               // Проходим группы item'ов в рамках каждой карточки:
-              (nodeId, nodeItems) <- orderContent.adId2itemsMap.iterator
+              (nodeId, nodeItems) <- orderContentJs.adId2itemsMap.iterator
               nodeItemsCount = nodeItems.length
 
               // Собрать ячейку с jd-рендером.
               previewOpt = {
                 // Пытаемся отрендерить как jd-карточку:
-                orderContent
+                orderContentJs
                   .adId2jdDataMap
                   .get( nodeId )
-                  .map[VdomElement] { jdAdData =>
+                  .map[VdomElement] { jdAdDataJs =>
                     propsProxy.wrap { _ =>
                       MJdArgs(
-                        template = jdAdData.template,
-                        edges = jdAdData.edgesMap
-                          // TODO Opt Инстанс карты с js-эджами следует собирать не тут, а в контроллере и хранить в состоянии.
-                          .mapValues(MEdgeDataJs(_)),
+                        template = jdAdDataJs.template,
+                        edges = jdAdDataJs.edges,
                         jdRuntime = props.jdRuntime,
                         conf  = props.jdRuntime.jdCss.jdCssArgs.conf
                       )
@@ -165,7 +162,7 @@ class ItemsTableBodyR(
                   }
                   .orElse {
                     // Поискать в adn node logos
-                    orderContent
+                    orderContentJs
                       .adnNodesMap
                       .get( nodeId )
                       .map[VdomElement] { nodeProps =>
@@ -207,9 +204,9 @@ class ItemsTableBodyR(
               propsProxy.wrap { _ =>
                 itemRowR.PropsVal(
                   mitem           = mitem,
-                  isItemEditable  = orderContent.isItemsEditable,
+                  isItemEditable  = orderContentJs.isItemsEditable,
                   isSelected      = mitem.id.map(props.selectedIds.contains),
-                  rcvrNode        = mitem.rcvrIdOpt.flatMap( orderContent.adnNodesMap.get ),
+                  rcvrNode        = mitem.rcvrIdOpt.flatMap( orderContentJs.adnNodesMap.get ),
                   isPendingReq    = props.orderContents.isPending,
                   previewRowSpan  = OptionUtil.maybe(isWithPreview)(nodeItemsCount)
                 )

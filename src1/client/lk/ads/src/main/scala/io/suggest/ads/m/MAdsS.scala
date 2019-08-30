@@ -6,6 +6,7 @@ import io.suggest.jd.render.m.MJdRuntime
 import japgolly.univeq._
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
+import monocle.macros.GenLens
 
 /**
   * Suggest.io
@@ -25,6 +26,8 @@ object MAdsS {
 
   @inline implicit def univEq: UnivEq[MAdsS] = UnivEq.derive
 
+  val ads = GenLens[MAdsS](_.ads)
+
 }
 
 
@@ -34,10 +37,4 @@ case class MAdsS(
                   jdRuntime  : MJdRuntime,
                   ads        : Pot[Vector[MAdProps]]  = Pot.empty,
                   hasMoreAds : Boolean                = true
-                ) {
-
-  def withJdRuntime(jdRuntime: MJdRuntime)        = copy(jdRuntime = jdRuntime)
-  def withAds(ads: Pot[Vector[MAdProps]])         = copy(ads = ads)
-  def withHasMoreAds(hasMoreAds: Boolean)         = copy(hasMoreAds = hasMoreAds)
-
-}
+                )
