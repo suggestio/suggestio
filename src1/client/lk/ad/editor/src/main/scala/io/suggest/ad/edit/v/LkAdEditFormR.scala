@@ -17,14 +17,14 @@ import io.suggest.css.{Css, CssR}
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.dev.MSzMults
 import io.suggest.jd.render.m.MJdArgs
-import io.suggest.jd.render.v.{JdCss, JdCssStatic, JdR}
+import io.suggest.jd.render.v.{JdCss, JdCssStatic}
 import io.suggest.quill.v.{QuillCss, QuillEditorR}
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.edit.JdEditR
 import io.suggest.jd.tags.{MJdShadow, MJdTagName, MJdTagNames}
-import io.suggest.lk.m.{CropOpen, DocBodyClick, PictureFileChanged}
+import io.suggest.lk.m.{CropOpen, DocBodyClick}
 import io.suggest.lk.r.{LkCss, SaveR, SlideBlockR, UploadStatusR}
 import io.suggest.lk.r.color.{ColorCheckBoxR, ColorPickerR, ColorsSuggestR}
 import io.suggest.lk.r.img.{CropBtnR, ImgEditBtnPropsVal, ImgEditBtnR}
@@ -380,7 +380,7 @@ class LkAdEditFormR(
             import io.suggest.common.empty.OptionUtil.BoolOptOps
             useAsMainR.PropsVal(
               checked = selJdt.props1.isMain.getOrElseFalse,
-              mainDefined = mroot.doc.jdArgs.template
+              mainDefined = mroot.doc.jdArgs.data.template
                 .subForest
                 .exists( _.rootLabel.props1.isMain.getOrElseFalse )
             )

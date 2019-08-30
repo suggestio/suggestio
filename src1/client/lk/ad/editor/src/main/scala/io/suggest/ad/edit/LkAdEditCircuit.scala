@@ -85,10 +85,9 @@ class LkAdEditCircuit(
         )
         MDocS(
           jdArgs = MJdArgs(
-            template   = jdDataJs.template,
-            edges      = jdDataJs.edges,
-            conf       = jdConf,
-            jdRuntime  = MJdRuntime.make(
+            data        = jdDataJs,
+            conf        = jdConf,
+            jdRuntime   = MJdRuntime.make(
               tpls   = jdDataJs.template :: Nil,
               jdConf = jdConf,
             )
@@ -187,7 +186,9 @@ class LkAdEditCircuit(
 
           (
             MDocS.jdArgs.modify(
-              MJdArgs.template.set( tpl2 ) andThen
+              MJdArgs.data
+                .composeLens(MJdDataJs.template)
+                .set( tpl2 ) andThen
               MJdArgs.jdRuntime.set( MJdRuntime.make(tpl2 :: Nil, mdoc0.jdArgs.conf) )
             ) andThen
             MDocS.colorsState.set( mColorAh.colorsState )
@@ -275,18 +276,18 @@ class LkAdEditCircuit(
   private val mPictureAhRW = zoomRW[MPictureAh[Tree[JdTag]]] { mroot =>
     val mdoc = mroot.doc
     MPictureAh(
-      edges       = mdoc.jdArgs.edges,
-      view        = mdoc.jdArgs.template,
+      edges       = mdoc.jdArgs.data.edges,
+      view        = mdoc.jdArgs.data.template,
       errorPopup  = mroot.popups.error,
       cropPopup   = mroot.popups.pictureCrop,
       histograms  = mdoc.colorsState.histograms
     )
   } { (mroot0, mPictureAh) =>
     val mdoc0 = mroot0.doc
-    val tpl0 = mdoc0.jdArgs.template
+    val tpl0 = mdoc0.jdArgs.data.template
     val isTplChanged = tpl0 !===* mPictureAh.view
 
-    val mdoc1 = if (isTplChanged || (mPictureAh.edges !===* mdoc0.jdArgs.edges)) {
+    val mdoc1 = if (isTplChanged || (mPictureAh.edges !===* mdoc0.jdArgs.data.edges)) {
       MDocS.jdArgs.set {
         // Разобраться, изменился ли шаблон в реальности:
         val (tpl2, jdRuntime2) = if (isTplChanged) {
@@ -301,8 +302,10 @@ class LkAdEditCircuit(
 
         // Залить всё в итоговое состояние пачкой:
         mdoc0.jdArgs.copy(
-          template    = tpl2,
-          edges       = mPictureAh.edges,
+          data = mdoc0.jdArgs.data.copy(
+            template  = tpl2,
+            edges     = mPictureAh.edges,
+          ),
           jdRuntime   = jdRuntime2
         )
       }(mdoc0)
@@ -347,11 +350,9 @@ class LkAdEditCircuit(
 
   private lazy val jdVldAh = new JdVldAh(
     modelRW = zoomRW { mroot =>
-      val jdArgs = mroot.doc.jdArgs
       MJdVldAh(
-        template = jdArgs.template,
-        edges    = jdArgs.edges,
-        popups   = mroot.popups
+        jdData   = mroot.doc.jdArgs.data,
+        popups   = mroot.popups,
       )
     } { (mroot, _) =>
       // TODO Залить возможные изменения в основную модель.
@@ -434,7 +435,7 @@ class LkAdEditCircuit(
 
   // Если валидация на клиенте, то мониторить jdArgs.template на предмет изменений шаблона.
   if (DOC_VLD_ON_CLIENT) {
-    subscribe(mDocSRw.zoom(_.jdArgs.template)) { _ =>
+    subscribe(mDocSRw.zoom(_.jdArgs.data.template)) { _ =>
       dispatch( JdDocChanged )
     }
   }

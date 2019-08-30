@@ -2,14 +2,9 @@ package io.suggest.ad.edit.m.vld
 
 import diode.FastEq
 import io.suggest.ad.edit.m.pop.MAePopupsS
-import io.suggest.jd.tags.JdTag
-import io.suggest.model.n2.edge.EdgeUid_t
-import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq.UnivEq
-
-import scalaz.Tree
 
 /**
   * Suggest.io
@@ -22,9 +17,8 @@ object MJdVldAh {
   /** Поддержка FastEq для инстансов [[MJdVldAh]]. */
   implicit object MJdVldAhFastEq extends FastEq[MJdVldAh] {
     override def eqv(a: MJdVldAh, b: MJdVldAh): Boolean = {
-      (a.template ===* b.template) &&
-        (a.edges  ===* b.edges) &&
-        (a.popups ===* b.popups)
+      (a.jdData ===* b.jdData) &&
+      (a.popups ===* b.popups)
     }
   }
 
@@ -35,12 +29,10 @@ object MJdVldAh {
 
 /** Класс модели-контейнера данных для контроллера валидации.
   *
-  * @param template Шаблон документа.
-  * @param edges Эджи документа.
+  * @param jdData Шаблон и эджи документа.
   * @param popups Доступ к попапам (чтобы можно было отрендерить ошибку).
   */
 case class MJdVldAh(
-                     template   : Tree[JdTag],
-                     edges      : Map[EdgeUid_t, MEdgeDataJs],
-                     popups     : MAePopupsS
+                     jdData     : MJdDataJs,
+                     popups     : MAePopupsS,
                    )

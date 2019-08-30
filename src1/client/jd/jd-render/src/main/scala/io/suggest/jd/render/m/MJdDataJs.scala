@@ -10,6 +10,7 @@ import io.suggest.primo.id.OptId
 import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
+import monocle.macros.GenLens
 import scalaz.Tree
 
 /**
@@ -39,6 +40,10 @@ object MJdDataJs {
       nodeId    = jdAdData.nodeId,
     )
   }
+
+  val template = GenLens[MJdDataJs](_.template)
+  val edges    = GenLens[MJdDataJs](_.edges)
+  val nodeId   = GenLens[MJdDataJs](_.nodeId)
 
 }
 

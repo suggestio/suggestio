@@ -14,7 +14,7 @@ import io.suggest.jd.render.m.{MJdArgs, MJdRuntime}
 import io.suggest.jd.render.v.JdR
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.msg.{JsFormatUtil, Messages}
-import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}, ReactDiodeUtil.Implicits._
 import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
@@ -151,14 +151,13 @@ class ItemsTableBodyR(
                   .adId2jdDataMap
                   .get( nodeId )
                   .map[VdomElement] { jdAdDataJs =>
-                    propsProxy.wrap { _ =>
-                      MJdArgs(
-                        template = jdAdDataJs.template,
-                        edges = jdAdDataJs.edges,
-                        jdRuntime = props.jdRuntime,
-                        conf  = props.jdRuntime.jdCss.jdCssArgs.conf
-                      )
-                    }( jdR.apply )
+                    val jdArgs = MJdArgs(
+                      data      = jdAdDataJs,
+                      jdRuntime = props.jdRuntime,
+                      conf      = props.jdRuntime.jdCss.jdCssArgs.conf,
+                    )
+                    val propsProxy2 = propsProxy.resetZoom( jdArgs )
+                    jdR.apply( propsProxy2 )
                   }
                   .orElse {
                     // Поискать в adn node logos

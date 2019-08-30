@@ -63,10 +63,11 @@ case class MAeRoot(
   def toForm: MJdData = {
     val jdArgs = doc.jdArgs
     MJdData(
-      template = jdArgs.template,
+      template = jdArgs.data.template,
       edges    = {
         val videoPred = MPredicates.JdContent.Frame
         jdArgs
+          .data
           .edges
           .mapValues { e =>
             var jde = e.jdEdge

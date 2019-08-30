@@ -154,7 +154,7 @@ class JdR(
 
         val bgImgOpt = for {
           bgImgData <- s.props1.bgImg
-          edge      <- state.jdArgs.edges.get( bgImgData.edgeUid )
+          edge      <- state.jdArgs.data.edges.get( bgImgData.edgeUid )
           if edge.jdEdge.predicate ==>> MPredicates.JdContent.Image
           bgImgSrc  <- edge.origImgSrcOpt
         } yield {
@@ -377,9 +377,9 @@ class JdR(
       .render_P { propsProxy =>
         propsProxy.wrap { jdArgs =>
           MJdRrrProps(
-            subTree = jdArgs.template,
+            subTree = jdArgs.data.template,
             tagId = MJdTagId(
-              nodeId      = None, // TODO XXX
+              nodeId      = jdArgs.data.nodeId,
               selPath     = Nil,
               blockExpand = None,
             ),

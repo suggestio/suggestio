@@ -126,7 +126,7 @@ case class QdRrrHtml(
       case MQdOpTypes.Insert =>
         for {
           qdEi <- qdOp.edgeInfo
-          e <- jdArgs.edges.get( qdEi.edgeUid )
+          e <- jdArgs.data.edges.get( qdEi.edgeUid )
         } yield {
           var framesCnt = counters.frame
           var imagesCnt = counters.image

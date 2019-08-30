@@ -23,7 +23,7 @@ class JdVldAh[M]( modelRW: ModelRW[M, MJdVldAh] ) extends ActionHandler(modelRW)
       val v0 = value
 
       val vld = new JdDocValidator(
-        edges = v0.edges.mapValues { eData =>
+        edges = v0.jdData.edges.mapValues { eData =>
           MJdEdgeVldInfo(
             jdEdge = eData.jdEdge,
             img = for (fileJs <- eData.fileJs) yield {
@@ -37,7 +37,7 @@ class JdVldAh[M]( modelRW: ModelRW[M, MJdVldAh] ) extends ActionHandler(modelRW)
           )
         }
       )
-      val vldRes = vld.validateDocumentTree( v0.template )
+      val vldRes = vld.validateDocumentTree( v0.jdData.template )
       println( vldRes )
 
       noChange

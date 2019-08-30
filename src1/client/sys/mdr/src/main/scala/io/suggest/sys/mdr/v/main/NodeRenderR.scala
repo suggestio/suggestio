@@ -13,6 +13,7 @@ import io.suggest.jd.tags.JdTag
 import io.suggest.msg.Messages
 import io.suggest.routes.routes
 import io.suggest.sc.index.MSc3IndexResp
+import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.sys.mdr.SysMdrConst
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.scalaz.ZTreeUtil._
@@ -99,14 +100,14 @@ class NodeRenderR(
 
               // Рендер jd-карточки:
               props.adData.whenDefined { adDataJs =>
-                propsOptPotProxy.wrap { _ =>
+                val mproxy = propsOptPotProxy.resetZoom(
                   MJdArgs(
-                    template  = adDataJs.template,
-                    edges     = adDataJs.edges,
+                    data      = adDataJs,
                     jdRuntime = props.jdRuntime,
                     conf      = props.jdRuntime.jdCss.jdCssArgs.conf,
                   )
-                }( jdR.apply )(implicitly, MJdArgs.MJdArgsFastEq)
+                )
+                jdR.apply( mproxy )
               },
 
               // Рендер данных об узле

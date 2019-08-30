@@ -90,8 +90,7 @@ class AdItemR(
             propsProxy.wrap { props =>
               val jdData = props.ad.jdDataJs
               MJdArgs(
-                template  = jdData.template,
-                edges     = jdData.edges,
+                data      = jdData,
                 jdRuntime = props.jdRuntime,
                 conf      = props.jdConf,
               )

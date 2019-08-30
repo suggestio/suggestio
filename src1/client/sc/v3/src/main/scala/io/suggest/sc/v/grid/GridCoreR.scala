@@ -3,9 +3,10 @@ package io.suggest.sc.v.grid
 import com.github.dantrain.react.stonecutter.{CSSGrid, GridComponents}
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.html.HtmlConstants.`.`
-import io.suggest.jd.render.m.{MJdArgs, MJdRenderArgs}
+import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
 import io.suggest.jd.render.v.{JdGridUtil, JdR}
 import io.suggest.react.ReactDiodeUtil
+import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.sc.m.grid._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -95,16 +96,22 @@ class GridCoreR(
               ^.onClick ==> onBlockClick(nodeId)
             },
 
-            mgridProxy.wrap { _ =>
-              // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
-              MJdArgs(
-                template    = tpl2,
-                edges       = edges,
-                jdRuntime   = mgrid.jdRuntime,
-                conf        = mgrid.jdConf,
-                renderArgs  = jdRenderArgs,
+            {
+              val jdArgsProxy2 = mgridProxy.resetZoom(
+                MJdArgs(
+                  data = MJdDataJs(
+                    template = tpl2,
+                    edges    = edges,
+                    nodeId   = ad.nodeId,
+                  ),
+                  jdRuntime   = mgrid.jdRuntime,
+                  conf        = mgrid.jdConf,
+                  renderArgs  = jdRenderArgs,
+                )
               )
-            } ( jdR.apply )
+              // Нельзя одновременно использовать разные инстансы mgrid, поэтому для простоты и удобства используем только внешний.
+              jdR.apply(jdArgsProxy2)
+            }
           )
         }
         iter.toVdomArray

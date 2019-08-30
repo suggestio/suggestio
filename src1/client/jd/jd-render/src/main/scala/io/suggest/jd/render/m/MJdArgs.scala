@@ -4,7 +4,6 @@ import diode.FastEq
 import io.suggest.form.MFormResourceKey
 import io.suggest.jd.{MJdConf, MJdEdgeId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
-import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -23,8 +22,7 @@ object MJdArgs {
   /** Поддержка FastEq для инстансов [[MJdArgs]]. */
   implicit object MJdArgsFastEq extends FastEq[MJdArgs] {
     override def eqv(a: MJdArgs, b: MJdArgs): Boolean = {
-      (a.template     ===* b.template) &&
-      (a.edges        ===* b.edges) &&
+      (a.data         ===* b.data) &&
       (a.jdRuntime    ===* b.jdRuntime) &&
       (a.conf         ===* b.conf) &&
       // Бывает, что инстансы генерятся на лету. Поэтому сравниваем глубинно:
@@ -34,8 +32,7 @@ object MJdArgs {
 
   @inline implicit def univEq: UnivEq[MJdArgs] = UnivEq.derive
 
-  val template    = GenLens[MJdArgs](_.template)
-  val edges       = GenLens[MJdArgs](_.edges)
+  val data        = GenLens[MJdArgs](_.data)
   val jdRuntime   = GenLens[MJdArgs](_.jdRuntime)
   val conf        = GenLens[MJdArgs](_.conf)
   val renderArgs  = GenLens[MJdArgs](_.renderArgs)
@@ -45,16 +42,13 @@ object MJdArgs {
 
 /** Класс-контейнер данных для рендера html.
   *
-  * @param template Шаблон для рендера.
-  * @param edges Карта данных по эджам, с сервера.
+  * @param data Шаблон, эджи и прочий реквизит данных для рендера.
   * @param renderArgs Контейнер параметров для рендера конкретно этого шаблона.
   * @param jdRuntime Рантаймовые данные для рендера (css и прочее).
   * @param conf Общий конфиг рендеринга.
   */
 case class MJdArgs(
-                  // TODO MJdDataJs - сюда, вместо template+edges.
-                    template     : Tree[JdTag],
-                    edges        : Map[EdgeUid_t, MEdgeDataJs],
+                    data         : MJdDataJs,
                     jdRuntime    : MJdRuntime,
                     conf         : MJdConf,
                     renderArgs   : MJdRenderArgs        = MJdRenderArgs.empty,
@@ -68,7 +62,7 @@ case class MJdArgs(
       * O(N). кэшируем результат тут. */
     lazy val treeLocOpt: Option[TreeLoc[JdTag]] = {
       renderArgs.selPath
-        .flatMap { template.pathToNode }
+        .flatMap { data.template.pathToNode }
     }
 
     /** Вернуть поддерево текущего тега.
@@ -96,7 +90,7 @@ case class MJdArgs(
     lazy val bgEdgeDataOpt: Option[(MJdEdgeId, MEdgeDataJs)] = {
       for {
         bgEi     <- bgEdgeIdOpt
-        dataEdge <- edges.get( bgEi.edgeUid )
+        dataEdge <- data.edges.get( bgEi.edgeUid )
       } yield {
         (bgEi, dataEdge)
       }
@@ -114,12 +108,12 @@ case class MJdArgs(
 
   /** Аналог selectedTagLoc, но для перетаскиваемого тега. */
   lazy val draggingTagLoc: Option[TreeLoc[JdTag]] = {
-    renderArgs.dnd.jdt.flatMap( template.pathToNode )
+    renderArgs.dnd.jdt.flatMap( data.template.pathToNode )
   }
 
   /** Вычислить высоту текущего шаблона. Используется при реакции на скроллинг. */
   lazy val templateHeightCssPx: Int = {
-    template
+    data.template
       // Считаем стрипы только на первом уровне.
       .subForest
       .iterator
