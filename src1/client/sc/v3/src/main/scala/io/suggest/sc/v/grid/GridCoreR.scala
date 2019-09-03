@@ -3,6 +3,7 @@ package io.suggest.sc.v.grid
 import com.github.dantrain.react.stonecutter.{CSSGrid, GridComponents}
 import diode.react.{ModelProxy, ReactConnectProps}
 import io.suggest.common.html.HtmlConstants.`.`
+import io.suggest.jd.MJdDoc
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRenderArgs}
 import io.suggest.jd.render.v.{JdGridUtil, JdR}
 import io.suggest.react.ReactDiodeUtil
@@ -71,7 +72,7 @@ class GridCoreR(
           groupOutlineColorOpt = ad.focused
             .toOption
             .flatMap { _ =>
-              ad.main.template.rootLabel.props1.bgColor
+              ad.main.doc.template.rootLabel.props1.bgColor
             }
           // Сборка контейнера настроек рендера всех плиток группы:
           jdRenderArgs = groupOutlineColorOpt.fold(MJdRenderArgs.empty) { _ =>
@@ -100,9 +101,11 @@ class GridCoreR(
               val jdArgsProxy2 = mgridProxy.resetZoom(
                 MJdArgs(
                   data = MJdDataJs(
-                    template = tpl2,
+                    doc = MJdDoc(
+                      template = tpl2,
+                      nodeId   = ad.nodeId,
+                    ),
                     edges    = edges,
-                    nodeId   = ad.nodeId,
                   ),
                   jdRuntime   = mgrid.jdRuntime,
                   conf        = mgrid.jdConf,

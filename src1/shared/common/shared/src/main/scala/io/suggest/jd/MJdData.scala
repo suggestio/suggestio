@@ -19,17 +19,15 @@ import scalaz.Tree
 object MJdData {
 
   object Fields {
-    val TEMPATE_FN = "t"
-    val EDGES_FN   = "e"
-    val NODE_ID_FN = "i"
+    val DOC_FN      = "d"
+    val EDGES_FN    = "e"
   }
 
   /** Поддержка play-json. */
   implicit def jdDataJson: OFormat[MJdData] = (
-    (__ \ Fields.TEMPATE_FN).format[Tree[JdTag]] and
+    (__ \ Fields.DOC_FN).format[MJdDoc] and
     // Массив эджей без Nullable, т.к. это очень маловероятная ситуация слишком пустой карточки.
-    (__ \ Fields.EDGES_FN).format[Iterable[MJdEdge]] and
-    (__ \ Fields.NODE_ID_FN).formatNullable[String]
+    (__ \ Fields.EDGES_FN).format[Iterable[MJdEdge]]
   )(apply, unlift(unapply))
 
 
@@ -39,9 +37,8 @@ object MJdData {
     UnivEq.derive
   }
 
-  val template = GenLens[MJdData](_.template)
-  val edges    = GenLens[MJdData](_.edges)
-  val nodeId   = GenLens[MJdData](_.nodeId)
+  val doc       = GenLens[MJdData](_.doc)
+  val edges     = GenLens[MJdData](_.edges)
 
 }
 
@@ -49,18 +46,16 @@ object MJdData {
 /** Класс контейнера данных формы редактирования карточки.
   * Именно этот класс является основным языком связи js-клиента и jvm-сервера.
   *
-  * @param nodeId id узла этой карточки. Может и отсутствовать.
-  * @param template Шаблон документа.
+  * @param doc Данные документа.
   * @param edges Эджи с данными для рендера документа.
   */
 final case class MJdData(
-                          template    : Tree[JdTag],
+                          doc         : MJdDoc,
                           edges       : Iterable[MJdEdge],
-                          nodeId      : Option[String]
                         )
   extends OptId[String]
 {
 
-  override def id = nodeId
+  override def id = doc.nodeId
 
 }

@@ -62,7 +62,7 @@ case class MJdArgs(
       * O(N). кэшируем результат тут. */
     lazy val treeLocOpt: Option[TreeLoc[JdTag]] = {
       renderArgs.selPath
-        .flatMap { data.template.pathToNode }
+        .flatMap { data.doc.template.pathToNode }
     }
 
     /** Вернуть поддерево текущего тега.
@@ -108,12 +108,12 @@ case class MJdArgs(
 
   /** Аналог selectedTagLoc, но для перетаскиваемого тега. */
   lazy val draggingTagLoc: Option[TreeLoc[JdTag]] = {
-    renderArgs.dnd.jdt.flatMap( data.template.pathToNode )
+    renderArgs.dnd.jdt.flatMap( data.doc.template.pathToNode )
   }
 
   /** Вычислить высоту текущего шаблона. Используется при реакции на скроллинг. */
   lazy val templateHeightCssPx: Int = {
-    data.template
+    data.doc.template
       // Считаем стрипы только на первом уровне.
       .subForest
       .iterator

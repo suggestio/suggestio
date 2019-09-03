@@ -58,7 +58,7 @@ case class MScAdData(
 
   private def _flatGridTemplatesUsing(f: MJdDataJs => Seq[Tree[JdTag]]) = {
     focused.fold [Seq[Tree[JdTag]]] {
-      main.template :: Nil
+      main.doc.template :: Nil
     }(foc => f(foc.blkData))
   }
 
@@ -67,7 +67,7 @@ case class MScAdData(
     * @return Список шаблонов на рендер.
     */
   def flatGridTemplates: Seq[Tree[JdTag]] = {
-    _flatGridTemplatesUsing(_.template.subForest)
+    _flatGridTemplatesUsing(_.doc.template.subForest)
   }
 
 

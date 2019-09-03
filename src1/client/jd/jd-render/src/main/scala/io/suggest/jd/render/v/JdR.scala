@@ -33,7 +33,6 @@ class JdR(
            jdGridUtil         : JdGridUtil
          ) { jdR =>
 
-
   type Props_t = MJdArgs
   type Props = ModelProxy[Props_t]
 
@@ -191,6 +190,7 @@ class JdR(
         val smBlock = <.div(
           keyAV
             .unless(isWide),
+          jdCssStatic.smBlockS,
           C.smBlock,
           C.bmStyleF( s ),
 
@@ -341,7 +341,7 @@ class JdR(
           .map { case (childJdTree, i) =>
             val ch = childJdTree.rootLabel
             val tagId = p.tagId.copy(
-              selPath     = i :: p.tagId.selPath,
+              selPathRev     = i :: p.tagId.selPathRev,
               blockExpand = OptionUtil.maybeOpt {
                 (ch.name ==* MJdTagNames.STRIP) //&&
                 // TODO Если wide запрещён, то это влияет на рендер?
@@ -377,10 +377,10 @@ class JdR(
       .render_P { propsProxy =>
         propsProxy.wrap { jdArgs =>
           MJdRrrProps(
-            subTree = jdArgs.data.template,
+            subTree = jdArgs.data.doc.template,
             tagId = MJdTagId(
-              nodeId      = jdArgs.data.nodeId,
-              selPath     = Nil,
+              nodeId      = jdArgs.data.doc.nodeId,
+              selPathRev  = Nil,
               blockExpand = None,
             ),
             jdArgs = jdArgs,
@@ -393,7 +393,6 @@ class JdR(
   }
   /** Обычная рендерилка. */
   object JdRrr extends JdRrr
-
 
 
   private def _bgColorOpt(jdTag: JdTag, jdArgs: MJdArgs): TagMod = {

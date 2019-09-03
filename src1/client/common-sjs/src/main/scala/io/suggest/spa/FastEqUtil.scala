@@ -3,6 +3,7 @@ package io.suggest.spa
 import diode.FastEq
 import diode.data.Pot
 import japgolly.univeq._
+import scala.annotation.unchecked.{ uncheckedVariance=> uV }
 
 import scala.language.higherKinds
 
@@ -42,7 +43,8 @@ object FastEqUtil {
           (a.size ==* b.size) && {
             a.iterator
               .zip(b.iterator)
-              .forall { case (x: T, y: T) =>
+              .asInstanceOf[Iterator[(T, T)]] // TODO Костыль, чтобы обойти ошибку сверки типов. Как правильно надо писать?
+              .forall { case (x, y) =>
                 feq.eqv(x, y)
               }
           }

@@ -15,7 +15,7 @@ import io.suggest.ad.edit.srv.LkAdEditApiHttp
 import io.suggest.color.MColorData
 import io.suggest.up.UploadApiHttp
 import io.suggest.dev.MSzMults
-import io.suggest.jd.MJdConf
+import io.suggest.jd.{MJdConf, MJdDoc}
 import io.suggest.spa.{OptFastEq, StateInp}
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
@@ -88,7 +88,7 @@ class LkAdEditCircuit(
             data        = jdDataJs,
             conf        = jdConf,
             jdRuntime   = MJdRuntime.make(
-              tpls   = jdDataJs.template :: Nil,
+              tpls   = jdDataJs.doc.template :: Nil,
               jdConf = jdConf,
             )
           ),
@@ -187,7 +187,8 @@ class LkAdEditCircuit(
           (
             MDocS.jdArgs.modify(
               MJdArgs.data
-                .composeLens(MJdDataJs.template)
+                .composeLens(MJdDataJs.doc)
+                .composeLens(MJdDoc.template)
                 .set( tpl2 ) andThen
               MJdArgs.jdRuntime.set( MJdRuntime.make(tpl2 :: Nil, mdoc0.jdArgs.conf) )
             ) andThen
@@ -277,14 +278,14 @@ class LkAdEditCircuit(
     val mdoc = mroot.doc
     MPictureAh(
       edges       = mdoc.jdArgs.data.edges,
-      view        = mdoc.jdArgs.data.template,
+      view        = mdoc.jdArgs.data.doc.template,
       errorPopup  = mroot.popups.error,
       cropPopup   = mroot.popups.pictureCrop,
       histograms  = mdoc.colorsState.histograms
     )
   } { (mroot0, mPictureAh) =>
     val mdoc0 = mroot0.doc
-    val tpl0 = mdoc0.jdArgs.data.template
+    val tpl0 = mdoc0.jdArgs.data.doc.template
     val isTplChanged = tpl0 !===* mPictureAh.view
 
     val mdoc1 = if (isTplChanged || (mPictureAh.edges !===* mdoc0.jdArgs.data.edges)) {
@@ -303,7 +304,9 @@ class LkAdEditCircuit(
         // Залить всё в итоговое состояние пачкой:
         mdoc0.jdArgs.copy(
           data = mdoc0.jdArgs.data.copy(
-            template  = tpl2,
+            doc = mdoc0.jdArgs.data.doc.copy(
+              template = tpl2,
+            ),
             edges     = mPictureAh.edges,
           ),
           jdRuntime   = jdRuntime2
@@ -435,7 +438,7 @@ class LkAdEditCircuit(
 
   // Если валидация на клиенте, то мониторить jdArgs.template на предмет изменений шаблона.
   if (DOC_VLD_ON_CLIENT) {
-    subscribe(mDocSRw.zoom(_.jdArgs.data.template)) { _ =>
+    subscribe(mDocSRw.zoom(_.jdArgs.data.doc.template)) { _ =>
       dispatch( JdDocChanged )
     }
   }

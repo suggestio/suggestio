@@ -12,6 +12,8 @@ import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
 import scalaz.Tree
 
+import scala.collection.immutable.HashMap
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -24,7 +26,9 @@ object MJdRuntime {
   implicit object MJdRuntimeFastEq extends FastEq[MJdRuntime] {
     override def eqv(a: MJdRuntime, b: MJdRuntime): Boolean = {
       (a.jdCss ===* b.jdCss) &&
-      (a.jdtWideSzMults ===* b.jdtWideSzMults)
+      (a.jdtWideSzMults ===* b.jdtWideSzMults) &&
+      (a.qdBlockLess ===* b.qdBlockLess) &&
+      (a.jdTagsById ===* b.jdTagsById)
     }
   }
 
@@ -65,9 +69,12 @@ object MJdRuntime {
   *                       Появился для возможности увеличения wide-блоков без влияния на остальную плитку.
   * @param qdBlockLess Состояния безблоковых qd-тегов с динамическими размерами в плитке.
   *                    Оно заполняется асинхронно через callback'и из react-measure и др.
+  *                    Только HashMap, чтобы гарантировать быстрое добавление новых элементов в массив.
+  * @param jdTagsById Теги по ключу. Для связывания стабильных названий стилей в JdCss с JdR.
   */
 case class MJdRuntime(
                        jdCss            : JdCss,
                        jdtWideSzMults   : Map[JdTag, MSzMult],
-                       qdBlockLess      : Map[JdTag, MSize2di]    = Map.empty,
+                       qdBlockLess      : HashMap[JdTag, MSize2di]    = HashMap.empty,
+                       jdTagsById       : HashMap[MJdTagId, JdTag]    = HashMap.empty,
                      )

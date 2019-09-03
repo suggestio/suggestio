@@ -302,7 +302,7 @@ class NodeMdrAh[M](
             .iterator
             .flatMap(_.nodeOpt)
             .flatMap(_.info.ad)
-            .map(_.template)
+            .map(_.doc.template)
             .toSeq: _*
         )
 

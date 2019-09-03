@@ -77,9 +77,11 @@ class LkAdEdFormUtil @Inject() (
     )
 
     val r = MJdData(
-      template = tplTree,
+      doc = MJdDoc(
+        template = tplTree,
+        nodeId   = None
+      ),
       edges    = Nil,
-      nodeId   = None
     )
 
     Future.successful(r)
@@ -113,11 +115,11 @@ class LkAdEdFormUtil @Inject() (
     *         exception обозначает ошибку валидации.
     */
   def earlyValidateEdges(form: MJdData): StringValidationNel[List[MJdEdge]] = {
-    val nodeIdVld = Validation.liftNel(form.nodeId)(_.nonEmpty, "e.nodeid." + ErrorConstants.Words.UNEXPECTED)
+    val nodeIdVld = Validation.liftNel(form.doc.nodeId)(_.nonEmpty, "e.nodeid." + ErrorConstants.Words.UNEXPECTED)
 
     // Прочистить начальную карту эджей от возможного мусора (которого там быть и не должно, по идее).
     val edgesMap = IId.els2idMap[EdgeUid_t, MJdEdge]( form.edges )
-    val edges1 = JdTag.purgeUnusedEdges( form.template, edgesMap )
+    val edges1 = JdTag.purgeUnusedEdges( form.doc.template, edgesMap )
 
     // Ранняя валидация корректности присланных эджей:
     val edgesVlds = n2VldUtil.earlyValidateEdges( edges1.values )
@@ -163,7 +165,7 @@ class LkAdEdFormUtil @Inject() (
   def mkTechName(tpl: Tree[JdTag], edgeTextsMap: Map[EdgeUid_t, String]): Option[String] = {
     val delim = " | "
     val techName = tpl
-      .deepSubtreesIter
+      .deepSubtrees
       .zipWithIndex
       .filter(_._1.rootLabel.name ==* MJdTagNames.QD_CONTENT)
       .flatMap { case (qdTree, i) =>

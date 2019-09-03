@@ -11,7 +11,6 @@ import io.suggest.jd.render.v.{JdCssStatic, JdR, QdRrrHtml}
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.lk.r.img.ImgRenderUtilJs
-import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
@@ -23,10 +22,9 @@ import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import japgolly.scalajs.react.vdom.{TagOf, VdomElement, html_<^}
+import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
 import japgolly.univeq._
-import org.scalajs.dom.Element
-import org.scalajs.dom.html.Div
+import org.scalajs.dom.{Element, html}
 import org.scalajs.dom.raw.CSSStyleDeclaration
 import play.api.libs.json.Json
 import scalacss.ScalaCssReact._
@@ -85,39 +83,32 @@ class JdEditR(
 
   /** Повесить onload для картинки, считывающий ей wh.
     * Нужно, чтобы редактор мог узнать wh оригинала изображения. */
-  private def _notifyImgWhOnEdit[P <: ModelProxy[_], S]($: BackendScope[P,S], e: MEdgeDataJs, jdArgs: MJdArgs): TagMod = {
+  private def _notifyImgWhOnEdit[P <: ModelProxy[_], S]($: BackendScope[P,S], edge: MEdgeDataJs, jdArgs: MJdArgs): TagMod = {
     // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
-    ReactCommonUtil.maybe( jdArgs.conf.isEdit && e.fileJs.exists(_.whPx.isEmpty) ) {
-      ^.onLoad ==> onNewImageLoaded($, e.id)
+    ReactCommonUtil.maybe( jdArgs.conf.isEdit && edge.fileJs.exists(_.whPx.isEmpty) ) {
+      ^.onLoad ==> imgRenderUtilJs.notifyImageLoaded($, edge.id)
     }
   }
-  /** Callback о завершении загрузки в память картинки, у которой неизвестны какие-то рантаймовые параметры. */
-  private def onNewImageLoaded[P <: ModelProxy[_], S]($: BackendScope[P,S], edgeUid: EdgeUid_t)(e: ReactEvent): Callback = {
-    imgRenderUtilJs.notifyImageLoaded($, edgeUid)(e)
-  }
 
-  /** Реакция на клик по отрендеренному тегу. */
-  private def jdTagClick[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag)(e: ReactMouseEvent): Callback = {
-    // Если не сделать stopPropagation, то наружный strip перехватит клик
-    e.stopPropagationCB >>
-      dispatchOnProxyScopeCB($, JdTagSelect(jdt) )
-  }
+
   private def _clickableOnEdit[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag, jdArgs: MJdArgs): TagMod = {
     // В режиме редактирования -- надо слать инфу по кликам на стрипах
     ReactCommonUtil.maybe(jdArgs.conf.isEdit) {
-      ^.onClick ==> jdTagClick($, jdt)
+      ^.onClick ==> { e =>
+        e.stopPropagationCB >>
+          dispatchOnProxyScopeCB($, JdTagSelect(jdt) )
+      }
     }
   }
 
-  private def _draggableUsing[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag, jdArgs: MJdArgs)(onDragStartF: ReactDragEvent => Callback): TagMod = {
+
+  private def _draggableUsing[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag, jdArgs: MJdArgs)
+                                                    (onDragStartF: ReactDragEvent => Callback): TagMod = {
     TagMod(
       ^.draggable := true,
       ^.onDragStart ==> onDragStartF,
-      ^.onDragEnd   ==> jdTagDragEnd($, jdt)
+      ^.onDragEnd   --> dispatchOnProxyScopeCB($, JdTagDragEnd(jdt) )
     )
-  }
-  private def jdTagDragEnd[P <: ModelProxy[_], S]($: BackendScope[P,S], jdt: JdTag)(e: ReactDragEvent): Callback = {
-    dispatchOnProxyScopeCB($, JdTagDragEnd(jdt) )
   }
 
 
@@ -142,7 +133,7 @@ class JdEditR(
         )
       }
 
-      override def _renderQdContentTag(state: MJdRrrProps): TagOf[Div] = {
+      override def _renderQdContentTag(state: MJdRrrProps): TagOf[html.Div] = {
         val qdTag = state.subTree.rootLabel
 
         super._renderQdContentTag(state)(
@@ -277,7 +268,7 @@ class JdEditR(
         )
       }
 
-      override def _smBlockAddons(state: MJdRrrProps): html_<^.TagMod = {
+      override def _smBlockAddons(state: MJdRrrProps): TagMod = {
         // Если текущий стрип выделен, то его можно таскать:
         ReactCommonUtil.maybe( state.isCurrentSelected && state.jdArgs.conf.isEdit ) {
           val s = state.subTree.rootLabel
@@ -288,7 +279,7 @@ class JdEditR(
         }
       }
 
-      override def _outerContainerAddons(state: MJdRrrProps): html_<^.TagMod = {
+      override def _outerContainerAddons(state: MJdRrrProps): TagMod = {
         _maybeSelected( state.subTree.rootLabel, state.jdArgs )
       }
 
@@ -379,7 +370,7 @@ class JdEditR(
         }
       }
 
-      override def _renderContentTag(propsProxy: ModelProxy[MJdRrrProps]): VdomTagOf[Div] = {
+      override def _renderContentTag(propsProxy: ModelProxy[MJdRrrProps]): TagOf[html.Div] = {
         val state = propsProxy.value
         val s = state.subTree.rootLabel
         super._renderContentTag(propsProxy)(

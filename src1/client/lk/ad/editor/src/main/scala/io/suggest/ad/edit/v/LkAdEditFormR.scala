@@ -380,7 +380,7 @@ class LkAdEditFormR(
             import io.suggest.common.empty.OptionUtil.BoolOptOps
             useAsMainR.PropsVal(
               checked = selJdt.props1.isMain.getOrElseFalse,
-              mainDefined = mroot.doc.jdArgs.data.template
+              mainDefined = mroot.doc.jdArgs.data.doc.template
                 .subForest
                 .exists( _.rootLabel.props1.isMain.getOrElseFalse )
             )

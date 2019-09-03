@@ -8,7 +8,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.dev.{MScreen, MSzMult}
 import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs, MGridBuildResult}
 import io.suggest.grid.{GridCalc, GridConst, GridScrollUtil, MGridCalcConf}
-import io.suggest.jd.MJdConf
+import io.suggest.jd.{MJdConf, MJdDoc}
 import io.suggest.jd.render.m.{MJdDataJs, MJdRuntime}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
@@ -74,7 +74,7 @@ object GridAh {
         scAdData.focused.fold [Tree[MGbBlock]] {
           // Несфокусированная карточка. Вернуть bm единственного стрипа.
           val brd = scAdData.main
-          blockRenderData2GbPayload( scAdData.nodeId, brd.template, brd )
+          blockRenderData2GbPayload( scAdData.nodeId, brd.doc.template, brd )
         } { foc =>
           // Открытая карточка. Вернуть MGbSubItems со списком фокус-блоков:
           Tree.Node(
@@ -83,7 +83,7 @@ object GridAh {
               jdtOpt = None,
             ),
             forest = foc.blkData
-              .template
+              .doc.template
               .subForest
               .iterator
               .map { subTpl =>
@@ -145,6 +145,7 @@ object GridAh {
       jdConf = jdConf,
     )
   }
+
 
   /** Эффект скроллинга к указанной карточке. */
   def scrollToAdFx(toAd    : MScAdData,
@@ -271,9 +272,10 @@ class GridRespHandler
       .iterator
       .map { sc3AdData =>
         // Два пути: переиспользование текущей карточки или добавление новой карточки.
-        sc3AdData.jd
-          // Если есть id и карта переиспользуемых карточек не пуста, то поискать там текущую карточку:
-          .nodeId
+        val nodeIdOpt = sc3AdData.jd.doc.nodeId
+
+        // Если есть id и карта переиспользуемых карточек не пуста, то поискать там текущую карточку:
+        nodeIdOpt
           .filter( _ => reusableAdsMap.nonEmpty )
           .flatMap( reusableAdsMap.get )
           // Если карточка не найдена среди reusable-карточек, то перейки к сброке состояния новой карточки:
@@ -281,28 +283,32 @@ class GridRespHandler
             // Собрать начальное состояние карточки.
             // Сервер может присылать уже открытые карточи - это нормально.
             // Главное - их сразу пропихивать и в focused, и в обычные блоки.
-            val tpl = sc3AdData.jd.template
+            val tpl = sc3AdData.jd.doc.template
             val isFocused = tpl.rootLabel.name ==* MJdTagNames.DOCUMENT
             val jsEdgesMap = MEdgeDataJs.jdEdges2EdgesDataMap( sc3AdData.jd.edges )
 
             MScAdData(
-              nodeId    = sc3AdData.jd.nodeId,
+              nodeId    = nodeIdOpt,
               main      = MJdDataJs(
-                template = {
-                  // Найти главный блок в шаблоне focused-карточки документа.
-                  if (isFocused) tpl.getMainBlockOrFirst
-                  else tpl
-                },
+                doc = MJdDoc(
+                  template = {
+                    // Найти главный блок в шаблоне focused-карточки документа.
+                    if (isFocused) tpl.getMainBlockOrFirst
+                    else tpl
+                  },
+                  nodeId  = nodeIdOpt,
+                ),
                 edges   = jsEdgesMap,
-                nodeId  = sc3AdData.jd.nodeId,
               ),
               focused = if (isFocused) {
                 // Сервер прислал focused-карточку.
                 val v = MScFocAdData(
                   MJdDataJs(
-                    template  = tpl,
+                    doc = MJdDoc(
+                      template  = tpl,
+                      nodeId    = nodeIdOpt,
+                    ),
                     edges     = jsEdgesMap,
-                    nodeId    = sc3AdData.jd.nodeId,
                   ),
                   canEdit = sc3AdData.canEdit.getOrElseFalse,
                   userFoc = false

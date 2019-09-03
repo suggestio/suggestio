@@ -2,16 +2,13 @@ package io.suggest.jd.render.m
 
 import diode.FastEq
 import io.suggest.common.html.HtmlConstants._
-import io.suggest.jd.MJdData
-import io.suggest.jd.tags.JdTag
+import io.suggest.jd.{MJdData, MJdDoc}
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.id.OptId
-import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
-import scalaz.Tree
 
 /**
   * Suggest.io
@@ -24,9 +21,8 @@ object MJdDataJs {
   /** Поддержка FastEq для инстансов [[MJdDataJs]]. */
   implicit object MJdDataJsFastEq extends FastEq[MJdDataJs] {
     override def eqv(a: MJdDataJs, b: MJdDataJs): Boolean = {
-      (a.template ===* b.template) &&
-      (a.edges ===* b.edges) &&
-      (a.nodeId ===* b.nodeId)
+      (a.doc ===* b.doc) &&
+      (a.edges ===* b.edges)
     }
   }
 
@@ -35,15 +31,13 @@ object MJdDataJs {
   /** Сборка на основе MJdAdData. */
   def apply( jdAdData: MJdData ): MJdDataJs = {
     apply(
-      template  = jdAdData.template,
-      edges     = MEdgeDataJs.jdEdges2EdgesDataMap( jdAdData.edges ),
-      nodeId    = jdAdData.nodeId,
+      doc      = jdAdData.doc,
+      edges    = MEdgeDataJs.jdEdges2EdgesDataMap( jdAdData.edges ),
     )
   }
 
-  val template = GenLens[MJdDataJs](_.template)
+  val doc      = GenLens[MJdDataJs](_.doc)
   val edges    = GenLens[MJdDataJs](_.edges)
-  val nodeId   = GenLens[MJdDataJs](_.nodeId)
 
 }
 
@@ -51,25 +45,21 @@ object MJdDataJs {
 
 /** Данные для рендера одного блока плитки.
   *
-  * @param template Шаблон для рендера.
-  *                 Тут может быть и Strip, и Document в зависимости от ситуации.
   * @param edges Карта js-эджей для рендера.
-  * @param nodeId id узла-карточки.
   */
 final case class MJdDataJs(
-                            template    : Tree[JdTag],
+                            doc         : MJdDoc,
                             edges       : Map[EdgeUid_t, MEdgeDataJs],
-                            nodeId      : Option[String],
                           )
   extends OptId[String]
 {
 
-  override def id = nodeId
+  override def id = doc.nodeId
 
   override def toString: String = {
     new StringBuilder( productPrefix )
       .append( `(` )
-      .append( nodeId.fold("")( DIEZ + _ + COMMA) )
+      .append( doc.nodeId.fold("")( DIEZ + _ + COMMA) )
       // Гарантированно не рендерим дерево, хотя там вроде toString и так переопределён уже:
       .append( DIEZ ).append( COMMA )
       // Рендерим кол-во эджей вместо всей карты

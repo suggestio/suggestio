@@ -235,7 +235,7 @@ class LkAds @Inject() (
         for {
           jdAdData <- jdAdDataFut
         } yield {
-          LOGGER.trace(s"$logPrefix Done render ${mad.idOrNull}, ${jdAdData.edges.size} edges, rootJdt=${jdAdData.template.rootLabel}, shownAtParent?$shownAtParent")
+          LOGGER.trace(s"$logPrefix Done render ${mad.idOrNull}, ${jdAdData.edges.size} edges, rootJdt=${jdAdData.doc.template.rootLabel}, shownAtParent?$shownAtParent")
           (mad.id, jdAdData, shownAtParent)
         }
       }

@@ -2,11 +2,16 @@ package io.suggest.jd.render.m
 
 import io.suggest.ad.blk.MBlockExpandMode
 import io.suggest.common.html.HtmlConstants
+import io.suggest.jd.MJdDoc
+import io.suggest.jd.tags.JdTag
 import io.suggest.scalaz.NodePath_t
-import japgolly.scalajs.react.Key
-import japgolly.scalajs.react.vdom.Attr.ValueType
+import japgolly.univeq._
 import japgolly.univeq.UnivEq
 import monocle.macros.GenLens
+import scalaz.Tree
+
+import scala.collection.immutable.HashMap
+
 
 /**
   * Suggest.io
@@ -25,7 +30,53 @@ object MJdTagId {
 
   implicit def univEq: UnivEq[MJdTagId] = UnivEq.derive
 
-  val selPath = GenLens[MJdTagId](_.selPath)
+  val selPathRev = GenLens[MJdTagId](_.selPathRev)
+  val blockExpand = GenLens[MJdTagId](_.blockExpand)
+
+  def mkTreeIndexSeg(jdDoc: MJdDoc): Stream[(MJdTagId, JdTag)] = {
+    mkTreeIndexSeg( jdDoc.template, MJdTagId(jdDoc.nodeId) )
+  }
+
+  /** Создать сегмент для будущего jd-индекса по id.
+    *
+    * @param template Исходный документ.
+    * @param jdTagId id текущего тега.
+    * @return Максимально ленивый Stream, на основе которого можно создать индекс.
+    */
+  def mkTreeIndexSeg(template: Tree[JdTag], jdTagId: MJdTagId): Stream[(MJdTagId, JdTag)] = {
+    // Если текущий тег - это блок, то надо сбросить значение expand на текущее значение.
+    val jdt = template.rootLabel
+    val expandMode2 = jdt.props1.bm .flatMap(_.expandMode)
+
+    val jdTagId2 = if (expandMode2 !=* jdTagId.blockExpand) {
+      blockExpand.set(expandMode2)( jdTagId )
+    } else {
+      jdTagId
+    }
+
+    // Отработать текущий элемент
+    val el0 = jdTagId2 -> jdt
+
+    el0 #:: {
+      // И отработать дочерние элементы:
+      template
+        .subForest
+        .zipWithIndex
+        .flatMap { case (subJdt, i) =>
+          val jdTagChild2 = selPathRev.modify(i :: _)( jdTagId2 )
+          mkTreeIndexSeg( subJdt, jdTagChild2 )
+        }
+    }
+  }
+
+
+  def mkTreeIndex(segments: Stream[(MJdTagId, JdTag)]*): HashMap[MJdTagId, JdTag] =
+    mkTreeIndex1( segments )
+  /** Сборка кусков-сегментов в единый индекс. */
+  def mkTreeIndex1(segments: TraversableOnce[Stream[(MJdTagId, JdTag)]]): HashMap[MJdTagId, JdTag] = {
+    (HashMap.newBuilder[MJdTagId, JdTag] ++= segments.toStream.iterator.flatten)
+      .result()
+  }
 
 }
 
@@ -33,23 +84,25 @@ object MJdTagId {
 /** Класс-контейнер данных идентификатора блока.
   *
   * @param nodeId id узла-карточки, если есть.
-  * @param selPath Порядковый номер до тега внутри jd-документа (одной карточки).
-  *                Эквивалентен по смыслу к MJdRenderArgs.selPath
+  * @param selPathRev Порядковый номер до тега внутри jd-документа (одной карточки).
+  *                   НеЭквивалентен по смыслу к MJdRenderArgs.selPath
   * @param blockExpand Режим отображения блока.
   */
 final case class MJdTagId(
-                           nodeId       : Option[String],
-                           selPath      : NodePath_t,
-                           blockExpand  : Option[MBlockExpandMode],
+                           nodeId           : Option[String]              = None,
+                           selPathRev       : NodePath_t                  = Nil,
+                           blockExpand      : Option[MBlockExpandMode]    = None,
                          ) {
 
   override val toString: String = {
-    var acc: List[Any] = selPath
+    var acc: List[Any] = selPathRev
     for (bexp <- blockExpand)
       acc ::= bexp.value
     for (id <- nodeId)
       acc ::= id
     acc.mkString( HtmlConstants.MINUS )
   }
+
+  def selPath = selPathRev.reverse
 
 }

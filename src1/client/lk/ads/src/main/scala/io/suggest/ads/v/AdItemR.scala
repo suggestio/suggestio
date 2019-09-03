@@ -98,7 +98,12 @@ class AdItemR(
           ),
 
           // Если блок по высоте великоват, то нарисовать линию отреза:
-          ReactCommonUtil.maybeNode(s.ad.adResp.jdAdData.template.rootLabel.props1.bm.exists(_.height >= BlockHeights.H460.value)) {
+          ReactCommonUtil.maybeNode(
+            s.ad.adResp.jdAdData.doc.template
+              .rootLabel
+              .props1.bm
+              .exists(_.height >= BlockHeights.H460.value)
+          ) {
             <.div(
               ^.`class` := ItemCss.AD_ITEM_PREVIEW_BOTTOM_ZIGZAG
             )
@@ -106,7 +111,7 @@ class AdItemR(
         ),
 
         // Утиль управления карточкой. Доступна, когда известен id карточки (по факту - всегда):
-        s.ad.adResp.jdAdData.nodeId.whenDefined { adId =>
+        s.ad.adResp.jdAdData.doc.nodeId.whenDefined { adId =>
           <.div(
             // Блок с ссылкой на редактор и галочкой размещения на parent-узле.
             <.div(

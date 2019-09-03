@@ -10,7 +10,7 @@ import io.suggest.es.model.EsModel
 import io.suggest.file.MSrvFileInfo
 import io.suggest.grid.GridCalc
 import io.suggest.img.MImgFmts
-import io.suggest.jd.{MJdData, MJdConf, MJdEdge, MJdEdgeId}
+import io.suggest.jd.{MJdConf, MJdData, MJdDoc, MJdEdge, MJdEdgeId}
 import io.suggest.jd.tags.{JdTag, MJdTagNames, MJdtProps1}
 import io.suggest.model.n2.edge.{EdgeUid_t, MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.media.{MFileMetaHash, MMedia, MMedias}
@@ -429,9 +429,11 @@ class JdAdUtil @Inject()(
         edEdges <- _edEdgesFut
       } yield {
         MJdData(
-          template  = _finalTpl,
-          edges     = edEdges,
-          nodeId    = nodeId
+          doc = MJdDoc(
+            template  = _finalTpl,
+            nodeId    = nodeId,
+          ),
+          edges       = edEdges,
         )
       }
     }

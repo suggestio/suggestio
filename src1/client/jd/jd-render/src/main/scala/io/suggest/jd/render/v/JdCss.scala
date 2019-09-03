@@ -127,6 +127,14 @@ class JdCssStatic extends StyleSheet.Inline {
   }
 
 
+
+  val smBlockS = style(
+    // Без addClassName("sm-block"), т.к. это ненужные transition и уже неактуальные стили (кроме overflow:hidden).
+    overflow.hidden,
+    // Дефолтовые настройки шрифтов внутри блока:
+    fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
+    color.black
+  )
 }
 
 
@@ -148,18 +156,13 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // TODO Вынести статические стили в object ScCss?
   /** Все блоки помечаются этим классом. */
   val smBlock = style(
-    // Без addClassName("sm-block"), т.к. это ненужные transition и уже неактуальные стили (кроме overflow:hidden).
-    overflow.hidden,
-
     // Без absolute, невлезающие элементы (текст/контент) будут вылезать за пределы границы div'а.
     // TODO Возможно, position.relative (или др.) сможет это пофиксить. Заодно можно будет удалить props-флаг quirks.
     if (jdCssArgs.quirks) position.absolute
     else position.relative,
 
     // Дефолтовые настройки шрифтов внутри блока:
-    fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
     fontSize( _szMulted(MFontSizes.default.value).px ),
-    color.black
   )
 
 

@@ -2,11 +2,9 @@ package io.suggest.bill.cart.m
 
 import diode.FastEq
 import io.suggest.bill.cart.MOrderContent
-import io.suggest.jd.MJdData
 import io.suggest.jd.render.m.MJdDataJs
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.order.MOrderStatuses
-import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.id.OptId
 import io.suggest.sc.index.MSc3IndexResp
 import japgolly.univeq._

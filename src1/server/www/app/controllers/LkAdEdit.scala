@@ -8,7 +8,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
-import io.suggest.jd.MJdData
+import io.suggest.jd.{MJdData, MJdDoc}
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.doc.MNodeDoc
@@ -161,8 +161,8 @@ class LkAdEdit @Inject() (
               vldEdgesMap <- edgesVldLogic.vldEdgesMapFut
             } yield {
               lkAdEdFormUtil.validateTpl(
-                template      = request.body.template,
-                vldEdgesMap   = vldEdgesMap
+                template      = request.body.doc.template,
+                vldEdgesMap   = vldEdgesMap,
               )
             }
 
@@ -329,9 +329,11 @@ class LkAdEdit @Inject() (
                         ctxId       = ctx.ctxIdStr
                       ),
                       adData = MJdData(
-                        template  = tpl2,
-                        edges     = edges2,
-                        nodeId    = None
+                        doc = MJdDoc(
+                          template  = tpl2,
+                          nodeId    = None,
+                        ),
+                        edges = edges2,
                       ),
                       blockPadding = prodBlockPadding(request.producer)
                     )

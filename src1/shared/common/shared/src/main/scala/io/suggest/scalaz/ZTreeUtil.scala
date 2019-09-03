@@ -74,10 +74,8 @@ object ZTreeUtil {
       tree.flatten.tail
     }
 
-    def deepSubtreesIter: Iterator[Tree[A]] = {
-      Iterator.single(tree) ++ tree.subForest
-        .iterator
-        .flatMap(_.deepSubtreesIter)
+    def deepSubtrees: Stream[Tree[A]] = {
+      Stream(tree) #::: tree.subForest.flatMap(_.deepSubtrees)
     }
 
     def contains(jdt: A): Boolean = {
@@ -125,7 +123,9 @@ object ZTreeUtil {
       } { hd =>
         loc
           .getChild(hd + 1)   // +1, потому что Tree считает с 1, а не с 0.
-          .flatMap { chLoc => _pathToNodeLoc(chLoc, restPath.tail) }
+          .flatMap { chLoc =>
+            _pathToNodeLoc(chLoc, restPath.tail)
+          }
       }
   }
 
@@ -136,8 +136,8 @@ object ZTreeUtil {
     def toNodePath: NodePath_t = {
       val l0 = treeLoc.lefts.length
       // Пройтись вверх до самой макушки.
-      val pathWithTop0 = treeLoc.parents
-        .iterator
+      val pathWithTop0 = treeLoc
+        .parents
         .foldLeft[NodePath_t](l0 :: Nil) {
           case (acc, (pLefts, _, _)) =>
             pLefts.length :: acc

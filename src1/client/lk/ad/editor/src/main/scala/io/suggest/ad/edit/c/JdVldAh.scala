@@ -37,7 +37,7 @@ class JdVldAh[M]( modelRW: ModelRW[M, MJdVldAh] ) extends ActionHandler(modelRW)
           )
         }
       )
-      val vldRes = vld.validateDocumentTree( v0.jdData.template )
+      val vldRes = vld.validateDocumentTree( v0.jdData.doc.template )
       println( vldRes )
 
       noChange
