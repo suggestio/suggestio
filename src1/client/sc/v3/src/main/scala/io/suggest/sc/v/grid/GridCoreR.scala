@@ -74,6 +74,7 @@ class GridCoreR(
             .flatMap { _ =>
               ad.main.doc.template.rootLabel.props1.bgColor
             }
+
           // Сборка контейнера настроек рендера всех плиток группы:
           jdRenderArgs = groupOutlineColorOpt.fold(MJdRenderArgs.empty) { _ =>
             MJdRenderArgs(
@@ -82,7 +83,7 @@ class GridCoreR(
           }
 
           // Пройтись по шаблонам карточки
-          (tpl2, j) <- ad.flatGridTemplates.iterator.zipWithIndex
+          (jdDoc2, j) <- ad.flatGridTemplates.zipWithIndex
 
         } yield {
           // Для скроллинга требуется повесить scroll.Element вокруг первого блока.
@@ -101,10 +102,7 @@ class GridCoreR(
               val jdArgsProxy2 = mgridProxy.resetZoom(
                 MJdArgs(
                   data = MJdDataJs(
-                    doc = MJdDoc(
-                      template = tpl2,
-                      nodeId   = ad.nodeId,
-                    ),
+                    doc      = jdDoc2,
                     edges    = edges,
                   ),
                   jdRuntime   = mgrid.jdRuntime,

@@ -4,13 +4,12 @@ import diode.FastEq
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MSzMult
 import io.suggest.grid.GridCalc
-import io.suggest.jd.MJdConf
+import io.suggest.jd.{MJdConf, MJdDoc, MJdTagId}
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.JdTag
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
-import scalaz.Tree
 
 import scala.collection.immutable.HashMap
 
@@ -36,22 +35,27 @@ object MJdRuntime {
   /** Генерация инстанса [[MJdRuntime]] из исходных данных.
     * Ресурсоёмкая операция, поэтому лучше вызывать только при сильной необходимости.
     *
-    * @param tpls Шаблоны
+    * @param docs Данные документов (шаблоны, id и тд).
     * @param jdConf Конфиг рендера.
     * @return Инстанс [[MJdRuntime]].
     */
   def make(
-            tpls    : Seq[Tree[JdTag]],
+            docs    : Stream[MJdDoc],
             jdConf  : MJdConf,
           ): MJdRuntime = {
+    val tpls = docs.map(_.template)
     val jdtWideSzMults = GridCalc.wideSzMults(tpls, jdConf)
+    val jdTagsById = MJdTagId.mkTreeIndex( MJdTagId.mkTreesIndexSeg(docs) )
     MJdRuntime(
       jdCss = JdCss( MJdCssArgs(
-        templates       = tpls,
+        docs            = docs,
         conf            = jdConf,
         jdtWideSzMults  = jdtWideSzMults,
+        jdTagsById      = jdTagsById,
       )),
       jdtWideSzMults = jdtWideSzMults,
+      // TODO Opt можно оптимизировать сборку id-индекса в выдаче через HashMap.merged для добавления новых данных вместо полного рендера.
+      jdTagsById     = jdTagsById,
     )
   }
 

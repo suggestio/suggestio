@@ -6,7 +6,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.css.Css
 import io.suggest.grid.build.{GridBuilderUtil, MGbBlock, MGridBuildArgs}
-import io.suggest.jd.MJdEdgeId
+import io.suggest.jd.{MJdEdgeId, MJdTagId}
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
 import io.suggest.model.n2.edge.MPredicates
@@ -192,7 +192,7 @@ class JdR(
             .unless(isWide),
           jdCssStatic.smBlockS,
           C.smBlock,
-          C.bmStyleF( s ),
+          C.bmStyleF( s /*state.tagId*/ ),
 
           if (isWide) {
             jdCssStatic.wideBlockStyle
@@ -281,6 +281,7 @@ class JdR(
             )
           } (
             renderChildrenWithId( propsProxy )
+              // Тут тег-обёртка-костыль - что для CSSGrid нужен обязательно теги, а НЕ react-компоненты в children.
               .map { case (id, p) =>
                 <.li(
                   ^.key := id.toString,
@@ -314,7 +315,8 @@ class JdR(
     // TODO parent может быть необязательным. Но это сейчас не востребовано, поэтому он обязательный
     def renderTag( proxy: ModelProxy[MJdRrrProps] ): VdomElement = {
       import MJdTagNames._
-      proxy.value.subTree.rootLabel.name match {
+      val p = proxy.value
+      p.subTree.rootLabel.name match {
         case QD_CONTENT                => qdContentComp(proxy)
         case STRIP                     => blockComp(proxy)
         case DOCUMENT                  => documentComp(proxy)
@@ -379,7 +381,7 @@ class JdR(
           MJdRrrProps(
             subTree = jdArgs.data.doc.template,
             tagId = MJdTagId(
-              nodeId      = jdArgs.data.doc.nodeId,
+              nodeId      = jdArgs.data.doc.jdId.nodeId,
               selPathRev  = Nil,
               blockExpand = None,
             ),

@@ -8,7 +8,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.{EsModel, MEsUuId}
 import io.suggest.init.routed.MJsInitTargets
-import io.suggest.jd.{MJdData, MJdDoc}
+import io.suggest.jd.{MJdData, MJdDoc, MJdTagId}
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.doc.MNodeDoc
@@ -280,7 +280,7 @@ class LkAdEdit @Inject() (
                       )
                       for (adId <- mNodes.save( mad0 )) yield {
                         LOGGER.trace(s"$logPrefix Created new ad#$adId")
-                        mad0.withId( Some(adId) )
+                        MNode.id.set( Some(adId) )(mad0)
                       }
                     } { mad00 =>
                       LOGGER.trace(s"$logPrefix Will update existing ad: ${mad00.idOrNull}")
@@ -331,7 +331,9 @@ class LkAdEdit @Inject() (
                       adData = MJdData(
                         doc = MJdDoc(
                           template  = tpl2,
-                          nodeId    = None,
+                          jdId      = MJdTagId(
+                            nodeId = mad2.id,
+                          ),
                         ),
                         edges = edges2,
                       ),

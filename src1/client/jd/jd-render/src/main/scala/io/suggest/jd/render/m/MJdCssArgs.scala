@@ -3,12 +3,12 @@ package io.suggest.jd.render.m
 import diode.FastEq
 import io.suggest.common.html.HtmlConstants
 import io.suggest.dev.MSzMult
-import io.suggest.jd.MJdConf
+import io.suggest.jd.{MJdConf, MJdDoc, MJdTagId}
 import io.suggest.jd.tags.JdTag
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.scalaz.ZTreeUtil._
-import scalaz.Tree
+
+import scala.collection.immutable.HashMap
 
 /**
   * Suggest.io
@@ -21,9 +21,10 @@ object MJdCssArgs {
   /** Поддержка FastEq для инстансов [[MJdCssArgs]]. */
   implicit object MJdCssArgsFastEq extends FastEq[MJdCssArgs] {
     override def eqv(a: MJdCssArgs, b: MJdCssArgs): Boolean = {
-      (a.templates ===* b.templates) &&
+      (a.docs ===* b.docs) &&
       (a.conf ===* b.conf) &&
-      (a.jdtWideSzMults ===* b.jdtWideSzMults)
+      (a.jdtWideSzMults ===* b.jdtWideSzMults) &&
+      (a.jdTagsById ===* b.jdTagsById)
     }
   }
 
@@ -34,22 +35,23 @@ object MJdCssArgs {
 
 /** Класс контейнера данных для рендера CSS-шаблона [[io.suggest.jd.render.v.JdCss]].
   *
-  * @param templates Все документы.
+  * @param docs Все документы.
   * @param conf Конфигурация рендеринга.
   * @param quirks Разрешить использовать костыли, которые могут нарушить рендер за пределами плитки.
   *               Появилось, чтобы убрать position.absolute из root-контейнера.
   */
 final case class MJdCssArgs(
-                             templates        : Seq[Tree[JdTag]] = Nil,
+                             docs             : Seq[MJdDoc]               = Nil,
                              conf             : MJdConf,
                              quirks           : Boolean = true,
                              jdtWideSzMults   : Map[JdTag, MSzMult],
+                             jdTagsById       : HashMap[MJdTagId, JdTag],
                            ) {
 
   override def toString: String = {
     new StringBuilder( productPrefix )
       .append( HtmlConstants.`(` )
-      .append( templates.length ).append( HtmlConstants.DIEZ ).append( HtmlConstants.COMMA )
+      .append( docs.length ).append( HtmlConstants.DIEZ ).append( HtmlConstants.COMMA )
       .append( conf )
       .append( HtmlConstants.`)` )
       .toString()

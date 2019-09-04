@@ -113,15 +113,15 @@ class DocEditAh[M](
               .modify(f)
           }
           .toTree
+        val jdDoc2 = MJdDoc.template.set( tpl2 )( v0.jdArgs.data.doc )
 
         val v2 = MDocS.jdArgs.modify(
           MJdArgs.jdRuntime.set(
-            _mkJdRuntime(tpl2, v0)
+            _mkJdRuntime(jdDoc2, v0.jdArgs.conf)
           ) andThen
           MJdArgs.data
-            .composeLens(MJdDataJs.doc)
-            .composeLens( MJdDoc.template )
-            .set( tpl2 )
+            .composeLens( MJdDataJs.doc )
+            .set(jdDoc2)
         )( v0 )
 
         updated(v2)
@@ -131,15 +131,12 @@ class DocEditAh[M](
   }
 
 
-  private def _mkJdRuntime(tpl: Tree[JdTag], jdConf: MJdConf): MJdRuntime =
+  private def _mkJdRuntime(jdDoc: MJdDoc, jdConf: MJdConf): MJdRuntime = {
     MJdRuntime.make(
-      tpls   = tpl :: Nil,
+      docs   = jdDoc #:: Stream.empty,
       jdConf = jdConf,
     )
-  private def _mkJdRuntime(tpl: Tree[JdTag], jdArgs: MJdArgs): MJdRuntime =
-    _mkJdRuntime(tpl, jdArgs.conf)
-  private def _mkJdRuntime(tpl: Tree[JdTag], mdoc: MDocS): MJdRuntime =
-    _mkJdRuntime(tpl, mdoc.jdArgs)
+  }
 
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
@@ -238,18 +235,16 @@ class DocEditAh[M](
           }
           .toTree
 
-        val tpl2 = __updateTpl( qdSubTree3 )
+        val jdDoc2 = MJdDoc.template.set( __updateTpl(qdSubTree3) )(v0.jdArgs.data.doc)
 
         // Залить все данные в новое состояние.
         val v2 = (
           MDocS.jdArgs.modify(
             MJdArgs.data.modify(
-              MJdDataJs.doc
-                .composeLens( MJdDoc.template )
-                .set( tpl2 ) andThen
-                MJdDataJs.edges.set( edgesData3 )
+              MJdDataJs.doc.set( jdDoc2 ) andThen
+              MJdDataJs.edges.set( edgesData3 )
             ) andThen
-            MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v0) )
+            MJdArgs.jdRuntime.set( _mkJdRuntime(jdDoc2, v0.jdArgs.conf) )
           ) andThen
           MDocS.qdEdit.modify { qdEditOpt0 =>
             for (qdEdit <- qdEditOpt0) yield {
@@ -289,15 +284,13 @@ class DocEditAh[M](
               .set( m.degrees )( jdt00 )
           }
           .toTree
+        val jdDoc2 = MJdDoc.template.set(tpl2)( v0.jdArgs.data.doc )
 
         val v2 = MDocS.jdArgs.modify(
           MJdArgs.data
-            .composeLens(MJdDataJs.doc)
-            .composeLens(MJdDoc.template)
-            .set( tpl2 ) andThen
-          MJdArgs.jdRuntime.set(
-            _mkJdRuntime(tpl2, v0)
-          )
+            .composeLens( MJdDataJs.doc )
+            .set( jdDoc2 ) andThen
+          MJdArgs.jdRuntime.set( _mkJdRuntime(jdDoc2, v0.jdArgs.conf) )
         )( v0 )
 
         updated( v2 )
@@ -465,14 +458,13 @@ class DocEditAh[M](
             }
           // Очистить эджи от лишнего контента
           val dataEdges2 = JdTag.purgeUnusedEdges(tpl2, dataEdges0)
+          val jdDoc2 = MJdDoc.template.set(tpl2)( v2.jdArgs.data.doc )
           v2 = MDocS.jdArgs.modify(
             MJdArgs.data.modify(
-              MJdDataJs.doc
-                .composeLens( MJdDoc.template )
-                .set( tpl2 ) andThen
+              MJdDataJs.doc.set( jdDoc2 ) andThen
               MJdDataJs.edges.set( dataEdges2 )
             ) andThen
-            MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v2) )
+            MJdArgs.jdRuntime.set( _mkJdRuntime(jdDoc2, v2.jdArgs.conf) )
           )(v2)
         }
 
@@ -601,14 +593,14 @@ class DocEditAh[M](
       val template2 = stripTreeLoc0
         .setLabel(strip2)
         .toTree
+      val jdDoc2 = MJdDoc.template.set(template2)( v0.jdArgs.data.doc )
 
       // Обновить и дерево, и currentTag новым инстансом.
       val v2 = MDocS.jdArgs.modify(
         MJdArgs.data
           .composeLens( MJdDataJs.doc )
-          .composeLens( MJdDoc.template )
-          .set( template2 ) andThen
-        MJdArgs.jdRuntime.set( _mkJdRuntime(template2, v0) )
+          .set( jdDoc2 ) andThen
+        MJdArgs.jdRuntime.set( _mkJdRuntime(jdDoc2, v0.jdArgs.conf) )
       )(v0)
 
       updated( v2 )
@@ -642,14 +634,13 @@ class DocEditAh[M](
         val tpl2 = strip4delLoc
           .delete
           .fold(tpl0) { _.toTree }
+        val jdDoc2 = MJdDoc.template.set(tpl2)( v0.jdArgs.data.doc )
 
         if (tpl2.subForest.nonEmpty) {
           val v2 = v0.copy(
             jdArgs = v0.jdArgs.copy(
-              data        = MJdDataJs.doc
-                .composeLens(MJdDoc.template)
-                .set( tpl2 )( v0.jdArgs.data ),
-              jdRuntime   = _mkJdRuntime(tpl2, v0),
+              data        = MJdDataJs.doc.set( jdDoc2 )( v0.jdArgs.data ),
+              jdRuntime   = _mkJdRuntime(jdDoc2, v0.jdArgs.conf),
               renderArgs  = MJdRenderArgs.selPath.set(None)( v0.jdArgs.renderArgs ),
             ),
             stripEd = None,
@@ -816,17 +807,18 @@ class DocEditAh[M](
       }
 
       val tpl2 = loc2.toTree
+      val jdDoc2 = MJdDoc.template.set( tpl2 )( v0.jdArgs.data.doc )
 
       // Пересобрать данные для рендера.
       val v2 = MDocS.jdArgs.modify { jdArgs0 =>
         jdArgs0.copy(
-          data        = MJdDataJs.doc
-            .composeLens( MJdDoc.template )
-            .set(tpl2)( jdArgs0.data ),
-          jdRuntime   = _mkJdRuntime(tpl2, jdArgs0),
+          data        = MJdDataJs.doc.set(jdDoc2)( jdArgs0.data ),
+          jdRuntime   = _mkJdRuntime(jdDoc2, jdArgs0.conf),
           renderArgs  = (
-            MJdRenderArgs.selPath.set( tpl2.nodeToPath( loc2.getLabel ) ) andThen
-            MJdRenderArgs.dnd.set( MJdDndS.empty )
+            MJdRenderArgs.selPath
+              .set( tpl2.nodeToPath( loc2.getLabel ) ) andThen
+            MJdRenderArgs.dnd
+              .set( MJdDndS.empty )
           )(jdArgs0.renderArgs)
         )
       }(v0)
@@ -865,10 +857,7 @@ class DocEditAh[M](
         val tpl2 = droppedStripLoc2.toTree
         // Залить обновлённый список стрипов в исходный документ
         val v2 = MDocS.jdArgs.modify(
-          MJdArgs.data
-            .composeLens(MJdDataJs.doc)
-            .composeLens(MJdDoc.template)
-            .set( tpl2 ) andThen
+          _jdData_doc_template_LENS.set( tpl2 ) andThen
           MJdArgs.renderArgs.modify(
             _.copy(
               selPath = tpl2.nodeToPath( droppedStripLabel ),
@@ -947,14 +936,14 @@ class DocEditAh[M](
                     }
                   }
               }
+            val jdDoc2 = MJdDoc.template.set(tpl2)( v0.jdArgs.data.doc )
 
             // Сохранить новые темплейт в состояние.
             val jdArgs2 = (
               MJdArgs.data
-                .composeLens(MJdDataJs.doc)
-                .composeLens(MJdDoc.template)
-                .set(tpl2) andThen
-              MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v0.jdArgs) )
+                .composeLens( MJdDataJs.doc )
+                .set(jdDoc2) andThen
+              MJdArgs.jdRuntime.set( _mkJdRuntime(jdDoc2, v0.jdArgs.conf) )
             )( v0.jdArgs )
 
             var v2 = MDocS.jdArgs.set( jdArgs2 )(v0)
@@ -994,13 +983,13 @@ class DocEditAh[M](
             .set( Some(m.widthPx) )( jdTag0 )
         }
         .toTree
+      val jdDoc2 = MJdDoc.template.set(tpl2)( v0.jdArgs.data.doc )
 
       val v2 = MDocS.jdArgs.modify(
         MJdArgs.data
-          .composeLens(MJdDataJs.doc)
-          .composeLens(MJdDoc.template)
-          .set( tpl2 ) andThen
-        MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v0) )
+          .composeLens( MJdDataJs.doc )
+          .set(jdDoc2) andThen
+        MJdArgs.jdRuntime.set( _mkJdRuntime(jdDoc2, v0.jdArgs.conf) )
       )(v0)
 
       updated(v2)
@@ -1025,13 +1014,13 @@ class DocEditAh[M](
             .setTree(qdSubTree2)
             .toTree
 
+          val jdDoc2 = MJdDoc.template.set( tpl2 )( v0.jdArgs.data.doc )
           val v2 = (
             MDocS.jdArgs.modify(
               MJdArgs.data
-                .composeLens(MJdDataJs.doc)
-                .composeLens(MJdDoc.template)
-                .set(tpl2) andThen
-              MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v0.jdArgs.conf) )
+                .composeLens( MJdDataJs.doc )
+                .set( jdDoc2 ) andThen
+              MJdArgs.jdRuntime.set( _mkJdRuntime(jdDoc2, v0.jdArgs.conf) )
             ) andThen
             MDocS.qdEdit.modify { qdEditOpt0 =>
               for (qdEdit0 <- qdEditOpt0) yield {
@@ -1087,10 +1076,7 @@ class DocEditAh[M](
         val tpl2 = loc2.toTree
 
         val v2 = MDocS.jdArgs.modify(
-          MJdArgs.data
-            .composeLens(MJdDataJs.doc)
-            .composeLens(MJdDoc.template)
-            .set(tpl2) andThen
+          _jdData_doc_template_LENS.set(tpl2) andThen
           // Надо пересчитать path до перемещённого тега.
           MJdArgs.renderArgs
             .composeLens( MJdRenderArgs.selPath )
@@ -1126,13 +1112,13 @@ class DocEditAh[M](
             (jdt_p1_bm_expandOpt_LENS set m.expandMode)(strip0)
           }
           .toTree
+        val jdDoc2 = MJdDoc.template.set(tpl2)( v0.jdArgs.data.doc )
 
         val v2 = MDocS.jdArgs.modify(
           MJdArgs.data
             .composeLens(MJdDataJs.doc)
-            .composeLens(MJdDoc.template)
-            .set( tpl2 ) andThen
-          MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v0) )
+            .set( jdDoc2 ) andThen
+          MJdArgs.jdRuntime.set( _mkJdRuntime(jdDoc2, v0.jdArgs.conf) )
         )(v0)
 
         updated( v2 )
@@ -1187,13 +1173,13 @@ class DocEditAh[M](
               )
             }
           )
+          val jdDoc2 = MJdDoc.template.set(tpl2)( v0.jdArgs.data.doc )
 
           val v2 = MDocS.jdArgs.modify(
             MJdArgs.data
-              .composeLens(MJdDataJs.doc)
-              .composeLens(MJdDoc.template)
-              .set(tpl2) andThen
-            MJdArgs.jdRuntime.set( _mkJdRuntime(tpl2, v0) )
+              .composeLens( MJdDataJs.doc )
+              .set( jdDoc2 ) andThen
+            MJdArgs.jdRuntime.set( _mkJdRuntime(jdDoc2, v0.jdArgs.conf) )
           )( v0 )
 
           updated(v2)
@@ -1281,16 +1267,15 @@ class DocEditAh[M](
       val qdtLoc = intoStripLoc.insertDownLast( qdtTree )
 
       val tpl2 = qdtLoc.toTree
+      val jdDoc2 = MJdDoc.template.set(tpl2)( v0.jdArgs.data.doc )
 
       val v2 = v0.copy(
         jdArgs = v0.jdArgs.copy(
           data = v0.jdArgs.data.copy(
-            doc = v0.jdArgs.data.doc.copy(
-              template = tpl2
-            ),
+            doc       = jdDoc2,
             edges     = edgesMap2,
           ),
-          jdRuntime   = _mkJdRuntime(tpl2, v0),
+          jdRuntime   = _mkJdRuntime(jdDoc2, v0.jdArgs.conf),
           renderArgs  = MJdRenderArgs.selPath.set(
             tpl2.nodeToPath( qdtTree.rootLabel )
           )(v0.jdArgs.renderArgs),
@@ -1361,16 +1346,16 @@ class DocEditAh[M](
       }
 
       val tpl2 = newStripLoc.toTree
+      val jdDoc2 = MJdDoc.template.set(tpl2)( v0.jdArgs.data.doc )
 
       val v2 = (
         MDocS.jdArgs.modify { jdArgs0 =>
           jdArgs0.copy(
             data        = MJdDataJs.doc
-              .composeLens( MJdDoc.template )
-              .set(tpl2)( jdArgs0.data ),
+              .set(jdDoc2)( jdArgs0.data ),
             renderArgs  = MJdRenderArgs.selPath
               .set( tpl2.nodeToPath( newStripTree.rootLabel ) )(jdArgs0.renderArgs),
-            jdRuntime   = _mkJdRuntime(tpl2, jdArgs0),
+            jdRuntime   = _mkJdRuntime(jdDoc2, jdArgs0.conf),
           )
         } andThen
         MDocS.slideBlocks
@@ -1389,7 +1374,7 @@ class DocEditAh[M](
 
       val v2 = MDocS.jdArgs.modify(
         MJdArgs.conf.set( conf2 ) andThen
-        MJdArgs.jdRuntime.set( _mkJdRuntime(v0.jdArgs.data.doc.template, conf2) )
+        MJdArgs.jdRuntime.set( _mkJdRuntime(v0.jdArgs.data.doc, conf2) )
       )(v0)
 
       updated(v2)
@@ -1459,6 +1444,12 @@ class DocEditAh[M](
       .composeLens( MJdArgs.renderArgs )
       .composeLens( MJdRenderArgs.dnd )
       .composeLens( MJdDndS.jdt )
+  }
+
+  private def _jdData_doc_template_LENS = {
+    MJdArgs.data
+      .composeLens( MJdDataJs.doc )
+      .composeLens( MJdDoc.template )
   }
 
 }

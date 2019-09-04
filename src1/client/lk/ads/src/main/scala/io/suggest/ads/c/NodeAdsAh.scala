@@ -76,7 +76,7 @@ class NodeAdsAh[M](
       val v2 = MAdsS.ads.modify( adsPot0 =>
         for (ads <- adsPot0) yield {
           for (adProps0 <- ads) yield {
-            if (adProps0.adResp.jdAdData.doc.nodeId contains[String] m.adId) {
+            if (adProps0.adResp.jdAdData.doc.jdId.nodeId contains[String] m.adId) {
               MAdProps.shownAtParentReq
                 .modify(_.pending(ts))(adProps0)
             } else {
@@ -94,7 +94,7 @@ class NodeAdsAh[M](
       val v2 = MAdsS.ads.modify( adsPot0 =>
         for (ads <- adsPot0) yield {
           for (adProps0 <- ads) yield {
-            if (adProps0.adResp.jdAdData.doc.nodeId contains[String] m.reason.adId) {
+            if (adProps0.adResp.jdAdData.doc.jdId.nodeId contains[String] m.reason.adId) {
               if (adProps0.shownAtParentReq isPendingWithStartTime m.timestampMs) {
                 m.tryResp.fold(
                   {ex =>
@@ -182,7 +182,10 @@ class NodeAdsAh[M](
             ads         = v0.ads.ready(ads2),
             hasMoreAds  = respAds.lengthCompare(LkAdsFormConst.GET_ADS_COUNT_PER_REQUEST) >= 0,
             jdRuntime   = MJdRuntime.make(
-              tpls    = ads2.map(_.adResp.jdAdData.doc.template),
+              docs    = ads2
+                .iterator
+                .map(_.adResp.jdAdData.doc)
+                .toStream,
               jdConf  = confRO.value.jdConf,
             ),
           )

@@ -127,7 +127,6 @@ class JdCssStatic extends StyleSheet.Inline {
   }
 
 
-
   val smBlockS = style(
     // Без addClassName("sm-block"), т.к. это ненужные transition и уже неактуальные стили (кроме overflow:hidden).
     overflow.hidden,
@@ -135,9 +134,11 @@ class JdCssStatic extends StyleSheet.Inline {
     fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
     color.black
   )
+
 }
 
 
+/** Динамическая часть стилей, рендерится при обновлении плиток. */
 final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   import dsl._
@@ -168,9 +169,10 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   private def _allJdTagsIter: Iterator[JdTag] = {
     jdCssArgs
-      .templates
+      .docs
       .iterator
-      .flatMap( _.flatten )
+      // TODO Надо сделать flatten, но с деревом jd-id.
+      .flatMap( _.template.flatten )
   }
 
 
@@ -335,7 +337,8 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       new Domain.OverSeq({
         val iter = for {
           // topTree может быть как DOCUMENT, так и STRIP.
-          topJdTree <- jdCssArgs.templates.iterator
+          jdDoc <- jdCssArgs.docs.iterator
+          topJdTree = jdDoc.template
           topJdt = topJdTree.rootLabel
           // Собираем только стрипы:
           stripTree <- topJdt.name match {

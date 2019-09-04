@@ -31,7 +31,9 @@ object SysMdrCircuit {
     // Сборка root-модели, готовой к работе.
     MSysMdrRootS(
       node = MMdrNodeS(
-        jdRuntime = NodeRenderR.mkJdRuntime()(),
+        jdRuntime = NodeRenderR.mkJdRuntime(
+          docs = Stream.empty
+        ),
       ),
       conf  = mconf,
     )

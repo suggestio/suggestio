@@ -111,7 +111,7 @@ class AdItemR(
         ),
 
         // Утиль управления карточкой. Доступна, когда известен id карточки (по факту - всегда):
-        s.ad.adResp.jdAdData.doc.nodeId.whenDefined { adId =>
+        s.ad.adResp.jdAdData.doc.jdId.nodeId.whenDefined { adId =>
           <.div(
             // Блок с ссылкой на редактор и галочкой размещения на parent-узле.
             <.div(

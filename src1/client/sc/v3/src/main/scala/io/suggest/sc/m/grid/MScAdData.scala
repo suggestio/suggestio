@@ -2,8 +2,8 @@ package io.suggest.sc.m.grid
 
 import diode.FastEq
 import diode.data.Pot
+import io.suggest.jd.{MJdDoc, MJdTagId}
 import io.suggest.jd.render.m.MJdDataJs
-import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.id.OptStrId
@@ -11,7 +11,6 @@ import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
-import scalaz.Tree
 
 /**
   * Suggest.io
@@ -25,7 +24,6 @@ object MScAdData {
   /** Поддержка FastEq для инстансов [[MScAdData]]. */
   implicit object MScAdDataFastEq extends FastEq[MScAdData] {
     override def eqv(a: MScAdData, b: MScAdData): Boolean = {
-      (a.nodeId ===* b.nodeId) &&
       (a.main ===* b.main) &&
       (a.focused ===* b.focused)
     }
@@ -33,7 +31,6 @@ object MScAdData {
 
   @inline implicit def univEq: UnivEq[MScAdData] = UnivEq.derive
 
-  val nodeId  = GenLens[MScAdData](_.nodeId)
   val main    = GenLens[MScAdData](_.main)
   val focused = GenLens[MScAdData](_.focused)
 
@@ -42,34 +39,39 @@ object MScAdData {
 
 /** Класс-контейнер данных по одному блоку плитки.
   *
-  * @param nodeId id карточки, которую надо раскрывать при клике.
-  *               None, если не требуется.
   * @param main Рендеренный главный блок для плитки разных карточек.
   * @param focused Плитка одной открытой карточки.
   *                Приходит после открытия карточки, представленной main-блоком.
   */
-case class MScAdData(
-                      nodeId      : Option[String],
-                      main        : MJdDataJs,
-                      focused     : Pot[MScFocAdData] = Pot.empty
-                    )
+final case class MScAdData(
+                            main        : MJdDataJs,
+                            focused     : Pot[MScFocAdData] = Pot.empty
+                          )
   extends OptStrId
 {
 
-  private def _flatGridTemplatesUsing(f: MJdDataJs => Seq[Tree[JdTag]]) = {
-    focused.fold [Seq[Tree[JdTag]]] {
-      main.doc.template :: Nil
-    }(foc => f(foc.blkData))
-  }
-
   /** Вернуть последовательность шаблонов для "плоской" плитки, т.е. где и focused и не-focused одновременно.
+    * val - для стабильности инстансов.
     *
     * @return Список шаблонов на рендер.
     */
-  def flatGridTemplates: Seq[Tree[JdTag]] = {
-    _flatGridTemplatesUsing(_.doc.template.subForest)
+  lazy val flatGridTemplates: Stream[MJdDoc] = {
+    focused.fold {
+      main.doc #:: Stream.empty
+    } { foc =>
+      foc
+        .blkData.doc.template
+        .subForest
+        .zipWithIndex
+        .map { case (blkJdt, i) =>
+          main.doc.copy(
+            template = blkJdt,
+            jdId = MJdTagId.selPathRev
+              .modify(i :: _)(main.doc.jdId),
+          )
+        }
+    }
   }
-
 
   /** Вернуть карту эджей для плоской плитки.
     *
@@ -80,6 +82,7 @@ case class MScAdData(
       .fold(main.edges)(_.blkData.edges)
   }
 
-  override final def id: Option[String] = nodeId
+  def nodeId = main.doc.jdId.nodeId
+  override def id = nodeId
 
 }

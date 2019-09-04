@@ -137,11 +137,11 @@ object GridAh {
   /** Сборка аргументов для рендера JdCss. */
   def mkJdRuntime(ads: Pot[Seq[MScAdData]], jdConf: MJdConf): MJdRuntime = {
     MJdRuntime.make(
-      tpls = ads
+      docs = ads
         .iterator
         .flatten
         .flatMap(_.flatGridTemplates)
-        .toSeq,
+        .toStream,
       jdConf = jdConf,
     )
   }
@@ -271,11 +271,8 @@ class GridRespHandler
     val newScAds = gridResp.ads
       .iterator
       .map { sc3AdData =>
-        // Два пути: переиспользование текущей карточки или добавление новой карточки.
-        val nodeIdOpt = sc3AdData.jd.doc.nodeId
-
         // Если есть id и карта переиспользуемых карточек не пуста, то поискать там текущую карточку:
-        nodeIdOpt
+        sc3AdData.jd.doc.jdId.nodeId
           .filter( _ => reusableAdsMap.nonEmpty )
           .flatMap( reusableAdsMap.get )
           // Если карточка не найдена среди reusable-карточек, то перейки к сброке состояния новой карточки:
@@ -283,32 +280,27 @@ class GridRespHandler
             // Собрать начальное состояние карточки.
             // Сервер может присылать уже открытые карточи - это нормально.
             // Главное - их сразу пропихивать и в focused, и в обычные блоки.
-            val tpl = sc3AdData.jd.doc.template
-            val isFocused = tpl.rootLabel.name ==* MJdTagNames.DOCUMENT
+            val jdDoc0 = sc3AdData.jd.doc
+            val isFocused = jdDoc0.template.rootLabel.name ==* MJdTagNames.DOCUMENT
             val jsEdgesMap = MEdgeDataJs.jdEdges2EdgesDataMap( sc3AdData.jd.edges )
 
             MScAdData(
-              nodeId    = nodeIdOpt,
-              main      = MJdDataJs(
-                doc = MJdDoc(
-                  template = {
+              main = MJdDataJs(
+                doc = {
+                  if (isFocused) {
                     // Найти главный блок в шаблоне focused-карточки документа.
-                    if (isFocused) tpl.getMainBlockOrFirst
-                    else tpl
-                  },
-                  nodeId  = nodeIdOpt,
-                ),
+                    MJdDoc.template
+                      .set(jdDoc0.template.getMainBlockOrFirst)( jdDoc0 )
+                  } else jdDoc0
+                },
                 edges   = jsEdgesMap,
               ),
               focused = if (isFocused) {
                 // Сервер прислал focused-карточку.
                 val v = MScFocAdData(
                   MJdDataJs(
-                    doc = MJdDoc(
-                      template  = tpl,
-                      nodeId    = nodeIdOpt,
-                    ),
-                    edges     = jsEdgesMap,
+                    doc   = jdDoc0,
+                    edges = jsEdgesMap,
                   ),
                   canEdit = sc3AdData.canEdit.getOrElseFalse,
                   userFoc = false

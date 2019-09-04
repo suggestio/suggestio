@@ -1,13 +1,10 @@
 package io.suggest.jd
 
-import io.suggest.jd.tags.JdTag
 import io.suggest.primo.id.OptId
-import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
 import japgolly.univeq._
 import monocle.macros.GenLens
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import scalaz.Tree
 
 /**
   * Suggest.io
@@ -56,6 +53,7 @@ final case class MJdData(
   extends OptId[String]
 {
 
-  override def id = doc.nodeId
+  // TODO Удалить OptId отсюда.
+  override def id = doc.jdId.nodeId
 
 }

@@ -1,6 +1,7 @@
 package io.suggest.jd
 
 import diode.FastEq
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.jd.tags.JdTag
 import io.suggest.primo.id.OptId
 import io.suggest.scalaz.ZTreeUtil._
@@ -23,31 +24,31 @@ object MJdDoc {
   implicit object MJdTplFastEq extends FastEq[MJdDoc] {
     override def eqv(a: MJdDoc, b: MJdDoc): Boolean = {
       (a.template ===* b.template) &&
-      (a.nodeId ===* b.nodeId)
+      (a.jdId ===* b.jdId)
     }
   }
 
   implicit def jdDocJson: OFormat[MJdDoc] = (
     (__ \ "t").format[Tree[JdTag]] and
-    (__ \ "i").formatNullable[String]
+    (__ \ "i").formatNullable[MJdTagId]
+      .inmap[MJdTagId](
+        EmptyUtil.opt2ImplMEmptyF( MJdTagId ),
+        EmptyUtil.implEmpty2OptF,
+      )
   )(apply, unlift(unapply))
 
   @inline implicit def univEq: UnivEq[MJdDoc] = UnivEq.derive
 
-  val template = GenLens[MJdDoc](_.template)
-  val nodeId   = GenLens[MJdDoc](_.nodeId)
+  val template  = GenLens[MJdDoc](_.template)
+  val jdId      = GenLens[MJdDoc](_.jdId)
 
 }
 
 
 /** @param template Шаблон документа.
-  * @param nodeId id документа, если есть.
+  * @param jdId id документа внутри MJdTagId, если есть.
   */
 final case class MJdDoc(
                          template     : Tree[JdTag],
-                         nodeId       : Option[String],
+                         jdId         : MJdTagId,
                        )
-  extends OptId[String]
-{
-  override def id = nodeId
-}

@@ -54,12 +54,13 @@ final case class MJdDataJs(
   extends OptId[String]
 {
 
-  override def id = doc.nodeId
+  // TODO Убрать это отсюда?
+  override def id = doc.jdId.nodeId
 
   override def toString: String = {
     new StringBuilder( productPrefix )
       .append( `(` )
-      .append( doc.nodeId.fold("")( DIEZ + _ + COMMA) )
+      .append( id.fold("")( DIEZ + _ + COMMA) )
       // Гарантированно не рендерим дерево, хотя там вроде toString и так переопределён уже:
       .append( DIEZ ).append( COMMA )
       // Рендерим кол-во эджей вместо всей карты

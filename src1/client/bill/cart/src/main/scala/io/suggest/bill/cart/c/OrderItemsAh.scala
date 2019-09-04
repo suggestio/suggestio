@@ -113,8 +113,8 @@ class OrderItemsAh[M](
           jdRuntime = ItemRowPreviewR.mkJdRuntime(
             req2.iterator
               .flatMap(_.content.adsJdDatas)
-              .map(_.doc.template)
-              .toSeq
+              .map(_.doc)
+              .toStream
           ),
           // Сброс (перефильтровать?) выделенных элементов, т.к. список item'ов изменился.
           itemsSelected =

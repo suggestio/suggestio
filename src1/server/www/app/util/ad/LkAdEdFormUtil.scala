@@ -78,8 +78,8 @@ class LkAdEdFormUtil @Inject() (
 
     val r = MJdData(
       doc = MJdDoc(
-        template = tplTree,
-        nodeId   = None
+        template  = tplTree,
+        jdId      = MJdTagId.empty,
       ),
       edges    = Nil,
     )
@@ -115,7 +115,7 @@ class LkAdEdFormUtil @Inject() (
     *         exception обозначает ошибку валидации.
     */
   def earlyValidateEdges(form: MJdData): StringValidationNel[List[MJdEdge]] = {
-    val nodeIdVld = Validation.liftNel(form.doc.nodeId)(_.nonEmpty, "e.nodeid." + ErrorConstants.Words.UNEXPECTED)
+    val nodeIdVld = Validation.liftNel(form.doc.jdId.nodeId)(_.nonEmpty, "e.nodeid." + ErrorConstants.Words.UNEXPECTED)
 
     // Прочистить начальную карту эджей от возможного мусора (которого там быть и не должно, по идее).
     val edgesMap = IId.els2idMap[EdgeUid_t, MJdEdge]( form.edges )

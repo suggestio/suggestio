@@ -88,7 +88,7 @@ class LkAdEditCircuit(
             data        = jdDataJs,
             conf        = jdConf,
             jdRuntime   = MJdRuntime.make(
-              tpls   = jdDataJs.doc.template :: Nil,
+              docs   = jdDataJs.doc #:: Stream.empty,
               jdConf = jdConf,
             )
           ),
@@ -183,14 +183,14 @@ class LkAdEditCircuit(
             setColorOpt( s0, mColorAh.colorOpt )
           }
           val tpl2 = strip2.toTree
+          val jdDoc2 = MJdDoc.template.set(tpl2)( mdoc0.jdArgs.data.doc )
 
           (
             MDocS.jdArgs.modify(
               MJdArgs.data
                 .composeLens(MJdDataJs.doc)
-                .composeLens(MJdDoc.template)
-                .set( tpl2 ) andThen
-              MJdArgs.jdRuntime.set( MJdRuntime.make(tpl2 :: Nil, mdoc0.jdArgs.conf) )
+                .set(jdDoc2) andThen
+              MJdArgs.jdRuntime.set( MJdRuntime.make(jdDoc2 #:: Stream.empty, mdoc0.jdArgs.conf) )
             ) andThen
             MDocS.colorsState.set( mColorAh.colorsState )
           )(mdoc0)
@@ -285,28 +285,26 @@ class LkAdEditCircuit(
     )
   } { (mroot0, mPictureAh) =>
     val mdoc0 = mroot0.doc
-    val tpl0 = mdoc0.jdArgs.data.doc.template
-    val isTplChanged = tpl0 !===* mPictureAh.view
+    val jdDoc0 = mdoc0.jdArgs.data.doc
+    val isTplChanged = jdDoc0.template !===* mPictureAh.view
 
     val mdoc1 = if (isTplChanged || (mPictureAh.edges !===* mdoc0.jdArgs.data.edges)) {
       MDocS.jdArgs.set {
         // Разобраться, изменился ли шаблон в реальности:
-        val (tpl2, jdRuntime2) = if (isTplChanged) {
+        val (jdDoc2, jdRuntime2) = if (isTplChanged) {
           // Изменился шаблон. Вернуть новый шаблон, пересобрать css
-          val tpl1 = mPictureAh.view
-          val jdRuntime1 = MJdRuntime.make(tpl1 :: Nil, mdoc0.jdArgs.conf)
-          (tpl1, jdRuntime1)
+          val jdDoc1 = MJdDoc.template.set( mPictureAh.view )( jdDoc0 )
+          val jdRuntime1 = MJdRuntime.make(jdDoc1 #:: Stream.empty, mdoc0.jdArgs.conf)
+          (jdDoc1, jdRuntime1)
         } else {
           // Не изменился шаблон, вернуть исходник
-          (tpl0, mdoc0.jdArgs.jdRuntime)
+          (jdDoc0, mdoc0.jdArgs.jdRuntime)
         }
 
         // Залить всё в итоговое состояние пачкой:
         mdoc0.jdArgs.copy(
           data = mdoc0.jdArgs.data.copy(
-            doc = mdoc0.jdArgs.data.doc.copy(
-              template = tpl2,
-            ),
+            doc       = jdDoc2,
             edges     = mPictureAh.edges,
           ),
           jdRuntime   = jdRuntime2

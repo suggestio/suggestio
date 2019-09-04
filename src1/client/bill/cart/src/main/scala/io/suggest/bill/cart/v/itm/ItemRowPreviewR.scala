@@ -1,10 +1,8 @@
 package io.suggest.bill.cart.v.itm
 
 import io.suggest.dev.MSzMults
-import io.suggest.jd.MJdConf
+import io.suggest.jd.{MJdConf, MJdDoc}
 import io.suggest.jd.render.m.MJdRuntime
-import io.suggest.jd.tags.JdTag
-import scalaz.Tree
 
 /**
   * Suggest.io
@@ -23,7 +21,7 @@ object ItemRowPreviewR {
   )
 
   /** Сборка пустого стиля для jd-рендера. */
-  def mkJdRuntime(templates: Seq[Tree[JdTag]] = Nil): MJdRuntime =
+  def mkJdRuntime(templates: Stream[MJdDoc] = Stream.empty): MJdRuntime =
     MJdRuntime.make( templates, JD_CONF )
 
 }

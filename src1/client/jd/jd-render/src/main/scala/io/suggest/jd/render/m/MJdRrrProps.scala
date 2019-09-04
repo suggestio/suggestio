@@ -1,6 +1,7 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
+import io.suggest.jd.MJdTagId
 import io.suggest.jd.tags.JdTag
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.scalaz.ZTreeUtil._

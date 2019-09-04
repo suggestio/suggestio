@@ -7,20 +7,19 @@ import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
+import io.suggest.jd.MJdDoc
 import io.suggest.jd.render.m.{MJdArgs, MJdDataJs, MJdRuntime}
 import io.suggest.jd.render.v.JdR
-import io.suggest.jd.tags.JdTag
 import io.suggest.msg.Messages
 import io.suggest.routes.routes
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.react.ReactDiodeUtil.Implicits._
 import io.suggest.sys.mdr.SysMdrConst
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.scalaz.ZTreeUtil._
+import io.suggest.spa.FastEqUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
-import scalaz.Tree
 
 /**
   * Suggest.io
@@ -156,15 +155,21 @@ object NodeRenderR {
   val JD_CONF = SysMdrConst.JD_CONF
 
   /** Ленивая сборка jdCss на основе шаблонов. */
-  def mkJdRuntime(jdRuntimeOpt0: Option[MJdRuntime] = None)(tpls: Tree[JdTag]*): MJdRuntime = {
-    jdRuntimeOpt0
+  def mkJdRuntime(docs: Stream[MJdDoc],
+                  jdRuntimeOpt: Option[MJdRuntime] = None): MJdRuntime = {
+    jdRuntimeOpt
       // Не пересобирать JdCss, если args не изменились.
       .filter { jdRuntime0 =>
-        (tpls ===* jdRuntime0.jdCss.jdCssArgs.templates)
+        FastEqUtil
+          .CollFastEq( FastEqUtil.AnyRefFastEq[MJdDoc] )
+          .eqv(
+            jdRuntime0.jdCss.jdCssArgs.docs,
+            docs,
+          )
       }
       .getOrElse {
         // Пересборка, т.к. шаблоны изменились.
-        MJdRuntime.make(tpls, JD_CONF)
+        MJdRuntime.make(docs, JD_CONF)
       }
   }
 

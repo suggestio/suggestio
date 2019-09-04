@@ -1,17 +1,16 @@
-package io.suggest.jd.render.m
+package io.suggest.jd
 
 import io.suggest.ad.blk.MBlockExpandMode
+import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.common.html.HtmlConstants
-import io.suggest.jd.MJdDoc
 import io.suggest.jd.tags.JdTag
 import io.suggest.scalaz.NodePath_t
-import japgolly.univeq._
-import japgolly.univeq.UnivEq
+import japgolly.univeq.{UnivEq, _}
 import monocle.macros.GenLens
-import scalaz.Tree
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 import scala.collection.immutable.HashMap
-
 
 /**
   * Suggest.io
@@ -26,32 +25,46 @@ import scala.collection.immutable.HashMap
   *
   * Это нужно для оптимизации jd-рендера, чтобы убрать пере-рендеры из-за нарушения порядка стилей в css.
   */
-object MJdTagId {
+object MJdTagId extends IEmpty {
+
+  override type T = MJdTagId
+  override def empty = apply()
 
   implicit def univEq: UnivEq[MJdTagId] = UnivEq.derive
+
+  implicit def jdTagIdJson: OFormat[MJdTagId] = (
+    (__ \ "i").formatNullable[String] and
+    (__ \ "p").formatNullable[NodePath_t]
+      .inmap[NodePath_t](
+        EmptyUtil.opt2ImplEmptyF( Nil ),
+        np => if (np.isEmpty) None else Some(np),
+      ) and
+    (__ \ "e").formatNullable[MBlockExpandMode]
+  )(apply, unlift(unapply))
+
 
   val selPathRev = GenLens[MJdTagId](_.selPathRev)
   val blockExpand = GenLens[MJdTagId](_.blockExpand)
 
-  def mkTreeIndexSeg(jdDoc: MJdDoc): Stream[(MJdTagId, JdTag)] = {
-    mkTreeIndexSeg( jdDoc.template, MJdTagId(jdDoc.nodeId) )
-  }
+
+  def mkTreesIndexSeg(jdDocs: Stream[MJdDoc]): Stream[(MJdTagId, JdTag)] =
+    jdDocs.flatMap( mkTreeIndexSeg )
 
   /** Создать сегмент для будущего jd-индекса по id.
     *
-    * @param template Исходный документ.
-    * @param jdTagId id текущего тега.
+    * @param jdDoc Данные исходного документа.
     * @return Максимально ленивый Stream, на основе которого можно создать индекс.
     */
-  def mkTreeIndexSeg(template: Tree[JdTag], jdTagId: MJdTagId): Stream[(MJdTagId, JdTag)] = {
+  def mkTreeIndexSeg(jdDoc: MJdDoc): Stream[(MJdTagId, JdTag)] = {
     // Если текущий тег - это блок, то надо сбросить значение expand на текущее значение.
-    val jdt = template.rootLabel
-    val expandMode2 = jdt.props1.bm .flatMap(_.expandMode)
+    val jdt = jdDoc.template.rootLabel
+    val expandMode2 = jdt.props1.bm
+      .flatMap(_.expandMode)
 
-    val jdTagId2 = if (expandMode2 !=* jdTagId.blockExpand) {
-      blockExpand.set(expandMode2)( jdTagId )
+    val jdTagId2 = if (expandMode2 !=* jdDoc.jdId.blockExpand) {
+      blockExpand.set(expandMode2)( jdDoc.jdId )
     } else {
-      jdTagId
+      jdDoc.jdId
     }
 
     // Отработать текущий элемент
@@ -59,12 +72,17 @@ object MJdTagId {
 
     el0 #:: {
       // И отработать дочерние элементы:
-      template
+      jdDoc
+        .template
         .subForest
         .zipWithIndex
         .flatMap { case (subJdt, i) =>
           val jdTagChild2 = selPathRev.modify(i :: _)( jdTagId2 )
-          mkTreeIndexSeg( subJdt, jdTagChild2 )
+          val jdDocCh = jdDoc.copy(
+            template  = subJdt,
+            jdId      = jdTagChild2,
+          )
+          mkTreeIndexSeg( jdDocCh )
         }
     }
   }
@@ -72,6 +90,7 @@ object MJdTagId {
 
   def mkTreeIndex(segments: Stream[(MJdTagId, JdTag)]*): HashMap[MJdTagId, JdTag] =
     mkTreeIndex1( segments )
+
   /** Сборка кусков-сегментов в единый индекс. */
   def mkTreeIndex1(segments: TraversableOnce[Stream[(MJdTagId, JdTag)]]): HashMap[MJdTagId, JdTag] = {
     (HashMap.newBuilder[MJdTagId, JdTag] ++= segments.toStream.iterator.flatten)
@@ -92,9 +111,11 @@ final case class MJdTagId(
                            nodeId           : Option[String]              = None,
                            selPathRev       : NodePath_t                  = Nil,
                            blockExpand      : Option[MBlockExpandMode]    = None,
-                         ) {
+                         )
+  extends EmptyProduct
+{
 
-  override val toString: String = {
+  override def toString: String = {
     var acc: List[Any] = selPathRev
     for (bexp <- blockExpand)
       acc ::= bexp.value
@@ -102,7 +123,5 @@ final case class MJdTagId(
       acc ::= id
     acc.mkString( HtmlConstants.MINUS )
   }
-
-  def selPath = selPathRev.reverse
 
 }
