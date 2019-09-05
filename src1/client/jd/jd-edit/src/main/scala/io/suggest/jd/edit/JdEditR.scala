@@ -120,8 +120,7 @@ class JdEditR(
       override def _qdContentRrrHtml(p: MJdRrrProps): QdRrrHtml = {
         QdRrrHtml(
           jdCssStatic = jdCssStatic,
-          jdArgs      = p.jdArgs,
-          qdTag       = p.subTree,
+          rrrProps    = p,
           // Для редактора: следует рендерить img-теги, подслушивая у них wh:
           imgEdgeMods = OptionUtil.maybe( p.jdArgs.conf.isEdit ) {
             _notifyImgWhOnEdit($, _, p.jdArgs)
@@ -370,10 +369,10 @@ class JdEditR(
         }
       }
 
-      override def _renderContentTag(propsProxy: ModelProxy[MJdRrrProps]): TagOf[html.Div] = {
+      override def _renderBlockTag(propsProxy: ModelProxy[MJdRrrProps]): TagOf[html.Div] = {
         val state = propsProxy.value
         val s = state.subTree.rootLabel
-        super._renderContentTag(propsProxy)(
+        super._renderBlockTag(propsProxy)(
           _clickableOnEdit( $, s, state.jdArgs ),
           _droppableOnEdit( s, state.jdArgs )
         )

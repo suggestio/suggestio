@@ -3,7 +3,8 @@ package io.suggest.jd
 import io.suggest.ad.blk.MBlockExpandMode
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.common.html.HtmlConstants
-import io.suggest.jd.tags.JdTag
+import io.suggest.jd.tags.{JdTag, MJdTagNames}
+import io.suggest.primo.IHashCodeLazyVal
 import io.suggest.scalaz.NodePath_t
 import japgolly.univeq.{UnivEq, _}
 import monocle.macros.GenLens
@@ -61,7 +62,10 @@ object MJdTagId extends IEmpty {
     val expandMode2 = jdt.props1.bm
       .flatMap(_.expandMode)
 
-    val jdTagId2 = if (expandMode2 !=* jdDoc.jdId.blockExpand) {
+    val jdTagId2 = if (
+      (jdt.name ==* MJdTagNames.STRIP) &&
+      (expandMode2 !=* jdDoc.jdId.blockExpand)
+    ) {
       blockExpand.set(expandMode2)( jdDoc.jdId )
     } else {
       jdDoc.jdId
@@ -77,10 +81,9 @@ object MJdTagId extends IEmpty {
         .subForest
         .zipWithIndex
         .flatMap { case (subJdt, i) =>
-          val jdTagChild2 = selPathRev.modify(i :: _)( jdTagId2 )
           val jdDocCh = jdDoc.copy(
             template  = subJdt,
-            jdId      = jdTagChild2,
+            jdId      = selPathRev.modify(i :: _)( jdTagId2 ),
           )
           mkTreeIndexSeg( jdDocCh )
         }
@@ -113,9 +116,10 @@ final case class MJdTagId(
                            blockExpand      : Option[MBlockExpandMode]    = None,
                          )
   extends EmptyProduct
+  with IHashCodeLazyVal
 {
 
-  override def toString: String = {
+  override lazy val toString: String = {
     var acc: List[Any] = selPathRev
     for (bexp <- blockExpand)
       acc ::= bexp.value

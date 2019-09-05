@@ -48,7 +48,6 @@ object MJdRuntime {
     val jdTagsById = MJdTagId.mkTreeIndex( MJdTagId.mkTreesIndexSeg(docs) )
     MJdRuntime(
       jdCss = JdCss( MJdCssArgs(
-        docs            = docs,
         conf            = jdConf,
         jdtWideSzMults  = jdtWideSzMults,
         jdTagsById      = jdTagsById,

@@ -66,8 +66,15 @@ final case class MScAdData(
         .map { case (blkJdt, i) =>
           main.doc.copy(
             template = blkJdt,
-            jdId = MJdTagId.selPathRev
-              .modify(i :: _)(main.doc.jdId),
+            jdId = {
+              val id = main.doc.jdId
+              id.copy(
+                selPathRev  = i :: id.selPathRev,
+                blockExpand = blkJdt.rootLabel.props1.bm
+                  .flatMap(_.expandMode)
+                  .orElse( id.blockExpand )
+              )
+            }
           )
         }
     }

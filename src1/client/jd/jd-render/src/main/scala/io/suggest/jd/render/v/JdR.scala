@@ -47,8 +47,7 @@ class JdR(
       def _qdContentRrrHtml(p: MJdRrrProps): QdRrrHtml = {
         QdRrrHtml(
           jdCssStatic = jdCssStatic,
-          jdArgs      = p.jdArgs,
-          qdTag       = p.subTree,
+          rrrProps    = p,
         )
       }
 
@@ -58,7 +57,6 @@ class JdR(
         val qdTag = state.subTree.rootLabel
 
         <.div(
-          ^.key := state.tagId.toString,
 
           // Опциональный цвет фона
           _bgColorOpt( qdTag, state.jdArgs ),
@@ -69,16 +67,16 @@ class JdR(
           // Поддержка перетаскивания
           jdCssStatic.absPosStyleAll,
 
-          jdCss.absPosStyleF(qdTag),
+          jdCss.absPosStyleF( state.tagId ),
 
           // CSS-класс принудительной ширины, если задан.
           ReactCommonUtil.maybe( qdTag.props1.widthPx.nonEmpty ) {
-            jdCss.forcedWidthStyleF(qdTag)
+            jdCss.forcedWidthStyleF( state.tagId )
           },
 
           // Стиль для теней
           ReactCommonUtil.maybe( qdTag.props1.textShadow.nonEmpty ) {
-            jdCss.contentShadowF( qdTag )
+            jdCss.contentShadowF( state.tagId )
           },
 
           // Рендер qd-контента в html.
@@ -120,8 +118,7 @@ class JdR(
       def _bgImgAddons(bgImgData: MJdEdgeId, edge: MEdgeDataJs, state: MJdRrrProps): TagMod = {
         // Просто заполнение всего блока картинкой. Т.к. фактический размер картинки отличается от размера блока
         // на px ratio, надо подогнать картинку по размерам:
-        val jdTag = state.subTree.rootLabel
-        state.jdArgs.jdRuntime.jdCss.stripBgStyleF( jdTag )
+        state.jdArgs.jdRuntime.jdCss.stripBgStyleF( state.tagId )
       }
 
       /** Доп.наполнение для sm-block div'a. */
@@ -133,7 +130,7 @@ class JdR(
         TagMod.empty
 
 
-      def _renderContentTag(propsProxy: ModelProxy[MJdRrrProps]): TagOf[html.Div] = {
+      def _renderBlockTag(propsProxy: ModelProxy[MJdRrrProps]): TagOf[html.Div] = {
         val state = propsProxy.value
         val s = state.subTree.rootLabel
         val C = state.jdArgs.jdRuntime.jdCss
@@ -171,10 +168,6 @@ class JdR(
         }
         val bgImgTm = bgImgOpt.whenDefined
 
-        val keyAV = {
-          ^.key := state.tagId.toString
-        }
-
         val maybeSelAV = _outerContainerAddons(state)
 
         // Скрывать не-main-стрипы, если этого требует рендер.
@@ -188,11 +181,9 @@ class JdR(
         }
 
         val smBlock = <.div(
-          keyAV
-            .unless(isWide),
           jdCssStatic.smBlockS,
           C.smBlock,
-          C.bmStyleF( s /*state.tagId*/ ),
+          C.bmStyleF( state.tagId ),
 
           if (isWide) {
             jdCssStatic.wideBlockStyle
@@ -217,11 +208,10 @@ class JdR(
         if (isWide) {
           // Широкоформатное отображение, рендерим фон без ограничений блока:
           <.div(
-            keyAV,
             groupOutlineTm,
             hideNonMainStrip,
             bgColor,
-            C.wideContStyleF(s),
+            C.wideContStyleF(state.tagId),
             maybeSelAV,
             ^.`class` := Css.flat( Css.Overflow.HIDDEN, Css.Position.RELATIVE ),
             bgImgTm.when(isWide),
@@ -235,7 +225,7 @@ class JdR(
       }
 
       def render(propsProxy: ModelProxy[MJdRrrProps]): VdomElement = {
-        _renderContentTag(propsProxy)
+        _renderBlockTag(propsProxy)
       }
 
     }
@@ -255,7 +245,6 @@ class JdR(
       def _renderTag(propsProxy: ModelProxy[MJdRrrProps]): TagOf[html.Div] = {
         val state = propsProxy.value
         <.div(
-          ^.key := state.tagId.toString,
           // Плитку отсюда полностью вынести не удалось.
           CSSGrid {
             jdGridUtil.mkCssGridArgs(
@@ -277,7 +266,7 @@ class JdR(
                 )
               },
               conf = state.jdArgs.conf,
-              tagName = GridComponents.DIV
+              tagName = GridComponents.DIV,
             )
           } (
             renderChildrenWithId( propsProxy )
@@ -317,9 +306,9 @@ class JdR(
       import MJdTagNames._
       val p = proxy.value
       p.subTree.rootLabel.name match {
-        case QD_CONTENT                => qdContentComp(proxy)
-        case STRIP                     => blockComp(proxy)
-        case DOCUMENT                  => documentComp(proxy)
+        case QD_CONTENT                => qdContentComp.withKey(p.tagId.toString)(proxy)
+        case STRIP                     => blockComp.withKey(p.tagId.toString)(proxy)
+        case DOCUMENT                  => documentComp.withKey(p.tagId.toString)(proxy)
         // Это пока не вызывается, т.к. QD_OP отрабатывается в QdRrrHtml.
         case other =>
           throw new UnsupportedOperationException( other.toString )
@@ -343,14 +332,12 @@ class JdR(
           .map { case (childJdTree, i) =>
             val ch = childJdTree.rootLabel
             val tagId = p.tagId.copy(
-              selPathRev     = i :: p.tagId.selPathRev,
-              blockExpand = OptionUtil.maybeOpt {
-                (ch.name ==* MJdTagNames.STRIP) //&&
-                // TODO Если wide запрещён, то это влияет на рендер?
-                //(p.jdArgs.jdRuntime.jdtWideSzMults contains ch)
-              } {
+              selPathRev  = i :: p.tagId.selPathRev,
+              blockExpand = if (ch.name ==* MJdTagNames.STRIP) {
                 ch.props1.bm
                   .flatMap(_.expandMode)
+              } else {
+                p.tagId.blockExpand
               }
             )
             val p2 = p.copy(
@@ -380,12 +367,8 @@ class JdR(
         propsProxy.wrap { jdArgs =>
           MJdRrrProps(
             subTree = jdArgs.data.doc.template,
-            tagId = MJdTagId(
-              nodeId      = jdArgs.data.doc.jdId.nodeId,
-              selPathRev  = Nil,
-              blockExpand = None,
-            ),
-            jdArgs = jdArgs,
+            tagId   = jdArgs.data.doc.jdId,
+            jdArgs  = jdArgs,
           )
         }( renderTag )(implicitly, MJdRrrProps.MJdtRrrPropsFastEq)
       }

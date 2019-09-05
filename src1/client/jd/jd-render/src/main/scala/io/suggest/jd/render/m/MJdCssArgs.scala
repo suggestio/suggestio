@@ -21,7 +21,6 @@ object MJdCssArgs {
   /** Поддержка FastEq для инстансов [[MJdCssArgs]]. */
   implicit object MJdCssArgsFastEq extends FastEq[MJdCssArgs] {
     override def eqv(a: MJdCssArgs, b: MJdCssArgs): Boolean = {
-      (a.docs ===* b.docs) &&
       (a.conf ===* b.conf) &&
       (a.jdtWideSzMults ===* b.jdtWideSzMults) &&
       (a.jdTagsById ===* b.jdTagsById)
@@ -35,13 +34,11 @@ object MJdCssArgs {
 
 /** Класс контейнера данных для рендера CSS-шаблона [[io.suggest.jd.render.v.JdCss]].
   *
-  * @param docs Все документы.
   * @param conf Конфигурация рендеринга.
   * @param quirks Разрешить использовать костыли, которые могут нарушить рендер за пределами плитки.
   *               Появилось, чтобы убрать position.absolute из root-контейнера.
   */
 final case class MJdCssArgs(
-                             docs             : Seq[MJdDoc]               = Nil,
                              conf             : MJdConf,
                              quirks           : Boolean = true,
                              jdtWideSzMults   : Map[JdTag, MSzMult],
@@ -51,7 +48,7 @@ final case class MJdCssArgs(
   override def toString: String = {
     new StringBuilder( productPrefix )
       .append( HtmlConstants.`(` )
-      .append( docs.length ).append( HtmlConstants.DIEZ ).append( HtmlConstants.COMMA )
+      .append( jdTagsById.size ).append( HtmlConstants.DIEZ ).append( HtmlConstants.COMMA )
       .append( conf )
       .append( HtmlConstants.`)` )
       .toString()

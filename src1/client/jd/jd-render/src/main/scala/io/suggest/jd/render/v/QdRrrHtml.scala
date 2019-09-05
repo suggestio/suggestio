@@ -3,8 +3,9 @@ package io.suggest.jd.render.v
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.jd.render.m.MJdArgs
-import io.suggest.jd.tags.{JdTag, MJdTagNames}
+import io.suggest.jd.MJdTagId
+import io.suggest.jd.render.m.MJdRrrProps
+import io.suggest.jd.tags.JdTag
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.msg.{ErrorMsgs, WarnMsgs}
@@ -19,7 +20,6 @@ import scalacss.ScalaCssReact._
 
 import scala.annotation.tailrec
 import japgolly.univeq._
-import scalaz.Tree
 
 /**
   * Suggest.io
@@ -36,20 +36,18 @@ import scalaz.Tree
   *   Например, заворачивать всю пачку строк в список.
   * - Форматирование сегментов текста внутри строк - тривиально, т.е. также как и в первой версии рендерера.
   *
-  * @param qdTag Текущий jd-тег для рендера.
+  * @param rrrProps Данные текущего jd-тег для рендера (QD_CONTENT).
   * @param imgEdgeMods Опциональная функция, возвращающая TagMod при рендере картинок.
   *                    Используется в редакторе для навешивания дополнительных листенеров.
   */
 case class QdRrrHtml(
                       jdCssStatic  : JdCssStatic,
-                      jdArgs       : MJdArgs,
-                      qdTag        : Tree[JdTag],
+                      rrrProps     : MJdRrrProps,
                       imgEdgeMods  : Option[MEdgeDataJs => TagMod] = None,
                       resizableCb  : Option[(MQdOp, MEdgeDataJs, Boolean, ReactMouseEventFromHtml) => Callback] = None,
                     ) {
 
   import QdRrrHtml.LOG
-
 
 
   /** Аккамулятор сегментов рендера текущей строки.
@@ -69,19 +67,26 @@ case class QdRrrHtml(
   /** Набор delta-операций, подлежащих проработке.
     * В конце работы должен остаться Nil.
     */
-  private var _restOps: Stream[(JdTag, MQdOp)] = {
+  private var _restOps: Stream[MQdOpCont] = {
     for {
-      jdt <- qdTag.flatten
-      if jdt.name ==* MJdTagNames.QD_OP
+      (jdtTree, i) <- rrrProps.subTree
+        .subForest
+        .zipWithIndex
+      jdt = jdtTree.rootLabel
       qdOp <- jdt.qdProps
     } yield {
-      jdt -> qdOp
+      MQdOpCont(
+        qdOp    = qdOp,
+        jdTag   = jdt,
+        jdTagId = MJdTagId.selPathRev
+          .modify(i :: _)(rrrProps.tagId),
+      )
     }
   }
 
   /** Аттрибут href для ссылки, чтобы не было паразитных переходов в редакторе. */
   private def _hrefAttr =
-    if (jdArgs.conf.isEdit) ^.title else ^.href
+    if (rrrProps.jdArgs.conf.isEdit) ^.title else ^.href
 
 
   /** Выполнить рендеринг текущего qd-тега. */
@@ -108,7 +113,7 @@ case class QdRrrHtml(
         // Если delta-синтаксис валиден, то currLineOpsAcc должен быть пустым благодаря финализирующей \n.
         if (_currLineAccRev.nonEmpty) {
           //throw new IllegalStateException("CR/LF error: " + qdTag)
-          LOG.warn( WarnMsgs.QDELTA_FINAL_NEWLINE_PROBLEM, msg = qdTag )
+          LOG.warn( WarnMsgs.QDELTA_FINAL_NEWLINE_PROBLEM, msg = rrrProps.subTree )
           // Надо принудительно закрыть кривую строку.
           _handleEol()
         }
@@ -120,13 +125,12 @@ case class QdRrrHtml(
 
 
   /** Прорендерить текущую операцию, распихав изменения по аккамуляторам. */
-  private def _renderOp(jdtQdOp: (JdTag, MQdOp), counters: QdRrrOpKeyCounters): Option[QdRrrOpKeyCounters] = {
-    val qdOp = jdtQdOp._2
-    val counters2Opt = qdOp.opType match {
+  private def _renderOp(jdtQdOp: MQdOpCont, counters: QdRrrOpKeyCounters): Option[QdRrrOpKeyCounters] = {
+    val counters2Opt = jdtQdOp.qdOp.opType match {
       case MQdOpTypes.Insert =>
         for {
-          qdEi <- qdOp.edgeInfo
-          e <- jdArgs.data.edges.get( qdEi.edgeUid )
+          qdEi <- jdtQdOp.qdOp.edgeInfo
+          e <- rrrProps.jdArgs.data.edges.get( qdEi.edgeUid )
         } yield {
           var framesCnt = counters.frame
           var imagesCnt = counters.image
@@ -160,14 +164,14 @@ case class QdRrrHtml(
         throw new UnsupportedOperationException( ErrorMsgs.NOT_IMPLEMENTED + HtmlConstants.SPACE + other )
     }
     if (counters2Opt.isEmpty)
-      LOG.warn(ErrorMsgs.EDGE_NOT_EXISTS, msg = qdOp.edgeInfo)
+      LOG.warn(ErrorMsgs.EDGE_NOT_EXISTS, msg = jdtQdOp.qdOp.edgeInfo)
     counters2Opt
   }
 
 
 
   /** Вставка картинки-изображения. */
-  private def _insertImage(e: MEdgeDataJs, jdtQdOp: (JdTag, MQdOp), i: Int): Unit = {
+  private def _insertImage(e: MEdgeDataJs, jdtQdOp: MQdOpCont, i: Int): Unit = {
     val resOpt = for {
       // Определяем img.src. Quill не понимает blob-ссылки, только data или http.
       imgSrc <- e.imgSrcOpt
@@ -175,17 +179,15 @@ case class QdRrrHtml(
       // Аккамулируем аттрибуты для рендера img-тега.
       var imgArgsAcc = List.empty[TagMod]
 
-      val (jdt, qdOp) = jdtQdOp
-
       // width/height экранного представления картинки задаётся в CSS:
       // Контейнер ресайза также требует этот стиль, поэтому кэшируем стиль в переменной:
-      val embedStyleOpt = for (ae <- qdOp.attrsEmbed if ae.nonEmpty) yield {
-        jdArgs.jdRuntime.jdCss.embedAttrStyleF( jdt )
+      val embedStyleOpt = for (ae <- jdtQdOp.qdOp.attrsEmbed if ae.nonEmpty) yield {
+        rrrProps.jdArgs.jdRuntime.jdCss.embedAttrStyleF( jdtQdOp.jdTagId )
       }
       embedStyleOpt.foreach( imgArgsAcc ::= _ )
 
       // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
-      if (jdArgs.conf.isEdit)
+      if (rrrProps.jdArgs.conf.isEdit)
         imgArgsAcc ::= (^.draggable := false)
 
       // Доп.модификации извне.
@@ -200,15 +202,16 @@ case class QdRrrHtml(
         (^.src := imgSrc) ::
         imgArgsAcc
 
-      for (attrsText <- qdOp.attrsText if attrsText.isCssStyled)
-        imgArgsAcc ::= jdArgs.jdRuntime.jdCss.textStyleF( jdt )
+      for (attrsText <- jdtQdOp.qdOp.attrsText if attrsText.isCssStyled) {
+        imgArgsAcc ::= rrrProps.jdArgs.jdRuntime.jdCss.textStyleF( jdtQdOp.jdTagId )
+      }
 
       var finalTm: TagMod = <.img(
         imgArgsAcc: _*
       )
 
       // Поддержка рендера внутри a-тега (ссылка). В редакторе не рендерим её, чтобы не было случайных переходов при кликах по шаблону.
-      for (attrsText <- qdOp.attrsText; linkSu <- attrsText.link; link <- linkSu) {
+      for (attrsText <- jdtQdOp.qdOp.attrsText; linkSu <- attrsText.link; link <- linkSu) {
         finalTm = <.a(
           keyTm,
           // Если редактор открыт, то не надо рендерить ссылку кликабельной. Просто пусть будет подсказка.
@@ -221,7 +224,7 @@ case class QdRrrHtml(
       for {
         resizableF      <- resizableCb
         origWh          <- e.origWh
-        attrsEmbed      <- qdOp.attrsEmbed
+        attrsEmbed      <- jdtQdOp.qdOp.attrsEmbed
         embedStyle      <- embedStyleOpt
       } {
         // TODO Надо бы сделать маску поверх картинки через div здесь. Это решит проблемы в хроме. Для этого надо провести высоту картинки, не сохраняя её в аттрибутах.
@@ -232,13 +235,16 @@ case class QdRrrHtml(
           .fold( origWh.height ) { displayWidthPx =>
             (displayWidthPx.toDouble / origWh.width.toDouble * origWh.height).toInt
           }
+
         finalTm = <.div(
           keyTm,
           ^.`class` := Css.flat(Css.Display.INLINE_BLOCK, Css.Position.RELATIVE),
           finalTm,
           <.div(
             jdCssStatic.horizResizable,
-            ^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, false, event) },
+            ^.onMouseUp ==> { event: ReactMouseEventFromHtml =>
+              resizableF(jdtQdOp.qdOp, e, false, event)
+            },
             ^.height := maskHeightPx.px,
             embedStyle,
             ^.`class` := Css.flat(Css.Overflow.HIDDEN, Css.Position.ABSOLUTE)
@@ -255,15 +261,14 @@ case class QdRrrHtml(
 
 
   /** Рендер video. */
-  private def _insertFrame(e: MEdgeDataJs, jdtQdOp: (JdTag, MQdOp), i: Int): Unit = {
+  private def _insertFrame(e: MEdgeDataJs, jdtQdOp: MQdOpCont, i: Int): Unit = {
     val resOpt = for {
       src <- e.jdEdge.url
     } yield {
-      val (jdTag, qdOp) = jdtQdOp
-      val whStyl = qdOp.attrsEmbed
+      val whStyl = jdtQdOp.qdOp.attrsEmbed
         .filter(_.nonEmpty)
-        .fold( jdArgs.jdRuntime.jdCss.videoStyle ) { _ =>
-          jdArgs.jdRuntime.jdCss.embedAttrStyleF( jdTag )
+        .fold( rrrProps.jdArgs.jdRuntime.jdCss.videoStyle ) { _ =>
+          rrrProps.jdArgs.jdRuntime.jdCss.embedAttrStyleF( jdtQdOp.jdTagId )
         }
       val keyV = "V" + i
       val iframe = <.iframe(
@@ -273,7 +278,7 @@ case class QdRrrHtml(
         whStyl
       )
 
-      val tm = if ( jdArgs.conf.isEdit ) {
+      val tm = if ( rrrProps.jdArgs.conf.isEdit ) {
         // Для редактора используем div-контейнер, чтобы меньше мигало видео в редакторе.
         var outerAcc = List.empty[TagMod]
         outerAcc ::= <.div(
@@ -283,7 +288,9 @@ case class QdRrrHtml(
           resizableCb.whenDefined { resizableF =>
             TagMod(
               jdCssStatic.hvResizable,
-              ^.onMouseUp ==> { event: ReactMouseEventFromHtml => resizableF(qdOp, e, true, event) }
+              ^.onMouseUp ==> { event: ReactMouseEventFromHtml =>
+                resizableF(jdtQdOp.qdOp, e, true, event)
+              }
             )
           }
         )
@@ -308,11 +315,11 @@ case class QdRrrHtml(
 
 
   /** Рендер insert-op с текстом. */
-  private def _insertText(text: String, jdtQdOp: (JdTag, MQdOp), i: Int): Unit = {
+  private def _insertText(text: String, jdtQdOp: MQdOpCont, i: Int): Unit = {
     if (text matches "[\n]+") {
       // Специальный случай: тег завершения строки с возможной стилистикой всей прошедшей строки.
       for (j <- 1 to text.length)
-        _handleEol( jdtQdOp._2.attrsLine, Some(i), Some(j) )
+        _handleEol( jdtQdOp.qdOp.attrsLine, Some(i), Some(j) )
     } else {
       // Это обычный текст. Но он может содержать в себе \n-символы в неограниченном количестве.
       _insertPlainTextWithNls(text, jdtQdOp, i)
@@ -346,7 +353,7 @@ case class QdRrrHtml(
     * Символы \n очень важны в quill-выхлопе, нельзя их терять или рубить неаккуратно.
     */
   /** Отработать просто текст с возможными \n внутри. */
-  private def _insertPlainTextWithNls(text: String, jdtQdOp: (JdTag, MQdOp), i: Int): Unit = {
+  private def _insertPlainTextWithNls(text: String, jdtQdOp: MQdOpCont, i: Int): Unit = {
     val nlCh = HtmlConstants.NEWLINE_UNIX
     if (text contains nlCh) {
       // Внутри строки есть символы \n. Обычно, такое возможно при отсуствии какого-либо форматирования.
@@ -362,7 +369,7 @@ case class QdRrrHtml(
         // Quill всегда добавляет в конец последней операции \n из каких-то благих намерений.
         // Его нужно правильно отрабатывать, т.е. срезать.
         val isNotLastSplit = j < lastSplitIndex
-        if (isNotLastSplit || split.nonEmpty || jdtQdOp._2.attrsLine.nonEmpty)
+        if (isNotLastSplit || split.nonEmpty || jdtQdOp.qdOp.attrsLine.nonEmpty)
           _insertVeryPlainText(split, jdtQdOp, s"$i.$j")
 
         if (isNotLastSplit)
@@ -376,7 +383,7 @@ case class QdRrrHtml(
   }
 
 
-  private def _insertVeryPlainText(text0: String, jdtQdOp: (JdTag, MQdOp), keyPrefix: String): Unit = {
+  private def _insertVeryPlainText(text0: String, jdtQdOp: MQdOpCont, keyPrefix: String): Unit = {
     // Для максимальной скорости работы и некоторого удобства, тут много переменных.
     var acc: TagMod = if ( text0.isEmpty ) {
       _emptyLineContent1( keyPrefix )
@@ -384,17 +391,15 @@ case class QdRrrHtml(
       text0
     }
 
-    val (jdt, qdOp) = jdtQdOp
-
     // Обвешать текст заданной аттрибутикой
     for {
-      attrs <- qdOp.attrsText
+      attrs <- jdtQdOp.qdOp.attrsText
       if attrs.nonEmpty
     } {
       // Отрендерить цвет текста и цвет фона, одним style.
       // Стилизуем текст только через самый внутренний тег оформления текста, управляя этим через переменную.
       var textStyleOpt = OptionUtil.maybe[TagMod]( attrs.isCssStyled ) {
-        jdArgs.jdRuntime.jdCss.textStyleF( jdt )
+        rrrProps.jdArgs.jdRuntime.jdCss.textStyleF( jdtQdOp.jdTagId )
       }
 
       val keyTm = ^.key := keyPrefix
@@ -678,3 +683,9 @@ protected sealed case class QdRrrOpKeyCounters(
                                                 other   : Int     = 0
                                               )
 
+
+protected final case class MQdOpCont(
+                                      qdOp        : MQdOp,
+                                      jdTag       : JdTag,
+                                      jdTagId     : MJdTagId,
+                                    )

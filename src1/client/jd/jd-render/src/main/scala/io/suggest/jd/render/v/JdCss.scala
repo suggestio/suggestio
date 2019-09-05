@@ -10,7 +10,7 @@ import io.suggest.css.ScalaCssDefaults._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.dev.MSzMult
 import io.suggest.font.{MFontSizes, MFonts}
-import io.suggest.jd.JdConst
+import io.suggest.jd.{JdConst, MJdTagId}
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.primo.ISetUnset
@@ -44,6 +44,11 @@ object JdCss {
   private[v] def valueEnumEntryDomainNameF[T] = {
     (vee: ValueEnumEntry[T], _: Int) =>
       vee.value
+  }
+
+  private val _jdIdToStringF = {
+    (jdId: MJdTagId, i: Int) =>
+      jdId.toString
   }
 
 }
@@ -169,12 +174,18 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   private def _allJdTagsIter: Iterator[JdTag] = {
     jdCssArgs
-      .docs
-      .iterator
-      // TODO Надо сделать flatten, но с деревом jd-id.
-      .flatMap( _.template.flatten )
+      .jdTagsById
+      .valuesIterator
   }
 
+  private def _filteredTagIds(filter: JdTag => Boolean): IndexedSeq[MJdTagId] = {
+    jdCssArgs.jdTagsById.iterator
+      .filter { jdtWithId =>
+        filter( jdtWithId._2 )
+      }
+      .map(_._1)
+      .toIndexedSeq
+  }
 
   // -------------------------------------------------------------------------------
   // Strip
@@ -196,65 +207,66 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
     styleF(
       new Domain.OverSeq(
-        _allJdTagsIter
-          .filter(_.props1.bm.nonEmpty)
-          .toIndexedSeq
+        _filteredTagIds( _.props1.bm.nonEmpty )
       )
-    ) { strip =>
-      var accS = List.empty[ToStyle]
+    )(
+      {stripId =>
+        val strip = jdCssArgs.jdTagsById( stripId )
+        var accS = List.empty[ToStyle]
 
-      // Стиль размеров блока-полосы.
-      for (bm <- strip.props1.bm) {
-        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( strip )
+        // Стиль размеров блока-полосы.
+        for (bm <- strip.props1.bm) {
+          val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( strip )
 
-        val widthPx = _szMulted( bm.width, wideSzMultOpt )
-        accS ::= height( _szMulted( bm.height, wideSzMultOpt ).px )
-        accS ::= width ( widthPx.px )
+          val widthPx = _szMulted( bm.width, wideSzMultOpt )
+          accS ::= height( _szMulted( bm.height, wideSzMultOpt ).px )
+          accS ::= width ( widthPx.px )
 
-        // Перезаписать дефолтовый размер шрифта в wide-блоке с доп.мультипликатором размера
-        for (_ <- wideSzMultOpt) {
-          accS ::= fontSize( _szMulted(MFontSizes.default.value, wideSzMultOpt).px )
-        }
-
-        // Выравнивание блока внутри внешнего контейнера:
-        if (bm.expandMode.nonEmpty && !jdCssArgs.conf.isEdit) {
-          // Если wide, то надо отцентровать блок внутри wide-контейнера.
-          // Формула по X банальна: с середины внешнего контейнера вычесть середину smBlock и /2.
-          import io.suggest.common.html.HtmlConstants._
-          accS ::= {
-            val calcFormula = pc50 + SPACE + MINUS + SPACE + (widthPx / 2).px.value
-            left.attr := Css.Calc( calcFormula )
+          // Перезаписать дефолтовый размер шрифта в wide-блоке с доп.мультипликатором размера
+          for (_ <- wideSzMultOpt) {
+            accS ::= fontSize( _szMulted(MFontSizes.default.value, wideSzMultOpt).px )
           }
 
-          //accS ::= wideLeftAv
-          //accS ::= wideWidthAv
+          // Выравнивание блока внутри внешнего контейнера:
+          if (bm.expandMode.nonEmpty && !jdCssArgs.conf.isEdit) {
+            // Если wide, то надо отцентровать блок внутри wide-контейнера.
+            // Формула по X банальна: с середины внешнего контейнера вычесть середину smBlock и /2.
+            import io.suggest.common.html.HtmlConstants._
+            accS ::= {
+              val calcFormula = pc50 + SPACE + MINUS + SPACE + (widthPx / 2).px.value
+              left.attr := Css.Calc( calcFormula )
+            }
 
-        } else {
-          // TODO Opt сделать единый стиль для left:0px, а здесь просто Style.empty делать?
-          accS ::= left0px
+            //accS ::= wideLeftAv
+            //accS ::= wideWidthAv
+
+          } else {
+            // TODO Opt сделать единый стиль для left:0px, а здесь просто Style.empty делать?
+            accS ::= left0px
+          }
         }
-      }
 
-      styleS( accS: _* )
-    }
+        styleS( accS: _* )
+      },
+      JdCss._jdIdToStringF,
+    )
   }
 
 
   /** Стили для фоновых картинок стрипов. */
-  val stripBgStyleF =
-    styleF(
-      new Domain.OverSeq(
-        _allJdTagsIter
-          .filter { jdt =>
-            // Интересуют только стрипы c bgImg, но без wide
-            val p1 = jdt.props1
-            p1.bm.nonEmpty &&
-              (jdt.name ==* MJdTagNames.STRIP) &&
-              p1.bgImg.nonEmpty
-          }
-          .toIndexedSeq
-      )
-    ) { strip =>
+  val stripBgStyleF = styleF(
+    new Domain.OverSeq(
+      _filteredTagIds { jdt =>
+        // Интересуют только стрипы c bgImg, но без wide
+        val p1 = jdt.props1
+        p1.bm.nonEmpty &&
+          (jdt.name ==* MJdTagNames.STRIP) &&
+          p1.bgImg.nonEmpty
+      }
+    )
+  ) (
+    {stripId =>
+      val strip = jdCssArgs.jdTagsById( stripId )
       strip.props1.bm.whenDefinedStyleS { bm =>
         val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( strip )
         styleS(
@@ -268,18 +280,21 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           }
         )
       }
-    }
+    },
+    JdCss._jdIdToStringF,
+  )
 
 
   /** Стили контейнера блока с широким фоном. */
-  val wideContStyleF =
-    styleF(
-      new Domain.OverSeq(
-        _allJdTagsIter
-          .filter(_.props1.bm.hasExpandMode)
-          .toIndexedSeq
-      )
-    ) { strip =>
+  val wideContStyleF = styleF(
+    new Domain.OverSeq(
+      _filteredTagIds { jdt =>
+        jdt.props1.bm.hasExpandMode
+      }
+    )
+  ) (
+    {stripId =>
+      val strip = jdCssArgs.jdTagsById( stripId )
       var accS: List[ToStyle] = Nil
       // Уточнить размеры wide-блока:
       for (bm <- strip.props1.bm) {
@@ -305,7 +320,9 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       }
       // Объеденить все стили:
       styleS( accS: _* )
-    }
+    },
+    JdCss._jdIdToStringF,
+  )
 
 
   /** Цвет фона бывает у разнотипных тегов, поэтому выносим CSS для цветов фона в отдельный каталог стилей. */
@@ -332,32 +349,13 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // AbsPos
 
   /** Стили для элементов, отпозиционированных абсолютно. */
-  val absPosStyleF = {
-    styleF(
-      new Domain.OverSeq({
-        val iter = for {
-          // topTree может быть как DOCUMENT, так и STRIP.
-          jdDoc <- jdCssArgs.docs.iterator
-          topJdTree = jdDoc.template
-          topJdt = topJdTree.rootLabel
-          // Собираем только стрипы:
-          stripTree <- topJdt.name match {
-            case MJdTagNames.STRIP => topJdTree :: Nil
-            case MJdTagNames.DOCUMENT => topJdTree.subForest
-            case _ => Nil
-          }
-          strip = stripTree.rootLabel
-          if (strip.name ==* MJdTagNames.STRIP)
-          jdTagTree <- stripTree.subForest
-          jdt = jdTagTree.rootLabel
-          if (jdt.name ==* MJdTagNames.QD_CONTENT) &&
-             jdt.props1.topLeft.nonEmpty
-        } yield {
-          jdt
-        }
-        iter.toIndexedSeq
-      })
-    ) { jdt =>
+  val absPosStyleF = styleF(
+    new Domain.OverSeq({
+      _filteredTagIds { _.props1.topLeft.nonEmpty }
+    })
+  ) (
+    { jdtId =>
+      val jdt = jdCssArgs.jdTagsById( jdtId )
       // 2019-03-06 Для позиционирования внутри wide-блока используется поправка по горизонтали, чтобы "растянуть" контент.
       jdt.props1.topLeft.whenDefinedStyleS { topLeft =>
         val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
@@ -367,40 +365,42 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
           left( _szMulted(topLeft.x, wideSzMultOpt).px ),
         )
       }
-    }
-  }
+    },
+    JdCss._jdIdToStringF,
+  )
+
 
 
   /** Стили ширин для элементов, у которых задана принудительная ширина. */
-  val forcedWidthStyleF =
-    styleF(
-      new Domain.OverSeq(
-        _allJdTagsIter
-          .filter(_.props1.widthPx.nonEmpty)
-          .toIndexedSeq
-      )
-    ) { jdt =>
+  val forcedWidthStyleF = styleF(
+    new Domain.OverSeq(
+      _filteredTagIds { _.props1.widthPx.nonEmpty }
+    )
+  ) (
+    {jdtId =>
+      val jdt = jdCssArgs.jdTagsById( jdtId )
       jdt.props1.widthPx.whenDefinedStyleS { widthPx =>
         val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
         styleS(
           width( _szMulted(widthPx, wideSzMultOpt).px )
         )
       }
-    }
+    },
+    JdCss._jdIdToStringF,
+  )
 
 
   // -------------------------------------------------------------------------------
   // fonts
 
   /** Тени текста. */
-  val contentShadowF = {
-    styleF(
-      new Domain.OverSeq(
-        _allJdTagsIter
-          .filter(_.props1.textShadow.nonEmpty)
-          .toIndexedSeq
-      )
-    ) { jdt =>
+  val contentShadowF = styleF(
+    new Domain.OverSeq(
+      _filteredTagIds { _.props1.textShadow.nonEmpty }
+    )
+  ) (
+    {jdtId =>
+      val jdt = jdCssArgs.jdTagsById( jdtId )
       val shadow = jdt.props1.textShadow.get
       var acc: List[String] = Nil
       for (mcd <- shadow.color)
@@ -413,8 +413,10 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       styleS(
         textShadow := acc.mkString( HtmlConstants.SPACE )
       )
-    }
-  }
+    },
+    JdCss._jdIdToStringF,
+  )
+
 
   /** styleF для стилей текстов. */
   val textStyleF = {
@@ -427,54 +429,57 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
     styleF(
       new Domain.OverSeq(
-        _allJdTagsIter.filter { jdt =>
+        _filteredTagIds { jdt =>
           jdt.qdProps.exists { qdOp =>
             qdOp.attrsText
               .exists(_.isCssStyled)
           }
         }
-          .toIndexedSeq
       )
-    ) { jdt =>
-      val attrsText = jdt.qdProps.get.attrsText.get
+    ) (
+      {jdtId =>
+        val jdt = jdCssArgs.jdTagsById( jdtId )
+        val attrsText = jdt.qdProps.get.attrsText.get
 
-      var acc = List.empty[ToStyle]
+        var acc = List.empty[ToStyle]
 
-      // Отрендерить аттрибут одного цвета.
-      // cssAttr не всегда обязателен, но его обязательная передача компенсируется через _colorAttr и _bgColorAttr.
-      def __applyToColor(cssAttr: TypedAttr_Color,  mcdSuOpt: Option[ISetUnset[MColorData]]): Unit = {
-        for (colorSU <- mcdSuOpt; color <- colorSU)
-          acc ::= cssAttr( Color(color.hexCode) )
-      }
+        // Отрендерить аттрибут одного цвета.
+        // cssAttr не всегда обязателен, но его обязательная передача компенсируется через _colorAttr и _bgColorAttr.
+        def __applyToColor(cssAttr: TypedAttr_Color,  mcdSuOpt: Option[ISetUnset[MColorData]]): Unit = {
+          for (colorSU <- mcdSuOpt; color <- colorSU)
+            acc ::= cssAttr( Color(color.hexCode) )
+        }
 
-      __applyToColor( _colorAttr, attrsText.color )
-      __applyToColor( _bgColorAttr, attrsText.background )
+        __applyToColor( _colorAttr, attrsText.color )
+        __applyToColor( _bgColorAttr, attrsText.background )
 
-      // Если задан font, то нужно отрендерить font-family:
-      for (fontSU <- attrsText.font; font <- fontSU) {
-        val av = _fontFamilyAttr := Css.quoted( font.cssFontFamily )
-        acc ::= av
-      }
+        // Если задан font, то нужно отрендерить font-family:
+        for (fontSU <- attrsText.font; font <- fontSU) {
+          val av = _fontFamilyAttr := Css.quoted( font.cssFontFamily )
+          acc ::= av
+        }
 
-      // Если задан font-size, то нужно отрендерить его вместе с сопутствующими аттрибутами.
-      for (fontSizeSU <- attrsText.size; fontSizePx <- fontSizeSU) {
-        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
+        // Если задан font-size, то нужно отрендерить его вместе с сопутствующими аттрибутами.
+        for (fontSizeSU <- attrsText.size; fontSizePx <- fontSizeSU) {
+          val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
 
-        // Рендер размера шрифта
-        acc ::= _lineHeightAttr( _szMulted(fontSizePx.lineHeight, wideSzMultOpt).px )
-        // Отрендерить размер шрифта
-        acc ::= _fontSizeAttr( _szMulted(fontSizePx.value, wideSzMultOpt).px )
+          // Рендер размера шрифта
+          acc ::= _lineHeightAttr( _szMulted(fontSizePx.lineHeight, wideSzMultOpt).px )
+          // Отрендерить размер шрифта
+          acc ::= _fontSizeAttr( _szMulted(fontSizePx.value, wideSzMultOpt).px )
 
-        // Фикс межстрочки для мелкого текста и HTML5. Можно это не рендерить для шрифтов, которые крупнее 18px
-        if (fontSizePx.forceRenderBlockHtml5)
-          acc ::= display.block
-      }
+          // Фикс межстрочки для мелкого текста и HTML5. Можно это не рендерить для шрифтов, которые крупнее 18px
+          if (fontSizePx.forceRenderBlockHtml5)
+            acc ::= display.block
+        }
 
-      //!!! При добавлении поддержки сюда новых аттрибутов attrsText, надо не забывать про набивку .isCssStyled .
+        //!!! При добавлении поддержки сюда новых аттрибутов attrsText, надо не забывать про набивку .isCssStyled .
 
-      // Вернуть скомпонованный стиль.
-      styleS( acc: _* )
-    }
+        // Вернуть скомпонованный стиль.
+        styleS( acc: _* )
+      },
+      JdCss._jdIdToStringF,
+    )
   }
 
 
@@ -484,24 +489,27 @@ final case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   val embedAttrStyleF = {
     styleF(
       new Domain.OverSeq(
-        _allJdTagsIter
-          .filter(_.qdProps.exists(_.attrsEmbed.exists(_.nonEmpty)))
-          .toIndexedSeq
+        _filteredTagIds( _.qdProps.exists(_.attrsEmbed.exists(_.nonEmpty)) )
       )
-    ) { jdt =>
-      val embedAttrs = jdt.qdProps.get.attrsEmbed.get
-      var acc = List.empty[ToStyle]
-      val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
+    ) (
+      {jdtId =>
+        val jdt = jdCssArgs.jdTagsById( jdtId )
 
-      for (heightSU <- embedAttrs.height; heightPx <- heightSU)
-        acc ::= height( _szMulted(heightPx, wideSzMultOpt).px )
-      for (widthSU <- embedAttrs.width; widthPx <- widthSU)
-        acc ::= width( _szMulted(widthPx, wideSzMultOpt).px )
+        val embedAttrs = jdt.qdProps.get.attrsEmbed.get
+        var acc = List.empty[ToStyle]
+        val wideSzMultOpt = jdCssArgs.jdtWideSzMults.get( jdt )
 
-      styleS(
-        acc: _*
-      )
-    }
+        for (heightSU <- embedAttrs.height; heightPx <- heightSU)
+          acc ::= height( _szMulted(heightPx, wideSzMultOpt).px )
+        for (widthSU <- embedAttrs.width; widthPx <- widthSU)
+          acc ::= width( _szMulted(widthPx, wideSzMultOpt).px )
+
+        styleS(
+          acc: _*
+        )
+      },
+      JdCss._jdIdToStringF,
+    )
   }
 
   val rotateF =
