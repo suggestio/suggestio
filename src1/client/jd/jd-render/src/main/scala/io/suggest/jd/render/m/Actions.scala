@@ -23,7 +23,7 @@ case class JdTagSelect(jdTag: JdTag ) extends IJdAction
 
 /** Начато перетаскивание тега. */
 case class JdTagDragStart( jdTag: JdTag ) extends IJdAction
-case class JdTagDragEnd( jdTag: JdTag ) extends IJdAction
+case object JdTagDragEnd extends IJdAction
 
 
 /** Текущий перетаскиваемый элемент был дропнут в указанный strip.

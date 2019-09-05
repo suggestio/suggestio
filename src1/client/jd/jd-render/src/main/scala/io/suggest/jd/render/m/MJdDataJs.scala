@@ -21,10 +21,11 @@ object MJdDataJs {
   /** Поддержка FastEq для инстансов [[MJdDataJs]]. */
   implicit object MJdDataJsFastEq extends FastEq[MJdDataJs] {
     override def eqv(a: MJdDataJs, b: MJdDataJs): Boolean = {
-      (a.doc ===* b.doc) &&
+      ((a.doc ===* b.doc) || MJdDoc.MJdTplFastEq.eqv(a.doc, b.doc)) &&
       (a.edges ===* b.edges)
     }
   }
+
 
   @inline implicit def univEq: UnivEq[MJdDataJs] = UnivEq.derive
 

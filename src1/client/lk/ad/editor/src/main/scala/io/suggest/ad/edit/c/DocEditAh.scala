@@ -468,6 +468,10 @@ class DocEditAh[M](
           )(v2)
         }
 
+        // Если состояние dnd непустое, то значит была ошибка перетакивания, и надо принудительно сбросить dnd-состояние.
+        // Если этого не сделать, то рамочка вокруг текущего тега не будет рендерится.
+        val fxOpt = OptionUtil.maybe(v2.jdArgs.renderArgs.dnd.nonEmpty)( JdTagDragEnd.toEffectPure )
+
         // Обновить список color-preset'ов.
         val bgColorsAppend = for {
           // Закинуть цвет фона нового тега в самое начало списка презетов. Затем - окончательный фон предыдущего тега.
@@ -485,7 +489,7 @@ class DocEditAh[M](
             .set( presets2 )(v2)
         }
 
-        updated( v2 )
+        ah.updatedMaybeEffect( v2, fxOpt )
       }
 
 
@@ -695,7 +699,7 @@ class DocEditAh[M](
 
 
     // dragend. Нередко, он не наступает вообще. Т.е. код тут ненадёжен и срабатывает редко, почему-то.
-    case _: JdTagDragEnd =>
+    case JdTagDragEnd =>
       val v0 = value
       v0.jdArgs.renderArgs.dnd.jdt.fold(noChange) { _ =>
         val v2 = _jdArgs_renderArgs_dnd_jdt_LENS.set( None )(v0)

@@ -24,7 +24,8 @@ object MJdDoc {
   implicit object MJdTplFastEq extends FastEq[MJdDoc] {
     override def eqv(a: MJdDoc, b: MJdDoc): Boolean = {
       (a.template ===* b.template) &&
-      (a.jdId ===* b.jdId)
+      // Инстанс JdID собирается динамически при рендере JdCss и JdR, поэтому его следует сравнивать изнутри.
+      ((a.jdId ===* b.jdId) || MJdTagId.MJdTagIdFastEq.eqv(a.jdId, b.jdId))
     }
   }
 

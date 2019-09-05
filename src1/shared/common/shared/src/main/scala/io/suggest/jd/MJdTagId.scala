@@ -1,12 +1,14 @@
 package io.suggest.jd
 
+import diode.FastEq
 import io.suggest.ad.blk.MBlockExpandMode
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.primo.IHashCodeLazyVal
 import io.suggest.scalaz.NodePath_t
-import japgolly.univeq.{UnivEq, _}
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 import monocle.macros.GenLens
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -98,6 +100,17 @@ object MJdTagId extends IEmpty {
   def mkTreeIndex1(segments: TraversableOnce[Stream[(MJdTagId, JdTag)]]): HashMap[MJdTagId, JdTag] = {
     (HashMap.newBuilder[MJdTagId, JdTag] ++= segments.toStream.iterator.flatten)
       .result()
+  }
+
+
+  object MJdTagIdFastEq extends FastEq[MJdTagId] {
+    override def eqv(a: MJdTagId, b: MJdTagId): Boolean = {
+      // Список selPathRev собирается динамически на основе zipWithIndex, поэтому инстансы у него очень динамические, в основном - одноразовые.
+      ((a.selPathRev ===* b.selPathRev) || (a.selPathRev ==* b.selPathRev)) &&
+      // Инстансы nodeId и blockExpand берутся напрямую из стабильных JdTag, поэтому эти инстансы стабильны:
+      (a.nodeId ===* b.nodeId) &&
+      (a.blockExpand ===* b.blockExpand)
+    }
   }
 
 }

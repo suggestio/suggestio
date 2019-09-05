@@ -2,8 +2,10 @@ package io.suggest.sc.m.grid
 
 import diode.FastEq
 import diode.data.Pot
+import io.suggest.ad.blk.MBlockExpandMode
 import io.suggest.jd.{MJdDoc, MJdTagId}
 import io.suggest.jd.render.m.MJdDataJs
+import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.id.OptStrId
@@ -11,6 +13,7 @@ import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
 import monocle.macros.GenLens
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -34,6 +37,17 @@ object MScAdData {
   val main    = GenLens[MScAdData](_.main)
   val focused = GenLens[MScAdData](_.focused)
 
+  private def _mkJdIdBlkExpand(blkJdt: Tree[JdTag], jdId0: MJdTagId): Option[MBlockExpandMode] = {
+    blkJdt.rootLabel.props1.bm
+      .flatMap(_.expandMode)
+      .orElse( jdId0.blockExpand )
+  }
+
+  private val _jdId_blockExpand_LENS = {
+    MJdDoc.jdId
+      .composeLens( MJdTagId.blockExpand )
+  }
+
 }
 
 
@@ -55,9 +69,18 @@ final case class MScAdData(
     *
     * @return Список шаблонов на рендер.
     */
-  lazy val flatGridTemplates: Stream[MJdDoc] = {
+  def flatGridTemplates: Stream[MJdDoc] = {
     focused.fold {
-      main.doc #:: Stream.empty
+      val blkExp2 = MScAdData._mkJdIdBlkExpand( main.doc.template, main.doc.jdId )
+
+      val doc2 = if (main.doc.jdId.blockExpand ==* blkExp2)
+        main.doc
+      else
+        MScAdData._jdId_blockExpand_LENS
+          .set(blkExp2)(main.doc)
+
+      doc2 #:: Stream.empty
+
     } { foc =>
       foc
         .blkData.doc.template
@@ -70,9 +93,7 @@ final case class MScAdData(
               val id = main.doc.jdId
               id.copy(
                 selPathRev  = i :: id.selPathRev,
-                blockExpand = blkJdt.rootLabel.props1.bm
-                  .flatMap(_.expandMode)
-                  .orElse( id.blockExpand )
+                blockExpand = MScAdData._mkJdIdBlkExpand(blkJdt, id),
               )
             }
           )

@@ -107,7 +107,7 @@ class JdEditR(
     TagMod(
       ^.draggable := true,
       ^.onDragStart ==> onDragStartF,
-      ^.onDragEnd   --> dispatchOnProxyScopeCB($, JdTagDragEnd(jdt) )
+      ^.onDragEnd   --> dispatchOnProxyScopeCB($, JdTagDragEnd )
     )
   }
 

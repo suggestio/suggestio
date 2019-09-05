@@ -24,10 +24,10 @@ object MJdRuntime {
 
   implicit object MJdRuntimeFastEq extends FastEq[MJdRuntime] {
     override def eqv(a: MJdRuntime, b: MJdRuntime): Boolean = {
-      (a.jdCss ===* b.jdCss) &&
-      (a.jdtWideSzMults ===* b.jdtWideSzMults) &&
-      (a.qdBlockLess ===* b.qdBlockLess) &&
-      (a.jdTagsById ===* b.jdTagsById)
+      //(a.jdCss ===* b.jdCss) &&
+      //(a.jdtWideSzMults ===* b.jdtWideSzMults) &&
+      (a.qdBlockLess ===* b.qdBlockLess) //&&
+      //(a.jdTagsById ===* b.jdTagsById)
     }
   }
 

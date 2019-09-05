@@ -22,9 +22,11 @@ object MJdArgs {
   /** Поддержка FastEq для инстансов [[MJdArgs]]. */
   implicit object MJdArgsFastEq extends FastEq[MJdArgs] {
     override def eqv(a: MJdArgs, b: MJdArgs): Boolean = {
-      (a.data         ===* b.data) &&
-      (a.jdRuntime    ===* b.jdRuntime) &&
-      (a.conf         ===* b.conf) &&
+      // data пересобирается (jdId и др.) при рендере JdR на каждом шаге рендера:
+      ((a.data ===* b.data) || MJdDataJs.MJdDataJsFastEq.eqv(a.data, b.data)) &&
+      // jdRuntime пересобирается на каждый чих, поэтому сравниваем внутренне:
+      ((a.jdRuntime ===* b.jdRuntime) || MJdRuntime.MJdRuntimeFastEq.eqv(a.jdRuntime, b.jdRuntime)) &&
+      (a.conf ===* b.conf) &&
       // Бывает, что инстансы генерятся на лету. Поэтому сравниваем глубинно:
       ((a.renderArgs ===* b.renderArgs) || MJdRenderArgs.MJdRenderArgsFastEq.eqv(a.renderArgs, b.renderArgs))
     }
